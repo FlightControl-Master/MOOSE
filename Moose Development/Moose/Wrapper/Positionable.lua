@@ -1187,6 +1187,33 @@ function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup, Name )
   return nil
 end
 
+--- Send a message to a @{Wrapper.Unit}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param DCS#Duration Duration The duration of the message.
+-- @param Wrapper.Unit#UNIT MessageUnit The UNIT object receiving the message.
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToUnit( Message, Duration, MessageUnit, Name )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    if DCSObject:isExist() then
+      if MessageUnit:IsAlive() then
+        self:GetMessage( Message, Duration, Name ):ToUnit( MessageUnit )
+      else
+        BASE:E( { "Message not sent to Unit; Unit is not alive...", Message = Message, MessageUnit = MessageUnit } )
+      end
+    else
+      BASE:E( { "Message not sent to Unit; Positionable is not alive ...", Message = Message, Positionable = self, MessageUnit = MessageUnit } )
+    end
+  end
+
+
+  return nil
+end
+
 --- Send a message of a message type to a @{Wrapper.Group}.
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
@@ -1223,6 +1250,30 @@ function POSITIONABLE:MessageToSetGroup( Message, Duration, MessageSetGroup, Nam
       MessageSetGroup:ForEachGroupAlive(
         function( MessageGroup )
           self:GetMessage( Message, Duration, Name ):ToGroup( MessageGroup )
+        end
+      )
+    end
+  end
+
+  return nil
+end
+
+--- Send a message to a @{Core.Set#SET_UNIT}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param DCS#Duration Duration The duration of the message.
+-- @param Core.Set#SET_UNIT MessageSetGroup The SET_UNIT collection receiving the message.
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToSetUnit( Message, Duration, MessageSetUnit, Name )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    if DCSObject:isExist() then
+      MessageSetUnit:ForEachUnit(
+        function( MessageGroup )
+          self:GetMessage( Message, Duration, Name ):ToUnit( MessageGroup )
         end
       )
     end
