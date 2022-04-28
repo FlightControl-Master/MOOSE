@@ -10,6 +10,7 @@
 --   * Send message to all players.
 --   * Send messages to a coalition.
 --   * Send messages to a specific group.
+--   * Send messages to a specific unit or client.
 -- 
 -- ===
 -- 
@@ -35,6 +36,7 @@
 --
 --   * To a @{Client} using @{#MESSAGE.ToClient}().
 --   * To a @{Wrapper.Group} using @{#MESSAGE.ToGroup}()
+--   * To a @{Wrapper.Unit} using @{#MESSAGE.ToUnit}()
 --   * To a coalition using @{#MESSAGE.ToCoalition}().
 --   * To the red coalition using @{#MESSAGE.ToRed}().
 --   * To the blue coalition using @{#MESSAGE.ToBlue}().
