@@ -1279,7 +1279,7 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param DCS#Duration Duration The duration of the message.
--- @param Core.Set#SET_UNIT MessageSetGroup The SET_UNIT collection receiving the message.
+-- @param Core.Set#SET_UNIT MessageSetUnit The SET_UNIT collection receiving the message.
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 function POSITIONABLE:MessageToSetUnit( Message, Duration, MessageSetUnit, Name )
   self:F2( { Message, Duration } )
