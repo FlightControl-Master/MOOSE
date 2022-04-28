@@ -95,6 +95,7 @@ Ops/Commander.lua
 Ops/Chief.lua
 Ops/CSAR.lua
 Ops/CTLD.lua
+Ops/Awacs.lua
 
 AI/AI_Balancer.lua
 AI/AI_Air.lua
