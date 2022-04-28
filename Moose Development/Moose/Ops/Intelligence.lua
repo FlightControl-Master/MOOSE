@@ -154,7 +154,7 @@ INTEL.Ctype={
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.3.1"
+INTEL.version="0.3.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -503,6 +503,22 @@ function INTEL:FilterCategoryGroup(GroupCategories)
   return self
 end
 
+--- Add a group to the detection set.
+-- @param #INTEL self
+-- @param Wrapper.Group#GROUP AgentGroup Group of agents. Can also be an @{Ops.OpsGroup#OPSGROUP} object.
+-- @return #INTEL self
+function INTEL:AddAgent(AgentGroup)
+
+  -- Check if this was an OPS group.
+  if AgentGroup:IsInstanceOf("OPSGROUP") then
+    AgentGroup=AgentGroup:GetGroup()
+  end
+
+  -- Add to detection set.
+  self.detectionset:AddGroup(AgentGroup)
+  return self
+end
+
 --- Enable or disable cluster analysis of detected targets.
 -- Targets will be grouped in coupled clusters.
 -- @param #INTEL self
@@ -618,6 +634,31 @@ function INTEL:GetContactName(Contact)
   return Contact.groupname
 end
 
+--- Get group of a contact.
+-- @param #INTEL self
+-- @param #INTEL.Contact Contact The contact.
+-- @return Wrapper.Group#GROUP Group object.
+function INTEL:GetContactGroup(Contact)
+  return Contact.group
+end
+
+--- Get threatlevel of a contact.
+-- @param #INTEL self
+-- @param #INTEL.Contact Contact The contact.
+-- @return #number Threat level.
+function INTEL:GetContactThreatlevel(Contact)
+  return Contact.threatlevel
+end
+
+
+--- Get type name of a contact.
+-- @param #INTEL self
+-- @param #INTEL.Contact Contact The contact.
+-- @return #string Type name.
+function INTEL:GetContactTypeName(Contact)
+  return Contact.typename
+end
+
 --- Get category name of a contact.
 -- @param #INTEL self
 -- @param #INTEL.Contact Contact The contact.
@@ -626,6 +667,13 @@ function INTEL:GetContactCategoryName(Contact)
   return Contact.categoryname
 end
 
+--- Get coordinate of a contact.
+-- @param #INTEL self
+-- @param #INTEL.Contact Contact The contact.
+-- @return Core.Point#COORDINATE Coordinates.
+function INTEL:GetContactCoordinate(Contact)
+  return Contact.position
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
