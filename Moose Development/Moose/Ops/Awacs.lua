@@ -101,7 +101,6 @@ do
 --
 -- ===
 --
--- ![Banner Image](OPS_AWACS.jpg)
 -- 
 -- @field #AWACS
 AWACS = {
