@@ -2768,9 +2768,10 @@ do -- COORDINATE
   --- Create a BRAA NATO call string to this COORDINATE from the FromCOORDINATE. Note - BRA delivered if no aspect can be obtained and "Merged" if range < 3nm
   -- @param #COORDINATE self
   -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
+  -- @param #boolean Bogey Add "Bogey" at the end if true (not yet declared hostile or friendly)
   -- @param #boolean Spades Add "Spades" at the end if true (no IFF/VID ID yet known)
   -- @return #string The BRAA text.
-  function COORDINATE:ToStringBRAANATO(FromCoordinate,Spades)
+  function COORDINATE:ToStringBRAANATO(FromCoordinate,Bogey,Spades)
     
     -- Thanks to @Pikey
     local BRAANATO = "Merged."
@@ -2796,8 +2797,12 @@ do -- COORDINATE
       else
         BRAANATO = string.format("BRAA, %03d, %d miles, Angels %d, %s, Track %s",bearing, rangeNM, alt, aspect, track)      
       end
-      if Spades then
-        BRAANATO = BRAANATO..", Spades."
+      if Bogey and Spades then
+        BRAANATO = BRAANATO..", Bogey, Spades."
+      elseif Bogey and (not Spades) then
+        BRAANATO = BRAANATO..", Bogey."
+      elseif (not Bogey) and Spades then
+       BRAANATO = BRAANATO..", Spades."
       else
        BRAANATO = BRAANATO.."."
       end
