@@ -3004,7 +3004,7 @@ function RANGE:_CheckInZone( _unitName )
           Straferesult.rangename = self.rangename
 
           -- Save trap sheet.
-          if playerData.targeton and self.targetsheet then
+          if playerData and playerData.targeton and self.targetsheet then
             self:_SaveTargetSheet( _playername, result )
           end
           -- RangeBoss edit for strafe data saved to file
@@ -3524,7 +3524,7 @@ function RANGE:_TargetsheetOnOff( _unitname )
         playerData.targeton = not playerData.targeton
 
         -- Inform player.
-        if playerData.targeton == true then
+        if playerData and playerData.targeton == true then
           text = string.format( "roger, your targetsheets are now SAVED." )
         else
           text = string.format( "affirm, your targetsheets are NOT SAVED." )
