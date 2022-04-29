@@ -47,7 +47,7 @@ LEGION = {
 
 --- LEGION class version.
 -- @field #string version
-LEGION.version="0.3.2"
+LEGION.version="0.3.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -863,6 +863,8 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
             if currM.type==AUFTRAG.Type.GCICAP and Mission.type==AUFTRAG.Type.INTERCEPT then
               pause=true
             elseif (currM.type==AUFTRAG.Type.ONGUARD or currM.type==AUFTRAG.Type.PATROLZONE) and (Mission.type==AUFTRAG.Type.ARTY or Mission.type==AUFTRAG.Type.GROUNDATTACK) then
+              pause=true
+            elseif currM.type==AUFTRAG.Type.NOTHING then
               pause=true
             end
             
@@ -2758,6 +2760,8 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
         -- Prefer assets that are on GCICAP to perform INTERCEPTS
         score=score+25
       elseif (currmission.type==AUFTRAG.Type.ONGUARD or currmission.type==AUFTRAG.Type.PATROLZONE) and (MissionType==AUFTRAG.Type.ARTY  or MissionType==AUFTRAG.Type.GROUNDATTACK) then
+        score=score+25
+      elseif currmission.type==AUFTRAG.Type.NOTHING then
         score=score+25
       end
       

@@ -46,7 +46,7 @@ PLATOON.version="0.1.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add weapon data.
+-- TODO: A lot.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -62,6 +62,9 @@ function PLATOON:New(TemplateGroupName, Ngroups, PlatoonName)
 
   -- Inherit everything from COHORT class.
   local self=BASE:Inherit(self, COHORT:New(TemplateGroupName, Ngroups, PlatoonName)) -- #PLATOON
+  
+  -- All platoons get mission type Nothing.
+  self:AddMissionCapability(AUFTRAG.Type.NOTHING, 50)
 
   -- Get ammo.
   self.ammo=self:_CheckAmmo()

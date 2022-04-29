@@ -3969,6 +3969,22 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
       -- FLIGHTGROUP not implemented (intended!) for this AUFTRAG type.
     end
 
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.NOTHING then
+
+    ---
+    -- Task "Nothing" Mission.
+    ---
+
+    -- Just stay put.
+    --TODO: Change ALARM STATE
+
+    if self:IsArmygroup() or self:IsNavygroup() then
+      -- Especially NAVYGROUP needs a full stop as patrol ad infinitum
+      self:FullStop()
+    else
+      -- FLIGHTGROUP not implemented (intended!) for this AUFTRAG type.
+    end
+
   elseif Task.dcstask.id==AUFTRAG.SpecialTask.AIRDEFENSE or Task.dcstask.id==AUFTRAG.SpecialTask.EWR then
 
     ---
@@ -4064,7 +4080,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     end
     
     wp.missionUID=Mission and Mission.auftragsnummer or nil
-    
+        
   else
 
     -- If task is scheduled (not waypoint) set task.
@@ -4108,8 +4124,15 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
         -- Number of ammo avail.
         local nAmmo=ammo.Total
         
-        if DCSTask.params.weaponType then
-          --TODO: use weapon type infor, e.g. for cruise missiles
+        local weaponType=DCSTask.params.weaponType or -1
+        
+        -- Adjust max number of ammo for specific weapon types requested.
+        if weaponType==ENUMS.WeaponFlag.CruiseMissile then
+          nAmmo=ammo.MissilesCR
+        elseif weaponType==ENUMS.WeaponFlag.AnyRocket then
+          nAmmo=ammo.Rockets
+        elseif weaponType==ENUMS.WeaponFlag.Cannons then
+          nAmmo=ammo.Guns
         end
         
         --TODO: Update target location while we're at it anyway.
@@ -4126,6 +4149,13 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
         
         -- Set quantity of task.
         DCSTask.params.expendQty=nShots
+        
+      elseif Mission and Mission.type==AUFTRAG.Type.RECOVERYTANKER then
+  
+        env.info("FF recoverytanker setting DCS task")
+    
+        -- Update DCS task with the current carrier parameters.
+        DCSTask=Mission:GetDCSMissionTask()        
         
       else
         ---
@@ -4230,6 +4260,8 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
         done=true
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.GROUNDATTACK or Task.dcstask.id==AUFTRAG.SpecialTask.ARMORATTACK then
         done=true
+      elseif Task.dcstask.id==AUFTRAG.SpecialTask.NOTHING then
+        done=true        
       elseif stopflag==1 or (not self:IsAlive()) or self:IsDead() or self:IsStopped() then
         -- Manual call TaskDone if setting flag to one was not successful.
         done=true
@@ -4344,7 +4376,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
       self:Disengage()
     end
 
-    if Task.description==AUFTRAG.SpecialTask.ONGUARD or Task.description==AUFTRAG.SpecialTask.ARMOREDGUARD then
+    if Task.description==AUFTRAG.SpecialTask.ONGUARD or Task.description==AUFTRAG.SpecialTask.ARMOREDGUARD or Task.description==AUFTRAG.SpecialTask.NOTHING then
       self:T(self.lid.."Task DONE OnGuard ==> Cruise")
       self:Cruise()
     end
@@ -4829,7 +4861,8 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
     -- Alert 5 missoins dont have a task set, which could be cancelled.
     if Mission.type==AUFTRAG.Type.ALERT5 or 
        Mission.type==AUFTRAG.Type.ONGUARD or 
-       Mission.type==AUFTRAG.Type.ARMOREDGUARD or 
+       Mission.type==AUFTRAG.Type.ARMOREDGUARD or
+       Mission.type==AUFTRAG.Type.NOTHING or 
        Mission.type==AUFTRAG.Type.AIRDEFENSE or
        Mission.type==AUFTRAG.Type.EWR then
        
@@ -5115,7 +5148,18 @@ function OPSGROUP:RouteToMission(mission, delay)
       
       -- Mission waypoint
       waypointcoord=mission:GetMissionWaypointCoord(self.group, nil, surfacetypes)
+
+    elseif mission.type==AUFTRAG.Type.NOTHING then
+      ---
+      -- Nothing
+      ---
+
+      -- Get the zone.
+      targetzone=mission.engageTarget:GetObject() --Core.Zone#ZONE
       
+      -- Random coordinate.
+      waypointcoord=targetzone:GetRandomCoordinate(nil , nil, surfacetypes)
+            
     elseif mission.type==AUFTRAG.Type.HOVER then
       ---
       -- Hover
@@ -5128,7 +5172,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       ---
       -- Relocation
       ---
-      
+
       -- Roughly go to the new legion. 
       local ToCoordinate=mission.DCStask.params.legion:GetCoordinate()
             
@@ -5137,6 +5181,22 @@ function OPSGROUP:RouteToMission(mission, delay)
       else
         waypointcoord=self:GetCoordinate():GetIntermediateCoordinate(ToCoordinate, 0.05)
       end
+      
+    elseif mission.type==AUFTRAG.Type.RECOVERYTANKER then
+      ---
+      -- Recoverytanker
+      ---
+
+      local carrier=mission.DCStask.params.carrier --Wrapper.Unit#UNIT
+
+      -- Roughly go to the new legion. 
+      local CarrierCoordinate=carrier:GetCoordinate()
+      
+      local heading=carrier:GetHeading()
+      
+      waypointcoord=CarrierCoordinate:Translate(10000, heading-180):SetAltitude(2000)
+      
+      waypointcoord:MarkToAll("Recoverytanker",ReadOnly,Text)
       
     else
       ---
@@ -9417,12 +9477,27 @@ function OPSGROUP:_CheckGroupDone(delay)
         return
       end
 
+      -- Number of tasks remaining.
+      local nTasks=self:CountRemainingTasks()
+
+      -- Number of mission remaining.
+      local nMissions=self:CountRemainingMissison()
+
+      -- Number of cargo transports remaining.
+      local nTransports=self:CountRemainingTransports()
+
       -- First check if there is a paused mission that
-      if self.missionpaused then
+      if self.missionpaused and nMissions==1 then
         self:T(self.lid..string.format("Found paused mission %s [%s]. Unpausing mission...", self.missionpaused.name, self.missionpaused.type))
         self:UnpauseMission()
         return
       end
+      
+      -- Number of remaining tasks/missions?
+      if nTasks>0 or nMissions>0 or nTransports>0 then
+        self:T(self.lid..string.format("Group still has tasks, missions or transports ==> NOT DONE"))
+        return
+      end      
 
       -- Get current waypoint.
       local waypoint=self:GetWaypoint(self.currentwp)
@@ -9439,21 +9514,6 @@ function OPSGROUP:_CheckGroupDone(delay)
         end
       end
       
-      -- Number of tasks remaining.
-      local nTasks=self:CountRemainingTasks()
-
-      -- Number of mission remaining.
-      local nMissions=self:CountRemainingMissison()
-
-      -- Number of cargo transports remaining.
-      local nTransports=self:CountRemainingTransports()      
-      
-      -- Number of remaining tasks/missions?
-      if nTasks>0 or nMissions>0 or nTransports>0 then
-        self:T(self.lid..string.format("Group still has tasks, missions or transports ==> NOT DONE"))
-        return
-      end
-
       if self.adinfinitum then
 
         ---

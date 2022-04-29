@@ -407,6 +407,7 @@ _AUFTRAGSNR=0
 -- @field #string RELOCATECOHORT Relocate a cohort from one legion to another.
 -- @field #string AIRDEFENSE Air defense.
 -- @field #string EWR Early Warning Radar.
+-- @field #string RECOVERYTANKER Recovery tanker.
 -- @field #string NOTHING Nothing.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
@@ -447,6 +448,7 @@ AUFTRAG.Type={
   RELOCATECOHORT="Relocate Cohort",
   AIRDEFENSE="Air Defence",
   EWR="Early Warning Radar",
+  RECOVERYTANKER="Recovery Tanker",
   NOTHING="Nothing",
 }
 
@@ -466,6 +468,8 @@ AUFTRAG.Type={
 -- @field #string FERRY Ferry mission.
 -- @field #string RELOCATECOHORT Relocate cohort.
 -- @field #string AIRDEFENSE Air defense.
+-- @field #string EWR Early Warning Radar.
+-- @field #string RECOVERYTANKER Recovery tanker.
 -- @field #string NOTHING Nothing.
 AUFTRAG.SpecialTask={
   FORMATION="Formation",
@@ -484,6 +488,7 @@ AUFTRAG.SpecialTask={
   RELOCATECOHORT="Relocate Cohort",
   AIRDEFENSE="Air Defense",
   EWR="Early Warning Radar",
+  RECOVERYTANKER="Recovery Tanker",
   NOTHING="Nothing",
 }
 
@@ -605,7 +610,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.9.4"
+AUFTRAG.version="0.9.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1610,6 +1615,32 @@ function AUFTRAG:NewRESCUEHELO(Carrier)
   return mission
 end
 
+--- **[AIRPANE]** Create a RECOVERY TANKER mission. **WIP and not working coorectly yet!**
+-- @param #AUFTRAG self
+-- @param Wrapper.Unit#UNIT Carrier The carrier unit.
+-- @return #AUFTRAG self
+function AUFTRAG:NewRECOVERYTANKER(Carrier)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.RECOVERYTANKER)
+
+  mission:_TargetFromObject(Carrier)
+
+  -- Mission options:
+  mission.missionTask=ENUMS.MissionTask.REFUELING
+  mission.missionFraction=0.5
+  mission.optionROE=ENUMS.ROE.WeaponHold
+  mission.optionROT=ENUMS.ROT.NoReaction
+  
+  mission.missionAltitude=UTILS.FeetToMeters(6000)
+  mission.missionSpeed=UTILS.KnotsToKmph(274)
+
+  mission.categories={AUFTRAG.Category.AIRPLANE}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
 
 --- **[AIR ROTARY, GROUND]** Create a TROOP TRANSPORT mission.
 -- @param #AUFTRAG self
@@ -2085,24 +2116,24 @@ function AUFTRAG:_NewRELOCATECOHORT(Legion, Cohort)
   return mission
 end
 
---- **[AIR, GROUND, NAVAL]** Create a mission to do NOTHING.
+--- **[GROUND, NAVAL]** Create a mission to do NOTHING.
 -- @param #AUFTRAG self
+-- @param Core.Zone#ZONE RelaxZone Zone where the assets are supposed to do nothing.
 -- @return #AUFTRAG self
-function AUFTRAG:NewNOTHING()
+function AUFTRAG:NewNOTHING(RelaxZone)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.NOTHING)
 
-  --mission:_TargetFromObject(Coordinate)
+  mission:_TargetFromObject(RelaxZone)
 
   mission.optionROE=ENUMS.ROE.WeaponHold
-  mission.optionAlarm=ENUMS.AlarmState.Green
+  mission.optionAlarm=ENUMS.AlarmState.Auto
 
   mission.missionFraction=1.0
 
-  mission.categories={AUFTRAG.Category.ALL}
+  mission.categories={AUFTRAG.Category.GROUND, AUFTRAG.Category.NAVAL}
 
   mission.DCStask=mission:GetDCSMissionTask()
-  mission.DCStask.params.adinfinitum=true
     
   return mission
 end
@@ -2720,7 +2751,7 @@ function AUFTRAG:SetRequiredAttribute(Attributes)
 end
 
 --- Set required property or properties the assets must have.
--- These are DCS attributes.
+-- These are [DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes).
 -- @param #AUFTRAG self
 -- @param #table Properties Property or table of properties.
 -- @return #AUFTRAG self
@@ -5073,9 +5104,8 @@ end
 
 --- Get DCS task table for the given mission.
 -- @param #AUFTRAG self
--- @param Wrapper.Controllable#CONTROLLABLE TaskControllable The controllable for which this task is set. Most tasks don't need it.
 -- @return DCS#Task The DCS task table. If multiple tasks are necessary, this is returned as a combo task.
-function AUFTRAG:GetDCSMissionTask(TaskControllable)
+function AUFTRAG:GetDCSMissionTask()
 
   local DCStasks={}
 
@@ -5207,6 +5237,47 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     DCStask.params=param
 
     table.insert(DCStasks, DCStask)
+ 
+  elseif self.type==AUFTRAG.Type.RECOVERYTANKER then   
+
+    ----------------------------
+    -- RECOVERYTANKER Mission --
+    ----------------------------
+    
+    -- Get the carrier unit.
+    local Carrier=self:GetObjective() --Wrapper.Unit#UNIT
+    
+    -- Carrier coordinate.
+    local Coord=Carrier:GetCoordinate()
+    
+    -- Get current heading of carrier.
+    local hdg=Carrier:GetHeading()
+
+    -- Altitude    
+    local Altitude=self.missionAltitude
+    
+    -- Race-track distances.
+    local distStern=UTILS.NMToMeters(4)
+    local distBow=UTILS.NMToMeters(10)
+    
+    -- Racetrack pattern points.
+    local p1=Coord:Translate(distStern, hdg):SetAltitude(self.missionAltitude)
+    local p2=Coord:Translate(distBow, hdg):SetAltitude(self.missionAltitude)
+    
+    p1:MarkToAll("p1")
+    p2:MarkToAll("p2")
+
+    -- Set speed in m/s.
+    local Speed=UTILS.KmphToMps(self.missionSpeed)
+
+    -- Orbit task.
+    local DCStask=CONTROLLABLE.TaskOrbit(nil, p1, Altitude, Speed, p2)
+    
+    -- Set carrier as parameter.
+    DCStask.params.carrier=Carrier
+
+    -- Add to DCS tasks.
+    table.insert(DCStasks, DCStask)    
     
   elseif self.type==AUFTRAG.Type.INTERCEPT then
 

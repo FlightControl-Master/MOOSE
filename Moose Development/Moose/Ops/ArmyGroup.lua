@@ -1149,7 +1149,7 @@ function ARMYGROUP:onafterOutOfAmmo(From, Event, To)
   end
   
   -- Third, check if we want to RTZ once out of ammo.
-  if self.rtzOnOutOfAmmo then    
+  if self.rtzOnOutOfAmmo then
     self:__RTZ(-1)
   end
 
@@ -1250,6 +1250,9 @@ function ARMYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
   
   -- Zone.
   local zone=Zone or self.homezone
+  
+  -- Cancel all missions in the queue.
+  self:CancelAllMissions()
   
   if zone then
   
