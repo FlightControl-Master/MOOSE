@@ -610,7 +610,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.9.4"
+AUFTRAG.version="0.9.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1615,7 +1615,7 @@ function AUFTRAG:NewRESCUEHELO(Carrier)
   return mission
 end
 
---- **[AIRPANE]** Create a RECOVERY TANKER mission.
+--- **[AIRPANE]** Create a RECOVERY TANKER mission. **WIP and not working coorectly yet!**
 -- @param #AUFTRAG self
 -- @param Wrapper.Unit#UNIT Carrier The carrier unit.
 -- @return #AUFTRAG self
@@ -1630,6 +1630,9 @@ function AUFTRAG:NewRECOVERYTANKER(Carrier)
   mission.missionFraction=0.5
   mission.optionROE=ENUMS.ROE.WeaponHold
   mission.optionROT=ENUMS.ROT.NoReaction
+  
+  mission.missionAltitude=UTILS.FeetToMeters(6000)
+  mission.missionSpeed=UTILS.KnotsToKmph(274)
 
   mission.categories={AUFTRAG.Category.AIRPLANE}
 
@@ -2113,24 +2116,24 @@ function AUFTRAG:_NewRELOCATECOHORT(Legion, Cohort)
   return mission
 end
 
---- **[AIR, GROUND, NAVAL]** Create a mission to do NOTHING.
+--- **[GROUND, NAVAL]** Create a mission to do NOTHING.
 -- @param #AUFTRAG self
+-- @param Core.Zone#ZONE RelaxZone Zone where the assets are supposed to do nothing.
 -- @return #AUFTRAG self
-function AUFTRAG:NewNOTHING()
+function AUFTRAG:NewNOTHING(RelaxZone)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.NOTHING)
 
-  --mission:_TargetFromObject(Coordinate)
+  mission:_TargetFromObject(RelaxZone)
 
   mission.optionROE=ENUMS.ROE.WeaponHold
-  mission.optionAlarm=ENUMS.AlarmState.Green
+  mission.optionAlarm=ENUMS.AlarmState.Auto
 
   mission.missionFraction=1.0
 
-  mission.categories={AUFTRAG.Category.ALL}
+  mission.categories={AUFTRAG.Category.GROUND, AUFTRAG.Category.NAVAL}
 
   mission.DCStask=mission:GetDCSMissionTask()
-  mission.DCStask.params.adinfinitum=true
     
   return mission
 end
@@ -2748,7 +2751,7 @@ function AUFTRAG:SetRequiredAttribute(Attributes)
 end
 
 --- Set required property or properties the assets must have.
--- These are DCS attributes.
+-- These are [DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes).
 -- @param #AUFTRAG self
 -- @param #table Properties Property or table of properties.
 -- @return #AUFTRAG self
@@ -5101,9 +5104,8 @@ end
 
 --- Get DCS task table for the given mission.
 -- @param #AUFTRAG self
--- @param Wrapper.Controllable#CONTROLLABLE TaskControllable The controllable for which this task is set. Most tasks don't need it.
 -- @return DCS#Task The DCS task table. If multiple tasks are necessary, this is returned as a combo task.
-function AUFTRAG:GetDCSMissionTask(TaskControllable)
+function AUFTRAG:GetDCSMissionTask()
 
   local DCStasks={}
 
@@ -5238,32 +5240,43 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
  
   elseif self.type==AUFTRAG.Type.RECOVERYTANKER then   
 
-
-    --[[
-    local DCStask={}
-
-    DCStask.id=AUFTRAG.SpecialTask.RECOVERYTANKER
-
-    -- We create a "fake" DCS task.
-    local param={}
-    DCStask.params=param
+    ----------------------------
+    -- RECOVERYTANKER Mission --
+    ----------------------------
     
-    ]]
-    
+    -- Get the carrier unit.
     local Carrier=self:GetObjective() --Wrapper.Unit#UNIT
     
-    local heading=Carrier:GetHeading()
+    -- Carrier coordinate.
+    local Coord=Carrier:GetCoordinate()
     
-    local Altitude=2000
-    
-    local Coordinate=Carrier:GetCoordinate():SetAltitude(2000)
-    
-    local RaceTrack=Coordinate:Translate(1000, heading, true)
+    -- Get current heading of carrier.
+    local hdg=Carrier:GetHeading()
 
-    local DCStask=CONTROLLABLE.TaskOrbit(nil, Coordinate, Altitude, 300, RaceTrack)
+    -- Altitude    
+    local Altitude=self.missionAltitude
     
+    -- Race-track distances.
+    local distStern=UTILS.NMToMeters(4)
+    local distBow=UTILS.NMToMeters(10)
+    
+    -- Racetrack pattern points.
+    local p1=Coord:Translate(distStern, hdg):SetAltitude(self.missionAltitude)
+    local p2=Coord:Translate(distBow, hdg):SetAltitude(self.missionAltitude)
+    
+    p1:MarkToAll("p1")
+    p2:MarkToAll("p2")
+
+    -- Set speed in m/s.
+    local Speed=UTILS.KmphToMps(self.missionSpeed)
+
+    -- Orbit task.
+    local DCStask=CONTROLLABLE.TaskOrbit(nil, p1, Altitude, Speed, p2)
+    
+    -- Set carrier as parameter.
     DCStask.params.carrier=Carrier
 
+    -- Add to DCS tasks.
     table.insert(DCStasks, DCStask)    
     
   elseif self.type==AUFTRAG.Type.INTERCEPT then

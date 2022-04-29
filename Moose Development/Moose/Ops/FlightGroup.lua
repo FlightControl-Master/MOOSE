@@ -1041,6 +1041,19 @@ function FLIGHTGROUP:Status()
   ---
 
   self:_PrintTaskAndMissionStatus()
+  
+  -- Current mission.
+  local mission=self:GetMissionCurrent()
+  
+  if mission and mission.type==AUFTRAG.Type.RECOVERYTANKER and mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.EXECUTING then
+  
+    --env.info("FF recovery tanker updating DCS task")    
+    --self:ClearTasks()
+  
+    local DCSTask=mission:GetDCSMissionTask()
+    self:SetTask(DCSTask)
+  
+  end
 
 end
 

@@ -41,13 +41,13 @@ FLOTILLA = {
 
 --- FLOTILLA class version.
 -- @field #string version
-FLOTILLA.version="0.0.1"
+FLOTILLA.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add weapon data.
+-- TODO: A lot.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -63,7 +63,11 @@ function FLOTILLA:New(TemplateGroupName, Ngroups, FlotillaName)
 
   -- Inherit everything from COHORT class.
   local self=BASE:Inherit(self, COHORT:New(TemplateGroupName, Ngroups, FlotillaName)) -- #FLOTILLA
+  
+  -- All flotillas get mission type Nothing.
+  self:AddMissionCapability(AUFTRAG.Type.NOTHING, 50)  
 
+  -- Get initial ammo.
   self.ammo=self:_CheckAmmo()
 
   return self

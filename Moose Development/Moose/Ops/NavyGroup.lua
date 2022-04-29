@@ -1584,6 +1584,9 @@ function NAVYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
   -- Zone.
   local zone=Zone or self.homezone
   
+  -- Cancel all missions in the queue.
+  self:CancelAllMissions()
+  
   if zone then
   
     if self:IsInZone(zone) then

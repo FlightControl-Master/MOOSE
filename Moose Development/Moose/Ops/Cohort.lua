@@ -86,7 +86,7 @@ COHORT = {
 
 --- COHORT class version.
 -- @field #string version
-COHORT.version="0.3.4"
+COHORT.version="0.3.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -391,10 +391,12 @@ function COHORT:AddMissionCapability(MissionTypes, Performance)
   
   for _,missiontype in pairs(MissionTypes) do
   
+    local Capability=self:GetMissionCapability(missiontype)
+  
     -- Check not to add the same twice.  
-    if AUFTRAG.CheckMissionCapability(missiontype, self.missiontypes) then
-      self:E(self.lid.."WARNING: Mission capability already present! No need to add it twice.")
-      -- TODO: update performance.
+    if Capability then
+      self:E(self.lid.."WARNING: Mission capability already present! No need to add it twice. Will update the performance though!")
+      Capability.Performance=Performance or 50
     else
   
       local capability={} --Ops.Auftrag#AUFTRAG.Capability
@@ -409,6 +411,22 @@ function COHORT:AddMissionCapability(MissionTypes, Performance)
   self:T2(self.missiontypes)
   
   return self
+end
+
+--- Get missin capability for a given mission type.
+-- @param #COHORT self
+-- @param #string MissionType Mission type, e.g. `AUFTRAG.Type.BAI`.
+-- @return Ops.Auftrag#AUFTRAG.Capability Capability table or `nil` if the capability does not exist.
+function COHORT:GetMissionCapability(MissionType)
+  
+  for _,_capability in pairs(self.missiontypes) do
+    local capability=_capability --Ops.Auftrag#AUFTRAG.Capability
+    if capability.MissionType==MissionType then
+      return capability
+    end
+  end
+  
+  return nil
 end
 
 --- Check if cohort assets have a given property (DCS attribute).
@@ -1008,9 +1026,14 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
         -- Asset is already on a mission.
         ---
  
-        -- Check if this asset is currently on a GCICAP mission (STARTED or EXECUTING).
+        -- Check if this asset is currently on a mission (STARTED or EXECUTING).
         if MissionType==AUFTRAG.Type.RELOCATECOHORT then
         
+          -- Relocation: Take all assets. Mission will be cancelled.
+          table.insert(assets, asset)
+          
+        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.NOTHING) then
+
           -- Relocation: Take all assets. Mission will be cancelled.
           table.insert(assets, asset)
           
