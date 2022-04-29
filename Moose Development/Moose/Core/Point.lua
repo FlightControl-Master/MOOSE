@@ -2799,9 +2799,9 @@ do -- COORDINATE
       end
       if Bogey and Spades then
         BRAANATO = BRAANATO..", Bogey, Spades."
-      elseif Bogey and (not Spades) then
+      elseif Bogey then
         BRAANATO = BRAANATO..", Bogey."
-      elseif (not Bogey) and Spades then
+      elseif Spades then
        BRAANATO = BRAANATO..", Spades."
       else
        BRAANATO = BRAANATO.."."

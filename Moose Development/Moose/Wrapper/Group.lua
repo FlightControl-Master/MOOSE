@@ -1027,16 +1027,25 @@ end
 -- @param Wrapper.Group#GROUP self
 -- @return Core.Point#COORDINATE The COORDINATE of the GROUP.
 function GROUP:GetCoordinate()
-
-  local FirstUnit = self:GetUnit(1)
+   
+   
+  local Units = self:GetUnits()  
   
-  if FirstUnit then
-    local FirstUnitCoordinate = FirstUnit:GetCoordinate()
-    local Heading = self:GetHeading()
-    FirstUnitCoordinate.Heading = Heading
-    return FirstUnitCoordinate
+  for _,_unit in pairs(Units) do
+    local FirstUnit = _unit -- Wrapper.Unit#UNIT
+    
+    if FirstUnit then
+    
+      local FirstUnitCoordinate = FirstUnit:GetCoordinate()
+      
+      if FirstUnitCoordinate then
+        local Heading = self:GetHeading()
+        FirstUnitCoordinate.Heading = Heading
+        return FirstUnitCoordinate
+      end
+      
+    end
   end
-  
   BASE:E( { "Cannot GetCoordinate", Group = self, Alive = self:IsAlive() } )
 
   return nil
