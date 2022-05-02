@@ -122,8 +122,11 @@ INTEL = {
 -- @field Ops.Auftrag#AUFTRAG mission The current Auftrag attached to this contact.
 -- @field Ops.Target#TARGET target The Target attached to this contact.
 -- @field #string recce The name of the recce unit that detected this contact.
--- @field #string ctype Contact type.
+-- @field #string ctype Contact type of #INTEL.Ctype.
 -- @field #string platform [AIR] Contact platform name, e.g. Foxbat, Flanker_E, defaults to Bogey if unknown
+-- @field #number heading [AIR] Heading of the contact, if available.
+-- @field #boolean maneuvering [AIR] Contact has changed direction by >10 deg.
+-- @field #number altitude [AIR] Flight altitude of the contact in meters.
 
 --- Cluster info.
 -- @type INTEL.Cluster
@@ -137,7 +140,8 @@ INTEL = {
 -- @field Wrapper.Marker#MARKER marker F10 marker.
 -- @field #number markerID Marker ID.
 -- @field Ops.Auftrag#AUFTRAG mission The current Auftrag attached to this cluster.
--- @field #string ctype Cluster type.
+-- @field #string ctype Cluster type of #INTEL.Ctype.
+-- @field #number altitude [AIR] Average flight altitude of the cluster in meters.
 
 --- Contact or cluster type.
 -- @type INTEL.Ctype
@@ -154,7 +158,7 @@ INTEL.Ctype={
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.3.2"
+INTEL.version="0.3.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -541,6 +545,7 @@ function INTEL:SetDetectStatics(Switch)
   else
     self.detectStatics=false
   end
+  return self
 end
 
 --- Set verbosity level for debugging.
@@ -692,6 +697,7 @@ function INTEL:onafterStart(From, Event, To)
 
   -- Start the status monitoring.
   self:__Status(-math.random(10))
+  return self
 end
 
 --- On after "Status" event.
@@ -737,6 +743,7 @@ function INTEL:onafterStatus(From, Event, To)
   end
 
   self:__Status(self.statusupdate)
+  return self
 end
 
 
@@ -856,7 +863,8 @@ function INTEL:UpdateIntel()
   if self.clusteranalysis then
     self:PaintPicture()
   end
-
+  
+  return self 
 end
 
 --- Update an #INTEL.Contact item.
@@ -877,11 +885,23 @@ function INTEL:_UpdateContact(Contact)
       Contact.position=Contact.group:GetCoordinate()
       Contact.velocity=Contact.group:GetVelocityVec3()
       Contact.speed=Contact.group:GetVelocityMPS()
-      
+      if Contact.group:IsAir() then
+        Contact.altitude=Contact.group:GetAltitude()
+        local oldheading = Contact.heading or 1
+        local newheading = Contact.group:GetHeading()
+        if newheading == 0 then newheading = 1 end
+        local changeh = math.abs(((oldheading - newheading) + 360) % 360)
+        Contact.heading = newheading
+        if changeh > 10 then
+          Contact.maneuvering = true
+        else
+          Contact.maneuvering = false
+        end
+      end
     end
     
   end
-
+  return self
 end
 
 --- Create an #INTEL.Contact item from a given GROUP or STATIC object.
@@ -917,9 +937,13 @@ function INTEL:_CreateContact(Positionable, RecceName)
       item.isStatic=false
       if group:IsAir() then
         item.platform=group:GetNatoReportingName()
+        item.heading = group:GetHeading()
+        item.maneuvering = false
+        item.altitude = group:GetAltitude()
       else
         -- TODO optionally add ground types?
         item.platform="Unknown"
+        item.altitude = group:GetAltitude(true)
       end
       if item.category==Group.Category.AIRPLANE or item.category==Group.Category.HELICOPTER then
         item.ctype=INTEL.Ctype.AIRCRAFT
@@ -1006,7 +1030,7 @@ function INTEL:CreateDetectedItems(DetectedGroups, DetectedStatics, RecceDetecti
 
     end
   end
-
+  return self
 end
 
 --- (Internal) Return the detected target groups of the controllable as a @{SET_GROUP}.
@@ -1084,7 +1108,7 @@ function INTEL:onafterNewContact(From, Event, To, Contact)
   
   -- Add to table of unknown contacts.
   table.insert(self.ContactsUnknown, Contact)
-  
+  return self
 end
 
 --- On after "LostContact" event.
@@ -1100,7 +1124,7 @@ function INTEL:onafterLostContact(From, Event, To, Contact)
   
   -- Add to table of lost contacts.
   table.insert(self.ContactsLost, Contact)
-  
+  return self
 end
 
 --- On after "NewCluster" event.
@@ -1116,7 +1140,7 @@ function INTEL:onafterNewCluster(From, Event, To, Cluster)
   
   -- Add cluster to table.
   self:_AddCluster(Cluster)
-  
+  return self
 end
 
 --- On after "LostCluster" event.
@@ -1137,7 +1161,7 @@ function INTEL:onafterLostCluster(From, Event, To, Cluster, Mission)
   end
   
   self:T(text)
-  
+  return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1261,7 +1285,7 @@ function INTEL:RemoveContact(Contact)
     end
 
   end
-
+  return self
 end
 
 --- Check if a contact was lost.
@@ -1458,6 +1482,8 @@ function INTEL:PaintPicture()
       
     end
   end
+  
+  return self
 end
 
 --- Create a new cluster.
@@ -1474,6 +1500,7 @@ function INTEL:_CreateCluster()
   cluster.threatlevelMax=0
   cluster.size=0
   cluster.Contacts={}
+  cluster.altitude=0
 
   -- Increase counter.
   self.clustercounter=self.clustercounter+1
@@ -1509,7 +1536,8 @@ function INTEL:_AddCluster(Cluster)
 
   -- Add cluster.
   table.insert(self.Clusters, Cluster)
-
+  
+  return self
 end
 
 --- Add a contact to the cluster.
@@ -1529,10 +1557,14 @@ function INTEL:AddContactToCluster(contact, cluster)
     -- Increase size.
     cluster.size=cluster.size+1
     
+    -- alt
+    self:GetClusterAltitude(cluster,true)
+    
     -- Debug info.
     self:T(self.lid..string.format("Adding contact %s to cluster #%d [%s] ==> New size=%d", contact.groupname, cluster.index, cluster.ctype, cluster.size))
   end
-
+  
+  return self
 end
 
 --- Remove a contact from a cluster.
@@ -1560,13 +1592,13 @@ function INTEL:RemoveContactFromCluster(contact, cluster)
         -- Debug info.
         self:T(self.lid..string.format("Removing contact %s from cluster #%d ==> New cluster size=%d", contact.groupname, cluster.index, cluster.size))
 
-        return
+        return self
       end
 
     end
 
   end
-
+  return self
 end
 
 --- Calculate cluster threat level sum.
@@ -1643,6 +1675,8 @@ function INTEL:CalcClusterDirection(cluster)
   -- Second group is going East, i.e. heading 270
   -- Total is 360/2=180, i.e. South!
   -- It should not go anywhere as the two movements cancel each other.
+  -- Correct, edge case for N=2^x, but when 2 pairs of groups drive in exact opposite directions, the cluster will split at some point?
+  -- maybe add the speed as weight to get a factor
   
   if n==0 then
     return 0
@@ -1773,8 +1807,18 @@ function INTEL:IsContactConnectedToCluster(contact, cluster)
 
       --local dist=Contact.position:Get2DDistance(contact.position)
       local dist=Contact.position:DistanceFromPointVec2(contact.position)
-
-      if dist<self.clusterradius then
+      
+      -- AIR - check for spatial proximity
+      local airprox = false
+      if contact.ctype == INTEL.Ctype.AIRCRAFT then
+       self:T(string.format("Cluster Alt=%d | Contact Alt=%d",cluster.altitude,contact.altitude))
+       local adist = math.abs(cluster.altitude - contact.altitude)
+       if adist < UTILS.FeetToMeters(10000) then -- limit to 10kft
+        airprox = true
+       end
+      end
+      
+      if dist<self.clusterradius and airprox then
         return true, dist
       end
 
@@ -1839,6 +1883,10 @@ function INTEL:_GetClosestClusterOfContact(Contact)
   
   local distmin=self.clusterradius
   
+  if not Contact.altitude then
+    Contact.altitude = Contact.group:GetAltitude()
+  end
+  
   for _,_cluster in pairs(self.Clusters) do
     local cluster=_cluster --#INTEL.Cluster
     
@@ -1846,7 +1894,20 @@ function INTEL:_GetClosestClusterOfContact(Contact)
     
       local dist=self:_GetDistContactToCluster(Contact, cluster)
       
-      if dist<distmin then
+      -- AIR - check for spatial proximity
+      local airprox = false
+      if Contact.ctype == INTEL.Ctype.AIRCRAFT then
+       if not cluster.altitude then
+        cluster.altitude = self:GetClusterAltitude(cluster,true)
+       end
+       local adist = math.abs(cluster.altitude - Contact.altitude)
+       self:T(string.format("Cluster Alt=%d | Contact Alt=%d",cluster.altitude,Contact.altitude))
+       if adist < UTILS.FeetToMeters(10000) then
+        airprox = true
+       end
+      end
+      
+      if dist<distmin and airprox then
         Cluster=cluster
         distmin=dist
       end
@@ -1878,6 +1939,40 @@ function INTEL:GetClusterOfContact(contact)
   return nil
 end
 
+--- Get the altitude of a cluster.
+-- @param #INTEL self
+-- @param #INTEL.Cluster Cluster The cluster.
+-- @param #boolean Update If `true`, update the altitude. Default is to just return the last stored altitude.
+-- @return #number The average altitude (ASL) of this cluster in meters.
+function INTEL:GetClusterAltitude(Cluster, Update)
+
+  -- Init.
+  local newalt = 0
+  local n=0
+  
+  -- Loop over all contacts.
+  for _,_contact in pairs(Cluster.Contacts) do
+    local contact=_contact --#INTEL.Contact
+    if contact.altitude then
+      newalt = newalt + contact.altitude
+      n=n+1
+    end
+  end
+
+  -- Average.
+  local avgalt = 0
+  if n>0 then
+    avgalt = newalt/n
+  end
+  
+  -- Update cluster coordinate.
+  Cluster.altitude = avgalt
+  
+  self:T(string.format("Updating Cluster Altitude: %d",Cluster.altitude))
+  
+  return Cluster.altitude
+end
+
 --- Get the coordinate of a cluster.
 -- @param #INTEL self
 -- @param #INTEL.Cluster Cluster The cluster.
@@ -1901,13 +1996,14 @@ function INTEL:GetClusterCoordinate(Cluster, Update)
     end
     
     -- Sum up posits.
-    x=x+vec3.x
-    y=y+vec3.y
-    z=z+vec3.z
-    
-    -- Increase counter.
-    n=n+1
-
+    if vec3 then
+      x=x+vec3.x
+      y=y+vec3.y
+      z=z+vec3.z
+      
+      -- Increase counter.
+      n=n+1
+    end
   end
 
   -- Average.
@@ -1953,10 +2049,12 @@ function INTEL:_UpdateClusterPositions()
     
     -- Update cluster coordinate.
     local coord = self:GetClusterCoordinate(cluster, true)
+    local alt = self:GetClusterAltitude(cluster,true)
     
     -- Debug info.
     self:T(self.lid..string.format("Updating Cluster position size: %s", cluster.size))
   end
+  return self
 end
 
 --- Count number of alive units in contact.

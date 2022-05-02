@@ -249,7 +249,11 @@ end
 -- @return #boolean exists
 function FIFO:HasUniqueID(UniqueID)
   self:T(self.lid.."HasUniqueID")
-  return self.stackbyid[UniqueID] and true or false
+  if self.stackbyid[UniqueID] ~= nil then
+    return true
+  else
+    return false
+  end
 end
 
 --- FIFO Get the data stack by UniqueID

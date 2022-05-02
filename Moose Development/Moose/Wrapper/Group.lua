@@ -667,6 +667,29 @@ function GROUP:GetPlayerUnits()
   return nil
 end
 
+--- Check if an (air) group is a client or player slot. Information is retrieved from the group template.
+-- @param #GROUP self
+-- @return #boolean If true, group is associated with a client or player slot.
+function GROUP:IsPlayer()
+  
+  -- Get group.
+ -- local group=self:GetGroup()
+    
+  -- Units of template group.
+  local units=self:GetTemplate().units
+  
+  -- Get numbers.
+  for _,unit in pairs(units) do
+      
+    -- Check if unit name matach and skill is Client or Player.
+    if unit.name==self:GetName() and (unit.skill=="Client" or unit.skill=="Player") then
+      return true
+    end
+
+  end
+  
+  return false
+end
 
 --- Returns the UNIT wrapper class with number UnitNumber.
 -- If the underlying DCS Unit does not exist, the method will return nil. .
