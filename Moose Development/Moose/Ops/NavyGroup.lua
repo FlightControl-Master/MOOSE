@@ -1021,23 +1021,75 @@ end
 -- @param #number Speed Speed in knots to the next waypoint.
 -- @param #number Depth Depth in meters to the next waypoint.
 function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Depth)
+  -- Is transition allowed? We assume yes until proven otherwise.
+  local allowed=true
+  local trepeat=nil
+
   if self:IsWaiting() then
-    self:E(self.lid.."Update route denied. Group is WAITING!")
+    self:T(self.lid.."Update route denied. Group is WAITING!")
     return false
   elseif self:IsInUtero() then
-    self:E(self.lid.."Update route denied. Group is INUTERO!")
+    self:T(self.lid.."Update route denied. Group is INUTERO!")
     return false
   elseif self:IsDead() then
-    self:E(self.lid.."Update route denied. Group is DEAD!")
+    self:T(self.lid.."Update route denied. Group is DEAD!")
     return false
   elseif self:IsStopped() then
-    self:E(self.lid.."Update route denied. Group is STOPPED!")
+    self:T(self.lid.."Update route denied. Group is STOPPED!")
     return false
   elseif self:IsHolding() then
     self:T(self.lid.."Update route denied. Group is holding position!")
-    return false    
+    return false
   end
-  return true
+  
+  -- Check for a current task.
+  if self.taskcurrent>0 then
+
+    -- Get the current task. Must not be executing already.
+    local task=self:GetTaskByID(self.taskcurrent)
+
+    if task then
+      if task.dcstask.id=="PatrolZone" then
+        -- For patrol zone, we need to allow the update as we insert new waypoints.
+        self:T2(self.lid.."Allowing update route for Task: PatrolZone")
+      elseif task.dcstask.id=="ReconMission" then
+        -- For recon missions, we need to allow the update as we insert new waypoints.
+        self:T2(self.lid.."Allowing update route for Task: ReconMission")
+      elseif task.dcstask.id==AUFTRAG.SpecialTask.RELOCATECOHORT then
+        -- For relocate
+        self:T2(self.lid.."Allowing update route for Task: Relocate Cohort")          
+      else
+        local taskname=task and task.description or "No description"
+        self:T(self.lid..string.format("WARNING: Update route denied because taskcurrent=%d>0! Task description = %s", self.taskcurrent, tostring(taskname)))
+        allowed=false
+      end
+    else
+      -- Now this can happen, if we directly use TaskExecute as the task is not in the task queue and cannot be removed. Therefore, also directly executed tasks should be added to the queue!
+      self:T(self.lid..string.format("WARNING: before update route taskcurrent=%d (>0!) but no task?!", self.taskcurrent))
+      -- Anyhow, a task is running so we do not allow to update the route!
+      allowed=false
+    end
+  end
+
+  -- Not good, because mission will never start. Better only check if there is a current task!
+  --if self.currentmission then
+  --end
+
+  -- Only AI flights.
+  if not self.isAI then
+    allowed=false
+  end
+
+  -- Debug info.
+  self:T2(self.lid..string.format("Onbefore Updateroute in state %s: allowed=%s (repeat in %s)", self:GetState(), tostring(allowed), tostring(trepeat)))
+
+  -- Try again?
+  if trepeat then
+    self:__UpdateRoute(trepeat, n)
+  end  
+  
+  return allowed
+
 end
 
 --- On after "UpdateRoute" event.
@@ -1711,6 +1763,13 @@ function NAVYGROUP:_InitGroup(Template)
   
   -- Max speed in km/h.
   self.speedMax=self.group:GetSpeedMax()
+  
+  -- Is group mobile?
+  if self.speedMax>3.6 then
+    self.isMobile=true
+  else
+    self.isMobile=false
+  end  
   
   -- Cruise speed: 70% of max speed.
   self.speedCruise=self.speedMax*0.7

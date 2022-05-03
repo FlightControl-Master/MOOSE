@@ -83,7 +83,6 @@ function LEGION:New(WarehouseName, LegionName)
   self.lid=string.format("LEGION %s | ", self.alias)
   
   -- Defaults:
-  -- TODO: What?
   self:SetMarker(false)
   
   -- Dead and crash events are handled via opsgroups.

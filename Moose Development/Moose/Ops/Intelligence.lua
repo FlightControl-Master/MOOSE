@@ -154,7 +154,7 @@ INTEL.Ctype={
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.3.2"
+INTEL.version="0.3.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -1894,27 +1894,37 @@ function INTEL:GetClusterCoordinate(Cluster, Update)
     
     local vec3=nil --DCS#Vec3
     
-    if Update and contact.group:IsAlive() then
+    if Update and contact.group and contact.group:IsAlive() then
       vec3 = contact.group:GetVec3()
-    else
-      vec3 = contact.position
     end
     
-    -- Sum up posits.
-    x=x+vec3.x
-    y=y+vec3.y
-    z=z+vec3.z
+    if not vec3 then
+      vec3=contact.position
+    end
     
-    -- Increase counter.
-    n=n+1
+    if vec3 then
+    
+      -- Sum up posits.
+      x=x+vec3.x
+      y=y+vec3.y
+      z=z+vec3.z
+      
+      -- Increase counter.
+      n=n+1
+      
+    end
 
   end
+  
+  if n>0 then
 
-  -- Average.
-  local Vec3={x=x/n, y=y/n, z=z/n} --DCS#Vec3
- 
-  -- Update cluster coordinate.
-  Cluster.coordinate:UpdateFromVec3(Vec3)
+    -- Average.
+    local Vec3={x=x/n, y=y/n, z=z/n} --DCS#Vec3
+   
+    -- Update cluster coordinate.
+    Cluster.coordinate:UpdateFromVec3(Vec3)
+    
+  end
 
   return Cluster.coordinate
 end

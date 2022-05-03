@@ -3097,6 +3097,13 @@ function FLIGHTGROUP:_InitGroup(Template)
 
   -- Max speed in km/h.
   self.speedMax=group:GetSpeedMax()
+  
+  -- Is group mobile?
+  if self.speedMax>3.6 then
+    self.isMobile=true
+  else
+    self.isMobile=false
+  end  
 
   -- Cruise speed limit 350 kts for fixed and 80 knots for rotary wings.
   local speedCruiseLimit=self.isHelo and UTILS.KnotsToKmph(80) or UTILS.KnotsToKmph(350)
