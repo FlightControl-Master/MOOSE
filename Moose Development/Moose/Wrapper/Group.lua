@@ -631,7 +631,7 @@ function GROUP:GetUnits()
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    local DCSUnits = DCSGroup:getUnits()
+    local DCSUnits = DCSGroup:getUnits() or {}
     local Units = {}
     for Index, UnitData in pairs( DCSUnits ) do
       Units[#Units+1] = UNIT:Find( UnitData )
@@ -1052,7 +1052,7 @@ end
 function GROUP:GetCoordinate()
    
    
-  local Units = self:GetUnits()  
+  local Units = self:GetUnits()  or {}
   
   for _,_unit in pairs(Units) do
     local FirstUnit = _unit -- Wrapper.Unit#UNIT
