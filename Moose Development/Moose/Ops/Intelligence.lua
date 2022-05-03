@@ -145,7 +145,7 @@ INTEL = {
 
 --- Contact or cluster type.
 -- @type INTEL.Ctype
--- @field #string GROUND Ground. 
+-- @field #string GROUND Ground.
 -- @field #string NAVAL Ship.
 -- @field #string AIRCRAFT Airpane or helicopter.
 -- @field #string STRUCTURE Static structure.
@@ -349,7 +349,7 @@ function INTEL:New(DetectionSet, Coalition, Alias)
   -- @param #INTEL self
   -- @param #number delay Delay in seconds.
   -- @param #INTEL.Cluster Cluster Detected cluster.
- 
+
   --- On After "NewCluster" event.
   -- @function [parent=#INTEL] OnAfterNewCluster
   -- @param #INTEL self
@@ -753,10 +753,10 @@ function INTEL:UpdateIntel()
 
   -- Set of all detected units.
   local DetectedUnits={}
-  
+
   -- Set of which units was detected by which recce
   local RecceDetecting = {}
-  
+
   -- Loop over all units providing intel.
   for _,_group in pairs(self.detectionset.Set or {}) do
     local group=_group --Wrapper.Group#GROUP
@@ -863,8 +863,8 @@ function INTEL:UpdateIntel()
   if self.clusteranalysis then
     self:PaintPicture()
   end
-  
-  return self 
+
+  return self
 end
 
 --- Update an #INTEL.Contact item.
@@ -874,11 +874,11 @@ end
 function INTEL:_UpdateContact(Contact)
 
   if Contact.isStatic then
-  
+
     -- Statics don't need to be updated.
-  
+
   else
-  
+
     if Contact.group and Contact.group:IsAlive() then
 
       Contact.Tdetected=timer.getAbsTime()
@@ -899,7 +899,7 @@ function INTEL:_UpdateContact(Contact)
         end
       end
     end
-    
+
   end
   return self
 end
@@ -915,11 +915,11 @@ function INTEL:_CreateContact(Positionable, RecceName)
 
     -- Create new contact.
     local item={} --#INTEL.Contact
-    
+
     if Positionable:IsInstanceOf("GROUP") then
-    
+
       local group=Positionable --Wrapper.Group#GROUP
-    
+
       item.groupname=group:GetName()
       item.group=group
       item.Tdetected=timer.getAbsTime()
@@ -952,13 +952,13 @@ function INTEL:_CreateContact(Positionable, RecceName)
       elseif item.category==Group.Category.SHIP then
         item.ctype=INTEL.Ctype.NAVAL
       end
-      
+
       return item
-      
+
     elseif Positionable:IsInstanceOf("STATIC") then
-  
+
       local static=Positionable --Wrapper.Static#STATIC
-  
+
       item.groupname=static:GetName()
       item.group=static
       item.Tdetected=timer.getAbsTime()
@@ -973,14 +973,14 @@ function INTEL:_CreateContact(Positionable, RecceName)
       item.recce=RecceName
       item.isground = true
       item.isship = false
-      item.isStatic=true  
+      item.isStatic=true
       item.ctype=INTEL.Ctype.STRUCTURE
-  
-      return item  
+
+      return item
     else
       self:E(self.lid..string.format("ERROR: object needs to be a GROUP or STATIC!"))
     end
-    
+
   end
 
   return nil
@@ -1005,7 +1005,7 @@ function INTEL:CreateDetectedItems(DetectedGroups, DetectedStatics, RecceDetecti
       self:KnowObject(group, RecceDetecting[groupname])
 
   end
-  
+
   -- Loop over statics.
   for staticname,_static in pairs(DetectedStatics) do
     local static=_static --Wrapper.Static#STATIC
@@ -1105,7 +1105,7 @@ function INTEL:onafterNewContact(From, Event, To, Contact)
 
   -- Debug text.
   self:F(self.lid..string.format("NEW contact %s", Contact.groupname))
-  
+
   -- Add to table of unknown contacts.
   table.insert(self.ContactsUnknown, Contact)
   return self
@@ -1121,7 +1121,7 @@ function INTEL:onafterLostContact(From, Event, To, Contact)
 
   -- Debug text.
   self:F(self.lid..string.format("LOST contact %s", Contact.groupname))
-  
+
   -- Add to table of lost contacts.
   table.insert(self.ContactsLost, Contact)
   return self
@@ -1134,10 +1134,10 @@ end
 -- @param #string To To state.
 -- @param #INTEL.Cluster Cluster Detected cluster.
 function INTEL:onafterNewCluster(From, Event, To, Cluster)
-  
+
   -- Debug text.
   self:F(self.lid..string.format("NEW cluster #%d [%s] of size %d", Cluster.index, Cluster.ctype, Cluster.size))
-  
+
   -- Add cluster to table.
   self:_AddCluster(Cluster)
   return self
@@ -1154,12 +1154,12 @@ function INTEL:onafterLostCluster(From, Event, To, Cluster, Mission)
 
   -- Debug text.
   local text = self.lid..string.format("LOST cluster #%d [%s]", Cluster.index, Cluster.ctype)
-  
+
   if Mission then
     local mission=Mission --Ops.Auftrag#AUFTRAG
     text=text..string.format(" mission name=%s type=%s target=%s", mission.name, mission.type, mission:GetTargetName() or "unknown")
   end
-  
+
   self:T(text)
   return self
 end
@@ -1178,47 +1178,47 @@ function INTEL:KnowObject(Positionable, RecceName, Tdetected)
 
   local Tnow=timer.getAbsTime()
   Tdetected=Tdetected or Tnow
-  
+
   if Positionable and Positionable:IsAlive() then
 
     if Tdetected>Tnow then
       -- Delay call.
       self:ScheduleOnce(Tdetected-Tnow, self.KnowObject, self, Positionable, RecceName)
     else
-    
+
       -- Name of the object.
       local name=Positionable:GetName()
-      
+
       -- Try to get the contact by name.
       local contact=self:GetContactByName(name)
-      
+
       if contact then
-      
+
         -- Update contact info.
         self:_UpdateContact(contact)
-      
+
       else
-      
+
         -- Create new contact.
         contact=self:_CreateContact(Positionable, RecceName)
-    
+
         if contact then
-  
+
           -- Debug info.
           self:T(string.format("%s contact detected by %s", contact.groupname, RecceName or "unknown"))
-      
+
           -- Add contact to table.
           self:AddContact(contact)
-    
+
           -- Trigger new contact event.
           self:NewContact(contact)
-          
+
         end
-        
+
       end
     end
   end
-  
+
   return self
 end
 
@@ -1268,7 +1268,7 @@ function INTEL:AddContact(Contact)
     self:T(self.lid..string.format("Adding new Contact %s to table", tostring(Contact.groupname)))
     table.insert(self.Contacts, Contact)
   end
-  
+
   return self
 end
 
@@ -1298,7 +1298,7 @@ function INTEL:_CheckContactLost(Contact)
   if Contact.group==nil or not Contact.group:IsAlive() then
     return true
   end
-  
+
   -- We never forget statics as they don't move.
   if Contact.isStatic then
     return false
@@ -1308,7 +1308,7 @@ function INTEL:_CheckContactLost(Contact)
   local dT=timer.getAbsTime()-Contact.Tdetected
 
   local dTforget=nil
-  
+
   if Contact.category==Group.Category.GROUND then
     dTforget=60*60*2  -- 2 hours
   elseif Contact.category==Group.Category.AIRPLANE then
@@ -1341,80 +1341,80 @@ function INTEL:PaintPicture()
   -- First remove all lost contacts from clusters.
   for _,_contact in pairs(self.ContactsLost) do
     local contact=_contact --#INTEL.Contact
-    
+
     -- Get cluster this contact belongs to (if any).
     local cluster=self:GetClusterOfContact(contact)
-    
+
     if cluster then
       self:RemoveContactFromCluster(contact, cluster)
     end
   end
-  
+
   -- Clean up cluster table.
   local ClusterSet = {}
-  
+
   -- Now check if whole clusters were lost.
   for _i,_cluster in pairs(self.Clusters) do
     local cluster=_cluster --#INTEL.Cluster
-  
+
     if cluster.size>0 and self:ClusterCountUnits(cluster)>0 then
       -- This one has size>0 and units>0
       table.insert(ClusterSet,_cluster)
     else
-    
+
       -- This cluster is gone.
 
-      -- Remove marker.      
+      -- Remove marker.
       if cluster.marker then
         cluster.marker:Remove()
       end
-      
+
       -- Marker of the arrow.
       if cluster.markerID then
         COORDINATE:RemoveMark(cluster.markerID)
       end
-      
+
       -- Lost cluster.
       self:LostCluster(cluster, cluster.mission)
     end
   end
-  
+
   -- Set Clusters.
   self.Clusters = ClusterSet
 
   -- Update positions.
   self:_UpdateClusterPositions()
 
-  
+
   for _,_contact in pairs(self.Contacts) do
     local contact=_contact --#INTEL.Contact
-    
+
     -- Debug info.
     self:T(string.format("Paint Picture: checking for %s",contact.groupname))
 
     -- Get the current cluster (if any) this contact belongs to.
     local currentcluster=self:GetClusterOfContact(contact)
 
-    if currentcluster then      
+    if currentcluster then
       ---
       -- Contact is currently part of a cluster.
       ---
 
       -- Check if the contact is still connected to the cluster.
       local isconnected=self:IsContactConnectedToCluster(contact, currentcluster)
-      
+
       if isconnected then
-      
+
       else
-      
+
         --- Not connected to current cluster any more.
-        
+
         -- Remove from current cluster.
         self:RemoveContactFromCluster(contact, currentcluster)
-        
+
         -- Find new cluster.
         local cluster=self:_GetClosestClusterOfContact(contact)
-        
+
         if cluster then
            -- Add contact to cluster.
           self:AddContactToCluster(contact, cluster)
@@ -1422,11 +1422,11 @@ function INTEL:PaintPicture()
 
           -- Create a new cluster.
           local newcluster=self:_CreateClusterFromContact(contact)
-          
+
           -- Trigger new cluster event.
           self:NewCluster(newcluster)
         end
-      
+
       end
 
     else
@@ -1434,26 +1434,26 @@ function INTEL:PaintPicture()
       ---
       -- Contact is not in any cluster yet.
       ---
-      
+
       -- Debug info.
       self:T(self.lid..string.format("Paint Picture: contact %s has NO current cluster", contact.groupname))
-      
+
       -- Get the closest existing cluster of this contact.
       local cluster=self:_GetClosestClusterOfContact(contact)
 
       if cluster then
-      
+
         -- Debug info.
         self:T(self.lid..string.format("Paint Picture: contact %s has closest cluster #%d",contact.groupname, cluster.index))
-      
+
         -- Add contact to this cluster.
         self:AddContactToCluster(contact, cluster)
-        
+
       else
 
         -- Create a brand new cluster.
         local newcluster=self:_CreateClusterFromContact(contact)
-        
+
         -- Trigger event for a new cluster.
         self:NewCluster(newcluster)
       end
@@ -1470,19 +1470,19 @@ function INTEL:PaintPicture()
     for _,_cluster in pairs(self.Clusters) do
       local cluster=_cluster --#INTEL.Cluster
       --local coordinate=self:GetClusterCoordinate(cluster)
-      
+
       -- Update F10 marker.
       MESSAGE:New("Updating cluster marker and future position", 10):ToAll()
-      
+
       -- Update cluster markers.
       self:UpdateClusterMarker(cluster)
-      
+
       -- Extrapolate future position of the cluster.
       self:CalcClusterFuturePosition(cluster, 300)
-      
+
     end
   end
-  
+
   return self
 end
 
@@ -1515,15 +1515,15 @@ end
 function INTEL:_CreateClusterFromContact(Contact)
 
   local cluster=self:_CreateCluster()
-  
+
   self:T(self.lid..string.format("Created NEW cluster #%d with first contact %s", cluster.index, Contact.groupname))
 
   cluster.coordinate:UpdateFromCoordinate(Contact.position)
 
   cluster.ctype=Contact.ctype
-  
+
   self:AddContactToCluster(Contact, cluster)
-  
+
   return cluster
 end
 
@@ -1536,7 +1536,7 @@ function INTEL:_AddCluster(Cluster)
 
   -- Add cluster.
   table.insert(self.Clusters, Cluster)
-  
+
   return self
 end
 
@@ -1547,7 +1547,7 @@ end
 function INTEL:AddContactToCluster(contact, cluster)
 
   if contact and cluster then
-  
+
     -- Add neighbour to cluster contacts.
     table.insert(cluster.Contacts, contact)
 
@@ -1556,14 +1556,14 @@ function INTEL:AddContactToCluster(contact, cluster)
 
     -- Increase size.
     cluster.size=cluster.size+1
-    
+
     -- alt
     self:GetClusterAltitude(cluster,true)
-    
+
     -- Debug info.
     self:T(self.lid..string.format("Adding contact %s to cluster #%d [%s] ==> New size=%d", contact.groupname, cluster.index, cluster.ctype, cluster.size))
   end
-  
+
   return self
 end
 
@@ -1582,7 +1582,7 @@ function INTEL:RemoveContactFromCluster(contact, cluster)
 
         -- Remove threat level sum.
         cluster.threatlevelSum=cluster.threatlevelSum-contact.threatlevel
-        
+
         -- Decrease cluster size.
         cluster.size=cluster.size-1
 
@@ -1662,13 +1662,13 @@ function INTEL:CalcClusterDirection(cluster)
   local n=0
   for _,_contact in pairs(cluster.Contacts) do
     local contact=_contact --#INTEL.Contact
-    
+
     if (not contact.isStatic) and contact.group:IsAlive() then
       direction = direction + contact.group:GetHeading()
       n=n+1
     end
   end
-  
+
   --TODO: This calculation is WRONG!
   -- Simple example for two groups:
   -- First group is going West, i.e. heading 090
@@ -1677,7 +1677,7 @@ function INTEL:CalcClusterDirection(cluster)
   -- It should not go anywhere as the two movements cancel each other.
   -- Correct, edge case for N=2^x, but when 2 pairs of groups drive in exact opposite directions, the cluster will split at some point?
   -- maybe add the speed as weight to get a factor
-  
+
   if n==0 then
     return 0
   else
@@ -1694,17 +1694,17 @@ function INTEL:CalcClusterSpeed(cluster)
   local velocity = 0 ; local n=0
   for _,_contact in pairs(cluster.Contacts) do
     local contact=_contact --#INTEL.Contact
-    
+
     if (not contact.isStatic) and contact.group:IsAlive() then
       velocity = velocity + contact.group:GetVelocityMPS()
       n=n+1
     end
-    
+
   end
-  
+
   if n==0 then
     return 0
-  else  
+  else
     return math.floor(velocity / n)
   end
 end
@@ -1716,10 +1716,10 @@ end
 function INTEL:CalcClusterVelocityVec3(cluster)
 
   local v={x=0, y=0, z=0} --DCS#Vec3
-  
+
   for _,_contact in pairs(cluster.Contacts) do
     local contact=_contact --#INTEL.Contact
-    
+
     if (not contact.isStatic) and contact.group:IsAlive() then
       local vec=contact.group:GetVelocityVec3()
       v.x=v.x+vec.x
@@ -1727,7 +1727,7 @@ function INTEL:CalcClusterVelocityVec3(cluster)
       v.z=v.y+vec.z
     end
   end
-  
+
   return v
 end
 
@@ -1737,22 +1737,22 @@ end
 -- @param #number seconds Time interval in seconds. Default is `self.prediction`.
 -- @return Core.Point#COORDINATE Calculated future position of the cluster.
 function INTEL:CalcClusterFuturePosition(cluster, seconds)
-  
+
   -- Get current position of the cluster.
   local p=self:GetClusterCoordinate(cluster)
-  
+
   -- Velocity vector in m/s.
   local v=self:CalcClusterVelocityVec3(cluster)
-  
+
   -- Time in seconds.
   local t=seconds or self.prediction
 
-  -- Extrapolated vec3.  
+  -- Extrapolated vec3.
   local Vec3={x=p.x+v.x*t, y=p.y+v.y*t, z=p.z+v.z*t}
-  
+
   -- Future position.
   local futureposition=COORDINATE:NewFromVec3(Vec3)
-  
+
   -- Create an arrow pointing in the direction of the movement.
   if self.clustermarkers and self.verbose>1 then
     if cluster.markerID then
@@ -1760,7 +1760,7 @@ function INTEL:CalcClusterFuturePosition(cluster, seconds)
     end
     cluster.markerID = p:ArrowToAll(futureposition, self.coalition, {1,0,0}, 1, {1,1,0}, 0.5, 2, true, "Position Calc")
   end
-  
+
   return futureposition
 end
 
@@ -1798,7 +1798,7 @@ function INTEL:IsContactConnectedToCluster(contact, cluster)
   if contact.ctype~=cluster.ctype then
     return false, math.huge
   end
-  
+
   for _,_contact in pairs(cluster.Contacts) do
     local Contact=_contact --#INTEL.Contact
 
@@ -1807,7 +1807,7 @@ function INTEL:IsContactConnectedToCluster(contact, cluster)
 
       --local dist=Contact.position:Get2DDistance(contact.position)
       local dist=Contact.position:DistanceFromPointVec2(contact.position)
-      
+
       -- AIR - check for spatial proximity
       local airprox = false
       if contact.ctype == INTEL.Ctype.AIRCRAFT then
@@ -1817,7 +1817,7 @@ function INTEL:IsContactConnectedToCluster(contact, cluster)
         airprox = true
        end
       end
-      
+
       if dist<self.clusterradius and airprox then
         return true, dist
       end
@@ -1854,19 +1854,19 @@ end
 function INTEL:_GetDistContactToCluster(Contact, Cluster)
 
   local distmin=math.huge
-  
+
   for _,_contact in pairs(Cluster.Contacts) do
     local contact=_contact --#INTEL.Contact
-    
+
     if contact.group and contact.group:IsAlive() and Contact.groupname~=contact.groupname then
-    
+
       local dist=Contact.position:Get2DDistance(contact.position)
-      
+
       if dist<distmin then
         distmin=dist
       end
     end
-    
+
   end
 
   return distmin
@@ -1880,20 +1880,20 @@ end
 function INTEL:_GetClosestClusterOfContact(Contact)
 
   local Cluster=nil  --#INTEL.Cluster
-  
+
   local distmin=self.clusterradius
-  
+
   if not Contact.altitude then
     Contact.altitude = Contact.group:GetAltitude()
   end
-  
+
   for _,_cluster in pairs(self.Clusters) do
     local cluster=_cluster --#INTEL.Cluster
-    
+
     if cluster.ctype==Contact.ctype then
-    
+
       local dist=self:_GetDistContactToCluster(Contact, cluster)
-      
+
       -- AIR - check for spatial proximity
       local airprox = false
       if Contact.ctype == INTEL.Ctype.AIRCRAFT then
@@ -1906,12 +1906,12 @@ function INTEL:_GetClosestClusterOfContact(Contact)
         airprox = true
        end
       end
-      
+
       if dist<distmin and airprox then
         Cluster=cluster
         distmin=dist
       end
-      
+
     end
   end
 
@@ -1949,7 +1949,7 @@ function INTEL:GetClusterAltitude(Cluster, Update)
   -- Init.
   local newalt = 0
   local n=0
-  
+
   -- Loop over all contacts.
   for _,_contact in pairs(Cluster.Contacts) do
     local contact=_contact --#INTEL.Contact
@@ -1964,12 +1964,12 @@ function INTEL:GetClusterAltitude(Cluster, Update)
   if n>0 then
     avgalt = newalt/n
   end
-  
+
   -- Update cluster coordinate.
   Cluster.altitude = avgalt
-  
+
   self:T(string.format("Updating Cluster Altitude: %d",Cluster.altitude))
-  
+
   return Cluster.altitude
 end
 
@@ -1982,35 +1982,44 @@ function INTEL:GetClusterCoordinate(Cluster, Update)
 
   -- Init.
   local x=0 ; local y=0 ; local z=0 ; local n=0
-  
+
   -- Loop over all contacts.
   for _,_contact in pairs(Cluster.Contacts) do
     local contact=_contact --#INTEL.Contact
-    
+
     local vec3=nil --DCS#Vec3
-    
-    if Update and contact.group:IsAlive() then
+
+    if Update and contact.group and contact.group:IsAlive() then
       vec3 = contact.group:GetVec3()
-    else
-      vec3 = contact.position
     end
-    
-    -- Sum up posits.
+
+    if not vec3 then
+      vec3=contact.position
+    end
+
     if vec3 then
+
+      -- Sum up posits.
       x=x+vec3.x
       y=y+vec3.y
       z=z+vec3.z
-      
+
       -- Increase counter.
       n=n+1
+
     end
+
   end
 
-  -- Average.
-  local Vec3={x=x/n, y=y/n, z=z/n} --DCS#Vec3
- 
-  -- Update cluster coordinate.
-  Cluster.coordinate:UpdateFromVec3(Vec3)
+  if n>0 then
+
+    -- Average.
+    local Vec3={x=x/n, y=y/n, z=z/n} --DCS#Vec3
+
+    -- Update cluster coordinate.
+    Cluster.coordinate:UpdateFromVec3(Vec3)
+
+  end
 
   return Cluster.coordinate
 end
@@ -2024,7 +2033,7 @@ end
 function INTEL:_CheckClusterCoordinateChanged(Cluster, Coordinate, Threshold)
 
   Threshold=Threshold or 100
-  
+
   Coordinate=Coordinate or Cluster.coordinate
 
   -- Positions of cluster.
@@ -2046,11 +2055,11 @@ end
 function INTEL:_UpdateClusterPositions()
   for _,_cluster in pairs (self.Clusters) do
     local cluster=_cluster --#INTEL.Cluster
-    
+
     -- Update cluster coordinate.
     local coord = self:GetClusterCoordinate(cluster, true)
     local alt = self:GetClusterAltitude(cluster,true)
-    
+
     -- Debug info.
     self:T(self.lid..string.format("Updating Cluster position size: %s", cluster.size))
   end
@@ -2070,7 +2079,7 @@ function INTEL:ContactCountUnits(Contact)
     end
   else
     if Contact.group then
-      local n=Contact.group:CountAliveUnits() 
+      local n=Contact.group:CountAliveUnits()
       return n
     else
       return 0
@@ -2084,7 +2093,7 @@ end
 -- @return #number unitcount
 function INTEL:ClusterCountUnits(Cluster)
   local unitcount = 0
-  for _,_contact in pairs (Cluster.Contacts) do 
+  for _,_contact in pairs (Cluster.Contacts) do
     local contact=_contact --#INTEL.Contact
     unitcount = unitcount + self:ContactCountUnits(contact)
   end
@@ -2102,10 +2111,10 @@ function INTEL:UpdateClusterMarker(cluster)
   local text=string.format("Cluster #%d: %s\nSize %d\nUnits %d\nTLsum=%d", cluster.index, cluster.ctype, cluster.size, unitcount, cluster.threatlevelSum)
 
   if not cluster.marker then
-    
+
     -- First time ==> need to create a new marker object.
     cluster.marker=MARKER:New(cluster.coordinate, text):ToCoalition(self.coalition)
-    
+
   else
 
     -- Need to refresh?
@@ -2118,7 +2127,7 @@ function INTEL:UpdateClusterMarker(cluster)
     end
 
     -- Check if coordinate changed.
-    local coordchange=self:_CheckClusterCoordinateChanged(cluster, cluster.marker.coordinate)     
+    local coordchange=self:_CheckClusterCoordinateChanged(cluster, cluster.marker.coordinate)
     if coordchange then
       cluster.marker.coordinate:UpdateFromCoordinate(cluster.coordinate)
       refresh=true
@@ -2197,22 +2206,22 @@ INTEL_DLINK.version = "0.0.1"
 -- Contact duplicates are removed. Clusters might contain duplicates (Might fix that later, WIP).
 --
 -- Basic setup:
--- 
+--
 --     local datalink = INTEL_DLINK:New({myintel1,myintel2}), "FSB", 20, 300)
 --     datalink:__Start(2)
 --
 -- Add an Intel while running:
--- 
+--
 --     datalink:AddIntel(myintel3)
 --
 -- Gather the data:
--- 
+--
 --     datalink:GetContactTable() -- #table of #INTEL.Contact contacts.
 --     datalink:GetClusterTable() -- #table of #INTEL.Cluster clusters.
 --     datalink:GetDetectedItemCoordinates() -- #table of contact coordinates, to be compatible with @{Functional.Detection#DETECTION}.
 --
 -- Gather data with the event function:
--- 
+--
 --     function datalink:OnAfterCollected(From, Event, To, Contacts, Clusters)
 --       ... <your code here> ...
 --     end

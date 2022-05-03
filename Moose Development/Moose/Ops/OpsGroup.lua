@@ -4144,8 +4144,18 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
         -- Debug info.
         self:T(self.lid..string.format("Fire at point with nshots=%d of %d", nShots, nAmmo))
         
-        -- Only fire number of avail shots.
-        nShots=math.min(nShots, nAmmo)
+        if nShots==-1 then
+          -- The -1 is for using all available ammo.
+          nShots=nAmmo
+          self:T(self.lid..string.format("Fire at point taking max amount of ammo = %d", nShots))
+        elseif nShots<1 then
+          local p=nShots
+          nShots=UTILS.Round(p*nAmmo, 0)
+          self:T(self.lid..string.format("Fire at point taking %.1f percent amount of ammo = %d", p, nShots))
+        else
+          -- Fire nShots but at most nAmmo.
+          nShots=math.min(nShots, nAmmo)
+        end
         
         -- Set quantity of task.
         DCSTask.params.expendQty=nShots
