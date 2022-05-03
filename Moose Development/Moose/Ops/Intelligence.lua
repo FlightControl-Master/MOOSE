@@ -1472,8 +1472,10 @@ function INTEL:PaintPicture()
       --local coordinate=self:GetClusterCoordinate(cluster)
 
       -- Update F10 marker.
-      MESSAGE:New("Updating cluster marker and future position", 10):ToAll()
-
+      if self.verbose >= 1 then
+        BASE:I("Updating cluster marker and future position")
+      end
+      
       -- Update cluster markers.
       self:UpdateClusterMarker(cluster)
 
