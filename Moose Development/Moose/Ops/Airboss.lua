@@ -5713,7 +5713,7 @@ function AIRBOSS:_ScanCarrierZone()
         local putintomarshal = false
 
         -- Get flight group.
-        local flight = _DATABASE:GetFlightGroup( groupname )
+        local flight = _DATABASE:GetOpsGroup( groupname )
 
         if flight and flight:IsInbound() and flight.destbase:GetName() == self.carrier:GetName() then
           if flight.ishelo then

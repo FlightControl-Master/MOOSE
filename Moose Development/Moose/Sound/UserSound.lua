@@ -40,7 +40,7 @@ do -- UserSound
   -- @param #USERSOUND self
   -- @param #string UserSoundFileName The filename of the usersound.
   -- @return #USERSOUND
-  function USERSOUND:New( UserSoundFileName ) --R2.3
+  function USERSOUND:New( UserSoundFileName ) 
   
     local self = BASE:Inherit( self, BASE:New() ) -- #USERSOUND
 
@@ -58,7 +58,7 @@ do -- UserSound
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
   --   BlueVictory:SetFileName( "BlueVictoryLoud.ogg" ) -- Set the BlueVictory to change the file name to play a louder sound.
   --   
-  function USERSOUND:SetFileName( UserSoundFileName ) --R2.3
+  function USERSOUND:SetFileName( UserSoundFileName ) 
     
     self.UserSoundFileName = UserSoundFileName
 
@@ -75,7 +75,7 @@ do -- UserSound
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
   --   BlueVictory:ToAll() -- Play the sound that Blue has won.
   --   
-  function USERSOUND:ToAll() --R2.3
+  function USERSOUND:ToAll() 
     
     trigger.action.outSound( self.UserSoundFileName )
     
@@ -91,7 +91,7 @@ do -- UserSound
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
   --   BlueVictory:ToCoalition( coalition.side.BLUE ) -- Play the sound that Blue has won to the blue coalition.
   --   
-  function USERSOUND:ToCoalition( Coalition ) --R2.3
+  function USERSOUND:ToCoalition( Coalition ) 
     
     trigger.action.outSoundForCoalition(Coalition, self.UserSoundFileName )
     
@@ -107,7 +107,7 @@ do -- UserSound
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
   --   BlueVictory:ToCountry( country.id.USA ) -- Play the sound that Blue has won to the USA country.
   --   
-  function USERSOUND:ToCountry( Country ) --R2.3
+  function USERSOUND:ToCountry( Country ) 
     
     trigger.action.outSoundForCountry( Country, self.UserSoundFileName )
     
@@ -123,9 +123,9 @@ do -- UserSound
   -- @usage
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
   --   local PlayerGroup = GROUP:FindByName( "PlayerGroup" ) -- Search for the active group named "PlayerGroup", that contains a human player.
-  --   BlueVictory:ToGroup( PlayerGroup ) -- Play the sound that Blue has won to the player group.
+  --   BlueVictory:ToGroup( PlayerGroup ) -- Play the victory sound to the player group.
   --   
-  function USERSOUND:ToGroup( Group, Delay ) --R2.3
+  function USERSOUND:ToGroup( Group, Delay ) 
   
     Delay=Delay or 0
     if Delay>0 then
@@ -136,5 +136,27 @@ do -- UserSound
     
     return self
   end  
+  
+    --- Play the usersound to the given @{Wrapper.Unit}.
+  -- @param #USERSOUND self
+  -- @param Wrapper.Unit#UNIT Unit The @{Wrapper.Unit} to play the usersound to.
+  -- @param #number Delay (Optional) Delay in seconds, before the sound is played. Default 0.
+  -- @return #USERSOUND The usersound instance.
+  -- @usage
+  --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
+  --   local PlayerUnit = UNIT:FindByName( "PlayerUnit" ) -- Search for the active unit named "PlayerUnit", a human player.
+  --   BlueVictory:ToUnit( PlayerUnit ) -- Play the victory sound to the player unit.
+  --   
+  function USERSOUND:ToUnit( Unit, Delay ) 
+  
+    Delay=Delay or 0
+    if Delay>0 then
+      SCHEDULER:New(nil, USERSOUND.ToUnit,{self, Unit}, Delay)      
+    else
+      trigger.action.outSoundForUnit( Unit:GetID(), self.UserSoundFileName )
+    end
+    
+    return self
+  end 
 
 end

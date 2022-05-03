@@ -1085,16 +1085,22 @@ do -- SET_GROUP
   -- Note that for each unit in the group that is set, a default cargo bay limit is initialized.
   -- @param Core.Set#SET_GROUP self
   -- @param Wrapper.Group#GROUP group The group which should be added to the set.
+  -- @param #boolean DontSetCargoBayLimit If true, do not attempt to auto-add the cargo bay limit per unit in this group.
   -- @return Core.Set#SET_GROUP self
-  function SET_GROUP:AddGroup( group )
+  function SET_GROUP:AddGroup( group, DontSetCargoBayLimit )
 
     self:Add( group:GetName(), group )
-
-    -- I set the default cargo bay weight limit each time a new group is added to the set.
-    for UnitID, UnitData in pairs( group:GetUnits() ) do
-      UnitData:SetCargoBayWeightLimit()
+    
+    if not DontSetCargoBayLimit then
+      -- I set the default cargo bay weight limit each time a new group is added to the set.
+      -- TODO Why is this here in the first place?
+      for UnitID, UnitData in pairs( group:GetUnits() ) do
+        if UnitData and UnitData:IsAlive() then
+          UnitData:SetCargoBayWeightLimit()
+        end
+      end
     end
-
+    
     return self
   end
 

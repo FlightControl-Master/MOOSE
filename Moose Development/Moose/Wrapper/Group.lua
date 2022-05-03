@@ -631,7 +631,7 @@ function GROUP:GetUnits()
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    local DCSUnits = DCSGroup:getUnits()
+    local DCSUnits = DCSGroup:getUnits() or {}
     local Units = {}
     for Index, UnitData in pairs( DCSUnits ) do
       Units[#Units+1] = UNIT:Find( UnitData )
@@ -667,6 +667,29 @@ function GROUP:GetPlayerUnits()
   return nil
 end
 
+--- Check if an (air) group is a client or player slot. Information is retrieved from the group template.
+-- @param #GROUP self
+-- @return #boolean If true, group is associated with a client or player slot.
+function GROUP:IsPlayer()
+  
+  -- Get group.
+ -- local group=self:GetGroup()
+    
+  -- Units of template group.
+  local units=self:GetTemplate().units
+  
+  -- Get numbers.
+  for _,unit in pairs(units) do
+      
+    -- Check if unit name matach and skill is Client or Player.
+    if unit.name==self:GetName() and (unit.skill=="Client" or unit.skill=="Player") then
+      return true
+    end
+
+  end
+  
+  return false
+end
 
 --- Returns the UNIT wrapper class with number UnitNumber.
 -- If the underlying DCS Unit does not exist, the method will return nil. .
@@ -1027,16 +1050,25 @@ end
 -- @param Wrapper.Group#GROUP self
 -- @return Core.Point#COORDINATE The COORDINATE of the GROUP.
 function GROUP:GetCoordinate()
-
-  local FirstUnit = self:GetUnit(1)
+   
+   
+  local Units = self:GetUnits()  or {}
   
-  if FirstUnit then
-    local FirstUnitCoordinate = FirstUnit:GetCoordinate()
-    local Heading = self:GetHeading()
-    FirstUnitCoordinate.Heading = Heading
-    return FirstUnitCoordinate
+  for _,_unit in pairs(Units) do
+    local FirstUnit = _unit -- Wrapper.Unit#UNIT
+    
+    if FirstUnit then
+    
+      local FirstUnitCoordinate = FirstUnit:GetCoordinate()
+      
+      if FirstUnitCoordinate then
+        local Heading = self:GetHeading()
+        FirstUnitCoordinate.Heading = Heading
+        return FirstUnitCoordinate
+      end
+      
+    end
   end
-  
   BASE:E( { "Cannot GetCoordinate", Group = self, Alive = self:IsAlive() } )
 
   return nil

@@ -10,6 +10,7 @@
 --   * Send message to all players.
 --   * Send messages to a coalition.
 --   * Send messages to a specific group.
+--   * Send messages to a specific unit or client.
 -- 
 -- ===
 -- 
@@ -35,6 +36,7 @@
 --
 --   * To a @{Client} using @{#MESSAGE.ToClient}().
 --   * To a @{Wrapper.Group} using @{#MESSAGE.ToGroup}()
+--   * To a @{Wrapper.Unit} using @{#MESSAGE.ToUnit}()
 --   * To a coalition using @{#MESSAGE.ToCoalition}().
 --   * To the red coalition using @{#MESSAGE.ToRed}().
 --   * To the blue coalition using @{#MESSAGE.ToBlue}().
@@ -199,11 +201,14 @@ function MESSAGE:ToClient( Client, Settings )
       self.MessageDuration = Settings:GetMessageTime( self.MessageType )
       self.MessageCategory = "" -- self.MessageType .. ": "
     end
-
+    
+    local Unit = Client:GetClient()
+    
     if self.MessageDuration ~= 0 then
   		local ClientGroupID = Client:GetClientGroupID()
   		self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
-  		trigger.action.outTextForGroup( ClientGroupID, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration , self.ClearScreen)
+  		--trigger.action.outTextForGroup( ClientGroupID, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration , self.ClearScreen)
+  		trigger.action.outTextForUnit( Unit:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration , self.ClearScreen)
 		end
 	end
 	
@@ -233,6 +238,31 @@ function MESSAGE:ToGroup( Group, Settings )
   
   return self
 end
+
+--- Sends a MESSAGE to a Unit. 
+-- @param #MESSAGE self
+-- @param Wrapper.Unit#UNIT Unit to which the message is displayed.
+-- @return #MESSAGE Message object.
+function MESSAGE:ToUnit( Unit, Settings )
+  self:F( Unit.IdentifiableName )
+
+  if Unit then
+    
+    if self.MessageType then
+      local Settings = Settings or ( Unit and _DATABASE:GetPlayerSettings( Unit:GetPlayerName() ) ) or _SETTINGS -- Core.Settings#SETTINGS
+      self.MessageDuration = Settings:GetMessageTime( self.MessageType )
+      self.MessageCategory = "" -- self.MessageType .. ": "
+    end
+
+    if self.MessageDuration ~= 0 then
+      self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+      trigger.action.outTextForUnit( Unit:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration, self.ClearScreen )
+    end
+  end
+  
+  return self
+end
+
 --- Sends a MESSAGE to the Blue coalition.
 -- @param #MESSAGE self 
 -- @return #MESSAGE
