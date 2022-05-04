@@ -622,7 +622,7 @@ function GROUP:GetUnits()
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    local DCSUnits = DCSGroup:getUnits()
+    local DCSUnits = DCSGroup:getUnits() or {}
     local Units = {}
     for Index, UnitData in pairs( DCSUnits ) do
       Units[#Units+1] = UNIT:Find( UnitData )
@@ -678,6 +678,30 @@ function GROUP:GetUnit( UnitNumber )
   end
 
   return nil
+end
+
+--- Check if an (air) group is a client or player slot. Information is retrieved from the group template.
+-- @param #GROUP self
+-- @return #boolean If true, group is associated with a client or player slot.
+function GROUP:IsPlayer()
+  
+  -- Get group.
+ -- local group=self:GetGroup()
+    
+  -- Units of template group.
+  local units=self:GetTemplate().units
+  
+  -- Get numbers.
+  for _,unit in pairs(units) do
+      
+    -- Check if unit name matach and skill is Client or Player.
+    if unit.name==self:GetName() and (unit.skill=="Client" or unit.skill=="Player") then
+      return true
+    end
+
+  end
+  
+  return false
 end
 
 --- Returns the DCS Unit with number UnitNumber.
@@ -1019,7 +1043,7 @@ end
 -- @return Core.Point#COORDINATE The COORDINATE of the GROUP.
 function GROUP:GetCoordinate()
 
-  local Units = self:GetUnits()  
+  local Units = self:GetUnits() or {}
   
   for _,_unit in pairs(Units) do
     local FirstUnit = _unit -- Wrapper.Unit#UNIT
@@ -1213,13 +1237,14 @@ function GROUP:IsInZone( Zone )
     for UnitID, UnitData in pairs(self:GetUnits()) do
       local Unit = UnitData -- Wrapper.Unit#UNIT
       
-      -- Get 2D vector. That's all we need for the zone check.
-      local vec2=Unit:GetVec2()
+      local vec2 = nil
+      if Unit then
+       -- Get 2D vector. That's all we need for the zone check.
+       vec2=Unit:GetVec2()
+      end
       
-      if Zone:IsVec2InZone(vec2) then
+      if vec2 and Zone:IsVec2InZone(vec2) then
         return true  -- At least one unit is in the zone. That is enough.
-      else
-        -- This one is not but another could be.
       end
       
     end

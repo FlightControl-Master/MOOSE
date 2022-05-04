@@ -90,6 +90,7 @@
 UNIT = {
   ClassName="UNIT",
   UnitName=nil,
+  GroupName=nil,
 }
 
 
@@ -110,10 +111,16 @@ UNIT = {
 function UNIT:Register( UnitName )
 
   -- Inherit CONTROLLABLE.
-  local self = BASE:Inherit( self, CONTROLLABLE:New( UnitName ) )
+  local self = BASE:Inherit( self, CONTROLLABLE:New( UnitName ) ) --#UNIT
   
   -- Set unit name.
   self.UnitName = UnitName
+  
+  local unit=Unit.getByName(self.UnitName)
+  
+  if unit then
+    self.GroupName=unit:getGroup():getName()
+  end
   
   -- Set event prio.
   self:SetEventPriority( 3 )

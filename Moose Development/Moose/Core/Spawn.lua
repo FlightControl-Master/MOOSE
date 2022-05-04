@@ -2827,21 +2827,40 @@ end
 -- The method will search for a #-mark, and will return the text before the #-mark.
 -- It will return nil of no prefix was found.
 -- @param #SPAWN self
--- @param DCS#UNIT DCSUnit The @{DCSUnit} to be searched.
--- @return #string The prefix
--- @return #nil Nothing found
+-- @param Wrapper.Group#GROUP SpawnGroup The GROUP object.
+-- @return #string The prefix or #nil if nothing was found.
 function SPAWN:_GetPrefixFromGroup( SpawnGroup )
-  self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnGroup } )
 
   local GroupName = SpawnGroup:GetName()
+  
   if GroupName then
-    local SpawnPrefix = string.match( GroupName, ".*#" )
-    if SpawnPrefix then
-      SpawnPrefix = SpawnPrefix:sub( 1, -2 )
-    end
+  
+    local SpawnPrefix=self:_GetPrefixFromGroupName(GroupName)
+    
     return SpawnPrefix
   end
+  
+  return nil
+end
 
+--- Return the prefix of a spawned group.
+-- The method will search for a `#`-mark, and will return the text before the `#`-mark. It will return nil of no prefix was found.
+-- @param #SPAWN self
+-- @param #string SpawnGroupName The name of the spawned group.
+-- @return #string The prefix or #nil if nothing was found.
+function SPAWN:_GetPrefixFromGroupName(SpawnGroupName)
+
+  if SpawnGroupName then
+  
+    local SpawnPrefix=string.match(SpawnGroupName, ".*#")
+    
+    if SpawnPrefix then
+      SpawnPrefix = SpawnPrefix:sub(1, -2)
+    end
+    
+    return SpawnPrefix
+  end
+  
   return nil
 end
 
@@ -3235,24 +3254,27 @@ function SPAWN:_OnBirth( EventData )
 
 end
 
---- Obscolete
--- @todo Need to delete this... _DATABASE does this now ...
-
 --- @param #SPAWN self 
 -- @param Core.Event#EVENTDATA EventData
 function SPAWN:_OnDeadOrCrash( EventData )
   self:F( self.SpawnTemplatePrefix )
-
-  local SpawnGroup = EventData.IniGroup
-
-  if SpawnGroup then
-    local EventPrefix = self:_GetPrefixFromGroup( SpawnGroup )
+  
+  local unit=UNIT:FindByName(EventData.IniUnitName)
+  
+  if unit then
+  
+    local EventPrefix = self:_GetPrefixFromGroupName(unit.GroupName)
+   
     if EventPrefix then -- EventPrefix can be nil if no # is found, which means, no spawnable group!
       self:T( { "Dead event: " .. EventPrefix } )
-      if EventPrefix == self.SpawnTemplatePrefix or (self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix) then
-        self.AliveUnits = self.AliveUnits - 1
-        self:T( "Alive Units: " .. self.AliveUnits )
+      
+      if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
+    
+       self.AliveUnits = self.AliveUnits - 1
+       
+       self:T( "Alive Units: " .. self.AliveUnits )    
       end
+    
     end
   end
 end
