@@ -233,6 +233,16 @@
 -- The next time you start the mission, these results are also automatically loaded.
 --
 -- Strafing results are currently **not** saved.
+-- 
+-- # FSM Events
+-- 
+-- This class creates additional events that can be used by mission designers for custom reactions
+-- 
+-- * `EnterRange` when a player enters a range zone. See @{#RANGE.OnAfterEnterRange}
+-- * `ExitRange`  when a player leaves a range zone. See @{#RANGE.OnAfterExitRange}
+-- * `Impact` on impact of a player's weapon on a bombing target. See @{#RANGE.OnAfterImpact}
+-- * `RollingIn` when a player rolls in on a strafing target. See @{#RANGE.OnAfterRollingIn}
+-- * `StrafeResult` when a player finishes a strafing run. See @{#RANGE.OnAfterStrafeResult}
 --
 -- # Examples
 --
@@ -366,14 +376,6 @@ RANGE.TargetType = {
   COORD = "Coordinate"
 }
 
---- Default range variables for RangeBoss/Hypeman tie in.
-hypemanStrafeRollIn = "nil"
-StrafeAircraftType = "strafeAircraftTypeNotSet"
-Straferesult = {}
-clientRollingIn = false
-clientStrafed = false
-invalidStrafe = false
-
 --- Player settings.
 -- @type RANGE.PlayerData
 -- @field #boolean smokebombimpact Smoke bomb impact points.
@@ -408,6 +410,14 @@ invalidStrafe = false
 -- @field #number smokepoints Number of smoke points.
 -- @field #number heading Heading of pit.
 
+--- Strafe status for player.
+-- @type RANGE.StrafeStatus
+-- @field #number hits Number of hits on target.
+-- @field #number time Number of times.
+-- @field #number ammo Amount of ammo.
+-- @field #boolean pastfoulline If `true`, player passed foul line. Invalid pass.
+-- @field #RANGE.StrafeTarget zone Strafe target.
+
 --- Bomb target result.
 -- @type RANGE.BombResult
 -- @field #string name Name of closest target.
@@ -415,6 +425,13 @@ invalidStrafe = false
 -- @field #number radial Radial in degrees.
 -- @field #string weapon Name of the weapon.
 -- @field #string quality Hit quality.
+-- @field #string player Player name.
+-- @field #string airframe Aircraft type of player.
+-- @field #number time Time via timer.getAbsTime() in seconds of impact.
+-- @field #string date OS date.
+
+--- Strafe result.
+-- @type RANGE.StrafeResult
 -- @field #string player Player name.
 -- @field #string airframe Aircraft type of player.
 -- @field #number time Time via timer.getAbsTime() in seconds of impact.
@@ -532,7 +549,7 @@ RANGE.MenuF10Root = nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version = "2.3.0"
+RANGE.version = "2.4.0"
 
 -- TODO list:
 -- TODO: Verbosity level for messages.
@@ -583,6 +600,8 @@ function RANGE:New( rangename )
   self:AddTransition("Stopped",         "Start",             "Running")     -- Start RANGE script.
   self:AddTransition("*",               "Status",            "*")           -- Status of RANGE script.
   self:AddTransition("*",               "Impact",            "*")           -- Impact of bomb/rocket/missile.
+  self:AddTransition("*",               "RollingIn",         "*")           -- Player rolling in on strafe target.
+  self:AddTransition("*",               "StrafeResult",      "*")           -- Strafe result of player.
   self:AddTransition("*",               "EnterRange",        "*")           -- Player enters the range.
   self:AddTransition("*",               "ExitRange",         "*")           -- Player leaves the range.
   self:AddTransition("*",               "Save",              "*")           -- Save player results.
@@ -639,6 +658,37 @@ function RANGE:New( rangename )
   -- @param #string To To state.
   -- @param #RANGE.BombResult result Data of the bombing run.
   -- @param #RANGE.PlayerData player Data of player settings etc.
+
+
+  --- Triggers the FSM event "RollingIn".
+  -- @function [parent=#RANGE] RollingIn
+  -- @param #RANGE self
+  -- @param #RANGE.PlayerData player Data of player settings etc.
+  -- @param #RANGE.StrafeTarget target Strafe target.
+
+  --- On after "RollingIn" event user function. Called when a player rolls in to a strafe taret.
+  -- @function [parent=#RANGE] OnAfterRollingIn
+  -- @param #RANGE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #RANGE.PlayerData player Data of player settings etc.
+  -- @param #RANGE.StrafeTarget target Strafe target.
+
+  --- Triggers the FSM event "StrafeResult".
+  -- @function [parent=#RANGE] StrafeResult
+  -- @param #RANGE self
+  -- @param #RANGE.PlayerData player Data of player settings etc.
+  -- @param #RANGE.StrafeResult result Data of the strafing run.
+
+  --- On after "StrafeResult" event user function. Called when a player finished a strafing run.
+  -- @function [parent=#RANGE] OnAfterStrafeResult
+  -- @param #RANGE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #RANGE.PlayerData player Data of player settings etc.
+  -- @param #RANGE.StrafeResult result Data of the strafing run.
 
   --- Triggers the FSM event "EnterRange".
   -- @function [parent=#RANGE] EnterRange
@@ -1594,7 +1644,6 @@ function RANGE:OnEventBirth( EventData )
     self.strafeStatus[_uid] = nil
 
     -- Add Menu commands after a delay of 0.1 seconds.
-    -- SCHEDULER:New(nil, self._AddF10Commands, {self,_unitName}, 0.1)    
     self:ScheduleOnce( 0.1, self._AddF10Commands, self, _unitName )
 
     -- By default, some bomb impact points and do not flare each hit on target.
@@ -1613,7 +1662,6 @@ function RANGE:OnEventBirth( EventData )
 
     -- Start check in zone timer.
     if self.planes[_uid] ~= true then
-      -- SCHEDULER:New(nil, self._CheckInZone, {self, EventData.IniUnitName}, 1, 1)
       self.timerCheckZone = TIMER:New( self._CheckInZone, self, EventData.IniUnitName ):Start( 1, 1 )
       self.planes[_uid] = true
     end
@@ -1647,7 +1695,7 @@ function RANGE:OnEventHit( EventData )
   local targetname = EventData.TgtUnitName
 
   -- Current strafe target of player.
-  local _currentTarget = self.strafeStatus[_unitID]
+  local _currentTarget = self.strafeStatus[_unitID] --#RANGE.StrafeStatus
 
   -- Player has rolled in on a strafing target.
   if _currentTarget and target:IsAlive() then
@@ -1931,74 +1979,6 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Functions
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RANGE:_SaveTargetSheet( _playername, result ) -- RangeBoss Specific Function
-
-  --- Function that saves data to file
-  local function _savefile( filename, data )
-    local f = io.open( filename, "wb" )
-    if f then
-      f:write( data )
-      f:close()
-    else
-      env.info( "RANGEBOSS EDIT - could not save target sheet to file" )
-      -- self:E(self.lid..string.format("ERROR: could not save target sheet to file %s.\nFile may contain invalid characters.", tostring(filename)))
-    end
-  end
-
-  -- Set path or default.
-  local path = self.targetpath
-  if lfs then
-    path = path or lfs.writedir() .. [[Logs\]]
-  end
-
-  -- Create unused file name.
-  local filename = nil
-  for i = 1, 9999 do
-
-    -- Create file name
-    if self.targetprefix then
-      filename = string.format( "%s_%s-%04d.csv", self.targetprefix, playerData.actype, i )
-    else
-      local name = UTILS.ReplaceIllegalCharacters( _playername, "_" )
-      filename = string.format( "RANGERESULTS-%s_Targetsheet-%s-%04d.csv", self.rangename, name, i )
-    end
-
-    -- Set path.
-    if path ~= nil then
-      filename = path .. "\\" .. filename
-    end
-
-    -- Check if file exists.
-    local _exists = UTILS.FileExists( filename )
-    if not _exists then
-      break
-    end
-  end
-
-  -- Header line
-  local data = "Name,Target,Distance,Radial,Quality,Rounds Fired,Rounds Hit,Rounds Quality,Attack Heading,Weapon,Airframe,Mission Time,OS Time\n"
-
-  -- local result=_result --#RANGE.BombResult
-  local distance = result.distance
-  local weapon = result.weapon
-  local target = result.name
-  local radial = result.radial
-  local quality = result.quality
-  local time = UTILS.SecondsToClock( result.time )
-  local airframe = result.airframe
-  local date = "n/a"
-  local roundsFired = result.roundsFired
-  local roundsHit = result.roundsHit
-  local strafeResult = result.roundsQuality
-  local attackHeading = result.heading
-  if os then
-    date = os.date()
-  end
-  data = data .. string.format( "%s,%s,%.2f,%03d,%s,%03d,%03d,%s,%03d,%s,%s,%s,%s", _playername, target, distance, radial, quality, roundsFired, roundsHit, strafeResult, attackHeading, weapon, airframe, time, date )
-
-  -- Save file.
-  _savefile( filename, data )
-end
 
 --- Check spawn queue and spawn aircraft if necessary.
 -- @param #RANGE self
@@ -2299,6 +2279,73 @@ function RANGE:onafterLoad( From, Event, To )
   end
 end
 
+--- Save target sheet.
+-- @param #RANGE self
+-- @param #string _playername Player name.
+-- @param #RANGE.StrafeResult result Results table.
+function RANGE:_SaveTargetSheet( _playername, result ) -- RangeBoss Specific Function
+
+  --- Function that saves data to file
+  local function _savefile( filename, data )
+    local f = io.open( filename, "wb" )
+    if f then
+      f:write( data )
+      f:close()
+    else
+      env.info( "RANGEBOSS EDIT - could not save target sheet to file" )
+      -- self:E(self.lid..string.format("ERROR: could not save target sheet to file %s.\nFile may contain invalid characters.", tostring(filename)))
+    end
+  end
+
+  -- Set path or default.
+  local path = self.targetpath
+  if lfs then
+    path = path or lfs.writedir() .. [[Logs\]]
+  end
+
+  -- Create unused file name.
+  local filename = nil
+  for i = 1, 9999 do
+
+    -- Create file name
+    if self.targetprefix then
+      filename = string.format( "%s_%s-%04d.csv", self.targetprefix, result.airframe, i )
+    else
+      local name = UTILS.ReplaceIllegalCharacters( _playername, "_" )
+      filename = string.format( "RANGERESULTS-%s_Targetsheet-%s-%04d.csv", self.rangename, name, i )
+    end
+
+    -- Set path.
+    if path ~= nil then
+      filename = path .. "\\" .. filename
+    end
+
+    -- Check if file exists.
+    local _exists = UTILS.FileExists( filename )
+    if not _exists then
+      break
+    end
+  end
+
+  -- Header line
+  local data = "Name,Target,Rounds Fired,Rounds Hit,Rounds Quality,Airframe,Mission Time,OS Time\n"
+
+  local target = result.name
+  local airframe = result.airframe
+  local roundsFired = result.roundsFired
+  local roundsHit = result.roundsHit
+  local strafeResult = result.roundsQuality
+  local time = UTILS.SecondsToClock( result.time )
+  local date = "n/a"
+  if os then
+    date = os.date()
+  end
+  data = data .. string.format( "%s,%s,%d,%d,%s,%s,%s,%s", _playername, target, roundsFired, roundsHit, strafeResult, airframe, time, date )
+
+  -- Save file.
+  _savefile( filename, data )
+end
+
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Display Messages
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2324,7 +2371,7 @@ function RANGE:_DisplayMyStrafePitResults( _unitName )
     local _message = string.format( "My Top %d Strafe Pit Results:\n", self.ndisplayresult )
 
     -- Get player results.
-    local _results = self.strafePlayerResults[_playername]
+    local _results = self.strafePlayerResults[_playername] 
 
     -- Create message.
     if _results == nil then
@@ -2344,9 +2391,10 @@ function RANGE:_DisplayMyStrafePitResults( _unitName )
 
       -- Loop over results
       for _, _result in pairs( _results ) do
+        local result=_result --#RANGE.StrafeResult
 
         -- Message text.
-        _message = _message .. string.format( "\n[%d] Hits %d - %s - %s", _count, _result.hits, _result.zone.name, _result.text )
+        _message = _message .. string.format( "\n[%d] Hits %d - %s - %s", _count, result.roundsHit, result.name, result.roundsQuality )
 
         -- Best result.
         if _bestMsg == "" then
@@ -2835,14 +2883,16 @@ function RANGE:_CheckInZone( _unitName )
   local unitheading = 0 -- RangeBoss
 
   if _unit and _playername then
-
+  
+    -- Player data.
+    local playerData=self.PlayerSettings[_playername] -- #RANGE.PlayerData
+    
     --- Function to check if unit is in zone and facing in the right direction and is below the max alt.
     local function checkme( targetheading, _zone )
       local zone = _zone -- Core.Zone#ZONE
 
       -- Heading check.
       local unitheading = _unit:GetHeading()
-      unitheadingStrafe = _unit:GetHeading() -- RangeBoss
       local pitheading = targetheading - 180
       local deltaheading = unitheading - pitheading
       local towardspit = math.abs( deltaheading ) <= 90 or math.abs( deltaheading - 360 ) <= 90
@@ -2867,7 +2917,7 @@ function RANGE:_CheckInZone( _unitName )
     local _unitID = _unit:GetID()
 
     -- Currently strafing? (strafeStatus is nil if not)
-    local _currentStrafeRun = self.strafeStatus[_unitID]
+    local _currentStrafeRun = self.strafeStatus[_unitID] --#RANGE.StrafeStatus
 
     if _currentStrafeRun then -- player has already registered for a strafing run.
 
@@ -2879,7 +2929,6 @@ function RANGE:_CheckInZone( _unitName )
 
       -- Check if player is in strafe zone and below max alt.
       if unitinzone then
-        StrafeAircraftType = _unit:GetTypeName() -- RangeBoss
         -- Still in zone, keep counting hits. Increase counter.
         _currentStrafeRun.time = _currentStrafeRun.time + 1
 
@@ -2909,8 +2958,10 @@ function RANGE:_CheckInZone( _unitName )
           local _ammo = self:_GetAmmo( _unitName )
 
           -- Result.
-          local _result = self.strafeStatus[_unitID]
+          local _result = self.strafeStatus[_unitID] --#RANGE.StrafeStatus
+          
           local _sound = nil -- #RANGE.Soundfile
+          
           --[[ --RangeBoss commented out in order to implement strafe quality based on accuracy percentage, not the number of rounds on target
           -- Judge this pass. Text is displayed on summary.
           if _result.hits >= _result.zone.goodPass*2 then
@@ -2927,6 +2978,7 @@ function RANGE:_CheckInZone( _unitName )
             _sound=RANGE.Sound.RCPoorPass
           end
           ]]
+          
           -- Calculate accuracy of run. Number of hits wrt number of rounds fired.
           local shots = _result.ammo - _ammo
           local accur = 0
@@ -2936,29 +2988,30 @@ function RANGE:_CheckInZone( _unitName )
               accur = 100
             end
           end
-
-          if invalidStrafe == true then --
-            _result.text = "* INVALID - PASSED FOUL LINE *"
+          
+          -- Results text and sound message.
+          local resulttext=""
+          if _result.pastfoulline == true then --
+            resulttext = "* INVALID - PASSED FOUL LINE *"
             _sound = RANGE.Sound.RCPoorPass --
           else
             if accur >= 90 then
-              _result.text = "DEADEYE PASS"
+              resulttext = "DEADEYE PASS"
               _sound = RANGE.Sound.RCExcellentPass
             elseif accur >= 75 then
-              _result.text = "EXCELLENT PASS"
+              resulttext = "EXCELLENT PASS"
               _sound = RANGE.Sound.RCExcellentPass
             elseif accur >= 50 then
-              _result.text = "GOOD PASS"
+              resulttext = "GOOD PASS"
               _sound = RANGE.Sound.RCGoodPass
             elseif accur >= 25 then
-              _result.text = "INEFFECTIVE PASS"
+              resulttext = "INEFFECTIVE PASS"
               _sound = RANGE.Sound.RCIneffectivePass
             else
-              _result.text = "POOR PASS"
+              resulttext = "POOR PASS"
               _sound = RANGE.Sound.RCPoorPass
             end
           end
-          clientStrafed = true -- RANGEBOSS
 
           -- Message text.
           local _text = string.format( "%s, hits on target %s: %d", self:_myname( _unitName ), _result.zone.name, _result.hits )
@@ -2969,45 +3022,27 @@ function RANGE:_CheckInZone( _unitName )
 
           -- Send message.
           self:_DisplayMessageToGroup( _unit, _text )
-
-          -- RangeBoss Edit for strafe table insert
-
-          -- Local results.
-
-          local result = {} -- #RANGE.BombResult
-          result.name = _result.zone.name or "unknown"
-          result.distance = 0
-          result.radial = 0
-          result.weapon = "N/A"
-          result.quality = "N/A"
-          result.player = _playernamee
+          
+          -- Strafe result.
+          local result = {} -- #RANGE.StrafeResult
+          result.player=_playername
+          result.name=_result.zone.name or "unknown"
           result.time = timer.getAbsTime()
-          result.airframe = StrafeAircraftType
-          result.roundsFired = shots -- RANGEBOSS
-          result.roundsHit = _result.hits -- RANGEBOSS
-          result.roundsQuality = _result.text -- RANGEBOSS
+          result.roundsFired = shots
+          result.roundsHit = _result.hits
+          result.roundsQuality = resulttext
           result.strafeAccuracy = accur
-          result.heading = unitheadingStrafe -- RANGEBOSS
-
-          Straferesult.name = _result.zone.name or "unknown"
-          Straferesult.distance = 0
-          Straferesult.radial = 0
-          Straferesult.weapon = "N/A"
-          Straferesult.quality = "N/A"
-          Straferesult.player = _playername
-          Straferesult.time = timer.getAbsTime()
-          Straferesult.airframe = StrafeAircraftType
-          Straferesult.roundsFired = shots
-          Straferesult.roundsHit = _result.hits
-          Straferesult.roundsQuality = _result.text
-          Straferesult.strafeAccuracy = accur
-          Straferesult.rangename = self.rangename
-
+          result.rangename = self.rangename
+          result.airframe=playerData.airframe
+          result.invalid = _result.pastfoulline
+          
+          -- Griger Results.
+          self:StrafeResult(playerData, result)
+ 
           -- Save trap sheet.
           if playerData and playerData.targeton and self.targetsheet then
             self:_SaveTargetSheet( _playername, result )
-          end
-          -- RangeBoss edit for strafe data saved to file
+          end        
 
           -- Voice over.
           if self.rangecontrol then
@@ -3028,7 +3063,7 @@ function RANGE:_CheckInZone( _unitName )
 
           -- Save stats so the player can retrieve them.
           local _stats = self.strafePlayerResults[_playername] or {}
-          table.insert( _stats, _result )
+          table.insert( _stats, result )
           self.strafePlayerResults[_playername] = _stats
         end
 
@@ -3038,12 +3073,13 @@ function RANGE:_CheckInZone( _unitName )
 
       -- Check to see if we're in any of the strafing zones (first time).
       for _, _targetZone in pairs( self.strafeTargets ) do
+        local target=_targetZone --#RANGE.StrafeTarget
 
         -- Get the current approach zone and check if player is inside.
-        local zone = _targetZone.polygon -- Core.Zone#ZONE_POLYGON_BASE
+        local zone = target.polygon -- Core.Zone#ZONE_POLYGON_BASE
 
         -- Check if unit in zone and facing the right direction.
-        local unitinzone = checkme( _targetZone.heading, zone )
+        local unitinzone = checkme( target.heading, zone )
 
         -- Player is inside zone.
         if unitinzone then
@@ -3052,19 +3088,20 @@ function RANGE:_CheckInZone( _unitName )
           local _ammo = self:_GetAmmo( _unitName )
 
           -- Init strafe status for this player.
-          self.strafeStatus[_unitID] = { hits = 0, zone = _targetZone, time = 1, ammo = _ammo, pastfoulline = false }
+          self.strafeStatus[_unitID] = { hits = 0, zone = target, time = 1, ammo = _ammo, pastfoulline = false }
 
           -- Rolling in!
-          local _msg = string.format( "%s, rolling in on strafe pit %s.", self:_myname( _unitName ), _targetZone.name )
+          local _msg = string.format( "%s, rolling in on strafe pit %s.", self:_myname( _unitName ), target.name )
 
           if self.rangecontrol then
             self.rangecontrol:NewTransmission( RANGE.Sound.RCRollingInOnStrafeTarget.filename, RANGE.Sound.RCRollingInOnStrafeTarget.duration, self.soundpath )
           end
-          clientRollingIn = true -- RANGEBOSS
 
           -- Send message.
           self:_DisplayMessageToGroup( _unit, _msg, 10, true )
-          hypemanStrafeRollIn = _msg -- RANGEBOSS
+          
+          -- Trigger event that player is rolling in.
+          self:RollingIn(playerData, target)
 
           -- We found our player. Skip remaining checks.
           break
