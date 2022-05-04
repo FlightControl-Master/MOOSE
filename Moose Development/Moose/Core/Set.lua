@@ -1369,7 +1369,11 @@ do -- SET_GROUP
     if Event.IniDCSUnit then
       local ObjectName, Object = self:FindInDatabase( Event )
       if ObjectName then
-        if Event.IniDCSGroup:getSize() == 1 then -- Only remove if the last unit of the group was destroyed.
+        local size = 1
+        if Event.IniDCSGroup then
+         size = Event.IniDCSGroup:getSize()
+        end
+        if size == 1 then -- Only remove if the last unit of the group was destroyed.
           self:Remove( ObjectName )
         end
       end

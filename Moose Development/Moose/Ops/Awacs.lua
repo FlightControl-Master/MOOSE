@@ -130,7 +130,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "alpha 0.0.14", -- #string
+  version = "alpha 0.0.15", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -438,11 +438,10 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.0.14
+-- TODO-List 0.0.15
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- TODO - System for Players to VID contacts? And put data into contacst fifo
--- TODO - TripWire - WIP - Threat (35nm), Meld (45nm, on mission), Merged (<3nm)
 --
 -- TODO - Player tasking
 -- TODO - Localization
@@ -450,12 +449,13 @@ AWACS.TaskStatus = {
 -- 
 -- TODO - SW Optimizer
 -- 
--- DEBUG - (WIP) Missile launch callout
--- DEBUG - Event detection, Player joining, eject, crash, dead, leaving; AI shot -> DEFEND
--- DEBUG - AI Tasking
+-- DONE - (WIP) Missile launch callout
+-- DONE - Event detection, Player joining, eject, crash, dead, leaving; AI shot -> DEFEND
+-- DONE - AI Tasking
 -- DEBUG - Multiple AIRWING connection? Can't really get recruit to work, switched to random round robin
--- DEBUG - Shift Change, Change on asset RTB or dead or mission done (done for AWACS and Escorts)
---
+-- DONE - Shift Change, Change on asset RTB or dead or mission done (done for AWACS and Escorts)
+-- DONE - TripWire - WIP - Threat (35nm), Meld (45nm, on mission), Merged (<3nm)
+-- 
 -- DONE - Escorts via AirWing not staying on
 -- DONE - Borders for INTEL. Optional, i.e. land based defense within borders
 -- DONE - Use AO as Anchor of Bulls, AO as default
@@ -3621,11 +3621,11 @@ function AWACS:_ThreatRangeCall(GID,Contact)
   -- AIC: “Enforcer 11 12, east group, THREAT, BRAA 260/15, 29 thousand, hot, hostile, robin.”
   local pilotcallsign = self:_GetCallSign(nil,GID) 
   local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
-  local flightpos = managedgroup.Group:GetCoordinate()
+  local flightpos = managedgroup.Group:GetCoordinate() or managedgroup.LastKnownPosition
   local contact = Contact.Contact -- Ops.Intelligence#INTEL.Contact
   local contacttag = Contact.TargetGroupNaming
   if contact then
-    local position = contact.position -- Core.Point#COORDINATE
+    local position = contact.position or contact.group:GetCoordinate() -- Core.Point#COORDINATE
     if position then     
       local BRATExt = position:ToStringBRAANATO(flightpos,false,false)
       local text = string.format("%s. %s. %s group, Threat. %s",self.callsigntxt,pilotcallsign,contacttag,BRATExt)
@@ -4333,25 +4333,24 @@ end
 -- @param Ops.Intelligence#INTEL.Contact Contact
 -- @return #AWACS self 
 function AWACS:onafterNewContact(From,Event,To,Contact)
-  self:I({From, Event, To, Contact})
-  
-  local cluster = self.intel:IsContactPartOfAnyClusters(Contact)
-  if cluster then
-    -- Is part of a cluster, do we know this cluster?
-    -- do we know this cluster?
-    local name = Contact.groupname
-    local CID = Contact.CID or 0
-    local cCID = cluster.CID or 0
-    local text = string.format("New contact name=%s CID=%d with Cluster CID=%d!",name,CID,cCID) 
-    self:I(self.lid..text)   
-  else
-    local name = Contact.groupname
-    local CID = Contact.CID or 0
-    local text = string.format("New contact name=%s CID=%d NO Intel Cluster!",name,CID) 
-    self:I(self.lid..text)
-    -- add / new cluster?   
+  self:T({From, Event, To, Contact})
+  local tdist = self.ThreatDistance -- NM 
+  -- is any plane near-by? 
+  for _gid,_mgroup in pairs(self.ManagedGrps) do
+    local managedgroup = _mgroup -- #AWACS.ManagedGroup
+    local group = managedgroup.Group
+    if group and group:IsAlive() then
+       -- contact distance
+       local cpos = Contact.position or Contact.group:GetCoordinate() -- Core.Point#COORDINATE
+       local mpos = group:GetCoordinate()
+       local dist = cpos:Get2DDistance(mpos) -- meter
+       dist = UTILS.Round(UTILS.MetersToNM(dist),0)
+       if dist <= tdist then
+        -- threat call
+        self:_ThreatRangeCall(_gid,Contact)
+       end
+    end
   end
-  
   return self
 end
   
