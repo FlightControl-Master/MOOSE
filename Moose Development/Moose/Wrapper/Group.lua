@@ -1247,13 +1247,14 @@ function GROUP:IsInZone( Zone )
     for UnitID, UnitData in pairs(self:GetUnits()) do
       local Unit = UnitData -- Wrapper.Unit#UNIT
       
-      -- Get 2D vector. That's all we need for the zone check.
-      local vec2=Unit:GetVec2()
+      local vec2 = nil
+      if Unit then
+       -- Get 2D vector. That's all we need for the zone check.
+       vec2=Unit:GetVec2()
+      end
       
-      if Zone:IsVec2InZone(vec2) then
+      if vec2 and Zone:IsVec2InZone(vec2) then
         return true  -- At least one unit is in the zone. That is enough.
-      else
-        -- This one is not but another could be.
       end
       
     end

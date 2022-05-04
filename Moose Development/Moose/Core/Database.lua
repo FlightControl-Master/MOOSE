@@ -124,6 +124,7 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
+  --self:HandleEvent( EVENTS.UnitLost, self._EventOnDeadOrCrash )  -- DCS 2.7.1 for Aerial units no dead event ATM
   self:HandleEvent( EVENTS.Hit, self.AccountHits )
   self:HandleEvent( EVENTS.NewCargo )
   self:HandleEvent( EVENTS.DeleteCargo )
@@ -1153,6 +1154,22 @@ function DATABASE:_EventOnDeadOrCrash( Event )
 
       if self.STATICS[Event.IniDCSUnitName] then
         self:DeleteStatic( Event.IniDCSUnitName )
+      end
+      
+      ---
+      -- Maybe a UNIT?
+      ---
+      
+      -- Delete unit.
+      if self.UNITS[Event.IniDCSUnitName] then
+        self:T("STATIC Event for UNIT "..tostring(Event.IniDCSUnitName))
+        local DCSUnit = _DATABASE:FindUnit( Event.IniDCSUnitName )
+        self:T({DCSUnit})
+        if DCSUnit then
+          --self:I("Creating DEAD Event for UNIT "..tostring(Event.IniDCSUnitName))
+          --DCSUnit:Destroy(true)
+          return
+        end
       end
 
     else

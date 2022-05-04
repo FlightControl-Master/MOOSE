@@ -503,8 +503,9 @@ do -- Object
   -- @field UNIT
   -- @field WEAPON
   -- @field STATIC
-  -- @field SCENERY
   -- @field BASE
+  -- @field SCENERY
+  -- @field CARGO
   
   --- @type Object.Desc
   -- @extends #Desc

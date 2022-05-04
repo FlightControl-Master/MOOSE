@@ -813,13 +813,14 @@ end
 -- @param #BASE self
 -- @param DCS#Time EventTime The time stamp of the event.
 -- @param DCS#Object Initiator The initiating object of the event.
-function BASE:CreateEventDead( EventTime, Initiator )
-  self:F( { EventTime, Initiator } )
+function BASE:CreateEventDead( EventTime, Initiator, IniObjectCategory )
+  self:F( { EventTime, Initiator, IniObjectCategory } )
 
   local Event = {
     id = world.event.S_EVENT_DEAD,
     time = EventTime,
     initiator = Initiator,
+    IniObjectCategory = IniObjectCategory,
     }
 
   world.onEvent( Event )
