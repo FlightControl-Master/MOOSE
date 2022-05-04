@@ -1475,7 +1475,7 @@ function INTEL:PaintPicture()
       if self.verbose >= 1 then
         BASE:I("Updating cluster marker and future position")
       end
-      
+
       -- Update cluster markers.
       self:UpdateClusterMarker(cluster)
 

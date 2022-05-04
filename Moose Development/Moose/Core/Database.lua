@@ -162,17 +162,11 @@ end
 function DATABASE:AddUnit( DCSUnitName )
 
   if not self.UNITS[DCSUnitName] then
-
     -- Debug info.
     self:T( { "Add UNIT:", DCSUnitName } )
 
-    --local UnitRegister = UNIT:Register( DCSUnitName )
-
     -- Register unit
     self.UNITS[DCSUnitName]=UNIT:Register(DCSUnitName)
-
-    -- This is not used anywhere in MOOSE as far as I can see so I remove it until there comes an error somewhere.
-    --table.insert(self.UNITS_Index, DCSUnitName )
   end
 
   return self.UNITS[DCSUnitName]
@@ -182,7 +176,6 @@ end
 --- Deletes a Unit from the DATABASE based on the Unit Name.
 -- @param #DATABASE self
 function DATABASE:DeleteUnit( DCSUnitName )
-
   self.UNITS[DCSUnitName] = nil
 end
 
