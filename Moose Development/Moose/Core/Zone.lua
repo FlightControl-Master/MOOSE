@@ -1996,7 +1996,9 @@ end
 -- @return #boolean true if the point is within the zone.
 function ZONE_POLYGON_BASE:IsVec3InZone( Vec3 )
   self:F2( Vec3 )
-
+  
+  if not Vec3 then return false end 
+  
   local InZone = self:IsVec2InZone( { x = Vec3.x, y = Vec3.z } )
 
   return InZone
