@@ -1661,13 +1661,16 @@ end
 function INTEL:CalcClusterDirection(cluster)
 
   local direction = 0
+  local speedsum = 0
   local n=0
   for _,_contact in pairs(cluster.Contacts) do
     local contact=_contact --#INTEL.Contact
 
     if (not contact.isStatic) and contact.group:IsAlive() then
-      direction = direction + contact.group:GetHeading()
+      local speed = contact.group:GetVelocityKNOTS()
+      direction = direction + (contact.group:GetHeading()*speed)
       n=n+1
+      speedsum = speedsum + speed
     end
   end
 
@@ -1678,13 +1681,14 @@ function INTEL:CalcClusterDirection(cluster)
   -- Total is 360/2=180, i.e. South!
   -- It should not go anywhere as the two movements cancel each other.
   -- Correct, edge case for N=2^x, but when 2 pairs of groups drive in exact opposite directions, the cluster will split at some point?
-  -- maybe add the speed as weight to get a factor
+  -- maybe add the speed as weight to get a weighted factor
 
   if n==0 then
     return 0
   else
-    return math.floor(direction / n)
+    return math.floor(direction / (speedsum * n ))
   end
+  
 end
 
 --- Calculate cluster speed.
