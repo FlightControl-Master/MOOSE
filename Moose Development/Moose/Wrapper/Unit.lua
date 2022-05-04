@@ -24,6 +24,7 @@
 --- @type UNIT
 -- @field #string ClassName Name of the class.
 -- @field #string UnitName Name of the unit.
+-- @field #string GroupName Name of the group the unit belongs to.
 -- @extends Wrapper.Controllable#CONTROLLABLE
 
 --- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
@@ -86,10 +87,11 @@
 --   * Use the @{#UNIT.IsLOS}() method to check if the given unit is within line of sight.
 -- 
 -- 
--- @field #UNIT UNIT
+-- @field #UNIT
 UNIT = {
 	ClassName="UNIT",
 	UnitName=nil,
+	GroupName=nil,
 }
 
 
@@ -110,10 +112,16 @@ UNIT = {
 function UNIT:Register( UnitName )
 
   -- Inherit CONTROLLABLE.
-  local self = BASE:Inherit( self, CONTROLLABLE:New( UnitName ) )
+  local self = BASE:Inherit( self, CONTROLLABLE:New( UnitName ) ) --#UNIT
   
   -- Set unit name.
   self.UnitName = UnitName
+  
+  local unit=Unit.getByName(self.UnitName)
+  
+  if unit then
+    self.GroupName=unit:getGroup():getName()
+  end
   
   -- Set event prio.
   self:SetEventPriority( 3 )
