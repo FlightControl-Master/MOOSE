@@ -110,7 +110,11 @@
 -- ## Set SRS Port
 -- 
 -- Use @{#MSRS.SetPort} to define the SRS port. Defaults to 5002.
---
+-- 
+-- ## Set SRS Volume
+-- 
+-- Use @{#MSRS.SetVolume} to define the SRS volume. Defaults to 1.0. Allowed values are between 0.0 and 1.0, from silent to loudest.
+-- 
 -- @field #MSRS
 MSRS = {
   ClassName      =     "MSRS",
