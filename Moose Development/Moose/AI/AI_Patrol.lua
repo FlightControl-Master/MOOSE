@@ -743,8 +743,8 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     if self.Controllable:InAir() == false then
       self:T( "Not in the air, finding route path within PatrolZone" )
       local CurrentVec2 = self.Controllable:GetVec2()
-      --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
-      local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
+      --DONE: Create GetAltitude function for GROUP, and delete GetUnit(1).
+      local CurrentAltitude = self.Controllable:GetAltitude()
       local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
       local CurrentRoutePoint = CurrentPointVec3:WaypointAir( 
@@ -758,8 +758,8 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     else
       self:T( "In the air, finding route path within PatrolZone" )
       local CurrentVec2 = self.Controllable:GetVec2()
-      --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
-      local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
+      --DONE: Create GetAltitude function for GROUP, and delete GetUnit(1).
+      local CurrentAltitude = self.Controllable:GetAltitude()
       local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
       local CurrentRoutePoint = CurrentPointVec3:WaypointAir( 
@@ -871,8 +871,9 @@ function AI_PATROL_ZONE:onafterRTB()
     --- Calculate the current route point.
     local CurrentVec2 = self.Controllable:GetVec2()
     
-    --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
-    local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
+    --DONE: Create GetAltitude function for GROUP, and delete GetUnit(1).
+    --local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
+    local CurrentAltitude = self.Controllable:GetAltitude()
     local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
     local ToPatrolZoneSpeed = self.PatrolMaxSpeed
     local CurrentRoutePoint = CurrentPointVec3:WaypointAir( 
