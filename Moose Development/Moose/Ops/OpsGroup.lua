@@ -2039,8 +2039,9 @@ end
 -- @param #number Port SRS port. Default 5002.
 -- @param #string PathToGoogleKey Full path to the google credentials JSON file, e.g. `"C:\Users\myUsername\Downloads\key.json"`.
 -- @param #string Label Label of the SRS comms for the SRS Radio overlay. Defaults to "ROBOT". No spaces allowed!
+-- @param #number Volume Volume to be set, 0.0 = silent, 1.0 = loudest. Defaults to 1.0
 -- @return #OPSGROUP self
-function OPSGROUP:SetSRS(PathToSRS, Gender, Culture, Voice, Port, PathToGoogleKey, Label)
+function OPSGROUP:SetSRS(PathToSRS, Gender, Culture, Voice, Port, PathToGoogleKey, Label, Volume)
   self.useSRS=true
   self.msrs=MSRS:New(PathToSRS, self.frequency, self.modulation)
   self.msrs:SetGender(Gender)
@@ -2052,6 +2053,7 @@ function OPSGROUP:SetSRS(PathToSRS, Gender, Culture, Voice, Port, PathToGoogleKe
     self.msrs:SetGoogle(PathToGoogleKey)
   end
   self.msrs:SetCoalition(self:GetCoalition())
+  self.msrs:SetVolume(Volume)
   return self
 end
 
