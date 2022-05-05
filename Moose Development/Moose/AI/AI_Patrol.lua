@@ -743,7 +743,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     if self.Controllable:InAir() == false then
       self:T( "Not in the air, finding route path within PatrolZone" )
       local CurrentVec2 = self.Controllable:GetVec2()
-      --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
+      --DOne: Create GetAltitude function for GROUP, and delete GetUnit(1).
       local CurrentAltitude = self.Controllable:GetAltitude()
       local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
