@@ -589,7 +589,9 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
     
     self:ClearTargetDistance()
     --AIGroup:ClearTasks()
-
+    
+    AIGroup:OptionProhibitAfterburner(true)
+      
     local EngageRoute = {}
 
     --- Calculate the target route point.
