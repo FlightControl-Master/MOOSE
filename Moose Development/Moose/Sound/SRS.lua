@@ -131,7 +131,7 @@ MSRS = {
 
 --- MSRS class version.
 -- @field #string version
-MSRS.version="0.0.4"
+MSRS.version="0.0.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -150,8 +150,9 @@ MSRS.version="0.0.4"
 -- @param #string PathToSRS Path to the directory, where SRS is located.
 -- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. Can also be given as a #table of multiple frequencies.
 -- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a #table of multiple modulations.
+-- @param #number Volume Volume - 1.0 is max, 0.0 is silence
 -- @return #MSRS self
-function MSRS:New(PathToSRS, Frequency, Modulation)
+function MSRS:New(PathToSRS, Frequency, Modulation, Volume)
 
   -- Defaults.
   Frequency =Frequency or 143
@@ -167,6 +168,12 @@ function MSRS:New(PathToSRS, Frequency, Modulation)
   self:SetGender()
   self:SetCoalition()
   self:SetLabel()
+  self:SetVolume()
+  self.lid = string.format("%s-%s | ",self.name,self.version)
+  
+  if not io or not os then
+    self:E(self.lid.."***** ERROR - io or os NOT desanitized! MSRS will not work!")
+  end
   
   return self
 end
@@ -207,6 +214,24 @@ end
 -- @return #string Path to the directory. This includes the final slash "/".
 function MSRS:GetPath()
   return self.path
+end
+
+--- Set SRS volume.
+-- @param #MSRS self
+-- @param #number Volume Volume - 1.0 is max, 0.0 is silence
+-- @return #MSRS self
+function MSRS:SetVolume(Volume)
+  local volume = Volume or 1
+  if volume > 1 then volume = 1 elseif volume < 0 then volume = 0 end
+  self.volume = volume
+  return self
+end
+
+--- Get SRS volume.
+-- @param #MSRS self 
+-- @return #number Volume Volume - 1.0 is max, 0.0 is silence
+function MSRS:GetVolume()
+  return self.volume
 end
 
 --- Set label.
