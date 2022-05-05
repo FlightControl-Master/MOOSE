@@ -610,6 +610,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.Culture = "en-US"
   self.Voice = nil
   self.Port = 5002
+  self.Volume = 1.0
   self.RadioQueue = FIFO:New() -- Utilities.FiFo#FIFO
   self.maxspeakentries = 3
   
@@ -773,7 +774,7 @@ end
 
 --- [User] Change the bulls eye alias for AWACS callout. Defaults to "Rock"
 -- @param #AWACS self
--- @param #string NAme
+-- @param #string Name
 -- @return #AWACS self
 function AWACS:SetBullsEyeAlias(Name)
   self:T(self.lid.."_SetBullsEyeAlias")
@@ -854,16 +855,6 @@ function AWACS:_EventHandler(EventData)
         self:_CheckOut(nil,GID,true)
       end
     end
-  end
-  
-  if Event.id == EVENTS.Dead or Event.id == EVENTS.UnitLost then
-    self:I("DEAD (8) or BDA (37) Event, ID="..Event.id)
-    local eventtext = UTILS.OneLineSerialize(Event)
-    local text = string.gsub(eventtext,",","\n")
-    text = string.gsub(text,"{","\n")
-    text = string.gsub(text,"}","")
-    text = string.gsub(text,"="," = ")
-    self:I(text)
   end
   
   if Event.id == EVENTS.Shot and self.PlayerGuidance then
@@ -1001,9 +992,10 @@ end
 -- @param #number Port Defaults to 5002
 -- @param #string Voice (Optional) Use a specifc voice with the @{#MSRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system.
+-- @param #number Volume Volume - between 0.0 (silent) and 1.0 (loudest)
 -- @param #string PathToGoogleKey Path to your google key if you want to use google TTS
 -- @return #AWACS self
-function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,PathToGoogleKey)
+function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
   self:T(self.lid.."SetSRS")
   self.PathToSRS = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
   self.Gender = Gender or "male"
@@ -1011,6 +1003,7 @@ function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,PathToGoogleKey)
   self.Port = Port or 5002
   self.Voice = Voice 
   self.PathToGoogleKey = PathToGoogleKey
+  self.Volume = Volume or 1.0
   return self
 end
 
@@ -1127,7 +1120,7 @@ function AWACS:_StartSettings(FlightGroup,Mission)
 
     self.AwacsFG = AwacsFG 
     
-    self.AwacsFG :SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,self.PathToGoogleKey,"AWACS")
+    self.AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,self.PathToGoogleKey,"AWACS",self.Volume)
     self.callsigntxt = string.format("%s",AWACS.CallSignClear[self.CallSign])
     
     self:__CheckRadioQueue(10)
@@ -2327,7 +2320,7 @@ function AWACS:_SetClientMenus()
             
             local tasking = MENU_GROUP:New(cgrp,"Tasking",basemenu)                      
             
-            local checkout = MENU_GROUP_COMMAND:New(cgrp,"Check Out",basemenu,self._CheckOut,self,cgrp)
+            local checkout = MENU_GROUP_COMMAND:New(cgrp,"Check Out",basemenu,self._CheckOut,self,cgrp):Refresh()
             
             local showtask = MENU_GROUP_COMMAND:New(cgrp,"Showtask",tasking,self._Showtask,self,cgrp)
             local commit = MENU_GROUP_COMMAND:New(cgrp,"Commit",tasking,self._Commit,self,cgrp)

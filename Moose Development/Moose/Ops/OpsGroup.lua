@@ -1000,7 +1000,7 @@ function OPSGROUP:GetAltitude()
   
   if self.group then
 
-    alt=self.group:GetUnit(1):GetAltitude()
+    alt=self.group:GetAltitude()
     
     alt=UTILS.MetersToFeet(alt)
     
