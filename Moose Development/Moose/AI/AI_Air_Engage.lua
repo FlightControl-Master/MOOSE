@@ -533,6 +533,10 @@ function AI_AIR_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetU
       DefenderCoord:SetY( EngageAltitude ) -- Ground targets don't have an altitude.
 
       local TargetCoord = AttackSetUnit:GetFirst():GetPointVec3()
+      if not TargetCoord then
+          self:Return()
+          return
+      end
       TargetCoord:SetY( EngageAltitude ) -- Ground targets don't have an altitude.
       
       local TargetDistance = DefenderCoord:Get2DDistance( TargetCoord )

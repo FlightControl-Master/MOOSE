@@ -1160,7 +1160,7 @@ function GROUP:GetFuelAvg()
     local TotalFuel = 0
     for UnitID, UnitData in pairs( self:GetUnits() ) do
       local Unit = UnitData -- Wrapper.Unit#UNIT
-      local UnitFuel = Unit:GetFuel()
+      local UnitFuel = Unit:GetFuel() or 0
       self:F( { Fuel = UnitFuel } )
       TotalFuel = TotalFuel + UnitFuel
     end
