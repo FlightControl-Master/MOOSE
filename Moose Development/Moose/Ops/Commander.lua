@@ -136,7 +136,7 @@ COMMANDER = {
 
 --- COMMANDER class version.
 -- @field #string version
-COMMANDER.version="0.1.2"
+COMMANDER.version="0.1.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1348,7 +1348,7 @@ function COMMANDER:RecruitAssetsForEscort(Mission, Assets)
         
     
     -- Call LEGION function but provide COMMANDER as self.
-    local assigned=LEGION.AssignAssetsForEscort(self, Cohorts, Assets, Mission.NescortMin, Mission.NescortMax)
+    local assigned=LEGION.AssignAssetsForEscort(self, Cohorts, Assets, Mission.NescortMin, Mission.NescortMax, Mission.escortTargetTypes, Mission.escortEngageRange)
     
     return assigned    
   end

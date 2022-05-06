@@ -47,7 +47,7 @@ LEGION = {
 
 --- LEGION class version.
 -- @field #string version
-LEGION.version="0.3.3"
+LEGION.version="0.3.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -2166,7 +2166,7 @@ function LEGION:RecruitAssetsForEscort(Mission, Assets)
     end    
     
     -- Call LEGION function but provide COMMANDER as self.
-    local assigned=LEGION.AssignAssetsForEscort(self, Cohorts, Assets, Mission.NescortMin, Mission.NescortMax)
+    local assigned=LEGION.AssignAssetsForEscort(self, Cohorts, Assets, Mission.NescortMin, Mission.NescortMax, Mission.escortMissionType, Mission.escortTargetTypes)
     
     return assigned
   end
@@ -2472,8 +2472,11 @@ end
 -- @param #table Assets Table of assets to be escorted.
 -- @param #number NescortMin Min number of escort groups required per escorted asset.
 -- @param #number NescortMax Max number of escort groups required per escorted asset.
+-- @param #string MissionType Mission type.
+-- @param #string TargetTypes Types of targets that are engaged.
+-- @param #number EngageRange EngageRange in Nautical Miles.
 -- @return #boolean If `true`, enough assets could be recruited or no escort was required in the first place.
-function LEGION:AssignAssetsForEscort(Cohorts, Assets, NescortMin, NescortMax)
+function LEGION:AssignAssetsForEscort(Cohorts, Assets, NescortMin, NescortMax, MissionType, TargetTypes, EngageRange)
 
   -- Is an escort requested in the first place?
   if NescortMin and NescortMax and (NescortMin>0 or NescortMax>0) then
@@ -2493,17 +2496,19 @@ function LEGION:AssignAssetsForEscort(Cohorts, Assets, NescortMin, NescortMax)
       
       -- We want airplanes for airplanes and helos for everything else.
       local Categories={Group.Category.HELICOPTER}
-      local TargetTypes={"Ground Units"}
+      local targetTypes={"Ground Units"}
       if asset.category==Group.Category.AIRPLANE then
         Categories={Group.Category.AIRPLANE}
-        TargetTypes={"Air"}
+        targetTypes={"Air"}
       end
       
+      TargetTypes=TargetTypes or targetTypes
+      
       -- Recruit escort asset for the mission asset.
-      local Erecruited, eassets, elegions=LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.ESCORT, nil, NescortMin, NescortMax, TargetVec2, nil, nil, nil, nil, nil, Categories)
+      local Erecruited, eassets, elegions=LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.ESCORT, MissionType, NescortMin, NescortMax, TargetVec2, nil, nil, nil, nil, nil, Categories)
       
       if Erecruited then
-        Escorts[asset.spawngroupname]={EscortLegions=elegions, EscortAssets=eassets, ecategory=asset.category, TargetTypes=TargetTypes}
+        Escorts[asset.spawngroupname]={EscortLegions=elegions, EscortAssets=eassets, ecategory=asset.category}
       else
         -- Could not find escort for this asset ==> Escort not possible ==> Break the loop.
         EscortAvail=false
@@ -2526,15 +2531,26 @@ function LEGION:AssignAssetsForEscort(Cohorts, Assets, NescortMin, NescortMax)
     
           local OffsetVector=nil --DCS#Vec3
           if ecategory==Group.Category.GROUND then
-            -- Overhead
+            -- Overhead at 1000 ft.
             OffsetVector={}
             OffsetVector.x=0
             OffsetVector.y=UTILS.FeetToMeters(1000)
             OffsetVector.z=0
+          elseif MissionType==AUFTRAG.Type.SEAD then
+            -- Overhead slightly higher and right.
+            OffsetVector={}
+            OffsetVector.x=-100
+            OffsetVector.y= 500
+            OffsetVector.z= 500
           end
     
           -- Create and ESCORT mission for this asset.
-          local escort=AUFTRAG:NewESCORT(groupname, OffsetVector, nil, value.TargetTypes)
+          local escort=AUFTRAG:NewESCORT(groupname, OffsetVector, EngageRange, TargetTypes)
+          
+          -- For a SEAD mission, we also adjust the mission task.
+          if MissionType==AUFTRAG.Type.SEAD then
+            escort.missionTask=ENUMS.MissionTask.SEAD
+          end
           
           -- Reserve assts and add to mission.
           for _,_asset in pairs(Eassets) do

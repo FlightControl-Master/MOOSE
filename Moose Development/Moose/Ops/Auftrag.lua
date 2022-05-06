@@ -119,6 +119,9 @@
 -- @field #number NassetsMax Max. number of required warehouse assets.
 -- @field #number NescortMin Min. number of required escort assets for each group the mission is assigned to.
 -- @field #number NescortMax Max. number of required escort assets for each group the mission is assigned to.
+-- @field #string escortMissionType Escort mission type.
+-- @field #table escortTargetTypes Target types that will be engaged.
+-- @field #number escortEngageRange Engage range in nautical miles (NM).
 -- @field #number Nassets Number of requested warehouse assets.
 -- @field #table NassetsLegMin Number of required warehouse assets for each assigned legion.
 -- @field #table NassetsLegMax Number of required warehouse assets for each assigned legion.
@@ -610,7 +613,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.9.5"
+AUFTRAG.version="0.9.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1404,7 +1407,6 @@ function AUFTRAG:NewSEAD(Target, Altitude)
   mission.missionFraction=0.2
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
-  --mission.optionROT=ENUMS.ROT.AllowAbortMission
 
   mission.categories={AUFTRAG.Category.AIRCRAFT}
 
@@ -1558,7 +1560,7 @@ end
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP EscortGroup The group to escort.
 -- @param DCS#Vec3 OffsetVector A table with x, y and z components specifying the offset of the flight to the escorted group. Default {x=-100, y=0, z=200} for z=200 meters to the right, same alitude (y=0), x=-100 meters behind.
--- @param #number EngageMaxDistance Max engage distance of targets in nautical miles. Default auto (*nil*).
+-- @param #number EngageMaxDistance Max engage distance of targets in nautical miles. Default auto 32 NM.
 -- @param #table TargetTypes Types of targets to engage automatically. Default is {"Air"}, i.e. all enemy airborne units. Use an empty set {} for a simple "FOLLOW" mission.
 -- @return #AUFTRAG self
 function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetTypes)
@@ -1575,7 +1577,7 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
 
   -- DCS task parameters:
   mission.escortVec3=OffsetVector or {x=-100, y=0, z=200}
-  mission.engageMaxDistance=EngageMaxDistance and UTILS.NMToMeters(EngageMaxDistance) or nil
+  mission.engageMaxDistance=EngageMaxDistance and UTILS.NMToMeters(EngageMaxDistance) or UTILS.NMToMeters(32)
   mission.engageTargetTypes=TargetTypes or {"Air"}
 
   -- Mission options:
@@ -2445,7 +2447,7 @@ function AUFTRAG:SetPriority(Prio, Urgent, Importance)
   return self
 end
 
---- Set how many times the mission is repeated. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, ...) or higher level.
+--- **[LEGION, COMMANDER, CHIEF]** Set how many times the mission is repeated. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, FLEET) or higher level.
 -- @param #AUFTRAG self
 -- @param #number Nrepeat Number of repeats. Default 0.
 -- @return #AUFTRAG self
@@ -2454,7 +2456,7 @@ function AUFTRAG:SetRepeat(Nrepeat)
   return self
 end
 
---- Set how many times the mission is repeated if it fails. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, ...) or higher level.
+--- **[LEGION, COMMANDER, CHIEF]** Set how many times the mission is repeated if it fails. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, FLEET) or higher level.
 -- @param #AUFTRAG self
 -- @param #number Nrepeat Number of repeats. Default 0.
 -- @return #AUFTRAG self
@@ -2463,7 +2465,7 @@ function AUFTRAG:SetRepeatOnFailure(Nrepeat)
   return self
 end
 
---- Set how many times the mission is repeated if it was successful. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, ...) or higher level.
+--- **[LEGION, COMMANDER, CHIEF]** Set how many times the mission is repeated if it was successful. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, FLEET) or higher level.
 -- @param #AUFTRAG self
 -- @param #number Nrepeat Number of repeats. Default 0.
 -- @return #AUFTRAG self
@@ -2472,7 +2474,7 @@ function AUFTRAG:SetRepeatOnSuccess(Nrepeat)
   return self
 end
 
---- Define how many assets are required to do the job. Only used if the mission is handled by a **LEGION** (AIRWING, BRIGADE, ...) or higher level.
+--- **[LEGION, COMMANDER, CHIEF]** Define how many assets are required to do the job. Only used if the mission is handled by a **LEGION** (AIRWING, BRIGADE, ...) or higher level.
 -- @param #AUFTRAG self
 -- @param #number NassetsMin Minimum number of asset groups. Default 1.
 -- @param #number NassetsMax Maximum Number of asset groups. Default is same as `NassetsMin`.
@@ -2491,7 +2493,7 @@ function AUFTRAG:SetRequiredAssets(NassetsMin, NassetsMax)
   return self
 end
 
---- Get number of required assets.
+--- **[LEGION, COMMANDER, CHIEF]** Get number of required assets.
 -- @param #AUFTRAG self
 -- @param Ops.Legion#Legion Legion (Optional) Only get the required assets for a specific legion. If required assets for this legion are not defined, the total number is returned.
 -- @return #number Min. number of required assets.
@@ -2507,21 +2509,30 @@ function AUFTRAG:GetRequiredAssets(Legion)
   return self.NassetsMin, self.NassetsMax
 end
 
---- Define how many assets are required to do the job. Only used if the mission is handled by a **LEGION** (AIRWING, BRIGADE, ...) or higher level.
+--- **[LEGION, COMMANDER, CHIEF]** Define how many assets are required that escort the mission assets. 
+-- Only used if the mission is handled by a **LEGION** (AIRWING, BRIGADE, FLEET) or higher level.
 -- @param #AUFTRAG self
 -- @param #number NescortMin Minimum number of asset groups. Default 1.
 -- @param #number NescortMax Maximum Number of asset groups. Default is same as `NassetsMin`.
+-- @param #string MissionType Mission type assets will be optimized for and payload selected, *e.g.* `AUFTRAG.Type.SEAD`. Default nil.
+-- @param #table TargetTypes Target Types that will be engaged by the escort group(s). Default `{"Air"}` for aircraft and `{"Ground Units"}` for helos. Set, *e.g.*, `{"Air Defence"}` for SEAD.
+-- @param #number EngageRange Max range in nautical miles that the escort group(s) will engage enemies. Default 32 NM (60 km).
 -- @return #AUFTRAG self
-function AUFTRAG:SetRequiredEscorts(NescortMin, NescortMax)
+function AUFTRAG:SetRequiredEscorts(NescortMin, NescortMax, MissionType, TargetTypes, EngageRange)
 
+  -- Set number of escort assets.
   self.NescortMin=NescortMin or 1
-
   self.NescortMax=NescortMax or self.NescortMin
 
   -- Ensure that max is at least equal to min.
   if self.NescortMax<self.NescortMin then
     self.NescortMax=self.NescortMin
   end
+  
+  -- Set parameters.
+  self.escortMissionType=MissionType
+  self.escortTargetTypes=TargetTypes
+  self.escortEngageRange=EngageRange or 32
 
   -- Debug info.
   self:T(self.lid..string.format("NescortMin=%s, NescortMax=%s", tostring(self.NescortMin), tostring(self.NescortMax)))
@@ -2698,7 +2709,7 @@ function AUFTRAG:GetOpsTransport()
   return self.opstransport
 end
 
---- Attach OPS transport to the mission. Mission assets will be transported before the mission is started at the OPSGROUP level.
+--- **[LEGION, COMMANDER, CHIEF]** Attach OPS transport to the mission. Mission assets will be transported before the mission is started at the OPSGROUP level.
 -- @param #AUFTRAG self
 -- @param Core.Zone#ZONE DeployZone Zone where assets are deployed.
 -- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
@@ -2739,7 +2750,7 @@ function AUFTRAG:AddTransportCarriers(Carriers)
 
 end
 
---- Set required attribute(s) the assets must have.
+--- **[LEGION, COMMANDER, CHIEF]** Set required attribute(s) the assets must have.
 -- @param #AUFTRAG self
 -- @param #table Attributes Generalized attribute(s).
 -- @return #AUFTRAG self
@@ -2750,7 +2761,7 @@ function AUFTRAG:SetRequiredAttribute(Attributes)
   self.attributes=Attributes
 end
 
---- Set required property or properties the assets must have.
+--- **[LEGION, COMMANDER, CHIEF]** Set required property or properties the assets must have.
 -- These are [DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes).
 -- @param #AUFTRAG self
 -- @param #table Properties Property or table of properties.
@@ -2762,7 +2773,7 @@ function AUFTRAG:SetRequiredProperty(Properties)
   self.properties=Properties
 end
 
---- Set number of required carrier groups if an OPSTRANSPORT assignment is required.
+--- **[LEGION, COMMANDER, CHIEF]** Set number of required carrier groups if an OPSTRANSPORT assignment is required.
 -- @param #AUFTRAG self
 -- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
 -- @param #number NcarriersMax Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
@@ -2782,7 +2793,7 @@ function AUFTRAG:SetRequiredCarriers(NcarriersMin, NcarriersMax)
 end
 
 
---- Assign a legion cohort to the mission. Only these cohorts will be considered for the job.
+--- **[LEGION, COMMANDER, CHIEF]** Assign a legion cohort to the mission. Only these cohorts will be considered for the job.
 -- @param #AUFTRAG self
 -- @param Ops.Cohort#COHORT Cohort The cohort.
 -- @return #AUFTRAG self
@@ -2798,7 +2809,7 @@ function AUFTRAG:AssignCohort(Cohort)
   return self
 end
 
---- Assign a legion to the mission. Only cohorts of this legion will be considered for the job. You can assign multiple legions.
+--- **[LEGION, COMMANDER, CHIEF]** Assign a legion to the mission. Only cohorts of this legion will be considered for the job. You can assign multiple legions.
 -- @param #AUFTRAG self
 -- @param Ops.Legion#LEGION Legion The legion.
 -- @return #AUFTRAG self
@@ -2815,7 +2826,7 @@ function AUFTRAG:AssignLegion(Legion)
 end
 
 
---- Assign airwing squadron(s) to the mission. Only these squads will be considered for the job.
+--- **[LEGION, COMMANDER, CHIEF]** Assign airwing squadron(s) to the mission. Only these squads will be considered for the job.
 -- @param #AUFTRAG self
 -- @param #table Squadrons A table of SQUADRON(s). **Has to be a table {}** even if a single squad is given.
 -- @return #AUFTRAG self
@@ -2831,7 +2842,7 @@ function AUFTRAG:AssignSquadrons(Squadrons)
 end
 
 
---- Assign a transport Legion.
+--- **[LEGION, COMMANDER, CHIEF]** Assign a transport Legion.
 -- @param #AUFTRAG self
 -- @param Ops.Legion#LEGION Legion The legion.
 function AUFTRAG:AssignTransportLegion(Legion)
@@ -2843,7 +2854,7 @@ function AUFTRAG:AssignTransportLegion(Legion)
   return self
 end
 
---- Assign a transport cohort.
+--- **[LEGION, COMMANDER, CHIEF]** Assign a transport cohort.
 -- @param #AUFTRAG self
 -- @param Ops.Cohort#Cohort Cohort The cohort.
 function AUFTRAG:AssignTransportCohort(Cohort)
@@ -2856,7 +2867,7 @@ function AUFTRAG:AssignTransportCohort(Cohort)
 end
 
 
---- Add an escort Legion.
+--- **[LEGION, COMMANDER, CHIEF]** Add an escort Legion.
 -- @param #AUFTRAG self
 -- @param Ops.Legion#LEGION Legion The legion.
 function AUFTRAG:AssignEscortLegion(Legion)
@@ -2868,7 +2879,7 @@ function AUFTRAG:AssignEscortLegion(Legion)
   return self
 end
 
---- Assign an escort cohort.
+--- **[LEGION, COMMANDER, CHIEF]** Assign an escort cohort.
 -- @param #AUFTRAG self
 -- @param Ops.Cohort#Cohort Cohort The cohort.
 function AUFTRAG:AssignEscortCohort(Cohort)
