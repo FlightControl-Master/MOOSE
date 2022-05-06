@@ -599,7 +599,7 @@ do -- DETECTION_BASE
     -- @param #string From The From State string.
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
-    -- @param Wrapper.Group#GROUP DetectionGroup The Group detecting.
+    -- @param Wrapper.Group#GROUP Detection The Group detecting.
     -- @param #number DetectionTimeStamp Time stamp of detection event.
     function DETECTION_BASE:onafterDetection( From, Event, To, Detection, DetectionTimeStamp  )
       
@@ -670,7 +670,7 @@ do -- DETECTION_BASE
       
               local DetectedObjectVec3 = DetectedObject:getPoint()
               local DetectedObjectVec2 = { x = DetectedObjectVec3.x, y = DetectedObjectVec3.z }
-              local DetectionGroupVec3 = Detection:GetVec3()
+              local DetectionGroupVec3 = Detection:GetVec3() or {x=0,y=0,z=0}
               local DetectionGroupVec2 = { x = DetectionGroupVec3.x, y = DetectionGroupVec3.z }
       
               local Distance = ( ( DetectedObjectVec3.x - DetectionGroupVec3.x )^2 +

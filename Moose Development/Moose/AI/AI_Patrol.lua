@@ -872,7 +872,7 @@ function AI_PATROL_ZONE:onafterRTB()
   
     --- Calculate the current route point.
     local CurrentVec2 = self.Controllable:GetVec2()
-    
+    if not CurrentVec2 then return end
     --DONE: Create GetAltitude function for GROUP, and delete GetUnit(1).
     --local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
     local CurrentAltitude = self.Controllable:GetAltitude()

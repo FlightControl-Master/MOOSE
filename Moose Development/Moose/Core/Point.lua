@@ -892,9 +892,8 @@ do -- COORDINATE
   -- @param #COORDINATE TargetCoordinate The target COORDINATE. Can also be a DCS#Vec3.
   -- @return DCS#Distance Distance The distance in meters.
   function COORDINATE:Get2DDistance(TargetCoordinate)
-
+    if not TargetCoordinate then return 1000000 end
     local a={x=TargetCoordinate.x-self.x, y=0, z=TargetCoordinate.z-self.z}
-
     local norm=UTILS.VecNorm(a)
     return norm
   end

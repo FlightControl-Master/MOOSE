@@ -349,7 +349,6 @@ do -- SET_BASE
     return complement
   end
 
-
   --- Compare two sets.
   -- @param #SET_BASE self
   -- @param Core.Set#SET_BASE SetA First set.
@@ -365,9 +364,6 @@ do -- SET_BASE
 
     return SetA
   end
-
-
-
 
   --- Gets a @{Core.Base#BASE} object from the @{Core.Set#SET_BASE} and derived classes, based on the Object Name.
   -- @param #SET_BASE self
