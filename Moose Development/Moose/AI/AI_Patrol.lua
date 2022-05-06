@@ -725,8 +725,8 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     return
   end
 
-  
-  if self.Controllable:IsAlive() then
+  local life = self.Controllable:GetLife() or 0
+  if self.Controllable:IsAlive() and life > 1 then
     -- Determine if the AIControllable is within the PatrolZone. 
     -- If not, make a waypoint within the to that the AIControllable will fly at maximum speed to that point.
     
@@ -743,7 +743,8 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     if self.Controllable:InAir() == false then
       self:T( "Not in the air, finding route path within PatrolZone" )
       local CurrentVec2 = self.Controllable:GetVec2()
-      --DOne: Create GetAltitude function for GROUP, and delete GetUnit(1).
+      if not CurrentVec2 then return end
+      --Done: Create GetAltitude function for GROUP, and delete GetUnit(1).
       local CurrentAltitude = self.Controllable:GetAltitude()
       local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
@@ -758,7 +759,8 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     else
       self:T( "In the air, finding route path within PatrolZone" )
       local CurrentVec2 = self.Controllable:GetVec2()
-      --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
+      if not CurrentVec2 then return end
+      --DONE: Create GetAltitude function for GROUP, and delete GetUnit(1).
       local CurrentAltitude = self.Controllable:GetAltitude()
       local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
