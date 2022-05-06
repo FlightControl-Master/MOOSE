@@ -119,7 +119,10 @@ function UNIT:Register( UnitName )
   local unit=Unit.getByName(self.UnitName)
   
   if unit then
-    self.GroupName=unit:getGroup():getName()
+    local group = unit:getGroup()
+    if group then 
+      self.GroupName=group:getName()
+    end
   end
   
   -- Set event prio.
