@@ -1809,6 +1809,11 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.ARRIVED)
   end
   
+  if not self.isAI then
+    -- Player landed. No despawn.
+    return
+  end
+  
   --TODO: Check that current base is airwing base.
   local airwing=self:GetAirWing()  --airwing:GetAirbaseName()==self.currbase:GetName()
 
