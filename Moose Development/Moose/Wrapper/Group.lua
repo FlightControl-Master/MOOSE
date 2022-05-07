@@ -723,7 +723,7 @@ function GROUP:GetDCSUnit( UnitNumber )
     
       local UnitFound = UNIT:Find(_unit)
       
-      if UnitFound and UnitFound:IsAlive() then
+      if UnitFound then
       
         return UnitFound
     
