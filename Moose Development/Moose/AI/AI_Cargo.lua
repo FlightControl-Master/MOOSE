@@ -1,4 +1,4 @@
---- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo.
+--- **AI** - Models the intelligent transportation of infantry and other cargo.
 --
 -- ===
 -- 
@@ -35,10 +35,9 @@ AI_CARGO = {
 
 --- Creates a new AI_CARGO object.
 -- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param Core.Set#SET_CARGO CargoSet
--- @param #number CombatRadius
--- @return #AI_CARGO
+-- @param Wrapper.Group#GROUP Carrier Cargo carrier group.
+-- @param Core.Set#SET_CARGO CargoSet Set of cargo(s) to transport.
+-- @return #AI_CARGO self
 function AI_CARGO:New( Carrier, CargoSet )
 
   local self = BASE:Inherit( self, FSM_CONTROLLABLE:New( Carrier ) ) -- #AI_CARGO
@@ -48,18 +47,21 @@ function AI_CARGO:New( Carrier, CargoSet )
 
   self:SetStartState( "Unloaded" )
   
-  self:AddTransition( "Unloaded", "Pickup", "*" )
-  self:AddTransition( "Loaded", "Deploy", "*" )
+  -- Board
+  self:AddTransition( "Unloaded",     "Pickup",     "Unloaded" )
+  self:AddTransition( "*",            "Load",       "*" )
+  self:AddTransition( "*",            "Reload",       "*" )
+  self:AddTransition( "*",            "Board",      "*" )
+  self:AddTransition( "*",            "Loaded",     "Loaded" )
+  self:AddTransition( "Loaded",       "PickedUp",   "Loaded" )
   
-  self:AddTransition( "*", "Load", "Boarding" )
-  self:AddTransition( { "Boarding", "Loaded" }, "Board", "Boarding" )
-  self:AddTransition( "Boarding", "Loaded", "Boarding" )
-  self:AddTransition( "Boarding", "PickedUp", "Loaded" )
-  
-  self:AddTransition( "Loaded", "Unload", "Unboarding" )
-  self:AddTransition( "Unboarding", "Unboard", "Unboarding" )
-  self:AddTransition( "Unboarding", "Unloaded", "Unboarding" )
-  self:AddTransition( "Unboarding", "Deployed", "Unloaded" )
+  -- Unload
+  self:AddTransition( "Loaded",       "Deploy",     "*" )
+  self:AddTransition( "*",            "Unload",     "*" )
+  self:AddTransition( "*",            "Unboard",    "*" )
+  self:AddTransition( "*",            "Unloaded",   "Unloaded" )
+  self:AddTransition( "Unloaded",     "Deployed",   "Unloaded" )
+
   
   --- Pickup Handler OnBefore for AI_CARGO
   -- @function [parent=#AI_CARGO] OnBeforePickup
@@ -580,4 +582,3 @@ function AI_CARGO:onafterDeployed( Carrier, From, Event, To, DeployZone, Defend 
   end
 
 end
-

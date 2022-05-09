@@ -683,6 +683,7 @@ do -- TASK_CARGO_DISPATCHER
   -- If no TaskPrefix is given, then "Transport" will be used as the prefix. 
   -- @param Core.SetCargo#SET_CARGO SetCargo The SetCargo to be transported.
   -- @param #string Briefing The briefing of the task transport to be shown to the player.
+  -- @param #boolean Silent If true don't send a message that a new task is available.
   -- @return Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT
   -- @usage
   -- 
@@ -705,9 +706,11 @@ do -- TASK_CARGO_DISPATCHER
   --  -- Here we set a TransportDeployZone. We use the WorkplaceTask as the reference, and provide a ZONE object.
   --  TaskDispatcher:SetTransportDeployZone( WorkplaceTask, ZONE:New( "Workplace" ) )
   --  
-  function TASK_CARGO_DISPATCHER:AddTransportTask( TaskPrefix, SetCargo, Briefing )
+  function TASK_CARGO_DISPATCHER:AddTransportTask( TaskPrefix, SetCargo, Briefing, Silent )
 
     self.TransportCount = self.TransportCount + 1
+    
+    local verbose = Silent or false
     
     local TaskName = string.format( ( TaskPrefix or "Transport" ) .. ".%03d", self.TransportCount )
     
@@ -717,7 +720,7 @@ do -- TASK_CARGO_DISPATCHER
     self.Transport[TaskName].Task = nil
     self.Transport[TaskName].TaskPrefix = TaskPrefix
     
-    self:ManageTasks()
+    self:ManageTasks(verbose)
     
     return self.Transport[TaskName] and self.Transport[TaskName].Task
   end
@@ -785,10 +788,11 @@ do -- TASK_CARGO_DISPATCHER
 
   --- Assigns tasks to the @{Core.Set#SET_GROUP}.
   -- @param #TASK_CARGO_DISPATCHER self
+  -- @param #boolean Silent Announce new task (nil/false) or not (true).
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
-  function TASK_CARGO_DISPATCHER:ManageTasks()
+  function TASK_CARGO_DISPATCHER:ManageTasks(Silent)
     self:F()
-  
+    local verbose = Silent and true
     local AreaMsg = {}
     local TaskMsg = {}
     local ChangeMsg = {}
@@ -897,7 +901,7 @@ do -- TASK_CARGO_DISPATCHER
       local TaskText = TaskReport:Text(", ")
       
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-        if ( not Mission:IsGroupAssigned(TaskGroup) ) and TaskText ~= "" then
+        if ( not Mission:IsGroupAssigned(TaskGroup) ) and TaskText ~= "" and not verbose then
           Mission:GetCommandCenter():MessageToGroup( string.format( "%s has tasks %s. Subscribe to a task using the radio menu.", Mission:GetShortText(), TaskText ), TaskGroup )
         end
       end

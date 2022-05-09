@@ -715,20 +715,21 @@ do -- ZONE_CAPTURE_COALITION
   
       local UnitHit = EventData.TgtUnit
       
+      if UnitHit.ClassName ~= "SCENERY" then
       -- Check if unit is inside the capture zone and that it is of the defending coalition.
-      if UnitHit and UnitHit:IsInZone(self) and UnitHit:GetCoalition()==self.Coalition then
-      
-        -- Update last hit time.
-        self.HitTimeLast=timer.getTime()
-        
-        -- Only trigger attacked event if not already in state "Attacked".
-        if self:GetState()~="Attacked" then
-          self:F2("Hit ==> Attack")
-          self:Attack()
-        end
-        
+          if UnitHit and UnitHit:IsInZone(self) and UnitHit:GetCoalition()==self.Coalition then
+          
+            -- Update last hit time.
+            self.HitTimeLast=timer.getTime()
+            
+            -- Only trigger attacked event if not already in state "Attacked".
+            if self:GetState()~="Attacked" then
+              self:F2("Hit ==> Attack")
+              self:Attack()
+            end
+            
+          end
       end
-
     end
   
   end
@@ -890,12 +891,14 @@ do -- ZONE_CAPTURE_COALITION
     end
     
     -- Status text.
-    local text=string.format("CAPTURE ZONE %s: Owner=%s (Previous=%s): #blue=%d, #red=%d, Status %s", self:GetZoneName(), self:GetCoalitionName(), UTILS.GetCoalitionName(self:GetPreviousCoalition()), nBlue, nRed, State)
-    local NewState = self:GetState()
-    if NewState~=State then
-      text=text..string.format(" --> %s", NewState)
+    if false then
+      local text=string.format("CAPTURE ZONE %s: Owner=%s (Previous=%s): #blue=%d, #red=%d, Status %s", self:GetZoneName(), self:GetCoalitionName(), UTILS.GetCoalitionName(self:GetPreviousCoalition()), nBlue, nRed, State)
+      local NewState = self:GetState()
+      if NewState~=State then
+        text=text..string.format(" --> %s", NewState)
+      end
+      self:I(text)
     end
-    self:I(text)
     
   end
 

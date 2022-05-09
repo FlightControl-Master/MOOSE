@@ -199,7 +199,7 @@ do -- TASK_A2A_DISPATCHER
     
     self.Detection = Detection
     self.Mission = Mission
-    
+    self.FlashNewTask = false
     
     -- TODO: Check detection through radar.
     self.Detection:FilterCategories( Unit.Category.AIRPLANE, Unit.Category.HELICOPTER )
@@ -253,7 +253,12 @@ do -- TASK_A2A_DISPATCHER
     return self
   end
   
-  
+  --- Set flashing player messages on or off
+  -- @param #TASK_A2A_DISPATCHER self
+  -- @param #boolean onoff Set messages on (true) or off (false)
+  function TASK_A2A_DISPATCHER:SetSendMessages( onoff )
+      self.FlashNewTask = onoff
+  end
   
   --- Creates an INTERCEPT task when there are targets for it.
   -- @param #TASK_A2A_DISPATCHER self
@@ -610,7 +615,7 @@ do -- TASK_A2A_DISPATCHER
       local TaskText = TaskReport:Text(", ")
       
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-        if ( not Mission:IsGroupAssigned(TaskGroup) ) and TaskText ~= "" then
+        if ( not Mission:IsGroupAssigned(TaskGroup) ) and TaskText ~= "" and (self.FlashNewTask) then
           Mission:GetCommandCenter():MessageToGroup( string.format( "%s has tasks %s. Subscribe to a task using the radio menu.", Mission:GetShortText(), TaskText ), TaskGroup )
         end
       end

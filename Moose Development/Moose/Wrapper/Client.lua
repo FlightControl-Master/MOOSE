@@ -3,8 +3,7 @@
 -- ===
 -- 
 -- ### Author: **FlightControl**
--- 
--- ### Contributions: 
+-- ### Contributions: **funkyfranky**
 -- 
 -- ===
 -- 
@@ -52,13 +51,6 @@
 -- 
 -- @field #CLIENT
 CLIENT = {
-	ONBOARDSIDE = {
-		NONE = 0,
-		LEFT = 1,
-		RIGHT = 2,
-		BACK = 3,
-		FRONT = 4
-	},
 	ClassName = "CLIENT",
 	ClientName = nil,
 	ClientAlive = false,
@@ -66,27 +58,20 @@ CLIENT = {
 	ClientBriefingShown = false,
 	_Menus = {},
 	_Tasks = {},
-	Messages = { 
-	}
+	Messages = {},
+	Players = {},
 }
 
 
 --- Finds a CLIENT from the _DATABASE using the relevant DCS Unit.
 -- @param #CLIENT self
--- @param #string ClientName Name of the DCS **Unit** as defined within the Mission Editor.
--- @param #string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
--- @return #CLIENT
--- @usage
--- -- Create new Clients.
---  local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
---  Mission:AddGoal( DeploySA6TroopsGoal )
---
---  Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*HOT-Deploy Troops 1' ):Transport() )
---  Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*RAMP-Deploy Troops 3' ):Transport() )
---  Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
---  Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
-function CLIENT:Find( DCSUnit, Error )
+-- @param DCS#Unit DCSUnit The DCS unit of the client.
+-- @param #boolean Error Throw an error message.
+-- @return #CLIENT The CLIENT found in the _DATABASE.
+function CLIENT:Find(DCSUnit, Error)
+
   local ClientName = DCSUnit:getName()
+  
   local ClientFound = _DATABASE:FindClient( ClientName )
   
   if ClientFound then
@@ -117,11 +102,15 @@ end
 --	Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
 --	Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
 function CLIENT:FindByName( ClientName, ClientBriefing, Error )
+
+  -- Client
   local ClientFound = _DATABASE:FindClient( ClientName )
 
   if ClientFound then
     ClientFound:F( { ClientName, ClientBriefing } )
-    ClientFound:AddBriefing( ClientBriefing )
+    
+    ClientFound:AddBriefing(ClientBriefing)
+    
     ClientFound.MessageSwitch = true
 
   	return ClientFound
@@ -132,51 +121,105 @@ function CLIENT:FindByName( ClientName, ClientBriefing, Error )
   end
 end
 
-function CLIENT:Register( ClientName )
+--- Transport defines that the Client is a Transport. Transports show cargo.
+-- @param #CLIENT self
+-- @param #string ClientName Name of the client unit.
+-- @return #CLIENT self
+function CLIENT:Register(ClientName)
 
-  local self = BASE:Inherit( self, UNIT:Register( ClientName ) ) -- #CLIENT
-
-  self:F( ClientName )
-  self.ClientName = ClientName
-  self.MessageSwitch = true
-  self.ClientAlive2 = false
+  -- Inherit unit.
+  local self = BASE:Inherit( self, UNIT:Register(ClientName )) -- #CLIENT
   
-  --self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
-  self.AliveCheckScheduler = SCHEDULER:New( self, self._AliveCheckScheduler, { "Client Alive " .. ClientName }, 1, 5, 0.5 )
-  self.AliveCheckScheduler:NoTrace()
+  -- Set client name.
+  self.ClientName = ClientName
+  
+  -- Message switch.
+  self.MessageSwitch = true
+  
+  -- Alive2.
+  self.ClientAlive2 = false
 
-  self:F( self )
   return self
 end
 
 
 --- Transport defines that the Client is a Transport. Transports show cargo.
 -- @param #CLIENT self
--- @return #CLIENT
+-- @return #CLIENT self
 function CLIENT:Transport()
-  self:F()
-
   self.ClientTransport = true
   return self
 end
 
---- AddBriefing adds a briefing to a CLIENT when a player joins a mission.
+--- Adds a briefing to a CLIENT when a player joins a mission.
 -- @param #CLIENT self
 -- @param #string ClientBriefing is the text defining the Mission briefing.
 -- @return #CLIENT self
 function CLIENT:AddBriefing( ClientBriefing )
-  self:F( ClientBriefing )
+
   self.ClientBriefing = ClientBriefing
   self.ClientBriefingShown = false
   
   return self
 end
 
+--- Add player name.
+-- @param #CLIENT self
+-- @param #string PlayerName Name of the player.
+-- @return #CLIENT self
+function CLIENT:AddPlayer(PlayerName)
+
+  table.insert(self.Players, PlayerName)
+  
+  return self
+end
+
+--- Get player name(s).
+-- @param #CLIENT self
+-- @return #table List of player names or an empty table `{}`.
+function CLIENT:GetPlayers()
+  return self.Players
+end
+
+--- Get name of player.
+-- @param #CLIENT self
+-- @return #string Player name or `nil`.
+function CLIENT:GetPlayer()
+  if #self.Players>0 then
+    return self.Players[1]
+  end
+  return nil
+end
+
+--- Remove player.
+-- @param #CLIENT self
+-- @param #string PlayerName Name of the player.
+-- @return #CLIENT self
+function CLIENT:RemovePlayer(PlayerName)
+
+  for i,playername in pairs(self.Players) do
+    if PlayerName==playername then
+      table.remove(self.Players, i)
+      break
+    end
+  end
+
+  return self
+end
+
+--- Remove all players.
+-- @param #CLIENT self
+-- @return #CLIENT self
+function CLIENT:RemovePlayers()
+  self.Players={}
+  return self
+end
+
+
 --- Show the briefing of a CLIENT.
 -- @param #CLIENT self
 -- @return #CLIENT self
 function CLIENT:ShowBriefing()
-  self:F( { self.ClientName, self.ClientBriefingShown } )
 
   if not self.ClientBriefingShown then
     self.ClientBriefingShown = true
@@ -203,8 +246,6 @@ function CLIENT:ShowMissionBriefing( MissionBriefing )
 
   return self
 end
-
-
 
 --- Resets a CLIENT.
 -- @param #CLIENT self
@@ -241,12 +282,16 @@ end
 --- Checks for a client alive event and calls a function on a continuous basis.
 -- @param #CLIENT self
 -- @param #function CallBackFunction Create a function that will be called when a player joins the slot.
+-- @param ... (Optional) Arguments for callback function as comma separated list.
 -- @return #CLIENT
 function CLIENT:Alive( CallBackFunction, ... )
   self:F()
   
   self.ClientCallBack = CallBackFunction
   self.ClientParameters = arg
+
+  self.AliveCheckScheduler = SCHEDULER:New( self, self._AliveCheckScheduler, { "Client Alive " .. self.ClientName }, 0.1, 5, 0.5 )
+  self.AliveCheckScheduler:NoTrace()
 
   return self
 end
@@ -255,19 +300,29 @@ end
 function CLIENT:_AliveCheckScheduler( SchedulerName )
   self:F3( { SchedulerName, self.ClientName, self.ClientAlive2, self.ClientBriefingShown, self.ClientCallBack } )
 
-  if self:IsAlive() then 
+  if self:IsAlive() then
+   
     if self.ClientAlive2 == false then
+    
+      -- Show briefing.
       self:ShowBriefing()
+      
+      -- Callback function.
       if self.ClientCallBack then
         self:T("Calling Callback function")
         self.ClientCallBack( self, unpack( self.ClientParameters ) )
       end
+      
+      -- Alive.
       self.ClientAlive2 = true
     end
+    
   else
+  
     if self.ClientAlive2 == true then
       self.ClientAlive2 = false
     end
+    
   end
   
   return true
@@ -291,6 +346,7 @@ function CLIENT:GetDCSGroup()
   local ClientUnit = Unit.getByName( self.ClientName )
 
 	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
+	
 	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
 		self:T3( { "CoalitionData:", CoalitionData } )
 		for UnitId, UnitData in pairs( CoalitionData ) do
@@ -299,10 +355,14 @@ function CLIENT:GetDCSGroup()
 
         --self:F(self.ClientName)
         if ClientUnit then
+        
   				local ClientGroup = ClientUnit:getGroup()
+  				
   				if ClientGroup then
   					self:T3( "ClientGroup = " .. self.ClientName )
-  					if ClientGroup:isExist() and UnitData:getGroup():isExist() then 
+  					
+  					if ClientGroup:isExist() and UnitData:getGroup():isExist() then
+  					 
   						if ClientGroup:getID() == UnitData:getGroup():getID() then
   							self:T3( "Normal logic" )
   							self:T3( self.ClientName .. " : group found!" )
@@ -310,15 +370,22 @@ function CLIENT:GetDCSGroup()
   							self.ClientGroupName = ClientGroup:getName()
   							return ClientGroup
   						end
+  						
   					else
+  					
   						-- Now we need to resolve the bugs in DCS 1.5 ...
   						-- Consult the database for the units of the Client Group. (ClientGroup:getUnits() returns nil)
   						self:T3( "Bug 1.5 logic" )
+  						
   						local ClientGroupTemplate = _DATABASE.Templates.Units[self.ClientName].GroupTemplate
+  						
   						self.ClientGroupID = ClientGroupTemplate.groupId
+  						
   						self.ClientGroupName = _DATABASE.Templates.Units[self.ClientName].GroupName
+  						
   						self:T3( self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
   						return ClientGroup
+  						
   					end
   --				else
   --					error( "Client " .. self.ClientName .. " not found!" )
@@ -343,22 +410,22 @@ function CLIENT:GetDCSGroup()
   	end
   end
 	
+	-- Nothing could be found :(
 	self.ClientGroupID = nil
-	self.ClientGroupUnit = nil
+	self.ClientGroupName = nil
 	
 	return nil
 end 
 
 
--- TODO: Check DCS#Group.ID
 --- Get the group ID of the client.
 -- @param #CLIENT self
--- @return DCS#Group.ID
+-- @return #number DCS#Group ID.
 function CLIENT:GetClientGroupID()
 
-  local ClientGroup = self:GetDCSGroup()
+  -- This updates the ID.
+  self:GetDCSGroup()
 
-  --self:F( self.ClientGroupID ) -- Determined in GetDCSGroup()
 	return self.ClientGroupID
 end
 
@@ -368,26 +435,28 @@ end
 -- @return #string
 function CLIENT:GetClientGroupName()
 
-  local ClientGroup = self:GetDCSGroup()
-
-  self:T( self.ClientGroupName ) -- Determined in GetDCSGroup()
+  -- This updates the group name.
+  self:GetDCSGroup()
+  
 	return self.ClientGroupName
 end
 
 --- Returns the UNIT of the CLIENT.
 -- @param #CLIENT self
--- @return Wrapper.Unit#UNIT
+-- @return Wrapper.Unit#UNIT The client UNIT or `nil`.
 function CLIENT:GetClientGroupUnit()
   self:F2()
   
 	local ClientDCSUnit = Unit.getByName( self.ClientName )
 
   self:T( self.ClientDCSUnit )
+  
 	if ClientDCSUnit and ClientDCSUnit:isExist() then
-		local ClientUnit = _DATABASE:FindUnit( self.ClientName )
-		self:T2( ClientUnit )
+		local ClientUnit=_DATABASE:FindUnit( self.ClientName )
 		return ClientUnit
 	end
+	
+	return nil
 end
 
 --- Returns the DCSUnit of the CLIENT.

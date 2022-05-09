@@ -13,7 +13,7 @@
 -- 
 -- ### Author: **FlightControl**
 -- 
--- ### Contributions: 
+-- ### Contributions: **funkyfranky**
 -- 
 -- ===
 -- 
@@ -22,6 +22,9 @@
 
 
 --- @type UNIT
+-- @field #string ClassName Name of the class.
+-- @field #string UnitName Name of the unit.
+-- @field #string GroupName Name of the group the unit belongs to.
 -- @extends Wrapper.Controllable#CONTROLLABLE
 
 --- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
@@ -61,7 +64,7 @@
 -- 
 -- The UNIT class provides methods to obtain the current point or position of the DCS Unit.
 -- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetVec3}() will obtain the current **location** of the DCS Unit in a Vec2 (2D) or a **point** in a Vec3 (3D) vector respectively.
--- If you want to obtain the complete **3D position** including ori�ntation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
+-- If you want to obtain the complete **3D position** including orientation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
 -- 
 -- ## Test if alive
 -- 
@@ -84,9 +87,11 @@
 --   * Use the @{#UNIT.IsLOS}() method to check if the given unit is within line of sight.
 -- 
 -- 
--- @field #UNIT UNIT
+-- @field #UNIT
 UNIT = {
 	ClassName="UNIT",
+	UnitName=nil,
+	GroupName=nil,
 }
 
 
@@ -103,12 +108,27 @@ UNIT = {
 --- Create a new UNIT from DCSUnit.
 -- @param #UNIT self
 -- @param #string UnitName The name of the DCS unit.
--- @return #UNIT
+-- @return #UNIT self
 function UNIT:Register( UnitName )
-  local self = BASE:Inherit( self, CONTROLLABLE:New( UnitName ) )
+
+  -- Inherit CONTROLLABLE.
+  local self = BASE:Inherit( self, CONTROLLABLE:New( UnitName ) ) --#UNIT
+  
+  -- Set unit name.
   self.UnitName = UnitName
   
+  local unit=Unit.getByName(self.UnitName)
+  
+  if unit then
+    local group = unit:getGroup()
+    if group then 
+      self.GroupName=group:getName()
+    end
+  end
+  
+  -- Set event prio.
   self:SetEventPriority( 3 )
+  
   return self
 end
 
@@ -145,8 +165,8 @@ function UNIT:Name()
   return self.UnitName
 end
 
-
---- @param #UNIT self
+--- Get the DCS unit object.
+-- @param #UNIT self
 -- @return DCS#Unit
 function UNIT:GetDCSObject()
 
@@ -258,8 +278,7 @@ end
 
 --- Returns if the unit is activated.
 -- @param #UNIT self
--- @return #boolean true if Unit is activated.
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return #boolean `true` if Unit is activated. `nil` The DCS Unit is not existing or alive.  
 function UNIT:IsActive()
   self:F2( self.UnitName )
 
@@ -279,9 +298,7 @@ end
 -- If the Unit is alive and active, true is returned.    
 -- If the Unit is alive but not active, false is returned.  
 -- @param #UNIT self
--- @return #boolean true if Unit is alive and active.
--- @return #boolean false if Unit is alive but not active.
--- @return #nil if the Unit is not existing or is not alive.  
+-- @return #boolean `true` if Unit is alive and active. `false` if Unit is alive but not active. `nil` if the Unit is not existing or is not alive.
 function UNIT:IsAlive()
   self:F3( self.UnitName )
 
@@ -300,7 +317,6 @@ end
 --- Returns the Unit's callsign - the localized string.
 -- @param #UNIT self
 -- @return #string The Callsign of the Unit.
--- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetCallsign()
   self:F2( self.UnitName )
 
@@ -377,6 +393,43 @@ function UNIT:GetPlayerName()
 
 end
 
+--- Checks is the unit is a *Player* or *Client* slot.  
+-- @param #UNIT self
+-- @return #boolean If true, unit is a player or client aircraft  
+function UNIT:IsClient()
+
+  if _DATABASE.CLIENTS[self.UnitName] then
+    return true
+  end
+
+  return false
+end
+
+--- Get the CLIENT of the unit  
+-- @param #UNIT self
+-- @return Wrapper.Client#CLIENT  
+function UNIT:GetClient()
+
+  local client=_DATABASE.CLIENTS[self.UnitName]
+
+  if client then
+    return client
+  end
+
+  return nil
+end
+
+--- [AIRPLANE] Get the NATO reporting name of a UNIT. Currently airplanes only!
+--@param #UNIT self
+--@return #string NatoReportingName or "Bogey" if unknown.
+function UNIT:GetNatoReportingName()
+  
+  local typename = self:GetTypeName()
+  return UTILS.GetReportingName(typename)
+  
+end
+
+
 --- Returns the unit's number in the group. 
 -- The number is the same number the unit has in ME. 
 -- It may not be changed during the mission. 
@@ -411,7 +464,7 @@ function UNIT:GetSpeedMax()
     return SpeedMax*3.6
   end
 
-  return nil
+  return 0
 end
 
 --- Returns the unit's max range in meters derived from the DCS descriptors.
@@ -493,11 +546,67 @@ function UNIT:IsTanker()
   return tanker, system
 end
 
+--- Check if the unit can supply ammo. Currently, we have
+-- 
+-- * M 818
+-- * Ural-375
+-- * ZIL-135
+-- 
+-- This list needs to be extended, if DCS adds other units capable of supplying ammo.
+-- 
+-- @param #UNIT self
+-- @return #boolean If `true`, unit can supply ammo.
+function UNIT:IsAmmoSupply()
+
+  -- Type name is the only thing we can check. There is no attribute (Sep. 2021) which would tell us.
+  local typename=self:GetTypeName()
+  
+  if typename=="M 818" then
+    -- Blue ammo truck.
+    return true
+  elseif typename=="Ural-375" then  
+    -- Red ammo truck.
+    return true
+  elseif typename=="ZIL-135" then
+    -- Red ammo truck. Checked that it can also provide ammo.
+    return true    
+  end
+
+  return false
+end
+
+--- Check if the unit can supply fuel. Currently, we have
+-- 
+-- * M978 HEMTT Tanker
+-- * ATMZ-5
+-- * ATMZ-10
+-- * ATZ-5
+-- 
+-- This list needs to be extended, if DCS adds other units capable of supplying fuel.
+-- 
+-- @param #UNIT self
+-- @return #boolean If `true`, unit can supply fuel.
+function UNIT:IsFuelSupply()
+
+  -- Type name is the only thing we can check. There is no attribute (Sep. 2021) which would tell us.
+  local typename=self:GetTypeName()
+  
+  if typename=="M978 HEMTT Tanker" then
+    return true
+  elseif typename=="ATMZ-5" then
+    return true
+  elseif typename=="ATMZ-10" then
+    return true
+  elseif typename=="ATZ-5" then
+    return true    
+  end
+
+  return false
+end
 
 --- Returns the unit's group if it exist and nil otherwise.
 -- @param Wrapper.Unit#UNIT self
--- @return Wrapper.Group#GROUP The Group of the Unit.
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return Wrapper.Group#GROUP The Group of the Unit or `nil` if the unit does not exist.  
 function UNIT:GetGroup()
   self:F2( self.UnitName )
 
@@ -550,6 +659,18 @@ function UNIT:GetAmmo()
   return nil
 end
 
+--- Sets the Unit's Internal Cargo Mass, in kg
+-- @param #UNIT self
+-- @param #number mass to set cargo to
+-- @return #UNIT self
+function UNIT:SetUnitInternalCargo(mass)
+  local DCSUnit = self:GetDCSObject()
+  if DCSUnit then
+    trigger.action.setUnitInternalCargo(DCSUnit:getName(), mass)
+  end
+  return self
+end
+
 --- Get the number of ammunition and in particular the number of shells, rockets, bombs and missiles a unit currently has.
 -- @param #UNIT self
 -- @return #number Total amount of ammo the unit has left. This is the sum of shells, rockets, bombs and missiles.
@@ -584,8 +705,8 @@ function UNIT:GetAmmunition()
       -- Type name of current weapon.
       local Tammo=ammotable[w]["desc"]["typeName"]
 
-      local _weaponString = UTILS.Split(Tammo,"%.")
-      local _weaponName   = _weaponString[#_weaponString]
+      --local _weaponString = UTILS.Split(Tammo,"%.")
+      --local _weaponName   = _weaponString[#_weaponString]
 
       -- Get the weapon category: shell=0, missile=1, rocket=2, bomb=3
       local Category=ammotable[w].desc.category
@@ -613,8 +734,9 @@ function UNIT:GetAmmunition()
         nbombs=nbombs+Nammo
         
       elseif Category==Weapon.Category.MISSILE then
-
-        -- Add up all cruise missiles (category 5)
+        
+        
+        -- Add up all  missiles (category 5)
         if MissileCategory==Weapon.MissileCategory.AAM then
           nmissiles=nmissiles+Nammo
         elseif MissileCategory==Weapon.MissileCategory.ANTI_SHIP then
@@ -622,6 +744,10 @@ function UNIT:GetAmmunition()
         elseif MissileCategory==Weapon.MissileCategory.BM then
           nmissiles=nmissiles+Nammo
         elseif MissileCategory==Weapon.MissileCategory.OTHER then
+          nmissiles=nmissiles+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.SAM then
+          nmissiles=nmissiles+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.CRUISE then
           nmissiles=nmissiles+Nammo
         end
 
@@ -636,12 +762,9 @@ function UNIT:GetAmmunition()
   return nammo, nshells, nrockets, nbombs, nmissiles
 end
 
-
-
 --- Returns the unit sensors.
 -- @param #UNIT self
--- @return DCS#Unit.Sensors
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return DCS#Unit.Sensors Table of sensors.  
 function UNIT:GetSensors()
   self:F2( self.UnitName )
 
@@ -661,7 +784,6 @@ end
 --- Returns if the unit has sensors of a certain type.
 -- @param #UNIT self
 -- @return #boolean returns true if the unit has specified types of sensors. This function is more preferable than Unit.getSensors() if you don't want to get information about all the unit's sensors, and just want to check if the unit has specified types of sensors. 
--- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:HasSensors( ... )
   self:F2( arg )
 
@@ -678,7 +800,6 @@ end
 --- Returns if the unit is SEADable.
 -- @param #UNIT self
 -- @return #boolean returns true if the unit is SEADable. 
--- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:HasSEAD()
   self:F2()
 
@@ -705,7 +826,6 @@ end
 -- @param #UNIT self
 -- @return #boolean  Indicates if at least one of the unit's radar(s) is on.
 -- @return DCS#Object The object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
--- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetRadar()
   self:F2( self.UnitName )
 
@@ -734,6 +854,7 @@ function UNIT:GetFuel()
   
   return nil
 end
+
 
 --- Returns a list of one @{Wrapper.Unit}.
 -- @param #UNIT self
@@ -957,7 +1078,7 @@ function UNIT:GetThreatLevel()
       elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
              not Attributes["ATGM"]                                                   then ThreatLevel = 3
       elseif Attributes["Old Tanks"] or Attributes["APC"] or Attributes["Artillery"]  then ThreatLevel = 2
-      elseif Attributes["Infantry"]                                                   then ThreatLevel = 1
+      elseif Attributes["Infantry"]  or Attributes["EWR"]                             then ThreatLevel = 1
       end
       
       ThreatText = ThreatLevels[ThreatLevel+1]
@@ -1148,8 +1269,9 @@ end
 
 --- Returns true if the UNIT is in the air.
 -- @param #UNIT self
+-- @param #boolean NoHeloCheck If true, no additonal checks for helos are performed.
 -- @return #boolean Return true if in the air or #nil if the UNIT is not existing or alive.   
-function UNIT:InAir()
+function UNIT:InAir(NoHeloCheck)
   self:F2( self.UnitName )
 
   -- Get DCS unit object.
@@ -1159,14 +1281,14 @@ function UNIT:InAir()
 
     -- Get DCS result of whether unit is in air or not.
     local UnitInAir = DCSUnit:inAir()
-    
+
     -- Get unit category.
     local UnitCategory = DCSUnit:getDesc().category
 
     -- If DCS says that it is in air, check if this is really the case, since we might have landed on a building where inAir()=true but actually is not.
     -- This is a workaround since DCS currently does not acknoledge that helos land on buildings.
     -- Note however, that the velocity check will fail if the ground is moving, e.g. on an aircraft carrier!    
-    if UnitInAir==true and UnitCategory == Unit.Category.HELICOPTER then
+    if UnitInAir==true and UnitCategory == Unit.Category.HELICOPTER and (not NoHeloCheck) then
       local VelocityVec3 = DCSUnit:getVelocity()
       local Velocity = UTILS.VecNorm(VelocityVec3)
       local Coordinate = DCSUnit:getPoint()
@@ -1188,23 +1310,26 @@ do -- Event Handling
 
   --- Subscribe to a DCS Event.
   -- @param #UNIT self
-  -- @param Core.Event#EVENTS Event
-  -- @param #function EventFunction (optional) The function to be called when the event occurs for the unit.
-  -- @return #UNIT
-  function UNIT:HandleEvent( Event, EventFunction )
+  -- @param Core.Event#EVENTS EventID Event ID.
+  -- @param #function EventFunction (Optional) The function to be called when the event occurs for the unit.
+  -- @return #UNIT self
+  function UNIT:HandleEvent(EventID, EventFunction)
   
-    self:EventDispatcher():OnEventForUnit( self:GetName(), EventFunction, self, Event )
+    self:EventDispatcher():OnEventForUnit(self:GetName(), EventFunction, self, EventID)
     
     return self
   end
   
   --- UnSubscribe to a DCS event.
   -- @param #UNIT self
-  -- @param Core.Event#EVENTS Event
-  -- @return #UNIT
-  function UNIT:UnHandleEvent( Event )
+  -- @param Core.Event#EVENTS EventID Event ID.
+  -- @return #UNIT self
+  function UNIT:UnHandleEvent(EventID)
   
-    self:EventDispatcher():RemoveForUnit( self:GetName(), self, Event )
+    --self:EventDispatcher():RemoveForUnit( self:GetName(), self, EventID )
+    
+    -- Fixes issue #1365 https://github.com/FlightControl-Master/MOOSE/issues/1365
+    self:EventDispatcher():RemoveEvent(self, EventID)
     
     return self
   end
@@ -1362,4 +1487,34 @@ function UNIT:GetTemplateFuel()
   end
 
   return nil
+end
+
+--- GROUND - Switch on/off radar emissions of a unit.
+-- @param #UNIT self
+-- @param #boolean switch If true, emission is enabled. If false, emission is disabled. 
+-- @return #UNIT self
+function UNIT:EnableEmission(switch)
+  self:F2( self.UnitName )
+  
+  local switch = switch or false
+  
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+  
+    DCSUnit:enableEmission(switch)
+
+  end
+
+  return self
+end
+
+--- Get skill from Unit.
+-- @param #UNIT self
+-- @return #string Skill String of skill name.
+function UNIT:GetSkill()
+  self:F2( self.UnitName )
+  local name = self.UnitName
+  local skill = _DATABASE.Templates.Units[name].Template.skill or "Random"
+  return skill
 end

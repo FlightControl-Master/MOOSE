@@ -46,14 +46,14 @@
 -- @field #number InitOffsetAngle Link offset angle in degrees.
 -- @field #number InitStaticHeading Heading of the static.
 -- @field #string InitStaticLivery Livery for aircraft.
--- @field #string InitStaticShape Shape of teh static.
+-- @field #string InitStaticShape Shape of the static.
 -- @field #string InitStaticType Type of the static.
 -- @field #string InitStaticCategory Categrory of the static.
 -- @field #string InitStaticName Name of the static.
 -- @field Core.Point#COORDINATE InitStaticCoordinate Coordinate where to spawn the static.
--- @field #boolean InitDead Set static to be dead if true.
--- @field #boolean InitCargo If true, static can act as cargo.
--- @field #number InitCargoMass Mass of cargo in kg.
+-- @field #boolean InitStaticDead Set static to be dead if true.
+-- @field #boolean InitStaticCargo If true, static can act as cargo.
+-- @field #number InitStaticCargoMass Mass of cargo in kg.
 -- @extends Core.Base#BASE
 
 
@@ -138,24 +138,24 @@ SPAWNSTATIC = {
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:NewFromStatic(SpawnTemplateName, SpawnCountryID)
 
-	local self = BASE:Inherit( self, BASE:New() ) -- #SPAWNSTATIC
+  local self = BASE:Inherit( self, BASE:New() ) -- #SPAWNSTATIC
   
-	local TemplateStatic, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate(SpawnTemplateName)
-	
-	if TemplateStatic then
-		self.SpawnTemplatePrefix = SpawnTemplateName
-		self.TemplateStaticUnit  = UTILS.DeepCopy(TemplateStatic.units[1])
-		self.CountryID           = SpawnCountryID or CountryID
-		self.CategoryID          = CategoryID
-		self.CoalitionID         = CoalitionID
-		self.SpawnIndex          = 0
-	else
-		error( "SPAWNSTATIC:New: There is no static declared in the mission editor with SpawnTemplatePrefix = '" .. tostring(SpawnTemplateName) .. "'" )
-	end
+  local TemplateStatic, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate(SpawnTemplateName)
+  
+  if TemplateStatic then
+    self.SpawnTemplatePrefix = SpawnTemplateName
+    self.TemplateStaticUnit  = UTILS.DeepCopy(TemplateStatic.units[1])
+    self.CountryID           = SpawnCountryID or CountryID
+    self.CategoryID          = CategoryID
+    self.CoalitionID         = CoalitionID
+    self.SpawnIndex          = 0
+  else
+    error( "SPAWNSTATIC:New: There is no static declared in the mission editor with SpawnTemplatePrefix = '" .. tostring(SpawnTemplateName) .. "'" )
+  end
 
   self:SetEventPriority( 5 )
 
-	return self
+  return self
 end
 
 --- Creates the main object to spawn a @{Static} given a template table.
@@ -241,12 +241,26 @@ function SPAWNSTATIC:InitShape(StaticShape)
   return self
 end
 
+--- Initialize parameters for spawning FARPs.
+-- @param #SPAWNSTATIC self
+-- @param #number CallsignID Callsign ID. Default 1 (="London").
+-- @param #number Frequency Frequency in MHz. Default 127.5 MHz.
+-- @param #number Modulation Modulation 0=AM, 1=FM.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:InitFARP(CallsignID, Frequency, Modulation)
+  self.InitFarp=true
+  self.InitFarpCallsignID=CallsignID or 1
+  self.InitFarpFreq=Frequency or 127.5
+  self.InitFarpModu=Modulation or 0
+  return self
+end
+
 --- Initialize cargo mass.
 -- @param #SPAWNSTATIC self
 -- @param #number Mass Mass of the cargo in kg.
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:InitCargoMass(Mass)
-  self.InitCargoMass=Mass
+  self.InitStaticCargoMass=Mass
   return self
 end
 
@@ -255,7 +269,16 @@ end
 -- @param #boolean IsCargo If true, this static can act as cargo.
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:InitCargo(IsCargo)
-  self.InitCargo=IsCargo
+  self.InitStaticCargo=IsCargo
+  return self
+end
+
+--- Initialize as dead.
+-- @param #SPAWNSTATIC self
+-- @param #boolean IsCargo If true, this static is dead.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:InitDead(IsDead)
+  self.InitStaticDead=IsDead
   return self
 end
 
@@ -403,12 +426,16 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
     Template.livery_id=self.InitStaticLivery
   end
   
-  if self.InitDead~=nil then
-    Template.dead=self.InitDead
+  if self.InitStaticDead~=nil then
+    Template.dead=self.InitStaticDead
   end
   
-  if self.InitCargo~=nil then
-    Template.isCargo=self.InitCargo
+  if self.InitStaticCargo~=nil then
+    Template.canCargo=self.InitStaticCargo
+  end
+  
+  if self.InitStaticCargoMass~=nil then
+    Template.mass=self.InitStaticCargoMass
   end
   
   if self.InitLinkUnit then
@@ -420,22 +447,51 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
     Template.offsets.angle=self.InitOffsetAngle and math.rad(self.InitOffsetAngle) or 0
   end
   
+  if self.InitFarp then
+    Template.heliport_callsign_id = self.InitFarpCallsignID
+    Template.heliport_frequency   = self.InitFarpFreq
+    Template.heliport_modulation  = self.InitFarpModu
+    Template.unitId=nil
+  end
+  
   -- Increase spawn index counter.
   self.SpawnIndex = self.SpawnIndex + 1
   
   -- Name of the spawned static.
   Template.name = self.InitStaticName or string.format("%s#%05d", self.SpawnTemplatePrefix, self.SpawnIndex)
 
-  -- Register the new static.
-  --_DATABASE:_RegisterStaticTemplate(Template, self.CoalitionID, self.CategoryID, CountryID)
-  _DATABASE:AddStatic(Template.name)
+  -- Add and register the new static.
+  local mystatic=_DATABASE:AddStatic(Template.name)
   
   -- Debug output.
   self:T(Template)
   
   -- Add static to the game.
-  local Static=coalition.addStaticObject(CountryID, Template)
-
+  local Static=nil
+  
+  if self.InitFarp then
     
-  return _DATABASE:FindStatic(Static:getName())
+    local TemplateGroup={}    
+    TemplateGroup.units={}
+    TemplateGroup.units[1]=Template
+    
+    TemplateGroup.visible=true
+    TemplateGroup.hidden=false
+    TemplateGroup.x=Template.x
+    TemplateGroup.y=Template.y
+    TemplateGroup.name=Template.name
+
+    self:T("Spawning FARP")        
+    self:T({Template=Template})
+    self:T({TemplateGroup=TemplateGroup})
+    
+    -- ED's dirty way to spawn FARPS.
+    Static=coalition.addGroup(CountryID, -1, TemplateGroup)
+  else
+    self:T("Spawning Static")        
+    self:T2({Template=Template})  
+    Static=coalition.addStaticObject(CountryID, Template)
+  end
+    
+  return mystatic
 end

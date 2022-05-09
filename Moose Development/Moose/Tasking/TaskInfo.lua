@@ -344,7 +344,9 @@ function TASKINFO:Report( Report, Detail, ReportGroup, Task )
         Text = DataText
       else
         local DataText = Data.Data -- #string
-        Text = DataText
+        if type(DataText) == "string" then --Issue #1388 - don't just assume this is a string
+          Text = DataText
+        end
       end
 
       if Line < math.floor( Data.Order / 10 ) then

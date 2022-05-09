@@ -1,4 +1,4 @@
---- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo.
+--- **AI** - Models the intelligent transportation of cargo using ground vehicles.
 --
 -- ===
 -- 
@@ -98,7 +98,8 @@ function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
   self:AddTransition( "*", "Guard", "Unloaded" )
   self:AddTransition( "*", "Home", "*" )
   self:AddTransition( "*", "Reload", "Boarding" )
-  
+  self:AddTransition( "*", "Deployed", "*" )
+  self:AddTransition( "*", "PickedUp", "*" )
   self:AddTransition( "*", "Destroyed", "Destroyed" )
 
   self:SetCombatRadius( CombatRadius )
@@ -154,6 +155,45 @@ function AI_CARGO_APC:SetCarrier( CargoCarrier )
 
   self:Guard()
 
+  return self
+end
+
+--- Set whether or not the carrier will use roads to *pickup* and *deploy* the cargo.
+-- @param #AI_CARGO_APC self
+-- @param #boolean Offroad If true, carrier will not use roads. If `nil` or `false` the carrier will use roads when available.
+-- @param #number Formation Offroad formation used. Default is `ENUMS.Formation.Vehicle.Offroad`.
+-- @return #AI_CARGO_APC self
+function AI_CARGO_APC:SetOffRoad(Offroad, Formation)
+
+  self:SetPickupOffRoad(Offroad, Formation)
+  self:SetDeployOffRoad(Offroad, Formation)
+  
+  return self
+end
+
+--- Set whether the carrier will *not* use roads to *pickup* the cargo.
+-- @param #AI_CARGO_APC self
+-- @param #boolean Offroad If true, carrier will not use roads.
+-- @param #number Formation Offroad formation used. Default is `ENUMS.Formation.Vehicle.Offroad`.
+-- @return #AI_CARGO_APC self
+function AI_CARGO_APC:SetPickupOffRoad(Offroad, Formation)
+
+  self.pickupOffroad=Offroad
+  self.pickupFormation=Formation or ENUMS.Formation.Vehicle.OffRoad
+  
+  return self
+end
+
+--- Set whether the carrier will *not* use roads to *deploy* the cargo.
+-- @param #AI_CARGO_APC self
+-- @param #boolean Offroad If true, carrier will not use roads.
+-- @param #number Formation Offroad formation used. Default is `ENUMS.Formation.Vehicle.Offroad`.
+-- @return #AI_CARGO_APC self
+function AI_CARGO_APC:SetDeployOffRoad(Offroad, Formation)
+
+  self.deployOffroad=Offroad
+  self.deployFormation=Formation or ENUMS.Formation.Vehicle.OffRoad
+  
   return self
 end
 
@@ -350,10 +390,13 @@ function AI_CARGO_APC:onafterFollow( APC, From, Event, To )
   
 end
 
-
---- @param #AI_CARGO_APC 
--- @param Wrapper.Group#GROUP APC
-function AI_CARGO_APC._Pickup( APC, self, Coordinate, Speed, PickupZone )
+--- Pickup task function. Triggers Load event.
+-- @param Wrapper.Group#GROUP APC The cargo carrier group.
+-- @param #AI_CARGO_APC sel `AI_CARGO_APC` class.
+-- @param Core.Point#COORDINATE Coordinate. The coordinate (not used).
+-- @param #number Speed Speed (not used).
+-- @param Core.Zone#ZONE PickupZone Pickup zone.
+function AI_CARGO_APC._Pickup(APC, self, Coordinate, Speed, PickupZone)
 
   APC:F( { "AI_CARGO_APC._Pickup:", APC:GetName() } )
 
@@ -362,8 +405,12 @@ function AI_CARGO_APC._Pickup( APC, self, Coordinate, Speed, PickupZone )
   end
 end
 
-
-function AI_CARGO_APC._Deploy( APC, self, Coordinate, DeployZone )
+--- Deploy task function. Triggers Unload event.
+-- @param Wrapper.Group#GROUP APC The cargo carrier group.
+-- @param #AI_CARGO_APC self `AI_CARGO_APC` class.
+-- @param Core.Point#COORDINATE Coordinate. The coordinate (not used).
+-- @param Core.Zone#ZONE DeployZone Deploy zone.
+function AI_CARGO_APC._Deploy(APC, self, Coordinate, DeployZone)
 
   APC:F( { "AI_CARGO_APC._Deploy:", APC } )
 
@@ -392,12 +439,20 @@ function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate, Speed, He
       self.RoutePickup = true
       
       local _speed=Speed or APC:GetSpeedMax()*0.5
+
+      -- Route on road.
+      local Waypoints = {}
       
-      local Waypoints = APC:TaskGroundOnRoad( Coordinate, _speed, "Line abreast", true )
+      if self.pickupOffroad then
+        Waypoints[1]=APC:GetCoordinate():WaypointGround(Speed, self.pickupFormation)
+        Waypoints[2]=Coordinate:WaypointGround(_speed, self.pickupFormation, DCSTasks)
+      else
+        Waypoints=APC:TaskGroundOnRoad(Coordinate, _speed, ENUMS.Formation.Vehicle.OffRoad, true)
+      end
+      
   
       local TaskFunction = APC:TaskFunction( "AI_CARGO_APC._Pickup", self, Coordinate, Speed, PickupZone )
-      
-      self:F({Waypoints = Waypoints})
+
       local Waypoint = Waypoints[#Waypoints]
       APC:SetTaskWaypoint( Waypoint, TaskFunction ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
     
@@ -428,18 +483,34 @@ function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed, He
 
     self.RouteDeploy = true
     
-    local _speed=Speed or APC:GetSpeedMax()*0.5
-     
-    local Waypoints = APC:TaskGroundOnRoad( Coordinate, _speed, "Line abreast", true )
+    -- Set speed in km/h.
+    local speedmax=APC:GetSpeedMax()    
+    local _speed=Speed or speedmax*0.5    
+    _speed=math.min(_speed, speedmax)
 
+    -- Route on road.
+    local Waypoints = {}
+    
+    if self.deployOffroad then
+      Waypoints[1]=APC:GetCoordinate():WaypointGround(Speed, self.deployFormation)
+      Waypoints[2]=Coordinate:WaypointGround(_speed, self.deployFormation, DCSTasks)
+    else
+      Waypoints=APC:TaskGroundOnRoad(Coordinate, _speed, ENUMS.Formation.Vehicle.OffRoad, true)
+    end
+
+    -- Task function
     local TaskFunction = APC:TaskFunction( "AI_CARGO_APC._Deploy", self, Coordinate, DeployZone )
     
-    self:F({Waypoints = Waypoints})
+    -- Last waypoint
     local Waypoint = Waypoints[#Waypoints]
-    APC:SetTaskWaypoint( Waypoint, TaskFunction ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+    
+    -- Set task function
+    APC:SetTaskWaypoint(Waypoint, TaskFunction) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
   
+    -- Route group
     APC:Route( Waypoints, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
 
+    -- Call parent function.
     self:GetParent( self, AI_CARGO_APC ).onafterDeploy( self, APC, From, Event, To, Coordinate, Speed, Height, DeployZone )
 
   end

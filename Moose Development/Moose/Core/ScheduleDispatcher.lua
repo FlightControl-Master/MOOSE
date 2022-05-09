@@ -109,9 +109,11 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   self.ObjectSchedulers = self.ObjectSchedulers or setmetatable( {}, { __mode = "v" } ) 
   
   if Scheduler.MasterObject then
+    --env.info("FF Object Scheduler")
     self.ObjectSchedulers[CallID] = Scheduler
     self:F3( { CallID = CallID, ObjectScheduler = tostring(self.ObjectSchedulers[CallID]), MasterObject = tostring(Scheduler.MasterObject) } )
   else
+    --env.info("FF Persistent Scheduler")
     self.PersistentSchedulers[CallID] = Scheduler
     self:F3( { CallID = CallID, PersistentScheduler = self.PersistentSchedulers[CallID] } )
   end
@@ -122,7 +124,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   self.Schedule[Scheduler][CallID].Function = ScheduleFunction
   self.Schedule[Scheduler][CallID].Arguments = ScheduleArguments
   self.Schedule[Scheduler][CallID].StartTime = timer.getTime() + ( Start or 0 )
-  self.Schedule[Scheduler][CallID].Start = Start + 0.1
+  self.Schedule[Scheduler][CallID].Start = Start + 0.001
   self.Schedule[Scheduler][CallID].Repeat = Repeat or 0
   self.Schedule[Scheduler][CallID].Randomize = Randomize or 0
   self.Schedule[Scheduler][CallID].Stop = Stop
@@ -219,6 +221,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
           if ShowTrace then
             SchedulerObject:T( Prefix .. Name .. ":" .. Line .. " (" .. Source .. ")" )
           end
+          -- The master object is passed as first parameter. A few :Schedule() calls in MOOSE expect this currently. But in principle it should be removed.
           return ScheduleFunction( SchedulerObject, unpack( ScheduleArguments ) ) 
         end
         Status, Result = xpcall( Timer, ErrorHandler )
@@ -317,7 +320,7 @@ end
 --- Stop dispatcher.
 -- @param #SCHEDULEDISPATCHER self
 -- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
--- @param #table CallID Call ID.
+-- @param #string CallID (Optional) Scheduler Call ID. If nil, all pending schedules are stopped recursively.
 function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
   self:F2( { Stop = CallID, Scheduler = Scheduler } )
 

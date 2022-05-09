@@ -59,7 +59,13 @@ function ATC_GROUND:New( Airbases, AirbaseList )
   
 
   for AirbaseID, Airbase in pairs( self.Airbases ) do
-    Airbase.ZoneBoundary = _DATABASE:FindAirbase( AirbaseID ):GetZone()
+    -- Specified ZoneBoundary is used if setted or Airbase radius by default
+    if Airbase.ZoneBoundary then
+      Airbase.ZoneBoundary = ZONE_POLYGON_BASE:New( "Boundary " .. AirbaseID, Airbase.ZoneBoundary )
+    else
+      Airbase.ZoneBoundary = _DATABASE:FindAirbase( AirbaseID ):GetZone()
+    end
+
     Airbase.ZoneRunways = {}
     for PointsRunwayID, PointsRunway in pairs( Airbase.PointsRunways ) do
       Airbase.ZoneRunways[PointsRunwayID] = ZONE_POLYGON_BASE:New( "Runway " .. PointsRunwayID, PointsRunway )
@@ -1053,7 +1059,7 @@ end
 --    * `AIRBASE.Nevada.Lincoln_County`
 --    * `AIRBASE.Nevada.McCarran_International_Airport`
 --    * `AIRBASE.Nevada.Mesquite`
---    * `AIRBASE.Nevada.Mina_Airport_3Q0`
+--    * `AIRBASE.Nevada.Mina_Airport`
 --    * `AIRBASE.Nevada.Nellis_AFB`
 --    * `AIRBASE.Nevada.North_Las_Vegas`
 --    * `AIRBASE.Nevada.Pahute_Mesa_Airstrip`
@@ -1288,7 +1294,7 @@ ATC_GROUND_NEVADA = {
         },
       },
     },
-    [AIRBASE.Nevada.Mina_Airport_3Q0] = {
+    [AIRBASE.Nevada.Mina_Airport] = {
       PointsRunways = {
         [1] = {
           [1] = {["y"]=-290054.57371429,["x"]=-160930.02228572,},
@@ -3263,5 +3269,310 @@ function ATC_GROUND_PERSIANGULF:Start( RepeatScanSeconds )
 end
           
 
+ --- @type ATC_GROUND_MARIANAISLANDS
+-- @extends #ATC_GROUND
 
      
+
+--- # ATC\_GROUND\_MARIANA, extends @{#ATC_GROUND}
+-- 
+-- The ATC\_GROUND\_MARIANA class monitors the speed of the airplanes at the airbase during taxi.
+-- The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.
+-- 
+-- ---
+-- 
+-- ![Banner Image](..\Presentations\ATC_GROUND\Dia1.JPG)
+-- 
+-- ---
+-- 
+-- The default maximum speed for the airbases at Persian Gulf is **50 km/h**. Warnings are given if this speed limit is trespassed.
+-- Players will be immediately kicked when driving faster than **150 km/h** on the taxi way.
+-- 
+-- The ATC\_GROUND\_MARIANA class monitors the speed of the airplanes at the airbase during taxi.
+-- The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.
+-- 
+-- The pilot will receive 3 times a warning during speeding. After the 3rd warning, if the pilot is still driving
+-- faster than the maximum allowed speed, the pilot will be kicked.
+-- 
+-- Different airbases have different maximum speeds, according safety regulations.
+-- 
+-- # Airbases monitored
+-- 
+-- The following airbases are monitored at the Mariana Island region.
+-- Use the @{Wrapper.Airbase#AIRBASE.MarianaIslands} enumeration to select the airbases to be monitored.
+-- 
+-- * AIRBASE.MarianaIslands.Rota_Intl
+-- * AIRBASE.MarianaIslands.Andersen_AFB
+-- * AIRBASE.MarianaIslands.Antonio_B_Won_Pat_Intl
+-- * AIRBASE.MarianaIslands.Saipan_Intl
+-- * AIRBASE.MarianaIslands.Tinian_Intl
+-- * AIRBASE.MarianaIslands.Olf_Orote
+--
+-- # Installation
+-- 
+-- ## In Single Player Missions
+-- 
+-- ATC\_GROUND is fully functional in single player.
+-- 
+-- ## In Multi Player Missions
+-- 
+-- ATC\_GROUND is functional in multi player, however ...
+-- 
+-- Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
+-- To **work around this problem**, a much better solution has been made, using the **slot blocker** script designed
+-- by Ciribob. 
+-- 
+-- With the help of __Ciribob__, this script has been extended to also kick client players while in flight.
+-- ATC\_GROUND is communicating with this modified script to kick players!
+-- 
+-- Install the file **SimpleSlotBlockGameGUI.lua** on the server, following the installation instructions described by Ciribob.
+-- 
+-- [Simple Slot Blocker from Ciribob & FlightControl](https://github.com/ciribob/DCS-SimpleSlotBlock)
+-- 
+-- # Script it!
+-- 
+-- ## 1. ATC_GROUND_MARIANAISLANDS Constructor
+-- 
+-- Creates a new ATC_GROUND_MARIANAISLANDS object that will monitor pilots taxiing behaviour.
+-- 
+--     -- This creates a new ATC_GROUND_MARIANAISLANDS object.
+-- 
+--     -- Monitor for these clients the airbases.
+--     AirbasePoliceCaucasus = ATC_GROUND_MARIANAISLANDS:New()
+--     
+--     ATC_Ground = ATC_GROUND_MARIANAISLANDS:New( 
+--       { AIRBASE.MarianaIslands.Andersen_AFB,
+--         AIRBASE.MarianaIslands.Saipan_Intl 
+--       } 
+--     )
+-- 
+--     
+-- ## 2. Set various options
+-- 
+-- There are various methods that you can use to tweak the behaviour of the ATC\_GROUND classes.
+-- 
+-- ### 2.1 Speed limit at an airbase.
+-- 
+--   * @{#ATC_GROUND.SetKickSpeed}(): Set the speed limit allowed at an airbase in meters per second.
+--   * @{#ATC_GROUND.SetKickSpeedKmph}(): Set the speed limit allowed at an airbase in kilometers per hour.
+--   * @{#ATC_GROUND.SetKickSpeedMiph}(): Set the speed limit allowed at an airbase in miles per hour.
+--   
+-- ### 2.2 Prevent Takeoff at an airbase. Players will be kicked immediately.
+-- 
+--   * @{#ATC_GROUND.SetMaximumKickSpeed}(): Set the maximum speed allowed at an airbase in meters per second. 
+--   * @{#ATC_GROUND.SetMaximumKickSpeedKmph}(): Set the maximum speed allowed at an airbase in kilometers per hour.
+--   * @{#ATC_GROUND.SetMaximumKickSpeedMiph}(): Set the maximum speed allowed at an airbase in miles per hour.
+--     
+---- @field #ATC_GROUND_MARIANAISLANDS
+ATC_GROUND_MARIANAISLANDS = {
+  ClassName = "ATC_GROUND_MARIANAISLANDS",
+  Airbases = {
+  
+    [AIRBASE.MarianaIslands.Andersen_AFB] = {
+      ZoneBoundary = {
+          [1]={["y"]=16534.138036037,["x"]=11357.42159178,},
+          [2]={["y"]=16193.406442738,["x"]=12080.012957533,},
+          [3]={["y"]=13846.966851869,["x"]=12017.348398727,},
+          [4]={["y"]=13085.815989171,["x"]=11686.317876875,},
+          [5]={["y"]=13157.991797443,["x"]=11307.826209991,},
+          [6]={["y"]=12055.725179065,["x"]=10795.955695916,},
+          [7]={["y"]=12762.455491112,["x"]=8890.9830441032,},
+          [8]={["y"]=15955.829493693,["x"]=10333.527220132,},
+          [9]={["y"]=16537.500532414,["x"]=11302.009499603,},
+      },
+      PointsRunways = {
+        [1]={
+          [1]={["y"]=12586.683049611,["x"]=10224.374497932,},
+          [2]={["y"]=16191.720475696,["x"]=11791.299100017,},
+          [3]={["y"]=16126.93956642,["x"]=11938.855615591,},
+          [4]={["y"]=12520.758127164,["x"]=10385.177131701,},
+          [5]={["y"]=12584.654720512,["x"]=10227.416991581,},
+        },
+        [2]={
+          [1]={["y"]=12663.030391743,["x"]=9661.9623015306,},
+          [2]={["y"]=16478.347303358,["x"]=11328.665745976,},
+          [3]={["y"]=16405.4731048,["x"]=11479.11570429,},
+          [4]={["y"]=12597.277684174,["x"]=9817.9733769647,},
+          [5]={["y"]=12661.894752524,["x"]=9674.4462086962,},
+        },     
+      },
+    },
+    [AIRBASE.MarianaIslands.Antonio_B_Won_Pat_Intl] = {
+      ZoneBoundary = {
+          [1]={["y"]=2288.5182403943,["x"]=1469.0170841716,},
+          [2]={["y"]=1126.2025877996,["x"]=1174.37135631,},
+          [3]={["y"]=-2015.6461924287,["x"]=-484.62000718931,},
+          [4]={["y"]=-2102.1292389114,["x"]=-988.03393750566,},
+          [5]={["y"]=476.03853524366,["x"]=-1220.1783269883,},
+          [6]={["y"]=2059.2220058047,["x"]=78.889693514402,},
+          [7]={["y"]=1898.1396965104,["x"]=705.67531284795,},
+          [8]={["y"]=2760.1768681934,["x"]=1026.0681119777,},
+          [9]={["y"]=2317.2278959994,["x"]=1460.8143254273,},          
+      },
+      PointsRunways = {
+        [1]={
+          [1]={["y"]=-1872.6620108821,["x"]=-924.3572605835,},
+          [2]={["y"]=1763.4754603305,["x"]=735.35988877983,},
+          [3]={["y"]=1700.6941677961,["x"]=866.32615476157,},
+          [4]={["y"]=-1934.0078007732,["x"]=-779.8149298453,},
+          [5]={["y"]=-1875.0113982627,["x"]=-914.95971106094,},
+        },
+        [2]={
+          [1]={["y"]=-1512.9403660377,["x"]=-1005.5903386188,},
+          [2]={["y"]=1577.9055714735,["x"]=413.22750176368,},
+          [3]={["y"]=1523.1182807849,["x"]=543.89726442232,},
+          [4]={["y"]=-1572.5102998047,["x"]=-867.04004322806,},
+          [5]={["y"]=-1514.2790162347,["x"]=-1003.5823633233,},
+        },
+      },
+    },
+    [AIRBASE.MarianaIslands.Rota_Intl] = {
+      ZoneBoundary = {
+        [1]={["y"]=47237.615412849,["x"]=76048.890408862,},
+        [2]={["y"]=49938.030053628,["x"]=75921.721582932,},
+        [3]={["y"]=49931.24873272,["x"]=75735.184004851,},
+        [4]={["y"]=49295.999227075,["x"]=75754.716414519,},
+        [5]={["y"]=49286.963307515,["x"]=75510.037806569,},
+        [6]={["y"]=48774.280745707,["x"]=75513.331990155,},
+        [7]={["y"]=48785.021396773,["x"]=75795.691662161,},
+        [8]={["y"]=47232.749278491,["x"]=75839.239059146,},
+        [9]={["y"]=47236.687866223,["x"]=76042.706764692,},         
+      },
+      PointsRunways = {
+        [1]={
+          [1]={["y"]=49741.295228062,["x"]=75901.50955922,},
+          [2]={["y"]=49739.033213305,["x"]=75768.333440425,},
+          [3]={["y"]=47448.460520408,["x"]=75857.400271466,},
+          [4]={["y"]=47452.270177742,["x"]=75999.965448133,},
+          [5]={["y"]=49738.502011054,["x"]=75905.338915708,},
+        },        
+      },
+    },
+    [AIRBASE.MarianaIslands.Saipan_Intl] = {
+      ZoneBoundary = {
+        [1]={["y"]=100489.08491445,["x"]=179799.05158855,},
+        [2]={["y"]=100869.73415313,["x"]=179948.98719903,},
+        [3]={["y"]=101364.78967515,["x"]=180831.98517043,},
+        [4]={["y"]=101563.85713359,["x"]=180885.21496237,},
+        [5]={["y"]=101733.92591034,["x"]=180457.73296886,},
+        [6]={["y"]=103340.30228775,["x"]=180990.08362622,},
+        [7]={["y"]=103459.55080438,["x"]=180453.77747027,},
+        [8]={["y"]=100406.63048095,["x"]=179266.60983762,},
+        [9]={["y"]=100225.55027532,["x"]=179423.9380961,},
+        [10]={["y"]=100477.48558937,["x"]=179791.9827288,},        
+      },
+      PointsRunways = {
+        [1]={
+          [1]={["y"]=103170.38882002,["x"]=180654.56630524,},
+          [2]={["y"]=103235.37868835,["x"]=180497.25368418,},
+          [3]={["y"]=100564.72969504,["x"]=179435.41443498,},
+          [4]={["y"]=100509.30718722,["x"]=179584.65394733,},
+          [5]={["y"]=103163.53918905,["x"]=180651.82645285,},
+        },
+        [2]={
+          [1]={["y"]=103048.83223261,["x"]=180819.94107128,},
+          [2]={["y"]=103087.60579257,["x"]=180720.06315265,},
+          [3]={["y"]=101037.52694966,["x"]=179899.50061624,},
+          [4]={["y"]=100994.61708907,["x"]=180009.33151758,},
+          [5]={["y"]=103043.26643227,["x"]=180820.40488798,},
+        },
+      },
+    },
+    [AIRBASE.MarianaIslands.Tinian_Intl] = {
+      ZoneBoundary = {
+        [1]={["y"]=88393.477575413,["x"]=166704.16076438,},
+        [2]={["y"]=91581.732441809,["x"]=167402.54409276,},
+        [3]={["y"]=91533.451647402,["x"]=166826.23670062,},
+        [4]={["y"]=90827.604136952,["x"]=166699.75590414,},
+        [5]={["y"]=90894.853975623,["x"]=166375.37836304,},
+        [6]={["y"]=89995.027922869,["x"]=166224.92495935,},
+        [7]={["y"]=88937.62899352,["x"]=166244.48573911,},
+        [8]={["y"]=88408.916178231,["x"]=166480.39896864,},
+        [9]={["y"]=88387.745481732,["x"]=166685.82715656,},
+      },      
+      PointsRunways = {
+        [1]={
+          [1]={["y"]=91329.480937912,["x"]=167204.44064529,},
+          [2]={["y"]=91363.95475433,["x"]=167038.15603429,},
+          [3]={["y"]=88585.849307337,["x"]=166520.3807647,},
+          [4]={["y"]=88554.422227212,["x"]=166686.49505251,},
+          [5]={["y"]=91318.8152578,["x"]=167203.31794212,},
+        },
+      },
+    },
+  
+  },
+}
+
+--- Creates a new ATC_GROUND_MARIANAISLANDS object.
+-- @param #ATC_GROUND_MARIANAISLANDS self
+-- @param AirbaseNames A list {} of airbase names (Use AIRBASE.MarianaIslands enumerator).
+-- @return #ATC_GROUND_MARIANAISLANDS self
+function ATC_GROUND_MARIANAISLANDS:New( AirbaseNames )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, ATC_GROUND:New( self.Airbases, AirbaseNames ) )
+
+  self:SetKickSpeedKmph( 50 )
+  self:SetMaximumKickSpeedKmph( 150 )
+
+--  -- Andersen
+--  local AndersenBoundary = GROUP:FindByName( "Andersen Boundary" )
+--  self.Airbases[AIRBASE.MarianaIslands.Andersen_AFB].ZoneBoundary = ZONE_POLYGON:New( "Andersen Boundary", AndersenBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
+--
+--  local AndersenRunway1 = GROUP:FindByName( "Andersen Runway 1" )
+--  self.Airbases[AIRBASE.MarianaIslands.Andersen_AFB].ZoneRunways[1] = ZONE_POLYGON:New( "Andersen Runway 1", AndersenRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
+--  
+--  local AndersenRunway2 = GROUP:FindByName( "Andersen Runway 2" )
+--  self.Airbases[AIRBASE.MarianaIslands.Andersen_AFB].ZoneRunways[2] = ZONE_POLYGON:New( "Andersen Runway 2", AndersenRunway2 ):SmokeZone(SMOKECOLOR.Red):Flush()
+--  
+--  
+--  -- Antonio_B_Won_Pat_International_Airport
+--  local AntonioBoundary = GROUP:FindByName( "Antonio Boundary" )
+--  self.Airbases[AIRBASE.MarianaIslands.Antonio_B_Won_Pat_Intl].ZoneBoundary = ZONE_POLYGON:New( "Antonio Boundary", AntonioBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
+--
+--  local AntonioRunway1 = GROUP:FindByName( "Antonio Runway 1" )
+--  self.Airbases[AIRBASE.MarianaIslands.Antonio_B_Won_Pat_Intl].ZoneRunways[1] = ZONE_POLYGON:New( "Antonio Runway 1", AntonioRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
+--  
+--  local AntonioRunway2 = GROUP:FindByName( "Antonio Runway 2" )
+--  self.Airbases[AIRBASE.MarianaIslands.Antonio_B_Won_Pat_Intl].ZoneRunways[2] = ZONE_POLYGON:New( "Antonio Runway 2", AntonioRunway2 ):SmokeZone(SMOKECOLOR.Red):Flush()
+--  
+--  
+--  -- Rota_International_Airport
+--  local RotaBoundary = GROUP:FindByName( "Rota Boundary" )
+--  self.Airbases[AIRBASE.MarianaIslands.Rota_Intl].ZoneBoundary = ZONE_POLYGON:New( "Rota Boundary", RotaBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
+--
+--  local RotaRunway1 = GROUP:FindByName( "Rota Runway 1" )
+--  self.Airbases[AIRBASE.MarianaIslands.Rota_Intl].ZoneRunways[1] = ZONE_POLYGON:New( "Rota Runway 1", RotaRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
+--
+--     
+--  -- Saipan_International_Airport
+--  local SaipanBoundary = GROUP:FindByName( "Saipan Boundary" )
+--  self.Airbases[AIRBASE.MarianaIslands.Saipan_Intl].ZoneBoundary = ZONE_POLYGON:New( "Saipan Boundary", SaipanBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
+--
+--  local SaipanRunway1 = GROUP:FindByName( "Saipan Runway 1" )
+--  self.Airbases[AIRBASE.MarianaIslands.Saipan_Intl].ZoneRunways[1] = ZONE_POLYGON:New( "Saipan Runway 1", SaipanRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
+--  
+--  local SaipanRunway2 = GROUP:FindByName( "Saipan Runway 2" )
+--  self.Airbases[AIRBASE.MarianaIslands.Saipan_Intl].ZoneRunways[2] = ZONE_POLYGON:New( "Saipan Runway 2", SaipanRunway2 ):SmokeZone(SMOKECOLOR.Red):Flush()
+--  
+--        
+--  -- Tinian_International_Airport
+--  local TinianBoundary = GROUP:FindByName( "Tinian Boundary" )
+--  self.Airbases[AIRBASE.MarianaIslands.Tinian_Intl].ZoneBoundary = ZONE_POLYGON:New( "Tinian Boundary", TinianBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
+--
+--  local TinianRunway1 = GROUP:FindByName( "Tinian Runway 1" )
+--  self.Airbases[AIRBASE.MarianaIslands.Tinian_Intl].ZoneRunways[1] = ZONE_POLYGON:New( "Tinian Runway 1", TinianRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
+
+  return self
+end
+
+
+--- Start SCHEDULER for ATC_GROUND_MARIANAISLANDS object.
+-- @param #ATC_GROUND_MARIANAISLANDS self
+-- @param RepeatScanSeconds Time in second for defining occurency of alerts.
+-- @return nothing
+function ATC_GROUND_MARIANAISLANDS:Start( RepeatScanSeconds )
+  RepeatScanSeconds = RepeatScanSeconds or 0.05
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
+end

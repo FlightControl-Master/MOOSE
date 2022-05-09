@@ -95,6 +95,11 @@ do -- world
   --- Returns a table of mark panels indexed numerically that are present within the mission. See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_getMarkPanels)
   -- @function [parent=#world] getMarkPanels
   -- @return #table Table of marks.
+
+  --- Returns a table of DCS airbase objects.
+  -- @function [parent=#world] getAirbases
+  -- @param #number coalitionId The coalition side number ID. Default is all airbases are returned.
+  -- @return #table Table of DCS airbase objects.
  
 end -- world
 
@@ -290,6 +295,17 @@ do -- country
   -- @field QATAR
   -- @field OMAN
   -- @field UNITED_ARAB_EMIRATES
+  -- @field SOUTH_AFRICA
+  -- @field CUBA
+  -- @field PORTUGAL
+  -- @field GDR
+  -- @field LEBANON
+  -- @field CJTF_BLUE
+  -- @field CJTF_RED
+  -- @field UN_PEACEKEEPERS
+  -- @field Argentinia
+  -- @field Cyprus
+  -- @field Slovenia
 
   country = {} --#country
 
@@ -360,7 +376,7 @@ do -- Types
   
   --- Time is given in seconds.
   -- @type Time
-  -- @extends #number
+  -- @extends #number Time in seconds.
   
   --- Model time is the time that drives the simulation. Model time may be stopped, accelerated and decelerated relative real time. 
   -- @type ModelTime
@@ -368,20 +384,20 @@ do -- Types
   
   --- Mission time is a model time plus time of the mission start.
   -- @type MissionTime
-  -- @extends #number
+  -- @extends #number Time in seconds.
   
   
   --- Distance is given in meters.
   -- @type Distance
-  -- @extends #number
+  -- @extends #number Distance in meters.
   
   --- Angle is given in radians.
   -- @type Angle
-  -- @extends #number
+  -- @extends #number Angle in radians.
   
   --- Azimuth is an angle of rotation around world axis y counter-clockwise.
   -- @type Azimuth
-  -- @extends #number
+  -- @extends #number Angle in radians.
   
   --- Mass is given in kilograms.
   -- @type Mass
@@ -401,15 +417,15 @@ do -- Types
   
   --- Position is a composite structure. It consists of both coordinate vector and orientation matrix. Position3 (also known as "Pos3" for short) is a table that has following format: 
   -- @type Position3
-  -- @field #Vec3 p
-  -- @field #Vec3 x
-  -- @field #Vec3 y
-  -- @field #Vec3 z
+  -- @field #Vec3 p 3D position vector.
+  -- @field #Vec3 x Orientation component of vector pointing East.
+  -- @field #Vec3 y Orientation component of vector pointing up.
+  -- @field #Vec3 z Orientation component of vector pointing North.
   
   --- 3-dimensional box.
   -- @type Box3
-  -- @field #Vec3 min
-  -- @field #Vec3 max
+  -- @field #Vec3 min Min.
+  -- @field #Vec3 max Max
   
   --- Each object belongs to a type. Object type is a named couple of properties those independent of mission and common for all units of the same type. Name of unit type is a string. Samples of unit type: "Su-27", "KAMAZ" and "M2 Bradley". 
   -- @type TypeName
@@ -455,6 +471,22 @@ do -- Types
   --@field #boolean lateActivated
   --@field #boolean uncontrolled
 
+  --- DCS template data structure.
+  -- @type Template
+  -- @field #boolean uncontrolled Aircraft is uncontrolled.
+  -- @field #boolean lateActivation Group is late activated.
+  -- @field #number x 2D Position on x-axis in meters.
+  -- @field #number y 2D Position on y-axis in meters.
+  -- @field #table units Unit list.
+  -- 
+  
+  --- Unit data structure.
+  --@type Template.Unit
+  --@field #string name Name of the unit.
+  --@field #number x
+  --@field #number y
+  --@field #number alt
+
 end --
 
 
@@ -471,8 +503,9 @@ do -- Object
   -- @field UNIT
   -- @field WEAPON
   -- @field STATIC
-  -- @field SCENERY
   -- @field BASE
+  -- @field SCENERY
+  -- @field CARGO
   
   --- @type Object.Desc
   -- @extends #Desc
@@ -480,6 +513,10 @@ do -- Object
   -- @field #Box3 box bounding box of collision geometry
   
   --- @function [parent=#Object] isExist
+  -- @param #Object self
+  -- @return #boolean
+
+  --- @function [parent=#Object] isActive
   -- @param #Object self
   -- @return #boolean
   
@@ -514,7 +551,7 @@ do -- Object
   --- Returns object coordinates for current time.
   -- @function [parent=#Object] getPoint
   -- @param #Object self
-  -- @return #Vec3
+  -- @return #Vec3 3D position vector with x,y,z components.
   
   --- Returns object position for current time. 
   -- @function [parent=#Object] getPosition
@@ -524,7 +561,7 @@ do -- Object
   --- Returns the unit's velocity vector.
   -- @function [parent=#Object] getVelocity
   -- @param #Object self
-  -- @return #Vec3
+  -- @return #Vec3 3D velocity vector.
   
   --- Returns true if the unit is in air.
   -- @function [parent=#Object] inAir
@@ -731,7 +768,66 @@ do -- Airbase
 
 end -- Airbase
 
+do -- Spot
 
+  --- [DCS Class Spot](https://wiki.hoggitworld.com/view/DCS_Class_Spot)
+  -- Represents a spot from laser or IR-pointer.
+  -- @type Spot 
+  -- @field #Spot.Category Category enum that stores spot categories. 
+  
+  --- Enum that stores spot categories. 
+  -- @type Spot.Category
+  -- @field #string INFRA_RED
+  -- @field #string LASER
+
+  
+  --- Creates a laser ray emanating from the given object to a point in 3d space.
+  -- @function [parent=#Spot] createLaser
+  -- @param DCS#Object Source The source object of the laser.
+  -- @param DCS#Vec3 LocalRef An optional 3D offset for the source.
+  -- @param DCS#Vec3 Vec3 Target coordinate where the ray is pointing at.
+  -- @param #number LaserCode Any 4 digit number between 1111 and 1788.
+  -- @return #Spot
+
+  --- Creates an infrared ray emanating from the given object to a point in 3d space. Can be seen with night vision goggles.
+  -- @function [parent=#Spot] createInfraRed
+  -- @param DCS#Object Source Source position of the IR ray.
+  -- @param DCS#Vec3 LocalRef An optional 3D offset for the source.
+  -- @param DCS#Vec3 Vec3 Target coordinate where the ray is pointing at.
+  -- @return #Spot
+
+  --- Returns a vec3 table of the x, y, and z coordinates for the position of the given object in 3D space. Coordinates are dependent on the position of the maps origin.
+  -- @function [parent=#Spot] getPoint
+  -- @param #Spot self
+  -- @return DCS#Vec3 Point in 3D, where the beam is pointing at.
+  
+  --- Sets the destination point from which the source of the spot is drawn toward.
+  -- @function [parent=#Spot] setPoint
+  -- @param #Spot self
+  -- @param DCS#Vec3 Vec3 Point in 3D, where the beam is pointing at.
+
+  --- Returns the number that is used to define the laser code for which laser designation can track.
+  -- @function [parent=#Spot] getCode
+  -- @param #Spot self
+  -- @return #number Code The laser code used.
+
+  --- Sets the number that is used to define the laser code for which laser designation can track.
+  -- @function [parent=#Spot] setCode
+  -- @param #Spot self
+  -- @param #number Code The laser code. Default value is 1688.
+  
+  --- Destroys the spot.
+  -- @function [parent=#Spot] destroy
+  -- @param #Spot self
+
+  --- Gets the category of the spot (laser or IR).
+  -- @function [parent=#Spot] getCategory
+  -- @param #Spot self
+  -- @return #string Category.
+
+  Spot = {} --#Spot
+
+end -- Spot
 
 do -- Controller
   --- Controller is an object that performs A.I.-routines. Other words controller is an instance of A.I.. Controller stores current main task, active enroute tasks and behavior options. Controller performs commands. Please, read DCS A-10C GUI Manual EN.pdf chapter "Task Planning for Unit Groups", page 91 to understand A.I. system of DCS:A-10C. 
@@ -1055,6 +1151,11 @@ do -- Unit
   -- @function [parent=#Unit] getAmmo
   -- @param #Unit self
   -- @return #Unit.Ammo
+
+  --- Returns the number of infantry that can be embark onto the aircraft. Only returns a value if run on airplanes or helicopters. Returns nil if run on ground or ship units.
+  -- @function [parent=#Unit] getDescentCapacity
+  -- @param #Unit self
+  -- @return #number Number of soldiers that embark.
   
   --- Returns the unit sensors. 
   -- @function [parent=#Unit] getSensors
@@ -1088,6 +1189,10 @@ do -- Unit
   -- @param #Unit self
   -- @return #Unit.Desc
   
+  --- GROUND - Switch on/off radar emissions
+  -- @function [parent=#Unit] enableEmission
+  -- @param #Unit self
+  -- @param #boolean switch
   
   Unit = {} --#Unit
 
@@ -1158,7 +1263,7 @@ do -- Group
   -- @param #Group self 
   -- @return #number
   
-  --- Returns initial size of the group. If some of the units will be destroyed, initial size of the group will not be changed. Initial size limits the unitNumber parameter for Group.getUnit() function.
+  --- Returns initial size of the group. If some of the units will be destroyed, initial size of the group will not be changed; Initial size limits the unitNumber parameter for Group.getUnit() function.
   -- @function [parent=#Group] getInitialSize
   -- @param #Group self 
   -- @return #number
@@ -1172,6 +1277,11 @@ do -- Group
   -- @function [parent=#Group] getController
   -- @param #Group self 
   -- @return #Controller
+  
+    --- GROUND - Switch on/off radar emissions
+  -- @function [parent=#Group] enableEmission
+  -- @param #Group self
+  -- @param #boolean switch
   
   Group = {} --#Group
 

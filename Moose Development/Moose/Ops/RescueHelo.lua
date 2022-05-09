@@ -802,7 +802,7 @@ function RESCUEHELO:_OnEventCrashOrEject(EventData)
       -- Debug.
       local text=string.format("Unit %s crashed or ejected.", unitname)
       MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
-      self:I(self.lid..text)
+      self:T(self.lid..text)
 
       -- Get coordinate of unit.      
       local coord=unit:GetCoordinate()
@@ -876,8 +876,8 @@ function RESCUEHELO:onafterStart(From, Event, To)
   local Spawn=SPAWN:NewWithAlias(self.helogroupname, self.alias)
   
   -- Set modex for spawn.
-  Spawn:InitModex(self.modex)  
-  
+  Spawn:InitModex(self.modex)
+
   -- Spawn in air or at airbase.
   if self.takeoff==SPAWN.Takeoff.Air then
   

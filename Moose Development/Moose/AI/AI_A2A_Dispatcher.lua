@@ -658,7 +658,9 @@ do -- AI_A2A_DISPATCHER
   -- of the race track will randomly selected between 90 (West to East) and 180 (North to South) degrees.
   -- After a random duration between 10 and 20 minutes, the flight will get a new random orbit location.
   --
-  -- Note that all parameters except the squadron name are optional. If not specified, default values are taken. Speed and altitude are taken from the
+  -- Note that all parameters except the squadron name are optional. If not specified, default values are taken. Speed and altitude are taken from the CAP command used earlier on, e.g.
+  --
+  --      A2ADispatcher:SetSquadronCap( "Mineralnye", CAPZoneEast, 4000, 10000, 500, 600, 800, 900 )
   --
   -- Also note that the center of the race track pattern is chosen randomly within the patrol zone and can be close the the boarder of the zone. Hence, it cannot be guaranteed that the
   -- whole pattern lies within the patrol zone.
@@ -882,8 +884,9 @@ do -- AI_A2A_DISPATCHER
   --- Enumerator for spawns at airbases
   -- @type AI_A2A_DISPATCHER.Takeoff
   -- @extends Wrapper.Group#GROUP.Takeoff
-
-  --- @field #AI_A2A_DISPATCHER.Takeoff Takeoff
+  
+  ---
+  -- @field #AI_A2A_DISPATCHER.Takeoff Takeoff
   AI_A2A_DISPATCHER.Takeoff = GROUP.Takeoff
 
   --- Defnes Landing location.
@@ -929,6 +932,8 @@ do -- AI_A2A_DISPATCHER
     self.DefenderTasks = {} -- The Defenders Tasks.
     self.DefenderDefault = {} -- The Defender Default Settings over all Squadrons.
 
+    self.SetSendPlayerMessages = false --#boolean Flash messages to player
+    
     -- TODO: Check detection through radar.
     self.Detection:FilterCategories( { Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
     --self.Detection:InitDetectRadar( true )
@@ -948,7 +953,6 @@ do -- AI_A2A_DISPATCHER
     self:SetDefaultDamageThreshold( 0.4 ) -- When 40% of damage, go RTB.
     self:SetDefaultCapTimeInterval( 180, 600 ) -- Between 180 and 600 seconds.
     self:SetDefaultCapLimit( 1 ) -- Maximum one CAP per squadron.
-
 
     self:AddTransition( "Started", "Assign", "Started" )
 
@@ -1707,7 +1711,7 @@ do -- AI_A2A_DISPATCHER
   end
 
 
-  --- Set the Squadron visible before startup of the dispatcher.
+  ---  [DEPRECATED - Might create problems launching planes] Set the Squadron visible before startup of the dispatcher.
   -- All planes will be spawned as uncontrolled on the parking spot.
   -- They will lock the parking spot.
   -- @param #AI_A2A_DISPATCHER self
@@ -2356,6 +2360,12 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
+  --- Set flashing player messages on or off
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #boolean onoff Set messages on (true) or off (false)
+  function AI_A2A_DISPATCHER:SetSendMessages( onoff )
+      self.SetSendPlayerMessages = onoff
+  end
 
   --- Sets flights to take-off in the air, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
@@ -2774,7 +2784,7 @@ do -- AI_A2A_DISPATCHER
   --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )
   --
   --   -- Now Setup the default fuel treshold.
-  --   A2ADispatcher:SetSquadronRefuelThreshold( "SquadronName", 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
+  --   A2ADispatcher:SetSquadronFuelThreshold( "SquadronName", 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   --
   function AI_A2A_DISPATCHER:SetSquadronFuelThreshold( SquadronName, FuelThreshold )
 
@@ -2817,7 +2827,7 @@ do -- AI_A2A_DISPATCHER
   --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )
   --
   --   -- Now Setup the squadron fuel treshold.
-  --   A2ADispatcher:SetSquadronRefuelThreshold( "SquadronName", 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
+  --   A2ADispatcher:SetSquadronFuelThreshold( "SquadronName", 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   --
   --   -- Now Setup the squadron tanker.
   --   A2ADispatcher:SetSquadronTanker( "SquadronName", "Tanker" ) -- The group name of the tanker is "Tanker" in the Mission Editor.
@@ -2919,9 +2929,13 @@ do -- AI_A2A_DISPATCHER
   -- @return #AI_A2A_DISPATCHER.Squadron Squadron The squadron.
   function AI_A2A_DISPATCHER:GetSquadronFromDefender( Defender )
     self.Defenders = self.Defenders or {}
-    local DefenderName = Defender:GetName()
-    self:F( { DefenderName = DefenderName } )
-    return self.Defenders[ DefenderName ]
+    if Defender ~= nil then
+      local DefenderName = Defender:GetName()
+      self:F( { DefenderName = DefenderName } )
+      return self.Defenders[ DefenderName ]
+    else
+      return nil        
+    end
   end
 
 
@@ -3035,7 +3049,20 @@ do -- AI_A2A_DISPATCHER
     for FriendlyDistance, AIFriendly in UTILS.spairs( DefenderFriendlies or {} ) do
       -- We only allow to ENGAGE targets as long as the Units on both sides are balanced.
       if AttackerCount > DefenderCount then
-        local Friendly = AIFriendly:GetGroup() -- Wrapper.Group#GROUP
+    --self:I("***** AI_A2A_DISPATCHER:CountDefendersToBeEngaged() *****\nThis is supposed to be a UNIT:")
+    if AIFriendly then
+      local classname = AIFriendly.ClassName or "No Class Name"
+      local unitname = AIFriendly.IdentifiableName or "No Unit Name"
+      --self:I("Class Name: " .. classname)
+      --self:I("Unit Name: " .. unitname)
+      --self:I({AIFriendly})
+    end
+    local Friendly = nil
+    if AIFriendly and AIFriendly:IsAlive() then
+      --self:I("AIFriendly alive, getting GROUP")
+      Friendly = AIFriendly:GetGroup() -- Wrapper.Group#GROUP
+    end
+    
         if Friendly and Friendly:IsAlive() then
           -- Ok, so we have a friendly near the potential target.
           -- Now we need to check if the AIGroup has a Task.
@@ -3240,7 +3267,9 @@ do -- AI_A2A_DISPATCHER
               local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
 
               if Squadron then
-                Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " Wheels up.", DefenderGroup )
+                if self.SetSendPlayerMessages then
+                  Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " Wheels up.", DefenderGroup )
+                end
                 AI_A2A_Fsm:__Patrol( 2 ) -- Start Patrolling
               end
             end
@@ -3252,10 +3281,10 @@ do -- AI_A2A_DISPATCHER
               self:GetParent(self).onafterPatrolRoute( self, DefenderGroup, From, Event, To )
 
               local DefenderName = DefenderGroup:GetCallsign()
-              local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
+              local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
               local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
-              if Squadron then
-                Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", patrolling.", DefenderGroup )
+              if Squadron and self.SetSendPlayerMessages then       
+                  Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", patrolling.", DefenderGroup )
               end
 
               Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
@@ -3271,7 +3300,7 @@ do -- AI_A2A_DISPATCHER
               local DefenderName = DefenderGroup:GetCallsign()
               local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
               local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
-              if Squadron then
+              if Squadron and self.SetSendPlayerMessages then
                 Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " returning to base.", DefenderGroup )
               end
               Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
@@ -3459,10 +3488,10 @@ do -- AI_A2A_DISPATCHER
                     local DefenderTarget = Dispatcher:GetDefenderTaskTarget( DefenderGroup )
 
                     if DefenderTarget then
-                      if Squadron.Language == "EN" then
+                      if Squadron.Language == "EN" and self.SetSendPlayerMessages then
                         Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " wheels up.", DefenderGroup )
-                      elseif Squadron.Language == "RU" then
-                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " колеса вверх.", DefenderGroup )
+                      elseif Squadron.Language == "RU" and self.SetSendPlayerMessages then
+                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " колёса вверх.", DefenderGroup )
                       end
                       --Fsm:__Engage( 2, DefenderTarget.Set ) -- Engage on the TargetSetUnit
                       Fsm:EngageRoute( DefenderTarget.Set ) -- Engage on the TargetSetUnit
@@ -3480,11 +3509,11 @@ do -- AI_A2A_DISPATCHER
                       local FirstUnit = AttackSetUnit:GetFirst()
                       local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
 
-                      if Squadron.Language == "EN" then
+                      if Squadron.Language == "EN" and self.SetSendPlayerMessages then
                         Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", intercepting bogeys at " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
-                      elseif Squadron.Language == "RU" then
-                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", перехват самолетов в " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
-                      elseif Squadron.Language == "DE" then
+                      elseif Squadron.Language == "RU" and self.SetSendPlayerMessages then
+                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", перехватывая боги в " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
+                      elseif Squadron.Language == "DE" and self.SetSendPlayerMessages then
                         Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", Eindringlinge abfangen bei" .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
                       end
                     end
@@ -3502,10 +3531,10 @@ do -- AI_A2A_DISPATCHER
                       local FirstUnit = AttackSetUnit:GetFirst()
                       local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
 
-                      if Squadron.Language == "EN" then
+                      if Squadron.Language == "EN" and self.SetSendPlayerMessages then
                         Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", engaging bogeys at " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
-                      elseif Squadron.Language == "RU" then
-                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", захватывающие самолеты в " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
+                      elseif Squadron.Language == "RU" and self.SetSendPlayerMessages then
+                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", задействуя боги в " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
                       end
                     end
                     self:GetParent( Fsm ).onafterEngage( self, DefenderGroup, From, Event, To, AttackSetUnit )
@@ -3520,10 +3549,10 @@ do -- AI_A2A_DISPATCHER
                     local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
 
                     if Squadron then
-                      if Squadron.Language == "EN" then
+                      if Squadron.Language == "EN" and self.SetSendPlayerMessages then
                         Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " returning to base.", DefenderGroup )
-                      elseif Squadron.Language == "RU" then
-                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", возвращаясь на базу.", DefenderGroup )
+                      elseif Squadron.Language == "RU" and self.SetSendPlayerMessages then
+                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", возвращение на базу.", DefenderGroup )
                       end
                     end
                     Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
@@ -3551,10 +3580,10 @@ do -- AI_A2A_DISPATCHER
                     local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
                     local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
 
-                      if Squadron.Language == "EN" then
+                      if Squadron.Language == "EN" and self.SetSendPlayerMessages then
                         Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " landing at base.", DefenderGroup )
-                      elseif Squadron.Language == "RU" then
-                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", захватывающие самолеты в посадка на базу.", DefenderGroup )
+                      elseif Squadron.Language == "RU" and self.SetSendPlayerMessages then
+                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", посадка на базу.", DefenderGroup )
                       end
 
                     if Action and Action == "Destroy" then
@@ -3946,6 +3975,30 @@ do
   -- @param #string SquadronName The squadron name.
   function AI_A2A_DISPATCHER:SchedulerCAP( SquadronName )
     self:CAP( SquadronName )
+  end
+  
+  --- Add resources to a Squadron
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string Squadron The squadron name.
+  -- @param #number Amount Number of resources to add.
+  function AI_A2A_DISPATCHER:AddToSquadron(Squadron,Amount)
+    local Squadron = self:GetSquadron(Squadron)
+    if Squadron.ResourceCount then
+      Squadron.ResourceCount = Squadron.ResourceCount + Amount
+    end
+    self:T({Squadron = Squadron.Name,SquadronResourceCount = Squadron.ResourceCount})
+  end
+  
+  --- Remove resources from a Squadron
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string Squadron The squadron name.
+  -- @param #number Amount Number of resources to remove.
+  function AI_A2A_DISPATCHER:RemoveFromSquadron(Squadron,Amount)
+    local Squadron = self:GetSquadron(Squadron)
+    if Squadron.ResourceCount then
+      Squadron.ResourceCount = Squadron.ResourceCount - Amount
+    end
+    self:T({Squadron = Squadron.Name,SquadronResourceCount = Squadron.ResourceCount})
   end
 
 end
@@ -4523,5 +4576,5 @@ do
     return self
 
   end
-
+  
 end

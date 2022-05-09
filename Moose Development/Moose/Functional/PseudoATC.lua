@@ -742,7 +742,7 @@ function PSEUDOATC:ReportWeather(GID, UID, position, location)
   local T=position:GetTemperature()
     
   -- Correct unit system.
-  local _T=string.format('%d°F', UTILS.CelciusToFarenheit(T))
+  local _T=string.format('%d°F', UTILS.CelsiusToFahrenheit(T))
   if settings:IsMetric() then
     _T=string.format('%d°C', T)
   end

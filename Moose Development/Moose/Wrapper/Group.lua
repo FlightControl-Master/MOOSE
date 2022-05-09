@@ -261,7 +261,9 @@ end
 -- @param #string GroupName The Group name
 -- @return #GROUP self
 function GROUP:Register( GroupName )
+
   local self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) ) -- #GROUP
+  
   self.GroupName = GroupName
   
   self:SetEventPriority( 4 )
@@ -308,8 +310,7 @@ end
 
 --- Returns the @{DCS#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return DCS#Position The 3D position vectors of the POSITIONABLE.
--- @return #nil The POSITIONABLE is not existing or alive.  
+-- @return DCS#Position The 3D position vectors of the POSITIONABLE or #nil if the groups not existing or alive.  
 function GROUP:GetPositionVec3() -- Overridden from POSITIONABLE:GetPositionVec3()
   self:F2( self.PositionableName )
 
@@ -337,9 +338,7 @@ end
 -- If the first @{Wrapper.Unit} of the group is inactive, it will return false.
 -- 
 -- @param #GROUP self
--- @return #boolean true if the group is alive and active.
--- @return #boolean false if the group is alive but inactive.
--- @return #nil if the group does not exist anymore.
+-- @return #boolean `true` if the group is alive *and* active, `false` if the group is alive but inactive or `#nil` if the group does not exist anymore.
 function GROUP:IsAlive()
   self:F2( self.GroupName )
 
@@ -361,8 +360,7 @@ end
 
 --- Returns if the group is activated.
 -- @param #GROUP self
--- @return #boolean true if group is activated.
--- @return #nil The group is not existing or alive.  
+-- @return #boolean `true` if group is activated or `#nil` The group is not existing or alive.  
 function GROUP:IsActive()
   self:F2( self.GroupName )
 
@@ -386,7 +384,7 @@ end
 -- So all event listeners will catch the destroy event of this group for each unit in the group.
 -- To raise these events, provide the `GenerateEvent` parameter.
 -- @param #GROUP self
--- @param #boolean GenerateEvent If true, a crash or dead event for each unit is generated. If false, if no event is triggered. If nil, a RemoveUnit event is triggered.
+-- @param #boolean GenerateEvent If true, a crash [AIR] or dead [GROUND] event for each unit is generated. If false, if no event is triggered. If nil, a RemoveUnit event is triggered.
 -- @param #number delay Delay in seconds before despawning the group.
 -- @usage
 -- -- Air unit example: destroy the Helicopter and generate a S_EVENT_CRASH for each unit in the Helicopter group.
@@ -410,7 +408,6 @@ function GROUP:Destroy( GenerateEvent, delay )
   self:F2( self.GroupName )
   
   if delay and delay>0 then
-    --SCHEDULER:New(nil, GROUP.Destroy, {self, GenerateEvent}, delay)
     self:ScheduleOnce(delay, GROUP.Destroy, self, GenerateEvent)
   else
 
@@ -532,26 +529,32 @@ function GROUP:HasAttribute(attribute, all)
   -- Get all units of the group.
   local _units=self:GetUnits()
   
-  local _allhave=true
-  local _onehas=false
+  if _units then
   
-  for _,_unit in pairs(_units) do
-    local _unit=_unit --Wrapper.Unit#UNIT
-    if _unit then
-      local _hastit=_unit:HasAttribute(attribute)
-      if _hastit==true then
-        _onehas=true
-      else
-        _allhave=false
-      end
-    end 
+    local _allhave=true
+    local _onehas=false
+    
+    for _,_unit in pairs(_units) do
+      local _unit=_unit --Wrapper.Unit#UNIT
+      if _unit then
+        local _hastit=_unit:HasAttribute(attribute)
+        if _hastit==true then
+          _onehas=true
+        else
+          _allhave=false
+        end
+      end 
+    end
+    
+    if all==true then
+      return _allhave
+    else
+      return _onehas
+    end
+    
   end
   
-  if all==true then
-    return _allhave
-  else
-    return _onehas
-  end
+  return nil
 end
 
 --- Returns the maximum speed of the group.
@@ -570,12 +573,15 @@ function GROUP:GetSpeedMax()
     
     for _,unit in pairs(Units) do
       local unit=unit --Wrapper.Unit#UNIT
+      
       local speed=unit:GetSpeedMax()
-      if speedmax==nil then
-        speedmax=speed
-      elseif speed<speedmax then
+      
+      if speedmax==nil or speed<speedmax then
         speedmax=speed
       end
+      
+      --env.info(string.format("FF unit %s: speed=%.1f, speedmax=%.1f", unit:GetName(), speed, speedmax))
+      
     end
     
     return speedmax
@@ -625,7 +631,7 @@ function GROUP:GetUnits()
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    local DCSUnits = DCSGroup:getUnits()
+    local DCSUnits = DCSGroup:getUnits() or {}
     local Units = {}
     for Index, UnitData in pairs( DCSUnits ) do
       Units[#Units+1] = UNIT:Find( UnitData )
@@ -661,6 +667,29 @@ function GROUP:GetPlayerUnits()
   return nil
 end
 
+--- Check if an (air) group is a client or player slot. Information is retrieved from the group template.
+-- @param #GROUP self
+-- @return #boolean If true, group is associated with a client or player slot.
+function GROUP:IsPlayer()
+  
+  -- Get group.
+ -- local group=self:GetGroup()
+    
+  -- Units of template group.
+  local units=self:GetTemplate().units
+  
+  -- Get numbers.
+  for _,unit in pairs(units) do
+      
+    -- Check if unit name matach and skill is Client or Player.
+    if unit.name==self:GetName() and (unit.skill=="Client" or unit.skill=="Player") then
+      return true
+    end
+
+  end
+  
+  return false
+end
 
 --- Returns the UNIT wrapper class with number UnitNumber.
 -- If the underlying DCS Unit does not exist, the method will return nil. .
@@ -668,18 +697,30 @@ end
 -- @param #number UnitNumber The number of the UNIT wrapper class to be returned.
 -- @return Wrapper.Unit#UNIT The UNIT wrapper class.
 function GROUP:GetUnit( UnitNumber )
-  self:F3( { self.GroupName, UnitNumber } )
 
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    local DCSUnit = DCSGroup:getUnit( UnitNumber )
-    local UnitFound = UNIT:Find( DCSGroup:getUnit( UnitNumber ) )
-    self:T2( UnitFound )
-    return UnitFound
+    
+    local UnitFound = nil
+    -- 2.7.1 dead event bug, return the first alive unit instead
+    local units = DCSGroup:getUnits() or {}
+    
+    for _,_unit in pairs(units) do
+    
+      local UnitFound = UNIT:Find(_unit)
+      
+      if UnitFound then
+      
+        return UnitFound
+    
+      end
+    end
+    
   end
 
   return nil
+  
 end
 
 --- Returns the DCS Unit with number UnitNumber.
@@ -688,13 +729,11 @@ end
 -- @param #number UnitNumber The number of the DCS Unit to be returned.
 -- @return DCS#Unit The DCS Unit.
 function GROUP:GetDCSUnit( UnitNumber )
-  self:F3( { self.GroupName, UnitNumber } )
 
-  local DCSGroup = self:GetDCSObject()
+  local DCSGroup=self:GetDCSObject()
 
   if DCSGroup then
-    local DCSUnitFound = DCSGroup:getUnit( UnitNumber )
-    self:T3( DCSUnitFound )
+    local DCSUnitFound=DCSGroup:getUnit( UnitNumber )
     return DCSUnitFound
   end
 
@@ -706,14 +745,14 @@ end
 -- @param #GROUP self
 -- @return #number The DCS Group size.
 function GROUP:GetSize()
-  self:F3( { self.GroupName } )
+
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
+  
     local GroupSize = DCSGroup:getSize()
     
     if GroupSize then
-      self:T3( GroupSize )
       return GroupSize
     else
       return 0
@@ -769,8 +808,7 @@ end
 
 --- Returns the average velocity Vec3 vector.
 -- @param Wrapper.Group#GROUP self
--- @return DCS#Vec3 The velocity Vec3 vector
--- @return #nil The GROUP is not existing or alive.  
+-- @return DCS#Vec3 The velocity Vec3 vector or `#nil` if the GROUP is not existing or alive.  
 function GROUP:GetVelocityVec3()
   self:F2( self.GroupName )
 
@@ -801,11 +839,19 @@ function GROUP:GetVelocityVec3()
   return nil
 end
 
+--- Returns the average group altitude in meters.
+-- @param Wrapper.Group#GROUP self
+-- @param #boolean FromGround Measure from the ground or from sea level (ASL). Provide **true** for measuring from the ground (AGL). **false** or **nil** if you measure from sea level. 
+-- @return #number The altitude of the group or nil if is not existing or alive.  
+function GROUP:GetAltitude(FromGround)
+  self:F2( self.GroupName )
+  return self:GetHeight(FromGround)
+end
 
 --- Returns the average group height in meters.
 -- @param Wrapper.Group#GROUP self
--- @param #boolean FromGround Measure from the ground or from sea level. Provide **true** for measuring from the ground. **false** or **nil** if you measure from sea level. 
--- @return DCS#Vec3 The height of the group or nil if is not existing or alive.  
+-- @param #boolean FromGround Measure from the ground or from sea level (ASL). Provide **true** for measuring from the ground (AGL). **false** or **nil** if you measure from sea level. 
+-- @return #number The height of the group or nil if is not existing or alive.  
 function GROUP:GetHeight( FromGround )
   self:F2( self.GroupName )
 
@@ -905,6 +951,24 @@ function GROUP:GetTypeName()
   return nil
 end
 
+--- [AIRPLANE] Get the NATO reporting name (platform, e.g. "Flanker") of a GROUP (note - first unit the group). "Bogey" if not found. Currently airplanes only!
+--@param #GROUP self
+--@return #string NatoReportingName or "Bogey" if unknown.
+function GROUP:GetNatoReportingName()
+  self:F2( self.GroupName )
+  
+  local DCSGroup = self:GetDCSObject()
+  
+  if DCSGroup then
+    local GroupTypeName = DCSGroup:getUnit(1):getTypeName()
+    self:T3( GroupTypeName )
+    return UTILS.GetReportingName(GroupTypeName)
+  end
+  
+  return "Bogey"
+  
+end
+
 --- Gets the player name of the group.
 -- @param #GROUP self
 -- @return #string The player name of the group.
@@ -946,24 +1010,31 @@ end
 -- @param #GROUP self
 -- @return DCS#Vec2 Current Vec2 point of the first DCS Unit of the DCS Group.
 function GROUP:GetVec2()
-  self:F2( self.GroupName )
 
-  local UnitPoint = self:GetUnit(1)
-  UnitPoint:GetVec2()
-  local GroupPointVec2 = UnitPoint:GetVec2()
-  self:T3( GroupPointVec2 )
-  return GroupPointVec2
+  local Unit=self:GetUnit(1)
+  
+  if Unit then
+    local vec2=Unit:GetVec2()
+    return vec2
+  end
+
 end
 
 --- Returns the current Vec3 vector of the first DCS Unit in the GROUP.
 -- @param #GROUP self
 -- @return DCS#Vec3 Current Vec3 of the first DCS Unit of the GROUP.
 function GROUP:GetVec3()
-  self:F2( self.GroupName )
 
-  local GroupVec3 = self:GetUnit(1):GetVec3()
-  self:T3( GroupVec3 )
-  return GroupVec3
+  -- Get first unit.
+  local unit=self:GetUnit(1)
+
+  if unit then
+    local vec3=unit:GetVec3()
+    return vec3
+  end
+  
+  self:E("ERROR: Cannot get Vec3 of group "..tostring(self.GroupName))
+  return nil
 end
 
 --- Returns a POINT_VEC2 object indicating the point in 2D of the first UNIT of the GROUP within the mission.
@@ -990,16 +1061,25 @@ end
 -- @param Wrapper.Group#GROUP self
 -- @return Core.Point#COORDINATE The COORDINATE of the GROUP.
 function GROUP:GetCoordinate()
-  self:F2( self.PositionableName )
-
-  local FirstUnit = self:GetUnit(1)
+   
+   
+  local Units = self:GetUnits()  or {}
   
-  if FirstUnit then
-    local FirstUnitCoordinate = FirstUnit:GetCoordinate()
-    self:T3(FirstUnitCoordinate)
-    return FirstUnitCoordinate
+  for _,_unit in pairs(Units) do
+    local FirstUnit = _unit -- Wrapper.Unit#UNIT
+    
+    if FirstUnit then
+    
+      local FirstUnitCoordinate = FirstUnit:GetCoordinate()
+      
+      if FirstUnitCoordinate then
+        local Heading = self:GetHeading()
+        FirstUnitCoordinate.Heading = Heading
+        return FirstUnitCoordinate
+      end
+      
+    end
   end
-  
   BASE:E( { "Cannot GetCoordinate", Group = self, Alive = self:IsAlive() } )
 
   return nil
@@ -1008,9 +1088,8 @@ end
 
 --- Returns a random @{DCS#Vec3} vector (point in 3D of the UNIT within the mission) within a range around the first UNIT of the GROUP.
 -- @param #GROUP self
--- @param #number Radius
--- @return DCS#Vec3 The random 3D point vector around the first UNIT of the GROUP.
--- @return #nil The GROUP is invalid or empty
+-- @param #number Radius Radius in meters.
+-- @return DCS#Vec3 The random 3D point vector around the first UNIT of the GROUP or #nil The GROUP is invalid or empty. 
 -- @usage 
 -- -- If Radius is ignored, returns the DCS#Vec3 of first UNIT of the GROUP
 function GROUP:GetRandomVec3(Radius)
@@ -1031,19 +1110,23 @@ end
 
 --- Returns the mean heading of every UNIT in the GROUP in degrees
 -- @param #GROUP self
--- @return #number mean heading of the GROUP
--- @return #nil The first UNIT is not existing or alive.
+-- @return #number Mean heading of the GROUP in degrees or #nil The first UNIT is not existing or alive.
 function GROUP:GetHeading()
   self:F2(self.GroupName)
 
   local GroupSize = self:GetSize()
   local HeadingAccumulator = 0
+  local n=0
+  local Units = self:GetUnits()
   
   if GroupSize then
-    for i = 1, GroupSize do
-      HeadingAccumulator = HeadingAccumulator + self:GetUnit(i):GetHeading()
+    for _,unit in pairs(Units) do
+      if unit and unit:IsAlive() then
+        HeadingAccumulator = HeadingAccumulator + unit:GetHeading()
+        n=n+1
+      end
     end
-    return math.floor(HeadingAccumulator / GroupSize)
+    return math.floor(HeadingAccumulator / n) 
   end
   
   BASE:E( { "Cannot GetHeading", Group = self, Alive = self:IsAlive() } )
@@ -1055,8 +1138,8 @@ end
 --- Return the fuel state and unit reference for the unit with the least
 -- amount of fuel in the group.
 -- @param #GROUP self
--- @return #number The fuel state of the unit with the least amount of fuel
--- @return #Unit reference to #Unit object for further processing
+-- @return #number The fuel state of the unit with the least amount of fuel.
+-- @return Wrapper.Unit#UNIT reference to #Unit object for further processing.
 function GROUP:GetFuelMin()
   self:F3(self.ControllableName)
 
@@ -1098,7 +1181,7 @@ function GROUP:GetFuelAvg()
     local TotalFuel = 0
     for UnitID, UnitData in pairs( self:GetUnits() ) do
       local Unit = UnitData -- Wrapper.Unit#UNIT
-      local UnitFuel = Unit:GetFuel()
+      local UnitFuel = Unit:GetFuel() or 0
       self:F( { Fuel = UnitFuel } )
       TotalFuel = TotalFuel + UnitFuel
     end
@@ -1126,7 +1209,7 @@ end
 -- @return #number Number of shells left.
 -- @return #number Number of rockets left.
 -- @return #number Number of bombs left.
--- @return #number Number of missiles left. 
+-- @return #number Number of missiles left.  
 function GROUP:GetAmmunition()
   self:F( self.ControllableName )
 
@@ -1136,6 +1219,7 @@ function GROUP:GetAmmunition()
   local Nshells=0
   local Nrockets=0
   local Nmissiles=0
+  local Nbombs=0
   
   if DCSControllable then
     
@@ -1144,22 +1228,53 @@ function GROUP:GetAmmunition()
       local Unit = UnitData -- Wrapper.Unit#UNIT
       
       -- Get ammo of the unit
-      local ntot, nshells, nrockets, nmissiles = Unit:GetAmmunition()
+      local ntot, nshells, nrockets, nbombs, nmissiles = Unit:GetAmmunition()
       
       Ntot=Ntot+ntot
       Nshells=Nshells+nshells
       Nrockets=Nrockets+nrockets
-      Nmissiles=Nmissiles+nmissiles 
+      Nmissiles=Nmissiles+nmissiles
+      Nbombs=Nbombs+nbombs
       
     end
     
   end
   
-  return Ntot, Nshells, Nrockets, Nmissiles
+  return Ntot, Nshells, Nrockets, Nbombs, Nmissiles
 end
 
 
 do -- Is Zone methods
+
+
+--- Check if any unit of a group is inside a @{Zone}.
+-- @param #GROUP self
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns `true` if *at least one unit* is inside the zone or `false` if *no* unit is inside.
+function GROUP:IsInZone( Zone )
+  
+  if self:IsAlive() then
+  
+    for UnitID, UnitData in pairs(self:GetUnits()) do
+      local Unit = UnitData -- Wrapper.Unit#UNIT
+      
+      local vec2 = nil
+      if Unit then
+       -- Get 2D vector. That's all we need for the zone check.
+       vec2=Unit:GetVec2()
+      end
+      
+      if vec2 and Zone:IsVec2InZone(vec2) then
+        return true  -- At least one unit is in the zone. That is enough.
+      end
+      
+    end
+    
+    return false
+  end
+  
+  return nil
+end
 
 --- Returns true if all units of the group are within a @{Zone}.
 -- @param #GROUP self
@@ -2095,6 +2210,7 @@ end
 
 --- Calculate the maxium A2G threat level of the Group.
 -- @param #GROUP self
+-- @return #number Number between 0 and 10.
 function GROUP:CalculateThreatLevelA2G()
   
   local MaxThreatLevelA2G = 0
@@ -2109,6 +2225,25 @@ function GROUP:CalculateThreatLevelA2G()
   self:T3( MaxThreatLevelA2G )
   return MaxThreatLevelA2G
 end
+
+--- Get threat level of the group.
+-- @param #GROUP self
+-- @return #number Max threat level (a number between 0 and 10).
+function GROUP:GetThreatLevel()
+  
+  local threatlevelMax = 0
+  for UnitName, UnitData in pairs(self:GetUnits()) do  
+    local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
+    
+    local threatlevel = ThreatUnit:GetThreatLevel()
+    if threatlevel > threatlevelMax then
+      threatlevelMax=threatlevel
+    end
+  end
+
+  return threatlevelMax
+end
+
 
 --- Returns true if the first unit of the GROUP is in the air.
 -- @param Wrapper.Group#GROUP self
@@ -2142,27 +2277,52 @@ function GROUP:IsAirborne(AllUnits)
   
   if units then
   
-    for _,_unit in pairs(units) do
-      local unit=_unit --Wrapper.Unit#UNIT
-      
-      if unit then
-      
-        -- Unit in air or not.
-        local inair=unit:InAir()
+    if AllUnits then
+    
+      --- We want to know if ALL units are airborne.
+
+      for _,_unit in pairs(units) do
+        local unit=_unit --Wrapper.Unit#UNIT
         
-        -- Unit is not in air and we wanted to know whether ALL units are ==> return false
-        if inair==false and AllUnits==true then
-          return false
-        end
+        if unit then
         
-        -- At least one unit is in are and we did not care which one.
-        if inair==true and not AllUnits then
-          return true
+          -- Unit in air or not.
+          local inair=unit:InAir()
+          
+          -- At least one unit is not in air.
+          if not inair then
+            return false
+          end
         end
         
       end
-      -- At least one unit is in the air.
-      return true  
+      
+      -- All units are in air.
+      return true
+    
+    else
+    
+      --- We want to know if ANY unit is airborne.
+
+      for _,_unit in pairs(units) do
+        local unit=_unit --Wrapper.Unit#UNIT
+        
+        if unit then
+        
+          -- Unit in air or not.
+          local inair=unit:InAir()
+          
+          if inair then
+            -- At least one unit is in air.
+            return true
+          end
+          
+        end
+        
+        -- No unit is in air.
+        return false
+        
+      end
     end
   end
   
@@ -2239,41 +2399,44 @@ function GROUP:GetAttribute()
     local unarmedship=self:HasAttribute("Unarmed ships")
 
 
-    -- Define attribute. Order is important.
-    if transportplane then
-      attribute=GROUP.Attribute.AIR_TRANSPORTPLANE
-    elseif awacs then
-      attribute=GROUP.Attribute.AIR_AWACS
-    elseif fighter then
+    -- Define attribute. Order of attack is important.
+    if fighter then
       attribute=GROUP.Attribute.AIR_FIGHTER
     elseif bomber then
       attribute=GROUP.Attribute.AIR_BOMBER
+    elseif awacs then
+      attribute=GROUP.Attribute.AIR_AWACS  
+    elseif transportplane then
+      attribute=GROUP.Attribute.AIR_TRANSPORTPLANE
     elseif tanker then
       attribute=GROUP.Attribute.AIR_TANKER
+      -- helos
+    elseif attackhelicopter then
+      attribute=GROUP.Attribute.AIR_ATTACKHELO  
     elseif transporthelo then
       attribute=GROUP.Attribute.AIR_TRANSPORTHELO
-    elseif attackhelicopter then
-      attribute=GROUP.Attribute.AIR_ATTACKHELO
     elseif uav then
       attribute=GROUP.Attribute.AIR_UAV
-    elseif apc then
-      attribute=GROUP.Attribute.GROUND_APC
-    elseif infantry then
-      attribute=GROUP.Attribute.GROUND_INFANTRY
-    elseif artillery then
-      attribute=GROUP.Attribute.GROUND_ARTILLERY
-    elseif tank then
-      attribute=GROUP.Attribute.GROUND_TANK
-    elseif aaa then
-      attribute=GROUP.Attribute.GROUND_AAA
+      -- ground - order of attack
     elseif ewr then
       attribute=GROUP.Attribute.GROUND_EWR
     elseif sam then
       attribute=GROUP.Attribute.GROUND_SAM
+    elseif aaa then
+      attribute=GROUP.Attribute.GROUND_AAA
+    elseif artillery then
+      attribute=GROUP.Attribute.GROUND_ARTILLERY         
+    elseif tank then
+      attribute=GROUP.Attribute.GROUND_TANK 
+    elseif apc then
+      attribute=GROUP.Attribute.GROUND_APC
+    elseif infantry then
+      attribute=GROUP.Attribute.GROUND_INFANTRY
     elseif truck then
       attribute=GROUP.Attribute.GROUND_TRUCK
     elseif train then
       attribute=GROUP.Attribute.GROUND_TRAIN
+      -- ships
     elseif aircraftcarrier then
       attribute=GROUP.Attribute.NAVAL_AIRCRAFTCARRIER
     elseif warship then
@@ -2464,6 +2627,99 @@ do -- Players
     return PlayerCount
   end
   
+end
+
+--- GROUND - Switch on/off radar emissions for the group.
+-- @param #GROUP self
+-- @param #boolean switch If true, emission is enabled. If false, emission is disabled.
+-- @return #GROUP self 
+function GROUP:EnableEmission(switch)
+  self:F2( self.GroupName )
+  local switch = switch or false
+  
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+  
+    DCSUnit:enableEmission(switch)
+
+  end
+
+  return self
+end
+
+--- Switch on/off invisible flag for the group.
+-- @param #GROUP self
+-- @param #boolean switch If true, emission is enabled. If false, emission is disabled.
+-- @return #GROUP self 
+function GROUP:SetCommandInvisible(switch)
+  self:F2( self.GroupName )
+  if switch==nil then
+    switch=false
+  end
+  local SetInvisible = {id = 'SetInvisible', params = {value = switch}}
+  self:SetCommand(SetInvisible)
+  return self
+end
+
+--- Switch on/off immortal flag for the group.
+-- @param #GROUP self
+-- @param #boolean switch If true, emission is enabled. If false, emission is disabled.
+-- @return #GROUP self 
+function GROUP:SetCommandImmortal(switch)
+  self:F2( self.GroupName )
+  if switch==nil then
+    switch=false
+  end
+  local SetImmortal = {id = 'SetImmortal', params = {value = switch}}
+  self:SetCommand(SetImmortal)
+  return self
+end
+
+--- Get skill from Group. Effectively gets the skill from Unit 1 as the group holds no skill value.
+-- @param #GROUP self
+-- @return #string Skill String of skill name.
+function GROUP:GetSkill()
+  self:F2( self.GroupName )
+  local unit = self:GetUnit(1)
+  local name = unit:GetName()
+  local skill = _DATABASE.Templates.Units[name].Template.skill or "Random"
+  return skill
+end
+
+
+--- Get the unit in the group with the highest threat level, which is still alive.
+-- @param #GROUP self
+-- @return Wrapper.Unit#UNIT The most dangerous unit in the group.
+-- @return #number Threat level of the unit.
+function GROUP:GetHighestThreat()
+
+  -- Get units of the group.
+  local units=self:GetUnits()
+
+  if units then
+
+    local threat=nil ; local maxtl=0
+    for _,_unit in pairs(units or {}) do
+      local unit=_unit --Wrapper.Unit#UNIT
+
+      if unit and unit:IsAlive() then
+
+        -- Threat level of group.
+        local tl=unit:GetThreatLevel()
+
+        -- Check if greater the current threat.
+        if tl>maxtl then
+          maxtl=tl
+          threat=unit
+        end        
+      end
+    end
+
+    return threat, maxtl    
+  end
+
+  return nil, nil
 end
 
 --do -- Smoke

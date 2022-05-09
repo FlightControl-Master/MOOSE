@@ -428,8 +428,10 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     --- Calculate the current route point.
     local CurrentVec2 = self.Controllable:GetVec2()
     
-    --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
-    local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
+    if not CurrentVec2 then return self end
+    
+    --DONE: Create GetAltitude function for GROUP, and delete GetUnit(1).
+    local CurrentAltitude = self.Controllable:GetAltitude()
     local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
     local ToEngageZoneSpeed = self.PatrolMaxSpeed
     local CurrentRoutePoint = CurrentPointVec3:WaypointAir( 

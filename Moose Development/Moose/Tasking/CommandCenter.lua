@@ -202,6 +202,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   self:SetAutoAcceptTasks( true )
   self:SetAutoAssignMethod( COMMANDCENTER.AutoAssignMethods.Distance )
   self:SetFlashStatus( false )
+  self:SetMessageDuration(10)
   
   self:HandleEvent( EVENTS.Birth,
     --- @param #COMMANDCENTER self
@@ -215,7 +216,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
           local MenuReporting = MENU_GROUP:New( EventGroup, "Missions Reports", CommandCenterMenu )
           local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Status Report", MenuReporting, self.ReportSummary, self, EventGroup )
           local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Players Report", MenuReporting, self.ReportMissionsPlayers, self, EventGroup )
-          self:ReportSummary( EventGroup )
+          --self:ReportSummary( EventGroup )
           local PlayerUnit = EventData.IniUnit
           for MissionID, Mission in pairs( self:GetMissions() ) do
             local Mission = Mission -- Tasking.Mission#MISSION
@@ -559,9 +560,11 @@ function COMMANDCENTER:SetAutoAssignTasks( AutoAssign )
   self.AutoAssignTasks = AutoAssign or false
   
   if self.AutoAssignTasks == true then
-    self:ScheduleRepeat( 10, 30, 0, nil, self.AssignTasks, self )
+    self.autoAssignTasksScheduleID=self:ScheduleRepeat( 10, 30, 0, nil, self.AssignTasks, self )
   else
-    self:ScheduleStop( self.AssignTasks )
+    self:ScheduleStop()
+    -- FF this is not the schedule ID
+    --self:ScheduleStop( self.AssignTasks )
   end
   
 end
@@ -682,7 +685,7 @@ end
 -- @param #string Message The message text.
 function COMMANDCENTER:MessageToAll( Message )
 
-    self:GetPositionable():MessageToAll( Message, 20, self:GetName() )
+    self:GetPositionable():MessageToAll( Message, self.MessageDuration, self:GetName() )
 
 end
 
@@ -692,7 +695,7 @@ end
 -- @param Wrapper.Group#GROUP MessageGroup The group to receive the message.
 function COMMANDCENTER:MessageToGroup( Message, MessageGroup )
 
-  self:GetPositionable():MessageToGroup( Message, 15, MessageGroup, self:GetShortText() )
+  self:GetPositionable():MessageToGroup( Message, self.MessageDuration, MessageGroup, self:GetShortText() )
 
 end
 
@@ -715,7 +718,7 @@ function COMMANDCENTER:MessageToCoalition( Message )
   local CCCoalition = self:GetPositionable():GetCoalition()
     --TODO: Fix coalition bug!
     
-    self:GetPositionable():MessageToCoalition( Message, 15, CCCoalition, self:GetShortText() )
+    self:GetPositionable():MessageToCoalition( Message, self.MessageDuration, CCCoalition, self:GetShortText() )
 
 end
 
@@ -795,9 +798,18 @@ end
 
 --- Let the command center flash a report of the status of the subscribed task to a group.
 -- @param #COMMANDCENTER self
+-- @param Flash #boolean
 function COMMANDCENTER:SetFlashStatus( Flash )
   self:F()
 
-  self.FlashStatus = Flash or true
+  self.FlashStatus = Flash and true
+end
 
+--- Duration a command center message is shown.
+-- @param #COMMANDCENTER self
+-- @param seconds #number
+function COMMANDCENTER:SetMessageDuration(seconds)
+  self:F()
+
+  self.MessageDuration = 10 or seconds
 end
