@@ -701,15 +701,26 @@ function GROUP:GetUnit( UnitNumber )
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-  
-    local DCSUnit = DCSGroup:getUnit( UnitNumber )
     
-    local UnitFound = UNIT:Find(DCSUnit)
+    local UnitFound = nil
+    -- 2.7.1 dead event bug, return the first alive unit instead
+    local units = DCSGroup:getUnits() or {}
     
-    return UnitFound
+    for _,_unit in pairs(units) do
+    
+      local UnitFound = UNIT:Find(_unit)
+      
+      if UnitFound then
+      
+        return UnitFound
+    
+      end
+    end
+    
   end
 
   return nil
+  
 end
 
 --- Returns the DCS Unit with number UnitNumber.
@@ -1105,17 +1116,17 @@ function GROUP:GetHeading()
 
   local GroupSize = self:GetSize()
   local HeadingAccumulator = 0
-  
   local n=0
+  local Units = self:GetUnits()
+  
   if GroupSize then
-    for i = 1, GroupSize do
-      local unit=self:GetUnit(i)
+    for _,unit in pairs(Units) do
       if unit and unit:IsAlive() then
         HeadingAccumulator = HeadingAccumulator + unit:GetHeading()
         n=n+1
       end
     end
-    return math.floor(HeadingAccumulator / n)
+    return math.floor(HeadingAccumulator / n) 
   end
   
   BASE:E( { "Cannot GetHeading", Group = self, Alive = self:IsAlive() } )

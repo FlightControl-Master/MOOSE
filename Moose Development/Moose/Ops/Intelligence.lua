@@ -98,6 +98,7 @@ INTEL = {
   clusterradius   = 15000,
   clusteranalysis =  true,
   clustermarkers  = false,
+  clusterarrows   = false,
   prediction      =   300,
   detectStatics   = false,
 }
@@ -528,10 +529,12 @@ end
 -- @param #INTEL self
 -- @param #boolean Switch If true, enable cluster analysis.
 -- @param #boolean Markers If true, place markers on F10 map.
+-- @param #boolean Arrows If true, draws arrows on F10 map.
 -- @return #INTEL self
-function INTEL:SetClusterAnalysis(Switch, Markers)
+function INTEL:SetClusterAnalysis(Switch, Markers, Arrows)
   self.clusteranalysis=Switch
   self.clustermarkers=Markers
+  self.clusterarrows=Arrows
   return self
 end
 
@@ -1760,7 +1763,7 @@ function INTEL:CalcClusterFuturePosition(cluster, seconds)
   local futureposition=COORDINATE:NewFromVec3(Vec3)
 
   -- Create an arrow pointing in the direction of the movement.
-  if self.clustermarkers and self.verbose>1 then
+  if self.clustermarkers and self.clusterarrows then
     if cluster.markerID then
       COORDINATE:RemoveMark(cluster.markerID)
     end
