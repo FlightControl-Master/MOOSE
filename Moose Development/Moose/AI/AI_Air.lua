@@ -253,6 +253,9 @@ function AI_AIR:New( AIGroup )
   
   self.IdleCount = 0
   
+  self.RTBSpeedMaxFactor = 0.6
+  self.RTBSpeedMinFactor = 0.5
+  
   return self
 end
 
@@ -576,6 +579,19 @@ function AI_AIR.RTBHold( AIGroup, Fsm )
   
 end
 
+--- Set the min and max factors on RTB speed. Use this, if your planes are heading back to base too fast. Default values are 0.5 and 0.6. 
+-- The RTB speed is calculated as the max speed of the unit multiplied by MinFactor (lower bracket) and multiplied by MaxFactor (upper bracket). 
+-- A random value in this bracket is then applied in the waypoint routing generation.
+-- @param #AI_AIR self
+-- @param #number MinFactor Lower bracket factor. Defaults to 0.5.
+-- @param #number MaxFactor Upper bracket factor. Defaults to 0.6.
+-- @return #AI_AIR self
+function AI_AIR:SetRTBSpeedFactors(MinFactor,MaxFactor)
+  self.RTBSpeedMaxFactor = MaxFactor or 0.6
+  self.RTBSpeedMinFactor = MinFactor or 0.5
+  return self
+end
+
 
 --- @param #AI_AIR self
 -- @param Wrapper.Group#GROUP AIGroup
@@ -599,12 +615,14 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
     local FromCoord = AIGroup:GetCoordinate()
     local ToTargetCoord = self.HomeAirbase:GetCoordinate() -- coordinate is on land height(!)
     local ToTargetVec3 = ToTargetCoord:GetVec3()
-    ToTargetVec3.y = ToTargetCoord:GetLandHeight()+1000 -- let's set this 1000m/3000 feet above ground
+    ToTargetVec3.y = ToTargetCoord:GetLandHeight()+3000 -- let's set this 1000m/3000 feet above ground
     local ToTargetCoord2 = COORDINATE:NewFromVec3( ToTargetVec3 )
      
     if not self.RTBMinSpeed or not self.RTBMaxSpeed then    
       local RTBSpeedMax = AIGroup:GetSpeedMax()
-      self:SetRTBSpeed( RTBSpeedMax * 0.5, RTBSpeedMax * 0.6 )  
+      local RTBSpeedMaxFactor = self.RTBSpeedMaxFactor or 0.6
+      local RTBSpeedMinFactor = self.RTBSpeedMinFactor or 0.5
+      self:SetRTBSpeed( RTBSpeedMax * RTBSpeedMinFactor, RTBSpeedMax * RTBSpeedMaxFactor)  
     end
     
     local RTBSpeed = math.random( self.RTBMinSpeed, self.RTBMaxSpeed )
