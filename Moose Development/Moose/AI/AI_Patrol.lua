@@ -16,7 +16,7 @@
 --   
 -- ===
 -- 
--- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/PAT%20-%20Patrolling)
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/PAT%20-%20Patrolling)
 -- 
 -- ===
 -- 
