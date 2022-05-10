@@ -399,6 +399,7 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Ruwayshid
 -- * AIRBASE.Syria.Sanliurfa
 -- * AIRBASE.Syria.Tal_Siman
+-- * AIRBASE.Syria.Deir_ez_Zor
 --
 --@field Syria
 AIRBASE.Syria={
@@ -464,7 +465,7 @@ AIRBASE.Syria={
   ["Ruwayshid"]="Ruwayshid",
   ["Sanliurfa"]="Sanliurfa",
   ["Tal_Siman"]="Tal Siman",
-  ["Deir_ez-Zor"] = "Deir ez-Zor",
+  ["Deir_ez_Zor"] = "Deir ez-Zor",
 }
 
 --- Airbases of the Mariana Islands map:
