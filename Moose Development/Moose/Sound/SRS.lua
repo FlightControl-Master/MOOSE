@@ -718,7 +718,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   --local command=string.format('start /b "" /d "%s" "%s" -f %s -m %s -c %s -p %s -n "%s" > bla.txt', path, exe, freqs, modus, coal, port, "ROBOT")
   
   -- Command.
-  local command=string.format('"%s\\%s" -f %s -m %s -c %s -p %s -n "%s" -v %.1f', path, exe, freqs, modus, coal, port, label,volume)
+  local command=string.format('"%s\\%s" -f %s -m %s -c %s -p %s -n "%s" -v "%.1f"', path, exe, freqs, modus, coal, port, label,volume)
 
   -- Set voice or gender/culture.
   if voice then
