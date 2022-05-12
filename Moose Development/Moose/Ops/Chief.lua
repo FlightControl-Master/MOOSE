@@ -1510,6 +1510,8 @@ function CHIEF:onafterStatus(From, Event, To)
 
   end
   
+  
+  
   ---
   -- Defcon
   ---
@@ -1529,6 +1531,58 @@ function CHIEF:onafterStatus(From, Event, To)
     
   -- Check target queue and assign missions to new targets.
   self:CheckTargetQueue()
+  
+  -- Loop over targets.
+  for _,_target in pairs(self.targetqueue) do
+    local target=_target --Ops.Target#TARGET
+    
+    if target and target:IsAlive() and target.mission and target.mission:IsNotOver() then
+    
+      local inborder=self:CheckTargetInZones(target, self.borderzoneset)
+      
+      local inyellow=self:CheckTargetInZones(target, self.yellowzoneset)
+      
+      local inattack=self:CheckTargetInZones(target, self.engagezoneset)
+      
+      if self.strategy==CHIEF.Strategy.PASSIVE then
+      
+        -- Passive: No targets are engaged at all.
+        self:T(self.lid..string.format("Cancelling mission for target %s as strategy is PASSIVE", target:GetName()))
+        target.mission:Cancel()
+        
+      elseif self.strategy==CHIEF.Strategy.DEFENSIVE then
+      
+        -- Defensive: Cancel if not in border.
+        if not inborder then
+          self:T(self.lid..string.format("Cancelling mission for target %s as strategy is DEFENSIVE and not inside border", target:GetName()))
+          target.mission:Cancel()
+        end
+      
+      elseif self.strategy==CHIEF.Strategy.OFFENSIVE then
+
+        -- Offensive: Cancel if not in border or conflict.
+        if not (inborder or inyellow) then
+          self:T(self.lid..string.format("Cancelling mission for target %s as strategy is OFFENSIVE and not inside border or conflict", target:GetName()))
+          target.mission:Cancel()
+        end
+      
+      elseif self.strategy==CHIEF.Strategy.AGGRESSIVE then
+
+        -- Aggessive: Cancel if not in border, conflict or attack.
+        if not (inborder or inyellow or inattack) then
+          self:T(self.lid..string.format("Cancelling mission for target %s as strategy is AGGRESSIVE and not inside border, conflict or attack", target:GetName()))
+          target.mission:Cancel()
+        end
+      
+      elseif self.strategy==CHIEF.Strategy.TOTALWAR then
+        
+        -- Total War: No missions are cancelled.
+        
+      end
+    
+    end
+    
+  end  
   
   ---
   -- Check Strategic Zone Queue
