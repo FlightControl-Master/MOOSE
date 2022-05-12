@@ -32,13 +32,14 @@
 -- @field #table clients Table with all clients spawning at this airbase.
 -- @field Ops.ATIS#ATIS atis ATIS object.
 -- @field #number activerwyno Number of active runway.
--- @field #number atcfreq ATC radio frequency.
--- @field Core.RadioQueue#RADIOQUEUE atcradio ATC radio queue.
+-- @field #number frequency ATC radio frequency in MHz.
+-- @field #number modulation ATC radio modulation, *e.g.* `radio.modulation.AM`.
 -- @field #number Nlanding Max number of aircraft groups in the landing pattern.
 -- @field #number dTlanding Time interval in seconds between landing clearance.
 -- @field #number Nparkingspots Total number of parking spots.
 -- @field Core.Spawn#SPAWN parkingGuard Parking guard spawner.
 -- @field #table holdingpoints Holding points.
+-- @field #number hpcounter Counter for holding zones.
 -- @field Sound.SRS#MSRS msrsTower Moose SRS wrapper.
 -- @field Sound.SRS#MSRS msrsPilot Moose SRS wrapper.
 -- @extends Core.Fsm#FSM
@@ -66,6 +67,7 @@
 -- * As soon as AI aircraft taxi or land, we completely loose control. All is governed by the internal DCS AI logic.
 -- * We have no control over the active runway or which runway is used by the AI if there are multiple.
 -- * Only one player/client per group as we can create menus only for a group and not for a specific unit.
+-- * Only FLIGHTGROUPS are controlled.
 -- 
 -- 
 -- @field #FLIGHTCONTROL
@@ -91,10 +93,14 @@ FLIGHTCONTROL = {
   dTlanding        = nil,
   Nparkingspots    = nil,
   holdingpoints    =  {},
+  hpcounter        =   0,
 }
 
 --- Holding point. Contains holding stacks.
 -- @type FLIGHTCONTROL.HoldingPoint
+-- @field Core.Zone#ZONE arrivalzone Zone where aircraft should arrive.
+-- @field #number uid Unique ID.
+-- @field #string name Name of the zone, which is <zonename>-<uid>.
 -- @field Core.Point#COORDINATE pos0 First position of racetrack holding point.
 -- @field Core.Point#COORDINATE pos1 Second position of racetrack holding point.
 -- @field #number angelsmin Smallest holding altitude in angels.
@@ -107,6 +113,7 @@ FLIGHTCONTROL = {
 -- @field #number angels Holding altitude in Angels.
 -- @field Core.Point#COORDINATE pos0 First position of racetrack holding point.
 -- @field Core.Point#COORDINATE pos1 Second position of racetrack holding point.
+-- @field #number heading Heading.
 
 --- Player menu data.
 -- @type FLIGHTCONTROL.PlayerMenu
@@ -149,18 +156,6 @@ FLIGHTCONTROL.FlightStatus={
 -- @field #number width Width of runway in meters.
 -- @field Core.Point#COORDINATE position Position of runway start.
 
---- Sound file data.
--- @type FLIGHTCONTROL.Soundfile
--- @field #string filename Name of the file
--- @field #number duration Duration in seconds.
-
---- Sound files.
--- @type FLIGHTCONTROL.Sound
--- @field #FLIGHTCONTROL.Soundfile ActiveRunway
-FLIGHTCONTROL.Sound = {
-  ActiveRunway={filename="ActiveRunway.ogg", duration=0.99},
-}
-
 --- FlightControl class version.
 -- @field #string version
 FLIGHTCONTROL.version="0.5.0"
@@ -169,10 +164,9 @@ FLIGHTCONTROL.version="0.5.0"
 -- TODO list
 --
 
--- TODO: 
+-- TODO: Support airwings. Dont give clearance for Alert5 or if mission has not started.
 -- TODO: Switch to enable/disable AI messages.
 -- TODO: Improve TTS messages. 
--- DONE: Add SRS TTS.
 -- TODO: Define holding zone.
 -- TODO: Add helos.
 -- TODO: Talk me down option.
@@ -180,6 +174,7 @@ FLIGHTCONTROL.version="0.5.0"
 -- TODO: ATC voice overs.
 -- TODO: Check runways and clean up.
 -- TODO: Accept and forbit parking spots.
+-- DONE: Add SRS TTS.
 -- DONE: Add parking guard.
 -- NOGO: Add FARPS?
 -- DONE: Interface with FLIGHTGROUP.
@@ -353,6 +348,12 @@ function FLIGHTCONTROL:AddHoldingPoint(ArrivalZone, Heading, Length, Flightlevel
   local hp={} --#FLIGHTCONTROL.HoldingPoint
   
   hp.arrivalzone=ArrivalZone
+  
+  self.hpcounter=self.hpcounter+1
+  
+  hp.uid=self.hpcounter
+  
+  hp.name=string.format("%s-%d", ArrivalZone:GetName(), hp.uid)
   
   hp.pos0=ArrivalZone:GetCoordinate()
   
@@ -1859,7 +1860,7 @@ end
 --- Player calls inbound.
 -- @param #FLIGHTCONTROL self
 -- @param #string groupname Name of the flight group.
-function FLIGHTCONTROL:_PlayerInbound(groupname)
+function FLIGHTCONTROL:_PlayerRequestInbound(groupname)
 
   -- Get flight group.
   local flight=_DATABASE:GetOpsGroup(groupname) --Ops.FlightGroup#FLIGHTGROUP
@@ -1877,6 +1878,15 @@ function FLIGHTCONTROL:_PlayerInbound(groupname)
       
       end
       
+      -- Call sign.
+      local callsign=flight:GetCallsignName()
+      
+      -- Pilot calls inbound for landing.
+      local text=string.format("%s, %s, inbound for landing", self.alias, callsign)
+      
+      -- Radio message.
+      self:TransmissionPilot(text, flight)
+      
       -- Distance from player to airbase.
       local dist=flight:GetCoordinate():Get2DDistance(self:GetCoordinate())
       
@@ -1889,12 +1899,12 @@ function FLIGHTCONTROL:_PlayerInbound(groupname)
         self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.INBOUND)
         
         -- Get holding point.
-        local stack=self:_GetHoldingpoint(flight)
+        local stack=self:_GetHoldingpoint(flight)        
         
         if stack then
         
           -- Set flight.
-          stack.flightgroup=self
+          stack.flightgroup=flight
           
           -- Stack.
           flight.stack=stack
@@ -1911,10 +1921,11 @@ function FLIGHTCONTROL:_PlayerInbound(groupname)
           local dist=UTILS.MetersToNM(distance)
       
           -- Message text.
-          local text=string.format("Roger, Fly heading %03d for %d nautical miles and report status when entering the holding pattern", heading, dist)
+          local text=string.format("%s, %s, roger, fly heading %03d for %d nautical miles, hold at angels %d. Report status when entering the pattern", 
+          callsign, self.alias, heading, dist, stack.angels)
           
           -- Send message.
-          self:TransmissionTower(text, flight)
+          self:TransmissionTower(text, flight, 15)
           
         else
           self:E(self.lid..string.format("WARNING: Could not get holding stack for flight %s", flight:GetName()))
@@ -1926,7 +1937,7 @@ function FLIGHTCONTROL:_PlayerInbound(groupname)
           local text=string.format("Negative, you have to be withing 50 nautical miles of the airbase to request inbound!")
           
           -- Send message.
-          self:TransmissionTower(text)          
+          self:TextMessageToFlight(text, flight, 10)
       
       end
       
@@ -1935,7 +1946,56 @@ function FLIGHTCONTROL:_PlayerInbound(groupname)
       local text=string.format("Negative, you must be AIRBORNE to call INBOUND!")
       
       -- Send message.
-      self:TransmissionTower(text)          
+      self:TextMessageToFlight(text, flight, 10)
+    end
+      
+  else
+    MESSAGE:New(string.format("Cannot find flight group %s.", tostring(groupname)), 5):ToAll()
+  end
+  
+end
+
+--- Player calls inbound.
+-- @param #FLIGHTCONTROL self
+-- @param #string groupname Name of the flight group.
+function FLIGHTCONTROL:_PlayerAbortInbound(groupname)
+
+  -- Get flight group.
+  local flight=_DATABASE:GetOpsGroup(groupname) --Ops.FlightGroup#FLIGHTGROUP
+  
+  if flight then
+      
+    if flight:IsInbound() and self:IsControlling(flight) then
+      
+      -- Call sign.
+      local callsign=flight:GetCallsignName()
+      
+      -- Pilot calls inbound for landing.
+      local text=string.format("%s, %s, abort inbound", self.alias, callsign)
+      
+      -- Radio message.
+      self:TransmissionPilot(text, flight)
+  
+      -- Add flight to inbound queue.
+      self:_RemoveFlight(flight)
+        
+      -- Set flight.
+      flight.stack.flightgroup=nil
+      flight.stack=nil
+      
+      -- Message text.
+      local text=string.format("%s, %s, roger, have a nice day!",  callsign, self.alias)
+          
+      -- Send message.
+      self:TransmissionTower(text, flight, 15)
+      
+    else
+    
+      -- Error you are not airborne!
+      local text=string.format("Negative, you must be INBOUND and CONTROLLED by us!")
+      
+      -- Send message.
+      self:TextMessageToFlight(text, flight, 10)
     end
       
   else
@@ -2273,7 +2333,7 @@ end
 --- Get element of flight from its unit name. 
 -- @param #FLIGHTCONTROL self
 -- @param #string unitname Name of the unit.
--- @return #FLIGHTCONTROL.FlightElement Element of the flight or nil.
+-- @return Ops.OpsGroup#OPSGROUP.Element Element of the flight or nil.
 -- @return #number Element index or nil.
 -- @return Ops.FlightGroup#FLIGHTGROUP The Flight group or nil.
 function FLIGHTCONTROL:_GetFlightElement(unitname)
@@ -2292,7 +2352,7 @@ function FLIGHTCONTROL:_GetFlightElement(unitname)
 
       -- Loop over all elements in flight group.
       for i,_element in pairs(flight.elements) do
-        local element=_element --#FLIGHTCONTROL.FlightElement
+        local element=_element --Ops.OpsGroup#OPSGROUP.Element
         
         if element.unit:GetName()==unitname then
           return element, i, flight
@@ -2448,11 +2508,18 @@ function FLIGHTCONTROL:_GetHoldingpoint(flight)
   
   ]]
   
+  -- Debug message.
+  self:T(self.lid..string.format("Getting holding point for flight %s", flight:GetName()))
+  
   for i,_hp in pairs(self.holdingpoints) do
     local holdingpoint=_hp --#FLIGHTCONTROL.HoldingPoint
-  
+    
+    self:T(self.lid..string.format("Checking holding point %s", holdingpoint.name))
+    
     for j,_stack in pairs(holdingpoint.stacks) do
       local stack=_stack --#FLIGHTCONTROL.HoldingStack
+      local name=stack.flightgroup and stack.flightgroup:GetName() or "empty"
+      self:T(self.lid..string.format("Stack %d: %s", j, name))
       if not stack.flightgroup then
         return stack
       end
@@ -2466,17 +2533,6 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Radio Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Transmission via RADIOQUEUE.
--- @param #FLIGHTCONTROL self
--- @param #FLIGHTCONTROL.Soundfile sound FLIGHTCONTROL sound object.
--- @param #number interval Interval in seconds after the last transmission finished.
--- @param #string subtitle Subtitle of the transmission.
--- @param #string path Path to sound file. Default self.soundpath.
-function FLIGHTCONTROL:Transmission2(sound, interval, subtitle, path)
-  self.radioqueue:NewTransmission(sound.filename, sound.duration, path or self.soundpath, nil, interval, subtitle, self.subduration)
-end
-
 
 --- Radio transmission from tower.
 -- @param #FLIGHTCONTROL self

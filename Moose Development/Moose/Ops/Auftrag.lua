@@ -2505,8 +2505,17 @@ function AUFTRAG:GetRequiredAssets(Legion)
   --if Legion and self.Nassets[Legion.alias] then
   --  N=self.Nassets[Legion.alias]
   --end
+  
+  local Nmin=self.NassetsMin
+  local Nmax=self.NassetsMax
+  
+  if self.type==AUFTRAG.Type.RELOCATECOHORT then
+    local cohort=self.DCStask.params.cohort --Ops.Cohort#COHORT
+    Nmin=#cohort.assets
+    Nmax=Nmin
+  end
 
-  return self.NassetsMin, self.NassetsMax
+  return Nmin, Nmax
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Define how many assets are required that escort the mission assets. 

@@ -713,8 +713,17 @@ function FLIGHTGROUP:ClearToLand(Delay)
   else
 
     if self:IsHolding() then
+    
+      -- Set flag.
       self:T(self.lid..string.format("Clear to land ==> setting holding flag to 1 (true)"))
       self.flaghold:Set(1)
+      
+      -- Clear holding stack.
+      if self.stack then
+        self.stack.flightgroup=nil
+        self.stack=nil
+      end
+      
     end
 
   end
@@ -2536,12 +2545,16 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
 
   -- Do we have a flight control?
   local fc=_DATABASE:GetFlightControl(airbase:GetName())
+  
   if fc then
   
     -- Get holding point from flight control.
     local HoldingPoint=fc:_GetHoldingpoint(self)
     
-    if HoldingPoint then
+    if HoldingPoint then          
+      
+      HoldingPoint.flightgroup=self
+      self.stack=HoldingPoint
       
       -- Race track points.
       p0=HoldingPoint.pos0
@@ -2552,6 +2565,8 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
         p0:MarkToAll(string.format("%s: Holding point P0, alt=%d meters", self:GetName(), p0.y))
         p1:MarkToAll(string.format("%s: Holding point P1, alt=%d meters", self:GetName(), p0.y))
       end
+      
+    else
       
     end
 
@@ -2809,6 +2824,7 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
   -- Holding time stamp.
   self.Tholding=timer.getAbsTime()
 
+  -- Debug message.
   local text=string.format("Flight group %s is HOLDING now", self.groupname)
   self:T(self.lid..text)
 
