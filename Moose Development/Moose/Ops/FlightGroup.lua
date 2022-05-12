@@ -842,7 +842,7 @@ function FLIGHTGROUP:Status()
     
     -- ROE and Alarm State.
     local roe=self:GetROE() or -1
-    local als=self:GetAlarmstate() or -1
+    local rot=self:GetROT() or -1
 
     -- Waypoint stuff.
     local wpidxCurr=self.currentwp
@@ -887,8 +887,8 @@ function FLIGHTGROUP:Status()
     local curr=self.currbase and self.currbase:GetName() or "N/A"
   
     -- Info text.
-    local text=string.format("%s [%d/%d]: ROE/AS=%d/%d | T/M=%d/%d | Wp=%d[%d]-->%d[%d]/%d [%s] | Life=%.1f | v=%.1f (%d) | Hdg=%03d | Ammo=%d | Detect=%s | Cargo=%.1f | Base=%s [%s-->%s]",
-    fsmstate, nelem, Nelem, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, wpN, wpF, life, speed, speedEx, hdg, ammo, ndetected, cargo, curr, home, dest)
+    local text=string.format("%s [%d/%d]: ROE/ROT=%d/%d | T/M=%d/%d | Wp=%d[%d]-->%d[%d]/%d [%s] | Life=%.1f | v=%.1f (%d) | Hdg=%03d | Ammo=%d | Detect=%s | Cargo=%.1f | Base=%s [%s-->%s]",
+    fsmstate, nelem, Nelem, roe, rot, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, wpN, wpF, life, speed, speedEx, hdg, ammo, ndetected, cargo, curr, home, dest)
     self:I(self.lid..text)
 
   end

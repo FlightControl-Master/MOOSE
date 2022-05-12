@@ -4418,6 +4418,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
     
     if Task.description=="Task_Land_At" then
       self:T(self.lid.."Taske DONE Task_Land_At ==> Wait")
+      self:Cruise()
       self:Wait(20, 100)
     else
       self:T(self.lid.."Task Done but NO mission found ==> _CheckGroupDone in 1 sec")
@@ -4813,6 +4814,11 @@ function OPSGROUP:onafterMissionExecute(From, Event, To, Mission)
 
   -- Set mission status to EXECUTING.
   Mission:Executing()
+  
+  -- Group is holding but has waypoints ==> Cruise.
+  if self:IsHolding() and not self:HasPassedFinalWaypoint() then
+    self:Cruise()
+  end
 
   -- Set auto engage detected targets.
   if Mission.engagedetectedOn then
@@ -9721,6 +9727,8 @@ function OPSGROUP:_CheckDamage()
   for _,_element in pairs(self.elements) do
     local element=_element --Ops.OpsGroup#OPSGROUP.Element
 
+	if element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
+
     -- Current life points.
     local life=element.unit:GetLife()
 
@@ -9731,6 +9739,8 @@ function OPSGROUP:_CheckDamage()
       self:ElementDamaged(element)
       damaged=true
     end
+	
+	end
 
   end
 
@@ -11868,7 +11878,7 @@ function OPSGROUP:GetAmmoTot()
   Ammo.MissilesCR=0
   Ammo.MissilesSA=0
 
-  for _,_unit in pairs(units) do
+  for _,_unit in pairs(units or {}) do
     local unit=_unit --Wrapper.Unit#UNIT
 
     if unit and unit:IsAlive()~=nil then
