@@ -54,6 +54,7 @@
 -- @field #boolean despawnAfterLanding If `true`, group is despawned after landed at an airbase.
 -- @field #boolean despawnAfterHolding If `true`, group is despawned after reaching the holding point.
 -- @field #number RTBRecallCount Number that counts RTB calls.
+-- @field Ops.FlightControl#FLIGHTCONTROL.HoldingStack stack Holding stack.
 --
 -- @extends Ops.OpsGroup#OPSGROUP
 
@@ -379,7 +380,9 @@ function FLIGHTGROUP:SetFlightControl(flightcontrol)
   self.flightcontrol=flightcontrol
 
   -- Add flight to all flights.
-  table.insert(flightcontrol.flights, self)
+  if not flightcontrol:IsFlight(self) then
+    table.insert(flightcontrol.flights, self)
+  end
 
   -- Update flight's F10 menu.
   if self.isAI==false then
@@ -799,11 +802,13 @@ function FLIGHTGROUP:Status()
   
           -- Get distance to assigned parking spot.
           local dist=element.unit:GetCoordinate():Get2DDistance(element.parking.Coordinate)
+          
+          env.info(string.format("FF dist to parking spot %d = %.1f meters", element.parking.TerminalID, dist))
   
           -- If distance >10 meters, we consider the unit as taxiing.
           -- TODO: Check distance threshold! If element is taxiing, the parking spot is free again.
           --       When the next plane is spawned on this spot, collisions should be avoided!
-          if dist>10 then
+          if dist>5 then
             if element.status==OPSGROUP.ElementStatus.ENGINEON then
               self:ElementTaxiing(element)
             end
@@ -1582,10 +1587,20 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
   else
   
     env.info("FF Spawned update menu")
-
-    -- F10 other menu.
-    self:_UpdateMenu()
-
+    
+    -- Set flightcontrol.
+    if self.currbase then
+      local flightcontrol=_DATABASE:GetFlightControl(self.currbase:GetName())
+      if flightcontrol then
+        self:SetFlightControl(flightcontrol)
+      else
+        -- F10 other menu.
+        self:_UpdateMenu()        
+      end
+    else
+      self:_UpdateMenu()
+    end
+    
   end
 
 end
@@ -1620,6 +1635,8 @@ function FLIGHTGROUP:onafterParking(From, Event, To)
   local flightcontrol=_DATABASE:GetFlightControl(airbasename)
 
   if flightcontrol then
+  
+    env.info("FF flight control!")
 
     -- Set FC for this flight
     self:SetFlightControl(flightcontrol)
@@ -1635,6 +1652,9 @@ function FLIGHTGROUP:onafterParking(From, Event, To)
       end
 
     end
+    
+  else
+    env.info("FF no flight control!")
   end
 end
 
@@ -2517,15 +2537,22 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
   -- Do we have a flight control?
   local fc=_DATABASE:GetFlightControl(airbase:GetName())
   if fc then
+  
     -- Get holding point from flight control.
     local HoldingPoint=fc:_GetHoldingpoint(self)
-    p0=HoldingPoint.pos0
-    p1=HoldingPoint.pos1
-
-    -- Debug marks.
-    if false then
-      p0:MarkToAll("Holding point P0")
-      p1:MarkToAll("Holding point P1")
+    
+    if HoldingPoint then
+      
+      -- Race track points.
+      p0=HoldingPoint.pos0
+      p1=HoldingPoint.pos1
+  
+      -- Debug marks.
+      if true then
+        p0:MarkToAll(string.format("%s: Holding point P0, alt=%d meters", self:GetName(), p0.y))
+        p1:MarkToAll(string.format("%s: Holding point P1, alt=%d meters", self:GetName(), p0.y))
+      end
+      
     end
 
     -- Set flightcontrol for this flight.

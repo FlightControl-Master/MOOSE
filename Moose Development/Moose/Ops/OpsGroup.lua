@@ -205,6 +205,7 @@ OPSGROUP = {
 -- @field DCS#Controller controller The DCS controller of the unit.
 -- @field #boolean ai If true, element is AI.
 -- @field #string skill Skill level.
+-- @field #string playerName Name of player if this is a client.
 --
 -- @field Core.Zone#ZONE_POLYGON_BASE zoneBoundingbox Bounding box zone of the element unit.
 -- @field Core.Zone#ZONE_POLYGON_BASE zoneLoad Loading zone.
@@ -268,6 +269,28 @@ OPSGROUP.ElementStatus={
   LANDED="landed",
   ARRIVED="arrived",
   DEAD="dead",
+}
+
+--- Status of group.
+-- @type OPSGROUP.GroupStatus
+-- @field #string INUTERO Not spawned yet or its status is unknown so far.
+-- @field #string PARKING Parking after spawned on ramp.
+-- @field #string TAXIING Taxiing after engine startup.
+-- @field #string AIRBORNE Element is airborne. Either after takeoff or after air start.
+-- @field #string LANDING Landing.
+-- @field #string LANDED Landed and is taxiing to its parking spot.
+-- @field #string ARRIVED Arrived at its parking spot and shut down its engines.
+-- @field #string DEAD Element is dead after it crashed, pilot ejected or pilot dead events.
+OPSGROUP.GroupStatus={
+  INUTERO="InUtero",
+  PARKING="Parking",
+  TAXIING="Taxiing",
+  AIRBORNE="Airborne",
+  INBOUND="Inbound",
+  LANDING="Landing",
+  LANDED="Landed",
+  ARRIVED="Arrived",
+  DEAD="Dead",
 }
 
 --- Ops group task status.
