@@ -463,12 +463,14 @@ AWACS.TaskStatus = {
 -- TODO - System for Players to VID contacts? And put data into contacst fifo
 -- TODO - Task reassignment - if a player reject a task, don't choose him again for x minutes
 -- DEBUG - WIP - Player tasking
+-- TODO -- Maybe check in AI only when airborne
+-- TODO -- remove SSL tag when not on google (currently sometimes spoken)
 -- TODO - Localization
 -- TODO - (LOW) LotATC / IFF
--- 
 -- TODO - SW Optimizer
 -- 
 -- DONE - added SSML tags to make google readouts nicer
+-- DONE - 2nd audio queue for priority messages
 -- DONE - (WIP) Missile launch callout
 -- DONE - Event detection, Player joining, eject, crash, dead, leaving; AI shot -> DEFEND
 -- DONE - AI Tasking
@@ -1699,8 +1701,13 @@ function AWACS:_CreatePicture(AO,Callsign,GID,MaxEntries,IsGeneral)
         textScreen = textScreen .. " "..refBRAA.." miles, "..alt.." thousand." -- Alpha Group, Bullseye 021, 16 miles, 25 thousand,
       else
         -- pilot reference
-        refBRAA = coordinate:ToStringBRAANATO(groupcoord,true,true) -- Charlie group, BRAA 045, 105 miles, Angels 41, Flanking, Track North-East, Bogey, Spades.
-        refBRAATTS = coordinate:ToStringBRAANATO(groupcoord,true,true,true)
+        refBRAA = coordinate:ToStringBRAANATO(groupcoord,true,true)
+        refBRAATTS = string.gsub(refBRAA,"BRAA","brah")
+        refBRAATTS = string.gsub(refBRAATTS,"BRA","brah")
+         -- Charlie group, BRAA 045, 105 miles, Angels 41, Flanking, Track North-East, Bogey, Spades.
+        if self.PathToGoogleKey then
+          refBRAATTS = coordinate:ToStringBRAANATO(groupcoord,true,true,true)
+        end
         text = text .. " "..refBRAATTS
         textScreen = textScreen .." "..refBRAA
       end
@@ -2928,8 +2935,13 @@ function AWACS:_ToStringBR(FromCoordinate,ToCoordinate)
   local AngleDegrees = UTILS.Round( UTILS.ToDegree( AngleRadians ), 0 ) -- degrees
   
   local AngleDegText = string.format("%03d",AngleDegrees) -- 051
-  local AngleDegTextTTS = string.format("<say-as interpret-as='characters'>%s</say-as>",AngleDegText)
+  local AngleDegTextTTS = ""
   
+  if self.PathToGoogleKey then
+    AngleDegTextTTS = string.format("<say-as interpret-as='characters'>%s</say-as>",AngleDegText)
+  else
+    AngleDegTextTTS = string.format("%s",AngleDegText)
+  end
   AngleDegText = string.gsub(AngleDegText,"%d","%1 ") -- "0 5 1 "
   AngleDegText = string.gsub(AngleDegText," $","") -- "0 5 1"
   
@@ -3504,7 +3516,11 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag,IsPopup,Repo
 
   if isGroup then
     BRAfromBulls = clustercoordinate:ToStringBRAANATO(Group:GetCoordinate(),true,true)
-    BRAfromBullsTTS = clustercoordinate:ToStringBRAANATO(Group:GetCoordinate(),true,true,true)
+    BRAfromBullsTTS = string.gsub(BRAfromBulls,"BRAA","brah")
+    BRAfromBullsTTS = string.gsub(BRAfromBullsTTS,"BRA","brah")
+    if self.PathToGoogleKey then
+      BRAfromBullsTTS = clustercoordinate:ToStringBRAANATO(Group:GetCoordinate(),true,true,true)
+    end
   end
 
   -- "Uzi 1-1, Magic, BRA, 183 for 10 at 2000, hot"
@@ -3915,8 +3931,13 @@ function AWACS:_MeldRangeCall(GID,Contact)
   local contacttag = Contact.TargetGroupNaming
   if contact and not Contact.MeldCallDone then
     local position = contact.position -- Core.Point#COORDINATE
-    if position then     
-      local BRATExt = position:ToStringBRAANATO(flightpos,false,false,true)
+    if position then
+      local BRATExt = ""
+      if self.PathToGoogleKey then     
+        BRATExt = position:ToStringBRAANATO(flightpos,false,false,true)
+      else
+        BRATExt = position:ToStringBRAANATO(flightpos,false,false)
+      end
       local text = string.format("%s. %s. %s group, %s",self.callsigntxt,pilotcallsign,contacttag,BRATExt)
       self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
       self:_UpdateContactEngagementTag(Contact.CID,Contact.EngagementTag,true,true,AWACS.TaskStatus.EXECUTING)
@@ -3939,7 +3960,12 @@ function AWACS:_ThreatRangeCall(GID,Contact)
   if contact then
     local position = contact.position or contact.group:GetCoordinate() -- Core.Point#COORDINATE
     if position then     
-      local BRATExt = position:ToStringBRAANATO(flightpos,false,false,true)
+      local BRATExt = ""
+      if self.PathToGoogleKey then     
+        BRATExt = position:ToStringBRAANATO(flightpos,false,false,true)
+      else
+        BRATExt = position:ToStringBRAANATO(flightpos,false,false)
+      end
       local text = string.format("%s. %s. %s group, Threat. %s",self.callsigntxt,pilotcallsign,contacttag,BRATExt)
       self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
     end
