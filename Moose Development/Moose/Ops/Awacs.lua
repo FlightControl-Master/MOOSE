@@ -132,7 +132,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "alpha 0.0.18", -- #string
+  version = "alpha 0.0.19", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -457,17 +457,18 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.0.18
+-- TODO-List 0.0.19
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
--- TODO - System for Players to VID contacts? And put data into contacst fifo
+-- TODO - System for Players to VID contacts?
 -- TODO - Task reassignment - if a player reject a task, don't choose him again for x minutes
 -- DEBUG - WIP - Player tasking
--- TODO -- Maybe check in AI only when airborne
--- TODO -- remove SSL tag when not on google (currently sometimes spoken)
+-- TODO - Maybe check in AI only when airborne
+-- DONE - remove SSML tag when not on google (currently sometimes spoken)
 -- TODO - Localization
 -- TODO - (LOW) LotATC / IFF
 -- TODO - SW Optimizer
+-- TODO - Assign specific number of AI CAP to a station
 -- 
 -- DONE - added SSML tags to make google readouts nicer
 -- DONE - 2nd audio queue for priority messages
@@ -578,7 +579,6 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.CallSign = CALLSIGN.AWACS.Darkstar -- #number
   self.CallSignNo = 1 -- #number
   self.NoHelos = true
-  self.MaxAIonCAP = 4
   self.AIRequested = 0
   self.AIonCAP = 0
   self.AICAPMissions = FIFO:New() -- Utilities.FiFo#FIFO
@@ -594,7 +594,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   local speed = 250
   self.SpeedBase = speed
   self.Speed = UTILS.KnotsToAltKIAS(speed,self.AwacsAngels*1000)
-  self.CapSpeedBase = 270
+  
   self.Heading = 0 -- north
   self.Leg = 50 -- nm
   self.invisible = false
@@ -609,8 +609,16 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.ShiftChangeTime = 0.25 -- 15mins
   self.ShiftChangeAwacsFlag = false
   self.ShiftChangeEscortsFlag = false
-  self.CAPTimeOnStation = 4
   
+  self.CapSpeedBase = 270
+  self.CAPTimeOnStation = 4
+  self.MaxAIonCAP = 4
+  self.AICAPCAllName = CALLSIGN.Aircraft.Colt
+  self.AICAPCAllNumber = 0
+  self.CAPGender = "male"
+  self.CAPCulture = "en-US"
+  self.CAPVoice = nil
+    
   self.DeclareRadius = 5 -- NM
   
   self.AwacsMission = nil
@@ -637,10 +645,6 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.PrioRadioQueue = FIFO:New() -- Utilities.FiFo#FIFO
   self.maxspeakentries = 3
   
-  self.CAPGender = "male"
-  self.CAPCulture = "en-US"
-  self.CAPVoice = nil
-  
   self.SuppressScreenOutput = false
   
   -- Client SET  
@@ -652,9 +656,6 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   -- managed groups
   self.ManagedGrps = {} -- #table of #AWACS.ManagedGroup entries
   self.ManagedGrpID = 0  
-  
-  self.AICAPCAllName = CALLSIGN.Aircraft.Colt
-  self.AICAPCAllNumber = 0
   
   -- Anchor stacks init
   self.AnchorStacks = FIFO:New() -- Utilities.FiFo#FIFO
@@ -1076,6 +1077,22 @@ function AWACS:SetSRSVoiceCAP(Gender, Culture, Voice)
   return self
 end
 
+--- [User] Set AI CAP Plane Details
+-- @param #AWACS self
+-- @param #number Callsign Callsign name of AI CAP, e.g. CALLSIGN.Aircraft.Dodge. Defaults to CALLSIGN.Aircraft.Colt. Note that not all available callsigns work for all plane types.
+-- @param #number MaxAICap Maximum number of AI CAP planes on station that AWACS will set up automatically. Default to 4.
+-- @param #number TOS Time on station, in  hours. AI planes might go back to base earlier if they run out of fuel or missiles.
+-- @param #number Speed Airspeed to be used in knots. Will be adjusted to flight height automatically. Defaults to 270.
+-- @return #AWACS self
+function AWACS:SetAICAPDetails(Callsign,MaxAICap,TOS,Speed)
+  self:T(self.lid.."SetAICAPDetails")
+  self.CapSpeedBase = Speed or 270
+  self.CAPTimeOnStation = TOS or 4
+  self.MaxAIonCAP = MaxAICap or 4
+  self.AICAPCAllName = Callsign or CALLSIGN.Aircraft.Colt
+  return self
+end
+
 --- [User] Set AWACS Escorts Template
 -- @param #AWACS self
 -- @param #number EscortNumber Number of fighther planes to accompany this AWACS. 0 or nil means no escorts.
@@ -1085,6 +1102,9 @@ function AWACS:SetEscort(EscortNumber)
   if EscortNumber and EscortNumber > 0 then
     self.HasEscorts = true
     self.EscortNumber = EscortNumber
+  else
+    self.HasEscorts = false
+    self.EscortNumber = 0
   end
   return self
 end
@@ -1263,8 +1283,9 @@ end
 -- @param #AWACS self
 -- @param Core.Point#COORDINATE Coordinate
 -- @param #boolean ssml Add SSML tag
+-- @param #boolean TTS For non-Alpha checks, hand back in format "Rock 0 2 1, 16"
 -- @return #string BullseyeBR
-function AWACS:ToStringBULLS( Coordinate, ssml )
+function AWACS:ToStringBULLS( Coordinate, ssml, TTS )
  -- local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( self.coalition ) )
   local bullseyename = self.AOName or "Rock"
   --local BullsCoordinate = self.OpsZone:GetCoordinate()
@@ -1277,8 +1298,11 @@ function AWACS:ToStringBULLS( Coordinate, ssml )
   local Distance = UTILS.Round( UTILS.MetersToNM( Distance ), 0 )
   if ssml then
     return string.format("%s <say-as interpret-as='characters'>%03d</say-as>, %d",bullseyename,Bearing,Distance)
+  elseif TTS then
+    Bearing = self:ToStringBullsTTS(Bearing)
+    return string.format("%s %s, %d",bullseyename,Bearing,Distance)
   else
-    return string.format("%s %03d, %d",bullseyename,Bearing,Distance)
+    return string.format("%s %s, %d",bullseyename,Bearing,Distance)
   end
 end
 
@@ -1692,7 +1716,8 @@ function AWACS:_CreatePicture(AO,Callsign,GID,MaxEntries,IsGeneral)
         if self.PathToGoogleKey then
           refBRAATTS = self:ToStringBULLS(coordinate, true)
         else
-          refBRAATTS = self:ToStringBullsTTS(refBRAA)
+          --refBRAATTS = self:ToStringBullsTTS(refBRAA)
+          refBRAATTS = self:ToStringBULLS(refBRAA,false,true)
         end 
         local alt = contact.Contact.group:GetAltitude() or 8000
         alt = UTILS.Round(UTILS.MetersToFeet(alt)/1000,0)
@@ -2815,11 +2840,11 @@ function AWACS:_StartIntel(awacs)
   local intel = INTEL:New(self.DetectionSet,self.coalition,self.callsigntxt)
   --intel:SetVerbosity(2)
   --intel:SetClusterRadius(UTILS.NMToMeters(5))
-  intel:SetClusterAnalysis(true,false,true)
+  intel:SetClusterAnalysis(true,true,true)
   
   local acceptzoneset = SET_ZONE:New()
   acceptzoneset:AddZone(self.ControlZone)
-  --acceptzoneset:AddZone(self.OpsZone)
+  acceptzoneset:AddZone(self.OpsZone)
   
   self.OrbitZone:SetRadius(UTILS.NMToMeters(55))
   acceptzoneset:AddZone(self.OrbitZone)
@@ -4740,7 +4765,7 @@ function AWACS:onafterNewCluster(From,Event,To,Cluster)
     inborderzone = self.BorderZone:IsVec2InZone(ContactCoordinate)
   end
   
-  if incontrolzone or inborderzone or (distance <= UTILS.NMToMeters(55)) then
+  if incontrolzone or inborderzone or (distance <= UTILS.NMToMeters(55)) or IsPopup then
     self:_AnnounceContact(managedcontact,true,nil,false,managedcontact.TargetGroupNaming,IsPopup,managedcontact.ReportingName)
   end
   
@@ -5022,7 +5047,7 @@ function AWACS:onafterReAnchor(From, Event, To, GID)
         local textScreen = string.format("All stations, %s. %s %s.", self.callsigntxt, faded, savedcallsign)
         
         local brtext = self:ToStringBULLS(managedgroup.LastKnownPosition)
-        local brtexttts = self:ToStringBullsTTS(brtext)
+        local brtexttts = self:ToStringBULLS(brtext,false,true)
         if self.PathToGoogleKey then
           brtexttts = self:ToStringBULLS(managedgroup.LastKnownPosition,true)
         end
@@ -5072,7 +5097,7 @@ function AWACS:onafterReAnchor(From, Event, To, GID)
         local textScreen = string.format("All stations, %s. %s %s.", self.callsigntxt, faded, savedcallsign)
         
         local brtext = self:ToStringBULLS(managedgroup.LastKnownPosition)
-        local brtexttts = self:ToStringBullsTTS(brtext)
+        local brtexttts = self:ToStringBULLS(brtext,false,true)
         if self.PathToGoogleKey then
           brtexttts = self:ToStringBULLS(managedgroup.LastKnownPosition,true)
         end
