@@ -96,6 +96,14 @@
 -- For more information on setting up a cloud account, visit: https://cloud.google.com/text-to-speech
 -- Google's supported SSML reference: https://cloud.google.com/text-to-speech/docs/ssml
 -- 
+-- **NOTE on using GOOGLE TTS with SRS:** You need to have the C# library installed in your SRS folder for Google to work. 
+-- You can obtain it e.g. here: [NuGet](https://www.nuget.org/packages/Grpc.Core)
+-- 
+-- **Pro-Tipp** - use the command line with power shell to call DCS-SR-ExternalAudio.exe - it will tell you what is missing.    
+-- and also the Google Console error, in case you have missed a step in setting up your Google TTS.   
+-- E.g. `.\DCS-SR-ExternalAudio.exe -t "Text Message" -f 255 -m AM -c 2 -s 2 -z -G "Path_To_You_Google.Json"`   
+-- Plays a message on 255AM for the blue coalition in-game.
+-- 
 -- ## Set Voice
 -- 
 -- Use a specifc voice with the @{#MSRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.

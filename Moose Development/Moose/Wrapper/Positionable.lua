@@ -1625,6 +1625,10 @@ do -- Cargo
           ["Ural-4320T"] = 14,
           ["ZBD04A"] = 7, -- new by kappa
           ["VAB_Mephisto"] = 8, -- new by Apple
+          ["tt_KORD"] = 6, -- 2.7.1 HL/TT
+          ["tt_DSHK"] = 6,
+          ["HL_KORD"] = 6,
+          ["HL_DSHK"] = 6,
         }
 
         -- Assuming that each passenger weighs 95 kg on average.
