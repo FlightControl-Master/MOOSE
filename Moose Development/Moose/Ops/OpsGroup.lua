@@ -2800,7 +2800,7 @@ end
 
 --- Get next waypoint index.
 -- @param #OPSGROUP self
--- @param #boolean cyclic If true, return first waypoint if last waypoint was reached. Default is patrol ad infinitum value set.
+-- @param #boolean cyclic If `true`, return first waypoint if last waypoint was reached. Default is patrol ad infinitum value set.
 -- @param #number i Waypoint index from which the next index is returned. Default is the last waypoint passed.
 -- @return #number Next waypoint index.
 function OPSGROUP:GetWaypointIndexNext(cyclic, i)
@@ -4072,11 +4072,14 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     local wp=nil --#OPSGROUP.Waypoint
     if self.isArmygroup then
       self:T2(self.lid.."Routing group to spawn zone of new legion")
-      wp=ARMYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Formation)
+      wp=ARMYGROUP.AddWaypoint(self,   Coordinate, UTILS.KmphToKnots(self.speedCruise), currUID, Mission.optionFormation)     
     elseif self.isFlightgroup then
       self:T2(self.lid.."Routing group to intermediate point near new legion")
       Coordinate=self:GetCoordinate():GetIntermediateCoordinate(Coordinate, 0.8)
       wp=FLIGHTGROUP.AddWaypoint(self, Coordinate, UTILS.KmphToKnots(self.speedCruise), currUID, UTILS.MetersToFeet(self.altitudeCruise))
+    elseif self.isNavygroup then
+      self:T2(self.lid.."Routing group to spawn zone of new legion")
+      wp=NAVYGROUP.AddWaypoint(self,   Coordinate, UTILS.KmphToKnots(self.speedCruise), currUID)         
     else
     
     end
@@ -4993,9 +4996,9 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   -- Emission to default.
   if Mission.optionEmission then
     self:SwitchEmission()
-  end  
+  end
   -- Formation to default.
-  if Mission.optionFormation then
+  if Mission.optionFormation and self:IsFlightgroup() then
     self:SwitchFormation()
   end
   -- Radio freq and modu to default.
@@ -5107,6 +5110,17 @@ function OPSGROUP:RouteToMission(mission, delay)
     -- Ingress waypoint coordinate where the mission is executed.
     local waypointcoord=nil --Core.Point#COORDINATE
     
+    -- Current coordinate of the group.
+    local currentcoord=self:GetCoordinate()
+    
+    -- Road connection.
+    local roadcoord=currentcoord:GetClosestPointToRoad()
+    
+    local roaddist=nil
+    if roadcoord then
+      roaddist=currentcoord:Get2DDistance(roadcoord)
+    end
+        
     -- Target zone.
     local targetzone=nil --Core.Zone#ZONE
   
@@ -5192,14 +5206,23 @@ function OPSGROUP:RouteToMission(mission, delay)
       ---
 
       -- Roughly go to the new legion. 
-      local ToCoordinate=mission.DCStask.params.legion:GetCoordinate()
+      local ToCoordinate=mission.DCStask.params.legion:GetCoordinate()      
             
       if self.isFlightgroup then
-        waypointcoord=self:GetCoordinate():GetIntermediateCoordinate(ToCoordinate, 0.2):SetAltitude(self.altitudeCruise)
+        -- Get mission waypoint coord in direction of the 
+        waypointcoord=currentcoord:GetIntermediateCoordinate(ToCoordinate, 0.2):SetAltitude(self.altitudeCruise)
+      elseif self.isArmygroup then
+        -- Army group: check for road connection.
+        if roadcoord then
+          waypointcoord=roadcoord
+        else
+          waypointcoord=currentcoord:GetIntermediateCoordinate(ToCoordinate, 100)
+        end
       else
-        waypointcoord=self:GetCoordinate():GetIntermediateCoordinate(ToCoordinate, 0.05)
+        -- Navy group: Route into direction of the target.
+        waypointcoord=currentcoord:GetIntermediateCoordinate(ToCoordinate, 0.05)
       end
-      
+            
     elseif mission.type==AUFTRAG.Type.RECOVERYTANKER then
       ---
       -- Recoverytanker
@@ -5333,12 +5356,16 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
      
     
-    -- Add waypoint.
+    -- Add mission execution (ingress) waypoint.
     local waypoint=nil --#OPSGROUP.Waypoint
     if self:IsFlightgroup() then
       waypoint=FLIGHTGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
     elseif self:IsArmygroup() then
-      waypoint=ARMYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, mission.optionFormation, false)
+      local formation=mission.optionFormation
+      if mission.type==AUFTRAG.Type.RELOCATECOHORT then
+        formation=ENUMS.Formation.Vehicle.OffRoad
+      end
+      waypoint=ARMYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, formation, false)
     elseif self:IsNavygroup() then
       waypoint=NAVYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
     end
@@ -5357,8 +5384,6 @@ function OPSGROUP:RouteToMission(mission, delay)
     -- Add egress waypoint.
     local egresscoord=mission:GetMissionEgressCoord()
     if egresscoord then
-      --egresscoord:MarkToAll(string.format("Egress Mission %s alt=%d m", mission:GetName(), waypointcoord.y))
-      -- Add waypoint.
       local Ewaypoint=nil --#OPSGROUP.Waypoint
       if self:IsFlightgroup() then
         Ewaypoint=FLIGHTGROUP.AddWaypoint(self, egresscoord, SpeedToMission, waypoint.uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
@@ -5371,12 +5396,9 @@ function OPSGROUP:RouteToMission(mission, delay)
       mission:SetGroupEgressWaypointUID(self, Ewaypoint.uid)
     end
 
-
-    -- Get current pos.    
-    local coord=self:GetCoordinate()
     
     -- Distance to waypoint coordinate.
-    local d=coord:Get2DDistance(waypointcoord)
+    local d=currentcoord:Get2DDistance(waypointcoord)
     
     -- Debug info.
     self:T(self.lid..string.format("FF distance to ingress waypoint=%.1f m", d))
@@ -5764,6 +5786,8 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
             self:_PassedFinalWaypoint(true, "PassingWaypoint: adinfinitum but only ONE WAYPOINT left")
           else
 
+            --[[ Solved now!
+
             -- Looks like the passing waypoint function is triggered over and over again if the group is near the final waypoint.
             -- So the only good solution is to guide the group away from that waypoint and then update the route.
 
@@ -5772,9 +5796,19 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
 
             -- Get a waypoint
             local Coordinate=Waypoint.coordinate:GetIntermediateCoordinate(wp1.coordinate, 0.1)
-
-            -- Detour to the temp waypoint. When reached, the normal route is resumed.
-            self:Detour(Coordinate, self.speedCruise, nil, true)
+            
+            local formation=nil
+            if self.isArmygroup then
+              formation=ENUMS.Formation.Vehicle.OffRoad
+            end
+                                    
+            self:Detour(Coordinate, self.speedCruise, formation, true)
+            
+            ]]
+            
+                  
+            -- Send 
+            self:__UpdateRoute(-0.01, 1, 1)
 
           end
         end
@@ -5785,6 +5819,27 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
 
         -- Final waypoint reached.
         self:_PassedFinalWaypoint(true, "PassingWaypoint: wpindex=#self.waypoints (or wpindex=nil)")
+      end
+      
+    elseif wpindex==1 then
+
+      -- Ad infinitum and not mission waypoint?
+      if self.adinfinitum then
+        ---
+        -- Ad Infinitum
+        ---
+
+        if #self.waypoints<=1 then
+          -- Only one waypoint. Ad infinitum does not really make sense. However, another waypoint could be added later...
+          self:_PassedFinalWaypoint(true, "PassingWaypoint: adinfinitum but only ONE WAYPOINT left")
+          
+        else
+        
+          if not Waypoint.missionUID then
+            -- Redo the route until the end.
+            self:__UpdateRoute(-0.01, 2)
+          end
+        end
       end
 
     end
@@ -9686,6 +9741,11 @@ function OPSGROUP:_CheckStuck()
 
       -- Debug warning.
       self:T(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected for %d sec", speed, ExpectedSpeed, holdtime))
+      
+      if self.legion then
+        self:T(self.lid..string.format("Asset is returned to its legion after being stuck!"))
+        self:ReturnToLegion()
+      end
 
     end
 
