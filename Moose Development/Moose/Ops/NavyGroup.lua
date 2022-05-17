@@ -541,6 +541,10 @@ function NAVYGROUP:_CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset
 
   -- Set start time.
   local Tstart=UTILS.ClockToSeconds(starttime)
+  
+  if uturn==nil then
+    uturn=true
+  end
 
   -- Set stop time.
   local Tstop=Tstart+90*60
@@ -1241,8 +1245,8 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
   
   IntoWind.Open=true
   
-  IntoWind.Coordinate=self:GetCoordinate()
-
+  IntoWind.Coordinate=self:GetCoordinate(true)
+  
   self.intowind=IntoWind
   
   -- Wind speed in m/s.

@@ -732,8 +732,11 @@ function COMMANDER:RelocateCohort(Cohort, Legion, Delay, NcarriersMin, Ncarriers
     else
       for _,legion in pairs(self.legions) do
         mission:AssignTransportLegion(legion)
-      end      
+      end 
     end
+    
+      -- Set mission range very large. Mission designer should know...
+      mission:SetMissionRange(10000)    
     
     -- Add mission.
     self:AddMission(mission)

@@ -102,6 +102,9 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
 
   -- Everyone can ORBIT.
   self:AddMissionCapability(AUFTRAG.Type.ORBIT)
+  
+  -- Is air.
+  self.isAir=true
 
   -- Refueling system.
   self.refuelSystem=select(2, self.templategroup:GetUnit(1):IsRefuelable())

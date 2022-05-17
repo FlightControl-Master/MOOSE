@@ -65,6 +65,9 @@ function PLATOON:New(TemplateGroupName, Ngroups, PlatoonName)
   
   -- All platoons get mission type Nothing.
   self:AddMissionCapability(AUFTRAG.Type.NOTHING, 50)
+  
+  -- Is ground.
+  self.isGround=true
 
   -- Get ammo.
   self.ammo=self:_CheckAmmo()

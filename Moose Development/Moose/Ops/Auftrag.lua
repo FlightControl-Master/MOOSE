@@ -2112,6 +2112,10 @@ function AUFTRAG:_NewRELOCATECOHORT(Legion, Cohort)
 
   mission.DCStask=mission:GetDCSMissionTask()
   
+  if Cohort.isGround then
+    mission.optionFormation=ENUMS.Formation.Vehicle.OnRoad
+  end
+    
   mission.DCStask.params.legion=Legion
   mission.DCStask.params.cohort=Cohort
 

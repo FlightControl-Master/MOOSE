@@ -874,6 +874,11 @@ do -- COORDINATE
 
     -- Get the vector from A to B
     local vec=UTILS.VecSubstract(ToCoordinate, self)
+    
+    if f>1 then
+      local norm=UTILS.VecNorm(vec)      
+      f=Fraction/norm
+    end
 
     -- Scale the vector.
     vec.x=f*vec.x
@@ -883,7 +888,9 @@ do -- COORDINATE
     -- Move the vector to start at the end of A.
     vec=UTILS.VecAdd(self, vec)
 
+    -- Create a new coordiante object.
     local coord=COORDINATE:New(vec.x,vec.y,vec.z)
+    
     return coord
   end
 
@@ -2769,8 +2776,9 @@ do -- COORDINATE
   -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
   -- @param #boolean Bogey Add "Bogey" at the end if true (not yet declared hostile or friendly)
   -- @param #boolean Spades Add "Spades" at the end if true (no IFF/VID ID yet known)
+  -- @param #boolean SSML Add SSML tags speaking aspect as 0 1 2 and "brah" instead of BRAA
   -- @return #string The BRAA text.
-  function COORDINATE:ToStringBRAANATO(FromCoordinate,Bogey,Spades)
+  function COORDINATE:ToStringBRAANATO(FromCoordinate,Bogey,Spades,SSML)
     
     -- Thanks to @Pikey
     local BRAANATO = "Merged."
@@ -2791,22 +2799,39 @@ do -- COORDINATE
     local track = UTILS.BearingToCardinal(bearing) or "North"
     
     if rangeNM > 3 then
-      if aspect == "" then
-        BRAANATO = string.format("BRA, %03d, %d miles, Angels %d, Track %s",bearing, rangeNM, alt, track)
+      if SSML then
+        if aspect == "" then
+          BRAANATO = string.format("brah <say-as interpret-as='characters'>%03d</say-as>, %d miles, Angels %d, Track %s",bearing, rangeNM, alt, track)
+        else
+          BRAANATO = string.format("brah <say-as interpret-as='characters'>%03d</say-as>, %d miles, Angels %d, %s, Track %s",bearing, rangeNM, alt, aspect, track)      
+        end
+        if Bogey and Spades then
+          BRAANATO = BRAANATO..", Bogey, Spades."
+        elseif Bogey then
+          BRAANATO = BRAANATO..", Bogey."
+        elseif Spades then
+         BRAANATO = BRAANATO..", Spades."
+        else
+         BRAANATO = BRAANATO.."."
+        end
       else
-        BRAANATO = string.format("BRAA, %03d, %d miles, Angels %d, %s, Track %s",bearing, rangeNM, alt, aspect, track)      
-      end
-      if Bogey and Spades then
-        BRAANATO = BRAANATO..", Bogey, Spades."
-      elseif Bogey then
-        BRAANATO = BRAANATO..", Bogey."
-      elseif Spades then
-       BRAANATO = BRAANATO..", Spades."
-      else
-       BRAANATO = BRAANATO.."."
+        if aspect == "" then
+          BRAANATO = string.format("BRA %03d, %d miles, Angels %d, Track %s",bearing, rangeNM, alt, track)
+        else
+          BRAANATO = string.format("BRAA %03d, %d miles, Angels %d, %s, Track %s",bearing, rangeNM, alt, aspect, track)      
+        end
+        if Bogey and Spades then
+          BRAANATO = BRAANATO..", Bogey, Spades."
+        elseif Bogey then
+          BRAANATO = BRAANATO..", Bogey."
+        elseif Spades then
+         BRAANATO = BRAANATO..", Spades."
+        else
+         BRAANATO = BRAANATO.."."
+        end
       end
     end
-    
+      
     return BRAANATO 
   end
   

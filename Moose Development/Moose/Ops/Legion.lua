@@ -499,6 +499,9 @@ function LEGION:RelocateCohort(Cohort, Legion, Delay, NcarriersMin, NcarriersMax
         end
       end
       
+      -- Set mission range very large. Mission designer should know...
+      mission:SetMissionRange(10000)
+      
       -- Add mission.
       self:AddMission(mission)
     end
