@@ -874,6 +874,11 @@ do -- COORDINATE
 
     -- Get the vector from A to B
     local vec=UTILS.VecSubstract(ToCoordinate, self)
+    
+    if f>1 then
+      local norm=UTILS.VecNorm(vec)      
+      f=Fraction/norm
+    end
 
     -- Scale the vector.
     vec.x=f*vec.x
@@ -883,7 +888,9 @@ do -- COORDINATE
     -- Move the vector to start at the end of A.
     vec=UTILS.VecAdd(self, vec)
 
+    -- Create a new coordiante object.
     local coord=COORDINATE:New(vec.x,vec.y,vec.z)
+    
     return coord
   end
 

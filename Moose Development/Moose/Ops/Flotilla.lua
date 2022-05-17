@@ -65,7 +65,10 @@ function FLOTILLA:New(TemplateGroupName, Ngroups, FlotillaName)
   local self=BASE:Inherit(self, COHORT:New(TemplateGroupName, Ngroups, FlotillaName)) -- #FLOTILLA
   
   -- All flotillas get mission type Nothing.
-  self:AddMissionCapability(AUFTRAG.Type.NOTHING, 50)  
+  self:AddMissionCapability(AUFTRAG.Type.NOTHING, 50)
+  
+  -- Is naval.
+  self.isNaval=true
 
   -- Get initial ammo.
   self.ammo=self:_CheckAmmo()
