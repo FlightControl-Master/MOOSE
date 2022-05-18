@@ -1000,6 +1000,23 @@ function AIRBASE:_InitParkingSpots()
     self.NparkingTerminal[terminalType]=0
   end
 
+  -- Get client coordinates.  
+  local function isClient(coord)
+    local clients=_DATABASE.CLIENTS
+    for clientname, client in pairs(clients) do
+      local template=_DATABASE:GetGroupTemplateFromUnitName(clientname)
+      local units=template.units
+      for i,unit in pairs(units) do
+        local Coord=COORDINATE:New(unit.x, unit.alt, unit.y)
+        local dist=Coord:Get2DDistance(coord)
+        if dist<2 then
+          return true
+        end
+      end
+    end
+    return false
+  end
+
   -- Put coordinates of parking spots into table.
   for _,spot in pairs(parkingdata) do
 
@@ -1013,6 +1030,7 @@ function AIRBASE:_InitParkingSpots()
     park.TerminalID0=spot.Term_Index_0
     park.TerminalType=spot.Term_Type
     park.TOAC=spot.TO_AC
+    park.ClientSpot=isClient(park.Coordinate)
 
     self.NparkingTotal=self.NparkingTotal+1
 
@@ -1072,7 +1090,6 @@ function AIRBASE:GetParkingSpotsTable(termtype)
         spot.Free=_isfree(_spot) -- updated
         spot.TOAC=_spot.TO_AC    -- updated
         spot.AirbaseName=self.AirbaseName
-        spot.ClientSpot=nil  --TODO
 
         table.insert(spots, spot)
 
@@ -1110,7 +1127,6 @@ function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
         spot.Free=true -- updated
         spot.TOAC=_spot.TO_AC    -- updated
         spot.AirbaseName=self.AirbaseName
-        spot.ClientSpot=nil  --TODO
 
         table.insert(freespots, spot)
 

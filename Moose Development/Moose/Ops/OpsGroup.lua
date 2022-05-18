@@ -7176,13 +7176,13 @@ function OPSGROUP:onafterStop(From, Event, To)
 
   -- Flightcontrol.
   if self.flightcontrol then
-    self.flightcontrol:_RemoveFlight(self)
     for _,_element in pairs(self.elements) do
       local element=_element --#OPSGROUP.Element
       if element.parking then
         self.flightcontrol:SetParkingFree(element.parking)
       end
     end
+    self.flightcontrol:_RemoveFlight(self)
   end
 
   if self:IsAlive() and not (self:IsDead() or self:IsStopped()) then

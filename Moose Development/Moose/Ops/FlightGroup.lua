@@ -812,12 +812,13 @@ function FLIGHTGROUP:Status()
           -- Get distance to assigned parking spot.
           local dist=element.unit:GetCoordinate():Get2DDistance(element.parking.Coordinate)
           
-          env.info(string.format("FF dist to parking spot %d = %.1f meters", element.parking.TerminalID, dist))
+          --env.info(string.format("FF dist to parking spot %d = %.1f meters", element.parking.TerminalID, dist))
   
           -- If distance >10 meters, we consider the unit as taxiing.
+          -- At least for fighters, the initial distance seems to be 1.8 meters.
           -- TODO: Check distance threshold! If element is taxiing, the parking spot is free again.
           --       When the next plane is spawned on this spot, collisions should be avoided!
-          if dist>5 then
+          if dist>10 then
             if element.status==OPSGROUP.ElementStatus.ENGINEON then
               self:ElementTaxiing(element)
             end
@@ -1678,10 +1679,7 @@ function FLIGHTGROUP:onafterTaxiing(From, Event, To)
   -- Parking over.
   self.Tparking=nil
 
-  -- TODO: need a better check for the airbase.
-  local airbase=self:GetClosestAirbase()
-
-  if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
+  if self.flightcontrol and self.flightcontrol:IsControlling(self) then
 
     -- Add AI flight to takeoff queue.
     if self.isAI then
@@ -2546,7 +2544,7 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
   -- Do we have a flight control?
   local fc=_DATABASE:GetFlightControl(airbase:GetName())
   
-  if fc then
+  if fc and self.isAI then
   
     -- Get holding point from flight control.
     local HoldingPoint=fc:_GetHoldingpoint(self)
