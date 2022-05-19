@@ -387,7 +387,7 @@ function TARGET:onafterStatus(From, Event, To)
     end
     
     if life==0 then
-      self:I(self.lid..string.format("FF life is zero but no object dead event fired ==> object dead now for traget object %s!", tostring(target.Name)))
+      self:I(self.lid..string.format("FF life is zero but no object dead event fired ==> object dead now for target object %s!", tostring(target.Name)))
       self:ObjectDead(target)
     end
     
