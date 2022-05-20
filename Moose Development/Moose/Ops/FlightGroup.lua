@@ -2556,22 +2556,22 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
   
   if fc and self.isAI then
   
-    -- Get holding point from flight control.
-    local HoldingPoint=fc:_GetHoldingpoint(self)
+    -- Get holding stack from flight control.
+    local stack=fc:_GetHoldingStack(self)
     
-    if HoldingPoint then          
+    if stack then          
       
-      HoldingPoint.flightgroup=self
-      self.stack=HoldingPoint
+      stack.flightgroup=self
+      self.stack=stack
       
       -- Race track points.
-      p0=HoldingPoint.pos0
-      p1=HoldingPoint.pos1
+      p0=stack.pos0
+      p1=stack.pos1
   
       -- Debug marks.
-      if true then
-        p0:MarkToAll(string.format("%s: Holding point P0, alt=%d meters", self:GetName(), p0.y))
-        p1:MarkToAll(string.format("%s: Holding point P1, alt=%d meters", self:GetName(), p0.y))
+      if false then
+        p0:MarkToAll(string.format("%s: Holding stack P0, alt=%d meters", self:GetName(), p0.y))
+        p1:MarkToAll(string.format("%s: Holding stack P1, alt=%d meters", self:GetName(), p0.y))
       end
       
     else

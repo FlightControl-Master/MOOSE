@@ -45,7 +45,7 @@
 -- @field #number Tlanding Time stamp (abs.) when last flight got landing clearance.
 -- @field #number Nparkingspots Total number of parking spots.
 -- @field Core.Spawn#SPAWN parkingGuard Parking guard spawner.
--- @field #table holdingpoints Holding points.
+-- @field #table holdingpatterns Holding points.
 -- @field #number hpcounter Counter for holding zones.
 -- @field Sound.SRS#MSRS msrsTower Moose SRS wrapper.
 -- @field Sound.SRS#MSRS msrsPilot Moose SRS wrapper.
@@ -102,17 +102,17 @@ FLIGHTCONTROL = {
   Nlanding         = nil,
   dTlanding        = nil,
   Nparkingspots    = nil,
-  holdingpoints    =  {},
+  holdingpatterns    =  {},
   hpcounter        =   0,
 }
 
 --- Holding point. Contains holding stacks.
--- @type FLIGHTCONTROL.HoldingPoint
+-- @type FLIGHTCONTROL.HoldingPattern
 -- @field Core.Zone#ZONE arrivalzone Zone where aircraft should arrive.
 -- @field #number uid Unique ID.
 -- @field #string name Name of the zone, which is <zonename>-<uid>.
--- @field Core.Point#COORDINATE pos0 First position of racetrack holding point.
--- @field Core.Point#COORDINATE pos1 Second position of racetrack holding point.
+-- @field Core.Point#COORDINATE pos0 First position of racetrack holding pattern.
+-- @field Core.Point#COORDINATE pos1 Second position of racetrack holding pattern.
 -- @field #number angelsmin Smallest holding altitude in angels.
 -- @field #number angelsmax Largest holding alitude in angels.
 -- @field #table stacks Holding stacks.
@@ -121,8 +121,8 @@ FLIGHTCONTROL = {
 -- @type FLIGHTCONTROL.HoldingStack
 -- @field Ops.FlightGroup#FLIGHTGROUP flightgroup Flight group of this stack.
 -- @field #number angels Holding altitude in Angels.
--- @field Core.Point#COORDINATE pos0 First position of racetrack holding point.
--- @field Core.Point#COORDINATE pos1 Second position of racetrack holding point.
+-- @field Core.Point#COORDINATE pos0 First position of racetrack holding pattern.
+-- @field Core.Point#COORDINATE pos1 Second position of racetrack holding pattern.
 -- @field #number heading Heading.
 
 --- Player menu data.
@@ -417,7 +417,7 @@ function FLIGHTCONTROL:SetActiveRunwayNumber(no)
   return self
 end
 
---- Add a holding point.
+--- Add a holding pattern.
 -- This is a zone where the aircraft...
 -- @param #FLIGHTCONTROL self
 -- @param Core.Zone#ZONE ArrivalZone Zone where planes arrive.
@@ -426,7 +426,7 @@ end
 -- @param #number FlightlevelMin Min flight level. Default 5.
 -- @param #number FlightlevelMax Max flight level. Default 15.
 -- @return #FLIGHTCONTROL self
-function FLIGHTCONTROL:AddHoldingPoint(ArrivalZone, Heading, Length, FlightlevelMin, FlightlevelMax)
+function FLIGHTCONTROL:AddHoldingPattern(ArrivalZone, Heading, Length, FlightlevelMin, FlightlevelMax)
 
   -- Get ZONE if passed as string.
   if type(ArrivalZone)=="string" then
@@ -436,7 +436,7 @@ function FLIGHTCONTROL:AddHoldingPoint(ArrivalZone, Heading, Length, Flightlevel
   -- Increase counter.
   self.hpcounter=self.hpcounter+1
 
-  local hp={} --#FLIGHTCONTROL.HoldingPoint
+  local hp={} --#FLIGHTCONTROL.HoldingPattern
   hp.arrivalzone=ArrivalZone  
   hp.uid=self.hpcounter
   hp.name=string.format("%s-%d", ArrivalZone:GetName(), hp.uid)
@@ -459,9 +459,9 @@ function FLIGHTCONTROL:AddHoldingPoint(ArrivalZone, Heading, Length, Flightlevel
   end
   
   -- Add to table.
-  table.insert(self.holdingpoints, hp)
+  table.insert(self.holdingpatterns, hp)
   
-  -- Mark holding point.
+  -- Mark holding pattern.
   hp.pos0:ArrowToAll(hp.pos1, nil, {1,0,0}, 1, {1,1,0}, 0.5, 2, true)
   ArrivalZone:DrawZone()
   
@@ -2242,7 +2242,7 @@ function FLIGHTCONTROL:_PlayerRequestInbound(groupname)
         self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.INBOUND)
         
         -- Get holding point.
-        local stack=self:_GetHoldingpoint(flight)        
+        local stack=self:_GetHoldingStack(flight)        
         
         if stack then
         
@@ -2642,7 +2642,7 @@ function FLIGHTCONTROL:_PlayerRequestTaxi(groupname)
       flight:_UpdateMenu()
       
     else
-      MESSAGE:New(string.format("Negative, you must be PARKING to request TAXI!"), 5):ToAll()
+      self:TextMessageToFlight(string.format("Negative, you must be PARKING to request TAXI!"), flight)
     end
     
   else
@@ -2693,7 +2693,7 @@ function FLIGHTCONTROL:_PlayerAbortTaxi(groupname)
       flight:_UpdateMenu()
             
     else
-      MESSAGE:New(string.format("Negative, you must be PARKING or TAXIING to abort TAXI!"), 5):ToAll()
+      self:TextMessageToFlight(string.format("Negative, you must be PARKING or TAXIING to abort TAXI!"), flight)
     end
     
   else
@@ -2771,7 +2771,7 @@ function FLIGHTCONTROL:_PlayerRequestTakeoff(groupname)
       flight:_UpdateMenu()
       
     else
-      MESSAGE:New(string.format("Negative, you must request TAXI before you can request TAKEOFF!"), 5):ToAll()  
+      self:TextMessageToFlight(string.format("Negative, you must request TAXI before you can request TAKEOFF!"), flight)  
     end
     
   else
@@ -2820,7 +2820,7 @@ function FLIGHTCONTROL:_PlayerAbortTakeoff(groupname)
       flight:_UpdateMenu()
       
     else
-      MESSAGE:New("Negative, You are NOT in the takeoff queue", 5):ToAll()
+      self:TextMessageToFlight("Negative, You are NOT in the takeoff queue", flight)
     end
     
   else
@@ -3207,7 +3207,7 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
     end
          
     -- Debug message.
-    MESSAGE:New(string.format("Respawning group %s", flight.groupname)):ToAll()
+    self:TextMessageToFlight(string.format("Respawning group %s", flight.groupname), flight)
   
     --Respawn the group.
     flight:Respawn(Template)
@@ -3221,14 +3221,14 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
   
 end
 
---- Get holding point.
+--- Get holding stack.
 -- @param #FLIGHTCONTROL self
 -- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
 -- @return #FLIGHTCONTROL.HoldingStack Holding point.
-function FLIGHTCONTROL:_GetHoldingpoint(flight)
+function FLIGHTCONTROL:_GetHoldingStack(flight)
 
   --[[
-  local holdingpoint={} --#FLIGHTCONTROL.HoldingPoint
+  local holdingpattern={} --#FLIGHTCONTROL.HoldingPattern
   
   local runway=self:GetActiveRunway()
   
@@ -3238,20 +3238,20 @@ function FLIGHTCONTROL:_GetHoldingpoint(flight)
   
   local angels=UTILS.FeetToMeters(math.random(6,10)*1000)
   
-  holdingpoint.pos0=runway.position:Translate(dx, hdg):SetAltitude(angels)
-  holdingpoint.pos1=holdingpoint.pos0:Translate(dz, runway.heading):SetAltitude(angels)
+  holdingpattern.pos0=runway.position:Translate(dx, hdg):SetAltitude(angels)
+  holdingpattern.pos1=holdingpattern.pos0:Translate(dz, runway.heading):SetAltitude(angels)
   
   ]]
   
   -- Debug message.
   self:T(self.lid..string.format("Getting holding point for flight %s", flight:GetName()))
   
-  for i,_hp in pairs(self.holdingpoints) do
-    local holdingpoint=_hp --#FLIGHTCONTROL.HoldingPoint
+  for i,_hp in pairs(self.holdingpatterns) do
+    local holdingpattern=_hp --#FLIGHTCONTROL.HoldingPattern
     
-    self:T(self.lid..string.format("Checking holding point %s", holdingpoint.name))
+    self:T(self.lid..string.format("Checking holding point %s", holdingpattern.name))
     
-    for j,_stack in pairs(holdingpoint.stacks) do
+    for j,_stack in pairs(holdingpattern.stacks) do
       local stack=_stack --#FLIGHTCONTROL.HoldingStack
       local name=stack.flightgroup and stack.flightgroup:GetName() or "empty"
       self:T(self.lid..string.format("Stack %d: %s", j, name))
