@@ -124,7 +124,9 @@ do
 
 
 ---
---- *Of all men\'s miseries the bitterest is this: to know so much and to have control over nothing.* (Herodotus)
+-- ===
+--
+-- *Of all men\'s miseries the bitterest is this: to know so much and to have control over nothing.* (Herodotus)
 --
 -- ===
 -- 
@@ -144,13 +146,13 @@ do
 -- Ensure you have this covered and working before tackling this class. TTS generation can thus be done via the Windows built-in system or via Google TTS; 
 -- the latter offers a wider range of voices and options, but you need to set up your own Google product account for this to work correctly.
 -- 
--- ## 2 Mission Design - Zones
+-- ## 2 Mission Design - Operational Priorities
 -- 
 -- Basic operational target of the AWACS is to control a Fighter Engagement Zone, or FEZ, and defend itself.
 -- 
 -- ## 3 Airwing(s)
 -- 
--- The AWACS plane, the optional escort planes, and the AI CAP planes work based on the @(Ops.AirWing) class. Read and understand the manual for this class in 
+-- The AWACS plane, the optional escort planes, and the AI CAP planes work based on the @{Ops.AirWing} class. Read and understand the manual for this class in 
 -- order to set everything up correctly. You will at least need one Squadron containing the AWACS plane itself.
 -- 
 -- Set up the AirWing
@@ -162,7 +164,7 @@ do
 --            AwacsAW:SetTakeoffAir()
 --            AwacsAW:__Start(2)
 -- 
--- Add the AWACS template Squadron - **Note**: remove the task AWACS in the mission editor und "Advanced Waypoint Actions" from the template to remove the DCS F10 AWACS menu
+-- Add the AWACS template Squadron - **Note**: remove the task AWACS in the mission editor under "Advanced Waypoint Actions" from the template to remove the DCS F10 AWACS menu
 -- 
 --            local Squad_One = SQUADRON:New("Awacs One",2,"Awacs North")
 --            Squad_One:AddMissionCapability({AUFTRAG.Type.ORBIT},100)
@@ -212,7 +214,7 @@ do
 -- Your AWACS is an HVT or high-value-target. Thus it makes sense to position the Orbit Zone in a way that your FEZ and thus your CAP flights defend it. 
 -- It should hence be positioned behind the FEZ, away from the direction of enemy engagement.
 -- The zone for CAP stations should be close to the FEZ, but not inside it.
--- The optional additional defense zone can be anywhere, but keep an eye on the location so your CAP flight don't take ages to get there. 
+-- The optional additional defense zone can be anywhere, but keep an eye on the location so your CAP flights don't take ages to get there. 
 -- The optional border is useful for e.g. "cold war" scenarios - planes across the border will not be considered as targets by AWACS.
 -- 
 -- ## 5 Set up AWACS
@@ -224,17 +226,17 @@ do
 --            local testawacs = AWACS:New("AWACS North",AwacsAW,"blue",AIRBASE.Caucasus.Kutaisi,"Awacs Orbit",ZONE:FindByName("Rock"),"Fremont",255,radio.modulation.AM )
 --            -- set two escorts
 --            testawacs:SetEscort(2)
---            -- Callsign will be "Focus". We'll be a Angels 30, doing 300 knots, orbit leg to 88deg with a lenght of 25nm.
+--            -- Callsign will be "Focus". We'll be a Angels 30, doing 300 knots, orbit leg to 88deg with a length of 25nm.
 --            testawacs:SetAwacsDetails(CALLSIGN.AWACS.Focus,1,30,300,88,25)
 --            -- Set up SRS on port 5010 - change the below to your path and port
 --            testawacs:SetSRS("C:\\Program Files\\DCS-SimpleRadio-Standalone","female","en-GB",5010)
---            -- Add a "red" border we don't want to cross, set up in the mission editor with a late activated helo named "REd Border#ZONE_POLYGON"
+--            -- Add a "red" border we don't want to cross, set up in the mission editor with a late activated helo named "Red Border#ZONE_POLYGON"
 --            testawacs:SetRejectionZone(ZONE:FindByName("Red Border"))
---            -- Our CAP flight will have callsign "Ford", we want 4 AI planes, Time-On-Station 4 hours, doing 300 kn IAS.
+--            -- Our CAP flight will have the callsign "Ford", we want 4 AI planes, Time-On-Station is four hours, doing 300 kn IAS.
 --            testawacs:SetAICAPDetails(CALLSIGN.Aircraft.Ford,4,4,300)
-              -- We're modern (default), e.g. we have EPLRS and get more fill-in information on detections
+--            -- We're modern (default), e.g. we have EPLRS and get more fill-in information on detections
 --            testawacs:SetModernEra()
-              -- And start
+--            -- And start
 --            testawacs:__Start(5)
 -- 
 -- ## 6 Menu entries
@@ -249,7 +251,7 @@ do
 -- 
 -- ### 6.2 Check-out
 -- 
--- You can check-ou anytime, of course.
+-- You can check-out anytime, of course.
 -- 
 -- ### 6.3 Picture
 -- 
@@ -280,7 +282,7 @@ do
 --            Tac Distance = 45
 --            Meld Distance = 35
 --            Threat Distance = 25
---            Merge Distance =3 
+--            Merge Distance = 3 
 --            
 -- ## 8 Discussion
 --
