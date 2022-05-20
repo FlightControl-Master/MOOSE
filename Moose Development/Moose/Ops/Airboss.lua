@@ -11210,7 +11210,7 @@ end
 
 --- Get wind direction and speed at carrier position.
 -- @param #AIRBOSS self
--- @param #number alt Altitude ASL in meters. Default 50 m.
+-- @param #number alt Altitude ASL in meters. Default 15 m.
 -- @param #boolean magnetic Direction including magnetic declination.
 -- @param Core.Point#COORDINATE coord (Optional) Coordinate at which to get the wind. Default is current carrier position.
 -- @return #number Direction the wind is blowing **from** in degrees.
@@ -11220,8 +11220,8 @@ function AIRBOSS:GetWind( alt, magnetic, coord )
   -- Current position of the carrier or input.
   local cv = coord or self:GetCoordinate()
 
-  -- Wind direction and speed. By default at 50 meters ASL.
-  local Wdir, Wspeed = cv:GetWind( alt or 50 )
+  -- Wind direction and speed. By default at 15 meters ASL.
+  local Wdir, Wspeed = cv:GetWind( alt or 15 )
 
   -- Include magnetic declination.
   if magnetic then
