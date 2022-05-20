@@ -730,6 +730,7 @@ function OPSGROUP:New(group)
   ------------------------
 
   --- Triggers the FSM event "Stop". Stops the OPSGROUP and all its event handlers.
+  -- @function [parent=#OPSGROUP] Stop
   -- @param #OPSGROUP self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the OPSGROUP and all its event handlers.
@@ -1610,10 +1611,11 @@ end
 --- Get current coordinate of the group. If the current position cannot be determined, the last known position is returned.
 -- @param #OPSGROUP self
 -- @param #boolean NewObject Create a new coordiante object.
+-- @param #string UnitName (Optional) Get position of a specifc unit of the group. Default is the first existing unit in the group.
 -- @return Core.Point#COORDINATE The coordinate (of the first unit) of the group.
-function OPSGROUP:GetCoordinate(NewObject)
+function OPSGROUP:GetCoordinate(NewObject, UnitName)
 
-  local vec3=self:GetVec3() or self.position --DCS#Vec3
+  local vec3=self:GetVec3(UnitName) or self.position --DCS#Vec3
 
   if vec3 then
 
@@ -11260,6 +11262,8 @@ function OPSGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
   self.callsignDefault.NumberSquad=CallsignName
   self.callsignDefault.NumberGroup=CallsignNumber or 1
   self.callsignDefault.NameSquad=UTILS.GetCallsignName(self.callsign.NumberSquad)
+  
+  self:I(self.lid..string.format("Default callsign=%s", self.callsignDefault.NameSquad))
 
   return self
 end

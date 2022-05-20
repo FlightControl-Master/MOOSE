@@ -182,6 +182,18 @@ FLIGHTGROUP.RadioMessage = {
   TAXIING={normal="Taxiing", enhanced="Taxiing"},
 }
 
+--- Player skill.
+-- @type FLIGHTGROUP.PlayerSkill
+-- @field #string NOVICE Novice
+FLIGHTGROUP.PlayerSkill = {
+  NOVICE="Novice",
+}
+
+--- Player settings.
+-- @type FLIGHTGROUP.PlayerSettings
+-- @field #boolean subtitles Display subtitles.
+-- @field #string skill Skill level.
+
 --- FLIGHTGROUP class version.
 -- @field #string version
 FLIGHTGROUP.version="0.7.3"
@@ -1645,8 +1657,6 @@ function FLIGHTGROUP:onafterParking(From, Event, To)
   local flightcontrol=_DATABASE:GetFlightControl(airbasename)
 
   if flightcontrol then
-  
-    env.info("FF flight control!")
 
     -- Set FC for this flight
     self:SetFlightControl(flightcontrol)
@@ -3167,6 +3177,7 @@ function FLIGHTGROUP:_InitGroup(Template)
 
   -- Set callsign. Default is set on spawn if not modified by user.
   local callsign=template.units[1].callsign
+  self:I({callsign=callsign})
   if type(callsign)=="number" then  -- Sometimes callsign is just "101".
     local cs=tostring(callsign)
     callsign={}
@@ -3174,8 +3185,8 @@ function FLIGHTGROUP:_InitGroup(Template)
     callsign[2]=cs:sub(2,2)
     callsign[3]=cs:sub(3,3)
   end
-  self.callsign.NumberSquad=callsign[1]
-  self.callsign.NumberGroup=callsign[2]
+  self.callsign.NumberSquad=tonumber(callsign[1])
+  self.callsign.NumberGroup=tonumber(callsign[2])
   self.callsign.NameSquad=UTILS.GetCallsignName(self.callsign.NumberSquad)
 
   -- Set default formation.
@@ -3195,8 +3206,9 @@ function FLIGHTGROUP:_InitGroup(Template)
   -- Create Menu.
   if not self.isAI then
     self.menu=self.menu or {}
-    self.menu.atc=self.menu.atc or {}
-    self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC")
+    self.menu.atc=self.menu.atc or {} --#table
+    self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC") --Core.Menu#MENU_GROUP
+    self.menu.atc.help=self.menu.atc.help or MENU_GROUP:New(self.group, "Help", self.menu.atc.root) --Core.Menu#MENU_GROUP
   end
 
   -- Units of the group.
@@ -3624,6 +3636,20 @@ function FLIGHTGROUP:AddWaypointLanding(Airbase, Speed, AfterWaypointWithID, Alt
   return waypoint
 end
 
+--- Get player element.
+-- @param #FLIGHTGROUP self
+-- @return Ops.OpsGroup#OPSGROUP.Element The element.
+function FLIGHTGROUP:GetPlayerElement()
+
+  for _,_element in pairs(self.elements) do
+    local element=_element --Ops.OpsGroup#OPSGROUP.Element
+    if not element.ai then
+      return element
+    end
+  end
+
+  return nil
+end
 
 --- Set parking spot of element.
 -- @param #FLIGHTGROUP self
@@ -4119,23 +4145,19 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- MENU FUNCTIONS
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Get the proper terminal type based on generalized attribute of the group.
+--- Update menu.
 --@param #FLIGHTGROUP self
 --@param #number delay Delay in seconds.
 function FLIGHTGROUP:_UpdateMenu(delay)
 
   if delay and delay>0 then
-    self:T(self.lid..string.format("FF updating menu in %.1f sec", delay))
+    -- Delayed call.
     self:ScheduleOnce(delay, FLIGHTGROUP._UpdateMenu, self)
   else
-
-    self:T(self.lid.."FF updating menu NOW")
 
     -- Get current position of group.
     local position=self:GetCoordinate()
@@ -4143,16 +4165,16 @@ function FLIGHTGROUP:_UpdateMenu(delay)
     -- Get all FLIGHTCONTROLS
     local fc={}
     for airbasename,_flightcontrol in pairs(_DATABASE.FLIGHTCONTROLS) do
+      local flightcontrol=_flightcontrol --Ops.FlightControl#FLIGHTCONTROL
 
-      local airbase=AIRBASE:FindByName(airbasename)
+      -- Get coord of airbase.
+      local coord=flightcontrol:GetCoordinate()
 
-      local coord=airbase:GetCoordinate()
-
+      -- Distance to flight.
       local dist=coord:Get2DDistance(position)
 
-      local fcitem={airbasename=airbasename, dist=dist}
-
-      table.insert(fc, fcitem)
+      -- Add to table.
+      table.insert(fc, {airbasename=airbasename, dist=dist})
     end
 
     -- Sort table wrt distance to airbases.
@@ -4161,18 +4183,20 @@ function FLIGHTGROUP:_UpdateMenu(delay)
     end
     table.sort(fc, _sort)
     
-    for _,_menu in pairs(self.menu.atc or {}) do
-      local menu=_menu
-        
-    end
+    -- Remove all submenus.
+    self.menu.atc.root:RemoveSubMenus()
+    
+    self:_CreateMenuAtcHelp(self.menu.atc.root)
+    
+    -- Max menu entries.
+    local N=7
 
     -- If there is a designated FC, we put it first.
-    local N=8
     local gotairbase=nil
     if self.flightcontrol then
-      self.flightcontrol:_CreatePlayerMenu(self, self.menu.atc)
+      self.flightcontrol:_CreatePlayerMenu(self, self.menu.atc.root)
       gotairbase=self.flightcontrol.airbasename
-      N=7
+      N=N-1
     end
 
     -- Max 8 entries in F10 menu.
@@ -4180,11 +4204,86 @@ function FLIGHTGROUP:_UpdateMenu(delay)
       local airbasename=fc[i].airbasename
       if gotairbase==nil or airbasename~=gotairbase then
         local flightcontrol=_DATABASE:GetFlightControl(airbasename)
-        flightcontrol:_CreatePlayerMenu(self, self.menu.atc)
+        flightcontrol:_CreatePlayerMenu(self, self.menu.atc.root)
       end
     end
   end
 
+end
+
+--- Create player menu.
+-- @param #FLIGHTGROUP self
+-- @param #table rootmenu ATC root menu table.
+function FLIGHTGROUP:_CreateMenuAtcHelp(rootmenu)
+
+  -- Help menu.
+  local helpmenu=MENU_GROUP:New(self.group, "Help",  rootmenu)
+  
+  -- Group name.
+  local groupname=self.groupname
+  
+  ---
+  -- Skill level menu
+  ---
+  local skillmenu=MENU_GROUP:New(self.group, "Skill Level", helpmenu)  
+  MENU_GROUP_COMMAND:New(self.group, "Beginner",     skillmenu, self._MenuNotImplemented,  self, groupname)
+  MENU_GROUP_COMMAND:New(self.group, "Student",      skillmenu, self._MenuNotImplemented,  self, groupname)
+  MENU_GROUP_COMMAND:New(self.group, "Professional", skillmenu, self._MenuNotImplemented,  self, groupname)
+  
+  ---
+  -- Commands
+  ---
+  MENU_GROUP_COMMAND:New(self.group, "Subtitles On/Off", helpmenu, self._MenuNotImplemented,  self, groupname)
+  MENU_GROUP_COMMAND:New(self.group, "My Voice On/Off",  helpmenu, self._MenuNotImplemented,  self, groupname)
+  MENU_GROUP_COMMAND:New(self.group, "My Status",        helpmenu, self._PlayerMyStatus,      self, groupname)
+
+end
+
+--- Player menu not implemented.
+-- @param #FLIGHTGROUP self
+-- @param #string groupname Name of the flight group.
+function FLIGHTGROUP:_MenuNotImplemented(groupname)
+
+  -- Get flight group.
+  local flight=_DATABASE:GetOpsGroup(groupname) --Ops.FlightGroup#FLIGHTGROUP
+  
+  if flight then
+  
+    local text=string.format("Sorry, this feature is not implemented yet!")
+    
+    MESSAGE:New(text, 10, nil, true):ToGroup(flight.group)
+    --self:TextMessageToFlight(text, flight)
+  
+  end
+  
+end
+
+--- Player status.
+-- @param #FLIGHTGROUP self
+-- @param #string groupname Name of the flight group.
+function FLIGHTGROUP:_PlayerMyStatus(groupname)
+
+  -- Get flight group.
+  local flight=_DATABASE:GetOpsGroup(groupname) --Ops.FlightGroup#FLIGHTGROUP
+  
+  if flight then
+    
+    local fc=flight.flightcontrol
+  
+    -- Status text.
+    local text=string.format("My Status:")
+    text=text..string.format("\nCallsign: %s", tostring(flight:GetCallsignName()))
+    text=text..string.format("\nFlight status: %s", tostring(flight:GetState()))
+    text=text..string.format("\nFlight control: %s status=%s", tostring(fc and fc.airbasename or "N/A"), tostring(fc and fc:GetFlightStatus(flight) or "N/A"))
+
+    -- Send message.
+    --self:TextMessageToFlight(text, flight, 10, true)
+    MESSAGE:New(text, 10, nil, true):ToGroup(flight.group)
+  
+  else
+    --TODO: Error
+  end
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
