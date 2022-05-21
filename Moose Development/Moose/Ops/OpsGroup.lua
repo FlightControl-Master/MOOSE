@@ -4774,6 +4774,11 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
 
   -- Set mission status to STARTED.
   Mission:__Started(3)
+  
+  -- Set ready for takeoff in case of FLIGHTCONTROL.
+  if self.isFlightgroup and Mission.type~=AUFTRAG.Type.ALERT5 then
+    FLIGHTGROUP.SetReadyForTakeoff(self, true)
+  end
 
   -- Route group to mission zone.
   if self.speedMax>3.6 or true then

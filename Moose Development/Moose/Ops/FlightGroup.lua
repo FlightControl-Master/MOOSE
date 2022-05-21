@@ -55,6 +55,7 @@
 -- @field #boolean despawnAfterHolding If `true`, group is despawned after reaching the holding point.
 -- @field #number RTBRecallCount Number that counts RTB calls.
 -- @field Ops.FlightControl#FLIGHTCONTROL.HoldingStack stack Holding stack.
+-- @field #boolean isReadyTO Flight is ready for takeoff. This is for FLIGHTCONTROL.
 --
 -- @extends Ops.OpsGroup#OPSGROUP
 
@@ -367,6 +368,20 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetVTOL()
   self.isVTOL=true
+  return self
+end
+
+--- Set if group is ready for taxi/takeoff if controlled by a `FLIGHTCONTROL`.
+-- @param #FLIGHTGROUP self
+-- @param #boolean ReadyTO If `true`, flight is ready for takeoff.
+-- @param #number Delay Delay in seconds before value is set. Default 0 sec.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetReadyForTakeoff(ReadyTO, Delay)
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, FLIGHTGROUP.SetReadyForTakeoff, self, ReadyTO, 0)
+  else
+    self.isReadyTO=ReadyTO
+  end
   return self
 end
 

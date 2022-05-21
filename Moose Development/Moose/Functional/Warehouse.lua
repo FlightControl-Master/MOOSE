@@ -6311,10 +6311,11 @@ function WAREHOUSE:_RouteAir(aircraft)
     self:T2(self.lid..string.format("RouteAir aircraft group %s alive=%s", aircraft:GetName(), tostring(aircraft:IsAlive())))
 
     -- Give start command to activate uncontrolled aircraft within the next 60 seconds.
-    if not self.flightcontrol then
-      local starttime=math.random(60)
-
-      aircraft:StartUncontrolled(starttime)
+    if self.flightcontrol then
+      local fg=FLIGHTGROUP:New(aircraft)
+      fg:SetReadyForTakeoff(true)    
+    else
+      aircraft:StartUncontrolled(math.random(60))
     end
 
     -- Debug info.

@@ -20,7 +20,7 @@
 --- FLIGHTCONTROL class.
 -- @type FLIGHTCONTROL
 -- @field #string ClassName Name of the class.
--- @field #boolean Debug Debug mode. Messages to all about status.
+-- @field #boolean verbose Verbosity level.
 -- @field #string theatre The DCS map used in the mission.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #string airbasename Name of airbase.
@@ -83,7 +83,7 @@
 -- @field #FLIGHTCONTROL
 FLIGHTCONTROL = {
   ClassName      = "FLIGHTCONTROL",
-  Debug          = false,
+  verbose        =     0,
   lid            =   nil,
   theatre        =   nil,
   airbasename    =   nil,
@@ -312,6 +312,15 @@ end
 -- User API Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Set verbosity level.
+-- @param #FLIGHTCONTROL self
+-- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @return #FLIGHTCONTROL self
+function FLIGHTCONTROL:SetVerbosity(VerbosityLevel)
+  self.verbose=VerbosityLevel or 0
+  return self
+end
+
 --- Set the tower frequency.
 -- @param #FLIGHTCONTROL self
 -- @param #number Frequency Frequency in MHz. Default 305 MHz.
@@ -322,8 +331,8 @@ function FLIGHTCONTROL:SetFrequency(Frequency, Modulation)
   self.frequency=Frequency or 305
   self.modulation=Modulation or radio.modulation.AM
 
+  return self
 end
-
 
 --- Set the number of aircraft groups, that are allowed to land simultaniously.
 -- Note that this restricts AI and human players.
@@ -380,43 +389,6 @@ function FLIGHTCONTROL:SetLimitTaxi(Ntaxi, IncludeInbound, Nlanding)
   return self
 end
 
-
---- Set runway. This clears all auto generated runways.
--- @param #FLIGHTCONTROL self
--- @param #FLIGHTCONTROL.Runway Runway.
--- @return #FLIGHTCONTROL self
-function FLIGHTCONTROL:SetRunway(runway)
-
-  -- Reset table.
-  self.runways={}
-  
-  -- Set runway.
-  table.insert(self.runways, runway)
-
-  return self
-end
-
---- Add runway.
--- @param #FLIGHTCONTROL self
--- @param #FLIGHTCONTROL.Runway Runway.
--- @return #FLIGHTCONTROL self
-function FLIGHTCONTROL:AddRunway(runway)
-
-  -- Set runway.
-  table.insert(self.runways, runway)
-
-  return self
-end
-
---- Set active runway number. Counting refers to the position in the table entry.
--- @param #FLIGHTCONTROL self
--- @param #number no Number in the runways table.
--- @return #FLIGHTCONTROL self
-function FLIGHTCONTROL:SetActiveRunwayNumber(no)
-  self.activerwyno=no
-  return self
-end
-
 --- Add a holding pattern.
 -- This is a zone where the aircraft...
 -- @param #FLIGHTCONTROL self
@@ -425,7 +397,7 @@ end
 -- @param #number Length Length in nautical miles. Default 15 NM.
 -- @param #number FlightlevelMin Min flight level. Default 5.
 -- @param #number FlightlevelMax Max flight level. Default 15.
--- @return #FLIGHTCONTROL self
+-- @return #FLIGHTCONTROL.HoldingPattern Holding pattern table.
 function FLIGHTCONTROL:AddHoldingPattern(ArrivalZone, Heading, Length, FlightlevelMin, FlightlevelMax)
 
   -- Get ZONE if passed as string.
@@ -556,7 +528,7 @@ function FLIGHTCONTROL:onbeforeStatus()
     
       -- Debug info.
       local text=string.format("Last message sent %d sec ago. Will call status again in %d sec", dT, dt)
-      self:I(self.lid..text)
+      self:T(self.lid..text)
         
       -- Call status again in dt seconds.
       self:__Status(-dt)
@@ -564,7 +536,7 @@ function FLIGHTCONTROL:onbeforeStatus()
       -- Deny transition.
       return false
     else
-      self:I(self.lid..string.format("Last radio sent %d>%d sec ago. Status update allowed", dT, self.dTmessage))
+      self:T2(self.lid..string.format("Last radio sent %d>%d sec ago. Status update allowed", dT, self.dTmessage))
     end
   end
 
@@ -576,7 +548,7 @@ end
 function FLIGHTCONTROL:onafterStatus()
 
   -- Debug message.
-  self:I(self.lid.."Status update")
+  self:T2(self.lid.."Status update")
 
   -- Check status of all registered flights.
   self:_CheckFlights()
@@ -618,9 +590,11 @@ function FLIGHTCONTROL:onafterStatus()
   end
 
   -- Info text.
-  local text=string.format("State %s - Runway %s - Parking F=%d/O=%d/R=%d of %d - Flights=%s: Qpark=%d Qtxout=%d Qready=%d Qto=%d | Qinbound=%d Qhold=%d Qland=%d Qtxinb=%d Qarr=%d", 
-  self:GetState(), runway.idx, Nfree, Noccu, Nresv, self.Nparkingspots, Nflights, NQparking, NQtaxiout, NQreadyto, NQtakeoff, NQinbound, NQholding, NQlanding, NQtaxiinb, NQarrived)
-  self:I(self.lid..text)
+  if self.verbose>=1 then
+    local text=string.format("State %s - Runway %s - Parking F=%d/O=%d/R=%d of %d - Flights=%s: Qpark=%d Qtxout=%d Qready=%d Qto=%d | Qinbound=%d Qhold=%d Qland=%d Qtxinb=%d Qarr=%d", 
+    self:GetState(), runway.idx, Nfree, Noccu, Nresv, self.Nparkingspots, Nflights, NQparking, NQtaxiout, NQreadyto, NQtakeoff, NQinbound, NQholding, NQlanding, NQtaxiinb, NQarrived)
+    self:I(self.lid..text)
+  end
   
   if Nflights==Nqueues then
     --Check!
@@ -698,7 +672,7 @@ function FLIGHTCONTROL:OnEventLand(EventData)
   self:F3({EvendData=EventData})
   
   self:T2(self.lid..string.format("LAND: unit  = %s", tostring(EventData.IniUnitName)))
-  self:T2(self.lid..string.format("LAND: group = %s", tostring(EventData.IniGroupName)))
+  self:T3(self.lid..string.format("LAND: group = %s", tostring(EventData.IniGroupName)))
   
 end
 
@@ -709,7 +683,7 @@ function FLIGHTCONTROL:OnEventTakeoff(EventData)
   self:F3({EvendData=EventData})
   
   self:T2(self.lid..string.format("TAKEOFF: unit  = %s", tostring(EventData.IniUnitName)))
-  self:T2(self.lid..string.format("TAKEOFF: group = %s", tostring(EventData.IniGroupName)))
+  self:T3(self.lid..string.format("TAKEOFF: group = %s", tostring(EventData.IniGroupName)))
   
   -- This would be the closest airbase.
   local airbase=EventData.Place
@@ -731,17 +705,9 @@ end
 function FLIGHTCONTROL:OnEventEngineStartup(EventData)
   self:F3({EvendData=EventData})
   
-  self:I(self.lid..string.format("ENGINESTARTUP: unit  = %s", tostring(EventData.IniUnitName)))
-  self:T2(self.lid..string.format("ENGINESTARTUP: group = %s", tostring(EventData.IniGroupName)))
-    
-  -- Unit that took off.
-  local unit=EventData.IniUnit
-
-  -- Nil check for unit.
-  if not unit then
-    return
-  end
-
+  self:T2(self.lid..string.format("ENGINESTARTUP: unit  = %s", tostring(EventData.IniUnitName)))
+  self:T3(self.lid..string.format("ENGINESTARTUP: group = %s", tostring(EventData.IniGroupName)))
+  
 end
 
 --- Event handler for event engine shutdown.
@@ -750,16 +716,8 @@ end
 function FLIGHTCONTROL:OnEventEngineShutdown(EventData)
   self:F3({EvendData=EventData})
   
-  self:I(self.lid..string.format("ENGINESHUTDOWN: unit  = %s", tostring(EventData.IniUnitName)))
-  self:T2(self.lid..string.format("ENGINESHUTDOWN: group = %s", tostring(EventData.IniGroupName)))
-    
-  -- Unit that took off.
-  local unit=EventData.IniUnit
-
-  -- Nil check for unit.
-  if not unit then
-    return
-  end
+  self:T2(self.lid..string.format("ENGINESHUTDOWN: unit  = %s", tostring(EventData.IniUnitName)))
+  self:T3(self.lid..string.format("ENGINESHUTDOWN: group = %s", tostring(EventData.IniGroupName)))
   
 end
 
@@ -770,7 +728,7 @@ function FLIGHTCONTROL:OnEventCrash(EventData)
   self:F3({EvendData=EventData})
   
   self:T2(self.lid..string.format("CRASH: unit  = %s", tostring(EventData.IniUnitName)))
-  self:T2(self.lid..string.format("CRASH: group = %s", tostring(EventData.IniGroupName)))
+  self:T3(self.lid..string.format("CRASH: group = %s", tostring(EventData.IniGroupName)))
   
 end
 
@@ -783,22 +741,9 @@ end
 function FLIGHTCONTROL:_CheckQueues()
 
   -- Print queue.
-  if true then
+  if self.verbose>=2 then
     self:_PrintQueue(self.flights,  "All flights")
   end
-
-  -- Number of holding groups.
-  local nholding=self:CountFlights(FLIGHTCONTROL.FlightStatus.HOLDING)
-      
-  -- Number of groups landing.
-  local nlanding=self:CountFlights(FLIGHTCONTROL.FlightStatus.LANDING)
-
-  -- Number of parking groups.
-  local nparking=self:CountFlights(FLIGHTCONTROL.FlightStatus.PARKING)
-    
-  -- Number of groups taking off.
-  local ntakeoff=self:CountFlights(FLIGHTCONTROL.FlightStatus.TAKEOFF)
-    
 
   -- Get next flight in line: either holding or parking.
   local flight, isholding, parking=self:_GetNextFlight()
@@ -856,7 +801,7 @@ function FLIGHTCONTROL:_CheckQueues()
           
         end
       else
-        self:T3(self.lid..string.format("FYI: Landing clearance for flight %s denied"))
+        self:T3(self.lid..string.format("FYI: Landing clearance for flight %s denied", flight.groupname))
       end
     
     else
@@ -954,12 +899,12 @@ function FLIGHTCONTROL:_CheckQueues()
         
       else
         -- Debug message.
-        self:I(self.lid..string.format("FYI: Take off for flight %s denied as other flights are taking off (N=%d) or landing (N=%d).", flight.groupname, ntakeoff, nlanding))
+        self:T3(self.lid..string.format("FYI: Take off for flight %s denied", flight.groupname))
       end
     end
   else
     -- Debug message.
-    self:I(self.lid..string.format("FYI: No flight in queue for takeoff or landing."))
+    self:T2(self.lid..string.format("FYI: No flight in queue for takeoff or landing"))
   end
   
 end
@@ -970,7 +915,6 @@ end
 -- @return #boolean If true, flight can.
 function FLIGHTCONTROL:_CheckFlightTakeoff(flight)
 
-      
   -- Number of groups landing.
   local nlanding=self:CountFlights(FLIGHTCONTROL.FlightStatus.LANDING)
     
@@ -986,24 +930,21 @@ function FLIGHTCONTROL:_CheckFlightTakeoff(flight)
     ---
       
     if nlanding>self.NtaxiLanding then
-      self:I(self.lid..string.format("AI flight %s [status=%s] NOT cleared for taxi/takeoff as %d>%d flight(s) landing", flight.groupname, status, nlanding, self.NtaxiLanding))
+      self:T(self.lid..string.format("AI flight %s [status=%s] NOT cleared for taxi/takeoff as %d>%d flight(s) landing", flight.groupname, status, nlanding, self.NtaxiLanding))
       return false
     end
-    
-    -- Number of AI flights taxiing/takeoff.
-    local ntakeoff=self:CountFlights(FLIGHTCONTROL.FlightStatus.TAKEOFF, nil, true)
     
     local ninbound=0
     if self.NtaxiInbound then
       ninbound=self:CountFlights(FLIGHTCONTROL.FlightStatus.TAXIINB, nil, true)
     end
 
-    if ntakeoff+ninbound>self.NtaxiTot then
-      self:I(self.lid..string.format("AI flight %s [status=%s] NOT cleared for taxi/takeoff as %s flight(s) taxi/takeoff", flight.groupname, status, ntakeoff))
+    if ntakeoff+ninbound>=self.NtaxiTot then
+      self:T(self.lid..string.format("AI flight %s [status=%s] NOT cleared for taxi/takeoff as %d>=%d flight(s) taxi/takeoff", flight.groupname, status, ntakeoff, self.NtaxiTot))
       return false
     end
   
-    self:I(self.lid..string.format("AI flight %s [status=%s] cleared for taxi/takeoff", flight.groupname, status))
+    self:T(self.lid..string.format("AI flight %s [status=%s] cleared for taxi/takeoff! nLanding=%d, nTakeoff=%d", flight.groupname, status, nlanding, ntakeoff))
     return true
   else
     ---
@@ -1015,15 +956,15 @@ function FLIGHTCONTROL:_CheckFlightTakeoff(flight)
   
     if status==FLIGHTCONTROL.FlightStatus.READYTO then
     
-      if nlanding>0 then
+      if nlanding>self.NtaxiLanding then
         -- Traffic landing. No permission to
-        self:I(self.lid..string.format("Player flight %s [status=%s] not cleared for taxi/takeoff as %s flight(s) landing", flight.groupname, status, nlanding))
+        self:T(self.lid..string.format("Player flight %s [status=%s] not cleared for taxi/takeoff as %d>%d flight(s) landing", flight.groupname, status, nlanding, self.NtaxiLanding))
         return false
       end      
     
     end
   
-    self:I(self.lid..string.format("Player flight %s [status=%s] cleared for taxi/takeoff", flight.groupname, status))
+    self:T(self.lid..string.format("Player flight %s [status=%s] cleared for taxi/takeoff", flight.groupname, status))
     return true  
   end
   
@@ -1050,7 +991,7 @@ function FLIGHTCONTROL:_CheckFlightLanding(flight)
     -- AI
     ---
 
-    if ntakeoff==0 and nlanding<self.NlandingTot then
+    if ntakeoff<=self.NlandingTakeoff and nlanding<self.NlandingTot then
       return true
     end
 
@@ -1061,7 +1002,7 @@ function FLIGHTCONTROL:_CheckFlightLanding(flight)
     ---
 
 
-    if ntakeoff==0 and nlanding<self.NlandingTot then
+    if ntakeoff<=self.NlandingTakeoff and nlanding<self.NlandingTot then
       return true
     end
 
@@ -1109,7 +1050,7 @@ function FLIGHTCONTROL:_GetNextFlight()
   if flightholding and flightparking then
   
     local text=string.format("We got a flight holding %s [%s] and parking %s [%s]", flightholding:GetName(), flightholding:GetState(), flightparking:GetName(), flightparking:GetState())
-    self:I(self.lid..text)
+    self:T(self.lid..text)
   
     -- Return holding flight if fuel is low.
     if flightholding.fuellow then
@@ -1123,7 +1064,7 @@ function FLIGHTCONTROL:_GetNextFlight()
     end
     
     local text=string.format("Flight holding for %d sec, flight parking for %d sec", flightholding:GetHoldingTime(), flightparking:GetParkingTime())
-    self:I(self.lid..text)
+    self:T(self.lid..text)
        
     -- Return the flight which is waiting longer. NOTE that Tholding and Tparking are abs. mission time. So a smaller value means waiting longer.
     if flightholding.Tholding and flightparking.Tparking and flightholding.Tholding<flightparking.Tparking and parking then
@@ -1234,32 +1175,32 @@ function FLIGHTCONTROL:_GetNextFightParking()
   -- Check special cases where only up to one flight is waiting for takeoff.
   if Nparking==0 then
     return nil
-  elseif Nparking==1 then
-    return Qparking[1]
   end
 
   -- Sort flights parking time.
   local function _sortByTparking(a, b)
     local flightA=a --Ops.FlightGroup#FLIGHTGROUP
     local flightB=b --Ops.FlightGroup#FLIGHTGROUP
-    return flightA.Tparking<flightB.Tparking -- Tholding is the abs. timestamp. So the one with the smallest time is holding the longest.
+    return flightA.Tparking<flightB.Tparking -- Tparking is the abs. timestamp. So the one with the smallest time is parking the longest.
   end
 
   -- Return flight waiting longest.
   table.sort(Qparking, _sortByTparking)
   
   -- Debug.
-  local text="Parking flights:"
-  for i,_flight in pairs(Qparking) do
-    local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
-    text=text..string.format("\n[%d] %s %.1f", i, flight.groupname, flight:GetParkingTime())
+  if self.verbose>=2 then
+    local text="Parking flights:"
+    for i,_flight in pairs(Qparking) do
+      local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
+      text=text..string.format("\n[%d] %s %.1f", i, flight.groupname, flight:GetParkingTime())
+    end
+    self:I(self.lid..text)
   end
-  self:I(self.lid..text)
 
   -- Get the first AI flight.
   for i,_flight in pairs(Qparking) do
     local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
-    if flight.isAI then
+    if flight.isAI and flight.isReadyTO then
       return flight
     end
   end
@@ -1354,7 +1295,7 @@ function FLIGHTCONTROL:_RemoveFlightFromQueue(queue, flight, queuename)
     
     -- Check for name.
     if qflight.groupname==flight.groupname then
-      self:I(self.lid..string.format("Removing flight group %s from %s queue", flight.groupname, queuename))
+      self:T(self.lid..string.format("Removing flight group %s from %s queue", flight.groupname, queuename))
       table.remove(queue, i)
       
       if not flight.isAI then      
@@ -1365,7 +1306,7 @@ function FLIGHTCONTROL:_RemoveFlightFromQueue(queue, flight, queuename)
     end
   end
   
-  self:I(self.lid..string.format("Could NOT remove flight group %s from %s queue", flight.groupname, queuename))
+  self:E(self.lid..string.format("WARNING: Could NOT remove flight group %s from %s queue", flight.groupname, queuename))
   return false, nil
 end
 
@@ -1532,8 +1473,7 @@ function FLIGHTCONTROL:_InitParkingSpots()
   self.Nparkingspots=0
   for _,_spot in pairs(parkingdata) do
     local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingSpot
-    
-    
+       
     -- Mark position.
     local text=string.format("Parking ID=%d, Terminal=%d: Free=%s, Client=%s, Dist=%.1f", spot.TerminalID, spot.TerminalType, tostring(spot.Free), tostring(spot.ClientSpot), spot.DistToRwy)
     self:I(self.lid..text)
@@ -1541,10 +1481,8 @@ function FLIGHTCONTROL:_InitParkingSpots()
     -- Add to table.
     self.parking[spot.TerminalID]=spot
     
-    spot.Marker=MARKER:New(spot.Coordinate, "Spot"):ReadOnly()
-    spot.Marker:ToCoalition(self:GetCoalition())
-    --spot.Marker.tocoaliton=true
-    --spot.Marker.coalition=self:GetCoalition()
+    -- Marker.
+    spot.Marker=MARKER:New(spot.Coordinate, "Spot"):ReadOnly():ToCoalition(self:GetCoalition())
     
     -- Check if spot is initially free or occupied.
     if spot.Free then
@@ -1580,12 +1518,12 @@ function FLIGHTCONTROL:_InitParkingSpots()
           --env.info(string.format("FF parking spot %d is occupied by NOT ALIVE unit %s", spot.TerminalID, unitname))
           
           -- Parking spot is free.
-          self:SetParkingFree(spot)          
+          self:SetParkingFree(spot)
           
         end
         
       else
-        self:I(self.lid..string.format("ERROR: Parking spot is NOT FREE but no unit could be found there!"))
+        self:E(self.lid..string.format("ERROR: Parking spot is NOT FREE but no unit could be found there!"))
       end
     end
 
@@ -1846,7 +1784,7 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, mainmenu)
   local gotcontrol=self:IsControlling(flight)
   
   -- Debug info.
-  self:I(self.lid..string.format("Creating ATC player menu for flight %s: in state=%s status=%s, gotcontrol=%s", tostring(flight.groupname), flight:GetState(), flightstatus, tostring(gotcontrol)))
+  self:T(self.lid..string.format("Creating ATC player menu for flight %s: in state=%s status=%s, gotcontrol=%s", tostring(flight.groupname), flight:GetState(), flightstatus, tostring(gotcontrol)))
 
 
   -- Airbase root menu.  
@@ -3007,7 +2945,7 @@ function FLIGHTCONTROL:_CreateFlightGroup(group)
   end
   
   -- Debug info.
-  self:I(self.lid..string.format("Creating new flight for group %s of aircraft type %s.", group:GetName(), group:GetTypeName()))
+  self:T(self.lid..string.format("Creating new flight for group %s of aircraft type %s.", group:GetName(), group:GetTypeName()))
   
   -- Get flightgroup from data base.
   local flight=_DATABASE:GetOpsGroup(group:GetName())
@@ -3113,7 +3051,7 @@ function FLIGHTCONTROL:_CheckFlights()
   for i=#self.flights,1,-1 do
     local flight=self.flights[i] --Ops.FlightGroup#FLIGHTGROUP    
     if flight:IsDead() then
-      self:I(self.lid..string.format("Removing DEAD flight %s", tostring(flight.groupname)))
+      self:T(self.lid..string.format("Removing DEAD flight %s", tostring(flight.groupname)))
       self:_RemoveFlight(flight)
     end  
   end
@@ -3166,7 +3104,7 @@ end
 function FLIGHTCONTROL:_LandAI(flight, parking)
 
    -- Debug info.
-  self:I(self.lid..string.format("Landing AI flight %s.", flight.groupname))
+  self:T(self.lid..string.format("Landing AI flight %s.", flight.groupname))
   
   -- Set flight status to LANDING.
   self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.LANDING)
@@ -3195,8 +3133,8 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
         -- Set the parking spot at the destination airbase.
         unit.parking_landing=spot.TerminalID
         
-        local text=string.format("FF Reserving parking spot %d for unit %s", spot.TerminalID, tostring(unit.name))
-        self:I(self.lid..text)
+        local text=string.format("Reserving parking spot %d for unit %s", spot.TerminalID, tostring(unit.name))
+        self:T(self.lid..text)
         
         -- Set parking to RESERVED.
         self:SetParkingReserved(spot, element.name)
@@ -3377,7 +3315,8 @@ function FLIGHTCONTROL:SpawnParkingGuard(unit)
     -- Length of the unit + 3 meters.
     local size, x, y, z=unit:GetObjectSize()
     
-    self:I(self.lid..string.format("Parking guard for %s: heading=%d, distance x=%.1f m", unit:GetName(), heading, x))
+    -- Debug message.
+    self:T2(self.lid..string.format("Parking guard for %s: heading=%d, distance x=%.1f m", unit:GetName(), heading, x))
     
     -- Coordinate for the guard.
     local Coordinate=coordinate:Translate(0.75*x+3, heading)
