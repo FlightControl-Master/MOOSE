@@ -1245,13 +1245,16 @@ end
 --- [User] Set additional defensive zone, e.g. the zone behind the FEZ to also be defended
 -- @param #AWACS self
 -- @param Core.Zone#ZONE Zone
+-- @param #boolean Draw Draw lines around this zone if true
 -- @return #AWACS self
-function AWACS:SetAdditionalZone(Zone)
+function AWACS:SetAdditionalZone(Zone, Draw)
   self:T(self.lid.."SetAdditionalZone")
   self.BorderZone = Zone
   if self.debug then
     Zone:DrawZone(-1,{1,0.64,0},1,{1,0.64,0},0.2,1,true)
     MARKER:New(Zone:GetCoordinate(),"Defensive Zone"):ToAll()
+  elseif Draw then
+    Zone:DrawZone(-1,{1,0.64,0},1,{1,0.64,0},0.2,1,true)
   end
   return self
 end
@@ -1259,14 +1262,26 @@ end
 --- [User] Set rejection zone, e.g. a border of a foreign country. Detected bogeys in here won't be engaged.
 -- @param #AWACS self
 -- @param Core.Zone#ZONE Zone
+-- @param #boolean Draw Draw lines around this zone if true
 -- @return #AWACS self
-function AWACS:SetRejectionZone(Zone)
+function AWACS:SetRejectionZone(Zone,Draw)
   self:T(self.lid.."SetRejectionZone")
   self.RejectZone = Zone
-  if self.debug then
+  if Draw then
+    Zone:DrawZone(-1,{1,0.64,0},1,{1,0.64,0},0.2,1,true)
+    --MARKER:New(Zone:GetCoordinate(),"Rejection Zone"):ToAll()
+  elseif self.debug then
     Zone:DrawZone(-1,{1,0.64,0},1,{1,0.64,0},0.2,1,true)
     MARKER:New(Zone:GetCoordinate(),"Rejection Zone"):ToAll()
   end
+  return self
+end
+
+--- [User] Draw a line around the FEZ on the F10 map.
+-- @param #AWACS self
+-- @return #AWACS self
+function AWACS:DrawFEZ()
+  self.OpsZone:DrawZone(-1,{1,0,0},1,{1,0,0},0.2,5,true)
   return self
 end
 
