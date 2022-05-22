@@ -715,21 +715,20 @@ function GROUP:GetDCSUnit( UnitNumber )
 
   if DCSGroup then
     
-    local UnitFound = nil
-    -- 2.7.1 dead event bug, return the first alive unit instead
-    local units = DCSGroup:getUnits() or {}
+    if DCSGroup.getUnit and DCSGroup:getUnit( UnitNumber ) then
+      return DCSGroup:getUnit( UnitNumber )
+    else
     
-    for _,_unit in pairs(units) do
-    
-      local UnitFound = UNIT:Find(_unit)
+      local UnitFound = nil
+      -- 2.7.1 dead event bug, return the first alive unit instead
+      local units = DCSGroup:getUnits() or {}
       
-      if UnitFound then
-      
-        return UnitFound
-    
+      for _,_unit in pairs(units) do
+        if _unit and _unit:isExist() then
+          return _unit
+        end
       end
     end
-    
   end
 
   return nil
