@@ -283,8 +283,13 @@ do
 --            Meld Distance = 35
 --            Threat Distance = 25
 --            Merge Distance = 3 
+-- 
+-- ## 8 Bespoke Player CallSigns
+-- 
+-- Append the GROUP name of your client slots with "#CallSign" to use bespoke callsigns in AWACS callouts. E.g. "Player F14#Ghostrider" will be refered to 
+-- as "Ghostrider" plus group number, e.g. "Ghostrider 9".
 --            
--- ## 8 Discussion
+-- ## 9 Discussion
 --
 -- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) #ops-awacs channel.
 -- 
