@@ -61,9 +61,10 @@ Documentation on the MOOSE class hierarchy, usage guides and background informat
   
   
   
-##  [MOOSE Youtube Channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg)
+##  [MOOSE Youtube Tutorials](https://youtube.com/playlist?list=PLLkY2GByvtC2ME0Q9wrKRDE6qnXJYV3iT)
 
-MOOSE has a [broadcast and training channel on YouTube](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg) with various channels that you can watch.
+Pene has kindly created a [tutorial series for MOOSE](https://youtube.com/playlist?list=PLLkY2GByvtC2ME0Q9wrKRDE6qnXJYV3iT)
+ with various videos that you can watch.
   
   
     
