@@ -63,7 +63,7 @@ ARMYGROUP = {
 
 --- Army Group version.
 -- @field #string version
-ARMYGROUP.version="0.7.3"
+ARMYGROUP.version="0.7.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -880,6 +880,12 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     
     -- Set default EPLRS.
     self:SwitchEPLRS(self.option.EPLRS)
+
+    -- Set default Invisible.
+    self:SwitchInvisible(self.option.Invisible)    
+
+    -- Set default Immortal.
+    self:SwitchImmortal(self.option.Immortal)
     
     -- Set TACAN to default.
     self:_SwitchTACAN()
@@ -943,6 +949,9 @@ function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Formation)
   elseif self:IsHolding() then
     self:T(self.lid.."Update route denied. Group is holding position!")
     return false
+  elseif self:IsEngaging() then
+    self:T(self.lid.."Update route allowed. Group is engaging!")
+    return true  
   end
   
   -- Check for a current task.
@@ -960,7 +969,7 @@ function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Formation)
         self:T2(self.lid.."Allowing update route for Task: ReconMission")
       elseif task.dcstask.id==AUFTRAG.SpecialTask.RELOCATECOHORT then
         -- For relocate
-        self:T2(self.lid.."Allowing update route for Task: Relocate Cohort")          
+        self:T2(self.lid.."Allowing update route for Task: Relocate Cohort")
       else
         local taskname=task and task.description or "No description"
         self:T(self.lid..string.format("WARNING: Update route denied because taskcurrent=%d>0! Task description = %s", self.taskcurrent, tostring(taskname)))
@@ -1117,7 +1126,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
   self.speedWp=wp.speed
   
   -- Debug output.
-  if self.verbose>=10 then
+  if self.verbose>=10 or true then
     for i,_wp in pairs(waypoints) do
       local wp=_wp --Ops.OpsGroup#OPSGROUP.Waypoint
       

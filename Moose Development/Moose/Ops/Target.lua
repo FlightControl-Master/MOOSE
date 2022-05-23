@@ -36,6 +36,7 @@
 -- @field Ops.Auftrag#AUFTRAG mission Mission attached to this target.
 -- @field Ops.Intelligence#INTEL.Contact contact Contact attached to this target.
 -- @field #boolean isDestroyed If true, target objects were destroyed.
+-- @field #table resources Resource list.
 -- @extends Core.Fsm#FSM
 
 --- **It is far more important to be able to hit the target than it is to haggle over who makes a weapon or who pulls a trigger** -- Dwight D Eisenhower
@@ -113,6 +114,16 @@ TARGET.ObjectStatus={
   ALIVE="Alive",
   DEAD="Dead",
 }
+
+--- Resource.
+-- @type TARGET.Resource
+-- @field #string MissionType Mission type, e.g. `AUFTRAG.Type.BAI`.
+-- @field #number Nmin Min number of assets.
+-- @field #number Nmax Max number of assets.
+-- @field #table Attributes Generalized attribute, e.g. `{GROUP.Attribute.GROUND_INFANTRY}`.
+-- @field #table Properties Properties ([DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)), e.g. `"Attack helicopters"` or `"Mobile AAA"`.
+-- @field Ops.Auftrag#AUFTRAG mission Attached mission.
+
 --- Target object.
 -- @type TARGET.Object
 -- @field #number ID Target unique ID.
@@ -307,6 +318,53 @@ function TARGET:SetImportance(Importance)
   return self
 end
 
+--- Add mission type and number of required assets to resource.
+-- @param #TARGET self
+-- @param #string MissionType Mission Type.
+-- @param #number Nmin Min number of required assets.
+-- @param #number Nmax Max number of requried assets.
+-- @param #table Attributes Generalized attribute(s).
+-- @param #table Properties DCS attribute(s). Default `nil`.
+-- @return #TARGET.Resource The resource table.
+function TARGET:AddResource(MissionType, Nmin, Nmax, Attributes, Properties)
+  
+  -- Ensure table.
+  if Attributes and type(Attributes)~="table" then
+    Attributes={Attributes}
+  end
+  
+  -- Ensure table.
+  if Properties and type(Properties)~="table" then
+    Properties={Properties}
+  end
+  
+  -- Create new resource table.
+  local resource={} --#TARGET.Resource
+  resource.MissionType=MissionType
+  resource.Nmin=Nmin or 1
+  resource.Nmax=Nmax or 1
+  resource.Attributes=Attributes or {}
+  resource.Properties=Properties or {}
+  
+  -- Init resource table.
+  self.resources=self.resources or {}
+  
+  -- Add to table.
+  table.insert(self.resources, resource)
+  
+  -- Debug output.
+  if self.verbose>10 then
+    local text="Resource:"
+    for _,_r in pairs(self.resources) do
+      local r=_r --#TARGET.Resource
+      text=text..string.format("\nmission=%s, Nmin=%d, Nmax=%d, attribute=%s, properties=%s", r.MissionType, r.Nmin, r.Nmax, tostring(r.Attributes[1]), tostring(r.Properties[1]))
+    end
+    self:I(self.lid..text)
+  end
+    
+  return resource
+end
+
 --- Check if TARGET is alive.
 -- @param #TARGET self
 -- @return #boolean If true, target is alive.
@@ -387,7 +445,7 @@ function TARGET:onafterStatus(From, Event, To)
     end
     
     if life==0 then
-      self:I(self.lid..string.format("FF life is zero but no object dead event fired ==> object dead now for traget object %s!", tostring(target.Name)))
+      self:I(self.lid..string.format("FF life is zero but no object dead event fired ==> object dead now for target object %s!", tostring(target.Name)))
       self:ObjectDead(target)
     end
     

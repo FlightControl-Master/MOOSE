@@ -2246,7 +2246,7 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     local cohort=_cohort --Ops.Cohort#COHORT
     if Properties and #Properties>0 then
       for _,Property in pairs(Properties) do
-        for _,property in pairs(cohort.properties) do
+        for property,value in pairs(cohort.properties) do
           if Property==property then
             return true
           end
@@ -2277,8 +2277,8 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     else
       return true
     end
-  end  
-  
+  end
+    
   -- Loops over cohorts.
   for _,_cohort in pairs(Cohorts) do
     local cohort=_cohort --Ops.Cohort#COHORT
@@ -2329,7 +2329,7 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     end
     
     -- Debug info.
-    cohort:T2(cohort.lid..string.format("State=%s: Capable=%s, InRange=%s, Refuel=%s, CanCarry=%s, Category=%s, Attribute=%s, Property=%s, Weapon=%s",
+    cohort:I(cohort.lid..string.format("State=%s: Capable=%s, InRange=%s, Refuel=%s, CanCarry=%s, Category=%s, Attribute=%s, Property=%s, Weapon=%s",
     cohort:GetState(), tostring(Capable), tostring(InRange), tostring(Refuel), tostring(CanCarry), tostring(RightCategory), tostring(RightAttribute), tostring(RightProperty), tostring(RightWeapon)))
     
     -- Check OnDuty, capable, in range and refueling type (if TANKER).

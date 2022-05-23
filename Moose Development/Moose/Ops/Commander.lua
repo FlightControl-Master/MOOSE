@@ -24,6 +24,7 @@
 -- @field #table legions Table of legions which are commanded.
 -- @field #table missionqueue Mission queue.
 -- @field #table transportqueue Transport queue.
+-- @field #table targetqueue Target queue.
 -- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.SupplyZone`.
 -- @field #table refuellingZones Refuelling zones. Each element is of type `#BRIGADE.SupplyZone`.
 -- @field #table capZones CAP zones. Each element is of type `#AIRWING.PatrolZone`.
@@ -125,6 +126,7 @@ COMMANDER = {
   legions         =    {},
   missionqueue    =    {},
   transportqueue  =    {},
+  targetqueue     =    {},
   rearmingZones   =    {},
   refuellingZones =    {},
   capZones        =    {},
@@ -514,6 +516,55 @@ function COMMANDER:RemoveTransport(Transport)
   return self
 end
 
+--- Add target.
+-- @param #COMMANDER self
+-- @param Ops.Target#TARGET Target Target object to be added.
+-- @return #COMMANDER self
+function COMMANDER:AddTarget(Target)
+
+  if not self:IsTarget(Target) then
+    table.insert(self.targetqueue, Target)
+  end
+
+  return self
+end
+
+--- Check if a TARGET is already in the queue. 
+-- @param #COMMANDER self
+-- @param Ops.Target#TARGET Target Target object to be added.
+-- @return #boolean If `true`, target exists in the target queue.
+function COMMANDER:IsTarget(Target)
+
+  for _,_target in pairs(self.targetqueue) do
+    local target=_target --Ops.Target#TARGET
+    if target.uid==Target.uid or target:GetName()==Target:GetName() then
+      return true
+    end
+  end
+
+  return false
+end
+
+--- Remove target from queue.
+-- @param #COMMANDER self
+-- @param Ops.Target#TARGET Target The target.
+-- @return #COMMANDER self
+function COMMANDER:RemoveTarget(Target)
+
+  for i,_target in pairs(self.targetqueue) do
+    local target=_target --Ops.Target#TARGET
+    
+    if target.uid==Target.uid then
+      self:T(self.lid..string.format("Removing target %s from queue", Target.name))
+      table.remove(self.targetqueue, i)
+      break
+    end
+    
+  end
+
+  return self
+end
+
 --- Add a rearming zone.
 -- @param #COMMANDER self
 -- @param Core.Zone#ZONE RearmingZone Rearming zone.
@@ -789,6 +840,9 @@ function COMMANDER:onafterStatus(From, Event, To)
     local text=string.format("Status %s: Legions=%d, Missions=%d, Transports", fsmstate, #self.legions, #self.missionqueue, #self.transportqueue)
     self:T(self.lid..text)
   end
+  
+  -- Check target queue and add missions.
+  self:CheckTargetQueue()  
 
   -- Check mission queue and assign one PLANNED mission.
   self:CheckMissionQueue()
@@ -1147,6 +1201,95 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Mission Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Check target queue and assign ONE valid target by adding it to the mission queue of the COMMANDER.
+-- @param #COMMANDER self 
+function COMMANDER:CheckTargetQueue()
+
+  -- Number of missions.
+  local Ntargets=#self.targetqueue
+
+  -- Treat special cases.
+  if Ntargets==0 then
+    return nil
+  end
+  
+  -- Check if total number of missions is reached.
+  local NoLimit=self:_CheckMissionLimit("Total")
+  if NoLimit==false then
+    return nil
+  end  
+
+  -- Sort results table wrt prio and threatlevel.
+  local function _sort(a, b)
+    local taskA=a --Ops.Target#TARGET
+    local taskB=b --Ops.Target#TARGET
+    return (taskA.prio<taskB.prio) or (taskA.prio==taskB.prio and taskA.threatlevel0>taskB.threatlevel0)
+  end
+  table.sort(self.targetqueue, _sort)
+
+  -- Get the lowest importance value (lower means more important).
+  -- If a target with importance 1 exists, targets with importance 2 will not be assigned. Targets with no importance (nil) can still be selected. 
+  local vip=math.huge
+  for _,_target in pairs(self.targetqueue) do
+    local target=_target --Ops.Target#TARGET
+    if target:IsAlive() and target.importance and target.importance<vip then
+      vip=target.importance
+    end
+  end
+
+  -- Loop over targets.
+  for _,_target in pairs(self.targetqueue) do
+    local target=_target --Ops.Target#TARGET
+    
+    -- Is target still alive.
+    local isAlive=target:IsAlive()
+    
+    -- Is this target important enough.
+    local isImportant=(target.importance==nil or target.importance<=vip)
+    
+    -- Debug message.
+    local text=string.format("Target %s: Alive=%s, Threat=%s, Important=%s", target:GetName(), tostring(isAlive), tostring(isThreat), tostring(isImportant))
+    self:T2(self.lid..text)
+
+    -- Check that target is alive and not already a mission has been assigned.
+    if isAlive and isImportant then
+
+      for _,_resource in pairs(target.resources or {}) do
+        local resource=_resource --Ops.Target#TARGET.Resource
+        
+        -- Mission type.
+        local missionType=resource.MissionType
+
+        if (not resource.mission) or resource.mission:IsOver() then
+
+          -- Debug info.
+          self:T2(self.lid..string.format("Target \"%s\" ==> Creating mission type %s: Nmin=%d, Nmax=%d", target:GetName(), missionType, resource.Nmin, resource.Nmax))          
+          
+          -- Create a mission.
+          local mission=AUFTRAG:NewFromTarget(target, missionType)
+          
+          if mission then
+            mission:SetRequiredAssets(resource.Nmin, resource.Nmax)
+            mission:SetRequiredAttribute(resource.Attributes)
+            mission:SetRequiredProperty(resource.Properties)
+            
+            resource.mission=mission
+            
+            -- Add mission to queue.
+            self:AddMission(resource.mission)
+            
+          end
+         
+        end
+      
+      end
+              
+    end
+  end
+  
+end
+
 
 --- Check mission queue and assign ONE planned mission.
 -- @param #COMMANDER self 

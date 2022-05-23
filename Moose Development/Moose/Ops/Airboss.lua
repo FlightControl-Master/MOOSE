@@ -6059,7 +6059,7 @@ function AIRBOSS:_MarshalAI( flight, nstack, respawn )
       local radial = self:GetRadial( case, false, true )
 
       -- Point in the middle of the race track and a 5 NM more port perpendicular.
-      p0 = p2:Translate( UTILS.NMToMeters( 5 ), radial + 90 ):Translate( UTILS.NMToMeters( 5 ), radial, true )
+      p0 = p2:Translate( UTILS.NMToMeters( 5 ), radial + 90, true ):Translate( UTILS.NMToMeters( 5 ), radial, true )
 
       -- Entering Case II/III marshal pattern waypoint.
       wp[#wp + 1] = p0:WaypointAirTurningPoint( nil, speedTransit, { TaskArrivedHolding }, "Entering Case II/III Marshal Pattern" )
@@ -11249,7 +11249,7 @@ end
 
 --- Get wind direction and speed at carrier position.
 -- @param #AIRBOSS self
--- @param #number alt Altitude ASL in meters. Default 50 m.
+-- @param #number alt Altitude ASL in meters. Default 15 m.
 -- @param #boolean magnetic Direction including magnetic declination.
 -- @param Core.Point#COORDINATE coord (Optional) Coordinate at which to get the wind. Default is current carrier position.
 -- @return #number Direction the wind is blowing **from** in degrees.
@@ -11260,7 +11260,7 @@ function AIRBOSS:GetWind( alt, magnetic, coord )
   local cv = coord or self:GetCoordinate()
 
   -- Wind direction and speed. By default at 50 meters ASL.
-  local Wdir, Wspeed = cv:GetWind( alt or 50 )
+  local Wdir, Wspeed = cv:GetWind( alt or 15 )
 
   -- Include magnetic declination.
   if magnetic then

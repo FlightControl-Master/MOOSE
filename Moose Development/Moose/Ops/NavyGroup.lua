@@ -90,7 +90,7 @@ NAVYGROUP = {
 
 --- NavyGroup version.
 -- @field #string version
-NAVYGROUP.version="0.7.3"
+NAVYGROUP.version="0.7.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -987,8 +987,17 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
     -- Set default Alarm State.
     self:SwitchAlarmstate(self.option.Alarm)
     
+    -- Set emission.
+    self:SwitchEmission(self.option.Emission)    
+    
     -- Set default EPLRS.
-    self:SwitchEPLRS(self.option.EPLRS)    
+    self:SwitchEPLRS(self.option.EPLRS)
+    
+    -- Set default Invisible.
+    self:SwitchInvisible(self.option.Invisible)    
+
+    -- Set default Immortal.
+    self:SwitchImmortal(self.option.Immortal)    
     
     -- Set TACAN beacon.
     self:_SwitchTACAN()

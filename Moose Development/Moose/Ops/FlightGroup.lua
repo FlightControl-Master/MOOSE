@@ -197,7 +197,7 @@ FLIGHTGROUP.PlayerSkill = {
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.7.3"
+FLIGHTGROUP.version="0.7.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1591,6 +1591,12 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
 
     -- Set default EPLRS.
     self:SwitchEPLRS(self.option.EPLRS)
+    
+    -- Set default Invisible.
+    self:SwitchInvisible(self.option.Invisible)    
+
+    -- Set default Immortal.
+    self:SwitchImmortal(self.option.Immortal)    
 
     -- Set Formation
     self:SwitchFormation(self.option.Formation)
