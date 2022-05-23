@@ -308,6 +308,18 @@ OPSGROUP.TaskType={
 -- @field Core.UserFlag#USERFLAG stopflag If flag is set to 1 (=true), the task is stopped.
 -- @field #number backupROE Rules of engagement that are restored once the task is over.
 
+--- Option data.
+-- @type OPSGROUP.Option
+-- @field #number ROE Rule of engagement.
+-- @field #number ROT Reaction on threat.
+-- @field #number Alarm Alarm state.
+-- @field #number Formation Formation.
+-- @field #boolean EPLRS data link.
+-- @field #boolean Disperse Disperse under fire.
+-- @field #boolean Emission Emission on/off.
+-- @field #boolean Invisible Invisible on/off.
+-- @field #boolean Immortal Immortal on/off.
+
 --- Beacon data.
 -- @type OPSGROUP.Beacon
 -- @field #number Channel Channel.
@@ -328,16 +340,6 @@ OPSGROUP.TaskType={
 -- @field #number NumberSquad Squadron number corresponding to a name like "Uzi".
 -- @field #number NumberGroup Group number. First number after name, e.g. "Uzi-**1**-1".
 -- @field #string NameSquad Name of the squad, e.g. "Uzi".
-
---- Option data.
--- @type OPSGROUP.Option
--- @field #number ROE Rule of engagement.
--- @field #number ROT Reaction on threat.
--- @field #number Alarm Alarm state.
--- @field #number Formation Formation.
--- @field #boolean EPLRS data link.
--- @field #boolean Disperse Disperse under fire.
--- @field #boolean Emission Emission on/off.
 
 --- Weapon range data.
 -- @type OPSGROUP.WeaponData
@@ -469,21 +471,21 @@ OPSGROUP.CargoStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="0.7.8"
+OPSGROUP.version="0.7.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: AI on/off.
--- TODO: Emission on/off.
--- TODO: Invisible/immortal.
 -- TODO: F10 menu.
 -- TODO: Add pseudo function.
 -- TODO: Afterburner restrict.
 -- TODO: What more options?
 -- TODO: Shot events?
 -- TODO: Marks to add waypoints/tasks on-the-fly.
+-- DONE: Invisible/immortal.
+-- DONE: Emission on/off
 -- DONE: Damage?
 -- DONE: Options EPLRS
 
@@ -4997,6 +4999,14 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   if Mission.optionEmission then
     self:SwitchEmission()
   end
+  -- Invisible to default.
+  if Mission.optionInvisible then
+    self:SwitchInvisible()
+  end
+  -- Immortal to default.
+  if Mission.optionImmortal then
+    self:SwitchImmortal()
+  end
   -- Formation to default.
   if Mission.optionFormation and self:IsFlightgroup() then
     self:SwitchFormation()
@@ -5103,15 +5113,21 @@ function OPSGROUP:RouteToMission(mission, delay)
       self:MissionExecute(mission)
       return
     end
+    
+    if self.speedMax<=3.6 or mission.teleport then
+      --self:ClearWaypoints()
+    end
 
     -- ID of current waypoint.
-    local uid=self:GetWaypointCurrent().uid
+    local uid=self:GetWaypointCurrentUID()
 
     -- Ingress waypoint coordinate where the mission is executed.
     local waypointcoord=nil --Core.Point#COORDINATE
     
     -- Current coordinate of the group.
     local currentcoord=self:GetCoordinate()
+    
+    currentcoord:MarkToAll(mission:GetName(),ReadOnly,Text)
     
     -- Road connection.
     local roadcoord=currentcoord:GetClosestPointToRoad()
@@ -5173,6 +5189,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       -- Random coordinate.
       waypointcoord=targetzone:GetRandomCoordinate(nil , nil, surfacetypes)
       
+      waypointcoord:MarkToAll(mission:GetName(),ReadOnly,Text)
     elseif mission.type==AUFTRAG.Type.ONGUARD or mission.type==AUFTRAG.Type.ARMOREDGUARD then
       ---
       -- Guard
@@ -5237,7 +5254,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       
       waypointcoord=CarrierCoordinate:Translate(10000, heading-180):SetAltitude(2000)
       
-      waypointcoord:MarkToAll("Recoverytanker",ReadOnly,Text)
+      waypointcoord:MarkToAll("Recoverytanker")
       
     else
       ---
@@ -5466,9 +5483,17 @@ function OPSGROUP:_SetMissionOptions(mission)
     self:SwitchEPLRS(mission.optionEPLRS)
   end
   -- Emission
-  if mission.optionEPLRS then
+  if mission.optionEmission then
     self:SwitchEmission(mission.optionEmission)
-  end  
+  end
+  -- Invisible
+  if mission.optionInvisible then
+    self:SwitchInvisible(mission.optionInvisible)
+  end
+  -- Immortal
+  if mission.optionImmortal then
+    self:SwitchImmortal(mission.optionImmortal)
+  end
   -- Formation
   if mission.optionFormation and self:IsFlightgroup() then
     self:SwitchFormation(mission.optionFormation)
@@ -6762,6 +6787,10 @@ function OPSGROUP:Teleport(Coordinate, Delay, NoPauseMission)
     -- Set waypoint in air for flighgroups.
     if self:IsFlightgroup() then
       Template.route.points[1]=Coordinate:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 300, true, nil, nil, "Spawnpoint")
+    elseif self:IsArmygroup() then
+      Template.route.points[1]=Coordinate:WaypointGround()
+    elseif self:IsNavygroup() then
+      Template.route.points[1]=Coordinate:WaypointNaval()
     end
 
     -- Template units.
@@ -10788,6 +10817,103 @@ end
 -- @return #boolean If `true`, emission is on.
 function OPSGROUP:GetEmission()
   return self.option.Emission or self.optionDefault.Emission
+end
+
+--- Set the default invisible for the group.
+-- @param #OPSGROUP self
+-- @param #boolean OnOffSwitch If `true`, group is ivisible by default.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultInvisible(OnOffSwitch)
+
+  if OnOffSwitch==nil then
+    self.optionDefault.Invisible=true
+  else
+    self.optionDefault.Invisible=OnOffSwitch
+  end
+
+  return self
+end
+
+--- Switch invisibility on or off.
+-- @param #OPSGROUP self
+-- @param #boolean OnOffSwitch If `true` or `nil`, switch invisibliity on. If `false` invisibility switched off.
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchInvisible(OnOffSwitch)
+
+  if self:IsAlive() or self:IsInUtero() then
+
+    if OnOffSwitch==nil then
+
+      self.option.Invisible=self.optionDefault.Invisible
+
+    else
+
+      self.option.Invisible=OnOffSwitch
+
+    end
+
+    if self:IsInUtero() then
+      self:T2(self.lid..string.format("Setting current INVISIBLE=%s when GROUP is SPAWNED", tostring(self.option.Invisible)))
+    else
+
+      self.group:SetCommandInvisible(self.option.Invisible)
+      self:T(self.lid..string.format("Setting current INVISIBLE=%s", tostring(self.option.Invisible)))
+
+    end
+  else
+    self:E(self.lid.."WARNING: Cannot switch Invisible! Group is not alive")
+  end
+
+  return self
+end
+
+
+--- Set the default immortal for the group.
+-- @param #OPSGROUP self
+-- @param #boolean OnOffSwitch If `true`, group is immortal by default.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultImmortal(OnOffSwitch)
+
+  if OnOffSwitch==nil then
+    self.optionDefault.Immortal=true
+  else
+    self.optionDefault.Immortal=OnOffSwitch
+  end
+
+  return self
+end
+
+--- Switch immortality on or off.
+-- @param #OPSGROUP self
+-- @param #boolean OnOffSwitch If `true` or `nil`, switch immortality on. If `false` immortality switched off.
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchImmortal(OnOffSwitch)
+
+  if self:IsAlive() or self:IsInUtero() then
+
+    if OnOffSwitch==nil then
+
+      self.option.Immortal=self.optionDefault.Immortal
+
+    else
+
+      self.option.Immortal=OnOffSwitch
+
+    end
+
+    if self:IsInUtero() then
+      self:T2(self.lid..string.format("Setting current IMMORTAL=%s when GROUP is SPAWNED", tostring(self.option.Immortal)))
+    else
+
+      self.group:SetCommandImmortal(self.option.Immortal)
+      self:T(self.lid..string.format("Setting current IMMORTAL=%s", tostring(self.option.Immortal)))
+
+    end
+  else
+    self:E(self.lid.."WARNING: Cannot switch Immortal! Group is not alive")
+  end
+
+  return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

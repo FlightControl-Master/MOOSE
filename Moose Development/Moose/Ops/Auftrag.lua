@@ -111,6 +111,9 @@
 -- @field #number artyAngle Shooting angle in degrees (for Barrage).
 --
 -- @field #string alert5MissionType Alert 5 mission type. This is the mission type, the alerted assets will be able to carry out.
+-- 
+-- @field #table attributes Generalized attribute(s) of assets.
+-- @field #table properties DCS attribute(s) of assets.
 --
 -- @field Ops.Chief#CHIEF chief The CHIEF managing this mission.
 -- @field Ops.Commander#COMMANDER commander The COMMANDER managing this mission.
@@ -168,6 +171,8 @@
 -- @field #number optionRTBfuel RTB on out-of-fuel.
 -- @field #number optionECM ECM.
 -- @field #boolean optionEmission Emission is on or off.
+-- @field #boolean optionInvisible Invisible is on/off.
+-- @field #boolean optionImmortal Immortal is on/off.
 --
 -- @extends Core.Fsm#FSM
 
@@ -1763,7 +1768,7 @@ end
 --- **[GROUND, NAVAL]** Create an ARTY mission.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target Center of the firing solution.
--- @param #number Nshots Number of shots to be fired. Default 3.
+-- @param #number Nshots Number of shots to be fired. Default `#nil`.
 -- @param #number Radius Radius of the shells in meters. Default 100 meters.
 -- @param #number Altitude Altitude in meters. Can be used to setup a Barrage. Default `#nil`.
 -- @return #AUFTRAG self
@@ -2196,7 +2201,9 @@ function AUFTRAG:NewFromTarget(Target, MissionType)
   elseif MissionType==AUFTRAG.Type.STRIKE then
     mission=self:NewSTRIKE(Target, Altitude)
   elseif MissionType==AUFTRAG.Type.ARMORATTACK then
-    mission=self:NewARMORATTACK(Target,Speed)
+    mission=self:NewARMORATTACK(Target, Speed)
+  elseif MissionType==AUFTRAG.Type.GROUNDATTACK then
+    mission=self:NewGROUNDATTACK(Target, Speed, Formation)
   else
     return nil
   end
@@ -2965,6 +2972,36 @@ function AUFTRAG:SetEmission(OnOffSwitch)
     self.optionEmission=true
   else
     self.optionEmission=OnOffSwitch
+  end
+
+  return self
+end
+
+--- Set invisibility setting for this mission.
+-- @param #AUFTRAG self
+-- @param #boolean OnOffSwitch If `true` or `nil`, invisible is on. If `false`, invisible is off.
+-- @return #AUFTRAG self
+function AUFTRAG:SetInvisible(OnOffSwitch)
+
+  if OnOffSwitch==nil then
+    self.optionInvisible=true
+  else
+    self.optionInvisible=OnOffSwitch
+  end
+
+  return self
+end
+
+--- Set immortality setting for this mission.
+-- @param #AUFTRAG self
+-- @param #boolean OnOffSwitch If `true` or `nil`, immortal is on. If `false`, immortal is off.
+-- @return #AUFTRAG self
+function AUFTRAG:SetImmortal(OnOffSwitch)
+
+  if OnOffSwitch==nil then
+    self.optionImmortal=true
+  else
+    self.optionImmortal=OnOffSwitch
   end
 
   return self
