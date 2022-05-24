@@ -130,9 +130,7 @@ do
 --  * FSM events that the mission designer can hook into
 --
 -- ===
---
-
---- 
+-- 
 -- ## 1 Prerequisites
 -- 
 -- The radio callouts in this class are ***exclusively*** created with Text-To-Speech (TTS), based on the Moose @{Sound.SRS} Class, and output is via [Ciribob's SRS system](https://github.com/ciribob/DCS-SimpleRadioStandalone/releases)
@@ -306,7 +304,7 @@ do
 -- * @{#AWACS.SetSRSVoiceCAP}() : Set voice details for AI CAP planes, using Windows dektop TTS.
 -- * @{#AWACS.SetAICAPDetails}() : Set AI CAP details.
 -- * @{#AWACS.SetEscort}() : Set number of escorting planes for AWACS.
--- * @{#AWACS.AddCAPAirWing}() : Add an additional @{Ops.AirWing#AIRWING} for CAP flights.
+-- * @{#AWACS.AddCAPAirWing}() : Add an additional @{Ops.Airwing#AIRWING} for CAP flights.
 -- 
 -- Further options (set before starting your AWACS instance, but after `:New()`)
 -- 
@@ -939,7 +937,6 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self:AddTransition("*",             "InterceptFailure",   "*")
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop FSM.
   
-  -- self:__Start(math.random(2,5))
   
   local text = string.format("%sAWACS Version %s Initiated",self.lid,self.version)
   
@@ -959,6 +956,119 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
   -- Missile warning
   self:HandleEvent(EVENTS.Shot, self._EventHandler)
+  
+  
+  ------------------------
+  --- Pseudo Functions ---
+  ------------------------
+  
+    --- Triggers the FSM event "Start". Starts the AWACS. Initializes parameters and starts event handlers.
+  -- @function [parent=#AWACS] Start
+  -- @param #AWACS self
+
+  --- Triggers the FSM event "Start" after a delay. Starts the AWACS. Initializes parameters and starts event handlers.
+  -- @function [parent=#AWACS] __Start
+  -- @param #AWACS self
+  -- @param #number delay Delay in seconds.
+
+  --- Triggers the FSM event "Stop". Stops the AWACS and all its event handlers.
+  -- @param #AWACS self
+
+  --- Triggers the FSM event "Stop" after a delay. Stops the AWACS and all its event handlers.
+  -- @function [parent=#AWACS] __Stop
+  -- @param #AWACS self
+  -- @param #number delay Delay in seconds.
+  
+  --- On After "CheckedIn" event. AI or Player checked in.
+  -- @function [parent=#AWACS] OnAfterCheckedIn
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+    --- On After "CheckedOut" event. AI or Player checked out.
+  -- @function [parent=#AWACS] OnAfterCheckedOut
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+    --- On After "AssignedAnchor" event. AI or Player has been assigned a CAP station.
+  -- @function [parent=#AWACS] OnAfterAssignedAnchor
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+    --- On After "ReAnchor" event. AI or Player has been send back to station.
+  -- @function [parent=#AWACS] OnAfterReAnchor
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "NewCluster" event. AWACS detected a cluster.
+  -- @function [parent=#AWACS] OnAfterNewCluster
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "NewContact" event. AWACS detected a contact.
+  -- @function [parent=#AWACS] OnAfterNewContact
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "LostCluster" event. AWACS lost a radar cluster.
+  -- @function [parent=#AWACS] OnAfterLostCluster
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "LostContact" event. AWACS lost a radar contact.
+  -- @function [parent=#AWACS] OnAfterLostContact
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+    --- On After "EscortShiftChange" event. AWACS escorts shift change.
+  -- @function [parent=#AWACS] OnAfterEscortShiftChange
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "AwacsShiftChange" event. AWACS shift change.
+  -- @function [parent=#AWACS] OnAfterAwacsShiftChange
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "Intercept" event. CAP send on intercept.
+  -- @function [parent=#AWACS] OnAfterIntercept
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "InterceptSuccess" event. Intercept successful.
+  -- @function [parent=#AWACS] OnAfterIntercept
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "InterceptFailure" event. Intercept failure.
+  -- @function [parent=#AWACS] OnAfterIntercept
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
   
   return self
 end
@@ -5284,6 +5394,20 @@ function AWACS:onafterStop(From, Event, To)
       SubAW:RemoveUsingOpsAwacs()
     end
   end
+    -- Events
+  -- Player joins
+  self:UnHandleEvent(EVENTS.PlayerEnterAircraft)
+  self:UnHandleEvent(EVENTS.PlayerEnterUnit)
+    -- Player leaves
+  self:UnHandleEvent(EVENTS.PlayerLeaveUnit)
+  self:UnHandleEvent(EVENTS.Ejection)
+  self:UnHandleEvent(EVENTS.Crash)
+  self:UnHandleEvent(EVENTS.Dead)
+  self:UnHandleEvent(EVENTS.UnitLost)
+  self:UnHandleEvent(EVENTS.BDA)
+  self:UnHandleEvent(EVENTS.PilotDead)
+  -- Missile warning
+  self:UnHandleEvent(EVENTS.Shot)
   
   return self
 end
@@ -5797,7 +5921,7 @@ function AWACS:onafterReAnchor(From, Event, To, GID)
           end
           text = text .. " "..brtexttts.." miles."
           textScreen = textScreen .. " "..brtext.." miles."
-          
+        
           self:_NewRadioEntry(text,textScreen,0,false,self.debug,true,false,true)
         end
         self.ManagedGrps[GID] = nil
