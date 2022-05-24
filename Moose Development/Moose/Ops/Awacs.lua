@@ -6,16 +6,16 @@
 --  * AWACS replacement for the in-game AWACS
 --  * Will control a fighter engagement zone and assign tasks to AI and human CAP flights
 --  * Concentrates on threat-based call outs
---  * Callouts referenced from:
---  ** References from ARN33396 ATP 3-52.4 (Sep 2021) (Combined Forces)
---  ** References from CNATRA P-877 (Rev 12-20) (NAVY)
+--  * Callouts referenced from:   
+--  ** References from ARN33396 ATP 3-52.4 (Sep 2021) (Combined Forces)   
+--  ** References from CNATRA P-877 (Rev 12-20) (NAVY)   
 --  * Many additional events that the mission designer can hook into
 --
 -- ===
 --
 -- ## Example Missions:
 -- 
--- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/).
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Awacs/).
 -- 
 -- ## Videos:
 -- 
@@ -114,7 +114,6 @@ do
 
 
 ---
--- ===
 --
 -- *Of all men\'s miseries the bitterest is this: to know so much and to have control over nothing.* (Herodotus)
 --
@@ -131,7 +130,9 @@ do
 --  * FSM events that the mission designer can hook into
 --
 -- ===
--- 
+--
+
+--- 
 -- ## 1 Prerequisites
 -- 
 -- The radio callouts in this class are ***exclusively*** created with Text-To-Speech (TTS), based on the Moose @{Sound.SRS} Class, and output is via [Ciribob's SRS system](https://github.com/ciribob/DCS-SimpleRadioStandalone/releases)
@@ -309,13 +310,13 @@ do
 -- 
 -- Further options (set before starting your AWACS instance, but after `:New()`)
 -- 
---            self.PlayerGuidance = true -- allow missile warning call-outs.
---            self.NoGroupTags = false -- use group tags like Alpha, Bravo .. etc in call outs.
---            self.callsignshort = true -- use short callsigns, e.g. "Moose 1", not "Moose 1-1".
---            self.DeclareRadius = 5 -- you need to be this close to the lead unit for declare/VID to work, in NM.
---            self.MenuStrict = true -- Players need to check-in to see the menu; check-in still require to use the menu.
---            self.maxassigndistance = 100 -- Don't assign targets further out than this, in NM.
---            self.debug = false -- set to true to produce more log output.
+--            testawacs.PlayerGuidance = true -- allow missile warning call-outs.
+--            testawacs.NoGroupTags = false -- use group tags like Alpha, Bravo .. etc in call outs.
+--            testawacs.callsignshort = true -- use short callsigns, e.g. "Moose 1", not "Moose 1-1".
+--            testawacs.DeclareRadius = 5 -- you need to be this close to the lead unit for declare/VID to work, in NM.
+--            testawacs.MenuStrict = true -- Players need to check-in to see the menu; check-in still require to use the menu.
+--            testawacs.maxassigndistance = 100 -- Don't assign targets further out than this, in NM.
+--            testawacs.debug = false -- set to true to produce more log output.
 --            
 -- ## 10 Discussion
 --
@@ -936,7 +937,6 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self:AddTransition("*",             "Intercept",          "*")
   self:AddTransition("*",             "InterceptSuccess",   "*")
   self:AddTransition("*",             "InterceptFailure",   "*")
-  --
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop FSM.
   
   -- self:__Start(math.random(2,5))
