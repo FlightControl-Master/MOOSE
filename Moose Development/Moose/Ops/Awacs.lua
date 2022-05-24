@@ -16,6 +16,10 @@
 -- ## Example Missions:
 -- 
 -- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/).
+-- 
+-- ## Videos:
+-- 
+-- Demo videos can be found on [Youtube](https://www.youtube.com/watch?v=ocdy8QzTNN4&list=PLFxp425SeXnq-oS0DSjam1HtddywH8i_k)
 --    
 -- ===
 --
@@ -25,22 +29,6 @@
 -- ==
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
-
-
---- 
--- ===
--- 
--- **AWACS** - MOOSE based AI AWACS Fighter Engagement Zone Operations for Players and AI
--- 
--- ===
---
--- ## Example Missions:
--- 
--- ### Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/).
---   
--- ===
---
-
 
 do
 --- Ops AWACS Class
@@ -109,17 +97,19 @@ do
 -- @field #number PictureInterval Interval in seconds for general picture
 -- @field #number PictureTimeStamp Interval timestamp
 -- @field #number maxassigndistance Only assing AI/Pilots to targets max this far away
--- @field #boolean PlayerGuidance -- if true additional callouts to guide/warn players
--- @field #boolean ModernEra -- if true we get more intel on targets, and EPLR on the AIC
--- @field #boolean callsignshort -- if true use short (group) callsigns, e.g. "Ghost 1", else "Ghost 1 1"
--- @field #number MeldDistance -- 25nm - distance for "Meld" Call , usually shortly before the actual engagement 
--- @field #number TacDistance -- 30nm - distance for "TAC" Call
--- @field #number ThreatDistance -- 15nm - distance to declare untargeted (new) threats
--- @field #string AOName -- name of the FEZ, e.g. Rock
--- @field Core.Point#COORDINATE AOCoordinate -- Coordinate of bulls eye
+-- @field #boolean PlayerGuidance if true additional callouts to guide/warn players
+-- @field #boolean ModernEra if true we get more intel on targets, and EPLR on the AIC
+-- @field #boolean callsignshort if true use short (group) callsigns, e.g. "Ghost 1", else "Ghost 1 1"
+-- @field #number MeldDistance 25nm - distance for "Meld" Call , usually shortly before the actual engagement 
+-- @field #number TacDistance 30nm - distance for "TAC" Call
+-- @field #number ThreatDistance 15nm - distance to declare untargeted (new) threats
+-- @field #string AOName name of the FEZ, e.g. Rock
+-- @field Core.Point#COORDINATE AOCoordinate Coordinate of bulls eye
 -- @field Utilities.FiFo#FIFO clientmenus
--- @field #number RadarBlur -- Radar blur in %
--- @field #number ReassignmentPause -- Wait this many seconds before re-assignment of a player
+-- @field #number RadarBlur Radar blur in %
+-- @field #number ReassignmentPause Wait this many seconds before re-assignment of a player
+-- @field #boolean NoGroupTags Set to true if you don't want group tags.
+-- @field #boolean SuppressScreenOutput Set to true to suppress all screen output.
 -- @extends Core.Fsm#FSM
 
 
@@ -139,6 +129,8 @@ do
 --  ** References from ARN33396 ATP 3-52.4 (Sep 2021) (Combined Forces)   
 --  ** References from CNATRA P-877 (Rev 12-20) (NAVY)   
 --  * FSM events that the mission designer can hook into
+--
+-- ===
 -- 
 -- ## 1 Prerequisites
 -- 
@@ -288,15 +280,51 @@ do
 -- 
 -- Append the GROUP name of your client slots with "#CallSign" to use bespoke callsigns in AWACS callouts. E.g. "Player F14#Ghostrider" will be refered to 
 -- as "Ghostrider" plus group number, e.g. "Ghostrider 9".
+--
+-- ## 9 Options
+-- 
+-- There's a number of functions available, to set various options for the setup.
+-- 
+-- * @{#AWACS.SetBullsEyeAlias}() : Set the alias name of the Bulls Eye.
+-- * @{#AWACS.SetTOS}() : Set time on station for AWACS and CAP.
+-- * @{#AWACS.SetReassignmentPause}() : Pause this number of seconds before re-assigning a Player to a task.
+-- * @{#AWACS.SuppressScreenMessages}() : Suppress message output on screen.
+-- * @{#AWACS.SetRadarBlur}() : Set the radar blur faktor in percent.
+-- * @{#AWACS.SetColdWar}() : Set to cold war - no fill-ins, no EPLRS, VID as standard.
+-- * @{#AWACS.SetModernEraDefensive}() : Set to modern, EPLRS, BVR/IFF engagement, fill-ins.
+-- * @{#AWACS.SetModernEraAgressive}() : Set to modern, EPLRS, BVR/IFF engagement, fill-ins.
+-- * @{#AWACS.SetPolicingModern}() : Set to modern, EPLRS, VID engagement, fill-ins.
+-- * @{#AWACS.SetPolicingColdWar}() : Set to cold war, no EPLRS, VID engagement, no fill-ins.
+-- * @{#AWACS.SetInterceptTimeline}() : Set distances for TAC, Meld and Threat range calls.
+-- * @{#AWACS.SetAdditionalZone}() : Add one additional defense zone, e.g. own border.
+-- * @{#AWACS.SetRejectionZone}() : Add one foreign border. Targets beyond will be ignored for tasking.
+-- * @{#AWACS.DrawFEZ}() : Show the FEZ on the F10 map.
+-- * @{#AWACS.SetAWACSDetails}() : Set AWACS details.
+-- * @{#AWACS.AddGroupToDetection}() : Add a group object to INTEL detection, e.g. EWR.
+-- * @{#AWACS.SetSRS}() : Set SRS details.
+-- * @{#AWACS.SetSRSVoiceCAP}() : Set voice details for AI CAP planes, using Windows dektop TTS.
+-- * @{#AWACS.SetAICAPDetails}() : Set AI CAP details.
+-- * @{#AWACS.SetEscort}() : Set number of escorting planes for AWACS.
+-- * @{#AWACS.AddCAPAirWing}() : Add an additional @{Ops.AirWing#AIRWING} for CAP flights.
+-- 
+-- Further options (set before starting your AWACS instance, but after `:New()`)
+-- 
+--            self.PlayerGuidance = true -- allow missile warning call-outs.
+--            self.NoGroupTags = false -- use group tags like Alpha, Bravo .. etc in call outs.
+--            self.callsignshort = true -- use short callsigns, e.g. "Moose 1", not "Moose 1-1".
+--            self.DeclareRadius = 5 -- you need to be this close to the lead unit for declare/VID to work, in NM.
+--            self.MenuStrict = true -- Players need to check-in to see the menu; check-in still require to use the menu.
+--            self.maxassigndistance = 100 -- Don't assign targets further out than this, in NM.
+--            self.debug = false -- set to true to produce more log output.
 --            
--- ## 9 Discussion
+-- ## 10 Discussion
 --
 -- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) #ops-awacs channel.
 -- 
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "beta 0.1.22", -- #string
+  version = "beta 0.1.23", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -370,6 +398,8 @@ AWACS = {
   clientmenus = nil,
   RadarBlur = 15,
   ReassignmentPause = 180,
+  NoGroupTags = false,
+  SuppressScreenOutput = false,
 }
 
 ---
@@ -629,12 +659,12 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.1.22
+-- TODO-List 0.1.23
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DEBUG - WIP - Player tasking, VID
--- TODO - Localization
--- TODO - (LOW) LotATC / IFF
+-- TODO - Localization (sensible?)
+-- TODO - (LOW) LotATC
 -- TODO - SW Optimization
 -- WONTDO - Maybe check in AI only when airborne
 -- DONE - remove SSML tag when not on google (currently sometimes spoken)
@@ -773,7 +803,6 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.invisible = false
   self.immortal = false
   self.callsigntxt = "AWACS"
-  self.maxassigndistance = 100 --nm
   
   self.AwacsTimeOnStation = 4
   self.AwacsTimeStamp = 0
@@ -792,18 +821,12 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.CAPCulture = "en-US"
   self.CAPVoice = nil
   
-  self.ReassignmentPause = 180
-    
-  self.DeclareRadius = 5 -- NM
-  
   self.AwacsMission = nil
   self.AwacsInZone = false -- not yet arrived or gone again
   self.AwacsReady = false
   
   self.AwacsROE = AWACS.ROE.IFF
   self.AwacsROT = AWACS.ROT.BYPASSESCAPE
-  
-  self.MenuStrict = true
   
   -- Escorts
   self.HasEscorts = false
@@ -820,14 +843,20 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.PrioRadioQueue = FIFO:New() -- Utilities.FiFo#FIFO
   self.maxspeakentries = 3
   
-  self.SuppressScreenOutput = false
-  
   -- Client SET  
   self.clientset = SET_CLIENT:New():FilterActive(true):FilterCoalitions(self.coalitiontxt):FilterCategories("plane"):FilterStart()
-
+  
+  -- Player options
   self.PlayerGuidance = true
   self.ModernEra = true
-  
+  self.NoGroupTags = false
+  self.SuppressScreenOutput = false  
+  self.ReassignmentPause = 180
+  self.callsignshort = true
+  self.DeclareRadius = 5 -- NM
+  self.MenuStrict = true
+  self.maxassigndistance = 100 --nm
+    
   -- managed groups
   self.ManagedGrps = {} -- #table of #AWACS.ManagedGroup entries
   self.ManagedGrpID = 0  
@@ -2004,9 +2033,13 @@ function AWACS:_CreatePicture(AO,Callsign,GID,MaxEntries,IsGeneral)
       end
       local refBRAA = ""
       local refBRAATTS = ""
-      text = contact.TargetGroupNaming.." group." -- Alpha Group.
-      textScreen = contact.TargetGroupNaming.." group,"
-
+      if self.NoGroupTags then
+        text = "Group." -- Alpha Group.
+        textScreen = "Group,"
+      else
+        text = contact.TargetGroupNaming.." group." -- Alpha Group.
+        textScreen = contact.TargetGroupNaming.." group,"
+      end
       if IsGeneral then
         -- AO/BE Reference
         refBRAA=self:_ToStringBULLS(coordinate)
@@ -2135,14 +2168,14 @@ function AWACS:_Picture(Group,IsGeneral)
   local GID, Outcome, gcallsign = self:_GetManagedGrpID(Group) 
   --local gcallsign = ""
   
-  if Group and Outcome then
-    general = false
-  end
-  
   if general then
     gcallsign = "All Stations"
   --else
     --gcallsign = self:_GetCallSign(Group,GID) or "Ghost 1"
+  end
+  
+  if Group and Outcome then
+    general = false
   end
     
   if not self.intel then
@@ -2210,13 +2243,13 @@ function AWACS:_Picture(Group,IsGeneral)
     else
     
       if clustersAO > 0 then
-        if general then
-          text = string.format("%s, %s. ",gcallsign, self.callsigntxt)
-          textScreen = string.format("%s, %s. ",gcallsign, self.callsigntxt)
-        else
+        --if general then
+          --text = string.format("%s, %s. ",gcallsign, self.callsigntxt)
+          --textScreen = string.format("%s, %s. ",gcallsign, self.callsigntxt)
+        --else
           text = string.format("%s, %s. Picture. ",gcallsign, self.callsigntxt)
           textScreen = string.format("%s, %s. Picture. ",gcallsign, self.callsigntxt)
-        end
+        --end
         if clustersAO == 1 then
           text = text .. "One group. "
           textScreen = textScreen .. "One group.\n"
@@ -4147,6 +4180,9 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag,IsPopup,Repo
     CID = Contact.CID or 0
     Tag = Contact.TargetGroupNaming or ""
     --self:T({CID,Tag})
+  end
+  if self.NoGroupTags then
+    Tag = nil
   end
   local isGroup = false
   local GID = 0
