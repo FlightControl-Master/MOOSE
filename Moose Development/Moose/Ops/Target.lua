@@ -37,6 +37,7 @@
 -- @field Ops.Intelligence#INTEL.Contact contact Contact attached to this target.
 -- @field #boolean isDestroyed If true, target objects were destroyed.
 -- @field #table resources Resource list.
+-- @field #table conditionStart Start condition functions.
 -- @extends Core.Fsm#FSM
 
 --- **It is far more important to be able to hit the target than it is to haggle over who makes a weapon or who pulls a trigger** -- Dwight D Eisenhower
@@ -65,7 +66,8 @@ TARGET = {
   Ndead          =     0,
   elements       =    {},
   casualties     =    {},
-  threatlevel0   =     0
+  threatlevel0   =     0,
+  conditionStart =    {},
 }
 
 
@@ -316,6 +318,95 @@ end
 function TARGET:SetImportance(Importance)
   self.importance=Importance
   return self
+end
+
+--- Add start condition.
+-- @param #TARGET self
+-- @param #function ConditionFunction Function that needs to be true before the mission can be started. Must return a #boolean.
+-- @param ... Condition function arguments if any.
+-- @return #TARGET self
+function TARGET:AddConditionStart(ConditionFunction, ...)
+
+  local condition={} --Ops.Auftrag#AUFTRAG.Condition
+
+  condition.func=ConditionFunction
+  condition.arg={}
+  if arg then
+    condition.arg=arg
+  end
+
+  table.insert(self.conditionStart, condition)
+
+  return self
+end
+
+--- Add stop condition.
+-- @param #TARGET self
+-- @param #function ConditionFunction Function that needs to be true before the mission can be started. Must return a #boolean.
+-- @param ... Condition function arguments if any.
+-- @return #TARGET self
+function TARGET:AddConditionStop(ConditionFunction, ...)
+
+  local condition={} --Ops.Auftrag#AUFTRAG.Condition
+
+  condition.func=ConditionFunction
+  condition.arg={}
+  if arg then
+    condition.arg=arg
+  end
+
+  table.insert(self.conditionStop, condition)
+
+  return self
+end
+
+--- Check if all given condition are true.
+-- @param #TARGET self
+-- @param #table Conditions Table of conditions.
+-- @return #boolean If true, all conditions were true. Returns false if at least one condition returned false.
+function TARGET:EvalConditionsAll(Conditions)
+
+  -- Any stop condition must be true.
+  for _,_condition in pairs(Conditions or {}) do
+    local condition=_condition --Ops.Auftrag#AUFTRAG.Condition
+
+    -- Call function.
+    local istrue=condition.func(unpack(condition.arg))
+
+    -- Any false will return false.
+    if not istrue then
+      return false
+    end
+
+  end
+
+  -- All conditions were true.
+  return true
+end
+
+
+--- Check if any of the given conditions is true.
+-- @param #TARGET self
+-- @param #table Conditions Table of conditions.
+-- @return #boolean If true, at least one condition is true.
+function TARGET:EvalConditionsAny(Conditions)
+
+  -- Any stop condition must be true.
+  for _,_condition in pairs(Conditions or {}) do
+    local condition=_condition --Ops.Auftrag#AUFTRAG.Condition
+
+    -- Call function.
+    local istrue=condition.func(unpack(condition.arg))
+
+    -- Any true will return true.
+    if istrue then
+      return true
+    end
+
+  end
+
+  -- No condition was true.
+  return false
 end
 
 --- Add mission type and number of required assets to resource.

@@ -1858,6 +1858,24 @@ function LEGION:CountAssets(InStock, MissionTypes, Attributes)
   return N
 end
 
+--- Get OPSGROUPs that are spawned and alive.
+-- @param #LEGION self
+-- @param #table MissionTypes (Optional) Get only assest that can perform certain mission type(s). Default is all types.
+-- @param #table Attributes (Optional) Get only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+-- @return Core.Set#SET_OPSGROUP The set of OPSGROUPs. Can be empty if no groups are spawned or alive!
+function LEGION:GetOpsGroups(MissionTypes, Attributes)
+
+  local setLegion=SET_OPSGROUP:New()
+
+  for _,_cohort in pairs(self.cohorts) do
+    local cohort=_cohort --Ops.Cohort#COHORT
+    local setcohort=cohort:GetOpsGroups(MissionTypes, Attributes)
+    setLegion:AddSet(setcohort)
+  end
+
+  return setLegion
+end
+
 --- Count total number of assets in LEGION warehouse stock that also have a payload.
 -- @param #LEGION self
 -- @param #boolean Payloads (Optional) Specifc payloads to consider. Default all.

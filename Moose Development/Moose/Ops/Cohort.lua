@@ -987,6 +987,31 @@ function COHORT:CountAssets(InStock, MissionTypes, Attributes)
   return N
 end
 
+--- Get OPSGROUPs.
+-- @param #COHORT self
+-- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+-- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+-- @return Core.Set#SET_OPSGROUPS Ops groups set.
+function COHORT:GetOpsGroups(MissionTypes, Attributes)
+
+  local set=SET_OPSGROUP:New()
+
+  for _,_asset in pairs(self.assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    
+    if MissionTypes==nil or AUFTRAG.CheckMissionCapability(MissionTypes, self.missiontypes) then
+      if Attributes==nil or self:CheckAttribute(Attributes) then
+        if asset.flightgroup and asset.flightgroup:IsAlive() then
+          --set:AddObject(asset.flightgroup)
+          set:AddGroup(asset.flightgroup)
+        end
+      end
+    end
+  end
+
+  return set
+end
+
 --- Get assets for a mission.
 -- @param #COHORT self
 -- @param #string MissionType Mission type.
@@ -1021,7 +1046,7 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
     if not (isRequested or isReserved) then
     
       -- Check if asset is currently on a mission (STARTED or QUEUED).
-      if self.legion:IsAssetOnMission(asset)  then
+      if self.legion:IsAssetOnMission(asset) then
         ---
         -- Asset is already on a mission.
         ---
@@ -1034,7 +1059,7 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
           
         elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.NOTHING) then
 
-          -- Relocation: Take all assets. Mission will be cancelled.
+          -- Assets on mission NOTHING are considered.
           table.insert(assets, asset)
           
         elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.GCICAP) and MissionType==AUFTRAG.Type.INTERCEPT then

@@ -2231,10 +2231,23 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
         self:T(self.lid.."Engaging! Group NOT done...")
         return
       end
+      
+      -- Number of tasks remaining.
+      local nTasks=self:CountRemainingTasks()
 
-      -- First check if there is a paused mission.
-      if self.missionpaused then
-        self:T(self.lid..string.format("Found paused mission %s [%s]. Unpausing mission...", self.missionpaused.name, self.missionpaused.type))
+      -- Number of mission remaining.
+      local nMissions=self:CountRemainingMissison()
+
+      -- Number of cargo transports remaining.
+      local nTransports=self:CountRemainingTransports()      
+
+      -- Number of paused missions.
+      local nPaused=self:_CountPausedMissions()
+
+      -- First check if there is a paused mission and that all remaining missions are paused. If there are other missions in the queue, we will run those.
+      if nPaused>0 and nPaused==nMissions then
+        local missionpaused=self:_GetPausedMission()
+        self:T(self.lid..string.format("Found paused mission %s [%s]. Unpausing mission...", missionpaused.name, missionpaused.type))
         self:UnpauseMission()
         return
       end
@@ -2250,15 +2263,6 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
         self:T(self.lid.."Waiting! Group NOT done...")
         return        
       end
-
-      -- Number of tasks remaining.
-      local nTasks=self:CountRemainingTasks()
-
-      -- Number of mission remaining.
-      local nMissions=self:CountRemainingMissison()
-
-      -- Number of cargo transports remaining.
-      local nTransports=self:CountRemainingTransports()
 
       -- Debug info.
       self:T(self.lid..string.format("Remaining (final=%s): missions=%d, tasks=%d, transports=%d", tostring(self.passedfinalwp), nMissions, nTasks, nTransports))

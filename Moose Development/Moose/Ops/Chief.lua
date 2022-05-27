@@ -955,6 +955,7 @@ end
 function CHIEF:AddTarget(Target)
 
   if not self:IsTarget(Target) then
+    Target.chief=self
     table.insert(self.targetqueue, Target)
   end
 
@@ -1536,7 +1537,7 @@ function CHIEF:onafterStatus(From, Event, To)
   for _,_target in pairs(self.targetqueue) do
     local target=_target --Ops.Target#TARGET
     
-    if target and target:IsAlive() and target.mission and target.mission:IsNotOver() then
+    if target and target:IsAlive() and target.chief and target.mission and target.mission:IsNotOver() then
     
       local inborder=self:CheckTargetInZones(target, self.borderzoneset)
       

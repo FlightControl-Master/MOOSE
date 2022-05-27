@@ -837,7 +837,7 @@ function COMMANDER:onafterStatus(From, Event, To)
 
   -- Status.
   if self.verbose>=1 then
-    local text=string.format("Status %s: Legions=%d, Missions=%d, Transports", fsmstate, #self.legions, #self.missionqueue, #self.transportqueue)
+    local text=string.format("Status %s: Legions=%d, Missions=%d, Targets=%d, Transports=%d", fsmstate, #self.legions, #self.missionqueue, #self.targetqueue, #self.transportqueue)
     self:T(self.lid..text)
   end
   
@@ -1031,6 +1031,21 @@ function COMMANDER:onafterStatus(From, Event, To)
     end
     self:I(self.lid..text)    
   end
+
+
+  ---
+  -- TARGETS
+  ---
+    
+  -- Target queue.
+  if self.verbose>=2 and #self.targetqueue>0 then
+    local text="Target queue:"
+    for i,_target in pairs(self.targetqueue) do      
+      local target=_target --Ops.Target#TARGET      
+      text=text..string.format("\n[%d] %s: status=%s, life=%d", i, target:GetName(), target:GetState(), target:GetLife())
+    end
+    self:I(self.lid..text)    
+  end
   
   ---
   -- TRANSPORTS
@@ -1214,11 +1229,25 @@ function COMMANDER:CheckTargetQueue()
     return nil
   end
   
+  -- Remove done targets.
+  for i=#self.targetqueue,1,-1 do
+    local target=self.targetqueue[i] --Ops.Target#TARGET
+    if (not target:IsAlive()) or target:EvalConditionsAny(target.conditionStop) then   
+      for _,_resource in pairs(target.resources) do
+        local resource=_resource --Ops.Target#TARGET.Resource
+        if resource.mission and resource.mission:IsNotOver() then
+          self:MissionCancel(resource.mission)
+        end
+      end
+      table.remove(self.targetqueue, i)
+    end
+  end
+  
   -- Check if total number of missions is reached.
   local NoLimit=self:_CheckMissionLimit("Total")
   if NoLimit==false then
     return nil
-  end  
+  end
 
   -- Sort results table wrt prio and threatlevel.
   local function _sort(a, b)
@@ -1248,6 +1277,9 @@ function COMMANDER:CheckTargetQueue()
     -- Is this target important enough.
     local isImportant=(target.importance==nil or target.importance<=vip)
     
+    -- Check ALL start conditions are true.
+    local isReadyStart=target:EvalConditionsAll(target.conditionStart)
+    
     -- Debug message.
     local text=string.format("Target %s: Alive=%s, Threat=%s, Important=%s", target:GetName(), tostring(isAlive), tostring(isThreat), tostring(isImportant))
     self:T2(self.lid..text)
@@ -1270,10 +1302,13 @@ function COMMANDER:CheckTargetQueue()
           local mission=AUFTRAG:NewFromTarget(target, missionType)
           
           if mission then
+          
+            -- Set mission parameters.
             mission:SetRequiredAssets(resource.Nmin, resource.Nmax)
             mission:SetRequiredAttribute(resource.Attributes)
             mission:SetRequiredProperty(resource.Properties)
             
+            -- Set resource mission.
             resource.mission=mission
             
             -- Add mission to queue.

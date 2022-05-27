@@ -1543,6 +1543,33 @@ function DATABASE:FindOpsGroup(groupname)
   return self.FLIGHTGROUPS[groupname]
 end
 
+--- Find an OPSGROUP (FLIGHTGROUP, ARMYGROUP, NAVYGROUP) in the data base for a given unit.
+-- @param #DATABASE self
+-- @param #string unitname Unit name. Can also be passed as UNIT object.
+-- @return Ops.OpsGroup#OPSGROUP OPS group object.
+function DATABASE:FindOpsGroupFromUnit(unitname)
+
+  local unit=nil --Wrapper.Unit#UNIT
+  local groupname
+
+  -- Get group and group name.
+  if type(unitname)=="string" then
+    unit=UNIT:FindByName(unitname)
+  else
+    unit=unitname
+  end
+  
+  if unit then
+    groupname=unit:GetGroup():GetName()
+  end
+  
+  if groupname then
+    return self.FLIGHTGROUPS[groupname]
+  else
+    return nil
+  end
+end
+
 --- Add a flight control to the data base.
 -- @param #DATABASE self
 -- @param Ops.FlightControl#FLIGHTCONTROL flightcontrol

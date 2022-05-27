@@ -2529,6 +2529,21 @@ function AUFTRAG:GetRequiredAssets(Legion)
   return Nmin, Nmax
 end
 
+--- **[LEGION, COMMANDER, CHIEF]** Set that only alive (spawned) assets are considered.
+-- @param #AUFTRAG self
+-- @param #boolean Switch If true or nil, only active assets. If false
+-- @return #AUFTRAG self
+function AUFTRAG:SetAssetsStayAlive(Switch)
+
+  if Switch==nil then
+    Switch=true
+  end
+
+  self.assetStayAlive=Switch
+
+  return self
+end
+
 --- **[LEGION, COMMANDER, CHIEF]** Define how many assets are required that escort the mission assets. 
 -- Only used if the mission is handled by a **LEGION** (AIRWING, BRIGADE, FLEET) or higher level.
 -- @param #AUFTRAG self

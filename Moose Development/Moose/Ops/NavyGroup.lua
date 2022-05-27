@@ -780,7 +780,11 @@ function NAVYGROUP:Status(From, Event, To)
         if timer.getAbsTime()>self.Twaiting+self.dTwait then
           self.Twaiting=nil
           self.dTwait=nil
-          self:Cruise()
+          if self:_CountPausedMissions()>0 then
+            self:UnpauseMission()
+          else          
+            self:Cruise()
+          end
         end
       end
     end

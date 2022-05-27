@@ -349,6 +349,7 @@
 -- * @{#WAREHOUSE.Attribute.GROUND_APC} Infantry carriers, in particular Amoured Personell Carrier. This can be used to transport other assets.
 -- * @{#WAREHOUSE.Attribute.GROUND_TRUCK} Unarmed ground vehicles, which has the DCS "Truck" attribute.
 -- * @{#WAREHOUSE.Attribute.GROUND_INFANTRY} Ground infantry assets.
+-- * @{#WAREHOUSE.Attribute.GROUND_IFV} Ground infantry fighting vehicle.
 -- * @{#WAREHOUSE.Attribute.GROUND_ARTILLERY} Artillery assets.
 -- * @{#WAREHOUSE.Attribute.GROUND_TANK} Tanks (modern or old).
 -- * @{#WAREHOUSE.Attribute.GROUND_TRAIN} Trains. Not that trains are **not** yet properly implemented in DCS and cannot be used currently.
@@ -1704,6 +1705,7 @@ WAREHOUSE.Descriptor = {
 -- @field #string GROUND_APC Infantry carriers, in particular Amoured Personell Carrier. This can be used to transport other assets.
 -- @field #string GROUND_TRUCK Unarmed ground vehicles, which has the DCS "Truck" attribute.
 -- @field #string GROUND_INFANTRY Ground infantry assets.
+-- @field #string GROUND_IFV Ground infantry fighting vehicle.
 -- @field #string GROUND_ARTILLERY Artillery assets.
 -- @field #string GROUND_TANK Tanks (modern or old).
 -- @field #string GROUND_TRAIN Trains. Not that trains are **not** yet properly implemented in DCS and cannot be used currently.
@@ -1730,6 +1732,7 @@ WAREHOUSE.Attribute = {
   GROUND_APC="Ground_APC",
   GROUND_TRUCK="Ground_Truck",
   GROUND_INFANTRY="Ground_Infantry",
+  GROUND_IFV="Ground_IFV",
   GROUND_ARTILLERY="Ground_Artillery",
   GROUND_TANK="Ground_Tank",
   GROUND_TRAIN="Ground_Train",
@@ -8352,9 +8355,10 @@ function WAREHOUSE:_GetAttribute(group)
     --- Ground ---
     --------------
     -- Ground
-    local apc=group:HasAttribute("Infantry carriers")
+    local apc=group:HasAttribute("APC") --("Infantry carriers")
     local truck=group:HasAttribute("Trucks") and group:GetCategory()==Group.Category.GROUND
     local infantry=group:HasAttribute("Infantry")
+    local ifv=group:HasAttribute("IFV")
     local artillery=group:HasAttribute("Artillery")
     local tank=group:HasAttribute("Old Tanks") or group:HasAttribute("Modern Tanks")
     local aaa=group:HasAttribute("AAA")
@@ -8391,6 +8395,8 @@ function WAREHOUSE:_GetAttribute(group)
       attribute=WAREHOUSE.Attribute.AIR_UAV
     elseif apc then
       attribute=WAREHOUSE.Attribute.GROUND_APC
+    elseif ifv then
+      attribute=WAREHOUSE.Attribute.GROUND_IFV
     elseif infantry then
       attribute=WAREHOUSE.Attribute.GROUND_INFANTRY
     elseif artillery then
