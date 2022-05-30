@@ -4143,7 +4143,7 @@ function AUFTRAG:CheckGroupsDone()
     if groupdata then
       if not (groupdata.status==AUFTRAG.GroupStatus.DONE or groupdata.status==AUFTRAG.GroupStatus.CANCELLED) then
         -- At least this flight is not DONE or CANCELLED.
-        self:T(self.lid..string.format("CheckGroupsDone: OPSGROUP %s is not DONE or CANCELLED but in state %s. Mission NOT DONE!", groupdata.opsgroup.groupname, groupdata.status))
+        self:T2(self.lid..string.format("CheckGroupsDone: OPSGROUP %s is not DONE or CANCELLED but in state %s. Mission NOT DONE!", groupdata.opsgroup.groupname, groupdata.status:upper()))
         return false
       end
     end
@@ -4155,7 +4155,7 @@ function AUFTRAG:CheckGroupsDone()
     local status=self:GetLegionStatus(legion)
     if not status==AUFTRAG.Status.CANCELLED then
       -- At least one LEGION has not CANCELLED.
-      self:T(self.lid..string.format("CheckGroupsDone: LEGION %s is not CANCELLED but in state %s. Mission NOT DONE!", legion.alias, status))
+      self:T2(self.lid..string.format("CheckGroupsDone: LEGION %s is not CANCELLED but in state %s. Mission NOT DONE!", legion.alias, status))
       return false
     end
   end
@@ -4163,7 +4163,7 @@ function AUFTRAG:CheckGroupsDone()
   -- Check commander status.
   if self.commander then
     if not self.statusCommander==AUFTRAG.Status.CANCELLED then
-      self:T(self.lid..string.format("CheckGroupsDone: COMMANDER is not CANCELLED but in state %s. Mission NOT DONE!", self.statusCommander))
+      self:T2(self.lid..string.format("CheckGroupsDone: COMMANDER is not CANCELLED but in state %s. Mission NOT DONE!", self.statusCommander))
       return false
     end
   end
@@ -4171,14 +4171,14 @@ function AUFTRAG:CheckGroupsDone()
   -- Check chief status.
   if self.chief then
     if not self.statusChief==AUFTRAG.Status.CANCELLED then
-      self:T(self.lid..string.format("CheckGroupsDone: CHIEF is not CANCELLED but in state %s. Mission NOT DONE!", self.statusChief))
+      self:T2(self.lid..string.format("CheckGroupsDone: CHIEF is not CANCELLED but in state %s. Mission NOT DONE!", self.statusChief))
       return false
     end
   end
 
   -- These are early stages, where we might not even have a opsgroup defined to be checked. If there were any groups, we checked above.
   if self:IsPlanned() or self:IsQueued() or self:IsRequested() then
-    self:T(self.lid..string.format("CheckGroupsDone: Mission is still in state %s [FSM=%s] (PLANNED or QUEUED or REQUESTED). Mission NOT DONE!", self.status, self:GetState()))
+    self:T2(self.lid..string.format("CheckGroupsDone: Mission is still in state %s [FSM=%s] (PLANNED or QUEUED or REQUESTED). Mission NOT DONE!", self.status, self:GetState()))
     return false
   end
 

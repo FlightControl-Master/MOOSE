@@ -25,6 +25,7 @@
 -- @field #table missionqueue Mission queue.
 -- @field #table transportqueue Transport queue.
 -- @field #table targetqueue Target queue.
+-- @field #table opsqueue Operations queue.
 -- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.SupplyZone`.
 -- @field #table refuellingZones Refuelling zones. Each element is of type `#BRIGADE.SupplyZone`.
 -- @field #table capZones CAP zones. Each element is of type `#AIRWING.PatrolZone`.
@@ -127,6 +128,7 @@ COMMANDER = {
   missionqueue    =    {},
   transportqueue  =    {},
   targetqueue     =    {},
+  opsqueue        =    {},
   rearmingZones   =    {},
   refuellingZones =    {},
   capZones        =    {},
@@ -841,6 +843,9 @@ function COMMANDER:onafterStatus(From, Event, To)
     self:T(self.lid..text)
   end
   
+  -- Check Operations queue.
+  self:CheckOpsQueue()    
+  
   -- Check target queue and add missions.
   self:CheckTargetQueue()  
 
@@ -1217,6 +1222,28 @@ end
 -- Mission Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Check OPERATIONs queue.
+-- @param #COMMANDER self 
+function COMMANDER:CheckOpsQueue()
+
+  -- Number of missions.
+  local Nops=#self.opsqueue
+
+  -- Treat special cases.
+  if Nops==0 then
+    return nil
+  end
+  
+  -- Loop over operations.
+  for _,_ops in pairs(self.opsqueue) do
+    local operation=_ops --Ops.Operation#OPRATION
+    
+    --TODO: What?
+    
+  end
+  
+end
+
 --- Check target queue and assign ONE valid target by adding it to the mission queue of the COMMANDER.
 -- @param #COMMANDER self 
 function COMMANDER:CheckTargetQueue()
@@ -1281,7 +1308,7 @@ function COMMANDER:CheckTargetQueue()
     local isReadyStart=target:EvalConditionsAll(target.conditionStart)
     
     -- Debug message.
-    local text=string.format("Target %s: Alive=%s, Threat=%s, Important=%s", target:GetName(), tostring(isAlive), tostring(isThreat), tostring(isImportant))
+    local text=string.format("Target %s: Alive=%s, Important=%s", target:GetName(), tostring(isAlive), tostring(isImportant))
     self:T2(self.lid..text)
 
     -- Check that target is alive and not already a mission has been assigned.

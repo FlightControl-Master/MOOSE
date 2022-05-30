@@ -11607,7 +11607,7 @@ function OPSGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
   self.callsignDefault.NumberGroup=CallsignNumber or 1
   self.callsignDefault.NameSquad=UTILS.GetCallsignName(self.callsign.NumberSquad)
   
-  self:I(self.lid..string.format("Default callsign=%s", self.callsignDefault.NameSquad))
+  --self:I(self.lid..string.format("Default callsign=%s", self.callsignDefault.NameSquad))
 
   return self
 end

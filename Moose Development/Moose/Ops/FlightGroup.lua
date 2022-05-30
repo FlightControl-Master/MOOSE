@@ -385,7 +385,7 @@ function FLIGHTGROUP:SetReadyForTakeoff(ReadyTO, Delay)
   return self
 end
 
---- Set the FLIGHTCONTROL controlling this flight group.
+--- Set the FLIGHTCONTROL controlling this flight group. Also updates the player menu after 0.5 sec.
 -- @param #FLIGHTGROUP self
 -- @param Ops.FlightControl#FLIGHTCONTROL flightcontrol The FLIGHTCONTROL object.
 -- @return #FLIGHTGROUP self
@@ -569,7 +569,7 @@ function FLIGHTGROUP:IsParking()
   return self:Is("Parking")
 end
 
---- Check if flight is parking.
+--- Check if is taxiing to the runway.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, flight is taxiing after engine start up.
 function FLIGHTGROUP:IsTaxiing()
@@ -1638,10 +1638,10 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
         self:SetFlightControl(flightcontrol)
       else
         -- F10 other menu.
-        self:_UpdateMenu()        
+        self:_UpdateMenu(0.5)        
       end
     else
-      self:_UpdateMenu()
+      self:_UpdateMenu(0.5)
     end
     
   end
@@ -1679,7 +1679,7 @@ function FLIGHTGROUP:onafterParking(From, Event, To)
 
   if flightcontrol then
 
-    -- Set FC for this flight
+    -- Set FC for this flight. This also updates the menu.
     self:SetFlightControl(flightcontrol)
 
     if self.flightcontrol then
@@ -1779,20 +1779,7 @@ function FLIGHTGROUP:onafterCruise(From, Event, To)
     -- AI
     ---
   
-    --[[
-    if self:IsTransporting() then
-      if self.cargoTransport and self.cargoTZC and self.cargoTZC.DeployAirbase then
-        self:LandAtAirbase(self.cargoTZC.DeployAirbase)
-      end
-    elseif self:IsPickingup() then
-      if self.cargoTransport and self.cargoTZC and self.cargoTZC.PickupAirbase then
-        self:LandAtAirbase(self.cargoTZC.PickupAirbase)
-      end
-    else
-      self:_CheckGroupDone(nil, 120)
-    end
-    ]]
-    
+    -- Check group Done.
     self:_CheckGroupDone(nil, 120)
     
   else
@@ -1801,7 +1788,7 @@ function FLIGHTGROUP:onafterCruise(From, Event, To)
     -- CLIENT
     ---
   
-    self:_UpdateMenu(0.1)
+    --self:_UpdateMenu(0.1)
     
   end
     
@@ -3202,7 +3189,7 @@ function FLIGHTGROUP:_InitGroup(Template)
 
   -- Set callsign. Default is set on spawn if not modified by user.
   local callsign=template.units[1].callsign
-  self:I({callsign=callsign})
+  --self:I({callsign=callsign})
   if type(callsign)=="number" then  -- Sometimes callsign is just "101".
     local cs=tostring(callsign)
     callsign={}
@@ -4183,9 +4170,16 @@ function FLIGHTGROUP:_UpdateMenu(delay)
     -- Delayed call.
     self:ScheduleOnce(delay, FLIGHTGROUP._UpdateMenu, self)
   else
+  
+    -- Message to group.
+    MESSAGE:New("Updating MENU state="..self:GetState(), 5):ToGroup(self.group)
+    env.info(self.lid.."updating menu state=")
+  
+    -- Player element.
+    local player=self:GetPlayerElement()
 
-    -- Get current position of group.
-    local position=self:GetCoordinate()
+    -- Get current position of player.
+    local position=self:GetCoordinate(nil, player.name)
 
     -- Get all FLIGHTCONTROLS
     local fc={}
@@ -4211,6 +4205,7 @@ function FLIGHTGROUP:_UpdateMenu(delay)
     -- Remove all submenus.
     self.menu.atc.root:RemoveSubMenus()
     
+    -- Create help menu.
     self:_CreateMenuAtcHelp(self.menu.atc.root)
     
     -- Max menu entries.
@@ -4260,6 +4255,7 @@ function FLIGHTGROUP:_CreateMenuAtcHelp(rootmenu)
   ---
   MENU_GROUP_COMMAND:New(self.group, "Subtitles On/Off", helpmenu, self._MenuNotImplemented,  self, groupname)
   MENU_GROUP_COMMAND:New(self.group, "My Voice On/Off",  helpmenu, self._MenuNotImplemented,  self, groupname)
+  MENU_GROUP_COMMAND:New(self.group, "Update Menu",      helpmenu, self._UpdateMenu,          self, 0)
   MENU_GROUP_COMMAND:New(self.group, "My Status",        helpmenu, self._PlayerMyStatus,      self, groupname)
 
 end

@@ -149,13 +149,13 @@ FLIGHTCONTROL = {
 FLIGHTCONTROL.FlightStatus={
   PARKING="Parking",
   READYTX="Ready To Taxi",
-  TAXIOUT="Taxi to runway",
+  TAXIOUT="Taxi To Runway",
   READYTO="Ready For Takeoff",
   TAKEOFF="Takeoff",          
   INBOUND="Inbound",
   HOLDING="Holding",
   LANDING="Landing",
-  TAXIINB="Taxi Inbound",
+  TAXIINB="Taxi To Parking",
   ARRIVED="Arrived",
 }
 
@@ -172,21 +172,20 @@ FLIGHTCONTROL.version="0.5.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
---
 
+-- TODO: Runway destroyed.
 -- TODO: Support airwings. Dont give clearance for Alert5 or if mission has not started.
 -- TODO: Switch to enable/disable AI messages.
 -- TODO: Improve ATC TTS messages.
--- TODO: Add helos.
 -- TODO: Talk me down option.
 -- TODO: ATIS option.
 -- TODO: Check runways and clean up.
 -- TODO: Accept and forbit parking spots.
--- TODO: Define holding zone.
+-- TODO: Add FARPS?
+-- DONE: Define holding zone.
 -- DONE: Basic ATC voice overs.
 -- DONE: Add SRS TTS.
 -- DONE: Add parking guard.
--- NOGO: Add FARPS?
 -- DONE: Interface with FLIGHTGROUP.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -793,7 +792,7 @@ function FLIGHTCONTROL:_CheckQueues()
           else
             -- TODO: Humans have to confirm via F10 menu.
             self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.LANDING)
-            flight:_UpdateMenu()
+            flight:_UpdateMenu(0.5)
           end
         
           -- Set time last flight got landing clearance.  
@@ -1299,7 +1298,7 @@ function FLIGHTCONTROL:_RemoveFlightFromQueue(queue, flight, queuename)
       table.remove(queue, i)
       
       if not flight.isAI then      
-        flight:_UpdateMenu()
+        flight:_UpdateMenu(0.5)
       end
       
       return true, i
@@ -1797,6 +1796,9 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, mainmenu)
   MENU_GROUP_COMMAND:New(group, "Radio Check",     helpmenu, self._PlayerRadioCheck,     self, groupname)
   MENU_GROUP_COMMAND:New(group, "Confirm Status",  helpmenu, self._PlayerConfirmStatus,  self, groupname)
   MENU_GROUP_COMMAND:New(group, "Mark Holding",    helpmenu, self._PlayerNotImplemented, self, groupname)
+  if gotcontrol and flight:IsInbound() and flight.stack then
+  MENU_GROUP_COMMAND:New(group, "Vector Holding",  helpmenu, self._PlayerVectorInbound,  self, groupname)
+  end  
 
   ---
   -- Info Menu
@@ -1832,22 +1834,24 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, mainmenu)
       ---
       -- Taxiing
       ---
-      
-      if status==FLIGHTCONTROL.FlightStatus.READYTO then
+
+      if status==FLIGHTCONTROL.FlightStatus.READYTX or status==FLIGHTCONTROL.FlightStatus.TAXIOUT then
+        -- Flight is "ready to taxi" (awaiting clearance) or "taxiing to runway".
+        MENU_GROUP_COMMAND:New(group, "Request Takeoff", rootmenu, self._PlayerRequestTakeoff, self, groupname)
+        MENU_GROUP_COMMAND:New(group, "Abort Taxi",      rootmenu, self._PlayerAbortTaxi,      self, groupname)              
+      elseif status==FLIGHTCONTROL.FlightStatus.READYTO then
+        -- Flight is ready for take off.
         MENU_GROUP_COMMAND:New(group, "Abort Takeoff",   rootmenu, self._PlayerAbortTakeoff,   self, groupname)
       elseif status==FLIGHTCONTROL.FlightStatus.TAKEOFF then
+        -- Flight is taking off.
         MENU_GROUP_COMMAND:New(group, "Abort Takeoff",   rootmenu, self._PlayerAbortTakeoff,   self, groupname)
-      elseif status==FLIGHTCONTROL.FlightStatus.READYTX or status==FLIGHTCONTROL.FlightStatus.TAXIOUT then
-        MENU_GROUP_COMMAND:New(group, "Abort Taxi",      rootmenu, self._PlayerAbortTaxi,      self, groupname)
-        MENU_GROUP_COMMAND:New(group, "Request Takeoff", rootmenu, self._PlayerRequestTakeoff, self, groupname)
       elseif status==FLIGHTCONTROL.FlightStatus.TAXIINB then
         -- Could be after "abort taxi" call and we changed our mind (again)
-        MENU_GROUP_COMMAND:New(group, "Request Parking", rootmenu, self._PlayerRequestParking, self, groupname)
-        MENU_GROUP_COMMAND:New(group, "Request Taxi",    rootmenu, self._PlayerRequestTaxi,    self, groupname)        
+        MENU_GROUP_COMMAND:New(group, "Request Taxi",       rootmenu, self._PlayerRequestTaxi,    self, groupname)
+        MENU_GROUP_COMMAND:New(group, "Request Parking",    rootmenu, self._PlayerRequestParking, self, groupname)
+        MENU_GROUP_COMMAND:New(group, "Arrived at Parking", rootmenu, self._PlayerArrived,        self, groupname)          
       end
       
-      MENU_GROUP_COMMAND:New(group, "Arrived and Parking", rootmenu, self._PlayerArrived,      self, groupname)
-       
     elseif flight:IsAirborne() then
       ---
       -- Airborne
@@ -1858,16 +1862,19 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, mainmenu)
       -- Inbound
       ---
 
-      MENU_GROUP_COMMAND:New(group, "Abort Inbound", rootmenu, self._PlayerAbortInbound, self, groupname)
       MENU_GROUP_COMMAND:New(group, "Holding",       rootmenu, self._PlayerHolding,      self, groupname)
+      MENU_GROUP_COMMAND:New(group, "Abort Inbound", rootmenu, self._PlayerAbortInbound, self, groupname)
+      MENU_GROUP_COMMAND:New(group, "Request Parking", rootmenu, self._PlayerRequestParking, self, groupname)
+
       
     elseif flight:IsHolding() then
       ---
       -- Holding
       ---
 
-      MENU_GROUP_COMMAND:New(group, "Abort Holding", rootmenu, self._PlayerAbortHolding,   self, groupname)
       MENU_GROUP_COMMAND:New(group, "Landing",       rootmenu, self._PlayerConfirmLanding, self, groupname)
+      MENU_GROUP_COMMAND:New(group, "Abort Holding", rootmenu, self._PlayerAbortHolding,   self, groupname)
+      MENU_GROUP_COMMAND:New(group, "Request Parking", rootmenu, self._PlayerRequestParking, self, groupname)
 
     elseif flight:IsLanding() then
       ---
@@ -1875,11 +1882,16 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, mainmenu)
       ---
 
       MENU_GROUP_COMMAND:New(group, "Abort Landing", rootmenu, self._PlayerAbortLanding, self, groupname)
-                
-    end
-  
-    if flight:IsInbound() or flight:IsHolding() or flight:IsLanding() or flight:IsLanded() then
       MENU_GROUP_COMMAND:New(group, "Request Parking", rootmenu, self._PlayerRequestParking, self, groupname)
+      
+    elseif flight:IsLanded() then
+      ---
+      -- Landed
+      ---      
+      
+      MENU_GROUP_COMMAND:New(group, "Arrived at Parking", rootmenu, self._PlayerArrived,        self, groupname)
+      MENU_GROUP_COMMAND:New(group, "Request Parking",    rootmenu, self._PlayerRequestParking, self, groupname)
+      
     end
     
   else
@@ -2158,6 +2170,9 @@ function FLIGHTCONTROL:_PlayerRequestInbound(groupname)
       
       -- Call sign.
       local callsign=flight:GetCallsignName()
+            
+      -- Get player element.
+      local player=flight:GetPlayerElement()      
       
       -- Pilot calls inbound for landing.
       local text=string.format("%s, %s, inbound for landing", self.alias, callsign)
@@ -2165,20 +2180,17 @@ function FLIGHTCONTROL:_PlayerRequestInbound(groupname)
       -- Radio message.
       self:TransmissionPilot(text, flight)
       
+      -- Current player coord.
+      local flightcoord=flight:GetCoordinate(nil, player.name)
+      
       -- Distance from player to airbase.
-      local dist=flight:GetCoordinate():Get2DDistance(self:GetCoordinate())
+      local dist=flightcoord:Get2DDistance(self:GetCoordinate())
       
       if dist<UTILS.NMToMeters(50) then
       
-        -- Call RTB event.
+        -- Call RTB event. This also sets the flight control and flight status to INBOUND and updates the menu.
         flight:RTB(self.airbase)
-        
-        -- Set flightcontrol for this flight.
-        flight:SetFlightControl(self)
-  
-        -- Add flight to inbound queue.
-        self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.INBOUND)
-        
+                
         -- Get holding point.
         local stack=self:_GetHoldingStack(flight)        
         
@@ -2190,14 +2202,11 @@ function FLIGHTCONTROL:_PlayerRequestInbound(groupname)
           -- Stack.
           flight.stack=stack
           
-          -- Current postion.
-          local coord=flight:GetCoordinate()
-          
           -- Heading to holding point.
-          local heading=coord:HeadingTo(stack.pos0)
+          local heading=flightcoord:HeadingTo(stack.pos0)
           
           -- Distance to holding point.
-          local distance=coord:Get2DDistance(stack.pos0)
+          local distance=flightcoord:Get2DDistance(stack.pos0)
           
           local dist=UTILS.MetersToNM(distance)
       
@@ -2209,7 +2218,7 @@ function FLIGHTCONTROL:_PlayerRequestInbound(groupname)
           self:TransmissionTower(text, flight, 15)
           
           -- Create player menu.
-          flight:_UpdateMenu()
+          --flight:_UpdateMenu()
           
         else
           self:E(self.lid..string.format("WARNING: Could not get holding stack for flight %s", flight:GetName()))
@@ -2225,7 +2234,7 @@ function FLIGHTCONTROL:_PlayerRequestInbound(groupname)
       
       end
       
-    else
+    else  
       -- Error you are not airborne!
       local text=string.format("Negative, you must be AIRBORNE to call INBOUND!")
       
@@ -2233,6 +2242,56 @@ function FLIGHTCONTROL:_PlayerRequestInbound(groupname)
       self:TextMessageToFlight(text, flight, 10)
     end
       
+  else
+    self:E(self.lid..string.format("Cannot find flight group %s.", tostring(groupname)))
+  end
+  
+end
+
+
+--- Player vector to inbound
+-- @param #FLIGHTCONTROL self
+-- @param #string groupname Name of the flight group.
+function FLIGHTCONTROL:_PlayerVectorInbound(groupname)
+
+  -- Get flight group.
+  local flight=_DATABASE:GetOpsGroup(groupname) --Ops.FlightGroup#FLIGHTGROUP
+  
+  if flight then
+      
+    if flight:IsInbound() and self:IsControlling(flight) and flight.stack then
+    
+      -- Call sign.
+      local callsign=flight:GetCallsignName()
+            
+      -- Get player element.
+      local player=flight:GetPlayerElement()
+      
+      -- Current player coord.
+      local flightcoord=flight:GetCoordinate(nil, player.name)
+      
+      -- Distance from player to airbase.
+      local dist=flightcoord:Get2DDistance(self:GetCoordinate())
+      
+      -- Call sign.
+      local callsign=flight:GetCallsignName()
+
+      -- Heading to holding point.
+      local heading=flightcoord:HeadingTo(flight.stack.pos0)
+      
+      -- Distance to holding point.
+      local distance=flightcoord:Get2DDistance(flight.stack.pos0)
+      
+      local dist=UTILS.MetersToNM(distance)
+  
+      -- Message text.
+      local text=string.format("%s, fly heading %03d for %d nautical miles, hold at angels %d.", 
+      callsign, self.alias, heading, dist, flight.stack.angels)
+      
+      -- Send message.
+      self:TextMessageToFlight(text, flight)
+      
+    end
   else
     self:E(self.lid..string.format("Cannot find flight group %s.", tostring(groupname)))
   end
@@ -2274,11 +2333,14 @@ function FLIGHTCONTROL:_PlayerAbortInbound(groupname)
         self:E(self.lid.."ERROR: No stack!")
       end
       
+      -- Remove flight. This also updates the menu.
+      self:_RemoveFlight(flight)      
+      
       -- Set flight to cruise.
       flight:Cruise()      
-      
-      -- Remove flight. This also updates the menu.
-      self:_RemoveFlight(flight)
+            
+      -- Create player menu.
+      --flight:_UpdateMenu()
             
     else
     
@@ -2313,19 +2375,27 @@ function FLIGHTCONTROL:_PlayerHolding(groupname)
 
       if self:IsControlling(flight) then
       
+        -- Callsign.
+        local callsign=flight:GetCallsignName()
+      
+        -- Player element.
+        local player=flight:GetPlayerElement()      
+      
         -- Holding stack.
         local stack=flight.stack
         
         if stack then
         
-          local Coordinate=flight:GetCoordinate()
+          -- Current coordinate.
+          local Coordinate=flight:GetCoordinate(nil, player.name)
         
+          -- Distance.
           local dist=stack.pos0:Get2DDistance(Coordinate)
           
           if dist<5000 then
         
             -- Message to flight
-            local text=string.format("Roger, you are added to the holding queue!")
+            local text=string.format("%s, roger, you are added to the holding queue!", callsign)
             self:TextMessageToFlight(text, flight, 10, true)
     
             -- Call holding event.        
@@ -2396,7 +2466,7 @@ function FLIGHTCONTROL:_PlayerAbortHolding(groupname)
       -- Not holding any more.
       flight.Tholding=nil
       
-      -- Set flight to cruise.
+      -- Set flight to cruise. This also updates the menu.
       flight:Cruise()
 
       -- Set flight.
@@ -2471,8 +2541,7 @@ function FLIGHTCONTROL:_PlayerConfirmLanding(groupname)
       self:TransmissionTower(text, flight, 10)
       
       -- Create player menu.
-      flight:_UpdateMenu()
-      --self:_CreatePlayerMenu(flight, flight.menu.atc)
+      flight:_UpdateMenu(0.5)
             
     else
     
@@ -2577,7 +2646,7 @@ function FLIGHTCONTROL:_PlayerRequestTaxi(groupname)
       self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.READYTX)
       
       -- Update menu.
-      flight:_UpdateMenu()
+      flight:_UpdateMenu(0.5)
       
     else
       self:TextMessageToFlight(string.format("Negative, you must be PARKING to request TAXI!"), flight)
@@ -2616,7 +2685,7 @@ function FLIGHTCONTROL:_PlayerAbortTaxi(groupname)
       self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.PARKING)
       
       -- Update menu.
-      flight:_UpdateMenu()
+      flight:_UpdateMenu(0.5)
       
     elseif flight:IsTaxiing() then
     
@@ -2628,7 +2697,7 @@ function FLIGHTCONTROL:_PlayerAbortTaxi(groupname)
       self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.TAXIINB)
       
       -- Update menu.
-      flight:_UpdateMenu()
+      flight:_UpdateMenu(0.5)
             
     else
       self:TextMessageToFlight(string.format("Negative, you must be PARKING or TAXIING to abort TAXI!"), flight)
@@ -2690,15 +2759,15 @@ function FLIGHTCONTROL:_PlayerRequestTakeoff(groupname)
       ]]
       
       -- We only check for landing flights.
-      local text=""
+      local text=string.format("%s, %s, ", callsign, self.alias)
       if Nlanding==0 then
-        text="No current traffic. You are cleared for takeoff."
+        text=text.."no current traffic. You are cleared for takeoff."
         self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.TAKEOFF)
       elseif Nlanding>0 then
         if Nlanding==1 then
-          text=string.format("Negative, we got %d flight inbound before it's your turn. Hold position until futher notice.", Nlanding)
+          text=text..string.format("negative, we got %d flight inbound before it's your turn. Hold position until futher notice.", Nlanding)
         else
-          text=string.format("Negative, we got %d flights inbound. Hold positon until futher notice.", Nlanding)
+          text=text..string.format("negative, we got %d flights inbound. Hold positon until futher notice.", Nlanding)
         end
       end      
       
@@ -2706,7 +2775,7 @@ function FLIGHTCONTROL:_PlayerRequestTakeoff(groupname)
       self:TransmissionTower(text, flight, 10)
             
       -- Update menu.
-      flight:_UpdateMenu()
+      flight:_UpdateMenu(0.5)
       
     else
       self:TextMessageToFlight(string.format("Negative, you must request TAXI before you can request TAKEOFF!"), flight)  
@@ -2755,7 +2824,7 @@ function FLIGHTCONTROL:_PlayerAbortTakeoff(groupname)
       self:TransmissionTower(text, flight, 10)      
       
       -- Update menu.
-      flight:_UpdateMenu()
+      flight:_UpdateMenu(0.5)
       
     else
       self:TextMessageToFlight("Negative, You are NOT in the takeoff queue", flight)
@@ -2857,7 +2926,7 @@ function FLIGHTCONTROL:_PlayerArrived(groupname)
     local player=flight:GetPlayerElement()
     
     -- Get current coordinate.
-    local coord=flight:GetCoordinate(player.name)
+    local coord=flight:GetCoordinate(nil, player.name)
 
     --Closest parking spot.
     local spot=self:GetClosestParkingSpot(coord)
@@ -2882,7 +2951,7 @@ function FLIGHTCONTROL:_PlayerArrived(groupname)
         self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.PARKING)
         
         -- Create player menu.
-        flight:_UpdateMenu()
+        flight:_UpdateMenu(0.5)
         
         -- Create mark on F10 map.
         --[[

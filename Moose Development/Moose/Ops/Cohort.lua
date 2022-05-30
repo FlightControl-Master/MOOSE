@@ -48,6 +48,7 @@
 -- @field #table tacanChannel List of TACAN channels available to the cohort.
 -- @field #number weightAsset Weight of one assets group in kg.
 -- @field #number cargobayLimit Cargo bay capacity in kg.
+-- @field #table operations Operations this cohort is part of.
 -- @extends Core.Fsm#FSM
 
 --- *I came, I saw, I conquered.* -- Julius Caesar
@@ -82,6 +83,7 @@ COHORT = {
   cargobayLimit  =     0,
   descriptors    =    {},
   properties     =    {},
+  operations     =    {},
 }
 
 --- COHORT class version.
@@ -1544,7 +1546,17 @@ function COHORT:_MissileCategoryName(categorynumber)
     cat="other"
   end
   return cat
-end  
+end
+
+--- Add an OPERATION.
+-- @param #COHORT self
+-- @param Ops.Operation#OPERATION Operation The operation this cohort is part of.
+-- @return #COHORT self
+function COHORT:_AddOperation(Operation)
+
+  self.operations[Operation.name]=Operation
+
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
