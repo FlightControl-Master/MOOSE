@@ -531,6 +531,20 @@ function COMMANDER:AddTarget(Target)
   return self
 end
 
+--- Add operation.
+-- @param #COMMANDER self
+-- @param Ops.Operation#OPERATION Operation The operation to be added.
+-- @return #COMMANDER self
+function COMMANDER:AddOperation(Operation)
+
+  -- TODO: Check that is not already added.
+  
+  -- Add operation to table.
+  table.insert(self.opsqueue, Operation)
+  
+  return self
+end
+
 --- Check if a TARGET is already in the queue. 
 -- @param #COMMANDER self
 -- @param Ops.Target#TARGET Target Target object to be added.
@@ -1236,9 +1250,12 @@ function COMMANDER:CheckOpsQueue()
   
   -- Loop over operations.
   for _,_ops in pairs(self.opsqueue) do
-    local operation=_ops --Ops.Operation#OPRATION
+    local operation=_ops --Ops.Operation#OPERATION
     
-    --TODO: What?
+    if operation:IsRunning() then
+    
+    
+    end
     
   end
   
@@ -1408,10 +1425,7 @@ function COMMANDER:CheckMissionQueue()
       if recruited then
       
         -- Add asset to mission.
-        for _,_asset in pairs(assets) do
-          local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-          mission:AddAsset(asset)
-        end
+        mission:_AddAssets(assets)
         
         -- Recruit asset for escorting recruited mission assets.
         local EscortAvail=self:RecruitAssetsForEscort(mission, assets)
@@ -1467,6 +1481,121 @@ function COMMANDER:CheckMissionQueue()
   
 end
 
+--- Get cohorts.
+-- @param #COMMANDER self
+-- @param #table Legions Special legions.
+-- @param #table Cohorts Special cohorts.
+-- @param Ops.Operation#OPERATION Operation Operation.
+-- @return #table Cohorts.
+function COMMANDER:_GetCohorts(Legions, Cohorts, Operation)
+  
+  --- Function that check if a legion or cohort is part of an operation.
+  local function CheckOperation(LegionOrCohort)
+    -- No operations ==> no problem!
+    if #self.opsqueue==0 then
+      return true
+    end
+    
+    -- Cohort is not dedicated to a running(!) operation. We assume so.
+    local isAvail=true
+    
+    -- Only available...
+    if Operation then
+      isAvail=false
+    end
+        
+    for _,_operation in pairs(self.opsqueue) do
+      local operation=_operation --Ops.Operation#OPERATION
+      
+      -- Legion is assigned to this operation.
+      local isOps=operation:IsAssignedCohortOrLegion(LegionOrCohort)
+      
+      if isOps and operation:IsRunning() then
+        
+        -- Is dedicated.
+        isAvail=false
+      
+        if Operation==nil then
+          -- No Operation given and this is dedicated to at least one operation.
+          return false
+        else
+          if Operation.uid==operation.uid then
+            -- Operation given and is part of it.
+            return true
+          end        
+        end
+      end
+    end
+    
+    return isAvail
+  end    
+
+  -- Chosen cohorts.
+  local cohorts={}
+  
+  -- Check if there are any special legions and/or cohorts.
+  if (Legions and #Legions>0) or (Cohorts and #Cohorts>0) then
+  
+    -- Add cohorts of special legions.
+    for _,_legion in pairs(Legions or {}) do
+      local legion=_legion --Ops.Legion#LEGION
+  
+      -- Check that runway is operational.    
+      local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
+      
+      -- Legion has to be running.
+      if legion:IsRunning() and Runway then
+      
+        -- Add cohorts of legion.
+        for _,_cohort in pairs(legion.cohorts) do
+          local cohort=_cohort --Ops.Cohort#COHORT
+
+          if CheckOperation(cohort.legion) or CheckOperation(cohort) then
+            table.insert(cohorts, cohort)
+          end
+        end
+        
+      end
+    end
+    
+    -- Add special cohorts.
+    for _,_cohort in pairs(Cohorts or {}) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      
+      if CheckOperation(cohort) then
+        table.insert(cohorts, cohort)
+      end
+    end
+    
+  else
+
+    -- No special mission legions/cohorts found ==> take own legions.
+    for _,_legion in pairs(self.legions) do
+      local legion=_legion --Ops.Legion#LEGION
+      
+      -- Check that runway is operational.    
+      local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
+      
+      -- Legion has to be running.
+      if legion:IsRunning() and Runway then
+      
+        -- Add cohorts of legion.
+        for _,_cohort in pairs(legion.cohorts) do
+          local cohort=_cohort --Ops.Cohort#COHORT
+          
+          if CheckOperation(cohort.legion) or CheckOperation(cohort) then
+            table.insert(cohorts, cohort)
+          end
+        end
+        
+      end
+    end
+    
+  end
+
+  return cohorts
+end
+
 --- Recruit assets for a given mission.
 -- @param #COMMANDER self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
@@ -1479,29 +1608,10 @@ function COMMANDER:RecruitAssetsForMission(Mission)
   self:T2(self.lid..string.format("Recruiting assets for mission \"%s\" [%s]", Mission:GetName(), Mission:GetType()))
   
   -- Cohorts.
-  local Cohorts={}
-  for _,_legion in pairs(Mission.specialLegions or {}) do
-    local legion=_legion --Ops.Legion#LEGION
-    for _,_cohort in pairs(legion.cohorts) do
-      local cohort=_cohort --Ops.Cohort#COHORT
-      table.insert(Cohorts, cohort)
-    end
-  end
-  for _,_cohort in pairs(Mission.specialCohorts or {}) do
-    local cohort=_cohort --Ops.Cohort#COHORT
-    table.insert(Cohorts, cohort)
-  end
+  local Cohorts=self:_GetCohorts(Mission.specialLegions, Mission.specialCohorts, Mission.operation)
   
-  -- No special mission legions/cohorts found ==> take own legions.
-  if #Cohorts==0 then
-    for _,_legion in pairs(self.legions) do
-      local legion=_legion --Ops.Legion#LEGION
-      for _,_cohort in pairs(legion.cohorts) do
-        local cohort=_cohort --Ops.Cohort#COHORT
-        table.insert(Cohorts, cohort)
-      end
-    end      
-  end  
+  -- Debug info.
+  self:T(self.lid..string.format("Found %d cohort candidates for mission", #Cohorts))
 
   -- Number of required assets.
   local NreqMin, NreqMax=Mission:GetRequiredAssets()
@@ -1530,30 +1640,7 @@ function COMMANDER:RecruitAssetsForEscort(Mission, Assets)
   if Mission.NescortMin and Mission.NescortMax and (Mission.NescortMin>0 or Mission.NescortMax>0) then
 
     -- Cohorts.
-    local Cohorts={}
-    for _,_legion in pairs(Mission.escortLegions or {}) do
-      local legion=_legion --Ops.Legion#LEGION
-      for _,_cohort in pairs(legion.cohorts) do
-        local cohort=_cohort --Ops.Cohort#COHORT
-        table.insert(Cohorts, cohort)
-      end
-    end
-    for _,_cohort in pairs(Mission.escortCohorts or {}) do
-      local cohort=_cohort --Ops.Cohort#COHORT
-      table.insert(Cohorts, cohort)
-    end
-    
-    -- No special escort legions/cohorts found ==> take own legions.
-    if #Cohorts==0 then
-      for _,_legion in pairs(self.legions) do
-        local legion=_legion --Ops.Legion#LEGION
-        for _,_cohort in pairs(legion.cohorts) do
-          local cohort=_cohort --Ops.Cohort#COHORT
-          table.insert(Cohorts, cohort)
-        end
-      end      
-    end
-        
+    local Cohorts=self:_GetCohorts(Mission.escortLegions, Mission.escortCohorts, Mission.operation)
     
     -- Call LEGION function but provide COMMANDER as self.
     local assigned=LEGION.AssignAssetsForEscort(self, Cohorts, Assets, Mission.NescortMin, Mission.NescortMax, Mission.escortTargetTypes, Mission.escortEngageRange)
@@ -1683,24 +1770,7 @@ function COMMANDER:RecruitAssetsForTransport(Transport, CargoWeight, TotalWeight
   end
   
   -- Cohorts.
-  local Cohorts={}
-  for _,_legion in pairs(self.legions) do
-    local legion=_legion --Ops.Legion#LEGION
-    
-    -- Check that runway is operational.    
-    local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
-    
-    if legion:IsRunning() and Runway then
-    
-      -- Loops over cohorts.
-      for _,_cohort in pairs(legion.cohorts) do
-        local cohort=_cohort --Ops.Cohort#COHORT
-        table.insert(Cohorts, cohort)
-      end
-      
-    end
-  end    
-
+  local Cohorts=self:_GetCohorts()
 
   -- Target is the deploy zone.
   local TargetVec2=Transport:GetDeployZone():GetVec2()

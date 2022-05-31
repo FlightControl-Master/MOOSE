@@ -4646,6 +4646,9 @@ function OPSGROUP:AddMission(Mission)
 
   -- Add elements.
   Mission.Nelements=Mission.Nelements+#self.elements
+  
+  -- Increase number of groups.
+  Mission.Ngroups=Mission.Ngroups+1
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)

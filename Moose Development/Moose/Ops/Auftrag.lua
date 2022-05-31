@@ -72,6 +72,8 @@
 --
 -- @field Ops.Target#TARGET engageTarget Target data to engage.
 -- 
+-- @field Ops.Operation#OPERATION operation Operation this mission is part of.
+-- 
 -- @field #boolean teleport Groups are teleported to the mission ingress waypoint.
 --
 -- @field Core.Zone#ZONE_RADIUS engageZone *Circular* engagement zone.
@@ -692,6 +694,9 @@ function AUFTRAG:New(Type)
   self.Ncasualties=0
   self.Nkills=0
   self.Nelements=0
+  self.Ngroups=0
+  self.Nassigned=nil
+  self.Ndead=0
 
   -- FMS start state is PLANNED.
   self:SetStartState(self.status)
@@ -3340,9 +3345,33 @@ end
 
 --- Check if mission is EXECUTING. The first OPSGROUP has reached the mission execution waypoint and is not executing the mission task.
 -- @param #AUFTRAG self
+-- @param #boolean AllGroups (Optional) Check that all groups are currently executing the mission.
 -- @return #boolean If true, mission is currently executing.
-function AUFTRAG:IsExecuting()
-  return self.status==AUFTRAG.Status.EXECUTING
+function AUFTRAG:IsExecuting(AllGroups)
+
+  local isExecuting=self.status==AUFTRAG.Status.EXECUTING
+
+  if AllGroups and isExecuting then
+  
+    -- Number of groups executing.
+    local n=self:CountOpsGroupsInStatus(AUFTRAG.GroupStatus.EXECUTING)
+
+    local N    
+    if self.Nassigned then
+      N=self.Nassigned-self.Ndead      
+    else
+      N=self:CountOpsGroups()   
+    end
+    
+    if n==N then
+      return true
+    else
+      return false
+    end
+         
+  end
+
+  return isExecuting
 end
 
 --- Check if mission was cancelled.
@@ -4301,7 +4330,8 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP OpsGroup The ops group that is dead now.
+-- @param Ops.OpsGroup#OPSGROUP OpsGroup The ops group to which the element belongs.
+-- @param Ops.OpsGroup#OPSGROUP.Element Element The element that got destroyed.
 function AUFTRAG:onafterElementDestroyed(From, Event, To, OpsGroup, Element)
   -- Increase number of own casualties.
   self.Ncasualties=self.Ncasualties+1
@@ -4319,6 +4349,9 @@ function AUFTRAG:onafterGroupDead(From, Event, To, OpsGroup)
   if asset then
     self:AssetDead(asset)
   end
+  
+  -- Number of dead groups.
+  self.Ndead=self.Ndead+1
 
 end
 
@@ -4677,6 +4710,9 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   -- Reset casualties and units assigned.
   self.Ncasualties=0
   self.Nelements=0
+  self.Ngroups=0
+  self.Nassigned=nil
+  self.Ndead=0
 
   -- Update DCS mission task. Could be that the initial task (e.g. for bombing) was destroyed. Then we need to update the coordinate.
   self.DCStask=self:GetDCSMissionTask()
@@ -4949,12 +4985,18 @@ function AUFTRAG:AddAsset(Asset)
 
   -- Add to table.
   self.assets=self.assets or {}
+  
+  -- Add to table.
   table.insert(self.assets, Asset)
+  
+  self.Nassigned=self.Nassigned or 0
+  
+  self.Nassigned=self.Nassigned+1
 
   return self
 end
 
---- Add asset to mission.
+--- Add assets to mission.
 -- @param #AUFTRAG self
 -- @param #table Assets List of assets.
 -- @return #AUFTRAG self
@@ -5018,6 +5060,22 @@ function AUFTRAG:CountOpsGroups()
   end
   return N
 end
+
+--- Count OPS groups in a certain status.
+-- @param #AUFTRAG self
+-- @param #string Status Status of group, e.g. `AUFTRAG.GroupStatus.EXECUTING`.
+-- @return #number Number of alive OPS groups.
+function AUFTRAG:CountOpsGroupsInStatus(Status)
+  local N=0
+  for _,_groupdata in pairs(self.groupdata) do
+    local groupdata=_groupdata --#AUFTRAG.GroupData
+    if groupdata and groupdata.status==Status then
+      N=N+1
+    end
+  end
+  return N
+end
+
 
 
 --- Get coordinate of target. First unit/group of the set is used.

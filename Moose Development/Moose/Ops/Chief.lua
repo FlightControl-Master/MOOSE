@@ -2128,10 +2128,8 @@ function CHIEF:CheckTargetQueue()
                               
                 -- Add asset to mission.
                 if mission then
-                  for _,_asset in pairs(assets) do
-                    local asset=_asset
-                    mission:AddAsset(asset)
-                  end
+                  
+                  mission:_AddAssets(assets)
                   Legions=legions
                   
                   -- We got what we wanted ==> leave loop.
@@ -2663,23 +2661,7 @@ end
 function CHIEF:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMax)
 
   -- Cohorts.
-  local Cohorts={}
-  for _,_legion in pairs(self.commander.legions) do
-    local legion=_legion --Ops.Legion#LEGION
-    
-    -- Check that runway is operational.d 
-    local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
-    
-    if legion:IsRunning() and Runway then    
-    
-      -- Loops over cohorts.
-      for _,_cohort in pairs(legion.cohorts) do
-        local cohort=_cohort --Ops.Cohort#COHORT
-        table.insert(Cohorts, cohort)
-      end
-      
-    end
-  end  
+  local Cohorts=self.commander:_GetCohorts()
 
   -- Target position.
   local TargetVec2=Target:GetVec2()
@@ -2699,23 +2681,7 @@ end
 function CHIEF:RecruitAssetsForZone(StratZone, Resource)
 
   -- Cohorts.
-  local Cohorts={}
-  for _,_legion in pairs(self.commander.legions) do
-    local legion=_legion --Ops.Legion#LEGION
-    
-    -- Check that runway is operational.    
-    local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
-    
-    if legion:IsRunning() and Runway then    
-    
-      -- Loops over cohorts.
-      for _,_cohort in pairs(legion.cohorts) do
-        local cohort=_cohort --Ops.Cohort#COHORT
-        table.insert(Cohorts, cohort)
-      end
-      
-    end
-  end
+  local Cohorts=self.commander:_GetCohorts()
   
   -- Shortcuts.
   local MissionType=Resource.MissionType

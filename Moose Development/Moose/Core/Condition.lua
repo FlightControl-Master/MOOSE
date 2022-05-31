@@ -7,10 +7,17 @@
 --
 -- ===
 --
+-- ## Example Missions:
+--
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Operation).
+--
+-- ===
+--
 -- ### Author: **funkyfranky**
+--
+-- ===
 -- @module Core.Condition
--- @image Core_Condition.png
-
+-- @image Core_Conditon.png
 
 --- CONDITON class.
 -- @type CONDITION
@@ -48,7 +55,7 @@ CONDITION = {
 
 --- CONDITION class version.
 -- @field #string version
-CONDITION.version="0.0.1"
+CONDITION.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -157,6 +164,15 @@ end
 -- @return #boolean Result of condition functions.
 function CONDITION:Evaluate(AnyTrue)
 
+  -- Check if at least one function was given.
+  if #self.functionsAll + #self.functionsAny + #self.functionsAll == 0 then
+    if self.negateResult then
+      return true
+    else
+      return false
+    end
+  end
+
   -- Any condition for gen.
   local evalAny=self.isAny
   if AnyTrue~=nil then
@@ -185,7 +201,7 @@ function CONDITION:Evaluate(AnyTrue)
   end
   
   -- Debug message.
-  self:I(self.lid..string.format("Evaluate: isGen=%s, isAny=%s, isAll=%s (negate=%s) ==> result=%s", tostring(isGen), tostring(isAny), tostring(isAll), tostring(self.negateResult), tostring(result)))
+  self:T(self.lid..string.format("Evaluate: isGen=%s, isAny=%s, isAll=%s (negate=%s) ==> result=%s", tostring(isGen), tostring(isAny), tostring(isAll), tostring(self.negateResult), tostring(result)))
 
   return result
 end

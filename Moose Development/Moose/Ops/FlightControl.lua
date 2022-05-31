@@ -137,6 +137,7 @@ FLIGHTCONTROL = {
 
 --- Flight status.
 -- @type FLIGHTCONTROL.FlightStatus
+-- @field #string UNKNOWN Flight is unknown.
 -- @field #string INBOUND Flight is inbound.
 -- @field #string HOLDING Flight is holding.
 -- @field #string LANDING Flight is landing.
@@ -147,6 +148,7 @@ FLIGHTCONTROL = {
 -- @field #string READYTO Flight is ready for takeoff.
 -- @field #string TAKEOFF Flight is taking off.
 FLIGHTCONTROL.FlightStatus={
+  UNKNOWN="Unknown",
   PARKING="Parking",
   READYTX="Ready To Taxi",
   TAXIOUT="Taxi To Runway",
@@ -1277,39 +1279,6 @@ function FLIGHTCONTROL:_PrintQueue(queue, name)
   return text
 end
 
---- Remove a flight group from a queue.
--- @param #FLIGHTCONTROL self
--- @param #table queue The queue from which the group will be removed.
--- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group that will be removed from queue.
--- @param #string queuename Name of the queue.
--- @return #boolean True, flight was in Queue and removed. False otherwise.
--- @return #number Table index of removed queue element or nil.
-function FLIGHTCONTROL:_RemoveFlightFromQueue(queue, flight, queuename)
-
-  queuename=queuename or "unknown"
-
-  -- Loop over all flights in group.
-  for i,_flight in pairs(queue) do
-    local qflight=_flight --Ops.FlightGroup#FLIGHTGROUP
-    
-    -- Check for name.
-    if qflight.groupname==flight.groupname then
-      self:T(self.lid..string.format("Removing flight group %s from %s queue", flight.groupname, queuename))
-      table.remove(queue, i)
-      
-      if not flight.isAI then      
-        flight:_UpdateMenu(0.5)
-      end
-      
-      return true, i
-    end
-  end
-  
-  self:E(self.lid..string.format("WARNING: Could NOT remove flight group %s from %s queue", flight.groupname, queuename))
-  return false, nil
-end
-
-
 --- Set flight status.
 -- @param #FLIGHTCONTROL self
 -- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
@@ -2158,15 +2127,6 @@ function FLIGHTCONTROL:_PlayerRequestInbound(groupname)
   if flight then
       
     if flight:IsAirborne() then
-
-      if self:IsControlling(flight) then
-        -- Nothing to do as this flight has already the right flightcontrol.
-      else
-      
-        -- Set FC controlling this flight.
-        flight:SetFlightControl(self)
-      
-      end
       
       -- Call sign.
       local callsign=flight:GetCallsignName()
@@ -2216,10 +2176,7 @@ function FLIGHTCONTROL:_PlayerRequestInbound(groupname)
           
           -- Send message.
           self:TransmissionTower(text, flight, 15)
-          
-          -- Create player menu.
-          --flight:_UpdateMenu()
-          
+            
         else
           self:E(self.lid..string.format("WARNING: Could not get holding stack for flight %s", flight:GetName()))
         end
@@ -2259,6 +2216,7 @@ function FLIGHTCONTROL:_PlayerVectorInbound(groupname)
   
   if flight then
       
+    -- Check if inbound, controlled and have a stack.
     if flight:IsInbound() and self:IsControlling(flight) and flight.stack then
     
       -- Call sign.
@@ -2279,9 +2237,10 @@ function FLIGHTCONTROL:_PlayerVectorInbound(groupname)
       -- Heading to holding point.
       local heading=flightcoord:HeadingTo(flight.stack.pos0)
       
-      -- Distance to holding point.
+      -- Distance to holding point in meters.
       local distance=flightcoord:Get2DDistance(flight.stack.pos0)
       
+      -- Distance in NM.
       local dist=UTILS.MetersToNM(distance)
   
       -- Message text.
@@ -2291,6 +2250,10 @@ function FLIGHTCONTROL:_PlayerVectorInbound(groupname)
       -- Send message.
       self:TextMessageToFlight(text, flight)
       
+    else
+      -- Send message.
+      local text="Negative, you must be INBOUND, CONTROLLED by us and have an assigned STACK!"
+      self:TextMessageToFlight(text, flight)      
     end
   else
     self:E(self.lid..string.format("Cannot find flight group %s.", tostring(groupname)))
@@ -3034,13 +2997,38 @@ end
 
 --- Remove flight from all queues.
 -- @param #FLIGHTCONTROL self
--- @param Ops.FlightGroup#FLIGHTGROUP flight The flight to be removed.
-function FLIGHTCONTROL:_RemoveFlight(flight)
-
-  flight.flightcontrol=nil
-
-  self:_RemoveFlightFromQueue(self.flights,  flight, "flights")
+-- @param Ops.FlightGroup#FLIGHTGROUP Flight The flight to be removed.
+function FLIGHTCONTROL:_RemoveFlight(Flight)
   
+  -- Loop over all flights in group.
+  for i,_flight in pairs(self.flights) do
+    local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
+    
+    -- Check for name.
+    if flight.groupname==Flight.groupname then
+    
+      -- Debug message.
+      self:T(self.lid..string.format("Removing flight group %s", flight.groupname))
+      
+      -- Remove table entry.
+      table.remove(self.flights, i)
+      
+      -- Remove myself.
+      Flight.flightcontrol=nil
+      
+      -- Set flight status to unknown.
+      self:SetFlightStatus(Flight, FLIGHTCONTROL.FlightStatus.UNKNOWN)      
+      
+      -- Update menu.
+      if not flight.isAI then      
+        flight:_UpdateMenu(0.5)
+      end
+      
+    end
+  end
+  
+  --
+  self:E(self.lid..string.format("WARNING: Could NOT remove flight group %s from %s queue", flight.groupname, queuename))
 end
 
 --- Get flight from group. 

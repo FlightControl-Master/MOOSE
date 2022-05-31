@@ -412,7 +412,7 @@ function FLIGHTGROUP:SetFlightControl(flightcontrol)
   end
 
   -- Update flight's F10 menu.
-  if self.isAI==false then
+  if not self.isAI then
     self:_UpdateMenu(0.5)
   end
 
@@ -2447,6 +2447,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
 
   end
 
+  -- Land at airbase.
   self:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
 
 end
@@ -4173,7 +4174,7 @@ function FLIGHTGROUP:_UpdateMenu(delay)
   
     -- Message to group.
     MESSAGE:New("Updating MENU state="..self:GetState(), 5):ToGroup(self.group)
-    env.info(self.lid.."updating menu state=")
+    env.info(self.lid.."updating menu state="..self:GetState())
   
     -- Player element.
     local player=self:GetPlayerElement()

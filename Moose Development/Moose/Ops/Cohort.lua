@@ -242,8 +242,8 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   -- @param #number delay Delay in seconds.
 
   --- On after "Pause" event.
-  -- @function [parent=#AUFTRAG] OnAfterPause
-  -- @param #AUFTRAG self
+  -- @function [parent=#COHORT] OnAfterPause
+  -- @param #COHORT self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
@@ -259,8 +259,8 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   -- @param #number delay Delay in seconds.
 
   --- On after "Unpause" event.
-  -- @function [parent=#AUFTRAG] OnAfterUnpause
-  -- @param #AUFTRAG self
+  -- @function [parent=#COHORT] OnAfterUnpause
+  -- @param #COHORT self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
@@ -276,8 +276,8 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   -- @param #number delay Delay in seconds.
 
   --- On after "Relocate" event.
-  -- @function [parent=#AUFTRAG] OnAfterRelocate
-  -- @param #AUFTRAG self
+  -- @function [parent=#COHORT] OnAfterRelocate
+  -- @param #COHORT self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
@@ -293,8 +293,8 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   -- @param #number delay Delay in seconds.
 
   --- On after "Relocated" event.
-  -- @function [parent=#AUFTRAG] OnAfterRelocated
-  -- @param #AUFTRAG self
+  -- @function [parent=#COHORT] OnAfterRelocated
+  -- @param #COHORT self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
@@ -1004,7 +1004,6 @@ function COHORT:GetOpsGroups(MissionTypes, Attributes)
     if MissionTypes==nil or AUFTRAG.CheckMissionCapability(MissionTypes, self.missiontypes) then
       if Attributes==nil or self:CheckAttribute(Attributes) then
         if asset.flightgroup and asset.flightgroup:IsAlive() then
-          --set:AddObject(asset.flightgroup)
           set:AddGroup(asset.flightgroup)
         end
       end

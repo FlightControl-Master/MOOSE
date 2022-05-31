@@ -1609,7 +1609,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #WAREHOUSE.Pendingitem Request Information table of the request.
+-- @param Functional.Warehouse#WAREHOUSE.Pendingitem Request Information table of the request.
 -- @param Core.Set#SET_GROUP CargoGroupSet Set of cargo groups.
 -- @param Core.Set#SET_GROUP TransportGroupSet Set of transport groups if any.
 function LEGION:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet, TransportGroupSet)

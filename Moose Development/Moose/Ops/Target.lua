@@ -38,6 +38,7 @@
 -- @field #boolean isDestroyed If true, target objects were destroyed.
 -- @field #table resources Resource list.
 -- @field #table conditionStart Start condition functions.
+-- @field Ops.Operation#OPERATION operation Operation this target is part of.
 -- @extends Core.Fsm#FSM
 
 --- **It is far more important to be able to hit the target than it is to haggle over who makes a weapon or who pulls a trigger** -- Dwight D Eisenhower
