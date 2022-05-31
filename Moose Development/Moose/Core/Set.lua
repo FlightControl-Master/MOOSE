@@ -4180,6 +4180,26 @@ do -- SET_CLIENT
     return CountU
   end
   
+  
+  --- Gets the alive set.
+  -- @param #SET_CLIENT self
+  -- @return #table Table of SET objects
+  function SET_CLIENT:GetAliveSet()
+
+    local AliveSet = SET_CLIENT:New()
+
+    -- Clean the Set before returning with only the alive Groups.
+    for GroupName, GroupObject in pairs(self.Set) do    
+      local GroupObject=GroupObject --Wrapper.Client#CLIENT
+      
+      if GroupObject and GroupObject:IsAlive() then      
+        AliveSet:Add(GroupName, GroupObject)
+      end
+    end
+
+    return AliveSet.Set or {}
+  end
+
   ---
   -- @param #SET_CLIENT self
   -- @param Wrapper.Client#CLIENT MClient

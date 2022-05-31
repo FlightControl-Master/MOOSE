@@ -2777,8 +2777,10 @@ do -- COORDINATE
   -- @param #boolean Bogey Add "Bogey" at the end if true (not yet declared hostile or friendly)
   -- @param #boolean Spades Add "Spades" at the end if true (no IFF/VID ID yet known)
   -- @param #boolean SSML Add SSML tags speaking aspect as 0 1 2 and "brah" instead of BRAA
+  -- @param #boolean Angels If true, altitude is e.g. "Angels 25" (i.e., a friendly plane), else "25 thousand"
+  -- @param #boolean Zeros If using SSML, be aware that Google TTS will say "oh" and not "zero" for "0"; if Zeros is set to true, "0" will be replaced with "zero"
   -- @return #string The BRAA text.
-  function COORDINATE:ToStringBRAANATO(FromCoordinate,Bogey,Spades,SSML)
+  function COORDINATE:ToStringBRAANATO(FromCoordinate,Bogey,Spades,SSML,Angels,Zeros)
     
     -- Thanks to @Pikey
     local BRAANATO = "Merged."
@@ -2796,14 +2798,32 @@ do -- COORDINATE
 
     local alt = UTILS.Round(UTILS.MetersToFeet(self.y)/1000,0)--*1000
     
+    local alttext = string.format("%d thousand",alt)
+    
+    if Angels then
+      alttext = string.format("Angels %d",alt)
+    end
+    
     local track = UTILS.BearingToCardinal(bearing) or "North"
     
     if rangeNM > 3 then
-      if SSML then
-        if aspect == "" then
-          BRAANATO = string.format("brah <say-as interpret-as='characters'>%03d</say-as>, %d miles, Angels %d, Track %s",bearing, rangeNM, alt, track)
+      if SSML then -- google says "oh" instead of zero, be aware
+        if Zeros then
+          bearing = string.format("%03d",bearing)
+          local AngleDegText = string.gsub(bearing,"%d","%1 ") -- "0 5 1 "
+          AngleDegText = string.gsub(AngleDegText," $","") -- "0 5 1"
+          AngleDegText = string.gsub(AngleDegText,"0","zero")
+          if aspect == "" then
+            BRAANATO = string.format("brah %s, %d miles, %s, Track %s", AngleDegText, rangeNM, alttext, track)
+          else
+            BRAANATO = string.format("brah %s, %d miles, %s, %s, Track %s", AngleDegText, rangeNM, alttext, aspect, track)      
+          end  
         else
-          BRAANATO = string.format("brah <say-as interpret-as='characters'>%03d</say-as>, %d miles, Angels %d, %s, Track %s",bearing, rangeNM, alt, aspect, track)      
+          if aspect == "" then
+            BRAANATO = string.format("brah <say-as interpret-as='characters'>%03d</say-as>, %d miles, %s, Track %s", bearing, rangeNM, alttext, track)
+          else
+            BRAANATO = string.format("brah <say-as interpret-as='characters'>%03d</say-as>, %d miles, %s, %s, Track %s", bearing, rangeNM, alttext, aspect, track)      
+          end
         end
         if Bogey and Spades then
           BRAANATO = BRAANATO..", Bogey, Spades."
@@ -2816,9 +2836,9 @@ do -- COORDINATE
         end
       else
         if aspect == "" then
-          BRAANATO = string.format("BRA %03d, %d miles, Angels %d, Track %s",bearing, rangeNM, alt, track)
+          BRAANATO = string.format("BRA %03d, %d miles, %s, Track %s",bearing, rangeNM, alttext, track)
         else
-          BRAANATO = string.format("BRAA %03d, %d miles, Angels %d, %s, Track %s",bearing, rangeNM, alt, aspect, track)      
+          BRAANATO = string.format("BRAA %03d, %d miles, %s, %s, Track %s",bearing, rangeNM, alttext, aspect, track)      
         end
         if Bogey and Spades then
           BRAANATO = BRAANATO..", Bogey, Spades."
