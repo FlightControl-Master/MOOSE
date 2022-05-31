@@ -4372,7 +4372,7 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag,IsPopup,Repo
     TextScreen = string.format("%s.",self.callsigntxt)
   end
   
-  if IsNew then
+  if IsNew and self.PlayerGuidance then
     BRAText = BRAText .. " New group."
     TextScreen = TextScreen .. " New group."
   elseif IsPopup then
