@@ -588,6 +588,7 @@ AWACS.CapVoices = {
 -- @field #string EngagementTag
 -- @field #boolean TACCallDone
 -- @field #boolean MeldCallDone
+-- @field #boolean MergeCallDone
 
 ---
 -- @type AWACS.TaskDescription
@@ -1870,6 +1871,8 @@ function AWACS:_CheckMerges()
     local pilot = _pilot -- #AWACS.ManagedGroup
     if pilot.Group and pilot.Group:IsAlive() then
       local ppos = pilot.Group:GetCoordinate()
+      local pcallsign = pilot.CallSign
+      self:I(self.lid.."Checking for "..pcallsign)
       if ppos then
         self.Contacts:ForEach(
           function (Contact)
@@ -1877,9 +1880,13 @@ function AWACS:_CheckMerges()
             local cpos = contact.Cluster.coordinate or contact.Contact.position or contact.Contact.group:GetCoordinate()
             local dist = ppos:Get2DDistance(cpos)
             local distnm = UTILS.Round(UTILS.MetersToNM(dist),0)
-            if (pilot.IsPlayer or self.debug) and distnm <= 5 then
-              self:I(self.lid.."Merged")
-              self:_MergedCall(_id)
+            if (pilot.IsPlayer or self.debug) and distnm <= 5 and not contact.MergeCallDone then
+              local label = contact.EngagementTag or ""
+              if not contact.MergeCallDone or not string.find(label,pcallsign) then
+                self:I(self.lid.."Merged")
+                self:_MergedCall(_id)
+                contact.MergeCallDone = true
+              end
             end
           end
         )      
