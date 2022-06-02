@@ -323,7 +323,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "beta 0.1.24", -- #string
+  version = "beta 0.1.25", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -658,7 +658,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.1.24
+-- TODO-List 0.1.25
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DEBUG - WIP - Player tasking, VID
@@ -1142,10 +1142,21 @@ end
 --- [User] Do not show messages on screen
 -- @param #AWACS self
 -- @param #boolean Switch If true, no messages will be shown on screen.
--- @return #AWACS sel
+-- @return #AWACS self
 function AWACS:SuppressScreenMessages(Switch)
   self:T(self.lid.."_SetBullsEyeAlias")
   self.SuppressScreenOutput = Switch or false
+  return self
+end
+
+--- [User] Do not show messages on screen, no extra calls for player guidance, use short callsigns.
+-- @param #AWACS self
+-- @return #AWACS self
+function AWACS:ZipLip()
+  self:T(self.lid.."ZipLip")
+  self:SuppressScreenMessages(true)
+  self.PlayerGuidance = false
+  self.callsignshort = true
   return self
 end
 
@@ -1317,6 +1328,17 @@ function AWACS:SetColdWar()
   self.AwacsROE = AWACS.ROE.VID
   self.RadarBlur = 25
   self:SetInterceptTimeline(35, 25, 15)
+  return self
+end
+
+--- [User] Set AWACS to Modern Era standards - ROE to BVR, ROT to defensive (evade fire). Radar blur 15%.
+-- @param #AWACS self
+-- @return #AWACS self
+function AWACS:SetModernEra()
+  self.ModernEra = true
+  self.AwacsROT = AWACS.ROT.EVADE
+  self.AwacsROE = AWACS.ROE.BVR
+  self.RadarBlur = 15
   return self
 end
 
@@ -1754,7 +1776,7 @@ end
 -- @return #string CallSign
 function AWACS:_GetManagedGrpID(Group)
   if not Group or not Group:IsAlive() then
-    self:E(self.lid.."_GetManagedGrpID - Requested Group is not alive!")
+    self:T(self.lid.."_GetManagedGrpID - Requested Group is not alive!")
     return 0,false,""
   end
   self:T(self.lid.."_GetManagedGrpID for "..Group:GetName())
@@ -1855,7 +1877,8 @@ function AWACS:_CheckMerges()
             local cpos = contact.Cluster.coordinate or contact.Contact.position or contact.Contact.group:GetCoordinate()
             local dist = ppos:Get2DDistance(cpos)
             local distnm = UTILS.Round(UTILS.MetersToNM(dist),0)
-            if pilot.IsPlayer and distnm <= 3 then
+            if (pilot.IsPlayer or self.debug) and distnm <= 5 then
+              self:I(self.lid.."Merged")
               self:_MergedCall(_id)
             end
           end
@@ -5573,6 +5596,9 @@ function AWACS:onafterNewCluster(From,Event,To,Cluster)
   end
   
   local Contact = GetFirstAliveContact(ContactTable) -- Ops.Intelligence#INTEL.Contact
+  
+  if not Contact then return self end
+  
   local targetset = SET_GROUP:New()
   -- SET for TARGET
   for _,_grp in pairs(ContactTable) do
@@ -5695,7 +5721,7 @@ function AWACS:onafterCheckRadioQueue(From,Event,To)
  -- do we have messages queued?
  
  local nextcall = 10
- if (self.RadioQueue:IsNotEmpty() or self.PrioRadioQueue:IsNotEmpty()) and self.clientset:CountAlive() >  0 then
+ if (self.RadioQueue:IsNotEmpty() or self.PrioRadioQueue:IsNotEmpty()) then
   
   local RadioEntry = nil
   
@@ -5705,6 +5731,12 @@ function AWACS:onafterCheckRadioQueue(From,Event,To)
     RadioEntry = self.RadioQueue:Pull() -- #AWACS.RadioEntry
   end
   self:T({RadioEntry})
+  
+  if self.clientset:CountAlive() ==  0 then 
+    self:I(self.lid.."No player connected.")
+    self:__CheckRadioQueue(5)
+    return self 
+  end
   
   if not RadioEntry.FromAI then
     -- AI AWACS Speaking
@@ -5750,7 +5782,7 @@ function AWACS:onafterCheckRadioQueue(From,Event,To)
  
  if self:Is("Running") then
   -- exit if stopped
-  self:__CheckRadioQueue(nextcall+2)
+  self:__CheckRadioQueue(nextcall+1)
  end
  return self
 end
@@ -5906,7 +5938,7 @@ function AWACS:onafterReAnchor(From, Event, To, GID)
           local textScreen = string.format("All stations, %s. %s %s.", self.callsigntxt, faded, savedcallsign)
           
           local brtext = self:_ToStringBULLS(lastknown)
-          local brtexttts = self:_ToStringBULLS(brtext,false,true)
+          local brtexttts = self:_ToStringBULLS(lastknown,false,true)
           --if self.PathToGoogleKey then
             --brtexttts = self:_ToStringBULLS(lastknown,true)
           --end
@@ -5957,7 +5989,7 @@ function AWACS:onafterReAnchor(From, Event, To, GID)
         if managedgroup.LastKnownPosition then
           local lastknown = UTILS.DeepCopy(managedgroup.LastKnownPosition)
           local brtext = self:_ToStringBULLS(lastknown)
-          local brtexttts = self:_ToStringBULLS(brtext,false,true)
+          local brtexttts = self:_ToStringBULLS(lastknown,false,true)
           --if self.PathToGoogleKey then
             --brtexttts = self:_ToStringBULLS(lastknown,true)
           --end
@@ -5970,7 +6002,6 @@ function AWACS:onafterReAnchor(From, Event, To, GID)
       end 
     end
   end
-  return self
 end
 
 end -- end do
