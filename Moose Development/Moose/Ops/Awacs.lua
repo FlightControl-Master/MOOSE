@@ -24,9 +24,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update May 2022
--- 
--- ==
+-- @date Last Update June 2022
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -110,6 +108,8 @@ do
 -- @field #number ReassignmentPause Wait this many seconds before re-assignment of a player
 -- @field #boolean NoGroupTags Set to true if you don't want group tags.
 -- @field #boolean SuppressScreenOutput Set to true to suppress all screen output.
+-- @field #number GoogleTTSPadding
+-- @field #number WindowsTTSPadding
 -- @extends Core.Fsm#FSM
 
 
@@ -128,8 +128,6 @@ do
 --  ** References from ARN33396 ATP 3-52.4 (Sep 2021) (Combined Forces)   
 --  ** References from CNATRA P-877 (Rev 12-20) (NAVY)   
 --  * FSM events that the mission designer can hook into
---
--- ===
 -- 
 -- ## 1 Prerequisites
 -- 
@@ -315,10 +313,18 @@ do
 --            testawacs.MenuStrict = true -- Players need to check-in to see the menu; check-in still require to use the menu.
 --            testawacs.maxassigndistance = 100 -- Don't assign targets further out than this, in NM.
 --            testawacs.debug = false -- set to true to produce more log output.
+--            -- By default, the radio queue is checked every 10 secs. This is altered by the calculated length of the sentence to speak
+--            -- over the radio. Google and Windows speech speed is different. Use the below to fine-tune the setup in case of overlapping
+--            -- messages or too long pauses
+--            testawacs.GoogleTTSPadding = 1
+--            testawacs.WindowsTTSPadding = 2.5
 --            
 -- ## 10 Discussion
 --
 -- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) #ops-awacs channel.
+-- 
+-- 
+-- 
 -- 
 -- @field #AWACS
 AWACS = {
@@ -399,6 +405,8 @@ AWACS = {
   ReassignmentPause = 180,
   NoGroupTags = false,
   SuppressScreenOutput = false,
+  GoogleTTSPadding = 1,
+  WindowsTTSPadding = 2.5,
 }
 
 ---
@@ -842,6 +850,8 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.RadioQueue = FIFO:New() -- Utilities.FiFo#FIFO
   self.PrioRadioQueue = FIFO:New() -- Utilities.FiFo#FIFO
   self.maxspeakentries = 3
+  self.GoogleTTSPadding = 1
+  self.WindowsTTSPadding = 2.5
   
   -- Client SET  
   self.clientset = SET_CLIENT:New():FilterActive(true):FilterCoalitions(self.coalitiontxt):FilterCategories("plane"):FilterStart()
@@ -1286,7 +1296,7 @@ end
 -- @return #AWACS self
 function AWACS:_MissileWarning(Coordinate,Type,Warndist)
   self:T(self.lid.."_MissileWarning Type="..Type.." WarnDist="..Warndist)
-  self:T(UTILS.OneLineSerialize(Coordinate))
+  --self:T(UTILS.OneLineSerialize(Coordinate))
   if not Coordinate then return self end
   local shotzone = ZONE_RADIUS:New("WarningZone",Coordinate:GetVec2(),UTILS.NMToMeters(Warndist))
   local targetgrpset = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterCategoryAirplane():FilterActive():FilterZones({shotzone}):FilterOnce()
@@ -1295,7 +1305,7 @@ function AWACS:_MissileWarning(Coordinate,Type,Warndist)
     for _,_grp in pairs (targets) do
       -- TODO -- player callouts only
       if _grp and _grp:IsAlive() then
-        local isPlayer = _grp:GetUnit(1):IsPlayer()
+        local isPlayer = _grp:IsPlayer()
         --if self.debug or isPlayer then
         if isPlayer then
           local callsign = self:_GetCallSign(_grp)
@@ -1387,6 +1397,19 @@ function AWACS:SetPolicingColdWar()
   self.AwacsROE = AWACS.ROE.VID
   self.RadarBlur = 25
   self:SetInterceptTimeline(35, 25, 15)
+  return self
+end
+
+--- [User] Set AWACS Player Guidance - influences missile callout and the "New" label in group callouts. 
+-- @param #AWACS self
+-- @param #boolean Switch If true (default) it is on, if false, it is off.
+-- @return #AWACS self
+function AWACS:SetPlayerGuidance(Switch)
+  if (Switch == nil) or (Switch == true) then
+   self.PlayerGuidance = true
+  else
+    self.PlayerGuidance = false
+  end
   return self
 end
 
@@ -1873,7 +1896,7 @@ function AWACS:_CheckMerges()
     if pilot.Group and pilot.Group:IsAlive() then
       local ppos = pilot.Group:GetCoordinate()
       local pcallsign = pilot.CallSign
-      self:I(self.lid.."Checking for "..pcallsign)
+      self:T(self.lid.."Checking for "..pcallsign)
       if ppos then
         self.Contacts:ForEach(
           function (Contact)
@@ -1884,7 +1907,7 @@ function AWACS:_CheckMerges()
             if (pilot.IsPlayer or self.debug) and distnm <= 5 and not contact.MergeCallDone then
               local label = contact.EngagementTag or ""
               if not contact.MergeCallDone or not string.find(label,pcallsign) then
-                self:I(self.lid.."Merged")
+                self:T(self.lid.."Merged")
                 self:_MergedCall(_id)
                 contact.MergeCallDone = true
               end
@@ -4759,6 +4782,7 @@ end
 function AWACS:_TACRangeCall(GID,Contact)
   self:T(self.lid.."_TACRangeCall")
   -- AIC: “Enforcer 11, single group, 30 miles.”
+  if not Contact then return self end
   local pilotcallsign = self:_GetCallSign(nil,GID) 
   local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
   local contact = Contact.Contact -- Ops.Intelligence#INTEL.Contact
@@ -4783,6 +4807,7 @@ end
 -- @return #AWACS self
 function AWACS:_MeldRangeCall(GID,Contact)
   self:T(self.lid.."_MeldRangeCall")
+  if not Contact then return self end
   -- AIC: “Heat 11, single group, BRAA 089/28, 32 thousand, hot, hostile, crow.”
   local pilotcallsign = self:_GetCallSign(nil,GID) 
   local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
@@ -4811,6 +4836,7 @@ end
 -- @return #AWACS self
 function AWACS:_ThreatRangeCall(GID,Contact)
   self:T(self.lid.."_ThreatRangeCall")
+  if not Contact then return self end
   -- AIC: “Enforcer 11 12, east group, THREAT, BRAA 260/15, 29 thousand, hot, hostile, robin.”
   local pilotcallsign = self:_GetCallSign(nil,GID) 
   local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
@@ -5735,7 +5761,7 @@ function AWACS:onafterCheckRadioQueue(From,Event,To)
   
   if self.clientset:CountAlive() ==  0 then 
     self:I(self.lid.."No player connected.")
-    self:__CheckRadioQueue(5)
+    self:__CheckRadioQueue(-5)
     return self 
   end
   
@@ -5783,7 +5809,12 @@ function AWACS:onafterCheckRadioQueue(From,Event,To)
  
  if self:Is("Running") then
   -- exit if stopped
-  self:__CheckRadioQueue(nextcall+1)
+  if self.PathToGoogleKey then
+    nextcall = nextcall + self.GoogleTTSPadding
+  else
+    nextcall = nextcall + self.WindowsTTSPadding
+  end
+  self:__CheckRadioQueue(-nextcall)
  end
  return self
 end
