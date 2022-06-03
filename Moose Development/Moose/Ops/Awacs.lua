@@ -246,12 +246,12 @@ do
 -- 
 -- ### 6.3 Picture
 -- 
--- Get a picture from the AWACS. It will call out the three most important groups. References are BRAA to the Player position.
--- **Note** that AWACS will do a regular picture call to all stations every five minutes. Here, references are to the (named) BullsEye position.
+-- Get a picture from the AWACS. It will call out the three most important groups. References are **always** to the (named) BullsEye position.
+-- **Note** that AWACS will anyway do a regular picture call to all stations every five minutes.
 -- 
 -- ### 6.4 Bogey Dope
 -- 
--- Get bogey dope from the AWACS. It will call out the three most important groups. References are BRAA to the Player position.
+-- Get bogey dope from the AWACS. It will call out the closest bogey group, if any. Reference is BRAA to the Player position.
 -- 
 -- ### 6.5 Declare
 -- 
@@ -323,7 +323,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "beta 0.1.25", -- #string
+  version = "beta 0.1.26", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -659,7 +659,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.1.25
+-- TODO-List 0.1.26
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DEBUG - WIP - Player tasking, VID
@@ -1150,7 +1150,7 @@ function AWACS:SuppressScreenMessages(Switch)
   return self
 end
 
---- [User] Do not show messages on screen, no extra calls for player guidance, use short callsigns.
+--- [User] Do not show messages on screen, no extra calls for player guidance, use short callsigns, no group tags.
 -- @param #AWACS self
 -- @return #AWACS self
 function AWACS:ZipLip()
@@ -1158,6 +1158,7 @@ function AWACS:ZipLip()
   self:SuppressScreenMessages(true)
   self.PlayerGuidance = false
   self.callsignshort = true
+  self.NoGroupTags = true
   return self
 end
 
@@ -2191,6 +2192,7 @@ function AWACS:_CreatePicture(AO,Callsign,GID,MaxEntries,IsGeneral)
       end
       local refBRAA = ""
       local refBRAATTS = ""
+      
       if self.NoGroupTags then
         text = "Group." -- Alpha Group.
         textScreen = "Group,"
@@ -2198,20 +2200,16 @@ function AWACS:_CreatePicture(AO,Callsign,GID,MaxEntries,IsGeneral)
         text = contact.TargetGroupNaming.." group." -- Alpha Group.
         textScreen = contact.TargetGroupNaming.." group,"
       end
-      if IsGeneral then
-        -- AO/BE Reference
+      
+      --if IsGeneral then
         refBRAA=self:_ToStringBULLS(coordinate)
-       -- if self.PathToGoogleKey then
-          refBRAATTS = self:_ToStringBULLS(coordinate, false, true)
-        --else
-          --refBRAATTS = self:__ToStringBullsTTS(refBRAA)
-          --refBRAATTS = self:_ToStringBULLS(coordinate,false,true)
-        --end 
+        refBRAATTS = self:_ToStringBULLS(coordinate, false, true)
         local alt = contact.Contact.group:GetAltitude() or 8000
         alt = UTILS.Round(UTILS.MetersToFeet(alt)/1000,0)
         -- Alpha Group. Bulls eye 0 2 1, 16 miles, 25 thousand. 
         text = text .. " "..refBRAATTS.." miles, "..alt.." thousand." -- Alpha Group. Bulls eye 0 2 1, 16 miles, 25 thousand. 
         textScreen = textScreen .. " "..refBRAA.." miles, "..alt.." thousand." -- Alpha Group, Bullseye 021, 16 miles, 25 thousand,
+      --[[  
       else
         -- pilot reference
         refBRAA = coordinate:ToStringBRAANATO(groupcoord,true,true)
@@ -2228,15 +2226,10 @@ function AWACS:_CreatePicture(AO,Callsign,GID,MaxEntries,IsGeneral)
         text = text .. " "..refBRAATTS
         textScreen = textScreen .." "..refBRAA
       end
+      --]]
       
       -- Aspect
       local aspect = ""
-      
-     -- if IsGeneral then
-       -- aspect = coordinate:ToStringAspect(self.OpsZone:GetCoordinate())
-       -- text = text .. " "..aspect.."." -- Alpha Group. Bulls eye 0 2 1, 1 6. Flanking.
-       -- textScreen = textScreen .. " "..aspect.."." -- Alpha Group, Bullseye 021, 16, Flanking.
-      --end
       
       -- sizing
       local size = contact.Contact.group:CountAliveUnits()
@@ -2285,7 +2278,8 @@ function AWACS:_CreateBogeyDope(Callsign,GID)
   local groupcoord = group:GetCoordinate()
   
   local fifo = self.ContactsAO -- Utilities.FiFo#FIFO
-  local maxentries = self.maxspeakentries
+  --local maxentries = self.maxspeakentries
+  local maxentries = 1
   local counter = 0
   
   local entries = fifo:GetSize()
