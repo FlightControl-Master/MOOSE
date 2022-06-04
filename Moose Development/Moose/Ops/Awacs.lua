@@ -108,6 +108,8 @@ do
 -- @field #number ReassignmentPause Wait this many seconds before re-assignment of a player
 -- @field #boolean NoGroupTags Set to true if you don't want group tags.
 -- @field #boolean SuppressScreenOutput Set to true to suppress all screen output.
+-- @field #boolean NoMissileCalls Suppress missile callouts
+-- @field #boolean PlayerCapAssigment Assign players to CAP tasks when they are logged on
 -- @field #number GoogleTTSPadding
 -- @field #number WindowsTTSPadding
 -- @extends Core.Fsm#FSM
@@ -271,7 +273,7 @@ do
 --            Tac Distance = 45
 --            Meld Distance = 35
 --            Threat Distance = 25
---            Merge Distance = 3 
+--            Merge Distance = 5 
 -- 
 -- ## 8 Bespoke Player CallSigns
 -- 
@@ -303,8 +305,11 @@ do
 -- * @{#AWACS.SetAICAPDetails}() : Set AI CAP details.
 -- * @{#AWACS.SetEscort}() : Set number of escorting planes for AWACS.
 -- * @{#AWACS.AddCAPAirWing}() : Add an additional @{Ops.Airwing#AIRWING} for CAP flights.
+-- * @{#AWACS.ZipLip}() : Do not show messages on screen, no extra calls for player guidance, use short callsigns, no group tags.
 -- 
--- Further options (set before starting your AWACS instance, but after `:New()`)
+-- ## 9.1 Single Options
+-- 
+-- Further single options (set before starting your AWACS instance, but after `:New()`)
 -- 
 --            testawacs.PlayerGuidance = true -- allow missile warning call-outs.
 --            testawacs.NoGroupTags = false -- use group tags like Alpha, Bravo .. etc in call outs.
@@ -313,11 +318,34 @@ do
 --            testawacs.MenuStrict = true -- Players need to check-in to see the menu; check-in still require to use the menu.
 --            testawacs.maxassigndistance = 100 -- Don't assign targets further out than this, in NM.
 --            testawacs.debug = false -- set to true to produce more log output.
+--            testawacs.NoMissileCalls = true -- suppress missile callouts
+--            testawacs.PlayerCapAssigment = true -- no task assignment for players
+--            testawacs.invisible = false -- set AWACS to be invisible to hostiles
+--            testawacs.immortal = false -- set AWACS to be immortal
 --            -- By default, the radio queue is checked every 10 secs. This is altered by the calculated length of the sentence to speak
 --            -- over the radio. Google and Windows speech speed is different. Use the below to fine-tune the setup in case of overlapping
 --            -- messages or too long pauses
---            testawacs.GoogleTTSPadding = 1
---            testawacs.WindowsTTSPadding = 2.5
+--            testawacs.GoogleTTSPadding = 1 -- seconds
+--            testawacs.WindowsTTSPadding = 2.5 -- seconds
+-- 
+-- ## 9.2 Bespoke random voices for AI CAP (Google TTS only)
+-- 
+-- Currently there are 10 voices defined which are randomly assigned to the AI CAP flights:
+-- 
+-- Defaults are:
+-- 
+--          testawacs.CapVoices = {
+--            [1] = "de-DE-Wavenet-A",
+--            [2] = "de-DE-Wavenet-B",
+--            [3] = "fr-FR-Wavenet-A",
+--            [4] = "fr-FR-Wavenet-B",
+--            [5] = "en-GB-Wavenet-A",
+--            [6] = "en-GB-Wavenet-B",
+--            [7] = "en-GB-Wavenet-D",
+--            [8] = "en-AU-Wavenet-B",
+--            [9] = "en-US-Wavenet-J",
+--            [10] = "en-US-Wavenet-H",
+--           }
 --            
 -- ## 10 Discussion
 --
@@ -329,7 +357,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "beta 0.1.26", -- #string
+  version = "beta 0.1.27", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -405,8 +433,10 @@ AWACS = {
   ReassignmentPause = 180,
   NoGroupTags = false,
   SuppressScreenOutput = false,
+  NoMissileCalls = true,
   GoogleTTSPadding = 1,
   WindowsTTSPadding = 2.5,
+  PlayerCapAssigment = true,
 }
 
 ---
@@ -667,10 +697,10 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.1.26
+-- TODO-List 0.1.27
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
--- DEBUG - WIP - Player tasking, VID
+-- DONE - WIP - Player tasking, VID
 -- TODO - Localization (sensible?)
 -- TODO - (LOW) LotATC
 -- TODO - SW Optimization
@@ -866,6 +896,8 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.DeclareRadius = 5 -- NM
   self.MenuStrict = true
   self.maxassigndistance = 100 --nm
+  self.NoMissileCalls = true
+  self.PlayerCapAssigment = true
     
   -- managed groups
   self.ManagedGrps = {} -- #table of #AWACS.ManagedGroup entries
@@ -1169,6 +1201,7 @@ function AWACS:ZipLip()
   self.PlayerGuidance = false
   self.callsignshort = true
   self.NoGroupTags = true
+  self.NoMissileCalls = true
   return self
 end
 
@@ -1247,7 +1280,7 @@ function AWACS:_EventHandler(EventData)
     end
   end
   
-  if Event.id == EVENTS.Shot and self.PlayerGuidance then
+  if Event.id == EVENTS.Shot and self.PlayerGuidance and not self.NoMissileCalls then
     if Event.IniCoalition ~= self.coalition then
       self:T("Shot from: " .. Event.IniGroupName)
       --self:T(UTILS.OneLineSerialize(Event))
@@ -5425,7 +5458,7 @@ function AWACS:onafterStatus(From, Event, To)
     local AI, Humans = self:_GetIdlePilots()
     -- assign Pilot if there are targets and available Pilots, prefer Humans to AI
     -- TODO - Implemented AI First, Humans laters - need to work out how to loop the targets to assign a pilot
-    if outcome and #Humans > 0 then
+    if outcome and #Humans > 0 and self.PlayerCapAssigment then
       -- add a task for AI
       self:_AssignPilotToTarget(Humans,targets)
     end
