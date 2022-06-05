@@ -1710,6 +1710,7 @@ function AWACS:_StartSettings(FlightGroup,Mission)
     group:SetCommandInvisible(self.invisible)
     group:SetCommandImmortal(self.immortal)
     group:CommandSetCallsign(self.CallSign,self.CallSignNo,2)
+    group:CommandEPLRS(self.ModernEra,5)
     -- Non AWACS does not seem take AWACS CS in DCS Group
 
     self.AwacsFG = AwacsFG 
