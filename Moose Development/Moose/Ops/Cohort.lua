@@ -787,7 +787,7 @@ end
 function COHORT:onafterStart(From, Event, To)
 
   -- Short info.
-  local text=string.format("Starting %s v%s %s", self.ClassName, self.version, self.name)
+  local text=string.format("Starting %s v%s %s [%s]", self.ClassName, self.version, self.name, self.attribute)
   self:I(self.lid..text)
 
   -- Start the status monitoring.
@@ -993,7 +993,7 @@ end
 -- @param #COHORT self
 -- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
 -- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
--- @return Core.Set#SET_OPSGROUPS Ops groups set.
+-- @return Core.Set#SET_OPSGROUP Ops groups set.
 function COHORT:GetOpsGroups(MissionTypes, Attributes)
 
   local set=SET_OPSGROUP:New()

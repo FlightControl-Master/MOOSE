@@ -1254,6 +1254,23 @@ function COMMANDER:CheckOpsQueue()
     
     if operation:IsRunning() then
     
+      -- Loop over missions.
+      for _,_mission in pairs(operation.missions or {}) do
+        local mission=_mission --Ops.Auftrag#AUFTRAG
+        
+        if mission.phase==nil or (mission.phase and mission.phase==operation.phase) and mission:IsPlanned() then
+          self:AddMission(mission)
+        end
+      end
+      
+      -- Loop over targets.
+      for _,_target in pairs(operation.targets or {}) do
+        local target=_target --Ops.Target#TARGET
+        
+        if (target.phase==nil or (target.phase and target.phase==operation.phase)) and (not self:IsTarget(target)) then
+          self:AddTarget(target)
+        end
+      end    
     
     end
     
@@ -1351,6 +1368,9 @@ function COMMANDER:CheckTargetQueue()
             mission:SetRequiredAssets(resource.Nmin, resource.Nmax)
             mission:SetRequiredAttribute(resource.Attributes)
             mission:SetRequiredProperty(resource.Properties)
+            
+            -- Set operation (if any).
+            mission.operation=target.operation
             
             -- Set resource mission.
             resource.mission=mission
@@ -1649,6 +1669,30 @@ function COMMANDER:RecruitAssetsForEscort(Mission, Assets)
   end
 
   return true
+end
+
+--- Recruit assets for a given TARGET.
+-- @param #COMMANDER self
+-- @param Ops.Target#TARGET Target The target.
+-- @param #string MissionType Mission Type.
+-- @param #number NassetsMin Min number of required assets.
+-- @param #number NassetsMax Max number of required assets.
+-- @return #boolean If `true` enough assets could be recruited.
+-- @return #table Assets that have been recruited from all legions.
+-- @return #table Legions that have recruited assets.
+function COMMANDER:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMax)
+
+  -- Cohorts.
+  local Cohorts=self:_GetCohorts()
+
+  -- Target position.
+  local TargetVec2=Target:GetVec2()
+  
+  -- Recruite assets.
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2)
+
+
+  return recruited, assets, legions
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

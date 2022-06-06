@@ -12,7 +12,15 @@
 --     
 -- ===
 --
+-- ## Example Missions:
+--
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20FlightControl).
+--
+-- ===
+--
 -- ### Author: **funkyfranky**
+--
+-- ===
 -- @module OPS.FlightControl
 -- @image OPS_FlightControl.png
 
@@ -62,7 +70,10 @@
 -- # The FLIGHTCONTROL Concept
 -- 
 -- This class implements an ATC for human and AI controlled aircraft. It gives permission for take-off and landing based on a sophisticated queueing system.
--- Therefore, it solves (or reduces) a lot of common problems with the DCS implementation (which is barly existing at this point).
+-- Therefore, it solves (or reduces) a lot of common problems with the DCS implementation.
+-- 
+-- You might be familiar with the `AIRBOSS` class. This class is the analogue for land based airfields. One major difference is that no pre-recorded sound files are 
+-- necessary. The radio transmissions use the SRS text-to-speech feature.
 -- 
 -- ## Prerequisites
 -- 
@@ -77,7 +88,54 @@
 -- * Only one player/client per group as we can create menus only for a group and not for a specific unit.
 -- * Only FLIGHTGROUPS are controlled. This means some older classes, *e.g.* RAT are not supported (yet).
 -- * So far only airdromes are handled, *i.e.* no FARPs or ships.
--- * Only fixed wing aircraft are handled until now, *i.e.* no helos.
+-- * Helicopters are not treated differently from fixed wing aircraft until now.
+-- * The active runway can only be determined by the wind direction. So at least set a very light wind speed in your mission.
+-- 
+-- # Basic Usage
+-- 
+-- A flight control for a given airdrome can be created with the @{#FLIGHTCONTROL.New}(*AirbaseName, Frequency, Modulation, PathToSRS*) function. You need to specify the name of the airbase, the 
+-- tower radio frequency, its modulation and the path, where SRS is located on the machine that is running this mission.
+-- 
+-- For the FC to be operating, it needs to be started with the @{#FLIGHTCONTROL.Start}() function.
+-- 
+-- ## Simple Script
+-- 
+-- The simplest script looks like
+-- 
+--      local FC_BATUMI=FLIGHTCONTROL:New(AIRBASE.Caucasus.Batumi, 251, nil, "D:\\SomeDirectory\\_SRS")
+--      FC_BATUMI:Start()
+-- 
+-- This will start the FC for at the Batumi airbase with tower frequency 251 MHz AM. SRS needs to be in the given directory.
+-- 
+-- Like this, a default holding pattern (see below) is parallel to the direction of the active runway.
+-- 
+-- # Holding Patterns
+-- 
+-- Holding pattern are air spaces where incoming aircraft are guided to and have to hold until they get landing clearance.
+-- 
+-- You can add a holding pattern with the @{#FLIGHTCONTROL.AddHoldingPattern}(*ArrivalZone, Heading, Length, FlightlevelMin, FlightlevelMax, Prio*) function, where
+-- 
+-- * `ArrivalZone` is the zone where the aircraft enter the pattern.
+-- * `Heading` is the direction into which the aircraft have to fly from the arrival zone.
+-- * `Length` is the length of the pattern.
+-- * `FlightLevelMin` is the lowest altitude at which aircraft can hold.
+-- * `FlightLevelMax` is the highest altitude at which aircraft can hold.
+-- * `Prio` is the priority of this holdig stacks. If multiple patterns are defined, patterns with higher prio will be filled first.
+-- 
+-- # Parking Guard
+-- 
+-- # Taxi Limits
+-- 
+-- You can define limits on how many aircraft are simultaniously landing and taking off. This avoids (DCS) problems where taxiing aircraft cause a "traffic jam" on the taxi way(s)
+-- and bring the whole airbase effectively to a stand still.
+-- 
+-- ## Landing Limits
+-- 
+-- 
+-- ## Takeoff Limits
+--
+-- Note that the limits here are only affecting AI aircraft groups. Human players are assumed to be a lot more well behaved and capable as they are able to taxi around obstacles, *e.g.*
+-- other aircraft etc. 
 -- 
 -- 
 -- @field #FLIGHTCONTROL
@@ -102,7 +160,7 @@ FLIGHTCONTROL = {
   Nlanding         = nil,
   dTlanding        = nil,
   Nparkingspots    = nil,
-  holdingpatterns    =  {},
+  holdingpatterns  =  {},
   hpcounter        =   0,
 }
 
@@ -170,20 +228,20 @@ FLIGHTCONTROL.FlightStatus={
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.5.2"
+FLIGHTCONTROL.version="0.5.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 
 -- TODO: Runway destroyed.
--- TODO: Support airwings. Dont give clearance for Alert5 or if mission has not started.
 -- TODO: Switch to enable/disable AI messages.
 -- TODO: Improve ATC TTS messages.
 -- TODO: Talk me down option.
 -- TODO: ATIS option.
 -- TODO: Check runways and clean up.
--- TODO: Accept and forbit parking spots.
 -- TODO: Add FARPS?
+-- DONE: Accept and forbit parking spots. DONE via AIRBASE black/white lists and airwing features.
+-- DONE: Support airwings. Dont give clearance for Alert5 or if mission has not started.
 -- DONE: Define holding zone.
 -- DONE: Basic ATC voice overs.
 -- DONE: Add SRS TTS.
@@ -234,6 +292,9 @@ function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS)
   
   -- 5 NM zone around the airbase.
   self.zoneAirbase=ZONE_RADIUS:New("FC", self:GetCoordinate():GetVec2(), UTILS.NMToMeters(5))
+  
+  -- Add backup holding pattern.
+  self:_AddHoldingPatternBackup()
 
   -- Set alias.
   self.alias=self.airbasename.." Tower"
@@ -331,7 +392,17 @@ function FLIGHTCONTROL:SetFrequency(Frequency, Modulation)
 
   self.frequency=Frequency or 305
   self.modulation=Modulation or radio.modulation.AM
+  
+  if self.msrsPilot then
+    self.msrsPilot:SetFrequencies(Frequency)
+    self.msrsPilot:SetModulations(Modulation)
+  end
 
+  if self.msrsTower then
+    self.msrsTower:SetFrequencies(Frequency)
+    self.msrsTower:SetModulations(Modulation)
+  end
+  
   return self
 end
 
@@ -398,8 +469,9 @@ end
 -- @param #number Length Length in nautical miles. Default 15 NM.
 -- @param #number FlightlevelMin Min flight level. Default 5.
 -- @param #number FlightlevelMax Max flight level. Default 15.
+-- @param #number Prio Priority. Lower is higher. Default 50.
 -- @return #FLIGHTCONTROL.HoldingPattern Holding pattern table.
-function FLIGHTCONTROL:AddHoldingPattern(ArrivalZone, Heading, Length, FlightlevelMin, FlightlevelMax)
+function FLIGHTCONTROL:AddHoldingPattern(ArrivalZone, Heading, Length, FlightlevelMin, FlightlevelMax, Prio)
 
   -- Get ZONE if passed as string.
   if type(ArrivalZone)=="string" then
@@ -410,13 +482,14 @@ function FLIGHTCONTROL:AddHoldingPattern(ArrivalZone, Heading, Length, Flightlev
   self.hpcounter=self.hpcounter+1
 
   local hp={} --#FLIGHTCONTROL.HoldingPattern
-  hp.arrivalzone=ArrivalZone  
   hp.uid=self.hpcounter
+  hp.arrivalzone=ArrivalZone  
   hp.name=string.format("%s-%d", ArrivalZone:GetName(), hp.uid)
   hp.pos0=ArrivalZone:GetCoordinate()
   hp.pos1=hp.pos0:Translate(UTILS.NMToMeters(Length or 15), Heading)
   hp.angelsmin=FlightlevelMin or 5
   hp.angelsmax=FlightlevelMax or 15
+  hp.prio=Prio or 50
   
   hp.stacks={}
   for i=hp.angelsmin, hp.angelsmax do
@@ -438,6 +511,50 @@ function FLIGHTCONTROL:AddHoldingPattern(ArrivalZone, Heading, Length, Flightlev
   hp.pos0:ArrowToAll(hp.pos1, nil, {1,0,0}, 1, {1,1,0}, 0.5, 2, true)
   ArrivalZone:DrawZone()
   
+  local function _sort(a,b)
+    return a.prio<b.prio
+  end
+  table.sort(self.holdingpatterns, _sort)
+  
+  return self
+end
+
+--- Add a holding pattern.
+-- @param #FLIGHTCONTROL self
+-- @return #FLIGHTCONTROL.HoldingPattern Holding pattern table.
+function FLIGHTCONTROL:_AddHoldingPatternBackup()
+
+  local runway=self:GetActiveRunway()
+  
+  local heading=runway.heading
+  
+  local vec2=self.airbase:GetVec2()
+  
+  local Vec2=UTILS.Vec2Translate(vec2, UTILS.NMToMeters(5), heading+90)
+  
+  local ArrivalZone=ZONE_RADIUS:New("Arrival Zone", Vec2, 5000)
+
+  -- Add holding pattern with very low priority.
+  self.holdingBackup=self:AddHoldingPattern(ArrivalZone, heading, 15, 5, 25, 999)
+
+  return self
+end
+
+--- Remove a holding pattern.
+-- @param #FLIGHTCONTROL self
+-- @param #FLIGHTCONTROL.HoldingPattern HoldingPattern Holding pattern to be removed.
+-- @param #FLIGHTCONTROL self
+function FLIGHTCONTROL:RemoveHoldingPattern(HoldingPattern)
+
+  for i,_holdingpattern in pairs(self.holdingpatterns) do
+    local hp=_holdingpattern --#FLIGHTCONTROL.HoldingPattern
+    
+    if hp.uid==HoldingPattern.uid then
+      table.remove(self.holdingpatterns, i)
+      return self
+    end
+  end
+
   return self
 end
 
@@ -468,6 +585,36 @@ function FLIGHTCONTROL:SetParkingGuardStatic(TemplateStaticName)
   self.parkingGuard=SPAWNSTATIC:NewFromStatic(TemplateStaticName):InitNamePrefix(alias)
 
   return self
+end
+
+--- Set ATIS.
+-- @param #FLIGHTCONTROL self
+-- @param Ops.Atis#ATIS Atis ATIS.
+-- @return #FLIGHTCONTROL self
+function FLIGHTCONTROL:SetATIS(Atis)
+  self.atis=Atis
+  return self
+end
+
+--- Get coordinate of the airbase.
+-- @param #FLIGHTCONTROL self
+-- @return Core.Point#COORDINATE Coordinate of the airbase.
+function FLIGHTCONTROL:GetCoordinate()
+  return self.airbase:GetCoordinate()
+end
+
+--- Get coalition of the airbase.
+-- @param #FLIGHTCONTROL self
+-- @return #number Coalition ID.
+function FLIGHTCONTROL:GetCoalition()
+  return self.airbase:GetCoalition()
+end
+
+--- Get country of the airbase.
+-- @param #FLIGHTCONTROL self
+-- @return #number Country ID.
+function FLIGHTCONTROL:GetCountry()
+  return self.airbase:GetCountry()
 end
 
 --- Is flight in queue of this flightcontrol.
@@ -507,6 +654,7 @@ function FLIGHTCONTROL:onafterStart()
   self:HandleEvent(EVENTS.Land)
   self:HandleEvent(EVENTS.EngineShutdown)
   self:HandleEvent(EVENTS.Crash)
+  self:HandleEvent(EVENTS.Kill)
  
   -- Init status updates.
   self:__Status(-1)
@@ -2036,6 +2184,8 @@ function FLIGHTCONTROL:_PlayerInfoATIS(groupname)
       
       end
       
+    else
+      text=text.." Not defined"      
     end
 
     -- Message to flight
@@ -2148,7 +2298,7 @@ function FLIGHTCONTROL:_PlayerRequestInbound(groupname)
       
       if dist<UTILS.NMToMeters(50) then
       
-        -- Call RTB event. This also sets the flight control and flight status to INBOUND and updates the menu.
+        -- Call RTB event. This only sets the FC for AI.
         flight:RTB(self.airbase)
                 
         -- Get holding point.
@@ -2176,8 +2326,22 @@ function FLIGHTCONTROL:_PlayerRequestInbound(groupname)
           
           -- Send message.
           self:TransmissionTower(text, flight, 15)
+
+          -- Set flightcontrol for this flight. This also updates the menu.
+          flight:SetFlightControl(self)
+
+          -- Add flight to inbound queue.
+          self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.INBOUND)
             
         else
+        
+          -- Message text.
+          local text=string.format("Negative, could not get a holding stack for you! Try again later...")
+          
+          -- Send message.
+          self:TextMessageToFlight(text, flight, 10)        
+        
+          -- Debug message.
           self:E(self.lid..string.format("WARNING: Could not get holding stack for flight %s", flight:GetName()))
         end
         
@@ -3023,12 +3187,13 @@ function FLIGHTCONTROL:_RemoveFlight(Flight)
       if not flight.isAI then      
         flight:_UpdateMenu(0.5)
       end
-      
+    
+      return true  
     end
   end
   
-  --
-  self:E(self.lid..string.format("WARNING: Could NOT remove flight group %s from %s queue", flight.groupname, queuename))
+  -- Debug message.
+  self:E(self.lid..string.format("WARNING: Could NOT remove flight group %s", Flight.groupname))
 end
 
 --- Get flight from group. 
@@ -3222,22 +3387,6 @@ end
 -- @return #FLIGHTCONTROL.HoldingStack Holding point.
 function FLIGHTCONTROL:_GetHoldingStack(flight)
 
-  --[[
-  local holdingpattern={} --#FLIGHTCONTROL.HoldingPattern
-  
-  local runway=self:GetActiveRunway()
-  
-  local hdg=runway.heading+90
-  local dx=UTILS.NMToMeters(5)
-  local dz=UTILS.NMToMeters(1)
-  
-  local angels=UTILS.FeetToMeters(math.random(6,10)*1000)
-  
-  holdingpattern.pos0=runway.position:Translate(dx, hdg):SetAltitude(angels)
-  holdingpattern.pos1=holdingpattern.pos0:Translate(dz, runway.heading):SetAltitude(angels)
-  
-  ]]
-  
   -- Debug message.
   self:T(self.lid..string.format("Getting holding point for flight %s", flight:GetName()))
   
@@ -3415,27 +3564,6 @@ function FLIGHTCONTROL:RemoveParkingGuard(spot, delay)
 
 end
 
-
---- Get coordinate of the airbase.
--- @param #FLIGHTCONTROL self
--- @return Core.Point#COORDINATE Coordinate of the airbase.
-function FLIGHTCONTROL:GetCoordinate()
-  return self.airbase:GetCoordinate()
-end
-
---- Get coalition of the airbase.
--- @param #FLIGHTCONTROL self
--- @return #number Coalition ID.
-function FLIGHTCONTROL:GetCoalition()
-  return self.airbase:GetCoalition()
-end
-
---- Get country of the airbase.
--- @param #FLIGHTCONTROL self
--- @return #number Country ID.
-function FLIGHTCONTROL:GetCountry()
-  return self.airbase:GetCountry()
-end
 
 --- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned.
 -- @param #FLIGHTCONTROL self

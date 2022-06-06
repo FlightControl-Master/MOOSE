@@ -6311,7 +6311,7 @@ do -- SET_OPSGROUP
 
   --- Creates a new SET_OPSGROUP object, building a set of groups belonging to a coalitions, categories, countries, types or with defined prefix names.
   -- @param #SET_OPSGROUP self
-  -- @return #SET_OPSGROUP
+  -- @return #SET_OPSGROUP self
   function SET_OPSGROUP:New()
 
     -- Inherit SET_BASE.

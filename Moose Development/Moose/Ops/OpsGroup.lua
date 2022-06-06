@@ -4162,6 +4162,17 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     ---
 
     -- Just stay put and wait until something happens.
+    
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.REARMING then
+
+    ---
+    -- Task "Rearming"
+    ---
+
+    -- Check if ammo is full.
+    
+    local rearmed=self:_CheckAmmoFull()
+
 
   elseif Task.dcstask.id==AUFTRAG.SpecialTask.ALERT5 then
 
@@ -4483,8 +4494,10 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
         done=true
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.AMMOSUPPLY then
         done=true
-      elseif Task.dcstask.id==AUFTRAG.SpecialTask.FUELSUPPLY then
+      elseif Task.dcstask.id==AUFTRAG.SpecialTask.FUELSUPPLY then      
         done=true
+      elseif Task.dcstask.id==AUFTRAG.SpecialTask.REARMING then
+        done=true        
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.ALERT5 then
         done=true
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.ONGUARD or Task.dcstask.id==AUFTRAG.SpecialTask.ARMOREDGUARD then
@@ -4944,7 +4957,12 @@ function OPSGROUP:onbeforeMissionStart(From, Event, To, Mission)
 
   -- Startup group if it is uncontrolled. Alert 5 aircraft will not be started though!
   if self:IsFlightgroup() and self:IsUncontrolled() and Mission.type~=AUFTRAG.Type.ALERT5 then
-    self:StartUncontrolled(delay)
+    local fc=FLIGHTGROUP.GetFlightControl(self)
+    if fc and fc:IsControlling(self) then
+      FLIGHTGROUP.SetReadyForTakeoff(self, true)
+    else
+      self:StartUncontrolled(delay)
+    end
   end
 
   return true
@@ -4972,9 +4990,9 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
   Mission:__Started(3)
   
   -- Set ready for takeoff in case of FLIGHTCONTROL.
-  if self.isFlightgroup and Mission.type~=AUFTRAG.Type.ALERT5 then
-    FLIGHTGROUP.SetReadyForTakeoff(self, true)
-  end
+  --if self.isFlightgroup and Mission.type~=AUFTRAG.Type.ALERT5 then
+  --  FLIGHTGROUP.SetReadyForTakeoff(self, true)
+  --end
 
   -- Route group to mission zone.
   if self.speedMax>3.6 or true then
@@ -5399,8 +5417,9 @@ function OPSGROUP:RouteToMission(mission, delay)
       
     elseif mission.type==AUFTRAG.Type.PATROLZONE or 
            mission.type==AUFTRAG.Type.BARRAGE    or 
-           mission.type==AUFTRAG.Type.AMMOSUPPLY or 
-           mission.type==AUFTRAG.Type.FUELSUPPLY or 
+           mission.type==AUFTRAG.Type.AMMOSUPPLY or
+           mission.type==AUFTRAG.Type.FUELSUPPLY or
+           mission.type==AUFTRAG.Type.REARMING   or 
            mission.type==AUFTRAG.Type.AIRDEFENSE or
            mission.type==AUFTRAG.Type.EWR        then
       ---
@@ -5539,8 +5558,6 @@ function OPSGROUP:RouteToMission(mission, delay)
       local inRange=self:InWeaponRange(targetcoord, mission.engageWeaponType)
       
       if inRange then
-      
-        env.info("FF in range!")
       
         waypointcoord=self:GetCoordinate(true)
       

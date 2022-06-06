@@ -418,6 +418,7 @@ _AUFTRAGSNR=0
 -- @field #string AIRDEFENSE Air defense.
 -- @field #string EWR Early Warning Radar.
 -- @field #string RECOVERYTANKER Recovery tanker.
+-- @filed #string REARMING Rearming mission.
 -- @field #string NOTHING Nothing.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
@@ -459,6 +460,7 @@ AUFTRAG.Type={
   AIRDEFENSE="Air Defence",
   EWR="Early Warning Radar",
   RECOVERYTANKER="Recovery Tanker",
+  REARMING="Rearming",
   NOTHING="Nothing",
 }
 
@@ -480,6 +482,7 @@ AUFTRAG.Type={
 -- @field #string AIRDEFENSE Air defense.
 -- @field #string EWR Early Warning Radar.
 -- @field #string RECOVERYTANKER Recovery tanker.
+-- @field #string REARMING Rearming.
 -- @field #string NOTHING Nothing.
 AUFTRAG.SpecialTask={
   FORMATION="Formation",
@@ -499,6 +502,7 @@ AUFTRAG.SpecialTask={
   AIRDEFENSE="Air Defense",
   EWR="Early Warning Radar",
   RECOVERYTANKER="Recovery Tanker",
+  REARMING="Rearming",
   NOTHING="Nothing",
 }
 
@@ -2001,6 +2005,30 @@ function AUFTRAG:NewFUELSUPPLY(Zone)
   mission.optionAlarm=ENUMS.AlarmState.Auto
 
   mission.missionFraction=1.0
+
+  mission.categories={AUFTRAG.Category.GROUND}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
+--- **[GROUND]** Create a REARMING mission.
+-- @param #AUFTRAG self
+-- @param Core.Zone#ZONE Zone The zone, where units go and look for ammo supply.
+-- @return #AUFTRAG self
+function AUFTRAG:NewREARMING(Zone)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.REARMING)
+
+  mission:_TargetFromObject(Zone)
+
+  mission.optionROE=ENUMS.ROE.WeaponHold
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+
+  mission.missionFraction=1.0
+
+  mission.missionWaypointRadius=0
 
   mission.categories={AUFTRAG.Category.GROUND}
 
@@ -5701,6 +5729,24 @@ function AUFTRAG:GetDCSMissionTask()
     local DCStask={}
 
     DCStask.id=AUFTRAG.SpecialTask.FUELSUPPLY
+
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
+    local param={}
+    param.zone=self:GetObjective()
+
+    DCStask.params=param
+
+    table.insert(DCStasks, DCStask)
+
+  elseif self.type==AUFTRAG.Type.AMMOSUPPLY then
+
+    ----------------------
+    -- REARMING Mission --
+    ----------------------
+
+    local DCStask={}
+
+    DCStask.id=AUFTRAG.SpecialTask.REARMING
 
     -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}

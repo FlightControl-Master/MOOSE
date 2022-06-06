@@ -33,6 +33,7 @@
 -- @field #number counterPhase Running number counting the phases.
 -- @field #OPERATION.Phase phase Currently active phase (if any).
 -- @field #table targets Targets.
+-- @field #table missions Missions.
 --
 -- @extends Core.Fsm#FSM
 
@@ -54,6 +55,7 @@ OPERATION = {
   phases             =    {},
   counterPhase       =     0,
   targets            =    {},
+  missions           =    {},
 }
 
 --- Global mission counter.
@@ -136,15 +138,14 @@ function OPERATION:New(Name)
   --- Pseudo Functions ---
   ------------------------
 
-  --- Triggers the FSM event "StatusUpdate".
-  -- @function [parent=#OPERATION] StatusUpdate
+  --- Triggers the FSM event "Start".
+  -- @function [parent=#OPERATION] Start
   -- @param #OPERATION self
 
-  --- Triggers the FSM event "Status" after a delay.
-  -- @function [parent=#OPERATION] __StatusUpdate
+  --- Triggers the FSM event "Start" after a delay.
+  -- @function [parent=#OPERATION] __Start
   -- @param #OPERATION self
   -- @param #number delay Delay in seconds.
-
 
   --- Triggers the FSM event "Stop".
   -- @function [parent=#OPERATION] Stop
@@ -152,6 +153,15 @@ function OPERATION:New(Name)
 
   --- Triggers the FSM event "Stop" after a delay.
   -- @function [parent=#OPERATION] __Stop
+  -- @param #OPERATION self
+  -- @param #number delay Delay in seconds.
+
+  --- Triggers the FSM event "StatusUpdate".
+  -- @function [parent=#OPERATION] StatusUpdate
+  -- @param #OPERATION self
+
+  --- Triggers the FSM event "Status" after a delay.
+  -- @function [parent=#OPERATION] __StatusUpdate
   -- @param #OPERATION self
   -- @param #number delay Delay in seconds.
 
@@ -243,6 +253,36 @@ function OPERATION:AddPhase(Name)
   return phase
 end
 
+--- Add mission to operation.
+-- @param #OPERATION self
+-- @param Ops.Auftrag#AUFTRAG Mission The mission to add.
+-- @param #OPERATION.Phase Phase (Optional) The phase in which the mission should be executed. If no phase is given, it will be exectuted ASAP.
+function OPERATION:AddMission(Mission, Phase)
+
+  Mission.phase=Phase
+  Mission.operation=self
+  
+  table.insert(self.missions, Mission)
+
+  return self
+end
+
+--- Add Target to operation.
+-- @param #OPERATION self
+-- @param Ops.Target#TARGET Target The target to add.
+-- @param #OPERATION.Phase Phase (Optional) The phase in which the target should be attacked. If no phase is given, it will be attacked ASAP.
+function OPERATION:AddTarget(Target, Phase)
+
+  Target.phase=Phase
+  Target.operation=self
+  
+  table.insert(self.targets, Target)
+
+  return self
+end
+
+
+
 --- Get a phase by its name.
 -- @param #OPERATION self
 -- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
@@ -310,6 +350,14 @@ function OPERATION:IsAssignedCohort(Cohort)
     self:T(self.lid..string.format("Cohort %s is assigned to this operation", Cohort.name))
     return true
   else
+  
+    -- Check if legion of this cohort was assigned.
+    local Legion=Cohort.legion
+    if Legion and self:IsAssignedLegion(Legion) then
+      self:T(self.lid..string.format("Legion %s of Cohort %s is assigned to this operation", Legion.alias, Cohort.name))
+      return true
+    end
+  
     self:T(self.lid..string.format("Cohort %s is NOT assigned to this operation", Cohort.name))
     return false
   end
@@ -460,6 +508,22 @@ function OPERATION:GetPhaseActive()
   return self.phase
 end
 
+--- Get name of a phase.
+-- @param #OPERATION self
+-- @param #OPERATION.Phase Phase The phase of which the name is returned.
+-- @return #string The name of the phase.
+function OPERATION:GetPhaseName(Phase)
+
+  Phase=Phase or self.phase
+  
+  if Phase then
+    return Phase.name
+  else
+    return "None"
+  end
+  
+end
+
 --- Check if a phase is the currently active one.
 -- @param #OPERATION self
 -- @param #OPERATION.Phase Phase The phase to check.
@@ -502,6 +566,24 @@ function OPERATION:CountPhases(Status)
   for _,_phase in pairs(self.phases) do
     local phase=_phase --#OPERATION.Phase
     if Status==nil or Status==phase.status then
+      N=N+1
+    end
+  end
+
+  return N
+end
+
+--- Count targets alive.
+-- @param #OPERATION self
+-- @param #OPERATION.Phase Phase (Optional) Only count targets set for this phase.
+-- @return #number Number of phases
+function OPERATION:CountTargets(Phase)
+
+  local N=0
+  for _,_target in pairs(self.targets) do
+    local target=_target --Ops.Target#TARGET
+    
+    if target:IsAlive() and (Phase==nil or target.phase==Phase) then
       N=N+1
     end
   end

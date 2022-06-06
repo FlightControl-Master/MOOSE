@@ -1695,7 +1695,7 @@ function FLIGHTGROUP:onafterParking(From, Event, To)
     end
     
   else
-    env.info("FF no flight control!")
+    self:E(self.lid.."ERROR: FF no flight control in onAfterParking!")
   end
 end
 
@@ -2327,6 +2327,9 @@ end
 -- @param #number SpeedTo Speed used for travelling from current position to holding point in knots.
 -- @param #number SpeedHold Holding speed in knots.
 function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
+
+  -- Debug info.
+  self:T(self.lid..string.format("RTB: before event=%s: %s --> %s to %s", Event, From, To, airbase and airbase:GetName() or "None"))
 
   if self:IsAlive() then
 
@@ -4296,7 +4299,7 @@ function FLIGHTGROUP:_PlayerMyStatus(groupname)
     local text=string.format("My Status:")
     text=text..string.format("\nCallsign: %s", tostring(flight:GetCallsignName()))
     text=text..string.format("\nFlight status: %s", tostring(flight:GetState()))
-    text=text..string.format("\nFlight control: %s status=%s", tostring(fc and fc.airbasename or "N/A"), tostring(fc and fc:GetFlightStatus(flight) or "N/A"))
+    text=text..string.format("\nFlight control: %s [%s]", tostring(fc and fc.airbasename or "N/A"), tostring(fc and fc:GetFlightStatus(flight) or "N/A"))
 
     -- Send message.
     --self:TextMessageToFlight(text, flight, 10, true)

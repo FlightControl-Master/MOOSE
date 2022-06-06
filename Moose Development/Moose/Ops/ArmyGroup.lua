@@ -137,7 +137,7 @@ function ARMYGROUP:New(group)
 
   self:AddTransition("*",             "Rearm",            "Rearm")       -- Group is send to a coordinate and waits until ammo is refilled.
   self:AddTransition("Rearm",         "Rearming",         "Rearming")    -- Group has arrived at the rearming coodinate and is waiting to be fully rearmed.
-  self:AddTransition("Rearming",      "Rearmed",          "Cruising")    -- Group was rearmed.
+  self:AddTransition("*",             "Rearmed",          "Cruising")    -- Group was rearmed.
   
   ------------------------
   --- Pseudo Functions ---
@@ -1381,9 +1381,22 @@ end
 -- @param #string To To state.
 function ARMYGROUP:onafterRearmed(From, Event, To)
   self:T(self.lid.."Group rearmed")
+  
+  -- Get Current mission.
+  local mission=self:GetMissionCurrent()
+  
+  -- Check if this is a rearming mission.
+  if mission and mission.type==AUFTRAG.Type.REARMING then
+    -- Rearmed ==> Mission Done! This also checks if the group is done.
+    self:MissionDone(mission)
+    
+  else
+  
+    -- Check group done.
+    self:_CheckGroupDone(1)
+  
+  end
 
-  -- Check group done.
-  self:_CheckGroupDone(1)      
 end
 
 --- On before "RTZ" event.

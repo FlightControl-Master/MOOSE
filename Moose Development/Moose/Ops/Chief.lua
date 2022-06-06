@@ -2117,7 +2117,7 @@ function CHIEF:CheckTargetQueue()
               self:T2(self.lid..string.format("Recruiting assets for mission type %s [performance=%d] of target %s", mp.MissionType, mp.Performance, target:GetName()))
               
               -- Recruit assets.
-              local recruited, assets, legions=self:RecruitAssetsForTarget(target, mp.MissionType, NassetsMin, NassetsMax)
+              local recruited, assets, legions=self.commander:RecruitAssetsForTarget(target, mp.MissionType, NassetsMin, NassetsMax)
               
               if recruited then
               
@@ -2649,29 +2649,6 @@ function CHIEF:_GetMissionTypeForGroupAttribute(Attribute)
   return missionperf
 end
 
---- Recruit assets for a given TARGET.
--- @param #CHIEF self
--- @param Ops.Target#TARGET Target The target.
--- @param #string MissionType Mission Type.
--- @param #number NassetsMin Min number of required assets.
--- @param #number NassetsMax Max number of required assets.
--- @return #boolean If `true` enough assets could be recruited.
--- @return #table Assets that have been recruited from all legions.
--- @return #table Legions that have recruited assets.
-function CHIEF:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMax)
-
-  -- Cohorts.
-  local Cohorts=self.commander:_GetCohorts()
-
-  -- Target position.
-  local TargetVec2=Target:GetVec2()
-  
-  -- Recruite assets.
-  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2)
-
-
-  return recruited, assets, legions
-end
 
 --- Recruit assets for a given OPS zone.
 -- @param #CHIEF self

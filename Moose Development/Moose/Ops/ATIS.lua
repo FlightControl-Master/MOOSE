@@ -1137,15 +1137,19 @@ end
 -- @param #number Port SRS port. Default 5002.
 -- @return #ATIS self
 function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port)
-  self.useSRS=true
-  self.msrs=MSRS:New(PathToSRS, self.frequency, self.modulation)
-  self.msrs:SetGender(Gender)
-  self.msrs:SetCulture(Culture)
-  self.msrs:SetVoice(Voice)
-  self.msrs:SetPort(Port)
-  self.msrs:SetCoalition(self:GetCoalition())
-  if self.dTQueueCheck<=10 then
-    self:SetQueueUpdateTime(90)
+  if PathToSRS then
+    self.useSRS=true
+    self.msrs=MSRS:New(PathToSRS, self.frequency, self.modulation)
+    self.msrs:SetGender(Gender)
+    self.msrs:SetCulture(Culture)
+    self.msrs:SetVoice(Voice)
+    self.msrs:SetPort(Port)
+    self.msrs:SetCoalition(self:GetCoalition())
+    if self.dTQueueCheck<=10 then
+      self:SetQueueUpdateTime(90)
+    end
+  else
+    self:E(self.lid..string.format("ERROR: No SRS path specified!"))
   end
   return self
 end

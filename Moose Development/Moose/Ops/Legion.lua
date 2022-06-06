@@ -1869,8 +1869,9 @@ function LEGION:GetOpsGroups(MissionTypes, Attributes)
 
   for _,_cohort in pairs(self.cohorts) do
     local cohort=_cohort --Ops.Cohort#COHORT
-    local setcohort=cohort:GetOpsGroups(MissionTypes, Attributes)
-    setLegion:AddSet(setcohort)
+    local setCohort=cohort:GetOpsGroups(MissionTypes, Attributes)
+    self:I(self.lid..string.format("Found %d opsgroups of cohort %s", setCohort:Count(), cohort.name))
+    setLegion:AddSet(setCohort)
   end
 
   return setLegion
