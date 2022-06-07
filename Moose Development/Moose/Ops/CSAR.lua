@@ -1248,7 +1248,7 @@ function CSAR:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupNam
     _maxUnits = self.max_units
   end
   if _unitsInHelicopter + 1 > _maxUnits then
-      self:_DisplayMessageToSAR(_heliUnit, string.format("%s, %s. We\'re already crammed with %d guys! Sorry!", _pilotName, _heliName, _unitsInHelicopter, _unitsInHelicopter), self.messageTime)
+      self:_DisplayMessageToSAR(_heliUnit, string.format("%s, %s. We\'re already crammed with %d guys! Sorry!", _pilotName, _heliName, _unitsInHelicopter, _unitsInHelicopter), self.messageTime,false,false,true)
       return true
   end
   
@@ -1346,7 +1346,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
               --if _time <= 0 or _distance < self.loadDistance then
               if _distance < self.loadDistance + 5 or _distance <= 13 then
                  if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
-                  self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true)
+                  self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true, true)
                   return true
                  else
                    self.landedStatus[_lookupKeyHeli] = nil
@@ -1358,7 +1358,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
         else
           if (_distance < self.loadDistance) then
               if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
-                self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true)
+                self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true, true)
                 return true
               else
                 self:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName)
@@ -1400,7 +1400,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
                           self:_DisplayMessageToSAR(_heliUnit, "Hovering above " .. _pilotName .. ". \n\nHold hover for " .. _time .. " seconds to winch them up. \n\nIf the countdown stops you\'re too far away!", self.messageTime, true)
                       else
                        if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
-                          self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true)
+                          self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true, true)
                           return true
                         else
                           self.hoverStatus[_lookupKeyHeli] = nil
@@ -1459,7 +1459,7 @@ function CSAR:_ScheduledSARFlight(heliname,groupname, isairport)
 
   if ( _dist < self.FARPRescueDistance or isairport ) and _heliUnit:InAir() == false then
     if self.pilotmustopendoors and self:_IsLoadingDoorOpen(heliname) == false then
-      self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me out!", self.messageTime, true)
+      self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me out!", self.messageTime, true, true)
     else
       self:_RescuePilots(_heliUnit)
       return
