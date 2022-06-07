@@ -357,7 +357,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "beta 0.1.27", -- #string
+  version = "beta 0.1.28", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -697,7 +697,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.1.27
+-- TODO-List 0.1.28
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
@@ -2259,15 +2259,14 @@ function AWACS:_CreatePicture(AO,Callsign,GID,MaxEntries,IsGeneral)
         textScreen = contact.TargetGroupNaming.." group,"
       end
       
-      --if IsGeneral then
+      if IsGeneral or not self.PlayerGuidance then
         refBRAA=self:_ToStringBULLS(coordinate)
         refBRAATTS = self:_ToStringBULLS(coordinate, false, true)
         local alt = contact.Contact.group:GetAltitude() or 8000
         alt = UTILS.Round(UTILS.MetersToFeet(alt)/1000,0)
         -- Alpha Group. Bulls eye 0 2 1, 16 miles, 25 thousand. 
         text = text .. " "..refBRAATTS.." miles, "..alt.." thousand." -- Alpha Group. Bulls eye 0 2 1, 16 miles, 25 thousand. 
-        textScreen = textScreen .. " "..refBRAA.." miles, "..alt.." thousand." -- Alpha Group, Bullseye 021, 16 miles, 25 thousand,
-      --[[  
+        textScreen = textScreen .. " "..refBRAA.." miles, "..alt.." thousand." -- Alpha Group, Bullseye 021, 16 miles, 25 thousand,      
       else
         -- pilot reference
         refBRAA = coordinate:ToStringBRAANATO(groupcoord,true,true)
@@ -2284,7 +2283,6 @@ function AWACS:_CreatePicture(AO,Callsign,GID,MaxEntries,IsGeneral)
         text = text .. " "..refBRAATTS
         textScreen = textScreen .." "..refBRAA
       end
-      --]]
       
       -- Aspect
       local aspect = ""
@@ -3143,6 +3141,7 @@ function AWACS:_CheckOut(Group,GID,dead)
     -- delete open tasks
     if managedgroup.CurrentTask and managedgroup.CurrentTask > 0 then
       self.ManagedTasks:PullByID(managedgroup.CurrentTask )
+      self:_UpdateContactEngagementTag(managedgroup.ContactCID,"",false,false)
     end
     self.ManagedGrps[GID] = nil
     self:__CheckedOut(1,GID,Stack,Angels)
