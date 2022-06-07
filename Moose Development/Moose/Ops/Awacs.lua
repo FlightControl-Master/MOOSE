@@ -1200,7 +1200,7 @@ function AWACS:ZipLip()
   self:SuppressScreenMessages(true)
   self.PlayerGuidance = false
   self.callsignshort = true
-  self.NoGroupTags = true
+  --self.NoGroupTags = true
   self.NoMissileCalls = true
   return self
 end
@@ -1532,6 +1532,7 @@ function AWACS:SetAwacsDetails(CallSign,CallSignNo,Angels,Speed,Heading,Leg)
 end
 
 --- [User] Add a radar GROUP object to the INTEL detection SET_GROUP
+-- @param #AWACS self
 -- @param Wrapper.Group#GROUP Group The GROUP to be added. Can be passed as SET_GROUP.
 -- @return #AWACS self
 function AWACS:AddGroupToDetection(Group)

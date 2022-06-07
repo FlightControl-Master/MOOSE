@@ -30,7 +30,7 @@
 -- @module Ops.CSAR
 -- @image OPS_CSAR.jpg
 
--- Date: Feb 2022
+-- Date: June 2022
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -76,65 +76,69 @@
 -- 
 -- The following options are available (with their defaults). Only set the ones you want changed:
 --
---         self.allowDownedPilotCAcontrol = false -- Set to false if you don\'t want to allow control by Combined Arms.
---         self.allowFARPRescue = true -- allows pilots to be rescued by landing at a FARP or Airbase. Else MASH only!
---         self.FARPRescueDistance = 1000 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
---         self.autosmoke = false -- automatically smoke a downed pilot\'s location when a heli is near.
---         self.autosmokedistance = 1000 -- distance for autosmoke
---         self.coordtype = 1 -- Use Lat/Long DDM (0), Lat/Long DMS (1), MGRS (2), Bullseye imperial (3) or Bullseye metric (4) for coordinates.
---         self.csarOncrash = false -- (WIP) If set to true, will generate a downed pilot when a plane crashes as well.
---         self.enableForAI = false -- set to false to disable AI pilots from being rescued.
---         self.pilotRuntoExtractPoint = true -- Downed pilot will run to the rescue helicopter up to self.extractDistance in meters. 
---         self.extractDistance = 500 -- Distance the downed pilot will start to run to the rescue helicopter.
---         self.immortalcrew = true -- Set to true to make wounded crew immortal.
---         self.invisiblecrew = false -- Set to true to make wounded crew insvisible.
---         self.loadDistance = 75 -- configure distance for pilots to get into helicopter in meters.
---         self.mashprefix = {"MASH"} -- prefixes of #GROUP objects used as MASHes.
---         self.max_units = 6 -- max number of pilots that can be carried if #CSAR.AircraftType is undefined.
---         self.messageTime = 15 -- Time to show messages for in seconds. Doubled for long messages.
---         self.radioSound = "beacon.ogg" -- the name of the sound file to use for the pilots\' radio beacons. 
---         self.smokecolor = 4 -- Color of smokemarker, 0 is green, 1 is red, 2 is white, 3 is orange and 4 is blue.
---         self.useprefix = true  -- Requires CSAR helicopter #GROUP names to have the prefix(es) defined below.
---         self.csarPrefix = { "helicargo", "MEDEVAC"} -- #GROUP name prefixes used for useprefix=true - DO NOT use # in helicopter names in the Mission Editor! 
---         self.verbose = 0 -- set to > 1 for stats output for debugging.
+--         mycsar.allowDownedPilotCAcontrol = false -- Set to false if you don\'t want to allow control by Combined Arms.
+--         mycsar.allowFARPRescue = true -- allows pilots to be rescued by landing at a FARP or Airbase. Else MASH only!
+--         mycsar.FARPRescueDistance = 1000 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
+--         mycsar.autosmoke = false -- automatically smoke a downed pilot\'s location when a heli is near.
+--         mycsar.autosmokedistance = 1000 -- distance for autosmoke
+--         mycsar.coordtype = 1 -- Use Lat/Long DDM (0), Lat/Long DMS (1), MGRS (2), Bullseye imperial (3) or Bullseye metric (4) for coordinates.
+--         mycsar.csarOncrash = false -- (WIP) If set to true, will generate a downed pilot when a plane crashes as well.
+--         mycsar.enableForAI = false -- set to false to disable AI pilots from being rescued.
+--         mycsar.pilotRuntoExtractPoint = true -- Downed pilot will run to the rescue helicopter up to mycsar.extractDistance in meters. 
+--         mycsar.extractDistance = 500 -- Distance the downed pilot will start to run to the rescue helicopter.
+--         mycsar.immortalcrew = true -- Set to true to make wounded crew immortal.
+--         mycsar.invisiblecrew = false -- Set to true to make wounded crew insvisible.
+--         mycsar.loadDistance = 75 -- configure distance for pilots to get into helicopter in meters.
+--         mycsar.mashprefix = {"MASH"} -- prefixes of #GROUP objects used as MASHes.
+--         mycsar.max_units = 6 -- max number of pilots that can be carried if #CSAR.AircraftType is undefined.
+--         mycsar.messageTime = 15 -- Time to show messages for in seconds. Doubled for long messages.
+--         mycsar.radioSound = "beacon.ogg" -- the name of the sound file to use for the pilots\' radio beacons. 
+--         mycsar.smokecolor = 4 -- Color of smokemarker, 0 is green, 1 is red, 2 is white, 3 is orange and 4 is blue.
+--         mycsar.useprefix = true  -- Requires CSAR helicopter #GROUP names to have the prefix(es) defined below.
+--         mycsar.csarPrefix = { "helicargo", "MEDEVAC"} -- #GROUP name prefixes used for useprefix=true - DO NOT use # in helicopter names in the Mission Editor! 
+--         mycsar.verbose = 0 -- set to > 1 for stats output for debugging.
 --         -- (added 0.1.4) limit amount of downed pilots spawned by **ejection** events
---         self.limitmaxdownedpilots = true
---         self.maxdownedpilots = 10 
+--         mycsar.limitmaxdownedpilots = true
+--         mycsar.maxdownedpilots = 10 
 --         -- (added 0.1.8) - allow to set far/near distance for approach and optionally pilot must open doors
---         self.approachdist_far = 5000 -- switch do 10 sec interval approach mode, meters
---         self.approachdist_near = 3000 -- switch to 5 sec interval approach mode, meters
---         self.pilotmustopendoors = false -- switch to true to enable check of open doors
+--         mycsar.approachdist_far = 5000 -- switch do 10 sec interval approach mode, meters
+--         mycsar.approachdist_near = 3000 -- switch to 5 sec interval approach mode, meters
+--         mycsar.pilotmustopendoors = false -- switch to true to enable check of open doors
 --         -- (added 0.1.9)
---         self.suppressmessages = false -- switch off all messaging if you want to do your own
+--         mycsar.suppressmessages = false -- switch off all messaging if you want to do your own
 --         -- (added 0.1.11)
---         self.rescuehoverheight = 20 -- max height for a hovering rescue in meters
---         self.rescuehoverdistance = 10 -- max distance for a hovering rescue in meters
+--         mycsar.rescuehoverheight = 20 -- max height for a hovering rescue in meters
+--         mycsar.rescuehoverdistance = 10 -- max distance for a hovering rescue in meters
 --         -- (added 0.1.12)
 --         -- Country codes for spawned pilots
---         self.countryblue= country.id.USA
---         self.countryred = country.id.RUSSIA
---         self.countryneutral = country.id.UN_PEACEKEEPERS
+--         mycsar.countryblue= country.id.USA
+--         mycsar.countryred = country.id.RUSSIA
+--         mycsar.countryneutral = country.id.UN_PEACEKEEPERS
 --         
 -- ## 2.1 Experimental Features
 -- 
 --       WARNING - Here\'ll be dragons!
 --       DANGER - For this to work you need to de-sanitize your mission environment (all three entries) in <DCS root>\Scripts\MissionScripting.lua
 --       Needs SRS => 1.9.6 to work (works on the **server** side of SRS)
---       self.useSRS = false -- Set true to use FF\'s SRS integration
---       self.SRSPath = "E:\\Progra~1\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your SRS installation -- server(!)
---       self.SRSchannel = 300 -- radio channel
---       self.SRSModulation = radio.modulation.AM -- modulation
---       self.SRSport = 5002  -- and SRS port
+--       mycsar.useSRS = false -- Set true to use FF\'s SRS integration
+--       mycsar.SRSPath = "C:\\Progra~1\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your SRS installation -- server(!)
+--       mycsar.SRSchannel = 300 -- radio channel
+--       mycsar.SRSModulation = radio.modulation.AM -- modulation
+--       mycsar.SRSport = 5002  -- and SRS Server port
+--       mycsar.SRSCulture = "en-GB" -- SRS voice culture
+--       mycsar.SRSVoice = nil -- SRS voice, relevant for Google TTS
+--       mycsar.SRSGPathToCredentials = nil -- Path to your Google credentials json file, set this if you want to use Google TTS
+--       mycsar.SRSVolume = 1 -- Volume, between 0 and 1
 --       --
---       self.csarUsePara = false -- If set to true, will use the LandingAfterEjection Event instead of Ejection --shagrat
---       self.wetfeettemplate = "man in floating thingy" -- if you use a mod to have a pilot in a rescue float, put the template name in here for wet feet spawns. Note: in conjunction with csarUsePara this might create dual ejected pilots in edge cases.
+--       mycsar.csarUsePara = false -- If set to true, will use the LandingAfterEjection Event instead of Ejection --shagrat
+--       mycsar.wetfeettemplate = "man in floating thingy" -- if you use a mod to have a pilot in a rescue float, put the template name in here for wet feet spawns. Note: in conjunction with csarUsePara this might create dual ejected pilots in edge cases.
 --        
 -- ## 3. Results
 -- 
 -- Number of successful landings with save pilots and aggregated number of saved pilots is stored in these variables in the object:
 --      
---        self.rescues -- number of successful landings *with* saved pilots
---        self.rescuedpilots -- aggregated number of pilots rescued from the field (of *all* players)
+--        mycsar.rescues -- number of successful landings *with* saved pilots
+--        mycsar.rescuedpilots -- aggregated number of pilots rescued from the field (of *all* players)
 -- 
 -- ## 4. Events
 --
@@ -260,7 +264,7 @@ CSAR.AircraftType["AH-64D_BLK_II"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.4e"
+CSAR.version="1.0.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -415,6 +419,10 @@ function CSAR:New(Coalition, Template, Alias)
   self.SRSchannel = 300 -- radio channel
   self.SRSModulation = radio.modulation.AM -- modulation
   self.SRSport = 5002 -- port
+  self.SRSCulture = "en-GB"
+  self.SRSVoice = nil
+  self.SRSGPathToCredentials = nil
+  self.SRSVolume = 1
   
   ------------------------
   --- Pseudo Functions ---
@@ -1526,6 +1534,14 @@ function CSAR:_DisplayMessageToSAR(_unit, _text, _time, _clear, _speak, _overrid
     local channel = self.SRSchannel
     local msrs = MSRS:New(path,channel,modulation)
     msrs:SetPort(self.SRSport)
+    msrs:SetLabel("CSAR")
+    msrs:SetCulture(self.SRSCulture)
+    msrs:SetCoalition(self.coalition)
+    msrs:SetVoice(self.SRSVoice)
+    if self.SRSGPathToCredentials then
+      msrs:SetGoogle(self.SRSGPathToCredentials)
+    end
+    msrs:SetVolume(self.SRSVolume)
     msrs:PlaySoundText(srstext, 2)
   end
   return self
