@@ -486,6 +486,29 @@ AIRBASE.MarianaIslands = {
   ["Olf_Orote"] = "Olf Orote",
 }
 
+--- Airbases of the South Atlantic map:
+--
+-- * AIRBASE.SouthAtlantic.Port_Stanley
+-- * AIRBASE.SouthAtlantic.Mount_Pleasant
+-- * AIRBASE.SouthAtlantic.San_Carlos_FOB
+-- * AIRBASE.SouthAtlantic.Rio_Grande
+-- * AIRBASE.SouthAtlantic.Rio_Gallegos
+-- * AIRBASE.SouthAtlantic.Ushuaia
+-- * AIRBASE.SouthAtlantic.Ushuaia_Helo_Port
+-- * AIRBASE.SouthAtlantic.Punta_Arenas
+-- 
+--@field MarianaIslands
+AIRBASE.SouthAtlantic={
+  ["Port_Stanley"]="Port Stanley",
+  ["Mount_Pleasant"]="Mount Pleasant",
+  ["San_Carlos_FOB"]="San Carlos FOB",
+  ["Rio_Grande"]="Rio Grande",
+  ["Rio_Gallegos"]="Rio Gallegos",
+  ["Ushuaia"]="Ushuaia",
+  ["Ushuaia_Helo_Port"]="Ushuaia Helo Port",
+  ["Punta_Arenas"]="Punta Arenas",
+}
+
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
 -- @type AIRBASE.ParkingSpot
 -- @field Core.Point#COORDINATE Coordinate Coordinate of the parking spot.
