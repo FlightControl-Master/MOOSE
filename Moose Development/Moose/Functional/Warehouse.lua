@@ -1939,6 +1939,7 @@ function WAREHOUSE:New(warehouse, alias)
   self:SetMarker(true)
   self:SetReportOff()
   self:SetRunwayRepairtime()
+  self.allowSpawnOnClientSpots=false
 
   -- Add warehouse to database.
   _WAREHOUSEDB.Warehouses[self.uid]=self
@@ -2581,6 +2582,14 @@ end
 -- @return #WAREHOUSE self
 function WAREHOUSE:SetSafeParkingOff()
   self.safeparking=false
+  return self
+end
+
+--- Set wether client parking spots can be used for spawning.
+-- @param #WAREHOUSE self
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetAllowSpawnOnClientParking()
+  self.allowSpawnOnClientSpots=true
   return self
 end
 
@@ -7878,14 +7887,16 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
 
   -- Get client coordinates.
   local function _clients()
-    local clients=_DATABASE.CLIENTS
     local coords={}
-    for clientname, client in pairs(clients) do
-      local template=_DATABASE:GetGroupTemplateFromUnitName(clientname)
-      local units=template.units
-      for i,unit in pairs(units) do
-        local coord=COORDINATE:New(unit.x, unit.alt, unit.y)
-        coords[unit.name]=coord
+    if not self.allowSpawnOnClientSpots then  
+      local clients=_DATABASE.CLIENTS
+      for clientname, client in pairs(clients) do
+        local template=_DATABASE:GetGroupTemplateFromUnitName(clientname)
+        local units=template.units
+        for i,unit in pairs(units) do
+          local coord=COORDINATE:New(unit.x, unit.alt, unit.y)
+          coords[unit.name]=coord
+        end
       end
     end
     return coords

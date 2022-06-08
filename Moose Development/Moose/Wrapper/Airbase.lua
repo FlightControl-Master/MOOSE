@@ -28,6 +28,7 @@
 -- @field #number activerwyno Active runway number (forced).
 -- @field #table parkingWhitelist List of parking spot terminal IDs considered for spawning.
 -- @field #table parkingBlacklist List of parking spot terminal IDs **not** considered for spawning.
+-- @field #table runways Runways of airdromes.
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 --- Wrapper class to handle the DCS Airbase objects:
@@ -551,11 +552,17 @@ AIRBASE.SpotStatus = {
 
 --- Runway data.
 -- @type AIRBASE.Runway
--- @field #number heading Heading of the runway in degrees.
+-- @field #string name Runway name.
 -- @field #string idx Runway ID: heading 070° ==> idx="07".
+-- @field #number heading True heading of the runway in degrees.
+-- @field #number magheading Magnetic heading of the runway in degrees. This is what is marked on the runway.
 -- @field #number length Length of runway in meters.
+-- @field #number width Width of runway in meters.
+-- @field Core.Zone#ZONE_POLYGON zone Runway zone.
+-- @field Core.Point#COORDINATE center Center of the runway.
 -- @field Core.Point#COORDINATE position Position of runway start.
 -- @field Core.Point#COORDINATE endpoint End point of runway.
+-- @field #boolean isLeft If `true`, this is the left of two parallel runways. If `false`, this is the right of two runways. If `nil`, no parallel runway exists.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Registration
@@ -602,6 +609,9 @@ function AIRBASE:Register(AirbaseName)
   else
     self:E("ERROR: Unknown airbase category!")
   end
+  
+  -- Init Runways.
+  self:_InitRunways()
 
   -- Init parking spots.
   self:_InitParkingSpots()
@@ -819,6 +829,42 @@ function AIRBASE:SetParkingSpotBlacklist(TerminalIdBlacklist)
   return self
 end
 
+--- Sets the ATC belonging to an airbase object to be silent and unresponsive. This is useful for disabling the award winning ATC behavior in DCS. 
+-- Note that this DOES NOT remove the airbase from the list. It just makes it unresponsive and silent to any radio calls to it.
+-- @param #AIRBASE self
+-- @param #boolean Silent If `true`, enable silent mode. If `false` or `nil`, disable silent mode.
+-- @return #AIRBASE self
+function AIRBASE:SetRadioSilentMode(Silent)
+
+  -- Get DCS airbase object.
+  local airbase=self:GetDCSObject()
+  
+  -- Set mode.
+  if airbase then
+    airbase:setRadioSilentMode(Silent)
+  end
+  
+  return self
+end
+
+--- Check whether or not the airbase has been silenced.
+-- @param #AIRBASE self
+-- @return #boolean If `true`, silent mode is enabled.
+function AIRBASE:GetRadioSilentMode()
+  
+  -- Is silent?
+  local silent=nil
+
+  -- Get DCS airbase object.
+  local airbase=self:GetDCSObject()
+  
+  -- Set mode.
+  if airbase then
+    silent=airbase:getRadioSilentMode()
+  end
+  
+  return silent
+end
 
 --- Get category of airbase.
 -- @param #AIRBASE self
@@ -1478,6 +1524,221 @@ end
 -- Runway
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Get runways.
+-- @param #AIRBASE self
+-- @return #table Runway data.
+function AIRBASE:GetRunways()
+  return self.runways or {}
+end
+
+--- Init runways.
+-- @param #AIRBASE self
+-- @param #boolean IncludeInverse If `true` or `nil`, include inverse runways.
+-- @return #table Runway data.
+function AIRBASE:_InitRunways(IncludeInverse)
+
+  -- Default is true.
+  if IncludeInverse==nil then
+    IncludeInverse=true
+  end
+
+  -- Runway table.
+  local Runways={}
+
+  if self:GetAirbaseCategory()~=Airbase.Category.AIRDROME then
+    self.runways={}
+    return {}
+  end
+  
+  --- Function to create a runway data table.
+  local function _createRunway(name, course, width, length, center)
+
+    -- Bearing in rad.
+    local bearing=-1*course
+    
+    -- Heading in degrees.
+    local heading=math.deg(bearing)
+      
+    -- Data table.
+    local runway={} --#AIRBASE.Runway      
+    runway.name=string.format("%02d", tonumber(name))
+    runway.magheading=tonumber(runway.name)*10
+    runway.heading=heading
+    runway.width=width or 0
+    runway.length=length or 0     
+    runway.center=COORDINATE:NewFromVec3(center)
+
+    -- Ensure heading is [0,360]
+    if runway.heading>360 then
+      runway.heading=runway.heading-360
+    elseif runway.heading<0 then
+      runway.heading=runway.heading+360
+    end
+    
+    -- For example at Nellis, DCS reports two runways, i.e. 03 and 21, BUT the "course" of both is -0.700 rad = 40 deg!
+    -- As a workaround, I check the difference between the "magnetic" heading derived from the name and the true heading.
+    -- If this is too large then very likely the "inverse" heading is the one we are looking for.
+    if math.abs(runway.heading-runway.magheading)>60 then
+      self:T(string.format("WARNING: Runway %s: heading=%.1f magheading=%.1f", runway.name, runway.heading, runway.magheading))
+      runway.heading=runway.heading-180
+    end
+    
+    -- Ensure heading is [0,360]
+    if runway.heading>360 then
+      runway.heading=runway.heading-360
+    elseif runway.heading<0 then
+      runway.heading=runway.heading+360
+    end
+    
+    -- Start and endpoint of runway.
+    runway.position=runway.center:Translate(-runway.length/2, runway.heading)
+    runway.endpoint=runway.center:Translate( runway.length/2, runway.heading)
+    
+    local init=runway.center:GetVec3()
+    local width = runway.width/2
+    local L2=runway.length/2
+    
+    local offset1 = {x = init.x + (math.cos(bearing + math.pi) * L2), y = init.z + (math.sin(bearing + math.pi) * L2)}
+    local offset2 = {x = init.x - (math.cos(bearing + math.pi) * L2), y = init.z - (math.sin(bearing + math.pi) * L2)}
+            
+    local points={}
+    points[1] = {x = offset1.x + (math.cos(bearing + (math.pi/2)) * width), y = offset1.y + (math.sin(bearing + (math.pi/2)) * width)}
+    points[2] = {x = offset1.x + (math.cos(bearing - (math.pi/2)) * width), y = offset1.y + (math.sin(bearing - (math.pi/2)) * width)}
+    points[3] = {x = offset2.x + (math.cos(bearing - (math.pi/2)) * width), y = offset2.y + (math.sin(bearing - (math.pi/2)) * width)}
+    points[4] = {x = offset2.x + (math.cos(bearing + (math.pi/2)) * width), y = offset2.y + (math.sin(bearing + (math.pi/2)) * width)}
+    
+    -- Runway zone.
+    runway.zone=ZONE_POLYGON_BASE:New(string.format("%s Runway %s", self.AirbaseName, runway.name), points)
+
+    return runway
+  end
+
+
+  -- Get DCS object.
+  local airbase=self:GetDCSObject()
+  
+  if airbase then
+
+   
+    -- Get DCS runways.
+    local runways=airbase:getRunways()
+    
+    -- Debug info.
+    self:T2(runways)
+    
+    if runways then
+    
+      -- Loop over runways.
+      for _,rwy in pairs(runways) do
+      
+        -- Debug info.
+        self:T(rwy)
+        
+        -- Get runway data.
+        local runway=_createRunway(rwy.Name, rwy.course, rwy.width, rwy.length, rwy.position) --#AIRBASE.Runway
+        
+        -- Add to table.
+        table.insert(Runways, runway)
+        
+        -- Include "inverse" runway.
+        if IncludeInverse then
+        
+          -- Create "inverse".
+          local idx=tonumber(runway.name)
+          local name2=tostring(idx-18)
+          if idx<18 then
+            name2=tostring(idx+18)
+          end
+          
+          -- Create "inverse" runway.
+          local runway=_createRunway(name2, rwy.course-math.pi, rwy.width, rwy.length, rwy.position) --#AIRBASE.Runway
+  
+          -- Add inverse to table.
+          table.insert(Runways, runway)
+          
+        end
+        
+      end
+    
+    end
+  
+  end
+  
+  -- Look for identical (parallel) runways, e.g. 03L and 03R at Nellis.
+  local rpairs={}
+  for i,_ri in pairs(Runways) do
+    local ri=_ri --#AIRBASE.Runway
+    for j,_rj in pairs(Runways) do
+      local rj=_rj --#AIRBASE.Runway
+      if i<j then
+        if ri.name==rj.name then
+          rpairs[i]=j
+        end
+      end
+    end
+  end
+  
+  local function isLeft(a, b, c)
+    --return ((b.x - a.x)*(c.z - a.z) - (b.z - a.z)*(c.x - a.x)) > 0
+    return ((b.z - a.z)*(c.x - a.x) - (b.x - a.x)*(c.z - a.z)) > 0
+  end
+  
+  --[[
+  local a={x=1, y=0, z=0}
+  local A={x=0, y=0, z=0}
+  local b={x=0, y=0, z=1}
+  local c={x=0, y=0, z=-1}
+  local bl=isLeft(A, a, b)
+  local cl=isLeft(A, a, c)
+  env.info(string.format("b left=%s, c left=%s", tostring(bl), tostring(cl)))
+  ]]
+  
+  for i,j in pairs(rpairs) do
+    local ri=Runways[i] --#AIRBASE.Runway
+    local rj=Runways[j] --#AIRBASE.Runway
+    
+    -- Draw arrow.
+    --ri.center:ArrowToAll(rj.center)
+    
+    local c0=ri.center
+    
+    -- Vector in the direction of the runway.
+    local a=UTILS.VecTranslate(c0, 1000, ri.heading)
+        
+    -- Vector from runway i to runway j.
+    local b=UTILS.VecSubstract(rj.center, ri.center)    
+    b=UTILS.VecAdd(ri.center, b)
+    
+    --[[
+    local ca=COORDINATE:NewFromVec3(a)
+    local cb=COORDINATE:NewFromVec3(b)    
+    c0:ArrowToAll(ca, nil , {0,1,0})
+    c0:ArrowToAll(cb, nil , {0,0,1})
+    ]]
+    
+    -- Check if rj is left of ri.
+    local left=isLeft(c0, a, b)
+    
+    --env.info(string.format("Found pair %s: i=%d, j=%d, left==%s", ri.name, i, j, tostring(left)))
+    
+    if left then
+      ri.isLeft=false
+      rj.isLeft=true
+    else
+      ri.isLeft=true
+      rj.isLeft=false    
+    end
+    
+    --break
+  end
+  
+  -- Set runways.
+  self.runways=Runways
+
+  return Runways
+end
+
+
 --- Get runways data. Only for airdromes!
 -- @param #AIRBASE self
 -- @param #number magvar (Optional) Magnetic variation in degrees.
@@ -1659,7 +1920,10 @@ end
 function AIRBASE:GetActiveRunway(magvar)
 
   -- Get runways data (initialize if necessary).
-  local runways=self:GetRunwayData(magvar)
+  --local runways=self:GetRunwayData(magvar)
+  
+  -- Get runway data.
+  local runways=self:GetRunways()
 
   -- Return user forced active runway if it was set.
   if self.activerwyno then
@@ -1695,9 +1959,6 @@ function AIRBASE:GetActiveRunway(magvar)
       -- Dot product: parallel component of the two vectors.
       local dot=UTILS.VecDot(Vwind, Vrunway)
 
-      -- Debug.
-      --env.info(string.format("runway=%03d° dot=%.3f", runway.heading, dot))
-
       -- New min?
       if dotmin==nil or dot<dotmin then
         dotmin=dot
@@ -1710,6 +1971,27 @@ function AIRBASE:GetActiveRunway(magvar)
   end
 
   return runways[iact]
+end
+
+--- Get name of the runway, e.g. "31L".
+-- @param #AIRBASE self
+-- @param #AIRBASE.Runway Runway The runway. Default is the active runway.
+-- @return #AIRBASE.Runway Active runway data table.
+function AIRBASE:GetRunwayName(Runway)
+
+  Runway=Runway or self:GetActiveRunway()
+  
+  local name="Unknown"
+  if Runway then
+    name=Runway.name
+    if Runway.isLeft==true then
+      name=name.."L"
+    elseif Runway.isLeft==false then
+      name=name.."R"
+    end
+  end
+
+  return name
 end
 
 --- Function that checks if at leat one unit of a group has been spawned close to a spawn point on the runway.

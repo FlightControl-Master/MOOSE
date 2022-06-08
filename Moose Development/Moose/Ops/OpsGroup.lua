@@ -11684,6 +11684,15 @@ end
 -- @return #string Callsign name, e.g. Uzi-1
 function OPSGROUP:GetCallsignName()
 
+    local element=self:GetElementAlive()
+
+    if element then
+      env.info("FF callsign "..tostring(element.callsign))
+      return element.callsign
+    end
+
+  --[[
+
   local numberSquad=self.callsign.NumberSquad or self.callsignDefault.NumberSquad
   local numberGroup=self.callsign.NumberGroup or self.callsignDefault.NumberGroup
   
@@ -11698,6 +11707,8 @@ function OPSGROUP:GetCallsignName()
   else
   
   end
+
+  ]]
   
   return callsign
 end

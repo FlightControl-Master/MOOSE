@@ -1037,7 +1037,7 @@ function DATABASE:_RegisterAirbases()
     local airbaseUID=airbase:GetID(true)
 
     -- Debug output.
-    local text=string.format("Register %s: %s (ID=%d UID=%d), parking=%d [", AIRBASE.CategoryName[airbase.category], tostring(DCSAirbaseName), airbaseID, airbaseUID, airbase.NparkingTotal)
+    local text=string.format("Register %s: %s (UID=%d), Runways=%d, Parking=%d [", AIRBASE.CategoryName[airbase.category], tostring(DCSAirbaseName), airbaseUID, #airbase.runways, airbase.NparkingTotal)
     for _,terminalType in pairs(AIRBASE.TerminalType) do
       if airbase.NparkingTerminal and airbase.NparkingTerminal[terminalType] then
         text=text..string.format("%d=%d ", terminalType, airbase.NparkingTerminal[terminalType])

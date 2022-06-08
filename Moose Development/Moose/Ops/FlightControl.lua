@@ -317,9 +317,6 @@ function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS)
   
   -- Wait at least 10 seconds after last radio message before calling the next status update.
   self.dTmessage=10
-    
-  -- Init runways.
-  self:_InitRunwayData()
   
   -- Start State.
   self:SetStartState("Stopped")
@@ -801,7 +798,7 @@ function FLIGHTCONTROL:OnEventBirth(EventData)
         -- Create player menu.
         self:ScheduleOnce(0.5, self._CreateFlightGroup, self, EventData.IniGroup)
         
-      end    
+      end
       
       -- Spawn parking guard.
       if bornhere then
@@ -1540,35 +1537,19 @@ end
 -- Runway Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Initialize data of runways.
--- @param #FLIGHTCONTROL self
-function FLIGHTCONTROL:_InitRunwayData()
-  self.runways=self.airbase:GetRunwayData()
-end
-
 --- Get the active runway based on current wind direction.
 -- @param #FLIGHTCONTROL self
 -- @return Wrapper.Airbase#AIRBASE.Runway Active runway.
 function FLIGHTCONTROL:GetActiveRunway()
-  return self.airbase:GetActiveRunway()
+  local rwy=self.airbase:GetActiveRunway()
+  return rwy
 end
 
---- Get the active runway based on current wind direction.
+--- Get the name of the active runway.
 -- @param #FLIGHTCONTROL self
 -- @return #string Runway text, e.g. "31L" or "09".
 function FLIGHTCONTROL:GetActiveRunwayText()
-  local rwy=""
-  local rwyL
-  if self.atis then
-    rwy, rwyL=self.atis:GetActiveRunway()
-    if rwyL==true then
-      rwy=rwy.."L"
-    elseif rwyL==false then
-      rwy=rwy.."R"
-    end
-  else
-    rwy=self.airbase:GetActiveRunway().idx
-  end
+  local rwy=self.airbase:GetRunwayName()
   return rwy
 end
 
@@ -2408,8 +2389,7 @@ function FLIGHTCONTROL:_PlayerVectorInbound(groupname)
       local dist=UTILS.MetersToNM(distance)
   
       -- Message text.
-      local text=string.format("%s, fly heading %03d for %d nautical miles, hold at angels %d.", 
-      callsign, self.alias, heading, dist, flight.stack.angels)
+      local text=string.format("%s, fly heading %03d for %d nautical miles, hold at angels %d.", callsign, heading, dist, flight.stack.angels)
       
       -- Send message.
       self:TextMessageToFlight(text, flight)
@@ -2513,16 +2493,24 @@ function FLIGHTCONTROL:_PlayerHolding(groupname)
         
         if stack then
         
+          -- Pilot calls inbound for landing.
+          local text=string.format("%s, %s, arrived at holding pattern", self.alias, callsign)
+          
+          -- Radio message.
+          self:TransmissionPilot(text, flight)        
+        
           -- Current coordinate.
           local Coordinate=flight:GetCoordinate(nil, player.name)
         
           -- Distance.
           local dist=stack.pos0:Get2DDistance(Coordinate)
           
-          if dist<5000 then
+          local dmax=UTILS.NMToMeters(5)
+          
+          if dist<dmax then
         
             -- Message to flight
-            local text=string.format("%s, roger, you are added to the holding queue!", callsign)
+            local text=string.format("%s, roger, fly heading %d at angels %d.", callsign, stack.heading, stack.angels)
             self:TextMessageToFlight(text, flight, 10, true)
     
             -- Call holding event.        
@@ -2531,13 +2519,15 @@ function FLIGHTCONTROL:_PlayerHolding(groupname)
           else
 
             -- Message to flight
-            local text=string.format("Negative, you have to be within 5 km!")         
+            local text=string.format("Negative, you have to be within %d NM of the arrival zone! You still %d NM away.", UTILS.MetersToNM(dmax), UTILS.MetersToNM(dist))
             self:TextMessageToFlight(text, flight, 10, true)
           
           end
           
         else
-          --TODO: Error not holding stack.
+          -- Message to flight
+          local text=string.format("Negative, we have no holding stack for you!")         
+          self:TextMessageToFlight(text, flight, 10, true)
         end
                 
       else
@@ -3419,9 +3409,12 @@ end
 -- @param Ops.FlightGroup#FLIGHTGROUP Flight The flight.
 -- @param #number Delay Delay in seconds before the text is transmitted. Default 0 sec.
 function FLIGHTCONTROL:TransmissionTower(Text, Flight, Delay)
+
+  -- Spoken text.
+  local text=self:_GetTextForSpeech(Text)
   
   -- Tower radio call.
-  self.msrsTower:PlayText(Text, Delay)
+  self.msrsTower:PlayText(text, Delay)
   
   -- "Subtitle".
   if Flight and not Flight.isAI then
@@ -3442,9 +3435,12 @@ end
 -- @param Ops.FlightGroup#FLIGHTGROUP Flight The flight.
 -- @param #number Delay Delay in seconds before the text is transmitted. Default 0 sec.
 function FLIGHTCONTROL:TransmissionPilot(Text, Flight, Delay)
+
+  -- Spoken text.
+  local text=self:_GetTextForSpeech(Text)
   
   -- Pilot radio call.
-  self.msrsPilot:PlayText(Text, Delay)
+  self.msrsPilot:PlayText(text, Delay)
   
   -- "Subtitle".
   if Flight and not Flight.isAI then
@@ -3562,6 +3558,45 @@ function FLIGHTCONTROL:RemoveParkingGuard(spot, delay)
     
   end
 
+end
+
+--- Get callsign name of a given flight.
+-- @param #FLIGHTCONTROL self
+-- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
+-- @return #string Callsign or "Ghostrider 1-1".
+function FLIGHTCONTROL:_GetCallsignName(flight)
+
+  local callsign=flight:GetCallsignName()
+  
+  local name=string.match(callsign, "%a+")
+  local number=string.match(callsign, "%d+")
+  
+end
+
+
+--- Get text for text
+-- @param #FLIGHTCONTROL self
+-- @param #string text
+-- @return #string Callsign or "Ghostrider 1-1".
+function FLIGHTCONTROL:_GetTextForSpeech(text)
+
+  --- Function to space out text.
+  local function space(text)
+    
+    local res=""
+    
+    for i=1, #text do
+      local char=text:sub(i,i)
+      res=res..char.." "
+    end
+  
+    return res
+  end
+  
+  -- Space out numbers.
+  local t=text:gsub("(%d+)", space)
+  
+  return t
 end
 
 

@@ -393,7 +393,7 @@ function FLIGHTGROUP:SetFlightControl(flightcontrol)
 
   -- Check if there is already a FC.
   if self.flightcontrol then
-    if self.flightcontrol.airbasename==flightcontrol.airbasename then
+    if self.flightcontrol:IsControlling(self) then
       -- Flight control is already controlling this flight!
       return
     else
@@ -3680,6 +3680,13 @@ function FLIGHTGROUP:_SetElementParkingAt(Element, Spot)
 
     -- Debug info.
     self:T(self.lid..string.format("Element %s is parking on spot %d", Element.name, Spot.TerminalID))
+    
+    -- Get flightcontrol.
+    local fc=_DATABASE:GetFlightControl(Spot.AirbaseName)
+    
+    if fc and not self.flightcontrol then
+      self:SetFlightControl(fc)
+    end
 
     if self.flightcontrol then
 
