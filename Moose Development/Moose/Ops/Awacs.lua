@@ -1,16 +1,9 @@
 --- **Ops** - AWACS
 -- 
--- ## Main Features:
---
---  * WIP (beta)
---  * AWACS replacement for the in-game AWACS
---  * Will control a fighter engagement zone and assign tasks to AI and human CAP flights
---  * Concentrates on threat-based call outs
---  * Callouts referenced from:   
---  ** References from ARN33396 ATP 3-52.4 (Sep 2021) (Combined Forces)   
---  ** References from CNATRA P-877 (Rev 12-20) (NAVY)   
---  * Many additional events that the mission designer can hook into
---
+-- ===
+-- 
+-- **AWACS** - MOOSE AI AWACS Operations using text-to-speech.
+-- 
 -- ===
 --
 -- ## Example Missions:
