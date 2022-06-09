@@ -4909,7 +4909,8 @@ CTLD_HERCULES.Types = {
 -- @return #CTLD_HERCULES self
 -- @usage
 -- Integrate to your CTLD instance like so, where `my_ctld` is a previously created CTLD instance:
--- 
+--            
+--            my_ctld.enableHercules = false -- avoid dual loading via CTLD F10 and F8 ground crew
 --            local herccargo = CTLD_HERCULES:New("blue", "Hercules Test", my_ctld)
 --            
 -- You also need: 
