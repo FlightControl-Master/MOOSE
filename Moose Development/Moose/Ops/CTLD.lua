@@ -4792,10 +4792,11 @@ end
 end -- end do
 
 do 
---- Hercules Cargo Drop Events by Anubis Yinepu
+--- **Hercules Cargo AIR Drop Events** by Anubis Yinepu
 -- Moose CTLD OO refactoring by Applevangelist
 -- 
--- This script will only work for the Herculus mod by Anubis
+-- This script will only work for the Herculus mod by Anubis, and only for **Air Dropping** cargo from the Hercules. 
+-- Use the standard Moose CTLD if you want to unload on the ground.
 -- Payloads carried by pylons 11, 12 and 13 need to be declared in the Herculus_Loadout.lua file
 -- Except for Ammo pallets, this script will spawn whatever payload gets launched from pylons 11, 12 and 13
 -- Pylons 11, 12 and 13 are moveable within the Herculus cargobay area
@@ -4883,7 +4884,7 @@ CTLD_HERCULES.Types = {
   ["ART GVOZDIKA [34720lb]"] = {['name'] = "SAU Gvozdika", ['container'] = false},
   ["APC MTLB Air [26400lb]"] = {['name'] = "MTLB", ['container'] = true},
   ["APC MTLB Skid [26290lb]"] = {['name'] = "MTLB", ['container'] = false},
-  ["Generic Crate [20000lb]"] = {['name'] =  "Hercules_Container_Parachute", ['container'] = true} --nothing generic in Moose CTLD
+  --["Generic Crate [20000lb]"] = {['name'] =  "Hercules_Container_Parachute", ['container'] = true} --nothing generic in Moose CTLD
 }
 
 --- Cargo Object
@@ -4922,6 +4923,14 @@ CTLD_HERCULES.Types = {
 --            ...Checking template for Transport Tigr Air [15900lb] (Tigr_233036) ... OK)
 --            
 -- Expected template names are the ones in the rounded brackets.
+-- 
+-- HINTS
+-- 
+-- The script works on the EVENTS.Shot trigger, which is used by the mod when you **drop cargo from the Hercules while flying**. Unloading on the ground does
+-- not achieve anything here. If you just want to unload on the ground, use the normal Moose CTLD.
+-- There are two ways of airdropping:   
+-- 1) Very low and very slow (>5m and <10m AGL) - here you can drop stuff which has "Skid" at the end of the cargo name (loaded via F8 Ground Crew menu)
+-- 2) Higher up and slow (>100m AGL) - here you can drop paratroopers and cargo which has "Air" at the end of the cargo name (loaded via F8 Ground Crew menu)
 function CTLD_HERCULES:New(Coalition, Alias, CtldObject)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #CTLD_HERCULES
