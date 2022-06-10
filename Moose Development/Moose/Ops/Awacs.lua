@@ -105,6 +105,8 @@ do
 -- @field #boolean PlayerCapAssigment Assign players to CAP tasks when they are logged on
 -- @field #number GoogleTTSPadding
 -- @field #number WindowsTTSPadding
+-- @field #boolean AllowMarkers
+-- @field #string PlayerStationName
 -- @extends Core.Fsm#FSM
 
 
@@ -339,8 +341,20 @@ do
 --            [9] = "en-US-Wavenet-J",
 --            [10] = "en-US-Wavenet-H",
 --           }
+-- 
+-- ## 10 Using F10 map markers to create new player station points
+-- 
+-- You can use F10 map markers to create new station points for human CAP flights. The latest created station will take priority for (new) station assignments for humans.
+-- Enable this option with
+-- 
+--            testawacs.AllowMarkers = true
 --            
--- ## 10 Discussion
+-- Set a marker on the map and add the following text to create a station: "AWACS Station London" - "AWACS Station" are the necessary keywords, "London" 
+-- in this example will be the name of the new station point. The user marker can then be deleted, an info marker point at the same place will remain.
+-- You can delete a player station point the same way: "AWACS Delete London"; note this will only work if currently there are no assigned flights on this station. 
+-- Lastly, you can move the station around with keyword "Move": "AWACS Move London".
+--            
+-- ## 11 Discussion
 --
 -- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) #ops-awacs channel.
 -- 
@@ -350,7 +364,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "beta 0.1.28", -- #string
+  version = "beta 0.1.29", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -430,6 +444,8 @@ AWACS = {
   GoogleTTSPadding = 1,
   WindowsTTSPadding = 2.5,
   PlayerCapAssigment = true,
+  AllowMarkers = false,
+  PlayerStationName = nil,
 }
 
 ---
@@ -690,7 +706,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.1.28
+-- TODO-List 0.1.29
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
@@ -3020,7 +3036,12 @@ function AWACS:_CheckIn(Group)
     textTTS = string.format("%s. %s. Alpha Check. %s",managedgroup.CallSign,self.callsigntxt,alphacheckbullstts)
     
     self:__CheckedIn(1,managedgroup.GID)
-    self:__AssignAnchor(5,managedgroup.GID)
+    
+    if self.PlayerStationName then
+       self:__AssignAnchor(5,managedgroup.GID,true,self.PlayerStationName)
+    else    
+      self:__AssignAnchor(5,managedgroup.GID)
+    end
     
   elseif self.AwacsFG then
     text = string.format("%s. %s. Negative. You are already checked in.",self:_GetCallSign(Group,GID) or "Ghost 1", self.callsigntxt)
@@ -3308,10 +3329,101 @@ function AWACS:_SetClientMenus()
   return self
 end
 
+--- [Internal] AWACS Delete a new Anchor Stack from a Marker - only works if no assignments are on the station
+-- @param #AWACS self
+-- @return #AWACS self 
+function AWACS:_DeleteAnchorStackFromMarker(Name,Coord)
+  self:I(self.lid.."_DeleteAnchorStackFromMarker")
+  if self.AnchorStacks:HasUniqueID(Name) and self.PlayerStationName == Name then
+    local stack = self.AnchorStacks:ReadByID(Name) -- #AWACS.AnchorData
+    local marker = stack.AnchorMarker
+    if stack.AnchorAssignedID:Count() == 0 then
+      marker:Remove()
+      if self.debug then
+        stack.StationZone:UndrawZone()
+      end
+      self.AnchorStacks:PullByID(Name)
+      self.PlayerStationName = nil
+    else
+      if self.debug then
+        self:I(self.lid.."**** Cannot delete station, there are CAPs assigned!")
+        local text = marker:GetText()
+        marker:TextUpdate(text.."\nMarked for deletion")
+      end
+    end
+  end
+  return self
+end
+
+--- [Internal] AWACS Move a new Anchor Stack from a Marker
+-- @param #AWACS self
+-- @return #AWACS self 
+function AWACS:_MoveAnchorStackFromMarker(Name,Coord)
+  self:I(self.lid.."_MoveAnchorStackFromMarker")
+  if self.AnchorStacks:HasUniqueID(Name) and self.PlayerStationName == Name then
+    local station = self.AnchorStacks:PullByID(Name) -- #AWACS.AnchorData
+    local stationtag = string.format("Station: %s\nCoordinate: %s",Name,Coord:ToStringLLDDM())
+    local marker = station.AnchorMarker
+    local zone = station.StationZone
+    if self.debug then
+      zone:UndrawZone()
+    end
+    local radius = self.StationZone:GetRadius()
+    if radius < 10000 then radius = 10000 end
+    station.StationZone = ZONE_RADIUS:New(Name, Coord:GetVec2(), radius)
+    marker:UpdateCoordinate(Coord)
+    marker:UpdateText(stationtag)
+    station.AnchorMarker = marker
+    if self.debug then
+      station.StationZone:DrawZone(-1,{0,0,1},1,{0,0,1},0.2,5,true)
+    end
+    self.AnchorStacks:Push(station,Name)
+  end
+  return self
+end
+
+--- [Internal] AWACS Create a new Anchor Stack from a Marker - this then is the preferred station for players
+-- @param #AWACS self
+-- @return #AWACS self 
+function AWACS:_CreateAnchorStackFromMarker(Name,Coord)
+  self:I(self.lid.."_CreateAnchorStackFromMarker")
+  local AnchorStackOne = {} -- #AWACS.AnchorData
+  AnchorStackOne.AnchorBaseAngels = self.AnchorBaseAngels
+  AnchorStackOne.Anchors = FIFO:New() -- Utilities.FiFo#FIFO
+  AnchorStackOne.AnchorAssignedID = FIFO:New() -- Utilities.FiFo#FIFO
+  
+  local newname = Name
+  
+  for i=1,self.AnchorMaxStacks do
+    AnchorStackOne.Anchors:Push((i-1)*self.AnchorStackDistance+self.AnchorBaseAngels)
+  end
+  local radius = self.StationZone:GetRadius()
+  if radius < 10000 then radius = 10000 end
+  AnchorStackOne.StationZone = ZONE_RADIUS:New(newname, Coord:GetVec2(), radius)
+  AnchorStackOne.StationZoneCoordinate = Coord
+  AnchorStackOne.StationZoneCoordinateText = Coord:ToStringLLDDM()
+  AnchorStackOne.StationName = newname
+  
+  --push to AnchorStacks
+  if self.debug then
+    AnchorStackOne.StationZone:DrawZone(-1,{0,0,1},1,{0,0,1},0.2,5,true)
+    local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
+    AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToAll()
+  else
+    local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
+    AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToAll()
+  end
+  
+  self.AnchorStacks:Push(AnchorStackOne,newname)
+  self.PlayerStationName = newname
+  
+  return self
+end
+
 --- [Internal] AWACS Create a new Anchor Stack
 -- @param #AWACS self
 -- @return #boolean success
--- @return #nunber AnchorStackNo
+-- @return #number AnchorStackNo
 function AWACS:_CreateAnchorStack()
   self:T(self.lid.."_CreateAnchorStack")
   local stackscreated = self.AnchorStacks:GetSize()
@@ -3354,14 +3466,14 @@ function AWACS:_CreateAnchorStack()
     local anchorbasecoord = self.OpsZone:GetCoordinate() -- Core.Point#COORDINATE
     -- OpsZone can be Polygon, so use distance to StationZone as radius
     local anchorradius = anchorbasecoord:Get2DDistance(self.StationZone:GetCoordinate())
-    --local anchorradius = self.OpsZone:GetRadius() -- #number
-    --anchorradius = anchorradius + self.StationZone:GetRadius()
     local angel = self.StationZone:GetCoordinate():GetAngleDegrees(self.OpsZone:GetVec3())
     self:T("Angel Radians= " .. angel)
     local turn = math.fmod(self.AnchorTurn*stackscreated,360) -- #number
     if self.AnchorTurn < 0 then turn = -turn end
     local newanchorbasecoord = anchorbasecoord:Translate(anchorradius,turn+angel) -- Core.Point#COORDINATE
-    AnchorStackOne.StationZone = ZONE_RADIUS:New(newname, newanchorbasecoord:GetVec2(), self.StationZone:GetRadius())
+    local radius = self.StationZone:GetRadius()
+    if radius < 10000 then radius = 10000 end
+    AnchorStackOne.StationZone = ZONE_RADIUS:New(newname, newanchorbasecoord:GetVec2(), radius)
     AnchorStackOne.StationZoneCoordinate = newanchorbasecoord
     AnchorStackOne.StationZoneCoordinateText = newanchorbasecoord:ToStringLLDDM()
     AnchorStackOne.StationName = newname
@@ -5172,6 +5284,55 @@ function AWACS:onafterStart(From, Event, To)
   
   self.ZoneSet = ZoneSet
   self.RejectZoneSet = RejectZoneSet
+  
+  if self.AllowMarkers then
+    -- Add MarkerOps
+    
+    local MarkerOps = MARKEROPS_BASE:New("AWACS",{"Station","Delete","Move"})
+    
+    local function Handler(Keywords,Coord,Text)
+      self:I(Text)
+      for _,_word in pairs (Keywords) do
+        if string.lower(_word) == "station" then
+          -- get the station name from the text field
+          local Name = string.match(Text," ([%a]+)$")
+          self:_CreateAnchorStackFromMarker(Name,Coord)
+          break
+        elseif string.lower(_word) == "delete" then
+          -- get the station name from the text field
+          local Name = string.match(Text," ([%a]+)$")
+          self:_DeleteAnchorStackFromMarker(Name,Coord)
+          break
+        elseif string.lower(_word) == "move" then
+          -- get the station name from the text field
+          local Name = string.match(Text," ([%a]+)$")
+          self:_MoveAnchorStackFromMarker(Name,Coord)
+          break  
+        end
+      end
+    end
+    
+    -- Event functions
+    function MarkerOps:OnAfterMarkAdded(From,Event,To,Text,Keywords,Coord)
+      --local m = MESSAGE:New(string.format("AWACS %s Mark Added.", self.Tag),10,"Info",true):ToAllIf(self.debug)
+      BASE:I(string.format("%s Mark Added.", self.Tag))
+      Handler(Keywords,Coord,Text)
+    end
+    
+    function MarkerOps:OnAfterMarkChanged(From,Event,To,Text,Keywords,Coord)
+      BASE:I(string.format("%s Mark Changed.", self.Tag))
+      --local m = MESSAGE:New(string.format("AWACS %s Mark Changed.", self.Tag),10,"Info",true):ToAllIf(self.debug)
+      Handler(Keywords,Coord,Text)
+    end
+    
+    function MarkerOps:OnAfterMarkDeleted(From,Event,To)
+      BASE:I(string.format("%s Mark Deleted.", self.Tag))
+      --local m = MESSAGE:New(string.format("AWACS %s Mark Deleted.", self.Tag),10,"Info",true):ToAllIf(self.debug)
+    end
+    
+    self.MarkerOps = MarkerOps
+    
+  end
   
   self:__Status(-30)
   return self
