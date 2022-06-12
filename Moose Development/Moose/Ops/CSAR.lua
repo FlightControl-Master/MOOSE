@@ -1336,7 +1336,8 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
               local _time = self.landedStatus[_lookupKeyHeli]
               if _time == nil then
                   self.landedStatus[_lookupKeyHeli] = math.floor( (_distance - self.loadDistance) / 3.6 )   
-                  _time = self.landedStatus[_lookupKeyHeli] 
+                  _time = self.landedStatus[_lookupKeyHeli]
+                  _woundedGroup:OptionAlarmStateGreen() 
                   self:_OrderGroupToMoveToPoint(_woundedGroup, _heliUnit:GetCoordinate())
                   self:_DisplayMessageToSAR(_heliUnit, "Wait till " .. _pilotName .. " gets in. \nETA " .. _time .. " more seconds.", self.messageTime, false)
               else
