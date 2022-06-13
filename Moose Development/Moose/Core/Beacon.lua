@@ -22,14 +22,14 @@
 -- 
 -- ## Aircraft TACAN Beacon usage
 -- 
--- This beacon only works with airborne @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}. Use @{#BEACON:ActivateTACAN}() to set the beacon parameters and start the beacon.
--- Use @#BEACON:StopRadioBeacon}() to stop it.
+-- This beacon only works with airborne @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}. Use @{#BEACON.ActivateTACAN}() to set the beacon parameters and start the beacon.
+-- Use @{#BEACON.StopRadioBeacon}() to stop it.
 -- 
 -- ## General Purpose Radio Beacon usage
 -- 
 -- This beacon will work with any @{Wrapper.Positionable#POSITIONABLE}, but **it won't follow the @{Wrapper.Positionable#POSITIONABLE}** ! This means that you should only use it with
--- @{Wrapper.Positionable#POSITIONABLE} that don't move, or move very slowly. Use @{#BEACON:RadioBeacon}() to set the beacon parameters and start the beacon.
--- Use @{#BEACON:StopRadioBeacon}() to stop it.
+-- @{Wrapper.Positionable#POSITIONABLE} that don't move, or move very slowly. Use @{#BEACON.RadioBeacon}() to set the beacon parameters and start the beacon.
+-- Use @{#BEACON.StopRadioBeacon}() to stop it.
 -- 
 -- @type BEACON
 -- @field #string ClassName Name of the class "BEACON".
