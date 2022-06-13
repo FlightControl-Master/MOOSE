@@ -17,19 +17,19 @@
 -- 
 -- After attaching a @{#BEACON} to your @{Wrapper.Positionable#POSITIONABLE}, you need to select the right function to activate the kind of beacon you want. 
 -- There are two types of BEACONs available : the (aircraft) TACAN Beacon and the general purpose Radio Beacon.
--- Note that in both case, you can set an optional parameter : the `BeaconDuration`. This can be very usefull to simulate the battery time if your BEACON is
+-- Note that in both case, you can set an optional parameter : the `BeaconDuration`. This can be very useful to simulate the battery time if your BEACON is
 -- attach to a cargo crate, for exemple. 
 -- 
 -- ## Aircraft TACAN Beacon usage
 -- 
--- This beacon only works with airborne @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}. Use @{#BEACON:ActivateTACAN}() to set the beacon parameters and start the beacon.
--- Use @{#BEACON:StopRadioBeacon}() to stop it.
+-- This beacon only works with airborne @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}. Use @{#BEACON.ActivateTACAN}() to set the beacon parameters and start the beacon.
+-- Use @{#BEACON.StopRadioBeacon}() to stop it.
 -- 
 -- ## General Purpose Radio Beacon usage
 -- 
 -- This beacon will work with any @{Wrapper.Positionable#POSITIONABLE}, but **it won't follow the @{Wrapper.Positionable#POSITIONABLE}** ! This means that you should only use it with
--- @{Wrapper.Positionable#POSITIONABLE} that don't move, or move very slowly. Use @{#BEACON:RadioBeacon}() to set the beacon parameters and start the beacon.
--- Use @{#BEACON:StopRadioBeacon}() to stop it.
+-- @{Wrapper.Positionable#POSITIONABLE} that don't move, or move very slowly. Use @{#BEACON.RadioBeacon}() to set the beacon parameters and start the beacon.
+-- Use @{#BEACON.StopRadioBeacon}() to stop it.
 -- 
 -- @type BEACON
 -- @field #string ClassName Name of the class "BEACON".
