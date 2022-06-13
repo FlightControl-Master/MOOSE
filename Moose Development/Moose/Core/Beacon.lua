@@ -23,7 +23,7 @@
 -- ## Aircraft TACAN Beacon usage
 -- 
 -- This beacon only works with airborne @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}. Use @{#BEACON:ActivateTACAN}() to set the beacon parameters and start the beacon.
--- Use @#BEACON:StopRadioBeacon}() to stop it.
+-- Use @{#BEACON:StopRadioBeacon}() to stop it.
 -- 
 -- ## General Purpose Radio Beacon usage
 -- 
