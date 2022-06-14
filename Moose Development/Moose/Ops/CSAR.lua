@@ -130,7 +130,7 @@
 --       mycsar.SRSGPathToCredentials = nil -- Path to your Google credentials json file, set this if you want to use Google TTS
 --       mycsar.SRSVolume = 1 -- Volume, between 0 and 1
 --       --
---       mycsar.csarUsePara = false -- If set to true, will use the LandingAfterEjection Event instead of Ejection --shagrat
+--       mycsar.csarUsePara = false -- If set to true, will use the LandingAfterEjection Event instead of Ejection. Requires mycsar.enableForAI to be set to true. --shagrat
 --       mycsar.wetfeettemplate = "man in floating thingy" -- if you use a mod to have a pilot in a rescue float, put the template name in here for wet feet spawns. Note: in conjunction with csarUsePara this might create dual ejected pilots in edge cases.
 --        
 -- ## 3. Results
@@ -869,12 +869,12 @@ function CSAR:_EventHandler(EventData)
   
     -- no Player  
   if self.enableForAI == false and _event.IniPlayerName == nil then
-      return
+      return self
   end 
    
   -- no event  
   if _event == nil or _event.initiator == nil then
-    return false
+    return self
   
   -- take off
   elseif _event.id == EVENTS.Takeoff then -- taken off
@@ -882,26 +882,34 @@ function CSAR:_EventHandler(EventData)
       
     local _coalition = _event.IniCoalition
     if _coalition ~= self.coalition then
-        return --ignore!
+        return self --ignore!
     end
       
     if _event.IniGroupName then
         self.takenOff[_event.IniUnitName] = true
     end
     
-    return true
+    return self
   
   -- player enter unit
   elseif _event.id == EVENTS.PlayerEnterAircraft or _event.id == EVENTS.PlayerEnterUnit then --player entered unit
     self:T(self.lid .. " Event unit - Player Enter")
     
     local _coalition = _event.IniCoalition
+    self:T("Coalition = "..UTILS.GetCoalitionName(_coalition))
     if _coalition ~= self.coalition then
-        return --ignore!
+        return self --ignore!
     end
     
     if _event.IniPlayerName then
         self.takenOff[_event.IniPlayerName] = nil
+    end
+    
+    -- jumped into flying plane?
+    self:T("Taken Off: "..tostring(_event.IniUnit:InAir(true)))
+    
+    if _event.IniUnit:InAir(true) then
+      self.takenOff[_event.IniPlayerName] = true
     end
     
     local _unit = _event.IniUnit
@@ -910,7 +918,7 @@ function CSAR:_EventHandler(EventData)
       self:_AddMedevacMenuItem()
     end 
     
-    return true
+    return self
   
   elseif (_event.id == EVENTS.PilotDead and self.csarOncrash == false) then
       -- Pilot dead
@@ -922,57 +930,68 @@ function CSAR:_EventHandler(EventData)
       local _group = _event.IniGroup
       
       if _unit == nil then
-          return -- error!
+          return self -- error!
       end
   
       local _coalition = _event.IniCoalition
       if _coalition ~= self.coalition then
-          return --ignore!
+          return self --ignore!
       end
   
       -- Catch multiple events here?
       if self.takenOff[_event.IniUnitName] == true or _group:IsAirborne() then
           if self:_DoubleEjection(_unitname) then
-            return
+            return self
           end
 
       else
           self:T(self.lid .. " Pilot has not taken off, ignore")
       end
   
-      return
+      return self
   
   elseif _event.id == EVENTS.PilotDead or _event.id == EVENTS.Ejection then
       if _event.id == EVENTS.PilotDead and self.csarOncrash == false then 
-          return     
+          return self    
       end
       self:T(self.lid .. " Event unit - Pilot Ejected")
   
       local _unit = _event.IniUnit
       local _unitname = _event.IniUnitName
       local _group = _event.IniGroup
+      
+      self:T({_unit.UnitName, _unitname, _group.GroupName})
           
       if _unit == nil then
-          return -- error!
+          self:T("Unit NIL!")
+          return self -- error!
       end
     
-    local _coalition = _unit:GetCoalition() 
+    --local _coalition = _unit:GetCoalition() -- nil now for some reason
+    local _coalition = _group:GetCoalition() 
       if _coalition ~= self.coalition then
-          return --ignore!
+        self:T("Wrong coalition! Coalition = "..UTILS.GetCoalitionName(_coalition))
+          return self --ignore!
       end
-
+      
+      
+      self:T("Airborne: "..tostring(_group:IsAirborne()))
+      self:T("Taken Off: "..tostring(self.takenOff[_event.IniUnitName]))
+      
       if not self.takenOff[_event.IniUnitName] and not _group:IsAirborne() then
           self:T(self.lid .. " Pilot has not taken off, ignore")
-          return -- give up, pilot hasnt taken off
+         -- return self -- give up, pilot hasnt taken off
       end
       
       if self:_DoubleEjection(_unitname) then
-        return
+        self:T("Double Ejection!")
+        return self
       end
       
       -- limit no of pilots in the field.
       if self.limitmaxdownedpilots and self:_ReachedPilotLimit() then
-        return
+        self:T("Maxed Downed Pilot!")
+        return self
       end
     
     
@@ -981,33 +1000,27 @@ function CSAR:_EventHandler(EventData)
     
     local wetfeet = false
     
-    local surface = _unit:GetCoordinate():GetSurfaceType()
+    local initdcscoord = nil
+    local initcoord = nil
+    --if _event.id == EVENTS.Ejection then
+      initdcscoord = _event.TgtDCSUnit:getPoint()
+      initcoord = COORDINATE:NewFromVec3(initdcscoord)
+      self:T({initdcscoord})
+    --end
+    
+    --local surface = _unit:GetCoordinate():GetSurfaceType()
+    local surface = initcoord:GetSurfaceType()
+    
     if surface == land.SurfaceType.WATER then
+      self:T("Wet feet!")
       wetfeet = true
     end  
       -- all checks passed, get going.
     if self.csarUsePara == false or (self.csarUsePara and wetfeet ) then --shagrat check parameter LandingAfterEjection, if true don't spawn a Pilot from EJECTION event, wait for the Chute to land
-    local _freq = self:_GenerateADFFrequency()
-     self:_AddCsar(_coalition, _unit:GetCountry(), _unit:GetCoordinate() , _unit:GetTypeName(),  _unit:GetName(), _event.IniPlayerName, _freq, false, "none")
-    return true
-    end
-    
-    ---- shagrat on event LANDING_AFTER_EJECTION spawn pilot at parachute location
-  elseif (_event.id == EVENTS.LandingAfterEjection and self.csarUsePara == true) then
-    self:I({EVENT=_event})
-    local _LandingPos = COORDINATE:NewFromVec3(_event.initiator:getPosition().p)
-    local _unitname = "Aircraft" --_event.initiator:getName() or "Aircraft" --shagrat Optional use of Object name which is unfortunately 'f15_Pilot_Parachute'
-    local _typename = "Ejected Pilot" --_event.Initiator.getTypeName() or "Ejected Pilot" 
-    local _country = _event.initiator:getCountry()
-    local _coalition = coalition.getCountryCoalition( _country )
-    if _coalition == self.coalition then
       local _freq = self:_GenerateADFFrequency()
-      self:I({coalition=_coalition,country= _country, coord=_LandingPos, name=_unitname, player=_event.IniPlayerName, freq=_freq})
-      self:_AddCsar(_coalition, _country, _LandingPos, nil, _unitname, _event.IniPlayerName, _freq, false, "none")--shagrat add CSAR at Parachute location.
-    
-      Unit.destroy(_event.initiator) -- shagrat remove static Pilot model
-    end 
-    return true
+       self:_AddCsar(_coalition, _unit:GetCountry(), initcoord , _unit:GetTypeName(),  _unit:GetName(), _event.IniPlayerName, _freq, false, "none")
+      return self
+    end
   
   elseif _event.id == EVENTS.Land then
       self:T(self.lid .. " Landing")
@@ -1022,12 +1035,12 @@ function CSAR:_EventHandler(EventData)
   
           if _unit == nil then
               self:T(self.lid .. " Unit nil on landing")
-              return -- error!
+              return self -- error!
           end
           
           local _coalition = _event.IniCoalition
           if _coalition ~= self.coalition then
-              return --ignore!
+              return self --ignore!
           end
           
           self.takenOff[_event.IniUnitName] = nil
@@ -1036,13 +1049,13 @@ function CSAR:_EventHandler(EventData)
   
           if _place == nil then
               self:T(self.lid .. " Landing Place Nil")
-              return -- error!
+              return self -- error!
           end
           
           -- anyone on board?
           if self.inTransitGroups[_event.IniUnitName] == nil then
             -- ignore
-            return
+            return self
           end
    
           if _place:GetCoalition() == self.coalition or _place:GetCoalition() == coalition.side.NEUTRAL then
@@ -1052,8 +1065,27 @@ function CSAR:_EventHandler(EventData)
               end
           end
   
-          return true
+          return self
       end
+      
+  ---- shagrat on event LANDING_AFTER_EJECTION spawn pilot at parachute location
+  if (_event.id == EVENTS.LandingAfterEjection and self.csarUsePara == true) then
+    self:T("LANDING_AFTER_EJECTION")
+    local _LandingPos = COORDINATE:NewFromVec3(_event.initiator:getPosition().p)
+    local _unitname = "Aircraft" --_event.initiator:getName() or "Aircraft" --shagrat Optional use of Object name which is unfortunately 'f15_Pilot_Parachute'
+    local _typename = "Ejected Pilot" --_event.Initiator.getTypeName() or "Ejected Pilot" 
+    local _country = _event.initiator:getCountry()
+    local _coalition = coalition.getCountryCoalition( _country )
+    self:T("Country = ".._country.." Coalition = ".._coalition)
+    if _coalition == self.coalition then
+      local _freq = self:_GenerateADFFrequency()
+      self:I({coalition=_coalition,country= _country, coord=_LandingPos, name=_unitname, player=_event.IniPlayerName, freq=_freq})
+      self:_AddCsar(_coalition, _country, _LandingPos, nil, _unitname, _event.IniPlayerName, _freq, false, "none")--shagrat add CSAR at Parachute location.
+    
+      Unit.destroy(_event.initiator) -- shagrat remove static Pilot model
+    end 
+  end
+  
   return self
 end
 
