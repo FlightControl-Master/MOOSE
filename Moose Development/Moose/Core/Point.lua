@@ -2804,6 +2804,10 @@ do -- COORDINATE
       alttext = string.format("Angels %d",alt)
     end
     
+    if alt < 1 then
+      alttext = "very low"
+    end
+    
     local track = UTILS.BearingToCardinal(bearing) or "North"
     
     if rangeNM > 3 then

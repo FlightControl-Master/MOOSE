@@ -314,7 +314,7 @@ do
 --            testawacs.maxassigndistance = 100 -- Don't assign targets further out than this, in NM.
 --            testawacs.debug = false -- set to true to produce more log output.
 --            testawacs.NoMissileCalls = true -- suppress missile callouts
---            testawacs.PlayerCapAssigment = true -- no task assignment for players
+--            testawacs.PlayerCapAssigment = true -- no intercept task assignments for players
 --            testawacs.invisible = false -- set AWACS to be invisible to hostiles
 --            testawacs.immortal = false -- set AWACS to be immortal
 --            -- By default, the radio queue is checked every 10 secs. This is altered by the calculated length of the sentence to speak
@@ -364,7 +364,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "beta 0.1.29", -- #string
+  version = "beta 0.1.30", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -706,7 +706,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.1.29
+-- TODO-List 0.1.30
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
@@ -1201,7 +1201,7 @@ function AWACS:SuppressScreenMessages(Switch)
   return self
 end
 
---- [User] Do not show messages on screen, no extra calls for player guidance, use short callsigns, no group tags.
+--- [User] Do not show messages on screen, no extra calls for player guidance, use short callsigns etc.
 -- @param #AWACS self
 -- @return #AWACS self
 function AWACS:ZipLip()
@@ -1984,7 +1984,7 @@ function AWACS:_CleanUpContacts()
      
     --local aliveclusters = FIFO:New()     
     -- announce VANISHED
-    if deadcontacts:Count() > 0 then
+    if deadcontacts:Count() > 0 and (not self.NoGroupTags) then
     
       self:T("DEAD count="..deadcontacts:Count())
       deadcontacts:ForEach(
@@ -2505,7 +2505,7 @@ function AWACS:_BogeyDope(Group)
   if not self.intel then
     -- no intel yet!
     text = string.format("%s. %s. Clean.",self:_GetCallSign(Group,GID) or "Ghost 1", self.callsigntxt)
-    self:_NewRadioEntry(text,text,0,false,true,true,false)
+    self:_NewRadioEntry(text,text,0,false,true,true,false,true)
 
     return self 
   end
@@ -2547,7 +2547,7 @@ function AWACS:_BogeyDope(Group)
      
       text = string.format("%s. %s. Clean.",self:_GetCallSign(Group,GID) or "Ghost 1", self.callsigntxt)
       
-      self:_NewRadioEntry(text,textScreen,GID,Outcome,Outcome,true,false)
+      self:_NewRadioEntry(text,textScreen,GID,Outcome,Outcome,true,false,true)
 
     else
     
@@ -2561,7 +2561,7 @@ function AWACS:_BogeyDope(Group)
           textScreen = textScreen .. contactsAO .. " groups.\n"
         end
         
-        self:_NewRadioEntry(text,textScreen,GID,Outcome,true,true,false)
+        self:_NewRadioEntry(text,textScreen,GID,Outcome,true,true,false,true)
         
         self:_CreateBogeyDope(self:_GetCallSign(Group,GID) or "Ghost 1",GID)
       end
@@ -3775,10 +3775,18 @@ function AWACS:_ToStringBRA(FromCoordinate,ToCoordinate,Altitude)
   local AngleDegTextTTS = string.gsub(AngleDegText,"0","zero")
   local Distance = ToCoordinate:Get2DDistance( FromCoordinate ) --meters
   local distancenm = UTILS.Round(UTILS.MetersToNM(Distance),0)
-  BRText = string.format("%03d, %d miles, %d thousand",AngleDegrees,distancenm,altitude)
-  BRTextTTS = string.format("%s, %d miles, %d thousand",AngleDegText,distancenm,altitude)
-  if self.PathToGoogleKey then
-    BRTextTTS = string.format("%s, %d miles, %d thousand",AngleDegTextTTS,distancenm,altitude)
+  if altitude >= 1 then
+    BRText = string.format("%03d, %d miles, %d thousand",AngleDegrees,distancenm,altitude)
+    BRTextTTS = string.format("%s, %d miles, %d thousand",AngleDegText,distancenm,altitude)
+    if self.PathToGoogleKey then
+      BRTextTTS = string.format("%s, %d miles, %d thousand",AngleDegTextTTS,distancenm,altitude)
+    end
+  else
+    BRText = string.format("%03d, %d miles, very low",AngleDegrees,distancenm)
+    BRTextTTS = string.format("%s, %d miles, very low",AngleDegText,distancenm)
+    if self.PathToGoogleKey then
+      BRTextTTS = string.format("%s, %d miles, very low",AngleDegTextTTS,distancenm)
+    end
   end
   self:T(BRText,BRTextTTS)
   return BRText,BRTextTTS
@@ -4620,8 +4628,8 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag,IsPopup,Repo
   string.gsub(BRAText,"BRA","brah")
   
   --self:T(BRAText)
-  
-  self:_NewRadioEntry(BRAText,TextScreen,GID,isGroup,true,IsNew,false,IsNew)
+  local prio = IsNew or IsBogeyDope
+  self:_NewRadioEntry(BRAText,TextScreen,GID,isGroup,true,IsNew,false,prio)
 
   return self
 end
