@@ -264,7 +264,7 @@ CSAR.AircraftType["AH-64D_BLK_II"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.5"
+CSAR.version="1.0.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -333,6 +333,7 @@ function CSAR:New(Coalition, Template, Alias)
   self:AddTransition("*",             "Status",             "*")           -- CSAR status update.
   self:AddTransition("*",             "PilotDown",          "*")          -- Downed Pilot added
   self:AddTransition("*",             "Approach",           "*")         -- CSAR heli closing in.
+  self:AddTransition("*",             "Landed",             "*")         -- CSAR heli landed 
   self:AddTransition("*",             "Boarded",            "*")          -- Pilot boarded.
   self:AddTransition("*",             "Returning",          "*")        -- CSAR able to return to base.
   self:AddTransition("*",             "Rescued",            "*")          -- Pilot at MASH.
@@ -474,7 +475,16 @@ function CSAR:New(Coalition, Template, Alias)
   -- @param #string Heliname Name of the helicopter group.
   -- @param #string Woundedgroupname Name of the downed pilot\'s group.
   
-    --- On After "Boarded" event. Downed pilot boarded heli.
+   --- On After "Landed" event. Heli landed at an airbase.
+  -- @function [parent=#CSAR] OnAfterLanded
+  -- @param #CSAR self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string HeliName Name of the #UNIT which has landed.
+  -- @param Wrapper.Airbase#AIRBASE Airbase Airbase where the heli landed.
+    
+   --- On After "Boarded" event. Downed pilot boarded heli.
   -- @function [parent=#CSAR] OnAfterBoarded
   -- @param #CSAR self
   -- @param #string From From state.
@@ -1038,15 +1048,17 @@ function CSAR:_EventHandler(EventData)
               return self -- error!
           end
           
-          local _coalition = _event.IniCoalition
+          --local _coalition = _event.IniCoalition
+          local _coalition = _event.IniGroup:GetCoalition()
           if _coalition ~= self.coalition then
+            self:T(self.lid .. " Wrong coalition")
               return self --ignore!
           end
           
           self.takenOff[_event.IniUnitName] = nil
  
           local _place = _event.Place -- Wrapper.Airbase#AIRBASE
-  
+          
           if _place == nil then
               self:T(self.lid .. " Landing Place Nil")
               return self -- error!
@@ -1059,6 +1071,7 @@ function CSAR:_EventHandler(EventData)
           end
    
           if _place:GetCoalition() == self.coalition or _place:GetCoalition() == coalition.side.NEUTRAL then
+            self:__Landed(2,_event.IniUnitName, _place)
             self:_ScheduledSARFlight(_event.IniUnitName,_event.IniGroupName,true)
           else
               self:T(string.format("Airfield %d, Unit %d", _place:GetCoalition(), _unit:GetCoalition()))
@@ -1185,7 +1198,7 @@ function CSAR:_CheckWoundedGroupStatus(heliname,woundedgroupname)
       self.heliVisibleMessage[_lookupKeyHeli] = nil
       self.heliCloseMessage[_lookupKeyHeli] = nil
       self.landedStatus[_lookupKeyHeli] = nil
-      self:T("...helinunit nil!")
+      self:T("...heliunit nil!")
       return
     end
     
@@ -1281,7 +1294,7 @@ function CSAR:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupNam
   end
   if _unitsInHelicopter + 1 > _maxUnits then
       self:_DisplayMessageToSAR(_heliUnit, string.format("%s, %s. We\'re already crammed with %d guys! Sorry!", _pilotName, _heliName, _unitsInHelicopter, _unitsInHelicopter), self.messageTime,false,false,true)
-      return true
+      return self
   end
   
   local found,downedgrouptable = self:_CheckNameInDownedPilots(_woundedGroupName)
@@ -1302,7 +1315,7 @@ function CSAR:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupNam
   
   self:__Boarded(5,_heliName,_woundedGroupName)
   
-  return true
+  return self
 end
 
 --- (Internal) Move group to destination.
@@ -1378,24 +1391,24 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
               end
               --if _time <= 0 or _distance < self.loadDistance then
               if _distance < self.loadDistance + 5 or _distance <= 13 then
-                 if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
+                 if self.pilotmustopendoors and (self:_IsLoadingDoorOpen(_heliName) == false) then
                   self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true, true)
-                  return true
+                  return false
                  else
                    self.landedStatus[_lookupKeyHeli] = nil
                    self:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName)
-                   return false
+                   return true
                  end
               end
             end
         else
           if (_distance < self.loadDistance) then
-              if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
+              if self.pilotmustopendoors and (self:_IsLoadingDoorOpen(_heliName) == false) then
                 self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true, true)
-                return true
+                return false
               else
                 self:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName)
-                return false
+                return true
               end
           end
         end
@@ -1432,18 +1445,19 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
                       if _time > 0 then
                           self:_DisplayMessageToSAR(_heliUnit, "Hovering above " .. _pilotName .. ". \n\nHold hover for " .. _time .. " seconds to winch them up. \n\nIf the countdown stops you\'re too far away!", self.messageTime, true)
                       else
-                       if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
+                       if self.pilotmustopendoors and (self:_IsLoadingDoorOpen(_heliName) == false) then
                           self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true, true)
-                          return true
+                          return false
                         else
                           self.hoverStatus[_lookupKeyHeli] = nil
                           self:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName)
-                          return false
+                          return true
                         end
                       end
                       _reset = false
                   else
                       self:_DisplayMessageToSAR(_heliUnit, "Too high to winch " .. _pilotName .. " \nReduce height and hover for 10 seconds!", self.messageTime, true,true)
+                      return false
                   end
               end
           
@@ -2075,7 +2089,7 @@ end
 -- @param #string To To state.
 function CSAR:onafterStart(From, Event, To)
   self:T({From, Event, To})
-  self:I(self.lid .. "Started.")
+  self:I(self.lid .. "Started ("..self.version..")")
   -- event handler
   self:HandleEvent(EVENTS.Takeoff, self._EventHandler)
   self:HandleEvent(EVENTS.Land, self._EventHandler)
@@ -2273,6 +2287,18 @@ end
 -- @param #string CoordinatesText String of the position of the pilot. Format determined by self.coordtype.
 function CSAR:onbeforePilotDown(From, Event, To, Group, Frequency, Leadername, CoordinatesText)
   self:T({From, Event, To, Group, Frequency, Leadername, CoordinatesText})
+  return self
+end
+
+--- (Internal) Function called before Landed() event.
+-- @param #CSAR self.
+-- @param #string From From state.
+-- @param #string Event Event triggered.
+-- @param #string To To state.
+-- @param #string HeliName Name of the #UNIT which has landed.
+-- @param Wrapper.Airbase#AIRBASE Airbase Airbase where the heli landed.
+function CSAR:onbeforeLanded(From, Event, To, HeliName, Airbase)
+  self:T({From, Event, To, HeliName, Airbase})
   return self
 end
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
