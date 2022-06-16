@@ -1012,11 +1012,15 @@ function CSAR:_EventHandler(EventData)
     
     local initdcscoord = nil
     local initcoord = nil
-    --if _event.id == EVENTS.Ejection then
+    if _event.id == EVENTS.Ejection then
       initdcscoord = _event.TgtDCSUnit:getPoint()
       initcoord = COORDINATE:NewFromVec3(initdcscoord)
       self:T({initdcscoord})
-    --end
+    else
+      initdcscoord = _event.IniDCSUnit:getPoint()
+      initcoord = COORDINATE:NewFromVec3(initdcscoord)
+      self:T({initdcscoord})
+    end
     
     --local surface = _unit:GetCoordinate():GetSurfaceType()
     local surface = initcoord:GetSurfaceType()
