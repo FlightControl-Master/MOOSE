@@ -52,6 +52,7 @@ BIGSMOKEPRESET = {
 -- @field #string TheChannel The Channel map.
 -- @field #string Syria Syria map.
 -- @field #string MarianaIslands Mariana Islands map.
+-- @field #string Falklands South Atlantic map.
 DCSMAP = {
   Caucasus="Caucasus",
   NTTR="Nevada",
@@ -59,7 +60,8 @@ DCSMAP = {
   PersianGulf="PersianGulf",
   TheChannel="TheChannel",
   Syria="Syria",
-  MarianaIslands="MarianaIslands"
+  MarianaIslands="MarianaIslands",
+  Falklands="Falklands",
 }
 
 
@@ -1347,6 +1349,7 @@ end
 -- * The Cannel Map -10 (West)
 -- * Syria +5 (East)
 -- * Mariana Islands +2 (East)
+-- * Falklands +12 (East) - note there's a LOT of deviation across the map, as we're closer to the South Pole
 -- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
 -- @return #number Declination in degrees.
 function UTILS.GetMagneticDeclination(map)
@@ -1369,6 +1372,8 @@ function UTILS.GetMagneticDeclination(map)
     declination=5
   elseif map==DCSMAP.MarianaIslands then
     declination=2
+  elseif map==DCSMAP.Falklands then
+    declination=12
   else
     declination=0
   end
