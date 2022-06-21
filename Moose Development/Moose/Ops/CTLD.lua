@@ -722,7 +722,8 @@ do
 --        ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18, cargoweightlimit = 700},
 --        ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18, cargoweightlimit = 700},
 --        ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 25, cargoweightlimit = 19000},
---        ["UH-60L"] = {type="UH-60L", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, 
+--        ["UH-60L"] = {type="UH-60L", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500},
+--        ["AH-64D_BLK_II"] = {type="AH-64D_BLK_II", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 17, cargoweightlimit = 200}, 
 --        
 -- ### 2.1.2 Activate and deactivate zones
 -- 
@@ -870,12 +871,13 @@ do
 -- 
 -- ## 5. Support for Hercules mod by Anubis
 -- 
--- Basic support for the Hercules mod By Anubis has been build into CTLD - that is you can load/drop/build the same objects as the helicopters. 
--- To also cover objects and troops which can be loaded from the groud crew Rearm/Refuel menu, you need to use @{#CTLD_HERCULES.New}() and link
--- this object to your CTLD setup. In this case, do **not** use the `Hercules_Cargo.lua` or `Hercules_Cargo_CTLD.lua` which are part of the mod 
+-- Basic support for the Hercules mod By Anubis has been build into CTLD - that is you can load/drop/build the same way and for the same objects as 
+-- the helicopters (main method). 
+-- To cover objects and troops which can be loaded from the groud crew Rearm/Refuel menu (F8), you need to use @{#CTLD_HERCULES.New}() and link
+-- this object to your CTLD setup (alternative method). In this case, do **not** use the `Hercules_Cargo.lua` or `Hercules_Cargo_CTLD.lua` which are part of the mod 
 -- in your mission!
 -- 
--- ### 5.1 Create an own CTLD instance and allow the usage of the Hercules mod:
+-- ### 5.1 Create an own CTLD instance and allow the usage of the Hercules mod (main method)
 --
 --              local my_ctld = CTLD:New(coalition.side.BLUE,{"Helicargo", "Hercules"},"Lufttransportbrigade I")
 -- 
@@ -893,25 +895,37 @@ do
 -- 
 --              my_ctld.useprefix = true -- this is true by default and MUST BE ON. 
 -- 
--- ### 5.2 Integrate Hercules ground crew loadable objects 
+-- ### 5.2 Integrate Hercules ground crew (F8 Menu) loadable objects (alternative method)
 -- 
--- Add ground crew loadable objects to your CTLD instance like so, where `my_ctld` is the previously created CTLD instance:
--- 
+-- Integrate to your CTLD instance like so, where `my_ctld` is a previously created CTLD instance:
+--            
+--            my_ctld.enableHercules = false -- avoid dual loading via CTLD F10 and F8 ground crew
 --            local herccargo = CTLD_HERCULES:New("blue", "Hercules Test", my_ctld)
 --            
--- You also need:
---  
--- * A template called "Infantry" for 10 Paratroopers (as set via herccargo.infantrytemplate). 
--- * Depending on what you are loading with the help of the ground crew, there are 42 more templates for the various vehicles that are loadable. 
+-- You also need: 
+-- 
+-- * A template called "Infantry" for 10 Paratroopers (as set via herccargo.infantrytemplate).   
+-- * Depending on what you are loading with the help of the ground crew, there are 42 more templates for the various vehicles that are loadable.   
 -- 
 -- There's a **quick check output in the `dcs.log`** which tells you what's there and what not.
--- E.g.:
---            ...Checking template for APC BTR-82A Air [24998lb] (BTR-82A) ... MISSING)
---            ...Checking template for ART 2S9 NONA Skid [19030lb] (SAU 2-C9) ... MISSING)
---            ...Checking template for EWR SBORKA Air [21624lb] (Dog Ear radar) ... MISSING)
---            ...Checking template for Transport Tigr Air [15900lb] (Tigr_233036) ... OK)
+-- E.g.:   
+-- 
+--            ...Checking template for APC BTR-82A Air [24998lb] (BTR-82A) ... MISSING)   
+--            ...Checking template for ART 2S9 NONA Skid [19030lb] (SAU 2-C9) ... MISSING)   
+--            ...Checking template for EWR SBORKA Air [21624lb] (Dog Ear radar) ... MISSING)   
+--            ...Checking template for Transport Tigr Air [15900lb] (Tigr_233036) ... OK)   
 --            
 -- Expected template names are the ones in the rounded brackets.
+-- 
+-- ### 5.2.1 Hints
+-- 
+-- The script works on the EVENTS.Shot trigger, which is used by the mod when you **drop cargo from the Hercules while flying**. Unloading on the ground does
+-- not achieve anything here. If you just want to unload on the ground, use the normal Moose CTLD (see 5.1).
+-- 
+-- There are two ways of airdropping: 
+--   
+-- 1) Very low and very slow (>5m and <10m AGL) - here you can drop stuff which has "Skid" at the end of the cargo name (loaded via F8 Ground Crew menu)   
+-- 2) Higher up and slow (>100m AGL) - here you can drop paratroopers and cargo which has "Air" at the end of the cargo name (loaded via F8 Ground Crew menu)   
 -- 
 -- Standard transport capabilities as per the real Hercules are:
 -- 
@@ -4792,10 +4806,11 @@ end
 end -- end do
 
 do 
---- Hercules Cargo Drop Events by Anubis Yinepu
+--- **Hercules Cargo AIR Drop Events** by Anubis Yinepu
 -- Moose CTLD OO refactoring by Applevangelist
 -- 
--- This script will only work for the Herculus mod by Anubis
+-- This script will only work for the Herculus mod by Anubis, and only for **Air Dropping** cargo from the Hercules. 
+-- Use the standard Moose CTLD if you want to unload on the ground.
 -- Payloads carried by pylons 11, 12 and 13 need to be declared in the Herculus_Loadout.lua file
 -- Except for Ammo pallets, this script will spawn whatever payload gets launched from pylons 11, 12 and 13
 -- Pylons 11, 12 and 13 are moveable within the Herculus cargobay area
@@ -4883,7 +4898,7 @@ CTLD_HERCULES.Types = {
   ["ART GVOZDIKA [34720lb]"] = {['name'] = "SAU Gvozdika", ['container'] = false},
   ["APC MTLB Air [26400lb]"] = {['name'] = "MTLB", ['container'] = true},
   ["APC MTLB Skid [26290lb]"] = {['name'] = "MTLB", ['container'] = false},
-  ["Generic Crate [20000lb]"] = {['name'] =  "Hercules_Container_Parachute", ['container'] = true} --nothing generic in Moose CTLD
+  --["Generic Crate [20000lb]"] = {['name'] =  "Hercules_Container_Parachute", ['container'] = true} --nothing generic in Moose CTLD
 }
 
 --- Cargo Object
@@ -4908,7 +4923,8 @@ CTLD_HERCULES.Types = {
 -- @return #CTLD_HERCULES self
 -- @usage
 -- Integrate to your CTLD instance like so, where `my_ctld` is a previously created CTLD instance:
--- 
+--            
+--            my_ctld.enableHercules = false -- avoid dual loading via CTLD F10 and F8 ground crew
 --            local herccargo = CTLD_HERCULES:New("blue", "Hercules Test", my_ctld)
 --            
 -- You also need: 
@@ -4922,6 +4938,14 @@ CTLD_HERCULES.Types = {
 --            ...Checking template for Transport Tigr Air [15900lb] (Tigr_233036) ... OK)
 --            
 -- Expected template names are the ones in the rounded brackets.
+-- 
+-- HINTS
+-- 
+-- The script works on the EVENTS.Shot trigger, which is used by the mod when you **drop cargo from the Hercules while flying**. Unloading on the ground does
+-- not achieve anything here. If you just want to unload on the ground, use the normal Moose CTLD.
+-- There are two ways of airdropping:   
+-- 1) Very low and very slow (>5m and <10m AGL) - here you can drop stuff which has "Skid" at the end of the cargo name (loaded via F8 Ground Crew menu)
+-- 2) Higher up and slow (>100m AGL) - here you can drop paratroopers and cargo which has "Air" at the end of the cargo name (loaded via F8 Ground Crew menu)
 function CTLD_HERCULES:New(Coalition, Alias, CtldObject)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #CTLD_HERCULES

@@ -16,20 +16,20 @@
 --- *In order for the light to shine so brightly, the darkness must be present.* -- Francis Bacon
 -- 
 -- After attaching a @{#BEACON} to your @{Wrapper.Positionable#POSITIONABLE}, you need to select the right function to activate the kind of beacon you want. 
--- There are two types of BEACONs available : the AA TACAN Beacon and the general purpose Radio Beacon.
+-- There are two types of BEACONs available : the (aircraft) TACAN Beacon and the general purpose Radio Beacon.
 -- Note that in both case, you can set an optional parameter : the `BeaconDuration`. This can be very usefull to simulate the battery time if your BEACON is
 -- attach to a cargo crate, for exemple. 
 -- 
--- ## AA TACAN Beacon usage
+-- ## Aircraft TACAN Beacon usage
 -- 
--- This beacon only works with airborne @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}. Use @{#BEACON:AATACAN}() to set the beacon parameters and start the beacon.
--- Use @#BEACON:StopAATACAN}() to stop it.
+-- This beacon only works with airborne @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}. Use @{#BEACON.ActivateTACAN}() to set the beacon parameters and start the beacon.
+-- Use @{#BEACON.StopRadioBeacon}() to stop it.
 -- 
 -- ## General Purpose Radio Beacon usage
 -- 
 -- This beacon will work with any @{Wrapper.Positionable#POSITIONABLE}, but **it won't follow the @{Wrapper.Positionable#POSITIONABLE}** ! This means that you should only use it with
--- @{Wrapper.Positionable#POSITIONABLE} that don't move, or move very slowly. Use @{#BEACON:RadioBeacon}() to set the beacon parameters and start the beacon.
--- Use @{#BEACON:StopRadioBeacon}() to stop it.
+-- @{Wrapper.Positionable#POSITIONABLE} that don't move, or move very slowly. Use @{#BEACON.RadioBeacon}() to set the beacon parameters and start the beacon.
+-- Use @{#BEACON.StopRadioBeacon}() to stop it.
 -- 
 -- @type BEACON
 -- @field #string ClassName Name of the class "BEACON".
@@ -245,7 +245,8 @@ function BEACON:ActivateICLS(Channel, Callsign, Duration)
   return self
 end
 
---- Activates a TACAN BEACON on an Aircraft.
+--- DEPRECATED: Please use @{BEACON:ActivateTACAN}() instead.
+-- Activates a TACAN BEACON on an Aircraft.
 -- @param #BEACON self
 -- @param #number TACANChannel (the "10" part in "10Y"). Note that AA TACAN are only available on Y Channels
 -- @param #string Message The Message that is going to be coded in Morse and broadcasted by the beacon
@@ -325,7 +326,7 @@ function BEACON:StopAATACAN()
 end
 
 
---- Activates a general pupose Radio Beacon
+--- Activates a general purpose Radio Beacon
 -- This uses the very generic singleton function "trigger.action.radioTransmission()" provided by DCS to broadcast a sound file on a specific frequency.
 -- Although any frequency could be used, only 2 DCS Modules can home on radio beacons at the time of writing : the Huey and the Mi-8. 
 -- They can home in on these specific frequencies : 
@@ -402,7 +403,7 @@ function BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDurati
   end 
 end
 
---- Stops the AA TACAN BEACON
+--- Stops the Radio Beacon
 -- @param #BEACON self
 -- @return #BEACON self
 function BEACON:StopRadioBeacon()
