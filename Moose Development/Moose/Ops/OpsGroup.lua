@@ -262,17 +262,17 @@ OPSGROUP = {
 -- @field #string ARRIVED Element arrived at its parking spot and shut down its engines.
 -- @field #string DEAD Element is dead after it crashed, pilot ejected or pilot dead events.
 OPSGROUP.ElementStatus={
-  INUTERO="inutero",
-  SPAWNED="spawned",
-  PARKING="parking",
-  ENGINEON="engineon",
-  TAXIING="taxiing",
-  TAKEOFF="takeoff",
-  AIRBORNE="airborne",
-  LANDING="landing",
-  LANDED="landed",
-  ARRIVED="arrived",
-  DEAD="dead",
+  INUTERO="InUtero",
+  SPAWNED="Spawned",
+  PARKING="Parking",
+  ENGINEON="Engine On",
+  TAXIING="Taxiing",
+  TAKEOFF="Takeoff",
+  AIRBORNE="Airborne",
+  LANDING="Landing",
+  LANDED="Landed",
+  ARRIVED="Arrived",
+  DEAD="Dead",
 }
 
 --- Status of group.
@@ -3452,10 +3452,37 @@ function OPSGROUP:OnEventRemoveUnit(EventData)
 
 end
 
+--- Event function handling when a unit is removed from the game.
+-- @param #OPSGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function OPSGROUP:OnEventPlayerLeaveUnit(EventData)
+
+  -- Check that this is the right group.
+  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+    self:T2(self.lid..string.format("EVENT: Player left Unit %s!", EventData.IniUnitName))
+
+    local unit=EventData.IniUnit
+    local group=EventData.IniGroup
+    local unitname=EventData.IniUnitName
+
+    -- Get element.
+    local element=self:GetElementByName(unitname)
+
+    if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+      self:T(self.lid..string.format("EVENT: Player left Element %s ==> dead", element.name))
+      self:ElementDead(element)
+    end
+
+  end
+
+end
+
 --- Event function handling the event that a unit achieved a kill.
 -- @param #OPSGROUP self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function OPSGROUP:OnEventKill(EventData)
+  --self:I("FF event kill")
+  --self:I(EventData)
 
   -- Check that this is the right group.
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
@@ -7354,13 +7381,10 @@ function OPSGROUP:onafterDead(From, Event, To)
       -- All elements were destroyed ==> Asset group is gone.
       self.cohort:DelGroup(self.groupname)
     end
-    if self.legion then
-      --self.legion:Get
-      --self.legion:AssetDead()
-    end
   else
     -- Not all assets were destroyed (despawn) ==> Add asset back to legion?
   end
+  
   
   if self.legion then
     if not self:IsInUtero() then
@@ -7377,6 +7401,10 @@ function OPSGROUP:onafterDead(From, Event, To)
   
     -- Stop in 5 sec to give possible respawn attempts a chance.  
     self:__Stop(-5)
+    
+  elseif not self.isAI then
+    -- Stop player flights.
+    self:__Stop(-1)
   end
     
 end
@@ -11679,15 +11707,15 @@ function OPSGROUP:SwitchCallsign(CallsignName, CallsignNumber)
   return self
 end
 
---- Get callsign
+--- Get callsign of the first element alive.
 -- @param #OPSGROUP self
--- @return #string Callsign name, e.g. Uzi-1
+-- @return #string Callsign name, e.g. Uzi11, or "Ghostrider11".
 function OPSGROUP:GetCallsignName()
 
     local element=self:GetElementAlive()
 
     if element then
-      env.info("FF callsign "..tostring(element.callsign))
+      self:T2(self.lid..string.format("Callsign %s", tostring(element.callsign)))
       return element.callsign
     end
 
@@ -11710,7 +11738,7 @@ function OPSGROUP:GetCallsignName()
 
   ]]
   
-  return callsign
+  return "Ghostrider11"
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -12666,6 +12694,7 @@ function OPSGROUP:_AddElementByName(unitname)
     if element.skill=="Client" or element.skill=="Player" then
       element.ai=false
       element.client=CLIENT:FindByName(unitname)
+      element.playerName=element.DCSunit:getPlayerName()
     else
       element.ai=true
     end

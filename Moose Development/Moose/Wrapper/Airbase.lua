@@ -25,10 +25,11 @@
 -- @field #boolean isShip Airbase is a ship.
 -- @field #table parking Parking spot data.
 -- @field #table parkingByID Parking spot data table with ID as key.
--- @field #number activerwyno Active runway number (forced).
 -- @field #table parkingWhitelist List of parking spot terminal IDs considered for spawning.
 -- @field #table parkingBlacklist List of parking spot terminal IDs **not** considered for spawning.
 -- @field #table runways Runways of airdromes.
+-- @field #AIRBASE.Runway runwayLanding Runway used for landing.
+-- @field #AIRBASE.Runway runwayTakeoff Runway used for takeoff.
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 --- Wrapper class to handle the DCS Airbase objects:
@@ -70,7 +71,6 @@ AIRBASE = {
     [Airbase.Category.HELIPAD]    = "Helipad",
     [Airbase.Category.SHIP]       = "Ship",
     },
-  activerwyno=nil,
   }
 
 --- Enumeration to identify the airbases in the Caucasus region.
@@ -612,6 +612,9 @@ function AIRBASE:Register(AirbaseName)
   
   -- Init Runways.
   self:_InitRunways()
+  
+  -- Set the active runways based on wind direction.
+  self:SetActiveRunway()
 
   -- Init parking spots.
   self:_InitParkingSpots()
@@ -1531,6 +1534,33 @@ function AIRBASE:GetRunways()
   return self.runways or {}
 end
 
+--- Get runway by its name.
+-- @param #AIRBASE self
+-- @param #string Name Name of the runway, e.g. "31" or "21L".
+-- @return #AIRBASE.Runway Runway data.
+function AIRBASE:GetRunwayByName(Name)
+  
+  if Name==nil then
+    return
+  end
+
+  if Name then
+    for _,_runway in pairs(self.runways) do
+      local runway=_runway --#AIRBASE.Runway
+      
+      -- Name including L or R, e.g. "31L".
+      local name=self:GetRunwayName(runway)
+      
+      if name==Name:upper() then
+        return runway
+      end
+    end
+  end
+
+  self:E("ERROR: Could not find runway with name "..tostring(Name))
+  return nil
+end
+
 --- Init runways.
 -- @param #AIRBASE self
 -- @param #boolean IncludeInverse If `true` or `nil`, include inverse runways.
@@ -1906,29 +1936,100 @@ function AIRBASE:GetRunwayData(magvar, mark)
   return runways
 end
 
---- Set the active runway in case it cannot be determined by the wind direction.
+--- Set the active runway for landing and takeoff.
 -- @param #AIRBASE self
--- @param #number iactive Number of the active runway in the runway data table.
-function AIRBASE:SetActiveRunway(iactive)
-  self.activerwyno=iactive
+-- @param #string Name Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
+-- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
+function AIRBASE:SetActiveRunway(Name, PreferLeft)
+  
+  self:SetActiveRunwayTakeoff(Name, PreferLeft)
+  
+  self:SetActiveRunwayLanding(Name,PreferLeft)
+
 end
 
---- Get the active runway based on current wind direction.
+--- Set the active runway for landing.
 -- @param #AIRBASE self
--- @param #number magvar (Optional) Magnetic variation in degrees.
--- @return #AIRBASE.Runway Active runway data table.
-function AIRBASE:GetActiveRunway(magvar)
+-- @param #string Name Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
+-- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
+-- @return #AIRBASE.Runway The active runway for landing.
+function AIRBASE:SetActiveRunwayLanding(Name, PreferLeft)
 
-  -- Get runways data (initialize if necessary).
-  --local runways=self:GetRunwayData(magvar)
+  local runway=self:GetRunwayByName(Name)
+  
+  if not runway then
+    runway=self:GetRunwayIntoWind(PreferLeft)
+  end
+  
+  if runway then
+    self:I("Setting active runway for landing as "..self:GetRunwayName(runway))
+  else
+    self:E("ERROR: Could not set the runway for landing!")
+  end
+  
+  self.runwayLanding=runway
+
+  return runway
+end
+
+--- Get the active runways.
+-- @param #AIRBASE self
+-- @return #AIRBASE.Runway The active runway for landing.
+-- @return #AIRBASE.Runway The active runway for takeoff.
+function AIRBASE:GetActiveRunway()
+  return self.runwayLanding, self.runwayTakeoff
+end
+
+
+--- Get the active runway for landing.
+-- @param #AIRBASE self
+-- @return #AIRBASE.Runway The active runway for landing.
+function AIRBASE:GetActiveRunwayLanding()
+  return self.runwayLanding
+end
+
+--- Get the active runway for takeoff.
+-- @param #AIRBASE self
+-- @return #AIRBASE.Runway The active runway for takeoff.
+function AIRBASE:GetActiveRunwayTakeoff()
+  return self.runwayTakeoff
+end
+
+
+--- Set the active runway for takeoff.
+-- @param #AIRBASE self
+-- @param #string Name Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
+-- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
+-- @return #AIRBASE.Runway The active runway for landing.
+function AIRBASE:SetActiveRunwayTakeoff(Name, PreferLeft)
+
+  local runway=self:GetRunwayByName(Name)
+  
+  if not runway then
+    runway=self:GetRunwayIntoWind(PreferLeft)
+  end
+  
+  if runway then
+    self:I("Setting active runway for takeoff as "..self:GetRunwayName(runway))
+  else
+    self:E("ERROR: Could not set the runway for takeoff!")
+  end
+  
+  self.runwayTakeoff=runway
+
+  return runway
+end
+
+
+--- Get the runway where aircraft would be taking of or landing into the direction of the wind.
+-- NOTE that this requires the wind to be non-zero as set in the mission editor.
+-- @param #AIRBASE self
+-- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
+-- @return #AIRBASE.Runway Active runway data table.
+function AIRBASE:GetRunwayIntoWind(PreferLeft)
   
   -- Get runway data.
   local runways=self:GetRunways()
-
-  -- Return user forced active runway if it was set.
-  if self.activerwyno then
-    return runways[self.activerwyno]
-  end
 
   -- Get wind vector.
   local Vwind=self:GetCoordinate():GetWindWithTurbulenceVec3()
@@ -1949,39 +2050,43 @@ function AIRBASE:GetActiveRunway(magvar)
     local dotmin=nil
     for i,_runway in pairs(runways) do
       local runway=_runway --#AIRBASE.Runway
+      
+      if PreferLeft==nil or PreferLeft==runway.isLeft then
 
-      -- Angle in rad.
-      local alpha=math.rad(runway.heading)
-
-      -- Runway vector.
-      local Vrunway={x=math.cos(alpha), y=0, z=math.sin(alpha)}
-
-      -- Dot product: parallel component of the two vectors.
-      local dot=UTILS.VecDot(Vwind, Vrunway)
-
-      -- New min?
-      if dotmin==nil or dot<dotmin then
-        dotmin=dot
-        iact=i
+        -- Angle in rad.
+        local alpha=math.rad(runway.heading)
+  
+        -- Runway vector.
+        local Vrunway={x=math.cos(alpha), y=0, z=math.sin(alpha)}
+  
+        -- Dot product: parallel component of the two vectors.
+        local dot=UTILS.VecDot(Vwind, Vrunway)
+  
+        -- New min?
+        if dotmin==nil or dot<dotmin then
+          dotmin=dot
+          iact=i
+        end
+        
       end
 
     end
   else
-    self:E("WARNING: Norm of wind is zero! Cannot determine active runway based on wind direction.")
+    self:E("WARNING: Norm of wind is zero! Cannot determine runway based on wind direction")
   end
 
   return runways[iact]
 end
 
---- Get name of the runway, e.g. "31L".
+--- Get name of a given runway, e.g. "31L".
 -- @param #AIRBASE self
 -- @param #AIRBASE.Runway Runway The runway. Default is the active runway.
--- @return #AIRBASE.Runway Active runway data table.
+-- @return #string Name of the runway or "XX" if it could not be found.
 function AIRBASE:GetRunwayName(Runway)
 
   Runway=Runway or self:GetActiveRunway()
   
-  local name="Unknown"
+  local name="XX"
   if Runway then
     name=Runway.name
     if Runway.isLeft==true then
