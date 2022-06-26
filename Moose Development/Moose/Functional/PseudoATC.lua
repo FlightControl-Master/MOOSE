@@ -949,11 +949,14 @@ function PSEUDOATC:LocalAirports(GID, UID)
     for _,airbase in pairs(airports) do
     
       local name=airbase:getName()
-      local q=AIRBASE:FindByName(name):GetCoordinate()
-      local d=q:Get2DDistance(pos)
+      local a=AIRBASE:FindByName(name)
+      if a then
+        local q=a:GetCoordinate()
+        local d=q:Get2DDistance(pos)
       
-      -- Add to table.
-      table.insert(self.group[GID].player[UID].airports, {distance=d, name=name})
+        -- Add to table.
+        table.insert(self.group[GID].player[UID].airports, {distance=d, name=name})
+      end
       
     end
   end
