@@ -241,16 +241,6 @@ function DATABASE:DeleteAirbase( AirbaseName )
   self.AIRBASES[AirbaseName] = nil
 end
 
---- Finds an AIRBASE based on the AirbaseName.
--- @param #DATABASE self
--- @param #string AirbaseName
--- @return Wrapper.Airbase#AIRBASE The found AIRBASE.
-function DATABASE:FindAirbase( AirbaseName )
-
-  local AirbaseFound = self.AIRBASES[AirbaseName]
-  return AirbaseFound
-end
-
 do -- Zones
 
   --- Finds a @{Zone} based on the zone name.
