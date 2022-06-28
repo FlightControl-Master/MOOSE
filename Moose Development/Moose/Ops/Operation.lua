@@ -81,7 +81,7 @@ OPERATION.PhaseStatus={
 
 --- OPERATION class version.
 -- @field #string version
-OPERATION.version="0.0.1"
+OPERATION.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -231,6 +231,15 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User API Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Set verbosity level.
+-- @param #OPERATION self
+-- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @return #OPERATION self
+function OPERATION:SetVerbosity(VerbosityLevel)
+  self.verbose=VerbosityLevel or 0
+  return self
+end
 
 --- Create a new generic OPERATION object.
 -- @param #OPERATION self
@@ -658,29 +667,39 @@ function OPERATION:onafterStatusUpdate(From, Event, To)
     self:_CheckPhases()
   end
   
-  -- Current phase.
-  local currphase=self:GetPhaseActive()
-  local phaseName="None"
-  if currphase then
-    phaseName=currphase.name
-  end
-  local NphaseTot=self:CountPhases()
-  local NphaseAct=self:CountPhases(OPERATION.PhaseStatus.ACTIVE)
-  local NphasePla=self:CountPhases(OPERATION.PhaseStatus.PLANNED)
-  local NphaseOvr=self:CountPhases(OPERATION.PhaseStatus.OVER)
+  -- Debug output.
+  if self.verbose>=1 then
   
-  -- General info.
-  local text=string.format("State=%s: Phase=%s, Phases=%d [Active=%d, Planned=%d, Over=%d]", fsmstate, phaseName, NphaseTot, NphaseAct, NphasePla, NphaseOvr)
-  self:I(self.lid..text)
-  
-  -- Info on phases.
-  local text="Phases:"
-  for i,_phase in pairs(self.phases) do
-    local phase=_phase --#OPERATION.Phase
-    text=text..string.format("\n[%d] %s: status=%s", i, phase.name, tostring(phase.status))
+    -- Current phase.
+    local currphase=self:GetPhaseActive()
+    local phaseName="None"
+    if currphase then
+      phaseName=currphase.name
+    end
+    local NphaseTot=self:CountPhases()
+    local NphaseAct=self:CountPhases(OPERATION.PhaseStatus.ACTIVE)
+    local NphasePla=self:CountPhases(OPERATION.PhaseStatus.PLANNED)
+    local NphaseOvr=self:CountPhases(OPERATION.PhaseStatus.OVER)
+    
+    -- General info.
+    local text=string.format("State=%s: Phase=%s, Phases=%d [Active=%d, Planned=%d, Over=%d]", fsmstate, phaseName, NphaseTot, NphaseAct, NphasePla, NphaseOvr)
+    self:I(self.lid..text)
+    
   end
-  if text=="Phases:" then text=text.." None" end
-  self:I(self.lid..text)
+  
+  -- Debug output.
+  if self.verbose>=2 then
+  
+    -- Info on phases.
+    local text="Phases:"
+    for i,_phase in pairs(self.phases) do
+      local phase=_phase --#OPERATION.Phase
+      text=text..string.format("\n[%d] %s: status=%s", i, phase.name, tostring(phase.status))
+    end
+    if text=="Phases:" then text=text.." None" end
+    self:I(self.lid..text)
+    
+  end
 
   -- Next status update.
   self:__StatusUpdate(-30)

@@ -870,21 +870,21 @@ function FLIGHTGROUP:Status()
     if self:IsParking() then
       for _,_element in pairs(self.elements) do
         local element=_element --Ops.OpsGroup#OPSGROUP.Element
+        
+        -- Check for parking spot.
         if element.parking then
   
           -- Get distance to assigned parking spot.
-          local dist=element.unit:GetCoordinate():Get2DDistance(element.parking.Coordinate)
+          local dist=element.unit:GetCoord():Get2DDistance(element.parking.Coordinate)
           
           --env.info(string.format("FF dist to parking spot %d = %.1f meters", element.parking.TerminalID, dist))
   
           -- If distance >10 meters, we consider the unit as taxiing.
-          -- At least for fighters, the initial distance seems to be 1.8 meters.
-          -- TODO: Check distance threshold! If element is taxiing, the parking spot is free again.
-          --       When the next plane is spawned on this spot, collisions should be avoided!
-          if dist>10 then
-            if element.status==OPSGROUP.ElementStatus.ENGINEON then
+          -- At least for fighters, the initial distance seems to be around 1.8 meters.
+          if dist>12 and element.engineOn then
+            --if element.status==OPSGROUP.ElementStatus.ENGINEON then
               self:ElementTaxiing(element)
-            end
+            --end
           end
   
         else
@@ -1163,6 +1163,9 @@ function FLIGHTGROUP:OnEventEngineStartup(EventData)
         -- Element started engies.
         self:ElementEngineOn(element)
         
+        -- Engines are on.
+        element.engineOn=true
+        
         --[[
         -- TODO: could be that this element is part of a human flight group.
         -- Problem: when player starts hot, the AI does too and starts to taxi immidiately :(
@@ -1253,6 +1256,9 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
+    
+      -- Engines are off.
+      element.engineOn=false
 
       if element.unit and element.unit:IsAlive() then
 
@@ -1395,8 +1401,10 @@ function FLIGHTGROUP:onafterElementParking(From, Event, To, Element, Spot)
     -- Wait for engine startup event.
   elseif self:IsTakeoffHot() then
     self:__ElementEngineOn(0.5, Element)  -- delay a bit to allow all elements
+    Element.engineOn=true
   elseif self:IsTakeoffRunway() then
     self:__ElementEngineOn(0.5, Element)
+    Element.engineOn=true
   end
   
 end
@@ -1618,6 +1626,11 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     text=text..string.format("Start Cold   = %s\n", tostring(self:IsTakeoffCold()))
     text=text..string.format("Start Hot    = %s\n", tostring(self:IsTakeoffHot()))
     text=text..string.format("Start Rwy    = %s\n", tostring(self:IsTakeoffRunway()))
+    text=text..string.format("Elements:")
+    for i,_element in pairs(self.elements) do
+      local element=_element --Ops.OpsGroup#OPSGROUP.Element
+      text=text..string.format("\n[%d] %s: callsign=%s, modex=%s, player=%s", i, element.name, tostring(element.callsign), tostring(element.modex), tostring(element.playerName))
+    end
     self:I(self.lid..text)
   end  
 
@@ -2651,6 +2664,22 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
 
     -- Add flight to inbound queue.
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.INBOUND)
+    
+    -- Callsign.
+    local callsign=self:GetCallsignName()
+    
+    -- Pilot calls inbound for landing.
+    local text=string.format("%s, %s, inbound for landing", fc.alias, callsign)
+      
+    -- Radio message.
+    fc:TransmissionPilot(text, self)
+    
+    -- Message text.
+    local text=string.format("%s, %s, roger, hold at angels %d. Report entering the pattern.", callsign, fc.alias, stack.angels)
+          
+    -- Send message.
+    fc:TransmissionTower(text, self, 10)
+    
   end
   
   -- Some intermediate coordinate to climb to the default cruise alitude.
@@ -2913,6 +2942,29 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
 
     -- Set flight status to holding.
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.HOLDING)
+    
+    if self.isAI then
+    
+      -- Callsign.
+      local callsign=self:GetCallsignName()
+
+      -- Pilot arrived at holding pattern.
+      local text=string.format("%s, %s, arrived at holding pattern", self.flightcontrol.alias, callsign)
+      
+      if self.stack then
+        text=text..string.format(", angels %d.", self.stack.angels)
+      end
+      
+      -- Radio message.
+      self.flightcontrol:TransmissionPilot(text, self)
+
+      -- Message to flight
+      local text=string.format("%s, roger, fly heading %d and wait for landing clearance", callsign, self.stack.heading)
+      
+      -- Radio message from tower.
+      self.flightcontrol:TransmissionTower(text, self, 10)
+          
+    end
 
   elseif self.airboss then
 
@@ -3900,16 +3952,16 @@ function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
   local coord=element.unit:GetCoordinate()
 
   -- Airbase.
-  airbase=airbase or self:GetClosestAirbase() --coord:GetClosestAirbase(nil, self:GetCoalition())
+  airbase=airbase or self:GetClosestAirbase()
 
-  -- TODO: replace by airbase.parking if AIRBASE is updated.
-  local parking=airbase:GetParkingSpotsTable()
+  -- Parking table of airbase.
+  local parking=airbase.parking --:GetParkingSpotsTable()
 
   -- If airbase is ship, translate parking coords. Alternatively, we just move the coordinate of the unit to the origin of the map, which is way more efficient.
   if airbase and airbase:IsShip() then
     coord.x=0
     coord.z=0
-    maxdist=500 -- 100 meters was not enough, e.g. on the Seawise Giant, where the spot is 139 meters from the "center"
+    maxdist=500 -- 100 meters was not enough, e.g. on the Seawise Giant, where the spot is 139 meters from the "center".
   end
 
   local spot=nil --Wrapper.Airbase#AIRBASE.ParkingSpot
@@ -3917,8 +3969,10 @@ function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
   local distmin=math.huge
   for _,_parking in pairs(parking) do
     local parking=_parking --Wrapper.Airbase#AIRBASE.ParkingSpot
+    
+    -- Distance to spot.
     dist=coord:Get2DDistance(parking.Coordinate)
-    --env.info(string.format("FF parking %d dist=%.1f", parking.TerminalID, dist))
+    
     if dist<distmin then
       distmin=dist
       spot=_parking
@@ -4357,6 +4411,7 @@ function FLIGHTGROUP:_CreateMenuAtcHelp(rootmenu)
   ---
   MENU_GROUP_COMMAND:New(self.group, "Subtitles On/Off", helpmenu, self._PlayerSubtitles,     self)
   MENU_GROUP_COMMAND:New(self.group, "My Voice On/Off",  helpmenu, self._MenuNotImplemented,  self, groupname)
+  MENU_GROUP_COMMAND:New(self.group, "Mark Parking",     helpmenu, self._MarkParking,         self)
   MENU_GROUP_COMMAND:New(self.group, "Update Menu",      helpmenu, self._UpdateMenu,          self, 0)
   MENU_GROUP_COMMAND:New(self.group, "My Status",        helpmenu, self._PlayerMyStatus,      self, groupname)
 
@@ -4389,6 +4444,9 @@ function FLIGHTGROUP:_PlayerMyStatus()
   
   -- Player data.
   local playerdata=self:_GetPlayerData()
+  
+  -- Player element.
+  local playerElement=self:GetPlayerElement()
 
   -- Status text.
   local text=string.format("My Status:")
@@ -4398,6 +4456,15 @@ function FLIGHTGROUP:_PlayerMyStatus()
   text=text..string.format("\nFlight control: %s [%s]", tostring(fc and fc.airbasename or "N/A"), tostring(fc and fc:GetFlightStatus(self) or "N/A"))
   text=text..string.format("\nSubtitles: %s", tostring(playerdata.subtitles))
   text=text..string.format("\nMy Voice: %s", tostring(playerdata.myvoice))
+  
+  if fc then
+    if playerElement.parking then
+      local spot=fc:GetParkingSpotByID(playerElement.parking.TerminalID)
+      if spot then
+        text=text..string.format("\nParking spot: %d [%s]", spot.TerminalID, spot.Status or "Unknown")
+      end
+    end
+  end
   
   -- Send message.
   MESSAGE:New(text, 10, nil, true):ToGroup(self.group)
@@ -4421,6 +4488,43 @@ function FLIGHTGROUP:_PlayerSubtitles()
   
   else
     --TODO: Error
+  end
+    
+end
+
+--- Player mark parking.
+-- @param #FLIGHTGROUP self
+function FLIGHTGROUP:_MarkParking()
+
+  local playerElement=self:GetPlayerElement()
+  
+  if playerElement then
+  
+    -- Player name.
+    local playerName=tostring(playerElement.playerName)
+    
+    -- Message text.
+    local message=string.format("No assigned parking spot for you could be found, %s", playerName)
+    
+    if playerElement.parking then
+    
+      local terminalID=playerElement.parking.TerminalID
+      local spotStatus=tostring(playerElement.parking.Status)
+    
+      -- Marker text.
+      local text=string.format("Your parking spot, %s\nTerminal ID=%d [%s]", playerName, terminalID, spotStatus)
+      
+      -- Text message.
+      message=string.format("%s, your parking spot is Terminal ID=%d [%s]. Check the marker on the F10 map.", playerName, terminalID, spotStatus)
+      
+      -- New marker.
+      playerElement.parking.Coordinate:MarkToGroup(text, self.group)
+      
+    end
+    
+    -- Text message to group.
+    MESSAGE:New(string.format(message, playerName), 10):ToGroup(self.group)
+    
   end
     
 end

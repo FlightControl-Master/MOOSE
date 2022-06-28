@@ -210,6 +210,7 @@ OPSGROUP = {
 -- @field #string skill Skill level.
 -- @field #string playerName Name of player if this is a client.
 -- @field #number Nhit Number of times the element was hit.
+-- @field #boolean engineOn If `true`, engines were started.
 --
 -- @field Core.Zone#ZONE_POLYGON_BASE zoneBoundingbox Bounding box zone of the element unit.
 -- @field Core.Zone#ZONE_POLYGON_BASE zoneLoad Loading zone.
@@ -5830,8 +5831,6 @@ end
 -- @param #string To To state.
 -- @param #number Duration Duration how long the group will be waiting in seconds. Default `nil` (=forever).
 function OPSGROUP:onbeforeWait(From, Event, To, Duration)
-
-  env.info("FF before wait")
 
   local allowed=true
   local Tsuspend=nil
@@ -11712,32 +11711,15 @@ end
 -- @return #string Callsign name, e.g. Uzi11, or "Ghostrider11".
 function OPSGROUP:GetCallsignName()
 
-    local element=self:GetElementAlive()
+  local element=self:GetElementAlive()
 
-    if element then
-      self:T2(self.lid..string.format("Callsign %s", tostring(element.callsign)))
-      return element.callsign
-    end
-
-  --[[
-
-  local numberSquad=self.callsign.NumberSquad or self.callsignDefault.NumberSquad
-  local numberGroup=self.callsign.NumberGroup or self.callsignDefault.NumberGroup
-  
-  local callsign="Unknown 1"
-  
-  if numberSquad and numberGroup then
-  
-    local nameSquad=UTILS.GetCallsignName(numberSquad)
-    
-    callsign=string.format("%s %d", nameSquad, numberGroup)
-  
-  else
-  
+  if element then
+    self:T2(self.lid..string.format("Callsign %s", tostring(element.callsign)))
+    local name=element.callsign or "Ghostrider11"
+    name=name:gsub("-", "")
+    return name
   end
 
-  ]]
-  
   return "Ghostrider11"
 end
 

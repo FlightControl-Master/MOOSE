@@ -5376,7 +5376,6 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param DCS#coalition.side Coalition Coalition side which originally captured the warehouse.
 function WAREHOUSE:onafterRunwayDestroyed(From, Event, To)
 
   -- Message.

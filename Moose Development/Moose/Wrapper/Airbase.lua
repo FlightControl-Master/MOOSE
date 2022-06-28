@@ -523,8 +523,9 @@ AIRBASE.SouthAtlantic={
 -- @field #string AirbaseName Name of the airbase.
 -- @field #number MarkerID Numerical ID of marker placed at parking spot.
 -- @field Wrapper.Marker#MARKER Marker The marker on the F10 map.
--- @field #string ClientSpot Client unit sitting at this spot or *nil*.
--- @field #string Status Status of spot e.g. AIRBASE.SpotStatus.FREE.
+-- @field #string ClientSpot If `true`, this is a parking spot of a client aircraft.
+-- @field #string ClientName Client unit name of this spot.
+-- @field #string Status Status of spot e.g. `AIRBASE.SpotStatus.FREE`.
 -- @field #string OccupiedBy Name of the aircraft occupying the spot or "unknown". Can be *nil* if spot is not occupied.
 -- @field #string ReservedBy Name of the aircraft for which this spot is reserved. Can be *nil* if spot is not reserved.
 
@@ -1081,11 +1082,11 @@ function AIRBASE:_InitParkingSpots()
         local Coord=COORDINATE:New(unit.x, unit.alt, unit.y)
         local dist=Coord:Get2DDistance(coord)
         if dist<2 then
-          return true
+          return true, clientname
         end
       end
     end
-    return false
+    return false, nil
   end
 
   -- Put coordinates of parking spots into table.
@@ -1101,7 +1102,7 @@ function AIRBASE:_InitParkingSpots()
     park.TerminalID0=spot.Term_Index_0
     park.TerminalType=spot.Term_Type
     park.TOAC=spot.TO_AC
-    park.ClientSpot=isClient(park.Coordinate)
+    park.ClientSpot, park.ClientName=isClient(park.Coordinate)
 
     self.NparkingTotal=self.NparkingTotal+1
 
@@ -2103,8 +2104,9 @@ end
 --- Get name of a given runway, e.g. "31L".
 -- @param #AIRBASE self
 -- @param #AIRBASE.Runway Runway The runway. Default is the active runway.
+-- @param #boolean LongLeftRight If `true`, return "Left" or "Right" instead of "L" or "R".
 -- @return #string Name of the runway or "XX" if it could not be found.
-function AIRBASE:GetRunwayName(Runway)
+function AIRBASE:GetRunwayName(Runway, LongLeftRight)
 
   Runway=Runway or self:GetActiveRunway()
   
@@ -2112,9 +2114,17 @@ function AIRBASE:GetRunwayName(Runway)
   if Runway then
     name=Runway.name
     if Runway.isLeft==true then
-      name=name.."L"
+      if LongLeftRight then
+        name=name.." Left"
+      else
+        name=name.."L"
+      end
     elseif Runway.isLeft==false then
-      name=name.."R"
+      if LongLeftRight then
+        name=name.." Right"
+      else
+        name=name.."R"
+      end
     end
   end
 

@@ -1869,8 +1869,14 @@ function LEGION:GetOpsGroups(MissionTypes, Attributes)
 
   for _,_cohort in pairs(self.cohorts) do
     local cohort=_cohort --Ops.Cohort#COHORT
+    
+    -- Get cohort set.
     local setCohort=cohort:GetOpsGroups(MissionTypes, Attributes)
-    self:I(self.lid..string.format("Found %d opsgroups of cohort %s", setCohort:Count(), cohort.name))
+    
+    -- Debug info.
+    self:T2(self.lid..string.format("Found %d opsgroups of cohort %s", setCohort:Count(), cohort.name))
+    
+    -- Add to legion set.
     setLegion:AddSet(setCohort)
   end
 
@@ -2348,7 +2354,7 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     end
     
     -- Debug info.
-    cohort:I(cohort.lid..string.format("State=%s: Capable=%s, InRange=%s, Refuel=%s, CanCarry=%s, Category=%s, Attribute=%s, Property=%s, Weapon=%s",
+    cohort:T(cohort.lid..string.format("State=%s: Capable=%s, InRange=%s, Refuel=%s, CanCarry=%s, Category=%s, Attribute=%s, Property=%s, Weapon=%s",
     cohort:GetState(), tostring(Capable), tostring(InRange), tostring(Refuel), tostring(CanCarry), tostring(RightCategory), tostring(RightAttribute), tostring(RightProperty), tostring(RightWeapon)))
     
     -- Check OnDuty, capable, in range and refueling type (if TANKER).
