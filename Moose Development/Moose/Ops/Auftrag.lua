@@ -4474,7 +4474,7 @@ function AUFTRAG:onafterCancel(From, Event, To)
   else
 
     -- Debug info.
-    self:T(self.lid..string.format("No legion, commander or chief. Attached flights will cancel the mission on their own. Will wait for mission DONE before evaluation!"))
+    self:T(self.lid..string.format("No legion, commander or chief. Attached groups will cancel the mission on their own. Will wait for mission DONE before evaluation!"))
 
     -- Loop over all groups.
     for _,_groupdata in pairs(self.groupdata or {}) do

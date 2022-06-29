@@ -4711,9 +4711,13 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:RemoveMission(Mission)
 
-  for i,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
+  --for i,_mission in pairs(self.missionqueue) do
+  for i=#self.missionqueue,1,-1 do
+  
+    -- Mission.
+    local mission=self.missionqueue[i] --Ops.Auftrag#AUFTRAG
 
+    -- Check mission ID.
     if mission.auftragsnummer==Mission.auftragsnummer then
 
       -- Remove mission waypoint task.
@@ -4724,9 +4728,10 @@ function OPSGROUP:RemoveMission(Mission)
       end
 
       -- Take care of a paused mission.
-      for j,mid in pairs(self.pausedmissions) do
+      for j=#self.pausedmissions,1,-1 do
+        local mid=self.pausedmissions[j]
         if Mission.auftragsnummer==mid then
-          table.remove(self.pausedmission, j)
+          table.remove(self.pausedmissions, j)
         end
       end
 
@@ -5161,6 +5166,7 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
     ---
 
     -- Some missions dont have a task set, which could be cancelled.
+    --[[
     if Mission.type==AUFTRAG.Type.ALERT5 or 
        Mission.type==AUFTRAG.Type.ONGUARD or 
        Mission.type==AUFTRAG.Type.ARMOREDGUARD or
@@ -5173,19 +5179,31 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
       
       return
     end
+    ]]
 
     -- Get mission waypoint task.
     local Task=Mission:GetGroupWaypointTask(self)
+    
+    if Task then
 
-    -- Debug info.
-    self:T(self.lid..string.format("Cancel current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
+      -- Debug info.
+      self:T(self.lid..string.format("Cancel current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
+  
+      -- Cancelling the mission is actually cancelling the current task.
+      -- Note that two things can happen.
+      -- 1.) Group is still on the way to the waypoint (status should be STARTED). In this case there would not be a current task!
+      -- 2.) Group already passed the mission waypoint (status should be EXECUTING).
+  
+      self:TaskCancel(Task)
+      
+    else
+    
+      -- Some missions dont have a task set, which could be cancelled.
 
-    -- Cancelling the mission is actually cancelling the current task.
-    -- Note that two things can happen.
-    -- 1.) Group is still on the way to the waypoint (status should be STARTED). In this case there would not be a current task!
-    -- 2.) Group already passed the mission waypoint (status should be EXECUTING).
-
-    self:TaskCancel(Task)
+      -- Trigger mission don task.
+      self:MissionDone(Mission)
+    
+    end
 
   else
 
