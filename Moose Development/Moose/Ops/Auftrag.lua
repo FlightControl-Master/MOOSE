@@ -2454,9 +2454,13 @@ end
 
 --- Set that mission assets are teleported to the mission execution waypoint.
 -- @param #AUFTRAG self
+-- @param #boolean Switch If `true` or `nil`, teleporting is on. If `false`, teleporting is off.
 -- @return #AUFTRAG self
-function AUFTRAG:SetTeleport()
-  self.teleport=true
+function AUFTRAG:SetTeleport(Switch)
+  if Switch==nil then
+    Switch=true
+  end
+  self.teleport=Switch
   return self
 end
 

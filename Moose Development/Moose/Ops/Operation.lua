@@ -1013,7 +1013,7 @@ function OPERATION:onafterPhaseChange(From, Event, To, Phase)
   end
 
   -- Debug message.
-  self:T(self.lid..string.format("Phase change: %s --> %s", oldphase, Phase.name))
+  self:I(self.lid..string.format("Phase change: %s --> %s", oldphase, Phase.name))
   
   -- Set currently active phase.
   self.phase=Phase

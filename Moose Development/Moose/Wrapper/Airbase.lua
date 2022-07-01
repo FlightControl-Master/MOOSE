@@ -637,7 +637,9 @@ function AIRBASE:Register(AirbaseName)
   self:_InitRunways()
   
   -- Set the active runways based on wind direction.
-  self:SetActiveRunway()
+  if self.isAirdrome then
+    self:SetActiveRunway()
+  end
 
   -- Init parking spots.
   self:_InitParkingSpots()
