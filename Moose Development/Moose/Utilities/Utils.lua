@@ -1782,71 +1782,68 @@ end
 --@return #boolean Outcome - true if a (loading door) is open, false if not, nil if none exists.
 function UTILS.IsLoadingDoorOpen( unit_name )
 
-  local ret_val = false
   local unit = Unit.getByName(unit_name)
+
   if unit ~= nil then
       local type_name = unit:getTypeName()
+      BASE:T("TypeName = ".. type_name)
 
-      if type_name == "Mi-8MT" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) < 0 then
+      if type_name == "Mi-8MT" and (unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) < 0) then
           BASE:T(unit_name .. " Cargo doors are open or cargo door not present")
-          ret_val =  true
+          return true
       end
 
-      if type_name == "Mi-24P" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 then
+      if type_name == "Mi-24P" and (unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1) then
           BASE:T(unit_name .. " a side door is open")
-          ret_val =  true
+          return true
       end
 
-      if type_name == "UH-1H" and unit:getDrawArgumentValue(43) == 1 or unit:getDrawArgumentValue(44) == 1 then
+      if type_name == "UH-1H" and (unit:getDrawArgumentValue(43) == 1 or unit:getDrawArgumentValue(44) == 1) then
           BASE:T(unit_name .. " a side door is open ")
-          ret_val =  true
+          return true
+      end
+    
+      if string.find(type_name, "SA342" ) and (unit:getDrawArgumentValue(34) == 1) then
+          BASE:T(unit_name .. " front door(s) are open or doors removed")
+          return true
       end
 
-      if string.find(type_name, "SA342" ) and unit:getDrawArgumentValue(34) == 1 or unit:getDrawArgumentValue(38) == 1 then
-          BASE:T(unit_name .. " front door(s) are open")
-          ret_val =  true
-      end
-
-      if string.find(type_name, "Hercules") and unit:getDrawArgumentValue(1215) == 1 and unit:getDrawArgumentValue(1216) == 1 then
+      if string.find(type_name, "Hercules") and (unit:getDrawArgumentValue(1215) == 1 and unit:getDrawArgumentValue(1216) == 1) then
           BASE:T(unit_name .. " rear doors are open")
-          ret_val =  true
+          return true
       end
 
       if string.find(type_name, "Hercules") and (unit:getDrawArgumentValue(1220) == 1 or unit:getDrawArgumentValue(1221) == 1) then
           BASE:T(unit_name .. " para doors are open")
-          ret_val =  true
+          return true
       end
 
-      if string.find(type_name, "Hercules") and unit:getDrawArgumentValue(1217) == 1 then
+      if string.find(type_name, "Hercules") and (unit:getDrawArgumentValue(1217) == 1) then
           BASE:T(unit_name .. " side door is open")
-          ret_val =  true
+          return true
       end
 
       if string.find(type_name, "Bell-47") then -- bell aint got no doors so always ready to load injured soldiers
           BASE:T(unit_name .. " door is open")
-          ret_val =  true
+          return true
       end
       
-      if string.find(type_name, "UH-60L") and (unit:getDrawArgumentValue(401) == 1) or (unit:getDrawArgumentValue(402) == 1) then
+      if string.find(type_name, "UH-60L") and (unit:getDrawArgumentValue(401) == 1 or unit:getDrawArgumentValue(402) == 1) then
           BASE:T(unit_name .. " cargo door is open")
-          ret_val =  true
+          return true
       end
 
-      if string.find(type_name, "UH-60L" ) and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(400) == 1 then
+      if string.find(type_name, "UH-60L" ) and (unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(400) == 1 ) then
           BASE:T(unit_name .. " front door(s) are open")
-          ret_val =  true
+          return true
       end
       
       if type_name == "AH-64D_BLK_II" then
          BASE:T(unit_name .. " front door(s) are open")
-         ret_val =  true -- no doors on this one ;)
+         return true -- no doors on this one ;)
       end
       
-      if ret_val == false then
-          BASE:T(unit_name .. " all doors are closed")
-      end
-      
-      return ret_val
+      return false
 
   end -- nil
 

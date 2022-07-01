@@ -165,7 +165,7 @@
 --    
 --      The pilot has been boarded to the helicopter. Use e.g. `function my_csar:OnAfterBoarded(...)` to link into this event:
 --      
---          function my_csar:OnAfterBoarded(from, event, to, heliname, groupname)
+--          function my_csar:OnAfterBoarded(from, event, to, heliname, groupname, description)
 --            ... your code here ...
 --          end
 --    
@@ -492,6 +492,7 @@ function CSAR:New(Coalition, Template, Alias)
   -- @param #string To To state.
   -- @param #string Heliname Name of the helicopter group.
   -- @param #string Woundedgroupname Name of the downed pilot\'s group.
+  -- @param #string Description Descriptive name of the group.
 
     --- On After "Returning" event. Heli can return home with downed pilot(s).
   -- @function [parent=#CSAR] OnAfterReturning
@@ -1317,7 +1318,7 @@ function CSAR:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupNam
   
   self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s I\'m in! Get to the MASH ASAP! ", _heliName, _pilotName), self.messageTime,true,true)
   
-  self:__Boarded(5,_heliName,_woundedGroupName)
+  self:__Boarded(5,_heliName,_woundedGroupName,grouptable.desc)
   
   return self
 end
