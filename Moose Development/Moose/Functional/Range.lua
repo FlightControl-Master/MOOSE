@@ -3018,7 +3018,7 @@ function RANGE:_CheckInZone( _unitName )
           if shots and accur then
             _text = _text .. string.format( "\nTotal rounds fired %d. Accuracy %.1f %%.", shots, accur )
           end
-          _text = _text .. string.format( "\n%s", _result.text )
+          _text = _text .. string.format( "\n%s", resulttext )
 
           -- Send message.
           self:_DisplayMessageToGroup( _unit, _text )
