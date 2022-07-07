@@ -17,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update June 2022
+-- @date Last Update July 2022
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -107,6 +107,8 @@ do
 -- @field #number WindowsTTSPadding
 -- @field #boolean AllowMarkers
 -- @field #string PlayerStationName
+-- @field #boolean GCI Act as GCI
+-- @field Wrapper.Group#GROUP GCIGroup EWR group object for GCI ops
 -- @extends Core.Fsm#FSM
 
 
@@ -125,6 +127,12 @@ do
 --  ** References from ARN33396 ATP 3-52.4 (Sep 2021) (Combined Forces)   
 --  ** References from CNATRA P-877 (Rev 12-20) (NAVY)   
 --  * FSM events that the mission designer can hook into
+--  * Can also be used as GCI Controller
+-- 
+-- ## 0 Note for Multiplayer Setup
+-- 
+-- Due to DCS limitations you need to set up a second, "normal" AWACS plane in multi-player/server environments to keep the EPLRS/DataLink going in these environments.
+-- Though working in single player, the situational awareness screens of the e.g. F14/16/18 will else not receive datalink targets.
 -- 
 -- ## 1 Prerequisites
 -- 
@@ -224,7 +232,27 @@ do
 --            testawacs:SetModernEra()
 --            -- And start
 --            testawacs:__Start(5)
+--            
+-- ### 5.1 Alternative - Set up as GCI (no AWACS plane needed)
 -- 
+--            -- Set up as GCI called "GCI Senaki". It will use the AwacsAW AirWing set up above and be of the "blue" coalition. Homebase is Senaki.
+--            -- No need to set the AWACS Orbit Zone; the FEZ is still a Polygon-Zone called "Rock" we have also
+--            -- set up in the mission editor with a late activated helo named "Rock#ZONE_POLYGON". Note this also sets the BullsEye to be referenced as "Rock".
+--            -- The CAP station zone is called "Fremont". We will be on 255 AM. Note the Orbit Zone is given as *nil* in the `New()`-Statement
+--            local testawacs = AWACS:New("GCI Senaki",AwacsAW,"blue",AIRBASE.Caucasus.Senaki_Kolkhi,nil,ZONE:FindByName("Rock"),"Fremont",255,radio.modulation.AM )
+--            -- Set up SRS on port 5010 - change the below to your path and port
+--            testawacs:SetSRS("C:\\Program Files\\DCS-SimpleRadio-Standalone","female","en-GB",5010)
+--            -- Add a "red" border we don't want to cross, set up in the mission editor with a late activated helo named "Red Border#ZONE_POLYGON"
+--            testawacs:SetRejectionZone(ZONE:FindByName("Red Border"))
+--            -- Our CAP flight will have the callsign "Ford", we want 4 AI planes, Time-On-Station is four hours, doing 300 kn IAS.
+--            testawacs:SetAICAPDetails(CALLSIGN.Aircraft.Ford,4,4,300)
+--            -- We're modern (default), e.g. we have EPLRS and get more fill-in information on detections
+--            testawacs:SetModernEra()
+--            -- Give it a fancy callsign
+--            testawacs:SetAwacsDetails(CALLSIGN.AWACS.Wizard)
+--            -- And start as GCI using a group name "Blue EWR" as main EWR station
+--            testawacs:StartAsGCI(GROUP:FindByName("Blue EWR"),2)
+--            
 -- ## 6 Menu entries
 -- 
 -- **Note on Radio Menu entries**: Due to a DCS limitation, these are on GROUP level and not individual (UNIT level). Hence, either put each player in his/her own group,
@@ -294,7 +322,7 @@ do
 -- * @{#AWACS.SetRejectionZone}() : Add one foreign border. Targets beyond will be ignored for tasking.
 -- * @{#AWACS.DrawFEZ}() : Show the FEZ on the F10 map.
 -- * @{#AWACS.SetAWACSDetails}() : Set AWACS details.
--- * @{#AWACS.AddGroupToDetection}() : Add a group object to INTEL detection, e.g. EWR.
+-- * @{#AWACS.AddGroupToDetection}() : Add a GROUP or SET_GROUP object to INTEL detection, e.g. EWR.
 -- * @{#AWACS.SetSRS}() : Set SRS details.
 -- * @{#AWACS.SetSRSVoiceCAP}() : Set voice details for AI CAP planes, using Windows dektop TTS.
 -- * @{#AWACS.SetAICAPDetails}() : Set AI CAP details.
@@ -364,7 +392,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "beta 0.1.30", -- #string
+  version = "beta 0.2.31", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -446,6 +474,8 @@ AWACS = {
   PlayerCapAssigment = true,
   AllowMarkers = false,
   PlayerStationName = nil,
+  GCI = false,
+  GCIGroup = nil,
 }
 
 ---
@@ -706,7 +736,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.1.30
+-- TODO-List 0.2.31
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
@@ -823,7 +853,9 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.Modulation = Modulation or radio.modulation.AM
   self.Airbase = AIRBASE:FindByName(AirbaseName)
   self.AwacsAngels = 25 -- orbit at 25'000 ft
-  self.OrbitZone = ZONE:New(AwacsOrbit) -- Core.Zone#ZONE
+  if AwacsOrbit then
+    self.OrbitZone = ZONE:New(AwacsOrbit) -- Core.Zone#ZONE
+  end
   self.BorderZone = nil
   self.CallSign = CALLSIGN.AWACS.Darkstar -- #number
   self.CallSignNo = 1 -- #number
@@ -1129,6 +1161,23 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- [User] Start this instance and act as GCI Ground Controlled Intercepts Operator
+-- @param #AWACS self
+-- @param #string EWR The **main** Early Warning Radar (EWR) group name for this GCI.
+-- @param #number Delay (option) Start after this many seconds (optional).
+-- @return #AWACS self
+function AWACS:StartAsGCI(EWR,Delay)
+  self:T(self.lid.."SetGCI")
+  local delay = Delay or -5
+  self.GCI = true
+  self.GCIGroup = EWR
+  self:SetEscort(0)
+  self:__Start(delay)
+  -- set FSM to started
+  self:__Started(2*delay)
+  return self
+end
 
 --- [Internal] Create a AIC-TTS message entry
 -- @param #AWACS self
@@ -2121,16 +2170,18 @@ function AWACS:_TargetSelectionProcess(Untargeted)
       end
     end
     -- Bucket 1 - close to AIC (HVT) ca ~45nm
-    local HVTCoordinate = self.OrbitZone:GetCoordinate()
-    local distance = UTILS.NMToMeters(200)
-    if contactcoord then
-      distance = HVTCoordinate:Get2DDistance(contactcoord)
-    end
-    self:T(self.lid.."HVT Distance = "..UTILS.Round(UTILS.MetersToNM(distance),0))
-    if UTILS.MetersToNM(distance) <= 45 and not checked then
-      self:T(self.lid.."In HVT Distance = YES")
-      targettable:Push(contact,distance)
-      checked = true
+    if not self.GCI then
+      local HVTCoordinate = self.OrbitZone:GetCoordinate()
+      local distance = UTILS.NMToMeters(200)
+      if contactcoord then
+        distance = HVTCoordinate:Get2DDistance(contactcoord)
+      end
+      self:T(self.lid.."HVT Distance = "..UTILS.Round(UTILS.MetersToNM(distance),0))
+      if UTILS.MetersToNM(distance) <= 45 and not checked then
+        self:T(self.lid.."In HVT Distance = YES")
+        targettable:Push(contact,distance)
+        checked = true
+      end
     end
     
     -- Bucket 2 - in AO/FEZ   
@@ -2425,7 +2476,7 @@ function AWACS:_Picture(Group,IsGeneral)
       
       if self.OpsZone:IsVec2InZone(coordVec2) then
         self.PictureAO:Push(contact)
-      elseif self.OrbitZone:IsVec2InZone(coordVec2) then
+      elseif self.OrbitZone and self.OrbitZone:IsVec2InZone(coordVec2) then
         self.PictureAO:Push(contact)
       elseif self.ControlZone:IsVec2InZone(coordVec2) then
         local distance = math.floor((contact.Contact.position:Get2DDistance(self.ControlZone:GetCoordinate()) / 1000) + 1) -- km
@@ -2533,9 +2584,11 @@ function AWACS:_BogeyDope(Group)
       elseif self.BorderZone and self.BorderZone:IsVec2InZone(coordVec2) then 
        self.ContactsAO:Push(managedcontact,dist)
       else
-        local distance = contactposition:Get2DDistance(self.OrbitZone:GetCoordinate())
-        if (distance <= UTILS.NMToMeters(45)) then
-          self.ContactsAO:Push(managedcontact,distance)
+        if self.OrbitZone then
+          local distance = contactposition:Get2DDistance(self.OrbitZone:GetCoordinate())
+          if (distance <= UTILS.NMToMeters(45)) then
+            self.ContactsAO:Push(managedcontact,distance)
+          end
         end
       end     
     end
@@ -3603,16 +3656,17 @@ function AWACS:_StartIntel(awacs)
   self.DetectionSet:AddGroup(awacs)
 
   local intel = INTEL:New(self.DetectionSet,self.coalition,self.callsigntxt)
-  --intel:SetVerbosity(2)
-  --intel:SetClusterRadius(UTILS.NMToMeters(5))
+
   intel:SetClusterAnalysis(true,false,false)
   
   local acceptzoneset = SET_ZONE:New()
   acceptzoneset:AddZone(self.ControlZone)
   acceptzoneset:AddZone(self.OpsZone)
   
-  self.OrbitZone:SetRadius(UTILS.NMToMeters(55))
-  acceptzoneset:AddZone(self.OrbitZone)
+  if not self.GCI then
+    self.OrbitZone:SetRadius(UTILS.NMToMeters(55))
+    acceptzoneset:AddZone(self.OrbitZone)
+  end
   
   if self.BorderZone then
     acceptzoneset:AddZone(self.BorderZone)
@@ -5252,34 +5306,70 @@ function AWACS:onafterStart(From, Event, To)
     MARKER:New(self.AOCoordinate,Rocktag):ToAll()
     self.StationZone:DrawZone(-1,{0,0,1},1,{0,0,1},0.2,5,true)
     local stationtag = string.format("Station: %s\nCoordinate: %s",self.StationZoneName,self.StationZone:GetCoordinate():ToStringLLDDM())
-    MARKER:New(self.StationZone:GetCoordinate(),stationtag):ToAll()
-    self.OrbitZone:DrawZone(-1,{0,1,0},1,{0,1,0},0.2,5,true)
-    MARKER:New(self.OrbitZone:GetCoordinate(),"AIC Orbit Zone"):ToAll()
+    if not self.GCI then
+      MARKER:New(self.StationZone:GetCoordinate(),stationtag):ToAll()
+      self.OrbitZone:DrawZone(-1,{0,1,0},1,{0,1,0},0.2,5,true)
+      MARKER:New(self.OrbitZone:GetCoordinate(),"AIC Orbit Zone"):ToAll()
+    end
   else
     local AOCoordString = self.AOCoordinate:ToStringLLDDM()
     local Rocktag = string.format("FEZ: %s\nBulls Coordinate: %s",self.AOName,AOCoordString)
     MARKER:New(self.AOCoordinate,Rocktag):ToAll()
-    MARKER:New(self.OrbitZone:GetCoordinate(),"AIC Orbit Zone"):ToAll()
+    if not self.GCI then
+      MARKER:New(self.OrbitZone:GetCoordinate(),"AIC Orbit Zone"):ToAll()
+    end
     local stationtag = string.format("Station: %s\nCoordinate: %s",self.StationZoneName,self.StationZone:GetCoordinate():ToStringLLDDM())
     MARKER:New(self.StationZone:GetCoordinate(),stationtag):ToAll()
   end
-
-  -- set up the AWACS and let it orbit
-  local AwacsAW = self.AirWing -- Ops.AirWing#AIRWING
-  local mission = AUFTRAG:NewORBIT_RACETRACK(self.OrbitZone:GetCoordinate(),self.AwacsAngels*1000,self.Speed,self.Heading,self.Leg)
-  local timeonstation = (self.AwacsTimeOnStation + self.ShiftChangeTime) * 3600
-  mission:SetTime(nil,timeonstation)
-  self.CatchAllMissions[#self.CatchAllMissions+1] = mission
   
-  AwacsAW:AddMission(mission)
-  
-  self.AwacsMission = mission
-  self.AwacsInZone = false -- not yet arrived or gone again
-  self.AwacsReady = false
+  if not self.GCI then
+    -- set up the AWACS and let it orbit
+    local AwacsAW = self.AirWing -- Ops.AirWing#AIRWING
+    local mission = AUFTRAG:NewORBIT_RACETRACK(self.OrbitZone:GetCoordinate(),self.AwacsAngels*1000,self.Speed,self.Heading,self.Leg)
+    local timeonstation = (self.AwacsTimeOnStation + self.ShiftChangeTime) * 3600
+    mission:SetTime(nil,timeonstation)
+    self.CatchAllMissions[#self.CatchAllMissions+1] = mission
+    
+    AwacsAW:AddMission(mission)
+    
+    self.AwacsMission = mission
+    self.AwacsInZone = false -- not yet arrived or gone again
+    self.AwacsReady = false
+  else
+    self.AwacsInZone = true -- for GCI - arrived
+    self.AwacsReady = true
+    self:_StartIntel(self.GCIGroup)
+    
+    if self.GCIGroup:IsGround() then
+      self.AwacsFG = ARMYGROUP:New(self.GCIGroup)
+      self.AwacsFG:SetDefaultRadio(self.Frequency,self.Modulation)
+      self.AwacsFG:SwitchRadio(self.Frequency,self.Modulation)
+    elseif self.GCIGroup:IsShip() then
+      self.AwacsFG = NAVYGROUP:New(self.GCIGroup)
+      self.AwacsFG:SetDefaultRadio(self.Frequency,self.Modulation)
+      self.AwacsFG:SwitchRadio(self.Frequency,self.Modulation)
+    else
+      self:E(self.lid.."**** Group unsuitable for GCI ops! Needs to be a GROUND or SHIP type group!")
+      self:Stop()
+      return self
+    end
+    
+    self.AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,self.PathToGoogleKey,"AWACS",self.Volume)
+    self.callsigntxt = string.format("%s",AWACS.CallSignClear[self.CallSign])  
+    self:__CheckRadioQueue(-10)
+    
+    local text = string.format("%s. All stations, SUNRISE SUNRISE SUNRISE, %s.",self.callsigntxt,self.callsigntxt)
+    self:_NewRadioEntry(text,text,0,false,false,false,false,true)
+    self:T(self.lid..text)
+    self.sunrisedone = true
+  end
   
   local ZoneSet = SET_ZONE:New()
   ZoneSet:AddZone(self.ControlZone)
-  ZoneSet:AddZone(self.OrbitZone)
+  
+  if not self.GCI then
+    ZoneSet:AddZone(self.OrbitZone)
+  end
   
   if self.BorderZone then
     ZoneSet:AddZone(self.BorderZone)
@@ -5356,19 +5446,20 @@ function AWACS:_CheckAwacsStatus()
   
   local monitoringdata = self.MonitoringData -- #AWACS.MonitoringData
   
-  if awacs and awacs:IsAlive() and not self.AwacsInZone then
-    -- check if we arrived
-    local orbitzone = self.OrbitZone -- Core.Zone#ZONE
-    if awacs:IsInZone(orbitzone) then
-      -- arrived
-      self.AwacsInZone = true
-      self:T(self.lid.."Arrived in Orbit Zone: " .. orbitzone:GetName())
-      local text = string.format("%s on station for %s control.",self.callsigntxt,self.AOName or "Rock")
-      local textScreen = string.format("%s on station for %s control.",self.callsigntxt,self.AOName or "Rock")      
-      self:_NewRadioEntry(text,textScreen,0,false,true,true,false,true)
-    end
-  end 
-  
+  if not self.GCI then
+    if awacs and awacs:IsAlive() and not self.AwacsInZone then
+      -- check if we arrived
+      local orbitzone = self.OrbitZone -- Core.Zone#ZONE
+      if awacs:IsInZone(orbitzone) then
+        -- arrived
+        self.AwacsInZone = true
+        self:T(self.lid.."Arrived in Orbit Zone: " .. orbitzone:GetName())
+        local text = string.format("%s on station for %s control.",self.callsigntxt,self.AOName or "Rock")
+        local textScreen = string.format("%s on station for %s control.",self.callsigntxt,self.AOName or "Rock")      
+        self:_NewRadioEntry(text,textScreen,0,false,true,true,false,true)
+      end
+    end 
+  end
   --------------------------------
   --     AWACS
   --------------------------------
@@ -5393,6 +5484,7 @@ function AWACS:_CheckAwacsStatus()
         self.sunrisedone = true
       end
     end
+    
     -- Check on Awacs Mission Status
     local AWmission = self.AwacsMission -- Ops.Auftrag#AUFTRAG
     local awstatus = AWmission:GetState()
@@ -5592,7 +5684,11 @@ function AWACS:onafterStatus(From, Event, To)
   
   self:_SetClientMenus()
   
-  local monitoringdata = self:_CheckAwacsStatus()
+  local monitoringdata = self.MonitoringData -- #AWACS.MonitoringData
+  
+  if not self.GCI then
+    monitoringdata = self:_CheckAwacsStatus()
+  end
   
   local awacsalive = false
   if self.AwacsFG then
@@ -5614,6 +5710,7 @@ function AWACS:onafterStatus(From, Event, To)
     if self.debug then
      --local outcome, targets = self:_TargetSelectionProcess() -- TODO for debug ATM
     end
+    
     local outcome, targets = self:_TargetSelectionProcess(true)
     
     self:_CheckTaskQueue()
@@ -5631,14 +5728,17 @@ function AWACS:onafterStatus(From, Event, To)
     end
   end
   
-  monitoringdata.AwacsShiftChange = self.ShiftChangeAwacsFlag
-  
-  if self.AwacsFG then
-   monitoringdata.AwacsStateFG = self.AwacsFG:GetState()
+  if not self.GCI then
+    monitoringdata.AwacsShiftChange = self.ShiftChangeAwacsFlag
+    
+    if self.AwacsFG then
+     monitoringdata.AwacsStateFG = self.AwacsFG:GetState()
+    end
+    
+    monitoringdata.AwacsStateMission = self.AwacsMission:GetState()
+    monitoringdata.EscortsShiftChange = self.ShiftChangeEscortsFlag
   end
   
-  monitoringdata.AwacsStateMission = self.AwacsMission:GetState()
-  monitoringdata.EscortsShiftChange = self.ShiftChangeEscortsFlag
   monitoringdata.AICAPCurrent = self.AICAPMissions:Count()
   monitoringdata.AICAPMax = self.MaxAIonCAP
   monitoringdata.Airwings = self.CAPAirwings:Count()
@@ -5863,8 +5963,13 @@ function AWACS:onafterNewCluster(From,Event,To,Cluster)
   -- only announce if in right distance to HVT/AIC or in ControlZone or in BorderZone
   local ContactCoordinate = Contact.position:GetVec2()
   local incontrolzone = self.ControlZone:IsVec2InZone(ContactCoordinate)
+  
   -- distance check to HVT
-  local distance = Contact.position:Get2DDistance(self.OrbitZone:GetCoordinate())
+  local distance = 1000000
+  if not self.GCI then
+    distance = Contact.position:Get2DDistance(self.OrbitZone:GetCoordinate())
+  end
+  
   local inborderzone = false
   if self.BorderZone then
     inborderzone = self.BorderZone:IsVec2InZone(ContactCoordinate)
