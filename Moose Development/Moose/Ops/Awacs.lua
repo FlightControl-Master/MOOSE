@@ -233,9 +233,9 @@ do
 --            -- And start
 --            testawacs:__Start(5)
 --            
--- ### 5.1 Alternative - Set up as GCI (no AWACS plane needed)
+-- ### 5.1 Alternative - Set up as GCI (no AWACS plane needed) Theater Air Control System (TACS)
 -- 
---            -- Set up as GCI called "GCI Senaki". It will use the AwacsAW AirWing set up above and be of the "blue" coalition. Homebase is Senaki.
+--            -- Set up as TACS called "GCI Senaki". It will use the AwacsAW AirWing set up above and be of the "blue" coalition. Homebase is Senaki.
 --            -- No need to set the AWACS Orbit Zone; the FEZ is still a Polygon-Zone called "Rock" we have also
 --            -- set up in the mission editor with a late activated helo named "Rock#ZONE_POLYGON". Note this also sets the BullsEye to be referenced as "Rock".
 --            -- The CAP station zone is called "Fremont". We will be on 255 AM. Note the Orbit Zone is given as *nil* in the `New()`-Statement
@@ -251,7 +251,8 @@ do
 --            -- Give it a fancy callsign
 --            testawacs:SetAwacsDetails(CALLSIGN.AWACS.Wizard)
 --            -- And start as GCI using a group name "Blue EWR" as main EWR station
---            testawacs:StartAsGCI(GROUP:FindByName("Blue EWR"),2)
+--            testawacs:SetAsGCI(GROUP:FindByName("Blue EWR"),2)
+--            testawacs:__Start(4)
 --            
 -- ## 6 Menu entries
 -- 
@@ -1162,12 +1163,12 @@ end
 -- Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- [User] Start this instance and act as GCI Ground Controlled Intercepts Operator
+--- [User] Set this instance to act as GCI TACS Theater Air Control System
 -- @param #AWACS self
--- @param Wrapper.Group#GROUP EWR The **main** Early Warning Radar (EWR) GROUP object for this GCI.
+-- @param Wrapper.Group#GROUP EWR The **main** Early Warning Radar (EWR) GROUP object for GCI.
 -- @param #number Delay (option) Start after this many seconds (optional).
 -- @return #AWACS self
-function AWACS:StartAsGCI(EWR,Delay)
+function AWACS:SetAsGCI(EWR,Delay)
   self:T(self.lid.."SetGCI")
   local delay = Delay or -5
   if type(EWR) == "string" then
@@ -1177,9 +1178,6 @@ function AWACS:StartAsGCI(EWR,Delay)
   end
   self.GCI = true
   self:SetEscort(0)
-  self:__Start(delay)
-  -- set FSM to started
-  self:__Started(2*delay)
   return self
 end
 
@@ -5432,6 +5430,11 @@ function AWACS:onafterStart(From, Event, To)
     
     self.MarkerOps = MarkerOps
     
+  end
+  
+  if self.GCI then
+    -- set FSM to started
+    self:__Started(-5)
   end
   
   self:__Status(-30)
