@@ -1164,14 +1164,18 @@ end
 
 --- [User] Start this instance and act as GCI Ground Controlled Intercepts Operator
 -- @param #AWACS self
--- @param #string EWR The **main** Early Warning Radar (EWR) group name for this GCI.
+-- @param Wrapper.Group#GROUP EWR The **main** Early Warning Radar (EWR) GROUP object for this GCI.
 -- @param #number Delay (option) Start after this many seconds (optional).
 -- @return #AWACS self
 function AWACS:StartAsGCI(EWR,Delay)
   self:T(self.lid.."SetGCI")
   local delay = Delay or -5
+  if type(EWR) == "string" then
+    self.GCIGroup = GROUP:FindByName(EWR)
+  else
+    self.GCIGroup = EWR
+  end
   self.GCI = true
-  self.GCIGroup = EWR
   self:SetEscort(0)
   self:__Start(delay)
   -- set FSM to started
