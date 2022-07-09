@@ -392,7 +392,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "beta 0.2.31", -- #string
+  version = "beta 0.2.3231", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -736,7 +736,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.2.31
+-- TODO-List 0.2.32
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
@@ -4725,13 +4725,13 @@ function AWACS:_CleanUpAIMissionStack()
     -- looking for missions of type CAP and ALERT5
     local mission = _mission -- Ops.Auftrag#AUFTRAG
     local type = mission:GetType()
-    if type == AUFTRAG.Type.ALERT5 then
+    if type == AUFTRAG.Type.ALERT5 and mission:IsNotOver() then
       MissionStack:Push(mission,mission.auftragsnummer)
       Alert5Missions = Alert5Missions + 1
-    elseif type == AUFTRAG.Type.CAP then
+    elseif type == AUFTRAG.Type.CAP and mission:IsNotOver() then
       MissionStack:Push(mission,mission.auftragsnummer)
       CAPMissions = CAPMissions + 1
-    elseif type == AUFTRAG.Type.INTERCEPT then
+    elseif type == AUFTRAG.Type.INTERCEPT and mission:IsNotOver() then
       MissionStack:Push(mission,mission.auftragsnummer)
       InterceptMissions = InterceptMissions + 1
     end
@@ -4815,32 +4815,14 @@ function AWACS:_CheckAICAPOnStation()
   self:_ConsistencyCheck()
   
   local capmissions, alert5missions, interceptmissions = self:_CleanUpAIMissionStack()
-  self:T({capmissions, alert5missions, interceptmissions})
+  self:I("CAP="..capmissions.." ALERT5="..alert5missions.." Requested="..self.AIRequested)
   
   if self.MaxAIonCAP > 0 then
-    --local onstation = self.AICAPMissions:Count()
+    
     local onstation = capmissions + alert5missions
-    -- control number of AI CAP Flights
-    if self.AIRequested < self.MaxAIonCAP then
-      -- not enough
-      local AnchorStackNo,free = self:_GetFreeAnchorStack()
-      if free then
-        -- create Alert5 and assign to ONE of our AWs
-        -- TODO better selection due to resource shortage?
-        local mission = AUFTRAG:NewALERT5(AUFTRAG.Type.CAP)
-        self.CatchAllMissions[#self.CatchAllMissions+1] = mission
-        local availableAWS = self.CAPAirwings:Count()
-        local AWS = self.CAPAirwings:GetDataTable()
-        -- round robin
-        self.AIRequested = self.AIRequested + 1
-        --print(((i-1) % divideby)+1)
-        local selectedAW = AWS[(((self.AIRequested-1) % availableAWS)+1)]
-        selectedAW:AddMission(mission)    
-        self:T("CAP="..capmissions.." ALERT5="..alert5missions.." Requested="..self.AIRequested)
-      end
-    end
-
-    if self.AIRequested > self.MaxAIonCAP then
+    
+    --if self.AIRequested > self.MaxAIonCAP then
+    if capmissions > self.MaxAIonCAP then
       -- too many, send one home
       self:T(string.format("*** Onstation %d > MaxAIOnCAP %d",onstation,self.MaxAIonCAP))
       local mission = self.AICAPMissions:Pull() -- Ops.Auftrag#AUFTRAG
@@ -4854,17 +4836,36 @@ function AWACS:_CheckAICAPOnStation()
       end
     end
     
+    -- control number of AI CAP Flights
+    if capmissions < self.MaxAIonCAP then
+      -- not enough
+      local AnchorStackNo,free = self:_GetFreeAnchorStack()
+      if free then
+        -- create Alert5 and assign to ONE of our AWs
+        -- TODO better selection due to resource shortage?
+        local mission = AUFTRAG:NewALERT5(AUFTRAG.Type.CAP)
+        self.CatchAllMissions[#self.CatchAllMissions+1] = mission
+        local availableAWS = self.CAPAirwings:Count()
+        local AWS = self.CAPAirwings:GetDataTable()
+        -- round robin
+        self.AIRequested = self.AIRequested + 1
+        local selectedAW = AWS[(((self.AIRequested-1) % availableAWS)+1)]
+        selectedAW:AddMission(mission)    
+        self:I("CAP="..capmissions.." ALERT5="..alert5missions.." Requested="..self.AIRequested)
+      end
+    end
+    
     -- Check CAP Mission states
-    if onstation > 0 then
+    if onstation > 0 and capmissions < self.MaxAIonCAP then
       local missions = self.AICAPMissions:GetDataTable()
       -- get mission type and state
       for _,_Mission in pairs(missions) do
-        --local mission = self.AICAPMissions:ReadByID(_MissionID) -- Ops.Auftrag#AUFTRAG
+
         local mission = _Mission -- Ops.Auftrag#AUFTRAG
         self:T("Looking at AuftragsNr " .. mission.auftragsnummer)
         local type = mission:GetType()
         local state = mission:GetState()
-        --if type == AUFTRAG.Type.CAP or type == AUFTRAG.Type.ALERT5 or type == AUFTRAG.Type.ORBIT then
+
         if type == AUFTRAG.Type.ALERT5 then
           -- parked up for CAP
           local OpsGroups = mission:GetOpsGroups()
@@ -4875,7 +4876,7 @@ function AWACS:_CheckAICAPOnStation()
              self:T("FG Object in state: " .. FGstate)
           end
           -- FG ready?
-         -- if OpsGroup and (state == AUFTRAG.Status.STARTED or FGstate ==  AUFTRAG.Status.EXECUTING or FGstate ==  AUFTRAG.Status.SCHEDULED) then
+
           if OpsGroup and (FGstate == "Parking" or FGstate == "Cruising") then
             -- has this group checked in already? Avoid double tasking
             local GID, CheckedInAlready = self:_GetManagedGrpID(OpsGroup:GetGroup())
@@ -4896,9 +4897,6 @@ function AWACS:_CheckAICAPOnStation()
       local missions = self.AICAPMissions:GetDataTable()
       local i = 1
       for _,_Mission in pairs(missions) do 
-      --for i=1,self.MaxAIonCAP do
-        --local mission = self.AICAPMissions:ReadByID(_MissionID) -- Ops.Auftrag#AUFTRAG
-        --local mission = self.AICAPMissions:ReadByPointer(i) -- Ops.Auftrag#AUFTRAG
         local mission = _Mission -- Ops.Auftrag#AUFTRAG
         if mission then
           i = i + 1
@@ -4923,7 +4921,7 @@ function AWACS:_CheckAICAPOnStation()
         report:Add("===============") 
       end
       if self.debug then
-        --self:T(report:Text())
+        self:I(report:Text())
       end    
     end
   end
@@ -5216,7 +5214,7 @@ function AWACS:_AssignPilotToTarget(Pilots,Targets)
     
     Pilot.FlightGroup:AddMission(intercept)    
     
-    local Angels = Pilot.AnchorStackAngels
+    local Angels = Pilot.AnchorStackAngels or 25
     Angels = Angels * 1000
     local AnchorSpeed = self.CapSpeedBase or 270
     AnchorSpeed = UTILS.KnotsToAltKIAS(AnchorSpeed,Angels)
@@ -5880,9 +5878,12 @@ function AWACS:onafterAssignedAnchor(From, Event, To, GID, Anchor, AnchorStackNo
         -- all correct
         local capauftrag = AUFTRAG:NewCAP(Anchor.StationZone,Angels*1000,AnchorSpeed,Anchor.StationZone:GetCoordinate(),0,15,{})
         capauftrag:SetTime(nil,((self.CAPTimeOnStation*3600)+(15*60)))
+        capauftrag:AddAsset(managedgroup.FlightGroup)
         self.CatchAllMissions[#self.CatchAllMissions+1] = capauftrag
+        --local AirWing = managedgroup.FlightGroup:GetAirWing()
         managedgroup.FlightGroup:AddMission(capauftrag)
         auftrag:Cancel()
+        --AirWing:AddMission(capauftrag)
       else
        self:E("**** AssignedAnchor but Auftrag NOT ALERT5!")
       end
