@@ -1382,9 +1382,9 @@ function ZONE:New( ZoneName )
 end
 
 --- Find a zone in the _DATABASE using the name of the zone.
--- @param #ZONE_BASE self
+-- @param #ZONE self
 -- @param #string ZoneName The name of the zone.
--- @return #ZONE_BASE self
+-- @return #ZONE self
 function ZONE:FindByName( ZoneName )
 
   local ZoneFound = _DATABASE:FindZone( ZoneName )

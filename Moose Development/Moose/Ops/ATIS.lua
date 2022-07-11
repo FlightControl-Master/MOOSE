@@ -1758,6 +1758,10 @@ function ATIS:onafterBroadcast(From, Event, To)
   end
   
   -- Wind
+   -- Adding a space after each digit of WINDFROM to convert this to aviation-speak for TTS via SRS
+  if self.useSRS then
+    WINDFROM = string.gsub(WINDFROM,".", "%1 ")
+  end 
   if self.metric then
     subtitle=string.format("Wind from %s at %s m/s", WINDFROM, WINDSPEED)
   else
@@ -2215,7 +2219,7 @@ function ATIS:onafterBroadcast(From, Event, To)
 
   -- TACAN
   if self.tacan then
-    subtitle=string.format("TACAN channel %dX", self.tacan)
+    subtitle=string.format("TACAN channel %dX Ray", self.tacan)
     if not self.useSRS then
       self:Transmission(ATIS.Sound.TACANChannel, 1.0, subtitle)
       self.radioqueue:Number2Transmission(tostring(self.tacan), nil, 0.2)

@@ -825,7 +825,11 @@ do -- COORDINATE
   -- @param #COORDINATE TargetCoordinate The target COORDINATE.
   -- @return DCS#Vec3 DirectionVec3 The direction vector in Vec3 format.
   function COORDINATE:GetDirectionVec3( TargetCoordinate )
-    return { x = TargetCoordinate.x - self.x, y = TargetCoordinate.y - self.y, z = TargetCoordinate.z - self.z }
+    if TargetCoordinate then
+      return { x = TargetCoordinate.x - self.x, y = TargetCoordinate.y - self.y, z = TargetCoordinate.z - self.z }
+    else
+      return { x=0,y=0,z=0}
+    end
   end
 
 

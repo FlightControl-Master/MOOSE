@@ -17,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update June 2022
+-- @date Last Update July 2022
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -107,6 +107,8 @@ do
 -- @field #number WindowsTTSPadding
 -- @field #boolean AllowMarkers
 -- @field #string PlayerStationName
+-- @field #boolean GCI Act as GCI
+-- @field Wrapper.Group#GROUP GCIGroup EWR group object for GCI ops
 -- @extends Core.Fsm#FSM
 
 
@@ -125,6 +127,12 @@ do
 --  ** References from ARN33396 ATP 3-52.4 (Sep 2021) (Combined Forces)   
 --  ** References from CNATRA P-877 (Rev 12-20) (NAVY)   
 --  * FSM events that the mission designer can hook into
+--  * Can also be used as GCI Controller
+-- 
+-- ## 0 Note for Multiplayer Setup
+-- 
+-- Due to DCS limitations you need to set up a second, "normal" AWACS plane in multi-player/server environments to keep the EPLRS/DataLink going in these environments.
+-- Though working in single player, the situational awareness screens of the e.g. F14/16/18 will else not receive datalink targets.
 -- 
 -- ## 1 Prerequisites
 -- 
@@ -224,7 +232,28 @@ do
 --            testawacs:SetModernEra()
 --            -- And start
 --            testawacs:__Start(5)
+--            
+-- ### 5.1 Alternative - Set up as GCI (no AWACS plane needed) Theater Air Control System (TACS)
 -- 
+--            -- Set up as TACS called "GCI Senaki". It will use the AwacsAW AirWing set up above and be of the "blue" coalition. Homebase is Senaki.
+--            -- No need to set the AWACS Orbit Zone; the FEZ is still a Polygon-Zone called "Rock" we have also
+--            -- set up in the mission editor with a late activated helo named "Rock#ZONE_POLYGON". Note this also sets the BullsEye to be referenced as "Rock".
+--            -- The CAP station zone is called "Fremont". We will be on 255 AM. Note the Orbit Zone is given as *nil* in the `New()`-Statement
+--            local testawacs = AWACS:New("GCI Senaki",AwacsAW,"blue",AIRBASE.Caucasus.Senaki_Kolkhi,nil,ZONE:FindByName("Rock"),"Fremont",255,radio.modulation.AM )
+--            -- Set up SRS on port 5010 - change the below to your path and port
+--            testawacs:SetSRS("C:\\Program Files\\DCS-SimpleRadio-Standalone","female","en-GB",5010)
+--            -- Add a "red" border we don't want to cross, set up in the mission editor with a late activated helo named "Red Border#ZONE_POLYGON"
+--            testawacs:SetRejectionZone(ZONE:FindByName("Red Border"))
+--            -- Our CAP flight will have the callsign "Ford", we want 4 AI planes, Time-On-Station is four hours, doing 300 kn IAS.
+--            testawacs:SetAICAPDetails(CALLSIGN.Aircraft.Ford,4,4,300)
+--            -- We're modern (default), e.g. we have EPLRS and get more fill-in information on detections
+--            testawacs:SetModernEra()
+--            -- Give it a fancy callsign
+--            testawacs:SetAwacsDetails(CALLSIGN.AWACS.Wizard)
+--            -- And start as GCI using a group name "Blue EWR" as main EWR station
+--            testawacs:SetAsGCI(GROUP:FindByName("Blue EWR"),2)
+--            testawacs:__Start(4)
+--            
 -- ## 6 Menu entries
 -- 
 -- **Note on Radio Menu entries**: Due to a DCS limitation, these are on GROUP level and not individual (UNIT level). Hence, either put each player in his/her own group,
@@ -294,7 +323,7 @@ do
 -- * @{#AWACS.SetRejectionZone}() : Add one foreign border. Targets beyond will be ignored for tasking.
 -- * @{#AWACS.DrawFEZ}() : Show the FEZ on the F10 map.
 -- * @{#AWACS.SetAWACSDetails}() : Set AWACS details.
--- * @{#AWACS.AddGroupToDetection}() : Add a group object to INTEL detection, e.g. EWR.
+-- * @{#AWACS.AddGroupToDetection}() : Add a GROUP or SET_GROUP object to INTEL detection, e.g. EWR.
 -- * @{#AWACS.SetSRS}() : Set SRS details.
 -- * @{#AWACS.SetSRSVoiceCAP}() : Set voice details for AI CAP planes, using Windows dektop TTS.
 -- * @{#AWACS.SetAICAPDetails}() : Set AI CAP details.
@@ -364,7 +393,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "beta 0.1.30", -- #string
+  version = "beta 0.2.3231", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -446,6 +475,8 @@ AWACS = {
   PlayerCapAssigment = true,
   AllowMarkers = false,
   PlayerStationName = nil,
+  GCI = false,
+  GCIGroup = nil,
 }
 
 ---
@@ -706,7 +737,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.1.30
+-- TODO-List 0.2.32
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
@@ -823,7 +854,9 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.Modulation = Modulation or radio.modulation.AM
   self.Airbase = AIRBASE:FindByName(AirbaseName)
   self.AwacsAngels = 25 -- orbit at 25'000 ft
-  self.OrbitZone = ZONE:New(AwacsOrbit) -- Core.Zone#ZONE
+  if AwacsOrbit then
+    self.OrbitZone = ZONE:New(AwacsOrbit) -- Core.Zone#ZONE
+  end
   self.BorderZone = nil
   self.CallSign = CALLSIGN.AWACS.Darkstar -- #number
   self.CallSignNo = 1 -- #number
@@ -1129,6 +1162,24 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- [User] Set this instance to act as GCI TACS Theater Air Control System
+-- @param #AWACS self
+-- @param Wrapper.Group#GROUP EWR The **main** Early Warning Radar (EWR) GROUP object for GCI.
+-- @param #number Delay (option) Start after this many seconds (optional).
+-- @return #AWACS self
+function AWACS:SetAsGCI(EWR,Delay)
+  self:T(self.lid.."SetGCI")
+  local delay = Delay or -5
+  if type(EWR) == "string" then
+    self.GCIGroup = GROUP:FindByName(EWR)
+  else
+    self.GCIGroup = EWR
+  end
+  self.GCI = true
+  self:SetEscort(0)
+  return self
+end
 
 --- [Internal] Create a AIC-TTS message entry
 -- @param #AWACS self
@@ -2121,16 +2172,18 @@ function AWACS:_TargetSelectionProcess(Untargeted)
       end
     end
     -- Bucket 1 - close to AIC (HVT) ca ~45nm
-    local HVTCoordinate = self.OrbitZone:GetCoordinate()
-    local distance = UTILS.NMToMeters(200)
-    if contactcoord then
-      distance = HVTCoordinate:Get2DDistance(contactcoord)
-    end
-    self:T(self.lid.."HVT Distance = "..UTILS.Round(UTILS.MetersToNM(distance),0))
-    if UTILS.MetersToNM(distance) <= 45 and not checked then
-      self:T(self.lid.."In HVT Distance = YES")
-      targettable:Push(contact,distance)
-      checked = true
+    if not self.GCI then
+      local HVTCoordinate = self.OrbitZone:GetCoordinate()
+      local distance = UTILS.NMToMeters(200)
+      if contactcoord then
+        distance = HVTCoordinate:Get2DDistance(contactcoord)
+      end
+      self:T(self.lid.."HVT Distance = "..UTILS.Round(UTILS.MetersToNM(distance),0))
+      if UTILS.MetersToNM(distance) <= 45 and not checked then
+        self:T(self.lid.."In HVT Distance = YES")
+        targettable:Push(contact,distance)
+        checked = true
+      end
     end
     
     -- Bucket 2 - in AO/FEZ   
@@ -2425,7 +2478,7 @@ function AWACS:_Picture(Group,IsGeneral)
       
       if self.OpsZone:IsVec2InZone(coordVec2) then
         self.PictureAO:Push(contact)
-      elseif self.OrbitZone:IsVec2InZone(coordVec2) then
+      elseif self.OrbitZone and self.OrbitZone:IsVec2InZone(coordVec2) then
         self.PictureAO:Push(contact)
       elseif self.ControlZone:IsVec2InZone(coordVec2) then
         local distance = math.floor((contact.Contact.position:Get2DDistance(self.ControlZone:GetCoordinate()) / 1000) + 1) -- km
@@ -2533,9 +2586,11 @@ function AWACS:_BogeyDope(Group)
       elseif self.BorderZone and self.BorderZone:IsVec2InZone(coordVec2) then 
        self.ContactsAO:Push(managedcontact,dist)
       else
-        local distance = contactposition:Get2DDistance(self.OrbitZone:GetCoordinate())
-        if (distance <= UTILS.NMToMeters(45)) then
-          self.ContactsAO:Push(managedcontact,distance)
+        if self.OrbitZone then
+          local distance = contactposition:Get2DDistance(self.OrbitZone:GetCoordinate())
+          if (distance <= UTILS.NMToMeters(45)) then
+            self.ContactsAO:Push(managedcontact,distance)
+          end
         end
       end     
     end
@@ -3603,16 +3658,17 @@ function AWACS:_StartIntel(awacs)
   self.DetectionSet:AddGroup(awacs)
 
   local intel = INTEL:New(self.DetectionSet,self.coalition,self.callsigntxt)
-  --intel:SetVerbosity(2)
-  --intel:SetClusterRadius(UTILS.NMToMeters(5))
+
   intel:SetClusterAnalysis(true,false,false)
   
   local acceptzoneset = SET_ZONE:New()
   acceptzoneset:AddZone(self.ControlZone)
   acceptzoneset:AddZone(self.OpsZone)
   
-  self.OrbitZone:SetRadius(UTILS.NMToMeters(55))
-  acceptzoneset:AddZone(self.OrbitZone)
+  if not self.GCI then
+    self.OrbitZone:SetRadius(UTILS.NMToMeters(55))
+    acceptzoneset:AddZone(self.OrbitZone)
+  end
   
   if self.BorderZone then
     acceptzoneset:AddZone(self.BorderZone)
@@ -4671,13 +4727,13 @@ function AWACS:_CleanUpAIMissionStack()
     -- looking for missions of type CAP and ALERT5
     local mission = _mission -- Ops.Auftrag#AUFTRAG
     local type = mission:GetType()
-    if type == AUFTRAG.Type.ALERT5 then
+    if type == AUFTRAG.Type.ALERT5 and mission:IsNotOver() then
       MissionStack:Push(mission,mission.auftragsnummer)
       Alert5Missions = Alert5Missions + 1
-    elseif type == AUFTRAG.Type.CAP then
+    elseif type == AUFTRAG.Type.CAP and mission:IsNotOver() then
       MissionStack:Push(mission,mission.auftragsnummer)
       CAPMissions = CAPMissions + 1
-    elseif type == AUFTRAG.Type.INTERCEPT then
+    elseif type == AUFTRAG.Type.INTERCEPT and mission:IsNotOver() then
       MissionStack:Push(mission,mission.auftragsnummer)
       InterceptMissions = InterceptMissions + 1
     end
@@ -4761,32 +4817,14 @@ function AWACS:_CheckAICAPOnStation()
   self:_ConsistencyCheck()
   
   local capmissions, alert5missions, interceptmissions = self:_CleanUpAIMissionStack()
-  self:T({capmissions, alert5missions, interceptmissions})
+  self:I("CAP="..capmissions.." ALERT5="..alert5missions.." Requested="..self.AIRequested)
   
   if self.MaxAIonCAP > 0 then
-    --local onstation = self.AICAPMissions:Count()
+    
     local onstation = capmissions + alert5missions
-    -- control number of AI CAP Flights
-    if self.AIRequested < self.MaxAIonCAP then
-      -- not enough
-      local AnchorStackNo,free = self:_GetFreeAnchorStack()
-      if free then
-        -- create Alert5 and assign to ONE of our AWs
-        -- TODO better selection due to resource shortage?
-        local mission = AUFTRAG:NewALERT5(AUFTRAG.Type.CAP)
-        self.CatchAllMissions[#self.CatchAllMissions+1] = mission
-        local availableAWS = self.CAPAirwings:Count()
-        local AWS = self.CAPAirwings:GetDataTable()
-        -- round robin
-        self.AIRequested = self.AIRequested + 1
-        --print(((i-1) % divideby)+1)
-        local selectedAW = AWS[(((self.AIRequested-1) % availableAWS)+1)]
-        selectedAW:AddMission(mission)    
-        self:T("CAP="..capmissions.." ALERT5="..alert5missions.." Requested="..self.AIRequested)
-      end
-    end
-
-    if self.AIRequested > self.MaxAIonCAP then
+    
+    --if self.AIRequested > self.MaxAIonCAP then
+    if capmissions > self.MaxAIonCAP then
       -- too many, send one home
       self:T(string.format("*** Onstation %d > MaxAIOnCAP %d",onstation,self.MaxAIonCAP))
       local mission = self.AICAPMissions:Pull() -- Ops.Auftrag#AUFTRAG
@@ -4800,17 +4838,36 @@ function AWACS:_CheckAICAPOnStation()
       end
     end
     
+    -- control number of AI CAP Flights
+    if capmissions < self.MaxAIonCAP then
+      -- not enough
+      local AnchorStackNo,free = self:_GetFreeAnchorStack()
+      if free then
+        -- create Alert5 and assign to ONE of our AWs
+        -- TODO better selection due to resource shortage?
+        local mission = AUFTRAG:NewALERT5(AUFTRAG.Type.CAP)
+        self.CatchAllMissions[#self.CatchAllMissions+1] = mission
+        local availableAWS = self.CAPAirwings:Count()
+        local AWS = self.CAPAirwings:GetDataTable()
+        -- round robin
+        self.AIRequested = self.AIRequested + 1
+        local selectedAW = AWS[(((self.AIRequested-1) % availableAWS)+1)]
+        selectedAW:AddMission(mission)    
+        self:I("CAP="..capmissions.." ALERT5="..alert5missions.." Requested="..self.AIRequested)
+      end
+    end
+    
     -- Check CAP Mission states
-    if onstation > 0 then
+    if onstation > 0 and capmissions < self.MaxAIonCAP then
       local missions = self.AICAPMissions:GetDataTable()
       -- get mission type and state
       for _,_Mission in pairs(missions) do
-        --local mission = self.AICAPMissions:ReadByID(_MissionID) -- Ops.Auftrag#AUFTRAG
+
         local mission = _Mission -- Ops.Auftrag#AUFTRAG
         self:T("Looking at AuftragsNr " .. mission.auftragsnummer)
         local type = mission:GetType()
         local state = mission:GetState()
-        --if type == AUFTRAG.Type.CAP or type == AUFTRAG.Type.ALERT5 or type == AUFTRAG.Type.ORBIT then
+
         if type == AUFTRAG.Type.ALERT5 then
           -- parked up for CAP
           local OpsGroups = mission:GetOpsGroups()
@@ -4821,7 +4878,7 @@ function AWACS:_CheckAICAPOnStation()
              self:T("FG Object in state: " .. FGstate)
           end
           -- FG ready?
-         -- if OpsGroup and (state == AUFTRAG.Status.STARTED or FGstate ==  AUFTRAG.Status.EXECUTING or FGstate ==  AUFTRAG.Status.SCHEDULED) then
+
           if OpsGroup and (FGstate == "Parking" or FGstate == "Cruising") then
             -- has this group checked in already? Avoid double tasking
             local GID, CheckedInAlready = self:_GetManagedGrpID(OpsGroup:GetGroup())
@@ -4842,9 +4899,6 @@ function AWACS:_CheckAICAPOnStation()
       local missions = self.AICAPMissions:GetDataTable()
       local i = 1
       for _,_Mission in pairs(missions) do 
-      --for i=1,self.MaxAIonCAP do
-        --local mission = self.AICAPMissions:ReadByID(_MissionID) -- Ops.Auftrag#AUFTRAG
-        --local mission = self.AICAPMissions:ReadByPointer(i) -- Ops.Auftrag#AUFTRAG
         local mission = _Mission -- Ops.Auftrag#AUFTRAG
         if mission then
           i = i + 1
@@ -4869,7 +4923,7 @@ function AWACS:_CheckAICAPOnStation()
         report:Add("===============") 
       end
       if self.debug then
-        --self:T(report:Text())
+        self:I(report:Text())
       end    
     end
   end
@@ -5162,7 +5216,7 @@ function AWACS:_AssignPilotToTarget(Pilots,Targets)
     
     Pilot.FlightGroup:AddMission(intercept)    
     
-    local Angels = Pilot.AnchorStackAngels
+    local Angels = Pilot.AnchorStackAngels or 25
     Angels = Angels * 1000
     local AnchorSpeed = self.CapSpeedBase or 270
     AnchorSpeed = UTILS.KnotsToAltKIAS(AnchorSpeed,Angels)
@@ -5252,34 +5306,70 @@ function AWACS:onafterStart(From, Event, To)
     MARKER:New(self.AOCoordinate,Rocktag):ToAll()
     self.StationZone:DrawZone(-1,{0,0,1},1,{0,0,1},0.2,5,true)
     local stationtag = string.format("Station: %s\nCoordinate: %s",self.StationZoneName,self.StationZone:GetCoordinate():ToStringLLDDM())
-    MARKER:New(self.StationZone:GetCoordinate(),stationtag):ToAll()
-    self.OrbitZone:DrawZone(-1,{0,1,0},1,{0,1,0},0.2,5,true)
-    MARKER:New(self.OrbitZone:GetCoordinate(),"AIC Orbit Zone"):ToAll()
+    if not self.GCI then
+      MARKER:New(self.StationZone:GetCoordinate(),stationtag):ToAll()
+      self.OrbitZone:DrawZone(-1,{0,1,0},1,{0,1,0},0.2,5,true)
+      MARKER:New(self.OrbitZone:GetCoordinate(),"AIC Orbit Zone"):ToAll()
+    end
   else
     local AOCoordString = self.AOCoordinate:ToStringLLDDM()
     local Rocktag = string.format("FEZ: %s\nBulls Coordinate: %s",self.AOName,AOCoordString)
     MARKER:New(self.AOCoordinate,Rocktag):ToAll()
-    MARKER:New(self.OrbitZone:GetCoordinate(),"AIC Orbit Zone"):ToAll()
+    if not self.GCI then
+      MARKER:New(self.OrbitZone:GetCoordinate(),"AIC Orbit Zone"):ToAll()
+    end
     local stationtag = string.format("Station: %s\nCoordinate: %s",self.StationZoneName,self.StationZone:GetCoordinate():ToStringLLDDM())
     MARKER:New(self.StationZone:GetCoordinate(),stationtag):ToAll()
   end
-
-  -- set up the AWACS and let it orbit
-  local AwacsAW = self.AirWing -- Ops.AirWing#AIRWING
-  local mission = AUFTRAG:NewORBIT_RACETRACK(self.OrbitZone:GetCoordinate(),self.AwacsAngels*1000,self.Speed,self.Heading,self.Leg)
-  local timeonstation = (self.AwacsTimeOnStation + self.ShiftChangeTime) * 3600
-  mission:SetTime(nil,timeonstation)
-  self.CatchAllMissions[#self.CatchAllMissions+1] = mission
   
-  AwacsAW:AddMission(mission)
-  
-  self.AwacsMission = mission
-  self.AwacsInZone = false -- not yet arrived or gone again
-  self.AwacsReady = false
+  if not self.GCI then
+    -- set up the AWACS and let it orbit
+    local AwacsAW = self.AirWing -- Ops.AirWing#AIRWING
+    local mission = AUFTRAG:NewORBIT_RACETRACK(self.OrbitZone:GetCoordinate(),self.AwacsAngels*1000,self.Speed,self.Heading,self.Leg)
+    local timeonstation = (self.AwacsTimeOnStation + self.ShiftChangeTime) * 3600
+    mission:SetTime(nil,timeonstation)
+    self.CatchAllMissions[#self.CatchAllMissions+1] = mission
+    
+    AwacsAW:AddMission(mission)
+    
+    self.AwacsMission = mission
+    self.AwacsInZone = false -- not yet arrived or gone again
+    self.AwacsReady = false
+  else
+    self.AwacsInZone = true -- for GCI - arrived
+    self.AwacsReady = true
+    self:_StartIntel(self.GCIGroup)
+    
+    if self.GCIGroup:IsGround() then
+      self.AwacsFG = ARMYGROUP:New(self.GCIGroup)
+      self.AwacsFG:SetDefaultRadio(self.Frequency,self.Modulation)
+      self.AwacsFG:SwitchRadio(self.Frequency,self.Modulation)
+    elseif self.GCIGroup:IsShip() then
+      self.AwacsFG = NAVYGROUP:New(self.GCIGroup)
+      self.AwacsFG:SetDefaultRadio(self.Frequency,self.Modulation)
+      self.AwacsFG:SwitchRadio(self.Frequency,self.Modulation)
+    else
+      self:E(self.lid.."**** Group unsuitable for GCI ops! Needs to be a GROUND or SHIP type group!")
+      self:Stop()
+      return self
+    end
+    
+    self.AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,self.PathToGoogleKey,"AWACS",self.Volume)
+    self.callsigntxt = string.format("%s",AWACS.CallSignClear[self.CallSign])  
+    self:__CheckRadioQueue(-10)
+    
+    local text = string.format("%s. All stations, SUNRISE SUNRISE SUNRISE, %s.",self.callsigntxt,self.callsigntxt)
+    self:_NewRadioEntry(text,text,0,false,false,false,false,true)
+    self:T(self.lid..text)
+    self.sunrisedone = true
+  end
   
   local ZoneSet = SET_ZONE:New()
   ZoneSet:AddZone(self.ControlZone)
-  ZoneSet:AddZone(self.OrbitZone)
+  
+  if not self.GCI then
+    ZoneSet:AddZone(self.OrbitZone)
+  end
   
   if self.BorderZone then
     ZoneSet:AddZone(self.BorderZone)
@@ -5342,6 +5432,11 @@ function AWACS:onafterStart(From, Event, To)
     
   end
   
+  if self.GCI then
+    -- set FSM to started
+    self:__Started(-5)
+  end
+  
   self:__Status(-30)
   return self
 end
@@ -5356,19 +5451,20 @@ function AWACS:_CheckAwacsStatus()
   
   local monitoringdata = self.MonitoringData -- #AWACS.MonitoringData
   
-  if awacs and awacs:IsAlive() and not self.AwacsInZone then
-    -- check if we arrived
-    local orbitzone = self.OrbitZone -- Core.Zone#ZONE
-    if awacs:IsInZone(orbitzone) then
-      -- arrived
-      self.AwacsInZone = true
-      self:T(self.lid.."Arrived in Orbit Zone: " .. orbitzone:GetName())
-      local text = string.format("%s on station for %s control.",self.callsigntxt,self.AOName or "Rock")
-      local textScreen = string.format("%s on station for %s control.",self.callsigntxt,self.AOName or "Rock")      
-      self:_NewRadioEntry(text,textScreen,0,false,true,true,false,true)
-    end
-  end 
-  
+  if not self.GCI then
+    if awacs and awacs:IsAlive() and not self.AwacsInZone then
+      -- check if we arrived
+      local orbitzone = self.OrbitZone -- Core.Zone#ZONE
+      if awacs:IsInZone(orbitzone) then
+        -- arrived
+        self.AwacsInZone = true
+        self:T(self.lid.."Arrived in Orbit Zone: " .. orbitzone:GetName())
+        local text = string.format("%s on station for %s control.",self.callsigntxt,self.AOName or "Rock")
+        local textScreen = string.format("%s on station for %s control.",self.callsigntxt,self.AOName or "Rock")      
+        self:_NewRadioEntry(text,textScreen,0,false,true,true,false,true)
+      end
+    end 
+  end
   --------------------------------
   --     AWACS
   --------------------------------
@@ -5393,6 +5489,7 @@ function AWACS:_CheckAwacsStatus()
         self.sunrisedone = true
       end
     end
+    
     -- Check on Awacs Mission Status
     local AWmission = self.AwacsMission -- Ops.Auftrag#AUFTRAG
     local awstatus = AWmission:GetState()
@@ -5592,7 +5689,11 @@ function AWACS:onafterStatus(From, Event, To)
   
   self:_SetClientMenus()
   
-  local monitoringdata = self:_CheckAwacsStatus()
+  local monitoringdata = self.MonitoringData -- #AWACS.MonitoringData
+  
+  if not self.GCI then
+    monitoringdata = self:_CheckAwacsStatus()
+  end
   
   local awacsalive = false
   if self.AwacsFG then
@@ -5614,6 +5715,7 @@ function AWACS:onafterStatus(From, Event, To)
     if self.debug then
      --local outcome, targets = self:_TargetSelectionProcess() -- TODO for debug ATM
     end
+    
     local outcome, targets = self:_TargetSelectionProcess(true)
     
     self:_CheckTaskQueue()
@@ -5631,14 +5733,17 @@ function AWACS:onafterStatus(From, Event, To)
     end
   end
   
-  monitoringdata.AwacsShiftChange = self.ShiftChangeAwacsFlag
-  
-  if self.AwacsFG then
-   monitoringdata.AwacsStateFG = self.AwacsFG:GetState()
+  if not self.GCI then
+    monitoringdata.AwacsShiftChange = self.ShiftChangeAwacsFlag
+    
+    if self.AwacsFG then
+     monitoringdata.AwacsStateFG = self.AwacsFG:GetState()
+    end
+    
+    monitoringdata.AwacsStateMission = self.AwacsMission:GetState()
+    monitoringdata.EscortsShiftChange = self.ShiftChangeEscortsFlag
   end
   
-  monitoringdata.AwacsStateMission = self.AwacsMission:GetState()
-  monitoringdata.EscortsShiftChange = self.ShiftChangeEscortsFlag
   monitoringdata.AICAPCurrent = self.AICAPMissions:Count()
   monitoringdata.AICAPMax = self.MaxAIonCAP
   monitoringdata.Airwings = self.CAPAirwings:Count()
@@ -5780,9 +5885,12 @@ function AWACS:onafterAssignedAnchor(From, Event, To, GID, Anchor, AnchorStackNo
         -- all correct
         local capauftrag = AUFTRAG:NewCAP(Anchor.StationZone,Angels*1000,AnchorSpeed,Anchor.StationZone:GetCoordinate(),0,15,{})
         capauftrag:SetTime(nil,((self.CAPTimeOnStation*3600)+(15*60)))
+        capauftrag:AddAsset(managedgroup.FlightGroup)
         self.CatchAllMissions[#self.CatchAllMissions+1] = capauftrag
+        --local AirWing = managedgroup.FlightGroup:GetAirWing()
         managedgroup.FlightGroup:AddMission(capauftrag)
         auftrag:Cancel()
+        --AirWing:AddMission(capauftrag)
       else
        self:E("**** AssignedAnchor but Auftrag NOT ALERT5!")
       end
@@ -5863,8 +5971,13 @@ function AWACS:onafterNewCluster(From,Event,To,Cluster)
   -- only announce if in right distance to HVT/AIC or in ControlZone or in BorderZone
   local ContactCoordinate = Contact.position:GetVec2()
   local incontrolzone = self.ControlZone:IsVec2InZone(ContactCoordinate)
+  
   -- distance check to HVT
-  local distance = Contact.position:Get2DDistance(self.OrbitZone:GetCoordinate())
+  local distance = 1000000
+  if not self.GCI then
+    distance = Contact.position:Get2DDistance(self.OrbitZone:GetCoordinate())
+  end
+  
   local inborderzone = false
   if self.BorderZone then
     inborderzone = self.BorderZone:IsVec2InZone(ContactCoordinate)
