@@ -1191,6 +1191,12 @@ function LEGION:onafterOpsOnMission(From, Event, To, OpsGroup, Mission)
     self:NavyOnMission(OpsGroup, Mission)
   end
   
+  -- Load group as cargo because it cannot swim! We pause the mission.
+  if self:IsBrigade() and self:IsShip() then
+    OpsGroup:PauseMission()
+    self.warehouseOpsGroup:Load(OpsGroup, self.warehouseOpsElement)
+  end
+  
   -- Trigger event for chief.
   if self.chief then
     self.chief:OpsOnMission(OpsGroup, Mission)
@@ -2689,15 +2695,15 @@ function LEGION:AssignAssetsForTransport(Legions, CargoAssets, NcarriersMin, Nca
         
         -- Set pickup zone to spawn zone or airbase if the legion has one that is operational.
         local pickupzone=legion.spawnzone
-        if legion.airbase and legion:IsRunwayOperational() then
-          --pickupzone=ZONE_AIRBASE:New(legion.airbasename, 4000)
-        end
         
         -- Add TZC from legion spawn zone to deploy zone.
         local tpz=Transport:AddTransportZoneCombo(nil, pickupzone, Transport:GetDeployZone())
-        tpz.PickupAirbase=legion:IsRunwayOperational() and legion.airbase or nil
-        Transport:SetEmbarkZone(legion.spawnzone, tpz)
         
+        -- Set pickup airbase if the legion has an airbase. Could also be the ship itself.
+        tpz.PickupAirbase=legion:IsRunwayOperational() and legion.airbase or nil
+        
+        -- Set embark zone to spawn zone.
+        Transport:SetEmbarkZone(legion.spawnzone, tpz)
         
         -- Add cargo assets to transport.
         for _,_asset in pairs(CargoAssets) do

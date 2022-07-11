@@ -92,7 +92,15 @@ function BRIGADE:New(WarehouseName, BrigadeName)
   
   -- Defaults
   self:SetRetreatZones()
-
+  
+  -- Turn ship into NAVYGROUP.
+  if self:IsShip() then
+    local wh=self.warehouse --Wrapper.Unit#UNIT
+    local group=wh:GetGroup()
+    self.warehouseOpsGroup=NAVYGROUP:New(group) --Ops.NavyGroup#NAVYGROUP
+    self.warehouseOpsElement=self.warehouseOpsGroup:GetElementByName(wh:GetName())
+  end
+  
   -- Add FSM transitions.
   --                 From State  -->   Event         -->      To State
   self:AddTransition("*",             "ArmyOnMission",       "*")           -- An ARMYGROUP was send on a Mission (AUFTRAG).

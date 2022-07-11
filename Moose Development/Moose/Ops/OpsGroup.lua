@@ -462,7 +462,7 @@ OPSGROUP.CarrierStatus={
 -- @type OPSGROUP.CargoStatus
 -- @field #string AWAITING Group is awaiting carrier.
 -- @field #string NOTCARGO This group is no cargo yet.
--- @field #string ASSIGNED Cargo is assigned to a carrier.
+-- @field #string ASSIGNED Cargo is assigned to a carrier. (Not used!)
 -- @field #string BOARDING Cargo is boarding a carrier.
 -- @field #string LOADED Cargo is loaded into a carrier.
 OPSGROUP.CargoStatus={
@@ -5397,6 +5397,12 @@ function OPSGROUP:RouteToMission(mission, delay)
       self:T(self.lid..string.format("Route To Mission: I am DEAD or STOPPED! Ooops..."))
       return
     end
+    
+    -- Check if this group is cargo.
+    if self:IsCargo() then
+      self:T(self.lid..string.format("Route To Mission: I am CARGO! You cannot route me..."))
+      return
+    end
 
     -- OPSTRANSPORT: Just add the ops transport to the queue.
     if mission.type==AUFTRAG.Type.OPSTRANSPORT then
@@ -8661,12 +8667,12 @@ function OPSGROUP:onafterLoading(From, Event, To)
     -- Check if cargo is not already cargo.
     local isNotCargo=cargo.opsgroup:IsNotCargo(true)
     
-    -- Check if cargo is holding.
-    local isHolding=cargo.opsgroup:IsHolding()
+    -- Check if cargo is holding or loaded
+    local isHolding=cargo.opsgroup:IsHolding() or cargo.opsgroup:IsLoaded()
     
     -- Check if cargo is in embark/pickup zone.
     -- Added InUtero here, if embark zone is moving (ship) and cargo has been spawned late activated and its position is not updated. Not sure if that breaks something else!
-    local inZone=cargo.opsgroup:IsInZone(self.cargoTZC.EmbarkZone) --or cargo.opsgroup:IsInUtero()
+    local inZone=cargo.opsgroup:IsInZone(self.cargoTZC.EmbarkZone) or cargo.opsgroup:IsInUtero()
     
     -- Check if cargo is currently on a mission.
     local isOnMission=cargo.opsgroup:IsOnMission()
@@ -8675,9 +8681,13 @@ function OPSGROUP:onafterLoading(From, Event, To)
     if isOnMission then
       local mission=cargo.opsgroup:GetMissionCurrent()
       if mission and mission.opstransport and mission.opstransport.uid==self.cargoTransport.uid then  
-        isOnMission=not cargo.opsgroup:IsHolding()
+        isOnMission=not isHolding
       end
-    end    
+    end
+    
+    -- Debug message.
+    self:T(self.lid..string.format("Loading: canCargo=%s, isCarrier=%s, isNotCargo=%s, isHolding=%s, isOnMission=%s",
+    tostring(canCargo), tostring(isCarrier), tostring(isNotCargo), tostring(isHolding), tostring(isOnMission)))
 
     -- TODO: Need a better :IsBusy() function or :IsReadyForMission() :IsReadyForBoarding() :IsReadyForTransport()
     if canCargo and inZone and isNotCargo and isHolding and (not (cargo.delivered or cargo.opsgroup:IsDead() or isCarrier or isOnMission)) then
@@ -8701,10 +8711,7 @@ function OPSGROUP:onafterLoading(From, Event, To)
     local carrier=self:FindCarrierForCargo(cargo.opsgroup)
 
     if carrier then
-
-      -- Set cargo status.
-      cargo.opsgroup:_NewCargoStatus(OPSGROUP.CargoStatus.ASSIGNED)
-
+      
       -- Order cargo group to board the carrier.
       cargo.opsgroup:Board(self, carrier)
 
@@ -9312,7 +9319,10 @@ function OPSGROUP:onafterUnloaded(From, Event, To, OpsGroupCargo)
     OpsGroupCargo:Returned()
   end
   
-  if self:_CountPausedMissions()>0 then
+  -- Check if there is a paused mission.
+  local paused=OpsGroupCargo:_CountPausedMissions()>0
+   
+  if paused then
     OpsGroupCargo:UnpauseMission()
   end
   
@@ -9586,9 +9596,6 @@ end
 -- @param #OPSGROUP.Element Carrier The OPSGROUP element
 function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
 
-  -- Set cargo status.
-  self:_NewCargoStatus(OPSGROUP.CargoStatus.BOARDING)
-
   -- Army or Navy group.
   local CarrierIsArmyOrNavy=CarrierGroup:IsArmygroup() or CarrierGroup:IsNavygroup()
   local CargoIsArmyOrNavy=self:IsArmygroup() or self:IsNavygroup()
@@ -9605,7 +9612,21 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
       board=false
     end
 
-    if board then
+    if self:IsLoaded() then
+
+      -- Debug info.
+      self:T(self.lid..string.format("Group is loaded currently ==> Moving directly to new carrier - No Unload(), Disembart() events triggered!"))
+
+      -- Remove my carrier.
+      self:_RemoveMyCarrier()
+
+      -- Trigger Load event.
+      CarrierGroup:Load(self)
+
+    elseif board then
+
+      -- Set cargo status.
+      self:_NewCargoStatus(OPSGROUP.CargoStatus.BOARDING)
 
       -- Debug info.
       self:T(self.lid..string.format("Boarding group=%s [%s], carrier=%s", CarrierGroup:GetName(), CarrierGroup:GetState(), tostring(Carrier.name)))

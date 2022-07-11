@@ -4322,12 +4322,14 @@ function FLIGHTGROUP:_UpdateMenu(delay)
     if player and player.status~=OPSGROUP.ElementStatus.DEAD then
   
       -- Debug text.
-      local text=string.format("Updating MENU: State=%s, ATC=%s [%s]", self:GetState(), 
-      self.flightcontrol and self.flightcontrol.airbasename or "None", self.flightcontrol and self.flightcontrol:GetFlightStatus(self) or "Unknown")
-    
-      -- Message to group.
-      MESSAGE:New(text, 5):ToGroup(self.group)
-      self:I(self.lid..text)
+      if self.verbose>=2 then
+        local text=string.format("Updating MENU: State=%s, ATC=%s [%s]", self:GetState(), 
+        self.flightcontrol and self.flightcontrol.airbasename or "None", self.flightcontrol and self.flightcontrol:GetFlightStatus(self) or "Unknown")
+      
+        -- Message to group.
+        MESSAGE:New(text, 5):ToGroup(self.group)
+        self:I(self.lid..text)
+      end
     
       -- Get current position of player.
       local position=self:GetCoordinate(nil, player.name)

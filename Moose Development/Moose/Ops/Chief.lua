@@ -256,6 +256,17 @@ CHIEF.Strategy = {
 -- @field #string MissionType Mission Type.
 -- @field #number Performance Performance: a number between 0 and 100, where 100 is best performance.
 
+--- Asset numbers for detected targets.
+-- @type CHIEF.AssetNumber
+-- @field #number nAssetMin Min number of assets.
+-- @field #number nAssetMax Max number of assets.
+-- @field #number threatlevel Threat level.
+-- @field #string targetCategory Target category.
+-- @field #string missionType Mission type.
+-- @field #number nUnits Number of enemy units.
+-- @field #string defcon Defense condition.
+-- @field #string strategy Strategy.
+
 --- Strategic zone.
 -- @type CHIEF.StrategicZone
 -- @field Ops.OpsZone#OPSZONE opszone OPS zone.
@@ -771,6 +782,153 @@ function CHIEF:DeleteFromResource(Resource, MissionType)
   end
   
   return self
+end
+
+--- Set number of assets requested for detected targets.
+-- @param #CHIEF self
+-- @param #number NassetsMin Min number of assets. Should be at least 1. Default 1.
+-- @param #number NassetsMax Max number of assets. Default is same as `NassetsMin`.
+-- @param #number ThreatLevel Only apply this setting if the target threat level is greater or equal this number. Default 0.
+-- @param #string TargetCategory Only apply this setting if the target is of this category, e.g. `TARGET.Category.AIRCRAFT`.
+-- @param #string MissionType Only apply this setting for this mission type, e.g. `AUFTRAG.Type.INTERCEPT`.
+-- @param #string Nunits Only apply this setting if the number of enemy units is greater or equal this number.
+-- @param #string Defcon Only apply this setting if this defense condition is in place.
+-- @param #string Strategy Only apply this setting if this strategy is in currently. place.
+-- @return #CHIEF self
+function CHIEF:SetResponseOnTarget(NassetsMin, NassetsMax, ThreatLevel, TargetCategory, MissionType, Nunits, Defcon, Strategy)
+  
+  local bla={} --#CHIEF.AssetNumber
+  
+  bla.nAssetMin=NassetsMin or 1
+  bla.nAssetMax=NassetsMax or bla.nAssetMin
+  bla.threatlevel=ThreatLevel or 0
+  bla.targetCategory=TargetCategory
+  bla.missionType=MissionType
+  bla.nUnits=Nunits or 1
+  bla.defcon=Defcon
+  bla.strategy=Strategy
+  
+  self.assetNumbers=self.assetNumbers or {}
+  
+  -- Add to table.
+  table.insert(self.assetNumbers, bla)
+  
+end
+
+--- Add mission type and number of required assets to resource.
+-- @param #CHIEF self
+-- @param Ops.Target#TARGET Target The target.
+-- @param #string MissionType Mission type.
+-- @return #number Number of min assets.
+-- @return #number Number of max assets.
+function CHIEF:_GetAssetsForTarget(Target, MissionType)
+
+  -- Threat level.
+  local threatlevel=Target:GetThreatLevelMax()
+  
+  -- Number of units.
+  local nUnits=Target.N0
+  
+  -- Target category.
+  local targetcategory=Target:GetCategory()
+  
+  -- Debug info.
+  self:T(self.lid..string.format("Getting number of assets for target with TL=%d, Category=%s, nUnits=%s, MissionType=%s", threatlevel, targetcategory, nUnits, tostring(MissionType)))
+  
+  -- Candidates.
+  local candidates={}
+  
+  local threatlevelMatch=nil
+  for _,_assetnumber in pairs(self.assetNumbers or {}) do
+    local assetnumber=_assetnumber --#CHIEF.AssetNumber
+    
+    if (threatlevelMatch==nil and threatlevel>=assetnumber.threatlevel) or (threatlevelMatch~=nil and threatlevelMatch==threatlevel) then
+            
+      if threatlevelMatch==nil then
+        threatlevelMatch=threatlevel
+      end
+      
+      -- Number of other parameters matching.
+      local nMatch=0
+      
+      -- Assume cand.
+      local cand=true
+      
+      if assetnumber.targetCategory~=nil then
+        if assetnumber.targetCategory==targetcategory then
+          nMatch=nMatch+1
+        else
+          cand=false
+        end
+      end
+      
+      if MissionType and assetnumber.missionType~=nil then 
+        if assetnumber.missionType==MissionType then
+          nMatch=nMatch+1
+        else
+          cand=false
+        end
+      end
+          
+      if assetnumber.nUnits~=nil then 
+        if assetnumber.nUnits>=nUnits then
+          nMatch=nMatch+1
+        else
+          cand=false
+        end
+      end
+            
+      if assetnumber.defcon~=nil then 
+        if assetnumber.defcon==self.Defcon then
+          nMatch=nMatch+1
+        else
+          cand=false
+        end
+      end
+      
+      if assetnumber.strategy~=nil then
+        if assetnumber.strategy==self.strategy then
+          nMatch=nMatch+1
+        else
+          cand=false
+        end
+      end
+    
+      -- Add to candidates.
+      if cand then
+        table.insert(candidates, {assetnumber=assetnumber, nMatch=nMatch})
+      end
+    
+    end
+    
+  end
+  
+  if #candidates>0 then
+  
+    -- Return greater match.
+    local function _sort(a,b)
+      return a.nMatch>b.nMatch
+    end
+    
+    -- Sort table by matches.
+    table.sort(candidates, _sort)
+    
+    -- Pick the candidate with most matches.
+    local candidate=candidates[1]
+    
+    -- Asset number.
+    local an=candidate.assetnumber --#CHIEF.AssetNumber
+    
+    -- Debug message.
+    self:T(self.lid..string.format("Picking candidate with %d matches: NassetsMin=%d, NassetsMax=%d, ThreatLevel=%d, TargetCategory=%s, MissionType=%s, Defcon=%s, Strategy=%s", 
+    candidate.nMatch, an.nAssetMin, an.nAssetMax, an.threatlevel, tostring(an.targetCategory), tostring(an.missionType), tostring(an.defcon), tostring(an.strategy)))
+     
+    -- Return number of assetes.
+    return an.nAssetMin, an.nAssetMax
+  else
+    return 1, 1
+  end
+
 end
 
 --- Get defence condition.
@@ -2084,24 +2242,6 @@ function CHIEF:CheckTargetQueue()
         local Legions=nil
         
         if #MissionPerformances>0 then
-
-          --TODO: Number of required assets. How many do we want? Should depend on:
-          --      * number of enemy units
-          --      * target threatlevel
-          --      * how many assets are still in stock
-          --      * is it inside of our border
-          --      * add damping factor
-          
-          local NassetsMin=1
-          local NassetsMax=1
-          
-          if threatlevel>=8 and target.N0 >=10 then
-            NassetsMax=3
-          elseif threatlevel>=5 then
-            NassetsMax=2
-          else
-            NassetsMax=1          
-          end
           
           for _,_mp in pairs(MissionPerformances) do
             local mp=_mp --#CHIEF.MissionPerformance
@@ -2112,6 +2252,9 @@ function CHIEF:CheckTargetQueue()
             --env.info(string.format("FF chief %s nolimit=%s", mp.MissionType, tostring(NoLimit)))
             
             if notlimited then
+            
+              -- Get min/max number of assets.          
+              local NassetsMin, NassetsMax=self:_GetAssetsForTarget(target, mp.MissionType)            
 
               -- Debug info.
               self:T2(self.lid..string.format("Recruiting assets for mission type %s [performance=%d] of target %s", mp.MissionType, mp.Performance, target:GetName()))

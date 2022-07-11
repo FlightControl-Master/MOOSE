@@ -1084,7 +1084,7 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
             table.insert(assets, asset)
           end        
           
-        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.ALERT5) and AUFTRAG.CheckMissionCapability(MissionType, asset.payload.capabilities) then
+        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.ALERT5) and AUFTRAG.CheckMissionCapability(MissionType, asset.payload.capabilities) and MissionType~=AUFTRAG.Type.ALERT5 then
                   
           -- Check if the payload of this asset is compatible with the mission.
           self:T(self.lid..string.format("Adding asset on ALERT 5 mission for %s mission", MissionType))
