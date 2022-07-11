@@ -911,6 +911,8 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   -- Escorts
   self.HasEscorts = false
   self.EscortTemplate = ""
+  self.EscortMission = {}
+  self.EscortMissionReplacement = {}
   
   -- SRS
   self.PathToSRS = "C:\\Program Files\\DCS-SimpleRadio-Standalone"
@@ -1722,23 +1724,19 @@ function AWACS:_StartEscorts(Shiftchange)
   local AwacsFG = self.AwacsFG -- Ops.FlightGroup#FLIGHTGROUP
   local group = AwacsFG:GetGroup()
   
-  local function stair(i)
-    return (i + (i%2))/2
-  end
-
   local timeonstation = (self.EscortsTimeOnStation + self.ShiftChangeTime) * 3600 -- hours to seconds
   for i=1,self.EscortNumber do
     -- every 
-    local escort = AUFTRAG:NewESCORT(group, {x= -100*stair(i), y=0, z=100 + 100*stair(i)*(-1)^i},45,{"Air"})
+    local escort = AUFTRAG:NewESCORT(group, {x= -100*((i + (i%2))/2), y=0, z=(100 + 100*((i + (i%2))/2))*(-1)^i},45,{"Air"})
     escort:SetRequiredAssets(1)
     escort:SetTime(nil,timeonstation)
     self.AirWing:AddMission(escort)
     self.CatchAllMissions[#self.CatchAllMissions+1] = escort
 
     if Shiftchange then
-      self.EscortMissionReplacement[#self.EscortMissionReplacement+1] = mission
+      self.EscortMissionReplacement[i] = mission
     else
-      self.EscortMission[#self.EscortMission+1] = mission
+      self.EscortMission[i] = mission
     end
   end
   
@@ -5583,8 +5581,9 @@ function AWACS:_CheckAwacsStatus()
     --------------------------------
                        
     if self.HasEscorts then
-      for i=#self.EscortMission - self.EscortNumber, #self.EscortMission do
+      for i=1, self.EscortNumber do
         local ESmission = self.EscortMission[i] -- Ops.Auftrag#AUFTRAG
+        if not ESmission then break end
         local esstatus = ESmission:GetState()
         local ESmissiontime = (timer.getTime() - self.EscortsTimeStamp)
         local ESTOSLeft = UTILS.Round((((self.EscortsTimeOnStation+self.ShiftChangeTime)*3600) - ESmissiontime),0) -- seconds
@@ -5612,8 +5611,8 @@ function AWACS:_CheckAwacsStatus()
           report:Add(string.format("Mission FG %s",OpsName))
           report:Add(string.format("Callsign %s",OpsCallSign))
           report:Add(string.format("Mission FG State %s",OpsGroup:GetState()))
-          monitoringdata.EscortsStateMission = esstatus
-          monitoringdata.EscortsStateFG = OpsGroup:GetState()
+          monitoringdata.EscortsStateMission[i] = esstatus
+          monitoringdata.EscortsStateFG[i] = OpsGroup:GetState()
         else
           report:Add("***** Cannot obtain (yet) this missions OpsGroup!")
         end
@@ -5653,8 +5652,8 @@ function AWACS:_CheckAwacsStatus()
             self.ShiftChangeEscortsFlag = false
             self.ShiftChangeEscortsRequested = false
             -- cancel old mission
-            if self.EscortMission and self.EscortMission:IsNotOver() then
-                self.EscortMission:Cancel()
+            if ESmission and ESmission:IsNotOver() then
+                ESmission:Cancel()
             end
             self.EscortMission[i] = self.EscortMissionReplacement[i]
             self.EscortMissionReplacement[i] = nil
