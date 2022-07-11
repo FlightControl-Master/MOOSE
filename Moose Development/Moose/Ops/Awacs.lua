@@ -252,14 +252,6 @@ do
 --            testawacs:SetAwacsDetails(CALLSIGN.AWACS.Wizard)
 --            -- And start as GCI using a group name "Blue EWR" as main EWR station
 --            testawacs:SetAsGCI(GROUP:FindByName("Blue EWR"),2)
---            -- Set Custom Callsigns for use with TTS
---            testawacs:SetCustomCallsigns({
---              Devil = 'Bengal',
---              Snake = 'Winder',
---              Colt = 'Camelot',
---              Enfield = 'Victory',
---              Uzi = 'Evil Eye'
---            })
 --            testawacs:__Start(4)
 --            
 -- ## 6 Menu entries
@@ -954,7 +946,6 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   -- managed groups
   self.ManagedGrps = {} -- #table of #AWACS.ManagedGroup entries
   self.ManagedGrpID = 0  
-  self.callsignTranslations = nil
   
   -- Anchor stacks init
   self.AnchorStacks = FIFO:New() -- Utilities.FiFo#FIFO
@@ -971,7 +962,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   -- Task lists
   self.ManagedTasks = FIFO:New() -- Utilities.FiFo#FIFO
   --self.OpenTasks = FIFO:New() -- Utilities.FiFo#FIFO
-
+  
   -- Monitoring, init
   local MonitoringData = {} -- #AWACS.MonitoringData
   MonitoringData.AICAPCurrent = 0
@@ -1274,14 +1265,6 @@ function AWACS:ZipLip()
   --self.NoGroupTags = true
   self.NoMissileCalls = true
   return self
-end
-
---- [User] Do not show messages on screen
--- @param #AWACS self
--- @param #table table with DCS callsigns as keys and replacements as values
--- @return #AWACS self
-function AWACS:SetCustomCallsigns(translationTable) 
-  self.callsignTranslations = translationTable
 end
 
 --- [Internal] Event handler
@@ -1953,11 +1936,6 @@ function AWACS:_GetCallSign(Group,GID)
   local callsign = "Ghost 1"
   if Group and Group:IsAlive() then
     local shortcallsign = Group:GetCallsign() or "unknown11"-- e.g.Uzi11, but we want Uzi 1 1
-    local callsignroot = string.match(shortcallsign, '(%a+)')
-    if self.callsignTranslations[callsignroot] then
-      shortcallsign = string.gsub(shortcallsign, callsignroot, self.callsignTranslations[callsignroot])
-    end
-  
     local groupname = Group:GetName()
     local callnumber = string.match(shortcallsign, "(%d+)$" ) or "unknown11"
     local callnumbermajor = string.char(string.byte(callnumber,1))
@@ -1973,7 +1951,6 @@ function AWACS:_GetCallSign(Group,GID)
     end
     self:T("Generated Callsign for TTS = " .. callsign)
   end
-  env.info('DEBUG: '..callsign)
   return callsign
 end
 
