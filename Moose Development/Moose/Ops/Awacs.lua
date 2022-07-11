@@ -1721,20 +1721,25 @@ function AWACS:_StartEscorts(Shiftchange)
   
   local AwacsFG = self.AwacsFG -- Ops.FlightGroup#FLIGHTGROUP
   local group = AwacsFG:GetGroup()
-  local mission = AUFTRAG:NewESCORT(group,{x=-100, y=0, z=200},45,{"Air"})
-  self.CatchAllMissions[#self.CatchAllMissions+1] = mission
   
-  mission:SetRequiredAssets(self.EscortNumber)
-  
+  local function stair(i)
+    return (i + (i%2))/2
+  end
+
   local timeonstation = (self.EscortsTimeOnStation + self.ShiftChangeTime) * 3600 -- hours to seconds
-  mission:SetTime(nil,timeonstation)
-  
-  self.AirWing:AddMission(mission)
-  
-  if Shiftchange then
-    self.EscortMissionReplacement = mission
-  else
-    self.EscortMission = mission
+  for i=1,self.EscortNumber do
+    -- every 
+    local escort = AUFTRAG:NewESCORT(group, {x= -100*stair(i), y=0, z=100 + 100*stair(i)*(-1)^i},45,{"Air"})
+    escort:SetRequiredAssets(1)
+    escort:SetTime(nil,timeonstation)
+    self.AirWing:AddMission(escort)
+    self.CatchAllMissions[#self.CatchAllMissions+1] = escort
+
+    if Shiftchange then
+      self.EscortMissionReplacement[#self.EscortMissionReplacement+1] = mission
+    else
+      self.EscortMission[#self.EscortMission+1] = mission
+    end
   end
   
   return self
@@ -5578,57 +5583,26 @@ function AWACS:_CheckAwacsStatus()
     --------------------------------
                        
     if self.HasEscorts then
-      local ESmission = self.EscortMission -- Ops.Auftrag#AUFTRAG
-      local esstatus = ESmission:GetState()
-      local ESmissiontime = (timer.getTime() - self.EscortsTimeStamp)
-      local ESTOSLeft = UTILS.Round((((self.EscortsTimeOnStation+self.ShiftChangeTime)*3600) - ESmissiontime),0) -- seconds
-      ESTOSLeft = UTILS.Round(ESTOSLeft/60,0) -- minutes
-      local ChangeTime = UTILS.Round(((self.ShiftChangeTime * 3600)/60),0)
-      local Changedue = "No"
-      
-      if (ESTOSLeft <= ChangeTime and not self.ShiftChangeEscortsFlag) or (ESmission:IsOver() and not self.ShiftChangeEscortsFlag) then 
-        Changedue = "Yes" 
-        self.ShiftChangeEscortsFlag = true -- set this back when new Escorts arrived
-        self:__EscortShiftChange(2)
-      end
-      
-      report:Add("====================")
-      report:Add("ESCORTS:")
-      report:Add(string.format("Auftrag Status: %s",esstatus))
-      report:Add(string.format("TOS Left: %d min",ESTOSLeft))
-      report:Add(string.format("Needs ShiftChange: %s",Changedue))
-      
-      local OpsGroups = ESmission:GetOpsGroups()
-      local OpsGroup = self:_GetAliveOpsGroupFromTable(OpsGroups) -- Ops.OpsGroup#OPSGROUP
-      if OpsGroup then
-        local OpsName = OpsGroup:GetName() or "Unknown"
-        local OpsCallSign = OpsGroup:GetCallsignName() or "Unknown"
-        report:Add(string.format("Mission FG %s",OpsName))
-        report:Add(string.format("Callsign %s",OpsCallSign))
-        report:Add(string.format("Mission FG State %s",OpsGroup:GetState()))
-        monitoringdata.EscortsStateMission = esstatus
-        monitoringdata.EscortsStateFG = OpsGroup:GetState()
-      else
-        report:Add("***** Cannot obtain (yet) this missions OpsGroup!")
-      end
-      
-      report:Add("====================")
-      
-      -- Check for replacement mission - if any
-      if self.ShiftChangeEscortsFlag and self.ShiftChangeEscortsRequested then -- Ops.Auftrag#AUFTRAG
-        ESmission = self.EscortMissionReplacement
+      for i=#self.EscortMission - self.EscortNumber, #self.EscortMission do
+        local ESmission = self.EscortMission[i] -- Ops.Auftrag#AUFTRAG
         local esstatus = ESmission:GetState()
         local ESmissiontime = (timer.getTime() - self.EscortsTimeStamp)
         local ESTOSLeft = UTILS.Round((((self.EscortsTimeOnStation+self.ShiftChangeTime)*3600) - ESmissiontime),0) -- seconds
         ESTOSLeft = UTILS.Round(ESTOSLeft/60,0) -- minutes
         local ChangeTime = UTILS.Round(((self.ShiftChangeTime * 3600)/60),0)
-        --local Changedue = "No"
+        local Changedue = "No"
         
-        --report:Add("====================")
-        report:Add("ESCORTS REPLACEMENT:")
+        if (ESTOSLeft <= ChangeTime and not self.ShiftChangeEscortsFlag) or (ESmission:IsOver() and not self.ShiftChangeEscortsFlag) then 
+          Changedue = "Yes" 
+          self.ShiftChangeEscortsFlag = true -- set this back when new Escorts arrived
+          self:__EscortShiftChange(2)
+        end
+        
+        report:Add("====================")
+        report:Add("ESCORTS:")
         report:Add(string.format("Auftrag Status: %s",esstatus))
         report:Add(string.format("TOS Left: %d min",ESTOSLeft))
-        --report:Add(string.format("Needs ShiftChange: %s",Changedue))
+        report:Add(string.format("Needs ShiftChange: %s",Changedue))
         
         local OpsGroups = ESmission:GetOpsGroups()
         local OpsGroup = self:_GetAliveOpsGroupFromTable(OpsGroups) -- Ops.OpsGroup#OPSGROUP
@@ -5638,24 +5612,57 @@ function AWACS:_CheckAwacsStatus()
           report:Add(string.format("Mission FG %s",OpsName))
           report:Add(string.format("Callsign %s",OpsCallSign))
           report:Add(string.format("Mission FG State %s",OpsGroup:GetState()))
+          monitoringdata.EscortsStateMission = esstatus
+          monitoringdata.EscortsStateFG = OpsGroup:GetState()
         else
           report:Add("***** Cannot obtain (yet) this missions OpsGroup!")
         end
         
-        if ESmission:IsExecuting() then
-          -- make the actual change in the queue
-          self.ShiftChangeEscortsFlag = false
-          self.ShiftChangeEscortsRequested = false
-          -- cancel old mission
-          if self.EscortMission and self.EscortMission:IsNotOver() then
-              self.EscortMission:Cancel()
-          end
-          self.EscortMission = self.EscortMissionReplacement
-          self.EscortMissionReplacement = nil
-          self.EscortsTimeStamp = timer.getTime()
-          report:Add("*** Replacement DONE ***")
-        end
         report:Add("====================")
+        
+        -- Check for replacement mission - if any
+        if self.ShiftChangeEscortsFlag and self.ShiftChangeEscortsRequested then -- Ops.Auftrag#AUFTRAG
+          ESmission = self.EscortMissionReplacement[i]
+          local esstatus = ESmission:GetState()
+          local ESmissiontime = (timer.getTime() - self.EscortsTimeStamp)
+          local ESTOSLeft = UTILS.Round((((self.EscortsTimeOnStation+self.ShiftChangeTime)*3600) - ESmissiontime),0) -- seconds
+          ESTOSLeft = UTILS.Round(ESTOSLeft/60,0) -- minutes
+          local ChangeTime = UTILS.Round(((self.ShiftChangeTime * 3600)/60),0)
+          --local Changedue = "No"
+          
+          --report:Add("====================")
+          report:Add("ESCORTS REPLACEMENT:")
+          report:Add(string.format("Auftrag Status: %s",esstatus))
+          report:Add(string.format("TOS Left: %d min",ESTOSLeft))
+          --report:Add(string.format("Needs ShiftChange: %s",Changedue))
+          
+          local OpsGroups = ESmission:GetOpsGroups()
+          local OpsGroup = self:_GetAliveOpsGroupFromTable(OpsGroups) -- Ops.OpsGroup#OPSGROUP
+          if OpsGroup then
+            local OpsName = OpsGroup:GetName() or "Unknown"
+            local OpsCallSign = OpsGroup:GetCallsignName() or "Unknown"
+            report:Add(string.format("Mission FG %s",OpsName))
+            report:Add(string.format("Callsign %s",OpsCallSign))
+            report:Add(string.format("Mission FG State %s",OpsGroup:GetState()))
+          else
+            report:Add("***** Cannot obtain (yet) this missions OpsGroup!")
+          end
+          
+          if ESmission:IsExecuting() then
+            -- make the actual change in the queue
+            self.ShiftChangeEscortsFlag = false
+            self.ShiftChangeEscortsRequested = false
+            -- cancel old mission
+            if self.EscortMission and self.EscortMission:IsNotOver() then
+                self.EscortMission:Cancel()
+            end
+            self.EscortMission[i] = self.EscortMissionReplacement[i]
+            self.EscortMissionReplacement[i] = nil
+            self.EscortsTimeStamp = timer.getTime()
+            report:Add("*** Replacement DONE ***")
+          end
+          report:Add("====================")
+        end
       end
     end
       
