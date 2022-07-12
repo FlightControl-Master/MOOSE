@@ -1951,7 +1951,7 @@ function AWACS:_GetCallSign(Group,GID)
   if Group and Group:IsAlive() then
     local shortcallsign = Group:GetCallsign() or "unknown11"-- e.g.Uzi11, but we want Uzi 1 1
     local callsignroot = string.match(shortcallsign, '(%a+)')
-    if self.callsignTranslations[callsignroot] then
+    if self.callsignTranslations and self.callsignTranslations[callsignroot] then
       shortcallsign = string.gsub(shortcallsign, callsignroot, self.callsignTranslations[callsignroot])
     end
   
