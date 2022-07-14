@@ -401,7 +401,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "beta 0.2.3231", -- #string
+  version = "beta 0.2.33", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -745,7 +745,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.2.32
+-- TODO-List 0.2.33
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
@@ -1292,6 +1292,7 @@ end
 -- @return #string CallSign
 function AWACS:_GetGIDFromGroupOrName(Group)
   self:T(self.lid.."_GetGIDFromGroupOrName")
+  self:T({Group})
   local GID = 0
   local Outcome = false
   local CallSign = "Ghost 1"
@@ -1313,6 +1314,7 @@ function AWACS:_GetGIDFromGroupOrName(Group)
       CallSign = managed.CallSign
     end
   end
+  self:T({Outcome, GID, CallSign})
   return Outcome, GID, CallSign
 end
 
@@ -1336,12 +1338,14 @@ function AWACS:_EventHandler(EventData)
   
   if Event.id == EVENTS.PlayerLeaveUnit then --player left unit
     -- check known player?
-    --self:T("Player group left  unit: " .. Event.IniGroupName)
-    --self:T("Player name left: " .. Event.IniPlayerName)
-    --self:T("Coalition = " .. UTILS.GetCoalitionName(Event.IniCoalition))
+    self:T("Player group left  unit: " .. Event.IniGroupName)
+    self:T("Player name left: " .. Event.IniPlayerName)
+    self:T("Coalition = " .. UTILS.GetCoalitionName(Event.IniCoalition))
     if Event.IniCoalition == self.coalition then
       local Outcome, GID, CallSign = self:_GetGIDFromGroupOrName(Event.IniGroupName)
       if Outcome and GID > 0 then
+        self:T("Task Abort and Checkout Called")
+        self:_TaskAbort(Event.IniGroupName)
         self:_CheckOut(nil,GID,true)
       end
     end
@@ -1354,6 +1358,7 @@ function AWACS:_EventHandler(EventData)
       --self:T("Coalition = " .. UTILS.GetCoalitionName(Event.IniCoalition))
       local Outcome, GID, CallSign = self:_GetGIDFromGroupOrName(Event.IniGroupName)
       if Outcome and GID > 0 then
+        self:_TaskAbort(Event.IniGroupName)
         self:_CheckOut(nil,GID,true)
       end
     end
@@ -2966,10 +2971,12 @@ end
 -- @return #AWACS self
 function AWACS:_TaskAbort(Group)
   self:T(self.lid.."_TaskAbort")
-  local GID, Outcome = self:_GetManagedGrpID(Group)
+  --local GID, Outcome = self:_GetManagedGrpID(Group)
+  local Outcome,GID = self:_GetGIDFromGroupOrName(Group)
   local text = ""
   if Outcome then 
     local Pilot = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
+    self:T({Pilot})
     -- Get current task from the group
     local currtaskid = Pilot.CurrentTask
     local managedtask = self.ManagedTasks:ReadByID(currtaskid) -- #AWACS.ManagedTask
@@ -3112,7 +3119,7 @@ function AWACS:_CheckIn(Group)
     --local alphacheckbullstts = self:_ToStringBullsTTS(alphacheckbulls)-- make tts friendly
     local alphacheckbullstts = self:_ToStringBULLS(Group:GetCoordinate(),false,true)
       
-    self.ManagedGrps[self.ManagedGrpID]=managedgroup
+    --self.ManagedGrps[self.ManagedGrpID]=managedgroup
     text = string.format("%s. %s. Alpha Check. %s",managedgroup.CallSign,self.callsigntxt,alphacheckbulls)
     textTTS = string.format("%s. %s. Alpha Check. %s",managedgroup.CallSign,self.callsigntxt,alphacheckbullstts)
     
@@ -3936,7 +3943,8 @@ function AWACS:_CreateTaskForGroup(GroupID,Description,ScreenText,Object,TaskSta
    managedgroup.HasAssignedTask = true
    managedgroup.CurrentTask = task.TID
    --managedgroup.TaskQueue:Push(task.TID)
-
+  
+   self:T({managedgroup})
    self.ManagedGrps[GroupID] = managedgroup
 
    return task.TID 
@@ -4283,7 +4291,7 @@ function AWACS:_CheckTaskQueue()
               entry.IsPlayerTask = false
             end 
             self.ManagedGrps[entry.AssignedGroupID] = managedgroup
-            if managedgroup.Group:IsAlive() or managedgroup.FlightGroup:IsAlive() then
+            if managedgroup.Group:IsAlive() or (managedgroup.FlightGroup and managedgroup.FlightGroup:IsAlive()) then
               self:__ReAnchor(5,managedgroup.GID)
             end
           end
@@ -5884,7 +5892,6 @@ function AWACS:onafterAssignedAnchor(From, Event, To, GID, Anchor, AnchorStackNo
   managedgroup.AnchorStackNo = AnchorStackNo
   managedgroup.AnchorStackAngels = AnchorAngels
   managedgroup.Blocked = false
-  self.ManagedGrps[GID] = managedgroup
   local isPlayer = managedgroup.IsPlayer
   local isAI = managedgroup.IsAI
   local Group = managedgroup.Group
@@ -5926,7 +5933,10 @@ function AWACS:onafterAssignedAnchor(From, Event, To, GID, Anchor, AnchorStackNo
     else
       self:E("**** AssignedAnchor but NO Auftrag!")
     end 
-  end  
+  end
+  
+  self.ManagedGrps[GID] = managedgroup
+    
   return self
 end
 
