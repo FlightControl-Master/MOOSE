@@ -252,6 +252,14 @@ do
 --            testawacs:SetAwacsDetails(CALLSIGN.AWACS.Wizard)
 --            -- And start as GCI using a group name "Blue EWR" as main EWR station
 --            testawacs:SetAsGCI(GROUP:FindByName("Blue EWR"),2)
+--            -- Set Custom Callsigns for use with TTS
+--            testawacs:SetCustomCallsigns({
+--              Devil = 'Bengal',
+--              Snake = 'Winder',
+--              Colt = 'Camelot',
+--              Enfield = 'Victory',
+--              Uzi = 'Evil Eye'
+--            })
 --            testawacs:__Start(4)
 --            
 -- ## 6 Menu entries
@@ -393,7 +401,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "beta 0.2.3231", -- #string
+  version = "beta 0.2.33", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -737,7 +745,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.2.32
+-- TODO-List 0.2.33
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
@@ -911,6 +919,8 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   -- Escorts
   self.HasEscorts = false
   self.EscortTemplate = ""
+  self.EscortMission = {}
+  self.EscortMissionReplacement = {}
   
   -- SRS
   self.PathToSRS = "C:\\Program Files\\DCS-SimpleRadio-Standalone"
@@ -944,6 +954,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   -- managed groups
   self.ManagedGrps = {} -- #table of #AWACS.ManagedGroup entries
   self.ManagedGrpID = 0  
+  self.callsignTranslations = nil
   
   -- Anchor stacks init
   self.AnchorStacks = FIFO:New() -- Utilities.FiFo#FIFO
@@ -960,7 +971,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   -- Task lists
   self.ManagedTasks = FIFO:New() -- Utilities.FiFo#FIFO
   --self.OpenTasks = FIFO:New() -- Utilities.FiFo#FIFO
-  
+
   -- Monitoring, init
   local MonitoringData = {} -- #AWACS.MonitoringData
   MonitoringData.AICAPCurrent = 0
@@ -1265,6 +1276,14 @@ function AWACS:ZipLip()
   return self
 end
 
+--- [User] Replace ME callsigns with user-defined callsigns for use with TTS and on-screen messaging
+-- @param #AWACS self
+-- @param #table table with DCS callsigns as keys and replacements as values
+-- @return #AWACS self
+function AWACS:SetCustomCallsigns(translationTable) 
+  self.callsignTranslations = translationTable
+end
+
 --- [Internal] Event handler
 -- @param #AWACS self
 -- @param Wrapper.Group#GROUP Group Group, can also be passed as #string group name
@@ -1273,6 +1292,7 @@ end
 -- @return #string CallSign
 function AWACS:_GetGIDFromGroupOrName(Group)
   self:T(self.lid.."_GetGIDFromGroupOrName")
+  self:T({Group})
   local GID = 0
   local Outcome = false
   local CallSign = "Ghost 1"
@@ -1294,6 +1314,7 @@ function AWACS:_GetGIDFromGroupOrName(Group)
       CallSign = managed.CallSign
     end
   end
+  self:T({Outcome, GID, CallSign})
   return Outcome, GID, CallSign
 end
 
@@ -1317,12 +1338,14 @@ function AWACS:_EventHandler(EventData)
   
   if Event.id == EVENTS.PlayerLeaveUnit then --player left unit
     -- check known player?
-    --self:T("Player group left  unit: " .. Event.IniGroupName)
-    --self:T("Player name left: " .. Event.IniPlayerName)
-    --self:T("Coalition = " .. UTILS.GetCoalitionName(Event.IniCoalition))
+    self:T("Player group left  unit: " .. Event.IniGroupName)
+    self:T("Player name left: " .. Event.IniPlayerName)
+    self:T("Coalition = " .. UTILS.GetCoalitionName(Event.IniCoalition))
     if Event.IniCoalition == self.coalition then
       local Outcome, GID, CallSign = self:_GetGIDFromGroupOrName(Event.IniGroupName)
       if Outcome and GID > 0 then
+        self:T("Task Abort and Checkout Called")
+        self:_TaskAbort(Event.IniGroupName)
         self:_CheckOut(nil,GID,true)
       end
     end
@@ -1335,6 +1358,7 @@ function AWACS:_EventHandler(EventData)
       --self:T("Coalition = " .. UTILS.GetCoalitionName(Event.IniCoalition))
       local Outcome, GID, CallSign = self:_GetGIDFromGroupOrName(Event.IniGroupName)
       if Outcome and GID > 0 then
+        self:_TaskAbort(Event.IniGroupName)
         self:_CheckOut(nil,GID,true)
       end
     end
@@ -1721,20 +1745,21 @@ function AWACS:_StartEscorts(Shiftchange)
   
   local AwacsFG = self.AwacsFG -- Ops.FlightGroup#FLIGHTGROUP
   local group = AwacsFG:GetGroup()
-  local mission = AUFTRAG:NewESCORT(group,{x=-100, y=0, z=200},45,{"Air"})
-  self.CatchAllMissions[#self.CatchAllMissions+1] = mission
-  
-  mission:SetRequiredAssets(self.EscortNumber)
-  
+
   local timeonstation = (self.EscortsTimeOnStation + self.ShiftChangeTime) * 3600 -- hours to seconds
-  mission:SetTime(nil,timeonstation)
-  
-  self.AirWing:AddMission(mission)
-  
-  if Shiftchange then
-    self.EscortMissionReplacement = mission
-  else
-    self.EscortMission = mission
+  for i=1,self.EscortNumber do
+    -- every 
+    local escort = AUFTRAG:NewESCORT(group, {x= -100*((i + (i%2))/2), y=0, z=(100 + 100*((i + (i%2))/2))*(-1)^i},45,{"Air"})
+    escort:SetRequiredAssets(1)
+    escort:SetTime(nil,timeonstation)
+    self.AirWing:AddMission(escort)
+    self.CatchAllMissions[#self.CatchAllMissions+1] = escort
+
+    if Shiftchange then
+      self.EscortMissionReplacement[i] = mission
+    else
+      self.EscortMission[i] = mission
+    end
   end
   
   return self
@@ -1933,6 +1958,11 @@ function AWACS:_GetCallSign(Group,GID)
   local callsign = "Ghost 1"
   if Group and Group:IsAlive() then
     local shortcallsign = Group:GetCallsign() or "unknown11"-- e.g.Uzi11, but we want Uzi 1 1
+    local callsignroot = string.match(shortcallsign, '(%a+)')
+    if self.callsignTranslations and self.callsignTranslations[callsignroot] then
+      shortcallsign = string.gsub(shortcallsign, callsignroot, self.callsignTranslations[callsignroot])
+    end
+  
     local groupname = Group:GetName()
     local callnumber = string.match(shortcallsign, "(%d+)$" ) or "unknown11"
     local callnumbermajor = string.char(string.byte(callnumber,1))
@@ -1948,6 +1978,7 @@ function AWACS:_GetCallSign(Group,GID)
     end
     self:T("Generated Callsign for TTS = " .. callsign)
   end
+  
   return callsign
 end
 
@@ -2940,10 +2971,12 @@ end
 -- @return #AWACS self
 function AWACS:_TaskAbort(Group)
   self:T(self.lid.."_TaskAbort")
-  local GID, Outcome = self:_GetManagedGrpID(Group)
+  --local GID, Outcome = self:_GetManagedGrpID(Group)
+  local Outcome,GID = self:_GetGIDFromGroupOrName(Group)
   local text = ""
   if Outcome then 
     local Pilot = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
+    self:T({Pilot})
     -- Get current task from the group
     local currtaskid = Pilot.CurrentTask
     local managedtask = self.ManagedTasks:ReadByID(currtaskid) -- #AWACS.ManagedTask
@@ -3086,7 +3119,7 @@ function AWACS:_CheckIn(Group)
     --local alphacheckbullstts = self:_ToStringBullsTTS(alphacheckbulls)-- make tts friendly
     local alphacheckbullstts = self:_ToStringBULLS(Group:GetCoordinate(),false,true)
       
-    self.ManagedGrps[self.ManagedGrpID]=managedgroup
+    --self.ManagedGrps[self.ManagedGrpID]=managedgroup
     text = string.format("%s. %s. Alpha Check. %s",managedgroup.CallSign,self.callsigntxt,alphacheckbulls)
     textTTS = string.format("%s. %s. Alpha Check. %s",managedgroup.CallSign,self.callsigntxt,alphacheckbullstts)
     
@@ -3910,7 +3943,8 @@ function AWACS:_CreateTaskForGroup(GroupID,Description,ScreenText,Object,TaskSta
    managedgroup.HasAssignedTask = true
    managedgroup.CurrentTask = task.TID
    --managedgroup.TaskQueue:Push(task.TID)
-
+  
+   self:T({managedgroup})
    self.ManagedGrps[GroupID] = managedgroup
 
    return task.TID 
@@ -4257,7 +4291,7 @@ function AWACS:_CheckTaskQueue()
               entry.IsPlayerTask = false
             end 
             self.ManagedGrps[entry.AssignedGroupID] = managedgroup
-            if managedgroup.Group:IsAlive() or managedgroup.FlightGroup:IsAlive() then
+            if managedgroup.Group:IsAlive() or (managedgroup.FlightGroup and managedgroup.FlightGroup:IsAlive()) then
               self:__ReAnchor(5,managedgroup.GID)
             end
           end
@@ -5578,57 +5612,27 @@ function AWACS:_CheckAwacsStatus()
     --------------------------------
                        
     if self.HasEscorts then
-      local ESmission = self.EscortMission -- Ops.Auftrag#AUFTRAG
-      local esstatus = ESmission:GetState()
-      local ESmissiontime = (timer.getTime() - self.EscortsTimeStamp)
-      local ESTOSLeft = UTILS.Round((((self.EscortsTimeOnStation+self.ShiftChangeTime)*3600) - ESmissiontime),0) -- seconds
-      ESTOSLeft = UTILS.Round(ESTOSLeft/60,0) -- minutes
-      local ChangeTime = UTILS.Round(((self.ShiftChangeTime * 3600)/60),0)
-      local Changedue = "No"
-      
-      if (ESTOSLeft <= ChangeTime and not self.ShiftChangeEscortsFlag) or (ESmission:IsOver() and not self.ShiftChangeEscortsFlag) then 
-        Changedue = "Yes" 
-        self.ShiftChangeEscortsFlag = true -- set this back when new Escorts arrived
-        self:__EscortShiftChange(2)
-      end
-      
-      report:Add("====================")
-      report:Add("ESCORTS:")
-      report:Add(string.format("Auftrag Status: %s",esstatus))
-      report:Add(string.format("TOS Left: %d min",ESTOSLeft))
-      report:Add(string.format("Needs ShiftChange: %s",Changedue))
-      
-      local OpsGroups = ESmission:GetOpsGroups()
-      local OpsGroup = self:_GetAliveOpsGroupFromTable(OpsGroups) -- Ops.OpsGroup#OPSGROUP
-      if OpsGroup then
-        local OpsName = OpsGroup:GetName() or "Unknown"
-        local OpsCallSign = OpsGroup:GetCallsignName() or "Unknown"
-        report:Add(string.format("Mission FG %s",OpsName))
-        report:Add(string.format("Callsign %s",OpsCallSign))
-        report:Add(string.format("Mission FG State %s",OpsGroup:GetState()))
-        monitoringdata.EscortsStateMission = esstatus
-        monitoringdata.EscortsStateFG = OpsGroup:GetState()
-      else
-        report:Add("***** Cannot obtain (yet) this missions OpsGroup!")
-      end
-      
-      report:Add("====================")
-      
-      -- Check for replacement mission - if any
-      if self.ShiftChangeEscortsFlag and self.ShiftChangeEscortsRequested then -- Ops.Auftrag#AUFTRAG
-        ESmission = self.EscortMissionReplacement
+      for i=1, self.EscortNumber do
+        local ESmission = self.EscortMission[i] -- Ops.Auftrag#AUFTRAG
+        if not ESmission then break end
         local esstatus = ESmission:GetState()
         local ESmissiontime = (timer.getTime() - self.EscortsTimeStamp)
         local ESTOSLeft = UTILS.Round((((self.EscortsTimeOnStation+self.ShiftChangeTime)*3600) - ESmissiontime),0) -- seconds
         ESTOSLeft = UTILS.Round(ESTOSLeft/60,0) -- minutes
         local ChangeTime = UTILS.Round(((self.ShiftChangeTime * 3600)/60),0)
-        --local Changedue = "No"
+        local Changedue = "No"
         
-        --report:Add("====================")
-        report:Add("ESCORTS REPLACEMENT:")
+        if (ESTOSLeft <= ChangeTime and not self.ShiftChangeEscortsFlag) or (ESmission:IsOver() and not self.ShiftChangeEscortsFlag) then 
+          Changedue = "Yes" 
+          self.ShiftChangeEscortsFlag = true -- set this back when new Escorts arrived
+          self:__EscortShiftChange(2)
+        end
+        
+        report:Add("====================")
+        report:Add("ESCORTS:")
         report:Add(string.format("Auftrag Status: %s",esstatus))
         report:Add(string.format("TOS Left: %d min",ESTOSLeft))
-        --report:Add(string.format("Needs ShiftChange: %s",Changedue))
+        report:Add(string.format("Needs ShiftChange: %s",Changedue))
         
         local OpsGroups = ESmission:GetOpsGroups()
         local OpsGroup = self:_GetAliveOpsGroupFromTable(OpsGroups) -- Ops.OpsGroup#OPSGROUP
@@ -5638,24 +5642,57 @@ function AWACS:_CheckAwacsStatus()
           report:Add(string.format("Mission FG %s",OpsName))
           report:Add(string.format("Callsign %s",OpsCallSign))
           report:Add(string.format("Mission FG State %s",OpsGroup:GetState()))
+          monitoringdata.EscortsStateMission[i] = esstatus
+          monitoringdata.EscortsStateFG[i] = OpsGroup:GetState()
         else
           report:Add("***** Cannot obtain (yet) this missions OpsGroup!")
         end
         
-        if ESmission:IsExecuting() then
-          -- make the actual change in the queue
-          self.ShiftChangeEscortsFlag = false
-          self.ShiftChangeEscortsRequested = false
-          -- cancel old mission
-          if self.EscortMission and self.EscortMission:IsNotOver() then
-              self.EscortMission:Cancel()
-          end
-          self.EscortMission = self.EscortMissionReplacement
-          self.EscortMissionReplacement = nil
-          self.EscortsTimeStamp = timer.getTime()
-          report:Add("*** Replacement DONE ***")
-        end
         report:Add("====================")
+        
+        -- Check for replacement mission - if any
+        if self.ShiftChangeEscortsFlag and self.ShiftChangeEscortsRequested then -- Ops.Auftrag#AUFTRAG
+          ESmission = self.EscortMissionReplacement[i]
+          local esstatus = ESmission:GetState()
+          local ESmissiontime = (timer.getTime() - self.EscortsTimeStamp)
+          local ESTOSLeft = UTILS.Round((((self.EscortsTimeOnStation+self.ShiftChangeTime)*3600) - ESmissiontime),0) -- seconds
+          ESTOSLeft = UTILS.Round(ESTOSLeft/60,0) -- minutes
+          local ChangeTime = UTILS.Round(((self.ShiftChangeTime * 3600)/60),0)
+          --local Changedue = "No"
+          
+          --report:Add("====================")
+          report:Add("ESCORTS REPLACEMENT:")
+          report:Add(string.format("Auftrag Status: %s",esstatus))
+          report:Add(string.format("TOS Left: %d min",ESTOSLeft))
+          --report:Add(string.format("Needs ShiftChange: %s",Changedue))
+          
+          local OpsGroups = ESmission:GetOpsGroups()
+          local OpsGroup = self:_GetAliveOpsGroupFromTable(OpsGroups) -- Ops.OpsGroup#OPSGROUP
+          if OpsGroup then
+            local OpsName = OpsGroup:GetName() or "Unknown"
+            local OpsCallSign = OpsGroup:GetCallsignName() or "Unknown"
+            report:Add(string.format("Mission FG %s",OpsName))
+            report:Add(string.format("Callsign %s",OpsCallSign))
+            report:Add(string.format("Mission FG State %s",OpsGroup:GetState()))
+          else
+            report:Add("***** Cannot obtain (yet) this missions OpsGroup!")
+          end
+          
+          if ESmission:IsExecuting() then
+            -- make the actual change in the queue
+            self.ShiftChangeEscortsFlag = false
+            self.ShiftChangeEscortsRequested = false
+            -- cancel old mission
+            if ESmission and ESmission:IsNotOver() then
+              ESmission:Cancel()
+            end
+            self.EscortMission[i] = self.EscortMissionReplacement[i]
+              self.EscortMissionReplacement[i] = nil
+            self.EscortsTimeStamp = timer.getTime()
+            report:Add("*** Replacement DONE ***")
+          end
+          report:Add("====================")
+        end
       end
     end
       
@@ -5855,7 +5892,6 @@ function AWACS:onafterAssignedAnchor(From, Event, To, GID, Anchor, AnchorStackNo
   managedgroup.AnchorStackNo = AnchorStackNo
   managedgroup.AnchorStackAngels = AnchorAngels
   managedgroup.Blocked = false
-  self.ManagedGrps[GID] = managedgroup
   local isPlayer = managedgroup.IsPlayer
   local isAI = managedgroup.IsAI
   local Group = managedgroup.Group
@@ -5897,7 +5933,10 @@ function AWACS:onafterAssignedAnchor(From, Event, To, GID, Anchor, AnchorStackNo
     else
       self:E("**** AssignedAnchor but NO Auftrag!")
     end 
-  end  
+  end
+  
+  self.ManagedGrps[GID] = managedgroup
+    
   return self
 end
 
