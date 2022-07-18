@@ -5282,6 +5282,10 @@ function AUFTRAG:GetDCSMissionTask()
     -- ANTISHIP Mission --
     ----------------------
 
+    -- Add enroute anti-ship task.
+    local DCStask=CONTROLLABLE.EnRouteTaskAntiShip(nil)
+    table.insert(self.enrouteTasks, DCStask)
+
     self:_GetDCSAttackTask(self.engageTarget, DCStasks)
 
   elseif self.type==AUFTRAG.Type.AWACS then
@@ -5619,8 +5623,6 @@ function AUFTRAG:GetDCSMissionTask()
       end
     
     end
-
-    --table.insert(DCStasks, DCStask)
 
   elseif self.type==AUFTRAG.Type.BARRAGE then
 

@@ -1105,6 +1105,7 @@ function AIRBASE:_InitParkingSpots()
     park.TerminalType=spot.Term_Type
     park.TOAC=spot.TO_AC
     park.ClientSpot, park.ClientName=isClient(park.Coordinate)
+    park.AirbaseName=self.AirbaseName
 
     self.NparkingTotal=self.NparkingTotal+1
 

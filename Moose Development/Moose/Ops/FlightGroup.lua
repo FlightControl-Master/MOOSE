@@ -875,16 +875,14 @@ function FLIGHTGROUP:Status()
         if element.parking then
   
           -- Get distance to assigned parking spot.
-          local dist=element.unit:GetCoord():Get2DDistance(element.parking.Coordinate)
+          local dist=self:_GetDistToParking(element.parking, element.unit:GetCoord())
           
-          --env.info(string.format("FF dist to parking spot %d = %.1f meters", element.parking.TerminalID, dist))
-  
-          -- If distance >10 meters, we consider the unit as taxiing.
-          -- At least for fighters, the initial distance seems to be around 1.8 meters.
+          -- Debug info.
+          self:T(self.lid..string.format("Distance to parking spot %d = %.1f meters", element.parking.TerminalID, dist))
+                      
+          -- If distance >10 meters, we consider the unit as taxiing. At least for fighters, the initial distance seems to be around 1.8 meters.
           if dist>12 and element.engineOn then
-            --if element.status==OPSGROUP.ElementStatus.ENGINEON then
-              self:ElementTaxiing(element)
-            --end
+            self:ElementTaxiing(element)
           end
   
         else
@@ -4604,6 +4602,53 @@ function FLIGHTGROUP:_GetPlayerData()
   return nil
 end  
     
+--- Get distance to parking spot. Takes extra care of ships.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Airbase#AIRBASE.ParkingSpot Spot Parking Spot.
+-- @param Core.Point#COORDINATE Coordinate Reference coordinate.
+-- @return #number Distance to parking spot in meters.
+function FLIGHTGROUP:_GetDistToParking(Spot, Coordinate)
+
+  local dist=99999
+  
+  if Spot then
+  
+    -- Get the airbase this spot belongs to.
+    local airbase=AIRBASE:FindByName(Spot.AirbaseName)
+    
+
+    if airbase:IsShip() then --or airbase:IsHelipad() then
+      
+      -- Vec2 of airbase.
+      local a=airbase:GetVec2()
+      
+      -- Vec2 of parking spot.
+      local b=Spot.Coordinate:GetVec2()
+      
+      -- Vec2 of ref coordinate.
+      local c=Coordinate:GetVec2()
+      
+      -- Vector from ref coord to airbase. This still needs to be rotated.
+      local t=UTILS.Vec2Substract(c,a)
+      
+      -- Get the heading of the unit.
+      local unit=UNIT:FindByName(Spot.AirbaseName)
+      local hdg=unit:GetHeading()
+      
+      -- Rotate the vector so that it corresponds to facing "North".
+      t=UTILS.Vec2Rotate2D(t, -hdg)
+      
+      -- Distance from spot to ref coordinate.
+      dist=UTILS.VecDist2D(b,t)
+    else
+      -- Normal case.
+      dist=Coordinate:Get2DDistance(Spot.Coordinate)  
+    end
+  
+  end
+
+  return dist
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

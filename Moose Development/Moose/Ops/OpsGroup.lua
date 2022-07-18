@@ -3595,7 +3595,7 @@ function OPSGROUP:PushTask(DCSTask)
         text=text..string.format("\n[%d] %s", i, tostring(task.id))
       end
     end
-    self:T(self.lid..text)
+    self:T(self.lid..text)    
   end
 
   return self
@@ -3756,6 +3756,7 @@ function OPSGROUP:AddTaskEnroute(task)
   end
 
   if not gotit then
+    self:T(self.lid..string.format("Adding enroute task"))
     table.insert(self.taskenroute, task)
   end
 
