@@ -265,7 +265,7 @@ function BEACON:ActivateLink4(Frequency, Morse, Duration)
       
   -- Stop sheduler
   if Duration then -- Schedule the stop of the BEACON if asked by the MD
-    self.Positionable:DeactivateBeacon(Duration)
+    self.Positionable:CommandDeactivateLink4(Duration)
   end
   
   return self
