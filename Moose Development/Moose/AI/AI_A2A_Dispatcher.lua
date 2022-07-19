@@ -427,7 +427,7 @@ do -- AI_A2A_DISPATCHER
   --   * @{#AI_A2A_DISPATCHER.SetSquadronTakeoffFromParkingHot}() will spawn new aircraft in with running engines at a parking spot at the airfield.
   --   * @{#AI_A2A_DISPATCHER.SetSquadronTakeoffFromRunway}() will spawn new aircraft at the runway at the airfield.
   --
-  -- **The default landing method is to spawn new aircraft directly in the air.**
+  -- **The default take-off method is to spawn new aircraft directly in the air.**
   --
   -- Use these methods to fine-tune for specific airfields that are known to create bottlenecks, or have reduced airbase efficiency.
   -- The more and the longer aircraft need to taxi at an airfield, the more risk there is that:
