@@ -48,6 +48,7 @@
 -- @field #table tacanChannel List of TACAN channels available to the cohort.
 -- @field #number weightAsset Weight of one assets group in kg.
 -- @field #number cargobayLimit Cargo bay capacity in kg.
+-- @field #table operations Operations this cohort is part of.
 -- @extends Core.Fsm#FSM
 
 --- *I came, I saw, I conquered.* -- Julius Caesar
@@ -82,6 +83,7 @@ COHORT = {
   cargobayLimit  =     0,
   descriptors    =    {},
   properties     =    {},
+  operations     =    {},
 }
 
 --- COHORT class version.
@@ -240,8 +242,8 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   -- @param #number delay Delay in seconds.
 
   --- On after "Pause" event.
-  -- @function [parent=#AUFTRAG] OnAfterPause
-  -- @param #AUFTRAG self
+  -- @function [parent=#COHORT] OnAfterPause
+  -- @param #COHORT self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
@@ -257,8 +259,8 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   -- @param #number delay Delay in seconds.
 
   --- On after "Unpause" event.
-  -- @function [parent=#AUFTRAG] OnAfterUnpause
-  -- @param #AUFTRAG self
+  -- @function [parent=#COHORT] OnAfterUnpause
+  -- @param #COHORT self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
@@ -274,8 +276,8 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   -- @param #number delay Delay in seconds.
 
   --- On after "Relocate" event.
-  -- @function [parent=#AUFTRAG] OnAfterRelocate
-  -- @param #AUFTRAG self
+  -- @function [parent=#COHORT] OnAfterRelocate
+  -- @param #COHORT self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
@@ -291,8 +293,8 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   -- @param #number delay Delay in seconds.
 
   --- On after "Relocated" event.
-  -- @function [parent=#AUFTRAG] OnAfterRelocated
-  -- @param #AUFTRAG self
+  -- @function [parent=#COHORT] OnAfterRelocated
+  -- @param #COHORT self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
@@ -785,7 +787,7 @@ end
 function COHORT:onafterStart(From, Event, To)
 
   -- Short info.
-  local text=string.format("Starting %s v%s %s", self.ClassName, self.version, self.name)
+  local text=string.format("Starting %s v%s %s [%s]", self.ClassName, self.version, self.name, self.attribute)
   self:I(self.lid..text)
 
   -- Start the status monitoring.
@@ -987,6 +989,30 @@ function COHORT:CountAssets(InStock, MissionTypes, Attributes)
   return N
 end
 
+--- Get OPSGROUPs.
+-- @param #COHORT self
+-- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+-- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+-- @return Core.Set#SET_OPSGROUP Ops groups set.
+function COHORT:GetOpsGroups(MissionTypes, Attributes)
+
+  local set=SET_OPSGROUP:New()
+
+  for _,_asset in pairs(self.assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    
+    if MissionTypes==nil or AUFTRAG.CheckMissionCapability(MissionTypes, self.missiontypes) then
+      if Attributes==nil or self:CheckAttribute(Attributes) then
+        if asset.flightgroup and asset.flightgroup:IsAlive() then
+          set:AddGroup(asset.flightgroup)
+        end
+      end
+    end
+  end
+
+  return set
+end
+
 --- Get assets for a mission.
 -- @param #COHORT self
 -- @param #string MissionType Mission type.
@@ -1021,7 +1047,7 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
     if not (isRequested or isReserved) then
     
       -- Check if asset is currently on a mission (STARTED or QUEUED).
-      if self.legion:IsAssetOnMission(asset)  then
+      if self.legion:IsAssetOnMission(asset) then
         ---
         -- Asset is already on a mission.
         ---
@@ -1034,7 +1060,7 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
           
         elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.NOTHING) then
 
-          -- Relocation: Take all assets. Mission will be cancelled.
+          -- Assets on mission NOTHING are considered.
           table.insert(assets, asset)
           
         elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.GCICAP) and MissionType==AUFTRAG.Type.INTERCEPT then
@@ -1058,7 +1084,7 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
             table.insert(assets, asset)
           end        
           
-        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.ALERT5) and AUFTRAG.CheckMissionCapability(MissionType, asset.payload.capabilities) then
+        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.ALERT5) and AUFTRAG.CheckMissionCapability(MissionType, asset.payload.capabilities) and MissionType~=AUFTRAG.Type.ALERT5 then
                   
           -- Check if the payload of this asset is compatible with the mission.
           self:T(self.lid..string.format("Adding asset on ALERT 5 mission for %s mission", MissionType))
@@ -1519,7 +1545,17 @@ function COHORT:_MissileCategoryName(categorynumber)
     cat="other"
   end
   return cat
-end  
+end
+
+--- Add an OPERATION.
+-- @param #COHORT self
+-- @param Ops.Operation#OPERATION Operation The operation this cohort is part of.
+-- @return #COHORT self
+function COHORT:_AddOperation(Operation)
+
+  self.operations[Operation.name]=Operation
+
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

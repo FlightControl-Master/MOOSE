@@ -1191,6 +1191,12 @@ function LEGION:onafterOpsOnMission(From, Event, To, OpsGroup, Mission)
     self:NavyOnMission(OpsGroup, Mission)
   end
   
+  -- Load group as cargo because it cannot swim! We pause the mission.
+  if self:IsBrigade() and self:IsShip() then
+    OpsGroup:PauseMission()
+    self.warehouseOpsGroup:Load(OpsGroup, self.warehouseOpsElement)
+  end
+  
   -- Trigger event for chief.
   if self.chief then
     self.chief:OpsOnMission(OpsGroup, Mission)
@@ -1609,7 +1615,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #WAREHOUSE.Pendingitem Request Information table of the request.
+-- @param Functional.Warehouse#WAREHOUSE.Pendingitem Request Information table of the request.
 -- @param Core.Set#SET_GROUP CargoGroupSet Set of cargo groups.
 -- @param Core.Set#SET_GROUP TransportGroupSet Set of transport groups if any.
 function LEGION:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet, TransportGroupSet)
@@ -1856,6 +1862,31 @@ function LEGION:CountAssets(InStock, MissionTypes, Attributes)
   end
 
   return N
+end
+
+--- Get OPSGROUPs that are spawned and alive.
+-- @param #LEGION self
+-- @param #table MissionTypes (Optional) Get only assest that can perform certain mission type(s). Default is all types.
+-- @param #table Attributes (Optional) Get only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+-- @return Core.Set#SET_OPSGROUP The set of OPSGROUPs. Can be empty if no groups are spawned or alive!
+function LEGION:GetOpsGroups(MissionTypes, Attributes)
+
+  local setLegion=SET_OPSGROUP:New()
+
+  for _,_cohort in pairs(self.cohorts) do
+    local cohort=_cohort --Ops.Cohort#COHORT
+    
+    -- Get cohort set.
+    local setCohort=cohort:GetOpsGroups(MissionTypes, Attributes)
+    
+    -- Debug info.
+    self:T2(self.lid..string.format("Found %d opsgroups of cohort %s", setCohort:Count(), cohort.name))
+    
+    -- Add to legion set.
+    setLegion:AddSet(setCohort)
+  end
+
+  return setLegion
 end
 
 --- Count total number of assets in LEGION warehouse stock that also have a payload.
@@ -2246,7 +2277,7 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     local cohort=_cohort --Ops.Cohort#COHORT
     if Properties and #Properties>0 then
       for _,Property in pairs(Properties) do
-        for _,property in pairs(cohort.properties) do
+        for property,value in pairs(cohort.properties) do
           if Property==property then
             return true
           end
@@ -2277,8 +2308,8 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     else
       return true
     end
-  end  
-  
+  end
+    
   -- Loops over cohorts.
   for _,_cohort in pairs(Cohorts) do
     local cohort=_cohort --Ops.Cohort#COHORT
@@ -2329,7 +2360,7 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     end
     
     -- Debug info.
-    cohort:T2(cohort.lid..string.format("State=%s: Capable=%s, InRange=%s, Refuel=%s, CanCarry=%s, Category=%s, Attribute=%s, Property=%s, Weapon=%s",
+    cohort:T(cohort.lid..string.format("State=%s: Capable=%s, InRange=%s, Refuel=%s, CanCarry=%s, Category=%s, Attribute=%s, Property=%s, Weapon=%s",
     cohort:GetState(), tostring(Capable), tostring(InRange), tostring(Refuel), tostring(CanCarry), tostring(RightCategory), tostring(RightAttribute), tostring(RightProperty), tostring(RightWeapon)))
     
     -- Check OnDuty, capable, in range and refueling type (if TANKER).
@@ -2664,15 +2695,15 @@ function LEGION:AssignAssetsForTransport(Legions, CargoAssets, NcarriersMin, Nca
         
         -- Set pickup zone to spawn zone or airbase if the legion has one that is operational.
         local pickupzone=legion.spawnzone
-        if legion.airbase and legion:IsRunwayOperational() then
-          --pickupzone=ZONE_AIRBASE:New(legion.airbasename, 4000)
-        end
         
         -- Add TZC from legion spawn zone to deploy zone.
         local tpz=Transport:AddTransportZoneCombo(nil, pickupzone, Transport:GetDeployZone())
-        tpz.PickupAirbase=legion:IsRunwayOperational() and legion.airbase or nil
-        Transport:SetEmbarkZone(legion.spawnzone, tpz)
         
+        -- Set pickup airbase if the legion has an airbase. Could also be the ship itself.
+        tpz.PickupAirbase=legion:IsRunwayOperational() and legion.airbase or nil
+        
+        -- Set embark zone to spawn zone.
+        Transport:SetEmbarkZone(legion.spawnzone, tpz)
         
         -- Add cargo assets to transport.
         for _,_asset in pairs(CargoAssets) do
@@ -2775,8 +2806,8 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
         -- Prefer assets that are on ALERT5 for this mission type.
         score=score+25
       elseif currmission.type==AUFTRAG.Type.GCICAP and MissionType==AUFTRAG.Type.INTERCEPT then
-        -- Prefer assets that are on GCICAP to perform INTERCEPTS
-        score=score+25
+        -- Prefer assets that are on GCICAP to perform INTERCEPTS. We set this even higher than alert5 because they are already in the air.
+        score=score+35
       elseif (currmission.type==AUFTRAG.Type.ONGUARD or currmission.type==AUFTRAG.Type.PATROLZONE) and (MissionType==AUFTRAG.Type.ARTY  or MissionType==AUFTRAG.Type.GROUNDATTACK) then
         score=score+25
       elseif currmission.type==AUFTRAG.Type.NOTHING then

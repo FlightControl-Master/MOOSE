@@ -72,6 +72,8 @@
 --
 -- @field Ops.Target#TARGET engageTarget Target data to engage.
 -- 
+-- @field Ops.Operation#OPERATION operation Operation this mission is part of.
+-- 
 -- @field #boolean teleport Groups are teleported to the mission ingress waypoint.
 --
 -- @field Core.Zone#ZONE_RADIUS engageZone *Circular* engagement zone.
@@ -111,6 +113,9 @@
 -- @field #number artyAngle Shooting angle in degrees (for Barrage).
 --
 -- @field #string alert5MissionType Alert 5 mission type. This is the mission type, the alerted assets will be able to carry out.
+-- 
+-- @field #table attributes Generalized attribute(s) of assets.
+-- @field #table properties DCS attribute(s) of assets.
 --
 -- @field Ops.Chief#CHIEF chief The CHIEF managing this mission.
 -- @field Ops.Commander#COMMANDER commander The COMMANDER managing this mission.
@@ -168,6 +173,8 @@
 -- @field #number optionRTBfuel RTB on out-of-fuel.
 -- @field #number optionECM ECM.
 -- @field #boolean optionEmission Emission is on or off.
+-- @field #boolean optionInvisible Invisible is on/off.
+-- @field #boolean optionImmortal Immortal is on/off.
 --
 -- @extends Core.Fsm#FSM
 
@@ -411,6 +418,7 @@ _AUFTRAGSNR=0
 -- @field #string AIRDEFENSE Air defense.
 -- @field #string EWR Early Warning Radar.
 -- @field #string RECOVERYTANKER Recovery tanker.
+-- @filed #string REARMING Rearming mission.
 -- @field #string NOTHING Nothing.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
@@ -452,6 +460,7 @@ AUFTRAG.Type={
   AIRDEFENSE="Air Defence",
   EWR="Early Warning Radar",
   RECOVERYTANKER="Recovery Tanker",
+  REARMING="Rearming",
   NOTHING="Nothing",
 }
 
@@ -473,6 +482,7 @@ AUFTRAG.Type={
 -- @field #string AIRDEFENSE Air defense.
 -- @field #string EWR Early Warning Radar.
 -- @field #string RECOVERYTANKER Recovery tanker.
+-- @field #string REARMING Rearming.
 -- @field #string NOTHING Nothing.
 AUFTRAG.SpecialTask={
   FORMATION="Formation",
@@ -492,6 +502,7 @@ AUFTRAG.SpecialTask={
   AIRDEFENSE="Air Defense",
   EWR="Early Warning Radar",
   RECOVERYTANKER="Recovery Tanker",
+  REARMING="Rearming",
   NOTHING="Nothing",
 }
 
@@ -687,6 +698,9 @@ function AUFTRAG:New(Type)
   self.Ncasualties=0
   self.Nkills=0
   self.Nelements=0
+  self.Ngroups=0
+  self.Nassigned=nil
+  self.Ndead=0
 
   -- FMS start state is PLANNED.
   self:SetStartState(self.status)
@@ -1763,7 +1777,7 @@ end
 --- **[GROUND, NAVAL]** Create an ARTY mission.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target Center of the firing solution.
--- @param #number Nshots Number of shots to be fired. Default 3.
+-- @param #number Nshots Number of shots to be fired. Default `#nil`.
 -- @param #number Radius Radius of the shells in meters. Default 100 meters.
 -- @param #number Altitude Altitude in meters. Can be used to setup a Barrage. Default `#nil`.
 -- @return #AUFTRAG self
@@ -1999,6 +2013,30 @@ function AUFTRAG:NewFUELSUPPLY(Zone)
   return mission
 end
 
+--- **[GROUND]** Create a REARMING mission.
+-- @param #AUFTRAG self
+-- @param Core.Zone#ZONE Zone The zone, where units go and look for ammo supply.
+-- @return #AUFTRAG self
+function AUFTRAG:NewREARMING(Zone)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.REARMING)
+
+  mission:_TargetFromObject(Zone)
+
+  mission.optionROE=ENUMS.ROE.WeaponHold
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+
+  mission.missionFraction=1.0
+
+  mission.missionWaypointRadius=0
+
+  mission.categories={AUFTRAG.Category.GROUND}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
 
 --- **[AIR]** Create an ALERT 5 mission. Aircraft will be spawned uncontrolled and wait for an assignment. You must specify **one** mission type which is performed.
 -- This determines the payload and the DCS mission task which are used when the aircraft is spawned.
@@ -2196,7 +2234,9 @@ function AUFTRAG:NewFromTarget(Target, MissionType)
   elseif MissionType==AUFTRAG.Type.STRIKE then
     mission=self:NewSTRIKE(Target, Altitude)
   elseif MissionType==AUFTRAG.Type.ARMORATTACK then
-    mission=self:NewARMORATTACK(Target,Speed)
+    mission=self:NewARMORATTACK(Target, Speed)
+  elseif MissionType==AUFTRAG.Type.GROUNDATTACK then
+    mission=self:NewGROUNDATTACK(Target, Speed, Formation)
   else
     return nil
   end
@@ -2414,9 +2454,13 @@ end
 
 --- Set that mission assets are teleported to the mission execution waypoint.
 -- @param #AUFTRAG self
+-- @param #boolean Switch If `true` or `nil`, teleporting is on. If `false`, teleporting is off.
 -- @return #AUFTRAG self
-function AUFTRAG:SetTeleport()
-  self.teleport=true
+function AUFTRAG:SetTeleport(Switch)
+  if Switch==nil then
+    Switch=true
+  end
+  self.teleport=Switch
   return self
 end
 
@@ -2520,6 +2564,21 @@ function AUFTRAG:GetRequiredAssets(Legion)
   end
 
   return Nmin, Nmax
+end
+
+--- **[LEGION, COMMANDER, CHIEF]** Set that only alive (spawned) assets are considered.
+-- @param #AUFTRAG self
+-- @param #boolean Switch If true or nil, only active assets. If false
+-- @return #AUFTRAG self
+function AUFTRAG:SetAssetsStayAlive(Switch)
+
+  if Switch==nil then
+    Switch=true
+  end
+
+  self.assetStayAlive=Switch
+
+  return self
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Define how many assets are required that escort the mission assets. 
@@ -2970,6 +3029,36 @@ function AUFTRAG:SetEmission(OnOffSwitch)
   return self
 end
 
+--- Set invisibility setting for this mission.
+-- @param #AUFTRAG self
+-- @param #boolean OnOffSwitch If `true` or `nil`, invisible is on. If `false`, invisible is off.
+-- @return #AUFTRAG self
+function AUFTRAG:SetInvisible(OnOffSwitch)
+
+  if OnOffSwitch==nil then
+    self.optionInvisible=true
+  else
+    self.optionInvisible=OnOffSwitch
+  end
+
+  return self
+end
+
+--- Set immortality setting for this mission.
+-- @param #AUFTRAG self
+-- @param #boolean OnOffSwitch If `true` or `nil`, immortal is on. If `false`, immortal is off.
+-- @return #AUFTRAG self
+function AUFTRAG:SetImmortal(OnOffSwitch)
+
+  if OnOffSwitch==nil then
+    self.optionImmortal=true
+  else
+    self.optionImmortal=OnOffSwitch
+  end
+
+  return self
+end
+
 --- Set formation for this mission.
 -- @param #AUFTRAG self
 -- @param #number Formation Formation.
@@ -3288,9 +3377,33 @@ end
 
 --- Check if mission is EXECUTING. The first OPSGROUP has reached the mission execution waypoint and is not executing the mission task.
 -- @param #AUFTRAG self
+-- @param #boolean AllGroups (Optional) Check that all groups are currently executing the mission.
 -- @return #boolean If true, mission is currently executing.
-function AUFTRAG:IsExecuting()
-  return self.status==AUFTRAG.Status.EXECUTING
+function AUFTRAG:IsExecuting(AllGroups)
+
+  local isExecuting=self.status==AUFTRAG.Status.EXECUTING
+
+  if AllGroups and isExecuting then
+  
+    -- Number of groups executing.
+    local n=self:CountOpsGroupsInStatus(AUFTRAG.GroupStatus.EXECUTING)
+
+    local N    
+    if self.Nassigned then
+      N=self.Nassigned-self.Ndead      
+    else
+      N=self:CountOpsGroups()   
+    end
+    
+    if n==N then
+      return true
+    else
+      return false
+    end
+         
+  end
+
+  return isExecuting
 end
 
 --- Check if mission was cancelled.
@@ -4091,7 +4204,7 @@ function AUFTRAG:CheckGroupsDone()
     if groupdata then
       if not (groupdata.status==AUFTRAG.GroupStatus.DONE or groupdata.status==AUFTRAG.GroupStatus.CANCELLED) then
         -- At least this flight is not DONE or CANCELLED.
-        self:T(self.lid..string.format("CheckGroupsDone: OPSGROUP %s is not DONE or CANCELLED but in state %s. Mission NOT DONE!", groupdata.opsgroup.groupname, groupdata.status))
+        self:T2(self.lid..string.format("CheckGroupsDone: OPSGROUP %s is not DONE or CANCELLED but in state %s. Mission NOT DONE!", groupdata.opsgroup.groupname, groupdata.status:upper()))
         return false
       end
     end
@@ -4103,7 +4216,7 @@ function AUFTRAG:CheckGroupsDone()
     local status=self:GetLegionStatus(legion)
     if not status==AUFTRAG.Status.CANCELLED then
       -- At least one LEGION has not CANCELLED.
-      self:T(self.lid..string.format("CheckGroupsDone: LEGION %s is not CANCELLED but in state %s. Mission NOT DONE!", legion.alias, status))
+      self:T2(self.lid..string.format("CheckGroupsDone: LEGION %s is not CANCELLED but in state %s. Mission NOT DONE!", legion.alias, status))
       return false
     end
   end
@@ -4111,7 +4224,7 @@ function AUFTRAG:CheckGroupsDone()
   -- Check commander status.
   if self.commander then
     if not self.statusCommander==AUFTRAG.Status.CANCELLED then
-      self:T(self.lid..string.format("CheckGroupsDone: COMMANDER is not CANCELLED but in state %s. Mission NOT DONE!", self.statusCommander))
+      self:T2(self.lid..string.format("CheckGroupsDone: COMMANDER is not CANCELLED but in state %s. Mission NOT DONE!", self.statusCommander))
       return false
     end
   end
@@ -4119,14 +4232,14 @@ function AUFTRAG:CheckGroupsDone()
   -- Check chief status.
   if self.chief then
     if not self.statusChief==AUFTRAG.Status.CANCELLED then
-      self:T(self.lid..string.format("CheckGroupsDone: CHIEF is not CANCELLED but in state %s. Mission NOT DONE!", self.statusChief))
+      self:T2(self.lid..string.format("CheckGroupsDone: CHIEF is not CANCELLED but in state %s. Mission NOT DONE!", self.statusChief))
       return false
     end
   end
 
   -- These are early stages, where we might not even have a opsgroup defined to be checked. If there were any groups, we checked above.
   if self:IsPlanned() or self:IsQueued() or self:IsRequested() then
-    self:T(self.lid..string.format("CheckGroupsDone: Mission is still in state %s [FSM=%s] (PLANNED or QUEUED or REQUESTED). Mission NOT DONE!", self.status, self:GetState()))
+    self:T2(self.lid..string.format("CheckGroupsDone: Mission is still in state %s [FSM=%s] (PLANNED or QUEUED or REQUESTED). Mission NOT DONE!", self.status, self:GetState()))
     return false
   end
 
@@ -4249,7 +4362,8 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP OpsGroup The ops group that is dead now.
+-- @param Ops.OpsGroup#OPSGROUP OpsGroup The ops group to which the element belongs.
+-- @param Ops.OpsGroup#OPSGROUP.Element Element The element that got destroyed.
 function AUFTRAG:onafterElementDestroyed(From, Event, To, OpsGroup, Element)
   -- Increase number of own casualties.
   self.Ncasualties=self.Ncasualties+1
@@ -4267,6 +4381,9 @@ function AUFTRAG:onafterGroupDead(From, Event, To, OpsGroup)
   if asset then
     self:AssetDead(asset)
   end
+  
+  -- Number of dead groups.
+  self.Ndead=self.Ndead+1
 
 end
 
@@ -4361,7 +4478,7 @@ function AUFTRAG:onafterCancel(From, Event, To)
   else
 
     -- Debug info.
-    self:T(self.lid..string.format("No legion, commander or chief. Attached flights will cancel the mission on their own. Will wait for mission DONE before evaluation!"))
+    self:T(self.lid..string.format("No legion, commander or chief. Attached groups will cancel the mission on their own. Will wait for mission DONE before evaluation!"))
 
     -- Loop over all groups.
     for _,_groupdata in pairs(self.groupdata or {}) do
@@ -4625,6 +4742,9 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   -- Reset casualties and units assigned.
   self.Ncasualties=0
   self.Nelements=0
+  self.Ngroups=0
+  self.Nassigned=nil
+  self.Ndead=0
 
   -- Update DCS mission task. Could be that the initial task (e.g. for bombing) was destroyed. Then we need to update the coordinate.
   self.DCStask=self:GetDCSMissionTask()
@@ -4897,12 +5017,18 @@ function AUFTRAG:AddAsset(Asset)
 
   -- Add to table.
   self.assets=self.assets or {}
+  
+  -- Add to table.
   table.insert(self.assets, Asset)
+  
+  self.Nassigned=self.Nassigned or 0
+  
+  self.Nassigned=self.Nassigned+1
 
   return self
 end
 
---- Add asset to mission.
+--- Add assets to mission.
 -- @param #AUFTRAG self
 -- @param #table Assets List of assets.
 -- @return #AUFTRAG self
@@ -4966,6 +5092,22 @@ function AUFTRAG:CountOpsGroups()
   end
   return N
 end
+
+--- Count OPS groups in a certain status.
+-- @param #AUFTRAG self
+-- @param #string Status Status of group, e.g. `AUFTRAG.GroupStatus.EXECUTING`.
+-- @return #number Number of alive OPS groups.
+function AUFTRAG:CountOpsGroupsInStatus(Status)
+  local N=0
+  for _,_groupdata in pairs(self.groupdata) do
+    local groupdata=_groupdata --#AUFTRAG.GroupData
+    if groupdata and groupdata.status==Status then
+      N=N+1
+    end
+  end
+  return N
+end
+
 
 
 --- Get coordinate of target. First unit/group of the set is used.
@@ -5139,6 +5281,10 @@ function AUFTRAG:GetDCSMissionTask()
     ----------------------
     -- ANTISHIP Mission --
     ----------------------
+
+    -- Add enroute anti-ship task.
+    local DCStask=CONTROLLABLE.EnRouteTaskAntiShip(nil)
+    table.insert(self.enrouteTasks, DCStask)
 
     self:_GetDCSAttackTask(self.engageTarget, DCStasks)
 
@@ -5478,8 +5624,6 @@ function AUFTRAG:GetDCSMissionTask()
     
     end
 
-    --table.insert(DCStasks, DCStask)
-
   elseif self.type==AUFTRAG.Type.BARRAGE then
 
     ---------------------
@@ -5591,6 +5735,24 @@ function AUFTRAG:GetDCSMissionTask()
     local DCStask={}
 
     DCStask.id=AUFTRAG.SpecialTask.FUELSUPPLY
+
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
+    local param={}
+    param.zone=self:GetObjective()
+
+    DCStask.params=param
+
+    table.insert(DCStasks, DCStask)
+
+  elseif self.type==AUFTRAG.Type.AMMOSUPPLY then
+
+    ----------------------
+    -- REARMING Mission --
+    ----------------------
+
+    local DCStask={}
+
+    DCStask.id=AUFTRAG.SpecialTask.REARMING
 
     -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}

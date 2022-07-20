@@ -322,6 +322,16 @@ function MARKER:ReadOnly()
   return self
 end
 
+--- Marker is readonly. Text cannot be changed and marker cannot be removed.
+-- @param #MARKER self
+-- @return #MARKER self
+function MARKER:ReadWrite()
+
+  self.readonly=false
+
+  return self
+end
+
 --- Set message that is displayed on screen if the marker is added.
 -- @param #MARKER self
 -- @param #string Text Message displayed when the marker is added.

@@ -187,6 +187,7 @@ GROUPTEMPLATE.Takeoff = {
 -- @field #string GROUND_APC Infantry carriers, in particular Amoured Personell Carrier. This can be used to transport other assets.
 -- @field #string GROUND_TRUCK Unarmed ground vehicles, which has the DCS "Truck" attribute.
 -- @field #string GROUND_INFANTRY Ground infantry assets.
+-- @field #string GROUND_IFV Ground Infantry Fighting Vehicle.
 -- @field #string GROUND_ARTILLERY Artillery assets.
 -- @field #string GROUND_TANK Tanks (modern or old).
 -- @field #string GROUND_TRAIN Trains. Not that trains are **not** yet properly implemented in DCS and cannot be used currently.
@@ -213,6 +214,7 @@ GROUP.Attribute = {
   GROUND_APC="Ground_APC",
   GROUND_TRUCK="Ground_Truck",
   GROUND_INFANTRY="Ground_Infantry",
+  GROUND_IFV="Ground_IFV",
   GROUND_ARTILLERY="Ground_Artillery",
   GROUND_TANK="Ground_Tank",
   GROUND_TRAIN="Ground_Train",
@@ -2378,13 +2380,14 @@ function GROUP:GetAttribute()
     --- Ground ---
     --------------
     -- Ground
-    local apc=self:HasAttribute("Infantry carriers")
+    local apc=self:HasAttribute("APC")
     local truck=self:HasAttribute("Trucks") and self:GetCategory()==Group.Category.GROUND
     local infantry=self:HasAttribute("Infantry")
     local artillery=self:HasAttribute("Artillery")
     local tank=self:HasAttribute("Old Tanks") or self:HasAttribute("Modern Tanks")
     local aaa=self:HasAttribute("AAA")
     local ewr=self:HasAttribute("EWR")
+    local ifv=self:HasAttribute("IFV")
     local sam=self:HasAttribute("SAM elements") and (not self:HasAttribute("AAA"))
     -- Train
     local train=self:GetCategory()==Group.Category.TRAIN
@@ -2432,6 +2435,8 @@ function GROUP:GetAttribute()
       attribute=GROUP.Attribute.GROUND_APC
     elseif infantry then
       attribute=GROUP.Attribute.GROUND_INFANTRY
+    elseif ifv then
+      attribute=GROUP.Attribute.GROUND_IFV    
     elseif truck then
       attribute=GROUP.Attribute.GROUND_TRUCK
     elseif train then

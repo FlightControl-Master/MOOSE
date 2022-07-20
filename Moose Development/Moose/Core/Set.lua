@@ -6331,7 +6331,7 @@ do -- SET_OPSGROUP
 
   --- Creates a new SET_OPSGROUP object, building a set of groups belonging to a coalitions, categories, countries, types or with defined prefix names.
   -- @param #SET_OPSGROUP self
-  -- @return #SET_OPSGROUP
+  -- @return #SET_OPSGROUP self
   function SET_OPSGROUP:New()
 
     -- Inherit SET_BASE.
@@ -6413,6 +6413,14 @@ do -- SET_OPSGROUP
 
     -- Trigger Added event.
     self:Added(ObjectName, object)
+  end
+  
+  --- Adds a @{Core.Base#BASE} object in the @{Core.Set#SET_BASE}, using the Object Name as the index.
+  -- @param #SET_BASE self
+  -- @param Ops.OpsGroup#OPSGROUP Object Ops group
+  -- @return Core.Base#BASE The added BASE Object.
+  function SET_OPSGROUP:AddObject(Object)
+    self:Add(Object.groupname, Object)
   end  
 
   --- Add a GROUP or OPSGROUP object to the set.

@@ -1027,7 +1027,7 @@ function DATABASE:_RegisterAirbases()
     local airbaseUID=airbase:GetID(true)
 
     -- Debug output.
-    local text=string.format("Register %s: %s (ID=%d UID=%d), parking=%d [", AIRBASE.CategoryName[airbase.category], tostring(DCSAirbaseName), airbaseID, airbaseUID, airbase.NparkingTotal)
+    local text=string.format("Register %s: %s (UID=%d), Runways=%d, Parking=%d [", AIRBASE.CategoryName[airbase.category], tostring(DCSAirbaseName), airbaseUID, #airbase.runways, airbase.NparkingTotal)
     for _,terminalType in pairs(AIRBASE.TerminalType) do
       if airbase.NparkingTerminal and airbase.NparkingTerminal[terminalType] then
         text=text..string.format("%d=%d ", terminalType, airbase.NparkingTerminal[terminalType])
@@ -1531,6 +1531,33 @@ function DATABASE:FindOpsGroup(groupname)
 
   --env.info("Getting OPSGROUP "..tostring(groupname))
   return self.FLIGHTGROUPS[groupname]
+end
+
+--- Find an OPSGROUP (FLIGHTGROUP, ARMYGROUP, NAVYGROUP) in the data base for a given unit.
+-- @param #DATABASE self
+-- @param #string unitname Unit name. Can also be passed as UNIT object.
+-- @return Ops.OpsGroup#OPSGROUP OPS group object.
+function DATABASE:FindOpsGroupFromUnit(unitname)
+
+  local unit=nil --Wrapper.Unit#UNIT
+  local groupname
+
+  -- Get group and group name.
+  if type(unitname)=="string" then
+    unit=UNIT:FindByName(unitname)
+  else
+    unit=unitname
+  end
+  
+  if unit then
+    groupname=unit:GetGroup():GetName()
+  end
+  
+  if groupname then
+    return self.FLIGHTGROUPS[groupname]
+  else
+    return nil
+  end
 end
 
 --- Add a flight control to the data base.

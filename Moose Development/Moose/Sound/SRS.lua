@@ -529,37 +529,41 @@ function MSRS:PlayText(Text, Delay)
     -- Execute command.
     self:_ExecCommand(command)
     
-    --[[
-    
-    -- Check that length of command is max 255 chars or os.execute() will not work!
-    if string.len(command)>255 then
-    
-      -- Create a tmp file.
-      local filename = os.getenv('TMP') .. "\\MSRS-"..STTS.uuid()..".bat"
-      
-      local script = io.open(filename, "w+")
-      script:write(command.." && exit")
-      script:close()
-    
-      -- Play command.  
-      command=string.format("\"%s\"", filename)
-            
-      -- Play file in 0.05 seconds
-      timer.scheduleFunction(os.execute, command, timer.getTime()+0.05)
-      
-      -- Remove file in 1 second.
-      timer.scheduleFunction(os.remove, filename, timer.getTime()+1)
-    else
-
-      -- Debug output.
-      self:I(string.format("MSRS Text command=%s", command))
+  end
   
-      -- Execute SRS command.
-      local x=os.execute(command)
+  return self
+end
+
+--- Play text message via STTS with explicitly specified options.
+-- @param #MSRS self
+-- @param #string Text Text message.
+-- @param #number Delay Delay in seconds, before the message is played.
+-- @return #MSRS self
+function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label)
+
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, MSRS.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label)
+  else
+  
+    -- Ensure table.
+    if Frequencies and type(Frequencies)~="table" then
+      Frequencies={Frequencies}
+    end
+
+    -- Ensure table.
+    if Modulations and type(Modulations)~="table" then
+      Modulations={Modulations}
+    end
+
+    -- Get command line.
+    local command=self:_GetCommand(Frequencies, Modulations, nil, Gender, Voice, Culture, Volume, nil, nil, Label)    
+
+    -- Append text.
+    command=command..string.format(" --text=\"%s\"", tostring(Text))
     
-    end    
+    -- Execute command.
+    self:_ExecCommand(command)
     
-    ]]
   end
   
   return self

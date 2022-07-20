@@ -34,6 +34,11 @@
 -- @field #boolean isMobile If true, group is mobile.
 -- @field #ARMYGROUP.Target engage Engage target.
 -- @field Core.Set#SET_ZONE retreatZones Set of retreat zones.
+-- @field #boolean suppressOn Bla
+-- @field #boolean isSuppressed Bla
+-- @field #number TsuppressMin Bla
+-- @field #number TsuppressMax Bla
+-- @field #number TsuppressAve Bla
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Your soul may belong to Jesus, but your ass belongs to the marines.* -- Eugene B Sledge
@@ -63,7 +68,7 @@ ARMYGROUP = {
 
 --- Army Group version.
 -- @field #string version
-ARMYGROUP.version="0.7.3"
+ARMYGROUP.version="0.7.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -122,6 +127,9 @@ function ARMYGROUP:New(group)
   self:AddTransition("*",             "Retreat",          "Retreating")  -- Order a retreat.
   self:AddTransition("Retreating",    "Retreated",        "Retreated")   -- Group retreated.
   
+  self:AddTransition("*",             "Suppressed",       "*")           -- Group is suppressed
+  self:AddTransition("*",             "Unsuppressed",     "*")           -- Group is unsuppressed.
+  
   self:AddTransition("Cruising",      "EngageTarget",     "Engaging")    -- Engage a target from Cruising state
   self:AddTransition("Holding",       "EngageTarget",     "Engaging")    -- Engage a target from Holding state
   self:AddTransition("OnDetour",      "EngageTarget",     "Engaging")    -- Engage a target from OnDetour state
@@ -129,7 +137,7 @@ function ARMYGROUP:New(group)
 
   self:AddTransition("*",             "Rearm",            "Rearm")       -- Group is send to a coordinate and waits until ammo is refilled.
   self:AddTransition("Rearm",         "Rearming",         "Rearming")    -- Group has arrived at the rearming coodinate and is waiting to be fully rearmed.
-  self:AddTransition("Rearming",      "Rearmed",          "Cruising")    -- Group was rearmed.
+  self:AddTransition("*",             "Rearmed",          "Cruising")    -- Group was rearmed.
   
   ------------------------
   --- Pseudo Functions ---
@@ -280,6 +288,7 @@ function ARMYGROUP:New(group)
   -- @function [parent=#ARMYGROUP] EngageTarget
   -- @param #ARMYGROUP self
   -- @param Wrapper.Group#GROUP Group the group to be engaged.
+  -- @param #number Speed Speed in knots.
   -- @param #string Formation Formation used in the engagement.
 
   --- Triggers the FSM event "EngageTarget" after a delay.
@@ -287,6 +296,7 @@ function ARMYGROUP:New(group)
   -- @param #ARMYGROUP self
   -- @param #number delay Delay in seconds.
   -- @param Wrapper.Group#GROUP Group the group to be engaged.
+  -- @param #number Speed Speed in knots.
   -- @param #string Formation Formation used in the engagement.
 
 
@@ -297,6 +307,7 @@ function ARMYGROUP:New(group)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param Wrapper.Group#GROUP Group the group to be engaged.
+  -- @param #number Speed Speed in knots.
   -- @param #string Formation Formation used in the engagement.
 
 
@@ -386,7 +397,7 @@ function ARMYGROUP:New(group)
   self:HandleEvent(EVENTS.Birth,      self.OnEventBirth)
   self:HandleEvent(EVENTS.Dead,       self.OnEventDead)
   self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)  
-  --self:HandleEvent(EVENTS.Hit,        self.OnEventHit)
+  self:HandleEvent(EVENTS.Hit,        self.OnEventHit)
   
   -- Start the status monitoring.
   self.timerStatus=TIMER:New(self.Status, self):Start(1, 30)
@@ -572,6 +583,47 @@ function ARMYGROUP:AddRetreatZone(RetreatZone)
   return self
 end
 
+--- Set suppression on. average, minimum and maximum time a unit is suppressed each time it gets hit.
+-- @param #ARMYGROUP self
+-- @param #number Tave Average time [seconds] a group will be suppressed. Default is 15 seconds.
+-- @param #number Tmin (Optional) Minimum time [seconds] a group will be suppressed. Default is 5 seconds.
+-- @param #number Tmax (Optional) Maximum time a group will be suppressed. Default is 25 seconds.
+-- @return #ARMYGROUP self
+function ARMYGROUP:SetSuppressionOn(Tave, Tmin, Tmax)
+  
+  -- Activate suppression.
+  self.suppressionOn=true
+
+  -- Minimum suppression time is input or default 5 sec (but at least 1 second).
+  self.TsuppressMin=Tmin or 1
+  self.TsuppressMin=math.max(self.TsuppressMin, 1)
+  
+  -- Maximum suppression time is input or default but at least Tmin.
+  self.TsuppressMax=Tmax or 15
+  self.TsuppressMax=math.max(self.TsuppressMax, self.TsuppressMin)
+  
+  -- Expected suppression time is input or default but at leat Tmin and at most Tmax.
+  self.TsuppressAve=Tave or 10
+  self.TsuppressAve=math.max(self.TsuppressMin)
+  self.TsuppressAve=math.min(self.TsuppressMax)
+  
+  -- Debug Info
+  self:T(self.lid..string.format("Set ave suppression time to %d seconds.", self.TsuppressAve))
+  self:T(self.lid..string.format("Set min suppression time to %d seconds.", self.TsuppressMin))
+  self:T(self.lid..string.format("Set max suppression time to %d seconds.", self.TsuppressMax))
+  
+  return self
+end
+
+--- Set suppression off.
+-- @param #ARMYGROUP self
+-- @return #ARMYGROUP self
+function ARMYGROUP:SetSuppressionOff()
+  -- Activate suppression.
+  self.suppressionOn=false
+end
+
+
 --- Check if the group is currently holding its positon.
 -- @param #ARMYGROUP self
 -- @return #boolean If true, group was ordered to hold.
@@ -651,10 +703,14 @@ function ARMYGROUP:Status()
     -- Check if group is waiting.
     if self:IsWaiting() then
       if self.Twaiting and self.dTwait then
-        if timer.getAbsTime()>self.Twaiting+self.dTwait then
+        if timer.getAbsTime()>self.Twaiting+self.dTwait then          
           self.Twaiting=nil
           self.dTwait=nil
-          self:Cruise()
+          if self:_CountPausedMissions()>0 then
+            self:UnpauseMission()
+          else
+            self:Cruise()
+          end
         end
       end
     end
@@ -799,22 +855,6 @@ end
 -- DCS Events ==> See OPSGROUP
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Event function handling when a unit is hit.
--- @param #ARMYGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function ARMYGROUP:OnEventHit(EventData)
-
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
-    
-    -- TODO: suppression
-
-  end
-end
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -880,6 +920,12 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     
     -- Set default EPLRS.
     self:SwitchEPLRS(self.option.EPLRS)
+
+    -- Set default Invisible.
+    self:SwitchInvisible(self.option.Invisible)    
+
+    -- Set default Immortal.
+    self:SwitchImmortal(self.option.Immortal)
     
     -- Set TACAN to default.
     self:_SwitchTACAN()
@@ -943,6 +989,9 @@ function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Formation)
   elseif self:IsHolding() then
     self:T(self.lid.."Update route denied. Group is holding position!")
     return false
+  elseif self:IsEngaging() then
+    self:T(self.lid.."Update route allowed. Group is engaging!")
+    return true  
   end
   
   -- Check for a current task.
@@ -960,7 +1009,7 @@ function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Formation)
         self:T2(self.lid.."Allowing update route for Task: ReconMission")
       elseif task.dcstask.id==AUFTRAG.SpecialTask.RELOCATECOHORT then
         -- For relocate
-        self:T2(self.lid.."Allowing update route for Task: Relocate Cohort")          
+        self:T2(self.lid.."Allowing update route for Task: Relocate Cohort")
       else
         local taskname=task and task.description or "No description"
         self:T(self.lid..string.format("WARNING: Update route denied because taskcurrent=%d>0! Task description = %s", self.taskcurrent, tostring(taskname)))
@@ -1219,6 +1268,16 @@ end
 function ARMYGROUP:onafterOutOfAmmo(From, Event, To)
   self:T(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))
   
+  -- Get current task.
+  local task=self:GetTaskCurrent()
+  
+  if task then
+    if task.dcstask.id=="FireAtPoint" or task.dcstask.id==AUFTRAG.SpecialTask.BARRAGE then
+      self:T(self.lid..string.format("Cancelling current %s task because out of ammo!", task.dcstask.id))
+      self:TaskCancel(task)
+    end
+  end  
+  
   -- Fist, check if we want to rearm once out-of-ammo.
   --TODO: IsMobile() check
   if self.rearmOnOutOfAmmo then
@@ -1240,16 +1299,6 @@ function ARMYGROUP:onafterOutOfAmmo(From, Event, To)
   -- Third, check if we want to RTZ once out of ammo.
   if self.rtzOnOutOfAmmo then
     self:__RTZ(-1)
-  end
-
-  -- Get current task.
-  local task=self:GetTaskCurrent()
-  
-  if task then
-    if task.dcstask.id=="FireAtPoint" or task.dcstask.id==AUFTRAG.SpecialTask.BARRAGE then
-      self:T(self.lid..string.format("Cancelling current %s task because out of ammo!", task.dcstask.id))
-      self:TaskCancel(task)
-    end
   end
     
 end
@@ -1281,6 +1330,15 @@ function ARMYGROUP:onbeforeRearm(From, Event, To, Coordinate, Formation)
     self:Disengage()
     dt=-0.1
     allowed=false
+  end
+  
+  -- Check if coordinate is provided.
+  if allowed and not Coordinate then
+    local truck=self:FindNearestAmmoSupply()
+    if truck and truck:IsAlive() then
+      self:__Rearm(-0.1, truck:GetCoordinate(), Formation)
+    end
+    return false
   end
   
   -- Try again...
@@ -1323,9 +1381,22 @@ end
 -- @param #string To To state.
 function ARMYGROUP:onafterRearmed(From, Event, To)
   self:T(self.lid.."Group rearmed")
+  
+  -- Get Current mission.
+  local mission=self:GetMissionCurrent()
+  
+  -- Check if this is a rearming mission.
+  if mission and mission.type==AUFTRAG.Type.REARMING then
+    -- Rearmed ==> Mission Done! This also checks if the group is done.
+    self:MissionDone(mission)
+    
+  else
+  
+    -- Check group done.
+    self:_CheckGroupDone(1)
+  
+  end
 
-  -- Check group done.
-  self:_CheckGroupDone(1)      
 end
 
 --- On before "RTZ" event.
@@ -1580,7 +1651,7 @@ function ARMYGROUP:onafterEngageTarget(From, Event, To, Target, Speed, Formation
   self.engage.Coordinate=UTILS.DeepCopy(self.engage.Target:GetCoordinate()) 
  
   -- Get a coordinate close to the target.
-  local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
+  local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.95)
 
   -- Backup ROE and alarm state.
   self.engage.roe=self:GetROE()
@@ -1741,6 +1812,21 @@ function ARMYGROUP:onafterCruise(From, Event, To, Speed, Formation)
   -- Update route.
   self:__UpdateRoute(-0.01, nil, nil, Speed, Formation)
 
+end
+
+--- On after "Hit" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Unit#UNIT Enemy Unit that hit the element or `nil`.
+function ARMYGROUP:onafterHit(From, Event, To, Enemy)
+  self:T(self.lid..string.format("ArmyGroup hit by %s", Enemy and Enemy:GetName() or "unknown"))
+  
+  if self.suppressionOn then
+    env.info(self.lid.."FF suppress")
+    self:_Suppress()
+  end  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1985,6 +2071,100 @@ function ARMYGROUP:FindNearestAmmoSupply(Radius)
   end
 
   return nil, nil
+end
+
+--- Suppress fire of the group by setting its ROE to weapon hold.
+-- @param #ARMYGROUP self
+function ARMYGROUP:_Suppress()
+
+  -- Current time.
+  local Tnow=timer.getTime()
+  
+  -- Current ROE
+  local currROE=self:GetROE()
+  
+  
+  -- Get randomized time the unit is suppressed.
+  local sigma=(self.TsuppressMax-self.TsuppressMin)/4
+
+  -- Gaussian distribution.  
+  local Tsuppress=UTILS.RandomGaussian(self.TsuppressAve,sigma,self.TsuppressMin, self.TsuppressMax)
+  
+  -- Time at which the suppression is over.
+  local renew=true
+  if not self.TsuppressionOver then
+  
+    -- Group is not suppressed currently.
+    self.TsuppressionOver=Tnow+Tsuppress
+    
+    -- Group will hold their weapons.
+    self:SwitchROE(ENUMS.ROE.WeaponHold)
+    
+    -- Backup ROE.
+    self.suppressionROE=currROE
+  
+  else
+    -- Check if suppression is longer than current time.
+    if Tsuppress+Tnow > self.TsuppressionOver then
+      self.TsuppressionOver=Tnow+Tsuppress
+    else
+      renew=false
+    end  
+  end
+  
+  -- Recovery event will be called in Tsuppress seconds.
+  if renew then
+    self:__Unsuppressed(self.TsuppressionOver-Tnow)
+  end
+  
+  -- Debug message.
+  self:T(self.lid..string.format("Suppressed for %d sec", Tsuppress))
+
+end
+
+--- Before "Recovered" event. Check if suppression time is over.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @return #boolean
+function ARMYGROUP:onbeforeUnsuppressed(From, Event, To)
+
+  -- Current time.
+  local Tnow=timer.getTime()
+  
+  -- Debug info
+  self:T(self.lid..string.format("onbeforeRecovered: Time now: %d  - Time over: %d", Tnow, self.TsuppressionOver))
+  
+  -- Recovery is only possible if enough time since the last hit has passed.
+  if Tnow >= self.TsuppressionOver then
+    return true
+  else
+    return false
+  end
+  
+end
+
+--- After "Recovered" event. Group has recovered and its ROE is set back to the "normal" unsuppressed state. Optionally the group is flared green.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function ARMYGROUP:onafterUnsuppressed(From, Event, To)
+  
+  -- Debug message.
+  local text=string.format("Group %s has recovered!", self:GetName())
+  MESSAGE:New(text, 10):ToAll()
+  self:T(self.lid..text)
+  
+  -- Set ROE back to default.
+  self:SwitchROE(self.suppressionROE)
+  
+  -- Flare unit green.
+  if true then
+    self.group:FlareGreen()
+  end
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

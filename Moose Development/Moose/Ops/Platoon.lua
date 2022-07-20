@@ -100,6 +100,7 @@ end
 -- Start & Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--[[
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
 -- @param #PLATOON self
 -- @param #string From From state.
@@ -114,6 +115,7 @@ function PLATOON:onafterStart(From, Event, To)
   -- Start the status monitoring.
   self:__Status(-1)
 end
+]]
 
 --- On after "Status" event.
 -- @param #PLATOON self

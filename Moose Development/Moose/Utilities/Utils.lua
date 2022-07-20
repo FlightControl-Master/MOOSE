@@ -1155,7 +1155,7 @@ function UTILS.VecHdg(a)
 end
 
 --- Calculate "heading" of a 2D vector in the X-Y plane.
--- @param DCS#Vec2 a Vector in "D with x, y components.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
 -- @return #number Heading in degrees in [0,360).
 function UTILS.Vec2Hdg(a)
   local h=math.deg(math.atan2(a.y, a.x))

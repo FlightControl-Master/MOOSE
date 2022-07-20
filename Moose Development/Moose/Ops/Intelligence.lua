@@ -1453,6 +1453,9 @@ function INTEL:PaintPicture()
         self:AddContactToCluster(contact, cluster)
 
       else
+      
+        -- Debug info.
+        self:T(self.lid..string.format("Paint Picture: contact %s has no closest cluster ==> Create new cluster", contact.groupname))      
 
         -- Create a brand new cluster.
         local newcluster=self:_CreateClusterFromContact(contact)
@@ -1817,13 +1820,13 @@ function INTEL:IsContactConnectedToCluster(contact, cluster)
       --local dist=Contact.position:Get2DDistance(contact.position)
       local dist=Contact.position:DistanceFromPointVec2(contact.position)
 
-      -- AIR - check for spatial proximity
-      local airprox = false
+      -- AIR - check for spatial proximity (corrected because airprox was always false for ctype~=INTEL.Ctype.AIRCRAFT)
+      local airprox = true
       if contact.ctype == INTEL.Ctype.AIRCRAFT then
        self:T(string.format("Cluster Alt=%d | Contact Alt=%d",cluster.altitude,contact.altitude))
        local adist = math.abs(cluster.altitude - contact.altitude)
-       if adist < UTILS.FeetToMeters(10000) then -- limit to 10kft
-        airprox = true
+       if adist > UTILS.FeetToMeters(10000) then -- limit to 10kft
+        airprox = false
        end
       end
 
@@ -1903,17 +1906,17 @@ function INTEL:_GetClosestClusterOfContact(Contact)
 
       local dist=self:_GetDistContactToCluster(Contact, cluster)
 
-      -- AIR - check for spatial proximity
-      local airprox = false
+      -- AIR - check for spatial proximity (ff: Changed because airprox was always false for ctype~=AIRCRAFT!)
+      local airprox=true
       if Contact.ctype == INTEL.Ctype.AIRCRAFT then
-       if not cluster.altitude then
-        cluster.altitude = self:GetClusterAltitude(cluster,true)
-       end
-       local adist = math.abs(cluster.altitude - Contact.altitude)
-       self:T(string.format("Cluster Alt=%d | Contact Alt=%d",cluster.altitude,Contact.altitude))
-       if adist < UTILS.FeetToMeters(10000) then
-        airprox = true
-       end
+        if not cluster.altitude then
+          cluster.altitude = self:GetClusterAltitude(cluster,true)
+        end
+        local adist = math.abs(cluster.altitude - Contact.altitude)
+         self:T(string.format("Cluster Alt=%d | Contact Alt=%d",cluster.altitude,Contact.altitude))
+        if adist > UTILS.FeetToMeters(10000) then
+          airprox = false
+        end
       end
 
       if dist<distmin and airprox then

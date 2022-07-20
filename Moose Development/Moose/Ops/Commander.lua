@@ -24,6 +24,8 @@
 -- @field #table legions Table of legions which are commanded.
 -- @field #table missionqueue Mission queue.
 -- @field #table transportqueue Transport queue.
+-- @field #table targetqueue Target queue.
+-- @field #table opsqueue Operations queue.
 -- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.SupplyZone`.
 -- @field #table refuellingZones Refuelling zones. Each element is of type `#BRIGADE.SupplyZone`.
 -- @field #table capZones CAP zones. Each element is of type `#AIRWING.PatrolZone`.
@@ -125,6 +127,8 @@ COMMANDER = {
   legions         =    {},
   missionqueue    =    {},
   transportqueue  =    {},
+  targetqueue     =    {},
+  opsqueue        =    {},
   rearmingZones   =    {},
   refuellingZones =    {},
   capZones        =    {},
@@ -514,6 +518,69 @@ function COMMANDER:RemoveTransport(Transport)
   return self
 end
 
+--- Add target.
+-- @param #COMMANDER self
+-- @param Ops.Target#TARGET Target Target object to be added.
+-- @return #COMMANDER self
+function COMMANDER:AddTarget(Target)
+
+  if not self:IsTarget(Target) then
+    table.insert(self.targetqueue, Target)
+  end
+
+  return self
+end
+
+--- Add operation.
+-- @param #COMMANDER self
+-- @param Ops.Operation#OPERATION Operation The operation to be added.
+-- @return #COMMANDER self
+function COMMANDER:AddOperation(Operation)
+
+  -- TODO: Check that is not already added.
+  
+  -- Add operation to table.
+  table.insert(self.opsqueue, Operation)
+  
+  return self
+end
+
+--- Check if a TARGET is already in the queue. 
+-- @param #COMMANDER self
+-- @param Ops.Target#TARGET Target Target object to be added.
+-- @return #boolean If `true`, target exists in the target queue.
+function COMMANDER:IsTarget(Target)
+
+  for _,_target in pairs(self.targetqueue) do
+    local target=_target --Ops.Target#TARGET
+    if target.uid==Target.uid or target:GetName()==Target:GetName() then
+      return true
+    end
+  end
+
+  return false
+end
+
+--- Remove target from queue.
+-- @param #COMMANDER self
+-- @param Ops.Target#TARGET Target The target.
+-- @return #COMMANDER self
+function COMMANDER:RemoveTarget(Target)
+
+  for i,_target in pairs(self.targetqueue) do
+    local target=_target --Ops.Target#TARGET
+    
+    if target.uid==Target.uid then
+      self:T(self.lid..string.format("Removing target %s from queue", Target.name))
+      table.remove(self.targetqueue, i)
+      break
+    end
+    
+  end
+
+  return self
+end
+
 --- Add a rearming zone.
 -- @param #COMMANDER self
 -- @param Core.Zone#ZONE RearmingZone Rearming zone.
@@ -786,9 +853,15 @@ function COMMANDER:onafterStatus(From, Event, To)
 
   -- Status.
   if self.verbose>=1 then
-    local text=string.format("Status %s: Legions=%d, Missions=%d, Transports", fsmstate, #self.legions, #self.missionqueue, #self.transportqueue)
+    local text=string.format("Status %s: Legions=%d, Missions=%d, Targets=%d, Transports=%d", fsmstate, #self.legions, #self.missionqueue, #self.targetqueue, #self.transportqueue)
     self:T(self.lid..text)
   end
+  
+  -- Check Operations queue.
+  self:CheckOpsQueue()    
+  
+  -- Check target queue and add missions.
+  self:CheckTargetQueue()  
 
   -- Check mission queue and assign one PLANNED mission.
   self:CheckMissionQueue()
@@ -977,6 +1050,21 @@ function COMMANDER:onafterStatus(From, Event, To)
     end
     self:I(self.lid..text)    
   end
+
+
+  ---
+  -- TARGETS
+  ---
+    
+  -- Target queue.
+  if self.verbose>=2 and #self.targetqueue>0 then
+    local text="Target queue:"
+    for i,_target in pairs(self.targetqueue) do      
+      local target=_target --Ops.Target#TARGET      
+      text=text..string.format("\n[%d] %s: status=%s, life=%d", i, target:GetName(), target:GetState(), target:GetLife())
+    end
+    self:I(self.lid..text)    
+  end
   
   ---
   -- TRANSPORTS
@@ -1148,6 +1236,160 @@ end
 -- Mission Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Check OPERATIONs queue.
+-- @param #COMMANDER self 
+function COMMANDER:CheckOpsQueue()
+
+  -- Number of missions.
+  local Nops=#self.opsqueue
+
+  -- Treat special cases.
+  if Nops==0 then
+    return nil
+  end
+  
+  -- Loop over operations.
+  for _,_ops in pairs(self.opsqueue) do
+    local operation=_ops --Ops.Operation#OPERATION
+    
+    if operation:IsRunning() then
+    
+      -- Loop over missions.
+      for _,_mission in pairs(operation.missions or {}) do
+        local mission=_mission --Ops.Auftrag#AUFTRAG
+        
+        if mission.phase==nil or (mission.phase and mission.phase==operation.phase) and mission:IsPlanned() then
+          self:AddMission(mission)
+        end
+      end
+      
+      -- Loop over targets.
+      for _,_target in pairs(operation.targets or {}) do
+        local target=_target --Ops.Target#TARGET
+        
+        if (target.phase==nil or (target.phase and target.phase==operation.phase)) and (not self:IsTarget(target)) then
+          self:AddTarget(target)
+        end
+      end    
+    
+    end
+    
+  end
+  
+end
+
+--- Check target queue and assign ONE valid target by adding it to the mission queue of the COMMANDER.
+-- @param #COMMANDER self 
+function COMMANDER:CheckTargetQueue()
+
+  -- Number of missions.
+  local Ntargets=#self.targetqueue
+
+  -- Treat special cases.
+  if Ntargets==0 then
+    return nil
+  end
+  
+  -- Remove done targets.
+  for i=#self.targetqueue,1,-1 do
+    local target=self.targetqueue[i] --Ops.Target#TARGET
+    if (not target:IsAlive()) or target:EvalConditionsAny(target.conditionStop) then   
+      for _,_resource in pairs(target.resources) do
+        local resource=_resource --Ops.Target#TARGET.Resource
+        if resource.mission and resource.mission:IsNotOver() then
+          self:MissionCancel(resource.mission)
+        end
+      end
+      table.remove(self.targetqueue, i)
+    end
+  end
+  
+  -- Check if total number of missions is reached.
+  local NoLimit=self:_CheckMissionLimit("Total")
+  if NoLimit==false then
+    return nil
+  end
+
+  -- Sort results table wrt prio and threatlevel.
+  local function _sort(a, b)
+    local taskA=a --Ops.Target#TARGET
+    local taskB=b --Ops.Target#TARGET
+    return (taskA.prio<taskB.prio) or (taskA.prio==taskB.prio and taskA.threatlevel0>taskB.threatlevel0)
+  end
+  table.sort(self.targetqueue, _sort)
+
+  -- Get the lowest importance value (lower means more important).
+  -- If a target with importance 1 exists, targets with importance 2 will not be assigned. Targets with no importance (nil) can still be selected. 
+  local vip=math.huge
+  for _,_target in pairs(self.targetqueue) do
+    local target=_target --Ops.Target#TARGET
+    if target:IsAlive() and target.importance and target.importance<vip then
+      vip=target.importance
+    end
+  end
+
+  -- Loop over targets.
+  for _,_target in pairs(self.targetqueue) do
+    local target=_target --Ops.Target#TARGET
+    
+    -- Is target still alive.
+    local isAlive=target:IsAlive()
+    
+    -- Is this target important enough.
+    local isImportant=(target.importance==nil or target.importance<=vip)
+    
+    -- Check ALL start conditions are true.
+    local isReadyStart=target:EvalConditionsAll(target.conditionStart)
+    
+    -- Debug message.
+    local text=string.format("Target %s: Alive=%s, Important=%s", target:GetName(), tostring(isAlive), tostring(isImportant))
+    self:T2(self.lid..text)
+
+    -- Check that target is alive and not already a mission has been assigned.
+    if isAlive and isImportant then
+
+      for _,_resource in pairs(target.resources or {}) do
+        local resource=_resource --Ops.Target#TARGET.Resource
+        
+        -- Mission type.
+        local missionType=resource.MissionType
+
+        if (not resource.mission) or resource.mission:IsOver() then
+
+          -- Debug info.
+          self:T2(self.lid..string.format("Target \"%s\" ==> Creating mission type %s: Nmin=%d, Nmax=%d", target:GetName(), missionType, resource.Nmin, resource.Nmax))          
+          
+          -- Create a mission.
+          local mission=AUFTRAG:NewFromTarget(target, missionType)
+          
+          if mission then
+          
+            -- Set mission parameters.
+            mission:SetRequiredAssets(resource.Nmin, resource.Nmax)
+            mission:SetRequiredAttribute(resource.Attributes)
+            mission:SetRequiredProperty(resource.Properties)
+            
+            -- Set operation (if any).
+            mission.operation=target.operation
+            
+            -- Set resource mission.
+            resource.mission=mission
+            
+            -- Add mission to queue.
+            self:AddMission(resource.mission)
+            
+          end
+         
+        end
+      
+      end
+              
+    end
+  end
+  
+end
+
+
 --- Check mission queue and assign ONE planned mission.
 -- @param #COMMANDER self 
 function COMMANDER:CheckMissionQueue()
@@ -1203,10 +1445,7 @@ function COMMANDER:CheckMissionQueue()
       if recruited then
       
         -- Add asset to mission.
-        for _,_asset in pairs(assets) do
-          local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-          mission:AddAsset(asset)
-        end
+        mission:_AddAssets(assets)
         
         -- Recruit asset for escorting recruited mission assets.
         local EscortAvail=self:RecruitAssetsForEscort(mission, assets)
@@ -1262,6 +1501,121 @@ function COMMANDER:CheckMissionQueue()
   
 end
 
+--- Get cohorts.
+-- @param #COMMANDER self
+-- @param #table Legions Special legions.
+-- @param #table Cohorts Special cohorts.
+-- @param Ops.Operation#OPERATION Operation Operation.
+-- @return #table Cohorts.
+function COMMANDER:_GetCohorts(Legions, Cohorts, Operation)
+  
+  --- Function that check if a legion or cohort is part of an operation.
+  local function CheckOperation(LegionOrCohort)
+    -- No operations ==> no problem!
+    if #self.opsqueue==0 then
+      return true
+    end
+    
+    -- Cohort is not dedicated to a running(!) operation. We assume so.
+    local isAvail=true
+    
+    -- Only available...
+    if Operation then
+      isAvail=false
+    end
+        
+    for _,_operation in pairs(self.opsqueue) do
+      local operation=_operation --Ops.Operation#OPERATION
+      
+      -- Legion is assigned to this operation.
+      local isOps=operation:IsAssignedCohortOrLegion(LegionOrCohort)
+      
+      if isOps and operation:IsRunning() then
+        
+        -- Is dedicated.
+        isAvail=false
+      
+        if Operation==nil then
+          -- No Operation given and this is dedicated to at least one operation.
+          return false
+        else
+          if Operation.uid==operation.uid then
+            -- Operation given and is part of it.
+            return true
+          end        
+        end
+      end
+    end
+    
+    return isAvail
+  end    
+
+  -- Chosen cohorts.
+  local cohorts={}
+  
+  -- Check if there are any special legions and/or cohorts.
+  if (Legions and #Legions>0) or (Cohorts and #Cohorts>0) then
+  
+    -- Add cohorts of special legions.
+    for _,_legion in pairs(Legions or {}) do
+      local legion=_legion --Ops.Legion#LEGION
+  
+      -- Check that runway is operational.    
+      local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
+      
+      -- Legion has to be running.
+      if legion:IsRunning() and Runway then
+      
+        -- Add cohorts of legion.
+        for _,_cohort in pairs(legion.cohorts) do
+          local cohort=_cohort --Ops.Cohort#COHORT
+
+          if CheckOperation(cohort.legion) or CheckOperation(cohort) then
+            table.insert(cohorts, cohort)
+          end
+        end
+        
+      end
+    end
+    
+    -- Add special cohorts.
+    for _,_cohort in pairs(Cohorts or {}) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      
+      if CheckOperation(cohort) then
+        table.insert(cohorts, cohort)
+      end
+    end
+    
+  else
+
+    -- No special mission legions/cohorts found ==> take own legions.
+    for _,_legion in pairs(self.legions) do
+      local legion=_legion --Ops.Legion#LEGION
+      
+      -- Check that runway is operational.    
+      local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
+      
+      -- Legion has to be running.
+      if legion:IsRunning() and Runway then
+      
+        -- Add cohorts of legion.
+        for _,_cohort in pairs(legion.cohorts) do
+          local cohort=_cohort --Ops.Cohort#COHORT
+          
+          if CheckOperation(cohort.legion) or CheckOperation(cohort) then
+            table.insert(cohorts, cohort)
+          end
+        end
+        
+      end
+    end
+    
+  end
+
+  return cohorts
+end
+
 --- Recruit assets for a given mission.
 -- @param #COMMANDER self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
@@ -1274,29 +1628,10 @@ function COMMANDER:RecruitAssetsForMission(Mission)
   self:T2(self.lid..string.format("Recruiting assets for mission \"%s\" [%s]", Mission:GetName(), Mission:GetType()))
   
   -- Cohorts.
-  local Cohorts={}
-  for _,_legion in pairs(Mission.specialLegions or {}) do
-    local legion=_legion --Ops.Legion#LEGION
-    for _,_cohort in pairs(legion.cohorts) do
-      local cohort=_cohort --Ops.Cohort#COHORT
-      table.insert(Cohorts, cohort)
-    end
-  end
-  for _,_cohort in pairs(Mission.specialCohorts or {}) do
-    local cohort=_cohort --Ops.Cohort#COHORT
-    table.insert(Cohorts, cohort)
-  end
+  local Cohorts=self:_GetCohorts(Mission.specialLegions, Mission.specialCohorts, Mission.operation)
   
-  -- No special mission legions/cohorts found ==> take own legions.
-  if #Cohorts==0 then
-    for _,_legion in pairs(self.legions) do
-      local legion=_legion --Ops.Legion#LEGION
-      for _,_cohort in pairs(legion.cohorts) do
-        local cohort=_cohort --Ops.Cohort#COHORT
-        table.insert(Cohorts, cohort)
-      end
-    end      
-  end  
+  -- Debug info.
+  self:T(self.lid..string.format("Found %d cohort candidates for mission", #Cohorts))
 
   -- Number of required assets.
   local NreqMin, NreqMax=Mission:GetRequiredAssets()
@@ -1325,30 +1660,7 @@ function COMMANDER:RecruitAssetsForEscort(Mission, Assets)
   if Mission.NescortMin and Mission.NescortMax and (Mission.NescortMin>0 or Mission.NescortMax>0) then
 
     -- Cohorts.
-    local Cohorts={}
-    for _,_legion in pairs(Mission.escortLegions or {}) do
-      local legion=_legion --Ops.Legion#LEGION
-      for _,_cohort in pairs(legion.cohorts) do
-        local cohort=_cohort --Ops.Cohort#COHORT
-        table.insert(Cohorts, cohort)
-      end
-    end
-    for _,_cohort in pairs(Mission.escortCohorts or {}) do
-      local cohort=_cohort --Ops.Cohort#COHORT
-      table.insert(Cohorts, cohort)
-    end
-    
-    -- No special escort legions/cohorts found ==> take own legions.
-    if #Cohorts==0 then
-      for _,_legion in pairs(self.legions) do
-        local legion=_legion --Ops.Legion#LEGION
-        for _,_cohort in pairs(legion.cohorts) do
-          local cohort=_cohort --Ops.Cohort#COHORT
-          table.insert(Cohorts, cohort)
-        end
-      end      
-    end
-        
+    local Cohorts=self:_GetCohorts(Mission.escortLegions, Mission.escortCohorts, Mission.operation)
     
     -- Call LEGION function but provide COMMANDER as self.
     local assigned=LEGION.AssignAssetsForEscort(self, Cohorts, Assets, Mission.NescortMin, Mission.NescortMax, Mission.escortTargetTypes, Mission.escortEngageRange)
@@ -1357,6 +1669,30 @@ function COMMANDER:RecruitAssetsForEscort(Mission, Assets)
   end
 
   return true
+end
+
+--- Recruit assets for a given TARGET.
+-- @param #COMMANDER self
+-- @param Ops.Target#TARGET Target The target.
+-- @param #string MissionType Mission Type.
+-- @param #number NassetsMin Min number of required assets.
+-- @param #number NassetsMax Max number of required assets.
+-- @return #boolean If `true` enough assets could be recruited.
+-- @return #table Assets that have been recruited from all legions.
+-- @return #table Legions that have recruited assets.
+function COMMANDER:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMax)
+
+  -- Cohorts.
+  local Cohorts=self:_GetCohorts()
+
+  -- Target position.
+  local TargetVec2=Target:GetVec2()
+  
+  -- Recruite assets.
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2)
+
+
+  return recruited, assets, legions
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1478,24 +1814,7 @@ function COMMANDER:RecruitAssetsForTransport(Transport, CargoWeight, TotalWeight
   end
   
   -- Cohorts.
-  local Cohorts={}
-  for _,_legion in pairs(self.legions) do
-    local legion=_legion --Ops.Legion#LEGION
-    
-    -- Check that runway is operational.    
-    local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
-    
-    if legion:IsRunning() and Runway then
-    
-      -- Loops over cohorts.
-      for _,_cohort in pairs(legion.cohorts) do
-        local cohort=_cohort --Ops.Cohort#COHORT
-        table.insert(Cohorts, cohort)
-      end
-      
-    end
-  end    
-
+  local Cohorts=self:_GetCohorts()
 
   -- Target is the deploy zone.
   local TargetVec2=Transport:GetDeployZone():GetVec2()

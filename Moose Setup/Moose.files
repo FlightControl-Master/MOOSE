@@ -30,6 +30,7 @@ Core/Timer.lua
 Core/Goal.lua
 Core/Spot.lua
 Core/TextAndSound.lua
+Core/Condition.lua
 
 Wrapper/Object.lua
 Wrapper/Identifiable.lua
@@ -96,6 +97,8 @@ Ops/Chief.lua
 Ops/CSAR.lua
 Ops/CTLD.lua
 Ops/Awacs.lua
+Ops/Operation.lua
+Ops/FlightControl.lua
 
 AI/AI_Balancer.lua
 AI/AI_Air.lua

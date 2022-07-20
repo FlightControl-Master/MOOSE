@@ -349,6 +349,7 @@
 -- * @{#WAREHOUSE.Attribute.GROUND_APC} Infantry carriers, in particular Amoured Personell Carrier. This can be used to transport other assets.
 -- * @{#WAREHOUSE.Attribute.GROUND_TRUCK} Unarmed ground vehicles, which has the DCS "Truck" attribute.
 -- * @{#WAREHOUSE.Attribute.GROUND_INFANTRY} Ground infantry assets.
+-- * @{#WAREHOUSE.Attribute.GROUND_IFV} Ground infantry fighting vehicle.
 -- * @{#WAREHOUSE.Attribute.GROUND_ARTILLERY} Artillery assets.
 -- * @{#WAREHOUSE.Attribute.GROUND_TANK} Tanks (modern or old).
 -- * @{#WAREHOUSE.Attribute.GROUND_TRAIN} Trains. Not that trains are **not** yet properly implemented in DCS and cannot be used currently.
@@ -1704,6 +1705,7 @@ WAREHOUSE.Descriptor = {
 -- @field #string GROUND_APC Infantry carriers, in particular Amoured Personell Carrier. This can be used to transport other assets.
 -- @field #string GROUND_TRUCK Unarmed ground vehicles, which has the DCS "Truck" attribute.
 -- @field #string GROUND_INFANTRY Ground infantry assets.
+-- @field #string GROUND_IFV Ground infantry fighting vehicle.
 -- @field #string GROUND_ARTILLERY Artillery assets.
 -- @field #string GROUND_TANK Tanks (modern or old).
 -- @field #string GROUND_TRAIN Trains. Not that trains are **not** yet properly implemented in DCS and cannot be used currently.
@@ -1730,6 +1732,7 @@ WAREHOUSE.Attribute = {
   GROUND_APC="Ground_APC",
   GROUND_TRUCK="Ground_Truck",
   GROUND_INFANTRY="Ground_Infantry",
+  GROUND_IFV="Ground_IFV",
   GROUND_ARTILLERY="Ground_Artillery",
   GROUND_TANK="Ground_Tank",
   GROUND_TRAIN="Ground_Train",
@@ -1936,6 +1939,7 @@ function WAREHOUSE:New(warehouse, alias)
   self:SetMarker(true)
   self:SetReportOff()
   self:SetRunwayRepairtime()
+  self.allowSpawnOnClientSpots=false
 
   -- Add warehouse to database.
   _WAREHOUSEDB.Warehouses[self.uid]=self
@@ -2578,6 +2582,14 @@ end
 -- @return #WAREHOUSE self
 function WAREHOUSE:SetSafeParkingOff()
   self.safeparking=false
+  return self
+end
+
+--- Set wether client parking spots can be used for spawning.
+-- @param #WAREHOUSE self
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetAllowSpawnOnClientParking()
+  self.allowSpawnOnClientSpots=true
   return self
 end
 
@@ -5364,7 +5376,6 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param DCS#coalition.side Coalition Coalition side which originally captured the warehouse.
 function WAREHOUSE:onafterRunwayDestroyed(From, Event, To)
 
   -- Message.
@@ -6311,10 +6322,11 @@ function WAREHOUSE:_RouteAir(aircraft)
     self:T2(self.lid..string.format("RouteAir aircraft group %s alive=%s", aircraft:GetName(), tostring(aircraft:IsAlive())))
 
     -- Give start command to activate uncontrolled aircraft within the next 60 seconds.
-    if not self.flightcontrol then
-      local starttime=math.random(60)
-
-      aircraft:StartUncontrolled(starttime)
+    if self.flightcontrol then
+      local fg=FLIGHTGROUP:New(aircraft)
+      fg:SetReadyForTakeoff(true)    
+    else
+      aircraft:StartUncontrolled(math.random(60))
     end
 
     -- Debug info.
@@ -7874,14 +7886,16 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
 
   -- Get client coordinates.
   local function _clients()
-    local clients=_DATABASE.CLIENTS
     local coords={}
-    for clientname, client in pairs(clients) do
-      local template=_DATABASE:GetGroupTemplateFromUnitName(clientname)
-      local units=template.units
-      for i,unit in pairs(units) do
-        local coord=COORDINATE:New(unit.x, unit.alt, unit.y)
-        coords[unit.name]=coord
+    if not self.allowSpawnOnClientSpots then  
+      local clients=_DATABASE.CLIENTS
+      for clientname, client in pairs(clients) do
+        local template=_DATABASE:GetGroupTemplateFromUnitName(clientname)
+        local units=template.units
+        for i,unit in pairs(units) do
+          local coord=COORDINATE:New(unit.x, unit.alt, unit.y)
+          coords[unit.name]=coord
+        end
       end
     end
     return coords
@@ -8351,9 +8365,10 @@ function WAREHOUSE:_GetAttribute(group)
     --- Ground ---
     --------------
     -- Ground
-    local apc=group:HasAttribute("Infantry carriers")
+    local apc=group:HasAttribute("APC") --("Infantry carriers")
     local truck=group:HasAttribute("Trucks") and group:GetCategory()==Group.Category.GROUND
     local infantry=group:HasAttribute("Infantry")
+    local ifv=group:HasAttribute("IFV")
     local artillery=group:HasAttribute("Artillery")
     local tank=group:HasAttribute("Old Tanks") or group:HasAttribute("Modern Tanks")
     local aaa=group:HasAttribute("AAA")
@@ -8390,6 +8405,8 @@ function WAREHOUSE:_GetAttribute(group)
       attribute=WAREHOUSE.Attribute.AIR_UAV
     elseif apc then
       attribute=WAREHOUSE.Attribute.GROUND_APC
+    elseif ifv then
+      attribute=WAREHOUSE.Attribute.GROUND_IFV
     elseif infantry then
       attribute=WAREHOUSE.Attribute.GROUND_INFANTRY
     elseif artillery then

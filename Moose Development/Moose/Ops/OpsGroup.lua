@@ -68,9 +68,10 @@
 -- @field Core.Timer#TIMER timerQueueUpdate Timer for queue updates.
 -- @field #boolean groupinitialized If true, group parameters were initialized.
 -- @field #boolean detectionOn If true, detected units of the group are analyzed.
--- @field Ops.Auftrag#AUFTRAG missionpaused Paused mission.
+-- @field #table pausedmissions Paused missions.
 -- @field #number Ndestroyed Number of destroyed units.
 -- @field #number Nkills Number kills of this groups.
+-- @field #number Nhit Number of hits taken.
 --
 -- @field #boolean rearmOnOutOfAmmo If `true`, group will go to rearm once it runs out of ammo.
 --
@@ -185,6 +186,7 @@ OPSGROUP = {
   callsign           =    {},
   Ndestroyed         =     0,
   Nkills             =     0,
+  Nhit               =     0,
   weaponData         =    {},
   cargoqueue         =    {},
   cargoBay           =    {},
@@ -192,6 +194,7 @@ OPSGROUP = {
   carrierLoader      =    {},
   carrierUnloader    =    {},
   useMEtasks         = false,
+  pausedmissions     =    {},
 }
 
 
@@ -205,6 +208,9 @@ OPSGROUP = {
 -- @field DCS#Controller controller The DCS controller of the unit.
 -- @field #boolean ai If true, element is AI.
 -- @field #string skill Skill level.
+-- @field #string playerName Name of player if this is a client.
+-- @field #number Nhit Number of times the element was hit.
+-- @field #boolean engineOn If `true`, engines were started.
 --
 -- @field Core.Zone#ZONE_POLYGON_BASE zoneBoundingbox Bounding box zone of the element unit.
 -- @field Core.Zone#ZONE_POLYGON_BASE zoneLoad Loading zone.
@@ -257,17 +263,39 @@ OPSGROUP = {
 -- @field #string ARRIVED Element arrived at its parking spot and shut down its engines.
 -- @field #string DEAD Element is dead after it crashed, pilot ejected or pilot dead events.
 OPSGROUP.ElementStatus={
-  INUTERO="inutero",
-  SPAWNED="spawned",
-  PARKING="parking",
-  ENGINEON="engineon",
-  TAXIING="taxiing",
-  TAKEOFF="takeoff",
-  AIRBORNE="airborne",
-  LANDING="landing",
-  LANDED="landed",
-  ARRIVED="arrived",
-  DEAD="dead",
+  INUTERO="InUtero",
+  SPAWNED="Spawned",
+  PARKING="Parking",
+  ENGINEON="Engine On",
+  TAXIING="Taxiing",
+  TAKEOFF="Takeoff",
+  AIRBORNE="Airborne",
+  LANDING="Landing",
+  LANDED="Landed",
+  ARRIVED="Arrived",
+  DEAD="Dead",
+}
+
+--- Status of group.
+-- @type OPSGROUP.GroupStatus
+-- @field #string INUTERO Not spawned yet or its status is unknown so far.
+-- @field #string PARKING Parking after spawned on ramp.
+-- @field #string TAXIING Taxiing after engine startup.
+-- @field #string AIRBORNE Element is airborne. Either after takeoff or after air start.
+-- @field #string LANDING Landing.
+-- @field #string LANDED Landed and is taxiing to its parking spot.
+-- @field #string ARRIVED Arrived at its parking spot and shut down its engines.
+-- @field #string DEAD Element is dead after it crashed, pilot ejected or pilot dead events.
+OPSGROUP.GroupStatus={
+  INUTERO="InUtero",
+  PARKING="Parking",
+  TAXIING="Taxiing",
+  AIRBORNE="Airborne",
+  INBOUND="Inbound",
+  LANDING="Landing",
+  LANDED="Landed",
+  ARRIVED="Arrived",
+  DEAD="Dead",
 }
 
 --- Ops group task status.
@@ -308,6 +336,18 @@ OPSGROUP.TaskType={
 -- @field Core.UserFlag#USERFLAG stopflag If flag is set to 1 (=true), the task is stopped.
 -- @field #number backupROE Rules of engagement that are restored once the task is over.
 
+--- Option data.
+-- @type OPSGROUP.Option
+-- @field #number ROE Rule of engagement.
+-- @field #number ROT Reaction on threat.
+-- @field #number Alarm Alarm state.
+-- @field #number Formation Formation.
+-- @field #boolean EPLRS data link.
+-- @field #boolean Disperse Disperse under fire.
+-- @field #boolean Emission Emission on/off.
+-- @field #boolean Invisible Invisible on/off.
+-- @field #boolean Immortal Immortal on/off.
+
 --- Beacon data.
 -- @type OPSGROUP.Beacon
 -- @field #number Channel Channel.
@@ -328,16 +368,6 @@ OPSGROUP.TaskType={
 -- @field #number NumberSquad Squadron number corresponding to a name like "Uzi".
 -- @field #number NumberGroup Group number. First number after name, e.g. "Uzi-**1**-1".
 -- @field #string NameSquad Name of the squad, e.g. "Uzi".
-
---- Option data.
--- @type OPSGROUP.Option
--- @field #number ROE Rule of engagement.
--- @field #number ROT Reaction on threat.
--- @field #number Alarm Alarm state.
--- @field #number Formation Formation.
--- @field #boolean EPLRS data link.
--- @field #boolean Disperse Disperse under fire.
--- @field #boolean Emission Emission on/off.
 
 --- Weapon range data.
 -- @type OPSGROUP.WeaponData
@@ -432,7 +462,7 @@ OPSGROUP.CarrierStatus={
 -- @type OPSGROUP.CargoStatus
 -- @field #string AWAITING Group is awaiting carrier.
 -- @field #string NOTCARGO This group is no cargo yet.
--- @field #string ASSIGNED Cargo is assigned to a carrier.
+-- @field #string ASSIGNED Cargo is assigned to a carrier. (Not used!)
 -- @field #string BOARDING Cargo is boarding a carrier.
 -- @field #string LOADED Cargo is loaded into a carrier.
 OPSGROUP.CargoStatus={
@@ -469,21 +499,21 @@ OPSGROUP.CargoStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="0.7.8"
+OPSGROUP.version="0.7.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: AI on/off.
--- TODO: Emission on/off.
--- TODO: Invisible/immortal.
 -- TODO: F10 menu.
 -- TODO: Add pseudo function.
 -- TODO: Afterburner restrict.
 -- TODO: What more options?
 -- TODO: Shot events?
 -- TODO: Marks to add waypoints/tasks on-the-fly.
+-- DONE: Invisible/immortal.
+-- DONE: Emission on/off
 -- DONE: Damage?
 -- DONE: Options EPLRS
 
@@ -621,8 +651,9 @@ function OPSGROUP:New(group)
   self:AddTransition("*",             "InUtero",          "InUtero")     -- Deactivated group goes back to mummy.
   self:AddTransition("*",             "Stop",             "Stopped")     -- Stop FSM.
 
-  self:AddTransition("*",             "Destroyed",        "*")           -- The whole group is dead.
+  self:AddTransition("*",             "Hit",              "*")           -- Someone in the group was hit.
   self:AddTransition("*",             "Damaged",          "*")           -- Someone in the group took damage.
+  self:AddTransition("*",             "Destroyed",        "*")           -- The whole group is dead.
 
   self:AddTransition("*",             "UpdateRoute",      "*")           -- Update route of group.
 
@@ -681,6 +712,7 @@ function OPSGROUP:New(group)
   self:AddTransition("*",             "ElementDestroyed", "*")           -- An element was destroyed.
   self:AddTransition("*",             "ElementDead",      "*")           -- An element is dead.
   self:AddTransition("*",             "ElementDamaged",   "*")           -- An element was damaged.
+  self:AddTransition("*",             "ElementHit",       "*")           -- An element was hit.
 
   self:AddTransition("*",             "Board",            "*")           -- Group is ordered to board the carrier.
   self:AddTransition("*",             "Embarked",         "*")           -- Group was loaded into a cargo carrier.
@@ -707,6 +739,7 @@ function OPSGROUP:New(group)
   ------------------------
 
   --- Triggers the FSM event "Stop". Stops the OPSGROUP and all its event handlers.
+  -- @function [parent=#OPSGROUP] Stop
   -- @param #OPSGROUP self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the OPSGROUP and all its event handlers.
@@ -1150,6 +1183,105 @@ function OPSGROUP:IsTargetDetected(TargetObject)
   return false
 end
 
+--- Check if a given coordinate is in weapon range.
+-- @param #OPSGROUP self
+-- @param Core.Point#COORDINATE TargetCoord Coordinate of the target.
+-- @param #number WeaponBitType Weapon type.
+-- @param Core.Point#COORDINATE RefCoord Reference coordinate.
+-- @return #boolean If `true`, coordinate is in range.
+function OPSGROUP:InWeaponRange(TargetCoord, WeaponBitType, RefCoord)
+
+  RefCoord=RefCoord or self:GetCoordinate()
+  
+  local dist=TargetCoord:Get2DDistance(RefCoord)
+
+  if WeaponBitType then
+  
+    local weapondata=self:GetWeaponData(WeaponBitType)
+    
+    if weapondata then
+    
+      if dist>=weapondata.RangeMin and dist<=weapondata.RangeMax then
+        return true
+      else
+        return false
+      end
+    
+    end
+    
+  else
+  
+    for _,_weapondata in pairs(self.weaponData or {}) do
+      local weapondata=_weapondata --#OPSGROUP.WeaponData
+
+      if dist>=weapondata.RangeMin and dist<=weapondata.RangeMax then
+        return true
+      end
+            
+    end
+
+    return false  
+  end
+    
+
+  return nil
+end
+
+--- Get a coordinate, which is in weapon range.
+-- @param #OPSGROUP self
+-- @param Core.Point#COORDINATE TargetCoord Coordinate of the target.
+-- @param #number WeaponBitType Weapon type.
+-- @param Core.Point#COORDINATE RefCoord Reference coordinate.
+-- @return Core.Point#COORDINATE Coordinate in weapon range
+function OPSGROUP:GetCoordinateInRange(TargetCoord, WeaponBitType, RefCoord)
+
+  local coordInRange=nil --Core.Point#COORDINATE
+  
+  RefCoord=RefCoord or self:GetCoordinate()
+
+  -- Get weapon range.
+  local weapondata=self:GetWeaponData(WeaponBitType)
+  
+  if weapondata then
+  
+    -- Heading to target.
+    local heading=RefCoord:HeadingTo(TargetCoord)
+  
+    -- Distance to target.
+    local dist=RefCoord:Get2DDistance(TargetCoord)
+  
+    -- Check if we are within range.
+    if dist>weapondata.RangeMax then
+  
+      local d=(dist-weapondata.RangeMax)*1.05
+  
+      -- New waypoint coord.
+      coordInRange=RefCoord:Translate(d, heading)
+  
+      -- Debug info.
+      self:T(self.lid..string.format("Out of max range = %.1f km for weapon %s", weapondata.RangeMax/1000, tostring(WeaponBitType)))
+    elseif dist<weapondata.RangeMin then
+  
+      local d=(dist-weapondata.RangeMin)*1.05
+  
+      -- New waypoint coord.
+      coordInRange=RefCoord:Translate(d, heading)
+  
+      -- Debug info.
+      self:T(self.lid..string.format("Out of min range = %.1f km for weapon %s", weapondata.RangeMax/1000, tostring(WeaponBitType)))          
+    else
+  
+      -- Debug info.
+      self:T(self.lid..string.format("Already in range for weapon %s", tostring(WeaponBitType)))                    
+    end
+  
+  else
+    self:T(self.lid..string.format("No weapon data for weapon type %s", tostring(WeaponBitType)))
+  end
+  
+  return coordInRange
+end
+
 --- Set LASER parameters.
 -- @param #OPSGROUP self
 -- @param #number Code Laser code. Default 1688.
@@ -1587,10 +1719,11 @@ end
 --- Get current coordinate of the group. If the current position cannot be determined, the last known position is returned.
 -- @param #OPSGROUP self
 -- @param #boolean NewObject Create a new coordiante object.
+-- @param #string UnitName (Optional) Get position of a specifc unit of the group. Default is the first existing unit in the group.
 -- @return Core.Point#COORDINATE The coordinate (of the first unit) of the group.
-function OPSGROUP:GetCoordinate(NewObject)
+function OPSGROUP:GetCoordinate(NewObject, UnitName)
 
-  local vec3=self:GetVec3() or self.position --DCS#Vec3
+  local vec3=self:GetVec3(UnitName) or self.position --DCS#Vec3
 
   if vec3 then
 
@@ -2596,6 +2729,61 @@ function OPSGROUP:IsAwaitingLift(Transport)
   return false
 end
 
+--- Get paused mission.
+-- @param #OPSGROUP self
+-- @return Ops.Auftrag#AUFTRAG Paused mission or nil.
+function OPSGROUP:_GetPausedMission()
+
+  if self.pausedmissions and #self.pausedmissions>0 then
+    for _,mid in pairs(self.pausedmissions) do
+      if mid then
+        local mission=self:GetMissionByID(mid)
+        if mission and mission:IsNotOver() then
+          return mission
+        end
+      end
+    end
+  end
+  
+  return nil
+end
+
+--- Count paused mission.
+-- @param #OPSGROUP self
+-- @return #number Number of paused missions.
+function OPSGROUP:_CountPausedMissions()
+  local N=0
+  if self.pausedmissions and #self.pausedmissions>0 then
+    for _,mid in pairs(self.pausedmissions) do
+      local mission=self:GetMissionByID(mid)
+      if mission and mission:IsNotOver() then
+        N=N+1
+      end
+    end
+  end
+  
+  return N
+end
+
+--- Remove paused mission from the table.
+-- @param #OPSGROUP self
+-- @param #number AuftragsNummer Mission ID of the paused mission to remove.
+-- @return #OPSGROUP self
+function OPSGROUP:_RemovePausedMission(AuftragsNummer)
+
+  if self.pausedmissions and #self.pausedmissions>0 then
+    for i=#self.pausedmissions,1,-1 do
+      local mid=self.pausedmissions[i]
+      if mid==AuftragsNummer then
+        table.remove(self.pausedmissions, i)
+        return self
+      end
+    end
+  end
+  
+  return self
+end
+
 --- Check if the group is currently boarding a carrier.
 -- @param #OPSGROUP self
 -- @param #string CarrierGroupName (Optional) Additionally check if group is boarding this particular carrier group.
@@ -3186,7 +3374,36 @@ function OPSGROUP:OnEventBirth(EventData)
 
 end
 
---- Event function handling the crash of a unit.
+--- Event function handling the hit of a unit.
+-- @param #OPSGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function OPSGROUP:OnEventHit(EventData)
+
+  -- Check that this is the right group. Here the hit group is stored as target.
+  if EventData and EventData.TgtGroup and EventData.TgtUnit and EventData.TgtGroupName and EventData.TgtGroupName==self.groupname then
+    self:T2(self.lid..string.format("EVENT: Unit %s hit!", EventData.TgtUnitName))
+
+    local unit=EventData.TgtUnit
+    local group=EventData.TgtGroup
+    local unitname=EventData.TgtUnitName
+
+    -- Get element.
+    local element=self:GetElementByName(unitname)
+    
+    -- Increase group hit counter.
+    self.Nhit=self.Nhit or 0
+    self.Nhit=self.Nhit +  1
+
+    if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+      -- Trigger Element Hit Event.
+      self:ElementHit(element, EventData.IniUnit)
+    end
+
+  end
+
+end
+
+--- Event function handling the dead of a unit.
 -- @param #OPSGROUP self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function OPSGROUP:OnEventDead(EventData)
@@ -3236,10 +3453,37 @@ function OPSGROUP:OnEventRemoveUnit(EventData)
 
 end
 
+--- Event function handling when a unit is removed from the game.
+-- @param #OPSGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function OPSGROUP:OnEventPlayerLeaveUnit(EventData)
+
+  -- Check that this is the right group.
+  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+    self:T2(self.lid..string.format("EVENT: Player left Unit %s!", EventData.IniUnitName))
+
+    local unit=EventData.IniUnit
+    local group=EventData.IniGroup
+    local unitname=EventData.IniUnitName
+
+    -- Get element.
+    local element=self:GetElementByName(unitname)
+
+    if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+      self:T(self.lid..string.format("EVENT: Player left Element %s ==> dead", element.name))
+      self:ElementDead(element)
+    end
+
+  end
+
+end
+
 --- Event function handling the event that a unit achieved a kill.
 -- @param #OPSGROUP self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function OPSGROUP:OnEventKill(EventData)
+  --self:I("FF event kill")
+  --self:I(EventData)
 
   -- Check that this is the right group.
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
@@ -3351,7 +3595,7 @@ function OPSGROUP:PushTask(DCSTask)
         text=text..string.format("\n[%d] %s", i, tostring(task.id))
       end
     end
-    self:T(self.lid..text)
+    self:T(self.lid..text)    
   end
 
   return self
@@ -3512,6 +3756,7 @@ function OPSGROUP:AddTaskEnroute(task)
   end
 
   if not gotit then
+    self:T(self.lid..string.format("Adding enroute task"))
     table.insert(self.taskenroute, task)
   end
 
@@ -3946,6 +4191,17 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     ---
 
     -- Just stay put and wait until something happens.
+    
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.REARMING then
+
+    ---
+    -- Task "Rearming"
+    ---
+
+    -- Check if ammo is full.
+    
+    local rearmed=self:_CheckAmmoFull()
+
 
   elseif Task.dcstask.id==AUFTRAG.SpecialTask.ALERT5 then
 
@@ -4267,8 +4523,10 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
         done=true
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.AMMOSUPPLY then
         done=true
-      elseif Task.dcstask.id==AUFTRAG.SpecialTask.FUELSUPPLY then
+      elseif Task.dcstask.id==AUFTRAG.SpecialTask.FUELSUPPLY then      
         done=true
+      elseif Task.dcstask.id==AUFTRAG.SpecialTask.REARMING then
+        done=true        
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.ALERT5 then
         done=true
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.ONGUARD or Task.dcstask.id==AUFTRAG.SpecialTask.ARMOREDGUARD then
@@ -4430,6 +4688,9 @@ function OPSGROUP:AddMission(Mission)
 
   -- Add elements.
   Mission.Nelements=Mission.Nelements+#self.elements
+  
+  -- Increase number of groups.
+  Mission.Ngroups=Mission.Ngroups+1
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
@@ -4451,9 +4712,13 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:RemoveMission(Mission)
 
-  for i,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
+  --for i,_mission in pairs(self.missionqueue) do
+  for i=#self.missionqueue,1,-1 do
+  
+    -- Mission.
+    local mission=self.missionqueue[i] --Ops.Auftrag#AUFTRAG
 
+    -- Check mission ID.
     if mission.auftragsnummer==Mission.auftragsnummer then
 
       -- Remove mission waypoint task.
@@ -4464,8 +4729,11 @@ function OPSGROUP:RemoveMission(Mission)
       end
 
       -- Take care of a paused mission.
-      if self.missionpaused and self.missionpaused.auftragsnummer==Mission.auftragsnummer then
-        self.missionpaused=nil
+      for j=#self.pausedmissions,1,-1 do
+        local mid=self.pausedmissions[j]
+        if Mission.auftragsnummer==mid then
+          table.remove(self.pausedmissions, j)
+        end
       end
 
       -- Remove mission from queue.
@@ -4723,7 +4991,12 @@ function OPSGROUP:onbeforeMissionStart(From, Event, To, Mission)
 
   -- Startup group if it is uncontrolled. Alert 5 aircraft will not be started though!
   if self:IsFlightgroup() and self:IsUncontrolled() and Mission.type~=AUFTRAG.Type.ALERT5 then
-    self:StartUncontrolled(delay)
+    local fc=FLIGHTGROUP.GetFlightControl(self)
+    if fc and fc:IsControlling(self) then
+      FLIGHTGROUP.SetReadyForTakeoff(self, true)
+    else
+      self:StartUncontrolled(delay)
+    end
   end
 
   return true
@@ -4749,6 +5022,11 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
 
   -- Set mission status to STARTED.
   Mission:__Started(3)
+  
+  -- Set ready for takeoff in case of FLIGHTCONTROL.
+  --if self.isFlightgroup and Mission.type~=AUFTRAG.Type.ALERT5 then
+  --  FLIGHTGROUP.SetReadyForTakeoff(self, true)
+  --end
 
   -- Route group to mission zone.
   if self.speedMax>3.6 or true then
@@ -4833,7 +5111,7 @@ function OPSGROUP:onafterPauseMission(From, Event, To)
     self:_RemoveMissionWaypoints(Mission)
 
     -- Set mission to pause so we can unpause it later.
-    self.missionpaused=Mission
+    table.insert(self.pausedmissions, 1, Mission.auftragsnummer)
 
   end
 
@@ -4845,19 +5123,28 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSGROUP:onafterUnpauseMission(From, Event, To)
+  
+  -- Get paused mission.
+  local mission=self:_GetPausedMission()
 
-  -- Debug info.
-  self:T(self.lid..string.format("Unpausing mission"))
-
-  if self.missionpaused then
-
-    local mission=self:GetMissionByID(self.missionpaused.auftragsnummer)
-
-    if mission then
-      self:MissionStart(mission)
+  if mission then
+  
+    -- Debug info.
+    self:T(self.lid..string.format("Unpausing mission %s [%s]", mission:GetName(), mission:GetType()))
+    
+    -- Start mission.
+    self:MissionStart(mission)
+    
+    -- Remove mission from 
+    for i,mid in pairs(self.pausedmissions) do
+      --self:T(self.lid..string.format("Checking paused mission", mid))
+      if mid==mission.auftragsnummer then
+        self:T(self.lid..string.format("Removing paused mission id=%d", mid))
+        table.remove(self.pausedmissions, i)
+        break
+      end
     end
-
-    self.missionpaused=nil
+    
   else
     self:T(self.lid.."ERROR: No mission to unpause!")
   end
@@ -4879,31 +5166,45 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
     -- Current Mission
     ---
 
-    -- Alert 5 missoins dont have a task set, which could be cancelled.
+    -- Some missions dont have a task set, which could be cancelled.
+    --[[
     if Mission.type==AUFTRAG.Type.ALERT5 or 
        Mission.type==AUFTRAG.Type.ONGUARD or 
        Mission.type==AUFTRAG.Type.ARMOREDGUARD or
-       Mission.type==AUFTRAG.Type.NOTHING or 
+       --Mission.type==AUFTRAG.Type.NOTHING or 
        Mission.type==AUFTRAG.Type.AIRDEFENSE or
        Mission.type==AUFTRAG.Type.EWR then
        
+      -- Trigger mission don task.
       self:MissionDone(Mission)
       
       return
     end
+    ]]
 
     -- Get mission waypoint task.
     local Task=Mission:GetGroupWaypointTask(self)
+    
+    if Task then
 
-    -- Debug info.
-    self:T(self.lid..string.format("Cancel current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
+      -- Debug info.
+      self:T(self.lid..string.format("Cancel current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
+  
+      -- Cancelling the mission is actually cancelling the current task.
+      -- Note that two things can happen.
+      -- 1.) Group is still on the way to the waypoint (status should be STARTED). In this case there would not be a current task!
+      -- 2.) Group already passed the mission waypoint (status should be EXECUTING).
+  
+      self:TaskCancel(Task)
+      
+    else
+    
+      -- Some missions dont have a task set, which could be cancelled.
 
-    -- Cancelling the mission is actually cancelling the current task.
-    -- Note that two things can happen.
-    -- 1.) Group is still on the way to the waypoint (status should be STARTED). In this case there would not be a current task!
-    -- 2.) Group already passed the mission waypoint (status should be EXECUTING).
-
-    self:TaskCancel(Task)
+      -- Trigger mission don task.
+      self:MissionDone(Mission)
+    
+    end
 
   else
 
@@ -4997,6 +5298,14 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   if Mission.optionEmission then
     self:SwitchEmission()
   end
+  -- Invisible to default.
+  if Mission.optionInvisible then
+    self:SwitchInvisible()
+  end
+  -- Immortal to default.
+  if Mission.optionImmortal then
+    self:SwitchImmortal()
+  end
   -- Formation to default.
   if Mission.optionFormation and self:IsFlightgroup() then
     self:SwitchFormation()
@@ -5089,6 +5398,12 @@ function OPSGROUP:RouteToMission(mission, delay)
       self:T(self.lid..string.format("Route To Mission: I am DEAD or STOPPED! Ooops..."))
       return
     end
+    
+    -- Check if this group is cargo.
+    if self:IsCargo() then
+      self:T(self.lid..string.format("Route To Mission: I am CARGO! You cannot route me..."))
+      return
+    end
 
     -- OPSTRANSPORT: Just add the ops transport to the queue.
     if mission.type==AUFTRAG.Type.OPSTRANSPORT then
@@ -5105,7 +5420,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
 
     -- ID of current waypoint.
-    local uid=self:GetWaypointCurrent().uid
+    local uid=self:GetWaypointCurrentUID()
 
     -- Ingress waypoint coordinate where the mission is executed.
     local waypointcoord=nil --Core.Point#COORDINATE
@@ -5135,11 +5450,8 @@ function OPSGROUP:RouteToMission(mission, delay)
       surfacetypes={land.SurfaceType.WATER, land.SurfaceType.SHALLOW_WATER}
     end
     
-
     -- Get ingress waypoint.    
     if mission.opstransport and not mission.opstransport:IsCargoDelivered(self.groupname) then
-      
-      --env.info(self.lid.."FF mission waypoint in embark zone")
       
       -- Get transport zone combo.
       local tzc=mission.opstransport:GetTZCofCargo(self.groupname)
@@ -5154,13 +5466,13 @@ function OPSGROUP:RouteToMission(mission, delay)
       else
         -- Get a random coordinate inside the pickup zone.
         waypointcoord=pickupzone:GetRandomCoordinate()
-        --waypointcoord:MarkToAll(self.lid.." embark here")        
       end
       
     elseif mission.type==AUFTRAG.Type.PATROLZONE or 
            mission.type==AUFTRAG.Type.BARRAGE    or 
-           mission.type==AUFTRAG.Type.AMMOSUPPLY or 
-           mission.type==AUFTRAG.Type.FUELSUPPLY or 
+           mission.type==AUFTRAG.Type.AMMOSUPPLY or
+           mission.type==AUFTRAG.Type.FUELSUPPLY or
+           mission.type==AUFTRAG.Type.REARMING   or 
            mission.type==AUFTRAG.Type.AIRDEFENSE or
            mission.type==AUFTRAG.Type.EWR        then
       ---
@@ -5237,7 +5549,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       
       waypointcoord=CarrierCoordinate:Translate(10000, heading-180):SetAltitude(2000)
       
-      waypointcoord:MarkToAll("Recoverytanker",ReadOnly,Text)
+      waypointcoord:MarkToAll("Recoverytanker")
       
     else
       ---
@@ -5291,65 +5603,39 @@ function OPSGROUP:RouteToMission(mission, delay)
       -- ARTY
       ---
 
-      -- Coord 
-      local coord=waypointcoord
-
-      -- Get weapon range.
-      local weapondata=self:GetWeaponData(mission.engageWeaponType)
-
-      local coordInRange=nil --Core.Point#COORDINATE
-      if weapondata then
-
-        -- Get target coordinate.
-        local targetcoord=mission:GetTargetCoordinate()
-
-        -- Heading to target.
-        local heading=coord:HeadingTo(targetcoord)
-
-        -- Distance to target.
-        local dist=coord:Get2DDistance(targetcoord)
-
-        -- Check if we are within range.
-        if dist>weapondata.RangeMax then
-
-          local d=(dist-weapondata.RangeMax)*1.1
-
-          -- New waypoint coord.
-          coordInRange=coord:Translate(d, heading)
-
-          -- Debug info.
-          self:T(self.lid..string.format("Out of max range = %.1f km for weapon %s", weapondata.RangeMax/1000, tostring(mission.engageWeaponType)))
-        elseif dist<weapondata.RangeMin then
-
-          local d=(dist-weapondata.RangeMin)*1.1
-
-          -- New waypoint coord.
-          coordInRange=coord:Translate(d, heading)
-
-          -- Debug info.
-          self:T(self.lid..string.format("Out of min range = %.1f km for weapon %s", weapondata.RangeMax/1000, tostring(mission.engageWeaponType)))
-        end
-
-      else
-        self:T(self.lid..string.format("No weapon data for weapon type %s", tostring(mission.engageWeaponType)))
-      end
+      -- Target Coord. 
+      local targetcoord=mission:GetTargetCoordinate()
       
-      if coordInRange then
+      
+      -- In range already?
+      local inRange=self:InWeaponRange(targetcoord, mission.engageWeaponType)
+      
+      if inRange then
+      
+        waypointcoord=self:GetCoordinate(true)
+      
+      else
 
-        -- Add waypoint at 
-        local waypoint=nil --#OPSGROUP.Waypoint
-        if self:IsFlightgroup() then
-          waypoint=FLIGHTGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
-        elseif self:IsArmygroup() then
-          waypoint=ARMYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, mission.optionFormation, false)
-        elseif self:IsNavygroup() then
-          waypoint=NAVYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
+        local coordInRange=self:GetCoordinateInRange(targetcoord, mission.engageWeaponType, waypointcoord)
+        
+        if coordInRange then
+  
+          -- Add waypoint at 
+          local waypoint=nil --#OPSGROUP.Waypoint
+          if self:IsFlightgroup() then
+            waypoint=FLIGHTGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
+          elseif self:IsArmygroup() then
+            waypoint=ARMYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, mission.optionFormation, false)
+          elseif self:IsNavygroup() then
+            waypoint=NAVYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
+          end
+          waypoint.missionUID=mission.auftragsnummer
+  
+          -- Set waypoint coord to be the one in range. Take care of proper waypoint uid.
+          waypointcoord=coordInRange
+          uid=waypoint.uid
+          
         end
-        waypoint.missionUID=mission.auftragsnummer
-
-        -- Set waypoint coord to be the one in range. Take care of proper waypoint uid.
-        waypointcoord=coordInRange
-        uid=waypoint.uid
         
       end
       
@@ -5466,9 +5752,17 @@ function OPSGROUP:_SetMissionOptions(mission)
     self:SwitchEPLRS(mission.optionEPLRS)
   end
   -- Emission
-  if mission.optionEPLRS then
+  if mission.optionEmission then
     self:SwitchEmission(mission.optionEmission)
-  end  
+  end
+  -- Invisible
+  if mission.optionInvisible then
+    self:SwitchInvisible(mission.optionInvisible)
+  end
+  -- Immortal
+  if mission.optionImmortal then
+    self:SwitchImmortal(mission.optionImmortal)
+  end
   -- Formation
   if mission.optionFormation and self:IsFlightgroup() then
     self:SwitchFormation(mission.optionFormation)
@@ -5513,6 +5807,7 @@ function OPSGROUP:_QueueUpdate()
 
         -- Current mission but new mission is urgent with higher prio.
         if mission.urgent and mission.prio<currentmission.prio then
+          self:T(self.lid.."FF got urgent mission with higher prio!")
           self:MissionCancel(currentmission)
           self:__MissionStart(1, mission)
         end
@@ -5564,6 +5859,12 @@ function OPSGROUP:onbeforeWait(From, Event, To, Duration)
 
   local allowed=true
   local Tsuspend=nil
+  
+  local mission=self:GetMissionCurrent()
+  if mission then
+    self:PauseMission()
+    return true
+  end
 
   -- Check for a current task.
   if self.taskcurrent>0 then
@@ -6597,6 +6898,37 @@ function OPSGROUP:onafterElementDamaged(From, Event, To, Element)
     
 end
 
+--- On after "ElementHit" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPSGROUP.Element Element The flight group element.
+-- @param Wrapper.Unit#UNIT Enemy Unit that hit the element or `nil`.
+function OPSGROUP:onafterElementHit(From, Event, To, Element, Enemy)
+
+  -- Increase element hit counter.
+  Element.Nhit=Element.Nhit+1
+
+  -- Debug message.
+  self:T(self.lid..string.format("Element hit %s by %s [n=%d, N=%d]", Element.name, Enemy and Enemy:GetName() or "unknown", Element.Nhit, self.Nhit))
+
+  -- Group was hit.
+  self:__Hit(-3, Enemy)
+
+end
+
+--- On after "Hit" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Unit#UNIT Enemy Unit that hit the element or `nil`.
+function OPSGROUP:onafterHit(From, Event, To, Enemy)
+  self:T(self.lid..string.format("Group hit by %s", Enemy and Enemy:GetName() or "unknown"))  
+end
+
+
 --- On after "ElementDestroyed" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -6762,6 +7094,10 @@ function OPSGROUP:Teleport(Coordinate, Delay, NoPauseMission)
     -- Set waypoint in air for flighgroups.
     if self:IsFlightgroup() then
       Template.route.points[1]=Coordinate:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 300, true, nil, nil, "Spawnpoint")
+    elseif self:IsArmygroup() then
+      Template.route.points[1]=Coordinate:WaypointGround(0)
+    elseif self:IsNavygroup() then
+      Template.route.points[1]=Coordinate:WaypointNaval(0)
     end
 
     -- Template units.
@@ -6833,6 +7169,7 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     
     -- Number of destroyed units.
     self.Ndestroyed=0
+    self.Nhit=0
 
     -- Check if group is currently alive.
     if self:IsAlive() then
@@ -7068,13 +7405,10 @@ function OPSGROUP:onafterDead(From, Event, To)
       -- All elements were destroyed ==> Asset group is gone.
       self.cohort:DelGroup(self.groupname)
     end
-    if self.legion then
-      --self.legion:Get
-      --self.legion:AssetDead()
-    end
   else
     -- Not all assets were destroyed (despawn) ==> Add asset back to legion?
   end
+  
   
   if self.legion then
     if not self:IsInUtero() then
@@ -7091,6 +7425,10 @@ function OPSGROUP:onafterDead(From, Event, To)
   
     -- Stop in 5 sec to give possible respawn attempts a chance.  
     self:__Stop(-5)
+    
+  elseif not self.isAI then
+    -- Stop player flights.
+    self:__Stop(-1)
   end
     
 end
@@ -7133,6 +7471,8 @@ function OPSGROUP:onafterStop(From, Event, To)
     self:UnHandleEvent(EVENTS.Ejection)
     self:UnHandleEvent(EVENTS.Crash)
     self.currbase=nil
+  elseif self.isArmygroup then
+    self:UnHandleEvent(EVENTS.Hit)
   end
   
   for _,_mission in pairs(self.missionqueue) do
@@ -7153,13 +7493,13 @@ function OPSGROUP:onafterStop(From, Event, To)
 
   -- Flightcontrol.
   if self.flightcontrol then
-    self.flightcontrol:_RemoveFlight(self)
     for _,_element in pairs(self.elements) do
       local element=_element --#OPSGROUP.Element
       if element.parking then
         self.flightcontrol:SetParkingFree(element.parking)
       end
     end
+    self.flightcontrol:_RemoveFlight(self)
   end
 
   if self:IsAlive() and not (self:IsDead() or self:IsStopped()) then
@@ -8328,12 +8668,12 @@ function OPSGROUP:onafterLoading(From, Event, To)
     -- Check if cargo is not already cargo.
     local isNotCargo=cargo.opsgroup:IsNotCargo(true)
     
-    -- Check if cargo is holding.
-    local isHolding=cargo.opsgroup:IsHolding()
+    -- Check if cargo is holding or loaded
+    local isHolding=cargo.opsgroup:IsHolding() or cargo.opsgroup:IsLoaded()
     
     -- Check if cargo is in embark/pickup zone.
     -- Added InUtero here, if embark zone is moving (ship) and cargo has been spawned late activated and its position is not updated. Not sure if that breaks something else!
-    local inZone=cargo.opsgroup:IsInZone(self.cargoTZC.EmbarkZone) --or cargo.opsgroup:IsInUtero()
+    local inZone=cargo.opsgroup:IsInZone(self.cargoTZC.EmbarkZone) or cargo.opsgroup:IsInUtero()
     
     -- Check if cargo is currently on a mission.
     local isOnMission=cargo.opsgroup:IsOnMission()
@@ -8342,9 +8682,13 @@ function OPSGROUP:onafterLoading(From, Event, To)
     if isOnMission then
       local mission=cargo.opsgroup:GetMissionCurrent()
       if mission and mission.opstransport and mission.opstransport.uid==self.cargoTransport.uid then  
-        isOnMission=not cargo.opsgroup:IsHolding()
+        isOnMission=not isHolding
       end
-    end    
+    end
+    
+    -- Debug message.
+    self:T(self.lid..string.format("Loading: canCargo=%s, isCarrier=%s, isNotCargo=%s, isHolding=%s, isOnMission=%s",
+    tostring(canCargo), tostring(isCarrier), tostring(isNotCargo), tostring(isHolding), tostring(isOnMission)))
 
     -- TODO: Need a better :IsBusy() function or :IsReadyForMission() :IsReadyForBoarding() :IsReadyForTransport()
     if canCargo and inZone and isNotCargo and isHolding and (not (cargo.delivered or cargo.opsgroup:IsDead() or isCarrier or isOnMission)) then
@@ -8368,10 +8712,7 @@ function OPSGROUP:onafterLoading(From, Event, To)
     local carrier=self:FindCarrierForCargo(cargo.opsgroup)
 
     if carrier then
-
-      -- Set cargo status.
-      cargo.opsgroup:_NewCargoStatus(OPSGROUP.CargoStatus.ASSIGNED)
-
+      
       -- Order cargo group to board the carrier.
       cargo.opsgroup:Board(self, carrier)
 
@@ -8979,7 +9320,10 @@ function OPSGROUP:onafterUnloaded(From, Event, To, OpsGroupCargo)
     OpsGroupCargo:Returned()
   end
   
-  if OpsGroupCargo.missionpaused then
+  -- Check if there is a paused mission.
+  local paused=OpsGroupCargo:_CountPausedMissions()>0
+   
+  if paused then
     OpsGroupCargo:UnpauseMission()
   end
   
@@ -9253,9 +9597,6 @@ end
 -- @param #OPSGROUP.Element Carrier The OPSGROUP element
 function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
 
-  -- Set cargo status.
-  self:_NewCargoStatus(OPSGROUP.CargoStatus.BOARDING)
-
   -- Army or Navy group.
   local CarrierIsArmyOrNavy=CarrierGroup:IsArmygroup() or CarrierGroup:IsNavygroup()
   local CargoIsArmyOrNavy=self:IsArmygroup() or self:IsNavygroup()
@@ -9272,7 +9613,21 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
       board=false
     end
 
-    if board then
+    if self:IsLoaded() then
+
+      -- Debug info.
+      self:T(self.lid..string.format("Group is loaded currently ==> Moving directly to new carrier - No Unload(), Disembart() events triggered!"))
+
+      -- Remove my carrier.
+      self:_RemoveMyCarrier()
+
+      -- Trigger Load event.
+      CarrierGroup:Load(self)
+
+    elseif board then
+
+      -- Set cargo status.
+      self:_NewCargoStatus(OPSGROUP.CargoStatus.BOARDING)
 
       -- Debug info.
       self:T(self.lid..string.format("Boarding group=%s [%s], carrier=%s", CarrierGroup:GetName(), CarrierGroup:GetState(), tostring(Carrier.name)))
@@ -9558,10 +9913,14 @@ function OPSGROUP:_CheckGroupDone(delay)
 
       -- Number of cargo transports remaining.
       local nTransports=self:CountRemainingTransports()
+      
+      -- Number of paused missions.
+      local nPaused=self:_CountPausedMissions()
 
-      -- First check if there is a paused mission that
-      if self.missionpaused and nMissions==1 then
-        self:T(self.lid..string.format("Found paused mission %s [%s]. Unpausing mission...", self.missionpaused.name, self.missionpaused.type))
+      -- First check if there is a paused mission and that all remaining missions are paused. If there are other missions in the queue, we will run those.
+      if nPaused>0 and nPaused==nMissions then
+        local missionpaused=self:_GetPausedMission()
+        self:T(self.lid..string.format("Found paused mission %s [%s]. Unpausing mission...", missionpaused.name, missionpaused.type))
         self:UnpauseMission()
         return
       end
@@ -10790,6 +11149,103 @@ function OPSGROUP:GetEmission()
   return self.option.Emission or self.optionDefault.Emission
 end
 
+--- Set the default invisible for the group.
+-- @param #OPSGROUP self
+-- @param #boolean OnOffSwitch If `true`, group is ivisible by default.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultInvisible(OnOffSwitch)
+
+  if OnOffSwitch==nil then
+    self.optionDefault.Invisible=true
+  else
+    self.optionDefault.Invisible=OnOffSwitch
+  end
+
+  return self
+end
+
+--- Switch invisibility on or off.
+-- @param #OPSGROUP self
+-- @param #boolean OnOffSwitch If `true` or `nil`, switch invisibliity on. If `false` invisibility switched off.
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchInvisible(OnOffSwitch)
+
+  if self:IsAlive() or self:IsInUtero() then
+
+    if OnOffSwitch==nil then
+
+      self.option.Invisible=self.optionDefault.Invisible
+
+    else
+
+      self.option.Invisible=OnOffSwitch
+
+    end
+
+    if self:IsInUtero() then
+      self:T2(self.lid..string.format("Setting current INVISIBLE=%s when GROUP is SPAWNED", tostring(self.option.Invisible)))
+    else
+
+      self.group:SetCommandInvisible(self.option.Invisible)
+      self:T(self.lid..string.format("Setting current INVISIBLE=%s", tostring(self.option.Invisible)))
+
+    end
+  else
+    self:E(self.lid.."WARNING: Cannot switch Invisible! Group is not alive")
+  end
+
+  return self
+end
+
+
+--- Set the default immortal for the group.
+-- @param #OPSGROUP self
+-- @param #boolean OnOffSwitch If `true`, group is immortal by default.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultImmortal(OnOffSwitch)
+
+  if OnOffSwitch==nil then
+    self.optionDefault.Immortal=true
+  else
+    self.optionDefault.Immortal=OnOffSwitch
+  end
+
+  return self
+end
+
+--- Switch immortality on or off.
+-- @param #OPSGROUP self
+-- @param #boolean OnOffSwitch If `true` or `nil`, switch immortality on. If `false` immortality switched off.
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchImmortal(OnOffSwitch)
+
+  if self:IsAlive() or self:IsInUtero() then
+
+    if OnOffSwitch==nil then
+
+      self.option.Immortal=self.optionDefault.Immortal
+
+    else
+
+      self.option.Immortal=OnOffSwitch
+
+    end
+
+    if self:IsInUtero() then
+      self:T2(self.lid..string.format("Setting current IMMORTAL=%s when GROUP is SPAWNED", tostring(self.option.Immortal)))
+    else
+
+      self.group:SetCommandImmortal(self.option.Immortal)
+      self:T(self.lid..string.format("Setting current IMMORTAL=%s", tostring(self.option.Immortal)))
+
+    end
+  else
+    self:E(self.lid.."WARNING: Cannot switch Immortal! Group is not alive")
+  end
+
+  return self
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- SETTINGS FUNCTIONS
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -11237,6 +11693,8 @@ function OPSGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
   self.callsignDefault.NumberSquad=CallsignName
   self.callsignDefault.NumberGroup=CallsignNumber or 1
   self.callsignDefault.NameSquad=UTILS.GetCallsignName(self.callsign.NumberSquad)
+  
+  --self:I(self.lid..string.format("Default callsign=%s", self.callsignDefault.NameSquad))
 
   return self
 end
@@ -11288,27 +11746,21 @@ function OPSGROUP:SwitchCallsign(CallsignName, CallsignNumber)
   return self
 end
 
---- Get callsign
+--- Get callsign of the first element alive.
 -- @param #OPSGROUP self
--- @return #string Callsign name, e.g. Uzi-1
+-- @return #string Callsign name, e.g. Uzi11, or "Ghostrider11".
 function OPSGROUP:GetCallsignName()
 
-  local numberSquad=self.callsign.NumberSquad or self.callsignDefault.NumberSquad
-  local numberGroup=self.callsign.NumberGroup or self.callsignDefault.NumberGroup
-  
-  local callsign="Unknown 1"
-  
-  if numberSquad and numberGroup then
-  
-    local nameSquad=UTILS.GetCallsignName(numberSquad)
-    
-    callsign=string.format("%s %d", nameSquad, numberGroup)
-  
-  else
-  
+  local element=self:GetElementAlive()
+
+  if element then
+    self:T2(self.lid..string.format("Callsign %s", tostring(element.callsign)))
+    local name=element.callsign or "Ghostrider11"
+    name=name:gsub("-", "")
+    return name
   end
-  
-  return callsign
+
+  return "Ghostrider11"
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -12255,7 +12707,8 @@ function OPSGROUP:_AddElementByName(unitname)
     element.gid=element.DCSunit:getNumber()
     element.uid=element.DCSunit:getID()
     --element.group=unit:GetGroup()
-	element.controller=element.DCSunit:getController()
+	  element.controller=element.DCSunit:getController()
+    element.Nhit=0
     element.opsgroup=self
 
     -- Skill etc.
@@ -12263,6 +12716,7 @@ function OPSGROUP:_AddElementByName(unitname)
     if element.skill=="Client" or element.skill=="Player" then
       element.ai=false
       element.client=CLIENT:FindByName(unitname)
+      element.playerName=element.DCSunit:getPlayerName()
     else
       element.ai=true
     end
@@ -12273,7 +12727,7 @@ function OPSGROUP:_AddElementByName(unitname)
     element.categoryname=unit:GetCategoryName()
     element.typename=unit:GetTypeName()
 
-
+    -- Describtors.
     --self:I({desc=element.descriptors})
 
     -- Ammo.

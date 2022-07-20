@@ -2,8 +2,9 @@
 --
 -- **Main Features:**
 --
---    * Monitor if a zone is captured.
---    * Monitor if an airbase is captured.
+--    * Monitor if a zone is captured
+--    * Monitor if an airbase is captured
+--    * Define conditions under which zones are captured/held
 --
 -- ===
 --
@@ -79,6 +80,7 @@ OPSZONE.version="0.3.0"
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Capturing based on (total) threat level threshold. Unarmed units do not pose a threat and should not be able to hold a zone.
 -- TODO: Pause/unpause evaluations.
 -- TODO: Capture time, i.e. time how long a single coalition has to be inside the zone to capture it.
 -- TODO: Differentiate between ground attack and boming by air or arty.
@@ -348,7 +350,7 @@ end
 --- Set categories of units that can capture or hold the zone. See [DCS Class Unit](https://wiki.hoggitworld.com/view/DCS_Class_Unit).
 -- @param #OPSZONE self
 -- @param #table Categories Table of unit categories. Default `{Unit.Category.GROUND_UNIT}`.
--- @return #OPSZONE
+-- @return #OPSZONE self
 function OPSZONE:SetUnitCategories(Categories)
 
   -- Ensure table.
@@ -361,6 +363,32 @@ function OPSZONE:SetUnitCategories(Categories)
   
   return self
 end
+
+--- Set threat level threshold that the defending units must have to hold a zone.
+-- The reason why you might want to set this is that unarmed units (*e.g.* fuel trucks) should not be able to hold a zone as they do not pose a threat.
+-- @param #OPSZONE self
+-- @param #number Threatlevel Threat level threshod. Default 0.
+-- @return #OPSZONE self
+function OPSZONE:SetThreatlevelDefinding(Threatlevel)
+
+  self.threatlevelDefending=Threatlevel or 0
+  
+  return self
+end
+
+
+--- Set threat level threshold that the offending units must have to capture a zone.
+-- The reason why you might want to set this is that unarmed units (*e.g.* fuel trucks) should not be able to capture a zone as they do not pose a threat.
+-- @param #OPSZONE self
+-- @param #number Threatlevel Threat level threshod. Default 0.
+-- @return #OPSZONE self
+function OPSZONE:SetThreatlevelOffending(Threatlevel)
+
+  self.threatlevelOffending=Threatlevel or 0
+  
+  return self
+end
+
 
 --- Set whether *neutral* units can capture the zone.
 -- @param #OPSZONE self

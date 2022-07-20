@@ -2171,7 +2171,7 @@ function OPSTRANSPORT:_GetTransportZoneCombo(Carrier)
   return nil
 end
 
---- Get an OPSGROUP from a given OPSGROUP or GROUP object. If the object is a GROUUP, an OPSGROUP is created automatically. 
+--- Get an OPSGROUP from a given OPSGROUP or GROUP object. If the object is a GROUP, an OPSGROUP is created automatically. 
 -- @param #OPSTRANSPORT self
 -- @param Core.Base#BASE Object The object, which can be a GROUP or OPSGROUP.
 -- @return Ops.OpsGroup#OPSGROUP Ops Group.
