@@ -252,7 +252,7 @@ do
 --            testawacs:SetAwacsDetails(CALLSIGN.AWACS.Wizard)
 --            -- And start as GCI using a group name "Blue EWR" as main EWR station
 --            testawacs:SetAsGCI(GROUP:FindByName("Blue EWR"),2)
---            -- Set Custom Callsigns for use with TTS
+--            -- Set Custom CAP Flight Callsigns for use with TTS
 --            testawacs:SetCustomCallsigns({
 --              Devil = 'Bengal',
 --              Snake = 'Winder',
@@ -866,7 +866,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
     self.OrbitZone = ZONE:New(AwacsOrbit) -- Core.Zone#ZONE
   end
   self.BorderZone = nil
-  self.CallSign = CALLSIGN.AWACS.Darkstar -- #number
+  self.CallSign = CALLSIGN.AWACS.Magic -- #number
   self.CallSignNo = 1 -- #number
   self.NoHelos = true
   self.AIRequested = 0
@@ -1276,10 +1276,19 @@ function AWACS:ZipLip()
   return self
 end
 
---- [User] Replace ME callsigns with user-defined callsigns for use with TTS and on-screen messaging
+--- [User] For CAP flights: Replace ME callsigns with user-defined callsigns for use with TTS and on-screen messaging
 -- @param #AWACS self
--- @param #table table with DCS callsigns as keys and replacements as values
+-- @param #table translationTable with DCS callsigns as keys and replacements as values
 -- @return #AWACS self
+-- @usage
+--            -- Set Custom CAP Flight Callsigns for use with TTS
+--            testawacs:SetCustomCallsigns({
+--              Devil = 'Bengal',
+--              Snake = 'Winder',
+--              Colt = 'Camelot',
+--              Enfield = 'Victory',
+--              Uzi = 'Evil Eye'
+--            })
 function AWACS:SetCustomCallsigns(translationTable) 
   self.callsignTranslations = translationTable
 end
@@ -1612,6 +1621,26 @@ function AWACS:SetAwacsDetails(CallSign,CallSignNo,Angels,Speed,Heading,Leg)
   self.Speed = UTILS.KnotsToAltKIAS(speed,self.Angels*1000)
   self.Heading = Heading or 0
   self.Leg = Leg or 25
+  return self
+end
+
+--- [User] Set AWACS custom callsigns for TTS
+-- @param #AWACS self
+-- @param #table CallsignTable Table of custom callsigns to use with TTS
+-- @return #AWACS self
+-- @usage
+-- You can overwrite the standard AWACS callsign for TTS usage with your own naming, e.g. like so:
+--              testawacs:SetCustomAWACSCallSign({
+--                [1]="Overlord", -- Overlord
+--                [2]="Bookshelf", -- Magic
+--                [3]="Wizard", -- Wizard
+--                [4]="Focus", -- Focus
+--                [5]="Darkstar", -- Darkstar
+--                })
+-- The default callsign used in AWACS is "Magic". With the above change, the AWACS will call itself "Bookshelf" over TTS instead.
+function AWACS:SetCustomAWACSCallSign(CallsignTable)
+  self:T(self.lid.."SetCustomAWACSCallSign")
+  self.CallSignClear = CallsignTable
   return self
 end
 

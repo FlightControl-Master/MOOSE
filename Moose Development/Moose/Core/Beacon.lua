@@ -245,6 +245,32 @@ function BEACON:ActivateICLS(Channel, Callsign, Duration)
   return self
 end
 
+--- Activates a LINK4 BEACON. The unit the BEACON is attached to should be an aircraft carrier supporting this system.
+-- @param #BEACON self
+-- @param #number Frequency LINK4 FRequency in MHz, eg 336.
+-- @param #string Morse The ID that is going to be coded in Morse and broadcasted by the beacon.
+-- @param #number Duration How long will the beacon last in seconds. Omit for forever.
+-- @return #BEACON self
+function BEACON:ActivateLink4(Frequency, Morse, Duration)
+  self:F({Frequency=Frequency, Morse=Morse, Duration=Duration})
+  
+  -- Attached unit.
+  local UnitID=self.Positionable:GetID()
+  
+  -- Debug
+  self:T2({"LINK4 BEACON started!"})
+    
+  -- Start beacon.
+  self.Positionable:CommandActivateLink4(Frequency,UnitID,Morse)
+      
+  -- Stop sheduler
+  if Duration then -- Schedule the stop of the BEACON if asked by the MD
+    self.Positionable:CommandDeactivateLink4(Duration)
+  end
+  
+  return self
+end
+
 --- DEPRECATED: Please use @{BEACON:ActivateTACAN}() instead.
 -- Activates a TACAN BEACON on an Aircraft.
 -- @param #BEACON self
