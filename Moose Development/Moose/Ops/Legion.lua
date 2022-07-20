@@ -2806,8 +2806,8 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
         -- Prefer assets that are on ALERT5 for this mission type.
         score=score+25
       elseif currmission.type==AUFTRAG.Type.GCICAP and MissionType==AUFTRAG.Type.INTERCEPT then
-        -- Prefer assets that are on GCICAP to perform INTERCEPTS
-        score=score+25
+        -- Prefer assets that are on GCICAP to perform INTERCEPTS. We set this even higher than alert5 because they are already in the air.
+        score=score+35
       elseif (currmission.type==AUFTRAG.Type.ONGUARD or currmission.type==AUFTRAG.Type.PATROLZONE) and (MissionType==AUFTRAG.Type.ARTY  or MissionType==AUFTRAG.Type.GROUNDATTACK) then
         score=score+25
       elseif currmission.type==AUFTRAG.Type.NOTHING then

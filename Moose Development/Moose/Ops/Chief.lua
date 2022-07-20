@@ -120,6 +120,33 @@
 -- 
 -- Fleets can be added via the @{#CHIEF.AddFleet}() function.
 -- 
+-- ## Response on Target
+-- 
+-- When the chief detects a valid target, he will launch a certain number of selected assets. Only whole groups from SQUADRONs, PLATOONs or FLOTILLAs can be selected.
+-- In other words, it is not possible to specify the abount of individual *units*.
+-- 
+-- By default, one group is selected for any detected target. This can, however, be customized with the @{CHIEF.SetResponseOnTarget}() function. The number of min and max
+-- asset groups can be specified depending on threatlevel, category, mission type, number of units, defcon and strategy.
+-- 
+-- For example:
+--
+--     -- One group for aircraft targets of threat level 0 or higher.
+--     myChief:SetResponseOnTarget(1, 1, 0, TARGET.Category.AIRCRAFT)
+--     -- At least one and up to two groups for aircraft targets of threat level 8 or higher. This will overrule the previous response!
+--     myChief:SetResponseOnTarget(1, 2, 8, TARGET.Category.AIRCRAFT)
+--     
+--     -- At least one and up to three groups for ground targets of threat level 0 or higher if current strategy is aggressive.  
+--     myChief:SetResponseOnTarget(1, 1, 0, TARGET.Category.GROUND, nil ,nil, nil, CHIEF.Strategy.DEFENSIVE)
+--     
+--     -- One group for BAI missions if current defcon is green.
+--     myChief:SetResponseOnTarget(1, 1, 0, nil, AUFTRAG.Type.BAI, nil, CHIEF.DEFCON.GREEN)
+--     
+--     -- At least one and up to four groups for BAI missions if current defcon is red.
+--     myChief:SetResponseOnTarget(1, 2, 0, nil, AUFTRAG.Type.BAI, nil, CHIEF.DEFCON.YELLOW)
+--     
+--     -- At least one and up to four groups for BAI missions if current defcon is red.
+--     myChief:SetResponseOnTarget(1, 3, 0, nil, AUFTRAG.Type.BAI, nil, CHIEF.DEFCON.RED)
+-- 
 --  
 -- # Strategic (Capture) Zones
 -- 
@@ -287,7 +314,7 @@ CHIEF.Strategy = {
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.3.1"
+CHIEF.version="0.4.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
