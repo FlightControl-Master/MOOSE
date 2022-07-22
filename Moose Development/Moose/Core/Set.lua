@@ -5627,7 +5627,7 @@ do -- SET_ZONE
       if self.Filter.Prefixes then
         local MZonePrefix = false
         for ZonePrefixId, ZonePrefix in pairs( self.Filter.Prefixes ) do
-          self:T3( { "Prefix:", string.find( MZoneName, ZonePrefix, 1 ), ZonePrefix } )
+          self:T2( { "Prefix:", string.find( MZoneName, ZonePrefix, 1 ), ZonePrefix } )
           if string.find( MZoneName, ZonePrefix, 1 ) then
             MZonePrefix = true
           end
