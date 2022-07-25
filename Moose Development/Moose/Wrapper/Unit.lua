@@ -178,8 +178,28 @@ function UNIT:GetDCSObject()
   return nil
 end
 
+--- Returns the unit altitude above sea level in meters.
+-- @param Wrapper.Unit#UNIT self
+-- @param #boolean FromGround Measure from the ground or from sea level (ASL). Provide **true** for measuring from the ground (AGL). **false** or **nil** if you measure from sea level. 
+-- @return #number The height of the group or nil if is not existing or alive.  
+function UNIT:GetAltitude(FromGround)
+  
+  local DCSUnit = Unit.getByName( self.UnitName )
 
+  if DCSUnit then
+    local altitude = 0
+    local point = DCSUnit.getPoint() --DCS#Vec3
+    altitude = point.y
+    if FromGround then
+      local land = land.getHeight( { x = point.x, y = point.z } ) or 0
+      altitude = altitude - land
+    end
+    return altitude
+  end
 
+  return nil
+  
+end
 
 --- Respawn the @{Wrapper.Unit} using a (tweaked) template of the parent Group.
 -- 

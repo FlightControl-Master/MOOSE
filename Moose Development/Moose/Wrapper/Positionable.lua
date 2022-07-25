@@ -537,7 +537,7 @@ function POSITIONABLE:GetBoundingRadius( MinDist )
   return nil
 end
 
---- Returns the altitude of the POSITIONABLE.
+--- Returns the altitude above sea level of the POSITIONABLE.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return DCS#Distance The altitude of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
@@ -779,7 +779,7 @@ function POSITIONABLE:GetRelativeVelocity( Positionable )
   return UTILS.VecNorm( vtot )
 end
 
---- Returns the POSITIONABLE height in meters.
+--- Returns the POSITIONABLE height above sea level in meters.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return DCS#Vec3 The height of the POSITIONABLE in meters.
 -- @return #nil The POSITIONABLE is not existing or alive.
