@@ -57,7 +57,7 @@ FLOTILLA.version="0.1.0"
 -- @param #FLOTILLA self
 -- @param #string TemplateGroupName Name of the template group.
 -- @param #number Ngroups Number of asset groups of this flotilla. Default 3.
--- @param #string FlotillaName Name of the flotilla, e.g. "VFA-37".
+-- @param #string FlotillaName Name of the flotilla. Must be **unique**!
 -- @return #FLOTILLA self
 function FLOTILLA:New(TemplateGroupName, Ngroups, FlotillaName)
 

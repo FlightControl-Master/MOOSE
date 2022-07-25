@@ -56,7 +56,7 @@ PLATOON.version="0.1.0"
 -- @param #PLATOON self
 -- @param #string TemplateGroupName Name of the template group.
 -- @param #number Ngroups Number of asset groups of this platoon. Default 3.
--- @param #string PlatoonName Name of the platoon, e.g. "VFA-37".
+-- @param #string PlatoonName Name of the platoon. Must be **unique**!
 -- @return #PLATOON self
 function PLATOON:New(TemplateGroupName, Ngroups, PlatoonName)
 
