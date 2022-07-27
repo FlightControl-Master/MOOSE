@@ -106,6 +106,7 @@ AUTOLASE = {
 -- @field #string unitname
 -- @field #string reccename
 -- @field #string unittype
+-- @field Core.Point#COORDINATE coordinate
 
 --- AUTOLASE class version.
 -- @field #string version
@@ -578,6 +579,17 @@ function AUTOLASE:ShowStatus(Group)
     local typename = entry.unittype
     local code = entry.lasercode
     local locationstring = entry.location
+    local playername = Group:GetPlayerName()
+    if playername then
+      local settings = _DATABASE:GetPlayerSettings(playername)
+      if settings then
+        if settings:IsA2G_MGRS() then
+          locationstring = entry.coordinate:ToStringMGRS(settings)
+        elseif settings:IsA2G_LL_DMS() then
+          locationstring = entry.coordinate:ToStringLLDMS()
+        end
+      end
+    end
     local text = string.format("%s lasing %s code %d\nat %s",reccename,typename,code,locationstring)
     report:Add(text)
     lines = lines + 1
@@ -852,6 +864,7 @@ function AUTOLASE:onafterMonitor(From, Event, To)
           unitname = unitname,
           reccename = reccename,
           unittype = unit:GetTypeName(),
+          coordinate = unit:GetCoordinate(),
           }
        if self.smoketargets then
           local coord = unit:GetCoordinate()
