@@ -239,6 +239,7 @@ do -- MENU_BASE
   function MENU_BASE:GetMenu( MenuText )
     return self.Menus[MenuText]
   end
+  
   --- Sets a menu stamp for later prevention of menu removal.
   -- @param #MENU_BASE self
   -- @param MenuStamp
@@ -276,6 +277,7 @@ do -- MENU_BASE
   end
   
 end
+
 do -- MENU_COMMAND_BASE
   --- @type MENU_COMMAND_BASE
   -- @field #function MenuCallHandler
@@ -813,6 +815,7 @@ do
     end
     
   end
+  
   --- Refreshes a new radio item for a group and submenus
   -- @param #MENU_GROUP self
   -- @return #MENU_GROUP

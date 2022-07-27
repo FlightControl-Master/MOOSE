@@ -109,7 +109,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.0.11"
+AUTOLASE.version = "0.0.12"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -832,7 +832,16 @@ function AUTOLASE:onafterMonitor(From, Event, To)
         local code = self:GetLaserCode(reccename)
         local spot = SPOT:New(recce)
         spot:LaseOn(unit,code,self.LaseDuration)
-        local locationstring = unit:GetCoordinate():ToStringLLDDM()
+        local locationstring = unit:GetCoordinate():ToStringLLDDM()    
+        if _SETTINGS:IsA2G_MGRS() then
+          local precision = _SETTINGS:GetMGRS_Accuracy()
+          local settings = {}
+          settings.MGRS_Accuracy = precision
+          locationstring = unit:GetCoordinate():ToStringMGRS(settings)
+        elseif _SETTINGS:IsA2G_LL_DMS() then
+          locationstring = unit:GetCoordinate():ToStringLLDMS()
+        end
+  
         local laserspot = { -- #AUTOLASE.LaserSpot
           laserspot = spot,
           lasedunit = unit,
