@@ -104,6 +104,7 @@ __Moose.Include( 'Scripts/Moose/Ops/Fleet.lua' )
 __Moose.Include( 'Scripts/Moose/Ops/Awacs.lua' )
 __Moose.Include( 'Scripts/Moose/Ops/Operation.lua' )
 __Moose.Include( 'Scripts/Moose/Ops/FlightControl.lua' )
+__Moose.Include( 'Scripts/Moose/Ops/PlayerTask.lua' )
 
 __Moose.Include( 'Scripts/Moose/AI/AI_Balancer.lua' )
 __Moose.Include( 'Scripts/Moose/AI/AI_Air.lua' )
