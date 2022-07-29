@@ -1152,8 +1152,10 @@ do -- SET_GROUP
 
     local NearestGroup = nil --Wrapper.Group#GROUP
     local ClosestDistance = nil
-
-    for ObjectID, ObjectData in pairs( self.Set ) do
+    
+    local Set = self:GetAliveSet()
+    
+    for ObjectID, ObjectData in pairs( Set ) do
       if NearestGroup == nil then
         NearestGroup = ObjectData
         ClosestDistance = PointVec2:DistanceFromPointVec2( ObjectData:GetCoordinate() )
@@ -5825,8 +5827,7 @@ do -- SET_ZONE
       if self.Filter.Prefixes then
         local MZonePrefix = false
         for ZonePrefixId, ZonePrefix in pairs( self.Filter.Prefixes ) do
-          env.info(string.format("zone %s %s", MZoneName, ZonePrefix))
-          self:I( { "Prefix:", string.find( MZoneName, ZonePrefix, 1 ), ZonePrefix } )
+          self:T2( { "Prefix:", string.find( MZoneName, ZonePrefix, 1 ), ZonePrefix } )
           if string.find( MZoneName, ZonePrefix, 1 ) then
             MZonePrefix = true
           end

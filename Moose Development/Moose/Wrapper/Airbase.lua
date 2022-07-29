@@ -498,6 +498,8 @@ AIRBASE.MarianaIslands={
 -- * AIRBASE.SouthAtlantic.Ushuaia
 -- * AIRBASE.SouthAtlantic.Ushuaia_Helo_Port
 -- * AIRBASE.SouthAtlantic.Punta_Arenas
+-- * AIRBASE.SouthAtlantic.Pampa_Guanaco
+-- * AIRBASE.SouthAtlantic.San_Julian
 -- 
 --@field MarianaIslands
 AIRBASE.SouthAtlantic={
@@ -509,6 +511,8 @@ AIRBASE.SouthAtlantic={
   ["Ushuaia"]="Ushuaia",
   ["Ushuaia_Helo_Port"]="Ushuaia Helo Port",
   ["Punta_Arenas"]="Punta Arenas",
+  ["Pampa_Guanaco"]="Pampa Guanaco",
+  ["San_Julian"]="San Julian",
 }
 
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".

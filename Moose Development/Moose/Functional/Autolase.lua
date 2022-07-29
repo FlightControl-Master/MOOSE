@@ -106,10 +106,11 @@ AUTOLASE = {
 -- @field #string unitname
 -- @field #string reccename
 -- @field #string unittype
+-- @field Core.Point#COORDINATE coordinate
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.0.11"
+AUTOLASE.version = "0.0.12"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -578,6 +579,17 @@ function AUTOLASE:ShowStatus(Group)
     local typename = entry.unittype
     local code = entry.lasercode
     local locationstring = entry.location
+    local playername = Group:GetPlayerName()
+    if playername then
+      local settings = _DATABASE:GetPlayerSettings(playername)
+      if settings then
+        if settings:IsA2G_MGRS() then
+          locationstring = entry.coordinate:ToStringMGRS(settings)
+        elseif settings:IsA2G_LL_DMS() then
+          locationstring = entry.coordinate:ToStringLLDMS()
+        end
+      end
+    end
     local text = string.format("%s lasing %s code %d\nat %s",reccename,typename,code,locationstring)
     report:Add(text)
     lines = lines + 1
@@ -832,7 +844,16 @@ function AUTOLASE:onafterMonitor(From, Event, To)
         local code = self:GetLaserCode(reccename)
         local spot = SPOT:New(recce)
         spot:LaseOn(unit,code,self.LaseDuration)
-        local locationstring = unit:GetCoordinate():ToStringLLDDM()
+        local locationstring = unit:GetCoordinate():ToStringLLDDM()    
+        if _SETTINGS:IsA2G_MGRS() then
+          local precision = _SETTINGS:GetMGRS_Accuracy()
+          local settings = {}
+          settings.MGRS_Accuracy = precision
+          locationstring = unit:GetCoordinate():ToStringMGRS(settings)
+        elseif _SETTINGS:IsA2G_LL_DMS() then
+          locationstring = unit:GetCoordinate():ToStringLLDMS()
+        end
+  
         local laserspot = { -- #AUTOLASE.LaserSpot
           laserspot = spot,
           lasedunit = unit,
@@ -843,6 +864,7 @@ function AUTOLASE:onafterMonitor(From, Event, To)
           unitname = unitname,
           reccename = reccename,
           unittype = unit:GetTypeName(),
+          coordinate = unit:GetCoordinate(),
           }
        if self.smoketargets then
           local coord = unit:GetCoordinate()
