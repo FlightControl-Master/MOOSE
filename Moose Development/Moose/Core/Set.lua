@@ -1127,8 +1127,10 @@ do -- SET_GROUP
 
     local NearestGroup = nil -- Wrapper.Group#GROUP
     local ClosestDistance = nil
-
-    for ObjectID, ObjectData in pairs( self.Set ) do
+    
+    local Set = self:GetAliveSet()
+    
+    for ObjectID, ObjectData in pairs( Set ) do
       if NearestGroup == nil then
         NearestGroup = ObjectData
         ClosestDistance = PointVec2:DistanceFromPointVec2( ObjectData:GetCoordinate() )
