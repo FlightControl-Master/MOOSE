@@ -519,6 +519,7 @@ end
 -- @field #string ClientFilter
 -- @field #string Name
 -- @field #string Type
+-- @field #boolean UseGroupNames
 -- 
 
 
@@ -530,6 +531,7 @@ PLAYERTASKCONTROLLER = {
   lid                =   nil,
   TargetQueue        =   nil,
   ClientSet          =   nil,
+  UseGroupNames      =   true,
   }
 
 ---
@@ -542,7 +544,7 @@ PLAYERTASKCONTROLLER.Type = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.0.1"
+PLAYERTASKCONTROLLER.version="0.0.2"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -568,6 +570,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   
   self.repeatonfailed = true
   self.repeattimes = 5
+  self.UseGroupNames = true
   
   if ClientFilter then
     self.ClientSet = SET_CLIENT:New():FilterCoalitions(string.lower(self.CoalitionName)):FilterActive(true):FilterPrefixes(ClientFilter):FilterStart()
@@ -594,6 +597,20 @@ end
 
 function PLAYERTASKCONTROLLER:_DummyMenu(group)
   self:I(self.lid.."_DummyMenu")
+  return self
+end
+
+--- [user] Switch usage of target names for menu entries on or off
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #boolean OnOff If true, set to on (default), if nil or false, set to off
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SwitchUseGroupNames(OnOff)
+  self:I(self.lid.."SwitchUseGroupNames")
+  if OnOff then
+    self.UseGroupNames = true
+  else
+   self.UseGroupNames = false
+  end
   return self
 end
 
@@ -660,8 +677,13 @@ function PLAYERTASKCONTROLLER:_CheckTaskQueue()
     local data = _entry.data -- Ops.PlayerTask#PLAYERTASK
     self:I("Looking at Task: "..data.PlayerTaskNr.." Type: "..data.Type.." State: "..data:GetState())
     if data:GetState() == "Done" or data:GetState() == "Stopped" then
-      local task = self.TaskQueue:PullByID(_id)
+      local task = self.TaskQueue:PullByID(_id) -- Ops.PlayerTask#PLAYERTASK
       -- TODO: Remove clients from the task
+      local clientsattask = task.Clients:GetIDStackSorted()
+      for _,_id in pairs(clientsattask) do
+        self.TasksPerPlayer:PullByID(_id)
+      end
+      task = nil
     end
    end
  end  
@@ -740,7 +762,7 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
   elseif cat == TARGET.Category.AIRCRAFT then
     type = AUFTRAG.Type.INTERCEPT
   elseif cat == TARGET.Category.AIRBASE then
-    --TODO: Define Success Criteria, AB hit? change of coalition?
+    --TODO: Define Success Criteria, AB hit? Runway blocked, how to determine? change of coalition?
     type = AUFTRAG.Type.BOMBRUNWAY
   elseif cat == TARGET.Category.COORDINATE or cat == TARGET.Category.ZONE then
     --TODO: Define Success Criteria, void of enemies?
@@ -762,6 +784,11 @@ end
 function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task)
   self:I(self.lid.."_JoinTask")
   local playername = Client:GetPlayerName()
+  if self.TasksPerPlayer:HasUniqueID(playername) then
+    -- Player already has a task
+    local m=MESSAGE:New("You already have one active task! Complete it first!","10","Info"):ToGroup(Group)
+    return self
+  end
   Task:AddClient(Client)
   local taskstate = Task:GetState()
   --self:I(self.lid.."Taskstate = "..taskstate)
@@ -788,6 +815,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client)
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
     -- TODO: Show multiple
+    local task = self.TasksPerPlayer:GetIDStack()
     local task = self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
     local taskname = string.format("%s Task ID %02d",task.Type,task.PlayerTaskNr)
     local Coordinate = task.Target:GetCoordinate()
@@ -914,6 +942,12 @@ function PLAYERTASKCONTROLLER:_BuildMenus()
           local tasks =  taskpertype[_tasktype] or {}
           for _,_task in pairs(tasks) do
             local text = string.format("TaskNo %03d",_task.PlayerTaskNr)
+            if self.UseGroupNames then
+              local name = _task.Target:GetName()
+              if name ~= "Unknown" then
+                text = string.format("%s (%03d)",name,_task.PlayerTaskNr)
+              end
+            end
             local taskentry = MENU_GROUP_COMMAND:New(group,text,ttypes[_tasktype],self._JoinTask,self,group,client,_task)
             taskentry:SetTag(client:GetPlayerName())
             taskmenu[#taskmenu+1] = taskentry
