@@ -28,7 +28,7 @@
 -- @field #number PlayerTaskNr (Globally unique) Number of the task.
 -- @field Ops.Auftrag#AUFTRAG.Type Type The type of the task
 -- @field Ops.Target#TARGET Target The target for this Task
--- @field Utilities.FiFo#FIFO Clients Table of Wrapper.Client#CLIENT planes executing this task
+-- @field Utilities.FiFo#FIFO Clients FiFo of Wrapper.Client#CLIENT planes executing this task
 -- @field #boolean Repeat
 -- @field #number repeats
 -- @field #number RepeatNo
@@ -67,7 +67,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.0.5"
+PLAYERTASK.version="0.0.6"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -170,7 +170,7 @@ end
 -- @return #PLAYERTASK self
 function PLAYERTASK:AddClient(Client)
   self:I(self.lid.."AddClient")
-  local name = Client:GetName()
+  local name = Client:GetPlayerName()
   if not self.Clients:HasUniqueID(name) then
     self.Clients:Push(Client,name)
     self:__ClientAdded(-2,Client)
@@ -184,7 +184,7 @@ end
 -- @return #PLAYERTASK self
 function PLAYERTASK:RemoveClient(Client)
   self:I(self.lid.."RemoveClient")
-  local name = Client:GetName()
+  local name = Client:GetPlayerName()
   if self.Clients:HasUniqueID(name) then
     self.Clients:PullByID(name)
     self:__ClientRemoved(-2,Client)
@@ -201,7 +201,6 @@ end
 -- @return #PLAYERTASK self
 function PLAYERTASK:ClientAbort(Client)
   self:I(self.lid.."ClientAbort")
-  local name = Client:GetName()
   if Client and Client:IsAlive() then
     self:RemoveClient(Client)
     self:__ClientAborted(-1,Client)
@@ -580,7 +579,7 @@ PLAYERTASKCONTROLLER.Type = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.0.3"
+PLAYERTASKCONTROLLER.version="0.0.4"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -718,12 +717,14 @@ function PLAYERTASKCONTROLLER:_CheckTaskQueue()
     local data = _entry.data -- Ops.PlayerTask#PLAYERTASK
     self:I("Looking at Task: "..data.PlayerTaskNr.." Type: "..data.Type.." State: "..data:GetState())
     if data:GetState() == "Done" or data:GetState() == "Stopped" then
-      local task = self.TaskQueue:PullByID(_id) -- Ops.PlayerTask#PLAYERTASK
+      local task = self.TaskQueue:ReadByID(_id) -- Ops.PlayerTask#PLAYERTASK
       -- TODO: Remove clients from the task
       local clientsattask = task.Clients:GetIDStackSorted()
       for _,_id in pairs(clientsattask) do
+        self:I("*****Removing player " .. _id)
         self.TasksPerPlayer:PullByID(_id)
       end
+      local task = self.TaskQueue:PullByID(_id) -- Ops.PlayerTask#PLAYERTASK
       task = nil
     end
    end
@@ -995,6 +996,7 @@ function PLAYERTASKCONTROLLER:_BuildMenus()
             _task.TaskMenu = taskentry
           end
         end
+        join:Refresh()
       end
     end
   end
