@@ -29,6 +29,15 @@
 -- @field Ops.Auftrag#AUFTRAG.Type Type The type of the task
 -- @field Ops.Target#TARGET Target The target for this Task
 -- @field Utilities.FiFo#FIFO Clients Table of Wrapper.Client#CLIENT planes executing this task
+-- @field #boolean Repeat
+-- @field #number repeats
+-- @field #number RepeatNo
+-- @field Wrapper.Marker#MARKER TargetMarker
+-- @field #number SmokeColor
+-- @field #number FlareColor
+-- @field #table conditionSuccess   =   {},
+-- @field #table conditionFailure   =   {},
+-- @field Ops.PlayerTask#PLAYERTASKCONTROLLER TaskController
 --
 -- @extends Core.Fsm#FSM
 
@@ -51,13 +60,14 @@ PLAYERTASK = {
   TargetMarker       =   nil,
   SmokeColor         =   nil,
   FlareColor         =   nil,
-  conditionSuccess = {},
-  conditionFailure = {},
+  conditionSuccess   =   {},
+  conditionFailure   =   {},
+  TaskController     =   nil,
   }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.0.3"
+PLAYERTASK.version="0.0.5"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -86,6 +96,7 @@ function PLAYERTASK:New(Type, Target, Repeat, Times)
   self.SmokeColor = SMOKECOLOR.Red
   self.conditionSuccess = {}
   self.conditionFailure = {}
+  self.TaskController = nil -- Ops.PlayerTask#PLAYERTASKCONTROLLER
   
   if Repeat then
     self.Repeat = true
@@ -121,7 +132,7 @@ function PLAYERTASK:New(Type, Target, Repeat, Times)
   self:AddTransition("*",            "Done",             "Done")   -- All clients have reported that Task is done.
   self:AddTransition("*",            "Cancel",           "Done")   -- Command to cancel the Task.
   self:AddTransition("*",            "Success",          "Done")
-  self:AddTransition("*",            "ClientAborted",          "*")
+  self:AddTransition("*",            "ClientAborted",    "*")
   self:AddTransition("*",            "Failed",           "*") -- Done or repeat --> PLANNED
   self:AddTransition("*",            "Status",           "*")
   self:AddTransition("*",            "Stop",             "Stopped")
@@ -130,7 +141,17 @@ function PLAYERTASK:New(Type, Target, Repeat, Times)
   return self
 end
 
---- (User) Check is task is done
+--- [Internal] Add a PLAYERTASKCONTROLLER for this task
+-- @param #PLAYERTASK self
+-- @param Ops.PlayerTask#PLAYERTASKCONTROLLER Controller
+-- @return #PLAYERTASK self
+function PLAYERTASK:_SetController(Controller)
+  self:I(self.lid.."_SetController")
+  self.TaskController = Controller
+  return self
+end
+
+--- [User] Check is task is done
 -- @param #PLAYERTASK self
 -- @return #boolean done
 function PLAYERTASK:IsDone()
@@ -143,7 +164,7 @@ function PLAYERTASK:IsDone()
   return IsDone
 end
 
---- (User) Add a client to this task
+--- [User] Add a client to this task
 -- @param #PLAYERTASK self
 -- @param Wrapper.Client#CLIENT Client
 -- @return #PLAYERTASK self
@@ -157,7 +178,7 @@ function PLAYERTASK:AddClient(Client)
   return self
 end
 
---- (User) Remove a client from this task
+--- [User] Remove a client from this task
 -- @param #PLAYERTASK self
 -- @param Wrapper.Client#CLIENT Client
 -- @return #PLAYERTASK self
@@ -168,13 +189,13 @@ function PLAYERTASK:RemoveClient(Client)
     self.Clients:PullByID(name)
     self:__ClientRemoved(-2,Client)
     if self.Clients:Count() == 0 then
-      self:__Planned(-1)
+      self:__Failed(-1)
     end
   end
   return self
 end
 
---- (User) Client has aborted task this task
+--- [User] Client has aborted task this task
 -- @param #PLAYERTASK self
 -- @param Wrapper.Client#CLIENT Client (optional)
 -- @return #PLAYERTASK self
@@ -188,14 +209,14 @@ function PLAYERTASK:ClientAbort(Client)
   else
     -- no client given, abort whole task if no one else is assigned
     if self.Clients:Count() == 0 then
-      -- return to planned state
-      self:__Planned(-1)
+      -- return to planned state if repeat    
+      self:__Failed(-1)
     end
   end
   return self
 end
 
---- (User) Create target mark on F10 map
+--- [User] Create target mark on F10 map
 -- @param #PLAYERTASK self
 -- @return #PLAYERTASK self
 function PLAYERTASK:MarkTargetOnF10Map()
@@ -215,7 +236,7 @@ function PLAYERTASK:MarkTargetOnF10Map()
   return self
 end
 
---- (User) Smoke Target
+--- [User] Smoke Target
 -- @param #PLAYERTASK self
 -- @param #number Color, defaults to SMOKECOLOR.Red
 -- @return #PLAYERTASK self
@@ -231,7 +252,7 @@ function PLAYERTASK:SmokeTarget(Color)
   return self
 end
 
---- (User) Flare Target
+--- [User] Flare Target
 -- @param #PLAYERTASK self
 -- @param #number Color, defaults to FLARECOLOR.Red
 -- @return #PLAYERTASK self
@@ -313,7 +334,7 @@ function PLAYERTASK:_EvalConditionsAny(Conditions)
   return false
 end
 
---- [internal] On after status call
+--- [Internal] On after status call
 -- @param #PLAYERTASK self
 -- @param #string From
 -- @param #string Event
@@ -381,7 +402,7 @@ function PLAYERTASK:onafterStatus(From, Event, To)
 end
 
 
---- [internal] On after planned call
+--- [Internal] On after planned call
 -- @param #PLAYERTASK self
 -- @param #string From
 -- @param #string Event
@@ -392,7 +413,7 @@ function PLAYERTASK:onafterPlanned(From, Event, To)
   return self
 end
 
---- [internal] On after requested call
+--- [Internal] On after requested call
 -- @param #PLAYERTASK self
 -- @param #string From
 -- @param #string Event
@@ -403,7 +424,7 @@ function PLAYERTASK:onafterRequested(From, Event, To)
   return self
 end
 
---- [internal] On after executing call
+--- [Internal] On after executing call
 -- @param #PLAYERTASK self
 -- @param #string From
 -- @param #string Event
@@ -414,7 +435,7 @@ function PLAYERTASK:onafterExecuting(From, Event, To)
   return self
 end
 
---- [internal] On after status call
+--- [Internal] On after status call
 -- @param #PLAYERTASK self
 -- @param #string From
 -- @param #string Event
@@ -425,7 +446,7 @@ function PLAYERTASK:onafterStop(From, Event, To)
   return self
 end
 
---- [internal] On after client added call
+--- [Internal] On after client added call
 -- @param #PLAYERTASK self
 -- @param #string From
 -- @param #string Event
@@ -441,7 +462,7 @@ function PLAYERTASK:onafterClientAdded(From, Event, To, Client)
   return self
 end
 
---- [internal] On after done call
+--- [Internal] On after done call
 -- @param #PLAYERTASK self
 -- @param #string From
 -- @param #string Event
@@ -449,11 +470,14 @@ end
 -- @return #PLAYERTASK self
 function PLAYERTASK:onafterDone(From, Event, To)
   self:I({From, Event, To})
+  if self.TaskController then
+    self.TaskController:__TaskDone(-1,self)
+  end
   self:__Stop(-1)
   return self
 end
 
---- [internal] On after cancel call
+--- [Internal] On after cancel call
 -- @param #PLAYERTASK self
 -- @param #string From
 -- @param #string Event
@@ -461,11 +485,14 @@ end
 -- @return #PLAYERTASK self
 function PLAYERTASK:onafterCancel(From, Event, To)
   self:I({From, Event, To})
+  if self.TaskController then
+    self.TaskController:__TaskCancelled(-1,self)
+  end
   self:__Done(-1)
   return self
 end
 
---- [internal] On after success call
+--- [Internal] On after success call
 -- @param #PLAYERTASK self
 -- @param #string From
 -- @param #string Event
@@ -473,6 +500,9 @@ end
 -- @return #PLAYERTASK self
 function PLAYERTASK:onafterSuccess(From, Event, To)
   self:I({From, Event, To})
+  if self.TaskController then
+    self.TaskController:__TaskSuccess(-1,self)
+  end
   if self.TargetMarker then
     self.TargetMarker:Remove()
   end
@@ -480,7 +510,7 @@ function PLAYERTASK:onafterSuccess(From, Event, To)
   return self
 end
 
---- [internal] On after failed call
+--- [Internal] On after failed call
 -- @param #PLAYERTASK self
 -- @param #string From
 -- @param #string Event
@@ -491,11 +521,17 @@ function PLAYERTASK:onafterFailed(From, Event, To)
   self.repeats = self.repeats + 1
   -- repeat on failed?
   if self.Repeat and (self.repeats <= self.RepeatNo) then
+    if self.TaskController then
+      self.TaskController:__TaskRepeatOnFailed(-1,self)
+    end
     self:__Planned(-1)
     return self
   else
     if self.TargetMarker then
       self.TargetMarker:Remove()
+    end
+    if self.TaskController then
+      self.TaskController:__TaskFailed(-1,self)
     end
     self:__Done(-1)
   end
@@ -544,7 +580,7 @@ PLAYERTASKCONTROLLER.Type = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.0.2"
+PLAYERTASKCONTROLLER.version="0.0.3"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -583,9 +619,14 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   -- FSM start state is STOPPED.
   self:SetStartState("Stopped")
   
-  self:AddTransition("Stopped",      "Start",            "Running")
-  self:AddTransition("*",            "Status",           "*")
-  self:AddTransition("*",            "Stop",             "Stopped")
+  self:AddTransition("Stopped",      "Start",                 "Running")
+  self:AddTransition("*",            "Status",                "*")
+  self:AddTransition("*",            "TaskDone",              "*")
+  self:AddTransition("*",            "TaskCancelled",         "*")
+  self:AddTransition("*",            "TaskSuccess",           "*")
+  self:AddTransition("*",            "TaskFailed",            "*")
+  self:AddTransition("*",            "TaskRepeatOnFailed",    "*")
+  self:AddTransition("*",            "Stop",                  "Stopped")
   
   self:__Start(-1)
   self:__Status(-2)
@@ -614,7 +655,7 @@ function PLAYERTASKCONTROLLER:SwitchUseGroupNames(OnOff)
   return self
 end
 
---- [internal] Get task types for the menu
+--- [Internal] Get task types for the menu
 -- @param #PLAYERTASKCONTROLLER self
 -- @return #table TaskTypes
 function PLAYERTASKCONTROLLER:_GetAvailableTaskTypes()
@@ -630,7 +671,7 @@ function PLAYERTASKCONTROLLER:_GetAvailableTaskTypes()
   return tasktypes
 end
 
---- [internal] Get task per type for the menu
+--- [Internal] Get task per type for the menu
 -- @param #PLAYERTASKCONTROLLER self
 -- @return #table TasksPerTypes
 function PLAYERTASKCONTROLLER:_GetTasksPerType()
@@ -652,7 +693,7 @@ function PLAYERTASKCONTROLLER:_GetTasksPerType()
   return tasktypes
 end
 
---- [internal] Check target queue
+--- [Internal] Check target queue
 -- @param #PLAYERTASKCONTROLLER self
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_CheckTargetQueue()
@@ -665,7 +706,7 @@ function PLAYERTASKCONTROLLER:_CheckTargetQueue()
  return self
 end
 
---- [internal] Check task queue
+--- [Internal] Check task queue
 -- @param #PLAYERTASKCONTROLLER self
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_CheckTaskQueue()
@@ -700,7 +741,7 @@ function PLAYERTASKCONTROLLER:AddTarget(Target)
   return self
 end
 
---- [internal] Add a task to the task queue
+--- [Internal] Add a task to the task queue
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Ops.Target#TARGET Target
 -- @return #PLAYERTASKCONTROLLER self
@@ -770,12 +811,12 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
   end
   
   local task = PLAYERTASK:New(type,Target,self.repeatonfailed,self.repeattimes)
-  
+  task:_SetController(self)
   self.TaskQueue:Push(task)
   return self
 end
 
---- [internal] Join a player to a task
+--- [Internal] Join a player to a task
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Client#CLIENT Client
@@ -804,7 +845,7 @@ function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task)
   return self
 end
 
---- [internal] Show active task info
+--- [Internal] Show active task info
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Client#CLIENT Client
@@ -831,7 +872,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client)
   return self
 end
 
---- [internal] Mark task on F10 map
+--- [Internal] Mark task on F10 map
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Client#CLIENT Client
@@ -851,7 +892,7 @@ function PLAYERTASKCONTROLLER:_MarkTask(Group, Client)
   return self
 end
 
---- [internal] Smoke task location
+--- [Internal] Smoke task location
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Client#CLIENT Client
@@ -871,7 +912,7 @@ function PLAYERTASKCONTROLLER:_SmokeTask(Group, Client)
   return self
 end
 
---- [internal] Flare task location
+--- [Internal] Flare task location
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Client#CLIENT Client
@@ -891,7 +932,7 @@ function PLAYERTASKCONTROLLER:_FlareTask(Group, Client)
   return self
 end
 
---- [internal] Abort Task
+--- [Internal] Abort Task
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Client#CLIENT Client
@@ -911,7 +952,7 @@ function PLAYERTASKCONTROLLER:_AbortTask(Group, Client)
   return self
 end
 
---- [internal] Build client menus
+--- [Internal] Build client menus
 -- @param #PLAYERTASKCONTROLLER self
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_BuildMenus()
@@ -960,7 +1001,7 @@ function PLAYERTASKCONTROLLER:_BuildMenus()
   return self
 end
 
---- [internal] On after Status call
+--- [Internal] On after Status call
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string From
 -- @param #string Event
@@ -987,7 +1028,78 @@ function PLAYERTASKCONTROLLER:onafterStatus(From, Event, To)
   return self
 end
 
---- [internal] On after Stop call
+--- [Internal] On after task done
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @param Ops.PlayerTask#PLAYERTASK Task
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:onafterTaskDone(From, Event, To, Task)
+  self:I({From, Event, To})
+  self:I(self.lid.."TaskDone")
+  return self
+end
+
+--- [Internal] On after task cancelled
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @param Ops.PlayerTask#PLAYERTASK Task
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:onafterTaskCancelled(From, Event, To, Task)
+  self:I({From, Event, To})
+  self:I(self.lid.."TaskCancelled")
+  return self
+end
+
+--- [Internal] On after task success
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @param Ops.PlayerTask#PLAYERTASK Task
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:onafterTaskSuccess(From, Event, To, Task)
+  self:I({From, Event, To})
+  self:I(self.lid.."TaskSuccess")
+  local taskname = string.format("Task #%d %s Success!", Task.PlayerTaskNr, tostring(Task.Type))
+  local m = MESSAGE:New(taskname,15,"Tasking"):ToCoalition(self.Coalition)
+  return self
+end
+
+--- [Internal] On after task failed
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @param Ops.PlayerTask#PLAYERTASK Task
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:onafterTaskFailed(From, Event, To, Task)
+  self:I({From, Event, To})
+  self:I(self.lid.."TaskFailed")
+  local taskname = string.format("Task #%d %s Failed!", Task.PlayerTaskNr, tostring(Task.Type))
+  local m = MESSAGE:New(taskname,15,"Tasking"):ToCoalition(self.Coalition)
+  return self
+end
+
+--- [Internal] On after task failed, repeat planned
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @param Ops.PlayerTask#PLAYERTASK Task
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:onafterTaskRepeatOnFailed(From, Event, To, Task)
+  self:I({From, Event, To})
+  self:I(self.lid.."RepeatOnFailed")
+  local taskname = string.format("Task #%d %s Failed! Replanning!", Task.PlayerTaskNr, tostring(Task.Type))
+  local m = MESSAGE:New(taskname,15,"Tasking"):ToCoalition(self.Coalition)
+  return self
+end
+
+--- [Internal] On after Stop call
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string From
 -- @param #string Event
