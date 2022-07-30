@@ -205,6 +205,9 @@ function PLAYERTASK:RemoveClient(Client)
   local name = Client:GetPlayerName()
   if self.Clients:HasUniqueID(name) then
     self.Clients:PullByID(name)
+    if self.verbose then
+      self.Clients:Flush()
+    end
     self:__ClientRemoved(-2,Client)
     if self.Clients:Count() == 0 then
       self:__Failed(-1)
@@ -599,7 +602,7 @@ PLAYERTASKCONTROLLER.Type = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.0.6"
+PLAYERTASKCONTROLLER.version="0.0.7"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -681,7 +684,7 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
           local task = self.TasksPerPlayer:PullByID(EventData.IniPlayerName) -- Ops.PlayerTask#PLAYERTASK
           local Client = _DATABASE:FindClient( EventData.IniPlayerName )
           if Client then
-            task:ClientAbort(Client)
+            task:RemoveClient(Client)
             text = "Task aborted!"
           end
         else
@@ -926,8 +929,15 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client)
     local CoordText = Coordinate:ToStringA2G(Client)
     local ThreatLevel = task.Target:GetThreatLevelMax()
     local targets = task.Target:CountTargets() or 0
+    local clientlist = task:GetClients()
     local ThreatGraph = "[" .. string.rep(  "■", ThreatLevel ) .. string.rep(  "□", 10 - ThreatLevel ) .. "]: "..ThreatLevel
-    text = string.format("%s\nThreat: %s\nTargets left: %d\nCoord: %s", taskname, ThreatGraph, targets, CoordText)    
+    text = string.format("%s\nThreat: %s\nTargets left: %d\nCoord: %s", taskname, ThreatGraph, targets, CoordText)
+    local clienttxt = "\nPilot(s): "
+    for _,_name in pairs(clientlist) do
+      clienttxt = clienttxt .. _name .. ", "
+    end
+    clienttxt=string.gsub(clienttxt,", $",".")  
+    text = text .. clienttxt  
   else
     text = "No active task!"
   end
