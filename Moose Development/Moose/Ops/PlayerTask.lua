@@ -67,7 +67,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.0.6"
+PLAYERTASK.version="0.0.7"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -151,7 +151,7 @@ function PLAYERTASK:_SetController(Controller)
   return self
 end
 
---- [User] Check is task is done
+--- [User] Check if task is done
 -- @param #PLAYERTASK self
 -- @return #boolean done
 function PLAYERTASK:IsDone()
@@ -162,6 +162,24 @@ function PLAYERTASK:IsDone()
     IsDone = true
   end
   return IsDone
+end
+
+--- [User] Get clients assigned list as table
+-- @param #PLAYERTASK self
+-- @return #table clients
+function PLAYERTASK:GetClients()
+  self:I(self.lid.."GetClients?")
+  local clientlist = self.Clients:GetIDStackSorted() or {}
+  return clientlist
+end
+
+--- [User] Check if a player name is assigned to this task
+-- @param #PLAYERTASK self
+-- @param #string Name
+-- @return #boolean HasName
+function PLAYERTASK:HasPlayerName(Name)
+  self:I(self.lid.."HasPlayerName?")
+  return self.Clients:HasUniqueID(Name)
 end
 
 --- [User] Add a client to this task
@@ -555,6 +573,7 @@ end
 -- @field #string Name
 -- @field #string Type
 -- @field #boolean UseGroupNames
+-- @field #table PlayerMenu
 -- 
 
 
@@ -567,6 +586,7 @@ PLAYERTASKCONTROLLER = {
   TargetQueue        =   nil,
   ClientSet          =   nil,
   UseGroupNames      =   true,
+  PlayerMenu         =   {},
   }
 
 ---
@@ -579,7 +599,7 @@ PLAYERTASKCONTROLLER.Type = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.0.4"
+PLAYERTASKCONTROLLER.version="0.0.6"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -602,6 +622,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.TargetQueue = FIFO:New() -- Utilities.FiFo#FIFO
   self.TaskQueue = FIFO:New() -- Utilities.FiFo#FIFO
   self.TasksPerPlayer = FIFO:New() -- Utilities.FiFo#FIFO
+  self.PlayerMenu = {} -- #table
   
   self.repeatonfailed = true
   self.repeattimes = 5
@@ -620,6 +641,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   
   self:AddTransition("Stopped",      "Start",                 "Running")
   self:AddTransition("*",            "Status",                "*")
+  self:AddTransition("*",            "TaskAdded",             "*")
   self:AddTransition("*",            "TaskDone",              "*")
   self:AddTransition("*",            "TaskCancelled",         "*")
   self:AddTransition("*",            "TaskSuccess",           "*")
@@ -630,8 +652,44 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self:__Start(-1)
   self:__Status(-2)
   
+  -- Player leaves
+  self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventHandler)
+  self:HandleEvent(EVENTS.Ejection, self._EventHandler)
+  self:HandleEvent(EVENTS.Crash, self._EventHandler)
+  self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
+  
   self:I(self.lid.."Started.")
   
+  return self
+end
+
+--- [internal] Event handling
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Event#EVENTDATA EventData
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:_EventHandler(EventData)
+  self:I(self.lid.."_EventHandler: "..EventData.id)
+  if EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
+    if EventData.IniPlayerName then
+      self:I(self.lid.."Event for player: "..EventData.IniPlayerName)
+      if self.PlayerMenu[EventData.IniPlayerName] then
+        self.PlayerMenu[EventData.IniPlayerName]:Remove()
+        self.PlayerMenu[EventData.IniPlayerName] = nil
+      end
+        local text = ""
+        if self.TasksPerPlayer:HasUniqueID(EventData.IniPlayerName) then
+          local task = self.TasksPerPlayer:PullByID(EventData.IniPlayerName) -- Ops.PlayerTask#PLAYERTASK
+          local Client = _DATABASE:FindClient( EventData.IniPlayerName )
+          if Client then
+            task:ClientAbort(Client)
+            text = "Task aborted!"
+          end
+        else
+          text = "No active task!"
+        end
+        self:I(self.lid..text)
+    end
+  end
   return self
 end
 
@@ -718,7 +776,7 @@ function PLAYERTASKCONTROLLER:_CheckTaskQueue()
     self:I("Looking at Task: "..data.PlayerTaskNr.." Type: "..data.Type.." State: "..data:GetState())
     if data:GetState() == "Done" or data:GetState() == "Stopped" then
       local task = self.TaskQueue:ReadByID(_id) -- Ops.PlayerTask#PLAYERTASK
-      -- TODO: Remove clients from the task
+      -- DEBUG: Remove clients from the task
       local clientsattask = task.Clients:GetIDStackSorted()
       for _,_id in pairs(clientsattask) do
         self:I("*****Removing player " .. _id)
@@ -814,6 +872,7 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
   local task = PLAYERTASK:New(type,Target,self.repeatonfailed,self.repeattimes)
   task:_SetController(self)
   self.TaskQueue:Push(task)
+  self:__TaskAdded(-1,task)
   return self
 end
 
@@ -841,7 +900,10 @@ function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task)
     self:I(self.lid..text)
     local m=MESSAGE:New(text,"10","Info"):ToAll()
     self.TasksPerPlayer:Push(Task,playername)
-    Task.TaskMenu:Remove()
+    -- clear menu
+    if self.PlayerMenu[playername] then
+      self.PlayerMenu[playername]:RemoveSubMenus()
+    end
   end
   return self
 end
@@ -963,16 +1025,24 @@ function PLAYERTASKCONTROLLER:_BuildMenus()
     if _client then
       local client = _client -- Wrapper.Client#CLIENT
       local group = client:GetGroup()
-      if group then
+      local playername = client:GetPlayerName() or "Unknown"
+      if group and client then
         local topmenu = MENU_GROUP:New(group,self.Name.." Tasking "..self.Type,nil)
         local active = MENU_GROUP:New(group,"Active Task",topmenu)
         local info = MENU_GROUP_COMMAND:New(group,"Info",active,self._ActiveTaskInfo,self,group,client)
         local mark = MENU_GROUP_COMMAND:New(group,"Mark on map",active,self._MarkTask,self,group,client)
-        local smoke = MENU_GROUP_COMMAND:New(group,"Smoke",active,self._SmokeTask,self,group,client)
-        local flare = MENU_GROUP_COMMAND:New(group,"Flare",active,self._FlareTask,self,group,client)
+        if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
+          -- no smoking/flaring here if A2A
+          local smoke = MENU_GROUP_COMMAND:New(group,"Smoke",active,self._SmokeTask,self,group,client)
+          local flare = MENU_GROUP_COMMAND:New(group,"Flare",active,self._FlareTask,self,group,client)
+        end
         local abort = MENU_GROUP_COMMAND:New(group,"Abort",active,self._AbortTask,self,group,client)
         
-        local join = MENU_GROUP:New(group,"Join Task",topmenu)  
+        if self.PlayerMenu[playername] then
+          self.PlayerMenu[playername]:RemoveSubMenus()
+        else
+          self.PlayerMenu[playername] = MENU_GROUP:New(group,"Join Task",topmenu)
+        end
         
         local tasktypes = self:_GetAvailableTaskTypes()
         local taskpertype = self:_GetTasksPerType()
@@ -980,9 +1050,10 @@ function PLAYERTASKCONTROLLER:_BuildMenus()
         local ttypes = {}
         local taskmenu = {}
         for _tasktype,_data in pairs(tasktypes) do
-          ttypes[_tasktype] = MENU_GROUP:New(group,_tasktype,join)
+          ttypes[_tasktype] = MENU_GROUP:New(group,_tasktype,self.PlayerMenu[playername])
           local tasks =  taskpertype[_tasktype] or {}
           for _,_task in pairs(tasks) do
+            _task = _task -- Ops.PlayerTask#PLAYERTASK
             local text = string.format("TaskNo %03d",_task.PlayerTaskNr)
             if self.UseGroupNames then
               local name = _task.Target:GetName()
@@ -990,13 +1061,14 @@ function PLAYERTASKCONTROLLER:_BuildMenus()
                 text = string.format("%s (%03d)",name,_task.PlayerTaskNr)
               end
             end
-            local taskentry = MENU_GROUP_COMMAND:New(group,text,ttypes[_tasktype],self._JoinTask,self,group,client,_task)
-            taskentry:SetTag(client:GetPlayerName())
-            taskmenu[#taskmenu+1] = taskentry
-            _task.TaskMenu = taskentry
+            if _task:GetState() == "Planned" or (not _task:HasPlayerName(playername)) then
+              local taskentry = MENU_GROUP_COMMAND:New(group,text,ttypes[_tasktype],self._JoinTask,self,group,client,_task)
+              taskentry:SetTag(playername)
+              taskmenu[#taskmenu+1] = taskentry
+            end          
           end
         end
-        join:Refresh()
+        self.PlayerMenu[playername]:Refresh()
       end
     end
   end
@@ -1101,6 +1173,21 @@ function PLAYERTASKCONTROLLER:onafterTaskRepeatOnFailed(From, Event, To, Task)
   return self
 end
 
+--- [Internal] On after task added
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @param Ops.PlayerTask#PLAYERTASK Task
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:onafterTaskAdded(From, Event, To, Task)
+  self:I({From, Event, To})
+  self:I(self.lid.."TaskAdded")
+  local taskname = string.format("%s has a new Task %s", self.Name, tostring(Task.Type))
+  local m = MESSAGE:New(taskname,15,"Tasking"):ToCoalition(self.Coalition)
+  return self
+end
+
 --- [Internal] On after Stop call
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string From
@@ -1110,6 +1197,11 @@ end
 function PLAYERTASKCONTROLLER:onafterStop(From, Event, To)
   self:I({From, Event, To})
   self:I(self.lid.."Stopped.")
+    -- Player leaves
+  self:UnHandleEvent(EVENTS.PlayerLeaveUnit)
+  self:UnHandleEvent(EVENTS.Ejection)
+  self:UnHandleEvent(EVENTS.Crash)
+  self:UnHandleEvent(EVENTS.PilotDead)
   return self
 end
 
