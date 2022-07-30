@@ -2278,7 +2278,7 @@ do -- COORDINATE
     end
 
     --- Creates a free form shape on the F10 map. The first point is the current COORDINATE. The remaining points need to be specified.
-    -- **NOTE**: A free form polygon must have **at least three points** in total and currently only **up to 10 points** in total are supported.
+    -- **NOTE**: A free form polygon must have **at least three points** in total and currently only **up to 15 points** in total are supported.
     -- @param #COORDINATE self
     -- @param #table Coordinates Table of coordinates of the remaining points of the shape.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
@@ -2331,8 +2331,28 @@ do -- COORDINATE
         trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], Color, FillColor, LineType, ReadOnly, Text or "")
       elseif #vecs==10 then
         trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], vecs[10], Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==11 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], vecs[10],
+                                                         vecs[11], 
+                                                         Color, FillColor, LineType, ReadOnly, Text or "")        
+      elseif #vecs==12 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], vecs[10],
+                                                         vecs[11], vecs[12],
+                                                         Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==13 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], vecs[10],
+                                                         vecs[11], vecs[12], vecs[13],
+                                                         Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==14 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], vecs[10],
+                                                         vecs[11], vecs[12], vecs[13], vecs[14],
+                                                         Color, FillColor, LineType, ReadOnly, Text or "")                                                                                                                                                                                                           
+      elseif #vecs==15 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], vecs[10],
+                                                         vecs[11], vecs[12], vecs[13], vecs[14], vecs[15],
+                                                         Color, FillColor, LineType, ReadOnly, Text or "")
       else
-        self:E("ERROR: Currently a free form polygon can only have 10 points in total!")
+        self:E("ERROR: Currently a free form polygon can only have 15 points in total!")
         -- Unfortunately, unpack(vecs) does not work! So no idea how to generalize this :(
         trigger.action.markupToAll(7, Coalition, MarkID, unpack(vecs), Color, FillColor, LineType, ReadOnly, Text or "")
       end

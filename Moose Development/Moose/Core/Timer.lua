@@ -167,7 +167,7 @@ function TIMER:Start(Tstart, dT, Duration)
   local Tnow=timer.getTime()
 
   -- Start time in sec.
-  self.Tstart=Tstart and Tnow+Tstart or Tnow+0.001  -- one millisecond delay if Tstart=nil
+  self.Tstart=Tstart and Tnow+math.max(Tstart, 0.001) or Tnow+0.001  -- one millisecond delay if Tstart=nil
   
   -- Set time interval.
   self.dT=dT
