@@ -66,7 +66,7 @@ LEGION.version="0.3.4"
 --- Create a new LEGION class object.
 -- @param #LEGION self
 -- @param #string WarehouseName Name of the warehouse STATIC or UNIT object representing the warehouse.
--- @param #string LegionName Name of the legion.
+-- @param #string LegionName Name of the legion. Must be **unique**!
 -- @return #LEGION self
 function LEGION:New(WarehouseName, LegionName)
 
@@ -396,11 +396,17 @@ end
 -- @param Ops.Cohort#COHORT Cohort The cohort to be added.
 -- @return #LEGION self
 function LEGION:AddCohort(Cohort)
-
-  -- TODO: Check if this cohort is already part of the legion!
   
-  -- Add cohort to legion.
-  table.insert(self.cohorts, Cohort)
+  if self:IsCohort(Cohort.name) then
+  
+    self:E(self.lid..string.format("ERROR: A cohort with name %s already exists in this legion. Cohorts must have UNIQUE names!"))
+  
+  else
+  
+    -- Add cohort to legion.
+    table.insert(self.cohorts, Cohort)
+    
+  end
 
   return self
 end

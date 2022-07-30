@@ -59,6 +59,8 @@
 -- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 -- @field #number DrawID Unique ID of the drawn zone on the F10 map.
 -- @field #table Color Table with four entries, e.g. {1, 0, 0, 0.15}. First three are RGB color code. Fourth is the transparency Alpha value.
+-- @field #table FillColor Table with four entries, e.g. {1, 0, 0, 0.15}. First three are RGB color code. Fourth is the transparency Alpha value.
+-- @field #number drawCoalition Draw coalition.
 -- @field #number ZoneID ID of zone. Only zones defined in the ME have an ID!
 -- @field #number Surface Type of surface. Only determined at the center of the zone!
 -- @extends Core.Fsm#FSM
@@ -357,6 +359,22 @@ function ZONE_BASE:BoundZone()
 end
 
 
+--- Set draw coalition of zone.
+-- @param #ZONE_BASE self
+-- @param #number Coalition Coalition. Default -1.
+-- @return #ZONE_BASE self
+function ZONE_BASE:SetDrawCoalition(Coalition)
+  self.drawCoalition=Coalition or -1
+  return self
+end
+
+--- Get draw coalition of zone.
+-- @param #ZONE_BASE self
+-- @return #number Draw coaliton.
+function ZONE_BASE:GetDrawCoalition()
+  return self.drawCoalition or -1
+end
+
 --- Set color of zone.
 -- @param #ZONE_BASE self
 -- @param #table RGBcolor RGB color table. Default `{1, 0, 0}`.
@@ -399,6 +417,51 @@ end
 -- @return #number Alpha value.
 function ZONE_BASE:GetColorAlpha()
   local alpha=self.Color[4]
+  return alpha
+end
+
+--- Set fill color of zone.
+-- @param #ZONE_BASE self
+-- @param #table RGBcolor RGB color table. Default `{1, 0, 0}`.
+-- @param #number Alpha Transparacy between 0 and 1. Default 0.15.
+-- @return #ZONE_BASE self
+function ZONE_BASE:SetFillColor(RGBcolor, Alpha)
+
+  RGBcolor=RGBcolor or {1, 0, 0}
+  Alpha=Alpha or 0.15
+
+  self.FillColor={}
+  self.FillColor[1]=RGBcolor[1]
+  self.FillColor[2]=RGBcolor[2]
+  self.FillColor[3]=RGBcolor[3]
+  self.FillColor[4]=Alpha
+
+  return self
+end
+
+--- Get fill color table of the zone.
+-- @param #ZONE_BASE self
+-- @return #table Table with four entries, e.g. {1, 0, 0, 0.15}. First three are RGB color code. Fourth is the transparency Alpha value.
+function ZONE_BASE:GetFillColor()
+  return self.FillColor
+end
+
+--- Get RGB fill color of zone.
+-- @param #ZONE_BASE self
+-- @return #table Table with three entries, e.g. {1, 0, 0}, which is the RGB color code.
+function ZONE_BASE:GetFillColorRGB()
+  local rgb={}
+  rgb[1]=self.FillColor[1]
+  rgb[2]=self.FillColor[2]
+  rgb[3]=self.FillColor[3]
+  return rgb
+end
+
+--- Get transperency Alpha fill value of zone.
+-- @param #ZONE_BASE self
+-- @return #number Alpha value.
+function ZONE_BASE:GetFillColorAlpha()
+  local alpha=self.FillColor[4]
   return alpha
 end
 
@@ -1858,7 +1921,7 @@ function ZONE_POLYGON_BASE:BoundZone( UnBound )
 end
 
 
---- Draw the zone on the F10 map.  **NOTE** Currently, only polygons with **exactly four points** are supported!
+--- Draw the zone on the F10 map.  **NOTE** Currently, only polygons **up to ten points** are supported!
 -- @param #ZONE_POLYGON_BASE self
 -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
 -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
@@ -1870,32 +1933,47 @@ end
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
 
-  local coordinate=COORDINATE:NewFromVec2(self._.Polygon[1])
+  if self._.Polygon and #self._.Polygon>=3 then
 
-  Color=Color or self:GetColorRGB()
-  Alpha=Alpha or 1
+    local coordinate=COORDINATE:NewFromVec2(self._.Polygon[1])
+    
+    Coalition=Coalition or self:GetDrawCoalition()
+    
+    -- Set draw coalition.
+    self:SetDrawCoalition(Coalition)  
   
-  FillColor=FillColor or UTILS.DeepCopy(Color)
-  FillAlpha=FillAlpha or self:GetColorAlpha()
-
-
-  if #self._.Polygon==4 then
-
-    local Coord2=COORDINATE:NewFromVec2(self._.Polygon[2])
-    local Coord3=COORDINATE:NewFromVec2(self._.Polygon[3])
-    local Coord4=COORDINATE:NewFromVec2(self._.Polygon[4])
-
-    self.DrawID=coordinate:QuadToAll(Coord2, Coord3, Coord4, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
-
-  else
-
-    local Coordinates=self:GetVerticiesCoordinates()
-    table.remove(Coordinates, 1)
-
-    self.DrawID=coordinate:MarkupToAllFreeForm(Coordinates, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
-
+    Color=Color or self:GetColorRGB()
+    Alpha=Alpha or 1
+    
+    -- Set color.
+    self:SetColor(Color, Alpha)
+    
+    FillColor=FillColor or self:GetFillColorRGB()
+    if not FillColor then UTILS.DeepCopy(Color) end
+    FillAlpha=FillAlpha or self:GetFillColorAlpha()
+    if not FillAlpha then FillAlpha=0.15 end
+    
+    -- Set fill color.
+    self:SetFillColor(FillColor, FillAlpha)
+  
+    if #self._.Polygon==4 then
+  
+      local Coord2=COORDINATE:NewFromVec2(self._.Polygon[2])
+      local Coord3=COORDINATE:NewFromVec2(self._.Polygon[3])
+      local Coord4=COORDINATE:NewFromVec2(self._.Polygon[4])
+  
+      self.DrawID=coordinate:QuadToAll(Coord2, Coord3, Coord4, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
+  
+    else
+  
+      local Coordinates=self:GetVerticiesCoordinates()
+      table.remove(Coordinates, 1)
+  
+      self.DrawID=coordinate:MarkupToAllFreeForm(Coordinates, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
+  
+    end
+    
   end
-
 
   return self
 end
@@ -2227,6 +2305,205 @@ function ZONE_POLYGON:FindByName( ZoneName )
 
   local ZoneFound = _DATABASE:FindZone( ZoneName )
   return ZoneFound
+end
+
+do -- ZONE_ELASTIC
+
+  --- @type ZONE_ELASTIC
+  -- @field #table points Points in 2D.
+  -- @field #table setGroups Set of GROUPs.
+  -- @field #table setOpsGroups Set of OPSGROUPS.
+  -- @field #table setUnits Set of UNITs.
+  -- @field #number updateID Scheduler ID for updating.
+  -- @extends #ZONE_POLYGON_BASE
+
+  --- The ZONE_ELASTIC class defines a dynamic polygon zone, where only the convex hull is used.
+  --
+  -- @field #ZONE_ELASTIC
+  ZONE_ELASTIC = {
+    ClassName="ZONE_ELASTIC",
+    points={},
+    setGroups={}
+    }
+
+  --- Constructor to create a ZONE_ELASTIC instance.
+  -- @param #ZONE_ELASTIC self
+  -- @param #string ZoneName Name of the zone.
+  -- @param DCS#Vec2 Points (Optional) Fixed points.
+  -- @return #ZONE_ELASTIC self
+  function ZONE_ELASTIC:New(ZoneName, Points)
+
+    local self=BASE:Inherit(self, ZONE_POLYGON_BASE:New(ZoneName, Points)) --#ZONE_ELASTIC
+  
+    -- Zone objects are added to the _DATABASE and SET_ZONE objects.
+    _EVENTDISPATCHER:CreateEventNewZone( self )
+  
+    if Points then
+      self.points=Points
+    end
+  
+    return self
+  end
+
+  --- Add a vertex (point) to the polygon.
+  -- @param #ZONE_ELASTIC self
+  -- @param DCS#Vec2 Vec2 Point in 2D (with x and y coordinates).
+  -- @return #ZONE_ELASTIC self
+  function ZONE_ELASTIC:AddVertex2D(Vec2)
+  
+    -- Add vec2 to points.
+    table.insert(self.points, Vec2)
+  
+    return self
+  end
+
+
+  --- Add a vertex (point) to the polygon.
+  -- @param #ZONE_ELASTIC self
+  -- @param DCS#Vec3 Vec3 Point in 3D (with x, y and z coordinates). Only the x and z coordinates are used.
+  -- @return #ZONE_ELASTIC self
+  function ZONE_ELASTIC:AddVertex3D(Vec3)
+    
+    -- Add vec2 from vec3 to points.
+    table.insert(self.points, {x=Vec3.x, y=Vec3.z})
+  
+    return self
+  end
+
+
+  --- Add a set of groups. Positions of the group will be considered as polygon vertices when contructing the convex hull.
+  -- @param #ZONE_ELASTIC self
+  -- @param Core.Set#SET_GROUP SetGroup Set of groups.
+  -- @return #ZONE_ELASTIC self
+  function ZONE_ELASTIC:AddSetGroup(GroupSet)
+  
+    -- Add set to table.
+    table.insert(self.setGroups, GroupSet)
+    
+    return self
+  end
+
+
+  --- Update the convex hull of the polygon.
+  -- This uses the [Graham scan](https://en.wikipedia.org/wiki/Graham_scan).
+  -- @param #ZONE_ELASTIC self
+  -- @field #number Delay Delay in seconds before the zone is updated. Default 0.
+  -- @field #boolean Draw Draw the zone. Default `nil`.
+  -- @return #ZONE_ELASTIC self
+  function ZONE_ELASTIC:Update(Delay, Draw)
+    
+    -- Debug info.
+    self:T(string.format("Updating ZONE_ELASTIC %s", tostring(self.ZoneName)))
+  
+    -- Copy all points.
+    local points=UTILS.DeepCopy(self.points or {})
+    
+    if self.setGroups then
+      for _,_setGroup in pairs(self.setGroups) do
+        local setGroup=_setGroup --Core.Set#SET_GROUP
+        for _,_group in pairs(setGroup.Set) do
+          local group=_group --Wrapper.Group#GROUP
+          if group and group:IsAlive() then
+            table.insert(points, group:GetVec2())
+          end
+        end
+      end
+    end
+
+    -- Update polygon verticies from points.
+    self._.Polygon=self:_ConvexHull(points)
+    
+    if Draw~=false then
+      if self.DrawID or Draw==true then
+        self:UndrawZone()
+        self:DrawZone()
+      end
+    end
+
+  end
+  
+  --- Start the updating scheduler.
+  -- @param #ZONE_ELASTIC self
+  -- @param #number Tstart Time in seconds before the updating starts.
+  -- @param #number dT Time interval in seconds between updates. Default 60 sec.
+  -- @param #number Tstop Time in seconds after which the updating stops. Default `nil`.
+  -- @field #boolean Draw Draw the zone. Default `nil`.
+  -- @return #ZONE_ELASTIC self
+  function ZONE_ELASTIC:StartUpdate(Tstart, dT, Tstop, Draw)
+  
+    self.updateID=self:ScheduleRepeat(Tstart, dT, 0, Tstop, ZONE_ELASTIC.Update, self, 0, Draw)
+  
+    return self
+  end
+
+  --- Stop the updating scheduler.
+  -- @param #ZONE_ELASTIC self
+  -- @param #number Delay Delay in seconds before the scheduler will be stopped. Default 0.
+  -- @return #ZONE_ELASTIC self
+  function ZONE_ELASTIC:StopUpdate(Delay)
+  
+    if Delay and Delay>0 then
+      self:ScheduleOnce(Delay, ZONE_ELASTIC.StopUpdate, self)
+    else
+  
+      if self.updateID then
+      
+        self:ScheduleStop(self.updateID)
+        
+        self.updateID=nil
+        
+      end
+      
+    end
+  
+    return self
+  end
+  
+
+  --- Create a convec hull.
+  -- @param #ZONE_ELASTIC self
+  -- @param #table pl Points
+  -- @return #table Points
+  function ZONE_ELASTIC:_ConvexHull(pl)
+  
+    if #pl == 0 then
+      return {}
+    end
+    
+    table.sort(pl, function(left,right)
+      return left.x < right.x
+    end)
+ 
+    local h = {}
+    
+    -- Function: ccw > 0 if three points make a counter-clockwise turn, clockwise if ccw < 0, and collinear if ccw = 0.
+    local function ccw(a,b,c)
+      return (b.x - a.x) * (c.y - a.y) > (b.y - a.y) * (c.x - a.x)
+    end
+ 
+    -- lower hull
+    for i,pt in pairs(pl) do
+      while #h >= 2 and not ccw(h[#h-1], h[#h], pt) do
+        table.remove(h,#h)
+      end
+      table.insert(h,pt)
+    end
+ 
+    -- upper hull
+    local t = #h + 1
+    for i=#pl, 1, -1 do
+      local pt = pl[i]
+      while #h >= t and not ccw(h[#h-1], h[#h], pt) do
+        table.remove(h, #h)
+      end
+      table.insert(h, pt)
+    end
+ 
+    table.remove(h, #h)
+    
+    return h
+  end  
+  
 end
 
 do -- ZONE_AIRBASE

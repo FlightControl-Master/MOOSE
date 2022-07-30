@@ -93,7 +93,7 @@ SQUADRON.version="0.8.1"
 -- @param #SQUADRON self
 -- @param #string TemplateGroupName Name of the template group.
 -- @param #number Ngroups Number of asset groups of this squadron. Default 3.
--- @param #string SquadronName Name of the squadron, e.g. "VFA-37".
+-- @param #string SquadronName Name of the squadron, e.g. "VFA-37". Must be **unique**!
 -- @return #SQUADRON self
 function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
 
