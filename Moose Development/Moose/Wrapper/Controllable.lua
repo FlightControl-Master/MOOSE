@@ -2111,10 +2111,12 @@ do -- Route methods
   --- (AIR + GROUND) Make the Controllable move to fly to a given point.
   -- @param #CONTROLLABLE self
   -- @param DCS#Vec3 Point The destination point in Vec3 format.
-  -- @param #number Speed The speed [m/s] to travel.
+  -- @param #number Speed The speed [m/s] to travel. Default 1 m/s.
   -- @return #CONTROLLABLE self
   function CONTROLLABLE:RouteToVec2( Point, Speed )
     self:F2( { Point, Speed } )
+
+    if not Speed then Speed = 1 end
 
     local ControllablePoint = self:GetUnit( 1 ):GetVec2()
 
