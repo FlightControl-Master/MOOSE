@@ -188,7 +188,7 @@ function UNIT:GetAltitude(FromGround)
 
   if DCSUnit then
     local altitude = 0
-    local point = DCSUnit.getPoint() --DCS#Vec3
+    local point = DCSUnit:getPoint() --DCS#Vec3
     altitude = point.y
     if FromGround then
       local land = land.getHeight( { x = point.x, y = point.z } ) or 0
