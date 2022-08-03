@@ -1978,7 +1978,8 @@ function AIRBOSS:New( carriername, alias )
 
   -- Init carrier parameters.
   if self.carriertype == AIRBOSS.CarrierType.STENNIS then
-    self:_InitStennis()
+    --self:_InitStennis()
+    self:_InitNimitz()
   elseif self.carriertype == AIRBOSS.CarrierType.ROOSEVELT then
     self:_InitNimitz()
   elseif self.carriertype == AIRBOSS.CarrierType.LINCOLN then

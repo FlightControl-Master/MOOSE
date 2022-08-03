@@ -20,11 +20,11 @@ do
 -- @type FIFO
 -- @field #string ClassName Name of the class.
 -- @field #string lid Class id string for output to DCS log file.
--- @field #string version Version of FiFo
--- @field #number counter
--- @field #number pointer
--- @field #table stackbypointer
--- @field #table stackbyid
+-- @field #string version Version of FiFo.
+-- @field #number counter Counter.
+-- @field #number pointer Pointer.
+-- @field #table stackbypointer Stack by pointer.
+-- @field #table stackbyid Stack by ID.
 -- @extends Core.Base#BASE
 
 ---
@@ -45,12 +45,12 @@ FIFO = {
   stackbyid = {}
 }
 
---- Instantiate a new FIFO Stack
+--- Instantiate a new FIFO Stack.
 -- @param #FIFO self
 -- @return #FIFO self
 function FIFO:New()
   -- Inherit everything from BASE class.
-  local self=BASE:Inherit(self, BASE:New())
+  local self=BASE:Inherit(self, BASE:New()) --#FIFO
   self.pointer = 0
   self.counter = 0
   self.stackbypointer = {}
@@ -62,7 +62,7 @@ function FIFO:New()
   return self
 end
 
---- Empty FIFO Stack
+--- Empty FIFO Stack.
 -- @param #FIFO self
 -- @return #FIFO self
 function FIFO:Clear()
@@ -77,7 +77,7 @@ function FIFO:Clear()
   return self
 end
 
---- FIFO Push Object to Stack
+--- FIFO Push Object to Stack.
 -- @param #FIFO self
 -- @param #table Object
 -- @param #string UniqueID (optional) - will default to current pointer + 1. Note - if you intend to use `FIFO:GetIDStackSorted()` keep the UniqueID numerical!
@@ -97,7 +97,7 @@ function FIFO:Push(Object,UniqueID)
   return self
 end
 
---- FIFO Pull Object from Stack
+--- FIFO Pull Object from Stack.
 -- @param #FIFO self
 -- @return #table Object or nil if stack is empty
 function FIFO:Pull()

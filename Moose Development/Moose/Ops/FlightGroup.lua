@@ -576,10 +576,11 @@ end
 -- @param Ops.OpsGroup#OPSGROUP.Element Element (Optional) Only check status for given element.
 -- @return #boolean If true, flight is parking after spawned.
 function FLIGHTGROUP:IsParking(Element)
+  local is=self:Is("Parking")
   if Element then
-    return Element.status==OPSGROUP.ElementStatus.PARKING
+    is=Element.status==OPSGROUP.ElementStatus.PARKING
   end
-  return self:Is("Parking")
+  return is 
 end
 
 --- Check if is taxiing to the runway.
@@ -587,10 +588,11 @@ end
 -- @param Ops.OpsGroup#OPSGROUP.Element Element (Optional) Only check status for given element.
 -- @return #boolean If true, flight is taxiing after engine start up.
 function FLIGHTGROUP:IsTaxiing(Element)
+  local is=self:Is("Taxiing")
   if Element then
-    return Element.status==OPSGROUP.ElementStatus.TAXIING
+    is=Element.status==OPSGROUP.ElementStatus.TAXIING
   end
-  return self:Is("Taxiing")
+  return is
 end
 
 --- Check if flight is airborne or cruising.
@@ -598,17 +600,19 @@ end
 -- @param Ops.OpsGroup#OPSGROUP.Element Element (Optional) Only check status for given element.
 -- @return #boolean If true, flight is airborne.
 function FLIGHTGROUP:IsAirborne(Element)
+  local is=self:Is("Airborne") or self:Is("Cruising")
   if Element then
-    return Element.status==OPSGROUP.ElementStatus.AIRBORNE
+    is=Element.status==OPSGROUP.ElementStatus.AIRBORNE
   end
-  return self:Is("Airborne") or self:Is("Cruising")
+  return is 
 end
 
 --- Check if flight is airborne or cruising.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, flight is airborne.
 function FLIGHTGROUP:IsCruising()
-  return self:Is("Cruising")
+  local is=self:Is("Cruising")
+  return is
 end
 
 --- Check if flight is landing.
@@ -616,10 +620,11 @@ end
 -- @param Ops.OpsGroup#OPSGROUP.Element Element (Optional) Only check status for given element.
 -- @return #boolean If true, flight is landing, i.e. on final approach.
 function FLIGHTGROUP:IsLanding(Element)
+  local is=self:Is("Landing")
   if Element then
-    return Element.status==OPSGROUP.ElementStatus.LANDING
+    is=Element.status==OPSGROUP.ElementStatus.LANDING
   end
-  return self:Is("Landing")
+  return is 
 end
 
 --- Check if flight has landed and is now taxiing to its parking spot.
@@ -627,10 +632,11 @@ end
 -- @param Ops.OpsGroup#OPSGROUP.Element Element (Optional) Only check status for given element.
 -- @return #boolean If true, flight has landed
 function FLIGHTGROUP:IsLanded(Element)
+  local is=self:Is("Landed")
   if Element then
-    return Element.status==OPSGROUP.ElementStatus.LANDED
+    is=Element.status==OPSGROUP.ElementStatus.LANDED
   end
-  return self:Is("Landed")
+  return is 
 end
 
 --- Check if flight has arrived at its destination parking spot.
@@ -638,45 +644,51 @@ end
 -- @param Ops.OpsGroup#OPSGROUP.Element Element (Optional) Only check status for given element.
 -- @return #boolean If true, flight has arrived at its destination and is parking.
 function FLIGHTGROUP:IsArrived(Element)
+  local is=self:Is("Arrived")
   if Element then
-    return Element.status==OPSGROUP.ElementStatus.ARRIVED
+    is=Element.status==OPSGROUP.ElementStatus.ARRIVED
   end
-  return self:Is("Arrived")
+  return is 
 end
 
 --- Check if flight is inbound and traveling to holding pattern.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, flight is holding.
 function FLIGHTGROUP:IsInbound()
-  return self:Is("Inbound")
+  local is=self:Is("Inbound")
+  return is
 end
 
 --- Check if flight is holding and waiting for landing clearance.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, flight is holding.
 function FLIGHTGROUP:IsHolding()
-  return self:Is("Holding")
+  local is=self:Is("Holding")
+  return is
 end
 
 --- Check if flight is going for fuel.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, flight is refueling.
 function FLIGHTGROUP:IsGoing4Fuel()
-  return self:Is("Going4Fuel")
+  local is=self:Is("Going4Fuel")
+  return is
 end
 
 --- Check if helo(!) flight is ordered to land at a specific point.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, group has task to land somewhere.
 function FLIGHTGROUP:IsLandingAt()
-  return self:Is("LandingAt")
+  local is=self:Is("LandingAt")
+  return is
 end
 
 --- Check if helo(!) flight has landed at a specific point.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, has landed somewhere.
 function FLIGHTGROUP:IsLandedAt()
-  return self:Is("LandedAt")
+  is=self:Is("LandedAt")
+  return is
 end
 
 --- Check if flight is low on fuel.

@@ -398,7 +398,7 @@ end
 -- @param #ZONE_BASE self
 -- @return #table Table with four entries, e.g. {1, 0, 0, 0.15}. First three are RGB color code. Fourth is the transparency Alpha value.
 function ZONE_BASE:GetColor()
-  return self.Color
+  return self.Color or {1, 0, 0, 0.15}
 end
 
 --- Get RGB color of zone.
@@ -406,9 +406,10 @@ end
 -- @return #table Table with three entries, e.g. {1, 0, 0}, which is the RGB color code.
 function ZONE_BASE:GetColorRGB()
   local rgb={}
-  rgb[1]=self.Color[1]
-  rgb[2]=self.Color[2]
-  rgb[3]=self.Color[3]
+  local Color=self:GetColor()
+  rgb[1]=Color[1]
+  rgb[2]=Color[2]
+  rgb[3]=Color[3]
   return rgb
 end
 
@@ -416,7 +417,8 @@ end
 -- @param #ZONE_BASE self
 -- @return #number Alpha value.
 function ZONE_BASE:GetColorAlpha()
-  local alpha=self.Color[4]
+  local Color=self:GetColor()
+  local alpha=Color[4]
   return alpha
 end
 
@@ -443,7 +445,7 @@ end
 -- @param #ZONE_BASE self
 -- @return #table Table with four entries, e.g. {1, 0, 0, 0.15}. First three are RGB color code. Fourth is the transparency Alpha value.
 function ZONE_BASE:GetFillColor()
-  return self.FillColor
+  return self.FillColor or {1, 0, 0, 0.15}
 end
 
 --- Get RGB fill color of zone.
@@ -451,9 +453,10 @@ end
 -- @return #table Table with three entries, e.g. {1, 0, 0}, which is the RGB color code.
 function ZONE_BASE:GetFillColorRGB()
   local rgb={}
-  rgb[1]=self.FillColor[1]
-  rgb[2]=self.FillColor[2]
-  rgb[3]=self.FillColor[3]
+  local FillColor=self:GetFillColor()
+  rgb[1]=FillColor[1]
+  rgb[2]=FillColor[2]
+  rgb[3]=FillColor[3]
   return rgb
 end
 
@@ -461,7 +464,8 @@ end
 -- @param #ZONE_BASE self
 -- @return #number Alpha value.
 function ZONE_BASE:GetFillColorAlpha()
-  local alpha=self.FillColor[4]
+  local FillColor=self:GetFillColor()
+  local alpha=FillColor[4]
   return alpha
 end
 
@@ -1683,7 +1687,7 @@ end
 
 
 --- @type ZONE_POLYGON_BASE
--- --@field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCS#Vec2}.
+-- @field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCS#Vec2}.
 -- @extends #ZONE_BASE
 
 
@@ -2387,8 +2391,8 @@ do -- ZONE_ELASTIC
   --- Update the convex hull of the polygon.
   -- This uses the [Graham scan](https://en.wikipedia.org/wiki/Graham_scan).
   -- @param #ZONE_ELASTIC self
-  -- @field #number Delay Delay in seconds before the zone is updated. Default 0.
-  -- @field #boolean Draw Draw the zone. Default `nil`.
+  -- @param #number Delay Delay in seconds before the zone is updated. Default 0.
+  -- @param #boolean Draw Draw the zone. Default `nil`.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:Update(Delay, Draw)
     
@@ -2420,6 +2424,7 @@ do -- ZONE_ELASTIC
       end
     end
 
+    return self
   end
   
   --- Start the updating scheduler.
@@ -2427,7 +2432,7 @@ do -- ZONE_ELASTIC
   -- @param #number Tstart Time in seconds before the updating starts.
   -- @param #number dT Time interval in seconds between updates. Default 60 sec.
   -- @param #number Tstop Time in seconds after which the updating stops. Default `nil`.
-  -- @field #boolean Draw Draw the zone. Default `nil`.
+  -- @param #boolean Draw Draw the zone. Default `nil`.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:StartUpdate(Tstart, dT, Tstop, Draw)
   

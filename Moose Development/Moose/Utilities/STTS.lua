@@ -154,7 +154,7 @@ function STTS.getSpeechTime(length,speed,isGoogle)
       length = string.len(length)
   end
 
-  return math.ceil(length/cps)
+  return length/cps --math.ceil(length/cps)
 end
 
 --- Text to speech function.

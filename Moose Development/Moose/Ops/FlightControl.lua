@@ -51,6 +51,7 @@
 -- @field Core.Spawn#SPAWN parkingGuard Parking guard spawner.
 -- @field #table holdingpatterns Holding points.
 -- @field #number hpcounter Counter for holding zones.
+-- @field Sound.SRS#MSRSQUEUE msrsqueue Queue for TTS transmissions using MSRS class.
 -- @field Sound.SRS#MSRS msrsTower Moose SRS wrapper.
 -- @field Sound.SRS#MSRS msrsPilot Moose SRS wrapper.
 -- @field #number Tlastmessage Time stamp (abs.) of last radio transmission.
@@ -326,7 +327,7 @@ FLIGHTCONTROL.FlightStatus={
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.7.0"
+FLIGHTCONTROL.version="0.7.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -404,6 +405,9 @@ function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS)
   self:SetFrequency(Frequency, Modulation)
   self:SetMarkHoldingPattern(true)
   self:SetRunwayRepairtime()
+  
+  -- Init msrs queue.
+  self.msrsqueue=MSRSQUEUE:New(self.alias)
   
   -- SRS for Tower.
   self.msrsTower=MSRS:New(PathToSRS, Frequency, Modulation)
@@ -977,6 +981,7 @@ end
 -- @param #FLIGHTCONTROL self
 function FLIGHTCONTROL:onbeforeStatusUpdate()
 
+  --[[
   if self.Tlastmessage then
     local Tnow=timer.getAbsTime()
     
@@ -1000,6 +1005,21 @@ function FLIGHTCONTROL:onbeforeStatusUpdate()
     else
       self:T2(self.lid..string.format("Last radio sent %d>%d sec ago. Status update allowed", dT, self.dTmessage))
     end
+  end
+  ]]
+  
+  local Tqueue=self.msrsqueue:CalcTransmisstionDuration()
+  
+  if Tqueue>0 then
+      -- Debug info.
+      local text=string.format("Still got %d messages in the radio queue. Will call status again in %.1f sec", #self.msrsqueue, Tqueue)
+      self:I(self.lid..text)
+        
+      -- Call status again in dt seconds.
+      self:__StatusUpdate(-Tqueue)
+
+      -- Deny transition.
+      return false  
   end
 
   return true
@@ -3273,8 +3293,10 @@ function FLIGHTCONTROL:_PlayerAbortLanding(groupname)
   local flight=_DATABASE:GetOpsGroup(groupname) --Ops.FlightGroup#FLIGHTGROUP
   
   if flight then
+  
+    local flightstatus=self:GetFlightStatus(flight)
       
-    if flight:IsLanding() and self:IsControlling(flight) then
+    if (flight:IsLanding() or flightstatus==FLIGHTCONTROL.FlightStatus.LANDING) and self:IsControlling(flight) then
       
       -- Call sign.
       local callsign=self:_GetCallsignName(flight)
@@ -3357,9 +3379,12 @@ function FLIGHTCONTROL:_PlayerRequestDirectLanding(groupname)
         self:TransmissionTower(text, flight, 10)
       
       else
+      
+        -- Runway.
+        local runway=self:GetActiveRunwayText()      
 
         -- Message text.
-        local text=string.format("%s, affirmative! Confirm approach",  callsign)
+        local text=string.format("%s, affirmative, runway %s. Confirm approach!",  callsign, runway)
             
         -- Send message.
         self:TransmissionTower(text, flight, 10)
@@ -4025,12 +4050,15 @@ function FLIGHTCONTROL:_CheckFlights()
             local onRunway=self:IsCoordinateRunway(coord)
                                    
             -- Debug output.
-            self:I(self.lid..string.format("Player %s speed %.1f knots (max=%.1f) onRunway=%s", playerElement.playerName, UTILS.MpsToKnots(speed), UTILS.MpsToKnots(self.speedLimitTaxi), tostring(onRunway)))
+            self:T(self.lid..string.format("Player %s speed %.1f knots (max=%.1f) onRunway=%s", playerElement.playerName, UTILS.MpsToKnots(speed), UTILS.MpsToKnots(self.speedLimitTaxi), tostring(onRunway)))
             
             if speed and speed>self.speedLimitTaxi and not onRunway then
             
+              -- Callsign.
+              local callsign=self:_GetCallsignName(flight)            
+            
               -- Radio text.
-              local text="Slow down, you are taxiing too fast!"
+              local text=string.format("%s, slow down, you are taxiing too fast!", callsign)
               
               -- Radio message to player.
               self:TransmissionTower(text, flight)
@@ -4227,17 +4255,19 @@ function FLIGHTCONTROL:TransmissionTower(Text, Flight, Delay)
 
   -- Spoken text.
   local text=self:_GetTextForSpeech(Text)
-  
-  -- Tower radio call.
-  self.msrsTower:PlayText(text, Delay)
-  
+    
   -- "Subtitle".
+  local subgroups=nil
   if Flight and not Flight.isAI then
     local playerData=Flight:_GetPlayerData()
     if playerData.subtitles then
-      self:TextMessageToFlight(Text, Flight, 5, false, Delay)
+      subgroups=subgroups or {}
+      table.insert(subgroups, Flight.group)
     end
   end
+  
+  -- New transmission.  
+  local transmission=self.msrsqueue:NewTransmission(text, nil, self.msrsTower, nil, 1, subgroups, Text)
   
   -- Set time stamp. Can be in the future.
   self.Tlastmessage=timer.getAbsTime() + (Delay or 0)
@@ -4256,29 +4286,35 @@ function FLIGHTCONTROL:TransmissionPilot(Text, Flight, Delay)
 
   -- Get player data.
   local playerData=Flight:_GetPlayerData()
-  
+    
   -- Check if player enabled his "voice".
   if playerData==nil or playerData.myvoice then
 
     -- Spoken text.
     local text=self:_GetTextForSpeech(Text)
+    
+    -- MSRS instance to use.
+    local msrs=self.msrsPilot
  
     if Flight.useSRS and Flight.msrs then
       
       -- Pilot radio call using settings of the FLIGHTGROUP. We just overwrite the frequency.
-      Flight.msrs:PlayTextExt(text, Delay, self.frequency, self.modulation, Gender, Culture, Voice, Volume, Label)
-      
-    else
-
-      -- Pilot radio call using the default settings.
-      self.msrsPilot:PlayText(text, Delay)
-
-    end        
-    
-    -- "Subtitle".
-    if Flight and not Flight.isAI then
-      self:TextMessageToFlight(Text, Flight, 5, false, Delay)
+      msrs=Flight.msrs
+       
     end
+        
+    -- "Subtitle".
+    local subgroups=nil
+    if Flight and not Flight.isAI then
+      local playerData=Flight:_GetPlayerData()
+      if playerData.subtitles then
+        subgroups=subgroups or {}
+        table.insert(subgroups, Flight.group)
+      end
+    end      
+    
+    -- Add transmission to msrsqueue.
+    self.msrsqueue:NewTransmission(text, nil, msrs, nil, 1, subgroups, Text, nil, self.frequency, self.modulation)
     
   end
 
@@ -4439,7 +4475,7 @@ end
 --- Get text for text-to-speech.
 -- Numbers are spaced out, e.g. "Heading 180" becomes "Heading 1 8 0 ".
 -- @param #FLIGHTCONTROL self
--- @param #string text
+-- @param #string text Original text.
 -- @return #string Spoken text.
 function FLIGHTCONTROL:_GetTextForSpeech(text)
 

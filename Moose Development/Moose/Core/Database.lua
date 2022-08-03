@@ -979,13 +979,15 @@ function DATABASE:_RegisterClients()
 
   for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
     self:I(string.format("Register Client: %s", tostring(ClientName)))
-    self:AddClient( ClientName )
+    local client=self:AddClient( ClientName )
+    client.SpawnCoord=COORDINATE:New(ClientTemplate.x, ClientTemplate.alt, ClientTemplate.y)    
   end
 
   return self
 end
 
---- @param #DATABASE self
+--- Private method that registeres all static objects.
+-- @param #DATABASE self
 function DATABASE:_RegisterStatics()
 
   local CoalitionsData={GroupsRed=coalition.getStaticObjects(coalition.side.RED), GroupsBlue=coalition.getStaticObjects(coalition.side.BLUE), GroupsNeutral=coalition.getStaticObjects(coalition.side.NEUTRAL)}
@@ -1035,11 +1037,6 @@ function DATABASE:_RegisterAirbases()
     end
     text=text.."]"
     self:I(text)
-
-    -- Check for DCS bug IDs.
-    if airbaseID~=airbase:GetID() then
-      --self:E("WARNING: :getID does NOT match :GetID!")
-    end
 
   end
 
