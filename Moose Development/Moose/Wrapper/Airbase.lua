@@ -1081,12 +1081,10 @@ function AIRBASE:_InitParkingSpots()
   -- Get client coordinates.  
   local function isClient(coord)
     local clients=_DATABASE.CLIENTS
-    for clientname, client in pairs(clients) do
-      local template=_DATABASE:GetGroupTemplateFromUnitName(clientname)
-      local units=template.units
-      for i,unit in pairs(units) do
-        local Coord=COORDINATE:New(unit.x, unit.alt, unit.y)
-        local dist=Coord:Get2DDistance(coord)
+    for clientname, _client in pairs(clients) do
+      local client=_client --Wrapper.Client#CLIENT
+      if client and client.SpawnCoord then
+        local dist=client.SpawnCoord:Get2DDistance(coord)
         if dist<2 then
           return true, clientname
         end
@@ -1743,16 +1741,6 @@ function AIRBASE:_InitRunways(IncludeInverse)
     return ((b.z - a.z)*(c.x - a.x) - (b.x - a.x)*(c.z - a.z)) > 0
   end
   
-  --[[
-  local a={x=1, y=0, z=0}
-  local A={x=0, y=0, z=0}
-  local b={x=0, y=0, z=1}
-  local c={x=0, y=0, z=-1}
-  local bl=isLeft(A, a, b)
-  local cl=isLeft(A, a, c)
-  env.info(string.format("b left=%s, c left=%s", tostring(bl), tostring(cl)))
-  ]]
-  
   for i,j in pairs(rpairs) do
     local ri=Runways[i] --#AIRBASE.Runway
     local rj=Runways[j] --#AIRBASE.Runway
@@ -1768,13 +1756,6 @@ function AIRBASE:_InitRunways(IncludeInverse)
     -- Vector from runway i to runway j.
     local b=UTILS.VecSubstract(rj.center, ri.center)    
     b=UTILS.VecAdd(ri.center, b)
-    
-    --[[
-    local ca=COORDINATE:NewFromVec3(a)
-    local cb=COORDINATE:NewFromVec3(b)    
-    c0:ArrowToAll(ca, nil , {0,1,0})
-    c0:ArrowToAll(cb, nil , {0,0,1})
-    ]]
     
     -- Check if rj is left of ri.
     local left=isLeft(c0, a, b)
@@ -1992,7 +1973,7 @@ function AIRBASE:SetActiveRunwayLanding(Name, PreferLeft)
   end
   
   if runway then
-    self:I("Setting active runway for landing as "..self:GetRunwayName(runway))
+    self:I(string.format("%s: Setting active runway for landing as %s", self.AirbaseName, self:GetRunwayName(runway)))
   else
     self:E("ERROR: Could not set the runway for landing!")
   end
@@ -2040,7 +2021,7 @@ function AIRBASE:SetActiveRunwayTakeoff(Name, PreferLeft)
   end
   
   if runway then
-    self:I("Setting active runway for takeoff as "..self:GetRunwayName(runway))
+    self:I(string.format("%s: Setting active runway for takeoff as %s", self.AirbaseName, self:GetRunwayName(runway)))
   else
     self:E("ERROR: Could not set the runway for takeoff!")
   end

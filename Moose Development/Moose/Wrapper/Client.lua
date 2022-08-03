@@ -13,6 +13,17 @@
 
 --- The CLIENT class
 -- @type CLIENT
+-- @field #string ClassName Name of the class.
+-- @field #string ClientName Name of the client.
+-- @field #string ClientBriefing Briefing.
+-- @field #function ClientCallBack Callback function.
+-- @field #table ClientParameters Parameters of the callback function.
+-- @field #number ClientGroupID Group ID of the client.
+-- @field #string ClientGroupName Group name.
+-- @field #boolean ClientAlive Client alive.
+-- @field #boolean ClientAlive2 Client alive 2.
+-- @field #table Players Player table.
+-- @field Core.Point#COORDINATE SpawnCoord Spawn coordinate from the template.
 -- @extends Wrapper.Unit#UNIT
 
 
