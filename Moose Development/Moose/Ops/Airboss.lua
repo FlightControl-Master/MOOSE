@@ -5335,15 +5335,11 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
 
     aoa = aoaac.OnSpeed
 
-    if harrier then
-      -- 0.8 to 1.0 NM
-      dist = UTILS.NMToMeters( 0.9 )
-    else
-      dist = UTILS.NMToMeters( 1.2 )
-    end
-
     if goshawk then
       -- 0.9 to 1.1 NM per natops ch.4 page 48
+      dist = UTILS.NMToMeters( 0.9 )
+    elseif harrier then
+      -- 0.8 to 1.0 NM
       dist = UTILS.NMToMeters( 0.9 )
     else
       dist = UTILS.NMToMeters( 1.1 )
