@@ -11190,10 +11190,11 @@ function AIRBOSS:_GetLandingSpotCoordinate()
     self.landingspotcoord:Translate( 69, hdg, true, true ):SetAltitude( self.carrierparam.deckheight )
   elseif self.carriertype == AIRBOSS.CarrierType.INVINCIBLE then
 
-    -- Landing 100 ft abeam, 100 alt.
+    -- Using spot 3 as the default
     local hdg = self:GetHeading()
 
     self.landingspotcoord:Translate( 69, hdg, true, true ):SetAltitude( self.carrierparam.deckheight )
+    -- This location looks good.
   elseif self.carriertype == AIRBOSS.CarrierType.TARAWA then
 
     -- Landing 100 ft abeam, 120 alt.
