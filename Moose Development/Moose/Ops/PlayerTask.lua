@@ -38,8 +38,14 @@
 -- @field #table conditionSuccess   =   {},
 -- @field #table conditionFailure   =   {},
 -- @field Ops.PlayerTask#PLAYERTASKCONTROLLER TaskController
+-- @field #number timestamp
 --
 -- @extends Core.Fsm#FSM
+
+-------------------------------------------------------------------------------------------------------------------
+-- PLAYERTASK
+-- TODO: PLAYERTASK
+-------------------------------------------------------------------------------------------------------------------
 
 --- Global PlayerTaskNr counter
 _PlayerTaskNr = 0
@@ -63,11 +69,12 @@ PLAYERTASK = {
   conditionSuccess   =   {},
   conditionFailure   =   {},
   TaskController     =   nil,
+  timestamp          =   0,
   }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.0.7"
+PLAYERTASK.version="0.0.8"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -97,6 +104,7 @@ function PLAYERTASK:New(Type, Target, Repeat, Times)
   self.conditionSuccess = {}
   self.conditionFailure = {}
   self.TaskController = nil -- Ops.PlayerTask#PLAYERTASKCONTROLLER
+  self.timestamp = timer.getTime()
   
   if Repeat then
     self.Repeat = true
@@ -168,9 +176,17 @@ end
 -- @param #PLAYERTASK self
 -- @return #table clients
 function PLAYERTASK:GetClients()
-  self:I(self.lid.."GetClients?")
+  self:I(self.lid.."GetClients")
   local clientlist = self.Clients:GetIDStackSorted() or {}
   return clientlist
+end
+
+--- [User] Count clients
+-- @param #PLAYERTASK self
+-- @return #number clientcount
+function PLAYERTASK:CountClients()
+  self:I(self.lid.."CountClients")
+  return self.Clients:Count()
 end
 
 --- [User] Check if a player name is assigned to this task
@@ -577,6 +593,7 @@ end
 -- @field #string Type
 -- @field #boolean UseGroupNames
 -- @field #table PlayerMenu
+-- @field #boolean usecluster
 -- 
 
 
@@ -590,6 +607,7 @@ PLAYERTASKCONTROLLER = {
   ClientSet          =   nil,
   UseGroupNames      =   true,
   PlayerMenu         =   {},
+  usecluster         = false,
   }
 
 ---
@@ -602,7 +620,7 @@ PLAYERTASKCONTROLLER.Type = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.0.7"
+PLAYERTASKCONTROLLER.version="0.0.8"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -620,6 +638,10 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.Coalition = Coalition or coalition.side.BLUE
   self.CoalitionName = UTILS.GetCoalitionName(Coalition)
   self.Type = Type or PLAYERTASKCONTROLLER.Type.A2G
+  self.usecluster = false
+  if self.Type == PLAYERTASKCONTROLLER.Type.A2A then
+    self.usecluster = true
+  end
   self.ClientFilter = ClientFilter or ""
   
   self.TargetQueue = FIFO:New() -- Utilities.FiFo#FIFO
@@ -701,7 +723,7 @@ function PLAYERTASKCONTROLLER:_DummyMenu(group)
   return self
 end
 
---- [user] Switch usage of target names for menu entries on or off
+--- [User] Switch usage of target names for menu entries on or off
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #boolean OnOff If true, set to on (default), if nil or false, set to off
 -- @return #PLAYERTASKCONTROLLER self
@@ -793,9 +815,9 @@ function PLAYERTASKCONTROLLER:_CheckTaskQueue()
  return self
 end
 
---- [user] Add a target object to the target queue
+--- [User] Add a target object to the target queue
 -- @param #PLAYERTASKCONTROLLER self
--- @param Wrapper.Positionable#POSITIONABLE Target The target GROUP, SET_GROUP, UNIT, SET_UNIT, STATIC, AIRBASE or COORDINATE.
+-- @param Wrapper.Positionable#POSITIONABLE Target The target GROUP, SET\_GROUP, UNIT, SET\_UNIT, STATIC, SET\_STATIC, AIRBASE or COORDINATE.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:AddTarget(Target)
   self:I(self.lid.."AddTarget")
@@ -1064,11 +1086,18 @@ function PLAYERTASKCONTROLLER:_BuildMenus()
           local tasks =  taskpertype[_tasktype] or {}
           for _,_task in pairs(tasks) do
             _task = _task -- Ops.PlayerTask#PLAYERTASK
-            local text = string.format("TaskNo %03d",_task.PlayerTaskNr)
+            local pilotcount = _task:CountClients()
+            local newtext = "]"
+            local tnow = timer.getTime()
+            -- marker for new tasks
+            if tnow - _task.timestamp < 60 then
+              newtext = "*]"
+            end
+            local text = string.format("TaskNo %03d [%d%s",_task.PlayerTaskNr,pilotcount,newtext)
             if self.UseGroupNames then
               local name = _task.Target:GetName()
               if name ~= "Unknown" then
-                text = string.format("%s (%03d)",name,_task.PlayerTaskNr)
+                text = string.format("%s (%03d) [%d%s",name,_task.PlayerTaskNr,pilotcount,newtext)
               end
             end
             if _task:GetState() == "Planned" or (not _task:HasPlayerName(playername)) then
@@ -1082,6 +1111,103 @@ function PLAYERTASKCONTROLLER:_BuildMenus()
       end
     end
   end
+  return self
+end
+
+--- [User] Add agent group to INTEL detection
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Wrapper.Group#GROUP Recce Group of agents. Can also be an @{Ops.OpsGroup#OPSGROUP} object.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:AddAgent(Recce)
+  self:I(self.lid.."AddAgent: "..Recce:GetName())
+  if self.Intel then
+    self.Intel:AddAgent(Recce)
+  end
+  return self
+end
+
+--- [User] Set up INTEL detection
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
+  self:I(self.lid.."SetupIntel: "..RecceName)
+  self.RecceSet = SET_GROUP:New():FilterCoalitions(self.CoalitionName):FilterPrefixes(RecceName):FilterStart()
+  self.Intel = INTEL:New(self.RecceSet,self.Coalition,self.Name.."-Intel")
+  self.Intel:SetClusterAnalysis(true,false,false)
+  self.Intel:SetClusterRadius(2500)
+  self.Intel.statusupdate = 25
+  --if self.verbose then
+    --self.Intel:SetDetectionTypes(true,true,false,true,true,true)
+  --end
+  if self.Type == PLAYERTASKCONTROLLER.Type.A2G then
+    self.Intel:SetDetectStatics(true)
+  end
+  self.Intel:__Start(2)
+  
+  local function NewCluster(Cluster)
+    if not self.usecluster then return self end
+    local cluster = Cluster -- Ops.Intelligence#INTEL.Cluster
+    local type = cluster.ctype
+    self:I({type,self.Type})
+    if (type == INTEL.Ctype.AIRCRAFT and self.Type == PLAYERTASKCONTROLLER.Type.A2A) or (type == INTEL.Ctype.NAVAL and self.Type == PLAYERTASKCONTROLLER.Type.A2S) then
+      self:I("A2A or A2S")
+      local contacts = cluster.Contacts -- #table of GROUP
+      local targetset = SET_GROUP:New()
+      for _,_object in pairs(contacts) do
+        local contact = _object -- Ops.Intelligence#INTEL.Contact
+        self:I("Adding group: "..contact.groupname)
+        targetset:AddGroup(contact.group,true)
+      end
+      self:AddTarget(targetset)
+    elseif (type == INTEL.Ctype.GROUND or type == INTEL.Ctype.STRUCTURE) and self.Type == PLAYERTASKCONTROLLER.Type.A2G then
+      self:I("A2G")
+      local contacts = cluster.Contacts -- #table of GROUP or STATIC
+      local targetset = nil -- Core.Set#SET_BASE
+      if type == INTEL.Ctype.GROUND then
+        targetset = SET_GROUP:New()
+        for _,_object in pairs(contacts) do
+          local contact = _object -- Ops.Intelligence#INTEL.Contact
+          self:I("Adding group: "..contact.groupname)
+          targetset:AddGroup(contact.group,true)
+        end
+      elseif type == INTEL.Ctype.STRUCTURE then
+        targetset = SET_STATIC:New()
+        for _,_object in pairs(contacts) do
+          local contact = _object -- Ops.Intelligence#INTEL.Contact
+          self:I("Adding static: "..contact.groupname)
+          targetset:AddStatic(contact.group)
+        end
+      end
+      if targetset then
+        self:AddTarget(targetset)
+      end
+    end
+  end
+  
+  local function NewContact(Contact)
+    if self.usecluster then return self end
+    local contact = Contact -- Ops.Intelligence#INTEL.Contact
+    local type = contact.ctype
+    self:I({type,self.Type})
+    if (type == INTEL.Ctype.AIRCRAFT and self.Type == PLAYERTASKCONTROLLER.Type.A2A) or (type == INTEL.Ctype.NAVAL and self.Type == PLAYERTASKCONTROLLER.Type.A2S) then
+      self:I("A2A or A2S")
+      self:I("Adding group: "..contact.groupname)
+      self:AddTarget(contact.group)
+    elseif (type == INTEL.Ctype.GROUND or type == INTEL.Ctype.STRUCTURE) and self.Type == PLAYERTASKCONTROLLER.Type.A2G then
+      self:I("A2G")
+      self:I("Adding group: "..contact.groupname)
+      self:AddTarget(contact.group)
+    end
+  end
+  
+  function self.Intel:OnAfterNewCluster(From,Event,To,Cluster)
+    NewCluster(Cluster)
+  end
+  
+  function self.Intel:OnAfterNewContact(From,Event,To,Contact)
+    NewContact(Contact)
+  end
+  
   return self
 end
 
