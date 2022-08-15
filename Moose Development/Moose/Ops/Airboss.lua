@@ -2098,6 +2098,7 @@ function AIRBOSS:New( carriername, alias )
       -- Carrier specific.
       if self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.INVINCIBLE or self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.HERMES or self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.TARAWA or self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.AMERICA or self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.JCARLOS or self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.CANBERRA then
 
+
         -- Flare wires.
         local w1 = stern:Translate( self.carrierparam.wire1, FB, true )
         local w2 = stern:Translate( self.carrierparam.wire2, FB, true )
@@ -2829,6 +2830,7 @@ end
 function AIRBOSS:SetGlideslopeErrorThresholds(_max,_min, High, HIGH, Low, LOW)
 
   --Check if V/STOL Carrier
+
   if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
   
   -- allow a larger GSE for V/STOL operations --Pene Testing
@@ -4505,6 +4507,46 @@ function AIRBOSS:_InitInvincible()
   self.BreakLate.Xmax = UTILS.NMToMeters( 5 ) -- Not more than 5 NM in front of the boat. Enough for late breaks?
   self.BreakLate.Zmin = -UTILS.NMToMeters( 1.6 ) -- Not more than 1.6 NM port.
   self.BreakLate.Zmax = UTILS.NMToMeters( 1 ) -- Not more than 1 NM starboard.
+  self.BreakLate.LimitXmin = 0 -- Check and next step 0.8 NM port and in front of boat.
+  self.BreakLate.LimitXmax = nil
+  self.BreakLate.LimitZmin = -UTILS.NMToMeters( 0.5 ) -- 926 m port, closer than the stennis as abeam is 0.8-1.0 rather than 1.2
+  self.BreakLate.LimitZmax = nil
+
+end
+
+--- Init parameters for R05 HMS Invincible carrier.
+-- @param #AIRBOSS self
+function AIRBOSS:_InitInvincible()
+
+  -- Init Stennis as default.
+  self:_InitStennis()
+
+  -- Carrier Parameters.
+  self.carrierparam.sterndist = -105
+  self.carrierparam.deckheight = 12 -- From model viewer WL0.
+
+  -- Total size of the carrier (approx as rectangle).
+  self.carrierparam.totlength = 228.19
+  self.carrierparam.totwidthport = 20.5
+  self.carrierparam.totwidthstarboard = 24.5
+
+  -- Landing runway.
+  self.carrierparam.rwyangle = 0
+  self.carrierparam.rwylength = 215
+  self.carrierparam.rwywidth = 13
+
+  -- Wires.
+  self.carrierparam.wire1 = nil
+  self.carrierparam.wire2 = nil
+  self.carrierparam.wire3 = nil
+  self.carrierparam.wire4 = nil
+
+  -- Late break.
+  self.BreakLate.name = "Late Break"
+  self.BreakLate.Xmin = -UTILS.NMToMeters( 1 ) -- Not more than 1 NM behind the boat. Last check was at 0.
+  self.BreakLate.Xmax = UTILS.NMToMeters( 5 ) -- Not more than 5 NM in front of the boat. Enough for late breaks?
+  self.BreakLate.Zmin = -UTILS.NMToMeters( 0.25 ) -- Not more than 0.25 NM port.
+  self.BreakLate.Zmax = UTILS.NMToMeters( 0.5 ) -- Not more than 0.5 NM starboard.
   self.BreakLate.LimitXmin = 0 -- Check and next step 0.8 NM port and in front of boat.
   self.BreakLate.LimitXmax = nil
   self.BreakLate.LimitZmin = -UTILS.NMToMeters( 0.5 ) -- 926 m port, closer than the stennis as abeam is 0.8-1.0 rather than 1.2
@@ -6340,6 +6382,7 @@ function AIRBOSS:_GetMarshalAltitude( stack, case )
 
     -- Tarawa,LHA,LHD Delta patterns.
     if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
+
 
       -- Pattern is directly overhead the carrier.
       p1 = Carrier:Translate( UTILS.NMToMeters( 1.0 ), hdg + 90 )
@@ -8180,6 +8223,7 @@ function AIRBOSS:OnEventLand( EventData )
           -- Check carrier type.
           if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
 
+
             -- Power "Idle".
             self:RadioTransmission( self.LSORadio, self.LSOCall.IDLE, false, 1, nil, true )
 
@@ -8214,6 +8258,7 @@ function AIRBOSS:OnEventLand( EventData )
       --------------------
 
       if self.carriertype ~= AIRBOSS.CarrierType.INVINCIBLE or self.carriertype ~= AIRBOSS.CarrierType.HERMES or self.carriertype ~= AIRBOSS.CarrierType.TARAWA or self.carriertype ~= AIRBOSS.CarrierType.AMERICA or self.carriertype ~= AIRBOSS.CarrierType.JCARLOS or self.carriertype ~= AIRBOSS.CarrierType.CANBERRA then
+
 
         -- Coordinate at landing event
         local coord = EventData.IniUnit:GetCoordinate()
@@ -9252,6 +9297,7 @@ function AIRBOSS:_CheckForLongDownwind( playerData )
 
   -- For the tarawa, other LHA and LHD we give a bit more space.
   if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
+
     limit = UTILS.NMToMeters( -2.0 )
   end
 
@@ -9339,6 +9385,7 @@ function AIRBOSS:_Ninety( playerData )
 
     -- Next step: wake.
     if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
+
       -- Harrier has no wake stop. It stays port of the boat.
       self:_SetPlayerStep( playerData, AIRBOSS.PatternStep.FINAL )
     else
@@ -10034,6 +10081,7 @@ function AIRBOSS:_GetSternCoord()
 
   -- Stern coordinate (sterndist<0). --Pene testing Case III
   if self.carriertype==AIRBOSS.CarrierType.INVINCIBLE or self.carriertype==AIRBOSS.CarrierType.HERMES or self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
+
     if case==3 then
     -- CASE III V/STOL translation Due over deck approach if needed.
     self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(8, FB-90, true, true)
@@ -10780,6 +10828,7 @@ function AIRBOSS:_GetZoneHolding( case, stack )
 
     -- Delta pattern.
     if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
+
       self.zoneHolding = ZONE_RADIUS:New( "CASE I Holding Zone", self.carrier:GetVec2(), UTILS.NMToMeters( 5 ) )
     end
 
@@ -10832,6 +10881,7 @@ function AIRBOSS:_GetZoneCommence( case, stack )
     local Three = self:GetCoordinate():Translate( D, hdg + 275 )
 
     if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
+
 
       local Dx = UTILS.NMToMeters( 2.25 )
 
@@ -11138,6 +11188,7 @@ function AIRBOSS:_GetOptLandingCoordinate()
   local case=self.case
   -- set Case III V/STOL abeam landing spot over deck -- Pene Testing
   if self.carriertype==AIRBOSS.CarrierType.INVINCIBLE or self.carriertype==AIRBOSS.CarrierType.HERMES or self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
+
   
     if case==3 then
 	self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate())
@@ -12137,6 +12188,7 @@ function AIRBOSS:_GS( step, n )
       gp = AIRBOSS.GroovePos.IC
     elseif n == 1 then
       if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
+
         gp = AIRBOSS.GroovePos.AL
       else
         gp = AIRBOSS.GroovePos.IW
@@ -14016,6 +14068,7 @@ function AIRBOSS:_IsCarrierAircraft( unit )
   -- Special case for Harrier which can only land on Tarawa, LHA and LHD.
   if aircrafttype == AIRBOSS.AircraftCarrier.AV8B then
     if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
+
       return true
     else
       return false
@@ -17381,6 +17434,7 @@ function AIRBOSS:_MarkCaseZones( _unitName, flare )
 
         -- Tarawa, LHA and LHD landing spots.
         if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
+
           text = text .. "\n* abeam landing stop with RED flares"
           -- Abeam landing spot zone.
           local ALSPT = self:_GetZoneAbeamLandingSpot()
