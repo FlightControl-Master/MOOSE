@@ -147,6 +147,89 @@ function PLAYERTASK:New(Type, Target, Repeat, Times)
   
   self:__Status(-5)
   return self
+  
+  ---
+  -- Pseudo Functions
+  ---
+  
+  --- On After "Planned" event. Task has been planned.
+  -- @function [parent=#PLAYERTASK] OnAfterPlanned
+  -- @param #PLAYERTASK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "Requested" event. Task has been Requested.
+  -- @function [parent=#PLAYERTASK] OnAfterRequested
+  -- @param #PLAYERTASK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+   
+  --- On After "ClientAdded" event. Client has been added to the task.
+  -- @function [parent=#PLAYERTASK] OnAfterClientAdded
+  -- @param #PLAYERTASK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Client#CLIENT Client
+   
+  --- On After "ClientRemoved" event. Client has been removed from the task.
+  -- @function [parent=#PLAYERTASK] OnAfterClientRemoved
+  -- @param #PLAYERTASK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+   
+  --- On After "Executing" event. Task is executed by the 1st client.
+  -- @function [parent=#PLAYERTASK] OnAfterExecuting
+  -- @param #PLAYERTASK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+   
+  --- On After "Done" event. Task is done.
+  -- @function [parent=#PLAYERTASK] OnAfterDone
+  -- @param #PLAYERTASK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+   
+  --- On After "Cancel" event. Task has been cancelled.
+  -- @function [parent=#PLAYERTASK] OnAfterCancel
+  -- @param #PLAYERTASK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+   
+  --- On After "Planned" event. Task has been planned.
+  -- @function [parent=#PLAYERTASK] OnAfterPilotPlanned
+  -- @param #PLAYERTASK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+   
+  --- On After "Success" event. Task has been a success.
+  -- @function [parent=#PLAYERTASK] OnAfterSuccess
+  -- @param #PLAYERTASK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+   
+  --- On After "ClientAborted" event. A client has aborted the task.
+  -- @function [parent=#PLAYERTASK] OnAfterClientAborted
+  -- @param #PLAYERTASK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+   
+  --- On After "Failed" event. Task has been a failure.
+  -- @function [parent=#PLAYERTASK] OnAfterFailed
+  -- @param #PLAYERTASK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
 end
 
 --- [Internal] Add a PLAYERTASKCONTROLLER for this task
@@ -594,6 +677,7 @@ end
 -- @field #boolean UseGroupNames
 -- @field #table PlayerMenu
 -- @field #boolean usecluster
+-- @field #string MenuName
 -- 
 
 
@@ -608,6 +692,7 @@ PLAYERTASKCONTROLLER = {
   UseGroupNames      =   true,
   PlayerMenu         =   {},
   usecluster         = false,
+  MenuName           = nil,
   }
 
 ---
@@ -620,7 +705,7 @@ PLAYERTASKCONTROLLER.Type = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.0.8"
+PLAYERTASKCONTROLLER.version="0.0.9"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -648,6 +733,8 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.TaskQueue = FIFO:New() -- Utilities.FiFo#FIFO
   self.TasksPerPlayer = FIFO:New() -- Utilities.FiFo#FIFO
   self.PlayerMenu = {} -- #table
+  
+  self.MenuName = nil
   
   self.repeatonfailed = true
   self.repeattimes = 5
@@ -686,6 +773,59 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self:I(self.lid.."Started.")
   
   return self
+  
+  ---
+  -- Pseudo Functions
+  ---
+  
+  --- On After "TaskAdded" event. Task has been added.
+  -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskAdded
+  -- @param #PLAYERTASKCONTROLLER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.PlayerTask#PLAYERTASK Task
+  
+   --- On After "TaskDone" event. Task is done.
+  -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskDone
+  -- @param #PLAYERTASKCONTROLLER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.PlayerTask#PLAYERTASK Task
+   
+  --- On After "TaskCancelled" event. Task has been cancelled.
+  -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskCancelled
+  -- @param #PLAYERTASKCONTROLLER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.PlayerTask#PLAYERTASK Task
+   
+  --- On After "TaskFailed" event. Task has failed.
+  -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskFailed
+  -- @param #PLAYERTASKCONTROLLER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.PlayerTask#PLAYERTASK Task
+   
+  --- On After "TaskSuccess" event. Task has been a success.
+  -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskSuccess
+  -- @param #PLAYERTASKCONTROLLER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.PlayerTask#PLAYERTASK Task
+   
+  --- On After "TaskRepeatOnFailed" event. Task has failed and will be repeated.
+  -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskRepeatOnFailed
+  -- @param #PLAYERTASKCONTROLLER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.PlayerTask#PLAYERTASK Task
+  
 end
 
 --- [internal] Event handling
@@ -815,6 +955,14 @@ function PLAYERTASKCONTROLLER:_CheckTaskQueue()
  return self
 end
 
+--- [Internal] Check task queue for a specific player name
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #boolean outcome
+function PLAYERTASKCONTROLLER:_CheckPlayerHasTask(PlayerName)
+  self:I(self.lid.."_CheckPlayerHasTask")
+  return self.TasksPerPlayer:HasUniqueID(PlayerName)
+end
+
 --- [User] Add a target object to the target queue
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Wrapper.Positionable#POSITIONABLE Target The target GROUP, SET\_GROUP, UNIT, SET\_UNIT, STATIC, SET\_STATIC, AIRBASE or COORDINATE.
@@ -926,9 +1074,12 @@ function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task)
     local m=MESSAGE:New(text,"10","Info"):ToAll()
     self.TasksPerPlayer:Push(Task,playername)
     -- clear menu
+    self:_BuildMenus(Client)
+    --[[
     if self.PlayerMenu[playername] then
       self.PlayerMenu[playername]:RemoveSubMenus()
     end
+    --]]
   end
   return self
 end
@@ -1044,69 +1195,95 @@ function PLAYERTASKCONTROLLER:_AbortTask(Group, Client)
     text = "No active task!"
   end
   local m=MESSAGE:New(text,15,"Info"):ToGroup(Group)
+  self:_BuildMenus(Client)
   return self
 end
 
 --- [Internal] Build client menus
 -- @param #PLAYERTASKCONTROLLER self
+-- @param Wrapper.Client#CLIENT Client (optional) build for this client name only
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:_BuildMenus()
+function PLAYERTASKCONTROLLER:_BuildMenus(Client)
   self:I(self.lid.."_BuildMenus")
   local clients = self.ClientSet:GetAliveSet()
+  if Client then
+    clients = {Client}
+  end
   for _,_client in pairs(clients) do
     if _client then
       local client = _client -- Wrapper.Client#CLIENT
       local group = client:GetGroup()
       local playername = client:GetPlayerName() or "Unknown"
       if group and client then
-        local topmenu = MENU_GROUP:New(group,self.Name.." Tasking "..self.Type,nil)
-        local active = MENU_GROUP:New(group,"Active Task",topmenu)
-        local info = MENU_GROUP_COMMAND:New(group,"Info",active,self._ActiveTaskInfo,self,group,client)
-        local mark = MENU_GROUP_COMMAND:New(group,"Mark on map",active,self._MarkTask,self,group,client)
-        if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
-          -- no smoking/flaring here if A2A
-          local smoke = MENU_GROUP_COMMAND:New(group,"Smoke",active,self._SmokeTask,self,group,client)
-          local flare = MENU_GROUP_COMMAND:New(group,"Flare",active,self._FlareTask,self,group,client)
-        end
-        local abort = MENU_GROUP_COMMAND:New(group,"Abort",active,self._AbortTask,self,group,client)
+        ---
+        -- TOPMENU
+        --- 
+        local menuname = self.MenuName or self.Name.." Tasking "..self.Type
+        local topmenu = MENU_GROUP:New(group,menuname,nil)
         
         if self.PlayerMenu[playername] then
           self.PlayerMenu[playername]:RemoveSubMenus()
         else
-          self.PlayerMenu[playername] = MENU_GROUP:New(group,"Join Task",topmenu)
+          self.PlayerMenu[playername] = topmenu
         end
         
-        local tasktypes = self:_GetAvailableTaskTypes()
-        local taskpertype = self:_GetTasksPerType()
-        
-        local ttypes = {}
-        local taskmenu = {}
-        for _tasktype,_data in pairs(tasktypes) do
-          ttypes[_tasktype] = MENU_GROUP:New(group,_tasktype,self.PlayerMenu[playername])
-          local tasks =  taskpertype[_tasktype] or {}
-          for _,_task in pairs(tasks) do
-            _task = _task -- Ops.PlayerTask#PLAYERTASK
-            local pilotcount = _task:CountClients()
-            local newtext = "]"
-            local tnow = timer.getTime()
-            -- marker for new tasks
-            if tnow - _task.timestamp < 60 then
-              newtext = "*]"
-            end
-            local text = string.format("TaskNo %03d [%d%s",_task.PlayerTaskNr,pilotcount,newtext)
-            if self.UseGroupNames then
-              local name = _task.Target:GetName()
-              if name ~= "Unknown" then
-                text = string.format("%s (%03d) [%d%s",name,_task.PlayerTaskNr,pilotcount,newtext)
-              end
-            end
-            if _task:GetState() == "Planned" or (not _task:HasPlayerName(playername)) then
-              local taskentry = MENU_GROUP_COMMAND:New(group,text,ttypes[_tasktype],self._JoinTask,self,group,client,_task)
-              taskentry:SetTag(playername)
-              taskmenu[#taskmenu+1] = taskentry
-            end          
+        ---
+        -- ACTIVE TASK MENU
+        ---
+        if self:_CheckPlayerHasTask(playername) then
+          local active = MENU_GROUP:New(group,"Active Task",topmenu)
+          local info = MENU_GROUP_COMMAND:New(group,"Info",active,self._ActiveTaskInfo,self,group,client)
+          local mark = MENU_GROUP_COMMAND:New(group,"Mark on map",active,self._MarkTask,self,group,client)
+          if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
+            -- no smoking/flaring here if A2A
+            local smoke = MENU_GROUP_COMMAND:New(group,"Smoke",active,self._SmokeTask,self,group,client)
+            local flare = MENU_GROUP_COMMAND:New(group,"Flare",active,self._FlareTask,self,group,client)
           end
+          local abort = MENU_GROUP_COMMAND:New(group,"Abort",active,self._AbortTask,self,group,client)
+        elseif self.TaskQueue:Count() > 0 then
+        ---
+        -- JOIN TASK MENU
+        --- 
+          local tasktypes = self:_GetAvailableTaskTypes()
+          local taskpertype = self:_GetTasksPerType()
+          
+          local joinmenu = MENU_GROUP:New(group,"Join Task",topmenu)
+          
+          local ttypes = {}
+          local taskmenu = {}
+          for _tasktype,_data in pairs(tasktypes) do
+            ttypes[_tasktype] = MENU_GROUP:New(group,_tasktype,joinmenu)
+            local tasks =  taskpertype[_tasktype] or {}
+            for _,_task in pairs(tasks) do
+              _task = _task -- Ops.PlayerTask#PLAYERTASK
+              local pilotcount = _task:CountClients()
+              local newtext = "]"
+              local tnow = timer.getTime()
+              -- marker for new tasks
+              if tnow - _task.timestamp < 60 then
+                newtext = "*]"
+              end
+              local text = string.format("TaskNo %03d [%d%s",_task.PlayerTaskNr,pilotcount,newtext)
+              if self.UseGroupNames then
+                local name = _task.Target:GetName()
+                if name ~= "Unknown" then
+                  text = string.format("%s (%03d) [%d%s",name,_task.PlayerTaskNr,pilotcount,newtext)
+                end
+              end
+              if _task:GetState() == "Planned" or (not _task:HasPlayerName(playername)) then
+                local taskentry = MENU_GROUP_COMMAND:New(group,text,ttypes[_tasktype],self._JoinTask,self,group,client,_task)
+                taskentry:SetTag(playername)
+                taskmenu[#taskmenu+1] = taskentry
+              end          
+            end
+          end
+        else
+          -- no tasks (yet)
+          local joinmenu = MENU_GROUP:New(group,"Currently no tasks available.",topmenu)
         end
+        ---
+        -- REFRESH MENU
+        --- 
         self.PlayerMenu[playername]:Refresh()
       end
     end
@@ -1126,8 +1303,19 @@ function PLAYERTASKCONTROLLER:AddAgent(Recce)
   return self
 end
 
+--- [User] Set the top menu name to a custom string.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #string Name The name to use as the top menu designation.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetMenuName(Name)
+ self:I(self.lid.."SetMenuName: "..Name)
+ self.MenuName = Name
+ return self
+end
+
 --- [User] Set up INTEL detection
 -- @param #PLAYERTASKCONTROLLER self
+-- @param #string RecceName This name will be used to build a detection group set. All groups with this string somewhere in their group name will be added as Recce.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
   self:I(self.lid.."SetupIntel: "..RecceName)
@@ -1319,7 +1507,7 @@ end
 function PLAYERTASKCONTROLLER:onafterTaskAdded(From, Event, To, Task)
   self:I({From, Event, To})
   self:I(self.lid.."TaskAdded")
-  local taskname = string.format("%s has a new Task %s", self.Name, tostring(Task.Type))
+  local taskname = string.format("%s has a new Task %s", self.MenuName or self.Name, tostring(Task.Type))
   local m = MESSAGE:New(taskname,15,"Tasking"):ToCoalition(self.Coalition)
   return self
 end
@@ -1327,7 +1515,7 @@ end
 --- [Internal] On after Stop call
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string From
--- @param #string Event
+-- @param #string Event 
 -- @param #string To
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterStop(From, Event, To)
