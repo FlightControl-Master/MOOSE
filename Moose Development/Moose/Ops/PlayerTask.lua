@@ -54,10 +54,11 @@ _PlayerTaskNr = 0
 -- @field #PLAYERTASK
 PLAYERTASK = {
   ClassName          = "PLAYERTASK",
-  verbose            =   true,
+  verbose            =   false,
   lid                =   nil,
   PlayerTaskNr       =   nil,
   Type               =   nil,
+  TTSType            =   nil,
   Target             =   nil,
   Clients            =   nil,
   Repeat             =   false,
@@ -88,7 +89,7 @@ PLAYERTASK.version="0.0.8"
 -- @param #boolean Repeat Repeat this task if true (default = false)
 -- @param #number Times Repeat on failure this many times if Repeat is true (default = 1)
 -- @return #PLAYERTASK self 
-function PLAYERTASK:New(Type, Target, Repeat, Times)
+function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #PLAYERTASK
@@ -105,6 +106,7 @@ function PLAYERTASK:New(Type, Target, Repeat, Times)
   self.conditionFailure = {}
   self.TaskController = nil -- Ops.PlayerTask#PLAYERTASKCONTROLLER
   self.timestamp = timer.getTime()
+  self.TTSType = TTSType or "close air support"
   
   if Repeat then
     self.Repeat = true
@@ -126,7 +128,7 @@ function PLAYERTASK:New(Type, Target, Repeat, Times)
     return self
   end
   
-  self:I(self.lid.."Created.")
+  self:T(self.lid.."Created.")
   
   -- FMS start state is PLANNED.
   self:SetStartState("Planned")
@@ -237,7 +239,7 @@ end
 -- @param Ops.PlayerTask#PLAYERTASKCONTROLLER Controller
 -- @return #PLAYERTASK self
 function PLAYERTASK:_SetController(Controller)
-  self:I(self.lid.."_SetController")
+  self:T(self.lid.."_SetController")
   self.TaskController = Controller
   return self
 end
@@ -246,7 +248,7 @@ end
 -- @param #PLAYERTASK self
 -- @return #boolean done
 function PLAYERTASK:IsDone()
-  self:I(self.lid.."IsDone?")
+  self:T(self.lid.."IsDone?")
   local IsDone = false
   local state = self:GetState()
   if state == "Done" or state == "Stopped" then
@@ -259,7 +261,7 @@ end
 -- @param #PLAYERTASK self
 -- @return #table clients
 function PLAYERTASK:GetClients()
-  self:I(self.lid.."GetClients")
+  self:T(self.lid.."GetClients")
   local clientlist = self.Clients:GetIDStackSorted() or {}
   return clientlist
 end
@@ -268,7 +270,7 @@ end
 -- @param #PLAYERTASK self
 -- @return #number clientcount
 function PLAYERTASK:CountClients()
-  self:I(self.lid.."CountClients")
+  self:T(self.lid.."CountClients")
   return self.Clients:Count()
 end
 
@@ -277,7 +279,7 @@ end
 -- @param #string Name
 -- @return #boolean HasName
 function PLAYERTASK:HasPlayerName(Name)
-  self:I(self.lid.."HasPlayerName?")
+  self:T(self.lid.."HasPlayerName?")
   return self.Clients:HasUniqueID(Name)
 end
 
@@ -286,7 +288,7 @@ end
 -- @param Wrapper.Client#CLIENT Client
 -- @return #PLAYERTASK self
 function PLAYERTASK:AddClient(Client)
-  self:I(self.lid.."AddClient")
+  self:T(self.lid.."AddClient")
   local name = Client:GetPlayerName()
   if not self.Clients:HasUniqueID(name) then
     self.Clients:Push(Client,name)
@@ -300,7 +302,7 @@ end
 -- @param Wrapper.Client#CLIENT Client
 -- @return #PLAYERTASK self
 function PLAYERTASK:RemoveClient(Client)
-  self:I(self.lid.."RemoveClient")
+  self:T(self.lid.."RemoveClient")
   local name = Client:GetPlayerName()
   if self.Clients:HasUniqueID(name) then
     self.Clients:PullByID(name)
@@ -320,7 +322,7 @@ end
 -- @param Wrapper.Client#CLIENT Client (optional)
 -- @return #PLAYERTASK self
 function PLAYERTASK:ClientAbort(Client)
-  self:I(self.lid.."ClientAbort")
+  self:T(self.lid.."ClientAbort")
   if Client and Client:IsAlive() then
     self:RemoveClient(Client)
     self:__ClientAborted(-1,Client)
@@ -339,7 +341,7 @@ end
 -- @param #PLAYERTASK self
 -- @return #PLAYERTASK self
 function PLAYERTASK:MarkTargetOnF10Map()
-  self:I(self.lid.."MarkTargetOnF10Map")
+  self:T(self.lid.."MarkTargetOnF10Map")
   if self.Target then
     local coordinate = self.Target:GetCoordinate()
     if coordinate then
@@ -360,7 +362,7 @@ end
 -- @param #number Color, defaults to SMOKECOLOR.Red
 -- @return #PLAYERTASK self
 function PLAYERTASK:SmokeTarget(Color)
-  self:I(self.lid.."SmokeTarget")
+  self:T(self.lid.."SmokeTarget")
   local color = Color or SMOKECOLOR.Red
   if self.Target then
     local coordinate = self.Target:GetCoordinate()
@@ -376,7 +378,7 @@ end
 -- @param #number Color, defaults to FLARECOLOR.Red
 -- @return #PLAYERTASK self
 function PLAYERTASK:FlareTarget(Color)
-  self:I(self.lid.."SmokeTarget")
+  self:T(self.lid.."SmokeTarget")
   local color = Color or FLARECOLOR.Red
   if self.Target then
     local coordinate = self.Target:GetCoordinate()
@@ -460,8 +462,8 @@ end
 -- @param #string To
 -- @return #PLAYERTASK self
 function PLAYERTASK:onafterStatus(From, Event, To)
-  self:I({From, Event, To})
-  self:I(self.lid.."onafterStatus")
+  self:T({From, Event, To})
+  self:T(self.lid.."onafterStatus")
   
   local status = self:GetState()
   
@@ -528,7 +530,7 @@ end
 -- @param #string To
 -- @return #PLAYERTASK self
 function PLAYERTASK:onafterPlanned(From, Event, To)
-  self:I({From, Event, To})
+  self:T({From, Event, To})
   return self
 end
 
@@ -539,7 +541,7 @@ end
 -- @param #string To
 -- @return #PLAYERTASK self
 function PLAYERTASK:onafterRequested(From, Event, To)
-  self:I({From, Event, To})
+  self:T({From, Event, To})
   return self
 end
 
@@ -550,7 +552,7 @@ end
 -- @param #string To
 -- @return #PLAYERTASK self
 function PLAYERTASK:onafterExecuting(From, Event, To)
-  self:I({From, Event, To})
+  self:T({From, Event, To})
   return self
 end
 
@@ -561,7 +563,7 @@ end
 -- @param #string To
 -- @return #PLAYERTASK self
 function PLAYERTASK:onafterStop(From, Event, To)
-  self:I({From, Event, To})
+  self:T({From, Event, To})
   return self
 end
 
@@ -573,8 +575,8 @@ end
 -- @param Wrapper.Client#CLIENT Client
 -- @return #PLAYERTASK self
 function PLAYERTASK:onafterClientAdded(From, Event, To, Client)
-  self:I({From, Event, To})
-  if Client then
+  self:T({From, Event, To})
+  if Client and self.verbose then
     local text = string.format("Player %s joined task %d!",Client:GetPlayerName() or "Generic",self.PlayerTaskNr)
     self:I(self.lid..text)
   end
@@ -588,7 +590,7 @@ end
 -- @param #string To
 -- @return #PLAYERTASK self
 function PLAYERTASK:onafterDone(From, Event, To)
-  self:I({From, Event, To})
+  self:T({From, Event, To})
   if self.TaskController then
     self.TaskController:__TaskDone(-1,self)
   end
@@ -603,7 +605,7 @@ end
 -- @param #string To
 -- @return #PLAYERTASK self
 function PLAYERTASK:onafterCancel(From, Event, To)
-  self:I({From, Event, To})
+  self:T({From, Event, To})
   if self.TaskController then
     self.TaskController:__TaskCancelled(-1,self)
   end
@@ -618,7 +620,7 @@ end
 -- @param #string To
 -- @return #PLAYERTASK self
 function PLAYERTASK:onafterSuccess(From, Event, To)
-  self:I({From, Event, To})
+  self:T({From, Event, To})
   if self.TaskController then
     self.TaskController:__TaskSuccess(-1,self)
   end
@@ -636,7 +638,7 @@ end
 -- @param #string To
 -- @return #PLAYERTASK self
 function PLAYERTASK:onafterFailed(From, Event, To)
-  self:I({From, Event, To})
+  self:T({From, Event, To})
   self.repeats = self.repeats + 1
   -- repeat on failed?
   if self.Repeat and (self.repeats <= self.RepeatNo) then
@@ -677,6 +679,7 @@ end
 -- @field #boolean UseGroupNames
 -- @field #table PlayerMenu
 -- @field #boolean usecluster
+-- @field #number ClusterRadius
 -- @field #string MenuName
 -- 
 
@@ -691,8 +694,9 @@ PLAYERTASKCONTROLLER = {
   ClientSet          =   nil,
   UseGroupNames      =   true,
   PlayerMenu         =   {},
-  usecluster         = false,
-  MenuName           = nil,
+  usecluster         =   false,
+  MenuName           =   nil,
+  ClusterRadius      =   1250,
   }
 
 ---
@@ -705,7 +709,7 @@ PLAYERTASKCONTROLLER.Type = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.0.9"
+PLAYERTASKCONTROLLER.version="0.0.11"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -723,10 +727,14 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.Coalition = Coalition or coalition.side.BLUE
   self.CoalitionName = UTILS.GetCoalitionName(Coalition)
   self.Type = Type or PLAYERTASKCONTROLLER.Type.A2G
+  
   self.usecluster = false
   if self.Type == PLAYERTASKCONTROLLER.Type.A2A then
     self.usecluster = true
   end
+  
+  self.ClusterRadius = 1250
+  
   self.ClientFilter = ClientFilter or ""
   
   self.TargetQueue = FIFO:New() -- Utilities.FiFo#FIFO
@@ -769,6 +777,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self:HandleEvent(EVENTS.Ejection, self._EventHandler)
   self:HandleEvent(EVENTS.Crash, self._EventHandler)
   self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
+  self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
   
   self:I(self.lid.."Started.")
   
@@ -833,10 +842,10 @@ end
 -- @param Core.Event#EVENTDATA EventData
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_EventHandler(EventData)
-  self:I(self.lid.."_EventHandler: "..EventData.id)
+  self:T(self.lid.."_EventHandler: "..EventData.id)
   if EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
     if EventData.IniPlayerName then
-      self:I(self.lid.."Event for player: "..EventData.IniPlayerName)
+      self:T(self.lid.."Event for player: "..EventData.IniPlayerName)
       if self.PlayerMenu[EventData.IniPlayerName] then
         self.PlayerMenu[EventData.IniPlayerName]:Remove()
         self.PlayerMenu[EventData.IniPlayerName] = nil
@@ -852,14 +861,48 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
         else
           text = "No active task!"
         end
-        self:I(self.lid..text)
+        self:T(self.lid..text) 
+    end
+  elseif EventData.id == EVENTS.PlayerEnterAircraft then
+    if EventData.IniPlayerName and EventData.IniGroup and self.UseSRS then
+      self:T(self.lid.."Event for player: "..EventData.IniPlayerName)
+      local frequency = self.Frequency
+      if type(frequency) == "table" then frequency = frequency[1] end
+      local modulation = self.Modulation
+      if type(modulation) == "table" then modulation = modulation[1] end
+      modulation = UTILS.GetModulationName(modulation)
+      local text = string.format("%s, %s, switch to frequency %.3f for task assignment!",EventData.IniPlayerName,self.MenuName or self.Name,frequency)
+      --local m = MESSAGE:New(text,30,"Tasking",true):ToGroup(EventData.IniGroup)
+      self.SRSQueue:NewTransmission(text,nil,self.SRS,timer.getAbsTime()+60,2,{EventData.IniGroup},text,30,self.BCFrequency,self.BCModulation)
     end
   end
   return self
 end
 
 function PLAYERTASKCONTROLLER:_DummyMenu(group)
-  self:I(self.lid.."_DummyMenu")
+  self:T(self.lid.."_DummyMenu")
+  return self
+end
+
+--- [User] Set the cluster radius if you want to use target clusters rather than single group detection. 
+-- Note that for a controller type A2A target clustering is on by default. Also remember that the diameter of the resulting zone is double the radius.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #number Radius Target cluster radius in meters. Default is 1250m or 0.67NM
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetClusterRadius(Radius)
+  self:T(self.lid.."SetClusterRadius")
+  self.ClusterRadius = Radius or 1250
+  self.usecluster = true
+  return self
+end
+
+--- [User] Manually cancel a specific task
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Ops.PlayerTask#PLAYERTASK Task The task to be cancelled
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:CancelTask(Task)
+  self:T(self.lid.."CancelTask")
+  Task:__Cancel(-1)
   return self
 end
 
@@ -868,7 +911,7 @@ end
 -- @param #boolean OnOff If true, set to on (default), if nil or false, set to off
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SwitchUseGroupNames(OnOff)
-  self:I(self.lid.."SwitchUseGroupNames")
+  self:T(self.lid.."SwitchUseGroupNames")
   if OnOff then
     self.UseGroupNames = true
   else
@@ -881,7 +924,7 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @return #table TaskTypes
 function PLAYERTASKCONTROLLER:_GetAvailableTaskTypes()
-  self:I(self.lid.."_GetAvailableTaskTypes")
+  self:T(self.lid.."_GetAvailableTaskTypes")
   local tasktypes = {}
   self.TaskQueue:ForEach(
     function (Task)
@@ -897,20 +940,31 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @return #table TasksPerTypes
 function PLAYERTASKCONTROLLER:_GetTasksPerType()
-  self:I(self.lid.."_GetTasksPerType")
+  self:T(self.lid.."_GetTasksPerType")
   local tasktypes = self:_GetAvailableTaskTypes()
   
-  self:I({tasktypes})
+  self:T({tasktypes})
   
-  self.TaskQueue:ForEach(
-    function (Task)
-      local task = Task -- Ops.PlayerTask#PLAYERTASK
-      local type = Task.Type
+  -- Sort tasks per threat level first
+  local datatable = self.TaskQueue:GetDataTable()
+  local threattable = {}
+  for _,_task in pairs(datatable) do
+    local task = _task -- Ops.PlayerTask#PLAYERTASK
+    local threat = task.Target:GetThreatLevelMax()
+    threattable[#threattable+1]={task=task,threat=threat}
+  end
+  
+  table.sort(threattable, function (k1, k2) return k1.threat > k2.threat end )
+  
+
+  for _id,_data in pairs(threattable) do
+    local threat=_data.threat
+    local task = _data.task -- Ops.PlayerTask#PLAYERTASK
+    local type = task.Type
       if task:GetState() ~= "Executing" and not task:IsDone() then
         table.insert(tasktypes[type],task)
       end
-    end
-  )
+  end
   
   return tasktypes
 end
@@ -919,7 +973,7 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_CheckTargetQueue()
- self:I(self.lid.."_CheckTargetQueue")
+ self:T(self.lid.."_CheckTargetQueue")
  if self.TargetQueue:Count() > 0 then
   local object = self.TargetQueue:Pull()
   local target = TARGET:New(object)
@@ -932,19 +986,19 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_CheckTaskQueue()
- self:I(self.lid.."_CheckTaskQueue")
+ self:T(self.lid.."_CheckTaskQueue")
  if self.TaskQueue:Count() > 0 then
    -- remove done tasks
    local tasks = self.TaskQueue:GetIDStack()
    for _id,_entry in pairs(tasks) do
     local data = _entry.data -- Ops.PlayerTask#PLAYERTASK
-    self:I("Looking at Task: "..data.PlayerTaskNr.." Type: "..data.Type.." State: "..data:GetState())
+    self:T("Looking at Task: "..data.PlayerTaskNr.." Type: "..data.Type.." State: "..data:GetState())
     if data:GetState() == "Done" or data:GetState() == "Stopped" then
       local task = self.TaskQueue:ReadByID(_id) -- Ops.PlayerTask#PLAYERTASK
-      -- DEBUG: Remove clients from the task
+      -- DONE: Remove clients from the task
       local clientsattask = task.Clients:GetIDStackSorted()
       for _,_id in pairs(clientsattask) do
-        self:I("*****Removing player " .. _id)
+        self:T("*****Removing player " .. _id)
         self.TasksPerPlayer:PullByID(_id)
       end
       local task = self.TaskQueue:PullByID(_id) -- Ops.PlayerTask#PLAYERTASK
@@ -959,7 +1013,7 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @return #boolean outcome
 function PLAYERTASKCONTROLLER:_CheckPlayerHasTask(PlayerName)
-  self:I(self.lid.."_CheckPlayerHasTask")
+  self:T(self.lid.."_CheckPlayerHasTask")
   return self.TasksPerPlayer:HasUniqueID(PlayerName)
 end
 
@@ -968,7 +1022,7 @@ end
 -- @param Wrapper.Positionable#POSITIONABLE Target The target GROUP, SET\_GROUP, UNIT, SET\_UNIT, STATIC, SET\_STATIC, AIRBASE or COORDINATE.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:AddTarget(Target)
-  self:I(self.lid.."AddTarget")
+  self:T(self.lid.."AddTarget")
   self.TargetQueue:Push(Target)
   return self
 end
@@ -978,41 +1032,46 @@ end
 -- @param Ops.Target#TARGET Target
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_AddTask(Target)
-  self:I(self.lid.."_AddTask")
+  self:T(self.lid.."_AddTask")
   local cat = Target:GetCategory()
   local type = AUFTRAG.Type.CAS
+  local ttstype = "close air support"
   
   if cat == TARGET.Category.GROUND then
     type = AUFTRAG.Type.CAS
     -- TODO: debug BAI, CAS, SEAD
     local targetobject = Target:GetObject() -- Wrapper.Positionable#POSITIONABLE
     if targetobject:IsInstanceOf("UNIT") then
-      self:I("SEAD Check UNIT")
+      self:T("SEAD Check UNIT")
       if targetobject:HasSEAD() then
         type = AUFTRAG.Type.SEAD
+        ttstype = "suppress air defense"
       end
     elseif targetobject:IsInstanceOf("GROUP") then
-      self:I("SEAD Check GROUP")
+      self:T("SEAD Check GROUP")
       local attribute = targetobject:GetAttribute()
       if attribute == GROUP.Attribute.GROUND_SAM or attribute == GROUP.Attribute.GROUND_AAA then
         type = AUFTRAG.Type.SEAD
+        ttstype = "suppress air defense"
       end
     elseif targetobject:IsInstanceOf("SET_GROUP") then
-      self:I("SEAD Check SET_GROUP")
+      self:T("SEAD Check SET_GROUP")
       targetobject:ForEachGroup(
         function (group)
           local attribute = group:GetAttribute()
           if attribute == GROUP.Attribute.GROUND_SAM or attribute == GROUP.Attribute.GROUND_AAA then
             type = AUFTRAG.Type.SEAD
+            ttstype = "suppress air defense"
           end
         end
       )     
     elseif targetobject:IsInstanceOf("SET_UNIT") then
-      self:I("SEAD Check SET_UNIT")
+      self:T("SEAD Check SET_UNIT")
       targetobject:ForEachUnit(
         function (unit)
           if unit:HasSEAD() then
             type = AUFTRAG.Type.SEAD
+            ttstype = "suppress air defenses"
           end
         end
       )
@@ -1023,26 +1082,31 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
     local targetzone = ZONE_RADIUS:New(self.Name,targetvec2,2000)
     local coalition = targetobject:GetCoalitionName() or "Blue"
     coalition = string.lower(coalition)
-    self:I("Target coalition is "..tostring(coalition))
+    self:T("Target coalition is "..tostring(coalition))
     local filtercoalition = "blue"
     if coalition == "blue" then filtercoalition = "red" end
     local friendlyset = SET_GROUP:New():FilterCategoryGround():FilterCoalitions(filtercoalition):FilterZones({targetzone}):FilterOnce()
     if friendlyset:Count() == 0 and type ~= AUFTRAG.Type.SEAD then
       type = AUFTRAG.Type.BAI
+      ttstype = "battle field air interdiction"
     end
   elseif cat == TARGET.Category.NAVAL then
     type = AUFTRAG.Type.ANTISHIP
+    ttstype = "anti-ship"
   elseif cat == TARGET.Category.AIRCRAFT then
     type = AUFTRAG.Type.INTERCEPT
+    ttstype = "intercept"
   elseif cat == TARGET.Category.AIRBASE then
     --TODO: Define Success Criteria, AB hit? Runway blocked, how to determine? change of coalition?
     type = AUFTRAG.Type.BOMBRUNWAY
+    ttstype = "bomb runway"
   elseif cat == TARGET.Category.COORDINATE or cat == TARGET.Category.ZONE then
     --TODO: Define Success Criteria, void of enemies?
     type = AUFTRAG.Type.BOMBING
+    ttstype = "bombing"
   end
   
-  local task = PLAYERTASK:New(type,Target,self.repeatonfailed,self.repeattimes)
+  local task = PLAYERTASK:New(type,Target,self.repeatonfailed,self.repeattimes,ttstype)
   task:_SetController(self)
   self.TaskQueue:Push(task)
   self:__TaskAdded(-1,task)
@@ -1056,7 +1120,7 @@ end
 -- @param Ops.PlayerTask#PLAYERTASK Task
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task)
-  self:I(self.lid.."_JoinTask")
+  self:T(self.lid.."_JoinTask")
   local playername = Client:GetPlayerName()
   if self.TasksPerPlayer:HasUniqueID(playername) then
     -- Player already has a task
@@ -1065,13 +1129,16 @@ function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task)
   end
   Task:AddClient(Client)
   local taskstate = Task:GetState()
-  --self:I(self.lid.."Taskstate = "..taskstate)
+  --self:T(self.lid.."Taskstate = "..taskstate)
   if taskstate ~= "Executing"  and taskstate ~= "Done" then
     Task:__Requested(-1)
     Task:__Executing(-2)
-    local text = string.format("Player %s joined task %d in state %s", playername, Task.PlayerTaskNr, taskstate)
-    self:I(self.lid..text)
+    local text = string.format("Pilot %s joined task %d", playername, Task.PlayerTaskNr)
+    self:T(self.lid..text)
     local m=MESSAGE:New(text,"10","Info"):ToAll()
+    if self.UseSRS then
+      self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
+    end
     self.TasksPerPlayer:Push(Task,playername)
     -- clear menu
     self:_BuildMenus(Client)
@@ -1090,11 +1157,11 @@ end
 -- @param Wrapper.Client#CLIENT Client
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client)
-  self:I(self.lid.."_ActiveTaskInfo")
+  self:T(self.lid.."_ActiveTaskInfo")
   local playername = Client:GetPlayerName()
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
-    -- TODO: Show multiple
+    -- TODO: Show multiple?
     local task = self.TasksPerPlayer:GetIDStack()
     local task = self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
     local taskname = string.format("%s Task ID %02d",task.Type,task.PlayerTaskNr)
@@ -1124,7 +1191,7 @@ end
 -- @param Wrapper.Client#CLIENT Client
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_MarkTask(Group, Client)
-  self:I(self.lid.."_ActiveTaskInfo")
+  self:T(self.lid.."_ActiveTaskInfo")
   local playername = Client:GetPlayerName()
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
@@ -1144,7 +1211,7 @@ end
 -- @param Wrapper.Client#CLIENT Client
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_SmokeTask(Group, Client)
-  self:I(self.lid.."_SmokeTask")
+  self:T(self.lid.."_SmokeTask")
   local playername = Client:GetPlayerName()
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
@@ -1164,7 +1231,7 @@ end
 -- @param Wrapper.Client#CLIENT Client
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_FlareTask(Group, Client)
-  self:I(self.lid.."_FlareTask")
+  self:T(self.lid.."_FlareTask")
   local playername = Client:GetPlayerName()
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
@@ -1184,7 +1251,7 @@ end
 -- @param Wrapper.Client#CLIENT Client
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_AbortTask(Group, Client)
-  self:I(self.lid.."_FlareTask")
+  self:T(self.lid.."_FlareTask")
   local playername = Client:GetPlayerName()
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
@@ -1204,7 +1271,7 @@ end
 -- @param Wrapper.Client#CLIENT Client (optional) build for this client name only
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_BuildMenus(Client)
-  self:I(self.lid.."_BuildMenus")
+  self:T(self.lid.."_BuildMenus")
   local clients = self.ClientSet:GetAliveSet()
   if Client then
     clients = {Client}
@@ -1296,9 +1363,57 @@ end
 -- @param Wrapper.Group#GROUP Recce Group of agents. Can also be an @{Ops.OpsGroup#OPSGROUP} object.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:AddAgent(Recce)
-  self:I(self.lid.."AddAgent: "..Recce:GetName())
+  self:T(self.lid.."AddAgent: "..Recce:GetName())
   if self.Intel then
     self.Intel:AddAgent(Recce)
+  end
+  return self
+end
+
+--- [User] Add accept zone to INTEL detection
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:AddAcceptZone(AcceptZone)
+  self:T(self.lid.."AddAcceptZone")
+  if self.Intel then
+    self.Intel:AddAcceptZone(AcceptZone)
+  end
+  return self
+end
+
+--- [User] Add reject zone to INTEL detection
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:AddRejectZone(RejectZone)
+  self:T(self.lid.."AddRejectZone")
+  if self.Intel then
+    self.Intel:AddRejectZone(RejectZone)
+  end
+  return self
+end
+
+--- [User] Remove accept zone from INTEL detection
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:RemoveAcceptZone(AcceptZone)
+  self:T(self.lid.."RemoveAcceptZone")
+  if self.Intel then
+    self.Intel:RemoveAcceptZone(AcceptZone)
+  end
+  return self
+end
+
+--- [User] Remove reject zone from INTEL detection
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:RemoveRejectZone(RejectZone)
+  self:T(self.lid.."RemoveRejectZone")
+  if self.Intel then
+    self.Intel:RemoveRejectZone(RejectZone)
   end
   return self
 end
@@ -1308,7 +1423,7 @@ end
 -- @param #string Name The name to use as the top menu designation.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetMenuName(Name)
- self:I(self.lid.."SetMenuName: "..Name)
+ self:T(self.lid.."SetMenuName: "..Name)
  self.MenuName = Name
  return self
 end
@@ -1318,12 +1433,14 @@ end
 -- @param #string RecceName This name will be used to build a detection group set. All groups with this string somewhere in their group name will be added as Recce.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
-  self:I(self.lid.."SetupIntel: "..RecceName)
+  self:T(self.lid.."SetupIntel: "..RecceName)
   self.RecceSet = SET_GROUP:New():FilterCoalitions(self.CoalitionName):FilterPrefixes(RecceName):FilterStart()
   self.Intel = INTEL:New(self.RecceSet,self.Coalition,self.Name.."-Intel")
   self.Intel:SetClusterAnalysis(true,false,false)
-  self.Intel:SetClusterRadius(2500)
+  self.Intel:SetClusterRadius(self.ClusterRadius or 500)
   self.Intel.statusupdate = 25
+  self.Intel:SetAcceptZones()
+  self.Intel:SetRejectZones()
   --if self.verbose then
     --self.Intel:SetDetectionTypes(true,true,false,true,true,true)
   --end
@@ -1336,33 +1453,33 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
     if not self.usecluster then return self end
     local cluster = Cluster -- Ops.Intelligence#INTEL.Cluster
     local type = cluster.ctype
-    self:I({type,self.Type})
+    self:T({type,self.Type})
     if (type == INTEL.Ctype.AIRCRAFT and self.Type == PLAYERTASKCONTROLLER.Type.A2A) or (type == INTEL.Ctype.NAVAL and self.Type == PLAYERTASKCONTROLLER.Type.A2S) then
-      self:I("A2A or A2S")
+      self:T("A2A or A2S")
       local contacts = cluster.Contacts -- #table of GROUP
       local targetset = SET_GROUP:New()
       for _,_object in pairs(contacts) do
         local contact = _object -- Ops.Intelligence#INTEL.Contact
-        self:I("Adding group: "..contact.groupname)
+        self:T("Adding group: "..contact.groupname)
         targetset:AddGroup(contact.group,true)
       end
       self:AddTarget(targetset)
     elseif (type == INTEL.Ctype.GROUND or type == INTEL.Ctype.STRUCTURE) and self.Type == PLAYERTASKCONTROLLER.Type.A2G then
-      self:I("A2G")
+      self:T("A2G")
       local contacts = cluster.Contacts -- #table of GROUP or STATIC
       local targetset = nil -- Core.Set#SET_BASE
       if type == INTEL.Ctype.GROUND then
         targetset = SET_GROUP:New()
         for _,_object in pairs(contacts) do
           local contact = _object -- Ops.Intelligence#INTEL.Contact
-          self:I("Adding group: "..contact.groupname)
+          self:T("Adding group: "..contact.groupname)
           targetset:AddGroup(contact.group,true)
         end
       elseif type == INTEL.Ctype.STRUCTURE then
         targetset = SET_STATIC:New()
         for _,_object in pairs(contacts) do
           local contact = _object -- Ops.Intelligence#INTEL.Contact
-          self:I("Adding static: "..contact.groupname)
+          self:T("Adding static: "..contact.groupname)
           targetset:AddStatic(contact.group)
         end
       end
@@ -1376,14 +1493,14 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
     if self.usecluster then return self end
     local contact = Contact -- Ops.Intelligence#INTEL.Contact
     local type = contact.ctype
-    self:I({type,self.Type})
+    self:T({type,self.Type})
     if (type == INTEL.Ctype.AIRCRAFT and self.Type == PLAYERTASKCONTROLLER.Type.A2A) or (type == INTEL.Ctype.NAVAL and self.Type == PLAYERTASKCONTROLLER.Type.A2S) then
-      self:I("A2A or A2S")
-      self:I("Adding group: "..contact.groupname)
+      self:T("A2A or A2S")
+      self:T("Adding group: "..contact.groupname)
       self:AddTarget(contact.group)
     elseif (type == INTEL.Ctype.GROUND or type == INTEL.Ctype.STRUCTURE) and self.Type == PLAYERTASKCONTROLLER.Type.A2G then
-      self:I("A2G")
-      self:I("Adding group: "..contact.groupname)
+      self:T("A2G")
+      self:T("Adding group: "..contact.groupname)
       self:AddTarget(contact.group)
     end
   end
@@ -1398,6 +1515,62 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
   
   return self
 end
+
+--- [User] Set SRS TTS details - see @{Sound.SRS} for details
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 271 or {127,251}
+-- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}
+-- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+-- @param #string Gender Defaults to "male"
+-- @param #string Culture Defaults to "en-US"
+-- @param #number Port Defaults to 5002
+-- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
+-- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
+-- @param #number Volume Volume - between 0.0 (silent) and 1.0 (loudest)
+-- @param #string PathToGoogleKey Path to your google key if you want to use google TTS
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
+  self:T(self.lid.."SetSRS")
+  self.PathToSRS = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+  self.Gender = Gender or "male"
+  self.Culture = Culture or "en-US"
+  self.Port = Port or 5002
+  self.Voice = Voice 
+  self.PathToGoogleKey = PathToGoogleKey
+  self.Volume = Volume or 1.0
+  self.UseSRS = true
+  self.Frequency = Frequency or {127,251}
+  self.BCFrequency = self.Frequency
+  self.Modulation = Modulation or {radio.modulationFM,radio.modulation.AM}
+  self.BCModulation = self.Modulation 
+  self.SRS=MSRS:New(self.PathToSRS,self.Frequency,self.Modulation,self.Volume)
+  self.SRS:SetCoalition(self.Coalition)
+  self.SRS:SetLabel(self.MenuName or self.Name)
+  if self.PathToGoogleKey then
+    self.SRS:SetGoogle(self.PathToGoogleKey)
+  end
+  self.SRSQueue = MSRSQUEUE:New(self.MenuName or self.Name)
+  return self
+end
+
+--- [User] Set SRS Broadcast - for the announcement to joining players which SRS frequency, modulation to use. Use in case you want to set this differently to the standard SRS.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 271 or {127,251}
+-- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetSRSBroadcast(Frequency,Modulation)
+  self:T(self.lid.."SetSRSBroadcast")
+  if self.SRS then
+    self.BCFrequency = Frequency
+    self.BCModulation = Modulation
+  end
+  return self
+end
+
+-------------------------------------------------------------------------------------------------------------------
+-- FSM Functions PLAYERTASKCONTROLLER
+-- TODO: FSM Functions PLAYERTASKCONTROLLER
+-------------------------------------------------------------------------------------------------------------------
 
 --- [Internal] On after Status call
 -- @param #PLAYERTASKCONTROLLER self
@@ -1414,9 +1587,10 @@ function PLAYERTASKCONTROLLER:onafterStatus(From, Event, To)
   local targetcount = self.TargetQueue:Count()
   local taskcount = self.TaskQueue:Count()
   local playercount = self.ClientSet:CountAlive()
+  local assignedtasks = self.TasksPerPlayer:Count()
   
   if self.verbose then
-    local text = string.format("New Targets: %02d | Active Tasks: %02d | Active Players: %02d",targetcount,taskcount,playercount)
+    local text = string.format("New Targets: %02d | Active Tasks: %02d | Active Players: %02d | Assigned Tasks: %02d",targetcount,taskcount,playercount,assignedtasks)
     self:I(text)
   end
   
@@ -1434,8 +1608,8 @@ end
 -- @param Ops.PlayerTask#PLAYERTASK Task
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterTaskDone(From, Event, To, Task)
-  self:I({From, Event, To})
-  self:I(self.lid.."TaskDone")
+  self:T({From, Event, To})
+  self:T(self.lid.."TaskDone")
   return self
 end
 
@@ -1447,8 +1621,14 @@ end
 -- @param Ops.PlayerTask#PLAYERTASK Task
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterTaskCancelled(From, Event, To, Task)
-  self:I({From, Event, To})
-  self:I(self.lid.."TaskCancelled")
+  self:T({From, Event, To})
+  self:T(self.lid.."TaskCancelled")
+  local taskname = string.format("Task #%d %s is ancelled!", Task.PlayerTaskNr, tostring(Task.Type))
+  local m = MESSAGE:New(taskname,15,"Tasking"):ToCoalition(self.Coalition)
+  if self.UseSRS then
+    taskname = string.format("Task %d %s is cancelled!", Task.PlayerTaskNr, tostring(Task.TTSType))
+    self.SRSQueue:NewTransmission(taskname,nil,self.SRS,nil,2)
+  end
   return self
 end
 
@@ -1460,10 +1640,14 @@ end
 -- @param Ops.PlayerTask#PLAYERTASK Task
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterTaskSuccess(From, Event, To, Task)
-  self:I({From, Event, To})
-  self:I(self.lid.."TaskSuccess")
-  local taskname = string.format("Task #%d %s Success!", Task.PlayerTaskNr, tostring(Task.Type))
+  self:T({From, Event, To})
+  self:T(self.lid.."TaskSuccess")
+  local taskname = string.format("Task #%d %s completed successfully!", Task.PlayerTaskNr, tostring(Task.Type))
   local m = MESSAGE:New(taskname,15,"Tasking"):ToCoalition(self.Coalition)
+  if self.UseSRS then
+    taskname = string.format("Task %d %s completed successfully!", Task.PlayerTaskNr, tostring(Task.TTSType))
+    self.SRSQueue:NewTransmission(taskname,nil,self.SRS,nil,2)
+  end
   return self
 end
 
@@ -1475,10 +1659,14 @@ end
 -- @param Ops.PlayerTask#PLAYERTASK Task
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterTaskFailed(From, Event, To, Task)
-  self:I({From, Event, To})
-  self:I(self.lid.."TaskFailed")
-  local taskname = string.format("Task #%d %s Failed!", Task.PlayerTaskNr, tostring(Task.Type))
+  self:T({From, Event, To})
+  self:T(self.lid.."TaskFailed")
+  local taskname = string.format("Task #%d %s was a failure!", Task.PlayerTaskNr, tostring(Task.Type))
   local m = MESSAGE:New(taskname,15,"Tasking"):ToCoalition(self.Coalition)
+  if self.UseSRS then
+    taskname = string.format("Task %d %s was a failure!", Task.PlayerTaskNr, tostring(Task.TTSType))
+    self.SRSQueue:NewTransmission(taskname,nil,self.SRS,nil,2)
+  end
   return self
 end
 
@@ -1490,10 +1678,14 @@ end
 -- @param Ops.PlayerTask#PLAYERTASK Task
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterTaskRepeatOnFailed(From, Event, To, Task)
-  self:I({From, Event, To})
-  self:I(self.lid.."RepeatOnFailed")
-  local taskname = string.format("Task #%d %s Failed! Replanning!", Task.PlayerTaskNr, tostring(Task.Type))
+  self:T({From, Event, To})
+  self:T(self.lid.."RepeatOnFailed")
+  local taskname = string.format("Task #%d %s was a failure! Replanning!", Task.PlayerTaskNr, tostring(Task.Type))
   local m = MESSAGE:New(taskname,15,"Tasking"):ToCoalition(self.Coalition)
+  if self.UseSRS then
+    taskname = string.format("Task %d %s was a failure! Replanning!", Task.PlayerTaskNr, tostring(Task.TTSType))
+    self.SRSQueue:NewTransmission(taskname,nil,self.SRS,nil,2)
+  end
   return self
 end
 
@@ -1505,10 +1697,14 @@ end
 -- @param Ops.PlayerTask#PLAYERTASK Task
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterTaskAdded(From, Event, To, Task)
-  self:I({From, Event, To})
-  self:I(self.lid.."TaskAdded")
-  local taskname = string.format("%s has a new Task %s", self.MenuName or self.Name, tostring(Task.Type))
+  self:T({From, Event, To})
+  self:T(self.lid.."TaskAdded")
+  local taskname = string.format("%s has a new task %s", self.MenuName or self.Name, tostring(Task.Type))
   local m = MESSAGE:New(taskname,15,"Tasking"):ToCoalition(self.Coalition)
+  if self.UseSRS then
+    taskname = string.format("%s has a new task %s", self.MenuName or self.Name, tostring(Task.TTSType))
+    self.SRSQueue:NewTransmission(taskname,nil,self.SRS,nil,2)
+  end
   return self
 end
 
@@ -1519,8 +1715,8 @@ end
 -- @param #string To
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterStop(From, Event, To)
-  self:I({From, Event, To})
-  self:I(self.lid.."Stopped.")
+  self:T({From, Event, To})
+  self:T(self.lid.."Stopped.")
     -- Player leaves
   self:UnHandleEvent(EVENTS.PlayerLeaveUnit)
   self:UnHandleEvent(EVENTS.Ejection)
