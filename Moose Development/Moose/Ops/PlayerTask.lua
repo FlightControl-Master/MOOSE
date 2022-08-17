@@ -18,6 +18,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.png
+-- @date Last Update August 2022
 
 
 --- PLAYERTASK class.
@@ -75,7 +76,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.0.8"
+PLAYERTASK.version="0.0.9"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -339,8 +340,9 @@ end
 
 --- [User] Create target mark on F10 map
 -- @param #PLAYERTASK self
+-- @param #string Text (optional) Text to show on the marker
 -- @return #PLAYERTASK self
-function PLAYERTASK:MarkTargetOnF10Map()
+function PLAYERTASK:MarkTargetOnF10Map(Text)
   self:T(self.lid.."MarkTargetOnF10Map")
   if self.Target then
     local coordinate = self.Target:GetCoordinate()
@@ -349,6 +351,7 @@ function PLAYERTASK:MarkTargetOnF10Map()
         -- Marker exists, delete one first
         self.TargetMarker:Remove()
       end
+      local text = Text or "Target of "..self.lid
       self.TargetMarker = MARKER:New(coordinate,"Target of "..self.lid)
       self.TargetMarker:ReadOnly()
       self.TargetMarker:ToAll()
@@ -824,7 +827,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.14"
+PLAYERTASKCONTROLLER.version="0.1.15"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -1228,9 +1231,9 @@ end
 -- A2A - AUFTRAG.Type.INTERCEPT
 -- A2S - AUFTRAG.Type.ANTISHIP
 -- A2G - AUFTRAG.Type.CAS, AUFTRAG.Type.BAI, AUFTRAG.Type.SEAD, AUFTRAG.Type.BOMBING, AUFTRAG.Type.BOMBRUNWAY
--- If you don't want SEAD tasks generated, use as follows:
+-- If you don't want SEAD tasks generated, use as follows where "mycontroller" is your PLAYERTASKCONTROLLER object:
 -- 
---            `mycontroller:SetTaskWhiteList(AUFTRAG.Type.CAS, AUFTRAG.Type.BAI, AUFTRAG.Type.BOMBING, AUFTRAG.Type.BOMBRUNWAY)`
+--            `mycontroller:SetTaskWhiteList({AUFTRAG.Type.CAS, AUFTRAG.Type.BAI, AUFTRAG.Type.BOMBING, AUFTRAG.Type.BOMBRUNWAY})`
 --            
 function PLAYERTASKCONTROLLER:SetTaskWhiteList(WhiteList)
   self:T(self.lid.."SetTaskWhiteList")
@@ -1506,7 +1509,8 @@ function PLAYERTASKCONTROLLER:_MarkTask(Group, Client)
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
     local task = self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
-    task:MarkTargetOnF10Map()
+    local text = string.format("Task ID #%03d | Type: %s | Threat: %d",task.PlayerTaskNr,task.Type,task.Target:GetThreatLevelMax())
+    task:MarkTargetOnF10Map(text)
     local textmark = self.gettext:GetEntry("MARKTASK",self.locale)
     --text = string.format("%s, copy pilot %s, task %03d location marked on map!", self.MenuName or self.Name, playername, task.PlayerTaskNr)
     text = string.format(textmark, self.MenuName or self.Name, playername, task.PlayerTaskNr)
