@@ -11273,7 +11273,7 @@ end
 
 --- Get wind speed on carrier deck parallel and perpendicular to runway.
 -- @param #AIRBOSS self
--- @param #number alt Altitude in meters. Default 15 m. (change made from 50m from Discord discussion from Sickdog)
+-- @param #number alt Altitude in meters. Default 18 m.
 -- @return #number Wind component parallel to runway im m/s.
 -- @return #number Wind component perpendicular to runway in m/s.
 -- @return #number Total wind strength in m/s.
@@ -11296,7 +11296,7 @@ function AIRBOSS:GetWindOnDeck( alt )
   zc = UTILS.Rotate2D( zc, -self.carrierparam.rwyangle )
 
   -- Wind (from) vector
-  local vw = cv:GetWindWithTurbulenceVec3( alt or 15 )
+  local vw = cv:GetWindWithTurbulenceVec3( alt or 18 ) --(change made from 50m to 15m from Discord discussion from Sickdog, next change to 18m due to SC higher deck discord)
 
   -- Total wind velocity vector.
   -- Carrier velocity has to be negative. If carrier drives in the direction the wind is blowing from, we have less wind in total.

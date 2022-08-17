@@ -569,17 +569,16 @@ RANGE.version = "2.4.0"
 
 --- RANGE contructor. Creates a new RANGE object.
 -- @param #RANGE self
--- @param #string rangename Name of the range. Has to be unique. Will we used to create F10 menu items etc.
+-- @param #string RangeName Name of the range. Has to be unique. Will we used to create F10 menu items etc.
 -- @return #RANGE RANGE object.
-function RANGE:New( rangename )
-  BASE:F( { rangename = rangename } )
+function RANGE:New( RangeName )
 
   -- Inherit BASE.
   local self = BASE:Inherit( self, FSM:New() ) -- #RANGE
 
   -- Get range name.
   -- TODO: make sure that the range name is not given twice. This would lead to problems in the F10 radio menu.
-  self.rangename = rangename or "Practice Range"
+  self.rangename = RangeName or "Practice Range"
 
   -- Log id.
   self.id = string.format( "RANGE %s | ", self.rangename )
@@ -1762,6 +1761,13 @@ end
 
 --- Range event handler for event shot (when a unit releases a rocket or bomb (but not a fast firing gun).
 -- @param #RANGE self
+-- @param #table weapon Weapon
+function RANGE:_TrackWeapon(weapon)
+
+end
+
+--- Range event handler for event shot (when a unit releases a rocket or bomb (but not a fast firing gun).
+-- @param #RANGE self
 -- @param Core.Event#EVENTDATA EventData
 function RANGE:OnEventShot( EventData )
   self:F( { eventshot = EventData } )
@@ -1806,6 +1812,11 @@ function RANGE:OnEventShot( EventData )
 
   -- Get player unit and name.
   local _unit, _playername = self:_GetPlayerUnitAndName( _unitName )
+  
+  -- Attack parameters.
+  local attackHdg=_unit:GetHeading()
+  local attackAlt=_unit:GetHeight()
+  local attackVel=_unit:GetVelocityKNOTS()
 
   -- Set this to larger value than the threshold.
   local dPR = self.BombtrackThreshold * 2
@@ -1848,7 +1859,6 @@ function RANGE:OnEventShot( EventData )
 
         -- Check again in ~0.005 seconds ==> 200 checks per second.
         return timer.getTime() + self.dtBombtrack
-
       else
 
         -----------------------------
@@ -1858,7 +1868,7 @@ function RANGE:OnEventShot( EventData )
         -- Get closet target to last position.
         local _closetTarget = nil -- #RANGE.BombTarget
         local _distance = nil
-        local _closeCoord = nil
+        local _closeCoord = nil   --Core.Point#COORDINATE
         local _hitquality = "POOR"
 
         -- Get callsign.
@@ -1886,6 +1896,7 @@ function RANGE:OnEventShot( EventData )
 
         -- Loop over defined bombing targets.
         for _, _bombtarget in pairs( self.bombingTargets ) do
+          local bombtarget=_bombtarget  --#RANGE.BombTarget
 
           -- Get target coordinate.
           local targetcoord = self:_GetBombTargetCoordinate( _bombtarget )
@@ -1898,15 +1909,15 @@ function RANGE:OnEventShot( EventData )
             -- Find closest target to last known position of the bomb.
             if _distance == nil or _temp < _distance then
               _distance = _temp
-              _closetTarget = _bombtarget
-              _closeCoord = targetcoord
+              _closetTarget = bombtarget
+              _closeCoord   = targetcoord
               if _distance <= 1.53 then -- Rangeboss Edit
                 _hitquality = "SHACK" -- Rangeboss Edit
-              elseif _distance <= 0.5 * _bombtarget.goodhitrange then -- Rangeboss Edit
+              elseif _distance <= 0.5 * bombtarget.goodhitrange then -- Rangeboss Edit
                 _hitquality = "EXCELLENT"
-              elseif _distance <= _bombtarget.goodhitrange then
+              elseif _distance <= bombtarget.goodhitrange then
                 _hitquality = "GOOD"
-              elseif _distance <= 2 * _bombtarget.goodhitrange then
+              elseif _distance <= 2 * bombtarget.goodhitrange then
                 _hitquality = "INEFFECTIVE"
               else
                 _hitquality = "POOR"
@@ -1927,6 +1938,7 @@ function RANGE:OnEventShot( EventData )
           local _results = self.bombPlayerResults[_playername]
 
           local result = {} -- #RANGE.BombResult
+          result.type = "Bomb Result"
           result.name = _closetTarget.name or "unknown"
           result.distance = _distance
           result.radial = _closeCoord:HeadingTo( impactcoord )
@@ -1934,11 +1946,15 @@ function RANGE:OnEventShot( EventData )
           result.quality = _hitquality
           result.player = playerData.playername
           result.time = timer.getAbsTime()
+          result.clock = UTILS.SecondsToClock(result.time)
           result.airframe = playerData.airframe
           result.roundsFired = 0 -- Rangeboss Edit
           result.roundsHit = 0 -- Rangeboss Edit
           result.roundsQuality = "N/A" -- Rangeboss Edit
           result.rangename = self.rangename
+          result.attackHdg = attackHdg
+          result.attackVel = attackVel
+          result.attackAlt = attackAlt
 
           -- Add to table.
           table.insert( _results, result )
@@ -2078,13 +2094,13 @@ function RANGE:onafterImpact( From, Event, To, result, player )
   -- Only display target name if there is more than one bomb target.
   local targetname = nil
   if #self.bombingTargets > 1 then
-    local targetname = result.name
+    targetname = result.name
   end
 
   -- Send message to player.
   local text = string.format( "%s, impact %03d° for %d ft", player.playername, result.radial, UTILS.MetersToFeet( result.distance ) )
   if targetname then
-    text = text .. string.format( " from bulls of target %s." )
+    text = text .. string.format( " from bulls of target %s.", targetname )
   else
     text = text .. "."
   end
@@ -2110,11 +2126,15 @@ function RANGE:onafterImpact( From, Event, To, result, player )
   end
 
   -- Unit.
-  local unit = UNIT:FindByName( player.unitname )
-
-  -- Send message.
-  self:_DisplayMessageToGroup( unit, text, nil, true )
-  self:T( self.id .. text )
+  if player.unitname then
+  
+    -- Get unit.
+    local unit = UNIT:FindByName( player.unitname )
+  
+    -- Send message.
+    self:_DisplayMessageToGroup( unit, text, nil, true )
+    self:T( self.id .. text )
+  end
 
   -- Save results.
   if self.autosave then
@@ -3045,9 +3065,11 @@ function RANGE:_CheckInZone( _unitName )
           
           -- Strafe result.
           local result = {} -- #RANGE.StrafeResult
+          result.type="Strafe Result"
           result.player=_playername
           result.name=_result.zone.name or "unknown"
           result.time = timer.getAbsTime()
+          result.clock = UTILS.SecondsToClock(result.time)
           result.roundsFired = shots
           result.roundsHit = _result.hits
           result.roundsQuality = resulttext
@@ -3507,7 +3529,7 @@ function RANGE:_SmokeBombImpactOnOff( unitname )
       self.PlayerSettings[playername].smokebombimpact = false
       text = string.format( "%s, %s, smoking impact points of bombs is now OFF.", self.rangename, playername )
     else
-      self.PlayerSettigs[playername].smokebombimpact = true
+      self.PlayerSettings[playername].smokebombimpact = true
       text = string.format( "%s, %s, smoking impact points of bombs is now ON.", self.rangename, playername )
     end
     self:_DisplayMessageToGroup( unit, text, 5, false, true )
@@ -3528,7 +3550,7 @@ function RANGE:_SmokeBombDelayOnOff( unitname )
       self.PlayerSettings[playername].delaysmoke = false
       text = string.format( "%s, %s, delayed smoke of bombs is now OFF.", self.rangename, playername )
     else
-      self.PlayerSettigs[playername].delaysmoke = true
+      self.PlayerSettings[playername].delaysmoke = true
       text = string.format( "%s, %s, delayed smoke of bombs is now ON.", self.rangename, playername )
     end
     self:_DisplayMessageToGroup( unit, text, 5, false, true )
