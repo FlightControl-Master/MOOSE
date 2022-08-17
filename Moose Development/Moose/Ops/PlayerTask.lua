@@ -827,7 +827,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.15"
+PLAYERTASKCONTROLLER.version="0.1.16"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -1879,31 +1879,36 @@ end
 -- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 271 or {127,251}. There needs to be exactly the same number of modulations!
 -- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}. There needs to be exactly the same number of frequencies!
 -- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone"
--- @param #string Gender Defaults to "male"
--- @param #string Culture Defaults to "en-US"
--- @param #number Port Defaults to 5002
+-- @param #string Gender (Optional) Defaults to "male"
+-- @param #string Culture (Optional) Defaults to "en-US"
+-- @param #number Port (Optional) Defaults to 5002
 -- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
--- @param #number Volume Volume - between 0.0 (silent) and 1.0 (loudest)
--- @param #string PathToGoogleKey Path to your google key if you want to use google TTS
+-- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
+-- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
   self:T(self.lid.."SetSRS")
-  self.PathToSRS = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
-  self.Gender = Gender or "male"
-  self.Culture = Culture or "en-US"
-  self.Port = Port or 5002
-  self.Voice = Voice 
-  self.PathToGoogleKey = PathToGoogleKey
-  self.Volume = Volume or 1.0
+  self.PathToSRS = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone" --
+  self.Gender = Gender or "male" --
+  self.Culture = Culture or "en-US" --
+  self.Port = Port or 5002 --
+  self.Voice = Voice --
+  self.PathToGoogleKey = PathToGoogleKey --
+  self.Volume = Volume or 1.0 --
   self.UseSRS = true
-  self.Frequency = Frequency or {127,251}
+  self.Frequency = Frequency or {127,251} --
   self.BCFrequency = self.Frequency
-  self.Modulation = Modulation or {radio.modulation.FM,radio.modulation.AM}
-  self.BCModulation = self.Modulation 
+  self.Modulation = Modulation or {radio.modulation.FM,radio.modulation.AM} --
+  self.BCModulation = self.Modulation
+  -- set up SRS 
   self.SRS=MSRS:New(self.PathToSRS,self.Frequency,self.Modulation,self.Volume)
   self.SRS:SetCoalition(self.Coalition)
   self.SRS:SetLabel(self.MenuName or self.Name)
+  self.SRS:SetGender(self.Gender)
+  self.SRS:SetCulture(self.Culture)
+  self.SRS:SetPort(self.Port)
+  self.SRS:SetVoice(self.Voice)
   if self.PathToGoogleKey then
     self.SRS:SetGoogle(self.PathToGoogleKey)
   end

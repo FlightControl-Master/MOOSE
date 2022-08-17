@@ -74,6 +74,7 @@
 -- @image Designation.JPG
 --
 -- Date: 24 Oct 2021
+-- Last Update: Aug 2022
 --
 --- Class AUTOLASE
 -- @type AUTOLASE
@@ -110,7 +111,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.0.12"
+AUTOLASE.version = "0.1.13"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -356,12 +357,45 @@ end
 -- @param #string Path Path to SRS directory, e.g. C:\\Program Files\\DCS-SimpleRadio-Standalon
 -- @param #number Frequency Frequency to send, e.g. 243
 -- @param #number Modulation Modulation i.e. radio.modulation.AM or radio.modulation.FM
+-- @param #string Label (Optional) Short label to be used on the SRS Client Overlay
+-- @param #string Gender (Optional) Defaults to "male"
+-- @param #string Culture (Optional) Defaults to "en-US"
+-- @param #number Port (Optional) Defaults to 5002
+-- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
+-- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
+-- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
+-- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS
 -- @return #AUTOLASE self 
-function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation)
-  self.useSRS = OnOff or true
-  self.SRSPath = Path or "E:\\Program Files\\DCS-SimpleRadio-Standalone"
-  self.SRSFreq = Frequency or 271
-  self.SRSMod = Modulation or radio.modulation.AM
+function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
+  if OnOff then
+    self.useSRS = true
+    self.SRSPath = Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+    self.SRSFreq = Frequency or 271
+    self.SRSMod = Modulation or radio.modulation.AM
+    self.Gender = Gender or "male"
+    self.Culture = Culture or "en-US"
+    self.Port = Port or 5002
+    self.Voice = Voice 
+    self.PathToGoogleKey = PathToGoogleKey
+    self.Volume = Volume or 1.0
+    self.Label = Label
+    -- set up SRS
+    self.SRS = MSRS:New(self.SRSPath,self.SRSFreq,self.SRSMod,self.Volume)
+    self.SRS:SetCoalition(self.coalition)
+    self.SRS:SetLabel(self.MenuName or self.Name)
+    self.SRS:SetGender(self.Gender)
+    self.SRS:SetCulture(self.Culture)
+    self.SRS:SetPort(self.Port)
+    self.SRS:SetVoice(self.Voice)
+    if self.PathToGoogleKey then
+      self.SRS:SetGoogle(self.PathToGoogleKey)
+    end
+    self.SRSQueue = MSRSQUEUE:New(self.alias)
+  else
+    self.useSRS = false
+    self.SRS= nil
+    self.SRSQueue = nil
+  end
   return self
 end
 
@@ -643,20 +677,7 @@ end
 --            end
 function AUTOLASE:NotifyPilotsWithSRS(Message)
   if self.useSRS then
-   -- Create a SOUNDTEXT object.
-   if self.debug then
-     BASE:TraceOn()
-     BASE:TraceClass("SOUNDTEXT")
-     BASE:TraceClass("MSRS")
-   end
-   local path = self.SRSPath or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
-   local freq = self.SRSFreq or 271
-   local mod = self.SRSMod or radio.modulation.AM
-   local text=SOUNDTEXT:New(Message)  
-   -- MOOSE SRS 
-   local msrs=MSRS:New(path, freq, mod)
-   -- Text-to speech with default voice after 2 seconds.
-   msrs:PlaySoundText(text, 2)
+   self.SRSQueue:NewTransmission(Message,nil,self.SRS,nil,2)
   end
   if self.debug then self:I(Message) end
   return self
