@@ -3,7 +3,9 @@
 -- ## Main Features:
 --
 --    * Simplifies defining and executing Player tasks
---    * FSM events when a mission is done, successful or failed
+--    * FSM events when a mission is added, done, successful or failed, replanned
+--    * Ready to use SRS and localization
+--    * Mission locations can be smoked, flared and marked on the map
 --
 -- ===
 --
@@ -17,9 +19,15 @@
 --
 -- ===
 -- @module Ops.PlayerTask
--- @image OPS_PlayerTask.png
+-- @image OPS_Auftrag.png
 -- @date Last Update August 2022
 
+
+do
+-------------------------------------------------------------------------------------------------------------------
+-- PLAYERTASK
+-- TODO: PLAYERTASK
+-------------------------------------------------------------------------------------------------------------------
 
 --- PLAYERTASK class.
 -- @type PLAYERTASK
@@ -40,13 +48,8 @@
 -- @field #table conditionFailure   =   {},
 -- @field Ops.PlayerTask#PLAYERTASKCONTROLLER TaskController
 -- @field #number timestamp
---
 -- @extends Core.Fsm#FSM
 
--------------------------------------------------------------------------------------------------------------------
--- PLAYERTASK
--- TODO: PLAYERTASK
--------------------------------------------------------------------------------------------------------------------
 
 --- Global PlayerTaskNr counter
 _PlayerTaskNr = 0
@@ -661,7 +664,12 @@ function PLAYERTASK:onafterFailed(From, Event, To)
   end
   return self
 end
+-------------------------------------------------------------------------------------------------------------------
+-- END PLAYERTASK
+-------------------------------------------------------------------------------------------------------------------
+end
 
+do
 -------------------------------------------------------------------------------------------------------------------
 -- PLAYERTASKCONTROLLER
 -- TODO: PLAYERTASKCONTROLLER
@@ -690,10 +698,194 @@ end
 -- @field #table WhiteList
 -- @field Core.TextAndSound#TEXTANDSOUND gettext
 -- @field #string locale
--- 
+-- @extends Core.Fsm#FSM
+
 
 
 ---
+--
+-- *It is our attitude at the beginning of a difficult task which, more than anything else, will affect its successful outcome.* (William James)
+--
+-- ===
+-- 
+-- ## PLAYERTASKCONTROLLER 
+-- 
+--    * Simplifies defining and executing Player tasks
+--    * FSM events when a mission is added, done, successful or failed, replanned
+--    * Ready to use SRS and localization
+--    * Mission locations can be smoked, flared and marked on the map
+-- 
+-- ## 1 Overview
+-- 
+-- PLAYERTASKCONTROLLER is used to auto-create (optional) and control tasks for players. It can be set up as Air-to-Ground (A2G, main focus), Air-to-Ship (A2S) or Air-to-Air (A2A) controller.
+-- For the latter task type, also have a look at the @{Ops.AwacsGroup#AWACS} class which allows for more complex scenarios.
+-- One task at a time can be joined by the player from the F10 menu. A task can be joined by multiple players. Once joined, task information is available via the F10 menu, the task location
+-- can be marked on the map and for A2G/S targets, the target can be marked with smoke and flares.
+-- 
+-- For the mission designer, tasks can be auto-created by means of detection with the integrated @{Ops.Intelligence#INTEL} class setup, or be manually added to the task queue.
+-- 
+-- ## 2 Task Types
+-- 
+-- Targets can be of types GROUP, SET\_GROUP, UNIT, SET\_UNIT, STATIC, SET\_STATIC, AIRBASE, ZONE or COORDINATE. The system will auto-create tasks for players from these targets.
+-- Tasks are created as @{Ops.PlayerTask#PLAYERTASK} objects, which leverage @{Ops.Target#TARGET} for the management of the actual target. The system creates these task types
+-- from the target objects:  
+-- 
+--  * A2A - AUFTRAG.Type.INTERCEPT
+--  * A2S - AUFTRAG.Type.ANTISHIP
+--  * A2G - AUFTRAG.Type.CAS, AUFTRAG.Type.BAI, AUFTRAG.Type.SEAD, AUFTRAG.Type.BOMBING, AUFTRAG.Type.BOMBRUNWAY
+-- 
+-- Task types are derived from @{Ops.Auftrag#AUFTRAG}:   
+--  
+--  * CAS - Close air support, created to attack ground units, where friendly ground units are around the location in a bespoke radius (default: 500m/1km diameter)
+--  * BAI - Battlefield air interdiction, same as above, but no friendlies around
+--  * SEAD - Same as CAS, but the enemy ground units field AAA, SAM or EWR units
+--  * Bombing - Against static targets
+--  * Bomb Runway - Against Airbase runways (in effect, drop bombs over the runway)
+--  * ZONE and COORDINATE - Targets will be scanned for GROUND or STATIC enemy units and tasks created from these
+--  * Intercept - Any airborne targets, if the controller is of type "A2A"
+--  * Anti-Ship - Any ship targets, if the controller is of type "A2S"
+--  
+-- ## 3 Task repetition
+--  
+-- On failure, tasks will be replanned by default for a maximum of 5 times.
+-- 
+-- ## 4 SETTINGS, SRS and language options (localization)
+-- 
+-- The system can optionally communicate to players via SRS. Also localization is available, both "en" and "de" has been build in already.
+-- Player and global @{Core.Settings#SETTINGS} for coordinates will be observed.
+--  
+-- ## 5 Setup  
+-- 
+-- A basic setup is very simple:
+-- 
+--            -- Settings - we want players to have a settings menu, be on imperial measures, and get directions as BR
+--            _SETTINGS:SetPlayerMenuOn()
+--            _SETTINGS:SetImperial()
+--            _SETTINGS:SetA2G_BR()
+-- 
+--            -- Set up the A2G task controller for the blue side named "82nd Airborne"
+--            local taskmanager = PLAYERTASKCONTROLLER:New("82nd Airborne",coalition.side.BLUE,PLAYERTASKCONTROLLER.Type.A2G)
+--            
+--            -- set locale to English
+--            taskmanager:SetLocale("en")
+--            
+--            -- Set up detection with grup names *containing* "Blue Recce", these will add targets to our controller via detection. Can be e.g. a drone.
+--            taskmanager:SetupIntel("Blue Recce")
+--            
+--            -- Add a single Recce group name "Blue Humvee"
+--            taskmanager:AddAgent(GROUP:FindByName("Blue Humvee"))
+--            
+--            -- Set the callsign for SRS and Menu name to be "Groundhog"
+--            taskmanager:SetMenuName("Groundhog")
+--            
+--            -- Add accept- and reject-zones for detection
+--            -- Accept zones are handy to limit e.g. the engagement to a certain zone. The example is a round, mission editor created zone named "AcceptZone"
+--            taskmanager:AddAcceptZone(ZONE:New("AcceptZone"))
+--            
+--            -- Reject zones are handy to create borders. The example is a ZONE_POLYGON, created in the mission editor, late activated with waypoints, 
+--            -- named "AcceptZone#ZONE_POLYGON"
+--            taskmanager:AddRejectZone(ZONE:FindByName("RejectZone"))
+--            
+--            -- Set up using SRS for messaging
+--            local hereSRSPath = "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+--            local hereSRSPort = 5002
+--            -- local hereSRSGoogle = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\yourkey.json"
+--            taskmanager:SetSRS({130,255},{radio.modulation.AM,radio.modulation.AM},hereSRSPath,"female","en-GB",hereSRSPort,"Microsoft Hazel Desktop",0.7,hereSRSGoogle)
+--            
+--            -- Controller will announce itself under these broadcast frequencies, handy to use cold-start frequencies here of your aircraft
+--            taskmanager:SetSRSBroadcast({127.5,305},{radio.modulation.AM,radio.modulation.AM})
+--            
+--            -- Example: Manually add an AIRBASE as a target
+--            taskmanager:AddTarget(AIRBASE:FindByName(AIRBASE.Caucasus.Senaki_Kolkhi))
+--            
+--            -- Example: Manually add a COORDINATE as a target
+--            taskmanager:AddTarget(GROUP:FindByName("Scout Coordinate"):GetCoordinate())
+--            
+--            -- Set a whitelist for tasks, e.g. skip SEAD tasks
+--            taskmanager:SetTaskWhiteList({AUFTRAG.Type.CAS, AUFTRAG.Type.BAI, AUFTRAG.Type.BOMBING, AUFTRAG.Type.BOMBRUNWAY})
+--            
+--            -- Set target radius
+--            taskmanager:SetTargetRadius(1000)
+-- 
+-- ## 6 Localization
+-- 
+-- Localization for English and German texts are build-in. Default setting is English. Change with @{#PLAYERTASKCONTROLLER.SetLocale}()
+-- 
+-- ### 6.1 Adding Localization
+-- 
+-- A list of fields to be defined follows below. **Note** that in some cases `string.format()` is used to format texts for screen and SRS. 
+-- Hence, the `%d`, `%s` and `%f` special characters need to appear in the exact same amount and order of appearance in the localized text or it will create errors.
+-- To add a localization, the following texts need to be translated and set in your mission script **before** @{#PLAYERTASKCONTROLLER.New}():   
+-- 
+--            PLAYERTASKCONTROLLER.Messages = {
+--              EN = {
+--                TASKABORT = "Task aborted!",
+--                NOACTIVETASK = "No active task!",
+--                FREQUENCIES = "frequencies ",
+--                FREQUENCY = "frequency %.3f",
+--                BROADCAST = "%s, %s, switch to %s for task assignment!",
+--                CASTTS = "close air support",
+--                SEADTTS = "suppress air defense",
+--                BOMBTTS = "bombing",
+--                BAITTS = "battle field air interdiction",
+--                ANTISHIPTTS = "anti-ship",
+--                INTERCEPTTS = "intercept",
+--                BOMBRUNWAYTTS = "bomb runway",
+--                HAVEACTIVETASK = "You already have one active task! Complete it first!",
+--                PILOTJOINEDTASK = "%s, pilot %s joined task %03d",
+--                TASKNAME = "%s Task ID %03d",
+--                TASKNAMETTS = "%s Task ID %03d",
+--                THREATHIGH = "high",
+--                THREATMEDIUM = "medium",
+--                THREATLOW = "low",
+--                THREATTEXT = "%s\nThreat: %s\nTargets left: %d\nCoord: %s",
+--                THREATTEXTTTS = "%s, %s. Target information for %s. Threat level %s. Targets left %d. Target location %s.",
+--                MARKTASK = "%s, copy pilot %s, task %03d location marked on map!",
+--                SMOKETASK = "%s, copy pilot %s, task %03d location smoked!",
+--                FLARETASK = "%s, copy pilot %s, task %03d location illuminated!",
+--                ABORTTASK = "%s, all stations, pilot %s aborted task %03d!",
+--                UNKNOWN = "Unknown",
+--                MENUTASKING = " Tasking ",
+--                MENUACTIVE = "Active Task",
+--                MENUINFO = "Info",
+--                MENUMARK = "Mark on map",
+--                MENUSMOKE = "Smoke",
+--                MENUFLARE = "Flare",
+--                MENUABORT = "Abort",
+--                MENUJOIN = "Join Task",
+--                MENUTASKNO = "TaskNo",
+--                MENUNOTASKS = "Currently no tasks available.",
+--                TASKCANCELLED = "Task #%03d %s is cancelled!",
+--                TASKCANCELLEDTTS = "%s, task %03d %s is cancelled!",
+--                TASKSUCCESS = "Task #%03d %s completed successfully!",
+--                TASKSUCCESSTTS = "%s, task %03d %s completed successfully!",
+--                TASKFAILED = "Task #%03d %s was a failure!",
+--                TASKFAILEDTTS = "%s, task %03d %s was a failure!",
+--                TASKFAILEDREPLAN = "Task #%03d %s was a failure! Replanning!",
+--                TASKFAILEDREPLANTTS = "%s, task %03d %s was a failure! Replanning!",
+--                TASKADDED = "%s has a new task %s",
+--                PILOTS = "\nPilot(s): ",
+--                PILOTSTTS = ". Pilot(s): ",
+--              },
+-- 
+-- e.g.
+-- 
+--            taskmanager.Messages = {
+--              FR = {
+--                TASKABORT = "Tâche abandonnée!",
+--                NOACTIVETASK = "Aucune tâche active!",
+--                FREQUENCIES = "fréquences ",
+--                FREQUENCY = "fréquence %.3f",
+--                BROADCAST = "%s, %s, passer au %s pour l'attribution des tâches!",
+--                ...
+--                TASKADDED = "%s a une nouvelle tâche %s",
+--                PILOTS = "\nPilote(s): ",
+--                PILOTSTTS = ". Pilote(s): ",
+--              },
+--  
+-- and then `taskmanager:SetLocale("fr")` **after** @{#PLAYERTASKCONTROLLER.New}() in your script.
+-- 
+--                            
 -- @field #PLAYERTASKCONTROLLER
 PLAYERTASKCONTROLLER = {
   ClassName          = "PLAYERTASKCONTROLLER",
@@ -827,7 +1019,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.16"
+PLAYERTASKCONTROLLER.version="0.1.17"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -958,6 +1150,9 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   
 end
 
+--- [Internal] Init localization
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_InitLocalization()
   self:T(self.lid.."_InitLocalization")
   self.gettext = TEXTANDSOUND:New("PLAYERTASKCONTROLLER","en") -- Core.TextAndSound#TEXTANDSOUND
@@ -973,7 +1168,25 @@ function PLAYERTASKCONTROLLER:_InitLocalization()
   return self
 end
 
---- [internal] Event handling
+--- [User] Set repetition options for tasks
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #boolean OnOff Set to `true` to switch on and `false` to switch off (defaults to true)
+-- @param #number Repeats Number of repeats (defaults to 5)
+-- @return #PLAYERTASKCONTROLLER self
+-- @usage `taskmanager:SetTaskRepetition(true, 5)`
+function PLAYERTASKCONTROLLER:SetTaskRepetition(OnOff, Repeats)
+  self:T(self.lid.."SetTaskRepetition")
+  if OnOff then
+    self.repeatonfailed = true
+    self.repeattimes = Repeats or 5
+  else
+    self.repeatonfailed = false
+    self.repeattimes = Repeats or 5
+  end
+  return self
+end
+
+--- [Internal] Event handling
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Event#EVENTDATA EventData
 -- @return #PLAYERTASKCONTROLLER self
@@ -2106,5 +2319,9 @@ function PLAYERTASKCONTROLLER:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.PilotDead)
   self:UnHandleEvent(EVENTS.PlayerEnterAircraft)
   return self
+end
+-------
+-- END PLAYERTASKCONTROLLER
+----- 
 end
 
