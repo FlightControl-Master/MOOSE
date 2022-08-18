@@ -885,7 +885,64 @@ do
 --  
 -- and then `taskmanager:SetLocale("fr")` **after** @{#PLAYERTASKCONTROLLER.New}() in your script.
 -- 
---                            
+-- ## 7 Events
+--
+--  The class comes with a number of FSM-based events that missions designers can use to shape their mission.
+--  These are:
+--  
+-- ### 7.1 TaskAdded. 
+--      
+--      The event is triggered when a new task is added to the controller. Use e.g. `function taskmanager:OnAfterTaskAdded()` to link into this event:
+--      
+--          function taskmanager:OnAfterTaskAdded(From, Event, To, Task)
+--            ... your code here ...
+--          end
+-- 
+-- ### 7.2 TaskDone. 
+--      
+--      The event is triggered when a task has ended. Use e.g. `function taskmanager:OnAfterTaskDone()` to link into this event:
+--      
+--          function taskmanager:OnAfterTaskDone(From, Event, To, Task)
+--            ... your code here ...
+--          end
+--          
+-- ### 7.3 TaskCancelled. 
+--      
+--      The event is triggered when a task was cancelled manually. Use e.g. `function taskmanager:OnAfterTaskCancelled()` to link into this event:
+--      
+--          function taskmanager:OnAfterTaskCancelled(From, Event, To, Task)
+--            ... your code here ...
+--          end
+--          
+-- ### 7.4 TaskSuccess. 
+--      
+--      The event is triggered when a task completed successfully. Use e.g. `function taskmanager:OnAfterTaskSuccess()` to link into this event:
+--      
+--          function taskmanager:OnAfterTaskSuccess(From, Event, To, Task)
+--            ... your code here ...
+--          end
+--          
+-- ### 7.5 TaskFailed. 
+--      
+--      The event is triggered when a task failed, no repeats. Use e.g. `function taskmanager:OnAfterTaskFailed()` to link into this event:
+--      
+--          function taskmanager:OnAfterTaskFailed(From, Event, To, Task)
+--            ... your code here ...
+--          end
+--          
+-- ### 7.6 TaskRepeatOnFailed. 
+--      
+--      The event is triggered when a task failed and is re-planned for execution. Use e.g. `function taskmanager:OnAfterRepeatOnFailed()` to link into this event:
+--      
+--          function taskmanager:OnAfterRepeatOnFailed(From, Event, To, Task)
+--            ... your code here ...
+--          end
+--          
+-- ## 8 Discussion
+--
+-- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) #ops-playertask channel.  
+-- 
+--                          
 -- @field #PLAYERTASKCONTROLLER
 PLAYERTASKCONTROLLER = {
   ClassName          = "PLAYERTASKCONTROLLER",
