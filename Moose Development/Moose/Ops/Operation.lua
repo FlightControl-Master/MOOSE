@@ -454,7 +454,7 @@ function OPERATION:GetPhaseStatus(Phase)
   return Phase.status
 end
 
---- Set codition when the given phase is over.
+--- Set condition when the given phase is over.
 -- @param #OPERATION self
 -- @param #OPERATION.Phase Phase The phase.
 -- @param Core.Condition#CONDITION Condition Condition when the phase is over.
