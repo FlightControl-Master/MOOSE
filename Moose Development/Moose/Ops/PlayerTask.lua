@@ -19,7 +19,7 @@
 --
 -- ===
 -- @module Ops.PlayerTask
--- @image OPS_Auftrag.png
+-- @image OPS_PlayerTask.jpg
 -- @date Last Update August 2022
 
 
@@ -700,17 +700,15 @@ do
 -- @field #string locale
 -- @extends Core.Fsm#FSM
 
-
-
 ---
 --
--- *It is our attitude at the beginning of a difficult task which, more than anything else, will affect its successful outcome.* (William James)
+-- *It is our attitude at the beginning of a difficult task which, more than anything else, which will affect its successful outcome.* (William James)
 --
 -- ===
 -- 
--- ## PLAYERTASKCONTROLLER 
+-- # PLAYERTASKCONTROLLER 
 -- 
---    * Simplifies defining and executing Player tasks
+--    * Simplifies defining, executing and controlling of Player tasks
 --    * FSM events when a mission is added, done, successful or failed, replanned
 --    * Ready to use SRS and localization
 --    * Mission locations can be smoked, flared and marked on the map
@@ -718,11 +716,11 @@ do
 -- ## 1 Overview
 -- 
 -- PLAYERTASKCONTROLLER is used to auto-create (optional) and control tasks for players. It can be set up as Air-to-Ground (A2G, main focus), Air-to-Ship (A2S) or Air-to-Air (A2A) controller.
--- For the latter task type, also have a look at the @{Ops.AwacsGroup#AWACS} class which allows for more complex scenarios.
+-- For the latter task type, also have a look at the @{Ops.Awacs#AWACS} class which allows for more complex scenarios.
 -- One task at a time can be joined by the player from the F10 menu. A task can be joined by multiple players. Once joined, task information is available via the F10 menu, the task location
 -- can be marked on the map and for A2G/S targets, the target can be marked with smoke and flares.
 -- 
--- For the mission designer, tasks can be auto-created by means of detection with the integrated @{Ops.Intelligence#INTEL} class setup, or be manually added to the task queue.
+-- For the mission designer, tasks can be auto-created by means of detection with the integrated @{Ops.Intel#INTEL} class setup, or be manually added to the task queue.
 -- 
 -- ## 2 Task Types
 -- 
