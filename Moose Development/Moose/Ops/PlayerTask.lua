@@ -861,7 +861,7 @@ do
 --                TASKFAILEDTTS = "%s, task %03d %s was a failure!",
 --                TASKFAILEDREPLAN = "Task #%03d %s was a failure! Replanning!",
 --                TASKFAILEDREPLANTTS = "%s, task %03d %s was a failure! Replanning!",
---                TASKADDED = "%s has a new task %s",
+--                TASKADDED = "%s has a new task %s available!",
 --                PILOTS = "\nPilot(s): ",
 --                PILOTSTTS = ". Pilot(s): ",
 --              },
@@ -1017,7 +1017,7 @@ PLAYERTASKCONTROLLER.Messages = {
     TASKFAILEDTTS = "%s, task %03d %s was a failure!",
     TASKFAILEDREPLAN = "Task #%03d %s was a failure! Replanning!",
     TASKFAILEDREPLANTTS = "%s, task %03d %s was a failure! Replanning!",
-    TASKADDED = "%s has a new task %s",
+    TASKADDED = "%s has a new task %s available!",
     PILOTS = "\nPilot(s): ",
     PILOTSTTS = ". Pilot(s): ",
   },
@@ -1066,7 +1066,7 @@ PLAYERTASKCONTROLLER.Messages = {
     TASKFAILEDTTS = "%s, Auftrag %03d %s gescheitert!",
     TASKFAILEDREPLAN = "Auftrag #%03d %s gescheitert! Neuplanung!",
     TASKFAILEDREPLANTTS = "%s, Auftrag %03d %s gescheitert! Neuplanung!",
-    TASKADDED = "%s hat einen neuen Auftrag %s",
+    TASKADDED = "%s hat einen neuen Auftrag %s zur Verfügung!",
     PILOTS = "\nPilot(en): ",
     PILOTSTTS = ". Pilot(en): ",
   },
@@ -1074,7 +1074,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.17"
+PLAYERTASKCONTROLLER.version="0.1.18"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
