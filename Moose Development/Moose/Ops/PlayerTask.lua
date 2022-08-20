@@ -830,7 +830,7 @@ do
 --                INTERCEPTTS = "intercept",
 --                BOMBRUNWAYTTS = "bomb runway",
 --                HAVEACTIVETASK = "You already have one active task! Complete it first!",
---                PILOTJOINEDTASK = "%s, pilot %s joined task %03d",
+--                PILOTJOINEDTASK = "%s, %s joined task %03d",
 --                TASKNAME = "%s Task ID %03d",
 --                TASKNAMETTS = "%s Task ID %03d",
 --                THREATHIGH = "high",
@@ -986,7 +986,7 @@ PLAYERTASKCONTROLLER.Messages = {
     INTERCEPTTS = "intercept",
     BOMBRUNWAYTTS = "bomb runway",
     HAVEACTIVETASK = "You already have one active task! Complete it first!",
-    PILOTJOINEDTASK = "%s, pilot %s joined task %03d",
+    PILOTJOINEDTASK = "%s, %s joined task %03d",
     TASKNAME = "%s Task ID %03d",
     TASKNAMETTS = "%s Task ID %03d",
     THREATHIGH = "high",
@@ -1035,7 +1035,7 @@ PLAYERTASKCONTROLLER.Messages = {
     INTERCEPTTS = "Abfangen",
     BOMBRUNWAYTTS = "Startbahn Bombardieren",
     HAVEACTIVETASK = "Du hast einen aktiven Auftrag! Beende ihn zuerst!",
-    PILOTJOINEDTASK = "%s, Pilot %s hat Auftrag %03d angenommen",
+    PILOTJOINEDTASK = "%s, %s hat Auftrag %03d angenommen",
     TASKNAME = "%s Auftrag ID %03d",
     TASKNAMETTS = "%s Auftrag ID %03d",
     THREATHIGH = "hoch",
@@ -1752,6 +1752,9 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client)
     clienttxt=string.gsub(clienttxt,", $",".")
     text = text .. clienttxt
     if self.UseSRS then
+      if string.find(CoordText," BR, ") then
+        CoordText = string.gsub(CoordText," BR, "," Bee, Arr, ")
+      end
       local ThreatLocaleTextTTS = self.gettext:GetEntry("THREATTEXTTTS",self.locale)
       local ttstext = string.format(ThreatLocaleTextTTS,self.MenuName or self.Name,playername,ttstaskname,ThreatLevelText, targets, CoordText)
       --local ttstext = string.format("%s, %s. Target information for %s. Threat level %s. Targets left %d. Target location %s.",self.MenuName or self.Name,playername,ttstaskname,ThreatLevelText, targets, CoordText)
