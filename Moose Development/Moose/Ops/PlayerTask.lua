@@ -838,10 +838,10 @@ do
 --                THREATLOW = "low",
 --                THREATTEXT = "%s\nThreat: %s\nTargets left: %d\nCoord: %s",
 --                THREATTEXTTTS = "%s, %s. Target information for %s. Threat level %s. Targets left %d. Target location %s.",
---                MARKTASK = "%s, copy pilot %s, task %03d location marked on map!",
---                SMOKETASK = "%s, copy pilot %s, task %03d location smoked!",
---                FLARETASK = "%s, copy pilot %s, task %03d location illuminated!",
---                ABORTTASK = "%s, all stations, pilot %s aborted task %03d!",
+--                MARKTASK = "%s, %s, copy, task %03d location marked on map!",
+--                SMOKETASK = "%s, %s, copy, task %03d location smoked!",
+--                FLARETASK = "%s, %s, copy, task %03d location illuminated!",
+--                ABORTTASK = "%s, all stations, %s aborted task %03d!",
 --                UNKNOWN = "Unknown",
 --                MENUTASKING = " Tasking ",
 --                MENUACTIVE = "Active Task",
@@ -876,7 +876,7 @@ do
 --                FREQUENCY = "fréquence %.3f",
 --                BROADCAST = "%s, %s, passer au %s pour l'attribution des tâches!",
 --                ...
---                TASKADDED = "%s a une nouvelle tâche %s",
+--                TASKADDED = "%s a créé une nouvelle tâche %s",
 --                PILOTS = "\nPilote(s): ",
 --                PILOTSTTS = ". Pilote(s): ",
 --              },
@@ -890,51 +890,51 @@ do
 --  
 -- ### 7.1 TaskAdded. 
 --      
---      The event is triggered when a new task is added to the controller. Use e.g. `function taskmanager:OnAfterTaskAdded()` to link into this event:
+-- The event is triggered when a new task is added to the controller. Use @{#PLAYERTASKCONTROLLER.OnAfterTaskAdded}() to link into this event:
 --      
---          function taskmanager:OnAfterTaskAdded(From, Event, To, Task)
---            ... your code here ...
---          end
+--              function taskmanager:OnAfterTaskAdded(From, Event, To, Task)
+--                ... your code here ...
+--              end
 -- 
 -- ### 7.2 TaskDone. 
 --      
---      The event is triggered when a task has ended. Use e.g. `function taskmanager:OnAfterTaskDone()` to link into this event:
+-- The event is triggered when a task has ended. Use @{#PLAYERTASKCONTROLLER.OnAfterTaskDone}() to link into this event:
 --      
---          function taskmanager:OnAfterTaskDone(From, Event, To, Task)
---            ... your code here ...
---          end
+--              function taskmanager:OnAfterTaskDone(From, Event, To, Task)
+--                ... your code here ...
+--              end
 --          
 -- ### 7.3 TaskCancelled. 
 --      
---      The event is triggered when a task was cancelled manually. Use e.g. `function taskmanager:OnAfterTaskCancelled()` to link into this event:
+-- The event is triggered when a task was cancelled manually. Use @{#PLAYERTASKCONTROLLER.OnAfterTaskCancelled}()` to link into this event:
 --      
---          function taskmanager:OnAfterTaskCancelled(From, Event, To, Task)
---            ... your code here ...
---          end
+--              function taskmanager:OnAfterTaskCancelled(From, Event, To, Task)
+--                ... your code here ...
+--              end
 --          
 -- ### 7.4 TaskSuccess. 
 --      
---      The event is triggered when a task completed successfully. Use e.g. `function taskmanager:OnAfterTaskSuccess()` to link into this event:
+-- The event is triggered when a task completed successfully. Use @{#PLAYERTASKCONTROLLER.OnAfterTaskSuccess}() to link into this event:
 --      
---          function taskmanager:OnAfterTaskSuccess(From, Event, To, Task)
---            ... your code here ...
---          end
+--              function taskmanager:OnAfterTaskSuccess(From, Event, To, Task)
+--                ... your code here ...
+--              end
 --          
 -- ### 7.5 TaskFailed. 
 --      
---      The event is triggered when a task failed, no repeats. Use e.g. `function taskmanager:OnAfterTaskFailed()` to link into this event:
+-- The event is triggered when a task failed, no repeats. Use @{#PLAYERTASKCONTROLLER.OnAfterTaskFailed}() to link into this event:
 --      
---          function taskmanager:OnAfterTaskFailed(From, Event, To, Task)
---            ... your code here ...
---          end
+--              function taskmanager:OnAfterTaskFailed(From, Event, To, Task)
+--                ... your code here ...
+--              end
 --          
 -- ### 7.6 TaskRepeatOnFailed. 
 --      
---      The event is triggered when a task failed and is re-planned for execution. Use e.g. `function taskmanager:OnAfterRepeatOnFailed()` to link into this event:
+-- The event is triggered when a task failed and is re-planned for execution. Use @{#PLAYERTASKCONTROLLER.OnAfterRepeatOnFailed}() to link into this event:
 --      
---          function taskmanager:OnAfterRepeatOnFailed(From, Event, To, Task)
---            ... your code here ...
---          end
+--              function taskmanager:OnAfterRepeatOnFailed(From, Event, To, Task)
+--                ... your code here ...
+--              end
 --          
 -- ## 8 Discussion
 --
@@ -994,10 +994,10 @@ PLAYERTASKCONTROLLER.Messages = {
     THREATLOW = "low",
     THREATTEXT = "%s\nThreat: %s\nTargets left: %d\nCoord: %s",
     THREATTEXTTTS = "%s, %s. Target information for %s. Threat level %s. Targets left %d. Target location %s.",
-    MARKTASK = "%s, copy pilot %s, task %03d location marked on map!",
-    SMOKETASK = "%s, copy pilot %s, task %03d location smoked!",
-    FLARETASK = "%s, copy pilot %s, task %03d location illuminated!",
-    ABORTTASK = "%s, all stations, pilot %s aborted task %03d!",
+    MARKTASK = "%s, %s, copy, task %03d location marked on map!",
+    SMOKETASK = "%s, %s, copy, task %03d location smoked!",
+    FLARETASK = "%s, %s, copy, task %03d location illuminated!",
+    ABORTTASK = "%s, all stations, %s aborted task %03d!",
     UNKNOWN = "Unknown",
     MENUTASKING = " Tasking ",
     MENUACTIVE = "Active Task",
@@ -1043,10 +1043,10 @@ PLAYERTASKCONTROLLER.Messages = {
     THREATLOW = "niedrig",
     THREATTEXT = "%s\nGefahrstufe: %s\nZiele: %d\nKoord: %s",
     THREATTEXTTTS = "%s, %s. Zielinformation zu %s. Gefahrstufe %s. Ziele %d. Zielposition %s.",
-    MARKTASK = "%s, verstanden Pilot %s, Auftrag %03d auf der Karte markiert!",
-    SMOKETASK = "%s, verstanden Pilot %s, Auftrag %03d mit Rauch markiert!",
-    FLARETASK = "%s, verstanden Pilot %s, Auftrag %03d beleuchtet!",
-    ABORTTASK = "%s, an alle, Pilot %s hat Auftrag %03d abgebrochen!",
+    MARKTASK = "%s, %s, verstanden, Zielposition %03d auf der Karte markiert!",
+    SMOKETASK = "%s, %s, verstanden, Zielposition %03d mit Rauch markiert!",
+    FLARETASK = "%s, %s, verstanden, Zielposition %03d beleuchtet!",
+    ABORTTASK = "%s, an alle, %s hat Auftrag %03d abgebrochen!",
     UNKNOWN = "Unbekannt",
     MENUTASKING = " Aufträge ",
     MENUACTIVE = "Aktiver Auftrag",
@@ -1066,7 +1066,7 @@ PLAYERTASKCONTROLLER.Messages = {
     TASKFAILEDTTS = "%s, Auftrag %03d %s gescheitert!",
     TASKFAILEDREPLAN = "Auftrag #%03d %s gescheitert! Neuplanung!",
     TASKFAILEDREPLANTTS = "%s, Auftrag %03d %s gescheitert! Neuplanung!",
-    TASKADDED = "%s hat einen neuen Auftrag %s zur Verfügung!",
+    TASKADDED = "%s hat einen neuen Auftrag %s erstellt!",
     PILOTS = "\nPilot(en): ",
     PILOTSTTS = ". Pilot(en): ",
   },
@@ -1074,7 +1074,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.18"
+PLAYERTASKCONTROLLER.version="0.1.19"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -1781,7 +1781,7 @@ function PLAYERTASKCONTROLLER:_MarkTask(Group, Client)
     task:MarkTargetOnF10Map(text)
     local textmark = self.gettext:GetEntry("MARKTASK",self.locale)
     --text = string.format("%s, copy pilot %s, task %03d location marked on map!", self.MenuName or self.Name, playername, task.PlayerTaskNr)
-    text = string.format(textmark, self.MenuName or self.Name, playername, task.PlayerTaskNr)
+    text = string.format(textmark, playername, self.MenuName or self.Name, task.PlayerTaskNr)
     self:T(self.lid..text)
     if self.UseSRS then
       self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
@@ -1808,7 +1808,7 @@ function PLAYERTASKCONTROLLER:_SmokeTask(Group, Client)
     local task = self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
     task:SmokeTarget()
     local textmark = self.gettext:GetEntry("SMOKETASK",self.locale)
-    text = string.format(textmark, self.MenuName or self.Name, playername, task.PlayerTaskNr)
+    text = string.format(textmark, playername, self.MenuName or self.Name, task.PlayerTaskNr)
     self:T(self.lid..text)
     --local m=MESSAGE:New(text,"10","Tasking"):ToAll()
     if self.UseSRS then
@@ -1836,7 +1836,7 @@ function PLAYERTASKCONTROLLER:_FlareTask(Group, Client)
     local task = self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
     task:FlareTarget()
     local textmark = self.gettext:GetEntry("FLARETASK",self.locale)
-    text = string.format(textmark, self.MenuName or self.Name, playername, task.PlayerTaskNr)
+    text = string.format(textmark, playername, self.MenuName or self.Name, task.PlayerTaskNr)
     self:T(self.lid..text)
     --local m=MESSAGE:New(text,"10","Tasking"):ToAll()
     if self.UseSRS then
@@ -1864,7 +1864,7 @@ function PLAYERTASKCONTROLLER:_AbortTask(Group, Client)
     local task = self.TasksPerPlayer:PullByID(playername) -- Ops.PlayerTask#PLAYERTASK
     task:ClientAbort(Client)
     local textmark = self.gettext:GetEntry("ABORTTASK",self.locale)
-    text = string.format(textmark, self.MenuName or self.Name, playername, task.PlayerTaskNr)
+    text = string.format(textmark, playername, self.MenuName or self.Name, task.PlayerTaskNr)
     self:T(self.lid..text)
     --local m=MESSAGE:New(text,"10","Tasking"):ToAll()
     if self.UseSRS then
