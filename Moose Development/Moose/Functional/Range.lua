@@ -2381,7 +2381,7 @@ function RANGE:_DisplayMyStrafePitResults( _unitName )
 
       -- Sort results table wrt number of hits.
       local _sort = function( a, b )
-        return a.hits > b.hits
+        return a.roundsHit > b.roundsHit
       end
       table.sort( _results, _sort )
 
@@ -2398,7 +2398,7 @@ function RANGE:_DisplayMyStrafePitResults( _unitName )
 
         -- Best result.
         if _bestMsg == "" then
-          _bestMsg = string.format( "Hits %d - %s - %s", _result.hits, _result.zone.name, _result.text )
+          _bestMsg = string.format( "Hits %d - %s - %s", result.roundsHit, result.name, result.roundsQuality)
         end
 
         -- 10 runs
@@ -2443,15 +2443,15 @@ function RANGE:_DisplayStrafePitResults( _unitName )
       -- Get the best result of the player.
       local _best = nil
       for _, _result in pairs( _results ) do
-        if _best == nil or _result.hits > _best.hits then
+        if _best == nil or _result.roundsHit > _best.roundsHit then
           _best = _result
         end
       end
 
       -- Add best result to table.
       if _best ~= nil then
-        local text = string.format( "%s: Hits %i - %s - %s", _playerName, _best.hits, _best.zone.name, _best.text )
-        table.insert( _playerResults, { msg = text, hits = _best.hits } )
+        local text = string.format( "%s: Hits %i - %s - %s", _playerName, _best.roundsHit, _best.name, _best.roundsQuality )
+        table.insert( _playerResults, { msg = text, hits = _best.roundsHit } )
       end
 
     end
@@ -3507,7 +3507,7 @@ function RANGE:_SmokeBombImpactOnOff( unitname )
       self.PlayerSettings[playername].smokebombimpact = false
       text = string.format( "%s, %s, smoking impact points of bombs is now OFF.", self.rangename, playername )
     else
-      self.PlayerSettigs[playername].smokebombimpact = true
+      self.PlayerSettings[playername].smokebombimpact = true
       text = string.format( "%s, %s, smoking impact points of bombs is now ON.", self.rangename, playername )
     end
     self:_DisplayMessageToGroup( unit, text, 5, false, true )
@@ -3528,7 +3528,7 @@ function RANGE:_SmokeBombDelayOnOff( unitname )
       self.PlayerSettings[playername].delaysmoke = false
       text = string.format( "%s, %s, delayed smoke of bombs is now OFF.", self.rangename, playername )
     else
-      self.PlayerSettigs[playername].delaysmoke = true
+      self.PlayerSettings[playername].delaysmoke = true
       text = string.format( "%s, %s, delayed smoke of bombs is now ON.", self.rangename, playername )
     end
     self:_DisplayMessageToGroup( unit, text, 5, false, true )
