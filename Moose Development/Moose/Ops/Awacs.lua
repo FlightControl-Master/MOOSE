@@ -310,7 +310,8 @@ do
 -- ## 8 Bespoke Player CallSigns
 -- 
 -- Append the GROUP name of your client slots with "#CallSign" to use bespoke callsigns in AWACS callouts. E.g. "Player F14#Ghostrider" will be refered to 
--- as "Ghostrider" plus group number, e.g. "Ghostrider 9".
+-- as "Ghostrider" plus group number, e.g. "Ghostrider 9". Alternatively, if you have set up your Player name in the "Logbook" in the mission editor main screen
+-- as e.g. "Pikes | Goose", you will be addressed as "Goose" by the AWACS callouts.
 --
 -- ## 9 Options
 -- 
@@ -359,6 +360,7 @@ do
 --            -- messages or too long pauses
 --            testawacs.GoogleTTSPadding = 1 -- seconds
 --            testawacs.WindowsTTSPadding = 2.5 -- seconds
+--            testawacs.PikesSpecialSwitch = false -- if set to true, AWACS will omit the "doing xy knots" on the station assignement callout
 -- 
 -- ## 9.2 Bespoke random voices for AI CAP (Google TTS only)
 -- 
@@ -401,7 +403,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.34", -- #string
+  version = "0.2.35", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -2000,6 +2002,11 @@ function AWACS:_GetCallSign(Group,GID, IsPlayer)
       shortcallsign = string.match(groupname,"#([%a]+)")
       personalized = true
     end
+    if IsPlayer and string.find(Group:GetPlayerName(),"|") then
+      -- personalized flight name in group naming
+      shortcallsign = string.match(Group:GetPlayerName(),"| ([%a]+)")
+      personalized = true
+    end
     if (not personalized) and self.callsignTranslations and self.callsignTranslations[callsignroot] then
       shortcallsign = string.gsub(shortcallsign, callsignroot, self.callsignTranslations[callsignroot])
     end
@@ -3336,6 +3343,10 @@ function AWACS:_SetClientMenus()
           
             basemenu:RemoveSubMenus()
             --basemenu:Refresh()
+            local bogeydope = MENU_GROUP_COMMAND:New(cgrp,"Bogey Dope",basemenu,self._BogeyDope,self,cgrp)
+            local picture = MENU_GROUP_COMMAND:New(cgrp,"Picture",basemenu,self._Picture,self,cgrp)
+            local declare = MENU_GROUP_COMMAND:New(cgrp,"Declare",basemenu,self._Declare,self,cgrp)
+            
             local tasking = MENU_GROUP:New(cgrp,"Tasking",basemenu)
             local showtask = MENU_GROUP_COMMAND:New(cgrp,"Showtask",tasking,self._Showtask,self,cgrp)
             local commit = MENU_GROUP_COMMAND:New(cgrp,"Commit",tasking,self._Commit,self,cgrp)
@@ -3350,15 +3361,11 @@ function AWACS:_SetClientMenus()
               local friendly = MENU_GROUP_COMMAND:New(cgrp,"Friendly",vid,self._VID,self,cgrp,AWACS.IFF.FRIENDLY)
             end
             
-            local picture = MENU_GROUP_COMMAND:New(cgrp,"Picture",basemenu,self._Picture,self,cgrp)
-            local bogeydope = MENU_GROUP_COMMAND:New(cgrp,"Bogey Dope",basemenu,self._BogeyDope,self,cgrp)
-             
-            local declare = MENU_GROUP_COMMAND:New(cgrp,"Declare",basemenu,self._Declare,self,cgrp)
             local ainfo = MENU_GROUP_COMMAND:New(cgrp,"Awacs Info",basemenu,self._ShowAwacsInfo,self,cgrp)                
             local checkout = MENU_GROUP_COMMAND:New(cgrp,"Check Out",basemenu,self._CheckOut,self,cgrp)
 
             --basemenu:Set()
-            basemenu:Refresh()
+            --basemenu:Refresh()
             
             local menus = { -- #AWACS.MenuStructure
               groupname =  cgrpname,
