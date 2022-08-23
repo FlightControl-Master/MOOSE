@@ -17,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update July 2022
+-- @date Last Update August 2022
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -401,7 +401,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "beta 0.2.33", -- #string
+  version = "0.2.34", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -1974,8 +1974,9 @@ end
 -- @param #AWACS self
 -- @param Wrapper.Group#GROUP Group Group to use
 -- @param #number GID GID to use
+-- @param #booean IsPlayer Check in player if true
 -- @return #string Callsign
-function AWACS:_GetCallSign(Group,GID)
+function AWACS:_GetCallSign(Group,GID, IsPlayer)
   self:T(self.lid.."_GetCallSign - GID "..tostring(GID))
   
   if GID and type(GID) == "number" and GID > 0 then
@@ -1988,18 +1989,21 @@ function AWACS:_GetCallSign(Group,GID)
   if Group and Group:IsAlive() then
     local shortcallsign = Group:GetCallsign() or "unknown11"-- e.g.Uzi11, but we want Uzi 1 1
     local callsignroot = string.match(shortcallsign, '(%a+)')
-    if self.callsignTranslations and self.callsignTranslations[callsignroot] then
-      shortcallsign = string.gsub(shortcallsign, callsignroot, self.callsignTranslations[callsignroot])
-    end
-  
+    self:I("CallSign = " .. callsignroot)
     local groupname = Group:GetName()
     local callnumber = string.match(shortcallsign, "(%d+)$" ) or "unknown11"
     local callnumbermajor = string.char(string.byte(callnumber,1))
     local callnumberminor = string.char(string.byte(callnumber,2))
-    if string.find(groupname,"#") then
+    local personalized = false
+    if IsPlayer and string.find(groupname,"#") then
       -- personalized flight name in group naming
       shortcallsign = string.match(groupname,"#([%a]+)")
+      personalized = true
     end
+    if (not personalized) and self.callsignTranslations and self.callsignTranslations[callsignroot] then
+      shortcallsign = string.gsub(shortcallsign, callsignroot, self.callsignTranslations[callsignroot])
+    end
+    
     if self.callsignshort then
       callsign = string.gsub(shortcallsign,callnumber,"").." "..callnumbermajor
     else
@@ -3131,7 +3135,7 @@ function AWACS:_CheckIn(Group)
       managedgroup.GroupName = Group:GetName()
       managedgroup.IsPlayer = true
       managedgroup.IsAI = false
-      managedgroup.CallSign = self:_GetCallSign(Group,GID) or "Ghost 1"
+      managedgroup.CallSign = self:_GetCallSign(Group,GID,true) or "Ghost 1"
       managedgroup.CurrentAuftrag = 0
       managedgroup.CurrentTask = 0
       managedgroup.HasAssignedTask = true
@@ -3189,6 +3193,9 @@ function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
       managedgroup.IsPlayer = false
       managedgroup.IsAI = true
       local callsignstring = UTILS.GetCallsignName(self.AICAPCAllName)
+      if self.callsignTranslations and self.callsignTranslations[callsignstring] then
+        callsignstring = self.callsignTranslations[callsignstring]
+      end
       local callsignmajor = math.fmod(self.AICAPCAllNumber,9)
       local callsign = string.format("%s %d 1",callsignstring,callsignmajor)
       if self.callsignshort then
@@ -5931,8 +5938,13 @@ function AWACS:onafterAssignedAnchor(From, Event, To, GID, Anchor, AnchorStackNo
   local Angels = AnchorAngels or 25
   local AnchorSpeed = self.CapSpeedBase or 270
   local AuftragsNr = managedgroup.CurrentAuftrag
-
-  local textTTS = string.format("%s. %s. Station at %s at angels %d doing %d knots.",CallSign,self.callsigntxt,AnchorName,Angels,AnchorSpeed)
+  
+  local textTTS = ""
+  if self.PikesSpecialSwitch then
+    textTTS = string.format("%s. %s. Station at %s at angels %d.",CallSign,self.callsigntxt,AnchorName,Angels)
+  else
+   textTTS = string.format("%s. %s. Station at %s at angels %d doing %d knots.",CallSign,self.callsigntxt,AnchorName,Angels,AnchorSpeed)
+  end
   local ROEROT = self.AwacsROE..", "..self.AwacsROT
   local textScreen = string.format("%s. %s.\nStation at %s\nAngels %d\nSpeed %d knots\nCoord %s\nROE %s.",CallSign,self.callsigntxt,AnchorName,Angels,AnchorSpeed,AnchorCoordTxt,ROEROT)
   local TextTasking = string.format("Station at %s\nAngels %d\nSpeed %d knots\nCoord %s\nROE %s",AnchorName,Angels,AnchorSpeed,AnchorCoordTxt,ROEROT)
