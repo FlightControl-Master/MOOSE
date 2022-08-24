@@ -193,6 +193,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.SRSPath = ""
   self.SRSFreq = 251
   self.SRSMod = radio.modulation.AM
+  self.NoMenus = false
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AUTOLASE %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -208,14 +209,14 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self:AddTransition("*",             "Cancel",               "*")     -- Stop Autolase
   
   -- Menu Entry
-  if not PilotSet then
-    self.Menu = MENU_COALITION_COMMAND:New(self.coalition,"Autolase",nil,self.ShowStatus,self)
-  else
+  if PilotSet then
     self.usepilotset = true
     self.pilotset = PilotSet
     self:HandleEvent(EVENTS.PlayerEnterAircraft)
-    self:SetPilotMenu()
+    --self:SetPilotMenu()
   end
+  self.SetPilotMenu()
+  
   
   self:SetClusterAnalysis(false, false)
   
@@ -308,6 +309,10 @@ function AUTOLASE:SetPilotMenu()
         local lasemenu = MENU_GROUP_COMMAND:New(Group,"Autolase Status",nil,self.ShowStatus,self,Group)
         lasemenu:Refresh()
       end
+    end
+  else
+    if not self.NoMenus then
+      self.Menu = MENU_COALITION_COMMAND:New(self.coalition,"Autolase",nil,self.ShowStatus,self)
     end
   end
   return self

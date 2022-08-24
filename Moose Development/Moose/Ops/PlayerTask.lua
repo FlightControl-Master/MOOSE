@@ -683,6 +683,7 @@ do
 -- @field Utilities.FiFo#FIFO TargetQueue
 -- @field Utilities.FiFo#FIFO TaskQueue
 -- @field Utilities.FiFo#FIFO TasksPerPlayer
+-- @field Utilities.FiFo#FIFO PrecisionTasks
 -- @field Core.Set#SET_CLIENT ClientSet
 -- @field #string ClientFilter
 -- @field #string Name
@@ -698,6 +699,8 @@ do
 -- @field #table WhiteList
 -- @field Core.TextAndSound#TEXTANDSOUND gettext
 -- @field #string locale
+-- @field #boolean precisionbombing
+-- @field Ops.FlightGroup#FLIGHTGROUP LasingDrone
 -- @extends Core.Fsm#FSM
 
 ---
@@ -730,7 +733,8 @@ do
 -- 
 --  * A2A - AUFTRAG.Type.INTERCEPT
 --  * A2S - AUFTRAG.Type.ANTISHIP
---  * A2G - AUFTRAG.Type.CAS, AUFTRAG.Type.BAI, AUFTRAG.Type.SEAD, AUFTRAG.Type.BOMBING, AUFTRAG.Type.BOMBRUNWAY
+--  * A2G - AUFTRAG.Type.CAS, AUFTRAG.Type.BAI, AUFTRAG.Type.SEAD, AUFTRAG.Type.BOMBING, AUFTRAG.Type.PRECISIONBOMBING, AUFTRAG.Type.BOMBRUNWAY
+--  * A2GS - A2S and A2G combined
 -- 
 -- Task types are derived from @{Ops.Auftrag#AUFTRAG}:   
 --  
@@ -738,6 +742,7 @@ do
 --  * BAI - Battlefield air interdiction, same as above, but no friendlies around
 --  * SEAD - Same as CAS, but the enemy ground units field AAA, SAM or EWR units
 --  * Bombing - Against static targets
+--  * Precision Bombing - (if enabled) Laser-guided bombing, against static targets and high-value ground targets (MBTs etc)
 --  * Bomb Runway - Against Airbase runways (in effect, drop bombs over the runway)
 --  * ZONE and COORDINATE - Targets will be scanned for GROUND or STATIC enemy units and tasks created from these
 --  * Intercept - Any airborne targets, if the controller is of type "A2A"
@@ -825,6 +830,7 @@ do
 --                CASTTS = "close air support",
 --                SEADTTS = "suppress air defense",
 --                BOMBTTS = "bombing",
+--                PRECBOMBTTS = "precision bombing",
 --                BAITTS = "battle field air interdiction",
 --                ANTISHIPTTS = "anti-ship",
 --                INTERCEPTTS = "intercept",
@@ -864,6 +870,10 @@ do
 --                TASKADDED = "%s has a new task %s available!",
 --                PILOTS = "\nPilot(s): ",
 --                PILOTSTTS = ". Pilot(s): ",
+--                YES = "Yes",
+--                NO = "No",
+--                POINTEROVERTARGET = "%s, %s, pointer over target for task %03d, lasing!",
+--                POINTERTARGETREPORT = "\nPointer over target: %s\nLasing: %s\n",
 --              },
 -- 
 -- e.g.
@@ -959,15 +969,24 @@ PLAYERTASKCONTROLLER = {
   WhiteList          =   {},
   gettext            =   nil,
   locale             =   "en",
+  precisionbombing   =   false,
   }
 
 ---
--- @field Type
+-- @type Type
+-- @field #string A2A Air-to-Air Controller
+-- @field #string A2G Air-to-Ground Controller
+-- @field #string A2S Air-to-Ship Controller
+-- @field #string A2GS Air-to-Ground-and-Ship Controller
 PLAYERTASKCONTROLLER.Type = {
-  ["A2A"] = "Air-To-Air",
-  ["A2G"] = "Air-To-Ground",
-  ["A2S"] = "Air-To-Sea",
+  A2A = "Air-To-Air",
+  A2G = "Air-To-Ground",
+  A2S = "Air-To-Sea",
+  A2GS = "Air-To-Ground-Sea",
 }
+
+--- Define a new AUFTRAG Type
+AUFTRAG.Type.PRECISIONBOMBING = "Precision Bombing"
  
 ---
 -- @field Messages 
@@ -981,6 +1000,7 @@ PLAYERTASKCONTROLLER.Messages = {
     CASTTS = "close air support",
     SEADTTS = "suppress air defense",
     BOMBTTS = "bombing",
+    PRECBOMBTTS = "precision bombing",
     BAITTS = "battle field air interdiction",
     ANTISHIPTTS = "anti-ship",
     INTERCEPTTS = "intercept",
@@ -1020,6 +1040,10 @@ PLAYERTASKCONTROLLER.Messages = {
     TASKADDED = "%s has a new task %s available!",
     PILOTS = "\nPilot(s): ",
     PILOTSTTS = ". Pilot(s): ",
+    YES = "Yes",
+    NO = "No",
+    POINTEROVERTARGET = "%s, %s, pointer over target for task %03d, lasing!",
+    POINTERTARGETREPORT = "\nPointer over target: %s\nLasing: %s\n",
   },
   DE = {
     TASKABORT = "Auftrag abgebrochen!",
@@ -1030,6 +1054,7 @@ PLAYERTASKCONTROLLER.Messages = {
     CASTTS = "Nahbereichsunterstützung",
     SEADTTS = "Luftabwehr ausschalten",
     BOMBTTS = "Bombardieren",
+    PRECBOMBTTS = "Präzisionsbombardieren",
     BAITTS = "Luftunterstützung",
     ANTISHIPTTS = "Anti-Schiff",
     INTERCEPTTS = "Abfangen",
@@ -1069,12 +1094,16 @@ PLAYERTASKCONTROLLER.Messages = {
     TASKADDED = "%s hat einen neuen Auftrag %s erstellt!",
     PILOTS = "\nPilot(en): ",
     PILOTSTTS = ". Pilot(en): ",
+    YES = "Ja",
+    NO = "Nein",
+    POINTEROVERTARGET = "%s, %s, Marker im Zielbereich für %03d, Laser an!",
+    POINTERTARGETREPORT = "\nMarker im Zielbereich: %s\nLaser an: %s\n",
   },
 }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.19"
+PLAYERTASKCONTROLLER.version="0.1.21"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -1106,6 +1135,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.TargetQueue = FIFO:New() -- Utilities.FiFo#FIFO
   self.TaskQueue = FIFO:New() -- Utilities.FiFo#FIFO
   self.TasksPerPlayer = FIFO:New() -- Utilities.FiFo#FIFO
+  self.PrecisionTasks = FIFO:New() -- Utilities.FiFo#FIFO
   self.PlayerMenu = {} -- #table
   
   self.MenuName = nil
@@ -1238,6 +1268,48 @@ function PLAYERTASKCONTROLLER:SetTaskRepetition(OnOff, Repeats)
     self.repeatonfailed = false
     self.repeattimes = Repeats or 5
   end
+  return self
+end
+
+--- [User] Allow precision laser-guided bombing on statics and "high-value" ground units (MBT etc)
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FlightGroup (e.g. drone) to be used for lasing (one unit in one group only)
+-- @param #number LaserCode The lasercode to be used. Defaults to 1688.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode)
+  self:T(self.lid.."EnablePrecisionBombing")
+  if FlightGroup then
+    if FlightGroup.ClassName and FlightGroup.ClassName == "FLIGHTGROUP" then
+      -- ok we have a FG
+      self.LasingDrone = FlightGroup -- Ops.FlightGroup#FLIGHTGROUP FlightGroup
+      self.LasingDrone.playertask = {}
+      self.LasingDrone.playertask.busy = false
+      self.LasingDrone.playertask.id = 0
+      self.precisionbombing = true
+      self.LasingDrone:SetLaser(LaserCode)
+      self.LaserCode = LaserCode or 1688
+      self.LasingDroneTemplate = self.LasingDrone:_GetTemplate(true)
+      -- let it orbit the BullsEye
+      local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( self.Coalition ))
+      local Orbit = AUFTRAG:NewORBIT_CIRCLE(BullsCoordinate,10000,120)
+      self.LasingDrone:AddMission(Orbit)
+    else
+      self:E(self.lid.."No FLIGHTGROUP object passed or FLIGHTGROUP is not alive!")
+    end
+  else
+    self.autolase = nil
+    self.precisionbombing = false
+  end
+  return self
+end
+
+--- [User] Disable precision laser-guided bombing on statics and "high-value" ground units (MBT etc)
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:DisablePrecisionBombing(FlightGroup,LaserCode)
+  self:T(self.lid.."DisablePrecisionBombing")
+  self.autolase = nil
+  self.precisionbombing = false
   return self
 end
 
@@ -1453,6 +1525,100 @@ function PLAYERTASKCONTROLLER:_CheckTaskQueue()
  return self
 end
 
+--- [Internal] Check precision task queue
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
+ self:T(self.lid.."_CheckTaskQueue")
+ if self.PrecisionTasks:Count() > 0 and self.precisionbombing then
+   if not self.LasingDrone or self.LasingDrone:IsDead() then
+    -- we need a new drone
+    self:E(self.lid.."Lasing drone is dead ... creating a new one!")
+    if self.LasingDrone then
+      self.LasingDrone:_Respawn(1,nil,true)
+    else
+      local FG = FLIGHTGROUP:New(self.LasingDroneTemplate)
+      FG:Activate()
+      self:EnablePrecisionBombing(FG,self.LaserCode or 1688)
+    end
+    return self
+   end
+  -- do we have a lasing unit assigned?
+  if self.LasingDrone and self.LasingDrone:IsAlive() then
+    if self.LasingDrone.playertask and (not self.LasingDrone.playertask.busy) then
+      -- not busy, get a task
+      self:I(self.lid.."Sending lasing unit to target")
+      local task = self.PrecisionTasks:Pull() -- Ops.PlayerTask#PLAYERTASK
+      self.LasingDrone.playertask.id = task.PlayerTaskNr
+      self.LasingDrone.playertask.busy = true
+      self.LasingDrone.playertask.inreach = false
+      self.LasingDrone.playertask.reachmessage = false
+      -- move the drone to target
+      local auftrag = AUFTRAG:NewORBIT_CIRCLE(task.Target:GetCoordinate(),10000,120)
+      local currmission = self.LasingDrone:GetMissionCurrent()
+      self.LasingDrone:AddMission(auftrag)
+      currmission:__Cancel(-2)
+      self.PrecisionTasks:Push(task,task.PlayerTaskNr)
+    elseif self.LasingDrone.playertask and self.LasingDrone.playertask.busy then
+      -- drone is busy, set up laser when over target
+      local task = self.PrecisionTasks:ReadByID(self.LasingDrone.playertask.id) -- Ops.PlayerTask#PLAYERTASK
+      self:I("Looking at Task: "..task.PlayerTaskNr.." Type: "..task.Type.." State: "..task:GetState())
+      if (not task) or task:GetState() == "Done" or task:GetState() == "Stopped" then
+        -- we're done here
+        local task = self.PrecisionTasks:PullByID(self.LasingDrone.playertask.id) -- Ops.PlayerTask#PLAYERTASK
+        self:_CheckTaskQueue()
+        task = nil
+        if self.LasingDrone:IsLasing() then
+          self.LasingDrone:__LaserOff(-1)
+        end
+        self.LasingDrone.playertask.busy = false
+        self.LasingDrone.playertask.inreach = false
+        self.LasingDrone.playertask.id = 0
+        self.LasingDrone.playertask.reachmessage = false
+        self:I(self.lid.."Laser Off")
+      else
+        -- not done yet
+        local dcoord = self.LasingDrone:GetCoordinate()
+        local tcoord = task.Target:GetCoordinate()
+        local dist = dcoord:Get2DDistance(tcoord)
+        -- close enough?
+        if dist < 3000 and not self.LasingDrone:IsLasing() then
+          self:I(self.lid.."Laser On")
+          self.LasingDrone:__LaserOn(-1,tcoord)
+          self.LasingDrone.playertask.inreach = true
+          if not self.LasingDrone.playertask.reachmessage then
+            --local textmark = self.gettext:GetEntry("FLARETASK",self.locale)
+            self.LasingDrone.playertask.reachmessage = true
+            local clients = task:GetClients()
+            local text = ""
+            for _,playername in pairs(clients) do
+              local pointertext = self.gettext:GetEntry("POINTEROVERTARGET",self.locale)
+              --text = string.format("%s, %s, pointer over target for task %03d, lasing!", playername, self.MenuName or self.Name, task.PlayerTaskNr)
+              text = string.format(pointertext, playername, self.MenuName or self.Name, task.PlayerTaskNr)
+              if not self.NoScreenOutput then
+                local client = nil
+                self.ClientSet:ForEachClient(
+                  function(Client)
+                    if Client:GetPlayerName() == playername then client = Client end
+                  end
+                ) 
+                if client then
+                    local m = MESSAGE:New(text,15,"Tasking"):ToClient(client)
+                end
+              end
+            end
+            if self.UseSRS then
+              self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
+            end
+          end
+        end
+      end
+    end
+  end
+ end
+ return self
+end
+
 --- [Internal] Check task queue for a specific player name
 -- @param #PLAYERTASKCONTROLLER self
 -- @return #boolean outcome
@@ -1498,7 +1664,8 @@ end
 -- @usage Currently, the following task types will be generated, if detection has been set up:
 -- A2A - AUFTRAG.Type.INTERCEPT
 -- A2S - AUFTRAG.Type.ANTISHIP
--- A2G - AUFTRAG.Type.CAS, AUFTRAG.Type.BAI, AUFTRAG.Type.SEAD, AUFTRAG.Type.BOMBING, AUFTRAG.Type.BOMBRUNWAY
+-- A2G - AUFTRAG.Type.CAS, AUFTRAG.Type.BAI, AUFTRAG.Type.SEAD, AUFTRAG.Type.BOMBING, AUFTRAG.Type.PRECISIONBOMBING, AUFTRAG.Type.BOMBRUNWAY
+-- A2GS - A2G + A2S
 -- If you don't want SEAD tasks generated, use as follows where "mycontroller" is your PLAYERTASKCONTROLLER object:
 -- 
 --            `mycontroller:SetTaskWhiteList({AUFTRAG.Type.CAS, AUFTRAG.Type.BAI, AUFTRAG.Type.BOMBING, AUFTRAG.Type.BOMBRUNWAY})`
@@ -1517,7 +1684,9 @@ end
 function PLAYERTASKCONTROLLER:_AddTask(Target)
   self:T(self.lid.."_AddTask")
   local cat = Target:GetCategory()
+  local threat = Target:GetThreatLevelMax()
   local type = AUFTRAG.Type.CAS
+  
   --local ttstype = "close air support"
   local ttstype = self.gettext:GetEntry("CASTTS",self.locale)
   
@@ -1564,10 +1733,15 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
         end
       )
     elseif targetobject:IsInstanceOf("SET_STATIC") or targetobject:IsInstanceOf("STATIC") then
-      self:T("BOMBING SET_STATIC or STATIC")
-      type = AUFTRAG.Type.BOMBING
-      --ttstype = "bombing"
-      ttstype = self.gettext:GetEntry("BOMBTTS",self.locale)
+      self:T("(PRECISION-)BOMBING SET_STATIC or STATIC")
+      if self.precisionbombing then
+        type = AUFTRAG.Type.PRECISIONBOMBING
+        ttstype = self.gettext:GetEntry("PRECBOMBTTS",self.locale)
+      else
+        type = AUFTRAG.Type.BOMBING
+        ttstype = self.gettext:GetEntry("BOMBTTS",self.locale)
+      end
+
     end
     -- if there are no friendlies nearby ~0.5km and task isn't SEAD, then it's BAI
     local targetcoord = Target:GetCoordinate()
@@ -1583,6 +1757,14 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
       type = AUFTRAG.Type.BAI
       --ttstype = "battle field air interdiction"
       ttstype = self.gettext:GetEntry("BAITTS",self.locale)
+    end
+    -- see if we can do precision bombing
+    if (type == AUFTRAG.Type.BAI or type == AUFTRAG.Type.CAS) and self.precisionbombing then
+      -- threatlevel between 3 and 6 means, it's artillery, tank, modern tank or AAA
+      if threat > 2 and threat < 7 then
+        type = AUFTRAG.Type.PRECISIONBOMBING
+        ttstype = self.gettext:GetEntry("PRECBOMBTTS",self.locale)
+      end
     end
   elseif cat == TARGET.Category.NAVAL then
     type = AUFTRAG.Type.ANTISHIP
@@ -1672,6 +1854,11 @@ end
 function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task)
   self:T(self.lid.."_JoinTask")
   local playername = Client:GetPlayerName()
+  local ttsplayername = playername
+  if string.find(playername,"|") then
+    -- personalized flight name in player naming
+    ttsplayername = string.match(playername,"| ([%a]+)")
+  end
   if self.TasksPerPlayer:HasUniqueID(playername) then
     -- Player already has a task
     if not self.NoScreenOutput then
@@ -1687,7 +1874,7 @@ function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task)
     Task:__Requested(-1)
     Task:__Executing(-2)
     local joined = self.gettext:GetEntry("PILOTJOINEDTASK",self.locale)
-    local text = string.format(joined, self.MenuName or self.Name, playername, Task.PlayerTaskNr)
+    local text = string.format(joined, self.MenuName or self.Name, ttsplayername, Task.PlayerTaskNr)
     self:T(self.lid..text)
     if not self.NoScreenOutput then
       local m=MESSAGE:New(text,"10","Tasking"):ToAll()
@@ -1698,6 +1885,11 @@ function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task)
     self.TasksPerPlayer:Push(Task,playername)
     -- clear menu
     self:_BuildMenus(Client)
+  end
+  if Task.Type == AUFTRAG.Type.PRECISIONBOMBING then
+    if not self.PrecisionTasks:HasUniqueID(Task.PlayerTaskNr) then
+      self.PrecisionTasks:Push(Task,Task.PlayerTaskNr)
+    end
   end
   return self
 end
@@ -1710,17 +1902,19 @@ end
 function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client)
   self:T(self.lid.."_ActiveTaskInfo")
   local playername = Client:GetPlayerName()
+  local ttsplayername = playername
+  if string.find(playername,"|") then
+    -- personalized flight name in player naming
+    ttsplayername = string.match(playername,"| ([%a]+)")
+  end
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
     -- TODO: Show multiple?
-    --local task = self.TasksPerPlayer:GetIDStack()
     local task = self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
     local tname = self.gettext:GetEntry("TASKNAME",self.locale)
     local ttsname = self.gettext:GetEntry("TASKNAMETTS",self.locale)
     local taskname = string.format(tname,task.Type,task.PlayerTaskNr)
     local ttstaskname = string.format(ttsname,task.TTSType,task.PlayerTaskNr)
-    --local taskname = string.format("%s Task ID %03d",task.Type,task.PlayerTaskNr)
-    --local ttstaskname = string.format("%s Task ID %03d",task.TTSType,task.PlayerTaskNr)
     local Coordinate = task.Target:GetCoordinate()
     local CoordText = ""
     if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
@@ -1743,10 +1937,23 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client)
     local ThreatGraph = "[" .. string.rep(  "■", ThreatLevel ) .. string.rep(  "□", 10 - ThreatLevel ) .. "]: "..ThreatLevel
     local ThreatLocaleText = self.gettext:GetEntry("THREATTEXT",self.locale)
     text = string.format(ThreatLocaleText, taskname, ThreatGraph, targets, CoordText)
-    --text = string.format("%s\nThreat: %s\nTargets left: %d\nCoord: %s", taskname, ThreatGraph, targets, CoordText)
-    --local clienttxt = "\nPilot(s): "
+    if task.Type == AUFTRAG.Type.PRECISIONBOMBING and self.precisionbombing then
+      if self.LasingDrone and self.LasingDrone.playertask then
+        local yes = self.gettext:GetEntry("YES",self.locale)
+        local no = self.gettext:GetEntry("NO",self.locale)
+        local inreach = self.LasingDrone.playertask.inreach == true and yes or no
+        local islasing = self.LasingDrone:IsLasing() == true and yes or no
+        local prectext = self.gettext:GetEntry("POINTERTARGETREPORT",self.locale)
+        prectext = string.format(prectext,inreach,islasing)
+        text = text .. prectext
+      end
+    end
     local clienttxt = self.gettext:GetEntry("PILOTS",self.locale)
     for _,_name in pairs(clientlist) do
+      if string.find(_name,"|") then
+        -- personalized flight name in player naming
+        _name = string.match(_name,"| ([%a]+)")
+      end
       clienttxt = clienttxt .. _name .. ", "
     end
     clienttxt=string.gsub(clienttxt,", $",".")
@@ -1756,8 +1963,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client)
         CoordText = string.gsub(CoordText," BR, "," Bee, Arr, ")
       end
       local ThreatLocaleTextTTS = self.gettext:GetEntry("THREATTEXTTTS",self.locale)
-      local ttstext = string.format(ThreatLocaleTextTTS,self.MenuName or self.Name,playername,ttstaskname,ThreatLevelText, targets, CoordText)
-      --local ttstext = string.format("%s, %s. Target information for %s. Threat level %s. Targets left %d. Target location %s.",self.MenuName or self.Name,playername,ttstaskname,ThreatLevelText, targets, CoordText)
+      local ttstext = string.format(ThreatLocaleTextTTS,self.MenuName or self.Name,ttsplayername,ttstaskname,ThreatLevelText, targets, CoordText)
       self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,2)
     end  
   else
@@ -1775,8 +1981,13 @@ end
 -- @param Wrapper.Client#CLIENT Client
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_MarkTask(Group, Client)
-  self:T(self.lid.."_ActiveTaskInfo")
+  self:T(self.lid.."_MarkTask")
   local playername = Client:GetPlayerName()
+  local ttsplayername = playername
+  if string.find(playername,"|") then
+    -- personalized flight name in player naming
+    ttsplayername = string.match(playername,"| ([%a]+)")
+  end
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
     local task = self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
@@ -1784,7 +1995,7 @@ function PLAYERTASKCONTROLLER:_MarkTask(Group, Client)
     task:MarkTargetOnF10Map(text)
     local textmark = self.gettext:GetEntry("MARKTASK",self.locale)
     --text = string.format("%s, copy pilot %s, task %03d location marked on map!", self.MenuName or self.Name, playername, task.PlayerTaskNr)
-    text = string.format(textmark, playername, self.MenuName or self.Name, task.PlayerTaskNr)
+    text = string.format(textmark, ttsplayername, self.MenuName or self.Name, task.PlayerTaskNr)
     self:T(self.lid..text)
     if self.UseSRS then
       self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
@@ -1806,12 +2017,17 @@ end
 function PLAYERTASKCONTROLLER:_SmokeTask(Group, Client)
   self:T(self.lid.."_SmokeTask")
   local playername = Client:GetPlayerName()
+  local ttsplayername = playername
+  if string.find(playername,"|") then
+    -- personalized flight name in player naming
+    ttsplayername = string.match(playername,"| ([%a]+)")
+  end  
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
     local task = self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
     task:SmokeTarget()
     local textmark = self.gettext:GetEntry("SMOKETASK",self.locale)
-    text = string.format(textmark, playername, self.MenuName or self.Name, task.PlayerTaskNr)
+    text = string.format(textmark, ttsplayername, self.MenuName or self.Name, task.PlayerTaskNr)
     self:T(self.lid..text)
     --local m=MESSAGE:New(text,"10","Tasking"):ToAll()
     if self.UseSRS then
@@ -1834,12 +2050,17 @@ end
 function PLAYERTASKCONTROLLER:_FlareTask(Group, Client)
   self:T(self.lid.."_FlareTask")
   local playername = Client:GetPlayerName()
+  local ttsplayername = playername
+  if string.find(playername,"|") then
+    -- personalized flight name in player naming
+    ttsplayername = string.match(playername,"| ([%a]+)")
+  end
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
     local task = self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
     task:FlareTarget()
     local textmark = self.gettext:GetEntry("FLARETASK",self.locale)
-    text = string.format(textmark, playername, self.MenuName or self.Name, task.PlayerTaskNr)
+    text = string.format(textmark, ttsplayername, self.MenuName or self.Name, task.PlayerTaskNr)
     self:T(self.lid..text)
     --local m=MESSAGE:New(text,"10","Tasking"):ToAll()
     if self.UseSRS then
@@ -1862,12 +2083,17 @@ end
 function PLAYERTASKCONTROLLER:_AbortTask(Group, Client)
   self:T(self.lid.."_FlareTask")
   local playername = Client:GetPlayerName()
+  local ttsplayername = playername
+  if string.find(playername,"|") then
+    -- personalized flight name in player naming
+    ttsplayername = string.match(playername,"| ([%a]+)")
+  end
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
     local task = self.TasksPerPlayer:PullByID(playername) -- Ops.PlayerTask#PLAYERTASK
     task:ClientAbort(Client)
     local textmark = self.gettext:GetEntry("ABORTTASK",self.locale)
-    text = string.format(textmark, playername, self.MenuName or self.Name, task.PlayerTaskNr)
+    text = string.format(textmark, ttsplayername, self.MenuName or self.Name, task.PlayerTaskNr)
     self:T(self.lid..text)
     --local m=MESSAGE:New(text,"10","Tasking"):ToAll()
     if self.UseSRS then
@@ -2073,7 +2299,7 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
   --if self.verbose then
     --self.Intel:SetDetectionTypes(true,true,false,true,true,true)
   --end
-  if self.Type == PLAYERTASKCONTROLLER.Type.A2G then
+  if self.Type == PLAYERTASKCONTROLLER.Type.A2G or self.Type == PLAYERTASKCONTROLLER.Type.A2GS then
     self.Intel:SetDetectStatics(true)
   end
   self.Intel:__Start(2)
@@ -2083,7 +2309,7 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
     local cluster = Cluster -- Ops.Intelligence#INTEL.Cluster
     local type = cluster.ctype
     self:T({type,self.Type})
-    if (type == INTEL.Ctype.AIRCRAFT and self.Type == PLAYERTASKCONTROLLER.Type.A2A) or (type == INTEL.Ctype.NAVAL and self.Type == PLAYERTASKCONTROLLER.Type.A2S) then
+    if (type == INTEL.Ctype.AIRCRAFT and self.Type == PLAYERTASKCONTROLLER.Type.A2A) or (type == INTEL.Ctype.NAVAL and (self.Type == PLAYERTASKCONTROLLER.Type.A2S or self.Type == PLAYERTASKCONTROLLER.Type.A2GS)) then
       self:T("A2A or A2S")
       local contacts = cluster.Contacts -- #table of GROUP
       local targetset = SET_GROUP:New()
@@ -2093,7 +2319,7 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
         targetset:AddGroup(contact.group,true)
       end
       self:AddTarget(targetset)
-    elseif (type == INTEL.Ctype.GROUND or type == INTEL.Ctype.STRUCTURE) and self.Type == PLAYERTASKCONTROLLER.Type.A2G then
+    elseif (type == INTEL.Ctype.GROUND or type == INTEL.Ctype.STRUCTURE) and (self.Type == PLAYERTASKCONTROLLER.Type.A2G or self.Type == PLAYERTASKCONTROLLER.Type.A2GS) then
       self:T("A2G")
       local contacts = cluster.Contacts -- #table of GROUP or STATIC
       local targetset = nil -- Core.Set#SET_BASE
@@ -2123,11 +2349,11 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
     local contact = Contact -- Ops.Intelligence#INTEL.Contact
     local type = contact.ctype
     self:T({type,self.Type})
-    if (type == INTEL.Ctype.AIRCRAFT and self.Type == PLAYERTASKCONTROLLER.Type.A2A) or (type == INTEL.Ctype.NAVAL and self.Type == PLAYERTASKCONTROLLER.Type.A2S) then
+    if (type == INTEL.Ctype.AIRCRAFT and self.Type == PLAYERTASKCONTROLLER.Type.A2A) or (type == INTEL.Ctype.NAVAL and (self.Type == PLAYERTASKCONTROLLER.Type.A2S or self.Type == PLAYERTASKCONTROLLER.Type.A2GS)) then
       self:T("A2A or A2S")
       self:T("Adding group: "..contact.groupname)
       self:AddTarget(contact.group)
-    elseif (type == INTEL.Ctype.GROUND or type == INTEL.Ctype.STRUCTURE) and self.Type == PLAYERTASKCONTROLLER.Type.A2G then
+    elseif (type == INTEL.Ctype.GROUND or type == INTEL.Ctype.STRUCTURE) and (self.Type == PLAYERTASKCONTROLLER.Type.A2G or self.Type == PLAYERTASKCONTROLLER.Type.A2GS) then
       self:T("A2G")
       self:T("Adding group: "..contact.groupname)
       self:AddTarget(contact.group)
@@ -2216,6 +2442,7 @@ function PLAYERTASKCONTROLLER:onafterStatus(From, Event, To)
   self:I({From, Event, To})
   self:_CheckTargetQueue()
   self:_CheckTaskQueue()
+  self:_CheckPrecisionTasks()
   self:_BuildMenus()
   
   local targetcount = self.TargetQueue:Count()
