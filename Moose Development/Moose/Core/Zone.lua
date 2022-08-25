@@ -899,8 +899,8 @@ end
 -- @param ObjectCategories An array of categories of the objects to find in the zone. E.g. `{Object.Category.UNIT}`
 -- @param UnitCategories An array of unit categories of the objects to find in the zone. E.g. `{Unit.Category.GROUND_UNIT,Unit.Category.SHIP}`
 -- @usage
---    self.Zone:Scan({Object.Category.UNIT},{Unit.Category.GROUND_UNIT})
---    local IsAttacked = self.Zone:IsSomeInZoneOfCoalition( self.Coalition )
+--    myzone:Scan({Object.Category.UNIT},{Unit.Category.GROUND_UNIT})
+--    local IsAttacked = myzone:IsSomeInZoneOfCoalition( self.Coalition )
 function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
 
   self.ScanData = {}
