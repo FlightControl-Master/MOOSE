@@ -1103,7 +1103,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.21"
+PLAYERTASKCONTROLLER.version="0.1.22"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -1341,7 +1341,7 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
         end
         self:T(self.lid..text) 
     end
-  elseif EventData.id == EVENTS.PlayerEnterAircraft then
+  elseif EventData.id == EVENTS.PlayerEnterAircraft and EventData.IniCoalition == self.Coalition then
     if EventData.IniPlayerName and EventData.IniGroup and self.UseSRS then
       self:T(self.lid.."Event for player: "..EventData.IniPlayerName)
       local frequency = self.Frequency
