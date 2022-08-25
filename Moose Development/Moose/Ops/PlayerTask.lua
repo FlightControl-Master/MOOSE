@@ -697,6 +697,8 @@ do
 -- @field #number TargetRadius
 -- @field #boolean UseWhiteList
 -- @field #table WhiteList
+-- @field #boolean UseBlackList
+-- @field #table BlackList
 -- @field Core.TextAndSound#TEXTANDSOUND gettext
 -- @field #string locale
 -- @field #boolean precisionbombing
@@ -873,7 +875,7 @@ do
 --                YES = "Yes",
 --                NO = "No",
 --                POINTEROVERTARGET = "%s, %s, pointer over target for task %03d, lasing!",
---                POINTERTARGETREPORT = "\nPointer over target: %s\nLasing: %s\n",
+--                POINTERTARGETREPORT = "\nPointer over target: %s\nLasing: %s",
 --              },
 -- 
 -- e.g.
@@ -1043,7 +1045,7 @@ PLAYERTASKCONTROLLER.Messages = {
     YES = "Yes",
     NO = "No",
     POINTEROVERTARGET = "%s, %s, pointer over target for task %03d, lasing!",
-    POINTERTARGETREPORT = "\nPointer over target: %s\nLasing: %s\n",
+    POINTERTARGETREPORT = "\nPointer over target: %s\nLasing: %s",
   },
   DE = {
     TASKABORT = "Auftrag abgebrochen!",
@@ -1097,7 +1099,7 @@ PLAYERTASKCONTROLLER.Messages = {
     YES = "Ja",
     NO = "Nein",
     POINTEROVERTARGET = "%s, %s, Marker im Zielbereich für %03d, Laser an!",
-    POINTERTARGETREPORT = "\nMarker im Zielbereich: %s\nLaser an: %s\n",
+    POINTERTARGETREPORT = "\nMarker im Zielbereich: %s\nLaser an: %s",
   },
 }
   
@@ -1657,6 +1659,26 @@ function PLAYERTASKCONTROLLER:_CheckTaskTypeAllowed(Type)
   return Outcome
 end
 
+--- [Internal] Check for allowed task type, if there is a (negative) blacklist
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #string Type
+-- @return #boolean Outcome
+function PLAYERTASKCONTROLLER:_CheckTaskTypeDisallowed(Type)
+  self:T(self.lid.."_CheckTaskTypeDisallowed")
+  local Outcome = false
+  if self.UseBlackList then
+    for _,_type in pairs(self.BlackList) do
+      if Type == _type then
+        Outcome = true
+        break
+      end
+    end
+  else
+    return true
+  end
+  return Outcome
+end
+
 --- [User] Set up a (positive) whitelist of allowed task types. Only these types will be generated.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #table WhiteList Table of task types that can be generated. Use to restrict available types.
@@ -1674,6 +1696,26 @@ function PLAYERTASKCONTROLLER:SetTaskWhiteList(WhiteList)
   self:T(self.lid.."SetTaskWhiteList")
   self.WhiteList = WhiteList
   self.UseWhiteList = true
+  return self
+end
+
+--- [User] Set up a (negative) blacklist of forbidden task types. These types will **not** be generated.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #table BlackList Table of task types that cannot be generated. Use to restrict available types.
+-- @return #PLAYERTASKCONTROLLER self
+-- @usage Currently, the following task types will be generated, if detection has been set up:
+-- A2A - AUFTRAG.Type.INTERCEPT
+-- A2S - AUFTRAG.Type.ANTISHIP
+-- A2G - AUFTRAG.Type.CAS, AUFTRAG.Type.BAI, AUFTRAG.Type.SEAD, AUFTRAG.Type.BOMBING, AUFTRAG.Type.PRECISIONBOMBING, AUFTRAG.Type.BOMBRUNWAY
+-- A2GS - A2G + A2S
+-- If you don't want SEAD tasks generated, use as follows where "mycontroller" is your PLAYERTASKCONTROLLER object:
+-- 
+--            `mycontroller:SetTaskBlackList({AUFTRAG.Type.SEAD})`
+--            
+function PLAYERTASKCONTROLLER:SetTaskBlackList(BlackList)
+  self:T(self.lid.."SetTaskBlackList")
+  self.BlackList = BlackList
+  self.UseBlackList = true
   return self
 end
 
@@ -1804,6 +1846,12 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
   
   if self.UseWhiteList then
     if not self:_CheckTaskTypeAllowed(type) then
+      return self
+    end
+  end
+  
+  if self.UseBlackList then
+    if self:_CheckTaskTypeDisallowed(type) then
       return self
     end
   end

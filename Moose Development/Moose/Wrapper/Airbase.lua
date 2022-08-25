@@ -500,6 +500,9 @@ AIRBASE.MarianaIslands={
 -- * AIRBASE.SouthAtlantic.Punta_Arenas
 -- * AIRBASE.SouthAtlantic.Pampa_Guanaco
 -- * AIRBASE.SouthAtlantic.San_Julian
+-- * AIRBASE.SouthAtlantic.Puerto_Williams
+-- * AIRBASE.SouthAtlantic.Puerto_Natales
+-- * AIRBASE.SouthAtlantic.El_Calafate
 -- 
 --@field MarianaIslands
 AIRBASE.SouthAtlantic={
@@ -513,6 +516,9 @@ AIRBASE.SouthAtlantic={
   ["Punta_Arenas"]="Punta Arenas",
   ["Pampa_Guanaco"]="Pampa Guanaco",
   ["San_Julian"]="San Julian",
+  ["Puerto_Williams"]="Puerto Williams",
+  ["Puerto_Natales"]="Puerto Natales",
+  ["El_Calafate"]="El Calafate",
 }
 
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
