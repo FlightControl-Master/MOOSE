@@ -1388,7 +1388,7 @@ function RANGE:AddBombingTargets( targetnames, goodhitrange, randommove )
     elseif _isstatic == false then
       local _unit = UNIT:FindByName( name )
       self:T2( self.id .. string.format( "Adding unit bombing target %s with hit range %d.", name, goodhitrange, randommove ) )
-      self:AddBombingTargetUnit( _unit, goodhitrange )
+      self:AddBombingTargetUnit( _unit, goodhitrange, randommove )
     else
       self:E( self.id .. string.format( "ERROR! Could not find bombing target %s.", name ) )
     end
