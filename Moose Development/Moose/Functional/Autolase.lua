@@ -111,7 +111,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.1.13"
+AUTOLASE.version = "0.1.14"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -215,7 +215,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
     self:HandleEvent(EVENTS.PlayerEnterAircraft)
     --self:SetPilotMenu()
   end
-  self.SetPilotMenu()
+  --self.SetPilotMenu()
   
   
   self:SetClusterAnalysis(false, false)
