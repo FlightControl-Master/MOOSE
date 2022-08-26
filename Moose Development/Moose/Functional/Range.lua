@@ -2353,7 +2353,8 @@ end
 --- Start smoking a coordinate with a delay.
 -- @param #table _args Argements passed.
 function RANGE._DelayedSmoke( _args )
-  trigger.action.smoke( _args.coord:GetVec3(), _args.color )
+  _args.coord:Smoke(_args.color)
+  --trigger.action.smoke( _args.coord:GetVec3(), _args.color )
 end
 
 --- Display top 10 stafing results of a specific player.
@@ -3473,6 +3474,7 @@ function RANGE:_DisplayMessageToGroup( _unit, _text, _time, _clear, display )
 
     -- Group ID.
     local _gid = _unit:GetGroup():GetID()
+    local _grp = _unit:GetGroup()
 
     -- Get playername and player settings
     local _, playername = self:_GetPlayerUnitAndName( _unit:GetName() )
@@ -3480,14 +3482,14 @@ function RANGE:_DisplayMessageToGroup( _unit, _text, _time, _clear, display )
 
     -- Send message to player if messages enabled and not only for the examiner.
     if _gid and (playermessage == true or display) and (not self.examinerexclusive) then
-      trigger.action.outTextForGroup( _gid, _text, _time, _clear )
+      local m = MESSAGE:New(_text,_time,nil,_clear):ToUnit(_unit)
     end
 
     -- Send message to examiner.
     if self.examinergroupname ~= nil then
-      local _examinerid = GROUP:FindByName( self.examinergroupname ):GetID()
+      local _examinerid = GROUP:FindByName( self.examinergroupname )
       if _examinerid then
-        trigger.action.outTextForGroup( _examinerid, _text, _time, _clear )
+        local m = MESSAGE:New(_text,_time,nil,_clear):ToGroup(_examinerid)
       end
     end
   end
