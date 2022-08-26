@@ -876,6 +876,7 @@ do
 --                NO = "No",
 --                POINTEROVERTARGET = "%s, %s, pointer over target for task %03d, lasing!",
 --                POINTERTARGETREPORT = "\nPointer over target: %s\nLasing: %s",
+--                POINTERTARGETLASINGTTS = ". Pointer over target and lasing.",
 --              },
 -- 
 -- e.g.
@@ -1046,6 +1047,7 @@ PLAYERTASKCONTROLLER.Messages = {
     NO = "No",
     POINTEROVERTARGET = "%s, %s, pointer over target for task %03d, lasing!",
     POINTERTARGETREPORT = "\nPointer over target: %s\nLasing: %s",
+    POINTERTARGETLASINGTTS = ". Pointer over target and lasing.",
   },
   DE = {
     TASKABORT = "Auftrag abgebrochen!",
@@ -1100,12 +1102,13 @@ PLAYERTASKCONTROLLER.Messages = {
     NO = "Nein",
     POINTEROVERTARGET = "%s, %s, Marker im Zielbereich für %03d, Laser an!",
     POINTERTARGETREPORT = "\nMarker im Zielbereich: %s\nLaser an: %s",
+    POINTERTARGETLASINGTTS = ". Marker im Zielbereich, Laser is an.",
   },
 }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.23"
+PLAYERTASKCONTROLLER.version="0.1.24"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -1275,13 +1278,27 @@ end
 
 --- [User] Allow precision laser-guided bombing on statics and "high-value" ground units (MBT etc)
 -- @param #PLAYERTASKCONTROLLER self
--- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FlightGroup (e.g. drone) to be used for lasing (one unit in one group only)
+-- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FlightGroup (e.g. drone) to be used for lasing (one unit in one group only).
+-- Can optionally be handed as Ops.ArmyGroup#ARMYGROUP - **Note** might not find an LOS spot or get lost on the way. Cannot island-hop.
 -- @param #number LaserCode The lasercode to be used. Defaults to 1688.
 -- @return #PLAYERTASKCONTROLLER self
+-- @usage
+-- -- Set up precision bombing, FlightGroup as lasing unit
+--        local FlightGroup = FLIGHTGROUP:New("LasingUnit")
+--        FlightGroup:Activate()
+--        taskmanager:EnablePrecisionBombing(FlightGroup,1688)
+--
+-- -- Alternatively, set up precision bombing, ArmyGroup as lasing unit
+--        local ArmyGroup = ARMYGROUP:New("LasingUnit")
+--        ArmyGroup:SetDefaultROE(ENUMS.ROE.WeaponHold)
+--        ArmyGroup:SetDefaultInvisible(true)
+--        ArmyGroup:Activate()
+--        taskmanager:EnablePrecisionBombing(ArmyGroup,1688)
+--
 function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode)
   self:T(self.lid.."EnablePrecisionBombing")
   if FlightGroup then
-    if FlightGroup.ClassName and FlightGroup.ClassName == "FLIGHTGROUP" then
+    if FlightGroup.ClassName and (FlightGroup.ClassName == "FLIGHTGROUP" or FlightGroup.ClassName == "ARMYGROUP")then
       -- ok we have a FG
       self.LasingDrone = FlightGroup -- Ops.FlightGroup#FLIGHTGROUP FlightGroup
       self.LasingDrone.playertask = {}
@@ -1291,10 +1308,12 @@ function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode)
       self.LasingDrone:SetLaser(LaserCode)
       self.LaserCode = LaserCode or 1688
       self.LasingDroneTemplate = self.LasingDrone:_GetTemplate(true)
-      -- let it orbit the BullsEye
-      local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( self.Coalition ))
-      local Orbit = AUFTRAG:NewORBIT_CIRCLE(BullsCoordinate,10000,120)
-      self.LasingDrone:AddMission(Orbit)
+      -- let it orbit the BullsEye if FG
+      if self.LasingDrone:IsFlightgroup() then
+        local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( self.Coalition ))
+        local Orbit = AUFTRAG:NewORBIT_CIRCLE(BullsCoordinate,10000,120)
+        self.LasingDrone:AddMission(Orbit)
+      end
     else
       self:E(self.lid.."No FLIGHTGROUP object passed or FLIGHTGROUP is not alive!")
     end
@@ -1303,6 +1322,26 @@ function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode)
     self.precisionbombing = false
   end
   return self
+end
+
+--- [Internal] Get player name
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Wrapper.Client#CLIENT Client
+-- @return #string playername
+-- @return #string ttsplayername
+function PLAYERTASKCONTROLLER:_GetPlayerName(Client)
+  self:T(self.lid.."DisablePrecisionBombing")
+  local playername = Client:GetPlayerName()
+  local ttsplayername = playername
+  if string.find(playername,"|") then
+    -- personalized flight name in player naming
+    ttsplayername = string.match(playername,"| ([%a]+)")
+  end
+  if string.find(playername,"#") then
+    -- personalized flight name in player naming
+    ttsplayername = string.match(playername,"# ([%a]+)")
+  end
+  return playername, ttsplayername
 end
 
 --- [User] Disable precision laser-guided bombing on statics and "high-value" ground units (MBT etc)
@@ -1545,6 +1584,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
     if self.LasingDrone then
       self.LasingDrone:_Respawn(1,nil,true)
     else
+      -- TODO: Handle ArmyGroup
       local FG = FLIGHTGROUP:New(self.LasingDroneTemplate)
       FG:Activate()
       self:EnablePrecisionBombing(FG,self.LaserCode or 1688)
@@ -1562,10 +1602,38 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
       self.LasingDrone.playertask.inreach = false
       self.LasingDrone.playertask.reachmessage = false
       -- move the drone to target
-      local auftrag = AUFTRAG:NewORBIT_CIRCLE(task.Target:GetCoordinate(),10000,120)
-      local currmission = self.LasingDrone:GetMissionCurrent()
-      self.LasingDrone:AddMission(auftrag)
-      currmission:__Cancel(-2)
+      if self.LasingDrone:IsFlightgroup() then
+        local auftrag = AUFTRAG:NewORBIT_CIRCLE(task.Target:GetCoordinate(),10000,120)
+        local currmission = self.LasingDrone:GetMissionCurrent()
+        self.LasingDrone:AddMission(auftrag)
+        currmission:__Cancel(-2)
+      elseif self.LasingDrone:IsArmygroup() then
+        local tgtcoord = task.Target:GetCoordinate()
+        local tgtzone = ZONE_RADIUS:New("ArmyGroup-"..math.random(1,10000),tgtcoord:GetVec2(),3000)
+        local finalpos=nil -- Core.Point#COORDINATE
+        for i=1,50 do
+          finalpos = tgtzone:GetRandomCoordinate(2000,0,{land.SurfaceType.LAND,land.SurfaceType.ROAD,land.SurfaceType.SHALLOW_WATER}) 
+          if finalpos then
+            if finalpos:IsLOS(tgtcoord,0) then
+              break
+            end
+          end
+        end
+        if finalpos then
+          -- yeah we got one
+          local auftrag = AUFTRAG:NewARMOREDGUARD(finalpos)
+          local currmission = self.LasingDrone:GetMissionCurrent()
+          self.LasingDrone:AddMission(auftrag)
+          if currmission then currmission:__Cancel(-2) end
+        else
+          -- could not find LOS position!
+          self:E("***Could not find LOS position to post ArmyGroup for lasing!")
+          self.LasingDrone.playertask.id = 0
+          self.LasingDrone.playertask.busy = false
+          self.LasingDrone.playertask.inreach = false
+          self.LasingDrone.playertask.reachmessage = false
+        end
+      end
       self.PrecisionTasks:Push(task,task.PlayerTaskNr)
     elseif self.LasingDrone.playertask and self.LasingDrone.playertask.busy then
       -- drone is busy, set up laser when over target
@@ -1907,12 +1975,7 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task)
   self:T(self.lid.."_JoinTask")
-  local playername = Client:GetPlayerName()
-  local ttsplayername = playername
-  if string.find(playername,"|") then
-    -- personalized flight name in player naming
-    ttsplayername = string.match(playername,"| ([%a]+)")
-  end
+  local playername, ttsplayername = self:_GetPlayerName(Client)
   if self.TasksPerPlayer:HasUniqueID(playername) then
     -- Player already has a task
     if not self.NoScreenOutput then
@@ -1955,12 +2018,7 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client)
   self:T(self.lid.."_ActiveTaskInfo")
-  local playername = Client:GetPlayerName()
-  local ttsplayername = playername
-  if string.find(playername,"|") then
-    -- personalized flight name in player naming
-    ttsplayername = string.match(playername,"| ([%a]+)")
-  end
+  local playername, ttsplayername = self:_GetPlayerName(Client)
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
     -- TODO: Show multiple?
@@ -2018,6 +2076,13 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client)
       end
       local ThreatLocaleTextTTS = self.gettext:GetEntry("THREATTEXTTTS",self.locale)
       local ttstext = string.format(ThreatLocaleTextTTS,self.MenuName or self.Name,ttsplayername,ttstaskname,ThreatLevelText, targets, CoordText)
+      -- POINTERTARGETLASINGTTS = ". Pointer over target and lasing."
+      if task.Type == AUFTRAG.Type.PRECISIONBOMBING and self.precisionbombing then
+        if self.LasingDrone.playertask.inreach and self.LasingDrone:IsLasing() then
+          local lasingtext = self.gettext:GetEntry("POINTERTARGETLASINGTTS",self.locale)
+          ttstext = ttstext .. lasingtext
+        end
+      end
       self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,2)
     end  
   else
@@ -2036,12 +2101,7 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_MarkTask(Group, Client)
   self:T(self.lid.."_MarkTask")
-  local playername = Client:GetPlayerName()
-  local ttsplayername = playername
-  if string.find(playername,"|") then
-    -- personalized flight name in player naming
-    ttsplayername = string.match(playername,"| ([%a]+)")
-  end
+  local playername, ttsplayername = self:_GetPlayerName(Client)
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
     local task = self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
@@ -2070,12 +2130,7 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_SmokeTask(Group, Client)
   self:T(self.lid.."_SmokeTask")
-  local playername = Client:GetPlayerName()
-  local ttsplayername = playername
-  if string.find(playername,"|") then
-    -- personalized flight name in player naming
-    ttsplayername = string.match(playername,"| ([%a]+)")
-  end  
+  local playername, ttsplayername = self:_GetPlayerName(Client) 
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
     local task = self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
@@ -2103,12 +2158,7 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_FlareTask(Group, Client)
   self:T(self.lid.."_FlareTask")
-  local playername = Client:GetPlayerName()
-  local ttsplayername = playername
-  if string.find(playername,"|") then
-    -- personalized flight name in player naming
-    ttsplayername = string.match(playername,"| ([%a]+)")
-  end
+  local playername, ttsplayername = self:_GetPlayerName(Client)
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
     local task = self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
@@ -2136,12 +2186,7 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_AbortTask(Group, Client)
   self:T(self.lid.."_FlareTask")
-  local playername = Client:GetPlayerName()
-  local ttsplayername = playername
-  if string.find(playername,"|") then
-    -- personalized flight name in player naming
-    ttsplayername = string.match(playername,"| ([%a]+)")
-  end
+  local playername, ttsplayername = self:_GetPlayerName(Client)
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
     local task = self.TasksPerPlayer:PullByID(playername) -- Ops.PlayerTask#PLAYERTASK
