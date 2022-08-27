@@ -1524,9 +1524,9 @@ function PLAYERTASKCONTROLLER:_GetTasksPerType()
     local threat=_data.threat
     local task = _data.task -- Ops.PlayerTask#PLAYERTASK
     local type = task.Type
-      if task:GetState() ~= "Executing" and not task:IsDone() then
-        table.insert(tasktypes[type],task)
-      end
+    if not task:IsDone() then
+      table.insert(tasktypes[type],task)
+    end
   end
   
   return tasktypes
@@ -1984,12 +1984,13 @@ function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task)
     end
     return self
   end
-  Task:AddClient(Client)
   local taskstate = Task:GetState()
-  --self:T(self.lid.."Taskstate = "..taskstate)
-  if taskstate ~= "Executing"  and taskstate ~= "Done" then
-    Task:__Requested(-1)
-    Task:__Executing(-2)
+  if not Task:IsDone() then
+    if taskstate ~= "Executing" then
+      Task:__Requested(-1)
+      Task:__Executing(-2)
+    end
+    Task:AddClient(Client)
     local joined = self.gettext:GetEntry("PILOTJOINEDTASK",self.locale)
     local text = string.format(joined, self.MenuName or self.Name, ttsplayername, Task.PlayerTaskNr)
     self:T(self.lid..text)
