@@ -1108,7 +1108,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.24"
+PLAYERTASKCONTROLLER.version="0.1.25"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -2290,11 +2290,11 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client)
                   text = string.format("%s (%03d) [%d%s",name,_task.PlayerTaskNr,pilotcount,newtext)
                 end
               end
-              if _task:GetState() == "Planned" or (not _task:HasPlayerName(playername)) then
-                local taskentry = MENU_GROUP_COMMAND:New(group,text,ttypes[_tasktype],self._JoinTask,self,group,client,_task)
-                taskentry:SetTag(playername)
-                taskmenu[#taskmenu+1] = taskentry
-              end          
+              --if _task:GetState() == "Planned" or (not _task:HasPlayerName(playername)) then
+              local taskentry = MENU_GROUP_COMMAND:New(group,text,ttypes[_tasktype],self._JoinTask,self,group,client,_task)
+              taskentry:SetTag(playername)
+              taskmenu[#taskmenu+1] = taskentry
+              --end          
             end
           end
         else
