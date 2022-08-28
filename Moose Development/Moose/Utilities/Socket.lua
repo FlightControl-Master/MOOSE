@@ -30,6 +30,8 @@
 -- # The SOCKET Concept
 -- 
 -- Create a UDP socket server. It enables you to send messages to discord servers via discord bots.
+-- 
+-- **Note** that you have to **de-sanitize** `require` and `package` in your `MissionScripting.lua` file, which is in your `DCS/Scripts` folder.
 --
 --
 -- @field #SOCKET
@@ -39,9 +41,24 @@ SOCKET = {
   lid            =   nil,
 }
 
+--- Data type.
+-- @field #string TEXT Plain text.
+-- @field #string BOMB Range bombing.
+-- @field #string STRAFE Range strafeing result.
+-- @field #string LSOGRADE Airboss LSO grade.
+-- @field #string TRAPSHEET Airboss trap sheet.
+SOCKET.DataType={
+  TEXT="Text",
+  RANGEBOMB="Bomb Result",
+  RANGESTRAFE="Strafe Run",
+  LSOGRADE="LSO Grade",
+  TRAPSHEET="Trapsheet",
+}
+
+
 --- SOCKET class version.
 -- @field #string version
-SOCKET.version="0.0.1"
+SOCKET.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -57,7 +74,7 @@ SOCKET.version="0.0.1"
 
 --- Create a new SOCKET object.
 -- @param #SOCKET self
--- @param #number Port UDP port. Default `10123`.
+-- @param #number Port UDP port. Default `10042`.
 -- @param #string Host Host. Default `"127.0.0.1"`.
 -- @return #SOCKET self
 function SOCKET:New(Port, Host)
@@ -70,7 +87,7 @@ function SOCKET:New(Port, Host)
   
   self.socket = require("socket")
   
-  self.port=Port or 10123
+  self.port=Port or 10042
   self.host=Host or "127.0.0.1"
   
   self.json=loadfile("Scripts\\JSON.lua")()
@@ -81,18 +98,37 @@ function SOCKET:New(Port, Host)
   return self
 end
 
+--- Set port.
+-- @param #SOCKET self
+-- @param #number Port Port. Default 10042.
+-- @return #SOCKET self
+function SOCKET:SetPort(Port)
+  self.port=Port or 10042
+end
+
+--- Set host.
+-- @param #SOCKET self
+-- @param #string Host Host. Default `"127.0.0.1"`.
+-- @return #SOCKET self
+function SOCKET:SetHost(Host)
+  self.host=Host or "127.0.0.1"
+end
+
+
 --- Send a table.
 -- @param #SOCKET self
 -- @param #table Table Table to send.
--- @param #number Port Port.
 -- @return #SOCKET self
-function SOCKET:SendTable(Table, Port)
+function SOCKET:SendTable(Table)
 
-    local tbl_json_txt = self.json:encode(Table)   
-    
-    Port=Port or self.port
-    
-    self.socket.try(self.UDPSendSocket:sendto(tbl_json_txt, self.host, Port))
+  local json= self.json:encode(Table)
+  
+  -- Debug info.
+  self:T("Json table:")
+  self:T(json)
+  
+  -- Send data.
+  self.socket.try(self.UDPSendSocket:sendto(json, self.host, self.port))
 
   return self
 end
@@ -100,16 +136,15 @@ end
 --- Send a text message.
 -- @param #SOCKET self
 -- @param #string Text Test message.
--- @param #number Port Port.
 -- @return #SOCKET self
-function SOCKET:SendText(Text, Port)
+function SOCKET:SendText(Text)
 
   local message={}
   
-  message.messageType = 1
-  message.messageString = Text  
+  message.dataType = "Text Message"
+  message.text = Text  
 
-  self:SendTable(message, Port)
+  self:SendTable(message)
 
   return self
 end

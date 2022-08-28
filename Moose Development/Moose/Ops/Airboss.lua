@@ -3361,6 +3361,20 @@ function AIRBOSS:SetDebugModeOFF()
   return self
 end
 
+
+--- Set FunkMan socket. LSO grades and trap sheets will be send to your Discord bot.
+-- **Requires running FunkMan program**.
+-- @param #AIRBOSS self
+-- @param #number Port Port. Default `10042`.
+-- @param #string Host Host. Default `"127.0.0.1"`.
+-- @return #AIRBOSS self
+function AIRBOSS:SetFunkManOn(Port, Host)
+  
+  self.funkmanSocket=SOCKET:New(Port, Host)
+  
+  return self
+end
+
 --- Get next time the carrier will start recovering aircraft.
 -- @param #AIRBOSS self
 -- @param #boolean InSeconds If true, abs. mission time seconds is returned. Default is a clock #string.
@@ -12781,18 +12795,22 @@ function AIRBOSS:_Debrief( playerData )
   end
   mygrade.case = playerData.case
   local windondeck = self:GetWindOnDeck()
-  mygrade.wind = tostring( UTILS.Round( UTILS.MpsToKnots( windondeck ), 1 ) )
+  mygrade.wind = UTILS.Round( UTILS.MpsToKnots( windondeck ), 1 )
   mygrade.modex = playerData.onboard
   mygrade.airframe = playerData.actype
   mygrade.carriertype = self.carriertype
   mygrade.carriername = self.alias
+  mygrade.carrierrwy  = self.carrierparam.rwyangle
   mygrade.theatre = self.theatre
-  mygrade.mitime = UTILS.SecondsToClock( timer.getAbsTime() )
+  mygrade.mitime = UTILS.SecondsToClock( timer.getAbsTime(), true )
   mygrade.midate = UTILS.GetDCSMissionDate()
   mygrade.osdate = "n/a"
   if os then
     mygrade.osdate = os.date() -- os.date("%d.%m.%Y")
   end
+
+  -- Add last grade to playerdata for FunkMan.
+  playerData.grade=mygrade
 
   -- Save trap sheet.
   if playerData.trapon and self.trapsheet then
@@ -17906,6 +17924,58 @@ function AIRBOSS:onafterLoad( From, Event, To, path, filename )
   -- Info message.
   local text = string.format( "Loaded %d player LSO grades from file %s", n, filename )
   self:I( self.lid .. text )
+
+end
+
+--- On after "LSOGrade" event.
+-- @param #AIRBOSS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #AIRBOSS.PlayerData playerData Player Data.
+-- @param #AIRBOSS.LSOgrade grade LSO grade.
+function AIRBOSS:onafterLSOGrade(From, Event, To, playerData, grade)
+
+  if self.funkmanSocket then
+
+    -- Extract used info for FunkMan. We need to be careful with the amount of data send via UDP socket.
+    local trapsheet={} ; trapsheet.X={} ; trapsheet.Z={} ; trapsheet.AoA={} ; trapsheet.Alt={}
+
+    -- Loop over trapsheet and extract used values.
+    for i = 1, #playerData.trapsheet do
+      local ts=playerData.trapsheet[i] --#AIRBOSS.GrooveData
+      table.insert(trapsheet.X, ts.X)
+      table.insert(trapsheet.Z, ts.Z)
+      table.insert(trapsheet.AoA, ts.AoA)
+      table.insert(trapsheet.Alt, ts.Alt)
+    end
+
+    local result={}
+    result.dataType="Trap Sheet"
+    result.name=playerData.name
+    result.trapsheet=trapsheet
+    result.airframe=grade.airframe
+    result.mitime=grade.mitime
+    result.midate=grade.midate
+    result.wind=grade.wind
+    result.carriertype=grade.carriertype
+    result.carriername=grade.carriername
+    result.carrierrwy=grade.carrierrwy
+    result.theatre=grade.theatre
+    result.case=playerData.case
+    result.Tgroove=grade.Tgroove
+    result.wire=grade.wire
+    result.grade=grade.grade
+    result.points=grade.points
+    result.details=grade.details
+
+    -- Debug info.
+    env.info("FF result onafterLSOGrade")
+    self:I(result)
+
+    -- Send result.
+    self.funkmanSocket:SendTable(result)
+  end
 
 end
 

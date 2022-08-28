@@ -429,6 +429,11 @@ RANGE.TargetType = {
 -- @field #string airframe Aircraft type of player.
 -- @field #number time Time via timer.getAbsTime() in seconds of impact.
 -- @field #string date OS date.
+-- @field #number attackHdg Attack heading in degrees.
+-- @field #number attackVel Attack velocity in knots.
+-- @field #number attackAlt Attack altitude in feet.
+-- @field #string clock Time of the run.
+-- @field #string rangename Name of the range.
 
 --- Strafe result.
 -- @type RANGE.StrafeResult
@@ -436,6 +441,13 @@ RANGE.TargetType = {
 -- @field #string airframe Aircraft type of player.
 -- @field #number time Time via timer.getAbsTime() in seconds of impact.
 -- @field #string date OS date.
+-- @field #string name Name of the target pit.
+-- @field #number roundsFired Number of rounds fired.
+-- @field #number roundsHit Number of rounds that hit the target.
+-- @field #number strafeAccuracy Accuracy of the run in percent.
+-- @field #string clock Time of the run.
+-- @field #string rangename Name of the range.
+-- @field #boolean invalid Invalid pass.
 
 --- Sound file data.
 -- @type RANGE.Soundfile
@@ -946,6 +958,19 @@ function RANGE:SetTargetSheet( path, prefix )
   else
     self:E( self.lid .. "ERROR: io is not desanitized. Cannot save target sheet." )
   end
+  return self
+end
+
+--- Set FunkMan socket. Bombing and strafing results will be send to your Discord bot.
+-- **Requires running FunkMan program**.
+-- @param #RANGE self
+-- @param #number Port Port. Default `10042`.
+-- @param #string Host Host. Default "127.0.0.1".
+-- @return #RANGE self
+function RANGE:SetFunkManOn(Port, Host)
+  
+  self.funkmanSocket=SOCKET:New(Port, Host)
+  
   return self
 end
 
@@ -1727,7 +1752,6 @@ function RANGE:OnEventHit( EventData )
             self:_DisplayMessageToGroup( _unit, text )
             self:T2( self.id .. text )
             _currentTarget.pastfoulline = true
-            invalidStrafe = true -- Rangeboss Edit
           end
         end
 
@@ -1938,7 +1962,7 @@ function RANGE:OnEventShot( EventData )
           local _results = self.bombPlayerResults[_playername]
 
           local result = {} -- #RANGE.BombResult
-          result.type = "Bomb Result"
+          result.dataType = "Bomb Result"
           result.name = _closetTarget.name or "unknown"
           result.distance = _distance
           result.radial = _closeCoord:HeadingTo( impactcoord )
@@ -1946,7 +1970,9 @@ function RANGE:OnEventShot( EventData )
           result.quality = _hitquality
           result.player = playerData.playername
           result.time = timer.getAbsTime()
-          result.clock = UTILS.SecondsToClock(result.time)
+          result.clock = UTILS.SecondsToClock(result.time, true)
+          result.midate = UTILS.GetDCSMissionDate()
+          result.theatre = env.mission.theatre
           result.airframe = playerData.airframe
           result.roundsFired = 0 -- Rangeboss Edit
           result.roundsHit = 0 -- Rangeboss Edit
@@ -2140,6 +2166,26 @@ function RANGE:onafterImpact( From, Event, To, result, player )
   if self.autosave then
     self:Save()
   end
+  
+  -- Send result to FunkMan, which creates fancy MatLab figures and sends them to Discord via a bot.
+  if self.funkmanSocket then
+    self.funkmanSocket:SendTable(result)
+  end
+
+end
+
+--- Function called after strafing run.
+-- @param #RANGE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #RANGE.PlayerData player Player data table.
+-- @param #RANGE.StrafeResult result Result of run.
+function RANGE:onafterStrafeResult( From, Event, To, player, result)
+
+  if self.funkmanSocket then
+    self.funkmanSocket:SendTable(result)
+  end
 
 end
 
@@ -2195,7 +2241,7 @@ function RANGE:onafterSave( From, Event, To )
       local target = result.name
       local radial = result.radial
       local quality = result.quality
-      local time = UTILS.SecondsToClock( result.time )
+      local time = UTILS.SecondsToClock(result.time, true)
       local airframe = result.airframe
       local date = "n/a"
       if os then
@@ -3065,11 +3111,13 @@ function RANGE:_CheckInZone( _unitName )
           
           -- Strafe result.
           local result = {} -- #RANGE.StrafeResult
-          result.type="Strafe Result"
+          result.dataType="Strafe Result"
           result.player=_playername
           result.name=_result.zone.name or "unknown"
           result.time = timer.getAbsTime()
           result.clock = UTILS.SecondsToClock(result.time)
+          result.midate = UTILS.GetDCSMissionDate()
+          result.theatre = env.mission.theatre
           result.roundsFired = shots
           result.roundsHit = _result.hits
           result.roundsQuality = resulttext
