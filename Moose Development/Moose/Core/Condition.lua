@@ -273,7 +273,7 @@ function CONDITION:_EvalConditionsAny(functions)
   end
 end
 
---- Create conditon fucntion object.
+--- Create conditon function object.
 -- @param #CONDITION self
 -- @param #function Function The function to call.
 -- @param ... (Optional) Parameters passed to the function (if any).

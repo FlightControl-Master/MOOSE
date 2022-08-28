@@ -1412,7 +1412,7 @@ function RANGE:AddBombingTargets( targetnames, goodhitrange, randommove )
     elseif _isstatic == false then
       local _unit = UNIT:FindByName( name )
       self:T2( self.id .. string.format( "Adding unit bombing target %s with hit range %d.", name, goodhitrange, randommove ) )
-      self:AddBombingTargetUnit( _unit, goodhitrange )
+      self:AddBombingTargetUnit( _unit, goodhitrange, randommove )
     else
       self:E( self.id .. string.format( "ERROR! Could not find bombing target %s.", name ) )
     end
@@ -2419,7 +2419,8 @@ end
 --- Start smoking a coordinate with a delay.
 -- @param #table _args Argements passed.
 function RANGE._DelayedSmoke( _args )
-  trigger.action.smoke( _args.coord:GetVec3(), _args.color )
+  _args.coord:Smoke(_args.color)
+  --trigger.action.smoke( _args.coord:GetVec3(), _args.color )
 end
 
 --- Display top 10 stafing results of a specific player.
@@ -2447,7 +2448,7 @@ function RANGE:_DisplayMyStrafePitResults( _unitName )
 
       -- Sort results table wrt number of hits.
       local _sort = function( a, b )
-        return a.hits > b.hits
+        return a.roundsHit > b.roundsHit
       end
       table.sort( _results, _sort )
 
@@ -2464,7 +2465,7 @@ function RANGE:_DisplayMyStrafePitResults( _unitName )
 
         -- Best result.
         if _bestMsg == "" then
-          _bestMsg = string.format( "Hits %d - %s - %s", _result.hits, _result.zone.name, _result.text )
+          _bestMsg = string.format( "Hits %d - %s - %s", result.roundsHit, result.name, result.roundsQuality)
         end
 
         -- 10 runs
@@ -2509,15 +2510,15 @@ function RANGE:_DisplayStrafePitResults( _unitName )
       -- Get the best result of the player.
       local _best = nil
       for _, _result in pairs( _results ) do
-        if _best == nil or _result.hits > _best.hits then
+        if _best == nil or _result.roundsHit > _best.roundsHit then
           _best = _result
         end
       end
 
       -- Add best result to table.
       if _best ~= nil then
-        local text = string.format( "%s: Hits %i - %s - %s", _playerName, _best.hits, _best.zone.name, _best.text )
-        table.insert( _playerResults, { msg = text, hits = _best.hits } )
+        local text = string.format( "%s: Hits %i - %s - %s", _playerName, _best.roundsHit, _best.name, _best.roundsQuality )
+        table.insert( _playerResults, { msg = text, hits = _best.roundsHit } )
       end
 
     end
@@ -3543,6 +3544,7 @@ function RANGE:_DisplayMessageToGroup( _unit, _text, _time, _clear, display )
 
     -- Group ID.
     local _gid = _unit:GetGroup():GetID()
+    local _grp = _unit:GetGroup()
 
     -- Get playername and player settings
     local _, playername = self:_GetPlayerUnitAndName( _unit:GetName() )
@@ -3550,14 +3552,14 @@ function RANGE:_DisplayMessageToGroup( _unit, _text, _time, _clear, display )
 
     -- Send message to player if messages enabled and not only for the examiner.
     if _gid and (playermessage == true or display) and (not self.examinerexclusive) then
-      trigger.action.outTextForGroup( _gid, _text, _time, _clear )
+      local m = MESSAGE:New(_text,_time,nil,_clear):ToUnit(_unit)
     end
 
     -- Send message to examiner.
     if self.examinergroupname ~= nil then
-      local _examinerid = GROUP:FindByName( self.examinergroupname ):GetID()
+      local _examinerid = GROUP:FindByName( self.examinergroupname )
       if _examinerid then
-        trigger.action.outTextForGroup( _examinerid, _text, _time, _clear )
+        local m = MESSAGE:New(_text,_time,nil,_clear):ToGroup(_examinerid)
       end
     end
   end

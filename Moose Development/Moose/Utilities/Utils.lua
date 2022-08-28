@@ -1725,10 +1725,16 @@ end
 -- @return #number Os time in seconds.
 function UTILS.GetOSTime()
   if os then
-    return os.clock()
+    local ts = 0
+    local t = os.date("*t")
+    local s = t.sec
+    local m = t.min * 60
+    local h = t.hour * 3600
+    ts = s+m+h
+    return ts
+  else
+    return nil
   end
-
-  return nil
 end
 
 --- Shuffle a table accoring to Fisher Yeates algorithm

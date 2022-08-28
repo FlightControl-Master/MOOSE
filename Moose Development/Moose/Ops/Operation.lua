@@ -454,7 +454,7 @@ function OPERATION:GetPhaseStatus(Phase)
   return Phase.status
 end
 
---- Set codition when the given phase is over.
+--- Set condition when the given phase is over.
 -- @param #OPERATION self
 -- @param #OPERATION.Phase Phase The phase.
 -- @param Core.Condition#CONDITION Condition Condition when the phase is over.
@@ -624,7 +624,7 @@ end
 --- Count phases.
 -- @param #OPERATION self
 -- @param #string Status (Optional) Only count phases in a certain status, e.g. `OPERATION.PhaseStatus.PLANNED`.
--- @param #OPERATION.Branch (Optional) Branch.
+-- @param #OPERATION.Branch Branch (Optional) Branch.
 -- @return #number Number of phases
 function OPERATION:CountPhases(Status, Branch)
 
@@ -644,6 +644,7 @@ end
 
 --- Add a new branch to the operation.
 -- @param #OPERATION self
+-- @param #string Name
 -- @return #OPERATION.Branch Branch table object.
 function OPERATION:AddBranch(Name)
 
@@ -666,6 +667,7 @@ end
 --- Get name of the branch.
 -- @param #OPERATION self
 -- @param #OPERATION.Branch Branch The branch of which the name is requested. Default is the currently active or master branch.
+-- @return #string Name Name or "None"
 function OPERATION:GetBranchName(Branch)
   Branch=Branch or self:GetBranchActive()
   if Branch then
