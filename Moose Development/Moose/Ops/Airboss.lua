@@ -17944,10 +17944,10 @@ function AIRBOSS:onafterLSOGrade(From, Event, To, playerData, grade)
     -- Loop over trapsheet and extract used values.
     for i = 1, #playerData.trapsheet do
       local ts=playerData.trapsheet[i] --#AIRBOSS.GrooveData
-      table.insert(trapsheet.X, ts.X)
-      table.insert(trapsheet.Z, ts.Z)
-      table.insert(trapsheet.AoA, ts.AoA)
-      table.insert(trapsheet.Alt, ts.Alt)
+      table.insert(trapsheet.X, UTILS.Round(ts.X, 1))
+      table.insert(trapsheet.Z, UTILS.Round(ts.Z, 1))
+      table.insert(trapsheet.AoA, UTILS.Round(ts.AoA), 2)
+      table.insert(trapsheet.Alt, UTILS.Round(ts.Alt), 1)
     end
 
     local result={}
