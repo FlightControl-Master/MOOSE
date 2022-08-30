@@ -2185,7 +2185,7 @@ end
 --- **[GROUND]** Create an ARMORED ON GUARD mission.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Coordinate, where to stand guard.
--- @param #string Formation Formation to take, e.g. "on Road", "Vee" etc.
+-- @param #string Formation Formation to take, e.g. "On Road", "Vee" etc.
 -- @return #AUFTRAG self
 function AUFTRAG:NewARMOREDGUARD(Coordinate,Formation)
 

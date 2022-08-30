@@ -123,7 +123,7 @@ function MARKEROPS_BASE:New(Tagname,Keywords)
 end
 
 --- (internal) Handle events.
--- @param #MARKEROPS self
+-- @param #MARKEROPS_BASE self
 -- @param Core.Event#EVENTDATA Event
 function MARKEROPS_BASE:OnEventMark(Event)
   self:T({Event})
@@ -173,7 +173,7 @@ function MARKEROPS_BASE:OnEventMark(Event)
 end
 
 --- (internal) Match tag.
--- @param #MARKEROPS self
+-- @param #MARKEROPS_BASE self
 -- @param #string Eventtext Text added to the marker.
 -- @return #boolean
 function MARKEROPS_BASE:_MatchTag(Eventtext)
@@ -186,7 +186,7 @@ function MARKEROPS_BASE:_MatchTag(Eventtext)
 end
 
 --- (internal) Match keywords table.
--- @param #MARKEROPS self
+-- @param #MARKEROPS_BASE self
 -- @param #string Eventtext Text added to the marker.
 -- @return #table
 function MARKEROPS_BASE:_MatchKeywords(Eventtext)

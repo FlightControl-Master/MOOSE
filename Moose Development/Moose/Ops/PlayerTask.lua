@@ -703,6 +703,7 @@ do
 -- @field #string locale
 -- @field #boolean precisionbombing
 -- @field Ops.FlightGroup#FLIGHTGROUP LasingDrone
+-- @field Core.MarkerOps_BASE#MARKEROPS_BASE MarkerOps
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1324,6 +1325,37 @@ function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode)
   return self
 end
 
+--- [User] Allow addition of targets with user F10 map markers.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #string Tag (Optional) The tagname to use to identify commands, defaults to "TASK"
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:EnableMarkerOps(Tag)
+  self:T(self.lid.."EnableMarkerOps")
+   
+  local tag = Tag or "TASK"
+  local MarkerOps = MARKEROPS_BASE:New(tag)
+  
+  local function Handler(Keywords,Coord,Text)
+    if self.verbose then
+      local m = MESSAGE:New(string.format("Target added from marker at: %s", Coord:ToStringLLDMS()),15,"INFO"):ToAll()
+    end
+    self:AddTarget(Coord)
+  end
+  
+  -- Event functions
+  function MarkerOps:OnAfterMarkAdded(From,Event,To,Text,Keywords,Coord)
+    Handler(Keywords,Coord,Text)
+  end
+  
+  function MarkerOps:OnAfterMarkChanged(From,Event,To,Text,Keywords,Coord)
+    Handler(Keywords,Coord,Text)
+  end
+  
+  self.MarkerOps = MarkerOps 
+   
+  return self
+end
+
 --- [Internal] Get player name
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Wrapper.Client#CLIENT Client
@@ -1595,7 +1627,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
   if self.LasingDrone and self.LasingDrone:IsAlive() then
     if self.LasingDrone.playertask and (not self.LasingDrone.playertask.busy) then
       -- not busy, get a task
-      self:I(self.lid.."Sending lasing unit to target")
+      self:T(self.lid.."Sending lasing unit to target")
       local task = self.PrecisionTasks:Pull() -- Ops.PlayerTask#PLAYERTASK
       self.LasingDrone.playertask.id = task.PlayerTaskNr
       self.LasingDrone.playertask.busy = true
@@ -1612,7 +1644,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
         local tgtzone = ZONE_RADIUS:New("ArmyGroup-"..math.random(1,10000),tgtcoord:GetVec2(),3000)
         local finalpos=nil -- Core.Point#COORDINATE
         for i=1,50 do
-          finalpos = tgtzone:GetRandomCoordinate(2000,0,{land.SurfaceType.LAND,land.SurfaceType.ROAD,land.SurfaceType.SHALLOW_WATER}) 
+          finalpos = tgtzone:GetRandomCoordinate(2500,0,{land.SurfaceType.LAND,land.SurfaceType.ROAD,land.SurfaceType.SHALLOW_WATER}) 
           if finalpos then
             if finalpos:IsLOS(tgtcoord,0) then
               break
@@ -1621,7 +1653,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
         end
         if finalpos then
           -- yeah we got one
-          local auftrag = AUFTRAG:NewARMOREDGUARD(finalpos)
+          local auftrag = AUFTRAG:NewARMOREDGUARD(finalpos,"Off road")
           local currmission = self.LasingDrone:GetMissionCurrent()
           self.LasingDrone:AddMission(auftrag)
           if currmission then currmission:__Cancel(-2) end
@@ -1638,7 +1670,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
     elseif self.LasingDrone.playertask and self.LasingDrone.playertask.busy then
       -- drone is busy, set up laser when over target
       local task = self.PrecisionTasks:ReadByID(self.LasingDrone.playertask.id) -- Ops.PlayerTask#PLAYERTASK
-      self:I("Looking at Task: "..task.PlayerTaskNr.." Type: "..task.Type.." State: "..task:GetState())
+      self:T("Looking at Task: "..task.PlayerTaskNr.." Type: "..task.Type.." State: "..task:GetState())
       if (not task) or task:GetState() == "Done" or task:GetState() == "Stopped" then
         -- we're done here
         local task = self.PrecisionTasks:PullByID(self.LasingDrone.playertask.id) -- Ops.PlayerTask#PLAYERTASK
@@ -1651,7 +1683,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
         self.LasingDrone.playertask.inreach = false
         self.LasingDrone.playertask.id = 0
         self.LasingDrone.playertask.reachmessage = false
-        self:I(self.lid.."Laser Off")
+        self:T(self.lid.."Laser Off")
       else
         -- not done yet
         local dcoord = self.LasingDrone:GetCoordinate()
@@ -1659,7 +1691,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
         local dist = dcoord:Get2DDistance(tcoord)
         -- close enough?
         if dist < 3000 and not self.LasingDrone:IsLasing() then
-          self:I(self.lid.."Laser On")
+          self:T(self.lid.."Laser On")
           self.LasingDrone:__LaserOn(-1,tcoord)
           self.LasingDrone.playertask.inreach = true
           if not self.LasingDrone.playertask.reachmessage then

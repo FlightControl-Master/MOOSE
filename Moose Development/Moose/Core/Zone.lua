@@ -970,7 +970,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
         local SceneryName = ZoneObject:getName()
         self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
         self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( SceneryName, ZoneObject )
-        self:F2( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
+        self:T( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
       end
 
     end
@@ -1373,7 +1373,86 @@ function ZONE_RADIUS:GetRandomCoordinate(inner, outer, surfacetypes)
   return Coordinate
 end
 
-
+--- Returns a @{Core.Point#COORDINATE} object reflecting a random location within the zone where there are no **map objects** of type "Building". 
+-- Does not find statics you might have placed there. **Note** This might be quite CPU intensive, use with care.
+-- @param #ZONE_RADIUS self
+-- @param #number inner (Optional) Minimal distance from the center of the zone in meters. Default is 0m.
+-- @param #number outer (Optional) Maximal distance from the outer edge of the zone in meters. Default is the radius of the zone.
+-- @param #number distance (Optional) Minumum distance from any building coordinate. Defaults to 100m.
+-- @param #boolean markbuildings (Optional) Place markers on found buildings (if any).
+-- @param #boolean markfinal (Optional) Place marker on the final coordinate (if any).
+-- @return Core.Point#COORDINATE The random coordinate or `nil` if cannot be found in 1000 iterations.
+function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,markbuildings,markfinal)
+  
+  local dist = distance or 100
+  
+  local objects = {}
+  
+  if self.ScanData and self.ScanData.Scenery then
+    objects = self:GetScannedScenery()
+  else
+    self:Scan({Object.Category.SCENERY})
+    objects = self:GetScannedScenery()
+  end
+  
+  local T0 = timer.getTime()
+  local T1 = timer.getTime()
+  
+  
+  local buildings = {}
+  if self.ScanData and self.ScanData.BuildingCoordinates then
+    buildings = self.ScanData.BuildingCoordinates
+  else
+    -- build table of buildings coordinates
+    for _,_object in pairs (objects) do
+      for _,_scen in pairs (_object) do
+         local scenery = _scen -- Wrapper.Scenery#SCENERY
+         local description=scenery:GetDesc()
+         if description and description.attributes and description.attributes.Buildings then
+          if markbuildings then
+            MARKER:New(scenery:GetCoordinate(),"Building"):ToAll()
+          end
+          buildings[#buildings+1] = scenery:GetCoordinate()
+         end
+      end
+    end
+    self.ScanData.BuildingCoordinates = buildings
+  end
+  
+  -- max 1000 tries
+  local rcoord = nil  
+  local found = false
+  local iterations = 0
+  
+  for i=1,1000 do
+    iterations = iterations + 1
+    rcoord = self:GetRandomCoordinate(inner,outer)
+    found = false
+    for _,_coord in pairs (buildings) do
+      local coord = _coord -- Core.Point#COORDINATE
+      -- keep >50m dist from buildings
+      if coord:Get2DDistance(rcoord) > dist then
+        found = true
+      else
+        found = false
+      end
+    end
+    if found then 
+      -- we have a winner!
+      if markfinal then
+        MARKER:New(rcoord,"FREE"):ToAll()
+      end
+      break 
+    end
+  end
+  
+  T1=timer.getTime()
+  
+  self:T(string.format("Found a coordinate: %s | Iterations: %d | Time: %d",tostring(found),iterations,T1-T0))
+  
+  if found then return rcoord else return nil end
+  
+end
 
 --- @type ZONE
 -- @extends #ZONE_RADIUS
