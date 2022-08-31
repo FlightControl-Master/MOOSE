@@ -1898,11 +1898,11 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
     elseif targetobject:IsInstanceOf("GROUP") then
       self:T("SEAD Check GROUP")
       local attribute = targetobject:GetAttribute()
-	 if self:_IsAttributeSead(attribute) then
-		type = AUFTRAG.Type.SEAD
-		--ttstype = "suppress air defense"
-		ttstype = self.gettext:GetEntry("SEADTTS",self.locale)
-	 end
+    	 if self:_IsAttributeSead(attribute) then
+    		type = AUFTRAG.Type.SEAD
+    		--ttstype = "suppress air defense"
+    		ttstype = self.gettext:GetEntry("SEADTTS",self.locale)
+    	 end
     elseif targetobject:IsInstanceOf("SET_GROUP") then
       self:T("SEAD Check SET_GROUP")
       targetobject:ForEachGroup(

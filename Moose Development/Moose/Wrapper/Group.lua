@@ -2431,12 +2431,12 @@ function GROUP:GetAttribute()
       attribute=GROUP.Attribute.GROUND_ARTILLERY         
     elseif tank then
       attribute=GROUP.Attribute.GROUND_TANK 
+    elseif ifv then
+      attribute=GROUP.Attribute.GROUND_IFV   
     elseif apc then
       attribute=GROUP.Attribute.GROUND_APC
     elseif infantry then
-      attribute=GROUP.Attribute.GROUND_INFANTRY
-    elseif ifv then
-      attribute=GROUP.Attribute.GROUND_IFV    
+      attribute=GROUP.Attribute.GROUND_INFANTRY 
     elseif truck then
       attribute=GROUP.Attribute.GROUND_TRUCK
     elseif train then
