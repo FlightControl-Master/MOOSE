@@ -213,6 +213,7 @@ GROUP.Attribute = {
   GROUND_APC="Ground_APC",
   GROUND_TRUCK="Ground_Truck",
   GROUND_INFANTRY="Ground_Infantry",
+  GROUND_IFV="Ground_IFV",
   GROUND_ARTILLERY="Ground_Artillery",
   GROUND_TANK="Ground_Tank",
   GROUND_TRAIN="Ground_Train",
@@ -2421,7 +2422,9 @@ function GROUP:GetAttribute()
     elseif artillery then
       attribute=GROUP.Attribute.GROUND_ARTILLERY         
     elseif tank then
-      attribute=GROUP.Attribute.GROUND_TANK 
+      attribute=GROUP.Attribute.GROUND_TANK
+    elseif ifv then
+      attribute=GROUP.Attribute.GROUND_IFV    
     elseif apc then
       attribute=GROUP.Attribute.GROUND_APC
     elseif infantry then
