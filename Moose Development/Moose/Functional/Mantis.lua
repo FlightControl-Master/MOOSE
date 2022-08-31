@@ -147,7 +147,7 @@
 --   * overestimation how far units can "see" and
 --   * not taking into account that a SAM site will take (e.g for a SA-6) 30-40 seconds between switching on, acquiring the target and firing.
 --
--- An attacker doing 350knots will cover ca 180meters/second or thus more than 6km until the SA-6 fires. Use triggers zones and the ruler in the missione editor to understand distances and zones. Take into account that the ranges given by the circles
+-- An attacker doing 350knots will cover ca 180meters/second or thus more than 6km until the SA-6 fires. Use triggers zones and the ruler in the mission editor to understand distances and zones. Take into account that the ranges given by the circles
 -- in the mission editor are absolute maximum ranges; in-game this is rather 50-75% of that depending on the system. Fiddle with placement and options to see what works best for your scenario, and remember **everything in here is in meters**.
 --
 -- # 2. Start up your MANTIS with a basic setting
@@ -1515,7 +1515,7 @@ do
   -- @param #table samset Table of SAM data
   -- @param #table detset Table of COORDINATES
   -- @param #boolean dlink Using DLINK
-  -- @param #limit limit of SAM sites to go active on a contact
+  -- @param #number limit of SAM sites to go active on a contact
   -- @return #MANTIS self
   function MANTIS:_CheckLoop(samset,detset,dlink,limit)
     self:T(self.lid .. "CheckLoop " .. #detset .. " Coordinates")
