@@ -17946,12 +17946,12 @@ function AIRBOSS:onafterLSOGrade(From, Event, To, playerData, grade)
       local ts=playerData.trapsheet[i] --#AIRBOSS.GrooveData
       table.insert(trapsheet.X, UTILS.Round(ts.X, 1))
       table.insert(trapsheet.Z, UTILS.Round(ts.Z, 1))
-      table.insert(trapsheet.AoA, UTILS.Round(ts.AoA), 2)
-      table.insert(trapsheet.Alt, UTILS.Round(ts.Alt), 1)
+      table.insert(trapsheet.AoA, UTILS.Round(ts.AoA, 2))
+      table.insert(trapsheet.Alt, UTILS.Round(ts.Alt, 1))
     end
 
     local result={}
-    result.dataType="Trap Sheet"
+    result.command=SOCKET.DataType.LSOGRADE
     result.name=playerData.name
     result.trapsheet=trapsheet
     result.airframe=grade.airframe

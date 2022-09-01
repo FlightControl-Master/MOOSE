@@ -23,7 +23,7 @@
 -- @field #table json JSON.
 -- @extends Core.Fsm#FSM
 
---- **It is far more important to be able to hit the target than it is to haggle over who makes a weapon or who pulls a trigger** -- Dwight D Eisenhower
+--- **At times I feel like a socket that remembers its tooth.** -- Saul Bellow
 --
 -- ===
 --
@@ -41,18 +41,16 @@ SOCKET = {
   lid            =   nil,
 }
 
---- Data type.
+--- Data type. This is the keyword the socket listener uses.
 -- @field #string TEXT Plain text.
--- @field #string BOMB Range bombing.
--- @field #string STRAFE Range strafeing result.
+-- @field #string BOMBRESULT Range bombing.
+-- @field #string STRAFERESULT Range strafeing result.
 -- @field #string LSOGRADE Airboss LSO grade.
--- @field #string TRAPSHEET Airboss trap sheet.
 SOCKET.DataType={
-  TEXT="Text",
-  RANGEBOMB="Bomb Result",
-  RANGESTRAFE="Strafe Run",
-  LSOGRADE="LSO Grade",
-  TRAPSHEET="Trapsheet",
+  TEXT="moose_text",
+  BOMBRESULT="moose_bomb_result",
+  STRAFERESULT="moose_strafe_result",
+  LSOGRADE="moose_lso_grade",
 }
 
 
@@ -141,7 +139,7 @@ function SOCKET:SendText(Text)
 
   local message={}
   
-  message.dataType = "Text Message"
+  message.command = SOCKET.DataType.TEXT
   message.text = Text  
 
   self:SendTable(message)

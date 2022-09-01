@@ -1962,7 +1962,7 @@ function RANGE:OnEventShot( EventData )
           local _results = self.bombPlayerResults[_playername]
 
           local result = {} -- #RANGE.BombResult
-          result.dataType = "Bomb Result"
+          result.command=SOCKET.DataType.BOMBRESULT
           result.name = _closetTarget.name or "unknown"
           result.distance = _distance
           result.radial = _closeCoord:HeadingTo( impactcoord )
@@ -3112,7 +3112,7 @@ function RANGE:_CheckInZone( _unitName )
           
           -- Strafe result.
           local result = {} -- #RANGE.StrafeResult
-          result.dataType="Strafe Result"
+          result.command=SOCKET.DataType.STRAFERESULT
           result.player=_playername
           result.name=_result.zone.name or "unknown"
           result.time = timer.getAbsTime()
