@@ -326,6 +326,17 @@ do -- Zones
         -- Store zone ID.
         Zone.ZoneID=ZoneData.zoneId
 
+        -- Store zone properties (if any)
+        local ZoneProperties = ZoneData.properties or nil
+        Zone.Properties = {}
+        if ZoneName and ZoneProperties then
+          for _,ZoneProp in ipairs(ZoneProperties) do
+            if ZoneProp.key then
+              Zone.Properties[ZoneProp.key] = ZoneProp.value
+            end
+          end
+        end
+
         -- Store in DB.
         self.ZONENAMES[ZoneName] = ZoneName
 

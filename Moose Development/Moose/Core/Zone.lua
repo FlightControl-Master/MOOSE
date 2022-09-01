@@ -62,6 +62,7 @@
 -- @field #table FillColor Table with four entries, e.g. {1, 0, 0, 0.15}. First three are RGB color code. Fourth is the transparency Alpha value.
 -- @field #number drawCoalition Draw coalition.
 -- @field #number ZoneID ID of zone. Only zones defined in the ME have an ID!
+-- @field #table Table of any trigger zone properties from the ME. The key is the Name of the property, and the value is the property's Value.
 -- @field #number Surface Type of surface. Only determined at the center of the zone!
 -- @extends Core.Fsm#FSM
 
@@ -106,6 +107,11 @@
 --   * @{#ZONE_BASE.SmokeZone}(): Smokes the zone boundaries in a color.
 --   * @{#ZONE_BASE.FlareZone}(): Flares the zone boundaries in a color.
 --
+-- ## A zone might have additional Properties created in the DCS Mission Editor, which can be accessed:
+--
+--   *@{#ZONE_BASE.GetProperty}(): Returns the Value of the zone with the given PropertyName, or nil if no matching property exists.
+--   *@{#ZONE_BASE.GetAllProperties}(): Returns the zone Properties table.  
+--
 -- @field #ZONE_BASE
 ZONE_BASE = {
   ClassName = "ZONE_BASE",
@@ -114,6 +120,7 @@ ZONE_BASE = {
   DrawID=nil,
   Color={},
   ZoneID=nil,
+  Properties={},
   Sureface=nil,
 }
 
@@ -557,6 +564,34 @@ function ZONE_BASE:GetZoneMaybe()
   end
 end
 
+--- Set the randomization probability of a zone to be selected.
+-- @param #ZONE_BASE self
+-- @param #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
+-- @return #ZONE_BASE self
+
+--   *@{#ZONE_BASE.GetProperty}(): Returns the Value of the zone with the given PropertyName, or nil if no matching property exists.
+--   *@{#ZONE_BASE.GetAllProperties}(): Returns the zone Properties table.  
+
+-- Returns the Value of the zone with the given PropertyName, or nil if no matching property exists.
+-- @param #ZONE_BASE self
+-- @param #string PropertyName The name of a the TriggerZone Property to be retrieved.
+-- @return #string The Value of the TriggerZone Property with the given PropertyName, or nil if absent.
+-- @usage
+-- 
+-- local PropertiesZone = ZONE:FindByName("Properties Zone")
+-- local Property = "ExampleProperty"
+-- local PropertyValue = PropertiesZone:GetProperty(PropertyName)
+--
+function ZONE_BASE:GetProperty(PropertyName)
+  return self.Properties[PropertyName]
+end
+
+-- Returns the zone Properties table.
+-- @param #ZONE_BASE self
+-- @return #table The Key:Value table of TriggerZone properties of the zone.
+function ZONE_BASE:GetAllProperties()
+  return self.Properties
+end
 
 --- The ZONE_RADIUS class, defined by a zone name, a location and a radius.
 -- @type ZONE_RADIUS
