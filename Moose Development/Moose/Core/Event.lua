@@ -983,13 +983,12 @@ end
 -- @param #EVENTDATA Event Event data table.
 function EVENT:onEvent( Event )
 
+  --- Function to handle errors.
   local ErrorHandler = function( errmsg )
-
     env.info( "Error in SCHEDULER function:" .. errmsg )
     if BASE.Debug ~= nil then
       env.info( debug.traceback() )
     end
-
     return errmsg
   end
 
@@ -1002,6 +1001,7 @@ function EVENT:onEvent( Event )
 
     if self and self.Events and self.Events[Event.id] and self.MissionEnd==false and (Event.initiator~=nil or (Event.initiator==nil and Event.id~=EVENTS.PlayerLeaveUnit)) then
 
+      -- Check if mission has ended.
       if Event.id and Event.id == EVENTS.MissionEnd then
         self.MissionEnd = true
       end
@@ -1009,35 +1009,12 @@ function EVENT:onEvent( Event )
       if Event.initiator then
 
         Event.IniObjectCategory = Event.initiator:getCategory()
-
-        if Event.IniObjectCategory == Object.Category.UNIT then
-          Event.IniDCSUnit = Event.initiator
-          Event.IniDCSUnitName = Event.IniDCSUnit:getName()
-          Event.IniUnitName = Event.IniDCSUnitName
-          Event.IniDCSGroup = Event.IniDCSUnit:getGroup()
-          Event.IniUnit = UNIT:FindByName( Event.IniDCSUnitName )
-          if not Event.IniUnit then
-            -- Unit can be a CLIENT. Most likely this will be the case ...
-            Event.IniUnit = CLIENT:FindByName( Event.IniDCSUnitName, '', true )
-          end
-          Event.IniDCSGroupName = ""
-          if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
-            Event.IniDCSGroupName = Event.IniDCSGroup:getName()
-            Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
-            --if Event.IniGroup then
-              Event.IniGroupName = Event.IniDCSGroupName
-            --end
-          end
-          Event.IniPlayerName = Event.IniDCSUnit:getPlayerName()
-          Event.IniCoalition = Event.IniDCSUnit:getCoalition()
-          Event.IniTypeName = Event.IniDCSUnit:getTypeName()
-          Event.IniCategory = Event.IniDCSUnit:getDesc().category
-        end
-
-        if Event.IniObjectCategory == Object.Category.STATIC then
-
+        
+       if Event.IniObjectCategory == Object.Category.STATIC then
+          ---
+          -- Static
+          ---          
           if Event.id==31 then
-
             -- Event.initiator is a Static object representing the pilot. But getName() errors due to DCS bug.
             Event.IniDCSUnit = Event.initiator
             local ID=Event.initiator.id_
@@ -1063,9 +1040,47 @@ function EVENT:onEvent( Event )
             Event.IniCategory = Event.IniDCSUnit:getDesc().category
             Event.IniTypeName = Event.IniDCSUnit:getTypeName()
           end
+          
+          -- Dead events of units can be delayed and the initiator changed to a static.
+          -- Take care of that.
+          local Unit=UNIT:FindByName(Event.IniDCSUnitName)
+          if Unit then
+            Event.IniObjectCategory = Object.Category.UNIT
+          end
+        end        
+
+        if Event.IniObjectCategory == Object.Category.UNIT then
+          ---
+          -- Unit
+          ---        
+          Event.IniDCSUnit = Event.initiator
+          Event.IniDCSUnitName = Event.IniDCSUnit:getName()
+          Event.IniUnitName = Event.IniDCSUnitName
+          Event.IniDCSGroup = Event.IniDCSUnit:getGroup()
+          Event.IniUnit = UNIT:FindByName( Event.IniDCSUnitName )
+          
+          if not Event.IniUnit then
+            -- Unit can be a CLIENT. Most likely this will be the case ...
+            Event.IniUnit = CLIENT:FindByName( Event.IniDCSUnitName, '', true )
+          end
+          
+          Event.IniDCSGroupName = Event.IniUnit and Event.IniUnit.GroupName or ""
+          if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
+            Event.IniDCSGroupName = Event.IniDCSGroup:getName()
+            Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+            Event.IniGroupName = Event.IniDCSGroupName
+          end
+          
+          Event.IniPlayerName = Event.IniDCSUnit:getPlayerName()
+          Event.IniCoalition = Event.IniDCSUnit:getCoalition()
+          Event.IniTypeName = Event.IniDCSUnit:getTypeName()
+          Event.IniCategory = Event.IniDCSUnit:getDesc().category  
         end
 
         if Event.IniObjectCategory == Object.Category.CARGO then
+          ---
+          -- Cargo
+          ---
           Event.IniDCSUnit = Event.initiator
           Event.IniDCSUnitName = Event.IniDCSUnit:getName()
           Event.IniUnitName = Event.IniDCSUnitName
@@ -1076,15 +1091,22 @@ function EVENT:onEvent( Event )
         end
 
         if Event.IniObjectCategory == Object.Category.SCENERY then
+          ---
+          -- Scenery
+          ---
+          
           Event.IniDCSUnit = Event.initiator
           Event.IniDCSUnitName = Event.IniDCSUnit:getName()
           Event.IniUnitName = Event.IniDCSUnitName
           Event.IniUnit = SCENERY:Register( Event.IniDCSUnitName, Event.initiator )
           Event.IniCategory = Event.IniDCSUnit:getDesc().category
-          Event.IniTypeName = Event.initiator:isExist() and Event.IniDCSUnit:getTypeName() or "SCENERY" -- TODO: Bug fix for 2.1!
+          Event.IniTypeName = Event.initiator:isExist() and Event.IniDCSUnit:getTypeName() or "SCENERY"
         end
 
         if Event.IniObjectCategory == Object.Category.BASE then
+          ---
+          -- Base Object
+          ---
           Event.IniDCSUnit = Event.initiator
           Event.IniDCSUnitName = Event.IniDCSUnit:getName()
           Event.IniUnitName = Event.IniDCSUnitName
@@ -1096,7 +1118,12 @@ function EVENT:onEvent( Event )
       end
 
       if Event.target then
+      
+        ---
+        -- TARGET
+        ---
 
+        -- Target category.
         Event.TgtObjectCategory = Event.target:getCategory()
 
         if Event.TgtObjectCategory == Object.Category.UNIT then
@@ -1109,9 +1136,7 @@ function EVENT:onEvent( Event )
           if Event.TgtDCSGroup and Event.TgtDCSGroup:isExist() then
             Event.TgtDCSGroupName = Event.TgtDCSGroup:getName()
             Event.TgtGroup = GROUP:FindByName( Event.TgtDCSGroupName )
-            --if Event.TgtGroup then
-              Event.TgtGroupName = Event.TgtDCSGroupName
-            --end
+            Event.TgtGroupName = Event.TgtDCSGroupName
           end
           Event.TgtPlayerName = Event.TgtDCSUnit:getPlayerName()
           Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
@@ -1159,6 +1184,7 @@ function EVENT:onEvent( Event )
         end
       end
 
+      -- Weapon.
       if Event.weapon then
         Event.Weapon = Event.weapon
         Event.WeaponName = Event.Weapon:getTypeName()
@@ -1193,23 +1219,22 @@ function EVENT:onEvent( Event )
         Event.MarkGroupID = Event.groupID
       end
 
+      -- Cargo object.
       if Event.cargo then
         Event.Cargo = Event.cargo
         Event.CargoName = Event.cargo.Name
       end
 
+      -- Zone object.
       if Event.zone then
         Event.Zone = Event.zone
         Event.ZoneName = Event.zone.ZoneName
       end
 
+      -- Priority order.
       local PriorityOrder = EventMeta.Order
       local PriorityBegin = PriorityOrder == -1 and 5 or 1
-      local PriorityEnd = PriorityOrder == -1 and 1 or 5
-
-      if Event.IniObjectCategory ~= Object.Category.STATIC then
-        self:F( { EventMeta.Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
-      end
+      local PriorityEnd   = PriorityOrder == -1 and 1 or 5
 
       for EventPriority = PriorityBegin, PriorityEnd, PriorityOrder do
 
@@ -1222,8 +1247,8 @@ function EVENT:onEvent( Event )
             --  self:E( { "Evaluating: ", EventClass:GetClassNameAndID() } )
             --end
 
-            Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
-            Event.TgtGroup = GROUP:FindByName( Event.TgtDCSGroupName )
+            Event.IniGroup = Event.IniGroup or GROUP:FindByName( Event.IniDCSGroupName )
+            Event.TgtGroup = Event.TgtGroup or GROUP:FindByName( Event.TgtDCSGroupName )
 
             -- If the EventData is for a UNIT, the call directly the EventClass EventFunction for that UNIT.
             if EventData.EventUnit then
@@ -1233,20 +1258,17 @@ function EVENT:onEvent( Event )
                  Event.id == EVENTS.PlayerEnterUnit or
                  Event.id == EVENTS.Crash or
                  Event.id == EVENTS.Dead or
-                 Event.id == EVENTS.RemoveUnit then
+                 Event.id == EVENTS.RemoveUnit or
+                 Event.id == EVENTS.UnitLost then
 
                 local UnitName = EventClass:GetName()
 
                 if ( EventMeta.Side == "I" and UnitName == Event.IniDCSUnitName ) or
                    ( EventMeta.Side == "T" and UnitName == Event.TgtDCSUnitName ) then
-
+                   
                   -- First test if a EventFunction is Set, otherwise search for the default function
                   if EventData.EventFunction then
-
-                    if Event.IniObjectCategory ~= 3 then
-                      self:F( { "Calling EventFunction for UNIT ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
-                    end
-
+ 
                     local Result, Value = xpcall(
                       function()
                         return EventData.EventFunction( EventClass, Event )
@@ -1259,15 +1281,12 @@ function EVENT:onEvent( Event )
                     if EventFunction and type( EventFunction ) == "function" then
 
                       -- Now call the default event function.
-                      if Event.IniObjectCategory ~= 3 then
-                        self:F( { "Calling " .. EventMeta.Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
-                      end
-
                       local Result, Value = xpcall(
                         function()
                           return EventFunction( EventClass, Event )
                         end, ErrorHandler )
                     end
+                    
                   end
                 end
               else
@@ -1285,7 +1304,8 @@ function EVENT:onEvent( Event )
                    Event.id == EVENTS.PlayerEnterUnit or
                    Event.id == EVENTS.Crash or
                    Event.id == EVENTS.Dead or
-                   Event.id == EVENTS.RemoveUnit then
+                   Event.id == EVENTS.RemoveUnit or
+                   Event.id == EVENTS.UnitLost then
 
                   -- We can get the name of the EventClass, which is now always a GROUP object.
                   local GroupName = EventClass:GetName()
@@ -1295,10 +1315,6 @@ function EVENT:onEvent( Event )
 
                     -- First test if a EventFunction is Set, otherwise search for the default function
                     if EventData.EventFunction then
-
-                      if Event.IniObjectCategory ~= 3 then
-                        self:F( { "Calling EventFunction for GROUP ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
-                      end
 
                       local Result, Value = xpcall(
                         function()
@@ -1312,10 +1328,6 @@ function EVENT:onEvent( Event )
                       if EventFunction and type( EventFunction ) == "function" then
 
                         -- Now call the default event function.
-                        if Event.IniObjectCategory ~= 3 then
-                          self:F( { "Calling " .. EventMeta.Event .. " for GROUP ", EventClass:GetClassNameAndID(), EventPriority } )
-                        end
-
                         local Result, Value = xpcall(
                           function()
                             return EventFunction( EventClass, Event, unpack( EventData.Params ) )
@@ -1328,7 +1340,7 @@ function EVENT:onEvent( Event )
                   --self:RemoveEvent( EventClass, Event.id )
                 end
               else
-
+              
                 -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
                 -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
                 if not EventData.EventUnit then
@@ -1337,9 +1349,6 @@ function EVENT:onEvent( Event )
                   if EventData.EventFunction then
 
                     -- There is an EventFunction defined, so call the EventFunction.
-                    if Event.IniObjectCategory ~= 3 then
-                      self:F2( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), EventPriority } )
-                    end
                     local Result, Value = xpcall(
                       function()
                         return EventData.EventFunction( EventClass, Event )
@@ -1351,16 +1360,14 @@ function EVENT:onEvent( Event )
                     if EventFunction and type( EventFunction ) == "function" then
 
                       -- Now call the default event function.
-                      if Event.IniObjectCategory ~= 3 then
-                        self:F2( { "Calling " .. EventMeta.Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
-                      end
-
                       local Result, Value = xpcall(
                         function()
                           local Result, Value = EventFunction( EventClass, Event )
                           return Result, Value
                         end, ErrorHandler )
+                        
                     end
+                    
                   end
 
                 end

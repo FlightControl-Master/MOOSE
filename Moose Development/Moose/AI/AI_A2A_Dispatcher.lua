@@ -427,7 +427,7 @@ do -- AI_A2A_DISPATCHER
   --   * @{#AI_A2A_DISPATCHER.SetSquadronTakeoffFromParkingHot}() will spawn new aircraft in with running engines at a parking spot at the airfield.
   --   * @{#AI_A2A_DISPATCHER.SetSquadronTakeoffFromRunway}() will spawn new aircraft at the runway at the airfield.
   --
-  -- **The default landing method is to spawn new aircraft directly in the air.**
+  -- **The default take-off method is to spawn new aircraft directly in the air.**
   --
   -- Use these methods to fine-tune for specific airfields that are known to create bottlenecks, or have reduced airbase efficiency.
   -- The more and the longer aircraft need to taxi at an airfield, the more risk there is that:
@@ -884,8 +884,9 @@ do -- AI_A2A_DISPATCHER
   --- Enumerator for spawns at airbases
   -- @type AI_A2A_DISPATCHER.Takeoff
   -- @extends Wrapper.Group#GROUP.Takeoff
-
-  --- @field #AI_A2A_DISPATCHER.Takeoff Takeoff
+  
+  ---
+  -- @field #AI_A2A_DISPATCHER.Takeoff Takeoff
   AI_A2A_DISPATCHER.Takeoff = GROUP.Takeoff
 
   --- Defnes Landing location.
@@ -1710,7 +1711,7 @@ do -- AI_A2A_DISPATCHER
   end
 
 
-  --- Set the Squadron visible before startup of the dispatcher.
+  ---  [DEPRECATED - Might create problems launching planes] Set the Squadron visible before startup of the dispatcher.
   -- All planes will be spawned as uncontrolled on the parking spot.
   -- They will lock the parking spot.
   -- @param #AI_A2A_DISPATCHER self
@@ -2360,7 +2361,7 @@ do -- AI_A2A_DISPATCHER
   end
 
   --- Set flashing player messages on or off
-  -- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2A_DISPATCHER self
   -- @param #boolean onoff Set messages on (true) or off (false)
   function AI_A2A_DISPATCHER:SetSendMessages( onoff )
       self.SetSendPlayerMessages = onoff
@@ -3048,7 +3049,20 @@ do -- AI_A2A_DISPATCHER
     for FriendlyDistance, AIFriendly in UTILS.spairs( DefenderFriendlies or {} ) do
       -- We only allow to ENGAGE targets as long as the Units on both sides are balanced.
       if AttackerCount > DefenderCount then
-        local Friendly = AIFriendly:GetGroup() -- Wrapper.Group#GROUP
+    --self:I("***** AI_A2A_DISPATCHER:CountDefendersToBeEngaged() *****\nThis is supposed to be a UNIT:")
+    if AIFriendly then
+      local classname = AIFriendly.ClassName or "No Class Name"
+      local unitname = AIFriendly.IdentifiableName or "No Unit Name"
+      --self:I("Class Name: " .. classname)
+      --self:I("Unit Name: " .. unitname)
+      --self:I({AIFriendly})
+    end
+    local Friendly = nil
+    if AIFriendly and AIFriendly:IsAlive() then
+      --self:I("AIFriendly alive, getting GROUP")
+      Friendly = AIFriendly:GetGroup() -- Wrapper.Group#GROUP
+    end
+    
         if Friendly and Friendly:IsAlive() then
           -- Ok, so we have a friendly near the potential target.
           -- Now we need to check if the AIGroup has a Task.
@@ -3961,6 +3975,30 @@ do
   -- @param #string SquadronName The squadron name.
   function AI_A2A_DISPATCHER:SchedulerCAP( SquadronName )
     self:CAP( SquadronName )
+  end
+  
+  --- Add resources to a Squadron
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string Squadron The squadron name.
+  -- @param #number Amount Number of resources to add.
+  function AI_A2A_DISPATCHER:AddToSquadron(Squadron,Amount)
+    local Squadron = self:GetSquadron(Squadron)
+    if Squadron.ResourceCount then
+      Squadron.ResourceCount = Squadron.ResourceCount + Amount
+    end
+    self:T({Squadron = Squadron.Name,SquadronResourceCount = Squadron.ResourceCount})
+  end
+  
+  --- Remove resources from a Squadron
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string Squadron The squadron name.
+  -- @param #number Amount Number of resources to remove.
+  function AI_A2A_DISPATCHER:RemoveFromSquadron(Squadron,Amount)
+    local Squadron = self:GetSquadron(Squadron)
+    if Squadron.ResourceCount then
+      Squadron.ResourceCount = Squadron.ResourceCount - Amount
+    end
+    self:T({Squadron = Squadron.Name,SquadronResourceCount = Squadron.ResourceCount})
   end
 
 end

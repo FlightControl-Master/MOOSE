@@ -11,7 +11,7 @@
 -- 
 -- DCS itself provides a lot of enumerators for various things. See [Enumerators](https://wiki.hoggitworld.com/view/Category:Enumerators) on Hoggit.
 -- 
--- Other Moose classe also have enumerators. For example, the AIRBASE class has enumerators for airbase names.
+-- Other Moose classes also have enumerators. For example, the AIRBASE class has enumerators for airbase names.
 -- 
 -- @module ENUMS
 -- @image MOOSE.JPG
@@ -126,6 +126,8 @@ ENUMS.WeaponFlag={
   AnyMissile           =  268402688, -- AnyASM + AnyAAM   
   --- Guns
   Cannons              =  805306368, -- GUN_POD + BuiltInCannon
+  --- Torpedo
+  Torpedo              = 4294967296,
   ---
   -- Even More Genral  
   Auto                 = 3221225470, -- Any Weapon (AnyBomb + AnyRocket + AnyMissile + Cannons)
@@ -135,6 +137,93 @@ ENUMS.WeaponFlag={
   AnyUnguided          = 2952822768, -- Any Unguided Weapon
   AnyGuided            =  268402702, -- Any Guided Weapon   
 }
+
+--- Weapon types by category. See the [Weapon Flag](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag) enumerator on hoggit wiki.
+-- @type ENUMS.WeaponType
+-- @field #table Bomb Bombs.
+-- @field #table Rocket Rocket.
+-- @field #table Gun Guns.
+-- @field #table Missile Missiles.
+-- @field #table AAM Air-to-Air missiles.
+-- @field #table Torpedo Torpedos.
+-- @field #table Any Combinations.
+ENUMS.WeaponType={}
+ENUMS.WeaponType.Bomb={
+  -- Bombs
+  LGB                  =          2,
+  TvGB                 =          4,
+  SNSGB                =          8,
+  HEBomb               =         16,
+  Penetrator           =         32,
+  NapalmBomb           =         64,
+  FAEBomb              =        128,
+  ClusterBomb          =        256,
+  Dispencer            =        512,
+  CandleBomb           =       1024,
+  ParachuteBomb        = 2147483648,
+  -- Combinations
+  GuidedBomb           =         14, -- (LGB + TvGB + SNSGB)
+  AnyUnguidedBomb      = 2147485680, -- (HeBomb + Penetrator + NapalmBomb + FAEBomb + ClusterBomb + Dispencer + CandleBomb + ParachuteBomb)
+  AnyBomb              = 2147485694, -- (GuidedBomb + AnyUnguidedBomb)  
+}
+ENUMS.WeaponType.Rocket={
+  -- Rockets
+  LightRocket          =       2048,
+  MarkerRocket         =       4096,
+  CandleRocket         =       8192,
+  HeavyRocket          =      16384,
+  -- Combinations
+  AnyRocket            =      30720, -- LightRocket + MarkerRocket + CandleRocket + HeavyRocket
+}
+ENUMS.WeaponType.Gun={
+  -- Guns
+  GunPod               =  268435456,
+  BuiltInCannon        =  536870912,
+  -- Combinations
+  Cannons              =  805306368, -- GUN_POD + BuiltInCannon
+}
+ENUMS.WeaponType.Missile={
+  -- Missiles
+  AntiRadarMissile     =      32768,
+  AntiShipMissile      =      65536,
+  AntiTankMissile      =     131072,
+  FireAndForgetASM     =     262144,
+  LaserASM             =     524288,
+  TeleASM              =    1048576,
+  CruiseMissile        =    2097152,
+  AntiRadarMissile2    = 1073741824,
+  -- Combinations
+  GuidedASM            =    1572864, -- (LaserASM + TeleASM)
+  TacticalASM          =    1835008, -- (GuidedASM + FireAndForgetASM)
+  AnyASM               =    4161536, -- (AntiRadarMissile + AntiShipMissile + AntiTankMissile + FireAndForgetASM + GuidedASM + CruiseMissile)
+  AnyASM2              = 1077903360, -- 4161536+1073741824,
+  AnyAutonomousMissile =   36012032, -- IR_AAM + AntiRadarMissile + AntiShipMissile + FireAndForgetASM + CruiseMissile
+  AnyMissile           =  268402688, -- AnyASM + AnyAAM       
+}
+ENUMS.WeaponType.AAM={
+  -- Air-To-Air Missiles
+  SRAM                 =    4194304,
+  MRAAM                =    8388608, 
+  LRAAM                =   16777216,
+  IR_AAM               =   33554432,
+  SAR_AAM              =   67108864,
+  AR_AAM               =  134217728,
+  -- Combinations
+  AnyAAM               =  264241152, -- IR_AAM + SAR_AAM + AR_AAM + SRAAM + MRAAM + LRAAM
+}
+ENUMS.WeaponType.Torpedo={
+  -- Torpedo
+  Torpedo              = 4294967296,
+}
+ENUMS.WeaponType.Any={
+  -- General combinations  
+  Weapon               = 3221225470, -- Any Weapon (AnyBomb + AnyRocket + AnyMissile + Cannons)
+  AG                   = 2956984318, -- Any Air-To-Ground Weapon
+  AA                   =  264241152, -- Any Air-To-Air Weapon
+  Unguided             = 2952822768, -- Any Unguided Weapon
+  Guided               =  268402702, -- Any Guided Weapon   
+}
+
 
 --- Mission tasks.
 -- @type ENUMS.MissionTask
@@ -359,4 +448,114 @@ ENUMS.Phonetic =
   X = 'Xray',
   Y = 'Yankee',
   Z = 'Zulu',
+}
+
+--- Reporting Names (NATO). See the [Wikipedia](https://en.wikipedia.org/wiki/List_of_NATO_reporting_names_for_fighter_aircraft).
+-- DCS known aircraft types
+-- 
+-- @type ENUMS.ReportingName
+ENUMS.ReportingName =
+{
+  NATO = {
+    -- Fighters
+    Dragon = "JF-17", -- China, correctly Fierce Dragon, Thunder for PAC
+    Fagot = "MiG-15",
+    Farmer = "MiG-19", -- Shenyang J-6 and Mikoyan-Gurevich MiG-19
+    Felon = "Su-57",
+    Fencer = "Su-24",
+    Fishbed = "MiG-21",
+    Fitter = "Su-17", -- Sukhoi Su-7 and Su-17/Su-20/Su-22
+    Flogger = "MiG-23",  --and MiG-27
+    Flogger_D = "MiG-27",  --and MiG-23
+    Flagon = "Su-15",
+    Foxbat = "MiG-25",
+    Fulcrum = "MiG-29",
+    Foxhound = "MiG-31",
+    Flanker = "Su-27", -- Sukhoi Su-27/Su-30/Su-33/Su-35/Su-37 and Shenyang J-11/J-15/J-16
+    Flanker_C = "Su-30",
+    Flanker_E = "Su-35",
+    Flanker_F = "Su-37",
+    Flanker_L = "J-11A",
+    Firebird = "J-10",
+    Sea_Flanker = "Su-33",
+    Fullback = "Su-34", -- also Su-32
+    Frogfoot = "Su-25",
+    Tomcat = "F-14", -- Iran
+    Mirage = "Mirage", -- various non-NATO
+    Codling = "Yak-40",
+    Maya = "L-39",
+    -- Fighters US/NATO
+    Warthog = "A-10",
+    --Mosquito = "A-20",
+    Skyhawk = "A-4E",
+    Viggen = "AJS37",
+    Harrier = "AV-8B",
+    Spirit = "B-2",
+    Aviojet = "C-101",
+    Nighthawk = "F-117A",
+    Eagle = "F-15C",
+    Mudhen = "F-15E",
+    Viper = "F-16",
+    Phantom = "F-4E",
+    Tiger = "F-5", -- was thinkg to name this MiG-25 ;)
+    Sabre = "F-86",
+    Hornet = "A-18", -- avoiding the slash
+    Hawk = "Hawk",
+    Albatros = "L-39",
+    Goshawk = "T-45",
+    Starfighter = "F-104",
+    Tornado = "Tornado",
+    -- Transport / Bomber / Others
+    Atlas = "A400",
+    Lancer = "B1-B",
+    Stratofortress = "B-52H",
+    Hercules = "C-130", 
+    Super_Hercules = "Hercules",
+    Globemaster = "C-17",
+    Greyhound = "C-2A",
+    Galaxy = "C-5",
+    Hawkeye = "E-2D",
+    Sentry = "E-3A",
+    Stratotanker = "KC-135",
+    Extender = "KC-10",
+    Orion = "P-3C",
+    Viking = "S-3B",
+    Osprey = "V-22",
+    -- Bomber Rus
+    Badger = "H6-J",
+    Bear_J = "Tu-142", -- also Tu-95
+    Bear = "Tu-95", -- also Tu-142
+    Blinder = "Tu-22",
+    Blackjack = "Tu-160",
+    -- AIC / Transport / Other
+    Clank = "An-30",
+    Curl = "An-26",
+    Candid = "IL-76",
+    Midas = "IL-78",
+    Mainstay = "A-50", 
+    Mainring = "KJ-2000", -- A-50 China
+    Yak = "Yak-52",
+    -- Helos
+    Helix = "Ka-27",
+    Shark = "Ka-50",
+    Hind = "Mi-24",
+    Halo = "Mi-26",
+    Hip = "Mi-8",
+    Havoc = "Mi-28",
+    Gazelle = "SA342",
+    -- Helos US
+    Huey = "UH-1H",
+    Cobra = "AH-1",
+    Apache = "AH-64",
+    Chinook = "CH-47",
+    Sea_Stallion = "CH-53",
+    Kiowa = "OH-58",
+    Seahawk = "SH-60",
+    Blackhawk = "UH-60",
+    Sea_King = "S-61",
+    -- Drones
+    UCAV = "WingLoong",
+    Reaper = "MQ-9",
+    Predator = "MQ-1A",
+  }
 }

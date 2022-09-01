@@ -681,7 +681,7 @@ end
 --- Activate ICLS system of the CONTROLLABLE. The controllable should be an aircraft carrier!
 -- @param #CONTROLLABLE self
 -- @param #number Channel ICLS channel.
--- @param #number UnitID The ID of the unit the ICLS system is attached to. Useful if more units are in one group.
+-- @param #number UnitID The DCS UNIT ID of the unit the ICLS system is attached to. Useful if more units are in one group.
 -- @param #string Callsign Morse code identification callsign.
 -- @param #number Delay (Optional) Delay in seconds before the ICLS is deactivated.
 -- @return #CONTROLLABLE self
@@ -707,6 +707,33 @@ function CONTROLLABLE:CommandActivateICLS(Channel, UnitID, Callsign, Delay)
   return self
 end
 
+--- Activate LINK4 system of the CONTROLLABLE. The controllable should be an aircraft carrier!
+-- @param #CONTROLLABLE self
+-- @param #number Frequency Link4 Frequency in MHz, e.g. 336
+-- @param #number UnitID The DCS UNIT ID of the unit the LINK4 system is attached to. Useful if more units are in one group.
+-- @param #string Callsign Morse code identification callsign.
+-- @param #number Delay (Optional) Delay in seconds before the LINK4 is deactivated.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandActivateLink4(Frequency, UnitID, Callsign, Delay)
+
+  -- Command to activate Link4 system.
+  local CommandActivateLink4= {
+    id = "ActivateLink4",
+    params= {
+      ["frequency "] = Frequency*1000,
+      ["unitId"] = UnitID,
+      ["name"] = Callsign,
+    }
+  }
+
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.CommandActivateLink4, {self}, Delay)
+  else
+    self:SetCommand(CommandActivateLink4)
+  end
+
+  return self
+end
 
 --- Deactivate the active beacon of the CONTROLLABLE.
 -- @param #CONTROLLABLE self
@@ -718,9 +745,27 @@ function CONTROLLABLE:CommandDeactivateBeacon(Delay)
   local CommandDeactivateBeacon={id='DeactivateBeacon', params={}}
 
   if Delay and Delay>0 then
-    SCHEDULER:New(nil, self.CommandActivateBeacon, {self}, Delay)
+    SCHEDULER:New(nil, self.CommandDeactivateBeacon, {self}, Delay)
   else
     self:SetCommand(CommandDeactivateBeacon)
+  end
+
+  return self
+end
+
+--- Deactivate the active Link4 of the CONTROLLABLE.
+-- @param #CONTROLLABLE self
+-- @param #number Delay (Optional) Delay in seconds before the Link4 is deactivated.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandDeactivateLink4(Delay)
+
+  -- Command to deactivate
+  local CommandDeactivateLink4={id='DeactivateLink4', params={}}
+
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.CommandDeactivateLink4, {self}, Delay)
+  else
+    self:SetCommand(CommandDeactivateLink4)
   end
 
   return self
@@ -1550,6 +1595,27 @@ function CONTROLLABLE:EnRouteTaskEngageTargetsInZone( Vec2, Radius, TargetTypes,
       point       = Vec2,
       zoneRadius  = Radius,
       targetTypes = TargetTypes or {"Air"},
+      priority    = Priority or 0
+    }
+  }
+
+  return DCSTask
+end
+
+--- (AIR) Enroute anti-ship task.
+-- @param #CONTROLLABLE self
+-- @param DCS#AttributeNameArray TargetTypes Array of target categories allowed to engage. Default `{"Ships"}`.
+-- @param #number Priority (Optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Default 0.
+-- @return DCS#Task The DCS task structure.
+function CONTROLLABLE:EnRouteTaskAntiShip(TargetTypes, Priority)
+
+  local DCSTask = {
+    id      = 'EngageTargets',
+    key     = "AntiShip",
+    --auto    = false,
+    --enabled = true,    
+    params  = {
+      targetTypes = TargetTypes or {"Ships"},
       priority    = Priority or 0
     }
   }
@@ -3843,4 +3909,46 @@ function POSITIONABLE:IsSubmarine()
   end
 
   return nil
+end
+
+
+--- Sets the controlled group to go at the specified speed in meters per second. 
+-- @param #CONTROLLABLE self
+-- @param #number Speed Speed in meters per second
+-- @param #boolean Keep (Optional) When set to true, will maintain the speed on passing waypoints. If not present or false, the controlled group will return to the speed as defined by their route. 
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetSpeed(Speed, Keep)
+  self:F2( { self.ControllableName } )
+  -- Set default if not specified.
+  local speed = Speed or 5
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+    if Controller then
+      Controller:setSpeed(speed, Keep)
+    end
+  end
+  return self
+end
+
+--- [AIR] Sets the controlled aircraft group to fly at the specified altitude in meters.
+-- @param #CONTROLLABLE self
+-- @param #number Altitude Altitude in meters.
+-- @param #boolean Keep (Optional) When set to true, will maintain the altitude on passing waypoints. If not present or false, the controlled group will return to the altitude as defined by their route. 
+-- @param #string AltType (Optional) Specifies the altitude type used. If nil, the altitude type of the current waypoint will be used. Accepted values are "BARO" and "RADIO".
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetAltitude(Altitude, Keep, AltType)
+  self:F2( { self.ControllableName } )
+  -- Set default if not specified.
+  local altitude = Altitude or 1000
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+    if Controller then
+      if self:IsAir() then
+        Controller:setAltitude(altitude, Keep, AltType)
+      end
+    end
+  end
+  return self
 end

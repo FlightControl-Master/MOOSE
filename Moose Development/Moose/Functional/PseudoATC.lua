@@ -742,7 +742,7 @@ function PSEUDOATC:ReportWeather(GID, UID, position, location)
   local T=position:GetTemperature()
     
   -- Correct unit system.
-  local _T=string.format('%d°F', UTILS.CelciusToFarenheit(T))
+  local _T=string.format('%d°F', UTILS.CelsiusToFahrenheit(T))
   if settings:IsMetric() then
     _T=string.format('%d°C', T)
   end
@@ -949,11 +949,14 @@ function PSEUDOATC:LocalAirports(GID, UID)
     for _,airbase in pairs(airports) do
     
       local name=airbase:getName()
-      local q=AIRBASE:FindByName(name):GetCoordinate()
-      local d=q:Get2DDistance(pos)
+      local a=AIRBASE:FindByName(name)
+      if a then
+        local q=a:GetCoordinate()
+        local d=q:Get2DDistance(pos)
       
-      -- Add to table.
-      table.insert(self.group[GID].player[UID].airports, {distance=d, name=name})
+        -- Add to table.
+        table.insert(self.group[GID].player[UID].airports, {distance=d, name=name})
+      end
       
     end
   end
@@ -1041,6 +1044,3 @@ function PSEUDOATC:_myname(unitname)
   
   return string.format("%s (%s)", csign, pname)
 end
-
-
-

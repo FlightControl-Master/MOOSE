@@ -1,4 +1,4 @@
---- This module contains derived utilities taken from the MIST framework, which are excellent tools to be reused in an OO environment.
+--- This module contains derived utilities taken from the MIST framework, as well as a lot of added helpers from the MOOSE community.
 --
 -- ### Authors:
 --
@@ -7,6 +7,7 @@
 -- ### Contributions:
 --
 --   * FlightControl : Rework to OO framework.
+--   * And many more
 --
 -- @module Utils
 -- @image MOOSE.JPG
@@ -51,6 +52,7 @@ BIGSMOKEPRESET = {
 -- @field #string TheChannel The Channel map.
 -- @field #string Syria Syria map.
 -- @field #string MarianaIslands Mariana Islands map.
+-- @field #string Falklands South Atlantic map.
 DCSMAP = {
   Caucasus="Caucasus",
   NTTR="Nevada",
@@ -58,7 +60,8 @@ DCSMAP = {
   PersianGulf="PersianGulf",
   TheChannel="TheChannel",
   Syria="Syria",
-  MarianaIslands="MarianaIslands"
+  MarianaIslands="MarianaIslands",
+  Falklands="Falklands",
 }
 
 
@@ -129,6 +132,62 @@ CALLSIGN={
     Warsaw=8,
     Dublin=9,
     Perth=10,
+  },
+  F16={
+    Viper=9,
+    Venom=10,
+    Lobo=11,
+    Cowboy=12,
+    Python=13,
+    Rattler=14,
+    Panther=15,
+    Wolf=16,
+    Weasel=17,
+    Wild=18,
+    Ninja=19,
+    Jedi=20,
+  },
+  F18={
+    Hornet=9,
+    Squid=10,
+    Ragin=11,
+    Roman=12,
+    Sting=13,
+    Jury=14,
+    Jokey=15,
+    Ram=16,
+    Hawk=17,
+    Devil=18,
+    Check=19,
+    Snake=20,
+  },
+  F15E={
+    Dude=9,
+    Thud=10,
+    Gunny=11,
+    Trek=12,
+    Sniper=13,
+    Sled=14,
+    Best=15,
+    Jazz=16,
+    Rage=17,
+    Tahoe=18,
+  },
+  B1B={
+    Bone=9,
+    Dark=10,
+    Vader=11
+  },
+  B52={
+    Buff=9,
+    Dump=10,
+    Kenworth=11,
+  },
+  TransportAircraft={
+    Heavy=9,
+    Trash=10,
+    Cargo=11,
+    Ascot=12,
   },
 } --#CALLSIGN
 
@@ -409,13 +468,17 @@ end
 -- @param #number knots Speed in knots.
 -- @return #number Speed in m/s.
 UTILS.KnotsToMps = function( knots )
-  return knots / 1.94384 --* 1852 / 3600
+  if type(knots) == "number" then
+    return knots / 1.94384 --* 1852 / 3600
+  else
+   return 0
+  end
 end
 
---- Convert temperature from Celsius to Farenheit.
+--- Convert temperature from Celsius to Fahrenheit.
 -- @param #number Celcius Temperature in degrees Celsius.
--- @return #number Temperature in degrees Farenheit.
-UTILS.CelciusToFarenheit = function( Celcius )
+-- @return #number Temperature in degrees Fahrenheit.
+UTILS.CelsiusToFahrenheit = function( Celcius )
   return Celcius * 9/5 + 32
 end
 
@@ -748,7 +811,7 @@ function UTILS.BeaufortScale(speed)
   return bn,bd
 end
 
---- Split string at seperators. C.f. http://stackoverflow.com/questions/1426954/split-string-in-lua
+--- Split string at seperators. C.f. [split-string-in-lua](http://stackoverflow.com/questions/1426954/split-string-in-lua).
 -- @param #string str Sting to split.
 -- @param #string sep Speparator for split.
 -- @return #table Split text.
@@ -1036,12 +1099,28 @@ function UTILS.VecSubstract(a, b)
   return {x=a.x-b.x, y=a.y-b.y, z=a.z-b.z}
 end
 
+--- Calculate the difference between two 2D vectors by substracting the x,y components from each other.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @param DCS#Vec2 b Vector in 2D with x, y components.
+-- @return DCS#Vec2 Vector c=a-b with c(i)=a(i)-b(i), i=x,y.
+function UTILS.Vec2Substract(a, b)
+  return {x=a.x-b.x, y=a.y-b.y}
+end
+
 --- Calculate the total vector of two 3D vectors by adding the x,y,z components of each other.
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @param DCS#Vec3 b Vector in 3D with x, y, z components.
 -- @return DCS#Vec3 Vector c=a+b with c(i)=a(i)+b(i), i=x,y,z.
 function UTILS.VecAdd(a, b)
   return {x=a.x+b.x, y=a.y+b.y, z=a.z+b.z}
+end
+
+--- Calculate the total vector of two 2D vectors by adding the x,y components of each other.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @param DCS#Vec2 b Vector in 2D with x, y components.
+-- @return DCS#Vec2 Vector c=a+b with c(i)=a(i)+b(i), i=x,y.
+function UTILS.Vec2Add(a, b)
+  return {x=a.x+b.x, y=a.y+b.y}
 end
 
 --- Calculate the angle between two 3D vectors.
@@ -1076,7 +1155,7 @@ function UTILS.VecHdg(a)
 end
 
 --- Calculate "heading" of a 2D vector in the X-Y plane.
--- @param DCS#Vec2 a Vector in "D with x, y components.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
 -- @return #number Heading in degrees in [0,360).
 function UTILS.Vec2Hdg(a)
   local h=math.deg(math.atan2(a.y, a.x))
@@ -1260,26 +1339,6 @@ function UTILS.GetMissionDayOfYear(Time)
 
 end
 
---- Returns the current date.
--- @return #string Mission date in yyyy/mm/dd format.
--- @return #number The year anno domini.
--- @return #number The month.
--- @return #number The day.
-function UTILS.GetDate()
-
-  -- Mission start date
-  local date, year, month, day=UTILS.GetDCSMissionDate()
-
-  local time=timer.getAbsTime()
-
-  local clock=UTILS.SecondsToClock(time, false)
-
-  local x=tonumber(UTILS.Split(clock, "+")[2])
-
-  local day=day+x
-
-end
-
 --- Returns the magnetic declination of the map.
 -- Returned values for the current maps are:
 --
@@ -1290,6 +1349,7 @@ end
 -- * The Cannel Map -10 (West)
 -- * Syria +5 (East)
 -- * Mariana Islands +2 (East)
+-- * Falklands +12 (East) - note there's a LOT of deviation across the map, as we're closer to the South Pole
 -- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
 -- @return #number Declination in degrees.
 function UTILS.GetMagneticDeclination(map)
@@ -1312,6 +1372,8 @@ function UTILS.GetMagneticDeclination(map)
     declination=5
   elseif map==DCSMAP.MarianaIslands then
     declination=2
+  elseif map==DCSMAP.Falklands then
+    declination=12
   else
     declination=0
   end
@@ -1390,6 +1452,23 @@ function UTILS.GetModulationName(Modulation)
 
 end
 
+--- Get the NATO reporting name of a unit type name
+-- @param #number Typename The type name.
+-- @return #string The Reporting name or "Bogey".
+function UTILS.GetReportingName(Typename)
+  
+  local typename = string.lower(Typename)
+  
+  for name, value in pairs(ENUMS.ReportingName.NATO) do
+    local svalue = string.lower(value)
+    if string.find(typename,svalue,1,true) then
+      return name
+    end
+  end
+  
+  return "Bogey"  
+end
+
 --- Get the callsign name from its enumerator value
 -- @param #number Callsign The enumerator callsign.
 -- @return #string The callsign name or "Ghostrider".
@@ -1418,7 +1497,49 @@ function UTILS.GetCallsignName(Callsign)
       return name
     end
   end
-
+  
+  for name, value in pairs(CALLSIGN.B1B) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.B52) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.F15E) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.F16) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.F18) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.FARP) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.TransportAircraft) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
   return "Ghostrider"
 end
 
@@ -1604,15 +1725,21 @@ end
 -- @return #number Os time in seconds.
 function UTILS.GetOSTime()
   if os then
-    return os.clock()
+    local ts = 0
+    local t = os.date("*t")
+    local s = t.sec
+    local m = t.min * 60
+    local h = t.hour * 3600
+    ts = s+m+h
+    return ts
+  else
+    return nil
   end
-
-  return nil
 end
 
 --- Shuffle a table accoring to Fisher Yeates algorithm
---@param #table t Table to be shuffled
---@return #table
+--@param #table t Table to be shuffled.
+--@return #table Shuffled table.
 function UTILS.ShuffleTable(t)
   if t == nil or type(t) ~= "table" then
     BASE:I("Error in ShuffleTable: Missing or wrong type of Argument")
@@ -1630,60 +1757,99 @@ function UTILS.ShuffleTable(t)
   return TempTable
 end
 
+--- Get a random element of a table.
+--@param #table t Table.
+--@param #boolean replace If `true`, the drawn element is replaced, i.e. not deleted.
+--@return #number Table element.
+function UTILS.GetRandomTableElement(t, replace)
+
+  if t == nil or type(t) ~= "table" then
+    BASE:I("Error in ShuffleTable: Missing or wrong type of Argument")
+    return
+  end
+  
+  math.random()
+  math.random()
+  math.random()
+  
+  local r=math.random(#t)
+  
+  local element=t[r]
+  
+  if not replace then
+    table.remove(t, r)
+  end
+  
+  return element
+end
+
 --- (Helicopter) Check if one loading door is open.
 --@param #string unit_name Unit name to be checked
 --@return #boolean Outcome - true if a (loading door) is open, false if not, nil if none exists.
 function UTILS.IsLoadingDoorOpen( unit_name )
 
-  local ret_val = false
   local unit = Unit.getByName(unit_name)
+
   if unit ~= nil then
       local type_name = unit:getTypeName()
+      BASE:T("TypeName = ".. type_name)
 
-      if type_name == "Mi-8MT" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) < 0 then
+      if type_name == "Mi-8MT" and (unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) < 0) then
           BASE:T(unit_name .. " Cargo doors are open or cargo door not present")
-          ret_val =  true
+          return true
       end
 
-      if type_name == "Mi-24P" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 then
+      if type_name == "Mi-24P" and (unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1) then
           BASE:T(unit_name .. " a side door is open")
-          ret_val =  true
+          return true
       end
 
-      if type_name == "UH-1H" and unit:getDrawArgumentValue(43) == 1 or unit:getDrawArgumentValue(44) == 1 then
+      if type_name == "UH-1H" and (unit:getDrawArgumentValue(43) == 1 or unit:getDrawArgumentValue(44) == 1) then
           BASE:T(unit_name .. " a side door is open ")
-          ret_val =  true
+          return true
+      end
+    
+      if string.find(type_name, "SA342" ) and (unit:getDrawArgumentValue(34) == 1) then
+          BASE:T(unit_name .. " front door(s) are open or doors removed")
+          return true
       end
 
-      if string.find(type_name, "SA342" ) and unit:getDrawArgumentValue(34) == 1 or unit:getDrawArgumentValue(38) == 1 then
-          BASE:T(unit_name .. " front door(s) are open")
-          ret_val =  true
-      end
-
-      if string.find(type_name, "Hercules") and unit:getDrawArgumentValue(1215) == 1 and unit:getDrawArgumentValue(1216) == 1 then
+      if string.find(type_name, "Hercules") and (unit:getDrawArgumentValue(1215) == 1 and unit:getDrawArgumentValue(1216) == 1) then
           BASE:T(unit_name .. " rear doors are open")
-          ret_val =  true
+          return true
       end
 
       if string.find(type_name, "Hercules") and (unit:getDrawArgumentValue(1220) == 1 or unit:getDrawArgumentValue(1221) == 1) then
           BASE:T(unit_name .. " para doors are open")
-          ret_val =  true
+          return true
       end
 
-      if string.find(type_name, "Hercules") and unit:getDrawArgumentValue(1217) == 1 then
+      if string.find(type_name, "Hercules") and (unit:getDrawArgumentValue(1217) == 1) then
           BASE:T(unit_name .. " side door is open")
-          ret_val =  true
+          return true
       end
 
       if string.find(type_name, "Bell-47") then -- bell aint got no doors so always ready to load injured soldiers
           BASE:T(unit_name .. " door is open")
-          ret_val =  true
+          return true
+      end
+      
+      if string.find(type_name, "UH-60L") and (unit:getDrawArgumentValue(401) == 1 or unit:getDrawArgumentValue(402) == 1) then
+          BASE:T(unit_name .. " cargo door is open")
+          return true
       end
 
-      if ret_val == false then
-          BASE:T(unit_name .. " all doors are closed")
+      if string.find(type_name, "UH-60L" ) and (unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(400) == 1 ) then
+          BASE:T(unit_name .. " front door(s) are open")
+          return true
       end
-      return ret_val
+      
+      if type_name == "AH-64D_BLK_II" then
+         BASE:T(unit_name .. " front door(s) are open")
+         return true -- no doors on this one ;)
+      end
+      
+      return false
 
   end -- nil
 
@@ -1712,7 +1878,7 @@ function UTILS.GenerateVHFrequencies()
   -- known and sorted map-wise NDBs in kHz
   local _skipFrequencies = {
   214,274,291.5,295,297.5,
-  300.5,304,307,309.5,311,312,312.5,316,
+  300.5,304,305,307,309.5,311,312,312.5,316,
   320,324,328,329,330,332,336,337,
   342,343,348,351,352,353,358,
   363,365,368,372.5,374,
@@ -2111,9 +2277,8 @@ function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce)
       local data = { groupname=groupname, size=size, coordinate=coordinate, group=GROUP:FindByName(groupname) }
       if reduce then
         local actualgroup = GROUP:FindByName(groupname)
-        local actualsize = actualgroup:CountAliveUnits()
-        if actualsize > size then
-          local reduction = actualsize-size
+        if actualgroup and actualgroup:IsAlive() and actualgroup:CountAliveUnits() > size then
+          local reduction = actualgroup:CountAliveUnits() - size
           BASE:I("Reducing groupsize by ".. reduction .. " units!")
           -- reduce existing group
           local units = actualgroup:GetUnits()
@@ -2256,4 +2421,51 @@ function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce)
     return nil
   end
   return datatable
+end
+
+--- Heading Degrees (0-360) to Cardinal
+-- @param #number Heading The heading
+-- @return #string Cardinal, e.g. "NORTH"
+function UTILS.BearingToCardinal(Heading)
+  if     Heading >= 0   and Heading <= 22  then return "North"
+    elseif Heading >= 23  and Heading <= 66  then return "North-East"
+    elseif Heading >= 67  and Heading <= 101 then return "East"
+    elseif Heading >= 102 and Heading <= 146 then return "South-East"
+    elseif Heading >= 147 and Heading <= 201 then return "South"
+    elseif Heading >= 202 and Heading <= 246 then return "South-West"
+    elseif Heading >= 247 and Heading <= 291 then return "West"
+    elseif Heading >= 292 and Heading <= 338 then return "North-West"
+    elseif Heading >= 339 then return "North"
+  end
+end
+
+--- Create a BRAA NATO call string BRAA between two GROUP objects
+-- @param Wrapper.Group#GROUP FromGrp GROUP object
+-- @param Wrapper.Group#GROUP ToGrp GROUP object
+-- @return #string Formatted BRAA NATO call
+function UTILS.ToStringBRAANATO(FromGrp,ToGrp)
+  local BRAANATO = "Merged."
+  local GroupNumber = FromGrp:GetSize()
+  local GroupWords = "Singleton"
+  if GroupNumber == 2 then GroupWords = "Two-Ship"
+    elseif GroupNumber >= 3 then GroupWords = "Heavy"
+  end
+  local grpLeadUnit = ToGrp:GetUnit(1)
+  local tgtCoord = grpLeadUnit:GetCoordinate()
+  local currentCoord = FromGrp:GetCoordinate()
+  local hdg = UTILS.Round(ToGrp:GetHeading()/100,1)*100
+  local bearing = UTILS.Round(currentCoord:HeadingTo(tgtCoord),0)
+  local rangeMetres = tgtCoord:Get2DDistance(currentCoord)
+  local rangeNM = UTILS.Round( UTILS.MetersToNM(rangeMetres), 0)
+  local aspect = tgtCoord:ToStringAspect(currentCoord)
+  local alt = UTILS.Round(UTILS.MetersToFeet(grpLeadUnit:GetAltitude())/1000,0)--*1000
+  local track = UTILS.BearingToCardinal(hdg)
+  if rangeNM > 3 then
+      if aspect == "" then
+        BRAANATO = string.format("%s, BRA, %03d, %d miles, Angels %d, Track %s",GroupWords,bearing, rangeNM, alt, track)
+      else
+        BRAANATO = string.format("%s, BRAA, %03d, %d miles, Angels %d, %s, Track %s",GroupWords, bearing, rangeNM, alt, aspect, track)      
+      end
+  end
+  return BRAANATO 
 end

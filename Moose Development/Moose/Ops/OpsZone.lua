@@ -2,8 +2,9 @@
 --
 -- **Main Features:**
 --
---    * Monitor if a zone is captured.
---    * Monitor if an airbase is captured.
+--    * Monitor if a zone is captured
+--    * Monitor if an airbase is captured
+--    * Define conditions under which zones are captured/held
 --
 -- ===
 --
@@ -39,10 +40,10 @@
 -- @field Wrapper.Marker#MARKER marker Marker on the F10 map.
 -- @field #string markerText Text shown in the maker.
 -- @field #table chiefs Chiefs that monitor this zone.
--- @field #table Missions Missions that are attached to this OpsZone
+-- @field #table Missions Missions that are attached to this OpsZone.
 -- @extends Core.Fsm#FSM
 
---- Be surprised!
+--- *Gentlemen, when the enemy is committed to a mistake we must not interrupt him too soon.* --- Horation Nelson
 --
 -- ===
 --
@@ -73,16 +74,17 @@ OPSZONE = {
 
 --- OPSZONE class version.
 -- @field #string version
-OPSZONE.version="0.2.0"
+OPSZONE.version="0.3.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Capturing based on (total) threat level threshold. Unarmed units do not pose a threat and should not be able to hold a zone.
 -- TODO: Pause/unpause evaluations.
 -- TODO: Capture time, i.e. time how long a single coalition has to be inside the zone to capture it.
--- DONE: Can neutrals capture? No, since they are _neutral_!
 -- TODO: Differentiate between ground attack and boming by air or arty.
+-- DONE: Can neutrals capture? No, since they are _neutral_!
 -- DONE: Capture airbases.
 -- DONE: Can statics capture or hold a zone? No, unless explicitly requested by mission designer.
 
@@ -92,9 +94,15 @@ OPSZONE.version="0.2.0"
 
 --- Create a new OPSZONE class object.
 -- @param #OPSZONE self
--- @param Core.Zone#ZONE Zone The zone.
+-- @param Core.Zone#ZONE Zone The zone. Needs to be a ZONE\_RADIUS (round) zone. Can be passed as ZONE\_AIRBASE or simply as the name of the airbase.
 -- @param #number CoalitionOwner Initial owner of the coaliton. Default `coalition.side.NEUTRAL`.
 -- @return #OPSZONE self
+-- @usage
+--            myopszone = OPSZONE:New(ZONE:FindByName("OpsZoneOne"),coalition.side.RED) -- base zone from the mission editor
+--            myopszone = OPSZONE:New(ZONE_RADIUS:New("OpsZoneTwo",mycoordinate:GetVec2(),5000),coalition.side.BLUE) -- radius zone of 5km at a coordinate
+--            myopszone = OPSZONE:New(ZONE_RADIUS:New("Batumi")) -- airbase zone from Batumi Airbase, ca 2500m radius
+--            myopszone = OPSZONE:New(ZONE_AIRBASE:New("Batumi",6000),coalition.side.BLUE) -- airbase zone from Batumi Airbase, but with a specific radius of 6km
+-- 
 function OPSZONE:New(Zone, CoalitionOwner)
 
   -- Inherit everything from LEGION class.
@@ -166,8 +174,7 @@ function OPSZONE:New(Zone, CoalitionOwner)
   -- Status timer.
   self.timerStatus=TIMER:New(OPSZONE.Status, self)
 
-
-  -- FMS start state is EMPTY.
+  -- FMS start state is STOPPED.
   self:SetStartState("Stopped")
   
   -- Add FSM transitions.
@@ -199,6 +206,7 @@ function OPSZONE:New(Zone, CoalitionOwner)
 
 
   --- Triggers the FSM event "Stop".
+  -- @function [parent=#OPSZONE] Stop
   -- @param #OPSZONE self
 
   --- Triggers the FSM event "Stop" after a delay.
@@ -318,13 +326,13 @@ end
 
 --- Set categories of objects that can capture or hold the zone.
 -- 
--- * Default is {Object.Category.UNIT} so only units can capture and hold zones.
--- * Set to `{Object.Category.UNIT, Object.Category.STATIC}` if static objects can capture and hold zones
+-- * Default is {Object.Category.UNIT, Object.Category.STATIC} so units and statics can capture and hold zones.
+-- * Set to `{Object.Category.UNIT}` if only units should be able to capture and hold zones
 -- 
 -- Which units can capture zones can be further refined by `:SetUnitCategories()`.
 -- 
 -- @param #OPSZONE self
--- @param #table Categories Object categories. Default is `{Object.Category.UNIT}`.
+-- @param #table Categories Object categories. Default is `{Object.Category.UNIT, Object.Category.STATIC}`.
 -- @return #OPSZONE self
 function OPSZONE:SetObjectCategories(Categories)
 
@@ -342,7 +350,7 @@ end
 --- Set categories of units that can capture or hold the zone. See [DCS Class Unit](https://wiki.hoggitworld.com/view/DCS_Class_Unit).
 -- @param #OPSZONE self
 -- @param #table Categories Table of unit categories. Default `{Unit.Category.GROUND_UNIT}`.
--- @return #OPSZONE
+-- @return #OPSZONE self
 function OPSZONE:SetUnitCategories(Categories)
 
   -- Ensure table.
@@ -355,6 +363,32 @@ function OPSZONE:SetUnitCategories(Categories)
   
   return self
 end
+
+--- Set threat level threshold that the defending units must have to hold a zone.
+-- The reason why you might want to set this is that unarmed units (*e.g.* fuel trucks) should not be able to hold a zone as they do not pose a threat.
+-- @param #OPSZONE self
+-- @param #number Threatlevel Threat level threshod. Default 0.
+-- @return #OPSZONE self
+function OPSZONE:SetThreatlevelDefinding(Threatlevel)
+
+  self.threatlevelDefending=Threatlevel or 0
+  
+  return self
+end
+
+
+--- Set threat level threshold that the offending units must have to capture a zone.
+-- The reason why you might want to set this is that unarmed units (*e.g.* fuel trucks) should not be able to capture a zone as they do not pose a threat.
+-- @param #OPSZONE self
+-- @param #number Threatlevel Threat level threshod. Default 0.
+-- @return #OPSZONE self
+function OPSZONE:SetThreatlevelOffending(Threatlevel)
+
+  self.threatlevelOffending=Threatlevel or 0
+  
+  return self
+end
+
 
 --- Set whether *neutral* units can capture the zone.
 -- @param #OPSZONE self
@@ -400,7 +434,7 @@ function OPSZONE:SetMarkZone(Switch, ReadOnly)
       self.marker:Remove()
     end
     self.marker=nil
-    self.marker=false
+    --self.marker=false
   end
   return self
 end
@@ -413,6 +447,13 @@ function OPSZONE:GetOwner()
   return self.ownerCurrent
 end
 
+--- Get coalition name of current owner of the zone.
+-- @param #OPSZONE self
+-- @return #string  Owner coalition.
+function OPSZONE:GetOwnerName()
+  return UTILS.GetCoalitionName(self.ownerCurrent)
+end
+
 --- Get coordinate of zone.
 -- @param #OPSZONE self
 -- @return Core.Point#COORDINATE Coordinate of the zone.
@@ -421,11 +462,33 @@ function OPSZONE:GetCoordinate()
   return coordinate
 end
 
---- Get name.
+--- Returns a random coordinate in the zone.
+-- @param #OPSZONE self
+-- @param #number inner (Optional) Minimal distance from the center of the zone in meters. Default is 0 m.
+-- @param #number outer (Optional) Maximal distance from the outer edge of the zone in meters. Default is the radius of the zone.
+-- @param #table surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type!
+-- @return Core.Point#COORDINATE The random coordinate.
+function OPSZONE:GetRandomCoordinate(inner, outer, surfacetypes)
+
+  local zone=self:GetZone()
+  
+  local coord=zone:GetRandomCoordinate(inner, outer, surfacetypes)
+
+  return coord
+end
+
+--- Get zone name.
 -- @param #OPSZONE self
 -- @return #string Name of the zone.
 function OPSZONE:GetName()
   return self.zoneName
+end
+
+--- Get the zone object.
+-- @param #OPSZONE self
+-- @return Core.Zone#ZONE The zone.
+function OPSZONE:GetZone()
+  return self.zone
 end
 
 --- Get previous owner of the zone.
@@ -470,6 +533,15 @@ end
 -- @return #boolean If `true`, zone is neutral.
 function OPSZONE:IsNeutral()
   local is=self.ownerCurrent==coalition.side.NEUTRAL
+  return is
+end
+
+--- Check if a certain coalition is currently owning the zone.
+-- @param #OPSZONE self 
+-- @param #number Coalition The Coalition that is supposed to own the zone.
+-- @return #boolean If `true`, zone is owned by the given coalition.
+function OPSZONE:IsCoalition(Coalition)
+  local is=self.ownerCurrent==Coalition
   return is
 end
 
@@ -552,8 +624,24 @@ function OPSZONE:onafterStop(From, Event, To)
   -- Reinit the timer.
   self.timerStatus:Stop()
   
+  -- Draw zone.
+  if self.drawZone then
+    self.zone:UndrawZone()
+  end
+
+  -- Remove marker.  
+  if self.markZone then
+    self.marker:Remove()
+  end  
+  
   -- Unhandle events.
   self:UnHandleEvent(EVENTS.BaseCaptured)
+
+  -- Stop FSM scheduler.
+  self.CallScheduler:Clear()
+  if self.Scheduler then
+    self.Scheduler:Clear()
+  end
   
 end
 
@@ -1233,13 +1321,13 @@ function OPSZONE:_GetMissions()
   return self.Missions
 end
 
---- Add an entry to the OpsZone mission table
+--- Add an entry to the OpsZone mission table.
 -- @param #OPSZONE self
--- @param #number Coalition Coalition of type e.g. coalition.side.NEUTRAL
--- @param #string Type Type of mission, e.g. AUFTRAG.Type.CAS
--- @return #boolean found True if we have that kind of mission, else false
--- @return #table Missions Table of Ops.Auftrag#AUFTRAG entries
-function OPSZONE:_FindMissions(Coalition,Type)
+-- @param #number Coalition Coalition of type e.g. `coalition.side.NEUTRAL`.
+-- @param #string Type Type of mission, e.g. `AUFTRAG.Type.CAS`.
+-- @return #boolean found True if we have that kind of mission, else false.
+-- @return #table Missions Table of `Ops.Auftrag#AUFTRAG` entries.
+function OPSZONE:_FindMissions(Coalition, Type)
   -- search the table
   local foundmissions = {}
   local found = false
@@ -1253,7 +1341,7 @@ function OPSZONE:_FindMissions(Coalition,Type)
   return found, foundmissions
 end
 
---- Housekeeping
+--- Clean mission table from missions that are over.
 -- @param #OPSZONE self
 -- @return #OPSZONE self
 function OPSZONE:_CleanMissionTable()

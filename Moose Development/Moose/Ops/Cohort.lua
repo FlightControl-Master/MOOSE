@@ -10,6 +10,8 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
+-- 
+-- ===
 -- @module Ops.Cohort
 -- @image OPS_Cohort.png
 
@@ -24,6 +26,9 @@
 -- @field #string aircrafttype Type of the units the cohort is using.
 -- @field #number category Group category of the assets: `Group.Category.AIRPLANE`, `Group.Category.HELICOPTER`, `Group.Category.GROUND`, `Group.Category.SHIP`, `Group.Category.TRAIN`.
 -- @field Wrapper.Group#GROUP templategroup Template group.
+-- @field #boolean isAir
+-- @field #boolean isGround Is ground.
+-- @field #boolean isNaval Is naval. 
 -- @field #table assets Cohort assets.
 -- @field #table missiontypes Capabilities (mission types and performances) of the cohort.
 -- @field #number maintenancetime Time in seconds needed for maintenance of a returned flight.
@@ -31,18 +36,22 @@
 -- @field #string livery Livery of the cohort.
 -- @field #number skill Skill of cohort members.
 -- @field Ops.Legion#LEGION legion The LEGION object the cohort belongs to.
--- @field #number Ngroups Number of asset OPS groups this cohort has. 
+-- @field #number Ngroups Number of asset OPS groups this cohort has.
+-- @field #number Nkilled Number of destroyed asset groups.
 -- @field #number engageRange Mission range in meters.
 -- @field #string attribute Generalized attribute of the cohort template group.
+-- @field #table descriptors DCS descriptors.
+-- @field #table properties DCS attributes.
 -- @field #table tacanChannel List of TACAN channels available to the cohort.
 -- @field #number radioFreq Radio frequency in MHz the cohort uses.
 -- @field #number radioModu Radio modulation the cohort uses.
 -- @field #table tacanChannel List of TACAN channels available to the cohort.
 -- @field #number weightAsset Weight of one assets group in kg.
 -- @field #number cargobayLimit Cargo bay capacity in kg.
+-- @field #table operations Operations this cohort is part of.
 -- @extends Core.Fsm#FSM
 
---- *It is unbelievable what a platoon of twelve aircraft did to tip the balance.* -- Adolf Galland
+--- *I came, I saw, I conquered.* -- Julius Caesar
 --
 -- ===
 --
@@ -67,21 +76,26 @@ COHORT = {
   skill          =   nil,
   legion         =   nil,
   Ngroups        =   nil,
+  Ngroups        =     0,
   engageRange    =   nil,
   tacanChannel   =    {},
   weightAsset    = 99999,
   cargobayLimit  =     0,
+  descriptors    =    {},
+  properties     =    {},
+  operations     =    {},
 }
 
 --- COHORT class version.
 -- @field #string version
-COHORT.version="0.1.0"
+COHORT.version="0.3.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Create FLOTILLA class.
+-- DONE: Create FLOTILLA class.
+-- DONE: Added check for properties.
 -- DONE: Make general so that PLATOON and SQUADRON can inherit this class.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -125,6 +139,15 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   
   -- Aircraft type.
   self.aircrafttype=self.templategroup:GetTypeName()
+  
+  -- Get descriptors.
+  self.descriptors=self.templategroup:GetUnit(1):GetDesc()
+  
+  -- Properties (DCS attributes).
+  self.properties=self.descriptors.attributes
+  
+  -- Print properties.
+  --self:I(self.properties)
 
   -- Defaults.
   self.Ngroups=Ngroups or 3  
@@ -141,6 +164,8 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
     self:SetMissionRange(100)
   elseif self.category==Group.Category.TRAIN then
     self:SetMissionRange(100)
+  else
+   self:SetMissionRange(150)
   end    
   
   -- Units.
@@ -168,6 +193,9 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   self:AddTransition("OnDuty",        "Pause",              "Paused")      -- Pause cohort.
   self:AddTransition("Paused",        "Unpause",            "OnDuty")      -- Unpause cohort.
   
+  self:AddTransition("OnDuty",        "Relocate",           "Relocating")  -- Relocate.
+  self:AddTransition("Relocating",    "Relocated",          "OnDuty")      -- Relocated.
+  
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop cohort.
 
 
@@ -175,17 +203,17 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   --- Pseudo Functions ---
   ------------------------
 
-  --- Triggers the FSM event "Start". Starts the COHORT. Initializes parameters and starts event handlers.
+  --- Triggers the FSM event "Start". Starts the COHORT.
   -- @function [parent=#COHORT] Start
   -- @param #COHORT self
 
-  --- Triggers the FSM event "Start" after a delay. Starts the COHORT. Initializes parameters and starts event handlers.
+  --- Triggers the FSM event "Start" after a delay. Starts the COHORT.
   -- @function [parent=#COHORT] __Start
   -- @param #COHORT self
   -- @param #number delay Delay in seconds.
 
 
-  --- Triggers the FSM event "Stop". Stops the COHORT and all its event handlers.
+  --- Triggers the FSM event "Stop".
   -- @param #COHORT self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the COHORT and all its event handlers.
@@ -202,6 +230,74 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   -- @function [parent=#COHORT] __Status
   -- @param #COHORT self
   -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Pause".
+  -- @function [parent=#COHORT] Pause
+  -- @param #COHORT self
+
+  --- Triggers the FSM event "Pause" after a delay.
+  -- @function [parent=#COHORT] __Pause
+  -- @param #COHORT self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Pause" event.
+  -- @function [parent=#COHORT] OnAfterPause
+  -- @param #COHORT self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Unpause".
+  -- @function [parent=#COHORT] Unpause
+  -- @param #COHORT self
+
+  --- Triggers the FSM event "Unpause" after a delay.
+  -- @function [parent=#COHORT] __Unpause
+  -- @param #COHORT self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Unpause" event.
+  -- @function [parent=#COHORT] OnAfterUnpause
+  -- @param #COHORT self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Relocate".
+  -- @function [parent=#COHORT] Relocate
+  -- @param #COHORT self
+
+  --- Triggers the FSM event "Relocate" after a delay.
+  -- @function [parent=#COHORT] __Relocate
+  -- @param #COHORT self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Relocate" event.
+  -- @function [parent=#COHORT] OnAfterRelocate
+  -- @param #COHORT self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Relocated".
+  -- @function [parent=#COHORT] Relocated
+  -- @param #COHORT self
+
+  --- Triggers the FSM event "Relocated" after a delay.
+  -- @function [parent=#COHORT] __Relocated
+  -- @param #COHORT self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Relocated" event.
+  -- @function [parent=#COHORT] OnAfterRelocated
+  -- @param #COHORT self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
 
   return self
 end
@@ -273,12 +369,10 @@ end
 
 --- Set number of units in groups.
 -- @param #COHORT self
--- @param #number nunits Number of units. Must be >=1 and <=4. Default 2.
+-- @param #number nunits Number of units. Default 2.
 -- @return #COHORT self
 function COHORT:SetGrouping(nunits)
   self.ngrouping=nunits or 2
-  if self.ngrouping<1 then self.ngrouping=1 end
-  if self.ngrouping>4 then self.ngrouping=4 end
   return self
 end
 
@@ -299,10 +393,12 @@ function COHORT:AddMissionCapability(MissionTypes, Performance)
   
   for _,missiontype in pairs(MissionTypes) do
   
+    local Capability=self:GetMissionCapability(missiontype)
+  
     -- Check not to add the same twice.  
-    if AUFTRAG.CheckMissionCapability(missiontype, self.missiontypes) then
-      self:E(self.lid.."WARNING: Mission capability already present! No need to add it twice.")
-      -- TODO: update performance.
+    if Capability then
+      self:E(self.lid.."WARNING: Mission capability already present! No need to add it twice. Will update the performance though!")
+      Capability.Performance=Performance or 50
     else
   
       local capability={} --Ops.Auftrag#AUFTRAG.Capability
@@ -317,6 +413,37 @@ function COHORT:AddMissionCapability(MissionTypes, Performance)
   self:T2(self.missiontypes)
   
   return self
+end
+
+--- Get missin capability for a given mission type.
+-- @param #COHORT self
+-- @param #string MissionType Mission type, e.g. `AUFTRAG.Type.BAI`.
+-- @return Ops.Auftrag#AUFTRAG.Capability Capability table or `nil` if the capability does not exist.
+function COHORT:GetMissionCapability(MissionType)
+  
+  for _,_capability in pairs(self.missiontypes) do
+    local capability=_capability --Ops.Auftrag#AUFTRAG.Capability
+    if capability.MissionType==MissionType then
+      return capability
+    end
+  end
+  
+  return nil
+end
+
+--- Check if cohort assets have a given property (DCS attribute).
+-- @param #COHORT self
+-- @param #string Property The property.
+-- @return #boolean If `true`, cohort assets have the attribute.
+function COHORT:HasProperty(Property)
+
+  for _,property in pairs(self.properties) do
+    if Property==property then
+      return true
+    end
+  end
+
+  return false
 end
 
 --- Get mission types this cohort is able to perform.
@@ -577,27 +704,76 @@ function COHORT:ReturnTacan(channel)
   self.tacanChannel[channel]=true
 end
 
+--- Add a weapon range for ARTY missions (@{Ops.Auftrag#AUFTRAG}).
+-- @param #COHORT self
+-- @param #number RangeMin Minimum range in nautical miles. Default 0 NM.
+-- @param #number RangeMax Maximum range in nautical miles. Default 10 NM.
+-- @param #number BitType Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
+-- @return #COHORT self
+function COHORT:AddWeaponRange(RangeMin, RangeMax, BitType)
+
+  RangeMin=UTILS.NMToMeters(RangeMin or 0)
+  RangeMax=UTILS.NMToMeters(RangeMax or 10)
+
+  local weapon={} --Ops.OpsGroup#OPSGROUP.WeaponData
+
+  weapon.BitType=BitType or ENUMS.WeaponFlag.Auto
+  weapon.RangeMax=RangeMax
+  weapon.RangeMin=RangeMin
+
+  self.weaponData=self.weaponData or {}
+  self.weaponData[tostring(weapon.BitType)]=weapon
+  
+  -- Debug info.
+  self:T(self.lid..string.format("Adding weapon data: Bit=%s, Rmin=%d m, Rmax=%d m", tostring(weapon.BitType), weapon.RangeMin, weapon.RangeMax))
+  
+  if self.verbose>=2 then
+    local text="Weapon data:"
+    for _,_weapondata in pairs(self.weaponData) do
+      local weapondata=_weapondata
+      text=text..string.format("\n- Bit=%s, Rmin=%d m, Rmax=%d m", tostring(weapondata.BitType), weapondata.RangeMin, weapondata.RangeMax)
+    end
+    self:I(self.lid..text)
+  end
+
+  return self
+end
+
+--- Get weapon range for given bit type.
+-- @param #COHORT self
+-- @param #number BitType Bit mask of weapon type.
+-- @return Ops.OpsGroup#OPSGROUP.WeaponData Weapon data.
+function COHORT:GetWeaponData(BitType)
+  return self.weaponData[tostring(BitType)]
+end
+
 --- Check if cohort is "OnDuty".
 -- @param #COHORT self
--- @return #boolean If true, squdron is in state "OnDuty".
+-- @return #boolean If true, cohort is in state "OnDuty".
 function COHORT:IsOnDuty()
   return self:Is("OnDuty")
 end
 
 --- Check if cohort is "Stopped".
 -- @param #COHORT self
--- @return #boolean If true, squdron is in state "Stopped".
+-- @return #boolean If true, cohort is in state "Stopped".
 function COHORT:IsStopped()
   return self:Is("Stopped")
 end
 
 --- Check if cohort is "Paused".
 -- @param #COHORT self
--- @return #boolean If true, squdron is in state "Paused".
+-- @return #boolean If true, cohort is in state "Paused".
 function COHORT:IsPaused()
   return self:Is("Paused")
 end
 
+--- Check if cohort is "Relocating".
+-- @param #COHORT self
+-- @return #boolean If true, cohort is relocating.
+function COHORT:IsRelocating()
+  return self:Is("Relocating")
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -611,7 +787,7 @@ end
 function COHORT:onafterStart(From, Event, To)
 
   -- Short info.
-  local text=string.format("Starting %s v%s %s", self.ClassName, self.version, self.name)
+  local text=string.format("Starting %s v%s %s [%s]", self.ClassName, self.version, self.name, self.attribute)
   self:I(self.lid..text)
 
   -- Start the status monitoring.
@@ -813,6 +989,30 @@ function COHORT:CountAssets(InStock, MissionTypes, Attributes)
   return N
 end
 
+--- Get OPSGROUPs.
+-- @param #COHORT self
+-- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+-- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+-- @return Core.Set#SET_OPSGROUP Ops groups set.
+function COHORT:GetOpsGroups(MissionTypes, Attributes)
+
+  local set=SET_OPSGROUP:New()
+
+  for _,_asset in pairs(self.assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    
+    if MissionTypes==nil or AUFTRAG.CheckMissionCapability(MissionTypes, self.missiontypes) then
+      if Attributes==nil or self:CheckAttribute(Attributes) then
+        if asset.flightgroup and asset.flightgroup:IsAlive() then
+          set:AddGroup(asset.flightgroup)
+        end
+      end
+    end
+  end
+
+  return set
+end
+
 --- Get assets for a mission.
 -- @param #COHORT self
 -- @param #string MissionType Mission type.
@@ -820,9 +1020,9 @@ end
 -- @return #table Assets that can do the required mission.
 -- @return #number Number of payloads still available after recruiting the assets.
 function COHORT:RecruitAssets(MissionType, Npayloads)
-  self:T("RecruitAssets for " .. MissionType .. " with " ..Npayloads)
+
   -- Debug info.
-  self:T3(self.lid..string.format("Recruiting asset for Mission type=%s", MissionType))
+  self:T2(self.lid..string.format("Recruiting asset for Mission type=%s", MissionType))
 
   -- Recruited assets.
   local assets={}
@@ -831,43 +1031,73 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
   for _,_asset in pairs(self.assets) do  
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
     
-    --self:I("Looking at Asset " .. asset.spawngroupname)
+    -- Get info.
+    local isRequested=asset.requested
+    local isReserved=asset.isReserved
+    local isSpawned=asset.spawned
+    local isOnMission=self.legion:IsAssetOnMission(asset)
+    
+    local opsgroup=asset.flightgroup
+    
+    -- Debug info.
+    self:T(self.lid..string.format("Asset %s: requested=%s, reserved=%s, spawned=%s,  onmission=%s", 
+    asset.spawngroupname, tostring(isRequested), tostring(isReserved), tostring(isSpawned), tostring(isOnMission)))
     
     -- First check that asset is not requested or reserved. This could happen if multiple requests are processed simultaniously.
-    if not (asset.requested or asset.isReserved) then
+    if not (isRequested or isReserved) then
     
-      --self:I("Not requested or reserved")
       -- Check if asset is currently on a mission (STARTED or QUEUED).
       if self.legion:IsAssetOnMission(asset) then
-        --self:I("But on a mission")
         ---
         -- Asset is already on a mission.
         ---
-  
-        -- Check if this asset is currently on a GCICAP mission (STARTED or EXECUTING).
-        if self.legion:IsAssetOnMission(asset, AUFTRAG.Type.GCICAP) and MissionType==AUFTRAG.Type.INTERCEPT then
+ 
+        -- Check if this asset is currently on a mission (STARTED or EXECUTING).
+        if MissionType==AUFTRAG.Type.RELOCATECOHORT then
+        
+          -- Relocation: Take all assets. Mission will be cancelled.
+          table.insert(assets, asset)
+          
+        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.NOTHING) then
+
+          -- Assets on mission NOTHING are considered.
+          table.insert(assets, asset)
+          
+        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.GCICAP) and MissionType==AUFTRAG.Type.INTERCEPT then
   
           -- Check if the payload of this asset is compatible with the mission.
           -- Note: we do not check the payload as an asset that is on a GCICAP mission should be able to do an INTERCEPT as well!
           self:T(self.lid..string.format("Adding asset on GCICAP mission for an INTERCEPT mission"))
           table.insert(assets, asset)
           
-        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.ALERT5) and AUFTRAG.CheckMissionCapability(MissionType, asset.payload.capabilities) then
+        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.ONGUARD) and (MissionType==AUFTRAG.Type.ARTY or MissionType==AUFTRAG.Type.GROUNDATTACK) then
+        
+          if not opsgroup:IsOutOfAmmo() then
+            self:T(self.lid..string.format("Adding asset on ONGUARD mission for an XXX mission"))
+            table.insert(assets, asset)
+          end        
+
+        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.PATROLZONE) and (MissionType==AUFTRAG.Type.ARTY or MissionType==AUFTRAG.Type.GROUNDATTACK) then
+        
+          if not opsgroup:IsOutOfAmmo() then
+            self:T(self.lid..string.format("Adding asset on PATROLZONE mission for an XXX mission"))
+            table.insert(assets, asset)
+          end        
+          
+        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.ALERT5) and AUFTRAG.CheckMissionCapability(MissionType, asset.payload.capabilities) and MissionType~=AUFTRAG.Type.ALERT5 then
                   
           -- Check if the payload of this asset is compatible with the mission.
           self:T(self.lid..string.format("Adding asset on ALERT 5 mission for %s mission", MissionType))
-          table.insert(assets, asset)        
-          
+          table.insert(assets, asset)
+                            
         end
       
       else
-        --self:I("No current mission")
         ---
         -- Asset as NO current mission
         ---
   
         if asset.spawned then
-          --self:I("Is already spawned")
           ---
           -- Asset is already SPAWNED (could be uncontrolled on the airfield or inbound after another mission)
           ---
@@ -917,36 +1147,38 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
               -- ARMY/NAVYGROUP combat ready?
               ---
             
+              -- Disable this for now as it can cause problems - at least with transport and cargo assets.
+              --self:I("Attribute is: "..asset.attribute)
+              if flightgroup:IsArmygroup() then
+                -- check for fighting assets
+                if asset.attribute == WAREHOUSE.Attribute.GROUND_ARTILLERY or 
+                      asset.attribute == WAREHOUSE.Attribute.GROUND_TANK or 
+                      asset.attribute == WAREHOUSE.Attribute.GROUND_INFANTRY or 
+                      asset.attribute == WAREHOUSE.Attribute.GROUND_AAA or 
+                      asset.attribute == WAREHOUSE.Attribute.GROUND_SAM                
+                then
+                   combatready=true 
+                end  
+              else
+                combatready=false
+              end
+
+              -- Not ready when rearming, retreating or returning!
               if flightgroup:IsRearming() or flightgroup:IsRetreating() or flightgroup:IsReturning() then
                 combatready=false
               end
               
             end
             
-            -- Check transport/cargo for combat readyness!
+            -- Not ready when currently acting as ops transport carrier.
             if flightgroup:IsLoading() or flightgroup:IsTransporting() or flightgroup:IsUnloading() or flightgroup:IsPickingup() or flightgroup:IsCarrier() then
               combatready=false
-            end            
+            end
+            -- Not ready when currently acting as ops transport cargo.
             if flightgroup:IsCargo() or flightgroup:IsBoarding() or flightgroup:IsAwaitingLift() then
               combatready=false
             end
-            
-            -- Disable this for now as it can cause problems - at least with transport and cargo assets.
-            --self:I("Attribute is: "..asset.attribute)
-            if flightgroup:IsArmygroup() then
-              -- check for fighting assets
-              if asset.attribute == WAREHOUSE.Attribute.GROUND_ARTILLERY or 
-                    asset.attribute == WAREHOUSE.Attribute.GROUND_TANK or 
-                    asset.attribute == WAREHOUSE.Attribute.GROUND_INFANTRY or 
-                    asset.attribute == WAREHOUSE.Attribute.GROUND_AAA or 
-                    asset.attribute == WAREHOUSE.Attribute.GROUND_SAM                
-              then
-                 combatready=true 
-              end  
-            else
-              combatready=false
-            end
-                    
+                                
             -- This asset is "combatready".
             if combatready then
               self:T(self.lid.."Adding SPAWNED asset to ANOTHER mission as it is COMBATREADY")
@@ -1007,6 +1239,42 @@ function COHORT:GetRepairTime(Asset)
 
 end
 
+--- Get max mission range. We add the largest weapon range, e.g. for arty or naval if weapon data is available.
+-- @param #COHORT self
+-- @param #table WeaponTypes (Optional) Weapon bit type(s) to add to the total range. Default is the max weapon type available.  
+-- @return #number Range in meters.
+function COHORT:GetMissionRange(WeaponTypes)
+
+  if WeaponTypes and type(WeaponTypes)~="table" then
+    WeaponTypes={WeaponTypes}
+  end
+  
+  local function checkWeaponType(Weapon)
+    local weapon=Weapon --Ops.OpsGroup#OPSGROUP.WeaponData
+    if WeaponTypes and #WeaponTypes>0 then
+      for _,weapontype in pairs(WeaponTypes) do
+        if weapontype==weapon.BitType then
+          return true
+        end
+      end
+      return false
+    end
+    return true
+  end
+
+  -- Get max weapon range.  
+  local WeaponRange=0
+  for _,_weapon in pairs(self.weaponData or {}) do
+    local weapon=_weapon --Ops.OpsGroup#OPSGROUP.WeaponData
+    
+    if weapon.RangeMax>WeaponRange and checkWeaponType(weapon) then
+      WeaponRange=weapon.RangeMax
+    end
+  end
+
+  return self.engageRange+WeaponRange
+end
+
 --- Checks if a mission type is contained in a table of possible types.
 -- @param #COHORT self
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
@@ -1047,6 +1315,247 @@ function COHORT:CheckAttribute(Attributes)
   return false
 end
 
+--- Check ammo.
+-- @param #COHORT self
+-- @return Ops.OpsGroup#OPSGROUP.Ammo Ammo.
+function COHORT:_CheckAmmo()
+
+  -- Get units of group.
+  local units=self.templategroup:GetUnits()
+
+  -- Init counter.
+  local nammo=0
+  local nguns=0
+  local nshells=0
+  local nrockets=0
+  local nmissiles=0
+  local nmissilesAA=0
+  local nmissilesAG=0
+  local nmissilesAS=0
+  local nmissilesSA=0
+  local nmissilesBM=0
+  local nmissilesCR=0
+  local ntorps=0
+  local nbombs=0
+
+  
+  for _,_unit in pairs(units) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    
+    -- Output.
+    local text=string.format("Unit %s:\n", unit:GetName())
+  
+    -- Get ammo table.
+    local ammotable=unit:GetAmmo()
+  
+    if ammotable then
+    
+      -- Debug info.
+      self:T3(ammotable)
+  
+      -- Loop over all weapons.
+      for w=1,#ammotable do
+      
+        -- Weapon table.
+        local weapon=ammotable[w]
+        
+        -- Descriptors.
+        local Desc=weapon["desc"]
+        
+        -- Warhead.
+        local Warhead=Desc["warhead"]
+  
+        -- Number of current weapon.
+        local Nammo=weapon["count"]
+        
+        -- Get the weapon category: shell=0, missile=1, rocket=2, bomb=3, torpedo=4
+        local Category=Desc["category"]
+  
+        -- Get missile category: Weapon.MissileCategory AAM=1, SAM=2, BM=3, ANTI_SHIP=4, CRUISE=5, OTHER=6
+        local MissileCategory = (Category==Weapon.Category.MISSILE) and Desc.missileCategory or nil
+
+        -- Type name of current weapon.
+        local TypeName=Desc["typeName"]
+  
+        -- WeaponName
+        local weaponString = UTILS.Split(TypeName,"%.")
+        local WeaponName   = weaponString[#weaponString]
+  
+             
+        -- Range in meters. Seems only to exist for missiles (not shells).
+        local Rmin=Desc["rangeMin"] or 0
+        local Rmax=Desc["rangeMaxAltMin"] or 0
+        
+        -- Caliber in mm.
+        local Caliber=Warhead and Warhead["caliber"] or 0
+        
+      
+        -- We are specifically looking for shells or rockets here.
+        if Category==Weapon.Category.SHELL then
+          ---
+          -- SHELL
+          ---
+  
+          -- Add up all shells.
+          if Caliber<70 then
+            nguns=nguns+Nammo
+          else
+            nshells=nshells+Nammo            
+          end
+  
+          -- Debug info.
+          text=text..string.format("- %d shells [%s]: caliber=%d mm, range=%d - %d meters\n", Nammo, WeaponName, Caliber, Rmin, Rmax)
+  
+        elseif Category==Weapon.Category.ROCKET then
+          ---
+          -- ROCKET
+          ---
+        
+          -- Add up all rockets.
+          nrockets=nrockets+Nammo
+  
+          -- Debug info.
+          text=text..string.format("- %d rockets [%s]: caliber=%d mm, range=%d - %d meters\n", Nammo, WeaponName, Caliber, Rmin, Rmax)
+  
+        elseif Category==Weapon.Category.BOMB then
+          ---
+          -- BOMB
+          ---
+  
+          -- Add up all rockets.
+          nbombs=nbombs+Nammo
+  
+          -- Debug info.
+          text=text..string.format("- %d bombs [%s]: caliber=%d mm, range=%d - %d meters\n", Nammo, WeaponName, Caliber, Rmin, Rmax)
+  
+        elseif Category==Weapon.Category.MISSILE then
+          ---
+          -- MISSILE
+          ---
+  
+          -- Add up all cruise missiles (category 5)
+          if MissileCategory==Weapon.MissileCategory.AAM then
+            nmissiles=nmissiles+Nammo
+            nmissilesAA=nmissilesAA+Nammo
+            -- Auto add range for AA missles. Useless here as this is not an aircraft.
+            if Rmax>0 then
+              self:AddWeaponRange(UTILS.MetersToNM(Rmin), UTILS.MetersToNM(Rmax), ENUMS.WeaponFlag.AnyAA)
+            end           
+          elseif MissileCategory==Weapon.MissileCategory.SAM then
+            nmissiles=nmissiles+Nammo
+            nmissilesSA=nmissilesSA+Nammo
+            -- Dont think there is a bit type for SAM.
+            if Rmax>0 then
+              --self:AddWeaponRange(Rmin, Rmax, ENUMS.WeaponFlag.AnyASM)
+            end                        
+          elseif MissileCategory==Weapon.MissileCategory.ANTI_SHIP then
+            nmissiles=nmissiles+Nammo
+            nmissilesAS=nmissilesAS+Nammo
+            -- Auto add weapon range for anti-ship missile.
+            if Rmax>0 then
+              self:AddWeaponRange(UTILS.MetersToNM(Rmin), UTILS.MetersToNM(Rmax), ENUMS.WeaponFlag.AntiShipMissile)
+            end                                    
+          elseif MissileCategory==Weapon.MissileCategory.BM then
+            nmissiles=nmissiles+Nammo
+            nmissilesBM=nmissilesBM+Nammo
+            -- Don't think there is a good bit type for ballistic missiles.
+            if Rmax>0 then
+              --self:AddWeaponRange(Rmin, Rmax, ENUMS.WeaponFlag.AnyASM)
+            end                                    
+          elseif MissileCategory==Weapon.MissileCategory.CRUISE then
+            nmissiles=nmissiles+Nammo
+            nmissilesCR=nmissilesCR+Nammo            
+            -- Auto add weapon range for cruise missile.
+            if Rmax>0 then
+              self:AddWeaponRange(UTILS.MetersToNM(Rmin), UTILS.MetersToNM(Rmax), ENUMS.WeaponFlag.CruiseMissile)
+            end                                    
+          elseif MissileCategory==Weapon.MissileCategory.OTHER then
+            nmissiles=nmissiles+Nammo
+            nmissilesAG=nmissilesAG+Nammo
+          end
+  
+          -- Debug info.
+          text=text..string.format("- %d %s missiles [%s]: caliber=%d mm, range=%d - %d meters\n", Nammo, self:_MissileCategoryName(MissileCategory), WeaponName, Caliber, Rmin, Rmax)
+  
+        elseif Category==Weapon.Category.TORPEDO then
+  
+          -- Add up all rockets.
+          ntorps=ntorps+Nammo
+  
+          -- Debug info.
+          text=text..string.format("- %d torpedos [%s]: caliber=%d mm, range=%d - %d meters\n", Nammo, WeaponName, Caliber, Rmin, Rmax)
+  
+        else
+  
+          -- Debug info.
+          text=text..string.format("- %d unknown ammo of type %s (category=%d, missile category=%s)\n", Nammo, TypeName, Category, tostring(MissileCategory))
+  
+        end
+  
+      end
+    end
+      
+    -- Debug text and send message.
+    if self.verbose>=5 then
+      self:I(self.lid..text)
+    else
+      self:T2(self.lid..text)
+    end
+    
+  end
+
+  -- Total amount of ammunition.
+  nammo=nguns+nshells+nrockets+nmissiles+nbombs+ntorps
+
+  local ammo={} --Ops.OpsGroup#OPSGROUP.Ammo
+  ammo.Total=nammo
+  ammo.Guns=nguns
+  ammo.Shells=nshells
+  ammo.Rockets=nrockets
+  ammo.Bombs=nbombs
+  ammo.Torpedos=ntorps
+  ammo.Missiles=nmissiles
+  ammo.MissilesAA=nmissilesAA
+  ammo.MissilesAG=nmissilesAG
+  ammo.MissilesAS=nmissilesAS
+  ammo.MissilesCR=nmissilesCR
+  ammo.MissilesBM=nmissilesBM
+  ammo.MissilesSA=nmissilesSA
+
+  return ammo
+end
+
+--- Returns a name of a missile category.
+-- @param #COHORT self
+-- @param #number categorynumber Number of missile category from weapon missile category enumerator. See https://wiki.hoggitworld.com/view/DCS_Class_Weapon
+-- @return #string Missile category name.
+function COHORT:_MissileCategoryName(categorynumber)
+  local cat="unknown"
+  if categorynumber==Weapon.MissileCategory.AAM then
+    cat="air-to-air"
+  elseif categorynumber==Weapon.MissileCategory.SAM then
+    cat="surface-to-air"
+  elseif categorynumber==Weapon.MissileCategory.BM then
+    cat="ballistic"
+  elseif categorynumber==Weapon.MissileCategory.ANTI_SHIP then
+    cat="anti-ship"
+  elseif categorynumber==Weapon.MissileCategory.CRUISE then
+    cat="cruise"
+  elseif categorynumber==Weapon.MissileCategory.OTHER then
+    cat="other"
+  end
+  return cat
+end
+
+--- Add an OPERATION.
+-- @param #COHORT self
+-- @param Ops.Operation#OPERATION Operation The operation this cohort is part of.
+-- @return #COHORT self
+function COHORT:_AddOperation(Operation)
+
+  self.operations[Operation.name]=Operation
+
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

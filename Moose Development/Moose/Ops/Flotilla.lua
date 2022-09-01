@@ -1,46 +1,47 @@
---- **Ops** - Brigade Platoon.
+--- **Ops** - Flotilla is a small naval group belonging to a fleet.
 --
 -- **Main Features:**
 --
---    * Set parameters like livery, skill valid for all platoon members.
---    * Define modex and callsigns.
---    * Define mission types, this platoon can perform (see Ops.Auftrag#AUFTRAG).
---    * Pause/unpause platoon operations.
+--    * Set parameters like livery, skill valid for all flotilla members.
+--    * Define mission types, this flotilla can perform (see Ops.Auftrag#AUFTRAG).
+--    * Pause/unpause flotilla operations.
 --
 -- ===
 --
 -- ### Author: **funkyfranky**
--- @module Ops.Platoon
--- @image OPS_Platoon.png
+-- 
+-- ===
+-- @module Ops.Flotilla
+-- @image OPS_Flotilla.png
 
 
---- PLATOON class.
--- @type PLATOON
+--- FLOTILLA class.
+-- @type FLOTILLA
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity level.
 -- @field Ops.OpsGroup#OPSGROUP.WeaponData weaponData Weapon data table with key=BitType.
 -- @extends Ops.Cohort#COHORT
 
---- *Some cool cohort quote* -- Known Author
+--- *No captain can do very wrong if he places his ship alongside that of an enemy.* -- Horation Nelson
 --
 -- ===
 --
--- # The PLATOON Concept
+-- # The FLOTILLA Concept
 -- 
--- A PLATOON is essential part of an BRIGADE.
+-- A FLOTILLA is an essential part of a FLEET.
 --
 --
 --
--- @field #PLATOON
-PLATOON = {
-  ClassName      = "PLATOON",
+-- @field #FLOTILLA
+FLOTILLA = {
+  ClassName      = "FLOTILLA",
   verbose        =     0,
   weaponData     =    {},
 }
 
---- PLATOON class version.
+--- FLOTILLA class version.
 -- @field #string version
-PLATOON.version="0.1.0"
+FLOTILLA.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -52,24 +53,24 @@ PLATOON.version="0.1.0"
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new PLATOON object and start the FSM.
--- @param #PLATOON self
+--- Create a new FLOTILLA object and start the FSM.
+-- @param #FLOTILLA self
 -- @param #string TemplateGroupName Name of the template group.
--- @param #number Ngroups Number of asset groups of this platoon. Default 3.
--- @param #string PlatoonName Name of the platoon. Must be **unique**!
--- @return #PLATOON self
-function PLATOON:New(TemplateGroupName, Ngroups, PlatoonName)
+-- @param #number Ngroups Number of asset groups of this flotilla. Default 3.
+-- @param #string FlotillaName Name of the flotilla. Must be **unique**!
+-- @return #FLOTILLA self
+function FLOTILLA:New(TemplateGroupName, Ngroups, FlotillaName)
 
   -- Inherit everything from COHORT class.
-  local self=BASE:Inherit(self, COHORT:New(TemplateGroupName, Ngroups, PlatoonName)) -- #PLATOON
+  local self=BASE:Inherit(self, COHORT:New(TemplateGroupName, Ngroups, FlotillaName)) -- #FLOTILLA
   
-  -- All platoons get mission type Nothing.
+  -- All flotillas get mission type Nothing.
   self:AddMissionCapability(AUFTRAG.Type.NOTHING, 50)
   
-  -- Is ground.
-  self.isGround=true
+  -- Is naval.
+  self.isNaval=true
 
-  -- Get ammo.
+  -- Get initial ammo.
   self.ammo=self:_CheckAmmo()
 
   return self
@@ -79,34 +80,34 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  -- TODO: Platoon specific user functions.
+  -- TODO: Flotilla specific user functions.
 
---- Set brigade of this platoon.
--- @param #PLATOON self
--- @param Ops.Brigade#BRIGADE Brigade The brigade.
--- @return #PLATOON self
-function PLATOON:SetBrigade(Brigade)
-  self.legion=Brigade
+--- Set fleet of this flotilla.
+-- @param #FLOTILLA self
+-- @param Ops.Fleet#FLEET Fleet The fleet.
+-- @return #FLOTILLA self
+function FLOTILLA:SetFleet(Fleet)
+  self.legion=Fleet
   return self
 end
 
---- Get brigade of this platoon.
--- @param #PLATOON self
--- @return Ops.Brigade#BRIGADE The brigade.
-function PLATOON:GetBrigade()
+--- Get fleet of this flotilla.
+-- @param #FLOTILLA self
+-- @return Ops.Fleet#FLEET The fleet.
+function FLOTILLA:GetFleet()
   return self.legion
 end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---[[
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
--- @param #PLATOON self
+-- @param #FLOTILLA self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function PLATOON:onafterStart(From, Event, To)
+function FLOTILLA:onafterStart(From, Event, To)
 
   -- Short info.
   local text=string.format("Starting %s v%s %s", self.ClassName, self.version, self.name)
@@ -115,14 +116,13 @@ function PLATOON:onafterStart(From, Event, To)
   -- Start the status monitoring.
   self:__Status(-1)
 end
-]]
 
 --- On after "Status" event.
--- @param #PLATOON self
+-- @param #FLOTILLA self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function PLATOON:onafterStatus(From, Event, To)
+function FLOTILLA:onafterStatus(From, Event, To)
 
   if self.verbose>=1 then
 
@@ -168,7 +168,7 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Misc functions.
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

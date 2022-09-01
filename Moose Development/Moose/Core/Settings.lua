@@ -253,6 +253,7 @@ do -- SETTINGS
       self:SetMessageTime( MESSAGE.Type.Overview, 60 )
       self:SetMessageTime( MESSAGE.Type.Update, 15 )
       self:SetEraModern()
+      self:SetLocale("en")
       return self
     else
       local Settings = _DATABASE:GetPlayerSettings( PlayerName )
@@ -284,7 +285,21 @@ do -- SETTINGS
   function SETTINGS:SetMetric()
     self.Metric = true
   end
-
+  
+  --- Sets the SETTINGS default text locale.
+  -- @param #SETTINGS self
+  -- @param #string Locale
+  function SETTINGS:SetLocale(Locale)
+    self.Locale = Locale or "en"
+  end
+  
+  --- Gets the SETTINGS text locale.
+  -- @param #SETTINGS self
+  -- @return #string
+  function SETTINGS:GetLocale()
+    return self.Locale or _SETTINGS:GetLocale()
+  end
+  
   --- Gets if the SETTINGS is metric.
   -- @param #SETTINGS self
   -- @return #boolean true if metric.

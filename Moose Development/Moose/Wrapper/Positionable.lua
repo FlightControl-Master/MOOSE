@@ -376,7 +376,8 @@ function POSITIONABLE:GetCoordinate()
     local PositionableVec3 = self:GetVec3()
 
     local coord=COORDINATE:NewFromVec3(PositionableVec3)
-
+    local heading = self:GetHeading()
+    coord.Heading = heading
     -- Return a new coordiante object.
     return coord
 
@@ -531,7 +532,7 @@ function POSITIONABLE:GetBoundingRadius(mindist)
   return nil
 end
 
---- Returns the altitude of the POSITIONABLE.
+--- Returns the altitude above sea level of the POSITIONABLE.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return DCS#Distance The altitude of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
@@ -774,7 +775,7 @@ function POSITIONABLE:GetRelativeVelocity(positionable)
 end
 
 
---- Returns the POSITIONABLE height in meters.
+--- Returns the POSITIONABLE height above sea level in meters.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return DCS#Vec3 The height of the positionable.
 -- @return #nil The POSITIONABLE is not existing or alive.
@@ -1186,6 +1187,33 @@ function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup, Name )
   return nil
 end
 
+--- Send a message to a @{Wrapper.Unit}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param DCS#Duration Duration The duration of the message.
+-- @param Wrapper.Unit#UNIT MessageUnit The UNIT object receiving the message.
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToUnit( Message, Duration, MessageUnit, Name )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    if DCSObject:isExist() then
+      if MessageUnit:IsAlive() then
+        self:GetMessage( Message, Duration, Name ):ToUnit( MessageUnit )
+      else
+        BASE:E( { "Message not sent to Unit; Unit is not alive...", Message = Message, MessageUnit = MessageUnit } )
+      end
+    else
+      BASE:E( { "Message not sent to Unit; Positionable is not alive ...", Message = Message, Positionable = self, MessageUnit = MessageUnit } )
+    end
+  end
+
+
+  return nil
+end
+
 --- Send a message of a message type to a @{Wrapper.Group}.
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
@@ -1222,6 +1250,30 @@ function POSITIONABLE:MessageToSetGroup( Message, Duration, MessageSetGroup, Nam
       MessageSetGroup:ForEachGroupAlive(
         function( MessageGroup )
           self:GetMessage( Message, Duration, Name ):ToGroup( MessageGroup )
+        end
+      )
+    end
+  end
+
+  return nil
+end
+
+--- Send a message to a @{Core.Set#SET_UNIT}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param DCS#Duration Duration The duration of the message.
+-- @param Core.Set#SET_UNIT MessageSetUnit The SET_UNIT collection receiving the message.
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToSetUnit( Message, Duration, MessageSetUnit, Name )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    if DCSObject:isExist() then
+      MessageSetUnit:ForEachUnit(
+        function( MessageGroup )
+          self:GetMessage( Message, Duration, Name ):ToUnit( MessageGroup )
         end
       )
     end
@@ -1494,7 +1546,7 @@ do -- Cargo
         
         -- Fuel. The descriptor provides the max fuel mass in kg. This needs to be multiplied by the relative fuel amount to calculate the actual fuel mass on board.
         local massFuelMax=Desc.fuelMassMax or 0
-        local relFuel=math.max(self:GetFuel() or 1.0, 1.0)  -- We take 1.0 as max in case of external fuel tanks.
+        local relFuel=math.min(self:GetFuel() or 1.0, 1.0)  -- We take 1.0 as max in case of external fuel tanks.
         local massFuel=massFuelMax*relFuel
         
         -- Number of soldiers according to DCS function 
@@ -1573,6 +1625,10 @@ do -- Cargo
           ["Ural-4320T"] = 14,
           ["ZBD04A"] = 7, -- new by kappa
           ["VAB_Mephisto"] = 8, -- new by Apple
+          ["tt_KORD"] = 6, -- 2.7.1 HL/TT
+          ["tt_DSHK"] = 6,
+          ["HL_KORD"] = 6,
+          ["HL_DSHK"] = 6,
         }
 
         -- Assuming that each passenger weighs 95 kg on average.

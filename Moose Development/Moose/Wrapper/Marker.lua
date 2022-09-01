@@ -152,7 +152,7 @@ _MARKERID=0
 
 --- Marker class version.
 -- @field #string version
-MARKER.version="0.1.0"
+MARKER.version="0.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -177,7 +177,7 @@ function MARKER:New(Coordinate, Text)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #MARKER
 
-  self.coordinate=Coordinate
+  self.coordinate=UTILS.DeepCopy(Coordinate)
 
   self.text=Text
 
@@ -318,6 +318,16 @@ end
 function MARKER:ReadOnly()
 
   self.readonly=true
+
+  return self
+end
+
+--- Marker is readonly. Text cannot be changed and marker cannot be removed.
+-- @param #MARKER self
+-- @return #MARKER self
+function MARKER:ReadWrite()
+
+  self.readonly=false
 
   return self
 end
@@ -588,7 +598,7 @@ end
 
 --- Set text that is displayed in the marker panel. Note this does not show the marker.
 -- @param #MARKER self
--- @param #string Text Marker text. Default is an empty sting "".
+-- @param #string Text Marker text. Default is an empty string "".
 -- @return #MARKER self
 function MARKER:SetText(Text)
   self.text=Text and tostring(Text) or ""

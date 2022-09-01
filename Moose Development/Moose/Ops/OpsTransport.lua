@@ -17,8 +17,7 @@
 --
 -- ### Author: **funkyfranky**
 -- 
--- ==
--- 
+-- ===
 -- @module Ops.OpsTransport
 -- @image OPS_OpsTransport.png
 
@@ -57,11 +56,13 @@
 -- @field #table statusLegion Transport status of all assigned LEGIONs.
 -- @field #string statusCommander Staus of the COMMANDER.
 -- @field Ops.Commander#COMMANDER commander Commander of the transport.
+-- @field Ops.Chief#CHIEF chief Chief of the transport.
+-- @field Ops.OpsZone#OPSZONE opszone OPS zone.
 -- @field #table requestID The ID of the queued warehouse request. Necessary to cancel the request if the transport was cancelled before the request is processed.
 -- 
 -- @extends Core.Fsm#FSM
 
---- *Victory is the beautiful, bright-colored flower. Transport is the stem without which it could never have blossomed.* -- Winston Churchill
+--- *Victory is the beautiful, bright-colored flower; Transport is the stem without which it could never have blossomed* -- Winston Churchill
 --
 -- ===
 --
@@ -654,58 +655,6 @@ function OPSTRANSPORT:GetEmbarkZone(TransportZoneCombo)
 
   return TransportZoneCombo.EmbarkZone
 end
-
---[[
-
---- Set transfer carrier(s). These are carrier groups, where the cargo is directly loaded into when disembarked.
--- @param #OPSTRANSPORT self
--- @param Core.Set#SET_GROUP Carriers Carrier set. Can also be passed as a #GROUP, #OPSGROUP or #SET_OPSGROUP object.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #OPSTRANSPORT self
-function OPSTRANSPORT:SetEmbarkCarriers(Carriers, TransportZoneCombo)
-
-  -- Debug info.
-  self:T(self.lid.."Setting embark carriers!")
-  
-  -- Use default TZC if no transport zone combo is provided.
-  TransportZoneCombo=TransportZoneCombo or self.tzcDefault
-
-  if Carriers:IsInstanceOf("GROUP") or Carriers:IsInstanceOf("OPSGROUP") then
-  
-    local carrier=self:_GetOpsGroupFromObject(Carriers)
-    if  carrier then
-      table.insert(TransportZoneCombo.EmbarkCarriers, carrier)
-    end
-      
-  elseif Carriers:IsInstanceOf("SET_GROUP") or Carriers:IsInstanceOf("SET_OPSGROUP") then
-  
-    for _,object in pairs(Carriers:GetSet()) do
-      local carrier=self:_GetOpsGroupFromObject(object)
-      if carrier then
-        table.insert(TransportZoneCombo.EmbarkCarriers, carrier)
-      end
-    end
-    
-  else  
-    self:E(self.lid.."ERROR: Carriers must be a GROUP, OPSGROUP, SET_GROUP or SET_OPSGROUP object!")    
-  end
-
-  return self
-end
-
---- Get embark transfer carrier(s). These are carrier groups, where the cargo is directly loaded into when disembarked.
--- @param #OPSTRANSPORT self
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #table Table of carrier OPS groups.
-function OPSTRANSPORT:GetEmbarkCarriers(TransportZoneCombo)
-
-  -- Use default TZC if no transport zone combo is provided.
-  TransportZoneCombo=TransportZoneCombo or self.tzcDefault
-  
-  return TransportZoneCombo.EmbarkCarriers
-end
-
-]]
 
 --- Set disembark zone.
 -- @param #OPSTRANSPORT self
@@ -1305,7 +1254,7 @@ function OPSTRANSPORT:GetNcarrier()
   return self.Ncarrier
 end
 
---- Add asset to transport.
+--- Add carrier asset to transport.
 -- @param #OPSTRANSPORT self
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be added.
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
@@ -1323,7 +1272,7 @@ function OPSTRANSPORT:AddAsset(Asset, TransportZoneCombo)
   return self
 end
 
---- Delete asset from mission.
+--- Delete carrier asset from transport.
 -- @param #OPSTRANSPORT self
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be removed.
 -- @return #OPSTRANSPORT self
@@ -1363,6 +1312,25 @@ function OPSTRANSPORT:AddAssetCargo(Asset, TransportZoneCombo)
   TransportZoneCombo.assetsCargo[Asset.spawngroupname]=Asset
   
   return self
+end
+
+--- Get transport zone combo of cargo group.
+-- @param #OPSTRANSPORT self
+-- @param #string GroupName Group name of cargo.
+-- @return #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+function OPSTRANSPORT:GetTZCofCargo(GroupName)
+
+  for _,_tzc in pairs(self.tzCombos) do
+    local tzc=_tzc --#OPSTRANSPORT.TransportZoneCombo
+    for _,_cargo in pairs(tzc.Cargos) do
+      local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
+      if cargo.opsgroup:GetName()==GroupName then
+        return tzc
+      end
+    end
+  end
+
+  return nil
 end
 
 --- Add LEGION to the transport.
@@ -1637,6 +1605,24 @@ function OPSTRANSPORT:onafterStatusUpdate(From, Event, To)
   end
 end
 
+--- Check if a cargo group was delivered.
+-- @param #OPSTRANSPORT self
+-- @param #string GroupName Name of the group.
+-- @return #boolean If `true`, cargo was delivered.
+function OPSTRANSPORT:IsCargoDelivered(GroupName)
+
+  for _,_cargo in pairs(self:GetCargos()) do
+    local cargo=_cargo  --Ops.OpsGroup#OPSGROUP.CargoGroup
+    
+    if cargo.opsgroup:GetName()==GroupName then
+      return cargo.delivered
+    end
+    
+  end
+  
+  return nil
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Event Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1736,12 +1722,12 @@ function OPSTRANSPORT:onafterDeadCarrierGroup(From, Event, To, OpsGroup)
   -- Increase dead counter.
   self.NcarrierDead=self.NcarrierDead+1
 
-  if #self.carriers==0 then
-    self:DeadCarrierAll()
-  end  
-
   -- Remove group from carrier list/table.  
   self:_DelCarrier(OpsGroup)
+  
+  if #self.carriers==0 then
+    self:DeadCarrierAll()
+  end    
 end
 
 --- On after "DeadCarrierAll" event.
@@ -1750,15 +1736,30 @@ end
 -- @param #string Event Event.
 -- @param #string To To state. 
 function OPSTRANSPORT:onafterDeadCarrierAll(From, Event, To)
-  self:I(self.lid..string.format("ALL Carrier OPSGROUPs are dead! Setting stage to PLANNED if not all cargo was delivered."))
+  self:I(self.lid..string.format("ALL Carrier OPSGROUPs are dead!"))
+
+  if self.opszone then
+
+    self:I(self.lid..string.format("Cancelling transport on CHIEF level"))
+    self.chief:TransportCancel(self)
+    
+    --for _,_legion in pairs(self.legions) do
+    --  local legion=_legion --Ops.Legion#LEGION
+    --  legion:TransportCancel(self)
+    --end
+
+  else
   
-  -- Check if cargo was delivered.
-  self:_CheckDelivered()
+    -- Check if cargo was delivered.
+    self:_CheckDelivered()
+    
+    -- Set state back to PLANNED if not delivered.
+    if not self:IsDelivered() then
+      self:Planned()
+    end
   
-  -- Set state back to PLANNED if not delivered.
-  if not self:IsDelivered() then
-    self:Planned()
   end
+  
 end
 
 --- On after "Cancel" event.
@@ -2170,7 +2171,7 @@ function OPSTRANSPORT:_GetTransportZoneCombo(Carrier)
   return nil
 end
 
---- Get an OPSGROUP from a given OPSGROUP or GROUP object. If the object is a GROUUP, an OPSGROUP is created automatically. 
+--- Get an OPSGROUP from a given OPSGROUP or GROUP object. If the object is a GROUP, an OPSGROUP is created automatically. 
 -- @param #OPSTRANSPORT self
 -- @param Core.Base#BASE Object The object, which can be a GROUP or OPSGROUP.
 -- @return Ops.OpsGroup#OPSGROUP Ops Group.

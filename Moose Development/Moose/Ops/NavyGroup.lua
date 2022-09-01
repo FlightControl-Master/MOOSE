@@ -78,6 +78,7 @@ NAVYGROUP = {
 -- @field #number Heading Heading the boat will take in degrees.
 -- @field #boolean Open Currently active.
 -- @field #boolean Over This turn is over.
+-- @field #boolean Recovery If `true` this is a recovery window. If `false`, this is a launch window. If `nil` this is just a turn into the wind.
 
 --- Engage Target.
 -- @type NAVYGROUP.Target
@@ -89,18 +90,18 @@ NAVYGROUP = {
 
 --- NavyGroup version.
 -- @field #string version
-NAVYGROUP.version="0.7.0"
+NAVYGROUP.version="0.7.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add RTZ.
 -- TODO: Add Retreat.
--- TODO: Add EngageTarget.
 -- TODO: Submaries.
 -- TODO: Extend, shorten turn into wind windows.
 -- TODO: Skipper menu.
+-- DONE: Add EngageTarget.
+-- DONE: Add RTZ.
 -- DONE: Collision warning.
 -- DONE: Detour, add temporary waypoint and resume route.
 -- DONE: Stop and resume route.
@@ -134,6 +135,7 @@ function NAVYGROUP:New(group)
   self:SetDefaultROE()
   self:SetDefaultAlarmstate()
   self:SetDefaultEPLRS(self.isEPLRS)
+  self:SetDefaultEmission()
   self:SetDetection()  
   self:SetPatrolAdInfinitum(true)
   self:SetPathfinding(false)
@@ -539,6 +541,10 @@ function NAVYGROUP:_CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset
 
   -- Set start time.
   local Tstart=UTILS.ClockToSeconds(starttime)
+  
+  if uturn==nil then
+    uturn=true
+  end
 
   -- Set stop time.
   local Tstop=Tstart+90*60
@@ -671,6 +677,36 @@ function NAVYGROUP:IsSteamingIntoWind()
   end
 end
 
+--- Check if the group is currently recovering aircraft.
+-- @param #NAVYGROUP self
+-- @return #boolean If true, group is currently recovering.
+function NAVYGROUP:IsRecovering()
+  if self.intowind then
+    if self.intowind.Recovery==true then
+      return true
+    else
+      return false
+    end
+  else
+    return false    
+  end
+end
+
+--- Check if the group is currently launching aircraft.
+-- @param #NAVYGROUP self
+-- @return #boolean If true, group is currently launching.
+function NAVYGROUP:IsLaunching()
+  if self.intowind then
+    if self.intowind.Recovery==false then
+      return true
+    else
+      return false
+    end
+  else
+    return false    
+  end
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status
@@ -728,6 +764,12 @@ function NAVYGROUP:Status(From, Event, To)
     
     -- Check into wind queue.
     self:_CheckTurnsIntoWind()
+
+    -- Check ammo status.
+    self:_CheckAmmoStatus()
+          
+    -- Check damage of elements and group.
+    self:_CheckDamage()
     
     -- Check if group got stuck.
     self:_CheckStuck()
@@ -738,28 +780,37 @@ function NAVYGROUP:Status(From, Event, To)
         if timer.getAbsTime()>self.Twaiting+self.dTwait then
           self.Twaiting=nil
           self.dTwait=nil
-          self:Cruise()
+          if self:_CountPausedMissions()>0 then
+            self:UnpauseMission()
+          else          
+            self:Cruise()
+          end
         end
       end
     end
     
+  else
+    -- Check damage of elements and group.
+    self:_CheckDamage()    
   end
 
   -- Group exists but can also be inactive.  
   if alive~=nil then
 
     if self.verbose>=1 then
+
+      -- Number of elements.
+      local nelem=self:CountElements()
+      local Nelem=#self.elements
   
       -- Get number of tasks and missions.
       local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
       local nMissions=self:CountRemainingMissison()
-  
-      local intowind=self:IsSteamingIntoWind() and UTILS.SecondsToClock(self.intowind.Tstop-timer.getAbsTime(), true) or "N/A"    
-      local turning=tostring(self:IsTurning())
-      local alt=self.position and self.position.y or 0
-      local speed=UTILS.MpsToKnots(self.velocity or 0)
-      local speedExpected=UTILS.MpsToKnots(self:GetExpectedSpeed())
       
+      -- ROE and Alarm State.
+      local roe=self:GetROE() or -1
+      local als=self:GetAlarmstate() or -1
+
       -- Waypoint stuff.
       local wpidxCurr=self.currentwp
       local wpuidCurr=self:GetWaypointUIDFromIndex(wpidxCurr) or 0
@@ -767,16 +818,40 @@ function NAVYGROUP:Status(From, Event, To)
       local wpuidNext=self:GetWaypointUIDFromIndex(wpidxNext) or 0
       local wpN=#self.waypoints or 0
       local wpF=tostring(self.passedfinalwp)
-      local wpDist=UTILS.MetersToNM(self:GetDistanceToWaypoint() or 0)
-      local wpETA=UTILS.SecondsToClock(self:GetTimeToWaypoint() or 0, true)
       
-      -- Current ROE and alarm state.
-      local roe=self:GetROE() or 0
-      local als=self:GetAlarmstate() or 0
-    
+      -- Speed.
+      local speed=UTILS.MpsToKnots(self.velocity or 0)
+      local speedEx=UTILS.MpsToKnots(self:GetExpectedSpeed())
+      
+      -- Altitude.
+      local alt=self.position and self.position.y or 0
+      
+      -- Heading in degrees.
+      local hdg=self.heading or 0      
+      
+      -- Life points.
+      local life=self.life or 0
+      
+      -- Total ammo.            
+      local ammo=self:GetAmmoTot().Total
+      
+      -- Detected units.
+      local ndetected=self.detectionOn and tostring(self.detectedunits:Count()) or "Off"      
+      
+      -- Get cargo weight.
+      local cargo=0
+      for _,_element in pairs(self.elements) do
+        local element=_element --Ops.OpsGroup#OPSGROUP.Element
+        cargo=cargo+element.weightCargo
+      end
+      
+      -- Into wind and turning status.
+      local intowind=self:IsSteamingIntoWind() and UTILS.SecondsToClock(self.intowind.Tstop-timer.getAbsTime(), true) or "N/A"
+      local turning=tostring(self:IsTurning())      
+
       -- Info text.
-      local text=string.format("%s [ROE=%d,AS=%d, T/M=%d/%d]: Wp=%d[%d]-->%d[%d] /%d [%s]  Dist=%.1f NM ETA=%s - Speed=%.1f (%.1f) kts, Depth=%.1f m, Hdg=%03d, Turn=%s Collision=%d IntoWind=%s", 
-      fsmstate, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, wpN, wpF, wpDist, wpETA, speed, speedExpected, alt, self.heading or 0, turning, freepath, intowind)
+      local text=string.format("%s [%d/%d]: ROE/AS=%d/%d | T/M=%d/%d | Wp=%d[%d]-->%d[%d]/%d [%s] | Life=%.1f | v=%.1f (%d) | Hdg=%03d | Ammo=%d | Detect=%s | Cargo=%.1f | Turn=%s Collision=%d IntoWind=%s",
+      fsmstate, nelem, Nelem, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, wpN, wpF, life, speed, speedEx, hdg, ammo, ndetected, cargo, turning, freepath, intowind)
       self:I(self.lid..text)
             
     end
@@ -916,8 +991,17 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
     -- Set default Alarm State.
     self:SwitchAlarmstate(self.option.Alarm)
     
+    -- Set emission.
+    self:SwitchEmission(self.option.Emission)    
+    
     -- Set default EPLRS.
-    self:SwitchEPLRS(self.option.EPLRS)    
+    self:SwitchEPLRS(self.option.EPLRS)
+    
+    -- Set default Invisible.
+    self:SwitchInvisible(self.option.Invisible)    
+
+    -- Set default Immortal.
+    self:SwitchImmortal(self.option.Immortal)    
     
     -- Set TACAN beacon.
     self:_SwitchTACAN()
@@ -954,23 +1038,75 @@ end
 -- @param #number Speed Speed in knots to the next waypoint.
 -- @param #number Depth Depth in meters to the next waypoint.
 function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Depth)
+  -- Is transition allowed? We assume yes until proven otherwise.
+  local allowed=true
+  local trepeat=nil
+
   if self:IsWaiting() then
-    self:E(self.lid.."Update route denied. Group is WAITING!")
+    self:T(self.lid.."Update route denied. Group is WAITING!")
     return false
   elseif self:IsInUtero() then
-    self:E(self.lid.."Update route denied. Group is INUTERO!")
+    self:T(self.lid.."Update route denied. Group is INUTERO!")
     return false
   elseif self:IsDead() then
-    self:E(self.lid.."Update route denied. Group is DEAD!")
+    self:T(self.lid.."Update route denied. Group is DEAD!")
     return false
   elseif self:IsStopped() then
-    self:E(self.lid.."Update route denied. Group is STOPPED!")
+    self:T(self.lid.."Update route denied. Group is STOPPED!")
     return false
   elseif self:IsHolding() then
     self:T(self.lid.."Update route denied. Group is holding position!")
-    return false    
+    return false
   end
-  return true
+  
+  -- Check for a current task.
+  if self.taskcurrent>0 then
+
+    -- Get the current task. Must not be executing already.
+    local task=self:GetTaskByID(self.taskcurrent)
+
+    if task then
+      if task.dcstask.id=="PatrolZone" then
+        -- For patrol zone, we need to allow the update as we insert new waypoints.
+        self:T2(self.lid.."Allowing update route for Task: PatrolZone")
+      elseif task.dcstask.id=="ReconMission" then
+        -- For recon missions, we need to allow the update as we insert new waypoints.
+        self:T2(self.lid.."Allowing update route for Task: ReconMission")
+      elseif task.dcstask.id==AUFTRAG.SpecialTask.RELOCATECOHORT then
+        -- For relocate
+        self:T2(self.lid.."Allowing update route for Task: Relocate Cohort")          
+      else
+        local taskname=task and task.description or "No description"
+        self:T(self.lid..string.format("WARNING: Update route denied because taskcurrent=%d>0! Task description = %s", self.taskcurrent, tostring(taskname)))
+        allowed=false
+      end
+    else
+      -- Now this can happen, if we directly use TaskExecute as the task is not in the task queue and cannot be removed. Therefore, also directly executed tasks should be added to the queue!
+      self:T(self.lid..string.format("WARNING: before update route taskcurrent=%d (>0!) but no task?!", self.taskcurrent))
+      -- Anyhow, a task is running so we do not allow to update the route!
+      allowed=false
+    end
+  end
+
+  -- Not good, because mission will never start. Better only check if there is a current task!
+  --if self.currentmission then
+  --end
+
+  -- Only AI flights.
+  if not self.isAI then
+    allowed=false
+  end
+
+  -- Debug info.
+  self:T2(self.lid..string.format("Onbefore Updateroute in state %s: allowed=%s (repeat in %s)", self:GetState(), tostring(allowed), tostring(trepeat)))
+
+  -- Try again?
+  if trepeat then
+    self:__UpdateRoute(trepeat, n)
+  end  
+  
+  return allowed
+
 end
 
 --- On after "UpdateRoute" event.
@@ -1122,8 +1258,8 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
   
   IntoWind.Open=true
   
-  IntoWind.Coordinate=self:GetCoordinate()
-
+  IntoWind.Coordinate=self:GetCoordinate(true)
+  
   self.intowind=IntoWind
   
   -- Wind speed in m/s.
@@ -1398,37 +1534,46 @@ function NAVYGROUP:_UpdateEngageTarget()
 
     -- Get current position vector.
     local vec3=self.engage.Target:GetVec3()
+    
+    if vec3 then
   
-    -- Distance to last known position of target.
-    local dist=UTILS.VecDist3D(vec3, self.engage.Coordinate:GetVec3())
-    
-    -- Check if target moved more than 100 meters.
-    if dist>100 then
-    
-      --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
-    
-      -- Update new position.
-      self.engage.Coordinate:UpdateFromVec3(vec3)
-
-      -- ID of current waypoint.
-      local uid=self:GetWaypointCurrent().uid
-    
-      -- Remove current waypoint
-      self:RemoveWaypointByID(self.engage.Waypoint.uid)
+      -- Distance to last known position of target.
+      local dist=UTILS.VecDist3D(vec3, self.engage.Coordinate:GetVec3())
       
-      local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
+      -- Check if target moved more than 100 meters.
+      if dist>100 then
+      
+        --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
+      
+        -- Update new position.
+        self.engage.Coordinate:UpdateFromVec3(vec3)
   
-        -- Add waypoint after current.
-      self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
+        -- ID of current waypoint.
+        local uid=self:GetWaypointCurrent().uid
+      
+        -- Remove current waypoint
+        self:RemoveWaypointByID(self.engage.Waypoint.uid)
+        
+        local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
     
-      -- Set if we want to resume route after reaching the detour waypoint.
-      self.engage.Waypoint.detour=0      
+          -- Add waypoint after current.
+        self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
+      
+        -- Set if we want to resume route after reaching the detour waypoint.
+        self.engage.Waypoint.detour=0      
+      
+      end
+      
+    else
+
+      -- Could not get position of target (not alive any more?) ==> Disengage.
+      self:Disengage()
     
     end
     
   else
   
-    -- Target not alive any more == Disengage.
+    -- Target not alive any more ==> Disengage.
     self:Disengage()
     
   end
@@ -1446,14 +1591,118 @@ function NAVYGROUP:onafterDisengage(From, Event, To)
   -- Restore previous ROE and alarm state.
   self:SwitchROE(self.engage.roe)
   self:SwitchAlarmstate(self.engage.alarmstate)
+
+  -- Get current task
+  local task=self:GetTaskCurrent()
+
+  -- Get if current task is ground attack.
+  if task and task.dcstask.id==AUFTRAG.SpecialTask.GROUNDATTACK then
+    self:T(self.lid.."Disengage with current task GROUNDATTACK ==> Task Done!")
+    self:TaskDone(task)
+  end    
   
   -- Remove current waypoint
   if self.engage.Waypoint then
-    self:RemoveWaypointByID(self.engage.Waypoint.uid)    
+    self:RemoveWaypointByID(self.engage.Waypoint.uid)
   end
 
   -- Check group is done
   self:_CheckGroupDone(1)
+end
+
+--- On after "OutOfAmmo" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterOutOfAmmo(From, Event, To)
+  self:T(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))
+  
+  -- Check if we want to retreat once out of ammo.
+  if self.retreatOnOutOfAmmo then
+    self:__Retreat(-1)
+    return
+  end
+  
+  -- Third, check if we want to RTZ once out of ammo.
+  if self.rtzOnOutOfAmmo then
+    self:__RTZ(-1)
+  end
+
+  -- Get current task.
+  local task=self:GetTaskCurrent()
+  
+  if task then
+    if task.dcstask.id=="FireAtPoint" or task.dcstask.id==AUFTRAG.SpecialTask.BARRAGE then
+      self:T(self.lid..string.format("Cancelling current %s task because out of ammo!", task.dcstask.id))
+      self:TaskCancel(task)
+    end
+  end
+    
+end
+
+--- On after "RTZ" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Zone#ZONE Zone The zone to return to.
+-- @param #number Formation Formation of the group.
+function NAVYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
+  
+  -- Zone.
+  local zone=Zone or self.homezone
+  
+  -- Cancel all missions in the queue.
+  self:CancelAllMissions()
+  
+  if zone then
+  
+    if self:IsInZone(zone) then
+      self:Returned()
+    else
+  
+      -- Debug info.
+      self:T(self.lid..string.format("RTZ to Zone %s", zone:GetName()))  
+      
+      local Coordinate=zone:GetRandomCoordinate()
+
+      -- ID of current waypoint.
+      local uid=self:GetWaypointCurrentUID()
+      
+      -- Add waypoint after current.
+      local wp=self:AddWaypoint(Coordinate, nil, uid, Formation, true)
+      
+      -- Set if we want to resume route after reaching the detour waypoint.
+      wp.detour=0
+      
+    end
+        
+  else
+    self:T(self.lid.."ERROR: No RTZ zone given!")
+  end
+
+end
+
+
+--- On after "Returned" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterReturned(From, Event, To)
+
+  -- Debug info.
+  self:T(self.lid..string.format("Group returned"))
+  
+  if self.legion then
+    -- Debug info.
+    self:T(self.lid..string.format("Adding group back to warehouse stock"))
+    
+    -- Add asset back in 10 seconds.
+    self.legion:__AddAsset(10, self.group, 1)
+  end
+
 end
 
 
@@ -1531,6 +1780,13 @@ function NAVYGROUP:_InitGroup(Template)
   
   -- Max speed in km/h.
   self.speedMax=self.group:GetSpeedMax()
+  
+  -- Is group mobile?
+  if self.speedMax>3.6 then
+    self.isMobile=true
+  else
+    self.isMobile=false
+  end  
   
   -- Cruise speed: 70% of max speed.
   self.speedCruise=self.speedMax*0.7
@@ -1611,17 +1867,11 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
     offsetY=5.01
   end
   
-  -- Current coordinate.
-  --local coordinate=self:GetCoordinate():SetAltitude(offsetY, true)
-  
   local vec3=self:GetVec3()
   vec3.y=offsetY
   
   -- Current heading.
   local heading=self:GetHeading()
-  
-  -- Check from 500 meters in front.
-  --coordinate=coordinate:Translate(500, heading, true)
   
   local function LoS(dist)
     local checkvec3=UTILS.VecTranslate(vec3, dist, heading)
@@ -1669,8 +1919,9 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
     return 0
   end
 
+  local _check=check()
 
-  return check()
+  return _check
 end
 
 --- Check if group is turning.

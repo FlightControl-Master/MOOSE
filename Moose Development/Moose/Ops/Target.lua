@@ -36,6 +36,9 @@
 -- @field Ops.Auftrag#AUFTRAG mission Mission attached to this target.
 -- @field Ops.Intelligence#INTEL.Contact contact Contact attached to this target.
 -- @field #boolean isDestroyed If true, target objects were destroyed.
+-- @field #table resources Resource list.
+-- @field #table conditionStart Start condition functions.
+-- @field Ops.Operation#OPERATION operation Operation this target is part of.
 -- @extends Core.Fsm#FSM
 
 --- **It is far more important to be able to hit the target than it is to haggle over who makes a weapon or who pulls a trigger** -- Dwight D Eisenhower
@@ -64,7 +67,8 @@ TARGET = {
   Ndead          =     0,
   elements       =    {},
   casualties     =    {},
-  threatlevel0   =     0
+  threatlevel0   =     0,
+  conditionStart =    {},
 }
 
 
@@ -113,6 +117,16 @@ TARGET.ObjectStatus={
   ALIVE="Alive",
   DEAD="Dead",
 }
+
+--- Resource.
+-- @type TARGET.Resource
+-- @field #string MissionType Mission type, e.g. `AUFTRAG.Type.BAI`.
+-- @field #number Nmin Min number of assets.
+-- @field #number Nmax Max number of assets.
+-- @field #table Attributes Generalized attribute, e.g. `{GROUP.Attribute.GROUND_INFANTRY}`.
+-- @field #table Properties Properties ([DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)), e.g. `"Attack helicopters"` or `"Mobile AAA"`.
+-- @field Ops.Auftrag#AUFTRAG mission Attached mission.
+
 --- Target object.
 -- @type TARGET.Object
 -- @field #number ID Target unique ID.
@@ -307,6 +321,142 @@ function TARGET:SetImportance(Importance)
   return self
 end
 
+--- Add start condition.
+-- @param #TARGET self
+-- @param #function ConditionFunction Function that needs to be true before the mission can be started. Must return a #boolean.
+-- @param ... Condition function arguments if any.
+-- @return #TARGET self
+function TARGET:AddConditionStart(ConditionFunction, ...)
+
+  local condition={} --Ops.Auftrag#AUFTRAG.Condition
+
+  condition.func=ConditionFunction
+  condition.arg={}
+  if arg then
+    condition.arg=arg
+  end
+
+  table.insert(self.conditionStart, condition)
+
+  return self
+end
+
+--- Add stop condition.
+-- @param #TARGET self
+-- @param #function ConditionFunction Function that needs to be true before the mission can be started. Must return a #boolean.
+-- @param ... Condition function arguments if any.
+-- @return #TARGET self
+function TARGET:AddConditionStop(ConditionFunction, ...)
+
+  local condition={} --Ops.Auftrag#AUFTRAG.Condition
+
+  condition.func=ConditionFunction
+  condition.arg={}
+  if arg then
+    condition.arg=arg
+  end
+
+  table.insert(self.conditionStop, condition)
+
+  return self
+end
+
+--- Check if all given condition are true.
+-- @param #TARGET self
+-- @param #table Conditions Table of conditions.
+-- @return #boolean If true, all conditions were true. Returns false if at least one condition returned false.
+function TARGET:EvalConditionsAll(Conditions)
+
+  -- Any stop condition must be true.
+  for _,_condition in pairs(Conditions or {}) do
+    local condition=_condition --Ops.Auftrag#AUFTRAG.Condition
+
+    -- Call function.
+    local istrue=condition.func(unpack(condition.arg))
+
+    -- Any false will return false.
+    if not istrue then
+      return false
+    end
+
+  end
+
+  -- All conditions were true.
+  return true
+end
+
+
+--- Check if any of the given conditions is true.
+-- @param #TARGET self
+-- @param #table Conditions Table of conditions.
+-- @return #boolean If true, at least one condition is true.
+function TARGET:EvalConditionsAny(Conditions)
+
+  -- Any stop condition must be true.
+  for _,_condition in pairs(Conditions or {}) do
+    local condition=_condition --Ops.Auftrag#AUFTRAG.Condition
+
+    -- Call function.
+    local istrue=condition.func(unpack(condition.arg))
+
+    -- Any true will return true.
+    if istrue then
+      return true
+    end
+
+  end
+
+  -- No condition was true.
+  return false
+end
+
+--- Add mission type and number of required assets to resource.
+-- @param #TARGET self
+-- @param #string MissionType Mission Type.
+-- @param #number Nmin Min number of required assets.
+-- @param #number Nmax Max number of requried assets.
+-- @param #table Attributes Generalized attribute(s).
+-- @param #table Properties DCS attribute(s). Default `nil`.
+-- @return #TARGET.Resource The resource table.
+function TARGET:AddResource(MissionType, Nmin, Nmax, Attributes, Properties)
+  
+  -- Ensure table.
+  if Attributes and type(Attributes)~="table" then
+    Attributes={Attributes}
+  end
+  
+  -- Ensure table.
+  if Properties and type(Properties)~="table" then
+    Properties={Properties}
+  end
+  
+  -- Create new resource table.
+  local resource={} --#TARGET.Resource
+  resource.MissionType=MissionType
+  resource.Nmin=Nmin or 1
+  resource.Nmax=Nmax or 1
+  resource.Attributes=Attributes or {}
+  resource.Properties=Properties or {}
+  
+  -- Init resource table.
+  self.resources=self.resources or {}
+  
+  -- Add to table.
+  table.insert(self.resources, resource)
+  
+  -- Debug output.
+  if self.verbose>10 then
+    local text="Resource:"
+    for _,_r in pairs(self.resources) do
+      local r=_r --#TARGET.Resource
+      text=text..string.format("\nmission=%s, Nmin=%d, Nmax=%d, attribute=%s, properties=%s", r.MissionType, r.Nmin, r.Nmax, tostring(r.Attributes[1]), tostring(r.Properties[1]))
+    end
+    self:I(self.lid..text)
+  end
+    
+  return resource
+end
+
 --- Check if TARGET is alive.
 -- @param #TARGET self
 -- @return #boolean If true, target is alive.
@@ -387,7 +537,7 @@ function TARGET:onafterStatus(From, Event, To)
     end
     
     if life==0 then
-      self:I(self.lid..string.format("FF life is zero but no object dead event fired ==> object dead now for traget object %s!", tostring(target.Name)))
+      self:I(self.lid..string.format("FF life is zero but no object dead event fired ==> object dead now for target object %s!", tostring(target.Name)))
       self:ObjectDead(target)
     end
     
@@ -990,8 +1140,12 @@ function TARGET:GetTargetVec3(Target)
 
     if object and object:IsAlive() then
       local vec3=object:GetVec3()
-      return vec3
       
+      if vec3 then
+        return vec3
+      else
+        return nil
+      end
     else
     
       return nil
@@ -1204,7 +1358,7 @@ function TARGET:GetCoordinate()
 
   end
 
-  self:E(self.lid..string.format("ERROR: Cannot get coordinate of target %s", self.name))
+  self:E(self.lid..string.format("ERROR: Cannot get coordinate of target %s", tostring(self.name)))
   return nil
 end
 

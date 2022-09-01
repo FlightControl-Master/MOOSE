@@ -194,7 +194,12 @@ do -- COORDINATE
   -- ## 9) Coordinate text generation
   --
   --   * @{#COORDINATE.ToStringBR}(): Generates a Bearing & Range text in the format of DDD for DI where DDD is degrees and DI is distance.
-  --   * @{#COORDINATE.ToStringLL}(): Generates a Latutude & Longutude text.
+  --   * @{#COORDINATE.ToStringBRA}(): Generates a Bearing, Range & Altitude text.
+  --   * @{#COORDINATE.ToStringBRAANATO}(): Generates a Generates a Bearing, Range, Aspect & Altitude text in NATOPS.
+  --   * @{#COORDINATE.ToStringLL}(): Generates a Latutide & Longitude text.
+  --   * @{#COORDINATE.ToStringLLDMS}(): Generates a Lat, Lon, Degree, Minute, Second text.
+  --   * @{#COORDINATE.ToStringLLDDM}(): Generates a Lat, Lon, Degree, decimal Minute text.
+  --   * @{#COORDINATE.ToStringMGRS}(): Generates a MGRS grid coordinate text.
   --
   -- ## 10) Drawings on F10 map
   --
@@ -820,7 +825,11 @@ do -- COORDINATE
   -- @param #COORDINATE TargetCoordinate The target COORDINATE.
   -- @return DCS#Vec3 DirectionVec3 The direction vector in Vec3 format.
   function COORDINATE:GetDirectionVec3( TargetCoordinate )
-    return { x = TargetCoordinate.x - self.x, y = TargetCoordinate.y - self.y, z = TargetCoordinate.z - self.z }
+    if TargetCoordinate then
+      return { x = TargetCoordinate.x - self.x, y = TargetCoordinate.y - self.y, z = TargetCoordinate.z - self.z }
+    else
+      return { x=0,y=0,z=0}
+    end
   end
 
 
@@ -869,6 +878,11 @@ do -- COORDINATE
 
     -- Get the vector from A to B
     local vec=UTILS.VecSubstract(ToCoordinate, self)
+    
+    if f>1 then
+      local norm=UTILS.VecNorm(vec)      
+      f=Fraction/norm
+    end
 
     -- Scale the vector.
     vec.x=f*vec.x
@@ -878,7 +892,9 @@ do -- COORDINATE
     -- Move the vector to start at the end of A.
     vec=UTILS.VecAdd(self, vec)
 
+    -- Create a new coordiante object.
     local coord=COORDINATE:New(vec.x,vec.y,vec.z)
+    
     return coord
   end
 
@@ -887,9 +903,8 @@ do -- COORDINATE
   -- @param #COORDINATE TargetCoordinate The target COORDINATE. Can also be a DCS#Vec3.
   -- @return DCS#Distance Distance The distance in meters.
   function COORDINATE:Get2DDistance(TargetCoordinate)
-
+    if not TargetCoordinate then return 1000000 end
     local a={x=TargetCoordinate.x-self.x, y=0, z=TargetCoordinate.z-self.z}
-
     local norm=UTILS.VecNorm(a)
     return norm
   end
@@ -912,7 +927,7 @@ do -- COORDINATE
   -- The text will reflect the temperature like this:
   --
   --   - For Russian and European aircraft using the metric system - Degrees Celcius (°C)
-  --   - For Americain aircraft we link to the imperial system - Degrees Farenheit (°F)
+  --   - For American aircraft we link to the imperial system - Degrees Fahrenheit (°F)
   --
   -- A text containing a pressure will look like this:
   --
@@ -932,7 +947,7 @@ do -- COORDINATE
       if Settings:IsMetric() then
         return string.format( " %-2.2f °C", DegreesCelcius )
       else
-        return string.format( " %-2.2f °F", UTILS.CelciusToFarenheit( DegreesCelcius ) )
+        return string.format( " %-2.2f °F", UTILS.CelsiusToFahrenheit( DegreesCelcius ) )
       end
     else
       return " no temperature"
@@ -958,7 +973,7 @@ do -- COORDINATE
   -- The text will contain always the pressure in hPa and:
   --
   --   - For Russian and European aircraft using the metric system - hPa and mmHg
-  --   - For Americain and European aircraft we link to the imperial system - hPa and inHg
+  --   - For American and European aircraft we link to the imperial system - hPa and inHg
   --
   -- A text containing a pressure will look like this:
   --
@@ -1051,7 +1066,7 @@ do -- COORDINATE
   -- The text will reflect the wind like this:
   --
   --   - For Russian and European aircraft using the metric system - Wind direction in degrees (°) and wind speed in meters per second (mps).
-  --   - For Americain aircraft we link to the imperial system - Wind direction in degrees (°) and wind speed in knots per second (kps).
+  --   - For American aircraft we link to the imperial system - Wind direction in degrees (°) and wind speed in knots per second (kps).
   --
   -- A text containing a pressure will look like this:
   --
@@ -1112,25 +1127,28 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #number Distance The distance in meters.
   -- @param Core.Settings#SETTINGS Settings
+  -- @param #string Language (optional) "EN" or "RU"
+  -- @param #number Precision (optional) round to this many decimal places
   -- @return #string The distance text expressed in the units of measurement.
-  function COORDINATE:GetDistanceText( Distance, Settings, Language )
+  function COORDINATE:GetDistanceText( Distance, Settings, Language, Precision )
 
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
     local Language = Language or "EN"
-
+    local Precision = Precision or 0
+    
     local DistanceText
 
     if Settings:IsMetric() then
       if     Language == "EN" then
-        DistanceText = " for " .. UTILS.Round( Distance / 1000, 2 ) .. " km"
+        DistanceText = " for " .. UTILS.Round( Distance / 1000, Precision ) .. " km"
       elseif Language == "RU" then
-        DistanceText = " за " .. UTILS.Round( Distance / 1000, 2 ) .. " километров"
+        DistanceText = " за " .. UTILS.Round( Distance / 1000, Precision ) .. " километров"
       end
     else
       if     Language == "EN" then
-        DistanceText = " for " .. UTILS.Round( UTILS.MetersToNM( Distance ), 2 ) .. " miles"
+        DistanceText = " for " .. UTILS.Round( UTILS.MetersToNM( Distance ), Precision ) .. " miles"
       elseif Language == "RU" then
-        DistanceText = " за " .. UTILS.Round( UTILS.MetersToNM( Distance ), 2 ) .. " миль"
+        DistanceText = " за " .. UTILS.Round( UTILS.MetersToNM( Distance ), Precision ) .. " миль"
       end
     end
 
@@ -1208,7 +1226,7 @@ do -- COORDINATE
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
 
     local BearingText = self:GetBearingText( AngleRadians, 0, Settings, Language )
-    local DistanceText = self:GetDistanceText( Distance, Settings, Language )
+    local DistanceText = self:GetDistanceText( Distance, Settings, Language, 0 )
 
     local BRText = BearingText .. DistanceText
 
@@ -1226,7 +1244,7 @@ do -- COORDINATE
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
 
     local BearingText = self:GetBearingText( AngleRadians, 0, Settings, Language )
-    local DistanceText = self:GetDistanceText( Distance, Settings, Language  )
+    local DistanceText = self:GetDistanceText( Distance, Settings, Language, 0  )
     local AltitudeText = self:GetAltitudeText( Settings, Language  )
 
     local BRAText = BearingText .. DistanceText .. AltitudeText -- When the POINT is a VEC2, there will be no altitude shown.
@@ -1883,82 +1901,101 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param Utilities.Utils#BIGSMOKEPRESET preset Smoke preset (1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke).
   -- @param #number density (Optional) Smoke density. Number in [0,...,1]. Default 0.5.
-  function COORDINATE:BigSmokeAndFire( preset, density )
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFire( preset, density, name )
     self:F2( { preset=preset, density=density } )
     density=density or 0.5
-    trigger.action.effectSmokeBig( self:GetVec3(), preset, density )
+    self.firename = name or "Fire-"..math.random(1,10000)
+    trigger.action.effectSmokeBig( self:GetVec3(), preset, density, self.firename )
+  end
+  
+  --- Stop big smoke and fire at the coordinate.
+  -- @param #COORDINATE self
+  -- @param #string name (Optional) Name of the fire to stop it, if not using the same COORDINATE object.
+  function COORDINATE:StopBigSmokeAndFire( name )
+    self:F2( { name = name } )
+    name = name or self.firename
+    trigger.action.effectSmokeStop( name )
   end
 
   --- Small smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireSmall( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireSmall( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmokeAndFire, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmokeAndFire, density, name)
   end
 
   --- Medium smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireMedium( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireMedium( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmokeAndFire, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmokeAndFire, density, name)
   end
 
   --- Large smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireLarge( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireLarge( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmokeAndFire, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmokeAndFire, density, name)
   end
 
   --- Huge smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireHuge( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireHuge( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmokeAndFire, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmokeAndFire, density, name)
   end
 
   --- Small smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeSmall( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeSmall( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmoke, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmoke, density, name)
   end
 
   --- Medium smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeMedium( density )
+  -- @param number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeMedium( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmoke, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmoke, density, name)
   end
 
   --- Large smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeLarge( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeLarge( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmoke, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmoke, density,name)
   end
 
   --- Huge smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeHuge( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeHuge( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmoke, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmoke, density,name)
   end
 
   --- Flares the point in a color.
@@ -2105,7 +2142,7 @@ do -- COORDINATE
     --- Line to all.
     -- Creates a line on the F10 map from one point to another.
     -- @param #COORDINATE self
-    -- @param #COORDINATE Endpoint COORDIANTE to where the line is drawn.
+    -- @param #COORDINATE Endpoint COORDINATE to where the line is drawn.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.
@@ -2145,14 +2182,21 @@ do -- COORDINATE
       if ReadOnly==nil then
         ReadOnly=false
       end
+      
       local vec3=self:GetVec3()
+      
       Radius=Radius or 1000
+      
       Coalition=Coalition or -1
+      
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
+      
       LineType=LineType or 1
-      FillColor=FillColor or Color
+      
+      FillColor=FillColor or UTILS.DeepCopy(Color)
       FillColor[4]=FillAlpha or 0.15
+      
       trigger.action.circleToAll(Coalition, MarkID, vec3, Radius, Color, FillColor, LineType, ReadOnly, Text or "")
       return MarkID
     end
@@ -2162,7 +2206,7 @@ do -- COORDINATE
     --- Rectangle to all. Creates a rectangle on the map from the COORDINATE in one corner to the end COORDINATE in the opposite corner.
     -- Creates a line on the F10 map from one point to another.
     -- @param #COORDINATE self
-    -- @param #COORDINATE Endpoint COORDIANTE in the opposite corner.
+    -- @param #COORDINATE Endpoint COORDINATE in the opposite corner.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.
@@ -2177,22 +2221,28 @@ do -- COORDINATE
       if ReadOnly==nil then
         ReadOnly=false
       end
+      
       local vec3=Endpoint:GetVec3()
+      
       Coalition=Coalition or -1
+      
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
+      
       LineType=LineType or 1
-      FillColor=FillColor or Color
+      
+      FillColor=FillColor or UTILS.DeepCopy(Color)
       FillColor[4]=FillAlpha or 0.15
+      
       trigger.action.rectToAll(Coalition, MarkID, self:GetVec3(), vec3, Color, FillColor, LineType, ReadOnly, Text or "")
       return MarkID
     end
 
     --- Creates a shape defined by 4 points on the F10 map. The first point is the current COORDINATE. The remaining three points need to be specified.
     -- @param #COORDINATE self
-    -- @param #COORDINATE Coord2 Second COORDIANTE of the quad shape.
-    -- @param #COORDINATE Coord3 Third COORDIANTE of the quad shape.
-    -- @param #COORDINATE Coord4 Fourth COORDIANTE of the quad shape.
+    -- @param #COORDINATE Coord2 Second COORDINATE of the quad shape.
+    -- @param #COORDINATE Coord3 Third COORDINATE of the quad shape.
+    -- @param #COORDINATE Coord4 Fourth COORDINATE of the quad shape.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.
@@ -2207,22 +2257,28 @@ do -- COORDINATE
       if ReadOnly==nil then
         ReadOnly=false
       end
+      
       local point1=self:GetVec3()
       local point2=Coord2:GetVec3()
       local point3=Coord3:GetVec3()
       local point4=Coord4:GetVec3()
+      
       Coalition=Coalition or -1
+      
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
+      
       LineType=LineType or 1
-      FillColor=FillColor or Color
+      
+      FillColor=FillColor or UTILS.DeepCopy(Color)
       FillColor[4]=FillAlpha or 0.15
-      trigger.action.quadToAll(Coalition, MarkID, self:GetVec3(), point2, point3, point4, Color, FillColor, LineType, ReadOnly, Text or "")
+      
+      trigger.action.quadToAll(Coalition, MarkID, point1, point2, point3, point4, Color, FillColor, LineType, ReadOnly, Text or "")
       return MarkID
     end
 
     --- Creates a free form shape on the F10 map. The first point is the current COORDINATE. The remaining points need to be specified.
-    -- **NOTE**: A free form polygon must have **at least three points** in total and currently only **up to 10 points** in total are supported.
+    -- **NOTE**: A free form polygon must have **at least three points** in total and currently only **up to 15 points** in total are supported.
     -- @param #COORDINATE self
     -- @param #table Coordinates Table of coordinates of the remaining points of the shape.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
@@ -2275,8 +2331,28 @@ do -- COORDINATE
         trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], Color, FillColor, LineType, ReadOnly, Text or "")
       elseif #vecs==10 then
         trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], vecs[10], Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==11 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], vecs[10],
+                                                         vecs[11], 
+                                                         Color, FillColor, LineType, ReadOnly, Text or "")        
+      elseif #vecs==12 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], vecs[10],
+                                                         vecs[11], vecs[12],
+                                                         Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==13 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], vecs[10],
+                                                         vecs[11], vecs[12], vecs[13],
+                                                         Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==14 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], vecs[10],
+                                                         vecs[11], vecs[12], vecs[13], vecs[14],
+                                                         Color, FillColor, LineType, ReadOnly, Text or "")                                                                                                                                                                                                           
+      elseif #vecs==15 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], vecs[10],
+                                                         vecs[11], vecs[12], vecs[13], vecs[14], vecs[15],
+                                                         Color, FillColor, LineType, ReadOnly, Text or "")
       else
-        self:E("ERROR: Currently a free form polygon can only have 10 points in total!")
+        self:E("ERROR: Currently a free form polygon can only have 15 points in total!")
         -- Unfortunately, unpack(vecs) does not work! So no idea how to generalize this :(
         trigger.action.markupToAll(7, Coalition, MarkID, unpack(vecs), Color, FillColor, LineType, ReadOnly, Text or "")
       end
@@ -2301,11 +2377,15 @@ do -- COORDINATE
         ReadOnly=false
       end
       Coalition=Coalition or -1
+      
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
-      FillColor=FillColor or Color
+      
+      FillColor=FillColor or UTILS.DeepCopy(Color)
       FillColor[4]=FillAlpha or 0.3
+      
       FontSize=FontSize or 14
+      
       trigger.action.textToAll(Coalition, MarkID, self:GetVec3(), Color, FillColor, FontSize, ReadOnly, Text or "Hello World")
       return MarkID
     end
@@ -2327,13 +2407,19 @@ do -- COORDINATE
       if ReadOnly==nil then
         ReadOnly=false
       end
+      
       local vec3=Endpoint:GetVec3()
+      
       Coalition=Coalition or -1
+      
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
+      
       LineType=LineType or 1
-      FillColor=FillColor or Color
+      
+      FillColor=FillColor or UTILS.DeepCopy(Color)
       FillColor[4]=FillAlpha or 0.15
+      
       --trigger.action.textToAll(Coalition, MarkID, self:GetVec3(), Color, FillColor, FontSize, ReadOnly, Text or "Hello World")
       trigger.action.arrowToAll(Coalition, MarkID, vec3, self:GetVec3(), Color, FillColor, LineType, ReadOnly, Text or "")
       return MarkID
@@ -2696,7 +2782,7 @@ do -- COORDINATE
     return "BR, " .. self:GetBRText( AngleRadians, Distance, Settings )
   end
 
-  --- Return a BRAA string from a COORDINATE to the COORDINATE.
+  --- Return a BRA string from a COORDINATE to the COORDINATE.
   -- @param #COORDINATE self
   -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
   -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
@@ -2708,7 +2794,95 @@ do -- COORDINATE
     local Altitude = self:GetAltitudeText()
     return "BRA, " .. self:GetBRAText( AngleRadians, Distance, Settings, Language )
   end
+  
+  --- Create a BRAA NATO call string to this COORDINATE from the FromCOORDINATE. Note - BRA delivered if no aspect can be obtained and "Merged" if range < 3nm
+  -- @param #COORDINATE self
+  -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
+  -- @param #boolean Bogey Add "Bogey" at the end if true (not yet declared hostile or friendly)
+  -- @param #boolean Spades Add "Spades" at the end if true (no IFF/VID ID yet known)
+  -- @param #boolean SSML Add SSML tags speaking aspect as 0 1 2 and "brah" instead of BRAA
+  -- @param #boolean Angels If true, altitude is e.g. "Angels 25" (i.e., a friendly plane), else "25 thousand"
+  -- @param #boolean Zeros If using SSML, be aware that Google TTS will say "oh" and not "zero" for "0"; if Zeros is set to true, "0" will be replaced with "zero"
+  -- @return #string The BRAA text.
+  function COORDINATE:ToStringBRAANATO(FromCoordinate,Bogey,Spades,SSML,Angels,Zeros)
+    
+    -- Thanks to @Pikey
+    local BRAANATO = "Merged."
 
+    local currentCoord = FromCoordinate
+    local DirectionVec3 = FromCoordinate:GetDirectionVec3( self )
+    local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
+    
+    local bearing = UTILS.Round( UTILS.ToDegree( AngleRadians ),0 )
+    
+    local rangeMetres = self:Get2DDistance(currentCoord)
+    local rangeNM = UTILS.Round( UTILS.MetersToNM(rangeMetres), 0)
+    
+    local aspect = self:ToStringAspect(currentCoord)
+
+    local alt = UTILS.Round(UTILS.MetersToFeet(self.y)/1000,0)--*1000
+    
+    local alttext = string.format("%d thousand",alt)
+    
+    if Angels then
+      alttext = string.format("Angels %d",alt)
+    end
+    
+    if alt < 1 then
+      alttext = "very low"
+    end
+    
+    local track = UTILS.BearingToCardinal(bearing) or "North"
+    
+    if rangeNM > 3 then
+      if SSML then -- google says "oh" instead of zero, be aware
+        if Zeros then
+          bearing = string.format("%03d",bearing)
+          local AngleDegText = string.gsub(bearing,"%d","%1 ") -- "0 5 1 "
+          AngleDegText = string.gsub(AngleDegText," $","") -- "0 5 1"
+          AngleDegText = string.gsub(AngleDegText,"0","zero")
+          if aspect == "" then
+            BRAANATO = string.format("brah %s, %d miles, %s, Track %s", AngleDegText, rangeNM, alttext, track)
+          else
+            BRAANATO = string.format("brah %s, %d miles, %s, %s, Track %s", AngleDegText, rangeNM, alttext, aspect, track)      
+          end  
+        else
+          if aspect == "" then
+            BRAANATO = string.format("brah <say-as interpret-as='characters'>%03d</say-as>, %d miles, %s, Track %s", bearing, rangeNM, alttext, track)
+          else
+            BRAANATO = string.format("brah <say-as interpret-as='characters'>%03d</say-as>, %d miles, %s, %s, Track %s", bearing, rangeNM, alttext, aspect, track)      
+          end
+        end
+        if Bogey and Spades then
+          BRAANATO = BRAANATO..", Bogey, Spades."
+        elseif Bogey then
+          BRAANATO = BRAANATO..", Bogey."
+        elseif Spades then
+         BRAANATO = BRAANATO..", Spades."
+        else
+         BRAANATO = BRAANATO.."."
+        end
+      else
+        if aspect == "" then
+          BRAANATO = string.format("BRA %03d, %d miles, %s, Track %s",bearing, rangeNM, alttext, track)
+        else
+          BRAANATO = string.format("BRAA %03d, %d miles, %s, %s, Track %s",bearing, rangeNM, alttext, aspect, track)      
+        end
+        if Bogey and Spades then
+          BRAANATO = BRAANATO..", Bogey, Spades."
+        elseif Bogey then
+          BRAANATO = BRAANATO..", Bogey."
+        elseif Spades then
+         BRAANATO = BRAANATO..", Spades."
+        else
+         BRAANATO = BRAANATO.."."
+        end
+      end
+    end
+      
+    return BRAANATO 
+  end
+  
   --- Return a BULLS string out of the BULLS of the coalition to the COORDINATE.
   -- @param #COORDINATE self
   -- @param DCS#coalition.side Coalition The coalition.
@@ -3007,7 +3181,7 @@ do -- POINT_VEC3
   -- @type POINT_VEC3
   -- @field #number x The x coordinate in 3D space.
   -- @field #number y The y coordinate in 3D space.
-  -- @field #number z The z coordiante in 3D space.
+  -- @field #number z The z COORDINATE in 3D space.
   -- @field Utilities.Utils#SMOKECOLOR SmokeColor
   -- @field Utilities.Utils#FLARECOLOR FlareColor
   -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType

@@ -2049,9 +2049,15 @@ function RAT:_InitAircraft(DCSgroup)
   --self.aircraft.descriptors=DCSdesc
 
   -- aircraft dimensions
-  self.aircraft.length=DCSdesc.box.max.x
-  self.aircraft.height=DCSdesc.box.max.y
-  self.aircraft.width=DCSdesc.box.max.z
+  if DCSdesc.box then
+    self.aircraft.length=DCSdesc.box.max.x
+    self.aircraft.height=DCSdesc.box.max.y
+    self.aircraft.width=DCSdesc.box.max.z
+  elseif DCStype == "Mirage-F1CE" then
+    self.aircraft.length=16
+    self.aircraft.height=5
+    self.aircraft.width=9
+  end
   self.aircraft.box=math.max(self.aircraft.length,self.aircraft.width)
 
   -- info message

@@ -124,6 +124,7 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
+  --self:HandleEvent( EVENTS.UnitLost, self._EventOnDeadOrCrash )  -- DCS 2.7.1 for Aerial units no dead event ATM
   self:HandleEvent( EVENTS.Hit, self.AccountHits )
   self:HandleEvent( EVENTS.NewCargo )
   self:HandleEvent( EVENTS.DeleteCargo )
@@ -162,17 +163,11 @@ end
 function DATABASE:AddUnit( DCSUnitName )
 
   if not self.UNITS[DCSUnitName] then
-
     -- Debug info.
     self:T( { "Add UNIT:", DCSUnitName } )
 
-    --local UnitRegister = UNIT:Register( DCSUnitName )
-
     -- Register unit
     self.UNITS[DCSUnitName]=UNIT:Register(DCSUnitName)
-
-    -- This is not used anywhere in MOOSE as far as I can see so I remove it until there comes an error somewhere.
-    --table.insert(self.UNITS_Index, DCSUnitName )
   end
 
   return self.UNITS[DCSUnitName]
@@ -182,7 +177,6 @@ end
 --- Deletes a Unit from the DATABASE based on the Unit Name.
 -- @param #DATABASE self
 function DATABASE:DeleteUnit( DCSUnitName )
-
   self.UNITS[DCSUnitName] = nil
 end
 
@@ -215,16 +209,6 @@ function DATABASE:FindStatic( StaticName )
 
   local StaticFound = self.STATICS[StaticName]
   return StaticFound
-end
-
---- Finds a AIRBASE based on the AirbaseName.
--- @param #DATABASE self
--- @param #string AirbaseName
--- @return Wrapper.Airbase#AIRBASE The found AIRBASE.
-function DATABASE:FindAirbase( AirbaseName )
-
-  local AirbaseFound = self.AIRBASES[AirbaseName]
-  return AirbaseFound
 end
 
 --- Adds a Airbase based on the Airbase Name in the DATABASE.
@@ -338,6 +322,9 @@ do -- Zones
 
         -- Store color of zone.
         Zone.Color=color
+        
+        -- Store zone ID.
+        Zone.ZoneID=ZoneData.zoneId
 
         -- Store in DB.
         self.ZONENAMES[ZoneName] = ZoneName
@@ -778,7 +765,9 @@ function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, Category
 
   local StaticTemplate = UTILS.DeepCopy( StaticTemplate )
 
-  local StaticTemplateName = env.getValueDictByKey(StaticTemplate.name)
+  local StaticTemplateGroupName = env.getValueDictByKey(StaticTemplate.name)
+  
+  local StaticTemplateName=StaticTemplate.units[1].name
 
   self.Templates.Statics[StaticTemplateName] = self.Templates.Statics[StaticTemplateName] or {}
 
@@ -786,7 +775,7 @@ function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, Category
   StaticTemplate.CoalitionID = CoalitionID
   StaticTemplate.CountryID = CountryID
 
-  self.Templates.Statics[StaticTemplateName].StaticName = StaticTemplateName
+  self.Templates.Statics[StaticTemplateName].StaticName = StaticTemplateGroupName
   self.Templates.Statics[StaticTemplateName].GroupTemplate = StaticTemplate
   self.Templates.Statics[StaticTemplateName].UnitTemplate = StaticTemplate.units[1]
   self.Templates.Statics[StaticTemplateName].CategoryID = CategoryID
@@ -990,13 +979,15 @@ function DATABASE:_RegisterClients()
 
   for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
     self:I(string.format("Register Client: %s", tostring(ClientName)))
-    self:AddClient( ClientName )
+    local client=self:AddClient( ClientName )
+    client.SpawnCoord=COORDINATE:New(ClientTemplate.x, ClientTemplate.alt, ClientTemplate.y)    
   end
 
   return self
 end
 
---- @param #DATABASE self
+--- Private method that registeres all static objects.
+-- @param #DATABASE self
 function DATABASE:_RegisterStatics()
 
   local CoalitionsData={GroupsRed=coalition.getStaticObjects(coalition.side.RED), GroupsBlue=coalition.getStaticObjects(coalition.side.BLUE), GroupsNeutral=coalition.getStaticObjects(coalition.side.NEUTRAL)}
@@ -1038,7 +1029,7 @@ function DATABASE:_RegisterAirbases()
     local airbaseUID=airbase:GetID(true)
 
     -- Debug output.
-    local text=string.format("Register %s: %s (ID=%d UID=%d), parking=%d [", AIRBASE.CategoryName[airbase.category], tostring(DCSAirbaseName), airbaseID, airbaseUID, airbase.NparkingTotal)
+    local text=string.format("Register %s: %s (UID=%d), Runways=%d, Parking=%d [", AIRBASE.CategoryName[airbase.category], tostring(DCSAirbaseName), airbaseUID, #airbase.runways, airbase.NparkingTotal)
     for _,terminalType in pairs(AIRBASE.TerminalType) do
       if airbase.NparkingTerminal and airbase.NparkingTerminal[terminalType] then
         text=text..string.format("%d=%d ", terminalType, airbase.NparkingTerminal[terminalType])
@@ -1046,11 +1037,6 @@ function DATABASE:_RegisterAirbases()
     end
     text=text.."]"
     self:I(text)
-
-    -- Check for DCS bug IDs.
-    if airbaseID~=airbase:GetID() then
-      --self:E("WARNING: :getID does NOT match :GetID!")
-    end
 
   end
 
@@ -1155,6 +1141,22 @@ function DATABASE:_EventOnDeadOrCrash( Event )
 
       if self.STATICS[Event.IniDCSUnitName] then
         self:DeleteStatic( Event.IniDCSUnitName )
+      end
+      
+      ---
+      -- Maybe a UNIT?
+      ---
+      
+      -- Delete unit.
+      if self.UNITS[Event.IniDCSUnitName] then
+        self:T("STATIC Event for UNIT "..tostring(Event.IniDCSUnitName))
+        local DCSUnit = _DATABASE:FindUnit( Event.IniDCSUnitName )
+        self:T({DCSUnit})
+        if DCSUnit then
+          --self:I("Creating DEAD Event for UNIT "..tostring(Event.IniDCSUnitName))
+          --DCSUnit:Destroy(true)
+          return
+        end
       end
 
     else
@@ -1526,6 +1528,33 @@ function DATABASE:FindOpsGroup(groupname)
 
   --env.info("Getting OPSGROUP "..tostring(groupname))
   return self.FLIGHTGROUPS[groupname]
+end
+
+--- Find an OPSGROUP (FLIGHTGROUP, ARMYGROUP, NAVYGROUP) in the data base for a given unit.
+-- @param #DATABASE self
+-- @param #string unitname Unit name. Can also be passed as UNIT object.
+-- @return Ops.OpsGroup#OPSGROUP OPS group object.
+function DATABASE:FindOpsGroupFromUnit(unitname)
+
+  local unit=nil --Wrapper.Unit#UNIT
+  local groupname
+
+  -- Get group and group name.
+  if type(unitname)=="string" then
+    unit=UNIT:FindByName(unitname)
+  else
+    unit=unitname
+  end
+  
+  if unit then
+    groupname=unit:GetGroup():GetName()
+  end
+  
+  if groupname then
+    return self.FLIGHTGROUPS[groupname]
+  else
+    return nil
+  end
 end
 
 --- Add a flight control to the data base.

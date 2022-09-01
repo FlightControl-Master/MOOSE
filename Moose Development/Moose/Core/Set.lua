@@ -210,7 +210,7 @@ do -- SET_BASE
     self:F2( { ObjectName = ObjectName } )
     
     local TriggerEvent = true
-    if NoTriggerEvent == false then TriggerEvent = false end
+    if NoTriggerEvent then TriggerEvent = false end
     
     local Object = self.Set[ObjectName]
 
@@ -326,7 +326,7 @@ do -- SET_BASE
 
     for _,Object in pairs(union.Set) do
       if self:IsIncludeObject(Object) and SetB:IsIncludeObject(Object) then
-        intersection:AddObject(intersection)
+        intersection:AddObject(Object)
       end
     end
 
@@ -349,7 +349,6 @@ do -- SET_BASE
     return complement
   end
 
-
   --- Compare two sets.
   -- @param #SET_BASE self
   -- @param Core.Set#SET_BASE SetA First set.
@@ -365,9 +364,6 @@ do -- SET_BASE
 
     return SetA
   end
-
-
-
 
   --- Gets a @{Core.Base#BASE} object from the @{Core.Set#SET_BASE} and derived classes, based on the Object Name.
   -- @param #SET_BASE self
@@ -1029,7 +1025,7 @@ do -- SET_GROUP
 
   --- Gets the Set.
   -- @param #SET_GROUP self
-  -- @return #SET_GROUP self
+  -- @return #table Table of objects
   function SET_GROUP:GetAliveSet()
     self:F2()
 
@@ -1085,16 +1081,22 @@ do -- SET_GROUP
   -- Note that for each unit in the group that is set, a default cargo bay limit is initialized.
   -- @param Core.Set#SET_GROUP self
   -- @param Wrapper.Group#GROUP group The group which should be added to the set.
+  -- @param #boolean DontSetCargoBayLimit If true, do not attempt to auto-add the cargo bay limit per unit in this group.
   -- @return Core.Set#SET_GROUP self
-  function SET_GROUP:AddGroup( group )
+  function SET_GROUP:AddGroup( group, DontSetCargoBayLimit )
 
     self:Add( group:GetName(), group )
-
-    -- I set the default cargo bay weight limit each time a new group is added to the set.
-    for UnitID, UnitData in pairs( group:GetUnits() ) do
-      UnitData:SetCargoBayWeightLimit()
+    
+    if not DontSetCargoBayLimit then
+      -- I set the default cargo bay weight limit each time a new group is added to the set.
+      -- TODO Why is this here in the first place?
+      for UnitID, UnitData in pairs( group:GetUnits() ) do
+        if UnitData and UnitData:IsAlive() then
+          UnitData:SetCargoBayWeightLimit()
+        end
+      end
     end
-
+    
     return self
   end
 
@@ -1150,8 +1152,10 @@ do -- SET_GROUP
 
     local NearestGroup = nil --Wrapper.Group#GROUP
     local ClosestDistance = nil
-
-    for ObjectID, ObjectData in pairs( self.Set ) do
+    
+    local Set = self:GetAliveSet()
+    
+    for ObjectID, ObjectData in pairs( Set ) do
       if NearestGroup == nil then
         NearestGroup = ObjectData
         ClosestDistance = PointVec2:DistanceFromPointVec2( ObjectData:GetCoordinate() )
@@ -1363,7 +1367,11 @@ do -- SET_GROUP
     if Event.IniDCSUnit then
       local ObjectName, Object = self:FindInDatabase( Event )
       if ObjectName then
-        if Event.IniDCSGroup:getSize() == 1 then -- Only remove if the last unit of the group was destroyed.
+        local size = 1
+        if Event.IniDCSGroup then
+         size = Event.IniDCSGroup:getSize()
+        end
+        if size == 1 then -- Only remove if the last unit of the group was destroyed.
           self:Remove( ObjectName )
         end
       end
@@ -4174,6 +4182,26 @@ do -- SET_CLIENT
     return CountU
   end
   
+  
+  --- Gets the alive set.
+  -- @param #SET_CLIENT self
+  -- @return #table Table of SET objects
+  function SET_CLIENT:GetAliveSet()
+
+    local AliveSet = SET_CLIENT:New()
+
+    -- Clean the Set before returning with only the alive Groups.
+    for GroupName, GroupObject in pairs(self.Set) do    
+      local GroupObject=GroupObject --Wrapper.Client#CLIENT
+      
+      if GroupObject and GroupObject:IsAlive() then      
+        AliveSet:Add(GroupName, GroupObject)
+      end
+    end
+
+    return AliveSet.Set or {}
+  end
+
   ---
   -- @param #SET_CLIENT self
   -- @param Wrapper.Client#CLIENT MClient
@@ -5763,8 +5791,28 @@ do -- SET_ZONE
     return self
   end
 
+  --- Draw all zones in the set on the F10 map.
+  -- @param #SET_ZONE self
+  -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+  -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
+  -- @param #number Alpha Transparency [0,1]. Default 1.
+  -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+  -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
+  -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+  -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+  -- @return #SET_ZONE self
+  function SET_ZONE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
+  
+    for _,_zone in pairs(self.Set) do
+      local zone=_zone --Core.Zone#ZONE
+      zone:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
+    end
 
-  ---
+    return self
+  end
+
+
+  --- Private function.
   -- @param #SET_ZONE self
   -- @param Core.Zone#ZONE_BASE MZone
   -- @return #SET_ZONE self
@@ -5779,7 +5827,7 @@ do -- SET_ZONE
       if self.Filter.Prefixes then
         local MZonePrefix = false
         for ZonePrefixId, ZonePrefix in pairs( self.Filter.Prefixes ) do
-          self:T3( { "Prefix:", string.find( MZoneName, ZonePrefix, 1 ), ZonePrefix } )
+          self:T2( { "Prefix:", string.find( MZoneName, ZonePrefix, 1 ), ZonePrefix } )
           if string.find( MZoneName, ZonePrefix, 1 ) then
             MZonePrefix = true
           end
@@ -6284,7 +6332,7 @@ do -- SET_OPSGROUP
 
   --- Creates a new SET_OPSGROUP object, building a set of groups belonging to a coalitions, categories, countries, types or with defined prefix names.
   -- @param #SET_OPSGROUP self
-  -- @return #SET_OPSGROUP
+  -- @return #SET_OPSGROUP self
   function SET_OPSGROUP:New()
 
     -- Inherit SET_BASE.
@@ -6366,6 +6414,14 @@ do -- SET_OPSGROUP
 
     -- Trigger Added event.
     self:Added(ObjectName, object)
+  end
+  
+  --- Adds a @{Core.Base#BASE} object in the @{Core.Set#SET_BASE}, using the Object Name as the index.
+  -- @param #SET_BASE self
+  -- @param Ops.OpsGroup#OPSGROUP Object Ops group
+  -- @return Core.Base#BASE The added BASE Object.
+  function SET_OPSGROUP:AddObject(Object)
+    self:Add(Object.groupname, Object)
   end  
 
   --- Add a GROUP or OPSGROUP object to the set.

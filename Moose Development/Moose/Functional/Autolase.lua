@@ -74,6 +74,7 @@
 -- @image Designation.JPG
 --
 -- Date: 24 Oct 2021
+-- Last Update: Aug 2022
 --
 --- Class AUTOLASE
 -- @type AUTOLASE
@@ -106,10 +107,11 @@ AUTOLASE = {
 -- @field #string unitname
 -- @field #string reccename
 -- @field #string unittype
+-- @field Core.Point#COORDINATE coordinate
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.0.10"
+AUTOLASE.version = "0.1.14"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -191,6 +193,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.SRSPath = ""
   self.SRSFreq = 251
   self.SRSMod = radio.modulation.AM
+  self.NoMenus = false
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AUTOLASE %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -206,14 +209,14 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self:AddTransition("*",             "Cancel",               "*")     -- Stop Autolase
   
   -- Menu Entry
-  if not PilotSet then
-    self.Menu = MENU_COALITION_COMMAND:New(self.coalition,"Autolase",nil,self.ShowStatus,self)
-  else
+  if PilotSet then
     self.usepilotset = true
     self.pilotset = PilotSet
     self:HandleEvent(EVENTS.PlayerEnterAircraft)
-    self:SetPilotMenu()
+    --self:SetPilotMenu()
   end
+  --self.SetPilotMenu()
+  
   
   self:SetClusterAnalysis(false, false)
   
@@ -307,6 +310,10 @@ function AUTOLASE:SetPilotMenu()
         lasemenu:Refresh()
       end
     end
+  else
+    if not self.NoMenus then
+      self.Menu = MENU_COALITION_COMMAND:New(self.coalition,"Autolase",nil,self.ShowStatus,self)
+    end
   end
   return self
 end
@@ -344,7 +351,7 @@ function AUTOLASE:GetSmokeColor(RecceName)
   if self.RecceSmokeColor[RecceName] == nil then
     self.RecceSmokeColor[RecceName] = color
   else
-    color = self.RecceLaserCode[RecceName]
+    color = self.RecceSmokeColor[RecceName]
   end
   return color
 end
@@ -355,12 +362,45 @@ end
 -- @param #string Path Path to SRS directory, e.g. C:\\Program Files\\DCS-SimpleRadio-Standalon
 -- @param #number Frequency Frequency to send, e.g. 243
 -- @param #number Modulation Modulation i.e. radio.modulation.AM or radio.modulation.FM
+-- @param #string Label (Optional) Short label to be used on the SRS Client Overlay
+-- @param #string Gender (Optional) Defaults to "male"
+-- @param #string Culture (Optional) Defaults to "en-US"
+-- @param #number Port (Optional) Defaults to 5002
+-- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
+-- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
+-- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
+-- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS
 -- @return #AUTOLASE self 
-function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation)
-  self.useSRS = OnOff or true
-  self.SRSPath = Path or "E:\\Program Files\\DCS-SimpleRadio-Standalone"
-  self.SRSFreq = Frequency or 271
-  self.SRSMod = Modulation or radio.modulation.AM
+function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
+  if OnOff then
+    self.useSRS = true
+    self.SRSPath = Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+    self.SRSFreq = Frequency or 271
+    self.SRSMod = Modulation or radio.modulation.AM
+    self.Gender = Gender or "male"
+    self.Culture = Culture or "en-US"
+    self.Port = Port or 5002
+    self.Voice = Voice 
+    self.PathToGoogleKey = PathToGoogleKey
+    self.Volume = Volume or 1.0
+    self.Label = Label
+    -- set up SRS
+    self.SRS = MSRS:New(self.SRSPath,self.SRSFreq,self.SRSMod,self.Volume)
+    self.SRS:SetCoalition(self.coalition)
+    self.SRS:SetLabel(self.MenuName or self.Name)
+    self.SRS:SetGender(self.Gender)
+    self.SRS:SetCulture(self.Culture)
+    self.SRS:SetPort(self.Port)
+    self.SRS:SetVoice(self.Voice)
+    if self.PathToGoogleKey then
+      self.SRS:SetGoogle(self.PathToGoogleKey)
+    end
+    self.SRSQueue = MSRSQUEUE:New(self.alias)
+  else
+    self.useSRS = false
+    self.SRS= nil
+    self.SRSQueue = nil
+  end
   return self
 end
 
@@ -578,6 +618,17 @@ function AUTOLASE:ShowStatus(Group)
     local typename = entry.unittype
     local code = entry.lasercode
     local locationstring = entry.location
+    local playername = Group:GetPlayerName()
+    if playername then
+      local settings = _DATABASE:GetPlayerSettings(playername)
+      if settings then
+        if settings:IsA2G_MGRS() then
+          locationstring = entry.coordinate:ToStringMGRS(settings)
+        elseif settings:IsA2G_LL_DMS() then
+          locationstring = entry.coordinate:ToStringLLDMS()
+        end
+      end
+    end
     local text = string.format("%s lasing %s code %d\nat %s",reccename,typename,code,locationstring)
     report:Add(text)
     lines = lines + 1
@@ -631,20 +682,7 @@ end
 --            end
 function AUTOLASE:NotifyPilotsWithSRS(Message)
   if self.useSRS then
-   -- Create a SOUNDTEXT object.
-   if self.debug then
-     BASE:TraceOn()
-     BASE:TraceClass("SOUNDTEXT")
-     BASE:TraceClass("MSRS")
-   end
-   local path = self.SRSPath or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
-   local freq = self.SRSFreq or 271
-   local mod = self.SRSMod or radio.modulation.AM
-   local text=SOUNDTEXT:New(Message)  
-   -- MOOSE SRS 
-   local msrs=MSRS:New(path, freq, mod)
-   -- Text-to speech with default voice after 2 seconds.
-   msrs:PlaySoundText(text, 2)
+   self.SRSQueue:NewTransmission(Message,nil,self.SRS,nil,2)
   end
   if self.debug then self:I(Message) end
   return self
@@ -674,25 +712,27 @@ end
 function AUTOLASE:CanLase(Recce,Unit)
   local canlase = false
   -- cooldown?
-  local name = Recce:GetName()
-  local cooldown = self.RecceUnits[name].cooldown and self.forcecooldown
-  if cooldown then
-    local Tdiff = timer.getAbsTime() - self.RecceUnits[name].timestamp
-    if Tdiff < self.cooldowntime then
-      return false
-    else
-      self.RecceUnits[name].cooldown = false
+  if Recce and Recce:IsAlive() == true then
+    local name = Recce:GetName()
+    local cooldown = self.RecceUnits[name].cooldown and self.forcecooldown
+    if cooldown then
+      local Tdiff = timer.getAbsTime() - self.RecceUnits[name].timestamp
+      if Tdiff < self.cooldowntime then
+        return false
+      else
+        self.RecceUnits[name].cooldown = false
+      end
     end
-  end
-  -- calculate LOS
-  local reccecoord = Recce:GetCoordinate()
-  local unitcoord = Unit:GetCoordinate()
-  local islos = reccecoord:IsLOS(unitcoord,2.5)
-  -- calculate distance
-  local distance = math.floor(reccecoord:Get3DDistance(unitcoord))
-  local lasedistance = self:GetLosFromUnit(Recce)
-  if distance <= lasedistance and islos then
-    canlase = true
+    -- calculate LOS
+    local reccecoord = Recce:GetCoordinate()
+    local unitcoord = Unit:GetCoordinate()
+    local islos = reccecoord:IsLOS(unitcoord,2.5)
+    -- calculate distance
+    local distance = math.floor(reccecoord:Get3DDistance(unitcoord))
+    local lasedistance = self:GetLosFromUnit(Recce)
+    if distance <= lasedistance and islos then
+      canlase = true
+    end
   end
   return canlase
 end
@@ -736,20 +776,22 @@ function AUTOLASE:onafterMonitor(From, Event, To)
     local contact = _contact -- Ops.Intelligence#INTEL.Contact
     local grp = contact.group
     local coord = contact.position
-    local reccename = contact.recce
+    local reccename = contact.recce or "none"
     local reccegrp = UNIT:FindByName(reccename)
-    local reccecoord = reccegrp:GetCoordinate()
-    local distance = math.floor(reccecoord:Get3DDistance(coord))
-    local text = string.format("%s of %s | Distance %d km | Threatlevel %d",contact.attribute, contact.groupname, math.floor(distance/1000), contact.threatlevel)
-    report:Add(text)
-    self:T(text)
-    if self.debug then self:I(text) end
-    lines = lines  +  1
-    -- sort out groups beyond sight
-    local lasedistance = self:GetLosFromUnit(reccegrp)
-    if grp:IsGround() and lasedistance >= distance then
-      table.insert(groupsbythreat,{contact.group,contact.threatlevel})
-      self.RecceNames[contact.groupname] = contact.recce
+    if reccegrp then
+      local reccecoord = reccegrp:GetCoordinate()
+      local distance = math.floor(reccecoord:Get3DDistance(coord))
+      local text = string.format("%s of %s | Distance %d km | Threatlevel %d",contact.attribute, contact.groupname, math.floor(distance/1000), contact.threatlevel)
+      report:Add(text)
+      self:T(text)
+      if self.debug then self:I(text) end
+      lines = lines  +  1
+      -- sort out groups beyond sight
+      local lasedistance = self:GetLosFromUnit(reccegrp)
+      if grp:IsGround() and lasedistance >= distance then
+        table.insert(groupsbythreat,{contact.group,contact.threatlevel})
+        self.RecceNames[contact.groupname] = contact.recce
+      end
     end
   end
   
@@ -828,7 +870,16 @@ function AUTOLASE:onafterMonitor(From, Event, To)
         local code = self:GetLaserCode(reccename)
         local spot = SPOT:New(recce)
         spot:LaseOn(unit,code,self.LaseDuration)
-        local locationstring = unit:GetCoordinate():ToStringLLDDM()
+        local locationstring = unit:GetCoordinate():ToStringLLDDM()    
+        if _SETTINGS:IsA2G_MGRS() then
+          local precision = _SETTINGS:GetMGRS_Accuracy()
+          local settings = {}
+          settings.MGRS_Accuracy = precision
+          locationstring = unit:GetCoordinate():ToStringMGRS(settings)
+        elseif _SETTINGS:IsA2G_LL_DMS() then
+          locationstring = unit:GetCoordinate():ToStringLLDMS()
+        end
+  
         local laserspot = { -- #AUTOLASE.LaserSpot
           laserspot = spot,
           lasedunit = unit,
@@ -839,6 +890,7 @@ function AUTOLASE:onafterMonitor(From, Event, To)
           unitname = unitname,
           reccename = reccename,
           unittype = unit:GetTypeName(),
+          coordinate = unit:GetCoordinate(),
           }
        if self.smoketargets then
           local coord = unit:GetCoordinate()

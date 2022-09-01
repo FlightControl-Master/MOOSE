@@ -10,6 +10,8 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
+-- 
+-- ===
 -- @module Core.Astar
 -- @image CORE_Astar.png
 
@@ -36,11 +38,9 @@
 -- @field #table CostArg Optional arguments passed to the cost function. 
 -- @extends Core.Base#BASE
 
---- **When nothing goes right... Go left!**
+--- *When nothing goes right... Go left!*
 --
 -- ===
---
--- ![Banner Image](..\Presentations\Astar\ASTAR_Main.jpg)
 --
 -- # The ASTAR Concept
 -- 

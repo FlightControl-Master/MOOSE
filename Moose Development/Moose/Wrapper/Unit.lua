@@ -24,6 +24,7 @@
 --- @type UNIT
 -- @field #string ClassName Name of the class.
 -- @field #string UnitName Name of the unit.
+-- @field #string GroupName Name of the group the unit belongs to.
 -- @extends Wrapper.Controllable#CONTROLLABLE
 
 --- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
@@ -86,10 +87,11 @@
 --   * Use the @{#UNIT.IsLOS}() method to check if the given unit is within line of sight.
 -- 
 -- 
--- @field #UNIT UNIT
+-- @field #UNIT
 UNIT = {
 	ClassName="UNIT",
 	UnitName=nil,
+	GroupName=nil,
 }
 
 
@@ -110,10 +112,19 @@ UNIT = {
 function UNIT:Register( UnitName )
 
   -- Inherit CONTROLLABLE.
-  local self = BASE:Inherit( self, CONTROLLABLE:New( UnitName ) )
+  local self = BASE:Inherit( self, CONTROLLABLE:New( UnitName ) ) --#UNIT
   
   -- Set unit name.
   self.UnitName = UnitName
+  
+  local unit=Unit.getByName(self.UnitName)
+  
+  if unit then
+    local group = unit:getGroup()
+    if group then 
+      self.GroupName=group:getName()
+    end
+  end
   
   -- Set event prio.
   self:SetEventPriority( 3 )
@@ -168,8 +179,28 @@ function UNIT:GetDCSObject()
   return nil
 end
 
+--- Returns the unit altitude above sea level in meters.
+-- @param Wrapper.Unit#UNIT self
+-- @param #boolean FromGround Measure from the ground or from sea level (ASL). Provide **true** for measuring from the ground (AGL). **false** or **nil** if you measure from sea level. 
+-- @return #number The height of the group or nil if is not existing or alive.  
+function UNIT:GetAltitude(FromGround)
+  
+  local DCSUnit = Unit.getByName( self.UnitName )
 
+  if DCSUnit then
+    local altitude = 0
+    local point = DCSUnit:getPoint() --DCS#Vec3
+    altitude = point.y
+    if FromGround then
+      local land = land.getHeight( { x = point.x, y = point.z } ) or 0
+      altitude = altitude - land
+    end
+    return altitude
+  end
 
+  return nil
+  
+end
 
 --- Respawn the @{Wrapper.Unit} using a (tweaked) template of the parent Group.
 -- 
@@ -407,6 +438,17 @@ function UNIT:GetClient()
 
   return nil
 end
+
+--- [AIRPLANE] Get the NATO reporting name of a UNIT. Currently airplanes only!
+--@param #UNIT self
+--@return #string NatoReportingName or "Bogey" if unknown.
+function UNIT:GetNatoReportingName()
+  
+  local typename = self:GetTypeName()
+  return UTILS.GetReportingName(typename)
+  
+end
+
 
 --- Returns the unit's number in the group. 
 -- The number is the same number the unit has in ME. 
@@ -788,7 +830,9 @@ function UNIT:HasSEAD()
     
     local HasSEAD = false
     if UnitSEADAttributes["RADAR_BAND1_FOR_ARM"] and UnitSEADAttributes["RADAR_BAND1_FOR_ARM"] == true or
-       UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] and UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] == true then
+       UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] and UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] == true or
+       UnitSEADAttributes["Optical Tracker"] and UnitSEADAttributes["Optical Tracker"] == true  
+       then
        HasSEAD = true
     end
     return HasSEAD
@@ -1025,7 +1069,7 @@ function UNIT:GetThreatLevel()
   if Descriptor then 
   
     local Attributes = Descriptor.attributes
-  
+    
     if self:IsGround() then
     
       local ThreatLevels = {

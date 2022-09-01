@@ -51,8 +51,11 @@
 -- @field #number Tparking Abs. mission time stamp when the group was spawned uncontrolled and is parking.
 -- @field #table menu F10 radio menu.
 -- @field #string controlstatus Flight control status.
--- @field #boolean despawnAfterLanding If true, group is despawned after landed at an airbase.
+-- @field #boolean despawnAfterLanding If `true`, group is despawned after landed at an airbase.
+-- @field #boolean despawnAfterHolding If `true`, group is despawned after reaching the holding point.
 -- @field #number RTBRecallCount Number that counts RTB calls.
+-- @field Ops.FlightControl#FLIGHTCONTROL.HoldingStack stack Holding stack.
+-- @field #boolean isReadyTO Flight is ready for takeoff. This is for FLIGHTCONTROL.
 --
 -- @extends Ops.OpsGroup#OPSGROUP
 
@@ -140,6 +143,8 @@ FLIGHTGROUP = {
   menu               =   nil,
   isHelo             =   nil,
   RTBRecallCount     =     0,
+  playerSettings     =    {},
+  playerWarnings     =    {},
 }
 
 
@@ -166,9 +171,46 @@ FLIGHTGROUP.Attribute = {
   OTHER="Other",
 }
 
+--- Radio Text.
+-- @type FLIGHTGROUP.RadioText
+-- @field #string normal
+-- @field #string enhanced
+
+--- Radio messages.
+-- @type FLIGHTGROUP.RadioMessage
+-- @field #FLIGHTGROUP.RadioText AIRBORNE
+-- @field #FLIGHTGROUP.RadioText TAXIING
+FLIGHTGROUP.RadioMessage = {
+  AIRBORNE={normal="Airborn", enhanced="Airborn"},
+  TAXIING={normal="Taxiing", enhanced="Taxiing"},
+}
+
+--- Skill level.
+-- @type FLIGHTGROUP.PlayerSkill
+-- @field #string STUDENT Flight Student. Shows tips and hints in important phases of the approach.
+-- @field #string AVIATOR Naval aviator. Moderate number of hints but not really zip lip.
+-- @field #string GRADUATE TOPGUN graduate. For people who know what they are doing. Nearly *ziplip*.
+-- @field #string INSTRUCTOR TOPGUN instructor. For people who know what they are doing. Nearly *ziplip*.
+FLIGHTGROUP.PlayerSkill = {
+  STUDENT    = "Student",
+  AVIATOR    = "Aviator",
+  GRADUATE   = "Graduate",
+  INSTRUCTOR = "Instructor",
+}
+
+--- Player data.
+-- @type FLIGHTGROUP.PlayerData
+-- @type #string name Player name.
+-- @field #boolean subtitles Display subtitles.
+-- @field #string skill Skill level.
+
+--- FLIGHTGROUP players.
+-- @field #table Players Player data.
+FLIGHTGROUP.Players={}
+
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.7.0"
+FLIGHTGROUP.version="0.8.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -280,17 +322,18 @@ function FLIGHTGROUP:New(group)
   -- TODO: Add pseudo functions.
 
   -- Handle events:
-  self:HandleEvent(EVENTS.Birth,          self.OnEventBirth)
-  self:HandleEvent(EVENTS.EngineStartup,  self.OnEventEngineStartup)
-  self:HandleEvent(EVENTS.Takeoff,        self.OnEventTakeOff)
-  self:HandleEvent(EVENTS.Land,           self.OnEventLanding)
-  self:HandleEvent(EVENTS.EngineShutdown, self.OnEventEngineShutdown)
-  self:HandleEvent(EVENTS.PilotDead,      self.OnEventPilotDead)
-  self:HandleEvent(EVENTS.Ejection,       self.OnEventEjection)
-  self:HandleEvent(EVENTS.Crash,          self.OnEventCrash)
-  self:HandleEvent(EVENTS.RemoveUnit,     self.OnEventRemoveUnit)
-  self:HandleEvent(EVENTS.UnitLost,       self.OnEventUnitLost)
-  self:HandleEvent(EVENTS.Kill,           self.OnEventKill)
+  self:HandleEvent(EVENTS.Birth,           self.OnEventBirth)
+  self:HandleEvent(EVENTS.EngineStartup,   self.OnEventEngineStartup)
+  self:HandleEvent(EVENTS.Takeoff,         self.OnEventTakeOff)
+  self:HandleEvent(EVENTS.Land,            self.OnEventLanding)
+  self:HandleEvent(EVENTS.EngineShutdown,  self.OnEventEngineShutdown)
+  self:HandleEvent(EVENTS.PilotDead,       self.OnEventPilotDead)
+  self:HandleEvent(EVENTS.Ejection,        self.OnEventEjection)
+  self:HandleEvent(EVENTS.Crash,           self.OnEventCrash)
+  self:HandleEvent(EVENTS.RemoveUnit,      self.OnEventRemoveUnit)
+  self:HandleEvent(EVENTS.UnitLost,        self.OnEventUnitLost)
+  self:HandleEvent(EVENTS.Kill,            self.OnEventKill)
+  self:HandleEvent(EVENTS.PlayerLeaveUnit, self.OnEventPlayerLeaveUnit)
 
   -- Init waypoints.
   self:_InitWaypoints()
@@ -342,6 +385,20 @@ function FLIGHTGROUP:SetVTOL()
   return self
 end
 
+--- Set if group is ready for taxi/takeoff if controlled by a `FLIGHTCONTROL`.
+-- @param #FLIGHTGROUP self
+-- @param #boolean ReadyTO If `true`, flight is ready for takeoff.
+-- @param #number Delay Delay in seconds before value is set. Default 0 sec.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetReadyForTakeoff(ReadyTO, Delay)
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, FLIGHTGROUP.SetReadyForTakeoff, self, ReadyTO, 0)
+  else
+    self.isReadyTO=ReadyTO
+  end
+  return self
+end
+
 --- Set the FLIGHTCONTROL controlling this flight group.
 -- @param #FLIGHTGROUP self
 -- @param Ops.FlightControl#FLIGHTCONTROL flightcontrol The FLIGHTCONTROL object.
@@ -350,7 +407,7 @@ function FLIGHTGROUP:SetFlightControl(flightcontrol)
 
   -- Check if there is already a FC.
   if self.flightcontrol then
-    if self.flightcontrol.airbasename==flightcontrol.airbasename then
+    if self.flightcontrol:IsControlling(self) then
       -- Flight control is already controlling this flight!
       return
     else
@@ -364,11 +421,8 @@ function FLIGHTGROUP:SetFlightControl(flightcontrol)
   self.flightcontrol=flightcontrol
 
   -- Add flight to all flights.
-  table.insert(flightcontrol.flights, self)
-
-  -- Update flight's F10 menu.
-  if self.isAI==false then
-    self:_UpdateMenu(0.5)
+  if not flightcontrol:IsFlight(self) then
+    table.insert(flightcontrol.flights, self)
   end
 
   return self
@@ -508,89 +562,133 @@ function FLIGHTGROUP:SetDespawnAfterLanding()
   return self
 end
 
-
---- Check if flight is parking.
+--- Enable that the group is despawned after holding. This can be useful to avoid DCS taxi issues with other AI or players or jamming taxiways.
 -- @param #FLIGHTGROUP self
--- @return #boolean If true, flight is parking after spawned.
-function FLIGHTGROUP:IsParking()
-  return self:Is("Parking")
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetDespawnAfterHolding()
+  self.despawnAfterHolding=true
+  return self
 end
 
+
 --- Check if flight is parking.
 -- @param #FLIGHTGROUP self
+-- @param Ops.OpsGroup#OPSGROUP.Element Element (Optional) Only check status for given element.
+-- @return #boolean If true, flight is parking after spawned.
+function FLIGHTGROUP:IsParking(Element)
+  local is=self:Is("Parking")
+  if Element then
+    is=Element.status==OPSGROUP.ElementStatus.PARKING
+  end
+  return is 
+end
+
+--- Check if is taxiing to the runway.
+-- @param #FLIGHTGROUP self
+-- @param Ops.OpsGroup#OPSGROUP.Element Element (Optional) Only check status for given element.
 -- @return #boolean If true, flight is taxiing after engine start up.
-function FLIGHTGROUP:IsTaxiing()
-  return self:Is("Taxiing")
+function FLIGHTGROUP:IsTaxiing(Element)
+  local is=self:Is("Taxiing")
+  if Element then
+    is=Element.status==OPSGROUP.ElementStatus.TAXIING
+  end
+  return is
 end
 
 --- Check if flight is airborne or cruising.
 -- @param #FLIGHTGROUP self
+-- @param Ops.OpsGroup#OPSGROUP.Element Element (Optional) Only check status for given element.
 -- @return #boolean If true, flight is airborne.
-function FLIGHTGROUP:IsAirborne()
-  return self:Is("Airborne") or self:Is("Cruising")
+function FLIGHTGROUP:IsAirborne(Element)
+  local is=self:Is("Airborne") or self:Is("Cruising")
+  if Element then
+    is=Element.status==OPSGROUP.ElementStatus.AIRBORNE
+  end
+  return is 
 end
 
 --- Check if flight is airborne or cruising.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, flight is airborne.
 function FLIGHTGROUP:IsCruising()
-  return self:Is("Cruising")
+  local is=self:Is("Cruising")
+  return is
 end
 
 --- Check if flight is landing.
 -- @param #FLIGHTGROUP self
+-- @param Ops.OpsGroup#OPSGROUP.Element Element (Optional) Only check status for given element.
 -- @return #boolean If true, flight is landing, i.e. on final approach.
-function FLIGHTGROUP:IsLanding()
-  return self:Is("Landing")
+function FLIGHTGROUP:IsLanding(Element)
+  local is=self:Is("Landing")
+  if Element then
+    is=Element.status==OPSGROUP.ElementStatus.LANDING
+  end
+  return is 
 end
 
 --- Check if flight has landed and is now taxiing to its parking spot.
 -- @param #FLIGHTGROUP self
+-- @param Ops.OpsGroup#OPSGROUP.Element Element (Optional) Only check status for given element.
 -- @return #boolean If true, flight has landed
-function FLIGHTGROUP:IsLanded()
-  return self:Is("Landed")
+function FLIGHTGROUP:IsLanded(Element)
+  local is=self:Is("Landed")
+  if Element then
+    is=Element.status==OPSGROUP.ElementStatus.LANDED
+  end
+  return is 
 end
 
 --- Check if flight has arrived at its destination parking spot.
 -- @param #FLIGHTGROUP self
+-- @param Ops.OpsGroup#OPSGROUP.Element Element (Optional) Only check status for given element.
 -- @return #boolean If true, flight has arrived at its destination and is parking.
-function FLIGHTGROUP:IsArrived()
-  return self:Is("Arrived")
+function FLIGHTGROUP:IsArrived(Element)
+  local is=self:Is("Arrived")
+  if Element then
+    is=Element.status==OPSGROUP.ElementStatus.ARRIVED
+  end
+  return is 
 end
 
 --- Check if flight is inbound and traveling to holding pattern.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, flight is holding.
 function FLIGHTGROUP:IsInbound()
-  return self:Is("Inbound")
+  local is=self:Is("Inbound")
+  return is
 end
 
 --- Check if flight is holding and waiting for landing clearance.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, flight is holding.
 function FLIGHTGROUP:IsHolding()
-  return self:Is("Holding")
+  local is=self:Is("Holding")
+  return is
 end
 
 --- Check if flight is going for fuel.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, flight is refueling.
 function FLIGHTGROUP:IsGoing4Fuel()
-  return self:Is("Going4Fuel")
+  local is=self:Is("Going4Fuel")
+  return is
 end
 
 --- Check if helo(!) flight is ordered to land at a specific point.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, group has task to land somewhere.
 function FLIGHTGROUP:IsLandingAt()
-  return self:Is("LandingAt")
+  local is=self:Is("LandingAt")
+  return is
 end
 
---- Check if helo(!) flight is currently landed at a specific point.
+--- Check if helo(!) flight has landed at a specific point.
 -- @param #FLIGHTGROUP self
--- @return #boolean If true, group is currently landed at the assigned position and waiting until task is complete.
+-- @return #boolean If true, has landed somewhere.
 function FLIGHTGROUP:IsLandedAt()
-  return self:Is("LandedAt")
+  is=self:Is("LandedAt")
+  return is
 end
 
 --- Check if flight is low on fuel.
@@ -668,7 +766,7 @@ function FLIGHTGROUP:StartUncontrolled(delay)
       self.group:StartUncontrolled(_delay)
       self.isUncontrolled=false
     else
-      self:E(self.lid.."ERROR: Could not start uncontrolled group as it is NOT alive!")
+      self:T(self.lid.."ERROR: Could not start uncontrolled group as it is NOT alive!")
     end
 
   end
@@ -687,8 +785,20 @@ function FLIGHTGROUP:ClearToLand(Delay)
   else
 
     if self:IsHolding() then
+    
+      -- Set flag.
       self:T(self.lid..string.format("Clear to land ==> setting holding flag to 1 (true)"))
       self.flaghold:Set(1)
+      
+      -- Not holding any more.
+      self.Tholding=nil
+      
+      -- Clear holding stack.
+      if self.stack then
+        self.stack.flightgroup=nil
+        self.stack=nil
+      end
+      
     end
 
   end
@@ -729,60 +839,6 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
----- Update status.
--- @param #FLIGHTGROUP self
-function FLIGHTGROUP:onbeforeStatus(From, Event, To)
-
-  -- First we check if elements are still alive. Could be that they were despawned without notice, e.g. when landing on a too small airbase.
-  for i,_element in pairs(self.elements) do
-    local element=_element --Ops.OpsGroup#OPSGROUP.Element
-
-    -- Check that element is not already dead or not yet alive.
-    if element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
-
-      -- Unit shortcut.
-      local unit=element.unit
-
-      local isdead=false
-      if unit and unit:IsAlive() then
-
-        -- Get life points.
-        local life=unit:GetLife() or 0
-
-        -- Units with life <=1 are dead.
-        if life<=1 then
-          --env.info(string.format("FF unit %s: live<=1 in status at T=%.3f", unit:GetName(), timer.getTime()))
-          isdead=true
-        end
-
-      else
-        -- Not alive any more.
-        --env.info(string.format("FF unit %s: NOT alive in status at T=%.3f", unit:GetName(), timer.getTime()))
-        isdead=true
-      end
-
-      -- This one is dead.
-      if isdead then
-        local text=string.format("Element %s is dead at t=%.3f but has status %s! Maybe despawned without notice or landed at a too small airbase. Calling ElementDead in 60 sec to give other events a chance",
-        tostring(element.name), timer.getTime(), tostring(element.status))
-        self:E(self.lid..text)
-        self:__ElementDead(60, element)
-      end
-
-    end
-  end
-
-  if self:IsDead() then
-    self:T(self.lid..string.format("Onbefore Status DEAD ==> false"))
-    return false
-  elseif self:IsStopped() then
-    self:T(self.lid..string.format("Onbefore Status STOPPED ==> false"))
-    return false
-  end
-
-  return true
-end
 
 --- Status update.
 -- @param #FLIGHTGROUP self
@@ -826,26 +882,30 @@ function FLIGHTGROUP:Status()
     if self:IsParking() then
       for _,_element in pairs(self.elements) do
         local element=_element --Ops.OpsGroup#OPSGROUP.Element
+        
+        -- Check for parking spot.
         if element.parking then
   
           -- Get distance to assigned parking spot.
-          local dist=element.unit:GetCoordinate():Get2DDistance(element.parking.Coordinate)
-  
-          -- If distance >10 meters, we consider the unit as taxiing.
-          -- TODO: Check distance threshold! If element is taxiing, the parking spot is free again.
-          --       When the next plane is spawned on this spot, collisions should be avoided!
-          if dist>10 then
-            if element.status==OPSGROUP.ElementStatus.ENGINEON then
-              self:ElementTaxiing(element)
-            end
+          local dist=self:_GetDistToParking(element.parking, element.unit:GetCoord())
+          
+          -- Debug info.
+          self:T(self.lid..string.format("Distance to parking spot %d = %.1f meters", element.parking.TerminalID, dist))
+                      
+          -- If distance >10 meters, we consider the unit as taxiing. At least for fighters, the initial distance seems to be around 1.8 meters.
+          if dist>12 and element.engineOn then
+            self:ElementTaxiing(element)
           end
   
         else
-          --self:E(self.lid..string.format("Element %s is in PARKING queue but has no parking spot assigned!", element.name))
+          --self:T(self.lid..string.format("Element %s is in PARKING queue but has no parking spot assigned!", element.name))
         end
       end
     end
-    
+
+  else
+    -- Check damage.
+    self:_CheckDamage()      
   end
     
   ---
@@ -855,25 +915,63 @@ function FLIGHTGROUP:Status()
   -- Short info.
   if self.verbose>=1 then
 
+    -- Number of elements.
     local nelem=self:CountElements()
     local Nelem=#self.elements
+
+    -- Get number of tasks and missions.
     local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
     local nMissions=self:CountRemainingMissison()
-    local currT=self.taskcurrent or "None"
-    local currM=self.currentmission or "None"
-    local currW=self.currentwp or 0
-    local nWp=self.waypoints and #self.waypoints or 0
+    
+    -- ROE and Alarm State.
+    local roe=self:GetROE() or -1
+    local rot=self:GetROT() or -1
+
+    -- Waypoint stuff.
+    local wpidxCurr=self.currentwp
+    local wpuidCurr=self:GetWaypointUIDFromIndex(wpidxCurr) or 0
+    local wpidxNext=self:GetWaypointIndexNext() or 0
+    local wpuidNext=self:GetWaypointUIDFromIndex(wpidxNext) or 0
+    local wpN=#self.waypoints or 0
+    local wpF=tostring(self.passedfinalwp)
+    
+    -- Speed.
+    local speed=UTILS.MpsToKnots(self.velocity or 0)
+    local speedEx=UTILS.MpsToKnots(self:GetExpectedSpeed())
+    
+    -- Altitude.
+    local alt=self.position and self.position.y or 0
+    
+    -- Heading in degrees.
+    local hdg=self.heading or 0      
+    
+    -- TODO: GetFormation function.
+    local formation=self.option.Formation or "unknown"
+    
+    -- Life points.
+    local life=self.life or 0
+    
+    -- Total ammo.            
+    local ammo=self:GetAmmoTot().Total
+    
+    -- Detected units.
+    local ndetected=self.detectionOn and tostring(self.detectedunits:Count()) or "Off"      
+    
+    -- Get cargo weight.
+    local cargo=0
+    for _,_element in pairs(self.elements) do
+      local element=_element --Ops.OpsGroup#OPSGROUP.Element
+        cargo=cargo+element.weightCargo
+      end
+ 
+       -- Home and destination base.
     local home=self.homebase and self.homebase:GetName() or "unknown"
     local dest=self.destbase and self.destbase:GetName() or "unknown"
-    local fc=self.flightcontrol and self.flightcontrol.airbasename or "N/A"
     local curr=self.currbase and self.currbase:GetName() or "N/A"
-    
-    local ndetected=self.detectionOn and tostring(self.detectedunits:Count()) or "OFF"
-
-    local text=string.format("Status %s [%d/%d]: T/M=%d/%d [Current %s/%s] [%s], Waypoint=%d/%d [%s], Base=%s [%s-->%s]",
-    fsmstate, nelem, Nelem, 
-    nTaskTot, nMissions, currT, currM, tostring(self:HasTaskController()), 
-    currW, nWp, tostring(self.passedfinalwp), curr, home, dest)
+  
+    -- Info text.
+    local text=string.format("%s [%d/%d]: ROE/ROT=%d/%d | T/M=%d/%d | Wp=%d[%d]-->%d[%d]/%d [%s] | Life=%.1f | v=%.1f (%d) | Hdg=%03d | Ammo=%d | Detect=%s | Cargo=%.1f | Base=%s [%s-->%s]",
+    fsmstate, nelem, Nelem, roe, rot, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, wpN, wpF, life, speed, speedEx, hdg, ammo, ndetected, cargo, curr, home, dest)
     self:I(self.lid..text)
 
   end
@@ -957,7 +1055,7 @@ function FLIGHTGROUP:Status()
     end
 
     -- Log outut.
-    self:I(self.lid..string.format("Travelled ds=%.1f km dt=%.1f s ==> v=%.1f knots. Fuel left for %.1f min", self.traveldist/1000, dt, UTILS.MpsToKnots(v), TmaxFuel/60))
+    self:T(self.lid..string.format("Travelled ds=%.1f km dt=%.1f s ==> v=%.1f knots. Fuel left for %.1f min", self.traveldist/1000, dt, UTILS.MpsToKnots(v), TmaxFuel/60))
 
   end
 
@@ -1031,6 +1129,19 @@ function FLIGHTGROUP:Status()
   ---
 
   self:_PrintTaskAndMissionStatus()
+  
+  -- Current mission.
+  local mission=self:GetMissionCurrent()
+  
+  if mission and mission.type==AUFTRAG.Type.RECOVERYTANKER and mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.EXECUTING then
+  
+    --env.info("FF recovery tanker updating DCS task")    
+    --self:ClearTasks()
+  
+    local DCSTask=mission:GetDCSMissionTask()
+    self:SetTask(DCSTask)
+  
+  end
 
 end
 
@@ -1058,6 +1169,14 @@ function FLIGHTGROUP:OnEventEngineStartup(EventData)
         -- TODO: what?
       else
         self:T3(self.lid..string.format("EVENT: Element %s started engines ==> taxiing (if AI)", element.name))
+        
+        -- Element started engies.
+        self:ElementEngineOn(element)
+        
+        -- Engines are on.
+        element.engineOn=true
+        
+        --[[
         -- TODO: could be that this element is part of a human flight group.
         -- Problem: when player starts hot, the AI does too and starts to taxi immidiately :(
         --          when player starts cold, ?
@@ -1069,6 +1188,7 @@ function FLIGHTGROUP:OnEventEngineStartup(EventData)
             self:ElementEngineOn(element)
           end
         end
+        ]]
       end
 
     end
@@ -1146,6 +1266,9 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
+    
+      -- Engines are off.
+      element.engineOn=false
 
       if element.unit and element.unit:IsAlive() then
 
@@ -1234,11 +1357,15 @@ function FLIGHTGROUP:onafterElementSpawned(From, Event, To, Element)
 
   -- Debug info.
   self:T(self.lid..string.format("Element spawned %s", Element.name))
+  
+  if Element.playerName then
+    self:_InitPlayerData(Element.playerName)
+  end
 
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.SPAWNED)
 
-  if Element.unit:InAir(true) then
+  if Element.unit:InAir(not self.isHelo) then  -- Setting check because of problems with helos dynamically spawned where inAir WRONGLY returned true if spawned at an airbase or farp!
     -- Trigger ElementAirborne event. Add a little delay because spawn is also delayed!
     self:__ElementAirborne(0.11, Element)
   else
@@ -1284,8 +1411,10 @@ function FLIGHTGROUP:onafterElementParking(From, Event, To, Element, Spot)
     -- Wait for engine startup event.
   elseif self:IsTakeoffHot() then
     self:__ElementEngineOn(0.5, Element)  -- delay a bit to allow all elements
+    Element.engineOn=true
   elseif self:IsTakeoffRunway() then
     self:__ElementEngineOn(0.5, Element)
+    Element.engineOn=true
   end
   
 end
@@ -1378,31 +1507,46 @@ function FLIGHTGROUP:onafterElementLanded(From, Event, To, Element, airbase)
 
   -- Debug info.
   self:T2(self.lid..string.format("Element landed %s at %s airbase", Element.name, airbase and airbase:GetName() or "unknown"))
+  
+  -- Set element status.
+  self:_UpdateStatus(Element, OPSGROUP.ElementStatus.LANDED, airbase)
 
-  if self.despawnAfterLanding then
+  -- Helos with skids land directly on parking spots.
+  if self.isHelo then
 
-    -- Despawn the element.
-    self:DespawnElement(Element)
+    local Spot=self:GetParkingSpot(Element, 10, airbase)
 
-  else
-
-    -- Set element status.
-    self:_UpdateStatus(Element, OPSGROUP.ElementStatus.LANDED, airbase)
-
-    -- Helos with skids land directly on parking spots.
-    if self.isHelo then
-
-      local Spot=self:GetParkingSpot(Element, 10, airbase)
-
-      if Spot then
-        self:_SetElementParkingAt(Element, Spot)
-        self:_UpdateStatus(Element, OPSGROUP.ElementStatus.ARRIVED)
-      end
-
+    if Spot then
+      self:_SetElementParkingAt(Element, Spot)
+      self:_UpdateStatus(Element, OPSGROUP.ElementStatus.ARRIVED)
     end
 
-  end
-  
+  end  
+
+  -- Despawn after landing.
+  if self.despawnAfterLanding then
+    
+    if self.legion then
+     
+      if airbase and self.legion.airbase and airbase.AirbaseName==self.legion.airbase.AirbaseName then
+    
+        if self:IsLanded() then
+          -- Everybody landed ==> Return to legion. Will despawn the last one.
+          self:ReturnToLegion()
+        else
+          -- Despawn the element.
+          self:DespawnElement(Element)
+        end
+        
+      end
+            
+    else
+
+      -- Despawn the element.
+      self:DespawnElement(Element)
+      
+    end
+  end  
 end
 
 --- On after "ElementArrived" event.
@@ -1444,12 +1588,13 @@ end
 -- @param Ops.OpsGroup#OPSGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementDead(From, Event, To, Element)
 
-  -- Call OPSGROUP function.
-  self:GetParent(self).onafterElementDead(self, From, Event, To, Element)
-
+  -- Check for flight control.
   if self.flightcontrol and Element.parking then
     self.flightcontrol:SetParkingFree(Element.parking)
   end
+  
+  -- Call OPSGROUP function. This will remove the flightcontrol. Therefore, has to be after setting parking free.
+  self:GetParent(self).onafterElementDead(self, From, Event, To, Element)  
 
   -- Not parking any more.
   Element.parking=nil
@@ -1491,6 +1636,11 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     text=text..string.format("Start Cold   = %s\n", tostring(self:IsTakeoffCold()))
     text=text..string.format("Start Hot    = %s\n", tostring(self:IsTakeoffHot()))
     text=text..string.format("Start Rwy    = %s\n", tostring(self:IsTakeoffRunway()))
+    text=text..string.format("Elements:")
+    for i,_element in pairs(self.elements) do
+      local element=_element --Ops.OpsGroup#OPSGROUP.Element
+      text=text..string.format("\n[%d] %s: callsign=%s, modex=%s, player=%s", i, element.name, tostring(element.callsign), tostring(element.modex), tostring(element.playerName))
+    end
     self:I(self.lid..text)
   end  
 
@@ -1511,6 +1661,12 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
 
     -- Set default EPLRS.
     self:SwitchEPLRS(self.option.EPLRS)
+    
+    -- Set default Invisible.
+    self:SwitchInvisible(self.option.Invisible)    
+
+    -- Set default Immortal.
+    self:SwitchImmortal(self.option.Immortal)    
 
     -- Set Formation
     self:SwitchFormation(self.option.Formation)
@@ -1542,12 +1698,20 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     self:__UpdateRoute(-0.5)
 
   else
-  
-    env.info("FF Spawned update menu")
-
-    -- F10 other menu.
-    self:_UpdateMenu()
-
+    
+    -- Set flightcontrol.
+    if self.currbase then
+      local flightcontrol=_DATABASE:GetFlightControl(self.currbase:GetName())
+      if flightcontrol then
+        self:SetFlightControl(flightcontrol)
+      else
+        -- F10 other menu.
+        self:_UpdateMenu(0.5)        
+      end
+    else
+      self:_UpdateMenu(0.5)
+    end
+    
   end
 
 end
@@ -1568,6 +1732,12 @@ function FLIGHTGROUP:onafterParking(From, Event, To)
   
   -- Set current airbase.
   self.currbase=airbase
+  
+  -- Set homebase to current airbase if not defined yet.
+  -- This is necessary, e.g, when flights are spawned at an airbase because they do not have a takeoff waypoint.
+  if not self.homebase then
+    self.homebase=airbase
+  end
 
   -- Parking time stamp.
   self.Tparking=timer.getAbsTime()
@@ -1577,7 +1747,7 @@ function FLIGHTGROUP:onafterParking(From, Event, To)
 
   if flightcontrol then
 
-    -- Set FC for this flight
+    -- Set FC for this flight. This also updates the menu.
     self:SetFlightControl(flightcontrol)
 
     if self.flightcontrol then
@@ -1585,12 +1755,10 @@ function FLIGHTGROUP:onafterParking(From, Event, To)
       -- Set flight status.
       self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.PARKING)
 
-      -- Update player menu.
-      if not self.isAI then
-        self:_UpdateMenu(0.5)
-      end
-
     end
+    
+  else
+    self:T3(self.lid.."INFO: No flight control in onAfterParking!")
   end
 end
 
@@ -1605,10 +1773,7 @@ function FLIGHTGROUP:onafterTaxiing(From, Event, To)
   -- Parking over.
   self.Tparking=nil
 
-  -- TODO: need a better check for the airbase.
-  local airbase=self:GetClosestAirbase()
-
-  if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
+  if self.flightcontrol and self.flightcontrol:IsControlling(self) then
 
     -- Add AI flight to takeoff queue.
     if self.isAI then
@@ -1617,9 +1782,6 @@ function FLIGHTGROUP:onafterTaxiing(From, Event, To)
     else
       -- Human flights go to TAXI OUT queue. They will go to the ready for takeoff queue when they request it.
       self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.TAXIOUT)
-      
-      -- Update menu.
-      self:_UpdateMenu()
     end
 
   end
@@ -1677,20 +1839,7 @@ function FLIGHTGROUP:onafterCruise(From, Event, To)
     -- AI
     ---
   
-    --[[
-    if self:IsTransporting() then
-      if self.cargoTransport and self.cargoTZC and self.cargoTZC.DeployAirbase then
-        self:LandAtAirbase(self.cargoTZC.DeployAirbase)
-      end
-    elseif self:IsPickingup() then
-      if self.cargoTransport and self.cargoTZC and self.cargoTZC.PickupAirbase then
-        self:LandAtAirbase(self.cargoTZC.PickupAirbase)
-      end
-    else
-      self:_CheckGroupDone(nil, 120)
-    end
-    ]]
-    
+    -- Check group Done.
     self:_CheckGroupDone(nil, 120)
     
   else
@@ -1699,7 +1848,7 @@ function FLIGHTGROUP:onafterCruise(From, Event, To)
     -- CLIENT
     ---
   
-    self:_UpdateMenu(0.1)
+    --self:_UpdateMenu(0.1)
     
   end
     
@@ -1713,7 +1862,22 @@ end
 function FLIGHTGROUP:onafterLanding(From, Event, To)
   self:T(self.lid..string.format("Flight is landing"))
 
+  -- Everyone is landing now.
   self:_SetElementStatusAll(OPSGROUP.ElementStatus.LANDING)
+
+  if self.flightcontrol and self.flightcontrol:IsControlling(self) then
+    -- Add flight to landing queue.
+    self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.LANDING)
+  end
+  
+  -- Not holding any more.
+  self.Tholding=nil
+  
+  -- Clear holding stack.
+  if self.stack then
+    self.stack.flightgroup=nil
+    self.stack=nil
+  end  
 
 end
 
@@ -1727,7 +1891,7 @@ end
 function FLIGHTGROUP:onafterLanded(From, Event, To, airbase)
   self:T(self.lid..string.format("Flight landed at %s", airbase and airbase:GetName() or "unknown place"))
 
-  if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
+  if self.flightcontrol and self.flightcontrol:IsControlling(self) then
     -- Add flight to taxiinb queue.
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.TAXIINB)
   end
@@ -1765,6 +1929,11 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.ARRIVED)
   end
   
+  if not self.isAI then
+    -- Player landed. No despawn.
+    return
+  end
+  
   --TODO: Check that current base is airwing base.
   local airwing=self:GetAirWing()  --airwing:GetAirbaseName()==self.currbase:GetName()
 
@@ -1775,7 +1944,8 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
     self:T(self.lid..string.format("Airwing asset group %s arrived ==> Adding asset back to stock of airwing %s", self.groupname, airwing.alias))
   
     -- Add the asset back to the airwing.
-    airwing:AddAsset(self.group, 1)
+    --airwing:AddAsset(self.group, 1)
+    self:ReturnToLegion(1)
         
   elseif self.isLandingAtAirbase then
 
@@ -1897,10 +2067,10 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n, N)
     self:T3(self.lid.."Update route possible. Group is ALIVE")
   elseif self:IsDead()  then
     -- Group is dead! No more updates.
-    self:E(self.lid.."Update route denied. Group is DEAD!")
+    self:T(self.lid.."Update route denied. Group is DEAD!")
     allowed=false
   elseif self:IsInUtero() then
-    self:E(self.lid.."Update route denied. Group is INUTERO!")
+    self:T(self.lid.."Update route denied. Group is INUTERO!")
     allowed=false    
   else
     -- Not airborne yet. Try again in 5 sec.
@@ -1923,19 +2093,19 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n, N)
 
   -- Requested waypoint index <1. Something is seriously wrong here!
   if n and n<1 then
-    self:E(self.lid.."Update route denied because waypoint n<1!")
+    self:T(self.lid.."Update route denied because waypoint n<1!")
     allowed=false
   end
 
   -- No current waypoint. Something is serously wrong!
   if not self.currentwp then
-    self:E(self.lid.."Update route denied because self.currentwp=nil!")
+    self:T(self.lid.."Update route denied because self.currentwp=nil!")
     allowed=false
   end
 
   local Nn=n or self.currentwp+1
   if not Nn or Nn<1 then
-    self:E(self.lid.."Update route denied because N=nil or N<1")
+    self:T(self.lid.."Update route denied because N=nil or N<1")
     trepeat=-5
     allowed=false
   end
@@ -1953,12 +2123,18 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n, N)
       elseif task.dcstask.id=="ReconMission" then
         -- For recon missions, we need to allow the update as we insert new waypoints.
         self:T2(self.lid.."Allowing update route for Task: ReconMission")
+      elseif task.dcstask.id=="Hover" then
+        -- For recon missions, we need to allow the update as we insert new waypoints.
+        self:T2(self.lid.."Allowing update route for Task: Hover")
+      elseif task.dcstask.id==AUFTRAG.SpecialTask.RELOCATECOHORT then
+        -- For relocate
+        self:T2(self.lid.."Allowing update route for Task: Relocate Cohort")          
       elseif task.description and task.description=="Task_Land_At" then
         -- We allow this
         self:T2(self.lid.."Allowing update route for Task: Task_Land_At")
       else
         local taskname=task and task.description or "No description"
-        self:E(self.lid..string.format("WARNING: Update route denied because taskcurrent=%d>0! Task description = %s", self.taskcurrent, tostring(taskname)))
+        self:T(self.lid..string.format("WARNING: Update route denied because taskcurrent=%d>0! Task description = %s", self.taskcurrent, tostring(taskname)))
         allowed=false
       end
     else
@@ -2117,10 +2293,23 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
         self:T(self.lid.."Engaging! Group NOT done...")
         return
       end
+      
+      -- Number of tasks remaining.
+      local nTasks=self:CountRemainingTasks()
 
-      -- First check if there is a paused mission.
-      if self.missionpaused then
-        self:T(self.lid..string.format("Found paused mission %s [%s]. Unpausing mission...", self.missionpaused.name, self.missionpaused.type))
+      -- Number of mission remaining.
+      local nMissions=self:CountRemainingMissison()
+
+      -- Number of cargo transports remaining.
+      local nTransports=self:CountRemainingTransports()      
+
+      -- Number of paused missions.
+      local nPaused=self:_CountPausedMissions()
+
+      -- First check if there is a paused mission and that all remaining missions are paused. If there are other missions in the queue, we will run those.
+      if nPaused>0 and nPaused==nMissions then
+        local missionpaused=self:_GetPausedMission()
+        self:T(self.lid..string.format("Found paused mission %s [%s]. Unpausing mission...", missionpaused.name, missionpaused.type))
         self:UnpauseMission()
         return
       end
@@ -2136,15 +2325,6 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
         self:T(self.lid.."Waiting! Group NOT done...")
         return        
       end
-
-      -- Number of tasks remaining.
-      local nTasks=self:CountRemainingTasks()
-
-      -- Number of mission remaining.
-      local nMissions=self:CountRemainingMissison()
-
-      -- Number of cargo transports remaining.
-      local nTransports=self:CountRemainingTransports()
 
       -- Debug info.
       self:T(self.lid..string.format("Remaining (final=%s): missions=%d, tasks=%d, transports=%d", tostring(self.passedfinalwp), nMissions, nTasks, nTransports))
@@ -2223,30 +2403,33 @@ end
 -- @param #number SpeedHold Holding speed in knots.
 function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
 
+  -- Debug info.
+  self:T(self.lid..string.format("RTB: before event=%s: %s --> %s to %s", Event, From, To, airbase and airbase:GetName() or "None"))
+
   if self:IsAlive() then
 
     local allowed=true
     local Tsuspend=nil
 
     if airbase==nil then
-      self:E(self.lid.."ERROR: Airbase is nil in RTB() call!")
+      self:T(self.lid.."ERROR: Airbase is nil in RTB() call!")
       allowed=false
     end
 
     -- Check that coaliton is okay. We allow same (blue=blue, red=red) or landing on neutral bases.
     if airbase and airbase:GetCoalition()~=self.group:GetCoalition() and airbase:GetCoalition()>0 then
-      self:E(self.lid..string.format("ERROR: Wrong airbase coalition %d in RTB() call! We allow only same as group %d or neutral airbases 0", airbase:GetCoalition(), self.group:GetCoalition()))
+      self:T(self.lid..string.format("ERROR: Wrong airbase coalition %d in RTB() call! We allow only same as group %d or neutral airbases 0", airbase:GetCoalition(), self.group:GetCoalition()))
       return false
     end
     
     if self.currbase and self.currbase:GetName()==airbase:GetName() then
-      self:E(self.lid.."WARNING: Currbase is already same as RTB airbase. RTB canceled!")
+      self:T(self.lid.."WARNING: Currbase is already same as RTB airbase. RTB canceled!")
       return false
     end
     
     -- Check if the group has landed at an airbase. If so, we lost control and RTBing is not possible (only after a respawn).
     if self:IsLanded() then
-      self:E(self.lid.."WARNING: Flight has already landed. RTB canceled!")
+      self:T(self.lid.."WARNING: Flight has already landed. RTB canceled!")
       return false    
     end
 
@@ -2260,7 +2443,7 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
         self.RTBRecallCount = self.RTBRecallCount+1
       end
       if self.RTBRecallCount>6 then
-        self:I(self.lid..string.format("WARNING: Group [%s] is not moving and was called RTB %d times. Assuming a problem and despawning!", self:GetState(), self.RTBRecallCount))
+        self:T(self.lid..string.format("WARNING: Group [%s] is not moving and was called RTB %d times. Assuming a problem and despawning!", self:GetState(), self.RTBRecallCount))
         self.RTBRecallCount=0
         self:Despawn(5)
         return
@@ -2274,25 +2457,25 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
       local Ntot,Nsched, Nwp=self:CountRemainingTasks()
 
       if self.taskcurrent>0 then
-        self:I(self.lid..string.format("WARNING: Got current task ==> RTB event is suspended for 10 sec"))
+        self:T(self.lid..string.format("WARNING: Got current task ==> RTB event is suspended for 10 sec"))
         Tsuspend=-10
         allowed=false
       end
 
       if Nsched>0 then
-        self:I(self.lid..string.format("WARNING: Still got %d SCHEDULED tasks in the queue ==> RTB event is suspended for 10 sec", Nsched))
+        self:T(self.lid..string.format("WARNING: Still got %d SCHEDULED tasks in the queue ==> RTB event is suspended for 10 sec", Nsched))
         Tsuspend=-10
         allowed=false
       end
 
       if Nwp>0 then
-        self:I(self.lid..string.format("WARNING: Still got %d WAYPOINT tasks in the queue ==> RTB event is suspended for 10 sec", Nwp))
+        self:T(self.lid..string.format("WARNING: Still got %d WAYPOINT tasks in the queue ==> RTB event is suspended for 10 sec", Nwp))
         Tsuspend=-10
         allowed=false
       end
       
       if self.Twaiting and self.dTwait then
-        self:I(self.lid..string.format("WARNING: Group is Waiting for a specific duration ==> RTB event is canceled", Nwp))
+        self:T(self.lid..string.format("WARNING: Group is Waiting for a specific duration ==> RTB event is canceled", Nwp))
         allowed=false
       end
 
@@ -2305,7 +2488,7 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
     return allowed
 
   else
-    self:E(self.lid.."WARNING: Group is not alive! RTB call not allowed.")
+    self:T(self.lid.."WARNING: Group is not alive! RTB call not allowed.")
     return false
   end
 
@@ -2342,6 +2525,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
 
   end
 
+  -- Land at airbase.
   self:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
 
 end
@@ -2361,35 +2545,35 @@ function FLIGHTGROUP:onbeforeLandAtAirbase(From, Event, To, airbase)
     local Tsuspend=nil
 
     if airbase==nil then
-      self:E(self.lid.."ERROR: Airbase is nil in LandAtAirase() call!")
+      self:T(self.lid.."ERROR: Airbase is nil in LandAtAirase() call!")
       allowed=false
     end
 
     -- Check that coaliton is okay. We allow same (blue=blue, red=red) or landing on neutral bases.
     if airbase and airbase:GetCoalition()~=self.group:GetCoalition() and airbase:GetCoalition()>0 then
-      self:E(self.lid..string.format("ERROR: Wrong airbase coalition %d in LandAtAirbase() call! We allow only same as group %d or neutral airbases 0", airbase:GetCoalition(), self.group:GetCoalition()))
+      self:T(self.lid..string.format("ERROR: Wrong airbase coalition %d in LandAtAirbase() call! We allow only same as group %d or neutral airbases 0", airbase:GetCoalition(), self.group:GetCoalition()))
       return false
     end
     
     if self.currbase and self.currbase:GetName()==airbase:GetName() then
-      self:E(self.lid.."WARNING: Currbase is already same as LandAtAirbase airbase. LandAtAirbase canceled!")
+      self:T(self.lid.."WARNING: Currbase is already same as LandAtAirbase airbase. LandAtAirbase canceled!")
       return false
     end
     
     -- Check if the group has landed at an airbase. If so, we lost control and RTBing is not possible (only after a respawn).
     if self:IsLanded() then
-      self:E(self.lid.."WARNING: Flight has already landed. LandAtAirbase canceled!")
+      self:T(self.lid.."WARNING: Flight has already landed. LandAtAirbase canceled!")
       return false    
     end
     
     if self:IsParking() then      
       allowed=false
       Tsuspend=-30
-      self:E(self.lid.."WARNING: Flight is parking. LandAtAirbase call delayed by 30 sec")
+      self:T(self.lid.."WARNING: Flight is parking. LandAtAirbase call delayed by 30 sec")
     elseif self:IsTaxiing() then
       allowed=false
       Tsuspend=-1
-      self:E(self.lid.."WARNING: Flight is parking. LandAtAirbase call delayed by 1 sec")
+      self:T(self.lid.."WARNING: Flight is parking. LandAtAirbase call delayed by 1 sec")
     end
     
     if Tsuspend and not allowed then
@@ -2398,7 +2582,7 @@ function FLIGHTGROUP:onbeforeLandAtAirbase(From, Event, To, airbase)
 
     return allowed
   else
-    self:E(self.lid.."WARNING: Group is not alive! LandAtAirbase call not allowed")
+    self:T(self.lid.."WARNING: Group is not alive! LandAtAirbase call not allowed")
     return false
   end
 
@@ -2460,16 +2644,29 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
 
   -- Do we have a flight control?
   local fc=_DATABASE:GetFlightControl(airbase:GetName())
-  if fc then
-    -- Get holding point from flight control.
-    local HoldingPoint=fc:_GetHoldingpoint(self)
-    p0=HoldingPoint.pos0
-    p1=HoldingPoint.pos1
-
-    -- Debug marks.
-    if false then
-      p0:MarkToAll("Holding point P0")
-      p1:MarkToAll("Holding point P1")
+  
+  if fc and self.isAI then
+  
+    -- Get holding stack from flight control.
+    local stack=fc:_GetHoldingStack(self)
+    
+    if stack then          
+      
+      stack.flightgroup=self
+      self.stack=stack
+      
+      -- Race track points.
+      p0=stack.pos0
+      p1=stack.pos1
+  
+      -- Debug marks.
+      if false then
+        p0:MarkToAll(string.format("%s: Holding stack P0, alt=%d meters", self:GetName(), p0.y))
+        p1:MarkToAll(string.format("%s: Holding stack P1, alt=%d meters", self:GetName(), p0.y))
+      end
+      
+    else
+      
     end
 
     -- Set flightcontrol for this flight.
@@ -2477,6 +2674,22 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
 
     -- Add flight to inbound queue.
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.INBOUND)
+    
+    -- Callsign.
+    local callsign=self:GetCallsignName()
+    
+    -- Pilot calls inbound for landing.
+    local text=string.format("%s, %s, inbound for landing", fc.alias, callsign)
+      
+    -- Radio message.
+    fc:TransmissionPilot(text, self)
+    
+    -- Message text.
+    local text=string.format("%s, %s, roger, hold at angels %d. Report entering the pattern.", callsign, fc.alias, stack.angels)
+          
+    -- Send message.
+    fc:TransmissionTower(text, self, 10)
+    
   end
   
   -- Some intermediate coordinate to climb to the default cruise alitude.
@@ -2491,7 +2704,7 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
   local h2=x2*math.tan(alpha)
 
   -- Get active runway.
-  local runway=airbase:GetActiveRunway()
+  local runway=airbase:GetActiveRunwayLanding()
 
   -- Set holding flag to 0=false.
   self.flaghold:Set(0)
@@ -2526,8 +2739,12 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
     -- Airdrome
     ---
 
+    -- Call a function to tell everyone we are on final.
+    local TaskFinal = self.group:TaskFunction("FLIGHTGROUP._OnFinal", self)
+
+    -- Final approach waypoint.
     local papp=airbase:GetCoordinate():Translate(x1, runway.heading-180):SetAltitude(h1)
-    wp[#wp+1]=papp:WaypointAirTurningPoint("BARO", UTILS.KnotsToKmph(SpeedLand), {}, "Final Approach")
+    wp[#wp+1]=papp:WaypointAirTurningPoint("BARO", UTILS.KnotsToKmph(SpeedLand), {TaskFinal}, "Final Approach")
 
     -- Okay, it looks like it's best to specify the coordinates not at the airbase but a bit away. This causes a more direct landing approach.
     local pland=airbase:GetCoordinate():Translate(x2, runway.heading-180):SetAltitude(h2)
@@ -2573,14 +2790,14 @@ function FLIGHTGROUP:onbeforeWait(From, Event, To, Duration, Altitude, Speed)
 
   -- Check for a current task.
   if self.taskcurrent>0 and not self:IsLandedAt() then
-    self:I(self.lid..string.format("WARNING: Got current task ==> WAIT event is suspended for 30 sec!"))
+    self:T(self.lid..string.format("WARNING: Got current task ==> WAIT event is suspended for 30 sec!"))
     Tsuspend=-30
     allowed=false
   end
   
   -- Check for a current transport assignment.
   if self.cargoTransport and not self:IsLandedAt() then
-    --self:I(self.lid..string.format("WARNING: Got current TRANSPORT assignment ==> WAIT event is suspended for 30 sec!"))
+    --self:T(self.lid..string.format("WARNING: Got current TRANSPORT assignment ==> WAIT event is suspended for 30 sec!"))
     --Tsuspend=-30
     --allowed=false  
   end
@@ -2712,21 +2929,51 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
 
   -- Set holding flag to 0 (just in case).
   self.flaghold:Set(0)
+  
+  -- Despawn after holding.
+  if self.despawnAfterHolding then
+    if self.legion then
+      self:ReturnToLegion(1)
+    else
+      self:Despawn(1)
+    end
+    return
+  end
 
   -- Holding time stamp.
   self.Tholding=timer.getAbsTime()
 
+  -- Debug message.
   local text=string.format("Flight group %s is HOLDING now", self.groupname)
   self:T(self.lid..text)
 
   -- Add flight to waiting/holding queue.
   if self.flightcontrol then
 
-    -- Set flight status to holding
+    -- Set flight status to holding.
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.HOLDING)
+    
+    if self.isAI then
+    
+      -- Callsign.
+      local callsign=self:GetCallsignName()
 
-    if not self.isAI then
-      self:_UpdateMenu()
+      -- Pilot arrived at holding pattern.
+      local text=string.format("%s, %s, arrived at holding pattern", self.flightcontrol.alias, callsign)
+      
+      if self.stack then
+        text=text..string.format(", angels %d.", self.stack.angels)
+      end
+      
+      -- Radio message.
+      self.flightcontrol:TransmissionPilot(text, self)
+
+      -- Message to flight
+      local text=string.format("%s, roger, fly heading %d and wait for landing clearance", callsign, self.stack.heading)
+      
+      -- Radio message from tower.
+      self.flightcontrol:TransmissionTower(text, self, 10)
+          
     end
 
   elseif self.airboss then
@@ -2803,7 +3050,7 @@ function FLIGHTGROUP:onafterEngageTarget(From, Event, To, Target)
     DCStask=self:GetGroup():TaskCombo(DCSTasks)
 
   else
-    self:E("ERROR: unknown Target in EngageTarget! Needs to be a UNIT, STATIC, GROUP, SET_UNIT or SET_GROUP")
+    self:T("ERROR: unknown Target in EngageTarget! Needs to be a UNIT, STATIC, GROUP, SET_UNIT or SET_GROUP")
     return
   end
 
@@ -2979,6 +3226,20 @@ function FLIGHTGROUP._ClearedToLand(group, flightgroup)
   flightgroup:__Landing(-1)
 end
 
+--- Function called when flight is on final.
+-- @param Wrapper.Group#GROUP group Group object.
+-- @param #FLIGHTGROUP flightgroup Flight group object.
+function FLIGHTGROUP._OnFinal(group, flightgroup)
+  flightgroup:T2(flightgroup.lid..string.format("Group on final approach"))
+
+  local fc=flightgroup.flightcontrol
+  
+  if fc and fc:IsControlling(flightgroup) then
+    fc:_FlightOnFinal(flightgroup)
+  end
+
+end
+
 --- Function called when flight finished refuelling.
 -- @param Wrapper.Group#GROUP group Group object.
 -- @param #FLIGHTGROUP flightgroup Flight group object.
@@ -3036,6 +3297,13 @@ function FLIGHTGROUP:_InitGroup(Template)
 
   -- Max speed in km/h.
   self.speedMax=group:GetSpeedMax()
+  
+  -- Is group mobile?
+  if self.speedMax>3.6 then
+    self.isMobile=true
+  else
+    self.isMobile=false
+  end  
 
   -- Cruise speed limit 350 kts for fixed and 80 knots for rotary wings.
   local speedCruiseLimit=self.isHelo and UTILS.KnotsToKmph(80) or UTILS.KnotsToKmph(350)
@@ -3053,6 +3321,7 @@ function FLIGHTGROUP:_InitGroup(Template)
 
   -- Set callsign. Default is set on spawn if not modified by user.
   local callsign=template.units[1].callsign
+  --self:I({callsign=callsign})
   if type(callsign)=="number" then  -- Sometimes callsign is just "101".
     local cs=tostring(callsign)
     callsign={}
@@ -3060,8 +3329,8 @@ function FLIGHTGROUP:_InitGroup(Template)
     callsign[2]=cs:sub(2,2)
     callsign[3]=cs:sub(3,3)
   end
-  self.callsign.NumberSquad=callsign[1]
-  self.callsign.NumberGroup=callsign[2]
+  self.callsign.NumberSquad=tonumber(callsign[1])
+  self.callsign.NumberGroup=tonumber(callsign[2])
   self.callsign.NameSquad=UTILS.GetCallsignName(self.callsign.NumberSquad)
 
   -- Set default formation.
@@ -3081,8 +3350,9 @@ function FLIGHTGROUP:_InitGroup(Template)
   -- Create Menu.
   if not self.isAI then
     self.menu=self.menu or {}
-    self.menu.atc=self.menu.atc or {}
-    self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC")
+    self.menu.atc=self.menu.atc or {} --#table
+    self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC") --Core.Menu#MENU_GROUP
+    self.menu.atc.help=self.menu.atc.help or MENU_GROUP:New(self.group, "Help", self.menu.atc.root) --Core.Menu#MENU_GROUP
   end
 
   -- Units of the group.
@@ -3094,7 +3364,7 @@ function FLIGHTGROUP:_InitGroup(Template)
   
   -- Quick check.
   if #units~=size0 then
-    self:E(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
+    self:T(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
   end  
 
   -- Add elemets.
@@ -3421,7 +3691,7 @@ end
 --- Add an AIR waypoint to the flight plan.
 -- @param #FLIGHTGROUP self
 -- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
--- @param #number Speed Speed in knots. Default 350 kts.
+-- @param #number Speed Speed in knots. Default is cruise speed.
 -- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
 -- @param #number Altitude Altitude in feet. Default is y-component of Coordinate. Note that these altitudes are wrt to sea level (barometric altitude).
 -- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
@@ -3435,7 +3705,7 @@ function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitud
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
 
   -- Speed in knots.
-  Speed=Speed or self.speedCruise
+  Speed=Speed or self:GetSpeedCruise()
 
   -- Create air waypoint.
   local wp=coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(Speed), true, nil, {})
@@ -3510,6 +3780,34 @@ function FLIGHTGROUP:AddWaypointLanding(Airbase, Speed, AfterWaypointWithID, Alt
   return waypoint
 end
 
+--- Get player element.
+-- @param #FLIGHTGROUP self
+-- @return Ops.OpsGroup#OPSGROUP.Element The element.
+function FLIGHTGROUP:GetPlayerElement()
+
+  for _,_element in pairs(self.elements) do
+    local element=_element --Ops.OpsGroup#OPSGROUP.Element
+    if not element.ai then
+      return element
+    end
+  end
+
+  return nil
+end
+
+--- Get player element.
+-- @param #FLIGHTGROUP self
+-- @return #string Player name or `nil`.
+function FLIGHTGROUP:GetPlayerName()
+
+  local playerElement=self:GetPlayerElement()
+  
+  if playerElement then
+    return playerElement.playerName
+  end
+
+  return nil
+end
 
 --- Set parking spot of element.
 -- @param #FLIGHTGROUP self
@@ -3524,6 +3822,13 @@ function FLIGHTGROUP:_SetElementParkingAt(Element, Spot)
 
     -- Debug info.
     self:T(self.lid..string.format("Element %s is parking on spot %d", Element.name, Spot.TerminalID))
+    
+    -- Get flightcontrol.
+    local fc=_DATABASE:GetFlightControl(Spot.AirbaseName)
+    
+    if fc and not self.flightcontrol then
+      self:SetFlightControl(fc)
+    end
 
     if self.flightcontrol then
 
@@ -3657,16 +3962,16 @@ function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
   local coord=element.unit:GetCoordinate()
 
   -- Airbase.
-  airbase=airbase or self:GetClosestAirbase() --coord:GetClosestAirbase(nil, self:GetCoalition())
+  airbase=airbase or self:GetClosestAirbase()
 
-  -- TODO: replace by airbase.parking if AIRBASE is updated.
-  local parking=airbase:GetParkingSpotsTable()
+  -- Parking table of airbase.
+  local parking=airbase.parking --:GetParkingSpotsTable()
 
   -- If airbase is ship, translate parking coords. Alternatively, we just move the coordinate of the unit to the origin of the map, which is way more efficient.
   if airbase and airbase:IsShip() then
     coord.x=0
     coord.z=0
-    maxdist=500 -- 100 meters was not enough, e.g. on the Seawise Giant, where the spot is 139 meters from the "center"
+    maxdist=500 -- 100 meters was not enough, e.g. on the Seawise Giant, where the spot is 139 meters from the "center".
   end
 
   local spot=nil --Wrapper.Airbase#AIRBASE.ParkingSpot
@@ -3674,8 +3979,10 @@ function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
   local distmin=math.huge
   for _,_parking in pairs(parking) do
     local parking=_parking --Wrapper.Airbase#AIRBASE.ParkingSpot
+    
+    -- Distance to spot.
     dist=coord:Get2DDistance(parking.Coordinate)
-    --env.info(string.format("FF parking %d dist=%.1f", parking.TerminalID, dist))
+    
     if dist<distmin then
       distmin=dist
       spot=_parking
@@ -3893,7 +4200,7 @@ function FLIGHTGROUP:GetParking(airbase)
 
     -- No parking spot for at least one asset :(
     if not gotit then
-      self:E(self.lid..string.format("WARNING: No free parking spot for element %s", element.name))
+      self:T(self.lid..string.format("WARNING: No free parking spot for element %s", element.name))
       return nil
     end
 
@@ -4005,72 +4312,354 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- MENU FUNCTIONS
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Get the proper terminal type based on generalized attribute of the group.
+--- Update menu.
 --@param #FLIGHTGROUP self
 --@param #number delay Delay in seconds.
 function FLIGHTGROUP:_UpdateMenu(delay)
 
   if delay and delay>0 then
-    self:T(self.lid..string.format("FF updating menu in %.1f sec", delay))
+    -- Delayed call.
     self:ScheduleOnce(delay, FLIGHTGROUP._UpdateMenu, self)
   else
 
-    self:T(self.lid.."FF updating menu NOW")
-
-    -- Get current position of group.
-    local position=self:GetCoordinate()
-
-    -- Get all FLIGHTCONTROLS
-    local fc={}
-    for airbasename,_flightcontrol in pairs(_DATABASE.FLIGHTCONTROLS) do
-
-      local airbase=AIRBASE:FindByName(airbasename)
-
-      local coord=airbase:GetCoordinate()
-
-      local dist=coord:Get2DDistance(position)
-
-      local fcitem={airbasename=airbasename, dist=dist}
-
-      table.insert(fc, fcitem)
-    end
-
-    -- Sort table wrt distance to airbases.
-    local function _sort(a,b)
-      return a.dist<b.dist
-    end
-    table.sort(fc, _sort)
+    -- Player element.
+    local player=self:GetPlayerElement()
     
-    for _,_menu in pairs(self.menu.atc or {}) do
-      local menu=_menu
-        
+    if player and player.status~=OPSGROUP.ElementStatus.DEAD then
+  
+      -- Debug text.
+      if self.verbose>=2 then
+        local text=string.format("Updating MENU: State=%s, ATC=%s [%s]", self:GetState(), 
+        self.flightcontrol and self.flightcontrol.airbasename or "None", self.flightcontrol and self.flightcontrol:GetFlightStatus(self) or "Unknown")
+      
+        -- Message to group.
+        MESSAGE:New(text, 5):ToGroup(self.group)
+        self:I(self.lid..text)
+      end
+    
+      -- Get current position of player.
+      local position=self:GetCoordinate(nil, player.name)
+  
+      -- Get all FLIGHTCONTROLS
+      local fc={}
+      for airbasename,_flightcontrol in pairs(_DATABASE.FLIGHTCONTROLS) do
+        local flightcontrol=_flightcontrol --Ops.FlightControl#FLIGHTCONTROL
+  
+        -- Get coord of airbase.
+        local coord=flightcontrol:GetCoordinate()
+  
+        -- Distance to flight.
+        local dist=coord:Get2DDistance(position)
+  
+        -- Add to table.
+        table.insert(fc, {airbasename=airbasename, dist=dist})
+      end
+  
+      -- Sort table wrt distance to airbases.
+      local function _sort(a,b)
+        return a.dist<b.dist
+      end
+      table.sort(fc, _sort)
+      
+      -- Remove all submenus.
+      self.menu.atc.root:RemoveSubMenus()
+      
+      -- Create help menu.
+      self:_CreateMenuAtcHelp(self.menu.atc.root)
+      
+      -- Max menu entries.
+      local N=7
+  
+      -- If there is a designated FC, we put it first.
+      local gotairbase=nil
+      if self.flightcontrol then
+        self.flightcontrol:_CreatePlayerMenu(self, self.menu.atc.root)
+        gotairbase=self.flightcontrol.airbasename
+        N=N-1
+      end
+  
+      -- Max 8 entries in F10 menu.
+      for i=1,math.min(#fc,N) do
+        local airbasename=fc[i].airbasename
+        if gotairbase==nil or airbasename~=gotairbase then
+          local flightcontrol=_DATABASE:GetFlightControl(airbasename)
+          flightcontrol:_CreatePlayerMenu(self, self.menu.atc.root)
+        end
+      end
+      
+    else
+      self:E(self.lid.."ERROR: Player dead in update menu!")
     end
+    
+  end
+end
 
-    -- If there is a designated FC, we put it first.
-    local N=8
-    local gotairbase=nil
-    if self.flightcontrol then
-      self.flightcontrol:_CreatePlayerMenu(self, self.menu.atc)
-      gotairbase=self.flightcontrol.airbasename
-      N=7
-    end
+--- Create player menu.
+-- @param #FLIGHTGROUP self
+-- @param #table rootmenu ATC root menu table.
+function FLIGHTGROUP:_CreateMenuAtcHelp(rootmenu)
 
-    -- Max 8 entries in F10 menu.
-    for i=1,math.min(#fc,N) do
-      local airbasename=fc[i].airbasename
-      if gotairbase==nil or airbasename~=gotairbase then
-        local flightcontrol=_DATABASE:GetFlightControl(airbasename)
-        flightcontrol:_CreatePlayerMenu(self, self.menu.atc)
+  -- Help menu.
+  local helpmenu=MENU_GROUP:New(self.group, "Help",  rootmenu)
+  
+  -- Group name.
+  local groupname=self.groupname
+  
+  ---
+  -- Skill level menu
+  ---
+  local skillmenu=MENU_GROUP:New(self.group, "Skill Level", helpmenu)  
+  MENU_GROUP_COMMAND:New(self.group, "Student",     skillmenu, self._PlayerSkill,  self, FLIGHTGROUP.PlayerSkill.STUDENT)
+  MENU_GROUP_COMMAND:New(self.group, "Aviator",     skillmenu, self._PlayerSkill,  self, FLIGHTGROUP.PlayerSkill.AVIATOR)
+  MENU_GROUP_COMMAND:New(self.group, "Graduate",    skillmenu, self._PlayerSkill,  self, FLIGHTGROUP.PlayerSkill.GRADUATE)
+  MENU_GROUP_COMMAND:New(self.group, "Instructor",  skillmenu, self._PlayerSkill,  self, FLIGHTGROUP.PlayerSkill.INSTRUCTOR)
+  
+  ---
+  -- Commands
+  ---
+  MENU_GROUP_COMMAND:New(self.group, "Subtitles On/Off", helpmenu, self._PlayerSubtitles,     self)
+  MENU_GROUP_COMMAND:New(self.group, "My Voice On/Off",  helpmenu, self._MenuNotImplemented,  self, groupname)
+  MENU_GROUP_COMMAND:New(self.group, "Mark Parking",     helpmenu, self._MarkParking,         self)
+  MENU_GROUP_COMMAND:New(self.group, "Update Menu",      helpmenu, self._UpdateMenu,          self, 0)
+  MENU_GROUP_COMMAND:New(self.group, "My Status",        helpmenu, self._PlayerMyStatus,      self, groupname)
+
+end
+
+--- Player menu not implemented.
+-- @param #FLIGHTGROUP self
+-- @param #string groupname Name of the flight group.
+function FLIGHTGROUP:_MenuNotImplemented(groupname)
+
+  -- Get flight group.
+  local flight=_DATABASE:GetOpsGroup(groupname) --Ops.FlightGroup#FLIGHTGROUP
+  
+  if flight then
+  
+    local text=string.format("Sorry, this feature is not implemented yet!")
+    
+    MESSAGE:New(text, 10, nil, true):ToGroup(flight.group)
+  
+  end
+  
+end
+
+--- Player status.
+-- @param #FLIGHTGROUP self
+function FLIGHTGROUP:_PlayerMyStatus()
+
+  -- Flight control.
+  local fc=self.flightcontrol
+  
+  -- Player data.
+  local playerdata=self:_GetPlayerData()
+  
+  -- Player element.
+  local playerElement=self:GetPlayerElement()
+
+  -- Status text.
+  local text=string.format("My Status:")
+  text=text..string.format("\nPlayer Name: %s", tostring(playerdata.name))
+  text=text..string.format("\nCallsign: %s", tostring(self:GetCallsignName()))
+  text=text..string.format("\nFlight status: %s", tostring(self:GetState()))
+  text=text..string.format("\nFlight control: %s [%s]", tostring(fc and fc.airbasename or "N/A"), tostring(fc and fc:GetFlightStatus(self) or "N/A"))
+  text=text..string.format("\nSubtitles: %s", tostring(playerdata.subtitles))
+  text=text..string.format("\nMy Voice: %s", tostring(playerdata.myvoice))
+  
+  if fc then
+    if playerElement.parking then
+      local spot=fc:GetParkingSpotByID(playerElement.parking.TerminalID)
+      if spot then
+        text=text..string.format("\nParking spot: %d [%s]", spot.TerminalID, spot.Status or "Unknown")
       end
     end
   end
+  
+  -- Send message.
+  MESSAGE:New(text, 10, nil, true):ToGroup(self.group)
+  
+end
 
+--- Player set subtitles.
+-- @param #FLIGHTGROUP self
+function FLIGHTGROUP:_PlayerSubtitles()
+
+  -- Get Player data.
+  local playerData=self:_GetPlayerData()
+  
+  if playerData then
+  
+    -- Switch setting.
+    playerData.subtitles=not playerData.subtitles
+    
+    -- Display message.
+    MESSAGE:New(string.format("%s, subtitles are now %s", playerData.name, tostring(playerData.subtitles)), 10, nil, true):ToGroup(self.group)
+  
+  else
+    --TODO: Error
+  end
+    
+end
+
+--- Player mark parking.
+-- @param #FLIGHTGROUP self
+function FLIGHTGROUP:_MarkParking()
+
+  local playerElement=self:GetPlayerElement()
+  
+  if playerElement then
+  
+    -- Player name.
+    local playerName=tostring(playerElement.playerName)
+    
+    -- Message text.
+    local message=string.format("No assigned parking spot for you could be found, %s", playerName)
+    
+    if playerElement.parking then
+    
+      local terminalID=playerElement.parking.TerminalID
+      local spotStatus=tostring(playerElement.parking.Status)
+    
+      -- Marker text.
+      local text=string.format("Your parking spot, %s\nTerminal ID=%d [%s]", playerName, terminalID, spotStatus)
+      
+      -- Text message.
+      message=string.format("%s, your parking spot is Terminal ID=%d [%s]. Check the marker on the F10 map.", playerName, terminalID, spotStatus)
+      
+      -- New marker.
+      playerElement.parking.Coordinate:MarkToGroup(text, self.group)
+      
+    end
+    
+    -- Text message to group.
+    MESSAGE:New(string.format(message, playerName), 10):ToGroup(self.group)
+    
+  end
+    
+end
+
+--- Player set skill.
+-- @param #FLIGHTGROUP self
+-- @param #string Skill Skill.
+function FLIGHTGROUP:_PlayerSkill(Skill)
+
+  -- Get Player data.
+  local playerData=self:_GetPlayerData()
+  
+  if playerData then
+  
+    -- Switch setting.
+    playerData.skill=Skill
+    
+    -- Display message.
+    MESSAGE:New(string.format("%s, your skill is %s", playerData.name, tostring(playerData.skill)), 10, nil, true):ToGroup(self.group)
+  
+  else
+    --TODO: Error
+  end
+    
+end
+
+
+--- Init player data.
+-- @param #FLIGHTGROUP self
+-- @param #string PlayerName Player name.
+-- @return #FLIGHTGROUP.PlayerData Player data.
+function FLIGHTGROUP:_InitPlayerData(PlayerName)
+
+  if PlayerName then
+  
+    -- Check if data is already there.
+    local playerData=FLIGHTGROUP.Players[PlayerName] --#FLIGHTGROUP.PlayerData
+  
+    if not playerData then
+    
+      local playerData={} --#FLIGHTGROUP.PlayerData
+      playerData.name=PlayerName  
+      playerData.skill=FLIGHTGROUP.PlayerSkill.STUDENT
+      playerData.subtitles=true
+      playerData.myvoice=true
+      
+      -- Debug message.
+      self:T(self.lid..string.format("Init player data for %s", PlayerName))
+      
+      -- Set data globally.
+      FLIGHTGROUP.Players[PlayerName]=playerData
+    end
+      
+    return playerData
+    
+  else
+    self:E(self.lid..string.format("ERROR: Player name is nil!"))
+  end
+  
+  return nil
+end
+
+--- Get player data.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP.PlayerData Player data.
+function FLIGHTGROUP:_GetPlayerData()
+
+  -- Get player element.
+  local playerElement=self:GetPlayerElement()
+  
+  if playerElement and playerElement.playerName then
+    return FLIGHTGROUP.Players[playerElement.playerName]
+  end
+
+  return nil
+end  
+    
+--- Get distance to parking spot. Takes extra care of ships.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Airbase#AIRBASE.ParkingSpot Spot Parking Spot.
+-- @param Core.Point#COORDINATE Coordinate Reference coordinate.
+-- @return #number Distance to parking spot in meters.
+function FLIGHTGROUP:_GetDistToParking(Spot, Coordinate)
+
+  local dist=99999
+  
+  if Spot then
+  
+    -- Get the airbase this spot belongs to.
+    local airbase=AIRBASE:FindByName(Spot.AirbaseName)
+    
+
+    if airbase:IsShip() then --or airbase:IsHelipad() then
+      
+      -- Vec2 of airbase.
+      local a=airbase:GetVec2()
+      
+      -- Vec2 of parking spot.
+      local b=Spot.Coordinate:GetVec2()
+      
+      -- Vec2 of ref coordinate.
+      local c=Coordinate:GetVec2()
+      
+      -- Vector from ref coord to airbase. This still needs to be rotated.
+      local t=UTILS.Vec2Substract(c,a)
+      
+      -- Get the heading of the unit.
+      local unit=UNIT:FindByName(Spot.AirbaseName)
+      local hdg=unit:GetHeading()
+      
+      -- Rotate the vector so that it corresponds to facing "North".
+      t=UTILS.Vec2Rotate2D(t, -hdg)
+      
+      -- Distance from spot to ref coordinate.
+      dist=UTILS.VecDist2D(b,t)
+    else
+      -- Normal case.
+      dist=Coordinate:Get2DDistance(Spot.Coordinate)  
+    end
+  
+  end
+
+  return dist
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
