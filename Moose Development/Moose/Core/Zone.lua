@@ -564,14 +564,6 @@ function ZONE_BASE:GetZoneMaybe()
   end
 end
 
---- Set the randomization probability of a zone to be selected.
--- @param #ZONE_BASE self
--- @param #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
--- @return #ZONE_BASE self
-
---   *@{#ZONE_BASE.GetProperty}(): Returns the Value of the zone with the given PropertyName, or nil if no matching property exists.
---   *@{#ZONE_BASE.GetAllProperties}(): Returns the zone Properties table.  
-
 -- Returns the Value of the zone with the given PropertyName, or nil if no matching property exists.
 -- @param #ZONE_BASE self
 -- @param #string PropertyName The name of a the TriggerZone Property to be retrieved.
