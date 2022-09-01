@@ -777,8 +777,7 @@ end
 
 --- Returns the POSITIONABLE height above sea level in meters.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return DCS#Vec3 The height of the positionable.
--- @return #nil The POSITIONABLE is not existing or alive.
+-- @return DCS#Vec3 Height of the positionable in meters (or nil, if the object does not exist).
 function POSITIONABLE:GetHeight() --R2.1
   self:F2( self.PositionableName )
 
