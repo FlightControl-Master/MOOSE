@@ -2,8 +2,10 @@
 --
 -- **Main Features:**
 --
---    * Sockets
+--    * Creates UDP Sockets
 --    * Send messages to Discord
+--    * Compatible with [FunkMan](https://github.com/funkyfranky/FunkMan)
+--    * Compatible with [DCSServerBot](https://github.com/Special-K-s-Flightsim-Bots/DCSServerBot)
 --
 -- ===
 --
