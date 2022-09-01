@@ -2401,7 +2401,7 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client)
   return self
 end
 
---- [User] Add agent group to INTEL detection
+--- [User] Add agent group to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Wrapper.Group#GROUP Recce Group of agents. Can also be an @{Ops.OpsGroup#OPSGROUP} object.
 -- @return #PLAYERTASKCONTROLLER self
@@ -2409,11 +2409,13 @@ function PLAYERTASKCONTROLLER:AddAgent(Recce)
   self:T(self.lid.."AddAgent")
   if self.Intel then
     self.Intel:AddAgent(Recce)
+  else
+    self:E(self.lid.."NO detection has been set up (yet)!")
   end
   return self
 end
 
---- [User] Add accept zone to INTEL detection
+--- [User] Add accept zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
 -- @return #PLAYERTASKCONTROLLER self
@@ -2421,11 +2423,13 @@ function PLAYERTASKCONTROLLER:AddAcceptZone(AcceptZone)
   self:T(self.lid.."AddAcceptZone")
   if self.Intel then
     self.Intel:AddAcceptZone(AcceptZone)
+  else
+    self:E(self.lid.."NO detection has been set up (yet)!")
   end
   return self
 end
 
---- [User] Add reject zone to INTEL detection
+--- [User] Add reject zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
 -- @return #PLAYERTASKCONTROLLER self
@@ -2433,11 +2437,13 @@ function PLAYERTASKCONTROLLER:AddRejectZone(RejectZone)
   self:T(self.lid.."AddRejectZone")
   if self.Intel then
     self.Intel:AddRejectZone(RejectZone)
+  else
+    self:E(self.lid.."NO detection has been set up (yet)!")
   end
   return self
 end
 
---- [User] Remove accept zone from INTEL detection
+--- [User] Remove accept zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
 -- @return #PLAYERTASKCONTROLLER self
@@ -2445,11 +2451,13 @@ function PLAYERTASKCONTROLLER:RemoveAcceptZone(AcceptZone)
   self:T(self.lid.."RemoveAcceptZone")
   if self.Intel then
     self.Intel:RemoveAcceptZone(AcceptZone)
+  else
+    self:E(self.lid.."NO detection has been set up (yet)!")
   end
   return self
 end
 
---- [User] Remove reject zone from INTEL detection
+--- [User] Remove reject zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
 -- @return #PLAYERTASKCONTROLLER self
@@ -2457,6 +2465,8 @@ function PLAYERTASKCONTROLLER:RemoveRejectZone(RejectZone)
   self:T(self.lid.."RemoveRejectZone")
   if self.Intel then
     self.Intel:RemoveRejectZone(RejectZone)
+  else
+    self:E(self.lid.."NO detection has been set up (yet)!")
   end
   return self
 end
