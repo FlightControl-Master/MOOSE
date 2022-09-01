@@ -79,7 +79,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.0.9"
+PLAYERTASK.version="0.1.0"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -147,7 +147,7 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
   self:AddTransition("*",            "Cancel",           "Done")   -- Command to cancel the Task.
   self:AddTransition("*",            "Success",          "Done")
   self:AddTransition("*",            "ClientAborted",    "*")
-  self:AddTransition("*",            "Failed",           "*") -- Done or repeat --> PLANNED
+  self:AddTransition("*",            "Failed",           "Failed") -- Done or repeat --> PLANNED
   self:AddTransition("*",            "Status",           "*")
   self:AddTransition("*",            "Stop",             "Stopped")
   
@@ -505,7 +505,7 @@ function PLAYERTASK:onafterStatus(From, Event, To)
     -- Any failure condition true?
     local failureCondition=self:_EvalConditionsAny(self.conditionFailure)
   
-    if failureCondition then
+    if failureCondition and status ~= "Failed" then
       self:__Failed(-2)
       status = "Failed"
     elseif successCondition then
@@ -875,9 +875,9 @@ do
 --                PILOTSTTS = ". Pilot(s): ",
 --                YES = "Yes",
 --                NO = "No",
---                POINTEROVERTARGET = "%s, %s, pointer over target for task %03d, lasing!",
---                POINTERTARGETREPORT = "\nPointer over target: %s\nLasing: %s",
---                POINTERTARGETLASINGTTS = ". Pointer over target and lasing.",
+--                POINTEROVERTARGET = "%s, %s, pointer in reach for task %03d, lasing!",
+--                POINTERTARGETREPORT = "\nPointer in reach: %s\nLasing: %s",
+--                POINTERTARGETLASINGTTS = ". Pointer in reach and lasing.",
 --              },
 -- 
 -- e.g.
@@ -1067,9 +1067,9 @@ PLAYERTASKCONTROLLER.Messages = {
     PILOTSTTS = ". Pilot(s): ",
     YES = "Yes",
     NO = "No",
-    POINTEROVERTARGET = "%s, %s, pointer over target for task %03d, lasing!",
-    POINTERTARGETREPORT = "\nPointer over target: %s\nLasing: %s",
-    POINTERTARGETLASINGTTS = ". Pointer over target and lasing.",
+    POINTEROVERTARGET = "%s, %s, pointer in reach for task %03d, lasing!",
+    POINTERTARGETREPORT = "\nPointer in reach: %s\nLasing: %s",
+    POINTERTARGETLASINGTTS = ". Pointer in reach and lasing.",
   },
   DE = {
     TASKABORT = "Auftrag abgebrochen!",
