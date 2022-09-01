@@ -745,7 +745,7 @@ do
 --  * BAI - Battlefield air interdiction, same as above, but no friendlies around
 --  * SEAD - Same as CAS, but the enemy ground units field AAA, SAM or EWR units
 --  * Bombing - Against static targets
---  * Precision Bombing - (if enabled) Laser-guided bombing, against static targets and high-value ground targets (MBTs etc)
+--  * Precision Bombing - (if enabled) Laser-guided bombing, against **static targets** and **high-value (non-SAM) ground targets (MBTs etc)**
 --  * Bomb Runway - Against Airbase runways (in effect, drop bombs over the runway)
 --  * ZONE and COORDINATE - Targets will be scanned for GROUND or STATIC enemy units and tasks created from these
 --  * Intercept - Any airborne targets, if the controller is of type "A2A"
@@ -949,8 +949,18 @@ do
 --              function taskmanager:OnAfterRepeatOnFailed(From, Event, To, Task)
 --                ... your code here ...
 --              end
---          
--- ## 8 Discussion
+-- 
+-- ## 8 Using F10 map markers to create new targets
+-- 
+-- You can use F10 map markers to create new target points for player tasks.  
+-- Enable this option with e.g., setting the tag to be used to "TARGET":
+-- 
+--            taskmanager:EnableMarkerOps("TARGET")
+--            
+-- Set a marker on the map and add the following text to create targets from it: "TARGET". This is effectively the same as adding a COORDINATE object as target.
+-- The marker can be deleted any time.
+--         
+-- ## 9 Discussion
 --
 -- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) #ops-playertask channel.  
 -- 
@@ -966,7 +976,7 @@ PLAYERTASKCONTROLLER = {
   PlayerMenu         =   {},
   usecluster         =   false,
   MenuName           =   nil,
-  ClusterRadius      =   1250,
+  ClusterRadius      =   0.5,
   NoScreenOutput     =   false,
   TargetRadius       =   500,
   UseWhiteList       =   false,
@@ -1120,7 +1130,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.26"
+PLAYERTASKCONTROLLER.version="0.1.27"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -1144,7 +1154,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
     self.usecluster = true
   end
   
-  self.ClusterRadius = 1250
+  self.ClusterRadius = 0.5
   self.TargetRadius = 500
   
   self.ClientFilter = ClientFilter or ""
@@ -1493,11 +1503,11 @@ end
 --- [User] Set the cluster radius if you want to use target clusters rather than single group detection. 
 -- Note that for a controller type A2A target clustering is on by default. Also remember that the diameter of the resulting zone is double the radius.
 -- @param #PLAYERTASKCONTROLLER self
--- @param #number Radius Target cluster radius in meters. Default is 1250m or 0.67NM
+-- @param #number Radius Target cluster radius in kilometers. Default is 0.5km.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetClusterRadius(Radius)
   self:T(self.lid.."SetClusterRadius")
-  self.ClusterRadius = Radius or 1250
+  self.ClusterRadius = Radius or 0.5
   self.usecluster = true
   return self
 end
@@ -1848,7 +1858,7 @@ end
 --
 function PLAYERTASKCONTROLLER:SetSEADAttributes(Attributes)
 	self:T(self.lid.."SetSEADAttributes")
-	if type(Attributes) ~= table then
+	if type(Attributes) ~= "table" then
 		Attributes = {Attributes}
 	end
 	self.SeadAttributes = Attributes
@@ -2396,7 +2406,7 @@ end
 -- @param Wrapper.Group#GROUP Recce Group of agents. Can also be an @{Ops.OpsGroup#OPSGROUP} object.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:AddAgent(Recce)
-  self:T(self.lid.."AddAgent: "..Recce:GetName())
+  self:T(self.lid.."AddAgent")
   if self.Intel then
     self.Intel:AddAgent(Recce)
   end
@@ -2470,7 +2480,7 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
   self.RecceSet = SET_GROUP:New():FilterCoalitions(self.CoalitionName):FilterPrefixes(RecceName):FilterStart()
   self.Intel = INTEL:New(self.RecceSet,self.Coalition,self.Name.."-Intel")
   self.Intel:SetClusterAnalysis(true,false,false)
-  self.Intel:SetClusterRadius(self.ClusterRadius or 500)
+  self.Intel:SetClusterRadius(self.ClusterRadius or 0.5)
   self.Intel.statusupdate = 25
   self.Intel:SetAcceptZones()
   self.Intel:SetRejectZones()

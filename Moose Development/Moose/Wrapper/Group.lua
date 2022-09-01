@@ -2385,10 +2385,10 @@ function GROUP:GetAttribute()
     local infantry=self:HasAttribute("Infantry")
     local artillery=self:HasAttribute("Artillery")
     local tank=self:HasAttribute("Old Tanks") or self:HasAttribute("Modern Tanks")
-    local aaa=self:HasAttribute("AAA")
+    local aaa=self:HasAttribute("AAA") and (not self:HasAttribute("SAM elements"))
     local ewr=self:HasAttribute("EWR")
     local ifv=self:HasAttribute("IFV")
-    local sam=self:HasAttribute("SAM elements") and (not self:HasAttribute("AAA"))
+    local sam=self:HasAttribute("SAM elements") or self:HasAttribute("Optical Tracker")
     -- Train
     local train=self:GetCategory()==Group.Category.TRAIN
 
