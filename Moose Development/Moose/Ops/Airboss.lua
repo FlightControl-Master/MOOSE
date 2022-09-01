@@ -17970,8 +17970,8 @@ function AIRBOSS:onafterLSOGrade(From, Event, To, playerData, grade)
     result.details=grade.details
 
     -- Debug info.
-    env.info("FF result onafterLSOGrade")
-    self:I(result)
+    self:T(self.lid.."Result onafterLSOGrade")
+    self:T(result)
 
     -- Send result.
     self.funkmanSocket:SendTable(result)
