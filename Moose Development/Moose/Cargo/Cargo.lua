@@ -206,27 +206,29 @@
 --    * **NR=** Provide the maximum range in meters when the cargo units will be boarded within the carrier during boarding.
 --      Note that this option is optional, so can be omitted. The default value of the RR is 10 meters.
 -- 
--- ## 5.2) The \#CARGO tag to create CARGO_CRATE objects:
+-- ## 5.2) The \#CARGO tag to create CARGO_CRATE or CARGO_SLINGLOAD objects:
 -- 
 -- You can also use the \#CARGO tag on **static** objects, including **static cargo** objects of the mission editor.
 -- 
 -- For example, the following #CARGO naming in the **static name** of the object, will create a CARGO_CRATE object when the mission starts.
 -- 
---   `Static #CARGO(T=Workmaterials,RR=500,NR=25)`
+--   `Static #CARGO(T=Workmaterials,C=CRATE,RR=500,NR=25)`
 -- 
 -- This will create a CARGO_CRATE object:
 -- 
 --    * with the group name `Static #CARGO`
 --    * is of type `Workmaterials`
+--    * is of category `CRATE` (as opposed to `SLING`)
 --    * will report when a carrier is within 500 meters
 --    * will board to carriers when the carrier is within 500 meters from the cargo object
 --    * will disappear when the cargo is within 25 meters from the carrier during boarding
 -- 
 -- So the overall syntax of the #CARGO naming tag and arguments are:
 -- 
---   `StaticName #CARGO(T=CargoTypeName,RR=Range,NR=Range)`
+--   `StaticName #CARGO(T=CargoTypeName,C=Category,RR=Range,NR=Range)`
 -- 
 --    * **T=** Provide a text that contains the type name of the cargo object. This type name can be used to filter cargo within a SET_CARGO object.
+--    * **C=** Provide either `CRATE` or `SLING` to have this static created as a CARGO_CRATE or CARGO_SLINGLOAD respectivly.
 --    * **RR=** Provide the minimal range in meters when the report to the carrier, and board to the carrier.
 --      Note that this option is optional, so can be omitted. The default value of the RR is 250 meters.
 --    * **NR=** Provide the maximum range in meters when the cargo units will be boarded within the carrier during boarding.
