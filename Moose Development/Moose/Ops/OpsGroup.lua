@@ -6421,7 +6421,7 @@ function OPSGROUP:onbeforeLaserOn(From, Event, To, Target)
     self.spot.element=element
 
     -- Height offset. No offset for aircraft. We take the height for ground or naval.
-    local offsetY=0
+    local offsetY=2 --2m for ARMYGROUP, else there might be no LOS
     if self.isFlightgroup or self.isNavygroup then
       offsetY=element.height
     end

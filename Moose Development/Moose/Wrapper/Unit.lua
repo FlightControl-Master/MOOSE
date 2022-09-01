@@ -830,7 +830,9 @@ function UNIT:HasSEAD()
     
     local HasSEAD = false
     if UnitSEADAttributes["RADAR_BAND1_FOR_ARM"] and UnitSEADAttributes["RADAR_BAND1_FOR_ARM"] == true or
-       UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] and UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] == true then
+       UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] and UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] == true or
+       UnitSEADAttributes["Optical Tracker"] and UnitSEADAttributes["Optical Tracker"] == true  
+       then
        HasSEAD = true
     end
     return HasSEAD
@@ -1067,7 +1069,7 @@ function UNIT:GetThreatLevel()
   if Descriptor then 
   
     local Attributes = Descriptor.attributes
-  
+    
     if self:IsGround() then
     
       local ThreatLevels = {

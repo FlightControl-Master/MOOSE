@@ -79,7 +79,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.0.9"
+PLAYERTASK.version="0.1.0"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -147,7 +147,7 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
   self:AddTransition("*",            "Cancel",           "Done")   -- Command to cancel the Task.
   self:AddTransition("*",            "Success",          "Done")
   self:AddTransition("*",            "ClientAborted",    "*")
-  self:AddTransition("*",            "Failed",           "*") -- Done or repeat --> PLANNED
+  self:AddTransition("*",            "Failed",           "Failed") -- Done or repeat --> PLANNED
   self:AddTransition("*",            "Status",           "*")
   self:AddTransition("*",            "Stop",             "Stopped")
   
@@ -505,7 +505,7 @@ function PLAYERTASK:onafterStatus(From, Event, To)
     -- Any failure condition true?
     local failureCondition=self:_EvalConditionsAny(self.conditionFailure)
   
-    if failureCondition then
+    if failureCondition and status ~= "Failed" then
       self:__Failed(-2)
       status = "Failed"
     elseif successCondition then
@@ -703,6 +703,7 @@ do
 -- @field #string locale
 -- @field #boolean precisionbombing
 -- @field Ops.FlightGroup#FLIGHTGROUP LasingDrone
+-- @field Core.MarkerOps_BASE#MARKEROPS_BASE MarkerOps
 -- @extends Core.Fsm#FSM
 
 ---
@@ -744,7 +745,7 @@ do
 --  * BAI - Battlefield air interdiction, same as above, but no friendlies around
 --  * SEAD - Same as CAS, but the enemy ground units field AAA, SAM or EWR units
 --  * Bombing - Against static targets
---  * Precision Bombing - (if enabled) Laser-guided bombing, against static targets and high-value ground targets (MBTs etc)
+--  * Precision Bombing - (if enabled) Laser-guided bombing, against **static targets** and **high-value (non-SAM) ground targets (MBTs etc)**
 --  * Bomb Runway - Against Airbase runways (in effect, drop bombs over the runway)
 --  * ZONE and COORDINATE - Targets will be scanned for GROUND or STATIC enemy units and tasks created from these
 --  * Intercept - Any airborne targets, if the controller is of type "A2A"
@@ -874,9 +875,9 @@ do
 --                PILOTSTTS = ". Pilot(s): ",
 --                YES = "Yes",
 --                NO = "No",
---                POINTEROVERTARGET = "%s, %s, pointer over target for task %03d, lasing!",
---                POINTERTARGETREPORT = "\nPointer over target: %s\nLasing: %s",
---                POINTERTARGETLASINGTTS = ". Pointer over target and lasing.",
+--                POINTEROVERTARGET = "%s, %s, pointer in reach for task %03d, lasing!",
+--                POINTERTARGETREPORT = "\nPointer in reach: %s\nLasing: %s",
+--                POINTERTARGETLASINGTTS = ". Pointer in reach and lasing.",
 --              },
 -- 
 -- e.g.
@@ -948,8 +949,18 @@ do
 --              function taskmanager:OnAfterRepeatOnFailed(From, Event, To, Task)
 --                ... your code here ...
 --              end
---          
--- ## 8 Discussion
+-- 
+-- ## 8 Using F10 map markers to create new targets
+-- 
+-- You can use F10 map markers to create new target points for player tasks.  
+-- Enable this option with e.g., setting the tag to be used to "TARGET":
+-- 
+--            taskmanager:EnableMarkerOps("TARGET")
+--            
+-- Set a marker on the map and add the following text to create targets from it: "TARGET". This is effectively the same as adding a COORDINATE object as target.
+-- The marker can be deleted any time.
+--         
+-- ## 9 Discussion
 --
 -- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) #ops-playertask channel.  
 -- 
@@ -965,7 +976,7 @@ PLAYERTASKCONTROLLER = {
   PlayerMenu         =   {},
   usecluster         =   false,
   MenuName           =   nil,
-  ClusterRadius      =   1250,
+  ClusterRadius      =   0.5,
   NoScreenOutput     =   false,
   TargetRadius       =   500,
   UseWhiteList       =   false,
@@ -990,6 +1001,17 @@ PLAYERTASKCONTROLLER.Type = {
 
 --- Define a new AUFTRAG Type
 AUFTRAG.Type.PRECISIONBOMBING = "Precision Bombing"
+ 
+--- 
+-- @type SeadAttributes
+-- @field #number SAM GROUP.Attribute.GROUND_SAM 
+-- @field #number AAA GROUP.Attribute.GROUND_AAA
+-- @field #number EWR GROUP.Attribute.GROUND_EWR 
+PLAYERTASKCONTROLLER.SeadAttributes = {
+	SAM = GROUP.Attribute.GROUND_SAM,
+	AAA = GROUP.Attribute.GROUND_AAA,
+	EWR = GROUP.Attribute.GROUND_EWR,
+}
  
 ---
 -- @field Messages 
@@ -1045,9 +1067,9 @@ PLAYERTASKCONTROLLER.Messages = {
     PILOTSTTS = ". Pilot(s): ",
     YES = "Yes",
     NO = "No",
-    POINTEROVERTARGET = "%s, %s, pointer over target for task %03d, lasing!",
-    POINTERTARGETREPORT = "\nPointer over target: %s\nLasing: %s",
-    POINTERTARGETLASINGTTS = ". Pointer over target and lasing.",
+    POINTEROVERTARGET = "%s, %s, pointer in reach for task %03d, lasing!",
+    POINTERTARGETREPORT = "\nPointer in reach: %s\nLasing: %s",
+    POINTERTARGETLASINGTTS = ". Pointer in reach and lasing.",
   },
   DE = {
     TASKABORT = "Auftrag abgebrochen!",
@@ -1108,7 +1130,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.25"
+PLAYERTASKCONTROLLER.version="0.1.27"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -1132,7 +1154,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
     self.usecluster = true
   end
   
-  self.ClusterRadius = 1250
+  self.ClusterRadius = 0.5
   self.TargetRadius = 500
   
   self.ClientFilter = ClientFilter or ""
@@ -1324,6 +1346,37 @@ function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode)
   return self
 end
 
+--- [User] Allow addition of targets with user F10 map markers.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #string Tag (Optional) The tagname to use to identify commands, defaults to "TASK"
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:EnableMarkerOps(Tag)
+  self:T(self.lid.."EnableMarkerOps")
+   
+  local tag = Tag or "TASK"
+  local MarkerOps = MARKEROPS_BASE:New(tag)
+  
+  local function Handler(Keywords,Coord,Text)
+    if self.verbose then
+      local m = MESSAGE:New(string.format("Target added from marker at: %s", Coord:ToStringLLDMS()),15,"INFO"):ToAll()
+    end
+    self:AddTarget(Coord)
+  end
+  
+  -- Event functions
+  function MarkerOps:OnAfterMarkAdded(From,Event,To,Text,Keywords,Coord)
+    Handler(Keywords,Coord,Text)
+  end
+  
+  function MarkerOps:OnAfterMarkChanged(From,Event,To,Text,Keywords,Coord)
+    Handler(Keywords,Coord,Text)
+  end
+  
+  self.MarkerOps = MarkerOps 
+   
+  return self
+end
+
 --- [Internal] Get player name
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Wrapper.Client#CLIENT Client
@@ -1450,11 +1503,11 @@ end
 --- [User] Set the cluster radius if you want to use target clusters rather than single group detection. 
 -- Note that for a controller type A2A target clustering is on by default. Also remember that the diameter of the resulting zone is double the radius.
 -- @param #PLAYERTASKCONTROLLER self
--- @param #number Radius Target cluster radius in meters. Default is 1250m or 0.67NM
+-- @param #number Radius Target cluster radius in kilometers. Default is 0.5km.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetClusterRadius(Radius)
   self:T(self.lid.."SetClusterRadius")
-  self.ClusterRadius = Radius or 1250
+  self.ClusterRadius = Radius or 0.5
   self.usecluster = true
   return self
 end
@@ -1595,7 +1648,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
   if self.LasingDrone and self.LasingDrone:IsAlive() then
     if self.LasingDrone.playertask and (not self.LasingDrone.playertask.busy) then
       -- not busy, get a task
-      self:I(self.lid.."Sending lasing unit to target")
+      self:T(self.lid.."Sending lasing unit to target")
       local task = self.PrecisionTasks:Pull() -- Ops.PlayerTask#PLAYERTASK
       self.LasingDrone.playertask.id = task.PlayerTaskNr
       self.LasingDrone.playertask.busy = true
@@ -1612,7 +1665,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
         local tgtzone = ZONE_RADIUS:New("ArmyGroup-"..math.random(1,10000),tgtcoord:GetVec2(),3000)
         local finalpos=nil -- Core.Point#COORDINATE
         for i=1,50 do
-          finalpos = tgtzone:GetRandomCoordinate(2000,0,{land.SurfaceType.LAND,land.SurfaceType.ROAD,land.SurfaceType.SHALLOW_WATER}) 
+          finalpos = tgtzone:GetRandomCoordinate(2500,0,{land.SurfaceType.LAND,land.SurfaceType.ROAD,land.SurfaceType.SHALLOW_WATER}) 
           if finalpos then
             if finalpos:IsLOS(tgtcoord,0) then
               break
@@ -1621,7 +1674,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
         end
         if finalpos then
           -- yeah we got one
-          local auftrag = AUFTRAG:NewARMOREDGUARD(finalpos)
+          local auftrag = AUFTRAG:NewARMOREDGUARD(finalpos,"Off road")
           local currmission = self.LasingDrone:GetMissionCurrent()
           self.LasingDrone:AddMission(auftrag)
           if currmission then currmission:__Cancel(-2) end
@@ -1638,7 +1691,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
     elseif self.LasingDrone.playertask and self.LasingDrone.playertask.busy then
       -- drone is busy, set up laser when over target
       local task = self.PrecisionTasks:ReadByID(self.LasingDrone.playertask.id) -- Ops.PlayerTask#PLAYERTASK
-      self:I("Looking at Task: "..task.PlayerTaskNr.." Type: "..task.Type.." State: "..task:GetState())
+      self:T("Looking at Task: "..task.PlayerTaskNr.." Type: "..task.Type.." State: "..task:GetState())
       if (not task) or task:GetState() == "Done" or task:GetState() == "Stopped" then
         -- we're done here
         local task = self.PrecisionTasks:PullByID(self.LasingDrone.playertask.id) -- Ops.PlayerTask#PLAYERTASK
@@ -1651,7 +1704,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
         self.LasingDrone.playertask.inreach = false
         self.LasingDrone.playertask.id = 0
         self.LasingDrone.playertask.reachmessage = false
-        self:I(self.lid.."Laser Off")
+        self:T(self.lid.."Laser Off")
       else
         -- not done yet
         local dcoord = self.LasingDrone:GetCoordinate()
@@ -1659,7 +1712,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
         local dist = dcoord:Get2DDistance(tcoord)
         -- close enough?
         if dist < 3000 and not self.LasingDrone:IsLasing() then
-          self:I(self.lid.."Laser On")
+          self:T(self.lid.."Laser On")
           self.LasingDrone:__LaserOn(-1,tcoord)
           self.LasingDrone.playertask.inreach = true
           if not self.LasingDrone.playertask.reachmessage then
@@ -1793,6 +1846,41 @@ function PLAYERTASKCONTROLLER:SetTaskBlackList(BlackList)
   return self
 end
 
+--- [User] Change the list of attributes, which are considered on GROUP or SET\_GROUP level of a target to create SEAD player tasks.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #table Attributes Table of attribute types considered to lead to a SEAD type player task.
+-- @return #PLAYERTASKCONTROLLER self
+-- @usage
+-- Default attribute types are: GROUP.Attribute.GROUND_SAM, GROUP.Attribute.GROUND_AAA, and GROUP.Attribute.GROUND_EWR.
+-- If you want to e.g. exclude AAA, so target groups with this attribute are assigned CAS or BAI tasks, and not SEAD, use this function as follows:
+--
+--						`mycontroller:SetSEADAttributes({GROUP.Attribute.GROUND_SAM, GROUP.Attribute.GROUND_EWR})`
+--
+function PLAYERTASKCONTROLLER:SetSEADAttributes(Attributes)
+	self:T(self.lid.."SetSEADAttributes")
+	if type(Attributes) ~= "table" then
+		Attributes = {Attributes}
+	end
+	self.SeadAttributes = Attributes
+	return self
+end
+
+--- [Internal] Function the check against SeadAttributes
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #string Attribute
+-- @return #boolean IsSead
+function PLAYERTASKCONTROLLER:_IsAttributeSead(Attribute)
+	self:T(self.lid.."_IsAttributeSead?")
+	local IsSead = false
+	for _,_attribute in pairs(self.SeadAttributes) do
+		if Attribute == _attribute then
+			IsSead = true
+			break
+		end
+	end
+	return IsSead
+end
+
 --- [Internal] Add a task to the task queue
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Ops.Target#TARGET Target
@@ -1820,22 +1908,22 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
     elseif targetobject:IsInstanceOf("GROUP") then
       self:T("SEAD Check GROUP")
       local attribute = targetobject:GetAttribute()
-      if attribute == GROUP.Attribute.GROUND_SAM or attribute == GROUP.Attribute.GROUND_AAA or attribute == GROUP.Attribute.GROUND_EWR then
-        type = AUFTRAG.Type.SEAD
-        --ttstype = "suppress air defense"
-        ttstype = self.gettext:GetEntry("SEADTTS",self.locale)
-      end
+    	 if self:_IsAttributeSead(attribute) then
+    		type = AUFTRAG.Type.SEAD
+    		--ttstype = "suppress air defense"
+    		ttstype = self.gettext:GetEntry("SEADTTS",self.locale)
+    	 end
     elseif targetobject:IsInstanceOf("SET_GROUP") then
       self:T("SEAD Check SET_GROUP")
       targetobject:ForEachGroup(
         function (group)
           local attribute = group:GetAttribute()
-          if attribute == GROUP.Attribute.GROUND_SAM or attribute == GROUP.Attribute.GROUND_AAA or attribute == GROUP.Attribute.GROUND_EWR then
-            type = AUFTRAG.Type.SEAD
-            --ttstype = "suppress air defense"
-            ttstype = self.gettext:GetEntry("SEADTTS",self.locale)
-          end
-        end
+      		 if self:_IsAttributeSead(attribute) then
+      			type = AUFTRAG.Type.SEAD
+      			--ttstype = "suppress air defense"
+      			ttstype = self.gettext:GetEntry("SEADTTS",self.locale)
+      		 end
+		    end
       )     
     elseif targetobject:IsInstanceOf("SET_UNIT") then
       self:T("SEAD Check SET_UNIT")
@@ -2313,19 +2401,21 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client)
   return self
 end
 
---- [User] Add agent group to INTEL detection
+--- [User] Add agent group to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Wrapper.Group#GROUP Recce Group of agents. Can also be an @{Ops.OpsGroup#OPSGROUP} object.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:AddAgent(Recce)
-  self:T(self.lid.."AddAgent: "..Recce:GetName())
+  self:T(self.lid.."AddAgent")
   if self.Intel then
     self.Intel:AddAgent(Recce)
+  else
+    self:E(self.lid.."NO detection has been set up (yet)!")
   end
   return self
 end
 
---- [User] Add accept zone to INTEL detection
+--- [User] Add accept zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
 -- @return #PLAYERTASKCONTROLLER self
@@ -2333,11 +2423,13 @@ function PLAYERTASKCONTROLLER:AddAcceptZone(AcceptZone)
   self:T(self.lid.."AddAcceptZone")
   if self.Intel then
     self.Intel:AddAcceptZone(AcceptZone)
+  else
+    self:E(self.lid.."NO detection has been set up (yet)!")
   end
   return self
 end
 
---- [User] Add reject zone to INTEL detection
+--- [User] Add reject zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
 -- @return #PLAYERTASKCONTROLLER self
@@ -2345,11 +2437,13 @@ function PLAYERTASKCONTROLLER:AddRejectZone(RejectZone)
   self:T(self.lid.."AddRejectZone")
   if self.Intel then
     self.Intel:AddRejectZone(RejectZone)
+  else
+    self:E(self.lid.."NO detection has been set up (yet)!")
   end
   return self
 end
 
---- [User] Remove accept zone from INTEL detection
+--- [User] Remove accept zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
 -- @return #PLAYERTASKCONTROLLER self
@@ -2357,11 +2451,13 @@ function PLAYERTASKCONTROLLER:RemoveAcceptZone(AcceptZone)
   self:T(self.lid.."RemoveAcceptZone")
   if self.Intel then
     self.Intel:RemoveAcceptZone(AcceptZone)
+  else
+    self:E(self.lid.."NO detection has been set up (yet)!")
   end
   return self
 end
 
---- [User] Remove reject zone from INTEL detection
+--- [User] Remove reject zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
 -- @return #PLAYERTASKCONTROLLER self
@@ -2369,6 +2465,8 @@ function PLAYERTASKCONTROLLER:RemoveRejectZone(RejectZone)
   self:T(self.lid.."RemoveRejectZone")
   if self.Intel then
     self.Intel:RemoveRejectZone(RejectZone)
+  else
+    self:E(self.lid.."NO detection has been set up (yet)!")
   end
   return self
 end
@@ -2392,7 +2490,7 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
   self.RecceSet = SET_GROUP:New():FilterCoalitions(self.CoalitionName):FilterPrefixes(RecceName):FilterStart()
   self.Intel = INTEL:New(self.RecceSet,self.Coalition,self.Name.."-Intel")
   self.Intel:SetClusterAnalysis(true,false,false)
-  self.Intel:SetClusterRadius(self.ClusterRadius or 500)
+  self.Intel:SetClusterRadius(self.ClusterRadius or 0.5)
   self.Intel.statusupdate = 25
   self.Intel:SetAcceptZones()
   self.Intel:SetRejectZones()
@@ -2709,4 +2807,3 @@ end
 -- END PLAYERTASKCONTROLLER
 ----- 
 end
-
