@@ -912,6 +912,11 @@ do
 --  
 -- and then `taskmanager:SetLocale("fr")` **after** @{#PLAYERTASKCONTROLLER.New}() in your script.
 -- 
+-- If you just want to replace a **single text block** in the table, you can do this like so:
+-- 
+--            mycontroller.Messages.EN.NOACTIVETASK = "Choose a task first!"   
+--            mycontroller.Messages.FR.YES = "Oui" 
+-- 
 -- ## 7 Events
 --
 --  The class comes with a number of FSM-based events that missions designers can use to shape their mission.
