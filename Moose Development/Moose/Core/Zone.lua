@@ -572,7 +572,7 @@ end
 -- 
 -- local PropertiesZone = ZONE:FindByName("Properties Zone")
 -- local Property = "ExampleProperty"
--- local PropertyValue = PropertiesZone:GetProperty(PropertyName)
+-- local PropertyValue = PropertiesZone:GetProperty(Property)
 --
 function ZONE_BASE:GetProperty(PropertyName)
   return self.Properties[PropertyName]
