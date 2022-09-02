@@ -16,6 +16,7 @@
 -- ===
 --
 -- ### Author: **Applevangelist**
+-- ### Special thanks to: Streakeagle
 --
 -- ===
 -- @module Ops.PlayerTask
@@ -79,7 +80,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.0"
+PLAYERTASK.version="0.1.1"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -346,8 +347,10 @@ end
 --- [User] Create target mark on F10 map
 -- @param #PLAYERTASK self
 -- @param #string Text (optional) Text to show on the marker
+-- @param #number Coalition (optional) Coalition this marker is for. Default = All.
+-- @param #boolean ReadOnly (optional) Make target marker read-only. Default = false.
 -- @return #PLAYERTASK self
-function PLAYERTASK:MarkTargetOnF10Map(Text)
+function PLAYERTASK:MarkTargetOnF10Map(Text,Coalition,ReadOnly)
   self:T(self.lid.."MarkTargetOnF10Map")
   if self.Target then
     local coordinate = self.Target:GetCoordinate()
@@ -358,8 +361,14 @@ function PLAYERTASK:MarkTargetOnF10Map(Text)
       end
       local text = Text or "Target of "..self.lid
       self.TargetMarker = MARKER:New(coordinate,"Target of "..self.lid)
-      self.TargetMarker:ReadOnly()
-      self.TargetMarker:ToAll()
+      if ReadOnly then
+        self.TargetMarker:ReadOnly()
+      end
+      if Coalition then
+        self.TargetMarker:ToCoalition(Coalition)
+      else
+        self.TargetMarker:ToAll()
+      end
     end
   end
   return self
@@ -707,6 +716,7 @@ do
 -- @field Ops.FlightGroup#FLIGHTGROUP LasingDrone
 -- @field Core.MarkerOps_BASE#MARKEROPS_BASE MarkerOps
 -- @field #boolean askinfomenu
+-- @field #boolean MarkerReadOnly
 -- @extends Core.Fsm#FSM
 
 ---
@@ -989,7 +999,8 @@ PLAYERTASKCONTROLLER = {
   gettext            =   nil,
   locale             =   "en",
   precisionbombing   =   false,
-  taskinfomenu       =   false,
+  taskinfomenu       =   true,
+  MarkerReadOnly     =   false,
   }
 
 ---
@@ -1177,9 +1188,11 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.PrecisionTasks = FIFO:New() -- Utilities.FiFo#FIFO
   self.PlayerMenu = {} -- #table
   self.lasttaskcount = 0
-  self.taskinfomenu = false
   
+  self.taskinfomenu = false
   self.MenuName = nil
+  
+  self.MarkerReadOnly = false
   
   self.repeatonfailed = true
   self.repeattimes = 5
@@ -1427,6 +1440,7 @@ end
 function PLAYERTASKCONTROLLER:EnableTaskInfoMenu()
   self:T(self.lid.."EnableTaskInfoMenu")
   self.taskinfomenu = true
+  return self
 end
 
 --- [User] Disable extra menu to show task detail information before joining
@@ -1435,6 +1449,25 @@ end
 function PLAYERTASKCONTROLLER:DisableTaskInfoMenu()
   self:T(self.lid.."DisableTaskInfoMenu")
   self.taskinfomenu = false
+  return self
+end
+
+--- [User] Forbid F10 markers to be deleted by pilots. Note: Marker will auto-delete when the undelying task is done.
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetMarkerReadOnly()
+  self:T(self.lid.."SetMarkerReadOnly")
+  self.MarkerReadOnly = true
+  return self
+end
+
+--- [User] Allow F10 markers to be deleted by pilots. Note: Marker will auto-delete when the undelying task is done.
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetMarkerDeleteable()
+  self:T(self.lid.."SetMarkerDeleteable")
+  self.MarkerReadOnly = false
+  return self
 end
 
 --- [Internal] Event handling
@@ -2232,7 +2265,7 @@ function PLAYERTASKCONTROLLER:_MarkTask(Group, Client)
   if self.TasksPerPlayer:HasUniqueID(playername) then
     local task = self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
     text = string.format("Task ID #%03d | Type: %s | Threat: %d",task.PlayerTaskNr,task.Type,task.Target:GetThreatLevelMax())
-    task:MarkTargetOnF10Map(text)
+    task:MarkTargetOnF10Map(text,self.Coalition,self.MarkerReadOnly)
     local textmark = self.gettext:GetEntry("MARKTASK",self.locale)
     --text = string.format("%s, copy pilot %s, task %03d location marked on map!", self.MenuName or self.Name, playername, task.PlayerTaskNr)
     text = string.format(textmark, ttsplayername, self.MenuName or self.Name, task.PlayerTaskNr)
@@ -2338,7 +2371,7 @@ end
 --- [Internal] Build client menus
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Wrapper.Client#CLIENT Client (optional) build for this client name only
--- @param #boolen enforced
+-- @param #boolean enforced
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced)
   self:T(self.lid.."_BuildMenus")
