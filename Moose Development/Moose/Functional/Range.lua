@@ -429,6 +429,11 @@ RANGE.TargetType = {
 -- @field #string airframe Aircraft type of player.
 -- @field #number time Time via timer.getAbsTime() in seconds of impact.
 -- @field #string date OS date.
+-- @field #number attackHdg Attack heading in degrees.
+-- @field #number attackVel Attack velocity in knots.
+-- @field #number attackAlt Attack altitude in feet.
+-- @field #string clock Time of the run.
+-- @field #string rangename Name of the range.
 
 --- Strafe result.
 -- @type RANGE.StrafeResult
@@ -436,6 +441,13 @@ RANGE.TargetType = {
 -- @field #string airframe Aircraft type of player.
 -- @field #number time Time via timer.getAbsTime() in seconds of impact.
 -- @field #string date OS date.
+-- @field #string name Name of the target pit.
+-- @field #number roundsFired Number of rounds fired.
+-- @field #number roundsHit Number of rounds that hit the target.
+-- @field #number strafeAccuracy Accuracy of the run in percent.
+-- @field #string clock Time of the run.
+-- @field #string rangename Name of the range.
+-- @field #boolean invalid Invalid pass.
 
 --- Sound file data.
 -- @type RANGE.Soundfile
@@ -569,17 +581,16 @@ RANGE.version = "2.4.0"
 
 --- RANGE contructor. Creates a new RANGE object.
 -- @param #RANGE self
--- @param #string rangename Name of the range. Has to be unique. Will we used to create F10 menu items etc.
+-- @param #string RangeName Name of the range. Has to be unique. Will we used to create F10 menu items etc.
 -- @return #RANGE RANGE object.
-function RANGE:New( rangename )
-  BASE:F( { rangename = rangename } )
+function RANGE:New( RangeName )
 
   -- Inherit BASE.
   local self = BASE:Inherit( self, FSM:New() ) -- #RANGE
 
   -- Get range name.
   -- TODO: make sure that the range name is not given twice. This would lead to problems in the F10 radio menu.
-  self.rangename = rangename or "Practice Range"
+  self.rangename = RangeName or "Practice Range"
 
   -- Log id.
   self.id = string.format( "RANGE %s | ", self.rangename )
@@ -947,6 +958,19 @@ function RANGE:SetTargetSheet( path, prefix )
   else
     self:E( self.lid .. "ERROR: io is not desanitized. Cannot save target sheet." )
   end
+  return self
+end
+
+--- Set FunkMan socket. Bombing and strafing results will be send to your Discord bot.
+-- **Requires running FunkMan program**.
+-- @param #RANGE self
+-- @param #number Port Port. Default `10042`.
+-- @param #string Host Host. Default "127.0.0.1".
+-- @return #RANGE self
+function RANGE:SetFunkManOn(Port, Host)
+  
+  self.funkmanSocket=SOCKET:New(Port, Host)
+  
   return self
 end
 
@@ -1728,7 +1752,6 @@ function RANGE:OnEventHit( EventData )
             self:_DisplayMessageToGroup( _unit, text )
             self:T2( self.id .. text )
             _currentTarget.pastfoulline = true
-            invalidStrafe = true -- Rangeboss Edit
           end
         end
 
@@ -1758,6 +1781,13 @@ function RANGE:OnEventHit( EventData )
       end
     end
   end
+end
+
+--- Range event handler for event shot (when a unit releases a rocket or bomb (but not a fast firing gun).
+-- @param #RANGE self
+-- @param #table weapon Weapon
+function RANGE:_TrackWeapon(weapon)
+
 end
 
 --- Range event handler for event shot (when a unit releases a rocket or bomb (but not a fast firing gun).
@@ -1806,6 +1836,11 @@ function RANGE:OnEventShot( EventData )
 
   -- Get player unit and name.
   local _unit, _playername = self:_GetPlayerUnitAndName( _unitName )
+  
+  -- Attack parameters.
+  local attackHdg=_unit:GetHeading()
+  local attackAlt=_unit:GetHeight()
+  local attackVel=_unit:GetVelocityKNOTS()
 
   -- Set this to larger value than the threshold.
   local dPR = self.BombtrackThreshold * 2
@@ -1848,7 +1883,6 @@ function RANGE:OnEventShot( EventData )
 
         -- Check again in ~0.005 seconds ==> 200 checks per second.
         return timer.getTime() + self.dtBombtrack
-
       else
 
         -----------------------------
@@ -1858,7 +1892,7 @@ function RANGE:OnEventShot( EventData )
         -- Get closet target to last position.
         local _closetTarget = nil -- #RANGE.BombTarget
         local _distance = nil
-        local _closeCoord = nil
+        local _closeCoord = nil   --Core.Point#COORDINATE
         local _hitquality = "POOR"
 
         -- Get callsign.
@@ -1886,6 +1920,7 @@ function RANGE:OnEventShot( EventData )
 
         -- Loop over defined bombing targets.
         for _, _bombtarget in pairs( self.bombingTargets ) do
+          local bombtarget=_bombtarget  --#RANGE.BombTarget
 
           -- Get target coordinate.
           local targetcoord = self:_GetBombTargetCoordinate( _bombtarget )
@@ -1898,15 +1933,15 @@ function RANGE:OnEventShot( EventData )
             -- Find closest target to last known position of the bomb.
             if _distance == nil or _temp < _distance then
               _distance = _temp
-              _closetTarget = _bombtarget
-              _closeCoord = targetcoord
+              _closetTarget = bombtarget
+              _closeCoord   = targetcoord
               if _distance <= 1.53 then -- Rangeboss Edit
                 _hitquality = "SHACK" -- Rangeboss Edit
-              elseif _distance <= 0.5 * _bombtarget.goodhitrange then -- Rangeboss Edit
+              elseif _distance <= 0.5 * bombtarget.goodhitrange then -- Rangeboss Edit
                 _hitquality = "EXCELLENT"
-              elseif _distance <= _bombtarget.goodhitrange then
+              elseif _distance <= bombtarget.goodhitrange then
                 _hitquality = "GOOD"
-              elseif _distance <= 2 * _bombtarget.goodhitrange then
+              elseif _distance <= 2 * bombtarget.goodhitrange then
                 _hitquality = "INEFFECTIVE"
               else
                 _hitquality = "POOR"
@@ -1927,6 +1962,7 @@ function RANGE:OnEventShot( EventData )
           local _results = self.bombPlayerResults[_playername]
 
           local result = {} -- #RANGE.BombResult
+          result.command=SOCKET.DataType.BOMBRESULT
           result.name = _closetTarget.name or "unknown"
           result.distance = _distance
           result.radial = _closeCoord:HeadingTo( impactcoord )
@@ -1934,11 +1970,17 @@ function RANGE:OnEventShot( EventData )
           result.quality = _hitquality
           result.player = playerData.playername
           result.time = timer.getAbsTime()
+          result.clock = UTILS.SecondsToClock(result.time, true)
+          result.midate = UTILS.GetDCSMissionDate()
+          result.theatre = env.mission.theatre
           result.airframe = playerData.airframe
           result.roundsFired = 0 -- Rangeboss Edit
           result.roundsHit = 0 -- Rangeboss Edit
           result.roundsQuality = "N/A" -- Rangeboss Edit
           result.rangename = self.rangename
+          result.attackHdg = attackHdg
+          result.attackVel = attackVel
+          result.attackAlt = attackAlt
 
           -- Add to table.
           table.insert( _results, result )
@@ -2078,13 +2120,13 @@ function RANGE:onafterImpact( From, Event, To, result, player )
   -- Only display target name if there is more than one bomb target.
   local targetname = nil
   if #self.bombingTargets > 1 then
-    local targetname = result.name
+    targetname = result.name
   end
 
   -- Send message to player.
   local text = string.format( "%s, impact %03d° for %d ft", player.playername, result.radial, UTILS.MetersToFeet( result.distance ) )
   if targetname then
-    text = text .. string.format( " from bulls of target %s." )
+    text = text .. string.format( " from bulls of target %s.", targetname )
   else
     text = text .. "."
   end
@@ -2110,15 +2152,39 @@ function RANGE:onafterImpact( From, Event, To, result, player )
   end
 
   -- Unit.
-  local unit = UNIT:FindByName( player.unitname )
-
-  -- Send message.
-  self:_DisplayMessageToGroup( unit, text, nil, true )
-  self:T( self.id .. text )
+  if player.unitname then
+  
+    -- Get unit.
+    local unit = UNIT:FindByName( player.unitname )
+  
+    -- Send message.
+    self:_DisplayMessageToGroup( unit, text, nil, true )
+    self:T( self.id .. text )
+  end
 
   -- Save results.
   if self.autosave then
     self:Save()
+  end
+  
+  -- Send result to FunkMan, which creates fancy MatLab figures and sends them to Discord via a bot.
+  if self.funkmanSocket then
+    self.funkmanSocket:SendTable(result)
+  end
+
+end
+
+--- Function called after strafing run.
+-- @param #RANGE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #RANGE.PlayerData player Player data table.
+-- @param #RANGE.StrafeResult result Result of run.
+function RANGE:onafterStrafeResult( From, Event, To, player, result)
+
+  if self.funkmanSocket then
+    self.funkmanSocket:SendTable(result)
   end
 
 end
@@ -2175,7 +2241,7 @@ function RANGE:onafterSave( From, Event, To )
       local target = result.name
       local radial = result.radial
       local quality = result.quality
-      local time = UTILS.SecondsToClock( result.time )
+      local time = UTILS.SecondsToClock(result.time, true)
       local airframe = result.airframe
       local date = "n/a"
       if os then
@@ -3046,9 +3112,13 @@ function RANGE:_CheckInZone( _unitName )
           
           -- Strafe result.
           local result = {} -- #RANGE.StrafeResult
+          result.command=SOCKET.DataType.STRAFERESULT
           result.player=_playername
           result.name=_result.zone.name or "unknown"
           result.time = timer.getAbsTime()
+          result.clock = UTILS.SecondsToClock(result.time)
+          result.midate = UTILS.GetDCSMissionDate()
+          result.theatre = env.mission.theatre
           result.roundsFired = shots
           result.roundsHit = _result.hits
           result.roundsQuality = resulttext
