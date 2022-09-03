@@ -863,7 +863,7 @@ do
 --                MARKTASK = "%s, %s, copy, task %03d location marked on map!",
 --                SMOKETASK = "%s, %s, copy, task %03d location smoked!",
 --                FLARETASK = "%s, %s, copy, task %03d location illuminated!",
---                ABORTTASK = "%s, all stations, %s has aborted %s task %03d!",
+--                ABORTTASK = "All stations, %s, %s has aborted %s task %03d!",
 --                UNKNOWN = "Unknown",
 --                MENUTASKING = " Tasking ",
 --                MENUACTIVE = "Active Task",
@@ -1053,7 +1053,6 @@ PLAYERTASKCONTROLLER.Messages = {
     INTERCEPTTS = "intercept",
     BOMBRUNWAYTTS = "bomb runway",
     HAVEACTIVETASK = "You already have one active task! Complete it first!",
-    --PILOTJOINEDTASK = "%s, %s joined task %03d",
     PILOTJOINEDTASK = "%s, %s. You have been assigned %s task %03d",
     TASKNAME = "%s Task ID %03d",
     TASKNAMETTS = "%s Task ID %03d",
@@ -1065,7 +1064,7 @@ PLAYERTASKCONTROLLER.Messages = {
     MARKTASK = "%s, %s, copy, task %03d location marked on map!",
     SMOKETASK = "%s, %s, copy, task %03d location smoked!",
     FLARETASK = "%s, %s, copy, task %03d location illuminated!",
-    ABORTTASK = "%s, all stations, %s has aborted %s task %03d!",
+    ABORTTASK = "All stations, %s, %s has aborted %s task %03d!",
     UNKNOWN = "Unknown",
     MENUTASKING = " Tasking ",
     MENUACTIVE = "Active Task",
@@ -1111,7 +1110,6 @@ PLAYERTASKCONTROLLER.Messages = {
     INTERCEPTTS = "Abfangen",
     BOMBRUNWAYTTS = "Startbahn Bombardieren",
     HAVEACTIVETASK = "Du hast einen aktiven Auftrag! Beende ihn zuerst!",
-    --PILOTJOINEDTASK = "%s, %s. You have been assigned %s task %03d",
     PILOTJOINEDTASK = "%s, %s hat Auftrag %s %03d angenommen",
     TASKNAME = "%s Auftrag ID %03d",
     TASKNAMETTS = "%s Auftrag ID %03d",
@@ -1158,7 +1156,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.29"
+PLAYERTASKCONTROLLER.version="0.1.30"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -2380,11 +2378,14 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced)
   self:T(self.lid.."_BuildMenus")
+
   local clients = self.ClientSet:GetAliveSet()
+
   if Client then
     clients = {Client}
     enforced = true
   end
+  
   for _,_client in pairs(clients) do
     if _client then
       local client = _client -- Wrapper.Client#CLIENT
@@ -2415,7 +2416,7 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced)
           end
           topmenu = self.PlayerMenu[playername]
         else
-          topmenu = MENU_GROUP:New(group,menuname,nil)
+          topmenu = MENU_GROUP_DELAYED:New(group,menuname,nil)
           self.PlayerMenu[playername] = topmenu
         end
         
@@ -2431,16 +2432,16 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced)
           local menuflare = self.gettext:GetEntry("MENUFLARE",self.locale)
           local menuabort = self.gettext:GetEntry("MENUABORT",self.locale)
           
-          local active = MENU_GROUP:New(group,menuactive,topmenu)
-          local info = MENU_GROUP_COMMAND:New(group,menuinfo,active,self._ActiveTaskInfo,self,group,client)
-          local mark = MENU_GROUP_COMMAND:New(group,menumark,active,self._MarkTask,self,group,client)
+          local active = MENU_GROUP_DELAYED:New(group,menuactive,topmenu)
+          local info = MENU_GROUP_COMMAND_DELAYED:New(group,menuinfo,active,self._ActiveTaskInfo,self,group,client)
+          local mark = MENU_GROUP_COMMAND_DELAYED:New(group,menumark,active,self._MarkTask,self,group,client)
           if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
             -- no smoking/flaring here if A2A
-            local smoke = MENU_GROUP_COMMAND:New(group,menusmoke,active,self._SmokeTask,self,group,client)
-            local flare = MENU_GROUP_COMMAND:New(group,menuflare,active,self._FlareTask,self,group,client)
+            local smoke = MENU_GROUP_COMMAND_DELAYED:New(group,menusmoke,active,self._SmokeTask,self,group,client)
+            local flare = MENU_GROUP_COMMAND_DELAYED:New(group,menuflare,active,self._FlareTask,self,group,client)
           end
-          local abort = MENU_GROUP_COMMAND:New(group,menuabort,active,self._AbortTask,self,group,client)
-          
+          local abort = MENU_GROUP_COMMAND_DELAYED:New(group,menuabort,active,self._AbortTask,self,group,client)
+
         elseif (self.TaskQueue:Count() > 0 and enforced) or (not playerhastask) then
         ---
         -- JOIN TASK MENU
@@ -2449,14 +2450,14 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced)
           local taskpertype = self:_GetTasksPerType()
           local menujoin = self.gettext:GetEntry("MENUJOIN",self.locale)
           local menutaskinfo = self.gettext:GetEntry("MENUTASKINFO",self.locale)
-          local joinmenu = MENU_GROUP:New(group,menujoin,topmenu)
+          local joinmenu = MENU_GROUP_DELAYED:New(group,menujoin,topmenu)
           
           local ttypes = {}
           local taskmenu = {}
           local ittypes = {}
           local itaskmenu = {}
           for _tasktype,_data in pairs(tasktypes) do
-            ttypes[_tasktype] = MENU_GROUP:New(group,_tasktype,joinmenu)
+            ttypes[_tasktype] = MENU_GROUP_DELAYED:New(group,_tasktype,joinmenu)
             local tasks =  taskpertype[_tasktype] or {}
             for _,_task in pairs(tasks) do
               _task = _task -- Ops.PlayerTask#PLAYERTASK
@@ -2476,17 +2477,18 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced)
                 end
               end
               --if _task:GetState() == "Planned" or (not _task:HasPlayerName(playername)) then
-              local taskentry = MENU_GROUP_COMMAND:New(group,text,ttypes[_tasktype],self._JoinTask,self,group,client,_task)
+              local taskentry = MENU_GROUP_COMMAND_DELAYED:New(group,text,ttypes[_tasktype],self._JoinTask,self,group,client,_task)
               taskentry:SetTag(playername)
               taskmenu[#taskmenu+1] = taskentry
               --end          
             end
           end
+          --joinmenu:Set()
           
           if self.taskinfomenu then
-            local taskinfomenu = MENU_GROUP:New(group,menutaskinfo,topmenu)
+            local taskinfomenu = MENU_GROUP_DELAYED:New(group,menutaskinfo,topmenu)
             for _tasktype,_data in pairs(tasktypes) do
-              ittypes[_tasktype] = MENU_GROUP:New(group,_tasktype,taskinfomenu)
+              ittypes[_tasktype] = MENU_GROUP_DELAYED:New(group,_tasktype,taskinfomenu)
               local tasks =  taskpertype[_tasktype] or {}
               for _,_task in pairs(tasks) do
                 _task = _task -- Ops.PlayerTask#PLAYERTASK
@@ -2506,22 +2508,23 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced)
                   end
                 end
                 --if _task:GetState() == "Planned" or (not _task:HasPlayerName(playername)) then
-                local taskentry = MENU_GROUP_COMMAND:New(group,text,ittypes[_tasktype],self._ActiveTaskInfo,self,group,client,_task)
+                local taskentry = MENU_GROUP_COMMAND_DELAYED:New(group,text,ittypes[_tasktype],self._ActiveTaskInfo,self,group,client,_task)
                 taskentry:SetTag(playername)
                 itaskmenu[#itaskmenu+1] = taskentry
                 --end          
               end
             end
+            --taskinfomenu:Set()
           end
         elseif self.TaskQueue:Count() == 0 then
           -- no tasks (yet)
           local menunotasks = self.gettext:GetEntry("MENUNOTASKS",self.locale)
-          local joinmenu = MENU_GROUP:New(group,menunotasks,topmenu)
+          local joinmenu = MENU_GROUP_DELAYED:New(group,menunotasks,topmenu)
         end
         ---
         -- REFRESH MENU
         --- 
-        self.PlayerMenu[playername]:Refresh()
+       self.PlayerMenu[playername]:Set()
       end
     end
   end
