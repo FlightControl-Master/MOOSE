@@ -1143,6 +1143,7 @@ function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port)
     self.msrs:SetVoice(Voice)
     self.msrs:SetPort(Port)
     self.msrs:SetCoalition(self:GetCoalition())
+    self.msrs:SetLabel("ATIS")
     if self.dTQueueCheck<=10 then
       self:SetQueueUpdateTime(90)
     end

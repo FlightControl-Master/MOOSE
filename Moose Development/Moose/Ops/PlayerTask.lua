@@ -1225,7 +1225,8 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self:AddTransition("*",            "Stop",                  "Stopped")
   
   self:__Start(-1)
-  self:__Status(-2)
+  local starttime = math.random(5,10)
+  self:__Status(-starttime)
   
   -- Player leaves
   self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventHandler)
@@ -2402,7 +2403,8 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced)
         -- TOPMENU
         ---
         local taskings = self.gettext:GetEntry("MENUTASKING",self.locale)
-        local menuname = self.MenuName or self.Name..taskings..self.Type
+        local longname = self.Name..taskings..self.Type
+        local menuname = self.MenuName or longname
         local playerhastask = false
         
         if self:_CheckPlayerHasTask(playername) then playerhastask = true end
