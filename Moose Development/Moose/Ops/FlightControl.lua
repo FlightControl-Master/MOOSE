@@ -327,7 +327,7 @@ FLIGHTCONTROL.FlightStatus={
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.7.1"
+FLIGHTCONTROL.version="0.7.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -591,6 +591,7 @@ function FLIGHTCONTROL:_SetSRSOptions(msrs, Gender, Culture, Voice, Volume, Labe
     msrs:SetVolume(Volume)
     msrs:SetLabel(Label)
     msrs:SetGoogle(PathToGoogleCredentials)
+    msrs:SetCoalition(self:GetCoalition())
   end
 
   return self

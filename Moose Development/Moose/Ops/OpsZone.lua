@@ -30,6 +30,8 @@
 -- @field #number Nred Number of red units in the zone.
 -- @field #number Nblu Number of blue units in the zone.
 -- @field #number Nnut Number of neutral units in the zone.
+-- @field #number TminCaptured Time interval in seconds how long an attacker must have troops inside the zone to capture.
+-- @field #number Tcaptured Time stamp (abs.) when the attacker destroyed all owning troops.
 -- @field #table ObjectCategories Object categories for the scan.
 -- @field #table UnitCategories Unit categories for the scan.
 -- @field #number Tattacked Abs. mission time stamp when an attack was started.
@@ -74,7 +76,7 @@ OPSZONE = {
 
 --- OPSZONE class version.
 -- @field #string version
-OPSZONE.version="0.3.0"
+OPSZONE.version="0.3.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -162,6 +164,9 @@ function OPSZONE:New(Zone, CoalitionOwner)
     self.ownerCurrent=self.airbase:GetCoalition()
     self.ownerPrevious=self.airbase:GetCoalition()
   end
+  
+  -- Set time to capture.
+  self:SetTimeCapture()
   
   -- Set object categories.
   self:SetObjectCategories()
@@ -385,6 +390,18 @@ end
 function OPSZONE:SetThreatlevelOffending(Threatlevel)
 
   self.threatlevelOffending=Threatlevel or 0
+  
+  return self
+end
+
+
+--- Set time how long an attacking coalition must have troops inside a zone before it captures the zone.
+-- @param #OPSZONE self
+-- @param #number Tcapture Time in seconds. Default 0.
+-- @return #OPSZONE self
+function OPSZONE:SetTimeCapture(Tcapture)
+
+  self.TminCaptured=Tcapture or 0
   
   return self
 end
@@ -679,6 +696,23 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On before "Captured" event.
+-- @param #OPSZONE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number NewOwnerCoalition Coalition of the new owner.
+function OPSZONE:onbeforeCaptured(From, Event, To, NewOwnerCoalition)
+
+  -- Check if owner changed.
+  
+  if self.ownerCurrent==NewOwnerCoalition then
+    self:T(self.lid.."")
+  end
+
+  return true
+end
 
 --- On after "Captured" event.
 -- @param #OPSZONE self
@@ -1004,12 +1038,34 @@ function OPSZONE:EvaluateZone()
       if Nblu>0 then
         -- Blue captured red zone.
         if not self.airbase then
-          self:Captured(coalition.side.BLUE)
+          local Tnow=timer.getAbsTime()
+          
+          -- Set time stamp if it does not exist.
+          if not self.Tcaptured then
+            self.Tcaptured=Tnow
+          end
+          
+          -- Check if enough time elapsed.
+          if Tnow-self.Tcaptured>=self.TminCaptured then
+            self:Captured(coalition.side.BLUE)
+            self.Tcaptured=nil
+          end
         end
       elseif Nnut>0 and self.neutralCanCapture then
         -- Neutral captured red zone.
         if not self.airbase then
-          self:Captured(coalition.side.NEUTRAL)
+          local Tnow=timer.getAbsTime()
+          
+          -- Set time stamp if it does not exist.
+          if not self.Tcaptured then
+            self.Tcaptured=Tnow
+          end
+          
+          -- Check if enough time elapsed.
+          if Tnow-self.Tcaptured>=self.TminCaptured then
+            self:Captured(coalition.side.NEUTRAL)
+            self.Tcaptured=nil
+          end
         end
       else
         -- Red zone is now empty (but will remain red).
