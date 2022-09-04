@@ -17,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update August 2022
+-- @date Last Update September 2022
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -340,6 +340,7 @@ do
 -- * @{#AWACS.SetEscort}() : Set number of escorting planes for AWACS.
 -- * @{#AWACS.AddCAPAirWing}() : Add an additional @{Ops.Airwing#AIRWING} for CAP flights.
 -- * @{#AWACS.ZipLip}() : Do not show messages on screen, no extra calls for player guidance, use short callsigns, no group tags.
+-- * @{#AWACS.AddFrequencyAndModulation}() : Add additional frequencies with modulation which will receive AWACS SRS messages.
 -- 
 -- ## 9.1 Single Options
 -- 
@@ -494,7 +495,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.40", -- #string
+  version = "0.2.41", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -909,11 +910,11 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.2.33
+-- TODO-List 0.2.41
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
--- TODO - Localization (sensible?)
+-- DONE - Localization (sensible?)
 -- TODO - (LOW) LotATC
 -- TODO - SW Optimization
 -- WONTDO - Maybe check in AI only when airborne
@@ -1022,8 +1023,12 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.ControlZoneRadius = 100 -- nm
   self.StationZone = ZONE:New(StationZone) -- Core.Zone#ZONE
   self.StationZoneName = StationZone
+  
   self.Frequency = Frequency or 271 -- #number
   self.Modulation = Modulation or radio.modulation.AM
+  self.MultiFrequency = {self.Frequency}
+  self.MultiModulation = {self.Modulation}
+
   self.Airbase = AIRBASE:FindByName(AirbaseName)
   self.AwacsAngels = 25 -- orbit at 25'000 ft
   if AwacsOrbit then
@@ -1364,6 +1369,22 @@ end
 function AWACS:SetLocale(Locale)
   self:T(self.lid.."SetLocale")
   self.locale = Locale or "en"
+  return self
+end
+
+--- [User] Add additional frequency and modulation for AWACS SRS output.
+-- @param #AWACS self
+-- @param #number Frequency The frequency to add, e.g. 132.5
+-- @param #number Modulation The modulation to add for the frequency, e.g. radio.modulation.AM
+-- @return #AWACS self
+function AWACS:AddFrequencyAndModulation(Frequency,Modulation)
+  self:T(self.lid.."AddFrequencyAndModulation")
+  table.insert(self.MultiFrequency,Frequency)
+  table.insert(self.MultiModulation,Modulation)
+  if self.AwacsSRS then
+    self.AwacsSRS:SetFrequencies(self.MultiFrequency)
+    self.AwacsSRS:SetModulations(self.MultiModulation)
+  end
   return self
 end
 
@@ -1873,6 +1894,17 @@ function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey
   self.Voice = Voice 
   self.PathToGoogleKey = PathToGoogleKey
   self.Volume = Volume or 1.0
+  
+  self.AwacsSRS = MSRS:New(self.PathToSRS,self.MultiFrequency,self.MultiModulation,self.Volume)
+  self.AwacsSRS:SetGender(self.Gender)
+  self.AwacsSRS:SetCulture(self.Culture)
+  self.AwacsSRS:SetVoice(self.Voice)
+  self.AwacsSRS:SetPort(self.Port)
+  self.AwacsSRS:SetLabel("AWACS")
+  if self.PathToGoogleKey then
+    self.AwacsSRS:SetGoogle(self.PathToGoogleKey)
+  end
+  
   return self
 end
 
@@ -2034,7 +2066,8 @@ function AWACS:_StartSettings(FlightGroup,Mission)
 
     self.AwacsFG = AwacsFG 
     
-    self.AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,self.PathToGoogleKey,"AWACS",self.Volume)
+    --self.AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,self.PathToGoogleKey,"AWACS",self.Volume)
+     
     self.callsigntxt = string.format("%s",AWACS.CallSignClear[self.CallSign])
     
     self:__CheckRadioQueue(10)
@@ -2075,7 +2108,7 @@ function AWACS:_StartSettings(FlightGroup,Mission)
     group:SetCommandImmortal(self.immortal)
     group:CommandSetCallsign(self.CallSign,self.CallSignNo,2)
     
-    AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,nil,"AWACS")
+    --AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,nil,"AWACS")
 
     self.callsigntxt = string.format("%s",AWACS.CallSignClear[self.CallSign])
     
@@ -5677,7 +5710,7 @@ function AWACS:onafterStart(From, Event, To)
       return self
     end
     
-    self.AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,self.PathToGoogleKey,"AWACS",self.Volume)
+    --self.AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,self.PathToGoogleKey,"AWACS",self.Volume)
     self.callsigntxt = string.format("%s",AWACS.CallSignClear[self.CallSign])  
     self:__CheckRadioQueue(-10)
     
@@ -6411,9 +6444,11 @@ function AWACS:onafterCheckRadioQueue(From,Event,To)
     if self.PathToGoogleKey then
       local gtext = RadioEntry.TextTTS
       gtext = string.format("<speak><prosody rate='medium'>%s</prosody></speak>",gtext)
-      self.AwacsFG:RadioTransmission(gtext,1,false)
+      --self.AwacsFG:RadioTransmission(gtext,1,false)
+      self.AwacsSRS:PlayTextExt(gtext,nil,self.MultiFrequency,self.MultiModulation,self.Gender,self.Culture,self.Voice,self.Volume,"AWACS")
     else
-      self.AwacsFG:RadioTransmission(RadioEntry.TextTTS,1,false)
+      --self.AwacsFG:RadioTransmission(RadioEntry.TextTTS,1,false)
+      self.AwacsSRS:PlayTextExt(RadioEntry.TextTTS,nil,self.MultiFrequency,self.MultiModulation,self.Gender,self.Culture,self.Voice,self.Volume,"AWACS")
     end
     self:T(RadioEntry.TextTTS)
   else
