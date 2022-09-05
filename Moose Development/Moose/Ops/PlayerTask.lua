@@ -2618,7 +2618,7 @@ end
 -- @param #string RecceName This name will be used to build a detection group set. All groups with this string somewhere in their group name will be added as Recce.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
-  self:T(self.lid.."SetupIntel: "..RecceName)
+  self:T(self.lid.."SetupIntel")
   self.RecceSet = SET_GROUP:New():FilterCoalitions(self.CoalitionName):FilterPrefixes(RecceName):FilterStart()
   self.Intel = INTEL:New(self.RecceSet,self.Coalition,self.Name.."-Intel")
   self.Intel:SetClusterAnalysis(true,false,false)
