@@ -42,8 +42,8 @@
 -- 
 -- ![Process](..\Presentations\AI_GCI\Dia10.JPG)
 -- 
--- Until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
--- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
+-- Until a fuel or damage threshold has been reached by the AI, or when the AI is commanded to RTB.
+-- When the fuel threshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
 -- 
 -- ![Process](..\Presentations\AI_GCI\Dia13.JPG)
 -- 

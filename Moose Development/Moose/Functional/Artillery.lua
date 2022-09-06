@@ -73,7 +73,7 @@
 -- @field Core.Point#COORDINATE RearmingPlaceCoord Coordinates of the rearming place. If the place is more than 100 m away from the ARTY group, the group will go there.
 -- @field #boolean RearmingArtyOnRoad If true, ARTY group will move to rearming place using mainly roads. Default false.
 -- @field Core.Point#COORDINATE InitialCoord Initial coordinates of the ARTY group.
--- @field #boolean report Arty group sends messages about their current state or target to its coaliton.
+-- @field #boolean report Arty group sends messages about their current state or target to its coalition.
 -- @field #table ammoshells Table holding names of the shell types which are included when counting the ammo. Default is {"weapons.shells"} which include most shells.
 -- @field #table ammorockets Table holding names of the rocket types which are included when counting the ammo. Default is {"weapons.nurs"} which includes most unguided rockets.
 -- @field #table ammomissiles Table holding names of the missile types which are included when counting the ammo. Default is {"weapons.missiles"} which includes some guided missiles.

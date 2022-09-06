@@ -82,7 +82,7 @@
 -- 
 -- ![Mission](../Tasking/Report_Statistics_Progress.JPG)
 -- 
--- A statistic report on the progress of the mission. Each task achievement will increase the %-tage to 100% as a goal to complete the task.
+-- A statistic report on the progress of the mission. Each task achievement will increase the % to 100% as a goal to complete the task.
 -- 
 -- ## 1.3) Join a Task.
 -- 

@@ -171,7 +171,7 @@ function IDENTIFIABLE:GetCoalitionName()
   
   if DCSIdentifiable then
   
-    -- Get coaliton ID.
+    -- Get coalition ID.
     local IdentifiableCoalition = DCSIdentifiable:getCoalition()
     self:T3( IdentifiableCoalition )
     

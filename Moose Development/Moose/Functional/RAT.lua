@@ -69,7 +69,7 @@
 -- @field #string category Category of aircarft: "plane" or "heli".
 -- @field #number groupsize Number of aircraft in group.
 -- @field #string friendly Possible departure/destination airport: all=blue+red+neutral, same=spawn+neutral, spawnonly=spawn, blue=blue+neutral, blueonly=blue, red=red+neutral, redonly=red.
--- @field #table ctable Table with the valid coalitons from choice self.friendly.
+-- @field #table ctable Table with the valid coalitions from choice self.friendly.
 -- @field #table aircraft Table which holds the basic aircraft properties (speed, range, ...).
 -- @field #number Vcruisemax Max cruise speed in m/s (250 m/s = 900 km/h = 486 kt) set by user.
 -- @field #number Vclimb Default climb rate in ft/min.
@@ -348,7 +348,7 @@ RAT={
   category = nil,           -- Category of aircarft: "plane" or "heli".
   groupsize=nil,            -- Number of aircraft in the group.
   friendly = "same",        -- Possible departure/destination airport: same=spawn+neutral, spawnonly=spawn, blue=blue+neutral, blueonly=blue, red=red+neutral, redonly=red, neutral.
-  ctable = {},              -- Table with the valid coalitons from choice self.friendly.
+  ctable = {},              -- Table with the valid coalitions from choice self.friendly.
   aircraft = {},            -- Table which holds the basic aircraft properties (speed, range, ...).
   Vcruisemax=nil,           -- Max cruise speed in set by user.
   Vclimb=1500,              -- Default climb rate in ft/min.
@@ -657,7 +657,7 @@ end
 -- @param #RAT self
 -- @param #number naircraft (Optional) Number of aircraft to spawn. Default is one aircraft.
 -- @return #boolean True if spawning was successful or nil if nothing was spawned.
--- @usage yak:Spawn(5) will spawn five aircraft. By default aircraft will spawn at neutral and red airports if the template group is part of the red coaliton.
+-- @usage yak:Spawn(5) will spawn five aircraft. By default aircraft will spawn at neutral and red airports if the template group is part of the red coalition.
 function RAT:Spawn(naircraft)
 
   -- Make sure that this function is only been called once per RAT object.
@@ -1289,7 +1289,7 @@ end
 
 --- Include all airports which lie in a zone as possible destinations.
 -- @param #RAT self
--- @param Core.Zone#ZONE zone Zone in which the departure airports lie. Has to be a MOOSE zone.
+-- @param Core.Zone#ZONE zone Zone in which the destination airports lie. Has to be a MOOSE zone.
 -- @return #RAT RAT self object.
 function RAT:SetDestinationsFromZone(zone)
   self:F2(zone)
@@ -1305,7 +1305,7 @@ end
 
 --- Include all airports which lie in a zone as possible destinations.
 -- @param #RAT self
--- @param Core.Zone#ZONE zone Zone in which the destination airports lie. Has to be a MOOSE zone.
+-- @param Core.Zone#ZONE zone Zone in which the departure airports lie. Has to be a MOOSE zone.
 -- @return #RAT RAT self object.
 function RAT:SetDeparturesFromZone(zone)
   self:F2(zone)

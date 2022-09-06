@@ -97,11 +97,11 @@ BEACON.Type={
 -- @field #number TACAN_TANKER_Y TACtical Air Navigation system for tankers on Y band.
 -- @field #number VOR Very High Frequency Omni-Directional Range
 -- @field #number ILS_LOCALIZER ILS localizer
--- @field #number ILS_GLIDESLOPE ILS glideslope.
+-- @field #number ILS_GLIDESLOPE ILS glide slope.
 -- @field #number PRGM_LOCALIZER PRGM localizer.
--- @field #number PRGM_GLIDESLOPE PRGM glideslope.
+-- @field #number PRGM_GLIDESLOPE PRGM glide slope.
 -- @field #number BROADCAST_STATION Broadcast station.
--- @field #number VORTAC Radio-based navigational aid for aircraft pilots consisting of a co-located VHF omnidirectional range (VOR) beacon and a tactical air navigation system (TACAN) beacon.
+-- @field #number VORTAC Radio-based navigational aid for aircraft pilots consisting of a co-located VHF omni-directional range (VOR) beacon and a tactical air navigation system (TACAN) beacon.
 -- @field #number TACAN_AA_MODE_X TACtical Air Navigation for aircraft on X band.
 -- @field #number TACAN_AA_MODE_Y TACtical Air Navigation for aircraft on Y band.
 -- @field #number VORDME Radio beacon that combines a VHF omnidirectional range (VOR) with a distance measuring equipment (DME).
@@ -211,7 +211,7 @@ function BEACON:ActivateTACAN(Channel, Mode, Message, Bearing, Duration)
   -- Start beacon.
   self.Positionable:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, Mode, AA, Message, Bearing)
       
-  -- Stop sheduler.
+  -- Stop scheduler.
   if Duration then
     self.Positionable:DeactivateBeacon(Duration)
   end
@@ -237,7 +237,7 @@ function BEACON:ActivateICLS(Channel, Callsign, Duration)
   -- Start beacon.
   self.Positionable:CommandActivateICLS(Channel, UnitID, Callsign)
       
-  -- Stop sheduler
+  -- Stop scheduler
   if Duration then -- Schedule the stop of the BEACON if asked by the MD
     self.Positionable:DeactivateBeacon(Duration)
   end
@@ -354,8 +354,8 @@ end
 
 --- Activates a general purpose Radio Beacon
 -- This uses the very generic singleton function "trigger.action.radioTransmission()" provided by DCS to broadcast a sound file on a specific frequency.
--- Although any frequency could be used, only 2 DCS Modules can home on radio beacons at the time of writing : the Huey and the Mi-8. 
--- They can home in on these specific frequencies : 
+-- Although any frequency could be used, only a few DCS Modules can home on radio beacons at the time of writing, i.e. the Mi-8, Huey, Gazelle etc.
+-- The following e.g. can home in on these specific frequencies : 
 -- * **Mi8**
 -- * R-828 -> 20-60MHz
 -- * ARKUD -> 100-150MHz (canal 1 : 114166, canal 2 : 114333, canal 3 : 114583, canal 4 : 121500, canal 5 : 123100, canal 6 : 124100) AM
