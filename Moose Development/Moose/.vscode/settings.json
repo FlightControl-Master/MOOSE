@@ -1,0 +1,17 @@
+{
+    "Lua.workspace.preloadFileSize": 1000,
+    "Lua.diagnostics.disable": [
+        "undefined-doc-name"
+    ],
+    "Lua.diagnostics.globals": [
+        "BASE",
+        "lfs",
+        "__Moose",
+        "trigger",
+        "coord",
+        "missionCommands"
+    ],
+    "Lua.completion.displayContext": 5,
+    "Lua.runtime.version": "Lua 5.1",
+    "Lua.completion.callSnippet": "Both"
+}
