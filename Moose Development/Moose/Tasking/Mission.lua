@@ -132,7 +132,7 @@ MISSION = {
 -- @param #string MissionName Name of the mission. This name will be used to reference the status of each mission by the players.
 -- @param #string MissionPriority String indicating the "priority" of the Mission. e.g. "Primary", "Secondary". It is free format and up to the Mission designer to choose. There are no rules behind this field.
 -- @param #string MissionBriefing String indicating the mission briefing to be shown when a player joins a @{CLIENT}.
--- @param DCS#coaliton.side MissionCoalition Side of the coalition, i.e. and enumerator @{#DCS.coalition.side} corresponding to RED, BLUE or NEUTRAL.
+-- @param DCS#coalition.side MissionCoalition Side of the coalition, i.e. and enumerator @{#DCS.coalition.side} corresponding to RED, BLUE or NEUTRAL.
 -- @return #MISSION self
 function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefing, MissionCoalition )
 

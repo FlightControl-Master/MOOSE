@@ -123,7 +123,7 @@
 -- Set up your SHORAD systems. They need to be **close** to (i.e. around) the SAM sites to be effective. Use **one** group per SAM location. SA-15 TOR systems offer a good missile defense.
 -- 
 -- [optional] Set up your HQ. Can be any group, e.g. a command vehicle.
--- 
+--
 -- # 1. Basic tactical considerations when setting up your SAM sites
 --
 -- ## 1.1 Radar systems and AWACS

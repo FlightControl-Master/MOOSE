@@ -1,20 +1,19 @@
 --- **Core** - Provides a handy means to create messages and reports.
 --
 -- ===
--- 
+--
 -- ## Features:
--- 
+--
 --   * Create text blocks that are formatted.
 --   * Create automatic indents.
 --   * Variate the delimiters between reporting lines.
--- 
+--
 -- ===
 --
 -- ### Authors: FlightControl : Design & Programming
 --
 -- @module Core.Report
 -- @image Core_Report.JPG
-
 
 --- @type REPORT
 -- @extends Core.Base#BASE
@@ -36,7 +35,7 @@ function REPORT:New( Title )
 
   self.Report = {}
 
-  self:SetTitle( Title or "" )  
+  self:SetTitle( Title or "" )
   self:SetIndent( 3 )
 
   return self
@@ -45,28 +44,26 @@ end
 --- Has the REPORT Text?
 -- @param #REPORT self
 -- @return #boolean
-function REPORT:HasText() --R2.1
-  
+function REPORT:HasText() -- R2.1
+
   return #self.Report > 0
 end
-
 
 --- Set indent of a REPORT.
 -- @param #REPORT self
 -- @param #number Indent
 -- @return #REPORT
-function REPORT:SetIndent( Indent ) --R2.1
+function REPORT:SetIndent( Indent ) -- R2.1
   self.Indent = Indent
   return self
 end
-
 
 --- Add a new line to a REPORT.
 -- @param #REPORT self
 -- @param #string Text
 -- @return #REPORT
 function REPORT:Add( Text )
-  self.Report[#self.Report+1] = Text
+  self.Report[#self.Report + 1] = Text
   return self
 end
 
@@ -76,17 +73,17 @@ end
 -- @param #string Separator (optional) The start of each report line can begin with an optional separator character. This can be a "-", or "#", or "*". You're free to choose what you find the best.
 -- @return #REPORT
 function REPORT:AddIndent( Text, Separator )
-  self.Report[#self.Report+1] = ( ( Separator and Separator .. string.rep( " ", self.Indent - 1 ) ) or string.rep(" ", self.Indent ) ) .. Text:gsub("\n","\n"..string.rep( " ", self.Indent ) )
+  self.Report[#self.Report + 1] = ((Separator and Separator .. string.rep( " ", self.Indent - 1 )) or string.rep( " ", self.Indent )) .. Text:gsub( "\n", "\n" .. string.rep( " ", self.Indent ) )
   return self
 end
 
---- Produces the text of the report, taking into account an optional delimeter, which is \n by default.
+--- Produces the text of the report, taking into account an optional delimiter, which is \n by default.
 -- @param #REPORT self
 -- @param #string Delimiter (optional) A delimiter text.
 -- @return #string The report text.
 function REPORT:Text( Delimiter )
   Delimiter = Delimiter or "\n"
-  local ReportText = ( self.Title ~= "" and self.Title .. Delimiter or self.Title ) .. table.concat( self.Report, Delimiter ) or ""
+  local ReportText = (self.Title ~= "" and self.Title .. Delimiter or self.Title) .. table.concat( self.Report, Delimiter ) or ""
   return ReportText
 end
 
@@ -95,7 +92,7 @@ end
 -- @param #string Title The title of the report.
 -- @return #REPORT
 function REPORT:SetTitle( Title )
-  self.Title = Title  
+  self.Title = Title
   return self
 end
 

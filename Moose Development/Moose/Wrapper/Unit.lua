@@ -104,7 +104,7 @@ UNIT = {
 
 
 -- Registration.
-	
+  
 --- Create a new UNIT from DCSUnit.
 -- @param #UNIT self
 -- @param #string UnitName The name of the DCS unit.
@@ -650,14 +650,14 @@ end
 -- @return #string The name of the DCS Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPrefix()
-	self:F2( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSObject()
-	
+  
   if DCSUnit then
-  	local UnitPrefix = string.match( self.UnitName, ".*#" ):sub( 1, -2 )
-  	self:T3( UnitPrefix )
-  	return UnitPrefix
+    local UnitPrefix = string.match( self.UnitName, ".*#" ):sub( 1, -2 )
+    self:T3( UnitPrefix )
+    return UnitPrefix
   end
   
   return nil
@@ -1220,24 +1220,24 @@ end
 -- @return true If the other DCS Unit is within the radius of the 2D point of the DCS Unit. 
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
-	self:F2( { self.UnitName, AwaitUnit.UnitName, Radius } )
+  self:F2( { self.UnitName, AwaitUnit.UnitName, Radius } )
 
   local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
-  	local UnitVec3 = self:GetVec3()
-  	local AwaitUnitVec3 = AwaitUnit:GetVec3()
+    local UnitVec3 = self:GetVec3()
+    local AwaitUnitVec3 = AwaitUnit:GetVec3()
   
-  	if  (((UnitVec3.x - AwaitUnitVec3.x)^2 + (UnitVec3.z - AwaitUnitVec3.z)^2)^0.5 <= Radius) then
-  		self:T3( "true" )
-  		return true
-  	else
-  		self:T3( "false" )
-  		return false
-  	end
+    if  (((UnitVec3.x - AwaitUnitVec3.x)^2 + (UnitVec3.z - AwaitUnitVec3.z)^2)^0.5 <= Radius) then
+      self:T3( "true" )
+      return true
+    else
+      self:T3( "false" )
+      return false
+    end
   end
 
-	return nil
+  return nil
 end
 
 

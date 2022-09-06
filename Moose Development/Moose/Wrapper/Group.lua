@@ -571,7 +571,7 @@ function GROUP:GetSpeedMax()
   
     local Units=self:GetUnits()
     
-    local speedmax=nil
+    local speedmax=0
     
     for _,unit in pairs(Units) do
       local unit=unit --Wrapper.Unit#UNIT
@@ -725,6 +725,30 @@ function GROUP:GetUnit( UnitNumber )
   
 end
 
+--- Check if an (air) group is a client or player slot. Information is retrieved from the group template.
+-- @param #GROUP self
+-- @return #boolean If true, group is associated with a client or player slot.
+function GROUP:IsPlayer()
+  
+  -- Get group.
+ -- local group=self:GetGroup()
+    
+  -- Units of template group.
+  local units=self:GetTemplate().units
+  
+  -- Get numbers.
+  for _,unit in pairs(units) do
+      
+    -- Check if unit name matach and skill is Client or Player.
+    if unit.name==self:GetName() and (unit.skill=="Client" or unit.skill=="Player") then
+      return true
+    end
+
+  end
+  
+  return false
+end
+
 --- Returns the DCS Unit with number UnitNumber.
 -- If the underlying DCS Unit does not exist, the method will return nil. .
 -- @param #GROUP self
@@ -732,11 +756,24 @@ end
 -- @return DCS#Unit The DCS Unit.
 function GROUP:GetDCSUnit( UnitNumber )
 
-  local DCSGroup=self:GetDCSObject()
+  local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    local DCSUnitFound=DCSGroup:getUnit( UnitNumber )
-    return DCSUnitFound
+    
+    if DCSGroup.getUnit and DCSGroup:getUnit( UnitNumber ) then
+      return DCSGroup:getUnit( UnitNumber )
+    else
+    
+      local UnitFound = nil
+      -- 2.7.1 dead event bug, return the first alive unit instead
+      local units = DCSGroup:getUnits() or {}
+      
+      for _,_unit in pairs(units) do
+        if _unit and _unit:isExist() then
+          return _unit
+        end
+      end
+    end
   end
 
   return nil
@@ -1083,8 +1120,7 @@ function GROUP:GetCoordinate()
     end
   end
   BASE:E( { "Cannot GetCoordinate", Group = self, Alive = self:IsAlive() } )
-
-  return nil
+  
 end
 
 
@@ -1114,6 +1150,8 @@ end
 -- @param #GROUP self
 -- @return #number Mean heading of the GROUP in degrees or #nil The first UNIT is not existing or alive.
 function GROUP:GetHeading()
+  self:F2(self.GroupName)
+
   self:F2(self.GroupName)
 
   local GroupSize = self:GetSize()

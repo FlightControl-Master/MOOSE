@@ -804,7 +804,7 @@ do -- ZONE_CAPTURE_COALITION
     return IsEmpty
   end
 
-  --- Check if zone is "Guarded", i.e. only one (the defending) coaliton is present inside the zone.
+  --- Check if zone is "Guarded", i.e. only one (the defending) coalition is present inside the zone.
   -- @param #ZONE_CAPTURE_COALITION self
   -- @return #boolean self:IsAllInZoneOfCoalition( self.Coalition )
   function ZONE_CAPTURE_COALITION:IsGuarded()
@@ -826,7 +826,7 @@ do -- ZONE_CAPTURE_COALITION
     return IsCaptured
   end
   
-  --- Check if zone is "Attacked", i.e. another coaliton entered the zone.
+  --- Check if zone is "Attacked", i.e. another coalition entered the zone.
   -- @param #ZONE_CAPTURE_COALITION self
   -- @return #boolean self:IsSomeInZoneOfCoalition( self.Coalition )
   function ZONE_CAPTURE_COALITION:IsAttacked()
@@ -899,24 +899,23 @@ do -- ZONE_CAPTURE_COALITION
       end
       self:I(text)
     end
-    
+
   end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  
   --- Update Mark on F10 map.
   -- @param #ZONE_CAPTURE_COALITION self
   function ZONE_CAPTURE_COALITION:Mark()
-  
+
     if self.MarkOn then
-    
+
       local Coord    = self:GetCoordinate()
       local ZoneName = self:GetZoneName()
       local State    = self:GetState()
-      
+
       -- Remove marks.
       if self.MarkRed then
         Coord:RemoveMark(self.MarkRed)
@@ -924,21 +923,21 @@ do -- ZONE_CAPTURE_COALITION
       if self.MarkBlue then
         Coord:RemoveMark(self.MarkBlue)
       end
-      
-      -- Create new marks for each coaliton.
+
+      -- Create new marks for each coalition.
       if self.Coalition == coalition.side.BLUE then
-        self.MarkBlue = Coord:MarkToCoalitionBlue( "Coalition: Blue\nGuard Zone: " .. ZoneName .. "\nStatus: " .. State )  
+        self.MarkBlue = Coord:MarkToCoalitionBlue( "Coalition: Blue\nGuard Zone: " .. ZoneName .. "\nStatus: " .. State )
         self.MarkRed  = Coord:MarkToCoalitionRed(  "Coalition: Blue\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )
       elseif self.Coalition == coalition.side.RED then
-        self.MarkRed  = Coord:MarkToCoalitionRed(  "Coalition: Red\nGuard Zone: " .. ZoneName .. "\nStatus: " .. State )  
+        self.MarkRed  = Coord:MarkToCoalitionRed(  "Coalition: Red\nGuard Zone: " .. ZoneName .. "\nStatus: " .. State )
         self.MarkBlue = Coord:MarkToCoalitionBlue( "Coalition: Red\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )
       else
-        self.MarkRed  = Coord:MarkToCoalitionRed(  "Coalition: Neutral\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )  
+        self.MarkRed  = Coord:MarkToCoalitionRed(  "Coalition: Neutral\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )
         self.MarkBlue = Coord:MarkToCoalitionBlue( "Coalition: Neutral\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )
       end
-      
+
     end
-    
+
   end
 
 end

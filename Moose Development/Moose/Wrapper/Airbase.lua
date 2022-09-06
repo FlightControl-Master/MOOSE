@@ -54,7 +54,7 @@
 --  * @{#AIRBASE.Find}(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase object.
 --  * @{#AIRBASE.FindByName}(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase name.
 --
--- IMPORTANT: ONE SHOULD NEVER SANATIZE these AIRBASE OBJECT REFERENCES! (make the AIRBASE object references nil).
+-- IMPORTANT: ONE SHOULD NEVER SANITIZE these AIRBASE OBJECT REFERENCES! (make the AIRBASE object references nil).
 --
 -- ## DCS Airbase APIs
 --
@@ -65,13 +65,14 @@
 --
 -- @field #AIRBASE AIRBASE
 AIRBASE = {
-  ClassName="AIRBASE",
+  ClassName = "AIRBASE",
   CategoryName = {
-    [Airbase.Category.AIRDROME]   = "Airdrome",
-    [Airbase.Category.HELIPAD]    = "Helipad",
-    [Airbase.Category.SHIP]       = "Ship",
-    },
-  }
+    [Airbase.Category.AIRDROME] = "Airdrome",
+    [Airbase.Category.HELIPAD] = "Helipad",
+    [Airbase.Category.SHIP] = "Ship",
+  },
+  activerwyno = nil,
+}
 
 --- Enumeration to identify the airbases in the Caucasus region.
 --
@@ -122,7 +123,7 @@ AIRBASE.Caucasus = {
   ["Nalchik"] = "Nalchik",
   ["Mozdok"] = "Mozdok",
   ["Beslan"] = "Beslan",
-  }
+}
 
 --- Airbases of the Nevada map:
 --
@@ -163,7 +164,7 @@ AIRBASE.Nevada = {
   ["Pahute_Mesa_Airstrip"] = "Pahute Mesa",
   ["Tonopah_Airport"] = "Tonopah",
   ["Tonopah_Test_Range_Airfield"] = "Tonopah Test Range",
-  }
+}
 
 --- Airbases of the Normandy map:
 --
@@ -198,7 +199,7 @@ AIRBASE.Nevada = {
 --   * AIRBASE.Normandy.Funtington
 --   * AIRBASE.Normandy.Tangmere
 --   * AIRBASE.Normandy.Ford_AF
---
+--   
 -- @field Normandy
 AIRBASE.Normandy = {
   ["Saint_Pierre_du_Mont"] = "Saint Pierre du Mont",
@@ -272,7 +273,7 @@ AIRBASE.Normandy = {
 -- * AIRBASE.PersianGulf.Sirri_Island
 -- * AIRBASE.PersianGulf.Tunb_Island_AFB
 -- * AIRBASE.PersianGulf.Tunb_Kochak
---
+-- 
 -- @field PersianGulf
 AIRBASE.PersianGulf = {
   ["Abu_Dhabi_International_Airport"] = "Abu Dhabi Intl",
@@ -320,7 +321,7 @@ AIRBASE.PersianGulf = {
 -- * AIRBASE.TheChannel.Biggin_Hill
 -- * AIRBASE.TheChannel.Eastchurch
 -- * AIRBASE.TheChannel.Headcorn
---
+-- 
 -- @field TheChannel
 AIRBASE.TheChannel = {
   ["Abbeville_Drucat"] = "Abbeville Drucat",
@@ -466,7 +467,7 @@ AIRBASE.Syria={
   ["Ruwayshid"]="Ruwayshid",
   ["Sanliurfa"]="Sanliurfa",
   ["Tal_Siman"]="Tal Siman",
-  ["Deir_ez_Zor"] = "Deir ez-Zor",
+  ["Deir_ez_Zor"] = "Deir ez-Zor", 
 }
 
 --- Airbases of the Mariana Islands map:
@@ -478,14 +479,14 @@ AIRBASE.Syria={
 -- * AIRBASE.MarianaIslands.Tinian_Intl
 -- * AIRBASE.MarianaIslands.Olf_Orote
 --
---@field MarianaIslands
-AIRBASE.MarianaIslands={
-  ["Rota_Intl"]="Rota Intl",
-  ["Andersen_AFB"]="Andersen AFB",
-  ["Antonio_B_Won_Pat_Intl"]="Antonio B. Won Pat Intl",
-  ["Saipan_Intl"]="Saipan Intl",
-  ["Tinian_Intl"]="Tinian Intl",
-  ["Olf_Orote"]="Olf Orote",
+-- @field MarianaIslands
+AIRBASE.MarianaIslands = {
+  ["Rota_Intl"] = "Rota Intl",
+  ["Andersen_AFB"] = "Andersen AFB",
+  ["Antonio_B_Won_Pat_Intl"] = "Antonio B. Won Pat Intl",
+  ["Saipan_Intl"] = "Saipan Intl",
+  ["Tinian_Intl"] = "Tinian Intl",
+  ["Olf_Orote"] = "Olf Orote",
 }
 
 --- Airbases of the South Atlantic map:

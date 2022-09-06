@@ -449,6 +449,13 @@ RANGE.TargetType = {
 -- @field #string rangename Name of the range.
 -- @field #boolean invalid Invalid pass.
 
+--- Strafe result.
+-- @type RANGE.StrafeResult
+-- @field #string player Player name.
+-- @field #string airframe Aircraft type of player.
+-- @field #number time Time via timer.getAbsTime() in seconds of impact.
+-- @field #string date OS date.
+
 --- Sound file data.
 -- @type RANGE.Soundfile
 -- @field #string filename Name of the file

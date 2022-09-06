@@ -44,7 +44,7 @@
 -- 
 -- @field #STATIC
 STATIC = {
-	ClassName = "STATIC",
+  ClassName = "STATIC",
 }
 
 
@@ -85,7 +85,7 @@ function STATIC:FindByName( StaticName, RaiseError )
   self.StaticName = StaticName
   
   if StaticFound then
-  	return StaticFound
+    return StaticFound
   end
   
   if RaiseError == nil or RaiseError == true then 
@@ -256,4 +256,3 @@ function STATIC:ReSpawnAt(Coordinate, Heading, Delay)
   
   return self
 end
-

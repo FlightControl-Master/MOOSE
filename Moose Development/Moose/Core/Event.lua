@@ -14,7 +14,7 @@
 -- ![Objects](..\Presentations\EVENT\Dia2.JPG)
 --
 -- Within a running mission, various DCS events occur. Units are dynamically created, crash, die, shoot stuff, get hit etc.
--- This module provides a mechanism to dispatch those events occuring within your running mission, to the different objects orchestrating your mission.
+-- This module provides a mechanism to dispatch those events occurring within your running mission, to the different objects orchestrating your mission.
 --
 -- ![Objects](..\Presentations\EVENT\Dia3.JPG)
 --
@@ -32,11 +32,11 @@
 --
 -- ![Objects](..\Presentations\EVENT\Dia5.JPG)
 --
--- There are 5 levels of kind of objects that the _EVENTDISPATCHER services:
+-- There are 5 types/levels of objects that the _EVENTDISPATCHER services:
 --
 --  * _DATABASE object: The core of the MOOSE objects. Any object that is created, deleted or updated, is done in this database.
---  * SET_ derived classes: Subsets of the _DATABASE object. These subsets are updated by the _EVENTDISPATCHER as the second priority.
---  * UNIT objects: UNIT objects can subscribe to DCS events. Each DCS event will be directly published to teh subscribed UNIT object.
+--  * SET_ derived classes: These are subsets of the _DATABASE object. These subsets are updated by the _EVENTDISPATCHER as the second priority.
+--  * UNIT objects: UNIT objects can subscribe to DCS events. Each DCS event will be directly published to the subscribed UNIT object.
 --  * GROUP objects: GROUP objects can subscribe to DCS events. Each DCS event will be directly published to the subscribed GROUP object.
 --  * Any other object: Various other objects can subscribe to DCS events. Each DCS event triggered will be published to each subscribed object.
 --

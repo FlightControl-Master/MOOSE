@@ -39,8 +39,8 @@
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia10.JPG)
 -- 
--- Until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
--- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
+-- Until a fuel or damage threshold has been reached by the AI, or when the AI is commanded to RTB.
+-- When the fuel threshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia11.JPG)
 -- 
@@ -68,7 +68,7 @@
 --   * **RTB** ( Group ): Route the AI to the home base.
 --   * **Detect** ( Group ): The AI is detecting targets.
 --   * **Detected** ( Group ): The AI has detected new targets.
---   * **Status** ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
+--   * **Status** ( Group ): The AI is checking status (fuel and damage). When the thresholds have been reached, the AI will RTB.
 --    
 -- ## 3. Set or Get the AI controllable
 -- 
@@ -100,8 +100,8 @@
 -- ## 6. Manage the "out of fuel" in the AI_A2A_PATROL
 -- 
 -- When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.
--- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
--- When the fuel treshold is reached, the AI will continue for a given time its patrol task in orbit, 
+-- Therefore, with a parameter and a calculation of the distance to the home base, the fuel threshold is calculated.
+-- When the fuel threshold is reached, the AI will continue for a given time its patrol task in orbit, 
 -- while a new AI is targetted to the AI_A2A_PATROL.
 -- Once the time is finished, the old AI will return to the base.
 -- Use the method @{#AI_A2A_PATROL.ManageFuel}() to have this proces in place.
@@ -109,7 +109,7 @@
 -- ## 7. Manage "damage" behaviour of the AI in the AI_A2A_PATROL
 -- 
 -- When the AI is damaged, it is required that a new Patrol is started. However, damage cannon be foreseen early on. 
--- Therefore, when the damage treshold is reached, the AI will return immediately to the home base (RTB).
+-- Therefore, when the damage threshold is reached, the AI will return immediately to the home base (RTB).
 -- Use the method @{#AI_A2A_PATROL.ManageDamage}() to have this proces in place.
 -- 
 -- ===
