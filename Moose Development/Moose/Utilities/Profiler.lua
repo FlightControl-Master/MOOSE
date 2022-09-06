@@ -283,8 +283,6 @@ end
 -- @return #number Function time in seconds.
 function PROFILER.getData( func )
 
-function PROFILER.getData(func)
-
   local n=PROFILER.dInfo[func]
 
   if n.what=="C" then
