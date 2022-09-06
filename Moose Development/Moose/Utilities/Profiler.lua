@@ -281,6 +281,8 @@ end
 -- @return #string Source file name.
 -- @return #string Line number.
 -- @return #number Function time in seconds.
+function PROFILER.getData( func )
+
 function PROFILER.getData(func)
 
   local n=PROFILER.dInfo[func]
