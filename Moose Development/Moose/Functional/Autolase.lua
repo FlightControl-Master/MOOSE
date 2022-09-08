@@ -111,7 +111,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.1.14"
+AUTOLASE.version = "0.1.15"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -194,6 +194,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.SRSFreq = 251
   self.SRSMod = radio.modulation.AM
   self.NoMenus = false
+  self.minthreatlevel = 0
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AUTOLASE %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -325,6 +326,19 @@ end
 function AUTOLASE:OnEventPlayerEnterAircraft(EventData)
   self:SetPilotMenu()
   return self
+end
+
+--- (User) Set minimum threat level for target selection, can be 0 (lowest) to 10 (highest).
+-- @param #AUTOLASE self
+-- @param #number Level Level used for filtering, defaults to 0. SAM systems and manpads have level 7 to 10, AAA level 6, MTBs and armoured vehicles level 3 to 5, APC, Artillery, Infantry and EWR level 1 to 2.
+-- @return #AUTOLASE self
+-- @usage Filter for level 3 and above:
+--            `myautolase:SetMinThreatLevel(3)`
+function AUTOLASE:SetMinThreatLevel(Level)
+  local level = Level or 0
+  if level < 0 or level > 10 then level = 0 end
+  self.minthreatlevel = level
+  return self 
 end
 
 --- (Internal) Function to get a laser code by recce name
@@ -777,6 +791,7 @@ function AUTOLASE:onafterMonitor(From, Event, To)
     local grp = contact.group
     local coord = contact.position
     local reccename = contact.recce or "none"
+  local threat = contact.threatlevel or 0
     local reccegrp = UNIT:FindByName(reccename)
     if reccegrp then
       local reccecoord = reccegrp:GetCoordinate()
@@ -788,7 +803,7 @@ function AUTOLASE:onafterMonitor(From, Event, To)
       lines = lines  +  1
       -- sort out groups beyond sight
       local lasedistance = self:GetLosFromUnit(reccegrp)
-      if grp:IsGround() and lasedistance >= distance then
+      if grp:IsGround() and lasedistance >= distance and threat >= self.minthreatlevel then
         table.insert(groupsbythreat,{contact.group,contact.threatlevel})
         self.RecceNames[contact.groupname] = contact.recce
       end
