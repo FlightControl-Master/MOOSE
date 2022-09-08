@@ -24,6 +24,7 @@
 --- @type UNIT
 -- @field #string ClassName Name of the class.
 -- @field #string UnitName Name of the unit.
+-- @field #string GroupName Name of the group the unit belongs to.
 -- @extends Wrapper.Controllable#CONTROLLABLE
 
 --- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
@@ -86,7 +87,7 @@
 --   * Use the @{#UNIT.IsLOS}() method to check if the given unit is within line of sight.
 -- 
 -- 
--- @field #UNIT UNIT
+-- @field #UNIT
 UNIT = {
   ClassName="UNIT",
   UnitName=nil,
@@ -697,6 +698,7 @@ end
 -- @return #number Number of rockets left.
 -- @return #number Number of bombs left.
 -- @return #number Number of missiles left.
+-- @return #number Number of artillery shells left (with explosive mass, included in shells; shells can also be machine gun ammo)
 function UNIT:GetAmmunition()
 
   -- Init counter.
@@ -705,6 +707,7 @@ function UNIT:GetAmmunition()
   local nrockets=0
   local nmissiles=0
   local nbombs=0
+  local narti=0
 
   local unit=self
 
@@ -741,7 +744,11 @@ function UNIT:GetAmmunition()
 
         -- Add up all shells.
         nshells=nshells+Nammo
-
+        
+        if ammotable[w].desc.warhead and ammotable[w].desc.warhead.explosiveMass and ammotable[w].desc.warhead.explosiveMass > 0 then
+          narti=narti+Nammo
+        end
+        
       elseif Category==Weapon.Category.ROCKET then
 
         -- Add up all rockets.
@@ -778,7 +785,7 @@ function UNIT:GetAmmunition()
   -- Total amount of ammunition.
   nammo=nshells+nrockets+nmissiles+nbombs
 
-  return nammo, nshells, nrockets, nbombs, nmissiles
+  return nammo, nshells, nrockets, nbombs, nmissiles, narti
 end
 
 --- Returns the unit sensors.
@@ -830,7 +837,7 @@ function UNIT:HasSEAD()
     local HasSEAD = false
     if UnitSEADAttributes["RADAR_BAND1_FOR_ARM"] and UnitSEADAttributes["RADAR_BAND1_FOR_ARM"] == true or
        UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] and UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] == true or
-       UnitSEADAttributes["Optical Tracker"] and UnitSEADAttributes["Optical Tracker"] == true 
+       UnitSEADAttributes["Optical Tracker"] and UnitSEADAttributes["Optical Tracker"] == true  
        then
        HasSEAD = true
     end
@@ -1068,7 +1075,7 @@ function UNIT:GetThreatLevel()
   if Descriptor then 
   
     local Attributes = Descriptor.attributes
-  
+    
     if self:IsGround() then
     
       local ThreatLevels = {

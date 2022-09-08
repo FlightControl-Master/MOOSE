@@ -187,6 +187,7 @@ GROUPTEMPLATE.Takeoff = {
 -- @field #string GROUND_APC Infantry carriers, in particular Amoured Personell Carrier. This can be used to transport other assets.
 -- @field #string GROUND_TRUCK Unarmed ground vehicles, which has the DCS "Truck" attribute.
 -- @field #string GROUND_INFANTRY Ground infantry assets.
+-- @field #string GROUND_IFV Ground Infantry Fighting Vehicle.
 -- @field #string GROUND_ARTILLERY Artillery assets.
 -- @field #string GROUND_TANK Tanks (modern or old).
 -- @field #string GROUND_TRAIN Trains. Not that trains are **not** yet properly implemented in DCS and cannot be used currently.
@@ -530,26 +531,32 @@ function GROUP:HasAttribute(attribute, all)
   -- Get all units of the group.
   local _units=self:GetUnits()
   
-  local _allhave=true
-  local _onehas=false
+  if _units then
   
-  for _,_unit in pairs(_units) do
-    local _unit=_unit --Wrapper.Unit#UNIT
-    if _unit then
-      local _hastit=_unit:HasAttribute(attribute)
-      if _hastit==true then
-        _onehas=true
-      else
-        _allhave=false
-      end
-    end 
+    local _allhave=true
+    local _onehas=false
+    
+    for _,_unit in pairs(_units) do
+      local _unit=_unit --Wrapper.Unit#UNIT
+      if _unit then
+        local _hastit=_unit:HasAttribute(attribute)
+        if _hastit==true then
+          _onehas=true
+        else
+          _allhave=false
+        end
+      end 
+    end
+    
+    if all==true then
+      return _allhave
+    else
+      return _onehas
+    end
+    
   end
   
-  if all==true then
-    return _allhave
-  else
-    return _onehas
-  end
+  return nil
 end
 
 --- Returns the maximum speed of the group.
@@ -568,12 +575,15 @@ function GROUP:GetSpeedMax()
     
     for _,unit in pairs(Units) do
       local unit=unit --Wrapper.Unit#UNIT
+      
       local speed=unit:GetSpeedMax()
-      if speedmax==0 then
-        speedmax=speed
-      elseif speed<speedmax then
+      
+      if speedmax==nil or speed<speedmax then
         speedmax=speed
       end
+      
+      --env.info(string.format("FF unit %s: speed=%.1f, speedmax=%.1f", unit:GetName(), speed, speedmax))
+      
     end
     
     return speedmax
@@ -659,6 +669,29 @@ function GROUP:GetPlayerUnits()
   return nil
 end
 
+--- Check if an (air) group is a client or player slot. Information is retrieved from the group template.
+-- @param #GROUP self
+-- @return #boolean If true, group is associated with a client or player slot.
+function GROUP:IsPlayer()
+  
+  -- Get group.
+ -- local group=self:GetGroup()
+    
+  -- Units of template group.
+  local units=self:GetTemplate().units
+  
+  -- Get numbers.
+  for _,unit in pairs(units) do
+      
+    -- Check if unit name matach and skill is Client or Player.
+    if unit.name==self:GetName() and (unit.skill=="Client" or unit.skill=="Player") then
+      return true
+    end
+
+  end
+  
+  return false
+end
 
 --- Returns the UNIT wrapper class with number UnitNumber.
 -- If the underlying DCS Unit does not exist, the method will return nil. .
@@ -670,15 +703,26 @@ function GROUP:GetUnit( UnitNumber )
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-  
-    local DCSUnit = DCSGroup:getUnit( UnitNumber )
     
-    local UnitFound = UNIT:Find(DCSUnit)
+    local UnitFound = nil
+    -- 2.7.1 dead event bug, return the first alive unit instead
+    local units = DCSGroup:getUnits() or {}
     
-    return UnitFound
+    for _,_unit in pairs(units) do
+    
+      local UnitFound = UNIT:Find(_unit)
+      
+      if UnitFound then
+      
+        return UnitFound
+    
+      end
+    end
+    
   end
 
   return nil
+  
 end
 
 --- Check if an (air) group is a client or player slot. Information is retrieved from the group template.
@@ -1056,8 +1100,9 @@ end
 -- @param Wrapper.Group#GROUP self
 -- @return Core.Point#COORDINATE The COORDINATE of the GROUP.
 function GROUP:GetCoordinate()
-
-  local Units = self:GetUnits() or {}
+   
+   
+  local Units = self:GetUnits()  or {}
   
   for _,_unit in pairs(Units) do
     local FirstUnit = _unit -- Wrapper.Unit#UNIT
@@ -1204,7 +1249,8 @@ end
 -- @return #number Number of shells left.
 -- @return #number Number of rockets left.
 -- @return #number Number of bombs left.
--- @return #number Number of missiles left.  
+-- @return #number Number of missiles left. 
+-- @return #number Number of artillery shells left (with explosive mass, included in shells; shells can also be machine gun ammo) 
 function GROUP:GetAmmunition()
   self:F( self.ControllableName )
 
@@ -1215,6 +1261,7 @@ function GROUP:GetAmmunition()
   local Nrockets=0
   local Nmissiles=0
   local Nbombs=0
+  local Narti=0
   
   if DCSControllable then
     
@@ -1223,19 +1270,19 @@ function GROUP:GetAmmunition()
       local Unit = UnitData -- Wrapper.Unit#UNIT
       
       -- Get ammo of the unit
-      local ntot, nshells, nrockets, nbombs, nmissiles = Unit:GetAmmunition()
+      local ntot, nshells, nrockets, nbombs, nmissiles, narti = Unit:GetAmmunition()
       
       Ntot=Ntot+ntot
       Nshells=Nshells+nshells
       Nrockets=Nrockets+nrockets
       Nmissiles=Nmissiles+nmissiles
       Nbombs=Nbombs+nbombs
-      
+      Narti=Narti+narti
     end
     
   end
   
-  return Ntot, Nshells, Nrockets, Nbombs, Nmissiles
+  return Ntot, Nshells, Nrockets, Nbombs, Nmissiles, Narti
 end
 
 
@@ -2423,13 +2470,13 @@ function GROUP:GetAttribute()
     elseif artillery then
       attribute=GROUP.Attribute.GROUND_ARTILLERY         
     elseif tank then
-      attribute=GROUP.Attribute.GROUND_TANK
+      attribute=GROUP.Attribute.GROUND_TANK 
     elseif ifv then
-      attribute=GROUP.Attribute.GROUND_IFV    
+      attribute=GROUP.Attribute.GROUND_IFV   
     elseif apc then
       attribute=GROUP.Attribute.GROUND_APC
     elseif infantry then
-      attribute=GROUP.Attribute.GROUND_INFANTRY
+      attribute=GROUP.Attribute.GROUND_INFANTRY 
     elseif truck then
       attribute=GROUP.Attribute.GROUND_TRUCK
     elseif train then
