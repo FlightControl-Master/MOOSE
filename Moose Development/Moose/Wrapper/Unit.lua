@@ -698,6 +698,7 @@ end
 -- @return #number Number of rockets left.
 -- @return #number Number of bombs left.
 -- @return #number Number of missiles left.
+-- @return #number Number of artillery shells left (with explosive mass, included in shells; shells can also be machine gun ammo)
 function UNIT:GetAmmunition()
 
   -- Init counter.
@@ -706,6 +707,7 @@ function UNIT:GetAmmunition()
   local nrockets=0
   local nmissiles=0
   local nbombs=0
+  local narti=0
 
   local unit=self
 
@@ -742,7 +744,11 @@ function UNIT:GetAmmunition()
 
         -- Add up all shells.
         nshells=nshells+Nammo
-
+        
+        if ammotable[w].desc.warhead and ammotable[w].desc.warhead.explosiveMass and ammotable[w].desc.warhead.explosiveMass > 0 then
+          narti=narti+Nammo
+        end
+        
       elseif Category==Weapon.Category.ROCKET then
 
         -- Add up all rockets.
@@ -779,7 +785,7 @@ function UNIT:GetAmmunition()
   -- Total amount of ammunition.
   nammo=nshells+nrockets+nmissiles+nbombs
 
-  return nammo, nshells, nrockets, nbombs, nmissiles
+  return nammo, nshells, nrockets, nbombs, nmissiles, narti
 end
 
 --- Returns the unit sensors.
