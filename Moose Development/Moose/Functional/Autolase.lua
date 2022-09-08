@@ -111,7 +111,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.1.15"
+AUTOLASE.version = "0.1.20"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -195,6 +195,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.SRSMod = radio.modulation.AM
   self.NoMenus = false
   self.minthreatlevel = 0
+  self.blacklistattributes = {}
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AUTOLASE %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -307,7 +308,7 @@ function AUTOLASE:SetPilotMenu()
       local Unit = _unit -- Wrapper.Unit#UNIT
       if Unit and Unit:IsAlive() then
         local Group = Unit:GetGroup()
-        local lasemenu = MENU_GROUP_COMMAND:New(Group,"Autolase Status",nil,self.ShowStatus,self,Group)
+        local lasemenu = MENU_GROUP_COMMAND:New(Group,"Autolase Status",nil,self.ShowStatus,self,Group,Unit)
         lasemenu:Refresh()
       end
     end
@@ -333,12 +334,35 @@ end
 -- @param #number Level Level used for filtering, defaults to 0. SAM systems and manpads have level 7 to 10, AAA level 6, MTBs and armoured vehicles level 3 to 5, APC, Artillery, Infantry and EWR level 1 to 2.
 -- @return #AUTOLASE self
 -- @usage Filter for level 3 and above:
---						`myautolase:SetMinThreatLevel(3)`
+--            `myautolase:SetMinThreatLevel(3)`
 function AUTOLASE:SetMinThreatLevel(Level)
-	local level = Level or 0
-	if level < 0 or level > 10 then level = 0 end
-	self.minthreatlevel = level
-	return self	
+  local level = Level or 0
+  if level < 0 or level > 10 then level = 0 end
+  self.minthreatlevel = level
+  return self 
+end
+
+--- (User) Set list of #UNIT level attributes that won't be lased. For list of attributes see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_attributes) and [GitHub](https://github.com/mrSkortch/DCS-miscScripts/tree/master/ObjectDB) 
+-- @param #AUTOLASE self
+-- @param #table Attributes Table of #string attributes to blacklist. Can be handed over as a single #string.
+-- @return #AUTOLASE self
+-- @usage To exclude e.g. manpads from being lased:
+-- 
+--            `myautolase:AddBlackListAttributes("MANPADS")`
+-- 
+-- To exclude trucks and artillery:
+-- 
+--            `myautolase:AddBlackListAttributes({"Trucks","Artillery"})`
+--            
+function AUTOLASE:AddBlackListAttributes(Attributes)
+  local attributes = Attributes
+  if type(attributes) ~= "table" then
+    attributes = {attributes}
+  end
+  for _,_attr in pairs(attributes) do
+    table.insert(self.blacklistattributes,_attr)
+  end
+  return self
 end
 
 --- (Internal) Function to get a laser code by recce name
@@ -613,15 +637,19 @@ end
 --- (Internal) Function to show status.
 -- @param #AUTOLASE self
 -- @param Wrapper.Group#GROUP Group (Optional) show to a certain group
+-- @param Wrapper.Unit#UNIT Unit (Optional) show to a certain unit
 -- @return #AUTOLASE self
-function AUTOLASE:ShowStatus(Group)
+function AUTOLASE:ShowStatus(Group,Unit)
   local report = REPORT:New("Autolase")
   local reccetable = self.RecceSet:GetSetObjects()
   for _,_recce in pairs(reccetable) do
     if _recce and _recce:IsAlive() then
       local unit = _recce:GetUnit(1)
       local name = unit:GetName()
-      local code = self:GetLaserCode(name)
+      if string.find(name,"#") then
+        name = string.match(name,"^(.*)#")
+      end
+      local code = self:GetLaserCode(unit:GetName())
       report:Add(string.format("Recce %s has code %d",name,code))
     end
   end
@@ -629,10 +657,18 @@ function AUTOLASE:ShowStatus(Group)
   for _ind,_entry in pairs(self.CurrentLasing) do
     local entry = _entry -- #AUTOLASE.LaserSpot
     local reccename = entry.reccename
+    if string.find(reccename,"#") then
+      reccename = string.match(reccename,"^(.*)#")
+    end
     local typename = entry.unittype
     local code = entry.lasercode
     local locationstring = entry.location
-    local playername = Group:GetPlayerName()
+    local playername = nil
+    if Unit and Unit:IsAlive() then
+      playername = Unit:GetPlayerName()
+    elseif Group and Group:IsAlive() then
+     playername = Group:GetPlayerName()
+    end
     if playername then
       local settings = _DATABASE:GetPlayerSettings(playername)
       if settings then
@@ -652,7 +688,9 @@ function AUTOLASE:ShowStatus(Group)
   end
   local reporttime = self.reporttimelong
   if lines == 0 then reporttime = self.reporttimeshort end
-  if Group and Group:IsAlive() then
+  if Unit and Unit:IsAlive() then
+    local m = MESSAGE:New(report:Text(),reporttime,"Info"):ToUnit(Unit)
+  elseif Group and Group:IsAlive() then
     local m = MESSAGE:New(report:Text(),reporttime,"Info"):ToGroup(Group)
   else
     local m = MESSAGE:New(report:Text(),reporttime,"Info"):ToCoalition(self.coalition)
@@ -724,6 +762,20 @@ end
 -- @param Wrapper.Unit#UNIT Unit The lased #UNIT
 -- @return #boolean outcome True or false
 function AUTOLASE:CanLase(Recce,Unit)
+  
+  local function HasNoBlackListAttribute(Unit)
+    local nogos = self.blacklistattributes or {}
+    local having = true
+    local unit = Unit -- Wrapper.Unit#UNIT
+    for _,_attribute in pairs (nogos) do
+      if unit:HasAttribute(_attribute) then
+        having = false
+        break
+      end
+    end
+    return having
+  end
+
   local canlase = false
   -- cooldown?
   if Recce and Recce:IsAlive() == true then
@@ -744,7 +796,7 @@ function AUTOLASE:CanLase(Recce,Unit)
     -- calculate distance
     local distance = math.floor(reccecoord:Get3DDistance(unitcoord))
     local lasedistance = self:GetLosFromUnit(Recce)
-    if distance <= lasedistance and islos then
+    if distance <= lasedistance and islos and HasNoBlackListAttribute(Unit) then
       canlase = true
     end
   end
@@ -791,7 +843,7 @@ function AUTOLASE:onafterMonitor(From, Event, To)
     local grp = contact.group
     local coord = contact.position
     local reccename = contact.recce or "none"
-	local threat = contact.threatlevel or 0
+  local threat = contact.threatlevel or 0
     local reccegrp = UNIT:FindByName(reccename)
     if reccegrp then
       local reccecoord = reccegrp:GetCoordinate()
@@ -836,6 +888,10 @@ function AUTOLASE:onafterMonitor(From, Event, To)
           local coord = unit:GetCoordinate()
           if threat > 0 then
             local unitname = unit:GetName()
+            -- prefer radar units
+            if unit:HasAttribute("RADAR_BAND1_FOR_ARM") or unit:HasAttribute("RADAR_BAND2_FOR_ARM") or unit:HasAttribute("Optical Tracker") then
+              threat = 11
+            end
             table.insert(unitsbythreat,{unit,threat})
             self.RecceUnitNames[unitname] = reccename
           end
@@ -1001,7 +1057,11 @@ function AUTOLASE:onbeforeLasing(From,Event,To,LaserSpot)
   self:T({From, Event, To, LaserSpot.unittype})
   if self.notifypilots or self.debug then
     local laserspot = LaserSpot -- #AUTOLASE.LaserSpot
-    local text = string.format("%s is lasing %s code %d\nat %s",laserspot.reccename,laserspot.unittype,laserspot.lasercode,laserspot.location)
+    local name = laserspot.reccename
+    if string.find(name,"#") then
+        name = string.match(name,"^(.*)#")
+      end
+    local text = string.format("%s is lasing %s code %d\nat %s",name,laserspot.unittype,laserspot.lasercode,laserspot.location)
     self:NotifyPilots(text,self.reporttimeshort+5)
   end
   return self
