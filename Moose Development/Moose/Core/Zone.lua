@@ -1458,7 +1458,7 @@ function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,ma
     for _,_coord in pairs (buildings) do
       local coord = _coord -- Core.Point#COORDINATE
       -- keep >50m dist from buildings
-      if coord:Get2DDistance(rcoord) > dist then
+      if coord:Get3DDistance(rcoord) > dist then
         found = true
       else
         found = false
