@@ -112,7 +112,7 @@
 AMMOTRUCK = {
   ClassName = "AMMOTRUCK",
   lid = "",
-  version = "0.0.1",
+  version = "0.0.10",
   alias = "",
   debug = false,
   trucklist = {},
@@ -187,7 +187,9 @@ function AMMOTRUCK:New(Truckset,Targetset,Coalition,Alias,Homezone)
   self.ammothreshold = 5
   self.remunidist = 20000
   self.homezone = Homezone -- Core.Zone#ZONE
-  self.waitingtime = 1800 
+  self.waitingtime = 1800
+  self.usearmygroup = false
+  self.hasarmygroup = false
   
   -- Log id.
   self.lid=string.format("AMMOTRUCK %s | %s | ", self.version, self.alias)
@@ -237,7 +239,7 @@ end
 -- @param Wrapper.Group#GROUP Group
 -- @return #AMMOTRUCK self 
 function AMMOTRUCK:GetAmmoStatus(Group)
-  local ammotot, shells, rockets, bombs, missiles, narti  = Group:GetAmmunition()
+  local ammotot, shells, rockets, bombs, missiles, narti = Group:GetAmmunition()
   --self:I({ammotot, shells, rockets, bombs, missiles, narti})
   return rockets+missiles+narti
 end
@@ -448,6 +450,15 @@ function AMMOTRUCK:CheckTrucksAlive()
       local newtruck = {} -- #AMMOTRUCK.data
       newtruck.name = name
       newtruck.group = truck
+      if self.hasarmygroup then
+        -- is (not) already ARMYGROUP?
+        if truck.ClassName and truck.ClassName == "GROUP" then
+          local trucker = ARMYGROUP:New(truck)
+          trucker:Activate()
+          newtruck.group = trucker
+          --self.opstrucks:AddObject(newtruck)
+        end
+      end
       newtruck.state = AMMOTRUCK.State.IDLE
       newtruck.timestamp = timer.getAbsTime()
       newtruck.coordinate = truck:GetCoordinate()
@@ -465,8 +476,13 @@ end
 -- @return #AMMOTRUCK self 
 function AMMOTRUCK:onafterStart(From, Event, To)
   self:T({From, Event, To})
+  if ARMYGROUP and self.usearmygroup then
+    self.hasarmygroup = true
+  else
+   self.hasarmygroup = false
+  end
   self:CheckTargetsAlive()
-  self:CheckTrucksAlive()
+  self:CheckTrucksAlive() 
   self:__Monitor(-30)
   return self
 end
@@ -602,7 +618,17 @@ function AMMOTRUCK:onafterRouteTruck(From, Event, To, Truckdata, Aridata)
   local tgtgrp = aridata.group
   local tgtzone = ZONE_GROUP:New(aridata.name,tgtgrp,30)
   local tgtcoord = tgtzone:GetRandomCoordinate(15)
-  if self.routeonroad then
+  if self.hasarmygroup then
+    --local targetzone = ZONE_RADIUS:New(aridata.group:GetName(),tgtcoord:GetVec2(),10)
+    local mission = AUFTRAG:NewONGUARD(tgtcoord)
+    local oldmission = truckdata.group:GetMissionCurrent()
+    if oldmission then oldmission:Cancel() end
+    mission:SetVerbosity(3)
+    mission:SetMissionSpeed(UTILS.KmphToKnots(20))
+    mission:SetTeleport(false)
+    --mission:SetTime(nil,math.random(self.unloadtime,self.waitingtime))
+    truckdata.group:AddMission(mission)
+  elseif self.routeonroad then
     truckdata.group:RouteGroundOnRoad(tgtcoord,30,1,"Cone")
   else
     truckdata.group:RouteGroundTo(tgtcoord,30,"Cone",1)
@@ -660,7 +686,15 @@ function AMMOTRUCK:onafterTruckReturning(From, Event, To, Truck)
   local truckdata = Truck -- #AMMOTRUCK.data
   local tgtzone = self.homezone
   local tgtcoord = tgtzone:GetRandomCoordinate()
-  if self.routeonroad then
+  if self.hasarmygroup then
+    local mission = AUFTRAG:NewONGUARD(tgtcoord)
+    local oldmission = truckdata.group:GetMissionCurrent()
+    if oldmission then oldmission:Cancel() end
+    mission:SetMissionSpeed(UTILS.KmphToKnots(20))
+    --mission:SetEnableMarkers()
+    mission:SetTeleport(false)
+    truckdata.group:AddMission(mission)
+  elseif self.routeonroad then
     truckdata.group:RouteGroundOnRoad(tgtcoord,30,1,"Cone")
   else
     truckdata.group:RouteGroundTo(tgtcoord,30,"Cone",1)
