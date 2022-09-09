@@ -571,7 +571,7 @@ function GROUP:GetSpeedMax()
   
     local Units=self:GetUnits()
     
-    local speedmax=0
+    local speedmax=nil
     
     for _,unit in pairs(Units) do
       local unit=unit --Wrapper.Unit#UNIT
