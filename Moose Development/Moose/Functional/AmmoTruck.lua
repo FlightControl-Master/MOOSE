@@ -481,6 +481,10 @@ function AMMOTRUCK:onafterStart(From, Event, To)
   else
    self.hasarmygroup = false
   end
+  if self.debug then
+    BASE:TraceOn()
+    BASE:TraceClass("AMMOTRUCK")
+  end
   self:CheckTargetsAlive()
   self:CheckTrucksAlive() 
   self:__Monitor(-30)
@@ -629,9 +633,9 @@ function AMMOTRUCK:onafterRouteTruck(From, Event, To, Truckdata, Aridata)
     --mission:SetTime(nil,math.random(self.unloadtime,self.waitingtime))
     truckdata.group:AddMission(mission)
   elseif self.routeonroad then
-    truckdata.group:RouteGroundOnRoad(tgtcoord,30,1,"Cone")
+    truckdata.group:RouteGroundOnRoad(tgtcoord,30)
   else
-    truckdata.group:RouteGroundTo(tgtcoord,30,"Cone",1)
+    truckdata.group:RouteGroundTo(tgtcoord,30)
   end
   truckdata.state = AMMOTRUCK.State.DRIVING
   truckdata.targetgroup = tgtgrp
