@@ -5701,7 +5701,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
     
     -- Check if group is mobile. Note that some immobile units report a speed of 1 m/s = 3.6 km/h.
-    if self.speedMax<=3.6 or mission.teleport then
+    if (self.speedMax<=3.6 and mission.teleport) or mission.teleport then
 
       -- Teleport to waypoint coordinate. Mission will not be paused.
       self:Teleport(waypointcoord, nil, true)
@@ -11778,7 +11778,7 @@ function OPSGROUP:_UpdatePosition()
     self.positionLast=self.position or self:GetVec3()
     self.headingLast=self.heading or self:GetHeading()
     self.orientXLast=self.orientX or self:GetOrientationX()
-    self.velocityLast=self.velocity or self.group:GetVelocityMPS()
+	self.velocityLast=self.velocity or self.group:GetVelocityMPS()
 
     -- Current state.
     self.position=self:GetVec3()
