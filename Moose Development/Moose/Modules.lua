@@ -9,6 +9,7 @@ __Moose.Include( 'Scripts/Moose/Utilities/Socket.lua' )
 
 __Moose.Include( 'Scripts/Moose/Core/Base.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Beacon.lua' )
+__Moose.Include( 'Scripts/Moose/Core/Condition.lua' )
 __Moose.Include( 'Scripts/Moose/Core/UserFlag.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Report.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Scheduler.lua' )
