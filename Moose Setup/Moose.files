@@ -6,6 +6,7 @@ Utilities/Profiler.lua
 Utilities/Templates.lua
 Utilities/STTS.lua
 Utilities/FiFo.lua
+Utilities/Socket.lua
 
 Core/Base.lua
 Core/Beacon.lua
@@ -30,6 +31,9 @@ Core/Timer.lua
 Core/Goal.lua
 Core/Spot.lua
 Core/MarkerOps_Base.lua
+Core/Astar.lua
+Core/Condition.lua
+Core/TextAndSound.lua
 
 Wrapper/Object.lua
 Wrapper/Identifiable.lua
