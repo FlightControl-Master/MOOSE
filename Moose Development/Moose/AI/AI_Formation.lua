@@ -1140,8 +1140,8 @@ end
 -- @param DCS#Vec3 CV2 Vec3
 function AI_FORMATION:FollowMe(FollowGroup, ClientUnit, CT1, CV1, CT2, CV2)
 
-  if FollowGroup:GetState( FollowGroup, "Mode" ) == self.__Enum.Mode.Formation then
-  
+  if FollowGroup:GetState( FollowGroup, "Mode" ) == self.__Enum.Mode.Formation and not self:Is("Stopped") then
+ 
     self:T({Mode=FollowGroup:GetState( FollowGroup, "Mode" )})
 
     FollowGroup:OptionROTEvadeFire()

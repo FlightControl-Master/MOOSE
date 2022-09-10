@@ -428,9 +428,7 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     --- Calculate the current route point.
     local CurrentVec2 = self.Controllable:GetVec2()
     
-    if not CurrentVec2 then -- flight dead at this point
-      return self 
-    end
+    if not CurrentVec2 then return self end
     
     --DONE: Create GetAltitude function for GROUP, and delete GetUnit(1).
     local CurrentAltitude = self.Controllable:GetAltitude()
