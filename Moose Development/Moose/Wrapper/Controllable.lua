@@ -3871,7 +3871,7 @@ end
 --- Returns if the unit is a submarine.
 -- @param #POSITIONABLE self
 -- @return #boolean Submarines attributes result.
-function POSITIONABLE:IsSubmarine()
+function CONTROLLABLE:IsSubmarine()
   self:F2()
 
   local DCSUnit = self:GetDCSObject()
