@@ -405,8 +405,8 @@ do -- FSM
     Transition.To = To
 
     -- Debug message.
-    self:T2( Transition )
-
+    --self:T3( Transition )
+    
     self._Transitions[Transition] = Transition
     self:_eventmap( self.Events, Transition )
   end
@@ -426,8 +426,8 @@ do -- FSM
   -- @param #table ReturnEvents A table indicating for which returned events of the SubFSM which Event must be triggered in the FSM.
   -- @return Core.Fsm#FSM_PROCESS The SubFSM.
   function FSM:AddProcess( From, Event, Process, ReturnEvents )
-    self:T( { From, Event } )
-
+    --self:T3( { From, Event } )
+  
     local Sub = {}
     Sub.From = From
     Sub.Event = Event
@@ -524,9 +524,9 @@ do -- FSM
     Process._Scores[State] = Process._Scores[State] or {}
     Process._Scores[State].ScoreText = ScoreText
     Process._Scores[State].Score = Score
-
-    self:T( Process._Scores )
-
+    
+    --self:T3( Process._Scores )
+  
     return Process
   end
 
@@ -560,19 +560,19 @@ do -- FSM
   -- @param #table Events Events.
   -- @param #table EventStructure Event structure.
   function FSM:_eventmap( Events, EventStructure )
-
-    local Event = EventStructure.Event
-    local __Event = "__" .. EventStructure.Event
-
-    self[Event] = self[Event] or self:_create_transition( Event )
-    self[__Event] = self[__Event] or self:_delayed_transition( Event )
-
-    -- Debug message.
-    self:T2( "Added methods: " .. Event .. ", " .. __Event )
-
-    Events[Event] = self.Events[Event] or { map = {} }
-    self:_add_to_map( Events[Event].map, EventStructure )
-
+  
+      local Event = EventStructure.Event
+      local __Event = "__" .. EventStructure.Event
+      
+      self[Event] = self[Event] or self:_create_transition(Event)
+      self[__Event] = self[__Event] or self:_delayed_transition(Event)
+      
+      -- Debug message.
+      --self:T3( "Added methods: " .. Event .. ", " .. __Event )
+      
+      Events[Event] = self.Events[Event] or { map = {} }
+      self:_add_to_map( Events[Event].map, EventStructure )
+  
   end
 
   --- Sub maps.
@@ -784,8 +784,8 @@ do -- FSM
     return function( self, DelaySeconds, ... )
 
       -- Debug.
-      self:T2( "Delayed Event: " .. EventName )
-
+      self:T3( "Delayed Event: " .. EventName )
+      
       local CallID = 0
       if DelaySeconds ~= nil then
 
@@ -802,23 +802,23 @@ do -- FSM
             self._EventSchedules[EventName] = CallID
 
             -- Debug output.
-            self:T2( string.format( "NEGATIVE Event %s delayed by %.1f sec SCHEDULED with CallID=%s", EventName, DelaySeconds, tostring( CallID ) ) )
+            self:T2(string.format("NEGATIVE Event %s delayed by %.3f sec SCHEDULED with CallID=%s", EventName, DelaySeconds, tostring(CallID)))
           else
-            self:T2( string.format( "NEGATIVE Event %s delayed by %.1f sec CANCELLED as we already have such an event in the queue.", EventName, DelaySeconds ) )
+            self:T2(string.format("NEGATIVE Event %s delayed by %.3f sec CANCELLED as we already have such an event in the queue.", EventName, DelaySeconds))
             -- reschedule
           end
         else
 
           CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1, nil, nil, nil, 4, true )
-
-          self:T2( string.format( "Event %s delayed by %.1f sec SCHEDULED with CallID=%s", EventName, DelaySeconds, tostring( CallID ) ) )
+          
+          self:T2(string.format("Event %s delayed by %.3f sec SCHEDULED with CallID=%s", EventName, DelaySeconds, tostring(CallID)))
         end
       else
         error( "FSM: An asynchronous event trigger requires a DelaySeconds parameter!!! This can be positive or negative! Sorry, but will not process this." )
       end
 
       -- Debug.
-      self:T2( { CallID = CallID } )
+      --self:T3( { CallID = CallID } )
     end
 
   end
@@ -841,7 +841,7 @@ do -- FSM
   function FSM:_gosub( ParentFrom, ParentEvent )
     local fsmtable = {}
     if self.subs[ParentFrom] and self.subs[ParentFrom][ParentEvent] then
-      self:T( { ParentFrom, ParentEvent, self.subs[ParentFrom], self.subs[ParentFrom][ParentEvent] } )
+      --self:T3( { ParentFrom, ParentEvent, self.subs[ParentFrom], self.subs[ParentFrom][ParentEvent] } )
       return self.subs[ParentFrom][ParentEvent]
     else
       return {}
@@ -887,8 +887,8 @@ do -- FSM
         Map[From] = Event.To
       end
     end
-
-    self:T3( { Map, Event } )
+    
+    --self:T3( {  Map, Event } )
   end
 
   --- Get current state.
@@ -908,7 +908,7 @@ do -- FSM
   --- Check if FSM is in state.
   -- @param #FSM self
   -- @param #string State State name.
-  -- @param #boolean If true, FSM is in this state.
+  -- @return #boolean If true, FSM is in this state.
   function FSM:Is( State )
     return self.current == State
   end
@@ -916,8 +916,8 @@ do -- FSM
   --- Check if FSM is in state.
   -- @param #FSM self
   -- @param #string State State name.
-  -- @param #boolean If true, FSM is in this state.
-  function FSM:is( state )
+  -- @return #boolean If true, FSM is in this state.  
+  function FSM:is(state)
     return self.current == state
   end
 
@@ -1146,7 +1146,7 @@ do -- FSM_PROCESS
   -- @param #FSM_PROCESS self
   -- @return #FSM_PROCESS
   function FSM_PROCESS:Copy( Controllable, Task )
-    self:T( { self:GetClassNameAndID() } )
+    --self:T3( { self:GetClassNameAndID() } )
 
     local NewFsm = self:New( Controllable, Task ) -- Core.Fsm#FSM_PROCESS
 
@@ -1171,13 +1171,13 @@ do -- FSM_PROCESS
 
     -- Copy End States
     for EndStateID, EndState in pairs( self:GetEndStates() ) do
-      self:T( EndState )
+      --self:T3( EndState )
       NewFsm:AddEndState( EndState )
     end
 
     -- Copy the score tables
     for ScoreID, Score in pairs( self:GetScores() ) do
-      self:T( Score )
+      --self:T3( Score )
       NewFsm:AddScore( ScoreID, Score.ScoreText, Score.Score )
     end
 
@@ -1422,7 +1422,7 @@ do -- FSM_SET
   -- @param #FSM_SET self
   -- @return Core.Set#SET_BASE
   function FSM_SET:Get()
-    return self.Controllable
+    return self.Set
   end
 
   function FSM_SET:_call_handler( step, trigger, params, EventName )

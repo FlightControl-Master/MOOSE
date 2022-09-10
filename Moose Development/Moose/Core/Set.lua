@@ -199,12 +199,10 @@ do -- SET_BASE
   -- @param NoTriggerEvent (Optional) When `true`, the :Remove() method will not trigger a **Removed** event.
   function SET_BASE:Remove( ObjectName, NoTriggerEvent )
     self:F2( { ObjectName = ObjectName } )
-
+    
     local TriggerEvent = true
-    if NoTriggerEvent then
-      TriggerEvent = false
-    end
-
+    if NoTriggerEvent then TriggerEvent = false end
+    
     local Object = self.Set[ObjectName]
 
     if Object then
@@ -228,7 +226,7 @@ do -- SET_BASE
   -- @param Core.Base#BASE Object The object itself.
   -- @return Core.Base#BASE The added BASE Object.
   function SET_BASE:Add( ObjectName, Object )
-
+  
     -- Debug info.
     self:T( { ObjectName = ObjectName, Object = Object } )
 
@@ -264,27 +262,28 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return Core.Base#BASE The added BASE Object.
   function SET_BASE:SortByName()
-
-    local function sort( a, b )
-      return a < b
+  
+    local function sort(a, b)
+      return a<b
     end
-
-    table.sort( self.Index )
-
+  
+    table.sort(self.Index)
+  
   end
 
   --- Add a SET to this set.
   -- @param #SET_BASE self
   -- @param Core.Set#SET_BASE SetToAdd Set to add.
   -- @return #SET_BASE self
-  function SET_BASE:AddSet( SetToAdd )
+  function SET_BASE:AddSet(SetToAdd)
 
-    for _, ObjectB in pairs( SetToAdd.Set ) do
-      self:AddObject( ObjectB )
+    for _,ObjectB in pairs(SetToAdd.Set) do
+      self:AddObject(ObjectB)
     end
 
     return self
   end
+
 
   --- Get the *union* of two sets.
   -- @param #SET_BASE self
@@ -309,15 +308,16 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param Core.Set#SET_BASE SetB Set other set, called *B*.
   -- @return Core.Set#SET_BASE A set of objects that is included in set *A* **and** in set *B*.
-  function SET_BASE:GetSetIntersection( SetB )
 
-    local intersection = SET_BASE:New()
+  function SET_BASE:GetSetIntersection(SetB)
 
-    local union = self:GetSetUnion( SetB )
+    local intersection=SET_BASE:New()
 
-    for _, Object in pairs( union.Set ) do
-      if self:IsIncludeObject( Object ) and SetB:IsIncludeObject( Object ) then
-        intersection:AddObject( Object )
+    local union=self:GetSetUnion(SetB)
+
+    for _,Object in pairs(union.Set) do
+      if self:IsIncludeObject(Object) and SetB:IsIncludeObject(Object) then
+        intersection:AddObject(Object)
       end
     end
 
@@ -330,11 +330,11 @@ do -- SET_BASE
   -- @return Core.Set#SET_BASE The set of objects that are in set *B* but **not** in this set *A*.
   function SET_BASE:GetSetComplement( SetB )
 
-    local complement = self:GetSetUnion( SetB )
-    local intersection = self:GetSetIntersection( SetB )
+    local complement = self:GetSetUnion(SetB)
+    local intersection = self:GetSetIntersection(SetB)
 
-    for _, Object in pairs( intersection.Set ) do
-      complement:Remove( Object.ObjectName, true )
+    for _,Object in pairs(intersection.Set) do
+        complement:Remove(Object.ObjectName,true)
     end
 
     return complement
@@ -765,6 +765,7 @@ do -- SET_BASE
     return self
   end
 
+
   ----- Iterate the SET_BASE and call an iterator function for each **alive** unit, providing the Unit and optional parameters.
   ---- @param #SET_BASE self
   ---- @param #function IteratorFunction The function that will be called when there is an alive unit in the SET_BASE. The function needs to accept a UNIT parameter.
@@ -1060,8 +1061,9 @@ do -- SET_GROUP
   -- Note that for each unit in the group that is set, a default cargo bay limit is initialized.
   -- @param Core.Set#SET_GROUP self
   -- @param Wrapper.Group#GROUP group The group which should be added to the set.
+  -- @param #boolean DontSetCargoBayLimit If true, do not attempt to auto-add the cargo bay limit per unit in this group.
   -- @return Core.Set#SET_GROUP self
-  function SET_GROUP:AddGroup( group )
+  function SET_GROUP:AddGroup( group, DontSetCargoBayLimit )
 
     self:Add( group:GetName(), group )
     
@@ -1164,6 +1166,30 @@ do -- SET_GROUP
       zones = Zones
     end
     for _, Zone in pairs( zones ) do
+      local zonename = Zone:GetName()
+      self.Filter.Zones[zonename] = Zone
+    end
+    return self
+  end
+
+  --- Builds a set of groups in zones.
+  -- @param #SET_GROUP self
+  -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
+  -- @return #SET_GROUP self
+  function SET_GROUP:FilterZones( Zones )
+    if not self.Filter.Zones then
+      self.Filter.Zones = {}
+    end
+    local zones = {}
+    if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
+      zones = Zones.Set
+    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+      self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
+      return self     
+    else
+      zones = Zones
+    end
+    for _,Zone in pairs( zones ) do
       local zonename = Zone:GetName()
       self.Filter.Zones[zonename] = Zone
     end
@@ -1428,16 +1454,17 @@ do -- SET_GROUP
   -- @param #SET_GROUP self
   -- @param #number Delay Delay in seconds.
   -- @return #SET_GROUP self
-  function SET_GROUP:Activate( Delay )
+  function SET_GROUP:Activate(Delay)
     local Set = self:GetSet()
-    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
-      local group = GroupData -- Wrapper.Group#GROUP
-      if group and group:IsAlive() == false then
-        group:Activate( Delay )
+    for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+      local group=GroupData --Wrapper.Group#GROUP
+      if group and group:IsAlive()==false then
+        group:Activate(Delay)
       end
     end
     return self
   end
+
 
   --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
   -- @param #SET_GROUP self
@@ -1821,18 +1848,18 @@ do -- SET_GROUP
       end
       MGroupInclude = MGroupInclude and MGroupPrefix
     end
-
+    
     if self.Filter.Zones then
       local MGroupZone = false
       for ZoneName, Zone in pairs( self.Filter.Zones ) do
         self:T3( "Zone:", ZoneName )
-        if MGroup:IsInZone( Zone ) then
+        if MGroup:IsInZone(Zone) then
           MGroupZone = true
         end
       end
       MGroupInclude = MGroupInclude and MGroupZone
     end
-
+     
     self:T2( MGroupInclude )
     return MGroupInclude
   end
@@ -2157,7 +2184,7 @@ do -- SET_UNIT
     end
     return self
   end
-
+  
   --- Builds a set of units in zones.
   -- @param #SET_UNIT self
   -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
@@ -2169,19 +2196,19 @@ do -- SET_UNIT
     local zones = {}
     if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
       zones = Zones.Set
-    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName) then
-      self:E( "***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!" )
-      return self
+    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+      self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
+      return self     
     else
       zones = Zones
     end
-    for _, Zone in pairs( zones ) do
+    for _,Zone in pairs( zones ) do
       local zonename = Zone:GetName()
       self.Filter.Zones[zonename] = Zone
     end
     return self
   end
-
+  
   --- Builds a set of units that are only active.
   -- Only the units that are active will be included within the set.
   -- @param #SET_UNIT self
@@ -2353,6 +2380,7 @@ do -- SET_UNIT
 
   end
 
+
   --- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT, providing the UNIT and optional parameters.
   -- @param #SET_UNIT self
   -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
@@ -2405,6 +2433,7 @@ do -- SET_UNIT
     end
 
   end
+
 
   --- Iterate the SET_UNIT **sorted *per Threat Level** and call an iterator function for each **alive** UNIT, providing the UNIT and optional parameters.
   --
@@ -2795,6 +2824,8 @@ do -- SET_UNIT
     return FriendlyUnitCount
   end
 
+
+
   ----- Iterate the SET_UNIT and call an iterator function for each **alive** player, providing the Unit of the player and optional parameters.
   ---- @param #SET_UNIT self
   ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a UNIT parameter.
@@ -2919,18 +2950,18 @@ do -- SET_UNIT
         MUnitInclude = MUnitInclude and MUnitSEAD
       end
     end
-
+    
     if self.Filter.Zones then
       local MGroupZone = false
       for ZoneName, Zone in pairs( self.Filter.Zones ) do
         self:T3( "Zone:", ZoneName )
-        if MUnit:IsInZone( Zone ) then
+        if MUnit:IsInZone(Zone) then
           MGroupZone = true
         end
       end
-      MUnitInclude = MUnitInclude and MGroupZone
+      MUnitInclude = MUnitInclude  and MGroupZone
     end
-
+    
     self:T2( MUnitInclude )
     return MUnitInclude
   end
@@ -3010,7 +3041,7 @@ do -- SET_STATIC
   --    * @{#SET_STATIC.FilterCountries}: Builds the SET_STATIC with the units belonging to the country(ies).
   --    * @{#SET_STATIC.FilterPrefixes}: Builds the SET_STATIC with the units containing the same string(s) in their name. **ATTENTION** bad naming convention as this *does not** only filter *prefixes*.
   --    * @{#SET_STATIC.FilterZones}: Builds the SET_STATIC with the units within a @{Core.Zone#ZONE}.
-  --
+  --    
   -- Once the filter criteria have been set for the SET_STATIC, you can start filtering using:
   --
   --   * @{#SET_STATIC.FilterStart}: Starts the filtering of the units within the SET_STATIC.
@@ -3151,8 +3182,9 @@ do -- SET_STATIC
     end
     return self
   end
-
-  --- Builds a set of statics in zones.
+  
+  
+   --- Builds a set of statics in zones.
   -- @param #SET_STATIC self
   -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
   -- @return #SET_STATIC self
@@ -3163,13 +3195,13 @@ do -- SET_STATIC
     local zones = {}
     if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
       zones = Zones.Set
-    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName) then
-      self:E( "***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!" )
-      return self
+    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+      self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
+      return self     
     else
       zones = Zones
     end
-    for _, Zone in pairs( zones ) do
+    for _,Zone in pairs( zones ) do
       local zonename = Zone:GetName()
       self.Filter.Zones[zonename] = Zone
     end
@@ -3373,6 +3405,7 @@ do -- SET_STATIC
     end
 
   end
+
 
   --- Iterate the SET_STATIC and call an iterator function for each **alive** STATIC, providing the STATIC and optional parameters.
   -- @param #SET_STATIC self
@@ -3651,18 +3684,18 @@ do -- SET_STATIC
       end
       MStaticInclude = MStaticInclude and MStaticPrefix
     end
-
+    
     if self.Filter.Zones then
       local MStaticZone = false
       for ZoneName, Zone in pairs( self.Filter.Zones ) do
         self:T3( "Zone:", ZoneName )
-        if MStatic and MStatic:IsInZone( Zone ) then
+        if MStatic and MStatic:IsInZone(Zone) then
           MStaticZone = true
         end
       end
       MStaticInclude = MStaticInclude and MStaticZone
     end
-
+    
     self:T2( MStaticInclude )
     return MStaticInclude
   end
@@ -3943,7 +3976,7 @@ do -- SET_CLIENT
     return self
   end
 
-  --- Builds a set of clients in zones.
+   --- Builds a set of clients in zones.
   -- @param #SET_CLIENT self
   -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
   -- @return #SET_TABLE self
@@ -3954,13 +3987,13 @@ do -- SET_CLIENT
     local zones = {}
     if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
       zones = Zones.Set
-    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName) then
-      self:E( "***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!" )
-      return self
+    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+      self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
+      return self     
     else
       zones = Zones
     end
-    for _, Zone in pairs( zones ) do
+    for _,Zone in pairs( zones ) do
       local zonename = Zone:GetName()
       self.Filter.Zones[zonename] = Zone
     end
@@ -4079,6 +4112,26 @@ do -- SET_CLIENT
 
     return CountU
   end
+  
+  
+  --- Gets the alive set.
+  -- @param #SET_CLIENT self
+  -- @return #table Table of SET objects
+  function SET_CLIENT:GetAliveSet()
+
+    local AliveSet = SET_CLIENT:New()
+
+    -- Clean the Set before returning with only the alive Groups.
+    for GroupName, GroupObject in pairs(self.Set) do    
+      local GroupObject=GroupObject --Wrapper.Client#CLIENT
+      
+      if GroupObject and GroupObject:IsAlive() then      
+        AliveSet:Add(GroupName, GroupObject)
+      end
+    end
+
+    return AliveSet.Set or {}
+  end
 
   ---
   -- @param #SET_CLIENT self
@@ -4169,13 +4222,13 @@ do -- SET_CLIENT
       for ZoneName, Zone in pairs( self.Filter.Zones ) do
         self:T3( "Zone:", ZoneName )
         local unit = MClient:GetClientGroupUnit()
-        if unit and unit:IsInZone( Zone ) then
+        if unit and unit:IsInZone(Zone) then
           MClientZone = true
         end
       end
       MClientInclude = MClientInclude and MClientZone
     end
-
+    
     self:T2( MClientInclude )
     return MClientInclude
   end
@@ -4321,7 +4374,7 @@ do -- SET_PLAYER
     end
     return self
   end
-
+  
   --- Builds a set of players in zones.
   -- @param #SET_PLAYER self
   -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
@@ -4333,18 +4386,19 @@ do -- SET_PLAYER
     local zones = {}
     if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
       zones = Zones.Set
-    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName) then
-      self:E( "***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!" )
-      return self
+    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+      self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
+      return self     
     else
       zones = Zones
     end
-    for _, Zone in pairs( zones ) do
+    for _,Zone in pairs( zones ) do
       local zonename = Zone:GetName()
       self.Filter.Zones[zonename] = Zone
     end
     return self
   end
+  
 
   --- Builds a set of clients out of categories joined by players.
   -- Possible current categories are plane, helicopter, ground, ship.
@@ -4588,19 +4642,19 @@ do -- SET_PLAYER
         MClientInclude = MClientInclude and MClientPrefix
       end
     end
-
+    
     if self.Filter.Zones then
       local MClientZone = false
       for ZoneName, Zone in pairs( self.Filter.Zones ) do
         self:T3( "Zone:", ZoneName )
         local unit = MClient:GetClientGroupUnit()
-        if unit and unit:IsInZone( Zone ) then
+        if unit and unit:IsInZone(Zone) then
           MClientZone = true
         end
       end
       MClientInclude = MClientInclude and MClientZone
     end
-
+    
     self:T2( MClientInclude )
     return MClientInclude
   end
@@ -5614,7 +5668,28 @@ do -- SET_ZONE
     return self
   end
 
-  ---
+  --- Draw all zones in the set on the F10 map.
+  -- @param #SET_ZONE self
+  -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+  -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
+  -- @param #number Alpha Transparency [0,1]. Default 1.
+  -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+  -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
+  -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+  -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+  -- @return #SET_ZONE self
+  function SET_ZONE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
+  
+    for _,_zone in pairs(self.Set) do
+      local zone=_zone --Core.Zone#ZONE
+      zone:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
+    end
+
+    return self
+  end
+
+
+  --- Private function.
   -- @param #SET_ZONE self
   -- @param Core.Zone#ZONE_BASE MZone
   -- @return #SET_ZONE self
@@ -6014,6 +6089,8 @@ do -- SET_ZONE_GOAL
 
 end
 
+
+
 do -- SET_OPSGROUP
 
   --- @type SET_OPSGROUP
@@ -6119,13 +6196,14 @@ do -- SET_OPSGROUP
     }, -- FilterMeta
   }
 
+
   --- Creates a new SET_OPSGROUP object, building a set of groups belonging to a coalitions, categories, countries, types or with defined prefix names.
   -- @param #SET_OPSGROUP self
-  -- @return #SET_OPSGROUP
+  -- @return #SET_OPSGROUP self
   function SET_OPSGROUP:New()
 
     -- Inherit SET_BASE.
-    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.GROUPS ) ) -- #SET_OPSGROUP
+    local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.GROUPS)) -- #SET_OPSGROUP
 
     -- Include non activated 
     self:FilterActive( false )
@@ -6141,80 +6219,88 @@ do -- SET_OPSGROUP
     local AliveSet = SET_OPSGROUP:New()
 
     -- Clean the Set before returning with only the alive Groups.
-    for GroupName, GroupObject in pairs( self.Set ) do
-      local GroupObject = GroupObject -- Wrapper.Group#GROUP
-
-      if GroupObject and GroupObject:IsAlive() then
-        AliveSet:Add( GroupName, GroupObject )
+    for GroupName, GroupObject in pairs(self.Set) do    
+      local GroupObject=GroupObject --Wrapper.Group#GROUP
+      
+      if GroupObject and GroupObject:IsAlive() then      
+        AliveSet:Add(GroupName, GroupObject)
       end
     end
 
     return AliveSet.Set or {}
   end
-
+  
   --- Adds a @{Core.Base#BASE} object in the @{Core.Set#SET_BASE}, using a given ObjectName as the index.
   -- @param #SET_BASE self
   -- @param #string ObjectName The name of the object.
   -- @param Core.Base#BASE Object The object itself.
   -- @return Core.Base#BASE The added BASE Object.
-  function SET_OPSGROUP:Add( ObjectName, Object )
+  function SET_OPSGROUP:Add(ObjectName, Object)
     self:T( { ObjectName = ObjectName, Object = Object } )
 
     -- Ensure that the existing element is removed from the Set before a new one is inserted to the Set
     if self.Set[ObjectName] then
-      self:Remove( ObjectName, true )
+      self:Remove(ObjectName, true)
     end
-
-    local object = nil -- Ops.OpsGroup#OPSGROUP
-    if Object:IsInstanceOf( "GROUP" ) then
-
+    
+    local object=nil --Ops.OpsGroup#OPSGROUP
+    if Object:IsInstanceOf("GROUP") then
+    
       ---
       -- GROUP Object
       ---
-
+    
       -- Fist, look up in the DATABASE if an OPSGROUP already exists.
-      object = _DATABASE:FindOpsGroup( ObjectName )
-
+      object=_DATABASE:FindOpsGroup(ObjectName)
+    
       if not object then
-
+      
         if Object:IsShip() then
-          object = NAVYGROUP:New( Object )
+          object=NAVYGROUP:New(Object)
         elseif Object:IsGround() then
-          object = ARMYGROUP:New( Object )
+          object=ARMYGROUP:New(Object)
         elseif Object:IsAir() then
-          object = FLIGHTGROUP:New( Object )
+          object=FLIGHTGROUP:New(Object)
         else
-          env.error( "ERROR: Unknown category of group object!" )
+          env.error("ERROR: Unknown category of group object!")
         end
       end
-
-    elseif Object:IsInstanceOf( "OPSGROUP" ) then
+      
+    elseif Object:IsInstanceOf("OPSGROUP") then
       -- We already have an OPSGROUP.
-      object = Object
+      object=Object
     else
-      env.error( "ERROR: Object must be a GROUP or OPSGROUP!" )
+      env.error("ERROR: Object must be a GROUP or OPSGROUP!")
     end
-
+    
     -- Add object to set.
-    self.Set[ObjectName] = object
+    self.Set[ObjectName]=object
 
     -- Add Object name to Index.
-    table.insert( self.Index, ObjectName )
+    table.insert(self.Index, ObjectName)
 
     -- Trigger Added event.
-    self:Added( ObjectName, object )
+    self:Added(ObjectName, object)
   end
+  
+  --- Adds a @{Core.Base#BASE} object in the @{Core.Set#SET_BASE}, using the Object Name as the index.
+  -- @param #SET_BASE self
+  -- @param Ops.OpsGroup#OPSGROUP Object Ops group
+  -- @return Core.Base#BASE The added BASE Object.
+  function SET_OPSGROUP:AddObject(Object)
+    self:Add(Object.groupname, Object)
+  end  
 
   --- Add a GROUP or OPSGROUP object to the set.
   -- **NOTE** that an OPSGROUP is automatically created from the GROUP if it does not exist already.
   -- @param Core.Set#SET_OPSGROUP self
   -- @param Wrapper.Group#GROUP group The GROUP which should be added to the set. Can also be given as an #OPSGROUP object.
   -- @return Core.Set#SET_OPSGROUP self
-  function SET_OPSGROUP:AddGroup( group )
-
-    local groupname = group:GetName()
-
-    self:Add( groupname, group )
+  function SET_OPSGROUP:AddGroup(group)
+  
+    local groupname=group:GetName()
+    
+    self:Add(groupname, group )
 
     return self
   end
@@ -6225,10 +6311,10 @@ do -- SET_OPSGROUP
   -- @return Core.Set#SET_OPSGROUP self
   function SET_OPSGROUP:AddGroupsByName( AddGroupNames )
 
-    local AddGroupNamesArray = (type( AddGroupNames ) == "table") and AddGroupNames or { AddGroupNames }
+    local AddGroupNamesArray = ( type( AddGroupNames ) == "table" ) and AddGroupNames or { AddGroupNames }
 
     for AddGroupID, AddGroupName in pairs( AddGroupNamesArray ) do
-      self:Add( AddGroupName, GROUP:FindByName( AddGroupName ) )
+      self:Add(AddGroupName, GROUP:FindByName(AddGroupName))
     end
 
     return self
@@ -6240,7 +6326,7 @@ do -- SET_OPSGROUP
   -- @return Core.Set#SET_OPSGROUP self
   function SET_OPSGROUP:RemoveGroupsByName( RemoveGroupNames )
 
-    local RemoveGroupNamesArray = (type( RemoveGroupNames ) == "table") and RemoveGroupNames or { RemoveGroupNames }
+    local RemoveGroupNamesArray = ( type( RemoveGroupNames ) == "table" ) and RemoveGroupNames or { RemoveGroupNames }
 
     for RemoveGroupID, RemoveGroupName in pairs( RemoveGroupNamesArray ) do
       self:Remove( RemoveGroupName )
@@ -6253,89 +6339,91 @@ do -- SET_OPSGROUP
   -- @param #SET_OPSGROUP self
   -- @param #string GroupName Name of the group.
   -- @return Ops.OpsGroup#OPSGROUP The found OPSGROUP (FLIGHTGROUP, ARMYGROUP or NAVYGROUP) or `#nil` if the group is not in the set.
-  function SET_OPSGROUP:FindGroup( GroupName )
+  function SET_OPSGROUP:FindGroup(GroupName)
     local GroupFound = self.Set[GroupName]
     return GroupFound
   end
-
+  
   --- Finds a FLIGHTGROUP based on the group name.
   -- @param #SET_OPSGROUP self
   -- @param #string GroupName Name of the group.
   -- @return Ops.FlightGroup#FLIGHTGROUP The found FLIGHTGROUP or `#nil` if the group is not in the set.
-  function SET_OPSGROUP:FindFlightGroup( GroupName )
-    local GroupFound = self:FindGroup( GroupName )
+  function SET_OPSGROUP:FindFlightGroup(GroupName)
+    local GroupFound = self:FindGroup(GroupName)
     return GroupFound
   end
-
+  
   --- Finds a ARMYGROUP based on the group name.
   -- @param #SET_OPSGROUP self
   -- @param #string GroupName Name of the group.
   -- @return Ops.ArmyGroup#ARMYGROUP The found ARMYGROUP or `#nil` if the group is not in the set.
-  function SET_OPSGROUP:FindArmyGroup( GroupName )
-    local GroupFound = self:FindGroup( GroupName )
+  function SET_OPSGROUP:FindArmyGroup(GroupName)
+    local GroupFound = self:FindGroup(GroupName)
     return GroupFound
-  end
+  end  
+
 
   --- Finds a NAVYGROUP based on the group name.
   -- @param #SET_OPSGROUP self
   -- @param #string GroupName Name of the group.
   -- @return Ops.NavyGroup#NAVYGROUP The found NAVYGROUP or `#nil` if the group is not in the set.
-  function SET_OPSGROUP:FindNavyGroup( GroupName )
-    local GroupFound = self:FindGroup( GroupName )
+  function SET_OPSGROUP:FindNavyGroup(GroupName)
+    local GroupFound = self:FindGroup(GroupName)
     return GroupFound
-  end
-
+  end  
+    
   --- Builds a set of groups of coalitions.
   -- Possible current coalitions are red, blue and neutral.
   -- @param #SET_OPSGROUP self
   -- @param #string Coalitions Can take the following values: "red", "blue", "neutral" or combinations as a table, for example `{"red", "neutral"}`.
   -- @return #SET_OPSGROUP self
-  function SET_OPSGROUP:FilterCoalitions( Coalitions )
-
+  function SET_OPSGROUP:FilterCoalitions(Coalitions)
+  
     -- Create an empty set.
     if not self.Filter.Coalitions then
-      self.Filter.Coalitions = {}
+      self.Filter.Coalitions={}
     end
-
+    
     -- Ensure we got a table.
-    if type( Coalitions ) ~= "table" then
-      Coalitions = { Coalitions }
+    if type(Coalitions)~="table" then
+      Coalitions = {Coalitions}
     end
-
+    
     -- Set filter.
     for CoalitionID, Coalition in pairs( Coalitions ) do
       self.Filter.Coalitions[Coalition] = Coalition
     end
-
+    
     return self
   end
 
+
   --- Builds a set of groups out of categories.
-  --
+  -- 
   -- Possible current categories are:
-  --
+  -- 
   -- * "plane" for fixed wing groups
   -- * "helicopter" for rotary wing groups
   -- * "ground" for ground groups
   -- * "ship" for naval groups
-  --
+  -- 
   -- @param #SET_OPSGROUP self
   -- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship" or combinations as a table, for example `{"plane", "helicopter"}`.
   -- @return #SET_OPSGROUP self
   function SET_OPSGROUP:FilterCategories( Categories )
-
+  
     if not self.Filter.Categories then
-      self.Filter.Categories = {}
+      self.Filter.Categories={}
     end
-
-    if type( Categories ) ~= "table" then
-      Categories = { Categories }
+    
+    if type(Categories)~="table" then
+      Categories={Categories}
     end
-
+    
     for CategoryID, Category in pairs( Categories ) do
       self.Filter.Categories[Category] = Category
     end
-
+    
     return self
   end
 
@@ -6343,7 +6431,7 @@ do -- SET_OPSGROUP
   -- @param #SET_OPSGROUP self
   -- @return #SET_OPSGROUP self
   function SET_OPSGROUP:FilterCategoryGround()
-    self:FilterCategories( "ground" )
+    self:FilterCategories("ground")
     return self
   end
 
@@ -6351,17 +6439,17 @@ do -- SET_OPSGROUP
   -- @param #SET_OPSGROUP self
   -- @return #SET_OPSGROUP self
   function SET_OPSGROUP:FilterCategoryAirplane()
-    self:FilterCategories( "plane" )
+    self:FilterCategories("plane")
     return self
   end
-
-  --- Builds a set of groups out of aircraft category (planes and helicopters).
+  
+  --- Builds a set of groups out of aicraft category (planes and helicopters).
   -- @param #SET_OPSGROUP self
   -- @return #SET_OPSGROUP self
   function SET_OPSGROUP:FilterCategoryAircraft()
-    self:FilterCategories( { "plane", "helicopter" } )
+    self:FilterCategories({"plane", "helicopter"})
     return self
-  end
+  end  
 
   --- Builds a set of groups out of helicopter category.
   -- @param #SET_OPSGROUP self
@@ -6375,7 +6463,7 @@ do -- SET_OPSGROUP
   -- @param #SET_OPSGROUP self
   -- @return #SET_OPSGROUP self
   function SET_OPSGROUP:FilterCategoryShip()
-    self:FilterCategories( "ship" )
+    self:FilterCategories("ship")
     return self
   end
 
@@ -6383,55 +6471,56 @@ do -- SET_OPSGROUP
   -- @param #SET_OPSGROUP self
   -- @param #string Countries Can take those country strings known within DCS world.
   -- @return #SET_OPSGROUP self
-  function SET_OPSGROUP:FilterCountries( Countries )
-
+  function SET_OPSGROUP:FilterCountries(Countries)
+  
     -- Create empty table if necessary.
     if not self.Filter.Countries then
       self.Filter.Countries = {}
     end
-
+    
     -- Ensure input is a table.
-    if type( Countries ) ~= "table" then
-      Countries = { Countries }
+    if type(Countries)~="table" then
+      Countries={Countries}
     end
-
+    
     -- Set filter.
     for CountryID, Country in pairs( Countries ) do
       self.Filter.Countries[Country] = Country
     end
-
+    
     return self
   end
 
+
   --- Builds a set of groups that contain the given string in their group name.
-  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all groups that **contain** the string.
+  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all groups that **contain** the string. 
   -- @param #SET_OPSGROUP self
   -- @param #string Prefixes The string pattern(s) that needs to be contained in the group name. Can also be passed as a `#table` of strings.
   -- @return #SET_OPSGROUP self
-  function SET_OPSGROUP:FilterPrefixes( Prefixes )
-
+  function SET_OPSGROUP:FilterPrefixes(Prefixes)
+  
     -- Create emtpy table if necessary.
     if not self.Filter.GroupPrefixes then
-      self.Filter.GroupPrefixes = {}
+      self.Filter.GroupPrefixes={}
     end
-
+    
     -- Ensure we have a table.
-    if type( Prefixes ) ~= "table" then
-      Prefixes = { Prefixes }
+    if type(Prefixes)~="table" then
+      Prefixes={Prefixes}
     end
-
+    
     -- Set group prefixes.
-    for PrefixID, Prefix in pairs( Prefixes ) do
-      self.Filter.GroupPrefixes[Prefix] = Prefix
+    for PrefixID, Prefix in pairs(Prefixes) do
+      self.Filter.GroupPrefixes[Prefix]=Prefix
     end
-
+    
     return self
   end
 
   --- Builds a set of groups that are only active.
   -- Only the groups that are active will be included within the set.
   -- @param #SET_OPSGROUP self
-  -- @param #boolean Active (Optional) Include only active groups to the set.
+  -- @param #boolean Active (optional) Include only active groups to the set.
   -- Include inactive groups if you provide false.
   -- @return #SET_OPSGROUP self
   -- @usage
@@ -6449,10 +6538,11 @@ do -- SET_OPSGROUP
   -- GroupSet = SET_OPSGROUP:New():FilterActive( false ):FilterCoalition( "blue" ):FilterOnce()
   --
   function SET_OPSGROUP:FilterActive( Active )
-    Active = Active or not (Active == false)
+    Active = Active or not ( Active == false )
     self.Filter.Active = Active
     return self
   end
+
 
   --- Starts the filtering.
   -- @param #SET_OPSGROUP self
@@ -6469,21 +6559,21 @@ do -- SET_OPSGROUP
 
     return self
   end
-
+  
   --- Activate late activated groups in the set.
   -- @param #SET_OPSGROUP self
   -- @param #number Delay Delay in seconds.
   -- @return #SET_OPSGROUP self
-  function SET_OPSGROUP:Activate( Delay )
+  function SET_OPSGROUP:Activate(Delay)
     local Set = self:GetSet()
-    for GroupID, GroupData in pairs( Set ) do
-      local group = GroupData -- Ops.OpsGroup#OPSGROUP
-      if group and group:IsAlive() == false then
-        group:Activate( Delay )
+    for GroupID, GroupData in pairs(Set) do
+      local group=GroupData --Ops.OpsGroup#OPSGROUP
+      if group and group:IsAlive()==false then
+        group:Activate(Delay)
       end
     end
     return self
-  end
+  end  
 
   --- Handles the OnDead or OnCrash event for alive groups set.
   -- Note: The GROUP object in the SET_OPSGROUP collection will only be removed if the last unit is destroyed of the GROUP.
@@ -6509,13 +6599,13 @@ do -- SET_OPSGROUP
   -- @return #string The name of the GROUP
   -- @return #table The GROUP
   function SET_OPSGROUP:AddInDatabase( Event )
-
-    if Event.IniObjectCategory == 1 then
-
+  
+    if Event.IniObjectCategory==1 then
+    
       if not self.Database[Event.IniDCSGroupName] then
         self.Database[Event.IniDCSGroupName] = GROUP:Register( Event.IniDCSGroupName )
       end
-
+      
     end
 
     return Event.IniDCSGroupName, self.Database[Event.IniDCSGroupName]
@@ -6527,7 +6617,7 @@ do -- SET_OPSGROUP
   -- @param Core.Event#EVENTDATA Event Event data table.
   -- @return #string The name of the GROUP
   -- @return #table The GROUP
-  function SET_OPSGROUP:FindInDatabase( Event )
+  function SET_OPSGROUP:FindInDatabase(Event)
     return Event.IniDCSGroupName, self.Database[Event.IniDCSGroupName]
   end
 
@@ -6538,7 +6628,7 @@ do -- SET_OPSGROUP
   -- @return #SET_OPSGROUP self
   function SET_OPSGROUP:ForEachGroup( IteratorFunction, ... )
 
-    self:ForEach( IteratorFunction, arg, self:GetSet() )
+    self:ForEach(IteratorFunction, arg, self:GetSet())
 
     return self
   end
@@ -6547,48 +6637,48 @@ do -- SET_OPSGROUP
   -- @param #SET_OPSGROUP self
   -- @param Wrapper.Group#GROUP MGroup The group that is checked for inclusion.
   -- @return #SET_OPSGROUP self
-  function SET_OPSGROUP:IsIncludeObject( MGroup )
-
+  function SET_OPSGROUP:IsIncludeObject(MGroup)
+  
     -- Assume it is and check later if not.
-    local MGroupInclude = true
+    local MGroupInclude=true
 
     -- Filter active.
-    if self.Filter.Active ~= nil then
-
+    if self.Filter.Active~=nil then
+    
       local MGroupActive = false
-
-      if self.Filter.Active == false or (self.Filter.Active == true and MGroup:IsActive() == true) then
+      
+      if self.Filter.Active==false or (self.Filter.Active==true and MGroup:IsActive()==true) then
         MGroupActive = true
       end
-
+      
       MGroupInclude = MGroupInclude and MGroupActive
     end
 
     -- Filter coalitions.
     if self.Filter.Coalitions then
-
+    
       local MGroupCoalition = false
-
+      
       for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-        if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == MGroup:GetCoalition() then
-          MGroupCoalition = true
+        if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName]==MGroup:GetCoalition() then
+          MGroupCoalition = true      
         end
       end
-
+      
       MGroupInclude = MGroupInclude and MGroupCoalition
     end
 
     -- Filter categories.
     if self.Filter.Categories then
-
+    
       local MGroupCategory = false
-
+      
       for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-        if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == MGroup:GetCategory() then
+        if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName]==MGroup:GetCategory() then
           MGroupCategory = true
         end
       end
-
+      
       MGroupInclude = MGroupInclude and MGroupCategory
     end
 
@@ -6605,19 +6695,19 @@ do -- SET_OPSGROUP
 
     -- Filter "prefixes".
     if self.Filter.GroupPrefixes then
-
+    
       local MGroupPrefix = false
-
+      
       for GroupPrefixId, GroupPrefix in pairs( self.Filter.GroupPrefixes ) do
-        if string.find( MGroup:GetName(), GroupPrefix:gsub( "-", "%%-" ), 1 ) then -- Not sure why "-" is replaced by "%-" ?!
+        if string.find( MGroup:GetName(), GroupPrefix:gsub ("-", "%%-"), 1 ) then --Not sure why "-" is replaced by "%-" ?!
           MGroupPrefix = true
         end
       end
-
+      
       MGroupInclude = MGroupInclude and MGroupPrefix
     end
 
     return MGroupInclude
   end
-
+  
 end

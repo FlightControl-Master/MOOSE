@@ -1155,7 +1155,7 @@ function UTILS.VecHdg(a)
 end
 
 --- Calculate "heading" of a 2D vector in the X-Y plane.
--- @param DCS#Vec2 a Vector in "D with x, y components.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
 -- @return #number Heading in degrees in [0,360).
 function UTILS.Vec2Hdg(a)
   local h=math.deg(math.atan2(a.y, a.x))
@@ -1724,17 +1724,17 @@ end
 --- Get OS time. Needs os to be desanitized!
 -- @return #number Os time in seconds.
 function UTILS.GetOSTime()
-	if os then
-		local ts = 0
-		local t = os.date("*t")
-		local s = t.sec
-		local m = t.min * 60
-		local h = t.hour * 3600
-		ts = s+m+h
-		return ts
-	else
-		return nil
-	end
+  if os then
+    local ts = 0
+    local t = os.date("*t")
+    local s = t.sec
+    local m = t.min * 60
+    local h = t.hour * 3600
+    ts = s+m+h
+    return ts
+  else
+    return nil
+  end
 end
 
 --- Shuffle a table accoring to Fisher Yeates algorithm

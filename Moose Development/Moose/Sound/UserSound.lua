@@ -144,7 +144,7 @@ do -- UserSound
   -- @return #USERSOUND The usersound instance.
   -- @usage
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
-  --   local PlayerUnit = UNIT:FindByName( "PlayerUnit" ) -- Search for the active group named "PlayerUnit", a human player.
+  --   local PlayerUnit = UNIT:FindByName( "PlayerUnit" ) -- Search for the active unit named "PlayerUnit", a human player.
   --   BlueVictory:ToUnit( PlayerUnit ) -- Play the victory sound to the player unit.
   --   
   function USERSOUND:ToUnit( Unit, Delay ) 

@@ -35,7 +35,7 @@ IDENTIFIABLE = {
 
 local _CategoryName = { 
   [Unit.Category.AIRPLANE]      = "Airplane",
-  [Unit.Category.HELICOPTER]    = "Helicoper",
+  [Unit.Category.HELICOPTER]    = "Helicopter",
   [Unit.Category.GROUND_UNIT]   = "Ground Identifiable",
   [Unit.Category.SHIP]          = "Ship",
   [Unit.Category.STRUCTURE]     = "Structure",
@@ -56,8 +56,7 @@ end
 -- If the Identifiable is not alive, nil is returned.  
 -- If the Identifiable is alive, true is returned.  
 -- @param #IDENTIFIABLE self
--- @return #boolean true if Identifiable is alive.
--- @return #nil if the Identifiable is not existing or is not alive.  
+-- @return #boolean true if Identifiable is alive or `#nil` if the Identifiable is not existing or is not alive.  
 function IDENTIFIABLE:IsAlive()
   self:F3( self.IdentifiableName )
 
@@ -77,11 +76,8 @@ end
 --- Returns DCS Identifiable object name. 
 -- The function provides access to non-activated objects too.
 -- @param #IDENTIFIABLE self
--- @return #string The name of the DCS Identifiable.
--- @return #nil The DCS Identifiable is not existing or alive.  
+-- @return #string The name of the DCS Identifiable or `#nil`.  
 function IDENTIFIABLE:GetName()
-  self:F2( self.IdentifiableName )
-
   local IdentifiableName = self.IdentifiableName
   return IdentifiableName
 end
@@ -148,8 +144,7 @@ end
 
 --- Returns coalition of the Identifiable.
 -- @param #IDENTIFIABLE self
--- @return DCS#coalition.side The side of the coalition.
--- @return #nil The DCS Identifiable is not existing or alive.  
+-- @return DCS#coalition.side The side of the coalition or `#nil` The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetCoalition()
   self:F2( self.IdentifiableName )
 
@@ -190,8 +185,7 @@ end
 
 --- Returns country of the Identifiable.
 -- @param #IDENTIFIABLE self
--- @return DCS#country.id The country identifier.
--- @return #nil The DCS Identifiable is not existing or alive.  
+-- @return DCS#country.id The country identifier or `#nil` The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetCountry()
   self:F2( self.IdentifiableName )
 
@@ -222,8 +216,7 @@ end
 
 --- Returns Identifiable descriptor. Descriptor type depends on Identifiable category.
 -- @param #IDENTIFIABLE self
--- @return DCS#Object.Desc The Identifiable descriptor.
--- @return #nil The DCS Identifiable is not existing or alive.  
+-- @return DCS#Object.Desc The Identifiable descriptor or `#nil` The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetDesc()
   self:F2( self.IdentifiableName )
 
@@ -242,8 +235,7 @@ end
 --- Check if the Object has the attribute.
 -- @param #IDENTIFIABLE self
 -- @param #string AttributeName The attribute name.
--- @return #boolean true if the attribute exists.
--- @return #nil The DCS Identifiable is not existing or alive.  
+-- @return #boolean true if the attribute exists or `#nil` The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:HasAttribute( AttributeName )
   self:F2( self.IdentifiableName )
 
@@ -266,8 +258,10 @@ function IDENTIFIABLE:GetCallsign()
   return ''
 end
 
-
+--- Gets the threat level.
+-- @param #IDENTIFIABLE self
+-- @return #number Threat level.
+-- @return #string Type.
 function IDENTIFIABLE:GetThreatLevel()
-
   return 0, "Scenery"
 end

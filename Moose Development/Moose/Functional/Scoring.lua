@@ -280,11 +280,11 @@ function SCORING:New( GameName )
   -- Default fratricide penalty level (maximum penalty that can be assigned to a player before he gets kicked).
   self:SetFratricide( self.ScaleDestroyPenalty * 3 )
   self.penaltyonfratricide = true
-
+  
   -- Default penalty when a player changes coalition.
   self:SetCoalitionChangePenalty( self.ScaleDestroyPenalty )
   self.penaltyoncoalitionchange = true
-
+  
   self:SetDisplayMessagePrefix()
 
   -- Event handlers  
@@ -656,11 +656,12 @@ function SCORING:_AddPlayerFromUnit( UnitData )
       if self.Players[PlayerName].UnitCoalition ~= UnitCoalition and self.penaltyoncoalitionchange then
         self.Players[PlayerName].Penalty = self.Players[PlayerName].Penalty + self.CoalitionChangePenalty or 50
         self.Players[PlayerName].PenaltyCoalition = self.Players[PlayerName].PenaltyCoalition + 1
-        MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' changed coalition from " .. _SCORINGCoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. _SCORINGCoalition[UnitCoalition] .. "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). " ..
-                         self.CoalitionChangePenalty .. "Penalty points added.",
-                         MESSAGE.Type.Information )
-               :ToAll()
-        self:ScoreCSV( PlayerName, "", "COALITION_PENALTY", 1, -1 * self.CoalitionChangePenalty, self.Players[PlayerName].UnitName, _SCORINGCoalition[self.Players[PlayerName].UnitCoalition], _SCORINGCategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType, UnitName, _SCORINGCoalition[UnitCoalition], _SCORINGCategory[UnitCategory], UnitData:GetTypeName() )
+        MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' changed coalition from " .. _SCORINGCoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. _SCORINGCoalition[UnitCoalition] ..
+          "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). ".. self.CoalitionChangePenalty .."Penalty points added.",
+          MESSAGE.Type.Information
+        ):ToAll()
+        self:ScoreCSV( PlayerName, "", "COALITION_PENALTY",  1, -1*self.CoalitionChangePenalty, self.Players[PlayerName].UnitName, _SCORINGCoalition[self.Players[PlayerName].UnitCoalition], _SCORINGCategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,
+          UnitName, _SCORINGCoalition[UnitCoalition], _SCORINGCategory[UnitCategory], UnitData:GetTypeName() )
       end
     end
 
@@ -671,7 +672,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     self.Players[PlayerName].UNIT = UnitData
     self.Players[PlayerName].ThreatLevel = UnitThreatLevel
     self.Players[PlayerName].ThreatType = UnitThreatType
-
+    
     -- TODO: make fratricide switchable
     if self.Players[PlayerName].Penalty > self.Fratricide * 0.50 and self.penaltyonfratricide then
       if self.Players[PlayerName].PenaltyWarning < 1 then
@@ -1112,16 +1113,18 @@ function SCORING:_EventOnHit( Event )
           if InitCoalition then -- A coalition object was hit, probably a static.
             if InitCoalition == TargetCoalition then
               -- TODO: Penalty according scale
-              Player.Penalty = Player.Penalty + 10 -- * self.ScaleDestroyPenalty
-              PlayerHit.Penalty = PlayerHit.Penalty + 10 -- * self.ScaleDestroyPenalty
+              Player.Penalty = Player.Penalty + 10 --* self.ScaleDestroyPenalty
+              PlayerHit.Penalty = PlayerHit.Penalty + 10 --* self.ScaleDestroyPenalty
               PlayerHit.PenaltyHit = PlayerHit.PenaltyHit + 1 * self.ScaleDestroyPenalty
-
-              MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. Event.WeaponPlayerName .. "' hit friendly target " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
-                               "Penalty: -" .. PlayerHit.Penalty .. " = " .. Player.Score - Player.Penalty,
-                               MESSAGE.Type.Update )
-                     :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
-                     :ToCoalitionIf( Event.WeaponCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
-
+      
+              MESSAGE
+                :NewType( self.DisplayMessagePrefix .. "Player '" .. Event.WeaponPlayerName .. "' hit friendly target " .. 
+                      TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
+                      "Penalty: -" .. PlayerHit.Penalty .. " = " .. Player.Score - Player.Penalty,
+                      MESSAGE.Type.Update
+                    )
+                :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
+                :ToCoalitionIf( Event.WeaponCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
               self:ScoreCSV( Event.WeaponPlayerName, TargetPlayerName, "HIT_PENALTY", 1, -10, Event.WeaponName, Event.WeaponCoalition, Event.WeaponCategory, Event.WeaponTypeName, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
             else
               Player.Score = Player.Score + 1
@@ -1651,18 +1654,19 @@ function SCORING:ReportScoreGroupDetailed( PlayerGroup )
 
       local PlayerScore = ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreGoals + ScoreMissions
       local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + PenaltyGoals + PenaltyMissions
-
-      PlayerMessage = string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties )%s%s%s%s%s",
-                                     PlayerName,
-                                     PlayerScore - PlayerPenalty,
-                                     PlayerScore,
-                                     PlayerPenalty,
-                                     ReportHits,
-                                     ReportDestroys,
-                                     ReportCoalitionChanges,
-                                     ReportGoals,
-                                     ReportMissions
-                                    )
+  
+      PlayerMessage = 
+        string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties )%s%s%s%s%s", 
+                       PlayerName, 
+                       PlayerScore - PlayerPenalty, 
+                       PlayerScore, 
+                       PlayerPenalty, 
+                       ReportHits,
+                       ReportDestroys,
+                       ReportCoalitionChanges,
+                       ReportGoals,
+                       ReportMissions
+                     )
       MESSAGE:NewType( PlayerMessage, MESSAGE.Type.Detailed ):ToGroup( PlayerGroup )
     end
   end
@@ -1706,13 +1710,14 @@ function SCORING:ReportScoreAllSummary( PlayerGroup )
 
       local PlayerScore = ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreGoals + ScoreMissions
       local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + PenaltyGoals + PenaltyMissions
-
-      PlayerMessage = string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties )",
-                                     PlayerName,
-                                     PlayerScore - PlayerPenalty,
-                                     PlayerScore,
-                                     PlayerPenalty
-                                    )
+  
+      PlayerMessage = 
+        string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties )", 
+                       PlayerName, 
+                       PlayerScore - PlayerPenalty, 
+                       PlayerScore, 
+                       PlayerPenalty 
+                     )
       MESSAGE:NewType( PlayerMessage, MESSAGE.Type.Overview ):ToGroup( PlayerGroup )
     end
   end

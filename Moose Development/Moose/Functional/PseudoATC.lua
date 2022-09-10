@@ -1044,6 +1044,3 @@ function PSEUDOATC:_myname(unitname)
   
   return string.format("%s (%s)", csign, pname)
 end
-
-
-

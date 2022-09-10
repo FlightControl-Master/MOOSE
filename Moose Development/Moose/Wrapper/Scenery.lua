@@ -57,3 +57,40 @@ end
 function SCENERY:GetThreatLevel()
   return 0, "Scenery"
 end
+
+--- Find a SCENERY object by it's name/id.
+--@param #SCENERY self
+--@param #string name The name/id of the scenery object as taken from the ME. Ex. '595785449'
+--@return #SCENERY Scenery Object or nil if not found.
+function SCENERY:FindByName(name)
+  local findAirbase = function ()
+    local airbases = AIRBASE.GetAllAirbases()
+    for index,airbase in pairs(airbases) do
+      local surftype = airbase:GetCoordinate():GetSurfaceType()
+      if surftype ~= land.SurfaceType.SHALLOW_WATER and surftype ~= land.SurfaceType.WATER then
+        return airbase:GetCoordinate()
+      end
+    end
+    return nil
+  end
+
+  local sceneryScan = function (scancoord)
+    if scancoord ~= nil then
+      local _,_,sceneryfound,_,_,scenerylist = scancoord:ScanObjects(200, false, false, true)
+      if sceneryfound == true then 
+        scenerylist[1].id_ = name
+        SCENERY.SceneryObject = SCENERY:Register(scenerylist[1].id_, scenerylist[1])
+        return SCENERY.SceneryObject
+      end
+    end
+    return nil
+  end
+  
+  if SCENERY.SceneryObject then
+    SCENERY.SceneryObject.SceneryObject.id_ = name
+    SCENERY.SceneryObject.SceneryName = name
+    return SCENERY:Register(SCENERY.SceneryObject.SceneryObject.id_, SCENERY.SceneryObject.SceneryObject)
+  else
+    return sceneryScan(findAirbase())
+  end
+end

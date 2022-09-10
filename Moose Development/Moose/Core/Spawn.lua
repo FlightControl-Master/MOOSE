@@ -29,9 +29,9 @@
 --   * Enquiry methods to check on spawn status.
 --
 -- ===
---
+-- 
 -- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SPA%20-%20Spawning)
---
+-- 
 -- ===
 --
 -- ### [YouTube Playlist](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1jirWIo4t4YxqN-HxjqRkL)
@@ -2403,8 +2403,7 @@ end
 -- @param #SPAWN self
 -- @param DCS#Vec3 Vec3 The Vec3 coordinates where to spawn the group.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 function SPAWN:SpawnFromVec3( Vec3, SpawnIndex )
   self:F( { self.SpawnTemplatePrefix, Vec3, SpawnIndex } )
 
@@ -2472,8 +2471,7 @@ end
 -- @param #SPAWN self
 -- @param Core.Point#Coordinate Coordinate The Coordinate coordinates where to spawn the group.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 function SPAWN:SpawnFromCoordinate( Coordinate, SpawnIndex )
   self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
 
@@ -2487,8 +2485,7 @@ end
 -- @param #SPAWN self
 -- @param Core.Point#POINT_VEC3 PointVec3 The PointVec3 coordinates where to spawn the group.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 -- @usage
 --
 --   local SpawnPointVec3 = ZONE:New( ZoneName ):GetPointVec3( 2000 ) -- Get the center of the ZONE object at 2000 meters from the ground.
@@ -2511,8 +2508,7 @@ end
 -- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
 -- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 -- @usage
 --
 --   local SpawnVec2 = ZONE:New( ZoneName ):GetVec2()
@@ -2544,8 +2540,7 @@ end
 -- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
 -- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 -- @usage
 --
 --   local SpawnPointVec2 = ZONE:New( ZoneName ):GetPointVec2()
@@ -2599,8 +2594,7 @@ end
 -- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
 -- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 -- @usage
 --
 --   local SpawnStatic = STATIC:FindByName( StaticName )
@@ -2631,8 +2625,7 @@ end
 -- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
 -- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil when nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned. 
 -- @usage
 --
 --   local SpawnZone = ZONE:New( ZoneName )
@@ -3261,20 +3254,20 @@ function SPAWN:_OnDeadOrCrash( EventData )
   
   local unit=UNIT:FindByName(EventData.IniUnitName)
   
-  if unit then
-  
-    local EventPrefix = self:_GetPrefixFromGroupName(unit.GroupName)
-   
+	if unit then
+	
+	  local EventPrefix = self:_GetPrefixFromGroupName(unit.GroupName)
+	 
     if EventPrefix then -- EventPrefix can be nil if no # is found, which means, no spawnable group!
       self:T( { "Dead event: " .. EventPrefix } )
       
       if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
     
-       self.AliveUnits = self.AliveUnits - 1
-       
-       self:T( "Alive Units: " .. self.AliveUnits )    
-      end
-    
+  	   self.AliveUnits = self.AliveUnits - 1
+  	   
+  	   self:T( "Alive Units: " .. self.AliveUnits )  	 
+		  end
+		
     end
   end
 end

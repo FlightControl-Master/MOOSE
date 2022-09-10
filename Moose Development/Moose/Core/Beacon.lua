@@ -17,7 +17,7 @@
 -- 
 -- After attaching a @{#BEACON} to your @{Wrapper.Positionable#POSITIONABLE}, you need to select the right function to activate the kind of beacon you want. 
 -- There are two types of BEACONs available : the (aircraft) TACAN Beacon and the general purpose Radio Beacon.
--- Note that in both case, you can set an optional parameter : the `BeaconDuration`. This can be very useful to simulate the battery time if your BEACON is
+-- Note that in both case, you can set an optional parameter : the `BeaconDuration`. This can be very usefull to simulate the battery time if your BEACON is
 -- attach to a cargo crate, for exemple. 
 -- 
 -- ## Aircraft TACAN Beacon usage
@@ -265,12 +265,11 @@ function BEACON:ActivateLink4(Frequency, Morse, Duration)
       
   -- Stop sheduler
   if Duration then -- Schedule the stop of the BEACON if asked by the MD
-    self.Positionable:DeactivateLink4(Duration)
+    self.Positionable:CommandDeactivateLink4(Duration)
   end
   
   return self
 end
-
 
 --- DEPRECATED: Please use @{BEACON:ActivateTACAN}() instead.
 -- Activates a TACAN BEACON on an Aircraft.
@@ -430,7 +429,7 @@ function BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDurati
   end 
 end
 
---- Stop the Radio Beacon
+--- Stops the Radio Beacon
 -- @param #BEACON self
 -- @return #BEACON self
 function BEACON:StopRadioBeacon()

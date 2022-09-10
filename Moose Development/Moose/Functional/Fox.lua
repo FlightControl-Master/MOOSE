@@ -792,7 +792,7 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
           local text=string.format("Missile launch detected! Distance %.1f NM, bearing %03d°.", UTILS.MetersToNM(distance), bearing)
           
           -- Say notching headings.
-          BASE:ScheduleOnce(5, FOX._SayNotchingHeadings, self, player, missile.weapon)
+          self:ScheduleOnce(5, FOX._SayNotchingHeadings, self, player, missile.weapon)
                     
           --TODO: ALERT or INFO depending on whether this is a direct target.
           --TODO: lauchalertall option.
@@ -1117,6 +1117,13 @@ end
 --- FOX event handler for event birth.
 -- @param #FOX self
 -- @param Core.Event#EVENTDATA EventData
+function FOX:OnEventPlayerEnterAircraft(EventData)
+
+end
+
+--- FOX event handler for event birth.
+-- @param #FOX self
+-- @param Core.Event#EVENTDATA EventData
 function FOX:OnEventBirth(EventData)
   self:F3({eventbirth = EventData})
   
@@ -1155,7 +1162,7 @@ function FOX:OnEventBirth(EventData)
             
     -- Add F10 radio menu for player.
     if not self.menudisabled then
-      SCHEDULER:New(nil, self._AddF10Commands, {self,_unitName}, 0.1)
+      self:ScheduleOnce(0.1, FOX._AddF10Commands, self, _unitname)
     end
     
     -- Player data.

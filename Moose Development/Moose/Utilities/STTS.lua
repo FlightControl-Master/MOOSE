@@ -126,8 +126,11 @@ end
 -- So length of msg / 8.3 = number of seconds needed to read it. rounded down to 8 chars per sec map function:
 --
 -- * (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
---
-function STTS.getSpeechTime( length, speed, isGoogle )
+-- 
+-- @param #number length can also be passed as #string
+-- @param #number speed Defaults to 1.0
+-- @param #boolean isGoogle We're using Google TTS
+function STTS.getSpeechTime(length,speed,isGoogle)
 
   local maxRateRatio = 3
 
@@ -153,7 +156,7 @@ function STTS.getSpeechTime( length, speed, isGoogle )
     length = string.len( length )
   end
 
-  return math.ceil( length / cps )
+  return length/cps --math.ceil(length/cps)
 end
 
 --- Text to speech function.

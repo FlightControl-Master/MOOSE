@@ -1,7 +1,7 @@
 --- **Core** - Prepares and handles the execution of functions over scheduled time (intervals).
 --
 -- ===
---
+-- 
 -- ## Features:
 --
 --   * Schedule functions over time,
@@ -13,9 +13,9 @@
 -- ===
 --
 -- # Demo Missions
---
+-- 
 -- ### [SCHEDULER Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SCH%20-%20Scheduler)
---
+-- 
 -- ### [SCHEDULER Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SCH%20-%20Scheduler)
 --
 -- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
@@ -237,7 +237,7 @@ end
 -- @param #number Stop Time interval in seconds after which the scheduler will be stopped.
 -- @param #number TraceLevel Trace level [0,3]. Default 3.
 -- @param Core.Fsm#FSM Fsm Finite state model.
--- @return #table The ScheduleID of the planned schedule.
+-- @return #string The Schedule ID of the planned schedule.
 function SCHEDULER:Schedule( MasterObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, TraceLevel, Fsm )
   self:F2( { Start, Repeat, RandomizeFactor, Stop } )
   self:T3( { SchedulerArguments } )
@@ -271,7 +271,7 @@ end
 
 --- (Re-)Starts the schedules or a specific schedule if a valid ScheduleID is provided.
 -- @param #SCHEDULER self
--- @param #string ScheduleID (Optional) The ScheduleID of the planned (repeating) schedule.
+-- @param #string ScheduleID (Optional) The Schedule ID of the planned (repeating) schedule.
 function SCHEDULER:Start( ScheduleID )
   self:F3( { ScheduleID } )
   self:T( string.format( "Starting scheduler ID=%s", tostring( ScheduleID ) ) )

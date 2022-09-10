@@ -239,6 +239,7 @@ do -- MENU_BASE
   function MENU_BASE:GetMenu( MenuText )
     return self.Menus[MenuText]
   end
+  
   --- Sets a menu stamp for later prevention of menu removal.
   -- @param #MENU_BASE self
   -- @param MenuStamp
@@ -376,6 +377,7 @@ do -- MENU_MISSION
     end
   
   end
+  
   --- Refreshes a radio item for a mission
   -- @param #MENU_MISSION self
   -- @return #MENU_MISSION
@@ -813,6 +815,7 @@ do
     end
     
   end
+  
   --- Refreshes a new radio item for a group and submenus
   -- @param #MENU_GROUP self
   -- @return #MENU_GROUP
@@ -824,6 +827,29 @@ do
       for MenuText, Menu in pairs( self.Menus or {} ) do
         Menu:Refresh()
       end
+    end
+    
+    return self
+  end
+  
+  --- Refreshes a new radio item for a group and submenus, ordering by (numerical) MenuTag
+  -- @param #MENU_GROUP self
+  -- @return #MENU_GROUP
+  function MENU_GROUP:RefreshAndOrderByTag()
+
+    do
+      missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+      missionCommands.addSubMenuForGroup( self.GroupID, self.MenuText, self.MenuParentPath )
+      
+      local MenuTable = {}
+      for MenuText, Menu in pairs( self.Menus or {} ) do
+        local tag = Menu.MenuTag or math.random(1,10000)
+        MenuTable[#MenuTable+1] = {Tag=tag, Enty=Menu}
+      end
+      table.sort(MenuTable, function (k1, k2) return k1.tag < k2.tag end )
+      for _, Menu in pairs( MenuTable ) do
+        Menu.Entry:Refresh()
+      end 
     end
     
     return self
@@ -1180,4 +1206,3 @@ do
     return self
   end
 end
-

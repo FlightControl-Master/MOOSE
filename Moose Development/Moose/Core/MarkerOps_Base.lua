@@ -11,6 +11,7 @@
 -- ### Author: **Applevangelist**
 -- 
 -- Date: 5 May 2021
+-- Last Update: Sep 2022
 -- 
 -- ===
 ---
@@ -27,6 +28,7 @@
 -- @field #string Tag Tag to identify commands.
 -- @field #table Keywords Table of keywords to recognize.
 -- @field #string version Version of #MARKEROPS_BASE.
+-- @field #boolean Casesensitive Enforce case when identifying the Tag, i.e. tag ~= Tag
 -- @extends Core.Fsm#FSM
 
 --- *Fiat lux.* -- Latin proverb.
@@ -42,16 +44,18 @@ MARKEROPS_BASE = {
   ClassName = "MARKEROPS",
   Tag = "mytag",
   Keywords = {},
-  version = "0.0.1",
+  version = "0.1.0",
   debug = false,
+  Casesensitive = true,
 }
 
 --- Function to instantiate a new #MARKEROPS_BASE object.
 -- @param #MARKEROPS_BASE self
 -- @param #string Tagname Name to identify us from the event text.
 -- @param #table Keywords Table of keywords  recognized from the event text.
+-- @param #boolean Casesensitive (Optional) Switch case sensitive identification of Tagname. Defaults to true.
 -- @return #MARKEROPS_BASE self
-function MARKEROPS_BASE:New(Tagname,Keywords)
+function MARKEROPS_BASE:New(Tagname,Keywords,Casesensitive)
    -- Inherit FSM
   local self=BASE:Inherit(self, FSM:New()) -- #MARKEROPS_BASE
   
@@ -61,6 +65,11 @@ function MARKEROPS_BASE:New(Tagname,Keywords)
   self.Tag = Tagname or "mytag"-- #string
   self.Keywords = Keywords or {} -- #table - might want to use lua regex here, too
   self.debug = false
+  self.Casesensitive = true
+  
+  if Casesensitive and Casesensitive == false then
+    self.Casesensitive = false
+  end
   
   -----------------------
   --- FSM Transitions ---
@@ -178,9 +187,16 @@ end
 -- @return #boolean
 function MARKEROPS_BASE:_MatchTag(Eventtext)
   local matches = false
-  local type = string.lower(self.Tag) -- #string
-  if string.find(string.lower(Eventtext),type) then
-    matches = true --event text contains tag
+  if not self.Casesensitive then
+    local type = string.lower(self.Tag) -- #string
+    if string.find(string.lower(Eventtext),type) then
+      matches = true --event text contains tag
+    end
+  else
+    local type = self.Tag -- #string
+    if string.find(Eventtext,type) then
+      matches = true --event text contains tag
+    end
   end
   return matches
 end

@@ -671,7 +671,7 @@ end
 --- Activate ICLS system of the CONTROLLABLE. The controllable should be an aircraft carrier!
 -- @param #CONTROLLABLE self
 -- @param #number Channel ICLS channel.
--- @param #number UnitID The ID of the unit the ICLS system is attached to. Useful if more units are in one group.
+-- @param #number UnitID The DCS UNIT ID of the unit the ICLS system is attached to. Useful if more units are in one group.
 -- @param #string Callsign Morse code identification callsign.
 -- @param #number Delay (Optional) Delay in seconds before the ICLS is deactivated.
 -- @return #CONTROLLABLE self
@@ -725,6 +725,34 @@ function CONTROLLABLE:CommandActivateLink4(Frequency, UnitID, Callsign, Delay)
   return self
 end
 
+--- Activate LINK4 system of the CONTROLLABLE. The controllable should be an aircraft carrier!
+-- @param #CONTROLLABLE self
+-- @param #number Frequency Link4 Frequency in MHz, e.g. 336
+-- @param #number UnitID The DCS UNIT ID of the unit the LINK4 system is attached to. Useful if more units are in one group.
+-- @param #string Callsign Morse code identification callsign.
+-- @param #number Delay (Optional) Delay in seconds before the LINK4 is deactivated.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandActivateLink4(Frequency, UnitID, Callsign, Delay)
+
+  -- Command to activate Link4 system.
+  local CommandActivateLink4= {
+    id = "ActivateLink4",
+    params= {
+      ["frequency "] = Frequency*1000,
+      ["unitId"] = UnitID,
+      ["name"] = Callsign,
+    }
+  }
+
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.CommandActivateLink4, {self}, Delay)
+  else
+    self:SetCommand(CommandActivateLink4)
+  end
+
+  return self
+end
+
 --- Deactivate the active beacon of the CONTROLLABLE.
 -- @param #CONTROLLABLE self
 -- @param #number Delay (Optional) Delay in seconds before the beacon is deactivated.
@@ -734,10 +762,30 @@ function CONTROLLABLE:CommandDeactivateBeacon( Delay )
   -- Command to deactivate
   local CommandDeactivateBeacon = { id = 'DeactivateBeacon', params = {} }
 
-  if Delay and Delay > 0 then
-    SCHEDULER:New( nil, self.CommandDeactivateBeacon, { self }, Delay )
+  local CommandDeactivateBeacon={id='DeactivateBeacon', params={}}
+
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.CommandDeactivateBeacon, {self}, Delay)
   else
     self:SetCommand( CommandDeactivateBeacon )
+  end
+
+  return self
+end
+
+--- Deactivate the active Link4 of the CONTROLLABLE.
+-- @param #CONTROLLABLE self
+-- @param #number Delay (Optional) Delay in seconds before the Link4 is deactivated.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandDeactivateLink4(Delay)
+
+  -- Command to deactivate
+  local CommandDeactivateLink4={id='DeactivateLink4', params={}}
+
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.CommandDeactivateLink4, {self}, Delay)
+  else
+    self:SetCommand(CommandDeactivateLink4)
   end
 
   return self
@@ -1424,7 +1472,7 @@ function CONTROLLABLE:TaskEscort( FollowControllable, Vec3, LastWaypointIndex, E
   DCSTask = {
     id = 'Escort',
     params = {
-      groupId           = FollowControllable:GetID(),
+      groupId           = FollowControllable and FollowControllable:GetID() or nil,
       pos               = Vec3,
       lastWptIndexFlag  = LastWaypointIndex and true or false,
       lastWptIndex      = LastWaypointIndex,
@@ -1453,11 +1501,11 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Alti
     id = 'FireAtPoint',
     params = {
       point            = Vec2,
-      x=Vec2.x,
-      y=Vec2.y,
+      x                = Vec2.x,
+      y                = Vec2.y,
       zoneRadius       = Radius,
       radius           = Radius,
-      expendQty        = 100, -- dummy value
+      expendQty        = 1, -- dummy value
       expendQtyEnabled = false,
       alt_type         = ASL and 0 or 1,
     },
@@ -1476,7 +1524,8 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Alti
     DCSTask.params.weaponType = WeaponType
   end
 
-  -- self:I(DCSTask)
+  --env.info("FF fireatpoint")
+  --BASE:I(DCSTask)
 
   return DCSTask
 end
@@ -1568,6 +1617,28 @@ function CONTROLLABLE:EnRouteTaskEngageTargetsInZone( Vec2, Radius, TargetTypes,
 
   return DCSTask
 end
+
+--- (AIR) Enroute anti-ship task.
+-- @param #CONTROLLABLE self
+-- @param DCS#AttributeNameArray TargetTypes Array of target categories allowed to engage. Default `{"Ships"}`.
+-- @param #number Priority (Optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Default 0.
+-- @return DCS#Task The DCS task structure.
+function CONTROLLABLE:EnRouteTaskAntiShip(TargetTypes, Priority)
+
+  local DCSTask = {
+    id      = 'EngageTargets',
+    key     = "AntiShip",
+    --auto    = false,
+    --enabled = true,    
+    params  = {
+      targetTypes = TargetTypes or {"Ships"},
+      priority    = Priority or 0
+    }
+  }
+
+  return DCSTask
+end
+
 
 --- (AIR) Engaging a controllable. The task does not assign the target controllable to the unit/controllable to attack now; it just allows the unit/controllable to engage the target controllable as well as other assigned targets.
 -- @param #CONTROLLABLE self
@@ -1835,7 +1906,7 @@ end
 
 do -- Patrol methods
 
-  --- (GROUND) Patrol iteratively using the waypoints the for the (parent) group.
+  --- (GROUND) Patrol iteratively using the waypoints of the (parent) group.
   -- @param #CONTROLLABLE self
   -- @return #CONTROLLABLE
   function CONTROLLABLE:PatrolRoute()
@@ -1866,12 +1937,13 @@ do -- Patrol methods
         end
       end
 
+
       local Waypoint = Waypoints[1]
       local Speed = Waypoint.speed or (20 / 3.6)
-      local From = FromCoord:WaypointGround( Speed )
+       local From = FromCoord:WaypointGround( Speed )
 
       if IsSub then
-        From = FromCoord:WaypointNaval( Speed, Waypoint.alt )
+         From = FromCoord:WaypointNaval( Speed, Waypoint.alt )
       end
 
       table.insert( Waypoints, 1, From )
@@ -2023,22 +2095,21 @@ do -- Patrol methods
 
 end
 
---- Return a Mission task to follow a given route defined by Points.
+
+--- Return a "Misson" task to follow a given route defined by Points.
 -- @param #CONTROLLABLE self
 -- @param #table Points A table of route points.
--- @return DCS#Task
+-- @return DCS#Task DCS mission task. Has entries `.id="Mission"`, `params`, were params has entries `airborne` and `route`, which is a table of `points`.
 function CONTROLLABLE:TaskRoute( Points )
-  self:F2( Points )
 
   local DCSTask = {
     id = 'Mission',
     params = {
-      airborne = self:IsAir(),
+      airborne = self:IsAir(),  -- This is important to make aircraft land without respawning them (which was a long standing DCS issue).
       route = {points = Points},
     },
   }
-
-  self:T3( { DCSTask } )
+  
   return DCSTask
 end
 
@@ -3746,10 +3817,10 @@ end
 
 --- (GROUND) Relocate controllable to a random point within a given radius; use e.g.for evasive actions; Note that not all ground controllables can actually drive, also the alarm state of the controllable might stop it from moving.
 -- @param #CONTROLLABLE self
--- @param  #number speed Speed of the controllable, default 20
--- @param  #number radius Radius of the relocation zone, default 500
--- @param  #boolean onroad If true, route on road (less problems with AI way finding), default true
--- @param  #boolean shortcut If true and onroad is set, take a shorter route - if available - off road, default false
+-- @param #number speed Speed of the controllable, default 20
+-- @param #number radius Radius of the relocation zone, default 500
+-- @param #boolean onroad If true, route on road (less problems with AI way finding), default true
+-- @param #boolean shortcut If true and onroad is set, take a shorter route - if available - off road, default false
 -- @param #string formation Formation string as in the mission editor, e.g. "Vee", "Diamond", "Line abreast", etc. Defaults to "Off Road"
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:RelocateGroundRandomInRadius( speed, radius, onroad, shortcut, formation )
@@ -3817,9 +3888,10 @@ function POSITIONABLE:IsSubmarine()
   return nil
 end
 
+
 --- Sets the controlled group to go at the specified speed in meters per second. 
 -- @param #CONTROLLABLE self
--- @param #number Speed Speed in meters per second.
+-- @param #number Speed Speed in meters per second
 -- @param #boolean Keep (Optional) When set to true, will maintain the speed on passing waypoints. If not present or false, the controlled group will return to the speed as defined by their route. 
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:SetSpeed(Speed, Keep)

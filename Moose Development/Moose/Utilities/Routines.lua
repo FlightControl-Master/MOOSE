@@ -494,330 +494,343 @@ routines.ground = {}
 routines.fixedWing = {}
 routines.heli = {}
 
-routines.ground.buildWP = function( point, overRideForm, overRideSpeed )
+routines.ground.buildWP = function(point, overRideForm, overRideSpeed)
 
-  local wp = {}
-  wp.x = point.x
+	local wp = {}
+	wp.x = point.x
 
-  if point.z then
-    wp.y = point.z
-  else
-    wp.y = point.y
-  end
-  local form, speed
+	if point.z then
+		wp.y = point.z
+	else
+		wp.y = point.y
+	end
+	local form, speed
 
-  if point.speed and not overRideSpeed then
-    wp.speed = point.speed
-  elseif type( overRideSpeed ) == 'number' then
-    wp.speed = overRideSpeed
-  else
-    wp.speed = routines.utils.kmphToMps( 20 )
-  end
+	if point.speed and not overRideSpeed then
+		wp.speed = point.speed
+	elseif type(overRideSpeed) == 'number' then
+		wp.speed = overRideSpeed
+	else
+		wp.speed = routines.utils.kmphToMps(20)
+	end
 
-  if point.form and not overRideForm then
-    form = point.form
-  else
-    form = overRideForm
-  end
+	if point.form and not overRideForm then
+		form = point.form
+	else
+		form = overRideForm
+	end
 
-  if not form then
-    wp.action = 'Cone'
-  else
-    form = string.lower( form )
-    if form == 'off_road' or form == 'off road' then
-      wp.action = 'Off Road'
-    elseif form == 'on_road' or form == 'on road' then
-      wp.action = 'On Road'
-    elseif form == 'rank' or form == 'line_abrest' or form == 'line abrest' or form == 'lineabrest' then
-      wp.action = 'Rank'
-    elseif form == 'cone' then
-      wp.action = 'Cone'
-    elseif form == 'diamond' then
-      wp.action = 'Diamond'
-    elseif form == 'vee' then
-      wp.action = 'Vee'
-    elseif form == 'echelon_left' or form == 'echelon left' or form == 'echelonl' then
-      wp.action = 'EchelonL'
-    elseif form == 'echelon_right' or form == 'echelon right' or form == 'echelonr' then
-      wp.action = 'EchelonR'
-    else
-      wp.action = 'Cone' -- if nothing matched
-    end
-  end
+	if not form then
+		wp.action = 'Cone'
+	else
+		form = string.lower(form)
+		if form == 'off_road' or form == 'off road' then
+			wp.action = 'Off Road'
+		elseif form == 'on_road' or form == 'on road' then
+			wp.action = 'On Road'
+		elseif form == 'rank' or form == 'line_abrest' or form == 'line abrest' or form == 'lineabrest'then
+			wp.action = 'Rank'
+		elseif form == 'cone' then
+			wp.action = 'Cone'
+		elseif form == 'diamond' then
+			wp.action = 'Diamond'
+		elseif form == 'vee' then
+			wp.action = 'Vee'
+		elseif form == 'echelon_left' or form == 'echelon left' or form == 'echelonl' then
+			wp.action = 'EchelonL'
+		elseif form == 'echelon_right' or form == 'echelon right' or form == 'echelonr' then
+			wp.action = 'EchelonR'
+		else
+			wp.action = 'Cone' -- if nothing matched
+		end
+	end
 
-  wp.type = 'Turning Point'
-  return wp
+	wp.type = 'Turning Point'
+
+	return wp
+
 end
 
-routines.fixedWing.buildWP = function( point, WPtype, speed, alt, altType )
+routines.fixedWing.buildWP = function(point, WPtype, speed, alt, altType)
 
-  local wp = {}
-  wp.x = point.x
+	local wp = {}
+	wp.x = point.x
 
-  if point.z then
-    wp.y = point.z
-  else
-    wp.y = point.y
-  end
+	if point.z then
+		wp.y = point.z
+	else
+		wp.y = point.y
+	end
 
-  if alt and type( alt ) == 'number' then
-    wp.alt = alt
-  else
-    wp.alt = 2000
-  end
+	if alt and type(alt) == 'number' then
+		wp.alt = alt
+	else
+		wp.alt = 2000
+	end
 
-  if altType then
-    altType = string.lower( altType )
-    if altType == 'radio' or 'agl' then
-      wp.alt_type = 'RADIO'
-    elseif altType == 'baro' or 'asl' then
-      wp.alt_type = 'BARO'
-    end
-  else
-    wp.alt_type = 'RADIO'
-  end
+	if altType then
+		altType = string.lower(altType)
+		if altType == 'radio' or 'agl' then
+			wp.alt_type = 'RADIO'
+		elseif altType == 'baro' or 'asl' then
+			wp.alt_type = 'BARO'
+		end
+	else
+		wp.alt_type = 'RADIO'
+	end
 
-  if point.speed then
-    speed = point.speed
-  end
+	if point.speed then
+		speed = point.speed
+	end
 
-  if point.type then
-    WPtype = point.type
-  end
+	if point.type then
+		WPtype = point.type
+	end
 
-  if not speed then
-    wp.speed = routines.utils.kmphToMps( 500 )
-  else
-    wp.speed = speed
-  end
+	if not speed then
+		wp.speed = routines.utils.kmphToMps(500)
+	else
+		wp.speed = speed
+	end
 
-  if not WPtype then
-    wp.action = 'Turning Point'
-  else
-    WPtype = string.lower( WPtype )
-    if WPtype == 'flyover' or WPtype == 'fly over' or WPtype == 'fly_over' then
-      wp.action = 'Fly Over Point'
-    elseif WPtype == 'turningpoint' or WPtype == 'turning point' or WPtype == 'turning_point' then
-      wp.action = 'Turning Point'
-    else
-      wp.action = 'Turning Point'
-    end
-  end
+	if not WPtype then
+		wp.action =  'Turning Point'
+	else
+		WPtype = string.lower(WPtype)
+		if WPtype == 'flyover' or WPtype == 'fly over' or WPtype == 'fly_over' then
+			wp.action =  'Fly Over Point'
+		elseif WPtype == 'turningpoint' or WPtype == 'turning point' or WPtype == 'turning_point' then
+			wp.action =  'Turning Point'
+		else
+			wp.action = 'Turning Point'
+		end
+	end
 
-  wp.type = 'Turning Point'
-  return wp
+	wp.type = 'Turning Point'
+	return wp
 end
 
-routines.heli.buildWP = function( point, WPtype, speed, alt, altType )
+routines.heli.buildWP = function(point, WPtype, speed, alt, altType)
 
-  local wp = {}
-  wp.x = point.x
+	local wp = {}
+	wp.x = point.x
 
-  if point.z then
-    wp.y = point.z
-  else
-    wp.y = point.y
-  end
+	if point.z then
+		wp.y = point.z
+	else
+		wp.y = point.y
+	end
 
-  if alt and type( alt ) == 'number' then
-    wp.alt = alt
-  else
-    wp.alt = 500
-  end
+	if alt and type(alt) == 'number' then
+		wp.alt = alt
+	else
+		wp.alt = 500
+	end
 
-  if altType then
-    altType = string.lower( altType )
-    if altType == 'radio' or 'agl' then
-      wp.alt_type = 'RADIO'
-    elseif altType == 'baro' or 'asl' then
-      wp.alt_type = 'BARO'
-    end
-  else
-    wp.alt_type = 'RADIO'
-  end
+	if altType then
+		altType = string.lower(altType)
+		if altType == 'radio' or 'agl' then
+			wp.alt_type = 'RADIO'
+		elseif altType == 'baro' or 'asl' then
+			wp.alt_type = 'BARO'
+		end
+	else
+		wp.alt_type = 'RADIO'
+	end
 
-  if point.speed then
-    speed = point.speed
-  end
+	if point.speed then
+		speed = point.speed
+	end
 
-  if point.type then
-    WPtype = point.type
-  end
+	if point.type then
+		WPtype = point.type
+	end
 
-  if not speed then
-    wp.speed = routines.utils.kmphToMps( 200 )
-  else
-    wp.speed = speed
-  end
+	if not speed then
+		wp.speed = routines.utils.kmphToMps(200)
+	else
+		wp.speed = speed
+	end
 
-  if not WPtype then
-    wp.action = 'Turning Point'
-  else
-    WPtype = string.lower( WPtype )
-    if WPtype == 'flyover' or WPtype == 'fly over' or WPtype == 'fly_over' then
-      wp.action = 'Fly Over Point'
-    elseif WPtype == 'turningpoint' or WPtype == 'turning point' or WPtype == 'turning_point' then
-      wp.action = 'Turning Point'
-    else
-      wp.action = 'Turning Point'
-    end
-  end
+	if not WPtype then
+		wp.action =  'Turning Point'
+	else
+		WPtype = string.lower(WPtype)
+		if WPtype == 'flyover' or WPtype == 'fly over' or WPtype == 'fly_over' then
+			wp.action =  'Fly Over Point'
+		elseif WPtype == 'turningpoint' or WPtype == 'turning point' or WPtype == 'turning_point' then
+			wp.action = 'Turning Point'
+		else
+			wp.action =  'Turning Point'
+		end
+	end
 
-  wp.type = 'Turning Point'
-  return wp
+	wp.type = 'Turning Point'
+	return wp
 end
 
-routines.groupToRandomPoint = function( vars )
-  local group = vars.group -- Required
-  local point = vars.point -- required
-  local radius = vars.radius or 0
-  local innerRadius = vars.innerRadius
-  local form = vars.form or 'Cone'
-  local heading = vars.heading or math.random() * 2 * math.pi
-  local headingDegrees = vars.headingDegrees
-  local speed = vars.speed or routines.utils.kmphToMps( 20 )
+routines.groupToRandomPoint = function(vars)
+	local group = vars.group --Required
+	local point = vars.point --required
+	local radius = vars.radius or 0
+	local innerRadius = vars.innerRadius
+	local form = vars.form or 'Cone'
+	local heading = vars.heading or math.random()*2*math.pi
+	local headingDegrees = vars.headingDegrees
+	local speed = vars.speed or routines.utils.kmphToMps(20)
 
-  local useRoads
-  if not vars.disableRoads then
-    useRoads = true
-  else
-    useRoads = false
-  end
 
-  local path = {}
+	local useRoads
+	if not vars.disableRoads then
+		useRoads = true
+	else
+		useRoads = false
+	end
 
-  if headingDegrees then
-    heading = headingDegrees * math.pi / 180
-  end
+	local path = {}
 
-  if heading >= 2 * math.pi then
-    heading = heading - 2 * math.pi
-  end
+	if headingDegrees then
+		heading = headingDegrees*math.pi/180
+	end
 
-  local rndCoord = routines.getRandPointInCircle( point, radius, innerRadius )
+	if heading >= 2*math.pi then
+		heading = heading - 2*math.pi
+	end
 
-  local offset = {}
-  local posStart = routines.getLeadPos( group )
+	local rndCoord = routines.getRandPointInCircle(point, radius, innerRadius)
 
-  offset.x = routines.utils.round( math.sin( heading - (math.pi / 2) ) * 50 + rndCoord.x, 3 )
-  offset.z = routines.utils.round( math.cos( heading + (math.pi / 2) ) * 50 + rndCoord.y, 3 )
-  path[#path + 1] = routines.ground.buildWP( posStart, form, speed )
+	local offset = {}
+	local posStart = routines.getLeadPos(group)
 
-  if useRoads == true and ((point.x - posStart.x) ^ 2 + (point.z - posStart.z) ^ 2) ^ 0.5 > radius * 1.3 then
-    path[#path + 1] = routines.ground.buildWP( { ['x'] = posStart.x + 11, ['z'] = posStart.z + 11 }, 'off_road', speed )
-    path[#path + 1] = routines.ground.buildWP( posStart, 'on_road', speed )
-    path[#path + 1] = routines.ground.buildWP( offset, 'on_road', speed )
-  else
-    path[#path + 1] = routines.ground.buildWP( { ['x'] = posStart.x + 25, ['z'] = posStart.z + 25 }, form, speed )
-  end
+	offset.x = routines.utils.round(math.sin(heading - (math.pi/2)) * 50 + rndCoord.x, 3)
+	offset.z = routines.utils.round(math.cos(heading + (math.pi/2)) * 50 + rndCoord.y, 3)
+	path[#path + 1] = routines.ground.buildWP(posStart, form, speed)
 
-  path[#path + 1] = routines.ground.buildWP( offset, form, speed )
-  path[#path + 1] = routines.ground.buildWP( rndCoord, form, speed )
 
-  routines.goRoute( group, path )
+	if useRoads == true and ((point.x - posStart.x)^2 + (point.z - posStart.z)^2)^0.5 > radius * 1.3 then
+		path[#path + 1] = routines.ground.buildWP({['x'] = posStart.x + 11, ['z'] = posStart.z + 11}, 'off_road', speed)
+		path[#path + 1] = routines.ground.buildWP(posStart, 'on_road', speed)
+		path[#path + 1] = routines.ground.buildWP(offset, 'on_road', speed)
+	else
+		path[#path + 1] = routines.ground.buildWP({['x'] = posStart.x + 25, ['z'] = posStart.z + 25}, form, speed)
+	end
+
+	path[#path + 1] = routines.ground.buildWP(offset, form, speed)
+	path[#path + 1] = routines.ground.buildWP(rndCoord, form, speed)
+
+	routines.goRoute(group, path)
+
+	return
 end
 
-routines.groupRandomDistSelf = function( gpData, dist, form, heading, speed )
-  local pos = routines.getLeadPos( gpData )
-  local fakeZone = {}
-  fakeZone.radius = dist or math.random( 300, 1000 )
-  fakeZone.point = { x = pos.x, y, pos.y, z = pos.z }
-  routines.groupToRandomZone( gpData, fakeZone, form, heading, speed )
+routines.groupRandomDistSelf = function(gpData, dist, form, heading, speed)
+	local pos = routines.getLeadPos(gpData)
+	local fakeZone = {}
+	fakeZone.radius = dist or math.random(300, 1000)
+	fakeZone.point = {x = pos.x, y = pos.y, z = pos.z}
+	routines.groupToRandomZone(gpData, fakeZone, form, heading, speed)
+
+	return
 end
 
-routines.groupToRandomZone = function( gpData, zone, form, heading, speed )
-  if type( gpData ) == 'string' then
-    gpData = Group.getByName( gpData )
-  end
+routines.groupToRandomZone = function(gpData, zone, form, heading, speed)
+	if type(gpData) == 'string' then
+		gpData = Group.getByName(gpData)
+	end
 
-  if type( zone ) == 'string' then
-    zone = trigger.misc.getZone( zone )
-  elseif type( zone ) == 'table' and not zone.radius then
-    zone = trigger.misc.getZone( zone[math.random( 1, #zone )] )
-  end
+	if type(zone) == 'string' then
+		zone = trigger.misc.getZone(zone)
+	elseif type(zone) == 'table' and not zone.radius then
+		zone = trigger.misc.getZone(zone[math.random(1, #zone)])
+	end
 
-  if speed then
-    speed = routines.utils.kmphToMps( speed )
-  end
+	if speed then
+		speed = routines.utils.kmphToMps(speed)
+	end
 
-  local vars = {}
-  vars.group = gpData
-  vars.radius = zone.radius
-  vars.form = form
-  vars.headingDegrees = heading
-  vars.speed = speed
-  vars.point = routines.utils.zoneToVec3( zone )
+	local vars = {}
+	vars.group = gpData
+	vars.radius = zone.radius
+	vars.form = form
+	vars.headingDegrees = heading
+	vars.speed = speed
+	vars.point = routines.utils.zoneToVec3(zone)
 
-  routines.groupToRandomPoint( vars )
+	routines.groupToRandomPoint(vars)
+
+	return
 end
 
-routines.isTerrainValid = function( coord, terrainTypes ) -- vec2/3 and enum or table of acceptable terrain types
-  if coord.z then
-    coord.y = coord.z
-  end
-  local typeConverted = {}
+routines.isTerrainValid = function(coord, terrainTypes) -- vec2/3 and enum or table of acceptable terrain types
+	if coord.z then
+		coord.y = coord.z
+	end
+	local typeConverted = {}
 
-  if type( terrainTypes ) == 'string' then -- if its a string it does this check
-    for constId, constData in pairs( land.SurfaceType ) do
-      if string.lower( constId ) == string.lower( terrainTypes ) or string.lower( constData ) == string.lower( terrainTypes ) then
-        table.insert( typeConverted, constId )
-      end
-    end
-  elseif type( terrainTypes ) == 'table' then -- if its a table it does this check
-    for typeId, typeData in pairs( terrainTypes ) do
-      for constId, constData in pairs( land.SurfaceType ) do
-        if string.lower( constId ) == string.lower( typeData ) or string.lower( constData ) == string.lower( typeId ) then
-          table.insert( typeConverted, constId )
-        end
-      end
-    end
-  end
-  for validIndex, validData in pairs( typeConverted ) do
-    if land.getSurfaceType( coord ) == land.SurfaceType[validData] then
-      return true
-    end
-  end
-  return false
+	if type(terrainTypes) == 'string' then -- if its a string it does this check
+		for constId, constData in pairs(land.SurfaceType) do
+			if string.lower(constId) == string.lower(terrainTypes) or string.lower(constData) == string.lower(terrainTypes) then
+				table.insert(typeConverted, constId)
+			end
+		end
+	elseif type(terrainTypes) == 'table' then -- if its a table it does this check
+		for typeId, typeData in pairs(terrainTypes) do
+			for constId, constData in pairs(land.SurfaceType) do
+				if string.lower(constId) == string.lower(typeData) or string.lower(constData) == string.lower(typeId) then
+					table.insert(typeConverted, constId)
+				end
+			end
+		end
+	end
+	for validIndex, validData in pairs(typeConverted) do
+		if land.getSurfaceType(coord) == land.SurfaceType[validData] then
+			return true
+		end
+	end
+	return false
 end
 
-routines.groupToPoint = function( gpData, point, form, heading, speed, useRoads )
-  if type( point ) == 'string' then
-    point = trigger.misc.getZone( point )
-  end
-  if speed then
-    speed = routines.utils.kmphToMps( speed )
-  end
+routines.groupToPoint = function(gpData, point, form, heading, speed, useRoads)
+	if type(point) == 'string' then
+		point = trigger.misc.getZone(point)
+	end
+	if speed then
+		speed = routines.utils.kmphToMps(speed)
+	end
 
-  local vars = {}
-  vars.group = gpData
-  vars.form = form
-  vars.headingDegrees = heading
-  vars.speed = speed
-  vars.disableRoads = useRoads
-  vars.point = routines.utils.zoneToVec3( point )
-  routines.groupToRandomPoint( vars )
+	local vars = {}
+	vars.group = gpData
+	vars.form = form
+	vars.headingDegrees = heading
+	vars.speed = speed
+	vars.disableRoads = useRoads
+	vars.point = routines.utils.zoneToVec3(point)
+	routines.groupToRandomPoint(vars)
+
+	return
 end
 
-routines.getLeadPos = function( group )
-  if type( group ) == 'string' then -- group name
-    group = Group.getByName( group )
-  end
 
-  local units = group:getUnits()
+routines.getLeadPos = function(group)
+	if type(group) == 'string' then -- group name
+		group = Group.getByName(group)
+	end
 
-  local leader = units[1]
-  if not leader then -- SHOULD be good, but if there is a bug, this code future-proofs it then.
-    local lowestInd = math.huge
-    for ind, unit in pairs( units ) do
-      if ind < lowestInd then
-        lowestInd = ind
-        leader = unit
-      end
-    end
-  end
-  if leader and Unit.isExist( leader ) then -- maybe a little too paranoid now...
-    return leader:getPosition().p
-  end
+	local units = group:getUnits()
+
+	local leader = units[1]
+	if not leader then  -- SHOULD be good, but if there is a bug, this code future-proofs it then.
+		local lowestInd = math.huge
+		for ind, unit in pairs(units) do
+			if ind < lowestInd then
+				lowestInd = ind
+				leader = unit
+			end
+		end
+	end
+	if leader and Unit.isExist(leader) then  -- maybe a little too paranoid now...
+		return leader:getPosition().p
+	end
 end
 
 --[[ vars for routines.getMGRSString:

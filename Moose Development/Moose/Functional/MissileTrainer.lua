@@ -1,28 +1,28 @@
 --- **Functional** -- Train missile defence and deflection.
--- 
+--
 -- ===
 --
 -- ## Features:
--- 
+--
 --   * Track the missiles fired at you and other players, providing bearing and range information of the missiles towards the airplanes.
---   * Provide alerts of missile launches, including detailed information of the units launching, including bearing, range °
+--   * Provide alerts of missile launches, including detailed information of the units launching, including bearing, range
 --   * Provide alerts when a missile would have killed your aircraft.
 --   * Provide alerts when the missile self destructs.
 --   * Enable / Disable and Configure the Missile Trainer using the various menu options.
--- 
+--
 -- ===
--- 
+--
 -- ## Missions:
--- 
+--
 -- [MIT - Missile Trainer](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/MIT%20-%20Missile%20Trainer)
--- 
+--
 -- ===
--- 
+--
 -- Uses the MOOSE messaging system to be alerted of any missiles fired, and when a missile would hit your aircraft,
 -- the class will destroy the missile within a certain range, to avoid damage to your aircraft.
---  
+--
 -- When running a mission where the missile trainer is used, the following radio menu structure ( 'Radio Menu' -> 'Other (F10)' -> 'MissileTrainer' ) options are available for the players:
---  
+--
 --  * **Messages**: Menu to configure all messages.
 --     * **Messages On**: Show all messages.
 --     * **Messages Off**: Disable all messages.
@@ -45,23 +45,23 @@
 --     * **Range Off**: Disable range information when a missile is fired to a target.
 --     * **Bearing On**: Shows bearing information when a missile is fired to a target.
 --     * **Bearing Off**: Disable bearing information when a missile is fired to a target.
---  * **Distance**: Menu to configure the distance when a missile needs to be destroyed when near to a player, during tracking. This will improve/influence hit calculation accuracy, but has the risk of damaging the aircraft when the missile reaches the aircraft before the distance is measured. 
+--  * **Distance**: Menu to configure the distance when a missile needs to be destroyed when near to a player, during tracking. This will improve/influence hit calculation accuracy, but has the risk of damaging the aircraft when the missile reaches the aircraft before the distance is measured.
 --     * **50 meter**: Destroys the missile when the distance to the aircraft is below or equal to 50 meter.
 --     * **100 meter**: Destroys the missile when the distance to the aircraft is below or equal to 100 meter.
 --     * **150 meter**: Destroys the missile when the distance to the aircraft is below or equal to 150 meter.
 --     * **200 meter**: Destroys the missile when the distance to the aircraft is below or equal to 200 meter.
---   
+--
 -- ===
--- 
+--
 -- ### Authors: **FlightControl**
--- 
+--
 -- ### Contributions:
--- 
---    * **Stuka (Danny)**: Who you can search on the Eagle Dynamics Forums. Working together with Danny has resulted in the MISSILETRAINER class.  
---      Danny has shared his ideas and together we made a design. 
+--
+--    * **Stuka (Danny)**: Who you can search on the Eagle Dynamics Forums. Working together with Danny has resulted in the MISSILETRAINER class.
+--      Danny has shared his ideas and together we made a design.
 --      Together with the **476 virtual team**, we tested the MISSILETRAINER class, and got much positive feedback!
 --    * **132nd Squadron**: Testing and optimizing the logic.
--- 
+--
 -- ===
 --
 -- @module Functional.MissileTrainer
@@ -76,7 +76,7 @@
 ---
 --
 -- # Constructor:
--- 
+--
 -- Create a new MISSILETRAINER object with the @{#MISSILETRAINER.New} method:
 --
 --   * @{#MISSILETRAINER.New}: Creates a new MISSILETRAINER object taking the maximum distance to your aircraft to evaluate when a missile needs to be destroyed.
@@ -84,7 +84,7 @@
 -- MISSILETRAINER will collect each unit declared in the mission with a skill level "Client" and "Player", and will monitor the missiles shot at those.
 --
 -- # Initialization:
--- 
+--
 -- A MISSILETRAINER object will behave differently based on the usage of initialization methods:
 --
 --  * @{#MISSILETRAINER.InitMessagesOnOff}: Sets by default the display of any message to be ON or OFF.
@@ -97,8 +97,8 @@
 --  * @{#MISSILETRAINER.InitRangeOnOff}: Sets by default the display of range information of missiles ON of OFF.
 --  * @{#MISSILETRAINER.InitBearingOnOff}: Sets by default the display of bearing information of missiles ON of OFF.
 --  * @{#MISSILETRAINER.InitMenusOnOff}: Allows to configure the options through the radio menu.
--- 
--- @field #MISSILETRAINER 
+--
+-- @field #MISSILETRAINER
 MISSILETRAINER = {
   ClassName = "MISSILETRAINER",
   TrackingMissiles = {},
@@ -167,7 +167,7 @@ end
 -- When a missile is fired a SCHEDULER is set off that follows the missile. When near a certain a client player, the missile will be destroyed.
 -- @param #MISSILETRAINER self
 -- @param #number Distance The distance in meters when a tracked missile needs to be destroyed when close to a player.
--- @param #string Briefing (Optional) Will show a text to the players when starting their mission. Can be used for briefing purposes. 
+-- @param #string Briefing (Optional) Will show a text to the players when starting their mission. Can be used for briefing purposes.
 -- @return #MISSILETRAINER
 function MISSILETRAINER:New( Distance, Briefing )
   local self = BASE:Inherit( self, BASE:New() )
@@ -194,8 +194,8 @@ function MISSILETRAINER:New( Distance, Briefing )
 --      self:F( "ForEach:" .. Client.UnitName )
 --      Client:Alive( self._Alive, self )
 --  end
---  
-  self.DBClients:ForEachClient( 
+--
+  self.DBClients:ForEachClient(
     function( Client )
       self:F( "ForEach:" .. Client.UnitName )
       Client:Alive( self._Alive, self )
@@ -207,9 +207,9 @@ function MISSILETRAINER:New( Distance, Briefing )
 --  	self.DB:ForEachClient(
 --  	 --- @param Wrapper.Client#CLIENT Client
 --  	 function( Client )
---  
+--
 --        ... actions ...
---        
+--
 --  	 end
 --  	)
 
@@ -225,7 +225,7 @@ function MISSILETRAINER:New( Distance, Briefing )
 
   self.DetailsRangeOnOff = true
   self.DetailsBearingOnOff = true
-  
+
   self.MenusOnOff = true
 
   self.TrackingMissiles = {}
@@ -293,7 +293,7 @@ end
 --- Increases, decreases the missile tracking message display frequency with the provided time interval in seconds.
 -- The default frequency is a 3 second interval, so the Tracking Frequency parameter specifies the increase or decrease from the default 3 seconds or the last frequency update.
 -- @param #MISSILETRAINER self
--- @param #number TrackingFrequency Provide a negative or positive value in seconds to incraese or decrease the display frequency. 
+-- @param #number TrackingFrequency Provide a negative or positive value in seconds to incraese or decrease the display frequency.
 -- @return #MISSILETRAINER self
 function MISSILETRAINER:InitTrackingFrequency( TrackingFrequency )
   self:F( TrackingFrequency )
@@ -478,30 +478,30 @@ function MISSILETRAINER:OnEventShot( EVentData )
   if TrainerTargetDCSUnit then
     local TrainerTargetDCSUnitName = Unit.getName( TrainerTargetDCSUnit )
     local TrainerTargetSkill =  _DATABASE.Templates.Units[TrainerTargetDCSUnitName].Template.skill
-  
+
     self:T(TrainerTargetDCSUnitName )
-  
+
     local Client = self.DBClients:FindClient( TrainerTargetDCSUnitName )
     if Client then
-  
+
       local TrainerSourceUnit = UNIT:Find( TrainerSourceDCSUnit )
       local TrainerTargetUnit = UNIT:Find( TrainerTargetDCSUnit )
-  
+
       if self.MessagesOnOff == true and self.AlertsLaunchesOnOff == true then
-  
+
         local Message = MESSAGE:New(
           string.format( "%s launched a %s",
             TrainerSourceUnit:GetTypeName(),
             TrainerWeaponName
           ) .. self:_AddRange( Client, TrainerWeapon ) .. self:_AddBearing( Client, TrainerWeapon ), 5, "Launch Alert" )
-  
+
         if self.AlertsToAll then
           Message:ToAll()
         else
           Message:ToClient( Client )
         end
       end
-  
+
       local ClientID = Client:GetID()
       self:T( ClientID )
       local MissileData = {}
@@ -579,52 +579,52 @@ function MISSILETRAINER:_TrackMissiles()
   end
 
   -- ALERTS PART
-  
+
   -- Loop for all Player Clients to check the alerts and deletion of missiles.
   for ClientDataID, ClientData in pairs( self.TrackingMissiles ) do
 
     local Client = ClientData.Client
-    
+
     if Client and Client:IsAlive() then
 
       for MissileDataID, MissileData in pairs( ClientData.MissileData ) do
         self:T3( MissileDataID )
-  
+
         local TrainerSourceUnit = MissileData.TrainerSourceUnit
         local TrainerWeapon = MissileData.TrainerWeapon
         local TrainerTargetUnit = MissileData.TrainerTargetUnit
         local TrainerWeaponTypeName = MissileData.TrainerWeaponTypeName
         local TrainerWeaponLaunched = MissileData.TrainerWeaponLaunched
-    
+
         if Client and Client:IsAlive() and TrainerSourceUnit and TrainerSourceUnit:IsAlive() and TrainerWeapon and TrainerWeapon:isExist() and TrainerTargetUnit and TrainerTargetUnit:IsAlive() then
           local PositionMissile = TrainerWeapon:getPosition().p
           local TargetVec3 = Client:GetVec3()
-    
+
           local Distance = ( ( PositionMissile.x - TargetVec3.x )^2 +
             ( PositionMissile.y - TargetVec3.y )^2 +
             ( PositionMissile.z - TargetVec3.z )^2
             ) ^ 0.5 / 1000
-    
+
           if Distance <= self.Distance then
             -- Hit alert
             TrainerWeapon:destroy()
             if self.MessagesOnOff == true and self.AlertsHitsOnOff == true then
-    
+
               self:T( "killed" )
-    
+
               local Message = MESSAGE:New(
                 string.format( "%s launched by %s killed %s",
                   TrainerWeapon:getTypeName(),
                   TrainerSourceUnit:GetTypeName(),
                   TrainerTargetUnit:GetPlayerName()
                 ), 15, "Hit Alert" )
-    
+
               if self.AlertsToAll == true then
                 Message:ToAll()
               else
                 Message:ToClient( Client )
               end
-    
+
               MissileData = nil
               table.remove( ClientData.MissileData, MissileDataID )
               self:T(ClientData.MissileData)
@@ -639,7 +639,7 @@ function MISSILETRAINER:_TrackMissiles()
                   TrainerWeaponTypeName,
                   TrainerSourceUnit:GetTypeName()
                 ), 5, "Tracking" )
-    
+
               if self.AlertsToAll == true then
                 Message:ToAll()
               else
@@ -660,41 +660,41 @@ function MISSILETRAINER:_TrackMissiles()
   if ShowMessages == true and self.MessagesOnOff == true and self.TrackingOnOff == true then -- Only do this when tracking information needs to be displayed.
 
     -- TRACKING PART
-  
+
     -- For the current client, the missile range and bearing details are displayed To the Player Client.
     -- For the other clients, the missile range and bearing details are displayed To the other Player Clients.
-    -- To achieve this, a cross loop is done for each Player Client <-> Other Player Client missile information. 
-  
+    -- To achieve this, a cross loop is done for each Player Client <-> Other Player Client missile information.
+
     -- Main Player Client loop
     for ClientDataID, ClientData in pairs( self.TrackingMissiles ) do
-  
+
       local Client = ClientData.Client
       --self:T2( { Client:GetName() } )
-  
-  
+
+
       ClientData.MessageToClient = ""
       ClientData.MessageToAll = ""
-  
+
       -- Other Players Client loop
       for TrackingDataID, TrackingData in pairs( self.TrackingMissiles ) do
-  
+
         for MissileDataID, MissileData in pairs( TrackingData.MissileData ) do
           --self:T3( MissileDataID )
-  
+
           local TrainerSourceUnit = MissileData.TrainerSourceUnit
           local TrainerWeapon = MissileData.TrainerWeapon
           local TrainerTargetUnit = MissileData.TrainerTargetUnit
           local TrainerWeaponTypeName = MissileData.TrainerWeaponTypeName
           local TrainerWeaponLaunched = MissileData.TrainerWeaponLaunched
-  
+
           if Client and Client:IsAlive() and TrainerSourceUnit and TrainerSourceUnit:IsAlive() and TrainerWeapon and TrainerWeapon:isExist() and TrainerTargetUnit and TrainerTargetUnit:IsAlive() then
-  
+
             if ShowMessages == true then
               local TrackingTo
               TrackingTo = string.format( "  -> %s",
                 TrainerWeaponTypeName
               )
-  
+
               if ClientDataID == TrackingDataID then
                 if ClientData.MessageToClient == "" then
                   ClientData.MessageToClient = "Missiles to You:\n"
@@ -712,7 +712,7 @@ function MISSILETRAINER:_TrackMissiles()
           end
         end
       end
-  
+
       -- Once the Player Client and the Other Player Client tracking messages are prepared, show them.
       if ClientData.MessageToClient ~= "" or ClientData.MessageToAll ~= "" then
         local Message = MESSAGE:New( ClientData.MessageToClient .. ClientData.MessageToAll, 1, "Tracking" ):ToClient( Client )
