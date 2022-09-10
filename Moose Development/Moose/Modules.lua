@@ -8,7 +8,6 @@ __Moose.Include( 'Scripts/Moose/Utilities/FiFo.lua' )
 __Moose.Include( 'Scripts/Moose/Utilities/Socket.lua' )
 
 __Moose.Include( 'Scripts/Moose/Core/Base.lua' )
-__Moose.Include( 'Scripts/Moose/Core/Astar.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Beacon.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Condition.lua' )
 __Moose.Include( 'Scripts/Moose/Core/UserFlag.lua' )
