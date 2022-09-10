@@ -148,7 +148,7 @@ AMMOTRUCK.State = {
 --@type AMMOTRUCK.data
 --@field Wrapper.Group#GROUP group
 --@field #string name
---@field #AMMOTRUCK.State state
+--@field #AMMOTRUCK.State statusquo
 --@field #number timestamp
 --@field #number ammo
 --@field Core.Point#COORDINATE coordinate
@@ -225,10 +225,36 @@ function AMMOTRUCK:CheckDrivingTrucks(dataset)
     local dist = coord:Get2DDistance(tgtcoord)
     if dist <= 150 then
       -- arrived
-      truck.state = AMMOTRUCK.State.ARRIVED
+      truck.statusquo = AMMOTRUCK.State.ARRIVED
       truck.timestamp = timer.getAbsTime()
       truck.coordinate = coord
       self:__TruckArrived(1,truck)
+    end
+    -- still driving?
+    local Tnow = timer.getAbsTime()
+    if Tnow - truck.timestamp > 30 then
+      local group = truck.group
+      if self.usearmygroup then
+        group = truck.group:GetGroup()
+      end
+      local currspeed = group:GetVelocityKMH()
+      if truck.lastspeed then
+        if truck.lastspeed == 0 and currspeed == 0 then
+          self:T(truck.group:GetName().." Is not moving!")
+          -- try and move it
+          truck.timestamp = timer.getAbsTime()
+          if self.routeonroad then
+            group:RouteGroundOnRoad(truck.targetcoordinate,30,2,"Vee")
+          else
+            group:RouteGroundTo(truck.targetcoordinate,30,"Vee",2)
+          end
+        end
+        truck.lastspeed = currspeed
+      else
+        truck.lastspeed = currspeed
+        truck.timestamp = timer.getAbsTime()
+      end
+      self:I({truck=truck.group:GetName(),currspeed=currspeed,lastspeed=truck.lastspeed})
     end
   end
   return self
@@ -260,9 +286,9 @@ function AMMOTRUCK:CheckWaitingTargets(dataset)
       local hasammo = self:GetAmmoStatus(truck.group)
       --if truck.group:GetAmmunition() <= self.ammothreshold then
       if hasammo <= self.ammothreshold then
-        truck.state = AMMOTRUCK.State.OUTOFAMMO
+        truck.statusquo = AMMOTRUCK.State.OUTOFAMMO
       else
-        truck.state = AMMOTRUCK.State.IDLE
+        truck.statusquo = AMMOTRUCK.State.IDLE
       end
     end
   end
@@ -286,7 +312,7 @@ function AMMOTRUCK:CheckReturningTrucks(dataset)
     self:T({name=truck.name,radius=radius,distance=dist})
     if dist <= radius then
       -- arrived
-      truck.state = AMMOTRUCK.State.IDLE
+      truck.statusquo = AMMOTRUCK.State.IDLE
       truck.timestamp = timer.getAbsTime()
       truck.coordinate = coord
       self:__TruckHome(1,truck)
@@ -341,13 +367,13 @@ function AMMOTRUCK:CheckArrivedTrucks(dataset)
   for _,_data in pairs (data) do
     -- set to unloading
     local truck = _data -- #AMMOTRUCK.data
-    truck.state = AMMOTRUCK.State.UNLOADING
+    truck.statusquo = AMMOTRUCK.State.UNLOADING
     truck.timestamp = timer.getAbsTime()
     self:__TruckUnloading(2,truck)
     -- set target to reloading
     local aridata = self:FindTarget(truck.targetname) -- #AMMOTRUCK.data
     if aridata then
-      aridata.state = AMMOTRUCK.State.RELOADING
+      aridata.statusquo = AMMOTRUCK.State.RELOADING
       aridata.timestamp = timer.getAbsTime()
     end
   end
@@ -369,13 +395,13 @@ function AMMOTRUCK:CheckUnloadingTrucks(dataset)
     local hasammo = self:GetAmmoStatus(truck.targetgroup)
     --local ammostate = truck.targetgroup:GetAmmunition()
     if Tpassed > self.unloadtime and hasammo > self.ammothreshold then
-      truck.state = AMMOTRUCK.State.RETURNING
+      truck.statusquo = AMMOTRUCK.State.RETURNING
       truck.timestamp = timer.getAbsTime()
       self:__TruckReturning(2,truck)
       -- set target to reloaded     
       local aridata = self:FindTarget(truck.targetname) -- #AMMOTRUCK.data
       if aridata then
-        aridata.state = AMMOTRUCK.State.IDLE
+        aridata.statusquo = AMMOTRUCK.State.IDLE
         aridata.timestamp = timer.getAbsTime()
       end
     end
@@ -407,7 +433,7 @@ function AMMOTRUCK:CheckTargetsAlive()
       local newari = {} -- #AMMOTRUCK.data
       newari.name = name
       newari.group = ari
-      newari.state = AMMOTRUCK.State.IDLE
+      newari.statusquo = AMMOTRUCK.State.IDLE
       newari.timestamp = timer.getAbsTime()
       newari.coordinate = ari:GetCoordinate()
       local hasammo = self:GetAmmoStatus(ari)
@@ -434,8 +460,8 @@ function AMMOTRUCK:CheckTrucksAlive()
       local tgtname = truck.targetname
       local targetdata = self:FindTarget(tgtname) -- #AMMOTRUCK.data
       if targetdata then
-        if targetdata.state ~= AMMOTRUCK.State.IDLE then
-          targetdata.state = AMMOTRUCK.State.IDLE
+        if targetdata.statusquo ~= AMMOTRUCK.State.IDLE then
+          targetdata.statusquo = AMMOTRUCK.State.IDLE
         end
       end
       self.trucklist[truck.name] = nil
@@ -459,7 +485,7 @@ function AMMOTRUCK:CheckTrucksAlive()
           --self.opstrucks:AddObject(newtruck)
         end
       end
-      newtruck.state = AMMOTRUCK.State.IDLE
+      newtruck.statusquo = AMMOTRUCK.State.IDLE
       newtruck.timestamp = timer.getAbsTime()
       newtruck.coordinate = truck:GetCoordinate()
       self.trucklist[name] = newtruck
@@ -511,14 +537,14 @@ function AMMOTRUCK:onafterMonitor(From, Event, To)
       --data.ammo = data.group:GetAmmunition()
       data.ammo = self:GetAmmoStatus(data.group)
       data.timestamp = timer.getAbsTime()
-      local text = string.format("Ari %s | Ammo %d | State %s",data.name,data.ammo,data.state)
+      local text = string.format("Ari %s | Ammo %d | State %s",data.name,data.ammo,data.statusquo)
       self:T(text)
-      if data.ammo <= self.ammothreshold and (data.state == AMMOTRUCK.State.IDLE or data.state == AMMOTRUCK.State.OUTOFAMMO) then
+      if data.ammo <= self.ammothreshold and (data.statusquo == AMMOTRUCK.State.IDLE or data.statusquo == AMMOTRUCK.State.OUTOFAMMO) then
         -- add to remu queue
-        data.state = AMMOTRUCK.State.OUTOFAMMO
+        data.statusquo = AMMOTRUCK.State.OUTOFAMMO
         remunitionqueue[#remunitionqueue+1] = data
         remunition = true
-      elseif data.state == AMMOTRUCK.State.WAITING then
+      elseif data.statusquo == AMMOTRUCK.State.WAITING then
         waitingtargets[#waitingtargets+1] = data
       end
     else
@@ -536,18 +562,18 @@ function AMMOTRUCK:onafterMonitor(From, Event, To)
     local data = _truckdata -- #AMMOTRUCK.data
     if data.group and data.group:IsAlive() then
         -- check state
-        local text = string.format("Truck %s | State %s",data.name,data.state)
+        local text = string.format("Truck %s | State %s",data.name,data.statusquo)
         self:T(text)
-        if data.state == AMMOTRUCK.State.IDLE then
+        if data.statusquo == AMMOTRUCK.State.IDLE then
           idletrucks[#idletrucks+1] = data
           found = true
-        elseif data.state == AMMOTRUCK.State.DRIVING then
+        elseif data.statusquo == AMMOTRUCK.State.DRIVING then
           drivingtrucks[#drivingtrucks+1] = data
-        elseif data.state == AMMOTRUCK.State.ARRIVED then
+        elseif data.statusquo == AMMOTRUCK.State.ARRIVED then
           arrivedtrucks[#arrivedtrucks+1] = data
-        elseif data.state == AMMOTRUCK.State.UNLOADING then
+        elseif data.statusquo == AMMOTRUCK.State.UNLOADING then
           unloadingtrucks[#unloadingtrucks+1] = data
-        elseif data.state == AMMOTRUCK.State.RETURNING then
+        elseif data.statusquo == AMMOTRUCK.State.RETURNING then
           returningtrucks[#returningtrucks+1] = data
           idletrucks[#idletrucks+1] = data
           found = true
@@ -568,9 +594,9 @@ function AMMOTRUCK:onafterMonitor(From, Event, To)
         local aridata = _aridata -- #AMMOTRUCK.data
         local aricoord = aridata.coordinate
         local distance = truckcoord:Get2DDistance(aricoord)
-        if distance <= self.remunidist and aridata.state == AMMOTRUCK.State.OUTOFAMMO and n <= #idletrucks then
+        if distance <= self.remunidist and aridata.statusquo == AMMOTRUCK.State.OUTOFAMMO and n <= #idletrucks then
           n = n + 1
-          aridata.state = AMMOTRUCK.State.REQUESTED
+          aridata.statusquo = AMMOTRUCK.State.REQUESTED
           self:__RouteTruck(n*5,truckdata,aridata)
           break
         end
@@ -627,8 +653,9 @@ function AMMOTRUCK:onafterRouteTruck(From, Event, To, Truckdata, Aridata)
     local mission = AUFTRAG:NewONGUARD(tgtcoord)
     local oldmission = truckdata.group:GetMissionCurrent()
     if oldmission then oldmission:Cancel() end
-    mission:SetVerbosity(3)
-    mission:SetMissionSpeed(UTILS.KmphToKnots(20))
+    --mission:SetVerbosity(3)
+    --mission:SetMissionSpeed(UTILS.KmphToKnots(30))
+    mission:SetTime(5)
     mission:SetTeleport(false)
     --mission:SetTime(nil,math.random(self.unloadtime,self.waitingtime))
     truckdata.group:AddMission(mission)
@@ -637,11 +664,11 @@ function AMMOTRUCK:onafterRouteTruck(From, Event, To, Truckdata, Aridata)
   else
     truckdata.group:RouteGroundTo(tgtcoord,30)
   end
-  truckdata.state = AMMOTRUCK.State.DRIVING
+  truckdata.statusquo = AMMOTRUCK.State.DRIVING
   truckdata.targetgroup = tgtgrp
   truckdata.targetname = aridata.name
   truckdata.targetcoordinate = tgtcoord
-  aridata.state = AMMOTRUCK.State.WAITING
+  aridata.statusquo = AMMOTRUCK.State.WAITING
   aridata.timestamp = timer.getAbsTime()
   return self
 end
@@ -694,8 +721,9 @@ function AMMOTRUCK:onafterTruckReturning(From, Event, To, Truck)
     local mission = AUFTRAG:NewONGUARD(tgtcoord)
     local oldmission = truckdata.group:GetMissionCurrent()
     if oldmission then oldmission:Cancel() end
-    mission:SetMissionSpeed(UTILS.KmphToKnots(20))
+    --mission:SetMissionSpeed(UTILS.KmphToKnots(30))
     --mission:SetEnableMarkers()
+    mission:SetTime(5)
     mission:SetTeleport(false)
     truckdata.group:AddMission(mission)
   elseif self.routeonroad then
