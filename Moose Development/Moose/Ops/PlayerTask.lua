@@ -1045,9 +1045,9 @@ AUFTRAG.Type.PRECISIONBOMBING = "Precision Bombing"
 -- @field #number AAA GROUP.Attribute.GROUND_AAA
 -- @field #number EWR GROUP.Attribute.GROUND_EWR 
 PLAYERTASKCONTROLLER.SeadAttributes = {
-	SAM = GROUP.Attribute.GROUND_SAM,
-	AAA = GROUP.Attribute.GROUND_AAA,
-	EWR = GROUP.Attribute.GROUND_EWR,
+  SAM = GROUP.Attribute.GROUND_SAM,
+  AAA = GROUP.Attribute.GROUND_AAA,
+  EWR = GROUP.Attribute.GROUND_EWR,
 }
  
 ---
@@ -1994,15 +1994,15 @@ end
 -- Default attribute types are: GROUP.Attribute.GROUND_SAM, GROUP.Attribute.GROUND_AAA, and GROUP.Attribute.GROUND_EWR.
 -- If you want to e.g. exclude AAA, so target groups with this attribute are assigned CAS or BAI tasks, and not SEAD, use this function as follows:
 --
---						`mycontroller:SetSEADAttributes({GROUP.Attribute.GROUND_SAM, GROUP.Attribute.GROUND_EWR})`
+--            `mycontroller:SetSEADAttributes({GROUP.Attribute.GROUND_SAM, GROUP.Attribute.GROUND_EWR})`
 --
 function PLAYERTASKCONTROLLER:SetSEADAttributes(Attributes)
-	self:T(self.lid.."SetSEADAttributes")
-	if type(Attributes) ~= "table" then
-		Attributes = {Attributes}
-	end
-	self.SeadAttributes = Attributes
-	return self
+  self:T(self.lid.."SetSEADAttributes")
+  if type(Attributes) ~= "table" then
+    Attributes = {Attributes}
+  end
+  self.SeadAttributes = Attributes
+  return self
 end
 
 --- [Internal] Function the check against SeadAttributes
@@ -2010,15 +2010,15 @@ end
 -- @param #string Attribute
 -- @return #boolean IsSead
 function PLAYERTASKCONTROLLER:_IsAttributeSead(Attribute)
-	self:T(self.lid.."_IsAttributeSead?")
-	local IsSead = false
-	for _,_attribute in pairs(self.SeadAttributes) do
-		if Attribute == _attribute then
-			IsSead = true
-			break
-		end
-	end
-	return IsSead
+  self:T(self.lid.."_IsAttributeSead?")
+  local IsSead = false
+  for _,_attribute in pairs(self.SeadAttributes) do
+    if Attribute == _attribute then
+      IsSead = true
+      break
+    end
+  end
+  return IsSead
 end
 
 --- [Internal] Add a task to the task queue
@@ -2048,22 +2048,22 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
     elseif targetobject:IsInstanceOf("GROUP") then
       self:T("SEAD Check GROUP")
       local attribute = targetobject:GetAttribute()
-    	 if self:_IsAttributeSead(attribute) then
-    		type = AUFTRAG.Type.SEAD
-    		--ttstype = "suppress air defense"
-    		ttstype = self.gettext:GetEntry("SEADTTS",self.locale)
-    	 end
+       if self:_IsAttributeSead(attribute) then
+        type = AUFTRAG.Type.SEAD
+        --ttstype = "suppress air defense"
+        ttstype = self.gettext:GetEntry("SEADTTS",self.locale)
+       end
     elseif targetobject:IsInstanceOf("SET_GROUP") then
       self:T("SEAD Check SET_GROUP")
       targetobject:ForEachGroup(
         function (group)
           local attribute = group:GetAttribute()
-      		 if self:_IsAttributeSead(attribute) then
-      			type = AUFTRAG.Type.SEAD
-      			--ttstype = "suppress air defense"
-      			ttstype = self.gettext:GetEntry("SEADTTS",self.locale)
-      		 end
-		    end
+           if self:_IsAttributeSead(attribute) then
+            type = AUFTRAG.Type.SEAD
+            --ttstype = "suppress air defense"
+            ttstype = self.gettext:GetEntry("SEADTTS",self.locale)
+           end
+        end
       )     
     elseif targetobject:IsInstanceOf("SET_UNIT") then
       self:T("SEAD Check SET_UNIT")
