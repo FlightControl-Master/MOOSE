@@ -471,6 +471,22 @@ do -- Types
   --@field #boolean lateActivated
   --@field #boolean uncontrolled
 
+  --- DCS template data structure.
+  -- @type Template
+  -- @field #boolean uncontrolled Aircraft is uncontrolled.
+  -- @field #boolean lateActivation Group is late activated.
+  -- @field #number x 2D Position on x-axis in meters.
+  -- @field #number y 2D Position on y-axis in meters.
+  -- @field #table units Unit list.
+  -- 
+  
+  --- Unit data structure.
+  --@type Template.Unit
+  --@field #string name Name of the unit.
+  --@field #number x
+  --@field #number y
+  --@field #number alt
+
 end --
 
 
@@ -490,7 +506,6 @@ do -- Object
   -- @field BASE
   -- @field SCENERY
   -- @field CARGO
-
   
   --- @type Object.Desc
   -- @extends #Desc
@@ -498,6 +513,10 @@ do -- Object
   -- @field #Box3 box bounding box of collision geometry
   
   --- @function [parent=#Object] isExist
+  -- @param #Object self
+  -- @return #boolean
+
+  --- @function [parent=#Object] isActive
   -- @param #Object self
   -- @return #boolean
   
@@ -1132,6 +1151,11 @@ do -- Unit
   -- @function [parent=#Unit] getAmmo
   -- @param #Unit self
   -- @return #Unit.Ammo
+
+  --- Returns the number of infantry that can be embark onto the aircraft. Only returns a value if run on airplanes or helicopters. Returns nil if run on ground or ship units.
+  -- @function [parent=#Unit] getDescentCapacity
+  -- @param #Unit self
+  -- @return #number Number of soldiers that embark.
   
   --- Returns the unit sensors. 
   -- @function [parent=#Unit] getSensors
@@ -1350,7 +1374,9 @@ do -- AI
   --- @type AI.Option.Ground
   -- @field #AI.Option.Ground.id                    id
   -- @field #AI.Option.Ground.val                   val
-  
+  -- @field #AI.Option.Ground.mid                   mid
+  -- @field #AI.Option.Ground.mval                  mval
+  -- 
   --- @type AI.Option.Naval
   -- @field #AI.Option.Naval.id                     id
   -- @field #AI.Option.Naval.val                    val
@@ -1373,6 +1399,11 @@ do -- AI
   -- @field PROHIBIT_AG
   -- @field MISSILE_ATTACK
   -- @field PROHIBIT_WP_PASS_REPORT
+  -- @field OPTION_RADIO_USAGE_CONTACT
+  -- @field OPTION_RADIO_USAGE_ENGAGE
+  -- @field OPTION_RADIO_USAGE_KILL
+  -- @field JETT_TANKS_IF_EMPTY
+  -- @field FORCED_ATTACK
   
   --- @type AI.Option.Air.id.FORMATION
   -- @field LINE_ABREAST
@@ -1442,18 +1473,34 @@ do -- AI
   --- @type AI.Option.Ground.id
   -- @field NO_OPTION
   -- @field ROE @{#AI.Option.Ground.val.ROE}
+  -- @field FORMATION
   -- @field DISPERSE_ON_ATTACK true or false
   -- @field ALARM_STATE @{#AI.Option.Ground.val.ALARM_STATE}
   -- @field ENGAGE_AIR_WEAPONS
+  -- @field AC_ENGAGEMENT_RANGE_RESTRICTION
+  
+  --- @type AI.Option.Ground.mid -- Moose added
+  -- @field RESTRICT_AAA_MIN        27
+  -- @field RESTRICT_AAA_MAX        29
+  -- @field RESTRICT_TARGETS @{#AI.Option.Ground.mval.ENGAGE_TARGETS}  28
   
   --- @type AI.Option.Ground.val
   -- @field #AI.Option.Ground.val.ROE               ROE
   -- @field #AI.Option.Ground.val.ALARM_STATE       ALARM_STATE
+  -- @field #AI.Option.Ground.val.ENGAGE_TARGETS    RESTRICT_TARGETS
   
   --- @type AI.Option.Ground.val.ROE
   -- @field OPEN_FIRE
   -- @field RETURN_FIRE
   -- @field WEAPON_HOLD
+  
+  --- @type AI.Option.Ground.mval -- Moose added
+  -- @field #AI.Option.Ground.mval.ENGAGE_TARGETS   ENGAGE_TARGETS
+  
+  --- @type AI.Option.Ground.mval.ENGAGE_TARGETS -- Moose added
+  -- @field ANY_TARGET -- 0
+  -- @field AIR_UNITS_ONLY -- 1
+  -- @field GROUND_UNITS_ONLY -- 2
   
   --- @type AI.Option.Ground.val.ALARM_STATE
   -- @field AUTO

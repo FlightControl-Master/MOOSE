@@ -31,7 +31,7 @@
 -- @field #string tankergroupname Name of the late activated tanker template group.
 -- @field Wrapper.Group#GROUP tanker Tanker group.
 -- @field Wrapper.Airbase#AIRBASE airbase The home airbase object of the tanker. Normally the aircraft carrier.
--- @field Core.Radio#BEACON beacon Tanker TACAN beacon.
+-- @field Core.Beacon#BEACON beacon Tanker TACAN beacon.
 -- @field #number TACANchannel TACAN channel. Default 1.
 -- @field #string TACANmode TACAN mode, i.e. "X" or "Y". Default "Y". Use only "Y" for AA TACAN stations!
 -- @field #string TACANmorse TACAN morse code. Three letters identifying the TACAN station. Default "TKR".
@@ -784,10 +784,11 @@ end
 -- @param #RECOVERYTANKER self
 -- @param #number channel TACAN channel. Default 1.
 -- @param #string morse TACAN morse code identifier. Three letters. Default "TKR".
+-- @param #string mode TACAN mode, which can be either "Y" (default) or "X".
 -- @return #RECOVERYTANKER self
-function RECOVERYTANKER:SetTACAN(channel, morse)
+function RECOVERYTANKER:SetTACAN(channel, morse, mode)
   self.TACANchannel=channel or 1
-  self.TACANmode="Y"
+  self.TACANmode=mode or "Y"
   self.TACANmorse=morse or "TKR"
   self.TACANon=true
   return self
@@ -1625,7 +1626,6 @@ function RECOVERYTANKER:_ActivateTACAN(delay)
   if delay and delay>0 then
   
     -- Schedule TACAN activation.
-    --SCHEDULER:New(nil, self._ActivateTACAN, {self}, delay)
     self:ScheduleOnce(delay, RECOVERYTANKER._ActivateTACAN, self)
     
   else
