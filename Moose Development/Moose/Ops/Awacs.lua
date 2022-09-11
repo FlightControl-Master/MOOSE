@@ -495,7 +495,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.41", -- #string
+  version = "0.2.42", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -2068,7 +2068,7 @@ function AWACS:_StartSettings(FlightGroup,Mission)
     
     --self.AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,self.PathToGoogleKey,"AWACS",self.Volume)
      
-    self.callsigntxt = string.format("%s",AWACS.CallSignClear[self.CallSign])
+    self.callsigntxt = string.format("%s",self.CallSignClear[self.CallSign])
     
     self:__CheckRadioQueue(10)
     
@@ -2110,7 +2110,7 @@ function AWACS:_StartSettings(FlightGroup,Mission)
     
     --AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,nil,"AWACS")
 
-    self.callsigntxt = string.format("%s",AWACS.CallSignClear[self.CallSign])
+    self.callsigntxt = string.format("%s",self.CallSignClear[self.CallSign])
     
     local shifting = self.gettext:GetEntry("SHIFTCHANGE",self.locale)
     
@@ -5711,7 +5711,7 @@ function AWACS:onafterStart(From, Event, To)
     end
     
     --self.AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,self.PathToGoogleKey,"AWACS",self.Volume)
-    self.callsigntxt = string.format("%s",AWACS.CallSignClear[self.CallSign])  
+    self.callsigntxt = string.format("%s",self.CallSignClear[self.CallSign])  
     self:__CheckRadioQueue(-10)
     
     local sunrise = self.gettext:GetEntry("SUNRISE",self.locale)
