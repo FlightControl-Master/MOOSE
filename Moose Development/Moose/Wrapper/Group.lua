@@ -2759,7 +2759,6 @@ function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
     local callsignroot = string.match(shortcallsign, '(%a+)') -- Uzi
     --self:I("CallSign = " .. callsignroot)
     local groupname = self:GetName()
-    BASE:I({name=groupname,IsPlayer=IsPlayer})
     local callnumber = string.match(shortcallsign, "(%d+)$" ) or "91" -- 91
     local callnumbermajor = string.char(string.byte(callnumber,1)) -- 9
     local callnumberminor = string.char(string.byte(callnumber,2)) -- 1
