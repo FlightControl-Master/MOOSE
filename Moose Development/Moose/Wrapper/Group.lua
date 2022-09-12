@@ -673,24 +673,7 @@ end
 -- @param #GROUP self
 -- @return #boolean If true, group is associated with a client or player slot.
 function GROUP:IsPlayer()
-  
-  -- Get group.
- -- local group=self:GetGroup()
-    
-  -- Units of template group.
-  local units=self:GetTemplate().units
-  
-  -- Get numbers.
-  for _,unit in pairs(units) do
-      
-    -- Check if unit name matach and skill is Client or Player.
-    if unit.name==self:GetName() and (unit.skill=="Client" or unit.skill=="Player") then
-      return true
-    end
-
-  end
-  
-  return false
+  return self:GetUnit(1):IsPlayer()
 end
 
 --- Returns the UNIT wrapper class with number UnitNumber.
@@ -725,29 +708,6 @@ function GROUP:GetUnit( UnitNumber )
   
 end
 
---- Check if an (air) group is a client or player slot. Information is retrieved from the group template.
--- @param #GROUP self
--- @return #boolean If true, group is associated with a client or player slot.
-function GROUP:IsPlayer()
-  
-  -- Get group.
- -- local group=self:GetGroup()
-    
-  -- Units of template group.
-  local units=self:GetTemplate().units
-  
-  -- Get numbers.
-  for _,unit in pairs(units) do
-      
-    -- Check if unit name matach and skill is Client or Player.
-    if unit.name==self:GetName() and (unit.skill=="Client" or unit.skill=="Player") then
-      return true
-    end
-
-  end
-  
-  return false
-end
 
 --- Returns the DCS Unit with number UnitNumber.
 -- If the underlying DCS Unit does not exist, the method will return nil. .
@@ -2768,10 +2728,10 @@ function GROUP:GetHighestThreat()
 end
 
 --- Get TTS friendly, optionally customized callsign mainly for **player groups**. A customized callsign is taken from the #GROUP name, after an optional '#' sign, e.g. "Aerial 1-1#Ghostrider" resulting in "Ghostrider 9", or, 
--- if that isn't available, from the playername, as set in the mission editor main screen, after an optional '|' sign (actually, more of a personal call sign), e.g. "Apple|Moose" results in "Moose 9 1". Options see below.
+-- if that isn't available, from the playername, as set in the mission editor main screen under Logbook, after an optional '|' sign (actually, more of a personal call sign), e.g. "Apple|Moose" results in "Moose 9 1". Options see below.
 -- @param #GROUP self
 -- @param #boolean ShortCallsign Return a shortened customized callsign, i.e. "Ghostrider 9" and not "Ghostrider 9 1"
--- @param #boolean (Player only) Keepnumber Return customized callsign, incl optional numbers at the end, e.g. "Aerial 1-1#Ghostrider 109" results in "Ghostrider 109", if you want to e.g. use historical US Navy Callsigns
+-- @param #boolean Keepnumber (Player only) Return customized callsign, incl optional numbers at the end, e.g. "Aerial 1-1#Ghostrider 109" results in "Ghostrider 109", if you want to e.g. use historical US Navy Callsigns
 -- @param #table CallsignTranslations with DCS callsigns as keys and replacements as values
 -- @return #string Callsign
 -- @usage
@@ -2786,63 +2746,63 @@ end
 --
 -- results in this outcome if the group has Callsign "Enfield 9 1" on the 1st #UNIT of the group:
 --
---   		'Victory 9'
+--      'Victory 9'
 --
 -- 
 function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
-  self:T("GetCustomCallSign")
+  --self:I("GetCustomCallSign")
 
   local callsign = "Ghost 1"
   if self:IsAlive() then
-	local IsPlayer = self:IsPlayer()
+    local IsPlayer = self:IsPlayer()
     local shortcallsign = self:GetCallsign() or "unknown91" -- e.g.Uzi91, but we want Uzi 9 1
     local callsignroot = string.match(shortcallsign, '(%a+)') -- Uzi
-    self:T("CallSign = " .. callsignroot)
+    --self:I("CallSign = " .. callsignroot)
     local groupname = self:GetName()
+    BASE:I({name=groupname,IsPlayer=IsPlayer})
     local callnumber = string.match(shortcallsign, "(%d+)$" ) or "91" -- 91
     local callnumbermajor = string.char(string.byte(callnumber,1)) -- 9
     local callnumberminor = string.char(string.byte(callnumber,2)) -- 1
     local personalized = false
     if IsPlayer and string.find(groupname,"#") then
       -- personalized flight name in group naming
-	  if Keepnumber then
-		shortcallsign = string.match(groupname,"#(.+)") -- Ghostrider 219
-	  else
-		shortcallsign = string.match(groupname,"#([%a]+)") -- Ghostrider
-	  end
+    if Keepnumber then
+    shortcallsign = string.match(groupname,"#(.+)") -- Ghostrider 219
+    else
+    shortcallsign = string.match(groupname,"#([%a]+)") -- Ghostrider
+    end
       personalized = true
     elseif IsPlayer and string.find(self:GetPlayerName(),"|") then
       -- personalized flight name in group naming
-      shortcallsign = string.match(Group:GetPlayerName(),"|([%a]+)") -- Ghostrider
+      shortcallsign = string.match(self:GetPlayerName(),"|([%a]+)") -- Ghostrider
       personalized = true
     end
-	
+  
     if (not personalized) and CallsignTranslations and CallsignTranslations[callsignroot] then
       callsignroot = CallsignTranslations[callsignroot]
     end
-	
-	if personalized then
-		-- player personalized callsign
-		if Keepnumber then
-			return shortcallsign -- Ghostrider 219
-		elseif ShortCallsign then
-			callsign = shortcallsign.." "..callnumbermajor -- Ghostrider 9
-		else
-			callsign = shortcallsign.." "..callnumbermajor.." "..callnumberminor -- Ghostrider 9 1
-		end
-		return callsign
-	end
-	
-	-- AI or not personalized
-	if ShortCallsign then
-	  callsign = callsignroot.." "..callnumbermajor -- Uzi/Victory 9
-	else
-	  callsign = callsignroot.." "..callnumbermajor.." "..callnumberminor -- Uzi/Victory 9 1
-	end
+  
+  if personalized then
+    -- player personalized callsign
+    if Keepnumber then
+      return shortcallsign -- Ghostrider 219
+    elseif ShortCallsign then
+      callsign = shortcallsign.." "..callnumbermajor -- Ghostrider 9
+    else
+      callsign = shortcallsign.." "..callnumbermajor.." "..callnumberminor -- Ghostrider 9 1
+    end
+    return callsign
+  end
+  
+  -- AI or not personalized
+  if ShortCallsign then
+    callsign = callsignroot.." "..callnumbermajor -- Uzi/Victory 9
+  else
+    callsign = callsignroot.." "..callnumbermajor.." "..callnumberminor -- Uzi/Victory 9 1
+  end
 
-    self:T("Generated Callsign = " .. callsign)
+    --self:I("Generated Callsign = " .. callsign)
   end
   
   return callsign
 end
-
