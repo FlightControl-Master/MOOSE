@@ -730,6 +730,10 @@ do
 -- @field #table customcallsigns
 -- @field #boolean ShortCallsign
 -- @field #boolean Keepnumber
+-- @field #table CallsignTranslations
+-- @field #table PlayerFlashMenu
+-- @field #table PlayerJoinMenu
+-- @field #table PlayerInfoMenu
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1026,7 +1030,11 @@ PLAYERTASKCONTROLLER = {
   MarkerReadOnly     =   false,
   customcallsigns    =   {},
   ShortCallsign      =   true,
-  Keepnumber         =   false, 
+  Keepnumber         =   false,
+  CallsignTranslations = nil,
+  PlayerFlashMenu    =   {},
+  PlayerJoinMenu     =   {},
+  PlayerInfoMenu     =   {},
   }
 
 ---
@@ -1185,7 +1193,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.33"
+PLAYERTASKCONTROLLER.version="0.1.34"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -1238,6 +1246,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.customcallsigns = {}
   self.ShortCallsign = true
   self.Keepnumber = false 
+  self.CallsignTranslations = nil
    
   if ClientFilter then
     self.ClientSet = SET_CLIENT:New():FilterCoalitions(string.lower(self.CoalitionName)):FilterActive(true):FilterPrefixes(ClientFilter):FilterStart()
@@ -1363,17 +1372,19 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #boolean ShortCallsign If true, only call out the major flight number
 -- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name as-is, no amendments or numbers.
+-- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
+-- callsigns from playername or group name.
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:SetCallSignOptions(ShortCallsign,Keepnumber)
+function PLAYERTASKCONTROLLER:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations)
   if not ShortCallsign or ShortCallsign == false then
    self.ShortCallsign = false
   else
    self.ShortCallsign = true
   end
   self.Keepnumber = Keepnumber or false
+  self.CallsignTranslations = CallsignTranslations
   return self  
 end
-
 
 --- [User] Set repetition options for tasks
 -- @param #PLAYERTASKCONTROLLER self
@@ -1499,7 +1510,7 @@ function PLAYERTASKCONTROLLER:_GetPlayerName(Client)
   local ttsplayername = nil
   if not self.customcallsigns[playername] then
     local playergroup = Client:GetGroup()
-    ttsplayername = playergroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber)
+    ttsplayername = playergroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
     self.customcallsigns[playername] = ttsplayername
   else
     ttsplayername = self.customcallsigns[playername]
@@ -2532,10 +2543,19 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_BuildTaskInfoMenu(group,client,playername,topmenu,tasktypes,taskpertype)
   if self.taskinfomenu then
-    local menutaskinfo = self.gettext:GetEntry("MENUTASKINFO",self.locale)
+    local taskinfomenu = nil
+    if self.PlayerInfoMenu[playername] then
+      taskinfomenu = self.PlayerInfoMenu[playername]
+      taskinfomenu:RemoveSubMenus()
+    else
+      local menutaskinfo = self.gettext:GetEntry("MENUTASKINFO",self.locale)
+      taskinfomenu = MENU_GROUP_DELAYED:New(group,menutaskinfo,topmenu)
+      self.PlayerInfoMenu[playername] = taskinfomenu
+    end
+     
     local ittypes = {}
     local itaskmenu = {}
-    local taskinfomenu = MENU_GROUP_DELAYED:New(group,menutaskinfo,topmenu)
+    
     for _tasktype,_data in pairs(tasktypes) do
       ittypes[_tasktype] = MENU_GROUP_DELAYED:New(group,_tasktype,taskinfomenu)
       local tasks =  taskpertype[_tasktype] or {}
