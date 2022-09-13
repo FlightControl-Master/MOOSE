@@ -2732,7 +2732,8 @@ end
 -- @param #GROUP self
 -- @param #boolean ShortCallsign Return a shortened customized callsign, i.e. "Ghostrider 9" and not "Ghostrider 9 1"
 -- @param #boolean Keepnumber (Player only) Return customized callsign, incl optional numbers at the end, e.g. "Aerial 1-1#Ghostrider 109" results in "Ghostrider 109", if you want to e.g. use historical US Navy Callsigns
--- @param #table CallsignTranslations with DCS callsigns as keys and replacements as values
+-- @param #table CallsignTranslations Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
+-- callsigns from playername or group name.
 -- @return #string Callsign
 -- @usage
 --            -- Set Custom CAP Flight Callsigns for use with TTS
