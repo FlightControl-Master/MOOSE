@@ -684,10 +684,10 @@ do
 -------------------------------------------------------------------------------------------------------------------
 -- PLAYERTASKCONTROLLER
 -- TODO: PLAYERTASKCONTROLLER
--- DONE Playername from after #
+-- DONE Playername customized
 -- DONE Coalition-level screen info to SET based
 -- DONE Flash directions
--- TODO less rebuilds menu, Task info menu available after join
+-- DONE less rebuilds menu, Task info menu available after join
 -- DONE Limit menu entries
 -------------------------------------------------------------------------------------------------------------------
 
@@ -727,6 +727,9 @@ do
 -- @field #number menuitemlimit
 -- @field #boolean activehasinfomenu
 -- @field #number holdmenutime
+-- @field #table customcallsigns
+-- @field #boolean ShortCallsign
+-- @field #boolean Keepnumber
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1021,6 +1024,9 @@ PLAYERTASKCONTROLLER = {
   taskinfomenu       =   false,
   activehasinfomenu  =   false,
   MarkerReadOnly     =   false,
+  customcallsigns    =   {},
+  ShortCallsign      =   true,
+  Keepnumber         =   false, 
   }
 
 ---
@@ -1179,7 +1185,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.32"
+PLAYERTASKCONTROLLER.version="0.1.33"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -1228,6 +1234,10 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.repeatonfailed = true
   self.repeattimes = 5
   self.UseGroupNames = true
+  
+  self.customcallsigns = {}
+  self.ShortCallsign = true
+  self.Keepnumber = false 
    
   if ClientFilter then
     self.ClientSet = SET_CLIENT:New():FilterCoalitions(string.lower(self.CoalitionName)):FilterActive(true):FilterPrefixes(ClientFilter):FilterStart()
@@ -1348,6 +1358,22 @@ function PLAYERTASKCONTROLLER:SetAllowFlashDirection(OnOff)
   self.AllowFlash = OnOff
   return self
 end
+
+--- [User] Set callsign options for TTS output. See @{Wrapper.Group#GROUP.GetCustomCallSign}() on how to set customized callsigns.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #boolean ShortCallsign If true, only call out the major flight number
+-- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name as-is, no amendments or numbers.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetCallSignOptions(ShortCallsign,Keepnumber)
+  if not ShortCallsign or ShortCallsign == false then
+   self.ShortCallsign = false
+  else
+   self.ShortCallsign = true
+  end
+  self.Keepnumber = Keepnumber or false
+  return self  
+end
+
 
 --- [User] Set repetition options for tasks
 -- @param #PLAYERTASKCONTROLLER self
@@ -1470,16 +1496,13 @@ end
 function PLAYERTASKCONTROLLER:_GetPlayerName(Client)
   self:T(self.lid.."DisablePrecisionBombing")
   local playername = Client:GetPlayerName()
-  local ttsplayername = playername
-  if string.find(playername,"|") then
-    -- personalized flight name in player naming
-    ttsplayername = string.match(playername,"| ([%a]+)")
-  end
-  local group = Client:GetGroup()
-  local groupname = group:GetName()
-  if string.find(groupname,"#") then
-    -- personalized flight name in player naming
-    ttsplayername = string.match(groupname,"#([%a]+)")
+  local ttsplayername = nil
+  if not self.customcallsigns[playername] then
+    local playergroup = Client:GetGroup()
+    ttsplayername = playergroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber)
+    self.customcallsigns[playername] = ttsplayername
+  else
+    ttsplayername = self.customcallsigns[playername]
   end
   return playername, ttsplayername
 end
@@ -1593,21 +1616,19 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
       modulation = UTILS.GetModulationName(modulation)
       local switchtext = self.gettext:GetEntry("BROADCAST",self.locale)
       
-      local playername = EventData.IniPlayerName
-      if string.find(playername,"|") then
+      local playername = EventData.IniPlayerName 
+      if EventData.IniGroup then
         -- personalized flight name in player naming
-        playername = string.match(playername,"| ([%a]+)")
+        if self.customcallsigns[playername] then
+          self.customcallsigns[playername] = nil
+        end
+        playername = EventData.IniGroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber)
       end
       --local text = string.format("%s, %s, switch to %s for task assignment!",EventData.IniPlayerName,self.MenuName or self.Name,freqtext)
       local text = string.format(switchtext,self.MenuName or self.Name,playername,freqtext)
       self.SRSQueue:NewTransmission(text,nil,self.SRS,timer.getAbsTime()+60,2,{EventData.IniGroup},text,30,self.BCFrequency,self.BCModulation)
     end
   end
-  return self
-end
-
-function PLAYERTASKCONTROLLER:_DummyMenu(group)
-  self:T(self.lid.."_DummyMenu")
   return self
 end
 
@@ -1862,8 +1883,12 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
             local text = ""
             for _,playername in pairs(clients) do
               local pointertext = self.gettext:GetEntry("POINTEROVERTARGET",self.locale)
+              local ttsplayername = playername
+              if self.customcallsigns[playername] then
+                ttsplayername = self.customcallsigns[playername]
+              end
               --text = string.format("%s, %s, pointer over target for task %03d, lasing!", playername, self.MenuName or self.Name, task.PlayerTaskNr)
-              text = string.format(pointertext, playername, self.MenuName or self.Name, task.PlayerTaskNr)
+              text = string.format(pointertext, ttsplayername, self.MenuName or self.Name, task.PlayerTaskNr)
               if not self.NoScreenOutput then
                 local client = nil
                 self.ClientSet:ForEachClient(
@@ -2344,9 +2369,10 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
     local clienttxt = self.gettext:GetEntry("PILOTS",self.locale)
     if clientcount > 0 then
       for _,_name in pairs(clientlist) do
-        if string.find(_name,"|") then
+        if self.customcallsigns[_name] then
           -- personalized flight name in player naming
-          _name = string.match(_name,"| ([%a]+)")
+          --_name = string.match(_name,"| ([%a]+)")
+          _name = self.customcallsigns[_name] 
         end
         clienttxt = clienttxt .. _name .. ", "
       end
@@ -2581,7 +2607,7 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced)
         if self:_CheckPlayerHasTask(playername) then playerhastask = true end
         local topmenu = nil
         
-        self:I("Playerhastask = "..tostring(playerhastask).." Enforced = "..tostring(enforced).." Join or Abort = "..tostring(joinorabort))
+        self:T("Playerhastask = "..tostring(playerhastask).." Enforced = "..tostring(enforced).." Join or Abort = "..tostring(joinorabort))
         
         -- Cases to rebuild menu
         -- 1) new player
@@ -2599,7 +2625,7 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced)
             -- 4) last build > 30 secs?
             local T0 = timer.getAbsTime()
             local TDiff = T0-self.PlayerMenu[playername].MenuTag
-            self:I("TDiff = "..TDiff)
+            self:T("TDiff = "..TDiff)
             if TDiff >= self.holdmenutime then
               self.PlayerMenu[playername]:RemoveSubMenus()
               self.PlayerMenu[playername]:SetTag(timer.getAbsTime())
@@ -2965,7 +2991,7 @@ end
 -- @param #string To
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterStatus(From, Event, To)
-  self:I({From, Event, To})
+  self:T({From, Event, To})
   
   self:_CheckTargetQueue()
   self:_CheckTaskQueue()
