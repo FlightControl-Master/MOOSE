@@ -4495,8 +4495,10 @@ function FLIGHTGROUP:_PlayerSubtitles()
     -- Switch setting.
     playerData.subtitles=not playerData.subtitles
     
+    local onoff = playerData.subtitles == true and "ON" or "OFF"
+    
     -- Display message.
-    MESSAGE:New(string.format("%s, subtitles are now %s", playerData.name, tostring(playerData.subtitles)), 10, nil, true):ToGroup(self.group)
+    MESSAGE:New(string.format("%s, subtitles are now %s", playerData.name, onoff), 10, nil, true):ToGroup(self.group)
   
   else
     --TODO: Error
