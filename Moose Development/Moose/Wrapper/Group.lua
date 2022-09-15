@@ -2784,6 +2784,9 @@ function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
   
   if personalized then
     -- player personalized callsign
+    -- remove trailing/leading spaces
+    shortcallsign=string.gsub(shortcallsign,"^%s*","")
+    shortcallsign=string.gsub(shortcallsign,"%s*$","")
     if Keepnumber then
       return shortcallsign -- Ghostrider 219
     elseif ShortCallsign then
