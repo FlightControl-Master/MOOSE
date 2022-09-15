@@ -11748,8 +11748,11 @@ end
 
 --- Get callsign of the first element alive.
 -- @param #OPSGROUP self
+-- @param #boolean ShortCallsign If true, append major flight number only
+-- @param #boolean Keepnumber (Player only) If true, and using a customized callsign in the #GROUP name after an #-sign, use all of that information.
+-- @param #table CallsignTranslations (optional) Translation table between callsigns
 -- @return #string Callsign name, e.g. Uzi11, or "Ghostrider11".
-function OPSGROUP:GetCallsignName()
+function OPSGROUP:GetCallsignName(ShortCallsign,Keepnumber,CallsignTranslations)
 
   local element=self:GetElementAlive()
 
@@ -11757,6 +11760,9 @@ function OPSGROUP:GetCallsignName()
     self:T2(self.lid..string.format("Callsign %s", tostring(element.callsign)))
     local name=element.callsign or "Ghostrider11"
     name=name:gsub("-", "")
+    if self.group:IsPlayer() or CallsignTranslations then
+      name=self.group:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
+    end
     return name
   end
 
