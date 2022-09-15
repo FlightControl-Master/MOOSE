@@ -2361,7 +2361,7 @@ function PLAYERTASKCONTROLLER:_FlashInfo()
         if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
           CoordText = Coordinate:ToStringA2G(_client)
         else
-          c = Coordinate:ToStringA2A(_client)
+          CoordText = Coordinate:ToStringA2A(_client)
         end
         local targettxt = self.gettext:GetEntry("TARGET",self.locale)
         local text = "Target: "..CoordText
