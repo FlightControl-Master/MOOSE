@@ -586,7 +586,7 @@ _ATIS = {}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version = "0.9.6"
+ATIS.version = "0.9.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1185,32 +1185,34 @@ function ATIS:onafterStart( From, Event, To )
   self:I( self.lid .. string.format( "Starting ATIS v%s for airbase %s on %.3f MHz Modulation=%d", ATIS.version, self.airbasename, self.frequency, self.modulation ) )
 
   -- Start radio queue.
-  self.radioqueue = RADIOQUEUE:New( self.frequency, self.modulation, string.format( "ATIS %s", self.airbasename ) )
-
-  -- Send coordinate is airbase coord.
-  self.radioqueue:SetSenderCoordinate( self.airbase:GetCoordinate() )
-
-  -- Set relay unit if we have one.
-  self.radioqueue:SetSenderUnitName( self.relayunitname )
-
-  -- Set radio power.
-  self.radioqueue:SetRadioPower( self.power )
-
-  -- Init numbers.
-  self.radioqueue:SetDigit( 0, ATIS.Sound.N0.filename, ATIS.Sound.N0.duration, self.soundpath )
-  self.radioqueue:SetDigit( 1, ATIS.Sound.N1.filename, ATIS.Sound.N1.duration, self.soundpath )
-  self.radioqueue:SetDigit( 2, ATIS.Sound.N2.filename, ATIS.Sound.N2.duration, self.soundpath )
-  self.radioqueue:SetDigit( 3, ATIS.Sound.N3.filename, ATIS.Sound.N3.duration, self.soundpath )
-  self.radioqueue:SetDigit( 4, ATIS.Sound.N4.filename, ATIS.Sound.N4.duration, self.soundpath )
-  self.radioqueue:SetDigit( 5, ATIS.Sound.N5.filename, ATIS.Sound.N5.duration, self.soundpath )
-  self.radioqueue:SetDigit( 6, ATIS.Sound.N6.filename, ATIS.Sound.N6.duration, self.soundpath )
-  self.radioqueue:SetDigit( 7, ATIS.Sound.N7.filename, ATIS.Sound.N7.duration, self.soundpath )
-  self.radioqueue:SetDigit( 8, ATIS.Sound.N8.filename, ATIS.Sound.N8.duration, self.soundpath )
-  self.radioqueue:SetDigit( 9, ATIS.Sound.N9.filename, ATIS.Sound.N9.duration, self.soundpath )
-
-  -- Start radio queue.
-  self.radioqueue:Start( 1, 0.1 )
-
+  if not self.useSRS then
+    self.radioqueue = RADIOQUEUE:New( self.frequency, self.modulation, string.format( "ATIS %s", self.airbasename ) )
+  
+    -- Send coordinate is airbase coord.
+    self.radioqueue:SetSenderCoordinate( self.airbase:GetCoordinate() )
+  
+    -- Set relay unit if we have one.
+    self.radioqueue:SetSenderUnitName( self.relayunitname )
+  
+    -- Set radio power.
+    self.radioqueue:SetRadioPower( self.power )
+  
+    -- Init numbers.
+    self.radioqueue:SetDigit( 0, ATIS.Sound.N0.filename, ATIS.Sound.N0.duration, self.soundpath )
+    self.radioqueue:SetDigit( 1, ATIS.Sound.N1.filename, ATIS.Sound.N1.duration, self.soundpath )
+    self.radioqueue:SetDigit( 2, ATIS.Sound.N2.filename, ATIS.Sound.N2.duration, self.soundpath )
+    self.radioqueue:SetDigit( 3, ATIS.Sound.N3.filename, ATIS.Sound.N3.duration, self.soundpath )
+    self.radioqueue:SetDigit( 4, ATIS.Sound.N4.filename, ATIS.Sound.N4.duration, self.soundpath )
+    self.radioqueue:SetDigit( 5, ATIS.Sound.N5.filename, ATIS.Sound.N5.duration, self.soundpath )
+    self.radioqueue:SetDigit( 6, ATIS.Sound.N6.filename, ATIS.Sound.N6.duration, self.soundpath )
+    self.radioqueue:SetDigit( 7, ATIS.Sound.N7.filename, ATIS.Sound.N7.duration, self.soundpath )
+    self.radioqueue:SetDigit( 8, ATIS.Sound.N8.filename, ATIS.Sound.N8.duration, self.soundpath )
+    self.radioqueue:SetDigit( 9, ATIS.Sound.N9.filename, ATIS.Sound.N9.duration, self.soundpath )
+  
+    -- Start radio queue.
+    self.radioqueue:Start( 1, 0.1 )
+  end
+  
   -- Handle airbase capture
   -- Handle events.
   self:HandleEvent( EVENTS.BaseCaptured )
