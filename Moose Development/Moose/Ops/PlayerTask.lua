@@ -1213,7 +1213,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.35"
+PLAYERTASKCONTROLLER.version="0.1.36"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -1391,7 +1391,7 @@ end
 --- [User] Set callsign options for TTS output. See @{Wrapper.Group#GROUP.GetCustomCallSign}() on how to set customized callsigns.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #boolean ShortCallsign If true, only call out the major flight number
--- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name as-is, no amendments or numbers.
+-- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name for players as-is, no amendments or numbers.
 -- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
 -- callsigns from playername or group name.
 -- @return #PLAYERTASKCONTROLLER self
@@ -1404,6 +1404,22 @@ function PLAYERTASKCONTROLLER:SetCallSignOptions(ShortCallsign,Keepnumber,Callsi
   self.Keepnumber = Keepnumber or false
   self.CallsignTranslations = CallsignTranslations
   return self  
+end
+
+--- [Internal] Get text for text-to-speech.
+-- Numbers are spaced out, e.g. "Heading 180" becomes "Heading 1 8 0 ".
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #string text Original text.
+-- @return #string Spoken text.
+function PLAYERTASKCONTROLLER:_GetTextForSpeech(text)
+  
+  -- Space out numbers.
+  text=string.gsub(text,"%d","%1 ")
+  -- get rid of leading or trailing spaces
+  text=string.gsub(text,"^%s*","")
+  text=string.gsub(text,"%s*$","")
+  
+  return text
 end
 
 --- [User] Set repetition options for tasks
@@ -1531,7 +1547,9 @@ function PLAYERTASKCONTROLLER:_GetPlayerName(Client)
   if not self.customcallsigns[playername] then
     local playergroup = Client:GetGroup()
     ttsplayername = playergroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
-    self.customcallsigns[playername] = ttsplayername
+    local newplayername = self:_GetTextForSpeech(ttsplayername)
+    self.customcallsigns[playername] = newplayername
+    ttsplayername = newplayername
   else
     ttsplayername = self.customcallsigns[playername]
   end
@@ -1655,6 +1673,7 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
         end
         playername = EventData.IniGroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber)
       end
+      playername = self:_GetTextForSpeech(playername)
       --local text = string.format("%s, %s, switch to %s for task assignment!",EventData.IniPlayerName,self.MenuName or self.Name,freqtext)
       local text = string.format(switchtext,self.MenuName or self.Name,playername,freqtext)
       self.SRSQueue:NewTransmission(text,nil,self.SRS,timer.getAbsTime()+60,2,{EventData.IniGroup},text,30,self.BCFrequency,self.BCModulation)
@@ -2289,6 +2308,7 @@ function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task)
       --local m=MESSAGE:New(text,"10","Tasking"):ToAll()
     end
     if self.UseSRS then
+      self:I(self.lid..text)
       self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
     end
     self.TasksPerPlayer:Push(Task,playername)
