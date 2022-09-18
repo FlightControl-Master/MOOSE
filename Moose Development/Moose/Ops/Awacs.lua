@@ -1900,6 +1900,7 @@ function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey
   self.Volume = Volume or 1.0
   
   self.AwacsSRS = MSRS:New(self.PathToSRS,self.MultiFrequency,self.MultiModulation,self.Volume)
+  self.AwacsSRS:SetCoalition(self.coalition)
   self.AwacsSRS:SetGender(self.Gender)
   self.AwacsSRS:SetCulture(self.Culture)
   self.AwacsSRS:SetVoice(self.Voice)
