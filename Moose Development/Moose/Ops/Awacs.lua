@@ -327,7 +327,7 @@ do
 -- * @{#AWACS.SetRadarBlur}() : Set the radar blur faktor in percent.
 -- * @{#AWACS.SetColdWar}() : Set to cold war - no fill-ins, no EPLRS, VID as standard.
 -- * @{#AWACS.SetModernEraDefensive}() : Set to modern, EPLRS, BVR/IFF engagement, fill-ins.
--- * @{#AWACS.SetModernEraAgressive}() : Set to modern, EPLRS, BVR/IFF engagement, fill-ins.
+-- * @{#AWACS.SetModernEraAggressive}() : Set to modern, EPLRS, BVR/IFF engagement, fill-ins.
 -- * @{#AWACS.SetPolicingModern}() : Set to modern, EPLRS, VID engagement, fill-ins.
 -- * @{#AWACS.SetPolicingColdWar}() : Set to cold war, no EPLRS, VID engagement, no fill-ins.
 -- * @{#AWACS.SetInterceptTimeline}() : Set distances for TAC, Meld and Threat range calls.
@@ -1714,7 +1714,7 @@ end
 --- [User] Set AWACS to Modern Era standards - ROE to BVR, ROT to return fire. Radar blur 15%.
 -- @param #AWACS self
 -- @return #AWACS self
-function AWACS:SetModernEraAgressive()
+function AWACS:SetModernEraAggressive()
   self.ModernEra = true
   self.AwacsROT = AWACS.ROT.RETURNFIRE
   self.AwacsROE = AWACS.ROE.BVR
