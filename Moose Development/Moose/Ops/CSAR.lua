@@ -39,6 +39,7 @@
 -- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #number coalition Coalition side number, e.g. `coalition.side.RED`.
+-- @field Core.Set#SET_GROUP allheligroupset Set of CSAR heli groups.
 -- @extends Core.Fsm#FSM
 
 --- *Combat search and rescue (CSAR) are search and rescue operations that are carried out during war that are within or near combat zones.* (Wikipedia)
@@ -129,9 +130,11 @@
 --       mycsar.SRSVoice = nil -- SRS voice, relevant for Google TTS
 --       mycsar.SRSGPathToCredentials = nil -- Path to your Google credentials json file, set this if you want to use Google TTS
 --       mycsar.SRSVolume = 1 -- Volume, between 0 and 1
+--       mycsar.SRSGender = "male" -- male or female voice
 --       --
 --       mycsar.csarUsePara = false -- If set to true, will use the LandingAfterEjection Event instead of Ejection. Requires mycsar.enableForAI to be set to true. --shagrat
 --       mycsar.wetfeettemplate = "man in floating thingy" -- if you use a mod to have a pilot in a rescue float, put the template name in here for wet feet spawns. Note: in conjunction with csarUsePara this might create dual ejected pilots in edge cases.
+--       mycsar.allowbronco = false  -- set to true to use the Bronco mod as a CSAR plane
 --        
 -- ## 3. Results
 -- 
@@ -228,6 +231,7 @@ CSAR = {
   rescuedpilots = 0,
   limitmaxdownedpilots = true,
   maxdownedpilots = 10,
+  allheligroupset = nil,
 }
 
 --- Downed pilots info.
@@ -260,11 +264,12 @@ CSAR.AircraftType["Mi-24P"] = 8
 CSAR.AircraftType["Mi-24V"] = 8
 CSAR.AircraftType["Bell-47"] = 2                
 CSAR.AircraftType["UH-60L"] = 10
-CSAR.AircraftType["AH-64D_BLK_II"] = 2  
+CSAR.AircraftType["AH-64D_BLK_II"] = 2
+CSAR.AircraftType["Bronco-OV-10A"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.6"
+CSAR.version="1.0.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -411,19 +416,23 @@ function CSAR:New(Coalition, Template, Alias)
   -- added 0.1.4
   self.wetfeettemplate = nil
   self.usewetfeet = false
+  
+  -- added 0.1.8
+  self.allowbronco = false  -- set to true to use the Bronco mod as a CSAR plane
       
   -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
   -- needs SRS => 1.9.6 to work (works on the *server* side)
   self.useSRS = false -- Use FF\'s SRS integration
-  self.SRSPath = "E:\\Progra~1\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your server(!)
+  self.SRSPath = "E:\\Program Files\\DCS-SimpleRadio-Standalone" -- adjust your own path in your server(!)
   self.SRSchannel = 300 -- radio channel
   self.SRSModulation = radio.modulation.AM -- modulation
   self.SRSport = 5002 -- port
   self.SRSCulture = "en-GB"
   self.SRSVoice = nil
   self.SRSGPathToCredentials = nil
-  self.SRSVolume = 1
+  self.SRSVolume = 1.0 -- volume 0.0 to 1.0
+  self.SRSGender = "male" -- male or female
   
   ------------------------
   --- Pseudo Functions ---
@@ -925,7 +934,16 @@ function CSAR:_EventHandler(EventData)
     
     local _unit = _event.IniUnit
     local _group = _event.IniGroup
-    if _unit:IsHelicopter() or _group:IsHelicopter() then
+    
+    local function IsBronco(Group)
+      local grp = Group -- Wrapper.Group#GROUP
+      local typename = grp:GetTypeName()
+      self:T(typename)
+      if typename == "Bronco-OV-10A" then return true end
+      return false
+    end
+    
+    if _unit:IsHelicopter() or _group:IsHelicopter() or IsBronco(_group) then
       self:_AddMedevacMenuItem()
     end 
     
@@ -1580,21 +1598,7 @@ function CSAR:_DisplayMessageToSAR(_unit, _text, _time, _clear, _speak, _overrid
   end
   -- integrate SRS
   if _speak and self.useSRS then
-    local srstext = SOUNDTEXT:New(_text)
-    local path = self.SRSPath
-    local modulation = self.SRSModulation
-    local channel = self.SRSchannel
-    local msrs = MSRS:New(path,channel,modulation)
-    msrs:SetPort(self.SRSport)
-    msrs:SetLabel("CSAR")
-    msrs:SetCulture(self.SRSCulture)
-    msrs:SetCoalition(self.coalition)
-    msrs:SetVoice(self.SRSVoice)
-    if self.SRSGPathToCredentials then
-      msrs:SetGoogle(self.SRSGPathToCredentials)
-    end
-    msrs:SetVolume(self.SRSVolume)
-    msrs:PlaySoundText(srstext, 2)
+    self.SRSQueue:NewTransmission(_text,nil,self.msrs,nil,2)
   end
   return self
 end
@@ -1894,7 +1898,7 @@ function CSAR:_AddMedevacMenuItem()
   self:T(self.lid .. " _AddMedevacMenuItem")
   
   local coalition = self.coalition
-  local allheligroupset = self.allheligroupset
+  local allheligroupset = self.allheligroupset -- Core.Set#SET_GROUP
   local _allHeliGroups = allheligroupset:GetSetObjects()
 
   -- rebuild units table
@@ -2106,7 +2110,11 @@ function CSAR:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
   self:HandleEvent(EVENTS.PlayerEnterUnit, self._EventHandler)
   self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
-  if self.useprefix then
+  
+  if self.allowbronco then
+    local prefixes = self.csarPrefix or {}
+    self.allheligroupset = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(prefixes):FilterStart()
+  elseif self.useprefix then
     local prefixes = self.csarPrefix or {}
     self.allheligroupset = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(prefixes):FilterCategoryHelicopter():FilterStart()
   else
@@ -2115,6 +2123,24 @@ function CSAR:onafterStart(From, Event, To)
   self.mash = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart() -- currently only GROUP objects, maybe support STATICs also?
   if self.wetfeettemplate then
     self.usewetfeet = true
+  end
+  if self.useSRS then
+    local path = self.SRSPath
+    local modulation = self.SRSModulation
+    local channel = self.SRSchannel
+    self.msrs = MSRS:New(path,channel,modulation)
+    self.msrs:SetPort(self.SRSport)
+    self.msrs:SetLabel("CSAR")
+    self.msrs:SetCulture(self.SRSCulture)
+    self.msrs:SetCoalition(self.coalition)
+    self.msrs:SetVoice(self.SRSVoice)
+    self.msrs:SetGender(self.SRSGender)
+    if self.SRSGPathToCredentials then
+      self.msrs:SetGoogle(self.SRSGPathToCredentials)
+    end
+    self.msrs:SetVolume(self.SRSVolume)
+    self.msrs:SetLabel("CSAR")
+    self.SRSQueue = MSRSQUEUE:New("CSAR")
   end
   self:__Status(-10)
   return self
