@@ -620,8 +620,6 @@ function ATIS:New(AirbaseName, Frequency, Modulation)
   -- Inherit everything from FSM class.
   local self = BASE:Inherit( self, FSM:New() ) -- #ATIS
 
-  local self=BASE:Inherit(self, FSM:New()) -- #ATIS
-
   self.airbasename=AirbaseName
   self.airbase=AIRBASE:FindByName(AirbaseName)
 
