@@ -1849,6 +1849,11 @@ function UTILS.IsLoadingDoorOpen( unit_name )
          return true -- no doors on this one ;)
       end
       
+      if type_name == "Bronco-OV-10A" then
+         BASE:T(unit_name .. " front door(s) are open")
+         return true -- no doors on this one ;)
+      end
+      
       return false
 
   end -- nil
