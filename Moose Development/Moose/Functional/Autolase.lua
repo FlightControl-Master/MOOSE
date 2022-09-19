@@ -111,7 +111,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.1.20"
+AUTOLASE.version = "0.1.21"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -430,6 +430,7 @@ function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Cultu
     self.SRS:SetCulture(self.Culture)
     self.SRS:SetPort(self.Port)
     self.SRS:SetVoice(self.Voice)
+    self.SRS:SetCoalition(self.coalition)
     if self.PathToGoogleKey then
       self.SRS:SetGoogle(self.PathToGoogleKey)
     end
@@ -672,10 +673,13 @@ function AUTOLASE:ShowStatus(Group,Unit)
     if playername then
       local settings = _DATABASE:GetPlayerSettings(playername)
       if settings then
+        --self:I("Get Settings ok!")
         if settings:IsA2G_MGRS() then
           locationstring = entry.coordinate:ToStringMGRS(settings)
         elseif settings:IsA2G_LL_DMS() then
-          locationstring = entry.coordinate:ToStringLLDMS()
+          locationstring = entry.coordinate:ToStringLLDMS(settings)
+        elseif settings:IsA2G_BR() then
+          locationstring = entry.coordinate:ToStringBR(Group:GetCoordinate() or Unit:GetCoordinate(),settings)
         end
       end
     end
@@ -948,7 +952,9 @@ function AUTOLASE:onafterMonitor(From, Event, To)
           settings.MGRS_Accuracy = precision
           locationstring = unit:GetCoordinate():ToStringMGRS(settings)
         elseif _SETTINGS:IsA2G_LL_DMS() then
-          locationstring = unit:GetCoordinate():ToStringLLDMS()
+          locationstring = unit:GetCoordinate():ToStringLLDMS(_SETTINGS)
+        elseif _SETTINGS:IsA2G_BR() then
+          locationstring = unit:GetCoordinate():ToStringBULLS(self.coalition,_SETTINGS)
         end
   
         local laserspot = { -- #AUTOLASE.LaserSpot
