@@ -213,7 +213,7 @@ do -- DESIGNATE
   -- In order to prevent an overflow of designations due to many Detected Targets, there is a 
   -- Maximum Designations scope that is set in the DesignationObject.
   -- 
-  -- The method @{#DESIGNATE.SetMaximumDesignations}() will put a limit on the amount of designations put in scope of the DesignationObject.
+  -- The method @{#DESIGNATE.SetMaximumDesignations}() will put a limit on the amount of designations (target groups) put in scope of the DesignationObject.
   -- Using the menu system, the player can "forget" a designation, so that gradually a new designation can be put in scope when detected.
   -- 
   -- # 4. Laser codes
@@ -562,7 +562,8 @@ do -- DESIGNATE
   end
 
 
-  --- Set the maximum amount of designations.
+  --- Set the maximum amount of designations (target groups). This will put a limit on the amount of designations in scope.
+  -- Using the menu system, the player can "forget" a designation, so that gradually a new designation can be put in scope when detected.
   -- @param #DESIGNATE self
   -- @param #number MaximumDesignations
   -- @return #DESIGNATE
@@ -602,7 +603,7 @@ do -- DESIGNATE
   end
   
   
-  --- Set the maximum amount of markings FACs will do, per designated target group.
+  --- Set the maximum amount of markings FACs will do, per designated target group. This will limit the number of parallelly marked units of a target group.
   -- @param #DESIGNATE self
   -- @param #number MaximumMarkings Maximum markings FACs will do, per designated target group.
   -- @return #DESIGNATE
