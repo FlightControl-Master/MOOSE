@@ -10135,8 +10135,8 @@ function OPSGROUP:_CheckDamage()
       self:ElementDamaged(element)
       damaged=true
     end
-	
-	end
+  
+  end
 
   end
 
@@ -11784,7 +11784,7 @@ function OPSGROUP:_UpdatePosition()
     self.positionLast=self.position or self:GetVec3()
     self.headingLast=self.heading or self:GetHeading()
     self.orientXLast=self.orientX or self:GetOrientationX()
-	self.velocityLast=self.velocity or self.group:GetVelocityMPS()
+  self.velocityLast=self.velocity or self.group:GetVelocityMPS()
 
     -- Current state.
     self.position=self:GetVec3()
@@ -12438,18 +12438,18 @@ function OPSGROUP:GetAmmoUnit(unit, display)
   if ammotable then
 
     local weapons=#ammotable
-	
-	--self:I(ammotable)
+  
+  --self:I(ammotable)
 
     -- Loop over all weapons.
     for w=1,weapons do
 
       -- Number of current weapon.
       local Nammo=ammotable[w]["count"]
-	  
-	  -- Range in meters. Seems only to exist for missiles (not shells).
-	  local rmin=ammotable[w]["desc"]["rangeMin"] or 0
-	  local rmax=ammotable[w]["desc"]["rangeMaxAltMin"] or 0
+    
+    -- Range in meters. Seems only to exist for missiles (not shells).
+    local rmin=ammotable[w]["desc"]["rangeMin"] or 0
+    local rmax=ammotable[w]["desc"]["rangeMaxAltMin"] or 0
 
       -- Type name of current weapon.
       local Tammo=ammotable[w]["desc"]["typeName"]
@@ -12713,7 +12713,7 @@ function OPSGROUP:_AddElementByName(unitname)
     element.gid=element.DCSunit:getNumber()
     element.uid=element.DCSunit:getID()
     --element.group=unit:GetGroup()
-	  element.controller=element.DCSunit:getController()
+    element.controller=element.DCSunit:getController()
     element.Nhit=0
     element.opsgroup=self
 
