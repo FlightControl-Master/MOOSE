@@ -315,7 +315,7 @@ do -- SETTINGS
   -- @param #SETTINGS self
   -- @return #boolean true if imperial.
   function SETTINGS:IsImperial()
-    return (self.Metric ~= nil and self.Metric == false) or (self.Metric == nil and _SETTINGS:IsMetric())
+    return (self.Metric ~= nil and self.Metric == false) or (self.Metric == nil and _SETTINGS:IsImperial())
   end
 
   --- Sets the SETTINGS LL accuracy.
