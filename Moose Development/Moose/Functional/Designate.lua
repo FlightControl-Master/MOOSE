@@ -1193,8 +1193,8 @@ do -- DESIGNATE
 
     local MarkingCount = 0
     local MarkedTypes = {}
-    local ReportTypes = REPORT:New()
-    local ReportLaserCodes = REPORT:New()
+    --local ReportTypes = REPORT:New()
+    --local ReportLaserCodes = REPORT:New()
     
     TargetSetUnit:Flush( self )
 
@@ -1244,8 +1244,8 @@ do -- DESIGNATE
               if not Recce then
     
                 self:F( "Lasing..." )
-                self.RecceSet:Flush( self)
-    
+                --self.RecceSet:Flush( self)
+
                 for RecceGroupID, RecceGroup in pairs( self.RecceSet:GetSet() ) do
                   for UnitID, UnitData in pairs( RecceGroup:GetUnits() or {} ) do
     
@@ -1283,13 +1283,13 @@ do -- DESIGNATE
                           -- OK. We have assigned for the Recce a TargetUnit. We can exit the function.
                           MarkingCount = MarkingCount + 1
                           local TargetUnitType = TargetUnit:GetTypeName()
-                          --RecceUnit:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 
-                          --                             5, self.AttackSet, DesignateName )
+                          RecceUnit:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 
+                                                     10, self.AttackSet, DesignateName )
                           if not MarkedTypes[TargetUnitType] then
                             MarkedTypes[TargetUnitType] = true
-                            ReportTypes:Add(TargetUnitType)
+                            --ReportTypes:Add(TargetUnitType)
                           end
-                          ReportLaserCodes:Add(RecceUnit.LaserCode)
+                          --ReportLaserCodes:Add(RecceUnit.LaserCode)
                           return
                         end
                       else
@@ -1304,16 +1304,16 @@ do -- DESIGNATE
     
                         if Recce then
                           Recce:LaseOff()
-                          Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() "out of LOS. Cancelling lase!", 5, self.AttackSet, self.DesignateName )
+                          Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() "out of LOS. Cancelling lase!", 10, self.AttackSet, self.DesignateName )
                         end
                       else
                         --MarkingCount = MarkingCount + 1
                         local TargetUnitType = TargetUnit:GetTypeName()
                         if not MarkedTypes[TargetUnitType] then
                           MarkedTypes[TargetUnitType] = true
-                          ReportTypes:Add(TargetUnitType)
+                          --ReportTypes:Add(TargetUnitType)
                         end
-                        ReportLaserCodes:Add(RecceUnit.LaserCode)
+                        --ReportLaserCodes:Add(RecceUnit.LaserCode)
                       end  
                     end
                   end
@@ -1323,19 +1323,19 @@ do -- DESIGNATE
                 local TargetUnitType = TargetUnit:GetTypeName()
                 if not MarkedTypes[TargetUnitType] then
                   MarkedTypes[TargetUnitType] = true
-                  ReportTypes:Add(TargetUnitType)
+                  --ReportTypes:Add(TargetUnitType)
                 end
-                ReportLaserCodes:Add(Recce.LaserCode)
-                --Recce:MessageToSetGroup( self.DesignateName .. ": Marking " .. TargetUnit:GetTypeName() .. " with laser " .. Recce.LaserCode .. ".", 5, self.AttackSet )
+                --ReportLaserCodes:Add(Recce.LaserCode)
+                Recce:MessageToSetGroup( self.DesignateName .. ": Marking " .. TargetUnit:GetTypeName() .. " with laser " .. Recce.LaserCode .. ".", 10, self.AttackSet )
               end
             end
           end
         end
       )
 
-      local MarkedTypesText = ReportTypes:Text(', ')
-      local MarkedLaserCodesText = ReportLaserCodes:Text(', ')
-      self.CC:GetPositionable():MessageToSetGroup( "Marking " .. MarkingCount .. " x "  .. MarkedTypesText .. ", code " .. MarkedLaserCodesText .. ".", 5, self.AttackSet, self.DesignateName )
+      --local MarkedTypesText = ReportTypes:Text(', ')
+      --local MarkedLaserCodesText = ReportLaserCodes:Text(', ')
+      --self.CC:GetPositionable():MessageToSetGroup( "Marking " .. MarkingCount .. " x "  .. MarkedTypesText .. ", code " .. MarkedLaserCodesText .. ".", 5, self.AttackSet, self.DesignateName )
   
       self:__Lasing( -self.LaseDuration, Index, Duration, LaserCodeRequested )
       
