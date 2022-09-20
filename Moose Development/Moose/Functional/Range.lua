@@ -833,7 +833,7 @@ function RANGE:onafterStart()
   end
 
   -- Init range control.
-  if self.rangecontrolfreq then
+  if self.rangecontrolfreq and not self.useSRS then
 
     -- Radio queue.
     self.rangecontrol = RADIOQUEUE:New( self.rangecontrolfreq, nil, self.rangename )
@@ -859,7 +859,7 @@ function RANGE:onafterStart()
     self.rangecontrol:Start( 1, 0.1 )
 
     -- Init range control.
-    if self.instructorfreq then
+    if self.instructorfreq and not self.useSRS then
 
       -- Radio queue.
       self.instructor = RADIOQUEUE:New( self.instructorfreq, nil, self.rangename )
@@ -1177,7 +1177,88 @@ function RANGE:TrackMissilesOFF()
   return self
 end
 
---- Enable range control and set frequency.
+--- Use SRS Simple-Text-To-Speech for transmissions. No sound files necessary.
+-- @param #RANGE self
+-- @param #string PathToSRS Path to SRS directory.
+-- @param #number Coalition Coalition side, e.g. coalition.side.BLUE or coalition.side.RED
+-- @param #number Frequency Frequency to use, defaults to 256 (same as rangecontrol)
+-- @param #number Modulation Modulation to use, defaults to radio.modulation.AM
+-- @param #number Port SRS port. Default 5002.
+-- @param #number Volume Volume, between 0.0 and 1.0. Defaults to 1.0
+-- @param #string PathToGoogleKey Path to Google TTS credentials.
+-- @return #RANGE self
+function RANGE:SetSRS(PathToSRS, Coalition, Frequency, Modulation, Port, Volume, PathToGoogleKey)
+  if PathToSRS then
+  
+    self.useSRS=true
+    
+    self.controlmsrs=MSRS:New(PathToSRS, Frequency or 256, Modulation or radio.modulation.AM, Volume or 1.0)
+    self.controlmsrs:SetPort(Port)
+    self.controlmsrs:SetCoalition(Coalition or coalition.side.BLUE)
+    self.controlmsrs:SetLabel("RANGEC")
+    self.controlsrsQ = MSRSQUEUE:New("CONTROL")
+    
+    self.instructmsrs=MSRS:New(PathToSRS, Frequency or 305, Modulation or radio.modulation.AM, Volume or 1.0)
+    self.instructmsrs:SetPort(Port)
+    self.instructmsrs:SetCoalition(Coalition or coalition.side.BLUE)
+    self.instructmsrs:SetLabel("RANGEI")
+    self.instructsrsQ = MSRSQUEUE:New("INSTRUCT")
+    
+  else
+    self:E(self.lid..string.format("ERROR: No SRS path specified!"))
+  end
+  return self
+end
+
+--- (SRS) Set range control frequency and voice.
+-- @param #RANGE self
+-- @param #number frequency Frequency in MHz. Default 256 MHz.
+-- @param #number modulation Modulation, defaults to radio.modulation.AM.
+-- @param #string voice Voice.
+-- @param #string culture Culture, defaults to "en-US".
+-- @param #string gender Gender, defaults to "female".
+-- @param #string relayunitname Name of the unit used for transmission location.
+-- @return #RANGE self
+function RANGE:SetSRSRangeControl( frequency, modulation, voice, culture, gender, relayunitname )
+  self.rangecontrolfreq = frequency or 256
+  self.controlmsrs:SetFrequencies(self.rangecontrolfreq)
+  self.controlmsrs:SetModulations(modulation or radio.modulation.AM)
+  self.controlmsrs:SetVoice(voice)
+  self.controlmsrs:SetCulture(culture or "en-US")
+  self.controlmsrs:SetGender(gender or "female")
+  if relayunitname then
+    local unit = UNIT:FindByName(relayunitname)
+    local Coordinate = unit:GetCoordinate()
+    self.controlmsrs:SetCoordinate(Coordinate)
+  end
+  return self
+end
+
+--- (SRS) Set range instructor frequency and voice.
+-- @param #RANGE self
+-- @param #number frequency Frequency in MHz. Default 305 MHz.
+-- @param #number modulation Modulation, defaults to radio.modulation.AM.
+-- @param #string voice Voice.
+-- @param #string culture Culture, defaults to "en-US".
+-- @param #string gender Gender, defaults to "male".
+-- @param #string relayunitname Name of the unit used for transmission location.
+-- @return #RANGE self
+function RANGE:SetSRSRangeInstructor( frequency, modulation, voice, culture, gender, relayunitname )
+  self.instructorfreq = frequency or 305
+  self.instructmsrs:SetFrequencies(self.instructorfreq)
+  self.instructmsrs:SetModulations(modulation or radio.modulation.AM)
+  self.instructmsrs:SetVoice(voice)
+  self.instructmsrs:SetCulture(culture or "en-US")
+  self.instructmsrs:SetGender(gender or "male")
+  if relayunitname then
+    local unit = UNIT:FindByName(relayunitname)
+    local Coordinate = unit:GetCoordinate()
+    self.instructmsrs:SetCoordinate(Coordinate)
+  end
+  return self
+end
+
+--- Enable range control and set frequency (non-SRS).
 -- @param #RANGE self
 -- @param #number frequency Frequency in MHz. Default 256 MHz.
 -- @param #string relayunitname Name of the unit used for transmission.
@@ -1188,7 +1269,7 @@ function RANGE:SetRangeControl( frequency, relayunitname )
   return self
 end
 
---- Enable instructor radio and set frequency.
+--- Enable instructor radio and set frequency (non-SRS).
 -- @param #RANGE self
 -- @param #number frequency Frequency in MHz. Default 305 MHz.
 -- @param #string relayunitname Name of the unit used for transmission.
