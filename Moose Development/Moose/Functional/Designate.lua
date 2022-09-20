@@ -912,8 +912,8 @@ do -- DESIGNATE
           for DesignateIndex, Designating in pairs( self.Designating ) do
             local DetectedItem = DetectedItems[DesignateIndex]
             if DetectedItem then
-              local Report = self.Detection:DetectedItemReportSummary( DetectedItem, AttackGroup ):Text( ", " )
-              DetectedReport:Add( string.rep( "-", 140 ) )
+              local Report = self.Detection:DetectedItemReportSummary( DetectedItem, AttackGroup, nil, true ):Text( ", " )
+              DetectedReport:Add( string.rep( "-", 40 ) )
               DetectedReport:Add( " - " .. Report )
               if string.find( Designating, "L" ) then
                 DetectedReport:Add( " - " .. "Lasing Targets" )

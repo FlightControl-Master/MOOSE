@@ -2152,8 +2152,9 @@ do -- DETECTION_UNITS
   -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
   -- @param Wrapper.Group#GROUP AttackGroup The group to generate the report for.
   -- @param Core.Settings#SETTINGS Settings Message formatting settings to use.
+  -- @param #boolean ForceA2GCoordinate Set creation of A2G coordinate
   -- @return Core.Report#REPORT The report of the detection items.
-  function DETECTION_UNITS:DetectedItemReportSummary( DetectedItem, AttackGroup, Settings )
+  function DETECTION_UNITS:DetectedItemReportSummary( DetectedItem, AttackGroup, Settings, ForceA2GCoordinate )
     self:F( { DetectedItem = DetectedItem } )
 
     local DetectedItemID = self:GetDetectedItemID( DetectedItem )
@@ -2188,7 +2189,11 @@ do -- DETECTION_UNITS
       -- TODO: solve Index reference
       local DetectedItemCoordinate = self:GetDetectedItemCoordinate( DetectedItem )
       local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup, Settings )
-
+      
+      if ForceA2GCoordinate then
+        DetectedItemCoordText = DetectedItemCoordinate:ToStringA2G(AttackGroup,Settings)
+      end
+      
       local ThreatLevelA2G = self:GetDetectedItemThreatLevel( DetectedItem )
 
       local Report = REPORT:New()
