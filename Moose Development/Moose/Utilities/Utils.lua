@@ -2332,7 +2332,7 @@ function UTILS.LoadSetOfGroups(Path,Filename,Spawn)
       local data = { groupname=groupname, size=size, coordinate=coordinate }
       table.insert(datatable,data)
       if spawn then
-        local group = SPAWN:New(groupname)
+        local group = SPAWN:New(template)
           :InitDelayOff()
           :OnSpawnGroup(
             function(spwndgrp)
