@@ -745,7 +745,7 @@ end
 -- @return #ATIS self
 function ATIS:SetSoundfilesPath( path )
   self.soundpath = tostring( path or "ATIS Soundfiles/" )
-  self:I( self.lid .. string.format( "Setting sound files path to %s", self.soundpath ) )
+  self:T( self.lid .. string.format( "Setting sound files path to %s", self.soundpath ) )
   return self
 end
 
@@ -756,7 +756,7 @@ end
 -- @return #ATIS self
 function ATIS:SetRadioRelayUnitName( unitname )
   self.relayunitname = unitname
-  self:I( self.lid .. string.format( "Setting radio relay unit to %s", self.relayunitname ) )
+  self:T( self.lid .. string.format( "Setting radio relay unit to %s", self.relayunitname ) )
   return self
 end
 
@@ -851,7 +851,7 @@ function ATIS:SetRunwayHeadingsMagnetic( headings )
     end
 
     -- Add runway heading to table.
-    self:I( self.lid .. string.format( "Adding user specified magnetic runway heading %s", heading ) )
+    self:T( self.lid .. string.format( "Adding user specified magnetic runway heading %s", heading ) )
     table.insert( self.runwaymag, heading )
 
     local h = self:GetRunwayWithoutLR( heading )
@@ -873,7 +873,7 @@ function ATIS:SetRunwayHeadingsMagnetic( headings )
     end
 
     -- Add inverse runway heading to table.
-    self:I( self.lid .. string.format( "Adding user specified magnetic runway heading %s (inverse)", head2 ) )
+    self:T( self.lid .. string.format( "Adding user specified magnetic runway heading %s (inverse)", head2 ) )
     table.insert( self.runwaymag, head2 )
   end
 
@@ -1245,7 +1245,7 @@ function ATIS:onafterStatus( From, Event, To )
   else
     text = text .. string.format( ", Relay unit=%s (alive=%s)", tostring( self.relayunitname ), relayunitstatus )
   end
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   self:__Status( -60 )
 end
@@ -2433,7 +2433,7 @@ end
 -- @return #string Runway heading without left or right, *e.g.* "31".
 function ATIS:GetRunwayWithoutLR( runway )
   local rwywo = runway:gsub( "%D+", "" )
-  -- self:I(string.format("FF runway=%s ==> rwywo=%s", runway, rwywo))
+  -- self:T(string.format("FF runway=%s ==> rwywo=%s", runway, rwywo))
   return rwywo
 end
 

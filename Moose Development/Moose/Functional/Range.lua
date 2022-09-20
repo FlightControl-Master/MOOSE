@@ -45,7 +45,8 @@
 -- ### Author: **[funkyfranky](https://forums.eagle.ru/member.php?u=115026)**
 --
 -- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536), [Ciribob](https://forums.eagle.ru/member.php?u=112175)
---
+-- ### SRS Additions: Applevangelist
+-- 
 -- ===
 -- @module Functional.Range
 -- @image Range.JPG
@@ -101,6 +102,10 @@
 -- @field #boolean targetsheet If true, players can save their target sheets. Rangeboss will not work if targetsheets do not save.
 -- @field #string targetpath Path where to save the target sheets.
 -- @field #string targetprefix File prefix for target sheet files.
+-- @field Sound.SRS#MSRS controlmsrs
+-- @field Sound.SRS#MSRSQUEUE controlsrsQ
+-- @field Sound.SRS#MSRS instructmsrs
+-- @field Sound.SRS#MSRSQUEUE instructsrsQ
 -- @extends Core.Fsm#FSM
 
 --- *Don't only practice your art, but force your way into its secrets; art deserves that, for it and knowledge can raise man to the Divine.* - Ludwig van Beethoven
@@ -224,6 +229,11 @@
 -- The range control can be enabled via the @{#RANGE.SetRangeControl}(*frequency*) functions, where *frequency* is the AM frequency in MHz.
 --
 -- By default, the sound files are placed in the "Range Soundfiles/" folder inside the mission (.miz) file. Another folder can be specified via the @{#RANGE.SetSoundfilesPath}(*path*) function.
+--
+-- ## Voice output via SRS
+-- 
+-- Alternatively, the voice output can be fully done via SRS, **no sound file additions needed**. Set up SRS with @{#RANGE.SetSRS}(). Range control and instructor frequencies and voices can then be
+-- set via @{#RANGE.SetSRSRangeControl}() and @{#RANGE.SetSRSRangeInstructor}()
 --
 -- # Persistence
 --
@@ -568,7 +578,7 @@ RANGE.MenuF10Root = nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version = "2.4.0"
+RANGE.version = "2.5.0"
 
 -- TODO list:
 -- TODO: Verbosity level for messages.
@@ -833,7 +843,7 @@ function RANGE:onafterStart()
   end
 
   -- Init range control.
-  if self.rangecontrolfreq then
+  if self.rangecontrolfreq and not self.useSRS then
 
     -- Radio queue.
     self.rangecontrol = RADIOQUEUE:New( self.rangecontrolfreq, nil, self.rangename )
@@ -859,7 +869,7 @@ function RANGE:onafterStart()
     self.rangecontrol:Start( 1, 0.1 )
 
     -- Init range control.
-    if self.instructorfreq then
+    if self.instructorfreq and not self.useSRS then
 
       -- Radio queue.
       self.instructor = RADIOQUEUE:New( self.instructorfreq, nil, self.rangename )
@@ -1177,7 +1187,91 @@ function RANGE:TrackMissilesOFF()
   return self
 end
 
---- Enable range control and set frequency.
+--- Use SRS Simple-Text-To-Speech for transmissions. No sound files necessary.
+-- @param #RANGE self
+-- @param #string PathToSRS Path to SRS directory.
+-- @param #number Port SRS port. Default 5002.
+-- @param #number Coalition Coalition side, e.g. coalition.side.BLUE or coalition.side.RED
+-- @param #number Frequency Frequency to use, defaults to 256 (same as rangecontrol)
+-- @param #number Modulation Modulation to use, defaults to radio.modulation.AM
+-- @param #number Volume Volume, between 0.0 and 1.0. Defaults to 1.0
+-- @param #string PathToGoogleKey Path to Google TTS credentials.
+-- @return #RANGE self
+function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume, PathToGoogleKey)
+  if PathToSRS then
+  
+    self.useSRS=true
+    
+    self.controlmsrs=MSRS:New(PathToSRS, Frequency or 256, Modulation or radio.modulation.AM, Volume or 1.0)
+    self.controlmsrs:SetPort(Port)
+    self.controlmsrs:SetCoalition(Coalition or coalition.side.BLUE)
+    self.controlmsrs:SetLabel("RANGEC")
+    self.controlsrsQ = MSRSQUEUE:New("CONTROL")
+    
+    self.instructmsrs=MSRS:New(PathToSRS, Frequency or 305, Modulation or radio.modulation.AM, Volume or 1.0)
+    self.instructmsrs:SetPort(Port)
+    self.instructmsrs:SetCoalition(Coalition or coalition.side.BLUE)
+    self.instructmsrs:SetLabel("RANGEI")
+    self.instructsrsQ = MSRSQUEUE:New("INSTRUCT")
+    
+  else
+    self:E(self.lid..string.format("ERROR: No SRS path specified!"))
+  end
+  return self
+end
+
+--- (SRS) Set range control frequency and voice.
+-- @param #RANGE self
+-- @param #number frequency Frequency in MHz. Default 256 MHz.
+-- @param #number modulation Modulation, defaults to radio.modulation.AM.
+-- @param #string voice Voice.
+-- @param #string culture Culture, defaults to "en-US".
+-- @param #string gender Gender, defaults to "female".
+-- @param #string relayunitname Name of the unit used for transmission location.
+-- @return #RANGE self
+function RANGE:SetSRSRangeControl( frequency, modulation, voice, culture, gender, relayunitname )
+  self.rangecontrolfreq = frequency or 256
+  self.controlmsrs:SetFrequencies(self.rangecontrolfreq)
+  self.controlmsrs:SetModulations(modulation or radio.modulation.AM)
+  self.controlmsrs:SetVoice(voice)
+  self.controlmsrs:SetCulture(culture or "en-US")
+  self.controlmsrs:SetGender(gender or "female")
+  self.rangecontrol = true
+  if relayunitname then
+    local unit = UNIT:FindByName(relayunitname)
+    local Coordinate = unit:GetCoordinate()
+    self.rangecontrolrelayname = relayunitname
+  end
+  return self
+end
+
+--- (SRS) Set range instructor frequency and voice.
+-- @param #RANGE self
+-- @param #number frequency Frequency in MHz. Default 305 MHz.
+-- @param #number modulation Modulation, defaults to radio.modulation.AM.
+-- @param #string voice Voice.
+-- @param #string culture Culture, defaults to "en-US".
+-- @param #string gender Gender, defaults to "male".
+-- @param #string relayunitname Name of the unit used for transmission location.
+-- @return #RANGE self
+function RANGE:SetSRSRangeInstructor( frequency, modulation, voice, culture, gender, relayunitname )
+  self.instructorfreq = frequency or 305
+  self.instructmsrs:SetFrequencies(self.instructorfreq)
+  self.instructmsrs:SetModulations(modulation or radio.modulation.AM)
+  self.instructmsrs:SetVoice(voice)
+  self.instructmsrs:SetCulture(culture or "en-US")
+  self.instructmsrs:SetGender(gender or "male")
+  self.instructor = true
+  if relayunitname then
+    local unit = UNIT:FindByName(relayunitname)
+    local Coordinate = unit:GetCoordinate()
+    self.instructmsrs:SetCoordinate(Coordinate)
+    self.instructorrelayname = relayunitname
+  end
+  return self
+end
+
+--- Enable range control and set frequency (non-SRS).
 -- @param #RANGE self
 -- @param #number frequency Frequency in MHz. Default 256 MHz.
 -- @param #string relayunitname Name of the unit used for transmission.
@@ -1188,7 +1282,7 @@ function RANGE:SetRangeControl( frequency, relayunitname )
   return self
 end
 
---- Enable instructor radio and set frequency.
+--- Enable instructor radio and set frequency (non-SRS).
 -- @param #RANGE self
 -- @param #number frequency Frequency in MHz. Default 305 MHz.
 -- @param #string relayunitname Name of the unit used for transmission.
@@ -1810,7 +1904,11 @@ function RANGE:OnEventShot( EventData )
   if EventData.IniDCSUnit == nil then
     return
   end
-
+  
+  if EventData.IniPlayerName == nil then
+    return
+  end
+  
   -- Weapon data.
   local _weapon = EventData.Weapon:getTypeName() -- should be the same as Event.WeaponTypeName
   local _weaponStrArray = UTILS.Split( _weapon, "%." )
@@ -2003,7 +2101,11 @@ function RANGE:OnEventShot( EventData )
 
           if self.rangecontrol then
             -- weapon impacted too far from the nearest target! No Score!
-            self.rangecontrol:NewTransmission( RANGE.Sound.RCWeaponImpactedTooFar.filename, RANGE.Sound.RCWeaponImpactedTooFar.duration, self.soundpath, nil, nil, _message, self.subduration )
+            if self.useSRS then
+              self.controlsrsQ:NewTransmission(_message,nil,self.controlmsrs,nil,1)
+            else
+              self.rangecontrol:NewTransmission( RANGE.Sound.RCWeaponImpactedTooFar.filename, RANGE.Sound.RCWeaponImpactedTooFar.duration, self.soundpath, nil, nil, _message, self.subduration )
+            end
           end
 
         else
@@ -2086,19 +2188,26 @@ end
 function RANGE:onafterEnterRange( From, Event, To, player )
 
   if self.instructor and self.rangecontrol then
-
-    -- Range control radio frequency split.
-    local RF = UTILS.Split( string.format( "%.3f", self.rangecontrolfreq ), "." )
-
-    -- Radio message that player entered the range
-    -- You entered the bombing range. For hit assessment, contact the range controller.
-    self.instructor:NewTransmission( RANGE.Sound.IREnterRange.filename, RANGE.Sound.IREnterRange.duration, self.soundpath )
-    self.instructor:Number2Transmission( RF[1] )
-    if tonumber( RF[2] ) > 0 then
-      self.instructor:NewTransmission( RANGE.Sound.IRDecimal.filename, RANGE.Sound.IRDecimal.duration, self.soundpath )
-      self.instructor:Number2Transmission( RF[2] )
+    
+    if self.useSRS then
+      local text = string.format("You entered the bombing range. For hit assessment, contact the range controller at %.3f MHz", self.rangecontrolfreq)
+      local ttstext = string.format("You entered the bombing range. For hit assessment, contact the range controller at %.3f mega hertz.", self.rangecontrolfreq)
+      local group = player.client:GetGroup()
+      self.instructsrsQ:NewTransmission(ttstext,nil,self.instructmsrs,nil,1,{group},text,10)
+    else
+      -- Range control radio frequency split.
+      local RF = UTILS.Split( string.format( "%.3f", self.rangecontrolfreq ), "." )
+  
+      -- Radio message that player entered the range
+      -- You entered the bombing range. For hit assessment, contact the range controller at xy MHz
+      self.instructor:NewTransmission( RANGE.Sound.IREnterRange.filename, RANGE.Sound.IREnterRange.duration, self.soundpath )
+      self.instructor:Number2Transmission( RF[1] )
+      if tonumber( RF[2] ) > 0 then
+        self.instructor:NewTransmission( RANGE.Sound.IRDecimal.filename, RANGE.Sound.IRDecimal.duration, self.soundpath )
+        self.instructor:Number2Transmission( RF[2] )
+      end
+      self.instructor:NewTransmission( RANGE.Sound.IRMegaHertz.filename, RANGE.Sound.IRMegaHertz.duration, self.soundpath )
     end
-    self.instructor:NewTransmission( RANGE.Sound.IRMegaHertz.filename, RANGE.Sound.IRMegaHertz.duration, self.soundpath )
   end
 
 end
@@ -2113,7 +2222,13 @@ function RANGE:onafterExitRange( From, Event, To, player )
 
   if self.instructor then
     -- You left the bombing range zone. Have a nice day!
-    self.instructor:NewTransmission( RANGE.Sound.IRExitRange.filename, RANGE.Sound.IRExitRange.duration, self.soundpath )
+    if self.useSRS then
+      local text = "You left the bombing range zone. Have a nice day!"
+      local group = player.client:GetGroup()
+      self.instructsrsQ:NewTransmission(text,nil,self.instructmsrs,nil,1,{group},text,10)
+    else
+      self.instructor:NewTransmission( RANGE.Sound.IRExitRange.filename, RANGE.Sound.IRExitRange.duration, self.soundpath )
+    end
   end
 
 end
@@ -2143,32 +2258,37 @@ function RANGE:onafterImpact( From, Event, To, result, player )
   text = text .. string.format( " %s hit.", result.quality )
 
   if self.rangecontrol then
-    self.rangecontrol:NewTransmission( RANGE.Sound.RCImpact.filename, RANGE.Sound.RCImpact.duration, self.soundpath, nil, nil, text, self.subduration )
-    self.rangecontrol:Number2Transmission( string.format( "%03d", result.radial ), nil, 0.1 )
-    self.rangecontrol:NewTransmission( RANGE.Sound.RCDegrees.filename, RANGE.Sound.RCDegrees.duration, self.soundpath )
-    self.rangecontrol:NewTransmission( RANGE.Sound.RCFor.filename, RANGE.Sound.RCFor.duration, self.soundpath )
-    self.rangecontrol:Number2Transmission( string.format( "%d", UTILS.MetersToFeet( result.distance ) ) )
-    self.rangecontrol:NewTransmission( RANGE.Sound.RCFeet.filename, RANGE.Sound.RCFeet.duration, self.soundpath )
-    if result.quality == "POOR" then
-      self.rangecontrol:NewTransmission( RANGE.Sound.RCPoorHit.filename, RANGE.Sound.RCPoorHit.duration, self.soundpath, nil, 0.5 )
-    elseif result.quality == "INEFFECTIVE" then
-      self.rangecontrol:NewTransmission( RANGE.Sound.RCIneffectiveHit.filename, RANGE.Sound.RCIneffectiveHit.duration, self.soundpath, nil, 0.5 )
-    elseif result.quality == "GOOD" then
-      self.rangecontrol:NewTransmission( RANGE.Sound.RCGoodHit.filename, RANGE.Sound.RCGoodHit.duration, self.soundpath, nil, 0.5 )
-    elseif result.quality == "EXCELLENT" then
-      self.rangecontrol:NewTransmission( RANGE.Sound.RCExcellentHit.filename, RANGE.Sound.RCExcellentHit.duration, self.soundpath, nil, 0.5 )
+  
+    if self.useSRS then
+      local group = player.client:GetGroup()
+      self.controlsrsQ:NewTransmission(text,nil,self.controlmsrs,nil,1,{group},text,10)
+    else
+      self.rangecontrol:NewTransmission( RANGE.Sound.RCImpact.filename, RANGE.Sound.RCImpact.duration, self.soundpath, nil, nil, text, self.subduration )
+      self.rangecontrol:Number2Transmission( string.format( "%03d", result.radial ), nil, 0.1 )
+      self.rangecontrol:NewTransmission( RANGE.Sound.RCDegrees.filename, RANGE.Sound.RCDegrees.duration, self.soundpath )
+      self.rangecontrol:NewTransmission( RANGE.Sound.RCFor.filename, RANGE.Sound.RCFor.duration, self.soundpath )
+      self.rangecontrol:Number2Transmission( string.format( "%d", UTILS.MetersToFeet( result.distance ) ) )
+      self.rangecontrol:NewTransmission( RANGE.Sound.RCFeet.filename, RANGE.Sound.RCFeet.duration, self.soundpath )
+      if result.quality == "POOR" then
+        self.rangecontrol:NewTransmission( RANGE.Sound.RCPoorHit.filename, RANGE.Sound.RCPoorHit.duration, self.soundpath, nil, 0.5 )
+      elseif result.quality == "INEFFECTIVE" then
+        self.rangecontrol:NewTransmission( RANGE.Sound.RCIneffectiveHit.filename, RANGE.Sound.RCIneffectiveHit.duration, self.soundpath, nil, 0.5 )
+      elseif result.quality == "GOOD" then
+        self.rangecontrol:NewTransmission( RANGE.Sound.RCGoodHit.filename, RANGE.Sound.RCGoodHit.duration, self.soundpath, nil, 0.5 )
+      elseif result.quality == "EXCELLENT" then
+        self.rangecontrol:NewTransmission( RANGE.Sound.RCExcellentHit.filename, RANGE.Sound.RCExcellentHit.duration, self.soundpath, nil, 0.5 )
+      end
     end
-
   end
 
   -- Unit.
-  if player.unitname then
+  if player.unitname and not self.useSRS then
   
     -- Get unit.
     local unit = UNIT:FindByName( player.unitname )
   
     -- Send message.
-    self:_DisplayMessageToGroup( unit, text, nil, true )
+      self:_DisplayMessageToGroup( unit, text, nil, true )
     self:T( self.id .. text )
   end
 
@@ -2680,7 +2800,7 @@ function RANGE:_DisplayRangeInfo( _unitname )
 
   -- Check if we have a player.
   if unit and playername then
-
+    self:I(playername)
     -- Message text.
     local text = ""
 
@@ -2749,7 +2869,8 @@ function RANGE:_DisplayRangeInfo( _unitname )
         if self.instructorrelayname then
           local relay = UNIT:FindByName( self.instructorrelayname )
           if relay then
-            alive = tostring( relay:IsAlive() )
+            --alive = tostring( relay:IsAlive() )
+            alive = relay:IsAlive() and "ok" or "N/A"
           end
         end
         text = text .. string.format( "Instructor %.3f MHz (Relay=%s)\n", self.instructorfreq, alive )
@@ -2760,6 +2881,7 @@ function RANGE:_DisplayRangeInfo( _unitname )
           local relay = UNIT:FindByName( self.rangecontrolrelayname )
           if relay then
             alive = tostring( relay:IsAlive() )
+            alive = relay:IsAlive() and "ok" or "N/A"
           end
         end
         text = text .. string.format( "Control %.3f MHz (Relay=%s)\n", self.rangecontrolfreq, alive )
@@ -3044,12 +3166,18 @@ function RANGE:_CheckInZone( _unitName )
 
           -- Send message.
           self:_DisplayMessageToGroup( _unit, _msg, nil, true )
-
+          
           if self.rangecontrol then
-            -- You left the strafing zone too quickly! No score!
-            self.rangecontrol:NewTransmission( RANGE.Sound.RCLeftStrafePitTooQuickly.filename, RANGE.Sound.RCLeftStrafePitTooQuickly.duration, self.soundpath )
+            if self.useSRS then
+              local group = _unit:GetGroup()
+              local text = "You left the strafing zone too quickly! No score!"
+              --self.controlsrsQ:NewTransmission(text,nil,self.controlmsrs,nil,1,{group},text,10)
+              self.controlsrsQ:NewTransmission(text,nil,self.controlmsrs,nil,1)
+            else
+              -- You left the strafing zone too quickly! No score!
+              self.rangecontrol:NewTransmission( RANGE.Sound.RCLeftStrafePitTooQuickly.filename, RANGE.Sound.RCLeftStrafePitTooQuickly.duration, self.soundpath )
+            end
           end
-
         else
 
           -- Get current ammo.
@@ -3113,10 +3241,13 @@ function RANGE:_CheckInZone( _unitName )
 
           -- Message text.
           local _text = string.format( "%s, hits on target %s: %d", self:_myname( _unitName ), _result.zone.name, _result.hits )
+          local ttstext = string.format( "%s, hits on target %s: %d.", self:_myname( _unitName ), _result.zone.name, _result.hits )
           if shots and accur then
             _text = _text .. string.format( "\nTotal rounds fired %d. Accuracy %.1f %%.", shots, accur )
+            ttstext = ttstext .. string.format( ". Total rounds fired %d. Accuracy %.1f percent.", shots, accur )
           end
           _text = _text .. string.format( "\n%s", resulttext )
+          ttstext = ttstext .. string.format( " %s", resulttext )
 
           -- Send message.
           self:_DisplayMessageToGroup( _unit, _text )
@@ -3148,16 +3279,20 @@ function RANGE:_CheckInZone( _unitName )
 
           -- Voice over.
           if self.rangecontrol then
-            self.rangecontrol:NewTransmission( RANGE.Sound.RCHitsOnTarget.filename, RANGE.Sound.RCHitsOnTarget.duration, self.soundpath )
-            self.rangecontrol:Number2Transmission( string.format( "%d", _result.hits ) )
-            if shots and accur then
-              self.rangecontrol:NewTransmission( RANGE.Sound.RCTotalRoundsFired.filename, RANGE.Sound.RCTotalRoundsFired.duration, self.soundpath, nil, 0.2 )
-              self.rangecontrol:Number2Transmission( string.format( "%d", shots ), nil, 0.2 )
-              self.rangecontrol:NewTransmission( RANGE.Sound.RCAccuracy.filename, RANGE.Sound.RCAccuracy.duration, self.soundpath, nil, 0.2 )
-              self.rangecontrol:Number2Transmission( string.format( "%d", UTILS.Round( accur, 0 ) ) )
-              self.rangecontrol:NewTransmission( RANGE.Sound.RCPercent.filename, RANGE.Sound.RCPercent.duration, self.soundpath )
+            if self.useSRS then
+              self.controlsrsQ:NewTransmission(ttstext,nil,self.controlmsrs,nil,1)
+            else
+              self.rangecontrol:NewTransmission( RANGE.Sound.RCHitsOnTarget.filename, RANGE.Sound.RCHitsOnTarget.duration, self.soundpath )
+              self.rangecontrol:Number2Transmission( string.format( "%d", _result.hits ) )
+              if shots and accur then
+                self.rangecontrol:NewTransmission( RANGE.Sound.RCTotalRoundsFired.filename, RANGE.Sound.RCTotalRoundsFired.duration, self.soundpath, nil, 0.2 )
+                self.rangecontrol:Number2Transmission( string.format( "%d", shots ), nil, 0.2 )
+                self.rangecontrol:NewTransmission( RANGE.Sound.RCAccuracy.filename, RANGE.Sound.RCAccuracy.duration, self.soundpath, nil, 0.2 )
+                self.rangecontrol:Number2Transmission( string.format( "%d", UTILS.Round( accur, 0 ) ) )
+                self.rangecontrol:NewTransmission( RANGE.Sound.RCPercent.filename, RANGE.Sound.RCPercent.duration, self.soundpath )
+              end
+              self.rangecontrol:NewTransmission( _sound.filename, _sound.duration, self.soundpath, nil, 0.5 )
             end
-            self.rangecontrol:NewTransmission( _sound.filename, _sound.duration, self.soundpath, nil, 0.5 )
           end
 
           -- Set strafe status to nil.
@@ -3196,7 +3331,11 @@ function RANGE:_CheckInZone( _unitName )
           local _msg = string.format( "%s, rolling in on strafe pit %s.", self:_myname( _unitName ), target.name )
 
           if self.rangecontrol then
-            self.rangecontrol:NewTransmission( RANGE.Sound.RCRollingInOnStrafeTarget.filename, RANGE.Sound.RCRollingInOnStrafeTarget.duration, self.soundpath )
+            if self.useSRS then
+              self.controlsrsQ:NewTransmission(_msg,nil,self.controlmsrs,nil,1)
+            else
+              self.rangecontrol:NewTransmission( RANGE.Sound.RCRollingInOnStrafeTarget.filename, RANGE.Sound.RCRollingInOnStrafeTarget.duration, self.soundpath )
+            end
           end
 
           -- Send message.
@@ -3923,6 +4062,7 @@ function RANGE:_GetPlayerUnitAndName( _unitName )
 
       self:T2( { DCSunit = DCSunit, unit = unit, playername = playername } )
       if DCSunit and unit and playername then
+        self:F2(playername)
         return unit, playername
       end
 
@@ -3939,13 +4079,22 @@ end
 -- @param #string unitname Name of the player unit.
 function RANGE:_myname( unitname )
   self:F2( unitname )
-
+  local pname = "Ghost 1 1"
   local unit = UNIT:FindByName( unitname )
+  if unit then
+    local grp = unit:GetGroup()
+    if grp then
+      pname = grp:GetCustomCallSign(true,true)
+    end
+  end  
+  --[[
   local pname = unit:GetPlayerName()
   -- local csign = unit:GetCallsign()
 
   -- return string.format("%s (%s)", csign, pname)
   return string.format( "%s", pname )
+  --]]
+  return pname
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

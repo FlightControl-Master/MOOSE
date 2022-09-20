@@ -1455,14 +1455,14 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
 
         --_spot:MarkToAll(string.format("Parking spot %d free=%s", parkingspot.TerminalID, tostring(not occupied)))
         if occupied then
-          self:I(string.format("%s: Parking spot id %d occupied.", airport, _termid))
+          self:T(string.format("%s: Parking spot id %d occupied.", airport, _termid))
         else
-          self:I(string.format("%s: Parking spot id %d free.", airport, _termid))
+          self:T(string.format("%s: Parking spot id %d free.", airport, _termid))
           if nvalid<_nspots then
             table.insert(validspots, {Coordinate=_spot, TerminalID=_termid})
           end
           nvalid=nvalid+1
-          self:I(string.format("%s: Parking spot id %d free. Nfree=%d/%d.", airport, _termid, nvalid,_nspots))
+          self:T(string.format("%s: Parking spot id %d free. Nfree=%d/%d.", airport, _termid, nvalid,_nspots))
         end
 
       end -- loop over units
@@ -1980,7 +1980,7 @@ function AIRBASE:SetActiveRunwayLanding(Name, PreferLeft)
   end
   
   if runway then
-    self:I(string.format("%s: Setting active runway for landing as %s", self.AirbaseName, self:GetRunwayName(runway)))
+    self:T(string.format("%s: Setting active runway for landing as %s", self.AirbaseName, self:GetRunwayName(runway)))
   else
     self:E("ERROR: Could not set the runway for landing!")
   end
@@ -2028,7 +2028,7 @@ function AIRBASE:SetActiveRunwayTakeoff(Name, PreferLeft)
   end
   
   if runway then
-    self:I(string.format("%s: Setting active runway for takeoff as %s", self.AirbaseName, self:GetRunwayName(runway)))
+    self:T(string.format("%s: Setting active runway for takeoff as %s", self.AirbaseName, self:GetRunwayName(runway)))
   else
     self:E("ERROR: Could not set the runway for takeoff!")
   end

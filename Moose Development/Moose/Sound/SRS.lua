@@ -143,6 +143,107 @@ MSRS = {
 -- @field #string version
 MSRS.version="0.1.0"
 
+--- Voices
+-- @type Voices
+MSRS.Voices = {
+  Microsoft = {
+    ["Hedda"] = "Microsoft Hedda Desktop", -- de-DE
+    ["Hazel"] = "Microsoft Hazel Desktop", -- en-GB
+    ["David"] = "Microsoft David Desktop", -- en-US
+    ["Zira"] = "Microsoft Zira Desktop", -- en-US
+    ["Hortense"] = "Microsoft Hortense Desktop", --fr-FR
+    },
+  Google = {
+    Standard = {
+       ["en-AU-Standard-A"] = 'en-AU-Standard-A', -- [1] FEMALE
+       ["en-AU-Standard-B"] = 'en-AU-Standard-B', -- [2] MALE
+       ["en-AU-Standard-C"] = 'en-AU-Standard-C', -- [3] FEMALE
+       ["en-AU-Standard-D"] = 'en-AU-Standard-D', -- [4] MALE
+       ["en-IN-Standard-A"] = 'en-IN-Standard-A', -- [5] FEMALE
+       ["en-IN-Standard-B"] = 'en-IN-Standard-B', -- [6] MALE
+       ["en-IN-Standard-C"] = 'en-IN-Standard-C', -- [7] MALE
+       ["en-IN-Standard-D"] = 'en-IN-Standard-D', -- [8] FEMALE
+       ["en-GB-Standard-A"] = 'en-GB-Standard-A', -- [9] FEMALE
+       ["en-GB-Standard-B"] = 'en-GB-Standard-B', -- [10] MALE
+       ["en-GB-Standard-C"] = 'en-GB-Standard-C', -- [11] FEMALE
+       ["en-GB-Standard-D"] = 'en-GB-Standard-D', -- [12] MALE
+       ["en-GB-Standard-F"] = 'en-GB-Standard-F', -- [13] FEMALE
+       ["en-US-Standard-A"] = 'en-US-Standard-A', -- [14] MALE
+       ["en-US-Standard-B"] = 'en-US-Standard-B', -- [15] MALE
+       ["en-US-Standard-C"] = 'en-US-Standard-C', -- [16] FEMALE
+       ["en-US-Standard-D"] = 'en-US-Standard-D', -- [17] MALE
+       ["en-US-Standard-E"] = 'en-US-Standard-E', -- [18] FEMALE
+       ["en-US-Standard-F"] = 'en-US-Standard-F', -- [19] FEMALE
+       ["en-US-Standard-G"] = 'en-US-Standard-G', -- [20] FEMALE
+       ["en-US-Standard-H"] = 'en-US-Standard-H', -- [21] FEMALE
+       ["en-US-Standard-I"] = 'en-US-Standard-I', -- [22] MALE
+       ["en-US-Standard-J"] = 'en-US-Standard-J', -- [23] MALE
+       ["fr-FR-Standard-A"] = "fr-FR-Standard-A", -- Female
+       ["fr-FR-Standard-B"] = "fr-FR-Standard-B", -- Male
+       ["fr-FR-Standard-C"] = "fr-FR-Standard-C", -- Female
+       ["fr-FR-Standard-D"] = "fr-FR-Standard-D", -- Male
+       ["fr-FR-Standard-E"] = "fr-FR-Standard-E", -- Female
+       ["de-DE-Standard-A"] = "de-DE-Standard-A", -- Female
+       ["de-DE-Standard-B"] = "de-DE-Standard-B", -- Male
+       ["de-DE-Standard-C"] = "de-DE-Standard-C", -- Female
+       ["de-DE-Standard-D"] = "de-DE-Standard-D", -- Male
+       ["de-DE-Standard-E"] = "de-DE-Standard-E", -- Male
+       ["de-DE-Standard-F"] = "de-DE-Standard-F", -- Female
+       ["es-ES-Standard-A"] = "es-ES-Standard-A", -- Female
+       ["es-ES-Standard-B"] = "es-ES-Standard-B", -- Male
+       ["es-ES-Standard-C"] = "es-ES-Standard-C", -- Female
+       ["es-ES-Standard-D"] = "es-ES-Standard-D", -- Female
+       ["it-IT-Standard-A"] = "it-IT-Standard-A", -- Female
+       ["it-IT-Standard-B"] = "it-IT-Standard-B", -- Female
+       ["it-IT-Standard-C"] = "it-IT-Standard-C", -- Male
+       ["it-IT-Standard-D"] = "it-IT-Standard-D", -- Male
+      },
+      Wavenet = {
+       ["en-AU-Wavenet-A"] = 'en-AU-Wavenet-A', -- [1] FEMALE
+       ["en-AU-Wavenet-B"] = 'en-AU-Wavenet-B', -- [2] MALE
+       ["en-AU-Wavenet-C"] = 'en-AU-Wavenet-C', -- [3] FEMALE
+       ["en-AU-Wavenet-D"] = 'en-AU-Wavenet-D', -- [4] MALE
+       ["en-IN-Wavenet-A"] = 'en-IN-Wavenet-A', -- [5] FEMALE
+       ["en-IN-Wavenet-B"] = 'en-IN-Wavenet-B', -- [6] MALE
+       ["en-IN-Wavenet-C"] = 'en-IN-Wavenet-C', -- [7] MALE
+       ["en-IN-Wavenet-D"] = 'en-IN-Wavenet-D', -- [8] FEMALE
+       ["en-GB-Wavenet-A"] = 'en-GB-Wavenet-A', -- [9] FEMALE
+       ["en-GB-Wavenet-B"] = 'en-GB-Wavenet-B', -- [10] MALE
+       ["en-GB-Wavenet-C"] = 'en-GB-Wavenet-C', -- [11] FEMALE
+       ["en-GB-Wavenet-D"] = 'en-GB-Wavenet-D', -- [12] MALE
+       ["en-GB-Wavenet-F"] = 'en-GB-Wavenet-F', -- [13] FEMALE
+       ["en-US-Wavenet-A"] = 'en-US-Wavenet-A', -- [14] MALE
+       ["en-US-Wavenet-B"] = 'en-US-Wavenet-B', -- [15] MALE
+       ["en-US-Wavenet-C"] = 'en-US-Wavenet-C', -- [16] FEMALE
+       ["en-US-Wavenet-D"] = 'en-US-Wavenet-D', -- [17] MALE
+       ["en-US-Wavenet-E"] = 'en-US-Wavenet-E', -- [18] FEMALE
+       ["en-US-Wavenet-F"] = 'en-US-Wavenet-F', -- [19] FEMALE
+       ["en-US-Wavenet-G"] = 'en-US-Wavenet-G', -- [20] FEMALE
+       ["en-US-Wavenet-H"] = 'en-US-Wavenet-H', -- [21] FEMALE
+       ["en-US-Wavenet-I"] = 'en-US-Wavenet-I', -- [22] MALE
+       ["en-US-Wavenet-J"] = 'en-US-Wavenet-J', -- [23] MALE
+       ["fr-FR-Wavenet-A"] = "fr-FR-Wavenet-A", -- Female
+       ["fr-FR-Wavenet-B"] = "fr-FR-Wavenet-B", -- Male
+       ["fr-FR-Wavenet-C"] = "fr-FR-Wavenet-C", -- Female
+       ["fr-FR-Wavenet-D"] = "fr-FR-Wavenet-D", -- Male
+       ["fr-FR-Wavenet-E"] = "fr-FR-Wavenet-E", -- Female
+       ["de-DE-Wavenet-A"] = "de-DE-Wavenet-A", -- Female
+       ["de-DE-Wavenet-B"] = "de-DE-Wavenet-B", -- Male
+       ["de-DE-Wavenet-C"] = "de-DE-Wavenet-C", -- Female
+       ["de-DE-Wavenet-D"] = "de-DE-Wavenet-D", -- Male
+       ["de-DE-Wavenet-E"] = "de-DE-Wavenet-E", -- Male
+       ["de-DE-Wavenet-F"] = "de-DE-Wavenet-F", -- Female      
+       ["es-ES-Wavenet-B"] = "es-ES-Wavenet-B", -- Male
+       ["es-ES-Wavenet-C"] = "es-ES-Wavenet-C", -- Female
+       ["es-ES-Wavenet-D"] = "es-ES-Wavenet-D", -- Female
+       ["it-IT-Wavenet-A"] = "it-IT-Wavenet-A", -- Female
+       ["it-IT-Wavenet-B"] = "it-IT-Wavenet-B", -- Female
+       ["it-IT-Wavenet-C"] = "it-IT-Wavenet-C", -- Male
+       ["it-IT-Wavenet-D"] = "it-IT-Wavenet-D", -- Male
+      } , 
+    },
+  }
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1098,5 +1199,3 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
