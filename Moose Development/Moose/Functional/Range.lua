@@ -2002,6 +2002,7 @@ function RANGE:OnEventShot( EventData )
           self:_DisplayMessageToGroup( _unit, _message, nil, false )
 
           if self.rangecontrol then
+            -- weapon impacted too far from the nearest target! No Score!
             self.rangecontrol:NewTransmission( RANGE.Sound.RCWeaponImpactedTooFar.filename, RANGE.Sound.RCWeaponImpactedTooFar.duration, self.soundpath, nil, nil, _message, self.subduration )
           end
 
@@ -2090,6 +2091,7 @@ function RANGE:onafterEnterRange( From, Event, To, player )
     local RF = UTILS.Split( string.format( "%.3f", self.rangecontrolfreq ), "." )
 
     -- Radio message that player entered the range
+    -- You entered the bombing range. For hit assessment, contact the range controller.
     self.instructor:NewTransmission( RANGE.Sound.IREnterRange.filename, RANGE.Sound.IREnterRange.duration, self.soundpath )
     self.instructor:Number2Transmission( RF[1] )
     if tonumber( RF[2] ) > 0 then
@@ -2110,6 +2112,7 @@ end
 function RANGE:onafterExitRange( From, Event, To, player )
 
   if self.instructor then
+    -- You left the bombing range zone. Have a nice day!
     self.instructor:NewTransmission( RANGE.Sound.IRExitRange.filename, RANGE.Sound.IRExitRange.duration, self.soundpath )
   end
 
@@ -3043,6 +3046,7 @@ function RANGE:_CheckInZone( _unitName )
           self:_DisplayMessageToGroup( _unit, _msg, nil, true )
 
           if self.rangecontrol then
+            -- You left the strafing zone too quickly! No score!
             self.rangecontrol:NewTransmission( RANGE.Sound.RCLeftStrafePitTooQuickly.filename, RANGE.Sound.RCLeftStrafePitTooQuickly.duration, self.soundpath )
           end
 
