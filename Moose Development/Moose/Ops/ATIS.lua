@@ -586,7 +586,7 @@ _ATIS = {}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version = "0.9.7"
+ATIS.version = "0.9.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1137,6 +1137,7 @@ function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port)
     self.msrs:SetPort(Port)
     self.msrs:SetCoalition(self:GetCoalition())
     self.msrs:SetLabel("ATIS")
+    self.msrsQ = MSRSQUEUE:New("ATIS")
     if self.dTQueueCheck<=10 then
       self:SetQueueUpdateTime(90)
     end
@@ -2285,8 +2286,10 @@ function ATIS:onafterReport( From, Event, To, Text )
     -- Debug output.
     self:T( "SRS TTS: " .. text )
 
-    -- Play text-to-speech report.    
-    self.msrs:PlayText( text )
+    -- Play text-to-speech report.
+    local duration = STTS.getSpeechTime(text,0.95)
+    self.msrsQ:NewTransmission(text,duration,self.msrs,nil,2)    
+    --self.msrs:PlayText( text )
 
   end
 
