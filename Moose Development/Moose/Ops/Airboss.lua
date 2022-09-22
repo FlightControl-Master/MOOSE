@@ -4233,7 +4233,7 @@ function AIRBOSS:_InitStennis()
 
   -- Carrier Parameters.
   self.carrierparam.sterndist = -153
-  self.carrierparam.deckheight = 19.06
+  self.carrierparam.deckheight = 18.30
 
   -- Total size of the carrier (approx as rectangle).
   self.carrierparam.totlength = 310 -- Wiki says 332.8 meters overall length.
