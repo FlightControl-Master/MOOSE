@@ -489,7 +489,7 @@ UTILS.hPa2inHg = function( hPa )
   return hPa * 0.0295299830714
 end
 
---- Convert knots to alitude corrected KIAS, e.g. for tankers.
+--- Convert knots to altitude corrected KIAS, e.g. for tankers.
 -- @param #number knots Speed in knots.
 -- @param #number altitude Altitude in feet
 -- @return #number Corrected KIAS

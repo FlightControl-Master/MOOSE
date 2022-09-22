@@ -2764,9 +2764,9 @@ function AIRBOSS:SetRefuelAI( LowFuelThreshold )
   return self
 end
 
---- Set max alitude to register flights in the initial zone. Aircraft above this altitude will not be registerered.
+--- Set max altitude to register flights in the initial zone. Aircraft above this altitude will not be registerered.
 -- @param #AIRBOSS self
--- @param #number MaxAltitude Max alitude in feet. Default 1300 ft.
+-- @param #number MaxAltitude Max altitude in feet. Default 1300 ft.
 -- @return #AIRBOSS self
 function AIRBOSS:SetInitialMaxAlt( MaxAltitude )
   self.initialmaxalt = UTILS.FeetToMeters( MaxAltitude or 1300 )
@@ -5916,7 +5916,7 @@ function AIRBOSS:_WaitAI( flight, respawn )
   -- Heading from carrier to flight group
   local hdgto = cv:HeadingTo( fc )
 
-  -- Holding alitude between angels 6 and 10 (random).
+  -- Holding altitude between angels 6 and 10 (random).
   local angels = math.random( 6, 10 )
   local altitude = UTILS.FeetToMeters( angels * 1000 )
 
@@ -8910,7 +8910,7 @@ function AIRBOSS:_Initial( playerData )
   -- Relative heading to carrier direction.
   local relheading = self:_GetRelativeHeading( playerData.unit, false )
 
-  -- Alitude of player in feet.
+  -- altitude of player in feet.
   local altitude = playerData.unit:GetAltitude()
 
   -- Check if player is in zone and flying roughly in the right direction.
@@ -11108,7 +11108,7 @@ function AIRBOSS:_Lineup( unit, runway )
   return lineup
 end
 
---- Get alitude of aircraft wrt carrier deck. Should give zero when the aircraft touched down.
+--- Get altitude of aircraft wrt carrier deck. Should give zero when the aircraft touched down.
 -- @param #AIRBOSS self
 -- @param Wrapper.Unit#UNIT unit Aircraft unit.
 -- @return #number Altitude in meters wrt carrier height.
@@ -14102,7 +14102,7 @@ end
 
 --- Convert altitude from meters to angels (thousands of feet).
 -- @param #AIRBOSS self
--- @param alt Alitude in meters.
+-- @param alt altitude in meters.
 -- @return #number Altitude in Anglels = thousands of feet using math.floor().
 function AIRBOSS:_GetAngels( alt )
 
@@ -15333,7 +15333,7 @@ function AIRBOSS:_MarshalCallNewFinalBearing( FB )
 
 end
 
---- Compile a radio call when Marshal tells a flight the holding alitude.
+--- Compile a radio call when Marshal tells a flight the holding altitude.
 -- @param #AIRBOSS self
 -- @param #number hdg Heading in degrees.
 function AIRBOSS:_MarshalCallCarrierTurnTo( hdg )
@@ -15356,7 +15356,7 @@ function AIRBOSS:_MarshalCallCarrierTurnTo( hdg )
 
 end
 
---- Compile a radio call when Marshal tells a flight the holding alitude.
+--- Compile a radio call when Marshal tells a flight the holding altitude.
 -- @param #AIRBOSS self
 -- @param #string modex Tail number.
 -- @param #number nwaiting Number of flights already waiting.
@@ -15382,7 +15382,7 @@ function AIRBOSS:_MarshalCallStackFull( modex, nwaiting )
   self:RadioTransmission( self.MarshalRadio, call, nil, nil, nil, true )
 end
 
---- Compile a radio call when Marshal tells a flight the holding alitude.
+--- Compile a radio call when Marshal tells a flight the holding altitude.
 -- @param #AIRBOSS self
 function AIRBOSS:_MarshalCallRecoveryStart( case )
 
@@ -15422,12 +15422,12 @@ function AIRBOSS:_MarshalCallRecoveryStart( case )
 
 end
 
---- Compile a radio call when Marshal tells a flight the holding alitude.
+--- Compile a radio call when Marshal tells a flight the holding altitude.
 -- @param #AIRBOSS self
 -- @param #string modex Tail number.
 -- @param #number case Recovery case.
 -- @param #number brc Base recovery course.
--- @param #number altitude Holding alitude.
+-- @param #number altitude Holding altitude.
 -- @param #string charlie Charlie Time estimate.
 -- @param #number qfe Alitmeter inHg.
 function AIRBOSS:_MarshalCallArrived( modex, case, brc, altitude, charlie, qfe )
@@ -17270,7 +17270,7 @@ function AIRBOSS:_MarkMarshalZone( _unitName, flare )
         -- Get Case I commence zone at three position.
         local zoneThree = self:_GetZoneCommence( case, stack )
 
-        -- Pattern alitude.
+        -- Pattern altitude.
         local patternalt = self:_GetMarshalAltitude( stack, case )
 
         -- Flare and smoke at the ground.
