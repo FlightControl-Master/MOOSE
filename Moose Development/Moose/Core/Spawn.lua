@@ -1418,7 +1418,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
       end
       -- TODO: Need to fix this by putting an "R" in the name of the group when the group repeats.
       -- if self.Repeat then
-      --	_DATABASE:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
+      --  _DATABASE:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
       -- end
     end
 
@@ -2971,9 +2971,9 @@ end
 function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
   self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
 
-  --	if not self.SpawnTemplate then
-  --	  self.SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
-  --	end
+  --  if not self.SpawnTemplate then
+  --    self.SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
+  --  end
 
   local SpawnTemplate
   if self.TweakedTemplate ~= nil and self.TweakedTemplate == true then
@@ -3254,20 +3254,20 @@ function SPAWN:_OnDeadOrCrash( EventData )
   
   local unit=UNIT:FindByName(EventData.IniUnitName)
   
-	if unit then
-	
-	  local EventPrefix = self:_GetPrefixFromGroupName(unit.GroupName)
-	 
+  if unit then
+  
+    local EventPrefix = self:_GetPrefixFromGroupName(unit.GroupName)
+   
     if EventPrefix then -- EventPrefix can be nil if no # is found, which means, no spawnable group!
       self:T( { "Dead event: " .. EventPrefix } )
       
       if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
     
-  	   self.AliveUnits = self.AliveUnits - 1
-  	   
-  	   self:T( "Alive Units: " .. self.AliveUnits )  	 
-		  end
-		
+       self.AliveUnits = self.AliveUnits - 1
+       
+       self:T( "Alive Units: " .. self.AliveUnits )    
+      end
+    
     end
   end
 end
@@ -3365,12 +3365,16 @@ end
 -- @return #boolean True = Continue Scheduler
 function SPAWN:_SpawnCleanUpScheduler()
   self:F( { "CleanUp Scheduler:", self.SpawnTemplatePrefix } )
-
+  
   local SpawnGroup, SpawnCursor = self:GetFirstAliveGroup()
   self:T( { "CleanUp Scheduler:", SpawnGroup, SpawnCursor } )
 
+  local IsHelo = false
+  
   while SpawnGroup do
-
+    
+    IsHelo = SpawnGroup:IsHelicopter()
+    
     local SpawnUnits = SpawnGroup:GetUnits()
 
     for UnitID, UnitData in pairs( SpawnUnits ) do
@@ -3383,8 +3387,8 @@ function SPAWN:_SpawnCleanUpScheduler()
       self:T( { SpawnUnitName, Stamp } )
 
       if Stamp.Vec2 then
-        if SpawnUnit:InAir() == false and SpawnUnit:GetVelocityKMH() < 1 then
-          local NewVec2 = SpawnUnit:GetVec2()
+        if (SpawnUnit:InAir() == false and SpawnUnit:GetVelocityKMH() < 1) or IsHelo then
+          local NewVec2 = SpawnUnit:GetVec2() or {x=0, y=0}
           if (Stamp.Vec2.x == NewVec2.x and Stamp.Vec2.y == NewVec2.y) or (SpawnUnit:GetLife() <= 1) then
             -- If the plane is not moving or dead , and is on the ground, assign it with a timestamp...
             if Stamp.Time + self.SpawnCleanUpInterval < timer.getTime() then
@@ -3402,8 +3406,8 @@ function SPAWN:_SpawnCleanUpScheduler()
           Stamp.Time = nil
         end
       else
-        if SpawnUnit:InAir() == false then
-          Stamp.Vec2 = SpawnUnit:GetVec2()
+        if SpawnUnit:InAir() == false or (IsHelo and SpawnUnit:GetLife() <= 1) then
+          Stamp.Vec2 = SpawnUnit:GetVec2() or {x=0, y=0}
           if (SpawnUnit:GetVelocityKMH() < 1) then
             Stamp.Time = timer.getTime()
           end
