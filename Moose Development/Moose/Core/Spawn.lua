@@ -3369,10 +3369,12 @@ function SPAWN:_SpawnCleanUpScheduler()
   local SpawnGroup, SpawnCursor = self:GetFirstAliveGroup()
   self:T( { "CleanUp Scheduler:", SpawnGroup, SpawnCursor } )
 
-  local IsHelo = SpawnGroup:IsHelicopter()
+  local IsHelo = false
   
   while SpawnGroup do
-
+    
+    IsHelo = SpawnGroup:IsHelicopter()
+    
     local SpawnUnits = SpawnGroup:GetUnits()
 
     for UnitID, UnitData in pairs( SpawnUnits ) do
@@ -3386,7 +3388,7 @@ function SPAWN:_SpawnCleanUpScheduler()
 
       if Stamp.Vec2 then
         if (SpawnUnit:InAir() == false and SpawnUnit:GetVelocityKMH() < 1) or IsHelo then
-          local NewVec2 = SpawnUnit:GetVec2()
+          local NewVec2 = SpawnUnit:GetVec2() or {x=0, y=0}
           if (Stamp.Vec2.x == NewVec2.x and Stamp.Vec2.y == NewVec2.y) or (SpawnUnit:GetLife() <= 1) then
             -- If the plane is not moving or dead , and is on the ground, assign it with a timestamp...
             if Stamp.Time + self.SpawnCleanUpInterval < timer.getTime() then
@@ -3404,8 +3406,8 @@ function SPAWN:_SpawnCleanUpScheduler()
           Stamp.Time = nil
         end
       else
-        if SpawnUnit:InAir() == false or IsHelo then
-          Stamp.Vec2 = SpawnUnit:GetVec2()
+        if SpawnUnit:InAir() == false or (IsHelo and SpawnUnit:GetLife() <= 1) then
+          Stamp.Vec2 = SpawnUnit:GetVec2() or {x=0, y=0}
           if (SpawnUnit:GetVelocityKMH() < 1) then
             Stamp.Time = timer.getTime()
           end
