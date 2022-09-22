@@ -23,6 +23,7 @@
 -- @image OPS_CTLD.jpg
 
 -- Date: Feb 2022
+-- Last Update Sep 2022
 
 do
 
@@ -306,7 +307,8 @@ CTLD_ENGINEERING = {
 
 end
 
-do  
+do 
+ 
 ------------------------------------------------------
 --- **CTLD_CARGO** class, extends Core.Base#BASE
 -- @type CTLD_CARGO
@@ -314,7 +316,7 @@ do
 -- @field #number ID ID of this cargo.
 -- @field #string Name Name for menu.
 -- @field #table Templates Table of #POSITIONABLE objects.
--- @field #CTLD_CARGO.Enum CargoType Enumerator of Type.
+-- @field #string CargoType Enumerator of Type.
 -- @field #boolean HasBeenMoved Flag for moving.
 -- @field #boolean LoadDirectly Flag for direct loading.
 -- @field #number CratesNeeded Crates needed to build.
@@ -325,8 +327,9 @@ do
 -- @field #string Subcategory Sub-category name.
 -- @extends Core.Base#BASE
 
+
 ---
--- @field #CTLD_CARGO
+-- @field CTLD_CARGO
 CTLD_CARGO = {
   ClassName = "CTLD_CARGO",
   ID = 0,
@@ -343,9 +346,15 @@ CTLD_CARGO = {
   Mark = nil,
   }
   
-  ---
   --- Define cargo types.
-  -- @field Enum
+  -- @type CTLD_CARGO.Enum
+  -- @field #string VEHICLE
+  -- @field #string TROOPS
+  -- @field #string FOB
+  -- @field #string CRATE
+  -- @field #string REPAIR
+  -- @field #string ENGINEERS
+  -- @field #string STATIC
   CTLD_CARGO.Enum = {
     VEHICLE = "Vehicle", -- #string vehicles
     TROOPS = "Troops", -- #string troops
@@ -542,7 +551,7 @@ CTLD_CARGO = {
   
   --- Query crate type for STATIC
   -- @param #CTLD_CARGO self
-  -- @param #boolean 
+  -- @return #boolean 
   function CTLD_CARGO:IsStatic()
    if self.CargoType == "Static" then
     return true
@@ -551,18 +560,34 @@ CTLD_CARGO = {
    end
   end
   
+  --- Add mark
+  -- @param #CTLD_CARGO self
+  -- @return #CTLD_CARGO self
   function CTLD_CARGO:AddMark(Mark)
     self.Mark = Mark
     return self
   end
   
+  --- Get mark
+  -- @param #CTLD_CARGO self
+  -- @return #string Mark
   function CTLD_CARGO:GetMark(Mark)
     return self.Mark
   end
   
+  --- Wipe mark
+  -- @param #CTLD_CARGO self
+  -- @return #CTLD_CARGO self
   function CTLD_CARGO:WipeMark()
     self.Mark = nil
     return self
+  end
+  
+  --- Get overall mass of a cargo object, i.e. crates needed x mass per crate
+  -- @param #CTLD_CARGO self
+  -- @return #number mass
+  function CTLD_CARGO:GetNetMass()
+    return self.CratesNeeded * self.PerCrateMass
   end
    
 end
@@ -1062,7 +1087,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.10"
+CTLD.version="1.0.11"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1532,6 +1557,8 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
   local instock = Cargotype:GetStock()
   local cgoname = Cargotype:GetName()
   local cgotype = Cargotype:GetType()
+  local cgonetmass = Cargotype:GetNetMass()
+  local maxloadable = self:_GetMaxLoadableMass(Unit)
   if type(instock) == "number" and tonumber(instock) <= 0 and tonumber(instock) ~= -1 then
     -- nothing left over
     self:_SendMessage(string.format("Sorry, all %s are gone!", cgoname), 10, false, Group)
@@ -1582,6 +1609,9 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
   end
   if troopsize + numberonboard > trooplimit then
     self:_SendMessage("Sorry, we\'re crammed already!", 10, false, Group)
+    return
+  elseif maxloadable < cgonetmass then
+    self:_SendMessage("Sorry, that\'s too heavy to load!", 10, false, Group)
     return
   else
     self.CargoCounter = self.CargoCounter + 1
@@ -2144,11 +2174,14 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
   local maxmass = 2000
   local maxloadable = 2000
   if not _ignoreweight then
+    --[[
     loadedmass = self:_GetUnitCargoMass(_unit)
     unittype = _unit:GetTypeName()
     capabilities = self:_GetUnitCapabilities(_unit) -- #CTLD.UnitCapabilities
     maxmass = capabilities.cargoweightlimit or 2000
-    maxloadable = maxmass - loadedmass 
+    maxloadable = maxmass - loadedmass
+    --]]
+    maxloadable = self:_GetMaxLoadableMass(_unit)
   end
   self:T(self.lid .. " Max loadable mass: " .. maxloadable)
   for _,_cargoobject in pairs (existingcrates) do
@@ -2326,6 +2359,21 @@ function CTLD:_GetUnitCargoMass(Unit)
   return loadedmass
 end
 
+--- (Internal) Function to calculate max loadable mass left over.
+-- @param #CTLD self
+-- @param Wrapper.Unit#UNIT Unit
+-- @return #number maxloadable Max loadable mass in kg
+function CTLD:_GetMaxLoadableMass(Unit)
+  self:T(self.lid .. " _GetMaxLoadableMass")
+  if not Unit then return 0 end
+  local loadable = 0
+  local loadedmass = self:_GetUnitCargoMass(Unit)
+  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitCapabilities
+  local maxmass = capabilities.cargoweightlimit or 2000 -- max 2 tons
+  loadable = maxmass - loadedmass
+  return loadable
+end
+
 --- (Internal) Function to calculate and set Unit internal cargo mass
 -- @param #CTLD self
 -- @param Wrapper.Unit#UNIT Unit
@@ -2333,9 +2381,6 @@ function CTLD:_UpdateUnitCargoMass(Unit)
   self:T(self.lid .. " _UpdateUnitCargoMass")
   local calculatedMass = self:_GetUnitCargoMass(Unit)
   Unit:SetUnitInternalCargo(calculatedMass)
-  --local report = REPORT:New("Loadmaster report")
-  --report:Add("Carrying " .. calculatedMass .. "Kg")
-  --self:_SendMessage(report:Text(),10,false,Unit:GetGroup())
   return self
 end
 
@@ -2353,6 +2398,7 @@ function CTLD:_ListCargo(Group, Unit)
   local cratelimit = capabilities.cratelimit -- #number
   local loadedcargo = self.Loaded_Cargo[unitname] or {} -- #CTLD.LoadedCargo
   local loadedmass = self:_GetUnitCargoMass(Unit) -- #number
+  local maxloadable = self:_GetMaxLoadableMass(Unit)
   if self.Loaded_Cargo[unitname] then
     local no_troops = loadedcargo.Troopsloaded or 0
     local no_crates = loadedcargo.Cratesloaded or 0
@@ -2387,11 +2433,11 @@ function CTLD:_ListCargo(Group, Unit)
       report:Add("        N O N E")
     end
     report:Add("------------------------------------------------------------")
-    report:Add("Total Mass: ".. loadedmass .. " kg")
+    report:Add("Total Mass: ".. loadedmass .. " kg. Loadable: "..maxloadable.." kg.")
     local text = report:Text()
     self:_SendMessage(text, 30, true, Group) 
   else
-    self:_SendMessage(string.format("Nothing loaded!\nTroop limit: %d | Crate limit %d",trooplimit,cratelimit), 10, false, Group) 
+    self:_SendMessage(string.format("Nothing loaded!\nTroop limit: %d | Crate limit %d | Weight limit %d kgs",trooplimit,cratelimit,maxloadable), 10, false, Group) 
   end
   return self
 end
@@ -3125,7 +3171,7 @@ function CTLD:_RefreshF10Menus()
 --- [Internal] Function to check if a template exists in the mission.
 -- @param #CTLD self
 -- @param #table temptable Table of string names
--- @return #boolen outcome
+-- @return #boolean outcome
 function CTLD:_CheckTemplates(temptable)
   self:T(self.lid .. " _CheckTemplates")
   local outcome = true
