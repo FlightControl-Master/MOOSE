@@ -1418,7 +1418,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
       end
       -- TODO: Need to fix this by putting an "R" in the name of the group when the group repeats.
       -- if self.Repeat then
-      --	_DATABASE:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
+      --  _DATABASE:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
       -- end
     end
 
@@ -2971,9 +2971,9 @@ end
 function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
   self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
 
-  --	if not self.SpawnTemplate then
-  --	  self.SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
-  --	end
+  --  if not self.SpawnTemplate then
+  --    self.SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
+  --  end
 
   local SpawnTemplate
   if self.TweakedTemplate ~= nil and self.TweakedTemplate == true then
@@ -3254,20 +3254,20 @@ function SPAWN:_OnDeadOrCrash( EventData )
   
   local unit=UNIT:FindByName(EventData.IniUnitName)
   
-	if unit then
-	
-	  local EventPrefix = self:_GetPrefixFromGroupName(unit.GroupName)
-	 
+  if unit then
+  
+    local EventPrefix = self:_GetPrefixFromGroupName(unit.GroupName)
+   
     if EventPrefix then -- EventPrefix can be nil if no # is found, which means, no spawnable group!
       self:T( { "Dead event: " .. EventPrefix } )
       
       if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
     
-  	   self.AliveUnits = self.AliveUnits - 1
-  	   
-  	   self:T( "Alive Units: " .. self.AliveUnits )  	 
-		  end
-		
+       self.AliveUnits = self.AliveUnits - 1
+       
+       self:T( "Alive Units: " .. self.AliveUnits )    
+      end
+    
     end
   end
 end
