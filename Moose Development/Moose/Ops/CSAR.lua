@@ -98,23 +98,21 @@
 --         mycsar.useprefix = true  -- Requires CSAR helicopter #GROUP names to have the prefix(es) defined below.
 --         mycsar.csarPrefix = { "helicargo", "MEDEVAC"} -- #GROUP name prefixes used for useprefix=true - DO NOT use # in helicopter names in the Mission Editor! 
 --         mycsar.verbose = 0 -- set to > 1 for stats output for debugging.
---         -- (added 0.1.4) limit amount of downed pilots spawned by **ejection** events
+--         -- limit amount of downed pilots spawned by **ejection** events
 --         mycsar.limitmaxdownedpilots = true
 --         mycsar.maxdownedpilots = 10 
---         -- (added 0.1.8) - allow to set far/near distance for approach and optionally pilot must open doors
+--         -- allow to set far/near distance for approach and optionally pilot must open doors
 --         mycsar.approachdist_far = 5000 -- switch do 10 sec interval approach mode, meters
 --         mycsar.approachdist_near = 3000 -- switch to 5 sec interval approach mode, meters
 --         mycsar.pilotmustopendoors = false -- switch to true to enable check of open doors
---         -- (added 0.1.9)
 --         mycsar.suppressmessages = false -- switch off all messaging if you want to do your own
---         -- (added 0.1.11)
 --         mycsar.rescuehoverheight = 20 -- max height for a hovering rescue in meters
 --         mycsar.rescuehoverdistance = 10 -- max distance for a hovering rescue in meters
---         -- (added 0.1.12)
 --         -- Country codes for spawned pilots
 --         mycsar.countryblue= country.id.USA
 --         mycsar.countryred = country.id.RUSSIA
 --         mycsar.countryneutral = country.id.UN_PEACEKEEPERS
+--         mycsar.topmenuname = "CSAR" -- set the menu entry name
 --         
 -- ## 2.1 Experimental Features
 -- 
@@ -218,7 +216,7 @@ CSAR = {
   smokeMarkers = {}, -- tracks smoke markers for groups
   heliVisibleMessage = {}, -- tracks if the first message has been sent of the heli being visible
   heliCloseMessage = {}, -- tracks heli close message  ie heli < 500m distance
-  max_units = 6, --number of pilots that can be carried
+  max_units = 6, -- number of pilots that can be carried
   hoverStatus = {}, -- tracks status of a helis hover above a downed pilot
   pilotDisabled = {}, -- tracks what aircraft a pilot is disabled for
   pilotLives = {}, -- tracks how many lives a pilot has
@@ -232,6 +230,7 @@ CSAR = {
   limitmaxdownedpilots = true,
   maxdownedpilots = 10,
   allheligroupset = nil,
+  topmenuname = "CSAR",
 }
 
 --- Downed pilots info.
@@ -1923,7 +1922,8 @@ function CSAR:_AddMedevacMenuItem()
         local groupname = _group:GetName()
         if self.addedTo[groupname] == nil then
           self.addedTo[groupname] = true
-          local _rootPath = MENU_GROUP:New(_group,"CSAR")
+          local menuname = self.topmenuname or "CSAR"
+          local _rootPath = MENU_GROUP:New(_group,menuname)
           local _rootMenu1 = MENU_GROUP_COMMAND:New(_group,"List Active CSAR",_rootPath, self._DisplayActiveSAR,self,_unitName)
           local _rootMenu2 = MENU_GROUP_COMMAND:New(_group,"Check Onboard",_rootPath, self._CheckOnboard,self,_unitName)
           local _rootMenu3 = MENU_GROUP_COMMAND:New(_group,"Request Signal Flare",_rootPath, self._SignalFlare,self,_unitName)
