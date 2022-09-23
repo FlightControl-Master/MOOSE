@@ -1162,7 +1162,7 @@ function FOX:OnEventBirth(EventData)
             
     -- Add F10 radio menu for player.
     if not self.menudisabled then
-      self:ScheduleOnce(0.1, FOX._AddF10Commands, self, _unitname)
+      self:ScheduleOnce(0.1, self._AddF10Commands, self, _unitName)
     end
     
     -- Player data.
@@ -1429,10 +1429,10 @@ function FOX:_AddF10Commands(_unitName)
         
       end
     else
-      self:E(self.lid..string.format("ERROR: Could not find group or group ID in AddF10Menu() function. Unit name: %s.", _unitName))
+      self:E(self.lid..string.format("ERROR: Could not find group or group ID in AddF10Menu() function. Unit name: %s.", _unitName or "unknown"))
     end
   else
-    self:E(self.lid..string.format("ERROR: Player unit does not exist in AddF10Menu() function. Unit name: %s.", _unitName))
+    self:E(self.lid..string.format("ERROR: Player unit does not exist in AddF10Menu() function. Unit name: %s.", _unitName or "unknown"))
   end
 
 end
