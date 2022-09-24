@@ -1849,7 +1849,12 @@ function RANGE:OnEventHit( EventData )
           -- Too close to the target.
           if _currentTarget.pastfoulline == false and _unit and _playername then
             local _d = _currentTarget.zone.foulline
+            -- DONE - SRS output
             local text = string.format( "%s, Invalid hit!\nYou already passed foul line distance of %d m for target %s.", self:_myname( _unitName ), _d, targetname )
+            if self.useSRS then
+              local ttstext = string.format( "%s, Invalid hit! You already passed foul line distance of %d meters for target %s.", self:_myname( _unitName ), _d, targetname )
+              self.controlsrsQ:NewTransmission(ttstext,nil,self.controlmsrs,nil,2)
+            end
             self:_DisplayMessageToGroup( _unit, text )
             self:T2( self.id .. text )
             _currentTarget.pastfoulline = true
@@ -2096,7 +2101,12 @@ function RANGE:OnEventShot( EventData )
         elseif insidezone then
 
           -- Send message.
+          -- DONE SRS message
           local _message = string.format( "%s, weapon impacted too far from nearest range target (>%.1f km). No score!", _callsign, self.scorebombdistance / 1000 )
+          if self.useSRS then
+            local ttstext = string.format( "%s, weapon impacted too far from nearest range target, mor than %.1f kilometer. No score!", _callsign, self.scorebombdistance / 1000 )
+            self.controlsrsQ:NewTransmission(ttstext,nil,self.controlmsrs,nil,2)        
+          end
           self:_DisplayMessageToGroup( _unit, _message, nil, false )
 
           if self.rangecontrol then
@@ -3188,23 +3198,6 @@ function RANGE:_CheckInZone( _unitName )
           
           local _sound = nil -- #RANGE.Soundfile
           
-          --[[ --RangeBoss commented out in order to implement strafe quality based on accuracy percentage, not the number of rounds on target
-          -- Judge this pass. Text is displayed on summary.
-          if _result.hits >= _result.zone.goodPass*2 then
-            _result.text = "EXCELLENT PASS"
-            _sound=RANGE.Sound.RCExcellentPass
-          elseif _result.hits >= _result.zone.goodPass then
-            _result.text = "GOOD PASS"
-            _sound=RANGE.Sound.RCGoodPass
-          elseif _result.hits >= _result.zone.goodPass/2 then
-            _result.text = "INEFFECTIVE PASS"
-            _sound=RANGE.Sound.RCIneffectivePass
-          else
-            _result.text = "POOR PASS"
-            _sound=RANGE.Sound.RCPoorPass
-          end
-          ]]
-          
           -- Calculate accuracy of run. Number of hits wrt number of rounds fired.
           local shots = _result.ammo - _ammo
           local accur = 0
@@ -3455,10 +3448,10 @@ function RANGE:_AddF10Commands( _unitName )
         local _StrPits = MENU_GROUP_COMMAND:New( group, "Strafe Pits", _infoPath, self._DisplayStrafePits, self, _unitName ):Refresh()
       end
     else
-      self:E( self.id .. "Could not find group or group ID in AddF10Menu() function. Unit name: " .. _unitName )
+      self:E( self.id .. "Could not find group or group ID in AddF10Menu() function. Unit name: " .. _unitName or "N/A")
     end
   else
-    self:E( self.id .. "Player unit does not exist in AddF10Menu() function. Unit name: " .. _unitName )
+    self:E( self.id .. "Player unit does not exist in AddF10Menu() function. Unit name: " .. _unitName or "N/A")
   end
 
 end
