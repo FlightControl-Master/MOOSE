@@ -492,11 +492,20 @@ end
 
 --- Disable F10 menu for all players.
 -- @param #FOX self
--- @param #boolean switch If true debug mode on. If false/nil debug mode off
 -- @return #FOX self
 function FOX:SetDisableF10Menu()
 
   self.menudisabled=true
+
+  return self
+end
+
+--- Enable F10 menu for all players.
+-- @param #FOX self
+-- @return #FOX self
+function FOX:SetEnableF10Menu()
+
+  self.menudisabled=false
 
   return self
 end
