@@ -806,16 +806,8 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   modus=modus:gsub("0", "AM")
   modus=modus:gsub("1", "FM")
   
-  -- This did not work well. Stopped if the transmission was a bit longer with no apparent error.  
-  --local command=string.format("%s --freqs=%s --modulations=%s --coalition=%d --port=%d --volume=%.2f --speed=%d", exe, freqs, modus, coal, port, volume, speed)
-
-  -- Command from orig STTS script. Works better for some unknown reason!
-  --local command=string.format("start /min \"\" /d \"%s\" /b \"%s\" -f %s -m %s -c %s -p %s -n \"%s\" -h", path, exe, freqs, modus, coal, port, "ROBOT")
-  
-  --local command=string.format('start /b "" /d "%s" "%s" -f %s -m %s -c %s -p %s -n "%s" > bla.txt', path, exe, freqs, modus, coal, port, "ROBOT")
-  
   -- Command.
-  local command=string.format('"%s\\%s" -f %s -m %s -c %s -p %s -n "%s" -v "%.1f"', path, exe, freqs, modus, coal, port, label,volume)
+  local command=string.format('"%s\\%s" -f "%s" -m "%s" -c %s -p %s -n "%s" -v "%.1f"', path, exe, freqs, modus, coal, port, label,volume)
 
   -- Set voice or gender/culture.
   if voice then
