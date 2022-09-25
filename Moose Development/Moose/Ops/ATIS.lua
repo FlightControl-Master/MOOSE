@@ -1126,8 +1126,9 @@ end
 -- @param #string Culture Culture, e.g. "en-GB" (default).
 -- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
 -- @param #number Port SRS port. Default 5002.
+-- @param #string GoogleKey Path to Google JSON-Key.
 -- @return #ATIS self
-function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port)
+function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey)
   if PathToSRS then
     self.useSRS=true
     self.msrs=MSRS:New(PathToSRS, self.frequency, self.modulation)
@@ -1137,6 +1138,7 @@ function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port)
     self.msrs:SetPort(Port)
     self.msrs:SetCoalition(self:GetCoalition())
     self.msrs:SetLabel("ATIS")
+    self.msrs:SetGoogle(GoogleKey)
     self.msrsQ = MSRSQUEUE:New("ATIS")
     if self.dTQueueCheck<=10 then
       self:SetQueueUpdateTime(90)
