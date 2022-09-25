@@ -358,8 +358,9 @@ FLIGHTCONTROL.version="0.7.3"
 -- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a `#table` of multiple modulations.
 -- @param #string PathToSRS Path to the directory, where SRS is located.
 -- @param #number Port Port of SRS Server, defaults to 5002
+-- @param #string GoogleKey Path to the Google JSON-Key.
 -- @return #FLIGHTCONTROL self
-function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS, Port)
+function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS, Port, GoogleKey)
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #FLIGHTCONTROL
@@ -419,11 +420,13 @@ function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS, Port)
   -- SRS for Tower.
   self.msrsTower=MSRS:New(PathToSRS, Frequency, Modulation)
   self.msrsTower:SetPort(self.Port)
+  self.msrsTower:SetGoogle(GoogleKey)
   self:SetSRSTower()
   
   -- SRS for Pilot.
   self.msrsPilot=MSRS:New(PathToSRS, Frequency, Modulation)
   self.msrsPilot:SetPort(self.Port)
+  self.msrsPilot:SetGoogle(GoogleKey)
   self:SetSRSPilot()
   
   -- Wait at least 10 seconds after last radio message before calling the next status update.
