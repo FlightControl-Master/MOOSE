@@ -963,6 +963,24 @@ function UNIT:GetDamageRelative()
   return 1
 end
 
+--- Returns the current value for an animation argument on the external model of the given object. 
+-- Each model animation has an id tied to with different values representing different states of the model. 
+-- Animation arguments can be figured out by opening the respective 3d model in the modelviewer.
+-- @param #UNIT self
+-- @param #number AnimationArgument Number corresponding to the animated part of the unit.
+-- @return #number Value of the animation argument [-1, 1]. If draw argument value is invalid for the unit in question a value of 0 will be returned.
+function UNIT:GetDrawArgumentValue(AnimationArgument)
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local value = DCSUnit:getDrawArgumentValue(AnimationArgument or 0)
+    return value
+  end
+  
+  return 0
+end
+
 --- Returns the category of the #UNIT from descriptor. Returns one of
 -- 
 -- * Unit.Category.AIRPLANE
