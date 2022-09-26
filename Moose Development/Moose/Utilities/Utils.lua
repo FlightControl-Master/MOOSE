@@ -2001,6 +2001,22 @@ function UTILS.GenerateLaserCodes()
     return jtacGeneratedLaserCodes
 end
 
+--- Ensure the passed object is a table. 
+-- @param #table Object The object that should be a table.
+-- @return #table The object that is a table. Note that if the Object is `#nil` initially, and empty table `{}` is returned.
+function UTILS.EnsureTable(Object)
+
+  if Object then
+    if type(Object)~="table" then
+      Object={Object}
+    end
+  else
+    Object={}
+  end
+
+  return Object
+end
+
 --- Function to save an object to a file
 -- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
 -- @param #string Filename The name of the file. Existing file will be overwritten.
