@@ -113,6 +113,7 @@
 --         mycsar.countryred = country.id.RUSSIA
 --         mycsar.countryneutral = country.id.UN_PEACEKEEPERS
 --         mycsar.topmenuname = "CSAR" -- set the menu entry name
+--         mycsar.ADFRadioPwr = 1000 -- ADF Beacons sending with 1KW as default
 --         
 -- ## 2.1 Experimental Features
 -- 
@@ -231,6 +232,7 @@ CSAR = {
   maxdownedpilots = 10,
   allheligroupset = nil,
   topmenuname = "CSAR",
+  ADFRadioPwr = 1000,
 }
 
 --- Downed pilots info.
@@ -268,7 +270,7 @@ CSAR.AircraftType["Bronco-OV-10A"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.9"
+CSAR.version="1.0.11"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -418,6 +420,8 @@ function CSAR:New(Coalition, Template, Alias)
   
   -- added 0.1.8
   self.allowbronco = false  -- set to true to use the Bronco mod as a CSAR plane
+  
+  self.ADFRadioPwr = 1000
       
   -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
@@ -2034,7 +2038,7 @@ function CSAR:_AddBeaconToGroup(_group, _freq)
         local Frequency = _freq -- Freq in Hertz
         local Sound =  "l10n/DEFAULT/"..self.radioSound
         local vec3 = _radioUnit:GetVec3() or _radioUnit:GetPositionVec3() or {x=0,y=0,z=0}
-        trigger.action.radioTransmission(Sound, vec3, 0, false, Frequency, 1000) -- Beacon in MP only runs for exactly 30secs straight
+        trigger.action.radioTransmission(Sound, vec3, 0, false, Frequency, self.ADFRadioPwr or 1000) -- Beacon in MP only runs for exactly 30secs straight
       end
     end
     return self
