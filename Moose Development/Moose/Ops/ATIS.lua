@@ -91,6 +91,7 @@
 -- @field #boolean useSRS If true, use SRS for transmission.
 -- @field Sound.SRS#MSRS msrs Moose SRS object.
 -- @field #number dTQueueCheck Time interval to check the radio queue. Default 5 sec or 90 sec if SRS is used.
+-- @field #boolean ReportmBar Report mBar/hpa even if not metric, i.e. for Mirage flights
 -- @extends Core.Fsm#FSM
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -344,6 +345,7 @@ ATIS = {
   usemarker      =   nil,
   markerid       =   nil,
   relHumidity    =   nil,
+  ReportmBar     =   false,
 }
 
 --- NATO alphabet.
@@ -586,15 +588,18 @@ _ATIS = {}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version = "0.9.8"
+ATIS.version = "0.9.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add new Normany airfields.
+-- TODO: Add new Normandy airfields.
 -- TODO: Zulu time --> Zulu in output.
 -- TODO: Correct fog for elevation.
+-- DONE: Use new AIRBASE system to set start/landing runway
+-- DONE: SetILS doesn't work
+-- DONE: Visibility reported twice over SRS
 -- DONE: Add text report for output.
 -- DONE: Add stop FMS functions.
 -- NOGO: Use local time. Not realisitc!
@@ -651,6 +656,7 @@ function ATIS:New(AirbaseName, Frequency, Modulation)
   self:SetMapMarks( false )
   self:SetRelativeHumidity()
   self:SetQueueUpdateTime()
+  self:SetReportmBar(false)
 
   -- Start State.
   self:SetStartState( "Stopped" )
@@ -774,13 +780,40 @@ function ATIS:SetTowerFrequencies( freqs )
   return self
 end
 
---- Set active runway. This can be used if the automatic runway determination via the wind direction gives incorrect results.
+--- Set active runway for **landing** operations. This can be used if the automatic runway determination via the wind direction gives incorrect results.
 -- For example, use this if there are two runways with the same directions.
 -- @param #ATIS self
 -- @param #string runway Active runway, *e.g.* "31L".
 -- @return #ATIS self
 function ATIS:SetActiveRunway( runway )
   self.activerunway = tostring( runway )
+  local prefer = nil
+  if string.find(string.lower(runway),"l") then 
+    prefer = true
+  elseif string.find(string.lower(runway),"r") then 
+    prefer = false
+  end
+  self.airbase:SetActiveRunway(runway,prefer)
+  return self
+end
+
+--- Set the active runway for landing.
+-- @param #ATIS self
+-- @param #string runway : Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
+-- @param #boolean preferleft : If true, perfer the left runway. If false, prefer the right runway. If nil (default), do not care about left or right.
+-- @return #ATIS self
+function ATIS:SetActiveRunwayLanding(runway, preferleft)
+  self.airbase:SetActiveRunwayLanding(runway,preferleft)
+  return self
+end
+
+--- Set the active runway for take-off.
+-- @param #ATIS self
+-- @param #string runway : Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
+-- @param #boolean preferleft : If true, perfer the left runway. If false, prefer the right runway. If nil (default), do not care about left or right.
+-- @return #ATIS self
+function ATIS:SetActiveRunwayTakeoff(runway,preferleft)
+  self.airbase:SetActiveRunwayTakeoff(runway,preferleft)
   return self
 end
 
@@ -944,6 +977,28 @@ function ATIS:SetAltimeterQNH( switch )
     self.altimeterQNH = false
   end
 
+  return self
+end
+
+--- Additionally report altimeter QNH/QFE in hPa, even if not set to metric.
+-- @param #ATIS self
+-- @param #boolean switch If true or nil, report mBar/hPa in addition.
+-- @return #ATIS self
+function ATIS:SetReportmBar(switch)
+  if switch == true or switch == nil then
+    self.ReportmBar = true
+  else
+    self.ReportmBar = false
+  end
+  return self
+end
+
+--- Additionally report free text, only working with SRS(!)
+-- @param #ATIS self
+-- @param #string text The text to report at the end of the ATIS message, e.g. runway closure, warnings, etc.
+-- @return #ATIS self
+function ATIS:SetAdditionalInformation(text)
+  self.AdditionalInformation = text
   return self
 end
 
@@ -1327,7 +1382,10 @@ function ATIS:onafterBroadcast( From, Event, To )
     qnh = Q / 100
 
   end
-
+  
+  local mBarqnh = qnh
+  local mBarqfe = qfe
+  
   -- Convert to inHg.
   if self.PmmHg then
     qfe = UTILS.hPa2mmHg( qfe )
@@ -1778,7 +1836,9 @@ function ATIS:onafterBroadcast( From, Event, To )
     end
   end
   alltext = alltext .. ";\n" .. subtitle
-
+  --self:I("Line 1811")
+  --self:I(alltext)
+  
   -- Visibility
   if self.metric then
     subtitle = string.format( "Visibility %s km", VISIBILITY )
@@ -1795,7 +1855,10 @@ function ATIS:onafterBroadcast( From, Event, To )
     end
   end
   alltext = alltext .. ";\n" .. subtitle
-
+  --self:I("Line 1830")
+  --self:I(alltext)
+  
+  subtitle = ""
   -- Weather phenomena
   local wp = false
   local wpsub = ""
@@ -1895,8 +1958,11 @@ function ATIS:onafterBroadcast( From, Event, To )
       end
     end
   end
-  alltext = alltext .. ";\n" .. subtitle
+  --self:I("Line 1932")
 
+  alltext = alltext .. ";\n" .. subtitle
+  --self:I(alltext)
+  subtitle = ""
   -- Temperature
   if self.TDegF then
     if temperature < 0 then
@@ -1924,8 +1990,10 @@ function ATIS:onafterBroadcast( From, Event, To )
       self:Transmission( ATIS.Sound.DegreesCelsius, 0.2 )
     end
   end
+  --self:I("Line 1962")
   alltext = alltext .. ";\n" .. subtitle
-
+  --self:I(alltext)
+    
   -- Dew point
   if self.TDegF then
     if dewpoint < 0 then
@@ -1953,6 +2021,8 @@ function ATIS:onafterBroadcast( From, Event, To )
       self:Transmission( ATIS.Sound.DegreesCelsius, 0.2 )
     end
   end
+  --self:I("Line 1992")
+  --self:I(alltext)
   alltext = alltext .. ";\n" .. subtitle
 
   -- Altimeter QNH/QFE.
@@ -1977,6 +2047,15 @@ function ATIS:onafterBroadcast( From, Event, To )
       end
     end
   end
+  
+  if self.ReportmBar and not self.metric then
+    if self.qnhonly then
+      subtitle = string.format( "%s;\nAltimeter %d hPa", subtitle, mBarqnh )
+    else
+      subtitle = string.format( "%s;\nAltimeter: QNH %d, QFE %d hPa", subtitle, mBarqnh, mBarqfe)
+    end
+  end
+  
   local _ALTIMETER = subtitle
   if not self.useSRS then
     self:Transmission( ATIS.Sound.Altimeter, 1.0, subtitle )
@@ -2009,6 +2088,8 @@ function ATIS:onafterBroadcast( From, Event, To )
       end
     end
   end
+  --self:I("Line 2049")
+  --self:I(alltext)
   alltext = alltext .. ";\n" .. subtitle
 
   -- Active runway.
@@ -2136,7 +2217,9 @@ function ATIS:onafterBroadcast( From, Event, To )
   end
 
   -- ILS
+  --self:I({ils=self.ils})
   local ils=self:GetNavPoint(self.ils, runwayLanding, rwyLandingLeft)
+  --self:I({ils=ils,runwayLanding=runwayLanding, rwyLandingLeft=rwyLandingLeft})
   if ils then
     subtitle = string.format( "ILS frequency %.2f MHz", ils.frequency )
     if not self.useSRS then
@@ -2151,6 +2234,7 @@ function ATIS:onafterBroadcast( From, Event, To )
       self:Transmission( ATIS.Sound.MegaHertz, 0.2 )
     end
     alltext = alltext .. ";\n" .. subtitle
+    --self:I(alltext)
   end
 
   -- Outer NDB
@@ -2240,7 +2324,12 @@ function ATIS:onafterBroadcast( From, Event, To )
     end
     alltext = alltext .. ";\n" .. subtitle
   end
-
+  
+  -- additional info, if any
+  if self.useSRS and self.AdditionalInformation then
+    alltext = alltext .. ";\n"..self.AdditionalInformation
+  end
+  
   -- Advice on initial...
   subtitle = string.format( "Advise on initial contact, you have information %s", NATO )
   if not self.useSRS then
