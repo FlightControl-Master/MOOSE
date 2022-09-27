@@ -4074,19 +4074,12 @@ function RANGE:_myname( unitname )
   self:F2( unitname )
   local pname = "Ghost 1 1"
   local unit = UNIT:FindByName( unitname )
-  if unit then
+  if unit and unit:IsAlive() then
     local grp = unit:GetGroup()
-    if grp then
+    if grp and grp:IsAlive() then
       pname = grp:GetCustomCallSign(true,true)
     end
   end  
-  --[[
-  local pname = unit:GetPlayerName()
-  -- local csign = unit:GetCallsign()
-
-  -- return string.format("%s (%s)", csign, pname)
-  return string.format( "%s", pname )
-  --]]
   return pname
 end
 
