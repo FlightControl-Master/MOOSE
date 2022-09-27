@@ -2766,15 +2766,15 @@ function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
     local personalized = false
     if IsPlayer and string.find(groupname,"#") then
       -- personalized flight name in group naming
-    if Keepnumber then
-    shortcallsign = string.match(groupname,"#(.+)") -- Ghostrider 219
-    else
-    shortcallsign = string.match(groupname,"#%s*([%a]+)") -- Ghostrider
-    end
+      if Keepnumber then
+        shortcallsign = string.match(groupname,"#(.+)") or "Ghost 111" -- Ghostrider 219
+      else
+        shortcallsign = string.match(groupname,"#%s*([%a]+)") or "Ghost" -- Ghostrider
+      end
       personalized = true
     elseif IsPlayer and string.find(self:GetPlayerName(),"|") then
       -- personalized flight name in group naming
-      shortcallsign = string.match(self:GetPlayerName(),"|%s*([%a]+)") -- Ghostrider
+      shortcallsign = string.match(self:GetPlayerName(),"|%s*([%a]+)") or string.match(self:GetPlayerName(),"|%s*([%d]+)") or "Ghost" -- Ghostrider
       personalized = true
     end
   
