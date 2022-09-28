@@ -910,9 +910,6 @@ function ZONE_RADIUS:GetVec3( Height )
 end
 
 
-
-
-
 --- Scan the zone for the presence of units of the given ObjectCategories.
 -- Note that **only after** a zone has been scanned, the zone can be evaluated by:
 --
@@ -921,7 +918,6 @@ end
 --   * @{ZONE_RADIUS.IsSomeInZoneOfCoalition}(): Scan if there is some presence of units in the zone of the given coalition.
 --   * @{ZONE_RADIUS.IsNoneInZoneOfCoalition}(): Scan if there isn't any presence of units in the zone of an other coalition than the given one.
 --   * @{ZONE_RADIUS.IsNoneInZone}(): Scan if the zone is empty.
--- @{#ZONE_RADIUS.
 -- @param #ZONE_RADIUS self
 -- @param ObjectCategories An array of categories of the objects to find in the zone. E.g. `{Object.Category.UNIT}`
 -- @param UnitCategories An array of unit categories of the objects to find in the zone. E.g. `{Unit.Category.GROUND_UNIT,Unit.Category.SHIP}`
@@ -953,7 +949,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
     if ZoneObject then
 
       local ObjectCategory = ZoneObject:getCategory()
-
+      
       --local name=ZoneObject:getName()
       --env.info(string.format("Zone object %s", tostring(name)))
       --self:E(ZoneObject)
@@ -2416,6 +2412,296 @@ function ZONE_POLYGON:FindByName( ZoneName )
   local ZoneFound = _DATABASE:FindZone( ZoneName )
   return ZoneFound
 end
+
+--- Scan the zone for the presence of units of the given ObjectCategories. Does **not** scan for scenery at the moment.
+-- Note that **only after** a zone has been scanned, the zone can be evaluated by:
+--
+--   * @{ZONE_POLYGON.IsAllInZoneOfCoalition}(): Scan the presence of units in the zone of a coalition.
+--   * @{ZONE_POLYGON.IsAllInZoneOfOtherCoalition}(): Scan the presence of units in the zone of an other coalition.
+--   * @{ZONE_POLYGON.IsSomeInZoneOfCoalition}(): Scan if there is some presence of units in the zone of the given coalition.
+--   * @{ZONE_POLYGON.IsNoneInZoneOfCoalition}(): Scan if there isn't any presence of units in the zone of an other coalition than the given one.
+--   * @{ZONE_POLYGON.IsNoneInZone}(): Scan if the zone is empty.
+-- @param #ZONE_POLYGON self
+-- @param ObjectCategories An array of categories of the objects to find in the zone. E.g. `{Object.Category.UNIT}`
+-- @param UnitCategories An array of unit categories of the objects to find in the zone. E.g. `{Unit.Category.GROUND_UNIT,Unit.Category.SHIP}`
+-- @usage
+--    myzone:Scan({Object.Category.UNIT},{Unit.Category.GROUND_UNIT})
+--    local IsAttacked = myzone:IsSomeInZoneOfCoalition( self.Coalition )
+function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
+
+  self.ScanData = {}
+  self.ScanData.Coalitions = {}
+  self.ScanData.Scenery = {}
+  self.ScanData.Units = {}
+
+  local function EvaluateZone( ZoneObject )
+
+    if ZoneObject then
+
+      local ObjectCategory = ZoneObject:getCategory()
+
+      if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive() ) or (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
+
+        local CoalitionDCSUnit = ZoneObject:getCoalition()
+
+        local Include = false
+        if not UnitCategories then
+          -- Anything found is included.
+          Include = true
+        else
+          -- Check if found object is in specified categories.
+          local CategoryDCSUnit = ZoneObject:getDesc().category
+
+          for UnitCategoryID, UnitCategory in pairs( UnitCategories ) do
+            if UnitCategory == CategoryDCSUnit then
+              Include = true
+              break
+            end
+          end
+
+        end
+
+        if Include then
+
+          local CoalitionDCSUnit = ZoneObject:getCoalition()
+
+          -- This coalition is inside the zone.
+          self.ScanData.Coalitions[CoalitionDCSUnit] = true
+
+          self.ScanData.Units[ZoneObject] = ZoneObject
+
+          self:F2( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
+        end
+      end
+      
+      --[[
+      -- no scenery possible at the moment
+      if ObjectCategory == Object.Category.SCENERY then
+        local SceneryType = ZoneObject:getTypeName()
+        local SceneryName = ZoneObject:getName()
+        self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
+        self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( SceneryName, ZoneObject )
+        self:T( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
+      end
+      --]]
+    end
+
+    return true
+  end
+
+  -- Search objects.
+  local inzoneunits = SET_UNIT:New():FilterZones({self}):FilterOnce()
+  local inzonestatics = SET_STATIC:New():FilterZones({self}):FilterOnce()
+  
+  inzoneunits:ForEach(
+    function(unit)
+      local Unit = unit --Wrapper.Unit#UNIT
+      local DCS = Unit:GetDCSObject()
+      EvaluateZone(DCS)
+    end
+  )
+  
+  inzonestatics:ForEach(
+    function(static)
+      local Static = static --Wrapper.Static#STATIC
+      local DCS = Static:GetDCSObject()
+      EvaluateZone(DCS)
+    end
+  )
+  
+end
+
+--- Count the number of different coalitions inside the zone.
+-- @param #ZONE_POLYGON self
+-- @return #table Table of DCS units and DCS statics inside the zone.
+function ZONE_POLYGON:GetScannedUnits()
+  return self.ScanData.Units
+end
+
+--- Get a set of scanned units.
+-- @param #ZONE_POLYGON self
+-- @return Core.Set#SET_UNIT Set of units and statics inside the zone.
+function ZONE_POLYGON:GetScannedSetUnit()
+
+  local SetUnit = SET_UNIT:New()
+
+  if self.ScanData then
+    for ObjectID, UnitObject in pairs( self.ScanData.Units ) do
+      local UnitObject = UnitObject -- DCS#Unit
+      if UnitObject:isExist() then
+        local FoundUnit = UNIT:FindByName( UnitObject:getName() )
+        if FoundUnit then
+          SetUnit:AddUnit( FoundUnit )
+        else
+          local FoundStatic = STATIC:FindByName( UnitObject:getName() )
+          if FoundStatic then
+            SetUnit:AddUnit( FoundStatic )
+          end
+        end
+      end
+    end
+  end
+
+  return SetUnit
+end
+
+--- Get a set of scanned units.
+-- @param #ZONE_POLYGON self
+-- @return Core.Set#SET_GROUP Set of groups.
+function ZONE_POLYGON:GetScannedSetGroup()
+
+  self.ScanSetGroup=self.ScanSetGroup or SET_GROUP:New() --Core.Set#SET_GROUP
+
+  self.ScanSetGroup.Set={}
+
+  if self.ScanData then
+    for ObjectID, UnitObject in pairs( self.ScanData.Units ) do
+      local UnitObject = UnitObject -- DCS#Unit
+      if UnitObject:isExist() then
+
+        local FoundUnit=UNIT:FindByName(UnitObject:getName())
+        if FoundUnit then
+          local group=FoundUnit:GetGroup()
+          self.ScanSetGroup:AddGroup(group)
+        end
+      end
+    end
+  end
+
+  return self.ScanSetGroup
+end
+
+--- Count the number of different coalitions inside the zone.
+-- @param #ZONE_POLYGON self
+-- @return #number Counted coalitions.
+function ZONE_POLYGON:CountScannedCoalitions()
+
+  local Count = 0
+
+  for CoalitionID, Coalition in pairs( self.ScanData.Coalitions ) do
+    Count = Count + 1
+  end
+
+  return Count
+end
+
+--- Check if a certain coalition is inside a scanned zone.
+-- @param #ZONE_POLYGON self
+-- @param #number Coalition The coalition id, e.g. coalition.side.BLUE.
+-- @return #boolean If true, the coalition is inside the zone.
+function ZONE_POLYGON:CheckScannedCoalition( Coalition )
+  if Coalition then
+    return self.ScanData.Coalitions[Coalition]
+  end
+  return nil
+end
+
+--- Get Coalitions of the units in the Zone, or Check if there are units of the given Coalition in the Zone.
+-- Returns nil if there are none to two Coalitions in the zone!
+-- Returns one Coalition if there are only Units of one Coalition in the Zone.
+-- Returns the Coalition for the given Coalition if there are units of the Coalition in the Zone.
+-- @param #ZONE_POLYGON self
+-- @return #table
+function ZONE_POLYGON:GetScannedCoalition( Coalition )
+
+  if Coalition then
+    return self.ScanData.Coalitions[Coalition]
+  else
+    local Count = 0
+    local ReturnCoalition = nil
+
+    for CoalitionID, Coalition in pairs( self.ScanData.Coalitions ) do
+      Count = Count + 1
+      ReturnCoalition = CoalitionID
+    end
+
+    if Count ~= 1 then
+      ReturnCoalition = nil
+    end
+
+    return ReturnCoalition
+  end
+end
+
+--- Get scanned scenery type (currently not implemented in ZONE_POLYGON)
+-- @param #ZONE_POLYGON self
+-- @return #table Table of DCS scenery type objects.
+function ZONE_POLYGON:GetScannedSceneryType( SceneryType )
+  return self.ScanData.Scenery[SceneryType]
+end
+
+--- Get scanned scenery table (currently not implemented in ZONE_POLYGON)
+-- @param #ZONE_POLYGON self
+-- @return #table Table of DCS scenery objects.
+function ZONE_POLYGON:GetScannedScenery()
+  return self.ScanData.Scenery
+end
+
+--- Is All in Zone of Coalition?
+-- Check if only the specifed coalition is inside the zone and noone else.
+-- @param #ZONE_POLYGON self
+-- @param #number Coalition Coalition ID of the coalition which is checked to be the only one in the zone.
+-- @return #boolean True, if **only** that coalition is inside the zone and no one else.
+-- @usage
+--    self.Zone:Scan()
+--    local IsGuarded = self.Zone:IsAllInZoneOfCoalition( self.Coalition )
+function ZONE_POLYGON:IsAllInZoneOfCoalition( Coalition )
+  return self:CountScannedCoalitions() == 1 and self:GetScannedCoalition( Coalition ) == true
+end
+
+--- Is All in Zone of Other Coalition?
+-- Check if only one coalition is inside the zone and the specified coalition is not the one.
+-- You first need to use the @{#ZONE_POLYGON.Scan} method to scan the zone before it can be evaluated!
+-- Note that once a zone has been scanned, multiple evaluations can be done on the scan result set.
+-- @param #ZONE_POLYGON self
+-- @param #number Coalition Coalition ID of the coalition which is not supposed to be in the zone.
+-- @return #boolean True, if and only if only one coalition is inside the zone and the specified coalition is not it.
+-- @usage
+--    self.Zone:Scan()
+--    local IsCaptured = self.Zone:IsAllInZoneOfOtherCoalition( self.Coalition )
+function ZONE_POLYGON:IsAllInZoneOfOtherCoalition( Coalition )
+  return self:CountScannedCoalitions() == 1 and self:GetScannedCoalition( Coalition ) == nil
+end
+
+--- Is Some in Zone of Coalition?
+-- Check if more than one coaltion is inside the zone and the specifed coalition is one of them.
+-- You first need to use the @{#ZONE_POLYGON.Scan} method to scan the zone before it can be evaluated!
+-- Note that once a zone has been scanned, multiple evaluations can be done on the scan result set.
+-- @param #ZONE_POLYGON self
+-- @param #number Coalition ID of the coaliton which is checked to be inside the zone.
+-- @return #boolean True if more than one coalition is inside the zone and the specified coalition is one of them.
+-- @usage
+--    self.Zone:Scan()
+--    local IsAttacked = self.Zone:IsSomeInZoneOfCoalition( self.Coalition )
+function ZONE_POLYGON:IsSomeInZoneOfCoalition( Coalition )
+  return self:CountScannedCoalitions() > 1 and self:GetScannedCoalition( Coalition ) == true
+end
+
+--- Is None in Zone of Coalition?
+-- You first need to use the @{#ZONE_POLYGON.Scan} method to scan the zone before it can be evaluated!
+-- Note that once a zone has been scanned, multiple evaluations can be done on the scan result set.
+-- @param #ZONE_POLYGON self
+-- @param Coalition
+-- @return #boolean
+-- @usage
+--    self.Zone:Scan()
+--    local IsOccupied = self.Zone:IsNoneInZoneOfCoalition( self.Coalition )
+function ZONE_POLYGON:IsNoneInZoneOfCoalition( Coalition )
+  return self:GetScannedCoalition( Coalition ) == nil
+end
+
+--- Is None in Zone?
+-- You first need to use the @{#ZONE_POLYGON.Scan} method to scan the zone before it can be evaluated!
+-- Note that once a zone has been scanned, multiple evaluations can be done on the scan result set.
+-- @param #ZONE_POLYGON self
+-- @return #boolean
+-- @usage
+--    self.Zone:Scan()
+--    local IsEmpty = self.Zone:IsNoneInZone()
+function ZONE_POLYGON:IsNoneInZone()
+  return self:CountScannedCoalitions() == 0
+end
+
 
 do -- ZONE_ELASTIC
 

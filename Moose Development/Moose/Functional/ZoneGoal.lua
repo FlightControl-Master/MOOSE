@@ -59,10 +59,15 @@ do -- Zone
   -- @param Core.Zone#ZONE_RADIUS Zone A @{Zone} object with the goal to be achieved.
   -- @return #ZONE_GOAL
   function ZONE_GOAL:New( Zone )
-  
-    local self = BASE:Inherit( self, ZONE_RADIUS:New( Zone:GetName(), Zone:GetVec2(), Zone:GetRadius() ) ) -- #ZONE_GOAL
-    self:F( { Zone = Zone } )
-
+    
+    BASE:I({Zone=Zone})
+    local self = BASE:Inherit( self, BASE:New())
+    if type(Zone) == "string" then
+       self = BASE:Inherit( self, ZONE_POLYGON:NewFromGroupName(Zone) )
+    else    
+        self = BASE:Inherit( self, ZONE_RADIUS:New( Zone:GetName(), Zone:GetVec2(), Zone:GetRadius() ) ) -- #ZONE_GOAL
+        self:F( { Zone = Zone } )
+    end
     -- Goal object.
     self.Goal = GOAL:New()
 
