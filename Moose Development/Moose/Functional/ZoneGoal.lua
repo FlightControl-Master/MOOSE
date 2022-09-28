@@ -8,7 +8,7 @@
 -- ===
 -- 
 -- ### Author: **FlightControl**
--- ### Contributions: **funkyfranky**
+-- ### Contributions: **funkyfranky**, **Applevangelist**
 -- 
 -- ===
 -- 
@@ -56,13 +56,18 @@ do -- Zone
   
   --- ZONE_GOAL Constructor.
   -- @param #ZONE_GOAL self
-  -- @param Core.Zone#ZONE_RADIUS Zone A @{Zone} object with the goal to be achieved.
+  -- @param Core.Zone#ZONE_RADIUS Zone A @{Zone} object with the goal to be achieved. Alternatively, can be handed as the name of late activated group describing a @{ZONE_POLYGON} with its waypoints.
   -- @return #ZONE_GOAL
   function ZONE_GOAL:New( Zone )
-  
-    local self = BASE:Inherit( self, ZONE_RADIUS:New( Zone:GetName(), Zone:GetVec2(), Zone:GetRadius() ) ) -- #ZONE_GOAL
-    self:F( { Zone = Zone } )
-
+    
+    BASE:I({Zone=Zone})
+    local self = BASE:Inherit( self, BASE:New())
+    if type(Zone) == "string" then
+       self = BASE:Inherit( self, ZONE_POLYGON:NewFromGroupName(Zone) )
+    else    
+        self = BASE:Inherit( self, ZONE_RADIUS:New( Zone:GetName(), Zone:GetVec2(), Zone:GetRadius() ) ) -- #ZONE_GOAL
+        self:F( { Zone = Zone } )
+    end
     -- Goal object.
     self.Goal = GOAL:New()
 
