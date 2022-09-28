@@ -363,7 +363,7 @@ do -- ZONE_CAPTURE_COALITION
 
   --- ZONE_CAPTURE_COALITION Constructor.
   -- @param #ZONE_CAPTURE_COALITION self
-  -- @param Core.Zone#ZONE Zone A @{Zone} object with the goal to be achieved.
+  -- @param Core.Zone#ZONE Zone A @{Zone} object with the goal to be achieved. Alternatively, can be handed as the name of late activated group describing a @{ZONE_POLYGON} with its waypoints.
   -- @param DCSCoalition.DCSCoalition#coalition Coalition The initial coalition owning the zone.
   -- @param #table UnitCategories Table of unit categories. See [DCS Class Unit](https://wiki.hoggitworld.com/view/DCS_Class_Unit). Default {Unit.Category.GROUND_UNIT}.
   -- @param #table ObjectCategories Table of unit categories. See [DCS Class Object](https://wiki.hoggitworld.com/view/DCS_Class_Object). Default {Object.Category.UNIT, Object.Category.STATIC}, i.e. all UNITS and STATICS.
