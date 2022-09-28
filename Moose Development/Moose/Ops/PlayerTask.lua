@@ -49,6 +49,7 @@ do
 -- @field #table conditionFailure   =   {},
 -- @field Ops.PlayerTask#PLAYERTASKCONTROLLER TaskController
 -- @field #number timestamp
+-- @field #number lastsmoketime
 -- @extends Core.Fsm#FSM
 
 
@@ -76,11 +77,12 @@ PLAYERTASK = {
   conditionFailure   =   {},
   TaskController     =   nil,
   timestamp          =   0,
+  lastsmoketime      =   0,
   }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.2"
+PLAYERTASK.version="0.1.3"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -112,6 +114,7 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
   self.TaskController = nil -- Ops.PlayerTask#PLAYERTASKCONTROLLER
   self.timestamp = timer.getAbsTime()
   self.TTSType = TTSType or "close air support"
+  self.lastsmoketime = 0
   
   if Repeat then
     self.Repeat = true
@@ -392,10 +395,13 @@ end
 function PLAYERTASK:SmokeTarget(Color)
   self:T(self.lid.."SmokeTarget")
   local color = Color or SMOKECOLOR.Red
-  if self.Target then
+  if not self.lastsmoketime then self.lastsmoketime = 0 end
+  local TDiff = timer.getAbsTime() - self.lastsmoketime
+  if self.Target and TDiff > 299 then
     local coordinate = self.Target:GetCoordinate()
     if coordinate then
       coordinate:Smoke(color)
+      self.lastsmoketime = timer.getAbsTime()
     end
   end
   return self
@@ -754,6 +760,7 @@ do
 -- @field #table PlayerFlashMenu
 -- @field #table PlayerJoinMenu
 -- @field #table PlayerInfoMenu
+-- @field #boolean noflaresmokemenu
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1055,6 +1062,7 @@ PLAYERTASKCONTROLLER = {
   PlayerFlashMenu    =   {},
   PlayerJoinMenu     =   {},
   PlayerInfoMenu     =   {},
+  noflaresmokemenu   =   false,
   }
 
 ---
@@ -1213,7 +1221,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.36"
+PLAYERTASKCONTROLLER.version="0.1.37"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -1267,6 +1275,8 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.ShortCallsign = true
   self.Keepnumber = false 
   self.CallsignTranslations = nil
+  
+  self.noflaresmokemenu = false
    
   if ClientFilter then
     self.ClientSet = SET_CLIENT:New():FilterCoalitions(string.lower(self.CoalitionName)):FilterActive(true):FilterPrefixes(ClientFilter):FilterStart()
@@ -1385,6 +1395,24 @@ end
 function PLAYERTASKCONTROLLER:SetAllowFlashDirection(OnOff)
   self:T(self.lid.."SetAllowFlashDirection")
   self.AllowFlash = OnOff
+  return self
+end
+
+--- [User] Do not show menu entries to smoke or flare targets
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetDisableSmokeFlareTask()
+  self:T(self.lid.."SetDisableSmokeFlareTask")
+  self.noflaresmokemenu = true
+  return self
+end
+
+--- [User] Show menu entries to smoke or flare targets (on by default!)
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetEnableSmokeFlareTask()
+  self:T(self.lid.."SetEnableSmokeFlareTask")
+  self.noflaresmokemenu = false
   return self
 end
 
@@ -2716,8 +2744,8 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
           local active = MENU_GROUP_DELAYED:New(group,menuactive,topmenu)
           local info = MENU_GROUP_COMMAND_DELAYED:New(group,menuinfo,active,self._ActiveTaskInfo,self,group,client)
           local mark = MENU_GROUP_COMMAND_DELAYED:New(group,menumark,active,self._MarkTask,self,group,client)
-          if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
-            -- no smoking/flaring here if A2A
+          if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A or self.noflaresmokemenu then
+            -- no smoking/flaring here if A2A or designer has set to false
             local smoke = MENU_GROUP_COMMAND_DELAYED:New(group,menusmoke,active,self._SmokeTask,self,group,client)
             local flare = MENU_GROUP_COMMAND_DELAYED:New(group,menuflare,active,self._FlareTask,self,group,client)
           end
