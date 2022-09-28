@@ -46,7 +46,7 @@
 -- ===
 --
 -- ### Author: **FlightControl**
--- ### Contributions:
+-- ### Contributions: **Applevangelist**, **FunkyFranky**
 --
 -- ===
 --
@@ -1290,13 +1290,13 @@ end
 -- @return DCS#Vec2 The random location within the zone.
 function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
 
-	local Vec2 = self:GetVec2()
-	local _inner = inner or 0
-	local _outer = outer or self:GetRadius()
+  local Vec2 = self:GetVec2()
+  local _inner = inner or 0
+  local _outer = outer or self:GetRadius()
 
-	if surfacetypes and type(surfacetypes)~="table" then
+  if surfacetypes and type(surfacetypes)~="table" then
     surfacetypes={surfacetypes}
-	end
+  end
 
   local function _getpoint()
     local point = {}
@@ -1316,10 +1316,10 @@ function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
     return false
   end
 
-	local point=_getpoint()
+  local point=_getpoint()
 
-	if surfacetypes then
-	  local N=1 ; local Nmax=100 ; local gotit=false
+  if surfacetypes then
+    local N=1 ; local Nmax=100 ; local gotit=false
     while gotit==false and N<=Nmax do
       gotit=_checkSurface(point)
       if gotit then
@@ -1331,7 +1331,7 @@ function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
     end
   end
 
-	return point
+  return point
 end
 
 --- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone.
