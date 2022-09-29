@@ -249,8 +249,10 @@ do
     
     local RecceDcsUnit = self.Recce:GetDCSObject()
     
-    self.SpotIR = Spot.createInfraRed( RecceDcsUnit, { x = 0, y = 2, z = 0 }, Target:GetPointVec3():AddY(1):GetVec3() )
-    self.SpotLaser = Spot.createLaser( RecceDcsUnit, { x = 0, y = 2, z = 0 }, Target:GetPointVec3():AddY(1):GetVec3(), LaserCode )
+    local relativespot = self.relstartpos or { x = 0, y = 2, z = 0 }
+    
+    self.SpotIR = Spot.createInfraRed( RecceDcsUnit, relativespot, Target:GetPointVec3():AddY(1):GetVec3() )
+    self.SpotLaser = Spot.createLaser( RecceDcsUnit, relativespot, Target:GetPointVec3():AddY(1):GetVec3(), LaserCode )
 
     if Duration then
       self.ScheduleID = self.LaseScheduler:Schedule( self, StopLase, {self}, Duration )
@@ -366,6 +368,18 @@ do
   -- @return #boolean true if it is lasing
   function SPOT:IsLasing()
     return self.Lasing
+  end
+  
+  --- Set laser start position relative to the lasing unit.
+  -- @param #SPOT self
+  -- @param #table position Start position of the laser relative to the lasing unit. Default is { x = 0, y = 2, z = 0 }
+  -- @return #SPOT self
+  -- @usage
+  --      -- Set lasing position to be the position of the optics of the Gazelle M:
+  --      myspot:SetRelativeStartPosition({ x = 1.7, y = 1.2, z = 0 })
+  function SPOT:SetRelativeStartPosition(position)
+    self.relstartpos = position or { x = 0, y = 2, z = 0 }
+    return self
   end
   
 end
