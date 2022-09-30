@@ -813,14 +813,31 @@ do -- SET_BASE
     return true
   end
 
-  --- Decides whether to include the Object.
+  --- Decides whether an object is in the SET
   -- @param #SET_BASE self
   -- @param #table Object
   -- @return #SET_BASE self
-  function SET_BASE:IsInSet( ObjectName )
+  function SET_BASE:IsInSet( Object )
     self:F3( Object )
-
-    return true
+    local outcome = false
+    local name = Object:GetName()
+    self:ForEach(
+      function(object)
+        if object:GetName() == name then
+          outcome = true
+        end
+      end
+    )
+    return outcome
+  end
+  
+  --- Decides whether an object is **not** in the SET
+  -- @param #SET_BASE self
+  -- @param #table Object
+  -- @return #SET_BASE self
+  function SET_BASE:IsNotInSet( Object )
+    self:F3( Object )
+    return not self:IsInSet(Object)
   end
 
   --- Gets a string with all the object names.
