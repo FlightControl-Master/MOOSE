@@ -1,4 +1,4 @@
---- **Ops** - Defines an extensive API to manage 3D points in the DCS World 3D simulation space.
+--- **Ops** - Allow a player in the Gazelle to detect, smoke, flare, lase and report ground units to others.
 --
 -- ## Features:
 --
@@ -62,8 +62,9 @@
 -- 
 -- # PLAYERRECCE 
 -- 
---    * Simplifies defining, executing and controlling of Player tasks
---    * TBD
+--   * Allow a player in the Gazelle to detect, smoke, flare, lase and report ground units to others.
+--   * Implements visual detection from the helo
+--   * Implements optical detection via the Vivianne system and lasing
 --    
 -- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) channel.  
 -- 
