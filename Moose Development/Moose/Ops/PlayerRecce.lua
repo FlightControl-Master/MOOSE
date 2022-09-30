@@ -1033,9 +1033,9 @@ function PLAYERRECCE:onafterStop(From, Event, To)
   return self
 end
 
---[[ test script
+--[[
 local PlayerSet = SET_CLIENT:New():FilterCoalitions("blue"):FilterActive(true):FilterCategories("helicopter"):FilterStart()
-local Attackers = SET_CLIENT:New():FilterCoalitions("blue"):FilterActive(true):FilterStart()
+local Attackers = SET_CLIENT:New():FilterCoalitions("blue"):FilterActive(true):FilterPrefixes({"CAS","BAI"}):FilterStart()
 local myrecce = PLAYERRECCE:New("1st Forward FACA",coalition.side.BLUE,PlayerSet)
 myrecce:SetAttackSet(Attackers)
 --]]
