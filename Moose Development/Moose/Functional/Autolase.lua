@@ -890,7 +890,7 @@ function AUTOLASE:onafterMonitor(From, Event, To)
         if unit and unit:IsAlive() then
           local threat = unit:GetThreatLevel()
           local coord = unit:GetCoordinate()
-          if threat > 0 then
+          if threat >= self.minthreatlevel then
             local unitname = unit:GetName()
             -- prefer radar units
             if unit:HasAttribute("RADAR_BAND1_FOR_ARM") or unit:HasAttribute("RADAR_BAND2_FOR_ARM") or unit:HasAttribute("Optical Tracker") then
