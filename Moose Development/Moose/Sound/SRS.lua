@@ -143,6 +143,107 @@ MSRS = {
 -- @field #string version
 MSRS.version="0.1.0"
 
+--- Voices
+-- @type Voices
+MSRS.Voices = {
+  Microsoft = {
+    ["Hedda"] = "Microsoft Hedda Desktop", -- de-DE
+    ["Hazel"] = "Microsoft Hazel Desktop", -- en-GB
+    ["David"] = "Microsoft David Desktop", -- en-US
+    ["Zira"] = "Microsoft Zira Desktop", -- en-US
+    ["Hortense"] = "Microsoft Hortense Desktop", --fr-FR
+    },
+  Google = {
+    Standard = {
+       ["en_AU_Standard_A"] = 'en-AU-Standard-A', -- [1] FEMALE
+       ["en_AU_Standard_B"] = 'en-AU-Standard-B', -- [2] MALE
+       ["en_AU_Standard_C"] = 'en-AU-Standard-C', -- [3] FEMALE
+       ["en_AU_Standard_D"] = 'en-AU-Standard-D', -- [4] MALE
+       ["en_IN_Standard_A"] = 'en-IN-Standard-A', -- [5] FEMALE
+       ["en_IN_Standard_B"] = 'en-IN-Standard-B', -- [6] MALE
+       ["en_IN_Standard_C"] = 'en-IN-Standard-C', -- [7] MALE
+       ["en_IN_Standard_D"] = 'en-IN-Standard-D', -- [8] FEMALE
+       ["en_GB_Standard_A"] = 'en-GB-Standard-A', -- [9] FEMALE
+       ["en_GB_Standard_B"] = 'en-GB-Standard-B', -- [10] MALE
+       ["en_GB_Standard_C"] = 'en-GB-Standard-C', -- [11] FEMALE
+       ["en_GB_Standard_D"] = 'en-GB-Standard-D', -- [12] MALE
+       ["en_GB_Standard_F"] = 'en-GB-Standard-F', -- [13] FEMALE
+       ["en_US_Standard_A"] = 'en-US-Standard-A', -- [14] MALE
+       ["en_US_Standard_B"] = 'en-US-Standard-B', -- [15] MALE
+       ["en_US_Standard_C"] = 'en-US-Standard-C', -- [16] FEMALE
+       ["en_US_Standard_D"] = 'en-US-Standard-D', -- [17] MALE
+       ["en_US_Standard_E"] = 'en-US-Standard-E', -- [18] FEMALE
+       ["en_US_Standard_F"] = 'en-US-Standard-F', -- [19] FEMALE
+       ["en_US_Standard_G"] = 'en-US-Standard-G', -- [20] FEMALE
+       ["en_US_Standard_H"] = 'en-US-Standard-H', -- [21] FEMALE
+       ["en_US_Standard_I"] = 'en-US-Standard-I', -- [22] MALE
+       ["en_US_Standard_J"] = 'en-US-Standard-J', -- [23] MALE
+       ["fr_FR_Standard_A"] = "fr-FR-Standard-A", -- Female
+       ["fr_FR_Standard_B"] = "fr-FR-Standard-B", -- Male
+       ["fr_FR_Standard_C"] = "fr-FR-Standard-C", -- Female
+       ["fr_FR_Standard_D"] = "fr-FR-Standard-D", -- Male
+       ["fr_FR_Standard_E"] = "fr-FR-Standard-E", -- Female
+       ["de_DE_Standard_A"] = "de-DE-Standard-A", -- Female
+       ["de_DE_Standard_B"] = "de-DE-Standard-B", -- Male
+       ["de_DE_Standard_C"] = "de-DE-Standard-C", -- Female
+       ["de_DE_Standard_D"] = "de-DE-Standard-D", -- Male
+       ["de_DE_Standard_E"] = "de-DE-Standard-E", -- Male
+       ["de_DE_Standard_F"] = "de-DE-Standard-F", -- Female
+       ["es_ES_Standard_A"] = "es-ES-Standard-A", -- Female
+       ["es_ES_Standard_B"] = "es-ES-Standard-B", -- Male
+       ["es_ES_Standard_C"] = "es-ES-Standard-C", -- Female
+       ["es_ES_Standard_D"] = "es-ES-Standard-D", -- Female
+       ["it_IT_Standard_A"] = "it-IT-Standard-A", -- Female
+       ["it_IT_Standard_B"] = "it-IT-Standard-B", -- Female
+       ["it_IT_Standard_C"] = "it-IT-Standard-C", -- Male
+       ["it_IT_Standard_D"] = "it-IT-Standard-D", -- Male
+      },
+      Wavenet = {
+       ["en_AU_Wavenet_A"] = 'en-AU-Wavenet-A', -- [1] FEMALE
+       ["en_AU_Wavenet_B"] = 'en-AU-Wavenet-B', -- [2] MALE
+       ["en_AU_Wavenet_C"] = 'en-AU-Wavenet-C', -- [3] FEMALE
+       ["en_AU_Wavenet_D"] = 'en-AU-Wavenet-D', -- [4] MALE
+       ["en_IN_Wavenet_A"] = 'en-IN-Wavenet-A', -- [5] FEMALE
+       ["en_IN_Wavenet_B"] = 'en-IN-Wavenet-B', -- [6] MALE
+       ["en_IN_Wavenet_C"] = 'en-IN-Wavenet-C', -- [7] MALE
+       ["en_IN_Wavenet_D"] = 'en-IN-Wavenet-D', -- [8] FEMALE
+       ["en_GB_Wavenet_A"] = 'en-GB-Wavenet-A', -- [9] FEMALE
+       ["en_GB_Wavenet_B"] = 'en-GB-Wavenet-B', -- [10] MALE
+       ["en_GB_Wavenet_C"] = 'en-GB-Wavenet-C', -- [11] FEMALE
+       ["en_GB_Wavenet_D"] = 'en-GB-Wavenet-D', -- [12] MALE
+       ["en_GB_Wavenet_F"] = 'en-GB-Wavenet-F', -- [13] FEMALE
+       ["en_US_Wavenet_A"] = 'en-US-Wavenet-A', -- [14] MALE
+       ["en_US_Wavenet_B"] = 'en-US-Wavenet-B', -- [15] MALE
+       ["en_US_Wavenet_C"] = 'en-US-Wavenet-C', -- [16] FEMALE
+       ["en_US_Wavenet_D"] = 'en-US-Wavenet-D', -- [17] MALE
+       ["en_US_Wavenet_E"] = 'en-US-Wavenet-E', -- [18] FEMALE
+       ["en_US_Wavenet_F"] = 'en-US-Wavenet-F', -- [19] FEMALE
+       ["en_US_Wavenet_G"] = 'en-US-Wavenet-G', -- [20] FEMALE
+       ["en_US_Wavenet_H"] = 'en-US-Wavenet-H', -- [21] FEMALE
+       ["en_US_Wavenet_I"] = 'en-US-Wavenet-I', -- [22] MALE
+       ["en_US_Wavenet_J"] = 'en-US-Wavenet-J', -- [23] MALE
+       ["fr_FR_Wavenet_A"] = "fr-FR-Wavenet-A", -- Female
+       ["fr_FR_Wavenet_B"] = "fr-FR-Wavenet-B", -- Male
+       ["fr_FR_Wavenet_C"] = "fr-FR-Wavenet-C", -- Female
+       ["fr_FR_Wavenet_D"] = "fr-FR-Wavenet-D", -- Male
+       ["fr_FR_Wavenet_E"] = "fr-FR-Wavenet-E", -- Female
+       ["de_DE_Wavenet_A"] = "de-DE-Wavenet-A", -- Female
+       ["de_DE_Wavenet_B"] = "de-DE-Wavenet-B", -- Male
+       ["de_DE_Wavenet_C"] = "de-DE-Wavenet-C", -- Female
+       ["de_DE_Wavenet_D"] = "de-DE-Wavenet-D", -- Male
+       ["de_DE_Wavenet_E"] = "de-DE-Wavenet-E", -- Male
+       ["de_DE_Wavenet_F"] = "de-DE-Wavenet-F", -- Female      
+       ["es_ES_Wavenet_B"] = "es-ES-Wavenet-B", -- Male
+       ["es_ES_Wavenet_C"] = "es-ES-Wavenet-C", -- Female
+       ["es_ES_Wavenet_D"] = "es-ES-Wavenet-D", -- Female
+       ["it_IT_Wavenet_A"] = "it-IT-Wavenet-A", -- Female
+       ["it_IT_Wavenet_B"] = "it-IT-Wavenet-B", -- Female
+       ["it_IT_Wavenet_C"] = "it-IT-Wavenet-C", -- Male
+       ["it_IT_Wavenet_D"] = "it-IT-Wavenet-D", -- Male
+      } , 
+    },
+  }
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -705,16 +806,8 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   modus=modus:gsub("0", "AM")
   modus=modus:gsub("1", "FM")
   
-  -- This did not work well. Stopped if the transmission was a bit longer with no apparent error.  
-  --local command=string.format("%s --freqs=%s --modulations=%s --coalition=%d --port=%d --volume=%.2f --speed=%d", exe, freqs, modus, coal, port, volume, speed)
-
-  -- Command from orig STTS script. Works better for some unknown reason!
-  --local command=string.format("start /min \"\" /d \"%s\" /b \"%s\" -f %s -m %s -c %s -p %s -n \"%s\" -h", path, exe, freqs, modus, coal, port, "ROBOT")
-  
-  --local command=string.format('start /b "" /d "%s" "%s" -f %s -m %s -c %s -p %s -n "%s" > bla.txt', path, exe, freqs, modus, coal, port, "ROBOT")
-  
   -- Command.
-  local command=string.format('"%s\\%s" -f %s -m %s -c %s -p %s -n "%s" -v "%.1f"', path, exe, freqs, modus, coal, port, label,volume)
+  local command=string.format('"%s\\%s" -f "%s" -m "%s" -c %s -p %s -n "%s" -v "%.1f"', path, exe, freqs, modus, coal, port, label,volume)
 
   -- Set voice or gender/culture.
   if voice then
@@ -1098,5 +1191,3 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-

@@ -489,7 +489,7 @@ UTILS.hPa2inHg = function( hPa )
   return hPa * 0.0295299830714
 end
 
---- Convert knots to alitude corrected KIAS, e.g. for tankers.
+--- Convert knots to altitude corrected KIAS, e.g. for tankers.
 -- @param #number knots Speed in knots.
 -- @param #number altitude Altitude in feet
 -- @return #number Corrected KIAS
@@ -1849,6 +1849,11 @@ function UTILS.IsLoadingDoorOpen( unit_name )
          return true -- no doors on this one ;)
       end
       
+      if type_name == "Bronco-OV-10A" then
+         BASE:T(unit_name .. " front door(s) are open")
+         return true -- no doors on this one ;)
+      end
+      
       return false
 
   end -- nil
@@ -2317,7 +2322,7 @@ end
 -- @param #string Filename The name of the file.
 -- @param #boolean Spawn If set to false, do not re-spawn the groups loaded in location and reduce to size.
 -- @return Core.Set#SET_GROUP Set of GROUP objects. 
--- Returns nil when file cannot be read. Returns a table of data entries if Spawn is false: `{ groupname=groupname, size=size, coordinate=coordinate }`
+-- Returns nil when file cannot be read. Returns a table of data entries if Spawn is false: `{ groupname=groupname, size=size, coordinate=coordinate, template=template }`
 function UTILS.LoadSetOfGroups(Path,Filename,Spawn)
   local spawn = true
   if Spawn == false then spawn = false end
@@ -2340,10 +2345,10 @@ function UTILS.LoadSetOfGroups(Path,Filename,Spawn)
       local posz = tonumber(dataset[6])
       local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
       local group=nil
-      local data = { groupname=groupname, size=size, coordinate=coordinate }
+      local data = { groupname=groupname, size=size, coordinate=coordinate, template=template }
       table.insert(datatable,data)
       if spawn then
-        local group = SPAWN:New(groupname)
+        local group = SPAWN:New(template)
           :InitDelayOff()
           :OnSpawnGroup(
             function(spwndgrp)

@@ -91,6 +91,8 @@ do
 -- @field #boolean PlayerGuidance if true additional callouts to guide/warn players
 -- @field #boolean ModernEra if true we get more intel on targets, and EPLR on the AIC
 -- @field #boolean callsignshort if true use short (group) callsigns, e.g. "Ghost 1", else "Ghost 1 1"
+-- @field #boolean keepnumber if true, use the full string after # for a player custom callsign
+-- @field #table callsignTranslations optional translations for callsigns
 -- @field #number MeldDistance 25nm - distance for "Meld" Call , usually shortly before the actual engagement 
 -- @field #number TacDistance 30nm - distance for "TAC" Call
 -- @field #number ThreatDistance 15nm - distance to declare untargeted (new) threats
@@ -325,7 +327,7 @@ do
 -- * @{#AWACS.SetRadarBlur}() : Set the radar blur faktor in percent.
 -- * @{#AWACS.SetColdWar}() : Set to cold war - no fill-ins, no EPLRS, VID as standard.
 -- * @{#AWACS.SetModernEraDefensive}() : Set to modern, EPLRS, BVR/IFF engagement, fill-ins.
--- * @{#AWACS.SetModernEraAgressive}() : Set to modern, EPLRS, BVR/IFF engagement, fill-ins.
+-- * @{#AWACS.SetModernEraAggressive}() : Set to modern, EPLRS, BVR/IFF engagement, fill-ins.
 -- * @{#AWACS.SetPolicingModern}() : Set to modern, EPLRS, VID engagement, fill-ins.
 -- * @{#AWACS.SetPolicingColdWar}() : Set to cold war, no EPLRS, VID engagement, no fill-ins.
 -- * @{#AWACS.SetInterceptTimeline}() : Set distances for TAC, Meld and Threat range calls.
@@ -495,7 +497,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.41", -- #string
+  version = "0.2.43", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -561,6 +563,8 @@ AWACS = {
   PlayerGuidance = true,
   ModernEra = true,
   callsignshort = true,
+  keepnumber = true,
+  callsignTranslations = nil,
   TacDistance = 45,
   MeldDistance = 35,
   ThreatDistance = 25,
@@ -1710,7 +1714,7 @@ end
 --- [User] Set AWACS to Modern Era standards - ROE to BVR, ROT to return fire. Radar blur 15%.
 -- @param #AWACS self
 -- @return #AWACS self
-function AWACS:SetModernEraAgressive()
+function AWACS:SetModernEraAggressive()
   self.ModernEra = true
   self.AwacsROT = AWACS.ROT.RETURNFIRE
   self.AwacsROE = AWACS.ROE.BVR
@@ -1896,6 +1900,7 @@ function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey
   self.Volume = Volume or 1.0
   
   self.AwacsSRS = MSRS:New(self.PathToSRS,self.MultiFrequency,self.MultiModulation,self.Volume)
+  self.AwacsSRS:SetCoalition(self.coalition)
   self.AwacsSRS:SetGender(self.Gender)
   self.AwacsSRS:SetCulture(self.Culture)
   self.AwacsSRS:SetVoice(self.Voice)
@@ -2068,7 +2073,7 @@ function AWACS:_StartSettings(FlightGroup,Mission)
     
     --self.AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,self.PathToGoogleKey,"AWACS",self.Volume)
      
-    self.callsigntxt = string.format("%s",AWACS.CallSignClear[self.CallSign])
+    self.callsigntxt = string.format("%s",self.CallSignClear[self.CallSign])
     
     self:__CheckRadioQueue(10)
     
@@ -2110,7 +2115,7 @@ function AWACS:_StartSettings(FlightGroup,Mission)
     
     --AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,nil,"AWACS")
 
-    self.callsigntxt = string.format("%s",AWACS.CallSignClear[self.CallSign])
+    self.callsigntxt = string.format("%s",self.CallSignClear[self.CallSign])
     
     local shifting = self.gettext:GetEntry("SHIFTCHANGE",self.locale)
     
@@ -2222,37 +2227,27 @@ function AWACS:_GetCallSign(Group,GID, IsPlayer)
   
   local callsign = "Ghost 1"
   if Group and Group:IsAlive() then
-    local shortcallsign = Group:GetCallsign() or "unknown11"-- e.g.Uzi11, but we want Uzi 1 1
-    local callsignroot = string.match(shortcallsign, '(%a+)')
-    self:I("CallSign = " .. callsignroot)
-    local groupname = Group:GetName()
-    local callnumber = string.match(shortcallsign, "(%d+)$" ) or "unknown11"
-    local callnumbermajor = string.char(string.byte(callnumber,1))
-    local callnumberminor = string.char(string.byte(callnumber,2))
-    local personalized = false
-    if IsPlayer and string.find(groupname,"#") then
-      -- personalized flight name in group naming
-      shortcallsign = string.match(groupname,"#([%a]+)")
-      personalized = true
-    end
-    if IsPlayer and string.find(Group:GetPlayerName(),"|") then
-      -- personalized flight name in group naming
-      shortcallsign = string.match(Group:GetPlayerName(),"| ([%a]+)")
-      personalized = true
-    end
-    if (not personalized) and self.callsignTranslations and self.callsignTranslations[callsignroot] then
-      shortcallsign = string.gsub(shortcallsign, callsignroot, self.callsignTranslations[callsignroot])
-    end
-    
-    if self.callsignshort then
-      callsign = string.gsub(shortcallsign,callnumber,"").." "..callnumbermajor
-    else
-      callsign = string.gsub(shortcallsign,callnumber,"").." "..callnumbermajor.." "..callnumberminor
-    end
-    self:T("Generated Callsign for TTS = " .. callsign)
-  end
-  
+    callsign = Group:GetCustomCallSign(self.callsignshort,self.keepnumber,self.callsignTranslations)
+  end  
   return callsign
+end
+
+--- [User] Set player callsign options for TTS output. See @{Wrapper.Group#GROUP.GetCustomCallSign}() on how to set customized callsigns.
+-- @param #AWACS self
+-- @param #boolean ShortCallsign If true, only call out the major flight number
+-- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name as-is, no amendments or numbers.
+-- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
+-- callsigns from playername or group name.
+-- @return #AWACS self
+function AWACS:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations)
+  if not ShortCallsign or ShortCallsign == false then
+   self.callsignshort = false
+  else
+   self.callsignshort = true
+  end
+  self.keepnumber = Keepnumber or false
+  self.callsignTranslations = CallsignTranslations
+  return self  
 end
 
 --- [Internal] Update contact from cluster data
@@ -2971,7 +2966,7 @@ function AWACS:_ShowAwacsInfo(Group)
   local report = REPORT:New("Info")
   report:Add("====================")
   report:Add(string.format("AWACS %s",self.callsigntxt))
-  report:Add(string.format("Radio: %d %s",self.Frequency,UTILS.GetModulationName(self.Modulation)))
+  report:Add(string.format("Radio: %.3f %s",self.Frequency,UTILS.GetModulationName(self.Modulation)))
   report:Add(string.format("Bulls Alias: %s",self.AOName))
   report:Add(string.format("Coordinate: %s",self.AOCoordinate:ToStringLLDDM()))
   report:Add("====================")
@@ -4303,55 +4298,7 @@ function AWACS:_ReadAssignedGroupFromTID(TaskID)
    end
    return nil
 end
-
---- [Internal] Create new idle task from contact to pick up later
--- @param #AWACS self
--- @param #string Description Task Type
--- @param #table Object Object of TARGET
--- @param Ops.Intelligence#INTEL.Contact Contact
--- @return #AWACS self
-function AWACS:_CreateIdleTaskForContact(Description,Object,Contact)
-   self:T(self.lid.."_CreateIdleTaskForContact "..Description)
-   local task = {} -- #AWACS.ManagedTask
-   self.ManagedTaskID = self.ManagedTaskID + 1
-   task.TID = self.ManagedTaskID
-   task.AssignedGroupID = 0
-   task.Status = AWACS.TaskStatus.IDLE
-   task.ToDo = Description
-   task.Target = TARGET:New(Object)
-   task.Contact = Contact
-   task.ScreenText = Description
-   if Description == AWACS.TaskDescription.ANCHOR or Description == AWACS.TaskDescription.REANCHOR then
-    task.Target.Type = TARGET.ObjectType.ZONE
-   end
-   self.ManagedTasks:Push(task,task.TID)
-   return self
-end  
-
---- [Internal] Create new idle task from cluster to pick up later
--- @param #AWACS self
--- @param #string Description Task Type
--- @param #table Object Object of TARGET
--- @param Ops.Intelligence#INTEL.Cluster Cluster
--- @return #AWACS self
-function AWACS:_CreateIdleTaskForCluster(Description,Object,Cluster)
-   self:T(self.lid.."_CreateIdleTaskForCluster "..Description)
-   local task = {} -- #AWACS.ManagedTask
-   self.ManagedTaskID = self.ManagedTaskID + 1
-   task.TID = self.ManagedTaskID
-   task.AssignedGroupID = 0
-   task.Status = AWACS.TaskStatus.IDLE
-   task.ToDo = Description
-   task.Target = TARGET:New(self.intel:GetClusterCoordinate(Cluster))
-   task.Cluster = Cluster
-   task.ScreenText = Description
-   if Description == AWACS.TaskDescription.ANCHOR or Description == AWACS.TaskDescription.REANCHOR then
-    task.Target.Type = TARGET.ObjectType.ZONE
-   end
-   self.ManagedTasks:Push(task,task.TID)
-   return self
-end 
-
+ 
 --- [Internal] Create radio entry to tell players that CAP is on station in Anchor
 -- @param #AWACS self
 -- @param #number GID Group ID 
@@ -5711,7 +5658,7 @@ function AWACS:onafterStart(From, Event, To)
     end
     
     --self.AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,self.PathToGoogleKey,"AWACS",self.Volume)
-    self.callsigntxt = string.format("%s",AWACS.CallSignClear[self.CallSign])  
+    self.callsigntxt = string.format("%s",self.CallSignClear[self.CallSign])  
     self:__CheckRadioQueue(-10)
     
     local sunrise = self.gettext:GetEntry("SUNRISE",self.locale)
