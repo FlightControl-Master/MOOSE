@@ -92,6 +92,7 @@
 -- @field Sound.SRS#MSRS msrs Moose SRS object.
 -- @field #number dTQueueCheck Time interval to check the radio queue. Default 5 sec or 90 sec if SRS is used.
 -- @field #boolean ReportmBar Report mBar/hpa even if not metric, i.e. for Mirage flights
+-- @field #boolean TransmitOnlyWithPlayers For SRS - If true, only transmit if there are alive Players.
 -- @extends Core.Fsm#FSM
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -346,6 +347,7 @@ ATIS = {
   markerid       =   nil,
   relHumidity    =   nil,
   ReportmBar     =   false,
+  TransmitOnlyWithPlayers = false,
 }
 
 --- NATO alphabet.
@@ -588,7 +590,7 @@ _ATIS = {}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version = "0.9.9"
+ATIS.version = "0.9.10"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -777,6 +779,18 @@ function ATIS:SetTowerFrequencies( freqs )
     freqs = { freqs }
   end
   self.towerfrequency = freqs
+  return self
+end
+
+--- For SRS - Switch to only transmit if there are players on the server.
+-- @param #ATIS self
+-- @param #boolean Switch If true, only send SRS if there are alive Players.
+-- @return #ATIS self
+function ATIS:SetTransmitOnlyWithPlayers(Switch)
+  self.TransmitOnlyWithPlayers = Switch
+  if self.msrsQ then
+    self.msrsQ:SetTransmitOnlyWithPlayers(Switch)
+  end
   return self
 end
 
@@ -1195,6 +1209,7 @@ function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey)
     self.msrs:SetLabel("ATIS")
     self.msrs:SetGoogle(GoogleKey)
     self.msrsQ = MSRSQUEUE:New("ATIS")
+    self.msrsQ:SetTransmitOnlyWithPlayers(self.TransmitOnlyWithPlayers)
     if self.dTQueueCheck<=10 then
       self:SetQueueUpdateTime(90)
     end
