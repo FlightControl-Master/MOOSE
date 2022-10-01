@@ -5,6 +5,7 @@
 --   * Allow a player in the Gazelle to detect, smoke, flare, lase and report ground units to others.
 --   * Implements visual detection from the helo
 --   * Implements optical detection via the Vivianne system and lasing
+--   * Upload target info to a PLAYERTASKCONTROLLER Instance
 --
 -- ===
 --
@@ -52,6 +53,14 @@
 -- @field #number lasingtime
 -- @field #table AutoLase
 -- @field Core.Set#SET_CLIENT AttackSet
+-- @field #boolean TransmitOnlyWithPlayers
+-- @field Sound.SRS#MSRS SRS
+-- @field Sound.SRS#MSRSQUEUE SRSQueue
+-- @field #boolean UseController
+-- @field Ops.PlayerTask#PLAYERTASKCONTROLLER Controller
+-- @field #boolean ShortCallsign
+-- @field #boolean Keepnumber
+-- @field #table CallsignTranslations
 -- @extends Core.Fsm#FSM
 
 ---
@@ -74,7 +83,7 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.0.1",
+  version            =   "0.0.5",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
   PlayerSet          =   nil,
@@ -88,6 +97,12 @@ PLAYERRECCE = {
   lasingtime         =   60,
   AutoLase           =   {},
   AttackSet          =   nil,
+  TransmitOnlyWithPlayers = true,
+  UseController      =   false,
+  Controller         =   nil,
+  ShortCallsign      =   true,
+  Keepnumber         =   true,
+  CallsignTranslations = nil,
 }
 
 ---
@@ -130,8 +145,11 @@ PLAYERRECCE.CanLase = {
   ["SA342L"] = true,
 }
 
----
+--- Create and rund a new PlayerRecce instance.
 -- @param #PLAYERRECCE self
+-- @param #string Name The name of this instance
+-- @param #number Coalition, e.g. coalition.side.BLUE
+-- @param Core.Set#SET_CLIENT PlayerSet The set of pilots working as recce
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:New(Name, Coalition, PlayerSet)
   
@@ -177,8 +195,14 @@ function PLAYERRECCE:New(Name, Coalition, PlayerSet)
   local starttime = math.random(5,10)
   self:__Status(-starttime)
   
+  self:I(self.lid..self.version.." Started.")
+  
   return self
 end
+
+------------------------------------------------------------------------------------------
+-- TODO: Functions
+------------------------------------------------------------------------------------------
 
 --- [Internal] Event handling
 -- @param #PLAYERRECCE self
@@ -188,7 +212,7 @@ function PLAYERRECCE:_EventHandler(EventData)
   self:T(self.lid.."_EventHandler: "..EventData.id)
   if EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
     if EventData.IniPlayerName then
-      self:I(self.lid.."Event for player: "..EventData.IniPlayerName)
+      self:T(self.lid.."Event for player: "..EventData.IniPlayerName)
       if self.ClientMenus[EventData.IniPlayerName] then
         self.ClientMenus[EventData.IniPlayerName]:Remove()
       end  
@@ -198,7 +222,7 @@ function PLAYERRECCE:_EventHandler(EventData)
     end
   elseif EventData.id == EVENTS.PlayerEnterAircraft and EventData.IniCoalition == self.Coalition then
     if EventData.IniPlayerName and EventData.IniGroup and self.UseSRS then
-      self:I(self.lid.."Event for player: "..EventData.IniPlayerName)
+      self:T(self.lid.."Event for player: "..EventData.IniPlayerName)
       self.UnitLaserCodes[EventData.IniPlayerName] = 1688
       self.ClientMenus[EventData.IniPlayerName] = nil
       self.LaserSpots[EventData.IniPlayerName] = nil
@@ -209,6 +233,37 @@ function PLAYERRECCE:_EventHandler(EventData)
   return self
 end
 
+--- (Internal) Function to determine clockwise direction to target.
+-- @param #PLAYERRECCE self
+-- @param Wrapper.Unit#UNIT unit The Helicopter
+-- @param Wrapper.Unit#UNIT target The downed Group
+-- @return #number direction
+function PLAYERRECCE:_GetClockDirection(unit, target)
+  self:T(self.lid .. " _GetClockDirection")
+ 
+  local _playerPosition = unit:GetCoordinate() -- get position of helicopter
+  local _targetpostions = target:GetCoordinate() -- get position of downed pilot
+  local _heading = unit:GetHeading() -- heading
+  local DirectionVec3 = _playerPosition:GetDirectionVec3( _targetpostions )
+  local Angle = _playerPosition:GetAngleDegrees( DirectionVec3 )
+  local clock = 12
+  local hours = 0   
+  if _heading and Angle then
+    clock = 12
+    --if angle == 0 then angle = 360 end
+    clock = _heading-Angle  
+    hours = (clock/30)*-1
+    clock = 12+hours
+    clock = UTILS.Round(clock,0)
+    if clock > 12 then clock = clock-12 end
+  end
+  if self.debug then
+    local text = string.format("Heading = %d, Angle = %d, Hours= %d, Clock = %d",_heading,Angle,hours,clock)
+    self:I(self.lid .. text)
+  end    
+  return clock
+end
+
 --- [User] Set a table of possible laser codes.
 -- Each new RECCE can select a code from this table, default is 1688.
 -- @param #PLAYERRECCE self
@@ -216,6 +271,16 @@ end
 -- @return #PLAYERRECCE
 function PLAYERRECCE:SetLaserCodes( LaserCodes )
   self.LaserCodes = ( type( LaserCodes ) == "table" ) and LaserCodes or { LaserCodes }
+  return self
+end
+
+--- [User] Set PlayerTaskController. Allows to upload target reports to the controller, in turn creating tasks for other players.
+-- @param #PLAYERRECCE self
+-- @param Ops.PlayerTask#PLAYERTASKCONTROLLER Controller
+-- @return #PLAYERRECCE
+function PLAYERRECCE:SetPlayerTaskController(Controller)
+  self.UseController = true
+  self.Controller = Controller
   return self
 end
 
@@ -236,7 +301,7 @@ end
 -- @return #number maxview in meters.
 -- @return #boolean cameraison If true, camera is on, else off.
 function PLAYERRECCE:_GetGazelleVivianneSight(Gazelle)
-  self:I(self.lid.."GetGazelleVivianneSight")
+  self:T(self.lid.."GetGazelleVivianneSight")
   local unit = Gazelle -- Wrapper.Unit#UNIT
   if unit and unit:IsAlive() then
     local dcsunit = Unit.getByName(Gazelle:GetName())
@@ -273,7 +338,7 @@ end
 -- @param #boolean vivoff Camera on or off
 -- @return #number maxview Max view distance in meters
 function PLAYERRECCE:_GetActualMaxLOSight(unit,vheading, vnod, vivoff)
-  self:I(self.lid.."_GetActualMaxLOSight")
+  self:T(self.lid.."_GetActualMaxLOSight")
   if vivoff then return 0 end
   local maxview = 0
   if unit and unit:IsAlive() then
@@ -295,6 +360,24 @@ function PLAYERRECCE:_GetActualMaxLOSight(unit,vheading, vnod, vivoff)
   return maxview 
 end
 
+--- [User] Set callsign options for TTS output. See @{Wrapper.Group#GROUP.GetCustomCallSign}() on how to set customized callsigns.
+-- @param #PLAYERRECCE self
+-- @param #boolean ShortCallsign If true, only call out the major flight number
+-- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name for players as-is, no amendments or numbers.
+-- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
+-- callsigns from playername or group name.
+-- @return #PLAYERRECCE self
+function PLAYERRECCE:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations)
+  if not ShortCallsign or ShortCallsign == false then
+   self.ShortCallsign = false
+  else
+   self.ShortCallsign = true
+  end
+  self.Keepnumber = Keepnumber or false
+  self.CallsignTranslations = CallsignTranslations
+  return self  
+end
+
 --- [Internal] Build a ZONE_POLYGON from a given viewport of a unit
 -- @param #PLAYERRECCE self
 -- @param Wrapper.Unit#UNIT unit The unit which is looking
@@ -306,7 +389,7 @@ end
 -- @param #boolean draw Draw the zone on the F10 map
 -- @return Core.Zone#ZONE_POLYGON ViewZone or nil if camera is off
 function PLAYERRECCE:_GetViewZone(unit, vheading, vnod, maxview, angle, camon, draw)
-  self:I(self.lid.."_GetViewZone")
+  self:T(self.lid.."_GetViewZone")
   local viewzone = nil
   if not camon then return nil end
   if unit and unit:IsAlive() then
@@ -340,7 +423,7 @@ end
 --@return Core.Set#SET_UNIT Set of targets, can be empty!
 --@return #number count Count of targets
 function PLAYERRECCE:_GetTargetSet(unit,camera)
-  self:I(self.lid.."_GetTargetSet")
+  self:T(self.lid.."_GetTargetSet")
   local finaltargets = SET_UNIT:New()
   local finalcount = 0
   local heading,nod,maxview,angle = 0,30,5000,10
@@ -365,7 +448,7 @@ function PLAYERRECCE:_GetTargetSet(unit,camera)
     -- determine what we can see
     local startpos = unit:GetCoordinate()
     local targetset = SET_UNIT:New():FilterCategories("ground"):FilterActive(true):FilterZones({zone}):FilterCoalitions(redcoalition):FilterOnce()
-    self:I("Prefilter Target Count = "..targetset:CountAlive())
+    self:T("Prefilter Target Count = "..targetset:CountAlive())
     -- TODO - Threat level filter?
     -- TODO - Min distance from unit?
     targetset:ForEach(
@@ -373,13 +456,13 @@ function PLAYERRECCE:_GetTargetSet(unit,camera)
         local _unit = _unit -- Wrapper.Unit#UNIT
         local _unitpos = _unit:GetCoordinate()
         if startpos:IsLOS(_unitpos) then
-            self:I("Adding to final targets: ".._unit:GetName())
+            self:T("Adding to final targets: ".._unit:GetName())
           finaltargets:Add(_unit:GetName(),_unit)
         end
       end
       )
     finalcount = finaltargets:CountAlive()
-    self:I(string.format("%s Unit: %s | Targets in view %s",self.lid,name,finalcount))
+    self:T(string.format("%s Unit: %s | Targets in view %s",self.lid,name,finalcount))
   end
   return finaltargets, finalcount, zone
 end
@@ -389,7 +472,7 @@ end
 --@param Core.Set#SET_UNIT targetset Set of targets, can be empty!
 --@return Wrapper.Unit#UNIT Target
 function PLAYERRECCE:_GetHVTTarget(targetset)
-   self:I(self.lid.."_GetHVTTarget")
+   self:T(self.lid.."_GetHVTTarget")
    
    -- get one target
   -- local target = targetset:GetRandom() -- Wrapper.Unit#UNIT
@@ -426,7 +509,7 @@ end
 --@param Core.Set#SET_UNIT targetset Set of targets, can be empty!
 --@return #PLAYERRECCE self
 function PLAYERRECCE:_LaseTarget(client,targetset)
-  self:I(self.lid.."_LaseTarget")
+  self:T(self.lid.."_LaseTarget")
   -- get one target
   local target = self:_GetHVTTarget(targetset) -- Wrapper.Unit#UNIT
   local playername = client:GetPlayerName()
@@ -475,7 +558,7 @@ end
 -- @param #string playername
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:_SetClientLaserCode(client,group,playername,code)
-  self:I(self.lid.."_SetClientLaserCode")
+  self:T(self.lid.."_SetClientLaserCode")
   self.UnitLaserCodes[playername] = code or 1688
   if self.ClientMenus[playername] then
     self.ClientMenus[playername]:Remove()
@@ -491,7 +574,7 @@ end
 -- @param #string playername
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:_SwitchOnStation(client,group,playername)
-  self:I(self.lid.."_SwitchOnStation")
+  self:T(self.lid.."_SwitchOnStation")
   if not self.OnStation[playername] then
     self.OnStation[playername] = true
     self:__RecceOnStation(-1,client,playername)
@@ -513,7 +596,7 @@ end
 -- @param #string playername
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:_SwitchLasing(client,group,playername)
-  self:I(self.lid.."_SwitchLasing")
+  self:T(self.lid.."_SwitchLasing")
   if not self.AutoLase[playername] then
     self.AutoLase[playername] = true
     MESSAGE:New("Lasing is now ON",10,self.Name or "FACA"):ToClient(client)
@@ -546,7 +629,7 @@ end
 -- @param #string playername
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:_SmokeTargets(client,group,playername)
-  self:I(self.lid.."_SmokeTargets")
+  self:T(self.lid.."_SmokeTargets")
   local cameraset = self:_GetTargetSet(client,true) -- Core.Set#SET_UNIT
   local visualset = self:_GetTargetSet(client,false) -- Core.Set#SET_UNIT
   cameraset:AddSet(visualset)
@@ -590,7 +673,7 @@ end
 -- @param #string playername
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:_FlareTargets(client,group,playername)
-  self:I(self.lid.."_SmokeTargets")
+  self:T(self.lid.."_FlareTargets")
   local cameraset = self:_GetTargetSet(client,true) -- Core.Set#SET_UNIT
   local visualset = self:_GetTargetSet(client,false) -- Core.Set#SET_UNIT
   cameraset:AddSet(visualset)
@@ -633,8 +716,28 @@ end
 -- @param Wrapper.Group#GROUP group
 -- @param #string playername
 -- @return #PLAYERRECCE self
+function PLAYERRECCE:_UploadTargets(client,group,playername)
+  self:T(self.lid.."_UploadTargets")
+  local targetset, number = self:_GetTargetSet(client,true)
+  local vtargetset, vnumber = self:_GetTargetSet(client,false)
+  local totalset = SET_UNIT:New()
+  totalset:AddSet(targetset)
+  totalset:AddSet(vtargetset)
+  if totalset:CountAlive() > 0 then
+    self.Controller:AddTarget(totalset)
+    self:__TargetReportSent(1,client,playername,totalset)
+  end
+  return self
+end
+
+--- [Internal] 
+-- @param #PLAYERRECCE self
+-- @param Wrapper.Client#CLIENT client
+-- @param Wrapper.Group#GROUP group
+-- @param #string playername
+-- @return #PLAYERRECCE self
 function PLAYERRECCE:_ReportLaserTargets(client,group,playername)
-self:I(self.lid.."_ReportLaserTargets")
+self:T(self.lid.."_ReportLaserTargets")
   local targetset, number = self:_GetTargetSet(client,true)
   if number > 0 and self.AutoLase[playername] then
     local Settings = ( client and _DATABASE:GetPlayerSettings( playername  ) ) or _SETTINGS
@@ -675,7 +778,7 @@ end
 -- @param #string playername
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:_ReportVisualTargets(client,group,playername)
-  self:I(self.lid.."_ReportVisualTargets")
+  self:T(self.lid.."_ReportVisualTargets")
   local targetset, number = self:_GetTargetSet(client,false)
     if number > 0 then
     local Settings = ( client and _DATABASE:GetPlayerSettings( playername ) ) or _SETTINGS
@@ -711,7 +814,7 @@ end
 -- @param #PLAYERRECCE self
 -- @param #PLAYERRECCE self
 function PLAYERRECCE:_BuildMenus()
-  self:I(self.lid.."_BuildMenus")
+  self:T(self.lid.."_BuildMenus")
   local clients = self.PlayerSet -- Core.Set#SET_CLIENT
   local clientset = clients:GetSetObjects()
   for _,_client in pairs(clientset) do
@@ -741,6 +844,10 @@ function PLAYERRECCE:_BuildMenus()
             local reportL = MENU_GROUP_COMMAND:New(group,"Laser Target",targetmenu,self._ReportLaserTargets,self,client,group,playername)
           end
           local reportV = MENU_GROUP_COMMAND:New(group,"Visual Targets",targetmenu,self._ReportVisualTargets,self,client,group,playername)
+          if self.UseController then
+            local text = string.format("Target Upload to %s",self.Controller.MenuName or self.Controller.Name)
+            local upload = MENU_GROUP_COMMAND:New(group,text,targetmenu,self._UploadTargets,self,client,group,playername)
+          end
           if canlase then
             local lasecodemenu = MENU_GROUP:New(group,"Set Laser Code",self.ClientMenus[playername])
             local codemenu = {}
@@ -766,18 +873,20 @@ end
 -- @param #string playername
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:_CheckNewTargets(targetset,client,playername)
-  self:I(self.lid.."_CheckNewTargets")
-  targetset:ForEachUnit(
+  self:T(self.lid.."_CheckNewTargets")
+  targetset:ForEach(
     function(unit)
       if unit and unit:IsAlive() then
+        self:T("Report unit: "..unit:GetName())
         if not unit.PlayerRecceDetected then
+          self:T("New unit: "..unit:GetName())
           unit.PlayerRecceDetected = {
             detected = true,
             recce = client,
             playername = playername,
             timestamp = timer.getTime()
           }
-          self:__TargetDetected(-1,unit,client,playername)
+          self:TargetDetected(unit,client,playername)
         end
       end
     end
@@ -799,7 +908,7 @@ end
 -- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
-  self:I(self.lid.."SetSRS")
+  self:T(self.lid.."SetSRS")
   self.PathToSRS = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone" --
   self.Gender = Gender or "male" --
   self.Culture = Culture or "en-US" --
@@ -824,6 +933,19 @@ function PLAYERRECCE:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,V
     self.SRS:SetGoogle(self.PathToGoogleKey)
   end
   self.SRSQueue = MSRSQUEUE:New(self.MenuName or self.Name)
+  self.SRSQueue:SetTransmitOnlyWithPlayers(self.TransmitOnlyWithPlayers)
+  return self
+end
+
+--- [User] For SRS - Switch to only transmit if there are players on the server.
+-- @param #PLAYERRECCE self
+-- @param #boolean Switch If true, only send SRS if there are alive Players.
+-- @return #PLAYERRECCE self
+function PLAYERRECCE:SetTransmitOnlyWithPlayers(Switch)
+  self.TransmitOnlyWithPlayers = Switch
+  if self.SRSQueue then
+    self.SRSQueue:SetTransmitOnlyWithPlayers(Switch)
+  end
   return self
 end
 
@@ -837,7 +959,27 @@ function PLAYERRECCE:SetMenuName(Name)
  return self
 end
 
---- [Internal] 
+--- [Internal] Get text for text-to-speech.
+-- Numbers are spaced out, e.g. "Heading 180" becomes "Heading 1 8 0 ".
+-- @param #PLAYERRECCE self
+-- @param #string text Original text.
+-- @return #string Spoken text.
+function PLAYERRECCE:_GetTextForSpeech(text)
+  
+  -- Space out numbers.
+  text=string.gsub(text,"%d","%1 ")
+  -- get rid of leading or trailing spaces
+  text=string.gsub(text,"^%s*","")
+  text=string.gsub(text,"%s*$","")
+  
+  return text
+end
+
+------------------------------------------------------------------------------------------
+-- TODO: FSM Functions
+------------------------------------------------------------------------------------------
+
+--- [Internal] Status Loop
 -- @param #PLAYERRECCE self
 -- @param #string From
 -- @param #string Event
@@ -853,6 +995,7 @@ function PLAYERRECCE:onafterStatus(From, Event, To)
         local client = Client -- Wrapper.Client#CLIENT
         local playername = client:GetPlayerName()
         if client and client:IsAlive() and self.OnStation[playername] then
+          
           -- targets on camera
           local targetset, targetcount, tzone = self:_GetTargetSet(client,true)
           if targetset then
@@ -863,7 +1006,17 @@ function PLAYERRECCE:onafterStatus(From, Event, To)
               self.ViewZone[playername]=tzone:DrawZone(self.Coalition,{0,0,1},nil,nil,nil,1)
             end
           end
-          self:I({targetcount=targetcount})
+          self:T({targetcount=targetcount})
+          -- lase targets on camera
+          if targetcount > 0 then
+            if self.CanLase[client:GetTypeName()] and self.AutoLase[playername] then
+              -- DONE move to lase at will
+              self:_LaseTarget(client,targetset)
+            end
+          end
+          -- Report new targets
+          self:_CheckNewTargets(targetset,client,playername)
+          
           -- visual targets
           local vistargetset, vistargetcount, viszone = self:_GetTargetSet(client,false)
           if vistargetset then
@@ -874,17 +1027,8 @@ function PLAYERRECCE:onafterStatus(From, Event, To)
               self.ViewZoneVisual[playername]=viszone:DrawZone(self.Coalition,{1,0,0},nil,nil,nil,3)
             end
           end
-          self:I({targetcount=targetcount})
-          -- lase targets on camera
-          if targetcount > 0 then
-            if self.CanLase[client:GetTypeName()] and self.AutoLase[playername] then
-              -- DONE move to lase at will
-              self:_LaseTarget(client,targetset)
-            end
-          end
-          -- Report new targets
-          targetset:AddSet(vistargetset)
-          self:_CheckNewTargets(targetset,client,playername)
+          self:T({visualtargetcount=vistargetcount})
+          self:_CheckNewTargets(vistargetset,client,playername)
         end
     end
   )
@@ -893,7 +1037,7 @@ function PLAYERRECCE:onafterStatus(From, Event, To)
   return self
 end
 
---- [Internal] 
+--- [Internal] Recce on station
 -- @param #PLAYERRECCE self
 -- @param #string From
 -- @param #string Event
@@ -902,16 +1046,30 @@ end
 -- @param #string Playername
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterRecceOnStation(From, Event, To, Client, Playername)
-  self:I({From, Event, To})
-  local callsign = Client:GetGroup():GetCustomCallSign(true,true)
+  self:T({From, Event, To})
+  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
   local coord = Client:GetCoordinate()
   local coordtext = coord:ToStringBULLS(self.Coalition)
-  local text = string.format("All stations, FACA %s on station\nat %s!",callsign, coordtext)
-  MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
+  if self.debug then
+    local text = string.format("All stations, FACA %s on station\nat %s!",callsign, coordtext)
+    MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
+  end
+  local text1 = "Party time!"
+  local text2 = string.format("All stations, FACA %s on station\nat %s!",callsign, coordtext)
+  local text2tts = string.format("All stations, FACA %s on station at %s!",callsign, coordtext)
+  text2tts = self:_GetTextForSpeech(text2tts)
+  if self.UseSRS then
+    local grp = Client:GetGroup()
+    self.SRSQueue:NewTransmission(text1,nil,self.SRS,nil,2,{grp},text1,10)
+    self.SRSQueue:NewTransmission(text2tts,nil,self.SRS,nil,1,{grp},text2,10)
+  else
+    MESSAGE:New(text1,10,self.Name or "FACA"):ToClient(Client)
+    MESSAGE:New(text2,10,self.Name or "FACA"):ToClient(Client)
+  end
   return self
 end
 
---- [Internal] 
+--- [Internal] Recce off station
 -- @param #PLAYERRECCE self
 -- @param #string From
 -- @param #string Event
@@ -920,16 +1078,28 @@ end
 -- @param #string Playername
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterRecceOffStation(From, Event, To, Client, Playername)
-  self:I({From, Event, To})
-  local callsign = Client:GetGroup():GetCustomCallSign(true,true)
+  self:T({From, Event, To})
+  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
   local coord = Client:GetCoordinate()
   local coordtext = coord:ToStringBULLS(self.Coalition)
-  local text = string.format("All stations, FACA %s leaving station\nat %s, going home!",callsign, coordtext)
-  MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
+  local text = string.format("All stations, FACA %s leaving station\nat %s, good bye!",callsign, coordtext)
+  local texttts = string.format("All stations, FACA %s leaving station at %s, good bye!",callsign, coordtext)
+  texttts = self:_GetTextForSpeech(texttts)
+  if self.debug then
+    MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
+  end
+  local text1 = "Going home!"
+  if self.UseSRS then
+    local grp = Client:GetGroup()
+    self.SRSQueue:NewTransmission(text1,nil,self.SRS,nil,2,{grp},text1,10)
+    self.SRSQueue:NewTransmission(texttts,nil,self.SRS,nil,2,{grp},text,10)
+  else
+    MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
+  end
   return self
 end
 
---- [Internal] 
+--- [Internal] Target Detected
 -- @param #PLAYERRECCE self
 -- @param #string From
 -- @param #string Event
@@ -939,15 +1109,36 @@ end
 -- @param #string Playername
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetDetected(From, Event, To, Target, Client, Playername)
-  self:I({From, Event, To})
-  if self.debug then
-    local text = string.format("New target %s detected by %s!",Target:GetTypeName(),Playername)
-    MESSAGE:New(text,10,self.Name or "FACA"):ToCoalition(self.Coalition)
+  self:T({From, Event, To})
+  local dunits = "meters"
+  local targetdirection = self:_GetClockDirection(Client,Target)
+  local targetdistance = Client:GetCoordinate():Get2DDistance(Target:GetCoordinate()) or 100
+  local Settings = Client and _DATABASE:GetPlayerSettings(Playername) or _SETTINGS -- Core.Settings#SETTINGS
+  local Threatlvl = Target:GetThreatLevel()
+  local ThreatTxt = "Low"
+  if Threatlvl >=7  then
+    ThreatTxt = "Medium"
+  elseif Threatlvl >=3  then
+    ThreatTxt = "High"
+  end
+  if Settings:IsMetric() then
+   targetdistance = UTILS.Round(targetdistance,-2)
+  else
+   targetdistance = UTILS.Round(UTILS.MetersToFeet(targetdistance),-2)
+   dunits = "feet"
+  end
+  local text = string.format("Target! %s! %s o\'clock, %d %s!", ThreatTxt,targetdirection, targetdistance, dunits)
+  local ttstext = string.format("Target! %s! %s oh clock, %d %s!", ThreatTxt, targetdirection, targetdistance, dunits)
+  if self.UseSRS then
+    local grp = Client:GetGroup()
+    self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
+  else
+    MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
   end
   return self
 end
 
---- [Internal] 
+--- [Internal] Targets Smoked
 -- @param #PLAYERRECCE self
 -- @param #string From
 -- @param #string Event
@@ -957,16 +1148,26 @@ end
 -- @param Core.Set#SET_UNIT TargetSet
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetsSmoked(From, Event, To, Client, Playername, TargetSet)
-  self:I({From, Event, To})
-  local callsign = Client:GetGroup():GetCustomCallSign(true,true)
+  self:T({From, Event, To})
+  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
   local coord = Client:GetCoordinate()
   local coordtext = coord:ToStringBULLS(self.Coalition)
-  local text = string.format("All stations, FACA %s smoked targets\nat %s!",callsign, coordtext)
-  MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
+  if self.debug then
+    local text = string.format("All stations, FACA %s smoked targets\nat %s!",callsign, coordtext)
+    MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
+  end
+  local text = "Smoke on!"
+  local ttstext = "Smoke and Mirrors!"
+  if self.UseSRS then
+    local grp = Client:GetGroup()
+    self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
+  else
+    MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
+  end
   return self
 end
 
---- [Internal] 
+--- [Internal] Targets Flared
 -- @param #PLAYERRECCE self
 -- @param #string From
 -- @param #string Event
@@ -976,16 +1177,26 @@ end
 -- @param Core.Set#SET_UNIT TargetSet
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetsFlared(From, Event, To, Client, Playername, TargetSet)
-  self:I({From, Event, To})
-  local callsign = Client:GetGroup():GetCustomCallSign(true,true)
+  self:T({From, Event, To})
+  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
   local coord = Client:GetCoordinate()
   local coordtext = coord:ToStringBULLS(self.Coalition)
-  local text = string.format("All stations, FACA %s flared\ntargets at %s!",callsign, coordtext)
-  MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
+  if self.debug then
+    local text = string.format("All stations, FACA %s flared\ntargets at %s!",callsign, coordtext)
+    MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
+  end
+  local text = "Fireworks!"
+  local ttstext = "Fire works!"
+  if self.UseSRS then
+    local grp = Client:GetGroup()
+    self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
+  else
+    MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
+  end
   return self
 end
  
---- [Internal] 
+--- [Internal] Target lasing
 -- @param #PLAYERRECCE self
 -- @param #string From
 -- @param #string Event
@@ -996,18 +1207,28 @@ end
 -- @param #number Lasingtime
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetLasing(From, Event, To, Client, Target, Lasercode, Lasingtime)
-  self:I({From, Event, To})
-  local callsign = Client:GetGroup():GetCustomCallSign(true,true)
+  self:T({From, Event, To})
+  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
   local Settings = ( Client and _DATABASE:GetPlayerSettings( Client:GetPlayerName() ) ) or _SETTINGS
   local coord = Client:GetCoordinate()
   local coordtext = coord:ToStringBULLS(self.Coalition,Settings)
   local targettype = Target:GetTypeName()
-  local text = string.format("All stations, FACA %s lasing %s\nat %s!\nCode %d, Duration %d seconds!",callsign, targettype, coordtext, Lasercode, Lasingtime)
-  MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
+  if self.debug then
+    local text = string.format("All stations, FACA %s lasing %s\nat %s!\nCode %d, Duration %d seconds!",callsign, targettype, coordtext, Lasercode, Lasingtime)
+    MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
+  end
+  local text = "Lasing!"
+  local ttstext = "Laser on!"
+  if self.UseSRS then
+    local grp = Client:GetGroup()
+    self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
+  else
+    MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
+  end
   return self
 end
 
---- [Internal] 
+--- [Internal] Laser lost LOS
 -- @param #PLAYERRECCE self
 -- @param #string From
 -- @param #string Event
@@ -1016,18 +1237,28 @@ end
 -- @param Wrapper.Unit#UNIT Target
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetLOSLost(From, Event, To, Client, Target)
-  self:I({From, Event, To})
-  local callsign = Client:GetGroup():GetCustomCallSign(true,true)
+  self:T({From, Event, To})
+  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
   local Settings = ( Client and _DATABASE:GetPlayerSettings( Client:GetPlayerName() ) ) or _SETTINGS
   local coord = Client:GetCoordinate()
   local coordtext = coord:ToStringBULLS(self.Coalition,Settings)
   local targettype = Target:GetTypeName()
-  local text = string.format("All stations, FACA %s lost sight of %s\nat %s!",callsign, targettype, coordtext)
-  MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
+  if self.debug then
+    local text = string.format("All stations, FACA %s lost sight of %s\nat %s!",callsign, targettype, coordtext)
+    MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
+  end
+  local text = "Lost LOS!"
+  local ttstext = "Lost L O S!"
+  if self.UseSRS then
+    local grp = Client:GetGroup()
+    self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
+  else
+    MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
+  end
   return self
 end
 
---- [Internal] 
+--- [Internal] Target report
 -- @param #PLAYERRECCE self
 -- @param #string From
 -- @param #string Event
@@ -1038,7 +1269,7 @@ end
 -- @param #string Text
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetReport(From, Event, To, Client, TargetSet, Target, Text)
-  self:I({From, Event, To})
+  self:T({From, Event, To})
   MESSAGE:New(Text,45,self.Name or "FACA"):ToClient(Client)
   if self.AttackSet then
     -- send message to AttackSet
@@ -1049,11 +1280,11 @@ function PLAYERRECCE:onafterTargetReport(From, Event, To, Client, TargetSet, Tar
       end
     end
   end
-  self:__TargetReportSent(-2,Client, TargetSet, Target, Text)
+  --self:__TargetReportSent(-2,Client, TargetSet, Target, Text)
   return self
 end
 
---- [Internal] 
+--- [Internal] Target data upload
 -- @param #PLAYERRECCE self
 -- @param #string From
 -- @param #string Event
@@ -1063,13 +1294,20 @@ end
 -- @param Wrapper.Unit#UNIT Target
 -- @param #string Text
 -- @return #PLAYERRECCE self
-function PLAYERRECCE:onafterTargetReportSent(From, Event, To, Client, TargetSet, Target, Text)
-  self:I({From, Event, To})
+function PLAYERRECCE:onafterTargetReportSent(From, Event, To, Client, TargetSet)
+  self:T({From, Event, To})
+  local text = "Upload completed!"
+  if self.UseSRS then
+    local grp = Client:GetGroup()
+    self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,1,{grp},text,10)
+  else
+    MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
+  end
   return self
 end
 
 
---- [Internal] 
+--- [Internal] Stop
 -- @param #PLAYERRECCE self
 -- @param #string From
 -- @param #string Event
@@ -1085,3 +1323,8 @@ function PLAYERRECCE:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.PlayerEnterAircraft)
   return self
 end
+
+------------------------------------------------------------------------------------------
+-- TODO: END PLAYERRECCE
+------------------------------------------------------------------------------------------
+
