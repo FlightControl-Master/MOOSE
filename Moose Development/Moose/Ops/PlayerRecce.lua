@@ -724,7 +724,7 @@ function PLAYERRECCE:_BuildMenus()
       local group = client:GetGroup()
       if not self.ClientMenus[playername] then
         local canlase = self.CanLase[client:GetTypeName()]
-        self.ClientMenus[playername] = MENU_GROUP:New(group,self.Name or "RECCE")
+        self.ClientMenus[playername] = MENU_GROUP:New(group,self.MenuName or self.Name or "RECCE")
         local txtonstation = self.OnStation[playername] and "ON" or "OFF"
         local text = string.format("Switch On-Station (%s)",txtonstation)
         local onstationmenu = MENU_GROUP_COMMAND:New(group,text,self.ClientMenus[playername],self._SwitchOnStation,self,client,group,playername)
@@ -783,6 +783,58 @@ function PLAYERRECCE:_CheckNewTargets(targetset,client,playername)
     end
   )
   return self
+end
+
+--- [User] Set SRS TTS details - see @{Sound.SRS} for details
+-- @param #PLAYERRECCE self
+-- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 271 or {127,251}. There needs to be exactly the same number of modulations!
+-- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}. There needs to be exactly the same number of frequencies!
+-- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+-- @param #string Gender (Optional) Defaults to "male"
+-- @param #string Culture (Optional) Defaults to "en-US"
+-- @param #number Port (Optional) Defaults to 5002
+-- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
+-- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
+-- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
+-- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS
+-- @return #PLAYERRECCE self
+function PLAYERRECCE:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
+  self:I(self.lid.."SetSRS")
+  self.PathToSRS = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone" --
+  self.Gender = Gender or "male" --
+  self.Culture = Culture or "en-US" --
+  self.Port = Port or 5002 --
+  self.Voice = Voice --
+  self.PathToGoogleKey = PathToGoogleKey --
+  self.Volume = Volume or 1.0 --
+  self.UseSRS = true
+  self.Frequency = Frequency or {127,251} --
+  self.BCFrequency = self.Frequency
+  self.Modulation = Modulation or {radio.modulation.FM,radio.modulation.AM} --
+  self.BCModulation = self.Modulation
+  -- set up SRS 
+  self.SRS=MSRS:New(self.PathToSRS,self.Frequency,self.Modulation,self.Volume)
+  self.SRS:SetCoalition(self.Coalition)
+  self.SRS:SetLabel(self.MenuName or self.Name)
+  self.SRS:SetGender(self.Gender)
+  self.SRS:SetCulture(self.Culture)
+  self.SRS:SetPort(self.Port)
+  self.SRS:SetVoice(self.Voice)
+  if self.PathToGoogleKey then
+    self.SRS:SetGoogle(self.PathToGoogleKey)
+  end
+  self.SRSQueue = MSRSQUEUE:New(self.MenuName or self.Name)
+  return self
+end
+
+--- [User] Set the top menu name to a custom string.
+-- @param #PLAYERRECCE self
+-- @param #string Name The name to use as the top menu designation.
+-- @return #PLAYERRECCE self
+function PLAYERRECCE:SetMenuName(Name)
+ self:T(self.lid.."SetMenuName: "..Name)
+ self.MenuName = Name
+ return self
 end
 
 --- [Internal] 
@@ -1033,10 +1085,3 @@ function PLAYERRECCE:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.PlayerEnterAircraft)
   return self
 end
-
---[[
-local PlayerSet = SET_CLIENT:New():FilterCoalitions("blue"):FilterActive(true):FilterCategories("helicopter"):FilterStart()
-local Attackers = SET_CLIENT:New():FilterCoalitions("blue"):FilterActive(true):FilterPrefixes({"CAS","BAI"}):FilterStart()
-local myrecce = PLAYERRECCE:New("1st Forward FACA",coalition.side.BLUE,PlayerSet)
-myrecce:SetAttackSet(Attackers)
---]]
