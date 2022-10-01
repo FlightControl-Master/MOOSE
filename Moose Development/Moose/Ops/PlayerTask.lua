@@ -761,6 +761,7 @@ do
 -- @field #table PlayerJoinMenu
 -- @field #table PlayerInfoMenu
 -- @field #boolean noflaresmokemenu
+-- @field #boolean TransmitOnlyWithPlayers
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1063,6 +1064,7 @@ PLAYERTASKCONTROLLER = {
   PlayerJoinMenu     =   {},
   PlayerInfoMenu     =   {},
   noflaresmokemenu   =   false,
+  TransmitOnlyWithPlayers = true,
   }
 
 ---
@@ -1221,7 +1223,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.37"
+PLAYERTASKCONTROLLER.version="0.1.38"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -1404,6 +1406,18 @@ end
 function PLAYERTASKCONTROLLER:SetDisableSmokeFlareTask()
   self:T(self.lid.."SetDisableSmokeFlareTask")
   self.noflaresmokemenu = true
+  return self
+end
+
+--- [User] For SRS - Switch to only transmit if there are players on the server.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #boolean Switch If true, only send SRS if there are alive Players.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetTransmitOnlyWithPlayers(Switch)
+  self.TransmitOnlyWithPlayers = Switch
+  if self.SRSQueue then
+    self.SRSQueue:SetTransmitOnlyWithPlayers(Switch)
+  end
   return self
 end
 
@@ -3034,6 +3048,7 @@ function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Cultu
     self.SRS:SetGoogle(self.PathToGoogleKey)
   end
   self.SRSQueue = MSRSQUEUE:New(self.MenuName or self.Name)
+  self.SRSQueue:SetTransmitOnlyWithPlayers(self.TransmitOnlyWithPlayers)
   return self
 end
 
