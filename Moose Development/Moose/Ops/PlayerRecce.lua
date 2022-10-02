@@ -33,6 +33,8 @@
 -- DONE: Messages to Attack Group, use client settings
 -- DONE: Lasing dist 8km
 -- DONE: Reference Point RP
+-- DONE: Sort for multiple targets in one direction
+-- DONE: Targets with forget timeout, also report 
 -------------------------------------------------------------------------------------------------------------------
 
 --- PLAYERRECCE class.
@@ -68,6 +70,8 @@
 -- @field Core.Point#COORDINATE ReferencePoint
 -- @field #string RPName
 -- @field Wrapper.Marker#MARKER RPMarker
+-- @field #number TForget
+-- @field Utilities.FiFo#FIFO TargetCache
 -- @extends Core.Fsm#FSM
 
 ---
@@ -90,11 +94,11 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.0.6",
+  version            =   "0.0.8",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
   PlayerSet          =   nil,
-  debug              =   false,
+  debug              =   true,
   LaserSpots         =   {},
   UnitLaserCodes     =   {},
   LaserCodes         =   {},
@@ -111,7 +115,16 @@ PLAYERRECCE = {
   Keepnumber         =   true,
   CallsignTranslations = nil,
   ReferencePoint     =   nil,
+  TForget            =   600,
+  TargetCache        =   nil,
 }
+
+--- 
+-- @type PlayerRecceDetected
+-- @field #boolean detected
+-- @field Wrapper.Client#CLIENT recce
+-- @field #string playername
+-- @field #number timestamp
 
 ---
 -- @type LaserRelativePos
@@ -153,6 +166,28 @@ PLAYERRECCE.CanLase = {
   ["SA342L"] = true,
 }
 
+---
+-- @type SmokeColor
+-- @field #string color
+PLAYERRECCE.SmokeColor = {
+  ["highsmoke"] = SMOKECOLOR.Orange,
+  ["medsmoke"] = SMOKECOLOR.White,
+  ["lowsmoke"] = SMOKECOLOR.Green,
+  ["lasersmoke"] = SMOKECOLOR.Red,
+  ["ownsmoke"] = SMOKECOLOR.Blue,
+}
+
+---
+-- @type FlareColor
+-- @field #string color
+PLAYERRECCE.FlareColor = {
+  ["highflare"] =FLARECOLOR.Yellow,
+  ["medflare"] = FLARECOLOR.White,
+  ["lowflare"] = FLARECOLOR.Green,
+  ["laserflare"] = FLARECOLOR.Red,
+  ["ownflare"] = FLARECOLOR.Green,
+}
+
 --- Create and rund a new PlayerRecce instance.
 -- @param #PLAYERRECCE self
 -- @param #string Name The name of this instance
@@ -175,6 +210,9 @@ function PLAYERRECCE:New(Name, Coalition, PlayerSet)
   self.lasingtime = 60
   
   self.minthreatlevel = 0
+  
+  self.TForget = 600
+  self.TargetCache = FIFO:New()
   
   -- FSM start state is STOPPED.
   self:SetStartState("Stopped")
@@ -444,6 +482,60 @@ end
 
 --- [Internal] 
 --@param #PLAYERRECCE self
+--@param Wrapper.Client#CLIENT client
+--@return Core.Set#SET_UNIT Set of targets, can be empty!
+--@return #number count Count of targets
+function PLAYERRECCE:_GetKnownTargets(client)
+  self:T(self.lid.."_GetKnownTargets")
+  local finaltargets = SET_UNIT:New()
+  local targets = self.TargetCache:GetDataTable()
+  local playername = client:GetPlayerName()
+  for _,_target in pairs(targets) do
+    local targetdata = _target.PlayerRecceDetected -- Ops.PlayerRecce#PLAYERRECCE.PlayerRecceDetected
+    if targetdata.playername == playername then
+      finaltargets:Add(_target:GetName(),_target)
+    end
+  end
+  return finaltargets,finaltargets:CountAlive()
+end
+
+--- [Internal] 
+--@param #PLAYERRECCE self
+--@return #PLAYERRECCE self
+function PLAYERRECCE:_CleanupTargetCache()
+  self:T(self.lid.."_CleanupTargetCache")
+  local cleancache = FIFO:New()
+  self.TargetCache:ForEach(
+    function(unit)
+      local pull = false
+      if unit and unit:IsAlive() then
+        if unit.PlayerRecceDetected and unit.PlayerRecceDetected.timestamp then
+          local TNow = timer.getTime()
+          if TNow-unit.PlayerRecceDetected.timestamp > self.TForget then
+            -- Forget this unit
+            pull = true
+            unit.PlayerRecceDetected=nil
+          end
+        else
+          -- no timestamp
+          pull = true
+        end
+      else
+        -- dead
+        pull = true
+      end
+      if not pull then
+        cleancache:Push(unit,unit:GetName())
+      end
+    end
+  )
+  self.TargetCache = nil
+  self.TargetCache = cleancache
+  return self
+end
+
+--- [Internal] 
+--@param #PLAYERRECCE self
 --@param Wrapper.Unit#UNIT unit The FACA unit
 --@param #boolean camera If true, use the unit's camera for targets in sight
 --@return Core.Set#SET_UNIT Set of targets, can be empty!
@@ -547,9 +639,6 @@ function PLAYERRECCE:_LaseTarget(client,targetset)
       self.UnitLaserCodes[playername] = 1688
     end
     laser.LaserCode = self.UnitLaserCodes[playername] or 1688
-    --function laser:OnAfterLaseOff(From,Event,To)
-      --MESSAGE:New("Finished lasing",15,"Info"):ToClient(client)
-    --end
     self.LaserSpots[playername] = laser
   else
     laser = self.LaserSpots[playername]
@@ -561,7 +650,6 @@ function PLAYERRECCE:_LaseTarget(client,targetset)
     local lasingtime = self.lasingtime or 60
     local targettype = target:GetTypeName()
     laser:LaseOn(target,lasercode,lasingtime)
-    --MESSAGE:New(string.format("Lasing Target %s with Code %d",targettype,lasercode),15,"Info"):ToClient(client)
     self:__TargetLasing(-1,client,target,lasercode,lasingtime)
   else
     -- still looking at target?
@@ -571,7 +659,6 @@ function PLAYERRECCE:_LaseTarget(client,targetset)
         local targettype = oldtarget:GetTypeName()
         laser:LaseOff()
         self:__TargetLOSLost(-1,client,oldtarget)
-        --MESSAGE:New(string.format("Lost LOS on target %s!",targettype),15,"Info"):ToClient(client) 
     end
   end
   return self
@@ -662,10 +749,10 @@ function PLAYERRECCE:_SmokeTargets(client,group,playername)
   if cameraset:CountAlive() > 0 then
     self:__TargetsSmoked(-1,client,playername,cameraset)
   end
-  local highsmoke = SMOKECOLOR.Orange
-  local medsmoke = SMOKECOLOR.White
-  local lowsmoke = SMOKECOLOR.Green
-  local lasersmoke = SMOKECOLOR.Red
+  local highsmoke = self.SmokeColor.highsmoke
+  local medsmoke = self.SmokeColor.medsmoke
+  local lowsmoke = self.SmokeColor.lowsmoke
+  local lasersmoke = self.SmokeColor.lasersmoke
   local laser = self.LaserSpots[playername] -- Core.Spot#SPOT
   -- laser targer gets extra smoke
   if laser and laser.Target and laser.Target:IsAlive() then
@@ -708,10 +795,10 @@ function PLAYERRECCE:_FlareTargets(client,group,playername)
   if cameraset:CountAlive() > 0 then
     self:__TargetsFlared(-1,client,playername,cameraset)
   end
-  local highsmoke = FLARECOLOR.Yellow
-  local medsmoke = FLARECOLOR.White
-  local lowsmoke = FLARECOLOR.Green
-  local lasersmoke = FLARECOLOR.Red
+  local highsmoke = self.FlareColor.highflare
+  local medsmoke = self.FlareColor.medflare
+  local lowsmoke = self.FlareColor.lowflare
+  local lasersmoke = self.FlareColor.laserflare
   local laser = self.LaserSpots[playername] -- Core.Spot#SPOT
   -- laser targer gets extra smoke
   if laser and laser.Target and laser.Target:IsAlive() then
@@ -812,7 +899,7 @@ end
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:_ReportVisualTargets(client,group,playername)
   self:T(self.lid.."_ReportVisualTargets")
-  local targetset, number = self:_GetTargetSet(client,false)
+  local targetset, number = self:_GetKnownTargets(client)
     if number > 0 then
     local Settings = ( client and _DATABASE:GetPlayerSettings( playername ) ) or _SETTINGS
     local ThreatLevel = targetset:CalculateThreatLevelA2G()
@@ -910,6 +997,7 @@ end
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:_CheckNewTargets(targetset,client,playername)
   self:T(self.lid.."_CheckNewTargets")
+  local tempset = SET_UNIT:New()
   targetset:ForEach(
     function(unit)
       if unit and unit:IsAlive() then
@@ -922,11 +1010,45 @@ function PLAYERRECCE:_CheckNewTargets(targetset,client,playername)
             playername = playername,
             timestamp = timer.getTime()
           }
-          self:TargetDetected(unit,client,playername)
+          --self:TargetDetected(unit,client,playername)
+          tempset:Add(unit:GetName(),unit)
+          if not self.TargetCache:HasUniqueID(unit:GetName()) then
+            self.TargetCache:Push(unit,unit:GetName())
+          end
+        end
+        if unit.PlayerRecceDetected and unit.PlayerRecceDetected.timestamp then
+          local TNow = timer.getTime()
+          if TNow-unit.PlayerRecceDetected.timestamp > self.TForget then
+           unit.PlayerRecceDetected = {
+              detected = true,
+              recce = client,
+              playername = playername,
+              timestamp = timer.getTime()
+              }
+           if not self.TargetCache:HasUniqueID(unit:GetName()) then
+            self.TargetCache:Push(unit,unit:GetName())
+           end
+           tempset:Add(unit:GetName(),unit)  
+          end
         end
       end
     end
   )
+  local targetsbyclock = {}
+  for i=1,12 do
+    targetsbyclock[i] = {}
+  end
+  tempset:ForEach(
+    function (object)
+      local obj=object -- Wrapper.Unit#UNIT
+      local clock = self:_GetClockDirection(client,obj)
+      table.insert(targetsbyclock[clock],obj)
+    end
+  )
+  self:I("Known target Count: "..self.TargetCache:Count())
+  if tempset:CountAlive() > 0 then
+    self:TargetDetected(targetsbyclock,client,playername)
+  end
   return self
 end
 
@@ -1024,6 +1146,16 @@ end
 function PLAYERRECCE:onafterStatus(From, Event, To)
   self:I({From, Event, To})
   
+  if not self.timestamp then
+    self.timestamp = timer.getTime()
+  else
+    local tNow = timer.getTime()
+    if tNow - self.timestamp >= 60 then
+      self:_CleanupTargetCache()
+      self.timestamp = timer.getTime()
+    end
+  end
+  
   self:_BuildMenus()
   
   self.PlayerSet:ForEachClient(
@@ -1050,9 +1182,7 @@ function PLAYERRECCE:onafterStatus(From, Event, To)
               self:_LaseTarget(client,targetset)
             end
           end
-          -- Report new targets
-          self:_CheckNewTargets(targetset,client,playername)
-          
+   
           -- visual targets
           local vistargetset, vistargetcount, viszone = self:_GetTargetSet(client,false)
           if vistargetset then
@@ -1064,7 +1194,8 @@ function PLAYERRECCE:onafterStatus(From, Event, To)
             end
           end
           self:T({visualtargetcount=vistargetcount})
-          self:_CheckNewTargets(vistargetset,client,playername)
+          targetset:AddSet(vistargetset)
+          self:_CheckNewTargets(targetset,client,playername)
         end
     end
   )
@@ -1150,36 +1281,72 @@ end
 -- @param #string From
 -- @param #string Event
 -- @param #string To
--- @param Wrapper.Unit#UNIT Target
+-- @param #table Targetsbyclock
 -- @param Wrapper.Client#CLIENT Client
 -- @param #string Playername
 -- @return #PLAYERRECCE self
-function PLAYERRECCE:onafterTargetDetected(From, Event, To, Target, Client, Playername)
+function PLAYERRECCE:onafterTargetDetected(From, Event, To, Targetsbyclock, Client, Playername)
   self:T({From, Event, To})
+
   local dunits = "meters"
-  local targetdirection = self:_GetClockDirection(Client,Target)
-  local targetdistance = Client:GetCoordinate():Get2DDistance(Target:GetCoordinate()) or 100
   local Settings = Client and _DATABASE:GetPlayerSettings(Playername) or _SETTINGS -- Core.Settings#SETTINGS
-  local Threatlvl = Target:GetThreatLevel()
-  local ThreatTxt = "Low"
-  if Threatlvl >=7  then
-    ThreatTxt = "Medium"
-  elseif Threatlvl >=3  then
-    ThreatTxt = "High"
-  end
-  if Settings:IsMetric() then
-   targetdistance = UTILS.Round(targetdistance,-2)
-  else
-   targetdistance = UTILS.Round(UTILS.MetersToFeet(targetdistance),-2)
-   dunits = "feet"
-  end
-  local text = string.format("Target! %s! %s o\'clock, %d %s!", ThreatTxt,targetdirection, targetdistance, dunits)
-  local ttstext = string.format("Target! %s! %s oh clock, %d %s!", ThreatTxt, targetdirection, targetdistance, dunits)
-  if self.UseSRS then
-    local grp = Client:GetGroup()
-    self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
-  else
-    MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
+  local clientcoord = Client:GetCoordinate()
+ 
+  for i=1,12 do
+    local targets = Targetsbyclock[i] --#table
+    local targetno = #targets
+    if targetno == 1 then
+      -- only one
+      local targetdistance = clientcoord:Get2DDistance(targets[1]:GetCoordinate()) or 100
+      local Threatlvl = targets[1]:GetThreatLevel()
+      local ThreatTxt = "Low"
+      if Threatlvl >=7  then
+        ThreatTxt = "Medium"
+      elseif Threatlvl >=3  then
+        ThreatTxt = "High"
+      end
+      if Settings:IsMetric() then
+       targetdistance = UTILS.Round(targetdistance,-2)
+      else
+       targetdistance = UTILS.Round(UTILS.MetersToFeet(targetdistance),-2)
+       dunits = "feet"
+      end
+      local text = string.format("Target! %s! %s o\'clock, %d %s!", ThreatTxt,i, targetdistance, dunits)
+      local ttstext = string.format("Target! %s! %s oh clock, %d %s!", ThreatTxt, i, targetdistance, dunits)
+      if self.UseSRS then
+        local grp = Client:GetGroup()
+        self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
+      else
+        MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
+      end
+    elseif targetno > 1 then
+      -- multiple
+      local function GetNearest(TTable)
+        local distance = 10000000
+        for _,_unit in pairs(TTable) do
+          local dist = clientcoord:Get2DDistance(_unit:GetCoordinate()) or 100
+          if dist < distance then
+            distance = dist
+          end
+        end
+        return distance
+      end
+      local targetdistance = GetNearest(targets)
+      if Settings:IsMetric() then
+       targetdistance = UTILS.Round(targetdistance,-2)
+      else
+       targetdistance = UTILS.Round(UTILS.MetersToFeet(targetdistance),-2)
+       dunits = "feet"
+      end
+      local text = string.format(" %d targets! %s o\'clock, %d %s!", targetno, i, targetdistance, dunits)
+      local ttstext = string.format("%d targets! %s oh clock, %d %s!", targetno, i, targetdistance, dunits)
+      if self.UseSRS then
+        local grp = Client:GetGroup()
+        self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
+      else
+        MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
+      end
+    end
   end
   return self
 end
