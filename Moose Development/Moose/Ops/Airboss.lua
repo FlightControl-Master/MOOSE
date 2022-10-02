@@ -5813,7 +5813,7 @@ function AIRBOSS:_ScanCarrierZone()
     if knownflight then
 
       -- Check if flight is AI and if we want to handle it at all.
-      if knownflight.ai and knownflight.flag == -100 and self.handleai then
+      if knownflight.ai and knownflight.flag == -100 and self.handleai and false then  --Disabled AI handling because of incorrect OPSGROUP reference!
 
         local putintomarshal = false
 
