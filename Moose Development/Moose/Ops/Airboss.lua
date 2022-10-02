@@ -1332,6 +1332,7 @@ AIRBOSS.CarrierType = {
 -- @field #number wire2 Distance in meters from carrier position to second wire.
 -- @field #number wire3 Distance in meters from carrier position to third wire.
 -- @field #number wire4 Distance in meters from carrier position to fourth wire.
+-- @field #number landingdist Distance in meeters to the landing position.
 -- @field #number rwylength Length of the landing runway in meters.
 -- @field #number rwywidth Width of the landing runway in meters.
 -- @field #number totlength Total length of carrier.
@@ -1978,7 +1979,7 @@ function AIRBOSS:New( carriername, alias )
 
   -- Init carrier parameters.
   if self.carriertype == AIRBOSS.CarrierType.STENNIS then
-    --self:_InitStennis()
+    -- Stennis parameters were updated to match the other Super Carriers.
     self:_InitNimitz()
   elseif self.carriertype == AIRBOSS.CarrierType.ROOSEVELT then
     self:_InitNimitz()
@@ -1991,7 +1992,7 @@ function AIRBOSS:New( carriername, alias )
   elseif self.carriertype == AIRBOSS.CarrierType.FORRESTAL then
     self:_InitForrestal()
   elseif self.carriertype == AIRBOSS.CarrierType.VINSON then
-    -- TODO: Carl Vinson parameters.
+    -- Carl Vinson is legacy now.
     self:_InitStennis()
   elseif self.carriertype == AIRBOSS.CarrierType.HERMES then
     -- Hermes parameters.
@@ -2006,8 +2007,8 @@ function AIRBOSS:New( carriername, alias )
     -- Use Juan Carlos parameters.
     self:_InitJcarlos()
   elseif self.carriertype == AIRBOSS.CarrierType.CANBERRA then
-    -- Use Juan Carlos parameters at this stage --TODO Check primary Landing spot.
-    self:_InitJcarlos()
+    -- Use Juan Carlos parameters at this stage.
+    self:_InitCanberra()
   elseif self.carriertype == AIRBOSS.CarrierType.KUZNETSOV then
     -- Kusnetsov parameters - maybe...
     self:_InitStennis()
@@ -4286,6 +4287,9 @@ function AIRBOSS:_InitStennis()
   self.carrierparam.wire3 = 46 + 24
   self.carrierparam.wire4 = 46 + 35 -- Last wire is strangely one meter closer.
 
+  -- Landing distance.
+  self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.wire3
+
   -- Platform at 5k. Reduce descent rate to 2000 ft/min to 1200 dirty up level flight.
   self.Platform.name = "Platform 5k"
   self.Platform.Xmin = -UTILS.NMToMeters( 22 ) -- Not more than 22 NM behind the boat. Last check was at 21 NM.
@@ -4436,6 +4440,9 @@ function AIRBOSS:_InitNimitz()
   self.carrierparam.wire3 = 79
   self.carrierparam.wire4 = 92
 
+  -- Landing distance.
+  self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.wire3
+
 end
 
 --- Init parameters for Forrestal class super carriers.
@@ -4465,6 +4472,9 @@ function AIRBOSS:_InitForrestal()
   self.carrierparam.wire3 = 64 -- 62
   self.carrierparam.wire4 = 74 -- 72.5
 
+  -- Landing distance.
+  self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.wire3
+
 end
 
 --- Init parameters for R12 HMS Hermes carrier.
@@ -4493,6 +4503,12 @@ function AIRBOSS:_InitHermes()
   self.carrierparam.wire2 = nil
   self.carrierparam.wire3 = nil
   self.carrierparam.wire4 = nil
+
+  -- Distance to landing spot.
+  self.carrierparam.landingspot=69
+
+  -- Landing distance.
+  self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.landingspot
 
   -- Late break.
   self.BreakLate.name = "Late Break"
@@ -4534,6 +4550,12 @@ function AIRBOSS:_InitTarawa()
   self.carrierparam.wire3 = nil
   self.carrierparam.wire4 = nil
 
+  -- Distance to landing spot.
+  self.carrierparam.landingspot=57
+
+  -- Landing distance.
+  self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.landingspot
+
   -- Late break.
   self.BreakLate.name = "Late Break"
   self.BreakLate.Xmin = -UTILS.NMToMeters( 1 ) -- Not more than 1 NM behind the boat. Last check was at 0.
@@ -4573,6 +4595,12 @@ function AIRBOSS:_InitAmerica()
   self.carrierparam.wire2 = nil
   self.carrierparam.wire3 = nil
   self.carrierparam.wire4 = nil
+
+  -- Distance to landing spot.
+  self.carrierparam.landingspot=59
+
+  -- Landing distance.
+  self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.landingspot
 
   -- Late break.
   self.BreakLate.name = "Late Break"
@@ -4614,6 +4642,12 @@ function AIRBOSS:_InitJcarlos()
   self.carrierparam.wire3 = nil
   self.carrierparam.wire4 = nil
 
+  -- Distance to landing spot.
+  self.carrierparam.landingspot=89
+
+  -- Landing distance.
+  self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.landingspot
+
   -- Late break.
   self.BreakLate.name = "Late Break"
   self.BreakLate.Xmin = -UTILS.NMToMeters( 1 ) -- Not more than 1 NM behind the boat. Last check was at 0.
@@ -4626,6 +4660,16 @@ function AIRBOSS:_InitJcarlos()
   self.BreakLate.LimitZmax = nil
 
 end
+
+--- Init parameters for L02 Canberra carrier.
+-- @param #AIRBOSS self
+function AIRBOSS:_InitCanberra()
+
+    -- Init Juan Carlos as default.
+    self:_InitJcarlos()
+
+end
+
 --- Init parameters for Marshal Voice overs *Gabriella* by HighwaymanEd.
 -- @param #AIRBOSS self
 -- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
@@ -5396,7 +5440,6 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
       alt = UTILS.FeetToMeters( 300 ) -- ?
     elseif harrier then
       alt=UTILS.FeetToMeters(312)-- 300-325 ft
-
     end
 
     aoa = aoaac.OnSpeed
@@ -11134,28 +11177,31 @@ function AIRBOSS:_GetOptLandingCoordinate()
   -- Start with stern coordiante.
   self.landingcoord:UpdateFromCoordinate( self:_GetSternCoord() )
 
-  -- Stern coordinate.
-  -- local stern=self:_GetSternCoord()
   -- Final bearing.
-
   local FB=self:GetFinalBearing(false)
+
+  -- Cse
   local case=self.case
+
   -- set Case III V/STOL abeam landing spot over deck -- Pene Testing
   if self.carriertype==AIRBOSS.CarrierType.HERMES or self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
   
     if case==3 then
-	self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate())
-    -- Altitude 120ft -- is this corect for Case III?
-    self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
+
+      -- Landing coordinate.
+      self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate())
+
+      -- Altitude 120ft -- is this corect for Case III?
+      self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
  
     elseif case==2 or case==1 then
 
-    -- Landing 100 ft abeam, 120 ft alt.
-    self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
-    --stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
+      -- Landing 100 ft abeam, 120 ft alt.
+      self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
 
-    -- Alitude 120 ft.
-    self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
+      -- Alitude 120 ft.
+      self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
+
     end
 	
   else
@@ -11163,8 +11209,7 @@ function AIRBOSS:_GetOptLandingCoordinate()
     -- Ideally we want to land between 2nd and 3rd wire.
     if self.carrierparam.wire3 then
       -- We take the position of the 3rd wire to approximately account for the length of the aircraft.
-      local w3 = self.carrierparam.wire3
-      self.landingcoord:Translate( w3, FB, true, true )
+      self.landingcoord:Translate( self.carrierparam.wire3, FB, true, true )
     end
 
     -- Add 2 meters to account for aircraft height.
@@ -11175,54 +11220,19 @@ function AIRBOSS:_GetOptLandingCoordinate()
   return self.landingcoord
 end
 
---- Get landing spot on Tarawa.
+--- Get landing spot on Tarawa and others.
 -- @param #AIRBOSS self
 -- @return Core.Point#COORDINATE Primary landing spot coordinate.
 function AIRBOSS:_GetLandingSpotCoordinate()
 
+  -- Start at stern coordinate.
   self.landingspotcoord:UpdateFromCoordinate( self:_GetSternCoord() )
 
-  -- Stern coordinate.
-  -- local stern=self:_GetSternCoord()
+  -- Landing 100 ft abeam, 100 alt.
+  local hdg = self:GetHeading()
 
-  if self.carriertype==AIRBOSS.CarrierType.HERMES then
-
-    -- Landing 100 ft abeam, 100 alt.
-    local hdg = self:GetHeading()
-
-    -- Primary landing spot 5
-    self.landingspotcoord:Translate( 69, hdg, true, true ):SetAltitude( self.carrierparam.deckheight )
-  elseif self.carriertype == AIRBOSS.CarrierType.TARAWA then
-
-    -- Landing 100 ft abeam, 120 alt.
-    local hdg = self:GetHeading()
-
-    -- Primary landing spot 7.5
-    self.landingspotcoord:Translate( 57, hdg, true, true ):SetAltitude( self.carrierparam.deckheight )
-  elseif self.carriertype == AIRBOSS.CarrierType.AMERICA then
-
-    -- Landing 100 ft abeam, 120 alt.
-    local hdg = self:GetHeading()
-
-    -- Primary landing spot 7.5 a little further forwad on the America
-    self.landingspotcoord:Translate( 59, hdg, true, true ):SetAltitude( self.carrierparam.deckheight )
-
-  elseif self.carriertype == AIRBOSS.CarrierType.JCARLOS then
-
-    -- Landing 100 ft abeam, 120 alt.
-    local hdg = self:GetHeading()
-
-    -- Primary landing spot 5.0 -- Done voice for different landing Spots.
-    self.landingspotcoord:Translate( 89, hdg, true, true ):SetAltitude( self.carrierparam.deckheight )
-
-  elseif self.carriertype == AIRBOSS.CarrierType.CANBERRA then
-
-    -- Landing 100 ft abeam, 120 alt.
-    local hdg = self:GetHeading()
-
-    -- Primary landing spot 5.0 -- Done voice for different landing Spots.
-    self.landingspotcoord:Translate( 89, hdg, true, true ):SetAltitude( self.carrierparam.deckheight )
-  end
+  -- Primary landing spot. Different carriers handled via carrier parameter landingspot now.
+  self.landingspotcoord:Translate( self.carrierparam.landingspot, hdg, true, true ):SetAltitude( self.carrierparam.deckheight )
 
   return self.landingspotcoord
 end
@@ -11796,7 +11806,7 @@ function AIRBOSS:_LSOgrade( playerData )
 
   local grade
   local points
-  if N == 0 and (TgrooveUnicorn or TgrooveVstolUnicorn) then
+  if N == 0 and (TgrooveUnicorn or TgrooveVstolUnicorn or playerData.case==3) then
     -- No deviations, should be REALLY RARE!
     grade = "_OK_"
     points = 5.0
@@ -17961,6 +17971,7 @@ function AIRBOSS:onafterLSOGrade(From, Event, To, playerData, grade)
     result.carriertype=grade.carriertype
     result.carriername=grade.carriername
     result.carrierrwy=grade.carrierrwy
+    result.landingdist=self.carrierparam.landingdist
     result.theatre=grade.theatre
     result.case=playerData.case
     result.Tgroove=grade.Tgroove
