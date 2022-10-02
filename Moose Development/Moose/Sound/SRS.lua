@@ -882,6 +882,8 @@ MSRSQUEUE = {
 -- @field #boolean isplaying If true, transmission is currently playing.
 -- @field #number Tplay Mission time (abs) in seconds when the transmission should be played.
 -- @field #number interval Interval in seconds before next transmission.
+-- @field #boolean TransmitOnlyWithPlayers If true, only transmit if there are alive Players.
+-- @field Core.Set#SET_CLIENT PlayerSet PlayerSet created when TransmitOnlyWithPlayers == true
 
 --- Create a new MSRSQUEUE object for a given radio frequency/modulation.
 -- @param #MSRSQUEUE self
@@ -932,6 +934,23 @@ function MSRSQUEUE:AddTransmission(transmission)
   return self
 end
 
+--- Switch to only transmit if there are players on the server.
+-- @param #MSRSQUEUE self
+-- @param #boolean Switch If true, only send SRS if there are alive Players.
+-- @return #MSRSQUEUE self
+function MSRSQUEUE:SetTransmitOnlyWithPlayers(Switch)
+  self.TransmitOnlyWithPlayers = Switch
+  if Switch == false or Switch==nil then
+    if self.PlayerSet then
+      self.PlayerSet:FilterStop()
+    end
+    self.PlayerSet = nil
+  else
+    self.PlayerSet = SET_CLIENT:New():FilterStart()
+  end
+  return self
+end
+
 --- Create a new transmission and add it to the radio queue.
 -- @param #MSRSQUEUE self
 -- @param #string text Text to play.
@@ -946,7 +965,13 @@ end
 -- @param #number modulation Radio modulation if other then MSRS default.
 -- @return #MSRSQUEUE.Transmission Radio transmission table.
 function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation)
-
+  
+  if self.TransmitOnlyWithPlayers then
+    if self.PlayerSet and self.PlayerSet:CountAlive() == 0 then
+      return self
+    end
+  end
+  
   -- Sanity checks.
   if not text then
     self:E(self.lid.."ERROR: No text specified.")

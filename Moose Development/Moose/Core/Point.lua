@@ -2970,8 +2970,8 @@ do -- COORDINATE
   --   * Uses default settings in COORDINATE.
   --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
   -- @param #COORDINATE self
-  -- @param #COORDINATE ReferenceCoord The refrence coordinate.
-  -- @param #string ReferenceName The refrence name.
+  -- @param #COORDINATE ReferenceCoord The reference coordinate.
+  -- @param #string ReferenceName The reference name.
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
   -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The coordinate Text in the configured coordinate system.
@@ -2998,7 +2998,40 @@ do -- COORDINATE
     return nil
 
   end
+  
+  --- Provides a coordinate string of the point, based on a coordinate format system:
+  --   * Uses default settings in COORDINATE.
+  --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE ReferenceCoord The reference coordinate.
+  -- @param #string ReferenceName The reference name.
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @return #string The coordinate Text in the configured coordinate system.
+  function COORDINATE:ToStringFromRPShort( ReferenceCoord, ReferenceName, Controllable, Settings )
 
+    self:F2( { ReferenceCoord = ReferenceCoord, ReferenceName = ReferenceName } )
+
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
+
+    local IsAir = Controllable and Controllable:IsAirPlane() or false
+
+    if IsAir then
+      local DirectionVec3 = ReferenceCoord:GetDirectionVec3( self )
+      local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
+      local Distance = self:Get2DDistance( ReferenceCoord )
+      return self:GetBRText( AngleRadians, Distance, Settings ) .. " from " .. ReferenceName
+    else
+      local DirectionVec3 = ReferenceCoord:GetDirectionVec3( self )
+      local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
+      local Distance = self:Get2DDistance( ReferenceCoord )
+      return self:GetBRText( AngleRadians, Distance, Settings ) .. " from " .. ReferenceName
+    end
+
+    return nil
+
+  end
+  
   --- Provides a coordinate string of the point, based on the A2G coordinate format system.
   -- @param #COORDINATE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
