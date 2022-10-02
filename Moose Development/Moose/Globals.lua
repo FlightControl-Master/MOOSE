@@ -44,3 +44,15 @@ end
 if __na then
   BASE:I("Check <DCS install folder>/Scripts/MissionScripting.lua and comment out the lines with sanitizeModule(''). Use at your own risk!)")
 end
+BASE.ServerName="Unknown"
+if lfs and loadfile then
+  local serverfile=lfs.writedir() .. 'Config/serverSettings.lua'
+  if UTILS.FileExists(serverfile) then
+    loadfile(serverfile)()
+    if cfg and cfg.name then
+      BASE.ServerName=cfg.name
+    end
+  end
+  BASE.ServerName=BASE.ServerName or "Unknown"
+  BASE:I("Server Name: "..tostring(BASE.ServerName))
+end
