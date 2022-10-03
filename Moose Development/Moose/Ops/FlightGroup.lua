@@ -210,7 +210,7 @@ FLIGHTGROUP.Players={}
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.8.0"
+FLIGHTGROUP.version="0.8.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -372,9 +372,32 @@ end
 
 --- Get airwing the flight group belongs to.
 -- @param #FLIGHTGROUP self
--- @return Ops.AirWing#AIRWING The AIRWING object.
-function FLIGHTGROUP:GetAirWing()
+-- @return Ops.AirWing#AIRWING The AIRWING object (if any).
+function FLIGHTGROUP:GetAirwing()
   return self.legion
+end
+
+--- Get name of airwing the flight group belongs to.
+-- @param #FLIGHTGROUP self
+-- @return #string Name of the airwing or "None" if the flightgroup does not belong to any airwing.
+function FLIGHTGROUP:GetAirwing()
+  local name=self.legion and self.legion.alias or "None"
+  return name
+end
+
+--- Get squadron the flight group belongs to.
+-- @param #FLIGHTGROUP self
+-- @return Ops.Squadron#SQUADRON The SQUADRON of this flightgroup or #nil if the flightgroup does not belong to any squadron.
+function FLIGHTGROUP:GetSquadron()
+  return self.cohort
+end
+
+--- Get squadron name the flight group belongs to.
+-- @param #FLIGHTGROUP self
+-- @return #string The squadron name or "None" if the flightgroup does not belon to any squadron.
+function FLIGHTGROUP:GetSquadronName()
+  local name=self.cohort and self.cohort:GetName() or "None"
+  return name
 end
 
 --- Set if aircraft is VTOL capable. Unfortunately, there is no DCS way to determine this via scripting.
@@ -836,6 +859,7 @@ end
 function FLIGHTGROUP:GetKills()
   return self.Nkills
 end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
