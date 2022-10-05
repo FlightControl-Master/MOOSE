@@ -68,9 +68,9 @@ do -- ZONE_CAPTURE_COALITION
   -- 
   -- In order to use ZONE_CAPTURE_COALITION, you need to:
   -- 
-  --   * Create a @{Zone} object from one of the ZONE_ classes.  
-  --     Note that ZONE_POLYGON_ classes are not yet functional.  
-  --     The only functional ZONE_ classses are those derived from a ZONE_RADIUS.
+  --   * Create a @{Zone} object from one of the ZONE_ classes.    
+  --     The functional ZONE_ classses are those derived from a ZONE_RADIUS.
+  --     In order to use a ZONE_POLYGON, hand over the **GROUP name** of a late activated group forming a polygon with it's waypoints.
   --   * Set the state of the zone. Most of the time, Guarded would be the initial state.
   --   * Start the zone capturing **monitoring process**.  
   --     This will check the presence of friendly and/or enemy units within the zone and will transition the state of the zone when the tactical situation changed.
