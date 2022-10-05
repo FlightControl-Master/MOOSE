@@ -143,6 +143,9 @@ function ZONE_BASE:New( ZoneName )
 
   self.ZoneName = ZoneName
   
+  if not _DATABASE:FindZone(ZoneName) then
+	  _EVENTDISPATCHER:CreateEventNewZone(self)
+  end
   --_DATABASE:AddZone(ZoneName,self)
   
   return self
