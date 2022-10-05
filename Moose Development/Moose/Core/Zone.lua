@@ -143,9 +143,6 @@ function ZONE_BASE:New( ZoneName )
 
   self.ZoneName = ZoneName
   
-  if not _DATABASE:FindZone(ZoneName) then
-	  _EVENTDISPATCHER:CreateEventNewZone(self)
-  end
   --_DATABASE:AddZone(ZoneName,self)
   
   return self
@@ -635,7 +632,7 @@ ZONE_RADIUS = {
 -- @param DCS#Vec2 Vec2 The location of the zone.
 -- @param DCS#Distance Radius The radius of the zone.
 -- @return #ZONE_RADIUS self
-function ZONE_RADIUS:New( ZoneName, Vec2, Radius )
+function ZONE_RADIUS:New( ZoneName, Vec2, Radius, noregister )
 
   -- Inherit ZONE_BASE.
   local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) ) -- #ZONE_RADIUS
@@ -643,7 +640,10 @@ function ZONE_RADIUS:New( ZoneName, Vec2, Radius )
 
   self.Radius = Radius
   self.Vec2 = Vec2
-
+	
+  if not noregister then
+	  _EVENTDISPATCHER:CreateEventNewZone(self)
+  end
   --self.Coordinate=COORDINATE:NewFromVec2(Vec2)
 
   return self
@@ -1608,7 +1608,7 @@ function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius, Offset)
     self.relative_to_unit = Offset.relative_to_unit or false
   end
 
-  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneUNIT:GetVec2(), Radius ) )
+  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneUNIT:GetVec2(), Radius, true ) )
 
   self:F( { ZoneName, ZoneUNIT:GetVec2(), Radius } )
 
@@ -1724,7 +1724,7 @@ ZONE_GROUP = {
 -- @param DCS#Distance Radius The radius of the zone.
 -- @return #ZONE_GROUP self
 function ZONE_GROUP:New( ZoneName, ZoneGROUP, Radius )
-  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneGROUP:GetVec2(), Radius ) )
+  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneGROUP:GetVec2(), Radius, true ) )
   self:F( { ZoneName, ZoneGROUP:GetVec2(), Radius } )
 
   self._.ZoneGROUP = ZoneGROUP
@@ -2951,7 +2951,7 @@ do -- ZONE_AIRBASE
 
     local Airbase = AIRBASE:FindByName( AirbaseName )
 
-    local self = BASE:Inherit( self, ZONE_RADIUS:New( AirbaseName, Airbase:GetVec2(), Radius ) )
+    local self = BASE:Inherit( self, ZONE_RADIUS:New( AirbaseName, Airbase:GetVec2(), Radius, true ) )
 
     self._.ZoneAirbase = Airbase
     self._.ZoneVec2Cache = self._.ZoneAirbase:GetVec2()
