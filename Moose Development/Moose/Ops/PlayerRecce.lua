@@ -228,6 +228,7 @@ function PLAYERRECCE:New(Name, Coalition, PlayerSet)
   self:AddTransition("*",            "TargetLOSLost",       "*")
   self:AddTransition("*",            "TargetReport",        "*")
   self:AddTransition("*",            "TargetReportSent",    "*")
+  self:AddTransition("*",            "Shack",                "*")
   self:AddTransition("Running",      "Stop",                "Stopped")
   
   -- Player Events
@@ -370,7 +371,7 @@ function PLAYERRECCE:_GetGazelleVivianneSight(Gazelle)
   if unit and unit:IsAlive() then
     local dcsunit = Unit.getByName(Gazelle:GetName())
     local vivihorizontal = dcsunit:getDrawArgumentValue(215) or 0 -- (not in MiniGun) 1 to -1 -- zero is straight ahead, 1/-1 = 180 deg
-    local vivivertical = dcsunit:getDrawArgumentValue(216) or 0 -- L/Mistral/Minigun model has no 216, ca 30deg up (=1) and down (=-1)
+    local vivivertical = dcsunit:getDrawArgumentValue(216) or 0 -- L/Mistral/Minigun model has no 216, ca 10deg up (=1) and down (=-1)
     local vivioff = false
     -- -1 = -180, 1 = 180
     -- Actual view -0,66 to 0,66
@@ -508,7 +509,7 @@ function PLAYERRECCE:_CleanupTargetCache()
   self.TargetCache:ForEach(
     function(unit)
       local pull = false
-      if unit and unit:IsAlive() then
+      if unit and unit:IsAlive() and unit:GetLife() > 1 then
         if unit.PlayerRecceDetected and unit.PlayerRecceDetected.timestamp then
           local TNow = timer.getTime()
           if TNow-unit.PlayerRecceDetected.timestamp > self.TForget then
@@ -573,7 +574,7 @@ function PLAYERRECCE:_GetTargetSet(unit,camera)
       function(_unit)
         local _unit = _unit -- Wrapper.Unit#UNIT
         local _unitpos = _unit:GetCoordinate()
-        if startpos:IsLOS(_unitpos) then
+        if startpos:IsLOS(_unitpos) and _unit:IsAlive and _unit:GetLife()>1 then
             self:T("Adding to final targets: ".._unit:GetName())
           finaltargets:Add(_unit:GetName(),_unit)
         end
@@ -600,7 +601,7 @@ function PLAYERRECCE:_GetHVTTarget(targetset)
    local minthreat = self.minthreatlevel or 0
    for _,_unit in pairs(targetset.Set) do
     local unit = _unit -- Wrapper.Unit#UNIT
-    if unit and unit:IsAlive() then
+    if unit and unit:IsAlive() and unit:GetLife() >1 then
       local threat = unit:GetThreatLevel()
       if threat >= minthreat then
         -- prefer radar units
@@ -654,11 +655,15 @@ function PLAYERRECCE:_LaseTarget(client,targetset)
   else
     -- still looking at target?
     local oldtarget=laser.Target
-    if targetset:IsNotInSet(oldtarget) then
-        -- lost LOS
-        local targettype = oldtarget:GetTypeName()
+    if targetset:IsNotInSet(oldtarget) or (not oldtarget) or (not oldtarget:IsAlive()) or (oldtarget:GetLife() < 2) then
+        -- lost LOS or dead
+        --local targettype = oldtarget:GetTypeName()
         laser:LaseOff()
-        self:__TargetLOSLost(-1,client,oldtarget)
+		if (not oldtarget:IsAlive()) or (oldtarget:GetLife() < 2) then
+			self:__Shack(-1,client,oldtarget)
+		else
+			self:__TargetLOSLost(-1,client,oldtarget)
+		end
     end
   end
   return self
@@ -1129,6 +1134,8 @@ function PLAYERRECCE:_GetTextForSpeech(text)
   -- get rid of leading or trailing spaces
   text=string.gsub(text,"^%s*","")
   text=string.gsub(text,"%s*$","")
+  text=string.gsub(text,"0","zero")
+  text=string.gsub(text,"9","niner")
   
   return text
 end
@@ -1221,14 +1228,13 @@ function PLAYERRECCE:onafterRecceOnStation(From, Event, To, Client, Playername)
     local Settings = Client and _DATABASE:GetPlayerSettings(Playername) or _SETTINGS -- Core.Settings#SETTINGS
     coordtext = coord:ToStringFromRPShort(self.ReferencePoint,self.RPName,Client,Settings)
   end
-  if self.debug then
-    local text = string.format("All stations, FACA %s on station\nat %s!",callsign, coordtext)
-    MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
-  end
   local text1 = "Party time!"
   local text2 = string.format("All stations, FACA %s on station\nat %s!",callsign, coordtext)
   local text2tts = string.format("All stations, FACA %s on station at %s!",callsign, coordtext)
   text2tts = self:_GetTextForSpeech(text2tts)
+  if self.debug then
+	self:I(text2.."\n"..text2tts)
+  end
   if self.UseSRS then
     local grp = Client:GetGroup()
     self.SRSQueue:NewTransmission(text1,nil,self.SRS,nil,2)
@@ -1236,7 +1242,7 @@ function PLAYERRECCE:onafterRecceOnStation(From, Event, To, Client, Playername)
     MESSAGE:New(text2,10,self.Name or "FACA"):ToCoalition(self.Coalition)
   else
     MESSAGE:New(text1,10,self.Name or "FACA"):ToClient(Client)
-    MESSAGE:New(text2,10,self.Name or "FACA"):ToClient(Client)
+    MESSAGE:New(text2,10,self.Name or "FACA"):ToCoalition(self.Coalition)
   end
   return self
 end
@@ -1262,7 +1268,7 @@ function PLAYERRECCE:onafterRecceOffStation(From, Event, To, Client, Playername)
   local texttts = string.format("All stations, FACA %s leaving station at %s, good bye!",callsign, coordtext)
   texttts = self:_GetTextForSpeech(texttts)
   if self.debug then
-    MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
+    self:I(text.."\n"..texttts)
   end
   local text1 = "Going home!"
   if self.UseSRS then
@@ -1271,7 +1277,7 @@ function PLAYERRECCE:onafterRecceOffStation(From, Event, To, Client, Playername)
     self.SRSQueue:NewTransmission(texttts,nil,self.SRS,nil,2)
     MESSAGE:New(text,10,self.Name or "FACA"):ToCoalition(self.Coalition)
   else
-    MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
+    MESSAGE:New(text,10,self.Name or "FACA"):ToCoalition(self.Coalition)
   end
   return self
 end
@@ -1365,10 +1371,6 @@ function PLAYERRECCE:onafterTargetsSmoked(From, Event, To, Client, Playername, T
   local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
   local coord = Client:GetCoordinate()
   local coordtext = coord:ToStringBULLS(self.Coalition)
-  if self.debug then
-    local text = string.format("All stations, %s smoked targets\nat %s!",callsign, coordtext)
-    MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
-  end
   if self.AttackSet then
     for _,_client in pairs(self.AttackSet.Set) do
       local client = _client --Wrapper.Client#CLIENT
@@ -1408,10 +1410,6 @@ function PLAYERRECCE:onafterTargetsFlared(From, Event, To, Client, Playername, T
   local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
   local coord = Client:GetCoordinate()
   local coordtext = coord:ToStringBULLS(self.Coalition)
-  if self.debug then
-    local text = string.format("All stations, %s flared\ntargets at %s!",callsign, coordtext)
-    MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
-  end
   if self.AttackSet then
     for _,_client in pairs(self.AttackSet.Set) do
       local client = _client --Wrapper.Client#CLIENT
@@ -1457,12 +1455,65 @@ function PLAYERRECCE:onafterTargetLasing(From, Event, To, Client, Target, Laserc
     coordtext = coord:ToStringFromRPShort(self.ReferencePoint,self.RPName,Client,Settings)
   end
   local targettype = Target:GetTypeName()
-  if self.debug then
-    local text = string.format("All stations, %s lasing %s\nat %s!\nCode %d, Duration %d seconds!",callsign, targettype, coordtext, Lasercode, Lasingtime)
-    MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
+  if self.AttackSet then
+    for _,_client in pairs(self.AttackSet.Set) do
+      local client = _client --Wrapper.Client#CLIENT
+      if client and client:IsAlive() then
+        local Settings = client and _DATABASE:GetPlayerSettings(client:GetPlayerName())  or _SETTINGS
+        if self.ReferencePoint then
+          coordtext = coord:ToStringFromRPShort(self.ReferencePoint,self.RPName,client,Settings)
+        end
+        local coordtext = coord:ToStringA2G(client,Settings)
+        local text = string.format("All stations, %s lasing %s\nat %s!\nCode %d, Duration %d seconds!",callsign, targettype, coordtext, Lasercode, Lasingtime)
+        MESSAGE:New(text,15,self.Name or "FACA"):ToClient(client)
+      end
+    end
   end
   local text = "Lasing!"
   local ttstext = "Laser on!"
+  if self.UseSRS then
+    local grp = Client:GetGroup()
+    self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
+  else
+    MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
+  end
+  return self
+end
+
+--- [Internal] Lased target destroyed
+-- @param #PLAYERRECCE self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @param Wrapper.Client#CLIENT Client
+-- @param Wrapper.Unit#UNIT Target
+-- @return #PLAYERRECCE self
+function PLAYERRECCE:onafterShack(From, Event, To, Client, Target)
+  self:T({From, Event, To})
+  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+  local Settings = ( Client and _DATABASE:GetPlayerSettings( Client:GetPlayerName() ) ) or _SETTINGS
+  local coord = Client:GetCoordinate()
+  local coordtext = coord:ToStringBULLS(self.Coalition,Settings)
+  if self.ReferencePoint then
+    coordtext = coord:ToStringFromRPShort(self.ReferencePoint,self.RPName,Client,Settings)
+  end
+  local targettype = Target:GetTypeName()
+  if self.AttackSet then
+    for _,_client in pairs(self.AttackSet.Set) do
+      local client = _client --Wrapper.Client#CLIENT
+      if client and client:IsAlive() then
+        local Settings = client and _DATABASE:GetPlayerSettings(client:GetPlayerName())  or _SETTINGS
+        if self.ReferencePoint then
+          coordtext = coord:ToStringFromRPShort(self.ReferencePoint,self.RPName,client,Settings)
+        end
+        local coordtext = coord:ToStringA2G(client,Settings)
+        local text = string.format("All stations, %s lost sight of %s\nat %s!",callsign, targettype, coordtext))
+        MESSAGE:New(text,15,self.Name or "FACA"):ToClient(client)
+      end
+    end
+  end
+  local text = "Shack!"
+  local ttstext = "Kaboom!"
   if self.UseSRS then
     local grp = Client:GetGroup()
     self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
@@ -1490,9 +1541,19 @@ function PLAYERRECCE:onafterTargetLOSLost(From, Event, To, Client, Target)
     coordtext = coord:ToStringFromRPShort(self.ReferencePoint,self.RPName,Client,Settings)
   end
   local targettype = Target:GetTypeName()
-  if self.debug then
-    local text = string.format("All stations, %s lost sight of %s\nat %s!",callsign, targettype, coordtext)
-    MESSAGE:New(text,15,self.Name or "FACA"):ToCoalition(self.Coalition)
+  if self.AttackSet then
+    for _,_client in pairs(self.AttackSet.Set) do
+      local client = _client --Wrapper.Client#CLIENT
+      if client and client:IsAlive() then
+        local Settings = client and _DATABASE:GetPlayerSettings(client:GetPlayerName())  or _SETTINGS
+        if self.ReferencePoint then
+          coordtext = coord:ToStringFromRPShort(self.ReferencePoint,self.RPName,client,Settings)
+        end
+        local coordtext = coord:ToStringA2G(client,Settings)
+        local text = string.format("All stations, %s lost sight of %s\nat %s!",callsign, targettype, coordtext))
+        MESSAGE:New(text,15,self.Name or "FACA"):ToClient(client)
+      end
+    end
   end
   local text = "Lost LOS!"
   local ttstext = "Lost L O S!"
@@ -1552,7 +1613,6 @@ function PLAYERRECCE:onafterTargetReportSent(From, Event, To, Client, TargetSet)
   end
   return self
 end
-
 
 --- [Internal] Stop
 -- @param #PLAYERRECCE self
