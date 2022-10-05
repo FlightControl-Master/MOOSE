@@ -370,7 +370,7 @@ function PLAYERRECCE:_GetGazelleVivianneSight(Gazelle)
   if unit and unit:IsAlive() then
     local dcsunit = Unit.getByName(Gazelle:GetName())
     local vivihorizontal = dcsunit:getDrawArgumentValue(215) or 0 -- (not in MiniGun) 1 to -1 -- zero is straight ahead, 1/-1 = 180 deg
-    local vivivertical = dcsunit:getDrawArgumentValue(216) or 0 -- L/Mistral/Minigun model has no 216, ca 10deg up (=1) and down (=-1)
+    local vivivertical = dcsunit:getDrawArgumentValue(216) or 0 -- L/Mistral/Minigun model has no 216, ca 30deg up (=1) and down (=-1)
     local vivioff = false
     -- -1 = -180, 1 = 180
     -- Actual view -0,66 to 0,66
