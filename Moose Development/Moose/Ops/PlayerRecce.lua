@@ -574,7 +574,7 @@ function PLAYERRECCE:_GetTargetSet(unit,camera)
       function(_unit)
         local _unit = _unit -- Wrapper.Unit#UNIT
         local _unitpos = _unit:GetCoordinate()
-        if startpos:IsLOS(_unitpos) and _unit:IsAlive and _unit:GetLife()>1 then
+        if startpos:IsLOS(_unitpos) and _unit:IsAlive() and _unit:GetLife()>1 then
             self:T("Adding to final targets: ".._unit:GetName())
           finaltargets:Add(_unit:GetName(),_unit)
         end
@@ -1507,7 +1507,7 @@ function PLAYERRECCE:onafterShack(From, Event, To, Client, Target)
           coordtext = coord:ToStringFromRPShort(self.ReferencePoint,self.RPName,client,Settings)
         end
         local coordtext = coord:ToStringA2G(client,Settings)
-        local text = string.format("All stations, %s lost sight of %s\nat %s!",callsign, targettype, coordtext))
+        local text = string.format("All stations, %s lost sight of %s\nat %s!",callsign, targettype, coordtext)
         MESSAGE:New(text,15,self.Name or "FACA"):ToClient(client)
       end
     end
@@ -1550,7 +1550,7 @@ function PLAYERRECCE:onafterTargetLOSLost(From, Event, To, Client, Target)
           coordtext = coord:ToStringFromRPShort(self.ReferencePoint,self.RPName,client,Settings)
         end
         local coordtext = coord:ToStringA2G(client,Settings)
-        local text = string.format("All stations, %s lost sight of %s\nat %s!",callsign, targettype, coordtext))
+        local text = string.format("All stations, %s lost sight of %s\nat %s!",callsign, targettype, coordtext)
         MESSAGE:New(text,15,self.Name or "FACA"):ToClient(client)
       end
     end
