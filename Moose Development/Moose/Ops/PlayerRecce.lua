@@ -94,7 +94,7 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.0.8",
+  version            =   "0.0.9",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
   PlayerSet          =   nil,
@@ -242,7 +242,7 @@ function PLAYERRECCE:New(Name, Coalition, PlayerSet)
   local starttime = math.random(5,10)
   self:__Status(-starttime)
   
-  self:I(self.lid..self.version.." Started.")
+  self:I(self.lid.." Started.")
   
   return self
 end
@@ -304,10 +304,10 @@ function PLAYERRECCE:_GetClockDirection(unit, target)
     clock = UTILS.Round(clock,0)
     if clock > 12 then clock = clock-12 end
   end
-  if self.debug then
-    local text = string.format("Heading = %d, Angle = %d, Hours= %d, Clock = %d",_heading,Angle,hours,clock)
-    self:I(self.lid .. text)
-  end    
+  --if self.debug then
+    --local text = string.format("Heading = %d, Angle = %d, Hours= %d, Clock = %d",_heading,Angle,hours,clock)
+    --self:I(self.lid .. text)
+  --end    
   return clock
 end
 
@@ -390,7 +390,30 @@ function PLAYERRECCE:_GetGazelleVivianneSight(Gazelle)
     local heading = unit:GetHeading()
     local viviheading = (heading+horizontalview)%360
     local maxview = self:_GetActualMaxLOSight(unit,viviheading, verticalview,vivioff)
-    return viviheading, verticalview, maxview, not vivioff
+    -- visual skew
+    local factor = 3.15
+    self.GazelleViewFactors = {
+      [1]=1.18,
+      [2]=1.32,
+      [3]=1.46,
+      [4]=1.62,
+      [5]=1.77,
+      [6]=1.85,
+      [7]=2.05,
+      [8]=2.05,
+      [9]=2.3,
+      [10]=2.3,
+      [11]=2.27,
+      [12]=2.27,
+      [13]=2.43,
+      }
+    local lfac = UTILS.Round(maxview,-2)
+    if lfac <= 1300 then
+      factor = self.GazelleViewFactors[lfac/100]
+      maxview = math.ceil((maxview*factor)/100)*100
+    end
+    if maxview > 8000 then maxview = 8000 end
+    return viviheading, verticalview,maxview, not vivioff
   end
   return 0,0,0,false
 end
@@ -651,6 +674,15 @@ function PLAYERRECCE:_LaseTarget(client,targetset)
     local lasingtime = self.lasingtime or 60
     local targettype = target:GetTypeName()
     laser:LaseOn(target,lasercode,lasingtime)
+    
+    local function Shack(dT,client,target,targettype)
+      self:__Shack(-1,client,target,targettype)
+    end
+    
+    function laser:OnAfterDestroyed(From,Event,To)
+      Shack(-1,client,target,targettype)
+    end
+    
     self:__TargetLasing(-1,client,target,lasercode,lasingtime)
   else
     -- still looking at target?
@@ -659,6 +691,7 @@ function PLAYERRECCE:_LaseTarget(client,targetset)
         -- lost LOS or dead
         --local targettype = oldtarget:GetTypeName()
         laser:LaseOff()
+        self:I(self.lid.."*** Laser off!")
     if (not oldtarget:IsAlive()) or (oldtarget:GetLife() < 2) then
       self:__Shack(-1,client,oldtarget)
     else
@@ -840,12 +873,13 @@ end
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:_UploadTargets(client,group,playername)
   self:T(self.lid.."_UploadTargets")
-  local targetset, number = self:_GetTargetSet(client,true)
-  local vtargetset, vnumber = self:_GetTargetSet(client,false)
-  local totalset = SET_UNIT:New()
-  totalset:AddSet(targetset)
-  totalset:AddSet(vtargetset)
-  if totalset:CountAlive() > 0 then
+  --local targetset, number = self:_GetTargetSet(client,true)
+  --local vtargetset, vnumber = self:_GetTargetSet(client,false)
+  local totalset, count = self:_GetKnownTargets(client)
+  --local totalset = SET_UNIT:New()
+ -- totalset:AddSet(targetset)
+  --totalset:AddSet(vtargetset)
+  if count > 0 then
     self.Controller:AddTarget(totalset)
     self:__TargetReportSent(1,client,playername,totalset)
   end
@@ -1487,8 +1521,9 @@ end
 -- @param #string To
 -- @param Wrapper.Client#CLIENT Client
 -- @param Wrapper.Unit#UNIT Target
+-- @param #string Targettype
 -- @return #PLAYERRECCE self
-function PLAYERRECCE:onafterShack(From, Event, To, Client, Target)
+function PLAYERRECCE:onafterShack(From, Event, To, Client, Target, Targettype)
   self:T({From, Event, To})
   local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
   local Settings = ( Client and _DATABASE:GetPlayerSettings( Client:GetPlayerName() ) ) or _SETTINGS
@@ -1497,7 +1532,7 @@ function PLAYERRECCE:onafterShack(From, Event, To, Client, Target)
   if self.ReferencePoint then
     coordtext = coord:ToStringFromRPShort(self.ReferencePoint,self.RPName,Client,Settings)
   end
-  local targettype = Target:GetTypeName()
+  local targettype = Targettype
   if self.AttackSet then
     for _,_client in pairs(self.AttackSet.Set) do
       local client = _client --Wrapper.Client#CLIENT
@@ -1507,16 +1542,16 @@ function PLAYERRECCE:onafterShack(From, Event, To, Client, Target)
           coordtext = coord:ToStringFromRPShort(self.ReferencePoint,self.RPName,client,Settings)
         end
         local coordtext = coord:ToStringA2G(client,Settings)
-        local text = string.format("All stations, %s lost sight of %s\nat %s!",callsign, targettype, coordtext)
+        local text = string.format("All stations, %s good hit on %s\nat %s!",callsign, targettype, coordtext)
         MESSAGE:New(text,15,self.Name or "FACA"):ToClient(client)
       end
     end
   end
   local text = "Shack!"
-  local ttstext = "Kaboom!"
+  local ttstext = "Shack!"
   if self.UseSRS then
     local grp = Client:GetGroup()
-    self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
+    self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1)
   else
     MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
   end
