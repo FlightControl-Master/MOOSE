@@ -497,7 +497,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.44", -- #string
+  version = "0.2.45", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -3515,7 +3515,7 @@ function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
     text = string.format("%s. %s. %s. %s",managedgroup.CallSign,self.callsigntxt,alpha,alphacheckbulls)
     self:__CheckedIn(1,managedgroup.GID)
 
-    local AW = FlightGroup:GetAirWing()
+    local AW = FlightGroup.legion
     if AW.HasOwnStation then
       self:__AssignAnchor(5,managedgroup.GID,AW.HasOwnStation,AW.StationName)
     else
