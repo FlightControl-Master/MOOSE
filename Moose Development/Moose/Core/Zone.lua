@@ -631,8 +631,9 @@ ZONE_RADIUS = {
 -- @param #string ZoneName Name of the zone.
 -- @param DCS#Vec2 Vec2 The location of the zone.
 -- @param DCS#Distance Radius The radius of the zone.
+-- @param DCS#Boolean DoNotRegisterZone Determins if the Zone should not be registered in the _Database Table. Default=false
 -- @return #ZONE_RADIUS self
-function ZONE_RADIUS:New( ZoneName, Vec2, Radius, noregister )
+function ZONE_RADIUS:New( ZoneName, Vec2, Radius, DoNotRegisterZone )
 
   -- Inherit ZONE_BASE.
   local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) ) -- #ZONE_RADIUS
@@ -640,10 +641,11 @@ function ZONE_RADIUS:New( ZoneName, Vec2, Radius, noregister )
 
   self.Radius = Radius
   self.Vec2 = Vec2
-	
-  if not noregister then
-	  _EVENTDISPATCHER:CreateEventNewZone(self)
+
+  if not DoNotRegisterZone then
+    _EVENTDISPATCHER:CreateEventNewZone(self)
   end
+  
   --self.Coordinate=COORDINATE:NewFromVec2(Vec2)
 
   return self
@@ -1541,7 +1543,7 @@ function ZONE:New( ZoneName )
   end
 
   -- Create a new ZONE_RADIUS.
-  local self=BASE:Inherit( self, ZONE_RADIUS:New(ZoneName, {x=Zone.point.x, y=Zone.point.z}, Zone.radius))
+  local self=BASE:Inherit( self, ZONE_RADIUS:New(ZoneName, {x=Zone.point.x, y=Zone.point.z}, Zone.radius, true))
   self:F(ZoneName)
 
   -- Color of zone.
