@@ -82,7 +82,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.3"
+PLAYERTASK.version="0.1.4"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -762,6 +762,8 @@ do
 -- @field #table PlayerInfoMenu
 -- @field #boolean noflaresmokemenu
 -- @field #boolean TransmitOnlyWithPlayers
+-- @field #boolean buddylasing
+-- @field Ops.PlayerRecce#PLAYERRECCE PlayerRecce
 -- @extends Core.Fsm#FSM
 
 ---
@@ -937,6 +939,7 @@ do
 --                NONE = "None",
 --                POINTEROVERTARGET = "%s, %s, pointer in reach for task %03d, lasing!",
 --                POINTERTARGETREPORT = "\nPointer in reach: %s\nLasing: %s",
+--                RECCETARGETREPORT = "\nRecce %s in reach: %s\nLasing: %s",
 --                POINTERTARGETLASINGTTS = ". Pointer in reach and lasing.",
 --                TARGET = "Target",
 --                FLASHON = "%s - Flashing directions is now ON!",
@@ -1065,6 +1068,8 @@ PLAYERTASKCONTROLLER = {
   PlayerInfoMenu     =   {},
   noflaresmokemenu   =   false,
   TransmitOnlyWithPlayers = true,
+  buddylasing        = false,
+  PlayerRecce         = nil,
   }
 
 ---
@@ -1152,6 +1157,7 @@ PLAYERTASKCONTROLLER.Messages = {
     NONE = "None",
     POINTEROVERTARGET = "%s, %s, pointer in reach for task %03d, lasing!",
     POINTERTARGETREPORT = "\nPointer in reach: %s\nLasing: %s",
+    RECCETARGETREPORT = "\nRecce %s in reach: %s\nLasing: %s",
     POINTERTARGETLASINGTTS = ". Pointer in reach and lasing.",
     TARGET = "Target",
     FLASHON = "%s - Flashing directions is now ON!",
@@ -1213,6 +1219,7 @@ PLAYERTASKCONTROLLER.Messages = {
     NONE = "Keine",
     POINTEROVERTARGET = "%s, %s, Marker im Zielbereich für %03d, Laser an!",
     POINTERTARGETREPORT = "\nMarker im Zielbereich: %s\nLaser an: %s",
+    RECCETARGETREPORT = "\nSpäher % im Zielbereich: %s\nLasing: %s",
     POINTERTARGETLASINGTTS = ". Marker im Zielbereich, Laser is an.",
     TARGET = "Ziel",
     FLASHON = "%s - Richtungsangaben einblenden ist EIN!",
@@ -1223,7 +1230,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.39"
+PLAYERTASKCONTROLLER.version="0.1.40"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -1303,9 +1310,9 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self:AddTransition("*",            "TaskRepeatOnFailed",    "*")
   self:AddTransition("*",            "Stop",                  "Stopped")
   
-  self:__Start(-1)
+  self:__Start(2)
   local starttime = math.random(5,10)
-  self:__Status(-starttime)
+  self:__Status(starttime)
   
   -- Player leaves
   self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventHandler)
@@ -1546,6 +1553,27 @@ function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode)
   return self
 end
 
+
+--- [User] Allow precision laser-guided bombing on statics and "high-value" ground units (MBT etc) with player units lasing.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Ops.PlayerRecce#PLAYERRECCE Recce (Optional) The PLAYERRECCE object governing the lasing players.
+-- @return #PLAYERTASKCONTROLLER self 
+function PLAYERTASKCONTROLLER:EnableBuddyLasing(Recce)
+  self:T(self.lid.."EnableBuddyLasing")
+  self.buddylasing = true
+  self.PlayerRecce = Recce
+  return self
+end
+
+--- [User] Allow precision laser-guided bombing on statics and "high-value" ground units (MBT etc) with player units lasing.
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:DisableBuddyLasing()
+  self:T(self.lid.."DisableBuddyLasing")
+  self.buddylasing = false
+  return self
+end
+
 --- [User] Allow addition of targets with user F10 map markers.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string Tag (Optional) The tagname to use to identify commands, defaults to "TASK"
@@ -1583,7 +1611,7 @@ end
 -- @return #string playername
 -- @return #string ttsplayername
 function PLAYERTASKCONTROLLER:_GetPlayerName(Client)
-  self:T(self.lid.."DisablePrecisionBombing")
+  self:T(self.lid.."_GetPlayerName")
   local playername = Client:GetPlayerName()
   local ttsplayername = nil
   if not self.customcallsigns[playername] then
@@ -2225,7 +2253,7 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
       ttstype = self.gettext:GetEntry("BAITTS",self.locale)
     end
     -- see if we can do precision bombing
-    if (type == AUFTRAG.Type.BAI or type == AUFTRAG.Type.CAS) and self.precisionbombing then
+    if (type == AUFTRAG.Type.BAI or type == AUFTRAG.Type.CAS) and (self.precisionbombing or self.buddylasing) then
       -- threatlevel between 3 and 6 means, it's artillery, tank, modern tank or AAA
       if threat > 2 and threat < 7 then
         type = AUFTRAG.Type.PRECISIONBOMBING
@@ -2464,6 +2492,36 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
         text = text .. prectext
       end
     end
+   if task.Type == AUFTRAG.Type.PRECISIONBOMBING and self.buddylasing then
+    if self.PlayerRecce then
+      local yes = self.gettext:GetEntry("YES",self.locale)
+      local no = self.gettext:GetEntry("NO",self.locale)
+      -- TODO make dist dependent on PlayerRecce Object
+      local reachdist = 8000
+      local inreach = false
+      -- someone close enough?
+      local pset = self.PlayerRecce.PlayerSet:GetAliveSet()
+      for _,_player in pairs(pset) do
+        local player = _player -- Wrapper.Client#CLIENT
+        local pcoord = player:GetCoordinate()
+        if pcoord:Get2DDistance(Coordinate) <= reachdist then
+          inreach = true
+          local callsign = player:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+          local playername = player:GetPlayerName()
+          local islasing = no
+          if self.PlayerRecce.CanLase[player:GetTypeName()] and self.PlayerRecce.AutoLase[playername] then
+            -- TODO - maybe compare Spot target
+            islasing = yes
+          end
+          local inrtext = inreach == true and yes or no
+          local prectext = self.gettext:GetEntry("RECCETARGETREPORT",self.locale)
+          -- RECCETARGETREPORT = "\nSpäher % im Zielbereich: %s\nLasing: %s",
+          prectext = string.format(prectext,callsign,inrtext,islasing)
+          text = text .. prectext
+        end
+      end
+    end
+   end
     local clienttxt = self.gettext:GetEntry("PILOTS",self.locale)
     if clientcount > 0 then
       for _,_name in pairs(clientlist) do
@@ -2758,10 +2816,12 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
           local active = MENU_GROUP_DELAYED:New(group,menuactive,topmenu)
           local info = MENU_GROUP_COMMAND_DELAYED:New(group,menuinfo,active,self._ActiveTaskInfo,self,group,client)
           local mark = MENU_GROUP_COMMAND_DELAYED:New(group,menumark,active,self._MarkTask,self,group,client)
-          if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A or self.noflaresmokemenu then
-            -- no smoking/flaring here if A2A or designer has set to false
-            local smoke = MENU_GROUP_COMMAND_DELAYED:New(group,menusmoke,active,self._SmokeTask,self,group,client)
-            local flare = MENU_GROUP_COMMAND_DELAYED:New(group,menuflare,active,self._FlareTask,self,group,client)
+          if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
+            if self.noflaresmokemenu ~= true then
+              -- no smoking/flaring here if A2A or designer has set noflaresmokemenu to true
+              local smoke = MENU_GROUP_COMMAND_DELAYED:New(group,menusmoke,active,self._SmokeTask,self,group,client)
+              local flare = MENU_GROUP_COMMAND_DELAYED:New(group,menuflare,active,self._FlareTask,self,group,client)
+            end
           end
           local abort = MENU_GROUP_COMMAND_DELAYED:New(group,menuabort,active,self._AbortTask,self,group,client)
           if self.activehasinfomenu and self.taskinfomenu then
