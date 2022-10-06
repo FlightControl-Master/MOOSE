@@ -380,7 +380,7 @@ end
 --- Get name of airwing the flight group belongs to.
 -- @param #FLIGHTGROUP self
 -- @return #string Name of the airwing or "None" if the flightgroup does not belong to any airwing.
-function FLIGHTGROUP:GetAirwing()
+function FLIGHTGROUP:GetAirwingName()
   local name=self.legion and self.legion.alias or "None"
   return name
 end
