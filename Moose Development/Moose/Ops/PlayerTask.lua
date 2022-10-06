@@ -1223,7 +1223,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.38"
+PLAYERTASKCONTROLLER.version="0.1.39"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -1717,7 +1717,7 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
       end
       playername = self:_GetTextForSpeech(playername)
       --local text = string.format("%s, %s, switch to %s for task assignment!",EventData.IniPlayerName,self.MenuName or self.Name,freqtext)
-      local text = string.format(switchtext,self.MenuName or self.Name,playername,freqtext)
+      local text = string.format(switchtext,playername,self.MenuName or self.Name,freqtext)
       self.SRSQueue:NewTransmission(text,nil,self.SRS,timer.getAbsTime()+60,2,{EventData.IniGroup},text,30,self.BCFrequency,self.BCModulation)
     end
   end
