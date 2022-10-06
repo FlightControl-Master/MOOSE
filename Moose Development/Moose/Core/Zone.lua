@@ -631,8 +631,9 @@ ZONE_RADIUS = {
 -- @param #string ZoneName Name of the zone.
 -- @param DCS#Vec2 Vec2 The location of the zone.
 -- @param DCS#Distance Radius The radius of the zone.
+-- @param DCS#Boolean DoNotRegisterZone Determins if the Zone should not be registered in the _Database Table. Default=false
 -- @return #ZONE_RADIUS self
-function ZONE_RADIUS:New( ZoneName, Vec2, Radius )
+function ZONE_RADIUS:New( ZoneName, Vec2, Radius, DoNotRegisterZone )
 
   -- Inherit ZONE_BASE.
   local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) ) -- #ZONE_RADIUS
@@ -641,6 +642,10 @@ function ZONE_RADIUS:New( ZoneName, Vec2, Radius )
   self.Radius = Radius
   self.Vec2 = Vec2
 
+  if not DoNotRegisterZone then
+    _EVENTDISPATCHER:CreateEventNewZone(self)
+  end
+  
   --self.Coordinate=COORDINATE:NewFromVec2(Vec2)
 
   return self
@@ -1538,7 +1543,7 @@ function ZONE:New( ZoneName )
   end
 
   -- Create a new ZONE_RADIUS.
-  local self=BASE:Inherit( self, ZONE_RADIUS:New(ZoneName, {x=Zone.point.x, y=Zone.point.z}, Zone.radius))
+  local self=BASE:Inherit( self, ZONE_RADIUS:New(ZoneName, {x=Zone.point.x, y=Zone.point.z}, Zone.radius, true))
   self:F(ZoneName)
 
   -- Color of zone.
@@ -1605,7 +1610,7 @@ function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius, Offset)
     self.relative_to_unit = Offset.relative_to_unit or false
   end
 
-  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneUNIT:GetVec2(), Radius ) )
+  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneUNIT:GetVec2(), Radius, true ) )
 
   self:F( { ZoneName, ZoneUNIT:GetVec2(), Radius } )
 
@@ -1721,7 +1726,7 @@ ZONE_GROUP = {
 -- @param DCS#Distance Radius The radius of the zone.
 -- @return #ZONE_GROUP self
 function ZONE_GROUP:New( ZoneName, ZoneGROUP, Radius )
-  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneGROUP:GetVec2(), Radius ) )
+  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneGROUP:GetVec2(), Radius, true ) )
   self:F( { ZoneName, ZoneGROUP:GetVec2(), Radius } )
 
   self._.ZoneGROUP = ZoneGROUP
@@ -2321,7 +2326,7 @@ function ZONE_POLYGON_BASE:Boundary(Coalition, Color, Radius, Alpha, Segments, C
             for Segment = 0, Segments do
                 local PointX = self._.Polygon[i].x + ( Segment * DeltaX / Segments )
                 local PointY = self._.Polygon[i].y + ( Segment * DeltaY / Segments )
-                ZONE_RADIUS:New( "Zone", {x = PointX, y = PointY}, Radius ):DrawZone(Coalition, Color, 1, Color, Alpha, nil, true)
+                ZONE_RADIUS:New( "Zone", {x = PointX, y = PointY}, Radius, true ):DrawZone(Coalition, Color, 1, Color, Alpha, nil, false)
             end
         end
         j = i
@@ -2948,7 +2953,7 @@ do -- ZONE_AIRBASE
 
     local Airbase = AIRBASE:FindByName( AirbaseName )
 
-    local self = BASE:Inherit( self, ZONE_RADIUS:New( AirbaseName, Airbase:GetVec2(), Radius ) )
+    local self = BASE:Inherit( self, ZONE_RADIUS:New( AirbaseName, Airbase:GetVec2(), Radius, true ) )
 
     self._.ZoneAirbase = Airbase
     self._.ZoneVec2Cache = self._.ZoneAirbase:GetVec2()
