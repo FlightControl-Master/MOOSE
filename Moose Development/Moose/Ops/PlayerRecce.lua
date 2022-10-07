@@ -45,6 +45,9 @@
 -- @field #string version
 -- @field #table ViewZone
 -- @field #table ViewZoneVisual
+-- @field #table ViewZoneLaser
+-- @field #table LaserFOV
+-- @field #table LaserTarget
 -- @field Core.Set#SET_CLIENT PlayerSet
 -- @field #string Name
 -- @field #number Coalition
@@ -94,9 +97,12 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.0.10",
+  version            =   "0.0.11",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
+  ViewZoneLaser      =   {},
+  LaserFOV           =   {},
+  LaserTarget        =   {},
   PlayerSet          =   nil,
   debug              =   true,
   LaserSpots         =   {},
@@ -470,36 +476,48 @@ end
 -- @param #PLAYERRECCE self
 -- @param Wrapper.Unit#UNIT unit The unit which is looking
 -- @param #number vheading Heading where the unit or camera is looking
--- @param #number vnod Nod down in degrees
--- @param #number maxview Max line of sight, depending on height
+-- @param #number minview Min line of sight - for lasing
+-- @param #number maxview Max line of sight
 -- @param #number angle  Angle left/right to be added to heading to form a triangle
 -- @param #boolean camon Camera is switched on
--- @param #boolean draw Draw the zone on the F10 map
+-- @param #boolean laser Zone is for lasing
 -- @return Core.Zone#ZONE_POLYGON ViewZone or nil if camera is off
-function PLAYERRECCE:_GetViewZone(unit, vheading, vnod, maxview, angle, camon, draw)
+function PLAYERRECCE:_GetViewZone(unit, vheading, minview, maxview, angle, camon, laser)
   self:T(self.lid.."_GetViewZone")
   local viewzone = nil
-  if not camon then return nil end
+  --if not camon then return nil end
   if unit and unit:IsAlive() then
     local unitname = unit:GetName()
-    if self.ViewZone[unitname] then
-      self.ViewZone[unitname]:UndrawZone()
-    end
-    --local vheading, vnod, maxview, vivon = self:GetGazelleVivianneSight(unit)
-    local startpos = unit:GetCoordinate()
-    local heading1 = (vheading+angle)%360
-    local heading2 = (vheading-angle)%360
-    local pos1 = startpos:Translate(maxview,heading1)
-    local pos2 = startpos:Translate(maxview,heading2)
-    local array = {}
-    table.insert(array,startpos:GetVec2())
-    table.insert(array,pos1:GetVec2())
-    table.insert(array,pos2:GetVec2())
-    viewzone = ZONE_POLYGON:NewFromPointsArray(unitname,array)
-    if draw then
-      viewzone:DrawZone(-1,{0,0,1},nil,nil,nil,1)
-      self.ViewZone[unitname] = viewzone
-    end  
+    if not laser then
+      -- Triangle
+      local startpos = unit:GetCoordinate()
+      local heading1 = (vheading+angle)%360
+      local heading2 = (vheading-angle)%360
+      local pos1 = startpos:Translate(maxview,heading1)
+      local pos2 = startpos:Translate(maxview,heading2)
+      local array = {}
+      table.insert(array,startpos:GetVec2())
+      table.insert(array,pos1:GetVec2())
+      table.insert(array,pos2:GetVec2())
+      viewzone = ZONE_POLYGON:NewFromPointsArray(unitname,array)
+    else
+      -- Square
+      local startp = unit:GetCoordinate()
+      local heading1 = (vheading+90)%360
+      local heading2 = (vheading-90)%360
+      self:I({heading1,heading2})
+      local startpos = startp:Translate(minview,vheading)
+      local pos1 = startpos:Translate(10,heading1)
+      local pos2 = startpos:Translate(10,heading2)
+      local pos3 = pos1:Translate(maxview,vheading)
+      local pos4 = pos2:Translate(maxview,vheading)
+      local array = {}
+      table.insert(array,pos1:GetVec2())
+      table.insert(array,pos2:GetVec2())
+      table.insert(array,pos4:GetVec2())
+      table.insert(array,pos3:GetVec2())
+      viewzone = ZONE_POLYGON:NewFromPointsArray(unitname,array)
+    end 
   end
   return viewzone
 end
@@ -564,24 +582,43 @@ end
 --@param #boolean camera If true, use the unit's camera for targets in sight
 --@return Core.Set#SET_UNIT Set of targets, can be empty!
 --@return #number count Count of targets
-function PLAYERRECCE:_GetTargetSet(unit,camera)
+function PLAYERRECCE:_GetTargetSet(unit,camera,laser)
   self:T(self.lid.."_GetTargetSet")
   local finaltargets = SET_UNIT:New()
   local finalcount = 0
+  local minview = 0
+  local typename = unit:GetTypeName()
+  local playername = unit:GetPlayerName()
+  local maxview = self.MaxViewDistance[typename] or 5000
   local heading,nod,maxview,angle = 0,30,8000,10
   local camon = true
-  local typename = unit:GetTypeName()
   local name = unit:GetName()
   if string.find(typename,"SA342") and camera then
     heading,nod,maxview,camon = self:_GetGazelleVivianneSight(unit)
     angle=10
+    -- Model nod and actual TV view don't compute
+    maxview = self.MaxViewDistance[typename] or 5000
   else
     -- visual
     heading = unit:GetHeading()
     nod,maxview,camon = 10,1000,true
     angle = 45
   end
-  local zone = self:_GetViewZone(unit,heading,nod,maxview,angle,camon)
+  if laser then
+    -- get min/max values
+    if not self.LaserFOV[playername] then
+      minview = 100
+      maxview = 2000
+      self.LaserFOV[playername] = {
+        min=100,
+        max=2000,
+      }
+    else
+      minview = self.LaserFOV[playername].min
+      maxview = self.LaserFOV[playername].max
+    end
+  end
+  local zone = self:_GetViewZone(unit,heading,minview,maxview,angle,camon,laser)
   if zone then
     local redcoalition = "red"
     if self.Coalition == coalition.side.RED then
@@ -612,13 +649,9 @@ end
 ---[Internal] 
 --@param #PLAYERRECCE self
 --@param Core.Set#SET_UNIT targetset Set of targets, can be empty!
---@return Wrapper.Unit#UNIT Target
+--@return Wrapper.Unit#UNIT Target or nil
 function PLAYERRECCE:_GetHVTTarget(targetset)
    self:T(self.lid.."_GetHVTTarget")
-   
-   -- get one target
-  -- local target = targetset:GetRandom() -- Wrapper.Unit#UNIT
-   
    -- sort units
    local unitsbythreat = {}
    local minthreat = self.minthreatlevel or 0
@@ -641,8 +674,12 @@ function PLAYERRECCE:_GetHVTTarget(targetset)
     local bNum = b[2] -- Coin value of b
     return aNum > bNum -- Return their comparisons, < for ascending, > for descending
   end)
-   
- return unitsbythreat[1][1]
+ 
+ if unitsbythreat[1] and unitsbythreat[1][1] then   
+  return unitsbythreat[1][1]  
+ else
+  return nil
+ end
 end
 
 --- [Internal] 
@@ -667,37 +704,32 @@ function PLAYERRECCE:_LaseTarget(client,targetset)
   else
     laser = self.LaserSpots[playername]
   end
-  if not laser:IsLasing() and target then
+  if self.LaserTarget[playername] then
+    -- still looking at target?
+    local target=self.LaserTarget[playername] -- Ops.Target#TARGET
+    local oldtarget = target:GetObject() --or laser.Target
+    self:I("Targetstate: "..target:GetState())
+    if not oldtarget or targetset:IsNotInSet(oldtarget) or target:IsDead() or target:IsDestroyed() then
+      -- lost LOS or dead
+      laser:LaseOff()
+      if target:IsDead() or target:IsDestroyed() or target:GetLife() < 2 then
+        self:__Shack(-1,client,oldtarget)
+        self.LaserTarget[playername] = nil
+      else
+        self:__TargetLOSLost(-1,client,oldtarget)
+        self.LaserTarget[playername] = nil
+      end
+    end
+  elseif not laser:IsLasing() and target then
     local relativecam = self.LaserRelativePos[client:GetTypeName()]
     laser:SetRelativeStartPosition(relativecam)
     local lasercode = self.UnitLaserCodes[playername] or laser.LaserCode or 1688
     local lasingtime = self.lasingtime or 60
     local targettype = target:GetTypeName()
-    laser:LaseOn(target,lasercode,lasingtime)
-    
-    local function Shack(dT,client,target,targettype)
-      self:__Shack(-1,client,target,targettype)
-    end
-    
-    function laser:OnAfterDestroyed(From,Event,To)
-      Shack(-1,client,target,targettype)
-    end
-    
+    laser:LaseOn(target,lasercode,lasingtime) 
+    self.LaserTarget[playername] = TARGET:New(target)
+    self.LaserTarget[playername].TStatus = 9
     self:__TargetLasing(-1,client,target,lasercode,lasingtime)
-  else
-    -- still looking at target?
-    local oldtarget=laser.Target
-    if targetset:IsNotInSet(oldtarget) or (not oldtarget) or (not oldtarget:IsAlive()) or (oldtarget:GetLife() < 2) then
-        -- lost LOS or dead
-        --local targettype = oldtarget:GetTypeName()
-        laser:LaseOff()
-        self:I(self.lid.."*** Laser off!")
-    if (not oldtarget:IsAlive()) or (oldtarget:GetLife() < 2) then
-      self:__Shack(-1,client,oldtarget)
-    else
-      self:__TargetLOSLost(-1,client,oldtarget)
-    end
-    end
   end
   return self
 end
@@ -755,6 +787,35 @@ function PLAYERRECCE:_SwitchLasing(client,group,playername)
     self.AutoLase[playername] = false
     MESSAGE:New("Lasing is now OFF",10,self.Name or "FACA"):ToClient(client)
   end
+  if self.ClientMenus[playername] then
+    self.ClientMenus[playername]:Remove()
+    self.ClientMenus[playername]=nil
+  end
+  return self
+end
+
+--- [Internal] 
+-- @param #PLAYERRECCE self
+-- @param Wrapper.Client#CLIENT client
+-- @param Wrapper.Group#GROUP group
+-- @param #string playername
+-- @param #number mindist
+-- @param #number maxdist
+-- @return #PLAYERRECCE self
+function PLAYERRECCE:_SwitchLasingDist(client,group,playername,mindist,maxdist)
+  self:T(self.lid.."_SwitchLasingDist")
+  local mind  = mindist or 100
+  local maxd  = maxdist or 2000
+  if not self.LaserFOV[playername] then
+    self.LaserFOV[playername] = {
+      min=mind,
+      max=maxd,
+    }
+  else
+    self.LaserFOV[playername].min=mind
+    self.LaserFOV[playername].max=maxd
+  end
+  MESSAGE:New(string.format("Laser distance set to %d-%dm!",mindist,maxdist),10,"FACA"):ToClient(client)
   if self.ClientMenus[playername] then
     self.ClientMenus[playername]:Remove()
     self.ClientMenus[playername]=nil
@@ -894,7 +955,7 @@ end
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:_ReportLaserTargets(client,group,playername)
 self:T(self.lid.."_ReportLaserTargets")
-  local targetset, number = self:_GetTargetSet(client,true)
+  local targetset, number = self:_GetTargetSet(client,true,true)
   if number > 0 and self.AutoLase[playername] then
     local Settings = ( client and _DATABASE:GetPlayerSettings( playername  ) ) or _SETTINGS
     local target = self:_GetHVTTarget(targetset) -- the one we're lasing
@@ -1000,6 +1061,23 @@ function PLAYERRECCE:_BuildMenus()
             local txtonstation = self.AutoLase[playername] and "ON" or "OFF"
             local text = string.format("Switch Lasing (%s)",txtonstation)
             local lasemenu = MENU_GROUP_COMMAND:New(group,text,self.ClientMenus[playername],self._SwitchLasing,self,client,group,playername)
+            local lasedist = MENU_GROUP:New(group,"Set Laser Distance",self.ClientMenus[playername])
+            local mindist = 100
+            local maxdist = 2000
+            if self.LaserFOV[playername] and self.LaserFOV[playername].max then
+              maxdist = self.LaserFOV[playername].max
+            end
+            local laselist={}
+            for i=2,8 do
+             local dist1 = (i*1000)-1000
+             local dist2 = i*1000
+             dist1 = dist1 == 1000 and 100 or dist1
+             local text = string.format("%d-%dm",dist1,dist2)
+             if dist2 == maxdist then
+              text = text .. " (*)"
+             end
+             laselist[i] = MENU_GROUP_COMMAND:New(group,text,lasedist,self._SwitchLasingDist,self,client,group,playername,dist1,dist2)
+            end
           end
           local targetmenu = MENU_GROUP:New(group,"Target Report",self.ClientMenus[playername])
           if canlase then
@@ -1216,14 +1294,26 @@ function PLAYERRECCE:onafterStatus(From, Event, To)
             end
           end
           self:T({targetcount=targetcount})
+          
           -- lase targets on camera
-          if targetcount > 0 then
-            if self.CanLase[client:GetTypeName()] and self.AutoLase[playername] then
-              -- DONE move to lase at will
-              self:_LaseTarget(client,targetset)
+          if self.AutoLase[playername] then
+            local laserset, targetcount, lzone = self:_GetTargetSet(client,true,true)
+            if targetcount > 0 or self.LaserTarget[playername] then
+              if self.CanLase[client:GetTypeName()] then
+                -- DONE move to lase at will
+                self:_LaseTarget(client,laserset)
+              end
             end
+            if lzone then
+              if self.ViewZoneLaser[playername] then
+                self.ViewZoneLaser[playername]:UndrawZone()
+              end
+              if self.debug and tzone then
+                self.ViewZoneLaser[playername]=lzone:DrawZone(self.Coalition,{0,1,0},nil,nil,nil,1)
+              end
+            end
+            self:I({lasercount=targetcount})
           end
-   
           -- visual targets
           local vistargetset, vistargetcount, viszone = self:_GetTargetSet(client,false)
           if vistargetset then
@@ -1532,7 +1622,7 @@ function PLAYERRECCE:onafterShack(From, Event, To, Client, Target, Targettype)
   if self.ReferencePoint then
     coordtext = coord:ToStringFromRPShort(self.ReferencePoint,self.RPName,Client,Settings)
   end
-  local targettype = Targettype
+  local targettype = "target"
   if self.AttackSet then
     for _,_client in pairs(self.AttackSet.Set) do
       local client = _client --Wrapper.Client#CLIENT
@@ -1575,7 +1665,7 @@ function PLAYERRECCE:onafterTargetLOSLost(From, Event, To, Client, Target)
   if self.ReferencePoint then
     coordtext = coord:ToStringFromRPShort(self.ReferencePoint,self.RPName,Client,Settings)
   end
-  local targettype = Target:GetTypeName()
+  local targettype = "target" --Target:GetTypeName()
   if self.AttackSet then
     for _,_client in pairs(self.AttackSet.Set) do
       local client = _client --Wrapper.Client#CLIENT

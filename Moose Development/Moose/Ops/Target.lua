@@ -69,6 +69,7 @@ TARGET = {
   casualties     =    {},
   threatlevel0   =     0,
   conditionStart =    {},
+  TStatus        =    30,
 }
 
 
@@ -146,7 +147,7 @@ _TARGETID=0
 
 --- TARGET class version.
 -- @field #string version
-TARGET.version="0.5.2"
+TARGET.version="0.5.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -185,6 +186,7 @@ function TARGET:New(TargetObject)
   -- Defaults.
   self:SetPriority()
   self:SetImportance()
+  self.TStatus = 30
   
   -- Log ID.
   self.lid=string.format("TARGET #%03d | ", _TARGETID)
@@ -570,7 +572,7 @@ function TARGET:onafterStatus(From, Event, To)
 
   -- Update status again in 30 sec.
   if self:IsAlive() then
-    self:__Status(-30)
+    self:__Status(-self.TStatus)
   end
 end
 
