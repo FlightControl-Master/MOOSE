@@ -277,6 +277,8 @@ do -- SET_BASE
   -- @return #SET_BASE self
   function SET_BASE:AddSet(SetToAdd)
 
+    if not SetToAdd then return self end
+
     for _,ObjectB in pairs(SetToAdd.Set) do
       self:AddObject(ObjectB)
     end
