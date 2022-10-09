@@ -1,4 +1,4 @@
---- **Ops** - Allow a player in the Gazelle to detect, smoke, flare, lase and report ground units to others.
+--- **Ops** - Allow a player in a helo like the Gazelle to detect, smoke, flare, lase and report ground units to others.
 --
 -- ## Features:
 --
@@ -97,7 +97,7 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.0.11",
+  version            =   "0.0.12",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
   ViewZoneLaser      =   {},
@@ -272,6 +272,13 @@ function PLAYERRECCE:_EventHandler(EventData)
       self.ClientMenus[EventData.IniPlayerName] = nil
       self.LaserSpots[EventData.IniPlayerName] = nil
       self.OnStation[EventData.IniPlayerName] = false
+      self.LaserFOV[EventData.IniPlayerName] = nil
+      self.UnitLaserCodes[EventData.IniPlayerName] = nil
+      self.LaserTarget[EventData.IniPlayerName] = nil
+      self.AutoLase[EventData.IniPlayerName] = false
+      if self.ViewZone[EventData.IniPlayerName] then self.ViewZone[EventData.IniPlayerName]:UndrawZone() end
+      if self.ViewZoneLaser[EventData.IniPlayerName] then self.ViewZoneLaser[EventData.IniPlayerName]:UndrawZone() end
+      if self.ViewZoneVisual[EventData.IniPlayerName] then self.ViewZoneVisual[EventData.IniPlayerName]:UndrawZone() end
     end
   elseif EventData.id == EVENTS.PlayerEnterAircraft and EventData.IniCoalition == self.Coalition then
     if EventData.IniPlayerName and EventData.IniGroup and self.UseSRS then
@@ -280,6 +287,13 @@ function PLAYERRECCE:_EventHandler(EventData)
       self.ClientMenus[EventData.IniPlayerName] = nil
       self.LaserSpots[EventData.IniPlayerName] = nil
       self.OnStation[EventData.IniPlayerName] = false
+      self.LaserFOV[EventData.IniPlayerName] = nil
+      self.UnitLaserCodes[EventData.IniPlayerName] = nil
+      self.LaserTarget[EventData.IniPlayerName] = nil
+      self.AutoLase[EventData.IniPlayerName] = false
+      if self.ViewZone[EventData.IniPlayerName] then self.ViewZone[EventData.IniPlayerName]:UndrawZone() end
+      if self.ViewZoneLaser[EventData.IniPlayerName] then self.ViewZoneLaser[EventData.IniPlayerName]:UndrawZone() end
+      if self.ViewZoneVisual[EventData.IniPlayerName] then self.ViewZoneVisual[EventData.IniPlayerName]:UndrawZone() end
       self:_BuildMenus()
     end
   end
@@ -362,6 +376,24 @@ end
 function PLAYERRECCE:SetAttackSet(AttackSet)
   self.AttackSet = AttackSet
   return self
+end
+
+---[Internal] Check Gazelle camera in on
+-- @param #PLAYERRECCE self
+-- @param Wrapper.Client#CLIENT client
+-- @param #string playername
+-- @return #boolen OnOff
+function PLAYERRECCE:_CameraOn(client,playername)
+  local camera = true
+  local unit = client -- Wrapper.Unit#UNIT
+  if unit and unit:IsAlive() then
+    local dcsunit = Unit.getByName(client:GetName())
+    local vivihorizontal = dcsunit:getDrawArgumentValue(215) or 0 -- (not in MiniGun) 1 to -1 -- zero is straight ahead, 1/-1 = 180 deg
+    if vivihorizontal < -0.7 or vivihorizontal > 0.7 then 
+      camera = false
+    end
+  end
+  return camera
 end
 
 --- [Internal] Get the view parameters from a Gazelle camera
@@ -485,7 +517,7 @@ end
 function PLAYERRECCE:_GetViewZone(unit, vheading, minview, maxview, angle, camon, laser)
   self:T(self.lid.."_GetViewZone")
   local viewzone = nil
-  --if not camon then return nil end
+  if not camon then return nil end
   if unit and unit:IsAlive() then
     local unitname = unit:GetName()
     if not laser then
@@ -507,17 +539,11 @@ function PLAYERRECCE:_GetViewZone(unit, vheading, minview, maxview, angle, camon
       local heading2 = (vheading-90)%360
       self:I({heading1,heading2})
       local startpos = startp:Translate(minview,vheading)
-      --startpos:MarkToAll("Startpoint")
       local pos1 = startpos:Translate(10,heading1)
       local pos2 = startpos:Translate(10,heading2)
       local pos3 = pos1:Translate(maxview,vheading)
       local pos4 = pos2:Translate(maxview,vheading)
-      --pos1:MarkToAll("P1")
-      --pos2:MarkToAll("P2")
-      --pos3:MarkToAll("P3")
-      --pos4:MarkToAll("P4")
       local array = {}
-      --table.insert(array,startpos:GetVec2())
       table.insert(array,pos1:GetVec2())
       table.insert(array,pos2:GetVec2())
       table.insert(array,pos4:GetVec2())
@@ -586,6 +612,7 @@ end
 --@param #PLAYERRECCE self
 --@param Wrapper.Unit#UNIT unit The FACA unit
 --@param #boolean camera If true, use the unit's camera for targets in sight
+--@param #laser Use laser zone
 --@return Core.Set#SET_UNIT Set of targets, can be empty!
 --@return #number count Count of targets
 function PLAYERRECCE:_GetTargetSet(unit,camera,laser)
@@ -597,7 +624,7 @@ function PLAYERRECCE:_GetTargetSet(unit,camera,laser)
   local playername = unit:GetPlayerName()
   local maxview = self.MaxViewDistance[typename] or 5000
   local heading,nod,maxview,angle = 0,30,8000,10
-  local camon = true
+  local camon = false
   local name = unit:GetName()
   if string.find(typename,"SA342") and camera then
     heading,nod,maxview,camon = self:_GetGazelleVivianneSight(unit)
@@ -1287,23 +1314,28 @@ function PLAYERRECCE:onafterStatus(From, Event, To)
     function(Client)
         local client = Client -- Wrapper.Client#CLIENT
         local playername = client:GetPlayerName()
+        local cameraison = self:_CameraOn(client,playername)
         if client and client:IsAlive() and self.OnStation[playername] then
-          
+          ---
+         local targetset, targetcount, tzone = nil,0,nil
+         local laserset, lzone = nil,nil
+         local vistargetset, vistargetcount, viszone = nil,0,nil
           -- targets on camera
-          local targetset, targetcount, tzone = self:_GetTargetSet(client,true)
-          if targetset then
-            if self.ViewZone[playername] then
-              self.ViewZone[playername]:UndrawZone()
+          if cameraison then
+            targetset, targetcount, tzone = self:_GetTargetSet(client,true)
+            if targetset then
+              if self.ViewZone[playername] then
+                self.ViewZone[playername]:UndrawZone()
+              end
+              if self.debug and tzone then
+                self.ViewZone[playername]=tzone:DrawZone(self.Coalition,{0,0,1},nil,nil,nil,1)
+              end
             end
-            if self.debug and tzone then
-              self.ViewZone[playername]=tzone:DrawZone(self.Coalition,{0,0,1},nil,nil,nil,1)
-            end
+            self:T({targetcount=targetcount})
           end
-          self:T({targetcount=targetcount})
-          
           -- lase targets on camera
-          if self.AutoLase[playername] then
-            local laserset, targetcount, lzone = self:_GetTargetSet(client,true,true)
+          if self.AutoLase[playername] and cameraison then
+            laserset, targetcount, lzone = self:_GetTargetSet(client,true,true)
             if targetcount > 0 or self.LaserTarget[playername] then
               if self.CanLase[client:GetTypeName()] then
                 -- DONE move to lase at will
@@ -1321,7 +1353,7 @@ function PLAYERRECCE:onafterStatus(From, Event, To)
             self:I({lasercount=targetcount})
           end
           -- visual targets
-          local vistargetset, vistargetcount, viszone = self:_GetTargetSet(client,false)
+          vistargetset, vistargetcount, viszone = self:_GetTargetSet(client,false)
           if vistargetset then
             if self.ViewZoneVisual[playername] then
               self.ViewZoneVisual[playername]:UndrawZone()
@@ -1331,8 +1363,21 @@ function PLAYERRECCE:onafterStatus(From, Event, To)
             end
           end
           self:T({visualtargetcount=vistargetcount})
-          targetset:AddSet(vistargetset)
-          self:_CheckNewTargets(targetset,client,playername)
+          if targetset then
+            vistargetset:AddSet(targetset)
+          end
+          if laserset then
+            vistargetset:AddSet(laserset)
+          end
+          if not cameraison and self.debug then
+            if self.ViewZoneLaser[playername] then
+                self.ViewZoneLaser[playername]:UndrawZone()
+              end
+            if self.ViewZone[playername] then
+              self.ViewZone[playername]:UndrawZone()
+            end
+          end
+          self:_CheckNewTargets(vistargetset,client,playername)
         end
     end
   )
