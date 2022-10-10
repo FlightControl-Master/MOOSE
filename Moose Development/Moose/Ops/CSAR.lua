@@ -1851,7 +1851,7 @@ function CSAR:_GetClosestMASH(_heli)
   
   if self.allowFARPRescue then
     local position = _heli:GetCoordinate()
-    local afb,distance = position:GetClosestAirbase2(nil,self.coalition)
+    local afb,distance = position:GetClosestAirbase(nil,self.coalition)
     _shortestDistance = distance
   end
   
