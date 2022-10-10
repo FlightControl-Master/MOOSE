@@ -482,6 +482,25 @@ function PLAYERTASK:FlareTarget(Color)
   return self
 end
 
+--- [User] Illuminate Target Area
+-- @param #PLAYERTASK self
+-- @param #number Power Power of illumination bomb in Candela. Default 1000 cd.
+-- @param #number Height Height above target used to release the bomb, default 150m.
+-- @return #PLAYERTASK self
+function PLAYERTASK:IlluminateTarget(Power,Height)
+  self:T(self.lid.."IlluminateTarget")
+  local Power = Power or 1000
+  local Height = Height or 150
+  if self.Target then
+    local coordinate = self.Target:GetCoordinate()
+    if coordinate then
+	  local bcoord = COORDINATE:NewFromVec2( coordinate:GetVec2(), Height )
+      bcoord:IlluminationBomb(Power)
+    end
+  end
+  return self
+end
+
 -- success / failure function addion courtesy @FunkyFranky.
 
 --- [User] Add success condition.
