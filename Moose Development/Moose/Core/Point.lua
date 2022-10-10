@@ -1519,7 +1519,7 @@ do -- COORDINATE
   -- @param #number Coalition (Optional) Coalition of the airbase.
   -- @return Wrapper.Airbase#AIRBASE Closest Airbase to the given coordinate.
   -- @return #number Distance to the closest airbase in meters.
-  function COORDINATE:GetClosestAirbase2(Category, Coalition)
+  function COORDINATE:GetClosestAirbase(Category, Coalition)
 
     -- Get all airbases of the map.
     local airbases=AIRBASE.GetAllAirbases(Coalition)
@@ -1553,34 +1553,15 @@ do -- COORDINATE
     return closest,distmin
   end
 
-  --- Gets the nearest airbase with respect to the current coordinates.
+  --- [kept for downwards compatibility only] Gets the nearest airbase with respect to the current coordinates.
   -- @param #COORDINATE self
   -- @param #number Category (Optional) Category of the airbase. Enumerator of @{Wrapper.Airbase#AIRBASE.Category}.
   -- @param #number Coalition (Optional) Coalition of the airbase.
   -- @return Wrapper.Airbase#AIRBASE Closest Airbase to the given coordinate.
   -- @return #number Distance to the closest airbase in meters.
-  function COORDINATE:GetClosestAirbase(Category, Coalition)
-
-    local a=self:GetVec3()
-
-    local distmin=math.huge
-    local airbase=nil
-    for DCSairbaseID, DCSairbase in pairs(world.getAirbases(Coalition)) do
-      local b=DCSairbase:getPoint()
-
-      local c=UTILS.VecSubstract(a,b)
-      local dist=UTILS.VecNorm(c)
-
-      --env.info(string.format("Airbase %s dist=%d category=%d", DCSairbase:getName(), dist, DCSairbase:getCategory()))
-
-      if dist<distmin and (Category==nil or Category==DCSairbase:getDesc().category) then
-        distmin=dist
-        airbase=DCSairbase
-      end
-
-    end
-
-    return AIRBASE:Find(airbase)
+  function COORDINATE:GetClosestAirbase2(Category, Coalition)
+    local closest, distmin = self:GetClosestAirbase(Category, Coalition)
+    return closest, distmin 
   end
 
   --- Gets the nearest parking spot.
