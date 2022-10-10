@@ -51,6 +51,8 @@ do
 -- @field #number timestamp
 -- @field #number lastsmoketime
 -- @field #number coalition
+-- @field #string Freetext
+-- @field #string FreetextTTS
 -- @extends Core.Fsm#FSM
 
 
@@ -79,11 +81,13 @@ PLAYERTASK = {
   TaskController     =   nil,
   timestamp          =   0,
   lastsmoketime      =   0,
+  Freetext           =    nil,
+  FreetextTTS       =     nil,
   }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.4"
+PLAYERTASK.version="0.1.5"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -96,7 +100,6 @@ PLAYERTASK.version="0.1.4"
 -- @param Ops.Target#TARGET Target Target for this task
 -- @param #boolean Repeat Repeat this task if true (default = false)
 -- @param #number Times Repeat on failure this many times if Repeat is true (default = 1)
--- @param #string TTSType Task type name for TTS
 -- @return #PLAYERTASK self 
 function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
 
@@ -254,14 +257,58 @@ function PLAYERTASK:_SetController(Controller)
   return self
 end
 
---- [User] Add a coalition for this task
+--- [User] Set a coalition side for this task
 -- @param #PLAYERTASK self
--- @param# number Coalition Coalition, e.g. coalition.side.BLUE
+-- @param #number Coalition Coaltion side to add, e.g. coalition.side.BLUE
 -- @return #PLAYERTASK self
 function PLAYERTASK:SetCoalition(Coalition)
   self:T(self.lid.."SetCoalition")
   self.coalition = Coalition or coalition.side.BLUE
   return self
+end
+
+--- [User] Get the coalition side for this task
+-- @param #PLAYERTASK self
+-- @return #number Coalition Coaltion side, e.g. coalition.side.BLUE, or nil if not set
+function PLAYERTASK:GetCoalition()
+  self:T(self.lid.."GetCoalition")
+  return self.coalition
+end
+
+--- [USER] Add a free text description to this task.
+-- @param #PLAYERTASK self
+-- @param #string Text
+-- @return #PLAYERTASK self
+function PLAYERTASK:AddFreetext(Text)
+  self:T(self.lid.."AddFreetext")
+  self.Freetext = Text
+  return self
+end
+
+--- [USER] Get the free text description from this task.
+-- @param #PLAYERTASK self
+-- @return #string Text
+function PLAYERTASK:GetFreetext()
+  self:T(self.lid.."GetFreetext")
+  return self.Freetext
+end
+
+--- [USER] Add a free text description for TTS to this task.
+-- @param #PLAYERTASK self
+-- @param #string Text
+-- @return #PLAYERTASK self
+function PLAYERTASK:AddFreetextTTS(TextTTS)
+  self:T(self.lid.."AddFreetextTTS")
+  self.FreetextTTS = TextTTS
+  return self
+end
+
+--- [USER] Get the free text TTS description from this task.
+-- @param #PLAYERTASK self
+-- @return #string Text
+function PLAYERTASK:GetFreetextTTS()
+  self:T(self.lid.."GetFreetextTTS")
+  return self.FreetextTTS
 end
 
 --- [User] Check if task is done
@@ -430,6 +477,25 @@ function PLAYERTASK:FlareTarget(Color)
     local coordinate = self.Target:GetCoordinate()
     if coordinate then
       coordinate:Flare(color,0)
+    end
+  end
+  return self
+end
+
+--- [User] Illuminate Target Area
+-- @param #PLAYERTASK self
+-- @param #number Power Power of illumination bomb in Candela. Default 1000 cd.
+-- @param #number Height Height above target used to release the bomb, default 150m.
+-- @return #PLAYERTASK self
+function PLAYERTASK:IlluminateTarget(Power,Height)
+  self:T(self.lid.."IlluminateTarget")
+  local Power = Power or 1000
+  local Height = Height or 150
+  if self.Target then
+    local coordinate = self.Target:GetCoordinate()
+    if coordinate then
+	  local bcoord = COORDINATE:NewFromVec2( coordinate:GetVec2(), Height )
+      bcoord:IlluminationBomb(Power)
     end
   end
   return self
@@ -1097,10 +1163,10 @@ PLAYERTASKCONTROLLER.Type = {
   A2GS = "Air-To-Ground-Sea",
 }
 
---- Define a new AUFTRAG Type
+--- Define new AUFTRAG Types
 AUFTRAG.Type.PRECISIONBOMBING = "Precision Bombing"
-AUFTRAG.Type.CTLD = "Transport"
-AUFTRAG.Type.CSAR = "Rescue"
+AUFTRAG.Type.CTLD = "Combat Transport"
+AUFTRAG.Type.CSAR "Combat Rescue"
  
 --- 
 -- @type SeadAttributes
