@@ -50,6 +50,7 @@ do
 -- @field Ops.PlayerTask#PLAYERTASKCONTROLLER TaskController
 -- @field #number timestamp
 -- @field #number lastsmoketime
+-- @field #number coalition
 -- @extends Core.Fsm#FSM
 
 
@@ -95,6 +96,7 @@ PLAYERTASK.version="0.1.4"
 -- @param Ops.Target#TARGET Target Target for this task
 -- @param #boolean Repeat Repeat this task if true (default = false)
 -- @param #number Times Repeat on failure this many times if Repeat is true (default = 1)
+-- @param #string TTSType Task type name for TTS
 -- @return #PLAYERTASK self 
 function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
 
@@ -249,6 +251,16 @@ end
 function PLAYERTASK:_SetController(Controller)
   self:T(self.lid.."_SetController")
   self.TaskController = Controller
+  return self
+end
+
+--- [User] Add a coalition for this task
+-- @param #PLAYERTASK self
+-- @param# number Coalition Coalition, e.g. coalition.side.BLUE
+-- @return #PLAYERTASK self
+function PLAYERTASK:SetCoalition(Coalition)
+  self:T(self.lid.."SetCoalition")
+  self.coalition = Coalition or coalition.side.BLUE
   return self
 end
 
@@ -1087,6 +1099,8 @@ PLAYERTASKCONTROLLER.Type = {
 
 --- Define a new AUFTRAG Type
 AUFTRAG.Type.PRECISIONBOMBING = "Precision Bombing"
+AUFTRAG.Type.CTLD = "Transport"
+AUFTRAG.Type.CSAR = "Rescue"
  
 --- 
 -- @type SeadAttributes
