@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update September 2022
+-- @date Last Update October 2022
 
 
 do
@@ -50,6 +50,9 @@ do
 -- @field Ops.PlayerTask#PLAYERTASKCONTROLLER TaskController
 -- @field #number timestamp
 -- @field #number lastsmoketime
+-- @field #number coalition
+-- @field #string Freetext
+-- @field #string FreetextTTS
 -- @extends Core.Fsm#FSM
 
 
@@ -78,11 +81,13 @@ PLAYERTASK = {
   TaskController     =   nil,
   timestamp          =   0,
   lastsmoketime      =   0,
+  Freetext           =    nil,
+  FreetextTTS       =     nil,
   }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.4"
+PLAYERTASK.version="0.1.5"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -250,6 +255,60 @@ function PLAYERTASK:_SetController(Controller)
   self:T(self.lid.."_SetController")
   self.TaskController = Controller
   return self
+end
+
+--- [User] Set a coalition side for this task
+-- @param #PLAYERTASK self
+-- @param #number Coalition Coaltion side to add, e.g. coalition.side.BLUE
+-- @return #PLAYERTASK self
+function PLAYERTASK:SetCoalition(Coalition)
+  self:T(self.lid.."SetCoalition")
+  self.coalition = Coalition or coalition.side.BLUE
+  return self
+end
+
+--- [User] Get the coalition side for this task
+-- @param #PLAYERTASK self
+-- @return #number Coalition Coaltion side, e.g. coalition.side.BLUE, or nil if not set
+function PLAYERTASK:GetCoalition()
+  self:T(self.lid.."GetCoalition")
+  return self.coalition
+end
+
+--- [USER] Add a free text description to this task.
+-- @param #PLAYERTASK self
+-- @param #string Text
+-- @return #PLAYERTASK self
+function PLAYERTASK:AddFreetext(Text)
+  self:T(self.lid.."AddFreetext")
+  self.Freetext = Text
+  return self
+end
+
+--- [USER] Get the free text description from this task.
+-- @param #PLAYERTASK self
+-- @return #string Text
+function PLAYERTASK:GetFreetext()
+  self:T(self.lid.."GetFreetext")
+  return self.Freetext
+end
+
+--- [USER] Add a free text description for TTS to this task.
+-- @param #PLAYERTASK self
+-- @param #string Text
+-- @return #PLAYERTASK self
+function PLAYERTASK:AddFreetextTTS(TextTTS)
+  self:T(self.lid.."AddFreetextTTS")
+  self.FreetextTTS = TextTTS
+  return self
+end
+
+--- [USER] Get the free text TTS description from this task.
+-- @param #PLAYERTASK self
+-- @return #string Text
+function PLAYERTASK:GetFreetextTTS()
+  self:T(self.lid.."GetFreetextTTS")
+  return self.FreetextTTS
 end
 
 --- [User] Check if task is done
@@ -1085,8 +1144,10 @@ PLAYERTASKCONTROLLER.Type = {
   A2GS = "Air-To-Ground-Sea",
 }
 
---- Define a new AUFTRAG Type
+--- Define new AUFTRAG Types
 AUFTRAG.Type.PRECISIONBOMBING = "Precision Bombing"
+AUFTRAG.Type.CTLD = "Combat Transport"
+AUFTRAG.Type.CSAR "Combat Rescue"
  
 --- 
 -- @type SeadAttributes
