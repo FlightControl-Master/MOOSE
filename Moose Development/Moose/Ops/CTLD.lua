@@ -23,7 +23,7 @@
 -- @image OPS_CTLD.jpg
 
 -- Date: Feb 2022
--- Last Update Sep 2022
+-- Last Update October 2022
 
 do
 
@@ -343,7 +343,7 @@ CTLD_CARGO = {
     CRATE = "Crate", -- #string crate
     REPAIR = "Repair", -- #string repair
     ENGINEERS = "Engineers", -- #string engineers
-    STATIC = "Static", -- #string engineers
+    STATIC = "Static", -- #string statics
   }
   
   --- Function to create new CTLD_CARGO object.
@@ -574,6 +574,10 @@ CTLD_CARGO = {
 end
 
 do
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- TODO CTLD
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 -------------------------------------------------------------------------
 --- **CTLD** class, extends Core.Base#BASE, Core.Fsm#FSM
 -- @type CTLD
@@ -1068,7 +1072,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.11"
+CTLD.version="1.0.12"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1473,6 +1477,19 @@ function CTLD:SetTroopDropZoneRadius(Radius)
   local tradius = Radius or 100
   if tradius < 25 then tradius = 25 end
   self.troopdropzoneradius = tradius
+  return self
+end
+
+--- (User) Add a PLAYERTASK - FSM events will check success
+-- @param #CTLD self
+-- @param Ops.PlayerTask#PLAYERTASK PlayerTask
+-- @return #CTLD self
+function CTLD:AddPlayerTask(PlayerTask)
+  self:T(self.lid .. " AddPlayerTask")
+  if not self.PlayerTaskQueue then
+    self.PlayerTaskQueue = FIFO:New()
+  end
+  self.PlayerTaskQueue:Push(PlayerTask,PlayerTask.PlayerTaskNr)
   return self
 end
 
@@ -4244,7 +4261,7 @@ end
   end
   
 ------------------------------------------------------------------- 
--- FSM functions
+-- TODO FSM functions
 ------------------------------------------------------------------- 
 
   --- (Internal) FSM Function onafterStart.
@@ -4445,9 +4462,30 @@ end
   -- @return #CTLD self
   function CTLD:onbeforeCratesBuild(From, Event, To, Group, Unit, Vehicle)
     self:T({From, Event, To})
+    if Unit and Unit:IsPlayer() and self.PlayerTaskQueue then
+      local playername = Unit:GetPlayerName()
+      local dropcoord = Vehicle:GetCoordinate() or COORDINATE:New(0,0,0)
+      local dropvec2 = dropcoord:GetVec2()
+      self.PlayerTaskQueue:ForEach(
+        function (Task)
+          local task = Task -- Ops.PlayerTask#PLAYERTASK
+          local subtype = task:GetSubType()
+          -- right subtype?
+          if Event == subtype and not task:IsDone() then
+            local targetzone = task.Target:GetObject() -- Core.Zone#ZONE should be a zone in this case ....
+            if targetzone and targetzone.ClassName and string.match(targetzone.ClassName,"ZONE") and targetzone:IsVec2InZone(dropvec2) then
+              if task.Clients:HasUniqueID(playername) then
+                -- success
+                task:__Success(-1)
+              end
+            end
+          end
+        end
+      )
+    end
     return self
   end
-  
+
   --- (Internal) FSM Function onbeforeTroopsRTB.
   -- @param #CTLD self
   -- @param #string From State.
@@ -4802,7 +4840,9 @@ end -- end do
 do 
 --- **Hercules Cargo AIR Drop Events** by Anubis Yinepu
 -- Moose CTLD OO refactoring by Applevangelist
--- 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- TODO CTLD_HERCULES
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- This script will only work for the Herculus mod by Anubis, and only for **Air Dropping** cargo from the Hercules. 
 -- Use the standard Moose CTLD if you want to unload on the ground.
 -- Payloads carried by pylons 11, 12 and 13 need to be declared in the Herculus_Loadout.lua file

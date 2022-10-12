@@ -1,11 +1,11 @@
---- **Ops** - PlayerTask (mission) for Players.
+---- **Ops** - PlayerTask (mission) for Players.
 --
 -- ## Main Features:
 --
 --    * Simplifies defining and executing Player tasks
 --    * FSM events when a mission is added, done, successful or failed, replanned
 --    * Ready to use SRS and localization
---    * Mission locations can be smoked, flared and marked on the map
+--    * Mission locations can be smoked, flared, illuminated and marked on the map
 --
 -- ===
 --
@@ -53,6 +53,7 @@ do
 -- @field #number coalition
 -- @field #string Freetext
 -- @field #string FreetextTTS
+-- @field #string TaskSubType
 -- @extends Core.Fsm#FSM
 
 
@@ -81,13 +82,14 @@ PLAYERTASK = {
   TaskController     =   nil,
   timestamp          =   0,
   lastsmoketime      =   0,
-  Freetext           =    nil,
-  FreetextTTS       =     nil,
+  Freetext           =   nil,
+  FreetextTTS        =   nil,
+  TaskSubType        =   nil,
   }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.5"
+PLAYERTASK.version="0.1.6"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -100,6 +102,7 @@ PLAYERTASK.version="0.1.5"
 -- @param Ops.Target#TARGET Target Target for this task
 -- @param #boolean Repeat Repeat this task if true (default = false)
 -- @param #number Times Repeat on failure this many times if Repeat is true (default = 1)
+-- @param #string TTSType TTS friendly task type name
 -- @return #PLAYERTASK self 
 function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
 
@@ -283,6 +286,24 @@ function PLAYERTASK:AddFreetext(Text)
   self:T(self.lid.."AddFreetext")
   self.Freetext = Text
   return self
+end
+
+--- [USER] Set a task sub type description to this task.
+-- @param #PLAYERTASK self
+-- @param #string Type
+-- @return #PLAYERTASK self
+function PLAYERTASK:SetSubType(Type)
+  self:T(self.lid.."AddSubType")
+  self.TaskSubType = Type
+  return self
+end
+
+--- [USER] Get task sub type description from this task.
+-- @param #PLAYERTASK self
+-- @return #string Type or nil
+function PLAYERTASK:GetSubType()
+  self:T(self.lid.."GetSubType")
+  return self.TaskSubType
 end
 
 --- [USER] Get the free text description from this task.
@@ -842,6 +863,7 @@ do
 -- @field #boolean TransmitOnlyWithPlayers
 -- @field #boolean buddylasing
 -- @field Ops.PlayerRecce#PLAYERRECCE PlayerRecce
+-- @field #number Coalition
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1147,7 +1169,8 @@ PLAYERTASKCONTROLLER = {
   noflaresmokemenu   =   false,
   TransmitOnlyWithPlayers = true,
   buddylasing        = false,
-  PlayerRecce         = nil,
+  PlayerRecce        = nil,
+  Coalition          = nil,
   }
 
 ---
@@ -1166,7 +1189,7 @@ PLAYERTASKCONTROLLER.Type = {
 --- Define new AUFTRAG Types
 AUFTRAG.Type.PRECISIONBOMBING = "Precision Bombing"
 AUFTRAG.Type.CTLD = "Combat Transport"
-AUFTRAG.Type.CSAR "Combat Rescue"
+AUFTRAG.Type.CSAR = "Combat Rescue"
  
 --- 
 -- @type SeadAttributes
@@ -2422,6 +2445,42 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
   self.TaskQueue:Push(task)
   self:__TaskAdded(-1,task)
   
+  return self
+end
+
+--- [User] Add a PLAYERTASK object to the list of (open) tasks
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Ops.PlayerTask#PLAYERTASK PlayerTask
+-- @return #PLAYERTASKCONTROLLER self
+-- @usage
+-- Example to create a PLAYERTASK of type CTLD and give Players 10 minutes to complete:
+-- 
+--        local newtask = PLAYERTASK:New(AUFTRAG.Type.CTLD,ZONE:Find("Unloading"),false,0,"Combat Transport")
+--        newtask.Time0 = timer.getAbsTime()    -- inject a timestamp for T0
+--        newtask:AddFreetext("Transport crates to the drop zone and build a vehicle in the next 10 minutes!")
+--        
+--        -- add a condition for failure - fail after 10 minutes
+--        newtask:AddConditionFailure(
+--          function()
+--            local Time = timer.getAbsTime()
+--            if Time - newtask.Time0 > 600 then
+--              return true
+--            end 
+--            return false
+--          end
+--          )  
+--          
+--        taskmanager:AddPlayerTaskToQueue(PlayerTask)     
+function PLAYERTASKCONTROLLER:AddPlayerTaskToQueue(PlayerTask)
+  self:T(self.lid.."AddPlayerTaskToQueue")
+  if PlayerTask and PlayerTask.ClassName and PlayerTask.ClassName == "PLAYERTASK" then
+    PlayerTask:_SetController(self)
+    PlayerTask:SetCoalition(self.Coalition)
+    self.TaskQueue:Push(PlayerTask)
+    self:__TaskAdded(-1,PlayerTask)
+  else
+    self:E(self.lid.."***** NO valid PAYERTASK object sent!")
+  end
   return self
 end
 
