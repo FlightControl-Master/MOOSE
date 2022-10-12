@@ -55,9 +55,33 @@ STATIC = {
 function STATIC:Register( StaticName )
   local self = BASE:Inherit( self, POSITIONABLE:New( StaticName ) )
   self.StaticName = StaticName
+  
+  local DCSStatic = StaticObject.getByName( self.StaticName )
+  if DCSStatic then
+    local Life0 = DCSStatic:getLife() or 1
+    self.Life0 = Life0
+  end
+  
   return self
 end
 
+--- Get initial life points
+-- @param #STATIC self
+-- @return #number lifepoints
+function STATIC:GetLife0()
+  return self.Life0 or 1
+end
+
+--- Get current life points
+-- @param #STATIC self
+-- @return #number lifepoints or nil
+function STATIC:GetLife()
+  local DCSStatic = StaticObject.getByName( self.StaticName )
+  if DCSStatic then
+    return DCSStatic:getLife() or 1
+  end
+  return nil
+end
 
 --- Finds a STATIC from the _DATABASE using a DCSStatic object.
 -- @param #STATIC self

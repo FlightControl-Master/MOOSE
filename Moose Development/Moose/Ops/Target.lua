@@ -147,7 +147,7 @@ _TARGETID=0
 
 --- TARGET class version.
 -- @field #string version
-TARGET.version="0.5.3"
+TARGET.version="0.5.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -830,8 +830,8 @@ function TARGET:_AddObject(Object)
     
     if static and static:IsAlive() then
     
-      target.Life0=1
-      target.Life=1      
+      target.Life0=static:GetLife0()
+      target.Life=static:GetLife()      
       target.N0=target.N0+1
       
       table.insert(self.elements, target.Name)
