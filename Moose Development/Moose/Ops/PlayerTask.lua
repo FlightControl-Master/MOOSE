@@ -332,6 +332,16 @@ function PLAYERTASK:GetFreetextTTS()
   return self.FreetextTTS
 end
 
+--- [USER] Add a short free text description for the menu entry of this task.
+-- @param #PLAYERTASK self
+-- @param #string Text
+-- @return #PLAYERTASK self
+function PLAYERTASK:SetMenuName(Text)
+  self:T(self.lid.."SetMenuName")
+  self.Target.name = Text
+  return self
+end
+
 --- [User] Check if task is done
 -- @param #PLAYERTASK self
 -- @return #boolean done
