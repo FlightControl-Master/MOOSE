@@ -58,10 +58,10 @@ function SCENERY:GetThreatLevel()
   return 0, "Scenery"
 end
 
---- Find a SCENERY object by it's name/id.
+--- Create a SCENERY object from it's name/id.
 --@param #SCENERY self
 --@param #string name The name/id of the scenery object as taken from the ME. Ex. '595785449'
---@return #SCENERY Scenery Object or nil if not found.
+--@return #SCENERY Scenery Object - **Note** this might not point to anything useful. Check with `myscenery:IsAlive()` if it is valid.
 function SCENERY:FindByName(name)
   local findAirbase = function ()
     local airbases = AIRBASE.GetAllAirbases()
