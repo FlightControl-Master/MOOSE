@@ -27,7 +27,7 @@
 --  
 --  @field #SCENERY
 SCENERY = {
-	ClassName = "SCENERY",
+  ClassName = "SCENERY",
 }
 
 
