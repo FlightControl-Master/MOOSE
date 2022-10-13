@@ -54,6 +54,9 @@ do
 -- @field #string Freetext
 -- @field #string FreetextTTS
 -- @field #string TaskSubType
+-- @field #table NextTaskSuccess
+-- @field #table NextTaskFailure
+-- @field #string FinalState
 -- @extends Core.Fsm#FSM
 
 
@@ -85,11 +88,14 @@ PLAYERTASK = {
   Freetext           =   nil,
   FreetextTTS        =   nil,
   TaskSubType        =   nil,
+  NextTaskSuccess    =   {},
+  NextTaskFailure    =   {},
+  FinalState         =   "none",
   }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.6"
+PLAYERTASK.version="0.1.8"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -311,12 +317,12 @@ end
 -- @return #string Text
 function PLAYERTASK:GetFreetext()
   self:T(self.lid.."GetFreetext")
-  return self.Freetext
+  return self.Freetext  or self.FreetextTTS or "No Details"
 end
 
 --- [USER] Add a free text description for TTS to this task.
 -- @param #PLAYERTASK self
--- @param #string Text
+-- @param #string TextTTS
 -- @return #PLAYERTASK self
 function PLAYERTASK:AddFreetextTTS(TextTTS)
   self:T(self.lid.."AddFreetextTTS")
@@ -329,7 +335,7 @@ end
 -- @return #string Text
 function PLAYERTASK:GetFreetextTTS()
   self:T(self.lid.."GetFreetextTTS")
-  return self.FreetextTTS
+  return self.FreetextTTS  or self.Freetext or "No Details"
 end
 
 --- [USER] Add a short free text description for the menu entry of this task.
@@ -339,6 +345,26 @@ end
 function PLAYERTASK:SetMenuName(Text)
   self:T(self.lid.."SetMenuName")
   self.Target.name = Text
+  return self
+end
+
+--- [USER] Add a task to be assigned to same clients when task was a success.
+-- @param #PLAYERTASK self
+-- @param Ops.PlayerTask#PLAYERTASK Task
+-- @return #PLAYERTASK self
+function PLAYERTASK:AddNextTaskAfterSuccess(Task)
+  self:T(self.lid.."AddNextTaskAfterSuccess")
+  table.insert(self.NextTaskSuccess,Task)
+  return self
+end
+
+--- [USER] Add a task to be assigned to same clients when task was a failure.
+-- @param #PLAYERTASK self
+-- @param Ops.PlayerTask#PLAYERTASK Task
+-- @return #PLAYERTASK self
+function PLAYERTASK:AddNextTaskAfterFailure(Task)
+  self:T(self.lid.."AddNextTaskAfterFailure")
+  table.insert(self.NextTaskFailure,Task)
   return self
 end
 
@@ -759,6 +785,7 @@ function PLAYERTASK:onafterCancel(From, Event, To)
     self.TaskController:__TaskCancelled(-1,self)
   end
   self.timestamp = timer.getAbsTime()
+  self.FinalState = "Cancel"
   self:__Done(-1)
   return self
 end
@@ -778,6 +805,7 @@ function PLAYERTASK:onafterSuccess(From, Event, To)
     self.TargetMarker:Remove()
   end
   self.timestamp = timer.getAbsTime()
+  self.FinalState = "Success"
   self:__Done(-1)
   return self
 end
@@ -802,9 +830,7 @@ function PLAYERTASK:onafterFailed(From, Event, To)
     if self.TargetMarker then
       self.TargetMarker:Remove()
     end
-    if self.TaskController then
-      self.TaskController:__TaskFailed(-1,self)
-    end
+    self.FinalState = "Failed"
     self:__Done(-1)
   end
   self.timestamp = timer.getAbsTime()
@@ -824,6 +850,8 @@ do
 -- DONE Flash directions
 -- DONE less rebuilds menu, Task info menu available after join
 -- DONE Limit menu entries
+-- DONE Integrated basic CTLD tasks
+-- DONE Integrate basic CSAR tasks
 -------------------------------------------------------------------------------------------------------------------
 
 --- PLAYERTASKCONTROLLER class.
@@ -1343,7 +1371,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.40"
+PLAYERTASKCONTROLLER.version="0.1.41"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -1580,6 +1608,7 @@ function PLAYERTASKCONTROLLER:_GetTextForSpeech(text)
   -- get rid of leading or trailing spaces
   text=string.gsub(text,"^%s*","")
   text=string.gsub(text,"%s*$","")
+  text=string.gsub(text,"  "," ")
   
   return text
 end
@@ -2012,6 +2041,23 @@ function PLAYERTASKCONTROLLER:_CheckTaskQueue()
       for _,_id in pairs(clientsattask) do
         self:T("*****Removing player " .. _id)
         self.TasksPerPlayer:PullByID(_id)
+      end
+      -- Follow-up tasks?
+      local nexttasks = {}
+      if task.FinalState == "Success" then
+        nexttasks = task.NextTaskSuccess
+      elseif task.FinalState == "Failed" then
+       nexttasks = task.NextTaskFailure
+      end
+      local clientlist, count = task:GetClientObjects()
+      if count > 0 then
+        for _,_client in pairs(clientlist) do
+          local client = _client --Wrapper.Client#CLIENT
+          local group = client:GetGroup()
+          for _,task in pairs(nexttasks) do  
+            self:_JoinTask(group,client,task,true)
+          end
+        end
       end
       local TNow = timer.getAbsTime()
       if TNow - task.timestamp > 10 then
@@ -2499,11 +2545,12 @@ end
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Client#CLIENT Client
 -- @param Ops.PlayerTask#PLAYERTASK Task
+-- @param #boolean Force Assign task even if client already has one
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task)
+function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task, Force)
   self:T(self.lid.."_JoinTask")
   local playername, ttsplayername = self:_GetPlayerName(Client)
-  if self.TasksPerPlayer:HasUniqueID(playername) then
+  if self.TasksPerPlayer:HasUniqueID(playername) and not Force then
     -- Player already has a task
     if not self.NoScreenOutput then
       local text = self.gettext:GetEntry("HAVEACTIVETASK",self.locale)
@@ -2601,6 +2648,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
   self:T(self.lid.."_ActiveTaskInfo")
   local playername, ttsplayername = self:_GetPlayerName(Client)
   local text = ""
+  local textTTS = ""
   if self.TasksPerPlayer:HasUniqueID(playername) or Task then
     -- TODO: Show multiple?
     local task = Task or self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
@@ -2670,6 +2718,15 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
         end
       end
     end
+   elseif task.Type == AUFTRAG.Type.CTLD or task.Type == AUFTRAG.Type.CSAR then
+   --                THREATTEXT = "%s\nThreat: %s\nTargets left: %d\nCoord: %s",
+   --                THREATTEXTTTS = "%s, %s. Target information for %s. Threat level %s. Targets left %d. Target location %s.",
+    text = taskname
+    textTTS = taskname
+    local detail = task:GetFreetext()
+    local detailTTS = task:GetFreetextTTS()
+    text = text .. "\nDetail: "..detail.."\nTarget location "..CoordText
+    textTTS = textTTS .. "; Detail: "..detailTTS.."\nTarget location "..CoordText
    end
     local clienttxt = self.gettext:GetEntry("PILOTS",self.locale)
     if clientcount > 0 then
@@ -2687,6 +2744,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
       clienttxt = clienttxt .. keine
     end
     text = text .. clienttxt
+    textTTS = textTTS .. clienttxt
     if self.UseSRS then
       if string.find(CoordText," BR, ") then
         CoordText = string.gsub(CoordText," BR, "," Bee, Arr, ")
@@ -2699,6 +2757,11 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
           local lasingtext = self.gettext:GetEntry("POINTERTARGETLASINGTTS",self.locale)
           ttstext = ttstext .. lasingtext
         end
+      elseif task.Type == AUFTRAG.Type.CTLD or task.Type == AUFTRAG.Type.CSAR then
+       ttstext = textTTS
+       if string.find(ttstext," BR, ") then
+        CoordText = string.gsub(ttstext," BR, "," Bee, Arr, ")
+       end
       end
       self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,2)
     end  
