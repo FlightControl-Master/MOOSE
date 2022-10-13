@@ -17,6 +17,7 @@
 -- @field #string ClassName
 -- @field #string SceneryName
 -- @field #DCS.Object SceneryObject
+-- @field #number Life0
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 
@@ -43,6 +44,11 @@ function SCENERY:Register( SceneryName, SceneryObject )
   local self = BASE:Inherit( self, POSITIONABLE:New( SceneryName ) )
   self.SceneryName = SceneryName
   self.SceneryObject = SceneryObject
+  if self.SceneryObject then
+    self.Life0 = self.SceneryObject:getLife()
+  else
+    self.Life0 = 0
+  end
   return self
 end
 
@@ -52,6 +58,38 @@ end
 function SCENERY:GetDCSObject()
   return self.SceneryObject
 end
+
+--- Get current life points from the SCENERY Object.
+--@param #SCENERY self
+--@return #number life
+function SCENERY:GetLife()
+  local life = 0
+  if self.SceneryObject then
+    life = self.SceneryObject:getLife()
+  end
+  return life
+end
+
+--- Get current initial life points from the SCENERY Object.
+--@param #SCENERY self
+--@return #number life
+function SCENERY:GetLife0()
+  return self.Life0 or 0
+end
+
+--- Check if SCENERY Object is alive.
+--@param #SCENERY self
+--@return #number life
+function SCENERY:IsAlive()
+  return self:GetLife() >= 1 and true or false
+end 
+
+--- Check if SCENERY Object is dead.
+--@param #SCENERY self
+--@return #number life
+function SCENERY:IsDead()
+  return self:GetLife() < 1 and true or false
+end 
 
 --- Get the threat level of a SCENERY object. Always 0.
 --@param #SCENERY self
