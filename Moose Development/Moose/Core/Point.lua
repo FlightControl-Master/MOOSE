@@ -594,7 +594,7 @@ do -- COORDINATE
   --- Scan/find SCENERY objects within a certain radius around the coordinate using the world.searchObjects() DCS API function.
   -- @param #COORDINATE self
   -- @param #number radius (Optional) Scan radius in meters. Default 100 m.
-  -- @return table Set of scenery objects.
+  -- @return table Table of SCENERY objects.
   function COORDINATE:ScanScenery(radius)
 
     local _,_,_,_,_,scenerys=self:ScanObjects(radius, false, false, true)
