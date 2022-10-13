@@ -1281,6 +1281,7 @@ function PLAYERRECCE:_GetTextForSpeech(text)
   text=string.gsub(text,"%s*$","")
   text=string.gsub(text,"0","zero")
   text=string.gsub(text,"9","niner")
+  text=string.gsub(text,"  "," ")
   
   return text
 end
