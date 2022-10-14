@@ -2639,8 +2639,10 @@ do -- SET_UNIT
   -- @return Core.Point#COORDINATE The center coordinate of all the units in the set, including heading in degrees and speed in mps in case of moving units.
   function SET_UNIT:GetCoordinate()
 
-    local Coordinate = self:GetFirst():GetCoordinate()
-
+    local Coordinate = self:GetRandom():GetCoordinate()
+    --self:F({Coordinate:GetVec3()})
+    
+    
     local x1 = Coordinate.x
     local x2 = Coordinate.x
     local y1 = Coordinate.y
