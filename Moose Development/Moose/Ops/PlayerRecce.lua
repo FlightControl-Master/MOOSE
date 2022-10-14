@@ -18,7 +18,7 @@
 --
 -- ### Authors:
 --
---   * Applevengelist (Design & Programming)
+--   * Applevangelist (Design & Programming)
 --   
 -- ===
 --
@@ -29,7 +29,7 @@
 -- PLAYERRECCE
 -- TODO: PLAYERRECCE
 -- DONE: No messages when no targets to flare or smoke
--- TODO: Flare smoke group, not all targets
+-- DONE: Flare not all targets
 -- DONE: Messages to Attack Group, use client settings
 -- DONE: Lasing dist 8km
 -- DONE: Reference Point RP
@@ -75,6 +75,8 @@
 -- @field Wrapper.Marker#MARKER RPMarker
 -- @field #number TForget
 -- @field Utilities.FiFo#FIFO TargetCache
+-- @field #boolean smokeownposition
+-- @field #table SmokeOwn
 -- @extends Core.Fsm#FSM
 
 ---
@@ -97,14 +99,14 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.0.12",
+  version            =   "0.0.15",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
   ViewZoneLaser      =   {},
   LaserFOV           =   {},
   LaserTarget        =   {},
   PlayerSet          =   nil,
-  debug              =   true,
+  debug              =   false,
   LaserSpots         =   {},
   UnitLaserCodes     =   {},
   LaserCodes         =   {},
@@ -123,6 +125,8 @@ PLAYERRECCE = {
   ReferencePoint     =   nil,
   TForget            =   600,
   TargetCache        =   nil,
+  smokeownposition   =   true,
+  SmokeOwn           =   {},
 }
 
 --- 
@@ -140,6 +144,7 @@ PLAYERRECCE.LaserRelativePos = {
   ["SA342Mistral"] = { x = 1.7, y = 1.2, z = 0 },
   ["SA342Minigun"] = { x = 1.7, y = 1.2, z = 0 },
   ["SA342L"] = { x = 1.7, y = 1.2, z = 0 },
+  ["Ka-50"] = { x = 6.1, y = -0.85 , z = 0 }
 }
 
 ---
@@ -150,6 +155,7 @@ PLAYERRECCE.MaxViewDistance = {
   ["SA342Mistral"] = 8000,
   ["SA342Minigun"] = 8000,
   ["SA342L"] = 8000,
+  ["Ka-50"] = 8000, 
 }
 
 ---
@@ -160,6 +166,7 @@ PLAYERRECCE.Cameraheight = {
   ["SA342Mistral"] = 2.85,
   ["SA342Minigun"] = 2.85,
   ["SA342L"] = 2.85,
+  ["Ka-50"] = 0.5, 
 }
 
 ---
@@ -170,6 +177,7 @@ PLAYERRECCE.CanLase = {
   ["SA342Mistral"] = true,
   ["SA342Minigun"] = false, -- no optics
   ["SA342L"] = true,
+  ["Ka-50"] = true, 
 }
 
 ---
@@ -230,6 +238,7 @@ function PLAYERRECCE:New(Name, Coalition, PlayerSet)
   self:AddTransition("*",            "TargetDetected",      "*")
   self:AddTransition("*",            "TargetsSmoked",       "*")
   self:AddTransition("*",            "TargetsFlared",       "*")
+  self:AddTransition("*",            "Illumination",        "*")
   self:AddTransition("*",            "TargetLasing",        "*")
   self:AddTransition("*",            "TargetLOSLost",       "*")
   self:AddTransition("*",            "TargetReport",        "*")
@@ -387,10 +396,15 @@ function PLAYERRECCE:_CameraOn(client,playername)
   local camera = true
   local unit = client -- Wrapper.Unit#UNIT
   if unit and unit:IsAlive() then
-    local dcsunit = Unit.getByName(client:GetName())
-    local vivihorizontal = dcsunit:getDrawArgumentValue(215) or 0 -- (not in MiniGun) 1 to -1 -- zero is straight ahead, 1/-1 = 180 deg
-    if vivihorizontal < -0.7 or vivihorizontal > 0.7 then 
-      camera = false
+    local typename = unit:GetTypeName()
+    if string.find(typename,"SA342") then
+      local dcsunit = Unit.getByName(client:GetName())
+      local vivihorizontal = dcsunit:getDrawArgumentValue(215) or 0 -- (not in MiniGun) 1 to -1 -- zero is straight ahead, 1/-1 = 180 deg
+      if vivihorizontal < -0.7 or vivihorizontal > 0.7 then 
+        camera = false
+      end
+    elseif typename == "Ka-50" then
+      camera = true
     end
   end
   return camera
@@ -537,7 +551,7 @@ function PLAYERRECCE:_GetViewZone(unit, vheading, minview, maxview, angle, camon
       local startp = unit:GetCoordinate()
       local heading1 = (vheading+90)%360
       local heading2 = (vheading-90)%360
-      self:I({heading1,heading2})
+      self:T({heading1,heading2})
       local startpos = startp:Translate(minview,vheading)
       local pos1 = startpos:Translate(10,heading1)
       local pos2 = startpos:Translate(10,heading2)
@@ -612,7 +626,7 @@ end
 --@param #PLAYERRECCE self
 --@param Wrapper.Unit#UNIT unit The FACA unit
 --@param #boolean camera If true, use the unit's camera for targets in sight
---@param #laser Use laser zone
+--@param #laser laser Use laser zone
 --@return Core.Set#SET_UNIT Set of targets, can be empty!
 --@return #number count Count of targets
 function PLAYERRECCE:_GetTargetSet(unit,camera,laser)
@@ -630,6 +644,11 @@ function PLAYERRECCE:_GetTargetSet(unit,camera,laser)
     heading,nod,maxview,camon = self:_GetGazelleVivianneSight(unit)
     angle=10
     -- Model nod and actual TV view don't compute
+    maxview = self.MaxViewDistance[typename] or 5000
+  elseif typename == "Ka-50" and camera then
+    heading = unit:GetHeading()
+    nod,maxview,camon = 10,1000,true
+    angle = 10
     maxview = self.MaxViewDistance[typename] or 5000
   else
     -- visual
@@ -741,7 +760,7 @@ function PLAYERRECCE:_LaseTarget(client,targetset)
     -- still looking at target?
     local target=self.LaserTarget[playername] -- Ops.Target#TARGET
     local oldtarget = target:GetObject() --or laser.Target
-    self:I("Targetstate: "..target:GetState())
+    self:T("Targetstate: "..target:GetState())
     if not oldtarget or targetset:IsNotInSet(oldtarget) or target:IsDead() or target:IsDestroyed() then
       -- lost LOS or dead
       laser:LaseOff()
@@ -811,6 +830,28 @@ end
 -- @param Wrapper.Group#GROUP group
 -- @param #string playername
 -- @return #PLAYERRECCE self
+function PLAYERRECCE:_SwitchSmoke(client,group,playername)
+  self:T(self.lid.."_SwitchLasing")
+  if not self.SmokeOwn[playername] then
+    self.SmokeOwn[playername] = true
+    MESSAGE:New("Smoke self is now ON",10,self.Name or "FACA"):ToClient(client)
+  else
+    self.SmokeOwn[playername] = false
+    MESSAGE:New("Smoke self is now OFF",10,self.Name or "FACA"):ToClient(client)
+  end
+  if self.ClientMenus[playername] then
+    self.ClientMenus[playername]:Remove()
+    self.ClientMenus[playername]=nil
+  end
+  return self
+end
+
+--- [Internal] 
+-- @param #PLAYERRECCE self
+-- @param Wrapper.Client#CLIENT client
+-- @param Wrapper.Group#GROUP group
+-- @param #string playername
+-- @return #PLAYERRECCE self
 function PLAYERRECCE:_SwitchLasing(client,group,playername)
   self:T(self.lid.."_SwitchLasing")
   if not self.AutoLase[playername] then
@@ -863,7 +904,7 @@ end
 -- @param #string playername
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:_WIP(client,group,playername)
-  self:I(self.lid.."_WIP")
+  self:T(self.lid.."_WIP")
   return self
 end
 
@@ -878,14 +919,17 @@ function PLAYERRECCE:_SmokeTargets(client,group,playername)
   local cameraset = self:_GetTargetSet(client,true) -- Core.Set#SET_UNIT
   local visualset = self:_GetTargetSet(client,false) -- Core.Set#SET_UNIT
   cameraset:AddSet(visualset)
+  
   if cameraset:CountAlive() > 0 then
     self:__TargetsSmoked(-1,client,playername,cameraset)
   end
+  
   local highsmoke = self.SmokeColor.highsmoke
   local medsmoke = self.SmokeColor.medsmoke
   local lowsmoke = self.SmokeColor.lowsmoke
   local lasersmoke = self.SmokeColor.lasersmoke
   local laser = self.LaserSpots[playername] -- Core.Spot#SPOT
+  
   -- laser targer gets extra smoke
   if laser and laser.Target and laser.Target:IsAlive() then
     laser.Target:GetCoordinate():Smoke(lasersmoke)
@@ -893,23 +937,27 @@ function PLAYERRECCE:_SmokeTargets(client,group,playername)
       cameraset:Remove(laser.Target:GetName(),true)
     end
   end
+  
   -- smoke everything else
-  for _,_unit in pairs(cameraset.Set) do
-    local unit = _unit --Wrapper.Unit#UNIT
-    if unit then
-      local coord = unit:GetCoordinate()
-      local threat = unit:GetThreatLevel()
-      if coord then
-        local color = lowsmoke
-        if threat > 7 then
-          color = medsmoke
-        elseif threat > 2 then
-          color = lowsmoke
-        end
-        coord:Smoke(color)
-      end
+  local coordinate = cameraset:GetCoordinate()
+  local setthreat = cameraset:CalculateThreatLevelA2G()
+  
+  if coordinate then
+    local color = lowsmoke
+    if setthreat > 7 then
+      color = medsmoke
+    elseif setthreat > 2 then
+      color = lowsmoke
     end
+    coordinate:Smoke(color)
   end
+  
+  if self.SmokeOwn[playername] then
+    local cc = client:GetCoordinate()
+    local color = self.SmokeColor.ownsmoke
+    cc:Smoke(color)
+  end
+  
   return self
 end
 
@@ -955,6 +1003,24 @@ function PLAYERRECCE:_FlareTargets(client,group,playername)
         coord:Flare(color)
       end
     end
+  end
+  return self
+end
+
+--- [Internal] 
+-- @param #PLAYERRECCE self
+-- @param Wrapper.Client#CLIENT client
+-- @param Wrapper.Group#GROUP group
+-- @param #string playername
+-- @return #PLAYERRECCE self
+function PLAYERRECCE:_IlluTargets(client,group,playername)
+  self:T(self.lid.."_IlluTargets")
+  local totalset, count = self:_GetKnownTargets(client) -- Core.Set#SET_UNIT
+  if count > 0 then
+    local coord = totalset:GetCoordinate() -- Core.Point#COORDINATE
+    coord.y = coord.y + 200
+    coord:IlluminationBomb(nil,1)
+    self:__Illumination(1,client,playername,totalset)
   end
   return self
 end
@@ -1080,6 +1146,9 @@ function PLAYERRECCE:_BuildMenus()
       if not self.UnitLaserCodes[playername] then
         self:_SetClientLaserCode(nil,nil,playername,1688)
       end
+      if not self.SmokeOwn[playername] then
+        self.SmokeOwn[playername] = self.smokeownposition
+      end
       local group = client:GetGroup()
       if not self.ClientMenus[playername] then
         local canlase = self.CanLase[client:GetTypeName()]
@@ -1088,8 +1157,13 @@ function PLAYERRECCE:_BuildMenus()
         local text = string.format("Switch On-Station (%s)",txtonstation)
         local onstationmenu = MENU_GROUP_COMMAND:New(group,text,self.ClientMenus[playername],self._SwitchOnStation,self,client,group,playername)
         if self.OnStation[playername] then
-          local smokemenu = MENU_GROUP_COMMAND:New(group,"Smoke Targets",self.ClientMenus[playername],self._SmokeTargets,self,client,group,playername)
-          local smokemenu = MENU_GROUP_COMMAND:New(group,"Flare Targets",self.ClientMenus[playername],self._FlareTargets,self,client,group,playername)
+          local smoketopmenu = MENU_GROUP:New(group,"Visual Markers",self.ClientMenus[playername])
+          local smokemenu = MENU_GROUP_COMMAND:New(group,"Smoke Targets",smoketopmenu,self._SmokeTargets,self,client,group,playername)
+          local flaremenu = MENU_GROUP_COMMAND:New(group,"Flare Targets",smoketopmenu,self._FlareTargets,self,client,group,playername)
+          local illumenu = MENU_GROUP_COMMAND:New(group,"Illuminate Area",smoketopmenu,self._IlluTargets,self,client,group,playername)
+          local ownsm = self.SmokeOwn[playername] and "ON" or "OFF"
+          local owntxt = string.format("Switch smoke self (%s)",ownsm)
+          local ownsmoke = MENU_GROUP_COMMAND:New(group,owntxt,smoketopmenu,self._SwitchSmoke,self,client,group,playername)
           if canlase then
             local txtonstation = self.AutoLase[playername] and "ON" or "OFF"
             local text = string.format("Switch Lasing (%s)",txtonstation)
@@ -1195,7 +1269,7 @@ function PLAYERRECCE:_CheckNewTargets(targetset,client,playername)
       table.insert(targetsbyclock[clock],obj)
     end
   )
-  self:I("Known target Count: "..self.TargetCache:Count())
+  self:T("Known target Count: "..self.TargetCache:Count())
   if tempset:CountAlive() > 0 then
     self:TargetDetected(targetsbyclock,client,playername)
   end
@@ -1265,6 +1339,24 @@ function PLAYERRECCE:SetMenuName(Name)
  self:T(self.lid.."SetMenuName: "..Name)
  self.MenuName = Name
  return self
+end
+
+--- [User] Enable smoking of own position
+-- @param #PLAYERRECCE self
+-- @return #PLAYERRECCE self
+function PLAYERRECCE:EnableSmokeOwnPosition()
+  self:T(self.lid.."ENableSmokeOwnPosition")
+  self.smokeownposition = true
+  return self
+end
+
+--- [User] Disable smoking of own position
+-- @param #PLAYERRECCE self
+-- @return #PLAYERRECCE 
+function PLAYERRECCE:DisableSmokeOwnPosition()
+  self:T(self.lid.."DisableSmokeOwnPosition")
+  self.smokeownposition = false
+  return self
 end
 
 --- [Internal] Get text for text-to-speech.
@@ -1351,7 +1443,7 @@ function PLAYERRECCE:onafterStatus(From, Event, To)
                 self.ViewZoneLaser[playername]=lzone:DrawZone(self.Coalition,{0,1,0},nil,nil,nil,1)
               end
             end
-            self:I({lasercount=targetcount})
+            self:T({lasercount=targetcount})
           end
           -- visual targets
           vistargetset, vistargetcount, viszone = self:_GetTargetSet(client,false)
@@ -1489,9 +1581,18 @@ function PLAYERRECCE:onafterTargetDetected(From, Event, To, Targetsbyclock, Clie
       end
       if Settings:IsMetric() then
        targetdistance = UTILS.Round(targetdistance,-2)
+       if targetdistance >= 1000 then
+        targetdistance = UTILS.Round(targetdistance/1000,0)
+        dunits = "kilometer"
+       end
       else
-       targetdistance = UTILS.Round(UTILS.MetersToFeet(targetdistance),-2)
-       dunits = "feet"
+       if UTILS.MetersToNM(targetdistance) >=1 then
+        targetdistance = UTILS.Round(UTILS.MetersToNM(targetdistance),0)
+        dunits = "miles"
+       else
+         targetdistance = UTILS.Round(UTILS.MetersToFeet(targetdistance),-2)
+         dunits = "feet"
+       end
       end
       local text = string.format("Target! %s! %s o\'clock, %d %s!", ThreatTxt,i, targetdistance, dunits)
       local ttstext = string.format("Target! %s! %s oh clock, %d %s!", ThreatTxt, i, targetdistance, dunits)
@@ -1516,9 +1617,18 @@ function PLAYERRECCE:onafterTargetDetected(From, Event, To, Targetsbyclock, Clie
       local targetdistance = GetNearest(targets)
       if Settings:IsMetric() then
        targetdistance = UTILS.Round(targetdistance,-2)
+        if targetdistance >= 1000 then
+        targetdistance = UTILS.Round(targetdistance/1000,0)
+        dunits = "kilometer"
+       end
       else
-       targetdistance = UTILS.Round(UTILS.MetersToFeet(targetdistance),-2)
-       dunits = "feet"
+       if UTILS.MetersToNM(targetdistance) >=1 then
+        targetdistance = UTILS.Round(UTILS.MetersToNM(targetdistance),0)
+        dunits = "miles"
+       else
+         targetdistance = UTILS.Round(UTILS.MetersToFeet(targetdistance),-2)
+         dunits = "feet"
+       end
       end
       local text = string.format(" %d targets! %s o\'clock, %d %s!", targetno, i, targetdistance, dunits)
       local ttstext = string.format("%d targets! %s oh clock, %d %s!", targetno, i, targetdistance, dunits)
@@ -1529,6 +1639,45 @@ function PLAYERRECCE:onafterTargetDetected(From, Event, To, Targetsbyclock, Clie
         MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
       end
     end
+  end
+  return self
+end
+
+--- [Internal] Targets Illuminated
+-- @param #PLAYERRECCE self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @param Wrapper.Client#CLIENT Client
+-- @param #string Playername
+-- @param Core.Set#SET_UNIT TargetSet
+-- @return #PLAYERRECCE self
+function PLAYERRECCE:onafterIllumination(From, Event, To, Client, Playername, TargetSet)
+  self:T({From, Event, To})
+  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+  local coord = Client:GetCoordinate()
+  local coordtext = coord:ToStringBULLS(self.Coalition)
+  if self.AttackSet then
+    for _,_client in pairs(self.AttackSet.Set) do
+      local client = _client --Wrapper.Client#CLIENT
+      if client and client:IsAlive() then
+        local Settings = client and _DATABASE:GetPlayerSettings(client:GetPlayerName())  or _SETTINGS
+        local coordtext = coord:ToStringA2G(client,Settings)
+        if self.ReferencePoint then
+          coordtext = coord:ToStringFromRPShort(self.ReferencePoint,self.RPName,client,Settings)
+        end
+        local text = string.format("All stations, %s fired illumination\nat %s!",callsign, coordtext)
+        MESSAGE:New(text,15,self.Name or "FACA"):ToClient(client)
+      end
+    end
+  end
+  local text = "Sunshine!"
+  local ttstext = "Sunshine!"
+  if self.UseSRS then
+    local grp = Client:GetGroup()
+    self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
+  else
+    MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
   end
   return self
 end
