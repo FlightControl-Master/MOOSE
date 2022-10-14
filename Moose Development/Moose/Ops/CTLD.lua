@@ -827,6 +827,8 @@ do
 --  
 --    To award player with points, using the SCORING Class (SCORING: my_Scoring, CTLD: CTLD_Cargotransport)
 --
+--        my_scoring = SCORING:New("Combat Transport")
+--
 --        function CTLD_Cargotransport:OnAfterCratesDropped(From, Event, To, Group, Unit, Cargotable)
 --            local points = 10
 --            if Unit then
@@ -904,7 +906,7 @@ do
 -- 
 --              my_ctld.useprefix = true -- this is true by default and MUST BE ON. 
 -- 
--- ### 5.2 Integrate Hercules ground crew (F8 Menu) loadable objects (alternative method)
+-- ### 5.2 Integrate Hercules ground crew (F8 Menu) loadable objects (alternative method, use either the above OR this method, NOT both!)
 -- 
 -- Integrate to your CTLD instance like so, where `my_ctld` is a previously created CTLD instance:
 --            
@@ -930,6 +932,8 @@ do
 -- 
 -- The script works on the EVENTS.Shot trigger, which is used by the mod when you **drop cargo from the Hercules while flying**. Unloading on the ground does
 -- not achieve anything here. If you just want to unload on the ground, use the normal Moose CTLD (see 5.1).
+-- 
+-- DO NOT use the "splash damage" script together with this method! Your cargo will explode on the ground!
 -- 
 -- There are two ways of airdropping: 
 --   
@@ -4992,13 +4996,21 @@ CTLD_HERCULES.Types = {
 --            
 -- Expected template names are the ones in the rounded brackets.
 -- 
--- HINTS
+-- ### HINTS
 -- 
 -- The script works on the EVENTS.Shot trigger, which is used by the mod when you **drop cargo from the Hercules while flying**. Unloading on the ground does
 -- not achieve anything here. If you just want to unload on the ground, use the normal Moose CTLD.
+-- **Do not use** the **splash damage** script together with this, your cargo will just explode when reaching the ground!
+-- 
+-- ### Airdrops
+-- 
 -- There are two ways of airdropping:   
 -- 1) Very low and very slow (>5m and <10m AGL) - here you can drop stuff which has "Skid" at the end of the cargo name (loaded via F8 Ground Crew menu)
 -- 2) Higher up and slow (>100m AGL) - here you can drop paratroopers and cargo which has "Air" at the end of the cargo name (loaded via F8 Ground Crew menu)
+-- 
+-- ### General
+-- 
+-- Use either this method to integrate the Hercules **or** the one from the "normal" CTLD. Never both!
 function CTLD_HERCULES:New(Coalition, Alias, CtldObject)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #CTLD_HERCULES
