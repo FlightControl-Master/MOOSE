@@ -29,7 +29,7 @@
 -- PLAYERRECCE
 -- TODO: PLAYERRECCE
 -- DONE: No messages when no targets to flare or smoke
--- DONE: Flare not all targets
+-- DONE: Smoke not all targets
 -- DONE: Messages to Attack Group, use client settings
 -- DONE: Lasing dist 8km
 -- DONE: Reference Point RP
