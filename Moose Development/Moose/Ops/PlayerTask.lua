@@ -95,7 +95,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.8"
+PLAYERTASK.version="0.1.9"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -292,6 +292,22 @@ function PLAYERTASK:AddFreetext(Text)
   self:T(self.lid.."AddFreetext")
   self.Freetext = Text
   return self
+end
+
+--- [USER] Query if a task has free text description.
+-- @param #PLAYERTASK self
+-- @return #PLAYERTASK self
+function PLAYERTASK:HasFreetext()
+  self:T(self.lid.."HasFreetext")
+  return self.Freetext ~= nil and true or false
+end
+
+--- [USER] Query if a task has free text TTS description.
+-- @param #PLAYERTASK self
+-- @return #PLAYERTASK self
+function PLAYERTASK:HasFreetextTTS()
+  self:T(self.lid.."HasFreetextTTS")
+  return self.FreetextTTS ~= nil and true or false
 end
 
 --- [USER] Set a task sub type description to this task.
@@ -514,7 +530,7 @@ function PLAYERTASK:SmokeTarget(Color)
   if not self.lastsmoketime then self.lastsmoketime = 0 end
   local TDiff = timer.getAbsTime() - self.lastsmoketime
   if self.Target and TDiff > 299 then
-    local coordinate = self.Target:GetCoordinate()
+    local coordinate = self.Target:GetAverageCoordinate()
     if coordinate then
       coordinate:Smoke(color)
       self.lastsmoketime = timer.getAbsTime()
@@ -531,7 +547,7 @@ function PLAYERTASK:FlareTarget(Color)
   self:T(self.lid.."SmokeTarget")
   local color = Color or FLARECOLOR.Red
   if self.Target then
-    local coordinate = self.Target:GetCoordinate()
+    local coordinate = self.Target:GetAverageCoordinate()
     if coordinate then
       coordinate:Flare(color,0)
     end
@@ -549,7 +565,7 @@ function PLAYERTASK:IlluminateTarget(Power,Height)
   local Power = Power or 1000
   local Height = Height or 150
   if self.Target then
-    local coordinate = self.Target:GetCoordinate()
+    local coordinate = self.Target:GetAverageCoordinate()
     if coordinate then
 	  local bcoord = COORDINATE:NewFromVec2( coordinate:GetVec2(), Height )
       bcoord:IlluminationBomb(Power)
@@ -1371,7 +1387,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.41"
+PLAYERTASKCONTROLLER.version="0.1.42"
 
 --- Constructor
 -- @param #PLAYERTASKCONTROLLER self
@@ -2650,7 +2666,8 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
   local text = ""
   local textTTS = ""
   if self.TasksPerPlayer:HasUniqueID(playername) or Task then
-    -- TODO: Show multiple?
+    -- NODO: Show multiple?
+    -- Details
     local task = Task or self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
     local tname = self.gettext:GetEntry("TASKNAME",self.locale)
     local ttsname = self.gettext:GetEntry("TASKNAMETTS",self.locale)
@@ -2663,6 +2680,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
     else
       CoordText = Coordinate:ToStringA2A(Client)
     end
+    -- Threat Level
     local ThreatLevel = task.Target:GetThreatLevelMax()
     --local ThreatLevelText = "high"
     local ThreatLevelText = self.gettext:GetEntry("THREATHIGH",self.locale)
@@ -2673,11 +2691,13 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
      --ThreatLevelText = "low"
      ThreatLevelText = self.gettext:GetEntry("THREATLOW",self.locale)
     end
+    -- Targetno and Threat
     local targets = task.Target:CountTargets() or 0
     local clientlist, clientcount = task:GetClients()
     local ThreatGraph = "[" .. string.rep(  "■", ThreatLevel ) .. string.rep(  "□", 10 - ThreatLevel ) .. "]: "..ThreatLevel
     local ThreatLocaleText = self.gettext:GetEntry("THREATTEXT",self.locale)
     text = string.format(ThreatLocaleText, taskname, ThreatGraph, targets, CoordText)
+    -- Prec bombing
     if task.Type == AUFTRAG.Type.PRECISIONBOMBING and self.precisionbombing then
       if self.LasingDrone and self.LasingDrone.playertask then
         local yes = self.gettext:GetEntry("YES",self.locale)
@@ -2689,6 +2709,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
         text = text .. prectext
       end
     end
+    -- Buddylasing
    if task.Type == AUFTRAG.Type.PRECISIONBOMBING and self.buddylasing then
     if self.PlayerRecce then
       local yes = self.gettext:GetEntry("YES",self.locale)
@@ -2718,6 +2739,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
         end
       end
     end
+    -- Transport
    elseif task.Type == AUFTRAG.Type.CTLD or task.Type == AUFTRAG.Type.CSAR then
    --                THREATTEXT = "%s\nThreat: %s\nTargets left: %d\nCoord: %s",
    --                THREATTEXTTTS = "%s, %s. Target information for %s. Threat level %s. Targets left %d. Target location %s.",
@@ -2725,15 +2747,15 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
     textTTS = taskname
     local detail = task:GetFreetext()
     local detailTTS = task:GetFreetextTTS()
-    text = text .. "\nDetail: "..detail.."\nTarget location "..CoordText
-    textTTS = textTTS .. "; Detail: "..detailTTS.."\nTarget location "..CoordText
+    text = text .. "\nBriefing: "..detail.."\nTarget location "..CoordText
+    textTTS = textTTS .. "; Briefing: "..detailTTS.."\nTarget location "..CoordText
    end
+   
+   -- Pilots
     local clienttxt = self.gettext:GetEntry("PILOTS",self.locale)
     if clientcount > 0 then
       for _,_name in pairs(clientlist) do
         if self.customcallsigns[_name] then
-          -- personalized flight name in player naming
-          --_name = string.match(_name,"| ([%a]+)")
           _name = self.customcallsigns[_name] 
         end
         clienttxt = clienttxt .. _name .. ", "
@@ -2743,6 +2765,8 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
       local keine = self.gettext:GetEntry("NONE",self.locale)
       clienttxt = clienttxt .. keine
     end
+    
+    -- Task Report   
     text = text .. clienttxt
     textTTS = textTTS .. clienttxt
     if self.UseSRS then
@@ -2762,6 +2786,10 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
        if string.find(ttstext," BR, ") then
         CoordText = string.gsub(ttstext," BR, "," Bee, Arr, ")
        end
+      elseif task:HasFreetext() then
+        -- add freetext
+        text = text .. "\nBriefing: "..task:GetFreetext()
+        ttstext = ttstext .. "; Briefing: "..task:GetFreetextTTS()
       end
       self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,2)
     end  
