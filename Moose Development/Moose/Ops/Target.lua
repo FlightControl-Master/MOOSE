@@ -1141,7 +1141,7 @@ function TARGET:GetTargetVec3(Target)
     local object=Target.Object --Wrapper.Group#GROUP
 
     if object and object:IsAlive() then
-      local vec3=object:GetVec3()
+      local vec3=object:GetAverageVec3()
       
       if vec3 then
         return vec3

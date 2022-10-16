@@ -1019,9 +1019,9 @@ function GROUP:GetVec2()
 
 end
 
---- Returns the current Vec3 vector of the first DCS Unit in the GROUP.
+--- Returns the current Vec3 vector of the first Unit in the GROUP.
 -- @param #GROUP self
--- @return DCS#Vec3 Current Vec3 of the first DCS Unit of the GROUP.
+-- @return DCS#Vec3 Current Vec3 of the first Unit of the GROUP or nil if cannot be found.
 function GROUP:GetVec3()
 
   -- Get first unit.
@@ -1034,6 +1034,37 @@ function GROUP:GetVec3()
   
   self:E("ERROR: Cannot get Vec3 of group "..tostring(self.GroupName))
   return nil
+end
+
+--- Returns the average Vec3 vector of the Units in the GROUP.
+-- @param #GROUP self
+-- @return DCS#Vec3 Current Vec3 of the GROUP  or nil if cannot be found.
+function GROUP:GetAverageVec3()
+  local units = self:GetUnits() or {}
+    -- Init.
+  local x=0 ; local y=0 ; local z=0 ; local n=0
+  -- Loop over all units.
+  for _,unit in pairs(units) do
+    local vec3=nil --DCS#Vec3
+    if unit and unit:IsAlive() then
+      vec3 = unit:GetVec3()
+    end
+    if vec3 then
+      -- Sum up posits.
+      x=x+vec3.x
+      y=y+vec3.y
+      z=z+vec3.z
+      -- Increase counter.
+      n=n+1
+    end
+  end
+
+  if n>0 then
+    -- Average.
+    local Vec3={x=x/n, y=y/n, z=z/n} --DCS#Vec3
+    return Vec3
+  end
+  return nil 
 end
 
 --- Returns a POINT_VEC2 object indicating the point in 2D of the first UNIT of the GROUP within the mission.
@@ -1054,6 +1085,21 @@ function GROUP:GetPointVec2()
   BASE:E( { "Cannot GetPointVec2", Group = self, Alive = self:IsAlive() } )
 
   return nil
+end
+
+--- Returns a COORDINATE object indicating the average position of the GROUP within the mission.
+-- @param Wrapper.Group#GROUP self
+-- @return Core.Point#COORDINATE The COORDINATE of the GROUP.
+function GROUP:GetAverageCoordinate()
+  local vec3 = self:GetAverageVec3()
+  if vec3 then
+    local coord = COORDINATE:NewFromVec3(vec3)
+    local Heading = self:GetHeading()
+    coord.Heading = Heading
+  else
+    BASE:E( { "Cannot GetAverageCoordinate", Group = self, Alive = self:IsAlive() } )
+    return nil
+  end
 end
 
 --- Returns a COORDINATE object indicating the point of the first UNIT of the GROUP within the mission.
