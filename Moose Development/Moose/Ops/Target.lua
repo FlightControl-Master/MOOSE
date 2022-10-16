@@ -1133,15 +1133,19 @@ end
 --- Get target 3D position vector.
 -- @param #TARGET self
 -- @param #TARGET.Object Target Target object.
+-- @param #boolean Average
 -- @return DCS#Vec3 Vector with x,y,z components.
-function TARGET:GetTargetVec3(Target)
+function TARGET:GetTargetVec3(Target, Average)
 
   if Target.Type==TARGET.ObjectType.GROUP then
   
     local object=Target.Object --Wrapper.Group#GROUP
 
     if object and object:IsAlive() then
-      local vec3=object:GetAverageVec3()
+      local vec3=object:GetVec3()
+      if Average then
+        vec3=object:GetAverageVec3()
+      end
       
       if vec3 then
         return vec3
@@ -1220,8 +1224,9 @@ end
 --- Get target coordinate.
 -- @param #TARGET self
 -- @param #TARGET.Object Target Target object.
+-- @param #boolean Average
 -- @return Core.Point#COORDINATE Coordinate of the target.
-function TARGET:GetTargetCoordinate(Target)
+function TARGET:GetTargetCoordinate(Target, Average)
 
   if Target.Type==TARGET.ObjectType.COORDINATE then
   
@@ -1231,7 +1236,7 @@ function TARGET:GetTargetCoordinate(Target)
   else
     
     -- Get updated position vector.
-    local vec3=self:GetTargetVec3(Target)
+    local vec3=self:GetTargetVec3(Target, Average)
     
     -- Update position. This saves us to create a new COORDINATE object each time.
     if vec3 then
@@ -1361,6 +1366,26 @@ function TARGET:GetCoordinate()
   end
 
   self:E(self.lid..string.format("ERROR: Cannot get coordinate of target %s", tostring(self.name)))
+  return nil
+end
+
+--- Get average coordinate.
+-- @param #TARGET self
+-- @return Core.Point#COORDINATE Coordinate of the target.
+function TARGET:GetAverageCoordinate()
+
+  for _,_target in pairs(self.targets) do
+    local Target=_target --#TARGET.Object
+    
+    local coordinate=self:GetTargetCoordinate(Target,true)
+    
+    if coordinate then
+      return coordinate
+    end
+
+  end
+
+  self:E(self.lid..string.format("ERROR: Cannot get average coordinate of target %s", tostring(self.name)))
   return nil
 end
 
