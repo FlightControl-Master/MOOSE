@@ -290,7 +290,7 @@ function PLAYERRECCE:_EventHandler(EventData)
       if self.ViewZoneVisual[EventData.IniPlayerName] then self.ViewZoneVisual[EventData.IniPlayerName]:UndrawZone() end
     end
   elseif EventData.id == EVENTS.PlayerEnterAircraft and EventData.IniCoalition == self.Coalition then
-    if EventData.IniPlayerName and EventData.IniGroup and self.UseSRS then
+    if EventData.IniPlayerName then
       self:T(self.lid.."Event for player: "..EventData.IniPlayerName)
       self.UnitLaserCodes[EventData.IniPlayerName] = 1688
       self.ClientMenus[EventData.IniPlayerName] = nil
