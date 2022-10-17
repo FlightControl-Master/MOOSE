@@ -26,6 +26,7 @@
 --   * @{#SET_AIRBASE}: Defines a collection of @{Wrapper.Airbase}s filtered by filter criteria.
 --   * @{#SET_CARGO}: Defines a collection of @{Cargo.Cargo}s filtered by filter criteria.
 --   * @{#SET_ZONE}: Defines a collection of @{Core.Zone}s filtered by filter criteria.
+--   * @{#SET_SCENERY}: Defines a collection of @{Warpper.Scenery}s added via a filtered @{#SET_ZONE}.
 --
 -- These classes are derived from @{#SET_BASE}, which contains the main methods to manage the collections.
 --
@@ -37,7 +38,7 @@
 -- ===
 --
 -- ### Author: **FlightControl**
--- ### Contributions: **funkyfranky**
+-- ### Contributions: **funkyfranky**, **applevangelist**
 --
 -- ===
 --
@@ -6764,7 +6765,7 @@ do -- SET_SCENERY
   -- The iterator methods will walk the SET_SCENERY set, and call for each element within the set a function that you provide.
   -- The following iterator methods are currently available within the SET_SCENERY:
   --
-  --   * @{#SET_SCENERY.ForEachScenery}: Calls a function for each alive unit it finds within the SET_SCENERY.
+  --   * @{#SET_SCENERY.ForEachScenery}: Calls a function for each alive object it finds within the SET_SCENERY.
   --
   -- ## SET_SCENERY atomic methods
   --
@@ -6793,7 +6794,7 @@ do -- SET_SCENERY
 	
 	local zoneset = {}	
     -- Inherits from BASE
-    local self = BASE:Inherit( self, SET_BASE:New( zoneset ) ) -- Core.Set#SET_SCENERY
+  local self = BASE:Inherit( self, SET_BASE:New( zoneset ) ) -- Core.Set#SET_SCENERY
 	
 	local zonenames = {}
 	for _,_zone in pairs(ZoneSet.Set) do
@@ -6802,7 +6803,7 @@ do -- SET_SCENERY
 	
 	self:AddSceneryByName(zonenames)
 	
-    return self
+  return self
   end
 
   --- Add SCENERY(s) to SET_SCENERY.
@@ -6902,7 +6903,7 @@ do -- SET_SCENERY
 
   --- Iterate the SET_SCENERY and count how many SCENERYSs are alive.
   -- @param #SET_SCENERY self
-  -- @return #number The number of UNITs alive.
+  -- @return #number The number of SCENERYSs alive.
   function SET_SCENERY:CountAlive()
 
     local Set = self:GetSet()
@@ -6930,7 +6931,7 @@ do -- SET_SCENERY
 
   --- Get the center coordinate of the SET_SCENERY.
   -- @param #SET_SCENERY self
-  -- @return Core.Point#COORDINATE The center coordinate of all the units in the set, including heading in degrees and speed in mps in case of moving units.
+  -- @return Core.Point#COORDINATE The center coordinate of all the objects in the set.
   function SET_SCENERY:GetCoordinate()
 
     local Coordinate = self:GetRandom():GetCoordinate()
