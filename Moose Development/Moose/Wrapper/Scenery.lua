@@ -158,7 +158,7 @@ end
 --- Find a SCENERY object from its zone name. Since SCENERY isn't registered in the Moose database (just too many objects per map), we need to do a scan first
 -- to find the correct object.
 --@param #SCENERY self
---@param #string Name The name of the scenery zone as created with a right-click on the map in the mission editor and select "assigned to...". Can be handed over as ZONE object.
+--@param #string ZoneName The name of the scenery zone as created with a right-click on the map in the mission editor and select "assigned to...". Can be handed over as ZONE object.
 --@return #SCENERY Scenery Object or `nil` if it cannot be found
 function SCENERY:FindByZoneName( ZoneName )
   local zone = ZoneName
