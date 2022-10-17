@@ -309,7 +309,7 @@ do
 -- @extends Core.Base#BASE
 
 ---
--- @field CTLD_CARGO
+-- @field #CTLD_CARGO CTLD_CARGO
 CTLD_CARGO = {
   ClassName = "CTLD_CARGO",
   ID = 0,
@@ -1075,7 +1075,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.14"
+CTLD.version="1.0.15"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -3652,9 +3652,10 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
   local zoneret = nil
   local zonewret = nil
   local zonenameret = nil
+  local unitcoord = Unit:GetCoordinate()
+  local unitVec2 = unitcoord:GetVec2()
   for _,_cargozone in pairs(zonetable) do
     local czone = _cargozone -- #CTLD.CargoZone
-    local unitcoord = Unit:GetCoordinate()
     local zonename = czone.name
     local active = czone.active
     local color = czone.color
@@ -3671,17 +3672,17 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
       zone = ZONE:FindByName(zonename)
       self:T("Checking Zone: "..zonename)
       zonecoord = zone:GetCoordinate()
-      zoneradius = zone:GetRadius()
+      zoneradius = 1500
       zonewidth = zoneradius
     elseif AIRBASE:FindByName(zonename) then
       zone = AIRBASE:FindByName(zonename):GetZone()
       self:T("Checking Zone: "..zonename)
       zonecoord = zone:GetCoordinate()
-      zoneradius = zone:GetRadius()
+      zoneradius = 2500
       zonewidth = zoneradius
     end
     local distance = self:_GetDistance(zonecoord,unitcoord)
-    if distance <= zoneradius and active then 
+    if zone:IsVec2InZone(unitVec2) and active then 
       outcome = true
     end
     if maxdist > distance then 
