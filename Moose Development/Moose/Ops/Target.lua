@@ -266,7 +266,7 @@ end
 -- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC, AIRBASE or COORDINATE.
 function TARGET:AddObject(Object)
     
-  if Object:IsInstanceOf("SET_GROUP") or Object:IsInstanceOf("SET_UNIT") or Object:IsInstanceOf("SET_STATIC") or Object:IsInstanceOf("SET_OPSGROUP") then
+  if Object:IsInstanceOf("SET_GROUP") or Object:IsInstanceOf("SET_UNIT") or Object:IsInstanceOf("SET_STATIC") or Object:IsInstanceOf("SET_SCENERY") or Object:IsInstanceOf("SET_OPSGROUP") then
 
     ---
     -- Sets
