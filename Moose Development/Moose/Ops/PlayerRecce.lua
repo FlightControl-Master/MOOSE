@@ -1,10 +1,12 @@
---- **Ops** - Allow a player in a helo like the Gazelle to detect, smoke, flare, lase and report ground units to others.
+--- **Ops** - Allow a player in a helo like the Gazelle, KA-50 to recon and lase groud targets.
 --
 -- ## Features:
 --
---   * Allow a player in the Gazelle to detect, smoke, flare, lase and report ground units to others.
+--   * Allow a player in a helicopter to detect, smoke, flare, lase and report ground units to others.
 --   * Implements visual detection from the helo
---   * Implements optical detection via the Vivianne system and lasing
+--   * Implements optical detection via the Gazelle Vivianne system and lasing
+--   * KA-50 BlackShark basic support
+--   * Everyone else gets visual detection only
 --   * Upload target info to a PLAYERTASKCONTROLLER Instance
 --
 -- ===
@@ -23,7 +25,7 @@
 -- ===
 --
 -- @module Ops.PlayerRecce
--- @image @image Detection.JPG
+-- @image Ops_PlayerRecce.png
 
 -------------------------------------------------------------------------------------------------------------------
 -- PLAYERRECCE
@@ -87,9 +89,12 @@
 -- 
 -- # PLAYERRECCE 
 -- 
---   * Allow a player in the Gazelle to detect, smoke, flare, lase and report ground units to others.
+--   * Allow a player in a helicopter to detect, smoke, flare, lase and report ground units to others.
 --   * Implements visual detection from the helo
---   * Implements optical detection via the Vivianne system and lasing
+--   * Implements optical detection via the Gazelle Vivianne system and lasing
+--   * KA-50 BlackShark basic support
+--   * Everyone else gets visual detection only
+--   * Upload target info to a PLAYERTASKCONTROLLER Instance
 --    
 -- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) channel.  
 -- 
@@ -202,7 +207,7 @@ PLAYERRECCE.FlareColor = {
   ["ownflare"] = FLARECOLOR.Green,
 }
 
---- Create and rund a new PlayerRecce instance.
+--- Create and run a new PlayerRecce instance.
 -- @param #PLAYERRECCE self
 -- @param #string Name The name of this instance
 -- @param #number Coalition, e.g. coalition.side.BLUE
