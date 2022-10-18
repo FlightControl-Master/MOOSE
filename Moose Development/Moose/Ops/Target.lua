@@ -4,7 +4,7 @@
 --
 --    * Manages target, number alive, life points, damage etc.
 --    * Events when targets are damaged or destroyed
---    * Various target objects: UNIT, GROUP, STATIC, AIRBASE, COORDINATE, SET_GROUP, SET_UNIT
+--    * Various target objects: UNIT, GROUP, STATIC, AIRBASE, COORDINATE, SET_GROUP, SET_UNIT, SET_SCENERY
 --
 -- ===
 --
@@ -261,6 +261,7 @@ end
 -- * SET_UNIT
 -- * SET_STATIC
 -- * SET_OPSGROUP
+-- * SET_SCENERY
 -- 
 -- @param #TARGET self
 -- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC, AIRBASE or COORDINATE.

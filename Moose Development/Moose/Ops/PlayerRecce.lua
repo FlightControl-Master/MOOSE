@@ -1,4 +1,4 @@
---- **Ops** - Allow a player in a helo like the Gazelle, KA-50 to recon and lase groud targets.
+--- **Ops** - Allow a player in a helo like the Gazelle, KA-50 to recon and lase ground targets.
 --
 -- ## Features:
 --
