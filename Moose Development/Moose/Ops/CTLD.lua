@@ -1074,7 +1074,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.15"
+CTLD.version="1.0.16"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -3405,7 +3405,13 @@ end
 -- @return #CTLD self
 function CTLD:AddCTLDZone(Name, Type, Color, Active, HasBeacon, Shiplength, Shipwidth)
   self:T(self.lid .. " AddCTLDZone")
-
+  
+  local zone = ZONE:FindByName(Name)
+  if not zone then
+    self:E(self.lid.."**** Zone does not exist: "..Name)
+    return self
+  end
+  
   local ctldzone = {} -- #CTLD.CargoZone
   ctldzone.active = Active or false
   ctldzone.color = Color or SMOKECOLOR.Red
