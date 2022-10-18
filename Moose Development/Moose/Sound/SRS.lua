@@ -26,7 +26,7 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
--- @module Sound.MSRS
+-- @module Sound.SRS
 -- @image Sound_MSRS.png
 
 --- MSRS class.

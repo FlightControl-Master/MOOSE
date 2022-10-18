@@ -1,6 +1,6 @@
---- **AI** -- Models the process of air to ground BAI engagement for airplanes and helicopters.
+--- **AI** - Models the process of air to ground BAI engagement for airplanes and helicopters.
 --
--- This is a class used in the @{AI_A2G_Dispatcher}.
+-- This is a class used in the @{AI.AI_A2G_Dispatcher}.
 -- 
 -- ===
 -- 
@@ -11,11 +11,8 @@
 -- @module AI.AI_A2G_BAI
 -- @image AI_Air_To_Ground_Engage.JPG
 
-
-
 --- @type AI_A2G_BAI
--- @extends AI.AI_A2A_Engage#AI_A2A_Engage
-
+-- @extends AI.AI_A2A_Engage#AI_A2A_Engage -- TODO: Documentation. This class does not exist, unable to determine what it extends.
 
 --- Implements the core functions to intercept intruders. Use the Engage trigger to intercept intruders.
 -- 
@@ -25,8 +22,6 @@
 AI_A2G_BAI = {
   ClassName = "AI_A2G_BAI",
 }
-
-
 
 --- Creates a new AI_A2G_BAI object
 -- @param #AI_A2G_BAI self
@@ -52,7 +47,6 @@ function AI_A2G_BAI:New2( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAl
 
   return self
 end
-
 
 --- Creates a new AI_A2G_BAI object
 -- @param #AI_A2G_BAI self
@@ -92,8 +86,6 @@ function AI_A2G_BAI:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageA
       end
     end
   end
-  
+
   return AttackUnitTasks
 end
-
-

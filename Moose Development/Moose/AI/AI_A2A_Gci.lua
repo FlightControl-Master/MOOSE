@@ -1,6 +1,6 @@
---- **AI** -- (R2.2) - Models the process of Ground Controlled Interception (GCI) for airplanes.
+--- **AI** - (R2.2) - Models the process of Ground Controlled Interception (GCI) for airplanes.
 --
--- This is a class used in the @{AI_A2A_Dispatcher}.
+-- This is a class used in the @{AI.AI_A2A_Dispatcher}.
 --
 -- ===
 --
@@ -8,7 +8,7 @@
 --
 -- ===
 --
--- @module AI.AI_A2A_GCI
+-- @module AI.AI_A2A_Gci
 -- @image AI_Ground_Control_Intercept.JPG
 
 
@@ -91,7 +91,7 @@
 --
 -- An optional @{Zone} can be set,
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_Cap#AI_A2A_GCI.SetEngageZone}() to define that Zone.
+-- Use the method @{AI.AI_CAP#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
 --
 -- ===
 --

@@ -1,4 +1,4 @@
---- **Tasking** -- A mission models a goal to be achieved through the execution and completion of tasks by human players.
+--- **Tasking** - A mission models a goal to be achieved through the execution and completion of tasks by human players.
 -- 
 -- **Features:**
 -- 

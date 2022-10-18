@@ -1,4 +1,4 @@
---- **Functional** -- Limit the movement of simulaneous moving ground vehicles.
+--- **Functional** - Limit the movement of simulaneous moving ground vehicles.
 -- 
 -- ===
 --  

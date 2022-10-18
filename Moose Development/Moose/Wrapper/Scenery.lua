@@ -1,4 +1,4 @@
---- **Wrapper** -- SCENERY models scenery within the DCS simulator.
+--- **Wrapper** - SCENERY models scenery within the DCS simulator.
 -- 
 -- ===
 -- 

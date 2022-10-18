@@ -1,4 +1,4 @@
---- **AI** -- Balance player slots with AI to create an engaging simulation environment, independent of the amount of players. 
+--- **AI** - Balance player slots with AI to create an engaging simulation environment, independent of the amount of players. 
 -- 
 -- **Features:**
 -- 

@@ -1,4 +1,4 @@
---- **Functional** -- Models the detection of enemy units by FACs or RECCEs and group them according various methods.
+--- **Functional** - Models the detection of enemy units by FACs or RECCEs and group them according various methods.
 --
 -- ===
 --

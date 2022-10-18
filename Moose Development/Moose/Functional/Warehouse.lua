@@ -1274,7 +1274,7 @@
 --
 -- ## Example 13: Battlefield Air Interdiction
 --
--- This example show how to couple the WAREHOUSE class with the @{AI.AI_Bai} class.
+-- This example show how to couple the WAREHOUSE class with the @{AI.AI_BAI} class.
 -- Four enemy targets have been located at the famous Kobuleti X. All three available Viggen 2-ship flights are assigned to kill at least one of the BMPs to complete their mission.
 --
 --     -- Start Warehouse at Kobuleti.
