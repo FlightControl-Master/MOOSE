@@ -4,7 +4,7 @@
 --
 --    * Manages target, number alive, life points, damage etc.
 --    * Events when targets are damaged or destroyed
---    * Various target objects: UNIT, GROUP, STATIC, AIRBASE, COORDINATE, SET_GROUP, SET_UNIT
+--    * Various target objects: UNIT, GROUP, STATIC, AIRBASE, COORDINATE, SET_GROUP, SET_UNIT, SET_SCENERY
 --
 -- ===
 --
@@ -69,6 +69,7 @@ TARGET = {
   casualties     =    {},
   threatlevel0   =     0,
   conditionStart =    {},
+  TStatus        =    30,
 }
 
 
@@ -146,7 +147,7 @@ _TARGETID=0
 
 --- TARGET class version.
 -- @field #string version
-TARGET.version="0.5.2"
+TARGET.version="0.5.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -185,6 +186,7 @@ function TARGET:New(TargetObject)
   -- Defaults.
   self:SetPriority()
   self:SetImportance()
+  self.TStatus = 30
   
   -- Log ID.
   self.lid=string.format("TARGET #%03d | ", _TARGETID)
@@ -259,12 +261,13 @@ end
 -- * SET_UNIT
 -- * SET_STATIC
 -- * SET_OPSGROUP
+-- * SET_SCENERY
 -- 
 -- @param #TARGET self
 -- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC, AIRBASE or COORDINATE.
 function TARGET:AddObject(Object)
     
-  if Object:IsInstanceOf("SET_GROUP") or Object:IsInstanceOf("SET_UNIT") or Object:IsInstanceOf("SET_STATIC") or Object:IsInstanceOf("SET_OPSGROUP") then
+  if Object:IsInstanceOf("SET_GROUP") or Object:IsInstanceOf("SET_UNIT") or Object:IsInstanceOf("SET_STATIC") or Object:IsInstanceOf("SET_SCENERY") or Object:IsInstanceOf("SET_OPSGROUP") then
 
     ---
     -- Sets
@@ -570,7 +573,7 @@ function TARGET:onafterStatus(From, Event, To)
 
   -- Update status again in 30 sec.
   if self:IsAlive() then
-    self:__Status(-30)
+    self:__Status(-self.TStatus)
   end
 end
 
@@ -828,8 +831,8 @@ function TARGET:_AddObject(Object)
     
     if static and static:IsAlive() then
     
-      target.Life0=1
-      target.Life=1      
+      target.Life0=static:GetLife0()
+      target.Life=static:GetLife()      
       target.N0=target.N0+1
       
       table.insert(self.elements, target.Name)
@@ -1131,8 +1134,9 @@ end
 --- Get target 3D position vector.
 -- @param #TARGET self
 -- @param #TARGET.Object Target Target object.
+-- @param #boolean Average
 -- @return DCS#Vec3 Vector with x,y,z components.
-function TARGET:GetTargetVec3(Target)
+function TARGET:GetTargetVec3(Target, Average)
 
   if Target.Type==TARGET.ObjectType.GROUP then
   
@@ -1140,6 +1144,9 @@ function TARGET:GetTargetVec3(Target)
 
     if object and object:IsAlive() then
       local vec3=object:GetVec3()
+      if Average then
+        vec3=object:GetAverageVec3()
+      end
       
       if vec3 then
         return vec3
@@ -1218,8 +1225,9 @@ end
 --- Get target coordinate.
 -- @param #TARGET self
 -- @param #TARGET.Object Target Target object.
+-- @param #boolean Average
 -- @return Core.Point#COORDINATE Coordinate of the target.
-function TARGET:GetTargetCoordinate(Target)
+function TARGET:GetTargetCoordinate(Target, Average)
 
   if Target.Type==TARGET.ObjectType.COORDINATE then
   
@@ -1229,7 +1237,7 @@ function TARGET:GetTargetCoordinate(Target)
   else
     
     -- Get updated position vector.
-    local vec3=self:GetTargetVec3(Target)
+    local vec3=self:GetTargetVec3(Target, Average)
     
     -- Update position. This saves us to create a new COORDINATE object each time.
     if vec3 then
@@ -1359,6 +1367,26 @@ function TARGET:GetCoordinate()
   end
 
   self:E(self.lid..string.format("ERROR: Cannot get coordinate of target %s", tostring(self.name)))
+  return nil
+end
+
+--- Get average coordinate.
+-- @param #TARGET self
+-- @return Core.Point#COORDINATE Coordinate of the target.
+function TARGET:GetAverageCoordinate()
+
+  for _,_target in pairs(self.targets) do
+    local Target=_target --#TARGET.Object
+    
+    local coordinate=self:GetTargetCoordinate(Target,true)
+    
+    if coordinate then
+      return coordinate
+    end
+
+  end
+
+  self:E(self.lid..string.format("ERROR: Cannot get average coordinate of target %s", tostring(self.name)))
   return nil
 end
 

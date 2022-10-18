@@ -422,6 +422,44 @@ function AIRWING:SetPayloadAmount(Payload, Navailable)
   return self
 end
 
+--- Increase or decrease the amount of available payloads. Unlimited playloads first need to be set to a limited number with the `SetPayloadAmount` function.
+-- @param #AIRWING self
+-- @param #AIRWING.Payload Payload The payload table created by the `:NewPayload` function.
+-- @param #number N Number of payloads to be added. Use negative number to decrease amount. Default 1.
+-- @return #AIRWING self
+function AIRWING:IncreasePayloadAmount(Payload, N)
+
+  N=N or 1
+  
+  if Payload and Payload.navail>=0 then
+  
+    -- Increase/decrease amount.
+    Payload.navail=Payload.navail+N
+  
+    -- Ensure playload does not drop below 0.
+    Payload.navail=math.max(Payload.navail, 0) 
+  
+  end
+  
+  return self
+end
+
+--- Get amount of payloads available for a given playload.
+-- @param #AIRWING self
+-- @param #AIRWING.Payload Payload The payload table created by the `:NewPayload` function.
+-- @return #number Number of payloads available. Unlimited payloads will return -1.
+function AIRWING:GetPayloadAmount(Payload)
+  return Payload.navail
+end
+
+--- Get capabilities of a given playload.
+-- @param #AIRWING self
+-- @param #AIRWING.Payload Payload The payload data table.
+-- @return #table Capabilities.
+function AIRWING:GetPayloadCapabilities(Payload)
+  return Payload.capabilities
+end
+
 --- Add a mission capability to an existing payload.
 -- @param #AIRWING self
 -- @param #AIRWING.Payload Payload The payload table to which the capability should be added.

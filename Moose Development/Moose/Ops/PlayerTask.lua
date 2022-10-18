@@ -1,11 +1,11 @@
---- **Ops** - PlayerTask (mission) for Players.
+---- **Ops** - PlayerTask (mission) for Players.
 --
 -- ## Main Features:
 --
 --    * Simplifies defining and executing Player tasks
 --    * FSM events when a mission is added, done, successful or failed, replanned
 --    * Ready to use SRS and localization
---    * Mission locations can be smoked, flared and marked on the map
+--    * Mission locations can be smoked, flared, illuminated and marked on the map
 --
 -- ===
 --
@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update September 2022
+-- @date Last Update October 2022
 
 
 do
@@ -50,6 +50,13 @@ do
 -- @field Ops.PlayerTask#PLAYERTASKCONTROLLER TaskController
 -- @field #number timestamp
 -- @field #number lastsmoketime
+-- @field #number coalition
+-- @field #string Freetext
+-- @field #string FreetextTTS
+-- @field #string TaskSubType
+-- @field #table NextTaskSuccess
+-- @field #table NextTaskFailure
+-- @field #string FinalState
 -- @extends Core.Fsm#FSM
 
 
@@ -78,11 +85,17 @@ PLAYERTASK = {
   TaskController     =   nil,
   timestamp          =   0,
   lastsmoketime      =   0,
+  Freetext           =   nil,
+  FreetextTTS        =   nil,
+  TaskSubType        =   nil,
+  NextTaskSuccess    =   {},
+  NextTaskFailure    =   {},
+  FinalState         =   "none",
   }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.3"
+PLAYERTASK.version="0.1.9"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -95,6 +108,7 @@ PLAYERTASK.version="0.1.3"
 -- @param Ops.Target#TARGET Target Target for this task
 -- @param #boolean Repeat Repeat this task if true (default = false)
 -- @param #number Times Repeat on failure this many times if Repeat is true (default = 1)
+-- @param #string TTSType TTS friendly task type name
 -- @return #PLAYERTASK self 
 function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
 
@@ -252,6 +266,124 @@ function PLAYERTASK:_SetController(Controller)
   return self
 end
 
+--- [User] Set a coalition side for this task
+-- @param #PLAYERTASK self
+-- @param #number Coalition Coaltion side to add, e.g. coalition.side.BLUE
+-- @return #PLAYERTASK self
+function PLAYERTASK:SetCoalition(Coalition)
+  self:T(self.lid.."SetCoalition")
+  self.coalition = Coalition or coalition.side.BLUE
+  return self
+end
+
+--- [User] Get the coalition side for this task
+-- @param #PLAYERTASK self
+-- @return #number Coalition Coaltion side, e.g. coalition.side.BLUE, or nil if not set
+function PLAYERTASK:GetCoalition()
+  self:T(self.lid.."GetCoalition")
+  return self.coalition
+end
+
+--- [USER] Add a free text description to this task.
+-- @param #PLAYERTASK self
+-- @param #string Text
+-- @return #PLAYERTASK self
+function PLAYERTASK:AddFreetext(Text)
+  self:T(self.lid.."AddFreetext")
+  self.Freetext = Text
+  return self
+end
+
+--- [USER] Query if a task has free text description.
+-- @param #PLAYERTASK self
+-- @return #PLAYERTASK self
+function PLAYERTASK:HasFreetext()
+  self:T(self.lid.."HasFreetext")
+  return self.Freetext ~= nil and true or false
+end
+
+--- [USER] Query if a task has free text TTS description.
+-- @param #PLAYERTASK self
+-- @return #PLAYERTASK self
+function PLAYERTASK:HasFreetextTTS()
+  self:T(self.lid.."HasFreetextTTS")
+  return self.FreetextTTS ~= nil and true or false
+end
+
+--- [USER] Set a task sub type description to this task.
+-- @param #PLAYERTASK self
+-- @param #string Type
+-- @return #PLAYERTASK self
+function PLAYERTASK:SetSubType(Type)
+  self:T(self.lid.."AddSubType")
+  self.TaskSubType = Type
+  return self
+end
+
+--- [USER] Get task sub type description from this task.
+-- @param #PLAYERTASK self
+-- @return #string Type or nil
+function PLAYERTASK:GetSubType()
+  self:T(self.lid.."GetSubType")
+  return self.TaskSubType
+end
+
+--- [USER] Get the free text description from this task.
+-- @param #PLAYERTASK self
+-- @return #string Text
+function PLAYERTASK:GetFreetext()
+  self:T(self.lid.."GetFreetext")
+  return self.Freetext  or self.FreetextTTS or "No Details"
+end
+
+--- [USER] Add a free text description for TTS to this task.
+-- @param #PLAYERTASK self
+-- @param #string TextTTS
+-- @return #PLAYERTASK self
+function PLAYERTASK:AddFreetextTTS(TextTTS)
+  self:T(self.lid.."AddFreetextTTS")
+  self.FreetextTTS = TextTTS
+  return self
+end
+
+--- [USER] Get the free text TTS description from this task.
+-- @param #PLAYERTASK self
+-- @return #string Text
+function PLAYERTASK:GetFreetextTTS()
+  self:T(self.lid.."GetFreetextTTS")
+  return self.FreetextTTS  or self.Freetext or "No Details"
+end
+
+--- [USER] Add a short free text description for the menu entry of this task.
+-- @param #PLAYERTASK self
+-- @param #string Text
+-- @return #PLAYERTASK self
+function PLAYERTASK:SetMenuName(Text)
+  self:T(self.lid.."SetMenuName")
+  self.Target.name = Text
+  return self
+end
+
+--- [USER] Add a task to be assigned to same clients when task was a success.
+-- @param #PLAYERTASK self
+-- @param Ops.PlayerTask#PLAYERTASK Task
+-- @return #PLAYERTASK self
+function PLAYERTASK:AddNextTaskAfterSuccess(Task)
+  self:T(self.lid.."AddNextTaskAfterSuccess")
+  table.insert(self.NextTaskSuccess,Task)
+  return self
+end
+
+--- [USER] Add a task to be assigned to same clients when task was a failure.
+-- @param #PLAYERTASK self
+-- @param Ops.PlayerTask#PLAYERTASK Task
+-- @return #PLAYERTASK self
+function PLAYERTASK:AddNextTaskAfterFailure(Task)
+  self:T(self.lid.."AddNextTaskAfterFailure")
+  table.insert(self.NextTaskFailure,Task)
+  return self
+end
+
 --- [User] Check if task is done
 -- @param #PLAYERTASK self
 -- @return #boolean done
@@ -398,7 +530,7 @@ function PLAYERTASK:SmokeTarget(Color)
   if not self.lastsmoketime then self.lastsmoketime = 0 end
   local TDiff = timer.getAbsTime() - self.lastsmoketime
   if self.Target and TDiff > 299 then
-    local coordinate = self.Target:GetCoordinate()
+    local coordinate = self.Target:GetAverageCoordinate()
     if coordinate then
       coordinate:Smoke(color)
       self.lastsmoketime = timer.getAbsTime()
@@ -415,9 +547,28 @@ function PLAYERTASK:FlareTarget(Color)
   self:T(self.lid.."SmokeTarget")
   local color = Color or FLARECOLOR.Red
   if self.Target then
-    local coordinate = self.Target:GetCoordinate()
+    local coordinate = self.Target:GetAverageCoordinate()
     if coordinate then
       coordinate:Flare(color,0)
+    end
+  end
+  return self
+end
+
+--- [User] Illuminate Target Area
+-- @param #PLAYERTASK self
+-- @param #number Power Power of illumination bomb in Candela. Default 1000 cd.
+-- @param #number Height Height above target used to release the bomb, default 150m.
+-- @return #PLAYERTASK self
+function PLAYERTASK:IlluminateTarget(Power,Height)
+  self:T(self.lid.."IlluminateTarget")
+  local Power = Power or 1000
+  local Height = Height or 150
+  if self.Target then
+    local coordinate = self.Target:GetAverageCoordinate()
+    if coordinate then
+    local bcoord = COORDINATE:NewFromVec2( coordinate:GetVec2(), Height )
+      bcoord:IlluminationBomb(Power)
     end
   end
   return self
@@ -650,6 +801,7 @@ function PLAYERTASK:onafterCancel(From, Event, To)
     self.TaskController:__TaskCancelled(-1,self)
   end
   self.timestamp = timer.getAbsTime()
+  self.FinalState = "Cancel"
   self:__Done(-1)
   return self
 end
@@ -669,6 +821,7 @@ function PLAYERTASK:onafterSuccess(From, Event, To)
     self.TargetMarker:Remove()
   end
   self.timestamp = timer.getAbsTime()
+  self.FinalState = "Success"
   self:__Done(-1)
   return self
 end
@@ -693,9 +846,7 @@ function PLAYERTASK:onafterFailed(From, Event, To)
     if self.TargetMarker then
       self.TargetMarker:Remove()
     end
-    if self.TaskController then
-      self.TaskController:__TaskFailed(-1,self)
-    end
+    self.FinalState = "Failed"
     self:__Done(-1)
   end
   self.timestamp = timer.getAbsTime()
@@ -715,6 +866,8 @@ do
 -- DONE Flash directions
 -- DONE less rebuilds menu, Task info menu available after join
 -- DONE Limit menu entries
+-- DONE Integrated basic CTLD tasks
+-- DONE Integrate basic CSAR tasks
 -------------------------------------------------------------------------------------------------------------------
 
 --- PLAYERTASKCONTROLLER class.
@@ -762,6 +915,9 @@ do
 -- @field #table PlayerInfoMenu
 -- @field #boolean noflaresmokemenu
 -- @field #boolean TransmitOnlyWithPlayers
+-- @field #boolean buddylasing
+-- @field Ops.PlayerRecce#PLAYERRECCE PlayerRecce
+-- @field #number Coalition
 -- @extends Core.Fsm#FSM
 
 ---
@@ -788,7 +944,7 @@ do
 -- 
 -- ## 2 Task Types
 -- 
--- Targets can be of types GROUP, SET\_GROUP, UNIT, SET\_UNIT, STATIC, SET\_STATIC, AIRBASE, ZONE or COORDINATE. The system will auto-create tasks for players from these targets.
+-- Targets can be of types GROUP, SET\_GROUP, UNIT, SET\_UNIT, STATIC, SET\_STATIC, SET\_SCENERY, AIRBASE, ZONE or COORDINATE. The system will auto-create tasks for players from these targets.
 -- Tasks are created as @{Ops.PlayerTask#PLAYERTASK} objects, which leverage @{Ops.Target#TARGET} for the management of the actual target. The system creates these task types
 -- from the target objects:  
 -- 
@@ -808,6 +964,8 @@ do
 --  * ZONE and COORDINATE - Targets will be scanned for GROUND or STATIC enemy units and tasks created from these
 --  * Intercept - Any airborne targets, if the controller is of type "A2A"
 --  * Anti-Ship - Any ship targets, if the controller is of type "A2S"
+--  * CTLD - Combat transport and logistics deployment
+--  * CSAR - Combat search and rescue
 --  
 -- ## 3 Task repetition
 --  
@@ -937,11 +1095,14 @@ do
 --                NONE = "None",
 --                POINTEROVERTARGET = "%s, %s, pointer in reach for task %03d, lasing!",
 --                POINTERTARGETREPORT = "\nPointer in reach: %s\nLasing: %s",
+--                RECCETARGETREPORT = "\nRecce %s in reach: %s\nLasing: %s",
 --                POINTERTARGETLASINGTTS = ". Pointer in reach and lasing.",
 --                TARGET = "Target",
 --                FLASHON = "%s - Flashing directions is now ON!",
 --                FLASHOFF = "%s - Flashing directions is now OFF!",
 --                FLASHMENU = "Flash Directions Switch",
+--                BRIEFING = "Briefing",
+--                TARGETLOCATION ="Target location",
 --              },
 -- 
 -- e.g.
@@ -1065,6 +1226,9 @@ PLAYERTASKCONTROLLER = {
   PlayerInfoMenu     =   {},
   noflaresmokemenu   =   false,
   TransmitOnlyWithPlayers = true,
+  buddylasing        = false,
+  PlayerRecce        = nil,
+  Coalition          = nil,
   }
 
 ---
@@ -1080,8 +1244,10 @@ PLAYERTASKCONTROLLER.Type = {
   A2GS = "Air-To-Ground-Sea",
 }
 
---- Define a new AUFTRAG Type
+--- Define new AUFTRAG Types
 AUFTRAG.Type.PRECISIONBOMBING = "Precision Bombing"
+AUFTRAG.Type.CTLD = "Combat Transport"
+AUFTRAG.Type.CSAR = "Combat Rescue"
  
 --- 
 -- @type SeadAttributes
@@ -1152,11 +1318,14 @@ PLAYERTASKCONTROLLER.Messages = {
     NONE = "None",
     POINTEROVERTARGET = "%s, %s, pointer in reach for task %03d, lasing!",
     POINTERTARGETREPORT = "\nPointer in reach: %s\nLasing: %s",
+    RECCETARGETREPORT = "\nRecce %s in reach: %s\nLasing: %s",
     POINTERTARGETLASINGTTS = ". Pointer in reach and lasing.",
     TARGET = "Target",
     FLASHON = "%s - Flashing directions is now ON!",
     FLASHOFF = "%s - Flashing directions is now OFF!",
     FLASHMENU = "Flash Directions Switch",
+    BRIEFING = "Briefing",
+    TARGETLOCATION ="Target location",
   },
   DE = {
     TASKABORT = "Auftrag abgebrochen!",
@@ -1213,19 +1382,22 @@ PLAYERTASKCONTROLLER.Messages = {
     NONE = "Keine",
     POINTEROVERTARGET = "%s, %s, Marker im Zielbereich für %03d, Laser an!",
     POINTERTARGETREPORT = "\nMarker im Zielbereich: %s\nLaser an: %s",
+    RECCETARGETREPORT = "\nSpäher % im Zielbereich: %s\nLasing: %s",
     POINTERTARGETLASINGTTS = ". Marker im Zielbereich, Laser is an.",
     TARGET = "Ziel",
     FLASHON = "%s - Richtungsangaben einblenden ist EIN!",
     FLASHOFF = "%s - Richtungsangaben einblenden ist AUS!",
     FLASHMENU = "Richtungsangaben Schalter",
+    BRIEFING = "Briefing",
+    TARGETLOCATION ="Zielkoordinate",
   },
 }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.38"
+PLAYERTASKCONTROLLER.version="0.1.43"
 
---- Constructor
+--- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string Name Name of this controller
 -- @param #number Coalition of this controller, e.g. coalition.side.BLUE
@@ -1303,9 +1475,9 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self:AddTransition("*",            "TaskRepeatOnFailed",    "*")
   self:AddTransition("*",            "Stop",                  "Stopped")
   
-  self:__Start(-1)
+  self:__Start(2)
   local starttime = math.random(5,10)
-  self:__Status(-starttime)
+  self:__Status(starttime)
   
   -- Player leaves
   self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventHandler)
@@ -1454,12 +1626,13 @@ end
 -- @param #string text Original text.
 -- @return #string Spoken text.
 function PLAYERTASKCONTROLLER:_GetTextForSpeech(text)
-  
+ self:T(self.lid.."_GetTextForSpeech")
   -- Space out numbers.
   text=string.gsub(text,"%d","%1 ")
   -- get rid of leading or trailing spaces
   text=string.gsub(text,"^%s*","")
   text=string.gsub(text,"%s*$","")
+  text=string.gsub(text,"  "," ")
   
   return text
 end
@@ -1546,6 +1719,27 @@ function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode)
   return self
 end
 
+
+--- [User] Allow precision laser-guided bombing on statics and "high-value" ground units (MBT etc) with player units lasing.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Ops.PlayerRecce#PLAYERRECCE Recce (Optional) The PLAYERRECCE object governing the lasing players.
+-- @return #PLAYERTASKCONTROLLER self 
+function PLAYERTASKCONTROLLER:EnableBuddyLasing(Recce)
+  self:T(self.lid.."EnableBuddyLasing")
+  self.buddylasing = true
+  self.PlayerRecce = Recce
+  return self
+end
+
+--- [User] Allow precision laser-guided bombing on statics and "high-value" ground units (MBT etc) with player units lasing.
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:DisableBuddyLasing()
+  self:T(self.lid.."DisableBuddyLasing")
+  self.buddylasing = false
+  return self
+end
+
 --- [User] Allow addition of targets with user F10 map markers.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string Tag (Optional) The tagname to use to identify commands, defaults to "TASK"
@@ -1583,7 +1777,7 @@ end
 -- @return #string playername
 -- @return #string ttsplayername
 function PLAYERTASKCONTROLLER:_GetPlayerName(Client)
-  self:T(self.lid.."DisablePrecisionBombing")
+  self:T(self.lid.."_GetPlayerName")
   local playername = Client:GetPlayerName()
   local ttsplayername = nil
   if not self.customcallsigns[playername] then
@@ -1717,7 +1911,7 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
       end
       playername = self:_GetTextForSpeech(playername)
       --local text = string.format("%s, %s, switch to %s for task assignment!",EventData.IniPlayerName,self.MenuName or self.Name,freqtext)
-      local text = string.format(switchtext,self.MenuName or self.Name,playername,freqtext)
+      local text = string.format(switchtext,playername,self.MenuName or self.Name,freqtext)
       self.SRSQueue:NewTransmission(text,nil,self.SRS,timer.getAbsTime()+60,2,{EventData.IniGroup},text,30,self.BCFrequency,self.BCModulation)
     end
   end
@@ -1871,6 +2065,23 @@ function PLAYERTASKCONTROLLER:_CheckTaskQueue()
       for _,_id in pairs(clientsattask) do
         self:T("*****Removing player " .. _id)
         self.TasksPerPlayer:PullByID(_id)
+      end
+      -- Follow-up tasks?
+      local nexttasks = {}
+      if task.FinalState == "Success" then
+        nexttasks = task.NextTaskSuccess
+      elseif task.FinalState == "Failed" then
+       nexttasks = task.NextTaskFailure
+      end
+      local clientlist, count = task:GetClientObjects()
+      if count > 0 then
+        for _,_client in pairs(clientlist) do
+          local client = _client --Wrapper.Client#CLIENT
+          local group = client:GetGroup()
+          for _,task in pairs(nexttasks) do  
+            self:_JoinTask(group,client,task,true)
+          end
+        end
       end
       local TNow = timer.getAbsTime()
       if TNow - task.timestamp > 10 then
@@ -2225,7 +2436,7 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
       ttstype = self.gettext:GetEntry("BAITTS",self.locale)
     end
     -- see if we can do precision bombing
-    if (type == AUFTRAG.Type.BAI or type == AUFTRAG.Type.CAS) and self.precisionbombing then
+    if (type == AUFTRAG.Type.BAI or type == AUFTRAG.Type.CAS) and (self.precisionbombing or self.buddylasing) then
       -- threatlevel between 3 and 6 means, it's artillery, tank, modern tank or AAA
       if threat > 2 and threat < 7 then
         type = AUFTRAG.Type.PRECISIONBOMBING
@@ -2317,16 +2528,53 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
   return self
 end
 
+--- [User] Add a PLAYERTASK object to the list of (open) tasks
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Ops.PlayerTask#PLAYERTASK PlayerTask
+-- @return #PLAYERTASKCONTROLLER self
+-- @usage
+-- Example to create a PLAYERTASK of type CTLD and give Players 10 minutes to complete:
+-- 
+--        local newtask = PLAYERTASK:New(AUFTRAG.Type.CTLD,ZONE:Find("Unloading"),false,0,"Combat Transport")
+--        newtask.Time0 = timer.getAbsTime()    -- inject a timestamp for T0
+--        newtask:AddFreetext("Transport crates to the drop zone and build a vehicle in the next 10 minutes!")
+--        
+--        -- add a condition for failure - fail after 10 minutes
+--        newtask:AddConditionFailure(
+--          function()
+--            local Time = timer.getAbsTime()
+--            if Time - newtask.Time0 > 600 then
+--              return true
+--            end 
+--            return false
+--          end
+--          )  
+--          
+--        taskmanager:AddPlayerTaskToQueue(PlayerTask)     
+function PLAYERTASKCONTROLLER:AddPlayerTaskToQueue(PlayerTask)
+  self:T(self.lid.."AddPlayerTaskToQueue")
+  if PlayerTask and PlayerTask.ClassName and PlayerTask.ClassName == "PLAYERTASK" then
+    PlayerTask:_SetController(self)
+    PlayerTask:SetCoalition(self.Coalition)
+    self.TaskQueue:Push(PlayerTask)
+    self:__TaskAdded(-1,PlayerTask)
+  else
+    self:E(self.lid.."***** NO valid PAYERTASK object sent!")
+  end
+  return self
+end
+
 --- [Internal] Join a player to a task
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Client#CLIENT Client
 -- @param Ops.PlayerTask#PLAYERTASK Task
+-- @param #boolean Force Assign task even if client already has one
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task)
+function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task, Force)
   self:T(self.lid.."_JoinTask")
   local playername, ttsplayername = self:_GetPlayerName(Client)
-  if self.TasksPerPlayer:HasUniqueID(playername) then
+  if self.TasksPerPlayer:HasUniqueID(playername) and not Force then
     -- Player already has a task
     if not self.NoScreenOutput then
       local text = self.gettext:GetEntry("HAVEACTIVETASK",self.locale)
@@ -2350,7 +2598,7 @@ function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task)
       --local m=MESSAGE:New(text,"10","Tasking"):ToAll()
     end
     if self.UseSRS then
-      self:I(self.lid..text)
+      self:T(self.lid..text)
       self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
     end
     self.TasksPerPlayer:Push(Task,playername)
@@ -2424,8 +2672,10 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
   self:T(self.lid.."_ActiveTaskInfo")
   local playername, ttsplayername = self:_GetPlayerName(Client)
   local text = ""
+  local textTTS = ""
   if self.TasksPerPlayer:HasUniqueID(playername) or Task then
-    -- TODO: Show multiple?
+    -- NODO: Show multiple?
+    -- Details
     local task = Task or self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
     local tname = self.gettext:GetEntry("TASKNAME",self.locale)
     local ttsname = self.gettext:GetEntry("TASKNAMETTS",self.locale)
@@ -2438,6 +2688,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
     else
       CoordText = Coordinate:ToStringA2A(Client)
     end
+    -- Threat Level
     local ThreatLevel = task.Target:GetThreatLevelMax()
     --local ThreatLevelText = "high"
     local ThreatLevelText = self.gettext:GetEntry("THREATHIGH",self.locale)
@@ -2448,11 +2699,13 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
      --ThreatLevelText = "low"
      ThreatLevelText = self.gettext:GetEntry("THREATLOW",self.locale)
     end
+    -- Targetno and Threat
     local targets = task.Target:CountTargets() or 0
     local clientlist, clientcount = task:GetClients()
     local ThreatGraph = "[" .. string.rep(  "■", ThreatLevel ) .. string.rep(  "□", 10 - ThreatLevel ) .. "]: "..ThreatLevel
     local ThreatLocaleText = self.gettext:GetEntry("THREATTEXT",self.locale)
     text = string.format(ThreatLocaleText, taskname, ThreatGraph, targets, CoordText)
+    -- Prec bombing
     if task.Type == AUFTRAG.Type.PRECISIONBOMBING and self.precisionbombing then
       if self.LasingDrone and self.LasingDrone.playertask then
         local yes = self.gettext:GetEntry("YES",self.locale)
@@ -2464,12 +2717,57 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
         text = text .. prectext
       end
     end
+    -- Buddylasing
+   if task.Type == AUFTRAG.Type.PRECISIONBOMBING and self.buddylasing then
+    if self.PlayerRecce then
+      local yes = self.gettext:GetEntry("YES",self.locale)
+      local no = self.gettext:GetEntry("NO",self.locale)
+      -- TODO make dist dependent on PlayerRecce Object
+      local reachdist = 8000
+      local inreach = false
+      -- someone close enough?
+      local pset = self.PlayerRecce.PlayerSet:GetAliveSet()
+      for _,_player in pairs(pset) do
+        local player = _player -- Wrapper.Client#CLIENT
+        local pcoord = player:GetCoordinate()
+        if pcoord:Get2DDistance(Coordinate) <= reachdist then
+          inreach = true
+          local callsign = player:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+          local playername = player:GetPlayerName()
+          local islasing = no
+          if self.PlayerRecce.CanLase[player:GetTypeName()] and self.PlayerRecce.AutoLase[playername] then
+            -- TODO - maybe compare Spot target
+            islasing = yes
+          end
+          local inrtext = inreach == true and yes or no
+          local prectext = self.gettext:GetEntry("RECCETARGETREPORT",self.locale)
+          -- RECCETARGETREPORT = "\nSpäher % im Zielbereich: %s\nLasing: %s",
+          prectext = string.format(prectext,callsign,inrtext,islasing)
+          text = text .. prectext
+        end
+      end
+    end
+    -- Transport
+   elseif task.Type == AUFTRAG.Type.CTLD or task.Type == AUFTRAG.Type.CSAR then
+   --                THREATTEXT = "%s\nThreat: %s\nTargets left: %d\nCoord: %s",
+   --                THREATTEXTTTS = "%s, %s. Target information for %s. Threat level %s. Targets left %d. Target location %s.",
+    text = taskname
+    textTTS = taskname
+    local detail = task:GetFreetext()
+    local detailTTS = task:GetFreetextTTS()
+    local brieftxt = self.gettext:GetEntry("BRIEFING",self.locale)
+    local locatxt = self.gettext:GetEntry("TARGETLOCATION",self.locale)
+    text = text .. string.format("\n%s: %s\n%s %s",brieftxt,detail,locatxt,CoordText)
+    --text = text .. "\nBriefing: "..detail.."\nTarget location "..CoordText
+    --textTTS = textTTS .. "; Briefing: "..detailTTS.."\nTarget location "..CoordText
+    textTTS = textTTS .. string.format("; %s: %s; %s %s",brieftxt,detailTTS,locatxt,CoordText)
+   end
+   
+   -- Pilots
     local clienttxt = self.gettext:GetEntry("PILOTS",self.locale)
     if clientcount > 0 then
       for _,_name in pairs(clientlist) do
         if self.customcallsigns[_name] then
-          -- personalized flight name in player naming
-          --_name = string.match(_name,"| ([%a]+)")
           _name = self.customcallsigns[_name] 
         end
         clienttxt = clienttxt .. _name .. ", "
@@ -2479,7 +2777,14 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
       local keine = self.gettext:GetEntry("NONE",self.locale)
       clienttxt = clienttxt .. keine
     end
+    
+    -- Task Report   
     text = text .. clienttxt
+    if task:HasFreetext() and not ( task.Type == AUFTRAG.Type.CTLD or task.Type == AUFTRAG.Type.CSAR) then
+      local brieftxt = self.gettext:GetEntry("BRIEFING",self.locale)
+      text = text .. string.format("\n%s: ",brieftxt)..task:GetFreetext()
+    end
+    textTTS = textTTS .. clienttxt
     if self.UseSRS then
       if string.find(CoordText," BR, ") then
         CoordText = string.gsub(CoordText," BR, "," Bee, Arr, ")
@@ -2492,6 +2797,15 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
           local lasingtext = self.gettext:GetEntry("POINTERTARGETLASINGTTS",self.locale)
           ttstext = ttstext .. lasingtext
         end
+      elseif task.Type == AUFTRAG.Type.CTLD or task.Type == AUFTRAG.Type.CSAR then
+       ttstext = textTTS
+       if string.find(ttstext," BR, ") then
+        CoordText = string.gsub(ttstext," BR, "," Bee, Arr, ")
+       end
+      elseif task:HasFreetext() then
+        -- add tts freetext
+        local brieftxt = self.gettext:GetEntry("BRIEFING",self.locale)
+        ttstext = ttstext .. string.format("; %s: ",brieftxt)..task:GetFreetextTTS()
       end
       self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,2)
     end  
@@ -2758,10 +3072,12 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
           local active = MENU_GROUP_DELAYED:New(group,menuactive,topmenu)
           local info = MENU_GROUP_COMMAND_DELAYED:New(group,menuinfo,active,self._ActiveTaskInfo,self,group,client)
           local mark = MENU_GROUP_COMMAND_DELAYED:New(group,menumark,active,self._MarkTask,self,group,client)
-          if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A or self.noflaresmokemenu then
-            -- no smoking/flaring here if A2A or designer has set to false
-            local smoke = MENU_GROUP_COMMAND_DELAYED:New(group,menusmoke,active,self._SmokeTask,self,group,client)
-            local flare = MENU_GROUP_COMMAND_DELAYED:New(group,menuflare,active,self._FlareTask,self,group,client)
+          if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
+            if self.noflaresmokemenu ~= true then
+              -- no smoking/flaring here if A2A or designer has set noflaresmokemenu to true
+              local smoke = MENU_GROUP_COMMAND_DELAYED:New(group,menusmoke,active,self._SmokeTask,self,group,client)
+              local flare = MENU_GROUP_COMMAND_DELAYED:New(group,menuflare,active,self._FlareTask,self,group,client)
+            end
           end
           local abort = MENU_GROUP_COMMAND_DELAYED:New(group,menuabort,active,self._AbortTask,self,group,client)
           if self.activehasinfomenu and self.taskinfomenu then

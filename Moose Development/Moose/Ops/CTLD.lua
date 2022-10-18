@@ -22,8 +22,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Date: Feb 2022
--- Last Update Sep 2022
+-- Last Update October 2022
 
 do
 
@@ -288,8 +287,8 @@ CTLD_ENGINEERING = {
 
 end
 
-do 
- 
+
+do  
 ------------------------------------------------------
 --- **CTLD_CARGO** class, extends Core.Base#BASE
 -- @type CTLD_CARGO
@@ -308,9 +307,8 @@ do
 -- @field #string Subcategory Sub-category name.
 -- @extends Core.Base#BASE
 
-
 ---
--- @field CTLD_CARGO
+-- @field #CTLD_CARGO CTLD_CARGO
 CTLD_CARGO = {
   ClassName = "CTLD_CARGO",
   ID = 0,
@@ -343,7 +341,7 @@ CTLD_CARGO = {
     CRATE = "Crate", -- #string crate
     REPAIR = "Repair", -- #string repair
     ENGINEERS = "Engineers", -- #string engineers
-    STATIC = "Static", -- #string engineers
+    STATIC = "Static", -- #string statics
   }
   
   --- Function to create new CTLD_CARGO object.
@@ -574,6 +572,10 @@ CTLD_CARGO = {
 end
 
 do
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- TODO CTLD
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 -------------------------------------------------------------------------
 --- **CTLD** class, extends Core.Base#BASE, Core.Fsm#FSM
 -- @type CTLD
@@ -824,6 +826,8 @@ do
 --  
 --    To award player with points, using the SCORING Class (SCORING: my_Scoring, CTLD: CTLD_Cargotransport)
 --
+--        my_scoring = SCORING:New("Combat Transport")
+--
 --        function CTLD_Cargotransport:OnAfterCratesDropped(From, Event, To, Group, Unit, Cargotable)
 --            local points = 10
 --            if Unit then
@@ -901,7 +905,7 @@ do
 -- 
 --              my_ctld.useprefix = true -- this is true by default and MUST BE ON. 
 -- 
--- ### 5.2 Integrate Hercules ground crew (F8 Menu) loadable objects (alternative method)
+-- ### 5.2 Integrate Hercules ground crew (F8 Menu) loadable objects (alternative method, use either the above OR this method, NOT both!)
 -- 
 -- Integrate to your CTLD instance like so, where `my_ctld` is a previously created CTLD instance:
 --            
@@ -927,6 +931,8 @@ do
 -- 
 -- The script works on the EVENTS.Shot trigger, which is used by the mod when you **drop cargo from the Hercules while flying**. Unloading on the ground does
 -- not achieve anything here. If you just want to unload on the ground, use the normal Moose CTLD (see 5.1).
+-- 
+-- DO NOT use the "splash damage" script together with this method! Your cargo will explode on the ground!
 -- 
 -- There are two ways of airdropping: 
 --   
@@ -1068,7 +1074,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.11"
+CTLD.version="1.0.16"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1473,6 +1479,19 @@ function CTLD:SetTroopDropZoneRadius(Radius)
   local tradius = Radius or 100
   if tradius < 25 then tradius = 25 end
   self.troopdropzoneradius = tradius
+  return self
+end
+
+--- (User) Add a PLAYERTASK - FSM events will check success
+-- @param #CTLD self
+-- @param Ops.PlayerTask#PLAYERTASK PlayerTask
+-- @return #CTLD self
+function CTLD:AddPlayerTask(PlayerTask)
+  self:T(self.lid .. " AddPlayerTask")
+  if not self.PlayerTaskQueue then
+    self.PlayerTaskQueue = FIFO:New()
+  end
+  self.PlayerTaskQueue:Push(PlayerTask,PlayerTask.PlayerTaskNr)
   return self
 end
 
@@ -3386,7 +3405,13 @@ end
 -- @return #CTLD self
 function CTLD:AddCTLDZone(Name, Type, Color, Active, HasBeacon, Shiplength, Shipwidth)
   self:T(self.lid .. " AddCTLDZone")
-
+  
+  local zone = ZONE:FindByName(Name)
+  if not zone then
+    self:E(self.lid.."**** Zone does not exist: "..Name)
+    return self
+  end
+  
   local ctldzone = {} -- #CTLD.CargoZone
   ctldzone.active = Active or false
   ctldzone.color = Color or SMOKECOLOR.Red
@@ -3632,9 +3657,10 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
   local zoneret = nil
   local zonewret = nil
   local zonenameret = nil
+  local unitcoord = Unit:GetCoordinate()
+  local unitVec2 = unitcoord:GetVec2()
   for _,_cargozone in pairs(zonetable) do
     local czone = _cargozone -- #CTLD.CargoZone
-    local unitcoord = Unit:GetCoordinate()
     local zonename = czone.name
     local active = czone.active
     local color = czone.color
@@ -3651,17 +3677,17 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
       zone = ZONE:FindByName(zonename)
       self:T("Checking Zone: "..zonename)
       zonecoord = zone:GetCoordinate()
-      zoneradius = zone:GetRadius()
+      zoneradius = 1500
       zonewidth = zoneradius
     elseif AIRBASE:FindByName(zonename) then
       zone = AIRBASE:FindByName(zonename):GetZone()
       self:T("Checking Zone: "..zonename)
       zonecoord = zone:GetCoordinate()
-      zoneradius = zone:GetRadius()
+      zoneradius = 2500
       zonewidth = zoneradius
     end
     local distance = self:_GetDistance(zonecoord,unitcoord)
-    if distance <= zoneradius and active then 
+    if zone:IsVec2InZone(unitVec2) and active then 
       outcome = true
     end
     if maxdist > distance then 
@@ -4244,7 +4270,7 @@ end
   end
   
 ------------------------------------------------------------------- 
--- FSM functions
+-- TODO FSM functions
 ------------------------------------------------------------------- 
 
   --- (Internal) FSM Function onafterStart.
@@ -4417,6 +4443,27 @@ end
   -- @return #CTLD self
   function CTLD:onbeforeTroopsDeployed(From, Event, To, Group, Unit, Troops)
     self:T({From, Event, To})
+    if Unit and Unit:IsPlayer() and self.PlayerTaskQueue then
+      local playername = Unit:GetPlayerName()
+      local dropcoord = Troops:GetCoordinate() or COORDINATE:New(0,0,0)
+      local dropvec2 = dropcoord:GetVec2()
+      self.PlayerTaskQueue:ForEach(
+        function (Task)
+          local task = Task -- Ops.PlayerTask#PLAYERTASK
+          local subtype = task:GetSubType()
+          -- right subtype?
+          if Event == subtype and not task:IsDone() then
+            local targetzone = task.Target:GetObject() -- Core.Zone#ZONE should be a zone in this case ....
+            if targetzone and targetzone.ClassName and string.match(targetzone.ClassName,"ZONE") and targetzone:IsVec2InZone(dropvec2) then
+              if task.Clients:HasUniqueID(playername) then
+                -- success
+                task:__Success(-1)
+              end
+            end
+          end
+        end
+      )
+    end
     return self
   end
   
@@ -4444,10 +4491,31 @@ end
   -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB build.
   -- @return #CTLD self
   function CTLD:onbeforeCratesBuild(From, Event, To, Group, Unit, Vehicle)
-    self:T({From, Event, To})
+    self:I({From, Event, To})
+    if Unit and Unit:IsPlayer() and self.PlayerTaskQueue then
+      local playername = Unit:GetPlayerName()
+      local dropcoord = Vehicle:GetCoordinate() or COORDINATE:New(0,0,0)
+      local dropvec2 = dropcoord:GetVec2()
+      self.PlayerTaskQueue:ForEach(
+        function (Task)
+          local task = Task -- Ops.PlayerTask#PLAYERTASK
+          local subtype = task:GetSubType()
+          -- right subtype?
+          if Event == subtype and not task:IsDone() then
+            local targetzone = task.Target:GetObject() -- Core.Zone#ZONE should be a zone in this case ....
+            if targetzone and targetzone.ClassName and string.match(targetzone.ClassName,"ZONE") and targetzone:IsVec2InZone(dropvec2) then
+              if task.Clients:HasUniqueID(playername) then
+                -- success
+                task:__Success(-1)
+              end
+            end
+          end
+        end
+      )
+    end
     return self
   end
-  
+
   --- (Internal) FSM Function onbeforeTroopsRTB.
   -- @param #CTLD self
   -- @param #string From State.
@@ -4802,7 +4870,9 @@ end -- end do
 do 
 --- **Hercules Cargo AIR Drop Events** by Anubis Yinepu
 -- Moose CTLD OO refactoring by Applevangelist
--- 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- TODO CTLD_HERCULES
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- This script will only work for the Herculus mod by Anubis, and only for **Air Dropping** cargo from the Hercules. 
 -- Use the standard Moose CTLD if you want to unload on the ground.
 -- Payloads carried by pylons 11, 12 and 13 need to be declared in the Herculus_Loadout.lua file
@@ -4932,13 +5002,21 @@ CTLD_HERCULES.Types = {
 --            
 -- Expected template names are the ones in the rounded brackets.
 -- 
--- HINTS
+-- ### HINTS
 -- 
 -- The script works on the EVENTS.Shot trigger, which is used by the mod when you **drop cargo from the Hercules while flying**. Unloading on the ground does
 -- not achieve anything here. If you just want to unload on the ground, use the normal Moose CTLD.
+-- **Do not use** the **splash damage** script together with this, your cargo will just explode when reaching the ground!
+-- 
+-- ### Airdrops
+-- 
 -- There are two ways of airdropping:   
 -- 1) Very low and very slow (>5m and <10m AGL) - here you can drop stuff which has "Skid" at the end of the cargo name (loaded via F8 Ground Crew menu)
 -- 2) Higher up and slow (>100m AGL) - here you can drop paratroopers and cargo which has "Air" at the end of the cargo name (loaded via F8 Ground Crew menu)
+-- 
+-- ### General
+-- 
+-- Use either this method to integrate the Hercules **or** the one from the "normal" CTLD. Never both!
 function CTLD_HERCULES:New(Coalition, Alias, CtldObject)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #CTLD_HERCULES

@@ -26,6 +26,7 @@
 --   * @{#SET_AIRBASE}: Defines a collection of @{Wrapper.Airbase}s filtered by filter criteria.
 --   * @{#SET_CARGO}: Defines a collection of @{Cargo.Cargo}s filtered by filter criteria.
 --   * @{#SET_ZONE}: Defines a collection of @{Core.Zone}s filtered by filter criteria.
+--   * @{#SET_SCENERY}: Defines a collection of @{Warpper.Scenery}s added via a filtered @{#SET_ZONE}.
 --
 -- These classes are derived from @{#SET_BASE}, which contains the main methods to manage the collections.
 --
@@ -37,7 +38,7 @@
 -- ===
 --
 -- ### Author: **FlightControl**
--- ### Contributions: **funkyfranky**
+-- ### Contributions: **funkyfranky**, **applevangelist**
 --
 -- ===
 --
@@ -276,7 +277,9 @@ do -- SET_BASE
   -- @param Core.Set#SET_BASE SetToAdd Set to add.
   -- @return #SET_BASE self
   function SET_BASE:AddSet(SetToAdd)
-
+    
+    if not SetToAdd then return self end
+    
     for _,ObjectB in pairs(SetToAdd.Set) do
       self:AddObject(ObjectB)
     end
@@ -2637,8 +2640,10 @@ do -- SET_UNIT
   -- @return Core.Point#COORDINATE The center coordinate of all the units in the set, including heading in degrees and speed in mps in case of moving units.
   function SET_UNIT:GetCoordinate()
 
-    local Coordinate = self:GetFirst():GetCoordinate()
-
+    local Coordinate = self:GetRandom():GetCoordinate()
+    --self:F({Coordinate:GetVec3()})
+    
+    
     local x1 = Coordinate.x
     local x2 = Coordinate.x
     local y1 = Coordinate.y
@@ -6727,4 +6732,246 @@ do -- SET_OPSGROUP
     return MGroupInclude
   end
   
+end
+            
+do -- SET_SCENERY
+
+  ---
+  -- @type SET_SCENERY
+  -- @extends Core.Set#SET_BASE
+
+  --- Mission designers can use the SET_SCENERY class to build sets of scenery belonging to certain:
+  --
+  --  * Zone Sets
+  --
+  -- ## SET_SCENERY constructor
+  --
+  -- Create a new SET_SCENERY object with the @{#SET_SCENERY.New} method:
+  --
+  --    * @{#SET_SCENERY.New}: Creates a new SET_SCENERY object.
+  --
+  -- ## Add or Remove SCENERY(s) from SET_SCENERY
+  --
+  -- SCENERYs can be added and removed using the @{Core.Set#SET_SCENERY.AddSceneryByName} and @{Core.Set#SET_SCENERY.RemoveSceneryByName} respectively.
+  -- These methods take a single SCENERY name or an array of SCENERY names to be added or removed from SET_SCENERY.
+  --
+  -- ## SET_SCENERY filter criteria
+  --
+  -- N/A at the moment
+  --    
+  -- ## SET_SCENERY iterators
+  --
+  -- Once the filters have been defined and the SET_SCENERY has been built, you can iterate the SET_SCENERY with the available iterator methods.
+  -- The iterator methods will walk the SET_SCENERY set, and call for each element within the set a function that you provide.
+  -- The following iterator methods are currently available within the SET_SCENERY:
+  --
+  --   * @{#SET_SCENERY.ForEachScenery}: Calls a function for each alive object it finds within the SET_SCENERY.
+  --
+  -- ## SET_SCENERY atomic methods
+  --
+  -- N/A at the moment
+  --
+  -- ===
+  -- @field #SET_SCENERY SET_SCENERY
+  SET_SCENERY = {
+    ClassName = "SET_SCENERY",
+    Scenerys = {},
+    Filter = {
+      SceneryPrefixes = nil,
+      Zones = nil,
+    },
+  }
+
+  --- Creates a new SET_SCENERY object. Scenery is **not** auto-registered in the Moose database, there are too many objects on each map. Hence we need to find them first. For this we are using a SET_ZONE. 
+  -- @param #SET_SCENERY self
+  -- @param #SET_ZONE ZoneSet SET_ZONE of ZONE objects as created by right-clicks on the map in the mission editor, choosing "assign as...". Rename the zones for grouping purposes, e.g. all sections of a bridge as "Bridge-1" to "Bridge-3".
+  -- @return #SET_SCENERY
+  -- @usage
+  -- -- Define a new SET_SCENERY Object. This Object will contain a reference to all added Scenery Objects.
+  --    ZoneSet = SET_ZONE:New():FilterPrefixes("Bridge"):FilterOnce()
+  --    mysceneryset = SET_SCENERY:New(ZoneSet)
+  function SET_SCENERY:New(ZoneSet)
+  
+  local zoneset = {}  
+    -- Inherits from BASE
+  local self = BASE:Inherit( self, SET_BASE:New( zoneset ) ) -- Core.Set#SET_SCENERY
+  
+  local zonenames = {}
+  for _,_zone in pairs(ZoneSet.Set) do
+    table.insert(zonenames,_zone:GetName())
+  end
+  
+  self:AddSceneryByName(zonenames)
+  
+  return self
+  end
+
+  --- Add SCENERY(s) to SET_SCENERY.
+  -- @param #SET_SCENERY self
+  -- @param #string AddScenery A single SCENERY.
+  -- @return #SET_SCENERY self
+  function SET_SCENERY:AddScenery( AddScenery )
+    self:F2( AddScenery:GetName() )
+
+    self:Add( AddScenery:GetName(), AddScenery )
+
+    return self
+  end
+
+
+  --- Add SCENERY(s) to SET_SCENERY.
+  -- @param #SET_SCENERY self
+  -- @param #string AddSceneryNames A single name or an array of SCENERY zone names.
+  -- @return #SET_SCENERY self
+  function SET_SCENERY:AddSceneryByName( AddSceneryNames )
+
+    local AddSceneryNamesArray = ( type( AddSceneryNames ) == "table" ) and AddSceneryNames or { AddSceneryNames }
+
+    self:T( AddSceneryNamesArray )
+    for AddSceneryID, AddSceneryName in pairs( AddSceneryNamesArray ) do
+      self:Add( AddSceneryName, SCENERY:FindByZoneName( AddSceneryName ) )
+    end
+
+    return self
+  end
+
+  --- Remove SCENERY(s) from SET_SCENERY.
+  -- @param Core.Set#SET_SCENERY self
+  -- @param Wrapper.Scenery#SCENERY RemoveSceneryNames A single name or an array of SCENERY zone names.
+  -- @return self
+  function SET_SCENERY:RemoveSceneryByName( RemoveSceneryNames )
+
+    local RemoveSceneryNamesArray = ( type( RemoveSceneryNames ) == "table" ) and RemoveSceneryNames or { RemoveSceneryNames }
+
+    for RemoveSceneryID, RemoveSceneryName in pairs( RemoveSceneryNamesArray ) do
+      self:Remove( RemoveSceneryName )
+    end
+
+    return self
+  end
+
+  --- Finds a Scenery in the SET, based on the Scenery Name.
+  -- @param #SET_SCENERY self
+  -- @param #string SceneryName
+  -- @return Wrapper.Scenery#SCENERY The found Scenery.
+  function SET_SCENERY:FindScenery( SceneryName )
+    local SceneryFound = self.Set[SceneryName]
+    return SceneryFound
+  end
+
+   --- Builds a set of scenery objects in zones.
+  -- @param #SET_SCENERY self
+  -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
+  -- @return #SET_SCENERY self
+  function SET_SCENERY:FilterZones( Zones )
+    if not self.Filter.Zones then
+      self.Filter.Zones = {}
+    end
+    local zones = {}
+    if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
+      zones = Zones.Set
+    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+      self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
+      return self     
+    else
+      zones = Zones
+    end
+    for _,Zone in pairs( zones ) do
+      local zonename = Zone:GetName()
+      self.Filter.Zones[zonename] = Zone
+    end
+    return self
+  end
+
+  --- Builds a set of SCENERYs that contain the given string in their name.
+  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all scenery that **contain** the string. 
+  -- @param #SET_SCENERY self
+  -- @param #string Prefixes The string pattern(s) that need to be contained in the scenery name. Can also be passed as a `#table` of strings.
+  -- @return #SET_SCENERY self
+  function SET_SCENERY:FilterPrefixes( Prefixes )
+    if not self.Filter.SceneryPrefixes then
+      self.Filter.SceneryPrefixes = {}
+    end
+    if type( Prefixes ) ~= "table" then
+      Prefixes = { Prefixes }
+    end
+    for PrefixID, Prefix in pairs( Prefixes ) do
+      self.Filter.SceneryPrefixes[Prefix] = Prefix
+    end
+    return self
+  end
+
+  --- Iterate the SET_SCENERY and count how many SCENERYSs are alive.
+  -- @param #SET_SCENERY self
+  -- @return #number The number of SCENERYSs alive.
+  function SET_SCENERY:CountAlive()
+
+    local Set = self:GetSet()
+
+    local CountU = 0
+    for UnitID, UnitData in pairs(Set) do
+      if UnitData and UnitData:IsAlive() then
+        CountU = CountU + 1
+      end
+
+    end
+
+    return CountU
+  end
+
+  --- Iterate the SET_SCENERY and call an iterator function for each **alive** SCENERY, providing the SCENERY and optional parameters.
+  -- @param #SET_SCENERY self
+  -- @param #function IteratorFunction The function that will be called when there is an alive SCENERY in the SET_SCENERY. The function needs to accept a SCENERY parameter.
+  -- @return #SET_SCENERY self
+  function SET_SCENERY:ForEachScenery( IteratorFunction, ... )
+    self:F2( arg )
+    self:ForEach( IteratorFunction, arg, self:GetSet() )
+    return self
+  end
+
+  --- Get the center coordinate of the SET_SCENERY.
+  -- @param #SET_SCENERY self
+  -- @return Core.Point#COORDINATE The center coordinate of all the objects in the set.
+  function SET_SCENERY:GetCoordinate()
+
+    local Coordinate = self:GetRandom():GetCoordinate()
+
+    local x1 = Coordinate.x
+    local x2 = Coordinate.x
+    local y1 = Coordinate.y
+    local y2 = Coordinate.y
+    local z1 = Coordinate.z
+    local z2 = Coordinate.z
+
+    for SceneryName, SceneryData in pairs( self:GetSet() ) do
+
+      local Scenery = SceneryData -- Wrapper.Scenery#SCENERY
+      local Coordinate = Scenery:GetCoordinate()
+
+      x1 = ( Coordinate.x < x1 ) and Coordinate.x or x1
+      x2 = ( Coordinate.x > x2 ) and Coordinate.x or x2
+      y1 = ( Coordinate.y < y1 ) and Coordinate.y or y1
+      y2 = ( Coordinate.y > y2 ) and Coordinate.y or y2
+      z1 = ( Coordinate.y < z1 ) and Coordinate.z or z1
+      z2 = ( Coordinate.y > z2 ) and Coordinate.z or z2
+
+    end
+
+    Coordinate.x = ( x2 - x1 ) / 2 + x1
+    Coordinate.y = ( y2 - y1 ) / 2 + y1
+    Coordinate.z = ( z2 - z1 ) / 2 + z1
+
+    self:F( { Coordinate = Coordinate } )
+    return Coordinate
+
+  end
+
+  ---
+  -- @param #SET_SCENERY self
+  -- @param Wrapper.Scenery#SCENERY MScenery
+  -- @return #SET_SCENERY self
+  function SET_SCENERY:IsIncludeObject( MScenery )
+    self:F2( MScenery )
+  return true
+  end
 end
