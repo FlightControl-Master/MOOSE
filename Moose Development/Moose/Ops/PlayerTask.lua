@@ -1626,7 +1626,7 @@ end
 -- @param #string text Original text.
 -- @return #string Spoken text.
 function PLAYERTASKCONTROLLER:_GetTextForSpeech(text)
-  
+ self:T(self.lid.."_GetTextForSpeech")
   -- Space out numbers.
   text=string.gsub(text,"%d","%1 ")
   -- get rid of leading or trailing spaces
@@ -2780,7 +2780,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
     
     -- Task Report   
     text = text .. clienttxt
-    if task:HasFreetext() then
+    if task:HasFreetext() and not ( task.Type == AUFTRAG.Type.CTLD or task.Type == AUFTRAG.Type.CSAR) then
       local brieftxt = self.gettext:GetEntry("BRIEFING",self.locale)
       text = text .. string.format("\n%s: ",brieftxt)..task:GetFreetext()
     end
