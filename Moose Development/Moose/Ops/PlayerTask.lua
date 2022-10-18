@@ -944,7 +944,7 @@ do
 -- 
 -- ## 2 Task Types
 -- 
--- Targets can be of types GROUP, SET\_GROUP, UNIT, SET\_UNIT, STATIC, SET\_STATIC, AIRBASE, ZONE or COORDINATE. The system will auto-create tasks for players from these targets.
+-- Targets can be of types GROUP, SET\_GROUP, UNIT, SET\_UNIT, STATIC, SET\_STATIC, SET\_SCENERY, AIRBASE, ZONE or COORDINATE. The system will auto-create tasks for players from these targets.
 -- Tasks are created as @{Ops.PlayerTask#PLAYERTASK} objects, which leverage @{Ops.Target#TARGET} for the management of the actual target. The system creates these task types
 -- from the target objects:  
 -- 
@@ -964,6 +964,8 @@ do
 --  * ZONE and COORDINATE - Targets will be scanned for GROUND or STATIC enemy units and tasks created from these
 --  * Intercept - Any airborne targets, if the controller is of type "A2A"
 --  * Anti-Ship - Any ship targets, if the controller is of type "A2S"
+--  * CTLD - Combat transport and logistics deployment
+--  * CSAR - Combat search and rescue
 --  
 -- ## 3 Task repetition
 --  
@@ -1099,6 +1101,8 @@ do
 --                FLASHON = "%s - Flashing directions is now ON!",
 --                FLASHOFF = "%s - Flashing directions is now OFF!",
 --                FLASHMENU = "Flash Directions Switch",
+--                BRIEFING = "Briefing",
+--                TARGETLOCATION ="Target location",
 --              },
 -- 
 -- e.g.
@@ -1320,6 +1324,8 @@ PLAYERTASKCONTROLLER.Messages = {
     FLASHON = "%s - Flashing directions is now ON!",
     FLASHOFF = "%s - Flashing directions is now OFF!",
     FLASHMENU = "Flash Directions Switch",
+    BRIEFING = "Briefing",
+    TARGETLOCATION ="Target location",
   },
   DE = {
     TASKABORT = "Auftrag abgebrochen!",
@@ -1382,14 +1388,16 @@ PLAYERTASKCONTROLLER.Messages = {
     FLASHON = "%s - Richtungsangaben einblenden ist EIN!",
     FLASHOFF = "%s - Richtungsangaben einblenden ist AUS!",
     FLASHMENU = "Richtungsangaben Schalter",
+    BRIEFING = "Briefing",
+    TARGETLOCATION ="Zielkoordinate",
   },
 }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.42"
+PLAYERTASKCONTROLLER.version="0.1.43"
 
---- Constructor
+--- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string Name Name of this controller
 -- @param #number Coalition of this controller, e.g. coalition.side.BLUE
@@ -2590,7 +2598,7 @@ function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task, Force)
       --local m=MESSAGE:New(text,"10","Tasking"):ToAll()
     end
     if self.UseSRS then
-      self:I(self.lid..text)
+      self:T(self.lid..text)
       self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
     end
     self.TasksPerPlayer:Push(Task,playername)
@@ -2747,8 +2755,12 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
     textTTS = taskname
     local detail = task:GetFreetext()
     local detailTTS = task:GetFreetextTTS()
-    text = text .. "\nBriefing: "..detail.."\nTarget location "..CoordText
-    textTTS = textTTS .. "; Briefing: "..detailTTS.."\nTarget location "..CoordText
+    local brieftxt = self.gettext:GetEntry("BRIEFING",self.locale)
+    local locatxt = self.gettext:GetEntry("TARGETLOCATION",self.locale)
+    text = text .. string.format("\n%s: %s\n%s %s",brieftxt,detail,locatxt,CoordText)
+    --text = text .. "\nBriefing: "..detail.."\nTarget location "..CoordText
+    --textTTS = textTTS .. "; Briefing: "..detailTTS.."\nTarget location "..CoordText
+    textTTS = textTTS .. string.format("; %s: %s; %s %s",brieftxt,detailTTS,locatxt,CoordText)
    end
    
    -- Pilots
@@ -2768,6 +2780,10 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
     
     -- Task Report   
     text = text .. clienttxt
+    if task:HasFreetext() then
+      local brieftxt = self.gettext:GetEntry("BRIEFING",self.locale)
+      text = text .. string.format("\n%s: ",brieftxt)..task:GetFreetext()
+    end
     textTTS = textTTS .. clienttxt
     if self.UseSRS then
       if string.find(CoordText," BR, ") then
@@ -2787,9 +2803,9 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
         CoordText = string.gsub(ttstext," BR, "," Bee, Arr, ")
        end
       elseif task:HasFreetext() then
-        -- add freetext
-        text = text .. "\nBriefing: "..task:GetFreetext()
-        ttstext = ttstext .. "; Briefing: "..task:GetFreetextTTS()
+        -- add tts freetext
+        local brieftxt = self.gettext:GetEntry("BRIEFING",self.locale)
+        ttstext = ttstext .. string.format("; %s: ",brieftxt)..task:GetFreetextTTS()
       end
       self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,2)
     end  
