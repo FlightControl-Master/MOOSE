@@ -1210,6 +1210,24 @@ function CSAR:_RemoveNameFromDownedPilots(name,force)
   return found
 end
 
+--- [User] Set callsign options for TTS output. See @{Wrapper.Group#GROUP.GetCustomCallSign}() on how to set customized callsigns.
+-- @param #CSAR self
+-- @param #boolean ShortCallsign If true, only call out the major flight number
+-- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name for players as-is, no amendments or numbers.
+-- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
+-- callsigns from playername or group name.
+-- @return #CSAR self
+function CSAR:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations)
+  if not ShortCallsign or ShortCallsign == false then
+   self.ShortCallsign = false
+  else
+   self.ShortCallsign = true
+  end
+  self.Keepnumber = Keepnumber or false
+  self.CallsignTranslations = CallsignTranslations
+  return self  
+end
+
 --- (Internal) Check if a name is in downed pilot table and remove it.
 -- @param #CSAR self
 -- @param #string UnitName
@@ -1219,7 +1237,7 @@ function CSAR:_GetCustomCallSign(UnitName)
   local unit = UNIT:FindByName(UnitName)
   if unit and unit:IsAlive() then
     local group = unit:GetGroup()
-    callsign = group:GetCustomCallSign(true,true)
+    callsign = group:GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
   end
   return callsign
 end
@@ -1791,7 +1809,7 @@ function CSAR:_SignalFlare(_unitName)
       else
         _distance = string.format("%.1fkm",_closest.distance)
       end 
-      local _msg = string.format("%s - Popping signal flare at your %s o\'clock. Distance %s", _unitName, _clockDir, _distance)
+      local _msg = string.format("%s - Popping signal flare at your %s o\'clock. Distance %s", self:_GetCustomCallSign(_unitName), _clockDir, _distance)
       self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true, true)
       
       local _coord = _closest.pilot:GetCoordinate()
@@ -1845,7 +1863,7 @@ function CSAR:_Reqsmoke( _unitName )
       else
         _distance = string.format("%.1fkm",_closest.distance/1000)
       end 
-      local _msg = string.format("%s - Popping smoke at your %s o\'clock. Distance %s", _unitName, _clockDir, _distance)
+      local _msg = string.format("%s - Popping smoke at your %s o\'clock. Distance %s", self:_GetCustomCallSign(_unitName), _clockDir, _distance)
       self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true, true)
       local _coord = _closest.pilot:GetCoordinate()
       local color = self.smokecolor
@@ -2049,13 +2067,17 @@ function CSAR:_GetClockDirection(_heli, _group)
   local DirectionVec3 = _playerPosition:GetDirectionVec3( _targetpostions )
   local Angle = _playerPosition:GetAngleDegrees( DirectionVec3 )
   self:T(self.lid .. " _GetClockDirection"..tostring(Angle).." "..tostring(_heading))
-  local clock = 12   
-  if _heading then
-    local Aspect = Angle - _heading
-    if Aspect == 0 then Aspect = 360 end
-    clock = math.abs(UTILS.Round((Aspect / 30),0))
-    if clock == 0 then clock = 12 end
-  end    
+  local hours = 0
+  local clock = 12
+  if _heading and Angle then
+    clock = 12
+    --if angle == 0 then angle = 360 end
+    clock = _heading-Angle  
+    hours = (clock/30)*-1
+    clock = 12+hours
+    clock = UTILS.Round(clock,0)
+    if clock > 12 then clock = clock-12 end
+  end  
   return clock
 end
 
