@@ -30,7 +30,7 @@
 -- @module Ops.CSAR
 -- @image OPS_CSAR.jpg
 
--- Date: June 2022
+-- Date: October 2022
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -270,7 +270,7 @@ CSAR.AircraftType["Bronco-OV-10A"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.13"
+CSAR.version="1.0.15"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -1210,6 +1210,20 @@ function CSAR:_RemoveNameFromDownedPilots(name,force)
   return found
 end
 
+--- (Internal) Check if a name is in downed pilot table and remove it.
+-- @param #CSAR self
+-- @param #string UnitName
+-- @return #string CallSign
+function CSAR:_GetCustomCallSign(UnitName)
+  local callsign = Unitname
+  local unit = UNIT:FindByName(UnitName)
+  if unit and unit:IsAlive() then
+    local group = unit:GetGroup()
+    callsign = group:GetCustomCallSign(true,true)
+  end
+  return callsign
+end
+
 --- (Internal) Check state of wounded group.
 -- @param #CSAR self
 -- @param #string heliname heliname
@@ -1266,9 +1280,9 @@ function CSAR:_CheckWoundedGroupStatus(heliname,woundedgroupname)
               local dist = UTILS.MetersToNM(self.autosmokedistance)
               disttext = string.format("%.0fnm",dist)
             end
-            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Finally, that is music in my ears!\nI'll pop a smoke when you are %s away.\nLand or hover by the smoke.", _heliName, _pilotName, disttext), self.messageTime,false,true)
+            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Finally, that is music in my ears!\nI'll pop a smoke when you are %s away.\nLand or hover by the smoke.", self:_GetCustomCallSign(_heliName), _pilotName, disttext), self.messageTime,false,true)
           else
-            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Finally, that is music in my ears!\nRequest a flare or smoke if you need.", _heliName, _pilotName), self.messageTime,false,true)
+            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Finally, that is music in my ears!\nRequest a flare or smoke if you need.", self:_GetCustomCallSign(_heliName), _pilotName), self.messageTime,false,true)
           end
           --mark as shown for THIS heli and THIS group
           self.heliVisibleMessage[_lookupKeyHeli] = true     
@@ -1332,7 +1346,7 @@ function CSAR:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupNam
     _maxUnits = self.max_units
   end
   if _unitsInHelicopter + 1 > _maxUnits then
-      self:_DisplayMessageToSAR(_heliUnit, string.format("%s, %s. We\'re already crammed with %d guys! Sorry!", _pilotName, _heliName, _unitsInHelicopter, _unitsInHelicopter), self.messageTime,false,false,true)
+      self:_DisplayMessageToSAR(_heliUnit, string.format("%s, %s. We\'re already crammed with %d guys! Sorry!", _pilotName, self:_GetCustomCallSign(_heliName), _unitsInHelicopter, _unitsInHelicopter), self.messageTime,false,false,true)
       return self
   end
   
@@ -1350,10 +1364,26 @@ function CSAR:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupNam
   _woundedGroup:Destroy(false)
   self:_RemoveNameFromDownedPilots(_woundedGroupName,true)
   
-  self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s I\'m in! Get to the MASH ASAP! ", _heliName, _pilotName), self.messageTime,true,true)
+  self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s I\'m in! Get to the MASH ASAP! ", self:_GetCustomCallSign(_heliName), _pilotName), self.messageTime,true,true)
+  
+  self:_UpdateUnitCargoMass(_heliName)
   
   self:__Boarded(5,_heliName,_woundedGroupName,grouptable.desc)
   
+  return self
+end
+
+--- (Internal) Function to calculate and set Unit internal cargo mass
+-- @param #CSAR self
+-- @param #string _heliName Unit name
+-- @return #CSAR self
+function CSAR:_UpdateUnitCargoMass(_heliName)
+  self:T(self.lid .. " _UpdateUnitCargoMass")
+  local calculatedMass = self:_PilotsOnboard(_heliName)*80
+  local Unit = UNIT:FindByName(_heliName)
+  if Unit then
+    Unit:SetUnitInternalCargo(calculatedMass)
+  end
   return self
 end
 
@@ -1370,7 +1400,6 @@ function CSAR:_OrderGroupToMoveToPoint(_leader, _destination)
   group:RouteToVec2(coordinate,5)
   return self
 end
-
 
 --- (internal) Function to check if the heli door(s) are open. Thanks to Shadowze.
 -- @param #CSAR self
@@ -1405,9 +1434,9 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
   
       if self.heliCloseMessage[_lookupKeyHeli] == nil then
           if self.autosmoke == true then
-            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. You\'re close now! Land or hover at the smoke.", _heliName, _pilotName), self.messageTime,false,true)
+            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. You\'re close now! Land or hover at the smoke.", self:_GetCustomCallSign(_heliName), _pilotName), self.messageTime,false,true)
           else
-            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. You\'re close now! Land in a safe place, I will go there ", _heliName, _pilotName), self.messageTime,false,true)
+            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. You\'re close now! Land in a safe place, I will go there ", self:_GetCustomCallSign(_heliName), _pilotName), self.messageTime,false,true)
           end
           self.heliCloseMessage[_lookupKeyHeli] = true
       end
@@ -1574,9 +1603,12 @@ function CSAR:_RescuePilots(_heliUnit)
   
   self.inTransitGroups[_heliName] = nil
   
-  local _txt = string.format("%s: The %d pilot(s) have been taken to the\nmedical clinic. Good job!", _heliName, PilotsSaved)
+  local _txt = string.format("%s: The %d pilot(s) have been taken to the\nmedical clinic. Good job!", self:_GetCustomCallSign(_heliName), PilotsSaved)
   
   self:_DisplayMessageToSAR(_heliUnit, _txt, self.messageTime)
+  
+  self:_UpdateUnitCargoMass(_heliName)
+  
   -- trigger event
   self:__Rescued(-1,_heliUnit,_heliName, PilotsSaved)
   return self
@@ -1610,7 +1642,7 @@ function CSAR:_DisplayMessageToSAR(_unit, _text, _time, _clear, _speak, _overrid
   local _clear = _clear or nil
   local _time = _time or self.messageTime
   if _override or not self.suppressmessages then
-    local m = MESSAGE:New(_text,_time,"Info",_clear):ToGroup(group)
+    local m = MESSAGE:New(_text,_time,"CSAR",_clear):ToGroup(group)
   end
   -- integrate SRS
   if _speak and self.useSRS then

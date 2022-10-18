@@ -22,7 +22,6 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Date: Feb 2022
 -- Last Update October 2022
 
 do
