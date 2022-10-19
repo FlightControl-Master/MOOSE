@@ -1,4 +1,4 @@
---- **AI** -- Peform Battlefield Area Interdiction (BAI) within an engagement zone.
+--- **AI** - Peform Battlefield Area Interdiction (BAI) within an engagement zone.
 --
 -- **Features:**
 -- 
@@ -26,7 +26,7 @@
 -- 
 -- ===
 --
--- @module AI.AI_Bai
+-- @module AI.AI_BAI
 -- @image AI_Battlefield_Air_Interdiction.JPG
 
 

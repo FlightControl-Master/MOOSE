@@ -9,7 +9,7 @@
 --   * FlightControl : Rework to OO framework.
 --   * And many more
 --
--- @module Utils
+-- @module Utilities.Utils
 -- @image MOOSE.JPG
 
 

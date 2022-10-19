@@ -1,3 +1,6 @@
+--- **Functional** - Captures the class DETECTION_ZONES.
+-- @module Functional.DetectionZones
+
 do -- DETECTION_ZONES
 
   --- @type DETECTION_ZONES
@@ -40,27 +43,27 @@ do -- DETECTION_ZONES
     ClassName = "DETECTION_ZONES",
     DetectionZoneRange = nil,
   }
-  
-  
+
+
   --- DETECTION_ZONES constructor.
   -- @param #DETECTION_ZONES self
   -- @param Core.Set#SET_ZONE DetectionSetZone The @{Set} of ZONE_RADIUS.
   -- @param DCS#Coalition.side DetectionCoalition The coalition of the detection.
   -- @return #DETECTION_ZONES
   function DETECTION_ZONES:New( DetectionSetZone, DetectionCoalition )
-  
+
     -- Inherits from DETECTION_BASE
     local self = BASE:Inherit( self, DETECTION_BASE:New( DetectionSetZone ) ) -- #DETECTION_ZONES
-  
+
     self.DetectionSetZone = DetectionSetZone  -- Core.Set#SET_ZONE
     self.DetectionCoalition = DetectionCoalition
-    
+
     self._SmokeDetectedUnits = false
     self._FlareDetectedUnits = false
     self._SmokeDetectedZones = false
     self._FlareDetectedZones = false
     self._BoundDetectedZones = false
-    
+
     return self
   end
 

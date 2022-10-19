@@ -42,7 +42,7 @@
 --  * @{#UNIT.Find}(): Find a UNIT instance from the _DATABASE object using a DCS Unit object.
 --  * @{#UNIT.FindByName}(): Find a UNIT instance from the _DATABASE object using a DCS Unit name.
 --  
--- IMPORTANT: ONE SHOULD NEVER SANATIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).
+-- IMPORTANT: ONE SHOULD NEVER SANITIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).
 -- 
 -- ## DCS UNIT APIs
 -- 

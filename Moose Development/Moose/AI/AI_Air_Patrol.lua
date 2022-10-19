@@ -1,4 +1,4 @@
---- **AI** -- Models the process of A2G patrolling and engaging ground targets for airplanes and helicopters.
+--- **AI** - Models the process of A2G patrolling and engaging ground targets for airplanes and helicopters.
 --
 -- ===
 -- 
@@ -88,7 +88,7 @@
 -- 
 -- An optional @{Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_Cap#AI_AIR_PATROL.SetEngageZone}() to define that Zone.
+-- Use the method @{AI.AI_CAP#AI_AIR_PATROL.SetEngageZone}() to define that Zone.
 --  
 -- ===
 -- 

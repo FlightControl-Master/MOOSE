@@ -66,7 +66,7 @@
 -- you can board the cargo into the carrier `CargoCarrier`.
 -- Simple, isn't it? Told you, and this is only the beginning.
 -- 
--- The boarding, unboarding, loading, unloading of cargo is however something that is not meant to be coded manualy by mission designers.
+-- The boarding, unboarding, loading, unloading of cargo is however something that is not meant to be coded manually by mission designers.
 -- It would be too low-level and not end-user friendly to deal with cargo handling complexity.
 -- Things can become really complex if you want to make cargo being handled and behave in multiple scenarios.
 -- 
@@ -77,8 +77,8 @@
 -- 
 -- ## 3.1) AI Cargo handlers.
 -- 
---   - @{AI.AI_Cargo_APC} will create for you the capatility to make an APC group handle cargo.
---   - @{AI.AI_Cargo_Helicopter} will create for you the capatility to make a Helicopter group handle cargo.
+--   - @{AI.AI_Cargo_APC} will create for you the capability to make an APC group handle cargo.
+--   - @{AI.AI_Cargo_Helicopter} will create for you the capability to make a Helicopter group handle cargo.
 --   
 --   
 -- ## 3.2) AI Cargo transportation dispatchers.
@@ -86,7 +86,7 @@
 -- There are also dispatchers that make AI work together to transport cargo automatically!!!
 --   
 --   - @{AI.AI_Cargo_Dispatcher_APC} derived classes will create for your dynamic cargo handlers controlled by AI ground vehicle groups (APCs) to transport cargo between sites.
---   - @{AI.AI_Cargo_Dispatcher_Helicopters} derived classes will create for your dynamic cargo handlers controlled by AI helicpter groups to transport cargo between sites.
+--   - @{AI.AI_Cargo_Dispatcher_Helicopters} derived classes will create for your dynamic cargo handlers controlled by AI helicopter groups to transport cargo between sites.
 -- 
 -- ## 3.3) Cargo transportation tasking.
 --   
@@ -94,7 +94,7 @@
 --   
 --   - @{Tasking.Task_CARGO} derived classes will create for you cargo transportation tasks, that allow human players to interact with MOOSE cargo objects to complete tasks.
 -- 
--- Please refer to the documentation reflected within these modules to understand the detailed capabilties.
+-- Please refer to the documentation reflected within these modules to understand the detailed capabilities.
 -- 
 -- # 4) Cargo SETs.
 -- 
@@ -228,7 +228,7 @@
 --   `StaticName #CARGO(T=CargoTypeName,C=Category,RR=Range,NR=Range)`
 -- 
 --    * **T=** Provide a text that contains the type name of the cargo object. This type name can be used to filter cargo within a SET_CARGO object.
---    * **C=** Provide either `CRATE` or `SLING` to have this static created as a CARGO_CRATE or CARGO_SLINGLOAD respectivly.
+--    * **C=** Provide either `CRATE` or `SLING` to have this static created as a CARGO_CRATE or CARGO_SLINGLOAD respectively.
 --    * **RR=** Provide the minimal range in meters when the report to the carrier, and board to the carrier.
 --      Note that this option is optional, so can be omitted. The default value of the RR is 250 meters.
 --    * **NR=** Provide the maximum range in meters when the cargo units will be boarded within the carrier during boarding.

@@ -6,7 +6,7 @@
 --
 -- ### Author: **TAW CougarNL**, *funkyfranky*
 --
--- @module Utilities.PROFILER
+-- @module Utilities.Profiler
 -- @image Utils_Profiler.jpg
 
 --- PROFILER class.

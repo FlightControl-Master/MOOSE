@@ -1,6 +1,6 @@
---- **AI** -- Models the process of air to ground SEAD engagement for airplanes and helicopters.
+--- **AI** - Models the process of air to ground SEAD engagement for airplanes and helicopters.
 --
--- This is a class used in the @{AI_A2G_Dispatcher}.
+-- This is a class used in the @{AI.AI_A2G_Dispatcher}.
 -- 
 -- ===
 -- 
@@ -67,7 +67,7 @@
 -- 
 -- An optional @{Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_Cap#AI_A2G_SEAD.SetEngageZone}() to define that Zone.
+-- Use the method @{AI.AI_CAP#AI_CAP_ZONE.SetEngageZone}() to define that Zone. -- TODO: Documentation. Check that this is actually correct. The originally referenced class does not exist.
 --  
 -- ===
 -- 
@@ -75,8 +75,6 @@
 AI_A2G_SEAD = {
   ClassName = "AI_A2G_SEAD",
 }
-
-
 
 --- Creates a new AI_A2G_SEAD object
 -- @param #AI_A2G_SEAD self

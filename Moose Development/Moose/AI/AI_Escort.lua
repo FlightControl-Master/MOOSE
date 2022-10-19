@@ -1,4 +1,4 @@
---- **Functional** -- Taking the lead of AI escorting your flight or of other AI.
+--- **Functional** - Taking the lead of AI escorting your flight or of other AI.
 -- 
 -- ===
 -- 

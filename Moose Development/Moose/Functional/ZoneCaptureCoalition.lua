@@ -1,4 +1,4 @@
---- **Functional** -- Models the process to zone guarding and capturing.
+--- **Functional** - Models the process to zone guarding and capturing.
 --
 -- ===
 -- 

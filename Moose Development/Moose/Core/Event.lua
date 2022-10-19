@@ -932,7 +932,7 @@ do -- Event Creation
 
   --- Creation of a ZoneGoal Deletion Event.
   -- @param #EVENT self
-  -- @param Core.ZoneGoal#ZONE_GOAL ZoneGoal The ZoneGoal created.
+  -- @param Functional.ZoneGoal#ZONE_GOAL ZoneGoal The ZoneGoal created.
   function EVENT:CreateEventDeleteZoneGoal( ZoneGoal )
     self:F( { ZoneGoal } )
 

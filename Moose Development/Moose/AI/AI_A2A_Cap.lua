@@ -1,4 +1,6 @@
---- **AI** -- (R2.2) - Models the process of Combat Air Patrol (CAP) for airplanes.
+--- **AI** - (R2.2) - Models the process of Combat Air Patrol (CAP) for airplanes.
+--
+-- This is a class used in the @{AI.AI_A2A_Dispatcher}.
 --
 -- ===
 --
@@ -12,7 +14,6 @@
 --- @type AI_A2A_CAP
 -- @extends AI.AI_Air_Patrol#AI_AIR_PATROL
 -- @extends AI.AI_Air_Engage#AI_AIR_ENGAGE
-
 
 --- The AI_A2A_CAP class implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group}
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
@@ -81,7 +82,7 @@
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- The range can be beyond or smaller than the range of the Patrol Zone.
 -- The range is applied at the position of the AI.
--- Use the method @{AI.AI_CAP#AI_A2A_CAP.SetEngageRange}() to define that range.
+-- Use the method @{#AI_A2A_CAP.SetEngageRange}() to define that range.
 --
 -- ## 4. Set the Zone of Engagement
 --
@@ -89,7 +90,7 @@
 --
 -- An optional @{Zone} can be set,
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_Cap#AI_A2A_CAP.SetEngageZone}() to define that Zone.
+-- Use the method @{#AI_A2A_CAP.SetEngageZone}() to define that Zone.
 --
 -- ===
 --

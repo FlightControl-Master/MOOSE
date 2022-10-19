@@ -1,4 +1,4 @@
---- **Functional** -- Make SAM sites execute evasive and defensive behaviour when being fired upon.
+--- **Functional** - Make SAM sites execute evasive and defensive behaviour when being fired upon.
 --
 -- ===
 --

@@ -1,4 +1,4 @@
---- **Functional** -- Keep airbases clean of crashing or colliding airplanes, and kill missiles when being fired at airbases.
+--- **Functional** - Keep airbases clean of crashing or colliding airplanes, and kill missiles when being fired at airbases.
 --
 -- ===
 --

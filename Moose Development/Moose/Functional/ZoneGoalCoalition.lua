@@ -1,4 +1,4 @@
---- **Functional (WIP)** -- Base class that models processes to achieve goals involving a Zone for a Coalition.
+--- **Functional (WIP)** - Base class that models processes to achieve goals involving a Zone for a Coalition.
 --
 -- ===
 --

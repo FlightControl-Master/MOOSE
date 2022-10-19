@@ -1,6 +1,6 @@
---- **AI** -- Models the process of air to ground engagement for airplanes and helicopters.
+--- **AI** - Models the process of air to ground engagement for airplanes and helicopters.
 --
--- This is a class used in the @{AI_A2G_Dispatcher}.
+-- This is a class used in the @{AI.AI_A2G_Dispatcher}.
 -- 
 -- ===
 -- 
@@ -67,7 +67,7 @@
 -- 
 -- An optional @{Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_Cap#AI_AIR_ENGAGE.SetEngageZone}() to define that Zone.
+-- Use the method @{AI.AI_CAP#AI_AIR_ENGAGE.SetEngageZone}() to define that Zone.
 --  
 -- ===
 -- 
