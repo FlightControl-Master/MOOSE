@@ -309,7 +309,7 @@ do -- Zones
 
         self:I(string.format("Register ZONE: %s (Polygon, Quad)", ZoneName))
 
-        Zone=ZONE_POLYGON_BASE:New(ZoneName, ZoneData.verticies)
+        Zone=ZONE_POLYGON:NewFromPointsArray(ZoneName, ZoneData.verticies)
 
         --for i,vec2 in pairs(ZoneData.verticies) do
         --  local coord=COORDINATE:NewFromVec2(vec2)

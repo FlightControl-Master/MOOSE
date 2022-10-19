@@ -159,12 +159,69 @@ end
 -- to find the correct object.
 --@param #SCENERY self
 --@param #string ZoneName The name of the scenery zone as created with a right-click on the map in the mission editor and select "assigned to...". Can be handed over as ZONE object.
---@return #SCENERY Scenery Object or `nil` if it cannot be found
+--@return #SCENERY First found Scenery Object or `nil` if it cannot be found
 function SCENERY:FindByZoneName( ZoneName )
-  local zone = ZoneName
+  local zone = ZoneName -- Core.Zone#ZONE
   if type(ZoneName) == "string" then
-  zone = ZONE:FindByName(ZoneName)
+  zone = ZONE:FindByName(ZoneName) 
   end
   local _id = zone:GetProperty('OBJECT ID')
-  return self:FindByName(_id, zone:GetCoordinate())
+  if not _id then
+    -- this zone has no object ID
+    BASE:E("**** Zone without object ID: "..ZoneName.." | Type: "..tostring(zone.ClassName))
+    if string.find(zone.ClassName,"POLYGON") then
+      zone:Scan({Object.Category.SCENERY})
+      local scanned = zone:GetScannedScenery()
+      for _,_scenery in (scanned) do
+        local scenery = _scenery -- Wrapper.Scenery#SCENERY
+        if scenery:IsAlive() then
+          return scenery
+        end
+      end
+      return nil
+    else
+      local coordinate = zone:GetCoordinate()
+      local scanned = coordinate:ScanScenery()
+      for _,_scenery in (scanned) do
+        local scenery = _scenery -- Wrapper.Scenery#SCENERY
+        if scenery:IsAlive() then
+          return scenery
+        end
+      end
+      return nil
+    end
+  else
+    return self:FindByName(_id, zone:GetCoordinate())
+  end
+end
+
+--- Scan and find all SCENERY objects from a zone by zone-name. Since SCENERY isn't registered in the Moose database (just too many objects per map), we need to do a scan first
+-- to find the correct object.
+--@param #SCENERY self
+--@param #string ZoneName The name of the zone, can be handed as ZONE_RADIUS or ZONE_POLYGON object
+--@return #table of SCENERY Objects, or `nil` if nothing found
+function SCENERY:FindAllByZoneName( ZoneName )
+  local zone = ZoneName -- Core.Zone#ZONE_RADIUS
+  if type(ZoneName) == "string" then
+    zone = ZONE:FindByName(ZoneName) 
+  end
+  local _id = zone:GetProperty('OBJECT ID')
+  if not _id then
+    -- this zone has no object ID
+    --BASE:E("**** Zone without object ID: "..ZoneName.." | Type: "..tostring(zone.ClassName))
+    zone:Scan({Object.Category.SCENERY})
+    local scanned = zone:GetScannedSceneryObjects()
+    if #scanned > 0 then
+      return scanned
+    else
+      return nil
+    end
+  else
+    local obj = self:FindByName(_id, zone:GetCoordinate())
+    if obj then
+      return {obj}
+    else
+      return nil
+    end 
+  end
 end

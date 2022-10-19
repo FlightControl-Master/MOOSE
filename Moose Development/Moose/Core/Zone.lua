@@ -934,6 +934,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
   self.ScanData = {}
   self.ScanData.Coalitions = {}
   self.ScanData.Scenery = {}
+  self.ScanData.SceneryTable = {}
   self.ScanData.Units = {}
 
   local ZoneCoord = self:GetCoordinate()
@@ -996,8 +997,10 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
       if ObjectCategory == Object.Category.SCENERY then
         local SceneryType = ZoneObject:getTypeName()
         local SceneryName = ZoneObject:getName()
+        --BASE:I("SceneryType "..SceneryType.."SceneryName"..SceneryName)
         self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
         self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( SceneryName, ZoneObject )
+        table.insert(self.ScanData.SceneryTable,self.ScanData.Scenery[SceneryType][SceneryName] )
         self:T( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
       end
 
@@ -1137,11 +1140,29 @@ end
 
 --- Get scanned scenery table
 -- @param #ZONE_RADIUS self
--- @return #table Table of DCS scenery objects.
+-- @return #table Structured object table: [type].[name].SCENERY
 function ZONE_RADIUS:GetScannedScenery()
   return self.ScanData.Scenery
 end
 
+--- Get table of scanned scenery objects
+-- @param #ZONE_RADIUS self
+-- @return #table Table of SCENERY objects.
+function ZONE_RADIUS:GetScannedSceneryObjects()
+  return self.ScanData.SceneryTable
+end
+
+--- Get set of scanned scenery objects
+-- @param #ZONE_RADIUS self
+-- @return #table Table of Wrapper.Scenery#SCENERY scenery objects.
+function ZONE_RADIUS:GetScannedSetScenery()
+  local scenery = SET_SCENERY:New()
+  local objects = self:GetScannedSceneryObjects()
+  for _,_obj in pairs (objects) do
+    scenery:AddScenery(_obj)
+  end
+  return scenery
+end
 
 --- Is All in Zone of Coalition?
 -- Check if only the specifed coalition is inside the zone and noone else.
@@ -2452,14 +2473,28 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
   self.ScanData = {}
   self.ScanData.Coalitions = {}
   self.ScanData.Scenery = {}
+  self.ScanData.SceneryTable = {}
   self.ScanData.Units = {}
-
+  
+  local vectors = self:GetBoundingSquare()
+  
+  local minVec3 = {x=vectors.x1, y=0, z=vectors.y1}
+  local maxVec3 = {x=vectors.x2, y=0, z=vectors.y2}
+  
+  local VolumeBox = {
+   id = world.VolumeType.BOX,
+   params = {
+     min = minVec3,
+     max = maxVec3
+   }
+ }
+  
   local function EvaluateZone( ZoneObject )
 
     if ZoneObject then
 
       local ObjectCategory = ZoneObject:getCategory()
-
+      
       if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive() ) or (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
 
         local CoalitionDCSUnit = ZoneObject:getCoalition()
@@ -2494,16 +2529,16 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
         end
       end
       
-      --[[
-      -- no scenery possible at the moment
+      -- trying with box search
       if ObjectCategory == Object.Category.SCENERY then
         local SceneryType = ZoneObject:getTypeName()
         local SceneryName = ZoneObject:getName()
         self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
         self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( SceneryName, ZoneObject )
+        table.insert(self.ScanData.SceneryTable,self.ScanData.Scenery[SceneryType][SceneryName])
         self:T( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
       end
-      --]]
+
     end
 
     return true
@@ -2528,6 +2563,18 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
       EvaluateZone(DCS)
     end
   )
+  
+  local searchscenery = false
+  for _,_type in pairs(ObjectCategories) do
+    if _type == Object.Category.SCENERY then
+      searchscenery = true
+    end
+  end
+  
+  if searchscenery then
+    -- Search objects.
+    world.searchObjects({Object.Category.SCENERY}, VolumeBox, EvaluateZone )
+  end
   
 end
 
@@ -2643,18 +2690,37 @@ function ZONE_POLYGON:GetScannedCoalition( Coalition )
   end
 end
 
---- Get scanned scenery type (currently not implemented in ZONE_POLYGON)
+--- Get scanned scenery types
 -- @param #ZONE_POLYGON self
 -- @return #table Table of DCS scenery type objects.
 function ZONE_POLYGON:GetScannedSceneryType( SceneryType )
   return self.ScanData.Scenery[SceneryType]
 end
 
---- Get scanned scenery table (currently not implemented in ZONE_POLYGON)
+--- Get scanned scenery table
 -- @param #ZONE_POLYGON self
--- @return #table Table of DCS scenery objects.
+-- @return #table Table of Wrapper.Scenery#SCENERY scenery objects.
+function ZONE_POLYGON:GetScannedSceneryObjects()
+  return self.ScanData.SceneryTable
+end
+
+--- Get scanned scenery table
+-- @param #ZONE_POLYGON self
+-- @return #table Structured table of [type].[name].Wrapper.Scenery#SCENERY scenery objects.
 function ZONE_POLYGON:GetScannedScenery()
   return self.ScanData.Scenery
+end
+
+--- Get scanned set of scenery objects
+-- @param #ZONE_POLYGON self
+-- @return #table Table of Wrapper.Scenery#SCENERY scenery objects.
+function ZONE_POLYGON:GetScannedSetScenery()
+  local scenery = SET_SCENERY:New()
+  local objects = self:GetScannedSceneryObjects()
+  for _,_obj in pairs (objects) do
+    scenery:AddScenery(_obj)
+  end
+  return scenery
 end
 
 --- Is All in Zone of Coalition?

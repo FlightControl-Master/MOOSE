@@ -6792,20 +6792,36 @@ do -- SET_SCENERY
   -- 		mysceneryset = SET_SCENERY:New(ZoneSet)
   function SET_SCENERY:New(ZoneSet)
 	
-	local zoneset = {}	
-    -- Inherits from BASE
-  local self = BASE:Inherit( self, SET_BASE:New( zoneset ) ) -- Core.Set#SET_SCENERY
-	
-	local zonenames = {}
-	for _,_zone in pairs(ZoneSet.Set) do
-		table.insert(zonenames,_zone:GetName())
-	end
-	
-	self:AddSceneryByName(zonenames)
-	
-  return self
+  	local zoneset = {}	
+      -- Inherits from BASE
+    local self = BASE:Inherit( self, SET_BASE:New( zoneset ) ) -- Core.Set#SET_SCENERY
+  	
+  	local zonenames = {}
+  	
+  	if ZoneSet then
+    	for _,_zone in pairs(ZoneSet.Set) do
+    	   self:I("Zone type handed: "..tostring(_zone.ClassName))
+    		table.insert(zonenames,_zone:GetName())
+    	end  	
+    	self:AddSceneryByName(zonenames)
+  	end
+  	
+    return self
   end
-
+  
+  --- Creates a new SET_SCENERY object. Scenery is **not** auto-registered in the Moose database, there are too many objects on each map. Hence we need to find them first. For this we scan the zone. 
+  -- @param #SET_SCENERY self
+  -- @param Core.Zone#ZONE Zone The zone to be scanned. Can be a ZONE_RADIUS (round) or a ZONE_POLYGON (e.g. Quad-Point)
+  -- @return #SET_SCENERY
+  function SET_SCENERY:NewFromZone(Zone)
+    local zone = Zone -- Core.Zone#ZONE_POLYGON
+    if type(Zone) == "string" then
+      zone = ZONE:FindByName(Zone)
+    end
+    zone:Scan({Object.Category.SCENERY})
+    return zone:GetScannedSetScenery()
+  end
+  
   --- Add SCENERY(s) to SET_SCENERY.
   -- @param #SET_SCENERY self
   -- @param #string AddScenery A single SCENERY.
