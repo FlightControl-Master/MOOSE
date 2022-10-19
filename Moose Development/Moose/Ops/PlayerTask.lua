@@ -567,7 +567,7 @@ function PLAYERTASK:IlluminateTarget(Power,Height)
   if self.Target then
     local coordinate = self.Target:GetAverageCoordinate()
     if coordinate then
-    local bcoord = COORDINATE:NewFromVec2( coordinate:GetVec2(), Height )
+	    local bcoord = COORDINATE:NewFromVec2( coordinate:GetVec2(), Height )
       bcoord:IlluminationBomb(Power)
     end
   end
@@ -888,7 +888,6 @@ do
 -- @field #boolean usecluster
 -- @field #number ClusterRadius
 -- @field #string MenuName
--- @field Core.Menu#MENU_MISSION MenuParent
 -- @field #boolean NoScreenOutput
 -- @field #number TargetRadius
 -- @field #boolean UseWhiteList
@@ -919,6 +918,7 @@ do
 -- @field #boolean buddylasing
 -- @field Ops.PlayerRecce#PLAYERRECCE PlayerRecce
 -- @field #number Coalition
+-- @field Core.Menu#MENU_MISSION MenuParent
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1207,7 +1207,6 @@ PLAYERTASKCONTROLLER = {
   PlayerMenu         =   {},
   usecluster         =   false,
   MenuName           =   nil,
-  MenuParent         =   nil,
   ClusterRadius      =   0.5,
   NoScreenOutput     =   false,
   TargetRadius       =   500,
@@ -1231,6 +1230,7 @@ PLAYERTASKCONTROLLER = {
   buddylasing        = false,
   PlayerRecce        = nil,
   Coalition          = nil,
+  MenuParent         = nil,
   }
 
 ---
@@ -1397,7 +1397,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.43"
+PLAYERTASKCONTROLLER.version="0.1.44"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -1438,7 +1438,6 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.taskinfomenu = false
   self.activehasinfomenu = false
   self.MenuName = nil
-  self.MenuParent = nil
   self.menuitemlimit = 5
   self.holdmenutime = 30
   
@@ -1629,7 +1628,7 @@ end
 -- @param #string text Original text.
 -- @return #string Spoken text.
 function PLAYERTASKCONTROLLER:_GetTextForSpeech(text)
-  
+ self:T(self.lid.."_GetTextForSpeech")
   -- Space out numbers.
   text=string.gsub(text,"%d","%1 ")
   -- get rid of leading or trailing spaces
@@ -2783,7 +2782,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
     
     -- Task Report   
     text = text .. clienttxt
-    if task:HasFreetext() then
+    if task:HasFreetext() and not ( task.Type == AUFTRAG.Type.CTLD or task.Type == AUFTRAG.Type.CSAR) then
       local brieftxt = self.gettext:GetEntry("BRIEFING",self.locale)
       text = text .. string.format("\n%s: ",brieftxt)..task:GetFreetext()
     end
@@ -3022,7 +3021,6 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
         local taskings = self.gettext:GetEntry("MENUTASKING",self.locale)
         local longname = self.Name..taskings..self.Type
         local menuname = self.MenuName or longname
-        local menuparent = self.MenuParent or nil
         local playerhastask = false
         
         if self:_CheckPlayerHasTask(playername) and not fromsuccess then playerhastask = true end
@@ -3056,7 +3054,7 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
           end
         else
           -- 1) new player#
-          topmenu = MENU_GROUP_DELAYED:New(group,menuname,menuparent)
+          topmenu = MENU_GROUP_DELAYED:New(group,menuname,self.MenuParent)
           self.PlayerMenu[playername] = topmenu
           self.PlayerMenu[playername]:SetTag(timer.getAbsTime())
         end
@@ -3234,12 +3232,20 @@ end
 --- [User] Set the top menu name to a custom string.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string Name The name to use as the top menu designation.
--- @param Core.Menu#MENU_MISSION ParentMenu (optional) The parent menu class of the PLAYERTASKCONTOLLER menu. Default is nil. If nil, will use the root DCS menu.
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:SetupMenu(Name, ParentMenu)
- self:T(self.lid.."SetupMenu: "..Name)
+function PLAYERTASKCONTROLLER:SetMenuName(Name)
+ self:T(self.lid.."SetMenuName: "..Name)
  self.MenuName = Name
- self.MenuParent = ParentMenu or nil
+ return self
+end
+
+--- [User] Set the top menu to be a sub-menu of another MENU entry.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Menu#MENU_MISSION Menu
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetParentName(Menu)
+ self:T(self.lid.."SetParentName")
+ self.MenuParent = Menu
  return self
 end
 
