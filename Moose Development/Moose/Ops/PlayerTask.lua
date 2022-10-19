@@ -1206,6 +1206,7 @@ PLAYERTASKCONTROLLER = {
   PlayerMenu         =   {},
   usecluster         =   false,
   MenuName           =   nil,
+  MenuParent         =   nil,
   ClusterRadius      =   0.5,
   NoScreenOutput     =   false,
   TargetRadius       =   500,
@@ -1436,6 +1437,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.taskinfomenu = false
   self.activehasinfomenu = false
   self.MenuName = nil
+  self.MenuParent = nil
   self.menuitemlimit = 5
   self.holdmenutime = 30
   
@@ -3019,6 +3021,7 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
         local taskings = self.gettext:GetEntry("MENUTASKING",self.locale)
         local longname = self.Name..taskings..self.Type
         local menuname = self.MenuName or longname
+        local menuparent = self.MenuParent or nil
         local playerhastask = false
         
         if self:_CheckPlayerHasTask(playername) and not fromsuccess then playerhastask = true end
@@ -3052,7 +3055,7 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
           end
         else
           -- 1) new player#
-          topmenu = MENU_GROUP_DELAYED:New(group,menuname,nil)
+          topmenu = MENU_GROUP_DELAYED:New(group,menuname,menuparent)
           self.PlayerMenu[playername] = topmenu
           self.PlayerMenu[playername]:SetTag(timer.getAbsTime())
         end
@@ -3230,10 +3233,12 @@ end
 --- [User] Set the top menu name to a custom string.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string Name The name to use as the top menu designation.
+-- @param #MENU_MISSION ParentMenu Optional. The parent menu class of the PLAYERTASKCONTOLLER menu. Default is nil. If nil, will use the root DCS menu.
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:SetMenuName(Name)
- self:T(self.lid.."SetMenuName: "..Name)
+function PLAYERTASKCONTROLLER:SetupMenu(Name, ParentMenu)
+ self:T(self.lid.."SetupMenu: "..Name)
  self.MenuName = Name
+ self.MenuParent = ParentMenu or nil
  return self
 end
 
