@@ -2347,7 +2347,7 @@ function ZONE_POLYGON_BASE:Boundary(Coalition, Color, Radius, Alpha, Segments, C
             for Segment = 0, Segments do
                 local PointX = self._.Polygon[i].x + ( Segment * DeltaX / Segments )
                 local PointY = self._.Polygon[i].y + ( Segment * DeltaY / Segments )
-                ZONE_RADIUS:New( "Zone", {x = PointX, y = PointY}, Radius ):DrawZone(Coalition, Color, 1, Color, Alpha, nil, true)
+                --ZONE_RADIUS:New( "Zone", {x = PointX, y = PointY}, Radius ):DrawZone(Coalition, Color, 1, Color, Alpha, nil, true)
             end
         end
         j = i
