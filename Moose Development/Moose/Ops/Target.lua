@@ -4,11 +4,13 @@
 --
 --    * Manages target, number alive, life points, damage etc.
 --    * Events when targets are damaged or destroyed
---    * Various target objects: UNIT, GROUP, STATIC, AIRBASE, COORDINATE, SET_GROUP, SET_UNIT, SET_SCENERY
+--    * Various target objects: UNIT, GROUP, STATIC, AIRBASE, COORDINATE, SET_GROUP, SET_UNIT
 --
 -- ===
 --
 -- ### Author: **funkyfranky**
+-- ### Additions: **applevangelist**
+-- 
 -- @module Ops.Target
 -- @image OPS_Target.png
 
@@ -114,9 +116,11 @@ TARGET.Category={
 -- @type TARGET.ObjectStatus
 -- @field #string ALIVE Object is alive.
 -- @field #string DEAD Object is dead.
+-- @field #string DAMAGED Object is damaged.
 TARGET.ObjectStatus={
   ALIVE="Alive",
   DEAD="Dead",
+  DAMAGED="Damaged",
 }
 
 --- Resource.
@@ -147,7 +151,7 @@ _TARGETID=0
 
 --- TARGET class version.
 -- @field #string version
-TARGET.version="0.5.4"
+TARGET.version="0.5.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -204,7 +208,7 @@ function TARGET:New(TargetObject)
   self:AddTransition("*",                  "ObjectDestroyed",     "*")           -- A target object was destroyed.
   self:AddTransition("*",                  "ObjectDead",          "*")           -- A target object is dead (destroyed or despawned).
   
-  self:AddTransition("*",                  "Damaged",             "*")           -- Target was damaged.
+  self:AddTransition("*",                  "Damaged",             "Damaged")     -- Target was damaged.
   self:AddTransition("*",                  "Destroyed",           "Dead")        -- Target was completely destroyed.
   self:AddTransition("*",                  "Dead",                "Dead")        -- Target is dead. Could be destroyed or despawned.
 
@@ -237,7 +241,51 @@ function TARGET:New(TargetObject)
   -- @function [parent=#TARGET] __Status
   -- @param #TARGET self
   -- @param #number delay Delay in seconds.
-
+  
+  --- On After "ObjectDamaged" event. A (sub-) target object has been damaged, e.g. a UNIT of a GROUP, or an object of a SET
+  -- @function [parent=#TARGET] OnAfterObjectDamaged
+  -- @param #TARGET self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #TARGET.Object Target Target object.
+  
+  --- On After "ObjectDestroyed" event. A (sub-) target object has been destroyed, e.g. a UNIT of a GROUP, or an object of a SET
+  -- @function [parent=#TARGET] OnAfterObjectDestroyed
+  -- @param #TARGET self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #TARGET.Object Target Target object.
+  
+  --- On After "ObjectDead" event. A (sub-) target object is dead, e.g. a UNIT of a GROUP, or an object of a SET
+  -- @function [parent=#TARGET] OnAfterObjectDead
+  -- @param #TARGET self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #TARGET.Object Target Target object.
+  
+    --- On After "Damaged" event. The (whole) target object has been damaged.
+  -- @function [parent=#TARGET] OnAfterDamaged
+  -- @param #TARGET self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "ObjectDestroyed" event. The (whole) target object has been destroyed.
+  -- @function [parent=#TARGET] OnAfterDestroyed
+  -- @param #TARGET self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "ObjectDead" event. The (whole) target object is dead.
+  -- @function [parent=#TARGET] OnAfterDead
+  -- @param #TARGET self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
 
   -- Start.
   self:__Start(-1)
@@ -261,7 +309,6 @@ end
 -- * SET_UNIT
 -- * SET_STATIC
 -- * SET_OPSGROUP
--- * SET_SCENERY
 -- 
 -- @param #TARGET self
 -- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC, AIRBASE or COORDINATE.
@@ -304,6 +351,7 @@ function TARGET:AddObject(Object)
     
   end
 
+  return self
 end
 
 --- Set priority of the target.
@@ -502,7 +550,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function TARGET:onafterStart(From, Event, To)
-
+  self:T({From, Event, To})
   -- Short info.
   local text=string.format("Starting Target")
   self:T(self.lid..text)
@@ -512,6 +560,7 @@ function TARGET:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.RemoveUnit, self.OnEventUnitDeadOrLost)
 
   self:__Status(-1)
+  return self
 end
 
 --- On after "Status" event.
@@ -521,7 +570,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function TARGET:onafterStatus(From, Event, To)
-
+  self:T({From, Event, To})
   -- FSM state.
   local fsmstate=self:GetState()
     
@@ -530,18 +579,29 @@ function TARGET:onafterStatus(From, Event, To)
   for i,_target in pairs(self.targets) do
     local target=_target --#TARGET.Object
     
+    -- old life
     local life=target.Life
-    
+    -- curr life    
     target.Life=self:GetTargetLife(target)
     
+    -- TODO: special case ED bug > life **increases** after hits on SCENERY
+    if target.Life > target.Life0 then
+      local delta = 2*(target.Life-target.Life0)
+      target.Life0 = target.Life0 + delta
+      life = target.Life0 
+      self.life0 = self.life0+delta
+    end
+    
     if target.Life<life then
-      self:ObjectDamaged(target)
+      target.Status = TARGET.ObjectStatus.DAMAGED
+      self:ObjectDamaged(target)      
       damaged=true
     end
     
-    if life==0 then
-      self:I(self.lid..string.format("FF life is zero but no object dead event fired ==> object dead now for target object %s!", tostring(target.Name)))
+    if life < 1 and (not target.Status == TARGET.ObjectStatus.DEAD) then
+      self:E(self.lid..string.format("FF life is zero but no object dead event fired ==> object dead now for target object %s!", tostring(target.Name)))
       self:ObjectDead(target)
+      damaged = true
     end
     
   end
@@ -575,6 +635,7 @@ function TARGET:onafterStatus(From, Event, To)
   if self:IsAlive() then
     self:__Status(-self.TStatus)
   end
+  return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -588,10 +649,11 @@ end
 -- @param #string To To state.
 -- @param #TARGET.Object Target Target object.
 function TARGET:onafterObjectDamaged(From, Event, To, Target)
-
+  self:T({From, Event, To})
   -- Debug info.
   self:T(self.lid..string.format("Object %s damaged", Target.Name))
-
+  
+  return self
 end
 
 --- On after "ObjectDestroyed" event.
@@ -601,7 +663,7 @@ end
 -- @param #string To To state.
 -- @param #TARGET.Object Target Target object.
 function TARGET:onafterObjectDestroyed(From, Event, To, Target)
-
+  self:T({From, Event, To})
   -- Debug message.
   self:T(self.lid..string.format("Object %s destroyed", Target.Name))
   
@@ -611,6 +673,7 @@ function TARGET:onafterObjectDestroyed(From, Event, To, Target)
   -- Call object dead event.
   self:ObjectDead(Target)
   
+  return self
 end
 
 --- On after "ObjectDead" event.
@@ -620,7 +683,7 @@ end
 -- @param #string To To state.
 -- @param #TARGET.Object Target Target object.
 function TARGET:onafterObjectDead(From, Event, To, Target)
-
+  self:T({From, Event, To})
   -- Debug message.
   self:T(self.lid..string.format("Object %s dead", Target.Name))
 
@@ -653,8 +716,11 @@ function TARGET:onafterObjectDead(From, Event, To, Target)
       self:Dead()
     
     end
+  else
+    self:Damaged()
   end
-
+  
+  return self
 end
 
 --- On after "Damaged" event.
@@ -663,9 +729,11 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function TARGET:onafterDamaged(From, Event, To)
-
+  self:T({From, Event, To})
+  
   self:T(self.lid..string.format("TARGET damaged"))
-
+  
+  return self
 end
 
 --- On after "Destroyed" event.
@@ -674,11 +742,14 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function TARGET:onafterDestroyed(From, Event, To)
-
+  
+  self:T({From, Event, To})
+  
   self:T(self.lid..string.format("TARGET destroyed"))
   
   self:Dead()
-
+  
+  return self
 end
 
 --- On after "Dead" event.
@@ -687,9 +758,11 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function TARGET:onafterDead(From, Event, To)
-
+  self:T({From, Event, To})
+  
   self:T(self.lid..string.format("TARGET dead"))
-
+  
+  return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -707,7 +780,7 @@ function TARGET:OnEventUnitDeadOrLost(EventData)
   if self:IsElement(Name) and not self:IsCasualty(Name) then
   
     -- Debug info.
-    self:T3(self.lid..string.format("EVENT ID=%d: Unit %s dead or lost!", EventData.id, tostring(Name)))
+    self:T(self.lid..string.format("EVENT ID=%d: Unit %s dead or lost!", EventData.id, tostring(Name)))
     
     -- Add to the list of casualties.
     table.insert(self.casualties, Name)
@@ -736,15 +809,19 @@ function TARGET:OnEventUnitDeadOrLost(EventData)
 
           -- Debug message.
           self:T2(self.lid..string.format("EVENT ID=%d: target %s dead/lost ==> destroyed", EventData.id, tostring(target.Name)))
-    
+          
+          target.Life = 0
+          
           -- Trigger object destroyed event.
           self:ObjectDestroyed(target)
-        
+          
         else
         
           -- Debug message.
           self:T2(self.lid..string.format("EVENT ID=%d: target %s removed ==> dead", EventData.id, tostring(target.Name)))
-    
+          
+          target.Life = 0
+          
           -- Trigger object dead event.
           self:ObjectDead(target)
         
@@ -755,7 +832,7 @@ function TARGET:OnEventUnitDeadOrLost(EventData)
     end -- Event belongs to this TARGET 
     
   end
-
+  return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -764,7 +841,7 @@ end
 
 --- Create target data from a given object.
 -- @param #TARGET self
--- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC, AIRBASE or COORDINATE.
+-- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC, SCENERY, AIRBASE or COORDINATE.
 function TARGET:_AddObject(Object)
 
   local target={}  --#TARGET.Object
@@ -848,8 +925,8 @@ function TARGET:_AddObject(Object)
     
     target.Coordinate=scenery:GetCoordinate()
 
-    target.Life0=1
-    target.Life=1
+    target.Life0=scenery:GetLife0()
+    target.Life=scenery:GetLife()
     
     target.N0=target.N0+1
     
@@ -922,7 +999,8 @@ function TARGET:_AddObject(Object)
   if self.category==nil then
     self.category=self:GetTargetCategory(target)
   end
-
+  
+  return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -991,8 +1069,9 @@ function TARGET:GetTargetLife(Target)
 
   elseif Target.Type==TARGET.ObjectType.SCENERY then
   
-    if Target.Status==TARGET.ObjectStatus.ALIVE then
-      return 1
+    if Target.Object and Target.Object:IsAlive()  then
+      local life = Target.Object:GetLife()
+      return life
     else
       return 0
     end
@@ -1016,7 +1095,8 @@ function TARGET:GetTargetLife(Target)
   else
     self:E("ERROR: unknown target object type in GetTargetLife!")
   end
-
+  
+  return self
 end
 
 --- Get current life points.
@@ -1091,7 +1171,8 @@ function TARGET:GetTargetThreatLevelMax(Target)
   else
     self:E("ERROR: unknown target object type in GetTargetThreatLevel!")
   end
-
+  
+  return self
 end
 
 
@@ -1558,7 +1639,7 @@ function TARGET:CountObjectives(Target)
 
   elseif Target.Type==TARGET.ObjectType.SCENERY then
   
-    if Target.Status==TARGET.ObjectStatus.ALIVE then
+    if Target.Status~=TARGET.ObjectStatus.DEAD then
       N=N+1
     end
     
@@ -1630,7 +1711,7 @@ function TARGET:IsCasualty(Name)
   end
 
   for _,name in pairs(self.casualties) do
-    if name==Name then
+    if tostring(name)==tostring(Name) then
       return true
     end
   end
