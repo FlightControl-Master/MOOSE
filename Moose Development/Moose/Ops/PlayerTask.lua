@@ -567,7 +567,7 @@ function PLAYERTASK:IlluminateTarget(Power,Height)
   if self.Target then
     local coordinate = self.Target:GetAverageCoordinate()
     if coordinate then
-    local bcoord = COORDINATE:NewFromVec2( coordinate:GetVec2(), Height )
+	    local bcoord = COORDINATE:NewFromVec2( coordinate:GetVec2(), Height )
       bcoord:IlluminationBomb(Power)
     end
   end
@@ -918,6 +918,7 @@ do
 -- @field #boolean buddylasing
 -- @field Ops.PlayerRecce#PLAYERRECCE PlayerRecce
 -- @field #number Coalition
+-- @field Core.Menu#MENU_MISSION MenuParent
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1229,6 +1230,7 @@ PLAYERTASKCONTROLLER = {
   buddylasing        = false,
   PlayerRecce        = nil,
   Coalition          = nil,
+  MenuParent         = nil,
   }
 
 ---
@@ -1395,7 +1397,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.43"
+PLAYERTASKCONTROLLER.version="0.1.44"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -3052,7 +3054,7 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
           end
         else
           -- 1) new player#
-          topmenu = MENU_GROUP_DELAYED:New(group,menuname,nil)
+          topmenu = MENU_GROUP_DELAYED:New(group,menuname,self.MenuParent)
           self.PlayerMenu[playername] = topmenu
           self.PlayerMenu[playername]:SetTag(timer.getAbsTime())
         end
@@ -3234,6 +3236,16 @@ end
 function PLAYERTASKCONTROLLER:SetMenuName(Name)
  self:T(self.lid.."SetMenuName: "..Name)
  self.MenuName = Name
+ return self
+end
+
+--- [User] Set the top menu to be a sub-menu of another MENU entry.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Menu#MENU_MISSION Menu
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetParentName(Menu)
+ self:T(self.lid.."SetParentName")
+ self.MenuParent = Menu
  return self
 end
 
