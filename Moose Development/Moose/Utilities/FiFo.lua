@@ -10,7 +10,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @module Utils.FiFo
+-- @module Utilities.FiFo
 -- @image MOOSE.JPG
 
 -- Date: April 2022

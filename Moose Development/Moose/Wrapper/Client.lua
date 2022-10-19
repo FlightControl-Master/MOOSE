@@ -1,4 +1,4 @@
---- **Wrapper** -- CLIENT wraps DCS Unit objects acting as a __Client__ or __Player__ within a mission.
+--- **Wrapper** - CLIENT wraps DCS Unit objects acting as a __Client__ or __Player__ within a mission.
 -- 
 -- ===
 -- 
@@ -58,7 +58,7 @@
 --  * @{#CLIENT.Find}(): Find a CLIENT instance from the _DATABASE object using a DCS Unit object.
 --  * @{#CLIENT.FindByName}(): Find a CLIENT instance from the _DATABASE object using a DCS Unit name.
 --  
--- **IMPORTANT: ONE SHOULD NEVER SANATIZE these CLIENT OBJECT REFERENCES! (make the CLIENT object references nil).**
+-- **IMPORTANT: ONE SHOULD NEVER SANITIZE these CLIENT OBJECT REFERENCES! (make the CLIENT object references nil).**
 -- 
 -- @field #CLIENT
 CLIENT = {

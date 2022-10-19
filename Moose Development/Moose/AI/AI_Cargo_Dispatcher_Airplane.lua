@@ -1,4 +1,4 @@
---- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo using Planes.
+--- **AI** - (R2.4) - Models the intelligent transportation of infantry and other cargo using Planes.
 --
 -- ## Features:
 --

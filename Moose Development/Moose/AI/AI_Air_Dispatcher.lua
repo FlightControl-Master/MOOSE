@@ -259,7 +259,7 @@
 -- 
 -- ### Author: **FlightControl** rework of GCICAP + introduction of new concepts (squadrons).
 -- 
--- @module AI.AI_AIR_Dispatcher
+-- @module AI.AI_Air_Dispatcher
 -- @image AI_Air_To_Ground_Dispatching.JPG
 
 
@@ -1224,7 +1224,7 @@ do -- AI_AIR_DISPATCHER
     
     self:I( "Captured " .. AirbaseName )
     
-    -- Now search for all squadrons located at the airbase, and sanatize them.
+    -- Now search for all squadrons located at the airbase, and sanitize them.
     for SquadronName, Squadron in pairs( self.DefenderSquadrons ) do
       if Squadron.AirbaseName == AirbaseName then
         Squadron.ResourceCount = -999 -- The base has been captured, and the resources are eliminated. No more spawning.
@@ -1796,12 +1796,12 @@ do -- AI_AIR_DISPATCHER
   --   
   -- @return #AI_AIR_DISPATCHER
   function AI_AIR_DISPATCHER:SetSquadron2( Squadron )
-  
+
     local SquadronName = Squadron:GetName() -- Retrieves the Squadron Name.
-    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
+    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {}
 
     local DefenderSquadron = self.DefenderSquadrons[SquadronName]
-    
+
     return self
   end
   
@@ -1812,15 +1812,15 @@ do -- AI_AIR_DISPATCHER
   function AI_AIR_DISPATCHER:GetSquadron( SquadronName )
 
     local DefenderSquadron = self.DefenderSquadrons[SquadronName]
-    
+
     if not DefenderSquadron then
       error( "Unknown Squadron for Dispatcher:" .. SquadronName )
     end
-    
+
     return DefenderSquadron
   end
 
-  
+
   --- Set the Squadron visible before startup of the dispatcher.
   -- All planes will be spawned as uncontrolled on the parking spot.
   -- They will lock the parking spot.

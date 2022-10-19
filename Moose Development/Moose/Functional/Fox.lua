@@ -20,7 +20,7 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
--- @module Functional.FOX
+-- @module Functional.Fox
 -- @image Functional_FOX.png
 
 --- FOX class.

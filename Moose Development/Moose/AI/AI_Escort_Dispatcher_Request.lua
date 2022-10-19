@@ -11,7 +11,7 @@
 -- 
 -- ===       
 --
--- @module AI.AI_ESCORT_DISPATCHER_REQUEST
+-- @module AI.AI_Escort_Dispatcher_Request
 -- @image MOOSE.JPG
 
 

@@ -1,4 +1,4 @@
---- **AI** -- Build large airborne formations of aircraft.
+--- **AI** - Build large airborne formations of aircraft.
 -- 
 -- **Features:**
 --

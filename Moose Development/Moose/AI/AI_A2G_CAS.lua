@@ -1,6 +1,6 @@
---- **AI** -- Models the process of air to ground engagement for airplanes and helicopters.
+--- **AI** - Models the process of air to ground engagement for airplanes and helicopters.
 --
--- This is a class used in the @{AI_A2G_Dispatcher}.
+-- This is a class used in the @{AI.AI_A2G_Dispatcher}.
 -- 
 -- ===
 -- 
@@ -11,11 +11,8 @@
 -- @module AI.AI_A2G_CAS
 -- @image AI_Air_To_Ground_Engage.JPG
 
-
-
 --- @type AI_A2G_CAS
--- @extends AI.AI_A2G_Patrol#AI_AIR_PATROL
-
+-- @extends AI.AI_A2G_Patrol#AI_AIR_PATROL TODO: Documentation. This class does not exist, unable to determine what it extends.
 
 --- Implements the core functions to intercept intruders. Use the Engage trigger to intercept intruders.
 -- 
@@ -25,8 +22,6 @@
 AI_A2G_CAS = {
   ClassName = "AI_A2G_CAS",
 }
-
-
 
 --- Creates a new AI_A2G_CAS object
 -- @param #AI_A2G_CAS self
@@ -52,7 +47,6 @@ function AI_A2G_CAS:New2( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAl
 
   return self
 end
-
 
 --- Creates a new AI_A2G_CAS object
 -- @param #AI_A2G_CAS self
@@ -92,9 +86,6 @@ function AI_A2G_CAS:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageA
       end
     end
   end
-  
+
   return AttackUnitTasks
 end
-
-
-

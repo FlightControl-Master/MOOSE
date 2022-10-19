@@ -1,4 +1,4 @@
---- **Core** -- SCHEDULEDISPATCHER dispatches the different schedules.
+--- **Core** - SCHEDULEDISPATCHER dispatches the different schedules.
 --
 -- ===
 --

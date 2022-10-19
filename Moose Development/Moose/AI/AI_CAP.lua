@@ -1,4 +1,4 @@
---- **AI** -- Perform Combat Air Patrolling (CAP) for airplanes.
+--- **AI** - Perform Combat Air Patrolling (CAP) for airplanes.
 --
 -- **Features:**
 -- 
@@ -29,7 +29,7 @@
 -- 
 -- ===       
 --
--- @module AI.AI_Cap
+-- @module AI.AI_CAP
 -- @image AI_Combat_Air_Patrol.JPG
 
 
@@ -106,7 +106,7 @@
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- The range can be beyond or smaller than the range of the Patrol Zone.
 -- The range is applied at the position of the AI.
--- Use the method @{AI.AI_CAP#AI_CAP_ZONE.SetEngageRange}() to define that range.
+-- Use the method @{#AI_CAP_ZONE.SetEngageRange}() to define that range.
 --
 -- ## 4. Set the Zone of Engagement
 -- 
@@ -114,7 +114,7 @@
 -- 
 -- An optional @{Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_Cap#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
+-- Use the method @{#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
 --  
 -- ===
 -- 
@@ -311,7 +311,7 @@ end
 function AI_CAP_ZONE:SetEngageZone( EngageZone )
   self:F2()
 
-  if EngageZone then  
+  if EngageZone then
     self.EngageZone = EngageZone
   else
     self.EngageZone = nil

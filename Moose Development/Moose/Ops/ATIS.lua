@@ -46,7 +46,7 @@
 --
 -- ### Author: **funkyfranky**
 --
--- @module Ops.Atis
+-- @module Ops.ATIS
 -- @image OPS_ATIS.png
 
 --- ATIS class.
@@ -1047,7 +1047,7 @@ end
 -- Or you make your life simple and just include the sign so you don't have to bother about East/West.
 --
 -- @param #ATIS self
--- @param #number magvar Magnetic variation in degrees. Positive for easterly and negative for westerly variation. Default is magnatic declinaton of the used map, c.f. @{Utilities.UTils#UTILS.GetMagneticDeclination}.
+-- @param #number magvar Magnetic variation in degrees. Positive for easterly and negative for westerly variation. Default is magnatic declinaton of the used map, c.f. @{Utilities.Utils#UTILS.GetMagneticDeclination}.
 -- @return #ATIS self
 function ATIS:SetMagneticDeclination( magvar )
   self.magvar = magvar or UTILS.GetMagneticDeclination()

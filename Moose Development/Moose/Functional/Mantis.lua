@@ -1,4 +1,4 @@
---- **Functional** -- Modular, Automatic and Network capable Targeting and Interception System for Air Defenses
+--- **Functional** - Modular, Automatic and Network capable Targeting and Interception System for Air Defenses
 --
 -- ===
 --

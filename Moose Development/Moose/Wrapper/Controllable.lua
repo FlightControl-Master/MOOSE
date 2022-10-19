@@ -1,4 +1,4 @@
---- **Wrapper** -- CONTROLLABLE is an intermediate class wrapping Group and Unit classes "controllers".
+--- **Wrapper** - CONTROLLABLE is an intermediate class wrapping Group and Unit classes "controllers".
 --
 -- ===
 --
