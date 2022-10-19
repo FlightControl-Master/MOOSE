@@ -1,4 +1,4 @@
---- **Wrapper** -- GROUP wraps the DCS Class Group objects.
+--- **Wrapper** - GROUP wraps the DCS Class Group objects.
 -- 
 -- ===
 -- 
@@ -11,7 +11,7 @@
 --  * Handle local Group Controller.
 --  * Manage the "state" of the DCS Group.
 --
--- **IMPORTANT: ONE SHOULD NEVER SANATIZE these GROUP OBJECT REFERENCES! (make the GROUP object references nil).**
+-- **IMPORTANT: ONE SHOULD NEVER SANITIZE these GROUP OBJECT REFERENCES! (make the GROUP object references nil).**
 --
 -- ===
 -- 

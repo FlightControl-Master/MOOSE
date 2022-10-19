@@ -1,4 +1,4 @@
---- **Wrapper** -- POSITIONABLE wraps DCS classes that are "positionable".
+--- **Wrapper** - POSITIONABLE wraps DCS classes that are "positionable".
 --
 -- ===
 --

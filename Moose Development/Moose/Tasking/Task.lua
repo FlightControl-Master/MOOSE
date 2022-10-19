@@ -1,4 +1,4 @@
---- **Tasking** -- A task object governs the main engine to administer human taskings.
+--- **Tasking** - A task object governs the main engine to administer human taskings.
 -- 
 -- **Features:**
 -- 
@@ -262,8 +262,8 @@
 -- 
 -- ## 1.3) Cargo Tasks  
 -- 
---   - @{Tasking.Task_Cargo#TASK_CARGO_TRANSPORT} - Models the transportation of cargo to deployment zones. 
---   - @{Tasking.Task_Cargo#TASK_CARGO_CSAR} - Models the rescue of downed friendly pilots from behind enemy lines.    
+--   - @{Tasking.Task_CARGO#TASK_CARGO_TRANSPORT} - Models the transportation of cargo to deployment zones. 
+--   - @{Tasking.Task_CARGO#TASK_CARGO_CSAR} - Models the rescue of downed friendly pilots from behind enemy lines.    
 -- 
 -- 
 -- # 2) Task status events.

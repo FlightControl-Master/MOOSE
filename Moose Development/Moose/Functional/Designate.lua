@@ -1,4 +1,4 @@
---- **Functional** -- Management of target **Designation**. Lase, smoke and illuminate targets.
+--- **Functional** - Management of target **Designation**. Lase, smoke and illuminate targets.
 --
 -- ===
 --

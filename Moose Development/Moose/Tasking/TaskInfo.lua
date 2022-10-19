@@ -1,4 +1,4 @@
---- **Tasking** -- Controls the information of a Task.
+--- **Tasking** - Controls the information of a Task.
 -- 
 -- ===
 -- 

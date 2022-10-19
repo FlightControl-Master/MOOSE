@@ -1148,7 +1148,7 @@ do -- AI_A2A_DISPATCHER
 
     self:I( "Captured " .. AirbaseName )
 
-    -- Now search for all squadrons located at the airbase, and sanatize them.
+    -- Now search for all squadrons located at the airbase, and sanitize them.
     for SquadronName, Squadron in pairs( self.DefenderSquadrons ) do
       if Squadron.AirbaseName == AirbaseName then
         Squadron.ResourceCount = -999 -- The base has been captured, and the resources are eliminated. No more spawning.

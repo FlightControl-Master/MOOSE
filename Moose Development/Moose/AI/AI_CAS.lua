@@ -1,4 +1,4 @@
---- **AI** -- Perform Close Air Support (CAS) near friendlies.
+--- **AI** - Perform Close Air Support (CAS) near friendlies.
 --
 -- **Features:**
 -- 
@@ -28,7 +28,7 @@
 --
 -- ===
 --
--- @module AI.AI_Cas
+-- @module AI.AI_CAS
 -- @image AI_Close_Air_Support.JPG
 
 --- AI_CAS_ZONE class

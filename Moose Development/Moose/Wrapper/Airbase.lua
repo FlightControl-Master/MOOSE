@@ -1,4 +1,4 @@
---- **Wrapper** -- AIRBASE is a wrapper class to handle the DCS Airbase objects.
+--- **Wrapper** - AIRBASE is a wrapper class to handle the DCS Airbase objects.
 --
 -- ===
 --

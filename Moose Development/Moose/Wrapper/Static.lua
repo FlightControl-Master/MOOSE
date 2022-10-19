@@ -1,4 +1,4 @@
---- **Wrapper** -- STATIC wraps the DCS StaticObject class.
+--- **Wrapper** - STATIC wraps the DCS StaticObject class.
 -- 
 -- ===
 -- 
@@ -40,7 +40,7 @@
 -- 
 --  * @{#STATIC.FindByName}(): Find a STATIC instance from the _DATABASE object using a DCS Static name.
 --  
--- IMPORTANT: ONE SHOULD NEVER SANATIZE these STATIC OBJECT REFERENCES! (make the STATIC object references nil).
+-- IMPORTANT: ONE SHOULD NEVER SANITIZE these STATIC OBJECT REFERENCES! (make the STATIC object references nil).
 -- 
 -- @field #STATIC
 STATIC = {

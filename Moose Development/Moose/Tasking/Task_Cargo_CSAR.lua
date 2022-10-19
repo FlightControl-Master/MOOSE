@@ -1,4 +1,4 @@
---- **Tasking** -- Orchestrates the task for players to execute CSAR for downed pilots.
+--- **Tasking** - Orchestrates the task for players to execute CSAR for downed pilots.
 -- 
 -- **Specific features:**
 -- 
@@ -44,7 +44,7 @@
 --
 -- ===
 -- 
--- Please read through the @{Tasking.Task_Cargo} process to understand the mechanisms of tasking and cargo tasking and handling.
+-- Please read through the @{Tasking.Task_CARGO} process to understand the mechanisms of tasking and cargo tasking and handling.
 -- 
 -- The cargo will be a downed pilot, which is located somwhere on the battlefield. Use the menus system and facilities to 
 -- join the CSAR task, and retrieve the pilot from behind enemy lines. The menu system is generic, there is nothing

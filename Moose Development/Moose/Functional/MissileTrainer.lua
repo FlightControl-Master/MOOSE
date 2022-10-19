@@ -1,4 +1,4 @@
---- **Functional** -- Train missile defence and deflection.
+--- **Functional** - Train missile defence and deflection.
 --
 -- ===
 --

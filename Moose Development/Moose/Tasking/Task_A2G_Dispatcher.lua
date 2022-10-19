@@ -1,4 +1,4 @@
---- **Tasking** -- Dynamically allocates A2G tasks to human players, based on detected ground targets through reconnaissance.
+--- **Tasking** - Dynamically allocates A2G tasks to human players, based on detected ground targets through reconnaissance.
 --
 -- **Features:**
 --
