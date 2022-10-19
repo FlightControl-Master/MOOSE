@@ -2770,7 +2770,8 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
     if clientcount > 0 then
       for _,_name in pairs(clientlist) do
         if self.customcallsigns[_name] then
-          _name = self.customcallsigns[_name] 
+          _name = self.customcallsigns[_name]
+          _name = string.gsub(_name, "(%d) ","%1") 
         end
         clienttxt = clienttxt .. _name .. ", "
       end
