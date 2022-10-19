@@ -4,7 +4,7 @@
 --
 --    * Manages target, number alive, life points, damage etc.
 --    * Events when targets are damaged or destroyed
---    * Various target objects: UNIT, GROUP, STATIC, AIRBASE, COORDINATE, SET_GROUP, SET_UNIT
+--    * Various target objects: UNIT, GROUP, STATIC, SCENERY, AIRBASE, COORDINATE, ZONE, SET_GROUP, SET_UNIT, SET_STATIC, SET_SCENERY, SET_ZONE
 --
 -- ===
 --
@@ -158,7 +158,7 @@ TARGET.version="0.5.5"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Had cases where target life was 0 but target was not dead. Need to figure out why!
--- TODO: Add pseudo functions.
+-- DONE: Add pseudo functions.
 -- DONE: Initial object can be nil.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -167,7 +167,7 @@ TARGET.version="0.5.5"
 
 --- Create a new TARGET object and start the FSM.
 -- @param #TARGET self
--- @param #table TargetObject Target object.
+-- @param #table TargetObject Target object. Can be a: UNIT, GROUP, STATIC, SCENERY, AIRBASE, COORDINATE, ZONE, SET_GROUP, SET_UNIT, SET_STATIC, SET_SCENERY, SET_ZONE
 -- @return #TARGET self
 function TARGET:New(TargetObject)
 
@@ -302,16 +302,19 @@ end
 -- * GROUP
 -- * UNIT
 -- * STATIC
+-- * SCENERY
 -- * AIRBASE
 -- * COORDINATE
 -- * ZONE
 -- * SET_GROUP
 -- * SET_UNIT
 -- * SET_STATIC
+-- * SET_SCENERY
 -- * SET_OPSGROUP
+-- * SET_ZONE
 -- 
 -- @param #TARGET self
--- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC, AIRBASE or COORDINATE.
+-- @param Wrapper.Positionable#POSITIONABLE Object The target UNIT, GROUP, STATIC, SCENERY, AIRBASE, COORDINATE, ZONE, SET_GROUP, SET_UNIT, SET_STATIC, SET_SCENERY, SET_ZONE
 function TARGET:AddObject(Object)
     
   if Object:IsInstanceOf("SET_GROUP") or Object:IsInstanceOf("SET_UNIT") or Object:IsInstanceOf("SET_STATIC") or Object:IsInstanceOf("SET_SCENERY") or Object:IsInstanceOf("SET_OPSGROUP") then
@@ -841,7 +844,7 @@ end
 
 --- Create target data from a given object.
 -- @param #TARGET self
--- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC, SCENERY, AIRBASE or COORDINATE.
+-- @param Wrapper.Positionable#POSITIONABLE Object The target UNIT, GROUP, STATIC, SCENERY, AIRBASE, COORDINATE, ZONE, SET_GROUP, SET_UNIT, SET_STATIC, SET_SCENERY, SET_ZONE
 function TARGET:_AddObject(Object)
 
   local target={}  --#TARGET.Object
@@ -1378,6 +1381,11 @@ function TARGET:GetTargetName(Target)
     
     return Zone:GetName()
     
+  elseif Target.Type==TARGET.ObjectType.SCENERY then
+  
+    local Zone=Target.Object  --Core.Zone#ZONE
+    
+    return Zone:GetName()  
   end
 
   return "Unknown"
@@ -1579,7 +1587,7 @@ function TARGET:GetObjective()
 
   for _,_target in pairs(self.targets) do
     local target=_target --#TARGET.Object
-    if target.Status==TARGET.ObjectStatus.ALIVE then
+    if target.Status~=TARGET.ObjectStatus.DEAD then
       return target
     end
   end
