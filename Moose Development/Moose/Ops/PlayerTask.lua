@@ -888,6 +888,7 @@ do
 -- @field #boolean usecluster
 -- @field #number ClusterRadius
 -- @field #string MenuName
+-- @field Core.Menu#MENU_MISSION MenuParent
 -- @field #boolean NoScreenOutput
 -- @field #number TargetRadius
 -- @field #boolean UseWhiteList
@@ -3233,7 +3234,7 @@ end
 --- [User] Set the top menu name to a custom string.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string Name The name to use as the top menu designation.
--- @param #MENU_MISSION ParentMenu Optional. The parent menu class of the PLAYERTASKCONTOLLER menu. Default is nil. If nil, will use the root DCS menu.
+-- @param Core.Menu#MENU_MISSION ParentMenu (optional) The parent menu class of the PLAYERTASKCONTOLLER menu. Default is nil. If nil, will use the root DCS menu.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetupMenu(Name, ParentMenu)
  self:T(self.lid.."SetupMenu: "..Name)
