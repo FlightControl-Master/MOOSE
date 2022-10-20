@@ -2,7 +2,7 @@
 --
 -- ===
 --
--- **MANTIS** - Moose derived  Modular, Automatic and Network capable Targeting and Interception System
+-- **MANTIS** - Moose derived  Modular, Automatic and Network capable Targeting and Interception System.
 -- Controls a network of SAM sites. Uses detection to switch on the AA site closest to the enemy.   
 -- Automatic mode (default since 0.8) can set-up your SAM site network automatically for you.   
 -- Leverage evasiveness from SEAD, leverage attack range setting.   
@@ -20,7 +20,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Date: Dec 2021
+-- Last Update: Oct 2022
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -61,10 +61,11 @@
 
 --- *The worst thing that can happen to a good cause is, not to be skillfully attacked, but to be ineptly defended.* - Frédéric Bastiat
 --
--- Simple Class for a more intelligent Air Defense System
+-- Moose class for a more intelligent Air Defense System
 --
--- #MANTIS
--- Moose derived  Modular, Automatic and Network capable Targeting and Interception System.
+-- # MANTIS
+-- 
+-- * Moose derived  Modular, Automatic and Network capable Targeting and Interception System.
 -- * Controls a network of SAM sites. Uses detection to switch on the SAM site closest to the enemy.
 -- * **Automatic mode** (default since 0.8) can set-up your SAM site network automatically for you
 -- * **Classic mode** behaves like before
@@ -100,9 +101,11 @@
 -- * Roland
 -- * Silkworm (though strictly speaking this is a surface to ship missile)
 -- * SA-2, SA-3, SA-5, SA-6, SA-7, SA-8, SA-9, SA-10, SA-11, SA-13, SA-15, SA-19
--- * and from HDS (see note below): SA-2, SA-3, SA-10B, SA-10C, SA-12, SA-17, SA-20A, SA-20B, SA-23, HQ-2
+-- * From HDS (see note on HDS below): SA-2, SA-3, SA-10B, SA-10C, SA-12, SA-17, SA-20A, SA-20B, SA-23, HQ-2
+-- * From SMA: RBS98M, RBS70, RBS90, RBS90M, RBS103A, RBS103B, RBS103AM, RBS103BM, Lvkv9040M 
+-- **NOTE** If you are using the Swedish Military Assets (SMA), please note that the **group name** for RBS-SAM types also needs to contain the keyword "SMA"
 -- 
--- Following the example started above, an SA-6 site group name should start with "Red SAM SA-6" then, or a blue Patriot installation with e.g. "Blue SAM Patriot".   
+-- Following the example started above, an SA-6 site group name should start with "Red SAM SA-6" then, or a blue Patriot installation with e.g. "Blue SAM Patriot". 
 -- **NOTE** If you are using the High-Digit-Sam Mod, please note that the **group name** for the following SAM types also needs to contain the keyword "HDS":
 -- 
 -- * SA-2 (with V759 missile, e.g. "Red SAM SA-2 HDS")
@@ -387,6 +390,29 @@ MANTIS.SamDataHDS = {
   ["HQ-2 HDS"] = { Range=50, Blindspot=6, Height=35, Type="Medium", Radar="HQ_2_Guideline_LN" },
 }
 
+--- SAM data SMA
+-- @type MANTIS.SamDataSMA
+-- @field #number Range Max firing range in km
+-- @field #number Blindspot no-firing range (green circle)
+-- @field #number Height Max firing height in km
+-- @field #string Type #MANTIS.SamType of SAM, i.e. SHORT, MEDIUM or LONG (range)
+-- @field #string Radar Radar typename on unit level (used as key)
+MANTIS.SamDataSMA = {
+  -- units from SMA Mod (Sweedish Military Assets)
+  -- https://forum.dcs.world/topic/295202-swedish-military-assets-for-dcs-by-currenthill/
+  -- group name MUST contain SMA to ID launcher type correctly!
+  ["RBS98M SMA"] = { Range=20, Blindspot=0, Height=8, Type="Short", Radar="RBS-98" },
+  ["RBS70 SMA"] = { Range=8, Blindspot=0, Height=5.5, Type="Short", Radar="RBS-70" },  
+  ["RBS70M SMA"] = { Range=8, Blindspot=0, Height=5.5, Type="Short", Radar="BV410_RBS70" }, 
+  ["RBS90 SMA"] = { Range=8, Blindspot=0, Height=5.5, Type="Short", Radar="RBS-90" }, 
+  ["RBS90M SMA"] = { Range=8, Blindspot=0, Height=5.5, Type="Short", Radar="BV410_RBS90" },  
+  ["RBS103A SMA"] = { Range=150, Blindspot=3, Height=24.5, Type="Long", Radar="LvS-103_Lavett103_Rb103A" },
+  ["RBS103B SMA"] = { Range=35, Blindspot=0, Height=36, Type="Medium", Radar="LvS-103_Lavett103_Rb103B" }, 
+  ["RBS103AM SMA"] = { Range=150, Blindspot=3, Height=24.5, Type="Long", Radar="LvS-103_Lavett103_HX_Rb103A" },
+  ["RBS103BM SMA"] = { Range=35, Blindspot=0, Height=36, Type="Medium", Radar="LvS-103_Lavett103_HX_Rb103B" },
+  ["Lvkv9040M SMA"] = { Range=4, Blindspot=0, Height=2.5, Type="Short", Radar="LvKv9040" },      
+}
+
 -----------------------------------------------------------------------
 -- MANTIS System
 -----------------------------------------------------------------------
@@ -550,7 +576,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.8.8"
+    self.version="0.8.9"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -1270,11 +1296,12 @@ do
   -- @param #MANTIS self
   -- @param #string grpname Name of the group
   -- @param #boolean mod HDS mod flag
+  -- @param #boolean sma SMA mod flag
   -- @return #number range Max firing range
   -- @return #number height Max firing height
   -- @return #string type Long, medium or short range
   -- @return #number blind "blind" spot
-  function MANTIS:_GetSAMDataFromUnits(grpname,mod)
+  function MANTIS:_GetSAMDataFromUnits(grpname,mod,sma)
     self:T(self.lid.."_GetSAMRangeFromUnits")
     local found = false
     local range = self.checkradius
@@ -1287,6 +1314,8 @@ do
     local SAMData = self.SamData
     if mod then
       SAMData = self.SamDataHDS
+    elseif sma then
+      SAMData = self.SamDataSMA
     end
     --self:I("Looking to auto-match for "..grpname)
     for _,_unit in pairs(units) do
@@ -1332,8 +1361,11 @@ do
     local blind = 0
     local found = false
     local HDSmod = false
+    local SMAMod = false
     if string.find(grpname,"HDS",1,true) then
       HDSmod = true
+    elseif string.find(grpname,"SMA",1,true) then
+      SMAMod = true
     end
     if self.automode then
       for idx,entry in pairs(self.SamData) do
@@ -1352,8 +1384,8 @@ do
       end
     end
     -- secondary filter if not found
-    if (not found and self.automode) or HDSmod then
-      range, height, type = self:_GetSAMDataFromUnits(grpname,HDSmod)
+    if (not found and self.automode) or HDSmod or SMAMod then
+      range, height, type = self:_GetSAMDataFromUnits(grpname,HDSmod,SMAMod)
     elseif not found then
       self:E(self.lid .. string.format("*****Could not match radar data for %s! Will default to midrange values!",grpname))
     end
