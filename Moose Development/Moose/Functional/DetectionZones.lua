@@ -1,5 +1,6 @@
 --- **Functional** - Captures the class DETECTION_ZONES.
 -- @module Functional.DetectionZones
+-- @image MOOSE.JPG
 
 do -- DETECTION_ZONES
 
