@@ -1,7 +1,6 @@
 Utilities/Enums.lua
 Utilities/Routines.lua
 Utilities/Utils.lua
-Utilities/Enums.lua
 Utilities/Profiler.lua
 Utilities/Templates.lua
 Utilities/STTS.lua
@@ -9,7 +8,9 @@ Utilities/FiFo.lua
 Utilities/Socket.lua
 
 Core/Base.lua
+Core/Astar.lua
 Core/Beacon.lua
+Core/Condition.lua
 Core/UserFlag.lua
 Core/Report.lua
 Core/Scheduler.lua
@@ -31,8 +32,6 @@ Core/Timer.lua
 Core/Goal.lua
 Core/Spot.lua
 Core/MarkerOps_Base.lua
-Core/Astar.lua
-Core/Condition.lua
 Core/TextAndSound.lua
 
 Wrapper/Object.lua
