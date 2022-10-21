@@ -10123,7 +10123,7 @@ function OPSGROUP:_CheckDamage()
   for _,_element in pairs(self.elements) do
     local element=_element --Ops.OpsGroup#OPSGROUP.Element
 
-	if element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
+  if element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
 
     -- Current life points.
     local life=element.unit:GetLife()
@@ -11540,7 +11540,7 @@ end
 --- Set default Radio frequency and modulation.
 -- @param #OPSGROUP self
 -- @param #number Frequency Radio frequency in MHz. Default 251 MHz.
--- @param #number Modulation Radio modulation. Default `radio.Modulation.AM`.
+-- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
 -- @param #boolean OffSwitch If true, radio is OFF by default.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultRadio(Frequency, Modulation, OffSwitch)
@@ -11569,7 +11569,7 @@ end
 --- Turn radio on or switch frequency/modulation.
 -- @param #OPSGROUP self
 -- @param #number Frequency Radio frequency in MHz. Default is value set in `SetDefaultRadio` (usually 251 MHz).
--- @param #number Modulation Radio modulation. Default is value set in `SetDefaultRadio` (usually `radio.Modulation.AM`).
+-- @param #number Modulation Radio modulation. Default is value set in `SetDefaultRadio` (usually `radio.modulation.AM`).
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchRadio(Frequency, Modulation)
 

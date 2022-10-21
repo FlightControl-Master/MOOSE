@@ -1075,10 +1075,14 @@ end
 -- @param DCS#Vec3 b Vector in 3D with x, y, z components.
 -- @return #number Distance between the vectors.
 function UTILS.VecDist3D(a, b)
-
+  
+  local d = math.huge
+  
+  if (not a) or (not b) then return d end
+  
   local c={x=b.x-a.x, y=b.y-a.y, z=b.z-a.z}
 
-  local d=math.sqrt(UTILS.VecDot(c, c))
+  d=math.sqrt(UTILS.VecDot(c, c))
 
   return d
 end
