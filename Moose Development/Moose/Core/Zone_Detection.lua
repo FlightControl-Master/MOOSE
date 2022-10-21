@@ -1,5 +1,6 @@
 --- **Core** - The ZONE_DETECTION class, defined by a zone name, a detection object and a radius.
 -- @module Core.Zone_Detection
+-- @image MOOSE.JPG
 
 --- @type ZONE_DETECTION
 -- @field DCS#Vec2 Vec2 The current location of the zone.

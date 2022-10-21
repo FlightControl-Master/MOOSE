@@ -115,7 +115,7 @@
 --
 -- Special targets can be set that will give extra scores to the players when these are destroyed.
 -- Use the methods @{#SCORING.AddUnitScore}() and @{#SCORING.RemoveUnitScore}() to specify a special additional score for a specific @{Wrapper.Unit}s.
--- Use the methods @{#SCORING.AddStaticScore}() and @{#SCORING.RemoveStaticScore}() to specify a special additional score for a specific @{Static}s.
+-- Use the methods @{#SCORING.AddStaticScore}() and @{#SCORING.RemoveStaticScore}() to specify a special additional score for a specific @{Wrapper.Static}s.
 -- Use the method @{#SCORING.SetGroupGroup}() to specify a special additional score for a specific @{Wrapper.Group}s.
 --
 --      local Scoring = SCORING:New( "Scoring File" )
@@ -373,11 +373,11 @@ function SCORING:RemoveUnitScore( ScoreUnit )
   return self
 end
 
---- Add a @{Static} for additional scoring when the @{Static} is destroyed.
--- Note that if there was already a @{Static} declared within the scoring with the same name,
--- then the old @{Static}  will be replaced with the new @{Static}.
+--- Add a @{Wrapper.Static} for additional scoring when the @{Wrapper.Static} is destroyed.
+-- Note that if there was already a @{Wrapper.Static} declared within the scoring with the same name,
+-- then the old @{Wrapper.Static}  will be replaced with the new @{Wrapper.Static}.
 -- @param #SCORING self
--- @param Wrapper.Static#UNIT ScoreStatic The @{Static} for which the Score needs to be given.
+-- @param Wrapper.Static#UNIT ScoreStatic The @{Wrapper.Static} for which the Score needs to be given.
 -- @param #number Score The Score value.
 -- @return #SCORING
 function SCORING:AddStaticScore( ScoreStatic, Score )
@@ -389,9 +389,9 @@ function SCORING:AddStaticScore( ScoreStatic, Score )
   return self
 end
 
---- Removes a @{Static} for additional scoring when the @{Static} is destroyed.
+--- Removes a @{Wrapper.Static} for additional scoring when the @{Wrapper.Static} is destroyed.
 -- @param #SCORING self
--- @param Wrapper.Static#UNIT ScoreStatic The @{Static} for which the Score needs to be given.
+-- @param Wrapper.Static#UNIT ScoreStatic The @{Wrapper.Static} for which the Score needs to be given.
 -- @return #SCORING
 function SCORING:RemoveStaticScore( ScoreStatic )
 

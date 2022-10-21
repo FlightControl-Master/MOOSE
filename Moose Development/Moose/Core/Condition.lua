@@ -17,7 +17,7 @@
 --
 -- ===
 -- @module Core.Condition
--- @image Core_Conditon.png
+-- @image MOOSE.JPG
 
 --- CONDITON class.
 -- @type CONDITION
