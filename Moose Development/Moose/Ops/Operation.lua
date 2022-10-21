@@ -467,7 +467,7 @@ function OPERATION:SetPhaseConditonOver(Phase, Condition)
   return self
 end
 
---- Add codition function when the given phase is over. Must return a `#boolean`.
+--- Add condition function when the given phase is over. Must return a `#boolean`.
 -- @param #OPERATION self
 -- @param #OPERATION.Phase Phase The phase.
 -- @param #function Function Function that needs to be `true`before the phase is over. 
@@ -739,6 +739,20 @@ function OPERATION:AddTarget(Target, Phase)
   return self
 end
 
+--- Add Targets from operation.
+-- @param #OPERATION self
+-- @param #OPERATION.Phase Phase
+-- @return #table Targets Table of #TARGET objects 
+function OPERATION:GetTargets(Phase)
+  local N = {}
+  for _,_target in pairs(self.targets) do
+    local target=_target --Ops.Target#TARGET
+    if target:IsAlive() and (Phase==nil or target.phase==Phase) then
+      table.insert(N,target)
+    end
+  end
+  return N
+end
 
 --- Count targets alive.
 -- @param #OPERATION self
@@ -896,7 +910,7 @@ function OPERATION:onafterStart(From, Event, To)
 
   -- Debug message.
   self:T(self.lid..string.format("Starting Operation!"))
-
+  return self 
 end
 
 
@@ -967,6 +981,8 @@ function OPERATION:onafterStatusUpdate(From, Event, To)
 
   -- Next status update.
   self:__StatusUpdate(-30)
+  
+  return self 
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -978,7 +994,6 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #OPERATION.Phase Phase The new phase.
 function OPERATION:onafterPhaseNext(From, Event, To)
 
   -- Get next phase.
@@ -996,6 +1011,7 @@ function OPERATION:onafterPhaseNext(From, Event, To)
     
   end
 
+  return self
 end
 
 
@@ -1023,6 +1039,7 @@ function OPERATION:onafterPhaseChange(From, Event, To, Phase)
   -- Phase is active.
   self:SetPhaseStatus(Phase, OPERATION.PhaseStatus.ACTIVE)
   
+  return self
 end
 
 --- On after "BranchSwitch" event.
@@ -1038,7 +1055,8 @@ function OPERATION:onafterBranchSwitch(From, Event, To, Branch)
 
   -- Set active branch.
   self.branchActive=Branch
-
+  
+  return self
 end
 
 --- On after "Over" event.
@@ -1062,7 +1080,9 @@ function OPERATION:onafterOver(From, Event, To)
       local phase=_phase --#OPERATION.Phase
       self:SetPhaseStatus(phase, OPERATION.PhaseStatus.OVER)
     end
-  end  
+  end 
+  
+  return self 
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

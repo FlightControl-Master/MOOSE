@@ -654,7 +654,7 @@ function PLAYERTASK:onafterStatus(From, Event, To)
   
   -- Check Target status
   local targetdead = false
-  if self.Target:IsDead() or self.Target:IsDestroyed() then
+  if self.Target:IsDead() or self.Target:IsDestroyed() or self.Target:CountTargets() == 0 then
     targetdead = true
     self:__Success(-2)
     status = "Success"
@@ -1397,7 +1397,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.44"
+PLAYERTASKCONTROLLER.version="0.1.45"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -1474,6 +1474,9 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self:AddTransition("*",            "TaskCancelled",         "*")
   self:AddTransition("*",            "TaskSuccess",           "*")
   self:AddTransition("*",            "TaskFailed",            "*")
+  self:AddTransition("*",            "TaskTargetSmoked",      "*")
+  self:AddTransition("*",            "TaskTargetFlared",      "*")
+  self:AddTransition("*",            "TaskTargetIlluminated", "*")
   self:AddTransition("*",            "TaskRepeatOnFailed",    "*")
   self:AddTransition("*",            "Stop",                  "Stopped")
   
@@ -1538,6 +1541,30 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
    
   --- On After "TaskRepeatOnFailed" event. Task has failed and will be repeated.
   -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskRepeatOnFailed
+  -- @param #PLAYERTASKCONTROLLER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.PlayerTask#PLAYERTASK Task
+  
+  --- On After "TaskTargetSmoked" event. Task smoked.
+  -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskTargetSmoked
+  -- @param #PLAYERTASKCONTROLLER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.PlayerTask#PLAYERTASK Task
+  
+  --- On After "TaskTargetFlared" event. Task flared.
+  -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskTargetFlared
+  -- @param #PLAYERTASKCONTROLLER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.PlayerTask#PLAYERTASK Task
+  
+  --- On After "TaskTargetIlluminated" event. Task illuminated.
+  -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskTargetIlluminated
   -- @param #PLAYERTASKCONTROLLER self
   -- @param #string From From state.
   -- @param #string Event Event.
@@ -2869,6 +2896,7 @@ function PLAYERTASKCONTROLLER:_SmokeTask(Group, Client)
     if self.UseSRS then
       self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
     end
+    self:__TaskTargetSmoked(5,task)
   else
     text = self.gettext:GetEntry("NOACTIVETASK",self.locale)
   end
@@ -2897,6 +2925,36 @@ function PLAYERTASKCONTROLLER:_FlareTask(Group, Client)
     if self.UseSRS then
       self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
     end
+    self:__TaskTargetFlared(5,task)
+  else
+    text = self.gettext:GetEntry("NOACTIVETASK",self.locale)
+  end
+  if not self.NoScreenOutput then
+    local m=MESSAGE:New(text,15,"Tasking"):ToClient(Client)
+  end
+  return self
+end
+
+--- [Internal] Illuminate task location
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Client#CLIENT Client
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:_IlluminateTask(Group, Client)
+  self:T(self.lid.."_IlluminateTask")
+  local playername, ttsplayername = self:_GetPlayerName(Client)
+  local text = ""
+  if self.TasksPerPlayer:HasUniqueID(playername) then
+    local task = self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
+    task:FlareTarget()
+    local textmark = self.gettext:GetEntry("FLARETASK",self.locale)
+    text = string.format(textmark, ttsplayername, self.MenuName or self.Name, task.PlayerTaskNr)
+    self:T(self.lid..text)
+    --local m=MESSAGE:New(text,"10","Tasking"):ToAll()
+    if self.UseSRS then
+      self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
+    end
+    self:__TaskTargetIlluminated(5,task)
   else
     text = self.gettext:GetEntry("NOACTIVETASK",self.locale)
   end
@@ -2912,7 +2970,7 @@ end
 -- @param Wrapper.Client#CLIENT Client
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_AbortTask(Group, Client)
-  self:T(self.lid.."_FlareTask")
+  self:T(self.lid.."_AbortTask")
   local playername, ttsplayername = self:_GetPlayerName(Client)
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
@@ -3080,6 +3138,10 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
               -- no smoking/flaring here if A2A or designer has set noflaresmokemenu to true
               local smoke = MENU_GROUP_COMMAND_DELAYED:New(group,menusmoke,active,self._SmokeTask,self,group,client)
               local flare = MENU_GROUP_COMMAND_DELAYED:New(group,menuflare,active,self._FlareTask,self,group,client)
+              local IsNight = client:GetCoordinate():IsNight()
+              if IsNight then
+                local light = MENU_GROUP_COMMAND_DELAYED:New(group,menuflare,active,self._IlluminateTask,self,group,client)
+              end
             end
           end
           local abort = MENU_GROUP_COMMAND_DELAYED:New(group,menuabort,active,self._AbortTask,self,group,client)
@@ -3244,7 +3306,7 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Menu#MENU_MISSION Menu
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:SetParentName(Menu)
+function PLAYERTASKCONTROLLER:SetParentMenu(Menu)
  self:T(self.lid.."SetParentName")
  self.MenuParent = Menu
  return self
