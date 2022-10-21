@@ -128,7 +128,7 @@ end
 --- Creates a new MESSAGE object of a certain type.
 -- Note that these MESSAGE objects are not yet displayed on the display panel.
 -- You must use the functions @{ToClient} or @{ToCoalition} or @{ToAll} to send these Messages to the respective recipients.
--- The message display times are automatically defined based on the timing settings in the @{Settings} menu.
+-- The message display times are automatically defined based on the timing settings in the @{Core.Settings} menu.
 -- @param self
 -- @param #string MessageText is the text of the Message.
 -- @param #MESSAGE.Type MessageType The type of the message.

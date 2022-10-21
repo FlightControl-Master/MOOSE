@@ -98,7 +98,7 @@ RADIO = {
 --- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{#RADIO.Broadcast} to actually broadcast.
 -- If you want to create a RADIO, you probably should use @{Wrapper.Positionable#POSITIONABLE.GetRadio}() instead.
 -- @param #RADIO self
--- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Positionable} that will receive radio capabilities.
+-- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Wrapper.Positionable#POSITIONABLE} that will receive radio capabilities.
 -- @return #RADIO The RADIO object or #nil if Positionable is invalid.
 function RADIO:New(Positionable)
 

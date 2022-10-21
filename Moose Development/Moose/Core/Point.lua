@@ -923,7 +923,7 @@ do -- COORDINATE
     return T-273.15
   end
 
-  --- Returns a text of the temperature according the measurement system @{Settings}.
+  --- Returns a text of the temperature according the measurement system @{Core.Settings}.
   -- The text will reflect the temperature like this:
   --
   --   - For Russian and European aircraft using the metric system - Degrees Celcius (°C)
@@ -936,7 +936,7 @@ do -- COORDINATE
   --
    -- @param #COORDINATE self
   -- @param height (Optional) parameter specifying the height ASL.
-  -- @return #string Temperature according the measurement system @{Settings}.
+  -- @return #string Temperature according the measurement system @{Core.Settings}.
   function COORDINATE:GetTemperatureText( height, Settings )
 
     local DegreesCelcius = self:GetTemperature( height )
@@ -969,7 +969,7 @@ do -- COORDINATE
     return P/100
   end
 
-  --- Returns a text of the pressure according the measurement system @{Settings}.
+  --- Returns a text of the pressure according the measurement system @{Core.Settings}.
   -- The text will contain always the pressure in hPa and:
   --
   --   - For Russian and European aircraft using the metric system - hPa and mmHg
@@ -982,7 +982,7 @@ do -- COORDINATE
   --
   -- @param #COORDINATE self
   -- @param height (Optional) parameter specifying the height ASL. E.g. set height=0 for QNH.
-  -- @return #string Pressure in hPa and mmHg or inHg depending on the measurement system @{Settings}.
+  -- @return #string Pressure in hPa and mmHg or inHg depending on the measurement system @{Core.Settings}.
   function COORDINATE:GetPressureText( height, Settings )
 
     local Pressure_hPa = self:GetPressure( height )
@@ -1062,7 +1062,7 @@ do -- COORDINATE
   end
 
 
-  --- Returns a text documenting the wind direction (from) and strength according the measurement system @{Settings}.
+  --- Returns a text documenting the wind direction (from) and strength according the measurement system @{Core.Settings}.
   -- The text will reflect the wind like this:
   --
   --   - For Russian and European aircraft using the metric system - Wind direction in degrees (°) and wind speed in meters per second (mps).
@@ -1075,7 +1075,7 @@ do -- COORDINATE
   --
   -- @param #COORDINATE self
   -- @param height (Optional) parameter specifying the height ASL. The minimum height will be always be the land height since the wind is zero below the ground.
-  -- @return #string Wind direction and strength according the measurement system @{Settings}.
+  -- @return #string Wind direction and strength according the measurement system @{Core.Settings}.
   function COORDINATE:GetWindText( height, Settings )
 
     local Direction, Strength = self:GetWind( height )

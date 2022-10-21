@@ -54,7 +54,7 @@ do -- Velocity
     self.Velocity = VelocityMps
     return self
   end
-  
+
   --- Get the velocity in Mps (meters per second).
   -- @param #VELOCITY self
   -- @return #number The velocity in meters per second. 
@@ -70,12 +70,12 @@ do -- Velocity
     self.Velocity = UTILS.KmphToMps( VelocityKmph )
     return self
   end
-  
+
   --- Get the velocity in Kmph (kilometers per hour).
   -- @param #VELOCITY self
   -- @return #number The velocity in kilometers per hour. 
   function VELOCITY:GetKmph()
-  
+
     return UTILS.MpsToKmph( self.Velocity )
   end
 
@@ -87,7 +87,7 @@ do -- Velocity
     self.Velocity = UTILS.MiphToMps( VelocityMiph )
     return self
   end
-  
+
   --- Get the velocity in Miph (miles per hour).
   -- @param #VELOCITY self
   -- @return #number The velocity in miles per hour. 
@@ -95,8 +95,7 @@ do -- Velocity
     return UTILS.MpsToMiph( self.Velocity )
   end
 
-  
-  --- Get the velocity in text, according the player @{Settings}.
+  --- Get the velocity in text, according the player @{Core.Settings}.
   -- @param #VELOCITY self
   -- @param Core.Settings#SETTINGS Settings
   -- @return #string The velocity in text. 
@@ -113,11 +112,11 @@ do -- Velocity
     end
   end
 
-  --- Get the velocity in text, according the player or default @{Settings}.
+  --- Get the velocity in text, according the player or default @{Core.Settings}.
   -- @param #VELOCITY self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
   -- @param Core.Settings#SETTINGS Settings
-  -- @return #string The velocity in text according the player or default @{Settings}
+  -- @return #string The velocity in text according the player or default @{Core.Settings}
   function VELOCITY:ToString( VelocityGroup, Settings ) -- R2.3
     self:F( { Group = VelocityGroup and VelocityGroup:GetName() } )
     local Settings = Settings or ( VelocityGroup and _DATABASE:GetPlayerSettings( VelocityGroup:GetPlayerName() ) ) or _SETTINGS
@@ -134,7 +133,7 @@ do -- VELOCITY_POSITIONABLE
 
   --- # VELOCITY_POSITIONABLE class, extends @{Core.Base#BASE}
   -- 
-  -- VELOCITY_POSITIONABLE monitors the speed of an @{Positionable} in the simulation, which can be expressed in various formats according the Settings.
+  -- @{#VELOCITY_POSITIONABLE} monitors the speed of a @{Wrapper.Positionable#POSITIONABLE} in the simulation, which can be expressed in various formats according the Settings.
   -- 
   -- ## 1. VELOCITY_POSITIONABLE constructor
   --   
@@ -167,7 +166,7 @@ do -- VELOCITY_POSITIONABLE
   -- @param #VELOCITY_POSITIONABLE self
   -- @return #number The velocity in kilometers per hour. 
   function VELOCITY_POSITIONABLE:GetKmph()
-  
+
     return UTILS.MpsToKmph( self.Positionable:GetVelocityMPS() or 0)
   end
 
@@ -178,9 +177,9 @@ do -- VELOCITY_POSITIONABLE
     return UTILS.MpsToMiph( self.Positionable:GetVelocityMPS() or 0 )
   end
 
-  --- Get the velocity in text, according the player or default @{Settings}.
+  --- Get the velocity in text, according the player or default @{Core.Settings}.
   -- @param #VELOCITY_POSITIONABLE self
-  -- @return #string The velocity in text according the player or default @{Settings}
+  -- @return #string The velocity in text according the player or default @{Core.Settings}
   function VELOCITY_POSITIONABLE:ToString() -- R2.3
     self:F( { Group = self.Positionable and self.Positionable:GetName() } )
     local Settings = Settings or ( self.Positionable and _DATABASE:GetPlayerSettings( self.Positionable:GetPlayerName() ) ) or _SETTINGS
