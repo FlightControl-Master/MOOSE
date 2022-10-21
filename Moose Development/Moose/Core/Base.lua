@@ -157,7 +157,7 @@ local _ClassID = 0
 --        self:SmokeBlue()
 --      end
 --
--- See the @{Event} module for more information about event handling.
+-- See the @{Core.Event} module for more information about event handling.
 --
 -- # 4. Class identification methods.
 --
@@ -412,20 +412,20 @@ do -- Event Handling
     return _EVENTDISPATCHER
   end
 
-  --- Get the Class @{Event} processing Priority.
+  --- Get the Class @{Core.Event} processing Priority.
   -- The Event processing Priority is a number from 1 to 10,
   -- reflecting the order of the classes subscribed to the Event to be processed.
   -- @param #BASE self
-  -- @return #number The @{Event} processing Priority.
+  -- @return #number The @{Core.Event} processing Priority.
   function BASE:GetEventPriority()
     return self._.EventPriority or 5
   end
 
-  --- Set the Class @{Event} processing Priority.
+  --- Set the Class @{Core.Event} processing Priority.
   -- The Event processing Priority is a number from 1 to 10,
   -- reflecting the order of the classes subscribed to the Event to be processed.
   -- @param #BASE self
-  -- @param #number EventPriority The @{Event} processing Priority.
+  -- @param #number EventPriority The @{Core.Event} processing Priority.
   -- @return #BASE self
   function BASE:SetEventPriority( EventPriority )
     self._.EventPriority = EventPriority
