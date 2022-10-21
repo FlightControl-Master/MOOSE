@@ -367,7 +367,7 @@ do -- TASK_A2G_DISPATCHER
   --
   -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia7.JPG)
   --
-  -- The @{Settings} menu provides additional options to control the timing of the messages.
+  -- The @{Core.Settings} menu provides additional options to control the timing of the messages.
   -- There are:
   --
   --   - Status messages, which are quick status updates. The settings menu allows to switch off these messages.

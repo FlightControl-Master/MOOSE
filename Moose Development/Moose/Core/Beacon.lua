@@ -17,8 +17,8 @@
 -- 
 -- After attaching a @{#BEACON} to your @{Wrapper.Positionable#POSITIONABLE}, you need to select the right function to activate the kind of beacon you want. 
 -- There are two types of BEACONs available : the (aircraft) TACAN Beacon and the general purpose Radio Beacon.
--- Note that in both case, you can set an optional parameter : the `BeaconDuration`. This can be very usefull to simulate the battery time if your BEACON is
--- attach to a cargo crate, for exemple. 
+-- Note that in both case, you can set an optional parameter : the `BeaconDuration`. This can be very useful to simulate the battery time if your BEACON is
+-- attach to a cargo crate, for example. 
 -- 
 -- ## Aircraft TACAN Beacon usage
 -- 
@@ -33,7 +33,7 @@
 -- 
 -- @type BEACON
 -- @field #string ClassName Name of the class "BEACON".
--- @field Wrapper.Controllable#CONTROLLABLE Positionable The @{#CONTROLLABLE} that will receive radio capabilities.
+-- @field Wrapper.Controllable#CONTROLLABLE Positionable The @{Wrapper.Controllable#CONTROLLABLE} that will receive radio capabilities.
 -- @extends Core.Base#BASE
 BEACON = {
   ClassName    = "BEACON",
@@ -72,12 +72,12 @@ BEACON.Type={
   TACAN                     = 4,
   VORTAC                    = 5, 
   RSBN                      = 128,
-  BROADCAST_STATION         = 1024, 
+  BROADCAST_STATION         = 1024,
   HOMER                     = 8,
-  AIRPORT_HOMER             = 4104, 
-  AIRPORT_HOMER_WITH_MARKER = 4136, 
+  AIRPORT_HOMER             = 4104,
+  AIRPORT_HOMER_WITH_MARKER = 4136,
   ILS_FAR_HOMER             = 16408,
-  ILS_NEAR_HOMER            = 16424, 
+  ILS_NEAR_HOMER            = 16424,
   ILS_LOCALIZER             = 16640,
   ILS_GLIDESLOPE            = 16896,
   PRMG_LOCALIZER            = 33024,
@@ -108,13 +108,13 @@ BEACON.Type={
 -- @field #number ICLS_LOCALIZER Carrier landing system.
 -- @field #number ICLS_GLIDESLOPE Carrier landing system.
 BEACON.System={
-  PAR_10            = 1, 
-  RSBN_5            = 2, 
-  TACAN             = 3, 
+  PAR_10            = 1,
+  RSBN_5            = 2,
+  TACAN             = 3,
   TACAN_TANKER_X    = 4,
   TACAN_TANKER_Y    = 5,
-  VOR               = 6, 
-  ILS_LOCALIZER     = 7, 
+  VOR               = 6,
+  ILS_LOCALIZER     = 7,
   ILS_GLIDESLOPE    = 8,
   PRMG_LOCALIZER    = 9,
   PRMG_GLIDESLOPE   = 10,
@@ -130,16 +130,16 @@ BEACON.System={
 --- Create a new BEACON Object. This doesn't activate the beacon, though, use @{#BEACON.ActivateTACAN} etc.
 -- If you want to create a BEACON, you probably should use @{Wrapper.Positionable#POSITIONABLE.GetBeacon}() instead.
 -- @param #BEACON self
--- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Positionable} that will receive radio capabilities.
+-- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Wrapper.Positionable} that will receive radio capabilities.
 -- @return #BEACON Beacon object or #nil if the positionable is invalid.
 function BEACON:New(Positionable)
 
   -- Inherit BASE.
   local self=BASE:Inherit(self, BASE:New()) --#BEACON
-  
+
   -- Debug.
   self:F(Positionable)
-  
+
   -- Set positionable.
   if Positionable:GetPointVec2() then -- It's stupid, but the only way I found to make sure positionable is valid
     self.Positionable = Positionable
@@ -147,11 +147,10 @@ function BEACON:New(Positionable)
     self:I(string.format("New BEACON %s", tostring(self.name)))
     return self
   end
-  
+
   self:E({"The passed positionable is invalid, no BEACON created", Positionable})
   return nil
 end
-
 
 --- Activates a TACAN BEACON.
 -- @param #BEACON self
@@ -169,28 +168,28 @@ end
 -- myBeacon:ActivateTACAN(20, "Y", "TEXACO", true) -- Activate the beacon
 function BEACON:ActivateTACAN(Channel, Mode, Message, Bearing, Duration)
   self:T({channel=Channel, mode=Mode, callsign=Message, bearing=Bearing, duration=Duration})
-  
+
   Mode=Mode or "Y"
-  
+
   -- Get frequency.
   local Frequency=UTILS.TACANToFrequency(Channel, Mode)
-  
+
   -- Check.
   if not Frequency then 
     self:E({"The passed TACAN channel is invalid, the BEACON is not emitting"})
     return self
   end
-  
+
   -- Beacon type.
   local Type=BEACON.Type.TACAN
-  
+
   -- Beacon system.  
   local System=BEACON.System.TACAN
-  
+
   -- Check if unit is an aircraft and set system accordingly.
   local AA=self.Positionable:IsAir()
-  
-  
+
+
   if AA then
     System=5 --NOTE: 5 is how you cat the correct tanker behaviour! --BEACON.System.TACAN_TANKER
     -- Check if "Y" mode is selected for aircraft.
@@ -201,21 +200,21 @@ function BEACON:ActivateTACAN(Channel, Mode, Message, Bearing, Duration)
       System=BEACON.System.TACAN_TANKER_Y
     end
   end
-  
+
   -- Attached unit.
   local UnitID=self.Positionable:GetID()
-  
+
   -- Debug.
   self:I({string.format("BEACON Activating TACAN %s: Channel=%d%s, Morse=%s, Bearing=%s, Duration=%s!", tostring(self.name), Channel, Mode, Message, tostring(Bearing), tostring(Duration))})
-    
+
   -- Start beacon.
   self.Positionable:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, Mode, AA, Message, Bearing)
-      
+
   -- Stop scheduler.
   if Duration then
     self.Positionable:DeactivateBeacon(Duration)
   end
-  
+
   return self
 end
 
@@ -227,21 +226,21 @@ end
 -- @return #BEACON self
 function BEACON:ActivateICLS(Channel, Callsign, Duration)
   self:F({Channel=Channel, Callsign=Callsign, Duration=Duration})
-  
+
   -- Attached unit.
   local UnitID=self.Positionable:GetID()
-  
+
   -- Debug
   self:T2({"ICLS BEACON started!"})
-    
+
   -- Start beacon.
   self.Positionable:CommandActivateICLS(Channel, UnitID, Callsign)
-      
+
   -- Stop scheduler
   if Duration then -- Schedule the stop of the BEACON if asked by the MD
     self.Positionable:DeactivateBeacon(Duration)
   end
-  
+
   return self
 end
 
@@ -253,25 +252,25 @@ end
 -- @return #BEACON self
 function BEACON:ActivateLink4(Frequency, Morse, Duration)
   self:F({Frequency=Frequency, Morse=Morse, Duration=Duration})
-  
+
   -- Attached unit.
   local UnitID=self.Positionable:GetID()
-  
+
   -- Debug
   self:T2({"LINK4 BEACON started!"})
-    
+
   -- Start beacon.
   self.Positionable:CommandActivateLink4(Frequency,UnitID,Morse)
-      
+
   -- Stop sheduler
   if Duration then -- Schedule the stop of the BEACON if asked by the MD
     self.Positionable:CommandDeactivateLink4(Duration)
   end
-  
+
   return self
 end
 
---- DEPRECATED: Please use @{BEACON:ActivateTACAN}() instead.
+--- DEPRECATED: Please use @{#BEACON.ActivateTACAN}() instead.
 -- Activates a TACAN BEACON on an Aircraft.
 -- @param #BEACON self
 -- @param #number TACANChannel (the "10" part in "10Y"). Note that AA TACAN are only available on Y Channels
@@ -287,20 +286,20 @@ end
 -- myBeacon:AATACAN(20, "TEXACO", true) -- Activate the beacon
 function BEACON:AATACAN(TACANChannel, Message, Bearing, BeaconDuration)
   self:F({TACANChannel, Message, Bearing, BeaconDuration})
-  
+
   local IsValid = true
-  
+
   if not self.Positionable:IsAir() then
     self:E({"The POSITIONABLE you want to attach the AA Tacan Beacon is not an aircraft ! The BEACON is not emitting", self.Positionable})
     IsValid = false
   end
-    
+
   local Frequency = self:_TACANToFrequency(TACANChannel, "Y")
   if not Frequency then 
     self:E({"The passed TACAN channel is invalid, the BEACON is not emitting"})
     IsValid = false
   end
-  
+
   -- I'm using the beacon type 4 (BEACON_TYPE_TACAN). For System, I'm using 5 (TACAN_TANKER_MODE_Y) if the bearing shows its bearing or 14 (TACAN_AA_MODE_Y) if it does not
   local System
   if Bearing then
@@ -308,7 +307,7 @@ function BEACON:AATACAN(TACANChannel, Message, Bearing, BeaconDuration)
   else
     System = BEACON.System.TACAN_AA_MODE_Y
   end
-  
+
   if IsValid then -- Starts the BEACON
     self:T2({"AA TACAN BEACON started !"})
     self.Positionable:SetCommand({
@@ -323,7 +322,7 @@ function BEACON:AATACAN(TACANChannel, Message, Bearing, BeaconDuration)
         modeChannel = "Y",
         }
       })
-      
+
     if BeaconDuration then -- Schedule the stop of the BEACON if asked by the MD
       SCHEDULER:New(nil, 
       function()
@@ -331,7 +330,7 @@ function BEACON:AATACAN(TACANChannel, Message, Bearing, BeaconDuration)
       end, {}, BeaconDuration)
     end
   end
-  
+
   return self
 end
 
@@ -350,7 +349,6 @@ function BEACON:StopAATACAN()
     })
   end
 end
-
 
 --- Activates a general purpose Radio Beacon
 -- This uses the very generic singleton function "trigger.action.radioTransmission()" provided by DCS to broadcast a sound file on a specific frequency.
@@ -381,7 +379,7 @@ end
 function BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDuration)
   self:F({FileName, Frequency, Modulation, Power, BeaconDuration})
   local IsValid = false
-  
+
   -- Check the filename
   if type(FileName) == "string" then
     if FileName:find(".ogg") or FileName:find(".wav") then
@@ -394,32 +392,32 @@ function BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDurati
   if not IsValid then
     self:E({"File name invalid. Maybe something wrong with the extension ? ", FileName})
   end
-  
+
   -- Check the Frequency
   if type(Frequency) ~= "number" and IsValid then
     self:E({"Frequency invalid. ", Frequency})
     IsValid = false
   end
   Frequency = Frequency * 1000000 -- Conversion to Hz
-  
+
   -- Check the modulation
   if Modulation ~= radio.modulation.AM and Modulation ~= radio.modulation.FM and IsValid then --TODO Maybe make this future proof if ED decides to add an other modulation ?
     self:E({"Modulation is invalid. Use DCS's enum radio.modulation.", Modulation})
     IsValid = false
   end
-  
+
   -- Check the Power
   if type(Power) ~= "number" and IsValid then
     self:E({"Power is invalid. ", Power})
     IsValid = false
   end
   Power = math.floor(math.abs(Power)) --TODO Find what is the maximum power allowed by DCS and limit power to that
-  
+
   if IsValid then
     self:T2({"Activating Beacon on ", Frequency, Modulation})
     -- Note that this is looped. I have to give this transmission a unique name, I use the class ID
     trigger.action.radioTransmission(FileName, self.Positionable:GetPositionVec3(), Modulation, true, Frequency, Power, tostring(self.ID))
-    
+
      if BeaconDuration then -- Schedule the stop of the BEACON if asked by the MD
        SCHEDULER:New( nil, 
          function()
@@ -453,16 +451,16 @@ function BEACON:_TACANToFrequency(TACANChannel, TACANMode)
       return nil -- error in arguments
     end
   end
-  
+
 -- This code is largely based on ED's code, in DCS World\Scripts\World\Radio\BeaconTypes.lua, line 137.
 -- I have no idea what it does but it seems to work
   local A = 1151 -- 'X', channel >= 64
   local B = 64   -- channel >= 64
-  
+
   if TACANChannel < 64 then
     B = 1
   end
-  
+
   if TACANMode == 'Y' then
     A = 1025
     if TACANChannel < 64 then
@@ -473,6 +471,6 @@ function BEACON:_TACANToFrequency(TACANChannel, TACANMode)
       A = 962
     end
   end
-  
+
   return (A + TACANChannel - B) * 1000000
 end
