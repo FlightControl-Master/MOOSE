@@ -200,7 +200,7 @@
 --   * @{#SPAWN.ReSpawn}(): Re-spawn a group based on a given index.
 --   * @{#SPAWN.SpawnFromVec3}(): Spawn a new group from a Vec3 coordinate. (The group will can be spawned at a point in the air).
 --   * @{#SPAWN.SpawnFromVec2}(): Spawn a new group from a Vec2 coordinate. (The group will be spawned at land height ).
---   * @{#SPAWN.SpawnFromStatic}(): Spawn a new group from a structure, taking the position of a @{Static}.
+--   * @{#SPAWN.SpawnFromStatic}(): Spawn a new group from a structure, taking the position of a @{Wrapper.Static}.
 --   * @{#SPAWN.SpawnFromUnit}(): Spawn a new group taking the position of a @{Wrapper.Unit}.
 --   * @{#SPAWN.SpawnInZone}(): Spawn a new group in a @{Zone}.
 --   * @{#SPAWN.SpawnAtAirbase}(): Spawn a new group at an @{Wrapper.Airbase}, which can be an airdrome, ship or helipad.
