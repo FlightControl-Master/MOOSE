@@ -617,7 +617,9 @@ function TARGET:onafterStatus(From, Event, To)
   -- Log output verbose=1.
   if self.verbose>=1 then
     local text=string.format("%s: Targets=%d/%d Life=%.1f/%.1f Damage=%.1f", fsmstate, self:CountTargets(), self.N0, self:GetLife(), self:GetLife0(), self:GetDamage())
-    if damaged then
+    if self:CountTargets() == 0 then
+      text=text.." Dead!"
+    elseif damaged then
       text=text.." Damaged!"
     end
     self:I(self.lid..text)
@@ -633,7 +635,11 @@ function TARGET:onafterStatus(From, Event, To)
     end
     self:I(self.lid..text)
   end
-
+  
+  if self:CountTargets() == 0 then
+    self:Dead()
+  end
+  
   -- Update status again in 30 sec.
   if self:IsAlive() then
     self:__Status(-self.TStatus)
