@@ -1062,9 +1062,13 @@ end
 -- @return #number Distance between the vectors.
 function UTILS.VecDist2D(a, b)
 
+  local d = math.huge
+  
+  if (not a) or (not b) then return d end
+
   local c={x=b.x-a.x, y=b.y-a.y}
 
-  local d=math.sqrt(c.x*c.x+c.y*c.y)
+  d=math.sqrt(c.x*c.x+c.y*c.y)
 
   return d
 end
@@ -1076,6 +1080,7 @@ end
 -- @return #number Distance between the vectors.
 function UTILS.VecDist3D(a, b)
   
+    
   local d = math.huge
   
   if (not a) or (not b) then return d end
