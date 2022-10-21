@@ -60,7 +60,7 @@
 --
 -- ===
 --
--- @module Actions.Assist
+-- @module Actions.Act_Assist
 -- @image MOOSE.JPG
 
 

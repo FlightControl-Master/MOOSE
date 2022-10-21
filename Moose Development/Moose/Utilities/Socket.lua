@@ -11,7 +11,7 @@
 --
 -- ### Author: **funkyfranky**
 -- @module Utilities.Socket
--- @image Utilities_Socket.png
+-- @image MOOSE.JPG
 
 
 --- SOCKET class.

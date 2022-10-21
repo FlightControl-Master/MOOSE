@@ -153,7 +153,7 @@ end
 --- Evaluate the attack and create an AttackUnitTask list.
 -- @param #AI_A2A_GCI self
 -- @param Core.Set#SET_UNIT AttackSetUnit The set of units to attack.
--- @param Wrappper.Group#GROUP DefenderGroup The group of defenders.
+-- @param Wrapper.Group#GROUP DefenderGroup The group of defenders.
 -- @param #number EngageAltitude The altitude to engage the targets.
 -- @return #AI_A2A_GCI self
 function AI_A2A_GCI:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageAltitude )

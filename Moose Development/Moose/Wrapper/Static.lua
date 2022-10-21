@@ -186,9 +186,9 @@ function STATIC:GetDCSObject()
   return nil
 end
 
---- Returns a list of one @{Static}.
+--- Returns a list of one @{Wrapper.Static}.
 -- @param #STATIC self
--- @return #list<Wrapper.Static#STATIC> A list of one @{Static}.
+-- @return #list<Wrapper.Static#STATIC> A list of one @{Wrapper.Static}.
 function STATIC:GetUnits()
   self:F2( { self.StaticName } )
   local DCSStatic = self:GetDCSObject()

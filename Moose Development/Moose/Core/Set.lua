@@ -3083,7 +3083,7 @@ do -- SET_STATIC
   --
   -- Various methods exist for a SET_STATIC to perform actions or calculations and retrieve results from the SET_STATIC:
   --
-  --   * @{#SET_STATIC.GetTypeNames}(): Retrieve the type names of the @{Static}s in the SET, delimited by a comma.
+  --   * @{#SET_STATIC.GetTypeNames}(): Retrieve the type names of the @{Wrapper.Static}s in the SET, delimited by a comma.
   --
   -- ===
   -- @field #SET_STATIC SET_STATIC
@@ -3722,10 +3722,10 @@ do -- SET_STATIC
     return MStaticInclude
   end
 
-  --- Retrieve the type names of the @{Static}s in the SET, delimited by an optional delimiter.
+  --- Retrieve the type names of the @{Wrapper.Static}s in the SET, delimited by an optional delimiter.
   -- @param #SET_STATIC self
   -- @param #string Delimiter (Optional) The delimiter, which is default a comma.
-  -- @return #string The types of the @{Static}s delimited.
+  -- @return #string The types of the @{Wrapper.Static}s delimited.
   function SET_STATIC:GetTypeNames( Delimiter )
 
     Delimiter = Delimiter or ", "
