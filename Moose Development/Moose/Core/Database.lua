@@ -246,7 +246,7 @@ end
 
 do -- Zones
 
-  --- Finds a @{Zone} based on the zone name.
+  --- Finds a @{Core.Zone} based on the zone name.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   -- @return Core.Zone#ZONE_BASE The found ZONE.
@@ -256,7 +256,7 @@ do -- Zones
     return ZoneFound
   end
 
-  --- Adds a @{Zone} based on the zone name in the DATABASE.
+  --- Adds a @{Core.Zone} based on the zone name in the DATABASE.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   -- @param Core.Zone#ZONE_BASE Zone The zone.
@@ -268,7 +268,7 @@ do -- Zones
   end
 
 
-  --- Deletes a @{Zone} from the DATABASE based on the zone name.
+  --- Deletes a @{Core.Zone} from the DATABASE based on the zone name.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   function DATABASE:DeleteZone( ZoneName )
@@ -379,7 +379,7 @@ end -- zone
 
 do -- Zone_Goal
 
-  --- Finds a @{Zone} based on the zone name.
+  --- Finds a @{Core.Zone} based on the zone name.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   -- @return Core.Zone#ZONE_BASE The found ZONE.
@@ -389,7 +389,7 @@ do -- Zone_Goal
     return ZoneFound
   end
 
-  --- Adds a @{Zone} based on the zone name in the DATABASE.
+  --- Adds a @{Core.Zone} based on the zone name in the DATABASE.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   -- @param Core.Zone#ZONE_BASE Zone The zone.
@@ -401,7 +401,7 @@ do -- Zone_Goal
   end
 
 
-  --- Deletes a @{Zone} from the DATABASE based on the zone name.
+  --- Deletes a @{Core.Zone} from the DATABASE based on the zone name.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   function DATABASE:DeleteZoneGoal( ZoneName )

@@ -167,7 +167,7 @@
 --
 --   * @{#SPAWN.InitRandomizePosition}(): Randomizes the position of @{Wrapper.Group}s that are spawned within a **radius band**, given an Outer and Inner radius, from the point that the spawn happens.
 --   * @{#SPAWN.InitRandomizeUnits}(): Randomizes the @{Wrapper.Unit}s in the @{Wrapper.Group} that is spawned within a **radius band**, given an Outer and Inner radius.
---   * @{#SPAWN.InitRandomizeZones}(): Randomizes the spawning between a predefined list of @{Zone}s that are declared using this function. Each zone can be given a probability factor.
+--   * @{#SPAWN.InitRandomizeZones}(): Randomizes the spawning between a predefined list of @{Core.Zone}s that are declared using this function. Each zone can be given a probability factor.
 --
 -- ### Enable / Disable AI when spawning a new @{Wrapper.Group}
 --
@@ -202,7 +202,7 @@
 --   * @{#SPAWN.SpawnFromVec2}(): Spawn a new group from a Vec2 coordinate. (The group will be spawned at land height ).
 --   * @{#SPAWN.SpawnFromStatic}(): Spawn a new group from a structure, taking the position of a @{Wrapper.Static}.
 --   * @{#SPAWN.SpawnFromUnit}(): Spawn a new group taking the position of a @{Wrapper.Unit}.
---   * @{#SPAWN.SpawnInZone}(): Spawn a new group in a @{Zone}.
+--   * @{#SPAWN.SpawnInZone}(): Spawn a new group in a @{Core.Zone}.
 --   * @{#SPAWN.SpawnAtAirbase}(): Spawn a new group at an @{Wrapper.Airbase}, which can be an airdrome, ship or helipad.
 --
 -- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{Wrapper.Group#GROUP.New} object, that contains a reference to the DCSGroup object.
@@ -906,7 +906,7 @@ end
 
 --- This method provides the functionality to randomize the spawning of the Groups at a given list of zones of different types.
 -- @param #SPAWN self
--- @param #table SpawnZoneTable A table with @{Zone} objects. If this table is given, then each spawn will be executed within the given list of @{Zone}s objects.
+-- @param #table SpawnZoneTable A table with @{Core.Zone} objects. If this table is given, then each spawn will be executed within the given list of @{Core.Zone}s objects.
 -- @return #SPAWN
 -- @usage
 --
@@ -2615,8 +2615,8 @@ function SPAWN:SpawnFromStatic( HostStatic, MinHeight, MaxHeight, SpawnIndex )
   return nil
 end
 
---- Will spawn a Group within a given @{Zone}.
--- The @{Zone} can be of any type derived from @{Core.Zone#ZONE_BASE}.
+--- Will spawn a Group within a given @{Core.Zone}.
+-- The @{Core.Zone} can be of any type derived from @{Core.Zone#ZONE_BASE}.
 -- Once the @{Wrapper.Group} is spawned within the zone, the @{Wrapper.Group} will continue on its route.
 -- The **first waypoint** (where the group is spawned) is replaced with the zone location coordinates.
 -- @param #SPAWN self
@@ -3108,7 +3108,7 @@ function SPAWN:_RandomizeTemplate( SpawnIndex )
   return self
 end
 
---- Private method that randomizes the @{Zone}s where the Group will be spawned.
+--- Private method that randomizes the @{Core.Zone}s where the Group will be spawned.
 -- @param #SPAWN self
 -- @param #number SpawnIndex
 -- @return #SPAWN self

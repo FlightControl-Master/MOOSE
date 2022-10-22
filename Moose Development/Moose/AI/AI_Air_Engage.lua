@@ -65,7 +65,7 @@
 -- 
 -- ![Zone](..\Presentations\AI_GCI\Dia12.JPG)
 -- 
--- An optional @{Zone} can be set, 
+-- An optional @{Core.Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- Use the method @{AI.AI_CAP#AI_AIR_ENGAGE.SetEngageZone}() to define that Zone.
 --  

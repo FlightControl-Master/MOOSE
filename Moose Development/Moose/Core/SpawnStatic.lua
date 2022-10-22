@@ -106,7 +106,7 @@
 --   * @{#SPAWNSTATIC.Spawn}(Heading, NewName) spawns the static with the set parameters. Optionally, heading and name can be given. The name **must be unique**!
 --   * @{#SPAWNSTATIC.SpawnFromCoordinate}(Coordinate, Heading, NewName) spawn the static at the given coordinate. Optionally, heading and name can be given. The name **must be unique**!
 --   * @{#SPAWNSTATIC.SpawnFromPointVec2}(PointVec2, Heading, NewName) spawns the static at a POINT_VEC2 coordinate. Optionally, heading and name can be given. The name **must be unique**!
---   * @{#SPAWNSTATIC.SpawnFromZone}(Zone, Heading, NewName) spawns the static at the center of a @{Zone}. Optionally, heading and name can be given. The name **must be unique**!
+--   * @{#SPAWNSTATIC.SpawnFromZone}(Zone, Heading, NewName) spawns the static at the center of a @{Core.Zone}. Optionally, heading and name can be given. The name **must be unique**!
 --  
 -- @field #SPAWNSTATIC SPAWNSTATIC
 -- 
@@ -375,7 +375,7 @@ function SPAWNSTATIC:SpawnFromCoordinate(Coordinate, Heading, NewName)
 end
 
 
---- Creates a new @{Wrapper.Static} from a @{Zone}.
+--- Creates a new @{Wrapper.Static} from a @{Core.Zone}.
 -- @param #SPAWNSTATIC self
 -- @param Core.Zone#ZONE_BASE Zone The Zone where to spawn the static.
 -- @param #number Heading (Optional)The heading of the static in degrees. Default is the heading of the template.

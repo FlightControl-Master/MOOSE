@@ -174,7 +174,7 @@
 --    * polygon zones
 --    * moving zones
 -- 
--- Depending on the type of zone selected, a different @{Zone} object needs to be created from a ZONE_ class.
+-- Depending on the type of zone selected, a different @{Core.Zone} object needs to be created from a ZONE_ class.
 -- 
 -- 
 -- ## 12. Are moving defense coordinates possible?
@@ -1376,7 +1376,7 @@ do -- AI_AIR_DISPATCHER
   --- Define a border area to simulate a **cold war** scenario.
   -- A **cold war** is one where Patrol aircraft patrol their territory but will not attack enemy aircraft or launch GCI aircraft unless enemy aircraft enter their territory. In other words the EWR may detect an enemy aircraft but will only send aircraft to attack it if it crosses the border.
   -- A **hot war** is one where Patrol aircraft will intercept any detected enemy aircraft and GCI aircraft will launch against detected enemy aircraft without regard for territory. In other words if the ground radar can detect the enemy aircraft then it will send Patrol and GCI aircraft to attack it.
-  -- If it's a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Core.Zone#ZONE_BASE}. This method needs to be used for this.
+  -- If it's a cold war then the **borders of red and blue territory** need to be defined using a @{Core.Zone} object derived from @{Core.Zone#ZONE_BASE}. This method needs to be used for this.
   -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. In a hot war the borders are effectively defined by the ground based radar coverage of a coalition. Set the noborders parameter to 1
   -- @param #AI_AIR_DISPATCHER self
   -- @param Core.Zone#ZONE_BASE BorderZone An object derived from ZONE_BASE, or a list of objects derived from ZONE_BASE.

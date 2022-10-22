@@ -930,9 +930,9 @@ do -- SET_GROUP
   -- The following iterator methods are currently available within the SET_GROUP:
   --
   --   * @{#SET_GROUP.ForEachGroup}: Calls a function for each alive group it finds within the SET_GROUP.
-  --   * @{#SET_GROUP.ForEachGroupCompletelyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
-  --   * @{#SET_GROUP.ForEachGroupPartlyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Zone}, providing the GROUP and optional parameters to the called function.
-  --   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
+  --   * @{#SET_GROUP.ForEachGroupCompletelyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Core.Zone}, providing the GROUP and optional parameters to the called function.
+  --   * @{#SET_GROUP.ForEachGroupPartlyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Core.Zone}, providing the GROUP and optional parameters to the called function.
+  --   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Core.Zone}, providing the GROUP and optional parameters to the called function.
   --
   --
   -- ## SET_GROUP trigger events on the GROUP objects.
@@ -1486,7 +1486,7 @@ do -- SET_GROUP
   end
 
 
-  --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
+  --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Core.Zone}, providing the GROUP and optional parameters to the called function.
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
@@ -1508,7 +1508,7 @@ do -- SET_GROUP
     return self
   end
 
-  --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Zone}, providing the GROUP and optional parameters to the called function.
+  --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Core.Zone}, providing the GROUP and optional parameters to the called function.
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
@@ -1530,7 +1530,7 @@ do -- SET_GROUP
     return self
   end
 
-  --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
+  --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Core.Zone}, providing the GROUP and optional parameters to the called function.
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
@@ -1624,7 +1624,7 @@ do -- SET_GROUP
     return false
   end
 
-  --- Iterate the SET_GROUP and return true if at least one @{#UNIT} of one @{GROUP} of the @{SET_GROUP} is in @{ZONE}
+  --- Iterate the SET_GROUP and return true if at least one @{#UNIT} of one @{GROUP} of the @{SET_GROUP} is in @{Core.Zone}
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completely inside the @{Core.Zone#ZONE}, false otherwise.
@@ -1649,8 +1649,8 @@ do -- SET_GROUP
     return false
   end
 
-  --- Iterate the SET_GROUP and return true if at least one @{GROUP} of the @{SET_GROUP} is partly in @{ZONE}.
-  -- Will return false if a @{GROUP} is fully in the @{ZONE}
+  --- Iterate the SET_GROUP and return true if at least one @{GROUP} of the @{SET_GROUP} is partly in @{Core.Zone}.
+  -- Will return false if a @{GROUP} is fully in the @{Core.Zone}
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completely inside the @{Core.Zone#ZONE}, false otherwise.
@@ -1683,7 +1683,7 @@ do -- SET_GROUP
     end
   end
 
-  --- Iterate the SET_GROUP and return true if no @{GROUP} of the @{SET_GROUP} is in @{ZONE}
+  --- Iterate the SET_GROUP and return true if no @{GROUP} of the @{SET_GROUP} is in @{Core.Zone}
   -- This could also be achieved with `not SET_GROUP:AnyPartlyInZone(Zone)`, but it's easier for the
   -- mission designer to add a dedicated method
   -- @param #SET_GROUP self
@@ -1952,14 +1952,14 @@ do -- SET_UNIT
   -- The following iterator methods are currently available within the SET_UNIT:
   --
   --   * @{#SET_UNIT.ForEachUnit}: Calls a function for each alive unit it finds within the SET_UNIT.
-  --   * @{#SET_UNIT.ForEachUnitInZone}: Iterate the SET_UNIT and call an iterator function for each **alive** UNIT object presence completely in a @{Zone}, providing the UNIT object and optional parameters to the called function.
-  --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate the SET_UNIT and call an iterator function for each **alive** UNIT object presence not in a @{Zone}, providing the UNIT object and optional parameters to the called function.
+  --   * @{#SET_UNIT.ForEachUnitInZone}: Iterate the SET_UNIT and call an iterator function for each **alive** UNIT object presence completely in a @{Core.Zone}, providing the UNIT object and optional parameters to the called function.
+  --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate the SET_UNIT and call an iterator function for each **alive** UNIT object presence not in a @{Core.Zone}, providing the UNIT object and optional parameters to the called function.
   --
   -- Planned iterators methods in development are (so these are not yet available):
   --
   --   * @{#SET_UNIT.ForEachUnitInUnit}: Calls a function for each unit contained within the SET_UNIT.
-  --   * @{#SET_UNIT.ForEachUnitCompletelyInZone}: Iterate and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
-  --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
+  --   * @{#SET_UNIT.ForEachUnitCompletelyInZone}: Iterate and call an iterator function for each **alive** UNIT presence completely in a @{Core.Zone}, providing the UNIT and optional parameters to the called function.
+  --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate and call an iterator function for each **alive** UNIT presence not in a @{Core.Zone}, providing the UNIT and optional parameters to the called function.
   --
   -- ## 5) SET_UNIT atomic methods
   --
@@ -2501,7 +2501,7 @@ do -- SET_UNIT
     return self
   end
 
-  --- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
+  --- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence completely in a @{Core.Zone}, providing the UNIT and optional parameters to the called function.
   -- @param #SET_UNIT self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
@@ -2523,7 +2523,7 @@ do -- SET_UNIT
     return self
   end
 
-  --- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
+  --- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence not in a @{Core.Zone}, providing the UNIT and optional parameters to the called function.
   -- @param #SET_UNIT self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
@@ -3075,9 +3075,9 @@ do -- SET_STATIC
   -- The following iterator methods are currently available within the SET_STATIC:
   --
   --   * @{#SET_STATIC.ForEachStatic}: Calls a function for each alive unit it finds within the SET_STATIC.
-  --   * @{#SET_STATIC.ForEachStaticCompletelyInZone}: Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence completely in a @{Zone}, providing the STATIC and optional parameters to the called function.
-  --   * @{#SET_STATIC.ForEachStaticInZone}: Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence completely in a @{Zone}, providing the STATIC and optional parameters to the called function.
-  --   * @{#SET_STATIC.ForEachStaticNotInZone}: Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence not in a @{Zone}, providing the STATIC and optional parameters to the called function.
+  --   * @{#SET_STATIC.ForEachStaticCompletelyInZone}: Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence completely in a @{Core.Zone}, providing the STATIC and optional parameters to the called function.
+  --   * @{#SET_STATIC.ForEachStaticInZone}: Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence completely in a @{Core.Zone}, providing the STATIC and optional parameters to the called function.
+  --   * @{#SET_STATIC.ForEachStaticNotInZone}: Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence not in a @{Core.Zone}, providing the STATIC and optional parameters to the called function.
   --
   -- ## SET_STATIC atomic methods
   --
@@ -3441,7 +3441,7 @@ do -- SET_STATIC
     return self
   end
 
-  --- Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence completely in a @{Zone}, providing the STATIC and optional parameters to the called function.
+  --- Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence completely in a @{Core.Zone}, providing the STATIC and optional parameters to the called function.
   -- @param #SET_STATIC self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.
@@ -3463,7 +3463,7 @@ do -- SET_STATIC
     return self
   end
 
-  --- Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence not in a @{Zone}, providing the STATIC and optional parameters to the called function.
+  --- Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence not in a @{Core.Zone}, providing the STATIC and optional parameters to the called function.
   -- @param #SET_STATIC self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.
@@ -4073,7 +4073,7 @@ do -- SET_CLIENT
     return self
   end
 
-  --- Iterate the SET_CLIENT and call an iterator function for each **alive** CLIENT presence completely in a @{Zone}, providing the CLIENT and optional parameters to the called function.
+  --- Iterate the SET_CLIENT and call an iterator function for each **alive** CLIENT presence completely in a @{Core.Zone}, providing the CLIENT and optional parameters to the called function.
   -- @param #SET_CLIENT self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
@@ -4095,7 +4095,7 @@ do -- SET_CLIENT
     return self
   end
 
-  --- Iterate the SET_CLIENT and call an iterator function for each **alive** CLIENT presence not in a @{Zone}, providing the CLIENT and optional parameters to the called function.
+  --- Iterate the SET_CLIENT and call an iterator function for each **alive** CLIENT presence not in a @{Core.Zone}, providing the CLIENT and optional parameters to the called function.
   -- @param #SET_CLIENT self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
@@ -4545,7 +4545,7 @@ do -- SET_PLAYER
     return self
   end
 
-  --- Iterate the SET_PLAYER and call an iterator function for each **alive** CLIENT presence completely in a @{Zone}, providing the CLIENT and optional parameters to the called function.
+  --- Iterate the SET_PLAYER and call an iterator function for each **alive** CLIENT presence completely in a @{Core.Zone}, providing the CLIENT and optional parameters to the called function.
   -- @param #SET_PLAYER self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.
@@ -4567,7 +4567,7 @@ do -- SET_PLAYER
     return self
   end
 
-  --- Iterate the SET_PLAYER and call an iterator function for each **alive** CLIENT presence not in a @{Zone}, providing the CLIENT and optional parameters to the called function.
+  --- Iterate the SET_PLAYER and call an iterator function for each **alive** CLIENT presence not in a @{Core.Zone}, providing the CLIENT and optional parameters to the called function.
   -- @param #SET_PLAYER self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.

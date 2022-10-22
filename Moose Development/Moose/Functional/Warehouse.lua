@@ -6814,7 +6814,7 @@ function WAREHOUSE:_OnEventBaseCaptured(EventData)
           self:AirbaseRecaptured(NewCoalitionAirbase)
         end
       else
-        -- Captured airbase belongs to this warehouse but was captured by other coaltion.
+        -- Captured airbase belongs to this warehouse but was captured by other coalition.
         if NewCoalitionAirbase ~= self:GetCoalition() then
           self:AirbaseCaptured(NewCoalitionAirbase)
         end
@@ -7007,7 +7007,7 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
 
     -- Request from enemy coalition?
     if self:GetCoalition()~=request.warehouse:GetCoalition() then
-      self:E(self.lid..string.format("ERROR: INVALID request. Requesting warehouse is of wrong coaltion! Own coalition %s != %s of requesting warehouse.", self:GetCoalitionName(), request.warehouse:GetCoalitionName()))
+      self:E(self.lid..string.format("ERROR: INVALID request. Requesting warehouse is of wrong coalition! Own coalition %s != %s of requesting warehouse.", self:GetCoalitionName(), request.warehouse:GetCoalitionName()))
       valid=false
     end
 

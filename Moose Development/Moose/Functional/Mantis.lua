@@ -214,7 +214,7 @@
 --  * grouping = 5000 (meters) - Detection (EWR) will group enemy flights to areas of 5km for tracking - `MANTIS:SetEWRGrouping(radius)`
 --  * detectinterval = 30 (seconds) - MANTIS will decide every 30 seconds which SAM to activate - `MANTIS:SetDetectInterval(interval)`
 --  * engagerange = 95 (percent) - SAMs will only fire if flights are inside of a 95% radius of their max firerange - `MANTIS:SetSAMRange(range)`
---  * dynamic = false - Group filtering is set to once, i.e. newly added groups will not be part of the setup by default - `MANTIS:New(name,samprefix,ewrprefix,hq,coaltion,dynamic)`
+--  * dynamic = false - Group filtering is set to once, i.e. newly added groups will not be part of the setup by default - `MANTIS:New(name,samprefix,ewrprefix,hq,coalition,dynamic)`
 --  * autorelocate = false - HQ and (mobile) EWR system will not relocate in random intervals between 30mins and 1 hour - `MANTIS:SetAutoRelocate(hq, ewr)`
 --  * debug = false - Debugging reports on screen are set to off - `MANTIS:Debug(onoff)`
 --
@@ -424,7 +424,7 @@ do
   --@param #string samprefix Prefixes for the SAM groups from the ME, e.g. all groups starting with "Red Sam..."
   --@param #string ewrprefix Prefixes for the EWR groups from the ME, e.g. all groups starting with "Red EWR..."
   --@param #string hq Group name of your HQ (optional)
-  --@param #string coaltion Coalition side of your setup, e.g. "blue", "red" or "neutral"
+  --@param #string coalition Coalition side of your setup, e.g. "blue", "red" or "neutral"
   --@param #boolean dynamic Use constant (true) filtering or just filter once (false, default) (optional)
   --@param #string awacs Group name of your Awacs (optional)
   --@param #boolean EmOnOff Make MANTIS switch Emissions on and off instead of changing the alarm state between RED and GREEN (optional)
@@ -447,7 +447,7 @@ do
   --        mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
   --        mybluemantis:Start()
   --
-  function MANTIS:New(name,samprefix,ewrprefix,hq,coaltion,dynamic,awacs, EmOnOff, Padding)
+  function MANTIS:New(name,samprefix,ewrprefix,hq,coalition,dynamic,awacs, EmOnOff, Padding)
 
     -- DONE: Create some user functions for these
     -- DONE: Make HQ useful
@@ -460,7 +460,7 @@ do
     self.SAM_Templates_Prefix = samprefix or "Red SAM"
     self.EWR_Templates_Prefix = ewrprefix or "Red EWR"
     self.HQ_Template_CC = hq or nil
-    self.Coalition = coaltion or "red"
+    self.Coalition = coalition or "red"
     self.SAM_Table = {}
     self.SAM_Table_Long = {}
     self.SAM_Table_Medium = {}

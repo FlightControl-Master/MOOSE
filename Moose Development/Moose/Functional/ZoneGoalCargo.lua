@@ -55,7 +55,7 @@ do -- ZoneGoal
   
   --- ZONE_GOAL_CARGO Constructor.
   -- @param #ZONE_GOAL_CARGO self
-  -- @param Core.Zone#ZONE Zone A @{Zone} object with the goal to be achieved.
+  -- @param Core.Zone#ZONE Zone A @{Core.Zone} object with the goal to be achieved.
   -- @param DCSCoalition.DCSCoalition#coalition Coalition The initial coalition owning the zone.
   -- @return #ZONE_GOAL_CARGO
   function ZONE_GOAL_CARGO:New( Zone, Coalition )
