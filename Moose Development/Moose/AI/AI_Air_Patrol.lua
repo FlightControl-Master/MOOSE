@@ -244,7 +244,7 @@ function AI_AIR_PATROL:SetRaceTrackPattern(LegMin, LegMax, HeadingMin, HeadingMa
 
 end
 
---- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
+--- Defines a new patrol route using the @{AI.AI_Patrol#AI_PATROL_ZONE} parameters and settings.
 -- @param #AI_AIR_PATROL self
 -- @return #AI_AIR_PATROL self
 -- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
@@ -280,7 +280,7 @@ function AI_AIR_PATROL.___PatrolRoute( AIPatrol, Fsm )
 
 end
 
---- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
+--- Defines a new patrol route using the @{AI.AI_Patrol#AI_PATROL_ZONE} parameters and settings.
 -- @param #AI_AIR_PATROL self
 -- @param Wrapper.Group#GROUP AIPatrol The Group managed by the FSM.
 -- @param #string From The From State string.

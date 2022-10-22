@@ -29,7 +29,7 @@ do -- TASK_A2A_DISPATCHER
   -- @type TASK_A2A_DISPATCHER
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
-  --- Orchestrates the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
+  --- Orchestrates the dynamic dispatching of tasks upon groups of detected units determined a @{Core.Set} of EWR installation groups.
   --
   -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia3.JPG)
   --

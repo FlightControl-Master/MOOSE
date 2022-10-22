@@ -47,9 +47,9 @@
 -- and tailored** by mission designers through **the implementation of Transition Handlers**.
 -- Each of these FSM implementation classes start either with:
 --
---   * an acronym **AI\_**, which indicates a FSM implementation directing **AI controlled** @{GROUP} and/or @{UNIT}. These AI\_ classes derive the @{#FSM_CONTROLLABLE} class.
+--   * an acronym **AI\_**, which indicates a FSM implementation directing **AI controlled** @{Wrapper.Group#GROUP} and/or @{Wrapper.Unit#UNIT}. These AI\_ classes derive the @{#FSM_CONTROLLABLE} class.
 --   * an acronym **TASK\_**, which indicates a FSM implementation executing a @{TASK} executed by Groups of players. These TASK\_ classes derive the @{#FSM_TASK} class.
---   * an acronym **ACT\_**, which indicates an Sub-FSM implementation, directing **Humans actions** that need to be done in a @{TASK}, seated in a @{CLIENT} (slot) or a @{UNIT} (CA join). These ACT\_ classes derive the @{#FSM_PROCESS} class.
+--   * an acronym **ACT\_**, which indicates an Sub-FSM implementation, directing **Humans actions** that need to be done in a @{TASK}, seated in a @{CLIENT} (slot) or a @{Wrapper.Unit#UNIT} (CA join). These ACT\_ classes derive the @{#FSM_PROCESS} class.
 --
 -- Detailed explanations and API specifics are further below clarified and FSM derived class specifics are described in those class documentation sections.
 --
@@ -64,7 +64,7 @@
 --   * @{#FSM_TASK}: Models Finite State Machines for @{Task}s.
 --   * @{#FSM_PROCESS}: Models Finite State Machines for @{Task} actions, which control @{Client}s.
 --   * @{#FSM_CONTROLLABLE}: Models Finite State Machines for @{Wrapper.Controllable}s, which are @{Wrapper.Group}s, @{Wrapper.Unit}s, @{Client}s.
---   * @{#FSM_SET}: Models Finite State Machines for @{Set}s. Note that these FSMs control multiple objects!!! So State concerns here
+--   * @{#FSM_SET}: Models Finite State Machines for @{Core.Set}s. Note that these FSMs control multiple objects!!! So State concerns here
 --     for multiple objects or the position of the state machine in the process.
 --
 -- ===
@@ -119,9 +119,9 @@ do -- FSM
   -- and tailored** by mission designers through **the implementation of Transition Handlers**.
   -- Each of these FSM implementation classes start either with:
   --
-  --   * an acronym **AI\_**, which indicates an FSM implementation directing **AI controlled** @{GROUP} and/or @{UNIT}. These AI\_ classes derive the @{#FSM_CONTROLLABLE} class.
+  --   * an acronym **AI\_**, which indicates an FSM implementation directing **AI controlled** @{Wrapper.Group#GROUP} and/or @{Wrapper.Unit#UNIT}. These AI\_ classes derive the @{#FSM_CONTROLLABLE} class.
   --   * an acronym **TASK\_**, which indicates an FSM implementation executing a @{TASK} executed by Groups of players. These TASK\_ classes derive the @{#FSM_TASK} class.
-  --   * an acronym **ACT\_**, which indicates an Sub-FSM implementation, directing **Humans actions** that need to be done in a @{TASK}, seated in a @{CLIENT} (slot) or a @{UNIT} (CA join). These ACT\_ classes derive the @{#FSM_PROCESS} class.
+  --   * an acronym **ACT\_**, which indicates an Sub-FSM implementation, directing **Humans actions** that need to be done in a @{TASK}, seated in a @{CLIENT} (slot) or a @{Wrapper.Unit#UNIT} (CA join). These ACT\_ classes derive the @{#FSM_PROCESS} class.
   --
   -- ![Transition Rules and Transition Handlers and Event Triggers](..\Presentations\FSM\Dia3.JPG)
   --
@@ -1382,7 +1382,7 @@ do -- FSM_SET
   -- @field Core.Set#SET_BASE Set
   -- @extends Core.Fsm#FSM
 
-  --- FSM_SET class models Finite State Machines for @{Set}s. Note that these FSMs control multiple objects!!! So State concerns here
+  --- FSM_SET class models Finite State Machines for @{Core.Set}s. Note that these FSMs control multiple objects!!! So State concerns here
   -- for multiple objects or the position of the state machine in the process.
   --
   -- ===
