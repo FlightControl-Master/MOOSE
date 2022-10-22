@@ -1815,7 +1815,7 @@ function POSITIONABLE:SmokeBlue()
   trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Blue )
 end
 
---- Returns true if the unit is within a @{Zone}.
+--- Returns true if the unit is within a @{Core.Zone}.
 -- @param #POSITIONABLE self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the unit is within the @{Core.Zone#ZONE_BASE}
@@ -1830,7 +1830,7 @@ function POSITIONABLE:IsInZone( Zone )
   return false
 end
 
---- Returns true if the unit is not within a @{Zone}.
+--- Returns true if the unit is not within a @{Core.Zone}.
 -- @param #POSITIONABLE self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the unit is not within the @{Core.Zone#ZONE_BASE}

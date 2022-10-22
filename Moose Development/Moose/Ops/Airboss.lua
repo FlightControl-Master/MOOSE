@@ -297,7 +297,7 @@
 --
 -- The flight that transitions form the holding pattern to the landing approach, it should leave the Marshal stack at the 3 position and make a left hand turn to the *Initial*
 -- position, which is 3 NM astern of the boat. Note that you need to be below 1300 feet to be registered in the initial zone.
--- The altitude can be set via the function @{AIRBOSS.SetInitialMaxAlt}(*altitude*) function.
+-- The altitude can be set via the function @{#AIRBOSS.SetInitialMaxAlt}(*altitude*) function.
 -- As described below, the initial zone can be smoked or flared via the AIRBOSS F10 Help radio menu.
 --
 -- ### Landing Pattern
@@ -762,7 +762,7 @@
 --
 -- ## Save Results
 --
--- Saving asset data to file is achieved by the @{AIRBOSS.Save}(*path*, *filename*) function.
+-- Saving asset data to file is achieved by the @{#AIRBOSS.Save}(*path*, *filename*) function.
 --
 -- The parameter *path* specifies the path on the file system where the
 -- player grades are saved. If you do not specify a path, the file is saved your the DCS installation root directory if the **lfs** module is *not* desanizied or
@@ -783,7 +783,7 @@
 --
 -- ### Automatic Saving
 --
--- The player grades can be saved automatically after each graded player pass via the @{AIRBOSS.SetAutoSave}(*path*, *filename*) function. Again the parameters *path* and *filename* are optional.
+-- The player grades can be saved automatically after each graded player pass via the @{#AIRBOSS.SetAutoSave}(*path*, *filename*) function. Again the parameters *path* and *filename* are optional.
 -- In the simplest case, you desanitize the **lfs** module and just add
 --
 --     airbossStennis:SetAutoSave()
@@ -821,7 +821,7 @@
 --
 -- ## Load Results
 --
--- Loading player grades from file is achieved by the @{AIRBOSS.Load}(*path*, *filename*) function. The parameter *path* specifies the path on the file system where the
+-- Loading player grades from file is achieved by the @{#AIRBOSS.Load}(*path*, *filename*) function. The parameter *path* specifies the path on the file system where the
 -- data is loaded from. If you do not specify a path, the file is loaded from your the DCS installation root directory or, if **lfs** was desanitized from you "Saved Games\DCS" directory.
 -- The parameter *filename* is optional and defines the name of the file to load. By default this is automatically generated from the AIBOSS carrier name/alias, for example
 -- "Airboss-USS Stennis_LSOgrades.csv".
@@ -1041,7 +1041,7 @@
 --
 -- AI groups that enter the CCA are usually guided to Marshal stack. However, due to DCS limitations they might not obey the landing task if they have another airfield as departure and/or destination in
 -- their mission task. Therefore, AI groups can be respawned when detected in the CCA. This should clear all other airfields and allow the aircraft to land on the carrier.
--- This is achieved by the @{AIRBOSS.SetRespawnAI}() function.
+-- This is achieved by the @{#AIRBOSS.SetRespawnAI}() function.
 --
 -- ## Known Issues
 --

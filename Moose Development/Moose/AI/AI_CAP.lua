@@ -35,11 +35,11 @@
 
 --- @type AI_CAP_ZONE
 -- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
--- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
+-- @field Core.Zone#ZONE_BASE TargetZone The @{Core.Zone} where the patrol needs to be executed.
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
 
---- Implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group} 
+--- Implements the core functions to patrol a @{Core.Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group} 
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
 -- 
 -- ![Process](..\Presentations\AI_CAP\Dia3.JPG)
@@ -112,7 +112,7 @@
 -- 
 -- ![Zone](..\Presentations\AI_CAP\Dia12.JPG)
 -- 
--- An optional @{Zone} can be set, 
+-- An optional @{Core.Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- Use the method @{#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
 --  
@@ -127,7 +127,7 @@ AI_CAP_ZONE = {
 
 --- Creates a new AI_CAP_ZONE object
 -- @param #AI_CAP_ZONE self
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.

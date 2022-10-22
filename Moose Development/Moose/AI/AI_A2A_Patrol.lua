@@ -13,7 +13,7 @@
 --- @type AI_A2A_PATROL
 -- @extends AI.AI_A2A#AI_A2A
 
---- Implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group}.
+--- Implements the core functions to patrol a @{Core.Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group}.
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia3.JPG)
 -- 
@@ -122,7 +122,7 @@ AI_A2A_PATROL = {
 --- Creates a new AI_A2A_PATROL object
 -- @param #AI_A2A_PATROL self
 -- @param Wrapper.Group#GROUP AIPatrol The patrol group object.
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.

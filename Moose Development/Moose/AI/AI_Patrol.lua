@@ -38,7 +38,7 @@
 --- AI_PATROL_ZONE class
 -- @type AI_PATROL_ZONE
 -- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
--- @field Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @field Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
 -- @field DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @field DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @field DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
@@ -46,7 +46,7 @@
 -- @field Core.Spawn#SPAWN CoordTest
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
---- Implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group}.
+--- Implements the core functions to patrol a @{Core.Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group}.
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia3.JPG)
 -- 
@@ -154,7 +154,7 @@ AI_PATROL_ZONE = {
 
 --- Creates a new AI_PATROL_ZONE object
 -- @param #AI_PATROL_ZONE self
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
@@ -775,7 +775,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     end    
     
     
-    --- Define a random point in the @{Zone}. The AI will fly to that point within the zone.
+    --- Define a random point in the @{Core.Zone}. The AI will fly to that point within the zone.
     
       --- Find a random 2D point in PatrolZone.
     local ToTargetVec2 = self.PatrolZone:GetRandomVec2()

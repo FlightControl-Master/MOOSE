@@ -1,4 +1,4 @@
---- **Actions** - ACT_ACCOUNT_ classes **account for** (detect, count & report) various DCS events occuring on @{Wrapper.Unit}s.
+--- **Actions** - ACT_ACCOUNT_ classes **account for** (detect, count & report) various DCS events occurring on @{Wrapper.Unit}s.
 --
 -- ![Banner Image](..\Presentations\ACT_ACCOUNT\Dia1.JPG)
 --
@@ -20,7 +20,7 @@ do -- ACT_ACCOUNT
   --
   -- ### ACT_ACCOUNT States
   --
-  --   * **Asigned**: The player is assigned.
+  --   * **Assigned**: The player is assigned.
   --   * **Waiting**: Waiting for an event.
   --   * **Report**: Reporting.
   --   * **Account**: Account for an event.
@@ -104,7 +104,6 @@ do -- ACT_ACCOUNT
     self:__Wait( 1 )
   end
 
-
     --- StateMachine callback function
     -- @param #ACT_ACCOUNT self
     -- @param Wrapper.Unit#UNIT ProcessUnit
@@ -157,7 +156,6 @@ do -- ACT_ACCOUNT_DEADS
     ClassName = "ACT_ACCOUNT_DEADS",
   }
 
-
   --- Creates a new DESTROY process.
   -- @param #ACT_ACCOUNT_DEADS self
   -- @param Core.Set#SET_UNIT TargetSetUnit
@@ -194,7 +192,6 @@ do -- ACT_ACCOUNT_DEADS
     local MessageText = "Your group with assigned " .. self.TaskName .. " task has " .. Task.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed."
     self:GetCommandCenter():MessageTypeToGroup( MessageText, ProcessUnit:GetGroup(), MESSAGE.Type.Information )
   end
-
 
   --- StateMachine callback function
   -- @param #ACT_ACCOUNT_DEADS self
@@ -269,7 +266,6 @@ do -- ACT_ACCOUNT_DEADS
       self:__NoMore( 1 )
     end
   end
-
 
   --- DCS Events
 

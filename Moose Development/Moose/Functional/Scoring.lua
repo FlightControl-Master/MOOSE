@@ -59,7 +59,7 @@
 --
 -- ![Banner Image](..\Presentations\SCORING\Dia9.JPG)
 --
--- Various @{Zone}s can be defined for which scores are also granted when objects in that @{Zone} are destroyed.
+-- Various @{Core.Zone}s can be defined for which scores are also granted when objects in that @{Core.Zone} are destroyed.
 -- This is **specifically useful** to designate **scenery targets on the map** that will generate points when destroyed.
 --
 -- With a small change in MissionScripting.lua, the scoring results can also be logged in a **CSV file**.
@@ -131,11 +131,11 @@
 -- # Define destruction zones that will give extra scores:
 --
 -- Define zones of destruction. Any object destroyed within the zone of the given category will give extra points.
--- Use the method @{#SCORING.AddZoneScore}() to add a @{Zone} for additional scoring.
--- Use the method @{#SCORING.RemoveZoneScore}() to remove a @{Zone} for additional scoring.
--- There are interesting variations that can be achieved with this functionality. For example, if the @{Zone} is a @{Core.Zone#ZONE_UNIT},
--- then the zone is a moving zone, and anything destroyed within that @{Zone} will generate points.
--- The other implementation could be to designate a scenery target (a building) in the mission editor surrounded by a @{Zone},
+-- Use the method @{#SCORING.AddZoneScore}() to add a @{Core.Zone} for additional scoring.
+-- Use the method @{#SCORING.RemoveZoneScore}() to remove a @{Core.Zone} for additional scoring.
+-- There are interesting variations that can be achieved with this functionality. For example, if the @{Core.Zone} is a @{Core.Zone#ZONE_UNIT},
+-- then the zone is a moving zone, and anything destroyed within that @{Core.Zone} will generate points.
+-- The other implementation could be to designate a scenery target (a building) in the mission editor surrounded by a @{Core.Zone},
 -- just large enough around that building.
 --
 -- # Add extra Goal scores upon an event or a condition:
@@ -419,11 +419,11 @@ function SCORING:AddScoreGroup( ScoreGroup, Score )
   return self
 end
 
---- Add a @{Zone} to define additional scoring when any object is destroyed in that zone.
--- Note that if a @{Zone} with the same name is already within the scoring added, the @{Zone} (type) and Score will be replaced!
+--- Add a @{Core.Zone} to define additional scoring when any object is destroyed in that zone.
+-- Note that if a @{Core.Zone} with the same name is already within the scoring added, the @{Core.Zone} (type) and Score will be replaced!
 -- This allows for a dynamic destruction zone evolution within your mission.
 -- @param #SCORING self
--- @param Core.Zone#ZONE_BASE ScoreZone The @{Zone} which defines the destruction score perimeters.
+-- @param Core.Zone#ZONE_BASE ScoreZone The @{Core.Zone} which defines the destruction score perimeters.
 -- Note that a zone can be a polygon or a moving zone.
 -- @param #number Score The Score value.
 -- @return #SCORING
@@ -438,11 +438,11 @@ function SCORING:AddZoneScore( ScoreZone, Score )
   return self
 end
 
---- Remove a @{Zone} for additional scoring.
--- The scoring will search if any @{Zone} is added with the given name, and will remove that zone from the scoring.
+--- Remove a @{Core.Zone} for additional scoring.
+-- The scoring will search if any @{Core.Zone} is added with the given name, and will remove that zone from the scoring.
 -- This allows for a dynamic destruction zone evolution within your mission.
 -- @param #SCORING self
--- @param Core.Zone#ZONE_BASE ScoreZone The @{Zone} which defines the destruction score perimeters.
+-- @param Core.Zone#ZONE_BASE ScoreZone The @{Core.Zone} which defines the destruction score perimeters.
 -- Note that a zone can be a polygon or a moving zone.
 -- @return #SCORING
 function SCORING:RemoveZoneScore( ScoreZone )

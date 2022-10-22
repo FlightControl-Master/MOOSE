@@ -132,14 +132,14 @@
 -- 
 -- ## GROUP Zone validation methods
 -- 
--- The group can be validated whether it is completely, partly or not within a @{Zone}.
+-- The group can be validated whether it is completely, partly or not within a @{Core.Zone}.
 -- Use the following Zone validation methods on the group:
 -- 
---   * @{#GROUP.IsCompletelyInZone}: Returns true if all units of the group are within a @{Zone}.
---   * @{#GROUP.IsPartlyInZone}: Returns true if some units of the group are within a @{Zone}.
---   * @{#GROUP.IsNotInZone}: Returns true if none of the group units of the group are within a @{Zone}.
+--   * @{#GROUP.IsCompletelyInZone}: Returns true if all units of the group are within a @{Core.Zone}.
+--   * @{#GROUP.IsPartlyInZone}: Returns true if some units of the group are within a @{Core.Zone}.
+--   * @{#GROUP.IsNotInZone}: Returns true if none of the group units of the group are within a @{Core.Zone}.
 --   
--- The zone can be of any @{Zone} class derived from @{Core.Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
+-- The zone can be of any @{Core.Zone} class derived from @{Core.Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
 -- 
 -- ## GROUP AI methods
 -- 
@@ -1295,7 +1295,7 @@ end
 do -- Is Zone methods
 
 
---- Check if any unit of a group is inside a @{Zone}.
+--- Check if any unit of a group is inside a @{Core.Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns `true` if *at least one unit* is inside the zone or `false` if *no* unit is inside.
@@ -1324,7 +1324,7 @@ function GROUP:IsInZone( Zone )
   return nil
 end
 
---- Returns true if all units of the group are within a @{Zone}.
+--- Returns true if all units of the group are within a @{Core.Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the Group is completely within the @{Core.Zone#ZONE_BASE}
@@ -1344,7 +1344,7 @@ function GROUP:IsCompletelyInZone( Zone )
   return true
 end
 
---- Returns true if some but NOT ALL units of the group are within a @{Zone}.
+--- Returns true if some but NOT ALL units of the group are within a @{Core.Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the Group is partially within the @{Core.Zone#ZONE_BASE}
@@ -1372,7 +1372,7 @@ function GROUP:IsPartlyInZone( Zone )
   end
 end
 
---- Returns true if part or all units of the group are within a @{Zone}.
+--- Returns true if part or all units of the group are within a @{Core.Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the Group is partially or completely within the @{Core.Zone#ZONE_BASE}.
@@ -1380,7 +1380,7 @@ function GROUP:IsPartlyOrCompletelyInZone( Zone )
   return self:IsPartlyInZone(Zone) or self:IsCompletelyInZone(Zone)
 end
 
---- Returns true if none of the group units of the group are within a @{Zone}.
+--- Returns true if none of the group units of the group are within a @{Core.Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the Group is not within the @{Core.Zone#ZONE_BASE}
@@ -1416,10 +1416,10 @@ function GROUP:IsAnyInZone( Zone )
   return false
 end
 
---- Returns the number of UNITs that are in the @{Zone}
+--- Returns the number of UNITs that are in the @{Core.Zone}
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #number The number of UNITs that are in the @{Zone}
+-- @return #number The number of UNITs that are in the @{Core.Zone}
 function GROUP:CountInZone( Zone )
   self:F2( {self.GroupName, Zone} )
   local Count = 0
@@ -1742,7 +1742,7 @@ function GROUP:InitHeight( Height )
 end
 
 
---- Set the respawn @{Zone} for the respawned group.
+--- Set the respawn @{Core.Zone} for the respawned group.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE Zone The zone in meters.
 -- @return #GROUP self
@@ -1752,7 +1752,7 @@ function GROUP:InitZone( Zone )
 end
 
 
---- Randomize the positions of the units of the respawned group within the @{Zone}.
+--- Randomize the positions of the units of the respawned group within the @{Core.Zone}.
 -- When a Respawn happens, the units of the group will be placed at random positions within the Zone (selected).
 -- @param #GROUP self
 -- @param #boolean PositionZone true will randomize the positions within the Zone.
@@ -1852,9 +1852,9 @@ end
 --   - @{#GROUP.InitHeading}: Set the heading for the units in degrees within the respawned group.
 --   - @{#GROUP.InitHeight}: Set the height for the units in meters for the respawned group. (This is applicable for air units).
 --   - @{#GROUP.InitRandomizeHeading}: Randomize the headings for the units within the respawned group.
---   - @{#GROUP.InitZone}: Set the respawn @{Zone} for the respawned group.
---   - @{#GROUP.InitRandomizeZones}: Randomize the respawn @{Zone} between one of the @{Zone}s given for the respawned group.
---   - @{#GROUP.InitRandomizePositionZone}: Randomize the positions of the units of the respawned group within the @{Zone}.
+--   - @{#GROUP.InitZone}: Set the respawn @{Core.Zone} for the respawned group.
+--   - @{#GROUP.InitRandomizeZones}: Randomize the respawn @{Core.Zone} between one of the @{Core.Zone}s given for the respawned group.
+--   - @{#GROUP.InitRandomizePositionZone}: Randomize the positions of the units of the respawned group within the @{Core.Zone}.
 --   - @{#GROUP.InitRandomizePositionRadius}: Randomize the positions of the units of the respawned group in a circle band.
 --   - @{#GROUP.InitRandomizeTemplates}: Randomize the Template for the respawned group.
 -- 

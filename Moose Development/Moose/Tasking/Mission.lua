@@ -86,7 +86,7 @@
 --   - @{#MISSION.GetTasks}(): Retrieves a list of the tasks controlled by the mission.
 --   - @{#MISSION.GetTask}(): Retrieves a specific task controlled by the mission.
 --   - @{#MISSION.GetTasksRemaining}(): Retrieve a list of the tasks that aren't finished or failed, and are governed by the mission.
---   - @{#MISSION.GetGroupTasks}(): Retrieve a list of the tasks that can be asigned to a @{Wrapper.Group}.
+--   - @{#MISSION.GetGroupTasks}(): Retrieve a list of the tasks that can be assigned to a @{Wrapper.Group}.
 --   - @{#MISSION.GetTaskTypes}(): Retrieve a list of the different task types governed by the mission.
 -- 
 -- ### 3.3. Get the command center.

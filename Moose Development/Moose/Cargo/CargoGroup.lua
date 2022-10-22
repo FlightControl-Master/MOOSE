@@ -727,7 +727,7 @@ do -- CARGO_GROUP
     end
   end
   
-  --- Check if the first element of the CargoGroup is the given @{Zone}.
+  --- Check if the first element of the CargoGroup is the given @{Core.Zone}.
   -- @param #CARGO_GROUP self
   -- @param Core.Zone#ZONE_BASE Zone
   -- @return #boolean **true** if the first element of the CargoGroup is in the Zone
