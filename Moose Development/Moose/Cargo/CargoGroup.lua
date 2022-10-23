@@ -47,7 +47,7 @@ do -- CARGO_GROUP
 
   --- CARGO_GROUP constructor.
   -- This make a new CARGO_GROUP from a @{Wrapper.Group} object.
-  -- It will "ungroup" the group object within the sim, and will create a @{Set} of individual Unit objects.
+  -- It will "ungroup" the group object within the sim, and will create a @{Core.Set} of individual Unit objects.
   -- @param #CARGO_GROUP self
   -- @param Wrapper.Group#GROUP CargoGroup Group to be transported as cargo.
   -- @param #string Type Cargo type, e.g. "Infantry". This is the type used in SET_CARGO:New():FilterTypes("Infantry") to define the valid cargo groups of the set.

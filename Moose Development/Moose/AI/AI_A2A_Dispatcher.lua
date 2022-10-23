@@ -57,8 +57,8 @@
 --
 -- ## 2. Which type of EWR will I setup? Grouping based per AREA, per TYPE or per UNIT? (Later others will follow).
 --
--- The MOOSE framework leverages the @{Detection} classes to perform the EWR detection.
--- Several types of @{Detection} classes exist, and the most common characteristics of these classes is that they:
+-- The MOOSE framework leverages the @{Functional.Detection} classes to perform the EWR detection.
+-- Several types of @{Functional.Detection} classes exist, and the most common characteristics of these classes is that they:
 --
 --    * Perform detections from multiple FACs as one co-operating entity.
 --    * Communicate with a Head Quarters, which consolidates each detection.

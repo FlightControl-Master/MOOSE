@@ -140,7 +140,7 @@ do -- ACT_ACCOUNT_DEADS
   --- # @{#ACT_ACCOUNT_DEADS} FSM class, extends @{Core.Fsm.Account#ACT_ACCOUNT}
   --
   -- The ACT_ACCOUNT_DEADS class accounts (detects, counts and reports) successful kills of DCS units.
-  -- The process is given a @{Set} of units that will be tracked upon successful destruction.
+  -- The process is given a @{Core.Set} of units that will be tracked upon successful destruction.
   -- The process will end after each target has been successfully destroyed.
   -- Each successful dead will trigger an Account state transition that can be scored, modified or administered.
   --

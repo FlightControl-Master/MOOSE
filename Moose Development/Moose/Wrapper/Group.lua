@@ -15,8 +15,8 @@
 --
 -- ===
 -- 
--- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
--- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{SPAWN} class).
+-- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
+-- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{Core.Spawn} class).
 -- 
 -- The GROUP class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
 -- using the DCS Group or the DCS GroupName.
@@ -47,8 +47,8 @@
 -- 
 -- The GROUP class provides the following functions to retrieve quickly the relevant GROUP instance:
 --
---  * @{#GROUP.Find}(): Find a GROUP instance from the _DATABASE object using a DCS Group object.
---  * @{#GROUP.FindByName}(): Find a GROUP instance from the _DATABASE object using a DCS Group name.
+--  * @{#GROUP.Find}(): Find a GROUP instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Group object.
+--  * @{#GROUP.FindByName}(): Find a GROUP instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Group name.
 --
 -- # 1. Tasking of groups
 --
@@ -1676,7 +1676,7 @@ end
 
 -- RESPAWNING
 
---- Returns the group template from the @{DATABASE} (_DATABASE object).
+--- Returns the group template from the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
 -- @param #GROUP self
 -- @return #table 
 function GROUP:GetTemplate()
@@ -1684,7 +1684,7 @@ function GROUP:GetTemplate()
   return UTILS.DeepCopy( _DATABASE:GetGroupTemplate( GroupName ) )
 end
 
---- Returns the group template route.points[] (the waypoints) from the @{DATABASE} (_DATABASE object).
+--- Returns the group template route.points[] (the waypoints) from the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
 -- @param #GROUP self
 -- @return #table 
 function GROUP:GetTemplateRoutePoints()
@@ -2205,7 +2205,7 @@ function GROUP:GetTaskRoute()
   return routines.utils.deepCopy( _DATABASE.Templates.Groups[self.GroupName].Template.route.points )
 end
 
---- Return the route of a group by using the @{Core.Database#DATABASE} class.
+--- Return the route of a group by using the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
 -- @param #GROUP self
 -- @param #number Begin The route point from where the copy will start. The base route point is 0.
 -- @param #number End The route point where the copy will end. The End point is the last point - the End point. The last point has base 0.

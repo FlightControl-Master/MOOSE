@@ -543,7 +543,7 @@ end
 
 do -- Group Assignment
 
-  --- Returns if the @{Mission} is assigned to the Group.
+  --- Returns if the @{Tasking.Mission} is assigned to the Group.
   -- @param #MISSION self
   -- @param Wrapper.Group#GROUP MissionGroup
   -- @return #boolean
@@ -561,7 +561,7 @@ do -- Group Assignment
   end
   
   
-  --- Set @{Wrapper.Group} assigned to the @{Mission}.
+  --- Set @{Wrapper.Group} assigned to the @{Tasking.Mission}.
   -- @param #MISSION self
   -- @param Wrapper.Group#GROUP MissionGroup
   -- @return #MISSION
@@ -576,7 +576,7 @@ do -- Group Assignment
     return self
   end
   
-  --- Clear the @{Wrapper.Group} assignment from the @{Mission}.
+  --- Clear the @{Wrapper.Group} assignment from the @{Tasking.Mission}.
   -- @param #MISSION self
   -- @param Wrapper.Group#GROUP MissionGroup
   -- @return #MISSION
@@ -667,7 +667,7 @@ end
 
 
 --- Get the TASK identified by the TaskNumber from the Mission. This function is useful in GoalFunctions.
--- @param #string TaskName The Name of the @{Task} within the @{Mission}.
+-- @param #string TaskName The Name of the @{Task} within the @{Tasking.Mission}.
 -- @return Tasking.Task#TASK The Task
 -- @return #nil Returns nil if no task was found.
 function MISSION:GetTask( TaskName )
@@ -677,7 +677,7 @@ function MISSION:GetTask( TaskName )
 end
 
 
---- Return the next @{Task} ID to be completed within the @{Mission}. 
+--- Return the next @{Task} ID to be completed within the @{Tasking.Mission}. 
 -- @param #MISSION self
 -- @param Tasking.Task#TASK Task is the @{Task} object.
 -- @return Tasking.Task#TASK The task added.
@@ -689,7 +689,7 @@ function MISSION:GetNextTaskID( Task )
 end
 
 
---- Register a @{Task} to be completed within the @{Mission}. 
+--- Register a @{Task} to be completed within the @{Tasking.Mission}. 
 -- Note that there can be multiple @{Task}s registered to be completed. 
 -- Each Task can be set a certain Goals. The Mission will not be completed until all Goals are reached.
 -- @param #MISSION self
@@ -708,7 +708,7 @@ function MISSION:AddTask( Task )
 end
 
 
---- Removes a @{Task} to be completed within the @{Mission}. 
+--- Removes a @{Task} to be completed within the @{Tasking.Mission}. 
 -- Note that there can be multiple @{Task}s registered to be completed. 
 -- Each Task can be set a certain Goals. The Mission will not be completed until all Goals are reached.
 -- @param #MISSION self
@@ -733,35 +733,35 @@ function MISSION:RemoveTask( Task )
   return nil
 end
 
---- Is the @{Mission} **COMPLETED**.
+--- Is the @{Tasking.Mission} **COMPLETED**.
 -- @param #MISSION self
 -- @return #boolean
 function MISSION:IsCOMPLETED()
   return self:Is( "COMPLETED" )
 end
 
---- Is the @{Mission} **IDLE**.
+--- Is the @{Tasking.Mission} **IDLE**.
 -- @param #MISSION self
 -- @return #boolean
 function MISSION:IsIDLE()
   return self:Is( "IDLE" )
 end
 
---- Is the @{Mission} **ENGAGED**.
+--- Is the @{Tasking.Mission} **ENGAGED**.
 -- @param #MISSION self
 -- @return #boolean
 function MISSION:IsENGAGED()
   return self:Is( "ENGAGED" )
 end
 
---- Is the @{Mission} **FAILED**.
+--- Is the @{Tasking.Mission} **FAILED**.
 -- @param #MISSION self
 -- @return #boolean
 function MISSION:IsFAILED()
   return self:Is( "FAILED" )
 end
 
---- Is the @{Mission} **HOLD**.
+--- Is the @{Tasking.Mission} **HOLD**.
 -- @param #MISSION self
 -- @return #boolean
 function MISSION:IsHOLD()

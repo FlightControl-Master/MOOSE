@@ -48,7 +48,7 @@ do -- DETECTION_ZONES
 
   --- DETECTION_ZONES constructor.
   -- @param #DETECTION_ZONES self
-  -- @param Core.Set#SET_ZONE DetectionSetZone The @{Set} of ZONE_RADIUS.
+  -- @param Core.Set#SET_ZONE DetectionSetZone The @{Core.Set} of ZONE_RADIUS.
   -- @param DCS#Coalition.side DetectionCoalition The coalition of the detection.
   -- @return #DETECTION_ZONES
   function DETECTION_ZONES:New( DetectionSetZone, DetectionCoalition )

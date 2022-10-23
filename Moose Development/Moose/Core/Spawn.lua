@@ -206,7 +206,7 @@
 --   * @{#SPAWN.SpawnAtAirbase}(): Spawn a new group at an @{Wrapper.Airbase}, which can be an airdrome, ship or helipad.
 --
 -- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{Wrapper.Group#GROUP.New} object, that contains a reference to the DCSGroup object.
--- You can use the @{GROUP} object to do further actions with the DCSGroup.
+-- You can use the @{Wrapper.Group#GROUP} object to do further actions with the DCSGroup.
 --
 -- ### **Scheduled** spawning methods
 --
@@ -765,7 +765,7 @@ end
 
 --- Randomizes the UNITs that are spawned within a radius band given an Outer and Inner radius.
 -- @param #SPAWN self
--- @param #boolean RandomizeUnits If true, SPAWN will perform the randomization of the @{UNIT}s position within the group between a given outer and inner radius.
+-- @param #boolean RandomizeUnits If true, SPAWN will perform the randomization of the @{Wrapper.Unit#UNIT}s position within the group between a given outer and inner radius.
 -- @param DCS#Distance OuterRadius (optional) The outer radius in meters where the new group will be spawned.
 -- @param DCS#Distance InnerRadius (optional) The inner radius in meters where the new group will NOT be spawned.
 -- @return #SPAWN
@@ -1159,7 +1159,7 @@ do -- Delay methods
 end -- Delay methods
 
 --- Will spawn a group based on the internal index.
--- Note: Uses @{DATABASE} module defined in MOOSE.
+-- Note: This method uses the global _DATABASE object (an instance of @{Core.Database#DATABASE}), which contains ALL initial and new spawned objects in MOOSE.
 -- @param #SPAWN self
 -- @return Wrapper.Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:Spawn()
@@ -1174,7 +1174,7 @@ function SPAWN:Spawn()
 end
 
 --- Will re-spawn a group based on a given index.
--- Note: Uses @{DATABASE} module defined in MOOSE.
+-- Note: This method uses the global _DATABASE object (an instance of @{Core.Database#DATABASE}), which contains ALL initial and new spawned objects in MOOSE.
 -- @param #SPAWN self
 -- @param #string SpawnIndex The index of the group to be spawned.
 -- @return Wrapper.Group#GROUP The group that was spawned. You can use this group for further actions.
@@ -1222,7 +1222,7 @@ function SPAWN:SetSpawnIndex( SpawnIndex )
 end
 
 --- Will spawn a group with a specified index number.
--- Uses @{DATABASE} global object defined in MOOSE.
+-- Note: This method uses the global _DATABASE object (an instance of @{Core.Database#DATABASE}), which contains ALL initial and new spawned objects in MOOSE.
 -- @param #SPAWN self
 -- @param #string SpawnIndex The index of the group to be spawned.
 -- @return Wrapper.Group#GROUP The group that was spawned. You can use this group for further actions.
@@ -2937,7 +2937,7 @@ function SPAWN:_GetGroupCountryID( SpawnPrefix )
 end
 
 --- Gets the Group Template from the ME environment definition.
--- This method used the @{DATABASE} object, which contains ALL initial and new spawned object in MOOSE.
+-- Note: This method uses the global _DATABASE object (an instance of @{Core.Database#DATABASE}), which contains ALL initial and new spawned objects in MOOSE.
 -- @param #SPAWN self
 -- @param #string SpawnTemplatePrefix
 -- @return @SPAWN self

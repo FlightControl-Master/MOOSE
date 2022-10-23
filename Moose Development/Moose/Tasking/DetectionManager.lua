@@ -342,7 +342,7 @@ do -- DETECTION_REPORTING
     return self
   end
   
-  --- Creates a string of the detected items in a @{Detection}.
+  --- Creates a string of the detected items in a @{Functional.Detection} object.
   -- @param #DETECTION_MANAGER self
   -- @param Core.Set#SET_UNIT DetectedSet The detected Set created by the @{Functional.Detection#DETECTION_BASE} object.
   -- @return #DETECTION_MANAGER self

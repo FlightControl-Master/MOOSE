@@ -1624,7 +1624,7 @@ do -- SET_GROUP
     return false
   end
 
-  --- Iterate the SET_GROUP and return true if at least one @{#UNIT} of one @{GROUP} of the @{SET_GROUP} is in @{Core.Zone}
+  --- Iterate the SET_GROUP and return true if at least one @{#UNIT} of one @{Wrapper.Group#GROUP} of the @{#SET_GROUP} is in @{Core.Zone}
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completely inside the @{Core.Zone#ZONE}, false otherwise.
@@ -1649,8 +1649,8 @@ do -- SET_GROUP
     return false
   end
 
-  --- Iterate the SET_GROUP and return true if at least one @{GROUP} of the @{SET_GROUP} is partly in @{Core.Zone}.
-  -- Will return false if a @{GROUP} is fully in the @{Core.Zone}
+  --- Iterate the SET_GROUP and return true if at least one @{Wrapper.Group#GROUP} of the @{#SET_GROUP} is partly in @{Core.Zone}.
+  -- Will return false if a @{Wrapper.Group#GROUP} is fully in the @{Core.Zone}
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completely inside the @{Core.Zone#ZONE}, false otherwise.
@@ -1683,7 +1683,7 @@ do -- SET_GROUP
     end
   end
 
-  --- Iterate the SET_GROUP and return true if no @{GROUP} of the @{SET_GROUP} is in @{Core.Zone}
+  --- Iterate the SET_GROUP and return true if no @{Wrapper.Group#GROUP} of the @{#SET_GROUP} is in @{Core.Zone}
   -- This could also be achieved with `not SET_GROUP:AnyPartlyInZone(Zone)`, but it's easier for the
   -- mission designer to add a dedicated method
   -- @param #SET_GROUP self
@@ -2574,7 +2574,7 @@ do -- SET_UNIT
     return UnitTypes
   end
 
-  --- Returns a comma separated string of the unit types with a count in the  @{Set}.
+  --- Returns a comma separated string of the unit types with a count in the  @{Core.Set}.
   -- @param #SET_UNIT self
   -- @return #string The unit types string
   function SET_UNIT:GetUnitTypesText()
@@ -2746,7 +2746,7 @@ do -- SET_UNIT
 
   end
 
-  --- Returns if the @{Set} has targets having a radar (of a given type).
+  --- Returns if the @{Core.Set} has targets having a radar (of a given type).
   -- @param #SET_UNIT self
   -- @param DCS#Unit.RadarType RadarType
   -- @return #number The amount of radars in the Set with the given type
@@ -2771,7 +2771,7 @@ do -- SET_UNIT
     return RadarCount
   end
 
-  --- Returns if the @{Set} has targets that can be SEADed.
+  --- Returns if the @{Core.Set} has targets that can be SEADed.
   -- @param #SET_UNIT self
   -- @return #number The amount of SEADable units in the Set
   function SET_UNIT:HasSEAD()
@@ -2795,7 +2795,7 @@ do -- SET_UNIT
     return SEADCount
   end
 
-  --- Returns if the @{Set} has ground targets.
+  --- Returns if the @{Core.Set} has ground targets.
   -- @param #SET_UNIT self
   -- @return #number The amount of ground targets in the Set.
   function SET_UNIT:HasGroundUnits()
@@ -2812,7 +2812,7 @@ do -- SET_UNIT
     return GroundUnitCount
   end
 
-  --- Returns if the @{Set} has air targets.
+  --- Returns if the @{Core.Set} has air targets.
   -- @param #SET_UNIT self
   -- @return #number The amount of air targets in the Set.
   function SET_UNIT:HasAirUnits()
@@ -2829,7 +2829,7 @@ do -- SET_UNIT
     return AirUnitCount
   end
 
-  --- Returns if the @{Set} has friendly ground units.
+  --- Returns if the @{Core.Set} has friendly ground units.
   -- @param #SET_UNIT self
   -- @return #number The amount of ground targets in the Set.
   function SET_UNIT:HasFriendlyUnits( FriendlyCoalition )
@@ -3514,7 +3514,7 @@ do -- SET_STATIC
     return StaticTypes
   end
 
-  --- Returns a comma separated string of the unit types with a count in the  @{Set}.
+  --- Returns a comma separated string of the unit types with a count in the  @{Core.Set}.
   -- @param #SET_STATIC self
   -- @return #string The unit types string
   function SET_STATIC:GetStaticTypesText()

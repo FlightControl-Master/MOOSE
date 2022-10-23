@@ -725,7 +725,7 @@ function POSITIONABLE:InAir()
   return nil
 end
 
---- Returns the a @{Velocity} object from the POSITIONABLE.
+--- Returns the @{Core.Velocity} object from the POSITIONABLE.
 -- @param #POSITIONABLE self
 -- @return Core.Velocity#VELOCITY Velocity The Velocity object.
 -- @return #nil The POSITIONABLE is not existing or alive.
