@@ -899,6 +899,43 @@ function FLIGHTGROUP:Status()
       end
     end
     
+    -- Get current mission (if any).
+    local mission=self:GetMissionCurrent()
+    
+    -- If mission, check if DCS task needs to be updated.
+    if mission and mission.updateDCSTask then
+    
+      -- Orbit missions might need updates.
+      if mission:GetType()==AUFTRAG.Type.ORBIT and mission.orbitVec2 then
+          
+        -- Get 2D vector of orbit target.
+        local vec2=mission:GetTargetVec2()
+        
+        -- Distance to previous position.
+        local dist=UTILS.VecDist2D(vec2, mission.orbitVec2)
+        
+        -- Debug info.
+        self:I(self.lid..string.format("FF Checking orbit mission dist=%d meters", dist))
+        
+        -- Check if distance is larger than threshold.
+        if dist>mission.orbitDeltaR then
+        
+          -- Update DCS task. This also sets the new mission.orbitVec2.
+          local DCSTask=mission:GetDCSMissionTask() --DCS#Task
+          
+          -- Get task.
+          local Task=self:GetTaskByID(mission.auftragsnummer)
+          
+          -- Reset current orbit task.
+          self.controller:resetTask()
+          
+          -- Push task after one second. We need to give resetTask some time or it will not work!
+          self:_SandwitchDCSTask(DCSTask, Task, false, 1)
+          
+        end
+      end    
+    end
+    
   
     -- TODO: _CheckParking() function
   

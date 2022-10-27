@@ -4070,6 +4070,23 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
   -- Get mission of this task (if any).
   local Mission=self:GetMissionByTaskID(self.taskcurrent)
 
+
+  self:_UpdateTask(Task, Mission)
+
+  -- Set AUFTRAG status.
+  if Mission then
+    self:MissionExecute(Mission)
+  end
+
+end
+
+--- Push task
+-- @param #OPSGROUP self
+-- @param Ops.OpsGroup#OPSGROUP.Task Task The task.
+function OPSGROUP:_UpdateTask(Task, Mission)
+
+  local Mission=Mission or self:GetMissionByTaskID(self.taskcurrent)
+
   if Task.dcstask.id==AUFTRAG.SpecialTask.FORMATION then
 
     -- Set of group(s) to follow Mother.
@@ -4434,39 +4451,8 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
         ---
         DCSTask=Task.dcstask
       end
-
-      local DCStasks={}
-      if DCSTask.id=='ComboTask' then
-        -- Loop over all combo tasks.
-        for TaskID, Task in ipairs(DCSTask.params.tasks) do
-          table.insert(DCStasks, Task)
-        end
-      else
-        table.insert(DCStasks, DCSTask)
-      end
-
-      -- Combo task.
-      local TaskCombo=self.group:TaskCombo(DCStasks)
-
-      -- Stop condition!
-      local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1, nil, Task.duration)
-
-      -- Controlled task.
-      local TaskControlled=self.group:TaskControlled(TaskCombo, TaskCondition)
-
-      -- Task done.
-      local TaskDone=self.group:TaskFunction("OPSGROUP._TaskDone", self, Task)
-
-      -- Final task.
-      local TaskFinal=self.group:TaskCombo({TaskControlled, TaskDone})
-
-      -- Set task for group.
-      -- NOTE: I am pushing the task instead of setting it as it seems to keep the mission task alive.
-      --       There were issues that flights did not proceed to a later waypoint because the task did not finish until the fired missiles
-      --       impacted (took rather long). Then the flight flew to the nearest airbase and one lost completely the control over the group.
-      self:PushTask(TaskFinal)
-      --self:SetTask(TaskFinal)
-
+      
+      self:_SandwitchDCSTask(DCSTask, Task)
 
     elseif Task.type==OPSGROUP.TaskType.WAYPOINT then
       -- Waypoint tasks are executed elsewhere!
@@ -4475,14 +4461,61 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     end
 
   end
+  
+end
 
+--- Sandwitch DCS task in stop condition and push the task to the group.
+-- @param #OPSGROUP self
+-- @param DCS#Task DCSTask The DCS task.
+-- @param Ops.OpsGroup#OPSGROUP.Task Task
+-- @param #boolean SetTask Set task instead of pushing it.
+-- @param #number Delay Delay in seconds. Default nil.
+function OPSGROUP:_SandwitchDCSTask(DCSTask, Task, SetTask, Delay)
 
-  -- Set AUFTRAG status.
-  if Mission then
-    self:MissionExecute(Mission)
+  if Delay and Delay>0 then
+    -- Delayed call.
+    self:ScheduleOnce(Delay, OPSGROUP._SandwitchDCSTask, self, DCSTask, Task, SetTask)    
+  else
+
+    local DCStasks={}
+    if DCSTask.id=='ComboTask' then
+      -- Loop over all combo tasks.
+      for TaskID, Task in ipairs(DCSTask.params.tasks) do
+        table.insert(DCStasks, Task)
+      end
+    else
+      table.insert(DCStasks, DCSTask)
+    end
+    
+    -- Combo task.
+    local TaskCombo=self.group:TaskCombo(DCStasks)
+    
+    -- Stop condition!
+    local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1, nil, Task.duration)
+    
+    -- Controlled task.
+    local TaskControlled=self.group:TaskControlled(TaskCombo, TaskCondition)
+    
+    -- Task done.
+    local TaskDone=self.group:TaskFunction("OPSGROUP._TaskDone", self, Task)
+    
+    -- Final task.
+    local TaskFinal=self.group:TaskCombo({TaskControlled, TaskDone})
+    
+    -- Set task for group.
+    -- NOTE: I am pushing the task instead of setting it as it seems to keep the mission task alive.
+    --       There were issues that flights did not proceed to a later waypoint because the task did not finish until the fired missiles
+    --       impacted (took rather long). Then the flight flew to the nearest airbase and one lost completely the control over the group.
+    if SetTask then
+      self:SetTask(TaskFinal)
+    else
+      self:PushTask(TaskFinal)
+    end
+    
   end
 
 end
+
 
 --- On after "TaskCancel" event. Cancels the current task or simply sets the status to DONE if the task is not the current one.
 -- @param #OPSGROUP self

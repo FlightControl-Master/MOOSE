@@ -59,6 +59,7 @@
 -- @field #number Nelements Number of elements (units) assigned to mission.
 -- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
 -- @field #number Tover Mission abs. time stamp, when mission was over.
+-- @field #boolean updateDCSTask If `true`, DCS task is updated at every status update of the assigned groups.
 -- @field #table conditionStart Condition(s) that have to be true, before the mission will be started.
 -- @field #table conditionSuccess If all conditions are true, the mission is cancelled.
 -- @field #table conditionFailure If all conditions are true, the mission is cancelled.
@@ -68,7 +69,9 @@
 -- @field #number orbitAltitude Orbit altitude in meters.
 -- @field #number orbitHeading Orbit heading in degrees.
 -- @field #number orbitLeg Length of orbit leg in meters.
--- @field Core.Point#COORDINATE orbitRaceTrack Race-track orbit coordinate.
+-- @field DCS#Vec2 orbitOffsetVec2 2D offset vector.
+-- @field DCS#Vec2 orbitVec2 2D orbit vector.
+-- @field #number orbitDeltaR Distance threshold in meters for moving orbit targets.
 --
 -- @field Ops.Target#TARGET engageTarget Target data to engage.
 -- 
@@ -1020,7 +1023,7 @@ end
 --- **[AIR]** Create an ORBIT mission, which can be either a circular orbit or a race-track pattern.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
--- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
+-- @param #number Altitude Orbit altitude in feet above sea level. Default is y component of `Coordinate`.
 -- @param #number Speed Orbit speed in knots. Default 350 KIAS.
 -- @param #number Heading Heading of race-track pattern in degrees. If not specified, a circular orbit is performed.
 -- @param #number Leg Length of race-track in NM. If not specified, a circular orbit is performed.
@@ -1028,26 +1031,35 @@ end
 function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ORBIT)
-
-  -- Altitude.
+  
+  -- Target.
+  mission:_TargetFromObject(Coordinate)
+  
+  -- Set Altitude.  
   if Altitude then
     mission.orbitAltitude=UTILS.FeetToMeters(Altitude)
   else
     mission.orbitAltitude=Coordinate.y
   end
-  Coordinate.y=mission.orbitAltitude
-
-  mission:_TargetFromObject(Coordinate)
-
-  mission.orbitSpeed = UTILS.KnotsToMps(Speed or 350) -- the DCS Task itself will shortly be build with this so MPS
+    
+  -- Orbit speed in m/s.
+  mission.orbitSpeed   = UTILS.KnotsToMps(Speed or 350)
+  
+  -- Mission speed in km/h.
   mission.missionSpeed = UTILS.KnotsToKmph(Speed or 350)
-
-  if Heading and Leg then
-    mission.orbitHeading=Heading
+  
+  if Leg then
     mission.orbitLeg=UTILS.NMToMeters(Leg)
-    mission.orbitRaceTrack=Coordinate:Translate(mission.orbitLeg, mission.orbitHeading, true)
-  end
 
+    -- Relative heading
+    if Heading and Heading<0 then
+      mission.orbitHeadingRel=true
+      Heading=-Heading
+    end      
+
+    -- Heading if given.
+    mission.orbitHeading=Heading    
+  end
 
   -- Mission options:
   mission.missionAltitude=mission.orbitAltitude*0.9
@@ -1092,6 +1104,32 @@ function AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
 
   return mission
 end
+
+--- **[AIR]** Create an ORBIT mission, where the aircraft will fly a circular or race-track pattern over a given group or unit.
+-- @param #AUFTRAG self
+-- @param Wrapper.Group#GROUP Group Group where to orbit around. Can also be a UNIT object.
+-- @param #number Altitude Orbit altitude in feet. Default is 7,000 ft.
+-- @param #number Speed Orbit speed in knots. Default 350 KIAS.
+-- @param #number Leg Length of race-track in NM. Default nil.
+-- @param #number Heading Heading of race-track pattern in degrees. Default is heading of the group.
+-- @param DCS#Vec2 OffsetVec2 Offset 2D-vector in meters with respect to the group. Default `{x=0, y=0}`, *i.e.* directly overhead.
+-- @param #number Distance Threshold distance in meters before orbit pattern is updated. Default 1000 m.
+-- @return #AUFTRAG self
+function AUFTRAG:NewORBIT_GROUP(Group, Altitude, Speed, Leg, Heading, OffsetVec2, Distance)
+
+  Altitude = Altitude or 7000
+
+
+  -- Create orbit mission.
+  local mission=AUFTRAG:NewORBIT(Group, Altitude, Speed, Heading, Leg)
+  
+  mission.updateDCSTask=true
+  mission.orbitOffsetVec2=OffsetVec2 or {x=0, y=0}
+  mission.orbitDeltaR=1000
+
+  return mission
+end
+
 
 --- **[AIR]** Create a Ground Controlled CAP (GCICAP) mission. Flights with this task are considered for A2A INTERCEPT missions by the CHIEF class. They will perform a compat air patrol but not engage by
 -- themselfs. They wait for the CHIEF to tell them whom to engage.
@@ -4970,6 +5008,17 @@ function AUFTRAG:GetTargetCoordinate()
   return nil
 end
 
+--- Get heading of target.
+-- @param #AUFTRAG self
+-- @return #number Heading of target in degrees.
+function AUFTRAG:GetTargetHeading()
+  if self.engageTarget then
+    local heading=self.engageTarget:GetHeading()
+    return heading
+  end
+  return nil
+end
+
 --- Get name of the target.
 -- @param #AUFTRAG self
 -- @return #string Name of the target or "N/A".
@@ -5232,6 +5281,17 @@ end
 -- @return #AUFTRAG self
 function AUFTRAG:_SetLogID()
   self.lid=string.format("Auftrag #%d %s | ", self.auftragsnummer, tostring(self.type))
+  return self
+end
+
+
+--- Update DCS task.
+-- @param #AUFTRAG self
+-- @return #AUFTRAG self
+function AUFTRAG:_UpdateTask()
+
+  
+
   return self
 end
 
@@ -5892,11 +5952,67 @@ function AUFTRAG:GetDCSMissionTask()
     -- ORBIT Mission --
     -------------------
 
-    local Coordinate=self:GetTargetCoordinate()
-
-    local DCStask=CONTROLLABLE.TaskOrbit(nil, Coordinate, self.orbitAltitude, self.orbitSpeed, self.orbitRaceTrack)
-
-    table.insert(DCStasks, DCStask)
+    -- Get/update orbit vector.
+    self.orbitVec2=self:GetTargetVec2()
+    
+    if self.orbitVec2 then
+    
+      -- Check for race-track pattern.
+      local orbitRaceTrack=nil --DCS#Vec2
+      if self.orbitLeg then
+      
+        -- Default heading is due North. 
+        local heading=0
+        
+        -- Check if specific heading was specified.
+        if self.orbitHeading then
+        
+          -- Is heading realtive to target?
+          if self.orbitHeadingRel then
+            -- Get heading of target.
+            local hdg=self:GetTargetHeading()
+            -- Relative heading wrt target.
+            heading=hdg+self.orbitHeading
+          else
+            -- Take given heading.
+            heading=self.orbitHeading
+          end
+          
+        else
+          -- Not specific heading specified ==> Take heading of target.
+          heading=self:GetTargetHeading() or 0        
+        end
+                
+        -- Race-track vector.
+        orbitRaceTrack=UTILS.Vec2Translate(self.orbitVec2, self.orbitLeg, heading)
+        
+        -- Debug show arrow.
+        COORDINATE:NewFromVec2(self.orbitVec2):ArrowToAll(COORDINATE:NewFromVec2(orbitRaceTrack))
+      end
+      
+      local OffsetVec2=self.orbitOffsetVec2 and UTILS.DeepCopy(self.orbitOffsetVec2) or nil
+      if OffsetVec2 then
+      
+        env.info("FF 1000")
+      
+        OffsetVec2.x=self.orbitOffsetVec2.r and self.orbitOffsetVec2.r*math.cos(math.rad(self.orbitOffsetVec2.phi) or 0) or self.orbitOffsetVec2.x
+        OffsetVec2.y=self.orbitOffsetVec2.r and self.orbitOffsetVec2.r*math.sin(math.rad(self.orbitOffsetVec2.phi) or 0) or self.orbitOffsetVec2.y
+        
+      end
+      
+      -- Actual orbit position with possible offset.
+      local orbitVec2=OffsetVec2 and UTILS.Vec2Add(self.orbitVec2, OffsetVec2) or self.orbitVec2
+      
+      -- Debug
+      local coord=COORDINATE:NewFromVec2(self.orbitVec2):MarkToAll("Orbit Center")
+      
+      -- Create orbit task.
+      local DCStask=CONTROLLABLE.TaskOrbit(nil, orbitVec2, self.orbitAltitude, self.orbitSpeed, orbitRaceTrack)
+  
+      -- Add DCS task.
+      table.insert(DCStasks, DCStask)
+      
+    end
 
   end
 
@@ -6082,6 +6198,8 @@ function AUFTRAG.CheckMissionCapabilityAll(MissionTypes, Capabilities)
 
   return res
 end
+
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
