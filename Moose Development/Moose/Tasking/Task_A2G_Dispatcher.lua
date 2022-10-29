@@ -39,7 +39,7 @@ do -- TASK_A2G_DISPATCHER
   -- in a true co-operation environment wherein **Multiple Teams** will collaborate in Missions to **achieve a common Mission Goal**.
   --
   -- The A2G dispatcher will dispatch the A2G Tasks to a defined  @{Core.Set} of @{Wrapper.Group}s that will be manned by **Players**.   
-  -- We call this the **AttackSet** of the A2G dispatcher. So, the Players are seated in the @{Client}s of the @{Wrapper.Group} @{Core.Set}.
+  -- We call this the **AttackSet** of the A2G dispatcher. So, the Players are seated in the @{Wrapper.Client}s of the @{Wrapper.Group} @{Core.Set}.
   --
   -- Depending on the actions of the enemy, preventive tasks are dispatched to the players to orchestrate the engagement in a true co-operation.
   -- The detection object will group the detected targets by its grouping method, and integrates a @{Core.Set} of @{Wrapper.Group}s that are Recce vehicles or air units.

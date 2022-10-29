@@ -10203,7 +10203,7 @@ function AIRBOSS:_GetWire( Lcoord, dc )
 
   if self.Debug and false then
 
-    -- Wire position coodinates.
+    -- Wire position coordinates.
     local wp1 = Scoord:Translate( w1, FB )
     local wp2 = Scoord:Translate( w2, FB )
     local wp3 = Scoord:Translate( w3, FB )
@@ -11391,7 +11391,7 @@ end
 --- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
 -- @param #AIRBOSS self
 -- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
--- @param Core.Point#COORDINATE coord (Optional) Coodinate from which heading is calculated. Default is current carrier position.
+-- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
 -- @return #number Carrier heading in degrees.
 function AIRBOSS:GetHeadingIntoWind( magnetic, coord )
 

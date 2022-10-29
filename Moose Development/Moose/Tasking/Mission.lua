@@ -131,7 +131,7 @@ MISSION = {
 -- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter
 -- @param #string MissionName Name of the mission. This name will be used to reference the status of each mission by the players.
 -- @param #string MissionPriority String indicating the "priority" of the Mission. e.g. "Primary", "Secondary". It is free format and up to the Mission designer to choose. There are no rules behind this field.
--- @param #string MissionBriefing String indicating the mission briefing to be shown when a player joins a @{CLIENT}.
+-- @param #string MissionBriefing String indicating the mission briefing to be shown when a player joins a @{Wrapper.Client#CLIENT}.
 -- @param DCS#coalition.side MissionCoalition Side of the coalition, i.e. and enumerator @{#DCS.coalition.side} corresponding to RED, BLUE or NEUTRAL.
 -- @return #MISSION self
 function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefing, MissionCoalition )
@@ -667,7 +667,7 @@ end
 
 
 --- Get the TASK identified by the TaskNumber from the Mission. This function is useful in GoalFunctions.
--- @param #string TaskName The Name of the @{Task} within the @{Tasking.Mission}.
+-- @param #string TaskName The Name of the @{Tasking.Task} within the @{Tasking.Mission}.
 -- @return Tasking.Task#TASK The Task
 -- @return #nil Returns nil if no task was found.
 function MISSION:GetTask( TaskName )
@@ -677,9 +677,9 @@ function MISSION:GetTask( TaskName )
 end
 
 
---- Return the next @{Task} ID to be completed within the @{Tasking.Mission}. 
+--- Return the next @{Tasking.Task} ID to be completed within the @{Tasking.Mission}. 
 -- @param #MISSION self
--- @param Tasking.Task#TASK Task is the @{Task} object.
+-- @param Tasking.Task#TASK Task is the @{Tasking.Task} object.
 -- @return Tasking.Task#TASK The task added.
 function MISSION:GetNextTaskID( Task )
 
@@ -689,11 +689,11 @@ function MISSION:GetNextTaskID( Task )
 end
 
 
---- Register a @{Task} to be completed within the @{Tasking.Mission}. 
--- Note that there can be multiple @{Task}s registered to be completed. 
+--- Register a @{Tasking.Task} to be completed within the @{Tasking.Mission}. 
+-- Note that there can be multiple @{Tasking.Task}s registered to be completed. 
 -- Each Task can be set a certain Goals. The Mission will not be completed until all Goals are reached.
 -- @param #MISSION self
--- @param Tasking.Task#TASK Task is the @{Task} object.
+-- @param Tasking.Task#TASK Task is the @{Tasking.Task} object.
 -- @return Tasking.Task#TASK The task added.
 function MISSION:AddTask( Task )
 
@@ -708,11 +708,11 @@ function MISSION:AddTask( Task )
 end
 
 
---- Removes a @{Task} to be completed within the @{Tasking.Mission}. 
--- Note that there can be multiple @{Task}s registered to be completed. 
+--- Removes a @{Tasking.Task} to be completed within the @{Tasking.Mission}. 
+-- Note that there can be multiple @{Tasking.Task}s registered to be completed. 
 -- Each Task can be set a certain Goals. The Mission will not be completed until all Goals are reached.
 -- @param #MISSION self
--- @param Tasking.Task#TASK Task is the @{Task} object.
+-- @param Tasking.Task#TASK Task is the @{Tasking.Task} object.
 -- @return #nil The cleaned Task reference.
 function MISSION:RemoveTask( Task )
 
@@ -1105,7 +1105,7 @@ function MISSION:ReportDetails( ReportGroup )
 end
 
 --- Get all the TASKs from the Mission. This function is useful in GoalFunctions.
--- @return {TASK,...} Structure of TASKS with the @{TASK} number as the key.
+-- @return {TASK,...} Structure of TASKS with the @{Tasking.Task#TASK} number as the key.
 -- @usage
 -- -- Get Tasks from the Mission.
 -- Tasks = Mission:GetTasks()
