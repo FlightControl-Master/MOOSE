@@ -22,11 +22,11 @@
 --   * @{#SET_GROUP}: Defines a collection of @{Wrapper.Group}s filtered by filter criteria.
 --   * @{#SET_UNIT}: Defines a collection of @{Wrapper.Unit}s filtered by filter criteria.
 --   * @{#SET_STATIC}: Defines a collection of @{Wrapper.Static}s filtered by filter criteria.
---   * @{#SET_CLIENT}: Defines a collection of @{Client}s filtered by filter criteria.
+--   * @{#SET_CLIENT}: Defines a collection of @{Wrapper.Client}s filtered by filter criteria.
 --   * @{#SET_AIRBASE}: Defines a collection of @{Wrapper.Airbase}s filtered by filter criteria.
 --   * @{#SET_CARGO}: Defines a collection of @{Cargo.Cargo}s filtered by filter criteria.
 --   * @{#SET_ZONE}: Defines a collection of @{Core.Zone}s filtered by filter criteria.
---   * @{#SET_SCENERY}: Defines a collection of @{Warpper.Scenery}s added via a filtered @{#SET_ZONE}.
+--   * @{#SET_SCENERY}: Defines a collection of @{Wrapper.Scenery}s added via a filtered @{#SET_ZONE}.
 --
 -- These classes are derived from @{#SET_BASE}, which contains the main methods to manage the collections.
 --
