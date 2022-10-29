@@ -18,7 +18,7 @@ do -- TASK_A2A
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
-  --- Defines Air To Air tasks for a @{Set} of Target Units, 
+  --- Defines Air To Air tasks for a @{Core.Set} of Target Units, 
   -- based on the tasking capabilities defined in @{Tasking.Task#TASK}.
   -- The TASK_A2A is implemented using a @{Core.Fsm#FSM_TASK}, and has the following statuses:
   -- 

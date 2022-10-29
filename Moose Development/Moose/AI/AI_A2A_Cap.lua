@@ -15,7 +15,7 @@
 -- @extends AI.AI_Air_Patrol#AI_AIR_PATROL
 -- @extends AI.AI_Air_Engage#AI_AIR_ENGAGE
 
---- The AI_A2A_CAP class implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group}
+--- The AI_A2A_CAP class implements the core functions to patrol a @{Core.Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group}
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
 --
 -- ![Process](..\Presentations\AI_CAP\Dia3.JPG)
@@ -88,7 +88,7 @@
 --
 -- ![Zone](..\Presentations\AI_CAP\Dia12.JPG)
 --
--- An optional @{Zone} can be set,
+-- An optional @{Core.Zone} can be set,
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- Use the method @{#AI_A2A_CAP.SetEngageZone}() to define that Zone.
 --
@@ -107,7 +107,7 @@ AI_A2A_CAP = {
 -- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
 -- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
 -- @param DCS#AltitudeType EngageAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
 -- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
 -- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
@@ -133,7 +133,7 @@ end
 --- Creates a new AI_A2A_CAP object
 -- @param #AI_A2A_CAP self
 -- @param Wrapper.Group#GROUP AICap
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.

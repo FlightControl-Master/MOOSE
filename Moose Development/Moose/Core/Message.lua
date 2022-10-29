@@ -34,7 +34,7 @@
 --
 -- Messages are sent:
 --
---   * To a @{Client} using @{#MESSAGE.ToClient}().
+--   * To a @{Wrapper.Client} using @{#MESSAGE.ToClient}().
 --   * To a @{Wrapper.Group} using @{#MESSAGE.ToGroup}()
 --   * To a @{Wrapper.Unit} using @{#MESSAGE.ToUnit}()
 --   * To a coalition using @{#MESSAGE.ToCoalition}().

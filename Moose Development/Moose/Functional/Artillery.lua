@@ -3422,7 +3422,7 @@ function ARTY:onafterMove(Controllable, From, Event, To, move)
   -- Set current move.
   self.currentMove=move
 
-  -- Route group to coodinate.
+  -- Route group to coordinate.
   self:_Move(self.Controllable, move.coord, move.speed, move.onroad)
 
 end

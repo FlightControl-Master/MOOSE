@@ -3635,7 +3635,7 @@ end
 
 --- Retrieve the controllable mission and allow to place function hooks within the mission waypoint plan.
 -- Use the method @{#CONTROLLABLE.WayPointFunction}() to define the hook functions for specific waypoints.
--- Use the method @{#CONTROLLABLE.WayPointExecute)() to start the execution of the new mission plan.
+-- Use the method @{#CONTROLLABLE.WayPointExecute}() to start the execution of the new mission plan.
 -- Note that when WayPointInitialize is called, the Mission of the controllable is RESTARTED!
 -- @param #CONTROLLABLE self
 -- @param #table WayPoints If WayPoints is given, then use the route.
