@@ -906,19 +906,36 @@ function FLIGHTGROUP:Status()
     if mission and mission.updateDCSTask then
     
       -- Orbit missions might need updates.
-      if mission:GetType()==AUFTRAG.Type.ORBIT and mission.orbitVec2 then
+      if (mission:GetType()==AUFTRAG.Type.ORBIT or mission:GetType()==AUFTRAG.Type.RECOVERYTANKER) and mission.orbitVec2 then
           
         -- Get 2D vector of orbit target.
         local vec2=mission:GetTargetVec2()
         
+        -- Heading.
+        local hdg=mission:GetTargetHeading()
+        
+        -- Heading change?
+        local hdgchange=false
+        if mission.orbitLeg then
+          if UTILS.HdgDiff(hdg, mission.targetHeading)>0 then
+            hdgchange=true
+          end
+        end
+        
         -- Distance to previous position.
         local dist=UTILS.VecDist2D(vec2, mission.orbitVec2)
         
+        -- Distance change?
+        local distchange=dist>mission.orbitDeltaR
+        
         -- Debug info.
-        self:I(self.lid..string.format("FF Checking orbit mission dist=%d meters", dist))
+        self:T3(self.lid..string.format("Checking orbit mission dist=%d meters", dist))
         
         -- Check if distance is larger than threshold.
-        if dist>mission.orbitDeltaR then
+        if distchange or hdgchange then
+        
+          -- Debug info.
+          self:T3(self.lid..string.format("Updating orbit!"))
         
           -- Update DCS task. This also sets the new mission.orbitVec2.
           local DCSTask=mission:GetDCSMissionTask() --DCS#Task
@@ -1193,16 +1210,6 @@ function FLIGHTGROUP:Status()
   
   -- Current mission.
   local mission=self:GetMissionCurrent()
-  
-  if mission and mission.type==AUFTRAG.Type.RECOVERYTANKER and mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.EXECUTING then
-  
-    --env.info("FF recovery tanker updating DCS task")    
-    --self:ClearTasks()
-  
-    local DCSTask=mission:GetDCSMissionTask()
-    self:SetTask(DCSTask)
-  
-  end
 
 end
 

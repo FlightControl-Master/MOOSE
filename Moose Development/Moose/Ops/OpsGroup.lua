@@ -4438,13 +4438,6 @@ function OPSGROUP:_UpdateTask(Task, Mission)
         -- Set quantity of task.
         DCSTask.params.expendQty=nShots
         
-      elseif Mission and Mission.type==AUFTRAG.Type.RECOVERYTANKER then
-  
-        env.info("FF recoverytanker setting DCS task")
-    
-        -- Update DCS task with the current carrier parameters.
-        DCSTask=Mission:GetDCSMissionTask()        
-        
       else
         ---
         -- Take DCS task
@@ -5567,23 +5560,7 @@ function OPSGROUP:RouteToMission(mission, delay)
         -- Navy group: Route into direction of the target.
         waypointcoord=currentcoord:GetIntermediateCoordinate(ToCoordinate, 0.05)
       end
-            
-    elseif mission.type==AUFTRAG.Type.RECOVERYTANKER then
-      ---
-      -- Recoverytanker
-      ---
 
-      local carrier=mission.DCStask.params.carrier --Wrapper.Unit#UNIT
-
-      -- Roughly go to the new legion. 
-      local CarrierCoordinate=carrier:GetCoordinate()
-      
-      local heading=carrier:GetHeading()
-      
-      waypointcoord=CarrierCoordinate:Translate(10000, heading-180):SetAltitude(2000)
-      
-      waypointcoord:MarkToAll("Recoverytanker")
-      
     else
       ---
       -- Default case

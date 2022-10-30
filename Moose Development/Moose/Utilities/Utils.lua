@@ -740,7 +740,9 @@ function UTILS.RemoveMark(MarkID, Delay)
   if Delay and Delay>0 then
     TIMER:New(UTILS.RemoveMark, MarkID):Start(Delay)
   else
-    trigger.action.removeMark(MarkID)
+    if MarkID then
+      trigger.action.removeMark(MarkID)
+    end
   end
 end
 
