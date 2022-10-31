@@ -1230,7 +1230,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
   self.speedWp=wp.speed
   
   -- Debug output.
-  if self.verbose>=10 or self.attribute==GROUP.Attribute.GROUND_APC then
+  if self.verbose>=10 then --or self.attribute==GROUP.Attribute.GROUND_APC then
     for i,_wp in pairs(waypoints) do
       local wp=_wp --Ops.OpsGroup#OPSGROUP.Waypoint
       

@@ -1274,7 +1274,7 @@ function CHIEF:AddStrategicZone(OpsZone, Priority, Importance, ResourceOccupied,
   if ResourceEmpty then
     stratzone.resourceEmpty=UTILS.DeepCopy(ResourceEmpty)
   else
-    local resourceEmpty, resourceInfantry=self:CreateResource(AUFTRAG.Type.ONGUARD, 1, 1, GROUP.Attribute.GROUND_INFANTRY)
+    local resourceEmpty, resourceInfantry=self:CreateResource(AUFTRAG.Type.ONGUARD, 1, 3, GROUP.Attribute.GROUND_INFANTRY)
     self:AddToResource(resourceEmpty, AUFTRAG.Type.ONGUARD, 1, 1, GROUP.Attribute.GROUND_TANK)
     self:AddTransportToResource(resourceInfantry, GROUP.Attribute.GROUND_INFANTRY, nil, nil, 1, 1, {GROUP.Attribute.AIR_TRANSPORTHELO, GROUP.Attribute.GROUND_APC})
     stratzone.resourceEmpty=resourceEmpty
