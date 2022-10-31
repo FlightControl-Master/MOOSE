@@ -1959,7 +1959,7 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
   end
   
   --TODO: Check that current base is airwing base.
-  local airwing=self:GetAirWing()  --airwing:GetAirbaseName()==self.currbase:GetName()
+  local airwing=self:GetAirwing()  --airwing:GetAirbaseName()==self.currbase:GetName()
 
   -- Check what to do.
   if airwing and not (self:IsPickingup() or self:IsTransporting()) then
