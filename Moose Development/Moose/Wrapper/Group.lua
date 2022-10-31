@@ -1,4 +1,4 @@
---- **Wrapper** - GROUP wraps the DCS Class Group objects.
+----- **Wrapper** - GROUP wraps the DCS Class Group objects.
 -- 
 -- ===
 -- 
@@ -2430,7 +2430,7 @@ function GROUP:GetAttribute()
     local truck=self:HasAttribute("Trucks") and self:GetCategory()==Group.Category.GROUND
     local infantry=self:HasAttribute("Infantry")
     local artillery=self:HasAttribute("Artillery")
-    local tank=self:HasAttribute("Old Tanks") or self:HasAttribute("Modern Tanks")
+    local tank=self:HasAttribute("Old Tanks") or self:HasAttribute("Modern Tanks") or self:HasAttribute("Tanks")
     local aaa=self:HasAttribute("AAA") and (not self:HasAttribute("SAM elements"))
     local ewr=self:HasAttribute("EWR")
     local ifv=self:HasAttribute("IFV")
