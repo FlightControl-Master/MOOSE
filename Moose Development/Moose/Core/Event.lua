@@ -248,6 +248,7 @@ EVENTS = {
   TriggerZone               = world.event.S_EVENT_TRIGGER_ZONE or -1,
   LandingQualityMark        = world.event.S_EVENT_LANDING_QUALITY_MARK or -1,
   BDA                       = world.event.S_EVENT_BDA or -1,
+  -- Added with DCS 2.8.0
   AIAbortMission            = world.event.S_EVENT_AI_ABORT_MISSION or -1,
   DayNight                  = world.event.S_EVENT_DAYNIGHT or -1,
   FlightTime                = world.event.S_EVENT_FLIGHT_TIME or -1,
@@ -564,16 +565,17 @@ local _EVENTMETA = {
    [EVENTS.LandingQualityMark] = {
      Order = 1,
      Event = "OnEventLandingQualityMark",
-     Text = "S_EVENT_BDA"
+     Text = "S_EVENT_LANDING_QUALITYMARK"
    },
    [EVENTS.BDA] = {
      Order = 1,
      Event = "OnEventBDA",
-     Text = "S_EVENT_LANDING_QUALITYMARK"
+     Text = "S_EVENT_BDA"
    },
-   -- Added with 2.8
+   -- Added with DCS 2.8
    [EVENTS.AIAbortMission] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventAIAbortMission",
      Text = "S_EVENT_AI_ABORT_MISSION"
    },
@@ -589,6 +591,7 @@ local _EVENTMETA = {
    },
    [EVENTS.SelfKillPilot] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventSelfKillPilot",
      Text = "S_EVENT_PLAYER_SELF_KILL_PILOT"
    },
@@ -599,6 +602,7 @@ local _EVENTMETA = {
    },
    [EVENTS.EmergencyLanding] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventEmergencyLanding",
      Text = "S_EVENT_EMERGENCY_LANDING"
    },
@@ -619,11 +623,13 @@ local _EVENTMETA = {
    },
    [EVENTS.WeaponRearm] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventWeaponRearm",
      Text = "S_EVENT_WEAPON_REARM"
    },
    [EVENTS.WeaponDrop] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventWeaponDrop",
      Text = "S_EVENT_WEAPON_DROP"
    },
