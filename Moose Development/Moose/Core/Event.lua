@@ -248,6 +248,17 @@ EVENTS = {
   TriggerZone               = world.event.S_EVENT_TRIGGER_ZONE or -1,
   LandingQualityMark        = world.event.S_EVENT_LANDING_QUALITY_MARK or -1,
   BDA                       = world.event.S_EVENT_BDA or -1,
+  AIAbortMission            = world.event.S_EVENT_AI_ABORT_MISSION or -1,
+  DayNight                  = world.event.S_EVENT_DAYNIGHT or -1,
+  FlightTime                = world.event.S_EVENT_FLIGHT_TIME or -1,
+  SelfKillPilot             = world.event.S_EVENT_PLAYER_SELF_KILL_PILOT or -1,
+  PlayerCaptureAirfield     = world.event.S_EVENT_PLAYER_CAPTURE_AIRFIELD or -1, 
+  EmergencyLanding          = world.event.S_EVENT_EMERGENCY_LANDING or -1,
+  UnitCreateTask            = world.event.S_EVENT_UNIT_CREATE_TASK or -1,
+  UnitDeleteTask            = world.event.S_EVENT_UNIT_DELETE_TASK or -1,
+  SimulationStart           = world.event.S_EVENT_SIMULATION_START or -1,
+  WeaponRearm               = world.event.S_EVENT_WEAPON_REARM or -1,
+  WeaponDrop                = world.event.S_EVENT_WEAPON_DROP or -1,
 }
 
 --- The Event structure
@@ -553,15 +564,70 @@ local _EVENTMETA = {
    [EVENTS.LandingQualityMark] = {
      Order = 1,
      Event = "OnEventLandingQualityMark",
-     Text = "S_EVENT_LANDING_QUALITYMARK"
+     Text = "S_EVENT_BDA"
    },
    [EVENTS.BDA] = {
      Order = 1,
      Event = "OnEventBDA",
-     Text = "S_EVENT_BDA"
+     Text = "S_EVENT_LANDING_QUALITYMARK"
+   },
+   -- Added with 2.8
+   [EVENTS.AIAbortMission] = {
+     Order = 1,
+     Event = "OnEventAIAbortMission",
+     Text = "S_EVENT_AI_ABORT_MISSION"
+   },
+   [EVENTS.DayNight] = {
+     Order = 1,
+     Event = "OnEventDayNight",
+     Text = "S_EVENT_DAYNIGHT"
+   },
+   [EVENTS.FlightTime] = {
+     Order = 1,
+     Event = "OnEventFlightTime",
+     Text = "S_EVENT_FLIGHT_TIME"
+   },
+   [EVENTS.SelfKillPilot] = {
+     Order = 1,
+     Event = "OnEventSelfKillPilot",
+     Text = "S_EVENT_PLAYER_SELF_KILL_PILOT"
+   },
+   [EVENTS.PlayerCaptureAirfield] = {
+     Order = 1,
+     Event = "OnEventPlayerCaptureAirfield",
+     Text = "S_EVENT_PLAYER_CAPTURE_AIRFIELD"
+   },
+   [EVENTS.EmergencyLanding] = {
+     Order = 1,
+     Event = "OnEventEmergencyLanding",
+     Text = "S_EVENT_EMERGENCY_LANDING"
+   },
+   [EVENTS.UnitCreateTask] = {
+     Order = 1,
+     Event = "OnEventUnitCreateTask",
+     Text = "S_EVENT_UNIT_CREATE_TASK"
+   },
+   [EVENTS.UnitDeleteTask] = {
+     Order = 1,
+     Event = "OnEventUnitDeleteTask",
+     Text = "S_EVENT_UNIT_DELETE_TASK"
+   },
+   [EVENTS.SimulationStart] = {
+     Order = 1,
+     Event = "OnEventSimulationStart",
+     Text = "S_EVENT_SIMULATION_START"
+   },
+   [EVENTS.WeaponRearm] = {
+     Order = 1,
+     Event = "OnEventWeaponRearm",
+     Text = "S_EVENT_WEAPON_REARM"
+   },
+   [EVENTS.WeaponDrop] = {
+     Order = 1,
+     Event = "OnEventWeaponDrop",
+     Text = "S_EVENT_WEAPON_DROP"
    },
 }
-
 
 --- The Events structure
 -- @type EVENT.Events
