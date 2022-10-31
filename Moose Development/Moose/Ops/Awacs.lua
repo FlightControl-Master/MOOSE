@@ -497,7 +497,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.45", -- #string
+  version = "0.2.46", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -914,7 +914,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.2.41
+-- TODO-List 0.2.42
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
@@ -950,6 +950,7 @@ AWACS.TaskStatus = {
 -- DONE - Anchor Stack Management
 -- DONE - Shift Length AWACS/AI
 -- DONE - (WIP) Reporting
+-- DONE - Do not report non-airborne groups
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -6232,15 +6233,19 @@ function AWACS:onafterNewCluster(From,Event,To,Cluster)
     for _,_contact in pairs (table) do
       local contact = _contact -- Ops.Intelligence#INTEL.Contact
       if contact and contact.group and contact.group:IsAlive() then
-        return contact
+        return contact, contact.group
       end
     end
     return nil
   end
   
-  local Contact = GetFirstAliveContact(ContactTable) -- Ops.Intelligence#INTEL.Contact
+  local Contact, Group = GetFirstAliveContact(ContactTable) -- Ops.Intelligence#INTEL.Contact
   
   if not Contact then return self end
+  
+  if Group and not Group:IsAirborne() then
+    return self
+  end
   
   local targetset = SET_GROUP:New()
   -- SET for TARGET
@@ -6316,7 +6321,7 @@ function AWACS:onafterNewContact(From,Event,To,Contact)
   for _gid,_mgroup in pairs(self.ManagedGrps) do
     local managedgroup = _mgroup -- #AWACS.ManagedGroup
     local group = managedgroup.Group
-    if group and group:IsAlive() then
+    if group and group:IsAlive() and group:IsAirborne() then
        -- contact distance
        local cpos = Contact.position or Contact.group:GetCoordinate() -- Core.Point#COORDINATE
        local mpos = group:GetCoordinate()
