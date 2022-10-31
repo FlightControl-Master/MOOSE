@@ -8626,7 +8626,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
       local path=self.cargoTransport:_GetPathTransport(self.category, self.cargoTZC)
 
       -- Formation used to go to the pickup zone..
-      local Formation=self.cargoTransport:_GetFormationTransport(self.cargoTZC)
+      local Formation=self.cargoTransport:_GetFormationPickup(self.cargoTZC)
 
       -- Get transport path.
       if path and oldstatus~=OPSGROUP.CarrierStatus.NOTCARRIER then
@@ -9444,7 +9444,7 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
       end
     else
       -- Army & Navy: give Cruise command to "wake up" from waiting status.
-      self:__Cruise(0.1)
+      self:__Cruise(-0.1)
     end
 
     -- Set carrier transport status.
@@ -9869,14 +9869,14 @@ function OPSGROUP:_CheckGroupDone(delay)
 
     if delay and delay>0 then
       -- Debug info.
-      self:T(self.lid..string.format("Check OPSGROUP [state=%s] done in %.3f seconds...", fsmstate, delay))
+      self:T(self.lid..string.format("Check OPSGROUP done? [state=%s] in %.3f seconds...", fsmstate, delay))
 
       -- Delayed call.
       self:ScheduleOnce(delay, self._CheckGroupDone, self)
     else
 
       -- Debug info.
-      self:T(self.lid..string.format("Check OSGROUP [state=%s] done?", fsmstate))
+      self:T(self.lid..string.format("Check OSGROUP done? [state=%s]", fsmstate))
 
       -- Group is engaging something.
       if self:IsEngaging() then
