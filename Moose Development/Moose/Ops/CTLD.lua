@@ -4895,7 +4895,7 @@ CTLD_HERCULES = {
   ClassName = "CTLD_HERCULES",
   lid = "",
   Name = "",
-  Version = "0.0.1",
+  Version = "0.0.2",
 }
 
 --- Define cargo types.
@@ -5306,7 +5306,7 @@ function CTLD_HERCULES:Cargo_Track(cargo, initiator)
       if self:Check_SurfaceType(cargo.Cargo_Contents) == 2 or self:Check_SurfaceType(cargo.Cargo_Contents) == 3 then
         cargo.Cargo_over_water = true--pallets gets destroyed in water
       end
-      local dcsvec3 = self.ObjectTracker[cargo.Cargo_Contents.id_] -- last known position
+      local dcsvec3 = self.ObjectTracker[cargo.Cargo_Contents.id_] or initiator:GetVec3() -- last known position
       self:T("SPAWNPOSITION: ")
       self:T({dcsvec3})
       local Vec2 = {
@@ -5409,7 +5409,7 @@ function CTLD_HERCULES:Cargo_Initialize(Initiator, Cargo_Contents, Cargo_Type_na
 
         local timer = TIMER:New(self.Cargo_Track,self,self.Cargo[self.j],Initiator)
         self.Cargo[self.j].scheduleFunctionID  = timer
-        timer:Start(5,2,600)  
+        timer:Start(1,1,600)  
         
       else
        -- no paras
@@ -5434,7 +5434,7 @@ function CTLD_HERCULES:Cargo_Initialize(Initiator, Cargo_Contents, Cargo_Type_na
         
         local timer = TIMER:New(self.Cargo_Track,self,self.Cargo[self.j],Initiator)
         self.Cargo[self.j].scheduleFunctionID  = timer
-        timer:Start(5,2,600)
+        timer:Start(1,1,600)
       end
     end
   return self 
