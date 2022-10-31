@@ -35,7 +35,7 @@
 -- There are 5 types/levels of objects that the _EVENTDISPATCHER services:
 --
 --  * _DATABASE object: The core of the MOOSE objects. Any object that is created, deleted or updated, is done in this database.
---  * SET_ derived classes: These are subsets of the _DATABASE object. These subsets are updated by the _EVENTDISPATCHER as the second priority.
+--  * SET_ derived classes: These are subsets of the global _DATABASE object (an instance of @{Core.Database#DATABASE}). These subsets are updated by the _EVENTDISPATCHER as the second priority.
 --  * UNIT objects: UNIT objects can subscribe to DCS events. Each DCS event will be directly published to the subscribed UNIT object.
 --  * GROUP objects: GROUP objects can subscribe to DCS events. Each DCS event will be directly published to the subscribed GROUP object.
 --  * Any other object: Various other objects can subscribe to DCS events. Each DCS event triggered will be published to each subscribed object.
@@ -52,7 +52,7 @@
 --
 -- ![Objects](..\Presentations\EVENT\Dia8.JPG)
 --
--- The actual event subscribing and handling is not facilitated through the _EVENTDISPATCHER, but it is done through the @{BASE} class, @{UNIT} class and @{GROUP} class.
+-- The actual event subscribing and handling is not facilitated through the _EVENTDISPATCHER, but it is done through the @{Core.Base#BASE} class, @{Wrapper.Unit#UNIT} class and @{Wrapper.Group#GROUP} class.
 -- The _EVENTDISPATCHER is a component that is quietly working in the background of MOOSE.
 --
 -- ![Objects](..\Presentations\EVENT\Dia9.JPG)

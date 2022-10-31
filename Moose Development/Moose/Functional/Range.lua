@@ -301,7 +301,7 @@
 --      BASE:TraceLevel(1)
 --      BASE:TraceClass("RANGE")
 --
--- To get even more output you can increase the trace level to 2 or even 3, c.f. @{BASE} for more details.
+-- To get even more output you can increase the trace level to 2 or even 3, c.f. @{Core.Base#BASE} for more details.
 --
 -- The function @{#RANGE.DebugON}() can be used to send messages on screen. It also smokes all defined strafe and bombing targets, the strafe pit approach boxes and the range zone.
 --
