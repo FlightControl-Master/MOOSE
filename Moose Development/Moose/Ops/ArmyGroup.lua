@@ -1190,6 +1190,8 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
       formation=Formation
     end
     
+    env.info(self.lid..string.format("FF Formation %s", formation))
+    
     -- Add road waypoint.
     if formation==ENUMS.Formation.Vehicle.OnRoad then
     
@@ -1908,7 +1910,7 @@ end
 function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation, Updateroute)
 
   -- Debug info.
-  self:T(self.lid..string.format("AddWaypoint Formation = %s",tostring(Formation) or "none"))
+  self:T(self.lid..string.format("AddWaypoint Formation = %s", tostring(Formation)))
   
   -- Create coordinate.
   local coordinate=self:_CoordinateFromObject(Coordinate)
@@ -1926,8 +1928,10 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
     elseif self.option.Formation then
       Formation = self.option.Formation
     else
-      Formation = "On Road"
+      -- Default formation is on road.
+      Formation = ENUMS.Formation.Vehicle.OnRoad
     end
+    self:T2(self.lid..string.format("Formation set to = %s", tostring(Formation)))
   end
   
   -- Create a Ground waypoint.
