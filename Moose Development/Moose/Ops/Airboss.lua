@@ -27,17 +27,17 @@
 -- **Supported Carriers:**
 --
 --    * [USS John C. Stennis](https://en.wikipedia.org/wiki/USS_John_C._Stennis) (CVN-74)
---    * [USS Theodore Roosevelt](https://en.wikipedia.org/wiki/USS_Theodore_Roosevelt_(CVN-71)) (CVN-71) [Super Carrier Module]
---    * [USS Abraham Lincoln](https://en.wikipedia.org/wiki/USS_Abraham_Lincoln_(CVN-72)) (CVN-72) [Super Carrier Module]
---    * [USS George Washington](https://en.wikipedia.org/wiki/USS_George_Washington_(CVN-73)) (CVN-73) [Super Carrier Module]
+--    * [USS Theodore Roosevelt](https://en.wikipedia.org/wiki/USS_Theodore_Roosevelt_(CVN-71\)) (CVN-71) [Super Carrier Module]
+--    * [USS Abraham Lincoln](https://en.wikipedia.org/wiki/USS_Abraham_Lincoln_(CVN-72\)) (CVN-72) [Super Carrier Module]
+--    * [USS George Washington](https://en.wikipedia.org/wiki/USS_George_Washington_(CVN-73\)) (CVN-73) [Super Carrier Module]
 --    * [USS Harry S. Truman](https://en.wikipedia.org/wiki/USS_Harry_S._Truman) (CVN-75) [Super Carrier Module]
---    * [USS Forrestal](https://en.wikipedia.org/wiki/USS_Forrestal_(CV-59)) (CV-59) [Heatblur Carrier Module]
---    * [HMS Hermes](https://en.wikipedia.org/wiki/HMS_Hermes_(R12)) (R12) [**WIP**]
---    * [HMS Invincible](https://en.wikipedia.org/wiki/HMS_Invincible_(R05) (R05) [**WIP**]
---    * [USS Tarawa](https://en.wikipedia.org/wiki/USS_Tarawa_(LHA-1)) (LHA-1) [**WIP**]
---    * [USS America](https://en.wikipedia.org/wiki/USS_America_(LHA-6)) (LHA-6) [**WIP**]
+--    * [USS Forrestal](https://en.wikipedia.org/wiki/USS_Forrestal_(CV-59\)) (CV-59) [Heatblur Carrier Module]
+--    * [HMS Hermes](https://en.wikipedia.org/wiki/HMS_Hermes_(R12\)) (R12) [**WIP**]
+--    * [HMS Invincible](https://en.wikipedia.org/wiki/HMS_Invincible_(R05\)) (R05) [**WIP**]
+--    * [USS Tarawa](https://en.wikipedia.org/wiki/USS_Tarawa_(LHA-1\)) (LHA-1) [**WIP**]
+--    * [USS America](https://en.wikipedia.org/wiki/USS_America_(LHA-6\)) (LHA-6) [**WIP**]
 --    * [Juan Carlos I](https://en.wikipedia.org/wiki/Spanish_amphibious_assault_ship_Juan_Carlos_I) (L61) [**WIP**]
---    * [HMAS Canberra](https://en.wikipedia.org/wiki/HMAS_Canberra_(L02)) (L02) [**WIP**]
+--    * [HMAS Canberra](https://en.wikipedia.org/wiki/HMAS_Canberra_(L02\)) (L02) [**WIP**]
 --
 -- **Supported Aircraft:**
 --
