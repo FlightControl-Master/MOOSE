@@ -361,6 +361,8 @@ function UNIT:IsPlayer()
   
   -- Get group.
   local group=self:GetGroup()
+  
+  if not group then return false end
     
   -- Units of template group.
   local units=group:GetTemplate().units

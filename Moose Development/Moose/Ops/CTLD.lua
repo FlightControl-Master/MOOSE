@@ -699,6 +699,7 @@ do
 --          my_ctld.smokedistance = 2000 -- Only smoke or flare zones if requesting player unit is this far away (in meters)
 --          my_ctld.suppressmessages = false -- Set to true if you want to script your own messages.
 --          my_ctld.repairtime = 300 -- Number of seconds it takes to repair a unit.
+--          my_ctld.buildtime = 300 -- Number of seconds it takes to build a unit. Set to zero or nil to build instantly.
 --          my_ctld.cratecountry = country.id.GERMANY -- ID of crates. Will default to country.id.RUSSIA for RED coalition setups.
 --          my_ctld.allowcratepickupagain = true  -- allow re-pickup crates that were dropped.
 --          my_ctld.enableslingload = false -- allow cargos to be slingloaded - might not work for all cargo types
@@ -708,6 +709,7 @@ do
 --          my_ctld.basetype = "container_cargo" -- default shape of the cargo container
 --          my_ctld.droppedbeacontimeout = 600 -- dropped beacon lasts 10 minutes
 --          my_ctld.usesubcats = false -- use sub-category names for crates, adds an extra menu layer in "Get Crates", useful if you have > 10 crate types.
+--          my_ctld.placeCratesAhead = false -- place crates straight ahead of the helicopter, in a random way. If true, crates are more neatly sorted.
 -- 
 -- ## 2.1 User functions
 -- 
@@ -1074,7 +1076,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.16"
+CTLD.version="1.0.17"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1212,8 +1214,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- message suppression
   self.suppressmessages = false
   
-  -- time to repair a unit/group
+  -- time to repairor build a unit/group
   self.repairtime = 300
+  self.buildtime = 300
   
   -- place spawned crates in front of aircraft
   self.placeCratesAhead = false
@@ -2807,7 +2810,13 @@ function CTLD:_BuildCrates(Group, Unit,Engineering)
         local build = _build -- #CTLD.Buildable
         if build.CanBuild then
           self:_CleanUpCrates(crates,build,number)
-          self:_BuildObjectFromCrates(Group,Unit,build)
+          if self.buildtime and self.buildtime > 0 then
+              local buildtimer = TIMER:New(self._BuildObjectFromCrates,self,Group,Unit,build,false,Group:GetCoordinate())
+              buildtimer:Start(self.buildtime)
+              self:_SendMessage(string.format("Build started, ready in %d seconds!",self.buildtime),15,false,Group)
+          else
+            self:_BuildObjectFromCrates(Group,Unit,build)
+          end
         end
       end
     end
@@ -2906,13 +2915,13 @@ end
 -- @param Wrapper.Group#UNIT Unit
 -- @param #CTLD.Buildable Build
 -- @param #boolean Repair If true this is a repair and not a new build
--- @param Core.Point#COORDINATE Coordinate Location for repair (e.g. where the destroyed unit was)
+-- @param Core.Point#COORDINATE RepairLocation Location for repair (e.g. where the destroyed unit was)
 function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation)
   self:T(self.lid .. " _BuildObjectFromCrates")
   -- Spawn-a-crate-content
-  if Group and Group:IsAlive() then
-    local position = Unit:GetCoordinate() or Group:GetCoordinate()
-    local unitname = Unit:GetName() or Group:GetName()
+  if Group and Group:IsAlive() or (RepairLocation and not Repair) then
+    --local position = Unit:GetCoordinate() or Group:GetCoordinate()
+    --local unitname = Unit:GetName() or Group:GetName() or "Unknown"
     local name = Build.Name
     local ctype = Build.Type -- #CTLD_CARGO.Enum
     local canmove = false
@@ -2924,7 +2933,13 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation)
     if type(temptable) == "string" then 
       temptable = {temptable}
     end
-    local zone = ZONE_GROUP:New(string.format("Unload zone-%s",unitname),Group,100)
+    local zone = nil
+    if RepairLocation and not Repair then
+      -- timed build
+      zone = ZONE_RADIUS:New(string.format("Build zone-%d",math.random(1,10000)),RepairLocation:GetVec2(),100)
+    else
+      zone = ZONE_GROUP:New(string.format("Unload zone-%d",math.random(1,10000)),Group,100)
+    end
     --local randomcoord = zone:GetRandomCoordinate(35):GetVec2()
     local randomcoord = Build.Coord or zone:GetRandomCoordinate(35):GetVec2()
     if Repair then
