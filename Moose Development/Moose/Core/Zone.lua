@@ -2451,14 +2451,30 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
   local minVec3 = {x=vectors.x1, y=0, z=vectors.y1}
   local maxVec3 = {x=vectors.x2, y=0, z=vectors.y2}
   
+  local minmarkcoord = COORDINATE:NewFromVec3(minVec3)
+  local maxmarkcoord = COORDINATE:NewFromVec3(maxVec3)
+  local ZoneRadius = minmarkcoord:Get2DDistance(maxmarkcoord)/2
+  
+  local CenterVec3 = self:GetCoordinate():GetVec3()
+  
+ --[[ this a bit shaky in functionality it seems
   local VolumeBox = {
    id = world.VolumeType.BOX,
    params = {
      min = minVec3,
      max = maxVec3
    }
- }
+  }
+  --]]
   
+  local SphereSearch = {
+  id = world.VolumeType.SPHERE,
+    params = {
+    point = CenterVec3,
+    radius = ZoneRadius,
+    }
+  }
+    
   local function EvaluateZone( ZoneObject )
 
     if ZoneObject then
@@ -2500,7 +2516,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
       end
       
       -- trying with box search
-      if ObjectCategory == Object.Category.SCENERY then
+      if ObjectCategory == Object.Category.SCENERY and self:IsVec3InZone(ZoneObject:getPoint()) then
         local SceneryType = ZoneObject:getTypeName()
         local SceneryName = ZoneObject:getName()
         self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
@@ -2543,7 +2559,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
   
   if searchscenery then
     -- Search objects.
-    world.searchObjects({Object.Category.SCENERY}, VolumeBox, EvaluateZone )
+    world.searchObjects({Object.Category.SCENERY}, SphereSearch, EvaluateZone )
   end
   
 end
