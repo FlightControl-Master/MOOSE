@@ -143,7 +143,7 @@
 -- @field Wrapper.Airbase#AIRBASE airbase Carrier airbase object.
 -- @field #table waypoints Waypoint coordinates of carrier.
 -- @field #number currentwp Current waypoint, i.e. the one that has been passed last.
--- @field Core.Radio#BEACON beacon Carrier beacon for TACAN and ICLS.
+-- @field Core.Beacon#BEACON beacon Carrier beacon for TACAN and ICLS.
 -- @field #boolean TACANon Automatic TACAN is activated.
 -- @field #number TACANchannel TACAN channel.
 -- @field #string TACANmode TACAN mode, i.e. "X" or "Y".
