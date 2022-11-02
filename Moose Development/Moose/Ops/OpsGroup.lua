@@ -5650,20 +5650,35 @@ function OPSGROUP:RouteToMission(mission, delay)
       end
       
     end
-     
+
+
+    -- Distance to waypoint coordinate.
+    local d=currentcoord:Get2DDistance(waypointcoord)
+    
+    -- Debug info.
+    self:T(self.lid..string.format("Distance to ingress waypoint=%.1f m", d))     
     
     -- Add mission execution (ingress) waypoint.
     local waypoint=nil --#OPSGROUP.Waypoint
     if self:IsFlightgroup() then
+    
       waypoint=FLIGHTGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
+      
     elseif self:IsArmygroup() then
+    
+      -- Set formation.
       local formation=mission.optionFormation
-      if mission.type==AUFTRAG.Type.RELOCATECOHORT then
+      
+      -- If distance is < 1 km or RELOCATECOHORT mission, go off-road.
+      if d<1000 or mission.type==AUFTRAG.Type.RELOCATECOHORT then
         formation=ENUMS.Formation.Vehicle.OffRoad
       end
+      
       waypoint=ARMYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, formation, false)
     elseif self:IsNavygroup() then
+    
       waypoint=NAVYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
+      
     end
     waypoint.missionUID=mission.auftragsnummer
 
@@ -5691,13 +5706,6 @@ function OPSGROUP:RouteToMission(mission, delay)
       Ewaypoint.missionUID=mission.auftragsnummer
       mission:SetGroupEgressWaypointUID(self, Ewaypoint.uid)
     end
-
-    
-    -- Distance to waypoint coordinate.
-    local d=currentcoord:Get2DDistance(waypointcoord)
-    
-    -- Debug info.
-    self:T(self.lid..string.format("FF distance to ingress waypoint=%.1f m", d))
     
     -- Check if we are already where we want to be.
     if targetzone and self:IsInZone(targetzone) then
