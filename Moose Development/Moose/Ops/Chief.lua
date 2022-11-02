@@ -1482,7 +1482,7 @@ end
 -- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.DEFENSIVE`.
 -- 
 -- @param #CHIEF self
--- @param Core.Set#SET_ZONE BorderZoneSet Set of zones, defining our borders.
+-- @param Core.Set#SET_ZONE BorderZoneSet Set of zones defining our borders.
 -- @return #CHIEF self
 function CHIEF:SetBorderZones(BorderZoneSet)
 
@@ -1498,7 +1498,7 @@ end
 -- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.DEFENSIVE`.
 -- 
 -- @param #CHIEF self
--- @param Core.Zone#ZONE Zone The zone.
+-- @param Core.Zone#ZONE Zone The zone to be added.
 -- @return #CHIEF self
 function CHIEF:AddBorderZone(Zone)
 
@@ -1508,7 +1508,7 @@ function CHIEF:AddBorderZone(Zone)
   return self
 end
 
---- Remove a zone defining your territory. 
+--- Remove a border zone defining your territory. 
 -- @param #CHIEF self
 -- @param Core.Zone#ZONE Zone The zone to be removed.
 -- @return #CHIEF self
@@ -1542,7 +1542,7 @@ end
 -- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.OFFENSIVE`.
 -- 
 -- @param #CHIEF self
--- @param Core.Zone#ZONE Zone The zone to add.
+-- @param Core.Zone#ZONE Zone The zone to be added.
 -- @return #CHIEF self
 function CHIEF:AddConflictZone(Zone)
 
@@ -1551,6 +1551,19 @@ function CHIEF:AddConflictZone(Zone)
   
   return self
 end
+
+--- Remove a conflict zone.
+-- @param #CHIEF self
+-- @param Core.Zone#ZONE Zone The zone to be removed.
+-- @return #CHIEF self
+function CHIEF:RemoveConflictZone(Zone)
+
+  -- Add a conflict zone.
+  self.yellowzoneset:Remove(Zone:GetName())
+  
+  return self
+end
+
 
 --- Set attack zone set.
 -- 
