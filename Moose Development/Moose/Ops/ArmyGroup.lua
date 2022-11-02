@@ -775,8 +775,8 @@ function ARMYGROUP:Status()
       end
     
       -- Info text.
-      local text=string.format("%s [%d/%d]: ROE/AS=%d/%d | T/M=%d/%d | Wp=%d[%d]-->%d[%d]/%d [%s] | Life=%.1f | v=%.1f (%d) | Hdg=%03d | Ammo=%d | Detect=%s | Cargo=%.1f",
-      fsmstate, nelem, Nelem, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, wpN, wpF, life, speed, speedEx, hdg, ammo, ndetected, cargo)
+      local text=string.format("%s [%d/%d]: ROE/AS=%d/%d | T/M=%d/%d | Wp=%d[%d]-->%d[%d]/%d [%s] | Life=%.1f | v=%.1f (%d) [%s] | Hdg=%03d | Ammo=%d | Detect=%s | Cargo=%.1f",
+      fsmstate, nelem, Nelem, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, wpN, wpF, life, speed, speedEx, formation, hdg, ammo, ndetected, cargo)
       self:I(self.lid..text)
       
     end
@@ -1083,20 +1083,24 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
   -- Formation at the current position.
   local formation0=wp.action
   if formation0==ENUMS.Formation.Vehicle.OnRoad then
-    if wp.roadcoord then
-      if wp.roaddist>10 then
-        formation0=ENUMS.Formation.Vehicle.OffRoad
-      end
-    else
+    -- Next waypoint is on road. Check if we are already on road.
+    if roaddist>10 then
+      -- Currently off road ==> we add an on road WP later.
       formation0=ENUMS.Formation.Vehicle.OffRoad
+    else
+      -- Already on road. We won't add an extra on road WP.
+      formation0=ENUMS.Formation.Vehicle.OnRoad
     end
   end
+  
+  -- Debug
+  --env.info(self.lid.."FF formation0="..tostring(formation0))
 
   -- Current point.
-  local current=coordinate:WaypointGround(UTILS.MpsToKmph(self.speedWp), formation0) --ENUMS.Formation.Vehicle.OffRoad)
+  local current=coordinate:WaypointGround(UTILS.MpsToKmph(self.speedWp), formation0)
   table.insert(waypoints, 1, current)
   
-  -- Check if route consists of more than one waypoint.
+  -- Check if route consists of more than one waypoint (otherwise we have no previous waypoint)
   if N-n>0 then
   
     -- Loop over waypoints.
@@ -1110,7 +1114,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
         i=self.currentwp
       end
     
-      -- Next waypoint.
+      -- Next waypoint. We create a copy because we need to modify it.
       local wp=UTILS.DeepCopy(self.waypoints[j]) --Ops.OpsGroup#OPSGROUP.Waypoint
   
       -- Previous waypoint. Index is i and not i-1 because we added the current position.
@@ -1144,6 +1148,9 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
           
         -- Add "On Road" waypoint in between.
         local wproad=wp0.roadcoord:WaypointGround(UTILS.MpsToKmph(wp.speed), ENUMS.Formation.Vehicle.OnRoad) --Ops.OpsGroup#OPSGROUP.Waypoint
+        
+        -- Debug
+        --wp0.roadcoord:MarkToAll(self.lid.." Added road wp near "..tostring(wproad.action))
   
         -- Insert road waypoint.
         table.insert(waypoints, wproad)
@@ -1157,14 +1164,19 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
     
         -- Add "On Road" waypoint in between.
         local wproad=wp.roadcoord:WaypointGround(UTILS.MpsToKmph(wp.speed), ENUMS.Formation.Vehicle.OnRoad) --Ops.OpsGroup#OPSGROUP.Waypoint
+        
+        -- Debug
+        --wp.roadcoord:MarkToAll(self.lid.." Added road wp far "..tostring(wproad.action))
   
         -- Insert road waypoint.
         table.insert(waypoints, wproad)
       end
       
-            
+      -- Debug
+      --wp.coordinate:MarkToAll(self.lid.." Added wp actual"..tostring(wp.action))
+                  
       -- Add waypoint.
-      table.insert(waypoints, wp)    
+      table.insert(waypoints, wp)
     end
     
   else
@@ -1199,6 +1211,9 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
       
         -- Add "On Road" waypoint in between.
         local wproad=coordRoad:WaypointGround(UTILS.MpsToKmph(wp.speed), ENUMS.Formation.Vehicle.OnRoad) --Ops.OpsGroup#OPSGROUP.Waypoint
+        
+        -- Debug
+        --coordRoad:MarkToAll(self.lid.." Added road wp near "..tostring(wp.action))
   
         -- Insert road waypoint.
         table.insert(waypoints, wproad)
@@ -1209,13 +1224,24 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
   
         -- Add "On Road" waypoint in between.
         local wproad=wp.roadcoord:WaypointGround(UTILS.MpsToKmph(wp.speed), ENUMS.Formation.Vehicle.OnRoad) --Ops.OpsGroup#OPSGROUP.Waypoint
-  
+
+        -- Debug
+        --wp.roadcoord:MarkToAll(self.lid.." Added road wp far "..tostring(wp.action))
+ 
         -- Insert road waypoint.
         table.insert(waypoints, wproad)
           
       end
       
     end
+    
+    -- Waypoint set set to on-road but lies off-road. We set it to off-road. the on-road wp has been inserted.
+    if wp.action==ENUMS.Formation.Vehicle.OnRoad and wp.roaddist>10 then
+      wp.action=ENUMS.Formation.Vehicle.OffRoad
+    end
+    
+    -- Debug
+    --wp.coordinate:MarkToAll(self.lid.." Added coord "..tostring(wp.action))
       
     -- Add actual waypoint.
     table.insert(waypoints, wp)
