@@ -1,6 +1,6 @@
---- **AI** -- Models the process of air to ground engagement for airplanes and helicopters.
+--- **AI** - Models the process of air to ground engagement for airplanes and helicopters.
 --
--- This is a class used in the @{AI_A2G_Dispatcher}.
+-- This is a class used in the @{AI.AI_A2G_Dispatcher}.
 -- 
 -- ===
 -- 
@@ -11,11 +11,8 @@
 -- @module AI.AI_A2G_CAS
 -- @image AI_Air_To_Ground_Engage.JPG
 
-
-
 --- @type AI_A2G_CAS
--- @extends AI.AI_A2G_Patrol#AI_AIR_PATROL
-
+-- @extends AI.AI_A2G_Patrol#AI_AIR_PATROL TODO: Documentation. This class does not exist, unable to determine what it extends.
 
 --- Implements the core functions to intercept intruders. Use the Engage trigger to intercept intruders.
 -- 
@@ -26,8 +23,6 @@ AI_A2G_CAS = {
   ClassName = "AI_A2G_CAS",
 }
 
-
-
 --- Creates a new AI_A2G_CAS object
 -- @param #AI_A2G_CAS self
 -- @param Wrapper.Group#GROUP AIGroup
@@ -36,7 +31,7 @@ AI_A2G_CAS = {
 -- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
 -- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
 -- @param DCS#AltitudeType EngageAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
@@ -53,7 +48,6 @@ function AI_A2G_CAS:New2( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAl
   return self
 end
 
-
 --- Creates a new AI_A2G_CAS object
 -- @param #AI_A2G_CAS self
 -- @param Wrapper.Group#GROUP AIGroup
@@ -61,7 +55,7 @@ end
 -- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
 -- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
 -- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
@@ -76,7 +70,7 @@ end
 --- Evaluate the attack and create an AttackUnitTask list. 
 -- @param #AI_A2G_CAS self
 -- @param Core.Set#SET_UNIT AttackSetUnit The set of units to attack.
--- @param Wrappper.Group#GROUP DefenderGroup The group of defenders.
+-- @param Wrapper.Group#GROUP DefenderGroup The group of defenders.
 -- @param #number EngageAltitude The altitude to engage the targets.
 -- @return #AI_A2G_CAS self
 function AI_A2G_CAS:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageAltitude )
@@ -92,9 +86,6 @@ function AI_A2G_CAS:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageA
       end
     end
   end
-  
+
   return AttackUnitTasks
 end
-
-
-

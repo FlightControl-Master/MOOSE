@@ -1,4 +1,4 @@
---- **Wrapper** -- CONTROLLABLE is an intermediate class wrapping Group and Unit classes "controllers".
+--- **Wrapper** - CONTROLLABLE is an intermediate class wrapping Group and Unit classes "controllers".
 --
 -- ===
 --
@@ -32,7 +32,7 @@
 -- # 2) CONTROLLABLE Task methods
 --
 -- Several controllable task methods are available that help you to prepare tasks.
--- These methods return a string consisting of the task description, which can then be given to either a @{Wrapper.Controllable#CONTROLLABLE.PushTask} or @{Wrapper.Controllable#SetTask} method to assign the task to the CONTROLLABLE.
+-- These methods return a string consisting of the task description, which can then be given to either a @{#CONTROLLABLE.PushTask}() or @{#CONTROLLABLE.SetTask}() method to assign the task to the CONTROLLABLE.
 -- Tasks are specific for the category of the CONTROLLABLE, more specific, for AIR, GROUND or AIR and GROUND.
 -- Each task description where applicable indicates for which controllable category the task is valid.
 -- There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.
@@ -318,7 +318,7 @@ end
 
 --- Popping current Task from the controllable.
 -- @param #CONTROLLABLE self
--- @return Wrapper.Controllable#CONTROLLABLE self
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:PopCurrentTask()
   self:F2()
 
@@ -335,7 +335,7 @@ end
 
 --- Pushing Task on the queue from the controllable.
 -- @param #CONTROLLABLE self
--- @return Wrapper.Controllable#CONTROLLABLE self
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:PushTask( DCSTask, WaitTime )
   self:F2()
 
@@ -374,7 +374,7 @@ end
 -- @param #CONTROLLABLE self
 -- @param DCS#Task DCSTask DCS Task array.
 -- @param #number WaitTime Time in seconds, before the task is set.
--- @return Wrapper.Controllable#CONTROLLABLE self
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:SetTask( DCSTask, WaitTime )
   self:F( { "SetTask", WaitTime, DCSTask = DCSTask } )
 
@@ -418,7 +418,7 @@ end
 
 --- Checking the Task Queue of the controllable. Returns false if no task is on the queue. true if there is a task.
 -- @param #CONTROLLABLE self
--- @return Wrapper.Controllable#CONTROLLABLE self
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:HasTask() -- R2.2
 
   local HasTaskResult = false
@@ -627,8 +627,8 @@ end
 -- For specific beacons like TACAN use the more convenient @{#BEACON} class.
 -- Note that a controllable can only have one beacon activated at a time with the execption of ICLS.
 -- @param #CONTROLLABLE self
--- @param Core.Radio#BEACON.Type Type Beacon type (VOR, DME, TACAN, RSBN, ILS etc).
--- @param Core.Radio#BEACON.System System Beacon system (VOR, DME, TACAN, RSBN, ILS etc).
+-- @param Core.Beacon#BEACON.Type Type Beacon type (VOR, DME, TACAN, RSBN, ILS etc).
+-- @param Core.Beacon#BEACON.System System Beacon system (VOR, DME, TACAN, RSBN, ILS etc).
 -- @param #number Frequency Frequency in Hz the beacon is running on. Use @{#UTILS.TACANToFrequency} to generate a frequency for TACAN beacons.
 -- @param #number UnitID The ID of the unit the beacon is attached to. Useful if more units are in one group.
 -- @param #number Channel Channel the beacon is using. For, e.g. TACAN beacons.
@@ -1405,7 +1405,7 @@ end
 -- The unit / controllable will follow lead unit of another controllable, wingmens of both controllables will continue following their leaders.
 -- If another controllable is on land the unit / controllable will orbit around.
 -- @param #CONTROLLABLE self
--- @param Wrapper.Controllable#CONTROLLABLE FollowControllable The controllable to be followed.
+-- @param #CONTROLLABLE FollowControllable The controllable to be followed.
 -- @param DCS#Vec3 Vec3 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.
 -- @param #number LastWaypointIndex Detach waypoint of another controllable. Once reached the unit / controllable Follow task is finished.
 -- @return DCS#Task The DCS task structure.
@@ -1448,7 +1448,7 @@ end
 -- The unit / controllable will follow lead unit of another controllable, wingmens of both controllables will continue following their leaders.
 -- The unit / controllable will also protect that controllable from threats of specified types.
 -- @param #CONTROLLABLE self
--- @param Wrapper.Controllable#CONTROLLABLE FollowControllable The controllable to be escorted.
+-- @param #CONTROLLABLE FollowControllable The controllable to be escorted.
 -- @param DCS#Vec3 Vec3 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.
 -- @param #number LastWaypointIndex Detach waypoint of another controllable. Once reached the unit / controllable Follow task is finished.
 -- @param #number EngagementDistance Maximal distance from escorted controllable to threat. If the threat is already engaged by escort escort will disengage if the distance becomes greater than 1.5 * engagementDistMax.
@@ -1642,7 +1642,7 @@ end
 
 --- (AIR) Engaging a controllable. The task does not assign the target controllable to the unit/controllable to attack now; it just allows the unit/controllable to engage the target controllable as well as other assigned targets.
 -- @param #CONTROLLABLE self
--- @param Wrapper.Controllable#CONTROLLABLE AttackGroup The Controllable to be attacked.
+-- @param #CONTROLLABLE AttackGroup The Controllable to be attacked.
 -- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first.
 -- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
 -- @param DCS#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
@@ -1770,7 +1770,7 @@ end
 -- The killer is player-controlled allied CAS-aircraft that is in contact with the FAC.
 -- If the task is assigned to the controllable lead unit will be a FAC.
 -- @param #CONTROLLABLE self
--- @param Wrapper.Controllable#CONTROLLABLE AttackGroup Target CONTROLLABLE.
+-- @param #CONTROLLABLE AttackGroup Target CONTROLLABLE.
 -- @param #number Priority (Optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Default is 0.
 -- @param #number WeaponType (Optional) Bitmask of weapon types those allowed to use. Default is "Auto".
 -- @param DCS#AI.Task.Designation Designation (Optional) Designation type.
@@ -2281,7 +2281,7 @@ do -- Route methods
   -- @param #number Speed (optional) Speed in km/h. The default speed is 20 km/h.
   -- @param #string Formation (optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".
   -- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
-  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
+  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{#CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
   -- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
   -- @return #CONTROLLABLE The CONTROLLABLE.
   function CONTROLLABLE:RouteGroundTo( ToCoordinate, Speed, Formation, DelaySeconds, WaypointFunction, WaypointFunctionArguments )
@@ -2315,7 +2315,7 @@ do -- Route methods
   -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
   -- @param #number DelaySeconds (Optional) Wait for the specified seconds before executing the Route. Default is one second.
   -- @param #string OffRoadFormation (Optional) The formation at initial and final waypoint. Default is "Off Road".
-  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
+  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{#CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
   -- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
   -- @return #CONTROLLABLE The CONTROLLABLE.
   function CONTROLLABLE:RouteGroundOnRoad( ToCoordinate, Speed, DelaySeconds, OffRoadFormation, WaypointFunction, WaypointFunctionArguments )
@@ -2339,7 +2339,7 @@ do -- Route methods
   -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
   -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
   -- @param #number DelaySeconds (Optional) Wait for the specified seconds before executing the Route. Default is one second.
-  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
+  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{#CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
   -- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
   -- @return #CONTROLLABLE The CONTROLLABLE.
   function CONTROLLABLE:RouteGroundOnRailRoads( ToCoordinate, Speed, DelaySeconds, WaypointFunction, WaypointFunctionArguments )
@@ -2364,7 +2364,7 @@ do -- Route methods
   -- @param #string OffRoadFormation (Optional) The formation at initial and final waypoint. Default is "Off Road".
   -- @param #boolean Shortcut (Optional) If true, controllable will take the direct route if the path on road is 10x longer or path on road is less than 5% of total path.
   -- @param Core.Point#COORDINATE FromCoordinate (Optional) Explicit initial coordinate. Default is the position of the controllable.
-  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
+  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{#CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
   -- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
   -- @return DCS#Task Task.
   -- @return #boolean If true, path on road is possible. If false, task will route the group directly to its destination.
@@ -2467,7 +2467,7 @@ do -- Route methods
   -- @param #CONTROLLABLE self
   -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
   -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
-  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
+  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{#CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
   -- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
   -- @return Task
   function CONTROLLABLE:TaskGroundOnRailRoads( ToCoordinate, Speed, WaypointFunction, WaypointFunctionArguments )
@@ -2748,7 +2748,7 @@ end
 --- Return the detected targets of the controllable.
 -- The optional parametes specify the detection methods that can be applied.
 -- If no detection method is given, the detection will use all the available methods by default.
--- @param Wrapper.Controllable#CONTROLLABLE self
+-- @param #CONTROLLABLE self
 -- @param #boolean DetectVisual (optional)
 -- @param #boolean DetectOptical (optional)
 -- @param #boolean DetectRadar (optional)
@@ -2802,9 +2802,9 @@ end
 -- The optional parametes specify the detection methods that can be applied.
 -- If **no** detection method is given, the detection will use **all** the available methods by default.
 -- If **at least one** detection method is specified, only the methods set to *true* will be used.
--- @param Wrapper.Controllable#CONTROLLABLE self
+-- @param #CONTROLLABLE self
 -- @param DCS#Object DCSObject The DCS object that is checked.
--- @param Wrapper.Controllable#CONTROLLABLE self
+-- @param #CONTROLLABLE self
 -- @param #boolean DetectVisual (Optional) If *false*, do not include visually detected targets.
 -- @param #boolean DetectOptical (Optional) If *false*, do not include optically detected targets.
 -- @param #boolean DetectRadar (Optional) If *false*, do not include targets detected by radar.
@@ -2910,7 +2910,7 @@ end
 -- The optional parametes specify the detection methods that can be applied.
 -- If **no** detection method is given, the detection will use **all** the available methods by default.
 -- If **at least one** detection method is specified, only the methods set to *true* will be used.
--- @param Wrapper.Controllable#CONTROLLABLE self
+-- @param #CONTROLLABLE self
 -- @param #boolean DetectVisual (Optional) If *false*, do not include visually detected targets.
 -- @param #boolean DetectOptical (Optional) If *false*, do not include optically detected targets.
 -- @param #boolean DetectRadar (Optional) If *false*, do not include targets detected by radar.
@@ -2947,7 +2947,7 @@ end
 --- Return the detected target groups of the controllable as a @{Core.Set#SET_GROUP}.
 -- The optional parametes specify the detection methods that can be applied.
 -- If no detection method is given, the detection will use all the available methods by default.
--- @param Wrapper.Controllable#CONTROLLABLE self
+-- @param #CONTROLLABLE self
 -- @param #boolean DetectVisual (Optional) If *false*, do not include visually detected targets.
 -- @param #boolean DetectOptical (Optional) If *false*, do not include optically detected targets.
 -- @param #boolean DetectRadar (Optional) If *false*, do not include targets detected by radar.
@@ -3004,7 +3004,7 @@ function CONTROLLABLE:SetOption( OptionID, OptionValue )
 end
 
 --- Set option for Rules of Engagement (ROE).
--- @param Wrapper.Controllable#CONTROLLABLE self
+-- @param #CONTROLLABLE self
 -- @param #number ROEvalue ROE value. See ENUMS.ROE.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionROE( ROEvalue )
@@ -3634,8 +3634,8 @@ function CONTROLLABLE:OptionECM_AlwaysOn()
 end
 
 --- Retrieve the controllable mission and allow to place function hooks within the mission waypoint plan.
--- Use the method @{Wrapper.Controllable#CONTROLLABLE:WayPointFunction} to define the hook functions for specific waypoints.
--- Use the method @{Controllable@CONTROLLABLE:WayPointExecute) to start the execution of the new mission plan.
+-- Use the method @{#CONTROLLABLE.WayPointFunction}() to define the hook functions for specific waypoints.
+-- Use the method @{#CONTROLLABLE.WayPointExecute}() to start the execution of the new mission plan.
 -- Note that when WayPointInitialize is called, the Mission of the controllable is RESTARTED!
 -- @param #CONTROLLABLE self
 -- @param #table WayPoints If WayPoints is given, then use the route.

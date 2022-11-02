@@ -27,8 +27,8 @@
 -- @field #string GroupName Name of the group the unit belongs to.
 -- @extends Wrapper.Controllable#CONTROLLABLE
 
---- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
--- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the @{SPAWN} class).
+--- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
+-- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the @{Core.Spawn} class).
 --  
 -- The UNIT class **does not contain a :New()** method, rather it provides **:Find()** methods to retrieve the object reference
 -- using the DCS Unit or the DCS UnitName.
@@ -39,10 +39,10 @@
 --  
 -- The UNIT class provides the following functions to retrieve quickly the relevant UNIT instance:
 -- 
---  * @{#UNIT.Find}(): Find a UNIT instance from the _DATABASE object using a DCS Unit object.
---  * @{#UNIT.FindByName}(): Find a UNIT instance from the _DATABASE object using a DCS Unit name.
+--  * @{#UNIT.Find}(): Find a UNIT instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Unit object.
+--  * @{#UNIT.FindByName}(): Find a UNIT instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Unit name.
 --  
--- IMPORTANT: ONE SHOULD NEVER SANATIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).
+-- IMPORTANT: ONE SHOULD NEVER SANITIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).
 -- 
 -- ## DCS UNIT APIs
 -- 
@@ -361,6 +361,8 @@ function UNIT:IsPlayer()
   
   -- Get group.
   local group=self:GetGroup()
+  
+  if not group then return false end
     
   -- Units of template group.
   local units=group:GetTemplate().units
@@ -644,7 +646,7 @@ end
 -- Need to add here functions to check if radar is on and which object etc.
 
 --- Returns the prefix name of the DCS Unit. A prefix name is a part of the name before a '#'-sign.
--- DCS Units spawned with the @{SPAWN} class contain a '#'-sign to indicate the end of the (base) DCS Unit name. 
+-- DCS Units spawned with the @{Core.Spawn#SPAWN} class contain a '#'-sign to indicate the end of the (base) DCS Unit name. 
 -- The spawn sequence number and unit number are contained within the name after the '#' sign. 
 -- @param #UNIT self
 -- @return #string The name of the DCS Unit.

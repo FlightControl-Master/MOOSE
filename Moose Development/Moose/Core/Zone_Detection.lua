@@ -1,6 +1,8 @@
+--- **Core** - The ZONE_DETECTION class, defined by a zone name, a detection object and a radius.
+-- @module Core.Zone_Detection
+-- @image MOOSE.JPG
 
---- The ZONE_DETECTION class, defined by a zone name, a detection object and a radius.
--- @type ZONE_DETECTION
+--- @type ZONE_DETECTION
 -- @field DCS#Vec2 Vec2 The current location of the zone.
 -- @field DCS#Distance Radius The radius of the zone.
 -- @extends #ZONE_BASE
@@ -29,7 +31,7 @@ function ZONE_DETECTION:New( ZoneName, Detection, Radius )
 
   self.Detection = Detection
   self.Radius = Radius
-  
+
   return self
 end
 
@@ -48,15 +50,14 @@ function ZONE_DETECTION:BoundZone( Points, CountryID, UnBound )
 
   local Angle
   local RadialBase = math.pi*2
-  
-  --
+
   for Angle = 0, 360, (360 / Points ) do
     local Radial = Angle * RadialBase / 360
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
-    
+
     local CountryName = _DATABASE.COUNTRY_NAME[CountryID]
-    
+
     local Tire = {
         ["country"] = CountryName, 
         ["category"] = "Fortifications",

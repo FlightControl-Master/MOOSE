@@ -35,7 +35,7 @@
 -- There are 5 types/levels of objects that the _EVENTDISPATCHER services:
 --
 --  * _DATABASE object: The core of the MOOSE objects. Any object that is created, deleted or updated, is done in this database.
---  * SET_ derived classes: These are subsets of the _DATABASE object. These subsets are updated by the _EVENTDISPATCHER as the second priority.
+--  * SET_ derived classes: These are subsets of the global _DATABASE object (an instance of @{Core.Database#DATABASE}). These subsets are updated by the _EVENTDISPATCHER as the second priority.
 --  * UNIT objects: UNIT objects can subscribe to DCS events. Each DCS event will be directly published to the subscribed UNIT object.
 --  * GROUP objects: GROUP objects can subscribe to DCS events. Each DCS event will be directly published to the subscribed GROUP object.
 --  * Any other object: Various other objects can subscribe to DCS events. Each DCS event triggered will be published to each subscribed object.
@@ -52,7 +52,7 @@
 --
 -- ![Objects](..\Presentations\EVENT\Dia8.JPG)
 --
--- The actual event subscribing and handling is not facilitated through the _EVENTDISPATCHER, but it is done through the @{BASE} class, @{UNIT} class and @{GROUP} class.
+-- The actual event subscribing and handling is not facilitated through the _EVENTDISPATCHER, but it is done through the @{Core.Base#BASE} class, @{Wrapper.Unit#UNIT} class and @{Wrapper.Group#GROUP} class.
 -- The _EVENTDISPATCHER is a component that is quietly working in the background of MOOSE.
 --
 -- ![Objects](..\Presentations\EVENT\Dia9.JPG)
@@ -248,6 +248,18 @@ EVENTS = {
   TriggerZone               = world.event.S_EVENT_TRIGGER_ZONE or -1,
   LandingQualityMark        = world.event.S_EVENT_LANDING_QUALITY_MARK or -1,
   BDA                       = world.event.S_EVENT_BDA or -1,
+  -- Added with DCS 2.8.0
+  AIAbortMission            = world.event.S_EVENT_AI_ABORT_MISSION or -1,
+  DayNight                  = world.event.S_EVENT_DAYNIGHT or -1,
+  FlightTime                = world.event.S_EVENT_FLIGHT_TIME or -1,
+  SelfKillPilot             = world.event.S_EVENT_PLAYER_SELF_KILL_PILOT or -1,
+  PlayerCaptureAirfield     = world.event.S_EVENT_PLAYER_CAPTURE_AIRFIELD or -1, 
+  EmergencyLanding          = world.event.S_EVENT_EMERGENCY_LANDING or -1,
+  UnitCreateTask            = world.event.S_EVENT_UNIT_CREATE_TASK or -1,
+  UnitDeleteTask            = world.event.S_EVENT_UNIT_DELETE_TASK or -1,
+  SimulationStart           = world.event.S_EVENT_SIMULATION_START or -1,
+  WeaponRearm               = world.event.S_EVENT_WEAPON_REARM or -1,
+  WeaponDrop                = world.event.S_EVENT_WEAPON_DROP or -1,
 }
 
 --- The Event structure
@@ -560,8 +572,68 @@ local _EVENTMETA = {
      Event = "OnEventBDA",
      Text = "S_EVENT_BDA"
    },
+   -- Added with DCS 2.8
+   [EVENTS.AIAbortMission] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventAIAbortMission",
+     Text = "S_EVENT_AI_ABORT_MISSION"
+   },
+   [EVENTS.DayNight] = {
+     Order = 1,
+     Event = "OnEventDayNight",
+     Text = "S_EVENT_DAYNIGHT"
+   },
+   [EVENTS.FlightTime] = {
+     Order = 1,
+     Event = "OnEventFlightTime",
+     Text = "S_EVENT_FLIGHT_TIME"
+   },
+   [EVENTS.SelfKillPilot] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventSelfKillPilot",
+     Text = "S_EVENT_PLAYER_SELF_KILL_PILOT"
+   },
+   [EVENTS.PlayerCaptureAirfield] = {
+     Order = 1,
+     Event = "OnEventPlayerCaptureAirfield",
+     Text = "S_EVENT_PLAYER_CAPTURE_AIRFIELD"
+   },
+   [EVENTS.EmergencyLanding] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventEmergencyLanding",
+     Text = "S_EVENT_EMERGENCY_LANDING"
+   },
+   [EVENTS.UnitCreateTask] = {
+     Order = 1,
+     Event = "OnEventUnitCreateTask",
+     Text = "S_EVENT_UNIT_CREATE_TASK"
+   },
+   [EVENTS.UnitDeleteTask] = {
+     Order = 1,
+     Event = "OnEventUnitDeleteTask",
+     Text = "S_EVENT_UNIT_DELETE_TASK"
+   },
+   [EVENTS.SimulationStart] = {
+     Order = 1,
+     Event = "OnEventSimulationStart",
+     Text = "S_EVENT_SIMULATION_START"
+   },
+   [EVENTS.WeaponRearm] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventWeaponRearm",
+     Text = "S_EVENT_WEAPON_REARM"
+   },
+   [EVENTS.WeaponDrop] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventWeaponDrop",
+     Text = "S_EVENT_WEAPON_DROP"
+   },
 }
-
 
 --- The Events structure
 -- @type EVENT.Events
@@ -932,7 +1004,7 @@ do -- Event Creation
 
   --- Creation of a ZoneGoal Deletion Event.
   -- @param #EVENT self
-  -- @param Core.ZoneGoal#ZONE_GOAL ZoneGoal The ZoneGoal created.
+  -- @param Functional.ZoneGoal#ZONE_GOAL ZoneGoal The ZoneGoal created.
   function EVENT:CreateEventDeleteZoneGoal( ZoneGoal )
     self:F( { ZoneGoal } )
 

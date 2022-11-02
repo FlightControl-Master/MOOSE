@@ -9,13 +9,13 @@
 -- What are radio communications in DCS?
 --
 --   * Radio transmissions consist of **sound files** that are broadcasted on a specific **frequency** (e.g. 115MHz) and **modulation** (e.g. AM),
---   * They can be **subtitled** for a specific **duration**, the **power** in Watts of the transmiter's antenna can be set, and the transmission can be **looped**.
+--   * They can be **subtitled** for a specific **duration**, the **power** in Watts of the transmitter's antenna can be set, and the transmission can be **looped**.
 --
 -- How to supply DCS my own Sound Files?
 --
 --   * Your sound files need to be encoded in **.ogg** or .wav,
 --   * Your sound files should be **as tiny as possible**. It is suggested you encode in .ogg with low bitrate and sampling settings,
---   * They need to be added in .\l10n\DEFAULT\ in you .miz file (wich can be decompressed like a .zip file),
+--   * They need to be added in .\l10n\DEFAULT\ in you .miz file (which can be decompressed like a .zip file),
 --   * For simplicity sake, you can **let DCS' Mission Editor add the file** itself, by creating a new Trigger with the action "Sound to Country", and choosing your sound file and a country you don't use in your mission.
 --
 -- Due to weird DCS quirks, **radio communications behave differently** if sent by a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP} or by any other @{Wrapper.Positionable#POSITIONABLE}
@@ -26,7 +26,7 @@
 -- Note that obviously, the **frequency** and the **modulation** of the transmission are important only if the players are piloting an **Advanced System Modelling** enabled aircraft,
 -- like the A10C or the Mirage 2000C. They will **hear the transmission** if they are tuned on the **right frequency and modulation** (and if they are close enough - more on that below).
 -- If an FC3 aircraft is used, it will **hear every communication, whatever the frequency and the modulation** is set to. The same is true for TACAN beacons. If your aircraft isn't compatible,
--- you won't hear/be able to use the TACAN beacon informations.
+-- you won't hear/be able to use the TACAN beacon information.
 --
 -- ===
 --
@@ -98,12 +98,12 @@ RADIO = {
 --- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{#RADIO.Broadcast} to actually broadcast.
 -- If you want to create a RADIO, you probably should use @{Wrapper.Positionable#POSITIONABLE.GetRadio}() instead.
 -- @param #RADIO self
--- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Positionable} that will receive radio capabilities.
+-- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Wrapper.Positionable#POSITIONABLE} that will receive radio capabilities.
 -- @return #RADIO The RADIO object or #nil if Positionable is invalid.
 function RADIO:New(Positionable)
 
   -- Inherit base
-  local self = BASE:Inherit( self, BASE:New() ) -- Core.Radio#RADIO
+  local self = BASE:Inherit( self, BASE:New() ) -- Sound.Radio#RADIO
   self:F(Positionable)
 
   if Positionable:GetPointVec2() then -- It's stupid, but the only way I found to make sure positionable is valid
@@ -375,7 +375,7 @@ end
 
 
 --- Stops a transmission
--- This function is especially usefull to stop the broadcast of looped transmissions
+-- This function is especially useful to stop the broadcast of looped transmissions
 -- @param #RADIO self
 -- @return #RADIO self
 function RADIO:StopBroadcast()

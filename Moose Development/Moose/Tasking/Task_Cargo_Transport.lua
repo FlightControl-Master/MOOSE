@@ -1,4 +1,4 @@
---- **Tasking** -- Models tasks for players to transport cargo.
+--- **Tasking** - Models tasks for players to transport cargo.
 -- 
 -- **Specific features:**
 -- 

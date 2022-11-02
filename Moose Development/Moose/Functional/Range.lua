@@ -138,7 +138,7 @@
 --
 -- A strafe pit can be added to the range by the @{#RANGE.AddStrafePit}(*targetnames, boxlength, boxwidth, heading, inverseheading, goodpass, foulline*) function.
 --
--- * The first parameter *targetnames* defines the target or targets. This can be a single item or a Table with the name(s) of @{Wrapper.Unit} or @{Static} objects defined in the mission editor.
+-- * The first parameter *targetnames* defines the target or targets. This can be a single item or a Table with the name(s) of @{Wrapper.Unit} or @{Wrapper.Static} objects defined in the mission editor.
 -- * In order to perform a valid pass on the strafe pit, the pilot has to begin his run from the correct direction. Therefore, an "approach box" is defined in front
 --   of the strafe targets. The parameters *boxlength* and *boxwidth* define the size of the box in meters, while the *heading* parameter defines the heading of the box FROM the target.
 --   For example, if heading 120 is set, the approach box will start FROM the target and extend outwards on heading 120. A strafe run approach must then be flown apx. heading 300 TOWARDS the target.
@@ -157,7 +157,7 @@
 --
 -- One ore multiple bombing targets can be added to the range by the @{#RANGE.AddBombingTargets}(targetnames, goodhitrange, randommove) function.
 --
--- * The first parameter *targetnames* defines the target or targets. This can be a single item or a Table with the name(s) of @{Wrapper.Unit} or @{Static} objects defined in the mission editor.
+-- * The first parameter *targetnames* defines the target or targets. This can be a single item or a Table with the name(s) of @{Wrapper.Unit} or @{Wrapper.Static} objects defined in the mission editor.
 -- * The (optional) parameter *goodhitrange* specifies the radius in metres around the target within which a bomb/rocket hit is considered to be "good".
 -- * If final (optional) parameter "*randommove*" can be enabled to create moving targets. If this parameter is set to true, the units of this bombing target will randomly move within the range zone.
 --   Note that there might be quirks since DCS units can get stuck in buildings etc. So it might be safer to manually define a route for the units in the mission editor if moving targets are desired.
@@ -301,7 +301,7 @@
 --      BASE:TraceLevel(1)
 --      BASE:TraceClass("RANGE")
 --
--- To get even more output you can increase the trace level to 2 or even 3, c.f. @{BASE} for more details.
+-- To get even more output you can increase the trace level to 2 or even 3, c.f. @{Core.Base#BASE} for more details.
 --
 -- The function @{#RANGE.DebugON}() can be used to send messages on screen. It also smokes all defined strafe and bombing targets, the strafe pit approach boxes and the range zone.
 --

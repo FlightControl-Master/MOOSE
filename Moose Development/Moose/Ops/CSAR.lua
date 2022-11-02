@@ -1,4 +1,4 @@
---- **Ops** -- Combat Search and Rescue.
+--- **Ops** - Combat Search and Rescue.
 --
 -- ===
 -- 

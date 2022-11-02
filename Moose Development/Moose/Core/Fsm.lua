@@ -47,9 +47,9 @@
 -- and tailored** by mission designers through **the implementation of Transition Handlers**.
 -- Each of these FSM implementation classes start either with:
 --
---   * an acronym **AI\_**, which indicates a FSM implementation directing **AI controlled** @{GROUP} and/or @{UNIT}. These AI\_ classes derive the @{#FSM_CONTROLLABLE} class.
---   * an acronym **TASK\_**, which indicates a FSM implementation executing a @{TASK} executed by Groups of players. These TASK\_ classes derive the @{#FSM_TASK} class.
---   * an acronym **ACT\_**, which indicates an Sub-FSM implementation, directing **Humans actions** that need to be done in a @{TASK}, seated in a @{CLIENT} (slot) or a @{UNIT} (CA join). These ACT\_ classes derive the @{#FSM_PROCESS} class.
+--   * an acronym **AI\_**, which indicates a FSM implementation directing **AI controlled** @{Wrapper.Group#GROUP} and/or @{Wrapper.Unit#UNIT}. These AI\_ classes derive the @{#FSM_CONTROLLABLE} class.
+--   * an acronym **TASK\_**, which indicates a FSM implementation executing a @{Tasking.Task#TASK} executed by Groups of players. These TASK\_ classes derive the @{#FSM_TASK} class.
+--   * an acronym **ACT\_**, which indicates an Sub-FSM implementation, directing **Humans actions** that need to be done in a @{Tasking.Task#TASK}, seated in a @{Wrapper.Client#CLIENT} (slot) or a @{Wrapper.Unit#UNIT} (CA join). These ACT\_ classes derive the @{#FSM_PROCESS} class.
 --
 -- Detailed explanations and API specifics are further below clarified and FSM derived class specifics are described in those class documentation sections.
 --
@@ -61,10 +61,10 @@
 --
 -- The following derived classes are available in the MOOSE framework, that implement a specialized form of a FSM:
 --
---   * @{#FSM_TASK}: Models Finite State Machines for @{Task}s.
---   * @{#FSM_PROCESS}: Models Finite State Machines for @{Task} actions, which control @{Client}s.
---   * @{#FSM_CONTROLLABLE}: Models Finite State Machines for @{Wrapper.Controllable}s, which are @{Wrapper.Group}s, @{Wrapper.Unit}s, @{Client}s.
---   * @{#FSM_SET}: Models Finite State Machines for @{Set}s. Note that these FSMs control multiple objects!!! So State concerns here
+--   * @{#FSM_TASK}: Models Finite State Machines for @{Tasking.Task}s.
+--   * @{#FSM_PROCESS}: Models Finite State Machines for @{Tasking.Task} actions, which control @{Wrapper.Client}s.
+--   * @{#FSM_CONTROLLABLE}: Models Finite State Machines for @{Wrapper.Controllable}s, which are @{Wrapper.Group}s, @{Wrapper.Unit}s, @{Wrapper.Client}s.
+--   * @{#FSM_SET}: Models Finite State Machines for @{Core.Set}s. Note that these FSMs control multiple objects!!! So State concerns here
 --     for multiple objects or the position of the state machine in the process.
 --
 -- ===
@@ -119,9 +119,9 @@ do -- FSM
   -- and tailored** by mission designers through **the implementation of Transition Handlers**.
   -- Each of these FSM implementation classes start either with:
   --
-  --   * an acronym **AI\_**, which indicates an FSM implementation directing **AI controlled** @{GROUP} and/or @{UNIT}. These AI\_ classes derive the @{#FSM_CONTROLLABLE} class.
-  --   * an acronym **TASK\_**, which indicates an FSM implementation executing a @{TASK} executed by Groups of players. These TASK\_ classes derive the @{#FSM_TASK} class.
-  --   * an acronym **ACT\_**, which indicates an Sub-FSM implementation, directing **Humans actions** that need to be done in a @{TASK}, seated in a @{CLIENT} (slot) or a @{UNIT} (CA join). These ACT\_ classes derive the @{#FSM_PROCESS} class.
+  --   * an acronym **AI\_**, which indicates an FSM implementation directing **AI controlled** @{Wrapper.Group#GROUP} and/or @{Wrapper.Unit#UNIT}. These AI\_ classes derive the @{#FSM_CONTROLLABLE} class.
+  --   * an acronym **TASK\_**, which indicates an FSM implementation executing a @{Tasking.Task#TASK} executed by Groups of players. These TASK\_ classes derive the @{#FSM_TASK} class.
+  --   * an acronym **ACT\_**, which indicates an Sub-FSM implementation, directing **Humans actions** that need to be done in a @{Tasking.Task#TASK}, seated in a @{Wrapper.Client#CLIENT} (slot) or a @{Wrapper.Unit#UNIT} (CA join). These ACT\_ classes derive the @{#FSM_PROCESS} class.
   --
   -- ![Transition Rules and Transition Handlers and Event Triggers](..\Presentations\FSM\Dia3.JPG)
   --
@@ -418,7 +418,7 @@ do -- FSM
     return self._Transitions or {}
   end
 
-  --- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Wrapper.Controllable} by the task.
+  --- Set the default @{#FSM_PROCESS} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Wrapper.Controllable} by the task.
   -- @param #FSM self
   -- @param #table From Can contain a string indicating the From state or a table of strings containing multiple From states.
   -- @param #string Event The Event name.
@@ -953,7 +953,7 @@ do -- FSM_CONTROLLABLE
   -- @field Wrapper.Controllable#CONTROLLABLE Controllable
   -- @extends Core.Fsm#FSM
 
-  --- Models Finite State Machines for @{Wrapper.Controllable}s, which are @{Wrapper.Group}s, @{Wrapper.Unit}s, @{Client}s.
+  --- Models Finite State Machines for @{Wrapper.Controllable}s, which are @{Wrapper.Group}s, @{Wrapper.Unit}s, @{Wrapper.Client}s.
   --
   -- ===
   --
@@ -1086,7 +1086,7 @@ do -- FSM_PROCESS
   -- @field Tasking.Task#TASK Task
   -- @extends Core.Fsm#FSM_CONTROLLABLE
 
-  --- FSM_PROCESS class models Finite State Machines for @{Task} actions, which control @{Client}s.
+  --- FSM_PROCESS class models Finite State Machines for @{Tasking.Task} actions, which control @{Wrapper.Client}s.
   -- 
   -- ===
   -- 
@@ -1241,7 +1241,7 @@ do -- FSM_PROCESS
 
   -- TODO: Need to check and fix that an FSM_PROCESS is only for a UNIT. Not for a GROUP.  
 
-  --- Send a message of the @{Task} to the Group of the Unit.
+  --- Send a message of the @{Tasking.Task} to the Group of the Unit.
   -- @param #FSM_PROCESS self
   function FSM_PROCESS:Message( Message )
     self:F( { Message = Message } )
@@ -1382,7 +1382,7 @@ do -- FSM_SET
   -- @field Core.Set#SET_BASE Set
   -- @extends Core.Fsm#FSM
 
-  --- FSM_SET class models Finite State Machines for @{Set}s. Note that these FSMs control multiple objects!!! So State concerns here
+  --- FSM_SET class models Finite State Machines for @{Core.Set}s. Note that these FSMs control multiple objects!!! So State concerns here
   -- for multiple objects or the position of the state machine in the process.
   --
   -- ===

@@ -1,4 +1,4 @@
---- **Wrapper** -- POSITIONABLE wraps DCS classes that are "positionable".
+--- **Wrapper** - POSITIONABLE wraps DCS classes that are "positionable".
 --
 -- ===
 --
@@ -11,7 +11,7 @@
 -- @module Wrapper.Positionable
 -- @image Wrapper_Positionable.JPG
 
---- @type POSITIONABLE.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
+--- @type POSITIONABLE.__ Methods which are not intended for mission designers, but which are used internally by the moose designer :-)
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
 
 --- @type POSITIONABLE
@@ -136,7 +136,7 @@ end
 
 --- Returns a pos3 table of the objects current position and orientation in 3D space. X, Y, Z values are unit vectors defining the objects orientation.
 -- Coordinates are dependent on the position of the maps origin.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Position3 Table consisting of the point and orientation tables.
 function POSITIONABLE:GetPosition()
   self:F2( self.PositionableName )
@@ -155,7 +155,7 @@ end
 
 --- Returns a {@DCS#Vec3} table of the objects current orientation in 3D space. X, Y, Z values are unit vectors defining the objects orientation.
 -- X is the orientation parallel to the movement of the object, Z perpendicular and Y vertical orientation.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Vec3 X orientation, i.e. parallel to the direction of movement.
 -- @return DCS#Vec3 Y orientation, i.e. vertical.
 -- @return DCS#Vec3 Z orientation, i.e. perpendicular to the direction of movement.
@@ -171,7 +171,7 @@ function POSITIONABLE:GetOrientation()
 end
 
 --- Returns a {@DCS#Vec3} table of the objects current X orientation in 3D space, i.e. along the direction of movement.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Vec3 X orientation, i.e. parallel to the direction of movement.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetOrientationX()
@@ -185,7 +185,7 @@ function POSITIONABLE:GetOrientationX()
 end
 
 --- Returns a {@DCS#Vec3} table of the objects current Y orientation in 3D space, i.e. vertical orientation.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Vec3 Y orientation, i.e. vertical.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetOrientationY()
@@ -199,7 +199,7 @@ function POSITIONABLE:GetOrientationY()
 end
 
 --- Returns a {@DCS#Vec3} table of the objects current Z orientation in 3D space, i.e. perpendicular to direction of movement.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Vec3 Z orientation, i.e. perpendicular to movement.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetOrientationZ()
@@ -213,7 +213,7 @@ function POSITIONABLE:GetOrientationZ()
 end
 
 --- Returns the @{DCS#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Position The 3D position vectors of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetPositionVec3()
@@ -233,7 +233,7 @@ function POSITIONABLE:GetPositionVec3()
 end
 
 --- Returns the @{DCS#Vec3} vector indicating the 3D vector of the POSITIONABLE within the mission.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Vec3 The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetVec3()
@@ -257,7 +257,7 @@ function POSITIONABLE:GetVec3()
 end
 
 --- Returns the @{DCS#Vec2} vector indicating the point in 2D of the POSITIONABLE within the mission.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Vec2 The 2D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetVec2()
@@ -277,7 +277,7 @@ function POSITIONABLE:GetVec2()
 end
 
 --- Returns a POINT_VEC2 object indicating the point in 2D of the POSITIONABLE within the mission.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return Core.Point#POINT_VEC2 The 2D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetPointVec2()
@@ -300,7 +300,7 @@ function POSITIONABLE:GetPointVec2()
 end
 
 --- Returns a POINT_VEC3 object indicating the point in 3D of the POSITIONABLE within the mission.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return Core.Point#POINT_VEC3 The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetPointVec3()
@@ -339,7 +339,7 @@ end
 -- within the POSITIONABLE. This has higher performance, but comes with all considerations associated with the possible referencing to the same COORDINATE object.
 -- This should only be used when performance is critical and there is sufficient awareness of the possible pitfalls. However, in most instances, GetCoordinate() is
 -- preferred as it will return a fresh new COORDINATE and thus avoid potentially unexpected issues.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return Core.Point#COORDINATE A reference to the COORDINATE object of the POSITIONABLE.
 function POSITIONABLE:GetCoord()
 
@@ -369,7 +369,7 @@ function POSITIONABLE:GetCoord()
 end
 
 --- Returns a new COORDINATE object indicating the point in 3D of the POSITIONABLE within the mission.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return Core.Point#COORDINATE A new COORDINATE object of the POSITIONABLE.
 function POSITIONABLE:GetCoordinate()
 
@@ -395,7 +395,7 @@ function POSITIONABLE:GetCoordinate()
 end
 
 --- Returns a COORDINATE object, which is offset with respect to the orientation of the POSITIONABLE.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @param #number x Offset in the direction "the nose" of the unit is pointing in meters. Default 0 m.
 -- @param #number y Offset "above" the unit in meters. Default 0 m.
 -- @param #number z Offset in the direction "the wing" of the unit is pointing in meters. z>0 starboard, z<0 port. Default 0 m.
@@ -436,7 +436,7 @@ function POSITIONABLE:GetOffsetCoordinate( x, y, z )
 end
 
 --- Returns a random @{DCS#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @param #number Radius
 -- @return DCS#Vec3 The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
@@ -538,7 +538,7 @@ function POSITIONABLE:GetBoundingRadius( MinDist )
 end
 
 --- Returns the altitude above sea level of the POSITIONABLE.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Distance The altitude of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetAltitude()
@@ -557,7 +557,7 @@ function POSITIONABLE:GetAltitude()
 end
 
 --- Returns if the Positionable is located above a runway.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return #boolean true if Positionable is above a runway.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:IsAboveRunway()
@@ -592,7 +592,7 @@ function POSITIONABLE:GetSize()
 end
 
 --- Returns the POSITIONABLE heading in degrees.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return #number The POSITIONABLE heading in degrees.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetHeading()
@@ -716,7 +716,7 @@ end
 
 --- Returns true if the POSITIONABLE is in the air.
 -- Polymorphic, is overridden in GROUP and UNIT.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return #boolean true if in the air.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:InAir()
@@ -725,8 +725,8 @@ function POSITIONABLE:InAir()
   return nil
 end
 
---- Returns the a @{Velocity} object from the POSITIONABLE.
--- @param Wrapper.Positionable#POSITIONABLE self
+--- Returns the @{Core.Velocity} object from the POSITIONABLE.
+-- @param #POSITIONABLE self
 -- @return Core.Velocity#VELOCITY Velocity The Velocity object.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetVelocity()
@@ -745,7 +745,7 @@ function POSITIONABLE:GetVelocity()
 end
 
 --- Returns the POSITIONABLE velocity Vec3 vector.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Vec3 The velocity Vec3 vector
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetVelocityVec3()
@@ -781,7 +781,7 @@ end
 
 
 --- Returns the POSITIONABLE height above sea level in meters.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Vec3 Height of the positionable in meters (or nil, if the object does not exist).
 function POSITIONABLE:GetHeight() --R2.1
   self:F2( self.PositionableName )
@@ -801,7 +801,7 @@ function POSITIONABLE:GetHeight() --R2.1
 end
 
 --- Returns the POSITIONABLE velocity in km/h.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return #number The velocity in km/h.
 function POSITIONABLE:GetVelocityKMH()
   self:F2( self.PositionableName )
@@ -820,7 +820,7 @@ function POSITIONABLE:GetVelocityKMH()
 end
 
 --- Returns the POSITIONABLE velocity in meters per second.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return #number The velocity in meters per second.
 function POSITIONABLE:GetVelocityMPS()
   self:F2( self.PositionableName )
@@ -838,7 +838,7 @@ function POSITIONABLE:GetVelocityMPS()
 end
 
 --- Returns the POSITIONABLE velocity in knots.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return #number The velocity in knots.
 function POSITIONABLE:GetVelocityKNOTS()
   self:F2( self.PositionableName )
@@ -846,7 +846,7 @@ function POSITIONABLE:GetVelocityKNOTS()
 end
 
 --- Returns the Angle of Attack of a POSITIONABLE.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return #number Angle of attack in degrees.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetAoA()
@@ -895,7 +895,7 @@ function POSITIONABLE:GetAoA()
 end
 
 --- Returns the climb or descent angle of the POSITIONABLE.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return #number Climb or descent angle in degrees. Or 0 if velocity vector norm is zero.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetClimbAngle()
@@ -925,7 +925,7 @@ function POSITIONABLE:GetClimbAngle()
 end
 
 --- Returns the pitch angle of a POSITIONABLE.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return #number Pitch angle in degrees.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetPitch()
@@ -941,7 +941,7 @@ function POSITIONABLE:GetPitch()
 end
 
 --- Returns the roll angle of a unit.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return #number Pitch angle in degrees.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetRoll()
@@ -975,7 +975,7 @@ function POSITIONABLE:GetRoll()
 end
 
 --- Returns the yaw angle of a POSITIONABLE.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return #number Yaw angle in degrees.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetYaw()
@@ -1366,24 +1366,24 @@ function POSITIONABLE:Message( Message, Duration, Name )
   return nil
 end
 
---- Create a @{Core.Radio#RADIO}, to allow radio transmission for this POSITIONABLE.
+--- Create a @{Sound.Radio#RADIO}, to allow radio transmission for this POSITIONABLE.
 -- Set parameters with the methods provided, then use RADIO:Broadcast() to actually broadcast the message
 -- @param #POSITIONABLE self
--- @return Core.Radio#RADIO Radio
+-- @return Sound.Radio#RADIO Radio
 function POSITIONABLE:GetRadio()
   self:F2( self )
   return RADIO:New( self )
 end
 
---- Create a @{Core.Radio#BEACON}, to allow this POSITIONABLE to broadcast beacon signals
+--- Create a @{Core.Beacon#BEACON}, to allow this POSITIONABLE to broadcast beacon signals.
 -- @param #POSITIONABLE self
--- @return Core.Radio#RADIO Radio
+-- @return Core.Beacon#BEACON Beacon
 function POSITIONABLE:GetBeacon()
   self:F2( self )
   return BEACON:New( self )
 end
 
---- Start Lasing a POSITIONABLE
+--- Start Lasing a POSITIONABLE.
 -- @param #POSITIONABLE self
 -- @param #POSITIONABLE Target The target to lase.
 -- @param #number LaserCode Laser code or random number in [1000, 9999].
@@ -1424,7 +1424,7 @@ function POSITIONABLE:LaseCoordinate( Coordinate, LaserCode, Duration )
   return self.Spot
 end
 
---- Stop Lasing a POSITIONABLE
+--- Stop Lasing a POSITIONABLE.
 -- @param #POSITIONABLE self
 -- @return #POSITIONABLE
 function POSITIONABLE:LaseOff()
@@ -1438,7 +1438,7 @@ function POSITIONABLE:LaseOff()
   return self
 end
 
---- Check if the POSITIONABLE is lasing a target
+--- Check if the POSITIONABLE is lasing a target.
 -- @param #POSITIONABLE self
 -- @return #boolean true if it is lasing a target
 function POSITIONABLE:IsLasing()
@@ -1815,7 +1815,7 @@ function POSITIONABLE:SmokeBlue()
   trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Blue )
 end
 
---- Returns true if the unit is within a @{Zone}.
+--- Returns true if the unit is within a @{Core.Zone}.
 -- @param #POSITIONABLE self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the unit is within the @{Core.Zone#ZONE_BASE}
@@ -1830,7 +1830,7 @@ function POSITIONABLE:IsInZone( Zone )
   return false
 end
 
---- Returns true if the unit is not within a @{Zone}.
+--- Returns true if the unit is not within a @{Core.Zone}.
 -- @param #POSITIONABLE self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the unit is not within the @{Core.Zone#ZONE_BASE}

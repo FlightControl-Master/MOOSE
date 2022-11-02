@@ -2787,8 +2787,9 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
       
         -- Tanks
         
-        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.CAS, 100))
-        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 80))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.CAS, 90))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.CASENHANCED, 90))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.GROUNDATTACK, 50))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 40))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))

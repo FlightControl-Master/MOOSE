@@ -51,7 +51,7 @@
 --  * PLAYERS
 --  * CARGOS
 --
--- On top, for internal MOOSE administration purposes, the DATBASE administers the Unit and Group TEMPLATES as defined within the Mission Editor.
+-- On top, for internal MOOSE administration purposes, the DATABASE administers the Unit and Group TEMPLATES as defined within the Mission Editor.
 --
 -- The singleton object **_DATABASE** is automatically created by MOOSE, that administers all objects within the mission.
 -- Moose refers to **_DATABASE** within the framework extensively, but you can also refer to the _DATABASE object within your missions if required.
@@ -246,7 +246,7 @@ end
 
 do -- Zones
 
-  --- Finds a @{Zone} based on the zone name.
+  --- Finds a @{Core.Zone} based on the zone name.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   -- @return Core.Zone#ZONE_BASE The found ZONE.
@@ -256,7 +256,7 @@ do -- Zones
     return ZoneFound
   end
 
-  --- Adds a @{Zone} based on the zone name in the DATABASE.
+  --- Adds a @{Core.Zone} based on the zone name in the DATABASE.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   -- @param Core.Zone#ZONE_BASE Zone The zone.
@@ -268,7 +268,7 @@ do -- Zones
   end
 
 
-  --- Deletes a @{Zone} from the DATABASE based on the zone name.
+  --- Deletes a @{Core.Zone} from the DATABASE based on the zone name.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   function DATABASE:DeleteZone( ZoneName )
@@ -309,7 +309,7 @@ do -- Zones
 
         self:I(string.format("Register ZONE: %s (Polygon, Quad)", ZoneName))
 
-        Zone=ZONE_POLYGON_BASE:New(ZoneName, ZoneData.verticies)
+        Zone=ZONE_POLYGON:NewFromPointsArray(ZoneName, ZoneData.verticies)
 
         --for i,vec2 in pairs(ZoneData.verticies) do
         --  local coord=COORDINATE:NewFromVec2(vec2)
@@ -322,7 +322,7 @@ do -- Zones
 
         -- Store color of zone.
         Zone.Color=color
-        
+
         -- Store zone ID.
         Zone.ZoneID=ZoneData.zoneId
 
@@ -379,7 +379,7 @@ end -- zone
 
 do -- Zone_Goal
 
-  --- Finds a @{Zone} based on the zone name.
+  --- Finds a @{Core.Zone} based on the zone name.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   -- @return Core.Zone#ZONE_BASE The found ZONE.
@@ -389,7 +389,7 @@ do -- Zone_Goal
     return ZoneFound
   end
 
-  --- Adds a @{Zone} based on the zone name in the DATABASE.
+  --- Adds a @{Core.Zone} based on the zone name in the DATABASE.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   -- @param Core.Zone#ZONE_BASE Zone The zone.
@@ -401,7 +401,7 @@ do -- Zone_Goal
   end
 
 
-  --- Deletes a @{Zone} from the DATABASE based on the zone name.
+  --- Deletes a @{Core.Zone} from the DATABASE based on the zone name.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   function DATABASE:DeleteZoneGoal( ZoneName )
@@ -777,7 +777,7 @@ function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, Category
   local StaticTemplate = UTILS.DeepCopy( StaticTemplate )
 
   local StaticTemplateGroupName = env.getValueDictByKey(StaticTemplate.name)
-  
+
   local StaticTemplateName=StaticTemplate.units[1].name
 
   self.Templates.Statics[StaticTemplateName] = self.Templates.Statics[StaticTemplateName] or {}
@@ -1153,11 +1153,11 @@ function DATABASE:_EventOnDeadOrCrash( Event )
       if self.STATICS[Event.IniDCSUnitName] then
         self:DeleteStatic( Event.IniDCSUnitName )
       end
-      
+
       ---
       -- Maybe a UNIT?
       ---
-      
+
       -- Delete unit.
       if self.UNITS[Event.IniDCSUnitName] then
         self:T("STATIC Event for UNIT "..tostring(Event.IniDCSUnitName))
@@ -1556,11 +1556,11 @@ function DATABASE:FindOpsGroupFromUnit(unitname)
   else
     unit=unitname
   end
-  
+
   if unit then
     groupname=unit:GetGroup():GetName()
   end
-  
+
   if groupname then
     return self.FLIGHTGROUPS[groupname]
   else

@@ -2306,6 +2306,10 @@ function AUFTRAG:NewFromTarget(Target, MissionType)
     mission=self:NewBOMBING(Target, Altitude)
   elseif MissionType==AUFTRAG.Type.BOMBRUNWAY then
     mission=self:NewBOMBRUNWAY(Target, Altitude)
+  elseif MissionType==AUFTRAG.Type.CAS then
+    mission=self:NewCAS(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000),Altitude,Speed,Target:GetAverageCoordinate(),Heading,Leg,TargetTypes)
+  elseif MissionType==AUFTRAG.Type.CASENHANCED then
+    mission=self:NewCASENHANCED(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000),Altitude,Speed,RangeMax,NoEngageZoneSet,TargetTypes)
   elseif MissionType==AUFTRAG.Type.INTERCEPT then
     mission=self:NewINTERCEPT(Target)
   elseif MissionType==AUFTRAG.Type.SEAD then

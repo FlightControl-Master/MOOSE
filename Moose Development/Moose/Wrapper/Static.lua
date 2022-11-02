@@ -1,4 +1,4 @@
---- **Wrapper** -- STATIC wraps the DCS StaticObject class.
+--- **Wrapper** - STATIC wraps the DCS StaticObject class.
 -- 
 -- ===
 -- 
@@ -26,21 +26,21 @@
 -- 
 -- ## STATIC reference methods
 -- 
--- For each DCS Static will have a STATIC wrapper object (instance) within the _@{DATABASE} object.
+-- For each DCS Static will have a STATIC wrapper object (instance) within the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
 -- This is done at the beginning of the mission (when the mission starts).
 --  
--- The STATIC class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
+-- The @{#STATIC} class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
 -- using the Static Name.
 -- 
 -- Another thing to know is that STATIC objects do not "contain" the DCS Static object. 
--- The STATIc methods will reference the DCS Static object by name when it is needed during API execution.
+-- The @{#STATIC} methods will reference the DCS Static object by name when it is needed during API execution.
 -- If the DCS Static object does not exist or is nil, the STATIC methods will return nil and log an exception in the DCS.log file.
 --  
--- The STATIc class provides the following functions to retrieve quickly the relevant STATIC instance:
+-- The @{#STATIC} class provides the following functions to retrieve quickly the relevant STATIC instance:
 -- 
---  * @{#STATIC.FindByName}(): Find a STATIC instance from the _DATABASE object using a DCS Static name.
+--  * @{#STATIC.FindByName}(): Find a STATIC instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Static name.
 --  
--- IMPORTANT: ONE SHOULD NEVER SANATIZE these STATIC OBJECT REFERENCES! (make the STATIC object references nil).
+-- IMPORTANT: ONE SHOULD NEVER SANITIZE these STATIC OBJECT REFERENCES! (make the STATIC object references nil).
 -- 
 -- @field #STATIC
 STATIC = {
@@ -186,9 +186,9 @@ function STATIC:GetDCSObject()
   return nil
 end
 
---- Returns a list of one @{Static}.
+--- Returns a list of one @{Wrapper.Static}.
 -- @param #STATIC self
--- @return #list<Wrapper.Static#STATIC> A list of one @{Static}.
+-- @return #list<Wrapper.Static#STATIC> A list of one @{Wrapper.Static}.
 function STATIC:GetUnits()
   self:F2( { self.StaticName } )
   local DCSStatic = self:GetDCSObject()

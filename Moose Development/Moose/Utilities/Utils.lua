@@ -9,7 +9,7 @@
 --   * FlightControl : Rework to OO framework.
 --   * And many more
 --
--- @module Utils
+-- @module Utilities.Utils
 -- @image MOOSE.JPG
 
 
@@ -1064,9 +1064,13 @@ end
 -- @return #number Distance between the vectors.
 function UTILS.VecDist2D(a, b)
 
+  local d = math.huge
+  
+  if (not a) or (not b) then return d end
+
   local c={x=b.x-a.x, y=b.y-a.y}
 
-  local d=math.sqrt(c.x*c.x+c.y*c.y)
+  d=math.sqrt(c.x*c.x+c.y*c.y)
 
   return d
 end
@@ -1077,10 +1081,15 @@ end
 -- @param DCS#Vec3 b Vector in 3D with x, y, z components.
 -- @return #number Distance between the vectors.
 function UTILS.VecDist3D(a, b)
-
+  
+    
+  local d = math.huge
+  
+  if (not a) or (not b) then return d end
+  
   local c={x=b.x-a.x, y=b.y-a.y, z=b.z-a.z}
 
-  local d=math.sqrt(UTILS.VecDot(c, c))
+  d=math.sqrt(UTILS.VecDot(c, c))
 
   return d
 end
@@ -1414,7 +1423,7 @@ function UTILS.CheckMemory(output)
 end
 
 
---- Get the coalition name from its numerical ID, e.g. coaliton.side.RED.
+--- Get the coalition name from its numerical ID, e.g. coalition.side.RED.
 -- @param #number Coalition The coalition ID.
 -- @return #string The coalition name, i.e. "Neutral", "Red" or "Blue" (or "Unknown").
 function UTILS.GetCoalitionName(Coalition)

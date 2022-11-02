@@ -53,7 +53,6 @@
 -- @module Core.Zone
 -- @image Core_Zones.JPG
 
-
 --- @type ZONE_BASE
 -- @field #string ZoneName Name of the zone.
 -- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
@@ -75,7 +74,7 @@
 --   * @{#ZONE_BASE.SetName}(): Sets the name of the zone.
 --
 --
--- ## Each zone implements two polymorphic functions defined in @{Core.Zone#ZONE_BASE}:
+-- ## Each zone implements two polymorphic functions defined in @{#ZONE_BASE}:
 --
 --   * @{#ZONE_BASE.IsVec2InZone}(): Returns if a 2D vector is within the zone.
 --   * @{#ZONE_BASE.IsVec3InZone}(): Returns if a 3D vector is within the zone.
@@ -121,9 +120,8 @@ ZONE_BASE = {
   Color={},
   ZoneID=nil,
   Properties={},
-  Sureface=nil,
+  Surface=nil,
 }
-
 
 --- The ZONE_BASE.BoundingSquare
 -- @type ZONE_BASE.BoundingSquare
@@ -131,7 +129,6 @@ ZONE_BASE = {
 -- @field DCS#Distance y1 The lower y coordinate (left down)
 -- @field DCS#Distance x2 The higher x coordinate (right up)
 -- @field DCS#Distance y2 The higher y coordinate (right up)
-
 
 --- ZONE_BASE constructor
 -- @param #ZONE_BASE self
@@ -142,13 +139,11 @@ function ZONE_BASE:New( ZoneName )
   self:F( ZoneName )
 
   self.ZoneName = ZoneName
-  
+
   --_DATABASE:AddZone(ZoneName,self)
-  
+
   return self
 end
-
-
 
 --- Returns the name of the zone.
 -- @param #ZONE_BASE self
@@ -158,7 +153,6 @@ function ZONE_BASE:GetName()
 
   return self.ZoneName
 end
-
 
 --- Sets the name of the zone.
 -- @param #ZONE_BASE self
@@ -217,7 +211,6 @@ function ZONE_BASE:IsPointVec3InZone( PointVec3 )
   return InZone
 end
 
-
 --- Returns the @{DCS#Vec2} coordinate of the zone.
 -- @param #ZONE_BASE self
 -- @return #nil.
@@ -240,7 +233,6 @@ function ZONE_BASE:GetPointVec2()
 
   return PointVec2
 end
-
 
 --- Returns the @{DCS#Vec3} of the zone.
 -- @param #ZONE_BASE self
@@ -365,7 +357,6 @@ function ZONE_BASE:BoundZone()
   self:F2()
 end
 
-
 --- Set draw coalition of zone.
 -- @param #ZONE_BASE self
 -- @param #number Coalition Coalition. Default -1.
@@ -377,7 +368,7 @@ end
 
 --- Get draw coalition of zone.
 -- @param #ZONE_BASE self
--- @return #number Draw coaliton.
+-- @return #number Draw coalition.
 function ZONE_BASE:GetDrawCoalition()
   return self.drawCoalition or -1
 end
@@ -385,7 +376,7 @@ end
 --- Set color of zone.
 -- @param #ZONE_BASE self
 -- @param #table RGBcolor RGB color table. Default `{1, 0, 0}`.
--- @param #number Alpha Transparacy between 0 and 1. Default 0.15.
+-- @param #number Alpha Transparency between 0 and 1. Default 0.15.
 -- @return #ZONE_BASE self
 function ZONE_BASE:SetColor(RGBcolor, Alpha)
 
@@ -420,7 +411,7 @@ function ZONE_BASE:GetColorRGB()
   return rgb
 end
 
---- Get transperency Alpha value of zone.
+--- Get transparency Alpha value of zone.
 -- @param #ZONE_BASE self
 -- @return #number Alpha value.
 function ZONE_BASE:GetColorAlpha()
@@ -467,7 +458,7 @@ function ZONE_BASE:GetFillColorRGB()
   return rgb
 end
 
---- Get transperency Alpha fill value of zone.
+--- Get transparency Alpha fill value of zone.
 -- @param #ZONE_BASE self
 -- @return #number Alpha value.
 function ZONE_BASE:GetFillColorAlpha()
@@ -592,7 +583,7 @@ end
 -- @extends #ZONE_BASE
 
 --- The ZONE_RADIUS class defined by a zone name, a location and a radius.
--- This class implements the inherited functions from Core.Zone#ZONE_BASE taking into account the own zone format and properties.
+-- This class implements the inherited functions from @{#ZONE_BASE} taking into account the own zone format and properties.
 --
 -- ## ZONE_RADIUS constructor
 --
@@ -631,7 +622,7 @@ ZONE_RADIUS = {
 -- @param #string ZoneName Name of the zone.
 -- @param DCS#Vec2 Vec2 The location of the zone.
 -- @param DCS#Distance Radius The radius of the zone.
--- @param DCS#Boolean DoNotRegisterZone Determins if the Zone should not be registered in the _Database Table. Default=false
+-- @param DCS#Boolean DoNotRegisterZone Determines if the Zone should not be registered in the _Database Table. Default=false
 -- @return #ZONE_RADIUS self
 function ZONE_RADIUS:New( ZoneName, Vec2, Radius, DoNotRegisterZone )
 
@@ -755,7 +746,6 @@ function ZONE_RADIUS:BoundZone( Points, CountryID, UnBound )
   local Angle
   local RadialBase = math.pi*2
 
-  --
   for Angle = 0, 360, (360 / Points ) do
     local Radial = Angle * RadialBase / 360
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
@@ -784,7 +774,6 @@ function ZONE_RADIUS:BoundZone( Points, CountryID, UnBound )
 
   return self
 end
-
 
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_RADIUS self
@@ -816,7 +805,6 @@ function ZONE_RADIUS:SmokeZone( SmokeColor, Points, AddHeight, AngleOffset )
 
   return self
 end
-
 
 --- Flares the zone boundaries in a color.
 -- @param #ZONE_RADIUS self
@@ -914,7 +902,6 @@ function ZONE_RADIUS:GetVec3( Height )
   return Vec3
 end
 
-
 --- Scan the zone for the presence of units of the given ObjectCategories.
 -- Note that **only after** a zone has been scanned, the zone can be evaluated by:
 --
@@ -934,6 +921,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
   self.ScanData = {}
   self.ScanData.Coalitions = {}
   self.ScanData.Scenery = {}
+  self.ScanData.SceneryTable = {}
   self.ScanData.Units = {}
 
   local ZoneCoord = self:GetCoordinate()
@@ -954,7 +942,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
     if ZoneObject then
 
       local ObjectCategory = ZoneObject:getCategory()
-      
+
       --local name=ZoneObject:getName()
       --env.info(string.format("Zone object %s", tostring(name)))
       --self:E(ZoneObject)
@@ -996,8 +984,10 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
       if ObjectCategory == Object.Category.SCENERY then
         local SceneryType = ZoneObject:getTypeName()
         local SceneryName = ZoneObject:getName()
+        --BASE:I("SceneryType "..SceneryType.."SceneryName"..SceneryName)
         self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
         self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( SceneryName, ZoneObject )
+        table.insert(self.ScanData.SceneryTable,self.ScanData.Scenery[SceneryType][SceneryName] )
         self:T( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
       end
 
@@ -1018,7 +1008,6 @@ function ZONE_RADIUS:GetScannedUnits()
 
   return self.ScanData.Units
 end
-
 
 --- Get a set of scanned units.
 -- @param #ZONE_RADIUS self
@@ -1073,7 +1062,6 @@ function ZONE_RADIUS:GetScannedSetGroup()
   return self.ScanSetGroup
 end
 
-
 --- Count the number of different coalitions inside the zone.
 -- @param #ZONE_RADIUS self
 -- @return #number Counted coalitions.
@@ -1126,7 +1114,6 @@ function ZONE_RADIUS:GetScannedCoalition( Coalition )
   end
 end
 
-
 --- Get scanned scenery type
 -- @param #ZONE_RADIUS self
 -- @return #table Table of DCS scenery type objects.
@@ -1134,17 +1121,34 @@ function ZONE_RADIUS:GetScannedSceneryType( SceneryType )
   return self.ScanData.Scenery[SceneryType]
 end
 
-
 --- Get scanned scenery table
 -- @param #ZONE_RADIUS self
--- @return #table Table of DCS scenery objects.
+-- @return #table Structured object table: [type].[name].SCENERY
 function ZONE_RADIUS:GetScannedScenery()
   return self.ScanData.Scenery
 end
 
+--- Get table of scanned scenery objects
+-- @param #ZONE_RADIUS self
+-- @return #table Table of SCENERY objects.
+function ZONE_RADIUS:GetScannedSceneryObjects()
+  return self.ScanData.SceneryTable
+end
+
+--- Get set of scanned scenery objects
+-- @param #ZONE_RADIUS self
+-- @return #table Table of Wrapper.Scenery#SCENERY scenery objects.
+function ZONE_RADIUS:GetScannedSetScenery()
+  local scenery = SET_SCENERY:New()
+  local objects = self:GetScannedSceneryObjects()
+  for _,_obj in pairs (objects) do
+    scenery:AddScenery(_obj)
+  end
+  return scenery
+end
 
 --- Is All in Zone of Coalition?
--- Check if only the specifed coalition is inside the zone and noone else.
+-- Check if only the specified coalition is inside the zone and no one else.
 -- @param #ZONE_RADIUS self
 -- @param #number Coalition Coalition ID of the coalition which is checked to be the only one in the zone.
 -- @return #boolean True, if **only** that coalition is inside the zone and no one else.
@@ -1156,7 +1160,6 @@ function ZONE_RADIUS:IsAllInZoneOfCoalition( Coalition )
   --self:E( { Coalitions = self.Coalitions, Count = self:CountScannedCoalitions() } )
   return self:CountScannedCoalitions() == 1 and self:GetScannedCoalition( Coalition ) == true
 end
-
 
 --- Is All in Zone of Other Coalition?
 -- Check if only one coalition is inside the zone and the specified coalition is not the one.
@@ -1174,13 +1177,12 @@ function ZONE_RADIUS:IsAllInZoneOfOtherCoalition( Coalition )
   return self:CountScannedCoalitions() == 1 and self:GetScannedCoalition( Coalition ) == nil
 end
 
-
 --- Is Some in Zone of Coalition?
--- Check if more than one coaltion is inside the zone and the specifed coalition is one of them.
+-- Check if more than one coalition is inside the zone and the specified coalition is one of them.
 -- You first need to use the @{#ZONE_RADIUS.Scan} method to scan the zone before it can be evaluated!
 -- Note that once a zone has been scanned, multiple evaluations can be done on the scan result set.
 -- @param #ZONE_RADIUS self
--- @param #number Coalition ID of the coaliton which is checked to be inside the zone.
+-- @param #number Coalition ID of the coalition which is checked to be inside the zone.
 -- @return #boolean True if more than one coalition is inside the zone and the specified coalition is one of them.
 -- @usage
 --    self.Zone:Scan()
@@ -1189,7 +1191,6 @@ function ZONE_RADIUS:IsSomeInZoneOfCoalition( Coalition )
 
   return self:CountScannedCoalitions() > 1 and self:GetScannedCoalition( Coalition ) == true
 end
-
 
 --- Is None in Zone of Coalition?
 -- You first need to use the @{#ZONE_RADIUS.Scan} method to scan the zone before it can be evaluated!
@@ -1205,7 +1206,6 @@ function ZONE_RADIUS:IsNoneInZoneOfCoalition( Coalition )
   return self:GetScannedCoalition( Coalition ) == nil
 end
 
-
 --- Is None in Zone?
 -- You first need to use the @{#ZONE_RADIUS.Scan} method to scan the zone before it can be evaluated!
 -- Note that once a zone has been scanned, multiple evaluations can be done on the scan result set.
@@ -1218,9 +1218,6 @@ function ZONE_RADIUS:IsNoneInZone()
 
   return self:CountScannedCoalitions() == 0
 end
-
-
-
 
 --- Searches the zone
 -- @param #ZONE_RADIUS self
@@ -1261,9 +1258,9 @@ end
 -- @return #boolean true if the location is within the zone.
 function ZONE_RADIUS:IsVec2InZone( Vec2 )
   self:F2( Vec2 )
-  
+
   if not Vec2 then return false end 
-  
+
   local ZoneVec2 = self:GetVec2()
 
   if ZoneVec2 then
@@ -1331,7 +1328,7 @@ function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
         --env.info(string.format("Got random coordinate with surface type %d after N=%d/%d iterations", land.getSurfaceType(point), N, Nmax))
       else
         point=_getpoint()
-        N=N+1      
+        N=N+1
       end
     end
   end
@@ -1406,27 +1403,26 @@ end
 -- @param #ZONE_RADIUS self
 -- @param #number inner (Optional) Minimal distance from the center of the zone in meters. Default is 0m.
 -- @param #number outer (Optional) Maximal distance from the outer edge of the zone in meters. Default is the radius of the zone.
--- @param #number distance (Optional) Minumum distance from any building coordinate. Defaults to 100m.
+-- @param #number distance (Optional) Minimum distance from any building coordinate. Defaults to 100m.
 -- @param #boolean markbuildings (Optional) Place markers on found buildings (if any).
 -- @param #boolean markfinal (Optional) Place marker on the final coordinate (if any).
 -- @return Core.Point#COORDINATE The random coordinate or `nil` if cannot be found in 1000 iterations.
 function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,markbuildings,markfinal)
-  
+
   local dist = distance or 100
-  
+
   local objects = {}
-  
+
   if self.ScanData and self.ScanData.Scenery then
     objects = self:GetScannedScenery()
   else
     self:Scan({Object.Category.SCENERY})
     objects = self:GetScannedScenery()
   end
-  
+
   local T0 = timer.getTime()
   local T1 = timer.getTime()
-  
-  
+
   local buildings = {}
   if self.ScanData and self.ScanData.BuildingCoordinates then
     buildings = self.ScanData.BuildingCoordinates
@@ -1446,12 +1442,12 @@ function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,ma
     end
     self.ScanData.BuildingCoordinates = buildings
   end
-  
+
   -- max 1000 tries
   local rcoord = nil  
   local found = false
   local iterations = 0
-  
+
   for i=1,1000 do
     iterations = iterations + 1
     rcoord = self:GetRandomCoordinate(inner,outer)
@@ -1572,7 +1568,7 @@ end
 -- @extends Core.Zone#ZONE_RADIUS
 
 
---- # ZONE_UNIT class, extends @{Zone#ZONE_RADIUS}
+--- # ZONE_UNIT class, extends @{#ZONE_RADIUS}
 --
 -- The ZONE_UNIT class defined by a zone attached to a @{Wrapper.Unit#UNIT} with a radius and optional offsets.
 -- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
@@ -1712,7 +1708,7 @@ end
 
 
 --- The ZONE_GROUP class defines by a zone around a @{Wrapper.Group#GROUP} with a radius. The current leader of the group defines the center of the zone.
--- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
 --
 -- @field #ZONE_GROUP
 ZONE_GROUP = {
@@ -1799,7 +1795,7 @@ end
 
 
 --- The ZONE_POLYGON_BASE class defined by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
--- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
 -- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
 --
 -- ## Zone point randomization
@@ -2031,7 +2027,6 @@ function ZONE_POLYGON_BASE:BoundZone( UnBound )
   return self
 end
 
-
 --- Draw the zone on the F10 map.  **NOTE** Currently, only polygons **up to ten points** are supported!
 -- @param #ZONE_POLYGON_BASE self
 -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
@@ -2047,43 +2042,43 @@ function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlph
   if self._.Polygon and #self._.Polygon>=3 then
 
     local coordinate=COORDINATE:NewFromVec2(self._.Polygon[1])
-    
+
     Coalition=Coalition or self:GetDrawCoalition()
-    
+
     -- Set draw coalition.
-    self:SetDrawCoalition(Coalition)  
-  
+    self:SetDrawCoalition(Coalition)
+
     Color=Color or self:GetColorRGB()
     Alpha=Alpha or 1
-    
+
     -- Set color.
     self:SetColor(Color, Alpha)
-    
+
     FillColor=FillColor or self:GetFillColorRGB()
     if not FillColor then UTILS.DeepCopy(Color) end
     FillAlpha=FillAlpha or self:GetFillColorAlpha()
     if not FillAlpha then FillAlpha=0.15 end
-    
+
     -- Set fill color.
     self:SetFillColor(FillColor, FillAlpha)
-  
+
     if #self._.Polygon==4 then
-  
+
       local Coord2=COORDINATE:NewFromVec2(self._.Polygon[2])
       local Coord3=COORDINATE:NewFromVec2(self._.Polygon[3])
       local Coord4=COORDINATE:NewFromVec2(self._.Polygon[4])
-  
+
       self.DrawID=coordinate:QuadToAll(Coord2, Coord3, Coord4, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
-  
+
     else
-  
+
       local Coordinates=self:GetVerticiesCoordinates()
       table.remove(Coordinates, 1)
-  
+
       self.DrawID=coordinate:MarkupToAllFreeForm(Coordinates, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
-  
+
     end
-    
+
   end
 
   return self
@@ -2120,7 +2115,6 @@ function ZONE_POLYGON_BASE:SmokeZone( SmokeColor, Segments )
   return self
 end
 
-
 --- Flare the zone boundaries in a color.
 -- @param #ZONE_POLYGON_BASE self
 -- @param Utilities.Utils#FLARECOLOR FlareColor The flare color.
@@ -2155,9 +2149,6 @@ function ZONE_POLYGON_BASE:FlareZone( FlareColor, Segments, Azimuth, AddHeight )
 
   return self
 end
-
-
-
 
 --- Returns if a location is within the zone.
 -- Source learned and taken from: https://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
@@ -2326,7 +2317,7 @@ function ZONE_POLYGON_BASE:Boundary(Coalition, Color, Radius, Alpha, Segments, C
             for Segment = 0, Segments do
                 local PointX = self._.Polygon[i].x + ( Segment * DeltaX / Segments )
                 local PointY = self._.Polygon[i].y + ( Segment * DeltaY / Segments )
-                ZONE_RADIUS:New( "Zone", {x = PointX, y = PointY}, Radius, true ):DrawZone(Coalition, Color, 1, Color, Alpha, nil, false)
+                --ZONE_RADIUS:New( "Zone", {x = PointX, y = PointY}, Radius ):DrawZone(Coalition, Color, 1, Color, Alpha, nil, true)
             end
         end
         j = i
@@ -2340,7 +2331,7 @@ end
 
 
 --- The ZONE_POLYGON class defined by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
--- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
 --
 -- ## Declare a ZONE_POLYGON directly in the DCS mission editor!
 --
@@ -2452,14 +2443,44 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
   self.ScanData = {}
   self.ScanData.Coalitions = {}
   self.ScanData.Scenery = {}
+  self.ScanData.SceneryTable = {}
   self.ScanData.Units = {}
-
+  
+  local vectors = self:GetBoundingSquare()
+  
+  local minVec3 = {x=vectors.x1, y=0, z=vectors.y1}
+  local maxVec3 = {x=vectors.x2, y=0, z=vectors.y2}
+  
+  local minmarkcoord = COORDINATE:NewFromVec3(minVec3)
+  local maxmarkcoord = COORDINATE:NewFromVec3(maxVec3)
+  local ZoneRadius = minmarkcoord:Get2DDistance(maxmarkcoord)/2
+  
+  local CenterVec3 = self:GetCoordinate():GetVec3()
+  
+ --[[ this a bit shaky in functionality it seems
+  local VolumeBox = {
+   id = world.VolumeType.BOX,
+   params = {
+     min = minVec3,
+     max = maxVec3
+   }
+  }
+  --]]
+  
+  local SphereSearch = {
+  id = world.VolumeType.SPHERE,
+    params = {
+    point = CenterVec3,
+    radius = ZoneRadius,
+    }
+  }
+    
   local function EvaluateZone( ZoneObject )
 
     if ZoneObject then
 
       local ObjectCategory = ZoneObject:getCategory()
-
+      
       if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive() ) or (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
 
         local CoalitionDCSUnit = ZoneObject:getCoalition()
@@ -2494,16 +2515,16 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
         end
       end
       
-      --[[
-      -- no scenery possible at the moment
-      if ObjectCategory == Object.Category.SCENERY then
+      -- trying with box search
+      if ObjectCategory == Object.Category.SCENERY and self:IsVec3InZone(ZoneObject:getPoint()) then
         local SceneryType = ZoneObject:getTypeName()
         local SceneryName = ZoneObject:getName()
         self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
         self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( SceneryName, ZoneObject )
+        table.insert(self.ScanData.SceneryTable,self.ScanData.Scenery[SceneryType][SceneryName])
         self:T( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
       end
-      --]]
+
     end
 
     return true
@@ -2528,6 +2549,18 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
       EvaluateZone(DCS)
     end
   )
+  
+  local searchscenery = false
+  for _,_type in pairs(ObjectCategories) do
+    if _type == Object.Category.SCENERY then
+      searchscenery = true
+    end
+  end
+  
+  if searchscenery then
+    -- Search objects.
+    world.searchObjects({Object.Category.SCENERY}, SphereSearch, EvaluateZone )
+  end
   
 end
 
@@ -2643,22 +2676,41 @@ function ZONE_POLYGON:GetScannedCoalition( Coalition )
   end
 end
 
---- Get scanned scenery type (currently not implemented in ZONE_POLYGON)
+--- Get scanned scenery types
 -- @param #ZONE_POLYGON self
 -- @return #table Table of DCS scenery type objects.
 function ZONE_POLYGON:GetScannedSceneryType( SceneryType )
   return self.ScanData.Scenery[SceneryType]
 end
 
---- Get scanned scenery table (currently not implemented in ZONE_POLYGON)
+--- Get scanned scenery table
 -- @param #ZONE_POLYGON self
--- @return #table Table of DCS scenery objects.
+-- @return #table Table of Wrapper.Scenery#SCENERY scenery objects.
+function ZONE_POLYGON:GetScannedSceneryObjects()
+  return self.ScanData.SceneryTable
+end
+
+--- Get scanned scenery table
+-- @param #ZONE_POLYGON self
+-- @return #table Structured table of [type].[name].Wrapper.Scenery#SCENERY scenery objects.
 function ZONE_POLYGON:GetScannedScenery()
   return self.ScanData.Scenery
 end
 
+--- Get scanned set of scenery objects
+-- @param #ZONE_POLYGON self
+-- @return #table Table of Wrapper.Scenery#SCENERY scenery objects.
+function ZONE_POLYGON:GetScannedSetScenery()
+  local scenery = SET_SCENERY:New()
+  local objects = self:GetScannedSceneryObjects()
+  for _,_obj in pairs (objects) do
+    scenery:AddScenery(_obj)
+  end
+  return scenery
+end
+
 --- Is All in Zone of Coalition?
--- Check if only the specifed coalition is inside the zone and noone else.
+-- Check if only the specified coalition is inside the zone and noone else.
 -- @param #ZONE_POLYGON self
 -- @param #number Coalition Coalition ID of the coalition which is checked to be the only one in the zone.
 -- @return #boolean True, if **only** that coalition is inside the zone and no one else.
@@ -2684,11 +2736,11 @@ function ZONE_POLYGON:IsAllInZoneOfOtherCoalition( Coalition )
 end
 
 --- Is Some in Zone of Coalition?
--- Check if more than one coaltion is inside the zone and the specifed coalition is one of them.
+-- Check if more than one coalition is inside the zone and the specified coalition is one of them.
 -- You first need to use the @{#ZONE_POLYGON.Scan} method to scan the zone before it can be evaluated!
 -- Note that once a zone has been scanned, multiple evaluations can be done on the scan result set.
 -- @param #ZONE_POLYGON self
--- @param #number Coalition ID of the coaliton which is checked to be inside the zone.
+-- @param #number Coalition ID of the coalition which is checked to be inside the zone.
 -- @return #boolean True if more than one coalition is inside the zone and the specified coalition is one of them.
 -- @usage
 --    self.Zone:Scan()
@@ -2933,7 +2985,7 @@ do -- ZONE_AIRBASE
 
 
   --- The ZONE_AIRBASE class defines by a zone around a @{Wrapper.Airbase#AIRBASE} with a radius.
-  -- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+  -- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
   --
   -- @field #ZONE_AIRBASE
   ZONE_AIRBASE = {
@@ -3019,6 +3071,5 @@ do -- ZONE_AIRBASE
 
     return PointVec2
   end
-
 
 end

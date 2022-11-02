@@ -57,15 +57,15 @@
 -- @extends Core.Base#BASE
 
 
---- Allows to spawn dynamically new @{Static}s into your mission.
+--- Allows to spawn dynamically new @{Wrapper.Static}s into your mission.
 -- 
 -- Through creating a copy of an existing static object template as defined in the Mission Editor (ME), SPAWNSTATIC can retireve the properties of the defined static object template (like type, category etc), 
 -- and "copy" these properties to create a new static object and place it at the desired coordinate.
 -- 
--- New spawned @{Static}s get **the same name** as the name of the template Static, or gets the given name when a new name is provided at the Spawn method.  
--- By default, spawned @{Static}s will follow a naming convention at run-time:
+-- New spawned @{Wrapper.Static}s get **the same name** as the name of the template Static, or gets the given name when a new name is provided at the Spawn method.  
+-- By default, spawned @{Wrapper.Static}s will follow a naming convention at run-time:
 -- 
---   * Spawned @{Static}s will have the name _StaticName_#_nnn_, where _StaticName_ is the name of the **Template Static**, and _nnn_ is a **counter from 0 to 99999**.
+--   * Spawned @{Wrapper.Static}s will have the name _StaticName_#_nnn_, where _StaticName_ is the name of the **Template Static**, and _nnn_ is a **counter from 0 to 99999**.
 -- 
 -- # SPAWNSTATIC Constructors
 -- 
@@ -106,7 +106,7 @@
 --   * @{#SPAWNSTATIC.Spawn}(Heading, NewName) spawns the static with the set parameters. Optionally, heading and name can be given. The name **must be unique**!
 --   * @{#SPAWNSTATIC.SpawnFromCoordinate}(Coordinate, Heading, NewName) spawn the static at the given coordinate. Optionally, heading and name can be given. The name **must be unique**!
 --   * @{#SPAWNSTATIC.SpawnFromPointVec2}(PointVec2, Heading, NewName) spawns the static at a POINT_VEC2 coordinate. Optionally, heading and name can be given. The name **must be unique**!
---   * @{#SPAWNSTATIC.SpawnFromZone}(Zone, Heading, NewName) spawns the static at the center of a @{Zone}. Optionally, heading and name can be given. The name **must be unique**!
+--   * @{#SPAWNSTATIC.SpawnFromZone}(Zone, Heading, NewName) spawns the static at the center of a @{Core.Zone}. Optionally, heading and name can be given. The name **must be unique**!
 --  
 -- @field #SPAWNSTATIC SPAWNSTATIC
 -- 
@@ -131,7 +131,7 @@ SPAWNSTATIC = {
 -- @field #number mass Cargo mass in kg.
 -- @field #boolean canCargo Static can be a cargo.
 
---- Creates the main object to spawn a @{Static} defined in the mission editor (ME).
+--- Creates the main object to spawn a @{Wrapper.Static} defined in the mission editor (ME).
 -- @param #SPAWNSTATIC self
 -- @param #string SpawnTemplateName Name of the static object in the ME. Each new static will have the name starting with this prefix.
 -- @param DCS#country.id SpawnCountryID (Optional) The ID of the country.
@@ -158,7 +158,7 @@ function SPAWNSTATIC:NewFromStatic(SpawnTemplateName, SpawnCountryID)
   return self
 end
 
---- Creates the main object to spawn a @{Static} given a template table.
+--- Creates the main object to spawn a @{Wrapper.Static} given a template table.
 -- @param #SPAWNSTATIC self
 -- @param #table SpawnTemplate Template used for spawning.
 -- @param DCS#country.id CountryID The ID of the country. Default `country.id.USA`.
@@ -174,7 +174,7 @@ function SPAWNSTATIC:NewFromTemplate(SpawnTemplate, CountryID)
   return self
 end
 
---- Creates the main object to spawn a @{Static} from a given type.
+--- Creates the main object to spawn a @{Wrapper.Static} from a given type.
 -- NOTE that you have to init many other parameters as spawn coordinate etc.
 -- @param #SPAWNSTATIC self
 -- @param #string StaticType Type of the static.
@@ -336,7 +336,7 @@ function SPAWNSTATIC:Spawn(Heading, NewName)
   
 end
 
---- Creates a new @{Static} from a POINT_VEC2.
+--- Creates a new @{Wrapper.Static} from a POINT_VEC2.
 -- @param #SPAWNSTATIC self
 -- @param Core.Point#POINT_VEC2 PointVec2 The 2D coordinate where to spawn the static.
 -- @param #number Heading The heading of the static, which is a number in degrees from 0 to 360.
@@ -352,7 +352,7 @@ function SPAWNSTATIC:SpawnFromPointVec2(PointVec2, Heading, NewName)
 end
 
 
---- Creates a new @{Static} from a COORDINATE.
+--- Creates a new @{Wrapper.Static} from a COORDINATE.
 -- @param #SPAWNSTATIC self
 -- @param Core.Point#COORDINATE Coordinate The 3D coordinate where to spawn the static.
 -- @param #number Heading (Optional) Heading The heading of the static in degrees. Default is 0 degrees.
@@ -375,7 +375,7 @@ function SPAWNSTATIC:SpawnFromCoordinate(Coordinate, Heading, NewName)
 end
 
 
---- Creates a new @{Static} from a @{Zone}.
+--- Creates a new @{Wrapper.Static} from a @{Core.Zone}.
 -- @param #SPAWNSTATIC self
 -- @param Core.Zone#ZONE_BASE Zone The Zone where to spawn the static.
 -- @param #number Heading (Optional)The heading of the static in degrees. Default is the heading of the template.

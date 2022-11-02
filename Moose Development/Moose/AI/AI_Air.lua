@@ -374,7 +374,7 @@ end
 
 --- When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.
 -- Therefore, with a parameter and a calculation of the distance to the home base, the fuel threshold is calculated.
--- When the fuel threshold is reached, the AI will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI_AIR.
+-- When the fuel threshold is reached, the AI will continue for a given time its patrol task in orbit, while a new AIControllable is targeted to the AI_AIR.
 -- Once the time is finished, the old AI will return to the base.
 -- @param #AI_AIR self
 -- @param #number FuelThresholdPercentage The threshold in percentage (between 0 and 1) when the AIControllable is considered to get out of fuel.
@@ -409,7 +409,7 @@ end
 
 
 
---- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
+--- Defines a new patrol route using the @{AI.AI_Patrol#AI_PATROL_ZONE} parameters and settings.
 -- @param #AI_AIR self
 -- @return #AI_AIR self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
@@ -473,27 +473,27 @@ function AI_AIR:onafterStatus()
 --        self:Home( "Destroy" )
 --      end
 --    end
-    
+
 
     if not self:Is( "Fuel" ) and not self:Is( "Home" ) and not self:is( "Refuelling" )then
-      
+
       local Fuel = self.Controllable:GetFuelMin()
-      
+
       -- If the fuel in the controllable is below the threshold percentage,
       -- then send for refuel in case of a tanker, otherwise RTB.
       if Fuel < self.FuelThresholdPercentage then
-      
+
         if self.TankerName then
           self:I( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... Refuelling at Tanker!" )
           self:Refuel()
         else
           self:I( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... RTB!" )
           local OldAIControllable = self.Controllable
-          
+
           local OrbitTask = OldAIControllable:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
           local TimedOrbitTask = OldAIControllable:TaskControlled( OrbitTask, OldAIControllable:TaskCondition(nil,nil,nil,nil,self.OutOfFuelOrbitTime,nil ) )
           OldAIControllable:SetTask( TimedOrbitTask, 10 )
-    
+
           self:Fuel()
           RTB = true
         end
@@ -504,11 +504,11 @@ function AI_AIR:onafterStatus()
     if self:Is( "Fuel" ) and not self:Is( "Home" ) and not self:is( "Refuelling" ) then
       RTB = true
     end
-    
+
     -- TODO: Check GROUP damage function.
     local Damage = self.Controllable:GetLife()
     local InitialLife = self.Controllable:GetLife0()
-    
+
     -- If the group is damaged, then RTB.
     -- Note that a group can consist of more units, so if one unit is damaged of a group, the mission may continue.
     -- The damaged unit will RTB due to DCS logic, and the others will continue to engage.
@@ -518,7 +518,7 @@ function AI_AIR:onafterStatus()
       RTB = true
       self:SetStatusOff()
     end
-    
+
     -- Check if planes went RTB and are out of control.
     -- We only check if planes are out of control, when they are in duty.
     if self.Controllable:HasTask() == false then
@@ -532,7 +532,7 @@ function AI_AIR:onafterStatus()
             self:Damaged()
           else  
             self:I( self.Controllable:GetName() .. " control lost! " )
-            
+
             self:LostControl()
           end
         else
@@ -550,7 +550,7 @@ function AI_AIR:onafterStatus()
     if not self:Is("Home") then
       self:__Status( 10 )
     end
-    
+
   end
 end
 
@@ -559,11 +559,11 @@ end
 function AI_AIR.RTBRoute( AIGroup, Fsm )
 
   AIGroup:F( { "AI_AIR.RTBRoute:", AIGroup:GetName() } )
-  
+
   if AIGroup:IsAlive() then
     Fsm:RTB()
   end
-  
+
 end
 
 --- @param Wrapper.Group#GROUP AIGroup
@@ -576,7 +576,7 @@ function AI_AIR.RTBHold( AIGroup, Fsm )
     local Task = AIGroup:TaskOrbitCircle( 4000, 400 )
     AIGroup:SetTask( Task )
   end
-  
+
 end
 
 --- Set the min and max factors on RTB speed. Use this, if your planes are heading back to base too fast. Default values are 0.5 and 0.6. 
@@ -598,54 +598,53 @@ end
 function AI_AIR:onafterRTB( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
 
-  
-  if AIGroup and AIGroup:IsAlive() then
+    if AIGroup and AIGroup:IsAlive() then
 
     self:T( "Group " .. AIGroup:GetName() .. " ... RTB! ( " .. self:GetState() .. " )" )
-    
+
     self:ClearTargetDistance()
     --AIGroup:ClearTasks()
-    
+
     AIGroup:OptionProhibitAfterburner(true)
-     
+
     local EngageRoute = {}
 
     --- Calculate the target route point.
-    
+
     local FromCoord = AIGroup:GetCoordinate()
     local ToTargetCoord = self.HomeAirbase:GetCoordinate() -- coordinate is on land height(!)
     local ToTargetVec3 = ToTargetCoord:GetVec3()
     ToTargetVec3.y = ToTargetCoord:GetLandHeight()+3000 -- let's set this 1000m/3000 feet above ground
     local ToTargetCoord2 = COORDINATE:NewFromVec3( ToTargetVec3 )
-     
+
     if not self.RTBMinSpeed or not self.RTBMaxSpeed then    
       local RTBSpeedMax = AIGroup:GetSpeedMax()
       local RTBSpeedMaxFactor = self.RTBSpeedMaxFactor or 0.6
       local RTBSpeedMinFactor = self.RTBSpeedMinFactor or 0.5
       self:SetRTBSpeed( RTBSpeedMax * RTBSpeedMinFactor, RTBSpeedMax * RTBSpeedMaxFactor)  
     end
-    
+
     local RTBSpeed = math.random( self.RTBMinSpeed, self.RTBMaxSpeed )
     --local ToAirbaseAngle = FromCoord:GetAngleDegrees( FromCoord:GetDirectionVec3( ToTargetCoord2 ) )
 
     local Distance = FromCoord:Get2DDistance( ToTargetCoord2 )
-    
+
     --local ToAirbaseCoord = FromCoord:Translate( 5000, ToAirbaseAngle )
     local ToAirbaseCoord = ToTargetCoord2
-		
+
     if Distance < 5000 then
       self:I( "RTB and near the airbase!" )
       self:Home()
       return
     end
-    
+
     if not AIGroup:InAir() == true then
       self:I( "Not anymore in the air, considered Home." )
       self:Home()
       return
     end
-      
-    
+
+
     --- Create a route point of type air.
     local FromRTBRoutePoint = FromCoord:WaypointAir( 
       self.PatrolAltType, 
@@ -666,10 +665,10 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
 
     EngageRoute[#EngageRoute+1] = FromRTBRoutePoint
     EngageRoute[#EngageRoute+1] = ToRTBRoutePoint
-    
+
     local Tasks = {}
     Tasks[#Tasks+1] = AIGroup:TaskFunction( "AI_AIR.RTBRoute", self )
-    
+
     EngageRoute[#EngageRoute].task = AIGroup:TaskCombo( Tasks )
 
     AIGroup:OptionROEHoldFire()
@@ -677,9 +676,9 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
 
     --- NOW ROUTE THE GROUP!
     AIGroup:Route( EngageRoute, self.TaskDelay )
-      
+
   end
-    
+
 end
 
 --- @param #AI_AIR self

@@ -1274,7 +1274,7 @@
 --
 -- ## Example 13: Battlefield Air Interdiction
 --
--- This example show how to couple the WAREHOUSE class with the @{AI.AI_Bai} class.
+-- This example show how to couple the WAREHOUSE class with the @{AI.AI_BAI} class.
 -- Four enemy targets have been located at the famous Kobuleti X. All three available Viggen 2-ship flights are assigned to kill at least one of the BMPs to complete their mission.
 --
 --     -- Start Warehouse at Kobuleti.
@@ -6814,7 +6814,7 @@ function WAREHOUSE:_OnEventBaseCaptured(EventData)
           self:AirbaseRecaptured(NewCoalitionAirbase)
         end
       else
-        -- Captured airbase belongs to this warehouse but was captured by other coaltion.
+        -- Captured airbase belongs to this warehouse but was captured by other coalition.
         if NewCoalitionAirbase ~= self:GetCoalition() then
           self:AirbaseCaptured(NewCoalitionAirbase)
         end
@@ -7007,7 +7007,7 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
 
     -- Request from enemy coalition?
     if self:GetCoalition()~=request.warehouse:GetCoalition() then
-      self:E(self.lid..string.format("ERROR: INVALID request. Requesting warehouse is of wrong coaltion! Own coalition %s != %s of requesting warehouse.", self:GetCoalitionName(), request.warehouse:GetCoalitionName()))
+      self:E(self.lid..string.format("ERROR: INVALID request. Requesting warehouse is of wrong coalition! Own coalition %s != %s of requesting warehouse.", self:GetCoalitionName(), request.warehouse:GetCoalitionName()))
       valid=false
     end
 

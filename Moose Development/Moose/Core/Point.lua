@@ -138,7 +138,7 @@ do -- COORDINATE
   --
   -- Calculate if the coordinate has Line of Sight (LOS) with the other given coordinate.
   -- Mountains, trees and other objects can be positioned between the two 3D points, preventing visibilty in a straight continuous line.
-  -- The method @{#COORDINATE.IsLOS}() returns if the two coodinates have LOS.
+  -- The method @{#COORDINATE.IsLOS}() returns if the two coordinates have LOS.
   --
   -- ## 4.7) Check the coordinate position.
   --
@@ -654,7 +654,7 @@ do -- COORDINATE
   -- @param DCS#Distance Distance The Distance to be added in meters.
   -- @param DCS#Angle Angle The Angle in degrees. Defaults to 0 if not specified (nil).
   -- @param #boolean Keepalt If true, keep altitude of original coordinate. Default is that the new coordinate is created at the translated land height.
-  -- @param #boolean Overwrite If true, overwrite the original COORDINATE with the translated one. Otherwise, create a new COODINATE.
+  -- @param #boolean Overwrite If true, overwrite the original COORDINATE with the translated one. Otherwise, create a new COORDINATE.
   -- @return #COORDINATE The new calculated COORDINATE.
   function COORDINATE:Translate( Distance, Angle, Keepalt, Overwrite )
 
@@ -923,7 +923,7 @@ do -- COORDINATE
     return T-273.15
   end
 
-  --- Returns a text of the temperature according the measurement system @{Settings}.
+  --- Returns a text of the temperature according the measurement system @{Core.Settings}.
   -- The text will reflect the temperature like this:
   --
   --   - For Russian and European aircraft using the metric system - Degrees Celcius (°C)
@@ -936,7 +936,7 @@ do -- COORDINATE
   --
    -- @param #COORDINATE self
   -- @param height (Optional) parameter specifying the height ASL.
-  -- @return #string Temperature according the measurement system @{Settings}.
+  -- @return #string Temperature according the measurement system @{Core.Settings}.
   function COORDINATE:GetTemperatureText( height, Settings )
 
     local DegreesCelcius = self:GetTemperature( height )
@@ -969,7 +969,7 @@ do -- COORDINATE
     return P/100
   end
 
-  --- Returns a text of the pressure according the measurement system @{Settings}.
+  --- Returns a text of the pressure according the measurement system @{Core.Settings}.
   -- The text will contain always the pressure in hPa and:
   --
   --   - For Russian and European aircraft using the metric system - hPa and mmHg
@@ -982,7 +982,7 @@ do -- COORDINATE
   --
   -- @param #COORDINATE self
   -- @param height (Optional) parameter specifying the height ASL. E.g. set height=0 for QNH.
-  -- @return #string Pressure in hPa and mmHg or inHg depending on the measurement system @{Settings}.
+  -- @return #string Pressure in hPa and mmHg or inHg depending on the measurement system @{Core.Settings}.
   function COORDINATE:GetPressureText( height, Settings )
 
     local Pressure_hPa = self:GetPressure( height )
@@ -1062,7 +1062,7 @@ do -- COORDINATE
   end
 
 
-  --- Returns a text documenting the wind direction (from) and strength according the measurement system @{Settings}.
+  --- Returns a text documenting the wind direction (from) and strength according the measurement system @{Core.Settings}.
   -- The text will reflect the wind like this:
   --
   --   - For Russian and European aircraft using the metric system - Wind direction in degrees (°) and wind speed in meters per second (mps).
@@ -1075,7 +1075,7 @@ do -- COORDINATE
   --
   -- @param #COORDINATE self
   -- @param height (Optional) parameter specifying the height ASL. The minimum height will be always be the land height since the wind is zero below the ground.
-  -- @return #string Wind direction and strength according the measurement system @{Settings}.
+  -- @return #string Wind direction and strength according the measurement system @{Core.Settings}.
   function COORDINATE:GetWindText( height, Settings )
 
     local Direction, Strength = self:GetWind( height )
@@ -3323,21 +3323,21 @@ do -- POINT_VEC3
 
   --- Return the x coordinate of the POINT_VEC3.
   -- @param #POINT_VEC3 self
-  -- @return #number The x coodinate.
+  -- @return #number The x coordinate.
   function POINT_VEC3:GetX()
     return self.x
   end
 
   --- Return the y coordinate of the POINT_VEC3.
   -- @param #POINT_VEC3 self
-  -- @return #number The y coodinate.
+  -- @return #number The y coordinate.
   function POINT_VEC3:GetY()
     return self.y
   end
 
   --- Return the z coordinate of the POINT_VEC3.
   -- @param #POINT_VEC3 self
-  -- @return #number The z coodinate.
+  -- @return #number The z coordinate.
   function POINT_VEC3:GetZ()
     return self.z
   end
@@ -3371,7 +3371,7 @@ do -- POINT_VEC3
 
   --- Add to the x coordinate of the POINT_VEC3.
   -- @param #POINT_VEC3 self
-  -- @param #number x The x coordinate value to add to the current x coodinate.
+  -- @param #number x The x coordinate value to add to the current x coordinate.
   -- @return #POINT_VEC3
   function POINT_VEC3:AddX( x )
     self.x = self.x + x
@@ -3380,7 +3380,7 @@ do -- POINT_VEC3
 
   --- Add to the y coordinate of the POINT_VEC3.
   -- @param #POINT_VEC3 self
-  -- @param #number y The y coordinate value to add to the current y coodinate.
+  -- @param #number y The y coordinate value to add to the current y coordinate.
   -- @return #POINT_VEC3
   function POINT_VEC3:AddY( y )
     self.y = self.y + y
@@ -3389,7 +3389,7 @@ do -- POINT_VEC3
 
   --- Add to the z coordinate of the POINT_VEC3.
   -- @param #POINT_VEC3 self
-  -- @param #number z The z coordinate value to add to the current z coodinate.
+  -- @param #number z The z coordinate value to add to the current z coordinate.
   -- @return #POINT_VEC3
   function POINT_VEC3:AddZ( z )
     self.z = self.z +z
@@ -3495,14 +3495,14 @@ do -- POINT_VEC2
 
   --- Return the x coordinate of the POINT_VEC2.
   -- @param #POINT_VEC2 self
-  -- @return #number The x coodinate.
+  -- @return #number The x coordinate.
   function POINT_VEC2:GetX()
     return self.x
   end
 
   --- Return the y coordinate of the POINT_VEC2.
   -- @param #POINT_VEC2 self
-  -- @return #number The y coodinate.
+  -- @return #number The y coordinate.
   function POINT_VEC2:GetY()
     return self.z
   end
@@ -3527,7 +3527,7 @@ do -- POINT_VEC2
 
   --- Return Return the Lat(itude) coordinate of the POINT_VEC2 (ie: (parent)POINT_VEC3.x).
   -- @param #POINT_VEC2 self
-  -- @return #number The x coodinate.
+  -- @return #number The x coordinate.
   function POINT_VEC2:GetLat()
     return self.x
   end
@@ -3543,7 +3543,7 @@ do -- POINT_VEC2
 
   --- Return the Lon(gitude) coordinate of the POINT_VEC2 (ie: (parent)POINT_VEC3.z).
   -- @param #POINT_VEC2 self
-  -- @return #number The y coodinate.
+  -- @return #number The y coordinate.
   function POINT_VEC2:GetLon()
     return self.z
   end

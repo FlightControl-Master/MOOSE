@@ -497,7 +497,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.45", -- #string
+  version = "0.2.46", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -914,7 +914,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.2.41
+-- TODO-List 0.2.42
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
@@ -950,6 +950,7 @@ AWACS.TaskStatus = {
 -- DONE - Anchor Stack Management
 -- DONE - Shift Length AWACS/AI
 -- DONE - (WIP) Reporting
+-- DONE - Do not report non-airborne groups
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -2092,7 +2093,7 @@ function AWACS:_StartSettings(FlightGroup,Mission)
     self:Started()
     
   elseif self.ShiftChangeAwacsRequested and self.AwacsMissionReplacement and self.AwacsMissionReplacement:GetName() == Mission:GetName() then
-    self:I("Setting up Awacs Replacement")
+    self:T("Setting up Awacs Replacement")
     -- manage AWACS Replacement
     AwacsFG:SetDefaultRadio(self.Frequency,self.Modulation,false)
     AwacsFG:SwitchRadio(self.Frequency,self.Modulation)
@@ -2962,7 +2963,7 @@ end
 -- @param Wrapper.Group#GROUP Group Group to use
 -- @return #AWACS self
 function AWACS:_ShowAwacsInfo(Group)
-  self:I(self.lid.."_ShowAwacsInfo")
+  self:T(self.lid.."_ShowAwacsInfo")
   local report = REPORT:New("Info")
   report:Add("====================")
   report:Add(string.format("AWACS %s",self.callsigntxt))
@@ -3738,7 +3739,7 @@ end
 -- @param #AWACS self
 -- @return #AWACS self 
 function AWACS:_DeleteAnchorStackFromMarker(Name,Coord)
-  self:I(self.lid.."_DeleteAnchorStackFromMarker")
+  self:T(self.lid.."_DeleteAnchorStackFromMarker")
   if self.AnchorStacks:HasUniqueID(Name) and self.PlayerStationName == Name then
     local stack = self.AnchorStacks:ReadByID(Name) -- #AWACS.AnchorData
     local marker = stack.AnchorMarker
@@ -3764,7 +3765,7 @@ end
 -- @param #AWACS self
 -- @return #AWACS self 
 function AWACS:_MoveAnchorStackFromMarker(Name,Coord)
-  self:I(self.lid.."_MoveAnchorStackFromMarker")
+  self:T(self.lid.."_MoveAnchorStackFromMarker")
   if self.AnchorStacks:HasUniqueID(Name) and self.PlayerStationName == Name then
     local station = self.AnchorStacks:PullByID(Name) -- #AWACS.AnchorData
     local stationtag = string.format("Station: %s\nCoordinate: %s",Name,Coord:ToStringLLDDM())
@@ -3791,7 +3792,7 @@ end
 -- @param #AWACS self
 -- @return #AWACS self 
 function AWACS:_CreateAnchorStackFromMarker(Name,Coord)
-  self:I(self.lid.."_CreateAnchorStackFromMarker")
+  self:T(self.lid.."_CreateAnchorStackFromMarker")
   local AnchorStackOne = {} -- #AWACS.AnchorData
   AnchorStackOne.AnchorBaseAngels = self.AnchorBaseAngels
   AnchorStackOne.Anchors = FIFO:New() -- Utilities.FiFo#FIFO
@@ -5112,7 +5113,7 @@ function AWACS:_CheckAICAPOnStation()
   self:_ConsistencyCheck()
   
   local capmissions, alert5missions, interceptmissions = self:_CleanUpAIMissionStack()
-  self:I("CAP="..capmissions.." ALERT5="..alert5missions.." Requested="..self.AIRequested)
+  self:T("CAP="..capmissions.." ALERT5="..alert5missions.." Requested="..self.AIRequested)
   
   if self.MaxAIonCAP > 0 then
     
@@ -5147,7 +5148,7 @@ function AWACS:_CheckAICAPOnStation()
         self.AIRequested = self.AIRequested + 1
         local selectedAW = AWS[(((self.AIRequested-1) % availableAWS)+1)]
         selectedAW:AddMission(mission)    
-        self:I("CAP="..capmissions.." ALERT5="..alert5missions.." Requested="..self.AIRequested)
+        self:T("CAP="..capmissions.." ALERT5="..alert5missions.." Requested="..self.AIRequested)
       end
     end
     
@@ -5693,7 +5694,7 @@ function AWACS:onafterStart(From, Event, To)
     local MarkerOps = MARKEROPS_BASE:New("AWACS",{"Station","Delete","Move"})
     
     local function Handler(Keywords,Coord,Text)
-      self:I(Text)
+      self:T(Text)
       for _,_word in pairs (Keywords) do
         if string.lower(_word) == "station" then
           -- get the station name from the text field
@@ -5988,7 +5989,7 @@ end
 -- @param #string To
 -- @return #AWACS self
 function AWACS:onafterStatus(From, Event, To)
-  self:I({From, Event, To})
+  self:T({From, Event, To})
   
   self:_SetClientMenus()
   
@@ -6232,15 +6233,19 @@ function AWACS:onafterNewCluster(From,Event,To,Cluster)
     for _,_contact in pairs (table) do
       local contact = _contact -- Ops.Intelligence#INTEL.Contact
       if contact and contact.group and contact.group:IsAlive() then
-        return contact
+        return contact, contact.group
       end
     end
     return nil
   end
   
-  local Contact = GetFirstAliveContact(ContactTable) -- Ops.Intelligence#INTEL.Contact
+  local Contact, Group = GetFirstAliveContact(ContactTable) -- Ops.Intelligence#INTEL.Contact
   
   if not Contact then return self end
+  
+  if Group and not Group:IsAirborne() then
+    return self
+  end
   
   local targetset = SET_GROUP:New()
   -- SET for TARGET
@@ -6316,7 +6321,7 @@ function AWACS:onafterNewContact(From,Event,To,Contact)
   for _gid,_mgroup in pairs(self.ManagedGrps) do
     local managedgroup = _mgroup -- #AWACS.ManagedGroup
     local group = managedgroup.Group
-    if group and group:IsAlive() then
+    if group and group:IsAlive() and group:IsAirborne() then
        -- contact distance
        local cpos = Contact.position or Contact.group:GetCoordinate() -- Core.Point#COORDINATE
        local mpos = group:GetCoordinate()
@@ -6381,7 +6386,7 @@ function AWACS:onafterCheckRadioQueue(From,Event,To)
   self:T({RadioEntry})
   
   if self.clientset:CountAlive() ==  0 then 
-    self:I(self.lid.."No player connected.")
+    self:T(self.lid.."No player connected.")
     self:__CheckRadioQueue(-5)
     return self 
   end

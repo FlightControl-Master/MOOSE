@@ -1,4 +1,4 @@
---- **Wrapper** -- AIRBASE is a wrapper class to handle the DCS Airbase objects.
+--- **Wrapper** - AIRBASE is a wrapper class to handle the DCS Airbase objects.
 --
 -- ===
 --
@@ -39,7 +39,7 @@
 --
 -- ## AIRBASE reference methods
 --
--- For each DCS Airbase object alive within a running mission, a AIRBASE wrapper object (instance) will be created within the _@{DATABASE} object.
+-- For each DCS Airbase object alive within a running mission, a AIRBASE wrapper object (instance) will be created within the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
 -- This is done at the beginning of the mission (when the mission starts).
 --
 -- The AIRBASE class **does not contain a :New()** method, rather it provides **:Find()** methods to retrieve the object reference
@@ -51,8 +51,8 @@
 --
 -- The AIRBASE class provides the following functions to retrieve quickly the relevant AIRBASE instance:
 --
---  * @{#AIRBASE.Find}(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase object.
---  * @{#AIRBASE.FindByName}(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase name.
+--  * @{#AIRBASE.Find}(): Find a AIRBASE instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Airbase object.
+--  * @{#AIRBASE.FindByName}(): Find a AIRBASE instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Airbase name.
 --
 -- IMPORTANT: ONE SHOULD NEVER SANITIZE these AIRBASE OBJECT REFERENCES! (make the AIRBASE object references nil).
 --

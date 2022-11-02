@@ -1,4 +1,4 @@
---- **AI** -- Models the process of A2G patrolling and engaging ground targets for airplanes and helicopters.
+--- **AI** - Models the process of A2G patrolling and engaging ground targets for airplanes and helicopters.
 --
 -- ===
 -- 
@@ -12,8 +12,7 @@
 --- @type AI_AIR_PATROL
 -- @extends AI.AI_Air#AI_AIR
 
-
---- The AI_AIR_PATROL class implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group} 
+--- The AI_AIR_PATROL class implements the core functions to patrol a @{Core.Zone} by an AI @{Wrapper.Group}
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
 -- 
 -- ![Process](..\Presentations\AI_CAP\Dia3.JPG)
@@ -86,9 +85,9 @@
 -- 
 -- ![Zone](..\Presentations\AI_CAP\Dia12.JPG)
 -- 
--- An optional @{Zone} can be set, 
+-- An optional @{Core.Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_Cap#AI_AIR_PATROL.SetEngageZone}() to define that Zone.
+-- Use the method @{AI.AI_CAP#AI_AIR_PATROL.SetEngageZone}() to define that Zone.
 --  
 -- ===
 -- 
@@ -101,7 +100,7 @@ AI_AIR_PATROL = {
 -- @param #AI_AIR_PATROL self
 -- @param AI.AI_Air#AI_AIR AI_Air The AI_AIR FSM.
 -- @param Wrapper.Group#GROUP AIGroup The AI group.
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude (optional, default = 1000m ) The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude (optional, default = 1500m ) The highest altitude in meters where to execute the patrol.
 -- @param DCS#Speed  PatrolMinSpeed (optional, default = 50% of max speed) The minimum speed of the @{Wrapper.Group} in km/h.
@@ -114,17 +113,17 @@ function AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, Pa
   local self = BASE:Inherit( self, AI_Air ) -- #AI_AIR_PATROL
 
   local SpeedMax = AIGroup:GetSpeedMax()
-  
+
   self.PatrolZone = PatrolZone
-  
+
   self.PatrolFloorAltitude = PatrolFloorAltitude or 1000
   self.PatrolCeilingAltitude = PatrolCeilingAltitude or 1500
   self.PatrolMinSpeed = PatrolMinSpeed or SpeedMax * 0.5
   self.PatrolMaxSpeed = PatrolMaxSpeed or SpeedMax * 0.75
-  
+
   -- defafult PatrolAltType to "RADIO" if not specified
   self.PatrolAltType = PatrolAltType or "RADIO"
-  
+
   self:AddTransition( { "Started", "Airborne", "Refuelling" }, "Patrol", "Patrolling" )
 
   --- OnBefore Transition Handler for Event Patrol.
@@ -135,7 +134,7 @@ function AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, Pa
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
-  
+
   --- OnAfter Transition Handler for Event Patrol.
   -- @function [parent=#AI_AIR_PATROL] OnAfterPatrol
   -- @param #AI_AIR_PATROL self
@@ -143,16 +142,16 @@ function AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, Pa
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-    
+
   --- Synchronous Event Trigger for Event Patrol.
   -- @function [parent=#AI_AIR_PATROL] Patrol
   -- @param #AI_AIR_PATROL self
-  
+
   --- Asynchronous Event Trigger for Event Patrol.
   -- @function [parent=#AI_AIR_PATROL] __Patrol
   -- @param #AI_AIR_PATROL self
   -- @param #number Delay The delay in seconds.
-  
+
   --- OnLeave Transition Handler for State Patrolling.
   -- @function [parent=#AI_AIR_PATROL] OnLeavePatrolling
   -- @param #AI_AIR_PATROL self
@@ -161,7 +160,7 @@ function AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, Pa
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
-  
+
   --- OnEnter Transition Handler for State Patrolling.
   -- @function [parent=#AI_AIR_PATROL] OnEnterPatrolling
   -- @param #AI_AIR_PATROL self
@@ -169,9 +168,9 @@ function AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, Pa
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-  
+
     self:AddTransition( "Patrolling", "PatrolRoute", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_AIR_PATROL.
-  
+
   --- OnBefore Transition Handler for Event PatrolRoute.
   -- @function [parent=#AI_AIR_PATROL] OnBeforePatrolRoute
   -- @param #AI_AIR_PATROL self
@@ -180,7 +179,7 @@ function AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, Pa
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
-  
+
   --- OnAfter Transition Handler for Event PatrolRoute.
   -- @function [parent=#AI_AIR_PATROL] OnAfterPatrolRoute
   -- @param #AI_AIR_PATROL self
@@ -188,22 +187,20 @@ function AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, Pa
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-    
+
   --- Synchronous Event Trigger for Event PatrolRoute.
   -- @function [parent=#AI_AIR_PATROL] PatrolRoute
   -- @param #AI_AIR_PATROL self
-  
+
   --- Asynchronous Event Trigger for Event PatrolRoute.
   -- @function [parent=#AI_AIR_PATROL] __PatrolRoute
   -- @param #AI_AIR_PATROL self
   -- @param #number Delay The delay in seconds.
 
-
   self:AddTransition( "*", "Reset", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_AIR_PATROL.
 
   return self
 end
-
 
 --- Set the Engage Range when the AI will engage with airborne enemies. 
 -- @param #AI_AIR_PATROL self
@@ -230,7 +227,7 @@ end
 -- @param #table CapCoordinates Table of coordinates of first race track point. Second point is determined by leg length and heading. 
 -- @return #AI_AIR_PATROL self
 function AI_AIR_PATROL:SetRaceTrackPattern(LegMin, LegMax, HeadingMin, HeadingMax, DurationMin, DurationMax, CapCoordinates)
-  
+
   self.racetrack=true
   self.racetracklegmin=LegMin or 10000
   self.racetracklegmax=LegMax or 15000
@@ -238,18 +235,16 @@ function AI_AIR_PATROL:SetRaceTrackPattern(LegMin, LegMax, HeadingMin, HeadingMa
   self.racetrackheadingmax=HeadingMax or 180
   self.racetrackdurationmin=DurationMin
   self.racetrackdurationmax=DurationMax
-  
+
   if self.racetrackdurationmax and not self.racetrackdurationmin then
     self.racetrackdurationmin=self.racetrackdurationmax
   end
-  
+
   self.racetrackcapcoordinates=CapCoordinates
-  
+
 end
 
-
-
---- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
+--- Defines a new patrol route using the @{AI.AI_Patrol#AI_PATROL_ZONE} parameters and settings.
 -- @param #AI_AIR_PATROL self
 -- @return #AI_AIR_PATROL self
 -- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
@@ -262,7 +257,7 @@ function AI_AIR_PATROL:onafterPatrol( AIPatrol, From, Event, To )
   self:ClearTargetDistance()
 
   self:__PatrolRoute( self.TaskDelay )
-  
+
   AIPatrol:OnReSpawn(
     function( PatrolGroup )
       self:__Reset( self.TaskDelay )
@@ -271,7 +266,7 @@ function AI_AIR_PATROL:onafterPatrol( AIPatrol, From, Event, To )
   )
 end
 
---- This statis method is called from the route path within the last task at the last waaypoint of the AIPatrol.
+--- This static method is called from the route path within the last task at the last waypoint of the AIPatrol.
 -- Note that this method is required, as triggers the next route when patrolling for the AIPatrol.
 -- @param Wrapper.Group#GROUP AIPatrol The AI group.
 -- @param #AI_AIR_PATROL Fsm The FSM.
@@ -282,10 +277,10 @@ function AI_AIR_PATROL.___PatrolRoute( AIPatrol, Fsm )
   if AIPatrol and AIPatrol:IsAlive() then
     Fsm:PatrolRoute()
   end
-  
+
 end
 
---- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
+--- Defines a new patrol route using the @{AI.AI_Patrol#AI_PATROL_ZONE} parameters and settings.
 -- @param #AI_AIR_PATROL self
 -- @param Wrapper.Group#GROUP AIPatrol The Group managed by the FSM.
 -- @param #string From The From State string.
@@ -300,21 +295,20 @@ function AI_AIR_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
     return
   end
 
-  
   if AIPatrol and  AIPatrol:IsAlive() then
-    
+
     local PatrolRoute = {}
 
     --- Calculate the target route point.
-    
+
     local CurrentCoord = AIPatrol:GetCoordinate()
-    
+
     local altitude= math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude )
-    
+
     local ToTargetCoord = self.PatrolZone:GetRandomPointVec2()
     ToTargetCoord:SetAlt( altitude )
     self:SetTargetDistance( ToTargetCoord ) -- For RTB status check
-    
+
     local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
     local speedkmh=ToTargetSpeed
 
@@ -322,31 +316,31 @@ function AI_AIR_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
     PatrolRoute[#PatrolRoute+1] = FromWP
 
     if self.racetrack then
-      
+
       -- Random heading.
       local heading = math.random(self.racetrackheadingmin, self.racetrackheadingmax)
-      
+
       -- Random leg length.
       local leg=math.random(self.racetracklegmin, self.racetracklegmax)
-      
+
       -- Random duration if any.
       local duration = self.racetrackdurationmin
       if self.racetrackdurationmax then
         duration=math.random(self.racetrackdurationmin, self.racetrackdurationmax)
       end
-      
+
       -- CAP coordinate.
       local c0=self.PatrolZone:GetRandomCoordinate()
       if self.racetrackcapcoordinates and #self.racetrackcapcoordinates>0 then
         c0=self.racetrackcapcoordinates[math.random(#self.racetrackcapcoordinates)]
       end
-      
+
       -- Race track points.
       local c1=c0:SetAltitude(altitude) --Core.Point#COORDINATE
       local c2=c1:Translate(leg, heading):SetAltitude(altitude)
-      
+
       self:SetTargetDistance(c0) -- For RTB status check
-      
+
       -- Debug:
       self:T(string.format("Patrol zone race track: v=%.1f knots, h=%.1f ft, heading=%03d, leg=%d m, t=%s sec", UTILS.KmphToKnots(speedkmh), UTILS.MetersToFeet(altitude), heading, leg, tostring(duration)))
       --c1:MarkToAll("Race track c1")
@@ -354,39 +348,41 @@ function AI_AIR_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
 
       -- Task to orbit.              
       local taskOrbit=AIPatrol:TaskOrbit(c1, altitude, UTILS.KmphToMps(speedkmh), c2)
-      
+
       -- Task function to redo the patrol at other random position.
       local taskPatrol=AIPatrol:TaskFunction("AI_AIR_PATROL.___PatrolRoute", self)
-      
+
       -- Controlled task with task condition.
       local taskCond=AIPatrol:TaskCondition(nil, nil, nil, nil, duration, nil)
       local taskCont=AIPatrol:TaskControlled(taskOrbit, taskCond)
-      
+
       -- Second waypoint
       PatrolRoute[2]=c1:WaypointAirTurningPoint(self.PatrolAltType, speedkmh, {taskCont, taskPatrol}, "CAP Orbit")
 
     else
-    
+
       --- Create a route point of type air.
       local ToWP = ToTargetCoord:WaypointAir(self.PatrolAltType, POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, ToTargetSpeed, true)  
       PatrolRoute[#PatrolRoute+1] = ToWP
-      
+
       local Tasks = {}
       Tasks[#Tasks+1] = AIPatrol:TaskFunction("AI_AIR_PATROL.___PatrolRoute", self)
       PatrolRoute[#PatrolRoute].task = AIPatrol:TaskCombo( Tasks )
-      
+
     end
-    
+
     AIPatrol:OptionROEReturnFire()
     AIPatrol:OptionROTEvadeFire()
-  
+
     AIPatrol:Route( PatrolRoute, self.TaskDelay )
-    
+
   end
 
 end
 
---- @param Wrapper.Group#GROUP AIPatrol
+--- Resumes the AIPatrol
+-- @param Wrapper.Group#GROUP AIPatrol
+-- @param Core.Fsm#FSM Fsm
 function AI_AIR_PATROL.Resume( AIPatrol, Fsm )
 
   AIPatrol:F( { "AI_AIR_PATROL.Resume:", AIPatrol:GetName() } )
@@ -394,5 +390,5 @@ function AI_AIR_PATROL.Resume( AIPatrol, Fsm )
     Fsm:__Reset( Fsm.TaskDelay )
     Fsm:__PatrolRoute( Fsm.TaskDelay )
   end
-  
+
 end

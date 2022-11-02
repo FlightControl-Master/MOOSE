@@ -13,7 +13,7 @@
 -- 
 -- Other Moose classes also have enumerators. For example, the AIRBASE class has enumerators for airbase names.
 -- 
--- @module ENUMS
+-- @module Utilities.Enums
 -- @image MOOSE.JPG
 
 --- [DCS Enum world](https://wiki.hoggitworld.com/view/DCS_enum_world)

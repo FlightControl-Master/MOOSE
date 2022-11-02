@@ -27,17 +27,17 @@
 -- **Supported Carriers:**
 --
 --    * [USS John C. Stennis](https://en.wikipedia.org/wiki/USS_John_C._Stennis) (CVN-74)
---    * [USS Theodore Roosevelt](https://en.wikipedia.org/wiki/USS_Theodore_Roosevelt_(CVN-71)) (CVN-71) [Super Carrier Module]
---    * [USS Abraham Lincoln](https://en.wikipedia.org/wiki/USS_Abraham_Lincoln_(CVN-72)) (CVN-72) [Super Carrier Module]
---    * [USS George Washington](https://en.wikipedia.org/wiki/USS_George_Washington_(CVN-73)) (CVN-73) [Super Carrier Module]
+--    * [USS Theodore Roosevelt](https://en.wikipedia.org/wiki/USS_Theodore_Roosevelt_(CVN-71\)) (CVN-71) [Super Carrier Module]
+--    * [USS Abraham Lincoln](https://en.wikipedia.org/wiki/USS_Abraham_Lincoln_(CVN-72\)) (CVN-72) [Super Carrier Module]
+--    * [USS George Washington](https://en.wikipedia.org/wiki/USS_George_Washington_(CVN-73\)) (CVN-73) [Super Carrier Module]
 --    * [USS Harry S. Truman](https://en.wikipedia.org/wiki/USS_Harry_S._Truman) (CVN-75) [Super Carrier Module]
---    * [USS Forrestal](https://en.wikipedia.org/wiki/USS_Forrestal_(CV-59)) (CV-59) [Heatblur Carrier Module]
---    * [HMS Hermes](https://en.wikipedia.org/wiki/HMS_Hermes_(R12)) (R12) [**WIP**]
---    * [HMS Invincible](https://en.wikipedia.org/wiki/HMS_Invincible_(R05) (R05) [**WIP**]
---    * [USS Tarawa](https://en.wikipedia.org/wiki/USS_Tarawa_(LHA-1)) (LHA-1) [**WIP**]
---    * [USS America](https://en.wikipedia.org/wiki/USS_America_(LHA-6)) (LHA-6) [**WIP**]
+--    * [USS Forrestal](https://en.wikipedia.org/wiki/USS_Forrestal_(CV-59\)) (CV-59) [Heatblur Carrier Module]
+--    * [HMS Hermes](https://en.wikipedia.org/wiki/HMS_Hermes_(R12\)) (R12) [**WIP**]
+--    * [HMS Invincible](https://en.wikipedia.org/wiki/HMS_Invincible_(R05\)) (R05) [**WIP**]
+--    * [USS Tarawa](https://en.wikipedia.org/wiki/USS_Tarawa_(LHA-1\)) (LHA-1) [**WIP**]
+--    * [USS America](https://en.wikipedia.org/wiki/USS_America_(LHA-6\)) (LHA-6) [**WIP**]
 --    * [Juan Carlos I](https://en.wikipedia.org/wiki/Spanish_amphibious_assault_ship_Juan_Carlos_I) (L61) [**WIP**]
---    * [HMAS Canberra](https://en.wikipedia.org/wiki/HMAS_Canberra_(L02)) (L02) [**WIP**]
+--    * [HMAS Canberra](https://en.wikipedia.org/wiki/HMAS_Canberra_(L02\)) (L02) [**WIP**]
 --
 -- **Supported Aircraft:**
 --
@@ -143,7 +143,7 @@
 -- @field Wrapper.Airbase#AIRBASE airbase Carrier airbase object.
 -- @field #table waypoints Waypoint coordinates of carrier.
 -- @field #number currentwp Current waypoint, i.e. the one that has been passed last.
--- @field Core.Radio#BEACON beacon Carrier beacon for TACAN and ICLS.
+-- @field Core.Beacon#BEACON beacon Carrier beacon for TACAN and ICLS.
 -- @field #boolean TACANon Automatic TACAN is activated.
 -- @field #number TACANchannel TACAN channel.
 -- @field #string TACANmode TACAN mode, i.e. "X" or "Y".
@@ -297,7 +297,7 @@
 --
 -- The flight that transitions form the holding pattern to the landing approach, it should leave the Marshal stack at the 3 position and make a left hand turn to the *Initial*
 -- position, which is 3 NM astern of the boat. Note that you need to be below 1300 feet to be registered in the initial zone.
--- The altitude can be set via the function @{AIRBOSS.SetInitialMaxAlt}(*altitude*) function.
+-- The altitude can be set via the function @{#AIRBOSS.SetInitialMaxAlt}(*altitude*) function.
 -- As described below, the initial zone can be smoked or flared via the AIRBOSS F10 Help radio menu.
 --
 -- ### Landing Pattern
@@ -762,7 +762,7 @@
 --
 -- ## Save Results
 --
--- Saving asset data to file is achieved by the @{AIRBOSS.Save}(*path*, *filename*) function.
+-- Saving asset data to file is achieved by the @{#AIRBOSS.Save}(*path*, *filename*) function.
 --
 -- The parameter *path* specifies the path on the file system where the
 -- player grades are saved. If you do not specify a path, the file is saved your the DCS installation root directory if the **lfs** module is *not* desanizied or
@@ -783,7 +783,7 @@
 --
 -- ### Automatic Saving
 --
--- The player grades can be saved automatically after each graded player pass via the @{AIRBOSS.SetAutoSave}(*path*, *filename*) function. Again the parameters *path* and *filename* are optional.
+-- The player grades can be saved automatically after each graded player pass via the @{#AIRBOSS.SetAutoSave}(*path*, *filename*) function. Again the parameters *path* and *filename* are optional.
 -- In the simplest case, you desanitize the **lfs** module and just add
 --
 --     airbossStennis:SetAutoSave()
@@ -821,7 +821,7 @@
 --
 -- ## Load Results
 --
--- Loading player grades from file is achieved by the @{AIRBOSS.Load}(*path*, *filename*) function. The parameter *path* specifies the path on the file system where the
+-- Loading player grades from file is achieved by the @{#AIRBOSS.Load}(*path*, *filename*) function. The parameter *path* specifies the path on the file system where the
 -- data is loaded from. If you do not specify a path, the file is loaded from your the DCS installation root directory or, if **lfs** was desanitized from you "Saved Games\DCS" directory.
 -- The parameter *filename* is optional and defines the name of the file to load. By default this is automatically generated from the AIBOSS carrier name/alias, for example
 -- "Airboss-USS Stennis_LSOgrades.csv".
@@ -1041,7 +1041,7 @@
 --
 -- AI groups that enter the CCA are usually guided to Marshal stack. However, due to DCS limitations they might not obey the landing task if they have another airfield as departure and/or destination in
 -- their mission task. Therefore, AI groups can be respawned when detected in the CCA. This should clear all other airfields and allow the aircraft to land on the carrier.
--- This is achieved by the @{AIRBOSS.SetRespawnAI}() function.
+-- This is achieved by the @{#AIRBOSS.SetRespawnAI}() function.
 --
 -- ## Known Issues
 --
@@ -10203,7 +10203,7 @@ function AIRBOSS:_GetWire( Lcoord, dc )
 
   if self.Debug and false then
 
-    -- Wire position coodinates.
+    -- Wire position coordinates.
     local wp1 = Scoord:Translate( w1, FB )
     local wp2 = Scoord:Translate( w2, FB )
     local wp3 = Scoord:Translate( w3, FB )
@@ -11391,7 +11391,7 @@ end
 --- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
 -- @param #AIRBOSS self
 -- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
--- @param Core.Point#COORDINATE coord (Optional) Coodinate from which heading is calculated. Default is current carrier position.
+-- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
 -- @return #number Carrier heading in degrees.
 function AIRBOSS:GetHeadingIntoWind( magnetic, coord )
 

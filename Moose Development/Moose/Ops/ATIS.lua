@@ -46,7 +46,7 @@
 --
 -- ### Author: **funkyfranky**
 --
--- @module Ops.Atis
+-- @module Ops.ATIS
 -- @image OPS_ATIS.png
 
 --- ATIS class.
@@ -122,7 +122,7 @@
 -- The @{#ATIS.New}(*airbasename*, *frequency*) creates a new ATIS object. The parameter *airbasename* is the name of the airbase or airport. Note that this has to be spelled exactly as in the DCS mission editor.
 -- The parameter *frequency* is the frequency the ATIS broadcasts in MHz.
 --
--- Broadcasting is started via the @{#ATIS.Start}() function. The start can be delayed by useing @{#ATIS.__Start}(*delay*), where *delay* is the delay in seconds.
+-- Broadcasting is started via the @{#ATIS.Start}() function. The start can be delayed by using @{#ATIS.__Start}(*delay*), where *delay* is the delay in seconds.
 --
 -- ## Subtitles
 --
@@ -1047,7 +1047,7 @@ end
 -- Or you make your life simple and just include the sign so you don't have to bother about East/West.
 --
 -- @param #ATIS self
--- @param #number magvar Magnetic variation in degrees. Positive for easterly and negative for westerly variation. Default is magnatic declinaton of the used map, c.f. @{Utilities.UTils#UTILS.GetMagneticDeclination}.
+-- @param #number magvar Magnetic variation in degrees. Positive for easterly and negative for westerly variation. Default is magnatic declinaton of the used map, c.f. @{Utilities.Utils#UTILS.GetMagneticDeclination}.
 -- @return #ATIS self
 function ATIS:SetMagneticDeclination( magvar )
   self.magvar = magvar or UTILS.GetMagneticDeclination()
@@ -1258,16 +1258,16 @@ function ATIS:onafterStart( From, Event, To )
   -- Start radio queue.
   if not self.useSRS then
     self.radioqueue = RADIOQUEUE:New( self.frequency, self.modulation, string.format( "ATIS %s", self.airbasename ) )
-  
+
     -- Send coordinate is airbase coord.
     self.radioqueue:SetSenderCoordinate( self.airbase:GetCoordinate() )
-  
+
     -- Set relay unit if we have one.
     self.radioqueue:SetSenderUnitName( self.relayunitname )
-  
+
     -- Set radio power.
     self.radioqueue:SetRadioPower( self.power )
-  
+
     -- Init numbers.
     self.radioqueue:SetDigit( 0, ATIS.Sound.N0.filename, ATIS.Sound.N0.duration, self.soundpath )
     self.radioqueue:SetDigit( 1, ATIS.Sound.N1.filename, ATIS.Sound.N1.duration, self.soundpath )
@@ -1279,11 +1279,11 @@ function ATIS:onafterStart( From, Event, To )
     self.radioqueue:SetDigit( 7, ATIS.Sound.N7.filename, ATIS.Sound.N7.duration, self.soundpath )
     self.radioqueue:SetDigit( 8, ATIS.Sound.N8.filename, ATIS.Sound.N8.duration, self.soundpath )
     self.radioqueue:SetDigit( 9, ATIS.Sound.N9.filename, ATIS.Sound.N9.duration, self.soundpath )
-  
+
     -- Start radio queue.
     self.radioqueue:Start( 1, 0.1 )
   end
-  
+
   -- Handle airbase capture
   -- Handle events.
   self:HandleEvent( EVENTS.BaseCaptured )
@@ -1397,10 +1397,10 @@ function ATIS:onafterBroadcast( From, Event, To )
     qnh = Q / 100
 
   end
-  
+
   local mBarqnh = qnh
   local mBarqfe = qfe
-  
+
   -- Convert to inHg.
   if self.PmmHg then
     qfe = UTILS.hPa2mmHg( qfe )
