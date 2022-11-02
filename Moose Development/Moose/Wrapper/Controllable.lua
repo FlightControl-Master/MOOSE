@@ -627,8 +627,8 @@ end
 -- For specific beacons like TACAN use the more convenient @{#BEACON} class.
 -- Note that a controllable can only have one beacon activated at a time with the execption of ICLS.
 -- @param #CONTROLLABLE self
--- @param Core.Radio#BEACON.Type Type Beacon type (VOR, DME, TACAN, RSBN, ILS etc).
--- @param Core.Radio#BEACON.System System Beacon system (VOR, DME, TACAN, RSBN, ILS etc).
+-- @param Core.Beacon#BEACON.Type Type Beacon type (VOR, DME, TACAN, RSBN, ILS etc).
+-- @param Core.Beacon#BEACON.System System Beacon system (VOR, DME, TACAN, RSBN, ILS etc).
 -- @param #number Frequency Frequency in Hz the beacon is running on. Use @{#UTILS.TACANToFrequency} to generate a frequency for TACAN beacons.
 -- @param #number UnitID The ID of the unit the beacon is attached to. Useful if more units are in one group.
 -- @param #number Channel Channel the beacon is using. For, e.g. TACAN beacons.

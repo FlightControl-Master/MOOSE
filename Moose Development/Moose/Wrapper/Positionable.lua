@@ -11,7 +11,7 @@
 -- @module Wrapper.Positionable
 -- @image Wrapper_Positionable.JPG
 
---- @type POSITIONABLE.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
+--- @type POSITIONABLE.__ Methods which are not intended for mission designers, but which are used internally by the moose designer :-)
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
 
 --- @type POSITIONABLE
@@ -1366,24 +1366,24 @@ function POSITIONABLE:Message( Message, Duration, Name )
   return nil
 end
 
---- Create a @{Core.Radio#RADIO}, to allow radio transmission for this POSITIONABLE.
+--- Create a @{Sound.Radio#RADIO}, to allow radio transmission for this POSITIONABLE.
 -- Set parameters with the methods provided, then use RADIO:Broadcast() to actually broadcast the message
 -- @param #POSITIONABLE self
--- @return Core.Radio#RADIO Radio
+-- @return Sound.Radio#RADIO Radio
 function POSITIONABLE:GetRadio()
   self:F2( self )
   return RADIO:New( self )
 end
 
---- Create a @{Core.Radio#BEACON}, to allow this POSITIONABLE to broadcast beacon signals
+--- Create a @{Core.Beacon#BEACON}, to allow this POSITIONABLE to broadcast beacon signals.
 -- @param #POSITIONABLE self
--- @return Core.Radio#RADIO Radio
+-- @return Core.Beacon#BEACON Beacon
 function POSITIONABLE:GetBeacon()
   self:F2( self )
   return BEACON:New( self )
 end
 
---- Start Lasing a POSITIONABLE
+--- Start Lasing a POSITIONABLE.
 -- @param #POSITIONABLE self
 -- @param #POSITIONABLE Target The target to lase.
 -- @param #number LaserCode Laser code or random number in [1000, 9999].
@@ -1424,7 +1424,7 @@ function POSITIONABLE:LaseCoordinate( Coordinate, LaserCode, Duration )
   return self.Spot
 end
 
---- Stop Lasing a POSITIONABLE
+--- Stop Lasing a POSITIONABLE.
 -- @param #POSITIONABLE self
 -- @return #POSITIONABLE
 function POSITIONABLE:LaseOff()
@@ -1438,7 +1438,7 @@ function POSITIONABLE:LaseOff()
   return self
 end
 
---- Check if the POSITIONABLE is lasing a target
+--- Check if the POSITIONABLE is lasing a target.
 -- @param #POSITIONABLE self
 -- @return #boolean true if it is lasing a target
 function POSITIONABLE:IsLasing()
