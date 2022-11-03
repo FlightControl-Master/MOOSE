@@ -1202,7 +1202,8 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
       formation=Formation
     end
     
-    env.info(self.lid..string.format("FF Formation %s", formation))
+    -- Debug
+    --env.info(self.lid..string.format("FF Formation %s", formation))
     
     -- Add road waypoint.
     if formation==ENUMS.Formation.Vehicle.OnRoad then
@@ -1754,7 +1755,7 @@ function ARMYGROUP:onafterEngageTarget(From, Event, To, Target, Speed, Formation
   self:SwitchROE(ENUMS.ROE.OpenFire)
 
   -- ID of current waypoint.
-  local uid=self:GetWaypointCurrent().uid
+  local uid=self:GetWaypointCurrentUID()
   
   -- Set formation.
   self.engage.Formation=Formation or ENUMS.Formation.Vehicle.Vee

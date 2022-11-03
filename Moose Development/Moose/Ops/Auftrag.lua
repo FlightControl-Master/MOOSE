@@ -74,6 +74,7 @@
 -- @field #number orbitDeltaR Distance threshold in meters for moving orbit targets.
 --
 -- @field Ops.Target#TARGET engageTarget Target data to engage.
+-- @field #number targetHeading Heading of target in degrees.
 -- 
 -- @field Ops.Operation#OPERATION operation Operation this mission is part of.
 -- 
@@ -1043,7 +1044,7 @@ function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
   end
     
   -- Orbit speed in m/s.
-  mission.orbitSpeed   = UTILS.KnotsToMps(Speed or 350)
+  mission.orbitSpeed   = UTILS.KnotsToMps(UTILS.KnotsToAltKIAS(Speed or 350, UTILS.MetersToFeet(mission.orbitAltitude)))
   
   -- Mission speed in km/h.
   mission.missionSpeed = UTILS.KnotsToKmph(Speed or 350)
@@ -1696,7 +1697,7 @@ end
 -- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
 -- @param #number Speed Orbit speed in knots. Default 250 KIAS.
 -- @param #number Leg Length of race-track in NM. Default 14 NM.
--- @param #number RelHeading Relative heading [0, 360) of race-track pattern in degrees. Default is heading of the carrier.
+-- @param #number RelHeading Relative heading [0, 360) of race-track pattern in degrees wrt heading of the carrier. Default is heading of the carrier.
 -- @param #number OffsetDist Relative distance of the first race-track point wrt to the carrier. Default 6 NM.
 -- @param #number OffsetAngle Relative angle of the first race-track point wrt. to the carrier. Default 180 (behind the boat).
 -- @param #number UpdateDistance Threshold distance in NM before orbit pattern is updated. Default 5 NM.
@@ -5963,10 +5964,8 @@ function AUFTRAG:GetDCSMissionTask()
     if self.orbitVec2 then
     
       -- Heading of the target.
-      local targetheading=self:GetTargetHeading()
-      
-      self.targetHeading=targetheading
-          
+      self.targetHeading=self:GetTargetHeading()
+
       local OffsetVec2=nil --DCS#Vec2
       if (self.orbitOffsetVec2~=nil) then
         OffsetVec2=UTILS.DeepCopy(self.orbitOffsetVec2)
@@ -5977,7 +5976,7 @@ function AUFTRAG:GetDCSMissionTask()
         if self.orbitOffsetVec2.r then
           -- Polar coordinates
           local r=self.orbitOffsetVec2.r
-          local phi=(self.orbitOffsetVec2.phi or 0) + targetheading
+          local phi=(self.orbitOffsetVec2.phi or 0) + self.targetHeading
           
           OffsetVec2.x=r*math.cos(math.rad(phi))
           OffsetVec2.y=r*math.sin(math.rad(phi))
@@ -6005,7 +6004,7 @@ function AUFTRAG:GetDCSMissionTask()
           -- Is heading realtive to target?
           if self.orbitHeadingRel then
             -- Relative heading wrt target.
-            heading=targetheading+self.orbitHeading
+            heading=self.targetHeading+self.orbitHeading
           else
             -- Take given heading.
             heading=self.orbitHeading
@@ -6013,7 +6012,7 @@ function AUFTRAG:GetDCSMissionTask()
           
         else
           -- Not specific heading specified ==> Take heading of target.
-          heading=targetheading or 0        
+          heading=self.targetHeading or 0        
         end
                 
         -- Race-track vector.

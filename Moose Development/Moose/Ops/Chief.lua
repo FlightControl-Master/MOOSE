@@ -762,12 +762,12 @@ function CHIEF:CreateResource(MissionType, Nmin, Nmax, Attributes, Properties)
   return resources, resource
 end
 
---- Add mission type and number of required assets to resource.
+--- Add mission type and number of required assets to resource list.
 -- @param #CHIEF self
--- @param #CHIEF.Resources Resource Resource list.
+-- @param #CHIEF.Resources Resource List of resources.
 -- @param #string MissionType Mission Type.
--- @param #number Nmin Min number of required assets.
--- @param #number Nmax Max number of requried assets.
+-- @param #number Nmin Min number of required assets. Default 1.
+-- @param #number Nmax Max number of requried assets. Default equal `Nmin`.
 -- @param #table Attributes Generalized attribute(s).
 -- @param #table Properties DCS attribute(s). Default `nil`.
 -- @return #CHIEF.Resource Resource table.
@@ -777,7 +777,7 @@ function CHIEF:AddToResource(Resource, MissionType, Nmin, Nmax, Attributes, Prop
   local resource={} --#CHIEF.Resource
   resource.MissionType=MissionType
   resource.Nmin=Nmin or 1
-  resource.Nmax=Nmax or 1
+  resource.Nmax=Nmax or Nmin
   resource.Attributes=UTILS.EnsureTable(Attributes)
   resource.Properties=UTILS.EnsureTable(Properties)
   
@@ -814,7 +814,7 @@ end
 -- @param #table CargoProperties DCS attribute(s) of the cargo assets.
 -- @param #table CargoCategories Group categories of the cargo assets.
 -- @param #number Nmin Min number of required assets. Default 1.
--- @param #number Nmax Max number of requried assets. Default 1.
+-- @param #number Nmax Max number of requried assets. Default is equal to `Nmin`.
 -- @param #table CarrierAttributes Generalized attribute(s) of the carrier assets.
 -- @param #table CarrierProperties DCS attribute(s) of the carrier assets.
 -- @param #table CarrierCategories Group categories of the carrier assets.
@@ -825,7 +825,7 @@ function CHIEF:AddTransportToResource(Resource, CargoAttributes, CargoProperties
   Resource.cargoAttributes=CargoAttributes
   Resource.cargoProperties=CargoProperties
   Resource.carrierNmin=Nmin or 1
-  Resource.carrierNmax=Nmin or 1
+  Resource.carrierNmax=Nmax or Nmin
   Resource.carrierCategories=CarrierCategories
   Resource.carrierAttributes=CarrierAttributes
   Resource.carrierProperties=CarrierProperties
@@ -1275,8 +1275,9 @@ function CHIEF:AddStrategicZone(OpsZone, Priority, Importance, ResourceOccupied,
     stratzone.resourceEmpty=UTILS.DeepCopy(ResourceEmpty)
   else
     local resourceEmpty, resourceInfantry=self:CreateResource(AUFTRAG.Type.ONGUARD, 1, 3, GROUP.Attribute.GROUND_INFANTRY)
-    self:AddToResource(resourceEmpty, AUFTRAG.Type.ONGUARD, 1, 1, GROUP.Attribute.GROUND_TANK)
-    self:AddTransportToResource(resourceInfantry, GROUP.Attribute.GROUND_INFANTRY, nil, nil, 1, 1, {GROUP.Attribute.AIR_TRANSPORTHELO, GROUP.Attribute.GROUND_APC})
+    self:AddToResource(resourceEmpty, AUFTRAG.Type.ONGUARD, 0, 1, GROUP.Attribute.GROUND_TANK)
+    self:AddToResource(resourceEmpty, AUFTRAG.Type.ONGUARD, 0, 1, GROUP.Attribute.GROUND_IFV)
+    self:AddTransportToResource(resourceInfantry, GROUP.Attribute.GROUND_INFANTRY, nil, nil, 0, 1, {GROUP.Attribute.AIR_TRANSPORTHELO, GROUP.Attribute.GROUND_APC})
     stratzone.resourceEmpty=resourceEmpty
   end
 
@@ -2963,7 +2964,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
 
     -- First check if we need a transportation.
     local transport=nil    
-    if Resource.carrierNmin and Resource.carrierNmin>0 then
+    if Resource.carrierNmin and Resource.carrierNmax and Resource.carrierNmax>0 then
     
       -- Filter only those assets that shall be transported.
       local cargoassets=CHIEF._FilterAssets(assets, Resource.cargoCategories, Resource.cargoAttributes, Resource.cargoProperties)
@@ -2972,7 +2973,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
 
         -- Recruit transport carrier assets.
         recruited, transport=LEGION.AssignAssetsForTransport(self.commander, self.commander.legions, cargoassets, 
-        Resource.carrierNmin, Resource.carrierNmin, TargetZone, nil, Resource.carrierCategories, Resource.carrierAttributes)
+        Resource.carrierNmin, Resource.carrierNmax, TargetZone, nil, Resource.carrierCategories, Resource.carrierAttributes)
         
       end
     
