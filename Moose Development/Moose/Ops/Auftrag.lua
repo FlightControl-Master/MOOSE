@@ -59,6 +59,7 @@
 -- @field #number Nelements Number of elements (units) assigned to mission.
 -- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
 -- @field #number Tover Mission abs. time stamp, when mission was over.
+-- @field #boolean updateDCSTask If `true`, DCS task is updated at every status update of the assigned groups.
 -- @field #table conditionStart Condition(s) that have to be true, before the mission will be started.
 -- @field #table conditionSuccess If all conditions are true, the mission is cancelled.
 -- @field #table conditionFailure If all conditions are true, the mission is cancelled.
@@ -68,9 +69,12 @@
 -- @field #number orbitAltitude Orbit altitude in meters.
 -- @field #number orbitHeading Orbit heading in degrees.
 -- @field #number orbitLeg Length of orbit leg in meters.
--- @field Core.Point#COORDINATE orbitRaceTrack Race-track orbit coordinate.
+-- @field DCS#Vec2 orbitOffsetVec2 2D offset vector.
+-- @field DCS#Vec2 orbitVec2 2D orbit vector.
+-- @field #number orbitDeltaR Distance threshold in meters for moving orbit targets.
 --
 -- @field Ops.Target#TARGET engageTarget Target data to engage.
+-- @field #number targetHeading Heading of target in degrees.
 -- 
 -- @field Ops.Operation#OPERATION operation Operation this mission is part of.
 -- 
@@ -624,7 +628,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.9.6"
+AUFTRAG.version="0.9.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -633,7 +637,8 @@ AUFTRAG.version="0.9.6"
 -- TODO: Replace engageRange by missionRange. Here and in other classes. CTRL+H is your friend!
 -- TODO: Mission success options damaged, destroyed.
 -- TODO: F10 marker to create new missions.
--- TODO: Add recovery tanker mission for boat ops.
+-- DONE: Add orbit mission for moving anker points.
+-- DONE: Add recovery tanker mission for boat ops.
 -- DONE: Added auftrag category.
 -- DONE: Missions can be assigned to multiple legions.
 -- DONE: Option to assign a specific payload for the mission (requires an AIRWING).
@@ -1020,7 +1025,7 @@ end
 --- **[AIR]** Create an ORBIT mission, which can be either a circular orbit or a race-track pattern.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
--- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
+-- @param #number Altitude Orbit altitude in feet above sea level. Default is y component of `Coordinate`.
 -- @param #number Speed Orbit speed in knots. Default 350 KIAS.
 -- @param #number Heading Heading of race-track pattern in degrees. If not specified, a circular orbit is performed.
 -- @param #number Leg Length of race-track in NM. If not specified, a circular orbit is performed.
@@ -1028,26 +1033,35 @@ end
 function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ORBIT)
-
-  -- Altitude.
+  
+  -- Target.
+  mission:_TargetFromObject(Coordinate)
+  
+  -- Set Altitude.  
   if Altitude then
     mission.orbitAltitude=UTILS.FeetToMeters(Altitude)
   else
     mission.orbitAltitude=Coordinate.y
   end
-  Coordinate.y=mission.orbitAltitude
-
-  mission:_TargetFromObject(Coordinate)
-
-  mission.orbitSpeed = UTILS.KnotsToMps(Speed or 350) -- the DCS Task itself will shortly be build with this so MPS
+    
+  -- Orbit speed in m/s.
+  mission.orbitSpeed   = UTILS.KnotsToMps(UTILS.KnotsToAltKIAS(Speed or 350, UTILS.MetersToFeet(mission.orbitAltitude)))
+  
+  -- Mission speed in km/h.
   mission.missionSpeed = UTILS.KnotsToKmph(Speed or 350)
-
-  if Heading and Leg then
-    mission.orbitHeading=Heading
+  
+  if Leg then
     mission.orbitLeg=UTILS.NMToMeters(Leg)
-    mission.orbitRaceTrack=Coordinate:Translate(mission.orbitLeg, mission.orbitHeading, true)
-  end
 
+    -- Relative heading
+    if Heading and Heading<0 then
+      mission.orbitHeadingRel=true
+      Heading=-Heading
+    end      
+
+    -- Heading if given.
+    mission.orbitHeading=Heading    
+  end
 
   -- Mission options:
   mission.missionAltitude=mission.orbitAltitude*0.9
@@ -1092,6 +1106,53 @@ function AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
 
   return mission
 end
+
+--- **[AIR]** Create an ORBIT mission, where the aircraft will fly a circular or race-track pattern over a given group or unit.
+-- @param #AUFTRAG self
+-- @param Wrapper.Group#GROUP Group Group where to orbit around. Can also be a UNIT object.
+-- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
+-- @param #number Speed Orbit speed in knots. Default 350 KIAS.
+-- @param #number Leg Length of race-track in NM. Default nil.
+-- @param #number Heading Heading of race-track pattern in degrees. Default is heading of the group.
+-- @param DCS#Vec2 OffsetVec2 Offset 2D-vector {x=0, y=0} in NM with respect to the group. Default directly overhead. Can also be given in polar coordinates `{r=5, phi=45}`.
+-- @param #number Distance Threshold distance in NM before orbit pattern is updated. Default 5 NM.
+-- @return #AUFTRAG self
+function AUFTRAG:NewORBIT_GROUP(Group, Altitude, Speed, Leg, Heading, OffsetVec2, Distance)
+
+  -- Set default altitude.
+  Altitude = Altitude or 6000
+
+  -- Create orbit mission.
+  local mission=AUFTRAG:NewORBIT(Group, Altitude, Speed, Heading, Leg)
+
+  -- DCS tasks needs to be updated from time to time.  
+  mission.updateDCSTask=true
+  
+  -- Convert offset vector to meters.
+  if OffsetVec2 then
+    if OffsetVec2.x then
+      OffsetVec2.x=UTILS.NMToMeters(OffsetVec2.x)
+    end
+    if OffsetVec2.y then
+      OffsetVec2.y=UTILS.NMToMeters(OffsetVec2.y)
+    end
+    if OffsetVec2.r then
+      OffsetVec2.r=UTILS.NMToMeters(OffsetVec2.r)
+    end    
+  end
+  
+  -- Offset vector.
+  mission.orbitOffsetVec2=OffsetVec2
+  
+  -- Pattern update distance.
+  mission.orbitDeltaR=UTILS.NMToMeters(Distance or 5)
+
+  -- Update task with offset etc.
+  mission:GetDCSMissionTask()
+
+  return mission
+end
+
 
 --- **[AIR]** Create a Ground Controlled CAP (GCICAP) mission. Flights with this task are considered for A2A INTERCEPT missions by the CHIEF class. They will perform a compat air patrol but not engage by
 -- themselfs. They wait for the CHIEF to tell them whom to engage.
@@ -1631,24 +1692,44 @@ function AUFTRAG:NewRESCUEHELO(Carrier)
   return mission
 end
 
---- **[AIRPANE]** Create a RECOVERY TANKER mission. **WIP and not working coorectly yet!**
+--- **[AIRPANE]** Create a RECOVERY TANKER mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Unit#UNIT Carrier The carrier unit.
+-- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
+-- @param #number Speed Orbit speed in knots. Default 250 KIAS.
+-- @param #number Leg Length of race-track in NM. Default 14 NM.
+-- @param #number RelHeading Relative heading [0, 360) of race-track pattern in degrees wrt heading of the carrier. Default is heading of the carrier.
+-- @param #number OffsetDist Relative distance of the first race-track point wrt to the carrier. Default 6 NM.
+-- @param #number OffsetAngle Relative angle of the first race-track point wrt. to the carrier. Default 180 (behind the boat).
+-- @param #number UpdateDistance Threshold distance in NM before orbit pattern is updated. Default 5 NM.
 -- @return #AUFTRAG self
-function AUFTRAG:NewRECOVERYTANKER(Carrier)
+function AUFTRAG:NewRECOVERYTANKER(Carrier, Altitude, Speed, Leg, RelHeading, OffsetDist, OffsetAngle, UpdateDistance)
+ 
+   -- Six NM astern.
+  local OffsetVec2={r=OffsetDist or 6, phi=OffsetAngle or 180}
+  
+  -- Default leg.
+  Leg=Leg or 14
+  
+  -- Default Speed.
+  Speed=Speed or 250
+  
+  local Heading=nil
+  if RelHeading then  
+    Heading=-math.abs(RelHeading)
+  end  
+ 
+  -- Create orbit mission. 
+  local mission=AUFTRAG:NewORBIT_GROUP(Carrier, Altitude, Speed, Leg, Heading, OffsetVec2, UpdateDistance)
 
-  local mission=AUFTRAG:New(AUFTRAG.Type.RECOVERYTANKER)
-
-  mission:_TargetFromObject(Carrier)
+  -- Set the type.  
+  mission.type=AUFTRAG.Type.RECOVERYTANKER
 
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.REFUELING
-  mission.missionFraction=0.5
+  mission.missionFraction=0.9
   mission.optionROE=ENUMS.ROE.WeaponHold
   mission.optionROT=ENUMS.ROT.NoReaction
-  
-  mission.missionAltitude=UTILS.FeetToMeters(6000)
-  mission.missionSpeed=UTILS.KnotsToKmph(274)
 
   mission.categories={AUFTRAG.Category.AIRPLANE}
 
@@ -4974,6 +5055,17 @@ function AUFTRAG:GetTargetCoordinate()
   return nil
 end
 
+--- Get heading of target.
+-- @param #AUFTRAG self
+-- @return #number Heading of target in degrees.
+function AUFTRAG:GetTargetHeading()
+  if self.engageTarget then
+    local heading=self.engageTarget:GetHeading()
+    return heading
+  end
+  return nil
+end
+
 --- Get name of the target.
 -- @param #AUFTRAG self
 -- @return #string Name of the target or "N/A".
@@ -5239,6 +5331,17 @@ function AUFTRAG:_SetLogID()
   return self
 end
 
+
+--- Update DCS task.
+-- @param #AUFTRAG self
+-- @return #AUFTRAG self
+function AUFTRAG:_UpdateTask()
+
+  
+
+  return self
+end
+
 --- Update mission F10 map marker.
 -- @param #AUFTRAG self
 -- @return #AUFTRAG self
@@ -5411,48 +5514,7 @@ function AUFTRAG:GetDCSMissionTask()
     DCStask.params=param
 
     table.insert(DCStasks, DCStask)
- 
-  elseif self.type==AUFTRAG.Type.RECOVERYTANKER then   
-
-    ----------------------------
-    -- RECOVERYTANKER Mission --
-    ----------------------------
-    
-    -- Get the carrier unit.
-    local Carrier=self:GetObjective() --Wrapper.Unit#UNIT
-    
-    -- Carrier coordinate.
-    local Coord=Carrier:GetCoordinate()
-    
-    -- Get current heading of carrier.
-    local hdg=Carrier:GetHeading()
-
-    -- Altitude    
-    local Altitude=self.missionAltitude
-    
-    -- Race-track distances.
-    local distStern=UTILS.NMToMeters(4)
-    local distBow=UTILS.NMToMeters(10)
-    
-    -- Racetrack pattern points.
-    local p1=Coord:Translate(distStern, hdg):SetAltitude(self.missionAltitude)
-    local p2=Coord:Translate(distBow, hdg):SetAltitude(self.missionAltitude)
-    
-    p1:MarkToAll("p1")
-    p2:MarkToAll("p2")
-
-    -- Set speed in m/s.
-    local Speed=UTILS.KmphToMps(self.missionSpeed)
-
-    -- Orbit task.
-    local DCStask=CONTROLLABLE.TaskOrbit(nil, p1, Altitude, Speed, p2)
-    
-    -- Set carrier as parameter.
-    DCStask.params.carrier=Carrier
-
-    -- Add to DCS tasks.
-    table.insert(DCStasks, DCStask)    
-    
+     
   elseif self.type==AUFTRAG.Type.INTERCEPT then
 
     -----------------------
@@ -5522,7 +5584,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     table.insert(DCStasks, DCStask)
 
-  elseif self.type==AUFTRAG.Type.TANKER then
+  elseif self.type==AUFTRAG.Type.TANKER or self.type==AUFTRAG.Type.RECOVERYTANKER then
 
     --------------------
     -- TANKER Mission --
@@ -5890,17 +5952,91 @@ function AUFTRAG:GetDCSMissionTask()
      self.type==AUFTRAG.Type.CAS    or
      self.type==AUFTRAG.Type.GCICAP or
      self.type==AUFTRAG.Type.AWACS  or
-     self.type==AUFTRAG.Type.TANKER then
+     self.type==AUFTRAG.Type.TANKER or
+     self.type==AUFTRAG.Type.RECOVERYTANKER then
 
     -------------------
     -- ORBIT Mission --
     -------------------
 
-    local Coordinate=self:GetTargetCoordinate()
+    -- Get/update orbit vector.
+    self.orbitVec2=self:GetTargetVec2()
+    
+    if self.orbitVec2 then
+    
+      -- Heading of the target.
+      self.targetHeading=self:GetTargetHeading()
 
-    local DCStask=CONTROLLABLE.TaskOrbit(nil, Coordinate, self.orbitAltitude, self.orbitSpeed, self.orbitRaceTrack)
-
-    table.insert(DCStasks, DCStask)
+      local OffsetVec2=nil --DCS#Vec2
+      if (self.orbitOffsetVec2~=nil) then
+        OffsetVec2=UTILS.DeepCopy(self.orbitOffsetVec2)
+      end
+      
+      if OffsetVec2 then
+        
+        if self.orbitOffsetVec2.r then
+          -- Polar coordinates
+          local r=self.orbitOffsetVec2.r
+          local phi=(self.orbitOffsetVec2.phi or 0) + self.targetHeading
+          
+          OffsetVec2.x=r*math.cos(math.rad(phi))
+          OffsetVec2.y=r*math.sin(math.rad(phi))
+        else
+          -- Cartesian coordinates
+          OffsetVec2.x=self.orbitOffsetVec2.x
+          OffsetVec2.y=self.orbitOffsetVec2.y
+        end
+        
+      end
+      
+      -- Actual orbit position with possible offset.
+      local orbitVec2=OffsetVec2 and UTILS.Vec2Add(self.orbitVec2, OffsetVec2) or self.orbitVec2      
+      
+      -- Check for race-track pattern.
+      local orbitRaceTrack=nil --DCS#Vec2
+      if self.orbitLeg then
+      
+        -- Default heading is due North. 
+        local heading=0
+        
+        -- Check if specific heading was specified.
+        if self.orbitHeading then
+        
+          -- Is heading realtive to target?
+          if self.orbitHeadingRel then
+            -- Relative heading wrt target.
+            heading=self.targetHeading+self.orbitHeading
+          else
+            -- Take given heading.
+            heading=self.orbitHeading
+          end
+          
+        else
+          -- Not specific heading specified ==> Take heading of target.
+          heading=self.targetHeading or 0        
+        end
+                
+        -- Race-track vector.
+        orbitRaceTrack=UTILS.Vec2Translate(orbitVec2, self.orbitLeg, heading)
+      end      
+            
+      -- Debug
+      --UTILS.RemoveMark(self.orbitCenterMarkID)
+      --self.orbitCenterMarkID=COORDINATE:NewFromVec2(orbitVec2):MarkToAll("Orbit Center")
+      
+      -- Debug show arrow.
+      --if orbitRaceTrack then
+        --UTILS.RemoveMark(self.orbitArrowMarkID)
+        --self.orbitArrowMarkID=COORDINATE:NewFromVec2(orbitVec2):ArrowToAll(COORDINATE:NewFromVec2(orbitRaceTrack))
+      --end      
+      
+      -- Create orbit task.
+      local DCStask=CONTROLLABLE.TaskOrbit(nil, orbitVec2, self.orbitAltitude, self.orbitSpeed, orbitRaceTrack)
+  
+      -- Add DCS task.
+      table.insert(DCStasks, DCStask)
+      
+    end
 
   end
 
@@ -6086,6 +6222,8 @@ function AUFTRAG.CheckMissionCapabilityAll(MissionTypes, Capabilities)
 
   return res
 end
+
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -50,6 +50,10 @@
 -- @field #number NcarrierDead Total number of dead carrier groups
 -- @field #number NcargoDead Totalnumber of dead cargo groups.
 -- 
+-- @field #string formationArmy Default formation for ground vehicles.
+-- @field #string formationHelo Default formation for helicopters.
+-- @field #string formationPlane Default formation for airplanes.
+-- 
 -- @field Ops.Auftrag#AUFTRAG mission The mission attached to this transport.
 -- @field #table assets Warehouse assets assigned for this transport.
 -- @field #table legions Assigned legions.
@@ -191,7 +195,7 @@ _OPSTRANSPORTID=0
 
 --- Army Group version.
 -- @field #string version
-OPSTRANSPORT.version="0.6.0"
+OPSTRANSPORT.version="0.6.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -234,6 +238,10 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   self:SetPriority()
   self:SetTime()
   self:SetRequiredCarriers()
+  
+  self.formationArmy=ENUMS.Formation.Vehicle.OnRoad
+  self.formationHelo=ENUMS.Formation.RotaryWing.Wedge
+  self.formationPlane=ENUMS.Formation.FixedWing.Wedge
   
   -- Init arrays and counters.
   self.carriers={}  
@@ -811,14 +819,42 @@ end
 
 --- Get pickup formation.
 -- @param #OPSTRANSPORT self
+-- @param Ops.OpsGroup#OPSGROUP OpsGroup
+-- @return #string Formation.
+function OPSTRANSPORT:_GetFormationDefault(OpsGroup)
+
+  if OpsGroup.isArmygroup then
+  
+    return self.formationArmy
+    
+  elseif OpsGroup.isFlightgroup then
+  
+    if OpsGroup.isHelo then
+      return self.formationHelo
+    else
+      return self.formationPlane
+    end
+  
+  else
+    return ENUMS.Formation.Vehicle.OffRoad
+  end
+  
+  return nil
+end
+
+--- Get pickup formation.
+-- @param #OPSTRANSPORT self
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+-- @param Ops.OpsGroup#OPSGROUP OpsGroup
 -- @return #number Formation.
-function OPSTRANSPORT:_GetFormationPickup(TransportZoneCombo)
+function OPSTRANSPORT:_GetFormationPickup(TransportZoneCombo, OpsGroup)
 
   -- Use default TZC if no transport zone combo is provided.
   TransportZoneCombo=TransportZoneCombo or self.tzcDefault
+  
+  local formation=TransportZoneCombo.PickupFormation or self:_GetFormationDefault(OpsGroup)
 
-  return TransportZoneCombo.PickupFormation
+  return formation
 end
 
 --- Set transport formation.
@@ -839,13 +875,16 @@ end
 --- Get transport formation.
 -- @param #OPSTRANSPORT self
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+-- @param Ops.OpsGroup#OPSGROUP OpsGroup
 -- @return #number Formation.
-function OPSTRANSPORT:_GetFormationTransport(TransportZoneCombo)
+function OPSTRANSPORT:_GetFormationTransport(TransportZoneCombo, OpsGroup)
 
   -- Use default TZC if no transport zone combo is provided.
   TransportZoneCombo=TransportZoneCombo or self.tzcDefault
+  
+  local formation=TransportZoneCombo.TransportFormation or self:_GetFormationDefault(OpsGroup)
 
-  return TransportZoneCombo.TransportFormation
+  return formation
 end
 
 

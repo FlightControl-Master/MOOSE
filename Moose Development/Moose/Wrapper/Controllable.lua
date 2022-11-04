@@ -1259,7 +1259,7 @@ end
 
 --- (AIR) Orbit at a position with at a given altitude and speed. Optionally, a race track pattern can be specified.
 -- @param #CONTROLLABLE self
--- @param Core.Point#COORDINATE Coord Coordinate at which the CONTROLLABLE orbits.
+-- @param Core.Point#COORDINATE Coord Coordinate at which the CONTROLLABLE orbits. Can also be given as a `DCS#Vec3` or `DCS#Vec2` object.
 -- @param #number Altitude Altitude in meters of the orbit pattern. Default y component of Coord.
 -- @param #number Speed Speed [m/s] flying the orbit pattern. Default 128 m/s = 250 knots.
 -- @param Core.Point#COORDINATE CoordRaceTrack (Optional) If this coordinate is specified, the CONTROLLABLE will fly a race-track pattern using this and the initial coordinate.
@@ -1268,11 +1268,11 @@ function CONTROLLABLE:TaskOrbit( Coord, Altitude, Speed, CoordRaceTrack )
 
   local Pattern = AI.Task.OrbitPattern.CIRCLE
 
-  local P1 = Coord:GetVec2()
+  local P1 = {x=Coord.x, y=Coord.z or Coord.y}
   local P2 = nil
   if CoordRaceTrack then
     Pattern = AI.Task.OrbitPattern.RACE_TRACK
-    P2 = CoordRaceTrack:GetVec2()
+    P2 = {x=CoordRaceTrack.x, y=CoordRaceTrack.z or CoordRaceTrack.y}
   end
 
   local Task = {
