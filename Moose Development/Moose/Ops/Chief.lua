@@ -328,7 +328,7 @@ CHIEF.Strategy = {
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.5.0"
+CHIEF.version="0.5.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1613,6 +1613,7 @@ end
 -- @param #CHIEF self
 -- @return #CHIEF self
 function CHIEF:AllowGroundTransport()
+  env.warning("WARNING: CHIEF:AllowGroundTransport() is depricated and will be removed in the future!")
   self.TransportCategories = {Group.Category.GROUND, Group.Category.HELICOPTER}
   return self
 end
@@ -1621,6 +1622,7 @@ end
 -- @param #CHIEF self
 -- @return #CHIEF self
 function CHIEF:ForbidGroundTransport()
+  env.warning("WARNING: CHIEF:ForbidGroundTransport() is depricated and will be removed in the future!")
   self.TransportCategories = {Group.Category.HELICOPTER}
   return self
 end

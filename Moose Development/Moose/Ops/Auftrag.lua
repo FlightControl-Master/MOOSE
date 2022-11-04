@@ -628,7 +628,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.9.6"
+AUFTRAG.version="0.9.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -637,7 +637,8 @@ AUFTRAG.version="0.9.6"
 -- TODO: Replace engageRange by missionRange. Here and in other classes. CTRL+H is your friend!
 -- TODO: Mission success options damaged, destroyed.
 -- TODO: F10 marker to create new missions.
--- TODO: Add recovery tanker mission for boat ops.
+-- DONE: Add orbit mission for moving anker points.
+-- DONE: Add recovery tanker mission for boat ops.
 -- DONE: Added auftrag category.
 -- DONE: Missions can be assigned to multiple legions.
 -- DONE: Option to assign a specific payload for the mission (requires an AIRWING).
