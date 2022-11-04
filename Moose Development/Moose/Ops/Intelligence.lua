@@ -159,13 +159,13 @@ INTEL.Ctype={
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.3.3"
+INTEL.version="0.3.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Make forget times user inpupt. Currently these are hard coded.
+-- TODO: Make forget times user input. Currently these are hard coded.
 -- TODO: Add min cluster size. Only create new clusters if they have a certain group size.
 -- TODO: process detected set asynchroniously for better performance.
 -- DONE: Add statics.
@@ -1686,8 +1686,8 @@ function INTEL:CalcClusterDirection(cluster)
   -- Second group is going East, i.e. heading 270
   -- Total is 360/2=180, i.e. South!
   -- It should not go anywhere as the two movements cancel each other.
-  -- Correct, edge case for N=2^x, but when 2 pairs of groups drive in exact opposite directions, the cluster will split at some point?
-  -- maybe add the speed as weight to get a weighted factor
+  -- Apple - Correct, edge case for N=2^x, but when 2 pairs of groups drive in exact opposite directions, the cluster will split at some point?
+  -- maybe add the speed as weight to get a weighted factor:
 
   if n==0 then
     return 0
@@ -2152,6 +2152,27 @@ function INTEL:UpdateClusterMarker(cluster)
   end
 
   return self
+end
+
+--- Get the contact with the highest threat level from the cluster.
+-- @param #INTEL self
+-- @param #INTEL.Cluster Cluster The cluster.
+-- @return #INTEL.Contact the contact or nil if none
+function INTEL:GetHighestThreatContact(Cluster)
+  local threatlevel=-1
+  local rcontact = nil
+  
+  for _,_contact in pairs(Cluster.Contacts) do
+
+    local contact=_contact --Ops.Intelligence#INTEL.Contact
+
+    if contact.threatlevel>threatlevel then
+      threatlevel=contact.threatlevel
+      rcontact = contact
+    end
+
+  end
+  return rcontact
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
