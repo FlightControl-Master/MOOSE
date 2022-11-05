@@ -740,7 +740,9 @@ function UTILS.RemoveMark(MarkID, Delay)
   if Delay and Delay>0 then
     TIMER:New(UTILS.RemoveMark, MarkID):Start(Delay)
   else
-    trigger.action.removeMark(MarkID)
+    if MarkID then
+      trigger.action.removeMark(MarkID)
+    end
   end
 end
 
@@ -1062,9 +1064,13 @@ end
 -- @return #number Distance between the vectors.
 function UTILS.VecDist2D(a, b)
 
+  local d = math.huge
+  
+  if (not a) or (not b) then return d end
+
   local c={x=b.x-a.x, y=b.y-a.y}
 
-  local d=math.sqrt(c.x*c.x+c.y*c.y)
+  d=math.sqrt(c.x*c.x+c.y*c.y)
 
   return d
 end
@@ -1075,10 +1081,15 @@ end
 -- @param DCS#Vec3 b Vector in 3D with x, y, z components.
 -- @return #number Distance between the vectors.
 function UTILS.VecDist3D(a, b)
-
+  
+    
+  local d = math.huge
+  
+  if (not a) or (not b) then return d end
+  
   local c={x=b.x-a.x, y=b.y-a.y, z=b.z-a.z}
 
-  local d=math.sqrt(UTILS.VecDot(c, c))
+  d=math.sqrt(UTILS.VecDot(c, c))
 
   return d
 end
@@ -2004,6 +2015,22 @@ function UTILS.GenerateLaserCodes()
         _count = _count + 1
     end
     return jtacGeneratedLaserCodes
+end
+
+--- Ensure the passed object is a table. 
+-- @param #table Object The object that should be a table.
+-- @return #table The object that is a table. Note that if the Object is `#nil` initially, and empty table `{}` is returned.
+function UTILS.EnsureTable(Object)
+
+  if Object then
+    if type(Object)~="table" then
+      Object={Object}
+    end
+  else
+    Object={}
+  end
+
+  return Object
 end
 
 --- Function to save an object to a file
