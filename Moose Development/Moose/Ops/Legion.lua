@@ -2640,9 +2640,12 @@ end
 -- @param #number NcarriersMax Max number of carrier assets.
 -- @param Core.Zone#ZONE DeployZone Deploy zone.
 -- @param Core.Zone#ZONE DisembarkZone (Optional) Disembark zone. 
+-- @param #table Categories Group categories.
+-- @param #table Attributes Generalizes group attributes.
+-- @param #table Properties DCS attributes.
 -- @return #boolean If `true`, enough assets could be recruited and an OPSTRANSPORT object was created.
 -- @return Ops.OpsTransport#OPSTRANSPORT Transport The transport.
-function LEGION:AssignAssetsForTransport(Legions, CargoAssets, NcarriersMin, NcarriersMax, DeployZone, DisembarkZone, Categories, Attributes)
+function LEGION:AssignAssetsForTransport(Legions, CargoAssets, NcarriersMin, NcarriersMax, DeployZone, DisembarkZone, Categories, Attributes, Properties)
 
   -- Is an escort requested in the first place?
   if NcarriersMin and NcarriersMax and (NcarriersMin>0 or NcarriersMax>0) then
@@ -2682,7 +2685,7 @@ function LEGION:AssignAssetsForTransport(Legions, CargoAssets, NcarriersMin, Nca
     
     -- Recruit assets and legions.
     local TransportAvail, CarrierAssets, CarrierLegions=
-    LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, NcarriersMin, NcarriersMax, TargetVec2, nil, nil, nil, CargoWeight, TotalWeight, Categories, Attributes)
+    LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, NcarriersMin, NcarriersMax, TargetVec2, nil, nil, nil, CargoWeight, TotalWeight, Categories, Attributes, Properties)
   
     if TransportAvail then
       

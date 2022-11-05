@@ -188,7 +188,7 @@
 --     --- Create a resource list of mission types and required assets for the case that the zone is OCCUPIED.
 --     --
 --     -- Here, we create an enhanced CAS mission and employ at least on and at most two asset groups.
---     local ResourceOccupied=myChief:CreateResource(AUFTRAG.Type.CASENHANCED, 1, 2)
+--     local ResourceOccupied, resourceCAS=myChief:CreateResource(AUFTRAG.Type.CASENHANCED, 1, 2)
 --     -- We also add ARTY missions with at least one and at most two assets. We additionally require these to be MLRS groups (and not howitzers).
 --     myChief:AddToResource(ResourceOccupied, AUFTRAG.Type.ARTY, 1, 2, nil, "MLRS")
 --     -- Add at least one RECON mission that uses UAV type assets.
@@ -199,11 +199,14 @@
 --     --- Create a resource list of mission types and required assets for the case that the zone is EMPTY.
 --     --
 --     -- Here, we create an ONGUARD mission and employ at least on and at most five infantry assets.
---     local ResourceEmpty=myChief:CreateResource(AUFTRAG.Type.ONGUARD, 1, 5, GROUP.Attribute.GROUND_INFANTRY)
+--     local ResourceEmpty, resourceInf=myChief:CreateResource(AUFTRAG.Type.ONGUARD, 1, 5, GROUP.Attribute.GROUND_INFANTRY)
 --     -- Additionally, we send up to three tank groups.
 --     myChief:AddToResource(ResourceEmpty, AUFTRAG.Type.ONGUARD, 1, 3, GROUP.Attribute.GROUND_TANK)
 --     -- Finally, we send two groups that patrol the zone.
 --     myChief:AddToResource(ResourceEmpty, AUFTRAG.Type.PATROLZONE, 2)
+--     
+--     -- Add a transport to the infantry resource. We want at least one and up to two transport helicopters.
+--     myChief:AddTransportToResource(resourceInf, 1, 2, GROUP.Attribute.AIR_TRANSPORTHELO)
 --     
 --     -- Add stratetic zone with customized reaction.
 --     myChief:AddStrategicZone(myOpsZone, nil , 2, ResourceOccupied, ResourceEmpty)
@@ -315,12 +318,10 @@ CHIEF.Strategy = {
 -- @field #number Nmax Max number of assets.
 -- @field #table Attributes Generalized attribute, e.g. `{GROUP.Attribute.GROUND_INFANTRY}`.
 -- @field #table Properties Properties ([DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)), e.g. `"Attack helicopters"` or `"Mobile AAA"`.
+-- @field #table Categories Categories Group categories.
 -- @field Ops.Auftrag#AUFTRAG mission Attached mission.
 -- @field #number carrierNmin Min number of assets.
 -- @field #number carrierNmax Max number of assets.
--- @field #table cargoCategories Group categories.
--- @field #table cargoAttributes Generalized attribute, e.g. `{GROUP.Attribute.GROUND_INFANTRY}`.
--- @field #table cargoProperties Properties ([DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)), e.g. `"Attack helicopters"` or `"Mobile AAA"`. 
 -- @field #table carrierCategories Group categories.
 -- @field #table carrierAttributes Generalized attribute, e.g. `{GROUP.Attribute.GROUND_INFANTRY}`.
 -- @field #table carrierProperties Properties ([DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)), e.g. `"Attack helicopters"` or `"Mobile AAA"`.
@@ -328,12 +329,13 @@ CHIEF.Strategy = {
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.5.1"
+CHIEF.version="0.5.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Event when asset groups die.
 -- TODO: PLAYERTASK integration.
 -- DONE: Let user specify amount of resources.
 -- DONE: Tactical overview.
@@ -751,13 +753,14 @@ end
 -- @param #number Nmax Max number of requried assets. Default 1.
 -- @param #table Attributes Generalized attribute(s). Default `nil`.
 -- @param #table Properties DCS attribute(s). Default `nil`.
+-- @param #table Categories Group categories.
 -- @return #CHIEF.Resources The newly created resource list table.
 -- @return #CHIEF.Resource The resource object that was added.
-function CHIEF:CreateResource(MissionType, Nmin, Nmax, Attributes, Properties)
+function CHIEF:CreateResource(MissionType, Nmin, Nmax, Attributes, Properties, Categories)
 
   local resources={}
   
-  local resource=self:AddToResource(resources, MissionType, Nmin, Nmax, Attributes, Properties)
+  local resource=self:AddToResource(resources, MissionType, Nmin, Nmax, Attributes, Properties, Categories)
     
   return resources, resource
 end
@@ -770,21 +773,20 @@ end
 -- @param #number Nmax Max number of requried assets. Default equal `Nmin`.
 -- @param #table Attributes Generalized attribute(s).
 -- @param #table Properties DCS attribute(s). Default `nil`.
+-- @param #table Categories Group categories.
 -- @return #CHIEF.Resource Resource table.
-function CHIEF:AddToResource(Resource, MissionType, Nmin, Nmax, Attributes, Properties)
+function CHIEF:AddToResource(Resource, MissionType, Nmin, Nmax, Attributes, Properties, Categories)
     
   -- Create new resource table.
   local resource={} --#CHIEF.Resource
   resource.MissionType=MissionType
   resource.Nmin=Nmin or 1
   resource.Nmax=Nmax or Nmin
-  resource.Attributes=UTILS.EnsureTable(Attributes)
-  resource.Properties=UTILS.EnsureTable(Properties)
+  resource.Attributes=UTILS.EnsureTable(Attributes, true)
+  resource.Properties=UTILS.EnsureTable(Properties, true)
+  resource.Categories=UTILS.EnsureTable(Categories, true)
   
   -- Transport carrier parameters.
-  resource.cargoAttributes=nil
-  resource.cargoProperties=nil
-  resource.cargoCategories=nil
   resource.carrierNmin=nil
   resource.carrierNmax=nil
   resource.carrierAttributes=nil
@@ -810,20 +812,14 @@ end
 --- Define which assets will be transported and define the number and attributes/properties of the cargo carrier assets.
 -- @param #CHIEF self
 -- @param #CHIEF.Resource Resource Resource table.
--- @param #table CargoAttributes Generalized attribute(s) of the cargo assets.
--- @param #table CargoProperties DCS attribute(s) of the cargo assets.
--- @param #table CargoCategories Group categories of the cargo assets.
 -- @param #number Nmin Min number of required assets. Default 1.
 -- @param #number Nmax Max number of requried assets. Default is equal to `Nmin`.
 -- @param #table CarrierAttributes Generalized attribute(s) of the carrier assets.
 -- @param #table CarrierProperties DCS attribute(s) of the carrier assets.
 -- @param #table CarrierCategories Group categories of the carrier assets.
 -- @return #CHIEF self
-function CHIEF:AddTransportToResource(Resource, CargoAttributes, CargoProperties, CargoCategories, Nmin, Nmax, CarrierAttributes, CarrierProperties, CarrierCategories)
+function CHIEF:AddTransportToResource(Resource, Nmin, Nmax, CarrierAttributes, CarrierProperties, CarrierCategories)
 
-  Resource.cargoCategories=CargoCategories
-  Resource.cargoAttributes=CargoAttributes
-  Resource.cargoProperties=CargoProperties
   Resource.carrierNmin=Nmin or 1
   Resource.carrierNmax=Nmax or Nmin
   Resource.carrierCategories=CarrierCategories
@@ -1277,7 +1273,7 @@ function CHIEF:AddStrategicZone(OpsZone, Priority, Importance, ResourceOccupied,
     local resourceEmpty, resourceInfantry=self:CreateResource(AUFTRAG.Type.ONGUARD, 1, 3, GROUP.Attribute.GROUND_INFANTRY)
     self:AddToResource(resourceEmpty, AUFTRAG.Type.ONGUARD, 0, 1, GROUP.Attribute.GROUND_TANK)
     self:AddToResource(resourceEmpty, AUFTRAG.Type.ONGUARD, 0, 1, GROUP.Attribute.GROUND_IFV)
-    self:AddTransportToResource(resourceInfantry, GROUP.Attribute.GROUND_INFANTRY, nil, nil, 0, 1, {GROUP.Attribute.AIR_TRANSPORTHELO, GROUP.Attribute.GROUND_APC})
+    self:AddTransportToResource(resourceInfantry, 0, 1, {GROUP.Attribute.AIR_TRANSPORTHELO, GROUP.Attribute.GROUND_APC})
     stratzone.resourceEmpty=resourceEmpty
   end
 
@@ -1613,7 +1609,7 @@ end
 -- @param #CHIEF self
 -- @return #CHIEF self
 function CHIEF:AllowGroundTransport()
-  env.warning("WARNING: CHIEF:AllowGroundTransport() is depricated and will be removed in the future!")
+  env.warning("WARNING: CHIEF:AllowGroundTransport() is deprecated and will be removed in the future!")
   self.TransportCategories = {Group.Category.GROUND, Group.Category.HELICOPTER}
   return self
 end
@@ -1622,7 +1618,7 @@ end
 -- @param #CHIEF self
 -- @return #CHIEF self
 function CHIEF:ForbidGroundTransport()
-  env.warning("WARNING: CHIEF:ForbidGroundTransport() is depricated and will be removed in the future!")
+  env.warning("WARNING: CHIEF:ForbidGroundTransport() is deprecated and will be removed in the future!")
   self.TransportCategories = {Group.Category.HELICOPTER}
   return self
 end
@@ -2559,7 +2555,7 @@ function CHIEF:CheckOpsZoneQueue()
           if (not resource.mission) or resource.mission:IsOver() then
 
             -- Debug info.
-            self:T2(self.lid..string.format("Zone \"%s\" is empty ==> Recruiting for mission type %s: Nmin=%d, Nmax=%d", zoneName, missionType, resource.Nmin, resource.Nmax))          
+            self:T2(self.lid..string.format("Zone \"%s\" is empty ==> Recruiting for mission type %s: Nmin=%d, Nmax=%d", zoneName, missionType, resource.Nmin, resource.Nmax))
           
             -- Recruit assets.
             local recruited=self:RecruitAssetsForZone(stratzone, resource)
@@ -2969,7 +2965,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
     if Resource.carrierNmin and Resource.carrierNmax and Resource.carrierNmax>0 then
     
       -- Filter only those assets that shall be transported.
-      local cargoassets=CHIEF._FilterAssets(assets, Resource.cargoCategories, Resource.cargoAttributes, Resource.cargoProperties)
+      local cargoassets=CHIEF._FilterAssets(assets, Resource.Categories, Resource.Attributes, Resource.Properties)
       
       if #cargoassets>0 then
 
