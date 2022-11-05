@@ -151,7 +151,7 @@ _TARGETID=0
 
 --- TARGET class version.
 -- @field #string version
-TARGET.version="0.5.5"
+TARGET.version="0.5.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1108,7 +1108,7 @@ function TARGET:GetTargetLife(Target)
   return self
 end
 
---- Get current life points.
+--- Get current total life points. This is the sum of all target objects.
 -- @param #TARGET self
 -- @return #number Life points of target.
 function TARGET:GetLife()
@@ -1311,6 +1311,89 @@ function TARGET:GetTargetVec3(Target, Average)
   self:E(self.lid.."ERROR: Unknown TARGET type! Cannot get Vec3")
 end
 
+--- Get heading of the target.
+-- @param #TARGET self
+-- @param #TARGET.Object Target Target object.
+-- @return #number Heading in degrees.
+function TARGET:GetTargetHeading(Target)
+
+  if Target.Type==TARGET.ObjectType.GROUP then
+  
+    local object=Target.Object --Wrapper.Group#GROUP
+
+    if object and object:IsAlive() then
+      local heading=object:GetHeading()
+
+      if heading then
+        return heading
+      else
+        return nil
+      end
+    else
+    
+      return nil
+
+    end
+
+  elseif Target.Type==TARGET.ObjectType.UNIT then
+  
+    local object=Target.Object --Wrapper.Unit#UNIT
+
+    if object and object:IsAlive() then
+      local heading=object:GetHeading()
+      return heading
+    else
+      return nil
+    end
+  
+  elseif Target.Type==TARGET.ObjectType.STATIC then
+  
+    local object=Target.Object --Wrapper.Static#STATIC
+  
+    if object and object:IsAlive() then
+      local heading=object:GetHeading()
+      return heading
+    else
+      return nil
+    end
+
+  elseif Target.Type==TARGET.ObjectType.SCENERY then
+  
+    local object=Target.Object --Wrapper.Scenery#SCENERY
+  
+    if object then
+      local heading=object:GetHeading()
+      return heading
+    else
+      return nil
+    end
+    
+  elseif Target.Type==TARGET.ObjectType.AIRBASE then
+  
+    local object=Target.Object --Wrapper.Airbase#AIRBASE
+    
+    -- Airbase has no real heading. Return 0. Maybe take the runway heading?
+    return 0
+    
+  elseif Target.Type==TARGET.ObjectType.COORDINATE then
+  
+    local object=Target.Object --Core.Point#COORDINATE
+  
+    -- A coordinate has no heading. Return 0.
+    return 0
+    
+  elseif Target.Type==TARGET.ObjectType.ZONE then
+  
+    local object=Target.Object --Core.Zone#ZONE
+  
+    -- A zone has no heading. Return 0.
+    return 0
+        
+  end
+
+  self:E(self.lid.."ERROR: Unknown TARGET type! Cannot get heading")
+end
+
 
 --- Get target coordinate.
 -- @param #TARGET self
@@ -1473,7 +1556,7 @@ function TARGET:GetAverageCoordinate()
   for _,_target in pairs(self.targets) do
     local Target=_target --#TARGET.Object
     
-    local coordinate=self:GetTargetCoordinate(Target,true)
+    local coordinate=self:GetTargetCoordinate(Target, true)
     
     if coordinate then
       return coordinate
@@ -1485,12 +1568,33 @@ function TARGET:GetAverageCoordinate()
   return nil
 end
 
+--- Get heading of target.
+-- @param #TARGET self
+-- @return #number Heading of the target in degrees.
+function TARGET:GetHeading()
+
+  for _,_target in pairs(self.targets) do
+    local Target=_target --#TARGET.Object
+    
+    local heading=self:GetTargetHeading(Target)
+    
+    if heading then
+      return heading
+    end
+
+  end
+
+  self:E(self.lid..string.format("ERROR: Cannot get heading of target %s", tostring(self.name)))
+  return nil
+end
+
 --- Get category.
 -- @param #TARGET self
 -- @return #string Target category. See `TARGET.Category.X`, where `X=AIRCRAFT, GROUND`.
 function TARGET:GetCategory()
   return self.category
 end
+
 
 --- Get target category.
 -- @param #TARGET self

@@ -499,7 +499,7 @@ OPSGROUP.CargoStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="0.7.9"
+OPSGROUP.version="0.8.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -4070,6 +4070,23 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
   -- Get mission of this task (if any).
   local Mission=self:GetMissionByTaskID(self.taskcurrent)
 
+
+  self:_UpdateTask(Task, Mission)
+
+  -- Set AUFTRAG status.
+  if Mission then
+    self:MissionExecute(Mission)
+  end
+
+end
+
+--- Push task
+-- @param #OPSGROUP self
+-- @param Ops.OpsGroup#OPSGROUP.Task Task The task.
+function OPSGROUP:_UpdateTask(Task, Mission)
+
+  local Mission=Mission or self:GetMissionByTaskID(self.taskcurrent)
+
   if Task.dcstask.id==AUFTRAG.SpecialTask.FORMATION then
 
     -- Set of group(s) to follow Mother.
@@ -4421,52 +4438,14 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
         -- Set quantity of task.
         DCSTask.params.expendQty=nShots
         
-      elseif Mission and Mission.type==AUFTRAG.Type.RECOVERYTANKER then
-  
-        env.info("FF recoverytanker setting DCS task")
-    
-        -- Update DCS task with the current carrier parameters.
-        DCSTask=Mission:GetDCSMissionTask()        
-        
       else
         ---
         -- Take DCS task
         ---
         DCSTask=Task.dcstask
       end
-
-      local DCStasks={}
-      if DCSTask.id=='ComboTask' then
-        -- Loop over all combo tasks.
-        for TaskID, Task in ipairs(DCSTask.params.tasks) do
-          table.insert(DCStasks, Task)
-        end
-      else
-        table.insert(DCStasks, DCSTask)
-      end
-
-      -- Combo task.
-      local TaskCombo=self.group:TaskCombo(DCStasks)
-
-      -- Stop condition!
-      local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1, nil, Task.duration)
-
-      -- Controlled task.
-      local TaskControlled=self.group:TaskControlled(TaskCombo, TaskCondition)
-
-      -- Task done.
-      local TaskDone=self.group:TaskFunction("OPSGROUP._TaskDone", self, Task)
-
-      -- Final task.
-      local TaskFinal=self.group:TaskCombo({TaskControlled, TaskDone})
-
-      -- Set task for group.
-      -- NOTE: I am pushing the task instead of setting it as it seems to keep the mission task alive.
-      --       There were issues that flights did not proceed to a later waypoint because the task did not finish until the fired missiles
-      --       impacted (took rather long). Then the flight flew to the nearest airbase and one lost completely the control over the group.
-      self:PushTask(TaskFinal)
-      --self:SetTask(TaskFinal)
-
+      
+      self:_SandwitchDCSTask(DCSTask, Task)
 
     elseif Task.type==OPSGROUP.TaskType.WAYPOINT then
       -- Waypoint tasks are executed elsewhere!
@@ -4475,14 +4454,61 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     end
 
   end
+  
+end
 
+--- Sandwitch DCS task in stop condition and push the task to the group.
+-- @param #OPSGROUP self
+-- @param DCS#Task DCSTask The DCS task.
+-- @param Ops.OpsGroup#OPSGROUP.Task Task
+-- @param #boolean SetTask Set task instead of pushing it.
+-- @param #number Delay Delay in seconds. Default nil.
+function OPSGROUP:_SandwitchDCSTask(DCSTask, Task, SetTask, Delay)
 
-  -- Set AUFTRAG status.
-  if Mission then
-    self:MissionExecute(Mission)
+  if Delay and Delay>0 then
+    -- Delayed call.
+    self:ScheduleOnce(Delay, OPSGROUP._SandwitchDCSTask, self, DCSTask, Task, SetTask)    
+  else
+
+    local DCStasks={}
+    if DCSTask.id=='ComboTask' then
+      -- Loop over all combo tasks.
+      for TaskID, Task in ipairs(DCSTask.params.tasks) do
+        table.insert(DCStasks, Task)
+      end
+    else
+      table.insert(DCStasks, DCSTask)
+    end
+    
+    -- Combo task.
+    local TaskCombo=self.group:TaskCombo(DCStasks)
+    
+    -- Stop condition!
+    local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1, nil, Task.duration)
+    
+    -- Controlled task.
+    local TaskControlled=self.group:TaskControlled(TaskCombo, TaskCondition)
+    
+    -- Task done.
+    local TaskDone=self.group:TaskFunction("OPSGROUP._TaskDone", self, Task)
+    
+    -- Final task.
+    local TaskFinal=self.group:TaskCombo({TaskControlled, TaskDone})
+    
+    -- Set task for group.
+    -- NOTE: I am pushing the task instead of setting it as it seems to keep the mission task alive.
+    --       There were issues that flights did not proceed to a later waypoint because the task did not finish until the fired missiles
+    --       impacted (took rather long). Then the flight flew to the nearest airbase and one lost completely the control over the group.
+    if SetTask then
+      self:SetTask(TaskFinal)
+    else
+      self:PushTask(TaskFinal)
+    end
+    
   end
 
 end
+
 
 --- On after "TaskCancel" event. Cancels the current task or simply sets the status to DONE if the task is not the current one.
 -- @param #OPSGROUP self
@@ -5534,23 +5560,7 @@ function OPSGROUP:RouteToMission(mission, delay)
         -- Navy group: Route into direction of the target.
         waypointcoord=currentcoord:GetIntermediateCoordinate(ToCoordinate, 0.05)
       end
-            
-    elseif mission.type==AUFTRAG.Type.RECOVERYTANKER then
-      ---
-      -- Recoverytanker
-      ---
 
-      local carrier=mission.DCStask.params.carrier --Wrapper.Unit#UNIT
-
-      -- Roughly go to the new legion. 
-      local CarrierCoordinate=carrier:GetCoordinate()
-      
-      local heading=carrier:GetHeading()
-      
-      waypointcoord=CarrierCoordinate:Translate(10000, heading-180):SetAltitude(2000)
-      
-      waypointcoord:MarkToAll("Recoverytanker")
-      
     else
       ---
       -- Default case
@@ -5640,20 +5650,35 @@ function OPSGROUP:RouteToMission(mission, delay)
       end
       
     end
-     
+
+
+    -- Distance to waypoint coordinate.
+    local d=currentcoord:Get2DDistance(waypointcoord)
+    
+    -- Debug info.
+    self:T(self.lid..string.format("Distance to ingress waypoint=%.1f m", d))     
     
     -- Add mission execution (ingress) waypoint.
     local waypoint=nil --#OPSGROUP.Waypoint
     if self:IsFlightgroup() then
+    
       waypoint=FLIGHTGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
+      
     elseif self:IsArmygroup() then
+    
+      -- Set formation.
       local formation=mission.optionFormation
-      if mission.type==AUFTRAG.Type.RELOCATECOHORT then
+      
+      -- If distance is < 1 km or RELOCATECOHORT mission, go off-road.
+      if d<1000 or mission.type==AUFTRAG.Type.RELOCATECOHORT then
         formation=ENUMS.Formation.Vehicle.OffRoad
       end
+      
       waypoint=ARMYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, formation, false)
     elseif self:IsNavygroup() then
+    
       waypoint=NAVYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
+      
     end
     waypoint.missionUID=mission.auftragsnummer
 
@@ -5681,13 +5706,6 @@ function OPSGROUP:RouteToMission(mission, delay)
       Ewaypoint.missionUID=mission.auftragsnummer
       mission:SetGroupEgressWaypointUID(self, Ewaypoint.uid)
     end
-
-    
-    -- Distance to waypoint coordinate.
-    local d=currentcoord:Get2DDistance(waypointcoord)
-    
-    -- Debug info.
-    self:T(self.lid..string.format("FF distance to ingress waypoint=%.1f m", d))
     
     -- Check if we are already where we want to be.
     if targetzone and self:IsInZone(targetzone) then
@@ -8499,13 +8517,9 @@ function OPSGROUP:onafterPickup(From, Event, To)
 
     -- Get a random coordinate in the pickup zone and let the carrier go there.
     local Coordinate=Zone:GetRandomCoordinate(nil, nil, surfacetypes)
-    --Coordinate:MarkToAll(string.format("Pickup coordinate for group %s [Surface type=%d]", self:GetName(), Coordinate:GetSurfaceType()))
-
-    -- Current Waypoint.
-    local cwp=self:GetWaypointCurrent()
 
     -- Current waypoint ID.
-    local uid=cwp and cwp.uid or nil
+    local uid=self:GetWaypointCurrentUID()
 
     -- Add waypoint.
     if self:IsFlightgroup() then
@@ -8545,8 +8559,6 @@ function OPSGROUP:onafterPickup(From, Event, To)
         else
 
           local coordinate=self:GetCoordinate():GetIntermediateCoordinate(Coordinate, 0.5)
-
-          --coordinate:MarkToAll("Pickup Inter Coord")
 
           -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
           local waypoint=FLIGHTGROUP.AddWaypoint(self, coordinate, nil, uid, UTILS.MetersToFeet(self.altitudeCruise), true) ; waypoint.detour=1
@@ -8616,8 +8628,8 @@ function OPSGROUP:onafterPickup(From, Event, To)
       local path=self.cargoTransport:_GetPathTransport(self.category, self.cargoTZC)
 
       -- Formation used to go to the pickup zone..
-      local Formation=self.cargoTransport:_GetFormationTransport(self.cargoTZC)
-
+      local Formation=self.cargoTransport:_GetFormationPickup(self.cargoTZC, self)
+            
       -- Get transport path.
       if path and oldstatus~=OPSGROUP.CarrierStatus.NOTCARRIER then
         for i=#path.waypoints,1,-1 do
@@ -8632,7 +8644,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
       local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, uid, Formation, false) ; waypoint.detour=1
 
       -- Give cruise command.
-      self:__Cruise(-2)
+      self:__Cruise(-2, nil, Formation)
 
     end
 
@@ -8917,7 +8929,8 @@ function OPSGROUP:onafterTransport(From, Event, To)
     -- Coord where the carrier goes to unload.
     local Coordinate=Zone:GetRandomCoordinate(nil, nil, surfacetypes) --Core.Point#COORDINATE
 
-    --Coordinate:MarkToAll(string.format("Deploy coordinate for group %s [Surface type=%d]", self:GetName(), Coordinate:GetSurfaceType()))
+    -- Current waypoint UID.
+    local uid=self:GetWaypointCurrentUID()
 
     -- Add waypoint.
     if self:IsFlightgroup() then
@@ -8932,9 +8945,6 @@ function OPSGROUP:onafterTransport(From, Event, To)
         ---
         -- Deploy at airbase
         ---
-
-        local cwp=self:GetWaypointCurrent()
-        local uid=cwp and cwp.uid or nil
 
         -- Get a (random) pre-defined transport path.
         local path=self.cargoTransport:_GetPathTransport(self.category, self.cargoTZC)
@@ -8957,15 +8967,10 @@ function OPSGROUP:onafterTransport(From, Event, To)
 
           local coordinate=self:GetCoordinate():GetIntermediateCoordinate(Coordinate, 0.5)
 
-          --coordinate:MarkToAll("Transport Inter Waypoint")
-
           -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
           local waypoint=FLIGHTGROUP.AddWaypoint(self, coordinate, nil, uid, UTILS.MetersToFeet(self.altitudeCruise), true) ; waypoint.detour=1
 
         end
-
-        -- Order group to land at an airbase.
-        --self:__LandAtAirbase(-0.1, airbaseDeploy)
 
       elseif self.isHelo then
 
@@ -8974,7 +8979,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
         ---
 
         -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
-        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, UTILS.MetersToFeet(self.altitudeCruise), false) ; waypoint.detour=1
+        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, nil, uid, UTILS.MetersToFeet(self.altitudeCruise), false) ; waypoint.detour=1
 
       else
         self:T(self.lid.."ERROR: Aircraft (cargo carrier) cannot land in Deploy zone! Specify a ZONE_AIRBASE as deploy zone")
@@ -8992,14 +8997,11 @@ function OPSGROUP:onafterTransport(From, Event, To)
 
     elseif self:IsArmygroup() then
 
-      local cwp=self:GetWaypointCurrent()
-      local uid=cwp and cwp.uid or nil
-
       -- Get transport path.
       local path=self.cargoTransport:_GetPathTransport(self.category, self.cargoTZC)
 
       -- Formation used for transporting.
-      local Formation=self.cargoTransport:_GetFormationTransport(self.cargoTZC)
+      local Formation=self.cargoTransport:_GetFormationTransport(self.cargoTZC, self)
 
       -- Get transport path.
       if path then
@@ -9015,12 +9017,9 @@ function OPSGROUP:onafterTransport(From, Event, To)
       local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, uid, Formation, false) ; waypoint.detour=1
 
       -- Give cruise command.
-      self:Cruise()
+      self:Cruise(nil, Formation)
 
     elseif self:IsNavygroup() then
-
-      local cwp=self:GetWaypointCurrent()
-      local uid=cwp and cwp.uid or nil
 
       -- Get a (random) pre-defined transport path.
       local path=self.cargoTransport:_GetPathTransport(self.category, self.cargoTZC)
@@ -9434,7 +9433,7 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
       end
     else
       -- Army & Navy: give Cruise command to "wake up" from waiting status.
-      self:__Cruise(0.1)
+      self:__Cruise(-0.1)
     end
 
     -- Set carrier transport status.
@@ -9859,14 +9858,14 @@ function OPSGROUP:_CheckGroupDone(delay)
 
     if delay and delay>0 then
       -- Debug info.
-      self:T(self.lid..string.format("Check OPSGROUP [state=%s] done in %.3f seconds...", fsmstate, delay))
+      self:T(self.lid..string.format("Check OPSGROUP done? [state=%s] in %.3f seconds...", fsmstate, delay))
 
       -- Delayed call.
       self:ScheduleOnce(delay, self._CheckGroupDone, self)
     else
 
       -- Debug info.
-      self:T(self.lid..string.format("Check OSGROUP [state=%s] done?", fsmstate))
+      self:T(self.lid..string.format("Check OSGROUP done? [state=%s]", fsmstate))
 
       -- Group is engaging something.
       if self:IsEngaging() then
@@ -10646,7 +10645,7 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
 
       -- Set formation.
       if opsgroup.isArmygroup then
-        opsgroup.formation=wpnext.action
+        opsgroup.option.Formation=wpnext.action
       end
 
       -- Set speed to next wp.

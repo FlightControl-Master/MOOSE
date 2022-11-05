@@ -641,10 +641,8 @@ function OPSZONE:onafterStop(From, Event, To)
   -- Reinit the timer.
   self.timerStatus:Stop()
   
-  -- Draw zone.
-  if self.drawZone then
-    self.zone:UndrawZone()
-  end
+  -- Undraw zone.
+  self.zone:UndrawZone()
 
   -- Remove marker.  
   if self.markZone then
@@ -690,6 +688,11 @@ function OPSZONE:Status()
    
   -- Update F10 marker (only if enabled).
   self:_UpdateMarker()
+  
+  -- Undraw zone.
+  if self.zone.DrawID and not self.drawZone then
+    self.zone:UndrawZone()
+  end
   
 end
 
