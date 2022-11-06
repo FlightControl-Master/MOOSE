@@ -12,7 +12,7 @@
 --   * Score the hits and destroys of units.
 --   * Score the hits and destroys of statics.
 --   * Score the hits and destroys of scenery.
---   * Log scores into a CSV file.
+--   * (optional) Log scores into a CSV file.
 --   * Connect to a remote server using JSON and IP.
 --
 -- ===
@@ -225,6 +225,7 @@ SCORING = {
   ClassName = "SCORING",
   ClassID = 0,
   Players = {},
+  AutoSave = true,
 }
 
 local _SCORINGCoalition = {
@@ -306,6 +307,7 @@ function SCORING:New( GameName )
   end )
 
   -- Create the CSV file.
+  self.AutoSave = true
   self:OpenCSV( GameName )
 
   return self
@@ -1748,7 +1750,7 @@ end
 function SCORING:OpenCSV( ScoringCSV )
   self:F( ScoringCSV )
 
-  if lfs and io and os then
+  if lfs and io and os and self.AutoSave then
     if ScoringCSV then
       self.ScoringCSV = ScoringCSV
       local fdir = lfs.writedir() .. [[Logs\]] .. self.ScoringCSV .. " " .. os.date( "%Y-%m-%d %H-%M-%S" ) .. ".csv"
@@ -1828,7 +1830,7 @@ function SCORING:ScoreCSV( PlayerName, TargetPlayerName, ScoreType, ScoreTimes, 
   TargetUnitType = TargetUnitType or ""
   TargetUnitName = TargetUnitName or ""
 
-  if lfs and io and os then
+  if lfs and io and os and self.AutoSave then
     self.CSVFile:write(
       '"' .. self.GameName        .. '"' .. ',' ..
       '"' .. self.RunTime         .. '"' .. ',' ..
@@ -1852,9 +1854,20 @@ function SCORING:ScoreCSV( PlayerName, TargetPlayerName, ScoreType, ScoreTimes, 
   end
 end
 
+--- Close CSV file
+-- @param #SCORING self
+-- @return #SCORING self
 function SCORING:CloseCSV()
-  if lfs and io and os then
+  if lfs and io and os and self.AutoSave then
     self.CSVFile:close()
   end
 end
 
+--- Registers a score for a player.
+-- @param #SCORING self
+-- @param #boolean OnOff Switch saving to CSV on = true or off = false
+-- @return #SCORING self
+function SCORING:SwitchAutoSave(OnOff)
+  self.AutoSave = OnOff
+  return self
+end
