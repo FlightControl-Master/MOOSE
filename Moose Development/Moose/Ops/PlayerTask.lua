@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update October 2022
+-- @date Last Update November 2022
 
 
 do
@@ -95,7 +95,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.9"
+PLAYERTASK.version="0.1.10"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -654,11 +654,14 @@ function PLAYERTASK:onafterStatus(From, Event, To)
   
   -- Check Target status
   local targetdead = false
-  if self.Target:IsDead() or self.Target:IsDestroyed() or self.Target:CountTargets() == 0 then
-    targetdead = true
-    self:__Success(-2)
-    status = "Success"
-    return self
+  
+  if self.Type ~= AUFTRAG.Type.CTLD and self.Type ~= AUFTRAG.Type.CSAR then
+    if self.Target:IsDead() or self.Target:IsDestroyed() or self.Target:CountTargets() == 0 then
+      targetdead = true
+      self:__Success(-2)
+      status = "Success"
+      return self
+    end
   end
     
   if status == "Executing" then    
