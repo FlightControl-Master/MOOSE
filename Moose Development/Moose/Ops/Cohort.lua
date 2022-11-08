@@ -504,6 +504,37 @@ function COHORT:SetCallsign(Callsign, Index)
   return self
 end
 
+--- Set generalized attribute.
+-- @param #COHORT self
+-- @param #string Attribute Generalized attribute, e.g. `GROUP.Attribute.Ground_Infantry`.
+-- @return #COHORT self
+function COHORT:SetAttribute(Attribute)
+  self.attribute=Attribute
+  return self
+end
+
+--- Get generalized attribute.
+-- @param #COHORT self
+-- @return #string Generalized attribute, e.g. `GROUP.Attribute.Ground_Infantry`.
+function COHORT:GetAttribute()
+  return self.attribute
+end
+
+--- Get group category.
+-- @param #COHORT self
+-- @return #string Group category
+function COHORT:GetCategory()
+  return self.category
+end
+
+--- Get properties, *i.e.* DCS attributes.
+-- @param #COHORT self
+-- @return #table Properties table.
+function COHORT:GetProperties()
+  return self.properties
+end
+
+
 --- Set modex.
 -- @param #COHORT self
 -- @param #number Modex A number like 100.
