@@ -5810,6 +5810,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
   -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
   local Parking={}
   if Request.cargocategory==Group.Category.AIRPLANE or Request.cargocategory==Group.Category.HELICOPTER then
+    --TODO: Check for airstart. Should be a request property.
     Parking=self:_FindParkingForAssets(self.airbase, cargoassets) or {}
   end
 
@@ -6069,7 +6070,9 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
         end
 
         if self.Debug then
-          coord:MarkToAll(string.format("Spawnplace unit %s terminal %d.", unit.name, terminal))
+          local text=string.format("Spawnplace unit %s terminal %d.", unit.name, terminal)
+          coord:MarkToAll(text)
+          env.info(text)
         end
 
         unit.x=coord.x
@@ -7374,6 +7377,7 @@ function WAREHOUSE:_CheckRequestNow(request)
   local _transports
   local _assetattribute
   local _assetcategory
+  local _assetairstart=false
 
   -- Check if at least one (cargo) asset is available.
   if _nassets>0 then
@@ -7381,21 +7385,28 @@ function WAREHOUSE:_CheckRequestNow(request)
     -- Get the attibute of the requested asset.
     _assetattribute=_assets[1].attribute
     _assetcategory=_assets[1].category
+    _assetairstart=_assets[1].takeoffType and _assets[1].takeoffType==COORDINATE.WaypointType.TurningPoint or false
 
     -- Check available parking for air asset units.
     if _assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER then
     
       if self.airbase and self.airbase:GetCoalition()==self:GetCoalition() then
     
-        if self:IsRunwayOperational() then
+        if self:IsRunwayOperational() or _assetairstart then
   
-          local Parking=self:_FindParkingForAssets(self.airbase,_assets)
-    
-          --if Parking==nil and not (self.category==Airbase.Category.HELIPAD) then
-          if Parking==nil then
-            local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all requested assets at the moment.", self.alias)
-            self:_InfoMessage(text, 5)
-            return false
+          if _assetairstart then
+            -- Airstart no need to check parking            
+          else
+          
+            -- Check parking.
+            local Parking=self:_FindParkingForAssets(self.airbase,_assets)
+      
+            -- No parking?
+            if Parking==nil then
+              local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all requested assets at the moment.", self.alias)
+              self:_InfoMessage(text, 5)
+              return false
+            end
           end
           
         else
@@ -7986,9 +7997,36 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
       local gotit=false
       for _,_parkingspot in pairs(parkingdata) do
         local parkingspot=_parkingspot --Wrapper.Airbase#AIRBASE.ParkingSpot
+        
+        -- Parking valid?
+        local valid=true
+        
+        if asset.parkingIDs then
+          -- If asset has assigned parking spots, we take these no matter what.
+          valid=self:_CheckParkingAsset(parkingspot, asset)
+        else
+
+          -- Valid terminal type depending on attribute.
+          local validTerminal=AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype)
+          
+          -- Valid parking list.
+          local validParking=self:_CheckParkingValid(parkingspot)
+          
+          -- Black and white list.
+          local validBWlist=airbase:_CheckParkingLists(parkingspot.TerminalID)        
+
+          -- Debug info.
+          --env.info(string.format("FF validTerminal = %s", tostring(validTerminal)))
+          --env.info(string.format("FF validParking  = %s", tostring(validParking)))
+          --env.info(string.format("FF validBWlist   = %s", tostring(validBWlist)))
+        
+          -- Check if all are true
+          valid=validTerminal and validParking and validBWlist
+        end
+        
 
         -- Check correct terminal type for asset. We don't want helos in shelters etc.
-        if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) and self:_CheckParkingValid(parkingspot) and self:_CheckParkingAsset(parkingspot, asset) and airbase:_CheckParkingLists(parkingspot.TerminalID) then
+        if valid then
 
           -- Coordinate of the parking spot.
           local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE

@@ -863,7 +863,7 @@ function AIRWING:SetAirboss(airboss)
   return self
 end
 
---- Set takeoff type. All assets of this squadron will be spawned with cold (default) or hot engines.
+--- Set takeoff type. All assets of this airwing will be spawned with this takeoff type.
 -- Spawning on runways is not supported.
 -- @param #AIRWING self
 -- @param #string TakeoffType Take off type: "Cold" (default) or "Hot" with engines on or "Air" for spawning in air.
