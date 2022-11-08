@@ -188,6 +188,7 @@
 --     --- Create a resource list of mission types and required assets for the case that the zone is OCCUPIED.
 --     --
 --     -- Here, we create an enhanced CAS mission and employ at least on and at most two asset groups.
+--     -- NOTE that two objects are returned, the resource list (ResourceOccupied) and the first resource of that list (resourceCAS).
 --     local ResourceOccupied, resourceCAS=myChief:CreateResource(AUFTRAG.Type.CASENHANCED, 1, 2)
 --     -- We also add ARTY missions with at least one and at most two assets. We additionally require these to be MLRS groups (and not howitzers).
 --     myChief:AddToResource(ResourceOccupied, AUFTRAG.Type.ARTY, 1, 2, nil, "MLRS")
@@ -197,7 +198,7 @@
 --     myChief:AddToResource(ResourceOccupied, AUFTRAG.Type.BOMBCARPET, 1, 2)
 --     
 --     --- Create a resource list of mission types and required assets for the case that the zone is EMPTY.
---     --
+--     -- NOTE that two objects are returned, the resource list (ResourceEmpty) and the first resource of that list (resourceInf).
 --     -- Here, we create an ONGUARD mission and employ at least on and at most five infantry assets.
 --     local ResourceEmpty, resourceInf=myChief:CreateResource(AUFTRAG.Type.ONGUARD, 1, 5, GROUP.Attribute.GROUND_INFANTRY)
 --     -- Additionally, we send up to three tank groups.
@@ -329,7 +330,7 @@ CHIEF.Strategy = {
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.5.2"
+CHIEF.version="0.5.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -822,9 +823,9 @@ function CHIEF:AddTransportToResource(Resource, Nmin, Nmax, CarrierAttributes, C
 
   Resource.carrierNmin=Nmin or 1
   Resource.carrierNmax=Nmax or Nmin
-  Resource.carrierCategories=CarrierCategories
-  Resource.carrierAttributes=CarrierAttributes
-  Resource.carrierProperties=CarrierProperties
+  Resource.carrierCategories=UTILS.EnsureTable(CarrierCategories, true)
+  Resource.carrierAttributes=UTILS.EnsureTable(CarrierAttributes, true)
+  Resource.carrierProperties=UTILS.EnsureTable(CarrierProperties, true)
 
   return self
 end
@@ -2971,7 +2972,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
 
         -- Recruit transport carrier assets.
         recruited, transport=LEGION.AssignAssetsForTransport(self.commander, self.commander.legions, cargoassets, 
-        Resource.carrierNmin, Resource.carrierNmax, TargetZone, nil, Resource.carrierCategories, Resource.carrierAttributes)
+        Resource.carrierNmin, Resource.carrierNmax, TargetZone, nil, Resource.carrierCategories, Resource.carrierAttributes, Resource.carrierProperties)
         
       end
     

@@ -2649,7 +2649,7 @@ function LEGION:AssignAssetsForTransport(Legions, CargoAssets, NcarriersMin, Nca
 
   -- Is an escort requested in the first place?
   if NcarriersMin and NcarriersMax and (NcarriersMin>0 or NcarriersMax>0) then
-
+  
     -- Cohorts.
     local Cohorts={}
     for _,_legion in pairs(Legions) do
@@ -2688,7 +2688,7 @@ function LEGION:AssignAssetsForTransport(Legions, CargoAssets, NcarriersMin, Nca
     LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, NcarriersMin, NcarriersMax, TargetVec2, nil, nil, nil, CargoWeight, TotalWeight, Categories, Attributes, Properties)
   
     if TransportAvail then
-      
+    
       -- Create and OPSTRANSPORT assignment.
       local Transport=OPSTRANSPORT:New(nil, nil, DeployZone)
       if DisembarkZone then
@@ -2735,6 +2735,9 @@ function LEGION:AssignAssetsForTransport(Legions, CargoAssets, NcarriersMin, Nca
       -- Got transport.
       return true, Transport
     else
+      -- Debug info.    
+      self:T(self.lid..string.format("Transport assets could not be allocated ==> Unrecruiting assets"))    
+    
       -- Uncrecruit transport assets.
       LEGION.UnRecruitAssets(CarrierAssets)
       return false, nil
