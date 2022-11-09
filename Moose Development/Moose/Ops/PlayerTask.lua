@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update October 2022
+-- @date Last Update November 2022
 
 
 do
@@ -95,7 +95,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.9"
+PLAYERTASK.version="0.1.10"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -654,11 +654,14 @@ function PLAYERTASK:onafterStatus(From, Event, To)
   
   -- Check Target status
   local targetdead = false
-  if self.Target:IsDead() or self.Target:IsDestroyed() or self.Target:CountTargets() == 0 then
-    targetdead = true
-    self:__Success(-2)
-    status = "Success"
-    return self
+  
+  if self.Type ~= AUFTRAG.Type.CTLD and self.Type ~= AUFTRAG.Type.CSAR then
+    if self.Target:IsDead() or self.Target:IsDestroyed() or self.Target:CountTargets() == 0 then
+      targetdead = true
+      self:__Success(-2)
+      status = "Success"
+      return self
+    end
   end
     
   if status == "Executing" then    
@@ -919,6 +922,7 @@ do
 -- @field Ops.PlayerRecce#PLAYERRECCE PlayerRecce
 -- @field #number Coalition
 -- @field Core.Menu#MENU_MISSION MenuParent
+-- @field #boolean ShowMagnetic Also show magnetic angles
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1231,6 +1235,7 @@ PLAYERTASKCONTROLLER = {
   PlayerRecce        = nil,
   Coalition          = nil,
   MenuParent         = nil,
+  ShowMagnetic       = true,
   }
 
 ---
@@ -1397,7 +1402,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.45"
+PLAYERTASKCONTROLLER.version="0.1.46"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -1453,6 +1458,8 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.CallsignTranslations = nil
   
   self.noflaresmokemenu = false
+  
+  self.ShowMagnetic = true
    
   if ClientFilter then
     self.ClientSet = SET_CLIENT:New():FilterCoalitions(string.lower(self.CoalitionName)):FilterActive(true):FilterPrefixes(ClientFilter):FilterStart()
@@ -2009,6 +2016,20 @@ function PLAYERTASKCONTROLLER:SwitchUseGroupNames(OnOff)
     self.UseGroupNames = true
   else
    self.UseGroupNames = false
+  end
+  return self
+end
+
+--- [User] Switch showing additional magnetic angles
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #boolean OnOff If true, set to on (default), if nil or false, set to off
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SwitchMagenticAngles(OnOff)
+  self:T(self.lid.."SwitchMagenticAngles")
+  if OnOff then
+    self.ShowMagnetic = true
+  else
+   self.ShowMagnetic = false
   end
   return self
 end
@@ -2678,9 +2699,9 @@ function PLAYERTASKCONTROLLER:_FlashInfo()
         local Coordinate = task.Target:GetCoordinate()
         local CoordText = ""
         if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
-          CoordText = Coordinate:ToStringA2G(_client)
+          CoordText = Coordinate:ToStringA2G(_client, nil, self.ShowMagnetic)
         else
-          CoordText = Coordinate:ToStringA2A(_client)
+          CoordText = Coordinate:ToStringA2A(_client, nil, self.ShowMagnetic)
         end
         local targettxt = self.gettext:GetEntry("TARGET",self.locale)
         local text = "Target: "..CoordText
@@ -2713,9 +2734,9 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
     local Coordinate = task.Target:GetCoordinate()
     local CoordText = ""
     if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
-      CoordText = Coordinate:ToStringA2G(Client)
+      CoordText = Coordinate:ToStringA2G(Client,nil,self.ShowMagnetic)
     else
-      CoordText = Coordinate:ToStringA2A(Client)
+      CoordText = Coordinate:ToStringA2A(Client,nil,self.ShowMagnetic)
     end
     -- Threat Level
     local ThreatLevel = task.Target:GetThreatLevelMax()
@@ -2818,6 +2839,9 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
     if self.UseSRS then
       if string.find(CoordText," BR, ") then
         CoordText = string.gsub(CoordText," BR, "," Bee, Arr, ")
+      end
+      if self.ShowMagnetic then
+        text=string.gsub(text,"°M|","° magnetic, ")
       end
       local ThreatLocaleTextTTS = self.gettext:GetEntry("THREATTEXTTTS",self.locale)
       local ttstext = string.format(ThreatLocaleTextTTS,self.MenuName or self.Name,ttsplayername,ttstaskname,ThreatLevelText, targets, CoordText)
