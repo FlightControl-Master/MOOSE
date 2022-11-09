@@ -3341,19 +3341,19 @@ function AWACS:_Showtask(Group)
             local alti = currenttask.Cluster.altitude or currenttask.Contact.altitude or currenttask.Contact.group:GetAltitude()
             local direction, direcTTS = self:_ToStringBRA(pposition,targetpos,alti)
             description = description .. "\nBRA "..direction
-		   descTTS = descTTS .."; "..direcTTS
+		        descTTS = descTTS .."; "..direcTTS
           end
         elseif currenttask.ToDo == AWACS.TaskDescription.ANCHOR or currenttask.ToDo == AWACS.TaskDescription.REANCHOR then
           local targetpos = currenttask.Target:GetCoordinate()
           local direction, direcTTS = self:_ToStringBR(pposition,targetpos)
           description = description .. "\nBR "..direction
-		 descTTS = descTTS .. "; "..direcTTS
+		      descTTS = descTTS .. "; "..direcTTS
         end
         local statustxt = self.gettext:GetEntry("STATUS",self.locale)  
         --MESSAGE:New(string.format("%s\n%s %s",description,statustxt,status),30,"AWACS",true):ToGroup(Group)
 	    local text = string.format("%s\n%s %s",description,statustxt,status)
         local ttstext = string.format("%s\n%s %s",descTTS,statustxt,status)
-		self:_NewRadioEntry(ttstext,text,GID,true,true,true)
+		    self:_NewRadioEntry(ttstext,text,GID,true,true,true)
       end
     end
    end
