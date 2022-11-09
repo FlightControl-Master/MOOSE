@@ -497,7 +497,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.47", -- #string
+  version = "0.2.48", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -3320,6 +3320,7 @@ function AWACS:_Showtask(Group)
         local targetstatus = currenttask.Target:GetState()
         local ToDo = currenttask.ToDo
         local description = currenttask.ScreenText
+	    local descTTS = currenttask.ScreenText
         local callsign = Callsign
         
         if self.debug then
@@ -3338,17 +3339,21 @@ function AWACS:_Showtask(Group)
           local targetpos = currenttask.Target:GetCoordinate()
           if pposition and targetpos then
             local alti = currenttask.Cluster.altitude or currenttask.Contact.altitude or currenttask.Contact.group:GetAltitude()
-            local direction = self:_ToStringBRA(pposition,targetpos,alti)
+            local direction, direcTTS = self:_ToStringBRA(pposition,targetpos,alti)
             description = description .. "\nBRA "..direction
+		   descTTS = descTTS .."; "..direcTTS
           end
         elseif currenttask.ToDo == AWACS.TaskDescription.ANCHOR or currenttask.ToDo == AWACS.TaskDescription.REANCHOR then
           local targetpos = currenttask.Target:GetCoordinate()
-          local direction = self:_ToStringBR(pposition,targetpos)
+          local direction, direcTTS = self:_ToStringBR(pposition,targetpos)
           description = description .. "\nBR "..direction
+		 descTTS = descTTS .. "; "..direcTTS
         end
         local statustxt = self.gettext:GetEntry("STATUS",self.locale)  
-        MESSAGE:New(string.format("%s\n%s %s",description,statustxt,status),30,"AWACS",true):ToGroup(Group)
-        
+        --MESSAGE:New(string.format("%s\n%s %s",description,statustxt,status),30,"AWACS",true):ToGroup(Group)
+	    local text = string.format("%s\n%s %s",description,statustxt,status)
+        local ttstext = string.format("%s\n%s %s",descTTS,statustxt,status)
+		self:_NewRadioEntry(ttstext,text,GID,true,true,true)
       end
     end
    end
