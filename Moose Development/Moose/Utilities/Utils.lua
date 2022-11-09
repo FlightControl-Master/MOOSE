@@ -2019,15 +2019,21 @@ end
 
 --- Ensure the passed object is a table. 
 -- @param #table Object The object that should be a table.
--- @return #table The object that is a table. Note that if the Object is `#nil` initially, and empty table `{}` is returned.
-function UTILS.EnsureTable(Object)
+-- @param #boolean ReturnNil If `true`, return `#nil` if `Object` is nil. Otherwise an empty table `{}` is returned.
+-- @return #table The object that now certainly *is* a table.
+function UTILS.EnsureTable(Object, ReturnNil)
 
   if Object then
     if type(Object)~="table" then
       Object={Object}
     end
   else
-    Object={}
+    if ReturnNil then
+      return nil      
+    else
+      Object={}   
+    end
+    
   end
 
   return Object
