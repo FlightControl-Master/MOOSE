@@ -10,14 +10,14 @@
 --
 -- ## Missions:
 --
--- ### [tbd](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/tbd)
+-- ### [AmmoTruck](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/AMT%20-%20AmmoTruck/AmmoTruck%20100%20-%20NTTR%20-%20Basic)
 --
 -- ===
 --
 -- ### Author : **applevangelist **
 --
 -- @module Functional.AmmoTruck
--- @image rtillery.JPG
+-- @image Artillery.JPG
 --
 -- Date: Nov 2022
 
@@ -44,7 +44,7 @@
 -- @field #boolean routeonroad Route truck on road if true (default)
 -- @extends Core.FSM#FSM
 
---- *Amateurs talk about tactics, but professionals study logistics.* - Gen. Robert H. Barrow, USMC
+--- *Amateurs talk about tactics, but professionals study logistics.* - General Robert H Barrow, USMC
 --
 -- Simple Class to re-arm your artillery with trucks.
 --
