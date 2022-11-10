@@ -2,7 +2,9 @@
 --
 -- ===
 --
--- **AMMOTRUCK** - Send a truck to supply artillery groups.
+-- ## Features: 
+-- 
+-- * Send a truck to supply artillery groups.
 --
 -- ===
 --
@@ -15,7 +17,7 @@
 -- ### Author : **applevangelist **
 --
 -- @module Functional.AmmoTruck
--- @image Functional.AmmoTruck.jpg
+-- @image rtillery.JPG
 --
 -- Date: Nov 2022
 
