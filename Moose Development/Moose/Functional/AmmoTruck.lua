@@ -12,10 +12,10 @@
 --
 -- ===
 --
--- ### Author : **applevangelist **
+-- ### Author : **applevangelist**
 --
 -- @module Functional.AmmoTruck
--- @image Functional.AmmoTruck.jpg
+-- @image Artillery.JPG
 --
 -- Date: Nov 2022
 

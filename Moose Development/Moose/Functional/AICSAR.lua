@@ -1,6 +1,8 @@
 --- **Functional** - AI CSAR system
+-- 
+-- ===
 --
--- ## Main Features:
+-- ## Features:
 --
 --    * Send out helicopters to downed pilots
 --    * Rescues players and AI alike
