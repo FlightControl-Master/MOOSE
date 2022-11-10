@@ -2,10 +2,12 @@
 --
 -- ===
 --
--- **MANTIS** - Moose derived  Modular, Automatic and Network capable Targeting and Interception System.
--- Controls a network of SAM sites. Uses detection to switch on the AA site closest to the enemy.   
--- Automatic mode (default since 0.8) can set-up your SAM site network automatically for you.   
--- Leverage evasiveness from SEAD, leverage attack range setting.   
+-- ## Features:
+--
+--  * Moose derived  Modular, Automatic and Network capable Targeting and Interception System.
+--  * Controls a network of SAM sites. Uses detection to switch on the AA site closest to the enemy.   
+--  * Automatic mode (default since 0.8) can set-up your SAM site network automatically for you.   
+--  * Leverage evasiveness from SEAD, leverage attack range setting.   
 --
 -- ===
 --
