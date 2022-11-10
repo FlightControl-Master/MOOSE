@@ -17,7 +17,7 @@
 -- @module Functional.AmmoTruck
 -- @image Functional.AmmoTruck.jpg
 --
--- Date: Sep 2022
+-- Date: Nov 2022
 
 -------------------------------------------------------------------------
 --- **AMMOTRUCK** class, extends Core.FSM#FSM
@@ -67,7 +67,7 @@
 -- 
 --            local ammotruck = AMMOTRUCK:New(truckset,ariset,coalition.side.BLUE,"Logistics",ZONE:FindByName("HomeZone") 
 --            
--- ## 2 Options
+-- ## 2 Options and their default values
 -- 
 --            ammotruck.ammothreshold = 5 -- send a truck when down to this many rounds
 --            ammotruck.remunidist = 20000 -- 20km - send trucks max this far from home
@@ -75,6 +75,7 @@
 --            ammotruck.waitingtime = 1800 -- 30 mintes - wait max this long until remunition is done
 --            ammotruck.monitor = -60 - 1 minute - AMMOTRUCK checks on things every 1 minute
 --            ammotruck.routeonroad = true - Trucks will **try** to drive on roads
+--            ammotruck.usearmygroup = false - if true, will make use of ARMYGROUP in the background (if used in DEV branch)
 -- 
 -- ## 3 FSM Events to shape mission
 -- 
@@ -207,6 +208,61 @@ function AMMOTRUCK:New(Truckset,Targetset,Coalition,Alias,Homezone)
   self:__Start(math.random(5,10))
   
   self:I(self.lid .. "Started")
+  
+  ------------------------
+  --- Pseudo Functions ---
+  ------------------------
+
+  --- Triggers the FSM event "Stop". Stops the AMMOTRUCK and all its event handlers.
+  -- @function [parent=#AMMOTRUCK] Stop
+  -- @param #AMMOTRUCK self
+
+  --- Triggers the FSM event "Stop" after a delay. Stops the AMMOTRUCK and all its event handlers.
+  -- @function [parent=#AMMOTRUCK] __Stop
+  -- @param #AMMOTRUCK self
+  -- @param #number delay Delay in seconds.
+  
+  --- On after "RouteTruck" event.
+  -- @function [parent=#AMMOTRUCK] OnAfterRouteTruck
+  -- @param #AMMOTRUCK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #AMMOTRUCK.data Truck
+  -- @param #AMMOTRUCK.data Artillery
+  
+    --- On after "TruckUnloading" event.
+  -- @function [parent=#AMMOTRUCK] OnAfterTruckUnloading
+  -- @param #AMMOTRUCK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #AMMOTRUCK.data Truck
+  
+    --- On after "TruckReturning" event.
+  -- @function [parent=#AMMOTRUCK] OnAfterTruckReturning
+  -- @param #AMMOTRUCK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #AMMOTRUCK.data Truck
+  
+    --- On after "RouteTruck" event.
+  -- @function [parent=#AMMOTRUCK] OnAfterRouteTruck
+  -- @param #AMMOTRUCK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #AMMOTRUCK.data Truck
+  
+    --- On after "TruckHome" event.
+  -- @function [parent=#AMMOTRUCK] OnAfterTruckHome
+  -- @param #AMMOTRUCK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #AMMOTRUCK.data Truck
+  
   return self
 end
 
@@ -266,7 +322,6 @@ end
 -- @return #AMMOTRUCK self 
 function AMMOTRUCK:GetAmmoStatus(Group)
   local ammotot, shells, rockets, bombs, missiles, narti = Group:GetAmmunition()
-  --self:I({ammotot, shells, rockets, bombs, missiles, narti})
   return rockets+missiles+narti
 end
 
@@ -284,7 +339,6 @@ function AMMOTRUCK:CheckWaitingTargets(dataset)
     local Tdiff = Tnow - truck.timestamp
     if Tdiff > self.waitingtime then
       local hasammo = self:GetAmmoStatus(truck.group)
-      --if truck.group:GetAmmunition() <= self.ammothreshold then
       if hasammo <= self.ammothreshold then
         truck.statusquo = AMMOTRUCK.State.OUTOFAMMO
       else
@@ -393,7 +447,6 @@ function AMMOTRUCK:CheckUnloadingTrucks(dataset)
     local Tnow = timer.getAbsTime()
     local Tpassed = Tnow - truck.timestamp
     local hasammo = self:GetAmmoStatus(truck.targetgroup)
-    --local ammostate = truck.targetgroup:GetAmmunition()
     if Tpassed > self.unloadtime and hasammo > self.ammothreshold then
       truck.statusquo = AMMOTRUCK.State.RETURNING
       truck.timestamp = timer.getAbsTime()
@@ -482,7 +535,6 @@ function AMMOTRUCK:CheckTrucksAlive()
           local trucker = ARMYGROUP:New(truck)
           trucker:Activate()
           newtruck.group = trucker
-          --self.opstrucks:AddObject(newtruck)
         end
       end
       newtruck.statusquo = AMMOTRUCK.State.IDLE
@@ -534,7 +586,6 @@ function AMMOTRUCK:onafterMonitor(From, Event, To)
   for _,_ari in pairs(self.targetlist) do
     local data = _ari -- #AMMOTRUCK.data
     if data.group and data.group:IsAlive() then
-      --data.ammo = data.group:GetAmmunition()
       data.ammo = self:GetAmmoStatus(data.group)
       data.timestamp = timer.getAbsTime()
       local text = string.format("Ari %s | Ammo %d | State %s",data.name,data.ammo,data.statusquo)
@@ -649,15 +700,11 @@ function AMMOTRUCK:onafterRouteTruck(From, Event, To, Truckdata, Aridata)
   local tgtzone = ZONE_GROUP:New(aridata.name,tgtgrp,30)
   local tgtcoord = tgtzone:GetRandomCoordinate(15)
   if self.hasarmygroup then
-    --local targetzone = ZONE_RADIUS:New(aridata.group:GetName(),tgtcoord:GetVec2(),10)
     local mission = AUFTRAG:NewONGUARD(tgtcoord)
     local oldmission = truckdata.group:GetMissionCurrent()
     if oldmission then oldmission:Cancel() end
-    --mission:SetVerbosity(3)
-    --mission:SetMissionSpeed(UTILS.KmphToKnots(30))
     mission:SetTime(5)
     mission:SetTeleport(false)
-    --mission:SetTime(nil,math.random(self.unloadtime,self.waitingtime))
     truckdata.group:AddMission(mission)
   elseif self.routeonroad then
     truckdata.group:RouteGroundOnRoad(tgtcoord,30)
@@ -688,6 +735,7 @@ end
    heading = heading < 180 and (360-heading) or (heading - 180)
    local cid = self.coalition == coalition.side.BLUE and country.id.USA or country.id.RUSSIA
    cid = self.coalition == coalition.side.NEUTRAL and country.id.UN_PEACEKEEPERS or cid
+   
    local ammo = {}
    for i=1,5 do
      ammo[i] = SPAWNSTATIC:NewFromType("ammo_cargo","Cargos",cid)
@@ -721,8 +769,6 @@ function AMMOTRUCK:onafterTruckReturning(From, Event, To, Truck)
     local mission = AUFTRAG:NewONGUARD(tgtcoord)
     local oldmission = truckdata.group:GetMissionCurrent()
     if oldmission then oldmission:Cancel() end
-    --mission:SetMissionSpeed(UTILS.KmphToKnots(30))
-    --mission:SetEnableMarkers()
     mission:SetTime(5)
     mission:SetTeleport(false)
     truckdata.group:AddMission(mission)

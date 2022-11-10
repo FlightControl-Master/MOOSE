@@ -54,6 +54,7 @@ __Moose.Include( 'Scripts/Moose/Cargo/CargoCrate.lua' )
 __Moose.Include( 'Scripts/Moose/Cargo/CargoGroup.lua' )
 
 __Moose.Include( 'Scripts/Moose/Functional/AICSAR.lua' )
+__Moose.Include( 'Scripts/Moose/Functional/AmmoTruck.lua' )
 __Moose.Include( 'Scripts/Moose/Functional/Artillery.lua' )
 __Moose.Include( 'Scripts/Moose/Functional/ATC_Ground.lua' )
 __Moose.Include( 'Scripts/Moose/Functional/Autolase.lua' )
