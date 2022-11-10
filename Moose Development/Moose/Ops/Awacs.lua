@@ -497,7 +497,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.48", -- #string
+  version = "0.2.49", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -2153,7 +2153,8 @@ function AWACS:_ToStringBULLS( Coordinate, ssml, TTS )
   local Distance = UTILS.Round( UTILS.MetersToNM( Distance ), 0 )
   if ssml then
     return string.format("%s <say-as interpret-as='characters'>%03d</say-as>, %d",bullseyename,Bearing,Distance)
-  elseif TTS then
+  end
+  if TTS then
     Bearing = self:_ToStringBullsTTS(Bearing)
     local zero = self.gettext:GetEntry("ZERO",self.locale)
     local BearingTTS = string.gsub(Bearing,"0",zero)
@@ -3320,7 +3321,7 @@ function AWACS:_Showtask(Group)
         local targetstatus = currenttask.Target:GetState()
         local ToDo = currenttask.ToDo
         local description = currenttask.ScreenText
-	    local descTTS = currenttask.ScreenText
+	      local descTTS = currenttask.ScreenText
         local callsign = Callsign
         
         if self.debug then
@@ -3341,19 +3342,21 @@ function AWACS:_Showtask(Group)
             local alti = currenttask.Cluster.altitude or currenttask.Contact.altitude or currenttask.Contact.group:GetAltitude()
             local direction, direcTTS = self:_ToStringBRA(pposition,targetpos,alti)
             description = description .. "\nBRA "..direction
-		        descTTS = descTTS .."; "..direcTTS
+		        descTTS = descTTS ..";BRA "..direcTTS
           end
         elseif currenttask.ToDo == AWACS.TaskDescription.ANCHOR or currenttask.ToDo == AWACS.TaskDescription.REANCHOR then
           local targetpos = currenttask.Target:GetCoordinate()
           local direction, direcTTS = self:_ToStringBR(pposition,targetpos)
           description = description .. "\nBR "..direction
-		      descTTS = descTTS .. "; "..direcTTS
+		      descTTS = descTTS .. ";BR "..direcTTS
         end
         local statustxt = self.gettext:GetEntry("STATUS",self.locale)  
         --MESSAGE:New(string.format("%s\n%s %s",description,statustxt,status),30,"AWACS",true):ToGroup(Group)
-	    local text = string.format("%s\n%s %s",description,statustxt,status)
-        local ttstext = string.format("%s\n%s %s",descTTS,statustxt,status)
-		    self:_NewRadioEntry(ttstext,text,GID,true,true,true)
+	      local text = string.format("%s\n%s %s",description,statustxt,status)
+        local ttstext = string.format("%s. %s. %s",managedgroup.CallSign,self.callsigntxt,descTTS)
+        ttstext = string.gsub(ttstext,"\\n",";")
+        ttstext = string.gsub(ttstext,"VID","V I D")
+		    self:_NewRadioEntry(ttstext,text,GID,true,true,false,false,true)
       end
     end
    end
@@ -3398,11 +3401,10 @@ function AWACS:_CheckIn(Group)
     
     local alphacheckbulls = self:_ToStringBULLS(Group:GetCoordinate())
     local alphacheckbullstts = self:_ToStringBULLS(Group:GetCoordinate(),false,true)
-
     local alpha = self.gettext:GetEntry("ALPHACHECK",self.locale)
     text = string.format("%s. %s. %s. %s",managedgroup.CallSign,self.callsigntxt,alpha,alphacheckbulls)
-    textTTS = text
-    
+    textTTS = string.format("%s. %s. %s. %s",managedgroup.CallSign,self.callsigntxt,alpha,alphacheckbullstts)
+   
     self:__CheckedIn(1,managedgroup.GID)
     
     if self.PlayerStationName then
