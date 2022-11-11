@@ -1,4 +1,4 @@
---- **AI** - (R2.5.1) - Models the intelligent transportation of infantry and other cargo.
+--- **AI** - Models the intelligent transportation of infantry and other cargo.
 --
 -- ===
 --

@@ -1,4 +1,4 @@
---- **Core** - MarkerOps_Base.
+--- **Core** - Tap into markers added to the F10 map by users.
 --
 -- **Main Features:**
 --

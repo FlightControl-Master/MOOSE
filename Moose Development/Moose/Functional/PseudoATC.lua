@@ -1,4 +1,4 @@
---- **Functional** - Rudimentary ATC.
+--- **Functional** - Basic ATC.
 --  
 -- ![Banner Image](..\Presentations\PSEUDOATC\PSEUDOATC_Main.jpg)
 -- 

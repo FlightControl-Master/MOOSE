@@ -1,4 +1,4 @@
---- **Actions** - ACT_ACCOUNT_ classes **account for** (detect, count & report) various DCS events occurring on @{Wrapper.Unit}s.
+--- **Actions** - ACT_ACCOUNT_ classes **account for** (detect, count & report) various DCS events occurring on UNITs.
 --
 -- ![Banner Image](..\Presentations\ACT_ACCOUNT\Dia1.JPG)
 --

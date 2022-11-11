@@ -1,4 +1,4 @@
---- **Functional** - Short Range Air Defense System
+--- **Functional** - Short Range Air Defense System.
 -- 
 -- ===
 --

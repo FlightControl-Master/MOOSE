@@ -1,4 +1,4 @@
---- **Core** - Manages various settings for running missions, consumed by moose classes and provides a menu system for players to tweak settings in running missions.
+--- **Core** - Manages various settings for missions, providing a menu for players to tweak settings in running missions.
 --
 -- ===
 --

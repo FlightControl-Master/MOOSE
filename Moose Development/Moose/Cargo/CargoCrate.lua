@@ -1,4 +1,4 @@
---- **Cargo** - Management of single cargo crates, which are based on a @{Wrapper.Static} object.
+--- **Cargo** - Management of single cargo crates, which are based on a STATIC object.
 --
 -- ===
 -- 
