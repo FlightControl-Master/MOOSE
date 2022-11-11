@@ -1007,10 +1007,10 @@ function AUFTRAG:NewHOVER(Coordinate, Altitude, Time, Speed, MissionAlt)
 
   mission.hoverSpeed = 0.1 -- the DCS Task itself will shortly be build with this so MPS
   mission.hoverTime = Time or 300
-  mission.missionSpeed = UTILS.KnotsToMps(Speed or 150)
-
+  self:SetMissionSpeed(Speed or 150)
+  self:SetMissionAltitude(MissionAlt or 1000)
+  
   -- Mission options:
-  mission.missionAltitude=mission.MissionAlt or UTILS.FeetToMeters(1000)
   mission.missionFraction=0.9
   mission.optionROE=ENUMS.ROE.ReturnFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
