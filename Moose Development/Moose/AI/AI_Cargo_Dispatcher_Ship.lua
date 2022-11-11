@@ -1,4 +1,4 @@
---- **AI** - (2.5.1) - Models the intelligent transportation of infantry and other cargo using Ships
+--- **AI** - Models the intelligent transportation of infantry and other cargo using Ships.
 --
 -- ## Features:
 -- 

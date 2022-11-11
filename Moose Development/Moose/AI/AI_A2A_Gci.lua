@@ -1,4 +1,4 @@
---- **AI** - (R2.2) - Models the process of Ground Controlled Interception (GCI) for airplanes.
+--- **AI** - Models the process of Ground Controlled Interception (GCI) for airplanes.
 --
 -- This is a class used in the @{AI.AI_A2A_Dispatcher}.
 --

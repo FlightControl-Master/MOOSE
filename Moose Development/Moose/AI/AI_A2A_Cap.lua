@@ -1,4 +1,4 @@
---- **AI** - (R2.2) - Models the process of Combat Air Patrol (CAP) for airplanes.
+--- **AI** - Models the process of Combat Air Patrol (CAP) for airplanes.
 --
 -- This is a class used in the @{AI.AI_A2A_Dispatcher}.
 --

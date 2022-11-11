@@ -1,4 +1,4 @@
---- **Core** - TEXTANDSOUND (MOOSE gettext) system
+--- **Core** - A Moose GetText system.
 --
 -- ===
 -- 

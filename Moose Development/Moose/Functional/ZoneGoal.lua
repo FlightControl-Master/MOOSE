@@ -1,4 +1,4 @@
---- **Functional (WIP)** - Base class that models processes to achieve goals involving a Zone.
+--- **Functional** - Base class that models processes to achieve goals involving a Zone.
 --
 -- ===
 -- 
