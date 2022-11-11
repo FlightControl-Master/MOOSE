@@ -1,4 +1,4 @@
---- **AI** - (R2.2) - Models the process of air patrol of airplanes.
+--- **AI** - Models the process of air patrol of airplanes.
 -- 
 -- ===
 -- 

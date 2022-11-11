@@ -1,4 +1,4 @@
---- **Functional** - Administer the scoring of player achievements, and create a CSV file logging the scoring events for use at team or squadron websites.
+--- **Functional** - Administer the scoring of player achievements, file and log the scoring events for use at websites.
 --
 -- ===
 --

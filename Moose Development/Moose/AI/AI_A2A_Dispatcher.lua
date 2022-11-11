@@ -1,4 +1,4 @@
---- **AI** - (R2.2) - Manages the process of an automatic A2A defense system based on an EWR network targets and coordinating CAP and GCI.
+--- **AI** - Manages the process of an automatic A2A defense system based on an EWR network targets and coordinating CAP and GCI.
 --
 -- ===
 --

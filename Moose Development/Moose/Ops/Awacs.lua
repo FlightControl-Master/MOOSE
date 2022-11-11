@@ -1,8 +1,10 @@
---- **Ops** - AWACS
+--- **Ops** - MOOSE AI AWACS Operations using text-to-speech.
 -- 
 -- ===
 -- 
--- **AWACS** - MOOSE AI AWACS Operations using text-to-speech.
+-- ## AWACS
+-- 
+-- * MOOSE AI AWACS Operations using text-to-speech.
 -- 
 -- ===
 --
