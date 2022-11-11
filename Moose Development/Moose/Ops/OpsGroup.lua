@@ -4305,8 +4305,9 @@ function OPSGROUP:_UpdateTask(Task, Mission)
       --self:I({Task.dcstask.params})
       local alt = Task.dcstask.params.hoverAltitude
       local time =Task.dcstask.params.hoverTime
-      local Speed=UTILS.MpsToKnots(Task.dcstask.params.missionSpeed) or UTILS.KmphToKnots(self.speedCruise)
-      local CruiseAlt = UTILS.FeetToMeters(Task.dcstask.params.missionAltitude)
+      local mSpeed = Task.dcstask.params.missionSpeed or self.speedCruise or 150
+      local Speed = UTILS.KmphToKnots(mSpeed)
+      local CruiseAlt = UTILS.FeetToMeters(Task.dcstask.params.missionAltitude or 1000)
       local helo = self:GetGroup()
       helo:SetSpeed(0.01,true)
       helo:SetAltitude(alt,true,"BARO")
