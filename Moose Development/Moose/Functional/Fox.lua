@@ -1,4 +1,4 @@
---- **Functional** - (R2.5) - Yet Another Missile Trainer.
+--- **Functional** - Yet Another Missile Trainer.
 -- 
 -- 
 -- Practice to evade missiles without being destroyed.
