@@ -1,4 +1,4 @@
---- Various routines.
+--- **Utilities** - Various routines.
 -- @module Utilities.Routines
 -- @image MOOSE.JPG
 env.setErrorMessageBoxEnabled( false )

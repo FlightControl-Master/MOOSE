@@ -1,4 +1,4 @@
---- **Utilities**  DCS Simple Text-To-Speech (STTS).
+--- **Utilities**  - DCS Simple Text-To-Speech (STTS).
 --
 --
 -- @module Utilities.STTS
