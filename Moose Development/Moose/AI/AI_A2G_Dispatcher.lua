@@ -1,4 +1,4 @@
---- **AI** - Create an automated A2G defense system based on a detection network of reconnaissance vehicles and air units, coordinating SEAD, BAI and CAS operations.
+--- **AI** - Create an automated A2G defense system with reconnaissance units, coordinating SEAD, BAI and CAS operations.
 -- 
 -- ===
 -- 
