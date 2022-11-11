@@ -1,4 +1,4 @@
---- **AI** - Create an automated AIR defense system based on a detection network of reconnaissance vehicles and air units, coordinating SEAD, BAI and CAP operations.
+--- **AI** - Create an automated AIR defense system with reconnaissance units, coordinating SEAD, BAI and CAP operations.
 -- 
 -- ===
 -- 

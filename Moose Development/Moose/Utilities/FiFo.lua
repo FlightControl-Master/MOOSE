@@ -1,4 +1,4 @@
----  **UTILS** - ClassicFiFo Stack.
+---  **UTILS** - Classic FiFo Stack.
 --
 -- ===
 --

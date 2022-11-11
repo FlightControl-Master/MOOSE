@@ -1,4 +1,4 @@
---- **Sound** - Simple Radio Standalone (SRS) Integration.
+--- **Sound** - Simple Radio Standalone (SRS) Integration and Text-to-Speech.
 --
 -- ===
 --

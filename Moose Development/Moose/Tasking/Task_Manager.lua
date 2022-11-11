@@ -1,4 +1,4 @@
---- This module contains the TASK_MANAGER class and derived classes.
+--- **Tasking** - This module contains the TASK_MANAGER class and derived classes.
 -- 
 -- ===
 -- 
