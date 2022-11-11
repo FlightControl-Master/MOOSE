@@ -1,4 +1,4 @@
---- This module contains derived utilities taken from the MIST framework, as well as a lot of added helpers from the MOOSE community.
+--- **Utilities** - Derived utilities taken from the MIST framework, added helpers from the MOOSE community.
 --
 -- ### Authors:
 --

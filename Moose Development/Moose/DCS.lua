@@ -1,4 +1,6 @@
---- **DCS API** Prototypes
+--- **DCS API** Prototypes.
+-- 
+-- ===
 -- 
 -- See the [Simulator Scripting Engine Documentation](https://wiki.hoggitworld.com/view/Simulator_Scripting_Engine_Documentation) on Hoggit for further explanation and examples.
 -- 
