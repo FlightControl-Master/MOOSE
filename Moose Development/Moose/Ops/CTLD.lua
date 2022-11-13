@@ -1073,7 +1073,7 @@ CTLD.UnitTypes = {
     --Actually it's longer, but the center coord is off-center of the model.
     ["UH-60L"] = {type="UH-60L", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
     ["AH-64D_BLK_II"] = {type="AH-64D_BLK_II", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 17, cargoweightlimit = 200}, -- 2 ppl **outside** the helo
-	  ["Bronco-OV-10A"] = {type="Bronco-OV-10A", crates= false, troops=true, cratelimit = 0, trooplimit = 5, length = 13, cargoweightlimit = 1450},
+    ["Bronco-OV-10A"] = {type="Bronco-OV-10A", crates= false, troops=true, cratelimit = 0, trooplimit = 5, length = 13, cargoweightlimit = 1450},
 }
 
 --- CTLD class version.
@@ -3509,11 +3509,11 @@ function CTLD:AddCTLDZone(Name, Type, Color, Active, HasBeacon, Shiplength, Ship
   end
   
   if Type == CTLD.CargoZoneType.SHIP then
-	local Ship = UNIT:FindByName(Name)
-	if not Ship then
-	    self:E(self.lid.."**** Ship does not exist: "..Name)
-		return self
-	end
+  local Ship = UNIT:FindByName(Name)
+  if not Ship then
+      self:E(self.lid.."**** Ship does not exist: "..Name)
+    return self
+  end
   end
   
   local ctldzone = {} -- #CTLD.CargoZone
@@ -3777,7 +3777,7 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
       zonecoord = ZoneUNIT:GetCoordinate()
       zoneradius = czone.shiplength
       zonewidth = czone.shipwidth
-	    zone = ZONE_UNIT:New( ZoneUNIT:GetName(), ZoneUNIT, zoneradius/2)
+      zone = ZONE_UNIT:New( ZoneUNIT:GetName(), ZoneUNIT, zoneradius/2)
     elseif ZONE:FindByName(zonename) then
       zone = ZONE:FindByName(zonename)
       self:T("Checking Zone: "..zonename)
