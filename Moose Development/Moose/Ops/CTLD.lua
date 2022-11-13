@@ -583,6 +583,7 @@ do
 -- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #number coalition Coalition side number, e.g. `coalition.side.RED`.
+-- @field #boolean debug
 -- @extends Core.Fsm#FSM
 
 --- *Combat Troop & Logistics Deployment (CTLD): Everyone wants to be a POG, until there\'s POG stuff to be done.* (Mil Saying)
@@ -1077,7 +1078,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.18"
+CTLD.version="1.0.19"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1311,6 +1312,92 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @function [parent=#CTLD] __Save
   -- @param #CTLD self
   -- @param #number delay Delay in seconds.
+  
+    --- FSM Function OnBeforeTroopsPickedUp.
+  -- @function [parent=#CTLD] OnBeforeTroopsPickedUp
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param #CTLD_CARGO Cargo Cargo troops.
+  -- @return #CTLD self
+  
+  --- FSM Function OnBeforeTroopsExtracted.
+  -- @function [parent=#CTLD] OnBeforeTroopsExtracted
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param #CTLD_CARGO Cargo Cargo troops.
+  -- @return #CTLD self
+    
+  --- FSM Function OnBeforeCratesPickedUp.
+  -- @function [parent=#CTLD] OnBeforeCratesPickedUp
+  -- @param #CTLD self
+  -- @param #string From State .
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param #CTLD_CARGO Cargo Cargo crate.
+  -- @return #CTLD self
+  
+   --- FSM Function OnBeforeTroopsDeployed.
+  -- @function [parent=#CTLD] OnBeforeTroopsDeployed
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
+  -- @return #CTLD self
+  
+  --- FSM Function OnBeforeCratesDropped.
+  -- @function [parent=#CTLD] OnBeforeCratesDropped
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param #table Cargotable Table of #CTLD_CARGO objects dropped.
+  -- @return #CTLD self
+  
+  --- FSM Function OnBeforeCratesBuild.
+  -- @function [parent=#CTLD] OnBeforeCratesBuild
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB build.
+  -- @return #CTLD self
+
+  --- FSM Function OnBeforeCratesRepaired.
+  -- @function [parent=#CTLD] OnBeforeCratesRepaired
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB repaired.
+  -- @return #CTLD self
+    
+  --- FSM Function OnBeforeTroopsRTB.
+  -- @function [parent=#CTLD] OnBeforeTroopsRTB
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
   
   --- FSM Function OnAfterTroopsPickedUp.
   -- @function [parent=#CTLD] OnAfterTroopsPickedUp
@@ -2590,9 +2677,7 @@ function CTLD:_UnloadTroops(Group, Unit)
               :InitRandomizeUnits(true,20,2)
               :InitDelayOff()
               :SpawnFromVec2(randomcoord)
-            if self.movetroopstowpzone and type ~= CTLD_CARGO.Enum.ENGINEERS then
-              self:_MoveGroupToZone(self.DroppedTroops[self.TroopCounter])
-            end
+            self:__TroopsDeployed(1, Group, Unit, self.DroppedTroops[self.TroopCounter],type)
           end -- template loop
           cargo:SetWasDropped(true)
           -- engineering group?
@@ -2604,7 +2689,6 @@ function CTLD:_UnloadTroops(Group, Unit)
           else
             self:_SendMessage(string.format("Dropped Troops %s into action!",name), 10, false, Group)
           end
-          self:__TroopsDeployed(1, Group, Unit, self.DroppedTroops[self.TroopCounter])
         end -- if type end
       end  -- cargotable loop
     else -- droppingatbase
@@ -2957,9 +3041,6 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation)
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
           :InitDelayOff()
           :SpawnFromVec2(randomcoord)
-      end
-      if self.movetroopstowpzone and canmove then
-        self:_MoveGroupToZone(self.DroppedTroops[self.TroopCounter])
       end
       if Repair then
         self:__CratesRepaired(1,Group,Unit,self.DroppedTroops[self.TroopCounter])
@@ -4215,7 +4296,7 @@ end
         self.EngineersInField[self.Engineers] = CTLD_ENGINEERING:New(name, grpname)
       end
       if self.eventoninject then
-         self:__TroopsDeployed(1,nil,nil,self.DroppedTroops[self.TroopCounter])
+         self:__TroopsDeployed(1,nil,nil,self.DroppedTroops[self.TroopCounter],type)
       end
     end -- if type end
     return self
@@ -4281,9 +4362,6 @@ end
           self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
             :InitDelayOff()
             :SpawnFromVec2(randomcoord)
-        end
-        if self.movetroopstowpzone and canmove then
-          self:_MoveGroupToZone(self.DroppedTroops[self.TroopCounter])
         end
         if self.eventoninject then
           self:__CratesBuild(1,nil,nil,self.DroppedTroops[self.TroopCounter])
@@ -4491,6 +4569,24 @@ end
     return self
   end
   
+  --- (Internal) FSM Function onafterTroopsDeployed.
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
+  -- @param #CTLD.CargoZoneType Type Type of Cargo deployed
+  -- @return #CTLD self
+  function CTLD:onafterTroopsDeployed(From, Event, To, Group, Unit, Troops, Type)
+    self:T({From, Event, To})
+    if self.movetroopstowpzone and Type ~= CTLD_CARGO.Enum.ENGINEERS then
+      self:_MoveGroupToZone(Troops)
+    end
+    return self
+  end
+  
   --- (Internal) FSM Function onbeforeCratesDropped.
   -- @param #CTLD self
   -- @param #string From State.
@@ -4540,6 +4636,23 @@ end
     return self
   end
 
+  --- (Internal) FSM Function onafterCratesBuild.
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB build.
+  -- @return #CTLD self
+  function CTLD:onafterCratesBuild(From, Event, To, Group, Unit, Vehicle)
+    self:T({From, Event, To})
+    if self.movetroopstowpzone then
+      self:_MoveGroupToZone(Vehicle)
+    end
+    return self
+  end
+  
   --- (Internal) FSM Function onbeforeTroopsRTB.
   -- @param #CTLD self
   -- @param #string From State.
