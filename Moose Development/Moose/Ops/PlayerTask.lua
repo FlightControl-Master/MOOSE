@@ -3320,7 +3320,7 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Set#SET_ZONE  RejectZoneSet Add a zone to the reject zone set.
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:AddRejectZone(RejectZoneSet)
+function PLAYERTASKCONTROLLER:AddRejectZoneSet(RejectZoneSet)
   self:T(self.lid.."AddRejectZoneSet")
   if self.Intel then
     self.Intel.rejectzoneset:AddSet(RejectZoneSet)
@@ -3348,7 +3348,7 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:RemoveRejectZone(RejectZone)
+function PLAYERTASKCONTROLLER:RemoveRejectZoneSet(RejectZone)
   self:T(self.lid.."RemoveRejectZone")
   if self.Intel then
     self.Intel:RemoveRejectZone(RejectZone)

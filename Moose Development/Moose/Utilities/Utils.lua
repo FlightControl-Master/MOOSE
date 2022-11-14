@@ -606,10 +606,12 @@ end
 -- acc- the accuracy of each easting/northing.  0, 1, 2, 3, 4, or 5.
 UTILS.tostringMGRS = function(MGRS, acc) --R2.1
 
-  if acc == 0 then
+  if acc <= 0 then
     return MGRS.UTMZone .. ' ' .. MGRS.MGRSDigraph
   else
-
+    
+    if acc > 5 then acc = 5 end
+    
     -- Test if Easting/Northing have less than 4 digits.
     --MGRS.Easting=123    -- should be 00123
     --MGRS.Northing=5432  -- should be 05432
