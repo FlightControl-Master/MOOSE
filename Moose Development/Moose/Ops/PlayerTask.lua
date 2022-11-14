@@ -506,7 +506,7 @@ function PLAYERTASK:MarkTargetOnF10Map(Text,Coalition,ReadOnly)
         self.TargetMarker:Remove()
       end
       local text = Text or "Target of "..self.lid
-      self.TargetMarker = MARKER:New(coordinate,text)
+      self.TargetMarker = MARKER:New(coordinate,"Target of "..self.lid)
       if ReadOnly then
         self.TargetMarker:ReadOnly()
       end
@@ -1402,7 +1402,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.46"
+PLAYERTASKCONTROLLER.version="0.1.47"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -2573,7 +2573,7 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
   
   task:_SetController(self)
   self.TaskQueue:Push(task)
-  self:__TaskAdded(-1,task)
+  self:__TaskAdded(10,task)
   
   return self
 end
@@ -2607,7 +2607,7 @@ function PLAYERTASKCONTROLLER:AddPlayerTaskToQueue(PlayerTask)
     PlayerTask:_SetController(self)
     PlayerTask:SetCoalition(self.Coalition)
     self.TaskQueue:Push(PlayerTask)
-    self:__TaskAdded(-1,PlayerTask)
+    self:__TaskAdded(10,PlayerTask)
   else
     self:E(self.lid.."***** NO valid PAYERTASK object sent!")
   end
@@ -3255,7 +3255,21 @@ function PLAYERTASKCONTROLLER:AddAgent(Recce)
   if self.Intel then
     self.Intel:AddAgent(Recce)
   else
-    self:E(self.lid.."NO detection has been set up (yet)!")
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- [User] Set up detection of STATIC objects. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #boolean OnOff Set to `true`for on and `false`for off.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SwitchDetectStatics(OnOff)
+  self:T(self.lid.."SwitchDetectStatics")
+  if self.Intel then
+    self.Intel:SetDetectStatics(OnOff)
+  else
+    self:E(self.lid.."***** NO detection has been set up (yet)!")
   end
   return self
 end
@@ -3269,7 +3283,21 @@ function PLAYERTASKCONTROLLER:AddAcceptZone(AcceptZone)
   if self.Intel then
     self.Intel:AddAcceptZone(AcceptZone)
   else
-    self:E(self.lid.."NO detection has been set up (yet)!")
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- [User] Add accept SET_ZONE to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Set#SET_ZONE AcceptZoneSet Add a SET_ZONE to the accept zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:AddAcceptZoneSet(AcceptZoneSet)
+  self:T(self.lid.."AddAcceptZoneSet")
+  if self.Intel then
+    self.Intel.acceptzoneset:AddSet(AcceptZoneSet)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
   end
   return self
 end
@@ -3283,7 +3311,21 @@ function PLAYERTASKCONTROLLER:AddRejectZone(RejectZone)
   if self.Intel then
     self.Intel:AddRejectZone(RejectZone)
   else
-    self:E(self.lid.."NO detection has been set up (yet)!")
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- [User] Add reject SET_ZONE to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Set#SET_ZONE  RejectZoneSet Add a zone to the reject zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:AddRejectZone(RejectZoneSet)
+  self:T(self.lid.."AddRejectZoneSet")
+  if self.Intel then
+    self.Intel.rejectzoneset:AddSet(RejectZoneSet)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
   end
   return self
 end
@@ -3297,7 +3339,7 @@ function PLAYERTASKCONTROLLER:RemoveAcceptZone(AcceptZone)
   if self.Intel then
     self.Intel:RemoveAcceptZone(AcceptZone)
   else
-    self:E(self.lid.."NO detection has been set up (yet)!")
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
   end
   return self
 end
@@ -3311,7 +3353,7 @@ function PLAYERTASKCONTROLLER:RemoveRejectZone(RejectZone)
   if self.Intel then
     self.Intel:RemoveRejectZone(RejectZone)
   else
-    self:E(self.lid.."NO detection has been set up (yet)!")
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
   end
   return self
 end
