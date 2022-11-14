@@ -335,7 +335,7 @@ do -- SETTINGS
 
   --- Sets the SETTINGS MGRS accuracy.
   -- @param #SETTINGS self
-  -- @param #number MGRS_Accuracy
+  -- @param #number MGRS_Accuracy 0 to 5
   -- @return #SETTINGS
   function SETTINGS:SetMGRS_Accuracy( MGRS_Accuracy )
     self.MGRS_Accuracy = MGRS_Accuracy
