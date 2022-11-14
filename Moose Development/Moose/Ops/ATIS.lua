@@ -590,7 +590,7 @@ _ATIS = {}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version = "0.9.10"
+ATIS.version = "0.9.11"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1319,8 +1319,10 @@ function ATIS:onafterStatus( From, Event, To )
     text = text .. string.format( ", Relay unit=%s (alive=%s)", tostring( self.relayunitname ), relayunitstatus )
   end
   self:T( self.lid .. text )
-
-  self:__Status( -60 )
+  
+  if not self:Is("Stopped") then
+    self:__Status( -60 )
+  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1348,9 +1350,11 @@ function ATIS:onafterCheckQueue( From, Event, To )
     end
 
   end
-
-  -- Check back in 5 seconds.  
-  self:__CheckQueue( -math.abs( self.dTQueueCheck ) )
+  
+  if not self:Is("Stopped") then
+    -- Check back in 5 seconds.  
+    self:__CheckQueue( -math.abs( self.dTQueueCheck ) )
+  end
 end
 
 --- Broadcast ATIS radio message.
