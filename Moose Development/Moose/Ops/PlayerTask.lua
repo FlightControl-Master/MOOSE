@@ -506,7 +506,7 @@ function PLAYERTASK:MarkTargetOnF10Map(Text,Coalition,ReadOnly)
         self.TargetMarker:Remove()
       end
       local text = Text or "Target of "..self.lid
-      self.TargetMarker = MARKER:New(coordinate,"Target of "..self.lid)
+      self.TargetMarker = MARKER:New(coordinate,text)
       if ReadOnly then
         self.TargetMarker:ReadOnly()
       end
@@ -567,7 +567,7 @@ function PLAYERTASK:IlluminateTarget(Power,Height)
   if self.Target then
     local coordinate = self.Target:GetAverageCoordinate()
     if coordinate then
-    local bcoord = COORDINATE:NewFromVec2( coordinate:GetVec2(), Height )
+	  local bcoord = COORDINATE:NewFromVec2( coordinate:GetVec2(), Height )
       bcoord:IlluminationBomb(Power)
     end
   end
@@ -923,6 +923,8 @@ do
 -- @field #number Coalition
 -- @field Core.Menu#MENU_MISSION MenuParent
 -- @field #boolean ShowMagnetic Also show magnetic angles
+-- @field #boolean InfoHasCoordinate
+-- @field #boolean InfoHasLLDDM
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1108,6 +1110,7 @@ do
 --                FLASHMENU = "Flash Directions Switch",
 --                BRIEFING = "Briefing",
 --                TARGETLOCATION ="Target location",
+--                COORDINATE = "Coordinate",
 --              },
 -- 
 -- e.g.
@@ -1236,6 +1239,8 @@ PLAYERTASKCONTROLLER = {
   Coalition          = nil,
   MenuParent         = nil,
   ShowMagnetic       = true,
+  InfoHasLLDDM       = false,
+  InfoHasCoordinate  = false,
   }
 
 ---
@@ -1333,6 +1338,7 @@ PLAYERTASKCONTROLLER.Messages = {
     FLASHMENU = "Flash Directions Switch",
     BRIEFING = "Briefing",
     TARGETLOCATION ="Target location",
+    COORDINATE = "Coordinate",
   },
   DE = {
     TASKABORT = "Auftrag abgebrochen!",
@@ -1396,13 +1402,14 @@ PLAYERTASKCONTROLLER.Messages = {
     FLASHOFF = "%s - Richtungsangaben einblenden ist AUS!",
     FLASHMENU = "Richtungsangaben Schalter",
     BRIEFING = "Briefing",
-    TARGETLOCATION ="Zielkoordinate",
+    TARGETLOCATION ="Zielposition",
+    COORDINATE = "Koordinate",
   },
 }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.47"
+PLAYERTASKCONTROLLER.version="0.1.48"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -1635,6 +1642,18 @@ end
 function PLAYERTASKCONTROLLER:SetEnableSmokeFlareTask()
   self:T(self.lid.."SetEnableSmokeFlareTask")
   self.noflaresmokemenu = false
+  return self
+end
+
+--- [User] Show info text on screen with a coordinate info in any case (OFF by default)
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #boolean OnOff Switch on = true or off = false
+-- @param #boolean LLDDM Show LLDDM = true or LLDMS = false
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetInfoShowsCoordinate(OnOff,LLDDM)
+  self:T(self.lid.."SetInfoShowsCoordinate")
+  self.InfoHasCoordinate = OnOff
+  self.InfoHasLLDDM = LLDDM
   return self
 end
 
@@ -2733,6 +2752,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
     local ttstaskname = string.format(ttsname,task.TTSType,task.PlayerTaskNr)
     local Coordinate = task.Target:GetCoordinate()
     local CoordText = ""
+    local CoordTextLLDM = nil
     if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
       CoordText = Coordinate:ToStringA2G(Client,nil,self.ShowMagnetic)
     else
@@ -2827,15 +2847,25 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
     else
       local keine = self.gettext:GetEntry("NONE",self.locale)
       clienttxt = clienttxt .. keine
-    end
-    
-    -- Task Report   
+    end  
     text = text .. clienttxt
+    textTTS = textTTS .. clienttxt
+    -- Task Report
+    if self.InfoHasCoordinate then
+      if self.InfoHasLLDDM then
+        CoordTextLLDM = Coordinate:ToStringLLDDM()
+      else
+        CoordTextLLDM = Coordinate:ToStringLLDMS()
+      end
+      -- TARGETLOCATION
+      local locatxt = self.gettext:GetEntry("COORDINATE",self.locale)
+      text = string.format("%s\n%s: %s",text,locatxt,CoordTextLLDM)
+    end
     if task:HasFreetext() and not ( task.Type == AUFTRAG.Type.CTLD or task.Type == AUFTRAG.Type.CSAR) then
       local brieftxt = self.gettext:GetEntry("BRIEFING",self.locale)
       text = text .. string.format("\n%s: ",brieftxt)..task:GetFreetext()
     end
-    textTTS = textTTS .. clienttxt
+
     if self.UseSRS then
       if string.find(CoordText," BR, ") then
         CoordText = string.gsub(CoordText," BR, "," Bee, Arr, ")
