@@ -567,7 +567,7 @@ function PLAYERTASK:IlluminateTarget(Power,Height)
   if self.Target then
     local coordinate = self.Target:GetAverageCoordinate()
     if coordinate then
-	  local bcoord = COORDINATE:NewFromVec2( coordinate:GetVec2(), Height )
+    local bcoord = COORDINATE:NewFromVec2( coordinate:GetVec2(), Height )
       bcoord:IlluminationBomb(Power)
     end
   end
@@ -1206,7 +1206,7 @@ do
 -- @field #PLAYERTASKCONTROLLER
 PLAYERTASKCONTROLLER = {
   ClassName          = "PLAYERTASKCONTROLLER",
-  verbose            =   true,
+  verbose            =   false,
   lid                =   nil,
   TargetQueue        =   nil,
   ClientSet          =   nil,
@@ -1409,7 +1409,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.48"
+PLAYERTASKCONTROLLER.version="0.1.49"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -1807,7 +1807,7 @@ function PLAYERTASKCONTROLLER:EnableMarkerOps(Tag)
   
   local function Handler(Keywords,Coord,Text)
     if self.verbose then
-      local m = MESSAGE:New(string.format("Target added from marker at: %s", Coord:ToStringLLDMS()),15,"INFO"):ToAll()
+      local m = MESSAGE:New(string.format("Target added from marker at: %s", Coord:ToStringA2G(nil, nil, self.ShowMagnetic)),15,"INFO"):ToAll()
     end
     self:AddTarget(Coord)
   end
@@ -1968,6 +1968,9 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
       --local text = string.format("%s, %s, switch to %s for task assignment!",EventData.IniPlayerName,self.MenuName or self.Name,freqtext)
       local text = string.format(switchtext,playername,self.MenuName or self.Name,freqtext)
       self.SRSQueue:NewTransmission(text,nil,self.SRS,timer.getAbsTime()+60,2,{EventData.IniGroup},text,30,self.BCFrequency,self.BCModulation)
+      if EventData.IniUnitName then
+        self:_BuildMenus(CLIENT:FindByName(EventData.IniUnitName))
+      end
     end
   end
   return self
