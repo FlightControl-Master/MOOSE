@@ -813,8 +813,13 @@ end
 --   Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):SpawnScheduled( 200, 0.4 ):InitRandomizeTemplate( Spawn_US_Platoon ):InitRandomizeRoute( 3, 3, 2000 )
 function SPAWN:InitRandomizeTemplate( SpawnTemplatePrefixTable )
   self:F( { self.SpawnTemplatePrefix, SpawnTemplatePrefixTable } )
-
-  self.SpawnTemplatePrefixTable = SpawnTemplatePrefixTable
+  
+  local temptable = {}
+  for _,_temp in pairs(SpawnTemplatePrefixTable) do
+    temptable[#temptable+1] = _temp
+  end
+  
+  self.SpawnTemplatePrefixTable = UTILS.ShuffleTable(temptable)
   self.SpawnRandomizeTemplate = true
 
   for SpawnGroupID = 1, self.SpawnMaxGroups do
@@ -848,16 +853,12 @@ end
 --   Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):SpawnScheduled( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
 --   Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):SpawnScheduled( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
 --
-function SPAWN:InitRandomizeTemplateSet( SpawnTemplateSet ) -- R2.3
+function SPAWN:InitRandomizeTemplateSet( SpawnTemplateSet )
   self:F( { self.SpawnTemplatePrefix } )
 
-  self.SpawnTemplatePrefixTable = SpawnTemplateSet:GetSetNames()
-  self.SpawnRandomizeTemplate = true
-
-  for SpawnGroupID = 1, self.SpawnMaxGroups do
-    self:_RandomizeTemplate( SpawnGroupID )
-  end
-
+  local setnames = SpawnTemplateSet:GetSetNames()
+  self:InitRandomizeTemplate(setnames)
+  
   return self
 end
 
@@ -921,8 +922,13 @@ end
 --
 function SPAWN:InitRandomizeZones( SpawnZoneTable )
   self:F( { self.SpawnTemplatePrefix, SpawnZoneTable } )
-
-  self.SpawnZoneTable = SpawnZoneTable
+  
+  local temptable = {}
+  for _,_temp in pairs(SpawnZoneTable) do
+    temptable[#temptable+1] = _temp
+  end
+  
+  self.SpawnZoneTable = UTILS.ShuffleTable(temptable)
   self.SpawnRandomizeZones = true
 
   for SpawnGroupID = 1, self.SpawnMaxGroups do
