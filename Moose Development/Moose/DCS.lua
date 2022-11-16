@@ -308,6 +308,11 @@ do -- country
   -- @field Argentinia
   -- @field Cyprus
   -- @field Slovenia
+  -- @field BOLIVIA
+  -- @field GHANA
+  -- @field NIGERIA
+  -- @field PERU
+  -- @field ECUADOR
 
   country = {} --#country
 
