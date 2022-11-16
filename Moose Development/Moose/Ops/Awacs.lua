@@ -1,4 +1,4 @@
---- **Ops** - AWACS
+--- **Ops** - MOOSE AI AWACS Operations using text-to-speech.
 -- 
 -- ===
 -- 
@@ -3348,15 +3348,15 @@ function AWACS:_Showtask(Group)
           local targetpos = currenttask.Target:GetCoordinate()
           local direction, direcTTS = self:_ToStringBR(pposition,targetpos)
           description = description .. "\nBR "..direction
-		      descTTS = descTTS .. ";BR "..direcTTS
+          descTTS = descTTS .. ";BR "..direcTTS
         end
         local statustxt = self.gettext:GetEntry("STATUS",self.locale)  
         --MESSAGE:New(string.format("%s\n%s %s",description,statustxt,status),30,"AWACS",true):ToGroup(Group)
-	      local text = string.format("%s\n%s %s",description,statustxt,status)
+        local text = string.format("%s\n%s %s",description,statustxt,status)
         local ttstext = string.format("%s. %s. %s",managedgroup.CallSign,self.callsigntxt,descTTS)
         ttstext = string.gsub(ttstext,"\\n",";")
         ttstext = string.gsub(ttstext,"VID","V I D")
-		    self:_NewRadioEntry(ttstext,text,GID,true,true,false,false,true)
+        self:_NewRadioEntry(ttstext,text,GID,true,true,false,false,true)
       end
     end
    end

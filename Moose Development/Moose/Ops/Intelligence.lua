@@ -159,7 +159,7 @@ INTEL.Ctype={
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.3.4"
+INTEL.version="0.3.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -815,8 +815,8 @@ function INTEL:UpdateIntel()
       end
     end
 
-    -- Filter unit categories.
-    if #self.filterCategory>0 then
+    -- Filter unit categories. Added check that we have a UNIT and not a STATIC object because :GetUnitCategory() is only available for units.
+    if #self.filterCategory>0 and unit:IsInstanceOf("UNIT") then
       local unitcategory=unit:GetUnitCategory()
       local keepit=false
       for _,filtercategory in pairs(self.filterCategory) do
@@ -1077,11 +1077,13 @@ function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisua
           RecceDetecting[name]=reccename
           self:T(string.format("Unit %s detect by %s", name, reccename))
         else
-          local static=STATIC:FindByName(name, false)
-          if static then
-            --env.info("FF found static "..name)
-            DetectedUnits[name]=static
-            RecceDetecting[name]=reccename
+          if self.detectStatics then
+            local static=STATIC:FindByName(name, false)
+            if static then
+              --env.info("FF found static "..name)
+              DetectedUnits[name]=static
+              RecceDetecting[name]=reccename
+            end
           end
         end
 

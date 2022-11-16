@@ -14,7 +14,7 @@
 --
 -- ===
 --
--- ### Author : **applevangelist **
+-- ### Author : **applevangelist**
 --
 -- @module Functional.AmmoTruck
 -- @image Artillery.JPG
