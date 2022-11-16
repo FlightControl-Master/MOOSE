@@ -217,6 +217,7 @@ end
 --- Sends a MESSAGE to a Group.
 -- @param #MESSAGE self
 -- @param Wrapper.Group#GROUP Group to which the message is displayed.
+-- @param Core.Settings#Settings Settings (Optional) Settings for message display.
 -- @return #MESSAGE Message object.
 function MESSAGE:ToGroup( Group, Settings )
   self:F( Group.GroupName )
@@ -241,6 +242,7 @@ end
 --- Sends a MESSAGE to a Unit. 
 -- @param #MESSAGE self
 -- @param Wrapper.Unit#UNIT Unit to which the message is displayed.
+-- @param Core.Settings#Settings Settings (Optional) Settings for message display.
 -- @return #MESSAGE Message object.
 function MESSAGE:ToUnit( Unit, Settings )
   self:F( Unit.IdentifiableName )
@@ -259,6 +261,41 @@ function MESSAGE:ToUnit( Unit, Settings )
     end
   end
   
+  return self
+end
+
+--- Sends a MESSAGE to a Country. 
+-- @param #MESSAGE self
+-- @param #number Country to which the message is displayed, e.g. country.id.GERMANY. For all country numbers see here: [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_country)
+-- @param Core.Settings#Settings Settings (Optional) Settings for message display.
+-- @return #MESSAGE Message object.
+function MESSAGE:ToCountry( Country, Settings )
+  self:F(Country )
+  if Country then   
+    if self.MessageType then
+      local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
+      self.MessageDuration = Settings:GetMessageTime( self.MessageType )
+      self.MessageCategory = "" -- self.MessageType .. ": "
+    end
+    if self.MessageDuration ~= 0 then
+      self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+      trigger.action.outTextForCountry( Country, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration, self.ClearScreen )
+    end
+  end  
+  return self
+end
+
+--- Sends a MESSAGE to a Country. 
+-- @param #MESSAGE self
+-- @param #number Country to which the message is displayed, , e.g. country.id.GERMANY. For all country numbers see here: [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_country)
+-- @param #boolean Condition Sends the message only if the condition is true.
+-- @param Core.Settings#Settings Settings (Optional) Settings for message display.
+-- @return #MESSAGE Message object.
+function MESSAGE:ToCountryIf( Country, Condition, Settings )
+  self:F(Country )
+  if Country and Condition == true then
+    self:ToCountry( Country, Settings )
+  end
   return self
 end
 
@@ -386,6 +423,7 @@ end
 
 --- Sends a MESSAGE to all players if the given Condition is true.
 -- @param #MESSAGE self
+-- @param #boolean Condition
 -- @return #MESSAGE
 function MESSAGE:ToAllIf( Condition )
 
