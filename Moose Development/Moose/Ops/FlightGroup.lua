@@ -335,11 +335,13 @@ function FLIGHTGROUP:New(group)
   self:HandleEvent(EVENTS.Kill,            self.OnEventKill)
   self:HandleEvent(EVENTS.PlayerLeaveUnit, self.OnEventPlayerLeaveUnit)
 
+  -- Initialize group.
+  self:_InitGroup()
+
   -- Init waypoints.
   self:_InitWaypoints()
 
-  -- Initialize group.
-  self:_InitGroup()
+
 
   -- Start the status monitoring.
   self.timerStatus=TIMER:New(self.Status, self):Start(1, 30)
@@ -3373,8 +3375,8 @@ function FLIGHTGROUP:_InitGroup(Template)
     self.isMobile=false
   end  
 
-  -- Cruise speed limit 350 kts for fixed and 80 knots for rotary wings.
-  local speedCruiseLimit=self.isHelo and UTILS.KnotsToKmph(80) or UTILS.KnotsToKmph(350)
+  -- Cruise speed limit 380 kts for fixed and 110 knots for rotary wings.
+  local speedCruiseLimit=self.isHelo and UTILS.KnotsToKmph(110) or UTILS.KnotsToKmph(380)
 
   -- Cruise speed: 70% of max speed but within limit.
   self.speedCruise=math.min(self.speedMax*0.7, speedCruiseLimit)
@@ -3774,9 +3776,15 @@ function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitud
 
   -- Speed in knots.
   Speed=Speed or self:GetSpeedCruise()
+  
+  -- Alt type default is barometric (ASL). For helos we use radar (AGL).
+  local alttype=COORDINATE.WaypointAltType.BARO
+  if self.isHelo then
+    alttype=COORDINATE.WaypointAltType.RADIO
+  end
 
   -- Create air waypoint.
-  local wp=coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(Speed), true, nil, {})
+  local wp=coordinate:WaypointAir(alttype, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(Speed), true, nil, {})
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)
@@ -3824,7 +3832,7 @@ function FLIGHTGROUP:AddWaypointLanding(Airbase, Speed, AfterWaypointWithID, Alt
   local Coordinate=Airbase:GetCoordinate()
 
   -- Create air waypoint.
-  local wp=Coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO,COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed, nil, Airbase, {}, "Landing Temp", nil)
+  local wp=Coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed, nil, Airbase, {}, "Landing Temp", nil)
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)

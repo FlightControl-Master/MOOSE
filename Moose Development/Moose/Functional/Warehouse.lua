@@ -2647,6 +2647,13 @@ function WAREHOUSE:SetWarehouseZone(zone)
   return self
 end
 
+--- Get the warehouse zone.
+-- @param #WAREHOUSE self
+-- @return Core.Zone#ZONE The warehouse zone.
+function WAREHOUSE:GetWarehouseZone()
+  return self.zone
+end
+
 --- Set auto defence on. When the warehouse is under attack, all ground assets are spawned automatically and will defend the warehouse zone.
 -- @param #WAREHOUSE self
 -- @return #WAREHOUSE self
