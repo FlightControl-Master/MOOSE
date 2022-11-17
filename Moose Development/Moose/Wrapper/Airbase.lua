@@ -504,6 +504,12 @@ AIRBASE.MarianaIslands = {
 -- * AIRBASE.SouthAtlantic.Puerto_Williams
 -- * AIRBASE.SouthAtlantic.Puerto_Natales
 -- * AIRBASE.SouthAtlantic.El_Calafate
+-- * AIRBASE.SouthAtlantic.Puerto_Santa_Cruz
+-- * AIRBASE.SouthAtlantic.Comandante_Luis_Piedrabuena
+-- * AIRBASE.SouthAtlantic.Aerodromo_De_Tolhuin
+-- * AIRBASE.SouthAtlantic.Porvenir_Airfield
+-- * AIRBASE.SouthAtlantic.Almirante_Schroeders
+-- * AIRBASE.SouthAtlantic.Rio_Turbio
 -- 
 --@field MarianaIslands
 AIRBASE.SouthAtlantic={
@@ -520,6 +526,12 @@ AIRBASE.SouthAtlantic={
   ["Puerto_Williams"]="Puerto Williams",
   ["Puerto_Natales"]="Puerto Natales",
   ["El_Calafate"]="El Calafate",
+  ["Puerto_Santa_Cruz"]="Puerto Santa Cruz",
+  ["Comandante_Luis_Piedrabuena"]="Comandante Luis Piedrabuena",
+  ["Aerodromo_De_Tolhuin"]="Aerodromo De Tolhuin",
+  ["Porvenir_Airfield"]="Porvenir Airfield",
+  ["Almirante_Schroeders"]="Almirante Schroeders",
+  ["Rio_Turbio"]="Rio Turbio",
 }
 
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
