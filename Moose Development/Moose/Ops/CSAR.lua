@@ -30,7 +30,7 @@
 -- @module Ops.CSAR
 -- @image OPS_CSAR.jpg
 
--- Date: October 2022
+-- Date: November 2022
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -114,6 +114,7 @@
 --         mycsar.countryneutral = country.id.UN_PEACEKEEPERS
 --         mycsar.topmenuname = "CSAR" -- set the menu entry name
 --         mycsar.ADFRadioPwr = 1000 -- ADF Beacons sending with 1KW as default
+--         mycsar.PilotWeight = 80 --  Loaded pilots weigh 80kgs each
 --         
 -- ## 2.1 Experimental Features
 -- 
@@ -233,6 +234,7 @@ CSAR = {
   allheligroupset = nil,
   topmenuname = "CSAR",
   ADFRadioPwr = 1000,
+  PilotWeight = 80,
 }
 
 --- Downed pilots info.
@@ -270,7 +272,7 @@ CSAR.AircraftType["Bronco-OV-10A"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.15"
+CSAR.version="1.0.16"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -278,7 +280,7 @@ CSAR.version="1.0.15"
 
 -- DONE: SRS Integration (to be tested)
 -- TODO: Maybe - add option to smoke/flare closest MASH
--- TODO: shagrat Add cargoWeight to helicopter when pilot boarded
+-- DONE: shagrat Add cargoWeight to helicopter when pilot boarded
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -418,10 +420,13 @@ function CSAR:New(Coalition, Template, Alias)
   self.wetfeettemplate = nil
   self.usewetfeet = false
   
-  -- added 0.1.8
+  -- added 1.0.15
   self.allowbronco = false  -- set to true to use the Bronco mod as a CSAR plane
   
   self.ADFRadioPwr = 1000
+  
+  -- added 1.0.16
+  self.PilotWeight = 80
       
   -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
@@ -1397,7 +1402,7 @@ end
 -- @return #CSAR self
 function CSAR:_UpdateUnitCargoMass(_heliName)
   self:T(self.lid .. " _UpdateUnitCargoMass")
-  local calculatedMass = self:_PilotsOnboard(_heliName)*80
+  local calculatedMass = self:_PilotsOnboard(_heliName)*(self.PilotWeight or 80)
   local Unit = UNIT:FindByName(_heliName)
   if Unit then
     Unit:SetUnitInternalCargo(calculatedMass)
