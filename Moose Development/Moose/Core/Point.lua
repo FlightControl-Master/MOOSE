@@ -504,7 +504,7 @@ do -- COORDINATE
     local gotscenery=false
 
     local function EvaluateZone(ZoneObject)
-
+      BASE:I({ZoneObject})
       if ZoneObject then
 
         -- Get category of scanned object.

@@ -927,7 +927,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
   local ZoneCoord = self:GetCoordinate()
   local ZoneRadius = self:GetRadius()
 
-  self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
+  --self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
 
   local SphereSearch = {
     id = world.VolumeType.SPHERE,

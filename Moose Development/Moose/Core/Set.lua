@@ -6814,7 +6814,7 @@ do -- SET_SCENERY
   -- @param Core.Zone#ZONE Zone The zone to be scanned. Can be a ZONE_RADIUS (round) or a ZONE_POLYGON (e.g. Quad-Point)
   -- @return #SET_SCENERY
   function SET_SCENERY:NewFromZone(Zone)
-    local zone = Zone -- Core.Zone#ZONE_POLYGON
+    local zone = Zone -- Core.Zone#ZONE_RADIUS
     if type(Zone) == "string" then
       zone = ZONE:FindByName(Zone)
     end
