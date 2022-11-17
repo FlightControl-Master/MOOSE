@@ -1799,16 +1799,36 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string Tag (Optional) The tagname to use to identify commands, defaults to "TASK"
 -- @return #PLAYERTASKCONTROLLER self
+-- @usage
+-- Enable the function like so:
+--          mycontroller:EnableMarkerOps("TASK")
+-- Then as a player in a client slot, you can add a map marker on the F10 map. Next edit the text
+-- in the marker to make it identifiable, e.g
+-- 
+-- TASK Name=Tanks Sochi, Text=Destroy tank group located near Sochi!
+-- 
+-- Where **TASK** is the tag that tells the controller this mark is a target location (must).
+-- **Name=** ended by a comma **,** tells the controller the supposed menu entry name (optional). No extra spaces! End with a comma!
+-- **Text=** tells the controller the supposed free text task description (optional, only taken if **Name=** is present first). No extra spaces!
 function PLAYERTASKCONTROLLER:EnableMarkerOps(Tag)
   self:T(self.lid.."EnableMarkerOps")
    
   local tag = Tag or "TASK"
-  local MarkerOps = MARKEROPS_BASE:New(tag)
+  local MarkerOps = MARKEROPS_BASE:New(tag,{"Name","Text"},true)
   
   local function Handler(Keywords,Coord,Text)
     if self.verbose then
       local m = MESSAGE:New(string.format("Target added from marker at: %s", Coord:ToStringA2G(nil, nil, self.ShowMagnetic)),15,"INFO"):ToAll()
+      local m = MESSAGE:New(string.format("Text: %s", Text),15,"INFO"):ToAll()
     end
+    local menuname = string.match(Text,"Name=(.+),")
+    local freetext = string.match(Text,"Text=(.+)")
+    if menuname then
+      Coord.menuname = menuname
+      if freetext then
+       Coord.freetext = freetext
+      end
+    end 
     self:AddTarget(Coord)
   end
   
@@ -2114,6 +2134,12 @@ function PLAYERTASKCONTROLLER:_CheckTargetQueue()
  if self.TargetQueue:Count() > 0 then
   local object = self.TargetQueue:Pull()
   local target = TARGET:New(object)
+  if object.menuname then
+    target.menuname = object.menuname
+    if object.freetext then
+      target.freetext = object.freetext
+    end
+  end
   self:_AddTask(target)
  end  
  return self
@@ -2543,9 +2569,23 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
     local countg = enemysetg:Count()
     local counts = enemysets:Count()
     if countg > 0 then
+      -- observe Tags coming from MarkerOps
+      if Target.menuname then
+        enemysetg.menuname = Target.menuname
+        if Target.freetext then
+          enemysetg.freetext = Target.freetext
+        end
+      end
       self:AddTarget(enemysetg)
     end
     if counts > 0 then
+      -- observe Tags coming from MarkerOps
+      if Target.menuname then
+        enemysets.menuname = Target.menuname
+        if Target.freetext then
+          enemysets.freetext = Target.freetext
+        end
+      end
       self:AddTarget(enemysets)
     end
     return self
@@ -2564,6 +2604,14 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
   end
   
   local task = PLAYERTASK:New(type,Target,self.repeatonfailed,self.repeattimes,ttstype)
+  
+  -- observe Tags coming from MarkerOps
+  if Target.menuname then
+    task:SetMenuName(Target.menuname)
+    if Target.freetext then
+      task:AddFreetext(Target.freetext)
+    end
+  end
   
   task.coalition = self.Coalition
   
