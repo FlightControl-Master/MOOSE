@@ -413,6 +413,8 @@ function CHIEF:New(Coalition, AgentSet, Alias)
   self:AddTransition("*",                "DefconChange",                  "*")   -- Change defence condition. 
   self:AddTransition("*",                "StrategyChange",                "*")   -- Change strategy condition.
 
+  self:AddTransition("*",                "LegionLost",                    "*")   -- Out of our legions was lost to the enemy.
+
   ------------------------
   --- Pseudo Functions ---
   ------------------------
@@ -646,6 +648,33 @@ function CHIEF:New(Coalition, AgentSet, Alias)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is being attacked. 
+
+
+  --- Triggers the FSM event "LegionLost".
+  -- @function [parent=#CHIEF] LegionLost
+  -- @param #CHIEF self
+  -- @param Ops.Legion#LEGION Legion The legion that was lost.
+  -- @param DCS#coalition.side Coalition which captured the warehouse.
+  -- @param DCS#country.id Country which has captured the warehouse.
+
+  --- Triggers the FSM event "LegionLost".
+  -- @function [parent=#CHIEF] __LegionLost
+  -- @param #CHIEF self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.Legion#LEGION Legion The legion that was lost.
+  -- @param DCS#coalition.side Coalition which captured the warehouse.
+  -- @param DCS#country.id Country which has captured the warehouse.
+
+  --- On after "LegionLost" event.
+  -- @function [parent=#CHIEF] OnAfterLegionLost
+  -- @param #CHIEF self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Legion#LEGION Legion The legion that was lost.
+  -- @param DCS#coalition.side Coalition which captured the warehouse.
+  -- @param DCS#country.id Country which has captured the warehouse.
+
 
   return self
 end
@@ -1111,6 +1140,21 @@ function CHIEF:AddLegion(Legion)
 
   -- Add legion to the commander.
   self.commander:AddLegion(Legion)
+  
+  return self
+end
+
+--- Remove a LEGION to the chief's commander.
+-- @param #CHIEF self
+-- @param Ops.Legion#LEGION Legion The legion to add.
+-- @return #CHIEF self
+function CHIEF:RemoveLegion(Legion)
+
+  -- Set chief of the legion.
+  Legion.chief=nil
+
+  -- Add legion to the commander.
+  self.commander:RemoveLegion(Legion)
   
   return self
 end
