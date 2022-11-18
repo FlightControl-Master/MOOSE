@@ -62,6 +62,7 @@
 --   * @{#CONTROLLABLE.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the controllable at a specified altitude.
 --   * @{#CONTROLLABLE.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified altitude during a specified duration with a specified speed.
 --   * @{#CONTROLLABLE.TaskRefueling}: (AIR) Refueling from the nearest tanker. No parameters.
+--   * @{#CONTROLLABLE.TaskRecoveryTanker}: (AIR) Set  group to act as recovery tanker for a naval group.
 --   * @{#CONTROLLABLE.TaskRoute}: (AIR + GROUND) Return a Mission task to follow a given route defined by Points.
 --   * @{#CONTROLLABLE.TaskRouteToVec2}: (AIR + GROUND) Make the Controllable move to a given point.
 --   * @{#CONTROLLABLE.TaskRouteToVec3}: (AIR + GROUND) Make the Controllable move to a given point.
@@ -1259,7 +1260,7 @@ end
 
 --- (AIR) Orbit at a position with at a given altitude and speed. Optionally, a race track pattern can be specified.
 -- @param #CONTROLLABLE self
--- @param Core.Point#COORDINATE Coord Coordinate at which the CONTROLLABLE orbits. Can also be given as a `DCS#Vec3` or `DCS#Vec2` object.
+-- @param Core.Point#COORDINATE Coord Coordinate at which the CONTROLLABLE orbits.
 -- @param #number Altitude Altitude in meters of the orbit pattern. Default y component of Coord.
 -- @param #number Speed Speed [m/s] flying the orbit pattern. Default 128 m/s = 250 knots.
 -- @param Core.Point#COORDINATE CoordRaceTrack (Optional) If this coordinate is specified, the CONTROLLABLE will fly a race-track pattern using this and the initial coordinate.
@@ -1268,11 +1269,11 @@ function CONTROLLABLE:TaskOrbit( Coord, Altitude, Speed, CoordRaceTrack )
 
   local Pattern = AI.Task.OrbitPattern.CIRCLE
 
-  local P1 = {x=Coord.x, y=Coord.z or Coord.y}
+  local P1 = Coord:GetVec2()
   local P2 = nil
   if CoordRaceTrack then
     Pattern = AI.Task.OrbitPattern.RACE_TRACK
-    P2 = {x=CoordRaceTrack.x, y=CoordRaceTrack.z or CoordRaceTrack.y}
+    P2 = CoordRaceTrack:GetVec2()
   end
 
   local Task = {
@@ -1364,6 +1365,31 @@ function CONTROLLABLE:TaskRefueling()
     params = {},
   }
 
+  return DCSTask
+end
+
+--- (AIR) Act as Recovery Tanker for a naval/carrier group.
+-- @param #CONTROLLABLE self
+-- @param Wrapper.Group#GROUP CarrierGroup
+-- @param #number Speed Speed in meters per second
+-- @param #number Altitude Altitude the tanker orbits at in meters
+-- @param #number LastWptNumber (optional) Waypoint of carrier group that when reached, ends the recovery tanker task
+-- @return DCS#Task The DCS task structure.
+function CONTROLLABLE:TaskRecoveryTanker(CarrierGroup, Speed, Altitude, LastWptNumber)
+  
+  local LastWptFlag = type(LastWptNumber) == "number" and true or false
+  
+  local DCSTask = { 
+   id = "RecoveryTanker",
+   params = {
+       groupId = CarrierGroup:GetID(),
+       speed = Speed, 
+       altitude = Altitude, 
+       lastWptIndexFlag = LastWptFlag, 
+       lastWptIndex = LastWptNumber
+      }
+    }
+  
   return DCSTask
 end
 

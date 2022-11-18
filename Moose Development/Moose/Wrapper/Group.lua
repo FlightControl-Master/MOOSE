@@ -2855,3 +2855,27 @@ function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
   
   return callsign
 end
+
+---
+-- @param #GROUP self
+-- @param Wrapper.Group#GROUP CarrierGroup.
+-- @param #number Speed Speed in knots.
+-- @param #boolean ToKIAS If true, adjust speed to altitude (KIAS).
+-- @param #number Altitude Altitude the tanker orbits at in feet.
+-- @param #number Delay (optional) Set the task after this many seconds. Defaults to one.
+-- @param #number LastWaypoint (optional) Waypoint number of carrier group that when reached, ends the recovery tanker task.
+-- @return #GROUP self
+function GROUP:SetAsRecoveryTanker(CarrierGroup,Speed,ToKIAS,Altitude,Delay,LastWaypoint)
+  
+  local speed = ToKIAS == true and UTILS.KnotsToAltKIAS(Speed,Altitude) or Speed
+  speed = UTILS.KnotsToMps(speed)
+  
+  local alt = UTILS.FeetToMeters(Altitude)
+  local delay = Delay or 1
+  
+  local task = self:TaskRecoveryTanker(CarrierGroup,speed,alt,LastWaypoint)
+
+  self:SetTask(task,delay)
+  
+  return self  
+end
