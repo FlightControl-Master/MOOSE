@@ -553,6 +553,13 @@ function LEGION:IsCohort(CohortName)
   return false
 end
 
+--- Get name of legion. This is the alias of the warehouse.
+-- @param #LEGION self
+-- @return #string Name of legion.
+function LEGION:GetName()
+  return self.alias
+end
+
 --- Get cohort of an asset.
 -- @param #LEGION self
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
@@ -1628,6 +1635,34 @@ function LEGION:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet, T
 
   -- Call parent warehouse function.
   self:GetParent(self, LEGION).onafterRequestSpawned(self, From, Event, To, Request, CargoGroupSet, TransportGroupSet)
+
+end
+
+--- On after "Captured" event.
+-- @param #LEGION self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param DCS#coalition.side Coalition which captured the warehouse.
+-- @param DCS#country.id Country which has captured the warehouse.
+function LEGION:onafterCaptured(From, Event, To, Coalition, Country)
+
+  -- Call parent warehouse function.
+  self:GetParent(self, LEGION).onafterCaptured(self, From, Event, To, Coalition, Country)
+  
+  
+  if self.chief then
+    -- Trigger event for chief and commander.
+    self.chief.commander:LegionLost(self, Coalition, Country)
+    self.chief:LegionLost(self, Coalition, Country)
+    -- Remove legion from chief and commander.
+    self.chief:RemoveLegion(self)    
+  elseif self.commander then
+    -- Trigger event.
+    self.commander:LegionLost(self, Coalition,Country)
+    -- Remove legion from commander.
+    self.commander:RemoveLegion(self)
+  end
 
 end
 
