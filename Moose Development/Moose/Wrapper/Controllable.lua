@@ -1377,7 +1377,7 @@ end
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskRecoveryTanker(CarrierGroup, Speed, Altitude, LastWptNumber)
   
-  local LastWptFlag = LastWptNumber and true or false
+  local LastWptFlag = type(LastWptNumber) == "number" and true or false
   
   local DCSTask = { 
    id = "RecoveryTanker",
