@@ -2877,5 +2877,8 @@ function GROUP:SetAsRecoveryTanker(CarrierGroup,Speed,ToKIAS,Altitude,Delay,Last
 
   self:SetTask(task,delay)
   
+  local tankertask = self:EnRouteTaskTanker()
+  self:PushTask(tankertask,delay+2)
+  
   return self  
 end
