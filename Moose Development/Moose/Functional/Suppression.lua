@@ -85,6 +85,7 @@
 -- @field #boolean eventmoose If true, events are handled by MOOSE. If false, events are handled directly by DCS eventhandler. Default true.
 -- @field Core.Zone#ZONE BattleZone 
 -- @field #boolean AutoEngage
+-- @field #table waypoints Waypoints of the group as defined in the ME.
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 -- 
 
@@ -265,6 +266,7 @@ SUPPRESSION={
   DefaultAlarmState = "Auto",
   DefaultROE        = "Weapon Free",
   eventmoose        = true,
+  waypoints         = {},
 }
 
 --- Enumerator of possible rules of engagement.
@@ -295,7 +297,7 @@ SUPPRESSION.MenuF10=nil
 
 --- PSEUDOATC version.
 -- @field #number version
-SUPPRESSION.version="0.9.3"
+SUPPRESSION.version="0.9.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -309,7 +311,7 @@ SUPPRESSION.version="0.9.3"
 --- Creates a new AI_suppression object.
 -- @param #SUPPRESSION self
 -- @param Wrapper.Group#GROUP group The GROUP object for which suppression should be applied.
--- @return #SUPPRESSION SUPPRESSION object or *nil* if group does not exist or is not a ground group.
+-- @return #SUPPRESSION self
 function SUPPRESSION:New(group)
 
   -- Inherits from FSM_CONTROLLABLE
@@ -320,7 +322,7 @@ function SUPPRESSION:New(group)
     self.lid=string.format("SUPPRESSION %s | ", tostring(group:GetName()))
     self:T(self.lid..string.format("SUPPRESSION version %s. Activating suppressive fire for group %s", SUPPRESSION.version, group:GetName()))
   else
-    self:E(self.lid.."SUPPRESSION | Requested group does not exist! (Has to be a MOOSE group.)")
+    self:E("SUPPRESSION | Requested group does not exist! (Has to be a MOOSE group)")
     return nil
   end
   
@@ -1186,6 +1188,16 @@ function SUPPRESSION:onafterFightBack(Controllable, From, Event, To)
   -- Set ROE and alarm state back to default.
   self:_SetROE()
   self:_SetAlarmState()
+  
+  local group=Controllable --Wrapper.Group#GROUP
+  
+  local Waypoints = group:GetTemplateRoutePoints()
+  
+--  env.info("FF waypoints",showMessageBox)
+--  self:I(Waypoints)
+  
+  group:Route(Waypoints, 5)
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1251,7 +1263,7 @@ function SUPPRESSION:onafterFallBack(Controllable, From, Event, To, AttackUnit)
   self:_SetROE(SUPPRESSION.ROE.Hold)
   
   -- Set alarm state to GREEN and let the unit run away.
-  self:_SetAlarmState(SUPPRESSION.AlarmState.Green)
+  self:_SetAlarmState(SUPPRESSION.AlarmState.Auto)
 
   -- Make the group run away.
   self:_Run(Coord, self.Speed, self.Formation, self.FallbackWait)
@@ -1537,7 +1549,7 @@ end
 -- @param #SUPPRESSION self
 -- @param Core.Event#EVENTDATA EventData
 function SUPPRESSION:_OnEventHit(EventData)
-  self:F(EventData)
+  self:F3(EventData)
 
   local GroupNameSelf=self.Controllable:GetName()
   local GroupNameTgt=EventData.TgtGroupName
@@ -1676,15 +1688,15 @@ end
 function SUPPRESSION:_Run(fin, speed, formation, wait)
 
   speed=speed or 20
-  formation=formation or "Off road"
+  formation=formation or ENUMS.Formation.Vehicle.OffRoad
   wait=wait or 30
 
-  local group=self.Controllable -- Wrapper.Controllable#CONTROLLABLE
+  local group=self.Controllable -- Wrapper.Group#GROUP
   
   if group and group:IsAlive() then
   
     -- Clear all tasks.
-    group:ClearTasks()
+    --group:ClearTasks()
     
     -- Current coordinates of group.
     local ini=group:GetCoordinate()
@@ -1694,55 +1706,16 @@ function SUPPRESSION:_Run(fin, speed, formation, wait)
     
     -- Heading from ini to fin.
     local heading=self:_Heading(ini, fin)
-    
-    -- Number of waypoints.
-    local nx
-    if dist <= 50 then
-      nx=2
-    elseif dist <= 100 then
-      nx=3
-    elseif dist <= 500 then
-      nx=4
-    else
-      nx=5
-    end
-    
-    -- Number of intermediate waypoints.
-    local dx=dist/(nx-1)
-      
+   
     -- Waypoint and task arrays.
     local wp={}
     local tasks={}
     
     -- First waypoint is the current position of the group.
     wp[1]=ini:WaypointGround(speed, formation)
-    tasks[1]=group:TaskFunction("SUPPRESSION._Passing_Waypoint", self, 1, false)
   
     if self.Debug then  
       local MarkerID=ini:MarkToAll(string.format("Waypoing %d of group %s (initial)", #wp, self.Controllable:GetName()))
-    end
-    
-    self:T2(self.lid..string.format("Number of waypoints %d", nx))
-    for i=1,nx-2 do
-    
-      local x=dx*i
-      local coord=ini:Translate(x, heading)
-      
-      wp[#wp+1]=coord:WaypointGround(speed, formation)
-      tasks[#tasks+1]=group:TaskFunction("SUPPRESSION._Passing_Waypoint", self, #wp, false)
-      
-      self:T2(self.lid..string.format("%d x = %4.1f", i, x))
-      if self.Debug then
-        local MarkerID=coord:MarkToAll(string.format("Waypoing %d of group %s", #wp, self.Controllable:GetName()))
-      end
-      
-    end
-    self:T2(self.lid..string.format("Total distance: %4.1f", dist))
-    
-    -- Final waypoint.
-    wp[#wp+1]=fin:WaypointGround(speed, formation)
-    if self.Debug then
-      local MarkerID=fin:MarkToAll(string.format("Waypoing %d of group %s (final)", #wp, self.Controllable:GetName()))
     end
     
       -- Task to hold.
@@ -1753,25 +1726,15 @@ function SUPPRESSION:_Run(fin, speed, formation, wait)
     local TaskComboFin = {}
     TaskComboFin[#TaskComboFin+1] = group:TaskFunction("SUPPRESSION._Passing_Waypoint", self, #wp, true)
     TaskComboFin[#TaskComboFin+1] = group:TaskControlled(TaskHold, ConditionWait)
-  
-    -- Add final task.  
-    tasks[#tasks+1]=group:TaskCombo(TaskComboFin)
-  
-    -- Original waypoints of the group.
-    local Waypoints = group:GetTemplateRoutePoints()
     
-    -- New points are added to the default route.
-    for i,p in ipairs(wp) do
-      table.insert(Waypoints, i, wp[i])
-    end
-    
-    -- Set task for all waypoints.
-    for i,wp in ipairs(Waypoints) do
-      group:SetTaskWaypoint(Waypoints[i], tasks[i])
-    end
+    -- Final waypoint.
+    wp[#wp+1]=fin:WaypointGround(speed, formation, TaskComboFin)
+    if self.Debug then
+      local MarkerID=fin:MarkToAll(string.format("Waypoing %d of group %s (final)", #wp, self.Controllable:GetName()))
+    end    
     
     -- Submit task and route group along waypoints.
-    group:Route(Waypoints)
+    group:Route(wp)
     
   else
     self:E(self.lid..string.format("ERROR: Group is not alive!"))
@@ -1790,7 +1753,7 @@ function SUPPRESSION._Passing_Waypoint(group, Fsm, i, final)
   local text=string.format("Group %s passing waypoint %d (final=%s)", group:GetName(), i, tostring(final))
   MESSAGE:New(text,10):ToAllIf(Fsm.Debug)
   if Fsm.Debug then
-    env.info(self.lid..text)
+    env.info(Fsm.lid..text)
   end
 
   if final then
@@ -1891,7 +1854,7 @@ function SUPPRESSION:_GetLife()
     
     local groupstrength=#units/self.IniGroupStrength*100
     
-    self.T2(self.lid..string.format("Group %s _GetLife nunits = %d", self.Controllable:GetName(), #units))
+    self:T2(self.lid..string.format("Group %s _GetLife nunits = %d", self.Controllable:GetName(), #units))
     
     for _,unit in pairs(units) do
     
