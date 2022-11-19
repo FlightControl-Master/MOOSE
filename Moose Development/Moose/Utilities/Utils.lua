@@ -1,4 +1,4 @@
---- This module contains derived utilities taken from the MIST framework, as well as a lot of added helpers from the MOOSE community.
+--- **Utilities** - Derived utilities taken from the MIST framework, added helpers from the MOOSE community.
 --
 -- ### Authors:
 --
@@ -9,7 +9,7 @@
 --   * FlightControl : Rework to OO framework.
 --   * And many more
 --
--- @module Utils
+-- @module Utilities.Utils
 -- @image MOOSE.JPG
 
 
@@ -606,10 +606,12 @@ end
 -- acc- the accuracy of each easting/northing.  0, 1, 2, 3, 4, or 5.
 UTILS.tostringMGRS = function(MGRS, acc) --R2.1
 
-  if acc == 0 then
+  if acc <= 0 then
     return MGRS.UTMZone .. ' ' .. MGRS.MGRSDigraph
   else
-
+    
+    if acc > 5 then acc = 5 end
+    
     -- Test if Easting/Northing have less than 4 digits.
     --MGRS.Easting=123    -- should be 00123
     --MGRS.Northing=5432  -- should be 05432
@@ -740,7 +742,9 @@ function UTILS.RemoveMark(MarkID, Delay)
   if Delay and Delay>0 then
     TIMER:New(UTILS.RemoveMark, MarkID):Start(Delay)
   else
-    trigger.action.removeMark(MarkID)
+    if MarkID then
+      trigger.action.removeMark(MarkID)
+    end
   end
 end
 
@@ -1062,9 +1066,13 @@ end
 -- @return #number Distance between the vectors.
 function UTILS.VecDist2D(a, b)
 
+  local d = math.huge
+  
+  if (not a) or (not b) then return d end
+
   local c={x=b.x-a.x, y=b.y-a.y}
 
-  local d=math.sqrt(c.x*c.x+c.y*c.y)
+  d=math.sqrt(c.x*c.x+c.y*c.y)
 
   return d
 end
@@ -1075,10 +1083,15 @@ end
 -- @param DCS#Vec3 b Vector in 3D with x, y, z components.
 -- @return #number Distance between the vectors.
 function UTILS.VecDist3D(a, b)
-
+  
+    
+  local d = math.huge
+  
+  if (not a) or (not b) then return d end
+  
   local c={x=b.x-a.x, y=b.y-a.y, z=b.z-a.z}
 
-  local d=math.sqrt(UTILS.VecDot(c, c))
+  d=math.sqrt(UTILS.VecDot(c, c))
 
   return d
 end
@@ -1412,7 +1425,7 @@ function UTILS.CheckMemory(output)
 end
 
 
---- Get the coalition name from its numerical ID, e.g. coaliton.side.RED.
+--- Get the coalition name from its numerical ID, e.g. coalition.side.RED.
 -- @param #number Coalition The coalition ID.
 -- @return #string The coalition name, i.e. "Neutral", "Red" or "Blue" (or "Unknown").
 function UTILS.GetCoalitionName(Coalition)
@@ -2004,6 +2017,28 @@ function UTILS.GenerateLaserCodes()
         _count = _count + 1
     end
     return jtacGeneratedLaserCodes
+end
+
+--- Ensure the passed object is a table. 
+-- @param #table Object The object that should be a table.
+-- @param #boolean ReturnNil If `true`, return `#nil` if `Object` is nil. Otherwise an empty table `{}` is returned.
+-- @return #table The object that now certainly *is* a table.
+function UTILS.EnsureTable(Object, ReturnNil)
+
+  if Object then
+    if type(Object)~="table" then
+      Object={Object}
+    end
+  else
+    if ReturnNil then
+      return nil      
+    else
+      Object={}   
+    end
+    
+  end
+
+  return Object
 end
 
 --- Function to save an object to a file

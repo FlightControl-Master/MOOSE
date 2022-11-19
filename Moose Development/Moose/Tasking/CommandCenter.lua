@@ -1,4 +1,4 @@
---- **Tasking** -- A command center governs multiple missions, and takes care of the reporting and communications.
+--- **Tasking** - A command center governs multiple missions, and takes care of the reporting and communications.
 -- 
 -- **Features:**
 -- 

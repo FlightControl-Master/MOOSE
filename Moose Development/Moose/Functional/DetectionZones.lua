@@ -1,8 +1,12 @@
+--- **Functional** - Captures the class DETECTION_ZONES.
+-- @module Functional.DetectionZones
+-- @image MOOSE.JPG
+
 do -- DETECTION_ZONES
 
   --- @type DETECTION_ZONES
   -- @field DCS#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
-  -- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Wrapper.Unit}s, @{Zone}s, the center @{Wrapper.Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
+  -- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Wrapper.Unit}s, @{Core.Zone}s, the center @{Wrapper.Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
   -- @extends Functional.Detection#DETECTION_BASE
 
   --- (old, to be revised ) Detect units within the battle zone for a list of @{Core.Zone}s detecting targets following (a) detection method(s), 
@@ -40,27 +44,27 @@ do -- DETECTION_ZONES
     ClassName = "DETECTION_ZONES",
     DetectionZoneRange = nil,
   }
-  
-  
+
+
   --- DETECTION_ZONES constructor.
   -- @param #DETECTION_ZONES self
-  -- @param Core.Set#SET_ZONE DetectionSetZone The @{Set} of ZONE_RADIUS.
+  -- @param Core.Set#SET_ZONE DetectionSetZone The @{Core.Set} of ZONE_RADIUS.
   -- @param DCS#Coalition.side DetectionCoalition The coalition of the detection.
   -- @return #DETECTION_ZONES
   function DETECTION_ZONES:New( DetectionSetZone, DetectionCoalition )
-  
+
     -- Inherits from DETECTION_BASE
     local self = BASE:Inherit( self, DETECTION_BASE:New( DetectionSetZone ) ) -- #DETECTION_ZONES
-  
+
     self.DetectionSetZone = DetectionSetZone  -- Core.Set#SET_ZONE
     self.DetectionCoalition = DetectionCoalition
-    
+
     self._SmokeDetectedUnits = false
     self._FlareDetectedUnits = false
     self._SmokeDetectedZones = false
     self._FlareDetectedZones = false
     self._BoundDetectedZones = false
-    
+
     return self
   end
 

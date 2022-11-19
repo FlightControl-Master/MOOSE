@@ -1,4 +1,4 @@
---- **AI** - (R2.2) - Manages the process of an automatic A2A defense system based on an EWR network targets and coordinating CAP and GCI.
+--- **AI** - Manages the process of an automatic A2A defense system based on an EWR network targets and coordinating CAP and GCI.
 --
 -- ===
 --
@@ -57,8 +57,8 @@
 --
 -- ## 2. Which type of EWR will I setup? Grouping based per AREA, per TYPE or per UNIT? (Later others will follow).
 --
--- The MOOSE framework leverages the @{Detection} classes to perform the EWR detection.
--- Several types of @{Detection} classes exist, and the most common characteristics of these classes is that they:
+-- The MOOSE framework leverages the @{Functional.Detection} classes to perform the EWR detection.
+-- Several types of @{Functional.Detection} classes exist, and the most common characteristics of these classes is that they:
 --
 --    * Perform detections from multiple FACs as one co-operating entity.
 --    * Communicate with a Head Quarters, which consolidates each detection.
@@ -126,7 +126,7 @@
 --    * polygon zones
 --    * moving zones
 --
--- Depending on the type of zone selected, a different @{Zone} object needs to be created from a ZONE_ class.
+-- Depending on the type of zone selected, a different @{Core.Zone} object needs to be created from a ZONE_ class.
 --
 -- ## 14. For each Squadron doing CAP, what are the time intervals and CAP amounts to be performed?
 --
@@ -356,7 +356,7 @@ do -- AI_A2A_DISPATCHER
   --
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia9.JPG)
   --
-  -- If it's a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Core.Zone#ZONE_BASE}.
+  -- If it's a cold war then the **borders of red and blue territory** need to be defined using a @{Core.Zone} object derived from @{Core.Zone#ZONE_BASE}.
   -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than
   -- it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are.
   -- In a hot war the borders are effectively defined by the ground based radar coverage of a coalition.
@@ -592,7 +592,7 @@ do -- AI_A2A_DISPATCHER
   --      A2ADispatcher:SetSquadronCap( "Maykop", CAPZoneMiddle, 4000, 8000, 600, 800, 800, 1200, "RADIO" )
   --      A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
   --
-  -- Note the different @{Zone} MOOSE classes being used to create zones of different types. Please click the @{Zone} link for more information about the different zone types.
+  -- Note the different @{Core.Zone} MOOSE classes being used to create zones of different types. Please click the @{Core.Zone} link for more information about the different zone types.
   -- Zones can be circles, can be setup in the mission editor using trigger zones, but can also be setup in the mission editor as polygons and in this case GROUP objects are being used!
   --
   -- ## 7.2. Set the squadron to execute CAP:
@@ -1148,7 +1148,7 @@ do -- AI_A2A_DISPATCHER
 
     self:I( "Captured " .. AirbaseName )
 
-    -- Now search for all squadrons located at the airbase, and sanatize them.
+    -- Now search for all squadrons located at the airbase, and sanitize them.
     for SquadronName, Squadron in pairs( self.DefenderSquadrons ) do
       if Squadron.AirbaseName == AirbaseName then
         Squadron.ResourceCount = -999 -- The base has been captured, and the resources are eliminated. No more spawning.
@@ -1304,7 +1304,7 @@ do -- AI_A2A_DISPATCHER
   --- Define a border area to simulate a **cold war** scenario.
   -- A **cold war** is one where CAP aircraft patrol their territory but will not attack enemy aircraft or launch GCI aircraft unless enemy aircraft enter their territory. In other words the EWR may detect an enemy aircraft but will only send aircraft to attack it if it crosses the border.
   -- A **hot war** is one where CAP aircraft will intercept any detected enemy aircraft and GCI aircraft will launch against detected enemy aircraft without regard for territory. In other words if the ground radar can detect the enemy aircraft then it will send CAP and GCI aircraft to attack it.
-  -- If it's a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Core.Zone#ZONE_BASE}. This method needs to be used for this.
+  -- If it's a cold war then the **borders of red and blue territory** need to be defined using a @{Core.Zone} object derived from @{Core.Zone#ZONE_BASE}. This method needs to be used for this.
   -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. In a hot war the borders are effectively defined by the ground based radar coverage of a coalition. Set the noborders parameter to 1
   -- @param #AI_A2A_DISPATCHER self
   -- @param Core.Zone#ZONE_BASE BorderZone An object derived from ZONE_BASE, or a list of objects derived from ZONE_BASE.
@@ -1713,7 +1713,7 @@ do -- AI_A2A_DISPATCHER
     -- Get free parking for fighter aircraft.
     local nfreeparking = DefenderSquadron.Airbase:GetFreeParkingSpotsNumber( AIRBASE.TerminalType.FighterAircraft, true )
 
-    -- Take number of free parking spots if no resource count was specifed.
+    -- Take number of free parking spots if no resource count was specified.
     DefenderSquadron.ResourceCount = DefenderSquadron.ResourceCount or nfreeparking
 
     -- Check that resource count is not larger than free parking spots.
@@ -1758,7 +1758,7 @@ do -- AI_A2A_DISPATCHER
   -- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
   -- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
   -- @param #number EngageAltType The altitude type to engage, which is a string "BARO" defining Barometric or "RADIO" defining radio controlled altitude.
-  -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the CAP will be executed.
+  -- @param Core.Zone#ZONE_BASE Zone The @{Core.Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the CAP will be executed.
   -- @param #number PatrolMinSpeed The minimum speed at which the cap can be executed.
   -- @param #number PatrolMaxSpeed The maximum speed at which the cap can be executed.
   -- @param #number PatrolFloorAltitude The minimum altitude at which the cap can be executed.
@@ -1825,7 +1825,7 @@ do -- AI_A2A_DISPATCHER
   --- Set a CAP for a Squadron.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The squadron name.
-  -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the CAP will be executed.
+  -- @param Core.Zone#ZONE_BASE Zone The @{Core.Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the CAP will be executed.
   -- @param #number PatrolFloorAltitude The minimum altitude at which the cap can be executed.
   -- @param #number PatrolCeilingAltitude the maximum altitude at which the cap can be executed.
   -- @param #number PatrolMinSpeed The minimum speed at which the cap can be executed.

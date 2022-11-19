@@ -1,11 +1,11 @@
---- **Tasking** -- Base class to model tasks for players to transport cargo.
+--- **Tasking** - Base class to model tasks for players to transport cargo.
 -- 
 -- ## Features:
 -- 
 --   * TASK_CARGO is the **base class** for:
 --   
 --     * @{Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT}
---     * @{Tasking.Task_Cargo_CSAR#TASK_CARGO_CSAR}
+--     * @{Tasking.Task_CARGO_CSAR#TASK_CARGO_CSAR}
 -- 
 -- 
 -- ===
@@ -34,7 +34,7 @@
 -- The following TASK_CARGO_ classes are important, as they implement the CONCRETE tasks:
 -- 
 --   * @{Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT}: Defines a task for a human player to transport a set of cargo between various zones.
---   * @{Tasking.Task_Cargo_CSAR#TASK_CARGO_CSAR}: Defines a task for a human player to Search and Rescue wounded pilots.
+--   * @{Tasking.Task_CARGO_CSAR#TASK_CARGO_CSAR}: Defines a task for a human player to Search and Rescue wounded pilots.
 -- 
 -- However! The menu system and basic usage of the TASK_CARGO classes is explained in the @{#TASK_CARGO} class description.
 -- So please browse further below to understand how to use it from a player perspective!
@@ -387,9 +387,9 @@
 -- 
 -- Please consult the documentation how to implement the derived classes of SET_CARGO in:
 -- 
---   - @{Tasking.Task_Cargo#TASK_CARGO}: Documents the main methods how to handle the cargo tasking from a mission designer perspective.
---   - @{Tasking.Task_Cargo#TASK_CARGO_TRANSPORT}: Documents the specific methods how to handle the cargo transportation tasking from a mission designer perspective.
---   - @{Tasking.Task_Cargo#TASK_CARGO_CSAR}: Documents the specific methods how to handle the cargo CSAR tasking from a mission designer perspective.
+--   - @{Tasking.Task_CARGO#TASK_CARGO}: Documents the main methods how to handle the cargo tasking from a mission designer perspective.
+--   - @{Tasking.Task_CARGO#TASK_CARGO_TRANSPORT}: Documents the specific methods how to handle the cargo transportation tasking from a mission designer perspective.
+--   - @{Tasking.Task_CARGO#TASK_CARGO_CSAR}: Documents the specific methods how to handle the cargo CSAR tasking from a mission designer perspective.
 --   
 -- 
 -- ===
@@ -400,7 +400,7 @@
 -- 
 -- ===
 --   
--- @module Tasking.Task_Cargo
+-- @module Tasking.Task_CARGO
 -- @image MOOSE.JPG
 
 do -- TASK_CARGO
@@ -438,8 +438,8 @@ do -- TASK_CARGO
   -- 
   -- ### 2.1.1) Cargo Tasks  
   -- 
-  --   - @{Tasking.Task_Cargo#TASK_CARGO_TRANSPORT} - Models the transportation of cargo to deployment zones. 
-  --   - @{Tasking.Task_Cargo#TASK_CARGO_CSAR} - Models the rescue of downed friendly pilots from behind enemy lines.    
+  --   - @{Tasking.Task_CARGO#TASK_CARGO_TRANSPORT} - Models the transportation of cargo to deployment zones. 
+  --   - @{Tasking.Task_CARGO#TASK_CARGO_CSAR} - Models the rescue of downed friendly pilots from behind enemy lines.    
   --   
   -- ## 2.2) Handle TASK_CARGO Events ...
   -- 

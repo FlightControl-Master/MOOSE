@@ -6,7 +6,7 @@
 --
 -- ### Author: **TAW CougarNL**, *funkyfranky*
 --
--- @module Utilities.PROFILER
+-- @module Utilities.Profiler
 -- @image Utils_Profiler.jpg
 
 --- PROFILER class.
@@ -34,11 +34,11 @@
 -- # The PROFILER Concept
 --
 -- Profile your lua code. This tells you, which functions are called very often and which consume most real time.
--- With this information you can optimize the perfomance of your code.
+-- With this information you can optimize the performance of your code.
 --
 -- # Prerequisites
 --
--- The modules **os**, **io** and **lfs** need to be desanizied. Comment out the lines
+-- The modules **os**, **io** and **lfs** need to be de-sanitized. Comment out the lines
 --
 --     --sanitizeModule('os')
 --     --sanitizeModule('io')

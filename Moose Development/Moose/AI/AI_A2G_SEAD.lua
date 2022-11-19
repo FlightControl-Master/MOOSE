@@ -1,6 +1,6 @@
---- **AI** -- Models the process of air to ground SEAD engagement for airplanes and helicopters.
+--- **AI** - Models the process of air to ground SEAD engagement for airplanes and helicopters.
 --
--- This is a class used in the @{AI_A2G_Dispatcher}.
+-- This is a class used in the @{AI.AI_A2G_Dispatcher}.
 -- 
 -- ===
 -- 
@@ -65,9 +65,9 @@
 -- 
 -- ![Zone](..\Presentations\AI_GCI\Dia12.JPG)
 -- 
--- An optional @{Zone} can be set, 
+-- An optional @{Core.Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_Cap#AI_A2G_SEAD.SetEngageZone}() to define that Zone.
+-- Use the method @{AI.AI_CAP#AI_CAP_ZONE.SetEngageZone}() to define that Zone. -- TODO: Documentation. Check that this is actually correct. The originally referenced class does not exist.
 --  
 -- ===
 -- 
@@ -75,8 +75,6 @@
 AI_A2G_SEAD = {
   ClassName = "AI_A2G_SEAD",
 }
-
-
 
 --- Creates a new AI_A2G_SEAD object
 -- @param #AI_A2G_SEAD self
@@ -86,7 +84,7 @@ AI_A2G_SEAD = {
 -- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
 -- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
 -- @param DCS#AltitudeType EngageAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
@@ -111,7 +109,7 @@ end
 -- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
 -- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
 -- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
@@ -127,7 +125,7 @@ end
 --- Evaluate the attack and create an AttackUnitTask list. 
 -- @param #AI_A2G_SEAD self
 -- @param Core.Set#SET_UNIT AttackSetUnit The set of units to attack.
--- @param Wrappper.Group#GROUP DefenderGroup The group of defenders.
+-- @param Wrapper.Group#GROUP DefenderGroup The group of defenders.
 -- @param #number EngageAltitude The altitude to engage the targets.
 -- @return #AI_A2G_SEAD self
 function AI_A2G_SEAD:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageAltitude )

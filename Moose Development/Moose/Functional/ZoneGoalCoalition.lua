@@ -1,4 +1,4 @@
---- **Functional (WIP)** -- Base class that models processes to achieve goals involving a Zone for a Coalition.
+--- **Functional** - Base class that models processes to achieve goals involving a Zone for a Coalition.
 --
 -- ===
 --
@@ -53,7 +53,7 @@ do -- ZoneGoal
 
   --- ZONE_GOAL_COALITION Constructor.
   -- @param #ZONE_GOAL_COALITION self
-  -- @param Core.Zone#ZONE Zone A @{Zone} object with the goal to be achieved.
+  -- @param Core.Zone#ZONE Zone A @{Core.Zone} object with the goal to be achieved.
   -- @param DCSCoalition.DCSCoalition#coalition Coalition The initial coalition owning the zone. Default coalition.side.NEUTRAL.
   -- @param #table UnitCategories Table of unit categories. See [DCS Class Unit](https://wiki.hoggitworld.com/view/DCS_Class_Unit). Default {Unit.Category.GROUND_UNIT}.
   -- @return #ZONE_GOAL_COALITION

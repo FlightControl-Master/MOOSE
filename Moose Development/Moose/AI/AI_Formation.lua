@@ -1,4 +1,4 @@
---- **AI** -- Build large airborne formations of aircraft.
+--- **AI** - Build large airborne formations of aircraft.
 -- 
 -- **Features:**
 --
@@ -41,7 +41,7 @@
 
 --- Build large formations, make AI follow a @{Wrapper.Client#CLIENT} (player) leader or a @{Wrapper.Unit#UNIT} (AI) leader.
 --
--- AI_FORMATION makes AI @{GROUP}s fly in formation of various compositions.
+-- AI_FORMATION makes AI @{Wrapper.Group#GROUP}s fly in formation of various compositions.
 -- The AI_FORMATION class models formations in a different manner than the internal DCS formation logic!!!
 -- The purpose of the class is to:
 -- 

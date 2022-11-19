@@ -1,4 +1,4 @@
---- **Tasking** -- Dynamically allocates A2G tasks to human players, based on detected ground targets through reconnaissance.
+--- **Tasking** - Dynamically allocates A2G tasks to human players, based on detected ground targets through reconnaissance.
 --
 -- **Features:**
 --
@@ -32,17 +32,17 @@ do -- TASK_A2G_DISPATCHER
   -- @field Tasking.Mission#MISSION Mission
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
-  --- Orchestrates dynamic **A2G Task Dispatching** based on the detection results of a linked @{Detection} object.
+  --- Orchestrates dynamic **A2G Task Dispatching** based on the detection results of a linked @{Functional.Detection} object.
   --
   -- It uses the Tasking System within the MOOSE framework, which is a multi-player Tasking Orchestration system.
   -- It provides a truly dynamic battle environment for pilots and ground commanders to engage upon,
   -- in a true co-operation environment wherein **Multiple Teams** will collaborate in Missions to **achieve a common Mission Goal**.
   --
-  -- The A2G dispatcher will dispatch the A2G Tasks to a defined  @{Set} of @{Wrapper.Group}s that will be manned by **Players**.   
-  -- We call this the **AttackSet** of the A2G dispatcher. So, the Players are seated in the @{Client}s of the @{Wrapper.Group} @{Set}.
+  -- The A2G dispatcher will dispatch the A2G Tasks to a defined  @{Core.Set} of @{Wrapper.Group}s that will be manned by **Players**.   
+  -- We call this the **AttackSet** of the A2G dispatcher. So, the Players are seated in the @{Wrapper.Client}s of the @{Wrapper.Group} @{Core.Set}.
   --
   -- Depending on the actions of the enemy, preventive tasks are dispatched to the players to orchestrate the engagement in a true co-operation.
-  -- The detection object will group the detected targets by its grouping method, and integrates a @{Set} of @{Wrapper.Group}s that are Recce vehicles or air units.
+  -- The detection object will group the detected targets by its grouping method, and integrates a @{Core.Set} of @{Wrapper.Group}s that are Recce vehicles or air units.
   -- We call this the **RecceSet** of the A2G dispatcher.
   --
   -- Depending on the current detected tactical situation, different task types will be dispatched to the Players seated in the AttackSet..
@@ -108,7 +108,7 @@ do -- TASK_A2G_DISPATCHER
   --
   -- # 1. Player Experience
   --
-  -- The A2G dispatcher is residing under a @{CommandCenter}, which is orchestrating a @{Mission}.
+  -- The A2G dispatcher is residing under a @{Tasking.CommandCenter}, which is orchestrating a @{Tasking.Mission}.
   -- As a result, you'll find for DCS World missions that implement the A2G dispatcher a **Command Center Menu** and under this one or more **Mission Menus**.
   --
   -- For example, if there are 2 Command Centers (CC).
@@ -367,7 +367,7 @@ do -- TASK_A2G_DISPATCHER
   --
   -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia7.JPG)
   --
-  -- The @{Settings} menu provides additional options to control the timing of the messages.
+  -- The @{Core.Settings} menu provides additional options to control the timing of the messages.
   -- There are:
   --
   --   - Status messages, which are quick status updates. The settings menu allows to switch off these messages.
@@ -384,12 +384,12 @@ do -- TASK_A2G_DISPATCHER
   --
   -- To use the TASK\_A2G\_DISPATCHER class, you need:
   --
-  --   - A @{CommandCenter} object. The master communication channel.
-  --   - A @{Mission} object. Each task belongs to a Mission.
-  --   - A @{Detection} object. There are several detection grouping methods to choose from.
-  --   - A @{Task_A2G_Dispatcher} object. The master A2G task dispatcher.
-  --   - A @{Set} of @{Wrapper.Group} objects that will detect the enemy, the RecceSet. This is attached to the @{Detection} object.
-  --   - A @{Set} ob @{Wrapper.Group} objects that will attack the enemy, the AttackSet. This is attached to the @{Task_A2G_Dispatcher} object.
+  --   - A @{Tasking.CommandCenter} object. The master communication channel.
+  --   - A @{Tasking.Mission} object. Each task belongs to a Mission.
+  --   - A @{Functional.Detection} object. There are several detection grouping methods to choose from.
+  --   - A @{Tasking.Task_A2G_Dispatcher} object. The master A2G task dispatcher.
+  --   - A @{Core.Set} of @{Wrapper.Group} objects that will detect the enemy, the RecceSet. This is attached to the @{Functional.Detection} object.
+  --   - A @{Core.Set} of @{Wrapper.Group} objects that will attack the enemy, the AttackSet. This is attached to the @{Tasking.Task_A2G_Dispatcher} object.
   --
   -- Below an example mission declaration that is defines a Task A2G Dispatcher object.
   --

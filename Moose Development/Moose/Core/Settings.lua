@@ -1,4 +1,4 @@
---- **Core** - Manages various settings for running missions, consumed by moose classes and provides a menu system for players to tweak settings in running missions.
+--- **Core** - Manages various settings for missions, providing a menu for players to tweak settings in running missions.
 --
 -- ===
 --
@@ -335,7 +335,7 @@ do -- SETTINGS
 
   --- Sets the SETTINGS MGRS accuracy.
   -- @param #SETTINGS self
-  -- @param #number MGRS_Accuracy
+  -- @param #number MGRS_Accuracy 0 to 5
   -- @return #SETTINGS
   function SETTINGS:SetMGRS_Accuracy( MGRS_Accuracy )
     self.MGRS_Accuracy = MGRS_Accuracy

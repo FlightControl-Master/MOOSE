@@ -1,4 +1,4 @@
---- **Cargo** -- Management of single cargo crates, which are based on a @{Static} object.
+--- **Cargo** - Management of single cargo crates, which are based on a STATIC object.
 --
 -- ===
 -- 

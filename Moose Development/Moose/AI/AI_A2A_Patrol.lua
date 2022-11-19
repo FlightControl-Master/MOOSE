@@ -1,4 +1,4 @@
---- **AI** -- (R2.2) - Models the process of air patrol of airplanes.
+--- **AI** - Models the process of air patrol of airplanes.
 -- 
 -- ===
 -- 
@@ -13,7 +13,7 @@
 --- @type AI_A2A_PATROL
 -- @extends AI.AI_A2A#AI_A2A
 
---- Implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group}.
+--- Implements the core functions to patrol a @{Core.Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group}.
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia3.JPG)
 -- 
@@ -102,7 +102,7 @@
 -- When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.
 -- Therefore, with a parameter and a calculation of the distance to the home base, the fuel threshold is calculated.
 -- When the fuel threshold is reached, the AI will continue for a given time its patrol task in orbit, 
--- while a new AI is targetted to the AI_A2A_PATROL.
+-- while a new AI is targeted to the AI_A2A_PATROL.
 -- Once the time is finished, the old AI will return to the base.
 -- Use the method @{#AI_A2A_PATROL.ManageFuel}() to have this proces in place.
 -- 
@@ -122,7 +122,7 @@ AI_A2A_PATROL = {
 --- Creates a new AI_A2A_PATROL object
 -- @param #AI_A2A_PATROL self
 -- @param Wrapper.Group#GROUP AIPatrol The patrol group object.
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
@@ -264,7 +264,7 @@ function AI_A2A_PATROL:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
 end
 
 
---- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
+--- Defines a new patrol route using the @{AI.AI_Patrol#AI_PATROL_ZONE} parameters and settings.
 -- @param #AI_A2A_PATROL self
 -- @return #AI_A2A_PATROL self
 -- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
@@ -287,7 +287,7 @@ function AI_A2A_PATROL:onafterPatrol( AIPatrol, From, Event, To )
 end
 
 
---- This statis method is called from the route path within the last task at the last waaypoint of the AIPatrol.
+--- This static method is called from the route path within the last task at the last waypoint of the AIPatrol.
 -- Note that this method is required, as triggers the next route when patrolling for the AIPatrol.
 -- @param Wrapper.Group#GROUP AIPatrol The AI group.
 -- @param #AI_A2A_PATROL Fsm The FSM.
@@ -302,7 +302,7 @@ function AI_A2A_PATROL.PatrolRoute( AIPatrol, Fsm )
 end
 
 
---- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
+--- Defines a new patrol route using the @{AI.AI_Patrol#AI_PATROL_ZONE} parameters and settings.
 -- @param #AI_A2A_PATROL self
 -- @param Wrapper.Group#GROUP AIPatrol The Group managed by the FSM.
 -- @param #string From The From State string.

@@ -29,11 +29,11 @@ do -- TASK_A2A_DISPATCHER
   -- @type TASK_A2A_DISPATCHER
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
-  --- Orchestrates the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
+  --- Orchestrates the dynamic dispatching of tasks upon groups of detected units determined a @{Core.Set} of EWR installation groups.
   --
   -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia3.JPG)
   --
-  -- The EWR will detect units, will group them, and will dispatch @{Task}s to groups. Depending on the type of target detected, different tasks will be dispatched.
+  -- The EWR will detect units, will group them, and will dispatch @{Tasking.Task}s to groups. Depending on the type of target detected, different tasks will be dispatched.
   -- Find a summary below describing for which situation a task type is created:
   --
   -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia9.JPG)
@@ -140,7 +140,7 @@ do -- TASK_A2A_DISPATCHER
   --
   -- ## 4. Set **Scoring** and **Messages**:
   --
-  -- The TASK\_A2A\_DISPATCHER is a state machine. It triggers the event Assign when a new player joins a @{Task} dispatched by the TASK\_A2A\_DISPATCHER.
+  -- The TASK\_A2A\_DISPATCHER is a state machine. It triggers the event Assign when a new player joins a @{Tasking.Task} dispatched by the TASK\_A2A\_DISPATCHER.
   -- An _event handler_ can be defined to catch the **Assign** event, and add **additional processing** to set _scoring_ and to _define messages_,
   -- when the player reaches certain achievements in the task.
   --

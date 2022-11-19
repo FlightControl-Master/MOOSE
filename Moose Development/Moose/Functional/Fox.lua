@@ -1,4 +1,4 @@
---- **Functional** - (R2.5) - Yet Another Missile Trainer.
+--- **Functional** - Yet Another Missile Trainer.
 -- 
 -- 
 -- Practice to evade missiles without being destroyed.
@@ -20,7 +20,7 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
--- @module Functional.FOX
+-- @module Functional.Fox
 -- @image Functional_FOX.png
 
 --- FOX class.

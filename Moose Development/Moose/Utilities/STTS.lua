@@ -1,7 +1,7 @@
---- **Utilities**  DCS Simple Text-To-Speech (STTS).
+--- **Utilities**  - DCS Simple Text-To-Speech (STTS).
 --
 --
--- @module Utils.STTS
+-- @module Utilities.STTS
 -- @image MOOSE.JPG
 
 --- [DCS Enum world](https://wiki.hoggitworld.com/view/DCS_enum_world)

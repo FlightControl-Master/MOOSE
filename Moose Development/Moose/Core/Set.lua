@@ -22,10 +22,11 @@
 --   * @{#SET_GROUP}: Defines a collection of @{Wrapper.Group}s filtered by filter criteria.
 --   * @{#SET_UNIT}: Defines a collection of @{Wrapper.Unit}s filtered by filter criteria.
 --   * @{#SET_STATIC}: Defines a collection of @{Wrapper.Static}s filtered by filter criteria.
---   * @{#SET_CLIENT}: Defines a collection of @{Client}s filtered by filter criteria.
+--   * @{#SET_CLIENT}: Defines a collection of @{Wrapper.Client}s filtered by filter criteria.
 --   * @{#SET_AIRBASE}: Defines a collection of @{Wrapper.Airbase}s filtered by filter criteria.
 --   * @{#SET_CARGO}: Defines a collection of @{Cargo.Cargo}s filtered by filter criteria.
 --   * @{#SET_ZONE}: Defines a collection of @{Core.Zone}s filtered by filter criteria.
+--   * @{#SET_SCENERY}: Defines a collection of @{Wrapper.Scenery}s added via a filtered @{#SET_ZONE}.
 --
 -- These classes are derived from @{#SET_BASE}, which contains the main methods to manage the collections.
 --
@@ -37,7 +38,7 @@
 -- ===
 --
 -- ### Author: **FlightControl**
--- ### Contributions: **funkyfranky**
+-- ### Contributions: **funkyfranky**, **applevangelist**
 --
 -- ===
 --
@@ -276,7 +277,9 @@ do -- SET_BASE
   -- @param Core.Set#SET_BASE SetToAdd Set to add.
   -- @return #SET_BASE self
   function SET_BASE:AddSet(SetToAdd)
-
+    
+    if not SetToAdd then return self end
+    
     for _,ObjectB in pairs(SetToAdd.Set) do
       self:AddObject(ObjectB)
     end
@@ -813,14 +816,31 @@ do -- SET_BASE
     return true
   end
 
-  --- Decides whether to include the Object.
+  --- Decides whether an object is in the SET
   -- @param #SET_BASE self
   -- @param #table Object
   -- @return #SET_BASE self
-  function SET_BASE:IsInSet( ObjectName )
+  function SET_BASE:IsInSet( Object )
     self:F3( Object )
-
-    return true
+    local outcome = false
+    local name = Object:GetName()
+    self:ForEach(
+      function(object)
+        if object:GetName() == name then
+          outcome = true
+        end
+      end
+    )
+    return outcome
+  end
+  
+  --- Decides whether an object is **not** in the SET
+  -- @param #SET_BASE self
+  -- @param #table Object
+  -- @return #SET_BASE self
+  function SET_BASE:IsNotInSet( Object )
+    self:F3( Object )
+    return not self:IsInSet(Object)
   end
 
   --- Gets a string with all the object names.
@@ -910,9 +930,9 @@ do -- SET_GROUP
   -- The following iterator methods are currently available within the SET_GROUP:
   --
   --   * @{#SET_GROUP.ForEachGroup}: Calls a function for each alive group it finds within the SET_GROUP.
-  --   * @{#SET_GROUP.ForEachGroupCompletelyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
-  --   * @{#SET_GROUP.ForEachGroupPartlyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Zone}, providing the GROUP and optional parameters to the called function.
-  --   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
+  --   * @{#SET_GROUP.ForEachGroupCompletelyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Core.Zone}, providing the GROUP and optional parameters to the called function.
+  --   * @{#SET_GROUP.ForEachGroupPartlyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Core.Zone}, providing the GROUP and optional parameters to the called function.
+  --   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Core.Zone}, providing the GROUP and optional parameters to the called function.
   --
   --
   -- ## SET_GROUP trigger events on the GROUP objects.
@@ -1466,7 +1486,7 @@ do -- SET_GROUP
   end
 
 
-  --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
+  --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Core.Zone}, providing the GROUP and optional parameters to the called function.
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
@@ -1488,7 +1508,7 @@ do -- SET_GROUP
     return self
   end
 
-  --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Zone}, providing the GROUP and optional parameters to the called function.
+  --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Core.Zone}, providing the GROUP and optional parameters to the called function.
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
@@ -1510,7 +1530,7 @@ do -- SET_GROUP
     return self
   end
 
-  --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
+  --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Core.Zone}, providing the GROUP and optional parameters to the called function.
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
@@ -1604,7 +1624,7 @@ do -- SET_GROUP
     return false
   end
 
-  --- Iterate the SET_GROUP and return true if at least one @{#UNIT} of one @{GROUP} of the @{SET_GROUP} is in @{ZONE}
+  --- Iterate the SET_GROUP and return true if at least one @{#UNIT} of one @{Wrapper.Group#GROUP} of the @{#SET_GROUP} is in @{Core.Zone}
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completely inside the @{Core.Zone#ZONE}, false otherwise.
@@ -1629,8 +1649,8 @@ do -- SET_GROUP
     return false
   end
 
-  --- Iterate the SET_GROUP and return true if at least one @{GROUP} of the @{SET_GROUP} is partly in @{ZONE}.
-  -- Will return false if a @{GROUP} is fully in the @{ZONE}
+  --- Iterate the SET_GROUP and return true if at least one @{Wrapper.Group#GROUP} of the @{#SET_GROUP} is partly in @{Core.Zone}.
+  -- Will return false if a @{Wrapper.Group#GROUP} is fully in the @{Core.Zone}
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completely inside the @{Core.Zone#ZONE}, false otherwise.
@@ -1663,7 +1683,7 @@ do -- SET_GROUP
     end
   end
 
-  --- Iterate the SET_GROUP and return true if no @{GROUP} of the @{SET_GROUP} is in @{ZONE}
+  --- Iterate the SET_GROUP and return true if no @{Wrapper.Group#GROUP} of the @{#SET_GROUP} is in @{Core.Zone}
   -- This could also be achieved with `not SET_GROUP:AnyPartlyInZone(Zone)`, but it's easier for the
   -- mission designer to add a dedicated method
   -- @param #SET_GROUP self
@@ -1932,14 +1952,14 @@ do -- SET_UNIT
   -- The following iterator methods are currently available within the SET_UNIT:
   --
   --   * @{#SET_UNIT.ForEachUnit}: Calls a function for each alive unit it finds within the SET_UNIT.
-  --   * @{#SET_UNIT.ForEachUnitInZone}: Iterate the SET_UNIT and call an iterator function for each **alive** UNIT object presence completely in a @{Zone}, providing the UNIT object and optional parameters to the called function.
-  --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate the SET_UNIT and call an iterator function for each **alive** UNIT object presence not in a @{Zone}, providing the UNIT object and optional parameters to the called function.
+  --   * @{#SET_UNIT.ForEachUnitInZone}: Iterate the SET_UNIT and call an iterator function for each **alive** UNIT object presence completely in a @{Core.Zone}, providing the UNIT object and optional parameters to the called function.
+  --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate the SET_UNIT and call an iterator function for each **alive** UNIT object presence not in a @{Core.Zone}, providing the UNIT object and optional parameters to the called function.
   --
   -- Planned iterators methods in development are (so these are not yet available):
   --
   --   * @{#SET_UNIT.ForEachUnitInUnit}: Calls a function for each unit contained within the SET_UNIT.
-  --   * @{#SET_UNIT.ForEachUnitCompletelyInZone}: Iterate and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
-  --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
+  --   * @{#SET_UNIT.ForEachUnitCompletelyInZone}: Iterate and call an iterator function for each **alive** UNIT presence completely in a @{Core.Zone}, providing the UNIT and optional parameters to the called function.
+  --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate and call an iterator function for each **alive** UNIT presence not in a @{Core.Zone}, providing the UNIT and optional parameters to the called function.
   --
   -- ## 5) SET_UNIT atomic methods
   --
@@ -2481,7 +2501,7 @@ do -- SET_UNIT
     return self
   end
 
-  --- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
+  --- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence completely in a @{Core.Zone}, providing the UNIT and optional parameters to the called function.
   -- @param #SET_UNIT self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
@@ -2503,7 +2523,7 @@ do -- SET_UNIT
     return self
   end
 
-  --- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
+  --- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence not in a @{Core.Zone}, providing the UNIT and optional parameters to the called function.
   -- @param #SET_UNIT self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
@@ -2554,7 +2574,7 @@ do -- SET_UNIT
     return UnitTypes
   end
 
-  --- Returns a comma separated string of the unit types with a count in the  @{Set}.
+  --- Returns a comma separated string of the unit types with a count in the  @{Core.Set}.
   -- @param #SET_UNIT self
   -- @return #string The unit types string
   function SET_UNIT:GetUnitTypesText()
@@ -2620,8 +2640,10 @@ do -- SET_UNIT
   -- @return Core.Point#COORDINATE The center coordinate of all the units in the set, including heading in degrees and speed in mps in case of moving units.
   function SET_UNIT:GetCoordinate()
 
-    local Coordinate = self:GetFirst():GetCoordinate()
-
+    local Coordinate = self:GetRandom():GetCoordinate()
+    --self:F({Coordinate:GetVec3()})
+    
+    
     local x1 = Coordinate.x
     local x2 = Coordinate.x
     local y1 = Coordinate.y
@@ -2724,7 +2746,7 @@ do -- SET_UNIT
 
   end
 
-  --- Returns if the @{Set} has targets having a radar (of a given type).
+  --- Returns if the @{Core.Set} has targets having a radar (of a given type).
   -- @param #SET_UNIT self
   -- @param DCS#Unit.RadarType RadarType
   -- @return #number The amount of radars in the Set with the given type
@@ -2749,7 +2771,7 @@ do -- SET_UNIT
     return RadarCount
   end
 
-  --- Returns if the @{Set} has targets that can be SEADed.
+  --- Returns if the @{Core.Set} has targets that can be SEADed.
   -- @param #SET_UNIT self
   -- @return #number The amount of SEADable units in the Set
   function SET_UNIT:HasSEAD()
@@ -2773,7 +2795,7 @@ do -- SET_UNIT
     return SEADCount
   end
 
-  --- Returns if the @{Set} has ground targets.
+  --- Returns if the @{Core.Set} has ground targets.
   -- @param #SET_UNIT self
   -- @return #number The amount of ground targets in the Set.
   function SET_UNIT:HasGroundUnits()
@@ -2790,7 +2812,7 @@ do -- SET_UNIT
     return GroundUnitCount
   end
 
-  --- Returns if the @{Set} has air targets.
+  --- Returns if the @{Core.Set} has air targets.
   -- @param #SET_UNIT self
   -- @return #number The amount of air targets in the Set.
   function SET_UNIT:HasAirUnits()
@@ -2807,7 +2829,7 @@ do -- SET_UNIT
     return AirUnitCount
   end
 
-  --- Returns if the @{Set} has friendly ground units.
+  --- Returns if the @{Core.Set} has friendly ground units.
   -- @param #SET_UNIT self
   -- @return #number The amount of ground targets in the Set.
   function SET_UNIT:HasFriendlyUnits( FriendlyCoalition )
@@ -3053,15 +3075,15 @@ do -- SET_STATIC
   -- The following iterator methods are currently available within the SET_STATIC:
   --
   --   * @{#SET_STATIC.ForEachStatic}: Calls a function for each alive unit it finds within the SET_STATIC.
-  --   * @{#SET_STATIC.ForEachStaticCompletelyInZone}: Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence completely in a @{Zone}, providing the STATIC and optional parameters to the called function.
-  --   * @{#SET_STATIC.ForEachStaticInZone}: Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence completely in a @{Zone}, providing the STATIC and optional parameters to the called function.
-  --   * @{#SET_STATIC.ForEachStaticNotInZone}: Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence not in a @{Zone}, providing the STATIC and optional parameters to the called function.
+  --   * @{#SET_STATIC.ForEachStaticCompletelyInZone}: Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence completely in a @{Core.Zone}, providing the STATIC and optional parameters to the called function.
+  --   * @{#SET_STATIC.ForEachStaticInZone}: Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence completely in a @{Core.Zone}, providing the STATIC and optional parameters to the called function.
+  --   * @{#SET_STATIC.ForEachStaticNotInZone}: Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence not in a @{Core.Zone}, providing the STATIC and optional parameters to the called function.
   --
   -- ## SET_STATIC atomic methods
   --
   -- Various methods exist for a SET_STATIC to perform actions or calculations and retrieve results from the SET_STATIC:
   --
-  --   * @{#SET_STATIC.GetTypeNames}(): Retrieve the type names of the @{Static}s in the SET, delimited by a comma.
+  --   * @{#SET_STATIC.GetTypeNames}(): Retrieve the type names of the @{Wrapper.Static}s in the SET, delimited by a comma.
   --
   -- ===
   -- @field #SET_STATIC SET_STATIC
@@ -3419,7 +3441,7 @@ do -- SET_STATIC
     return self
   end
 
-  --- Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence completely in a @{Zone}, providing the STATIC and optional parameters to the called function.
+  --- Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence completely in a @{Core.Zone}, providing the STATIC and optional parameters to the called function.
   -- @param #SET_STATIC self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.
@@ -3441,7 +3463,7 @@ do -- SET_STATIC
     return self
   end
 
-  --- Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence not in a @{Zone}, providing the STATIC and optional parameters to the called function.
+  --- Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence not in a @{Core.Zone}, providing the STATIC and optional parameters to the called function.
   -- @param #SET_STATIC self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.
@@ -3492,7 +3514,7 @@ do -- SET_STATIC
     return StaticTypes
   end
 
-  --- Returns a comma separated string of the unit types with a count in the  @{Set}.
+  --- Returns a comma separated string of the unit types with a count in the  @{Core.Set}.
   -- @param #SET_STATIC self
   -- @return #string The unit types string
   function SET_STATIC:GetStaticTypesText()
@@ -3700,10 +3722,10 @@ do -- SET_STATIC
     return MStaticInclude
   end
 
-  --- Retrieve the type names of the @{Static}s in the SET, delimited by an optional delimiter.
+  --- Retrieve the type names of the @{Wrapper.Static}s in the SET, delimited by an optional delimiter.
   -- @param #SET_STATIC self
   -- @param #string Delimiter (Optional) The delimiter, which is default a comma.
-  -- @return #string The types of the @{Static}s delimited.
+  -- @return #string The types of the @{Wrapper.Static}s delimited.
   function SET_STATIC:GetTypeNames( Delimiter )
 
     Delimiter = Delimiter or ", "
@@ -4051,7 +4073,7 @@ do -- SET_CLIENT
     return self
   end
 
-  --- Iterate the SET_CLIENT and call an iterator function for each **alive** CLIENT presence completely in a @{Zone}, providing the CLIENT and optional parameters to the called function.
+  --- Iterate the SET_CLIENT and call an iterator function for each **alive** CLIENT presence completely in a @{Core.Zone}, providing the CLIENT and optional parameters to the called function.
   -- @param #SET_CLIENT self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
@@ -4073,7 +4095,7 @@ do -- SET_CLIENT
     return self
   end
 
-  --- Iterate the SET_CLIENT and call an iterator function for each **alive** CLIENT presence not in a @{Zone}, providing the CLIENT and optional parameters to the called function.
+  --- Iterate the SET_CLIENT and call an iterator function for each **alive** CLIENT presence not in a @{Core.Zone}, providing the CLIENT and optional parameters to the called function.
   -- @param #SET_CLIENT self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
@@ -4523,7 +4545,7 @@ do -- SET_PLAYER
     return self
   end
 
-  --- Iterate the SET_PLAYER and call an iterator function for each **alive** CLIENT presence completely in a @{Zone}, providing the CLIENT and optional parameters to the called function.
+  --- Iterate the SET_PLAYER and call an iterator function for each **alive** CLIENT presence completely in a @{Core.Zone}, providing the CLIENT and optional parameters to the called function.
   -- @param #SET_PLAYER self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.
@@ -4545,7 +4567,7 @@ do -- SET_PLAYER
     return self
   end
 
-  --- Iterate the SET_PLAYER and call an iterator function for each **alive** CLIENT presence not in a @{Zone}, providing the CLIENT and optional parameters to the called function.
+  --- Iterate the SET_PLAYER and call an iterator function for each **alive** CLIENT presence not in a @{Core.Zone}, providing the CLIENT and optional parameters to the called function.
   -- @param #SET_PLAYER self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.
@@ -6710,4 +6732,262 @@ do -- SET_OPSGROUP
     return MGroupInclude
   end
   
+end
+            
+do -- SET_SCENERY
+
+  ---
+  -- @type SET_SCENERY
+  -- @extends Core.Set#SET_BASE
+
+  --- Mission designers can use the SET_SCENERY class to build sets of scenery belonging to certain:
+  --
+  --  * Zone Sets
+  --
+  -- ## SET_SCENERY constructor
+  --
+  -- Create a new SET_SCENERY object with the @{#SET_SCENERY.New} method:
+  --
+  --    * @{#SET_SCENERY.New}: Creates a new SET_SCENERY object.
+  --
+  -- ## Add or Remove SCENERY(s) from SET_SCENERY
+  --
+  -- SCENERYs can be added and removed using the @{Core.Set#SET_SCENERY.AddSceneryByName} and @{Core.Set#SET_SCENERY.RemoveSceneryByName} respectively.
+  -- These methods take a single SCENERY name or an array of SCENERY names to be added or removed from SET_SCENERY.
+  --
+  -- ## SET_SCENERY filter criteria
+  --
+  -- N/A at the moment
+  --    
+  -- ## SET_SCENERY iterators
+  --
+  -- Once the filters have been defined and the SET_SCENERY has been built, you can iterate the SET_SCENERY with the available iterator methods.
+  -- The iterator methods will walk the SET_SCENERY set, and call for each element within the set a function that you provide.
+  -- The following iterator methods are currently available within the SET_SCENERY:
+  --
+  --   * @{#SET_SCENERY.ForEachScenery}: Calls a function for each alive object it finds within the SET_SCENERY.
+  --
+  -- ## SET_SCENERY atomic methods
+  --
+  -- N/A at the moment
+  --
+  -- ===
+  -- @field #SET_SCENERY SET_SCENERY
+  SET_SCENERY = {
+    ClassName = "SET_SCENERY",
+    Scenerys = {},
+    Filter = {
+      SceneryPrefixes = nil,
+      Zones = nil,
+    },
+  }
+
+  --- Creates a new SET_SCENERY object. Scenery is **not** auto-registered in the Moose database, there are too many objects on each map. Hence we need to find them first. For this we are using a SET_ZONE. 
+  -- @param #SET_SCENERY self
+  -- @param #SET_ZONE ZoneSet SET_ZONE of ZONE objects as created by right-clicks on the map in the mission editor, choosing "assign as...". Rename the zones for grouping purposes, e.g. all sections of a bridge as "Bridge-1" to "Bridge-3".
+  -- @return #SET_SCENERY
+  -- @usage
+  -- -- Define a new SET_SCENERY Object. This Object will contain a reference to all added Scenery Objects.
+  --    ZoneSet = SET_ZONE:New():FilterPrefixes("Bridge"):FilterOnce()
+  --    mysceneryset = SET_SCENERY:New(ZoneSet)
+  function SET_SCENERY:New(ZoneSet)
+  
+    local zoneset = {}  
+      -- Inherits from BASE
+    local self = BASE:Inherit( self, SET_BASE:New( zoneset ) ) -- Core.Set#SET_SCENERY
+    
+    local zonenames = {}
+    
+    if ZoneSet then
+      for _,_zone in pairs(ZoneSet.Set) do
+        --self:I("Zone type handed: "..tostring(_zone.ClassName))
+        table.insert(zonenames,_zone:GetName())
+      end   
+      self:AddSceneryByName(zonenames)
+    end
+    
+    return self
+  end
+  
+  --- Creates a new SET_SCENERY object. Scenery is **not** auto-registered in the Moose database, there are too many objects on each map. Hence we need to find them first. For this we scan the zone. 
+  -- @param #SET_SCENERY self
+  -- @param Core.Zone#ZONE Zone The zone to be scanned. Can be a ZONE_RADIUS (round) or a ZONE_POLYGON (e.g. Quad-Point)
+  -- @return #SET_SCENERY
+  function SET_SCENERY:NewFromZone(Zone)
+    local zone = Zone -- Core.Zone#ZONE_POLYGON
+    if type(Zone) == "string" then
+      zone = ZONE:FindByName(Zone)
+    end
+    zone:Scan({Object.Category.SCENERY})
+    return zone:GetScannedSetScenery()
+  end
+  
+  --- Add SCENERY(s) to SET_SCENERY.
+  -- @param #SET_SCENERY self
+  -- @param #string AddScenery A single SCENERY.
+  -- @return #SET_SCENERY self
+  function SET_SCENERY:AddScenery( AddScenery )
+    self:F2( AddScenery:GetName() )
+
+    self:Add( AddScenery:GetName(), AddScenery )
+
+    return self
+  end
+
+
+  --- Add SCENERY(s) to SET_SCENERY.
+  -- @param #SET_SCENERY self
+  -- @param #string AddSceneryNames A single name or an array of SCENERY zone names.
+  -- @return #SET_SCENERY self
+  function SET_SCENERY:AddSceneryByName( AddSceneryNames )
+
+    local AddSceneryNamesArray = ( type( AddSceneryNames ) == "table" ) and AddSceneryNames or { AddSceneryNames }
+
+    self:T( AddSceneryNamesArray )
+    for AddSceneryID, AddSceneryName in pairs( AddSceneryNamesArray ) do
+      self:Add( AddSceneryName, SCENERY:FindByZoneName( AddSceneryName ) )
+    end
+
+    return self
+  end
+
+  --- Remove SCENERY(s) from SET_SCENERY.
+  -- @param Core.Set#SET_SCENERY self
+  -- @param Wrapper.Scenery#SCENERY RemoveSceneryNames A single name or an array of SCENERY zone names.
+  -- @return self
+  function SET_SCENERY:RemoveSceneryByName( RemoveSceneryNames )
+
+    local RemoveSceneryNamesArray = ( type( RemoveSceneryNames ) == "table" ) and RemoveSceneryNames or { RemoveSceneryNames }
+
+    for RemoveSceneryID, RemoveSceneryName in pairs( RemoveSceneryNamesArray ) do
+      self:Remove( RemoveSceneryName )
+    end
+
+    return self
+  end
+
+  --- Finds a Scenery in the SET, based on the Scenery Name.
+  -- @param #SET_SCENERY self
+  -- @param #string SceneryName
+  -- @return Wrapper.Scenery#SCENERY The found Scenery.
+  function SET_SCENERY:FindScenery( SceneryName )
+    local SceneryFound = self.Set[SceneryName]
+    return SceneryFound
+  end
+
+   --- Builds a set of scenery objects in zones.
+  -- @param #SET_SCENERY self
+  -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
+  -- @return #SET_SCENERY self
+  function SET_SCENERY:FilterZones( Zones )
+    if not self.Filter.Zones then
+      self.Filter.Zones = {}
+    end
+    local zones = {}
+    if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
+      zones = Zones.Set
+    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+      self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
+      return self     
+    else
+      zones = Zones
+    end
+    for _,Zone in pairs( zones ) do
+      local zonename = Zone:GetName()
+      self.Filter.Zones[zonename] = Zone
+    end
+    return self
+  end
+
+  --- Builds a set of SCENERYs that contain the given string in their name.
+  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all scenery that **contain** the string. 
+  -- @param #SET_SCENERY self
+  -- @param #string Prefixes The string pattern(s) that need to be contained in the scenery name. Can also be passed as a `#table` of strings.
+  -- @return #SET_SCENERY self
+  function SET_SCENERY:FilterPrefixes( Prefixes )
+    if not self.Filter.SceneryPrefixes then
+      self.Filter.SceneryPrefixes = {}
+    end
+    if type( Prefixes ) ~= "table" then
+      Prefixes = { Prefixes }
+    end
+    for PrefixID, Prefix in pairs( Prefixes ) do
+      self.Filter.SceneryPrefixes[Prefix] = Prefix
+    end
+    return self
+  end
+
+  --- Iterate the SET_SCENERY and count how many SCENERYSs are alive.
+  -- @param #SET_SCENERY self
+  -- @return #number The number of SCENERYSs alive.
+  function SET_SCENERY:CountAlive()
+
+    local Set = self:GetSet()
+
+    local CountU = 0
+    for UnitID, UnitData in pairs(Set) do
+      if UnitData and UnitData:IsAlive() then
+        CountU = CountU + 1
+      end
+
+    end
+
+    return CountU
+  end
+
+  --- Iterate the SET_SCENERY and call an iterator function for each **alive** SCENERY, providing the SCENERY and optional parameters.
+  -- @param #SET_SCENERY self
+  -- @param #function IteratorFunction The function that will be called when there is an alive SCENERY in the SET_SCENERY. The function needs to accept a SCENERY parameter.
+  -- @return #SET_SCENERY self
+  function SET_SCENERY:ForEachScenery( IteratorFunction, ... )
+    self:F2( arg )
+    self:ForEach( IteratorFunction, arg, self:GetSet() )
+    return self
+  end
+
+  --- Get the center coordinate of the SET_SCENERY.
+  -- @param #SET_SCENERY self
+  -- @return Core.Point#COORDINATE The center coordinate of all the objects in the set.
+  function SET_SCENERY:GetCoordinate()
+
+    local Coordinate = self:GetRandom():GetCoordinate()
+
+    local x1 = Coordinate.x
+    local x2 = Coordinate.x
+    local y1 = Coordinate.y
+    local y2 = Coordinate.y
+    local z1 = Coordinate.z
+    local z2 = Coordinate.z
+
+    for SceneryName, SceneryData in pairs( self:GetSet() ) do
+
+      local Scenery = SceneryData -- Wrapper.Scenery#SCENERY
+      local Coordinate = Scenery:GetCoordinate()
+
+      x1 = ( Coordinate.x < x1 ) and Coordinate.x or x1
+      x2 = ( Coordinate.x > x2 ) and Coordinate.x or x2
+      y1 = ( Coordinate.y < y1 ) and Coordinate.y or y1
+      y2 = ( Coordinate.y > y2 ) and Coordinate.y or y2
+      z1 = ( Coordinate.y < z1 ) and Coordinate.z or z1
+      z2 = ( Coordinate.y > z2 ) and Coordinate.z or z2
+
+    end
+
+    Coordinate.x = ( x2 - x1 ) / 2 + x1
+    Coordinate.y = ( y2 - y1 ) / 2 + y1
+    Coordinate.z = ( z2 - z1 ) / 2 + z1
+
+    self:F( { Coordinate = Coordinate } )
+    return Coordinate
+
+  end
+
+  ---
+  -- @param #SET_SCENERY self
+  -- @param Wrapper.Scenery#SCENERY MScenery
+  -- @return #SET_SCENERY self
+  function SET_SCENERY:IsIncludeObject( MScenery )
+    self:F2( MScenery )
+  return true
+  end
 end

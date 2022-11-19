@@ -1,4 +1,4 @@
---- **AI** - Create an automated AIR defense system based on a detection network of reconnaissance vehicles and air units, coordinating SEAD, BAI and CAP operations.
+--- **AI** - Create an automated AIR defense system with reconnaissance units, coordinating SEAD, BAI and CAP operations.
 -- 
 -- ===
 -- 
@@ -7,7 +7,7 @@
 --    * Setup quickly an AIR defense system for a coalition.
 --    * Setup multiple defense zones to defend specific coordinates in your battlefield.
 --    * Setup (SEAD) Suppression of Air Defense squadrons, to gain control in the air of enemy grounds.
---    * Setup (CAS) Controlled Air Support squadrons, to attack closeby enemy ground units near friendly installations.
+--    * Setup (CAS) Controlled Air Support squadrons, to attack close by enemy ground units near friendly installations.
 --    * Setup (BAI) Battleground Air Interdiction squadrons to attack remote enemy ground units and targets.
 --    * Define and use a detection network controlled by recce.
 --    * Define AIR defense squadrons at airbases, FARPs and carriers.
@@ -24,7 +24,7 @@
 -- 
 -- ## Missions:
 -- 
--- [AID-AIR - AI AIR Dispatching](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AID%20-%20AI%20Dispatching/AID-AIR%20-%20AI%20AIR%20Dispatching)
+-- [AID-AIR - AI AIR Dispatching](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AID%20-%20AI%20Dispatching)
 -- 
 -- ===
 -- 
@@ -88,7 +88,7 @@
 -- 
 -- ## 4. How do the defenses decide **when and where to engage** on approaching enemy units?
 -- 
--- The AIR dispacher needs you to setup (various) defense coordinates, which are strategic positions in the battle field to be defended. 
+-- The AIR dispatcher needs you to setup (various) defense coordinates, which are strategic positions in the battle field to be defended. 
 -- Any ground based enemy approaching within the proximity of such a defense point, may trigger for a defensive action by friendly air units.
 -- 
 -- There are 2 important parameters that play a role in the defensive decision making: defensiveness and reactivity.
@@ -108,7 +108,7 @@
 -- ## 5. Are defense coordinates and defense reactivity the only parameters?
 -- 
 -- No, depending on the target type, and the threat level of the target, the probability of defense will be higher.
--- In other words, when a SAM-10 radar emitter is detected, its probabilty for defense will be much higher than when a BMP-1 vehicle is
+-- In other words, when a SAM-10 radar emitter is detected, its probability for defense will be much higher than when a BMP-1 vehicle is
 -- detected, even when both enemies are at the same distance from a defense coordinate.
 -- This will ensure optimal defenses, SEAD tasks will be launched much more quicker against engaging radar emitters, to ensure air superiority.
 -- Approaching main battle tanks will be engaged much faster, than a group of approaching trucks.
@@ -117,12 +117,12 @@
 -- ## 6. Which Squadrons will I create and which name will I give each Squadron?
 -- 
 -- The AIR defense system works with **Squadrons**. Each Squadron must be given a unique name, that forms the **key** to the squadron.
--- Several options and activities can be set per Squadron. A free format name can be given, but always ensure that the name is meaningfull 
+-- Several options and activities can be set per Squadron. A free format name can be given, but always ensure that the name is meaningful 
 -- for your mission, and remember that squadron names are used for communication to the players of your mission.
 -- 
 -- There are mainly 3 types of defenses: **SEAD**, **CAS** and **BAI**.
 -- 
--- Suppression of Air Defenses (SEAD) are effective agains radar emitters. Close Air Support (CAS) is launched when the enemy is close near friendly units.
+-- Suppression of Air Defenses (SEAD) are effective against radar emitters. Close Air Support (CAS) is launched when the enemy is close near friendly units.
 -- Battleground Air Interdiction (BAI) tasks are launched when there are no friendlies around.
 -- 
 -- Depending on the defense type, different payloads will be needed. See further points on squadron definition.
@@ -174,13 +174,13 @@
 --    * polygon zones
 --    * moving zones
 -- 
--- Depending on the type of zone selected, a different @{Zone} object needs to be created from a ZONE_ class.
+-- Depending on the type of zone selected, a different @{Core.Zone} object needs to be created from a ZONE_ class.
 -- 
 -- 
 -- ## 12. Are moving defense coordinates possible?
 -- 
 -- Yes, different COORDINATE types are possible to be used.
--- The COORDINATE_UNIT will help you to specify a defense coodinate that is attached to a moving unit.
+-- The COORDINATE_UNIT will help you to specify a defense coordinate that is attached to a moving unit.
 -- 
 -- 
 -- ## 13. How much defense coordinates do I need to create?
@@ -214,7 +214,7 @@
 --    * From a parking spot with running engines
 --    * From a parking spot with cold engines
 -- 
--- **The default takeoff method is staight in the air.**
+-- **The default takeoff method is straight in the air.**
 -- This takeoff method is the most useful if you want to avoid airplane clutter at airbases!
 -- But it is the least realistic one!
 -- 
@@ -236,10 +236,10 @@
 -- 
 -- For each Squadron, depending on the helicopter or airplane type (modern, old) and payload, which overhead is required to provide any defense?
 -- 
--- In other words, if **X** enemy ground units are detected, how many **Y** defense helicpters or airplanes need to engage (per squadron)?
+-- In other words, if **X** enemy ground units are detected, how many **Y** defense helicopters or airplanes need to engage (per squadron)?
 -- The **Y** is dependent on the type of airplane (era), payload, fuel levels, skills etc.
 -- But the most important factor is the payload, which is the amount of AIR weapons the defense can carry to attack the enemy ground units.
--- For example, a Ka-50 can carry 16 vikrs, that means, that it potentially can destroy at least 8 ground units without a reload of ammunication.
+-- For example, a Ka-50 can carry 16 vikrs, that means, that it potentially can destroy at least 8 ground units without a reload of ammunition.
 -- That means, that one defender can destroy more enemy ground units. 
 -- Thus, the overhead is a **factor** that will calculate dynamically how many **Y** defenses will be required based on **X** attackers detected.
 -- 
@@ -259,7 +259,7 @@
 -- 
 -- ### Author: **FlightControl** rework of GCICAP + introduction of new concepts (squadrons).
 -- 
--- @module AI.AI_AIR_Dispatcher
+-- @module AI.AI_Air_Dispatcher
 -- @image AI_Air_To_Ground_Dispatching.JPG
 
 
@@ -279,7 +279,7 @@ do -- AI_AIR_DISPATCHER
   -- Multiple defense coordinates can be setup. Defense coordinates can be strategic or tactical positions or references to strategic units or scenery.
   -- The AIR dispatcher will evaluate every x seconds the tactical situation around each defense coordinate. When a defense coordinate
   -- is under threat, it will communicate through the command center that defensive actions need to be taken and will launch groups of air units for defense.
-  -- The level of threat to the defense coordinate varyies upon the strength and types of the enemy units, the distance to the defense point, and the defensiveness parameters.
+  -- The level of threat to the defense coordinate varies upon the strength and types of the enemy units, the distance to the defense point, and the defensiveness parameters.
   -- Defensive actions are taken through probability, but the closer and the more threat the enemy poses to the defense coordinate, the faster it will be attacked by friendly AIR units.
   -- 
   -- Please study carefully the underlying explanations how to setup and use this module, as it has many features.
@@ -328,7 +328,7 @@ do -- AI_AIR_DISPATCHER
   -- By spawning in dynamically additional recce, you can ensure that there is sufficient reconnaissance coverage so the defense mechanism is continuously
   -- alerted of new enemy ground targets.
   -- 
-  -- The following example defens a new reconnaissance network using a @{Functional.Detection#DETECTION_AREAS} object.
+  -- The following example defense a new reconnaissance network using a @{Functional.Detection#DETECTION_AREAS} object.
   -- 
   --        -- Define a SET_GROUP object that builds a collection of groups that define the recce network.
   --        -- Here we build the network with all the groups that have a name starting with CCCP Recce.
@@ -473,7 +473,7 @@ do -- AI_AIR_DISPATCHER
   --     the mission designer can choose to increase or reduce the amount of planes spawned.
   -- 
   -- The method @{#AI_AIR_DISPATCHER.SetSquadron}() defines for you a new squadron. 
-  -- The provided parameters are the squadron name, airbase name and a list of template prefixe, and a number that indicates the amount of resources.
+  -- The provided parameters are the squadron name, airbase name and a list of template prefixes, and a number that indicates the amount of resources.
   -- 
   -- For example, this defines 3 new squadrons:
   -- 
@@ -619,7 +619,7 @@ do -- AI_AIR_DISPATCHER
   -- Depending on the demand of requested takeoffs by the AIR dispatcher, an airfield can become overloaded. Too many aircraft need to be taken
   -- off at the same time, which will result in clutter as described above. In order to better control this behaviour, a takeoff scheduler is implemented,
   -- which can be used to control how many aircraft are ordered for takeoff between specific time intervals.
-  -- The takeff intervals can be specified per squadron, which make sense, as each squadron have a "home" airfield.
+  -- The takeoff intervals can be specified per squadron, which make sense, as each squadron have a "home" airfield.
   -- 
   -- For this purpose, the method @{#AI_AIR_DISPATCHER.SetSquadronTakeOffInterval}() can be used to specify the takeoff intervals of 
   -- aircraft groups per squadron to avoid cluttering of aircraft at airbases.
@@ -1021,7 +1021,7 @@ do -- AI_AIR_DISPATCHER
     -- @param #string From The From State string.
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
-    -- @param Tasking.Task_AIR#AI_AIR Task
+    -- @param AI.AI_Air#AI_AIR Task
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param #string PlayerName
     
@@ -1224,7 +1224,7 @@ do -- AI_AIR_DISPATCHER
     
     self:I( "Captured " .. AirbaseName )
     
-    -- Now search for all squadrons located at the airbase, and sanatize them.
+    -- Now search for all squadrons located at the airbase, and sanitize them.
     for SquadronName, Squadron in pairs( self.DefenderSquadrons ) do
       if Squadron.AirbaseName == AirbaseName then
         Squadron.ResourceCount = -999 -- The base has been captured, and the resources are eliminated. No more spawning.
@@ -1376,7 +1376,7 @@ do -- AI_AIR_DISPATCHER
   --- Define a border area to simulate a **cold war** scenario.
   -- A **cold war** is one where Patrol aircraft patrol their territory but will not attack enemy aircraft or launch GCI aircraft unless enemy aircraft enter their territory. In other words the EWR may detect an enemy aircraft but will only send aircraft to attack it if it crosses the border.
   -- A **hot war** is one where Patrol aircraft will intercept any detected enemy aircraft and GCI aircraft will launch against detected enemy aircraft without regard for territory. In other words if the ground radar can detect the enemy aircraft then it will send Patrol and GCI aircraft to attack it.
-  -- If it's a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Core.Zone#ZONE_BASE}. This method needs to be used for this.
+  -- If it's a cold war then the **borders of red and blue territory** need to be defined using a @{Core.Zone} object derived from @{Core.Zone#ZONE_BASE}. This method needs to be used for this.
   -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. In a hot war the borders are effectively defined by the ground based radar coverage of a coalition. Set the noborders parameter to 1
   -- @param #AI_AIR_DISPATCHER self
   -- @param Core.Zone#ZONE_BASE BorderZone An object derived from ZONE_BASE, or a list of objects derived from ZONE_BASE.
@@ -1796,12 +1796,12 @@ do -- AI_AIR_DISPATCHER
   --   
   -- @return #AI_AIR_DISPATCHER
   function AI_AIR_DISPATCHER:SetSquadron2( Squadron )
-  
+
     local SquadronName = Squadron:GetName() -- Retrieves the Squadron Name.
-    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
+    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {}
 
     local DefenderSquadron = self.DefenderSquadrons[SquadronName]
-    
+
     return self
   end
   
@@ -1812,15 +1812,15 @@ do -- AI_AIR_DISPATCHER
   function AI_AIR_DISPATCHER:GetSquadron( SquadronName )
 
     local DefenderSquadron = self.DefenderSquadrons[SquadronName]
-    
+
     if not DefenderSquadron then
       error( "Unknown Squadron for Dispatcher:" .. SquadronName )
     end
-    
+
     return DefenderSquadron
   end
 
-  
+
   --- Set the Squadron visible before startup of the dispatcher.
   -- All planes will be spawned as uncontrolled on the parking spot.
   -- They will lock the parking spot.

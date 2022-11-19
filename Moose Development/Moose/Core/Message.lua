@@ -34,7 +34,7 @@
 --
 -- Messages are sent:
 --
---   * To a @{Client} using @{#MESSAGE.ToClient}().
+--   * To a @{Wrapper.Client} using @{#MESSAGE.ToClient}().
 --   * To a @{Wrapper.Group} using @{#MESSAGE.ToGroup}()
 --   * To a @{Wrapper.Unit} using @{#MESSAGE.ToUnit}()
 --   * To a coalition using @{#MESSAGE.ToCoalition}().
@@ -128,7 +128,7 @@ end
 --- Creates a new MESSAGE object of a certain type.
 -- Note that these MESSAGE objects are not yet displayed on the display panel.
 -- You must use the functions @{ToClient} or @{ToCoalition} or @{ToAll} to send these Messages to the respective recipients.
--- The message display times are automatically defined based on the timing settings in the @{Settings} menu.
+-- The message display times are automatically defined based on the timing settings in the @{Core.Settings} menu.
 -- @param self
 -- @param #string MessageText is the text of the Message.
 -- @param #MESSAGE.Type MessageType The type of the message.
@@ -171,7 +171,7 @@ end
 --- Sends a MESSAGE to a Client Group. Note that the Group needs to be defined within the ME with the skillset "Client" or "Player".
 -- @param #MESSAGE self
 -- @param Wrapper.Client#CLIENT Client is the Group of the Client.
--- @param Core.Settings#SETTINGS Settings Settings used to display the message.
+-- @param Core.Settings#SETTINGS Settings used to display the message.
 -- @return #MESSAGE
 -- @usage
 --
@@ -182,11 +182,11 @@ end
 --   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25, "Score" ):ToClient( ClientGroup )
 --   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25, "Score" ):ToClient( ClientGroup )
 --   or
---   MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25, "Score" ):ToClient( ClientGroup )
---   MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25, "Score" ):ToClient( ClientGroup )
+--   MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25 ):ToClient( ClientGroup )
+--   MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25 ):ToClient( ClientGroup )
 --   or
---   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25, "Score" )
---   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25, "Score" )
+--   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25 )
+--   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25 )
 --   MessageClient1:ToClient( ClientGroup )
 --   MessageClient2:ToClient( ClientGroup )
 --
@@ -217,6 +217,7 @@ end
 --- Sends a MESSAGE to a Group.
 -- @param #MESSAGE self
 -- @param Wrapper.Group#GROUP Group to which the message is displayed.
+-- @param Core.Settings#Settings Settings (Optional) Settings for message display.
 -- @return #MESSAGE Message object.
 function MESSAGE:ToGroup( Group, Settings )
   self:F( Group.GroupName )
@@ -241,6 +242,7 @@ end
 --- Sends a MESSAGE to a Unit. 
 -- @param #MESSAGE self
 -- @param Wrapper.Unit#UNIT Unit to which the message is displayed.
+-- @param Core.Settings#Settings Settings (Optional) Settings for message display.
 -- @return #MESSAGE Message object.
 function MESSAGE:ToUnit( Unit, Settings )
   self:F( Unit.IdentifiableName )
@@ -262,27 +264,38 @@ function MESSAGE:ToUnit( Unit, Settings )
   return self
 end
 
---- Sends a MESSAGE to a Unit. 
+--- Sends a MESSAGE to a Country. 
 -- @param #MESSAGE self
--- @param Wrapper.Unit#UNIT Unit to which the message is displayed.
+-- @param #number Country to which the message is displayed, e.g. country.id.GERMANY. For all country numbers see here: [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_country)
+-- @param Core.Settings#Settings Settings (Optional) Settings for message display.
 -- @return #MESSAGE Message object.
-function MESSAGE:ToUnit( Unit, Settings )
-  self:F( Unit.IdentifiableName )
-
-  if Unit then
-    
+function MESSAGE:ToCountry( Country, Settings )
+  self:F(Country )
+  if Country then   
     if self.MessageType then
-      local Settings = Settings or ( Unit and _DATABASE:GetPlayerSettings( Unit:GetPlayerName() ) ) or _SETTINGS -- Core.Settings#SETTINGS
+      local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
       self.MessageDuration = Settings:GetMessageTime( self.MessageType )
       self.MessageCategory = "" -- self.MessageType .. ": "
     end
-
     if self.MessageDuration ~= 0 then
       self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
-      trigger.action.outTextForUnit( Unit:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration, self.ClearScreen )
+      trigger.action.outTextForCountry( Country, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration, self.ClearScreen )
     end
+  end  
+  return self
+end
+
+--- Sends a MESSAGE to a Country. 
+-- @param #MESSAGE self
+-- @param #number Country to which the message is displayed, , e.g. country.id.GERMANY. For all country numbers see here: [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_country)
+-- @param #boolean Condition Sends the message only if the condition is true.
+-- @param Core.Settings#Settings Settings (Optional) Settings for message display.
+-- @return #MESSAGE Message object.
+function MESSAGE:ToCountryIf( Country, Condition, Settings )
+  self:F(Country )
+  if Country and Condition == true then
+    self:ToCountry( Country, Settings )
   end
-  
   return self
 end
 
@@ -292,11 +305,11 @@ end
 -- @usage
 --
 --   -- Send a message created with the @{New} method to the BLUE coalition.
---   MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToBlue()
+--   MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25):ToBlue()
 --   or
---   MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToBlue()
+--   MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 ):ToBlue()
 --   or
---   MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
+--   MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 )
 --   MessageBLUE:ToBlue()
 --
 function MESSAGE:ToBlue()
@@ -313,11 +326,11 @@ end
 -- @usage
 --
 --   -- Send a message created with the @{New} method to the RED coalition.
---   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToRed()
+--   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 ):ToRed()
 --   or
---   MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToRed()
+--   MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 ):ToRed()
 --   or
---   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
+--   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 )
 --   MessageRED:ToRed()
 --
 function MESSAGE:ToRed()
@@ -336,11 +349,11 @@ end
 -- @usage
 --
 --   -- Send a message created with the @{New} method to the RED coalition.
---   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToCoalition( coalition.side.RED )
+--   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 ):ToCoalition( coalition.side.RED )
 --   or
---   MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToCoalition( coalition.side.RED )
+--   MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 ):ToCoalition( coalition.side.RED )
 --   or
---   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
+--   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 )
 --   MessageRED:ToCoalition( coalition.side.RED )
 --
 function MESSAGE:ToCoalition( CoalitionSide, Settings )
@@ -384,11 +397,11 @@ end
 -- @usage
 --
 --   -- Send a message created to all players.
---   MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25, "Win" ):ToAll()
+--   MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25 ):ToAll()
 --   or
---   MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25, "Win" ):ToAll()
+--   MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25 ):ToAll()
 --   or
---   MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25, "Win" )
+--   MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25 )
 --   MessageAll:ToAll()
 --
 function MESSAGE:ToAll( Settings )
@@ -410,6 +423,7 @@ end
 
 --- Sends a MESSAGE to all players if the given Condition is true.
 -- @param #MESSAGE self
+-- @param #boolean Condition
 -- @return #MESSAGE
 function MESSAGE:ToAllIf( Condition )
 

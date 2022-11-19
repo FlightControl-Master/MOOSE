@@ -30,7 +30,7 @@
 -- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536)
 --
 -- ====
--- @module Functional.Arty
+-- @module Functional.Artillery
 -- @image Artillery.JPG
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -108,7 +108,7 @@
 --- Enables mission designers easily to assign targets for artillery units. Since the implementation is based on a Finite State Model (FSM), the mission designer can
 -- interact with the process at certain events or states.
 --
--- A new ARTY object can be created with the @{#ARTY.New}(*group*) contructor.
+-- A new ARTY object can be created with the @{#ARTY.New}(*group*) constructor.
 -- The parameter *group* has to be a MOOSE Group object and defines ARTY group.
 --
 -- The ARTY FSM process can be started by the @{#ARTY.Start}() command.
@@ -146,7 +146,7 @@
 -- When a new target is assigned via the @{#ARTY.AssignTargetCoord}() function (see below), the **NewTarget** event is triggered.
 --
 -- ## Assigning Targets
--- Assigning targets is a central point of the ARTY class. Multiple targets can be assigned simultanioulsly and are put into a queue.
+-- Assigning targets is a central point of the ARTY class. Multiple targets can be assigned simultaneously and are put into a queue.
 -- Of course, targets can be added at any time during the mission. For example, once they are detected by a reconnaissance unit.
 --
 -- In order to add a target, the function @{#ARTY.AssignTargetCoord}(*coord*, *prio*, *radius*, *nshells*, *maxengage*, *time*, *weapontype*, *name*) has to be used.
@@ -161,7 +161,7 @@
 -- * *maxengage*: Number of times a target is engaged.
 -- * *time*: Time of day the engagement is schedule in the format "hh:mm:ss" for hh=hours, mm=minutes, ss=seconds.
 -- For example "10:15:35". In the case the attack will be executed at a quarter past ten in the morning at the day the mission started.
--- If the engagement should start on the following day the format can be specified as "10:15:35+1", where the +1 denots the following day.
+-- If the engagement should start on the following day the format can be specified as "10:15:35+1", where the +1 denotes the following day.
 -- This is useful for longer running missions or if the mission starts at 23:00 hours and the attack should be scheduled at 01:00 hours on the following day.
 -- Of course, later days are also possible by appending "+2", "+3", etc.
 -- **Note** that the time has to be given as a string. So the enclosing quotation marks "" are important.
@@ -179,7 +179,7 @@
 -- Let's first consider the case that none of the targets is scheduled to be executed at a certain time (*time*=nil).
 -- The ARTY group will first engage the target with higher priority (*prio*=10). After the engagement is finished, the target with lower priority is attacked.
 -- This is because the target with lower prio has been attacked one time less. After the attack on the lower priority task is finished and both targets
--- have been engaged equally often, the target with the higher priority is engaged again. This coninues until a target has engaged three times.
+-- have been engaged equally often, the target with the higher priority is engaged again. This continues until a target has engaged three times.
 -- Once the maximum number of engagements is reached, the target is deleted from the queue.
 --
 -- In other words, the queue is first sorted with respect to the number of engagements and targets with the same number of engagements are sorted with
@@ -190,7 +190,7 @@
 -- As mentioned above, targets can be engaged at a specific time of the day via the *time* parameter.
 --
 -- If the *time* parameter is specified for a target, the first engagement of that target will happen at that time of the day and not before.
--- This also applies when multiple engagements are requested via the *maxengage* parameter. The first attack will not happen before the specifed time.
+-- This also applies when multiple engagements are requested via the *maxengage* parameter. The first attack will not happen before the specified time.
 -- When that timed attack is finished, the *time* parameter is deleted and the remaining engagements are carried out in the same manner as for untimed targets (described above).
 --
 -- Of course, it can happen that a scheduled task should be executed at a time, when another target is already under attack.
@@ -201,7 +201,7 @@
 --
 -- ## Determining the Amount of Ammo
 --
--- In order to determin when a unit is out of ammo and possible initiate the rearming process it is necessary to know which types of weapons have to be counted.
+-- In order to determine when a unit is out of ammo and possible initiate the rearming process it is necessary to know which types of weapons have to be counted.
 -- For most artillery unit types, this is simple because they only have one type of weapon and hence ammunition.
 --
 -- However, there are more complex scenarios. For example, naval units carry a big arsenal of different ammunition types ranging from various cannon shell types
@@ -217,7 +217,7 @@
 -- **Note** that the default parameters "weapons.shells", "weapons.nurs", "weapons.missiles" **should in priciple** capture all the corresponding ammo types.
 -- However, the logic searches for the string "weapon.missies" in the ammo type. Especially for missiles, this string is often not contained in the ammo type descriptor.
 --
--- One way to determin which types of ammo the unit carries, one can use the debug mode of the arty class via @{#ARTY.SetDebugON}().
+-- One way to determine which types of ammo the unit carries, one can use the debug mode of the arty class via @{#ARTY.SetDebugON}().
 -- In debug mode, the all ammo types of the group are printed to the monitor as message and can be found in the DCS.log file.
 --
 -- ## Employing Selected Weapons
@@ -274,7 +274,7 @@
 --
 -- ## Simulated Weapons
 --
--- In addtion to the standard weapons a group has available some special weapon types that are not possible to use in the native DCS environment are simulated.
+-- In addition to the standard weapons a group has available some special weapon types that are not possible to use in the native DCS environment are simulated.
 --
 -- ### Tactical Nukes
 --
@@ -283,9 +283,9 @@
 --
 -- By default, they group does not have any nukes available. To give the group the ability the function @{#ARTY.SetTacNukeShells}(*n*) can be used.
 -- This supplies the group with *n* nuclear shells, where *n* is restricted to the number of conventional shells the group can carry.
--- Note that the group must always have convenctional shells left in order to fire a nuclear shell.
+-- Note that the group must always have conventional shells left in order to fire a nuclear shell.
 --
--- The default explostion strength is 0.075 kilo tons TNT. The can be changed with the @{#ARTY.SetTacNukeWarhead}(*strength*), where *strength* is given in kilo tons TNT.
+-- The default explosion strength is 0.075 kilo tons TNT. The can be changed with the @{#ARTY.SetTacNukeWarhead}(*strength*), where *strength* is given in kilo tons TNT.
 --
 -- ### Illumination Shells
 --
@@ -301,12 +301,12 @@
 --
 -- ### Smoke Shells
 --
--- In a similar way to illumination shells, ARTY groups can also employ smoke shells. The numer of smoke shells the group has available is set by the function
+-- In a similar way to illumination shells, ARTY groups can also employ smoke shells. The number of smoke shells the group has available is set by the function
 -- @{#ARTY.SetSmokeShells}(*n*, *color*), where *n* is the number of shells and *color* defines the smoke color. Default is SMOKECOLOR.Red.
 --
 -- The weapon type to be used in the @{#ARTY.AssignTargetCoord}() function is *ARTY.WeaponType.SmokeShells*.
 --
--- The explosive shell the group fired is destroyed shortly before its impact on the ground and smoke of the speficied color is triggered at that position.
+-- The explosive shell the group fired is destroyed shortly before its impact on the ground and smoke of the specified color is triggered at that position.
 --
 --
 -- ## Assignments via Markers on F10 Map
@@ -320,15 +320,15 @@
 -- ### Target Assignments
 -- A new target can be assigned by writing **arty engage** in the marker text.
 -- This is followed by a **comma separated list** of (optional) keywords and parameters.
--- First, it is important to address the ARTY group or groups that should engage. This can be done in numrous ways. The keywords are *battery*, *alias*, *cluster*.
+-- First, it is important to address the ARTY group or groups that should engage. This can be done in numerous ways. The keywords are *battery*, *alias*, *cluster*.
 -- It is also possible to address all ARTY groups by the keyword *everyone* or *allbatteries*. These two can be used synonymously.
 -- **Note that**, if no battery is assigned nothing will happen.
 --
 -- * *everyone* or *allbatteries* The target is assigned to all batteries.
 -- * *battery* Name of the ARTY group that the target is assigned to. Note that **the name is case sensitive** and has to be given in quotation marks. Default is all ARTY groups of the right coalition.
 -- * *alias* Alias of the ARTY group that the target is assigned to. The alias is **case sensitive** and needs to be in quotation marks.
--- * *cluster* The cluster of ARTY groups that is addessed. Clusters can be defined by the function @{#ARTY.AddToCluster}(*clusters*). Names are **case sensitive** and need to be in quotation marks.
--- * *key* A number to authorize the target assignment. Only specifing the correct number will trigger an engagement.
+-- * *cluster* The cluster of ARTY groups that is addressed. Clusters can be defined by the function @{#ARTY.AddToCluster}(*clusters*). Names are **case sensitive** and need to be in quotation marks.
+-- * *key* A number to authorize the target assignment. Only specifying the correct number will trigger an engagement.
 -- * *time* Time for which which the engagement is schedules, e.g. 08:42. Default is as soon as possible.
 -- * *prio*  Priority of the engagement as number between 1 (high prio) and 100 (low prio). Default is 50, i.e. medium priority.
 -- * *shots* Number of shots (shells, rockets or missiles) fired at each engagement. Default is 5.
@@ -353,8 +353,8 @@
 --      arty engage, battery "Paladin Alpha", weapon nukes, shots 1, time 20:15
 --      arty engage, battery "Horwitzer 1", lldms 41:51:00N 41:47:58E
 --
--- Note that the keywords and parameters are *case insensitve*. Only exception are the battery, alias and cluster names.
--- These must be exactly the same as the names of the goups defined in the mission editor or the aliases and cluster names defined in the script.
+-- Note that the keywords and parameters are *case insensitive*. Only exception are the battery, alias and cluster names.
+-- These must be exactly the same as the names of the groups defined in the mission editor or the aliases and cluster names defined in the script.
 --
 -- ### Relocation Assignments
 --
@@ -363,11 +363,11 @@
 -- * *time* Time for which which the relocation/move is schedules, e.g. 08:42. Default is as soon as possible.
 -- * *speed* The speed in km/h the group will drive at. Default is 70% of its max possible speed.
 -- * *on road* Group will use mainly roads. Default is off, i.e. it will go in a straight line from its current position to the assigned coordinate.
--- * *canceltarget* Group will cancel all running firing engagements and immidiately start to move. Default is that group will wait until is current assignment is over.
+-- * *canceltarget* Group will cancel all running firing engagements and immediately start to move. Default is that group will wait until is current assignment is over.
 -- * *battery* Name of the ARTY group that the relocation is assigned to.
 -- * *alias* Alias of the ARTY group that the target is assigned to. The alias is **case sensitive** and needs to be in quotation marks.
--- * *cluster* The cluster of ARTY groups that is addessed. Clusters can be defined by the function @{#ARTY.AddToCluster}(*clusters*). Names are **case sensitive** and need to be in quotation marks.
--- * *key* A number to authorize the target assignment. Only specifing the correct number will trigger an engagement.
+-- * *cluster* The cluster of ARTY groups that is addressed. Clusters can be defined by the function @{#ARTY.AddToCluster}(*clusters*). Names are **case sensitive** and need to be in quotation marks.
+-- * *key* A number to authorize the target assignment. Only specifying the correct number will trigger an engagement.
 -- * *lldms* Specify the coordinates in Lat/Long degrees, minutes and seconds format. The actual location of the marker is unimportant. The group will move to the coordinates given in the lldms keyword.
 -- Format is DD:MM:SS[N,S] DD:MM:SS[W,E]. See example below.
 -- * *readonly* Marker cannot be deleted by users any more. Hence, assignment cannot be cancelled by removing the marker.
@@ -410,12 +410,12 @@
 --
 -- A few options can be set by marks. The corresponding keyword is **arty set**. This can be used to define the rearming place and group for a battery.
 --
--- To set the reamring place of a group at the marker position type
+-- To set the rearming place of a group at the marker position type
 --      arty set, battery "Paladin Alpha", rearming place
 --
 -- Setting the rearming group is independent of the position of the mark. Just create one anywhere on the map and type
 --      arty set, battery "Mortar Bravo", rearming group "Ammo Truck M818"
--- Note that the name of the rearming group has to be given in quotation marks and spellt exactly as the group name defined in the mission editor.
+-- Note that the name of the rearming group has to be given in quotation marks and spelt exactly as the group name defined in the mission editor.
 --
 -- ## Transporting
 --
@@ -3422,7 +3422,7 @@ function ARTY:onafterMove(Controllable, From, Event, To, move)
   -- Set current move.
   self.currentMove=move
 
-  -- Route group to coodinate.
+  -- Route group to coordinate.
   self:_Move(self.Controllable, move.coord, move.speed, move.onroad)
 
 end

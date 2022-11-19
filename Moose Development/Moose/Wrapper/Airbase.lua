@@ -1,4 +1,4 @@
---- **Wrapper** -- AIRBASE is a wrapper class to handle the DCS Airbase objects.
+--- **Wrapper** - AIRBASE is a wrapper class to handle the DCS Airbase objects.
 --
 -- ===
 --
@@ -39,7 +39,7 @@
 --
 -- ## AIRBASE reference methods
 --
--- For each DCS Airbase object alive within a running mission, a AIRBASE wrapper object (instance) will be created within the _@{DATABASE} object.
+-- For each DCS Airbase object alive within a running mission, a AIRBASE wrapper object (instance) will be created within the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
 -- This is done at the beginning of the mission (when the mission starts).
 --
 -- The AIRBASE class **does not contain a :New()** method, rather it provides **:Find()** methods to retrieve the object reference
@@ -51,8 +51,8 @@
 --
 -- The AIRBASE class provides the following functions to retrieve quickly the relevant AIRBASE instance:
 --
---  * @{#AIRBASE.Find}(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase object.
---  * @{#AIRBASE.FindByName}(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase name.
+--  * @{#AIRBASE.Find}(): Find a AIRBASE instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Airbase object.
+--  * @{#AIRBASE.FindByName}(): Find a AIRBASE instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Airbase name.
 --
 -- IMPORTANT: ONE SHOULD NEVER SANITIZE these AIRBASE OBJECT REFERENCES! (make the AIRBASE object references nil).
 --
@@ -504,6 +504,12 @@ AIRBASE.MarianaIslands = {
 -- * AIRBASE.SouthAtlantic.Puerto_Williams
 -- * AIRBASE.SouthAtlantic.Puerto_Natales
 -- * AIRBASE.SouthAtlantic.El_Calafate
+-- * AIRBASE.SouthAtlantic.Puerto_Santa_Cruz
+-- * AIRBASE.SouthAtlantic.Comandante_Luis_Piedrabuena
+-- * AIRBASE.SouthAtlantic.Aerodromo_De_Tolhuin
+-- * AIRBASE.SouthAtlantic.Porvenir_Airfield
+-- * AIRBASE.SouthAtlantic.Almirante_Schroeders
+-- * AIRBASE.SouthAtlantic.Rio_Turbio
 -- 
 --@field MarianaIslands
 AIRBASE.SouthAtlantic={
@@ -520,6 +526,12 @@ AIRBASE.SouthAtlantic={
   ["Puerto_Williams"]="Puerto Williams",
   ["Puerto_Natales"]="Puerto Natales",
   ["El_Calafate"]="El Calafate",
+  ["Puerto_Santa_Cruz"]="Puerto Santa Cruz",
+  ["Comandante_Luis_Piedrabuena"]="Comandante Luis Piedrabuena",
+  ["Aerodromo_De_Tolhuin"]="Aerodromo De Tolhuin",
+  ["Porvenir_Airfield"]="Porvenir Airfield",
+  ["Almirante_Schroeders"]="Almirante Schroeders",
+  ["Rio_Turbio"]="Rio Turbio",
 }
 
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".

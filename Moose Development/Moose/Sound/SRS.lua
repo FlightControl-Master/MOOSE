@@ -1,4 +1,4 @@
---- **Sound** - Simple Radio Standalone (SRS) Integration.
+--- **Sound** - Simple Radio Standalone (SRS) Integration and Text-to-Speech.
 --
 -- ===
 --
@@ -26,7 +26,7 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
--- @module Sound.MSRS
+-- @module Sound.SRS
 -- @image Sound_MSRS.png
 
 --- MSRS class.
@@ -94,8 +94,6 @@
 -- For more information on setting up a cloud account, visit: https://cloud.google.com/text-to-speech
 -- Google's supported SSML reference: https://cloud.google.com/text-to-speech/docs/ssml
 -- 
--- **NOTE on using GOOGLE TTS with SRS:** You need to have the C# library installed in your SRS folder for Google to work. 
--- You can obtain it e.g. here: [NuGet](https://www.nuget.org/packages/Grpc.Core)
 -- 
 -- **Pro-Tipp** - use the command line with power shell to call DCS-SR-ExternalAudio.exe - it will tell you what is missing.    
 -- and also the Google Console error, in case you have missed a step in setting up your Google TTS.   
@@ -104,10 +102,14 @@
 -- 
 -- ## Set Voice
 -- 
--- Use a specifc voice with the @{#MSRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
+-- Use a specific voice with the @{#MSRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system.
 -- If enabling SetGoogle(), you can use voices provided by Google
 -- Google's supported voices: https://cloud.google.com/text-to-speech/docs/voices
+-- For voices there are enumerators in this class to help you out on voice names:
+-- 
+--            MSRS.Voices.Microsoft -- e.g. MSRS.Voices.Microsoft.Hedda - the Microsoft enumerator contains all voices known to work with SRS
+--            MSRS.Voices.Google -- e.g. MSRS.Voices.Google.Standard.en_AU_Standard_A or MSRS.Voices.Google.Wavenet.de_DE_Wavenet_C - The Google enumerator contains voices for EN, DE, IT, FR and ES.
 -- 
 -- ## Set Coordinate
 -- 
@@ -141,7 +143,7 @@ MSRS = {
 
 --- MSRS class version.
 -- @field #string version
-MSRS.version="0.1.0"
+MSRS.version="0.1.1"
 
 --- Voices
 -- @type Voices
@@ -248,7 +250,7 @@ MSRS.Voices = {
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add functions to add/remove freqs and modulations.
+-- TODO: Add functions to remove freqs and modulations.
 -- DONE: Add coordinate.
 -- DONE: Add google.
 
@@ -410,6 +412,24 @@ function MSRS:SetFrequencies(Frequencies)
   return self
 end
 
+--- Add frequencies.
+-- @param #MSRS self
+-- @param #table Frequencies Frequencies in MHz. Can also be given as a #number if only one frequency should be used.
+-- @return #MSRS self
+function MSRS:AddFrequencies(Frequencies)
+
+  -- Ensure table.
+  if type(Frequencies)~="table" then
+    Frequencies={Frequencies}
+  end
+  
+  for _,_freq in pairs(Frequencies) do
+    table.insert(self.frequencies,_freq)
+  end
+  
+  return self
+end
+
 --- Get frequencies.
 -- @param #MSRS self
 -- @param #table Frequencies in MHz.
@@ -430,6 +450,24 @@ function MSRS:SetModulations(Modulations)
   end
   
   self.modulations=Modulations
+  
+  return self
+end
+
+--- Add modulations.
+-- @param #MSRS self
+-- @param #table Modulations Modulations. Can also be given as a #number if only one modulation should be used.
+-- @return #MSRS self
+function MSRS:AddModulations(Modulations)
+
+  -- Ensure table.
+  if type(Modulations)~="table" then
+    Modulations={Modulations}
+  end
+  
+   for _,_mod in pairs(Modulations) do
+    table.insert(self.modulations,_mod)
+   end
   
   return self
 end
@@ -882,6 +920,8 @@ MSRSQUEUE = {
 -- @field #boolean isplaying If true, transmission is currently playing.
 -- @field #number Tplay Mission time (abs) in seconds when the transmission should be played.
 -- @field #number interval Interval in seconds before next transmission.
+-- @field #boolean TransmitOnlyWithPlayers If true, only transmit if there are alive Players.
+-- @field Core.Set#SET_CLIENT PlayerSet PlayerSet created when TransmitOnlyWithPlayers == true
 
 --- Create a new MSRSQUEUE object for a given radio frequency/modulation.
 -- @param #MSRSQUEUE self
@@ -932,6 +972,23 @@ function MSRSQUEUE:AddTransmission(transmission)
   return self
 end
 
+--- Switch to only transmit if there are players on the server.
+-- @param #MSRSQUEUE self
+-- @param #boolean Switch If true, only send SRS if there are alive Players.
+-- @return #MSRSQUEUE self
+function MSRSQUEUE:SetTransmitOnlyWithPlayers(Switch)
+  self.TransmitOnlyWithPlayers = Switch
+  if Switch == false or Switch==nil then
+    if self.PlayerSet then
+      self.PlayerSet:FilterStop()
+    end
+    self.PlayerSet = nil
+  else
+    self.PlayerSet = SET_CLIENT:New():FilterStart()
+  end
+  return self
+end
+
 --- Create a new transmission and add it to the radio queue.
 -- @param #MSRSQUEUE self
 -- @param #string text Text to play.
@@ -946,7 +1003,13 @@ end
 -- @param #number modulation Radio modulation if other then MSRS default.
 -- @return #MSRSQUEUE.Transmission Radio transmission table.
 function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation)
-
+  
+  if self.TransmitOnlyWithPlayers then
+    if self.PlayerSet and self.PlayerSet:CountAlive() == 0 then
+      return self
+    end
+  end
+  
   -- Sanity checks.
   if not text then
     self:E(self.lid.."ERROR: No text specified.")

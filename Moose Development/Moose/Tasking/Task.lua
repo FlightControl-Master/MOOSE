@@ -1,4 +1,4 @@
---- **Tasking** -- A task object governs the main engine to administer human taskings.
+--- **Tasking** - A task object governs the main engine to administer human taskings.
 -- 
 -- **Features:**
 -- 
@@ -38,7 +38,7 @@
 -- 
 -- A mission can be in a specific state during the simulation run. For more information about these states, please check the @{Tasking.Mission} section.
 -- 
--- To achieve the mission goal, a mission administers @{Tasking.Task}s that are set to achieve the mission goal by the human players.
+-- To achieve the mission goal, a mission administers @{#TASK}s that are set to achieve the mission goal by the human players.
 -- Each of these tasks can be **dynamically created** using a task dispatcher, or **coded** by the mission designer.
 -- Each mission has a separate **Mission Menu**, that focuses on the administration of these tasks.
 -- 
@@ -143,7 +143,7 @@
 -- 
 -- ![Command Center](../Tasking/Menu_CommandCenter.JPG)
 -- 
--- When we take back the command center menu, you see two addtional **Assign Task** menu items.
+-- When we take back the command center menu, you see two additional **Assign Task** menu items.
 -- The menu **Assign Task On** will automatically allocate a task to the player.
 -- After the selection of this menu, the menu will change into **Assign Task Off**,
 -- and will need to be selected again by the player to switch of the automatic task assignment.
@@ -190,7 +190,7 @@
 --                          
 -- The state completion is by default set to **Success**, if the goals of the task have been reached, but can be overruled by a goal method.
 -- 
--- Depending on the tactical situation, a task can be **Cancelled** by the mission governer.
+-- Depending on the tactical situation, a task can be **Cancelled** by the mission governor.
 -- It is actually the mission designer who has the flexibility to decide at which conditions a task would be set to **Success**, **Failed** or **Cancelled**.
 -- This decision all depends on the task goals, and the phase/evolution of the task conditions that would accomplish the goals.
 -- 
@@ -199,16 +199,16 @@
 -- However, it could very well be also acceptable that the task would be flagged as **Success**.
 -- 
 -- The tasking mechanism governs beside the progress also a scoring mechanism, and in case of goal completion without any active pilot involved
--- in the execution of the task, could result in a **Success** task completion status, but no score would be awared, as there were no players involved. 
+-- in the execution of the task, could result in a **Success** task completion status, but no score would be awarded, as there were no players involved. 
 -- 
 -- These different completion states are important for the mission designer to reflect scoring to a player.
 -- A success could mean a positive score to be given, while a failure could mean a negative score or penalties to be awarded.
 -- 
 -- ===
 -- 
--- ### Author: **FlightControl**
+-- ### Author(s): **FlightControl**
 -- 
--- ### Contributions: 
+-- ### Contribution(s):
 -- 
 -- ===
 -- 
@@ -262,8 +262,8 @@
 -- 
 -- ## 1.3) Cargo Tasks  
 -- 
---   - @{Tasking.Task_Cargo#TASK_CARGO_TRANSPORT} - Models the transportation of cargo to deployment zones. 
---   - @{Tasking.Task_Cargo#TASK_CARGO_CSAR} - Models the rescue of downed friendly pilots from behind enemy lines.    
+--   - @{Tasking.Task_CARGO#TASK_CARGO_TRANSPORT} - Models the transportation of cargo to deployment zones. 
+--   - @{Tasking.Task_CARGO#TASK_CARGO_CSAR} - Models the rescue of downed friendly pilots from behind enemy lines.    
 -- 
 -- 
 -- # 2) Task status events.
@@ -293,7 +293,7 @@
 -- 
 --      function Task:OnAfterGoal()
 --        if condition == true then
---          self:Success() -- This will flag the task to Succcess when the condition is true.
+--          self:Success() -- This will flag the task to Success when the condition is true.
 --        else
 --          if condition2 == true and condition3 == true then
 --            self:Fail() -- This will flag the task to Failed, when condition2 and condition3 would be true.
@@ -732,7 +732,7 @@ end
 
 do -- Group Assignment
 
-  --- Returns if the @{Task} is assigned to the Group.
+  --- Returns if the @{#TASK} is assigned to the Group.
   -- @param #TASK self
   -- @param Wrapper.Group#GROUP TaskGroup
   -- @return #boolean
@@ -750,7 +750,7 @@ do -- Group Assignment
   end
   
   
-  --- Set @{Wrapper.Group} assigned to the @{Task}.
+  --- Set @{Wrapper.Group} assigned to the @{#TASK}.
   -- @param #TASK self
   -- @param Wrapper.Group#GROUP TaskGroup
   -- @return #TASK
@@ -780,7 +780,7 @@ do -- Group Assignment
     return self
   end
   
-  --- Clear the @{Wrapper.Group} assignment from the @{Task}.
+  --- Clear the @{Wrapper.Group} assignment from the @{#TASK}.
   -- @param #TASK self
   -- @param Wrapper.Group#GROUP TaskGroup
   -- @return #TASK
@@ -824,7 +824,7 @@ do -- Group Assignment
   end
 
 
-  --- Assign the @{Task} to a @{Wrapper.Group}.
+  --- Assign the @{#TASK} to a @{Wrapper.Group}.
   -- @param #TASK self
   -- @param Wrapper.Group#GROUP TaskGroup
   -- @return #TASK
@@ -861,7 +861,7 @@ do -- Group Assignment
     return self
   end
   
-  --- UnAssign the @{Task} from a @{Wrapper.Group}.
+  --- UnAssign the @{#TASK} from a @{Wrapper.Group}.
   -- @param #TASK self
   -- @param Wrapper.Group#GROUP TaskGroup
   function TASK:UnAssignFromGroup( TaskGroup )
@@ -899,7 +899,7 @@ function TASK:HasGroup( FindGroup )
 
 end
 
---- Assign the @{Task} to an alive @{Wrapper.Unit}.
+--- Assign the @{#TASK} to an alive @{Wrapper.Unit}.
 -- @param #TASK self
 -- @param Wrapper.Unit#UNIT TaskUnit
 -- @return #TASK self
@@ -918,7 +918,7 @@ function TASK:AssignToUnit( TaskUnit )
   return self
 end
 
---- UnAssign the @{Task} from an alive @{Wrapper.Unit}.
+--- UnAssign the @{#TASK} from an alive @{Wrapper.Unit}.
 -- @param #TASK self
 -- @param Wrapper.Unit#UNIT TaskUnit
 -- @return #TASK self
@@ -932,7 +932,7 @@ function TASK:UnAssignFromUnit( TaskUnit )
   return self
 end
 
---- Sets the TimeOut for the @{Task}. If @{Task} stayed planned for longer than TimeOut, it gets into Cancelled status.
+--- Sets the TimeOut for the @{#TASK}. If @{#TASK} stayed planned for longer than TimeOut, it gets into Cancelled status.
 -- @param #TASK self
 -- @param #integer Timer in seconds
 -- @return #TASK self
@@ -943,7 +943,7 @@ function TASK:SetTimeOut ( Timer )
   return self
 end
 
---- Send a message of the @{Task} to the assigned @{Wrapper.Group}s.
+--- Send a message of the @{#TASK} to the assigned @{Wrapper.Group}s.
 -- @param #TASK self
 function TASK:MessageToGroups( Message )
   self:F( { Message = Message } )
@@ -960,7 +960,7 @@ function TASK:MessageToGroups( Message )
 end
 
 
---- Send the briefng message of the @{Task} to the assigned @{Wrapper.Group}s.
+--- Send the briefing message of the @{#TASK} to the assigned @{Wrapper.Group}s.
 -- @param #TASK self
 function TASK:SendBriefingToAssignedGroups()
   self:F2()
@@ -975,7 +975,7 @@ function TASK:SendBriefingToAssignedGroups()
 end
 
 
---- UnAssign the @{Task} from the @{Wrapper.Group}s.
+--- UnAssign the @{#TASK} from the @{Wrapper.Group}s.
 -- @param #TASK self
 function TASK:UnAssignFromGroups()
   self:F2()
@@ -991,7 +991,7 @@ end
 
 
 
---- Returns if the @{Task} has still alive and assigned Units.
+--- Returns if the @{#TASK} has still alive and assigned Units.
 -- @param #TASK self
 -- @return #boolean
 function TASK:HasAliveUnits()
@@ -1016,7 +1016,7 @@ function TASK:HasAliveUnits()
   return false
 end
 
---- Set the menu options of the @{Task} to all the groups in the SetGroup.
+--- Set the menu options of the @{#TASK} to all the groups in the SetGroup.
 -- @param #TASK self
 -- @param #number MenuTime
 -- @return #TASK
@@ -1057,7 +1057,7 @@ function TASK:SetMenuForGroup( TaskGroup, MenuTime )
 end
 
 
---- Set the planned menu option of the @{Task}.
+--- Set the planned menu option of the @{#TASK}.
 -- @param #TASK self
 -- @param Wrapper.Group#GROUP TaskGroup
 -- @param #string MenuText The menu text.
@@ -1092,7 +1092,7 @@ function TASK:SetPlannedMenuForGroup( TaskGroup, MenuTime )
   return self
 end
 
---- Set the assigned menu options of the @{Task}.
+--- Set the assigned menu options of the @{#TASK}.
 -- @param #TASK self
 -- @param Wrapper.Group#GROUP TaskGroup
 -- @param #number MenuTime
@@ -1127,7 +1127,7 @@ function TASK:SetAssignedMenuForGroup( TaskGroup, MenuTime )
   return self
 end
 
---- Remove the menu options of the @{Task} to all the groups in the SetGroup.
+--- Remove the menu options of the @{#TASK} to all the groups in the SetGroup.
 -- @param #TASK self
 -- @param #number MenuTime
 -- @return #TASK
@@ -1145,7 +1145,7 @@ function TASK:RemoveMenu( MenuTime )
 end
 
 
---- Remove the menu option of the @{Task} for a @{Wrapper.Group}.
+--- Remove the menu option of the @{#TASK} for a @{Wrapper.Group}.
 -- @param #TASK self
 -- @param Wrapper.Group#GROUP TaskGroup
 -- @param #number MenuTime
@@ -1176,7 +1176,7 @@ function TASK:RefreshMenus( TaskGroup, MenuTime )
   
 end
 
---- Remove the assigned menu option of the @{Task} for a @{Wrapper.Group}.
+--- Remove the assigned menu option of the @{#TASK} for a @{Wrapper.Group}.
 -- @param #TASK self
 -- @param Wrapper.Group#GROUP TaskGroup
 -- @param #number MenuTime
@@ -1275,14 +1275,14 @@ end
 
 
 
---- Returns the @{Task} name.
+--- Returns the @{#TASK} name.
 -- @param #TASK self
 -- @return #string TaskName
 function TASK:GetTaskName()
   return self.TaskName
 end
 
---- Returns the @{Task} briefing.
+--- Returns the @{#TASK} briefing.
 -- @param #TASK self
 -- @return #string Task briefing.
 function TASK:GetTaskBriefing()
@@ -1292,7 +1292,7 @@ end
 
 
 
---- Get the default or currently assigned @{Process} template with key ProcessName.
+--- Get the default or currently assigned @{Core.Fsm#FSM_PROCESS} template with key ProcessName.
 -- @param #TASK self
 -- @param #string ProcessName
 -- @return Core.Fsm#FSM_PROCESS
@@ -1305,8 +1305,8 @@ end
 
 
 
--- TODO: Obscolete?
---- Fail processes from @{Task} with key @{Wrapper.Unit}
+-- TODO: Obsolete?
+--- Fail processes from @{#TASK} with key @{Wrapper.Unit}.
 -- @param #TASK self
 -- @param #string TaskUnitName
 -- @return #TASK self
@@ -1318,7 +1318,7 @@ function TASK:FailProcesses( TaskUnitName )
   end
 end
 
---- Add a FiniteStateMachine to @{Task} with key Task@{Wrapper.Unit}
+--- Add a FiniteStateMachine to @{#TASK} with key @{Wrapper.Unit}.
 -- @param #TASK self
 -- @param Wrapper.Unit#UNIT TaskUnit
 -- @param Core.Fsm#FSM_PROCESS Fsm
@@ -1331,7 +1331,7 @@ function TASK:SetStateMachine( TaskUnit, Fsm )
   return Fsm
 end
 
---- Gets the FiniteStateMachine of @{Task} with key Task@{Wrapper.Unit}
+--- Gets the FiniteStateMachine of @{#TASK} with key @{Wrapper.Unit}.
 -- @param #TASK self
 -- @param Wrapper.Unit#UNIT TaskUnit
 -- @return Core.Fsm#FSM_PROCESS
@@ -1341,7 +1341,7 @@ function TASK:GetStateMachine( TaskUnit )
   return self.Fsm[TaskUnit]
 end
 
---- Remove FiniteStateMachines from @{Task} with key Task@{Wrapper.Unit}
+--- Remove FiniteStateMachines from @{#TASK} with key @{Wrapper.Unit}.
 -- @param #TASK self
 -- @param Wrapper.Unit#UNIT TaskUnit
 -- @return #TASK self
@@ -1365,7 +1365,7 @@ function TASK:RemoveStateMachine( TaskUnit )
 end
 
 
---- Checks if there is a FiniteStateMachine assigned to Task@{Wrapper.Unit} for @{Task}
+--- Checks if there is a FiniteStateMachine assigned to @{Wrapper.Unit} for @{#TASK}.
 -- @param #TASK self
 -- @param Wrapper.Unit#UNIT TaskUnit
 -- @return #TASK self
@@ -1438,117 +1438,117 @@ function TASK:GetID()
 end
 
 
---- Sets a @{Task} to status **Success**.
+--- Sets a @{#TASK} to status **Success**.
 -- @param #TASK self
 function TASK:StateSuccess()
   self:SetState( self, "State", "Success" )
   return self
 end
 
---- Is the @{Task} status **Success**.
+--- Is the @{#TASK} status **Success**.
 -- @param #TASK self
 function TASK:IsStateSuccess()
   return self:Is( "Success" )
 end
 
---- Sets a @{Task} to status **Failed**.
+--- Sets a @{#TASK} to status **Failed**.
 -- @param #TASK self
 function TASK:StateFailed()
   self:SetState( self, "State", "Failed" )
   return self
 end
 
---- Is the @{Task} status **Failed**.
+--- Is the @{#TASK} status **Failed**.
 -- @param #TASK self
 function TASK:IsStateFailed()
   return self:Is( "Failed" )
 end
 
---- Sets a @{Task} to status **Planned**.
+--- Sets a @{#TASK} to status **Planned**.
 -- @param #TASK self
 function TASK:StatePlanned()
   self:SetState( self, "State", "Planned" )
   return self
 end
 
---- Is the @{Task} status **Planned**.
+--- Is the @{#TASK} status **Planned**.
 -- @param #TASK self
 function TASK:IsStatePlanned()
   return self:Is( "Planned" )
 end
 
---- Sets a @{Task} to status **Aborted**.
+--- Sets a @{#TASK} to status **Aborted**.
 -- @param #TASK self
 function TASK:StateAborted()
   self:SetState( self, "State", "Aborted" )
   return self
 end
 
---- Is the @{Task} status **Aborted**.
+--- Is the @{#TASK} status **Aborted**.
 -- @param #TASK self
 function TASK:IsStateAborted()
   return self:Is( "Aborted" )
 end
 
---- Sets a @{Task} to status **Cancelled**.
+--- Sets a @{#TASK} to status **Cancelled**.
 -- @param #TASK self
 function TASK:StateCancelled()
   self:SetState( self, "State", "Cancelled" )
   return self
 end
 
---- Is the @{Task} status **Cancelled**.
+--- Is the @{#TASK} status **Cancelled**.
 -- @param #TASK self
 function TASK:IsStateCancelled()
   return self:Is( "Cancelled" )
 end
 
---- Sets a @{Task} to status **Assigned**.
+--- Sets a @{#TASK} to status **Assigned**.
 -- @param #TASK self
 function TASK:StateAssigned()
   self:SetState( self, "State", "Assigned" )
   return self
 end
 
---- Is the @{Task} status **Assigned**.
+--- Is the @{#TASK} status **Assigned**.
 -- @param #TASK self
 function TASK:IsStateAssigned()
   return self:Is( "Assigned" )
 end
 
---- Sets a @{Task} to status **Hold**.
+--- Sets a @{#TASK} to status **Hold**.
 -- @param #TASK self
 function TASK:StateHold()
   self:SetState( self, "State", "Hold" )
   return self
 end
 
---- Is the @{Task} status **Hold**.
+--- Is the @{#TASK} status **Hold**.
 -- @param #TASK self
 function TASK:IsStateHold()
   return self:Is( "Hold" )
 end
 
---- Sets a @{Task} to status **Replanned**.
+--- Sets a @{#TASK} to status **Replanned**.
 -- @param #TASK self
 function TASK:StateReplanned()
   self:SetState( self, "State", "Replanned" )
   return self
 end
 
---- Is the @{Task} status **Replanned**.
+--- Is the @{#TASK} status **Replanned**.
 -- @param #TASK self
 function TASK:IsStateReplanned()
   return self:Is( "Replanned" )
 end
 
---- Gets the @{Task} status.
+--- Gets the @{#TASK} status.
 -- @param #TASK self
 function TASK:GetStateString()
   return self:GetState( self, "State" )
 end
 
---- Sets a @{Task} briefing.
+--- Sets a @{#TASK} briefing.
 -- @param #TASK self
 -- @param #string TaskBriefing
 -- @return #TASK self
@@ -1558,7 +1558,7 @@ function TASK:SetBriefing( TaskBriefing )
   return self
 end
 
---- Gets the @{Task} briefing.
+--- Gets the @{#TASK} briefing.
 -- @param #TASK self
 -- @return #string The briefing text.
 function TASK:GetBriefing()

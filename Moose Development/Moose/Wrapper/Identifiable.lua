@@ -1,4 +1,4 @@
---- **Wrapper** -- IDENTIFIABLE is an intermediate class wrapping DCS Object class derived Objects.
+--- **Wrapper** - IDENTIFIABLE is an intermediate class wrapping DCS Object class derived Objects.
 -- 
 -- ===
 -- 

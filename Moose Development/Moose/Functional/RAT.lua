@@ -51,7 +51,7 @@
 -- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536)
 --
 -- ===
--- @module Functional.Rat
+-- @module Functional.RAT
 -- @image RAT.JPG
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -5443,7 +5443,7 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
           SpawnTemplate.units[UnitID]["onboard_num"] = string.format("%s%d%02d", self.onboardnum, (self.SpawnIndex-1)%10, (self.onboardnum0-1)+UnitID)
         end
 
-        -- Modify coaltion and country of template.
+        -- Modify coalition and country of template.
         SpawnTemplate.CoalitionID=self.coalition
         if self.country then
           SpawnTemplate.CountryID=self.country

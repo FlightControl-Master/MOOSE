@@ -1,6 +1,6 @@
---- **AI** -- (R2.2) - Models the process of Ground Controlled Interception (GCI) for airplanes.
+--- **AI** - Models the process of Ground Controlled Interception (GCI) for airplanes.
 --
--- This is a class used in the @{AI_A2A_Dispatcher}.
+-- This is a class used in the @{AI.AI_A2A_Dispatcher}.
 --
 -- ===
 --
@@ -8,7 +8,7 @@
 --
 -- ===
 --
--- @module AI.AI_A2A_GCI
+-- @module AI.AI_A2A_Gci
 -- @image AI_Ground_Control_Intercept.JPG
 
 
@@ -89,9 +89,9 @@
 --
 -- ![Zone](..\Presentations\AI_GCI\Dia12.JPG)
 --
--- An optional @{Zone} can be set,
+-- An optional @{Core.Zone} can be set,
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_Cap#AI_A2A_GCI.SetEngageZone}() to define that Zone.
+-- Use the method @{AI.AI_CAP#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
 --
 -- ===
 --
@@ -153,7 +153,7 @@ end
 --- Evaluate the attack and create an AttackUnitTask list.
 -- @param #AI_A2A_GCI self
 -- @param Core.Set#SET_UNIT AttackSetUnit The set of units to attack.
--- @param Wrappper.Group#GROUP DefenderGroup The group of defenders.
+-- @param Wrapper.Group#GROUP DefenderGroup The group of defenders.
 -- @param #number EngageAltitude The altitude to engage the targets.
 -- @return #AI_A2A_GCI self
 function AI_A2A_GCI:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageAltitude )

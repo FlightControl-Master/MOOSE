@@ -1,4 +1,4 @@
---- **Functional** - Administer the scoring of player achievements, and create a CSV file logging the scoring events for use at team or squadron websites.
+--- **Functional** - Administer the scoring of player achievements, file and log the scoring events for use at websites.
 --
 -- ===
 --
@@ -12,7 +12,7 @@
 --   * Score the hits and destroys of units.
 --   * Score the hits and destroys of statics.
 --   * Score the hits and destroys of scenery.
---   * Log scores into a CSV file.
+--   * (optional) Log scores into a CSV file.
 --   * Connect to a remote server using JSON and IP.
 --
 -- ===
@@ -59,7 +59,7 @@
 --
 -- ![Banner Image](..\Presentations\SCORING\Dia9.JPG)
 --
--- Various @{Zone}s can be defined for which scores are also granted when objects in that @{Zone} are destroyed.
+-- Various @{Core.Zone}s can be defined for which scores are also granted when objects in that @{Core.Zone} are destroyed.
 -- This is **specifically useful** to designate **scenery targets on the map** that will generate points when destroyed.
 --
 -- With a small change in MissionScripting.lua, the scoring results can also be logged in a **CSV file**.
@@ -115,7 +115,7 @@
 --
 -- Special targets can be set that will give extra scores to the players when these are destroyed.
 -- Use the methods @{#SCORING.AddUnitScore}() and @{#SCORING.RemoveUnitScore}() to specify a special additional score for a specific @{Wrapper.Unit}s.
--- Use the methods @{#SCORING.AddStaticScore}() and @{#SCORING.RemoveStaticScore}() to specify a special additional score for a specific @{Static}s.
+-- Use the methods @{#SCORING.AddStaticScore}() and @{#SCORING.RemoveStaticScore}() to specify a special additional score for a specific @{Wrapper.Static}s.
 -- Use the method @{#SCORING.SetGroupGroup}() to specify a special additional score for a specific @{Wrapper.Group}s.
 --
 --      local Scoring = SCORING:New( "Scoring File" )
@@ -131,11 +131,11 @@
 -- # Define destruction zones that will give extra scores:
 --
 -- Define zones of destruction. Any object destroyed within the zone of the given category will give extra points.
--- Use the method @{#SCORING.AddZoneScore}() to add a @{Zone} for additional scoring.
--- Use the method @{#SCORING.RemoveZoneScore}() to remove a @{Zone} for additional scoring.
--- There are interesting variations that can be achieved with this functionality. For example, if the @{Zone} is a @{Core.Zone#ZONE_UNIT},
--- then the zone is a moving zone, and anything destroyed within that @{Zone} will generate points.
--- The other implementation could be to designate a scenery target (a building) in the mission editor surrounded by a @{Zone},
+-- Use the method @{#SCORING.AddZoneScore}() to add a @{Core.Zone} for additional scoring.
+-- Use the method @{#SCORING.RemoveZoneScore}() to remove a @{Core.Zone} for additional scoring.
+-- There are interesting variations that can be achieved with this functionality. For example, if the @{Core.Zone} is a @{Core.Zone#ZONE_UNIT},
+-- then the zone is a moving zone, and anything destroyed within that @{Core.Zone} will generate points.
+-- The other implementation could be to designate a scenery target (a building) in the mission editor surrounded by a @{Core.Zone},
 -- just large enough around that building.
 --
 -- # Add extra Goal scores upon an event or a condition:
@@ -225,6 +225,7 @@ SCORING = {
   ClassName = "SCORING",
   ClassID = 0,
   Players = {},
+  AutoSave = true,
 }
 
 local _SCORINGCoalition = {
@@ -306,6 +307,7 @@ function SCORING:New( GameName )
   end )
 
   -- Create the CSV file.
+  self.AutoSave = true
   self:OpenCSV( GameName )
 
   return self
@@ -373,11 +375,11 @@ function SCORING:RemoveUnitScore( ScoreUnit )
   return self
 end
 
---- Add a @{Static} for additional scoring when the @{Static} is destroyed.
--- Note that if there was already a @{Static} declared within the scoring with the same name,
--- then the old @{Static}  will be replaced with the new @{Static}.
+--- Add a @{Wrapper.Static} for additional scoring when the @{Wrapper.Static} is destroyed.
+-- Note that if there was already a @{Wrapper.Static} declared within the scoring with the same name,
+-- then the old @{Wrapper.Static}  will be replaced with the new @{Wrapper.Static}.
 -- @param #SCORING self
--- @param Wrapper.Static#UNIT ScoreStatic The @{Static} for which the Score needs to be given.
+-- @param Wrapper.Static#UNIT ScoreStatic The @{Wrapper.Static} for which the Score needs to be given.
 -- @param #number Score The Score value.
 -- @return #SCORING
 function SCORING:AddStaticScore( ScoreStatic, Score )
@@ -389,9 +391,9 @@ function SCORING:AddStaticScore( ScoreStatic, Score )
   return self
 end
 
---- Removes a @{Static} for additional scoring when the @{Static} is destroyed.
+--- Removes a @{Wrapper.Static} for additional scoring when the @{Wrapper.Static} is destroyed.
 -- @param #SCORING self
--- @param Wrapper.Static#UNIT ScoreStatic The @{Static} for which the Score needs to be given.
+-- @param Wrapper.Static#UNIT ScoreStatic The @{Wrapper.Static} for which the Score needs to be given.
 -- @return #SCORING
 function SCORING:RemoveStaticScore( ScoreStatic )
 
@@ -419,11 +421,11 @@ function SCORING:AddScoreGroup( ScoreGroup, Score )
   return self
 end
 
---- Add a @{Zone} to define additional scoring when any object is destroyed in that zone.
--- Note that if a @{Zone} with the same name is already within the scoring added, the @{Zone} (type) and Score will be replaced!
+--- Add a @{Core.Zone} to define additional scoring when any object is destroyed in that zone.
+-- Note that if a @{Core.Zone} with the same name is already within the scoring added, the @{Core.Zone} (type) and Score will be replaced!
 -- This allows for a dynamic destruction zone evolution within your mission.
 -- @param #SCORING self
--- @param Core.Zone#ZONE_BASE ScoreZone The @{Zone} which defines the destruction score perimeters.
+-- @param Core.Zone#ZONE_BASE ScoreZone The @{Core.Zone} which defines the destruction score perimeters.
 -- Note that a zone can be a polygon or a moving zone.
 -- @param #number Score The Score value.
 -- @return #SCORING
@@ -438,11 +440,11 @@ function SCORING:AddZoneScore( ScoreZone, Score )
   return self
 end
 
---- Remove a @{Zone} for additional scoring.
--- The scoring will search if any @{Zone} is added with the given name, and will remove that zone from the scoring.
+--- Remove a @{Core.Zone} for additional scoring.
+-- The scoring will search if any @{Core.Zone} is added with the given name, and will remove that zone from the scoring.
 -- This allows for a dynamic destruction zone evolution within your mission.
 -- @param #SCORING self
--- @param Core.Zone#ZONE_BASE ScoreZone The @{Zone} which defines the destruction score perimeters.
+-- @param Core.Zone#ZONE_BASE ScoreZone The @{Core.Zone} which defines the destruction score perimeters.
 -- Note that a zone can be a polygon or a moving zone.
 -- @return #SCORING
 function SCORING:RemoveZoneScore( ScoreZone )
@@ -1748,7 +1750,7 @@ end
 function SCORING:OpenCSV( ScoringCSV )
   self:F( ScoringCSV )
 
-  if lfs and io and os then
+  if lfs and io and os and self.AutoSave then
     if ScoringCSV then
       self.ScoringCSV = ScoringCSV
       local fdir = lfs.writedir() .. [[Logs\]] .. self.ScoringCSV .. " " .. os.date( "%Y-%m-%d %H-%M-%S" ) .. ".csv"
@@ -1828,7 +1830,7 @@ function SCORING:ScoreCSV( PlayerName, TargetPlayerName, ScoreType, ScoreTimes, 
   TargetUnitType = TargetUnitType or ""
   TargetUnitName = TargetUnitName or ""
 
-  if lfs and io and os then
+  if lfs and io and os and self.AutoSave then
     self.CSVFile:write(
       '"' .. self.GameName        .. '"' .. ',' ..
       '"' .. self.RunTime         .. '"' .. ',' ..
@@ -1852,9 +1854,20 @@ function SCORING:ScoreCSV( PlayerName, TargetPlayerName, ScoreType, ScoreTimes, 
   end
 end
 
+--- Close CSV file
+-- @param #SCORING self
+-- @return #SCORING self
 function SCORING:CloseCSV()
-  if lfs and io and os then
+  if lfs and io and os and self.AutoSave then
     self.CSVFile:close()
   end
 end
 
+--- Registers a score for a player.
+-- @param #SCORING self
+-- @param #boolean OnOff Switch saving to CSV on = true or off = false
+-- @return #SCORING self
+function SCORING:SwitchAutoSave(OnOff)
+  self.AutoSave = OnOff
+  return self
+end

@@ -27,17 +27,17 @@
 -- **Supported Carriers:**
 --
 --    * [USS John C. Stennis](https://en.wikipedia.org/wiki/USS_John_C._Stennis) (CVN-74)
---    * [USS Theodore Roosevelt](https://en.wikipedia.org/wiki/USS_Theodore_Roosevelt_(CVN-71)) (CVN-71) [Super Carrier Module]
---    * [USS Abraham Lincoln](https://en.wikipedia.org/wiki/USS_Abraham_Lincoln_(CVN-72)) (CVN-72) [Super Carrier Module]
---    * [USS George Washington](https://en.wikipedia.org/wiki/USS_George_Washington_(CVN-73)) (CVN-73) [Super Carrier Module]
+--    * [USS Theodore Roosevelt](https://en.wikipedia.org/wiki/USS_Theodore_Roosevelt_(CVN-71\)) (CVN-71) [Super Carrier Module]
+--    * [USS Abraham Lincoln](https://en.wikipedia.org/wiki/USS_Abraham_Lincoln_(CVN-72\)) (CVN-72) [Super Carrier Module]
+--    * [USS George Washington](https://en.wikipedia.org/wiki/USS_George_Washington_(CVN-73\)) (CVN-73) [Super Carrier Module]
 --    * [USS Harry S. Truman](https://en.wikipedia.org/wiki/USS_Harry_S._Truman) (CVN-75) [Super Carrier Module]
---    * [USS Forrestal](https://en.wikipedia.org/wiki/USS_Forrestal_(CV-59)) (CV-59) [Heatblur Carrier Module]
---    * [HMS Hermes](https://en.wikipedia.org/wiki/HMS_Hermes_(R12)) (R12) [**WIP**]
---    * [HMS Invincible](https://en.wikipedia.org/wiki/HMS_Invincible_(R05) (R05) [**WIP**]
---    * [USS Tarawa](https://en.wikipedia.org/wiki/USS_Tarawa_(LHA-1)) (LHA-1) [**WIP**]
---    * [USS America](https://en.wikipedia.org/wiki/USS_America_(LHA-6)) (LHA-6) [**WIP**]
+--    * [USS Forrestal](https://en.wikipedia.org/wiki/USS_Forrestal_(CV-59\)) (CV-59) [Heatblur Carrier Module]
+--    * [HMS Hermes](https://en.wikipedia.org/wiki/HMS_Hermes_(R12\)) (R12) [**WIP**]
+--    * [HMS Invincible](https://en.wikipedia.org/wiki/HMS_Invincible_(R05\)) (R05) [**WIP**]
+--    * [USS Tarawa](https://en.wikipedia.org/wiki/USS_Tarawa_(LHA-1\)) (LHA-1) [**WIP**]
+--    * [USS America](https://en.wikipedia.org/wiki/USS_America_(LHA-6\)) (LHA-6) [**WIP**]
 --    * [Juan Carlos I](https://en.wikipedia.org/wiki/Spanish_amphibious_assault_ship_Juan_Carlos_I) (L61) [**WIP**]
---    * [HMAS Canberra](https://en.wikipedia.org/wiki/HMAS_Canberra_(L02)) (L02) [**WIP**]
+--    * [HMAS Canberra](https://en.wikipedia.org/wiki/HMAS_Canberra_(L02\)) (L02) [**WIP**]
 --
 -- **Supported Aircraft:**
 --
@@ -117,6 +117,7 @@
 --    * [Updated Airboss V/STOL Features USS Tarawa](https://youtu.be/K7I4pU6j718)
 --    * [Harrier Practice pattern USS America](https://youtu.be/99NigITYmcI)
 --    * [Harrier CASE III TACAN Approach USS Tarawa](https://www.youtube.com/watch?v=bTgJXZ9Mhdc&t=1s)
+--    * [Harrier CASE III TACAN Approach USS Tarawa](https://www.youtube.com/watch?v=wWHag5WpNZ0)
 --
 -- ===
 --
@@ -142,7 +143,7 @@
 -- @field Wrapper.Airbase#AIRBASE airbase Carrier airbase object.
 -- @field #table waypoints Waypoint coordinates of carrier.
 -- @field #number currentwp Current waypoint, i.e. the one that has been passed last.
--- @field Core.Radio#BEACON beacon Carrier beacon for TACAN and ICLS.
+-- @field Core.Beacon#BEACON beacon Carrier beacon for TACAN and ICLS.
 -- @field #boolean TACANon Automatic TACAN is activated.
 -- @field #number TACANchannel TACAN channel.
 -- @field #string TACANmode TACAN mode, i.e. "X" or "Y".
@@ -296,7 +297,7 @@
 --
 -- The flight that transitions form the holding pattern to the landing approach, it should leave the Marshal stack at the 3 position and make a left hand turn to the *Initial*
 -- position, which is 3 NM astern of the boat. Note that you need to be below 1300 feet to be registered in the initial zone.
--- The altitude can be set via the function @{AIRBOSS.SetInitialMaxAlt}(*altitude*) function.
+-- The altitude can be set via the function @{#AIRBOSS.SetInitialMaxAlt}(*altitude*) function.
 -- As described below, the initial zone can be smoked or flared via the AIRBOSS F10 Help radio menu.
 --
 -- ### Landing Pattern
@@ -761,7 +762,7 @@
 --
 -- ## Save Results
 --
--- Saving asset data to file is achieved by the @{AIRBOSS.Save}(*path*, *filename*) function.
+-- Saving asset data to file is achieved by the @{#AIRBOSS.Save}(*path*, *filename*) function.
 --
 -- The parameter *path* specifies the path on the file system where the
 -- player grades are saved. If you do not specify a path, the file is saved your the DCS installation root directory if the **lfs** module is *not* desanizied or
@@ -782,7 +783,7 @@
 --
 -- ### Automatic Saving
 --
--- The player grades can be saved automatically after each graded player pass via the @{AIRBOSS.SetAutoSave}(*path*, *filename*) function. Again the parameters *path* and *filename* are optional.
+-- The player grades can be saved automatically after each graded player pass via the @{#AIRBOSS.SetAutoSave}(*path*, *filename*) function. Again the parameters *path* and *filename* are optional.
 -- In the simplest case, you desanitize the **lfs** module and just add
 --
 --     airbossStennis:SetAutoSave()
@@ -820,7 +821,7 @@
 --
 -- ## Load Results
 --
--- Loading player grades from file is achieved by the @{AIRBOSS.Load}(*path*, *filename*) function. The parameter *path* specifies the path on the file system where the
+-- Loading player grades from file is achieved by the @{#AIRBOSS.Load}(*path*, *filename*) function. The parameter *path* specifies the path on the file system where the
 -- data is loaded from. If you do not specify a path, the file is loaded from your the DCS installation root directory or, if **lfs** was desanitized from you "Saved Games\DCS" directory.
 -- The parameter *filename* is optional and defines the name of the file to load. By default this is automatically generated from the AIBOSS carrier name/alias, for example
 -- "Airboss-USS Stennis_LSOgrades.csv".
@@ -1040,7 +1041,7 @@
 --
 -- AI groups that enter the CCA are usually guided to Marshal stack. However, due to DCS limitations they might not obey the landing task if they have another airfield as departure and/or destination in
 -- their mission task. Therefore, AI groups can be respawned when detected in the CCA. This should clear all other airfields and allow the aircraft to land on the carrier.
--- This is achieved by the @{AIRBOSS.SetRespawnAI}() function.
+-- This is achieved by the @{#AIRBOSS.SetRespawnAI}() function.
 --
 -- ## Known Issues
 --
@@ -1202,6 +1203,8 @@ AIRBOSS = {
   NmaxSection    = nil,
   NmaxStack      = nil,
   handleai       = nil,
+  xtVoiceOvers   = nil,
+  xtVoiceOversAI = nil,
   tanker         = nil,
   Corientation   = nil,
   Corientlast    = nil,
@@ -1333,6 +1336,7 @@ AIRBOSS.CarrierType = {
 -- @field #number wire2 Distance in meters from carrier position to second wire.
 -- @field #number wire3 Distance in meters from carrier position to third wire.
 -- @field #number wire4 Distance in meters from carrier position to fourth wire.
+-- @field #number landingdist Distance in meeters to the landing position.
 -- @field #number rwylength Length of the landing runway in meters.
 -- @field #number rwywidth Width of the landing runway in meters.
 -- @field #number totlength Total length of carrier.
@@ -1732,8 +1736,7 @@ AIRBOSS.MenuF10Root = nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version = "1.2.1"
-
+AIRBOSS.version = "1.3.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1903,6 +1906,12 @@ function AIRBOSS:New( carriername, alias )
   -- Set AI handling On.
   self:SetHandleAION()
 
+  -- No extra voiceover/calls from player by default
+  self:SetExtraVoiceOvers(false)
+
+  -- No extra voiceover/calls from AI by default
+  self:SetExtraVoiceOversAI(false)
+
   -- Airboss is a nice guy.
   self:SetAirbossNiceGuy()
 
@@ -1974,7 +1983,8 @@ function AIRBOSS:New( carriername, alias )
 
   -- Init carrier parameters.
   if self.carriertype == AIRBOSS.CarrierType.STENNIS then
-    self:_InitStennis()
+    -- Stennis parameters were updated to match the other Super Carriers.
+    self:_InitNimitz()
   elseif self.carriertype == AIRBOSS.CarrierType.ROOSEVELT then
     self:_InitNimitz()
   elseif self.carriertype == AIRBOSS.CarrierType.LINCOLN then
@@ -1986,7 +1996,7 @@ function AIRBOSS:New( carriername, alias )
   elseif self.carriertype == AIRBOSS.CarrierType.FORRESTAL then
     self:_InitForrestal()
   elseif self.carriertype == AIRBOSS.CarrierType.VINSON then
-    -- TODO: Carl Vinson parameters.
+    -- Carl Vinson is legacy now.
     self:_InitStennis()
   elseif self.carriertype == AIRBOSS.CarrierType.HERMES then
     -- Hermes parameters.
@@ -2004,8 +2014,8 @@ function AIRBOSS:New( carriername, alias )
     -- Use Juan Carlos parameters.
     self:_InitJcarlos()
   elseif self.carriertype == AIRBOSS.CarrierType.CANBERRA then
-    -- Use Juan Carlos parameters at this stage --TODO Check primary Landing spot.
-    self:_InitJcarlos()
+    -- Use Juan Carlos parameters at this stage.
+    self:_InitCanberra()
   elseif self.carriertype == AIRBOSS.CarrierType.KUZNETSOV then
     -- Kusnetsov parameters - maybe...
     self:_InitStennis()
@@ -3234,6 +3244,24 @@ function AIRBOSS:SetHandleAION()
   return self
 end
 
+--- Will play the inbound calls, commencing, initial, etc. from the player when requesteing marshal
+-- @param #AIRBOSS self
+-- @param #AIRBOSS status Boolean to activate (true) / deactivate (false) the radio inbound calls (default is ON)
+-- @return #AIRBOSS self
+function AIRBOSS:SetExtraVoiceOvers(status)
+  self.xtVoiceOvers=status
+  return self
+end
+
+--- Will simulate the inbound call, commencing, initial, etc from the AI when requested by Airboss
+-- @param #AIRBOSS self
+-- @param #AIRBOSS status Boolean to activate (true) / deactivate (false) the radio inbound calls (default is ON)
+-- @return #AIRBOSS self
+function AIRBOSS:SetExtraVoiceOversAI(status)
+  self.xtVoiceOversAI=status
+  return self
+end
+ 
 --- Do not handle AI aircraft.
 -- @param #AIRBOSS self
 -- @return #AIRBOSS self
@@ -3337,6 +3365,20 @@ end
 -- @return #AIRBOSS self
 function AIRBOSS:SetDebugModeOFF()
   self.Debug = false
+  return self
+end
+
+
+--- Set FunkMan socket. LSO grades and trap sheets will be send to your Discord bot.
+-- **Requires running FunkMan program**.
+-- @param #AIRBOSS self
+-- @param #number Port Port. Default `10042`.
+-- @param #string Host Host. Default `"127.0.0.1"`.
+-- @return #AIRBOSS self
+function AIRBOSS:SetFunkManOn(Port, Host)
+  
+  self.funkmanSocket=SOCKET:New(Port, Host)
+  
   return self
 end
 
@@ -4251,6 +4293,9 @@ function AIRBOSS:_InitStennis()
   self.carrierparam.wire3 = 46 + 24
   self.carrierparam.wire4 = 46 + 35 -- Last wire is strangely one meter closer.
 
+  -- Landing distance.
+  self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.wire3
+
   -- Platform at 5k. Reduce descent rate to 2000 ft/min to 1200 dirty up level flight.
   self.Platform.name = "Platform 5k"
   self.Platform.Xmin = -UTILS.NMToMeters( 22 ) -- Not more than 22 NM behind the boat. Last check was at 21 NM.
@@ -4401,6 +4446,9 @@ function AIRBOSS:_InitNimitz()
   self.carrierparam.wire3 = 79
   self.carrierparam.wire4 = 92
 
+  -- Landing distance.
+  self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.wire3
+
 end
 
 --- Init parameters for Forrestal class super carriers.
@@ -4430,6 +4478,9 @@ function AIRBOSS:_InitForrestal()
   self.carrierparam.wire3 = 64 -- 62
   self.carrierparam.wire4 = 74 -- 72.5
 
+  -- Landing distance.
+  self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.wire3
+
 end
 
 --- Init parameters for R12 HMS Hermes carrier.
@@ -4458,6 +4509,12 @@ function AIRBOSS:_InitHermes()
   self.carrierparam.wire2 = nil
   self.carrierparam.wire3 = nil
   self.carrierparam.wire4 = nil
+
+  -- Distance to landing spot.
+  self.carrierparam.landingspot=69
+
+  -- Landing distance.
+  self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.landingspot
 
   -- Late break.
   self.BreakLate.name = "Late Break"
@@ -4499,6 +4556,12 @@ function AIRBOSS:_InitInvincible()
   self.carrierparam.wire3 = nil
   self.carrierparam.wire4 = nil
 
+  -- Distance to landing spot.
+  self.carrierparam.landingspot=69
+
+  -- Landing distance.
+  self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.landingspot
+
   -- Late break.
   self.BreakLate.name = "Late Break"
   self.BreakLate.Xmin = -UTILS.NMToMeters( 1 ) -- Not more than 1 NM behind the boat. Last check was at 0.
@@ -4538,6 +4601,12 @@ function AIRBOSS:_InitTarawa()
   self.carrierparam.wire2 = nil
   self.carrierparam.wire3 = nil
   self.carrierparam.wire4 = nil
+
+  -- Distance to landing spot.
+  self.carrierparam.landingspot=57
+
+  -- Landing distance.
+  self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.landingspot
 
   -- Late break.
   self.BreakLate.name = "Late Break"
@@ -4579,6 +4648,12 @@ function AIRBOSS:_InitAmerica()
   self.carrierparam.wire3 = nil
   self.carrierparam.wire4 = nil
 
+  -- Distance to landing spot.
+  self.carrierparam.landingspot=59
+
+  -- Landing distance.
+  self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.landingspot
+
   -- Late break.
   self.BreakLate.name = "Late Break"
   self.BreakLate.Xmin = -UTILS.NMToMeters( 1 ) -- Not more than 1 NM behind the boat. Last check was at 0.
@@ -4619,6 +4694,12 @@ function AIRBOSS:_InitJcarlos()
   self.carrierparam.wire3 = nil
   self.carrierparam.wire4 = nil
 
+  -- Distance to landing spot.
+  self.carrierparam.landingspot=89
+
+  -- Landing distance.
+  self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.landingspot
+
   -- Late break.
   self.BreakLate.name = "Late Break"
   self.BreakLate.Xmin = -UTILS.NMToMeters( 1 ) -- Not more than 1 NM behind the boat. Last check was at 0.
@@ -4631,6 +4712,16 @@ function AIRBOSS:_InitJcarlos()
   self.BreakLate.LimitZmax = nil
 
 end
+
+--- Init parameters for L02 Canberra carrier.
+-- @param #AIRBOSS self
+function AIRBOSS:_InitCanberra()
+
+    -- Init Juan Carlos as default.
+    self:_InitJcarlos()
+
+end
+
 --- Init parameters for Marshal Voice overs *Gabriella* by HighwaymanEd.
 -- @param #AIRBOSS self
 -- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
@@ -5353,15 +5444,11 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
 
     aoa = aoaac.OnSpeed
 
-    if harrier then
-      -- 0.8 to 1.0 NM
-      dist = UTILS.NMToMeters( 0.9 )
-    else
-      dist = UTILS.NMToMeters( 1.2 )
-    end
-
     if goshawk then
       -- 0.9 to 1.1 NM per natops ch.4 page 48
+      dist = UTILS.NMToMeters( 0.9 )
+    elseif harrier then
+      -- 0.8 to 1.0 NM
       dist = UTILS.NMToMeters( 0.9 )
     else
       dist = UTILS.NMToMeters( 1.1 )
@@ -5404,7 +5491,6 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
       alt = UTILS.FeetToMeters( 300 ) -- ?
     elseif harrier then
       alt=UTILS.FeetToMeters(312)-- 300-325 ft
-
     end
 
     aoa = aoaac.OnSpeed
@@ -5622,6 +5708,12 @@ function AIRBOSS:_ClearForLanding( flight )
     -- Cleared for Case X recovery.
     self:_MarshalCallClearedForRecovery( flight.onboard, flight.case )
 
+    -- Voice over of the commencing simulated call from AI
+    if self.xtVoiceOversAI then
+      local leader = flight.group:GetUnits()[1]
+      self:_CommencingCall(leader, flight.onboard)
+    end
+
   else
 
     -- Cleared for Case X recovery.
@@ -5721,12 +5813,12 @@ function AIRBOSS:_ScanCarrierZone()
     if knownflight then
 
       -- Check if flight is AI and if we want to handle it at all.
-      if knownflight.ai and knownflight.flag == -100 and self.handleai then
+      if knownflight.ai and knownflight.flag == -100 and self.handleai and false then  --Disabled AI handling because of incorrect OPSGROUP reference!
 
         local putintomarshal = false
 
         -- Get flight group.
-        local flight = _DATABASE:GetFlightGroup( groupname )
+        local flight = _DATABASE:GetOpsGroup( groupname )
 
         if flight and flight:IsInbound() and flight.destbase:GetName() == self.carrier:GetName() then
           if flight.ishelo then
@@ -5772,7 +5864,6 @@ function AIRBOSS:_ScanCarrierZone()
       if not self:_IsHuman( group ) then
         self:_CreateFlightGroup( group )
       end
-
     end
 
   end
@@ -5986,7 +6077,12 @@ function AIRBOSS:_MarshalAI( flight, nstack, respawn )
   end
 
   -- Check if flight is already in Marshal queue.
-  if not self:_InQueue( self.Qmarshal, flight.group ) then
+  if not self:_InQueue(self.Qmarshal,flight.group) then
+    -- Simulate inbound call
+    if self.xtVoiceOversAI then
+      local leader = flight.group:GetUnits()[1]
+      self:_MarshallInboundCall(leader, flight.onboard)
+    end
     -- Add group to marshal stack queue.
     self:_AddMarshalGroup( flight, nstack )
   end
@@ -6068,7 +6164,7 @@ function AIRBOSS:_MarshalAI( flight, nstack, respawn )
       local radial = self:GetRadial( case, false, true )
 
       -- Point in the middle of the race track and a 5 NM more port perpendicular.
-      p0 = p2:Translate( UTILS.NMToMeters( 5 ), radial + 90 ):Translate( UTILS.NMToMeters( 5 ), radial, true )
+      p0 = p2:Translate( UTILS.NMToMeters( 5 ), radial + 90, true ):Translate( UTILS.NMToMeters( 5 ), radial, true )
 
       -- Entering Case II/III marshal pattern waypoint.
       wp[#wp + 1] = p0:WaypointAirTurningPoint( nil, speedTransit, { TaskArrivedHolding }, "Entering Case II/III Marshal Pattern" )
@@ -10129,7 +10225,7 @@ function AIRBOSS:_GetWirePos( Lcoord, dc )
 
   if self.Debug and false then
 
-    -- Wire position coodinates.
+    -- Wire position coordinates.
     local wp1 = Scoord:Translate( w1, FB )
     local wp2 = Scoord:Translate( w2, FB )
     local wp3 = Scoord:Translate( w3, FB )
@@ -10854,7 +10950,6 @@ function AIRBOSS:_GetZoneCommence( case, stack )
     local Three = self:GetCoordinate():Translate( D, hdg + 275 )
 
     if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
-
       local Dx = UTILS.NMToMeters( 2.25 )
 
       local Dz = UTILS.NMToMeters( 2.25 )
@@ -11152,28 +11247,31 @@ function AIRBOSS:_GetOptLandingCoordinate()
   -- Start with stern coordiante.
   self.landingcoord:UpdateFromCoordinate( self:_GetSternCoord() )
 
-  -- Stern coordinate.
-  -- local stern=self:_GetSternCoord()
   -- Final bearing.
-
   local FB=self:GetFinalBearing(false)
+
+  -- Cse
   local case=self.case
+
   -- set Case III V/STOL abeam landing spot over deck -- Pene Testing
   if self.carriertype==AIRBOSS.CarrierType.INVINCIBLE or self.carriertype==AIRBOSS.CarrierType.HERMES or self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
   
     if case==3 then
-	self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate())
-    -- Altitude 120ft -- is this corect for Case III?
-    self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
+
+      -- Landing coordinate.
+      self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate())
+
+      -- Altitude 120ft -- is this corect for Case III?
+      self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
  
     elseif case==2 or case==1 then
 
-    -- Landing 100 ft abeam, 120 ft alt.
-    self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
-    --stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
+      -- Landing 100 ft abeam, 120 ft alt.
+      self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
 
-    -- Atlitude 120 ft.
-    self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
+      -- Alitude 120 ft.
+      self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
+
     end
 	
   else
@@ -11181,8 +11279,7 @@ function AIRBOSS:_GetOptLandingCoordinate()
     -- Ideally we want to land between 2nd and 3rd wire.
     if self.carrierparam.wire3 then
       -- We take the position of the 3rd wire to approximately account for the length of the aircraft.
-      local w3 = self.carrierparam.wire3
-      self.landingcoord:Translate( w3, FB, true, true )
+      self.landingcoord:Translate( self.carrierparam.wire3, FB, true, true )
     end
 
     -- Add 2 meters to account for aircraft height.
@@ -11193,61 +11290,19 @@ function AIRBOSS:_GetOptLandingCoordinate()
   return self.landingcoord
 end
 
---- Get landing spot on Tarawa.
+--- Get landing spot on Tarawa and others.
 -- @param #AIRBOSS self
 -- @return Core.Point#COORDINATE Primary landing spot coordinate.
 function AIRBOSS:_GetLandingSpotCoordinate()
 
+  -- Start at stern coordinate.
   self.landingspotcoord:UpdateFromCoordinate( self:_GetSternCoord() )
 
-  -- Stern coordinate.
-  -- local stern=self:_GetSternCoord()
+  -- Landing 100 ft abeam, 100 alt.
+  local hdg = self:GetHeading()
 
-  if self.carriertype==AIRBOSS.CarrierType.HERMES then
-
-    -- Landing 100 ft abeam, 100 alt.
-    local hdg = self:GetHeading()
-
-    -- Primary landing spot 5
-    self.landingspotcoord:Translate( 69, hdg, true, true ):SetAltitude( self.carrierparam.deckheight )
-  elseif self.carriertype == AIRBOSS.CarrierType.INVINCIBLE then
-
-    -- Using spot 3 as the default
-    local hdg = self:GetHeading()
-
-    self.landingspotcoord:Translate( 69, hdg, true, true ):SetAltitude( self.carrierparam.deckheight )
-    -- This location looks good.
-  elseif self.carriertype == AIRBOSS.CarrierType.TARAWA then
-
-    -- Landing 100 ft abeam, 120 alt.
-    local hdg = self:GetHeading()
-
-    -- Primary landing spot 7.5
-    self.landingspotcoord:Translate( 57, hdg, true, true ):SetAltitude( self.carrierparam.deckheight )
-  elseif self.carriertype == AIRBOSS.CarrierType.AMERICA then
-
-    -- Landing 100 ft abeam, 120 alt.
-    local hdg = self:GetHeading()
-
-    -- Primary landing spot 7.5 a little further forwad on the America
-    self.landingspotcoord:Translate( 59, hdg, true, true ):SetAltitude( self.carrierparam.deckheight )
-
-  elseif self.carriertype == AIRBOSS.CarrierType.JCARLOS then
-
-    -- Landing 100 ft abeam, 120 alt.
-    local hdg = self:GetHeading()
-
-    -- Primary landing spot 5.0 -- Done voice for different landing Spots.
-    self.landingspotcoord:Translate( 89, hdg, true, true ):SetAltitude( self.carrierparam.deckheight )
-
-  elseif self.carriertype == AIRBOSS.CarrierType.CANBERRA then
-
-    -- Landing 100 ft abeam, 120 alt.
-    local hdg = self:GetHeading()
-
-    -- Primary landing spot 5.0 -- Done voice for different landing Spots.
-    self.landingspotcoord:Translate( 89, hdg, true, true ):SetAltitude( self.carrierparam.deckheight )
-  end
+  -- Primary landing spot. Different carriers handled via carrier parameter landingspot now.
+  self.landingspotcoord:Translate( self.carrierparam.landingspot, hdg, true, true ):SetAltitude( self.carrierparam.deckheight )
 
   return self.landingspotcoord
 end
@@ -11295,8 +11350,8 @@ function AIRBOSS:GetWind( alt, magnetic, coord )
   -- Current position of the carrier or input.
   local cv = coord or self:GetCoordinate()
 
-  -- Wind direction and speed. By default at 15 meters ASL.
-  local Wdir, Wspeed = cv:GetWind( alt or 15 )
+  -- Wind direction and speed. By default at 18 meters ASL.
+  local Wdir, Wspeed = cv:GetWind( alt or 18 )
 
   -- Include magnetic declination.
   if magnetic then
@@ -11312,7 +11367,7 @@ end
 
 --- Get wind speed on carrier deck parallel and perpendicular to runway.
 -- @param #AIRBOSS self
--- @param #number alt Altitude in meters. Default 15 m. (change made from 50m from Discord discussion from Sickdog)
+-- @param #number alt Altitude in meters. Default 18 m.
 -- @return #number Wind component parallel to runway im m/s.
 -- @return #number Wind component perpendicular to runway in m/s.
 -- @return #number Total wind strength in m/s.
@@ -11335,7 +11390,7 @@ function AIRBOSS:GetWindOnDeck( alt )
   zc = UTILS.Rotate2D( zc, -self.carrierparam.rwyangle )
 
   -- Wind (from) vector
-  local vw = cv:GetWindWithTurbulenceVec3( alt or 15 )
+  local vw = cv:GetWindWithTurbulenceVec3( alt or 18 ) --(change made from 50m to 15m from Discord discussion from Sickdog, next change to 18m due to SC higher deck discord)
 
   -- Total wind velocity vector.
   -- Carrier velocity has to be negative. If carrier drives in the direction the wind is blowing from, we have less wind in total.
@@ -11358,7 +11413,7 @@ end
 --- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
 -- @param #AIRBOSS self
 -- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
--- @param Core.Point#COORDINATE coord (Optional) Coodinate from which heading is calculated. Default is current carrier position.
+-- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
 -- @return #number Carrier heading in degrees.
 function AIRBOSS:GetHeadingIntoWind( magnetic, coord )
 
@@ -11821,7 +11876,7 @@ function AIRBOSS:_LSOgrade( playerData )
 
   local grade
   local points
-  if N == 0 and (TgrooveUnicorn or TgrooveVstolUnicorn) then
+  if N == 0 and (TgrooveUnicorn or TgrooveVstolUnicorn or playerData.case==3) then
     -- No deviations, should be REALLY RARE!
     grade = "_OK_"
     points = 5.0
@@ -12820,18 +12875,22 @@ function AIRBOSS:_Debrief( playerData )
   end
   mygrade.case = playerData.case
   local windondeck = self:GetWindOnDeck()
-  mygrade.wind = tostring( UTILS.Round( UTILS.MpsToKnots( windondeck ), 1 ) )
+  mygrade.wind = UTILS.Round( UTILS.MpsToKnots( windondeck ), 1 )
   mygrade.modex = playerData.onboard
   mygrade.airframe = playerData.actype
   mygrade.carriertype = self.carriertype
   mygrade.carriername = self.alias
+  mygrade.carrierrwy  = self.carrierparam.rwyangle
   mygrade.theatre = self.theatre
-  mygrade.mitime = UTILS.SecondsToClock( timer.getAbsTime() )
+  mygrade.mitime = UTILS.SecondsToClock( timer.getAbsTime(), true )
   mygrade.midate = UTILS.GetDCSMissionDate()
   mygrade.osdate = "n/a"
   if os then
     mygrade.osdate = os.date() -- os.date("%d.%m.%Y")
   end
+
+  -- Add last grade to playerdata for FunkMan.
+  playerData.grade=mygrade
 
   -- Save trap sheet.
   if playerData.trapon and self.trapsheet then
@@ -15143,6 +15202,86 @@ function AIRBOSS:_Number2Radio( radio, number, delay, interval, pilotcall )
   return wait
 end
 
+--- Aircraft request marshal (Inbound call both for players and AI).
+-- @param #AIRBOSS self
+-- @return Wrapper.Unit#UNIT Unit of player or nil.
+-- @param #string modex Tail number.
+function AIRBOSS:_MarshallInboundCall(unit, modex)
+
+  -- Calculate 
+  local vectorCarrier = self:GetCoordinate():GetDirectionVec3(unit:GetCoordinate())
+  local bearing =  UTILS.Round(unit:GetCoordinate():GetAngleDegrees( vectorCarrier ), 0)
+  local distance = UTILS.Round(UTILS.MetersToNM(unit:GetCoordinate():Get2DDistance(self:GetCoordinate())),0)
+  local angels = UTILS.Round(UTILS.MetersToFeet(unit:GetHeight()/1000),0)
+  local state = UTILS.Round(self:_GetFuelState(unit)/1000,1)
+  
+  -- Pilot: "Marshall, [modex], marking mom's [bearing] for [distance], angels [XX], state [X.X]"
+  local text=string.format("Marshal, %s, marking mom's %d for %d, angels %d, state %.1f", modex, bearing, distance, angels, state)
+  -- Debug message.
+  self:T(self.lid..text)
+
+  -- Fuel state.
+  local FS=UTILS.Split(string.format("%.1f", state), ".")
+
+  -- Create new call to display complete subtitle.
+  local inboundcall=self:_NewRadioCall(self.MarshalCall.CLICK,  unit.UnitName:upper() , text, self.Tmessage, nil, unit.UnitName:upper())
+
+  -- CLICK!
+  self:RadioTransmission(self.MarshalRadio, inboundcall)
+  -- Marshal ..
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.MARSHAL, nil, nil, nil, nil, true)
+  -- Modex..
+  self:_Number2Radio(self.MarshalRadio, modex, nil, nil, true)
+  -- Marking Mom's,
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.MARKINGMOMS, nil, nil, nil, nil, true)
+  -- Bearing ..
+  self:_Number2Radio(self.MarshalRadio, tostring(bearing), nil, nil, true)
+  -- For ..
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.FOR, nil, nil, nil, nil, true)
+  -- Distance ..
+  self:_Number2Radio(self.MarshalRadio, tostring(distance), nil, nil, true)
+  -- Angels ..
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.ANGELS, nil, nil, nil, nil, true)
+  -- Angels Number ..
+  self:_Number2Radio(self.MarshalRadio, tostring(angels), nil, nil, true)
+  -- State ..
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.STATE, nil, nil, nil, nil, true)
+  -- X..
+  self:_Number2Radio(self.MarshalRadio, FS[1], nil, nil, true)
+  -- Point..
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.POINT, nil, nil, nil, nil, true)
+  -- Y.
+  self:_Number2Radio(self.MarshalRadio, FS[2], nil, nil, true)
+  -- CLICK!
+  self:RadioTransmission(self.MarshalRadio, self.MarshalRadio.CLICK, nil, nil, nil, nil, true)
+
+end
+
+--- Aircraft commencing call (both for players and AI).
+-- @param #AIRBOSS self
+-- @return Wrapper.Unit#UNIT Unit of player or nil.
+-- @param #string modex Tail number.
+function AIRBOSS:_CommencingCall(unit, modex)
+
+  -- Pilot: "[modex], commencing"
+  local text=string.format("%s, commencing", modex)
+  -- Debug message.
+  self:T(self.lid..text)
+
+  -- Create new call to display complete subtitle.
+  local commencingCall=self:_NewRadioCall(self.MarshalCall.CLICK,  unit.UnitName:upper() , text, self.Tmessage, nil, unit.UnitName:upper())
+
+  -- Click
+  self:RadioTransmission(self.MarshalRadio, commencingCall)
+  -- Modex..
+  self:_Number2Radio(self.MarshalRadio, modex, nil, nil, true)
+  -- Commencing
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.COMMENCING, nil, nil, nil, nil, true)
+  -- CLICK!
+  self:RadioTransmission(self.MarshalRadio, self.MarshalRadio.CLICK, nil, nil, nil, nil, true)
+
+end
+
 --- AI aircraft calls the ball.
 -- @param #AIRBOSS self
 -- @param #string modex Tail number.
@@ -15191,6 +15330,7 @@ function AIRBOSS:_MarshalCallGasAtTanker( modex )
 
   -- Debug message.
   self:I( self.lid .. text )
+
 
   -- Create new call to display complete subtitle.
   local call = self:_NewRadioCall( self.PilotCall.BINGOFUEL, modex, text, self.Tmessage, nil, modex )
@@ -15898,6 +16038,11 @@ function AIRBOSS:_RequestMarshal( _unitName )
 
     if playerData then
 
+      -- Voice over of inbound call (regardless of airboss rejecting it or not)
+      if self.xtVoiceOvers then
+        self:_MarshallInboundCall(_unit, playerData.onboard)
+      end   
+    
       -- Check if player is in CCA
       local inCCA = playerData.unit:IsInZone( self.zoneCCA )
 
@@ -16145,7 +16290,12 @@ function AIRBOSS:_RequestCommence( _unitName )
     local playerData = self.players[_playername] -- #AIRBOSS.PlayerData
 
     if playerData then
-
+   
+      -- Voice over of Commencing call (regardless of Airboss will rejected or not)
+      if self.xtVoiceOvers then
+        self:_CommencingCall(_unit, playerData.onboard)
+      end
+      
       -- Check if unit is in CCA.
       local text = ""
       local cleared = false
@@ -17854,6 +18004,59 @@ function AIRBOSS:onafterLoad( From, Event, To, path, filename )
   -- Info message.
   local text = string.format( "Loaded %d player LSO grades from file %s", n, filename )
   self:I( self.lid .. text )
+
+end
+
+--- On after "LSOGrade" event.
+-- @param #AIRBOSS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #AIRBOSS.PlayerData playerData Player Data.
+-- @param #AIRBOSS.LSOgrade grade LSO grade.
+function AIRBOSS:onafterLSOGrade(From, Event, To, playerData, grade)
+
+  if self.funkmanSocket then
+
+    -- Extract used info for FunkMan. We need to be careful with the amount of data send via UDP socket.
+    local trapsheet={} ; trapsheet.X={} ; trapsheet.Z={} ; trapsheet.AoA={} ; trapsheet.Alt={}
+
+    -- Loop over trapsheet and extract used values.
+    for i = 1, #playerData.trapsheet do
+      local ts=playerData.trapsheet[i] --#AIRBOSS.GrooveData
+      table.insert(trapsheet.X, UTILS.Round(ts.X, 1))
+      table.insert(trapsheet.Z, UTILS.Round(ts.Z, 1))
+      table.insert(trapsheet.AoA, UTILS.Round(ts.AoA, 2))
+      table.insert(trapsheet.Alt, UTILS.Round(ts.Alt, 1))
+    end
+
+    local result={}
+    result.command=SOCKET.DataType.LSOGRADE
+    result.name=playerData.name
+    result.trapsheet=trapsheet
+    result.airframe=grade.airframe
+    result.mitime=grade.mitime
+    result.midate=grade.midate
+    result.wind=grade.wind
+    result.carriertype=grade.carriertype
+    result.carriername=grade.carriername
+    result.carrierrwy=grade.carrierrwy
+    result.landingdist=self.carrierparam.landingdist
+    result.theatre=grade.theatre
+    result.case=playerData.case
+    result.Tgroove=grade.Tgroove
+    result.wire=grade.wire
+    result.grade=grade.grade
+    result.points=grade.points
+    result.details=grade.details
+
+    -- Debug info.
+    self:T(self.lid.."Result onafterLSOGrade")
+    self:T(result)
+
+    -- Send result.
+    self.funkmanSocket:SendTable(result)
+  end
 
 end
 

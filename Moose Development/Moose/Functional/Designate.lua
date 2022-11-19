@@ -1,4 +1,4 @@
---- **Functional** -- Management of target **Designation**. Lase, smoke and illuminate targets.
+--- **Functional** - Management of target **Designation**. Lase, smoke and illuminate targets.
 --
 -- ===
 --
@@ -48,7 +48,7 @@
 -- 
 -- ![Banner Image](..\Presentations\DESIGNATE\Dia3.JPG)
 -- 
--- A typical mission setup would require Recce (a @{Set} of Recce) to be detecting potential targets.
+-- A typical mission setup would require Recce (a @{Core.Set} of Recce) to be detecting potential targets.
 -- The DetectionObject will group the detected targets based on the detection method being used.
 -- Possible detection methods could be by Area, by Type or by Unit.
 -- Each grouping will result in a **TargetGroup**, for terminology and clarity we will use this term throughout the document.
@@ -276,7 +276,7 @@ do -- DESIGNATE
   -- # 7. Designate Menu Location for a Mission
   -- 
   -- You can make DESIGNATE work for a @{Tasking.Mission#MISSION} object. In this way, the designate menu will not appear in the root of the radio menu, but in the menu of the Mission.
-  -- Use the method @{#DESIGNATE.SetMission}() to set the @{Mission} object for the designate function.
+  -- Use the method @{#DESIGNATE.SetMission}() to set the @{Tasking.Mission} object for the designate function.
   -- 
   -- # 8. Status Report
   -- 

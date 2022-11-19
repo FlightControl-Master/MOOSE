@@ -1,4 +1,4 @@
---- **Cargo** - Management of single cargo logistics, which are based on a @{Wrapper.Unit} object.
+--- **Cargo** - Management of single cargo logistics, which are based on a UNIT object.
 --
 -- ===
 -- 

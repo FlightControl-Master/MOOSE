@@ -1,4 +1,4 @@
---- **Functional** -- Models the detection of enemy units by FACs or RECCEs and group them according various methods.
+--- **Functional** - Models the detection of enemy units by FACs or RECCEs and group them according various methods.
 --
 -- ===
 --
@@ -40,7 +40,7 @@
 do -- DETECTION_BASE
 
   --- @type DETECTION_BASE
-  -- @field Core.Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
+  -- @field Core.Set#SET_GROUP DetectionSetGroup The @{Core.Set} of GROUPs in the Forward Air Controller role.
   -- @field DCS#Distance DetectionRange The range till which targets are accepted to be detected.
   -- @field #DETECTION_BASE.DetectedObjects DetectedObjects The list of detected objects.
   -- @field #table DetectedObjectsIdentified Map of the DetectedObjects identified.
@@ -318,7 +318,7 @@ do -- DETECTION_BASE
 
   --- DETECTION constructor.
   -- @param #DETECTION_BASE self
-  -- @param Core.Set#SET_GROUP DetectionSet The @{Set} of @{Group}s that is used to detect the units.
+  -- @param Core.Set#SET_GROUP DetectionSet The @{Core.Set} of @{Wrapper.Group}s that is used to detect the units.
   -- @return #DETECTION_BASE self
   function DETECTION_BASE:New( DetectionSet )
 
@@ -1982,7 +1982,7 @@ do -- DETECTION_UNITS
 
   --- Will detect units within the battle zone.
   --
-  -- It will build a DetectedItems list filled with DetectedItems. Each DetectedItem will contain a field Set, which contains a @{Core.Set#SET_UNIT} containing ONE @{UNIT} object reference.
+  -- It will build a DetectedItems list filled with DetectedItems. Each DetectedItem will contain a field Set, which contains a @{Core.Set#SET_UNIT} containing ONE @{Wrapper.Unit#UNIT} object reference.
   -- Beware that when the amount of units detected is large, the DetectedItems list will be large also.
   --
   -- @field #DETECTION_UNITS
@@ -1993,7 +1993,7 @@ do -- DETECTION_UNITS
 
   --- DETECTION_UNITS constructor.
   -- @param Functional.Detection#DETECTION_UNITS self
-  -- @param Core.Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
+  -- @param Core.Set#SET_GROUP DetectionSetGroup The @{Core.Set} of GROUPs in the Forward Air Controller role.
   -- @return Functional.Detection#DETECTION_UNITS self
   function DETECTION_UNITS:New( DetectionSetGroup )
 
@@ -2237,7 +2237,7 @@ do -- DETECTION_TYPES
 
   --- Will detect units within the battle zone.
   -- It will build a DetectedItems[] list filled with DetectedItems, grouped by the type of units detected.
-  -- Each DetectedItem will contain a field Set, which contains a @{Core.Set#SET_UNIT} containing ONE @{UNIT} object reference.
+  -- Each DetectedItem will contain a field Set, which contains a @{Core.Set#SET_UNIT} containing ONE @{Wrapper.Unit#UNIT} object reference.
   -- Beware that when the amount of different types detected is large, the DetectedItems[] list will be large also.
   --
   -- @field #DETECTION_TYPES
@@ -2248,7 +2248,7 @@ do -- DETECTION_TYPES
 
   --- DETECTION_TYPES constructor.
   -- @param Functional.Detection#DETECTION_TYPES self
-  -- @param Core.Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Recce role.
+  -- @param Core.Set#SET_GROUP DetectionSetGroup The @{Core.Set} of GROUPs in the Recce role.
   -- @return Functional.Detection#DETECTION_TYPES self
   function DETECTION_TYPES:New( DetectionSetGroup )
 
@@ -2436,7 +2436,7 @@ do -- DETECTION_AREAS
 
   --- @type DETECTION_AREAS
   -- @field DCS#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
-  -- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Wrapper.Unit}s, @{Zone}s, the center @{Wrapper.Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
+  -- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Wrapper.Unit}s, @{Core.Zone}s, the center @{Wrapper.Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
   -- @extends Functional.Detection#DETECTION_BASE
 
   --- Detect units within the battle zone for a list of @{Wrapper.Group}s detecting targets following (a) detection method(s),
@@ -2477,7 +2477,7 @@ do -- DETECTION_AREAS
 
   --- DETECTION_AREAS constructor.
   -- @param #DETECTION_AREAS self
-  -- @param Core.Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
+  -- @param Core.Set#SET_GROUP DetectionSetGroup The @{Core.Set} of GROUPs in the Forward Air Controller role.
   -- @param DCS#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
   -- @return #DETECTION_AREAS
   function DETECTION_AREAS:New( DetectionSetGroup, DetectionZoneRange )
@@ -2498,7 +2498,7 @@ do -- DETECTION_AREAS
 
   --- Retrieve set of detected zones.
   -- @param #DETECTION_AREAS self
-  -- @return Core.Set#SET_ZONE The @{Set} of ZONE_UNIT objects detected.
+  -- @return Core.Set#SET_ZONE The @{Core.Set} of ZONE_UNIT objects detected.
   function DETECTION_AREAS:GetDetectionZones()
     local zoneset = SET_ZONE:New()
     for _ID,_Item in pairs (self.DetectedItems) do

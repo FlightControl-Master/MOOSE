@@ -50,7 +50,7 @@
 --
 -- # 1) @{#ACT_ASSIST_SMOKE_TARGETS_ZONE} class, extends @{Core.Fsm.Route#ACT_ASSIST}
 --
--- The ACT_ASSIST_SMOKE_TARGETS_ZONE class implements the core functions to smoke targets in a @{Zone}.
+-- The ACT_ASSIST_SMOKE_TARGETS_ZONE class implements the core functions to smoke targets in a @{Core.Zone}.
 -- The targets are smoked within a certain range around each target, simulating a realistic smoking behaviour.
 -- At random intervals, a new target is smoked.
 --
@@ -60,7 +60,7 @@
 --
 -- ===
 --
--- @module Actions.Assist
+-- @module Actions.Act_Assist
 -- @image MOOSE.JPG
 
 

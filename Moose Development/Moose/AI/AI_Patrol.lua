@@ -1,4 +1,4 @@
---- **AI** -- Perform Air Patrolling for airplanes.
+--- **AI** - Perform Air Patrolling for airplanes.
 -- 
 -- **Features:**
 -- 
@@ -38,7 +38,7 @@
 --- AI_PATROL_ZONE class
 -- @type AI_PATROL_ZONE
 -- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
--- @field Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @field Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
 -- @field DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @field DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @field DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
@@ -46,7 +46,7 @@
 -- @field Core.Spawn#SPAWN CoordTest
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
---- Implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group}.
+--- Implements the core functions to patrol a @{Core.Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group}.
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia3.JPG)
 -- 
@@ -135,15 +135,15 @@
 -- When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.
 -- Therefore, with a parameter and a calculation of the distance to the home base, the fuel threshold is calculated.
 -- When the fuel threshold is reached, the AI will continue for a given time its patrol task in orbit, 
--- while a new AI is targetted to the AI_PATROL_ZONE.
+-- while a new AI is targeted to the AI_PATROL_ZONE.
 -- Once the time is finished, the old AI will return to the base.
--- Use the method @{#AI_PATROL_ZONE.ManageFuel}() to have this proces in place.
+-- Use the method @{#AI_PATROL_ZONE.ManageFuel}() to have this process in place.
 -- 
 -- ## 7. Manage "damage" behaviour of the AI in the AI_PATROL_ZONE
 -- 
 -- When the AI is damaged, it is required that a new AIControllable is started. However, damage cannon be foreseen early on. 
 -- Therefore, when the damage threshold is reached, the AI will return immediately to the home base (RTB).
--- Use the method @{#AI_PATROL_ZONE.ManageDamage}() to have this proces in place.
+-- Use the method @{#AI_PATROL_ZONE.ManageDamage}() to have this process in place.
 -- 
 -- ===
 -- 
@@ -154,7 +154,7 @@ AI_PATROL_ZONE = {
 
 --- Creates a new AI_PATROL_ZONE object
 -- @param #AI_PATROL_ZONE self
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
@@ -170,27 +170,27 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- #AI_PATROL_ZONE
-  
-  
+
+
   self.PatrolZone = PatrolZone
   self.PatrolFloorAltitude = PatrolFloorAltitude
   self.PatrolCeilingAltitude = PatrolCeilingAltitude
   self.PatrolMinSpeed = PatrolMinSpeed
   self.PatrolMaxSpeed = PatrolMaxSpeed
-  
+
   -- defafult PatrolAltType to "BARO" if not specified
   self.PatrolAltType = PatrolAltType or "BARO"
-  
+
   self:SetRefreshTimeInterval( 30 )
-  
+
   self.CheckStatus = true
-  
+
   self:ManageFuel( .2, 60 )
   self:ManageDamage( 1 )
-  
+
 
   self.DetectedUnits = {} -- This table contains the targets detected during patrol.
-  
+
   self:SetStartState( "None" ) 
 
   self:AddTransition( "*", "Stop", "Stopped" )
@@ -228,7 +228,7 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-	
+
 --- Synchronous Event Trigger for Event Stop.
 -- @function [parent=#AI_PATROL_ZONE] Stop
 -- @param #AI_PATROL_ZONE self
@@ -256,7 +256,7 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-	
+
 --- Synchronous Event Trigger for Event Start.
 -- @function [parent=#AI_PATROL_ZONE] Start
 -- @param #AI_PATROL_ZONE self
@@ -329,7 +329,7 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-	
+
 --- Synchronous Event Trigger for Event Status.
 -- @function [parent=#AI_PATROL_ZONE] Status
 -- @param #AI_PATROL_ZONE self
@@ -413,7 +413,7 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-	
+
 --- Synchronous Event Trigger for Event RTB.
 -- @function [parent=#AI_PATROL_ZONE] RTB
 -- @param #AI_PATROL_ZONE self
@@ -441,11 +441,11 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
 -- @param #string To The To State string.
 
   self:AddTransition( "*", "Reset", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROL_ZONE.
-  
+
   self:AddTransition( "*", "Eject", "*" )
   self:AddTransition( "*", "Crash", "Crashed" )
   self:AddTransition( "*", "PilotDead", "*" )
-  
+
   return self
 end
 
@@ -459,7 +459,7 @@ end
 -- @return #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
   self:F2( { PatrolMinSpeed, PatrolMaxSpeed } )
-  
+
   self.PatrolMinSpeed = PatrolMinSpeed
   self.PatrolMaxSpeed = PatrolMaxSpeed
 end
@@ -473,7 +473,7 @@ end
 -- @return #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
   self:F2( { PatrolFloorAltitude, PatrolCeilingAltitude } )
-  
+
   self.PatrolFloorAltitude = PatrolFloorAltitude
   self.PatrolCeilingAltitude = PatrolCeilingAltitude
 end
@@ -582,7 +582,7 @@ end
 
 --- When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.
 -- Therefore, with a parameter and a calculation of the distance to the home base, the fuel threshold is calculated.
--- When the fuel threshold is reached, the AI will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI_PATROL_ZONE.
+-- When the fuel threshold is reached, the AI will continue for a given time its patrol task in orbit, while a new AIControllable is targeted to the AI_PATROL_ZONE.
 -- Once the time is finished, the old AI will return to the base.
 -- @param #AI_PATROL_ZONE self
 -- @param #number PatrolFuelThresholdPercentage The threshold in percentage (between 0 and 1) when the AIControllable is considered to get out of fuel.
@@ -592,7 +592,7 @@ function AI_PATROL_ZONE:ManageFuel( PatrolFuelThresholdPercentage, PatrolOutOfFu
 
   self.PatrolFuelThresholdPercentage = PatrolFuelThresholdPercentage
   self.PatrolOutOfFuelOrbitTime = PatrolOutOfFuelOrbitTime
-  
+
   return self
 end
 
@@ -609,28 +609,28 @@ function AI_PATROL_ZONE:ManageDamage( PatrolDamageThreshold )
 
   self.PatrolManageDamage = true
   self.PatrolDamageThreshold = PatrolDamageThreshold
-  
+
   return self
 end
 
---- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
+--- Defines a new patrol route using the @{#AI_PATROL_ZONE} parameters and settings.
 -- @param #AI_PATROL_ZONE self
--- @return #AI_PATROL_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
+-- @return #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
   self:F2()
 
   self:__Route( 1 ) -- Route to the patrol point. The asynchronous trigger is important, because a spawned group and units takes at least one second to come live.
   self:__Status( 60 ) -- Check status status every 30 seconds.
   self:SetDetectionActivated()
-  
+
   self:HandleEvent( EVENTS.PilotDead, self.OnPilotDead )
   self:HandleEvent( EVENTS.Crash, self.OnCrash )
   self:HandleEvent( EVENTS.Ejection, self.OnEjection )
-  
+
   Controllable:OptionROEHoldFire()
   Controllable:OptionROTVertical()
 
@@ -667,12 +667,12 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
     if TargetObject and TargetObject:isExist() and TargetObject.id_ < 50000000 then
 
       local TargetUnit = UNIT:Find( TargetObject )
-      
+
       -- Check that target is alive due to issue https://github.com/FlightControl-Master/MOOSE/issues/1234
       if TargetUnit and TargetUnit:IsAlive() then
-      
+
         local TargetUnitName = TargetUnit:GetName()
-        
+
         if self.DetectionZone then
           if TargetUnit:IsInZone( self.DetectionZone ) then
             self:T( {"Detected ", TargetUnit } )
@@ -687,13 +687,13 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
           end
           Detected = true
         end
-        
+  
       end
     end
   end
 
   self:__Detect( -self.DetectInterval )
-  
+
   if Detected == true then
     self:__Detected( 1.5 )
   end
@@ -701,7 +701,7 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
 end
 
 --- @param Wrapper.Controllable#CONTROLLABLE AIControllable
--- This statis method is called from the route path within the last task at the last waaypoint of the Controllable.
+-- This static method is called from the route path within the last task at the last waypoint of the Controllable.
 -- Note that this method is required, as triggers the next route when patrolling for the Controllable.
 function AI_PATROL_ZONE:_NewPatrolRoute( AIControllable )
 
@@ -710,7 +710,7 @@ function AI_PATROL_ZONE:_NewPatrolRoute( AIControllable )
 end
 
 
---- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
+--- Defines a new patrol route using the @{#AI_PATROL_ZONE} parameters and settings.
 -- @param #AI_PATROL_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
 -- @param #string From The From State string.
@@ -729,7 +729,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
   if self.Controllable:IsAlive() and life > 1 then
     -- Determine if the AIControllable is within the PatrolZone. 
     -- If not, make a waypoint within the to that the AIControllable will fly at maximum speed to that point.
-    
+
     local PatrolRoute = {}
 
     -- Calculate the current route point of the controllable as the start point of the route.
@@ -775,7 +775,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     end    
     
     
-    --- Define a random point in the @{Zone}. The AI will fly to that point within the zone.
+    --- Define a random point in the @{Core.Zone}. The AI will fly to that point within the zone.
     
       --- Find a random 2D point in PatrolZone.
     local ToTargetVec2 = self.PatrolZone:GetRandomVec2()

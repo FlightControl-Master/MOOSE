@@ -1,4 +1,4 @@
---- **Wrapper** -- OBJECT wraps the DCS Object derived objects.
+--- **Wrapper** - OBJECT wraps the DCS Object derived objects.
 -- 
 -- ===
 -- 

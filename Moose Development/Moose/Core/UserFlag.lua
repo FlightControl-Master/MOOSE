@@ -35,13 +35,13 @@ do -- UserFlag
     ClassName    = "USERFLAG",
     UserFlagName = nil,
   }
-  
+
   --- USERFLAG Constructor.
   -- @param #USERFLAG self
   -- @param #string UserFlagName The name of the userflag, which is a free text string.
   -- @return #USERFLAG
   function USERFLAG:New( UserFlagName ) --R2.3
-  
+
     local self = BASE:Inherit( self, BASE:New() ) -- #USERFLAG
 
     self.UserFlagName = UserFlagName
@@ -52,7 +52,7 @@ do -- UserFlag
   --- Get the userflag name.
   -- @param #USERFLAG self
   -- @return #string Name of the user flag.
-  function USERFLAG:GetName()    
+  function USERFLAG:GetName()
     return self.UserFlagName
   end  
 
@@ -66,18 +66,17 @@ do -- UserFlag
   --   BlueVictory:Set( 100 ) -- Set the UserFlag VictoryBlue to 100.
   --   
   function USERFLAG:Set( Number, Delay ) --R2.3
-  
+
     if Delay and Delay>0 then
       self:ScheduleOnce(Delay, USERFLAG.Set, self, Number)
     else
       --env.info(string.format("Setting flag \"%s\" to %d at T=%.1f", self.UserFlagName, Number, timer.getTime()))
       trigger.action.setUserFlag( self.UserFlagName, Number )
     end
-    
-    return self
-  end  
 
-  
+    return self
+  end
+
   --- Get the userflag Number.
   -- @param #USERFLAG self
   -- @return #number Number The number value to be checked if it is the same as the userflag.
@@ -86,12 +85,10 @@ do -- UserFlag
   --   local BlueVictoryValue = BlueVictory:Get() -- Get the UserFlag VictoryBlue value.
   --   
   function USERFLAG:Get() --R2.3
-    
-    return trigger.misc.getUserFlag( self.UserFlagName )
-  end  
 
-  
-  
+    return trigger.misc.getUserFlag( self.UserFlagName )
+  end
+
   --- Check if the userflag has a value of Number.
   -- @param #USERFLAG self
   -- @param #number Number The number value to be checked if it is the same as the userflag.
@@ -102,9 +99,9 @@ do -- UserFlag
   --     return "Blue has won"
   --   end
   function USERFLAG:Is( Number ) --R2.3
-    
+
     return trigger.misc.getUserFlag( self.UserFlagName ) == Number
-    
-  end  
+
+  end
 
 end
