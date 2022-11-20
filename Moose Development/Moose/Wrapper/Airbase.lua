@@ -685,6 +685,9 @@ function AIRBASE:Register(AirbaseName)
   else
     self:E(string.format("ERROR: Cound not get position Vec2 of airbase %s", AirbaseName))
   end
+  
+  -- Debug info.
+  self:T2(string.format("Registered airbase %s", tostring(self.AirbaseName)))
 
   return self
 end

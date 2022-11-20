@@ -1130,7 +1130,7 @@ function EVENT:onEvent( Event )
           Event.IniUnitName = Event.IniDCSUnitName
           Event.IniDCSGroup = Event.IniDCSUnit:getGroup()
           Event.IniUnit = UNIT:FindByName( Event.IniDCSUnitName )
-          
+                  
           if not Event.IniUnit then
             -- Unit can be a CLIENT. Most likely this will be the case ...
             Event.IniUnit = CLIENT:FindByName( Event.IniDCSUnitName, '', true )
@@ -1165,8 +1165,7 @@ function EVENT:onEvent( Event )
         if Event.IniObjectCategory == Object.Category.SCENERY then
           ---
           -- Scenery
-          ---
-          
+          ---          
           Event.IniDCSUnit = Event.initiator
           Event.IniDCSUnitName = Event.IniDCSUnit:getName()
           Event.IniUnitName = Event.IniDCSUnitName
@@ -1186,6 +1185,12 @@ function EVENT:onEvent( Event )
           Event.IniCoalition = Event.IniDCSUnit:getCoalition()
           Event.IniCategory = Event.IniDCSUnit:getDesc().category
           Event.IniTypeName = Event.IniDCSUnit:getTypeName()
+          
+          -- If the airbase does not exist in the DB, we add it (e.g. when FARPS are spawned).
+          if not Event.IniUnit then
+            _DATABASE:_RegisterAirbase(Event.initiator)
+            Event.IniUnit = AIRBASE:FindByName(Event.IniDCSUnitName)
+          end
         end
       end
 
