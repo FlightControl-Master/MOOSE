@@ -3038,6 +3038,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
       if type( Callsign ) ~= "number" then -- blue callsign
         Callsign[2] = ((SpawnIndex - 1) % 10) + 1
         local CallsignName = SpawnTemplate.units[UnitID].callsign["name"] -- #string
+        CallsignName = string.match(CallsignName,"^(%a+)") -- 2.8 - only the part w/o numbers
         local CallsignLen = CallsignName:len()
         SpawnTemplate.units[UnitID].callsign["name"] = CallsignName:sub( 1, CallsignLen ) .. SpawnTemplate.units[UnitID].callsign[2] .. SpawnTemplate.units[UnitID].callsign[3]
       else
