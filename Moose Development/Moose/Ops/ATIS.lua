@@ -268,6 +268,8 @@
 -- Unfortunately, it is not possible to determine the duration of the complete transmission. So once the transmission is finished, there might be some radio silence before
 -- the next iteration begins. You can fine tune the time interval between transmissions with the @{#ATIS.SetQueueUpdateTime}() function. The default interval is 90 seconds.
 --
+-- An SRS Setup-Guide can be found here: [Moose TTS Setup Guide](https://github.com/FlightControl-Master/MOOSE_GUIDES/blob/master/documents/Moose%20TTS%20Setup%20Guide.pdf)
+--
 -- # Examples
 --
 -- ## Caucasus: Batumi

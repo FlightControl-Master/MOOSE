@@ -512,7 +512,7 @@ function COMMANDCENTER:AssignTask( TaskGroup )
   
   if Task then
 
-    self:I( "Assigning task " .. Task:GetName() .. " using auto assign method " .. self.AutoAssignMethod .. " to " .. TaskGroup:GetName() .. " with task priority " .. AssignPriority )
+    self:T( "Assigning task " .. Task:GetName() .. " using auto assign method " .. self.AutoAssignMethod .. " to " .. TaskGroup:GetName() .. " with task priority " .. AssignPriority )
     
     if not self.AutoAcceptTasks == true then
       Task:SetAutoAssignMethod( ACT_ASSIGN_MENU_ACCEPT:New( Task.TaskBriefing ) )
