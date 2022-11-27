@@ -6800,7 +6800,7 @@ do -- SET_SCENERY
   	
   	if ZoneSet then
     	for _,_zone in pairs(ZoneSet.Set) do
-    	   self:I("Zone type handed: "..tostring(_zone.ClassName))
+    	   self:T("Zone type handed: "..tostring(_zone.ClassName))
     		table.insert(zonenames,_zone:GetName())
     	end  	
     	self:AddSceneryByName(zonenames)
