@@ -1577,7 +1577,7 @@ function UTILS.GMTToLocalTimeDifference()
   elseif theatre==DCSMAP.MarianaIslands then
     return 10  -- Guam is UTC+10 hours.
   elseif theatre==DCSMAP.Falklands then
-    return -3  -- Guam is UTC+10 hours.
+    return -3  -- Fireland is UTC-3 hours.
   else
     BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
     return 0
