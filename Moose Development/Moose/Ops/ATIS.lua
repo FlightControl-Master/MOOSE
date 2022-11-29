@@ -93,6 +93,7 @@
 -- @field #number dTQueueCheck Time interval to check the radio queue. Default 5 sec or 90 sec if SRS is used.
 -- @field #boolean ReportmBar Report mBar/hpa even if not metric, i.e. for Mirage flights
 -- @field #boolean TransmitOnlyWithPlayers For SRS - If true, only transmit if there are alive Players.
+-- @field #string SRSText Text of the complete SRS message (if done at least once, else nil)
 -- @extends Core.Fsm#FSM
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -592,7 +593,7 @@ _ATIS = {}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version = "0.9.11"
+ATIS.version = "0.9.12"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -878,6 +879,13 @@ function ATIS:SetMapMarks( switch )
     self.usemarker = false
   end
   return self
+end
+
+--- Return the complete SRS Text block, if at least generated once. Else nil.
+-- @param #ATIS self
+-- @return #string SRSText
+function ATIS:GetSRSText()
+  return self.SRSText
 end
 
 --- Set magnetic runway headings as depicted on the runway, *e.g.* "13" for 130° or "25L" for the left runway with magnetic heading 250°.
@@ -2402,7 +2410,8 @@ function ATIS:onafterReport( From, Event, To, Text )
     local duration = STTS.getSpeechTime(text,0.95)
     self.msrsQ:NewTransmission(text,duration,self.msrs,nil,2)    
     --self.msrs:PlayText( text )
-
+    self.SRSText = text
+    
   end
 
 end
