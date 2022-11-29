@@ -22,7 +22,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update October 2022
+-- Last Update December 2022
 
 do
 
@@ -1078,7 +1078,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.19"
+CTLD.version="1.0.20"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -3611,7 +3611,8 @@ function CTLD:CheckDroppedBeacons()
   
   for _,_beacon in pairs (self.droppedBeacons) do
     local beacon = _beacon -- #CTLD.CargoZone
-    local T0 = beacon.timestamp
+    if not beacon.timestamp then beacon.timestamp = timer.getTime() end
+    local T0 = beacon.timestamp 
     if timer.getTime() - T0 > timeout then
       local name = beacon.name
       self.droppedbeaconref[name] = nil
