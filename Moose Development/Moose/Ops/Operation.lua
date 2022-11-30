@@ -4,6 +4,7 @@
 --
 --    * Define operation phases
 --    * Define conditions when phases are over
+--    * Option to have branches in the phase tree
 --    * Dedicate resources to operations
 --
 -- ===
@@ -25,8 +26,12 @@
 -- @type OPERATION
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity level.
+-- @field #number uid Unique ID of the operation.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #string name Name of the operation.
+-- @field #number Tstart Start time in seconds of abs mission time.
+-- @field #number Tstop Stop time in seconds of abs mission time.
+-- @field #number duration Duration of the operation in seconds.
 -- @field Core.Condition#CONDITION conditionStart Start condition.
 -- @field Core.Condition#CONDITION conditionStop Stop condition.
 -- @field #table branches Branches.
@@ -42,7 +47,7 @@
 -- @field #table missions Missions.
 -- @extends Core.Fsm#FSM
 
---- *Before this time tomorrow I shall have gained a peerage, or Westminster Abbey.* -- Horatio Nelson
+--- *Before this time tomorrow I shall have gained a peerage, or Westminster Abbey* -- Horatio Nelson
 --
 -- ===
 --
@@ -89,6 +94,8 @@ _OPERATIONID=0
 -- @field #string name Name of the phase.
 -- @field Core.Condition#CONDITION conditionOver Conditions when the phase is over.
 -- @field #string status Phase status.
+-- @field #number Tstart Abs. mission time when the phase was started.
+-- @field #number duration Duration in seconds how long the phase should be active after it started.
 -- @field #OPERATION.Branch branch The branch this phase belongs to.
 
 --- Operation branch.
@@ -120,14 +127,14 @@ OPERATION.PhaseStatus={
 
 --- OPERATION class version.
 -- @field #string version
-OPERATION.version="0.1.0"
+OPERATION.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Branches?
 -- TODO: "Over" conditions.
+-- DONE: Branches.
 -- DONE: Phases.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -279,12 +286,14 @@ function OPERATION:New(Name)
   -- @function [parent=#OPERATION] BranchSwitch
   -- @param #OPERATION self
   -- @param #OPERATION.Branch Branch The branch that is now active.
+  -- @param #OPERATION.Phase Phase The new phase.
 
   --- Triggers the FSM event "BranchSwitch" after a delay.
   -- @function [parent=#OPERATION] __BranchSwitch
   -- @param #OPERATION self
   -- @param #number delay Delay in seconds.
   -- @param #OPERATION.Branch Branch The branch that is now active.
+  -- @param #OPERATION.Phase Phase The new phase.
 
   --- On after "BranchSwitch" event.
   -- @function [parent=#OPERATION] OnAfterBranchSwitch
@@ -293,7 +302,7 @@ function OPERATION:New(Name)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param #OPERATION.Branch Branch The branch that is now active.
-
+  -- @param #OPERATION.Phase Phase The new phase.
 
   --- Triggers the FSM event "Over".
   -- @function [parent=#OPERATION] Over
@@ -370,8 +379,9 @@ end
 -- @param #OPERATION self
 -- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
 -- @param #OPERATION.Branch Branch The branch to which this phase is added. Default is the master branch.
+-- @param #number Duration Duration in seconds how long the phase will last. Default `nil`=forever.
 -- @return #OPERATION.Phase Phase table object.
-function OPERATION:AddPhase(Name, Branch)
+function OPERATION:AddPhase(Name, Branch, Duration)
 
   -- Branch.
   Branch=Branch or self.branchMaster
@@ -381,6 +391,8 @@ function OPERATION:AddPhase(Name, Branch)
   
   -- Branch of phase
   phase.branch=Branch
+  
+  phase.duration=Duration
   
   
   -- Debug output.
@@ -413,6 +425,12 @@ function OPERATION:InsertPhaseAfter(PhaseAfter, Name)
   return nil
 end
 
+--- Get a name of this operation.
+-- @param #OPERATION self
+-- @return #string Name of this operation or "Unknown".
+function OPERATION:GetName()
+  return self.name or "Unknown"
+end
 
 --- Get a phase by its name.
 -- @param #OPERATION self
@@ -439,10 +457,26 @@ end
 -- @param #string Status New status, *e.g.* `OPERATION.PhaseStatus.OVER`.
 -- @return #OPERATION self
 function OPERATION:SetPhaseStatus(Phase, Status)
+
   if Phase then
-    self:T(self.lid..string.format("Phase %s status: %s-->%s"), Phase.status, Status)
+  
+    -- Debug message.
+    self:T(self.lid..string.format("Phase %s status: %s-->%s", tostring(Phase.name), tostring(Phase.status), tostring(Status)))
+    
+    -- Set status.
     Phase.status=Status
+    
+    -- Set time stamp when phase becase active.
+    if Phase.status==OPERATION.PhaseStatus.ACTIVE then
+      Phase.Tstart=timer.getAbsTime()
+      env.info("FF Setting phase start time stamp")
+    elseif Phase.status==OPERATION.PhaseStatus.OVER then
+      -- Trigger PhaseOver event.
+      self:PhaseOver(Phase)
+    end
+    
   end
+  
   return self
 end
 
@@ -461,7 +495,7 @@ end
 -- @return #OPERATION self
 function OPERATION:SetPhaseConditonOver(Phase, Condition)
   if Phase then
-    self:T(self.lid..string.format("Setting phase %s conditon over %s"), Phase.name, Condition and Condition.name or "None")
+    self:T(self.lid..string.format("Setting phase %s conditon over %s", self:GetPhaseName(Phase), Condition and Condition.name or "None"))
     Phase.conditionOver=Condition
   end
   return self
@@ -500,19 +534,6 @@ end
 -- @return Core.Condition#CONDITION Condition when the phase is over (if any).
 function OPERATION:GetPhaseConditonOver(Phase, Condition)
   return Phase.conditionOver
-end
-
---- Get currrently active phase.
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase.
--- @param #string Status New status, e.g. `OPERATION.PhaseStatus.OVER`.
--- @return #OPERATION self
-function OPERATION:SetPhaseStatus(Phase, Status)
-  if Phase then
-    self:T(self.lid..string.format("Phase \"%s\" status: %s-->%s", Phase.name, Phase.status, Status))
-    Phase.status=Status
-  end
-  return self
 end
 
 --- Get currrently active phase.
@@ -657,6 +678,13 @@ function OPERATION:AddBranch(Name)
   return branch
 end
 
+--- Get the master branch. This is the default branch and should always exist (if it was not explicitly deleted).
+-- @param #OPERATION self
+-- @return #OPERATION.Branch The master branch.
+function OPERATION:GetBranchMaster()
+  return self.branchMaster
+end
+
 --- Get the currently active branch.
 -- @param #OPERATION self
 -- @return #OPERATION.Branch The active branch. If no branch is active, the master branch is returned.
@@ -678,19 +706,21 @@ end
 
 --- Add an edge between two branches.
 -- @param #OPERATION self
--- @param #OPERATION.Branch BranchTo The branch *to* which to switch.
--- @param #OPERATION.Phase PhaseAfter The phase of the *from* branch *after* which to switch.
--- @param #OPERATION.Phase PhaseNext The phase of the *to* branch *to* which to switch.
+-- @param #OPERATION.Phase PhaseFrom The phase of the *from* branch *after* which to switch.
+-- @param #OPERATION.Phase PhaseTo The phase of the *to* branch *to* which to switch.
 -- @param Core.Condition#CONDITION ConditionSwitch (Optional) Condition(s) when to switch the branches.
 -- @return #OPERATION.Branch Branch table object.
-function OPERATION:AddEdge(BranchTo, PhaseAfter, PhaseNext, ConditionSwitch)
+function OPERATION:AddEdge(PhaseFrom, PhaseTo, ConditionSwitch)
 
   local edge={} --#OPERATION.Edge
   
-  edge.branchFrom=PhaseAfter and PhaseAfter.branch or self.branchMaster
-  edge.phaseFrom=PhaseAfter
-  edge.branchTo=BranchTo
-  edge.phaseTo=PhaseNext
+  
+  edge.phaseFrom=PhaseFrom
+  edge.phaseTo=PhaseTo
+
+  edge.branchFrom=PhaseFrom.branch
+  edge.branchTo=PhaseTo.branch  
+  
   edge.conditionSwitch=ConditionSwitch or CONDITION:New("Edge")
   
   table.insert(edge.branchFrom.edges, edge)
@@ -896,6 +926,39 @@ function OPERATION:IsStopped()
   return is
 end
 
+--- Check if phase is in status "Active".
+-- @param #OPERATION self
+-- @param #OPERATION.Phase Phase The phase.
+-- @return #boolean If `true`, phase is active.
+function OPERATION:IsPhaseActive(Phase)
+  if Phase and Phase.status and Phase.status==OPERATION.PhaseStatus.ACTIVE then
+    return true
+  end
+  return false
+end
+
+--- Check if phase is in status "Planned".
+-- @param #OPERATION self
+-- @param #OPERATION.Phase Phase The phase.
+-- @return #boolean If `true`, phase is Planned.
+function OPERATION:IsPhasePlanned(Phase)
+  if Phase and Phase.status and Phase.status==OPERATION.PhaseStatus.PLANNED then
+    return true
+  end
+  return false
+end
+
+--- Check if phase is in status "Over".
+-- @param #OPERATION self
+-- @param #OPERATION.Phase Phase The phase.
+-- @return #boolean If `true`, phase is over.
+function OPERATION:IsPhaseOver(Phase)
+  if Phase and Phase.status and Phase.status==OPERATION.PhaseStatus.OVER then
+    return true
+  end
+  return false
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status Update
@@ -1026,7 +1089,9 @@ function OPERATION:onafterPhaseChange(From, Event, To, Phase)
   -- Previous phase (if any).
   local oldphase="None"
   if self.phase then
-    self:SetPhaseStatus(self.phase, OPERATION.PhaseStatus.OVER)
+    if self.phase.status~=OPERATION.PhaseStatus.OVER then
+      self:SetPhaseStatus(self.phase, OPERATION.PhaseStatus.OVER)
+    end
     oldphase=self.phase.name
   end
 
@@ -1048,13 +1113,17 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #OPERATION.Branch Branch The new branch.
-function OPERATION:onafterBranchSwitch(From, Event, To, Branch)
+-- @param #OPERATION.Phase Phase The phase.
+function OPERATION:onafterBranchSwitch(From, Event, To, Branch, Phase)
 
   -- Debug info.
   self:T(self.lid..string.format("Switching to branch %s", Branch.name))
 
   -- Set active branch.
   self.branchActive=Branch
+  
+  -- Change phase.
+  self:PhaseChange(Phase)  
   
   return self
 end
@@ -1064,7 +1133,6 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #OPERATION.Phase Phase The new phase.
 function OPERATION:onafterOver(From, Event, To)
 
   -- Debug message.
@@ -1078,7 +1146,9 @@ function OPERATION:onafterOver(From, Event, To)
     local branch=_branch --#OPERATION.Branch
     for _,_phase in pairs(branch.phases) do
       local phase=_phase --#OPERATION.Phase
-      self:SetPhaseStatus(phase, OPERATION.PhaseStatus.OVER)
+      if not self:IsPhaseOver(phase) then
+        self:SetPhaseStatus(phase, OPERATION.PhaseStatus.OVER)
+      end
     end
   end 
   
@@ -1099,6 +1169,13 @@ function OPERATION:_CheckPhases()
   -- Check if active phase is over if conditon over is defined.
   if phase and phase.conditionOver then
     local isOver=phase.conditionOver:Evaluate()
+    
+    local Tnow=timer.getAbsTime()
+    
+    if phase.duration and phase.Tstart and Tnow-phase.Tstart>phase.duration then
+      isOver=true
+    end
+    
     if isOver then
       self:SetPhaseStatus(phase, OPERATION.PhaseStatus.OVER)
     end
@@ -1117,21 +1194,35 @@ function OPERATION:_CheckPhases()
         
         if switch then
         
-          -- Switch to new branch.
-          self:BranchSwitch(edge.branchTo)
+          -- Get next phase of the branch
+          local phaseTo=edge.phaseTo or self:GetPhaseNext(edge.branchTo, nil)
           
-          -- If we want to switch to a specific phase of the branch.
-          if edge.phaseTo then
-          
-            -- Change phase.
-            self:PhaseChange(edge.phaseTo)
+          if phaseTo then       
+        
+            -- Switch to new branch.
+            self:BranchSwitch(edge.branchTo, phaseTo)
             
-            -- Done here!
-            return
+          else
+          
+            self:Over()
+            
           end
           
-          -- Break the loop.
-          break
+          -- Done here!
+          return          
+          
+--          -- If we want to switch to a specific phase of the branch.
+--          if edge.phaseTo then
+--          
+--            -- Change phase.
+--            self:PhaseChange(edge.phaseTo)
+--            
+--            -- Done here!
+--            return
+--          end
+--          
+--          -- Break the loop.
+--          break
         end
       end
       
