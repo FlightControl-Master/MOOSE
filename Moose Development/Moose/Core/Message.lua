@@ -433,3 +433,13 @@ function MESSAGE:ToAllIf( Condition )
 
   return self
 end
+
+--- Sends a MESSAGE to DCS log file.
+-- @param #MESSAGE self
+-- @return #MESSAGE self
+function MESSAGE:ToLog()
+
+  env.info(self.MessageCategory .. self.MessageText:gsub( "\n$", "" ):gsub( "\n$", "" ))
+
+  return self
+end
