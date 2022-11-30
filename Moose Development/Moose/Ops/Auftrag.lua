@@ -6031,7 +6031,7 @@ function AUFTRAG:GetDCSMissionTask()
       --end      
       
       -- Create orbit task.
-      local DCStask=CONTROLLABLE.TaskOrbit(nil, orbitVec2, self.orbitAltitude, self.orbitSpeed, orbitRaceTrack)
+      local DCStask=CONTROLLABLE.TaskOrbit(nil, COORDINATE:NewFromVec2(orbitVec2), self.orbitAltitude, self.orbitSpeed, orbitRaceTrack)
   
       -- Add DCS task.
       table.insert(DCStasks, DCStask)

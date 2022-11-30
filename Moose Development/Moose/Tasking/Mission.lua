@@ -413,7 +413,7 @@ end
 -- @param Wrapper.Group#GROUP PlayerGroup The GROUP of the player joining the Mission.
 -- @return #boolean true if Unit is part of a Task in the Mission.
 function MISSION:JoinUnit( PlayerUnit, PlayerGroup )
-  self:I( { Mission = self:GetName(), PlayerUnit = PlayerUnit, PlayerGroup = PlayerGroup } )
+  self:T( { Mission = self:GetName(), PlayerUnit = PlayerUnit, PlayerGroup = PlayerGroup } )
   
   local PlayerUnitAdded = false
   
@@ -571,7 +571,7 @@ do -- Group Assignment
     local MissionGroupName = MissionGroup:GetName()
   
     self.AssignedGroups[MissionGroupName] = MissionGroup
-    self:I( string.format( "Mission %s is assigned to %s", MissionName, MissionGroupName ) )
+    self:T( string.format( "Mission %s is assigned to %s", MissionName, MissionGroupName ) )
     
     return self
   end
@@ -698,7 +698,7 @@ end
 function MISSION:AddTask( Task )
 
   local TaskName = Task:GetTaskName()
-  self:I( { "==> Adding TASK ", MissionName = self:GetName(), TaskName = TaskName } )
+  self:T( { "==> Adding TASK ", MissionName = self:GetName(), TaskName = TaskName } )
 
   self.Tasks[TaskName] = Task
   
@@ -717,7 +717,7 @@ end
 function MISSION:RemoveTask( Task )
 
   local TaskName = Task:GetTaskName()
-  self:I( { "<== Removing TASK ", MissionName = self:GetName(), TaskName = TaskName } )
+  self:T( { "<== Removing TASK ", MissionName = self:GetName(), TaskName = TaskName } )
 
   self:F( TaskName )
   self.Tasks[TaskName] = self.Tasks[TaskName] or { n = 0 }

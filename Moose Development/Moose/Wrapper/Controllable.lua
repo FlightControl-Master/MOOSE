@@ -2395,7 +2395,7 @@ do -- Route methods
   -- @return DCS#Task Task.
   -- @return #boolean If true, path on road is possible. If false, task will route the group directly to its destination.
   function CONTROLLABLE:TaskGroundOnRoad( ToCoordinate, Speed, OffRoadFormation, Shortcut, FromCoordinate, WaypointFunction, WaypointFunctionArguments )
-    self:I( { ToCoordinate = ToCoordinate, Speed = Speed, OffRoadFormation = OffRoadFormation, WaypointFunction = WaypointFunction, Args = WaypointFunctionArguments } )
+    self:T( { ToCoordinate = ToCoordinate, Speed = Speed, OffRoadFormation = OffRoadFormation, WaypointFunction = WaypointFunction, Args = WaypointFunctionArguments } )
 
     -- Defaults.
     Speed = Speed or 20

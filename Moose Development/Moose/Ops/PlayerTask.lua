@@ -1409,7 +1409,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.49"
+PLAYERTASKCONTROLLER.version="0.1.50"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -2651,6 +2651,7 @@ end
 --- [User] Add a PLAYERTASK object to the list of (open) tasks
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Ops.PlayerTask#PLAYERTASK PlayerTask
+-- @param #boolean Silent If true, make no "has new task" announcement
 -- @return #PLAYERTASKCONTROLLER self
 -- @usage
 -- Example to create a PLAYERTASK of type CTLD and give Players 10 minutes to complete:
@@ -2671,13 +2672,15 @@ end
 --          )  
 --          
 --        taskmanager:AddPlayerTaskToQueue(PlayerTask)     
-function PLAYERTASKCONTROLLER:AddPlayerTaskToQueue(PlayerTask)
+function PLAYERTASKCONTROLLER:AddPlayerTaskToQueue(PlayerTask,Silent)
   self:T(self.lid.."AddPlayerTaskToQueue")
   if PlayerTask and PlayerTask.ClassName and PlayerTask.ClassName == "PLAYERTASK" then
     PlayerTask:_SetController(self)
     PlayerTask:SetCoalition(self.Coalition)
     self.TaskQueue:Push(PlayerTask)
-    self:__TaskAdded(10,PlayerTask)
+    if not Silent then
+      self:__TaskAdded(10,PlayerTask)
+    end
   else
     self:E(self.lid.."***** NO valid PAYERTASK object sent!")
   end
