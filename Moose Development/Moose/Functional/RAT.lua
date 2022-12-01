@@ -3492,7 +3492,7 @@ function RAT:Status(message, forID)
       local fuel=group:GetFuel()*100.0
       local airborne=group:InAir()
       local coords=group:GetCoordinate()
-      local alt=coords.y
+      local alt=coords.y or 1000
       --local vel=group:GetVelocityKMH()
       local departure=ratcraft.departure:GetName()
       local destination=ratcraft.destination:GetName()
