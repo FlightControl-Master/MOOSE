@@ -23,6 +23,7 @@
 -- @type CONDITION
 -- @field #string ClassName Name of the class.
 -- @field #string lid Class id string for output to DCS log file.
+-- @field #string name Name of the condition.
 -- @field #boolean isAny General functions are evaluated as any condition.
 -- @field #boolean negateResult Negeate result of evaluation.
 -- @field #table functionsGen General condition functions.
@@ -55,7 +56,7 @@ CONDITION = {
 
 --- CONDITION class version.
 -- @field #string version
-CONDITION.version="0.1.0"
+CONDITION.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -206,6 +207,10 @@ function CONDITION:Evaluate(AnyTrue)
   return result
 end
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Private Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 --- Check if all given condition are true.
 -- @param #CONDITION self
 -- @param #table functions Functions to evaluate.
@@ -290,6 +295,71 @@ function CONDITION:_CreateCondition(Function, ...)
   
   return condition
 end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Global Condition Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Condition to check if time is greater than a given threshold time.
+-- @param #number Time Time in seconds.
+-- @param #boolean Absolute If `true`, abs. mission time from `timer.getAbsTime()` is checked. Default is relative mission time from `timer.getTime()`.
+-- @return #boolean Returns `true` if time is greater than give the time.
+function CONDITION.IsTimeGreater(Time, Absolute)
+
+  local Tnow=nil 
+  
+  if Absolute then
+    Tnow=timer.getAbsTime()
+  else
+    Tnow=timer.getTime()
+  end
+  
+  if Tnow>Time then
+    return true
+  else
+    return false      
+  end    
+
+  return nil
+end
+
+--- Function that returns `true` (success) with a certain probability. For example, if you specify `Probability=80` there is an 80% chance that `true` is returned.
+-- Technically, a random number between 0 and 100 is created. If the given success probability is less then this number, `true` is returned.
+-- @param #number Probability Success probability in percent. Default 50 %.
+-- @return #boolean Returns `true` for success and `false` otherwise.
+function CONDITION.IsRandomSuccess(Probability)
+
+  Probability=Probability or 50
+  
+  -- Create some randomness.
+  math.random()
+  math.random()
+  math.random()
+
+  -- Number between 0 and 100.
+  local N=math.random()*100
+  
+  if N<Probability then
+    return true
+  else
+    return false
+  end
+
+end
+
+--- Function that returns always `true`
+-- @return #boolean Returns `true` unconditionally.
+function CONDITION.ReturnTrue()
+  return true
+end
+
+--- Function that returns always `false`
+-- @return #boolean Returns `false` unconditionally.
+function CONDITION.ReturnFalse()
+  return false
+end
+
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
