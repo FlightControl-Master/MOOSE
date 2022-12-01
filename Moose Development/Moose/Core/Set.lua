@@ -179,7 +179,7 @@ do -- SET_BASE
     return Names
   end
 
-  --- Gets a list of the Objects in the Set.
+  --- Returns a table of the Objects in the Set.
   -- @param #SET_BASE self
   -- @return #SET_BASE self
   function SET_BASE:GetSetObjects() -- R2.3
