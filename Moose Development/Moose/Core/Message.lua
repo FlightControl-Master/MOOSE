@@ -98,7 +98,7 @@ function MESSAGE:New( MessageText, MessageDuration, MessageCategory, ClearScreen
 
   self.MessageType = nil
 
-  -- When no MessageCategory is given, we don't show it as a title...	
+  -- When no MessageCategory is given, we don't show it as a title... 
   if MessageCategory and MessageCategory ~= "" then
     if MessageCategory:sub( -1 ) ~= "\n" then
       self.MessageCategory = MessageCategory .. ": "
@@ -204,14 +204,14 @@ function MESSAGE:ToClient( Client, Settings )
     local Unit = Client:GetClient()
     
     if self.MessageDuration ~= 0 then
-  		local ClientGroupID = Client:GetClientGroupID()
-  		self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
-  		--trigger.action.outTextForGroup( ClientGroupID, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration , self.ClearScreen)
-  		trigger.action.outTextForUnit( Unit:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration , self.ClearScreen)
-		end
-	end
-	
-	return self
+      local ClientGroupID = Client:GetClientGroupID()
+      self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+      --trigger.action.outTextForGroup( ClientGroupID, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration , self.ClearScreen)
+      trigger.action.outTextForUnit( Unit:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration , self.ClearScreen)
+    end
+  end
+  
+  return self
 end
 
 --- Sends a MESSAGE to a Group.
@@ -441,5 +441,16 @@ function MESSAGE:ToLog()
 
   env.info(self.MessageCategory .. self.MessageText:gsub( "\n$", "" ):gsub( "\n$", "" ))
 
+  return self
+end
+
+--- Sends a MESSAGE to DCS log file if the given Condition is true.
+-- @param #MESSAGE self
+-- @return #MESSAGE self
+function MESSAGE:ToLogIf( Condition )
+  
+  if Condition and Condition == true then
+    env.info(self.MessageCategory .. self.MessageText:gsub( "\n$", "" ):gsub( "\n$", "" ))
+  end
   return self
 end

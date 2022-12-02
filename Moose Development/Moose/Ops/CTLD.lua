@@ -3690,7 +3690,7 @@ function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation, IsShip, IsDropped)
     local Sound =  "l10n/DEFAULT/"..Sound
     trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, Frequency, 1000) -- Beacon in MP only runs for 30secs straight
   elseif Zone then
-    local ZoneCoord = Zone:GetCoordinate()
+    local ZoneCoord = Zone:GetCoordinate(2)
     local ZoneVec3 = ZoneCoord:GetVec3()
     local Frequency = Mhz * 1000000 -- Freq in Hertz
     local Sound =  "l10n/DEFAULT/"..Sound
