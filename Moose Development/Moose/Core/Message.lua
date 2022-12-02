@@ -443,3 +443,15 @@ function MESSAGE:ToLog()
 
   return self
 end
+
+--- Sends a MESSAGE to DCS log file if the given Condition is true.
+-- @param #MESSAGE self
+-- @return #MESSAGE self
+function MESSAGE:ToLogIf( Condition )
+  
+  if Condition and Condition == true then
+    env.info(self.MessageCategory .. self.MessageText:gsub( "\n$", "" ):gsub( "\n$", "" ))
+  end
+  return self
+end
+
