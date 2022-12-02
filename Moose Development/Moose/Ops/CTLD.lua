@@ -3522,6 +3522,7 @@ function CTLD:AddCTLDZone(Name, Type, Color, Active, HasBeacon, Shiplength, Ship
   ctldzone.name = Name or "NONE"
   ctldzone.type = Type or CTLD.CargoZoneType.MOVE -- #CTLD.CargoZoneType
   ctldzone.hasbeacon = HasBeacon or false
+  ctldzone.timestamp = timer.getTime()
    
   if HasBeacon then
     ctldzone.fmbeacon = self:_GetFMBeacon(Name)
@@ -3611,7 +3612,7 @@ function CTLD:CheckDroppedBeacons()
   
   for _,_beacon in pairs (self.droppedBeacons) do
     local beacon = _beacon -- #CTLD.CargoZone
-    if not beacon.timestamp then beacon.timestamp = timer.getTime() end
+    if not beacon.timestamp then beacon.timestamp = timer.getTime() + timeout end
     local T0 = beacon.timestamp 
     if timer.getTime() - T0 > timeout then
       local name = beacon.name
