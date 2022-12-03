@@ -1394,7 +1394,7 @@ end
 -- @param #string To
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterStatus(From, Event, To)
-  self:I({From, Event, To})
+  self:T({From, Event, To})
   
   if not self.timestamp then
     self.timestamp = timer.getTime()
