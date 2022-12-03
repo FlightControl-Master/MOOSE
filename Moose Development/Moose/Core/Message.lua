@@ -204,14 +204,14 @@ function MESSAGE:ToClient( Client, Settings )
     local Unit = Client:GetClient()
     
     if self.MessageDuration ~= 0 then
-  		local ClientGroupID = Client:GetClientGroupID()
-  		self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
-  		--trigger.action.outTextForGroup( ClientGroupID, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration , self.ClearScreen)
-  		trigger.action.outTextForUnit( Unit:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration , self.ClearScreen)
-		end
-	end
-	
-	return self
+      local ClientGroupID = Client:GetClientGroupID()
+      self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+      --trigger.action.outTextForGroup( ClientGroupID, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration , self.ClearScreen)
+      trigger.action.outTextForUnit( Unit:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration , self.ClearScreen)
+    end
+  end
+  
+  return self
 end
 
 --- Sends a MESSAGE to a Group.
