@@ -104,7 +104,7 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.0.15",
+  version            =   "0.0.16",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
   ViewZoneLaser      =   {},
@@ -958,9 +958,11 @@ function PLAYERRECCE:_SmokeTargets(client,group,playername)
   end
   
   if self.SmokeOwn[playername] then
-    local cc = client:GetCoordinate()
+    local cc = client:GetVec2()
+    -- don't smoke mid-air
+    local lc = COORDINATE:NewFromVec2(cc,1)
     local color = self.SmokeColor.ownsmoke
-    cc:Smoke(color)
+    lc:Smoke(color)
   end
   
   return self
