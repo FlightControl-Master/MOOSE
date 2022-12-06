@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update November 2022
+-- @date Last Update December 2022
 
 
 do
@@ -1409,7 +1409,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.50"
+PLAYERTASKCONTROLLER.version="0.1.51"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -2922,10 +2922,20 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
 
     if self.UseSRS then
       if string.find(CoordText," BR, ") then
-        CoordText = string.gsub(CoordText," BR, "," Bee, Arr, ")
+        CoordText = string.gsub(CoordText," BR, "," Bee, Arr; ")
       end
       if self.ShowMagnetic then
-        text=string.gsub(text,"°M|","° magnetic, ")
+        text=string.gsub(text,"°M|","° magnetic; ")
+      end
+      if string.find(CoordText,"MGRS") then
+        local Text = string.gsub(CoordText,"%d","%1;") -- "0 5 1 "
+        Text = string.gsub(Text," $","") -- "0 5 1"
+        CoordText = string.gsub(Text,"0","zero")
+        CoordText = string.gsub(Text,"MGRS","MGRS;")
+        if self.PathToGoogleKey then
+          CoordText = string.format("<say-as interpret-as='characters'>%s</say-as>",CoordText)
+        end
+        --self:I(self.lid.." | ".. CoordText)
       end
       local ThreatLocaleTextTTS = self.gettext:GetEntry("THREATTEXTTTS",self.locale)
       local ttstext = string.format(ThreatLocaleTextTTS,self.MenuName or self.Name,ttsplayername,ttstaskname,ThreatLevelText, targets, CoordText)
