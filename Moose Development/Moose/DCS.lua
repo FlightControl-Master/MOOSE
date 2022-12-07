@@ -135,6 +135,22 @@ do -- env
   
 end -- env
 
+do -- radio
+
+  ---@type radio
+  -- @field #radio.modulation modulation
+  
+  ---
+  -- @type radio.modulation
+  -- @field AM
+  -- @field FM
+  
+  radio = {}
+  radio.modulation = {}
+  radio.modulation.AM = 0  
+  radio.modulation.FM = 1
+  
+end
 
 do -- timer
 
