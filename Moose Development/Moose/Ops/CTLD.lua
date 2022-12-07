@@ -1015,7 +1015,16 @@ CTLD = {
 -- @type CTLD.ZoneBeacon
 -- @field #string name -- Name of zone for the coordinate
 -- @field #number frequency -- in mHz
--- @field #number modulation -- i.e.radio.modulation.FM or radio.modulation.AM
+-- @field #number modulation -- i.e.CTLD.RadioModulation.FM or CTLD.RadioModulation.AM
+
+--- Radio Modulation
+-- @type CTLD.RadioModulation
+-- @field #number AM
+-- @field #number FM
+CTLD.RadioModulation = {
+  AM = 0,
+  FM = 1,
+}
 
 --- Zone Info.
 -- @type CTLD.CargoZone
@@ -3440,7 +3449,7 @@ function CTLD:_GetFMBeacon(Name)
   table.insert(self.UsedFMFrequencies, FM)  
   beacon.name = Name
   beacon.frequency = FM / 1000000
-  beacon.modulation = radio.modulation.FM
+  beacon.modulation = CTLD.RadioModulation.FM
   return beacon
 end
 
@@ -3460,7 +3469,7 @@ function CTLD:_GetUHFBeacon(Name)
   table.insert(self.UsedUHFFrequencies, UHF)
   beacon.name = Name
   beacon.frequency = UHF / 1000000
-  beacon.modulation = radio.modulation.AM
+  beacon.modulation = CTLD.RadioModulation.AM
 
   return beacon
 end
@@ -3481,7 +3490,7 @@ function CTLD:_GetVHFBeacon(Name)
   table.insert(self.UsedVHFFrequencies, VHF)
   beacon.name = Name
   beacon.frequency = VHF / 1000000
-  beacon.modulation = radio.modulation.FM
+  beacon.modulation = CTLD.RadioModulation.FM
   return beacon
 end
 
@@ -3690,20 +3699,26 @@ function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation, IsShip, IsDropped)
   local Sound = Sound or "beacon.ogg"
   if IsDropped and Zone then
     local ZoneCoord = Zone
-    local ZoneVec3 = ZoneCoord:GetVec3()
+    local ZoneVec3 = ZoneCoord:GetVec3(1)
     local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
+    --local Frequency = Mhz*1000000
     local Sound =  "l10n/DEFAULT/"..Sound
-    trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, Frequency, 1000) -- Beacon in MP only runs for 30secs straight
-    --local status = string.format("***** Beacon added Freq %s Mod %s", Mhz, UTILS.GetModulationName(Modulation))
-    --MESSAGE:New(status,10,"Debug"):ToLogIf(self.debug)
+    local name = string.format("%s-%f-%s",Zone:GetName(),Mhz,tostring(Modulation))
+    --trigger.action.stopRadioTransmission(name)
+    trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, tonumber(Frequency), 100000,name) -- Beacon in MP only runs for 30secs straight
+    local status = string.format("***** Beacon added Freq %s Mod %s", Frequency, UTILS.GetModulationName(Modulation))
+    MESSAGE:New(status,10,"Debug"):ToLogIf(self.debug)
   elseif Zone then
-    local ZoneCoord = Zone:GetCoordinate(2)
+    local ZoneCoord = Zone:GetCoordinate(1)
     local ZoneVec3 = ZoneCoord:GetVec3()
     local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
+    --local Frequency = Mhz*1000000
     local Sound =  "l10n/DEFAULT/"..Sound
-    trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, Frequency, 1000) -- Beacon in MP only runs for 30secs straight
-    --local status = string.format("***** Beacon added Freq %s Mod %s", Mhz, UTILS.GetModulationName(Modulation))
-    --MESSAGE:New(status,10,"Debug"):ToLogIf(self.debug)
+    local name = string.format("%s-%f-%s",Zone:GetName(),Mhz,tostring(Modulation))
+    --trigger.action.stopRadioTransmission(name)
+    trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, tonumber(Frequency), 100000,name) -- Beacon in MP only runs for 30secs straight
+    local status = string.format("***** Beacon added Freq %s Mod %s", Frequency, UTILS.GetModulationName(Modulation))
+    MESSAGE:New(status,10,"Debug"):ToLogIf(self.debug)
   end
   return self
 end
@@ -3730,10 +3745,14 @@ function CTLD:_RefreshRadioBeacons()
         local Name = czone.name
         local FM = FMbeacon.frequency  -- MHz
         local VHF = VHFbeacon.frequency -- KHz
-        local UHF = UHFbeacon.frequency  -- MHz      
-        self:_AddRadioBeacon(Name,Sound,FM,radio.modulation.FM, IsShip, IsDropped)
-        self:_AddRadioBeacon(Name,Sound,VHF,radio.modulation.FM, IsShip, IsDropped)
-        self:_AddRadioBeacon(Name,Sound,UHF,radio.modulation.AM, IsShip, IsDropped)
+        local UHF = UHFbeacon.frequency  -- MHz
+       -- local co = coroutine.create(self._AddRadioBeacon)
+        --coroutine.resume(co, self, Name,Sound,FM,CTLD.RadioModulation.FM, IsShip, IsDropped)
+        --coroutine.resume(co, self, Name,Sound,VHF,CTLD.RadioModulation.FM, IsShip, IsDropped)
+        --coroutine.resume(co, self, Name,Sound,UHF,CTLD.RadioModulation.AM, IsShip, IsDropped)      
+        self:_AddRadioBeacon(Name,Sound,FM, CTLD.RadioModulation.FM, IsShip, IsDropped)
+        self:_AddRadioBeacon(Name,Sound,VHF,CTLD.RadioModulation.FM, IsShip, IsDropped)
+        self:_AddRadioBeacon(Name,Sound,UHF,CTLD.RadioModulation.AM, IsShip, IsDropped)
       end
     end
   end
