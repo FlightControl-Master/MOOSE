@@ -3522,7 +3522,12 @@ function CTLD:AddCTLDZone(Name, Type, Color, Active, HasBeacon, Shiplength, Ship
   ctldzone.name = Name or "NONE"
   ctldzone.type = Type or CTLD.CargoZoneType.MOVE -- #CTLD.CargoZoneType
   ctldzone.hasbeacon = HasBeacon or false
-   
+  
+  if Type == CTLD.CargoZoneType.BEACON then
+    self.droppedbeaconref[ctldzone.name] = zone:GetCoordinate()
+    ctldzone.timestamp = timer.getTime()
+  end
+     
   if HasBeacon then
     ctldzone.fmbeacon = self:_GetFMBeacon(Name)
     ctldzone.uhfbeacon = self:_GetUHFBeacon(Name)
@@ -3611,7 +3616,7 @@ function CTLD:CheckDroppedBeacons()
   
   for _,_beacon in pairs (self.droppedBeacons) do
     local beacon = _beacon -- #CTLD.CargoZone
-    if not beacon.timestamp then beacon.timestamp = timer.getTime() end
+    if not beacon.timestamp then beacon.timestamp = timer.getTime() + timeout end
     local T0 = beacon.timestamp 
     if timer.getTime() - T0 > timeout then
       local name = beacon.name
@@ -3686,15 +3691,19 @@ function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation, IsShip, IsDropped)
   if IsDropped and Zone then
     local ZoneCoord = Zone
     local ZoneVec3 = ZoneCoord:GetVec3()
-    local Frequency = Mhz * 1000000 -- Freq in Hertz
+    local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
     local Sound =  "l10n/DEFAULT/"..Sound
     trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, Frequency, 1000) -- Beacon in MP only runs for 30secs straight
+    --local status = string.format("***** Beacon added Freq %s Mod %s", Mhz, UTILS.GetModulationName(Modulation))
+    --MESSAGE:New(status,10,"Debug"):ToLogIf(self.debug)
   elseif Zone then
-    local ZoneCoord = Zone:GetCoordinate()
+    local ZoneCoord = Zone:GetCoordinate(2)
     local ZoneVec3 = ZoneCoord:GetVec3()
-    local Frequency = Mhz * 1000000 -- Freq in Hertz
+    local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
     local Sound =  "l10n/DEFAULT/"..Sound
     trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, Frequency, 1000) -- Beacon in MP only runs for 30secs straight
+    --local status = string.format("***** Beacon added Freq %s Mod %s", Mhz, UTILS.GetModulationName(Modulation))
+    --MESSAGE:New(status,10,"Debug"):ToLogIf(self.debug)
   end
   return self
 end
@@ -4612,7 +4621,7 @@ end
   -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB build.
   -- @return #CTLD self
   function CTLD:onbeforeCratesBuild(From, Event, To, Group, Unit, Vehicle)
-    self:I({From, Event, To})
+    self:T({From, Event, To})
     if Unit and Unit:IsPlayer() and self.PlayerTaskQueue then
       local playername = Unit:GetPlayerName()
       local dropcoord = Vehicle:GetCoordinate() or COORDINATE:New(0,0,0)

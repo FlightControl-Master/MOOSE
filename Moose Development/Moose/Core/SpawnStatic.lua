@@ -275,7 +275,7 @@ end
 
 --- Initialize as dead.
 -- @param #SPAWNSTATIC self
--- @param #boolean IsCargo If true, this static is dead.
+-- @param #boolean IsDead If true, this static is dead.
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:InitDead(IsDead)
   self.InitStaticDead=IsDead

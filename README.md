@@ -68,7 +68,7 @@ Pene has kindly created a [tutorial series for MOOSE](https://youtube.com/playli
   
   
     
-##  [MOOSE on Discord](https://discord.gg/yBPfxC6)
+##  [MOOSE on Discord](https://discord.gg/aQtjcR94Qf)
 
 MOOSE has a living (chat and video) community of users, beta testers and contributors. The gathering point is a service provided by discord.com. If you want to join this community, just click Discord and you'll be on board in no time.
   
