@@ -3703,22 +3703,22 @@ function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation, IsShip, IsDropped)
     local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
     --local Frequency = Mhz*1000000
     local Sound =  "l10n/DEFAULT/"..Sound
-    local name = string.format("%s-%f-%s",Zone:GetName(),Mhz,tostring(Modulation))
+    --local name = string.format("%s-%f-%s",Zone:GetName(),Mhz,tostring(Modulation))
     --trigger.action.stopRadioTransmission(name)
-    trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, tonumber(Frequency), 100000,name) -- Beacon in MP only runs for 30secs straight
-    local status = string.format("***** Beacon added Freq %s Mod %s", Frequency, UTILS.GetModulationName(Modulation))
-    MESSAGE:New(status,10,"Debug"):ToLogIf(self.debug)
+    trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, tonumber(Frequency), 1000) -- Beacon in MP only runs for 30secs straight
+    --local status = string.format("***** Beacon added Freq %s Mod %s", Frequency, UTILS.GetModulationName(Modulation))
+    --MESSAGE:New(status,10,"Debug"):ToLogIf(self.debug)
   elseif Zone then
     local ZoneCoord = Zone:GetCoordinate(1)
     local ZoneVec3 = ZoneCoord:GetVec3()
     local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
     --local Frequency = Mhz*1000000
     local Sound =  "l10n/DEFAULT/"..Sound
-    local name = string.format("%s-%f-%s",Zone:GetName(),Mhz,tostring(Modulation))
+    --local name = string.format("%s-%f-%s",Zone:GetName(),Mhz,tostring(Modulation))
     --trigger.action.stopRadioTransmission(name)
-    trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, tonumber(Frequency), 100000,name) -- Beacon in MP only runs for 30secs straight
-    local status = string.format("***** Beacon added Freq %s Mod %s", Frequency, UTILS.GetModulationName(Modulation))
-    MESSAGE:New(status,10,"Debug"):ToLogIf(self.debug)
+    trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, tonumber(Frequency), 1000) -- Beacon in MP only runs for 30secs straight
+    --local status = string.format("***** Beacon added Freq %s Mod %s", Frequency, UTILS.GetModulationName(Modulation))
+    --MESSAGE:New(status,10,"Debug"):ToLogIf(self.debug)
   end
   return self
 end
