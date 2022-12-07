@@ -142,6 +142,7 @@ function ARMYGROUP:New(group)
   ------------------------
   --- Pseudo Functions ---
   ------------------------
+
   --- Triggers the FSM event "Cruise".
   -- @function [parent=#ARMYGROUP] Cruise
   -- @param #ARMYGROUP self
@@ -253,10 +254,14 @@ function ARMYGROUP:New(group)
   --- Triggers the FSM event "Retreat".
   -- @function [parent=#ARMYGROUP] Retreat
   -- @param #ARMYGROUP self
+  -- @param Core.Zone#ZONE_BASE Zone (Optional) Zone where to retreat. Default is the closest retreat zone.
+  -- @param #number Formation (Optional) Formation of the group.
 
   --- Triggers the FSM event "Retreat" after a delay.
   -- @function [parent=#ARMYGROUP] __Retreat
   -- @param #ARMYGROUP self
+  -- @param Core.Zone#ZONE_BASE Zone (Optional) Zone where to retreat. Default is the closest retreat zone.
+  -- @param #number Formation (Optional) Formation of the group. 
   -- @param #number delay Delay in seconds.
 
   --- On after "Retreat" event.
@@ -265,7 +270,8 @@ function ARMYGROUP:New(group)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-
+  -- @param Core.Zone#ZONE_BASE Zone Zone where to retreat.
+  -- @param #number Formation Formation of the group. Can be #nil.
 
   --- Triggers the FSM event "Retreated".
   -- @function [parent=#ARMYGROUP] Retreated
@@ -1010,6 +1016,9 @@ function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Formation)
       elseif task.dcstask.id==AUFTRAG.SpecialTask.RELOCATECOHORT then
         -- For relocate
         self:T2(self.lid.."Allowing update route for Task: Relocate Cohort")
+      elseif task.dcstask.id==AUFTRAG.SpecialTask.REARMING then
+        -- For relocate
+        self:T2(self.lid.."Allowing update route for Task: Rearming")        
       else
         local taskname=task and task.description or "No description"
         self:T(self.lid..string.format("WARNING: Update route denied because taskcurrent=%d>0! Task description = %s", self.taskcurrent, tostring(taskname)))
@@ -1411,10 +1420,15 @@ function ARMYGROUP:onbeforeRearm(From, Event, To, Coordinate, Formation)
 
   -- Pause current mission.
   if self:IsOnMission() then
-    self:T(self.lid.."Rearm command but have current mission ==> Pausing mission!")
-    self:PauseMission()
-    dt=-0.1
-    allowed=false
+    local mission=self:GetMissionCurrent()
+    if mission and mission.type~=AUFTRAG.Type.REARMING then
+      self:T(self.lid.."Rearm command but have current mission ==> Pausing mission!")
+      self:PauseMission()
+      dt=-0.1
+      allowed=false
+    else
+      self:T(self.lid.."Rearm command and current mission is REARMING ==> Transition ALLOWED!")
+    end
   end
 
   -- Disengage.
@@ -1480,6 +1494,7 @@ function ARMYGROUP:onafterRearmed(From, Event, To)
   
   -- Check if this is a rearming mission.
   if mission and mission.type==AUFTRAG.Type.REARMING then
+  
     -- Rearmed ==> Mission Done! This also checks if the group is done.
     self:MissionDone(mission)
     
@@ -1651,7 +1666,11 @@ function ARMYGROUP:onafterRetreat(From, Event, To, Zone, Formation)
   -- ID of current waypoint.
   local uid=self:GetWaypointCurrent().uid
   
+  -- Get random coordinate of the zone.
   local Coordinate=Zone:GetRandomCoordinate()
+  
+  -- Debug info.
+  self:T(self.lid..string.format("Retreating to zone %s", Zone:GetName()))
   
   -- Add waypoint after current.
   local wp=self:AddWaypoint(Coordinate, nil, uid, Formation, true)
@@ -1952,8 +1971,10 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
   if not Formation then
     if self.formationPerma then
       Formation = self.formationPerma
+    elseif self.optionDefault.Formation then
+      Formation = self.optionDefault.Formation
     elseif self.option.Formation then
-      Formation = self.option.Formation
+      Formation = self.option.Formation      
     else
       -- Default formation is on road.
       Formation = ENUMS.Formation.Vehicle.OnRoad
@@ -2037,8 +2058,11 @@ function ARMYGROUP:_InitGroup(Template)
   -- Set default radio.
   self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, self.radio.On)
   
-  -- Set default formation from first waypoint.
-  self.optionDefault.Formation=template.route.points[1].action --self:GetWaypoint(1).action
+  -- Get current formation from first waypoint.
+  self.option.Formation=template.route.points[1].action
+  
+  -- Set default formation to "on road".
+  self.optionDefault.Formation=ENUMS.Formation.Vehicle.OnRoad
 
   -- Default TACAN off.
   self:SetDefaultTACAN(nil, nil, nil, nil, true)

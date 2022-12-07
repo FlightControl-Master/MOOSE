@@ -4043,11 +4043,16 @@ end
 -- @param #string To To state.
 -- @param Ops.OpsGroup#OPSGROUP.Task Task The task.
 function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
-  self:T({Task})
+
   -- Debug message.
   local text=string.format("Task %s ID=%d execute", tostring(Task.description), Task.id)
+
+  -- Debug info.  
   self:T(self.lid..text)
-  self:T({Task})  
+
+  -- Debug info.
+  self:T2({Task})
+  
   -- Cancel current task if there is any.
   if self.taskcurrent>0 then
     self:TaskCancel()
@@ -4070,7 +4075,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
   -- Get mission of this task (if any).
   local Mission=self:GetMissionByTaskID(self.taskcurrent)
 
-
+  -- Update push DCS task.
   self:_UpdateTask(Task, Mission)
 
   -- Set AUFTRAG status.
@@ -4080,7 +4085,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
 end
 
---- Push task
+--- Push task.
 -- @param #OPSGROUP self
 -- @param Ops.OpsGroup#OPSGROUP.Task Task The task.
 function OPSGROUP:_UpdateTask(Task, Mission)
@@ -4218,6 +4223,14 @@ function OPSGROUP:_UpdateTask(Task, Mission)
     -- Check if ammo is full.
     
     local rearmed=self:_CheckAmmoFull()
+    
+    if rearmed then
+      self:T2(self.lid.."Ammo already full ==> reaming task done!")
+      self:TaskDone(Task)
+    else
+      self:T2(self.lid.."Ammo not full ==> Rearm()")
+      self:Rearm()
+    end
 
 
   elseif Task.dcstask.id==AUFTRAG.SpecialTask.ALERT5 then
@@ -6070,6 +6083,18 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     -- Final zone reached ==> task done.
     self:TaskDone(task)    
 
+  elseif task and task.dcstask.id==AUFTRAG.SpecialTask.REARMING then
+
+    ---
+    -- SPECIAL TASK: Rearming Mission
+    ---
+
+    -- Debug info.
+    self:T(self.lid..string.format("FF Rearming Mission ==> Rearm()"))
+    
+    -- Call rearm event.
+    self:Rearm()
+
   else
 
     ---
@@ -7361,8 +7386,10 @@ function OPSGROUP:CancelAllMissions()
   -- Cancel all missions.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
-    self:T(self.lid.."Cancelling mission "..tostring(mission:GetName()))
-    self:MissionCancel(mission)
+    if mission:IsNotOver() then
+      self:T(self.lid.."Cancelling mission "..tostring(mission:GetName()))
+      self:MissionCancel(mission)
+    end
   end
 
 end
@@ -10179,7 +10206,7 @@ function OPSGROUP:_CheckAmmoStatus()
 
     -- Check if rearming is completed.
     if self:IsRearming() then
-      if ammo.Total==self.ammo.Total then
+      if ammo.Total>=self.ammo.Total then
         self:Rearmed()
       end
     end

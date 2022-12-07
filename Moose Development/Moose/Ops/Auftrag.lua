@@ -628,7 +628,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.9.7"
+AUFTRAG.version="0.9.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -5810,7 +5810,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     table.insert(DCStasks, DCStask)
 
-  elseif self.type==AUFTRAG.Type.AMMOSUPPLY then
+  elseif self.type==AUFTRAG.Type.REARMING then
 
     ----------------------
     -- REARMING Mission --

@@ -33,7 +33,7 @@
 -- @field #number Tstop Stop time in seconds of abs mission time.
 -- @field #number duration Duration of the operation in seconds.
 -- @field Core.Condition#CONDITION conditionStart Start condition.
--- @field Core.Condition#CONDITION conditionStop Stop condition.
+-- @field Core.Condition#CONDITION conditionOver Over condition.
 -- @field #table branches Branches.
 -- @field #OPERATION.Branch branchMaster Master branch.
 -- @field #OPERATION.Branch branchActive Active branch.
@@ -47,7 +47,7 @@
 -- @field #table missions Missions.
 -- @extends Core.Fsm#FSM
 
---- *Before this time tomorrow I shall have gained a peerage, or Westminster Abbey* -- Horatio Nelson
+--- *Before this time tomorrow I shall have gained a peerage, or Westminster Abbey.* -- Horatio Nelson
 --
 -- ===
 --
@@ -95,6 +95,7 @@ _OPERATIONID=0
 -- @field Core.Condition#CONDITION conditionOver Conditions when the phase is over.
 -- @field #string status Phase status.
 -- @field #number Tstart Abs. mission time when the phase was started.
+-- @field #number nActive Number of times the phase was active.
 -- @field #number duration Duration in seconds how long the phase should be active after it started.
 -- @field #OPERATION.Branch branch The branch this phase belongs to.
 
@@ -134,6 +135,7 @@ OPERATION.version="0.2.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: "Over" conditions.
+-- TODO: Repeat phases: after over ==> planned (not over)
 -- DONE: Branches.
 -- DONE: Phases.
 
@@ -167,6 +169,15 @@ function OPERATION:New(Name)
   
   -- Master branch.
   self.branchMaster=self:AddBranch("Master")
+  
+  self.conditionStart=CONDITION:New("Operation %s start", self.name)
+  self.conditionStart:SetNoneResult(false) --If no condition function is specified, the ops will NOT be over.
+  self.conditionStart:SetDefaultPersistence(false)
+  
+  self.conditionOver=CONDITION:New("Operation %s over", self.name)
+  self.conditionOver:SetNoneResult(false)
+  self.conditionOver:SetDefaultPersistence(false)
+  
   
   -- Set master as active branch.
   self.branchActive=self.branchMaster
@@ -204,6 +215,12 @@ function OPERATION:New(Name)
   -- @param #OPERATION self
   -- @param #number delay Delay in seconds.
 
+  --- On after "Start" event.
+  -- @function [parent=#OPERATION] OnAfterStart
+  -- @param #OPERATION self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
 
   --- Triggers the FSM event "Stop".
   -- @function [parent=#OPERATION] Stop
@@ -375,6 +392,27 @@ function OPERATION:SetTime(ClockStart, ClockStop)
   return self
 end
 
+--- Add (all) condition function when the whole operation is over. Must return a `#boolean`.
+-- @param #OPERATION self
+-- @param #function Function Function that needs to be `true` before the operation is over. 
+-- @param ... Condition function arguments if any.
+-- @return Core.Condition#CONDITION.Function Condition function table.
+function OPERATION:AddConditonOverAll(Function, ...)
+  local cf=self.conditionOver:AddFunctionAll(Function, ...)
+  return cf  
+end
+
+--- Add (any) condition function when the whole operation is over. Must return a `#boolean`.
+-- @param #OPERATION self
+-- @param #function Function Function that needs to be `true` before the operation is over. 
+-- @param ... Condition function arguments if any.
+-- @return Core.Condition#CONDITION.Function Condition function table.
+function OPERATION:AddConditonOverAny(Phase, Function, ...)
+  local cf=self.conditionOver:AddFunctionAny(Function, ...)
+  return cf  
+end
+
+
 --- Add a new phase to the operation. This is added add the end of all previously added phases (if any).
 -- @param #OPERATION self
 -- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
@@ -392,8 +430,8 @@ function OPERATION:AddPhase(Name, Branch, Duration)
   -- Branch of phase
   phase.branch=Branch
   
+  -- Set duraction of pahse (if any).
   phase.duration=Duration
-  
   
   -- Debug output.
   self:T(self.lid..string.format("Adding phase %s to branch %s", phase.name, Branch.name))
@@ -469,7 +507,7 @@ function OPERATION:SetPhaseStatus(Phase, Status)
     -- Set time stamp when phase becase active.
     if Phase.status==OPERATION.PhaseStatus.ACTIVE then
       Phase.Tstart=timer.getAbsTime()
-      env.info("FF Setting phase start time stamp")
+      Phase.nActive=Phase.nActive+1
     elseif Phase.status==OPERATION.PhaseStatus.OVER then
       -- Trigger PhaseOver event.
       self:PhaseOver(Phase)
@@ -504,14 +542,15 @@ end
 --- Add condition function when the given phase is over. Must return a `#boolean`.
 -- @param #OPERATION self
 -- @param #OPERATION.Phase Phase The phase.
--- @param #function Function Function that needs to be `true`before the phase is over. 
+-- @param #function Function Function that needs to be `true` before the phase is over. 
 -- @param ... Condition function arguments if any.
--- @return #OPERATION self
+-- @return Core.Condition#CONDITION.Function Condition function table.
 function OPERATION:AddPhaseConditonOverAll(Phase, Function, ...)
   if Phase then
-    Phase.conditionOver:AddFunctionAll(Function, ...)  
+    local cf=Phase.conditionOver:AddFunctionAll(Function, ...)
+    return cf  
   end
-  return self
+  return nil
 end
 
 --- Add condition function when the given phase is over. Must return a `#boolean`.
@@ -519,16 +558,41 @@ end
 -- @param #OPERATION.Phase Phase The phase.
 -- @param #function Function Function that needs to be `true` before the phase is over. 
 -- @param ... Condition function arguments if any.
--- @return #OPERATION self
+-- @return Core.Condition#CONDITION.Function Condition function table.
 function OPERATION:AddPhaseConditonOverAny(Phase, Function, ...)
   if Phase then
-    Phase.conditionOver:AddFunctionAny(Function, ...)  
+    local cf=Phase.conditionOver:AddFunctionAny(Function, ...)
+    return cf  
+  end
+  return nil
+end
+
+--- Set persistence of condition function. By default, condition functions are removed after a phase is over.
+-- @param #OPERATION self
+-- @param Core.Condition#CONDITION.Function ConditionFunction Condition function table.
+-- @param #boolean IsPersistent If `true` or `nil`, condition function is persistent.
+-- @return #OPERATION self
+function OPERATION:SetConditionFunctionPersistence(ConditionFunction, IsPersistent)
+  ConditionFunction.persistence=IsPersistent
+  return self
+end
+
+--- Add condition function when the given phase is to be repeated. The provided function must return a `#boolean`.
+-- If the condition evaluation returns `true`, the phase is set to state `Planned` instead of `Over` and can be repeated.
+-- @param #OPERATION self
+-- @param #OPERATION.Phase Phase The phase.
+-- @param #function Function Function that needs to be `true` before the phase is over. 
+-- @param ... Condition function arguments if any.
+-- @return #OPERATION self
+function OPERATION:AddPhaseConditonRepeatAll(Phase, Function, ...)
+  if Phase then
+    Phase.conditionRepeat:AddFunctionAll(Function, ...)  
   end
   return self
 end
 
 
---- Get codition when the given phase is over.
+--- Get condition when the given phase is over.
 -- @param #OPERATION self
 -- @param #OPERATION.Phase Phase The phase.
 -- @return Core.Condition#CONDITION Condition when the phase is over (if any).
@@ -536,11 +600,12 @@ function OPERATION:GetPhaseConditonOver(Phase, Condition)
   return Phase.conditionOver
 end
 
---- Get currrently active phase.
+--- Get how many times a phase has been active.
 -- @param #OPERATION self
--- @return #OPERATION.Phase Current phase or `nil` if no current phase is active.
-function OPERATION:GetPhaseActive()
-  return self.phase
+-- @param #OPERATION.Phase Phase The phase.
+-- @return #number Number of times the phase has been active.
+function OPERATION:GetPhaseNactive(Phase)
+  return Phase.nActive
 end
 
 --- Get name of a phase.
@@ -558,18 +623,11 @@ function OPERATION:GetPhaseName(Phase)
   return "None"
 end
 
---- Check if a phase is the currently active one.
+--- Get currrently active phase.
 -- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase to check.
--- @return #boolean If `true`, this phase is currently active.
-function OPERATION:IsPhaseActive(Phase)
-  local phase=self:GetPhaseActive()
-  if phase and phase.uid==Phase.uid then
-    return true
-  else
-    return false
-  end
-  return nil
+-- @return #OPERATION.Phase Current phase or `nil` if no current phase is active.
+function OPERATION:GetPhaseActive()
+  return self.phase
 end
 
 --- Get index of phase.
@@ -709,11 +767,10 @@ end
 -- @param #OPERATION.Phase PhaseFrom The phase of the *from* branch *after* which to switch.
 -- @param #OPERATION.Phase PhaseTo The phase of the *to* branch *to* which to switch.
 -- @param Core.Condition#CONDITION ConditionSwitch (Optional) Condition(s) when to switch the branches.
--- @return #OPERATION.Branch Branch table object.
+-- @return #OPERATION.Edge Edge table object.
 function OPERATION:AddEdge(PhaseFrom, PhaseTo, ConditionSwitch)
 
   local edge={} --#OPERATION.Edge
-  
   
   edge.phaseFrom=PhaseFrom
   edge.phaseTo=PhaseTo
@@ -721,7 +778,12 @@ function OPERATION:AddEdge(PhaseFrom, PhaseTo, ConditionSwitch)
   edge.branchFrom=PhaseFrom.branch
   edge.branchTo=PhaseTo.branch  
   
-  edge.conditionSwitch=ConditionSwitch or CONDITION:New("Edge")
+  if ConditionSwitch then
+    edge.conditionSwitch=ConditionSwitch
+  else
+    edge.conditionSwitch=CONDITION:New("Edge")
+    edge.conditionSwitch:SetNoneResult(true)
+  end
   
   table.insert(edge.branchFrom.edges, edge)
 
@@ -729,16 +791,18 @@ function OPERATION:AddEdge(PhaseFrom, PhaseTo, ConditionSwitch)
 end
 
 --- Add condition function to an edge when branches are switched. The function must return a `#boolean`.
+-- If multiple condition functions are added, all of these must return true for the branch switch to occur.
 -- @param #OPERATION self
 -- @param #OPERATION.Edge Edge The edge connecting the two branches.
 -- @param #function Function Function that needs to be `true` for switching between the branches. 
 -- @param ... Condition function arguments if any.
--- @return #OPERATION self
+-- @return Core.Condition#CONDITION.Function Condition function table.
 function OPERATION:AddEdgeConditonSwitchAll(Edge, Function, ...)
   if Edge then
-    Edge.conditionSwitch:AddFunctionAll(Function, ...)
+    local cf=Edge.conditionSwitch:AddFunctionAll(Function, ...)
+    return cf
   end
-  return self
+  return nil
 end
 
 --- Add mission to operation.
@@ -769,9 +833,9 @@ function OPERATION:AddTarget(Target, Phase)
   return self
 end
 
---- Add Targets from operation.
+--- Get targets of operation.
 -- @param #OPERATION self
--- @param #OPERATION.Phase Phase
+-- @param #OPERATION.Phase Phase (Optional) Only return targets set for this phase. Default is targets of all phases.
 -- @return #table Targets Table of #TARGET objects 
 function OPERATION:GetTargets(Phase)
   local N = {}
@@ -926,6 +990,14 @@ function OPERATION:IsStopped()
   return is
 end
 
+--- Check if operation is **not** "Over" or "Stopped".
+-- @param #OPERATION self
+-- @return #boolean If `true`, operation is not "Over" or "Stopped".
+function OPERATION:IsNotOver()
+  local is=not (self:IsOver() or self:IsStopped())
+  return is
+end
+
 --- Check if phase is in status "Active".
 -- @param #OPERATION self
 -- @param #OPERATION.Phase Phase The phase.
@@ -935,6 +1007,20 @@ function OPERATION:IsPhaseActive(Phase)
     return true
   end
   return false
+end
+
+--- Check if a phase is the currently active one.
+-- @param #OPERATION self
+-- @param #OPERATION.Phase Phase The phase to check.
+-- @return #boolean If `true`, this phase is currently active.
+function OPERATION:IsPhaseActive(Phase)
+  local phase=self:GetPhaseActive()
+  if phase and phase.uid==Phase.uid then
+    return true
+  else
+    return false
+  end
+  return nil
 end
 
 --- Check if phase is in status "Planned".
@@ -990,26 +1076,29 @@ function OPERATION:onafterStatusUpdate(From, Event, To)
   -- Current FSM state.
   local fsmstate=self:GetState()
   
+  -- Start operation.
   if self:IsPlanned() then
-    if self.Tstart and Tnow>self.Tstart then
+  
+    -- Start operation if start time has passed (if any) and start condition(s) are met (if any).
+    if (self.Tstart and Tnow>self.Tstart or self.Tstart==nil) and (self.conditionStart==nil or self.conditionStart:Evaluate()) then
       self:Start()
     end
-  end
-  if (self.Tstop and Tnow>self.Tstop) and not (self:IsOver() or self:IsStopped()) then
-    self:Over()
+    
+  elseif self:IsNotOver() then
+
+    -- Operation is over if stop time has passed (if any) and over condition(s) are met (if any).
+    if (self.Tstop and Tnow>self.Tstop or self.Tstop==nil) and (self.conditionOver==nil or self.conditionOver:Evaluate()) then
+      self:Over()
+    end
+    
   end
   
-  if (not self:IsRunning()) and (self.conditionStart and self.conditionStart:Evaluate()) then
-    self:Start()
-  end
-  if self:IsRunning() and (self.conditionStop and self.conditionStop:Evaluate()) then
-    self:Over()
-  end
   
   -- Check phases.
   if self:IsRunning() then
     self:_CheckPhases()
   end
+  
   
   -- Debug output.
   if self.verbose>=1 then
@@ -1035,7 +1124,7 @@ function OPERATION:onafterStatusUpdate(From, Event, To)
     local text="Phases:"
     for i,_phase in pairs(self.branchActive.phases) do
       local phase=_phase --#OPERATION.Phase
-      text=text..string.format("\n[%d] %s: status=%s", i, phase.name, tostring(phase.status))
+      text=text..string.format("\n[%d] %s [uid=%d]: status=%s Nact=%d", i, phase.name, phase.uid, tostring(phase.status), phase.nActive)
     end
     if text=="Phases:" then text=text.." None" end
     self:I(self.lid..text)
@@ -1107,6 +1196,19 @@ function OPERATION:onafterPhaseChange(From, Event, To, Phase)
   return self
 end
 
+--- On after "PhaseOver" event.
+-- @param #OPERATION self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPERATION.Phase Phase The phase that is over.
+function OPERATION:onafterPhaseOver(From, Event, To, Phase)
+  
+  -- Remove all non-persistant condition functions.
+  Phase.conditionOver:RemoveNonPersistant()
+
+end
+
 --- On after "BranchSwitch" event.
 -- @param #OPERATION self
 -- @param #string From From state.
@@ -1168,14 +1270,18 @@ function OPERATION:_CheckPhases()
   
   -- Check if active phase is over if conditon over is defined.
   if phase and phase.conditionOver then
+  
+    -- Evaluate if phase is over.
     local isOver=phase.conditionOver:Evaluate()
     
     local Tnow=timer.getAbsTime()
     
+    -- Check if duration of phase if over.
     if phase.duration and phase.Tstart and Tnow-phase.Tstart>phase.duration then
       isOver=true
     end
     
+    -- Set phase status to over. This also triggers the PhaseOver() event.
     if isOver then
       self:SetPhaseStatus(phase, OPERATION.PhaseStatus.OVER)
     end
@@ -1187,6 +1293,11 @@ function OPERATION:_CheckPhases()
     for _,_edge in pairs(self.branchActive.edges) do
       local edge=_edge --#OPERATION.Edge
       
+      if phase then
+        --env.info(string.format("phase active uid=%d", phase.uid))
+        --env.info(string.format("Phase from   uid=%d", edge.phaseFrom.uid))
+      end
+      
       if (edge.phaseFrom==nil) or (phase and edge.phaseFrom.uid==phase.uid) then
 
         -- Evaluate switch condition.      
@@ -1197,37 +1308,25 @@ function OPERATION:_CheckPhases()
           -- Get next phase of the branch
           local phaseTo=edge.phaseTo or self:GetPhaseNext(edge.branchTo, nil)
           
-          if phaseTo then       
-        
+          if phaseTo then
+          
             -- Switch to new branch.
             self:BranchSwitch(edge.branchTo, phaseTo)
             
           else
           
+            -- No next phase ==> Ops is over!
             self:Over()
             
           end
           
           -- Done here!
-          return          
-          
---          -- If we want to switch to a specific phase of the branch.
---          if edge.phaseTo then
---          
---            -- Change phase.
---            self:PhaseChange(edge.phaseTo)
---            
---            -- Done here!
---            return
---          end
---          
---          -- Break the loop.
---          break
+          return
         end
       end
       
     end
-    
+        
     -- Next phase.
     self:PhaseNext()
         
@@ -1248,7 +1347,9 @@ function OPERATION:_CreatePhase(Name)
   phase.uid=self.counterPhase
   phase.name=Name or string.format("Phase-%02d", self.counterPhase)  
   phase.conditionOver=CONDITION:New(Name.." Over")
+  phase.conditionOver:SetDefaultPersistence(false)
   phase.status=OPERATION.PhaseStatus.PLANNED
+  phase.nActive=0
 
   return phase
 end
