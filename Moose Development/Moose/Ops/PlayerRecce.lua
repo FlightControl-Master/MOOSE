@@ -366,7 +366,10 @@ function PLAYERRECCE:SetReferencePoint(Coordinate,Name)
   if self.RPMarker then
     self.RPMarker:Remove()
   end
-  local text = string.format("%s RP %s\n%s\n%s\n%s",self.Name,Name,Coordinate:ToStringLLDDM(),Coordinate:ToStringLLDMS(),Coordinate:ToStringMGRS())
+  local llddm = Coordinate:ToStringLLDDM()
+  local lldms = Coordinate:ToStringLLDMS()
+  local mgrs = Coordinate:ToStringMGRS()
+  local text = string.format("%s RP %s\n%s\n%s\n%s",self.Name,Name,llddm,lldms,mgrs)
   self.RPMarker = MARKER:New(Coordinate,text)
   self.RPMarker:ReadOnly()
   self.RPMarker:ToCoalition(self.Coalition)

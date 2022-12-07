@@ -2,9 +2,7 @@
 -- 
 -- ===
 -- 
--- ## AWACS
--- 
--- * MOOSE AI AWACS Operations using text-to-speech.
+-- **AWACS** - MOOSE AI AWACS Operations using text-to-speech.
 -- 
 -- ===
 --
@@ -499,7 +497,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.49", -- #string
+  version = "0.2.50", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -916,7 +914,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.2.42
+-- TODO-List 0.2.50
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
@@ -3470,7 +3468,7 @@ function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
     local CAPVoice = self.CAPVoice
     
     if self.PathToGoogleKey then
-      CAPVoice = AWACS.CapVoices[math.floor(math.random(1,10))]
+      CAPVoice = self.CapVoices[math.floor(math.random(1,10))]
     end
     
     FlightGroup:SetSRS(self.PathToSRS,self.CAPGender,self.CAPCulture,CAPVoice,self.Port,self.PathToGoogleKey,"FLIGHT")
