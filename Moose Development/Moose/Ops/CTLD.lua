@@ -711,6 +711,7 @@ do
 --          my_ctld.droppedbeacontimeout = 600 -- dropped beacon lasts 10 minutes
 --          my_ctld.usesubcats = false -- use sub-category names for crates, adds an extra menu layer in "Get Crates", useful if you have > 10 crate types.
 --          my_ctld.placeCratesAhead = false -- place crates straight ahead of the helicopter, in a random way. If true, crates are more neatly sorted.
+--          my_ctld.nobuildinloadzones = true -- forbid players to build stuff in LOAD zones if set to `true`
 -- 
 -- ## 2.1 User functions
 -- 
@@ -1087,7 +1088,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.20"
+CTLD.version="1.0.21"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1251,6 +1252,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- sub categories
   self.usesubcats = false
   self.subcats = {}
+  
+  -- disallow building in loadzones
+  self.nobuildinloadzones = true
   
   local AliaS = string.gsub(self.alias," ","_")
   self.filename = string.format("CTLD_%s_Persist.csv",AliaS)
@@ -2102,10 +2106,10 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
     self.CargoCounter = self.CargoCounter + 1
     local realcargo = nil
     if drop then
-      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,true,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true,cargotype.PerCrateMass,subcat)
+      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,true,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true,cargotype.PerCrateMass,nil,subcat)
       table.insert(droppedcargo,realcargo)
     else
-      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,false,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true,cargotype.PerCrateMass,subcat)
+      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,false,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],false,cargotype.PerCrateMass,nil,subcat)
       Cargo:RemoveStock()
     end
     table.insert(self.Spawned_Cargo, realcargo)
@@ -2830,6 +2834,14 @@ function CTLD:_BuildCrates(Group, Unit,Engineering)
     local speed = Unit:GetVelocityKMH()
     if speed > 1 then
       self:_SendMessage("You need to land / stop to build something, Pilot!", 10, false, Group) 
+      return self
+    end
+  end
+  if not Engineering and self.nobuildinloadzones then
+    -- are we in a load zone?
+    local inloadzone = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
+    if inloadzone then
+      self:_SendMessage("You cannot build in a loading area, Pilot!", 10, false, Group) 
       return self
     end
   end
