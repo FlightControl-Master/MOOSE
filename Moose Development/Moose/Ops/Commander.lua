@@ -209,6 +209,8 @@ function COMMANDER:New(Coalition, Alias)
   self:AddTransition("*",                  "TransportCancel",     "*")           -- COMMANDER cancels a Transport.
 
   self:AddTransition("*",                  "OpsOnMission",        "*")           -- An OPSGROUP was send on a Mission (AUFTRAG).
+  
+  self:AddTransition("*",                  "LegionLost",          "*")           -- Out of our legions was lost to the enemy.
 
   ------------------------
   --- Pseudo Functions ---
@@ -351,6 +353,32 @@ function COMMANDER:New(Coalition, Alias)
   -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
+
+  --- Triggers the FSM event "LegionLost".
+  -- @function [parent=#COMMANDER] LegionLost
+  -- @param #COMMANDER self
+  -- @param Ops.Legion#LEGION Legion The legion that was lost.
+  -- @param DCS#coalition.side Coalition which captured the warehouse.
+  -- @param DCS#country.id Country which has captured the warehouse.
+
+  --- Triggers the FSM event "LegionLost".
+  -- @function [parent=#COMMANDER] __LegionLost
+  -- @param #COMMANDER self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.Legion#LEGION Legion The legion that was lost.
+  -- @param DCS#coalition.side Coalition which captured the warehouse.
+  -- @param DCS#country.id Country which has captured the warehouse.
+
+  --- On after "LegionLost" event.
+  -- @function [parent=#COMMANDER] OnAfterLegionLost
+  -- @param #COMMANDER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Legion#LEGION Legion The legion that was lost.
+  -- @param DCS#coalition.side Coalition which captured the warehouse.
+  -- @param DCS#country.id Country which has captured the warehouse.
+
   return self
 end
 
@@ -438,6 +466,23 @@ function COMMANDER:AddLegion(Legion)
 
   -- Add to legions.
   table.insert(self.legions, Legion)  
+  
+  return self
+end
+
+--- Remove a LEGION to the commander.
+-- @param #COMMANDER self
+-- @param Ops.Legion#LEGION Legion The legion to be removed.
+-- @return #COMMANDER self
+function COMMANDER:RemoveLegion(Legion)
+    
+  for i,_legion in pairs(self.legions) do
+    local legion=_legion --Ops.Legion#LEGION
+    if legion.alias==Legion.alias then
+      table.remove(self.legions, i)
+      Legion.commander=nil
+    end
+  end
   
   return self
 end

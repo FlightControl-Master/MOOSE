@@ -1312,6 +1312,62 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
   return mission
 end
 
+--- **[AIRPANE]** Create a CAP on group mission.
+-- @param #AUFTRAG self
+-- @param Wrapper.Group#GROUP group.
+-- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
+-- @param #number Speed Orbit speed in knots. Default 250 KIAS.
+-- @param #number Leg Length of race-track in NM. Default 14 NM.
+-- @param #number RelHeading Relative heading [0, 360) of race-track pattern in degrees wrt heading of the carrier. Default is heading of the carrier.
+-- @param #number OffsetDist Relative distance of the first race-track point wrt to the carrier. Default 6 NM.
+-- @param #number OffsetAngle Relative angle of the first race-track point wrt. to the carrier. Default 180 (behind the boat).
+-- @param #number UpdateDistance Threshold distance in NM before orbit pattern is updated. Default 5 NM.
+-- @param #table TargetTypes (Optional) Table of target types. Default `{"Helicopters", "Ground Units", "Light armed ships"}`.
+-- @param #number EngageRange Max range in nautical miles that the escort group(s) will engage enemies. Default 32 NM (60 km).
+-- @return #AUFTRAG self
+function AUFTRAG:NewCAPGROUP(Grp, Altitude, Speed, RelHeading, Leg, OffsetDist, OffsetAngle, UpdateDistance, TargetTypes, EngageRange)
+
+  -- Ensure given TargetTypes parameter is a table.
+  if TargetTypes then
+    if type(TargetTypes)~="table" then
+      TargetTypes={TargetTypes}
+    end
+  end
+  -- Six NM astern.
+ local OffsetVec2={r=OffsetDist or 6, phi=OffsetAngle or 180}
+
+ -- Default leg.
+ Leg=Leg or 14
+
+ local Heading=nil
+ if RelHeading then  
+   Heading=-math.abs(RelHeading)
+ end  
+
+ -- Create orbit mission. 
+ local mission=AUFTRAG:NewORBIT_GROUP(Grp, Altitude, Speed, Leg, Heading, OffsetVec2, UpdateDistance)
+ -- Mission type CAP.
+ mission.type=AUFTRAG.Type.CAP
+ mission:_SetLogID()
+
+ -- DCS task parameters:
+ local engage = EngageRange or 32
+ local zoneCAPGroup = ZONE_GROUP:New("CAPGroup", Grp, UTILS.NMToMeters(engage))
+ mission.engageZone=zoneCAPGroup
+ mission.engageTargetTypes=TargetTypes or {"Air"}
+
+ -- Mission options:
+ mission.missionTask=ENUMS.MissionTask.CAP
+ mission.optionROE=ENUMS.ROE.OpenFire
+ mission.optionROT=ENUMS.ROT.EvadeFire
+
+ mission.categories={AUFTRAG.Category.AIRCRAFT}
+
+ mission.DCStask=mission:GetDCSMissionTask()
+
+ return mission
+end
+
 --- **[AIR]** Create a CAS mission.
 -- @param #AUFTRAG self
 -- @param Core.Zone#ZONE_RADIUS ZoneCAS Circular CAS zone. Detected targets in this zone will be engaged.
