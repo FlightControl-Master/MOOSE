@@ -17,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update November 2022
+-- @date Last Update December 2022
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -104,7 +104,7 @@ do
 -- @field #boolean NoGroupTags Set to true if you don't want group tags.
 -- @field #boolean SuppressScreenOutput Set to true to suppress all screen output.
 -- @field #boolean NoMissileCalls Suppress missile callouts
--- @field #boolean PlayerCapAssigment Assign players to CAP tasks when they are logged on
+-- @field #boolean PlayerCapAssignment Assign players to CAP tasks when they are logged on
 -- @field #number GoogleTTSPadding
 -- @field #number WindowsTTSPadding
 -- @field #boolean AllowMarkers
@@ -356,7 +356,7 @@ do
 --            testawacs.maxassigndistance = 100 -- Don't assign targets further out than this, in NM.
 --            testawacs.debug = false -- set to true to produce more log output.
 --            testawacs.NoMissileCalls = true -- suppress missile callouts
---            testawacs.PlayerCapAssigment = true -- no intercept task assignments for players
+--            testawacs.PlayerCapAssignment = true -- no intercept task assignments for players
 --            testawacs.invisible = false -- set AWACS to be invisible to hostiles
 --            testawacs.immortal = false -- set AWACS to be immortal
 --            -- By default, the radio queue is checked every 10 secs. This is altered by the calculated length of the sentence to speak
@@ -578,7 +578,7 @@ AWACS = {
   NoMissileCalls = true,
   GoogleTTSPadding = 1,
   WindowsTTSPadding = 2.5,
-  PlayerCapAssigment = true,
+  PlayerCapAssignment = true,
   AllowMarkers = false,
   PlayerStationName = nil,
   GCI = false,
@@ -1123,7 +1123,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.MenuStrict = true
   self.maxassigndistance = 100 --nm
   self.NoMissileCalls = true
-  self.PlayerCapAssigment = true
+  self.PlayerCapAssignment = true
     
   -- managed groups
   self.ManagedGrps = {} -- #table of #AWACS.ManagedGroup entries
@@ -3587,13 +3587,15 @@ function AWACS:_SetClientMenus()
             local bogeydope = MENU_GROUP_COMMAND:New(cgrp,"Bogey Dope",basemenu,self._BogeyDope,self,cgrp)
             local picture = MENU_GROUP_COMMAND:New(cgrp,"Picture",basemenu,self._Picture,self,cgrp)
             local declare = MENU_GROUP_COMMAND:New(cgrp,"Declare",basemenu,self._Declare,self,cgrp)
-            
             local tasking = MENU_GROUP:New(cgrp,"Tasking",basemenu)
             local showtask = MENU_GROUP_COMMAND:New(cgrp,"Showtask",tasking,self._Showtask,self,cgrp)
-            local commit = MENU_GROUP_COMMAND:New(cgrp,"Commit",tasking,self._Commit,self,cgrp)
-            local unable = MENU_GROUP_COMMAND:New(cgrp,"Unable",tasking,self._Unable,self,cgrp)
-            local abort = MENU_GROUP_COMMAND:New(cgrp,"Abort",tasking,self._TaskAbort,self,cgrp)
-            --local judy = MENU_GROUP_COMMAND:New(cgrp,"Judy",tasking,self._Judy,self,cgrp)
+            
+            if self.PlayerCapAssignment then
+              local commit = MENU_GROUP_COMMAND:New(cgrp,"Commit",tasking,self._Commit,self,cgrp)
+              local unable = MENU_GROUP_COMMAND:New(cgrp,"Unable",tasking,self._Unable,self,cgrp)
+              local abort = MENU_GROUP_COMMAND:New(cgrp,"Abort",tasking,self._TaskAbort,self,cgrp)
+              --local judy = MENU_GROUP_COMMAND:New(cgrp,"Judy",tasking,self._Judy,self,cgrp)
+            end
             
             if self.AwacsROE == AWACS.ROE.POLICE or self.AwacsROE == AWACS.ROE.VID then
               local vid = MENU_GROUP:New(cgrp,"VID as",tasking)
@@ -5957,7 +5959,7 @@ function AWACS:onafterStatus(From, Event, To)
     local AI, Humans = self:_GetIdlePilots()
     -- assign Pilot if there are targets and available Pilots, prefer Humans to AI
     -- DONE - Implemented AI First, Humans laters - need to work out how to loop the targets to assign a pilot
-    if outcome and #Humans > 0 and self.PlayerCapAssigment then
+    if outcome and #Humans > 0 and self.PlayerCapAssignment then
       -- add a task for AI
       self:_AssignPilotToTarget(Humans,targets)
     end
