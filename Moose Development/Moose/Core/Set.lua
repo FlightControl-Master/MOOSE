@@ -376,7 +376,6 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return Core.Base#BASE
   function SET_BASE:GetFirst()
-
     local ObjectName = self.Index[1]
     local FirstObject = self.Set[ObjectName]
     self:T3( { FirstObject } )
@@ -387,7 +386,7 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return Core.Base#BASE
   function SET_BASE:GetLast()
-	local tablemax = table.maxn(self.Index)
+	  local tablemax = table.maxn(self.Index)
     local ObjectName = self.Index[tablemax]
     local LastObject = self.Set[ObjectName]
     self:T3( { LastObject } )
@@ -398,7 +397,7 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return Core.Base#BASE
   function SET_BASE:GetRandom()
-	local tablemax = table.maxn(self.Index)
+	  local tablemax = table.maxn(self.Index)
     local RandomItem = self.Set[self.Index[math.random(1,tablemax)]]
     self:T3( { RandomItem } )
     return RandomItem
@@ -408,8 +407,7 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return #number Count
   function SET_BASE:Count()
-
-    return self.Index and #self.Index or 0
+    return self.Index and table.maxn(self.Index) or 0
   end
 
   --- Copies the Filter criteria from a given Set (for rebuilding a new Set based on an existing Set).
