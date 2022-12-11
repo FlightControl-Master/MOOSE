@@ -179,7 +179,7 @@ do -- SET_BASE
     return Names
   end
 
-  --- Return a table of the Objects in the Set.
+  --- Returns a table of the Objects in the Set.
   -- @param #SET_BASE self
   -- @return #SET_BASE self
   function SET_BASE:GetSetObjects() -- R2.3
@@ -376,7 +376,6 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return Core.Base#BASE
   function SET_BASE:GetFirst()
-
     local ObjectName = self.Index[1]
     local FirstObject = self.Set[ObjectName]
     self:T3( { FirstObject } )
@@ -387,8 +386,8 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return Core.Base#BASE
   function SET_BASE:GetLast()
-
-    local ObjectName = self.Index[#self.Index]
+    local tablemax = table.maxn(self.Index)
+    local ObjectName = self.Index[tablemax]
     local LastObject = self.Set[ObjectName]
     self:T3( { LastObject } )
     return LastObject
@@ -398,8 +397,8 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return Core.Base#BASE
   function SET_BASE:GetRandom()
-
-    local RandomItem = self.Set[self.Index[math.random( #self.Index )]]
+    local tablemax = table.maxn(self.Index)
+    local RandomItem = self.Set[self.Index[math.random(1,tablemax)]]
     self:T3( { RandomItem } )
     return RandomItem
   end
@@ -408,8 +407,7 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return #number Count
   function SET_BASE:Count()
-
-    return self.Index and #self.Index or 0
+    return self.Index and table.maxn(self.Index) or 0
   end
 
   --- Copies the Filter criteria from a given Set (for rebuilding a new Set based on an existing Set).
@@ -6800,7 +6798,7 @@ do -- SET_SCENERY
     
     if ZoneSet then
       for _,_zone in pairs(ZoneSet.Set) do
-        --self:I("Zone type handed: "..tostring(_zone.ClassName))
+         self:T("Zone type handed: "..tostring(_zone.ClassName))
         table.insert(zonenames,_zone:GetName())
       end   
       self:AddSceneryByName(zonenames)
@@ -6814,7 +6812,7 @@ do -- SET_SCENERY
   -- @param Core.Zone#ZONE Zone The zone to be scanned. Can be a ZONE_RADIUS (round) or a ZONE_POLYGON (e.g. Quad-Point)
   -- @return #SET_SCENERY
   function SET_SCENERY:NewFromZone(Zone)
-    local zone = Zone -- Core.Zone#ZONE_POLYGON
+    local zone = Zone -- Core.Zone#ZONE_RADIUS
     if type(Zone) == "string" then
       zone = ZONE:FindByName(Zone)
     end
