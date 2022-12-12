@@ -839,7 +839,7 @@ end
 -- Black listed spots overrule white listed spots.
 -- **NOTE** that terminal IDs are not necessarily the same as those displayed in the mission editor!
 -- @param #AIRBASE self
--- @param #table TerminalIdBlacklist Table of white listed terminal IDs.
+-- @param #table TerminalIdWhitelist Table of white listed terminal IDs.
 -- @return #AIRBASE self
 -- @usage AIRBASE:FindByName("Batumi"):SetParkingSpotWhitelist({2, 3, 4}) --Only allow terminal IDs 2, 3, 4
 function AIRBASE:SetParkingSpotWhitelist(TerminalIdWhitelist)
