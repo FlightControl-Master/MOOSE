@@ -57,6 +57,7 @@ do
 -- @field #table NextTaskSuccess
 -- @field #table NextTaskFailure
 -- @field #string FinalState
+-- @field #string TypeName
 -- @extends Core.Fsm#FSM
 
 
@@ -926,6 +927,7 @@ do
 -- @field #boolean InfoHasCoordinate
 -- @field #boolean InfoHasLLDDM
 -- @field #table PlayerMenuTag
+-- @field #boolean UseTypeNames
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1112,6 +1114,13 @@ do
 --                BRIEFING = "Briefing",
 --                TARGETLOCATION ="Target location",
 --                COORDINATE = "Coordinate",
+--                INFANTRY = "Infantry",
+--                TECHNICAL = "Technical",
+--                ARTILLERY = "Artillery",
+--                TANKS = "Tanks",
+--                AIRDEFENSE = "Airdefense",
+--                SAM = "SAM",
+--                GROUP = "Group",
 --              },
 -- 
 -- e.g.
@@ -1243,6 +1252,7 @@ PLAYERTASKCONTROLLER = {
   ShowMagnetic       = true,
   InfoHasLLDDM       = false,
   InfoHasCoordinate  = false,
+  UseTypeNames       = false,
   }
 
 ---
@@ -1341,6 +1351,13 @@ PLAYERTASKCONTROLLER.Messages = {
     BRIEFING = "Briefing",
     TARGETLOCATION ="Target location",
     COORDINATE = "Coordinate",
+    INFANTRY = "Infantry",
+    TECHNICAL = "Technical",
+    ARTILLERY = "Artillery",
+    TANKS = "Tanks",
+    AIRDEFENSE = "Airdefense",
+    SAM = "SAM",
+    GROUP = "Group",
   },
   DE = {
     TASKABORT = "Auftrag abgebrochen!",
@@ -1406,12 +1423,19 @@ PLAYERTASKCONTROLLER.Messages = {
     BRIEFING = "Briefing",
     TARGETLOCATION ="Zielposition",
     COORDINATE = "Koordinate",
+    INFANTRY = "Infantrie",
+    TECHNICAL = "Technische",
+    ARTILLERY = "Artillerie",
+    TANKS = "Panzer",
+    AIRDEFENSE = "Flak",
+    SAM = "Luftabwehr",
+    GROUP = "Einheit",
   },
 }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.51"
+PLAYERTASKCONTROLLER.version="0.1.52"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -1469,6 +1493,8 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.noflaresmokemenu = false
   
   self.ShowMagnetic = true
+  
+  self.UseTypeNames = false
    
   if ClientFilter then
     self.ClientSet = SET_CLIENT:New():FilterCoalitions(string.lower(self.CoalitionName)):FilterActive(true):FilterPrefixes(ClientFilter):FilterStart()
@@ -1604,6 +1630,24 @@ function PLAYERTASKCONTROLLER:_InitLocalization()
       self.gettext:AddEntry(Locale,tostring(ID),Text)
     end
   end
+  return self
+end
+
+--- [User] Show target menu entries of type names for GROUND targets (off by default!), e.g. "Tank Group..."
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetEnableUseTypeNames()
+  self:T(self.lid.."SetEnableUseTypeNames")
+  self.UseTypeNames = true
+  return self
+end
+
+--- [User] Do not show target menu entries of type names for GROUND targets
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetDisableUseTypeNames()
+  self:T(self.lid.."SetDisableUseTypeNames")
+  self.UseTypeNames = false
   return self
 end
 
@@ -2134,7 +2178,7 @@ end
 function PLAYERTASKCONTROLLER:_CheckTargetQueue()
  self:T(self.lid.."_CheckTargetQueue")
  if self.TargetQueue:Count() > 0 then
-  local object = self.TargetQueue:Pull()
+  local object = self.TargetQueue:Pull() -- Wrapper.Positionable#POSITIONABLE
   local target = TARGET:New(object)
   if object.menuname then
     target.menuname = object.menuname
@@ -2142,6 +2186,38 @@ function PLAYERTASKCONTROLLER:_CheckTargetQueue()
       target.freetext = object.freetext
     end
   end
+  
+  if self.UseTypeNames and object:IsGround() then
+    --   * Threat level  0: Unit is unarmed.
+    --   * Threat level  1: Unit is infantry.
+    --   * Threat level  2: Unit is an infantry vehicle.
+    --   * Threat level  3: Unit is ground artillery.
+    --   * Threat level  4: Unit is a tank.
+    --   * Threat level  5: Unit is a modern tank or ifv with ATGM.
+    --   * Threat level  6: Unit is a AAA.
+    --   * Threat level  7: Unit is a SAM or manpad, IR guided.
+    --   * Threat level  8: Unit is a Short Range SAM, radar guided.
+    --   * Threat level  9: Unit is a Medium Range SAM, radar guided.
+    --   * Threat level 10: Unit is a Long Range SAM, radar guided.
+    local threat = object:GetThreatLevel()
+    local typekey = "INFANTRY"
+    if threat == 0 or threat == 2 then
+      typekey = "TECHNICAL"
+    elseif threat == 3 then
+      typekey = "ARTILLERY" 
+    elseif threat == 4 or  threat == 5 then
+      typekey = "TANKS"
+    elseif threat == 6 or threat == 7 then
+      typekey = "AIRDEFENSE"
+    elseif threat >= 8 then
+      typekey = "SAM"
+    end
+    local typename = self.gettext:GetEntry(typekey,self.locale)
+    local gname = self.gettext:GetEntry("GROUP",self.locale)
+    target.TypeName = string.format("%s %s",typename,gname)
+    --self:T(self.lid.."Target TypeName = "..target.TypeName)
+  end
+  
   self:_AddTask(target)
  end  
  return self
@@ -2616,6 +2692,7 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
   end
   
   task.coalition = self.Coalition
+  task.TypeName = Target.TypeName
   
   if type == AUFTRAG.Type.BOMBRUNWAY then
     -- task to handle event shot
@@ -3152,6 +3229,13 @@ function PLAYERTASKCONTROLLER:_BuildTaskInfoMenu(group,client,playername,topmenu
           local name = _task.Target:GetName()
           if name ~= "Unknown" then
             text = string.format("%s (%03d) [%d%s",name,_task.PlayerTaskNr,pilotcount,newtext)
+          end
+        end
+        if self.UseTypeNames then
+          if _task.TypeName then
+            --local name = self.gettext:GetEntry(_task.TypeName,self.locale)
+            text = string.format("%s (%03d) [%d%s",_task.TypeName,_task.PlayerTaskNr,pilotcount,newtext)
+            --self:T(self.lid.."Menu text = "..text)
           end
         end
         local taskentry = MENU_GROUP_COMMAND_DELAYED:New(group,text,ittypes[_tasktype],self._ActiveTaskInfo,self,group,client,_task):SetTag(newtag)
