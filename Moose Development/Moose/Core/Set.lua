@@ -386,7 +386,7 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return Core.Base#BASE
   function SET_BASE:GetLast()
-	  local tablemax = table.maxn(self.Index)
+    local tablemax = table.maxn(self.Index)
     local ObjectName = self.Index[tablemax]
     local LastObject = self.Set[ObjectName]
     self:T3( { LastObject } )
@@ -397,7 +397,7 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return Core.Base#BASE
   function SET_BASE:GetRandom()
-	  local tablemax = table.maxn(self.Index)
+    local tablemax = table.maxn(self.Index)
     local RandomItem = self.Set[self.Index[math.random(1,tablemax)]]
     self:T3( { RandomItem } )
     return RandomItem
@@ -3808,6 +3808,8 @@ do -- SET_CLIENT
       Countries = nil,
       ClientPrefixes = nil,
       Zones = nil,
+	 Playernames = nil,
+	 Callsigns = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -3878,6 +3880,40 @@ do -- SET_CLIENT
 
     local ClientFound = self.Set[ClientName]
     return ClientFound
+  end
+
+  --- Builds a set of clients of certain callsigns.
+  -- @param #SET_CLIENT self
+  -- @param #string Callsigns Can be a string e.g. "Ford", or a table of strings e.g. {"Ford","Enfield","Chevy"}
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:Filtercallsigns( Callsigns )
+    if not self.Filter.Callsigns then
+      self.Filter.Callsigns = {}
+    end
+    if type( Callsigns ) ~= "table" then
+      Callsigns = { Callsigns }
+    end
+    for callsignID, callsign in pairs( Callsigns ) do
+      self.Filter.Coalitions[Callsigns] = Callsigns
+    end
+    return self
+  end
+
+  --- Builds a set of clients of certain playernames.
+  -- @param #SET_CLIENT self
+  -- @param #string Playernames Can be a string e.g. "Apple", or a table of strings e.g. {"Walter","Hermann","Gonzo"}
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:FilterPlayernames( Playernames )
+    if not self.Filter.Playernames then
+      self.Filter.Playernames = {}
+    end
+    if type( Playernames ) ~= "table" then
+      Playernames = { Playernames }
+    end
+    for PlayernameID, Playernames in pairs( Playernames ) do
+      self.Filter.Coalitions[Playernames] = Playernames
+    end
+    return self
   end
 
   --- Builds a set of clients of coalitions.
@@ -4235,20 +4271,44 @@ do -- SET_CLIENT
         self:T( { "Evaluated Prefix", MClientPrefix } )
         MClientInclude = MClientInclude and MClientPrefix
       end
-    end
 
-    if self.Filter.Zones then
-      local MClientZone = false
-      for ZoneName, Zone in pairs( self.Filter.Zones ) do
-        self:T3( "Zone:", ZoneName )
-        local unit = MClient:GetClientGroupUnit()
-        if unit and unit:IsInZone(Zone) then
-          MClientZone = true
-        end
-      end
-      MClientInclude = MClientInclude and MClientZone
-    end
-    
+		if self.Filter.Zones then
+		  local MClientZone = false
+		  for ZoneName, Zone in pairs( self.Filter.Zones ) do
+			self:T3( "Zone:", ZoneName )
+			local unit = MClient:GetClientGroupUnit()
+			if unit and unit:IsInZone(Zone) then
+			  MClientZone = true
+			end
+		  end
+		  MClientInclude = MClientInclude and MClientZone
+		end
+		
+		if self.Filter.Playernames then
+			local MClientPlayername = false
+			local playername = MClient:GetPlayerName()
+			for _,_Playername in pairs(self.Filter.Playernames) do
+				if playername and playername == _Playername then
+					MClientPlayername = true
+				end
+			end
+			self:T( { "Evaluated Playername", MClientPlayername } )
+			MClientInclude = MClientInclude and MClientPlayername
+		end
+		
+		if self.Filter.Callsigns then
+			local MClientCallsigns = false
+			local callsign = MClient:GetCallsign()
+			for _,_Callsign in pairs(self.Filter.Callsigns) do
+				if callsign and string.find(callsign,_Callsign) then
+					MClientCallsigns = true
+				end
+			end
+			self:T( { "Evaluated Callsign", MClientCallsigns } )
+			MClientInclude = MClientInclude and MClientCallsigns
+		end
+		
+	end
     self:T2( MClientInclude )
     return MClientInclude
   end
@@ -6786,24 +6846,24 @@ do -- SET_SCENERY
   -- @return #SET_SCENERY
   -- @usage
   -- -- Define a new SET_SCENERY Object. This Object will contain a reference to all added Scenery Objects.
-  --		ZoneSet = SET_ZONE:New():FilterPrefixes("Bridge"):FilterOnce()
-  -- 		mysceneryset = SET_SCENERY:New(ZoneSet)
+  --    ZoneSet = SET_ZONE:New():FilterPrefixes("Bridge"):FilterOnce()
+  --    mysceneryset = SET_SCENERY:New(ZoneSet)
   function SET_SCENERY:New(ZoneSet)
-	
-  	local zoneset = {}	
+  
+    local zoneset = {}  
       -- Inherits from BASE
     local self = BASE:Inherit( self, SET_BASE:New( zoneset ) ) -- Core.Set#SET_SCENERY
-  	
-  	local zonenames = {}
-  	
-  	if ZoneSet then
-    	for _,_zone in pairs(ZoneSet.Set) do
-    	   self:T("Zone type handed: "..tostring(_zone.ClassName))
-    		table.insert(zonenames,_zone:GetName())
-    	end  	
-    	self:AddSceneryByName(zonenames)
-  	end
-  	
+    
+    local zonenames = {}
+    
+    if ZoneSet then
+      for _,_zone in pairs(ZoneSet.Set) do
+         self:T("Zone type handed: "..tostring(_zone.ClassName))
+        table.insert(zonenames,_zone:GetName())
+      end   
+      self:AddSceneryByName(zonenames)
+    end
+    
     return self
   end
   
@@ -6986,6 +7046,6 @@ do -- SET_SCENERY
   -- @return #SET_SCENERY self
   function SET_SCENERY:IsIncludeObject( MScenery )
     self:F2( MScenery )
-	return true
+  return true
   end
 end
