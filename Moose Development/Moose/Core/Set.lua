@@ -3808,8 +3808,8 @@ do -- SET_CLIENT
       Countries = nil,
       ClientPrefixes = nil,
       Zones = nil,
-	 Playernames = nil,
-	 Callsigns = nil,
+  	  Playernames = nil,
+  	  Callsigns = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -3884,7 +3884,7 @@ do -- SET_CLIENT
 
   --- Builds a set of clients of certain callsigns.
   -- @param #SET_CLIENT self
-  -- @param #string Callsigns Can be a string e.g. "Ford", or a table of strings e.g. {"Ford","Enfield","Chevy"}
+  -- @param #string Callsigns Can be a string e.g. "Ford", or a table of strings e.g. {"Uzi","Enfield","Chevy"}
   -- @return #SET_CLIENT self
   function SET_CLIENT:Filtercallsigns( Callsigns )
     if not self.Filter.Callsigns then
@@ -4286,9 +4286,9 @@ do -- SET_CLIENT
 		
 		if self.Filter.Playernames then
 			local MClientPlayername = false
-			local playername = MClient:GetPlayerName()
+			local playername = MClient:GetPlayerName() or "Unknown"
 			for _,_Playername in pairs(self.Filter.Playernames) do
-				if playername and playername == _Playername then
+				if playername and string.find(playername,_Playername) then
 					MClientPlayername = true
 				end
 			end
