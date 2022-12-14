@@ -1435,7 +1435,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.52"
+PLAYERTASKCONTROLLER.version="0.1.53"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -2731,6 +2731,7 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Ops.PlayerTask#PLAYERTASK PlayerTask
 -- @param #boolean Silent If true, make no "has new task" announcement
+-- @param #boolen TaskFilter If true, apply the white/black-list task filters here, also
 -- @return #PLAYERTASKCONTROLLER self
 -- @usage
 -- Example to create a PLAYERTASK of type CTLD and give Players 10 minutes to complete:
@@ -2751,9 +2752,17 @@ end
 --          )  
 --          
 --        taskmanager:AddPlayerTaskToQueue(PlayerTask)     
-function PLAYERTASKCONTROLLER:AddPlayerTaskToQueue(PlayerTask,Silent)
+function PLAYERTASKCONTROLLER:AddPlayerTaskToQueue(PlayerTask,Silent,TaskFilter)
   self:T(self.lid.."AddPlayerTaskToQueue")
   if PlayerTask and PlayerTask.ClassName and PlayerTask.ClassName == "PLAYERTASK" then
+    if TaskFilter then  
+      if self.UseWhiteList and (not self:_CheckTaskTypeAllowed(PlayerTask.Type)) then
+          return self
+      end      
+      if self.UseBlackList and self:_CheckTaskTypeDisallowed(PlayerTask.Type) then
+          return self
+      end
+    end
     PlayerTask:_SetController(self)
     PlayerTask:SetCoalition(self.Coalition)
     self.TaskQueue:Push(PlayerTask)
