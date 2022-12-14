@@ -3884,9 +3884,9 @@ do -- SET_CLIENT
 
   --- Builds a set of clients of certain callsigns.
   -- @param #SET_CLIENT self
-  -- @param #string Callsigns Can be a string e.g. "Ford", or a table of strings e.g. {"Uzi","Enfield","Chevy"}
+  -- @param #string Callsigns Can be a single string e.g. "Ford", or a table of strings e.g. {"Uzi","Enfield","Chevy"}. Refers to the callsigns as they can be set in the mission editor.
   -- @return #SET_CLIENT self
-  function SET_CLIENT:Filtercallsigns( Callsigns )
+  function SET_CLIENT:FilterCallsigns( Callsigns )
     if not self.Filter.Callsigns then
       self.Filter.Callsigns = {}
     end
@@ -3894,14 +3894,14 @@ do -- SET_CLIENT
       Callsigns = { Callsigns }
     end
     for callsignID, callsign in pairs( Callsigns ) do
-      self.Filter.Coalitions[Callsigns] = Callsigns
+      self.Filter.Callsigns[callsign] = callsign
     end
     return self
   end
 
   --- Builds a set of clients of certain playernames.
   -- @param #SET_CLIENT self
-  -- @param #string Playernames Can be a string e.g. "Apple", or a table of strings e.g. {"Walter","Hermann","Gonzo"}
+  -- @param #string Playernames Can be a single string e.g. "Apple", or a table of strings e.g. {"Walter","Hermann","Gonzo"}. Useful if you have e.g. a common squadron prefix.
   -- @return #SET_CLIENT self
   function SET_CLIENT:FilterPlayernames( Playernames )
     if not self.Filter.Playernames then
@@ -3910,8 +3910,8 @@ do -- SET_CLIENT
     if type( Playernames ) ~= "table" then
       Playernames = { Playernames }
     end
-    for PlayernameID, Playernames in pairs( Playernames ) do
-      self.Filter.Coalitions[Playernames] = Playernames
+    for PlayernameID, playername in pairs( Playernames ) do
+      self.Filter.Playernames[playername] = playername
     end
     return self
   end
