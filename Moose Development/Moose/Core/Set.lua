@@ -3808,6 +3808,8 @@ do -- SET_CLIENT
       Countries = nil,
       ClientPrefixes = nil,
       Zones = nil,
+      Playernames = nil,
+      Callsigns = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -3878,6 +3880,40 @@ do -- SET_CLIENT
 
     local ClientFound = self.Set[ClientName]
     return ClientFound
+  end
+
+  --- Builds a set of clients of certain callsigns.
+  -- @param #SET_CLIENT self
+  -- @param #string Callsigns Can be a single string e.g. "Ford", or a table of strings e.g. {"Uzi","Enfield","Chevy"}. Refers to the callsigns as they can be set in the mission editor.
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:FilterCallsigns( Callsigns )
+    if not self.Filter.Callsigns then
+      self.Filter.Callsigns = {}
+    end
+    if type( Callsigns ) ~= "table" then
+      Callsigns = { Callsigns }
+    end
+    for callsignID, callsign in pairs( Callsigns ) do
+      self.Filter.Callsigns[callsign] = callsign
+    end
+    return self
+  end
+
+  --- Builds a set of clients of certain playernames.
+  -- @param #SET_CLIENT self
+  -- @param #string Playernames Can be a single string e.g. "Apple", or a table of strings e.g. {"Walter","Hermann","Gonzo"}. Useful if you have e.g. a common squadron prefix.
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:FilterPlayernames( Playernames )
+    if not self.Filter.Playernames then
+      self.Filter.Playernames = {}
+    end
+    if type( Playernames ) ~= "table" then
+      Playernames = { Playernames }
+    end
+    for PlayernameID, playername in pairs( Playernames ) do
+      self.Filter.Playernames[playername] = playername
+    end
+    return self
   end
 
   --- Builds a set of clients of coalitions.
@@ -4235,20 +4271,44 @@ do -- SET_CLIENT
         self:T( { "Evaluated Prefix", MClientPrefix } )
         MClientInclude = MClientInclude and MClientPrefix
       end
-    end
 
     if self.Filter.Zones then
       local MClientZone = false
       for ZoneName, Zone in pairs( self.Filter.Zones ) do
-        self:T3( "Zone:", ZoneName )
-        local unit = MClient:GetClientGroupUnit()
-        if unit and unit:IsInZone(Zone) then
-          MClientZone = true
-        end
+      self:T3( "Zone:", ZoneName )
+      local unit = MClient:GetClientGroupUnit()
+      if unit and unit:IsInZone(Zone) then
+        MClientZone = true
+      end
       end
       MClientInclude = MClientInclude and MClientZone
     end
     
+    if self.Filter.Playernames then
+      local MClientPlayername = false
+      local playername = MClient:GetPlayerName() or "Unknown"
+      for _,_Playername in pairs(self.Filter.Playernames) do
+        if playername and string.find(playername,_Playername) then
+          MClientPlayername = true
+        end
+      end
+      self:T( { "Evaluated Playername", MClientPlayername } )
+      MClientInclude = MClientInclude and MClientPlayername
+    end
+    
+    if self.Filter.Callsigns then
+      local MClientCallsigns = false
+      local callsign = MClient:GetCallsign()
+      for _,_Callsign in pairs(self.Filter.Callsigns) do
+        if callsign and string.find(callsign,_Callsign) then
+          MClientCallsigns = true
+        end
+      end
+      self:T( { "Evaluated Callsign", MClientCallsigns } )
+      MClientInclude = MClientInclude and MClientCallsigns
+    end
+    
+  end
     self:T2( MClientInclude )
     return MClientInclude
   end
