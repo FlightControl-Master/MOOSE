@@ -2414,11 +2414,14 @@ function UTILS.LoadSetOfStatics(Path,Filename)
       local dataset = UTILS.Split(_entry,",")
       -- staticname,position.x,position.y,position.z
       local staticname = dataset[1]
-      local posx = tonumber(dataset[2])
-      local posy = tonumber(dataset[3])
-      local posz = tonumber(dataset[4])
-      local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
-      datatable:AddObject(STATIC:FindByName(staticname,false))
+      --local posx = tonumber(dataset[2])
+      --local posy = tonumber(dataset[3])
+      --local posz = tonumber(dataset[4])
+      --local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
+      local StaticObject = STATIC:FindByName(staticname,false)
+      if StaticObject then
+        datatable:AddObject(StaticObject)
+      end
     end 
   else
     return nil
