@@ -4203,9 +4203,10 @@ do -- SET_CLIENT
 
       if self.Filter.Active ~= nil then
         local MClientActive = false
-        if self.Filter.Active == false or (self.Filter.Active == true and MClient:IsActive() == true) then
+        if self.Filter.Active == false or (self.Filter.Active == true and MClient:IsActive() == true and MClient:IsAlive() == true) then
           MClientActive = true
         end
+        --self:I( { "Evaluated Active", MClientActive } )
         MClientInclude = MClientInclude and MClientActive
       end
 
@@ -4287,6 +4288,7 @@ do -- SET_CLIENT
     if self.Filter.Playernames then
       local MClientPlayername = false
       local playername = MClient:GetPlayerName() or "Unknown"
+      --self:I(playername)
       for _,_Playername in pairs(self.Filter.Playernames) do
         if playername and string.find(playername,_Playername) then
           MClientPlayername = true
@@ -4299,6 +4301,7 @@ do -- SET_CLIENT
     if self.Filter.Callsigns then
       local MClientCallsigns = false
       local callsign = MClient:GetCallsign()
+      --self:I(callsign)
       for _,_Callsign in pairs(self.Filter.Callsigns) do
         if callsign and string.find(callsign,_Callsign) then
           MClientCallsigns = true
