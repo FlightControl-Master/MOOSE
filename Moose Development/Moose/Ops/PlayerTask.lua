@@ -1435,14 +1435,14 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.53"
+PLAYERTASKCONTROLLER.version="0.1.54"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string Name Name of this controller
 -- @param #number Coalition of this controller, e.g. coalition.side.BLUE
 -- @param #string Type Type of the tasks controlled, defaults to PLAYERTASKCONTROLLER.Type.A2G
--- @param #string ClientFilter (optional) Additional prefix filter for the SET_CLIENT
+-- @param #string ClientFilter (optional) Additional prefix filter for the SET_CLIENT. Can be handed as @{Core.Set#SET_CLIENT} also.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   
@@ -1495,10 +1495,18 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.ShowMagnetic = true
   
   self.UseTypeNames = false
+  
+  local IsClientSet = false
+  
+  if ClientFilter and type(ClientFilter) == "table" and ClientFilter.ClassName and ClientFilter.ClassName == "SET_CLIENT" then
+    -- we have a predefined SET_CLIENT
+    self.ClientSet = ClientFilter
+    IsClientSet = true
+  end
    
-  if ClientFilter then
+  if ClientFilter and not IsClientSet then
     self.ClientSet = SET_CLIENT:New():FilterCoalitions(string.lower(self.CoalitionName)):FilterActive(true):FilterPrefixes(ClientFilter):FilterStart()
-  else
+  elseif not IsClientSet then
     self.ClientSet = SET_CLIENT:New():FilterCoalitions(string.lower(self.CoalitionName)):FilterActive(true):FilterStart()
   end
   
@@ -2007,6 +2015,9 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
     end
   elseif EventData.id == EVENTS.PlayerEnterAircraft and EventData.IniCoalition == self.Coalition then
     if EventData.IniPlayerName and EventData.IniGroup and self.UseSRS then
+      if self.ClientSet:IsNotInSet(CLIENT:FindByName(EventData.IniUnitName)) then
+        return self
+      end
       self:T(self.lid.."Event for player: "..EventData.IniPlayerName)
       local frequency = self.Frequency
       local freqtext = ""
@@ -3282,7 +3293,7 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
   end
   
   for _,_client in pairs(clients) do
-    if _client then
+    if _client and _client:IsAlive() then
       local client = _client -- Wrapper.Client#CLIENT
       local group = client:GetGroup()
       local unknown = self.gettext:GetEntry("UNKNOWN",self.locale)
@@ -3768,7 +3779,7 @@ function PLAYERTASKCONTROLLER:onafterStatus(From, Event, To)
   self:_BuildMenus(nil,enforcedmenu)
   
   if self.verbose then
-    local text = string.format("New Targets: %02d | Active Tasks: %02d | Active Players: %02d | Assigned Tasks: %02d",targetcount,taskcount,playercount,assignedtasks)
+    local text = string.format("%s | New Targets: %02d | Active Tasks: %02d | Active Players: %02d | Assigned Tasks: %02d",self.MenuName, targetcount,taskcount,playercount,assignedtasks)
     self:I(text)
   end
   
