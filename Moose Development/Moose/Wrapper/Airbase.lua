@@ -510,6 +510,7 @@ AIRBASE.MarianaIslands = {
 -- * AIRBASE.SouthAtlantic.Porvenir_Airfield
 -- * AIRBASE.SouthAtlantic.Almirante_Schroeders
 -- * AIRBASE.SouthAtlantic.Rio_Turbio
+-- * AIRBASE.SouthAtlantic.Rio_Chico_Airfield
 -- 
 --@field MarianaIslands
 AIRBASE.SouthAtlantic={
@@ -532,6 +533,7 @@ AIRBASE.SouthAtlantic={
   ["Porvenir_Airfield"]="Porvenir Airfield",
   ["Almirante_Schroeders"]="Almirante Schroeders",
   ["Rio_Turbio"]="Rio Turbio",
+  ["Rio_Chico"] = "Rio Chico",
 }
 
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
