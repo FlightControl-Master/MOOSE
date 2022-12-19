@@ -325,7 +325,7 @@ function UNIT:IsAlive()
   local DCSUnit = self:GetDCSObject() -- DCS#Unit
   
   if DCSUnit then
-    local UnitIsAlive  = DCSUnit:isExist() and DCSUnit:isActive() and DCSUnit:getLife() > 1
+    local UnitIsAlive  = DCSUnit:isExist() and DCSUnit:isActive() -- and DCSUnit:getLife() > 1
     return UnitIsAlive
   end 
   
@@ -635,26 +635,22 @@ end
 -- @param Wrapper.Unit#UNIT self
 -- @return Wrapper.Group#GROUP The Group of the Unit or `nil` if the unit does not exist.  
 function UNIT:GetGroup()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local grp = DCSUnit:getGroup()
-    if grp then
-      local UnitGroup = GROUP:FindByName( grp:getName() )
-      return UnitGroup
-    else
-      local UnitGroup = GROUP:FindByName(self.GroupName)
-      return UnitGroup
+  self:F2( self.UnitName )  
+  local UnitGroup = GROUP:FindByName(self.GroupName)
+  if UnitGroup then
+    return UnitGroup
+  else
+    local DCSUnit = self:GetDCSObject()    
+    if DCSUnit then
+      local grp = DCSUnit:getGroup()
+      if grp then
+        local UnitGroup = GROUP:FindByName( grp:getName() )
+        return UnitGroup
+      end
     end
   end
-
   return nil
 end
-
-
--- Need to add here functions to check if radar is on and which object etc.
 
 --- Returns the prefix name of the DCS Unit. A prefix name is a part of the name before a '#'-sign.
 -- DCS Units spawned with the @{Core.Spawn#SPAWN} class contain a '#'-sign to indicate the end of the (base) DCS Unit name. 
