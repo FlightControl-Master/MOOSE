@@ -1088,7 +1088,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.21"
+CTLD.version="1.0.22"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2106,6 +2106,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
     self.CargoCounter = self.CargoCounter + 1
     local realcargo = nil
     if drop then
+                --CTLD_CARGO:New(ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped, PerCrateMass, Stock, Subcategory)
       realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,true,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true,cargotype.PerCrateMass,nil,subcat)
       table.insert(droppedcargo,realcargo)
     else
@@ -4778,7 +4779,7 @@ end
     for _,_cargo in pairs (stcstable) do     
       local cargo = _cargo -- #CTLD_CARGO
       local object = cargo:GetPositionable() -- Wrapper.Static#STATIC
-      if object and object:IsAlive() and cargo:WasDropped() then
+      if object and object:IsAlive() and (cargo:WasDropped() or not cargo:HasMoved()) then
         statics[#statics+1] = cargo
       end
     end
