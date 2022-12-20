@@ -2607,6 +2607,15 @@ function AUFTRAG:SetRepeatOnSuccess(Nrepeat)
   return self
 end
 
+--- **[LEGION, COMMANDER, CHIEF]** Set that mission assets get reinforced if their number drops below Nmin.
+-- @param #AUFTRAG self
+-- @param #number Nreinforce Number of max asset groups used to reinforce.
+-- @return #AUFTRAG self
+function AUFTRAG:SetReinforce(Nreinforce)
+  self.reinforce=Nreinforce
+  return self
+end
+
 --- **[LEGION, COMMANDER, CHIEF]** Define how many assets are required to do the job. Only used if the mission is handled by a **LEGION** (AIRWING, BRIGADE, ...) or higher level.
 -- @param #AUFTRAG self
 -- @param #number NassetsMin Minimum number of asset groups. Default 1.
@@ -2628,24 +2637,32 @@ end
 
 --- **[LEGION, COMMANDER, CHIEF]** Get number of required assets.
 -- @param #AUFTRAG self
--- @param Ops.Legion#Legion Legion (Optional) Only get the required assets for a specific legion. If required assets for this legion are not defined, the total number is returned.
 -- @return #number Min. number of required assets.
 -- @return #number Max. number of required assets.
-function AUFTRAG:GetRequiredAssets(Legion)
-
-  --local N=self.nassets
-
-  --if Legion and self.Nassets[Legion.alias] then
-  --  N=self.Nassets[Legion.alias]
-  --end
+function AUFTRAG:GetRequiredAssets()
   
   local Nmin=self.NassetsMin
   local Nmax=self.NassetsMax
-  
+    
   if self.type==AUFTRAG.Type.RELOCATECOHORT then
+
+    -- Relocation gets all the assets.
     local cohort=self.DCStask.params.cohort --Ops.Cohort#COHORT
     Nmin=#cohort.assets
     Nmax=Nmin
+    
+  else
+
+    -- Check if this is an reinforcement.
+    if self:IsExecuting() and self.reinforce and self.reinforce>0 then
+      local N=self:CountOpsGroups()
+      if N<Nmin then
+        Nmin=math.min(Nmin-N, self.reinforce)
+        Nmax=Nmin
+        self:T(self.lid..string.format("FF Executing Nmin=%d, N=%d, Nreinfoce=%d ==> Nmin=%d", self.NassetsMin, N, self.reinforce, Nmin))
+      end
+    end
+  
   end
 
   return Nmin, Nmax
@@ -2905,6 +2922,7 @@ function AUFTRAG:AddTransportCarriers(Carriers)
 
   end
 
+  return self
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set required attribute(s) the assets must have.
@@ -2912,10 +2930,8 @@ end
 -- @param #table Attributes Generalized attribute(s).
 -- @return #AUFTRAG self
 function AUFTRAG:SetRequiredAttribute(Attributes)
-  if Attributes and type(Attributes)~="table" then
-    Attributes={Attributes}
-  end
-  self.attributes=Attributes
+  self.attributes=UTILS.EnsureTable(Attributes, true)
+  return self
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set required property or properties the assets must have.
@@ -2924,10 +2940,8 @@ end
 -- @param #table Properties Property or table of properties.
 -- @return #AUFTRAG self
 function AUFTRAG:SetRequiredProperty(Properties)
-  if Properties and type(Properties)~="table" then
-    Properties={Properties}
-  end
-  self.properties=Properties
+  self.properties=UTILS.EnsureTable(Properties, true)
+  return self
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set number of required carrier groups if an OPSTRANSPORT assignment is required.
@@ -3798,7 +3812,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
       self:T(self.lid.."No targets left cancelling mission!")
       self:Cancel()
 
-    elseif self:IsExecuting() then
+    elseif self:IsExecuting() and ((not self.reinforce) or self.reinforce==0) then
 
       -- Had the case that mission was in state Executing but all assigned groups were dead.
       -- TODO: might need to loop over all assigned groups
@@ -4327,6 +4341,12 @@ function AUFTRAG:CheckGroupsDone()
     self:T2(self.lid..string.format("CheckGroupsDone: Mission is still in state %s [FSM=%s] (PLANNED or QUEUED or REQUESTED). Mission NOT DONE!", self.status, self:GetState()))
     return false
   end
+  
+  -- Check if there is still reinforcement to be expected.
+  if self:IsExecuting() and self.reinforce and self.reinforce>0 then
+    self:T2(self.lid..string.format("CheckGroupsDone: Mission is still in state %s [FSM=%s] and reinfoce=%d. Mission NOT DONE!", self.status, self:GetState(), self.reinforce))
+    return false  
+  end
 
   -- It could be that all flights were destroyed on the way to the mission execution waypoint.
   -- TODO: would be better to check if everybody is dead by now.
@@ -4486,7 +4506,7 @@ function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
   self:T(self.lid..string.format("Asset %s dead! Number of ops groups remaining %d", tostring(Asset.spawngroupname), N))
 
   -- All assets dead?
-  if N==0 then
+  if N==0 and (self.reinforce==nil or self.reinforce==0) then
 
     if self:IsNotOver() then
 

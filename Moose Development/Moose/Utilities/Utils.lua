@@ -2511,3 +2511,51 @@ function UTILS.ToStringBRAANATO(FromGrp,ToGrp)
   end
   return BRAANATO 
 end
+
+--- Check if an object is contained in a table.
+-- @param #table Table The table.
+-- @param #table Object The object to check.
+-- @param #string Key (Optional) Key to check. By default, the object itself is checked.
+-- @return #booolen Returns `true` if object is in table.
+function UTILS.IsInTable(Table, Object, Key)
+
+  for key, object in pairs(Table) do
+    if Key then
+      if Object[Key]==object[Key] then
+        return true
+      end
+    else
+      if object==Object then
+        return true
+      end
+    end
+  end
+
+  return false
+end
+
+--- Check if any object of multiple given objects is contained in a table.
+-- @param #table Table The table.
+-- @param #table Objects The objects to check.
+-- @param #string Key (Optional) Key to check.
+-- @return #booolen Returns `true` if object is in table.
+function UTILS.IsAnyInTable(Table, Objects, Key)
+
+  for _,Object in pairs(UTILS.EnsureTable(Objects)) do
+
+    for key, object in pairs(Table) do
+      if Key then
+        if Object[Key]==object[Key] then
+          return true
+        end
+      else
+        if object==Object then
+          return true
+        end
+      end
+    end
+    
+  end
+
+  return false
+end

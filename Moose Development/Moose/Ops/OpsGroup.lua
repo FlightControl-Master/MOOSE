@@ -885,10 +885,10 @@ function OPSGROUP:GetCoalition()
   return self.group:GetCoalition()
 end
 
---- Returns the absolute (average) life points of the group.
+--- Returns the absolute total life points of the group.
 -- @param #OPSGROUP self
 -- @param #OPSGROUP.Element Element (Optional) Only get life points of this element.
--- @return #number Life points. If group contains more than one element, the average is given.
+-- @return #number Life points, *i.e.* the sum of life points over all units in the group (unless a specific element was passed).  
 -- @return #number Initial life points.
 function OPSGROUP:GetLifePoints(Element)
 
@@ -3315,7 +3315,13 @@ function OPSGROUP:RemoveWaypoint(wpindex)
       else
         self.currentwp=self.currentwp-1
       end
-
+      
+      -- Could be that the waypoint we are currently moving to was the LAST waypoint. Then we now passed the final waypoint.
+      if (self.adinfinitum or istemp) then
+        self:_PassedFinalWaypoint(false, "Removed PASSED temporary waypoint ")
+      end      
+      
+      
     end
 
   end
@@ -5689,6 +5695,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       end
       
       waypoint=ARMYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, formation, false)
+      
     elseif self:IsNavygroup() then
     
       waypoint=NAVYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
@@ -5725,6 +5732,8 @@ function OPSGROUP:RouteToMission(mission, delay)
     if targetzone and self:IsInZone(targetzone) then
       self:T(self.lid.."Already in mission zone ==> TaskExecute()")
       self:TaskExecute(waypointtask)
+      -- TODO: Calling PassingWaypoint here is probably better as it marks the mission waypoint as passed!
+      --self:PassingWaypoint(waypoint)
       return
     elseif d<25 then
       self:T(self.lid.."Already within 25 meters of mission waypoint ==> TaskExecute()")
@@ -6923,7 +6932,7 @@ function OPSGROUP:onafterElementDamaged(From, Event, To, Element)
   
     local lifepoints=0
     
-    if Element.DCSunit and Element.DCSunit:isExist() then
+    if Element.DCSunit then --and Element.DCSunit:isExist() then
 
       -- Get life of unit
       lifepoints=Element.DCSunit:getLife()
@@ -10145,28 +10154,32 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:_CheckDamage()
 
+  self:T(self.lid..string.format("Checking damage..."))
+
   self.life=0
   local damaged=false
+  
   for _,_element in pairs(self.elements) do
     local element=_element --Ops.OpsGroup#OPSGROUP.Element
 
-  if element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
-
-    -- Current life points.
-    local life=element.unit:GetLife()
-
-    self.life=self.life+life
-
-    if life<element.life then
-      element.life=life
-      self:ElementDamaged(element)
-      damaged=true
-    end
+    if element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
   
-  end
+      -- Current life points.
+      local life=element.unit:GetLife()
+  
+      self.life=self.life+life
+  
+      if life<element.life then
+        element.life=life
+        self:ElementDamaged(element)
+        damaged=true
+      end
+    
+    end
 
   end
 
+  -- If anyone in the group was damaged, trigger event.
   if damaged then
     self:Damaged()
   end
