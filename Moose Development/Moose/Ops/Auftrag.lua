@@ -6075,20 +6075,15 @@ function AUFTRAG:GetDCSMissionTask()
         -- Race-track vector.
         orbitRaceTrack=UTILS.Vec2Translate(orbitVec2, self.orbitLeg, heading)
       end      
-            
-      -- Debug
-      --UTILS.RemoveMark(self.orbitCenterMarkID)
-      --self.orbitCenterMarkID=COORDINATE:NewFromVec2(orbitVec2):MarkToAll("Orbit Center")
-      
-      -- Debug show arrow.
-      --if orbitRaceTrack then
-        --UTILS.RemoveMark(self.orbitArrowMarkID)
-        --self.orbitArrowMarkID=COORDINATE:NewFromVec2(orbitVec2):ArrowToAll(COORDINATE:NewFromVec2(orbitRaceTrack))
-      --end      
+              
+      local orbitRaceTrackCoord = nil    
+      if orbitRaceTrack then
+        orbitRaceTrackCoord = COORDINATE:NewFromVec2(orbitRaceTrack)
+      end
       
       -- Create orbit task.
-      local DCStask=CONTROLLABLE.TaskOrbit(nil, COORDINATE:NewFromVec2(orbitVec2), self.orbitAltitude, self.orbitSpeed, COORDINATE:NewFromVec2(orbitRaceTrack))
-  
+      local DCStask=CONTROLLABLE.TaskOrbit(nil, COORDINATE:NewFromVec2(orbitVec2), self.orbitAltitude, self.orbitSpeed, orbitRaceTrackCoord)
+            
       -- Add DCS task.
       table.insert(DCStasks, DCStask)
       
