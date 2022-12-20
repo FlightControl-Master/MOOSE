@@ -96,7 +96,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.10"
+PLAYERTASK.version="0.1.11"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -283,6 +283,14 @@ end
 function PLAYERTASK:GetCoalition()
   self:T(self.lid.."GetCoalition")
   return self.coalition
+end
+
+--- [User] Get the Ops.Target#TARGET object for this task
+-- @param #PLAYERTASK self
+-- @return Ops.Target#TARGET Target
+function PLAYERTASK:GetTarget()
+  self:T(self.lid.."GetTarget")
+  return self.Target
 end
 
 --- [USER] Add a free text description to this task.
