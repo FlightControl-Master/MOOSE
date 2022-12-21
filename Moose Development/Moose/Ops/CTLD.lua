@@ -1088,7 +1088,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.22"
+CTLD.version="1.0.23"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1648,12 +1648,54 @@ function CTLD:_SendMessage(Text, Time, Clearscreen, Group)
   return self
 end
 
+--- (Internal) Find a troops CTLD_CARGO object in stock
+-- @param #CTLD self
+-- @param #string Name of the object
+-- @return #CTLD_CARGO Cargo object, nil if it cannot be found
+function CTLD:_FindTroopsCargoObject(Name)
+  self:T(self.lid .. " _FindTroopsCargoObject")
+  local cargo = nil
+  for _,_cargo in pairs(self.Cargo_Troops)do
+    local cargo = _cargo -- #CTLD_CARGO
+    if cargo.Name == Name then
+      return cargo
+    end
+  end
+  return nil
+end
+
+--- (User) Pre-load troops into a helo, e.g. for airstart. Unit **must** be alive in-game, i.e. player has taken the slot!
+-- @param #CTLD self
+-- @param Wrapper.Unit#UNIT Unit The unit to load into, can be handed as Wrapper.Client#CLIENT object
+-- @param #string Troopname The name of the Troops to be loaded. Must be created prior in the CTLD setup!
+-- @return #CTLD self
+-- @usage
+--          local client = UNIT:FindByName("Helo-1-1")
+--          if client and client:IsAlive() then
+--            myctld:PreloadTroops(client,"Infantry")
+--          end
+function CTLD:PreloadTroops(Unit,Troopname)
+  self:T(self.lid .. " PreloadTroops")
+  local name = Troopname or "Unknown"
+  if Unit and Unit:IsAlive() then
+    local cargo = self:_FindTroopsCargoObject(name)
+    local group = Unit:GetGroup()
+    if cargo then
+      self:_LoadTroops(group,Unit,cargo,true)
+    else
+      self:E(self.lid.." Troops preload - Cargo Object "..name.." not found!")
+    end
+  end
+  return self
+end
+
 --- (Internal) Function to load troops into a heli.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Unit#UNIT Unit
 -- @param #CTLD_CARGO Cargotype
-function CTLD:_LoadTroops(Group, Unit, Cargotype)
+-- @param #boolean Inject
+function CTLD:_LoadTroops(Group, Unit, Cargotype, Inject)
   self:T(self.lid .. " _LoadTroops")
   -- check if we have stock
   local instock = Cargotype:GetStock()
@@ -1661,7 +1703,7 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
   local cgotype = Cargotype:GetType()
   local cgonetmass = Cargotype:GetNetMass()
   local maxloadable = self:_GetMaxLoadableMass(Unit)
-  if type(instock) == "number" and tonumber(instock) <= 0 and tonumber(instock) ~= -1 then
+  if type(instock) == "number" and tonumber(instock) <= 0 and tonumber(instock) ~= -1 and not Inject then
     -- nothing left over
     self:_SendMessage(string.format("Sorry, all %s are gone!", cgoname), 10, false, Group)
     return self
@@ -1669,21 +1711,22 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
   -- landed or hovering over load zone?
   local grounded = not self:IsUnitInAir(Unit)
   local hoverload = self:CanHoverLoad(Unit)
-  --local dooropen = UTILS.IsLoadingDoorOpen(Unit:GetName()) and self.pilotmustopendoors
   -- check if we are in LOAD zone
   local inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
   if not inzone then
     inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.SHIP)
   end
-  if not inzone then
-    self:_SendMessage("You are not close enough to a logistics zone!", 10, false, Group)
-    if not self.debug then return self end
-  elseif not grounded and not hoverload then
-    self:_SendMessage("You need to land or hover in position to load!", 10, false, Group)
-    if not self.debug then return self end
-  elseif self.pilotmustopendoors and not  UTILS.IsLoadingDoorOpen(Unit:GetName()) then
-    self:_SendMessage("You need to open the door(s) to load troops!", 10, false, Group)
-    if not self.debug then return self end  
+  if not Inject then
+    if not inzone then
+      self:_SendMessage("You are not close enough to a logistics zone!", 10, false, Group)
+      if not self.debug then return self end
+    elseif not grounded and not hoverload then
+      self:_SendMessage("You need to land or hover in position to load!", 10, false, Group)
+      if not self.debug then return self end
+    elseif self.pilotmustopendoors and not  UTILS.IsLoadingDoorOpen(Unit:GetName()) then
+      self:_SendMessage("You need to open the door(s) to load troops!", 10, false, Group)
+      if not self.debug then return self end  
+    end
   end
   -- load troops into heli
   local group = Group -- Wrapper.Group#GROUP
