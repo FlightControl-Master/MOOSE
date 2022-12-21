@@ -629,9 +629,6 @@ end
 --- Returns the unit's group if it exist and nil otherwise.
 -- @param Wrapper.Unit#UNIT self
 -- @return Wrapper.Group#GROUP The Group of the Unit or `nil` if the unit does not exist.  
---- Returns the unit's group if it exists and nil otherwise.
--- @param Wrapper.Unit#UNIT self
--- @return Wrapper.Group#GROUP The Group of the Unit or `nil` if the unit does not exist.  
 function UNIT:GetGroup()
   self:F2( self.UnitName )  
   local UnitGroup = GROUP:FindByName(self.GroupName)
