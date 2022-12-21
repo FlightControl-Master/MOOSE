@@ -2821,6 +2821,7 @@ function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task, Force)
     Task:AddClient(Client)
     local joined = self.gettext:GetEntry("PILOTJOINEDTASK",self.locale)
     -- PILOTJOINEDTASK = "%s, %s. You have been assigned %s task %03d",
+    --self:I(string.format("Task %s | TaskType %s | Number %s | Type %s",self.MenuName or self.Name, Task.TTSType, tonumber(Task.PlayerTaskNr),type(Task.PlayerTaskNr)))
     local text = string.format(joined,ttsplayername, self.MenuName or self.Name, Task.TTSType, Task.PlayerTaskNr)
     self:T(self.lid..text)
     if not self.NoScreenOutput then

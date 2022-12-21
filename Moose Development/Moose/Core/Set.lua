@@ -6990,7 +6990,29 @@ do -- SET_SCENERY
 
     return CountU
   end
+  
+  --- Get a table of alive objects.
+  -- @param #SET_GROUP self
+  -- @return #table Table of alive objects
+  -- @return Core.Set#SET_SCENERY SET of alive objects
+  function SET_SCENERY:GetAliveSet()
+    self:F2()
 
+    local AliveSet = SET_SCENERY:New()
+
+    -- Clean the Set before returning with only the alive Groups.
+    for GroupName, GroupObject in pairs( self.Set ) do
+      local GroupObject = GroupObject -- Wrapper.Group#GROUP
+      if GroupObject then
+        if GroupObject:IsAlive() then
+          AliveSet:Add( GroupName, GroupObject )
+        end
+      end
+    end
+
+    return AliveSet.Set or {}, AliveSet
+  end
+  
   --- Iterate the SET_SCENERY and call an iterator function for each **alive** SCENERY, providing the SCENERY and optional parameters.
   -- @param #SET_SCENERY self
   -- @param #function IteratorFunction The function that will be called when there is an alive SCENERY in the SET_SCENERY. The function needs to accept a SCENERY parameter.
