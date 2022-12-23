@@ -3770,6 +3770,31 @@ function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation, IsShip, IsDropped)
   return self
 end
 
+--- Set folder path where the CTLD sound files are located **within you mission (miz) file**.
+-- The default path is "l10n/DEFAULT/" but sound files simply copied there will be removed by DCS the next time you save the mission.
+-- However, if you create a new folder inside the miz file, which contains the sounds, it will not be deleted and can be used.
+-- @param #CTLD self
+-- @param #string FolderPath The path to the sound files, e.g. "CTLD_Soundfiles/".
+-- @return #CTLD self
+function CTLD:SetSoundfilesFolder( FolderPath )
+  self:T(self.lid .. " SetSoundfilesFolder")
+  -- Check that it ends with /
+  if FolderPath then
+      local lastchar = string.sub( FolderPath, -1 )
+      if lastchar ~= "/" then
+          FolderPath = FolderPath .. "/"
+      end
+  end
+
+  -- Folderpath.
+  self.RadioPath = FolderPath
+
+  -- Info message.
+  self:I( self.lid .. string.format( "Setting sound files folder to: %s", self.RadioPath ) )
+
+  return self
+end
+
 --- (Internal) Function to refresh radio beacons
 -- @param #CTLD self
 function CTLD:_RefreshRadioBeacons()
