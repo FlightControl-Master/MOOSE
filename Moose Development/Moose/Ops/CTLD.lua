@@ -1088,7 +1088,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.23"
+CTLD.version="1.0.24"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1171,6 +1171,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   
   -- radio beacons
   self.RadioSound = "beacon.ogg"
+  self.RadioPath = "l10n/DEFAULT/"
   
   -- zones stuff
   self.pickupZones  = {}
@@ -3757,25 +3758,40 @@ function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation, IsShip, IsDropped)
     local ZoneCoord = Zone
     local ZoneVec3 = ZoneCoord:GetVec3(1)
     local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
-    --local Frequency = Mhz*1000000
-    local Sound =  "l10n/DEFAULT/"..Sound
-    --local name = string.format("%s-%f-%s",Zone:GetName(),Mhz,tostring(Modulation))
-    --trigger.action.stopRadioTransmission(name)
+    local Sound =  self.RadioPath..Sound
     trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, tonumber(Frequency), 1000) -- Beacon in MP only runs for 30secs straight
-    --local status = string.format("***** Beacon added Freq %s Mod %s", Frequency, UTILS.GetModulationName(Modulation))
-    --MESSAGE:New(status,10,"Debug"):ToLogIf(self.debug)
   elseif Zone then
     local ZoneCoord = Zone:GetCoordinate(1)
     local ZoneVec3 = ZoneCoord:GetVec3()
     local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
-    --local Frequency = Mhz*1000000
-    local Sound =  "l10n/DEFAULT/"..Sound
-    --local name = string.format("%s-%f-%s",Zone:GetName(),Mhz,tostring(Modulation))
-    --trigger.action.stopRadioTransmission(name)
+    local Sound =  self.RadioPath..Sound
     trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, tonumber(Frequency), 1000) -- Beacon in MP only runs for 30secs straight
-    --local status = string.format("***** Beacon added Freq %s Mod %s", Frequency, UTILS.GetModulationName(Modulation))
-    --MESSAGE:New(status,10,"Debug"):ToLogIf(self.debug)
   end
+  return self
+end
+
+--- Set folder path where the CTLD sound files are located **within you mission (miz) file**.
+-- The default path is "l10n/DEFAULT/" but sound files simply copied there will be removed by DCS the next time you save the mission.
+-- However, if you create a new folder inside the miz file, which contains the sounds, it will not be deleted and can be used.
+-- @param #CTLD self
+-- @param #string FolderPath The path to the sound files, e.g. "CTLD_Soundfiles/".
+-- @return #CTLD self
+function CTLD:SetSoundfilesFolder( FolderPath )
+  self:T(self.lid .. " SetSoundfilesFolder")
+  -- Check that it ends with /
+  if FolderPath then
+      local lastchar = string.sub( FolderPath, -1 )
+      if lastchar ~= "/" then
+          FolderPath = FolderPath .. "/"
+      end
+  end
+
+  -- Folderpath.
+  self.RadioPath = FolderPath
+
+  -- Info message.
+  self:I( self.lid .. string.format( "Setting sound files folder to: %s", self.RadioPath ) )
+
   return self
 end
 
