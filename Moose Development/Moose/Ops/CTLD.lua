@@ -1088,7 +1088,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.23"
+CTLD.version="1.0.24"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1171,6 +1171,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   
   -- radio beacons
   self.RadioSound = "beacon.ogg"
+  self.RadioPath = "l10n/DEFAULT/"
   
   -- zones stuff
   self.pickupZones  = {}
@@ -3757,24 +3758,14 @@ function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation, IsShip, IsDropped)
     local ZoneCoord = Zone
     local ZoneVec3 = ZoneCoord:GetVec3(1)
     local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
-    --local Frequency = Mhz*1000000
-    local Sound =  "l10n/DEFAULT/"..Sound
-    --local name = string.format("%s-%f-%s",Zone:GetName(),Mhz,tostring(Modulation))
-    --trigger.action.stopRadioTransmission(name)
+    local Sound =  self.RadioPath..Sound
     trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, tonumber(Frequency), 1000) -- Beacon in MP only runs for 30secs straight
-    --local status = string.format("***** Beacon added Freq %s Mod %s", Frequency, UTILS.GetModulationName(Modulation))
-    --MESSAGE:New(status,10,"Debug"):ToLogIf(self.debug)
   elseif Zone then
     local ZoneCoord = Zone:GetCoordinate(1)
     local ZoneVec3 = ZoneCoord:GetVec3()
     local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
-    --local Frequency = Mhz*1000000
-    local Sound =  "l10n/DEFAULT/"..Sound
-    --local name = string.format("%s-%f-%s",Zone:GetName(),Mhz,tostring(Modulation))
-    --trigger.action.stopRadioTransmission(name)
+    local Sound =  self.RadioPath..Sound
     trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, tonumber(Frequency), 1000) -- Beacon in MP only runs for 30secs straight
-    --local status = string.format("***** Beacon added Freq %s Mod %s", Frequency, UTILS.GetModulationName(Modulation))
-    --MESSAGE:New(status,10,"Debug"):ToLogIf(self.debug)
   end
   return self
 end
