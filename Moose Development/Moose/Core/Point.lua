@@ -1911,7 +1911,6 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #string name (Optional) Name of the fire to stop it, if not using the same COORDINATE object.
   function COORDINATE:StopBigSmokeAndFire( name )
-    self:F2( { name = name } )
     name = name or self.firename
     trigger.action.effectSmokeStop( name )
   end
