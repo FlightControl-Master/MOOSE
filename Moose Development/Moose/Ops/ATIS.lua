@@ -2416,6 +2416,8 @@ function ATIS:onafterReport( From, Event, To, Text )
     local text = string.gsub( text, "mmHg", "millimeters of Mercury" )
     local text = string.gsub( text, "hPa", "hectopascals" )
     local text = string.gsub( text, "m/s", "meters per second" )
+    local text = string.gsub( text, "TACAN", "tackan" )
+    local text = string.gsub( text, "FARP", "farp" )
 
     -- Replace ";" by "."
     local text = string.gsub( text, ";", " . " )
