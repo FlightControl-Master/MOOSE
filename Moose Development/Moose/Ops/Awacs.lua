@@ -112,6 +112,7 @@ do
 -- @field #boolean GCI Act as GCI
 -- @field Wrapper.Group#GROUP GCIGroup EWR group object for GCI ops
 -- @field #string locale Localization
+-- @field #boolean IncludeHelicopters
 -- @extends Core.Fsm#FSM
 
 
@@ -365,6 +366,7 @@ do
 --            testawacs.GoogleTTSPadding = 1 -- seconds
 --            testawacs.WindowsTTSPadding = 2.5 -- seconds
 --            testawacs.PikesSpecialSwitch = false -- if set to true, AWACS will omit the "doing xy knots" on the station assignement callout
+--            testawacs.IncludeHelicopters = false -- if set to true, Helicopter pilots will also get the AWACS Menu and options
 -- 
 -- ## 9.2 Bespoke random voices for AI CAP (Google TTS only)
 -- 
@@ -497,7 +499,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.50", -- #string
+  version = "0.2.51", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -584,6 +586,7 @@ AWACS = {
   GCI = false,
   GCIGroup = nil,
   locale = "en",
+  IncludeHelicopters = false,
 }
 
 ---
@@ -914,13 +917,13 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.2.50
+-- TODO-List 0.2.51
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
 -- DONE - Localization (sensible?)
 -- TODO - (LOW) LotATC
--- TODO - SW Optimization
+-- DONE - SW Optimization
 -- WONTDO - Maybe check in AI only when airborne
 -- DONE - remove SSML tag when not on google (currently sometimes spoken)
 -- DONE - Maybe - Assign specific number of AI CAP to a station
@@ -951,6 +954,7 @@ AWACS.TaskStatus = {
 -- DONE - Shift Length AWACS/AI
 -- DONE - (WIP) Reporting
 -- DONE - Do not report non-airborne groups
+-- DONE - Added option for helos
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -5533,6 +5537,20 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- [Internal] onbeforeStart
+-- @param #AWACS self
+-- @param #string From 
+-- @param #string Event
+-- @param #string To
+-- @return #AWACS self
+function AWACS:onbeforeStart(From,Event,to)
+  self:T({From, Event, To})
+  if self.IncludeHelicopters then
+    self.clientset:FilterCategories("helicopter")
+  end
+  return self
+end
 
 --- [Internal] onafterStart
 -- @param #AWACS self
