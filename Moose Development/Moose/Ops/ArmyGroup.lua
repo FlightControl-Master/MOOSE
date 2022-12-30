@@ -68,7 +68,7 @@ ARMYGROUP = {
 
 --- Army Group version.
 -- @field #string version
-ARMYGROUP.version="0.8.0"
+ARMYGROUP.version="0.9.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -293,7 +293,7 @@ function ARMYGROUP:New(group)
   --- Triggers the FSM event "EngageTarget".
   -- @function [parent=#ARMYGROUP] EngageTarget
   -- @param #ARMYGROUP self
-  -- @param Wrapper.Group#GROUP Group the group to be engaged.
+  -- @param Ops.Target#TARGET Target The target to be engaged. Can also be a GROUP or UNIT object.
   -- @param #number Speed Speed in knots.
   -- @param #string Formation Formation used in the engagement.
 
@@ -728,23 +728,16 @@ function ARMYGROUP:Status()
     -- If mission, check if DCS task needs to be updated.
     if mission and mission.updateDCSTask and mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.EXECUTING then
     
-
       if mission.type==AUFTRAG.Type.CAPTUREZONE then
        
         -- Get task.
-        local Task=self:GetTaskByID(mission.auftragsnummer)
-        
-        local opszone=Task.target --Ops.OpsZone#OPSZONE
-        
-        env.info(string.format("FF Opszone %s owner=%s, engaging=%s", opszone:GetName(), opszone:GetOwnerName(), tostring(self:IsEngaging())))
+        local Task=mission:GetGroupWaypointTask(self)
         
         -- Update task: Engage or get new zone.
         self:_UpdateTask(Task, mission)
-        
-          
+                  
       end
-      
-    
+          
     end    
 
   else
@@ -1374,7 +1367,7 @@ function ARMYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Formation, 
   Speed=Speed or self:GetSpeedCruise()
   
   -- ID of current waypoint.
-  local uid=self:GetWaypointCurrent().uid
+  local uid=self:GetWaypointCurrentUID()
   
   -- Add waypoint after current.
   local wp=self:AddWaypoint(Coordinate, Speed, uid, Formation, true)
@@ -1497,7 +1490,7 @@ function ARMYGROUP:onafterRearm(From, Event, To, Coordinate, Formation)
   self:T(self.lid..string.format("Group send to rearm"))
 
   -- ID of current waypoint.
-  local uid=self:GetWaypointCurrent().uid
+  local uid=self:GetWaypointCurrentUID()
   
   -- Add waypoint after current.
   local wp=self:AddWaypoint(Coordinate, nil, uid, Formation, true)
@@ -1690,7 +1683,7 @@ end
 function ARMYGROUP:onafterRetreat(From, Event, To, Zone, Formation)
 
   -- ID of current waypoint.
-  local uid=self:GetWaypointCurrent().uid
+  local uid=self:GetWaypointCurrentUID()
   
   -- Get random coordinate of the zone.
   local Coordinate=Zone:GetRandomCoordinate()
@@ -1773,7 +1766,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Wrapper.Group#GROUP Group the group to be engaged.
+-- @param Ops.Target#TARGET Target The target to be engaged. Can also be a group or unit.
 -- @param #number Speed Attack speed in knots.
 -- @param #string Formation Formation used in the engagement. Default `ENUMS.Formation.Vehicle.Vee`.
 function ARMYGROUP:onafterEngageTarget(From, Event, To, Target, Speed, Formation)
@@ -1840,7 +1833,7 @@ function ARMYGROUP:_UpdateEngageTarget()
         self.engage.Coordinate:UpdateFromVec3(vec3)
   
         -- ID of current waypoint.
-        local uid=self:GetWaypointCurrent().uid
+        local uid=self:GetWaypointCurrentUID()
       
         -- Remove current waypoint
         self:RemoveWaypointByID(self.engage.Waypoint.uid)

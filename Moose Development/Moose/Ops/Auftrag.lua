@@ -632,7 +632,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.9.8"
+AUFTRAG.version="0.9.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -641,6 +641,7 @@ AUFTRAG.version="0.9.8"
 -- TODO: Replace engageRange by missionRange. Here and in other classes. CTRL+H is your friend!
 -- TODO: Mission success options damaged, destroyed.
 -- TODO: F10 marker to create new missions.
+-- DONE: Add Capture zone task.
 -- DONE: Add orbit mission for moving anker points.
 -- DONE: Add recovery tanker mission for boat ops.
 -- DONE: Added auftrag category.
@@ -1987,11 +1988,11 @@ function AUFTRAG:NewCAPTUREZONE(OpsZone, Coalition, Speed, Altitude, Formation)
 
   mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.CAPTUREZONE)
 
-  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROE=ENUMS.ROE.ReturnFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
   mission.optionAlarm=ENUMS.AlarmState.Auto
 
-  mission.missionFraction=1.0
+  mission.missionFraction=0.1
   mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
   mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or nil
 

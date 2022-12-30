@@ -500,7 +500,7 @@ OPSGROUP.CargoStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="0.8.0"
+OPSGROUP.version="0.9.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -4385,42 +4385,56 @@ function OPSGROUP:_UpdateTask(Task, Mission)
 
     ---
     -- Task "CaptureZone" Mission.
+    -- Check if zone was captured or find new target to engage.
     ---  
-    
-    env.info("FF Update Task Capture zone")
-    
-    -- Find the closest enemy group and engage!
     
     -- Not enganging already.
     if self:IsEngaging() then
-      self:T(self.lid..string.format("Engaging currently!"))    
+    
+      -- Group is currently engaging an enemy unit to capture the zone.
+      self:T2(self.lid..string.format("CaptureZone: Engaging currently!"))
     else
     
+      -- Get enemy coalitions. We do not include neutrals.
       local Coalitions=UTILS.GetCoalitionEnemy(self:GetCoalition(), false)
       
+      -- Current target object.
       local zoneCurr=Task.target --Ops.OpsZone#OPSZONE
       
       if zoneCurr then
             
-        self:T(self.lid..string.format("Current target zone=%s", zoneCurr:GetName()))
+        self:T(self.lid..string.format("Current target zone=%s owner=%s", zoneCurr:GetName(), zoneCurr:GetOwnerName()))
         
         if zoneCurr:GetOwner()==self:GetCoalition() then
           -- Current zone captured ==> Find next zone or call it a day!
           
+          -- Debug info.
           self:T(self.lid..string.format("Zone %s captured ==> Task DONE!", zoneCurr:GetName()))
           
+          -- Task done.
           self:TaskDone(Task)
           
         else        
           -- Current zone NOT captured yet ==> Find Target
           
+          -- Debug info.
+          self:T(self.lid..string.format("Zone %s NOT captured!", zoneCurr:GetName()))          
+          
           if Mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.EXECUTING then
+          
+            -- Debug info.
+            self:T(self.lid..string.format("Zone %s NOT captured and EXECUTING ==> Find target", zoneCurr:GetName()))          
+          
         
             -- Get closest target.
             local targetgroup=zoneCurr:GetScannedGroupSet():GetClosestGroup(self.coordinate, Coalitions)
             
             if targetgroup then
             
+              -- Debug info.
+              self:T(self.lid..string.format("Zone %s NOT captured: engaging target %s", zoneCurr:GetName(), targetgroup:GetName()))
+            
+              -- Engage target group.
               self:EngageTarget(targetgroup)
               
             else
@@ -4428,10 +4442,11 @@ function OPSGROUP:_UpdateTask(Task, Mission)
               self:E(self.lid..string.format("ERROR: Current zone not captured but no target group could be found. This should NOT happen!"))          
             end
             
-          end        
-        
-        end
-        
+          else
+            self:T(self.lid..string.format("Zone %s NOT captured and NOT EXECUTING", zoneCurr:GetName()))            
+          end
+          
+        end        
         
       else
         self:T(self.lid..string.format("NO Current target zone=%s"))
@@ -4727,11 +4742,14 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
 
       if Mission.type==AUFTRAG.Type.CAPTUREZONE and Mission:CountMissionTargets()>0 then
       
-        env.info("FF task done route to mission 1000")
-        self:RouteToMission(Mission)
-        
-        return
+        -- Remove mission waypoints.
+        self:T(self.lid.."Remove mission waypoints")
+        self:_RemoveMissionWaypoints(Mission, false)      
       
+        self:T(self.lid.."Task done ==> Route to mission for next opszone")
+        self:MissionStart(Mission)
+        
+        return      
       end
 
       -- Get egress waypoint uid.

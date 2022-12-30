@@ -1935,7 +1935,7 @@ do -- SET_GROUP
     for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
       local group=GroupData --Wrapper.Group#GROUP
       
-      if Coalitions==nil or UTILS.IsAnyInTable(Coalitions, group:GetCoalition()) then
+      if group and group:IsAlive() and (Coalitions==nil or UTILS.IsAnyInTable(Coalitions, group:GetCoalition())) then
       
         local coord=group:GetCoord()
         
@@ -6255,18 +6255,18 @@ do -- SET_OPSZONE
   --- Add an OPSZONE to set.
   -- @param Core.Set#SET_OPSZONE self
   -- @param Ops.OpsZone#OPSZONE Zone The OPSZONE object.
-  -- @return self
+  -- @return #SET_OPSZONE self
   function SET_OPSZONE:AddZone( Zone )
 
     self:Add( Zone:GetName(), Zone )
 
     return self
-  end
+  end 
 
   --- Remove ZONEs from SET_OPSZONE.
   -- @param Core.Set#SET_OPSZONE self
   -- @param #table RemoveZoneNames A single name or an array of OPSZONE names.
-  -- @return self
+  -- @return #SET_OPSZONE  self
   function SET_OPSZONE:RemoveZonesByName( RemoveZoneNames )
 
     local RemoveZoneNamesArray = (type( RemoveZoneNames ) == "table") and RemoveZoneNames or { RemoveZoneNames }
@@ -6570,6 +6570,21 @@ do -- SET_OPSZONE
       end
     end
   end
+  
+  --- Start all opszones of the set.
+  -- @param #SET_OPSZONE self
+  -- @return #SET_OPSZONE self
+  function SET_OPSZONE:Start()
+
+    for _,_Zone in pairs( self:GetSet() ) do
+      local Zone = _Zone --Ops.OpsZone#OPSZONE
+      if Zone:IsStopped() then
+        Zone:Start()
+      end
+    end  
+
+    return self
+  end  
 
   --- Validate if a coordinate is in one of the zones in the set.
   -- Returns the ZONE object where the coordiante is located.
@@ -6591,16 +6606,14 @@ do -- SET_OPSZONE
   end
 
 
-  --- Get the closest OPSZONE from a given reference coordinate.
+  --- Get the closest OPSZONE from a given reference coordinate. Only started zones are considered.
   -- @param #SET_OPSZONE self
   -- @param Core.Point#COORDINATE Coordinate The reference coordinate from which the closest zone is determined.
   -- @param #table Coalitions Only consider the given coalition(s), *e.g.* `{coaliton.side.RED}` to find the closest red zone.
   -- @return Ops.OpsZone#OPSZONE The closest OPSZONE (if any).
   -- @return #number Distance to ref coordinate in meters.
   function SET_OPSZONE:GetClosestZone( Coordinate, Coalitions )
-  
-    env.info("FF 100",showMessageBox)
-  
+   
     Coalitions=UTILS.EnsureTable(Coalitions, true)
 
     local dmin=math.huge --#number
@@ -6611,22 +6624,12 @@ do -- SET_OPSZONE
             
       local coal=opszone:GetOwner()
       
-      env.info("FF 200",showMessageBox)
-      
-      env.info("In table="..tostring(UTILS.IsInTable(Coalitions, coal)))
-      BASE:I(Coalitions)
-      BASE:I(coal)
-      
-      if Coalitions==nil or (Coalitions and UTILS.IsInTable(Coalitions, coal)) then
-      
-        env.info("FF 300",showMessageBox)
+      if opszone:IsStarted() and (Coalitions==nil or (Coalitions and UTILS.IsInTable(Coalitions, coal))) then
       
         -- Get 2D distance.
         local d=opszone:GetZone():Get2DDistance(Coordinate)
         
-        if d<dmin then
-        
-          env.info("FF 400",showMessageBox)
+        if d<dmin then        
           dmin=d
           zmin=opszone
         end

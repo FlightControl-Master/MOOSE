@@ -86,16 +86,16 @@ OPSZONE = {
 
 --- OPSZONE class version.
 -- @field #string version
-OPSZONE.version="0.3.2"
+OPSZONE.version="0.4.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Capturing based on (total) threat level threshold. Unarmed units do not pose a threat and should not be able to hold a zone.
 -- TODO: Pause/unpause evaluations.
--- TODO: Capture time, i.e. time how long a single coalition has to be inside the zone to capture it.
 -- TODO: Differentiate between ground attack and boming by air or arty.
+-- DONE: Capture time, i.e. time how long a single coalition has to be inside the zone to capture it.
+-- DONE: Capturing based on (total) threat level threshold. Unarmed units do not pose a threat and should not be able to hold a zone.
 -- DONE: Can neutrals capture? No, since they are _neutral_!
 -- DONE: Capture airbases.
 -- DONE: Can statics capture or hold a zone? No, unless explicitly requested by mission designer.
@@ -610,6 +610,22 @@ end
 -- @return #boolean If `true`, zone is owned by the given coalition.
 function OPSZONE:IsCoalition(Coalition)
   local is=self.ownerCurrent==Coalition
+  return is
+end
+
+--- Check if zone is started (not stopped).
+-- @param #OPSZONE self 
+-- @return #boolean If `true`, zone is started.
+function OPSZONE:IsStarted()
+  local is=not self:IsStopped()
+  return is
+end
+
+--- Check if zone is stopped.
+-- @param #OPSZONE self 
+-- @return #boolean If `true`, zone is stopped.
+function OPSZONE:IsStopped()
+  local is=self:is("Stopped")
   return is
 end
 
