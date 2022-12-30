@@ -1671,25 +1671,51 @@ function COMMANDER:RecruitAssetsForMission(Mission)
 
   -- Debug info.
   self:T2(self.lid..string.format("Recruiting assets for mission \"%s\" [%s]", Mission:GetName(), Mission:GetType()))
-  
-  -- Cohorts.
-  local Cohorts=self:_GetCohorts(Mission.specialLegions, Mission.specialCohorts, Mission.operation)
-  
-  -- Debug info.
-  self:T(self.lid..string.format("Found %d cohort candidates for mission", #Cohorts))
 
   -- Number of required assets.
   local NreqMin, NreqMax=Mission:GetRequiredAssets()
-  
+
   -- Target position.
   local TargetVec2=Mission:GetTargetVec2()
   
   -- Special payloads.
-  local Payloads=Mission.payloads
+  local Payloads=Mission.payloads  
+  
+  -- Largest cargo bay available of available carrier assets if mission assets need to be transported.
+  local MaxWeight=nil
+  
+  if Mission.NcarriersMin then
+  
+    -- Get transport cohorts.
+    local Cohorts=LEGION._GetCohorts(Mission.transportLegions or self.legions, Mission.transportCohorts)
+    
+    -- Filter cohorts that can actually perform transport missions.    
+    local transportcohorts={}
+    for _,_cohort in pairs(Cohorts) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      
+      -- Check if cohort can perform transport to target.
+      --TODO: Option to filter transport carrier asset categories, attributes and/or properties.
+      local can=LEGION._CohortCan(cohort, AUFTRAG.Type.OPSTRANSPORT, Categories, Attributes, Properties, nil, TargetVec2)
+      
+      -- MaxWeight of cargo assets is limited by the largets available cargo bay. We don't want to select, e.g., tanks that cannot be transported by APCs or helos.
+      if can and (MaxWeight==nil or cohort.cargobayLimit>MaxWeight) then
+        MaxWeight=cohort.cargobayLimit
+      end
+    end
+    
+    self:T(self.lid..string.format("Largest cargo bay available=%.1f", MaxWeight))
+  end  
+  
+  -- Get cohorts.
+  local Cohorts=LEGION._GetCohorts(Mission.specialLegions or self.legions, Mission.specialCohorts, Mission.operation, self.opsqueue)
+  
+  -- Debug info.
+  self:T(self.lid..string.format("Found %d cohort candidates for mission", #Cohorts))
   
   -- Recruite assets.
   local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads,
-   Mission.engageRange, Mission.refuelSystem, nil, nil, nil, Mission.attributes, Mission.properties, {Mission.engageWeaponType})
+   Mission.engageRange, Mission.refuelSystem, nil, nil, MaxWeight, nil, Mission.attributes, Mission.properties, {Mission.engageWeaponType})
 
   return recruited, assets, legions
 end
