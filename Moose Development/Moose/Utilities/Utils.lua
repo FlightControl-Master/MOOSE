@@ -2201,10 +2201,29 @@ function UTILS.CheckFileExists(Path,Filename)
   end
 end
 
+--- Function to obtain a table of typenames from the group given with the number of units of the same type in the group.
+-- @param Wrapper.Group#GROUP Group The group to list
+-- @return #table Table of typnames and typename counts, e.g. `{["KAMAZ Truck"]=3,["ATZ-5"]=1}`
+function UTILS.GetCountPerTypeName(Group)
+  local units = Group:GetUnits()
+  local TypeNameTable = {}
+  for _,_unt in pairs (units) do
+    local unit = _unt -- Wrapper.Unit#UNIT
+    local typen = unit:GetTypeName()
+    if not TypeNameTable[typen] then
+      TypeNameTable[typen] = 1
+    else
+      TypeNameTable[typen] = TypeNameTable[typen] + 1
+    end
+  end
+  return TypeNameTable
+end
+
 --- Function to save the state of a list of groups found by name
 -- @param #table List Table of strings with groupnames
 -- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
 -- @param #string Filename The name of the file.
+-- @param #boolean Structured Append the data with a list of typenames in the group plus their count.
 -- @return #boolean outcome True if saving is successful, else false.
 -- @usage
 -- We will go through the list and find the corresponding group and save the current group size (0 when dead).
@@ -2212,7 +2231,7 @@ end
 -- Position is still saved for your usage.
 -- The idea is to reduce the number of units when reloading the data again to restart the saved mission.
 -- The data will be a simple comma separated list of groupname and size, with one header line.
-function UTILS.SaveStationaryListOfGroups(List,Path,Filename)
+function UTILS.SaveStationaryListOfGroups(List,Path,Filename,Structured)
   local filename = Filename or "StateListofGroups"
   local data = "--Save Stationary List of Groups: "..Filename .."\n"
   for _,_group in pairs (List) do
@@ -2220,7 +2239,16 @@ function UTILS.SaveStationaryListOfGroups(List,Path,Filename)
     if group and group:IsAlive() then
       local units = group:CountAliveUnits()
       local position = group:GetVec3()
-      data = string.format("%s%s,%d,%d,%d,%d\n",data,_group,units,position.x,position.y,position.z)
+      if Structured then
+        local structure = UTILS.GetCountPerTypeName(group)
+        local strucdata =  ""
+        for typen,anzahl in pairs (structure) do
+          strucdata = strucdata .. typen .. "=="..anzahl..";"
+        end
+        data = string.format("%s%s,%d,%d,%d,%d,%s\n",data,_group,units,position.x,position.y,position.z,strucdata)
+      else
+        data = string.format("%s%s,%d,%d,%d,%d\n",data,_group,units,position.x,position.y,position.z)
+      end
     else
       data = string.format("%s%s,0,0,0,0\n",data,_group)
     end
@@ -2234,6 +2262,7 @@ end
 -- @param Core.Set#SET_BASE Set of objects to save
 -- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
 -- @param #string Filename The name of the file.
+-- @param #boolean Structured Append the data with a list of typenames in the group plus their count.
 -- @return #boolean outcome True if saving is successful, else false.
 -- @usage
 -- We will go through the set and find the corresponding group and save the current group size and current position.
@@ -2243,7 +2272,7 @@ end
 -- **Note** Do NOT use dashes or hashes in group template names (-,#)!
 -- The data will be a simple comma separated list of groupname and size, with one header line.
 -- The current task/waypoint/etc cannot be restored. 
-function UTILS.SaveSetOfGroups(Set,Path,Filename)
+function UTILS.SaveSetOfGroups(Set,Path,Filename,Structured)
   local filename = Filename or "SetOfGroups"
   local data = "--Save SET of groups: "..Filename .."\n"
   local List = Set:GetSetObjects()
@@ -2257,7 +2286,16 @@ function UTILS.SaveSetOfGroups(Set,Path,Filename)
       end 
       local units = group:CountAliveUnits()
       local position = group:GetVec3()
-      data = string.format("%s%s,%s,%d,%d,%d,%d\n",data,name,template,units,position.x,position.y,position.z)
+      if Structured then
+        local structure = UTILS.GetCountPerTypeName(group)
+        local strucdata =  ""
+        for typen,anzahl in pairs (structure) do
+          strucdata = strucdata .. typen .. "=="..anzahl..";"
+        end
+        data = string.format("%s%s,%s,%d,%d,%d,%d,%s\n",data,name,template,units,position.x,position.y,position.z,strucdata)
+      else
+        data = string.format("%s%s,%s,%d,%d,%d,%d\n",data,name,template,units,position.x,position.y,position.z)
+      end     
     end
   end
   -- save the data
@@ -2321,8 +2359,41 @@ end
 -- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
 -- @param #string Filename The name of the file.
 -- @param #boolean Reduce If false, existing loaded groups will not be reduced to fit the saved number.
+-- @param #boolean Structured (Optional, needs Reduce = true) If true, and the data has been saved as structure before, remove the correct unit types as per the saved list.
+-- @param #boolean Cinematic (Optional, needs Structured = true) If true, place a fire/smoke effect on the dead static position.
+-- @param #number Effect (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
+-- @param #number Density (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
 -- @return #table Table of data objects (tables) containing groupname, coordinate and group object. Returns nil when file cannot be read.
-function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce)
+-- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )`
+function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce,Structured,Cinematic,Effect,Density)
+  
+  local fires = {}
+  
+  local function Smokers(name,coord,effect,density)
+    local eff = math.random(8)
+    if type(effect) == "number" then eff = effect end
+    coord:BigSmokeAndFire(eff,density,name)
+    table.insert(fires,name)
+  end
+  
+  local function Cruncher(group,typename,anzahl)
+    local units = group:GetUnits()
+    local reduced = 0
+    for _,_unit in pairs (units) do
+      local typo = _unit:GetTypeName()
+      if typename == typo then
+        if Cinematic then
+          local coordinate = _unit:GetCoordinate()
+          local name = _unit:GetName()
+          Smokers(name,coordinate,Effect,Density)
+        end
+        _unit:Destroy(false)
+        reduced = reduced + 1
+        if reduced == anzahl then break end
+      end
+    end
+  end
+  
   local reduce = true
   if Reduce == false then reduce = false end
   local filename = Filename or "StateListofGroups"
@@ -2339,18 +2410,48 @@ function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce)
       local posx = tonumber(dataset[3])
       local posy = tonumber(dataset[4])
       local posz = tonumber(dataset[5])
+      local structure = dataset[6]
+      --BASE:I({structure})
       local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
       local data = { groupname=groupname, size=size, coordinate=coordinate, group=GROUP:FindByName(groupname) }
       if reduce then
         local actualgroup = GROUP:FindByName(groupname)
         if actualgroup and actualgroup:IsAlive() and actualgroup:CountAliveUnits() > size then
-          local reduction = actualgroup:CountAliveUnits() - size
-          BASE:I("Reducing groupsize by ".. reduction .. " units!")
-          -- reduce existing group
-          local units = actualgroup:GetUnits()
-          local units2 = UTILS.ShuffleTable(units) -- randomize table
-          for i=1,reduction do
-            units2[i]:Destroy(false)
+          if Structured and structure then
+            --BASE:I("Reducing group structure!")
+            local loadedstructure = {}
+            local strcset = UTILS.Split(structure,";")
+            for _,_data in pairs(strcset) do
+              local datasplit = UTILS.Split(_data,"==")
+              loadedstructure[datasplit[1]] = tonumber(datasplit[2])
+            end
+            --BASE:I({loadedstructure})
+            local originalstructure = UTILS.GetCountPerTypeName(actualgroup)
+            --BASE:I({originalstructure})
+            for _name,_number in pairs(originalstructure) do
+              local loadednumber = 0
+              if loadedstructure[_name] then
+                loadednumber = loadedstructure[_name]
+              end
+              local reduce = false
+              if loadednumber < _number then reduce = true end
+              
+              --BASE:I(string.format("Looking at: %s | Original number: %d | Loaded number: %d | Reduce: %s",_name,_number,loadednumber,tostring(reduce))) 
+              
+              if reduce then
+                Cruncher(actualgroup,_name,_number-loadednumber)  
+              end
+                         
+            end
+          else
+            local reduction = actualgroup:CountAliveUnits() - size
+            --BASE:I("Reducing groupsize by ".. reduction .. " units!")
+            -- reduce existing group
+            local units = actualgroup:GetUnits()
+            local units2 = UTILS.ShuffleTable(units) -- randomize table
+            for i=1,reduction do
+              units2[i]:Destroy(false)
+            end
           end
         end
       end
@@ -2359,19 +2460,52 @@ function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce)
   else
     return nil
   end
-  return datatable
+  return datatable,fires
 end
 
 --- Load back a SET of groups from file.
 -- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
 -- @param #string Filename The name of the file.
 -- @param #boolean Spawn If set to false, do not re-spawn the groups loaded in location and reduce to size.
+-- @param #boolean Structured (Optional, needs Spawn=true)If true, and the data has been saved as structure before, remove the correct unit types as per the saved list.
+-- @param #boolean Cinematic (Optional, needs Structured=true) If true, place a fire/smoke effect on the dead static position.
+-- @param #number Effect (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
+-- @param #number Density (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
 -- @return Core.Set#SET_GROUP Set of GROUP objects. 
 -- Returns nil when file cannot be read. Returns a table of data entries if Spawn is false: `{ groupname=groupname, size=size, coordinate=coordinate, template=template }`
-function UTILS.LoadSetOfGroups(Path,Filename,Spawn)
+-- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )`
+function UTILS.LoadSetOfGroups(Path,Filename,Spawn,Structured,Cinematic,Effect,Density)
+  
+  local fires = {}
+  
+  local function Smokers(name,coord,effect,density)
+    local eff = math.random(8)
+    if type(effect) == "number" then eff = effect end
+    coord:BigSmokeAndFire(eff,density,name)
+    table.insert(fires,name)
+  end
+  
+  local function Cruncher(group,typename,anzahl)
+    local units = group:GetUnits()
+    local reduced = 0
+    for _,_unit in pairs (units) do
+      local typo = _unit:GetTypeName()
+      if typename == typo then
+        if Cinematic then
+          local coordinate = _unit:GetCoordinate()
+          local name = _unit:GetName()
+          Smokers(name,coordinate,Effect,Density)
+        end
+        _unit:Destroy(false)
+        reduced = reduced + 1
+        if reduced == anzahl then break end
+      end
+    end
+  end
+
   local spawn = true
   if Spawn == false then spawn = false end
-  BASE:I("Spawn = "..tostring(spawn))
+  --BASE:I("Spawn = "..tostring(spawn))
   local filename = Filename or "SetOfGroups"
   local setdata = SET_GROUP:New()
   local datatable = {}
@@ -2388,6 +2522,7 @@ function UTILS.LoadSetOfGroups(Path,Filename,Spawn)
       local posx = tonumber(dataset[4])
       local posy = tonumber(dataset[5])
       local posz = tonumber(dataset[6])
+      local structure = dataset[7]
       local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
       local group=nil
       local data = { groupname=groupname, size=size, coordinate=coordinate, template=template }
@@ -2400,12 +2535,40 @@ function UTILS.LoadSetOfGroups(Path,Filename,Spawn)
               setdata:AddObject(spwndgrp)
               local actualsize = spwndgrp:CountAliveUnits()
               if actualsize > size then
-                local reduction = actualsize-size
-                -- reduce existing group
-                local units = spwndgrp:GetUnits()
-                local units2 = UTILS.ShuffleTable(units) -- randomize table
-                for i=1,reduction do
-                  units2[i]:Destroy(false)
+                if Structured and structure then
+                  --BASE:I("Reducing group structure!")
+                  local loadedstructure = {}
+                  local strcset = UTILS.Split(structure,";")
+                  for _,_data in pairs(strcset) do
+                    local datasplit = UTILS.Split(_data,"==")
+                    loadedstructure[datasplit[1]] = tonumber(datasplit[2])
+                  end
+                  --BASE:I({loadedstructure})
+                  local originalstructure = UTILS.GetCountPerTypeName(spwndgrp)
+                  --BASE:I({originalstructure})
+                  for _name,_number in pairs(originalstructure) do
+                    local loadednumber = 0
+                    if loadedstructure[_name] then
+                      loadednumber = loadedstructure[_name]
+                    end
+                    local reduce = false
+                    if loadednumber < _number then reduce = true end
+                    
+                    --BASE:I(string.format("Looking at: %s | Original number: %d | Loaded number: %d | Reduce: %s",_name,_number,loadednumber,tostring(reduce))) 
+                    
+                    if reduce then
+                      Cruncher(spwndgrp,_name,_number-loadednumber)  
+                    end
+                               
+                  end
+                else
+                  local reduction = actualsize-size
+                  -- reduce existing group
+                  local units = spwndgrp:GetUnits()
+                  local units2 = UTILS.ShuffleTable(units) -- randomize table
+                  for i=1,reduction do
+                    units2[i]:Destroy(false)
+                  end
                 end
               end
             end
@@ -2417,7 +2580,7 @@ function UTILS.LoadSetOfGroups(Path,Filename,Spawn)
     return nil
   end
   if spawn then
-    return setdata
+    return setdata,fires
   else
    return datatable
   end
@@ -2436,13 +2599,11 @@ function UTILS.LoadSetOfStatics(Path,Filename)
     table.remove(loadeddata, 1)
     for _id,_entry in pairs (loadeddata) do
       local dataset = UTILS.Split(_entry,",")
-      -- staticname,position.x,position.y,position.z
       local staticname = dataset[1]
-      local posx = tonumber(dataset[2])
-      local posy = tonumber(dataset[3])
-      local posz = tonumber(dataset[4])
-      local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
-      datatable:AddObject(STATIC:FindByName(staticname,false))
+      local StaticObject = STATIC:FindByName(staticname,false)
+      if StaticObject then
+        datatable:AddObject(StaticObject)
+      end
     end 
   else
     return nil
@@ -2454,9 +2615,15 @@ end
 -- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
 -- @param #string Filename The name of the file.
 -- @param #boolean Reduce If false, do not destroy the units with size=0.
--- @return #table Table of data objects (tables) containing staticname, size (0=dead else 1), coordinate and the static object. 
+-- @param #boolean Dead (Optional, needs Reduce = true) If Dead is true, re-spawn the dead object as dead and do not just delete it.
+-- @param #boolean Cinematic (Optional, needs Dead = true) If true, place a fire/smoke effect on the dead static position.
+-- @param #number Effect (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
+-- @param #number Density (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
+-- @return #table Table of data objects (tables) containing staticname, size (0=dead else 1), coordinate and the static object. Dead objects will have coordinate points `{x=0,y=0,z=0}`
+-- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )` 
 -- Returns nil when file cannot be read.
-function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce)
+function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce,Dead,Cinematic,Effect,Density)
+  local fires = {}
   local reduce = true
   if Reduce == false then reduce = false end
   local filename = Filename or "StateListofStatics"
@@ -2479,14 +2646,31 @@ function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce)
       if size==0 and reduce then
         local static = STATIC:FindByName(staticname,false)
         if static then
-          static:Destroy(false)
+          if Dead then
+            local deadobject = SPAWNSTATIC:NewFromStatic(staticname,static:GetCountry())
+            deadobject:InitDead(true)
+            local heading = static:GetHeading()
+            local coord = static:GetCoordinate()
+            static:Destroy(false)
+            deadobject:SpawnFromCoordinate(coord,heading,staticname)
+            if Cinematic then
+              local effect = math.random(8)
+              if type(Effect) == "number" then
+                effect = Effect 
+              end
+              coord:BigSmokeAndFire(effect,Density,staticname)
+              table.insert(fires,staticname)
+            end
+          else
+            static:Destroy(false)
+          end
         end
       end
     end 
   else
     return nil
   end
-  return datatable
+  return datatable,fires
 end
 
 --- Heading Degrees (0-360) to Cardinal

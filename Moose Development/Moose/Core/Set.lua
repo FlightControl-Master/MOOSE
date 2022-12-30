@@ -186,7 +186,7 @@ do -- SET_BASE
     return Names
   end
 
-  --- Return a table of the Objects in the Set.
+  --- Returns a table of the Objects in the Set.
   -- @param #SET_BASE self
   -- @return #table Table of objects.
   function SET_BASE:GetSetObjects() -- R2.3
@@ -388,7 +388,6 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return Core.Base#BASE
   function SET_BASE:GetFirst()
-
     local ObjectName = self.Index[1]
     local FirstObject = self.Set[ObjectName]
     self:T3( { FirstObject } )
@@ -399,8 +398,8 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return Core.Base#BASE
   function SET_BASE:GetLast()
-
-    local ObjectName = self.Index[#self.Index]
+    local tablemax = table.maxn(self.Index)
+    local ObjectName = self.Index[tablemax]
     local LastObject = self.Set[ObjectName]
     self:T3( { LastObject } )
     return LastObject
@@ -410,8 +409,8 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return Core.Base#BASE
   function SET_BASE:GetRandom()
-
-    local RandomItem = self.Set[self.Index[math.random( #self.Index )]]
+    local tablemax = table.maxn(self.Index)
+    local RandomItem = self.Set[self.Index[math.random(1,tablemax)]]
     self:T3( { RandomItem } )
     return RandomItem
   end
@@ -420,8 +419,7 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return #number Count
   function SET_BASE:Count()
-
-    return self.Index and #self.Index or 0
+    return self.Index and table.maxn(self.Index) or 0
   end
 
   --- Copies the Filter criteria from a given Set (for rebuilding a new Set based on an existing Set).
@@ -2007,12 +2005,7 @@ do -- SET_UNIT
   --   * @{#SET_UNIT.ForEachUnit}: Calls a function for each alive unit it finds within the SET_UNIT.
   --   * @{#SET_UNIT.ForEachUnitInZone}: Iterate the SET_UNIT and call an iterator function for each **alive** UNIT object presence completely in a @{Core.Zone}, providing the UNIT object and optional parameters to the called function.
   --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate the SET_UNIT and call an iterator function for each **alive** UNIT object presence not in a @{Core.Zone}, providing the UNIT object and optional parameters to the called function.
-  --
-  -- Planned iterators methods in development are (so these are not yet available):
-  --
-  --   * @{#SET_UNIT.ForEachUnitInUnit}: Calls a function for each unit contained within the SET_UNIT.
-  --   * @{#SET_UNIT.ForEachUnitCompletelyInZone}: Iterate and call an iterator function for each **alive** UNIT presence completely in a @{Core.Zone}, providing the UNIT and optional parameters to the called function.
-  --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate and call an iterator function for each **alive** UNIT presence not in a @{Core.Zone}, providing the UNIT and optional parameters to the called function.
+  --   * @{#SET_UNIT:ForEachUnitPerThreatLevel}: Iterate the SET_UNIT **sorted *per Threat Level** and call an iterator function for each **alive** UNIT, providing the UNIT and optional parameters
   --
   -- ## 5) SET_UNIT atomic methods
   --
@@ -3865,6 +3858,8 @@ do -- SET_CLIENT
       Countries = nil,
       ClientPrefixes = nil,
       Zones = nil,
+      Playernames = nil,
+      Callsigns = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -3935,6 +3930,40 @@ do -- SET_CLIENT
 
     local ClientFound = self.Set[ClientName]
     return ClientFound
+  end
+
+  --- Builds a set of clients of certain callsigns.
+  -- @param #SET_CLIENT self
+  -- @param #string Callsigns Can be a single string e.g. "Ford", or a table of strings e.g. {"Uzi","Enfield","Chevy"}. Refers to the callsigns as they can be set in the mission editor.
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:FilterCallsigns( Callsigns )
+    if not self.Filter.Callsigns then
+      self.Filter.Callsigns = {}
+    end
+    if type( Callsigns ) ~= "table" then
+      Callsigns = { Callsigns }
+    end
+    for callsignID, callsign in pairs( Callsigns ) do
+      self.Filter.Callsigns[callsign] = callsign
+    end
+    return self
+  end
+
+  --- Builds a set of clients of certain playernames.
+  -- @param #SET_CLIENT self
+  -- @param #string Playernames Can be a single string e.g. "Apple", or a table of strings e.g. {"Walter","Hermann","Gonzo"}. Useful if you have e.g. a common squadron prefix.
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:FilterPlayernames( Playernames )
+    if not self.Filter.Playernames then
+      self.Filter.Playernames = {}
+    end
+    if type( Playernames ) ~= "table" then
+      Playernames = { Playernames }
+    end
+    for PlayernameID, playername in pairs( Playernames ) do
+      self.Filter.Playernames[playername] = playername
+    end
+    return self
   end
 
   --- Builds a set of clients of coalitions.
@@ -4224,9 +4253,10 @@ do -- SET_CLIENT
 
       if self.Filter.Active ~= nil then
         local MClientActive = false
-        if self.Filter.Active == false or (self.Filter.Active == true and MClient:IsActive() == true) then
+        if self.Filter.Active == false or (self.Filter.Active == true and MClient:IsActive() == true and MClient:IsAlive() == true) then
           MClientActive = true
         end
+        --self:I( { "Evaluated Active", MClientActive } )
         MClientInclude = MClientInclude and MClientActive
       end
 
@@ -4292,20 +4322,46 @@ do -- SET_CLIENT
         self:T( { "Evaluated Prefix", MClientPrefix } )
         MClientInclude = MClientInclude and MClientPrefix
       end
-    end
 
     if self.Filter.Zones then
       local MClientZone = false
       for ZoneName, Zone in pairs( self.Filter.Zones ) do
-        self:T3( "Zone:", ZoneName )
-        local unit = MClient:GetClientGroupUnit()
-        if unit and unit:IsInZone(Zone) then
-          MClientZone = true
-        end
+      self:T3( "Zone:", ZoneName )
+      local unit = MClient:GetClientGroupUnit()
+      if unit and unit:IsInZone(Zone) then
+        MClientZone = true
+      end
       end
       MClientInclude = MClientInclude and MClientZone
     end
     
+    if self.Filter.Playernames then
+      local MClientPlayername = false
+      local playername = MClient:GetPlayerName() or "Unknown"
+      --self:I(playername)
+      for _,_Playername in pairs(self.Filter.Playernames) do
+        if playername and string.find(playername,_Playername) then
+          MClientPlayername = true
+        end
+      end
+      self:T( { "Evaluated Playername", MClientPlayername } )
+      MClientInclude = MClientInclude and MClientPlayername
+    end
+    
+    if self.Filter.Callsigns then
+      local MClientCallsigns = false
+      local callsign = MClient:GetCallsign()
+      --self:I(callsign)
+      for _,_Callsign in pairs(self.Filter.Callsigns) do
+        if callsign and string.find(callsign,_Callsign) then
+          MClientCallsigns = true
+        end
+      end
+      self:T( { "Evaluated Callsign", MClientCallsigns } )
+      MClientInclude = MClientInclude and MClientCallsigns
+    end
+    
+  end
     self:T2( MClientInclude )
     return MClientInclude
   end
@@ -7334,7 +7390,7 @@ do -- SET_SCENERY
     
     if ZoneSet then
       for _,_zone in pairs(ZoneSet.Set) do
-        --self:I("Zone type handed: "..tostring(_zone.ClassName))
+         self:T("Zone type handed: "..tostring(_zone.ClassName))
         table.insert(zonenames,_zone:GetName())
       end   
       self:AddSceneryByName(zonenames)
@@ -7348,7 +7404,7 @@ do -- SET_SCENERY
   -- @param Core.Zone#ZONE Zone The zone to be scanned. Can be a ZONE_RADIUS (round) or a ZONE_POLYGON (e.g. Quad-Point)
   -- @return #SET_SCENERY
   function SET_SCENERY:NewFromZone(Zone)
-    local zone = Zone -- Core.Zone#ZONE_POLYGON
+    local zone = Zone -- Core.Zone#ZONE_RADIUS
     if type(Zone) == "string" then
       zone = ZONE:FindByName(Zone)
     end
@@ -7468,7 +7524,29 @@ do -- SET_SCENERY
 
     return CountU
   end
+  
+  --- Get a table of alive objects.
+  -- @param #SET_GROUP self
+  -- @return #table Table of alive objects
+  -- @return Core.Set#SET_SCENERY SET of alive objects
+  function SET_SCENERY:GetAliveSet()
+    self:F2()
 
+    local AliveSet = SET_SCENERY:New()
+
+    -- Clean the Set before returning with only the alive Groups.
+    for GroupName, GroupObject in pairs( self.Set ) do
+      local GroupObject = GroupObject -- Wrapper.Group#GROUP
+      if GroupObject then
+        if GroupObject:IsAlive() then
+          AliveSet:Add( GroupName, GroupObject )
+        end
+      end
+    end
+
+    return AliveSet.Set or {}, AliveSet
+  end
+  
   --- Iterate the SET_SCENERY and call an iterator function for each **alive** SCENERY, providing the SCENERY and optional parameters.
   -- @param #SET_SCENERY self
   -- @param #function IteratorFunction The function that will be called when there is an alive SCENERY in the SET_SCENERY. The function needs to accept a SCENERY parameter.

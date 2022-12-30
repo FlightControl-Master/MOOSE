@@ -2,9 +2,7 @@
 -- 
 -- ===
 -- 
--- ## AWACS
--- 
--- * MOOSE AI AWACS Operations using text-to-speech.
+-- **AWACS** - MOOSE AI AWACS Operations using text-to-speech.
 -- 
 -- ===
 --
@@ -19,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update November 2022
+-- @date Last Update December 2022
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -106,7 +104,7 @@ do
 -- @field #boolean NoGroupTags Set to true if you don't want group tags.
 -- @field #boolean SuppressScreenOutput Set to true to suppress all screen output.
 -- @field #boolean NoMissileCalls Suppress missile callouts
--- @field #boolean PlayerCapAssigment Assign players to CAP tasks when they are logged on
+-- @field #boolean PlayerCapAssignment Assign players to CAP tasks when they are logged on
 -- @field #number GoogleTTSPadding
 -- @field #number WindowsTTSPadding
 -- @field #boolean AllowMarkers
@@ -114,6 +112,7 @@ do
 -- @field #boolean GCI Act as GCI
 -- @field Wrapper.Group#GROUP GCIGroup EWR group object for GCI ops
 -- @field #string locale Localization
+-- @field #boolean IncludeHelicopters
 -- @extends Core.Fsm#FSM
 
 
@@ -358,7 +357,7 @@ do
 --            testawacs.maxassigndistance = 100 -- Don't assign targets further out than this, in NM.
 --            testawacs.debug = false -- set to true to produce more log output.
 --            testawacs.NoMissileCalls = true -- suppress missile callouts
---            testawacs.PlayerCapAssigment = true -- no intercept task assignments for players
+--            testawacs.PlayerCapAssignment = true -- no intercept task assignments for players
 --            testawacs.invisible = false -- set AWACS to be invisible to hostiles
 --            testawacs.immortal = false -- set AWACS to be immortal
 --            -- By default, the radio queue is checked every 10 secs. This is altered by the calculated length of the sentence to speak
@@ -367,6 +366,7 @@ do
 --            testawacs.GoogleTTSPadding = 1 -- seconds
 --            testawacs.WindowsTTSPadding = 2.5 -- seconds
 --            testawacs.PikesSpecialSwitch = false -- if set to true, AWACS will omit the "doing xy knots" on the station assignement callout
+--            testawacs.IncludeHelicopters = false -- if set to true, Helicopter pilots will also get the AWACS Menu and options
 -- 
 -- ## 9.2 Bespoke random voices for AI CAP (Google TTS only)
 -- 
@@ -499,7 +499,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.49", -- #string
+  version = "0.2.51", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -580,12 +580,13 @@ AWACS = {
   NoMissileCalls = true,
   GoogleTTSPadding = 1,
   WindowsTTSPadding = 2.5,
-  PlayerCapAssigment = true,
+  PlayerCapAssignment = true,
   AllowMarkers = false,
   PlayerStationName = nil,
   GCI = false,
   GCIGroup = nil,
   locale = "en",
+  IncludeHelicopters = false,
 }
 
 ---
@@ -916,13 +917,13 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.2.42
+-- TODO-List 0.2.51
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
 -- DONE - Localization (sensible?)
 -- TODO - (LOW) LotATC
--- TODO - SW Optimization
+-- DONE - SW Optimization
 -- WONTDO - Maybe check in AI only when airborne
 -- DONE - remove SSML tag when not on google (currently sometimes spoken)
 -- DONE - Maybe - Assign specific number of AI CAP to a station
@@ -953,6 +954,7 @@ AWACS.TaskStatus = {
 -- DONE - Shift Length AWACS/AI
 -- DONE - (WIP) Reporting
 -- DONE - Do not report non-airborne groups
+-- DONE - Added option for helos
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -1125,7 +1127,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.MenuStrict = true
   self.maxassigndistance = 100 --nm
   self.NoMissileCalls = true
-  self.PlayerCapAssigment = true
+  self.PlayerCapAssignment = true
     
   -- managed groups
   self.ManagedGrps = {} -- #table of #AWACS.ManagedGroup entries
@@ -3470,7 +3472,7 @@ function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
     local CAPVoice = self.CAPVoice
     
     if self.PathToGoogleKey then
-      CAPVoice = AWACS.CapVoices[math.floor(math.random(1,10))]
+      CAPVoice = self.CapVoices[math.floor(math.random(1,10))]
     end
     
     FlightGroup:SetSRS(self.PathToSRS,self.CAPGender,self.CAPCulture,CAPVoice,self.Port,self.PathToGoogleKey,"FLIGHT")
@@ -3589,13 +3591,15 @@ function AWACS:_SetClientMenus()
             local bogeydope = MENU_GROUP_COMMAND:New(cgrp,"Bogey Dope",basemenu,self._BogeyDope,self,cgrp)
             local picture = MENU_GROUP_COMMAND:New(cgrp,"Picture",basemenu,self._Picture,self,cgrp)
             local declare = MENU_GROUP_COMMAND:New(cgrp,"Declare",basemenu,self._Declare,self,cgrp)
-            
             local tasking = MENU_GROUP:New(cgrp,"Tasking",basemenu)
             local showtask = MENU_GROUP_COMMAND:New(cgrp,"Showtask",tasking,self._Showtask,self,cgrp)
-            local commit = MENU_GROUP_COMMAND:New(cgrp,"Commit",tasking,self._Commit,self,cgrp)
-            local unable = MENU_GROUP_COMMAND:New(cgrp,"Unable",tasking,self._Unable,self,cgrp)
-            local abort = MENU_GROUP_COMMAND:New(cgrp,"Abort",tasking,self._TaskAbort,self,cgrp)
-            --local judy = MENU_GROUP_COMMAND:New(cgrp,"Judy",tasking,self._Judy,self,cgrp)
+            
+            if self.PlayerCapAssignment then
+              local commit = MENU_GROUP_COMMAND:New(cgrp,"Commit",tasking,self._Commit,self,cgrp)
+              local unable = MENU_GROUP_COMMAND:New(cgrp,"Unable",tasking,self._Unable,self,cgrp)
+              local abort = MENU_GROUP_COMMAND:New(cgrp,"Abort",tasking,self._TaskAbort,self,cgrp)
+              --local judy = MENU_GROUP_COMMAND:New(cgrp,"Judy",tasking,self._Judy,self,cgrp)
+            end
             
             if self.AwacsROE == AWACS.ROE.POLICE or self.AwacsROE == AWACS.ROE.VID then
               local vid = MENU_GROUP:New(cgrp,"VID as",tasking)
@@ -5534,6 +5538,20 @@ end
 -- FSM Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- [Internal] onbeforeStart
+-- @param #AWACS self
+-- @param #string From 
+-- @param #string Event
+-- @param #string To
+-- @return #AWACS self
+function AWACS:onbeforeStart(From,Event,to)
+  self:T({From, Event, To})
+  if self.IncludeHelicopters then
+    self.clientset:FilterCategories("helicopter")
+  end
+  return self
+end
+
 --- [Internal] onafterStart
 -- @param #AWACS self
 -- @param #string From 
@@ -5959,7 +5977,7 @@ function AWACS:onafterStatus(From, Event, To)
     local AI, Humans = self:_GetIdlePilots()
     -- assign Pilot if there are targets and available Pilots, prefer Humans to AI
     -- DONE - Implemented AI First, Humans laters - need to work out how to loop the targets to assign a pilot
-    if outcome and #Humans > 0 and self.PlayerCapAssigment then
+    if outcome and #Humans > 0 and self.PlayerCapAssignment then
       -- add a task for AI
       self:_AssignPilotToTarget(Humans,targets)
     end

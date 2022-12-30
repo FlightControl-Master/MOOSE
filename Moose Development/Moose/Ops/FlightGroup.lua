@@ -712,7 +712,7 @@ end
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, has landed somewhere.
 function FLIGHTGROUP:IsLandedAt()
-  is=self:Is("LandedAt")
+  local is=self:Is("LandedAt")
   return is
 end
 
@@ -908,7 +908,7 @@ function FLIGHTGROUP:Status()
     if mission and mission.updateDCSTask then
     
       -- Orbit missions might need updates.
-      if (mission:GetType()==AUFTRAG.Type.ORBIT or mission:GetType()==AUFTRAG.Type.RECOVERYTANKER) and mission.orbitVec2 then
+      if (mission:GetType()==AUFTRAG.Type.ORBIT or mission:GetType()==AUFTRAG.Type.RECOVERYTANKER or mission:GetType()==AUFTRAG.Type.CAP) and mission.orbitVec2 then
           
         -- Get 2D vector of orbit target.
         local vec2=mission:GetTargetVec2()

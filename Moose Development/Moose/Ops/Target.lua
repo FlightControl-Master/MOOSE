@@ -625,7 +625,7 @@ function TARGET:onafterStatus(From, Event, To)
   -- Log output verbose=1.
   if self.verbose>=1 then
     local text=string.format("%s: Targets=%d/%d Life=%.1f/%.1f Damage=%.1f", fsmstate, self:CountTargets(), self.N0, self:GetLife(), self:GetLife0(), self:GetDamage())
-    if self:CountTargets() == 0 then
+    if self:CountTargets() == 0 or self:GetDamage() >= 100 then
       text=text.." Dead!"
     elseif damaged then
       text=text.." Damaged!"
@@ -644,7 +644,7 @@ function TARGET:onafterStatus(From, Event, To)
     self:I(self.lid..text)
   end
   
-  if self:CountTargets() == 0 then
+  if self:CountTargets() == 0 or self:GetDamage() >= 100 then
     self:Dead()
   end
   
@@ -943,6 +943,9 @@ function TARGET:_AddObject(Object)
     target.Coordinate=scenery:GetCoordinate()
 
     target.Life0=scenery:GetLife0()
+    
+    if target.Life0==0 then target.Life0 = 1 end
+    
     target.Life=scenery:GetLife()
     
     target.N0=target.N0+1
@@ -1095,7 +1098,9 @@ function TARGET:GetTargetLife(Target)
   elseif Target.Type==TARGET.ObjectType.STATIC then
   
     if Target.Object and Target.Object:IsAlive() then
-      return 1
+      local life=Target.Object:GetLife()
+      return life
+      --return 1
     else
       return 0
     end
