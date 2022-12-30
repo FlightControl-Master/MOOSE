@@ -1919,6 +1919,41 @@ do -- SET_GROUP
     end
   end
 
+
+  --- Get the closest group of the set with respect to a given reference coordinate. Optionally, only groups of given coalitions are considered in the search.
+  -- @param #SET_GROUP self
+  -- @param Core.Point#COORDINATE Coordinate Reference Coordinate from which the closest group is determined.
+  -- @return Wrapper.Group#GROUP The closest group (if any).
+  -- @return #number Distance in meters to the closest group.
+  function SET_GROUP:GetClosestGroup(Coordinate, Coalitions)
+  
+    local Set = self:GetSet()
+    
+    local dmin=math.huge
+    local gmin=nil
+    
+    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
+      local group=GroupData --Wrapper.Group#GROUP
+      
+      if Coalitions==nil or UTILS.IsAnyInTable(Coalitions, group:GetCoalition()) then
+      
+        local coord=group:GetCoord()
+        
+        -- Distance between ref. coordinate and group coordinate.
+        local d=UTILS.VecDist3D(Coordinate, coord)
+      
+        if d<dmin then
+          dmin=d
+          gmin=group
+        end
+        
+      end
+    
+    end
+    
+    return gmin, dmin
+  end
+
 end
 
 do -- SET_UNIT

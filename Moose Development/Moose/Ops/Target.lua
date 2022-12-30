@@ -84,6 +84,7 @@ TARGET = {
 -- @field #string COORDINATE Target is a COORDINATE.
 -- @field #string AIRBASE Target is an AIRBASE.
 -- @field #string ZONE Target is a ZONE object.
+-- @field #string OPSZONE Target is an OPSZONE object.
 TARGET.ObjectType={
   GROUP="Group",
   UNIT="Unit",
@@ -92,6 +93,7 @@ TARGET.ObjectType={
   COORDINATE="Coordinate",
   AIRBASE="Airbase",
   ZONE="Zone",
+  OPSZONE="OpsZone"
 }
 
 
@@ -312,12 +314,18 @@ end
 -- * SET_SCENERY
 -- * SET_OPSGROUP
 -- * SET_ZONE
+-- * SET_OPSZONE
 -- 
 -- @param #TARGET self
 -- @param Wrapper.Positionable#POSITIONABLE Object The target UNIT, GROUP, STATIC, SCENERY, AIRBASE, COORDINATE, ZONE, SET_GROUP, SET_UNIT, SET_STATIC, SET_SCENERY, SET_ZONE
 function TARGET:AddObject(Object)
     
-  if Object:IsInstanceOf("SET_GROUP") or Object:IsInstanceOf("SET_UNIT") or Object:IsInstanceOf("SET_STATIC") or Object:IsInstanceOf("SET_SCENERY") or Object:IsInstanceOf("SET_OPSGROUP") then
+  if Object:IsInstanceOf("SET_GROUP")    or 
+     Object:IsInstanceOf("SET_UNIT")     or 
+     Object:IsInstanceOf("SET_STATIC")   or 
+     Object:IsInstanceOf("SET_SCENERY")  or 
+     Object:IsInstanceOf("SET_OPSGROUP") or  
+     Object:IsInstanceOf("SET_OPSZONE")  then
 
     ---
     -- Sets
@@ -981,6 +989,22 @@ function TARGET:_AddObject(Object)
 
     target.Life0=1
     target.Life=1
+
+  elseif Object:IsInstanceOf("OPSZONE") then
+  
+  
+    local zone=Object --Ops.OpsZone#OPSZONE
+    Object=zone
+    
+    target.Type=TARGET.ObjectType.OPSZONE
+    target.Name=zone:GetName()
+    
+    target.Coordinate=zone:GetCoordinate()
+    
+    target.N0=target.N0+1
+
+    target.Life0=1
+    target.Life=1
   
   else
     self:E(self.lid.."ERROR: Unknown object type!")
@@ -1097,7 +1121,7 @@ function TARGET:GetTargetLife(Target)
   
     return 1
 
-  elseif Target.Type==TARGET.ObjectType.ZONE then
+  elseif Target.Type==TARGET.ObjectType.ZONE or Target.Type==TARGET.ObjectType.OPSZONE then
   
     return 1
     
@@ -1305,6 +1329,13 @@ function TARGET:GetTargetVec3(Target, Average)
   
     local vec3=object:GetVec3()
     return vec3
+
+  elseif Target.Type==TARGET.ObjectType.OPSZONE then
+  
+    local object=Target.Object --Ops.OpsZone#OPSZONE
+  
+    local vec3=object:GetZone():GetVec3()
+    return vec3
         
   end
 
@@ -1382,7 +1413,7 @@ function TARGET:GetTargetHeading(Target)
     -- A coordinate has no heading. Return 0.
     return 0
     
-  elseif Target.Type==TARGET.ObjectType.ZONE then
+  elseif Target.Type==TARGET.ObjectType.ZONE or Target.Type==TARGET.ObjectType.OPSZONE then
   
     local object=Target.Object --Core.Zone#ZONE
   
@@ -1660,12 +1691,81 @@ function TARGET:GetTargetCategory(Target)
   elseif Target.Type==TARGET.ObjectType.ZONE then
   
     return TARGET.Category.ZONE
+    
+  elseif Target.Type==TARGET.ObjectType.OPSZONE then
+  
+    return TARGET.Category.OPSZONE
 
   else
     self:E("ERROR: unknown target category!")
   end
 
   return category
+end
+
+
+--- Get coalition of target object. If an object has no coalition (*e.g.* a coordinate) it is returned as neutral.
+-- @param #TARGET self
+-- @param #TARGET.Object Target Target object.
+-- @return #number Coalition number.
+function TARGET:GetTargetCoalition(Target)
+
+
+  -- We take neutral for objects that do not have a coalition.
+  local coal=coalition.side.NEUTRAL
+
+
+  if Target.Type==TARGET.ObjectType.GROUP then
+
+    if Target.Object and Target.Object:IsAlive()~=nil then    
+      local object=Target.Object --Wrapper.Group#GROUP
+      
+      coal=object:GetCoalition()
+      
+    end
+
+  elseif Target.Type==TARGET.ObjectType.UNIT then
+
+    if Target.Object and Target.Object:IsAlive()~=nil then
+      local object=Target.Object --Wrapper.Unit#UNIT
+      
+      coal=object:GetCoalition()
+      
+    end
+  
+  elseif Target.Type==TARGET.ObjectType.STATIC then
+    local object=Target.Object --Wrapper.Static#STATIC
+    
+    coal=object:GetCoalition()
+    
+  elseif Target.Type==TARGET.ObjectType.SCENERY then
+  
+    -- Scenery has no coalition.
+      
+  elseif Target.Type==TARGET.ObjectType.AIRBASE then
+    local object=Target.Object --Wrapper.Airbase#AIRBASE
+  
+    coal=object:GetCoalition()
+    
+  elseif Target.Type==TARGET.ObjectType.COORDINATE then
+  
+    -- Coordinate has no coalition.
+
+  elseif Target.Type==TARGET.ObjectType.ZONE then
+  
+    -- Zone has no coalition.
+    
+  elseif Target.Type==TARGET.ObjectType.OPSZONE then
+    local object=Target.Object --Ops.OpsZone#OPSZONE
+  
+    coal=object:GetOwner()
+
+  else
+    self:E("ERROR: unknown target category!")
+  end
+
+
+  return coal
 end
 
 
@@ -1692,14 +1792,45 @@ end
 
 --- Get the first target objective alive.
 -- @param #TARGET self
+-- @param Core.Point#COORDINATE RefCoordinate (Optional) Reference coordinate to determine the closest target objective.
+-- @param #table Coalitions (Optional) Only consider targets of the given coalition(s). 
 -- @return #TARGET.Object The target objective.
-function TARGET:GetObjective()
+function TARGET:GetObjective(RefCoordinate, Coalitions)
 
-  for _,_target in pairs(self.targets) do
-    local target=_target --#TARGET.Object
-    if target.Status~=TARGET.ObjectStatus.DEAD then
-      return target
+  if RefCoordinate then
+  
+    local dmin=math.huge
+    local tmin=nil --#TARGET.Object
+    
+    for _,_target in pairs(self.targets) do
+      local target=_target --#TARGET.Object
+      
+      if target.Status~=TARGET.ObjectStatus.DEAD and (Coalitions==nil or UTILS.IsInTable(UTILS.EnsureTable(Coalitions), self:GetTargetCoalition(target))) then
+      
+        local vec3=self:GetTargetVec3(target)
+        
+        local d=UTILS.VecDist3D(vec3, RefCoordinate)
+        
+        if d<dmin then
+          dmin=d
+          tmin=target
+        end
+      
+      end
+      
+      
+    end  
+  
+    return tmin  
+  else
+
+    for _,_target in pairs(self.targets) do
+      local target=_target --#TARGET.Object
+      if target.Status~=TARGET.ObjectStatus.DEAD and (Coalitions==nil or UTILS.IsInTable(UTILS.EnsureTable(Coalitions), self:GetTargetCoalition(target))) then
+        return target
+      end
     end
+    
   end
 
   return nil
@@ -1707,10 +1838,13 @@ end
 
 --- Get the first target object alive.
 -- @param #TARGET self
+-- @param Core.Point#COORDINATE RefCoordinate Reference coordinate to determine the closest target objective.
+-- @param #table Coalitions (Optional) Only consider targets of the given coalition(s). 
 -- @return Wrapper.Positionable#POSITIONABLE The target object or nil.
-function TARGET:GetObject()
+function TARGET:GetObject(RefCoordinate, Coalitions)
 
-  local target=self:GetObjective()
+  local target=self:GetObjective(RefCoordinate, Coalitions)
+  
   if target then
     return target.Object
   end
@@ -1721,8 +1855,9 @@ end
 --- Count alive objects.
 -- @param #TARGET self
 -- @param #TARGET.Object Target Target objective.
+-- @param #table Coalitions (Optional) Only count targets of the given coalition(s). 
 -- @return #number Number of alive target objects.
-function TARGET:CountObjectives(Target)
+function TARGET:CountObjectives(Target, Coalitions)
 
   local N=0
 
@@ -1735,7 +1870,9 @@ function TARGET:CountObjectives(Target)
     for _,_unit in pairs(units or {}) do
       local unit=_unit --Wrapper.Unit#UNIT
       if unit and unit:IsAlive()~=nil and unit:GetLife()>1 then
-        N=N+1
+        if Coalitions==nil or UTILS.IsInTable(UTILS.EnsureTable(Coalitions), unit:GetCoalition()) then
+          N=N+1
+        end
       end
     end
 
@@ -1744,7 +1881,9 @@ function TARGET:CountObjectives(Target)
     local target=Target.Object --Wrapper.Unit#UNIT        
     
     if target and target:IsAlive()~=nil and target:GetLife()>1 then
-      N=N+1
+      if Coalitions==nil or UTILS.IsInTable(Coalitions, target:GetCoalition()) then    
+        N=N+1
+      end
     end
     
   elseif Target.Type==TARGET.ObjectType.STATIC then
@@ -1752,7 +1891,9 @@ function TARGET:CountObjectives(Target)
     local target=Target.Object --Wrapper.Static#STATIC
     
     if target and target:IsAlive() then
-      N=N+1
+      if Coalitions==nil or UTILS.IsInTable(Coalitions, target:GetCoalition()) then
+        N=N+1
+      end
     end
 
   elseif Target.Type==TARGET.ObjectType.SCENERY then
@@ -1763,8 +1904,12 @@ function TARGET:CountObjectives(Target)
     
   elseif Target.Type==TARGET.ObjectType.AIRBASE then
   
+    local target=Target.Object --Wrapper.Airbase#AIRBASE
+  
     if Target.Status==TARGET.ObjectStatus.ALIVE then
-      N=N+1
+      if Coalitions==nil or UTILS.IsInTable(Coalitions, target:GetCoalition()) then
+        N=N+1
+      end
     end
     
   elseif Target.Type==TARGET.ObjectType.COORDINATE then
@@ -1774,7 +1919,15 @@ function TARGET:CountObjectives(Target)
   elseif Target.Type==TARGET.ObjectType.ZONE then
   
     -- No target we can check!
-
+    
+  elseif Target.Type==TARGET.ObjectType.OPSZONE then
+    
+    local target=Target.Object --Ops.OpsZone#OPSZONE
+    
+    if Coalitions==nil or UTILS.IsInTable(Coalitions, target:GetOwner()) then
+      N=N+1
+    end
+    
   else
     self:E(self.lid.."ERROR: Unknown target type! Cannot count targets")
   end
@@ -1784,15 +1937,16 @@ end
 
 --- Count alive targets.
 -- @param #TARGET self
+-- @param #table Coalitions (Optional) Only count targets of the given coalition(s). 
 -- @return #number Number of alive target objects.
-function TARGET:CountTargets()
+function TARGET:CountTargets(Coalitions)
   
   local N=0
   
   for _,_target in pairs(self.targets) do
     local Target=_target --#TARGET.Object
   
-    N=N+self:CountObjectives(Target)
+    N=N+self:CountObjectives(Target, Coalitions)
     
   end
   

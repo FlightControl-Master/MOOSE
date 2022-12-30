@@ -335,6 +335,7 @@ OPSGROUP.TaskType={
 -- @field #number waypoint Waypoint index if task is a waypoint task.
 -- @field Core.UserFlag#USERFLAG stopflag If flag is set to 1 (=true), the task is stopped.
 -- @field #number backupROE Rules of engagement that are restored once the task is over.
+-- @field Ops.Target#TARGET target Target object.
 
 --- Option data.
 -- @type OPSGROUP.Option
@@ -4091,12 +4092,13 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
 end
 
---- Push task.
+--- Update (DCS) task.
 -- @param #OPSGROUP self
 -- @param Ops.OpsGroup#OPSGROUP.Task Task The task.
+-- @param Ops.Auftrag#AUFTRAG Mission The mission.
 function OPSGROUP:_UpdateTask(Task, Mission)
 
-  local Mission=Mission or self:GetMissionByTaskID(self.taskcurrent)
+  Mission=Mission or self:GetMissionByTaskID(self.taskcurrent)
 
   if Task.dcstask.id==AUFTRAG.SpecialTask.FORMATION then
 
@@ -4378,6 +4380,64 @@ function OPSGROUP:_UpdateTask(Task, Mission)
     end
     
     wp.missionUID=Mission and Mission.auftragsnummer or nil
+    
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.CAPTUREZONE then
+
+    ---
+    -- Task "CaptureZone" Mission.
+    ---  
+    
+    env.info("FF Update Task Capture zone")
+    
+    -- Find the closest enemy group and engage!
+    
+    -- Not enganging already.
+    if self:IsEngaging() then
+      self:T(self.lid..string.format("Engaging currently!"))    
+    else
+    
+      local Coalitions=UTILS.GetCoalitionEnemy(self:GetCoalition(), false)
+      
+      local zoneCurr=Task.target --Ops.OpsZone#OPSZONE
+      
+      if zoneCurr then
+            
+        self:T(self.lid..string.format("Current target zone=%s", zoneCurr:GetName()))
+        
+        if zoneCurr:GetOwner()==self:GetCoalition() then
+          -- Current zone captured ==> Find next zone or call it a day!
+          
+          self:T(self.lid..string.format("Zone %s captured ==> Task DONE!", zoneCurr:GetName()))
+          
+          self:TaskDone(Task)
+          
+        else        
+          -- Current zone NOT captured yet ==> Find Target
+          
+          if Mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.EXECUTING then
+        
+            -- Get closest target.
+            local targetgroup=zoneCurr:GetScannedGroupSet():GetClosestGroup(self.coordinate, Coalitions)
+            
+            if targetgroup then
+            
+              self:EngageTarget(targetgroup)
+              
+            else
+              -- Error Message.
+              self:E(self.lid..string.format("ERROR: Current zone not captured but no target group could be found. This should NOT happen!"))          
+            end
+            
+          end        
+        
+        end
+        
+        
+      else
+        self:T(self.lid..string.format("NO Current target zone=%s"))
+      end
+      
+    end
         
   else
 
@@ -4662,8 +4722,17 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
     -- Check if mission is paused.
     if status~=AUFTRAG.GroupStatus.PAUSED then
       --- 
-      -- Mission is NOT over ==> trigger done
+      -- Mission is NOT over ==> trigger DONE
       ---
+
+      if Mission.type==AUFTRAG.Type.CAPTUREZONE and Mission:CountMissionTargets()>0 then
+      
+        env.info("FF task done route to mission 1000")
+        self:RouteToMission(Mission)
+        
+        return
+      
+      end
 
       -- Get egress waypoint uid.
       local EgressUID=Mission:GetGroupEgressWaypointUID(self)
@@ -5496,6 +5565,13 @@ function OPSGROUP:RouteToMission(mission, delay)
       surfacetypes={land.SurfaceType.WATER, land.SurfaceType.SHALLOW_WATER}
     end
     
+    -- Get target object.
+    local targetobject=mission:GetObjective(currentcoord, UTILS.GetCoalitionEnemy(self:GetCoalition(), true))
+    
+    if targetobject then
+      self:T(self.lid..string.format("Route to mission target object %s", targetobject:GetName()))
+    end
+    
     -- Get ingress waypoint.    
     if mission.opstransport and not mission.opstransport:IsCargoDelivered(self.groupname) then
       
@@ -5526,7 +5602,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       ---
       
       -- Get the zone.
-      targetzone=mission.engageTarget:GetObject() --Core.Zone#ZONE
+      targetzone=targetobject --Core.Zone#ZONE
       
       -- Random coordinate.
       waypointcoord=targetzone:GetRandomCoordinate(nil , nil, surfacetypes)
@@ -5545,7 +5621,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       ---
 
       -- Get the zone.
-      targetzone=mission.engageTarget:GetObject() --Core.Zone#ZONE
+      targetzone=targetobject --Core.Zone#ZONE
       
       -- Random coordinate.
       waypointcoord=targetzone:GetRandomCoordinate(nil , nil, surfacetypes)
@@ -5555,7 +5631,8 @@ function OPSGROUP:RouteToMission(mission, delay)
       -- Hover
       ---
 
-      local zone=mission.engageTarget:GetObject() --Core.Zone#ZONE
+      local zone=targetobject --Core.Zone#ZONE
+      
       waypointcoord=zone:GetCoordinate()
       
     elseif mission.type==AUFTRAG.Type.RELOCATECOHORT then
@@ -5580,6 +5657,15 @@ function OPSGROUP:RouteToMission(mission, delay)
         -- Navy group: Route into direction of the target.
         waypointcoord=currentcoord:GetIntermediateCoordinate(ToCoordinate, 0.05)
       end
+    
+    elseif mission.type==AUFTRAG.Type.CAPTUREZONE then
+    
+      -- Get the zone.
+      targetzone=targetobject:GetZone()
+      
+      -- Random coordinate.
+      waypointcoord=targetzone:GetRandomCoordinate(nil , nil, surfacetypes)      
+      
 
     else
       ---
@@ -5706,6 +5792,8 @@ function OPSGROUP:RouteToMission(mission, delay)
     -- Add waypoint task. UpdateRoute is called inside.
     local waypointtask=self:AddTaskWaypoint(mission.DCStask, waypoint, mission.name, mission.prio, mission.duration)
     waypointtask.ismission=true
+    
+    waypointtask.target=targetobject
 
     -- Set waypoint task.
     mission:SetGroupWaypointTask(self, waypointtask)
@@ -5766,7 +5854,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     ---
     -- Mission Specific Settings
     ---
-    self:_SetMissionOptions(mission)    
+    self:_SetMissionOptions(mission)
 
   end
 end

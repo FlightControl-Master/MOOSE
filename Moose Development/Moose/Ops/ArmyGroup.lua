@@ -720,6 +720,32 @@ function ARMYGROUP:Status()
         end
       end
     end
+    
+    
+    -- Get current mission (if any).
+    local mission=self:GetMissionCurrent()
+    
+    -- If mission, check if DCS task needs to be updated.
+    if mission and mission.updateDCSTask and mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.EXECUTING then
+    
+
+      if mission.type==AUFTRAG.Type.CAPTUREZONE then
+       
+        -- Get task.
+        local Task=self:GetTaskByID(mission.auftragsnummer)
+        
+        local opszone=Task.target --Ops.OpsZone#OPSZONE
+        
+        env.info(string.format("FF Opszone %s owner=%s, engaging=%s", opszone:GetName(), opszone:GetOwnerName(), tostring(self:IsEngaging())))
+        
+        -- Update task: Engage or get new zone.
+        self:_UpdateTask(Task, mission)
+        
+          
+      end
+      
+    
+    end    
 
   else
     -- Check damage of elements and group.
@@ -1721,10 +1747,11 @@ function ARMYGROUP:onbeforeEngageTarget(From, Event, To, Target, Speed, Formatio
     return false
   end
   
-  -- Pause current mission.
+  -- Get current mission.
   local mission=self:GetMissionCurrent()
   
-  if mission and mission.type~=AUFTRAG.Type.GROUNDATTACK then
+  -- Pause current mission unless it uses the EngageTarget command.
+  if mission and mission.type~=AUFTRAG.Type.GROUNDATTACK and mission.type~=AUFTRAG.Type.CAPTUREZONE then
     self:T(self.lid.."Engage command but have current mission ==> Pausing mission!")
     self:PauseMission()
     dt=-0.1
@@ -1804,8 +1831,8 @@ function ARMYGROUP:_UpdateEngageTarget()
       -- Distance to last known position of target.
       local dist=UTILS.VecDist3D(vec3, self.engage.Coordinate:GetVec3())
       
-      -- Check if target moved more than 100 meters.
-      if dist>100 then
+      -- Check if target moved more than 100 meters or we do not have line of sight.
+      if dist>100 or not self:HasLoS(self.engage.Target:GetCoordinate()) then
       
         --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
       
@@ -1824,7 +1851,7 @@ function ARMYGROUP:_UpdateEngageTarget()
         self.engage.Waypoint=self:AddWaypoint(intercoord, self.engage.Speed, uid, self.engage.Formation, true)
       
         -- Set if we want to resume route after reaching the detour waypoint.
-        self.engage.Waypoint.detour=0      
+        self.engage.Waypoint.detour=0
       
       end
       

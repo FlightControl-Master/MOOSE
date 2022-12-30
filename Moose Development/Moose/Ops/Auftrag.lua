@@ -422,7 +422,8 @@ _AUFTRAGSNR=0
 -- @field #string AIRDEFENSE Air defense.
 -- @field #string EWR Early Warning Radar.
 -- @field #string RECOVERYTANKER Recovery tanker.
--- @filed #string REARMING Rearming mission.
+-- @field #string REARMING Rearming mission.
+-- @field #string CAPTUREZONE Capture zone mission.
 -- @field #string NOTHING Nothing.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
@@ -465,6 +466,7 @@ AUFTRAG.Type={
   EWR="Early Warning Radar",
   RECOVERYTANKER="Recovery Tanker",
   REARMING="Rearming",
+  CAPTUREZONE="Capture Zone",
   NOTHING="Nothing",
 }
 
@@ -487,6 +489,7 @@ AUFTRAG.Type={
 -- @field #string EWR Early Warning Radar.
 -- @field #string RECOVERYTANKER Recovery tanker.
 -- @field #string REARMING Rearming.
+-- @field #string CAPTUREZONE Capture OPS zone.
 -- @field #string NOTHING Nothing.
 AUFTRAG.SpecialTask={
   FORMATION="Formation",
@@ -507,6 +510,7 @@ AUFTRAG.SpecialTask={
   EWR="Early Warning Radar",
   RECOVERYTANKER="Recovery Tanker",
   REARMING="Rearming",
+  CAPTUREZONE="Capture Zone",  
   NOTHING="Nothing",
 }
 
@@ -1960,6 +1964,51 @@ function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude, Formation)
   mission.DCStask=mission:GetDCSMissionTask()
 
   mission.DCStask.params.formation=Formation or "Off Road"
+
+  return mission
+end
+
+--- **[AIR, GROUND, NAVAL]** Create a CAPTUREZONE mission. Group(s) will go to the zone and patrol it randomly.
+-- @param #AUFTRAG self
+-- @param Ops.OpsZone#OPSZONE OpsZone The OPS zone to capture.
+-- @param #number Coalition The coalition which should capture the zone for the mission to be successful.
+-- @param #number Speed Speed in knots.
+-- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
+-- @param #string Formation Formation used by ground units during patrol. Default "Off Road".
+-- @return #AUFTRAG self
+function AUFTRAG:NewCAPTUREZONE(OpsZone, Coalition, Speed, Altitude, Formation)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.CAPTUREZONE)
+
+
+  mission:_TargetFromObject(OpsZone)
+  
+  mission.coalition=Coalition
+
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.CAPTUREZONE)
+
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+
+  mission.missionFraction=1.0
+  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
+  mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or nil
+
+  mission.categories={AUFTRAG.Category.ALL}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  mission.updateDCSTask=true
+
+  local params={}
+  
+  params.formation=Formation or "Off Road"  
+  params.zone=mission:GetObjective()
+  params.altitude=mission.missionAltitude
+  params.speed=mission.missionSpeed  
+
+  mission.DCStask.params=params
 
   return mission
 end
@@ -4947,8 +4996,11 @@ function AUFTRAG:CountMissionTargets()
 
   local N=0
 
+  -- Count specific coalitions.  
+  local Coalitions=self.coalition and UTILS.GetCoalitionEnemy(self.coalition, true) or nil
+
   if self.engageTarget then
-    N=self.engageTarget:CountTargets()
+    N=self.engageTarget:CountTargets(Coalitions)
   end
 
   return N
@@ -5013,9 +5065,13 @@ end
 
 --- Get mission objective object. Could be many things depending on the mission type.
 -- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE RefCoordinate (Optional) Reference coordinate from which the closest target is determined.
+-- @param #table Coalitions (Optional) Only consider targets of the given coalition(s). 
 -- @return Wrapper.Positionable#POSITIONABLE The target object. Could be many things.
-function AUFTRAG:GetObjective()
-  local objective=self:GetTargetData():GetObject()
+function AUFTRAG:GetObjective(RefCoordinate, Coalitions)
+  
+  local objective=self:GetTargetData():GetObject(RefCoordinate, Coalitions)
+  
   return objective
 end
 
@@ -5753,6 +5809,22 @@ function AUFTRAG:GetDCSMissionTask()
     DCStask.params=param
 
     table.insert(DCStasks, DCStask)
+    
+  elseif self.type==AUFTRAG.Type.CAPTUREZONE then
+
+    --------------------------
+    -- CAPTURE ZONE Mission --
+    --------------------------
+
+    local DCStask={}
+
+    DCStask.id=AUFTRAG.SpecialTask.CAPTUREZONE
+
+    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    local param={}
+    DCStask.params=param
+
+    table.insert(DCStasks, DCStask)    
 
   elseif self.type==AUFTRAG.Type.CASENHANCED then
 

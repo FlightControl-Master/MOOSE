@@ -1061,8 +1061,8 @@ function UTILS.Vec2Norm(a)
 end
 
 --- Calculate the distance between two 2D vectors.
--- @param DCS#Vec2 a Vector in 3D with x, y components.
--- @param DCS#Vec2 b Vector in 3D with x, y components.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @param DCS#Vec2 b Vector in 2D with x, y components.
 -- @return #number Distance between the vectors.
 function UTILS.VecDist2D(a, b)
 
@@ -1444,6 +1444,30 @@ function UTILS.GetCoalitionName(Coalition)
     return "Unknown"
   end
 
+end
+
+--- Get the enemy coalition for a given coalition.
+-- @param #number Coalition The coalition ID.
+-- @param #boolean Neutral Include neutral as enemy.
+-- @return #table Enemy coalition table.
+function UTILS.GetCoalitionEnemy(Coalition, Neutral)
+
+  local Coalitions={}
+  if Coalition then
+    if Coalition==coalition.side.RED then      
+      Coalitions={coalition.side.BLUE}
+    elseif Coalition==coalition.side.BLUE then
+      Coalitions={coalition.side.RED}
+    elseif Coalition==coalition.side.NEUTRAL then
+      Coalitions={coalition.side.RED, coalition.side.BLUE}
+    end
+  end
+  
+  if Neutral then
+    table.insert(Coalitions, coalition.side.NEUTRAL)
+  end
+
+  return Coalitions
 end
 
 --- Get the modulation name from its numerical value.
