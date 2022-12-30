@@ -712,7 +712,7 @@ end
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, has landed somewhere.
 function FLIGHTGROUP:IsLandedAt()
-  is=self:Is("LandedAt")
+  local is=self:Is("LandedAt")
   return is
 end
 
