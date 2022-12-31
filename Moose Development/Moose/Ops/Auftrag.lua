@@ -7577,7 +7577,7 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
   end
 
   -- Create ORBIT first.
-  local mission=AUFTRAG:NewORBIT(Coordinate or ZoneCAP:GetCoordinate(), Altitude or 10000, Speed, Heading, Leg)
+  local mission=AUFTRAG:NewORBIT(Coordinate or ZoneCAP:GetCoordinate(), Altitude or 10000, Speed or 350, Heading, Leg)
 
   -- Mission type CAP.
   mission.type=AUFTRAG.Type.CAP
@@ -7591,6 +7591,7 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
   mission.missionTask=ENUMS.MissionTask.CAP
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
+  mission.missionSpeed = UTILS.KnotsToAltKIAS(Speed or 350,Altitude)
 
   mission.categories={AUFTRAG.Category.AIRCRAFT}
 

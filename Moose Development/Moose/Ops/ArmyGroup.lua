@@ -726,7 +726,7 @@ function ARMYGROUP:Status()
     local mission=self:GetMissionCurrent()
     
     -- If mission, check if DCS task needs to be updated.
-    if mission and mission.updateDCSTask and mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.EXECUTING then
+    if mission and mission.updateDCSTask  then
     
       if mission.type==AUFTRAG.Type.CAPTUREZONE then
        
@@ -734,7 +734,9 @@ function ARMYGROUP:Status()
         local Task=mission:GetGroupWaypointTask(self)
         
         -- Update task: Engage or get new zone.
-        self:_UpdateTask(Task, mission)
+        if mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.EXECUTING or  mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.STARTED then
+          self:_UpdateTask(Task, mission)
+        end
                   
       end
           

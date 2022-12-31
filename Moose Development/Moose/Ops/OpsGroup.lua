@@ -4440,8 +4440,8 @@ function OPSGROUP:_UpdateTask(Task, Mission)
               self:EngageTarget(targetgroup)
               
             else
-              -- Error Message.
-              self:E(self.lid..string.format("ERROR: Current zone not captured but no target group could be found. This should NOT happen!"))          
+              -- Debug info.
+              self:T(self.lid..string.format("Zone %s not captured but no target group could be found. Should be captured in the next zone evaluation.", zoneCurr:GetName()))          
             end
             
           else
