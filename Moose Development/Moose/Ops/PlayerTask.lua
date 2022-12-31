@@ -1443,7 +1443,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.54"
+PLAYERTASKCONTROLLER.version="0.1.55"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -3301,6 +3301,9 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
     joinorabort = true
   end
   
+  local tasktypes = self:_GetAvailableTaskTypes()
+  local taskpertype = self:_GetTasksPerType()
+  
   for _,_client in pairs(clients) do
     if _client and _client:IsAlive() then
       local client = _client -- Wrapper.Client#CLIENT
@@ -3349,6 +3352,7 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
               --self.PlayerMenu[playername]:RemoveSubMenus()
               --oldmenu = self.PlayerMenu[playername]
               --self.PlayerMenu[playername] = nil
+              self.PlayerMenu[playername]:RemoveSubMenus()
               self.PlayerMenu[playername] = MENU_GROUP_DELAYED:New(group,menuname,self.MenuParent)
               self.PlayerMenu[playername]:SetTag(newtag)
               self.PlayerMenu[playername].PTTimeStamp = timer.getAbsTime()
@@ -3395,8 +3399,6 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
           local abort = MENU_GROUP_COMMAND_DELAYED:New(group,menuabort,active,self._AbortTask,self,group,client):SetTag(newtag)
           if self.activehasinfomenu and self.taskinfomenu then
             self:T("Building Active-Info Menus for "..playername)
-            local tasktypes = self:_GetAvailableTaskTypes()
-            local taskpertype = self:_GetTasksPerType()
             if self.PlayerInfoMenu[playername] then
               self.PlayerInfoMenu[playername]:RemoveSubMenus(nil,oldtag)
             end
@@ -3408,10 +3410,14 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
         ---
         -- JOIN TASK MENU
         --- 
-          local tasktypes = self:_GetAvailableTaskTypes()
-          local taskpertype = self:_GetTasksPerType()
           local menujoin = self.gettext:GetEntry("MENUJOIN",self.locale)
+          
+          if self.PlayerJoinMenu[playername] then
+            self.PlayerJoinMenu[playername]:RemoveSubMenus(nil,oldtag)
+          end
+          
           local joinmenu = MENU_GROUP_DELAYED:New(group,menujoin,topmenu):SetTag(newtag)
+          self.PlayerJoinMenu[playername] = joinmenu
           
           local ttypes = {}
           local taskmenu = {}
@@ -3468,6 +3474,7 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
         ---
        if rebuilddone then
          self.PlayerMenu[playername]:RemoveSubMenus(nil,oldtag)
+         self.PlayerMenu[playername]:Set()
          self.PlayerMenu[playername]:Refresh()
        end
       end
