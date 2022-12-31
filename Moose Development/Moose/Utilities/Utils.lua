@@ -1061,8 +1061,8 @@ function UTILS.Vec2Norm(a)
 end
 
 --- Calculate the distance between two 2D vectors.
--- @param DCS#Vec2 a Vector in 3D with x, y components.
--- @param DCS#Vec2 b Vector in 3D with x, y components.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @param DCS#Vec2 b Vector in 2D with x, y components.
 -- @return #number Distance between the vectors.
 function UTILS.VecDist2D(a, b)
 
@@ -1444,6 +1444,30 @@ function UTILS.GetCoalitionName(Coalition)
     return "Unknown"
   end
 
+end
+
+--- Get the enemy coalition for a given coalition.
+-- @param #number Coalition The coalition ID.
+-- @param #boolean Neutral Include neutral as enemy.
+-- @return #table Enemy coalition table.
+function UTILS.GetCoalitionEnemy(Coalition, Neutral)
+
+  local Coalitions={}
+  if Coalition then
+    if Coalition==coalition.side.RED then      
+      Coalitions={coalition.side.BLUE}
+    elseif Coalition==coalition.side.BLUE then
+      Coalitions={coalition.side.RED}
+    elseif Coalition==coalition.side.NEUTRAL then
+      Coalitions={coalition.side.RED, coalition.side.BLUE}
+    end
+  end
+  
+  if Neutral then
+    table.insert(Coalitions, coalition.side.NEUTRAL)
+  end
+
+  return Coalitions
 end
 
 --- Get the modulation name from its numerical value.
@@ -2694,4 +2718,52 @@ function UTILS.ToStringBRAANATO(FromGrp,ToGrp)
       end
   end
   return BRAANATO 
+end
+
+--- Check if an object is contained in a table.
+-- @param #table Table The table.
+-- @param #table Object The object to check.
+-- @param #string Key (Optional) Key to check. By default, the object itself is checked.
+-- @return #booolen Returns `true` if object is in table.
+function UTILS.IsInTable(Table, Object, Key)
+
+  for key, object in pairs(Table) do
+    if Key then
+      if Object[Key]==object[Key] then
+        return true
+      end
+    else
+      if object==Object then
+        return true
+      end
+    end
+  end
+
+  return false
+end
+
+--- Check if any object of multiple given objects is contained in a table.
+-- @param #table Table The table.
+-- @param #table Objects The objects to check.
+-- @param #string Key (Optional) Key to check.
+-- @return #booolen Returns `true` if object is in table.
+function UTILS.IsAnyInTable(Table, Objects, Key)
+
+  for _,Object in pairs(UTILS.EnsureTable(Objects)) do
+
+    for key, object in pairs(Table) do
+      if Key then
+        if Object[Key]==object[Key] then
+          return true
+        end
+      else
+        if object==Object then
+          return true
+        end
+      end
+    end
+    
+  end
+
+  return false
 end

@@ -6703,7 +6703,8 @@ _AUFTRAGSNR=0
 -- @field #string AIRDEFENSE Air defense.
 -- @field #string EWR Early Warning Radar.
 -- @field #string RECOVERYTANKER Recovery tanker.
--- @filed #string REARMING Rearming mission.
+-- @field #string REARMING Rearming mission.
+-- @field #string CAPTUREZONE Capture zone mission.
 -- @field #string NOTHING Nothing.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
@@ -6746,6 +6747,7 @@ AUFTRAG.Type={
   EWR="Early Warning Radar",
   RECOVERYTANKER="Recovery Tanker",
   REARMING="Rearming",
+  CAPTUREZONE="Capture Zone",
   NOTHING="Nothing",
 }
 
@@ -6768,6 +6770,7 @@ AUFTRAG.Type={
 -- @field #string EWR Early Warning Radar.
 -- @field #string RECOVERYTANKER Recovery tanker.
 -- @field #string REARMING Rearming.
+-- @field #string CAPTUREZONE Capture OPS zone.
 -- @field #string NOTHING Nothing.
 AUFTRAG.SpecialTask={
   FORMATION="Formation",
@@ -6788,6 +6791,7 @@ AUFTRAG.SpecialTask={
   EWR="Early Warning Radar",
   RECOVERYTANKER="Recovery Tanker",
   REARMING="Rearming",
+  CAPTUREZONE="Capture Zone",  
   NOTHING="Nothing",
 }
 
@@ -6909,7 +6913,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.9.7"
+AUFTRAG.version="0.9.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -6918,6 +6922,7 @@ AUFTRAG.version="0.9.7"
 -- TODO: Replace engageRange by missionRange. Here and in other classes. CTRL+H is your friend!
 -- TODO: Mission success options damaged, destroyed.
 -- TODO: F10 marker to create new missions.
+-- DONE: Add Capture zone task.
 -- DONE: Add orbit mission for moving anker points.
 -- DONE: Add recovery tanker mission for boat ops.
 -- DONE: Added auftrag category.
@@ -8301,6 +8306,51 @@ function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude, Formation)
   return mission
 end
 
+--- **[AIR, GROUND, NAVAL]** Create a CAPTUREZONE mission. Group(s) will go to the zone and patrol it randomly.
+-- @param #AUFTRAG self
+-- @param Ops.OpsZone#OPSZONE OpsZone The OPS zone to capture.
+-- @param #number Coalition The coalition which should capture the zone for the mission to be successful.
+-- @param #number Speed Speed in knots.
+-- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
+-- @param #string Formation Formation used by ground units during patrol. Default "Off Road".
+-- @return #AUFTRAG self
+function AUFTRAG:NewCAPTUREZONE(OpsZone, Coalition, Speed, Altitude, Formation)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.CAPTUREZONE)
+
+
+  mission:_TargetFromObject(OpsZone)
+  
+  mission.coalition=Coalition
+
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.CAPTUREZONE)
+
+  mission.optionROE=ENUMS.ROE.ReturnFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+
+  mission.missionFraction=0.1
+  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
+  mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or nil
+
+  mission.categories={AUFTRAG.Category.ALL}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  mission.updateDCSTask=true
+
+  local params={}
+  
+  params.formation=Formation or "Off Road"  
+  params.zone=mission:GetObjective()
+  params.altitude=mission.missionAltitude
+  params.speed=mission.missionSpeed  
+
+  mission.DCStask.params=params
+
+  return mission
+end
+
 
 --- **[OBSOLETE]** Create a ARMORATTACK mission.
 -- ** Note that this is actually creating a GROUNDATTACK mission!** 
@@ -8944,6 +8994,15 @@ function AUFTRAG:SetRepeatOnSuccess(Nrepeat)
   return self
 end
 
+--- **[LEGION, COMMANDER, CHIEF]** Set that mission assets get reinforced if their number drops below Nmin.
+-- @param #AUFTRAG self
+-- @param #number Nreinforce Number of max asset groups used to reinforce.
+-- @return #AUFTRAG self
+function AUFTRAG:SetReinforce(Nreinforce)
+  self.reinforce=Nreinforce
+  return self
+end
+
 --- **[LEGION, COMMANDER, CHIEF]** Define how many assets are required to do the job. Only used if the mission is handled by a **LEGION** (AIRWING, BRIGADE, ...) or higher level.
 -- @param #AUFTRAG self
 -- @param #number NassetsMin Minimum number of asset groups. Default 1.
@@ -8965,24 +9024,32 @@ end
 
 --- **[LEGION, COMMANDER, CHIEF]** Get number of required assets.
 -- @param #AUFTRAG self
--- @param Ops.Legion#Legion Legion (Optional) Only get the required assets for a specific legion. If required assets for this legion are not defined, the total number is returned.
 -- @return #number Min. number of required assets.
 -- @return #number Max. number of required assets.
-function AUFTRAG:GetRequiredAssets(Legion)
-
-  --local N=self.nassets
-
-  --if Legion and self.Nassets[Legion.alias] then
-  --  N=self.Nassets[Legion.alias]
-  --end
+function AUFTRAG:GetRequiredAssets()
   
   local Nmin=self.NassetsMin
   local Nmax=self.NassetsMax
-  
+    
   if self.type==AUFTRAG.Type.RELOCATECOHORT then
+
+    -- Relocation gets all the assets.
     local cohort=self.DCStask.params.cohort --Ops.Cohort#COHORT
     Nmin=#cohort.assets
     Nmax=Nmin
+    
+  else
+
+    -- Check if this is an reinforcement.
+    if self:IsExecuting() and self.reinforce and self.reinforce>0 then
+      local N=self:CountOpsGroups()
+      if N<Nmin then
+        Nmin=math.min(Nmin-N, self.reinforce)
+        Nmax=Nmin
+        self:T(self.lid..string.format("FF Executing Nmin=%d, N=%d, Nreinfoce=%d ==> Nmin=%d", self.NassetsMin, N, self.reinforce, Nmin))
+      end
+    end
+  
   end
 
   return Nmin, Nmax
@@ -9242,6 +9309,7 @@ function AUFTRAG:AddTransportCarriers(Carriers)
 
   end
 
+  return self
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set required attribute(s) the assets must have.
@@ -9249,10 +9317,8 @@ end
 -- @param #table Attributes Generalized attribute(s).
 -- @return #AUFTRAG self
 function AUFTRAG:SetRequiredAttribute(Attributes)
-  if Attributes and type(Attributes)~="table" then
-    Attributes={Attributes}
-  end
-  self.attributes=Attributes
+  self.attributes=UTILS.EnsureTable(Attributes, true)
+  return self
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set required property or properties the assets must have.
@@ -9261,10 +9327,8 @@ end
 -- @param #table Properties Property or table of properties.
 -- @return #AUFTRAG self
 function AUFTRAG:SetRequiredProperty(Properties)
-  if Properties and type(Properties)~="table" then
-    Properties={Properties}
-  end
-  self.properties=Properties
+  self.properties=UTILS.EnsureTable(Properties, true)
+  return self
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set number of required carrier groups if an OPSTRANSPORT assignment is required.
@@ -10135,7 +10199,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
       self:T(self.lid.."No targets left cancelling mission!")
       self:Cancel()
 
-    elseif self:IsExecuting() then
+    elseif self:IsExecuting() and ((not self.reinforce) or self.reinforce==0) then
 
       -- Had the case that mission was in state Executing but all assigned groups were dead.
       -- TODO: might need to loop over all assigned groups
@@ -10664,6 +10728,12 @@ function AUFTRAG:CheckGroupsDone()
     self:T2(self.lid..string.format("CheckGroupsDone: Mission is still in state %s [FSM=%s] (PLANNED or QUEUED or REQUESTED). Mission NOT DONE!", self.status, self:GetState()))
     return false
   end
+  
+  -- Check if there is still reinforcement to be expected.
+  if self:IsExecuting() and self.reinforce and self.reinforce>0 then
+    self:T2(self.lid..string.format("CheckGroupsDone: Mission is still in state %s [FSM=%s] and reinfoce=%d. Mission NOT DONE!", self.status, self:GetState(), self.reinforce))
+    return false  
+  end
 
   -- It could be that all flights were destroyed on the way to the mission execution waypoint.
   -- TODO: would be better to check if everybody is dead by now.
@@ -10823,7 +10893,7 @@ function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
   self:T(self.lid..string.format("Asset %s dead! Number of ops groups remaining %d", tostring(Asset.spawngroupname), N))
 
   -- All assets dead?
-  if N==0 then
+  if N==0 and (self.reinforce==nil or self.reinforce==0) then
 
     if self:IsNotOver() then
 
@@ -11264,8 +11334,11 @@ function AUFTRAG:CountMissionTargets()
 
   local N=0
 
+  -- Count specific coalitions.  
+  local Coalitions=self.coalition and UTILS.GetCoalitionEnemy(self.coalition, true) or nil
+
   if self.engageTarget then
-    N=self.engageTarget:CountTargets()
+    N=self.engageTarget:CountTargets(Coalitions)
   end
 
   return N
@@ -11330,9 +11403,13 @@ end
 
 --- Get mission objective object. Could be many things depending on the mission type.
 -- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE RefCoordinate (Optional) Reference coordinate from which the closest target is determined.
+-- @param #table Coalitions (Optional) Only consider targets of the given coalition(s). 
 -- @return Wrapper.Positionable#POSITIONABLE The target object. Could be many things.
-function AUFTRAG:GetObjective()
-  local objective=self:GetTargetData():GetObject()
+function AUFTRAG:GetObjective(RefCoordinate, Coalitions)
+  
+  local objective=self:GetTargetData():GetObject(RefCoordinate, Coalitions)
+  
   return objective
 end
 
@@ -12070,6 +12147,22 @@ function AUFTRAG:GetDCSMissionTask()
     DCStask.params=param
 
     table.insert(DCStasks, DCStask)
+    
+  elseif self.type==AUFTRAG.Type.CAPTUREZONE then
+
+    --------------------------
+    -- CAPTURE ZONE Mission --
+    --------------------------
+
+    local DCStask={}
+
+    DCStask.id=AUFTRAG.SpecialTask.CAPTUREZONE
+
+    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    local param={}
+    DCStask.params=param
+
+    table.insert(DCStasks, DCStask)    
 
   elseif self.type==AUFTRAG.Type.CASENHANCED then
 
@@ -12147,7 +12240,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     table.insert(DCStasks, DCStask)
 
-  elseif self.type==AUFTRAG.Type.AMMOSUPPLY then
+  elseif self.type==AUFTRAG.Type.REARMING then
 
     ----------------------
     -- REARMING Mission --
