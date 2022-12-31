@@ -3213,8 +3213,10 @@ end
 function OPSGROUP:GetExpectedSpeed()
 
   if self:IsHolding() or self:Is("Rearming") or self:IsWaiting() or self:IsRetreated() then
+    --env.info("GetExpectedSpeed - returning ZERO")
     return 0
   else
+    --env.info("GetExpectedSpeed - returning self.speedWP = "..self.speedWp)
     return self.speedWp or 0
   end
 
