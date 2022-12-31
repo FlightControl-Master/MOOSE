@@ -7593,13 +7593,13 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
   return mission
 end
 
---- **[AIRPANE]** Create a CAP on group mission.
+--- **[AIR]** Create a CAP mission on a group.
 -- @param #AUFTRAG self
--- @param Wrapper.Group#GROUP group.
+-- @param Wrapper.Group#GROUP Grp.
 -- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
 -- @param #number Speed Orbit speed in knots. Default 250 KIAS.
--- @param #number Leg Length of race-track in NM. Default 14 NM.
 -- @param #number RelHeading Relative heading [0, 360) of race-track pattern in degrees wrt heading of the carrier. Default is heading of the carrier.
+-- @param #number Leg Length of race-track in NM. Default 14 NM.
 -- @param #number OffsetDist Relative distance of the first race-track point wrt to the carrier. Default 6 NM.
 -- @param #number OffsetAngle Relative angle of the first race-track point wrt. to the carrier. Default 180 (behind the boat).
 -- @param #number UpdateDistance Threshold distance in NM before orbit pattern is updated. Default 5 NM.
