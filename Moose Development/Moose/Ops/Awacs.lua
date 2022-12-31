@@ -499,7 +499,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.51", -- #string
+  version = "0.2.52", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -917,7 +917,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.2.51
+-- TODO-List 0.2.52
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
@@ -2393,7 +2393,7 @@ function AWACS:_GetIdlePilots()
         self:T("Adding AI with Callsign: "..entry.CallSign)
         AIPilots[#AIPilots+1] = _entry
       end
-    elseif entry.IsPlayer and not entry.Blocked then
+    elseif entry.IsPlayer and (not entry.Blocked) and (not entry.Group:IsHelicopter()) then
       if (not entry.HasAssignedTask) or overridetask then -- must be idle, or?
         -- check last assignment
         local TNow = timer.getTime()
