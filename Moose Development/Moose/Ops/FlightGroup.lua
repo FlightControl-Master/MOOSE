@@ -943,7 +943,7 @@ function FLIGHTGROUP:Status()
           local DCSTask=mission:GetDCSMissionTask() --DCS#Task
           
           -- Get task.
-          local Task=self:GetTaskByID(mission.auftragsnummer)
+          local Task=mission:GetGroupWaypointTask(self)
           
           -- Reset current orbit task.
           self.controller:resetTask()
