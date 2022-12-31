@@ -1041,6 +1041,10 @@ function OPSZONE:Scan()
             -- Add unit to set.
             self.ScanUnitSet:AddUnit(unit)
             
+            -- Debug: Had cases where a (red) unit was clearly not inside the zone but the scan did find it!
+            --local inzone=unit:IsInZone(self.zone)            
+            --unit:GetCoordinate():MarkToAll(string.format("Unit %s inzone=%s", unit:GetName(), tostring(inzone)))
+            
             -- Get group of unit.
             local group=unit:GetGroup()
             
@@ -1120,7 +1124,18 @@ function OPSZONE:Scan()
   
   -- Debug info.
   if self.verbose>=3 then
-    local text=string.format("Scan result Nred=%d, Nblue=%d, Nneutral=%d", Nred, Nblu, Nnut)
+    local text=string.format("Scan result Nred=%d, Nblue=%d, Nneutral=%d", Nred, Nblu, Nnut)    
+    if self.verbose>=4 then
+      for _,_unit in pairs(self.ScanUnitSet:GetSet()) do
+        local unit=_unit --Wrapper.Unit#UNIT
+        text=text..string.format("\nUnit %s coalition=%s", unit:GetName(), unit:GetCoalitionName())
+      end
+  
+      for _,_group in pairs(self.ScanGroupSet:GetSet()) do
+        local group=_group --Wrapper.Group#GROUP
+        text=text..string.format("\nGroup %s coalition=%s", group:GetName(), group:GetCoalitionName())
+      end
+    end    
     self:I(self.lid..text)
   end
   
