@@ -943,7 +943,7 @@ function FLIGHTGROUP:Status()
           local DCSTask=mission:GetDCSMissionTask() --DCS#Task
           
           -- Get task.
-          local Task=mission:GetGroupWaypointTask(self)
+          local Task=self:GetTaskByID(mission.auftragsnummer)
           
           -- Reset current orbit task.
           self.controller:resetTask()
@@ -3773,9 +3773,16 @@ function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitud
 
   -- Set waypoint index.
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
-
+ 
   -- Speed in knots.
-  Speed=Speed or self:GetSpeedCruise()
+  if not Speed or Speed < 10 then 
+  
+  local mission = self:GetMissionCurrent() -- Ops.Auftrag#AUFTRAG
+  local speed = mission.missionSpeed 
+  Speed = speed or self:GetSpeedCruise() 
+  
+  end
+  --Speed=Speed or self:GetSpeedCruise()
   
   -- Alt type default is barometric (ASL). For helos we use radar (AGL).
   local alttype=COORDINATE.WaypointAltType.BARO
