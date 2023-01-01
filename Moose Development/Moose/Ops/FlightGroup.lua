@@ -2275,6 +2275,10 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n, N)
   for i=n, N do
     table.insert(wp, self.waypoints[i])
   end
+  
+  if wp[2] then
+    self.speedWp=wp[2].speed
+  end
 
   -- Debug info.
   local hb=self.homebase and self.homebase:GetName() or "unknown"
@@ -3775,14 +3779,7 @@ function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitud
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
  
   -- Speed in knots.
-  if not Speed or Speed < 10 then 
-  
-  local mission = self:GetMissionCurrent() -- Ops.Auftrag#AUFTRAG
-  local speed = mission.missionSpeed 
-  Speed = speed or self:GetSpeedCruise() 
-  
-  end
-  --Speed=Speed or self:GetSpeedCruise()
+  Speed=Speed or self:GetSpeedCruise()
   
   -- Alt type default is barometric (ASL). For helos we use radar (AGL).
   local alttype=COORDINATE.WaypointAltType.BARO
