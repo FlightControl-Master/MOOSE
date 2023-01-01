@@ -155,7 +155,7 @@ function TIMER:New(Function, ...)
   return self
 end
 
---- Create a new TIMER object.
+--- Start TIMER object.
 -- @param #TIMER self
 -- @param #number Tstart Relative start time in seconds.
 -- @param #number dT Interval between function calls in seconds. If not specified `nil`, the function is called only once.
@@ -189,6 +189,20 @@ function TIMER:Start(Tstart, dT, Duration)
   -- Debug info.
   self:T(self.lid..string.format("Starting Timer in %.3f sec, dT=%s, Tstop=%s", self.Tstart-Tnow, tostring(self.dT), tostring(self.Tstop)))
 
+  return self
+end
+
+--- Start TIMER object if a condition is met. Useful for e.g. debugging.
+-- @param #TIMER self
+-- @param #boolean Condition Must be true for the TIMER to start
+-- @param #number Tstart Relative start time in seconds.
+-- @param #number dT Interval between function calls in seconds. If not specified `nil`, the function is called only once.
+-- @param #number Duration Time in seconds for how long the timer is running. If not specified `nil`, the timer runs forever or until stopped manually by the `TIMER:Stop()` function.
+-- @return #TIMER self
+function TIMER:StartIf(Condition,Tstart, dT, Duration)
+  if Condition then
+    self:Start(Tstart, dT, Duration)
+  end
   return self
 end
 
