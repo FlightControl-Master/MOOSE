@@ -839,6 +839,58 @@ function LEGION:onafterMissionAssign(From, Event, To, Mission, Legions)
 
 end
 
+--- Create a request and add it to the warehouse queue.
+-- @param #LEGION self
+-- @param Functional.Warehouse#WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
+-- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
+-- @param #number nAsset Number of groups requested that match the asset specification.
+-- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
+-- @param #string Assignment A keyword or text that can later be used to identify this request and postprocess the assets.
+function LEGION:_AddRequest(AssetDescriptor, AssetDescriptorValue, nAsset, Prio, Assignment)
+
+  -- Defaults.
+  nAsset=nAsset or 1
+  Prio=Prio or 50
+
+  -- Increase id.
+  self.queueid=self.queueid+1
+
+  -- Request queue table item.
+  local request={
+  uid=self.queueid,
+  prio=Prio,
+  warehouse=self,
+  assetdesc=AssetDescriptor,
+  assetdescval=AssetDescriptorValue,
+  nasset=nAsset,
+  transporttype=WAREHOUSE.TransportType.SELFPROPELLED,
+  ntransport=0,
+  assignment=tostring(Assignment),
+  airbase=self:GetAirbase(),
+  category=self:GetAirbaseCategory(),
+  ndelivered=0,
+  ntransporthome=0,
+  assets={},
+  toself=true,
+  } --Functional.Warehouse#WAREHOUSE.Queueitem
+  
+
+  -- Add request to queue.
+  table.insert(self.queue, request)
+  
+  local descval="assetlist"
+  if request.assetdesc==WAREHOUSE.Descriptor.ASSETLIST then
+  
+  else
+    descval=tostring(request.assetdescval)
+  end
+
+  local text=string.format("Warehouse %s: New request from warehouse %s.\nDescriptor %s=%s, #assets=%s; Transport=%s, #transports=%s.",
+  self.alias, self.alias, request.assetdesc, descval, tostring(request.nasset), request.transporttype, tostring(request.ntransport))
+  self:_DebugMessage(text, 5)
+
+end
+
 
 --- On after "MissionRequest" event. Performs a self request to the warehouse for the mission assets. Sets mission status to REQUESTED.
 -- @param #LEGION self
@@ -914,11 +966,8 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
             if Mission.type==AUFTRAG.Type.RELOCATECOHORT then
               cancel=true
               
-              -- Get request ID.
-              local requestID=currM.requestID[self.alias]
-              
               -- Get request.
-              local request=self:GetRequestByID(requestID)
+              local request=currM:_GetRequest(self)
               
               if request then
                 self:T2(self.lid.."Removing group from cargoset")
@@ -999,7 +1048,8 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
     local assignment=string.format("Mission-%d", Mission.auftragsnummer)
 
     -- Add request to legion warehouse.
-    self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, Assetlist, #Assetlist, nil, nil, Mission.prio, assignment)
+    --self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, Assetlist, #Assetlist, nil, nil, Mission.prio, assignment)
+    self:_AddRequest(WAREHOUSE.Descriptor.ASSETLIST, Assetlist, #Assetlist, Mission.prio, assignment)
 
     -- The queueid has been increased in the onafterAddRequest function. So we can simply use it here.
     Mission.requestID[self.alias]=self.queueid
@@ -1091,7 +1141,8 @@ function LEGION:onafterTransportRequest(From, Event, To, OpsTransport)
     local assignment=string.format("Transport-%d", OpsTransport.uid)
 
     -- Add request to legion warehouse.
-    self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, AssetList, #AssetList, nil, nil, OpsTransport.prio, assignment)
+    --self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, AssetList, #AssetList, nil, nil, OpsTransport.prio, assignment)
+    self:_AddRequest(WAREHOUSE.Descriptor.ASSETLIST, AssetList, #AssetList, OpsTransport.prio, assignment)
 
     -- The queueid has been increased in the onafterAddRequest function. So we can simply use it here.
     OpsTransport.requestID[self.alias]=self.queueid
@@ -1198,8 +1249,9 @@ function LEGION:onafterMissionCancel(From, Event, To, Mission)
   end
 
   -- Remove queued request (if any).
-  if Mission.requestID[self.alias] then
-    self:_DeleteQueueItemByID(Mission.requestID[self.alias], self.queue)
+  local requestID=Mission:_GetRequestID(self)
+  if requestID then
+    self:_DeleteQueueItemByID(requestID, self.queue)
   end
 
 end
