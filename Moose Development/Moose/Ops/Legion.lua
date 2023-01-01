@@ -670,16 +670,15 @@ function LEGION:CheckMissionQueue()
     local reinforce=false
     if mission:IsExecuting() and mission.reinforce and mission.reinforce>0 then
     
+      -- Number of current opsgroups.
       local N=mission:CountOpsGroups()
-        
-      local Nmin, Nmax=mission:GetRequiredAssets()
       
-      if N<Nmin then
+      if N<mission.NassetsMin then
         reinforce=true
-      end      
+      end
+      
+      self:I(self.lid..string.format("Checking Reinforcement N=%d, Nmin=%d ==> Reinforce=%s", N, mission.NassetsMin, tostring(reinforce)))      
     end
-    
-    mission:CountOpsGroups()
 
     -- Firstly, check if mission is due?
     if (mission:IsQueued(self) or reinforce) and mission:IsReadyToGo() and (mission.importance==nil or mission.importance<=vip) then
@@ -691,10 +690,7 @@ function LEGION:CheckMissionQueue()
       if recruited then
     
         -- Reserve assets and add to mission.
-        for _,_asset in pairs(assets) do
-          local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-          mission:AddAsset(asset)
-        end
+        mission:_AddAssets(assets)
   
         -- Recruit asset for escorting recruited mission assets.
         local EscortAvail=self:RecruitAssetsForEscort(mission, assets)
@@ -728,10 +724,16 @@ function LEGION:CheckMissionQueue()
           -- Got a mission.
           self:MissionRequest(mission)
           
+          -- Reduce number of reinforcements.
+          if reinforce then
+            mission.reinforce=mission.reinforce-#assets
+            self:I(self.lid..string.format("Reinforced with N=%d Nreinforce=%d", #assets, mission.reinforce))
+          end
+          
           return true
         else
           -- Recruited assets but no requested escort available. Unrecruit assets!
-          LEGION.UnRecruitAssets(assets, mission)        
+          LEGION.UnRecruitAssets(assets, mission)
         end
         
       end -- recruited mission assets
@@ -2039,7 +2041,7 @@ function LEGION:CountAssetsOnMission(MissionTypes, Cohort)
   return Np+Nq, Np, Nq
 end
 
---- Count assets on mission.
+--- Get assets on mission.
 -- @param #LEGION self
 -- @param #table MissionTypes Types on mission to be checked. Default all.
 -- @return #table Assets on pending requests.
@@ -2159,8 +2161,15 @@ function LEGION:RecruitAssetsForMission(Mission)
   
   if Mission.NcarriersMin then
   
+    local legions={self}
+    local cohorts=self.cohorts
+    if Mission.transportLegions or Mission.transportCohorts then
+      legions=Mission.transportLegions
+      cohorts=Mission.transportCohorts
+    end
+      
     -- Get transport cohorts.
-    local Cohorts=LEGION._GetCohorts(Mission.transportLegions or {self}, Mission.transportCohorts or self.cohorts)
+    local Cohorts=LEGION._GetCohorts(legions, cohorts)
     
     -- Filter cohorts that can actually perform transport missions.    
     local transportcohorts={}
@@ -2179,9 +2188,17 @@ function LEGION:RecruitAssetsForMission(Mission)
     
     self:T(self.lid..string.format("Largest cargo bay available=%.1f", MaxWeight))
   end
+  
+  
+  local legions={self}
+  local cohorts=self.cohorts
+  if Mission.specialLegions or Mission.specialCohorts then
+    legions=Mission.specialLegions
+    cohorts=Mission.specialCohorts
+  end  
 
   -- Get cohorts.  
-  local Cohorts=LEGION._GetCohorts(Mission.specialLegions or {self}, Mission.specialCohorts or self.cohorts, Operation, OpsQueue)
+  local Cohorts=LEGION._GetCohorts(legions, cohorts, Operation, OpsQueue)
 
   -- Recuit assets.
   local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads, 
@@ -2349,7 +2366,6 @@ function LEGION._GetCohorts(Legions, Cohorts, Operation, OpsQueue)
         -- Add cohorts of legion.
         for _,_cohort in pairs(legion.cohorts) do
           local cohort=_cohort --Ops.Cohort#COHORT
-
           if (CheckOperation(cohort.legion) or CheckOperation(cohort)) and not UTILS.IsInTable(cohorts, cohort, "name") then
             table.insert(cohorts, cohort)
           end
@@ -2361,7 +2377,6 @@ function LEGION._GetCohorts(Legions, Cohorts, Operation, OpsQueue)
     -- Add special cohorts.
     for _,_cohort in pairs(Cohorts or {}) do
       local cohort=_cohort --Ops.Cohort#COHORT
-     
       if CheckOperation(cohort) and not UTILS.IsInTable(cohorts, cohort, "name") then
         table.insert(cohorts, cohort)
       end
@@ -2505,7 +2520,7 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
   local function CheckMaxWeight(_cohort)
     local cohort=_cohort --Ops.Cohort#COHORT
     if MaxWeight~=nil then
-      cohort:I(string.format("Cohort weight=%.1f | max weight=%.1f", cohort.weightAsset, MaxWeight))
+      cohort:T(string.format("Cohort weight=%.1f | max weight=%.1f", cohort.weightAsset, MaxWeight))
       return cohort.weightAsset<=MaxWeight
     else
       return true
@@ -2519,7 +2534,7 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
   if can then
     can=CheckCategory(Cohort)
   else
-    env.info(string.format("Cohort %s cannot because of mission types", Cohort.name))
+    Cohort:T(Cohort.lid..string.format("Cohort %s cannot because of mission types", Cohort.name))
     return false    
   end
   
@@ -2530,65 +2545,63 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
       can=Cohort:IsOnDuty()  
     end
   else
-    env.info(string.format("Cohort %s cannot because of category", Cohort.name))
-    BASE:I(Categories)
-    BASE:I(Cohort.category)
+    Cohort:T(Cohort.lid..string.format("Cohort %s cannot because of category", Cohort.name))
     return false  
   end  
   
   if can then
     can=CheckAttribute(Cohort)
   else
-    env.info(string.format("Cohort %s cannot because of readyiness", Cohort.name))
+    Cohort:T(Cohort.lid..string.format("Cohort %s cannot because of readyiness", Cohort.name))
     return false
   end
   
   if can then
     can=CheckProperty(Cohort)
   else
-    env.info(string.format("Cohort %s cannot because of attribute", Cohort.name))
+    Cohort:T(Cohort.lid..string.format("Cohort %s cannot because of attribute", Cohort.name))
     return false
   end
 
   if can then
     can=CheckWeapon(Cohort)
   else
-    env.info(string.format("Cohort %s cannot because of property", Cohort.name))
+    Cohort:T(Cohort.lid..string.format("Cohort %s cannot because of property", Cohort.name))
     return false
   end
 
   if can then
     can=CheckRange(Cohort)
   else
-    env.info(string.format("Cohort %s cannot because of weapon type", Cohort.name))
+    Cohort:T(Cohort.lid..string.format("Cohort %s cannot because of weapon type", Cohort.name))
     return false
   end
   
   if can then
     can=CheckRefueling(Cohort)
   else
-    env.info(string.format("Cohort %s cannot because of range", Cohort.name))
+    Cohort:T(Cohort.lid..string.format("Cohort %s cannot because of range", Cohort.name))
     return false
   end
 
   if can then
     can=CheckCargoWeight(Cohort)
   else
-    env.info(string.format("Cohort %s cannot because of refueling system", Cohort.name))
+    Cohort:T(Cohort.lid..string.format("Cohort %s cannot because of refueling system", Cohort.name))
     return false
   end
   
   if can then
     can=CheckMaxWeight(Cohort)
   else
-    env.info(string.format("Cohort %s cannot because of cargo weight", Cohort.name))
+    Cohort:T(Cohort.lid..string.format("Cohort %s cannot because of cargo weight", Cohort.name))
     return false
   end
   
   if can then
     return true
   else
-    env.info(string.format("Cohort %s cannot because of max weight", Cohort.name))
+    Cohort:T(Cohort.lid..string.format("Cohort %s cannot because of max weight", Cohort.name))
     return false
   end  
   

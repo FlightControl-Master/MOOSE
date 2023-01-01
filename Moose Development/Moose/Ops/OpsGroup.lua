@@ -6334,6 +6334,12 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     self:T(self.lid..text)
 
   end
+  
+  -- Set expected speed.
+  local wpnext=self:GetWaypointNext()
+  if wpnext then
+    self.speedWp=wpnext.speed
+  end
 
 end
 
