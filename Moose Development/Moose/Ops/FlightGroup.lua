@@ -2261,7 +2261,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n, N)
   local waypointType=COORDINATE.WaypointType.TurningPoint
   local waypointAction=COORDINATE.WaypointAction.TurningPoint
   if self:IsLanded() or self:IsLandedAt() or self:IsAirborne()==false then
-    -- Had some issues with passing waypoint function of the next WP called too ealy when the type is TurningPoint. Setting it to TakeOff solved it!
+    -- Had some issues with passing waypoint function of the next WP called too early when the type is TurningPoint. Setting it to TakeOff solved it!
     waypointType=COORDINATE.WaypointType.TakeOff
     --waypointType=COORDINATE.WaypointType.TakeOffGroundHot
     --waypointAction=COORDINATE.WaypointAction.FromGroundAreaHot
@@ -3777,9 +3777,14 @@ function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitud
 
   -- Set waypoint index.
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
- 
+  
   -- Speed in knots.
   Speed=Speed or self:GetSpeedCruise()
+  
+  local mission = self:GetMissionCurrent()
+  if mission and not self.isHelo then
+    Speed = mission.missionSpeed and mission.missionSpeed or self:GetSpeedCruise()
+  end
   
   -- Alt type default is barometric (ASL). For helos we use radar (AGL).
   local alttype=COORDINATE.WaypointAltType.BARO
