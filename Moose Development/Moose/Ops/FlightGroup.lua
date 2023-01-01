@@ -3777,9 +3777,12 @@ function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitud
 
   -- Set waypoint index.
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
- 
+   
   -- Speed in knots.
   Speed=Speed or self:GetSpeedCruise()
+  
+  -- Debug info.
+  self:T3(self.lid..string.format("Waypoint Speed=%.1f knots", Speed))
   
   -- Alt type default is barometric (ASL). For helos we use radar (AGL).
   local alttype=COORDINATE.WaypointAltType.BARO

@@ -1310,7 +1310,7 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
   mission.missionTask=ENUMS.MissionTask.CAP
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
-  mission.missionSpeed = UTILS.KnotsToAltKIAS(Speed or 350,Altitude)
+  mission.missionSpeed = UTILS.KnotsToKmph(UTILS.KnotsToAltKIAS(Speed or 350, Altitude))
 
   mission.categories={AUFTRAG.Category.AIRCRAFT}
 
