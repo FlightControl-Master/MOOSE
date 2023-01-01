@@ -2991,7 +2991,11 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
   end
 
   -- Recruite infantry assets.
-  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, RangeMax, nil, nil, nil, Categories, Attributes, Properties)
+  self:T(self.lid.."Missiontype="..MissionType)
+  self:T({categories=Categories})
+  self:T({attributes=Attributes})
+  self:T({properties=Properties})
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, RangeMax, nil, nil, nil, nil, Categories, Attributes, Properties)
   
   if recruited then
   

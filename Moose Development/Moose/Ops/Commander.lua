@@ -1686,8 +1686,15 @@ function COMMANDER:RecruitAssetsForMission(Mission)
   
   if Mission.NcarriersMin then
   
+    local legions=self.legions
+    local cohorts=nil
+    if Mission.transportLegions or Mission.transportCohorts then
+      legions=Mission.transportLegions
+      cohorts=Mission.transportCohorts
+    end  
+  
     -- Get transport cohorts.
-    local Cohorts=LEGION._GetCohorts(Mission.transportLegions or self.legions, Mission.transportCohorts)
+    local Cohorts=LEGION._GetCohorts(legions, cohorts)
     
     -- Filter cohorts that can actually perform transport missions.    
     local transportcohorts={}
@@ -1705,10 +1712,17 @@ function COMMANDER:RecruitAssetsForMission(Mission)
     end
     
     self:T(self.lid..string.format("Largest cargo bay available=%.1f", MaxWeight))
-  end  
+  end
+  
+  local legions=self.legions
+  local cohorts=nil
+  if Mission.specialLegions or Mission.specialCohorts then
+    legions=Mission.specialLegions
+    cohorts=Mission.specialCohorts
+  end    
   
   -- Get cohorts.
-  local Cohorts=LEGION._GetCohorts(Mission.specialLegions or self.legions, Mission.specialCohorts, Mission.operation, self.opsqueue)
+  local Cohorts=LEGION._GetCohorts(legions, cohorts, Mission.operation, self.opsqueue)
   
   -- Debug info.
   self:T(self.lid..string.format("Found %d cohort candidates for mission", #Cohorts))

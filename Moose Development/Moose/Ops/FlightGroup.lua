@@ -2275,6 +2275,10 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n, N)
   for i=n, N do
     table.insert(wp, self.waypoints[i])
   end
+  
+  if wp[2] then
+    self.speedWp=wp[2].speed
+  end
 
   -- Debug info.
   local hb=self.homebase and self.homebase:GetName() or "unknown"
