@@ -3772,19 +3772,19 @@ end
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitude, Updateroute)
 
+  self:I(self.lid..string.format("AddWaypoint | Speed = %f | After Wpt = %d | Alt = %d | Updateroute = %s",Speed or -1,AfterWaypointWithID or -1 ,Altitude or -1,tostring(Updateroute))
+  
   -- Create coordinate.
   local coordinate=self:_CoordinateFromObject(Coordinate)  
 
   -- Set waypoint index.
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
-  
+   
   -- Speed in knots.
   Speed=Speed or self:GetSpeedCruise()
   
-  local mission = self:GetMissionCurrent()
-  if mission and not self.isHelo then
-    Speed = mission.missionSpeed and mission.missionSpeed or self:GetSpeedCruise()
-  end
+  -- Debug info.
+  self:T3(self.lid..string.format("Waypoint Speed=%.1f knots", Speed))
   
   -- Alt type default is barometric (ASL). For helos we use radar (AGL).
   local alttype=COORDINATE.WaypointAltType.BARO
