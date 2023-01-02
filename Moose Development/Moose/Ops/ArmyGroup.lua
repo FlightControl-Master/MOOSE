@@ -1826,8 +1826,11 @@ function ARMYGROUP:_UpdateEngageTarget()
       -- Distance to last known position of target.
       local dist=UTILS.VecDist3D(vec3, self.engage.Coordinate:GetVec3())
       
+      -- Check line of sight to target.
+      local los=self:HasLoS(vec3)
+      
       -- Check if target moved more than 100 meters or we do not have line of sight.
-      if dist>100 or not self:HasLoS(self.engage.Target:GetCoordinate()) then
+      if dist>100 or los==false then
       
         --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
       

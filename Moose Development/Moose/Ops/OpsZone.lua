@@ -5,6 +5,7 @@
 --    * Monitor if a zone is captured
 --    * Monitor if an airbase is captured
 --    * Define conditions under which zones are captured/held
+--    * Supports circular and polygon zone shapes
 --
 -- ===
 --
@@ -20,6 +21,7 @@
 -- @field #string lid DCS log ID string.
 -- @field #number verbose Verbosity of output.
 -- @field Core.Zone#ZONE zone The zone.
+-- @field Core.Zone#ZONE_RADIUS zoneCircular The circular zone.
 -- @field Wrapper.Airbase#AIRBASE airbase The airbase that is monitored.
 -- @field #string airbaseName Name of the airbase that is monitored.
 -- @field #string zoneName Name of the zone.
@@ -60,9 +62,6 @@
 --
 -- An OPSZONE is a strategically important area.
 --
--- **Restrictions**
---
--- * Since we are using a DCS routine that scans a zone for units or other objects present in the zone and this DCS routine is limited to cicular zones, only those can be used.
 --
 -- @field #OPSZONE
 OPSZONE = {
@@ -84,9 +83,19 @@ OPSZONE = {
 -- @field #string Type Type of mission
 -- @field Ops.Auftrag#AUFTRAG Mission The actual attached mission
 
+
+--- Type of zone we are dealing with.
+-- @type OPSZONE.ZoneType
+-- @field #string Circular Zone is circular.
+-- @field #string Polygon Zone is a polygon.
+OPSZONE.ZoneType={
+  Circular="Circular",
+  Polygon="Polygon",
+}
+
 --- OPSZONE class version.
 -- @field #string version
-OPSZONE.version="0.4.0"
+OPSZONE.version="0.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -94,6 +103,7 @@ OPSZONE.version="0.4.0"
 
 -- TODO: Pause/unpause evaluations.
 -- TODO: Differentiate between ground attack and boming by air or arty.
+-- DONE: Polygon zones.
 -- DONE: Capture time, i.e. time how long a single coalition has to be inside the zone to capture it.
 -- DONE: Capturing based on (total) threat level threshold. Unarmed units do not pose a threat and should not be able to hold a zone.
 -- DONE: Can neutrals capture? No, since they are _neutral_!
@@ -125,7 +135,7 @@ function OPSZONE:New(Zone, CoalitionOwner)
     if type(Zone)=="string" then
       -- Convert string into a ZONE or ZONE_AIRBASE    
       local Name=Zone      
-      Zone=ZONE:New(Name)
+      Zone=ZONE:FindByName(Name)
       if not Zone then
         local airbase=AIRBASE:FindByName(Name)
         if airbase then
@@ -146,8 +156,17 @@ function OPSZONE:New(Zone, CoalitionOwner)
   if Zone:IsInstanceOf("ZONE_AIRBASE") then
     self.airbase=Zone._.ZoneAirbase
     self.airbaseName=self.airbase:GetName()
+    self.zoneType=OPSZONE.ZoneType.Circular
+    self.zoneCircular=Zone    
   elseif Zone:IsInstanceOf("ZONE_RADIUS") then
     -- Nothing to do.
+    self.zoneType=OPSZONE.ZoneType.Circular
+    self.zoneCircular=Zone
+  elseif Zone:IsInstanceOf("ZONE_POLYGON_BASE") then
+    -- Nothing to do.
+    self.zoneType=OPSZONE.ZoneType.Polygon
+    local zone=Zone --Core.Zone#ZONE_POLYGON
+    self.zoneCircular=zone:GetZoneRadius(nil, true)
   else  
     self:E("ERROR: OPSZONE must be a SPHERICAL zone due to DCS restrictions!")
     return nil
@@ -156,10 +175,10 @@ function OPSZONE:New(Zone, CoalitionOwner)
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("OPSZONE %s | ", Zone:GetName())
 
-  -- Set some values.  
+  -- Set some values.
   self.zone=Zone
   self.zoneName=Zone:GetName()
-  self.zoneRadius=Zone:GetRadius()
+  self.zoneRadius=self.zoneCircular:GetRadius()
   self.Missions = {}
   self.ScanUnitSet=SET_UNIT:New():FilterZones({Zone})
   self.ScanGroupSet=SET_GROUP:New():FilterZones({Zone})
@@ -820,8 +839,6 @@ function OPSZONE:onafterEmpty(From, Event, To)
   -- Debug info.
   self:T(self.lid..string.format("Zone is empty EVENT"))
 
-
-  
 end
 
 --- On after "Attacked" event.
@@ -1034,42 +1051,55 @@ function OPSZONE:Scan()
           local tl=0
           local unit=UNIT:Find(DCSUnit)
           if unit then
-          
-            -- Threat level of unit.
-            tl=unit:GetThreatLevel()
+                      
+            -- Inside zone.
+            local inzone=true
+            if self.zoneType==OPSZONE.ZoneType.Polygon then
             
-            -- Add unit to set.
-            self.ScanUnitSet:AddUnit(unit)
+              -- Check if unit is really inside the zone.
+              inzone=unit:IsInZone(self.zone)
+              
+              -- Debug marker.
+              -- Debug: Had cases where a (red) unit was clearly not inside the zone but the scan did find it!      
+              unit:GetCoordinate():MarkToAll(string.format("Unit %s inzone=%s", unit:GetName(), tostring(inzone)))
+            end
             
-            -- Debug: Had cases where a (red) unit was clearly not inside the zone but the scan did find it!
-            --local inzone=unit:IsInZone(self.zone)            
-            --unit:GetCoordinate():MarkToAll(string.format("Unit %s inzone=%s", unit:GetName(), tostring(inzone)))
+            if inzone then          
+                    
+              -- Threat level of unit.
+              tl=unit:GetThreatLevel()
+              
+              -- Add unit to set.
+              self.ScanUnitSet:AddUnit(unit)
+                          
+              -- Get group of unit.
+              local group=unit:GetGroup()
             
-            -- Get group of unit.
-            local group=unit:GetGroup()
+              -- Add group to scanned set.  
+              if group then
+                self.ScanGroupSet:AddGroup(group, true)
+              end
+                        
+              -- Increase counter.
+              if Coalition==coalition.side.RED then
+                Nred=Nred+1
+                Tred=Tred+tl
+              elseif Coalition==coalition.side.BLUE then
+                Nblu=Nblu+1
+                Tblu=Tblu+tl
+              elseif Coalition==coalition.side.NEUTRAL then
+                Nnut=Nnut+1
+                Tnut=Tnut+tl
+              end
+              
+              -- Debug info.
+              if self.verbose>=4 then
+                self:I(self.lid..string.format("Found unit %s (coalition=%d)", DCSUnit:getName(), Coalition))
+              end
             
-            if group then
-              self.ScanGroupSet:AddGroup(group, true)
             end
           end
           
-          
-          -- Increase counter.
-          if Coalition==coalition.side.RED then
-            Nred=Nred+1
-            Tred=Tred+tl
-          elseif Coalition==coalition.side.BLUE then
-            Nblu=Nblu+1
-            Tblu=Tblu+tl
-          elseif Coalition==coalition.side.NEUTRAL then
-            Nnut=Nnut+1
-            Tnut=Tnut+tl
-          end
-          
-          -- Debug info.
-          if self.verbose>=4 then
-            self:I(self.lid..string.format("Found unit %s (coalition=%d)", DCSUnit:getName(), Coalition))
-          end
         end
               
       elseif ObjectCategory==Object.Category.STATIC and ZoneObject:isExist() then
@@ -1079,26 +1109,40 @@ function OPSZONE:Scan()
         ---
       
         -- This is a DCS static object.
-        local DCSStatic=ZoneObject --DCS#Static
+        local DCSStatic=ZoneObject --DCS#StaticObject
         
         -- Get coalition.
         local Coalition=DCSStatic:getCoalition()
         
         -- CAREFUL! Downed pilots break routine here without any error thrown.
         --local unit=STATIC:Find(DCSStatic)
-
-        -- Increase counter.
-        if Coalition==coalition.side.RED then
-          Nred=Nred+1
-        elseif Coalition==coalition.side.BLUE then
-          Nblu=Nblu+1
-        elseif Coalition==coalition.side.NEUTRAL then
-          Nnut=Nnut+1
+        
+        -- Inside zone.
+        local inzone=true
+        if self.zoneType==OPSZONE.ZoneType.Polygon then
+        
+          local Vec3=DCSStatic:getPoint()
+                  
+          inzone=self.zone:IsVec3InZone(Vec3)
+          
         end
         
-        -- Debug info
-        if self.verbose>=4 then        
-          self:I(self.lid..string.format("Found static %s (coalition=%d)", DCSStatic:getName(), Coalition))
+        if inzone then                  
+
+          -- Increase counter.
+          if Coalition==coalition.side.RED then
+            Nred=Nred+1
+          elseif Coalition==coalition.side.BLUE then
+            Nblu=Nblu+1
+          elseif Coalition==coalition.side.NEUTRAL then
+            Nnut=Nnut+1
+          end
+          
+          -- Debug info
+          if self.verbose>=4 then        
+            self:I(self.lid..string.format("Found static %s (coalition=%d)", DCSStatic:getName(), Coalition))
+          end
+          
         end
       
       elseif ObjectCategory==Object.Category.SCENERY then

@@ -2084,6 +2084,52 @@ function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlph
   return self
 end
 
+
+--- Get the smallest circular zone encompassing all points points of the polygon zone. 
+-- @param #ZONE_POLYGON_BASE self
+-- @param #string ZoneName (Optional) Name of the zone. Default is the name of the polygon zone.
+-- @param #boolean DoNotRegisterZone (Optional) If `true`, zone is not registered.
+-- @return #ZONE_RADIUS The circular zone.
+function ZONE_POLYGON_BASE:GetZoneRadius(ZoneName, DoNotRegisterZone)
+
+  local center=self:GetVec2()
+
+  local radius=0
+    
+  for _,_vec2 in pairs(self._.Polygon) do
+    local vec2=_vec2 --DCS#Vec2
+    
+    local r=UTILS.VecDist2D(center, vec2)
+    
+    if r>radius then
+      radius=r
+    end
+    
+  end
+  
+  local zone=ZONE_RADIUS:New(ZoneName or self.ZoneName, center, radius, DoNotRegisterZone)
+
+  return zone
+end
+
+
+--- Get the smallest rectangular zone encompassing all points points of the polygon zone. 
+-- @param #ZONE_POLYGON_BASE self
+-- @param #string ZoneName (Optional) Name of the zone. Default is the name of the polygon zone.
+-- @param #boolean DoNotRegisterZone (Optional) If `true`, zone is not registered.
+-- @return #ZONE_POLYGON The rectangular zone.
+function ZONE_POLYGON_BASE:GetZoneQuad(ZoneName, DoNotRegisterZone)
+ 
+  local vec1, vec3=self:GetBoundingVec2()
+  
+  local vec2={x=vec1.x, y=vec3.y}
+  local vec4={x=vec3.x, y=vec1.y}
+  
+  local zone=ZONE_POLYGON_BASE:New(ZoneName or self.ZoneName, {vec1, vec2, vec3, vec4})
+
+  return zone
+end
+
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_POLYGON_BASE self
 -- @param Utilities.Utils#SMOKECOLOR SmokeColor The smoke color.
@@ -2284,6 +2330,32 @@ function ZONE_POLYGON_BASE:GetBoundingSquare()
   end
 
   return { x1 = x1, y1 = y1, x2 = x2, y2 = y2 }
+end
+
+--- Get the bounding 2D vectors of the polygon.
+-- @param #ZONE_POLYGON_BASE self
+-- @return DCS#Vec2 Coordinates of western-southern-lower vertex of the box.
+-- @return DCS#Vec2 Coordinates of eastern-northern-upper vertex of the box.
+function ZONE_POLYGON_BASE:GetBoundingVec2()
+
+  local x1 = self._.Polygon[1].x
+  local y1 = self._.Polygon[1].y
+  local x2 = self._.Polygon[1].x
+  local y2 = self._.Polygon[1].y
+
+  for i = 2, #self._.Polygon do
+    self:T2( { self._.Polygon[i], x1, y1, x2, y2 } )
+    x1 = ( x1 > self._.Polygon[i].x ) and self._.Polygon[i].x or x1
+    x2 = ( x2 < self._.Polygon[i].x ) and self._.Polygon[i].x or x2
+    y1 = ( y1 > self._.Polygon[i].y ) and self._.Polygon[i].y or y1
+    y2 = ( y2 < self._.Polygon[i].y ) and self._.Polygon[i].y or y2
+
+  end
+  
+  local vec1={x=x1, y=y1}
+  local vec2={x=x2, y=y2}
+
+  return vec1, vec2
 end
 
 --- Draw a frontier on the F10 map with small filled circles.

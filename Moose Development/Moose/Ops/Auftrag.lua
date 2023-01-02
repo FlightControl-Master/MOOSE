@@ -7592,7 +7592,7 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
   mission.missionTask=ENUMS.MissionTask.CAP
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
-  mission.missionSpeed = UTILS.KnotsToAltKIAS(Speed or 350,Altitude)
+  mission.missionSpeed = UTILS.KnotsToKmph(UTILS.KnotsToAltKIAS(Speed or 350, Altitude))
 
   mission.categories={AUFTRAG.Category.AIRCRAFT}
 
@@ -11749,15 +11749,72 @@ function AUFTRAG:_SetLogID()
 end
 
 
---- Update DCS task.
+--- Get request ID from legion this mission requested assets from
 -- @param #AUFTRAG self
--- @return #AUFTRAG self
-function AUFTRAG:_UpdateTask()
+-- @param Ops.Legion#LEGION Legion The legion from which to get the request ID.
+-- @return #number Request ID (if any).
+function AUFTRAG:_GetRequestID(Legion)
 
+  local requestid=nil
+  local name=nil
   
+  if type(Legion)=="string" then
+    name=Legion
+  else
+    name=Legion.alias
+  end
+
+  if name then
+    requestid=self.requestID[name]
+  end  
+
+  return nil
+end
+
+
+--- Get request from legion this mission requested assets from.
+-- @param #AUFTRAG self
+-- @param Ops.Legion#LEGION Legion The legion from which to get the request ID.
+-- @return Functional.Warehouse#WAREHOUSE.PendingItem Request.
+function AUFTRAG:_GetRequest(Legion)
+
+  local request=nil
+  
+  local requestID=self:_GetRequestID(Legion)
+  
+  if requestID then
+    request=Legion:GetRequestByID(requestID)
+  end
+
+  return request
+end
+
+--- Set request ID from legion this mission requested assets from
+-- @param #AUFTRAG self
+-- @param Ops.Legion#LEGION Legion The legion from which to get the request ID.
+-- @param #number RequestID Request ID.
+-- @return #AUFTRAG self
+function AUFTRAG:_SetRequestID(Legion, RequestID)
+
+  local requestid=nil
+  local name=nil
+  
+  if type(Legion)=="string" then
+    name=Legion
+  else
+    name=Legion.alias
+  end
+
+  if name then
+    if self.requestID[name] then
+      self:I(self.lid..string.format("WARNING: Mission already has a request ID=%d!", self.requestID[name]))
+    end
+    self.requestID[name]=RequestID
+  end  
 
   return self
 end
+
 
 --- Update mission F10 map marker.
 -- @param #AUFTRAG self
