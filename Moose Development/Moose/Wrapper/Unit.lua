@@ -229,7 +229,7 @@ function UNIT:ReSpawnAt( Coordinate, Heading )
     SpawnGroupTemplate.y = Coordinate.z
     
     self:F( #SpawnGroupTemplate.units )
-    for UnitID, UnitData in pairs( SpawnGroup:GetUnits() ) do
+    for UnitID, UnitData in pairs( SpawnGroup:GetUnits() or {} ) do
       local GroupUnit = UnitData -- #UNIT
       self:F( GroupUnit:GetName() )
       if GroupUnit:IsAlive() then
