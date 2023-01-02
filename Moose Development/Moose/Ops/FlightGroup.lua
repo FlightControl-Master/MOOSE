@@ -3772,7 +3772,7 @@ end
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitude, Updateroute)
 
-  self:I(self.lid..string.format("AddWaypoint | Speed = %f | After Wpt = %d | Alt = %d | Updateroute = %s",Speed or -1,AfterWaypointWithID or -1 ,Altitude or -1,tostring(Updateroute))
+  self:I(self.lid..string.format("AddWaypoint | Speed = %f | After Wpt = %d | Alt = %d | Updateroute = %s",Speed or -1,AfterWaypointWithID or -1 ,Altitude or -1,tostring(Updateroute)))
   
   -- Create coordinate.
   local coordinate=self:_CoordinateFromObject(Coordinate)  
