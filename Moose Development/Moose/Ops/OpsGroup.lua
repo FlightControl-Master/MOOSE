@@ -1539,49 +1539,67 @@ function OPSGROUP:SetReturnOnOutOfAmmo()
   return self
 end
 
-
 --- Check if an element of the group has line of sight to a coordinate.
 -- @param #OPSGROUP self
--- @param Core.Point#COORDINATE Coordinate The position to which we check the LoS.
+-- @param Core.Point#COORDINATE Coordinate The position to which we check the LoS. Can also be a DCS#Vec3.
 -- @param #OPSGROUP.Element Element The (optinal) element. If not given, all elements are checked.
 -- @param DCS#Vec3 OffsetElement Offset vector of the element.
 -- @param DCS#Vec3 OffsetCoordinate Offset vector of the coordinate.
 -- @return #boolean If `true`, there is line of sight to the specified coordinate.
 function OPSGROUP:HasLoS(Coordinate, Element, OffsetElement, OffsetCoordinate)
 
-  -- Target vector.
-  local Vec3=Coordinate:GetVec3()
+  if Coordinate then
 
-  -- Optional offset.
-  if OffsetCoordinate then
-    Vec3=UTILS.VecAdd(Vec3, OffsetCoordinate)
-  end
-
-  --- Function to check LoS for an element of the group.
-  local function checklos(element)
-    local vec3=element.unit:GetVec3()
-    if OffsetElement then
-      vec3=UTILS.VecAdd(vec3, OffsetElement)
+    -- Target vector.
+    local Vec3={x=Coordinate.x, y=Coordinate.y, z=Coordinate.z} --Coordinate:GetVec3()
+  
+    -- Optional offset.
+    if OffsetCoordinate then
+      Vec3=UTILS.VecAdd(Vec3, OffsetCoordinate)
     end
-    local _los=land.isVisible(vec3, Vec3)
-    --self:I({los=_los, source=vec3, target=Vec3})
-    return _los
-  end
-
-  if Element then
-    local los=checklos(Element)
-    return los
-  else
-
-    for _,element in pairs(self.elements) do
-      -- Get LoS of this element.
-      local los=checklos(element)
-      if los then
-        return true
+  
+    --- Function to check LoS for an element of the group.
+    local function checklos(vec3)
+      if vec3 then
+        if OffsetElement then
+          vec3=UTILS.VecAdd(vec3, OffsetElement)
+        end
+        local _los=land.isVisible(vec3, Vec3)
+        --self:I({los=_los, source=vec3, target=Vec3})
+        return _los
+      end
+      return nil      
+    end
+  
+    if Element then
+      -- Check los for the given element.
+      if Element.unit and Element.unit:IsAlive() then
+        local vec3=Element.unit:GetVec3()
+        local los=checklos(Element)
+        return los
+      end
+    else
+  
+      -- Check if any element has los.
+      local gotit=false
+      for _,_element in pairs(self.elements) do
+        local element=_element --#OPSGROUP.Element
+        if element and element.unit and element.unit:IsAlive() then
+          gotit=true
+          local vec3=element.unit:GetVec3()
+          -- Get LoS of this element.
+          local los=checklos(vec3)
+          if los then
+            return true
+          end
+        end
+      end
+  
+      if gotit then
+        return false
       end
     end
-
-    return false
+    
   end
 
   return nil
