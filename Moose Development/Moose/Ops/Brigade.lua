@@ -572,9 +572,9 @@ function BRIGADE:onafterStatus(From, Event, To)
     self:I(self.lid..text)
   end
   
-  -------------------
+  ---------------------
   -- Refuelling Info --
-  -------------------
+  ---------------------
   if self.verbose>=4 then
     local text="Refuelling Zones:"
     for i,_refuellingzone in pairs(self.refuellingZones) do
@@ -583,7 +583,20 @@ function BRIGADE:onafterStatus(From, Event, To)
       text=text..string.format("\n* %s: Mission status=%s, suppliers=%d", refuellingzone.zone:GetName(), refuellingzone.mission:GetState(), refuellingzone.mission:CountOpsGroups())      
     end
     self:I(self.lid..text)
-  end  
+  end
+  
+  ----------------
+  -- Asset Info --
+  ----------------
+  if self.verbose>=5 then
+    local text="Assets in stock:"
+    for i,_asset in pairs(self.stock) do
+      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+      -- Info text.
+      text=text..string.format("\n* %s: spawned=%s", asset.spawngroupname, tostring(asset.spawned))      
+    end
+    self:I(self.lid..text)
+  end    
 
 end
 
