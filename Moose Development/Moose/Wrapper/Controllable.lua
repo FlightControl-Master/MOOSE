@@ -1416,7 +1416,7 @@ end
 -- @param #CONTROLLABLE self
 -- @param Core.Zone#ZONE Zone The zone where to land.
 -- @param #number Duration The duration in seconds to stay on the ground.
--- @return #CONTROLLABLE self
+-- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskLandAtZone( Zone, Duration, RandomPoint )
 
   -- Get landing point
