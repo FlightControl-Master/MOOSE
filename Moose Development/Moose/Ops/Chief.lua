@@ -218,6 +218,7 @@
 -- * `AUFTRAG.Type.ARTY`
 -- * `AUFTRAG.Type.PATROLZONE`
 -- * `AUFTRAG.Type.ONGUARD`
+-- * `AUFTRAG.Type.CAPTUREZONE`
 -- * `AUFTRAG.Type.RECON`
 -- * `AUFTRAG.Type.AMMOSUPPLY`
 -- * `AUFTRAG.Type.BOMBING`
@@ -330,7 +331,7 @@ CHIEF.Strategy = {
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.5.3"
+CHIEF.version="0.6.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -3033,6 +3034,9 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
       LEGION.UnRecruitAssets(assets)
       return false
     end
+
+    -- Debug messgage.
+    self:T2(self.lid..string.format("Recruited %d assets for mission %s", #assets, MissionType))
     
   
     if MissionType==AUFTRAG.Type.PATROLZONE or MissionType==AUFTRAG.Type.ONGUARD then
@@ -3040,10 +3044,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
       ---
       -- PATROLZONE or ONGUARD
       ---
-     
-      -- Debug messgage.
-      self:T2(self.lid..string.format("Recruited %d assets for PATROL mission", #assets))
-        
+             
       if MissionType==AUFTRAG.Type.PATROLZONE then
         mission=AUFTRAG:NewPATROLZONE(TargetZone)
         
@@ -3053,6 +3054,14 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
       
       -- Engage detected targets.
       mission:SetEngageDetected(25, {"Ground Units", "Light armed ships", "Helicopters"})            
+      
+    elseif MissionType==AUFTRAG.Type.CAPTUREZONE then
+
+      ---
+      -- CAPTUREZONE
+      ---
+      
+      mission=AUFTRAG:NewCAPTUREZONE(StratZone.opszone, self.coalition)
       
     elseif MissionType==AUFTRAG.Type.CASENHANCED then
     
@@ -3088,6 +3097,9 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
           Speed = UTILS.KmphToKnots(assets[1].speedmax * 0.7) or 200
         end
       end
+      
+      -- Here we need a circular zone.
+      TargetZone=StratZone.opszone.zoneCircular
       
       -- Leg length.
       local Leg = TargetZone:GetRadius() <= 10000 and 5 or UTILS.MetersToNM(TargetZone:GetRadius())
@@ -3163,9 +3175,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
     if mission then
 
       -- Add assets to mission.
-      for _,asset in pairs(assets) do
-        mission:AddAsset(asset)
-      end
+      mission:_AddAssets(assets)
           
       -- Assign mission to legions.
       self:MissionAssign(mission, legions)

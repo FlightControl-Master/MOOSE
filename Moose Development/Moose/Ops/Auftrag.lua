@@ -56,6 +56,8 @@
 -- @field #table DCStask DCS task structure.
 -- @field #number Ncasualties Number of own casualties during mission.
 -- @field #number Nkills Number of (enemy) units killed by assets of this mission.
+-- @field #number Ndead Number of assigned groups that are dead.
+-- @field #number Nassigned Number of assigned groups.
 -- @field #number Nelements Number of elements (units) assigned to mission.
 -- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
 -- @field #number Tover Mission abs. time stamp, when mission was over.
@@ -92,6 +94,7 @@
 -- @field #number refuelSystem Refuel type (boom or probe) for TANKER missions.
 --
 -- @field Wrapper.Group#GROUP escortGroup The group to be escorted.
+-- @field #string escortGroupName Name of the escorted group.
 -- @field DCS#Vec3 escortVec3 The 3D offset vector from the escorted group to the escort group.
 --
 -- @field #number facDesignation FAC designation type.
@@ -3597,7 +3600,7 @@ function AUFTRAG:IsExecuting(AllGroups)
 
     local N    
     if self.Nassigned then
-      N=self.Nassigned-self.Ndead      
+      N=self.Nassigned-self.Ndead
     else
       N=self:CountOpsGroups()   
     end
@@ -3885,6 +3888,8 @@ function AUFTRAG:onafterStatus(From, Event, To)
 
   -- Number of alive groups attached to this mission.
   local Ngroups=self:CountOpsGroups()
+  
+  local Nassigned=self.Nassigned and self.Nassigned-self.Ndead or 0
 
   -- Check if mission is not OVER yet.
   if self:IsNotOver() then
@@ -3920,7 +3925,13 @@ function AUFTRAG:onafterStatus(From, Event, To)
       self:T(self.lid.."No targets left cancelling mission!")
       self:Cancel()
 
-    elseif self:IsExecuting() and ((not self.reinforce) or self.reinforce==0) then
+    elseif self:IsExecuting() and ((not self.reinforce) or (self.reinforce==0 and Nassigned<=0)) then
+    
+--      env.info("Mission Done:")
+--      env.info(string.format("Nreinforce= %d", self.reinforce or 0))      
+--      env.info(string.format("Nassigned = %d", self.Nassigned))
+--      env.info(string.format("Ndead     = %d", self.Ndead))
+--      env.info(string.format("Nass-Ndead= %d", Nassigned))
 
       -- Had the case that mission was in state Executing but all assigned groups were dead.
       -- TODO: might need to loop over all assigned groups
@@ -3980,6 +3991,17 @@ function AUFTRAG:onafterStatus(From, Event, To)
     end
     self:I(self.lid..text)
   end
+  
+  -- Group info.
+  if self.verbose>=3 then
+    -- Data on assigned groups.
+    local text=string.format("Assets [N=%d,Nassigned=%s, Ndead=%s]:", self.Nassets or 0, self.Nassigned or 0, self.Ndead or 0)
+    for i,_asset in pairs(self.assets or {}) do
+      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+      text=text..string.format("\n[%d] %s: spawned=%s, requested=%s, reserved=%s", i, asset.spawngroupname, tostring(asset.spawned), tostring(asset.requested), tostring(asset.reserved))
+    end
+    self:I(self.lid..text)
+  end  
 
   -- Ready to evaluate mission outcome?
   local ready2evaluate=self.Tover and Tnow-self.Tover>=self.dTevaluate or false
@@ -4398,11 +4420,9 @@ function AUFTRAG:GetGroupEgressWaypointUID(opsgroup)
   end
 end
 
-
-
---- Check if all flights are done with their mission (or dead).
+--- Check if all groups are done with their mission (or dead).
 -- @param #AUFTRAG self
--- @return #boolean If true, all flights are done with the mission.
+-- @return #boolean If `true`, all groups are done with the mission.
 function AUFTRAG:CheckGroupsDone()
 
   -- Check status of all OPS groups.
@@ -4410,7 +4430,7 @@ function AUFTRAG:CheckGroupsDone()
     local groupdata=data --#AUFTRAG.GroupData
     if groupdata then
       if not (groupdata.status==AUFTRAG.GroupStatus.DONE or groupdata.status==AUFTRAG.GroupStatus.CANCELLED) then
-        -- At least this flight is not DONE or CANCELLED.
+        -- At least this group is not DONE or CANCELLED.
         self:T2(self.lid..string.format("CheckGroupsDone: OPSGROUP %s is not DONE or CANCELLED but in state %s. Mission NOT DONE!", groupdata.opsgroup.groupname, groupdata.status:upper()))
         return false
       end
@@ -4451,12 +4471,12 @@ function AUFTRAG:CheckGroupsDone()
   end
   
   -- Check if there is still reinforcement to be expected.
-  if self:IsExecuting() and self.reinforce and self.reinforce>0 then
+  if self:IsExecuting() and self.reinforce and (self.reinforce>0 or self.Nassigned-self.Ndead>0) then
     self:T2(self.lid..string.format("CheckGroupsDone: Mission is still in state %s [FSM=%s] and reinfoce=%d. Mission NOT DONE!", self.status, self:GetState(), self.reinforce))
     return false  
   end
 
-  -- It could be that all flights were destroyed on the way to the mission execution waypoint.
+  -- It could be that all groups were destroyed on the way to the mission execution waypoint.
   -- TODO: would be better to check if everybody is dead by now.
   if self:IsStarted() and self:CountOpsGroups()==0 then
     self:T(self.lid..string.format("CheckGroupsDone: Mission is STARTED state %s [FSM=%s] but count of alive OPSGROUP is zero. Mission DONE!", self.status, self:GetState()))
@@ -4591,6 +4611,7 @@ end
 function AUFTRAG:onafterGroupDead(From, Event, To, OpsGroup)
 
   local asset=self:GetAssetByName(OpsGroup.groupname)
+  
   if asset then
     self:AssetDead(asset)
   end
@@ -4683,7 +4704,7 @@ function AUFTRAG:onafterCancel(From, Event, To)
       -- Debug info.
       self:T(self.lid..string.format("LEGION %s will cancel the mission. Will wait for mission DONE before evaluation!", legion.alias))
 
-      -- Legion will cancel all flight missions and remove queued request from warehouse queue.
+      -- Legion will cancel all group's missions and remove queued request from warehouse queue.
       legion:MissionCancel(self)
 
     end
@@ -4949,7 +4970,7 @@ function AUFTRAG:onafterRepeat(From, Event, To)
     end
 
   end
-  -- No flight data.
+  -- No group data.
   self.groupdata={}
 
   -- Reset casualties and units assigned.
@@ -4967,7 +4988,7 @@ function AUFTRAG:onafterRepeat(From, Event, To)
 
 end
 
---- On after "Stop" event. Remove mission from AIRWING and FLIGHTGROUP mission queues.
+--- On after "Stop" event. Remove mission from LEGION and OPSGROUP mission queues.
 -- @param #AUFTRAG self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -5006,7 +5027,7 @@ function AUFTRAG:onafterStop(From, Event, To)
   -- No mission assets.
   self.assets={}
 
-  -- No flight data.
+  -- No group data.
   self.groupdata={}
 
   -- Clear pending scheduler calls.
@@ -5811,7 +5832,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     DCStask.id="OpsTransport"
 
-    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}
     DCStask.params=param
 
@@ -5841,7 +5862,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     DCStask.id=AUFTRAG.SpecialTask.FORMATION
 
-    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}
     param.unitname=self:GetTargetName()
     param.offsetX=200
@@ -5892,7 +5913,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     DCStask.id=AUFTRAG.SpecialTask.BARRAGE
 
-    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}
     param.zone=self:GetObjective()
     param.altitude=self.artyAltitude
@@ -5916,7 +5937,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     DCStask.id=AUFTRAG.SpecialTask.PATROLZONE
 
-    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}
     param.zone=self:GetObjective()
     param.altitude=self.missionAltitude
@@ -5936,7 +5957,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     DCStask.id=AUFTRAG.SpecialTask.CAPTUREZONE
 
-    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}
     DCStask.params=param
 
@@ -5952,7 +5973,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     DCStask.id=AUFTRAG.SpecialTask.PATROLZONE
 
-    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}
     param.zone=self:GetObjective()
     param.altitude=self.missionAltitude
