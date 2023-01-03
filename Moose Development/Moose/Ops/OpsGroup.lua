@@ -5065,6 +5065,24 @@ function OPSGROUP:GetMissionByID(id)
   return nil
 end
 
+--- Check if a given mission is already in the queue.
+-- @param #OPSGROUP self
+-- @param Ops.Auftrag#AUFTRAG Mission the mission to check
+-- @return #boolean If `true`, the mission is in the queue.
+function OPSGROUP:IsMissionInQueue(Mission)
+
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+
+    if mission.auftragsnummer==Mission.auftragsnummer then
+      return true
+    end
+
+  end
+
+  return false
+end
+
 --- Get mission by its task id.
 -- @param #OPSGROUP self
 -- @param #number taskid The id of the (waypoint) task of the mission.
