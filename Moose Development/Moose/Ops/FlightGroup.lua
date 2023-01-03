@@ -148,7 +148,7 @@ FLIGHTGROUP = {
   RTBRecallCount     =     0,
   playerSettings     =    {},
   playerWarnings     =    {},
-  prohibitAB         =   true,
+  prohibitAB         =   false,
   jettisonEmptyTanks =   true,
   jettisonWeapons    =   true, -- that's actually a negative option like prohibitAB
 }
