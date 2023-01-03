@@ -56,6 +56,9 @@
 -- @field #number RTBRecallCount Number that counts RTB calls.
 -- @field Ops.FlightControl#FLIGHTCONTROL.HoldingStack stack Holding stack.
 -- @field #boolean isReadyTO Flight is ready for takeoff. This is for FLIGHTCONTROL.
+-- @field #boolean prohibitAB Disallow (true) or allow (false) AI to use the afterburner.
+-- @field #boolean jettisonEmptyTanks Allow (true) or disallow (false) AI to jettison empty fuel tanks.
+-- @field #boolean jettisonWeapons Allow (true) or disallow (false) AI to jettison weapons if in danger.
 --
 -- @extends Ops.OpsGroup#OPSGROUP
 
@@ -145,6 +148,9 @@ FLIGHTGROUP = {
   RTBRecallCount     =     0,
   playerSettings     =    {},
   playerWarnings     =    {},
+  prohibitAB         =   false,
+  jettisonEmptyTanks =   true,
+  jettisonWeapons    =   true, -- that's actually a negative option like prohibitAB
 }
 
 
@@ -210,7 +216,7 @@ FLIGHTGROUP.Players={}
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.8.2"
+FLIGHTGROUP.version="0.8.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -407,6 +413,52 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetVTOL()
   self.isVTOL=true
+  return self
+end
+
+--- Set if aircraft is **not** allowed to use afterburner.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetProhibitAfterburner()
+  self.prohibitAB = true
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_AB, true)
+  end
+  return self 
+end
+
+--- Set if aircraft is allowed to use afterburner.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetAllowAfterburner()
+  self.prohibitAB = false
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_AB, false)
+  end
+  return self 
+end
+
+--- Set if aircraft is allowed to drop empty fuel tanks - set to true to allow, and false to forbid it.
+-- @param #FLIGHTGROUP self
+-- @param #boolean Switch true or false
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetJettisonEmptyTanks(Switch)
+  self.jettisonEmptyTanks = Switch
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():SetOption(AI.Option.Air.id.JETT_TANKS_IF_EMPTY, Switch)
+  end
+  return self
+end
+
+--- Set if aircraft is allowed to drop weapons to escape danger - set to true to allow, and false to forbid it.
+-- @param #FLIGHTGROUP self
+-- @param #boolean Switch true or false
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetJettisonWeapons(Switch)
+  self.jettisonWeapons = not Switch
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_JETT, not Switch)
+  end
   return self
 end
 
@@ -1759,9 +1811,10 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     end
 
     -- TODO: make this input.
-    self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_JETT, true)
-    self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_AB,   true)   -- Does not seem to work. AI still used the after burner.
-    self:GetGroup():SetOption(AI.Option.Air.id.RTB_ON_BINGO, false)
+    self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_JETT, self.jettisonWeapons)
+    self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_AB,   self.prohibitAB)   -- Does not seem to work. AI still used the after burner.
+    self:GetGroup():SetOption(AI.Option.Air.id.RTB_ON_BINGO, false)    
+    self:GetGroup():SetOption(AI.Option.Air.id.JETT_TANKS_IF_EMPTY, self.jettisonEmptyTanks)
     --self.group:SetOption(AI.Option.Air.id.RADAR_USING, AI.Option.Air.val.RADAR_USING.FOR_CONTINUOUS_SEARCH)
 
     -- Update route.

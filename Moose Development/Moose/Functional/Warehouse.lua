@@ -302,8 +302,8 @@
 --
 -- Initial Spawn states is as follows:
 --    GROUND: ROE, "Return Fire" Alarm, "Green"
---    AIR: 	ROE, "Return Fire" Reaction to Threat, "Passive Defense"
---    NAVAL	ROE, "Return Fire" Alarm,"N/A"
+--    AIR:  ROE, "Return Fire" Reaction to Threat, "Passive Defense"
+--    NAVAL ROE, "Return Fire" Alarm,"N/A"
 --
 -- A request can be added by the @{#WAREHOUSE.AddRequest}(*warehouse*, *AssetDescriptor*, *AssetDescriptorValue*, *nAsset*, *TransportType*, *nTransport*, *Prio*, *Assignment*) function.
 -- The parameters are

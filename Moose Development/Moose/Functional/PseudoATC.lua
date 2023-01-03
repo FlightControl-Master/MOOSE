@@ -45,6 +45,7 @@
 -- @field #number talt Interval in seconds between reporting altitude until touchdown. Default 3 sec.
 -- @field #boolean chatty Display some messages on events like take-off and touchdown.
 -- @field #boolean eventsmoose If true, events are handled by MOOSE. If false, events are handled directly by DCS eventhandler.
+-- @field #boolean reportplayername If true, use playername not callsign on callouts
 -- @extends Core.Base#BASE
 
 --- Adds some rudimentary ATC functionality via the radio menu.
@@ -88,6 +89,7 @@ PSEUDOATC={
   talt=3,
   chatty=true,
   eventsmoose=true,
+  reportplayername = false,
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -98,7 +100,7 @@ PSEUDOATC.id="PseudoATC | "
 
 --- PSEUDOATC version.
 -- @field #number version
-PSEUDOATC.version="0.9.2"
+PSEUDOATC.version="0.9.3"
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -181,6 +183,13 @@ end
 -- @param #number duration Time in seconds. Default is 30 sec.
 function PSEUDOATC:SetMessageDuration(duration)
   self.mdur=duration or 30
+end
+
+--- Use player name, not call sign, in callouts
+-- @param #PSEUDOATC self
+function PSEUDOATC:SetReportPlayername()
+  self.reportplayername = true
+  return self
 end
 
 --- Set time interval after which the F10 radio menu is refreshed.
@@ -485,6 +494,9 @@ function PSEUDOATC:PlayerTakeOff(unit, place)
   -- Bye-Bye message.
   if place and self.chatty then
     local text=string.format("%s, %s, you are airborne. Have a safe trip!", place, CallSign)
+	if self.reportplayername then
+		text=string.format("%s, %s, you are airborne. Have a safe trip!", place, PlayerName)
+	end
     MESSAGE:New(text, self.mdur):ToGroup(group)
   end
 
@@ -844,7 +856,8 @@ function PSEUDOATC:ReportHeight(GID, UID, dt, _clear)
     local position=unit:GetCoordinate()
     local height=get_AGL(position)
     local callsign=unit:GetCallsign()
-    
+    local PlayerName=self.group[GID].player[UID].playername
+	
     -- Settings.
     local settings=_DATABASE:GetPlayerSettings(self.group[GID].player[UID].playername) or _SETTINGS --Core.Settings#SETTINGS
     
@@ -856,7 +869,9 @@ function PSEUDOATC:ReportHeight(GID, UID, dt, _clear)
     
     -- Message text.
     local _text=string.format("%s, your altitude is %s AGL.", callsign, Hs)
-    
+    if self.reportplayername then
+		_text=string.format("%s, your altitude is %s AGL.", PlayerName, Hs)
+	end
     -- Append flight level.
     if _clear==false then
       _text=_text..string.format(" FL%03d.", position.y/30.48)
