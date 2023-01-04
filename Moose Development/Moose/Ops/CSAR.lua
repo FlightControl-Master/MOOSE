@@ -2107,10 +2107,11 @@ function CSAR:_AddBeaconToGroup(_group, _freq)
     if _group:IsAlive() then
       local _radioUnit = _group:GetUnit(1)
       if _radioUnit then    
+	   local name = _radioUnit:GetName()
         local Frequency = _freq -- Freq in Hertz
         local Sound =  "l10n/DEFAULT/"..self.radioSound
         local vec3 = _radioUnit:GetVec3() or _radioUnit:GetPositionVec3() or {x=0,y=0,z=0}
-        trigger.action.radioTransmission(Sound, vec3, 0, false, Frequency, self.ADFRadioPwr or 1000) -- Beacon in MP only runs for exactly 30secs straight
+        trigger.action.radioTransmission(Sound, vec3, 0, false, Frequency, self.ADFRadioPwr or 1000,name..math.random(1,10000)) -- Beacon in MP only runs for exactly 30secs straight
       end
     end
     return self
