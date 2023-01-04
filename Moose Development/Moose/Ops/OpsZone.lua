@@ -506,7 +506,7 @@ function OPSZONE:SetMarkZone(Switch, ReadOnly)
       self.marker:Remove()
     end
     self.marker=nil
-    --self.marker=false
+    self.markZone=false
   end
   return self
 end

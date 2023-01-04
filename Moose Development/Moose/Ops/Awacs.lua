@@ -1840,10 +1840,10 @@ function AWACS:SetAwacsDetails(CallSign,CallSignNo,Angels,Speed,Heading,Leg)
   self:T(self.lid.."SetAwacsDetails")
   self.CallSign = CallSign or CALLSIGN.AWACS.Magic
   self.CallSignNo = CallSignNo or 1
-  self.Angels = Angels or 25
+  self.AwacsAngels = Angels or 25
   local speed = Speed or 250
   self.SpeedBase = speed
-  self.Speed = UTILS.KnotsToAltKIAS(speed,self.Angels*1000)
+  self.Speed = UTILS.KnotsToAltKIAS(speed,self.AwacsAngels*1000)
   self.Heading = Heading or 0
   self.Leg = Leg or 25
   return self

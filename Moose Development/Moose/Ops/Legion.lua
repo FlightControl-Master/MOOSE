@@ -158,12 +158,14 @@ function LEGION:New(WarehouseName, LegionName)
   -- @function [parent=#LEGION] MissionRequest
   -- @param #LEGION self
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  -- @param #table Assets (Optional) Assets to add.
 
   --- Triggers the FSM event "MissionRequest" after a delay.
   -- @function [parent=#LEGION] __MissionRequest
   -- @param #LEGION self
   -- @param #number delay Delay in seconds.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  -- @param #table Assets (Optional) Assets to add.
 
   --- On after "MissionRequest" event.
   -- @function [parent=#LEGION] OnAfterMissionRequest
@@ -172,6 +174,7 @@ function LEGION:New(WarehouseName, LegionName)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  -- @param #table Assets (Optional) Assets to add.
 
 
   --- Triggers the FSM event "MissionCancel" after a delay.
@@ -671,13 +674,15 @@ function LEGION:CheckMissionQueue()
     if mission:IsExecuting() and mission.reinforce and mission.reinforce>0 then
     
       -- Number of current opsgroups.
-      local N=mission:CountOpsGroups()
+      local N=mission.Nassigned-mission.Ndead
       
       if N<mission.NassetsMin then
         reinforce=true
       end
       
-      self:I(self.lid..string.format("Checking Reinforcement N=%d, Nmin=%d ==> Reinforce=%s", N, mission.NassetsMin, tostring(reinforce)))      
+      -- Debug info.
+      self:T(self.lid..string.format("Checking Reinforcement Nreinf=%d, Nops=%d, Nassigned=%d, Ndead=%d, Nmin=%d ==> Reinforce=%s", 
+      mission.reinforce, N, mission.Nassigned, mission.Ndead, mission.NassetsMin, tostring(reinforce)))      
     end
 
     -- Firstly, check if mission is due?
@@ -689,8 +694,8 @@ function LEGION:CheckMissionQueue()
       -- Did we find enough assets?
       if recruited then
     
-        -- Reserve assets and add to mission.
-        mission:_AddAssets(assets)
+        -- Add to mission.
+        --mission:_AddAssets(assets)
   
         -- Recruit asset for escorting recruited mission assets.
         local EscortAvail=self:RecruitAssetsForEscort(mission, assets)
@@ -722,7 +727,7 @@ function LEGION:CheckMissionQueue()
         if EscortAvail and TransportAvail then
         
           -- Got a mission.
-          self:MissionRequest(mission)
+          self:MissionRequest(mission, assets)
           
           -- Reduce number of reinforcements.
           if reinforce then
@@ -846,6 +851,7 @@ end
 -- @param #number nAsset Number of groups requested that match the asset specification.
 -- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
 -- @param #string Assignment A keyword or text that can later be used to identify this request and postprocess the assets.
+-- @return Functional.Warehouse#WAREHOUSE.Queueitem The request.
 function LEGION:_AddRequest(AssetDescriptor, AssetDescriptorValue, nAsset, Prio, Assignment)
 
   -- Defaults.
@@ -889,6 +895,7 @@ function LEGION:_AddRequest(AssetDescriptor, AssetDescriptorValue, nAsset, Prio,
   self.alias, self.alias, request.assetdesc, descval, tostring(request.nasset), request.transporttype, tostring(request.ntransport))
   self:_DebugMessage(text, 5)
 
+  return request
 end
 
 
@@ -898,10 +905,14 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
-function LEGION:onafterMissionRequest(From, Event, To, Mission)
+-- @param #table Assets (Optional) Assets to add.
+function LEGION:onafterMissionRequest(From, Event, To, Mission, Assets)
 
   -- Debug info.
   self:T(self.lid..string.format("MissionRequest for mission %s [%s]", Mission:GetName(), Mission:GetType()))
+  
+  -- Take provided assets or that of the mission.
+  Assets=Assets or Mission.assets
 
   -- Set mission status from QUEUED to REQUESTED.
   Mission:Requested()
@@ -917,7 +928,7 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
   -- Assets to be requested.
   local Assetlist={}
 
-  for _,_asset in pairs(Mission.assets) do
+  for _,_asset in pairs(Assets) do
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
 
     -- Check that this asset belongs to this Legion warehouse.
@@ -929,7 +940,7 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
         -- Spawned Assets
         ---
   
-        if asset.flightgroup then
+        if asset.flightgroup and not asset.flightgroup:IsMissionInQueue(Mission) then
           
           -- Add new mission.
           asset.flightgroup:AddMission(Mission)
@@ -992,11 +1003,13 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
           
           end
           
+          Mission:AddAsset(asset)
+          
           -- Trigger event.
           self:__OpsOnMission(2, asset.flightgroup, Mission)
   
         else
-          self:E(self.lid.."ERROR: OPSGROUP for asset does NOT exist but it seems to be SPAWNED (asset.spawned=true)!")
+          self:T(self.lid.."ERROR: OPSGROUP for asset does NOT exist but it seems to be SPAWNED (asset.spawned=true)!")
         end
   
       else
@@ -1040,22 +1053,29 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
       if Mission.type==AUFTRAG.Type.ALERT5 then
         asset.takeoffType=COORDINATE.WaypointType.TakeOffParking
       end
+      
+      Mission:AddAsset(asset)
 
     end
     
     -- Set assignment.
     -- TODO: Get/set functions for assignment string.
     local assignment=string.format("Mission-%d", Mission.auftragsnummer)
+    
+    --local request=Mission:_GetRequest(self)
 
     -- Add request to legion warehouse.
     --self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, Assetlist, #Assetlist, nil, nil, Mission.prio, assignment)
-    self:_AddRequest(WAREHOUSE.Descriptor.ASSETLIST, Assetlist, #Assetlist, Mission.prio, assignment)
+    local request=self:_AddRequest(WAREHOUSE.Descriptor.ASSETLIST, Assetlist, #Assetlist, Mission.prio, assignment)
+    
+    env.info(string.format("FF Added request=%d for Nasssets=%d", request.uid, #Assetlist))
 
     -- The queueid has been increased in the onafterAddRequest function. So we can simply use it here.
-    Mission.requestID[self.alias]=self.queueid
+    --Mission.requestID[self.alias]=self.queueid
+    Mission:_SetRequestID(self, self.queueid)
     
     -- Get request.
-    local request=self:GetRequestByID(self.queueid)
+    --local request=self:GetRequestByID(self.queueid)
     
     -- Debug info.
     self:T(self.lid..string.format("Mission %s [%s] got Request ID=%d", Mission:GetName(), Mission:GetType(), self.queueid))

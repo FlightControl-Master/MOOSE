@@ -2084,13 +2084,10 @@ function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlph
   return self
 end
 
-
---- Get the smallest circular zone encompassing all points points of the polygon zone. 
+--- Get the smallest radius encompassing all points of the polygon zone. 
 -- @param #ZONE_POLYGON_BASE self
--- @param #string ZoneName (Optional) Name of the zone. Default is the name of the polygon zone.
--- @param #boolean DoNotRegisterZone (Optional) If `true`, zone is not registered.
--- @return #ZONE_RADIUS The circular zone.
-function ZONE_POLYGON_BASE:GetZoneRadius(ZoneName, DoNotRegisterZone)
+-- @return #number Radius of the zone in meters.
+function ZONE_POLYGON_BASE:GetRadius()
 
   local center=self:GetVec2()
 
@@ -2106,6 +2103,20 @@ function ZONE_POLYGON_BASE:GetZoneRadius(ZoneName, DoNotRegisterZone)
     end
     
   end
+
+  return radius
+end
+
+--- Get the smallest circular zone encompassing all points of the polygon zone. 
+-- @param #ZONE_POLYGON_BASE self
+-- @param #string ZoneName (Optional) Name of the zone. Default is the name of the polygon zone.
+-- @param #boolean DoNotRegisterZone (Optional) If `true`, zone is not registered.
+-- @return #ZONE_RADIUS The circular zone.
+function ZONE_POLYGON_BASE:GetZoneRadius(ZoneName, DoNotRegisterZone)
+
+  local center=self:GetVec2()
+
+  local radius=self:GetRadius()
   
   local zone=ZONE_RADIUS:New(ZoneName or self.ZoneName, center, radius, DoNotRegisterZone)
 
