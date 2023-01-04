@@ -27,8 +27,8 @@
 -- @field #string GroupName Name of the group the unit belongs to.
 -- @extends Wrapper.Controllable#CONTROLLABLE
 
---- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
--- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the @{SPAWN} class).
+--- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
+-- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the @{Core.Spawn} class).
 --  
 -- The UNIT class **does not contain a :New()** method, rather it provides **:Find()** methods to retrieve the object reference
 -- using the DCS Unit or the DCS UnitName.
@@ -39,10 +39,10 @@
 --  
 -- The UNIT class provides the following functions to retrieve quickly the relevant UNIT instance:
 -- 
---  * @{#UNIT.Find}(): Find a UNIT instance from the _DATABASE object using a DCS Unit object.
---  * @{#UNIT.FindByName}(): Find a UNIT instance from the _DATABASE object using a DCS Unit name.
+--  * @{#UNIT.Find}(): Find a UNIT instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Unit object.
+--  * @{#UNIT.FindByName}(): Find a UNIT instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Unit name.
 --  
--- IMPORTANT: ONE SHOULD NEVER SANATIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).
+-- IMPORTANT: ONE SHOULD NEVER SANITIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).
 -- 
 -- ## DCS UNIT APIs
 -- 
@@ -104,7 +104,7 @@ UNIT = {
 
 
 -- Registration.
-	
+  
 --- Create a new UNIT from DCSUnit.
 -- @param #UNIT self
 -- @param #string UnitName The name of the DCS unit.
@@ -229,7 +229,7 @@ function UNIT:ReSpawnAt( Coordinate, Heading )
     SpawnGroupTemplate.y = Coordinate.z
     
     self:F( #SpawnGroupTemplate.units )
-    for UnitID, UnitData in pairs( SpawnGroup:GetUnits() ) do
+    for UnitID, UnitData in pairs( SpawnGroup:GetUnits() or {} ) do
       local GroupUnit = UnitData -- #UNIT
       self:F( GroupUnit:GetName() )
       if GroupUnit:IsAlive() then
@@ -361,6 +361,8 @@ function UNIT:IsPlayer()
   
   -- Get group.
   local group=self:GetGroup()
+  
+  if not group then return false end
     
   -- Units of template group.
   local units=group:GetTemplate().units
@@ -628,36 +630,38 @@ end
 -- @param Wrapper.Unit#UNIT self
 -- @return Wrapper.Group#GROUP The Group of the Unit or `nil` if the unit does not exist.  
 function UNIT:GetGroup()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local UnitGroup = GROUP:FindByName( DCSUnit:getGroup():getName() )
+  self:F2( self.UnitName )  
+  local UnitGroup = GROUP:FindByName(self.GroupName)
+  if UnitGroup then
     return UnitGroup
+  else
+    local DCSUnit = self:GetDCSObject()    
+    if DCSUnit then
+      local grp = DCSUnit:getGroup()
+      if grp then
+        local UnitGroup = GROUP:FindByName( grp:getName() )
+        return UnitGroup
+      end
+    end
   end
-
   return nil
 end
 
-
--- Need to add here functions to check if radar is on and which object etc.
-
 --- Returns the prefix name of the DCS Unit. A prefix name is a part of the name before a '#'-sign.
--- DCS Units spawned with the @{SPAWN} class contain a '#'-sign to indicate the end of the (base) DCS Unit name. 
+-- DCS Units spawned with the @{Core.Spawn#SPAWN} class contain a '#'-sign to indicate the end of the (base) DCS Unit name. 
 -- The spawn sequence number and unit number are contained within the name after the '#' sign. 
 -- @param #UNIT self
 -- @return #string The name of the DCS Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPrefix()
-	self:F2( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSObject()
-	
+  
   if DCSUnit then
-  	local UnitPrefix = string.match( self.UnitName, ".*#" ):sub( 1, -2 )
-  	self:T3( UnitPrefix )
-  	return UnitPrefix
+    local UnitPrefix = string.match( self.UnitName, ".*#" ):sub( 1, -2 )
+    self:T3( UnitPrefix )
+    return UnitPrefix
   end
   
   return nil
@@ -698,6 +702,7 @@ end
 -- @return #number Number of rockets left.
 -- @return #number Number of bombs left.
 -- @return #number Number of missiles left.
+-- @return #number Number of artillery shells left (with explosive mass, included in shells; shells can also be machine gun ammo)
 function UNIT:GetAmmunition()
 
   -- Init counter.
@@ -706,6 +711,7 @@ function UNIT:GetAmmunition()
   local nrockets=0
   local nmissiles=0
   local nbombs=0
+  local narti=0
 
   local unit=self
 
@@ -742,7 +748,11 @@ function UNIT:GetAmmunition()
 
         -- Add up all shells.
         nshells=nshells+Nammo
-
+        
+        if ammotable[w].desc.warhead and ammotable[w].desc.warhead.explosiveMass and ammotable[w].desc.warhead.explosiveMass > 0 then
+          narti=narti+Nammo
+        end
+        
       elseif Category==Weapon.Category.ROCKET then
 
         -- Add up all rockets.
@@ -779,7 +789,7 @@ function UNIT:GetAmmunition()
   -- Total amount of ammunition.
   nammo=nshells+nrockets+nmissiles+nbombs
 
-  return nammo, nshells, nrockets, nbombs, nmissiles
+  return nammo, nshells, nrockets, nbombs, nmissiles, narti
 end
 
 --- Returns the unit sensors.
@@ -1220,24 +1230,24 @@ end
 -- @return true If the other DCS Unit is within the radius of the 2D point of the DCS Unit. 
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
-	self:F2( { self.UnitName, AwaitUnit.UnitName, Radius } )
+  self:F2( { self.UnitName, AwaitUnit.UnitName, Radius } )
 
   local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
-  	local UnitVec3 = self:GetVec3()
-  	local AwaitUnitVec3 = AwaitUnit:GetVec3()
+    local UnitVec3 = self:GetVec3()
+    local AwaitUnitVec3 = AwaitUnit:GetVec3()
   
-  	if  (((UnitVec3.x - AwaitUnitVec3.x)^2 + (UnitVec3.z - AwaitUnitVec3.z)^2)^0.5 <= Radius) then
-  		self:T3( "true" )
-  		return true
-  	else
-  		self:T3( "false" )
-  		return false
-  	end
+    if  (((UnitVec3.x - AwaitUnitVec3.x)^2 + (UnitVec3.z - AwaitUnitVec3.z)^2)^0.5 <= Radius) then
+      self:T3( "true" )
+      return true
+    else
+      self:T3( "false" )
+      return false
+    end
   end
 
-	return nil
+  return nil
 end
 
 

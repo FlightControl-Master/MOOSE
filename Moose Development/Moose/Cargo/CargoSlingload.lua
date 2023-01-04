@@ -1,4 +1,4 @@
---- **Cargo** -- Management of single cargo crates, which are based on a @{Static} object. The cargo can only be slingloaded.
+--- **Cargo** - Management of single cargo crates, which are based on a STATIC object. The cargo can only be slingloaded.
 --
 -- ===
 -- 

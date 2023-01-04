@@ -1,4 +1,6 @@
---- **DCS API** Prototypes
+--- **DCS API** Prototypes.
+-- 
+-- ===
 -- 
 -- See the [Simulator Scripting Engine Documentation](https://wiki.hoggitworld.com/view/Simulator_Scripting_Engine_Documentation) on Hoggit for further explanation and examples.
 -- 
@@ -306,6 +308,11 @@ do -- country
   -- @field Argentinia
   -- @field Cyprus
   -- @field Slovenia
+  -- @field BOLIVIA
+  -- @field GHANA
+  -- @field NIGERIA
+  -- @field PERU
+  -- @field ECUADOR
 
   country = {} --#country
 
@@ -334,9 +341,23 @@ do -- coalition
   -- @field RED
   -- @field BLUE
   
-  --- @function [parent=#coalition] getCountryCoalition
-  -- @param #number countryId
-  -- @return #number coalitionId
+  --- Get country coalition.
+  -- @function [parent=#coalition] getCountryCoalition
+  -- @param #number countryId Country ID.
+  -- @return #number coalitionId Coalition ID.
+
+  --- Dynamically spawns a group. See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_addGroup)
+  -- @function [parent=#coalition] addGroup
+  -- @param #number countryId Id of the country.
+  -- @param #number groupCategory Group category. Set -1 for spawning FARPS.
+  -- @param #table groupData Group data table.
+  -- @return DCS#Group The spawned Group object.
+
+  --- Dynamically spawns a static object. See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_addGroup)
+  -- @function [parent=#coalition] addStaticObject
+  -- @param #number countryId Id of the country.
+  -- @param #table groupData Group data table.
+  -- @return DCS#Static The spawned static object.
   
   coalition = {} -- #coalition
 
@@ -1287,6 +1308,42 @@ do -- Group
 
 end -- Group
 
+do -- StaticObject
+
+  --- Represents a static object.
+  -- @type StaticObject
+  -- @extends DCS#Object
+
+  --- Returns the static object.
+  -- @function [parent=#StaticObject] getByName
+  -- @param #string name Name of the static object.
+  -- @return #StaticObject
+
+  StaticObject = {} --#StaticObject
+
+end
+
+do --Event
+
+  --- Event structure. Note that present fields depend on type of event.
+  -- @type Event
+  -- @field #number id Event ID.
+  -- @field #number time Mission time in seconds.
+  -- @field DCS#Unit initiator Unit initiating the event.
+  -- @field DCS#Unit target Target unit.
+  -- @field DCS#Airbase place Airbase.
+  -- @field number subPlace Subplace. Unknown and often just 0.
+  -- @field #string weapon_name Weapoin name.
+  -- @field #number idx Mark ID.
+  -- @field #number coalition Coalition ID.
+  -- @field #number groupID Group ID, *e.g.* of group that added mark point.
+  -- @field #string text Text, *e.g.* of mark point.
+  -- @field DCS#Vec3 pos Position vector, *e.g.* of mark point.
+  -- @field #string comment Comment, *e.g.* LSO score.
+
+  Event={} --#Event
+
+end
 
 do -- AI
 

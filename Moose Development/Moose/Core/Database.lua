@@ -51,7 +51,7 @@
 --  * PLAYERS
 --  * CARGOS
 --
--- On top, for internal MOOSE administration purposes, the DATBASE administers the Unit and Group TEMPLATES as defined within the Mission Editor.
+-- On top, for internal MOOSE administration purposes, the DATABASE administers the Unit and Group TEMPLATES as defined within the Mission Editor.
 --
 -- The singleton object **_DATABASE** is automatically created by MOOSE, that administers all objects within the mission.
 -- Moose refers to **_DATABASE** within the framework extensively, but you can also refer to the _DATABASE object within your missions if required.
@@ -88,6 +88,7 @@ DATABASE = {
   WAREHOUSES = {},
   FLIGHTGROUPS = {},
   FLIGHTCONTROLS = {},
+  OPSZONES = {},
 }
 
 local _DATABASECoalition =
@@ -246,7 +247,7 @@ end
 
 do -- Zones
 
-  --- Finds a @{Zone} based on the zone name.
+  --- Finds a @{Core.Zone} based on the zone name.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   -- @return Core.Zone#ZONE_BASE The found ZONE.
@@ -256,7 +257,7 @@ do -- Zones
     return ZoneFound
   end
 
-  --- Adds a @{Zone} based on the zone name in the DATABASE.
+  --- Adds a @{Core.Zone} based on the zone name in the DATABASE.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   -- @param Core.Zone#ZONE_BASE Zone The zone.
@@ -268,7 +269,7 @@ do -- Zones
   end
 
 
-  --- Deletes a @{Zone} from the DATABASE based on the zone name.
+  --- Deletes a @{Core.Zone} from the DATABASE based on the zone name.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   function DATABASE:DeleteZone( ZoneName )
@@ -309,7 +310,7 @@ do -- Zones
 
         self:I(string.format("Register ZONE: %s (Polygon, Quad)", ZoneName))
 
-        Zone=ZONE_POLYGON_BASE:New(ZoneName, ZoneData.verticies)
+        Zone=ZONE_POLYGON:NewFromPointsArray(ZoneName, ZoneData.verticies)
 
         --for i,vec2 in pairs(ZoneData.verticies) do
         --  local coord=COORDINATE:NewFromVec2(vec2)
@@ -322,7 +323,7 @@ do -- Zones
 
         -- Store color of zone.
         Zone.Color=color
-        
+
         -- Store zone ID.
         Zone.ZoneID=ZoneData.zoneId
 
@@ -379,7 +380,7 @@ end -- zone
 
 do -- Zone_Goal
 
-  --- Finds a @{Zone} based on the zone name.
+  --- Finds a @{Core.Zone} based on the zone name.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   -- @return Core.Zone#ZONE_BASE The found ZONE.
@@ -389,7 +390,7 @@ do -- Zone_Goal
     return ZoneFound
   end
 
-  --- Adds a @{Zone} based on the zone name in the DATABASE.
+  --- Adds a @{Core.Zone} based on the zone name in the DATABASE.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   -- @param Core.Zone#ZONE_BASE Zone The zone.
@@ -401,7 +402,7 @@ do -- Zone_Goal
   end
 
 
-  --- Deletes a @{Zone} from the DATABASE based on the zone name.
+  --- Deletes a @{Core.Zone} from the DATABASE based on the zone name.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   function DATABASE:DeleteZoneGoal( ZoneName )
@@ -410,6 +411,46 @@ do -- Zone_Goal
   end
 
 end -- Zone_Goal
+
+do -- OpsZone
+
+  --- Finds a @{Ops.OpsZone#OPSZONE} based on the zone name.
+  -- @param #DATABASE self
+  -- @param #string ZoneName The name of the zone.
+  -- @return Ops.OpsZone#OPSZONE The found OPSZONE.
+  function DATABASE:FindOpsZone( ZoneName )
+
+    local ZoneFound = self.OPSZONES[ZoneName]
+    
+    return ZoneFound
+  end
+
+  --- Adds a @{Ops.OpsZone#OPSZONE} based on the zone name in the DATABASE.
+  -- @param #DATABASE self
+  -- @param Ops.OpsZone#OPSZONE OpsZone The zone.
+  function DATABASE:AddOpsZone( OpsZone )
+  
+    if OpsZone then
+    
+      local ZoneName=OpsZone:GetName()
+
+      if not self.OPSZONES[ZoneName] then
+        self.OPSZONES[ZoneName] = OpsZone
+      end
+      
+    end
+  end
+
+
+  --- Deletes a @{Ops.OpsZone#OPSZONE} from the DATABASE based on the zone name.
+  -- @param #DATABASE self
+  -- @param #string ZoneName The name of the zone.
+  function DATABASE:DeleteOpsZone( ZoneName )
+    self.OPSZONES[ZoneName] = nil
+  end
+
+end -- OpsZone
+
 do -- cargo
 
   --- Adds a Cargo based on the Cargo Name in the DATABASE.
@@ -777,7 +818,7 @@ function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, Category
   local StaticTemplate = UTILS.DeepCopy( StaticTemplate )
 
   local StaticTemplateGroupName = env.getValueDictByKey(StaticTemplate.name)
-  
+
   local StaticTemplateName=StaticTemplate.units[1].name
 
   self.Templates.Statics[StaticTemplateName] = self.Templates.Statics[StaticTemplateName] or {}
@@ -1027,11 +1068,26 @@ function DATABASE:_RegisterAirbases()
 
  for DCSAirbaseId, DCSAirbase in pairs(world.getAirbases()) do
 
+    self:_RegisterAirbase(DCSAirbase)
+
+  end
+
+  return self
+end
+
+--- Register a DCS airbase.
+-- @param #DATABASE self
+-- @param DCS#Airbase airbase Airbase.
+-- @return #DATABASE self
+function DATABASE:_RegisterAirbase(airbase)
+
+  if airbase then
+  
     -- Get the airbase name.
-    local DCSAirbaseName = DCSAirbase:getName()
+    local DCSAirbaseName = airbase:getName()
 
     -- This gave the incorrect value to be inserted into the airdromeID for DCS 2.5.6. Is fixed now.
-    local airbaseID=DCSAirbase:getID()
+    local airbaseID=airbase:getID()
 
     -- Add and register airbase.
     local airbase=self:AddAirbase( DCSAirbaseName )
@@ -1065,20 +1121,23 @@ function DATABASE:_EventOnBirth( Event )
 
   if Event.IniDCSUnit then
 
-    if Event.IniObjectCategory == 3 then
+    if Event.IniObjectCategory == Object.Category.STATIC then
 
+      -- Add static object to DB.
       self:AddStatic( Event.IniDCSUnitName )
 
     else
 
-      if Event.IniObjectCategory == 1 then
+      if Event.IniObjectCategory == Object.Category.UNIT then
 
+        -- Add unit and group to DB.
         self:AddUnit( Event.IniDCSUnitName )
         self:AddGroup( Event.IniDCSGroupName )
 
-        -- Add airbase if it was spawned later in the mission.
+        -- A unit can also be an airbase (e.g. ships).
         local DCSAirbase = Airbase.getByName(Event.IniDCSUnitName)
         if DCSAirbase then
+          -- Add airbase if it was spawned later in the mission.
           self:I(string.format("Adding airbase %s", tostring(Event.IniDCSUnitName)))
           self:AddAirbase(Event.IniDCSUnitName)
         end
@@ -1086,7 +1145,7 @@ function DATABASE:_EventOnBirth( Event )
       end
     end
 
-    if Event.IniObjectCategory == 1 then
+    if Event.IniObjectCategory == Object.Category.UNIT then
 
       Event.IniUnit = self:FindUnit( Event.IniDCSUnitName )
       Event.IniGroup = self:FindGroup( Event.IniDCSGroupName )
@@ -1153,11 +1212,11 @@ function DATABASE:_EventOnDeadOrCrash( Event )
       if self.STATICS[Event.IniDCSUnitName] then
         self:DeleteStatic( Event.IniDCSUnitName )
       end
-      
+
       ---
       -- Maybe a UNIT?
       ---
-      
+
       -- Delete unit.
       if self.UNITS[Event.IniDCSUnitName] then
         self:T("STATIC Event for UNIT "..tostring(Event.IniDCSUnitName))
@@ -1556,11 +1615,11 @@ function DATABASE:FindOpsGroupFromUnit(unitname)
   else
     unit=unitname
   end
-  
+
   if unit then
     groupname=unit:GetGroup():GetName()
   end
-  
+
   if groupname then
     return self.FLIGHTGROUPS[groupname]
   else

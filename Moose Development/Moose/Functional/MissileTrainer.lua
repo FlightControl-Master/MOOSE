@@ -1,4 +1,4 @@
---- **Functional** -- Train missile defence and deflection.
+--- **Functional** - Train missile defence and deflection.
 --
 -- ===
 --
@@ -28,14 +28,14 @@
 --     * **Messages Off**: Disable all messages.
 --  * **Tracking**: Menu to configure missile tracking messages.
 --     * **To All**: Shows missile tracking messages to all players.
---     * **To Target**: Shows missile tracking messages only to the player where the missile is targetted at.
+--     * **To Target**: Shows missile tracking messages only to the player where the missile is targeted at.
 --     * **Tracking On**: Show missile tracking messages.
 --     * **Tracking Off**: Disable missile tracking messages.
 --     * **Frequency Increase**: Increases the missile tracking message frequency with one second.
 --     * **Frequency Decrease**: Decreases the missile tracking message frequency with one second.
 --  * **Alerts**: Menu to configure alert messages.
 --     * **To All**: Shows alert messages to all players.
---     * **To Target**: Shows alert messages only to the player where the missile is (was) targetted at.
+--     * **To Target**: Shows alert messages only to the player where the missile is (was) targeted at.
 --     * **Hits On**: Show missile hit alert messages.
 --     * **Hits Off**: Disable missile hit alert messages.
 --     * **Launches On**: Show missile launch messages.
@@ -88,7 +88,7 @@
 -- A MISSILETRAINER object will behave differently based on the usage of initialization methods:
 --
 --  * @{#MISSILETRAINER.InitMessagesOnOff}: Sets by default the display of any message to be ON or OFF.
---  * @{#MISSILETRAINER.InitTrackingToAll}: Sets by default the missile tracking report for all players or only for those missiles targetted to you.
+--  * @{#MISSILETRAINER.InitTrackingToAll}: Sets by default the missile tracking report for all players or only for those missiles targeted to you.
 --  * @{#MISSILETRAINER.InitTrackingOnOff}: Sets by default the display of missile tracking report to be ON or OFF.
 --  * @{#MISSILETRAINER.InitTrackingFrequency}: Increases, decreases the missile tracking message display frequency with the provided time interval in seconds.
 --  * @{#MISSILETRAINER.InitAlertsToAll}: Sets by default the display of alerts to be shown to all players or only to you.
@@ -256,7 +256,7 @@ function MISSILETRAINER:InitMessagesOnOff( MessagesOnOff )
   return self
 end
 
---- Sets by default the missile tracking report for all players or only for those missiles targetted to you.
+--- Sets by default the missile tracking report for all players or only for those missiles targeted to you.
 -- @param #MISSILETRAINER self
 -- @param #boolean TrackingToAll true or false
 -- @return #MISSILETRAINER self

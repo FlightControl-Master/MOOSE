@@ -1,4 +1,4 @@
---- **Functional** -- Monitor airbase traffic and regulate speed while taxiing.
+--- **Functional** - Monitor airbase traffic and regulate speed while taxiing.
 --
 -- ===
 --

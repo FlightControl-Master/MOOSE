@@ -1,4 +1,4 @@
---- **AI** -- Peform Battlefield Area Interdiction (BAI) within an engagement zone.
+--- **AI** - Peform Battlefield Area Interdiction (BAI) within an engagement zone.
 --
 -- **Features:**
 -- 
@@ -26,17 +26,17 @@
 -- 
 -- ===
 --
--- @module AI.AI_Bai
+-- @module AI.AI_BAI
 -- @image AI_Battlefield_Air_Interdiction.JPG
 
 
 --- AI_BAI_ZONE class
 -- @type AI_BAI_ZONE
 -- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
--- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
+-- @field Core.Zone#ZONE_BASE TargetZone The @{Core.Zone} where the patrol needs to be executed.
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
---- Implements the core functions to provide BattleGround Air Interdiction in an Engage @{Zone} by an AIR @{Wrapper.Controllable} or @{Wrapper.Group}.
+--- Implements the core functions to provide BattleGround Air Interdiction in an Engage @{Core.Zone} by an AIR @{Wrapper.Controllable} or @{Wrapper.Group}.
 -- 
 -- The AI_BAI_ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.
 -- 
@@ -49,7 +49,7 @@
 -- Upon started, The AI will **Route** itself towards the random 3D point within a patrol zone, 
 -- using a random speed within the given altitude and speed limits.
 -- Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
--- This cycle will continue until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
+-- This cycle will continue until a fuel or damage threshold has been reached by the AI, or when the AI is commanded to RTB.
 -- 
 -- ![Route Event](..\Presentations\AI_BAI\Dia5.JPG)
 -- 
@@ -87,7 +87,7 @@
 -- It will keep patrolling there, until it is notified to RTB or move to another BOMB Zone.
 -- It can be notified to go RTB through the **RTB** event.
 -- 
--- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
+-- When the fuel threshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
 -- 
 -- ![Engage Event](..\Presentations\AI_BAI\Dia12.JPG)
 --
@@ -117,7 +117,7 @@
 --   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
 --   * **@{#AI_BAI_ZONE.Destroy}**: The AI has destroyed a target @{Wrapper.Unit}.
 --   * **@{#AI_BAI_ZONE.Destroyed}**: The AI has destroyed all target @{Wrapper.Unit}s assigned in the BOMB task.
---   * **Status**: The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
+--   * **Status**: The AI is checking status (fuel and damage). When the thresholds have been reached, the AI will RTB.
 -- 
 -- ## 3. Modify the Engage Zone behaviour to pinpoint a **map object** or **scenery object**
 -- 
@@ -142,7 +142,7 @@ AI_BAI_ZONE = {
 
 --- Creates a new AI_BAI_ZONE object
 -- @param #AI_BAI_ZONE self
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
@@ -566,7 +566,7 @@ function AI_BAI_ZONE:onafterEngage( Controllable, From, Event, To,
 
     EngageRoute[#EngageRoute].task = Controllable:TaskCombo( AttackTasks )
 
-    --- Define a random point in the @{Zone}. The AI will fly to that point within the zone.
+    --- Define a random point in the @{Core.Zone}. The AI will fly to that point within the zone.
     
       --- Find a random 2D point in EngageZone.
     local ToTargetVec2 = self.EngageZone:GetRandomVec2()
@@ -602,7 +602,7 @@ function AI_BAI_ZONE:onafterEngage( Controllable, From, Event, To,
 
     self:SetRefreshTimeInterval( 2 )
     self:SetDetectionActivated()
-    self:__Target( -2 ) -- Start Targetting
+    self:__Target( -2 ) -- Start targeting
   end
 end
 

@@ -1,4 +1,4 @@
---- **Wrapper** -- AIRBASE is a wrapper class to handle the DCS Airbase objects.
+--- **Wrapper** - AIRBASE is a wrapper class to handle the DCS Airbase objects.
 --
 -- ===
 --
@@ -39,7 +39,7 @@
 --
 -- ## AIRBASE reference methods
 --
--- For each DCS Airbase object alive within a running mission, a AIRBASE wrapper object (instance) will be created within the _@{DATABASE} object.
+-- For each DCS Airbase object alive within a running mission, a AIRBASE wrapper object (instance) will be created within the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
 -- This is done at the beginning of the mission (when the mission starts).
 --
 -- The AIRBASE class **does not contain a :New()** method, rather it provides **:Find()** methods to retrieve the object reference
@@ -51,10 +51,10 @@
 --
 -- The AIRBASE class provides the following functions to retrieve quickly the relevant AIRBASE instance:
 --
---  * @{#AIRBASE.Find}(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase object.
---  * @{#AIRBASE.FindByName}(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase name.
+--  * @{#AIRBASE.Find}(): Find a AIRBASE instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Airbase object.
+--  * @{#AIRBASE.FindByName}(): Find a AIRBASE instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Airbase name.
 --
--- IMPORTANT: ONE SHOULD NEVER SANATIZE these AIRBASE OBJECT REFERENCES! (make the AIRBASE object references nil).
+-- IMPORTANT: ONE SHOULD NEVER SANITIZE these AIRBASE OBJECT REFERENCES! (make the AIRBASE object references nil).
 --
 -- ## DCS Airbase APIs
 --
@@ -65,13 +65,14 @@
 --
 -- @field #AIRBASE AIRBASE
 AIRBASE = {
-  ClassName="AIRBASE",
+  ClassName = "AIRBASE",
   CategoryName = {
-    [Airbase.Category.AIRDROME]   = "Airdrome",
-    [Airbase.Category.HELIPAD]    = "Helipad",
-    [Airbase.Category.SHIP]       = "Ship",
-    },
-  }
+    [Airbase.Category.AIRDROME] = "Airdrome",
+    [Airbase.Category.HELIPAD] = "Helipad",
+    [Airbase.Category.SHIP] = "Ship",
+  },
+  activerwyno = nil,
+}
 
 --- Enumeration to identify the airbases in the Caucasus region.
 --
@@ -122,7 +123,7 @@ AIRBASE.Caucasus = {
   ["Nalchik"] = "Nalchik",
   ["Mozdok"] = "Mozdok",
   ["Beslan"] = "Beslan",
-  }
+}
 
 --- Airbases of the Nevada map:
 --
@@ -163,7 +164,7 @@ AIRBASE.Nevada = {
   ["Pahute_Mesa_Airstrip"] = "Pahute Mesa",
   ["Tonopah_Airport"] = "Tonopah",
   ["Tonopah_Test_Range_Airfield"] = "Tonopah Test Range",
-  }
+}
 
 --- Airbases of the Normandy map:
 --
@@ -198,7 +199,7 @@ AIRBASE.Nevada = {
 --   * AIRBASE.Normandy.Funtington
 --   * AIRBASE.Normandy.Tangmere
 --   * AIRBASE.Normandy.Ford_AF
---
+--   
 -- @field Normandy
 AIRBASE.Normandy = {
   ["Saint_Pierre_du_Mont"] = "Saint Pierre du Mont",
@@ -272,7 +273,7 @@ AIRBASE.Normandy = {
 -- * AIRBASE.PersianGulf.Sirri_Island
 -- * AIRBASE.PersianGulf.Tunb_Island_AFB
 -- * AIRBASE.PersianGulf.Tunb_Kochak
---
+-- 
 -- @field PersianGulf
 AIRBASE.PersianGulf = {
   ["Abu_Dhabi_International_Airport"] = "Abu Dhabi Intl",
@@ -320,7 +321,7 @@ AIRBASE.PersianGulf = {
 -- * AIRBASE.TheChannel.Biggin_Hill
 -- * AIRBASE.TheChannel.Eastchurch
 -- * AIRBASE.TheChannel.Headcorn
---
+-- 
 -- @field TheChannel
 AIRBASE.TheChannel = {
   ["Abbeville_Drucat"] = "Abbeville Drucat",
@@ -466,7 +467,7 @@ AIRBASE.Syria={
   ["Ruwayshid"]="Ruwayshid",
   ["Sanliurfa"]="Sanliurfa",
   ["Tal_Siman"]="Tal Siman",
-  ["Deir_ez_Zor"] = "Deir ez-Zor",
+  ["Deir_ez_Zor"] = "Deir ez-Zor", 
 }
 
 --- Airbases of the Mariana Islands map:
@@ -478,14 +479,14 @@ AIRBASE.Syria={
 -- * AIRBASE.MarianaIslands.Tinian_Intl
 -- * AIRBASE.MarianaIslands.Olf_Orote
 --
---@field MarianaIslands
-AIRBASE.MarianaIslands={
-  ["Rota_Intl"]="Rota Intl",
-  ["Andersen_AFB"]="Andersen AFB",
-  ["Antonio_B_Won_Pat_Intl"]="Antonio B. Won Pat Intl",
-  ["Saipan_Intl"]="Saipan Intl",
-  ["Tinian_Intl"]="Tinian Intl",
-  ["Olf_Orote"]="Olf Orote",
+-- @field MarianaIslands
+AIRBASE.MarianaIslands = {
+  ["Rota_Intl"] = "Rota Intl",
+  ["Andersen_AFB"] = "Andersen AFB",
+  ["Antonio_B_Won_Pat_Intl"] = "Antonio B. Won Pat Intl",
+  ["Saipan_Intl"] = "Saipan Intl",
+  ["Tinian_Intl"] = "Tinian Intl",
+  ["Olf_Orote"] = "Olf Orote",
 }
 
 --- Airbases of the South Atlantic map:
@@ -503,6 +504,13 @@ AIRBASE.MarianaIslands={
 -- * AIRBASE.SouthAtlantic.Puerto_Williams
 -- * AIRBASE.SouthAtlantic.Puerto_Natales
 -- * AIRBASE.SouthAtlantic.El_Calafate
+-- * AIRBASE.SouthAtlantic.Puerto_Santa_Cruz
+-- * AIRBASE.SouthAtlantic.Comandante_Luis_Piedrabuena
+-- * AIRBASE.SouthAtlantic.Aerodromo_De_Tolhuin
+-- * AIRBASE.SouthAtlantic.Porvenir_Airfield
+-- * AIRBASE.SouthAtlantic.Almirante_Schroeders
+-- * AIRBASE.SouthAtlantic.Rio_Turbio
+-- * AIRBASE.SouthAtlantic.Rio_Chico_Airfield
 -- 
 --@field MarianaIslands
 AIRBASE.SouthAtlantic={
@@ -519,6 +527,13 @@ AIRBASE.SouthAtlantic={
   ["Puerto_Williams"]="Puerto Williams",
   ["Puerto_Natales"]="Puerto Natales",
   ["El_Calafate"]="El Calafate",
+  ["Puerto_Santa_Cruz"]="Puerto Santa Cruz",
+  ["Comandante_Luis_Piedrabuena"]="Comandante Luis Piedrabuena",
+  ["Aerodromo_De_Tolhuin"]="Aerodromo De Tolhuin",
+  ["Porvenir_Airfield"]="Porvenir Airfield",
+  ["Almirante_Schroeders"]="Almirante Schroeders",
+  ["Rio_Turbio"]="Rio Turbio",
+  ["Rio_Chico"] = "Rio Chico",
 }
 
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
@@ -672,6 +687,9 @@ function AIRBASE:Register(AirbaseName)
   else
     self:E(string.format("ERROR: Cound not get position Vec2 of airbase %s", AirbaseName))
   end
+  
+  -- Debug info.
+  self:T2(string.format("Registered airbase %s", tostring(self.AirbaseName)))
 
   return self
 end
@@ -823,7 +841,7 @@ end
 -- Black listed spots overrule white listed spots.
 -- **NOTE** that terminal IDs are not necessarily the same as those displayed in the mission editor!
 -- @param #AIRBASE self
--- @param #table TerminalIdBlacklist Table of white listed terminal IDs.
+-- @param #table TerminalIdWhitelist Table of white listed terminal IDs.
 -- @return #AIRBASE self
 -- @usage AIRBASE:FindByName("Batumi"):SetParkingSpotWhitelist({2, 3, 4}) --Only allow terminal IDs 2, 3, 4
 function AIRBASE:SetParkingSpotWhitelist(TerminalIdWhitelist)
@@ -1352,7 +1370,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   local _nspots=nspots or group:GetSize()
 
   -- Debug info.
-  self:E(string.format("%s: Looking for %d parking spot(s) for aircraft of size %.1f m (x=%.1f,y=%.1f,z=%.1f) at terminal type %s.", airport, _nspots, _aircraftsize, ax, ay, az, tostring(terminaltype)))
+  self:T(string.format("%s: Looking for %d parking spot(s) for aircraft of size %.1f m (x=%.1f,y=%.1f,z=%.1f) at terminal type %s.", airport, _nspots, _aircraftsize, ax, ay, az, tostring(terminaltype)))
 
   -- Table of valid spots.
   local validspots={}
@@ -1454,14 +1472,14 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
 
         --_spot:MarkToAll(string.format("Parking spot %d free=%s", parkingspot.TerminalID, tostring(not occupied)))
         if occupied then
-          self:I(string.format("%s: Parking spot id %d occupied.", airport, _termid))
+          self:T(string.format("%s: Parking spot id %d occupied.", airport, _termid))
         else
-          self:I(string.format("%s: Parking spot id %d free.", airport, _termid))
+          self:T(string.format("%s: Parking spot id %d free.", airport, _termid))
           if nvalid<_nspots then
             table.insert(validspots, {Coordinate=_spot, TerminalID=_termid})
           end
           nvalid=nvalid+1
-          self:I(string.format("%s: Parking spot id %d free. Nfree=%d/%d.", airport, _termid, nvalid,_nspots))
+          self:T(string.format("%s: Parking spot id %d free. Nfree=%d/%d.", airport, _termid, nvalid,_nspots))
         end
 
       end -- loop over units
@@ -1979,7 +1997,7 @@ function AIRBASE:SetActiveRunwayLanding(Name, PreferLeft)
   end
   
   if runway then
-    self:I(string.format("%s: Setting active runway for landing as %s", self.AirbaseName, self:GetRunwayName(runway)))
+    self:T(string.format("%s: Setting active runway for landing as %s", self.AirbaseName, self:GetRunwayName(runway)))
   else
     self:E("ERROR: Could not set the runway for landing!")
   end
@@ -2027,7 +2045,7 @@ function AIRBASE:SetActiveRunwayTakeoff(Name, PreferLeft)
   end
   
   if runway then
-    self:I(string.format("%s: Setting active runway for takeoff as %s", self.AirbaseName, self:GetRunwayName(runway)))
+    self:T(string.format("%s: Setting active runway for takeoff as %s", self.AirbaseName, self:GetRunwayName(runway)))
   else
     self:E("ERROR: Could not set the runway for takeoff!")
   end

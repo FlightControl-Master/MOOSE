@@ -6,9 +6,8 @@
 --
 -- ### Author: **TAW CougarNL**, *funkyfranky*
 --
--- @module Utilities.PROFILER
+-- @module Utilities.Profiler
 -- @image Utils_Profiler.jpg
-
 
 --- PROFILER class.
 -- @type PROFILER
@@ -35,11 +34,11 @@
 -- # The PROFILER Concept
 --
 -- Profile your lua code. This tells you, which functions are called very often and which consume most real time.
--- With this information you can optimize the perfomance of your code.
+-- With this information you can optimize the performance of your code.
 --
 -- # Prerequisites
 --
--- The modules **os**, **io** and **lfs** need to be desanizied. Comment out the lines
+-- The modules **os**, **io** and **lfs** need to be de-sanitized. Comment out the lines
 --
 --     --sanitizeModule('os')
 --     --sanitizeModule('io')
@@ -129,13 +128,13 @@ PROFILER = {
 --- Start profiler.
 -- @param #number Delay Delay in seconds before profiler is stated. Default is immediately.
 -- @param #number Duration Duration in (game) seconds before the profiler is stopped. Default is when mission ends.
-function PROFILER.Start(Delay, Duration)
+function PROFILER.Start( Delay, Duration )
 
   -- Check if os, io and lfs are available.
-  local go=true
+  local go = true
   if not os then
-    env.error("ERROR: Profiler needs os to be desanitized!")
-    go=false
+    env.error( "ERROR: Profiler needs os to be de-sanitized!" )
+    go = false
   end
   if not io then
     env.error("ERROR: Profiler needs io to be desanitized!")
@@ -149,8 +148,8 @@ function PROFILER.Start(Delay, Duration)
     return
   end
 
-  if Delay and Delay>0 then
-    BASE:ScheduleOnce(Delay, PROFILER.Start, 0, Duration)
+  if Delay and Delay > 0 then
+    BASE:ScheduleOnce( Delay, PROFILER.Start, 0, Duration )
   else
 
     -- Set start time.
@@ -161,11 +160,11 @@ function PROFILER.Start(Delay, Duration)
     world.addEventHandler(PROFILER.eventHandler)
 
     -- Info in log.
-    env.info('############################   Profiler Started   ############################')
+    env.info( '############################   Profiler Started   ############################' )
     if Duration then
-      env.info(string.format("- Will be running for %d seconds", Duration))
+      env.info( string.format( "- Will be running for %d seconds", Duration ) )
     else
-      env.info(string.format("- Will be stopped when mission ends"))
+      env.info( string.format( "- Will be stopped when mission ends" ) )
     end
     env.info(string.format("- Calls per second threshold %.3f/sec", PROFILER.ThreshCPS))
     env.info(string.format("- Total function time threshold %.3f sec", PROFILER.ThreshTtot))
@@ -183,7 +182,7 @@ function PROFILER.Start(Delay, Duration)
 
     -- Auto stop profiler.
     if Duration then
-      PROFILER.Stop(Duration)
+      PROFILER.Stop( Duration )
     end
 
   end
@@ -192,6 +191,14 @@ end
 
 --- Stop profiler.
 -- @param #number Delay Delay before stop in seconds.
+function PROFILER.Stop( Delay )
+
+  if Delay and Delay > 0 then
+
+    BASE:ScheduleOnce( Delay, PROFILER.Stop )
+  end
+end
+
 function PROFILER.Stop(Delay)
 
   if Delay and Delay>0 then
@@ -218,8 +225,8 @@ function PROFILER.Stop(Delay)
 end
 
 --- Event handler.
-function PROFILER.eventHandler:onEvent(event)
-  if event.id==world.event.S_EVENT_MISSION_END then
+function PROFILER.eventHandler:onEvent( event )
+  if event.id == world.event.S_EVENT_MISSION_END then
     PROFILER.Stop()
   end
 end
@@ -246,7 +253,7 @@ function PROFILER.hook(event)
       end
 
     else
-      PROFILER.Counters[f]=PROFILER.Counters[f]+1
+      PROFILER.Counters[f] = PROFILER.Counters[f] + 1
     end
 
     if PROFILER.fTime[f]==nil then
@@ -274,7 +281,7 @@ end
 -- @return #string Source file name.
 -- @return #string Line number.
 -- @return #number Function time in seconds.
-function PROFILER.getData(func)
+function PROFILER.getData( func )
 
   local n=PROFILER.dInfo[func]
 
@@ -288,15 +295,15 @@ end
 --- Write text to log file.
 -- @param #function f The file.
 -- @param #string txt The text.
-function PROFILER._flog(f, txt)
-  f:write(txt.."\r\n")
+function PROFILER._flog( f, txt )
+  f:write( txt .. "\r\n" )
 end
 
 --- Show table.
 -- @param #table data Data table.
 -- @param #function f The file.
 -- @param #number runTimeGame Game run time in seconds.
-function PROFILER.showTable(data, f, runTimeGame)
+function PROFILER.showTable( data, f, runTimeGame )
 
   -- Loop over data.
   for i=1, #data do
@@ -322,11 +329,11 @@ end
 --- Print csv file.
 -- @param #table data Data table.
 -- @param #number runTimeGame Game run time in seconds.
-function PROFILER.printCSV(data, runTimeGame)
+function PROFILER.printCSV( data, runTimeGame )
 
   -- Output file.
-  local file=PROFILER.getfilename("csv")
-  local g=io.open(file, 'w')
+  local file = PROFILER.getfilename( "csv" )
+  local g = io.open( file, 'w' )
 
   -- Header.
   local text="Function,Total Calls,Calls per Sec,Total Time,Total in %,Sec per Call,Source File;Line Number,"
@@ -337,7 +344,7 @@ function PROFILER.printCSV(data, runTimeGame)
     local t=data[i] --#PROFILER.Data
 
     -- Calls per second.
-    local cps=t.count/runTimeGame
+    local cps = t.count / runTimeGame
 
     -- Output
     local txt=string.format("%s,%d,%.1f,%.3f,%.3f,%.3f,%s,%s,", t.func, t.count, cps, t.tm, t.tm/runTimeGame*100, t.tm/t.count, tostring(t.src), tostring(t.line))
@@ -348,7 +355,6 @@ function PROFILER.printCSV(data, runTimeGame)
   -- Close file.
   g:close()
 end
-
 
 --- Write info to output file.
 -- @param #string ext Extension.
@@ -365,11 +371,11 @@ function PROFILER.getfilename(ext)
     return file
   end
 
-  for i=1,999 do
+  for i = 1, 999 do
 
-    local file=string.format("%s%s-%03d.%s", dir,PROFILER.fileNamePrefix, i, ext)
+    local file = string.format( "%s%s-%03d.%s", dir, PROFILER.fileNamePrefix, i, ext )
 
-    if not UTILS.FileExists(file) then
+    if not UTILS.FileExists( file ) then
       return file
     end
 
@@ -380,7 +386,7 @@ end
 --- Write info to output file.
 -- @param #number runTimeGame Game time in seconds.
 -- @param #number runTimeOS OS time in seconds.
-function PROFILER.showInfo(runTimeGame, runTimeOS)
+function PROFILER.showInfo( runTimeGame, runTimeOS )
 
   -- Output file.
   local file=PROFILER.getfilename(PROFILER.fileNameSuffix)
@@ -418,16 +424,16 @@ function PROFILER.showInfo(runTimeGame, runTimeOS)
       } --#PROFILER.Data
 
       -- Collect special cases. Somehow, e.g. "_copy" appears multiple times so we try to gather all data.
-      if s=="_copy" then
-        if tcopy==nil then
-          tcopy=T
+      if s == "_copy" then
+        if tcopy == nil then
+          tcopy = T
         else
-          tcopy.count=tcopy.count+T.count
-          tcopy.tm=tcopy.tm+T.tm
+          tcopy.count = tcopy.count + T.count
+          tcopy.tm = tcopy.tm + T.tm
         end
-      elseif s=="_Serialize" then
-        if tserialize==nil then
-          tserialize=T
+      elseif s == "_Serialize" then
+        if tserialize == nil then
+          tserialize = T
         else
           tserialize.count=tserialize.count+T.count
           tserialize.tm=tserialize.tm+T.tm
@@ -447,7 +453,7 @@ function PROFILER.showInfo(runTimeGame, runTimeOS)
           tpairs.tm=tpairs.tm+T.tm
         end
       else
-        table.insert(t, T)
+        table.insert( t, T )
       end
 
       -- Total function time.
@@ -462,13 +468,13 @@ function PROFILER.showInfo(runTimeGame, runTimeOS)
 
   -- Add special cases.
   if tcopy then
-    table.insert(t, tcopy)
+    table.insert( t, tcopy )
   end
   if tserialize then
     table.insert(t, tserialize)
   end
   if tforgen then
-    table.insert(t, tforgen)
+    table.insert( t, tforgen )
   end
   if tpairs then
     table.insert(t, tpairs)
@@ -538,13 +544,13 @@ function PROFILER.showInfo(runTimeGame, runTimeOS)
   PROFILER.showTable(t, f, runTimeGame)
 
   -- Closing.
-  PROFILER._flog(f,"")
-  PROFILER._flog(f,"************************************************************************************************************************")
-  PROFILER._flog(f,"************************************************************************************************************************")
-  PROFILER._flog(f,"************************************************************************************************************************")
+  PROFILER._flog( f, "" )
+  PROFILER._flog( f, "************************************************************************************************************************" )
+  PROFILER._flog( f, "************************************************************************************************************************" )
+  PROFILER._flog( f, "************************************************************************************************************************" )
   -- Close file.
   f:close()
 
   -- Print csv file.
-  PROFILER.printCSV(t, runTimeGame)
+  PROFILER.printCSV( t, runTimeGame )
 end

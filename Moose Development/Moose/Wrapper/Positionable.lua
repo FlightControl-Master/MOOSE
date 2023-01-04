@@ -1,4 +1,4 @@
---- **Wrapper** -- POSITIONABLE wraps DCS classes that are "positionable".
+--- **Wrapper** - POSITIONABLE wraps DCS classes that are "positionable".
 --
 -- ===
 --
@@ -11,7 +11,7 @@
 -- @module Wrapper.Positionable
 -- @image Wrapper_Positionable.JPG
 
---- @type POSITIONABLE.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
+--- @type POSITIONABLE.__ Methods which are not intended for mission designers, but which are used internally by the moose designer :-)
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
 
 --- @type POSITIONABLE
@@ -57,7 +57,6 @@ POSITIONABLE.__ = {}
 --- @field #POSITIONABLE.__.Cargo
 POSITIONABLE.__.Cargo = {}
 
-
 --- A DCSPositionable
 -- @type DCSPositionable
 -- @field id_ The ID of the controllable in DCS
@@ -75,16 +74,19 @@ end
 
 --- Destroys the POSITIONABLE.
 -- @param #POSITIONABLE self
--- @param #boolean GenerateEvent (Optional) true if you want to generate a crash or dead event for the unit.
+-- @param #boolean GenerateEvent (Optional) If true, generates a crash or dead event for the unit. If false, no event generated. If nil, a remove event is generated. 
 -- @return #nil The DCS Unit is not existing or alive.
 -- @usage
--- -- Air unit example: destroy the Helicopter and generate a S_EVENT_CRASH for each unit in the Helicopter group.
+--
+-- Air unit example: destroy the Helicopter and generate a S_EVENT_CRASH for each unit in the Helicopter group.
 -- Helicopter = UNIT:FindByName( "Helicopter" )
 -- Helicopter:Destroy( true )
+--
 -- @usage
 -- -- Ground unit example: destroy the Tanks and generate a S_EVENT_DEAD for each unit in the Tanks group.
 -- Tanks = UNIT:FindByName( "Tanks" )
 -- Tanks:Destroy( true )
+--
 -- @usage
 -- -- Ship unit example: destroy the Ship silently.
 -- Ship = STATIC:FindByName( "Ship" )
@@ -134,7 +136,7 @@ end
 
 --- Returns a pos3 table of the objects current position and orientation in 3D space. X, Y, Z values are unit vectors defining the objects orientation.
 -- Coordinates are dependent on the position of the maps origin.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Position3 Table consisting of the point and orientation tables.
 function POSITIONABLE:GetPosition()
   self:F2( self.PositionableName )
@@ -147,18 +149,19 @@ function POSITIONABLE:GetPosition()
     return PositionablePosition
   end
 
-  BASE:E( { "Cannot GetPositionVec3", Positionable = self, Alive = self:IsAlive() } )
+  BASE:E( { "Cannot GetPosition", Positionable = self, Alive = self:IsAlive() } )
   return nil
 end
 
 --- Returns a {@DCS#Vec3} table of the objects current orientation in 3D space. X, Y, Z values are unit vectors defining the objects orientation.
 -- X is the orientation parallel to the movement of the object, Z perpendicular and Y vertical orientation.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Vec3 X orientation, i.e. parallel to the direction of movement.
 -- @return DCS#Vec3 Y orientation, i.e. vertical.
 -- @return DCS#Vec3 Z orientation, i.e. perpendicular to the direction of movement.
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetOrientation()
-  local position=self:GetPosition()
+  local position = self:GetPosition()
   if position then
     return position.x, position.y, position.z
   else
@@ -168,10 +171,11 @@ function POSITIONABLE:GetOrientation()
 end
 
 --- Returns a {@DCS#Vec3} table of the objects current X orientation in 3D space, i.e. along the direction of movement.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Vec3 X orientation, i.e. parallel to the direction of movement.
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetOrientationX()
-  local position=self:GetPosition()
+  local position = self:GetPosition()
   if position then
     return position.x
   else
@@ -181,10 +185,11 @@ function POSITIONABLE:GetOrientationX()
 end
 
 --- Returns a {@DCS#Vec3} table of the objects current Y orientation in 3D space, i.e. vertical orientation.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Vec3 Y orientation, i.e. vertical.
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetOrientationY()
-  local position=self:GetPosition()
+  local position = self:GetPosition()
   if position then
     return position.y
   else
@@ -194,10 +199,11 @@ function POSITIONABLE:GetOrientationY()
 end
 
 --- Returns a {@DCS#Vec3} table of the objects current Z orientation in 3D space, i.e. perpendicular to direction of movement.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Vec3 Z orientation, i.e. perpendicular to movement.
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetOrientationZ()
-  local position=self:GetPosition()
+  local position = self:GetPosition()
   if position then
     return position.z
   else
@@ -207,7 +213,7 @@ function POSITIONABLE:GetOrientationZ()
 end
 
 --- Returns the @{DCS#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Position The 3D position vectors of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetPositionVec3()
@@ -227,20 +233,21 @@ function POSITIONABLE:GetPositionVec3()
 end
 
 --- Returns the @{DCS#Vec3} vector indicating the 3D vector of the POSITIONABLE within the mission.
--- @param Wrapper.Positionable#POSITIONABLE self
--- @return DCS#Vec3 The 3D point vector of the POSITIONABLE or `nil` if it is not existing or alive.
+-- @param #POSITIONABLE self
+-- @return DCS#Vec3 The 3D point vector of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetVec3()
 
   local DCSPositionable = self:GetDCSObject()
 
   if DCSPositionable then
 
-    local vec3=DCSPositionable:getPoint()
+    local vec3 = DCSPositionable:getPoint()
 
     if vec3 then
       return vec3
     else
-      self:E("ERROR: Cannot get vec3!")
+      self:E( "ERROR: Cannot get vec3!" )
     end
   end
 
@@ -250,17 +257,18 @@ function POSITIONABLE:GetVec3()
 end
 
 --- Returns the @{DCS#Vec2} vector indicating the point in 2D of the POSITIONABLE within the mission.
--- @param Wrapper.Positionable#POSITIONABLE self
--- @return DCS#Vec2 The 2D point vector of the POSITIONABLE or #nil if it is not existing or alive.
+-- @param #POSITIONABLE self
+-- @return DCS#Vec2 The 2D point vector of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetVec2()
 
   local DCSPositionable = self:GetDCSObject()
 
   if DCSPositionable then
 
-    local Vec3=DCSPositionable:getPoint() --DCS#Vec3
+    local Vec3 = DCSPositionable:getPoint() -- DCS#Vec3
 
-    return {x=Vec3.x, y=Vec3.z}
+    return { x = Vec3.x, y = Vec3.z }
   end
 
   self:E( { "Cannot GetVec2", Positionable = self, Alive = self:IsAlive() } )
@@ -269,7 +277,7 @@ function POSITIONABLE:GetVec2()
 end
 
 --- Returns a POINT_VEC2 object indicating the point in 2D of the POSITIONABLE within the mission.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return Core.Point#POINT_VEC2 The 2D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetPointVec2()
@@ -282,7 +290,7 @@ function POSITIONABLE:GetPointVec2()
 
     local PositionablePointVec2 = POINT_VEC2:NewFromVec3( PositionableVec3 )
 
-    --self:F( PositionablePointVec2 )
+    -- self:F( PositionablePointVec2 )
     return PositionablePointVec2
   end
 
@@ -292,7 +300,7 @@ function POSITIONABLE:GetPointVec2()
 end
 
 --- Returns a POINT_VEC3 object indicating the point in 3D of the POSITIONABLE within the mission.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return Core.Point#POINT_VEC3 The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetPointVec3()
@@ -307,14 +315,14 @@ function POSITIONABLE:GetPointVec3()
     if false and self.pointvec3 then
 
       -- Update vector.
-      self.pointvec3.x=PositionableVec3.x
-      self.pointvec3.y=PositionableVec3.y
-      self.pointvec3.z=PositionableVec3.z
+      self.pointvec3.x = PositionableVec3.x
+      self.pointvec3.y = PositionableVec3.y
+      self.pointvec3.z = PositionableVec3.z
 
     else
 
       -- Create a new POINT_VEC3 object.
-      self.pointvec3=POINT_VEC3:NewFromVec3(PositionableVec3)
+      self.pointvec3 = POINT_VEC3:NewFromVec3( PositionableVec3 )
 
     end
 
@@ -326,9 +334,13 @@ function POSITIONABLE:GetPointVec3()
   return nil
 end
 
---- Returns a COORDINATE object indicating the point in 3D of the POSITIONABLE within the mission.
--- @param Wrapper.Positionable#POSITIONABLE self
--- @return Core.Point#COORDINATE The COORDINATE of the POSITIONABLE.
+--- Returns a reference to a COORDINATE object indicating the point in 3D of the POSITIONABLE within the mission.
+-- This function works similar to POSITIONABLE.GetCoordinate(), however, this function caches, updates and re-uses the same COORDINATE object stored
+-- within the POSITIONABLE. This has higher performance, but comes with all considerations associated with the possible referencing to the same COORDINATE object.
+-- This should only be used when performance is critical and there is sufficient awareness of the possible pitfalls. However, in most instances, GetCoordinate() is
+-- preferred as it will return a fresh new COORDINATE and thus avoid potentially unexpected issues.
+-- @param #POSITIONABLE self
+-- @return Core.Point#COORDINATE A reference to the COORDINATE object of the POSITIONABLE.
 function POSITIONABLE:GetCoord()
 
   -- Get DCS object.
@@ -337,20 +349,14 @@ function POSITIONABLE:GetCoord()
   if DCSPositionable then
 
     -- Get the current position.
-    local Vec3 = self:GetVec3()
+    local PositionableVec3 = self:GetVec3()
 
     if self.coordinate then
-
-      -- Update vector.
-      self.coordinate.x=Vec3.x
-      self.coordinate.y=Vec3.y
-      self.coordinate.z=Vec3.z
-
+      -- Update COORDINATE from 3D vector.
+      self.coordinate:UpdateFromVec3( PositionableVec3 )
     else
-
       -- New COORDINATE.
-      self.coordinate=COORDINATE:NewFromVec3(Vec3)
-
+      self.coordinate = COORDINATE:NewFromVec3( PositionableVec3 )
     end
 
     return self.coordinate
@@ -362,9 +368,9 @@ function POSITIONABLE:GetCoord()
   return nil
 end
 
---- Returns a COORDINATE object indicating the point in 3D of the POSITIONABLE within the mission.
--- @param Wrapper.Positionable#POSITIONABLE self
--- @return Core.Point#COORDINATE The COORDINATE of the POSITIONABLE.
+--- Returns a new COORDINATE object indicating the point in 3D of the POSITIONABLE within the mission.
+-- @param #POSITIONABLE self
+-- @return Core.Point#COORDINATE A new COORDINATE object of the POSITIONABLE.
 function POSITIONABLE:GetCoordinate()
 
   -- Get DCS object.
@@ -389,48 +395,48 @@ function POSITIONABLE:GetCoordinate()
 end
 
 --- Returns a COORDINATE object, which is offset with respect to the orientation of the POSITIONABLE.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @param #number x Offset in the direction "the nose" of the unit is pointing in meters. Default 0 m.
 -- @param #number y Offset "above" the unit in meters. Default 0 m.
 -- @param #number z Offset in the direction "the wing" of the unit is pointing in meters. z>0 starboard, z<0 port. Default 0 m.
 -- @return Core.Point#COORDINATE The COORDINATE of the offset with respect to the orientation of the  POSITIONABLE.
-function POSITIONABLE:GetOffsetCoordinate(x,y,z)
+function POSITIONABLE:GetOffsetCoordinate( x, y, z )
 
   -- Default if nil.
-  x=x or 0
-  y=y or 0
-  z=z or 0
+  x = x or 0
+  y = y or 0
+  z = z or 0
 
   -- Vectors making up the coordinate system.
-  local X=self:GetOrientationX()
-  local Y=self:GetOrientationY()
-  local Z=self:GetOrientationZ()
+  local X = self:GetOrientationX()
+  local Y = self:GetOrientationY()
+  local Z = self:GetOrientationZ()
 
   -- Offset vector: x meters ahead, z meters starboard, y meters above.
-  local A={x=x, y=y, z=z}
+  local A = { x = x, y = y, z = z }
 
   -- Scale components of orthonormal coordinate vectors.
-  local x={x=X.x*A.x, y=X.y*A.x, z=X.z*A.x}
-  local y={x=Y.x*A.y, y=Y.y*A.y, z=Y.z*A.y}
-  local z={x=Z.x*A.z, y=Z.y*A.z, z=Z.z*A.z}
+  local x = { x = X.x * A.x, y = X.y * A.x, z = X.z * A.x }
+  local y = { x = Y.x * A.y, y = Y.y * A.y, z = Y.z * A.y }
+  local z = { x = Z.x * A.z, y = Z.y * A.z, z = Z.z * A.z }
 
   -- Add up vectors in the unit coordinate system ==> this gives the offset vector relative the the origin of the map.
-  local a={x=x.x+y.x+z.x, y=x.y+y.y+z.y, z=x.z+y.z+z.z}
+  local a = { x = x.x + y.x + z.x, y = x.y + y.y + z.y, z = x.z + y.z + z.z }
 
   -- Vector from the origin of the map to the unit.
-  local u=self:GetVec3()
+  local u = self:GetVec3()
 
   -- Translate offset vector from map origin to the unit: v=u+a.
-  local v={x=a.x+u.x, y=a.y+u.y, z=a.z+u.z}
+  local v = { x = a.x + u.x, y = a.y + u.y, z = a.z + u.z }
 
-  local coord=COORDINATE:NewFromVec3(v)
+  local coord = COORDINATE:NewFromVec3( v )
 
   -- Return the offset coordinate.
   return coord
 end
 
 --- Returns a random @{DCS#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @param #number Radius
 -- @return DCS#Vec3 The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
@@ -446,7 +452,7 @@ function POSITIONABLE:GetRandomVec3( Radius )
 
     if Radius then
       local PositionableRandomVec3 = {}
-      local angle = math.random() * math.pi*2;
+      local angle = math.random() * math.pi * 2;
       PositionableRandomVec3.x = PositionablePointVec3.x + math.cos( angle ) * math.random() * Radius;
       PositionableRandomVec3.y = PositionablePointVec3.y
       PositionableRandomVec3.z = PositionablePointVec3.z + math.sin( angle ) * math.random() * Radius;
@@ -454,7 +460,7 @@ function POSITIONABLE:GetRandomVec3( Radius )
       self:T3( PositionableRandomVec3 )
       return PositionableRandomVec3
     else
-      self:F("Radius is nil, returning the PointVec3 of the POSITIONABLE", PositionablePointVec3)
+      self:F( "Radius is nil, returning the PointVec3 of the POSITIONABLE", PositionablePointVec3 )
       return PositionablePointVec3
     end
   end
@@ -464,18 +470,17 @@ function POSITIONABLE:GetRandomVec3( Radius )
   return nil
 end
 
-
 --- Get the bounding box of the underlying POSITIONABLE DCS Object.
 -- @param #POSITIONABLE self
 -- @return DCS#Box3 The bounding box of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
-function POSITIONABLE:GetBoundingBox() --R2.1
+function POSITIONABLE:GetBoundingBox()
   self:F2()
 
   local DCSPositionable = self:GetDCSObject()
 
   if DCSPositionable then
-    local PositionableDesc = DCSPositionable:getDesc() --DCS#Desc
+    local PositionableDesc = DCSPositionable:getDesc() -- DCS#Desc
     if PositionableDesc then
       local PositionableBox = PositionableDesc.box
       return PositionableBox
@@ -487,7 +492,6 @@ function POSITIONABLE:GetBoundingBox() --R2.1
   return nil
 end
 
-
 --- Get the object size.
 -- @param #POSITIONABLE self
 -- @return DCS#Distance Max size of object in x, z or 0 if bounding box could not be obtained.
@@ -497,28 +501,29 @@ end
 function POSITIONABLE:GetObjectSize()
 
   -- Get bounding box.
-  local box=self:GetBoundingBox()
+  local box = self:GetBoundingBox()
 
   if box then
-    local x=box.max.x+math.abs(box.min.x)  --length
-    local y=box.max.y+math.abs(box.min.y)  --height
-    local z=box.max.z+math.abs(box.min.z)  --width
-    return math.max(x,z), x , y, z
+    local x = box.max.x + math.abs( box.min.x ) -- length
+    local y = box.max.y + math.abs( box.min.y ) -- height
+    local z = box.max.z + math.abs( box.min.z ) -- width
+    return math.max( x, z ), x, y, z
   end
 
-  return 0,0,0,0
+  return 0, 0, 0, 0
 end
 
 --- Get the bounding radius of the underlying POSITIONABLE DCS Object.
 -- @param #POSITIONABLE self
--- @param #number mindist (Optional) If bounding box is smaller than this value, mindist is returned.
--- @return DCS#Distance The bounding radius of the POSITIONABLE or #nil if the POSITIONABLE is not existing or alive.
-function POSITIONABLE:GetBoundingRadius(mindist)
+-- @param #number MinDist (Optional) If bounding box is smaller than this value, MinDist is returned.
+-- @return DCS#Distance The bounding radius of the POSITIONABLE
+-- @return #nil The POSITIONABLE is not existing or alive.
+function POSITIONABLE:GetBoundingRadius( MinDist )
   self:F2()
 
   local Box = self:GetBoundingBox()
 
-  local boxmin=mindist or 0
+  local boxmin = MinDist or 0
   if Box then
     local X = Box.max.x - Box.min.x
     local Z = Box.max.z - Box.min.z
@@ -533,7 +538,7 @@ function POSITIONABLE:GetBoundingRadius(mindist)
 end
 
 --- Returns the altitude above sea level of the POSITIONABLE.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Distance The altitude of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetAltitude()
@@ -542,7 +547,7 @@ function POSITIONABLE:GetAltitude()
   local DCSPositionable = self:GetDCSObject()
 
   if DCSPositionable then
-    local PositionablePointVec3 = DCSPositionable:getPoint() --DCS#Vec3
+    local PositionablePointVec3 = DCSPositionable:getPoint() -- DCS#Vec3
     return PositionablePointVec3.y
   end
 
@@ -552,7 +557,7 @@ function POSITIONABLE:GetAltitude()
 end
 
 --- Returns if the Positionable is located above a runway.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return #boolean true if Positionable is above a runway.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:IsAboveRunway()
@@ -575,7 +580,6 @@ function POSITIONABLE:IsAboveRunway()
   return nil
 end
 
-
 function POSITIONABLE:GetSize()
 
   local DCSObject = self:GetDCSObject()
@@ -587,11 +591,10 @@ function POSITIONABLE:GetSize()
   end
 end
 
-
-
 --- Returns the POSITIONABLE heading in degrees.
--- @param Wrapper.Positionable#POSITIONABLE self
--- @return #number The POSITIONABLE heading in degrees or `nil` if not existing or alive.
+-- @param #POSITIONABLE self
+-- @return #number The POSITIONABLE heading in degrees.
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetHeading()
 
   local DCSPositionable = self:GetDCSObject()
@@ -613,8 +616,7 @@ function POSITIONABLE:GetHeading()
     end
   end
 
-  self:E({"Cannot GetHeading", Positionable = self, Alive = self:IsAlive()})
-
+  self:E( { "Cannot GetHeading", Positionable = self, Alive = self:IsAlive() } )
   return nil
 end
 
@@ -624,6 +626,7 @@ end
 -- If the unit is a helicopter or a plane, then this method will return true, otherwise false.
 -- @param #POSITIONABLE self
 -- @return #boolean Air category evaluation result.
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:IsAir()
   self:F2()
 
@@ -639,6 +642,7 @@ function POSITIONABLE:IsAir()
     return IsAirResult
   end
 
+  self:E( { "Cannot check IsAir", Positionable = self, Alive = self:IsAlive() } )
   return nil
 end
 
@@ -646,6 +650,7 @@ end
 -- If the unit is a ground vehicle or infantry, this method will return true, otherwise false.
 -- @param #POSITIONABLE self
 -- @return #boolean Ground category evaluation result.
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:IsGround()
   self:F2()
 
@@ -655,19 +660,20 @@ function POSITIONABLE:IsGround()
     local UnitDescriptor = DCSUnit:getDesc()
     self:T3( { UnitDescriptor.category, Unit.Category.GROUND_UNIT } )
 
-    local IsGroundResult = ( UnitDescriptor.category == Unit.Category.GROUND_UNIT )
+    local IsGroundResult = (UnitDescriptor.category == Unit.Category.GROUND_UNIT)
 
     self:T3( IsGroundResult )
     return IsGroundResult
   end
 
+  self:E( { "Cannot check IsGround", Positionable = self, Alive = self:IsAlive() } )
   return nil
 end
-
 
 --- Returns if the unit is of ship category.
 -- @param #POSITIONABLE self
 -- @return #boolean Ship category evaluation result.
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:IsShip()
   self:F2()
 
@@ -675,15 +681,17 @@ function POSITIONABLE:IsShip()
 
   if DCSUnit then
     local UnitDescriptor = DCSUnit:getDesc()
+    self:T3( { UnitDescriptor.category, Unit.Category.SHIP } )
 
-    local IsShip = ( UnitDescriptor.category == Unit.Category.SHIP )
+    local IsShipResult = (UnitDescriptor.category == Unit.Category.SHIP)
 
-    return IsShip
+    self:T3( IsShipResult )
+    return IsShipResult
   end
 
+  self:E( { "Cannot check IsShip", Positionable = self, Alive = self:IsAlive() } )
   return nil
 end
-
 
 --- Returns if the unit is a submarine.
 -- @param #POSITIONABLE self
@@ -702,13 +710,13 @@ function POSITIONABLE:IsSubmarine()
 		end
   end
 
+  self:E( { "Cannot check IsSubmarine", Positionable = self, Alive = self:IsAlive() } )
   return nil
 end
 
-
 --- Returns true if the POSITIONABLE is in the air.
 -- Polymorphic, is overridden in GROUP and UNIT.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return #boolean true if in the air.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:InAir()
@@ -717,9 +725,8 @@ function POSITIONABLE:InAir()
   return nil
 end
 
-
---- Returns the a @{Velocity} object from the positionable.
--- @param Wrapper.Positionable#POSITIONABLE self
+--- Returns the @{Core.Velocity} object from the POSITIONABLE.
+-- @param #POSITIONABLE self
 -- @return Core.Velocity#VELOCITY Velocity The Velocity object.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetVelocity()
@@ -737,10 +744,8 @@ function POSITIONABLE:GetVelocity()
   return nil
 end
 
-
-
 --- Returns the POSITIONABLE velocity Vec3 vector.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Vec3 The velocity Vec3 vector
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetVelocityVec3()
@@ -761,29 +766,29 @@ end
 
 --- Get relative velocity with respect to another POSITIONABLE.
 -- @param #POSITIONABLE self
--- @param #POSITIONABLE positionable Other positionable.
+-- @param #POSITIONABLE Positionable Other POSITIONABLE.
 -- @return #number Relative velocity in m/s.
-function POSITIONABLE:GetRelativeVelocity(positionable)
+function POSITIONABLE:GetRelativeVelocity( Positionable )
   self:F2( self.PositionableName )
 
-  local v1=self:GetVelocityVec3()
-  local v2=positionable:GetVelocityVec3()
+  local v1 = self:GetVelocityVec3()
+  local v2 = Positionable:GetVelocityVec3()
 
-  local vtot=UTILS.VecAdd(v1,v2)
+  local vtot = UTILS.VecAdd( v1, v2 )
 
-  return UTILS.VecNorm(vtot)
+  return UTILS.VecNorm( vtot )
 end
 
 
 --- Returns the POSITIONABLE height above sea level in meters.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return DCS#Vec3 Height of the positionable in meters (or nil, if the object does not exist).
 function POSITIONABLE:GetHeight() --R2.1
   self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
 
-  if DCSPositionable then
+  if DCSPositionable and DCSPositionable:isExist() then
     local PositionablePosition = DCSPositionable:getPosition()
     if PositionablePosition then
       local PositionableHeight = PositionablePosition.p.y
@@ -795,10 +800,9 @@ function POSITIONABLE:GetHeight() --R2.1
   return nil
 end
 
-
 --- Returns the POSITIONABLE velocity in km/h.
--- @param Wrapper.Positionable#POSITIONABLE self
--- @return #number The velocity in km/h
+-- @param #POSITIONABLE self
+-- @return #number The velocity in km/h.
 function POSITIONABLE:GetVelocityKMH()
   self:F2( self.PositionableName )
 
@@ -816,7 +820,7 @@ function POSITIONABLE:GetVelocityKMH()
 end
 
 --- Returns the POSITIONABLE velocity in meters per second.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return #number The velocity in meters per second.
 function POSITIONABLE:GetVelocityMPS()
   self:F2( self.PositionableName )
@@ -834,16 +838,17 @@ function POSITIONABLE:GetVelocityMPS()
 end
 
 --- Returns the POSITIONABLE velocity in knots.
--- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #POSITIONABLE self
 -- @return #number The velocity in knots.
 function POSITIONABLE:GetVelocityKNOTS()
   self:F2( self.PositionableName )
-  return UTILS.MpsToKnots(self:GetVelocityMPS())
+  return UTILS.MpsToKnots( self:GetVelocityMPS() )
 end
 
---- Returns the Angle of Attack of a positionable.
--- @param Wrapper.Positionable#POSITIONABLE self
+--- Returns the Angle of Attack of a POSITIONABLE.
+-- @param #POSITIONABLE self
 -- @return #number Angle of attack in degrees.
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetAoA()
 
   -- Get position of the unit.
@@ -854,34 +859,34 @@ function POSITIONABLE:GetAoA()
     -- Get velocity vector of the unit.
     local unitvel = self:GetVelocityVec3()
 
-    if unitvel and UTILS.VecNorm(unitvel)~=0 then
+    if unitvel and UTILS.VecNorm( unitvel ) ~= 0 then
 
       -- Get wind vector including turbulences.
-      local wind=self:GetCoordinate():GetWindWithTurbulenceVec3()
+      local wind = self:GetCoordinate():GetWindWithTurbulenceVec3()
 
       -- Include wind vector.
-      unitvel.x=unitvel.x-wind.x
-      unitvel.y=unitvel.y-wind.y
-      unitvel.z=unitvel.z-wind.z
+      unitvel.x = unitvel.x - wind.x
+      unitvel.y = unitvel.y - wind.y
+      unitvel.z = unitvel.z - wind.z
 
       -- Unit velocity transformed into aircraft axes directions.
       local AxialVel = {}
 
       -- Transform velocity components in direction of aircraft axes.
-      AxialVel.x = UTILS.VecDot(unitpos.x, unitvel)
-      AxialVel.y = UTILS.VecDot(unitpos.y, unitvel)
-      AxialVel.z = UTILS.VecDot(unitpos.z, unitvel)
+      AxialVel.x = UTILS.VecDot( unitpos.x, unitvel )
+      AxialVel.y = UTILS.VecDot( unitpos.y, unitvel )
+      AxialVel.z = UTILS.VecDot( unitpos.z, unitvel )
 
       -- AoA is angle between unitpos.x and the x and y velocities.
-      local AoA = math.acos(UTILS.VecDot({x = 1, y = 0, z = 0}, {x = AxialVel.x, y = AxialVel.y, z = 0})/UTILS.VecNorm({x = AxialVel.x, y = AxialVel.y, z = 0}))
+      local AoA = math.acos( UTILS.VecDot( { x = 1, y = 0, z = 0 }, { x = AxialVel.x, y = AxialVel.y, z = 0 } ) / UTILS.VecNorm( { x = AxialVel.x, y = AxialVel.y, z = 0 } ) )
 
-      --Set correct direction:
+      -- Set correct direction:
       if AxialVel.y > 0 then
         AoA = -AoA
       end
 
       -- Return AoA value in degrees.
-      return math.deg(AoA)
+      return math.deg( AoA )
     end
 
   end
@@ -889,9 +894,10 @@ function POSITIONABLE:GetAoA()
   return nil
 end
 
---- Returns the unit's climb or descent angle.
--- @param Wrapper.Positionable#POSITIONABLE self
--- @return #number Climb or descent angle in degrees. Or 0 if velocity vector norm is zero (or nil). Or nil, if the position of the POSITIONABLE returns nil.
+--- Returns the climb or descent angle of the POSITIONABLE.
+-- @param #POSITIONABLE self
+-- @return #number Climb or descent angle in degrees. Or 0 if velocity vector norm is zero.
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetClimbAngle()
 
   -- Get position of the unit.
@@ -902,39 +908,42 @@ function POSITIONABLE:GetClimbAngle()
     -- Get velocity vector of the unit.
     local unitvel = self:GetVelocityVec3()
 
-    if unitvel and UTILS.VecNorm(unitvel)~=0 then
+    if unitvel and UTILS.VecNorm( unitvel ) ~= 0 then
 
       -- Calculate climb angle.
-      local angle=math.asin(unitvel.y/UTILS.VecNorm(unitvel))
+      local angle = math.asin( unitvel.y / UTILS.VecNorm( unitvel ) )
 
       -- Return angle in degrees.
-      return math.deg(angle)
+      return math.deg( angle )
     else
       return 0
     end
+
   end
 
   return nil
 end
 
---- Returns the pitch angle of a unit.
--- @param Wrapper.Positionable#POSITIONABLE self
--- @return #number Pitch ange in degrees.
+--- Returns the pitch angle of a POSITIONABLE.
+-- @param #POSITIONABLE self
+-- @return #number Pitch angle in degrees.
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetPitch()
 
   -- Get position of the unit.
   local unitpos = self:GetPosition()
 
   if unitpos then
-    return math.deg(math.asin(unitpos.x.y))
+    return math.deg( math.asin( unitpos.x.y ) )
   end
 
   return nil
 end
 
 --- Returns the roll angle of a unit.
--- @param Wrapper.Positionable#POSITIONABLE self
--- @return #number Pitch ange in degrees.
+-- @param #POSITIONABLE self
+-- @return #number Pitch angle in degrees.
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetRoll()
 
   -- Get position of the unit.
@@ -942,87 +951,98 @@ function POSITIONABLE:GetRoll()
 
   if unitpos then
 
-    --first, make a vector that is perpendicular to y and unitpos.x with cross product
-    local cp = UTILS.VecCross(unitpos.x, {x = 0, y = 1, z = 0})
+    -- First, make a vector that is perpendicular to y and unitpos.x with cross product
+    local cp = UTILS.VecCross( unitpos.x, { x = 0, y = 1, z = 0 } )
 
-    --now, get dot product of of this cross product with unitpos.z
-    local dp = UTILS.VecDot(cp, unitpos.z)
+    -- Now, get dot product of of this cross product with unitpos.z
+    local dp = UTILS.VecDot( cp, unitpos.z )
 
-    --now get the magnitude of the roll (magnitude of the angle between two vectors is acos(vec1.vec2/|vec1||vec2|)
-    local Roll = math.acos(dp/(UTILS.VecNorm(cp)*UTILS.VecNorm(unitpos.z)))
+    -- Now get the magnitude of the roll (magnitude of the angle between two vectors is acos(vec1.vec2/|vec1||vec2|)
+    local Roll = math.acos( dp / (UTILS.VecNorm( cp ) * UTILS.VecNorm( unitpos.z )) )
 
-    --now, have to get sign of roll.
-    -- by convention, making right roll positive
-    -- to get sign of roll, use the y component of unitpos.z. For right roll, y component is negative.
+    -- Now, have to get sign of roll. By convention, making right roll positive
+    -- To get sign of roll, use the y component of unitpos.z. For right roll, y component is negative.
 
     if unitpos.z.y > 0 then -- left roll, flip the sign of the roll
       Roll = -Roll
     end
 
-    return math.deg(Roll)
-  end
-end
+    return math.deg( Roll )
 
---- Returns the yaw angle of a unit.
--- @param Wrapper.Positionable#POSITIONABLE self
--- @return #number Yaw ange in degrees.
-function POSITIONABLE:GetYaw()
-
-  local unitpos = self:GetPosition()
-  if unitpos then
-    -- get unit velocity
-    local unitvel = self:GetVelocityVec3()
-
-    if unitvel and UTILS.VecNorm(unitvel) ~= 0 then --must have non-zero velocity!
-      local AxialVel = {} --unit velocity transformed into aircraft axes directions
-
-      --transform velocity components in direction of aircraft axes.
-      AxialVel.x = UTILS.VecDot(unitpos.x, unitvel)
-      AxialVel.y = UTILS.VecDot(unitpos.y, unitvel)
-      AxialVel.z = UTILS.VecDot(unitpos.z, unitvel)
-
-      --Yaw is the angle between unitpos.x and the x and z velocities
-      --define right yaw as positive
-      local Yaw = math.acos(UTILS.VecDot({x = 1, y = 0, z = 0}, {x = AxialVel.x, y = 0, z = AxialVel.z})/UTILS.VecNorm({x = AxialVel.x, y = 0, z = AxialVel.z}))
-
-      --now set correct direction:
-      if AxialVel.z > 0 then
-        Yaw = -Yaw
-      end
-      return Yaw
-    end
-  end
-
-end
-
-
---- Returns the message text with the callsign embedded (if there is one).
--- @param #POSITIONABLE self
--- @param #string Message The message text
--- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
--- @return #string The message text
-function POSITIONABLE:GetMessageText( Message, Name )
-
-  local DCSObject = self:GetDCSObject()
-  if DCSObject then
-    local Callsign = string.format( "%s", ( ( Name ~= "" and Name ) or self:GetCallsign() ~= "" and self:GetCallsign() ) or self:GetName() )
-    local MessageText = string.format("%s - %s", Callsign, Message )
-    return MessageText
   end
 
   return nil
 end
 
+--- Returns the yaw angle of a POSITIONABLE.
+-- @param #POSITIONABLE self
+-- @return #number Yaw angle in degrees.
+-- @return #nil The POSITIONABLE is not existing or alive.
+function POSITIONABLE:GetYaw()
+
+  -- Get position of the unit.
+  local unitpos = self:GetPosition()
+
+  if unitpos then
+
+    -- get unit velocity
+    local unitvel = self:GetVelocityVec3()
+
+    if unitvel and UTILS.VecNorm( unitvel ) ~= 0 then -- must have non-zero velocity!
+      local AxialVel = {} -- unit velocity transformed into aircraft axes directions
+
+      -- transform velocity components in direction of aircraft axes.
+      AxialVel.x = UTILS.VecDot( unitpos.x, unitvel )
+      AxialVel.y = UTILS.VecDot( unitpos.y, unitvel )
+      AxialVel.z = UTILS.VecDot( unitpos.z, unitvel )
+
+      -- Yaw is the angle between unitpos.x and the x and z velocities
+      -- define right yaw as positive
+      local Yaw = math.acos( UTILS.VecDot( { x = 1, y = 0, z = 0 }, { x = AxialVel.x, y = 0, z = AxialVel.z } ) / UTILS.VecNorm( { x = AxialVel.x, y = 0, z = AxialVel.z } ) )
+
+      -- now set correct direction:
+      if AxialVel.z > 0 then
+        Yaw = -Yaw
+      end
+      return Yaw
+    end
+
+  end
+
+  return nil
+end
+
+--- Returns the message text with the callsign embedded (if there is one).
+-- @param #POSITIONABLE self
+-- @param #string Message The message text.
+-- @param #string Name (Optional) The Name of the sender. If not provided, Name is set to the type of the POSITIONABLE.
+-- @return #string The message text.
+-- @return #nil The POSITIONABLE is not existing or alive.
+function POSITIONABLE:GetMessageText( Message, Name )
+
+  local DCSObject = self:GetDCSObject()
+
+  if DCSObject then
+
+    local Callsign = string.format( "%s", ((Name ~= "" and Name) or self:GetCallsign() ~= "" and self:GetCallsign()) or self:GetName() )
+    local MessageText = string.format( "%s - %s", Callsign, Message )
+    return MessageText
+
+  end
+
+  return nil
+end
 
 --- Returns a message with the callsign embedded (if there is one).
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param DCS#Duration Duration The duration of the message.
--- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+-- @param #string Name (Optional) The Name of the sender. If not provided, Name is set to the type of the POSITIONABLE.
 -- @return Core.Message#MESSAGE
-function POSITIONABLE:GetMessage( Message, Duration, Name ) --R2.1 changed callsign and name and using GetMessageText
+function POSITIONABLE:GetMessage( Message, Duration, Name )
 
   local DCSObject = self:GetDCSObject()
+
   if DCSObject then
     local MessageText = self:GetMessageText( Message, Name )
     return MESSAGE:New( MessageText, Duration )
@@ -1035,7 +1055,7 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Core.Message#MESSAGE MessageType MessageType The message type.
--- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+-- @param #string Name (Optional) The Name of the sender. If not provided, Name is set to the type of the POSITIONABLE.
 -- @return Core.Message#MESSAGE
 function POSITIONABLE:GetMessageType( Message, MessageType, Name ) -- R2.2 changed callsign and name and using GetMessageText
 
@@ -1053,7 +1073,7 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param DCS#Duration Duration The duration of the message.
--- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+-- @param #string Name (Optional) The Name of the sender. If not provided, Name is set to the type of the POSITIONABLE.
 function POSITIONABLE:MessageToAll( Message, Duration, Name )
   self:F2( { Message, Duration } )
 
@@ -1071,7 +1091,7 @@ end
 -- @param #string Message The message text
 -- @param DCS#Duration Duration The duration of the message.
 -- @param DCS#coalition MessageCoalition The Coalition receiving the message.
--- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+-- @param #string Name (Optional) The Name of the sender. If not provided, Name is set to the type of the POSITIONABLE.
 function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition, Name )
   self:F2( { Message, Duration } )
 
@@ -1085,14 +1105,13 @@ function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition, N
   return nil
 end
 
-
 --- Send a message to a coalition.
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Core.Message#MESSAGE.Type MessageType The message type that determines the duration.
 -- @param DCS#coalition MessageCoalition The Coalition receiving the message.
--- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+-- @param #string Name (Optional) The Name of the sender. If not provided, Name is set to the type of the POSITIONABLE.
 function POSITIONABLE:MessageTypeToCoalition( Message, MessageType, MessageCoalition, Name )
   self:F2( { Message, MessageType } )
 
@@ -1106,13 +1125,12 @@ function POSITIONABLE:MessageTypeToCoalition( Message, MessageType, MessageCoali
   return nil
 end
 
-
 --- Send a message to the red coalition.
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param DCS#Duration Duration The duration of the message.
--- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+-- @param #string Name (Optional) The Name of the sender. If not provided, Name is set to the type of the POSITIONABLE.
 function POSITIONABLE:MessageToRed( Message, Duration, Name )
   self:F2( { Message, Duration } )
 
@@ -1129,7 +1147,7 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param DCS#Duration Duration The duration of the message.
--- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+-- @param #string Name (Optional) The Name of the sender. If not provided, Name is set to the type of the POSITIONABLE.
 function POSITIONABLE:MessageToBlue( Message, Duration, Name )
   self:F2( { Message, Duration } )
 
@@ -1147,7 +1165,7 @@ end
 -- @param #string Message The message text
 -- @param DCS#Duration Duration The duration of the message.
 -- @param Wrapper.Client#CLIENT Client The client object receiving the message.
--- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+-- @param #string Name (Optional) The Name of the sender. If not provided, Name is set to the type of the POSITIONABLE.
 function POSITIONABLE:MessageToClient( Message, Duration, Client, Name )
   self:F2( { Message, Duration } )
 
@@ -1159,13 +1177,37 @@ function POSITIONABLE:MessageToClient( Message, Duration, Client, Name )
   return nil
 end
 
+--- Send a message to a @{Wrapper.Unit}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param DCS#Duration Duration The duration of the message.
+-- @param Wrapper.Unit#UNIT MessageUnit The UNIT object receiving the message.
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToUnit( Message, Duration, MessageUnit, Name )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    if DCSObject:isExist() then
+      if MessageUnit:IsAlive() then
+        self:GetMessage( Message, Duration, Name ):ToUnit( MessageUnit )
+      else
+        BASE:E( { "Message not sent to Unit; Unit is not alive...", Message = Message, MessageUnit = MessageUnit } )
+      end
+    else
+      BASE:E( { "Message not sent to Unit; Positionable is not alive ...", Message = Message, Positionable = self, MessageUnit = MessageUnit } )
+    end
+  end
+end
+
 --- Send a message to a @{Wrapper.Group}.
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param DCS#Duration Duration The duration of the message.
 -- @param Wrapper.Group#GROUP MessageGroup The GROUP object receiving the message.
--- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+-- @param #string Name (Optional) The Name of the sender. If not provided, Name is set to the type of the POSITIONABLE.
 function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup, Name )
   self:F2( { Message, Duration } )
 
@@ -1178,10 +1220,14 @@ function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup, Name )
         BASE:E( { "Message not sent to Group; Group is not alive...", Message = Message, MessageGroup = MessageGroup } )
       end
     else
-      BASE:E( { "Message not sent to Group; Positionable is not alive ...", Message = Message, Positionable = self, MessageGroup = MessageGroup } )
+      BASE:E( {
+        "Message not sent to Group; Positionable is not alive ...",
+        Message = Message,
+        Positionable = self,
+        MessageGroup = MessageGroup
+      } )
     end
   end
-
 
   return nil
 end
@@ -1219,7 +1265,7 @@ end
 -- @param #string Message The message text
 -- @param Core.Message#MESSAGE.Type MessageType The message type that determines the duration.
 -- @param Wrapper.Group#GROUP MessageGroup The GROUP object receiving the message.
--- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+-- @param #string Name (Optional) The Name of the sender. If not provided, the Name is the type of the POSITIONABLE.
 function POSITIONABLE:MessageTypeToGroup( Message, MessageType, MessageGroup, Name )
   self:F2( { Message, MessageType } )
 
@@ -1239,16 +1285,38 @@ end
 -- @param #string Message The message text
 -- @param DCS#Duration Duration The duration of the message.
 -- @param Core.Set#SET_GROUP MessageSetGroup The SET_GROUP collection receiving the message.
--- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
-function POSITIONABLE:MessageToSetGroup( Message, Duration, MessageSetGroup, Name )  --R2.1
+-- @param #string Name (Optional) The Name of the sender. If not provided, Name is set to the type of the POSITIONABLE.
+function POSITIONABLE:MessageToSetGroup( Message, Duration, MessageSetGroup, Name )
   self:F2( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
     if DCSObject:isExist() then
-      MessageSetGroup:ForEachGroupAlive(
+      MessageSetGroup:ForEachGroupAlive( function( MessageGroup )
+        self:GetMessage( Message, Duration, Name ):ToGroup( MessageGroup )
+      end )
+    end
+  end
+
+  return nil
+end
+
+--- Send a message to a @{Core.Set#SET_UNIT}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param DCS#Duration Duration The duration of the message.
+-- @param Core.Set#SET_UNIT MessageSetUnit The SET_UNIT collection receiving the message.
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToSetUnit( Message, Duration, MessageSetUnit, Name )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    if DCSObject:isExist() then
+      MessageSetUnit:ForEachUnit(
         function( MessageGroup )
-          self:GetMessage( Message, Duration, Name ):ToGroup( MessageGroup )
+          self:GetMessage( Message, Duration, Name ):ToUnit( MessageGroup )
         end
       )
     end
@@ -1286,7 +1354,7 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param DCS#Duration Duration The duration of the message.
--- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+-- @param #string Name (Optional) The Name of the sender. If not provided, Name is set to the type of the POSITIONABLE.
 function POSITIONABLE:Message( Message, Duration, Name )
   self:F2( { Message, Duration } )
 
@@ -1298,30 +1366,30 @@ function POSITIONABLE:Message( Message, Duration, Name )
   return nil
 end
 
---- Create a @{Core.Radio#RADIO}, to allow radio transmission for this POSITIONABLE.
+--- Create a @{Sound.Radio#RADIO}, to allow radio transmission for this POSITIONABLE.
 -- Set parameters with the methods provided, then use RADIO:Broadcast() to actually broadcast the message
 -- @param #POSITIONABLE self
--- @return Core.Radio#RADIO Radio
-function POSITIONABLE:GetRadio() --R2.1
-  self:F2(self)
-  return RADIO:New(self)
+-- @return Sound.Radio#RADIO Radio
+function POSITIONABLE:GetRadio()
+  self:F2( self )
+  return RADIO:New( self )
 end
 
---- Create a @{Core.Radio#BEACON}, to allow this POSITIONABLE to broadcast beacon signals
+--- Create a @{Core.Beacon#BEACON}, to allow this POSITIONABLE to broadcast beacon signals.
 -- @param #POSITIONABLE self
--- @return Core.Radio#RADIO Radio
-function POSITIONABLE:GetBeacon() --R2.1
-  self:F2(self)
-  return BEACON:New(self)
+-- @return Core.Beacon#BEACON Beacon
+function POSITIONABLE:GetBeacon()
+  self:F2( self )
+  return BEACON:New( self )
 end
 
---- Start Lasing a POSITIONABLE
+--- Start Lasing a POSITIONABLE.
 -- @param #POSITIONABLE self
 -- @param #POSITIONABLE Target The target to lase.
 -- @param #number LaserCode Laser code or random number in [1000, 9999].
 -- @param #number Duration Duration of lasing in seconds.
 -- @return Core.Spot#SPOT
-function POSITIONABLE:LaseUnit( Target, LaserCode, Duration ) --R2.1
+function POSITIONABLE:LaseUnit( Target, LaserCode, Duration )
   self:F2()
 
   LaserCode = LaserCode or math.random( 1000, 9999 )
@@ -1329,9 +1397,9 @@ function POSITIONABLE:LaseUnit( Target, LaserCode, Duration ) --R2.1
   local RecceDcsUnit = self:GetDCSObject()
   local TargetVec3 = Target:GetVec3()
 
-  self:F("bulding spot")
+  self:F( "building spot" )
   self.Spot = SPOT:New( self ) -- Core.Spot#SPOT
-  self.Spot:LaseOn( Target, LaserCode, Duration)
+  self.Spot:LaseOn( Target, LaserCode, Duration )
   self.LaserCode = LaserCode
 
   return self.Spot
@@ -1340,26 +1408,26 @@ end
 
 --- Start Lasing a COORDINATE.
 -- @param #POSITIONABLE self
--- @param Core.Point#COORDIUNATE Coordinate The coordinate where the lase is pointing at.
+-- @param Core.Point#COORDINATE Coordinate The coordinate where the lase is pointing at.
 -- @param #number LaserCode Laser code or random number in [1000, 9999].
 -- @param #number Duration Duration of lasing in seconds.
 -- @return Core.Spot#SPOT
-function POSITIONABLE:LaseCoordinate(Coordinate, LaserCode, Duration)
+function POSITIONABLE:LaseCoordinate( Coordinate, LaserCode, Duration )
   self:F2()
 
-  LaserCode = LaserCode or math.random(1000, 9999)
+  LaserCode = LaserCode or math.random( 1000, 9999 )
 
-  self.Spot = SPOT:New(self) -- Core.Spot#SPOT
-  self.Spot:LaseOnCoordinate(Coordinate, LaserCode, Duration)
+  self.Spot = SPOT:New( self ) -- Core.Spot#SPOT
+  self.Spot:LaseOnCoordinate( Coordinate, LaserCode, Duration )
   self.LaserCode = LaserCode
 
   return self.Spot
 end
 
---- Stop Lasing a POSITIONABLE
+--- Stop Lasing a POSITIONABLE.
 -- @param #POSITIONABLE self
 -- @return #POSITIONABLE
-function POSITIONABLE:LaseOff() --R2.1
+function POSITIONABLE:LaseOff()
   self:F2()
 
   if self.Spot then
@@ -1370,10 +1438,10 @@ function POSITIONABLE:LaseOff() --R2.1
   return self
 end
 
---- Check if the POSITIONABLE is lasing a target
+--- Check if the POSITIONABLE is lasing a target.
 -- @param #POSITIONABLE self
 -- @return #boolean true if it is lasing a target
-function POSITIONABLE:IsLasing() --R2.1
+function POSITIONABLE:IsLasing()
   self:F2()
 
   local Lasing = false
@@ -1388,7 +1456,7 @@ end
 --- Get the Spot
 -- @param #POSITIONABLE self
 -- @return Core.Spot#SPOT The Spot
-function POSITIONABLE:GetSpot() --R2.1
+function POSITIONABLE:GetSpot()
 
   return self.Spot
 end
@@ -1396,7 +1464,7 @@ end
 --- Get the last assigned laser code
 -- @param #POSITIONABLE self
 -- @return #number The laser code
-function POSITIONABLE:GetLaserCode() --R2.1
+function POSITIONABLE:GetLaserCode()
 
   return self.LaserCode
 end
@@ -1478,7 +1546,7 @@ do -- Cargo
   -- @return #number CargoBayFreeWeight
   function POSITIONABLE:GetCargoBayFreeWeight()
 
-    -- When there is no cargo bay weight limit set, then calculate this for this positionable!
+    -- When there is no cargo bay weight limit set, then calculate this for this POSITIONABLE!
     if not self.__.CargoBayWeightLimit then
       self:SetCargoBayWeightLimit()
     end
@@ -1500,7 +1568,7 @@ do -- Cargo
       -- User defined value
       ---
       self.__.CargoBayWeightLimit = WeightLimit
-    elseif self.__.CargoBayWeightLimit~=nil then
+    elseif self.__.CargoBayWeightLimit ~= nil then
       -- Value already set ==> Do nothing!
     else
       ---
@@ -1514,7 +1582,7 @@ do -- Cargo
       -- Unit type name.
       local TypeName=Desc.typeName or "Unknown Type"
 
-      -- When an airplane or helicopter, we calculate the weightlimit based on the descriptor.
+      -- When an airplane or helicopter, we calculate the WeightLimit based on the descriptor.
       if self:IsAir() then
 
         -- Max takeoff weight if DCS descriptors have unrealstic values.
@@ -1585,14 +1653,14 @@ do -- Cargo
           ["AAV7"] = 25,
           ["Bedford_MWD"] = 8, -- new by kappa
           ["Blitz_36-6700A"] = 10, -- new by kappa
-          ["BMD-1"] = 9,  -- IRL should be 4 passengers
+          ["BMD-1"] = 9, -- IRL should be 4 passengers
           ["BMP-1"] = 8,
           ["BMP-2"] = 7,
-          ["BMP-3"] = 8,  -- IRL should be 7+2 passengers
+          ["BMP-3"] = 8, -- IRL should be 7+2 passengers
           ["Boman"] = 25,
           ["BTR-80"] = 9, -- IRL should be 7 passengers
           ["BTR-82A"] = 9, -- new by kappa -- IRL should be 7 passengers
-          ["BTR_D"] = 12,  -- IRL should be 10 passengers
+          ["BTR_D"] = 12, -- IRL should be 10 passengers
           ["Cobra"] = 8,
           ["Land_Rover_101_FC"] = 11, -- new by kappa
           ["Land_Rover_109_S3"] = 7, -- new by kappa
@@ -1603,11 +1671,11 @@ do -- Cargo
           ["M1126 Stryker ICV"] = 9,
           ["M1134 Stryker ATGM"] = 9,
           ["M2A1_halftrack"] = 9,
-          ["M-113"] = 9,   -- IRL should be 11 passengers
+          ["M-113"] = 9, -- IRL should be 11 passengers
           ["Marder"] = 6,
           ["MCV-80"] = 9, -- IRL should be 7 passengers
           ["MLRS FDDM"] = 4,
-          ["MTLB"] = 25,    -- IRL should be 11 passengers
+          ["MTLB"] = 25, -- IRL should be 11 passengers
           ["GAZ-66"] = 8,
           ["GAZ-3307"] = 12,
           ["GAZ-3308"] = 14,
@@ -1659,28 +1727,28 @@ end --- Cargo
 -- @param Utilities.Utils#FLARECOLOR FlareColor
 function POSITIONABLE:Flare( FlareColor )
   self:F2()
-  trigger.action.signalFlare( self:GetVec3(), FlareColor , 0 )
+  trigger.action.signalFlare( self:GetVec3(), FlareColor, 0 )
 end
 
 --- Signal a white flare at the position of the POSITIONABLE.
 -- @param #POSITIONABLE self
 function POSITIONABLE:FlareWhite()
   self:F2()
-  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.White , 0 )
+  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.White, 0 )
 end
 
 --- Signal a yellow flare at the position of the POSITIONABLE.
 -- @param #POSITIONABLE self
 function POSITIONABLE:FlareYellow()
   self:F2()
-  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Yellow , 0 )
+  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Yellow, 0 )
 end
 
 --- Signal a green flare at the position of the POSITIONABLE.
 -- @param #POSITIONABLE self
 function POSITIONABLE:FlareGreen()
   self:F2()
-  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Green , 0 )
+  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Green, 0 )
 end
 
 --- Signal a red flare at the position of the POSITIONABLE.
@@ -1695,9 +1763,9 @@ end
 
 --- Smoke the POSITIONABLE.
 -- @param #POSITIONABLE self
--- @param Utilities.Utils#SMOKECOLOR SmokeColor The color to smoke to positionable.
--- @param #number Range The range in meters to randomize the smoking around the positionable.
--- @param #number AddHeight The height in meters to add to the altitude of the positionable.
+-- @param Utilities.Utils#SMOKECOLOR SmokeColor The smoke color.
+-- @param #number Range The range in meters to randomize the smoking around the POSITIONABLE.
+-- @param #number AddHeight The height in meters to add to the altitude of the POSITIONABLE.
 function POSITIONABLE:Smoke( SmokeColor, Range, AddHeight )
   self:F2()
   if Range then
@@ -1747,8 +1815,7 @@ function POSITIONABLE:SmokeBlue()
   trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Blue )
 end
 
-
---- Returns true if the unit is within a @{Zone}.
+--- Returns true if the unit is within a @{Core.Zone}.
 -- @param #POSITIONABLE self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the unit is within the @{Core.Zone#ZONE_BASE}
@@ -1763,7 +1830,7 @@ function POSITIONABLE:IsInZone( Zone )
   return false
 end
 
---- Returns true if the unit is not within a @{Zone}.
+--- Returns true if the unit is not within a @{Core.Zone}.
 -- @param #POSITIONABLE self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the unit is not within the @{Core.Zone#ZONE_BASE}

@@ -1,4 +1,4 @@
---- **Functional** -- Models the process to zone guarding and capturing.
+--- **Functional** - Models the process to zone guarding and capturing.
 --
 -- ===
 -- 
@@ -68,9 +68,9 @@ do -- ZONE_CAPTURE_COALITION
   -- 
   -- In order to use ZONE_CAPTURE_COALITION, you need to:
   -- 
-  --   * Create a @{Zone} object from one of the ZONE_ classes.  
-  --     Note that ZONE_POLYGON_ classes are not yet functional.  
-  --     The only functional ZONE_ classses are those derived from a ZONE_RADIUS.
+  --   * Create a @{Core.Zone} object from one of the ZONE_ classes.    
+  --     The functional ZONE_ classses are those derived from a ZONE_RADIUS.
+  --     In order to use a ZONE_POLYGON, hand over the **GROUP name** of a late activated group forming a polygon with it's waypoints.
   --   * Set the state of the zone. Most of the time, Guarded would be the initial state.
   --   * Start the zone capturing **monitoring process**.  
   --     This will check the presence of friendly and/or enemy units within the zone and will transition the state of the zone when the tactical situation changed.
@@ -363,7 +363,7 @@ do -- ZONE_CAPTURE_COALITION
 
   --- ZONE_CAPTURE_COALITION Constructor.
   -- @param #ZONE_CAPTURE_COALITION self
-  -- @param Core.Zone#ZONE Zone A @{Zone} object with the goal to be achieved.
+  -- @param Core.Zone#ZONE Zone A @{Core.Zone} object with the goal to be achieved. Alternatively, can be handed as the name of late activated group describing a @{ZONE_POLYGON} with its waypoints.
   -- @param DCSCoalition.DCSCoalition#coalition Coalition The initial coalition owning the zone.
   -- @param #table UnitCategories Table of unit categories. See [DCS Class Unit](https://wiki.hoggitworld.com/view/DCS_Class_Unit). Default {Unit.Category.GROUND_UNIT}.
   -- @param #table ObjectCategories Table of unit categories. See [DCS Class Object](https://wiki.hoggitworld.com/view/DCS_Class_Object). Default {Object.Category.UNIT, Object.Category.STATIC}, i.e. all UNITS and STATICS.
@@ -804,7 +804,7 @@ do -- ZONE_CAPTURE_COALITION
     return IsEmpty
   end
 
-  --- Check if zone is "Guarded", i.e. only one (the defending) coaliton is present inside the zone.
+  --- Check if zone is "Guarded", i.e. only one (the defending) coalition is present inside the zone.
   -- @param #ZONE_CAPTURE_COALITION self
   -- @return #boolean self:IsAllInZoneOfCoalition( self.Coalition )
   function ZONE_CAPTURE_COALITION:IsGuarded()
@@ -826,7 +826,7 @@ do -- ZONE_CAPTURE_COALITION
     return IsCaptured
   end
   
-  --- Check if zone is "Attacked", i.e. another coaliton entered the zone.
+  --- Check if zone is "Attacked", i.e. another coalition entered the zone.
   -- @param #ZONE_CAPTURE_COALITION self
   -- @return #boolean self:IsSomeInZoneOfCoalition( self.Coalition )
   function ZONE_CAPTURE_COALITION:IsAttacked()
@@ -899,24 +899,23 @@ do -- ZONE_CAPTURE_COALITION
       end
       self:I(text)
     end
-    
+
   end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  
   --- Update Mark on F10 map.
   -- @param #ZONE_CAPTURE_COALITION self
   function ZONE_CAPTURE_COALITION:Mark()
-  
+
     if self.MarkOn then
-    
+
       local Coord    = self:GetCoordinate()
       local ZoneName = self:GetZoneName()
       local State    = self:GetState()
-      
+
       -- Remove marks.
       if self.MarkRed then
         Coord:RemoveMark(self.MarkRed)
@@ -924,21 +923,21 @@ do -- ZONE_CAPTURE_COALITION
       if self.MarkBlue then
         Coord:RemoveMark(self.MarkBlue)
       end
-      
-      -- Create new marks for each coaliton.
+
+      -- Create new marks for each coalition.
       if self.Coalition == coalition.side.BLUE then
-        self.MarkBlue = Coord:MarkToCoalitionBlue( "Coalition: Blue\nGuard Zone: " .. ZoneName .. "\nStatus: " .. State )  
+        self.MarkBlue = Coord:MarkToCoalitionBlue( "Coalition: Blue\nGuard Zone: " .. ZoneName .. "\nStatus: " .. State )
         self.MarkRed  = Coord:MarkToCoalitionRed(  "Coalition: Blue\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )
       elseif self.Coalition == coalition.side.RED then
-        self.MarkRed  = Coord:MarkToCoalitionRed(  "Coalition: Red\nGuard Zone: " .. ZoneName .. "\nStatus: " .. State )  
+        self.MarkRed  = Coord:MarkToCoalitionRed(  "Coalition: Red\nGuard Zone: " .. ZoneName .. "\nStatus: " .. State )
         self.MarkBlue = Coord:MarkToCoalitionBlue( "Coalition: Red\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )
       else
-        self.MarkRed  = Coord:MarkToCoalitionRed(  "Coalition: Neutral\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )  
+        self.MarkRed  = Coord:MarkToCoalitionRed(  "Coalition: Neutral\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )
         self.MarkBlue = Coord:MarkToCoalitionBlue( "Coalition: Neutral\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )
       end
-      
+
     end
-    
+
   end
 
 end

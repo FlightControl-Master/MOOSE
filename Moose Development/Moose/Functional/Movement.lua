@@ -1,4 +1,4 @@
---- **Functional** -- Limit the movement of simulaneous moving ground vehicles.
+--- **Functional** - Limit the movement of simulaneous moving ground vehicles.
 -- 
 -- ===
 --  
@@ -30,23 +30,23 @@ MOVEMENT = {
 function MOVEMENT:New( MovePrefixes, MoveMaximum )
 	local self = BASE:Inherit( self, BASE:New() ) -- #MOVEMENT
 	self:F( { MovePrefixes, MoveMaximum } )
-  
+
 	if type( MovePrefixes ) == 'table' then
 		self.MovePrefixes = MovePrefixes
 	else
 		self.MovePrefixes = { MovePrefixes }
 	end
-	self.MoveCount = 0															-- The internal counter of the amount of Moveing the has happened since MoveStart.
-	self.MoveMaximum = MoveMaximum												-- Contains the Maximum amount of units that are allowed to move...
-	self.AliveUnits = 0														-- Contains the counter how many units are currently alive
-	self.MoveUnits = {}														-- Reflects if the Moving for this MovePrefixes is going to be scheduled or not.
-	
+	self.MoveCount = 0              -- The internal counter of the amount of Moving the has happened since MoveStart.
+	self.MoveMaximum = MoveMaximum  -- Contains the Maximum amount of units that are allowed to move.
+	self.AliveUnits = 0             -- Contains the counter how many units are currently alive.
+	self.MoveUnits = {}             -- Reflects if the Moving for this MovePrefixes is going to be scheduled or not.
+
 	self:HandleEvent( EVENTS.Birth )
-	
+
 --	self:AddEvent( world.event.S_EVENT_BIRTH, self.OnBirth )
 --	
 --	self:EnableEvents()
-	
+
 	self:ScheduleStart()
 
 	return self
@@ -67,7 +67,7 @@ function MOVEMENT:ScheduleStop()
 end
 
 --- Captures the birth events when new Units were spawned.
--- @todo This method should become obsolete. The new @{DATABASE} class will handle the collection administration.
+-- @todo This method should become obsolete. The global _DATABASE object (an instance of @{Core.Database#DATABASE}) will handle the collection administration.
 -- @param #MOVEMENT self
 -- @param Core.Event#EVENTDATA self
 function MOVEMENT:OnEventBirth( EventData )
@@ -86,14 +86,14 @@ function MOVEMENT:OnEventBirth( EventData )
 				end
 			end
 		end
-		
+	
 		EventData.IniUnit:HandleEvent( EVENTS.DEAD, self.OnDeadOrCrash )
 	end
 
 end
 
 --- Captures the Dead or Crash events when Units crash or are destroyed.
--- @todo This method should become obsolete. The new @{DATABASE} class will handle the collection administration.
+-- @todo This method should become obsolete. The global _DATABASE object (an instance of @{Core.Database#DATABASE}) will handle the collection administration.
 function MOVEMENT:OnDeadOrCrash( Event )
 	self:F( { Event } )
 

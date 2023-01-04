@@ -5,6 +5,7 @@
 --    * Monitor if a zone is captured
 --    * Monitor if an airbase is captured
 --    * Define conditions under which zones are captured/held
+--    * Supports circular and polygon zone shapes
 --
 -- ===
 --
@@ -20,6 +21,7 @@
 -- @field #string lid DCS log ID string.
 -- @field #number verbose Verbosity of output.
 -- @field Core.Zone#ZONE zone The zone.
+-- @field Core.Zone#ZONE_RADIUS zoneCircular The circular zone.
 -- @field Wrapper.Airbase#AIRBASE airbase The airbase that is monitored.
 -- @field #string airbaseName Name of the airbase that is monitored.
 -- @field #string zoneName Name of the zone.
@@ -30,6 +32,11 @@
 -- @field #number Nred Number of red units in the zone.
 -- @field #number Nblu Number of blue units in the zone.
 -- @field #number Nnut Number of neutral units in the zone.
+-- @field #number Tred Threat level of red units in the zone.
+-- @field #number Tblu Threat level of blue units in the zone.
+-- @field #number Tnut Threat level of neutral units in the zone.
+-- @field #number TminCaptured Time interval in seconds how long an attacker must have troops inside the zone to capture.
+-- @field #number Tcaptured Time stamp (abs.) when the attacker destroyed all owning troops.
 -- @field #table ObjectCategories Object categories for the scan.
 -- @field #table UnitCategories Unit categories for the scan.
 -- @field #number Tattacked Abs. mission time stamp when an attack was started.
@@ -41,6 +48,10 @@
 -- @field #string markerText Text shown in the maker.
 -- @field #table chiefs Chiefs that monitor this zone.
 -- @field #table Missions Missions that are attached to this OpsZone.
+-- @field #number nunitsCapture Number of units necessary to capture a zone.
+-- @field #number threatlevelCapture Threat level necessary to capture a zone.
+-- @field Core.Set#SET_UNIT ScanUnitSet Set of scanned units.
+-- @field Core.Set#SET_GROUP ScanGroupSet Set of scanned groups.
 -- @extends Core.Fsm#FSM
 
 --- *Gentlemen, when the enemy is committed to a mistake we must not interrupt him too soon.* --- Horation Nelson
@@ -51,9 +62,6 @@
 --
 -- An OPSZONE is a strategically important area.
 --
--- **Restrictions**
---
--- * Since we are using a DCS routine that scans a zone for units or other objects present in the zone and this DCS routine is limited to cicular zones, only those can be used.
 --
 -- @field #OPSZONE
 OPSZONE = {
@@ -62,6 +70,9 @@ OPSZONE = {
   Nred           =     0,
   Nblu           =     0,
   Nnut           =     0,
+  Tred           =     0,
+  Tblu           =     0,
+  Tnut           =     0,
   chiefs         =    {},
   Missions       =    {},
 }
@@ -72,18 +83,29 @@ OPSZONE = {
 -- @field #string Type Type of mission
 -- @field Ops.Auftrag#AUFTRAG Mission The actual attached mission
 
+
+--- Type of zone we are dealing with.
+-- @type OPSZONE.ZoneType
+-- @field #string Circular Zone is circular.
+-- @field #string Polygon Zone is a polygon.
+OPSZONE.ZoneType={
+  Circular="Circular",
+  Polygon="Polygon",
+}
+
 --- OPSZONE class version.
 -- @field #string version
-OPSZONE.version="0.3.0"
+OPSZONE.version="0.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Capturing based on (total) threat level threshold. Unarmed units do not pose a threat and should not be able to hold a zone.
 -- TODO: Pause/unpause evaluations.
--- TODO: Capture time, i.e. time how long a single coalition has to be inside the zone to capture it.
 -- TODO: Differentiate between ground attack and boming by air or arty.
+-- DONE: Polygon zones.
+-- DONE: Capture time, i.e. time how long a single coalition has to be inside the zone to capture it.
+-- DONE: Capturing based on (total) threat level threshold. Unarmed units do not pose a threat and should not be able to hold a zone.
 -- DONE: Can neutrals capture? No, since they are _neutral_!
 -- DONE: Capture airbases.
 -- DONE: Can statics capture or hold a zone? No, unless explicitly requested by mission designer.
@@ -98,10 +120,10 @@ OPSZONE.version="0.3.0"
 -- @param #number CoalitionOwner Initial owner of the coaliton. Default `coalition.side.NEUTRAL`.
 -- @return #OPSZONE self
 -- @usage
---            myopszone = OPSZONE:New(ZONE:FindByName("OpsZoneOne"),coalition.side.RED) -- base zone from the mission editor
---            myopszone = OPSZONE:New(ZONE_RADIUS:New("OpsZoneTwo",mycoordinate:GetVec2(),5000),coalition.side.BLUE) -- radius zone of 5km at a coordinate
---            myopszone = OPSZONE:New(ZONE_RADIUS:New("Batumi")) -- airbase zone from Batumi Airbase, ca 2500m radius
---            myopszone = OPSZONE:New(ZONE_AIRBASE:New("Batumi",6000),coalition.side.BLUE) -- airbase zone from Batumi Airbase, but with a specific radius of 6km
+-- myopszone = OPSZONE:New(ZONE:FindByName("OpsZoneOne"), coalition.side.RED) -- base zone from the mission editor
+-- myopszone = OPSZONE:New(ZONE_RADIUS:New("OpsZoneTwo", mycoordinate:GetVec2(),5000),coalition.side.BLUE) -- radius zone of 5km at a coordinate
+-- myopszone = OPSZONE:New(ZONE_RADIUS:New("Batumi")) -- airbase zone from Batumi Airbase, ca 2500m radius
+-- myopszone = OPSZONE:New(ZONE_AIRBASE:New("Batumi",6000),coalition.side.BLUE) -- airbase zone from Batumi Airbase, but with a specific radius of 6km
 -- 
 function OPSZONE:New(Zone, CoalitionOwner)
 
@@ -113,7 +135,7 @@ function OPSZONE:New(Zone, CoalitionOwner)
     if type(Zone)=="string" then
       -- Convert string into a ZONE or ZONE_AIRBASE    
       local Name=Zone      
-      Zone=ZONE:New(Name)
+      Zone=ZONE:FindByName(Name)
       if not Zone then
         local airbase=AIRBASE:FindByName(Name)
         if airbase then
@@ -134,8 +156,17 @@ function OPSZONE:New(Zone, CoalitionOwner)
   if Zone:IsInstanceOf("ZONE_AIRBASE") then
     self.airbase=Zone._.ZoneAirbase
     self.airbaseName=self.airbase:GetName()
+    self.zoneType=OPSZONE.ZoneType.Circular
+    self.zoneCircular=Zone    
   elseif Zone:IsInstanceOf("ZONE_RADIUS") then
     -- Nothing to do.
+    self.zoneType=OPSZONE.ZoneType.Circular
+    self.zoneCircular=Zone
+  elseif Zone:IsInstanceOf("ZONE_POLYGON_BASE") then
+    -- Nothing to do.
+    self.zoneType=OPSZONE.ZoneType.Polygon
+    local zone=Zone --Core.Zone#ZONE_POLYGON
+    self.zoneCircular=zone:GetZoneRadius(nil, true)
   else  
     self:E("ERROR: OPSZONE must be a SPHERICAL zone due to DCS restrictions!")
     return nil
@@ -144,11 +175,16 @@ function OPSZONE:New(Zone, CoalitionOwner)
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("OPSZONE %s | ", Zone:GetName())
 
-  -- Set some values.  
+  -- Set some values.
   self.zone=Zone
   self.zoneName=Zone:GetName()
-  self.zoneRadius=Zone:GetRadius()
+  self.zoneRadius=self.zoneCircular:GetRadius()
   self.Missions = {}
+  self.ScanUnitSet=SET_UNIT:New():FilterZones({Zone})
+  self.ScanGroupSet=SET_GROUP:New():FilterZones({Zone})
+
+  -- Add to database.
+  _DATABASE:AddOpsZone(self)
   
   -- Current and previous owners.
   self.ownerCurrent=CoalitionOwner or coalition.side.NEUTRAL
@@ -171,6 +207,11 @@ function OPSZONE:New(Zone, CoalitionOwner)
   self:SetDrawZone()
   self:SetMarkZone(true)
   
+  -- Default capture parameters.
+  self:SetCaptureTime()
+  self:SetCaptureNunits()
+  self:SetCaptureThreatlevel()
+  
   -- Status timer.
   self.timerStatus=TIMER:New(OPSZONE.Status, self)
 
@@ -181,6 +222,8 @@ function OPSZONE:New(Zone, CoalitionOwner)
   --                 From State    -->      Event       -->     To State
   self:AddTransition("Stopped",            "Start",             "Empty")       -- Start FSM.
   self:AddTransition("*",                  "Stop",              "Stopped")     -- Stop FSM.
+  
+  self:AddTransition("*",                  "Evaluated",         "*")           -- Evaluation done.
 
   self:AddTransition("*",                  "Captured",          "Guarded")     -- Zone was captured.
   
@@ -213,6 +256,23 @@ function OPSZONE:New(Zone, CoalitionOwner)
   -- @function [parent=#OPSZONE] __Stop
   -- @param #OPSZONE self
   -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Evaluated".
+  -- @function [parent=#OPSZONE] Evaluated
+  -- @param #OPSZONE self
+
+  --- Triggers the FSM event "Evaluated" after a delay.
+  -- @function [parent=#OPSZONE] __Evaluated
+  -- @param #OPSZONE self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Evaluated" event.
+  -- @function [parent=#OPSZONE] OnAfterEvaluated
+  -- @param #OPSZONE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
 
 
   --- Triggers the FSM event "Captured".
@@ -364,27 +424,39 @@ function OPSZONE:SetUnitCategories(Categories)
   return self
 end
 
---- Set threat level threshold that the defending units must have to hold a zone.
--- The reason why you might want to set this is that unarmed units (*e.g.* fuel trucks) should not be able to hold a zone as they do not pose a threat.
+--- Set threat level threshold that the offending units must have to capture a zone.
+-- The reason why you might want to set this is that unarmed units (*e.g.* fuel trucks) should not be able to capture a zone as they do not pose a threat.
 -- @param #OPSZONE self
--- @param #number Threatlevel Threat level threshod. Default 0.
+-- @param #number Threatlevel Threat level threshold. Default 0.
 -- @return #OPSZONE self
-function OPSZONE:SetThreatlevelDefinding(Threatlevel)
+function OPSZONE:SetCaptureThreatlevel(Threatlevel)
 
-  self.threatlevelDefending=Threatlevel or 0
+  self.threatlevelCapture=Threatlevel or 0
+  
+  return self
+end
+
+--- Set how many units must be present in a zone to capture it. By default, one unit is enough.
+-- @param #OPSZONE self
+-- @param #number Nunits Number of units. Default 1.
+-- @return #OPSZONE self
+function OPSZONE:SetCaptureNunits(Nunits)
+
+  Nunits=Nunits or 1
+
+  self.nunitsCapture=Nunits
   
   return self
 end
 
 
---- Set threat level threshold that the offending units must have to capture a zone.
--- The reason why you might want to set this is that unarmed units (*e.g.* fuel trucks) should not be able to capture a zone as they do not pose a threat.
+--- Set time how long an attacking coalition must have troops inside a zone before it captures the zone.
 -- @param #OPSZONE self
--- @param #number Threatlevel Threat level threshod. Default 0.
+-- @param #number Tcapture Time in seconds. Default 0.
 -- @return #OPSZONE self
-function OPSZONE:SetThreatlevelOffending(Threatlevel)
+function OPSZONE:SetCaptureTime(Tcapture)
 
-  self.threatlevelOffending=Threatlevel or 0
+  self.TminCaptured=Tcapture or 0
   
   return self
 end
@@ -434,7 +506,7 @@ function OPSZONE:SetMarkZone(Switch, ReadOnly)
       self.marker:Remove()
     end
     self.marker=nil
-    --self.marker=false
+    self.markZone=false
   end
   return self
 end
@@ -460,6 +532,21 @@ end
 function OPSZONE:GetCoordinate()
   local coordinate=self.zone:GetCoordinate()
   return coordinate
+end
+
+--- Get scanned units inside the zone.
+-- @param #OPSZONE self
+-- @return Core.Set#SET_UNIT Set of units inside the zone.
+function OPSZONE:GetScannedUnitSet()
+  return self.ScanUnitSet
+end
+
+
+--- Get scanned groups inside the zone.
+-- @param #OPSZONE self
+-- @return Core.Set#SET_GROUP Set of groups inside the zone.
+function OPSZONE:GetScannedGroupSet()
+  return self.ScanGroupSet
 end
 
 --- Returns a random coordinate in the zone.
@@ -545,6 +632,22 @@ function OPSZONE:IsCoalition(Coalition)
   return is
 end
 
+--- Check if zone is started (not stopped).
+-- @param #OPSZONE self 
+-- @return #boolean If `true`, zone is started.
+function OPSZONE:IsStarted()
+  local is=not self:IsStopped()
+  return is
+end
+
+--- Check if zone is stopped.
+-- @param #OPSZONE self 
+-- @return #boolean If `true`, zone is stopped.
+function OPSZONE:IsStopped()
+  local is=self:is("Stopped")
+  return is
+end
+
 --- Check if zone is guarded.
 -- @param #OPSZONE self 
 -- @return #boolean If `true`, zone is guarded.
@@ -624,10 +727,8 @@ function OPSZONE:onafterStop(From, Event, To)
   -- Reinit the timer.
   self.timerStatus:Stop()
   
-  -- Draw zone.
-  if self.drawZone then
-    self.zone:UndrawZone()
-  end
+  -- Undraw zone.
+  self.zone:UndrawZone()
 
   -- Remove marker.  
   if self.markZone then
@@ -674,11 +775,33 @@ function OPSZONE:Status()
   -- Update F10 marker (only if enabled).
   self:_UpdateMarker()
   
+  -- Undraw zone.
+  if self.zone.DrawID and not self.drawZone then
+    self.zone:UndrawZone()
+  end
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On before "Captured" event.
+-- @param #OPSZONE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number NewOwnerCoalition Coalition of the new owner.
+function OPSZONE:onbeforeCaptured(From, Event, To, NewOwnerCoalition)
+
+  -- Check if owner changed.
+  
+  if self.ownerCurrent==NewOwnerCoalition then
+    self:T(self.lid.."")
+  end
+
+  return true
+end
 
 --- On after "Captured" event.
 -- @param #OPSZONE self
@@ -716,12 +839,6 @@ function OPSZONE:onafterEmpty(From, Event, To)
   -- Debug info.
   self:T(self.lid..string.format("Zone is empty EVENT"))
 
-  -- Inform chief.
-  for _,_chief in pairs(self.chiefs) do
-    local chief=_chief --Ops.Chief#CHIEF  
-    chief:ZoneEmpty(self)
-  end
-  
 end
 
 --- On after "Attacked" event.
@@ -734,17 +851,7 @@ function OPSZONE:onafterAttacked(From, Event, To, AttackerCoalition)
 
   -- Debug info.
   self:T(self.lid..string.format("Zone is being attacked by coalition=%s!", tostring(AttackerCoalition)))
-
-  -- Inform chief.
-  if AttackerCoalition then
-    for _,_chief in pairs(self.chiefs) do
-      local chief=_chief --Ops.Chief#CHIEF
-      if chief.coalition~=AttackerCoalition then
-        chief:ZoneAttacked(self)
-      end
-    end
-  end
-  
+    
 end
 
 --- On after "Defeated" event.
@@ -769,19 +876,24 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSZONE:onenterGuarded(From, Event, To)
+  
+  if From~=To then
 
-  -- Debug info.
-  self:T(self.lid..string.format("Zone is guarded"))
+    -- Debug info.
+    self:T(self.lid..string.format("Zone is guarded"))
 
-  -- Not attacked any more.
-  self.Tattacked=nil
-
-  if self.drawZone then
-    self.zone:UndrawZone()
+    -- Not attacked any more.
+    self.Tattacked=nil
+  
+    if self.drawZone then
     
-    local color=self:_GetZoneColor()
+      self.zone:UndrawZone()
+      
+      local color=self:_GetZoneColor()
+      
+      self.zone:DrawZone(nil, color, 1.0, color, 0.5)
+    end
     
-    self.zone:DrawZone(nil, color, 1.0, color, 0.5)
   end
 
 end
@@ -791,26 +903,43 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function OPSZONE:onenterAttacked(From, Event, To)
-
-  -- Debug info.
-  self:T(self.lid..string.format("Zone is Attacked"))
+-- @param #number AttackerCoalition Coalition of the attacking ground troops.
+function OPSZONE:onenterAttacked(From, Event, To, AttackerCoalition)
 
   -- Time stamp when the attack started.
-  self.Tattacked=timer.getAbsTime()
+  if From~="Attacked" then
 
-  -- Draw zone?
-  if self.drawZone then
-    self.zone:UndrawZone()
-    
-    -- Color.
-    local color={1, 204/255, 204/255}
-    
-    -- Draw zone.
-    self.zone:DrawZone(nil, color, 1.0, color, 0.5)
-  end
+    -- Debug info.
+    self:T(self.lid..string.format("Zone is Attacked"))
   
-  self:_CleanMissionTable()
+    -- Set time stamp.
+    self.Tattacked=timer.getAbsTime()
+    
+    -- Inform chief.
+    if AttackerCoalition then
+      for _,_chief in pairs(self.chiefs) do
+        local chief=_chief --Ops.Chief#CHIEF
+        if chief.coalition~=AttackerCoalition then
+          chief:ZoneAttacked(self)
+        end
+      end
+    end    
+  
+    -- Draw zone?
+    if self.drawZone then
+      self.zone:UndrawZone()
+      
+      -- Color.
+      local color={1, 204/255, 204/255}
+      
+      -- Draw zone.
+      self.zone:DrawZone(nil, color, 1.0, color, 0.5)
+    end
+    
+    self:_CleanMissionTable()
+    
+  end
+
 end
 
 --- On enter "Empty" event.
@@ -820,17 +949,27 @@ end
 -- @param #string To To state.
 function OPSZONE:onenterEmpty(From, Event, To)
 
-  -- Debug info.
-  self:T(self.lid..string.format("Zone is empty now"))
+  if From~=To then
 
-  if self.drawZone then
-    self.zone:UndrawZone()
-    
-    local color=self:_GetZoneColor()
-    
-    self.zone:DrawZone(nil, color, 1.0, color, 0.2)
-  end
+    -- Debug info.
+    self:T(self.lid..string.format("Zone is empty now"))
   
+    -- Inform chief.
+    for _,_chief in pairs(self.chiefs) do
+      local chief=_chief --Ops.Chief#CHIEF  
+      chief:ZoneEmpty(self)
+    end
+  
+    if self.drawZone then
+      self.zone:UndrawZone()
+      
+      local color=self:_GetZoneColor()
+      
+      self.zone:DrawZone(nil, color, 1.0, color, 0.2)
+    end
+    
+  end
+    
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -855,6 +994,13 @@ function OPSZONE:Scan()
   local Nred=0
   local Nblu=0
   local Nnut=0
+  
+  local Tred=0
+  local Tblu=0
+  local Tnut=0
+  
+  self.ScanGroupSet:Clear(false)
+  self.ScanUnitSet:Clear(false)
 
   --- Function to evaluate the world search
   local function EvaluateZone(_ZoneObject)
@@ -902,19 +1048,58 @@ function OPSZONE:Scan()
           -- Get Coalition.
           local Coalition=DCSUnit:getCoalition()
           
-          -- Increase counter.
-          if Coalition==coalition.side.RED then
-            Nred=Nred+1
-          elseif Coalition==coalition.side.BLUE then
-            Nblu=Nblu+1
-          elseif Coalition==coalition.side.NEUTRAL then
-            Nnut=Nnut+1
+          local tl=0
+          local unit=UNIT:Find(DCSUnit)
+          if unit then
+                      
+            -- Inside zone.
+            local inzone=true
+            if self.zoneType==OPSZONE.ZoneType.Polygon then
+            
+              -- Check if unit is really inside the zone.
+              inzone=unit:IsInZone(self.zone)
+              
+              -- Debug marker.
+              -- Debug: Had cases where a (red) unit was clearly not inside the zone but the scan did find it!      
+              unit:GetCoordinate():MarkToAll(string.format("Unit %s inzone=%s", unit:GetName(), tostring(inzone)))
+            end
+            
+            if inzone then          
+                    
+              -- Threat level of unit.
+              tl=unit:GetThreatLevel()
+              
+              -- Add unit to set.
+              self.ScanUnitSet:AddUnit(unit)
+                          
+              -- Get group of unit.
+              local group=unit:GetGroup()
+            
+              -- Add group to scanned set.  
+              if group then
+                self.ScanGroupSet:AddGroup(group, true)
+              end
+                        
+              -- Increase counter.
+              if Coalition==coalition.side.RED then
+                Nred=Nred+1
+                Tred=Tred+tl
+              elseif Coalition==coalition.side.BLUE then
+                Nblu=Nblu+1
+                Tblu=Tblu+tl
+              elseif Coalition==coalition.side.NEUTRAL then
+                Nnut=Nnut+1
+                Tnut=Tnut+tl
+              end
+              
+              -- Debug info.
+              if self.verbose>=4 then
+                self:I(self.lid..string.format("Found unit %s (coalition=%d)", DCSUnit:getName(), Coalition))
+              end
+            
+            end
           end
           
-          -- Debug info.
-          if self.verbose>=4 then
-            self:I(self.lid..string.format("Found unit %s (coalition=%d)", DCSUnit:getName(), Coalition))
-          end
         end
               
       elseif ObjectCategory==Object.Category.STATIC and ZoneObject:isExist() then
@@ -924,26 +1109,40 @@ function OPSZONE:Scan()
         ---
       
         -- This is a DCS static object.
-        local DCSStatic=ZoneObject --DCS#Static
+        local DCSStatic=ZoneObject --DCS#StaticObject
         
         -- Get coalition.
         local Coalition=DCSStatic:getCoalition()
         
         -- CAREFUL! Downed pilots break routine here without any error thrown.
         --local unit=STATIC:Find(DCSStatic)
-
-        -- Increase counter.
-        if Coalition==coalition.side.RED then
-          Nred=Nred+1
-        elseif Coalition==coalition.side.BLUE then
-          Nblu=Nblu+1
-        elseif Coalition==coalition.side.NEUTRAL then
-          Nnut=Nnut+1
+        
+        -- Inside zone.
+        local inzone=true
+        if self.zoneType==OPSZONE.ZoneType.Polygon then
+        
+          local Vec3=DCSStatic:getPoint()
+                  
+          inzone=self.zone:IsVec3InZone(Vec3)
+          
         end
         
-        -- Debug info
-        if self.verbose>=4 then        
-          self:I(self.lid..string.format("Found static %s (coalition=%d)", DCSStatic:getName(), Coalition))
+        if inzone then                  
+
+          -- Increase counter.
+          if Coalition==coalition.side.RED then
+            Nred=Nred+1
+          elseif Coalition==coalition.side.BLUE then
+            Nblu=Nblu+1
+          elseif Coalition==coalition.side.NEUTRAL then
+            Nnut=Nnut+1
+          end
+          
+          -- Debug info
+          if self.verbose>=4 then        
+            self:I(self.lid..string.format("Found static %s (coalition=%d)", DCSStatic:getName(), Coalition))
+          end
+          
         end
       
       elseif ObjectCategory==Object.Category.SCENERY then
@@ -969,7 +1168,18 @@ function OPSZONE:Scan()
   
   -- Debug info.
   if self.verbose>=3 then
-    local text=string.format("Scan result Nred=%d, Nblue=%d, Nneutral=%d", Nred, Nblu, Nnut)
+    local text=string.format("Scan result Nred=%d, Nblue=%d, Nneutral=%d", Nred, Nblu, Nnut)    
+    if self.verbose>=4 then
+      for _,_unit in pairs(self.ScanUnitSet:GetSet()) do
+        local unit=_unit --Wrapper.Unit#UNIT
+        text=text..string.format("\nUnit %s coalition=%s", unit:GetName(), unit:GetCoalitionName())
+      end
+  
+      for _,_group in pairs(self.ScanGroupSet:GetSet()) do
+        local group=_group --Wrapper.Group#GROUP
+        text=text..string.format("\nGroup %s coalition=%s", group:GetName(), group:GetCoalitionName())
+      end
+    end    
     self:I(self.lid..text)
   end
   
@@ -977,6 +1187,10 @@ function OPSZONE:Scan()
   self.Nred=Nred
   self.Nblu=Nblu
   self.Nnut=Nnut
+  
+  self.Tblu=Tblu
+  self.Tred=Tred
+  self.Tnut=Tnut
 
   return self
 end
@@ -991,6 +1205,30 @@ function OPSZONE:EvaluateZone()
   local Nblu=self.Nblu
   local Nnut=self.Nnut
 
+  local Tnow=timer.getAbsTime()
+  
+  --- Capture
+  -- @param #number coal Coaltion capturing.
+  local function captured(coal)
+  
+    -- Blue captured red zone.
+    if not self.airbase then
+      
+      -- Set time stamp if it does not exist.
+      if not self.Tcaptured then
+        self.Tcaptured=Tnow
+      end
+      
+      -- Check if enough time elapsed.
+      if Tnow-self.Tcaptured>=self.TminCaptured then
+        self:Captured(coal)
+        self.Tcaptured=nil
+      end
+    end  
+  
+  end
+  
+
   if self:IsRed() then
   
     ---
@@ -1001,21 +1239,16 @@ function OPSZONE:EvaluateZone()
     
       -- No red units in red zone any more.
     
-      if Nblu>0 then
-        -- Blue captured red zone.
-        if not self.airbase then
-          self:Captured(coalition.side.BLUE)
-        end
-      elseif Nnut>0 and self.neutralCanCapture then
+      if Nblu>=self.nunitsCapture and self.Tblu>=self.threatlevelCapture then
+      
+        -- Blue captued red zone.
+        captured(coalition.side.BLUE)
+        
+      elseif Nnut>=self.nunitsCapture and self.Tnut>=self.threatlevelCapture and self.neutralCanCapture then
+      
         -- Neutral captured red zone.
-        if not self.airbase then
-          self:Captured(coalition.side.NEUTRAL)
-        end
-      else
-        -- Red zone is now empty (but will remain red).
-        if not self:IsEmpty() then
-          self:Empty()
-        end    
+        captured(coalition.side.NEUTRAL)
+                    
       end
       
     else
@@ -1058,21 +1291,16 @@ function OPSZONE:EvaluateZone()
     
       -- No blue units in blue zone any more.
     
-      if Nred>0 then
+      if Nred>=self.nunitsCapture and self.Tred>=self.threatlevelCapture then
+      
         -- Red captured blue zone.
-        if not self.airbase then
-          self:Captured(coalition.side.RED)
-        end
-      elseif Nnut>0 and self.neutralCanCapture then
+        captured(coalition.side.RED)        
+        
+      elseif Nnut>=self.nunitsCapture and self.Tnut>=self.threatlevelCapture and self.neutralCanCapture then
+      
         -- Neutral captured blue zone.
-        if not self.airbase then
-          self:Captured(coalition.side.NEUTRAL)
-        end
-      else
-        -- Blue zone is empty now.
-        if not self:IsEmpty() then
-          self:Empty()
-        end
+        captured(coalition.side.NEUTRAL)      
+      
       end
 
     else
@@ -1093,7 +1321,7 @@ function OPSZONE:EvaluateZone()
           self:Defeated(coalition.side.RED)
         elseif self:IsEmpty() then
           -- Blue units left zone and returned (or from initial Empty state).
-          self:Guarded()          
+          self:Guarded() 
         end
 
       end
@@ -1124,21 +1352,12 @@ function OPSZONE:EvaluateZone()
           self:Attacked()
         end
         self.isContested=true
-      elseif Nred>0 then
+      elseif Nred>=self.nunitsCapture and self.Tred>=self.threatlevelCapture then
         -- Red captured neutral zone.
-        if not self.airbase then
-          self:Captured(coalition.side.RED)
-        end
-      elseif Nblu>0 then
+        captured(coalition.side.RED)
+      elseif Nblu>=self.nunitsCapture and self.Tblu>=self.threatlevelCapture then
         -- Blue captured neutral zone.
-        if not self.airbase then
-          self:Captured(coalition.side.BLUE)
-        end
-      else
-        -- Neutral zone is empty now.
-        if not self:IsEmpty() then
-          self:Empty()
-        end
+        captured(coalition.side.BLUE)
       end
       
     --end
@@ -1147,6 +1366,11 @@ function OPSZONE:EvaluateZone()
     self:E(self.lid.."ERROR: Unknown coaliton!")
   end
 
+      
+  -- No units of any coalition in zone any more ==> Empty!
+  if Nblu==0 and Nred==0 and Nnut==0 and (not self:IsEmpty()) then
+    self:Empty()
+  end
 
   -- Finally, check airbase coalition
   if self.airbase then
@@ -1160,6 +1384,9 @@ function OPSZONE:EvaluateZone()
     end
   
   end
+  
+  -- Trigger event.
+  self:Evaluated()
 
 end
 
@@ -1269,7 +1496,7 @@ function OPSZONE:_UpdateMarker()
 
 end
 
---- Get marker text
+--- Get marker text.
 -- @param #OPSZONE self
 -- @return #string Marker text.
 function OPSZONE:_GetMarkerText()
@@ -1278,8 +1505,10 @@ function OPSZONE:_GetMarkerText()
   local prevowner=UTILS.GetCoalitionName(self.ownerPrevious)
 
   -- Get marker text.
-  local text=string.format("%s: Owner=%s [%s]\nState=%s [Contested=%s]\nBlue=%d, Red=%d, Neutral=%d", 
-  self.zoneName, owner, prevowner, self:GetState(), tostring(self:IsContested()), self.Nblu, self.Nred, self.Nnut)
+  local text=string.format("%s [N=%d, TL=%d T=%d]:\nOwner=%s [%s]\nState=%s [Contested=%s]\nBlue=%d [TL=%d]\nRed=%d [TL=%d]\nNeutral=%d [TL=%d]", 
+  self.zoneName, self.nunitsCapture or 0, self.threatlevelCapture or 0, self.TminCaptured or 0, 
+  owner, prevowner, self:GetState(), tostring(self:IsContested()), 
+  self.Nblu, self.Tblu, self.Nred, self.Tred, self.Nnut, self.Tnut)
   
   return text
 end

@@ -11,7 +11,7 @@
 --
 -- ### Author: **funkyfranky**
 -- @module Utilities.Socket
--- @image Utilities_Socket.png
+-- @image MOOSE.JPG
 
 
 --- SOCKET class.
@@ -58,7 +58,7 @@ SOCKET.DataType={
 
 --- SOCKET class version.
 -- @field #string version
-SOCKET.version="0.1.0"
+SOCKET.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -121,6 +121,10 @@ end
 -- @return #SOCKET self
 function SOCKET:SendTable(Table)
 
+  -- Add server name for DCS
+  Table.server_name=BASE.ServerName or "Unknown"
+
+  -- Encode json table.
   local json= self.json:encode(Table)
   
   -- Debug info.

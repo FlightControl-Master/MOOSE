@@ -209,6 +209,8 @@ function COMMANDER:New(Coalition, Alias)
   self:AddTransition("*",                  "TransportCancel",     "*")           -- COMMANDER cancels a Transport.
 
   self:AddTransition("*",                  "OpsOnMission",        "*")           -- An OPSGROUP was send on a Mission (AUFTRAG).
+  
+  self:AddTransition("*",                  "LegionLost",          "*")           -- Out of our legions was lost to the enemy.
 
   ------------------------
   --- Pseudo Functions ---
@@ -351,6 +353,32 @@ function COMMANDER:New(Coalition, Alias)
   -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
+
+  --- Triggers the FSM event "LegionLost".
+  -- @function [parent=#COMMANDER] LegionLost
+  -- @param #COMMANDER self
+  -- @param Ops.Legion#LEGION Legion The legion that was lost.
+  -- @param DCS#coalition.side Coalition which captured the warehouse.
+  -- @param DCS#country.id Country which has captured the warehouse.
+
+  --- Triggers the FSM event "LegionLost".
+  -- @function [parent=#COMMANDER] __LegionLost
+  -- @param #COMMANDER self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.Legion#LEGION Legion The legion that was lost.
+  -- @param DCS#coalition.side Coalition which captured the warehouse.
+  -- @param DCS#country.id Country which has captured the warehouse.
+
+  --- On after "LegionLost" event.
+  -- @function [parent=#COMMANDER] OnAfterLegionLost
+  -- @param #COMMANDER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Legion#LEGION Legion The legion that was lost.
+  -- @param DCS#coalition.side Coalition which captured the warehouse.
+  -- @param DCS#country.id Country which has captured the warehouse.
+
   return self
 end
 
@@ -438,6 +466,23 @@ function COMMANDER:AddLegion(Legion)
 
   -- Add to legions.
   table.insert(self.legions, Legion)  
+  
+  return self
+end
+
+--- Remove a LEGION to the commander.
+-- @param #COMMANDER self
+-- @param Ops.Legion#LEGION Legion The legion to be removed.
+-- @return #COMMANDER self
+function COMMANDER:RemoveLegion(Legion)
+    
+  for i,_legion in pairs(self.legions) do
+    local legion=_legion --Ops.Legion#LEGION
+    if legion.alias==Legion.alias then
+      table.remove(self.legions, i)
+      Legion.commander=nil
+    end
+  end
   
   return self
 end
@@ -1626,25 +1671,65 @@ function COMMANDER:RecruitAssetsForMission(Mission)
 
   -- Debug info.
   self:T2(self.lid..string.format("Recruiting assets for mission \"%s\" [%s]", Mission:GetName(), Mission:GetType()))
-  
-  -- Cohorts.
-  local Cohorts=self:_GetCohorts(Mission.specialLegions, Mission.specialCohorts, Mission.operation)
-  
-  -- Debug info.
-  self:T(self.lid..string.format("Found %d cohort candidates for mission", #Cohorts))
 
   -- Number of required assets.
   local NreqMin, NreqMax=Mission:GetRequiredAssets()
-  
+
   -- Target position.
   local TargetVec2=Mission:GetTargetVec2()
   
   -- Special payloads.
-  local Payloads=Mission.payloads
+  local Payloads=Mission.payloads  
+  
+  -- Largest cargo bay available of available carrier assets if mission assets need to be transported.
+  local MaxWeight=nil
+  
+  if Mission.NcarriersMin then
+  
+    local legions=self.legions
+    local cohorts=nil
+    if Mission.transportLegions or Mission.transportCohorts then
+      legions=Mission.transportLegions
+      cohorts=Mission.transportCohorts
+    end  
+  
+    -- Get transport cohorts.
+    local Cohorts=LEGION._GetCohorts(legions, cohorts)
+    
+    -- Filter cohorts that can actually perform transport missions.    
+    local transportcohorts={}
+    for _,_cohort in pairs(Cohorts) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      
+      -- Check if cohort can perform transport to target.
+      --TODO: Option to filter transport carrier asset categories, attributes and/or properties.
+      local can=LEGION._CohortCan(cohort, AUFTRAG.Type.OPSTRANSPORT, Categories, Attributes, Properties, nil, TargetVec2)
+      
+      -- MaxWeight of cargo assets is limited by the largets available cargo bay. We don't want to select, e.g., tanks that cannot be transported by APCs or helos.
+      if can and (MaxWeight==nil or cohort.cargobayLimit>MaxWeight) then
+        MaxWeight=cohort.cargobayLimit
+      end
+    end
+    
+    self:T(self.lid..string.format("Largest cargo bay available=%.1f", MaxWeight))
+  end
+  
+  local legions=self.legions
+  local cohorts=nil
+  if Mission.specialLegions or Mission.specialCohorts then
+    legions=Mission.specialLegions
+    cohorts=Mission.specialCohorts
+  end    
+  
+  -- Get cohorts.
+  local Cohorts=LEGION._GetCohorts(legions, cohorts, Mission.operation, self.opsqueue)
+  
+  -- Debug info.
+  self:T(self.lid..string.format("Found %d cohort candidates for mission", #Cohorts))
   
   -- Recruite assets.
   local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads,
-   Mission.engageRange, Mission.refuelSystem, nil, nil, nil, Mission.attributes, Mission.properties, {Mission.engageWeaponType})
+   Mission.engageRange, Mission.refuelSystem, nil, nil, MaxWeight, nil, Mission.attributes, Mission.properties, {Mission.engageWeaponType})
 
   return recruited, assets, legions
 end

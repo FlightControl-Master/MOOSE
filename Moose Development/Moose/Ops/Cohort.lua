@@ -176,7 +176,11 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   for i,_unit in pairs(units) do
     local unit=_unit --Wrapper.Unit#UNIT
     local desc=unit:GetDesc()
-    self.weightAsset=self.weightAsset + (desc.massMax or 666)
+    local mass=666
+    if desc then
+      mass=desc.massMax or desc.massEmpty
+    end
+    self.weightAsset=self.weightAsset + (mass or 666)
     if i==1 then
       self.cargobayLimit=unit:GetCargoBayFreeWeight()  
     end
@@ -503,6 +507,37 @@ function COHORT:SetCallsign(Callsign, Index)
   self.callsignIndex=Index
   return self
 end
+
+--- Set generalized attribute.
+-- @param #COHORT self
+-- @param #string Attribute Generalized attribute, e.g. `GROUP.Attribute.Ground_Infantry`.
+-- @return #COHORT self
+function COHORT:SetAttribute(Attribute)
+  self.attribute=Attribute
+  return self
+end
+
+--- Get generalized attribute.
+-- @param #COHORT self
+-- @return #string Generalized attribute, e.g. `GROUP.Attribute.Ground_Infantry`.
+function COHORT:GetAttribute()
+  return self.attribute
+end
+
+--- Get group category.
+-- @param #COHORT self
+-- @return #string Group category
+function COHORT:GetCategory()
+  return self.category
+end
+
+--- Get properties, *i.e.* DCS attributes.
+-- @param #COHORT self
+-- @return #table Properties table.
+function COHORT:GetProperties()
+  return self.properties
+end
+
 
 --- Set modex.
 -- @param #COHORT self

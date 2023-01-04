@@ -1,4 +1,4 @@
---- **Wrapper** -- GROUP wraps the DCS Class Group objects.
+--- **Wrapper** - GROUP wraps the DCS Class Group objects.
 -- 
 -- ===
 -- 
@@ -11,12 +11,12 @@
 --  * Handle local Group Controller.
 --  * Manage the "state" of the DCS Group.
 --
--- **IMPORTANT: ONE SHOULD NEVER SANATIZE these GROUP OBJECT REFERENCES! (make the GROUP object references nil).**
+-- **IMPORTANT: ONE SHOULD NEVER SANITIZE these GROUP OBJECT REFERENCES! (make the GROUP object references nil).**
 --
 -- ===
 -- 
--- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
--- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{SPAWN} class).
+-- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
+-- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{Core.Spawn} class).
 -- 
 -- The GROUP class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
 -- using the DCS Group or the DCS GroupName.
@@ -47,8 +47,8 @@
 -- 
 -- The GROUP class provides the following functions to retrieve quickly the relevant GROUP instance:
 --
---  * @{#GROUP.Find}(): Find a GROUP instance from the _DATABASE object using a DCS Group object.
---  * @{#GROUP.FindByName}(): Find a GROUP instance from the _DATABASE object using a DCS Group name.
+--  * @{#GROUP.Find}(): Find a GROUP instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Group object.
+--  * @{#GROUP.FindByName}(): Find a GROUP instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Group name.
 --
 -- # 1. Tasking of groups
 --
@@ -132,14 +132,14 @@
 -- 
 -- ## GROUP Zone validation methods
 -- 
--- The group can be validated whether it is completely, partly or not within a @{Zone}.
+-- The group can be validated whether it is completely, partly or not within a @{Core.Zone}.
 -- Use the following Zone validation methods on the group:
 -- 
---   * @{#GROUP.IsCompletelyInZone}: Returns true if all units of the group are within a @{Zone}.
---   * @{#GROUP.IsPartlyInZone}: Returns true if some units of the group are within a @{Zone}.
---   * @{#GROUP.IsNotInZone}: Returns true if none of the group units of the group are within a @{Zone}.
+--   * @{#GROUP.IsCompletelyInZone}: Returns true if all units of the group are within a @{Core.Zone}.
+--   * @{#GROUP.IsPartlyInZone}: Returns true if some units of the group are within a @{Core.Zone}.
+--   * @{#GROUP.IsNotInZone}: Returns true if none of the group units of the group are within a @{Core.Zone}.
 --   
--- The zone can be of any @{Zone} class derived from @{Core.Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
+-- The zone can be of any @{Core.Zone} class derived from @{Core.Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
 -- 
 -- ## GROUP AI methods
 -- 
@@ -673,24 +673,7 @@ end
 -- @param #GROUP self
 -- @return #boolean If true, group is associated with a client or player slot.
 function GROUP:IsPlayer()
-  
-  -- Get group.
- -- local group=self:GetGroup()
-    
-  -- Units of template group.
-  local units=self:GetTemplate().units
-  
-  -- Get numbers.
-  for _,unit in pairs(units) do
-      
-    -- Check if unit name matach and skill is Client or Player.
-    if unit.name==self:GetName() and (unit.skill=="Client" or unit.skill=="Player") then
-      return true
-    end
-
-  end
-  
-  return false
+  return self:GetUnit(1):IsPlayer()
 end
 
 --- Returns the UNIT wrapper class with number UnitNumber.
@@ -725,6 +708,7 @@ function GROUP:GetUnit( UnitNumber )
   
 end
 
+
 --- Returns the DCS Unit with number UnitNumber.
 -- If the underlying DCS Unit does not exist, the method will return nil. .
 -- @param #GROUP self
@@ -732,11 +716,24 @@ end
 -- @return DCS#Unit The DCS Unit.
 function GROUP:GetDCSUnit( UnitNumber )
 
-  local DCSGroup=self:GetDCSObject()
+  local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    local DCSUnitFound=DCSGroup:getUnit( UnitNumber )
-    return DCSUnitFound
+    
+    if DCSGroup.getUnit and DCSGroup:getUnit( UnitNumber ) then
+      return DCSGroup:getUnit( UnitNumber )
+    else
+    
+      local UnitFound = nil
+      -- 2.7.1 dead event bug, return the first alive unit instead
+      local units = DCSGroup:getUnits() or {}
+      
+      for _,_unit in pairs(units) do
+        if _unit and _unit:isExist() then
+          return _unit
+        end
+      end
+    end
   end
 
   return nil
@@ -1022,9 +1019,9 @@ function GROUP:GetVec2()
 
 end
 
---- Returns the current Vec3 vector of the first DCS Unit in the GROUP.
+--- Returns the current Vec3 vector of the first Unit in the GROUP.
 -- @param #GROUP self
--- @return DCS#Vec3 Current Vec3 of the first DCS Unit of the GROUP.
+-- @return DCS#Vec3 Current Vec3 of the first Unit of the GROUP or nil if cannot be found.
 function GROUP:GetVec3()
 
   -- Get first unit.
@@ -1037,6 +1034,37 @@ function GROUP:GetVec3()
   
   self:E("ERROR: Cannot get Vec3 of group "..tostring(self.GroupName))
   return nil
+end
+
+--- Returns the average Vec3 vector of the Units in the GROUP.
+-- @param #GROUP self
+-- @return DCS#Vec3 Current Vec3 of the GROUP  or nil if cannot be found.
+function GROUP:GetAverageVec3()
+  local units = self:GetUnits() or {}
+    -- Init.
+  local x=0 ; local y=0 ; local z=0 ; local n=0
+  -- Loop over all units.
+  for _,unit in pairs(units) do
+    local vec3=nil --DCS#Vec3
+    if unit and unit:IsAlive() then
+      vec3 = unit:GetVec3()
+    end
+    if vec3 then
+      -- Sum up posits.
+      x=x+vec3.x
+      y=y+vec3.y
+      z=z+vec3.z
+      -- Increase counter.
+      n=n+1
+    end
+  end
+
+  if n>0 then
+    -- Average.
+    local Vec3={x=x/n, y=y/n, z=z/n} --DCS#Vec3
+    return Vec3
+  end
+  return nil 
 end
 
 --- Returns a POINT_VEC2 object indicating the point in 2D of the first UNIT of the GROUP within the mission.
@@ -1057,6 +1085,21 @@ function GROUP:GetPointVec2()
   BASE:E( { "Cannot GetPointVec2", Group = self, Alive = self:IsAlive() } )
 
   return nil
+end
+
+--- Returns a COORDINATE object indicating the average position of the GROUP within the mission.
+-- @param Wrapper.Group#GROUP self
+-- @return Core.Point#COORDINATE The COORDINATE of the GROUP.
+function GROUP:GetAverageCoordinate()
+  local vec3 = self:GetAverageVec3()
+  if vec3 then
+    local coord = COORDINATE:NewFromVec3(vec3)
+    local Heading = self:GetHeading()
+    coord.Heading = Heading
+  else
+    BASE:E( { "Cannot GetAverageCoordinate", Group = self, Alive = self:IsAlive() } )
+    return nil
+  end
 end
 
 --- Returns a COORDINATE object indicating the point of the first UNIT of the GROUP within the mission.
@@ -1083,8 +1126,7 @@ function GROUP:GetCoordinate()
     end
   end
   BASE:E( { "Cannot GetCoordinate", Group = self, Alive = self:IsAlive() } )
-
-  return nil
+  
 end
 
 
@@ -1114,6 +1156,8 @@ end
 -- @param #GROUP self
 -- @return #number Mean heading of the GROUP in degrees or #nil The first UNIT is not existing or alive.
 function GROUP:GetHeading()
+  self:F2(self.GroupName)
+
   self:F2(self.GroupName)
 
   local GroupSize = self:GetSize()
@@ -1211,7 +1255,8 @@ end
 -- @return #number Number of shells left.
 -- @return #number Number of rockets left.
 -- @return #number Number of bombs left.
--- @return #number Number of missiles left.  
+-- @return #number Number of missiles left. 
+-- @return #number Number of artillery shells left (with explosive mass, included in shells; shells can also be machine gun ammo) 
 function GROUP:GetAmmunition()
   self:F( self.ControllableName )
 
@@ -1222,6 +1267,7 @@ function GROUP:GetAmmunition()
   local Nrockets=0
   local Nmissiles=0
   local Nbombs=0
+  local Narti=0
   
   if DCSControllable then
     
@@ -1230,26 +1276,26 @@ function GROUP:GetAmmunition()
       local Unit = UnitData -- Wrapper.Unit#UNIT
       
       -- Get ammo of the unit
-      local ntot, nshells, nrockets, nbombs, nmissiles = Unit:GetAmmunition()
+      local ntot, nshells, nrockets, nbombs, nmissiles, narti = Unit:GetAmmunition()
       
       Ntot=Ntot+ntot
       Nshells=Nshells+nshells
       Nrockets=Nrockets+nrockets
       Nmissiles=Nmissiles+nmissiles
       Nbombs=Nbombs+nbombs
-      
+      Narti=Narti+narti
     end
     
   end
   
-  return Ntot, Nshells, Nrockets, Nbombs, Nmissiles
+  return Ntot, Nshells, Nrockets, Nbombs, Nmissiles, Narti
 end
 
 
 do -- Is Zone methods
 
 
---- Check if any unit of a group is inside a @{Zone}.
+--- Check if any unit of a group is inside a @{Core.Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns `true` if *at least one unit* is inside the zone or `false` if *no* unit is inside.
@@ -1278,7 +1324,7 @@ function GROUP:IsInZone( Zone )
   return nil
 end
 
---- Returns true if all units of the group are within a @{Zone}.
+--- Returns true if all units of the group are within a @{Core.Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the Group is completely within the @{Core.Zone#ZONE_BASE}
@@ -1298,7 +1344,7 @@ function GROUP:IsCompletelyInZone( Zone )
   return true
 end
 
---- Returns true if some but NOT ALL units of the group are within a @{Zone}.
+--- Returns true if some but NOT ALL units of the group are within a @{Core.Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the Group is partially within the @{Core.Zone#ZONE_BASE}
@@ -1326,7 +1372,7 @@ function GROUP:IsPartlyInZone( Zone )
   end
 end
 
---- Returns true if part or all units of the group are within a @{Zone}.
+--- Returns true if part or all units of the group are within a @{Core.Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the Group is partially or completely within the @{Core.Zone#ZONE_BASE}.
@@ -1334,7 +1380,7 @@ function GROUP:IsPartlyOrCompletelyInZone( Zone )
   return self:IsPartlyInZone(Zone) or self:IsCompletelyInZone(Zone)
 end
 
---- Returns true if none of the group units of the group are within a @{Zone}.
+--- Returns true if none of the group units of the group are within a @{Core.Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the Group is not within the @{Core.Zone#ZONE_BASE}
@@ -1370,10 +1416,10 @@ function GROUP:IsAnyInZone( Zone )
   return false
 end
 
---- Returns the number of UNITs that are in the @{Zone}
+--- Returns the number of UNITs that are in the @{Core.Zone}
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #number The number of UNITs that are in the @{Zone}
+-- @return #number The number of UNITs that are in the @{Core.Zone}
 function GROUP:CountInZone( Zone )
   self:F2( {self.GroupName, Zone} )
   local Count = 0
@@ -1630,7 +1676,7 @@ end
 
 -- RESPAWNING
 
---- Returns the group template from the @{DATABASE} (_DATABASE object).
+--- Returns the group template from the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
 -- @param #GROUP self
 -- @return #table 
 function GROUP:GetTemplate()
@@ -1638,7 +1684,7 @@ function GROUP:GetTemplate()
   return UTILS.DeepCopy( _DATABASE:GetGroupTemplate( GroupName ) )
 end
 
---- Returns the group template route.points[] (the waypoints) from the @{DATABASE} (_DATABASE object).
+--- Returns the group template route.points[] (the waypoints) from the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
 -- @param #GROUP self
 -- @return #table 
 function GROUP:GetTemplateRoutePoints()
@@ -1696,7 +1742,7 @@ function GROUP:InitHeight( Height )
 end
 
 
---- Set the respawn @{Zone} for the respawned group.
+--- Set the respawn @{Core.Zone} for the respawned group.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE Zone The zone in meters.
 -- @return #GROUP self
@@ -1706,7 +1752,7 @@ function GROUP:InitZone( Zone )
 end
 
 
---- Randomize the positions of the units of the respawned group within the @{Zone}.
+--- Randomize the positions of the units of the respawned group within the @{Core.Zone}.
 -- When a Respawn happens, the units of the group will be placed at random positions within the Zone (selected).
 -- @param #GROUP self
 -- @param #boolean PositionZone true will randomize the positions within the Zone.
@@ -1806,9 +1852,9 @@ end
 --   - @{#GROUP.InitHeading}: Set the heading for the units in degrees within the respawned group.
 --   - @{#GROUP.InitHeight}: Set the height for the units in meters for the respawned group. (This is applicable for air units).
 --   - @{#GROUP.InitRandomizeHeading}: Randomize the headings for the units within the respawned group.
---   - @{#GROUP.InitZone}: Set the respawn @{Zone} for the respawned group.
---   - @{#GROUP.InitRandomizeZones}: Randomize the respawn @{Zone} between one of the @{Zone}s given for the respawned group.
---   - @{#GROUP.InitRandomizePositionZone}: Randomize the positions of the units of the respawned group within the @{Zone}.
+--   - @{#GROUP.InitZone}: Set the respawn @{Core.Zone} for the respawned group.
+--   - @{#GROUP.InitRandomizeZones}: Randomize the respawn @{Core.Zone} between one of the @{Core.Zone}s given for the respawned group.
+--   - @{#GROUP.InitRandomizePositionZone}: Randomize the positions of the units of the respawned group within the @{Core.Zone}.
 --   - @{#GROUP.InitRandomizePositionRadius}: Randomize the positions of the units of the respawned group in a circle band.
 --   - @{#GROUP.InitRandomizeTemplates}: Randomize the Template for the respawned group.
 -- 
@@ -2159,7 +2205,7 @@ function GROUP:GetTaskRoute()
   return routines.utils.deepCopy( _DATABASE.Templates.Groups[self.GroupName].Template.route.points )
 end
 
---- Return the route of a group by using the @{Core.Database#DATABASE} class.
+--- Return the route of a group by using the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
 -- @param #GROUP self
 -- @param #number Begin The route point from where the copy will start. The base route point is 0.
 -- @param #number End The route point where the copy will end. The End point is the last point - the End point. The last point has base 0.
@@ -2384,7 +2430,7 @@ function GROUP:GetAttribute()
     local truck=self:HasAttribute("Trucks") and self:GetCategory()==Group.Category.GROUND
     local infantry=self:HasAttribute("Infantry")
     local artillery=self:HasAttribute("Artillery")
-    local tank=self:HasAttribute("Old Tanks") or self:HasAttribute("Modern Tanks")
+    local tank=self:HasAttribute("Old Tanks") or self:HasAttribute("Modern Tanks") or self:HasAttribute("Tanks")
     local aaa=self:HasAttribute("AAA") and (not self:HasAttribute("SAM elements"))
     local ewr=self:HasAttribute("EWR")
     local ifv=self:HasAttribute("IFV")
@@ -2727,94 +2773,112 @@ function GROUP:GetHighestThreat()
   return nil, nil
 end
 
---do -- Smoke
+--- Get TTS friendly, optionally customized callsign mainly for **player groups**. A customized callsign is taken from the #GROUP name, after an optional '#' sign, e.g. "Aerial 1-1#Ghostrider" resulting in "Ghostrider 9", or, 
+-- if that isn't available, from the playername, as set in the mission editor main screen under Logbook, after an optional '|' sign (actually, more of a personal call sign), e.g. "Apple|Moose" results in "Moose 9 1". Options see below.
+-- @param #GROUP self
+-- @param #boolean ShortCallsign Return a shortened customized callsign, i.e. "Ghostrider 9" and not "Ghostrider 9 1"
+-- @param #boolean Keepnumber (Player only) Return customized callsign, incl optional numbers at the end, e.g. "Aerial 1-1#Ghostrider 109" results in "Ghostrider 109", if you want to e.g. use historical US Navy Callsigns
+-- @param #table CallsignTranslations Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
+-- callsigns from playername or group name.
+-- @return #string Callsign
+-- @usage
+--            -- Set Custom CAP Flight Callsigns for use with TTS
+--            mygroup:GetCustomCallSign(true,false,{
+--              Devil = 'Bengal',
+--              Snake = 'Winder',
+--              Colt = 'Camelot',
+--              Enfield = 'Victory',
+--              Uzi = 'Evil Eye'
+--            })
 --
------ Signal a flare at the position of the GROUP.
----- @param #GROUP self
----- @param Utilities.Utils#FLARECOLOR FlareColor
---function GROUP:Flare( FlareColor )
---  self:F2()
---  trigger.action.signalFlare( self:GetVec3(), FlareColor , 0 )
---end
+-- results in this outcome if the group has Callsign "Enfield 9 1" on the 1st #UNIT of the group:
 --
------ Signal a white flare at the position of the GROUP.
----- @param #GROUP self
---function GROUP:FlareWhite()
---  self:F2()
---  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.White , 0 )
---end
+--      'Victory 9'
 --
------ Signal a yellow flare at the position of the GROUP.
----- @param #GROUP self
---function GROUP:FlareYellow()
---  self:F2()
---  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Yellow , 0 )
---end
---
------ Signal a green flare at the position of the GROUP.
----- @param #GROUP self
---function GROUP:FlareGreen()
---  self:F2()
---  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Green , 0 )
---end
---
------ Signal a red flare at the position of the GROUP.
----- @param #GROUP self
---function GROUP:FlareRed()
---  self:F2()
---  local Vec3 = self:GetVec3()
---  if Vec3 then
---    trigger.action.signalFlare( Vec3, trigger.flareColor.Red, 0 )
---  end
---end
---
------ Smoke the GROUP.
----- @param #GROUP self
---function GROUP:Smoke( SmokeColor, Range )
---  self:F2()
---  if Range then
---    trigger.action.smoke( self:GetRandomVec3( Range ), SmokeColor )
---  else
---    trigger.action.smoke( self:GetVec3(), SmokeColor )
---  end
---  
---end
---
------ Smoke the GROUP Green.
----- @param #GROUP self
---function GROUP:SmokeGreen()
---  self:F2()
---  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Green )
---end
---
------ Smoke the GROUP Red.
----- @param #GROUP self
---function GROUP:SmokeRed()
---  self:F2()
---  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Red )
---end
---
------ Smoke the GROUP White.
----- @param #GROUP self
---function GROUP:SmokeWhite()
---  self:F2()
---  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.White )
---end
---
------ Smoke the GROUP Orange.
----- @param #GROUP self
---function GROUP:SmokeOrange()
---  self:F2()
---  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Orange )
---end
---
------ Smoke the GROUP Blue.
----- @param #GROUP self
---function GROUP:SmokeBlue()
---  self:F2()
---  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Blue )
---end
---
---
---
---end
+-- 
+function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
+  --self:I("GetCustomCallSign")
+
+  local callsign = "Ghost 1"
+  if self:IsAlive() then
+    local IsPlayer = self:IsPlayer()
+    local shortcallsign = self:GetCallsign() or "unknown91" -- e.g.Uzi91, but we want Uzi 9 1
+    local callsignroot = string.match(shortcallsign, '(%a+)') -- Uzi
+    --self:I("CallSign = " .. callsignroot)
+    local groupname = self:GetName()
+    local callnumber = string.match(shortcallsign, "(%d+)$" ) or "91" -- 91
+    local callnumbermajor = string.char(string.byte(callnumber,1)) -- 9
+    local callnumberminor = string.char(string.byte(callnumber,2)) -- 1
+    local personalized = false
+    if IsPlayer and string.find(groupname,"#") then
+      -- personalized flight name in group naming
+      if Keepnumber then
+        shortcallsign = string.match(groupname,"#(.+)") or "Ghost 111" -- Ghostrider 219
+      else
+        shortcallsign = string.match(groupname,"#%s*([%a]+)") or "Ghost" -- Ghostrider
+      end
+      personalized = true
+    elseif IsPlayer and string.find(self:GetPlayerName(),"|") then
+      -- personalized flight name in group naming
+      shortcallsign = string.match(self:GetPlayerName(),"|%s*([%a]+)") or string.match(self:GetPlayerName(),"|%s*([%d]+)") or "Ghost" -- Ghostrider
+      personalized = true
+    end
+  
+    if (not personalized) and CallsignTranslations and CallsignTranslations[callsignroot] then
+      callsignroot = CallsignTranslations[callsignroot]
+    end
+  
+  if personalized then
+    -- player personalized callsign
+    -- remove trailing/leading spaces
+    shortcallsign=string.gsub(shortcallsign,"^%s*","")
+    shortcallsign=string.gsub(shortcallsign,"%s*$","")
+    if Keepnumber then
+      return shortcallsign -- Ghostrider 219
+    elseif ShortCallsign then
+      callsign = shortcallsign.." "..callnumbermajor -- Ghostrider 9
+    else
+      callsign = shortcallsign.." "..callnumbermajor.." "..callnumberminor -- Ghostrider 9 1
+    end
+    return callsign
+  end
+  
+  -- AI or not personalized
+  if ShortCallsign then
+    callsign = callsignroot.." "..callnumbermajor -- Uzi/Victory 9
+  else
+    callsign = callsignroot.." "..callnumbermajor.." "..callnumberminor -- Uzi/Victory 9 1
+  end
+
+    --self:I("Generated Callsign = " .. callsign)
+  end
+  
+  return callsign
+end
+
+---
+-- @param #GROUP self
+-- @param Wrapper.Group#GROUP CarrierGroup.
+-- @param #number Speed Speed in knots.
+-- @param #boolean ToKIAS If true, adjust speed to altitude (KIAS).
+-- @param #number Altitude Altitude the tanker orbits at in feet.
+-- @param #number Delay (optional) Set the task after this many seconds. Defaults to one.
+-- @param #number LastWaypoint (optional) Waypoint number of carrier group that when reached, ends the recovery tanker task.
+-- @return #GROUP self
+function GROUP:SetAsRecoveryTanker(CarrierGroup,Speed,ToKIAS,Altitude,Delay,LastWaypoint)
+  
+  local speed = ToKIAS == true and UTILS.KnotsToAltKIAS(Speed,Altitude) or Speed
+  speed = UTILS.KnotsToMps(speed)
+  
+  local alt = UTILS.FeetToMeters(Altitude)
+  local delay = Delay or 1
+  
+  local task = self:TaskRecoveryTanker(CarrierGroup,speed,alt,LastWaypoint)
+
+  self:SetTask(task,delay)
+  
+  local tankertask = self:EnRouteTaskTanker()
+  self:PushTask(tankertask,delay+2)
+  
+  return self  
+end

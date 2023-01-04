@@ -42,7 +42,8 @@
 --
 -- # The CHIEF Concept
 -- 
--- The Chief of staff gathers INTEL and assigns missions (AUFTRAG) the airforce, army and/or navy.
+-- The Chief of staff gathers INTEL and assigns missions (AUFTRAG) to the airforce, army and/or navy. The distinguished feature here is that this class combines all three
+-- forces under one hood. Therefore, this class be used as an air-to-air, air-to-ground, ground-to-ground, air-to-sea, sea-to-ground, etc. dispachter.
 -- 
 -- # Territory
 -- 
@@ -187,7 +188,8 @@
 --     --- Create a resource list of mission types and required assets for the case that the zone is OCCUPIED.
 --     --
 --     -- Here, we create an enhanced CAS mission and employ at least on and at most two asset groups.
---     local ResourceOccupied=myChief:CreateResource(AUFTRAG.Type.CASENHANCED, 1, 2)
+--     -- NOTE that two objects are returned, the resource list (ResourceOccupied) and the first resource of that list (resourceCAS).
+--     local ResourceOccupied, resourceCAS=myChief:CreateResource(AUFTRAG.Type.CASENHANCED, 1, 2)
 --     -- We also add ARTY missions with at least one and at most two assets. We additionally require these to be MLRS groups (and not howitzers).
 --     myChief:AddToResource(ResourceOccupied, AUFTRAG.Type.ARTY, 1, 2, nil, "MLRS")
 --     -- Add at least one RECON mission that uses UAV type assets.
@@ -196,13 +198,16 @@
 --     myChief:AddToResource(ResourceOccupied, AUFTRAG.Type.BOMBCARPET, 1, 2)
 --     
 --     --- Create a resource list of mission types and required assets for the case that the zone is EMPTY.
---     --
+--     -- NOTE that two objects are returned, the resource list (ResourceEmpty) and the first resource of that list (resourceInf).
 --     -- Here, we create an ONGUARD mission and employ at least on and at most five infantry assets.
---     local ResourceEmpty=myChief:CreateResource(AUFTRAG.Type.ONGUARD, 1, 5, GROUP.Attribute.GROUND_INFANTRY)
+--     local ResourceEmpty, resourceInf=myChief:CreateResource(AUFTRAG.Type.ONGUARD, 1, 5, GROUP.Attribute.GROUND_INFANTRY)
 --     -- Additionally, we send up to three tank groups.
 --     myChief:AddToResource(ResourceEmpty, AUFTRAG.Type.ONGUARD, 1, 3, GROUP.Attribute.GROUND_TANK)
 --     -- Finally, we send two groups that patrol the zone.
 --     myChief:AddToResource(ResourceEmpty, AUFTRAG.Type.PATROLZONE, 2)
+--     
+--     -- Add a transport to the infantry resource. We want at least one and up to two transport helicopters.
+--     myChief:AddTransportToResource(resourceInf, 1, 2, GROUP.Attribute.AIR_TRANSPORTHELO)
 --     
 --     -- Add stratetic zone with customized reaction.
 --     myChief:AddStrategicZone(myOpsZone, nil , 2, ResourceOccupied, ResourceEmpty)
@@ -213,6 +218,7 @@
 -- * `AUFTRAG.Type.ARTY`
 -- * `AUFTRAG.Type.PATROLZONE`
 -- * `AUFTRAG.Type.ONGUARD`
+-- * `AUFTRAG.Type.CAPTUREZONE`
 -- * `AUFTRAG.Type.RECON`
 -- * `AUFTRAG.Type.AMMOSUPPLY`
 -- * `AUFTRAG.Type.BOMBING`
@@ -299,9 +305,13 @@ CHIEF.Strategy = {
 -- @field Ops.OpsZone#OPSZONE opszone OPS zone.
 -- @field #number prio Priority.
 -- @field #number importance Importance.
--- @field #table resourceEmpty Resource list.
--- @field #table resourceOccup Resource list.
+-- @field #CHIEF.Resources resourceEmpty List of resources employed when the zone is empty.
+-- @field #CHIEF.Resources resourceOccup List of resources employed when the zone is occupied by an enemy.
 -- @field #table missions Mission.
+
+--- Resource list.
+-- @type CHIEF.Resources
+-- @field <#CHIEF.Resource> List of resources.
 
 --- Resource.
 -- @type CHIEF.Resource
@@ -310,17 +320,26 @@ CHIEF.Strategy = {
 -- @field #number Nmax Max number of assets.
 -- @field #table Attributes Generalized attribute, e.g. `{GROUP.Attribute.GROUND_INFANTRY}`.
 -- @field #table Properties Properties ([DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)), e.g. `"Attack helicopters"` or `"Mobile AAA"`.
+-- @field #table Categories Categories Group categories.
 -- @field Ops.Auftrag#AUFTRAG mission Attached mission.
+-- @field #number carrierNmin Min number of assets.
+-- @field #number carrierNmax Max number of assets.
+-- @field #table carrierCategories Group categories.
+-- @field #table carrierAttributes Generalized attribute, e.g. `{GROUP.Attribute.GROUND_INFANTRY}`.
+-- @field #table carrierProperties Properties ([DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)), e.g. `"Attack helicopters"` or `"Mobile AAA"`.
+
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.4.0"
+CHIEF.version="0.6.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Let user specify amount of resources.
+-- TODO: Event when asset groups die.
+-- TODO: PLAYERTASK integration.
+-- DONE: Let user specify amount of resources.
 -- DONE: Tactical overview.
 -- DONE: Add event for opsgroups on mission.
 -- DONE: Add event for zone captured. 
@@ -394,6 +413,8 @@ function CHIEF:New(Coalition, AgentSet, Alias)
   
   self:AddTransition("*",                "DefconChange",                  "*")   -- Change defence condition. 
   self:AddTransition("*",                "StrategyChange",                "*")   -- Change strategy condition.
+
+  self:AddTransition("*",                "LegionLost",                    "*")   -- Out of our legions was lost to the enemy.
 
   ------------------------
   --- Pseudo Functions ---
@@ -629,6 +650,33 @@ function CHIEF:New(Coalition, AgentSet, Alias)
   -- @param #string To To state.
   -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is being attacked. 
 
+
+  --- Triggers the FSM event "LegionLost".
+  -- @function [parent=#CHIEF] LegionLost
+  -- @param #CHIEF self
+  -- @param Ops.Legion#LEGION Legion The legion that was lost.
+  -- @param DCS#coalition.side Coalition which captured the warehouse.
+  -- @param DCS#country.id Country which has captured the warehouse.
+
+  --- Triggers the FSM event "LegionLost".
+  -- @function [parent=#CHIEF] __LegionLost
+  -- @param #CHIEF self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.Legion#LEGION Legion The legion that was lost.
+  -- @param DCS#coalition.side Coalition which captured the warehouse.
+  -- @param DCS#country.id Country which has captured the warehouse.
+
+  --- On after "LegionLost" event.
+  -- @function [parent=#CHIEF] OnAfterLegionLost
+  -- @param #CHIEF self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Legion#LEGION Legion The legion that was lost.
+  -- @param DCS#coalition.side Coalition which captured the warehouse.
+  -- @param DCS#country.id Country which has captured the warehouse.
+
+
   return self
 end
 
@@ -736,44 +784,45 @@ end
 -- @param #number Nmax Max number of requried assets. Default 1.
 -- @param #table Attributes Generalized attribute(s). Default `nil`.
 -- @param #table Properties DCS attribute(s). Default `nil`.
--- @return #table The resource object.
-function CHIEF:CreateResource(MissionType, Nmin, Nmax, Attributes, Properties)
+-- @param #table Categories Group categories.
+-- @return #CHIEF.Resources The newly created resource list table.
+-- @return #CHIEF.Resource The resource object that was added.
+function CHIEF:CreateResource(MissionType, Nmin, Nmax, Attributes, Properties, Categories)
 
-  local resource={}
+  local resources={}
   
-  self:AddToResource(resource, MissionType, Nmin, Nmax, Attributes, Properties)
+  local resource=self:AddToResource(resources, MissionType, Nmin, Nmax, Attributes, Properties, Categories)
     
-  return resource
+  return resources, resource
 end
 
---- Add mission type and number of required assets to resource.
+--- Add mission type and number of required assets to resource list.
 -- @param #CHIEF self
--- @param #table Resource Resource table.
+-- @param #CHIEF.Resources Resource List of resources.
 -- @param #string MissionType Mission Type.
--- @param #number Nmin Min number of required assets.
--- @param #number Nmax Max number of requried assets.
+-- @param #number Nmin Min number of required assets. Default 1.
+-- @param #number Nmax Max number of requried assets. Default equal `Nmin`.
 -- @param #table Attributes Generalized attribute(s).
 -- @param #table Properties DCS attribute(s). Default `nil`.
--- @return #CHIEF self
-function CHIEF:AddToResource(Resource, MissionType, Nmin, Nmax, Attributes, Properties)
-  
-  -- Ensure table.
-  if Attributes and type(Attributes)~="table" then
-    Attributes={Attributes}
-  end
-  
-  -- Ensure table.
-  if Properties and type(Properties)~="table" then
-    Properties={Properties}
-  end
-  
+-- @param #table Categories Group categories.
+-- @return #CHIEF.Resource Resource table.
+function CHIEF:AddToResource(Resource, MissionType, Nmin, Nmax, Attributes, Properties, Categories)
+    
   -- Create new resource table.
   local resource={} --#CHIEF.Resource
   resource.MissionType=MissionType
   resource.Nmin=Nmin or 1
-  resource.Nmax=Nmax or 1
-  resource.Attributes=Attributes or {}
-  resource.Properties=Properties or {}
+  resource.Nmax=Nmax or Nmin
+  resource.Attributes=UTILS.EnsureTable(Attributes, true)
+  resource.Properties=UTILS.EnsureTable(Properties, true)
+  resource.Categories=UTILS.EnsureTable(Categories, true)
+  
+  -- Transport carrier parameters.
+  resource.carrierNmin=nil
+  resource.carrierNmax=nil
+  resource.carrierAttributes=nil
+  resource.carrierProperties=nil
+  resource.carrierCategories=nil
   
   -- Add to table.
   table.insert(Resource, resource)
@@ -788,6 +837,26 @@ function CHIEF:AddToResource(Resource, MissionType, Nmin, Nmax, Attributes, Prop
     self:I(self.lid..text)
   end
     
+  return resource
+end
+
+--- Define which assets will be transported and define the number and attributes/properties of the cargo carrier assets.
+-- @param #CHIEF self
+-- @param #CHIEF.Resource Resource Resource table.
+-- @param #number Nmin Min number of required assets. Default 1.
+-- @param #number Nmax Max number of requried assets. Default is equal to `Nmin`.
+-- @param #table CarrierAttributes Generalized attribute(s) of the carrier assets.
+-- @param #table CarrierProperties DCS attribute(s) of the carrier assets.
+-- @param #table CarrierCategories Group categories of the carrier assets.
+-- @return #CHIEF self
+function CHIEF:AddTransportToResource(Resource, Nmin, Nmax, CarrierAttributes, CarrierProperties, CarrierCategories)
+
+  Resource.carrierNmin=Nmin or 1
+  Resource.carrierNmax=Nmax or Nmin
+  Resource.carrierCategories=UTILS.EnsureTable(CarrierCategories, true)
+  Resource.carrierAttributes=UTILS.EnsureTable(CarrierAttributes, true)
+  Resource.carrierProperties=UTILS.EnsureTable(CarrierProperties, true)
+
   return self
 end
 
@@ -1076,6 +1145,21 @@ function CHIEF:AddLegion(Legion)
   return self
 end
 
+--- Remove a LEGION to the chief's commander.
+-- @param #CHIEF self
+-- @param Ops.Legion#LEGION Legion The legion to add.
+-- @return #CHIEF self
+function CHIEF:RemoveLegion(Legion)
+
+  -- Set chief of the legion.
+  Legion.chief=nil
+
+  -- Add legion to the commander.
+  self.commander:RemoveLegion(Legion)
+  
+  return self
+end
+
 
 --- Add mission to mission queue of the COMMANDER.
 -- @param #CHIEF self
@@ -1193,17 +1277,17 @@ end
 -- 
 -- Empty:
 -- 
--- * `AUFTRAG.Type.ONGUARD` with Nmin=1 and Nmax=3 assets, Attribute=`GROUP.Attribute.GROUND_INFANTRY`.
 -- * `AUFTRAG.Type.ONGURAD` with Nmin=1 and Nmax=1 assets, Attribute=`GROUP.Attribute.GROUND_TANK`.
+-- * `AUFTRAG.Type.ONGUARD` with Nmin=1 and Nmax=3 assets, Attribute=`GROUP.Attribute.GROUND_INFANTRY`.
 -- 
 -- Resources can be created with the @{#CHIEF.CreateResource} and @{#CHIEF.AddToResource} functions.
 -- 
 -- @param #CHIEF self
 -- @param Ops.OpsZone#OPSZONE OpsZone OPS zone object.
 -- @param #number Priority Priority. Default 50.
--- @param #number Importance Importance. Default nil.
--- @param #CHIEF.Resource ResourceOccupied (Optional) Resources used then zone is occupied by the enemy.
--- @param #CHIEF.Resource ResourceEmpty (Optional) Resources used then zone is empty.
+-- @param #number Importance Importance. Default `#nil`.
+-- @param #CHIEF.Resources ResourceOccupied (Optional) Resources used then zone is occupied by the enemy.
+-- @param #CHIEF.Resources ResourceEmpty (Optional) Resources used then zone is empty.
 -- @return #CHIEF.StrategicZone The strategic zone.
 function CHIEF:AddStrategicZone(OpsZone, Priority, Importance, ResourceOccupied, ResourceEmpty)
 
@@ -1232,8 +1316,11 @@ function CHIEF:AddStrategicZone(OpsZone, Priority, Importance, ResourceOccupied,
   if ResourceEmpty then
     stratzone.resourceEmpty=UTILS.DeepCopy(ResourceEmpty)
   else
-    stratzone.resourceEmpty=self:CreateResource(AUFTRAG.Type.ONGUARD, 1, 3, GROUP.Attribute.GROUND_INFANTRY)
-    self:AddToResource(stratzone.resourceEmpty, AUFTRAG.Type.ONGUARD, 1, 1, GROUP.Attribute.GROUND_TANK)
+    local resourceEmpty, resourceInfantry=self:CreateResource(AUFTRAG.Type.ONGUARD, 1, 3, GROUP.Attribute.GROUND_INFANTRY)
+    self:AddToResource(resourceEmpty, AUFTRAG.Type.ONGUARD, 0, 1, GROUP.Attribute.GROUND_TANK)
+    self:AddToResource(resourceEmpty, AUFTRAG.Type.ONGUARD, 0, 1, GROUP.Attribute.GROUND_IFV)
+    self:AddTransportToResource(resourceInfantry, 0, 1, {GROUP.Attribute.AIR_TRANSPORTHELO, GROUP.Attribute.GROUND_APC})
+    stratzone.resourceEmpty=resourceEmpty
   end
 
   -- Add to table.
@@ -1438,7 +1525,7 @@ end
 -- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.DEFENSIVE`.
 -- 
 -- @param #CHIEF self
--- @param Core.Set#SET_ZONE BorderZoneSet Set of zones, defining our borders.
+-- @param Core.Set#SET_ZONE BorderZoneSet Set of zones defining our borders.
 -- @return #CHIEF self
 function CHIEF:SetBorderZones(BorderZoneSet)
 
@@ -1454,12 +1541,24 @@ end
 -- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.DEFENSIVE`.
 -- 
 -- @param #CHIEF self
--- @param Core.Zone#ZONE Zone The zone.
+-- @param Core.Zone#ZONE Zone The zone to be added.
 -- @return #CHIEF self
 function CHIEF:AddBorderZone(Zone)
 
   -- Add a border zone.
   self.borderzoneset:AddZone(Zone)
+  
+  return self
+end
+
+--- Remove a border zone defining your territory. 
+-- @param #CHIEF self
+-- @param Core.Zone#ZONE Zone The zone to be removed.
+-- @return #CHIEF self
+function CHIEF:RemoveBorderZone(Zone)
+
+  -- Add a border zone.
+  self.borderzoneset:Remove(Zone:GetName())
   
   return self
 end
@@ -1486,7 +1585,7 @@ end
 -- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.OFFENSIVE`.
 -- 
 -- @param #CHIEF self
--- @param Core.Zone#ZONE Zone The zone to add.
+-- @param Core.Zone#ZONE Zone The zone to be added.
 -- @return #CHIEF self
 function CHIEF:AddConflictZone(Zone)
 
@@ -1495,6 +1594,19 @@ function CHIEF:AddConflictZone(Zone)
   
   return self
 end
+
+--- Remove a conflict zone.
+-- @param #CHIEF self
+-- @param Core.Zone#ZONE Zone The zone to be removed.
+-- @return #CHIEF self
+function CHIEF:RemoveConflictZone(Zone)
+
+  -- Add a conflict zone.
+  self.yellowzoneset:Remove(Zone:GetName())
+  
+  return self
+end
+
 
 --- Set attack zone set.
 -- 
@@ -1526,11 +1638,24 @@ function CHIEF:AddAttackZone(Zone)
   return self
 end
 
+--- Remove an attack zone.
+-- @param #CHIEF self
+-- @param Core.Zone#ZONE Zone The zone to be removed.
+-- @return #CHIEF self
+function CHIEF:RemoveAttackZone(Zone)
+
+  -- Add an attack zone.
+  self.engagezoneset:Remove(Zone:GetName())
+  
+  return self
+end
+
 --- Allow chief to use GROUND units for transport tasks. Helicopters are still preferred, and be aware there's no check as of now
 -- if a destination can be reached on land.
 -- @param #CHIEF self
 -- @return #CHIEF self
 function CHIEF:AllowGroundTransport()
+  env.warning("WARNING: CHIEF:AllowGroundTransport() is deprecated and will be removed in the future!")
   self.TransportCategories = {Group.Category.GROUND, Group.Category.HELICOPTER}
   return self
 end
@@ -1539,6 +1664,7 @@ end
 -- @param #CHIEF self
 -- @return #CHIEF self
 function CHIEF:ForbidGroundTransport()
+  env.warning("WARNING: CHIEF:ForbidGroundTransport() is deprecated and will be removed in the future!")
   self.TransportCategories = {Group.Category.HELICOPTER}
   return self
 end
@@ -2114,7 +2240,16 @@ function CHIEF:_TacticalOverview()
     for _,_stratzone in pairs(self.zonequeue) do
       local stratzone=_stratzone --#CHIEF.StrategicZone
       local owner=stratzone.opszone:GetOwnerName()
-      text=text..string.format("  - %s: %s - %s [I=%d, P=%d]\n", stratzone.opszone:GetName(), owner, stratzone.opszone:GetState(), stratzone.importance, stratzone.prio)
+      text=text..string.format("  - %s: %s - %s [I=%d, P=%d]\n", stratzone.opszone:GetName(), owner, stratzone.opszone:GetState(), stratzone.importance or 0, stratzone.prio or 0)
+    end
+    
+    local Ntransports=#self.commander.transportqueue
+    if Ntransports>0 then
+      text=text..string.format("Transports: %d\n", Ntransports)
+      for _,_transport in pairs(self.commander.transportqueue) do
+        local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
+        text=text..string.format(" - %s", transport:GetState())
+      end
     end
     
     -- Message to coalition.
@@ -2466,7 +2601,7 @@ function CHIEF:CheckOpsZoneQueue()
           if (not resource.mission) or resource.mission:IsOver() then
 
             -- Debug info.
-            self:T2(self.lid..string.format("Zone \"%s\" is empty ==> Recruiting for mission type %s: Nmin=%d, Nmax=%d", zoneName, missionType, resource.Nmin, resource.Nmax))          
+            self:T2(self.lid..string.format("Zone \"%s\" is empty ==> Recruiting for mission type %s: Nmin=%d, Nmax=%d", zoneName, missionType, resource.Nmin, resource.Nmax))
           
             -- Recruit assets.
             local recruited=self:RecruitAssetsForZone(stratzone, resource)
@@ -2710,7 +2845,9 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
       
         -- Tanks
         
-        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.CAS, 100))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.CAS, 90))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.CASENHANCED, 90))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.GROUNDATTACK, 50))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 40))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
@@ -2855,7 +2992,11 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
   end
 
   -- Recruite infantry assets.
-  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, RangeMax, nil, nil, nil, Categories, Attributes, Properties)
+  self:T(self.lid.."Missiontype="..MissionType)
+  self:T({categories=Categories})
+  self:T({attributes=Attributes})
+  self:T({properties=Properties})
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, RangeMax, nil, nil, nil, nil, Categories, Attributes, Properties)
   
   if recruited then
   
@@ -2865,59 +3006,62 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
     -- Debug messgage.
     self:T2(self.lid..string.format("Recruited %d assets for %s mission STRATEGIC zone %s", #assets, MissionType, tostring(StratZone.opszone.zoneName)))
     
+    -- Short cuts.
     local TargetZone  = StratZone.opszone.zone
-    local TargetCoord = TargetZone:GetCoordinate()    
+    local TargetCoord = TargetZone:GetCoordinate()
+
+    -- First check if we need a transportation.
+    local transport=nil    
+    if Resource.carrierNmin and Resource.carrierNmax and Resource.carrierNmax>0 then
+    
+      -- Filter only those assets that shall be transported.
+      local cargoassets=CHIEF._FilterAssets(assets, Resource.Categories, Resource.Attributes, Resource.Properties)
+      
+      if #cargoassets>0 then
+
+        -- Recruit transport carrier assets.
+        recruited, transport=LEGION.AssignAssetsForTransport(self.commander, self.commander.legions, cargoassets, 
+        Resource.carrierNmin, Resource.carrierNmax, TargetZone, nil, Resource.carrierCategories, Resource.carrierAttributes, Resource.carrierProperties)
+        
+      end
+    
+    end
+
+    -- Check if everything was recruited.
+    if not recruited then  
+      -- No (transport) assets ==> no mission!
+      self:T(self.lid..string.format("Could not allocate assets or transport of OPSZONE!"))
+      LEGION.UnRecruitAssets(assets)
+      return false
+    end
+
+    -- Debug messgage.
+    self:T2(self.lid..string.format("Recruited %d assets for mission %s", #assets, MissionType))
+    
   
     if MissionType==AUFTRAG.Type.PATROLZONE or MissionType==AUFTRAG.Type.ONGUARD then
     
       ---
       -- PATROLZONE or ONGUARD
       ---
-     
-      -- Debug messgage.
-      self:T2(self.lid..string.format("Recruited %d assets for PATROL mission", #assets))
-      
-      -- First check if we need a transportation.
-      local recruitedTrans=true ; local transport=nil
-      if Attributes and Attributes[1]==GROUP.Attribute.GROUND_INFANTRY then
-      
-        -- Categories. Currently only helicopters are allowed due to problems with ground transports (might get stuck, might not be a land connection.
-        -- TODO: Check if ground transport is possible. For example, by trying land.getPathOnRoad or something.
-        local Categories=self.TransportCategories
-  
-        -- Recruit transport assets for infantry.    
-        recruitedTrans, transport=LEGION.AssignAssetsForTransport(self.commander, self.commander.legions, assets, 1, 1, TargetZone, nil, Categories)
+             
+      if MissionType==AUFTRAG.Type.PATROLZONE then
+        mission=AUFTRAG:NewPATROLZONE(TargetZone)
         
+      elseif MissionType==AUFTRAG.Type.ONGUARD then 
+        mission=AUFTRAG:NewONGUARD(TargetZone:GetRandomCoordinate(nil, nil, {land.SurfaceType.LAND}))
       end
       
-      if recruitedTrans then
-        
-        if MissionType==AUFTRAG.Type.PATROLZONE then
-          mission=AUFTRAG:NewPATROLZONE(TargetZone)
-          
-        elseif MissionType==AUFTRAG.Type.ONGUARD then 
-          mission=AUFTRAG:NewONGUARD(TargetZone:GetRandomCoordinate(nil, nil, {land.SurfaceType.LAND}))
-        end
-        
-        -- Engage detected targets.
-        mission:SetEngageDetected(25, {"Ground Units", "Light armed ships", "Helicopters"})            
-                        
-        -- Attach OPS transport to mission.
-        mission.opstransport=transport
-                    
-        -- Set ops zone to transport.
-        if transport then
-          transport.opszone=StratZone.opszone
-          transport.chief=self
-          transport.commander=self.commander
-        end
+      -- Engage detected targets.
+      mission:SetEngageDetected(25, {"Ground Units", "Light armed ships", "Helicopters"})            
+      
+    elseif MissionType==AUFTRAG.Type.CAPTUREZONE then
 
-      else
-        -- No transport ==> no mission!
-        self:T(self.lid..string.format("Could not allocate transport of OPSZONE infantry!"))
-        LEGION.UnRecruitAssets(assets)
-        return false
-      end
+      ---
+      -- CAPTUREZONE
+      ---
+      
+      mission=AUFTRAG:NewCAPTUREZONE(StratZone.opszone, self.coalition)
       
     elseif MissionType==AUFTRAG.Type.CASENHANCED then
     
@@ -2953,6 +3097,9 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
           Speed = UTILS.KmphToKnots(assets[1].speedmax * 0.7) or 200
         end
       end
+      
+      -- Here we need a circular zone.
+      TargetZone=StratZone.opszone.zoneCircular
       
       -- Leg length.
       local Leg = TargetZone:GetRadius() <= 10000 and 5 or UTILS.MetersToNM(TargetZone:GetRadius())
@@ -3028,9 +3175,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
     if mission then
 
       -- Add assets to mission.
-      for _,asset in pairs(assets) do
-        mission:AddAsset(asset)
-      end
+      mission:_AddAssets(assets)
           
       -- Assign mission to legions.
       self:MissionAssign(mission, legions)
@@ -3040,6 +3185,15 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
       
       -- Attach mission to resource.
       Resource.mission=mission
+      
+      if transport then
+        -- Attach OPS transport to mission.
+        mission.opstransport=transport
+        -- Set ops zone to transport.
+        transport.opszone=StratZone.opszone
+        transport.chief=self
+        transport.commander=self.commander  
+      end      
     
       return true      
     else
@@ -3055,6 +3209,89 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
 
     -- Debug messgage.
     self:T2(self.lid..string.format("Could NOT recruit assets for %s mission of STRATEGIC zone %s", MissionType, tostring(StratZone.opszone.zoneName)))  
+
+  return false
+end
+
+--- Filter assets, which have certain categories, attributes and/or properties.
+-- @param #table Assets The assets to be filtered.
+-- @param #table Categories Group categories.
+-- @param #table Attributes Generalized attributes.
+-- @param #table Properties DCS attributes
+-- @return #table Table of filtered assets.
+function CHIEF._FilterAssets(Assets, Categories, Attributes, Properties)
+
+  local filtered={}
+
+  for _,_asset in pairs(Assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    
+    local hasCat=CHIEF._CheckAssetCategories(asset, Categories)    
+    local hasAtt=CHIEF._CheckAssetAttributes(asset, Attributes)
+    local hasPro=CHIEF._CheckAssetProperties(asset, Properties)
+  
+    if hasAtt and hasCat and hasPro then
+      table.insert(filtered, asset)
+    end
+  
+  end
+
+  return filtered
+end
+
+--- Check if a given asset has certain attribute(s).
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset item.
+-- @param #table Attributes The required attributes. See `WAREHOUSE.Attribute` enum. Can also be passed as a single attribute `#string`.
+-- @return #boolean Returns `true`, the asset has at least one requested attribute.
+function CHIEF._CheckAssetAttributes(Asset, Attributes)
+
+  if not Attributes then
+    return true
+  end
+
+  for _,attribute in pairs(UTILS.EnsureTable(Attributes)) do
+    if attribute==Asset.attribute then
+      return true
+    end
+  end
+
+  return false
+end
+
+--- Check if a given asset has certain categories.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset item.
+-- @param #table Categories DCS group categories.
+-- @return #boolean Returns `true`, the asset has at least one requested category.
+function CHIEF._CheckAssetCategories(Asset, Categories)
+
+  if not Categories then
+    return true
+  end
+
+  for _,attribute in pairs(UTILS.EnsureTable(Categories)) do
+    if attribute==Asset.category then
+      return true
+    end
+  end
+
+  return false
+end
+
+--- Check if a given asset has certain properties.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset item.
+-- @param #table Categories DCS group categories.
+-- @return #boolean Returns `true`, the asset has at least one requested property.
+function CHIEF._CheckAssetProperties(Asset, Properties)
+
+  if not Properties then
+    return true
+  end
+
+  for _,attribute in pairs(UTILS.EnsureTable(Properties)) do
+    if attribute==Asset.DCSdesc then
+      return true
+    end
+  end
 
   return false
 end

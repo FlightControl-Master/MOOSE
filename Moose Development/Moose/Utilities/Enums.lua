@@ -13,7 +13,7 @@
 -- 
 -- Other Moose classes also have enumerators. For example, the AIRBASE class has enumerators for airbase names.
 -- 
--- @module ENUMS
+-- @module Utilities.Enums
 -- @image MOOSE.JPG
 
 --- [DCS Enum world](https://wiki.hoggitworld.com/view/DCS_enum_world)
@@ -28,11 +28,11 @@ ENUMS = {}
 
 --- Rules of Engagement.
 -- @type ENUMS.ROE
--- @field #number WeaponFree AI will engage any enemy group it detects. Target prioritization is based based on the threat of the target.
--- @field #number OpenFireWeaponFree AI will engage any enemy group it detects, but will prioritize targets specified in the groups tasking.
--- @field #number OpenFire AI will engage only targets specified in its taskings.
--- @field #number ReturnFire AI will only engage threats that shoot first.
--- @field #number WeaponHold AI will hold fire under all circumstances.
+-- @field #number WeaponFree [AIR] AI will engage any enemy group it detects. Target prioritization is based based on the threat of the target.
+-- @field #number OpenFireWeaponFree [AIR] AI will engage any enemy group it detects, but will prioritize targets specified in the groups tasking.
+-- @field #number OpenFire [AIR, GROUND, NAVAL] AI will engage only targets specified in its taskings.
+-- @field #number ReturnFire [AIR, GROUND, NAVAL] AI will only engage threats that shoot first.
+-- @field #number WeaponHold [AIR, GROUND, NAVAL] AI will hold fire under all circumstances.
 ENUMS.ROE = {
   WeaponFree=0,
   OpenFireWeaponFree=1,

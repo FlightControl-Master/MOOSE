@@ -1,9 +1,11 @@
---- **Functional** -- Short Range Air Defense System
+--- **Functional** - Short Range Air Defense System.
 -- 
 -- ===
+--
+-- ## Features: 
 -- 
--- **SHORAD** - Short Range Air Defense System
--- Controls a network of short range air/missile defense groups.
+--   * Short Range Air Defense System
+--   * Controls a network of short range air/missile defense groups.
 -- 
 -- ===
 -- 

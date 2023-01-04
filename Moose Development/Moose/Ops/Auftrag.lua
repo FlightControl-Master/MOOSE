@@ -56,9 +56,12 @@
 -- @field #table DCStask DCS task structure.
 -- @field #number Ncasualties Number of own casualties during mission.
 -- @field #number Nkills Number of (enemy) units killed by assets of this mission.
+-- @field #number Ndead Number of assigned groups that are dead.
+-- @field #number Nassigned Number of assigned groups.
 -- @field #number Nelements Number of elements (units) assigned to mission.
 -- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
 -- @field #number Tover Mission abs. time stamp, when mission was over.
+-- @field #boolean updateDCSTask If `true`, DCS task is updated at every status update of the assigned groups.
 -- @field #table conditionStart Condition(s) that have to be true, before the mission will be started.
 -- @field #table conditionSuccess If all conditions are true, the mission is cancelled.
 -- @field #table conditionFailure If all conditions are true, the mission is cancelled.
@@ -68,9 +71,12 @@
 -- @field #number orbitAltitude Orbit altitude in meters.
 -- @field #number orbitHeading Orbit heading in degrees.
 -- @field #number orbitLeg Length of orbit leg in meters.
--- @field Core.Point#COORDINATE orbitRaceTrack Race-track orbit coordinate.
+-- @field DCS#Vec2 orbitOffsetVec2 2D offset vector.
+-- @field DCS#Vec2 orbitVec2 2D orbit vector.
+-- @field #number orbitDeltaR Distance threshold in meters for moving orbit targets.
 --
 -- @field Ops.Target#TARGET engageTarget Target data to engage.
+-- @field #number targetHeading Heading of target in degrees.
 -- 
 -- @field Ops.Operation#OPERATION operation Operation this mission is part of.
 -- 
@@ -88,6 +94,7 @@
 -- @field #number refuelSystem Refuel type (boom or probe) for TANKER missions.
 --
 -- @field Wrapper.Group#GROUP escortGroup The group to be escorted.
+-- @field #string escortGroupName Name of the escorted group.
 -- @field DCS#Vec3 escortVec3 The 3D offset vector from the escorted group to the escort group.
 --
 -- @field #number facDesignation FAC designation type.
@@ -418,7 +425,8 @@ _AUFTRAGSNR=0
 -- @field #string AIRDEFENSE Air defense.
 -- @field #string EWR Early Warning Radar.
 -- @field #string RECOVERYTANKER Recovery tanker.
--- @filed #string REARMING Rearming mission.
+-- @field #string REARMING Rearming mission.
+-- @field #string CAPTUREZONE Capture zone mission.
 -- @field #string NOTHING Nothing.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
@@ -461,6 +469,7 @@ AUFTRAG.Type={
   EWR="Early Warning Radar",
   RECOVERYTANKER="Recovery Tanker",
   REARMING="Rearming",
+  CAPTUREZONE="Capture Zone",
   NOTHING="Nothing",
 }
 
@@ -483,6 +492,7 @@ AUFTRAG.Type={
 -- @field #string EWR Early Warning Radar.
 -- @field #string RECOVERYTANKER Recovery tanker.
 -- @field #string REARMING Rearming.
+-- @field #string CAPTUREZONE Capture OPS zone.
 -- @field #string NOTHING Nothing.
 AUFTRAG.SpecialTask={
   FORMATION="Formation",
@@ -503,6 +513,7 @@ AUFTRAG.SpecialTask={
   EWR="Early Warning Radar",
   RECOVERYTANKER="Recovery Tanker",
   REARMING="Rearming",
+  CAPTUREZONE="Capture Zone",  
   NOTHING="Nothing",
 }
 
@@ -624,7 +635,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.9.6"
+AUFTRAG.version="0.9.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -633,7 +644,9 @@ AUFTRAG.version="0.9.6"
 -- TODO: Replace engageRange by missionRange. Here and in other classes. CTRL+H is your friend!
 -- TODO: Mission success options damaged, destroyed.
 -- TODO: F10 marker to create new missions.
--- TODO: Add recovery tanker mission for boat ops.
+-- DONE: Add Capture zone task.
+-- DONE: Add orbit mission for moving anker points.
+-- DONE: Add recovery tanker mission for boat ops.
 -- DONE: Added auftrag category.
 -- DONE: Missions can be assigned to multiple legions.
 -- DONE: Option to assign a specific payload for the mission (requires an AIRWING).
@@ -710,11 +723,12 @@ function AUFTRAG:New(Type)
   self:AddTransition(AUFTRAG.Status.PLANNED,   "Queued",           AUFTRAG.Status.QUEUED)      -- Mission is in queue of a LEGION.
   self:AddTransition(AUFTRAG.Status.QUEUED,    "Requested",        AUFTRAG.Status.REQUESTED)   -- Mission assets have been requested from the warehouse.
   self:AddTransition(AUFTRAG.Status.REQUESTED, "Scheduled",        AUFTRAG.Status.SCHEDULED)   -- Mission added to the first ops group queue.
-
+  
   self:AddTransition(AUFTRAG.Status.PLANNED,   "Scheduled",        AUFTRAG.Status.SCHEDULED)   -- From planned directly to scheduled.
 
   self:AddTransition(AUFTRAG.Status.SCHEDULED, "Started",          AUFTRAG.Status.STARTED)     -- First asset has started the mission.
   self:AddTransition(AUFTRAG.Status.STARTED,   "Executing",        AUFTRAG.Status.EXECUTING)   -- First asset is executing the mission.
+  
 
   self:AddTransition("*",                      "Done",             AUFTRAG.Status.DONE)        -- All assets have reported that mission is done.
 
@@ -1002,10 +1016,10 @@ function AUFTRAG:NewHOVER(Coordinate, Altitude, Time, Speed, MissionAlt)
 
   mission.hoverSpeed = 0.1 -- the DCS Task itself will shortly be build with this so MPS
   mission.hoverTime = Time or 300
-  mission.missionSpeed = UTILS.KnotsToMps(Speed or 150)
-
+  self:SetMissionSpeed(Speed or 150)
+  self:SetMissionAltitude(MissionAlt or 1000)
+  
   -- Mission options:
-  mission.missionAltitude=mission.MissionAlt or UTILS.FeetToMeters(1000)
   mission.missionFraction=0.9
   mission.optionROE=ENUMS.ROE.ReturnFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
@@ -1020,7 +1034,7 @@ end
 --- **[AIR]** Create an ORBIT mission, which can be either a circular orbit or a race-track pattern.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
--- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
+-- @param #number Altitude Orbit altitude in feet above sea level. Default is y component of `Coordinate`.
 -- @param #number Speed Orbit speed in knots. Default 350 KIAS.
 -- @param #number Heading Heading of race-track pattern in degrees. If not specified, a circular orbit is performed.
 -- @param #number Leg Length of race-track in NM. If not specified, a circular orbit is performed.
@@ -1028,26 +1042,35 @@ end
 function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ORBIT)
-
-  -- Altitude.
+  
+  -- Target.
+  mission:_TargetFromObject(Coordinate)
+  
+  -- Set Altitude.  
   if Altitude then
     mission.orbitAltitude=UTILS.FeetToMeters(Altitude)
   else
     mission.orbitAltitude=Coordinate.y
   end
-  Coordinate.y=mission.orbitAltitude
-
-  mission:_TargetFromObject(Coordinate)
-
-  mission.orbitSpeed = UTILS.KnotsToMps(Speed or 350) -- the DCS Task itself will shortly be build with this so MPS
+    
+  -- Orbit speed in m/s.
+  mission.orbitSpeed   = UTILS.KnotsToMps(UTILS.KnotsToAltKIAS(Speed or 350, UTILS.MetersToFeet(mission.orbitAltitude)))
+  
+  -- Mission speed in km/h.
   mission.missionSpeed = UTILS.KnotsToKmph(Speed or 350)
-
-  if Heading and Leg then
-    mission.orbitHeading=Heading
+  
+  if Leg then
     mission.orbitLeg=UTILS.NMToMeters(Leg)
-    mission.orbitRaceTrack=Coordinate:Translate(mission.orbitLeg, mission.orbitHeading, true)
-  end
 
+    -- Relative heading
+    if Heading and Heading<0 then
+      mission.orbitHeadingRel=true
+      Heading=-Heading
+    end      
+
+    -- Heading if given.
+    mission.orbitHeading=Heading    
+  end
 
   -- Mission options:
   mission.missionAltitude=mission.orbitAltitude*0.9
@@ -1092,6 +1115,53 @@ function AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
 
   return mission
 end
+
+--- **[AIR]** Create an ORBIT mission, where the aircraft will fly a circular or race-track pattern over a given group or unit.
+-- @param #AUFTRAG self
+-- @param Wrapper.Group#GROUP Group Group where to orbit around. Can also be a UNIT object.
+-- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
+-- @param #number Speed Orbit speed in knots. Default 350 KIAS.
+-- @param #number Leg Length of race-track in NM. Default nil.
+-- @param #number Heading Heading of race-track pattern in degrees. Default is heading of the group.
+-- @param DCS#Vec2 OffsetVec2 Offset 2D-vector {x=0, y=0} in NM with respect to the group. Default directly overhead. Can also be given in polar coordinates `{r=5, phi=45}`.
+-- @param #number Distance Threshold distance in NM before orbit pattern is updated. Default 5 NM.
+-- @return #AUFTRAG self
+function AUFTRAG:NewORBIT_GROUP(Group, Altitude, Speed, Leg, Heading, OffsetVec2, Distance)
+
+  -- Set default altitude.
+  Altitude = Altitude or 6000
+
+  -- Create orbit mission.
+  local mission=AUFTRAG:NewORBIT(Group, Altitude, Speed, Heading, Leg)
+
+  -- DCS tasks needs to be updated from time to time.  
+  mission.updateDCSTask=true
+  
+  -- Convert offset vector to meters.
+  if OffsetVec2 then
+    if OffsetVec2.x then
+      OffsetVec2.x=UTILS.NMToMeters(OffsetVec2.x)
+    end
+    if OffsetVec2.y then
+      OffsetVec2.y=UTILS.NMToMeters(OffsetVec2.y)
+    end
+    if OffsetVec2.r then
+      OffsetVec2.r=UTILS.NMToMeters(OffsetVec2.r)
+    end    
+  end
+  
+  -- Offset vector.
+  mission.orbitOffsetVec2=OffsetVec2
+  
+  -- Pattern update distance.
+  mission.orbitDeltaR=UTILS.NMToMeters(Distance or 5)
+
+  -- Update task with offset etc.
+  mission:GetDCSMissionTask()
+
+  return mission
+end
+
 
 --- **[AIR]** Create a Ground Controlled CAP (GCICAP) mission. Flights with this task are considered for A2A INTERCEPT missions by the CHIEF class. They will perform a compat air patrol but not engage by
 -- themselfs. They wait for the CHIEF to tell them whom to engage.
@@ -1229,7 +1299,7 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
   end
 
   -- Create ORBIT first.
-  local mission=AUFTRAG:NewORBIT(Coordinate or ZoneCAP:GetCoordinate(), Altitude or 10000, Speed, Heading, Leg)
+  local mission=AUFTRAG:NewORBIT(Coordinate or ZoneCAP:GetCoordinate(), Altitude or 10000, Speed or 350, Heading, Leg)
 
   -- Mission type CAP.
   mission.type=AUFTRAG.Type.CAP
@@ -1243,12 +1313,69 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
   mission.missionTask=ENUMS.MissionTask.CAP
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
+  mission.missionSpeed = UTILS.KnotsToKmph(UTILS.KnotsToAltKIAS(Speed or 350, Altitude))
 
   mission.categories={AUFTRAG.Category.AIRCRAFT}
 
   mission.DCStask=mission:GetDCSMissionTask()
 
   return mission
+end
+
+--- **[AIR]** Create a CAP mission on a group.
+-- @param #AUFTRAG self
+-- @param Wrapper.Group#GROUP Grp.
+-- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
+-- @param #number Speed Orbit speed in knots. Default 250 KIAS.
+-- @param #number RelHeading Relative heading [0, 360) of race-track pattern in degrees wrt heading of the carrier. Default is heading of the carrier.
+-- @param #number Leg Length of race-track in NM. Default 14 NM.
+-- @param #number OffsetDist Relative distance of the first race-track point wrt to the carrier. Default 6 NM.
+-- @param #number OffsetAngle Relative angle of the first race-track point wrt. to the carrier. Default 180 (behind the boat).
+-- @param #number UpdateDistance Threshold distance in NM before orbit pattern is updated. Default 5 NM.
+-- @param #table TargetTypes (Optional) Table of target types. Default `{"Helicopters", "Ground Units", "Light armed ships"}`.
+-- @param #number EngageRange Max range in nautical miles that the escort group(s) will engage enemies. Default 32 NM (60 km).
+-- @return #AUFTRAG self
+function AUFTRAG:NewCAPGROUP(Grp, Altitude, Speed, RelHeading, Leg, OffsetDist, OffsetAngle, UpdateDistance, TargetTypes, EngageRange)
+
+  -- Ensure given TargetTypes parameter is a table.
+  if TargetTypes then
+    if type(TargetTypes)~="table" then
+      TargetTypes={TargetTypes}
+    end
+  end
+  -- Six NM astern.
+ local OffsetVec2={r=OffsetDist or 6, phi=OffsetAngle or 180}
+
+ -- Default leg.
+ Leg=Leg or 14
+
+ local Heading=nil
+ if RelHeading then  
+   Heading=-math.abs(RelHeading)
+ end  
+
+ -- Create orbit mission. 
+ local mission=AUFTRAG:NewORBIT_GROUP(Grp, Altitude, Speed, Leg, Heading, OffsetVec2, UpdateDistance)
+ -- Mission type CAP.
+ mission.type=AUFTRAG.Type.CAP
+ mission:_SetLogID()
+
+ -- DCS task parameters:
+ local engage = EngageRange or 32
+ local zoneCAPGroup = ZONE_GROUP:New("CAPGroup", Grp, UTILS.NMToMeters(engage))
+ mission.engageZone=zoneCAPGroup
+ mission.engageTargetTypes=TargetTypes or {"Air"}
+
+ -- Mission options:
+ mission.missionTask=ENUMS.MissionTask.CAP
+ mission.optionROE=ENUMS.ROE.OpenFire
+ mission.optionROT=ENUMS.ROT.EvadeFire
+
+ mission.categories={AUFTRAG.Category.AIRCRAFT}
+
+ mission.DCStask=mission:GetDCSMissionTask()
+
+ return mission
 end
 
 --- **[AIR]** Create a CAS mission.
@@ -1631,24 +1758,44 @@ function AUFTRAG:NewRESCUEHELO(Carrier)
   return mission
 end
 
---- **[AIRPANE]** Create a RECOVERY TANKER mission. **WIP and not working coorectly yet!**
+--- **[AIRPANE]** Create a RECOVERY TANKER mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Unit#UNIT Carrier The carrier unit.
+-- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
+-- @param #number Speed Orbit speed in knots. Default 250 KIAS.
+-- @param #number Leg Length of race-track in NM. Default 14 NM.
+-- @param #number RelHeading Relative heading [0, 360) of race-track pattern in degrees wrt heading of the carrier. Default is heading of the carrier.
+-- @param #number OffsetDist Relative distance of the first race-track point wrt to the carrier. Default 6 NM.
+-- @param #number OffsetAngle Relative angle of the first race-track point wrt. to the carrier. Default 180 (behind the boat).
+-- @param #number UpdateDistance Threshold distance in NM before orbit pattern is updated. Default 5 NM.
 -- @return #AUFTRAG self
-function AUFTRAG:NewRECOVERYTANKER(Carrier)
+function AUFTRAG:NewRECOVERYTANKER(Carrier, Altitude, Speed, Leg, RelHeading, OffsetDist, OffsetAngle, UpdateDistance)
+ 
+   -- Six NM astern.
+  local OffsetVec2={r=OffsetDist or 6, phi=OffsetAngle or 180}
+  
+  -- Default leg.
+  Leg=Leg or 14
+  
+  -- Default Speed.
+  Speed=Speed or 250
+  
+  local Heading=nil
+  if RelHeading then  
+    Heading=-math.abs(RelHeading)
+  end  
+ 
+  -- Create orbit mission. 
+  local mission=AUFTRAG:NewORBIT_GROUP(Carrier, Altitude, Speed, Leg, Heading, OffsetVec2, UpdateDistance)
 
-  local mission=AUFTRAG:New(AUFTRAG.Type.RECOVERYTANKER)
-
-  mission:_TargetFromObject(Carrier)
+  -- Set the type.  
+  mission.type=AUFTRAG.Type.RECOVERYTANKER
 
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.REFUELING
-  mission.missionFraction=0.5
+  mission.missionFraction=0.9
   mission.optionROE=ENUMS.ROE.WeaponHold
   mission.optionROT=ENUMS.ROT.NoReaction
-  
-  mission.missionAltitude=UTILS.FeetToMeters(6000)
-  mission.missionSpeed=UTILS.KnotsToKmph(274)
 
   mission.categories={AUFTRAG.Category.AIRPLANE}
 
@@ -1879,6 +2026,51 @@ function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude, Formation)
   mission.DCStask=mission:GetDCSMissionTask()
 
   mission.DCStask.params.formation=Formation or "Off Road"
+
+  return mission
+end
+
+--- **[AIR, GROUND, NAVAL]** Create a CAPTUREZONE mission. Group(s) will go to the zone and patrol it randomly.
+-- @param #AUFTRAG self
+-- @param Ops.OpsZone#OPSZONE OpsZone The OPS zone to capture.
+-- @param #number Coalition The coalition which should capture the zone for the mission to be successful.
+-- @param #number Speed Speed in knots.
+-- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
+-- @param #string Formation Formation used by ground units during patrol. Default "Off Road".
+-- @return #AUFTRAG self
+function AUFTRAG:NewCAPTUREZONE(OpsZone, Coalition, Speed, Altitude, Formation)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.CAPTUREZONE)
+
+
+  mission:_TargetFromObject(OpsZone)
+  
+  mission.coalition=Coalition
+
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.CAPTUREZONE)
+
+  mission.optionROE=ENUMS.ROE.ReturnFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+
+  mission.missionFraction=0.1
+  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
+  mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or nil
+
+  mission.categories={AUFTRAG.Category.ALL}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  mission.updateDCSTask=true
+
+  local params={}
+  
+  params.formation=Formation or "Off Road"  
+  params.zone=mission:GetObjective()
+  params.altitude=mission.missionAltitude
+  params.speed=mission.missionSpeed  
+
+  mission.DCStask.params=params
 
   return mission
 end
@@ -2227,6 +2419,10 @@ function AUFTRAG:NewFromTarget(Target, MissionType)
     mission=self:NewBOMBING(Target, Altitude)
   elseif MissionType==AUFTRAG.Type.BOMBRUNWAY then
     mission=self:NewBOMBRUNWAY(Target, Altitude)
+  elseif MissionType==AUFTRAG.Type.CAS then
+    mission=self:NewCAS(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000),Altitude,Speed,Target:GetAverageCoordinate(),Heading,Leg,TargetTypes)
+  elseif MissionType==AUFTRAG.Type.CASENHANCED then
+    mission=self:NewCASENHANCED(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000),Altitude,Speed,RangeMax,NoEngageZoneSet,TargetTypes)
   elseif MissionType==AUFTRAG.Type.INTERCEPT then
     mission=self:NewINTERCEPT(Target)
   elseif MissionType==AUFTRAG.Type.SEAD then
@@ -2522,6 +2718,15 @@ function AUFTRAG:SetRepeatOnSuccess(Nrepeat)
   return self
 end
 
+--- **[LEGION, COMMANDER, CHIEF]** Set that mission assets get reinforced if their number drops below Nmin.
+-- @param #AUFTRAG self
+-- @param #number Nreinforce Number of max asset groups used to reinforce.
+-- @return #AUFTRAG self
+function AUFTRAG:SetReinforce(Nreinforce)
+  self.reinforce=Nreinforce
+  return self
+end
+
 --- **[LEGION, COMMANDER, CHIEF]** Define how many assets are required to do the job. Only used if the mission is handled by a **LEGION** (AIRWING, BRIGADE, ...) or higher level.
 -- @param #AUFTRAG self
 -- @param #number NassetsMin Minimum number of asset groups. Default 1.
@@ -2543,24 +2748,32 @@ end
 
 --- **[LEGION, COMMANDER, CHIEF]** Get number of required assets.
 -- @param #AUFTRAG self
--- @param Ops.Legion#Legion Legion (Optional) Only get the required assets for a specific legion. If required assets for this legion are not defined, the total number is returned.
 -- @return #number Min. number of required assets.
 -- @return #number Max. number of required assets.
-function AUFTRAG:GetRequiredAssets(Legion)
-
-  --local N=self.nassets
-
-  --if Legion and self.Nassets[Legion.alias] then
-  --  N=self.Nassets[Legion.alias]
-  --end
+function AUFTRAG:GetRequiredAssets()
   
   local Nmin=self.NassetsMin
   local Nmax=self.NassetsMax
-  
+    
   if self.type==AUFTRAG.Type.RELOCATECOHORT then
+
+    -- Relocation gets all the assets.
     local cohort=self.DCStask.params.cohort --Ops.Cohort#COHORT
     Nmin=#cohort.assets
     Nmax=Nmin
+    
+  else
+
+    -- Check if this is an reinforcement.
+    if self:IsExecuting() and self.reinforce and self.reinforce>0 then
+      local N=self:CountOpsGroups()
+      if N<Nmin then
+        Nmin=math.min(Nmin-N, self.reinforce)
+        Nmax=Nmin
+        self:T(self.lid..string.format("FF Executing Nmin=%d, N=%d, Nreinfoce=%d ==> Nmin=%d", self.NassetsMin, N, self.reinforce, Nmin))
+      end
+    end
+  
   end
 
   return Nmin, Nmax
@@ -2820,6 +3033,7 @@ function AUFTRAG:AddTransportCarriers(Carriers)
 
   end
 
+  return self
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set required attribute(s) the assets must have.
@@ -2827,10 +3041,8 @@ end
 -- @param #table Attributes Generalized attribute(s).
 -- @return #AUFTRAG self
 function AUFTRAG:SetRequiredAttribute(Attributes)
-  if Attributes and type(Attributes)~="table" then
-    Attributes={Attributes}
-  end
-  self.attributes=Attributes
+  self.attributes=UTILS.EnsureTable(Attributes, true)
+  return self
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set required property or properties the assets must have.
@@ -2839,10 +3051,8 @@ end
 -- @param #table Properties Property or table of properties.
 -- @return #AUFTRAG self
 function AUFTRAG:SetRequiredProperty(Properties)
-  if Properties and type(Properties)~="table" then
-    Properties={Properties}
-  end
-  self.properties=Properties
+  self.properties=UTILS.EnsureTable(Properties, true)
+  return self
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set number of required carrier groups if an OPSTRANSPORT assignment is required.
@@ -3390,7 +3600,7 @@ function AUFTRAG:IsExecuting(AllGroups)
 
     local N    
     if self.Nassigned then
-      N=self.Nassigned-self.Ndead      
+      N=self.Nassigned-self.Ndead
     else
       N=self:CountOpsGroups()   
     end
@@ -3678,6 +3888,8 @@ function AUFTRAG:onafterStatus(From, Event, To)
 
   -- Number of alive groups attached to this mission.
   local Ngroups=self:CountOpsGroups()
+  
+  local Nassigned=self.Nassigned and self.Nassigned-self.Ndead or 0
 
   -- Check if mission is not OVER yet.
   if self:IsNotOver() then
@@ -3713,7 +3925,13 @@ function AUFTRAG:onafterStatus(From, Event, To)
       self:T(self.lid.."No targets left cancelling mission!")
       self:Cancel()
 
-    elseif self:IsExecuting() then
+    elseif self:IsExecuting() and ((not self.reinforce) or (self.reinforce==0 and Nassigned<=0)) then
+    
+--      env.info("Mission Done:")
+--      env.info(string.format("Nreinforce= %d", self.reinforce or 0))      
+--      env.info(string.format("Nassigned = %d", self.Nassigned))
+--      env.info(string.format("Ndead     = %d", self.Ndead))
+--      env.info(string.format("Nass-Ndead= %d", Nassigned))
 
       -- Had the case that mission was in state Executing but all assigned groups were dead.
       -- TODO: might need to loop over all assigned groups
@@ -3773,6 +3991,17 @@ function AUFTRAG:onafterStatus(From, Event, To)
     end
     self:I(self.lid..text)
   end
+  
+  -- Group info.
+  if self.verbose>=3 then
+    -- Data on assigned groups.
+    local text=string.format("Assets [N=%d,Nassigned=%s, Ndead=%s]:", self.Nassets or 0, self.Nassigned or 0, self.Ndead or 0)
+    for i,_asset in pairs(self.assets or {}) do
+      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+      text=text..string.format("\n[%d] %s: spawned=%s, requested=%s, reserved=%s", i, asset.spawngroupname, tostring(asset.spawned), tostring(asset.requested), tostring(asset.reserved))
+    end
+    self:I(self.lid..text)
+  end  
 
   -- Ready to evaluate mission outcome?
   local ready2evaluate=self.Tover and Tnow-self.Tover>=self.dTevaluate or false
@@ -4191,11 +4420,9 @@ function AUFTRAG:GetGroupEgressWaypointUID(opsgroup)
   end
 end
 
-
-
---- Check if all flights are done with their mission (or dead).
+--- Check if all groups are done with their mission (or dead).
 -- @param #AUFTRAG self
--- @return #boolean If true, all flights are done with the mission.
+-- @return #boolean If `true`, all groups are done with the mission.
 function AUFTRAG:CheckGroupsDone()
 
   -- Check status of all OPS groups.
@@ -4203,7 +4430,7 @@ function AUFTRAG:CheckGroupsDone()
     local groupdata=data --#AUFTRAG.GroupData
     if groupdata then
       if not (groupdata.status==AUFTRAG.GroupStatus.DONE or groupdata.status==AUFTRAG.GroupStatus.CANCELLED) then
-        -- At least this flight is not DONE or CANCELLED.
+        -- At least this group is not DONE or CANCELLED.
         self:T2(self.lid..string.format("CheckGroupsDone: OPSGROUP %s is not DONE or CANCELLED but in state %s. Mission NOT DONE!", groupdata.opsgroup.groupname, groupdata.status:upper()))
         return false
       end
@@ -4242,8 +4469,14 @@ function AUFTRAG:CheckGroupsDone()
     self:T2(self.lid..string.format("CheckGroupsDone: Mission is still in state %s [FSM=%s] (PLANNED or QUEUED or REQUESTED). Mission NOT DONE!", self.status, self:GetState()))
     return false
   end
+  
+  -- Check if there is still reinforcement to be expected.
+  if self:IsExecuting() and self.reinforce and (self.reinforce>0 or self.Nassigned-self.Ndead>0) then
+    self:T2(self.lid..string.format("CheckGroupsDone: Mission is still in state %s [FSM=%s] and reinfoce=%d. Mission NOT DONE!", self.status, self:GetState(), self.reinforce))
+    return false  
+  end
 
-  -- It could be that all flights were destroyed on the way to the mission execution waypoint.
+  -- It could be that all groups were destroyed on the way to the mission execution waypoint.
   -- TODO: would be better to check if everybody is dead by now.
   if self:IsStarted() and self:CountOpsGroups()==0 then
     self:T(self.lid..string.format("CheckGroupsDone: Mission is STARTED state %s [FSM=%s] but count of alive OPSGROUP is zero. Mission DONE!", self.status, self:GetState()))
@@ -4378,6 +4611,7 @@ end
 function AUFTRAG:onafterGroupDead(From, Event, To, OpsGroup)
 
   local asset=self:GetAssetByName(OpsGroup.groupname)
+  
   if asset then
     self:AssetDead(asset)
   end
@@ -4401,7 +4635,7 @@ function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
   self:T(self.lid..string.format("Asset %s dead! Number of ops groups remaining %d", tostring(Asset.spawngroupname), N))
 
   -- All assets dead?
-  if N==0 then
+  if N==0 and (self.reinforce==nil or self.reinforce==0) then
 
     if self:IsNotOver() then
 
@@ -4470,7 +4704,7 @@ function AUFTRAG:onafterCancel(From, Event, To)
       -- Debug info.
       self:T(self.lid..string.format("LEGION %s will cancel the mission. Will wait for mission DONE before evaluation!", legion.alias))
 
-      -- Legion will cancel all flight missions and remove queued request from warehouse queue.
+      -- Legion will cancel all group's missions and remove queued request from warehouse queue.
       legion:MissionCancel(self)
 
     end
@@ -4736,7 +4970,7 @@ function AUFTRAG:onafterRepeat(From, Event, To)
     end
 
   end
-  -- No flight data.
+  -- No group data.
   self.groupdata={}
 
   -- Reset casualties and units assigned.
@@ -4754,7 +4988,7 @@ function AUFTRAG:onafterRepeat(From, Event, To)
 
 end
 
---- On after "Stop" event. Remove mission from AIRWING and FLIGHTGROUP mission queues.
+--- On after "Stop" event. Remove mission from LEGION and OPSGROUP mission queues.
 -- @param #AUFTRAG self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -4793,7 +5027,7 @@ function AUFTRAG:onafterStop(From, Event, To)
   -- No mission assets.
   self.assets={}
 
-  -- No flight data.
+  -- No group data.
   self.groupdata={}
 
   -- Clear pending scheduler calls.
@@ -4842,8 +5076,11 @@ function AUFTRAG:CountMissionTargets()
 
   local N=0
 
+  -- Count specific coalitions.  
+  local Coalitions=self.coalition and UTILS.GetCoalitionEnemy(self.coalition, true) or nil
+
   if self.engageTarget then
-    N=self.engageTarget:CountTargets()
+    N=self.engageTarget:CountTargets(Coalitions)
   end
 
   return N
@@ -4908,9 +5145,13 @@ end
 
 --- Get mission objective object. Could be many things depending on the mission type.
 -- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE RefCoordinate (Optional) Reference coordinate from which the closest target is determined.
+-- @param #table Coalitions (Optional) Only consider targets of the given coalition(s). 
 -- @return Wrapper.Positionable#POSITIONABLE The target object. Could be many things.
-function AUFTRAG:GetObjective()
-  local objective=self:GetTargetData():GetObject()
+function AUFTRAG:GetObjective(RefCoordinate, Coalitions)
+  
+  local objective=self:GetTargetData():GetObject(RefCoordinate, Coalitions)
+  
   return objective
 end
 
@@ -4967,6 +5208,17 @@ function AUFTRAG:GetTargetCoordinate()
     self:T(self.lid.."ERROR: Cannot get target coordinate!")
   end
 
+  return nil
+end
+
+--- Get heading of target.
+-- @param #AUFTRAG self
+-- @return #number Heading of target in degrees.
+function AUFTRAG:GetTargetHeading()
+  if self.engageTarget then
+    local heading=self.engageTarget:GetHeading()
+    return heading
+  end
   return nil
 end
 
@@ -5235,6 +5487,74 @@ function AUFTRAG:_SetLogID()
   return self
 end
 
+
+--- Get request ID from legion this mission requested assets from
+-- @param #AUFTRAG self
+-- @param Ops.Legion#LEGION Legion The legion from which to get the request ID.
+-- @return #number Request ID (if any).
+function AUFTRAG:_GetRequestID(Legion)
+
+  local requestid=nil
+  local name=nil
+  
+  if type(Legion)=="string" then
+    name=Legion
+  else
+    name=Legion.alias
+  end
+
+  if name then
+    requestid=self.requestID[name]
+  end  
+
+  return nil
+end
+
+
+--- Get request from legion this mission requested assets from.
+-- @param #AUFTRAG self
+-- @param Ops.Legion#LEGION Legion The legion from which to get the request ID.
+-- @return Functional.Warehouse#WAREHOUSE.PendingItem Request.
+function AUFTRAG:_GetRequest(Legion)
+
+  local request=nil
+  
+  local requestID=self:_GetRequestID(Legion)
+  
+  if requestID then
+    request=Legion:GetRequestByID(requestID)
+  end
+
+  return request
+end
+
+--- Set request ID from legion this mission requested assets from
+-- @param #AUFTRAG self
+-- @param Ops.Legion#LEGION Legion The legion from which to get the request ID.
+-- @param #number RequestID Request ID.
+-- @return #AUFTRAG self
+function AUFTRAG:_SetRequestID(Legion, RequestID)
+
+  local requestid=nil
+  local name=nil
+  
+  if type(Legion)=="string" then
+    name=Legion
+  else
+    name=Legion.alias
+  end
+
+  if name then
+    if self.requestID[name] then
+      self:I(self.lid..string.format("WARNING: Mission already has a request ID=%d!", self.requestID[name]))
+    end
+    self.requestID[name]=RequestID
+  end  
+
+  return self
+end
+
+
 --- Update mission F10 map marker.
 -- @param #AUFTRAG self
 -- @return #AUFTRAG self
@@ -5407,48 +5727,7 @@ function AUFTRAG:GetDCSMissionTask()
     DCStask.params=param
 
     table.insert(DCStasks, DCStask)
- 
-  elseif self.type==AUFTRAG.Type.RECOVERYTANKER then   
-
-    ----------------------------
-    -- RECOVERYTANKER Mission --
-    ----------------------------
-    
-    -- Get the carrier unit.
-    local Carrier=self:GetObjective() --Wrapper.Unit#UNIT
-    
-    -- Carrier coordinate.
-    local Coord=Carrier:GetCoordinate()
-    
-    -- Get current heading of carrier.
-    local hdg=Carrier:GetHeading()
-
-    -- Altitude    
-    local Altitude=self.missionAltitude
-    
-    -- Race-track distances.
-    local distStern=UTILS.NMToMeters(4)
-    local distBow=UTILS.NMToMeters(10)
-    
-    -- Racetrack pattern points.
-    local p1=Coord:Translate(distStern, hdg):SetAltitude(self.missionAltitude)
-    local p2=Coord:Translate(distBow, hdg):SetAltitude(self.missionAltitude)
-    
-    p1:MarkToAll("p1")
-    p2:MarkToAll("p2")
-
-    -- Set speed in m/s.
-    local Speed=UTILS.KmphToMps(self.missionSpeed)
-
-    -- Orbit task.
-    local DCStask=CONTROLLABLE.TaskOrbit(nil, p1, Altitude, Speed, p2)
-    
-    -- Set carrier as parameter.
-    DCStask.params.carrier=Carrier
-
-    -- Add to DCS tasks.
-    table.insert(DCStasks, DCStask)    
-    
+     
   elseif self.type==AUFTRAG.Type.INTERCEPT then
 
     -----------------------
@@ -5518,7 +5797,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     table.insert(DCStasks, DCStask)
 
-  elseif self.type==AUFTRAG.Type.TANKER then
+  elseif self.type==AUFTRAG.Type.TANKER or self.type==AUFTRAG.Type.RECOVERYTANKER then
 
     --------------------
     -- TANKER Mission --
@@ -5553,7 +5832,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     DCStask.id="OpsTransport"
 
-    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}
     DCStask.params=param
 
@@ -5583,7 +5862,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     DCStask.id=AUFTRAG.SpecialTask.FORMATION
 
-    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}
     param.unitname=self:GetTargetName()
     param.offsetX=200
@@ -5634,7 +5913,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     DCStask.id=AUFTRAG.SpecialTask.BARRAGE
 
-    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}
     param.zone=self:GetObjective()
     param.altitude=self.artyAltitude
@@ -5658,7 +5937,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     DCStask.id=AUFTRAG.SpecialTask.PATROLZONE
 
-    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}
     param.zone=self:GetObjective()
     param.altitude=self.missionAltitude
@@ -5667,6 +5946,22 @@ function AUFTRAG:GetDCSMissionTask()
     DCStask.params=param
 
     table.insert(DCStasks, DCStask)
+    
+  elseif self.type==AUFTRAG.Type.CAPTUREZONE then
+
+    --------------------------
+    -- CAPTURE ZONE Mission --
+    --------------------------
+
+    local DCStask={}
+
+    DCStask.id=AUFTRAG.SpecialTask.CAPTUREZONE
+
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
+    local param={}
+    DCStask.params=param
+
+    table.insert(DCStasks, DCStask)    
 
   elseif self.type==AUFTRAG.Type.CASENHANCED then
 
@@ -5678,7 +5973,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     DCStask.id=AUFTRAG.SpecialTask.PATROLZONE
 
-    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}
     param.zone=self:GetObjective()
     param.altitude=self.missionAltitude
@@ -5744,7 +6039,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     table.insert(DCStasks, DCStask)
 
-  elseif self.type==AUFTRAG.Type.AMMOSUPPLY then
+  elseif self.type==AUFTRAG.Type.REARMING then
 
     ----------------------
     -- REARMING Mission --
@@ -5886,17 +6181,86 @@ function AUFTRAG:GetDCSMissionTask()
      self.type==AUFTRAG.Type.CAS    or
      self.type==AUFTRAG.Type.GCICAP or
      self.type==AUFTRAG.Type.AWACS  or
-     self.type==AUFTRAG.Type.TANKER then
+     self.type==AUFTRAG.Type.TANKER or
+     self.type==AUFTRAG.Type.RECOVERYTANKER then
 
     -------------------
     -- ORBIT Mission --
     -------------------
 
-    local Coordinate=self:GetTargetCoordinate()
+    -- Get/update orbit vector.
+    self.orbitVec2=self:GetTargetVec2()
+    
+    if self.orbitVec2 then
+    
+      -- Heading of the target.
+      self.targetHeading=self:GetTargetHeading()
 
-    local DCStask=CONTROLLABLE.TaskOrbit(nil, Coordinate, self.orbitAltitude, self.orbitSpeed, self.orbitRaceTrack)
-
-    table.insert(DCStasks, DCStask)
+      local OffsetVec2=nil --DCS#Vec2
+      if (self.orbitOffsetVec2~=nil) then
+        OffsetVec2=UTILS.DeepCopy(self.orbitOffsetVec2)
+      end
+      
+      if OffsetVec2 then
+        
+        if self.orbitOffsetVec2.r then
+          -- Polar coordinates
+          local r=self.orbitOffsetVec2.r
+          local phi=(self.orbitOffsetVec2.phi or 0) + self.targetHeading
+          
+          OffsetVec2.x=r*math.cos(math.rad(phi))
+          OffsetVec2.y=r*math.sin(math.rad(phi))
+        else
+          -- Cartesian coordinates
+          OffsetVec2.x=self.orbitOffsetVec2.x
+          OffsetVec2.y=self.orbitOffsetVec2.y
+        end
+        
+      end
+      
+      -- Actual orbit position with possible offset.
+      local orbitVec2=OffsetVec2 and UTILS.Vec2Add(self.orbitVec2, OffsetVec2) or self.orbitVec2      
+      
+      -- Check for race-track pattern.
+      local orbitRaceTrack=nil --DCS#Vec2
+      if self.orbitLeg then
+      
+        -- Default heading is due North. 
+        local heading=0
+        
+        -- Check if specific heading was specified.
+        if self.orbitHeading then
+        
+          -- Is heading realtive to target?
+          if self.orbitHeadingRel then
+            -- Relative heading wrt target.
+            heading=self.targetHeading+self.orbitHeading
+          else
+            -- Take given heading.
+            heading=self.orbitHeading
+          end
+          
+        else
+          -- Not specific heading specified ==> Take heading of target.
+          heading=self.targetHeading or 0        
+        end
+                
+        -- Race-track vector.
+        orbitRaceTrack=UTILS.Vec2Translate(orbitVec2, self.orbitLeg, heading)
+      end      
+              
+      local orbitRaceTrackCoord = nil    
+      if orbitRaceTrack then
+        orbitRaceTrackCoord = COORDINATE:NewFromVec2(orbitRaceTrack)
+      end
+      
+      -- Create orbit task.
+      local DCStask=CONTROLLABLE.TaskOrbit(nil, COORDINATE:NewFromVec2(orbitVec2), self.orbitAltitude, self.orbitSpeed, orbitRaceTrackCoord)
+            
+      -- Add DCS task.
+      table.insert(DCStasks, DCStask)
+      
+    end
 
   end
 
@@ -6082,6 +6446,8 @@ function AUFTRAG.CheckMissionCapabilityAll(MissionTypes, Capabilities)
 
   return res
 end
+
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

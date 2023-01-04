@@ -327,7 +327,7 @@ FLIGHTCONTROL.FlightStatus={
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.7.1"
+FLIGHTCONTROL.version="0.7.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -357,8 +357,10 @@ FLIGHTCONTROL.version="0.7.1"
 -- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. Can also be given as a `#table` of multiple frequencies.
 -- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a `#table` of multiple modulations.
 -- @param #string PathToSRS Path to the directory, where SRS is located.
+-- @param #number Port Port of SRS Server, defaults to 5002
+-- @param #string GoogleKey Path to the Google JSON-Key.
 -- @return #FLIGHTCONTROL self
-function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS)
+function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS, Port, GoogleKey)
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #FLIGHTCONTROL
@@ -406,15 +408,25 @@ function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS)
   self:SetMarkHoldingPattern(true)
   self:SetRunwayRepairtime()
   
+  -- Set SRS Port
+  self:SetSRSPort(Port or 5002)
+  
+  -- Set Callsign Options
+  self:SetCallSignOptions(true,true)
+  
   -- Init msrs queue.
   self.msrsqueue=MSRSQUEUE:New(self.alias)
   
   -- SRS for Tower.
   self.msrsTower=MSRS:New(PathToSRS, Frequency, Modulation)
+  self.msrsTower:SetPort(self.Port)
+  self.msrsTower:SetGoogle(GoogleKey)
   self:SetSRSTower()
   
   -- SRS for Pilot.
   self.msrsPilot=MSRS:New(PathToSRS, Frequency, Modulation)
+  self.msrsPilot:SetPort(self.Port)
+  self.msrsPilot:SetGoogle(GoogleKey)
   self:SetSRSPilot()
   
   -- Wait at least 10 seconds after last radio message before calling the next status update.
@@ -567,6 +579,15 @@ function FLIGHTCONTROL:SetFrequency(Frequency, Modulation)
   return self
 end
 
+--- Set the SRS server port.
+-- @param #FLIGHTCONTROL self
+-- @param #number Port Port to be used. Defaults to 5002.
+-- @return #FLIGHTCONTROL self
+function FLIGHTCONTROL:SetSRSPort(Port)
+  self.Port = Port or 5002
+  return self
+end
+
 --- Set SRS options for a given MSRS object.
 -- @param #FLIGHTCONTROL self
 -- @param Sound.SRS#MSRS msrs Moose SRS object.
@@ -576,8 +597,9 @@ end
 -- @param #number Volume Volume. Default 1.0.
 -- @param #string Label Name under which SRS transmitts.
 -- @param #string PathToGoogleCredentials Path to google credentials json file.
+-- @param #number Port Server port for SRS
 -- @return #FLIGHTCONTROL self
-function FLIGHTCONTROL:_SetSRSOptions(msrs, Gender, Culture, Voice, Volume, Label, PathToGoogleCredentials)
+function FLIGHTCONTROL:_SetSRSOptions(msrs, Gender, Culture, Voice, Volume, Label, PathToGoogleCredentials, Port)
 
   -- Defaults:
   Gender=Gender or "female"
@@ -591,6 +613,8 @@ function FLIGHTCONTROL:_SetSRSOptions(msrs, Gender, Culture, Voice, Volume, Labe
     msrs:SetVolume(Volume)
     msrs:SetLabel(Label)
     msrs:SetGoogle(PathToGoogleCredentials)
+    msrs:SetCoalition(self:GetCoalition())
+    msrs:SetPort(Port or self.Port or 5002)
   end
 
   return self
@@ -980,33 +1004,6 @@ end
 --- On Before Update status.
 -- @param #FLIGHTCONTROL self
 function FLIGHTCONTROL:onbeforeStatusUpdate()
-
-  --[[
-  if self.Tlastmessage then
-    local Tnow=timer.getAbsTime()
-    
-    -- Time interval between last radio message.
-    local dT=Tnow-self.Tlastmessage
-        
-    if dT<self.dTmessage then
-    
-      -- Time
-      local dt=self.dTmessage-dT+1
-    
-      -- Debug info.
-      local text=string.format("Last message sent %d sec ago. Will call status again in %d sec", dT, dt)
-      self:T(self.lid..text)
-        
-      -- Call status again in dt seconds.
-      self:__StatusUpdate(-dt)
-      
-      -- Deny transition.
-      return false
-    else
-      self:T2(self.lid..string.format("Last radio sent %d>%d sec ago. Status update allowed", dT, self.dTmessage))
-    end
-  end
-  ]]
   
   local Tqueue=self.msrsqueue:CalcTransmisstionDuration()
   
@@ -2632,8 +2629,18 @@ function FLIGHTCONTROL:_PlayerRadioCheck(groupname)
     local callsign=self:_GetCallsignName(flight)
     
     -- Pilot radio check.
-    local text=string.format("%s, %s, radio check %.3f", self.alias, callsign, self.frequency)
+    local text = ""
     
+    if type(self.frequency) == "table" then
+      local multifreq = ""
+      for _,_entry in pairs(self.frequency) do
+        multifreq = string.format("%s%.2f, ",multifreq,_entry)
+      end
+      multifreq = string.gsub(multifreq,", $","")
+      text=string.format("%s, %s, radio check %s", self.alias, callsign, multifreq)
+    else
+      text=string.format("%s, %s, radio check %.3f", self.alias, callsign, self.frequency)
+    end
     -- Radio message.
     self:TransmissionPilot(text, flight)
         
@@ -2712,7 +2719,17 @@ function FLIGHTCONTROL:_PlayerInfoAirbase(groupname)
  
     local text=string.format("Airbase %s Info:", self.airbasename) 
     text=text..string.format("\nATC Status: %s", self:GetState())
-    text=text..string.format("\nFrequency: %.3f %s", self.frequency, UTILS.GetModulationName(self.modulation))
+    
+    if type(self.frequency) == "table" then
+      local multifreq = ""
+      for i=1,#self.frequency do
+        multifreq=string.format("%s%.2f %s, ",multifreq,self.frequency[i],UTILS.GetModulationName(self.modulation[i] or 0))
+      end
+      text=string.gsub(text,", $","")
+      text=text..string.format("\nFrequencies: %s", multifreq)
+    else
+      text=text..string.format("\nFrequency: %.3f %s", self.frequency, UTILS.GetModulationName(self.modulation)) 
+    end
     text=text..string.format("\nRunway Landing: %s", self:GetActiveRunwayText())
     text=text..string.format("\nRunway Takeoff: %s", self:GetActiveRunwayText(true))
 
@@ -4457,13 +4474,31 @@ function FLIGHTCONTROL:_IsFlightOnRunway(flight)
   return nil
 end
 
+--- [User] Set callsign options for TTS output. See @{Wrapper.Group#GROUP.GetCustomCallSign}() on how to set customized callsigns.
+-- @param #FLIGHTCONTROL self
+-- @param #boolean ShortCallsign If true, only call out the major flight number. Default = `true`.
+-- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name for players as-is, no amendments or numbers. Default = `true`.
+-- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
+-- callsigns from playername or group name.
+-- @return #FLIGHTCONTROL self
+function FLIGHTCONTROL:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations)
+  if not ShortCallsign or ShortCallsign == false then
+   self.ShortCallsign = false
+  else
+   self.ShortCallsign = true
+  end
+  self.Keepnumber = Keepnumber or false
+  self.CallsignTranslations = CallsignTranslations
+  return self  
+end
+
 --- Get callsign name of a given flight.
 -- @param #FLIGHTCONTROL self
 -- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
 -- @return #string Callsign or "Ghostrider 1-1".
 function FLIGHTCONTROL:_GetCallsignName(flight)
 
-  local callsign=flight:GetCallsignName()
+  local callsign=flight:GetCallsignName(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
   
   --local name=string.match(callsign, "%a+")
   --local number=string.match(callsign, "%d+")

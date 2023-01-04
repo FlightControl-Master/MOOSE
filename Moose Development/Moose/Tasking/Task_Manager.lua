@@ -1,4 +1,4 @@
---- This module contains the TASK_MANAGER class and derived classes.
+--- **Tasking** - This module contains the TASK_MANAGER class and derived classes.
 -- 
 -- ===
 -- 
@@ -33,7 +33,7 @@
 -- @image MOOSE.JPG
 
 do -- TASK_MANAGER
-  
+
   --- TASK_MANAGER class.
   -- @type TASK_MANAGER
   -- @field Core.Set#SET_GROUP SetGroup The set of group objects containing players for which tasks are managed.
@@ -42,21 +42,21 @@ do -- TASK_MANAGER
     ClassName = "TASK_MANAGER",
     SetGroup = nil,
   }
-  
+
   --- TASK\_MANAGER constructor.
   -- @param #TASK_MANAGER self
   -- @param Core.Set#SET_GROUP SetGroup The set of group objects containing players for which tasks are managed.
   -- @return #TASK_MANAGER self
   function TASK_MANAGER:New( SetGroup )
-  
+
     -- Inherits from BASE
     local self = BASE:Inherit( self, FSM:New() ) -- #TASK_MANAGER
-    
+
     self.SetGroup = SetGroup
-    
+
     self:SetStartState( "Stopped" )
     self:AddTransition( "Stopped", "StartTasks", "Started" )
-    
+
     --- StartTasks Handler OnBefore for TASK_MANAGER
     -- @function [parent=#TASK_MANAGER] OnBeforeStartTasks
     -- @param #TASK_MANAGER self
@@ -64,27 +64,25 @@ do -- TASK_MANAGER
     -- @param #string Event
     -- @param #string To
     -- @return #boolean
-    
+
     --- StartTasks Handler OnAfter for TASK_MANAGER
     -- @function [parent=#TASK_MANAGER] OnAfterStartTasks
     -- @param #TASK_MANAGER self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
-    
+
     --- StartTasks Trigger for TASK_MANAGER
     -- @function [parent=#TASK_MANAGER] StartTasks
     -- @param #TASK_MANAGER self
-    
+
     --- StartTasks Asynchronous Trigger for TASK_MANAGER
     -- @function [parent=#TASK_MANAGER] __StartTasks
     -- @param #TASK_MANAGER self
     -- @param #number Delay
-    
-    
-    
+
     self:AddTransition( "Started", "StopTasks", "Stopped" )
-    
+
     --- StopTasks Handler OnBefore for TASK_MANAGER
     -- @function [parent=#TASK_MANAGER] OnBeforeStopTasks
     -- @param #TASK_MANAGER self
@@ -92,28 +90,27 @@ do -- TASK_MANAGER
     -- @param #string Event
     -- @param #string To
     -- @return #boolean
-    
+
     --- StopTasks Handler OnAfter for TASK_MANAGER
     -- @function [parent=#TASK_MANAGER] OnAfterStopTasks
     -- @param #TASK_MANAGER self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
-    
+
     --- StopTasks Trigger for TASK_MANAGER
     -- @function [parent=#TASK_MANAGER] StopTasks
     -- @param #TASK_MANAGER self
-    
+
     --- StopTasks Asynchronous Trigger for TASK_MANAGER
     -- @function [parent=#TASK_MANAGER] __StopTasks
     -- @param #TASK_MANAGER self
     -- @param #number Delay
-    
 
     self:AddTransition( "Started", "Manage", "Started" )
 
     self:AddTransition( "Started", "Success", "Started" )
-    
+
     --- Success Handler OnAfter for TASK_MANAGER
     -- @function [parent=#TASK_MANAGER] OnAfterSuccess
     -- @param #TASK_MANAGER self
@@ -121,10 +118,9 @@ do -- TASK_MANAGER
     -- @param #string Event
     -- @param #string To
     -- @param Tasking.Task#TASK Task
-    
-    
+
     self:AddTransition( "Started", "Failed", "Started" )
-    
+
     --- Failed Handler OnAfter for TASK_MANAGER
     -- @function [parent=#TASK_MANAGER] OnAfterFailed
     -- @param #TASK_MANAGER self
@@ -132,10 +128,9 @@ do -- TASK_MANAGER
     -- @param #string Event
     -- @param #string To
     -- @param Tasking.Task#TASK Task
-    
-    
+
     self:AddTransition( "Started", "Aborted", "Started" )
-    
+
     --- Aborted Handler OnAfter for TASK_MANAGER
     -- @function [parent=#TASK_MANAGER] OnAfterAborted
     -- @param #TASK_MANAGER self
@@ -143,9 +138,9 @@ do -- TASK_MANAGER
     -- @param #string Event
     -- @param #string To
     -- @param Tasking.Task#TASK Task
-    
+
     self:AddTransition( "Started", "Cancelled", "Started" )
-    
+
     --- Cancelled Handler OnAfter for TASK_MANAGER
     -- @function [parent=#TASK_MANAGER] OnAfterCancelled
     -- @param #TASK_MANAGER self
@@ -155,37 +150,37 @@ do -- TASK_MANAGER
     -- @param Tasking.Task#TASK Task
 
     self:SetRefreshTimeInterval( 30 )
-  
+
     return self
   end
-  
+
   function TASK_MANAGER:onafterStartTasks( From, Event, To )
     self:Manage()
   end
-  
+
   function TASK_MANAGER:onafterManage( From, Event, To )
 
     self:__Manage( -self._RefreshTimeInterval )
 
     self:ManageTasks()
   end
-  
+
   --- Set the refresh time interval in seconds when a new task management action needs to be done.
   -- @param #TASK_MANAGER self
   -- @param #number RefreshTimeInterval The refresh time interval in seconds when a new task management action needs to be done.
   -- @return #TASK_MANAGER self
   function TASK_MANAGER:SetRefreshTimeInterval( RefreshTimeInterval )
     self:F2()
-  
+
     self._RefreshTimeInterval = RefreshTimeInterval
   end
-  
-  
+
+
   --- Manages the tasks for the @{Core.Set#SET_GROUP}.
   -- @param #TASK_MANAGER self
   -- @return #TASK_MANAGER self
   function TASK_MANAGER:ManageTasks()
-  
+
   end
 
 end

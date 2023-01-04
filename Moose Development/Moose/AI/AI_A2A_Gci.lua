@@ -1,6 +1,6 @@
---- **AI** -- (R2.2) - Models the process of Ground Controlled Interception (GCI) for airplanes.
+--- **AI** - Models the process of Ground Controlled Interception (GCI) for airplanes.
 --
--- This is a class used in the @{AI_A2A_Dispatcher}.
+-- This is a class used in the @{AI.AI_A2A_Dispatcher}.
 --
 -- ===
 --
@@ -8,7 +8,7 @@
 --
 -- ===
 --
--- @module AI.AI_A2A_GCI
+-- @module AI.AI_A2A_Gci
 -- @image AI_Ground_Control_Intercept.JPG
 
 
@@ -42,8 +42,8 @@
 --
 -- ![Process](..\Presentations\AI_GCI\Dia10.JPG)
 --
--- Until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
--- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
+-- Until a fuel or damage threshold has been reached by the AI, or when the AI is commanded to RTB.
+-- When the fuel threshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
 --
 -- ![Process](..\Presentations\AI_GCI\Dia13.JPG)
 --
@@ -73,7 +73,7 @@
 --   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
 --   * **@{#AI_A2A_GCI.Destroy}**: The AI has destroyed a bogey @{Wrapper.Unit}.
 --   * **@{#AI_A2A_GCI.Destroyed}**: The AI has destroyed all bogeys @{Wrapper.Unit}s assigned in the CAS task.
---   * **Status** ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
+--   * **Status** ( Group ): The AI is checking status (fuel and damage). When the thresholds have been reached, the AI will RTB.
 --
 -- ## 3. Set the Range of Engagement
 --
@@ -89,9 +89,9 @@
 --
 -- ![Zone](..\Presentations\AI_GCI\Dia12.JPG)
 --
--- An optional @{Zone} can be set,
+-- An optional @{Core.Zone} can be set,
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_Cap#AI_A2A_GCI.SetEngageZone}() to define that Zone.
+-- Use the method @{AI.AI_CAP#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
 --
 -- ===
 --
@@ -153,7 +153,7 @@ end
 --- Evaluate the attack and create an AttackUnitTask list.
 -- @param #AI_A2A_GCI self
 -- @param Core.Set#SET_UNIT AttackSetUnit The set of units to attack.
--- @param Wrappper.Group#GROUP DefenderGroup The group of defenders.
+-- @param Wrapper.Group#GROUP DefenderGroup The group of defenders.
 -- @param #number EngageAltitude The altitude to engage the targets.
 -- @return #AI_A2A_GCI self
 function AI_A2A_GCI:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageAltitude )

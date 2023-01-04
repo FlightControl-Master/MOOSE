@@ -56,6 +56,9 @@
 -- @field #number RTBRecallCount Number that counts RTB calls.
 -- @field Ops.FlightControl#FLIGHTCONTROL.HoldingStack stack Holding stack.
 -- @field #boolean isReadyTO Flight is ready for takeoff. This is for FLIGHTCONTROL.
+-- @field #boolean prohibitAB Disallow (true) or allow (false) AI to use the afterburner.
+-- @field #boolean jettisonEmptyTanks Allow (true) or disallow (false) AI to jettison empty fuel tanks.
+-- @field #boolean jettisonWeapons Allow (true) or disallow (false) AI to jettison weapons if in danger.
 --
 -- @extends Ops.OpsGroup#OPSGROUP
 
@@ -145,6 +148,9 @@ FLIGHTGROUP = {
   RTBRecallCount     =     0,
   playerSettings     =    {},
   playerWarnings     =    {},
+  prohibitAB         =   false,
+  jettisonEmptyTanks =   true,
+  jettisonWeapons    =   true, -- that's actually a negative option like prohibitAB
 }
 
 
@@ -210,7 +216,7 @@ FLIGHTGROUP.Players={}
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.8.0"
+FLIGHTGROUP.version="0.8.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -335,11 +341,13 @@ function FLIGHTGROUP:New(group)
   self:HandleEvent(EVENTS.Kill,            self.OnEventKill)
   self:HandleEvent(EVENTS.PlayerLeaveUnit, self.OnEventPlayerLeaveUnit)
 
+  -- Initialize group.
+  self:_InitGroup()
+
   -- Init waypoints.
   self:_InitWaypoints()
 
-  -- Initialize group.
-  self:_InitGroup()
+
 
   -- Start the status monitoring.
   self.timerStatus=TIMER:New(self.Status, self):Start(1, 30)
@@ -372,9 +380,32 @@ end
 
 --- Get airwing the flight group belongs to.
 -- @param #FLIGHTGROUP self
--- @return Ops.AirWing#AIRWING The AIRWING object.
-function FLIGHTGROUP:GetAirWing()
+-- @return Ops.AirWing#AIRWING The AIRWING object (if any).
+function FLIGHTGROUP:GetAirwing()
   return self.legion
+end
+
+--- Get name of airwing the flight group belongs to.
+-- @param #FLIGHTGROUP self
+-- @return #string Name of the airwing or "None" if the flightgroup does not belong to any airwing.
+function FLIGHTGROUP:GetAirwingName()
+  local name=self.legion and self.legion.alias or "None"
+  return name
+end
+
+--- Get squadron the flight group belongs to.
+-- @param #FLIGHTGROUP self
+-- @return Ops.Squadron#SQUADRON The SQUADRON of this flightgroup or #nil if the flightgroup does not belong to any squadron.
+function FLIGHTGROUP:GetSquadron()
+  return self.cohort
+end
+
+--- Get squadron name the flight group belongs to.
+-- @param #FLIGHTGROUP self
+-- @return #string The squadron name or "None" if the flightgroup does not belon to any squadron.
+function FLIGHTGROUP:GetSquadronName()
+  local name=self.cohort and self.cohort:GetName() or "None"
+  return name
 end
 
 --- Set if aircraft is VTOL capable. Unfortunately, there is no DCS way to determine this via scripting.
@@ -382,6 +413,52 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetVTOL()
   self.isVTOL=true
+  return self
+end
+
+--- Set if aircraft is **not** allowed to use afterburner.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetProhibitAfterburner()
+  self.prohibitAB = true
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_AB, true)
+  end
+  return self 
+end
+
+--- Set if aircraft is allowed to use afterburner.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetAllowAfterburner()
+  self.prohibitAB = false
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_AB, false)
+  end
+  return self 
+end
+
+--- Set if aircraft is allowed to drop empty fuel tanks - set to true to allow, and false to forbid it.
+-- @param #FLIGHTGROUP self
+-- @param #boolean Switch true or false
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetJettisonEmptyTanks(Switch)
+  self.jettisonEmptyTanks = Switch
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():SetOption(AI.Option.Air.id.JETT_TANKS_IF_EMPTY, Switch)
+  end
+  return self
+end
+
+--- Set if aircraft is allowed to drop weapons to escape danger - set to true to allow, and false to forbid it.
+-- @param #FLIGHTGROUP self
+-- @param #boolean Switch true or false
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetJettisonWeapons(Switch)
+  self.jettisonWeapons = not Switch
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_JETT, not Switch)
+  end
   return self
 end
 
@@ -687,7 +764,7 @@ end
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, has landed somewhere.
 function FLIGHTGROUP:IsLandedAt()
-  is=self:Is("LandedAt")
+  local is=self:Is("LandedAt")
   return is
 end
 
@@ -836,6 +913,7 @@ end
 function FLIGHTGROUP:GetKills()
   return self.Nkills
 end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -873,6 +951,60 @@ function FLIGHTGROUP:Status()
           --self:Cruise()
         end
       end
+    end
+    
+    -- Get current mission (if any).
+    local mission=self:GetMissionCurrent()
+    
+    -- If mission, check if DCS task needs to be updated.
+    if mission and mission.updateDCSTask then
+    
+      -- Orbit missions might need updates.
+      if (mission:GetType()==AUFTRAG.Type.ORBIT or mission:GetType()==AUFTRAG.Type.RECOVERYTANKER or mission:GetType()==AUFTRAG.Type.CAP) and mission.orbitVec2 then
+          
+        -- Get 2D vector of orbit target.
+        local vec2=mission:GetTargetVec2()
+        
+        -- Heading.
+        local hdg=mission:GetTargetHeading()
+        
+        -- Heading change?
+        local hdgchange=false
+        if mission.orbitLeg then
+          if UTILS.HdgDiff(hdg, mission.targetHeading)>0 then
+            hdgchange=true
+          end
+        end
+        
+        -- Distance to previous position.
+        local dist=UTILS.VecDist2D(vec2, mission.orbitVec2)
+        
+        -- Distance change?
+        local distchange=dist>mission.orbitDeltaR
+        
+        -- Debug info.
+        self:T3(self.lid..string.format("Checking orbit mission dist=%d meters", dist))
+        
+        -- Check if distance is larger than threshold.
+        if distchange or hdgchange then
+        
+          -- Debug info.
+          self:T3(self.lid..string.format("Updating orbit!"))
+        
+          -- Update DCS task. This also sets the new mission.orbitVec2.
+          local DCSTask=mission:GetDCSMissionTask() --DCS#Task
+          
+          -- Get task.
+          local Task=mission:GetGroupWaypointTask(self)
+          
+          -- Reset current orbit task.
+          self.controller:resetTask()
+          
+          -- Push task after one second. We need to give resetTask some time or it will not work!
+          self:_SandwitchDCSTask(DCSTask, Task, false, 1)
+          
+        end
+      end    
     end
     
   
@@ -1132,16 +1264,6 @@ function FLIGHTGROUP:Status()
   
   -- Current mission.
   local mission=self:GetMissionCurrent()
-  
-  if mission and mission.type==AUFTRAG.Type.RECOVERYTANKER and mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.EXECUTING then
-  
-    --env.info("FF recovery tanker updating DCS task")    
-    --self:ClearTasks()
-  
-    local DCSTask=mission:GetDCSMissionTask()
-    self:SetTask(DCSTask)
-  
-  end
 
 end
 
@@ -1689,9 +1811,10 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     end
 
     -- TODO: make this input.
-    self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_JETT, true)
-    self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_AB,   true)   -- Does not seem to work. AI still used the after burner.
-    self:GetGroup():SetOption(AI.Option.Air.id.RTB_ON_BINGO, false)
+    self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_JETT, self.jettisonWeapons)
+    self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_AB,   self.prohibitAB)   -- Does not seem to work. AI still used the after burner.
+    self:GetGroup():SetOption(AI.Option.Air.id.RTB_ON_BINGO, false)    
+    self:GetGroup():SetOption(AI.Option.Air.id.JETT_TANKS_IF_EMPTY, self.jettisonEmptyTanks)
     --self.group:SetOption(AI.Option.Air.id.RADAR_USING, AI.Option.Air.val.RADAR_USING.FOR_CONTINUOUS_SEARCH)
 
     -- Update route.
@@ -1935,7 +2058,7 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
   end
   
   --TODO: Check that current base is airwing base.
-  local airwing=self:GetAirWing()  --airwing:GetAirbaseName()==self.currbase:GetName()
+  local airwing=self:GetAirwing()  --airwing:GetAirbaseName()==self.currbase:GetName()
 
   -- Check what to do.
   if airwing and not (self:IsPickingup() or self:IsTransporting()) then
@@ -2204,6 +2327,10 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n, N)
   -- Add remaining waypoints to route.
   for i=n, N do
     table.insert(wp, self.waypoints[i])
+  end
+  
+  if wp[2] then
+    self.speedWp=wp[2].speed
   end
 
   -- Debug info.
@@ -3305,8 +3432,8 @@ function FLIGHTGROUP:_InitGroup(Template)
     self.isMobile=false
   end  
 
-  -- Cruise speed limit 350 kts for fixed and 80 knots for rotary wings.
-  local speedCruiseLimit=self.isHelo and UTILS.KnotsToKmph(80) or UTILS.KnotsToKmph(350)
+  -- Cruise speed limit 380 kts for fixed and 110 knots for rotary wings.
+  local speedCruiseLimit=self.isHelo and UTILS.KnotsToKmph(110) or UTILS.KnotsToKmph(380)
 
   -- Cruise speed: 70% of max speed but within limit.
   self.speedCruise=math.min(self.speedMax*0.7, speedCruiseLimit)
@@ -3703,12 +3830,21 @@ function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitud
 
   -- Set waypoint index.
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
-
+   
   -- Speed in knots.
   Speed=Speed or self:GetSpeedCruise()
+  
+  -- Debug info.
+  self:T3(self.lid..string.format("Waypoint Speed=%.1f knots", Speed))
+  
+  -- Alt type default is barometric (ASL). For helos we use radar (AGL).
+  local alttype=COORDINATE.WaypointAltType.BARO
+  if self.isHelo then
+    alttype=COORDINATE.WaypointAltType.RADIO
+  end
 
   -- Create air waypoint.
-  local wp=coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(Speed), true, nil, {})
+  local wp=coordinate:WaypointAir(alttype, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(Speed), true, nil, {})
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)
@@ -3756,7 +3892,7 @@ function FLIGHTGROUP:AddWaypointLanding(Airbase, Speed, AfterWaypointWithID, Alt
   local Coordinate=Airbase:GetCoordinate()
 
   -- Create air waypoint.
-  local wp=Coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO,COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed, nil, Airbase, {}, "Landing Temp", nil)
+  local wp=Coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed, nil, Airbase, {}, "Landing Temp", nil)
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)
@@ -4495,8 +4631,10 @@ function FLIGHTGROUP:_PlayerSubtitles()
     -- Switch setting.
     playerData.subtitles=not playerData.subtitles
     
+    local onoff = playerData.subtitles == true and "ON" or "OFF"
+    
     -- Display message.
-    MESSAGE:New(string.format("%s, subtitles are now %s", playerData.name, tostring(playerData.subtitles)), 10, nil, true):ToGroup(self.group)
+    MESSAGE:New(string.format("%s, subtitles are now %s", playerData.name, onoff), 10, nil, true):ToGroup(self.group)
   
   else
     --TODO: Error

@@ -51,7 +51,7 @@
 -- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536)
 --
 -- ===
--- @module Functional.Rat
+-- @module Functional.RAT
 -- @image RAT.JPG
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -69,7 +69,7 @@
 -- @field #string category Category of aircarft: "plane" or "heli".
 -- @field #number groupsize Number of aircraft in group.
 -- @field #string friendly Possible departure/destination airport: all=blue+red+neutral, same=spawn+neutral, spawnonly=spawn, blue=blue+neutral, blueonly=blue, red=red+neutral, redonly=red.
--- @field #table ctable Table with the valid coalitons from choice self.friendly.
+-- @field #table ctable Table with the valid coalitions from choice self.friendly.
 -- @field #table aircraft Table which holds the basic aircraft properties (speed, range, ...).
 -- @field #number Vcruisemax Max cruise speed in m/s (250 m/s = 900 km/h = 486 kt) set by user.
 -- @field #number Vclimb Default climb rate in ft/min.
@@ -348,7 +348,7 @@ RAT={
   category = nil,           -- Category of aircarft: "plane" or "heli".
   groupsize=nil,            -- Number of aircraft in the group.
   friendly = "same",        -- Possible departure/destination airport: same=spawn+neutral, spawnonly=spawn, blue=blue+neutral, blueonly=blue, red=red+neutral, redonly=red, neutral.
-  ctable = {},              -- Table with the valid coalitons from choice self.friendly.
+  ctable = {},              -- Table with the valid coalitions from choice self.friendly.
   aircraft = {},            -- Table which holds the basic aircraft properties (speed, range, ...).
   Vcruisemax=nil,           -- Max cruise speed in set by user.
   Vclimb=1500,              -- Default climb rate in ft/min.
@@ -657,7 +657,7 @@ end
 -- @param #RAT self
 -- @param #number naircraft (Optional) Number of aircraft to spawn. Default is one aircraft.
 -- @return #boolean True if spawning was successful or nil if nothing was spawned.
--- @usage yak:Spawn(5) will spawn five aircraft. By default aircraft will spawn at neutral and red airports if the template group is part of the red coaliton.
+-- @usage yak:Spawn(5) will spawn five aircraft. By default aircraft will spawn at neutral and red airports if the template group is part of the red coalition.
 function RAT:Spawn(naircraft)
 
   -- Make sure that this function is only been called once per RAT object.
@@ -1289,7 +1289,7 @@ end
 
 --- Include all airports which lie in a zone as possible destinations.
 -- @param #RAT self
--- @param Core.Zone#ZONE zone Zone in which the departure airports lie. Has to be a MOOSE zone.
+-- @param Core.Zone#ZONE zone Zone in which the destination airports lie. Has to be a MOOSE zone.
 -- @return #RAT RAT self object.
 function RAT:SetDestinationsFromZone(zone)
   self:F2(zone)
@@ -1305,7 +1305,7 @@ end
 
 --- Include all airports which lie in a zone as possible destinations.
 -- @param #RAT self
--- @param Core.Zone#ZONE zone Zone in which the destination airports lie. Has to be a MOOSE zone.
+-- @param Core.Zone#ZONE zone Zone in which the departure airports lie. Has to be a MOOSE zone.
 -- @return #RAT RAT self object.
 function RAT:SetDeparturesFromZone(zone)
   self:F2(zone)
@@ -3492,7 +3492,7 @@ function RAT:Status(message, forID)
       local fuel=group:GetFuel()*100.0
       local airborne=group:InAir()
       local coords=group:GetCoordinate()
-      local alt=coords.y
+      local alt=coords.y or 1000
       --local vel=group:GetVelocityKMH()
       local departure=ratcraft.departure:GetName()
       local destination=ratcraft.destination:GetName()
@@ -5443,7 +5443,7 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
           SpawnTemplate.units[UnitID]["onboard_num"] = string.format("%s%d%02d", self.onboardnum, (self.SpawnIndex-1)%10, (self.onboardnum0-1)+UnitID)
         end
 
-        -- Modify coaltion and country of template.
+        -- Modify coalition and country of template.
         SpawnTemplate.CoalitionID=self.coalition
         if self.country then
           SpawnTemplate.CountryID=self.country
@@ -5671,6 +5671,9 @@ function RAT:_ATCClearForLanding(airport, flight)
 
   -- Debug message.
   local text1=string.format("ATC %s: Flight %s cleared for landing (flag=%d).", airport, flight, flagvalue)
+	if string.find(flight,"#") then
+		flight =  string.match(flight,"^(.+)#")
+	end
   local text2=string.format("ATC %s: Flight %s you are cleared for landing.", airport, flight)
   BASE:T( RAT.id..text1)
   MESSAGE:New(text2, 10):ToAllIf(RAT.ATC.messages)
@@ -5713,6 +5716,9 @@ function RAT:_ATCFlightLanded(name)
     local text1=string.format("ATC %s: Flight %s landed. Tholding = %i:%02d, Tfinal = %i:%02d.", dest, name, Thold/60, Thold%60, Tfinal/60, Tfinal%60)
     local text2=string.format("ATC %s: Number of flights still on final %d.", dest, RAT.ATC.airport[dest].Nonfinal)
     local text3=string.format("ATC %s: Traffic report: Number of planes landed in total %d. Flights/hour = %3.2f.", dest, RAT.ATC.airport[dest].traffic, TrafficPerHour)
+	if string.find(name,"#") then
+		name =  string.match(name,"^(.+)#")
+	end
     local text4=string.format("ATC %s: Flight %s landed. Welcome to %s.", dest, name, dest)
     BASE:T(RAT.id..text1)
     BASE:T(RAT.id..text2)

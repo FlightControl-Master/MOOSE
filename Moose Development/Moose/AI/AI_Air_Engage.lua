@@ -1,6 +1,6 @@
---- **AI** -- Models the process of air to ground engagement for airplanes and helicopters.
+--- **AI** - Models the process of air to ground engagement for airplanes and helicopters.
 --
--- This is a class used in the @{AI_A2G_Dispatcher}.
+-- This is a class used in the @{AI.AI_A2G_Dispatcher}.
 -- 
 -- ===
 -- 
@@ -42,8 +42,8 @@
 -- 
 -- ![Process](..\Presentations\AI_GCI\Dia10.JPG)
 -- 
--- Until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
--- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
+-- Until a fuel or damage threshold has been reached by the AI, or when the AI is commanded to RTB.
+-- When the fuel threshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
 -- 
 -- ![Process](..\Presentations\AI_GCI\Dia13.JPG)
 -- 
@@ -65,9 +65,9 @@
 -- 
 -- ![Zone](..\Presentations\AI_GCI\Dia12.JPG)
 -- 
--- An optional @{Zone} can be set, 
+-- An optional @{Core.Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_Cap#AI_AIR_ENGAGE.SetEngageZone}() to define that Zone.
+-- Use the method @{AI.AI_CAP#AI_AIR_ENGAGE.SetEngageZone}() to define that Zone.
 --  
 -- ===
 -- 

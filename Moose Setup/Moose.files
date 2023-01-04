@@ -74,6 +74,7 @@ Functional/Mantis.lua
 Functional/Shorad.lua
 Functional/Autolase.lua
 Functional/AICSAR.lua
+Functional/AmmoTruck.lua
 
 Ops/Airboss.lua
 Ops/RecoveryTanker.lua
@@ -100,6 +101,7 @@ Ops/Awacs.lua
 Ops/Operation.lua
 Ops/FlightControl.lua
 Ops/PlayerTask.lua
+Ops/PlayerRecce.lua
 
 AI/AI_Balancer.lua
 AI/AI_Air.lua

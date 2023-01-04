@@ -1,4 +1,4 @@
---- **AI** -- (2.4) - Models the intelligent transportation of infantry and other cargo using Helicopters.
+--- **AI** - Models the intelligent transportation of infantry and other cargo using Helicopters.
 --
 -- ## Features:
 -- 

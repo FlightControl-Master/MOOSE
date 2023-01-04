@@ -1,4 +1,4 @@
---- **AI** -- (R2.5.1) - Models the intelligent transportation of infantry and other cargo.
+--- **AI** - Models the intelligent transportation of infantry and other cargo.
 --
 -- ===
 --
@@ -46,12 +46,12 @@
 --
 -- ## Cargo deployment.
 --
--- Using the @{AI_CARGO_SHIP.Deploy}() method, you are able to direct the Ship towards a Deploy zone to unboard/unload the cargo at the
+-- Using the @{#AI_CARGO_SHIP.Deploy}() method, you are able to direct the Ship towards a Deploy zone to unboard/unload the cargo at the
 -- specified coordinate. The Ship will follow the Shipping Lane to ensure consistent cargo transportation within the simulation environment.
 --
 -- ## Cargo pickup.
 --
--- Using the @{AI_CARGO_SHIP.Pickup}() method, you are able to direct the Ship towards a Pickup zone to board/load the cargo at the specified
+-- Using the @{#AI_CARGO_SHIP.Pickup}() method, you are able to direct the Ship towards a Pickup zone to board/load the cargo at the specified
 -- coordinate. The Ship will follow the Shipping Lane to ensure consistent cargo transportation within the simulation environment.
 --
 --

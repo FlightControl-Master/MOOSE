@@ -1,4 +1,4 @@
---- **Wrapper** -- CLIENT wraps DCS Unit objects acting as a __Client__ or __Player__ within a mission.
+--- **Wrapper** - CLIENT wraps DCS Unit objects acting as a __Client__ or __Player__ within a mission.
 -- 
 -- ===
 -- 
@@ -39,11 +39,11 @@
 --  * Handles messages to players.
 --  * Manage the "state" of the DCS Unit.
 -- 
--- Clients are being used by the @{MISSION} class to follow players and register their successes.
+-- Clients are being used by the @{Tasking.Mission#MISSION} class to follow players and register their successes.
 --  
 -- ## CLIENT reference methods
 -- 
--- For each DCS Unit having skill level Player or Client, a CLIENT wrapper object (instance) will be created within the _@{DATABASE} object.
+-- For each DCS Unit having skill level Player or Client, a CLIENT wrapper object (instance) will be created within the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
 -- This is done at the beginning of the mission (when the mission starts).
 --  
 -- The CLIENT class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
@@ -55,10 +55,10 @@
 --  
 -- The CLIENT class provides the following functions to retrieve quickly the relevant CLIENT instance:
 -- 
---  * @{#CLIENT.Find}(): Find a CLIENT instance from the _DATABASE object using a DCS Unit object.
---  * @{#CLIENT.FindByName}(): Find a CLIENT instance from the _DATABASE object using a DCS Unit name.
+--  * @{#CLIENT.Find}(): Find a CLIENT instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Unit object.
+--  * @{#CLIENT.FindByName}(): Find a CLIENT instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Unit name.
 --  
--- **IMPORTANT: ONE SHOULD NEVER SANATIZE these CLIENT OBJECT REFERENCES! (make the CLIENT object references nil).**
+-- **IMPORTANT: ONE SHOULD NEVER SANITIZE these CLIENT OBJECT REFERENCES! (make the CLIENT object references nil).**
 -- 
 -- @field #CLIENT
 CLIENT = {
