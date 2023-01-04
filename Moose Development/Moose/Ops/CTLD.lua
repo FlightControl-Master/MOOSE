@@ -3761,15 +3761,19 @@ function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation, IsShip, IsDropped)
 	   -- local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
 		local Frequency = Mhz * 1000000 -- Freq in Hertz
 		local Sound =  self.RadioPath..Sound
-		trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, Frequency, 1000, name..math.random(1,10000)) -- Beacon in MP only runs for 30secs straight
+		trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, Frequency, 1000, Name..math.random(1,10000)) -- Beacon in MP only runs for 30secs straight
+		self:I(string.format("Beacon added | Name = %s | Sound = %s | Vec3 = %d %d %d | Freq = %f | Modulation = %d (0=AM/1=FM)",Name,Sound,ZoneVec3.x,ZoneVec3.y,ZoneVec3.z,MhZ,Modulation))
 	  else
 		local ZoneCoord = Zone:GetCoordinate()
 		local ZoneVec3 = ZoneCoord:GetVec3() or {x=0,y=0,z=0}
 		--local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
 		local Frequency = Mhz * 1000000 -- Freq in Hert
 		local Sound =  self.RadioPath..Sound
-		trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, Frequency, 1000, name ..math.random(1,10000)) -- Beacon in MP only runs for 30secs straight
+		trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, Frequency, 1000, Name..math.random(1,10000)) -- Beacon in MP only runs for 30secs straight
+		self:I(string.format("Beacon added | Name = %s | Sound = %s | Vec3 = {x=%d, y=%d, z=%d} | Freq = %f | Modulation = %d (0=AM/1=FM)",Name,Sound,ZoneVec3.x,ZoneVec3.y,ZoneVec3.z,MhZ,Modulation))
 	  end
+  else
+	self:E(self.lid.."***** _AddRadioBeacon: Zone does not exist: "..Name)
   end
   return self
 end
