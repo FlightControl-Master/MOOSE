@@ -3754,18 +3754,22 @@ function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation, IsShip, IsDropped)
     end
   end
   local Sound = Sound or "beacon.ogg"
-  if IsDropped and Zone then
-    local ZoneCoord = Zone
-    local ZoneVec3 = ZoneCoord:GetVec3(1)
-    local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
-    local Sound =  self.RadioPath..Sound
-    trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, tonumber(Frequency), 1000) -- Beacon in MP only runs for 30secs straight
-  elseif Zone then
-    local ZoneCoord = Zone:GetCoordinate(1)
-    local ZoneVec3 = ZoneCoord:GetVec3()
-    local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
-    local Sound =  self.RadioPath..Sound
-    trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, tonumber(Frequency), 1000) -- Beacon in MP only runs for 30secs straight
+  if Zone then
+	if IsDropped then
+		local ZoneCoord = Zone
+		local ZoneVec3 = ZoneCoord:GetVec3() or {x=0,y=0,z=0}
+	   -- local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
+		local Frequency = Mhz * 1000000 -- Freq in Hertz
+		local Sound =  self.RadioPath..Sound
+		trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, Frequency, 1000, name..math.random(1,10000)) -- Beacon in MP only runs for 30secs straight
+	  else
+		local ZoneCoord = Zone:GetCoordinate()
+		local ZoneVec3 = ZoneCoord:GetVec3() or {x=0,y=0,z=0}
+		--local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
+		local Frequency = Mhz * 1000000 -- Freq in Hert
+		local Sound =  self.RadioPath..Sound
+		trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, Frequency, 1000, name ..math.random(1,10000)) -- Beacon in MP only runs for 30secs straight
+	  end
   end
   return self
 end
@@ -3817,11 +3821,7 @@ function CTLD:_RefreshRadioBeacons()
         local Name = czone.name
         local FM = FMbeacon.frequency  -- MHz
         local VHF = VHFbeacon.frequency -- KHz
-        local UHF = UHFbeacon.frequency  -- MHz
-       -- local co = coroutine.create(self._AddRadioBeacon)
-        --coroutine.resume(co, self, Name,Sound,FM,CTLD.RadioModulation.FM, IsShip, IsDropped)
-        --coroutine.resume(co, self, Name,Sound,VHF,CTLD.RadioModulation.FM, IsShip, IsDropped)
-        --coroutine.resume(co, self, Name,Sound,UHF,CTLD.RadioModulation.AM, IsShip, IsDropped)      
+        local UHF = UHFbeacon.frequency  -- MHz   
         self:_AddRadioBeacon(Name,Sound,FM, CTLD.RadioModulation.FM, IsShip, IsDropped)
         self:_AddRadioBeacon(Name,Sound,VHF,CTLD.RadioModulation.FM, IsShip, IsDropped)
         self:_AddRadioBeacon(Name,Sound,UHF,CTLD.RadioModulation.AM, IsShip, IsDropped)
