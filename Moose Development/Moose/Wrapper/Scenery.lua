@@ -225,3 +225,10 @@ function SCENERY:FindAllByZoneName( ZoneName )
     end 
   end
 end
+
+--- SCENERY objects cannot be destroyed via the API (at the punishment of game crash).
+--@param #SCENERY self
+--@return #SCENERY self
+function SCENERY:Destroy()
+  return self
+end

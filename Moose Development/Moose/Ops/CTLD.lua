@@ -1088,7 +1088,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.24"
+CTLD.version="1.0.25"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -3754,18 +3754,24 @@ function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation, IsShip, IsDropped)
     end
   end
   local Sound = Sound or "beacon.ogg"
-  if IsDropped and Zone then
+  if Zone then
+  if IsDropped then
     local ZoneCoord = Zone
-    local ZoneVec3 = ZoneCoord:GetVec3(1)
-    local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
+    local ZoneVec3 = ZoneCoord:GetVec3() or {x=0,y=0,z=0}
+    local Frequency = Mhz * 1000000 -- Freq in Hertz
     local Sound =  self.RadioPath..Sound
-    trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, tonumber(Frequency), 1000) -- Beacon in MP only runs for 30secs straight
-  elseif Zone then
-    local ZoneCoord = Zone:GetCoordinate(1)
-    local ZoneVec3 = ZoneCoord:GetVec3()
-    local Frequency = string.format("%09d",Mhz * 1000000) -- Freq in Hertz
+    trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, Frequency, 1000, Name..math.random(1,10000)) -- Beacon in MP only runs for 30secs straight
+    self:T2(string.format("Beacon added | Name = %s | Sound = %s | Vec3 = %d %d %d | Freq = %f | Modulation = %d (0=AM/1=FM)",Name,Sound,ZoneVec3.x,ZoneVec3.y,ZoneVec3.z,Mhz,Modulation))
+    else
+    local ZoneCoord = Zone:GetCoordinate()
+    local ZoneVec3 = ZoneCoord:GetVec3() or {x=0,y=0,z=0}
+    local Frequency = Mhz * 1000000 -- Freq in Hert
     local Sound =  self.RadioPath..Sound
-    trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, tonumber(Frequency), 1000) -- Beacon in MP only runs for 30secs straight
+    trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, Frequency, 1000, Name..math.random(1,10000)) -- Beacon in MP only runs for 30secs straightt
+    self:T2(string.format("Beacon added | Name = %s | Sound = %s | Vec3 = {x=%d, y=%d, z=%d} | Freq = %f | Modulation = %d (0=AM/1=FM)",Name,Sound,ZoneVec3.x,ZoneVec3.y,ZoneVec3.z,Mhz,Modulation))
+    end
+  else
+  self:E(self.lid.."***** _AddRadioBeacon: Zone does not exist: "..Name)
   end
   return self
 end
@@ -3817,11 +3823,7 @@ function CTLD:_RefreshRadioBeacons()
         local Name = czone.name
         local FM = FMbeacon.frequency  -- MHz
         local VHF = VHFbeacon.frequency -- KHz
-        local UHF = UHFbeacon.frequency  -- MHz
-       -- local co = coroutine.create(self._AddRadioBeacon)
-        --coroutine.resume(co, self, Name,Sound,FM,CTLD.RadioModulation.FM, IsShip, IsDropped)
-        --coroutine.resume(co, self, Name,Sound,VHF,CTLD.RadioModulation.FM, IsShip, IsDropped)
-        --coroutine.resume(co, self, Name,Sound,UHF,CTLD.RadioModulation.AM, IsShip, IsDropped)      
+        local UHF = UHFbeacon.frequency  -- MHz   
         self:_AddRadioBeacon(Name,Sound,FM, CTLD.RadioModulation.FM, IsShip, IsDropped)
         self:_AddRadioBeacon(Name,Sound,VHF,CTLD.RadioModulation.FM, IsShip, IsDropped)
         self:_AddRadioBeacon(Name,Sound,UHF,CTLD.RadioModulation.AM, IsShip, IsDropped)
