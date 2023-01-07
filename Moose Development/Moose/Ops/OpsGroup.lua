@@ -4898,6 +4898,22 @@ function OPSGROUP:RemoveMission(Mission)
   return self
 end
 
+--- Cancel all missions in mission queue.
+-- @param #OPSGROUP self
+function OPSGROUP:CancelAllMissions()
+  self:T(self.lid.."Cancelling ALL missions!")
+
+  -- Cancel all missions.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    if mission:IsNotOver() then
+      self:T(self.lid.."Cancelling mission "..tostring(mission:GetName()))
+      self:MissionCancel(mission)
+    end
+  end
+
+end
+
 --- Count remaining missons.
 -- @param #OPSGROUP self
 -- @return #number Number of missions to be done.
@@ -5075,6 +5091,24 @@ function OPSGROUP:IsMissionInQueue(Mission)
     local mission=_mission --Ops.Auftrag#AUFTRAG
 
     if mission.auftragsnummer==Mission.auftragsnummer then
+      return true
+    end
+
+  end
+
+  return false
+end
+
+--- Check if a given mission type is already in the queue.
+-- @param #OPSGROUP self
+-- @param #string MissionType MissionType Type of mission.
+-- @return #boolean If `true`, the mission type is in the queue.
+function OPSGROUP:IsMissionTypeInQueue(MissionType)
+
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+
+    if mission:GetType()==MissionType then
       return true
     end
 
@@ -7534,21 +7568,6 @@ function OPSGROUP:onbeforeDead(From, Event, To)
   if self.Ndestroyed==#self.elements then
     self:Destroyed()
   end
-end
-
---- Cancel all missions in mission queue.
--- @param #OPSGROUP self
-function OPSGROUP:CancelAllMissions()
-
-  -- Cancel all missions.
-  for _,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
-    if mission:IsNotOver() then
-      self:T(self.lid.."Cancelling mission "..tostring(mission:GetName()))
-      self:MissionCancel(mission)
-    end
-  end
-
 end
 
 --- On after "Dead" event.
@@ -10171,8 +10190,10 @@ function OPSGROUP:_CheckGroupDone(delay)
 
             self:T(self.lid..string.format("Passed final WP, adinfinitum=FALSE, LEGION set ==> RTZ"))
             if self.isArmygroup then
+              self:T2(self.lid.."RTZ to legion spawn zone")
               self:RTZ(self.legion.spawnzone)
             elseif self.isNavygroup then
+              self:T2(self.lid.."RTZ to legion port zone")
               self:RTZ(self.legion.portzone)
             end
 
@@ -10255,6 +10276,7 @@ function OPSGROUP:_CheckStuck()
       if self:IsEngaging() then
         self:__Disengage(1)        
       elseif self:IsReturning() then
+        self:T2(self.lid.."RTZ because of stuck")
         self:__RTZ(1)
       else
         self:__Cruise(1)
@@ -10274,6 +10296,7 @@ function OPSGROUP:_CheckStuck()
       else
         -- Give cruise command again.
         if self:IsReturning() then
+          self:T2(self.lid.."RTZ because of stuck")
           self:__RTZ(1)
         else
           self:__Cruise(1)
