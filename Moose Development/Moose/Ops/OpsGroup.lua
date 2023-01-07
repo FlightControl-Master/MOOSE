@@ -4898,7 +4898,7 @@ function OPSGROUP:RemoveMission(Mission)
   return self
 end
 
---- Cancel all missions in mission queue.
+--- Cancel all missions in mission queue that are not already done or cancelled.
 -- @param #OPSGROUP self
 function OPSGROUP:CancelAllMissions()
   self:T(self.lid.."Cancelling ALL missions!")
@@ -4906,7 +4906,13 @@ function OPSGROUP:CancelAllMissions()
   -- Cancel all missions.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
-    if mission:IsNotOver() then
+
+    -- Current group status.
+    local mystatus=mission:GetGroupStatus(self)
+
+    -- Check if mission is already over!
+    if not (mystatus==AUFTRAG.GroupStatus.DONE or mystatus==AUFTRAG.GroupStatus.CANCELLED) then        
+    --if mission:IsNotOver() then
       self:T(self.lid.."Cancelling mission "..tostring(mission:GetName()))
       self:MissionCancel(mission)
     end

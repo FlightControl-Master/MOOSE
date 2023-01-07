@@ -216,7 +216,7 @@ FLIGHTGROUP.Players={}
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.8.3"
+FLIGHTGROUP.version="0.8.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2637,20 +2637,9 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
 
   -- Set the destination base.
   self.destbase=airbase
-
+  
   -- Cancel all missions.
-  for _,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
-    local mystatus=mission:GetGroupStatus(self)
-
-    -- Check if mission is already over!
-    if not (mystatus==AUFTRAG.GroupStatus.DONE or mystatus==AUFTRAG.GroupStatus.CANCELLED) then
-      local text=string.format("Canceling mission %s in state=%s", mission.name, mission.status)
-      self:T(self.lid..text)
-      self:MissionCancel(mission)
-    end
-
-  end
+  self:CancelAllMissions()
 
   -- Land at airbase.
   self:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
@@ -2895,8 +2884,11 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
     --self:ClearTasks()
 
     -- Just route the group. Respawn might happen when going from holding to final.
-    -- NOTE: I have delayed that here because of RTB calling _LandAtAirbase which resets current task immediately. So the stop flag change to 1 will not trigger TaskDone() and a current mission is not done either
-    self:Route(wp, 0.1)
+    -- NOTE: I have delayed that here because of RTB calling _LandAtAirbase which resets current task immediately. 
+    -- So the stop flag change to 1 will not trigger TaskDone() and a current mission is not done either!
+    -- Looks like a delay of 0.1 sec was not enough for the stopflag to take effect. Increasing this to 1.0 sec.
+    -- This delay is looking better. Hopefully not any unwanted side effects in other situations.
+    self:Route(wp, 1.0)
 
   end
 
