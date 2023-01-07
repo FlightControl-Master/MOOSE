@@ -1068,7 +1068,8 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission, Assets)
     --self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, Assetlist, #Assetlist, nil, nil, Mission.prio, assignment)
     local request=self:_AddRequest(WAREHOUSE.Descriptor.ASSETLIST, Assetlist, #Assetlist, Mission.prio, assignment)
     
-    env.info(string.format("FF Added request=%d for Nasssets=%d", request.uid, #Assetlist))
+    -- Debug Info.
+    self:T(self.lid..string.format("Added request=%d for Nasssets=%d", request.uid, #Assetlist))
 
     -- The queueid has been increased in the onafterAddRequest function. So we can simply use it here.
     --Mission.requestID[self.alias]=self.queueid

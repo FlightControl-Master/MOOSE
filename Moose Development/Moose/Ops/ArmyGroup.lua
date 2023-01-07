@@ -1415,12 +1415,14 @@ function ARMYGROUP:onafterOutOfAmmo(From, Event, To)
   
   -- Second, check if we want to retreat once out of ammo.
   if self.retreatOnOutOfAmmo then
+    self:T(self.lid.."Retreat on out of ammo")
     self:__Retreat(-1)
     return
   end
   
-  -- Third, check if we want to RTZ once out of ammo.
-  if self.rtzOnOutOfAmmo then
+  -- Third, check if we want to RTZ once out of ammo (unless we have a rearming mission in the queue).
+  if self.rtzOnOutOfAmmo and not self:IsMissionTypeInQueue(AUFTRAG.Type.REARMING) then
+    self:T(self.lid.."RTZ on out of ammo")
     self:__RTZ(-1)
   end
     
@@ -1536,6 +1538,7 @@ end
 -- @param Core.Zone#ZONE Zone The zone to return to.
 -- @param #number Formation Formation of the group.
 function ARMYGROUP:onbeforeRTZ(From, Event, To, Zone, Formation)
+  self:T2(self.lid.."onbeforeRTZ")
 
   -- Zone.
   local zone=Zone or self.homezone
@@ -1563,6 +1566,7 @@ end
 -- @param Core.Zone#ZONE Zone The zone to return to.
 -- @param #number Formation Formation of the group.
 function ARMYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
+  self:T2(self.lid.."onafterRTZ")
   
   -- Zone.
   local zone=Zone or self.homezone

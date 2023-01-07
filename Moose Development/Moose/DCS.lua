@@ -1001,8 +1001,8 @@ do -- Unit
   
   --- Enum that stores aircraft refueling system types.
   -- @type Unit.RefuelingSystem
-  -- @field BOOM_AND_RECEPTACLE
-  -- @field PROBE_AND_DROGUE
+  -- @field BOOM_AND_RECEPTACLE Tanker with a boom.
+  -- @field PROBE_AND_DROGUE Tanker with a probe.
   
   --- Enum that stores sensor types.
   -- @type Unit.SensorType
