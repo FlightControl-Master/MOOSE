@@ -160,7 +160,7 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
   self:AddTransition("*",            "Planned",          "Planned")   -- Task is in planning stage. 
   self:AddTransition("*",            "Requested",        "Requested")   -- Task clients have been requested to join.
   self:AddTransition("*",            "ClientAdded",      "*")  -- Client has been added to the task
-  self:AddTransition("*",            "ClientRemoved",    "*")  -- Client has been added to the task
+  self:AddTransition("*",            "ClientRemoved",    "*")  -- Client has been removed from the task
   self:AddTransition("*",            "Executing",        "Executing")   -- First client is executing the Task.
   self:AddTransition("*",            "Done",             "Done")   -- All clients have reported that Task is done.
   self:AddTransition("*",            "Cancel",           "Done")   -- Command to cancel the Task.
@@ -1443,7 +1443,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.55"
+PLAYERTASKCONTROLLER.version="0.1.56"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -1536,6 +1536,8 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self:AddTransition("*",            "TaskTargetFlared",      "*")
   self:AddTransition("*",            "TaskTargetIlluminated", "*")
   self:AddTransition("*",            "TaskRepeatOnFailed",    "*")
+  self:AddTransition("*",            "PlayerJoinedTask",      "*")
+  self:AddTransition("*",            "PlayerAbortedTask",      "*")
   self:AddTransition("*",            "Stop",                  "Stopped")
   
   self:__Start(2)
@@ -1627,6 +1629,26 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
+  -- @param Ops.PlayerTask#PLAYERTASK Task
+  
+    --- On After "PlayerJoinedTask" event. Player joined a task.
+  -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterPlayerJoinedTask
+  -- @param #PLAYERTASKCONTROLLER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Group#GROUP Group The player group object
+  -- @param Wrapper.Client#CLIENT Client The player client object
+  -- @param Ops.PlayerTask#PLAYERTASK Task
+  
+    --- On After "PlayerAbortedTask" event. Player aborted a task.
+  -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterPlayerAbortedTask
+  -- @param #PLAYERTASKCONTROLLER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Group#GROUP Group The player group object
+  -- @param Wrapper.Client#CLIENT Client The player client object
   -- @param Ops.PlayerTask#PLAYERTASK Task
   
 end
@@ -2833,6 +2855,7 @@ function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task, Force)
       self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
     end
     self.TasksPerPlayer:Push(Task,playername)
+    self:__PlayerJoinedTask(1, Group, Client, Task)
     -- clear menu
     self:_BuildMenus(Client,true)
   end
@@ -3210,6 +3233,7 @@ function PLAYERTASKCONTROLLER:_AbortTask(Group, Client)
     if self.UseSRS then
       self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
     end
+    self:__PlayerAbortedTask(1,Group, Client,task)
   else
     text = self.gettext:GetEntry("NOACTIVETASK",self.locale)
   end
