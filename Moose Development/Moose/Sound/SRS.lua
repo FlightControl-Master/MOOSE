@@ -46,6 +46,7 @@
 -- @field #string path Path to the SRS exe. This includes the final slash "/".
 -- @field #string google Full path google credentials JSON file, e.g. "C:\Users\username\Downloads\service-account-file.json".
 -- @field #string Label Label showing up on the SRS radio overlay. Default is "ROBOT". No spaces allowed.
+-- @field #table AltBackend Table containing functions and variables to enable an alternate backend to transmit to SRS.
 -- @extends Core.Base#BASE
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -123,6 +124,38 @@
 -- 
 -- Use @{#MSRS.SetVolume} to define the SRS volume. Defaults to 1.0. Allowed values are between 0.0 and 1.0, from silent to loudest.
 -- 
+-- ## Set DCS-gRPC as an alternative to 'DCS-SR-ExternalAudio.exe' for TTS 
+--
+-- Use @{#MSRS.SetDefaultBackendGRPC} to enable [DCS-gRPC](https://github.com/DCS-gRPC/rust-server) as an alternate backend for transmitting text-to-speech over SRS.
+-- This can be useful if 'DCS-SR-ExternalAudio.exe' cannot be used in the environment, or to use Azure or AWS clouds for TTS.  Note that DCS-gRPC does not (yet?) support
+-- all of the features and options available with 'DCS-SR-ExternalAudio.exe'. Of note, only text-to-speech is supported and it it cannot be used to transmit audio files.
+--
+-- DCS-gRPC must be installed and configured per the [DCS-gRPC documentation](https://github.com/DCS-gRPC/rust-server) and already running via either the 'autostart' mechanism 
+-- or a Lua call to 'GRPC.load()' prior to useof the alternate DCS-gRPC backend. Note that if a cloud TTS provider is being used, the API key must be set via the 'Config\dcs-grpc.lua' 
+-- configuration file prior DCS-gRPC being started.
+-- 
+-- To use the default DCS-gRPC the local Windows TTS, Windows 2019 Server (or newer) or Windows 10/11 are required.  Voices for non-local languages and dialects may need to
+-- be explicitly installed.
+--
+-- To set the MSRS class to use the DCS-gRPC backend for all future instances, call the function `MSRS.SetDefaultBackendGRPC()`
+--
+-- **Note** - When using other classes that use MSRS with the alternate DCS-gRPC backend, pass them strings instead of nil values for non-applicable fields with filesystem paths, 
+-- such as the SRS path or Google credential path. This will help maximize compatibility with other classes that were written for the default backend.
+--
+-- Basic Play Text-To-Speech example using alternate DCS-gRPC backend (DCS-gRPC not previously started):
+--
+--     -- Start DCS-gRPC
+--     GRPC.load()
+--     -- Select the alternate DCS-gRPC backend for new MSRS instances
+--     MSRS.SetDefaultBackendGRPC()
+--     -- Create a SOUNDTEXT object.
+--     local text=SOUNDTEXT:New("All Enemies destroyed")  
+--     -- MOOSE SRS 
+--     local msrs=MSRS:New('', 305.0)
+--     -- Text-to speech with default voice after 30 seconds.
+--     msrs:PlaySoundText(text, 30)
+--
+--
 -- @field #MSRS
 MSRS = {
   ClassName      =     "MSRS",
@@ -139,11 +172,12 @@ MSRS = {
   speed          =          1,
   coordinate     =        nil,
   Label          =    "ROBOT",
+  AltBackend     =        nil,
 }
 
 --- MSRS class version.
 -- @field #string version
-MSRS.version="0.1.1"
+MSRS.version="0.1.2"
 
 --- Voices
 -- @type Voices
@@ -264,16 +298,35 @@ MSRS.Voices = {
 -- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. Can also be given as a #table of multiple frequencies.
 -- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a #table of multiple modulations.
 -- @param #number Volume Volume - 1.0 is max, 0.0 is silence
+-- @param #table (Optional) Table containing tables 'Functions' and 'Vars' which add/replace functions and variables for the MSRS instance to allow alternate backends for transmitting to SRS.
 -- @return #MSRS self
-function MSRS:New(PathToSRS, Frequency, Modulation, Volume)
+function MSRS:New(PathToSRS, Frequency, Modulation, Volume, AltBackend)
 
   -- Defaults.
-  Frequency =Frequency or 143
-  Modulation= Modulation or radio.modulation.AM
+  Frequency = Frequency or 143
+  Modulation = Modulation or radio.modulation.AM
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, BASE:New()) -- #MSRS
+
+  -- If AltBackend is supplied, initialize it, which will add/replace functions and variables in this MSRS instance.
+  if type( AltBackend ) == "table" or type( self.AltBackend ) == "table" then
+
+    local Backend = UTILS.DeepCopy(AltBackend) or UTILS.DeepCopy(self.AltBackend)
+
+    -- Add parameters to vars so alternate backends can use them if applicable
+    Backend.Vars            = Backend.Vars or {}
+    Backend.Vars.PathToSRS  = UTILS.DeepCopy(PathToSRS)   -- DeepCopy probably unecessary
+    Backend.Vars.Frequency  = UTILS.DeepCopy(Frequency)
+    Backend.Vars.Modulation = UTILS.DeepCopy(Modulation)
+    Backend.Vars.Volume     = UTILS.DeepCopy(Volume)      -- DeepCopy probably unecessary
+
+    Backend.Functions = Backend.Functions or {} 
+
+    return self:_NewAltBackend(Backend)
+  end
   
+  -- If no AltBackend table, the proceed with default initialization
   self:SetPath(PathToSRS)
   self:SetPort()
   self:SetFrequencies(Frequency)
@@ -568,6 +621,32 @@ function MSRS:Help()
   return self
 end
 
+--- Sets an alternate SRS backend to be used by MSRS to transmit over SRS for all new MSRS class instances.
+-- @param #table A table containing a table `Functions` with new/replacement class functions and `Vars` with new/replacement variables. 
+-- @return #boolean Returns 'true' on success.
+function MSRS.SetDefaultBackend(Backend)
+  if type(Backend) == "table" then
+    MSRS.AltBackend = UTILS.DeepCopy(Backend)
+  else
+    return false
+  end
+  
+  return true
+end
+
+--- Restores default SRS backend (DCS-SR-ExternalAudio.exe) to be used by all new MSRS class instances to transmit over SRS.
+-- @return #boolean Returns 'true' on success.
+function MSRS.ResetDefaultBackend()
+  MSRS.AltBackend = nil
+  return true
+end
+
+--- Sets DCS-gRPC as the default SRS backend for all new MSRS class instances.
+-- @return #boolean Returns 'true' on success.
+function MSRS.SetDefaultBackendGRPC()
+  return MSRS.SetDefaultBackend(MSRS_BACKEND_DCSGRPC)
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Transmission Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -736,6 +815,35 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Adds or replaces functions and variables in the current MSRS class instance to enable an alternate backends for transmitting to SRS.
+-- @param #MSRS self
+-- @param #table A table containing a table `Functions` with new/replacement class functions and `Vars` with new/replacement variables. 
+-- @return #MSRS self
+function MSRS:_NewAltBackend(Backend)
+  BASE:T('Entering MSRS:_NewAltBackend()')
+
+  -- Add/replace class instance functions with those defined in the alternate backend in Functions table
+  for funcName,funcDef in pairs(Backend.Functions) do
+    if type(funcDef) == 'function' then
+      BASE:T('MSRS (re-)defining function MSRS:' .. funcName )
+      self[funcName] = funcDef
+    end
+  end
+
+  -- Add/replace class instance variables with those defined in the alternate backend in Vars table
+  for varName,varVal in pairs(Backend.Vars) do
+      BASE:T('MSRS setting self.' .. varName)
+      self[varName] = UTILS.DeepCopy(varVal)
+  end
+  
+  -- If _MSRSbackendInit() is defined in the backend, then run it (it should return self)
+  if self._MSRSbackendInit and type(self._MSRSbackendInit) == 'function' then
+    return self:_MSRSbackendInit()
+  end
+
+  return self
+end
+
 --- Execute SRS command to play sound using the `DCS-SR-ExternalAudio.exe`.
 -- @param #MSRS self
 -- @param #string command Command to executer
@@ -877,6 +985,309 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   self:T("MSRS command="..command)
 
   return command
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- MSRS DCS-gRPC alternate backend
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- ### Author: **dogjutsu**
+-- @type MSRS_BACKEND_DCSGRPC A table containing functions and variables for MSRS to use DCS-gRPC [DCS-gRPC](https://github.com/DCS-gRPC/rust-server) 0.7.0 or newer as a backend to transmit over SRS.
+-- @field #number version Version number of this alternate backend.
+-- @field #table Functions A table of functions that will add or replace the default MSRS class functions.
+-- @field #table Vars A table of variables that will add or replace the default MSRS class variables.
+-- 
+
+MSRS_BACKEND_DCSGRPC = {}
+MSRS_BACKEND_DCSGRPC.version = 0.1
+
+MSRS_BACKEND_DCSGRPC.Functions = {}
+MSRS_BACKEND_DCSGRPC.Vars = { provider = 'win' }
+
+--- Called by @{#MSRS._NewAltBackend} (if present) immediately after an alternate backend functions and variables for MSRS are added/replaced.
+-- @param #MSRS self
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions._MSRSbackendInit = function (self)
+  BASE:I('Loaded MSRS DCS-gRPC alternate backend version ' .. self.AltBackend.version or 'unspecified')
+
+  return self
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- MSRS DCS-gRPC alternate backend User Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- No-op replacement function for @{#MSRS.SetPath} (Not Applicable)
+-- @param #MSRS self
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions.SetPath = function (self)
+  return self
+end
+
+--- No-op replacement function for @{#MSRS.GetPath} (Not Applicable)
+-- @param #MSRS self
+-- @return #string Empty string
+MSRS_BACKEND_DCSGRPC.Functions.GetPath = function (self)
+  return ''
+end
+
+--- No-op replacement function for @{#MSRS.SetVolume} (Not Applicable)
+-- @param #MSRS self
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions.SetVolume = function (self)
+  BASE:I('NOTE: MSRS:SetVolume() not used with DCS-gRPC backend.')
+  return self
+end
+
+--- No-op replacement function for @{#MSRS.GetVolume} (Not Applicable)
+-- @param #MSRS self
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions.GetVolume = function (self)
+  BASE:I('NOTE: MSRS:GetVolume() not used with DCS-gRPC backend.')
+  return 1
+end
+
+--- No-op replacement function for @{#MSRS.SetGender} (Not Applicable)
+-- @param #MSRS self
+-- #string Gender Gender: "male" or "female"
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions.SetGender = function (self, Gender)
+  -- Use DCS-gRPC default if not specified
+
+  if Gender then
+    self.gender=Gender:lower()
+  end
+  
+  -- Debug output.
+  self:T("Setting gender to "..tostring(self.gender))
+  return self
+end
+
+--- Replacement function for @{#MSRS.SetGoogle} to use google text-to-speech.  (API key set as part of DCS-gRPC configuration)
+-- @param #MSRS self
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions.SetGoogle = function (self)
+    self.provider = 'gcloud'
+    return self
+end
+
+--- MSRS:SetAWS() Use AWS text-to-speech. (API key set as part of DCS-gRPC configuration)
+-- @param #MSRS self
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions.SetAWS = function (self)
+    self.provider = 'aws'
+    return self
+end
+
+--- MSRS:SetAzure() Use Azure text-to-speech. (API key set as part of DCS-gRPC configuration)
+-- @param #MSRS self
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions.SetAzure = function (self)
+    self.provider = 'azure'
+    return self
+end
+
+--- MSRS:SetWin() Use local Windows OS text-to-speech (Windows Server 2019 / Windows 11 / Windows 10? or newer). (Default)
+-- @param #MSRS self
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions.SetWin = function (self)
+    self.provider = 'win'
+    return self
+end
+
+--- Replacement function for @{#MSRS.Help} to display help.
+-- @param #MSRS self
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions.Help = function (self)
+    env.info('For DCS-gRPC help, please see: https://github.com/DCS-gRPC/rust-server')
+    return self
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- MSRS DCS-gRPC alternate backend Transmission Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- No-op replacement function for @{#MSRS.PlaySoundFile} (Not Applicable)
+-- @param #MSRS self
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions.PlaySoundFile = function (self)
+    BASE:E("ERROR: MSRS:PlaySoundFile() is not supported by the DCS-gRPC backend.")
+    return self
+end
+
+--- Replacement function for @{#MSRS.PlaySoundText} 
+-- @param #MSRS self
+-- @param Sound.SoundFile#SOUNDTEXT SoundText Sound text.
+-- @param #number Delay Delay in seconds, before the sound file is played.
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions.PlaySoundText = function (self, SoundText, Delay)
+
+    if Delay and Delay>0 then
+        self:ScheduleOnce(Delay, self.PlaySoundText, self, SoundText, 0)
+    else
+        self:_DCSgRPCtts(tostring(SoundText.text))
+    end
+    
+    return self
+end
+
+--- Replacement function for @{#MSRS.PlayText} 
+-- @param #MSRS self
+-- @param #string Text Text message.
+-- @param #number Delay Delay in seconds, before the message is played.
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions.PlayText = function (self, Text, Delay)
+
+    if Delay and Delay>0 then
+        self:ScheduleOnce(Delay, self.PlayText, self, Text, 0)
+    else
+        self:_DCSgRPCtts(tostring(Text))
+    end
+    
+    return self
+end
+
+--- Replacement function for @{#MSRS.PlayText} 
+-- @param #MSRS self
+-- @param #string Text Text message.
+-- @param #number Delay Delay in seconds, before the message is played.
+-- @param #table Frequencies Radio frequencies.
+-- @param #table Modulations Radio modulations. (Non-functional, DCS-gRPC sets automatically)
+-- @param #string Gender Gender. (Non-functional, only 'Voice' supported)
+-- @param #string Culture Culture. (Non-functional, only 'Voice' supported)
+-- @param #string Voice Voice. 
+-- @param #number Volume Volume. (Non-functional, all transmissions full volume with DCS-gRPC)
+-- @param #string Label Label.
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions.PlayTextExt = function (self, Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label)
+  if Delay and Delay>0 then
+      self:ScheduleOnce(Delay, self.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label)
+  else
+      self:_DCSgRPCtts(tostring(Text, nil, Frequencies, Voice, Label))
+  end
+  
+  return self
+end
+
+--- No-op replacement function for @{#MSRS.PlayTextFile} (Not Applicable)
+-- @param #MSRS self
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions.PlayTextFile = function (self, TextFile, Delay)
+  BASE:E("ERROR: MSRS:PlayTextFile() is not supported by the DCS-gRPC backend.")
+  return self
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- MSRS DCS-gRPC alternate backend Misc Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- DCS-gRPC v0.70 TTS API call:
+-- GRPC.tts(ssml, frequency[, options]) - Synthesize text (ssml; SSML tags supported) to speech and transmit it over SRS on the frequency with the following optional options (and their defaults):
+
+-- {
+--     -- The plain text without any transformations made to it for the purpose of getting it spoken out
+--     -- as desired (no SSML tags, no FOUR NINER instead of 49, ...). Even though this field is
+--     -- optional, please consider providing it as it can be used to display the spoken text to players
+--     -- with hearing impairments.
+--     plaintext = null, -- e.g. `= "Hello Pilot"`
+
+--     -- Name of the SRS client.
+--     srsClientName = "DCS-gRPC",
+
+--     -- The origin of the transmission. Relevant if the SRS server has "Line of
+--     -- Sight" and/or "Distance Limit" enabled.
+--     position = {
+--         lat = 0.0,
+--         lon = 0.0,
+--         alt = 0.0, -- in meters
+--     },
+
+--     -- The coalition of the transmission. Relevant if the SRS server has "Secure
+--     -- Coalition Radios" enabled. Supported values are: `blue` and `red`. Defaults
+--     -- to being spectator if not specified.
+--     coalition = null,
+
+--     -- TTS provider to be use. Defaults to the one configured in your config or to Windows'
+--     -- built-in TTS. Examples:
+--     -- `= { aws = {} }` / `= { aws = { voice = "..." } }` enable AWS TTS
+--     -- `= { azure = {} }` / `= { azure = { voice = "..." } }` enable Azure TTS
+--     -- `= { gcloud = {} }` / `= { gcloud = { voice = "..." } }` enable Google Cloud TTS
+--     -- `= { win = {} }` / `= { win = { voice = "..." } }` enable Windows TTS
+--     provider = null,
+-- }
+
+--- Make DCS-gRPC API call to transmit text-to-speech over SRS.
+-- @param #MSRS self
+-- @param #string Text Text of message to transmit (can also be SSML).
+-- @param #string Optional plaintext version of message (for accessiblity)
+-- @param #table Frequencies Radio frequencies to transmit on. Can also accept a number in MHz.
+-- @param #string Voice Voice for the TTS provider to user. 
+-- @param #string Label Label (SRS diplays as name of the transmitter).
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions._DCSgRPCtts = function (self, Text, Plaintext, Frequencies, Voice, Label)
+
+    BASE:T("MSRS_BACKEND_DCSGRPC:_DCSgRPCtts()")
+    BASE:T({Text, Plaintext, Frequencies, Voice, Label})
+
+    local options = {}
+    local ssml = Text or ''
+
+    local XmitFrequencies = Frequencies or self.Frequency
+    if type(XmitFrequencies)~="table" then
+        XmitFrequencies={XmitFrequencies}
+    end
+
+    options.plaintext = Plaintext
+    options.srsClientName = Label or self.Label
+    options.position = {}
+    if self.coordinate then
+        options.position.lat, options.position.lat, options.position.alt = self._GetLatLongAlt(self.coordinate)
+    end
+
+    options.position.lat = options.position.lat or 0.0
+    options.position.lon = options.position.lon or 0.0
+    options.position.alt = options.position.alt or 0.0
+
+    if UTILS.GetCoalitionName(self.coalition) == 'Blue' then
+      options.coalition = 'blue'
+    elseif UTILS.GetCoalitionName(self.coalition) == 'Red' then
+      options.coalition = 'red'
+    end
+
+    options.provider = {}
+    options.provider[self.provider] = {}
+
+    if self.voice then
+      options.provider[self.provider].voice = Voice or self.voice
+    elseif ssml then
+      -- DCS-gRPC doesn't directly support language/gender, but can use SSML
+      -- Only use if a voice isn't explicitly set
+      local preTag, genderProp, langProp, postTag = '', '', '', ''
+
+      if self.gender then
+        genderProp = ' gender=\"' .. self.gender .. '\"'
+      end
+      if self.culture then
+        langProp = ' language=\"' .. self.culture .. '\"'
+      end
+
+      if self.culture or self.gender then
+        preTag = '<voice' .. langProp .. genderProp  .. '>'
+        postTag = '</voice>'
+        ssml = preTag .. Text .. postTag
+      end
+
+    end
+
+    for _,_freq in ipairs(XmitFrequencies) do
+        local freq = _freq*1000000
+        BASE:T("GRPC.tts")
+        BASE:T(ssml)
+        BASE:T(freq)
+        BASE:T(options)
+        GRPC.tts(ssml, freq, options)
+    end
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
