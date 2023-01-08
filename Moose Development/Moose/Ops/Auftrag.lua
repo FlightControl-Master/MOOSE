@@ -7614,7 +7614,7 @@ end
 -- @param #number OffsetDist Relative distance of the first race-track point wrt to the carrier. Default 6 NM.
 -- @param #number OffsetAngle Relative angle of the first race-track point wrt. to the carrier. Default 180 (behind the boat).
 -- @param #number UpdateDistance Threshold distance in NM before orbit pattern is updated. Default 5 NM.
--- @param #table TargetTypes (Optional) Table of target types. Default `{"Helicopters", "Ground Units", "Light armed ships"}`.
+-- @param #table TargetTypes (Optional) Table of target types. Default `{"Air"}`.
 -- @param #number EngageRange Max range in nautical miles that the escort group(s) will engage enemies. Default 32 NM (60 km).
 -- @return #AUFTRAG self
 function AUFTRAG:NewCAPGROUP(Grp, Altitude, Speed, RelHeading, Leg, OffsetDist, OffsetAngle, UpdateDistance, TargetTypes, EngageRange)
