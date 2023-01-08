@@ -131,13 +131,13 @@
 -- all of the features and options available with 'DCS-SR-ExternalAudio.exe'. Of note, only text-to-speech is supported and it it cannot be used to transmit audio files.
 --
 -- DCS-gRPC must be installed and configured per the [DCS-gRPC documentation](https://github.com/DCS-gRPC/rust-server) and already running via either the 'autostart' mechanism 
--- or a Lua call to 'GRPC.load()' prior to useof the alternate DCS-gRPC backend. Note that if a cloud TTS provider is being used, the API key must be set via the 'Config\dcs-grpc.lua' 
--- configuration file prior DCS-gRPC being started.
+-- or a Lua call to 'GRPC.load()' prior to use of the alternate DCS-gRPC backend. If a cloud TTS provider is being used, the API key must be set via the 'Config\dcs-grpc.lua' 
+-- configuration file prior DCS-gRPC being started. DCS-gRPC can be used both with DCS dedicated server and regular DCS installations.
 -- 
--- To use the default DCS-gRPC the local Windows TTS, Windows 2019 Server (or newer) or Windows 10/11 are required.  Voices for non-local languages and dialects may need to
+-- To use the default local Windows TTS with DCS-gRPC, Windows 2019 Server (or newer) or Windows 10/11 are required.  Voices for non-local languages and dialects may need to
 -- be explicitly installed.
 --
--- To set the MSRS class to use the DCS-gRPC backend for all future instances, call the function `MSRS.SetDefaultBackendGRPC()`
+-- To set the MSRS class to use the DCS-gRPC backend for all future instances, call the function `MSRS.SetDefaultBackendGRPC()`.
 --
 -- **Note** - When using other classes that use MSRS with the alternate DCS-gRPC backend, pass them strings instead of nil values for non-applicable fields with filesystem paths, 
 -- such as the SRS path or Google credential path. This will help maximize compatibility with other classes that were written for the default backend.
@@ -298,7 +298,7 @@ MSRS.Voices = {
 -- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. Can also be given as a #table of multiple frequencies.
 -- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a #table of multiple modulations.
 -- @param #number Volume Volume - 1.0 is max, 0.0 is silence
--- @param #table (Optional) Table containing tables 'Functions' and 'Vars' which add/replace functions and variables for the MSRS instance to allow alternate backends for transmitting to SRS.
+-- @param #table AltBackend Optional table containing tables 'Functions' and 'Vars' which add/replace functions and variables for the MSRS instance to allow alternate backends for transmitting to SRS.
 -- @return #MSRS self
 function MSRS:New(PathToSRS, Frequency, Modulation, Volume, AltBackend)
 
@@ -991,13 +991,15 @@ end
 -- MSRS DCS-gRPC alternate backend
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Alternate backend for MSRS to enable text-to-speech via DCS-gRPC.
 -- ### Author: **dogjutsu**
--- @type MSRS_BACKEND_DCSGRPC A table containing functions and variables for MSRS to use DCS-gRPC [DCS-gRPC](https://github.com/DCS-gRPC/rust-server) 0.7.0 or newer as a backend to transmit over SRS.
+-- A table containing functions and variables for MSRS to use DCS-gRPC [DCS-gRPC](https://github.com/DCS-gRPC/rust-server) 0.7.0 or newer as a backend to transmit over SRS.
+-- This is not a standalone class. Instead, variables and functions under the `Vars` and `Functions` tables get added to or replace MSRS variables/functions when activated.
+-- 
+-- @type MSRS_BACKEND_DCSGRPC 
 -- @field #number version Version number of this alternate backend.
 -- @field #table Functions A table of functions that will add or replace the default MSRS class functions.
 -- @field #table Vars A table of variables that will add or replace the default MSRS class variables.
--- 
-
 MSRS_BACKEND_DCSGRPC = {}
 MSRS_BACKEND_DCSGRPC.version = 0.1
 
