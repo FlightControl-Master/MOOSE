@@ -624,10 +624,9 @@ function GROUP:GetRange()
   return nil
 end
 
-
 --- Returns a list of @{Wrapper.Unit} objects of the @{Wrapper.Group}.
 -- @param #GROUP self
--- @return #list<Wrapper.Unit#UNIT> The list of @{Wrapper.Unit} objects of the @{Wrapper.Group}.
+-- @return #table of Wrapper.Unit#UNIT objects, indexed by number.
 function GROUP:GetUnits()
   self:F2( { self.GroupName } )
   local DCSGroup = self:GetDCSObject()
@@ -644,7 +643,6 @@ function GROUP:GetUnits()
 
   return nil
 end
-
 
 --- Returns a list of @{Wrapper.Unit} objects of the @{Wrapper.Group} that are occupied by a player.
 -- @param #GROUP self
@@ -676,41 +674,38 @@ function GROUP:IsPlayer()
   return self:GetUnit(1):IsPlayer()
 end
 
---- Returns the UNIT wrapper class with number UnitNumber.
--- If the underlying DCS Unit does not exist, the method will return nil. .
+--- Returns the UNIT wrapper object with number UnitNumber. If it doesn't exist, tries to return the next available unit.
+-- If no underlying DCS Units exist, the method will return nil.
 -- @param #GROUP self
 -- @param #number UnitNumber The number of the UNIT wrapper class to be returned.
--- @return Wrapper.Unit#UNIT The UNIT wrapper class.
+-- @return Wrapper.Unit#UNIT The UNIT object or nil
 function GROUP:GetUnit( UnitNumber )
-
   local DCSGroup = self:GetDCSObject()
-
-  if DCSGroup then
-    
+  if DCSGroup then  
     local UnitFound = nil
     -- 2.7.1 dead event bug, return the first alive unit instead
-    local units = DCSGroup:getUnits() or {}
-    
-    for _,_unit in pairs(units) do
-    
-      local UnitFound = UNIT:Find(_unit)
-      
+    -- Maybe fixed with 2.8?
+    local units = DCSGroup:getUnits() or {}    
+    if units[UnitNumber] then
+      local UnitFound = UNIT:Find(units[UnitNumber])
       if UnitFound then
-      
         return UnitFound
-    
+      end
+    else 
+      for _,_unit in pairs(units) do     
+        local UnitFound = UNIT:Find(_unit)       
+        if UnitFound then       
+          return UnitFound     
+        end
       end
     end
-    
   end
-
-  return nil
-  
+  return nil 
 end
 
 
 --- Returns the DCS Unit with number UnitNumber.
--- If the underlying DCS Unit does not exist, the method will return nil. .
+-- If the underlying DCS Unit does not exist, the method will return try to find the next unit. Returns nil if no units are found.
 -- @param #GROUP self
 -- @param #number UnitNumber The number of the DCS Unit to be returned.
 -- @return DCS#Unit The DCS Unit.
@@ -723,8 +718,7 @@ function GROUP:GetDCSUnit( UnitNumber )
     if DCSGroup.getUnit and DCSGroup:getUnit( UnitNumber ) then
       return DCSGroup:getUnit( UnitNumber )
     else
-    
-      local UnitFound = nil
+
       -- 2.7.1 dead event bug, return the first alive unit instead
       local units = DCSGroup:getUnits() or {}
       
@@ -803,7 +797,20 @@ function GROUP:GetFirstUnitAlive()
   return nil
 end
 
+--- Get the first unit of the group. Might be nil!
+-- @param #GROUP self
+-- @return Wrapper.Unit#UNIT First unit or nil if it does not exist.
+function GROUP:GetFirstUnit()
+  self:F3({self.GroupName})
+  local DCSGroup = self:GetDCSObject()
 
+  if DCSGroup then
+    local units=self:GetUnits()
+    return units[1]
+  end
+
+  return nil
+end
 
 --- Returns the average velocity Vec3 vector.
 -- @param Wrapper.Group#GROUP self

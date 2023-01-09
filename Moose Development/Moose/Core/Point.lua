@@ -406,6 +406,42 @@ do -- COORDINATE
     return self
   end
 
+  --- Returns the magnetic declination at the given coordinate.
+  -- NOTE that this needs `require` to be available so you need to desanitize the `MissionScripting.lua` file in your DCS/Scrips folder.
+  -- If `require` is not available, a constant value for the whole map.
+  -- @param #COORDINATE self
+  -- @param #number Month (Optional) The month at which the declination is calculated. Default is the mission month.
+  -- @param #number Year (Optional) The year at which the declination is calculated. Default is the mission year.
+  -- @return #number Magnetic declination in degrees.
+  function COORDINATE:GetMagneticDeclination(Month, Year)
+  
+    local decl=UTILS.GetMagneticDeclination()
+    
+    if require then
+      
+      local magvar = require('magvar')
+      
+      if magvar then
+      
+        local date, year, month, day=UTILS.GetDCSMissionDate()
+        
+        magvar.init(Month or month, Year or year)
+      
+        local lat, lon=self:GetLLDDM()
+        
+        decl=magvar.get_mag_decl(lat, lon)
+        
+        if decl then
+          decl=math.deg(decl)
+        end
+        
+      end
+    else
+      self:T("The require package is not available. Using constant value for magnetic declination")    
+    end
+  
+    return decl
+  end
 
   --- Returns the coordinate from the latitude and longitude given in decimal degrees.
   -- @param #COORDINATE self
