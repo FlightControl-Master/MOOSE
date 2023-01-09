@@ -1061,7 +1061,7 @@ function OPSZONE:Scan()
               
               -- Debug marker.
               -- Debug: Had cases where a (red) unit was clearly not inside the zone but the scan did find it!      
-              unit:GetCoordinate():MarkToAll(string.format("Unit %s inzone=%s", unit:GetName(), tostring(inzone)))
+              --unit:GetCoordinate():MarkToAll(string.format("Unit %s inzone=%s", unit:GetName(), tostring(inzone)))
             end
             
             if inzone then          
