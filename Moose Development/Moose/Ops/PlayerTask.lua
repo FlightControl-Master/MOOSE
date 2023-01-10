@@ -3062,10 +3062,12 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
         text=string.gsub(text,"°M|","° magnetic; ")
       end
       if string.find(CoordText,"MGRS") then
-        local Text = string.gsub(CoordText,"%d","%1;") -- "0 5 1 "
-        Text = string.gsub(Text," $","") -- "0 5 1"
-        CoordText = string.gsub(Text,"0","zero")
-        CoordText = string.gsub(Text,"MGRS","MGRS;")
+        local Text = string.gsub(CoordText,"MGRS ","")
+        Text = string.gsub(Text,"%s+","")
+        Text = string.gsub(Text,"([%a%d])","%1;") -- "0 5 1 "
+        Text = string.gsub(Text,"0","zero")
+        Text = string.gsub(Text,"9","niner")
+        CoordText = "MGRS;"..Text
         if self.PathToGoogleKey then
           CoordText = string.format("<say-as interpret-as='characters'>%s</say-as>",CoordText)
         end
