@@ -246,7 +246,7 @@ AIRBASE.Normandy = {
 --
 -- * AIRBASE.PersianGulf.Abu_Dhabi_International_Airport
 -- * AIRBASE.PersianGulf.Abu_Musa_Island_Airport
--- * AIRBASE.PersianGulf.Al-Bateen_Airport
+-- * AIRBASE.PersianGulf.Al_Bateen_Airport
 -- * AIRBASE.PersianGulf.Al_Ain_International_Airport
 -- * AIRBASE.PersianGulf.Al_Dhafra_AB
 -- * AIRBASE.PersianGulf.Al_Maktoum_Intl
@@ -265,7 +265,7 @@ AIRBASE.Normandy = {
 -- * AIRBASE.PersianGulf.Lavan_Island_Airport
 -- * AIRBASE.PersianGulf.Liwa_Airbase
 -- * AIRBASE.PersianGulf.Qeshm_Island
--- * AIRBASE.PersianGulf.Ras_Al_Khaimah_International_Airport
+-- * AIRBASE.PersianGulf.Ras_Al_Khaimah
 -- * AIRBASE.PersianGulf.Sas_Al_Nakheel_Airport
 -- * AIRBASE.PersianGulf.Sharjah_Intl
 -- * AIRBASE.PersianGulf.Shiraz_International_Airport
