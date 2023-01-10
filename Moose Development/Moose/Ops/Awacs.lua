@@ -499,7 +499,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.52", -- #string
+  version = "0.2.53", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -2901,6 +2901,7 @@ function AWACS:_BogeyDope(Group)
       if contactsAO > 0 then
         local dope = self.gettext:GetEntry("DOPE",self.locale)
         text = string.format(dope,self:_GetCallSign(Group,GID) or "Ghost 1", self.callsigntxt)
+        textScreen = string.format(dope,self:_GetCallSign(Group,GID) or "Ghost 1", self.callsigntxt)
         local onetxt = self.gettext:GetEntry("ONE",self.locale)
         local grptxt = self.gettext:GetEntry("GROUP",self.locale)
         local groupstxt = self.gettext:GetEntry("GROUPMULTI",self.locale)  

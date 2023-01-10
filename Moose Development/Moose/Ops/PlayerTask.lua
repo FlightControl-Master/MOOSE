@@ -96,7 +96,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.11"
+PLAYERTASK.version="0.1.12"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -661,6 +661,8 @@ function PLAYERTASK:onafterStatus(From, Event, To)
   
   local status = self:GetState()
   
+  if status == "Stopped" then return self end
+  
   -- Check Target status
   local targetdead = false
   
@@ -672,10 +674,11 @@ function PLAYERTASK:onafterStatus(From, Event, To)
       return self
     end
   end
+  
+  local clientsalive = false  
     
   if status == "Executing" then    
     -- Check Clients alive
-    local clientsalive = false
     local ClientTable = self.Clients:GetDataTable()
     for _,_client in pairs(ClientTable) do
       local client = _client -- Wrapper.Client#CLIENT
@@ -689,7 +692,10 @@ function PLAYERTASK:onafterStatus(From, Event, To)
       self:__Failed(-2)
       status = "Failed"
     end
-    
+  end 
+  
+  -- Continue if we are not done
+  if status ~= "Done" and status ~= "Stopped" then 
     -- Any success condition true?
     local successCondition=self:_EvalConditionsAny(self.conditionSuccess)
   
@@ -707,12 +713,9 @@ function PLAYERTASK:onafterStatus(From, Event, To)
     if self.verbose then
       self:I(self.lid.."Target dead: "..tostring(targetdead).." | Clients alive: " .. tostring(clientsalive))
     end
-  end
   
-  -- Continue if we are not done
-  if status ~= "Done" then
     self:__Status(-20)
-  else
+  elseif status ~= "Stopped" then
     self:__Stop(-1)
   end
   
