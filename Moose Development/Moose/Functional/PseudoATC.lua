@@ -100,7 +100,7 @@ PSEUDOATC.id="PseudoATC | "
 
 --- PSEUDOATC version.
 -- @field #number version
-PSEUDOATC.version="0.9.3"
+PSEUDOATC.version="0.9.4"
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -450,14 +450,18 @@ function PSEUDOATC:PlayerLanded(unit, place)
   local group=unit:GetGroup()
   local GID=group:GetID()
   local UID=unit:GetDCSObject():getID()
-  local PlayerName=self.group[GID].player[UID].playername
-  local UnitName=self.group[GID].player[UID].unitname
-  local GroupName=self.group[GID].player[UID].groupname
-  
-  -- Debug message.
-  local text=string.format("Player %s in unit %s of group %s (id=%d) landed at %s.", PlayerName, UnitName, GroupName, GID, place)
-  self:T(PSEUDOATC.id..text)
-  MESSAGE:New(text, 30):ToAllIf(self.Debug)
+  --local PlayerName=self.group[GID].player[UID].playername
+  --local UnitName=self.group[GID].player[UID].unitname
+  --local GroupName=self.group[GID].player[UID].groupname
+  local PlayerName = unit:GetPlayerName() or "Ghost"
+  local UnitName = unit:GetName() or "Ghostplane"
+  local GroupName = group:GetName() or "Ghostgroup"
+  if self.Debug then
+    -- Debug message.
+    local text=string.format("Player %s in unit %s of group %s landed at %s.", PlayerName, UnitName, GroupName, place)
+    self:T(PSEUDOATC.id..text)
+    MESSAGE:New(text, 30):ToAllIf(self.Debug)
+  end
   
   -- Stop altitude reporting timer if its activated.
   self:AltitudeTimerStop(GID,UID)
@@ -479,18 +483,22 @@ function PSEUDOATC:PlayerTakeOff(unit, place)
   
   -- Gather some information.
   local group=unit:GetGroup()
-  local GID=group:GetID()
-  local UID=unit:GetDCSObject():getID()
-  local PlayerName=self.group[GID].player[UID].playername
-  local CallSign=self.group[GID].player[UID].callsign
-  local UnitName=self.group[GID].player[UID].unitname
-  local GroupName=self.group[GID].player[UID].groupname
-  
-  -- Debug message.
-  local text=string.format("Player %s in unit %s of group %s (id=%d) took off at %s.", PlayerName, UnitName, GroupName, GID, place)
-  self:T(PSEUDOATC.id..text)
-  MESSAGE:New(text, 30):ToAllIf(self.Debug)
-    
+  --local GID=group:GetID()
+  --local UID=unit:GetDCSObject():getID()
+  --local PlayerName=self.group[GID].player[UID].playername
+  --local CallSign=self.group[GID].player[UID].callsign
+  --local UnitName=self.group[GID].player[UID].unitname
+  --local GroupName=self.group[GID].player[UID].groupname
+  local PlayerName = unit:GetPlayerName() or "Ghost"
+  local UnitName = unit:GetName() or "Ghostplane"
+  local GroupName = group:GetName() or "Ghostgroup"
+  local CallSign = unit:GetCallsign() or "Ghost11"
+  if self.Debug then
+    -- Debug message.
+    local text=string.format("Player %s in unit %s of group %s took off at %s.", PlayerName, UnitName, GroupName, place)
+    self:T(PSEUDOATC.id..text)
+    MESSAGE:New(text, 30):ToAllIf(self.Debug)
+  end
   -- Bye-Bye message.
   if place and self.chatty then
     local text=string.format("%s, %s, you are airborne. Have a safe trip!", place, CallSign)
