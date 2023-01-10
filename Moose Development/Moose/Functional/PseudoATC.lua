@@ -502,9 +502,9 @@ function PSEUDOATC:PlayerTakeOff(unit, place)
   -- Bye-Bye message.
   if place and self.chatty then
     local text=string.format("%s, %s, you are airborne. Have a safe trip!", place, CallSign)
-	if self.reportplayername then
-		text=string.format("%s, %s, you are airborne. Have a safe trip!", place, PlayerName)
-	end
+  if self.reportplayername then
+    text=string.format("%s, %s, you are airborne. Have a safe trip!", place, PlayerName)
+  end
     MESSAGE:New(text, self.mdur):ToGroup(group)
   end
 
@@ -865,7 +865,7 @@ function PSEUDOATC:ReportHeight(GID, UID, dt, _clear)
     local height=get_AGL(position)
     local callsign=unit:GetCallsign()
     local PlayerName=self.group[GID].player[UID].playername
-	
+  
     -- Settings.
     local settings=_DATABASE:GetPlayerSettings(self.group[GID].player[UID].playername) or _SETTINGS --Core.Settings#SETTINGS
     
@@ -878,8 +878,8 @@ function PSEUDOATC:ReportHeight(GID, UID, dt, _clear)
     -- Message text.
     local _text=string.format("%s, your altitude is %s AGL.", callsign, Hs)
     if self.reportplayername then
-		_text=string.format("%s, your altitude is %s AGL.", PlayerName, Hs)
-	end
+    _text=string.format("%s, your altitude is %s AGL.", PlayerName, Hs)
+  end
     -- Append flight level.
     if _clear==false then
       _text=_text..string.format(" FL%03d.", position.y/30.48)
