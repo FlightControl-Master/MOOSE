@@ -389,7 +389,7 @@ end
 -- @param #SPAWN self
 -- @param #table SpawnTemplate is the Template of the Group. This must be a valid Group Template structure!
 -- @param #string SpawnTemplatePrefix is the name of the Group that will be given at each spawn.
--- @param #string SpawnAliasPrefix (optional) is the name that will be given to the Group at runtime.
+-- @param #string SpawnAliasPrefix is the name that will be given to the Group at runtime.
 -- @return #SPAWN
 -- @usage
 -- -- Create a new SPAWN object based on a Group Template defined from scratch.
@@ -403,7 +403,7 @@ function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPr
   local self = BASE:Inherit( self, BASE:New() )
   self:F( { SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPrefix } )
   if SpawnAliasPrefix == nil or SpawnAliasPrefix == "" then
-    BASE:I( "ERROR: in function NewFromTemplate, required paramter SpawnAliasPrefix is not set" )
+    BASE:I( "ERROR: in function NewFromTemplate, required parameter SpawnAliasPrefix is not set" )
     return nil
   end
 
