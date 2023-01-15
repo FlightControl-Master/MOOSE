@@ -850,7 +850,7 @@ end
 
 --- (Internal) Function to add a CSAR object into the scene at a Point coordinate (VEC_2). For mission designers wanting to add e.g. casualties to the scene, that don't use beacons.
 -- @param #CSAR self
--- @param #string _Point a POINT_VEC2.
+-- @param Core.Point#COORDINATE _Point
 -- @param #number _coalition Coalition.
 -- @param #string _description (optional) Description.
 -- @param #boolean _nomessage (optional) If true, don\'t send a message to SAR.
@@ -883,7 +883,7 @@ end
 
 --- Function to add a CSAR object into the scene at a zone coordinate. For mission designers wanting to add e.g. PoWs to the scene.
 -- @param #CSAR self
--- @param #string Point a POINT_VEC2.
+-- @param Core.Point#COORDINATE Point
 -- @param #number Coalition Coalition.
 -- @param #string Description (optional) Description.
 -- @param #boolean addBeacon (optional) yes or no.
@@ -893,8 +893,8 @@ end
 -- @param #boolean Forcedesc (optional) Force to use the **description passed only** for the pilot track entry. Use to have fully custom names.
 -- @usage If missions designers want to spawn downed pilots into the field, e.g. at mission begin, to give the helicopter guys work, they can do this like so:
 --      
---        -- Create casualty  "CASEVAC" at Point #POINT_VEC2 for the blue coalition.
---        my_csar:SpawnCASEVAC( POINT_VEC2, coalition.side.BLUE )
+--        -- Create casualty  "CASEVAC" at coordinate Core.Point#COORDINATE for the blue coalition.
+--        my_csar:SpawnCASEVAC( coordinate, coalition.side.BLUE )
 function CSAR:SpawnCASEVAC(Point, Coalition, Description, Nomessage, Unitname, Typename, Forcedesc) 
   self:_SpawnCASEVAC(Point, Coalition, Description, Nomessage, Unitname, Typename, Forcedesc)
   return self
