@@ -149,12 +149,12 @@ do -- TASK_A2A_DISPATCHER
   --      TaskDispatcher = TASK_A2A_DISPATCHER:New( ... )
   --
   --      --- @param #TaskDispatcher self
-  --      -- @param #string From Contains the name of the state from where the Event was triggered.
-  --      -- @param #string Event Contains the name of the event that was triggered. In this case Assign.
-  --      -- @param #string To Contains the name of the state that will be transitioned to.
-  --      -- @param Tasking.Task_A2A#TASK_A2A Task The Task object, which is any derived object from TASK_A2A.
-  --      -- @param Wrapper.Unit#UNIT TaskUnit The Unit or Client that contains the Player.
-  --      -- @param #string PlayerName The name of the Player that joined the TaskUnit.
+  --      --- @param #string From Contains the name of the state from where the Event was triggered.
+  --      --- @param #string Event Contains the name of the event that was triggered. In this case Assign.
+  --      --- @param #string To Contains the name of the state that will be transitioned to.
+  --      --- @param Tasking.Task_A2A#TASK_A2A Task The Task object, which is any derived object from TASK_A2A.
+  --      --- @param Wrapper.Unit#UNIT TaskUnit The Unit or Client that contains the Player.
+  --      --- @param #string PlayerName The name of the Player that joined the TaskUnit.
   --      function TaskDispatcher:OnAfterAssign( From, Event, To, Task, TaskUnit, PlayerName )
   --        Task:SetScoreOnProgress( PlayerName, 20, TaskUnit )
   --        Task:SetScoreOnSuccess( PlayerName, 200, TaskUnit )
@@ -176,7 +176,7 @@ do -- TASK_A2A_DISPATCHER
   --   * @{Tasking.Task#TASK.SetScoreOnSuccess}() will add additional (negative) scores when the task goes into **Failed** state.
   --     This means the **task has not been successfully completed**, and the scores must be given with a negative value!
   --
-  -- @field #TASK_A2A_DISPATCHER
+  --- @field #TASK_A2A_DISPATCHER
   TASK_A2A_DISPATCHER = {
     ClassName = "TASK_A2A_DISPATCHER",
     Mission = nil,
@@ -186,11 +186,11 @@ do -- TASK_A2A_DISPATCHER
   }
 
   --- TASK_A2A_DISPATCHER constructor.
-  -- @param #TASK_A2A_DISPATCHER self
-  -- @param Tasking.Mission#MISSION Mission The mission for which the task dispatching is done.
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups that can join the tasks within the mission.
-  -- @param Functional.Detection#DETECTION_BASE Detection The detection results that are used to dynamically assign new tasks to human players.
-  -- @return #TASK_A2A_DISPATCHER self
+  --- @param #TASK_A2A_DISPATCHER self
+  --- @param Tasking.Mission#MISSION Mission The mission for which the task dispatching is done.
+  --- @param Core.Set#SET_GROUP SetGroup The set of groups that can join the tasks within the mission.
+  --- @param Functional.Detection#DETECTION_BASE Detection The detection results that are used to dynamically assign new tasks to human players.
+  --- @return #TASK_A2A_DISPATCHER self
   function TASK_A2A_DISPATCHER:New( Mission, SetGroup, Detection )
 
     -- Inherits from DETECTION_MANAGER
@@ -209,13 +209,13 @@ do -- TASK_A2A_DISPATCHER
 
     --- OnAfter Transition Handler for Event Assign.
     -- @function [parent=#TASK_A2A_DISPATCHER] OnAfterAssign
-    -- @param #TASK_A2A_DISPATCHER self
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @param Tasking.Task_A2A#TASK_A2A Task
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param #string PlayerName
+    --- @param #TASK_A2A_DISPATCHER self
+    --- @param #string From The From State string.
+    --- @param #string Event The Event string.
+    --- @param #string To The To State string.
+    --- @param Tasking.Task_A2A#TASK_A2A Task
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param #string PlayerName
 
     self:__Start( 5 )
 
@@ -232,9 +232,9 @@ do -- TASK_A2A_DISPATCHER
   -- You need to evaluate the value of this parameter carefully.
   -- If too small, more intercept missions may be triggered upon detected target areas.
   -- If too large, any airborne cap may not be able to reach the detected target area in time, because it is too far.
-  -- @param #TASK_A2A_DISPATCHER self
-  -- @param #number EngageRadius (Optional, Default = 100000) The radius to report friendlies near the target.
-  -- @return #TASK_A2A_DISPATCHER
+  --- @param #TASK_A2A_DISPATCHER self
+  --- @param #number EngageRadius (Optional, Default = 100000) The radius to report friendlies near the target.
+  --- @return #TASK_A2A_DISPATCHER
   -- @usage
   --
   --   -- Set 50km as the radius to engage any target by airborne friendlies.
@@ -251,17 +251,17 @@ do -- TASK_A2A_DISPATCHER
   end
 
   --- Set flashing player messages on or off
-  -- @param #TASK_A2A_DISPATCHER self
-  -- @param #boolean onoff Set messages on (true) or off (false)
+  --- @param #TASK_A2A_DISPATCHER self
+  --- @param #boolean onoff Set messages on (true) or off (false)
   function TASK_A2A_DISPATCHER:SetSendMessages( onoff )
     self.FlashNewTask = onoff
   end
 
   --- Creates an INTERCEPT task when there are targets for it.
-  -- @param #TASK_A2A_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
-  -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
-  -- @return #nil If there are no targets to be set.
+  --- @param #TASK_A2A_DISPATCHER self
+  --- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
+  --- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
+  --- @return #nil If there are no targets to be set.
   function TASK_A2A_DISPATCHER:EvaluateINTERCEPT( DetectedItem )
     self:F( { DetectedItem.ItemID } )
 
@@ -284,10 +284,10 @@ do -- TASK_A2A_DISPATCHER
   end
 
   --- Creates an SWEEP task when there are targets for it.
-  -- @param #TASK_A2A_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
-  -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
-  -- @return #nil If there are no targets to be set.
+  --- @param #TASK_A2A_DISPATCHER self
+  --- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
+  --- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
+  --- @return #nil If there are no targets to be set.
   function TASK_A2A_DISPATCHER:EvaluateSWEEP( DetectedItem )
     self:F( { DetectedItem.ItemID } )
 
@@ -308,10 +308,10 @@ do -- TASK_A2A_DISPATCHER
   end
 
   --- Creates an ENGAGE task when there are human friendlies airborne near the targets.
-  -- @param #TASK_A2A_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
-  -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
-  -- @return #nil If there are no targets to be set.
+  --- @param #TASK_A2A_DISPATCHER self
+  --- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
+  --- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
+  --- @return #nil If there are no targets to be set.
   function TASK_A2A_DISPATCHER:EvaluateENGAGE( DetectedItem )
     self:F( { DetectedItem.ItemID } )
 
@@ -336,13 +336,13 @@ do -- TASK_A2A_DISPATCHER
 
   --- Evaluates the removal of the Task from the Mission.
   -- Can only occur when the DetectedItem is Changed AND the state of the Task is "Planned".
-  -- @param #TASK_A2A_DISPATCHER self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Tasking.Task#TASK Task
-  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Functional.Detection#DETECTION_BASE} derived object.
-  -- @param #boolean DetectedItemID
-  -- @param #boolean DetectedItemChange
-  -- @return Tasking.Task#TASK
+  --- @param #TASK_A2A_DISPATCHER self
+  --- @param Tasking.Mission#MISSION Mission
+  --- @param Tasking.Task#TASK Task
+  --- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Functional.Detection#DETECTION_BASE} derived object.
+  --- @param #boolean DetectedItemID
+  --- @param #boolean DetectedItemChange
+  --- @return Tasking.Task#TASK
   function TASK_A2A_DISPATCHER:EvaluateRemoveTask( Mission, Task, Detection, DetectedItem, DetectedItemIndex, DetectedItemChanged )
 
     if Task then
@@ -394,9 +394,9 @@ do -- TASK_A2A_DISPATCHER
   end
 
   --- Calculates which friendlies are nearby the area
-  -- @param #TASK_A2A_DISPATCHER self
-  -- @param DetectedItem
-  -- @return #number, Core.CommandCenter#REPORT
+  --- @param #TASK_A2A_DISPATCHER self
+  --- @param DetectedItem
+  --- @return #number, Core.CommandCenter#REPORT
   function TASK_A2A_DISPATCHER:GetFriendliesNearBy( DetectedItem )
 
     local DetectedSet = DetectedItem.Set
@@ -437,9 +437,9 @@ do -- TASK_A2A_DISPATCHER
   end
 
   --- Calculates which HUMAN friendlies are nearby the area
-  -- @param #TASK_A2A_DISPATCHER self
-  -- @param DetectedItem
-  -- @return #number, Core.CommandCenter#REPORT
+  --- @param #TASK_A2A_DISPATCHER self
+  --- @param DetectedItem
+  --- @return #number, Core.CommandCenter#REPORT
   function TASK_A2A_DISPATCHER:GetPlayerFriendliesNearBy( DetectedItem )
 
     local DetectedSet = DetectedItem.Set
@@ -485,9 +485,9 @@ do -- TASK_A2A_DISPATCHER
   end
 
   --- Assigns tasks in relation to the detected items to the @{Core.Set#SET_GROUP}.
-  -- @param #TASK_A2A_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Functional.Detection#DETECTION_BASE} derived object.
-  -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
+  --- @param #TASK_A2A_DISPATCHER self
+  --- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Functional.Detection#DETECTION_BASE} derived object.
+  --- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function TASK_A2A_DISPATCHER:ProcessDetected( Detection )
     self:F()
 

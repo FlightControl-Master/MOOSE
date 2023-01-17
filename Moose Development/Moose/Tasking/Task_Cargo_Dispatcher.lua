@@ -69,12 +69,12 @@ do -- TASK_CARGO_DISPATCHER
   --- TASK_CARGO_DISPATCHER class.
   --- @type TASK_CARGO_DISPATCHER
   -- @extends Tasking.Task_Manager#TASK_MANAGER
-  -- @field TASK_CARGO_DISPATCHER.CSAR CSAR
-  -- @field Core.Set#SET_ZONE SetZonesCSAR
+  --- @field TASK_CARGO_DISPATCHER.CSAR CSAR
+  --- @field Core.Set#SET_ZONE SetZonesCSAR
 
   --- @type TASK_CARGO_DISPATCHER.CSAR
-  -- @field Wrapper.Unit#UNIT PilotUnit
-  -- @field Tasking.Task#TASK Task
+  --- @field Wrapper.Unit#UNIT PilotUnit
+  --- @field Tasking.Task#TASK Task
   
 
   --- Implements the dynamic dispatching of cargo tasks.
@@ -317,14 +317,14 @@ do -- TASK_CARGO_DISPATCHER
   -- You can use this event handler to post messages to players, or provide status updates etc.
   -- 
   --      --- CargoPickedUp event handler OnAfter for CLASS.
-  --      -- @param #CLASS self
-  --      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
-  --      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
-  --      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
-  --      -- @param Tasking.Task_Cargo#TASK_CARGO Task The cargo task for which the cargo has been picked up. Note that this will be a derived TAKS_CARGO object!
-  --      -- @param #string TaskPrefix The prefix of the task that was provided when the task was created.
-  --      -- @param Wrapper.Unit#UNIT TaskUnit The unit (client) of the player that has picked up the cargo.
-  --      -- @param Cargo.Cargo#CARGO Cargo The cargo object that has been picked up. Note that this can be a CARGO_GROUP, CARGO_CRATE or CARGO_SLINGLOAD object!
+  --      --- @param #CLASS self
+  --      --- @param #string From A string that contains the "*from state name*" when the event was triggered.
+  --      --- @param #string Event A string that contains the "*event name*" when the event was triggered.
+  --      --- @param #string To A string that contains the "*to state name*" when the event was triggered.
+  --      --- @param Tasking.Task_Cargo#TASK_CARGO Task The cargo task for which the cargo has been picked up. Note that this will be a derived TAKS_CARGO object!
+  --      --- @param #string TaskPrefix The prefix of the task that was provided when the task was created.
+  --      --- @param Wrapper.Unit#UNIT TaskUnit The unit (client) of the player that has picked up the cargo.
+  --      --- @param Cargo.Cargo#CARGO Cargo The cargo object that has been picked up. Note that this can be a CARGO_GROUP, CARGO_CRATE or CARGO_SLINGLOAD object!
   --      function CLASS:OnAfterCargoPickedUp( From, Event, To, Task, TaskPrefix, TaskUnit, Cargo )
   --      
   --        -- Write here your own code.
@@ -349,15 +349,15 @@ do -- TASK_CARGO_DISPATCHER
   -- 
   -- 
   --      --- CargoDeployed event handler OnAfter for CLASS.
-  --      -- @param #CLASS self
-  --      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
-  --      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
-  --      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
-  --      -- @param Tasking.Task_Cargo#TASK_CARGO Task The cargo task for which the cargo has been deployed. Note that this will be a derived TAKS_CARGO object!
-  --      -- @param #string TaskPrefix The prefix of the task that was provided when the task was created.
-  --      -- @param Wrapper.Unit#UNIT TaskUnit The unit (client) of the player that has deployed the cargo.
-  --      -- @param Cargo.Cargo#CARGO Cargo The cargo object that has been deployed. Note that this can be a CARGO_GROUP, CARGO_CRATE or CARGO_SLINGLOAD object!
-  --      -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+  --      --- @param #CLASS self
+  --      --- @param #string From A string that contains the "*from state name*" when the event was triggered.
+  --      --- @param #string Event A string that contains the "*event name*" when the event was triggered.
+  --      --- @param #string To A string that contains the "*to state name*" when the event was triggered.
+  --      --- @param Tasking.Task_Cargo#TASK_CARGO Task The cargo task for which the cargo has been deployed. Note that this will be a derived TAKS_CARGO object!
+  --      --- @param #string TaskPrefix The prefix of the task that was provided when the task was created.
+  --      --- @param Wrapper.Unit#UNIT TaskUnit The unit (client) of the player that has deployed the cargo.
+  --      --- @param Cargo.Cargo#CARGO Cargo The cargo object that has been deployed. Note that this can be a CARGO_GROUP, CARGO_CRATE or CARGO_SLINGLOAD object!
+  --      --- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
   --      function CLASS:OnAfterCargoDeployed( From, Event, To, Task, TaskPrefix, TaskUnit, Cargo, DeployZone )
   --      
   --        -- Write here your own code.
@@ -366,7 +366,7 @@ do -- TASK_CARGO_DISPATCHER
   -- 
   -- 
   -- 
-  -- @field #TASK_CARGO_DISPATCHER
+  --- @field #TASK_CARGO_DISPATCHER
   TASK_CARGO_DISPATCHER = {
     ClassName = "TASK_CARGO_DISPATCHER",
     Mission = nil,
@@ -380,10 +380,10 @@ do -- TASK_CARGO_DISPATCHER
   
   
   --- TASK_CARGO_DISPATCHER constructor.
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @param Tasking.Mission#MISSION Mission The mission for which the task dispatching is done.
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups that can join the tasks within the mission.
-  -- @return #TASK_CARGO_DISPATCHER self
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @param Tasking.Mission#MISSION Mission The mission for which the task dispatching is done.
+  --- @param Core.Set#SET_GROUP SetGroup The set of groups that can join the tasks within the mission.
+  --- @return #TASK_CARGO_DISPATCHER self
   function TASK_CARGO_DISPATCHER:New( Mission, SetGroup )
   
     -- Inherits from DETECTION_MANAGER
@@ -397,13 +397,13 @@ do -- TASK_CARGO_DISPATCHER
     
     --- OnAfter Transition Handler for Event Assign.
     -- @function [parent=#TASK_CARGO_DISPATCHER] OnAfterAssign
-    -- @param #TASK_CARGO_DISPATCHER self
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @param Tasking.Task_A2A#TASK_A2A Task
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param #string PlayerName
+    --- @param #TASK_CARGO_DISPATCHER self
+    --- @param #string From The From State string.
+    --- @param #string Event The Event string.
+    --- @param #string To The To State string.
+    --- @param Tasking.Task_A2A#TASK_A2A Task
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param #string PlayerName
     
     self:SetCSARRadius()
     self:__StartTasks( 5 )
@@ -425,8 +425,8 @@ do -- TASK_CARGO_DISPATCHER
   -- 
   -- ![CSAR Zones](../Tasking/CSAR_Zones.JPG)
   -- 
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @param Core.Set#SET_ZONE SetZonesCSAR The set of zones where pilots will only be spawned for CSAR when they eject.
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @param Core.Set#SET_ZONE SetZonesCSAR The set of zones where pilots will only be spawned for CSAR when they eject.
   -- @usage
   -- 
   --      TaskDispatcher = TASK_CARGO_DISPATCHER:New( Mission, AttackGroups )
@@ -445,8 +445,8 @@ do -- TASK_CARGO_DISPATCHER
 
 
   --- Sets the maximum of pilots that will be spawned (eject) when the planes crash.  
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @param #number MaxCSAR The maximum of pilots that will eject for CSAR.
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @param #number MaxCSAR The maximum of pilots that will eject for CSAR.
   -- @usage
   -- 
   --      TaskDispatcher = TASK_CARGO_DISPATCHER:New( Mission, AttackGroups )
@@ -463,8 +463,8 @@ do -- TASK_CARGO_DISPATCHER
 
 
   --- Handle the event when a pilot ejects.
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @param Core.Event#EVENTDATA EventData
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @param Core.Event#EVENTDATA EventData
   function TASK_CARGO_DISPATCHER:OnEventEjection( EventData )
     self:F( { EventData = EventData } )
     
@@ -494,9 +494,9 @@ do -- TASK_CARGO_DISPATCHER
   
 
   --- Define one default deploy zone for all the cargo tasks.
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @param DefaultDeployZone A default deploy zone.
-  -- @return #TASK_CARGO_DISPATCHER
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @param DefaultDeployZone A default deploy zone.
+  --- @return #TASK_CARGO_DISPATCHER
   function TASK_CARGO_DISPATCHER:SetDefaultDeployZone( DefaultDeployZone )
 
     self.DefaultDeployZones = { DefaultDeployZone }
@@ -506,9 +506,9 @@ do -- TASK_CARGO_DISPATCHER
   
   
   --- Define the deploy zones for all the cargo tasks.
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @param DefaultDeployZones A list of the deploy zones.
-  -- @return #TASK_CARGO_DISPATCHER
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @param DefaultDeployZones A list of the deploy zones.
+  --- @return #TASK_CARGO_DISPATCHER
   -- 
   function TASK_CARGO_DISPATCHER:SetDefaultDeployZones( DefaultDeployZones )
 
@@ -521,11 +521,11 @@ do -- TASK_CARGO_DISPATCHER
   --- Start the generation of CSAR tasks to retrieve a downed pilots.
   -- You need to specify a task briefing, a task name, default deployment zone(s).
   -- This method can only be used once!
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @param #string CSARTaskName The CSAR task name.
-  -- @param #string CSARDeployZones The zones to where the CSAR deployment should be directed.
-  -- @param #string CSARBriefing The briefing of the CSAR tasks.
-  -- @return #TASK_CARGO_DISPATCHER
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @param #string CSARTaskName The CSAR task name.
+  --- @param #string CSARDeployZones The zones to where the CSAR deployment should be directed.
+  --- @param #string CSARBriefing The briefing of the CSAR tasks.
+  --- @return #TASK_CARGO_DISPATCHER
   function TASK_CARGO_DISPATCHER:StartCSARTasks( CSARTaskName, CSARDeployZones, CSARBriefing)
   
     if not self.CSARTasks then
@@ -542,8 +542,8 @@ do -- TASK_CARGO_DISPATCHER
   
   
   --- Stop the generation of CSAR tasks to retrieve a downed pilots.
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @return #TASK_CARGO_DISPATCHER
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @return #TASK_CARGO_DISPATCHER
   function TASK_CARGO_DISPATCHER:StopCSARTasks()
   
     if self.CSARTasks then
@@ -561,13 +561,13 @@ do -- TASK_CARGO_DISPATCHER
   
   --- Add a CSAR task to retrieve a downed pilot.
   -- You need to specify a coordinate from where the pilot will be spawned to be rescued.
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @param #string CSARTaskPrefix (optional) The prefix of the CSAR task. 
-  -- @param Core.Point#COORDINATE CSARCoordinate The coordinate where a downed pilot will be spawned.
-  -- @param #number CSARHeading The heading of the pilot in degrees.
-  -- @param DCSCountry#Country CSARCountry The country ID of the pilot that will be spawned.
-  -- @param #string CSARBriefing The briefing of the CSAR task.
-  -- @return #string The CSAR Task Name as a string. The Task Name is the main key and is shown in the task list of the Mission Tasking menu.
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @param #string CSARTaskPrefix (optional) The prefix of the CSAR task. 
+  --- @param Core.Point#COORDINATE CSARCoordinate The coordinate where a downed pilot will be spawned.
+  --- @param #number CSARHeading The heading of the pilot in degrees.
+  --- @param DCSCountry#Country CSARCountry The country ID of the pilot that will be spawned.
+  --- @param #string CSARBriefing The briefing of the CSAR task.
+  --- @return #string The CSAR Task Name as a string. The Task Name is the main key and is shown in the task list of the Mission Tasking menu.
   -- @usage
   -- 
   --   -- Add a CSAR task to rescue a downed pilot from within a coordinate.
@@ -626,9 +626,9 @@ do -- TASK_CARGO_DISPATCHER
 
 
   --- Define the radius to when a CSAR task will be generated for any downed pilot within range of the nearest CSAR airbase.
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @param #number CSARRadius (Optional, Default = 50000) The radius in meters to decide whether a CSAR needs to be created.
-  -- @return #TASK_CARGO_DISPATCHER
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @param #number CSARRadius (Optional, Default = 50000) The radius in meters to decide whether a CSAR needs to be created.
+  --- @return #TASK_CARGO_DISPATCHER
   -- @usage
   -- 
   --   -- Set 20km as the radius to CSAR any downed pilot within range of the nearest CSAR airbase.
@@ -646,10 +646,10 @@ do -- TASK_CARGO_DISPATCHER
   
   
   --- Define one deploy zone for the CSAR tasks.
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @param #string CSARTaskName (optional) The name of the CSAR task. 
-  -- @param CSARDeployZone A CSAR deploy zone.
-  -- @return #TASK_CARGO_DISPATCHER
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @param #string CSARTaskName (optional) The name of the CSAR task. 
+  --- @param CSARDeployZone A CSAR deploy zone.
+  --- @return #TASK_CARGO_DISPATCHER
   function TASK_CARGO_DISPATCHER:SetCSARDeployZone( CSARTaskName, CSARDeployZone )
 
     if CSARTaskName then
@@ -661,10 +661,10 @@ do -- TASK_CARGO_DISPATCHER
   
   
   --- Define the deploy zones for the CSAR tasks.
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @param #string CSARTaskName (optional) The name of the CSAR task.
-  -- @param CSARDeployZones A list of the CSAR deploy zones.
-  -- @return #TASK_CARGO_DISPATCHER
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @param #string CSARTaskName (optional) The name of the CSAR task.
+  --- @param CSARDeployZones A list of the CSAR deploy zones.
+  --- @return #TASK_CARGO_DISPATCHER
   -- 
   function TASK_CARGO_DISPATCHER:SetCSARDeployZones( CSARTaskName, CSARDeployZones )
 
@@ -677,14 +677,14 @@ do -- TASK_CARGO_DISPATCHER
 
 
   --- Add a Transport task to transport cargo from fixed locations to a deployment zone.
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @param #string TaskPrefix (optional) The prefix of the transport task. 
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @param #string TaskPrefix (optional) The prefix of the transport task. 
   -- This prefix will be appended with a . + a number of 3 digits.
   -- If no TaskPrefix is given, then "Transport" will be used as the prefix. 
-  -- @param Core.SetCargo#SET_CARGO SetCargo The SetCargo to be transported.
-  -- @param #string Briefing The briefing of the task transport to be shown to the player.
-  -- @param #boolean Silent If true don't send a message that a new task is available.
-  -- @return Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT
+  --- @param Core.SetCargo#SET_CARGO SetCargo The SetCargo to be transported.
+  --- @param #string Briefing The briefing of the task transport to be shown to the player.
+  --- @param #boolean Silent If true don't send a message that a new task is available.
+  --- @return Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT
   -- @usage
   -- 
   --   -- Add a Transport task to transport cargo of different types to a Transport Deployment Zone.
@@ -727,10 +727,10 @@ do -- TASK_CARGO_DISPATCHER
 
 
   --- Define one deploy zone for the Transport tasks.
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @param Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT Task The name of the Transport task. 
-  -- @param TransportDeployZone A Transport deploy zone.
-  -- @return #TASK_CARGO_DISPATCHER
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @param Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT Task The name of the Transport task. 
+  --- @param TransportDeployZone A Transport deploy zone.
+  --- @return #TASK_CARGO_DISPATCHER
   -- @usage
   -- 
   -- 
@@ -749,10 +749,10 @@ do -- TASK_CARGO_DISPATCHER
   
   
   --- Define the deploy zones for the Transport tasks.
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @param Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT Task The name of the Transport task. 
-  -- @param TransportDeployZones A list of the Transport deploy zones.
-  -- @return #TASK_CARGO_DISPATCHER
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @param Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT Task The name of the Transport task. 
+  --- @param TransportDeployZones A list of the Transport deploy zones.
+  --- @return #TASK_CARGO_DISPATCHER
   -- 
   function TASK_CARGO_DISPATCHER:SetTransportDeployZones( Task, TransportDeployZones )
 
@@ -768,9 +768,9 @@ do -- TASK_CARGO_DISPATCHER
   end
   
   --- Evaluates of a CSAR task needs to be started.
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @return Core.Set#SET_CARGO The SetCargo to be rescued.
-  -- @return #nil If there is no CSAR task required.
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @return Core.Set#SET_CARGO The SetCargo to be rescued.
+  --- @return #nil If there is no CSAR task required.
   function TASK_CARGO_DISPATCHER:EvaluateCSAR( CSARUnit )
   
     local CSARCargo = CARGO_GROUP:New( CSARUnit, "Pilot", CSARUnit:GetName(), 80, 1500, 10 )
@@ -787,9 +787,9 @@ do -- TASK_CARGO_DISPATCHER
   
 
   --- Assigns tasks to the @{Core.Set#SET_GROUP}.
-  -- @param #TASK_CARGO_DISPATCHER self
-  -- @param #boolean Silent Announce new task (nil/false) or not (true).
-  -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
+  --- @param #TASK_CARGO_DISPATCHER self
+  --- @param #boolean Silent Announce new task (nil/false) or not (true).
+  --- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function TASK_CARGO_DISPATCHER:ManageTasks(Silent)
     self:F()
     local verbose = Silent and true

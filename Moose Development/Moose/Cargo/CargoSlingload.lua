@@ -32,19 +32,19 @@ do -- CARGO_SLINGLOAD
   -- 
   -- ===
   -- 
-  -- @field #CARGO_SLINGLOAD
+  --- @field #CARGO_SLINGLOAD
   CARGO_SLINGLOAD = {
     ClassName = "CARGO_SLINGLOAD"
   }
   
   --- CARGO_SLINGLOAD Constructor.
-  -- @param #CARGO_SLINGLOAD self
-  -- @param Wrapper.Static#STATIC CargoStatic
-  -- @param #string Type
-  -- @param #string Name
-  -- @param #number LoadRadius (optional)
-  -- @param #number NearRadius (optional)
-  -- @return #CARGO_SLINGLOAD
+  --- @param #CARGO_SLINGLOAD self
+  --- @param Wrapper.Static#STATIC CargoStatic
+  --- @param #string Type
+  --- @param #string Name
+  --- @param #number LoadRadius (optional)
+  --- @param #number NearRadius (optional)
+  --- @return #CARGO_SLINGLOAD
   function CARGO_SLINGLOAD:New( CargoStatic, Type, Name, LoadRadius, NearRadius )
     local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoStatic, Type, Name, nil, LoadRadius, NearRadius ) ) -- #CARGO_SLINGLOAD
     self:F( { Type, Name, NearRadius } )
@@ -68,7 +68,7 @@ do -- CARGO_SLINGLOAD
 
 
   --- @param #CARGO_SLINGLOAD self
-  -- @param Core.Event#EVENTDATA EventData 
+  --- @param Core.Event#EVENTDATA EventData 
   function CARGO_SLINGLOAD:OnEventCargoDead( EventData )
 
     local Destroyed = false
@@ -90,40 +90,40 @@ do -- CARGO_SLINGLOAD
   
   
   --- Check if the cargo can be Slingloaded.
-  -- @param #CARGO_SLINGLOAD self
+  --- @param #CARGO_SLINGLOAD self
   function CARGO_SLINGLOAD:CanSlingload()
     return true
   end
   
   --- Check if the cargo can be Boarded.
-  -- @param #CARGO_SLINGLOAD self
+  --- @param #CARGO_SLINGLOAD self
   function CARGO_SLINGLOAD:CanBoard()
     return false
   end
 
   --- Check if the cargo can be Unboarded.
-  -- @param #CARGO_SLINGLOAD self
+  --- @param #CARGO_SLINGLOAD self
   function CARGO_SLINGLOAD:CanUnboard()
     return false
   end
 
   --- Check if the cargo can be Loaded.
-  -- @param #CARGO_SLINGLOAD self
+  --- @param #CARGO_SLINGLOAD self
   function CARGO_SLINGLOAD:CanLoad()
     return false
   end
 
   --- Check if the cargo can be Unloaded.
-  -- @param #CARGO_SLINGLOAD self
+  --- @param #CARGO_SLINGLOAD self
   function CARGO_SLINGLOAD:CanUnload()
     return false
   end
 
 
   --- Check if Cargo Crate is in the radius for the Cargo to be reported.
-  -- @param #CARGO_SLINGLOAD self
-  -- @param Core.Point#COORDINATE Coordinate
-  -- @return #boolean true if the Cargo Crate is within the report radius.
+  --- @param #CARGO_SLINGLOAD self
+  --- @param Core.Point#COORDINATE Coordinate
+  --- @return #boolean true if the Cargo Crate is within the report radius.
   function CARGO_SLINGLOAD:IsInReportRadius( Coordinate )
     --self:F( { Coordinate, LoadRadius = self.LoadRadius } )
   
@@ -140,9 +140,9 @@ do -- CARGO_SLINGLOAD
 
 
   --- Check if Cargo Slingload is in the radius for the Cargo to be Boarded or Loaded.
-  -- @param #CARGO_SLINGLOAD self
-  -- @param Core.Point#COORDINATE Coordinate
-  -- @return #boolean true if the Cargo Slingload is within the loading radius.
+  --- @param #CARGO_SLINGLOAD self
+  --- @param Core.Point#COORDINATE Coordinate
+  --- @return #boolean true if the Cargo Slingload is within the loading radius.
   function CARGO_SLINGLOAD:IsInLoadRadius( Coordinate )
     --self:F( { Coordinate } )
   
@@ -160,9 +160,9 @@ do -- CARGO_SLINGLOAD
 
 
   --- Get the current Coordinate of the CargoGroup.
-  -- @param #CARGO_SLINGLOAD self
-  -- @return Core.Point#COORDINATE The current Coordinate of the first Cargo of the CargoGroup.
-  -- @return #nil There is no valid Cargo in the CargoGroup.
+  --- @param #CARGO_SLINGLOAD self
+  --- @return Core.Point#COORDINATE The current Coordinate of the first Cargo of the CargoGroup.
+  --- @return #nil There is no valid Cargo in the CargoGroup.
   function CARGO_SLINGLOAD:GetCoordinate()
     --self:F()
     
@@ -170,9 +170,9 @@ do -- CARGO_SLINGLOAD
   end
 
   --- Check if the CargoGroup is alive.
-  -- @param #CARGO_SLINGLOAD self
-  -- @return #boolean true if the CargoGroup is alive.
-  -- @return #boolean false if the CargoGroup is dead.
+  --- @param #CARGO_SLINGLOAD self
+  --- @return #boolean true if the CargoGroup is alive.
+  --- @return #boolean false if the CargoGroup is dead.
   function CARGO_SLINGLOAD:IsAlive()
 
     local Alive = true
@@ -191,8 +191,8 @@ do -- CARGO_SLINGLOAD
 
   
   --- Route Cargo to Coordinate and randomize locations.
-  -- @param #CARGO_SLINGLOAD self
-  -- @param Core.Point#COORDINATE Coordinate
+  --- @param #CARGO_SLINGLOAD self
+  --- @param Core.Point#COORDINATE Coordinate
   function CARGO_SLINGLOAD:RouteTo( Coordinate )
     --self:F( {Coordinate = Coordinate } )
     
@@ -201,11 +201,11 @@ do -- CARGO_SLINGLOAD
   
   --- Check if Cargo is near to the Carrier.
   -- The Cargo is near to the Carrier within NearRadius.
-  -- @param #CARGO_SLINGLOAD self
-  -- @param Wrapper.Group#GROUP CargoCarrier
-  -- @param #number NearRadius
-  -- @return #boolean The Cargo is near to the Carrier.
-  -- @return #nil The Cargo is not near to the Carrier.
+  --- @param #CARGO_SLINGLOAD self
+  --- @param Wrapper.Group#GROUP CargoCarrier
+  --- @param #number NearRadius
+  --- @return #boolean The Cargo is near to the Carrier.
+  --- @return #nil The Cargo is not near to the Carrier.
   function CARGO_SLINGLOAD:IsNear( CargoCarrier, NearRadius )
     --self:F( {NearRadius = NearRadius } )
     
@@ -214,7 +214,7 @@ do -- CARGO_SLINGLOAD
 
 
   --- Respawn the CargoGroup.
-  -- @param #CARGO_SLINGLOAD self
+  --- @param #CARGO_SLINGLOAD self
   function CARGO_SLINGLOAD:Respawn()
 
     --self:F( { "Respawning slingload " .. self:GetName() } )
@@ -231,7 +231,7 @@ do -- CARGO_SLINGLOAD
 
 
   --- Respawn the CargoGroup.
-  -- @param #CARGO_SLINGLOAD self
+  --- @param #CARGO_SLINGLOAD self
   function CARGO_SLINGLOAD:onafterReset()
 
     --self:F( { "Reset slingload " .. self:GetName() } )
@@ -250,8 +250,8 @@ do -- CARGO_SLINGLOAD
   end
 
   --- Get the transportation method of the Cargo.
-  -- @param #CARGO_SLINGLOAD self
-  -- @return #string The transportation method of the Cargo.
+  --- @param #CARGO_SLINGLOAD self
+  --- @return #string The transportation method of the Cargo.
   function CARGO_SLINGLOAD:GetTransportationMethod()
     if self:IsLoaded() then
       return "for sling loading"

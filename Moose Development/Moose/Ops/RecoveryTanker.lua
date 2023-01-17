@@ -414,134 +414,134 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
 
   --- Triggers the FSM event "Start" that starts the recovery tanker. Initializes parameters and starts event handlers.
   -- @function [parent=#RECOVERYTANKER] Start
-  -- @param #RECOVERYTANKER self
+  --- @param #RECOVERYTANKER self
 
   --- Triggers the FSM event "Start" that starts the recovery tanker after a delay. Initializes parameters and starts event handlers.
   -- @function [parent=#RECOVERYTANKER] __Start
-  -- @param #RECOVERYTANKER self
-  -- @param #number delay Delay in seconds.
+  --- @param #RECOVERYTANKER self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Start" event function. Called when FSM is started.
   -- @function [parent=#RECOVERYTANKER] OnAfterStart
-  -- @param #RECOVERYTANKER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #RECOVERYTANKER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "RefuelStart" when the tanker starts refueling another aircraft.
   -- @function [parent=#RECOVERYTANKER] RefuelStart
-  -- @param #RECOVERYTANKER self
-  -- @param Wrapper.Unit#UNIT receiver Unit receiving fuel from the tanker.
+  --- @param #RECOVERYTANKER self
+  --- @param Wrapper.Unit#UNIT receiver Unit receiving fuel from the tanker.
 
   --- On after "RefuelStart" event user function. Called when a the the tanker started to refuel another unit.
   -- @function [parent=#RECOVERYTANKER] OnAfterRefuelStart
-  -- @param #RECOVERYTANKER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Unit#UNIT receiver Unit receiving fuel from the tanker.
+  --- @param #RECOVERYTANKER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Unit#UNIT receiver Unit receiving fuel from the tanker.
 
 
   --- Triggers the FSM event "RefuelStop" when the tanker stops refueling another aircraft.
   -- @function [parent=#RECOVERYTANKER] RefuelStop
-  -- @param #RECOVERYTANKER self
-  -- @param Wrapper.Unit#UNIT receiver Unit stoped receiving fuel from the tanker.
+  --- @param #RECOVERYTANKER self
+  --- @param Wrapper.Unit#UNIT receiver Unit stoped receiving fuel from the tanker.
 
   --- On after "RefuelStop" event user function. Called when a the the tanker stopped to refuel another unit.
   -- @function [parent=#RECOVERYTANKER] OnAfterRefuelStop
-  -- @param #RECOVERYTANKER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Unit#UNIT receiver Unit that received fuel from the tanker.
+  --- @param #RECOVERYTANKER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Unit#UNIT receiver Unit that received fuel from the tanker.
 
 
   --- Triggers the FSM event "Run". Simply puts the group into "Running" state.
   -- @function [parent=#RECOVERYTANKER] Run
-  -- @param #RECOVERYTANKER self
+  --- @param #RECOVERYTANKER self
 
   --- Triggers delayed the FSM event "Run". Simply puts the group into "Running" state.
   -- @function [parent=#RECOVERYTANKER] __Run
-  -- @param #RECOVERYTANKER self
-  -- @param #number delay Delay in seconds.
+  --- @param #RECOVERYTANKER self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "RTB" that sends the tanker home.
   -- @function [parent=#RECOVERYTANKER] RTB
-  -- @param #RECOVERYTANKER self
-  -- @param Wrapper.Airbase#AIRBASE airbase The airbase where the tanker should return to.
+  --- @param #RECOVERYTANKER self
+  --- @param Wrapper.Airbase#AIRBASE airbase The airbase where the tanker should return to.
 
   --- Triggers the FSM event "RTB" that sends the tanker home after a delay.
   -- @function [parent=#RECOVERYTANKER] __RTB
-  -- @param #RECOVERYTANKER self
-  -- @param #number delay Delay in seconds.
-  -- @param Wrapper.Airbase#AIRBASE airbase The airbase where the tanker should return to.
+  --- @param #RECOVERYTANKER self
+  --- @param #number delay Delay in seconds.
+  --- @param Wrapper.Airbase#AIRBASE airbase The airbase where the tanker should return to.
 
   --- On after "RTB" event user function. Called when a the the tanker returns to its home base.
   -- @function [parent=#RECOVERYTANKER] OnAfterRTB
-  -- @param #RECOVERYTANKER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Airbase#AIRBASE airbase The airbase where the tanker should return to.
+  --- @param #RECOVERYTANKER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Airbase#AIRBASE airbase The airbase where the tanker should return to.
 
 
   --- Triggers the FSM event "Returned" after the tanker has landed.
   -- @function [parent=#RECOVERYTANKER] Returned
-  -- @param #RECOVERYTANKER self
-  -- @param Wrapper.Airbase#AIRBASE airbase The airbase the tanker has landed.
+  --- @param #RECOVERYTANKER self
+  --- @param Wrapper.Airbase#AIRBASE airbase The airbase the tanker has landed.
 
   --- Triggers the delayed FSM event "Returned" after the tanker has landed.
   -- @function [parent=#RECOVERYTANKER] __Returned
-  -- @param #RECOVERYTANKER self
-  -- @param #number delay Delay in seconds.
-  -- @param Wrapper.Airbase#AIRBASE airbase The airbase the tanker has landed.
+  --- @param #RECOVERYTANKER self
+  --- @param #number delay Delay in seconds.
+  --- @param Wrapper.Airbase#AIRBASE airbase The airbase the tanker has landed.
 
   --- On after "Returned" event user function. Called when a the the tanker has landed at an airbase.
   -- @function [parent=#RECOVERYTANKER] OnAfterReturned
-  -- @param #RECOVERYTANKER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Airbase#AIRBASE airbase The airbase the tanker has landed.
+  --- @param #RECOVERYTANKER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Airbase#AIRBASE airbase The airbase the tanker has landed.
 
 
   --- Triggers the FSM event "Status" that updates the tanker status.
   -- @function [parent=#RECOVERYTANKER] Status
-  -- @param #RECOVERYTANKER self
+  --- @param #RECOVERYTANKER self
 
   --- Triggers the delayed FSM event "Status" that updates the tanker status.
   -- @function [parent=#RECOVERYTANKER] __Status
-  -- @param #RECOVERYTANKER self
-  -- @param #number delay Delay in seconds.
+  --- @param #RECOVERYTANKER self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "PatternUpdate" that updates the pattern of the tanker wrt to the carrier position.
   -- @function [parent=#RECOVERYTANKER] PatternUpdate
-  -- @param #RECOVERYTANKER self
+  --- @param #RECOVERYTANKER self
 
   --- Triggers the delayed FSM event "PatternUpdate" that updates the pattern of the tanker wrt to the carrier position.
   -- @function [parent=#RECOVERYTANKER] __PatternUpdate
-  -- @param #RECOVERYTANKER self
-  -- @param #number delay Delay in seconds.
+  --- @param #RECOVERYTANKER self
+  --- @param #number delay Delay in seconds.
 
   --- On after "PatternEvent" event user function. Called when a the pattern of the tanker is updated.
   -- @function [parent=#RECOVERYTANKER] OnAfterPatternUpdate
-  -- @param #RECOVERYTANKER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #RECOVERYTANKER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Stop" that stops the recovery tanker. Event handlers are stopped.
   -- @function [parent=#RECOVERYTANKER] Stop
-  -- @param #RECOVERYTANKER self
+  --- @param #RECOVERYTANKER self
 
   --- Triggers the FSM event "Stop" that stops the recovery tanker after a delay. Event handlers are stopped.
   -- @function [parent=#RECOVERYTANKER] __Stop
-  -- @param #RECOVERYTANKER self
-  -- @param #number delay Delay in seconds.
+  --- @param #RECOVERYTANKER self
+  --- @param #number delay Delay in seconds.
   
   return self
 end

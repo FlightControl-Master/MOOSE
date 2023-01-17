@@ -54,16 +54,16 @@ CTLD_ENGINEERING = {
   }
   
   --- CTLD_ENGINEERING class version.
-  -- @field #string version
+  --- @field #string version
   CTLD_ENGINEERING.Version = "0.0.3"
   
   --- Create a new instance.
-  -- @param #CTLD_ENGINEERING self
-  -- @param #string Name
-  -- @param #string GroupName Name of Engineering #GROUP object
-  -- @param Wrapper.Group#GROUP HeliGroup HeliGroup
-  -- @param Wrapper.Unit#UNIT HeliUnit HeliUnit
-  -- @return #CTLD_ENGINEERING self 
+  --- @param #CTLD_ENGINEERING self
+  --- @param #string Name
+  --- @param #string GroupName Name of Engineering #GROUP object
+  --- @param Wrapper.Group#GROUP HeliGroup HeliGroup
+  --- @param Wrapper.Unit#UNIT HeliUnit HeliUnit
+  --- @return #CTLD_ENGINEERING self 
   function CTLD_ENGINEERING:New(Name, GroupName, HeliGroup, HeliUnit)
   
       -- Inherit everything from BASE class.
@@ -87,40 +87,40 @@ CTLD_ENGINEERING = {
   end
   
   --- (Internal) Set the status
-  -- @param #CTLD_ENGINEERING self
-  -- @param #string State
-  -- @return #CTLD_ENGINEERING self
+  --- @param #CTLD_ENGINEERING self
+  --- @param #string State
+  --- @return #CTLD_ENGINEERING self
   function CTLD_ENGINEERING:SetStatus(State)
     self.State = State
     return self
   end
   
   --- (Internal) Get the status
-  -- @param #CTLD_ENGINEERING self
-  -- @return #string State
+  --- @param #CTLD_ENGINEERING self
+  --- @return #string State
   function CTLD_ENGINEERING:GetStatus()
     return self.State
   end
   
   --- (Internal) Check the status
-  -- @param #CTLD_ENGINEERING self
-  -- @param #string State
-  -- @return #boolean Outcome
+  --- @param #CTLD_ENGINEERING self
+  --- @param #string State
+  --- @return #boolean Outcome
   function CTLD_ENGINEERING:IsStatus(State)
     return self.State == State
   end
   
   --- (Internal) Check the negative status
-  -- @param #CTLD_ENGINEERING self
-  -- @param #string State
-  -- @return #boolean Outcome
+  --- @param #CTLD_ENGINEERING self
+  --- @param #string State
+  --- @return #boolean Outcome
   function CTLD_ENGINEERING:IsNotStatus(State)
     return self.State ~= State
   end
   
   --- (Internal) Set start status.
-  -- @param #CTLD_ENGINEERING self
-  -- @return #CTLD_ENGINEERING self
+  --- @param #CTLD_ENGINEERING self
+  --- @return #CTLD_ENGINEERING self
   function CTLD_ENGINEERING:Start()
     self:T(self.lid.."Start")
     self:SetStatus("Running")
@@ -128,8 +128,8 @@ CTLD_ENGINEERING = {
   end
   
   --- (Internal) Set stop status.
-  -- @param #CTLD_ENGINEERING self
-  -- @return #CTLD_ENGINEERING self
+  --- @param #CTLD_ENGINEERING self
+  --- @return #CTLD_ENGINEERING self
   function CTLD_ENGINEERING:Stop()
     self:T(self.lid.."Stop")
     self:SetStatus("Stopped")
@@ -137,8 +137,8 @@ CTLD_ENGINEERING = {
   end
   
   --- (Internal) Set build status.
-  -- @param #CTLD_ENGINEERING self
-  -- @return #CTLD_ENGINEERING self
+  --- @param #CTLD_ENGINEERING self
+  --- @return #CTLD_ENGINEERING self
   function CTLD_ENGINEERING:Build()
     self:T(self.lid.."Build")
     self:SetStatus("Building")
@@ -146,8 +146,8 @@ CTLD_ENGINEERING = {
   end
   
   --- (Internal) Set done status.
-  -- @param #CTLD_ENGINEERING self
-  -- @return #CTLD_ENGINEERING self
+  --- @param #CTLD_ENGINEERING self
+  --- @return #CTLD_ENGINEERING self
   function CTLD_ENGINEERING:Done()
     self:T(self.lid.."Done")
     local grp = self.Group -- Wrapper.Group#GROUP
@@ -157,10 +157,10 @@ CTLD_ENGINEERING = {
   end
   
   --- (Internal) Search for crates in reach.
-  -- @param #CTLD_ENGINEERING self
-  -- @param #table crates Table of found crate Ops.CTLD#CTLD_CARGO objects.
-  -- @param #number number Number of crates found.
-  -- @return #CTLD_ENGINEERING self
+  --- @param #CTLD_ENGINEERING self
+  --- @param #table crates Table of found crate Ops.CTLD#CTLD_CARGO objects.
+  --- @param #number number Number of crates found.
+  --- @return #CTLD_ENGINEERING self
   function CTLD_ENGINEERING:Search(crates,number)
     self:T(self.lid.."Search")
     self:SetStatus("Searching")
@@ -227,8 +227,8 @@ CTLD_ENGINEERING = {
   end
   
   --- (Internal) Move towards crates in reach.
-  -- @param #CTLD_ENGINEERING self
-  -- @return #CTLD_ENGINEERING self
+  --- @param #CTLD_ENGINEERING self
+  --- @return #CTLD_ENGINEERING self
   function CTLD_ENGINEERING:Move()
     self:T(self.lid.."Move")
     self:SetStatus("Moving")
@@ -248,8 +248,8 @@ CTLD_ENGINEERING = {
   end
   
   --- (Internal) Arrived at crates in reach. Stop group.
-  -- @param #CTLD_ENGINEERING self
-  -- @return #CTLD_ENGINEERING self
+  --- @param #CTLD_ENGINEERING self
+  --- @return #CTLD_ENGINEERING self
   function CTLD_ENGINEERING:Arrive()
     self:T(self.lid.."Arrive")
     self:SetStatus("Arrived")
@@ -260,10 +260,10 @@ CTLD_ENGINEERING = {
   end
   
   --- (Internal) Return distance in meters between two coordinates.
-  -- @param #CTLD_ENGINEERING self
-  -- @param Core.Point#COORDINATE _point1 Coordinate one
-  -- @param Core.Point#COORDINATE _point2 Coordinate two
-  -- @return #number Distance in meters or -1
+  --- @param #CTLD_ENGINEERING self
+  --- @param Core.Point#COORDINATE _point1 Coordinate one
+  --- @param Core.Point#COORDINATE _point2 Coordinate two
+  --- @return #number Distance in meters or -1
   function CTLD_ENGINEERING:_GetDistance(_point1, _point2)
     self:T(self.lid .. " _GetDistance")
     if _point1 and _point2 then
@@ -327,13 +327,13 @@ CTLD_CARGO = {
   
   --- Define cargo types.
   --- @type CTLD_CARGO.Enum
-  -- @field #string VEHICLE
-  -- @field #string TROOPS
-  -- @field #string FOB
-  -- @field #string CRATE
-  -- @field #string REPAIR
-  -- @field #string ENGINEERS
-  -- @field #string STATIC
+  --- @field #string VEHICLE
+  --- @field #string TROOPS
+  --- @field #string FOB
+  --- @field #string CRATE
+  --- @field #string REPAIR
+  --- @field #string ENGINEERS
+  --- @field #string STATIC
   CTLD_CARGO.Enum = {
     VEHICLE = "Vehicle", -- #string vehicles
     TROOPS = "Troops", -- #string troops
@@ -345,20 +345,20 @@ CTLD_CARGO = {
   }
   
   --- Function to create new CTLD_CARGO object.
-  -- @param #CTLD_CARGO self
-  -- @param #number ID ID of this #CTLD_CARGO
-  -- @param #string Name Name for menu.
-  -- @param #table Templates Table of #POSITIONABLE objects.
-  -- @param #CTLD_CARGO.Enum Sorte Enumerator of Type.
-  -- @param #boolean HasBeenMoved Flag for moving.
-  -- @param #boolean LoadDirectly Flag for direct loading.
-  -- @param #number CratesNeeded Crates needed to build.
-  -- @param Wrapper.Positionable#POSITIONABLE Positionable Representation of cargo in the mission.
-  -- @param #boolean Dropped Cargo/Troops have been unloaded from a chopper.
-  -- @param #number PerCrateMass Mass in kg
-  -- @param #number Stock Number of builds available, nil for unlimited
-  -- @param #string Subcategory Name of subcategory, handy if using > 10 types to load.
-  -- @return #CTLD_CARGO self
+  --- @param #CTLD_CARGO self
+  --- @param #number ID ID of this #CTLD_CARGO
+  --- @param #string Name Name for menu.
+  --- @param #table Templates Table of #POSITIONABLE objects.
+  --- @param #CTLD_CARGO.Enum Sorte Enumerator of Type.
+  --- @param #boolean HasBeenMoved Flag for moving.
+  --- @param #boolean LoadDirectly Flag for direct loading.
+  --- @param #number CratesNeeded Crates needed to build.
+  --- @param Wrapper.Positionable#POSITIONABLE Positionable Representation of cargo in the mission.
+  --- @param #boolean Dropped Cargo/Troops have been unloaded from a chopper.
+  --- @param #number PerCrateMass Mass in kg
+  --- @param #number Stock Number of builds available, nil for unlimited
+  --- @param #string Subcategory Name of subcategory, handy if using > 10 types to load.
+  --- @return #CTLD_CARGO self
   function CTLD_CARGO:New(ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped, PerCrateMass, Stock, Subcategory)
     -- Inherit everything from BASE class.
     local self=BASE:Inherit(self, BASE:New()) -- #CTLD
@@ -380,92 +380,92 @@ CTLD_CARGO = {
   end
   
   --- Query ID.
-  -- @param #CTLD_CARGO self
-  -- @return #number ID
+  --- @param #CTLD_CARGO self
+  --- @return #number ID
   function CTLD_CARGO:GetID()
     return self.ID
   end
   
   --- Query Subcategory
-  -- @param #CTLD_CARGO self
-  -- @return #string SubCategory
+  --- @param #CTLD_CARGO self
+  --- @return #string SubCategory
   function CTLD_CARGO:GetSubCat()
     return self.Subcategory
   end
   
   --- Query Mass.
-  -- @param #CTLD_CARGO self
-  -- @return #number Mass in kg
+  --- @param #CTLD_CARGO self
+  --- @return #number Mass in kg
   function CTLD_CARGO:GetMass()
     return self.PerCrateMass
   end  
   
   --- Query Name.
-  -- @param #CTLD_CARGO self
-  -- @return #string Name
+  --- @param #CTLD_CARGO self
+  --- @return #string Name
   function CTLD_CARGO:GetName()
     return self.Name
   end
   
   --- Query Templates.
-  -- @param #CTLD_CARGO self
-  -- @return #table Templates
+  --- @param #CTLD_CARGO self
+  --- @return #table Templates
   function CTLD_CARGO:GetTemplates()
     return self.Templates
   end
   
   --- Query has moved.
-  -- @param #CTLD_CARGO self
-  -- @return #boolean Has moved
+  --- @param #CTLD_CARGO self
+  --- @return #boolean Has moved
   function CTLD_CARGO:HasMoved()
     return self.HasBeenMoved
   end
   
   --- Query was dropped.
-  -- @param #CTLD_CARGO self
-  -- @return #boolean Has been dropped.
+  --- @param #CTLD_CARGO self
+  --- @return #boolean Has been dropped.
   function CTLD_CARGO:WasDropped()
     return self.HasBeenDropped
   end
   
   --- Query directly loadable.
-  -- @param #CTLD_CARGO self
-  -- @return #boolean loadable
+  --- @param #CTLD_CARGO self
+  --- @return #boolean loadable
   function CTLD_CARGO:CanLoadDirectly()
     return self.LoadDirectly
   end
   
   --- Query number of crates or troopsize.
-  -- @param #CTLD_CARGO self
-  -- @return #number Crates or size of troops.
+  --- @param #CTLD_CARGO self
+  --- @return #number Crates or size of troops.
   function CTLD_CARGO:GetCratesNeeded()
     return self.CratesNeeded
   end
   
   --- Query type.
-  -- @param #CTLD_CARGO self
-  -- @return #CTLD_CARGO.Enum Type
+  --- @param #CTLD_CARGO self
+  --- @return #CTLD_CARGO.Enum Type
   function CTLD_CARGO:GetType()
     return self.CargoType
   end
   
   --- Query type.
-  -- @param #CTLD_CARGO self
-  -- @return Wrapper.Positionable#POSITIONABLE Positionable
+  --- @param #CTLD_CARGO self
+  --- @return Wrapper.Positionable#POSITIONABLE Positionable
   function CTLD_CARGO:GetPositionable()
     return self.Positionable
   end
   
   --- Set HasMoved.
-  -- @param #CTLD_CARGO self
-  -- @param #boolean moved
+  --- @param #CTLD_CARGO self
+  --- @param #boolean moved
   function CTLD_CARGO:SetHasMoved(moved)
     self.HasBeenMoved = moved or false
   end
   
    --- Query if cargo has been loaded.
-  -- @param #CTLD_CARGO self
-  -- @param #boolean loaded
+  --- @param #CTLD_CARGO self
+  --- @param #boolean loaded
   function CTLD_CARGO:Isloaded()
     if self.HasBeenMoved and not self.WasDropped() then
       return true
@@ -475,15 +475,15 @@ CTLD_CARGO = {
   end
   
   --- Set WasDropped.
-  -- @param #CTLD_CARGO self
-  -- @param #boolean dropped
+  --- @param #CTLD_CARGO self
+  --- @param #boolean dropped
   function CTLD_CARGO:SetWasDropped(dropped)
     self.HasBeenDropped = dropped or false
   end
   
   --- Get Stock.
-  -- @param #CTLD_CARGO self
-  -- @return #number Stock
+  --- @param #CTLD_CARGO self
+  --- @return #number Stock
   function CTLD_CARGO:GetStock()
     if self.Stock then
       return self.Stock
@@ -493,9 +493,9 @@ CTLD_CARGO = {
   end
   
   --- Add Stock.
-  -- @param #CTLD_CARGO self
-  -- @param #number Number to add, one if nil.
-  -- @return #CTLD_CARGO self
+  --- @param #CTLD_CARGO self
+  --- @param #number Number to add, one if nil.
+  --- @return #CTLD_CARGO self
   function CTLD_CARGO:AddStock(Number)
     if self.Stock then -- Stock nil?
       local number = Number or 1
@@ -505,9 +505,9 @@ CTLD_CARGO = {
   end
   
   --- Remove Stock.
-  -- @param #CTLD_CARGO self
-  -- @param #number Number to reduce, one if nil.
-  -- @return #CTLD_CARGO self
+  --- @param #CTLD_CARGO self
+  --- @param #number Number to reduce, one if nil.
+  --- @return #CTLD_CARGO self
   function CTLD_CARGO:RemoveStock(Number)
     if self.Stock then -- Stock nil?
       local number = Number or 1
@@ -518,8 +518,8 @@ CTLD_CARGO = {
   end
   
   --- Query crate type for REPAIR
-  -- @param #CTLD_CARGO self
-  -- @param #boolean 
+  --- @param #CTLD_CARGO self
+  --- @param #boolean 
   function CTLD_CARGO:IsRepair()
    if self.CargoType == "Repair" then
     return true
@@ -529,8 +529,8 @@ CTLD_CARGO = {
   end
   
   --- Query crate type for STATIC
-  -- @param #CTLD_CARGO self
-  -- @return #boolean 
+  --- @param #CTLD_CARGO self
+  --- @return #boolean 
   function CTLD_CARGO:IsStatic()
    if self.CargoType == "Static" then
     return true
@@ -540,31 +540,31 @@ CTLD_CARGO = {
   end
   
   --- Add mark
-  -- @param #CTLD_CARGO self
-  -- @return #CTLD_CARGO self
+  --- @param #CTLD_CARGO self
+  --- @return #CTLD_CARGO self
   function CTLD_CARGO:AddMark(Mark)
     self.Mark = Mark
     return self
   end
   
   --- Get mark
-  -- @param #CTLD_CARGO self
-  -- @return #string Mark
+  --- @param #CTLD_CARGO self
+  --- @return #string Mark
   function CTLD_CARGO:GetMark(Mark)
     return self.Mark
   end
   
   --- Wipe mark
-  -- @param #CTLD_CARGO self
-  -- @return #CTLD_CARGO self
+  --- @param #CTLD_CARGO self
+  --- @return #CTLD_CARGO self
   function CTLD_CARGO:WipeMark()
     self.Mark = nil
     return self
   end
   
   --- Get overall mass of a cargo object, i.e. crates needed x mass per crate
-  -- @param #CTLD_CARGO self
-  -- @return #number mass
+  --- @param #CTLD_CARGO self
+  --- @return #number mass
   function CTLD_CARGO:GetNetMass()
     return self.CratesNeeded * self.PerCrateMass
   end
@@ -1286,237 +1286,237 @@ function CTLD:New(Coalition, Prefixes, Alias)
   
     --- Triggers the FSM event "Start". Starts the CTLD. Initializes parameters and starts event handlers.
   -- @function [parent=#CTLD] Start
-  -- @param #CTLD self
+  --- @param #CTLD self
 
   --- Triggers the FSM event "Start" after a delay. Starts the CTLD. Initializes parameters and starts event handlers.
   -- @function [parent=#CTLD] __Start
-  -- @param #CTLD self
-  -- @param #number delay Delay in seconds.
+  --- @param #CTLD self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Stop". Stops the CTLD and all its event handlers.
-  -- @param #CTLD self
+  --- @param #CTLD self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the CTLD and all its event handlers.
   -- @function [parent=#CTLD] __Stop
-  -- @param #CTLD self
-  -- @param #number delay Delay in seconds.
+  --- @param #CTLD self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#CTLD] Status
-  -- @param #CTLD self
+  --- @param #CTLD self
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#CTLD] __Status
-  -- @param #CTLD self
-  -- @param #number delay Delay in seconds.
+  --- @param #CTLD self
+  --- @param #number delay Delay in seconds.
   
   --- Triggers the FSM event "Load".
   -- @function [parent=#CTLD] Load
-  -- @param #CTLD self
+  --- @param #CTLD self
 
   --- Triggers the FSM event "Load" after a delay.
   -- @function [parent=#CTLD] __Load
-  -- @param #CTLD self
-  -- @param #number delay Delay in seconds.
+  --- @param #CTLD self
+  --- @param #number delay Delay in seconds.
   
   --- Triggers the FSM event "Save".
   -- @function [parent=#CTLD] Load
-  -- @param #CTLD self
+  --- @param #CTLD self
 
   --- Triggers the FSM event "Save" after a delay.
   -- @function [parent=#CTLD] __Save
-  -- @param #CTLD self
-  -- @param #number delay Delay in seconds.
+  --- @param #CTLD self
+  --- @param #number delay Delay in seconds.
   
     --- FSM Function OnBeforeTroopsPickedUp.
   -- @function [parent=#CTLD] OnBeforeTroopsPickedUp
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #CTLD_CARGO Cargo Cargo troops.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param #CTLD_CARGO Cargo Cargo troops.
+  --- @return #CTLD self
   
   --- FSM Function OnBeforeTroopsExtracted.
   -- @function [parent=#CTLD] OnBeforeTroopsExtracted
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #CTLD_CARGO Cargo Cargo troops.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param #CTLD_CARGO Cargo Cargo troops.
+  --- @return #CTLD self
     
   --- FSM Function OnBeforeCratesPickedUp.
   -- @function [parent=#CTLD] OnBeforeCratesPickedUp
-  -- @param #CTLD self
-  -- @param #string From State .
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #CTLD_CARGO Cargo Cargo crate.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State .
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param #CTLD_CARGO Cargo Cargo crate.
+  --- @return #CTLD self
   
    --- FSM Function OnBeforeTroopsDeployed.
   -- @function [parent=#CTLD] OnBeforeTroopsDeployed
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
+  --- @return #CTLD self
   
   --- FSM Function OnBeforeCratesDropped.
   -- @function [parent=#CTLD] OnBeforeCratesDropped
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #table Cargotable Table of #CTLD_CARGO objects dropped.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param #table Cargotable Table of #CTLD_CARGO objects dropped.
+  --- @return #CTLD self
   
   --- FSM Function OnBeforeCratesBuild.
   -- @function [parent=#CTLD] OnBeforeCratesBuild
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB build.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB build.
+  --- @return #CTLD self
 
   --- FSM Function OnBeforeCratesRepaired.
   -- @function [parent=#CTLD] OnBeforeCratesRepaired
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB repaired.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB repaired.
+  --- @return #CTLD self
     
   --- FSM Function OnBeforeTroopsRTB.
   -- @function [parent=#CTLD] OnBeforeTroopsRTB
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
   
   --- FSM Function OnAfterTroopsPickedUp.
   -- @function [parent=#CTLD] OnAfterTroopsPickedUp
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #CTLD_CARGO Cargo Cargo troops.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param #CTLD_CARGO Cargo Cargo troops.
+  --- @return #CTLD self
   
   --- FSM Function OnAfterTroopsExtracted.
   -- @function [parent=#CTLD] OnAfterTroopsExtracted
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #CTLD_CARGO Cargo Cargo troops.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param #CTLD_CARGO Cargo Cargo troops.
+  --- @return #CTLD self
     
   --- FSM Function OnAfterCratesPickedUp.
   -- @function [parent=#CTLD] OnAfterCratesPickedUp
-  -- @param #CTLD self
-  -- @param #string From State .
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #CTLD_CARGO Cargo Cargo crate.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State .
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param #CTLD_CARGO Cargo Cargo crate.
+  --- @return #CTLD self
   
    --- FSM Function OnAfterTroopsDeployed.
   -- @function [parent=#CTLD] OnAfterTroopsDeployed
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
+  --- @return #CTLD self
   
   --- FSM Function OnAfterCratesDropped.
   -- @function [parent=#CTLD] OnAfterCratesDropped
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #table Cargotable Table of #CTLD_CARGO objects dropped.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param #table Cargotable Table of #CTLD_CARGO objects dropped.
+  --- @return #CTLD self
   
   --- FSM Function OnAfterCratesBuild.
   -- @function [parent=#CTLD] OnAfterCratesBuild
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB build.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB build.
+  --- @return #CTLD self
 
   --- FSM Function OnAfterCratesRepaired.
   -- @function [parent=#CTLD] OnAfterCratesRepaired
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB repaired.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB repaired.
+  --- @return #CTLD self
     
   --- FSM Function OnAfterTroopsRTB.
   -- @function [parent=#CTLD] OnAfterTroopsRTB
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
   
   --- FSM Function OnAfterLoad.
   -- @function [parent=#CTLD] OnAfterLoad
-  -- @param #CTLD self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string path (Optional) Path where the file is located. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
-  -- @param #string filename (Optional) File name for loading. Default is "CTLD_<alias>_Persist.csv".
+  --- @param #CTLD self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string path (Optional) Path where the file is located. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+  --- @param #string filename (Optional) File name for loading. Default is "CTLD_<alias>_Persist.csv".
   
   --- FSM Function OnAfterSave.
   -- @function [parent=#CTLD] OnAfterSave
-  -- @param #CTLD self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string path (Optional) Path where the file is saved. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
-  -- @param #string filename (Optional) File name for saving. Default is "CTLD_<alias>_Persist.csv".
+  --- @param #CTLD self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string path (Optional) Path where the file is saved. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+  --- @param #string filename (Optional) File name for saving. Default is "CTLD_<alias>_Persist.csv".
   
   return self
 end
@@ -1883,9 +1883,9 @@ function CTLD:_RepairObjectFromCrates(Group,Unit,Crates,Build,Number,Engineering
 end
 
   --- (Internal) Function to extract (load from the field) troops into a heli.
-  -- @param #CTLD self
-  -- @param Wrapper.Group#GROUP Group
-  -- @param Wrapper.Unit#UNIT Unit
+  --- @param #CTLD self
+  --- @param Wrapper.Group#GROUP Group
+  --- @param Wrapper.Unit#UNIT Unit
   function CTLD:_ExtractTroops(Group, Unit) -- #1574 thanks to @bbirchnz!
     self:T(self.lid .. " _ExtractTroops")
     -- landed or hovering over load zone?
@@ -3991,14 +3991,14 @@ function CTLD:SmokeZoneNearBy(Unit, Flare)
 end
 
   --- User - Function to add/adjust unittype capabilities.
-  -- @param #CTLD self
-  -- @param #string Unittype The unittype to adjust. If passed as Wrapper.Unit#UNIT, it will search for the unit in the mission.
-  -- @param #boolean Cancrates Unit can load crates. Default false.
-  -- @param #boolean Cantroops Unit can load troops. Default false.
-  -- @param #number Cratelimit Unit can carry number of crates. Default 0.
-  -- @param #number Trooplimit Unit can carry number of troops. Default 0.
-  -- @param #number Length Unit lenght (in metres) for the load radius. Default 20.
-  -- @param #number Maxcargoweight Maxmimum weight in kgs this helo can carry. Default 500.
+  --- @param #CTLD self
+  --- @param #string Unittype The unittype to adjust. If passed as Wrapper.Unit#UNIT, it will search for the unit in the mission.
+  --- @param #boolean Cancrates Unit can load crates. Default false.
+  --- @param #boolean Cantroops Unit can load troops. Default false.
+  --- @param #number Cratelimit Unit can carry number of crates. Default 0.
+  --- @param #number Trooplimit Unit can carry number of troops. Default 0.
+  --- @param #number Length Unit lenght (in metres) for the load radius. Default 20.
+  --- @param #number Maxcargoweight Maxmimum weight in kgs this helo can carry. Default 500.
   function CTLD:UnitCapabilities(Unittype, Cancrates, Cantroops, Cratelimit, Trooplimit, Length, Maxcargoweight)
     self:T(self.lid .. " UnitCapabilities")
     local unittype =  nil
@@ -4032,9 +4032,9 @@ end
   end
   
   --- (Internal) Check if a unit is hovering *in parameters*.
-  -- @param #CTLD self
-  -- @param Wrapper.Unit#UNIT Unit
-  -- @return #boolean Outcome
+  --- @param #CTLD self
+  --- @param Wrapper.Unit#UNIT Unit
+  --- @return #boolean Outcome
   function CTLD:IsCorrectHover(Unit)
     self:T(self.lid .. " IsCorrectHover")
     local outcome = false
@@ -4058,9 +4058,9 @@ end
   end
   
     --- (Internal) Check if a Hercules is flying *in parameters* for air drops.
-  -- @param #CTLD self
-  -- @param Wrapper.Unit#UNIT Unit
-  -- @return #boolean Outcome
+  --- @param #CTLD self
+  --- @param Wrapper.Unit#UNIT Unit
+  --- @return #boolean Outcome
   function CTLD:IsCorrectFlightParameters(Unit)
     self:T(self.lid .. " IsCorrectFlightParameters")
     local outcome = false
@@ -4088,9 +4088,9 @@ end
   end
   
   --- (Internal) List if a unit is hovering *in parameters*.
-  -- @param #CTLD self
-  -- @param Wrapper.Group#GROUP Group
-  -- @param Wrapper.Unit#UNIT Unit
+  --- @param #CTLD self
+  --- @param Wrapper.Group#GROUP Group
+  --- @param Wrapper.Unit#UNIT Unit
   function CTLD:_ShowHoverParams(Group,Unit)
     local inhover = self:IsCorrectHover(Unit)
     local htxt = "true"
@@ -4108,9 +4108,9 @@ end
   end
   
     --- (Internal) List if a Herc unit is flying *in parameters*.
-  -- @param #CTLD self
-  -- @param Wrapper.Group#GROUP Group
-  -- @param Wrapper.Unit#UNIT Unit
+  --- @param #CTLD self
+  --- @param Wrapper.Group#GROUP Group
+  --- @param Wrapper.Unit#UNIT Unit
   function CTLD:_ShowFlightParams(Group,Unit)
     local inhover = self:IsCorrectFlightParameters(Unit)
     local htxt = "true"
@@ -4130,9 +4130,9 @@ end
   end
     
   --- (Internal) Check if a unit is in a load zone and is hovering in parameters.
-  -- @param #CTLD self
-  -- @param Wrapper.Unit#UNIT Unit
-  -- @return #boolean Outcome
+  --- @param #CTLD self
+  --- @param Wrapper.Unit#UNIT Unit
+  --- @return #boolean Outcome
   function CTLD:CanHoverLoad(Unit)
     self:T(self.lid .. " CanHoverLoad")
     if self:IsHercules(Unit) then return false end
@@ -4144,9 +4144,9 @@ end
   end
   
   --- (Internal) Check if a unit is above ground.
-  -- @param #CTLD self
-  -- @param Wrapper.Unit#UNIT Unit
-  -- @return #boolean Outcome
+  --- @param #CTLD self
+  --- @param Wrapper.Unit#UNIT Unit
+  --- @return #boolean Outcome
   function CTLD:IsUnitInAir(Unit)
     -- get speed and height
     local minheight = self.minimumHoverHeight
@@ -4165,9 +4165,9 @@ end
   end
   
   --- (Internal) Autoload if we can do crates, have capacity free and are in a load zone.
-  -- @param #CTLD self
-  -- @param Wrapper.Unit#UNIT Unit
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param Wrapper.Unit#UNIT Unit
+  --- @return #CTLD self
   function CTLD:AutoHoverLoad(Unit)
     self:T(self.lid .. " AutoHoverLoad")
     -- get capabilities and current load
@@ -4195,8 +4195,8 @@ end
   end
   
   --- (Internal) Run through all pilots and see if we autoload.
-  -- @param #CTLD self
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @return #CTLD self
   function CTLD:CheckAutoHoverload()
     if self.hoverautoloading then
       for _,_pilot in pairs (self.CtldUnits) do
@@ -4208,8 +4208,8 @@ end
   end
   
   --- (Internal) Run through DroppedTroops and capture alive units
-  -- @param #CTLD self
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @return #CTLD self
   function CTLD:CleanDroppedTroops()
     -- Troops
     local troops = self.DroppedTroops
@@ -4237,10 +4237,10 @@ end
   end
 
   --- User - function to add stock of a certain troops type
-  -- @param #CTLD self
-  -- @param #string Name Name as defined in the generic cargo.
-  -- @param #number Number Number of units/groups to add.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string Name Name as defined in the generic cargo.
+  --- @param #number Number Number of units/groups to add.
+  --- @return #CTLD self
   function CTLD:AddStockTroops(Name, Number)
     local name = Name or "none"
     local number = Number or 1
@@ -4254,10 +4254,10 @@ end
   end
   
   --- User - function to add stock of a certain crates type
-  -- @param #CTLD self
-  -- @param #string Name Name as defined in the generic cargo.
-  -- @param #number Number Number of units/groups to add.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string Name Name as defined in the generic cargo.
+  --- @param #number Number Number of units/groups to add.
+  --- @return #CTLD self
   function CTLD:AddStockCrates(Name, Number)
     local name = Name or "none"
     local number = Number or 1
@@ -4271,10 +4271,10 @@ end
   end
   
   --- User - function to remove stock of a certain troops type
-  -- @param #CTLD self
-  -- @param #string Name Name as defined in the generic cargo.
-  -- @param #number Number Number of units/groups to add.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string Name Name as defined in the generic cargo.
+  --- @param #number Number Number of units/groups to add.
+  --- @return #CTLD self
   function CTLD:RemoveStockTroops(Name, Number)
     local name = Name or "none"
     local number = Number or 1
@@ -4288,10 +4288,10 @@ end
   end
   
   --- User - function to remove stock of a certain crates type
-  -- @param #CTLD self
-  -- @param #string Name Name as defined in the generic cargo.
-  -- @param #number Number Number of units/groups to add.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string Name Name as defined in the generic cargo.
+  --- @param #number Number Number of units/groups to add.
+  --- @return #CTLD self
   function CTLD:RemoveStockCrates(Name, Number)
     local name = Name or "none"
     local number = Number or 1
@@ -4306,8 +4306,8 @@ end
   end
   
   --- (Internal) Check on engineering teams
-  -- @param #CTLD self
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @return #CTLD self
   function CTLD:_CheckEngineers()
     self:T(self.lid.." CheckEngineers")
     local engtable = self.EngineersInField
@@ -4336,10 +4336,10 @@ end
   end
   
   --- (User) Pre-populate troops in the field.
-  -- @param #CTLD self
-  -- @param Core.Zone#ZONE Zone The zone where to drop the troops.
-  -- @param Ops.CTLD#CTLD_CARGO Cargo The #CTLD_CARGO object to spawn.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param Core.Zone#ZONE Zone The zone where to drop the troops.
+  --- @param Ops.CTLD#CTLD_CARGO Cargo The #CTLD_CARGO object to spawn.
+  --- @return #CTLD self
   -- @usage Use this function to pre-populate the field with Troops or Engineers at a random coordinate in a zone:
   --            -- create a matching #CTLD_CARGO type
   --            local InjectTroopsType = CTLD_CARGO:New(nil,"Infantry",{"Inf12"},CTLD_CARGO.Enum.TROOPS,true,true,12,nil,false,80)
@@ -4407,10 +4407,10 @@ end
   end
   
     --- (User) Pre-populate vehicles in the field.
-  -- @param #CTLD self
-  -- @param Core.Zone#ZONE Zone The zone where to drop the troops.
-  -- @param Ops.CTLD#CTLD_CARGO Cargo The #CTLD_CARGO object to spawn.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param Core.Zone#ZONE Zone The zone where to drop the troops.
+  --- @param Ops.CTLD#CTLD_CARGO Cargo The #CTLD_CARGO object to spawn.
+  --- @return #CTLD self
   -- @usage Use this function to pre-populate the field with Vehicles or FOB at a random coordinate in a zone:
   --            -- create a matching #CTLD_CARGO type
   --            local InjectVehicleType = CTLD_CARGO:New(nil,"Humvee",{"Humvee"},CTLD_CARGO.Enum.VEHICLE,true,true,1,nil,false,1000)
@@ -4480,11 +4480,11 @@ end
 ------------------------------------------------------------------- 
 
   --- (Internal) FSM Function onafterStart.
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @return #CTLD self
   function CTLD:onafterStart(From, Event, To)
     self:T({From, Event, To})
     self:I(self.lid .. "Started ("..self.version..")")
@@ -4515,11 +4515,11 @@ end
   end
 
   --- (Internal) FSM Function onbeforeStatus.
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @return #CTLD self
   function CTLD:onbeforeStatus(From, Event, To)
     self:T({From, Event, To})
     self:CleanDroppedTroops()
@@ -4532,11 +4532,11 @@ end
   end
   
   --- (Internal) FSM Function onafterStatus.
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @return #CTLD self
   function CTLD:onafterStatus(From, Event, To)
     self:T({From, Event, To})
      -- gather some stats
@@ -4582,11 +4582,11 @@ end
   end
   
   --- (Internal) FSM Function onafterStop.
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @return #CTLD self
   function CTLD:onafterStop(From, Event, To)
     self:T({From, Event, To})
     self:UnhandleEvent(EVENTS.PlayerEnterAircraft)
@@ -4596,42 +4596,42 @@ end
   end
   
   --- (Internal) FSM Function onbeforeTroopsPickedUp.
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #CTLD_CARGO Cargo Cargo crate.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param #CTLD_CARGO Cargo Cargo crate.
+  --- @return #CTLD self
   function CTLD:onbeforeTroopsPickedUp(From, Event, To, Group, Unit, Cargo)
     self:T({From, Event, To})
     return self
   end
   
     --- (Internal) FSM Function onbeforeCratesPickedUp.
-  -- @param #CTLD self
-  -- @param #string From State .
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #CTLD_CARGO Cargo Cargo crate.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State .
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param #CTLD_CARGO Cargo Cargo crate.
+  --- @return #CTLD self
   function CTLD:onbeforeCratesPickedUp(From, Event, To, Group, Unit, Cargo)
     self:T({From, Event, To})
     return self
   end
   
       --- (Internal) FSM Function onbeforeTroopsExtracted.
-    -- @param #CTLD self
-    -- @param #string From State.
-    -- @param #string Event Trigger.
-    -- @param #string To State.
-    -- @param Wrapper.Group#GROUP Group Group Object.
-    -- @param Wrapper.Unit#UNIT Unit Unit Object.
-    -- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
-    -- @return #CTLD self
+    --- @param #CTLD self
+    --- @param #string From State.
+    --- @param #string Event Trigger.
+    --- @param #string To State.
+    --- @param Wrapper.Group#GROUP Group Group Object.
+    --- @param Wrapper.Unit#UNIT Unit Unit Object.
+    --- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
+    --- @return #CTLD self
     function CTLD:onbeforeTroopsExtracted(From, Event, To, Group, Unit, Troops)
       self:T({From, Event, To})
       return self
@@ -4639,14 +4639,14 @@ end
     
     
   --- (Internal) FSM Function onbeforeTroopsDeployed.
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
+  --- @return #CTLD self
   function CTLD:onbeforeTroopsDeployed(From, Event, To, Group, Unit, Troops)
     self:T({From, Event, To})
     if Unit and Unit:IsPlayer() and self.PlayerTaskQueue then
@@ -4674,15 +4674,15 @@ end
   end
   
   --- (Internal) FSM Function onafterTroopsDeployed.
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
-  -- @param #CTLD.CargoZoneType Type Type of Cargo deployed
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
+  --- @param #CTLD.CargoZoneType Type Type of Cargo deployed
+  --- @return #CTLD self
   function CTLD:onafterTroopsDeployed(From, Event, To, Group, Unit, Troops, Type)
     self:T({From, Event, To})
     if self.movetroopstowpzone and Type ~= CTLD_CARGO.Enum.ENGINEERS then
@@ -4692,28 +4692,28 @@ end
   end
   
   --- (Internal) FSM Function onbeforeCratesDropped.
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #table Cargotable Table of #CTLD_CARGO objects dropped.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param #table Cargotable Table of #CTLD_CARGO objects dropped.
+  --- @return #CTLD self
   function CTLD:onbeforeCratesDropped(From, Event, To, Group, Unit, Cargotable)
     self:T({From, Event, To})
     return self
   end
   
   --- (Internal) FSM Function onbeforeCratesBuild.
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB build.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB build.
+  --- @return #CTLD self
   function CTLD:onbeforeCratesBuild(From, Event, To, Group, Unit, Vehicle)
     self:T({From, Event, To})
     if Unit and Unit:IsPlayer() and self.PlayerTaskQueue then
@@ -4741,14 +4741,14 @@ end
   end
 
   --- (Internal) FSM Function onafterCratesBuild.
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB build.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB build.
+  --- @return #CTLD self
   function CTLD:onafterCratesBuild(From, Event, To, Group, Unit, Vehicle)
     self:T({From, Event, To})
     if self.movetroopstowpzone then
@@ -4758,25 +4758,25 @@ end
   end
   
   --- (Internal) FSM Function onbeforeTroopsRTB.
-  -- @param #CTLD self
-  -- @param #string From State.
-  -- @param #string Event Trigger.
-  -- @param #string To State.
-  -- @param Wrapper.Group#GROUP Group Group Object.
-  -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @return #CTLD self
+  --- @param #CTLD self
+  --- @param #string From State.
+  --- @param #string Event Trigger.
+  --- @param #string To State.
+  --- @param Wrapper.Group#GROUP Group Group Object.
+  --- @param Wrapper.Unit#UNIT Unit Unit Object.
+  --- @return #CTLD self
   function CTLD:onbeforeTroopsRTB(From, Event, To, Group, Unit)
     self:T({From, Event, To})
     return self
   end
   
   --- On before "Save" event. Checks if io and lfs are available.
-  -- @param #CTLD self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string path (Optional) Path where the file is saved. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
-  -- @param #string filename (Optional) File name for saving. Default is "CTLD_<alias>_Persist.csv".
+  --- @param #CTLD self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string path (Optional) Path where the file is saved. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+  --- @param #string filename (Optional) File name for saving. Default is "CTLD_<alias>_Persist.csv".
   function CTLD:onbeforeSave(From, Event, To, path, filename)
     self:T({From, Event, To, path, filename})
     if not self.enableLoadSave then
@@ -4798,12 +4798,12 @@ end
   end
   
   --- On after "Save" event. Player data is saved to file.
-  -- @param #CTLD self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string path Path where the file is saved. If nil, file is saved in the DCS root installtion directory or your "Saved Games" folder if lfs was desanitized.
-  -- @param #string filename (Optional) File name for saving. Default is Default is "CTLD_<alias>_Persist.csv".
+  --- @param #CTLD self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string path Path where the file is saved. If nil, file is saved in the DCS root installtion directory or your "Saved Games" folder if lfs was desanitized.
+  --- @param #string filename (Optional) File name for saving. Default is Default is "CTLD_<alias>_Persist.csv".
   function CTLD:onafterSave(From, Event, To, path, filename)
     self:T({From, Event, To, path, filename})
     -- Thanks to @FunkyFranky 
@@ -4949,12 +4949,12 @@ end
   end
 
   --- On before "Load" event. Checks if io and lfs and the file are available.
-  -- @param #CTLD self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string path (Optional) Path where the file is located. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
-  -- @param #string filename (Optional) File name for loading. Default is "CTLD_<alias>_Persist.csv".
+  --- @param #CTLD self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string path (Optional) Path where the file is located. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+  --- @param #string filename (Optional) File name for loading. Default is "CTLD_<alias>_Persist.csv".
   function CTLD:onbeforeLoad(From, Event, To, path, filename)
     self:T({From, Event, To, path, filename})
     if not self.enableLoadSave then
@@ -5010,12 +5010,12 @@ end
   end
 
   --- On after "Load" event. Loads dropped units from file.
-  -- @param #CTLD self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string path (Optional) Path where the file is located. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
-  -- @param #string filename (Optional) File name for loading. Default is "CTLD_<alias>_Persist.csv".
+  --- @param #CTLD self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string path (Optional) Path where the file is located. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+  --- @param #string filename (Optional) File name for loading. Default is "CTLD_<alias>_Persist.csv".
   function CTLD:onafterLoad(From, Event, To, path, filename)
     self:T({From, Event, To, path, filename})
     if not self.enableLoadSave then

@@ -218,166 +218,166 @@ function COMMANDER:New(Coalition, Alias)
 
   --- Triggers the FSM event "Start". Starts the COMMANDER.
   -- @function [parent=#COMMANDER] Start
-  -- @param #COMMANDER self
+  --- @param #COMMANDER self
 
   --- Triggers the FSM event "Start" after a delay. Starts the COMMANDER.
   -- @function [parent=#COMMANDER] __Start
-  -- @param #COMMANDER self
-  -- @param #number delay Delay in seconds.
+  --- @param #COMMANDER self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Stop". Stops the COMMANDER.
-  -- @param #COMMANDER self
+  --- @param #COMMANDER self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the COMMANDER.
   -- @function [parent=#COMMANDER] __Stop
-  -- @param #COMMANDER self
-  -- @param #number delay Delay in seconds.
+  --- @param #COMMANDER self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#COMMANDER] Status
-  -- @param #COMMANDER self
+  --- @param #COMMANDER self
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#COMMANDER] __Status
-  -- @param #COMMANDER self
-  -- @param #number delay Delay in seconds.
+  --- @param #COMMANDER self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "MissionAssign". Mission is added to a LEGION mission queue and already requested. Needs assets to be added to the mission!
   -- @function [parent=#COMMANDER] MissionAssign
-  -- @param #COMMANDER self
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-  -- @param #table Legions The Legion(s) to which the mission is assigned.
+  --- @param #COMMANDER self
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #table Legions The Legion(s) to which the mission is assigned.
 
   --- Triggers the FSM event "MissionAssign" after a delay. Mission is added to a LEGION mission queue and already requested. Needs assets to be added to the mission!
   -- @function [parent=#COMMANDER] __MissionAssign
-  -- @param #COMMANDER self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-  -- @param #table Legions The Legion(s) to which the mission is assigned.
+  --- @param #COMMANDER self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #table Legions The Legion(s) to which the mission is assigned.
 
   --- On after "MissionAssign" event.
   -- @function [parent=#COMMANDER] OnAfterMissionAssign
-  -- @param #COMMANDER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-  -- @param #table Legions The Legion(s) to which the mission is assigned.
+  --- @param #COMMANDER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #table Legions The Legion(s) to which the mission is assigned.
 
 
   --- Triggers the FSM event "MissionCancel".
   -- @function [parent=#COMMANDER] MissionCancel
-  -- @param #COMMANDER self
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #COMMANDER self
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- Triggers the FSM event "MissionCancel" after a delay.
   -- @function [parent=#COMMANDER] __MissionCancel
-  -- @param #COMMANDER self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #COMMANDER self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- On after "MissionCancel" event.
   -- @function [parent=#COMMANDER] OnAfterMissionCancel
-  -- @param #COMMANDER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #COMMANDER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
 
   --- Triggers the FSM event "TransportAssign".
   -- @function [parent=#COMMANDER] TransportAssign
-  -- @param #COMMANDER self
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
-  -- @param #table Legions The legion(s) to which this transport is assigned.
+  --- @param #COMMANDER self
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #table Legions The legion(s) to which this transport is assigned.
 
   --- Triggers the FSM event "TransportAssign" after a delay.
   -- @function [parent=#COMMANDER] __TransportAssign
-  -- @param #COMMANDER self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
-  -- @param #table Legions The legion(s) to which this transport is assigned.
+  --- @param #COMMANDER self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #table Legions The legion(s) to which this transport is assigned.
 
   --- On after "TransportAssign" event.
   -- @function [parent=#COMMANDER] OnAfterTransportAssign
-  -- @param #COMMANDER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
-  -- @param #table Legions The legion(s) to which this transport is assigned.
+  --- @param #COMMANDER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #table Legions The legion(s) to which this transport is assigned.
 
 
   --- Triggers the FSM event "TransportCancel".
   -- @function [parent=#COMMANDER] TransportCancel
-  -- @param #COMMANDER self
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #COMMANDER self
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
   --- Triggers the FSM event "TransportCancel" after a delay.
   -- @function [parent=#COMMANDER] __TransportCancel
-  -- @param #COMMANDER self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #COMMANDER self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
   --- On after "TransportCancel" event.
   -- @function [parent=#COMMANDER] OnAfterTransportCancel
-  -- @param #COMMANDER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #COMMANDER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
 
   --- Triggers the FSM event "OpsOnMission".
   -- @function [parent=#COMMANDER] OpsOnMission
-  -- @param #COMMANDER self
-  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #COMMANDER self
+  --- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- Triggers the FSM event "OpsOnMission" after a delay.
   -- @function [parent=#COMMANDER] __OpsOnMission
-  -- @param #COMMANDER self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #COMMANDER self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- On after "OpsOnMission" event.
   -- @function [parent=#COMMANDER] OnAfterOpsOnMission
-  -- @param #COMMANDER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #COMMANDER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
 
   --- Triggers the FSM event "LegionLost".
   -- @function [parent=#COMMANDER] LegionLost
-  -- @param #COMMANDER self
-  -- @param Ops.Legion#LEGION Legion The legion that was lost.
-  -- @param DCS#coalition.side Coalition which captured the warehouse.
-  -- @param DCS#country.id Country which has captured the warehouse.
+  --- @param #COMMANDER self
+  --- @param Ops.Legion#LEGION Legion The legion that was lost.
+  --- @param DCS#coalition.side Coalition which captured the warehouse.
+  --- @param DCS#country.id Country which has captured the warehouse.
 
   --- Triggers the FSM event "LegionLost".
   -- @function [parent=#COMMANDER] __LegionLost
-  -- @param #COMMANDER self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.Legion#LEGION Legion The legion that was lost.
-  -- @param DCS#coalition.side Coalition which captured the warehouse.
-  -- @param DCS#country.id Country which has captured the warehouse.
+  --- @param #COMMANDER self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.Legion#LEGION Legion The legion that was lost.
+  --- @param DCS#coalition.side Coalition which captured the warehouse.
+  --- @param DCS#country.id Country which has captured the warehouse.
 
   --- On after "LegionLost" event.
   -- @function [parent=#COMMANDER] OnAfterLegionLost
-  -- @param #COMMANDER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.Legion#LEGION Legion The legion that was lost.
-  -- @param DCS#coalition.side Coalition which captured the warehouse.
-  -- @param DCS#country.id Country which has captured the warehouse.
+  --- @param #COMMANDER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.Legion#LEGION Legion The legion that was lost.
+  --- @param DCS#coalition.side Coalition which captured the warehouse.
+  --- @param DCS#country.id Country which has captured the warehouse.
 
   return self
 end
@@ -1206,7 +1206,7 @@ end
 --- @param #string Event Event.
 --- @param #string To To state.
 --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
-  -- @param #table Legions The legion(s) to which this transport is assigned.
+  --- @param #table Legions The legion(s) to which this transport is assigned.
 function COMMANDER:onafterTransportAssign(From, Event, To, Transport, Legions)
   
   -- Set mission commander status to QUEUED as it is now queued at a legion.

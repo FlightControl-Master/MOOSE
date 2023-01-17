@@ -92,16 +92,16 @@
 --      Tank2:HandleEvent( EVENTS.Dead )
 --
 --      --- This function is an Event Handling function that will be called when Tank1 is Dead.
---      -- @param Wrapper.Unit#UNIT self
---      -- @param Core.Event#EVENTDATA EventData
+--      --- @param Wrapper.Unit#UNIT self
+--      --- @param Core.Event#EVENTDATA EventData
 --      function Tank1:OnEventDead( EventData )
 --
 --        self:SmokeGreen()
 --      end
 --
 --      --- This function is an Event Handling function that will be called when Tank2 is Dead.
---      -- @param Wrapper.Unit#UNIT self
---      -- @param Core.Event#EVENTDATA EventData
+--      --- @param Wrapper.Unit#UNIT self
+--      --- @param Core.Event#EVENTDATA EventData
 --      function Tank2:OnEventDead( EventData )
 --
 --        self:SmokeBlue()
@@ -134,8 +134,8 @@
 --      --- This function is an Event Handling function that will be called when Tank1 is Dead.
 --      -- EventData is an EVENTDATA structure.
 --      -- We use the EventData.IniUnit to smoke the tank Green.
---      -- @param Wrapper.Unit#UNIT self
---      -- @param Core.Event#EVENTDATA EventData
+--      --- @param Wrapper.Unit#UNIT self
+--      --- @param Core.Event#EVENTDATA EventData
 --      function Tank1:OnEventDead( EventData )
 --
 --        EventData.IniUnit:SmokeGreen()
@@ -818,11 +818,11 @@ end
 do -- OnBirth
 
   --- Create an OnBirth event handler for a group
-  -- @param #EVENT self
-  -- @param Wrapper.Group#GROUP EventGroup
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param EventClass The self instance of the class for which the event is.
-  -- @return #EVENT self
+  --- @param #EVENT self
+  --- @param Wrapper.Group#GROUP EventGroup
+  --- @param #function EventFunction The function to be called when the event occurs for the unit.
+  --- @param EventClass The self instance of the class for which the event is.
+  --- @return #EVENT self
   function EVENT:OnBirthForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
 
@@ -836,11 +836,11 @@ end
 do -- OnCrash
 
   --- Create an OnCrash event handler for a group
-  -- @param #EVENT self
-  -- @param Wrapper.Group#GROUP EventGroup
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
+  --- @param #EVENT self
+  --- @param Wrapper.Group#GROUP EventGroup
+  --- @param #function EventFunction The function to be called when the event occurs for the unit.
+  --- @param EventClass The self instance of the class for which the event is.
+  --- @return #EVENT
   function EVENT:OnCrashForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
 
@@ -854,11 +854,11 @@ end
 do -- OnDead
 
   --- Create an OnDead event handler for a group
-  -- @param #EVENT self
-  -- @param Wrapper.Group#GROUP EventGroup The GROUP object.
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param #table EventClass The self instance of the class for which the event is.
-  -- @return #EVENT self
+  --- @param #EVENT self
+  --- @param Wrapper.Group#GROUP EventGroup The GROUP object.
+  --- @param #function EventFunction The function to be called when the event occurs for the unit.
+  --- @param #table EventClass The self instance of the class for which the event is.
+  --- @return #EVENT self
   function EVENT:OnDeadForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
 
@@ -873,11 +873,11 @@ end
 do -- OnLand
 
   --- Create an OnLand event handler for a group
-  -- @param #EVENT self
-  -- @param #table EventTemplate
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param #table EventClass The self instance of the class for which the event is.
-  -- @return #EVENT self
+  --- @param #EVENT self
+  --- @param #table EventTemplate
+  --- @param #function EventFunction The function to be called when the event occurs for the unit.
+  --- @param #table EventClass The self instance of the class for which the event is.
+  --- @return #EVENT self
   function EVENT:OnLandForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
 
@@ -891,11 +891,11 @@ end
 do -- OnTakeOff
 
   --- Create an OnTakeOff event handler for a group
-  -- @param #EVENT self
-  -- @param #table EventTemplate Template table.
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param #table EventClass The self instance of the class for which the event is.
-  -- @return #EVENT self
+  --- @param #EVENT self
+  --- @param #table EventTemplate Template table.
+  --- @param #function EventFunction The function to be called when the event occurs for the unit.
+  --- @param #table EventClass The self instance of the class for which the event is.
+  --- @return #EVENT self
   function EVENT:OnTakeOffForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
 
@@ -909,11 +909,11 @@ end
 do -- OnEngineShutDown
 
   --- Create an OnDead event handler for a group
-  -- @param #EVENT self
-  -- @param #table EventTemplate
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
+  --- @param #EVENT self
+  --- @param #table EventTemplate
+  --- @param #function EventFunction The function to be called when the event occurs for the unit.
+  --- @param EventClass The self instance of the class for which the event is.
+  --- @return #EVENT
   function EVENT:OnEngineShutDownForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
 
@@ -927,8 +927,8 @@ end
 do -- Event Creation
 
   --- Creation of a New Cargo Event.
-  -- @param #EVENT self
-  -- @param AI.AI_Cargo#AI_CARGO Cargo The Cargo created.
+  --- @param #EVENT self
+  --- @param AI.AI_Cargo#AI_CARGO Cargo The Cargo created.
   function EVENT:CreateEventNewCargo( Cargo )
     self:F( { Cargo } )
 
@@ -942,8 +942,8 @@ do -- Event Creation
   end
 
   --- Creation of a Cargo Deletion Event.
-  -- @param #EVENT self
-  -- @param AI.AI_Cargo#AI_CARGO Cargo The Cargo created.
+  --- @param #EVENT self
+  --- @param AI.AI_Cargo#AI_CARGO Cargo The Cargo created.
   function EVENT:CreateEventDeleteCargo( Cargo )
     self:F( { Cargo } )
 
@@ -957,8 +957,8 @@ do -- Event Creation
   end
 
   --- Creation of a New Zone Event.
-  -- @param #EVENT self
-  -- @param Core.Zone#ZONE_BASE Zone The Zone created.
+  --- @param #EVENT self
+  --- @param Core.Zone#ZONE_BASE Zone The Zone created.
   function EVENT:CreateEventNewZone( Zone )
     self:F( { Zone } )
 
@@ -972,8 +972,8 @@ do -- Event Creation
   end
 
   --- Creation of a Zone Deletion Event.
-  -- @param #EVENT self
-  -- @param Core.Zone#ZONE_BASE Zone The Zone created.
+  --- @param #EVENT self
+  --- @param Core.Zone#ZONE_BASE Zone The Zone created.
   function EVENT:CreateEventDeleteZone( Zone )
     self:F( { Zone } )
 
@@ -987,8 +987,8 @@ do -- Event Creation
   end
 
   --- Creation of a New ZoneGoal Event.
-  -- @param #EVENT self
-  -- @param Core.Functional#ZONE_GOAL ZoneGoal The ZoneGoal created.
+  --- @param #EVENT self
+  --- @param Core.Functional#ZONE_GOAL ZoneGoal The ZoneGoal created.
   function EVENT:CreateEventNewZoneGoal( ZoneGoal )
     self:F( { ZoneGoal } )
 
@@ -1003,8 +1003,8 @@ do -- Event Creation
 
 
   --- Creation of a ZoneGoal Deletion Event.
-  -- @param #EVENT self
-  -- @param Functional.ZoneGoal#ZONE_GOAL ZoneGoal The ZoneGoal created.
+  --- @param #EVENT self
+  --- @param Functional.ZoneGoal#ZONE_GOAL ZoneGoal The ZoneGoal created.
   function EVENT:CreateEventDeleteZoneGoal( ZoneGoal )
     self:F( { ZoneGoal } )
 
@@ -1019,8 +1019,8 @@ do -- Event Creation
 
 
   --- Creation of a S_EVENT_PLAYER_ENTER_UNIT Event.
-  -- @param #EVENT self
-  -- @param Wrapper.Unit#UNIT PlayerUnit.
+  --- @param #EVENT self
+  --- @param Wrapper.Unit#UNIT PlayerUnit.
   function EVENT:CreateEventPlayerEnterUnit( PlayerUnit )
     self:F( { PlayerUnit } )
 
@@ -1034,8 +1034,8 @@ do -- Event Creation
   end
 
   --- Creation of a S_EVENT_PLAYER_ENTER_AIRCRAFT event.
-  -- @param #EVENT self
-  -- @param Wrapper.Unit#UNIT PlayerUnit The aircraft unit the player entered.
+  --- @param #EVENT self
+  --- @param Wrapper.Unit#UNIT PlayerUnit The aircraft unit the player entered.
   function EVENT:CreateEventPlayerEnterAircraft( PlayerUnit )
     self:F( { PlayerUnit } )
 

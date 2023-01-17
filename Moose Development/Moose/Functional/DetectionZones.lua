@@ -5,8 +5,8 @@
 do -- DETECTION_ZONES
 
   --- @type DETECTION_ZONES
-  -- @field DCS#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
-  -- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Wrapper.Unit}s, @{Core.Zone}s, the center @{Wrapper.Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
+  --- @field DCS#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
+  --- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Wrapper.Unit}s, @{Core.Zone}s, the center @{Wrapper.Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
   -- @extends Functional.Detection#DETECTION_BASE
 
   --- (old, to be revised ) Detect units within the battle zone for a list of @{Core.Zone}s detecting targets following (a) detection method(s), 
@@ -39,7 +39,7 @@ do -- DETECTION_ZONES
   --   
   -- the detected zones when a new detection has taken place.
   -- 
-  -- @field #DETECTION_ZONES
+  --- @field #DETECTION_ZONES
   DETECTION_ZONES = {
     ClassName = "DETECTION_ZONES",
     DetectionZoneRange = nil,
@@ -47,10 +47,10 @@ do -- DETECTION_ZONES
 
 
   --- DETECTION_ZONES constructor.
-  -- @param #DETECTION_ZONES self
-  -- @param Core.Set#SET_ZONE DetectionSetZone The @{Core.Set} of ZONE_RADIUS.
-  -- @param DCS#Coalition.side DetectionCoalition The coalition of the detection.
-  -- @return #DETECTION_ZONES
+  --- @param #DETECTION_ZONES self
+  --- @param Core.Set#SET_ZONE DetectionSetZone The @{Core.Set} of ZONE_RADIUS.
+  --- @param DCS#Coalition.side DetectionCoalition The coalition of the detection.
+  --- @return #DETECTION_ZONES
   function DETECTION_ZONES:New( DetectionSetZone, DetectionCoalition )
 
     -- Inherits from DETECTION_BASE
@@ -69,7 +69,7 @@ do -- DETECTION_ZONES
   end
 
   --- @param #DETECTION_ZONES self
-  -- @param #number The amount of alive recce.
+  --- @param #number The amount of alive recce.
   function DETECTION_ZONES:CountAliveRecce()
 
     return self.DetectionSetZone:Count()
@@ -86,11 +86,11 @@ do -- DETECTION_ZONES
   end
 
   --- Report summary of a detected item using a given numeric index.
-  -- @param #DETECTION_ZONES self
-  -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
-  -- @param Wrapper.Group#GROUP AttackGroup The group to get the settings for.
-  -- @param Core.Settings#SETTINGS Settings (Optional) Message formatting settings to use.
-  -- @return Core.Report#REPORT The report of the detection items.
+  --- @param #DETECTION_ZONES self
+  --- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
+  --- @param Wrapper.Group#GROUP AttackGroup The group to get the settings for.
+  --- @param Core.Settings#SETTINGS Settings (Optional) Message formatting settings to use.
+  --- @return Core.Report#REPORT The report of the detection items.
   function DETECTION_ZONES:DetectedItemReportSummary( DetectedItem, AttackGroup, Settings )
     self:F( { DetectedItem = DetectedItem } )
   
@@ -121,9 +121,9 @@ do -- DETECTION_ZONES
   end
 
   --- Report detailed of a detection result.
-  -- @param #DETECTION_ZONES self
-  -- @param Wrapper.Group#GROUP AttackGroup The group to generate the report for.
-  -- @return #string
+  --- @param #DETECTION_ZONES self
+  --- @param Wrapper.Group#GROUP AttackGroup The group to generate the report for.
+  --- @return #string
   function DETECTION_ZONES:DetectedReportDetailed( AttackGroup ) --R2.1  Fixed missing report
     self:F()
     
@@ -142,8 +142,8 @@ do -- DETECTION_ZONES
 
   
   --- Calculate the optimal intercept point of the DetectedItem.
-  -- @param #DETECTION_ZONES self
-  -- @param #DETECTION_BASE.DetectedItem DetectedItem
+  --- @param #DETECTION_ZONES self
+  --- @param #DETECTION_BASE.DetectedItem DetectedItem
   function DETECTION_ZONES:CalculateIntercept( DetectedItem )
 
     local DetectedCoord = DetectedItem.Coordinate
@@ -168,8 +168,8 @@ do -- DETECTION_ZONES
   
 
   --- Smoke the detected units
-  -- @param #DETECTION_ZONES self
-  -- @return #DETECTION_ZONES self
+  --- @param #DETECTION_ZONES self
+  --- @return #DETECTION_ZONES self
   function DETECTION_ZONES:SmokeDetectedUnits()
     self:F2()
   
@@ -178,8 +178,8 @@ do -- DETECTION_ZONES
   end
   
   --- Flare the detected units
-  -- @param #DETECTION_ZONES self
-  -- @return #DETECTION_ZONES self
+  --- @param #DETECTION_ZONES self
+  --- @return #DETECTION_ZONES self
   function DETECTION_ZONES:FlareDetectedUnits()
     self:F2()
   
@@ -188,8 +188,8 @@ do -- DETECTION_ZONES
   end
   
   --- Smoke the detected zones
-  -- @param #DETECTION_ZONES self
-  -- @return #DETECTION_ZONES self
+  --- @param #DETECTION_ZONES self
+  --- @return #DETECTION_ZONES self
   function DETECTION_ZONES:SmokeDetectedZones()
     self:F2()
   
@@ -198,8 +198,8 @@ do -- DETECTION_ZONES
   end
   
   --- Flare the detected zones
-  -- @param #DETECTION_ZONES self
-  -- @return #DETECTION_ZONES self
+  --- @param #DETECTION_ZONES self
+  --- @return #DETECTION_ZONES self
   function DETECTION_ZONES:FlareDetectedZones()
     self:F2()
   
@@ -208,8 +208,8 @@ do -- DETECTION_ZONES
   end
 
   --- Bound the detected zones
-  -- @param #DETECTION_ZONES self
-  -- @return #DETECTION_ZONES self
+  --- @param #DETECTION_ZONES self
+  --- @return #DETECTION_ZONES self
   function DETECTION_ZONES:BoundDetectedZones()
     self:F2()
   
@@ -218,9 +218,9 @@ do -- DETECTION_ZONES
   end
   
   --- Make text documenting the changes of the detected zone.
-  -- @param #DETECTION_ZONES self
-  -- @param #DETECTION_BASE.DetectedItem DetectedItem
-  -- @return #string The Changes text
+  --- @param #DETECTION_ZONES self
+  --- @param #DETECTION_BASE.DetectedItem DetectedItem
+  --- @return #string The Changes text
   function DETECTION_ZONES:GetChangeText( DetectedItem )
     self:F( DetectedItem )
     
@@ -272,8 +272,8 @@ do -- DETECTION_ZONES
   
   
   --- Make a DetectionSet table. This function will be overridden in the derived clsses.
-  -- @param #DETECTION_ZONES self
-  -- @return #DETECTION_ZONES self
+  --- @param #DETECTION_ZONES self
+  --- @return #DETECTION_ZONES self
   function DETECTION_ZONES:CreateDetectionItems()
   
   
@@ -381,11 +381,11 @@ do -- DETECTION_ZONES
   end
 
   --- @param #DETECTION_ZONES self
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @param Detection The element on which the detection is based.
-  -- @param #number DetectionTimeStamp Time stamp of detection event.
+  --- @param #string From The From State string.
+  --- @param #string Event The Event string.
+  --- @param #string To The To State string.
+  --- @param Detection The element on which the detection is based.
+  --- @param #number DetectionTimeStamp Time stamp of detection event.
   function DETECTION_ZONES:onafterDetection( From, Event, To, Detection, DetectionTimeStamp  )
 
     self.DetectionRun = self.DetectionRun + 1
@@ -405,9 +405,9 @@ do -- DETECTION_ZONES
   
   
   --- Set IsDetected flag for the DetectedItem, which can have more units.
-  -- @param #DETECTION_ZONES self
-  -- @return #DETECTION_ZONES.DetectedItem DetectedItem
-  -- @return #boolean true if at least one UNIT is detected from the DetectedSet, false if no UNIT was detected from the DetectedSet.
+  --- @param #DETECTION_ZONES self
+  --- @return #DETECTION_ZONES.DetectedItem DetectedItem
+  --- @return #boolean true if at least one UNIT is detected from the DetectedSet, false if no UNIT was detected from the DetectedSet.
   function DETECTION_ZONES:UpdateDetectedItemDetection( DetectedItem )
     
     local IsDetected = true

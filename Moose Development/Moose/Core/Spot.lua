@@ -80,15 +80,15 @@ do
   -- 
   -- The method @{#SPOT.IsLasing}() indicates whether lasing is on or off.
   -- 
-  -- @field #SPOT
+  --- @field #SPOT
   SPOT = {
     ClassName = "SPOT",
   }
   
   --- SPOT Constructor.
-  -- @param #SPOT self
-  -- @param Wrapper.Unit#UNIT Recce Unit that is lasing
-  -- @return #SPOT
+  --- @param #SPOT self
+  --- @param Wrapper.Unit#UNIT Recce Unit that is lasing
+  --- @return #SPOT
   function SPOT:New( Recce )
   
     local self = BASE:Inherit( self, FSM:New() ) -- #SPOT
@@ -99,65 +99,65 @@ do
     
     --- LaseOn Handler OnBefore for SPOT
     -- @function [parent=#SPOT] OnBeforeLaseOn
-    -- @param #SPOT self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
+    --- @param #SPOT self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @return #boolean
     
     --- LaseOn Handler OnAfter for SPOT
     -- @function [parent=#SPOT] OnAfterLaseOn
-    -- @param #SPOT self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
+    --- @param #SPOT self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
     
     --- LaseOn Trigger for SPOT
     -- @function [parent=#SPOT] LaseOn
-    -- @param #SPOT self
-    -- @param Wrapper.Positionable#POSITIONABLE Target
-    -- @param #number LaserCode Laser code.
-    -- @param #number Duration Duration of lasing in seconds.
+    --- @param #SPOT self
+    --- @param Wrapper.Positionable#POSITIONABLE Target
+    --- @param #number LaserCode Laser code.
+    --- @param #number Duration Duration of lasing in seconds.
     
     --- LaseOn Asynchronous Trigger for SPOT
     -- @function [parent=#SPOT] __LaseOn
-    -- @param #SPOT self
-    -- @param #number Delay
-    -- @param Wrapper.Positionable#POSITIONABLE Target
-    -- @param #number LaserCode Laser code.
-    -- @param #number Duration Duration of lasing in seconds.
+    --- @param #SPOT self
+    --- @param #number Delay
+    --- @param Wrapper.Positionable#POSITIONABLE Target
+    --- @param #number LaserCode Laser code.
+    --- @param #number Duration Duration of lasing in seconds.
 
     self:AddTransition( "Off", "LaseOnCoordinate", "On" )
     
     --- LaseOnCoordinate Handler OnBefore for SPOT.
     -- @function [parent=#SPOT] OnBeforeLaseOnCoordinate
-    -- @param #SPOT self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
+    --- @param #SPOT self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @return #boolean
     
     --- LaseOnCoordinate Handler OnAfter for SPOT.
     -- @function [parent=#SPOT] OnAfterLaseOnCoordinate
-    -- @param #SPOT self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
+    --- @param #SPOT self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
     
     --- LaseOnCoordinate Trigger for SPOT.
     -- @function [parent=#SPOT] LaseOnCoordinate
-    -- @param #SPOT self
-    -- @param Core.Point#COORDINATE Coordinate The coordinate to lase.
-    -- @param #number LaserCode Laser code.
-    -- @param #number Duration Duration of lasing in seconds.
+    --- @param #SPOT self
+    --- @param Core.Point#COORDINATE Coordinate The coordinate to lase.
+    --- @param #number LaserCode Laser code.
+    --- @param #number Duration Duration of lasing in seconds.
     
     --- LaseOn Asynchronous Trigger for SPOT
     -- @function [parent=#SPOT] __LaseOn
-    -- @param #SPOT self
-    -- @param #number Delay
-    -- @param Wrapper.Positionable#POSITIONABLE Target
-    -- @param #number LaserCode Laser code.
-    -- @param #number Duration Duration of lasing in seconds.
+    --- @param #SPOT self
+    --- @param #number Delay
+    --- @param Wrapper.Positionable#POSITIONABLE Target
+    --- @param #number LaserCode Laser code.
+    --- @param #number Duration Duration of lasing in seconds.
 
     
     
@@ -166,53 +166,53 @@ do
     
     --- LaseOff Handler OnBefore for SPOT
     -- @function [parent=#SPOT] OnBeforeLaseOff
-    -- @param #SPOT self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
+    --- @param #SPOT self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @return #boolean
     
     --- LaseOff Handler OnAfter for SPOT
     -- @function [parent=#SPOT] OnAfterLaseOff
-    -- @param #SPOT self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
+    --- @param #SPOT self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
     
     --- LaseOff Trigger for SPOT
     -- @function [parent=#SPOT] LaseOff
-    -- @param #SPOT self
+    --- @param #SPOT self
     
     --- LaseOff Asynchronous Trigger for SPOT
     -- @function [parent=#SPOT] __LaseOff
-    -- @param #SPOT self
-    -- @param #number Delay
+    --- @param #SPOT self
+    --- @param #number Delay
     
     self:AddTransition( "*" , "Destroyed", "Destroyed" )
     
     --- Destroyed Handler OnBefore for SPOT
     -- @function [parent=#SPOT] OnBeforeDestroyed
-    -- @param #SPOT self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
+    --- @param #SPOT self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @return #boolean
     
     --- Destroyed Handler OnAfter for SPOT
     -- @function [parent=#SPOT] OnAfterDestroyed
-    -- @param #SPOT self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
+    --- @param #SPOT self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
     
     --- Destroyed Trigger for SPOT
     -- @function [parent=#SPOT] Destroyed
-    -- @param #SPOT self
+    --- @param #SPOT self
     
     --- Destroyed Asynchronous Trigger for SPOT
     -- @function [parent=#SPOT] __Destroyed
-    -- @param #SPOT self
-    -- @param #number Delay
+    --- @param #SPOT self
+    --- @param #number Delay
     
     
   
@@ -228,13 +228,13 @@ do
   end
   
   --- On after LaseOn event. Activates the laser spot.
-  -- @param #SPOT self
-  -- @param From
-  -- @param Event
-  -- @param To
-  -- @param Wrapper.Positionable#POSITIONABLE Target Unit that is being lased.
-  -- @param #number LaserCode Laser code.
-  -- @param #number Duration Duration of lasing in seconds.
+  --- @param #SPOT self
+  --- @param From
+  --- @param Event
+  --- @param To
+  --- @param Wrapper.Positionable#POSITIONABLE Target Unit that is being lased.
+  --- @param #number LaserCode Laser code.
+  --- @param #number Duration Duration of lasing in seconds.
   function SPOT:onafterLaseOn( From, Event, To, Target, LaserCode, Duration )
     self:F( { "LaseOn", Target, LaserCode, Duration } )
 
@@ -265,13 +265,13 @@ do
   
   
   --- On after LaseOnCoordinate event. Activates the laser spot.
-  -- @param #SPOT self
-  -- @param From
-  -- @param Event
-  -- @param To
-  -- @param Core.Point#COORDINATE Coordinate The coordinate at which the laser is pointing.
-  -- @param #number LaserCode Laser code.
-  -- @param #number Duration Duration of lasing in seconds.
+  --- @param #SPOT self
+  --- @param From
+  --- @param Event
+  --- @param To
+  --- @param Core.Point#COORDINATE Coordinate The coordinate at which the laser is pointing.
+  --- @param #number LaserCode Laser code.
+  --- @param #number Duration Duration of lasing in seconds.
   function SPOT:onafterLaseOnCoordinate(From, Event, To, Coordinate, LaserCode, Duration)
     self:F( { "LaseOnCoordinate", Coordinate, LaserCode, Duration } )
 
@@ -298,7 +298,7 @@ do
   end  
 
   --- @param #SPOT self
-  -- @param Core.Event#EVENTDATA EventData
+  --- @param Core.Event#EVENTDATA EventData
   function SPOT:OnEventDead(EventData)
     self:F( { Dead = EventData.IniDCSUnitName, Target = self.Target } )
     if self.Target then
@@ -311,9 +311,9 @@ do
   end
   
   --- @param #SPOT self
-  -- @param From
-  -- @param Event
-  -- @param To
+  --- @param From
+  --- @param Event
+  --- @param To
   function SPOT:onafterLasing( From, Event, To )
   
     if self.Target and self.Target:IsAlive() then
@@ -337,10 +337,10 @@ do
   end
 
   --- @param #SPOT self
-  -- @param From
-  -- @param Event
-  -- @param To
-  -- @return #SPOT
+  --- @param From
+  --- @param Event
+  --- @param To
+  --- @return #SPOT
   function SPOT:onafterLaseOff( From, Event, To )
   
     self:F( {"Stopped lasing for ", self.Target and self.Target:GetName() or "coord", SpotIR = self.SportIR, SpotLaser = self.SpotLaser } )
@@ -364,16 +364,16 @@ do
   end
   
   --- Check if the SPOT is lasing
-  -- @param #SPOT self
-  -- @return #boolean true if it is lasing
+  --- @param #SPOT self
+  --- @return #boolean true if it is lasing
   function SPOT:IsLasing()
     return self.Lasing
   end
   
   --- Set laser start position relative to the lasing unit.
-  -- @param #SPOT self
-  -- @param #table position Start position of the laser relative to the lasing unit. Default is { x = 0, y = 2, z = 0 }
-  -- @return #SPOT self
+  --- @param #SPOT self
+  --- @param #table position Start position of the laser relative to the lasing unit. Default is { x = 0, y = 2, z = 0 }
+  --- @return #SPOT self
   -- @usage
   --      -- Set lasing position to be the position of the optics of the Gazelle M:
   --      myspot:SetRelativeStartPosition({ x = 1.7, y = 1.2, z = 0 })

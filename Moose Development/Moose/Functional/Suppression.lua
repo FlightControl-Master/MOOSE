@@ -379,261 +379,261 @@ function SUPPRESSION:New(group)
 
   --- Trigger "Status" event.
   -- @function [parent=#SUPPRESSION] Status
-  -- @param #SUPPRESSION self
+  --- @param #SUPPRESSION self
 
   --- Trigger "Status" event after a delay.
   -- @function [parent=#SUPPRESSION] __Status
-  -- @param #SUPPRESSION self
-  -- @param #number Delay Delay in seconds.
+  --- @param #SUPPRESSION self
+  --- @param #number Delay Delay in seconds.
 
   --- User function for OnAfter "Status" event.
   -- @function [parent=#SUPPRESSION] OnAfterStatus
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Trigger "Hit" event.
   -- @function [parent=#SUPPRESSION] Hit
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Unit#UNIT Unit Unit that was hit.
-  -- @param Wrapper.Unit#UNIT AttackUnit Unit that attacked.
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Unit#UNIT Unit Unit that was hit.
+  --- @param Wrapper.Unit#UNIT AttackUnit Unit that attacked.
 
   --- Trigger "Hit" event after a delay.
   -- @function [parent=#SUPPRESSION] __Hit
-  -- @param #SUPPRESSION self
-  -- @param #number Delay Delay in seconds. 
-  -- @param Wrapper.Unit#UNIT Unit Unit that was hit.
-  -- @param Wrapper.Unit#UNIT AttackUnit Unit that attacked.
+  --- @param #SUPPRESSION self
+  --- @param #number Delay Delay in seconds. 
+  --- @param Wrapper.Unit#UNIT Unit Unit that was hit.
+  --- @param Wrapper.Unit#UNIT AttackUnit Unit that attacked.
 
   --- User function for OnBefore "Hit" event.
   -- @function [parent=#SUPPRESSION] OnBeforeHit
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Unit#UNIT Unit Unit that was hit.
-  -- @param Wrapper.Unit#UNIT AttackUnit Unit that attacked.
-  -- @return #boolean
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Unit#UNIT Unit Unit that was hit.
+  --- @param Wrapper.Unit#UNIT AttackUnit Unit that attacked.
+  --- @return #boolean
 
   --- User function for OnAfter "Hit" event.
   -- @function [parent=#SUPPRESSION] OnAfterHit
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Unit#UNIT Unit Unit that was hit.
-  -- @param Wrapper.Unit#UNIT AttackUnit Unit that attacked.
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Unit#UNIT Unit Unit that was hit.
+  --- @param Wrapper.Unit#UNIT AttackUnit Unit that attacked.
 
   
   --- Trigger "Recovered" event.
   -- @function [parent=#SUPPRESSION] Recovered
-  -- @param #SUPPRESSION self
+  --- @param #SUPPRESSION self
 
   --- Trigger "Recovered" event after a delay.
   -- @function [parent=#SUPPRESSION] Recovered
-  -- @param #number Delay Delay in seconds. 
-  -- @param #SUPPRESSION self
+  --- @param #number Delay Delay in seconds. 
+  --- @param #SUPPRESSION self
 
   --- User function for OnBefore "Recovered" event.
   -- @function [parent=#SUPPRESSION] OnBeforeRecovered
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @return #boolean  
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @return #boolean  
 
   --- User function for OnAfter "Recovered" event.
   -- @function [parent=#SUPPRESSION] OnAfterRecovered
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Trigger "TakeCover" event.
   -- @function [parent=#SUPPRESSION] TakeCover
-  -- @param #SUPPRESSION self
-  -- @param Core.Point#COORDINATE Hideout Place where the group will hide.
+  --- @param #SUPPRESSION self
+  --- @param Core.Point#COORDINATE Hideout Place where the group will hide.
 
   --- Trigger "TakeCover" event after a delay.
   -- @function [parent=#SUPPRESSION] __TakeCover
-  -- @param #SUPPRESSION self
-  -- @param #number Delay Delay in seconds. 
-  -- @param Core.Point#COORDINATE Hideout Place where the group will hide.
+  --- @param #SUPPRESSION self
+  --- @param #number Delay Delay in seconds. 
+  --- @param Core.Point#COORDINATE Hideout Place where the group will hide.
 
   --- User function for OnBefore "TakeCover" event.
   -- @function [parent=#SUPPRESSION] OnBeforeTakeCover
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Core.Point#COORDINATE Hideout Place where the group will hide.
-  -- @return #boolean
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Core.Point#COORDINATE Hideout Place where the group will hide.
+  --- @return #boolean
 
   --- User function for OnAfter "TakeCover" event.
   -- @function [parent=#SUPPRESSION] OnAfterTakeCover
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Core.Point#COORDINATE Hideout Place where the group will hide.
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Core.Point#COORDINATE Hideout Place where the group will hide.
 
 
   --- Trigger "FallBack" event.
   -- @function [parent=#SUPPRESSION] FallBack
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Unit#UNIT AttackUnit Attacking unit. We will move away from this.
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Unit#UNIT AttackUnit Attacking unit. We will move away from this.
 
   --- Trigger "FallBack" event after a delay.
   -- @function [parent=#SUPPRESSION] __FallBack
-  -- @param #SUPPRESSION self
-  -- @param #number Delay Delay in seconds. 
-  -- @param Wrapper.Unit#UNIT AttackUnit Attacking unit. We will move away from this.
+  --- @param #SUPPRESSION self
+  --- @param #number Delay Delay in seconds. 
+  --- @param Wrapper.Unit#UNIT AttackUnit Attacking unit. We will move away from this.
 
   --- User function for OnBefore "FallBack" event.
   -- @function [parent=#SUPPRESSION] OnBeforeFallBack
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Unit#UNIT AttackUnit Attacking unit. We will move away from this.
-  -- @return #boolean
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Unit#UNIT AttackUnit Attacking unit. We will move away from this.
+  --- @return #boolean
 
   --- User function for OnAfter "FallBack" event.
   -- @function [parent=#SUPPRESSION] OnAfterFallBack
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Unit#UNIT AttackUnit Attacking unit. We will move away from this.
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Unit#UNIT AttackUnit Attacking unit. We will move away from this.
 
 
   --- Trigger "Retreat" event.
   -- @function [parent=#SUPPRESSION] Retreat
-  -- @param #SUPPRESSION self
+  --- @param #SUPPRESSION self
 
   --- Trigger "Retreat" event after a delay.
   -- @function [parent=#SUPPRESSION] __Retreat
-  -- @param #SUPPRESSION self
-  -- @param #number Delay Delay in seconds. 
+  --- @param #SUPPRESSION self
+  --- @param #number Delay Delay in seconds. 
 
   --- User function for OnBefore "Retreat" event.
   -- @function [parent=#SUPPRESSION] OnBeforeRetreat
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @return #boolean
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @return #boolean
   
   --- User function for OnAfter "Retreat" event.
   -- @function [parent=#SUPPRESSION] OnAfterRetreat
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Trigger "Retreated" event.
   -- @function [parent=#SUPPRESSION] Retreated
-  -- @param #SUPPRESSION self
+  --- @param #SUPPRESSION self
 
   --- Trigger "Retreated" event after a delay.
   -- @function [parent=#SUPPRESSION] __Retreated
-  -- @param #SUPPRESSION self
-  -- @param #number Delay Delay in seconds. 
+  --- @param #SUPPRESSION self
+  --- @param #number Delay Delay in seconds. 
 
   --- User function for OnBefore "Retreated" event.
   -- @function [parent=#SUPPRESSION] OnBeforeRetreated
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @return #boolean
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @return #boolean
   
   --- User function for OnAfter "Retreated" event.
   -- @function [parent=#SUPPRESSION] OnAfterRetreated
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Trigger "FightBack" event.
   -- @function [parent=#SUPPRESSION] FightBack
-  -- @param #SUPPRESSION self
+  --- @param #SUPPRESSION self
 
   --- Trigger "FightBack" event after a delay.
   -- @function [parent=#SUPPRESSION] __FightBack
-  -- @param #SUPPRESSION self
-  -- @param #number Delay Delay in seconds. 
+  --- @param #SUPPRESSION self
+  --- @param #number Delay Delay in seconds. 
 
   --- User function for OnBefore "FlightBack" event.
   -- @function [parent=#SUPPRESSION] OnBeforeFightBack
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @return #boolean
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @return #boolean
   
   --- User function for OnAfter "FlightBack" event.
   -- @function [parent=#SUPPRESSION] OnAfterFightBack
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Trigger "OutOfAmmo" event.
   -- @function [parent=#SUPPRESSION] OutOfAmmo
-  -- @param #SUPPRESSION self
+  --- @param #SUPPRESSION self
 
   --- Trigger "OutOfAmmo" event after a delay.
   -- @function [parent=#SUPPRESSION] __OutOfAmmo
-  -- @param #SUPPRESSION self
-  -- @param #number Delay Delay in seconds. 
+  --- @param #SUPPRESSION self
+  --- @param #number Delay Delay in seconds. 
 
   --- User function for OnAfter "OutOfAmmo" event.
   -- @function [parent=#SUPPRESSION] OnAfterOutOfAmmo
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Trigger "Dead" event.
   -- @function [parent=#SUPPRESSION] Dead
-  -- @param #SUPPRESSION self
+  --- @param #SUPPRESSION self
 
   --- Trigger "Dead" event after a delay.
   -- @function [parent=#SUPPRESSION] __Dead
-  -- @param #SUPPRESSION self
-  -- @param #number Delay Delay in seconds. 
+  --- @param #SUPPRESSION self
+  --- @param #number Delay Delay in seconds. 
 
   --- User function for OnAfter "Dead" event.
   -- @function [parent=#SUPPRESSION] OnAfterDead
-  -- @param #SUPPRESSION self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #SUPPRESSION self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   return self
 end
@@ -1505,7 +1505,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Event handler for suppressed groups.
---@param #SUPPRESSION self
+--- @param #SUPPRESSION self
 function SUPPRESSION:onEvent(Event)
   --self:E(event)
   
@@ -1680,11 +1680,11 @@ end
 
 
 --- Make group run/drive to a certain point. We put in several intermediate waypoints because sometimes the group stops before it arrived at the desired point.
---@param #SUPPRESSION self
---@param Core.Point#COORDINATE fin Coordinate where we want to go.
---@param #number speed Speed of group. Default is 20.
---@param #string formation Formation of group. Default is "Vee".
---@param #number wait Time the group will wait/hold at final waypoint. Default is 30 seconds.
+--- @param #SUPPRESSION self
+--- @param Core.Point#COORDINATE fin Coordinate where we want to go.
+--- @param #number speed Speed of group. Default is 20.
+--- @param #string formation Formation of group. Default is "Vee".
+--- @param #number wait Time the group will wait/hold at final waypoint. Default is 30 seconds.
 function SUPPRESSION:_Run(fin, speed, formation, wait)
 
   speed=speed or 20
@@ -1743,10 +1743,10 @@ function SUPPRESSION:_Run(fin, speed, formation, wait)
 end
 
 --- Function called when group is passing a waypoint. At the last waypoint we set the group back to CombatReady.
---@param Wrapper.Group#GROUP group Group which is passing a waypoint.
---@param #SUPPRESSION Fsm The suppression object.
---@param #number i Waypoint number that has been reached.
---@param #boolean final True if it is the final waypoint. Start Fightback.
+--- @param Wrapper.Group#GROUP group Group which is passing a waypoint.
+--- @param #SUPPRESSION Fsm The suppression object.
+--- @param #number i Waypoint number that has been reached.
+--- @param #boolean final True if it is the final waypoint. Start Fightback.
 function SUPPRESSION._Passing_Waypoint(group, Fsm, i, final)
 
   -- Debug message.
@@ -1769,9 +1769,9 @@ end
 
 
 --- Search a place to hide. This is any scenery object in the vicinity.
---@param #SUPPRESSION self
---@return Core.Point#COORDINATE Coordinate of the hideout place.
---@return nil If no scenery object is within search radius.
+--- @param #SUPPRESSION self
+--- @return Core.Point#COORDINATE Coordinate of the hideout place.
+--- @return nil If no scenery object is within search radius.
 function SUPPRESSION:_SearchHideout()
   -- We search objects in a zone with radius ~300 m around the group.
   local Zone = ZONE_GROUP:New("Zone_Hiding", self.Controllable, self.TakecoverRange)
@@ -1896,10 +1896,10 @@ end
 
 
 --- Heading from point a to point b in degrees.
---@param #SUPPRESSION self
---@param Core.Point#COORDINATE a Coordinate.
---@param Core.Point#COORDINATE b Coordinate.
---@return #number angle Angle from a to b in degrees.
+--- @param #SUPPRESSION self
+--- @param Core.Point#COORDINATE a Coordinate.
+--- @param Core.Point#COORDINATE b Coordinate.
+--- @return #number angle Angle from a to b in degrees.
 function SUPPRESSION:_Heading(a, b)
   local dx = b.x-a.x
   local dy = b.z-a.z

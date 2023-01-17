@@ -236,7 +236,7 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
   --self.SetClient:Flush()
 
   self.SetClient:ForEachClient(
-    --- @param Wrapper.Client#CLIENT Client
+    -- @param Wrapper.Client#CLIENT Client
     function( Client )
       self:T3(Client.ClientName)
 
@@ -259,7 +259,7 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
             self:T2( RangeZone )
             
             _DATABASE:ForEachPlayerUnit(
-              --- @param Wrapper.Unit#UNIT RangeTestUnit
+              -- @param Wrapper.Unit#UNIT RangeTestUnit
               function( RangeTestUnit, RangeZone, AIGroup, PlayerInRange )
                 self:T2( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
                 if RangeTestUnit:IsInZone( RangeZone ) == true then
@@ -271,7 +271,7 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
                 end
               end,
               
-              --- @param Core.Zone#ZONE_RADIUS RangeZone
+              -- @param Core.Zone#ZONE_RADIUS RangeZone
               -- @param Wrapper.Group#GROUP AIGroup
               function( RangeZone, AIGroup, PlayerInRange )
                 if PlayerInRange.Value == false then

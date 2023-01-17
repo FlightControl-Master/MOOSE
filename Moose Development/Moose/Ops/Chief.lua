@@ -422,259 +422,259 @@ function CHIEF:New(Coalition, AgentSet, Alias)
 
   --- Triggers the FSM event "Start".
   -- @function [parent=#CHIEF] Start
-  -- @param #CHIEF self
+  --- @param #CHIEF self
 
   --- Triggers the FSM event "Start" after a delay.
   -- @function [parent=#CHIEF] __Start
-  -- @param #CHIEF self
-  -- @param #number delay Delay in seconds.
+  --- @param #CHIEF self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Stop".
-  -- @param #CHIEF self
+  --- @param #CHIEF self
 
   --- Triggers the FSM event "Stop" after a delay.
   -- @function [parent=#CHIEF] __Stop
-  -- @param #CHIEF self
-  -- @param #number delay Delay in seconds.
+  --- @param #CHIEF self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#CHIEF] Status
-  -- @param #CHIEF self
+  --- @param #CHIEF self
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#CHIEF] __Status
-  -- @param #CHIEF self
-  -- @param #number delay Delay in seconds.
+  --- @param #CHIEF self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "DefconChange".
   -- @function [parent=#CHIEF] DefconChange
-  -- @param #CHIEF self
-  -- @param #string Defcon New Defence Condition.
+  --- @param #CHIEF self
+  --- @param #string Defcon New Defence Condition.
 
   --- Triggers the FSM event "DefconChange" after a delay.
   -- @function [parent=#CHIEF] __DefconChange
-  -- @param #CHIEF self
-  -- @param #number delay Delay in seconds.
-  -- @param #string Defcon New Defence Condition.
+  --- @param #CHIEF self
+  --- @param #number delay Delay in seconds.
+  --- @param #string Defcon New Defence Condition.
 
   --- On after "DefconChange" event.
   -- @function [parent=#CHIEF] OnAfterDefconChange
-  -- @param #CHIEF self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string Defcon New Defence Condition.
+  --- @param #CHIEF self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string Defcon New Defence Condition.
 
 
   --- Triggers the FSM event "StrategyChange".
   -- @function [parent=#CHIEF] StrategyChange
-  -- @param #CHIEF self
-  -- @param #string Strategy New strategy.
+  --- @param #CHIEF self
+  --- @param #string Strategy New strategy.
 
   --- Triggers the FSM event "StrategyChange" after a delay.
   -- @function [parent=#CHIEF] __StrategyChange
-  -- @param #CHIEF self
-  -- @param #number delay Delay in seconds.
-  -- @param #string Strategy New strategy.
+  --- @param #CHIEF self
+  --- @param #number delay Delay in seconds.
+  --- @param #string Strategy New strategy.
 
   --- On after "StrategyChange" event.
   -- @function [parent=#CHIEF] OnAfterStrategyChange
-  -- @param #CHIEF self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string Strategy New strategy.
+  --- @param #CHIEF self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string Strategy New strategy.
 
 
   --- Triggers the FSM event "MissionAssign".
   -- @function [parent=#CHIEF] MissionAssign
-  -- @param #CHIEF self
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-  -- @param #table Legions The Legion(s) to which the mission is assigned.
+  --- @param #CHIEF self
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #table Legions The Legion(s) to which the mission is assigned.
 
   --- Triggers the FSM event "MissionAssign" after a delay.
   -- @function [parent=#CHIEF] __MissionAssign
-  -- @param #CHIEF self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-  -- @param #table Legions The Legion(s) to which the mission is assigned.
+  --- @param #CHIEF self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #table Legions The Legion(s) to which the mission is assigned.
 
   --- On after "MissionAssign" event.
   -- @function [parent=#CHIEF] OnAfterMissionAssign
-  -- @param #CHIEF self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-  -- @param #table Legions The Legion(s) to which the mission is assigned.
+  --- @param #CHIEF self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #table Legions The Legion(s) to which the mission is assigned.
 
   --- Triggers the FSM event "MissionCancel".
   -- @function [parent=#CHIEF] MissionCancel
-  -- @param #CHIEF self
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #CHIEF self
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- Triggers the FSM event "MissionCancel" after a delay.
   -- @function [parent=#CHIEF] __MissionCancel
-  -- @param #CHIEF self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #CHIEF self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- On after "MissionCancel" event.
   -- @function [parent=#CHIEF] OnAfterMissionCancel
-  -- @param #CHIEF self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #CHIEF self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
 
   --- Triggers the FSM event "TransportCancel".
   -- @function [parent=#CHIEF] TransportCancel
-  -- @param #CHIEF self
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #CHIEF self
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
   --- Triggers the FSM event "TransportCancel" after a delay.
   -- @function [parent=#CHIEF] __TransportCancel
-  -- @param #CHIEF self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #CHIEF self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
   --- On after "TransportCancel" event.
   -- @function [parent=#CHIEF] OnAfterTransportCancel
-  -- @param #CHIEF self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #CHIEF self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
 
   --- Triggers the FSM event "OpsOnMission".
   -- @function [parent=#CHIEF] OpsOnMission
-  -- @param #CHIEF self
-  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #CHIEF self
+  --- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- Triggers the FSM event "OpsOnMission" after a delay.
   -- @function [parent=#CHIEF] __OpsOnMission
-  -- @param #CHIEF self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #CHIEF self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- On after "OpsOnMission" event.
   -- @function [parent=#CHIEF] OnAfterOpsOnMission
-  -- @param #CHIEF self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #CHIEF self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
 
   --- Triggers the FSM event "ZoneCaptured".
   -- @function [parent=#CHIEF] ZoneCaptured
-  -- @param #CHIEF self
-  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that was captured.
+  --- @param #CHIEF self
+  --- @param Ops.OpsZone#OPSZONE OpsZone Zone that was captured.
 
   --- Triggers the FSM event "ZoneCaptured" after a delay.
   -- @function [parent=#CHIEF] __ZoneCaptured
-  -- @param #CHIEF self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that was captured.
+  --- @param #CHIEF self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.OpsZone#OPSZONE OpsZone Zone that was captured.
 
   --- On after "ZoneCaptured" event.
   -- @function [parent=#CHIEF] OnAfterZoneCaptured
-  -- @param #CHIEF self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that was captured. 
+  --- @param #CHIEF self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.OpsZone#OPSZONE OpsZone Zone that was captured. 
 
   --- Triggers the FSM event "ZoneLost".
   -- @function [parent=#CHIEF] ZoneLost
-  -- @param #CHIEF self
-  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that was lost.
+  --- @param #CHIEF self
+  --- @param Ops.OpsZone#OPSZONE OpsZone Zone that was lost.
 
   --- Triggers the FSM event "ZoneLost" after a delay.
   -- @function [parent=#CHIEF] __ZoneLost
-  -- @param #CHIEF self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that was lost.
+  --- @param #CHIEF self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.OpsZone#OPSZONE OpsZone Zone that was lost.
 
   --- On after "ZoneLost" event.
   -- @function [parent=#CHIEF] OnAfterZoneLost
-  -- @param #CHIEF self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that was lost. 
+  --- @param #CHIEF self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.OpsZone#OPSZONE OpsZone Zone that was lost. 
 
   --- Triggers the FSM event "ZoneEmpty".
   -- @function [parent=#CHIEF] ZoneEmpty
-  -- @param #CHIEF self
-  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is empty now.
+  --- @param #CHIEF self
+  --- @param Ops.OpsZone#OPSZONE OpsZone Zone that is empty now.
 
   --- Triggers the FSM event "ZoneEmpty" after a delay.
   -- @function [parent=#CHIEF] __ZoneEmpty
-  -- @param #CHIEF self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is empty now.
+  --- @param #CHIEF self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.OpsZone#OPSZONE OpsZone Zone that is empty now.
 
   --- On after "ZoneEmpty" event.
   -- @function [parent=#CHIEF] OnAfterZoneEmpty
-  -- @param #CHIEF self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is empty now.
+  --- @param #CHIEF self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.OpsZone#OPSZONE OpsZone Zone that is empty now.
 
   --- Triggers the FSM event "ZoneAttacked".
   -- @function [parent=#CHIEF] ZoneAttacked
-  -- @param #CHIEF self
-  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is being attacked.
+  --- @param #CHIEF self
+  --- @param Ops.OpsZone#OPSZONE OpsZone Zone that is being attacked.
 
   --- Triggers the FSM event "ZoneAttacked" after a delay.
   -- @function [parent=#CHIEF] __ZoneAttacked
-  -- @param #CHIEF self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is being attacked.
+  --- @param #CHIEF self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.OpsZone#OPSZONE OpsZone Zone that is being attacked.
 
   --- On after "ZoneAttacked" event.
   -- @function [parent=#CHIEF] OnAfterZoneAttacked
-  -- @param #CHIEF self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is being attacked. 
+  --- @param #CHIEF self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.OpsZone#OPSZONE OpsZone Zone that is being attacked. 
 
 
   --- Triggers the FSM event "LegionLost".
   -- @function [parent=#CHIEF] LegionLost
-  -- @param #CHIEF self
-  -- @param Ops.Legion#LEGION Legion The legion that was lost.
-  -- @param DCS#coalition.side Coalition which captured the warehouse.
-  -- @param DCS#country.id Country which has captured the warehouse.
+  --- @param #CHIEF self
+  --- @param Ops.Legion#LEGION Legion The legion that was lost.
+  --- @param DCS#coalition.side Coalition which captured the warehouse.
+  --- @param DCS#country.id Country which has captured the warehouse.
 
   --- Triggers the FSM event "LegionLost".
   -- @function [parent=#CHIEF] __LegionLost
-  -- @param #CHIEF self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.Legion#LEGION Legion The legion that was lost.
-  -- @param DCS#coalition.side Coalition which captured the warehouse.
-  -- @param DCS#country.id Country which has captured the warehouse.
+  --- @param #CHIEF self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.Legion#LEGION Legion The legion that was lost.
+  --- @param DCS#coalition.side Coalition which captured the warehouse.
+  --- @param DCS#country.id Country which has captured the warehouse.
 
   --- On after "LegionLost" event.
   -- @function [parent=#CHIEF] OnAfterLegionLost
-  -- @param #CHIEF self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.Legion#LEGION Legion The legion that was lost.
-  -- @param DCS#coalition.side Coalition which captured the warehouse.
-  -- @param DCS#country.id Country which has captured the warehouse.
+  --- @param #CHIEF self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.Legion#LEGION Legion The legion that was lost.
+  --- @param DCS#coalition.side Coalition which captured the warehouse.
+  --- @param DCS#country.id Country which has captured the warehouse.
 
 
   return self
@@ -2039,7 +2039,7 @@ end
 --- @param #string Event Event.
 --- @param #string To To state.
 --- @param Ops.Auftrag#AUFTRAG Mission The mission.
-  -- @param #table Legions The Legion(s) to which the mission is assigned.
+  --- @param #table Legions The Legion(s) to which the mission is assigned.
 function CHIEF:onafterMissionAssign(From, Event, To, Mission, Legions)
 
   if self.commander then

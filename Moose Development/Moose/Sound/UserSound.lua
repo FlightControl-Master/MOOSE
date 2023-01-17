@@ -31,15 +31,15 @@ do -- UserSound
   --   
   --   * @{#USERSOUND.New}(): Creates a new USERSOUND object.
   -- 
-  -- @field #USERSOUND
+  --- @field #USERSOUND
   USERSOUND = {
     ClassName = "USERSOUND",
   }
   
   --- USERSOUND Constructor.
-  -- @param #USERSOUND self
-  -- @param #string UserSoundFileName The filename of the usersound.
-  -- @return #USERSOUND
+  --- @param #USERSOUND self
+  --- @param #string UserSoundFileName The filename of the usersound.
+  --- @return #USERSOUND
   function USERSOUND:New( UserSoundFileName ) 
   
     local self = BASE:Inherit( self, BASE:New() ) -- #USERSOUND
@@ -51,9 +51,9 @@ do -- UserSound
 
 
   --- Set usersound filename.
-  -- @param #USERSOUND self
-  -- @param #string UserSoundFileName The filename of the usersound.
-  -- @return #USERSOUND The usersound instance.
+  --- @param #USERSOUND self
+  --- @param #string UserSoundFileName The filename of the usersound.
+  --- @return #USERSOUND The usersound instance.
   -- @usage
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
   --   BlueVictory:SetFileName( "BlueVictoryLoud.ogg" ) -- Set the BlueVictory to change the file name to play a louder sound.
@@ -69,8 +69,8 @@ do -- UserSound
 
 
   --- Play the usersound to all players.
-  -- @param #USERSOUND self
-  -- @return #USERSOUND The usersound instance.
+  --- @param #USERSOUND self
+  --- @return #USERSOUND The usersound instance.
   -- @usage
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
   --   BlueVictory:ToAll() -- Play the sound that Blue has won.
@@ -84,9 +84,9 @@ do -- UserSound
 
   
   --- Play the usersound to the given coalition.
-  -- @param #USERSOUND self
-  -- @param DCS#coalition Coalition The coalition to play the usersound to.
-  -- @return #USERSOUND The usersound instance.
+  --- @param #USERSOUND self
+  --- @param DCS#coalition Coalition The coalition to play the usersound to.
+  --- @return #USERSOUND The usersound instance.
   -- @usage
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
   --   BlueVictory:ToCoalition( coalition.side.BLUE ) -- Play the sound that Blue has won to the blue coalition.
@@ -100,9 +100,9 @@ do -- UserSound
 
 
   --- Play the usersound to the given country.
-  -- @param #USERSOUND self
-  -- @param DCS#country Country The country to play the usersound to.
-  -- @return #USERSOUND The usersound instance.
+  --- @param #USERSOUND self
+  --- @param DCS#country Country The country to play the usersound to.
+  --- @return #USERSOUND The usersound instance.
   -- @usage
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
   --   BlueVictory:ToCountry( country.id.USA ) -- Play the sound that Blue has won to the USA country.
@@ -116,10 +116,10 @@ do -- UserSound
 
 
   --- Play the usersound to the given @{Wrapper.Group}.
-  -- @param #USERSOUND self
-  -- @param Wrapper.Group#GROUP Group The @{Wrapper.Group} to play the usersound to.
-  -- @param #number Delay (Optional) Delay in seconds, before the sound is played. Default 0.
-  -- @return #USERSOUND The usersound instance.
+  --- @param #USERSOUND self
+  --- @param Wrapper.Group#GROUP Group The @{Wrapper.Group} to play the usersound to.
+  --- @param #number Delay (Optional) Delay in seconds, before the sound is played. Default 0.
+  --- @return #USERSOUND The usersound instance.
   -- @usage
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
   --   local PlayerGroup = GROUP:FindByName( "PlayerGroup" ) -- Search for the active group named "PlayerGroup", that contains a human player.
@@ -138,10 +138,10 @@ do -- UserSound
   end  
   
     --- Play the usersound to the given @{Wrapper.Unit}.
-  -- @param #USERSOUND self
-  -- @param Wrapper.Unit#UNIT Unit The @{Wrapper.Unit} to play the usersound to.
-  -- @param #number Delay (Optional) Delay in seconds, before the sound is played. Default 0.
-  -- @return #USERSOUND The usersound instance.
+  --- @param #USERSOUND self
+  --- @param Wrapper.Unit#UNIT Unit The @{Wrapper.Unit} to play the usersound to.
+  --- @param #number Delay (Optional) Delay in seconds, before the sound is played. Default 0.
+  --- @return #USERSOUND The usersound instance.
   -- @usage
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
   --   local PlayerUnit = UNIT:FindByName( "PlayerUnit" ) -- Search for the active unit named "PlayerUnit", a human player.

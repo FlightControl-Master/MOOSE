@@ -44,13 +44,13 @@
 do -- DETECTION MANAGER
   
   --- @type DETECTION_MANAGER
-  -- @field Core.Set#SET_GROUP SetGroup The groups to which the FAC will report to.
-  -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
-  -- @field Tasking.CommandCenter#COMMANDCENTER CC The command center that is used to communicate with the players.
+  --- @field Core.Set#SET_GROUP SetGroup The groups to which the FAC will report to.
+  --- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
+  --- @field Tasking.CommandCenter#COMMANDCENTER CC The command center that is used to communicate with the players.
   -- @extends Core.Fsm#FSM
 
   --- DETECTION_MANAGER class.
-  -- @field #DETECTION_MANAGER
+  --- @field #DETECTION_MANAGER
   DETECTION_MANAGER = {
     ClassName = "DETECTION_MANAGER",
     SetGroup = nil,
@@ -61,10 +61,10 @@ do -- DETECTION MANAGER
   DETECTION_MANAGER.CC = nil
   
   --- FAC constructor.
-  -- @param #DETECTION_MANAGER self
-  -- @param Core.Set#SET_GROUP SetGroup
-  -- @param Functional.Detection#DETECTION_BASE Detection
-  -- @return #DETECTION_MANAGER self
+  --- @param #DETECTION_MANAGER self
+  --- @param Core.Set#SET_GROUP SetGroup
+  --- @param Functional.Detection#DETECTION_BASE Detection
+  --- @return #DETECTION_MANAGER self
   function DETECTION_MANAGER:New( SetGroup, Detection )
   
     -- Inherits from BASE
@@ -78,27 +78,27 @@ do -- DETECTION MANAGER
     
     --- Start Handler OnBefore for DETECTION_MANAGER
     -- @function [parent=#DETECTION_MANAGER] OnBeforeStart
-    -- @param #DETECTION_MANAGER self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
+    --- @param #DETECTION_MANAGER self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @return #boolean
     
     --- Start Handler OnAfter for DETECTION_MANAGER
     -- @function [parent=#DETECTION_MANAGER] OnAfterStart
-    -- @param #DETECTION_MANAGER self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
+    --- @param #DETECTION_MANAGER self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
     
     --- Start Trigger for DETECTION_MANAGER
     -- @function [parent=#DETECTION_MANAGER] Start
-    -- @param #DETECTION_MANAGER self
+    --- @param #DETECTION_MANAGER self
     
     --- Start Asynchronous Trigger for DETECTION_MANAGER
     -- @function [parent=#DETECTION_MANAGER] __Start
-    -- @param #DETECTION_MANAGER self
-    -- @param #number Delay
+    --- @param #DETECTION_MANAGER self
+    --- @param #number Delay
     
     
     
@@ -106,69 +106,69 @@ do -- DETECTION MANAGER
     
     --- Stop Handler OnBefore for DETECTION_MANAGER
     -- @function [parent=#DETECTION_MANAGER] OnBeforeStop
-    -- @param #DETECTION_MANAGER self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
+    --- @param #DETECTION_MANAGER self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @return #boolean
     
     --- Stop Handler OnAfter for DETECTION_MANAGER
     -- @function [parent=#DETECTION_MANAGER] OnAfterStop
-    -- @param #DETECTION_MANAGER self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
+    --- @param #DETECTION_MANAGER self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
     
     --- Stop Trigger for DETECTION_MANAGER
     -- @function [parent=#DETECTION_MANAGER] Stop
-    -- @param #DETECTION_MANAGER self
+    --- @param #DETECTION_MANAGER self
     
     --- Stop Asynchronous Trigger for DETECTION_MANAGER
     -- @function [parent=#DETECTION_MANAGER] __Stop
-    -- @param #DETECTION_MANAGER self
-    -- @param #number Delay
+    --- @param #DETECTION_MANAGER self
+    --- @param #number Delay
 
     self:AddTransition( "Started", "Success", "Started" )
     
     --- Success Handler OnAfter for DETECTION_MANAGER
     -- @function [parent=#DETECTION_MANAGER] OnAfterSuccess
-    -- @param #DETECTION_MANAGER self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @param Tasking.Task#TASK Task
+    --- @param #DETECTION_MANAGER self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @param Tasking.Task#TASK Task
     
     
     self:AddTransition( "Started", "Failed", "Started" )
     
     --- Failed Handler OnAfter for DETECTION_MANAGER
     -- @function [parent=#DETECTION_MANAGER] OnAfterFailed
-    -- @param #DETECTION_MANAGER self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @param Tasking.Task#TASK Task
+    --- @param #DETECTION_MANAGER self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @param Tasking.Task#TASK Task
     
     
     self:AddTransition( "Started", "Aborted", "Started" )
     
     --- Aborted Handler OnAfter for DETECTION_MANAGER
     -- @function [parent=#DETECTION_MANAGER] OnAfterAborted
-    -- @param #DETECTION_MANAGER self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @param Tasking.Task#TASK Task
+    --- @param #DETECTION_MANAGER self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @param Tasking.Task#TASK Task
     
     self:AddTransition( "Started", "Cancelled", "Started" )
     
     --- Cancelled Handler OnAfter for DETECTION_MANAGER
     -- @function [parent=#DETECTION_MANAGER] OnAfterCancelled
-    -- @param #DETECTION_MANAGER self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @param Tasking.Task#TASK Task
+    --- @param #DETECTION_MANAGER self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @param Tasking.Task#TASK Task
     
 
     self:AddTransition( "Started", "Report", "Started" )
@@ -193,9 +193,9 @@ do -- DETECTION MANAGER
   end
   
   --- Set the reporting time interval.
-  -- @param #DETECTION_MANAGER self
-  -- @param #number RefreshTimeInterval The interval in seconds when a report needs to be done.
-  -- @return #DETECTION_MANAGER self
+  --- @param #DETECTION_MANAGER self
+  --- @param #number RefreshTimeInterval The interval in seconds when a report needs to be done.
+  --- @return #DETECTION_MANAGER self
   function DETECTION_MANAGER:SetRefreshTimeInterval( RefreshTimeInterval )
     self:F2()
   
@@ -204,9 +204,9 @@ do -- DETECTION MANAGER
   
   
   --- Set the reporting message display time.
-  -- @param #DETECTION_MANAGER self
-  -- @param #number ReportDisplayTime The display time in seconds when a report needs to be done.
-  -- @return #DETECTION_MANAGER self
+  --- @param #DETECTION_MANAGER self
+  --- @param #number ReportDisplayTime The display time in seconds when a report needs to be done.
+  --- @return #DETECTION_MANAGER self
   function DETECTION_MANAGER:SetReportDisplayTime( ReportDisplayTime )
     self:F2()
   
@@ -214,8 +214,8 @@ do -- DETECTION MANAGER
   end
   
   --- Get the reporting message display time.
-  -- @param #DETECTION_MANAGER self
-  -- @return #number ReportDisplayTime The display time in seconds when a report needs to be done.
+  --- @param #DETECTION_MANAGER self
+  --- @return #number ReportDisplayTime The display time in seconds when a report needs to be done.
   function DETECTION_MANAGER:GetReportDisplayTime()
     self:F2()
   
@@ -224,8 +224,8 @@ do -- DETECTION MANAGER
 
 
   --- Set a command center to communicate actions to the players reporting to the command center.
-  -- @param #DETECTION_MANAGER self
-  -- @return #DETECTION_MANGER self
+  --- @param #DETECTION_MANAGER self
+  --- @return #DETECTION_MANGER self
   function DETECTION_MANAGER:SetTacticalMenu( DispatcherMainMenuText, DispatcherMenuText )
 
     local DispatcherMainMenu = MENU_MISSION:New( DispatcherMainMenuText, nil )
@@ -242,9 +242,9 @@ do -- DETECTION MANAGER
 
   
   --- Set a command center to communicate actions to the players reporting to the command center.
-  -- @param #DETECTION_MANAGER self
-  -- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter The command center.
-  -- @return #DETECTION_MANGER self
+  --- @param #DETECTION_MANAGER self
+  --- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter The command center.
+  --- @return #DETECTION_MANGER self
   function DETECTION_MANAGER:SetCommandCenter( CommandCenter )
     
     self.CC = CommandCenter
@@ -254,8 +254,8 @@ do -- DETECTION MANAGER
   
   
   --- Get the command center to communicate actions to the players.
-  -- @param #DETECTION_MANAGER self
-  -- @return Tasking.CommandCenter#COMMANDCENTER The command center.
+  --- @param #DETECTION_MANAGER self
+  --- @return Tasking.CommandCenter#COMMANDCENTER The command center.
   function DETECTION_MANAGER:GetCommandCenter()
     
     return self.CC
@@ -263,14 +263,14 @@ do -- DETECTION MANAGER
  
   
   --- Send an information message to the players reporting to the command center.
-  -- @param #DETECTION_MANAGER self
-  -- @param #table Squadron The squadron table.
-  -- @param #string Message The message to be sent.
-  -- @param #string SoundFile The name of the sound file .wav or .ogg.
-  -- @param #number SoundDuration The duration of the sound.
-  -- @param #string SoundPath The path pointing to the folder in the mission file.
-  -- @param Wrapper.Group#GROUP DefenderGroup The defender group sending the message.
-  -- @return #DETECTION_MANGER self
+  --- @param #DETECTION_MANAGER self
+  --- @param #table Squadron The squadron table.
+  --- @param #string Message The message to be sent.
+  --- @param #string SoundFile The name of the sound file .wav or .ogg.
+  --- @param #number SoundDuration The duration of the sound.
+  --- @param #string SoundPath The path pointing to the folder in the mission file.
+  --- @param Wrapper.Group#GROUP DefenderGroup The defender group sending the message.
+  --- @return #DETECTION_MANGER self
   function DETECTION_MANAGER:MessageToPlayers( Squadron,  Message, DefenderGroup )
   
     self:F( { Message = Message } )
@@ -306,9 +306,9 @@ do -- DETECTION MANAGER
   
   
   --- Reports the detected items to the @{Core.Set#SET_GROUP}.
-  -- @param #DETECTION_MANAGER self
-  -- @param Functional.Detection#DETECTION_BASE Detection
-  -- @return #DETECTION_MANAGER self
+  --- @param #DETECTION_MANAGER self
+  --- @param Functional.Detection#DETECTION_BASE Detection
+  --- @return #DETECTION_MANAGER self
   function DETECTION_MANAGER:ProcessDetected( Detection )
   
   end
@@ -320,8 +320,8 @@ do -- DETECTION_REPORTING
 
   --- DETECTION_REPORTING class.
   --- @type DETECTION_REPORTING
-  -- @field Core.Set#SET_GROUP SetGroup The groups to which the FAC will report to.
-  -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
+  --- @field Core.Set#SET_GROUP SetGroup The groups to which the FAC will report to.
+  --- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
   -- @extends #DETECTION_MANAGER
   DETECTION_REPORTING = {
     ClassName = "DETECTION_REPORTING",
@@ -329,10 +329,10 @@ do -- DETECTION_REPORTING
   
   
   --- DETECTION_REPORTING constructor.
-  -- @param #DETECTION_REPORTING self
-  -- @param Core.Set#SET_GROUP SetGroup
-  -- @param Functional.Detection#DETECTION_AREAS Detection
-  -- @return #DETECTION_REPORTING self
+  --- @param #DETECTION_REPORTING self
+  --- @param Core.Set#SET_GROUP SetGroup
+  --- @param Functional.Detection#DETECTION_AREAS Detection
+  --- @return #DETECTION_REPORTING self
   function DETECTION_REPORTING:New( SetGroup, Detection )
   
     -- Inherits from DETECTION_MANAGER
@@ -343,9 +343,9 @@ do -- DETECTION_REPORTING
   end
   
   --- Creates a string of the detected items in a @{Functional.Detection} object.
-  -- @param #DETECTION_MANAGER self
-  -- @param Core.Set#SET_UNIT DetectedSet The detected Set created by the @{Functional.Detection#DETECTION_BASE} object.
-  -- @return #DETECTION_MANAGER self
+  --- @param #DETECTION_MANAGER self
+  --- @param Core.Set#SET_UNIT DetectedSet The detected Set created by the @{Functional.Detection#DETECTION_BASE} object.
+  --- @return #DETECTION_MANAGER self
   function DETECTION_REPORTING:GetDetectedItemsText( DetectedSet )
     self:F2()
   
@@ -375,10 +375,10 @@ do -- DETECTION_REPORTING
   
   
   --- Reports the detected items to the @{Core.Set#SET_GROUP}.
-  -- @param #DETECTION_REPORTING self
-  -- @param Wrapper.Group#GROUP Group The @{Wrapper.Group} object to where the report needs to go.
-  -- @param Functional.Detection#DETECTION_AREAS Detection The detection created by the @{Functional.Detection#DETECTION_BASE} object.
-  -- @return #boolean Return true if you want the reporting to continue... false will cancel the reporting loop.
+  --- @param #DETECTION_REPORTING self
+  --- @param Wrapper.Group#GROUP Group The @{Wrapper.Group} object to where the report needs to go.
+  --- @param Functional.Detection#DETECTION_AREAS Detection The detection created by the @{Functional.Detection#DETECTION_BASE} object.
+  --- @return #boolean Return true if you want the reporting to continue... false will cancel the reporting loop.
   function DETECTION_REPORTING:ProcessDetected( Group, Detection )
     self:F2( Group )
   

@@ -249,107 +249,107 @@ function FOX:New()
 
   --- Triggers the FSM event "Start". Starts the FOX. Initializes parameters and starts event handlers.
   -- @function [parent=#FOX] Start
-  -- @param #FOX self
+  --- @param #FOX self
 
   --- Triggers the FSM event "Start" after a delay. Starts the FOX. Initializes parameters and starts event handlers.
   -- @function [parent=#FOX] __Start
-  -- @param #FOX self
-  -- @param #number delay Delay in seconds.
+  --- @param #FOX self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Stop". Stops the FOX and all its event handlers.
-  -- @param #FOX self
+  --- @param #FOX self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the FOX and all its event handlers.
   -- @function [parent=#FOX] __Stop
-  -- @param #FOX self
-  -- @param #number delay Delay in seconds.
+  --- @param #FOX self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#FOX] Status
-  -- @param #FOX self
+  --- @param #FOX self
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#FOX] __Status
-  -- @param #FOX self
-  -- @param #number delay Delay in seconds.
+  --- @param #FOX self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "MissileLaunch".
   -- @function [parent=#FOX] MissileLaunch
-  -- @param #FOX self
-  -- @param #FOX.MissileData missile Data of the fired missile.
+  --- @param #FOX self
+  --- @param #FOX.MissileData missile Data of the fired missile.
 
   --- Triggers the FSM delayed event "MissileLaunch".
   -- @function [parent=#FOX] __MissileLaunch
-  -- @param #FOX self
-  -- @param #number delay Delay in seconds before the function is called.
-  -- @param #FOX.MissileData missile Data of the fired missile.
+  --- @param #FOX self
+  --- @param #number delay Delay in seconds before the function is called.
+  --- @param #FOX.MissileData missile Data of the fired missile.
 
   --- On after "MissileLaunch" event user function. Called when a missile was launched.
   -- @function [parent=#FOX] OnAfterMissileLaunch
-  -- @param #FOX self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #FOX.MissileData missile Data of the fired missile.
+  --- @param #FOX self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #FOX.MissileData missile Data of the fired missile.
 
   --- Triggers the FSM event "MissileDestroyed".
   -- @function [parent=#FOX] MissileDestroyed
-  -- @param #FOX self
-  -- @param #FOX.MissileData missile Data of the destroyed missile.
+  --- @param #FOX self
+  --- @param #FOX.MissileData missile Data of the destroyed missile.
 
   --- Triggers the FSM delayed event "MissileDestroyed".
   -- @function [parent=#FOX] __MissileDestroyed
-  -- @param #FOX self
-  -- @param #number delay Delay in seconds before the function is called.
-  -- @param #FOX.MissileData missile Data of the destroyed missile.
+  --- @param #FOX self
+  --- @param #number delay Delay in seconds before the function is called.
+  --- @param #FOX.MissileData missile Data of the destroyed missile.
 
   --- On after "MissileDestroyed" event user function. Called when a missile was destroyed.
   -- @function [parent=#FOX] OnAfterMissileDestroyed
-  -- @param #FOX self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #FOX.MissileData missile Data of the destroyed missile.
+  --- @param #FOX self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #FOX.MissileData missile Data of the destroyed missile.
 
 
   --- Triggers the FSM event "EnterSafeZone".
   -- @function [parent=#FOX] EnterSafeZone
-  -- @param #FOX self
-  -- @param #FOX.PlayerData player Player data.
+  --- @param #FOX self
+  --- @param #FOX.PlayerData player Player data.
 
   --- Triggers the FSM delayed event "EnterSafeZone".
   -- @function [parent=#FOX] __EnterSafeZone
-  -- @param #FOX self
-  -- @param #number delay Delay in seconds before the function is called.
-  -- @param #FOX.PlayerData player Player data.
+  --- @param #FOX self
+  --- @param #number delay Delay in seconds before the function is called.
+  --- @param #FOX.PlayerData player Player data.
 
   --- On after "EnterSafeZone" event user function. Called when a player enters a safe zone.
   -- @function [parent=#FOX] OnAfterEnterSafeZone
-  -- @param #FOX self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #FOX.PlayerData player Player data.
+  --- @param #FOX self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #FOX.PlayerData player Player data.
 
 
   --- Triggers the FSM event "ExitSafeZone".
   -- @function [parent=#FOX] ExitSafeZone
-  -- @param #FOX self
-  -- @param #FOX.PlayerData player Player data.
+  --- @param #FOX self
+  --- @param #FOX.PlayerData player Player data.
 
   --- Triggers the FSM delayed event "ExitSafeZone".
   -- @function [parent=#FOX] __ExitSafeZone
-  -- @param #FOX self
-  -- @param #number delay Delay in seconds before the function is called.
-  -- @param #FOX.PlayerData player Player data.
+  --- @param #FOX self
+  --- @param #number delay Delay in seconds before the function is called.
+  --- @param #FOX.PlayerData player Player data.
 
   --- On after "ExitSafeZone" event user function. Called when a player exists a safe zone.
   -- @function [parent=#FOX] OnAfterExitSafeZone
-  -- @param #FOX self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #FOX.PlayerData player Player data.
+  --- @param #FOX self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #FOX.PlayerData player Player data.
 
   
   return self

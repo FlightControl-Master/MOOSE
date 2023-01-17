@@ -448,95 +448,95 @@ function CSAR:New(Coalition, Template, Alias)
   
     --- Triggers the FSM event "Start". Starts the CSAR. Initializes parameters and starts event handlers.
   -- @function [parent=#CSAR] Start
-  -- @param #CSAR self
+  --- @param #CSAR self
 
   --- Triggers the FSM event "Start" after a delay. Starts the CSAR. Initializes parameters and starts event handlers.
   -- @function [parent=#CSAR] __Start
-  -- @param #CSAR self
-  -- @param #number delay Delay in seconds.
+  --- @param #CSAR self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Stop". Stops the CSAR and all its event handlers.
-  -- @param #CSAR self
+  --- @param #CSAR self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the CSAR and all its event handlers.
   -- @function [parent=#CSAR] __Stop
-  -- @param #CSAR self
-  -- @param #number delay Delay in seconds.
+  --- @param #CSAR self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#CSAR] Status
-  -- @param #CSAR self
+  --- @param #CSAR self
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#CSAR] __Status
-  -- @param #CSAR self
-  -- @param #number delay Delay in seconds.
+  --- @param #CSAR self
+  --- @param #number delay Delay in seconds.
   
   --- On After "PilotDown" event. Downed Pilot detected.
   -- @function [parent=#CSAR] OnAfterPilotDown
-  -- @param #CSAR self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Group#GROUP Group Group object of the downed pilot.
-  -- @param #number Frequency Beacon frequency in kHz.
-  -- @param #string Leadername Name of the #UNIT of the downed pilot.
-  -- @param #string CoordinatesText String of the position of the pilot. Format determined by self.coordtype.
+  --- @param #CSAR self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Group#GROUP Group Group object of the downed pilot.
+  --- @param #number Frequency Beacon frequency in kHz.
+  --- @param #string Leadername Name of the #UNIT of the downed pilot.
+  --- @param #string CoordinatesText String of the position of the pilot. Format determined by self.coordtype.
   
   --- On After "Aproach" event. Heli close to downed Pilot.
   -- @function [parent=#CSAR] OnAfterApproach
-  -- @param #CSAR self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string Heliname Name of the helicopter group.
-  -- @param #string Woundedgroupname Name of the downed pilot\'s group.
+  --- @param #CSAR self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string Heliname Name of the helicopter group.
+  --- @param #string Woundedgroupname Name of the downed pilot\'s group.
   
    --- On After "Landed" event. Heli landed at an airbase.
   -- @function [parent=#CSAR] OnAfterLanded
-  -- @param #CSAR self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string HeliName Name of the #UNIT which has landed.
-  -- @param Wrapper.Airbase#AIRBASE Airbase Airbase where the heli landed.
+  --- @param #CSAR self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string HeliName Name of the #UNIT which has landed.
+  --- @param Wrapper.Airbase#AIRBASE Airbase Airbase where the heli landed.
     
    --- On After "Boarded" event. Downed pilot boarded heli.
   -- @function [parent=#CSAR] OnAfterBoarded
-  -- @param #CSAR self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string Heliname Name of the helicopter group.
-  -- @param #string Woundedgroupname Name of the downed pilot\'s group.
-  -- @param #string Description Descriptive name of the group.
+  --- @param #CSAR self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string Heliname Name of the helicopter group.
+  --- @param #string Woundedgroupname Name of the downed pilot\'s group.
+  --- @param #string Description Descriptive name of the group.
 
     --- On After "Returning" event. Heli can return home with downed pilot(s).
   -- @function [parent=#CSAR] OnAfterReturning
-  -- @param #CSAR self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string Heliname Name of the helicopter group.
-  -- @param #string Woundedgroupname Name of the downed pilot\'s group.
+  --- @param #CSAR self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string Heliname Name of the helicopter group.
+  --- @param #string Woundedgroupname Name of the downed pilot\'s group.
   
     --- On After "Rescued" event. Pilot(s) have been brought to the MASH/FARP/AFB.
   -- @function [parent=#CSAR] OnAfterRescued
-  -- @param #CSAR self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Unit#UNIT HeliUnit Unit of the helicopter.
-  -- @param #string HeliName Name of the helicopter group.
-  -- @param #number PilotsSaved Number of the saved pilots on board when landing.
+  --- @param #CSAR self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Unit#UNIT HeliUnit Unit of the helicopter.
+  --- @param #string HeliName Name of the helicopter group.
+  --- @param #number PilotsSaved Number of the saved pilots on board when landing.
   
   --- On After "KIA" event. Pilot is dead.
   -- @function [parent=#CSAR] OnAfterKIA
-  -- @param #CSAR self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string Pilotname Name of the pilot KIA.
+  --- @param #CSAR self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string Pilotname Name of the pilot KIA.
   
   return self
 end
@@ -1849,8 +1849,8 @@ function CSAR:_DisplayToAllSAR(_message, _side, _messagetime)
 end
 
 ---(Internal) Request smoke at closest downed pilot.
---@param #CSAR self
---@param #string _unitName Name of the helicopter
+--- @param #CSAR self
+--- @param #string _unitName Name of the helicopter
 function CSAR:_Reqsmoke( _unitName )
   self:T(self.lid .. " _Reqsmoke")
   local _heli = self:_GetSARHeli(_unitName)

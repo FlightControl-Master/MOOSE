@@ -101,30 +101,30 @@ function MARKEROPS_BASE:New(Tagname,Keywords,Casesensitive)
   
    --- On after "MarkAdded" event. Triggered when a Marker is added to the F10 map.
    -- @function [parent=#MARKEROPS_BASE] OnAfterMarkAdded
-   -- @param #MARKEROPS_BASE self
-   -- @param #string From The From state
-   -- @param #string Event The Event called
-   -- @param #string To The To state
-   -- @param #string Text The text on the marker
-   -- @param #table Keywords Table of matching keywords found in the Event text
-   -- @param Core.Point#COORDINATE Coord Coordinate of the marker.
+   --- @param #MARKEROPS_BASE self
+   --- @param #string From The From state
+   --- @param #string Event The Event called
+   --- @param #string To The To state
+   --- @param #string Text The text on the marker
+   --- @param #table Keywords Table of matching keywords found in the Event text
+   --- @param Core.Point#COORDINATE Coord Coordinate of the marker.
    
    --- On after "MarkChanged" event. Triggered when a Marker is changed on the F10 map.
    -- @function [parent=#MARKEROPS_BASE] OnAfterMarkChanged
-   -- @param #MARKEROPS_BASE self
-   -- @param #string From The From state
-   -- @param #string Event The Event called
-   -- @param #string To The To state
-   -- @param #string Text The text on the marker
-   -- @param #table Keywords Table of matching keywords found in the Event text
-   -- @param Core.Point#COORDINATE Coord Coordinate of the marker.
+   --- @param #MARKEROPS_BASE self
+   --- @param #string From The From state
+   --- @param #string Event The Event called
+   --- @param #string To The To state
+   --- @param #string Text The text on the marker
+   --- @param #table Keywords Table of matching keywords found in the Event text
+   --- @param Core.Point#COORDINATE Coord Coordinate of the marker.
   
    --- On after "MarkDeleted" event. Triggered when a Marker is deleted from the F10 map.
    -- @function [parent=#MARKEROPS_BASE] OnAfterMarkDeleted
-   -- @param #MARKEROPS_BASE self
-   -- @param #string From The From state
-   -- @param #string Event The Event called
-   -- @param #string To The To state
+   --- @param #MARKEROPS_BASE self
+   --- @param #string From The From state
+   --- @param #string Event The Event called
+   --- @param #string To The To state
    
       --- "Stop" trigger. Used to stop the function an unhandle events
    -- @function [parent=#MARKEROPS_BASE] Stop
@@ -217,43 +217,43 @@ function MARKEROPS_BASE:_MatchKeywords(Eventtext)
 end
 
 --- On before "MarkAdded" event. Triggered when a Marker is added to the F10 map.
- -- @param #MARKEROPS_BASE self
- -- @param #string From The From state
- -- @param #string Event The Event called
- -- @param #string To The To state
- -- @param #string Text The text on the marker
- -- @param #table Keywords Table of matching keywords found in the Event text
- -- @param Core.Point#COORDINATE Coord Coordinate of the marker.
+ --- @param #MARKEROPS_BASE self
+ --- @param #string From The From state
+ --- @param #string Event The Event called
+ --- @param #string To The To state
+ --- @param #string Text The text on the marker
+ --- @param #table Keywords Table of matching keywords found in the Event text
+ --- @param Core.Point#COORDINATE Coord Coordinate of the marker.
 function MARKEROPS_BASE:onbeforeMarkAdded(From,Event,To,Text,Keywords,Coord)
   self:T({self.lid,From,Event,To,Text,Keywords,Coord:ToStringLLDDM()})
 end
 
 --- On before "MarkChanged" event. Triggered when a Marker is changed on the F10 map.
- -- @param #MARKEROPS_BASE self
- -- @param #string From The From state
- -- @param #string Event The Event called
- -- @param #string To The To state
- -- @param #string Text The text on the marker
- -- @param #table Keywords Table of matching keywords found in the Event text
- -- @param Core.Point#COORDINATE Coord Coordinate of the marker.
+ --- @param #MARKEROPS_BASE self
+ --- @param #string From The From state
+ --- @param #string Event The Event called
+ --- @param #string To The To state
+ --- @param #string Text The text on the marker
+ --- @param #table Keywords Table of matching keywords found in the Event text
+ --- @param Core.Point#COORDINATE Coord Coordinate of the marker.
 function MARKEROPS_BASE:onbeforeMarkChanged(From,Event,To,Text,Keywords,Coord)
   self:T({self.lid,From,Event,To,Text,Keywords,Coord:ToStringLLDDM()})
 end
 
 --- On before "MarkDeleted" event. Triggered when a Marker is removed from the F10 map.
- -- @param #MARKEROPS_BASE self
- -- @param #string From The From state
- -- @param #string Event The Event called
- -- @param #string To The To state
+ --- @param #MARKEROPS_BASE self
+ --- @param #string From The From state
+ --- @param #string Event The Event called
+ --- @param #string To The To state
 function MARKEROPS_BASE:onbeforeMarkDeleted(From,Event,To)
   self:T({self.lid,From,Event,To})
 end
 
 --- On enter "Stopped" event. Unsubscribe events.
- -- @param #MARKEROPS_BASE self
- -- @param #string From The From state
- -- @param #string Event The Event called
- -- @param #string To The To state
+ --- @param #MARKEROPS_BASE self
+ --- @param #string From The From state
+ --- @param #string Event The Event called
+ --- @param #string To The To state
 function MARKEROPS_BASE:onenterStopped(From,Event,To)
   self:T({self.lid,From,Event,To})
   -- unsubscribe from events

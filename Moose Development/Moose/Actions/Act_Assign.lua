@@ -85,9 +85,9 @@ do -- ACT_ASSIGN
 
   --- ACT_ASSIGN class
   --- @type ACT_ASSIGN
-  -- @field Tasking.Task#TASK Task
-  -- @field Wrapper.Unit#UNIT ProcessUnit
-  -- @field Core.Zone#ZONE_BASE TargetZone
+  --- @field Tasking.Task#TASK Task
+  --- @field Wrapper.Unit#UNIT ProcessUnit
+  --- @field Core.Zone#ZONE_BASE TargetZone
   -- @extends Core.Fsm#FSM_PROCESS
   ACT_ASSIGN = {
     ClassName = "ACT_ASSIGN",
@@ -96,7 +96,7 @@ do -- ACT_ASSIGN
 
   --- Creates a new task assignment state machine. The process will accept the task by default, no player intervention accepted.
   -- @param #ACT_ASSIGN self
-  -- @return #ACT_ASSIGN The task acceptance process.
+  --- @return #ACT_ASSIGN The task acceptance process.
   function ACT_ASSIGN:New()
 
     -- Inherits from BASE
@@ -124,9 +124,9 @@ do -- ACT_ASSIGN_ACCEPT
 
   --- ACT_ASSIGN_ACCEPT class
   --- @type ACT_ASSIGN_ACCEPT
-  -- @field Tasking.Task#TASK Task
-  -- @field Wrapper.Unit#UNIT ProcessUnit
-  -- @field Core.Zone#ZONE_BASE TargetZone
+  --- @field Tasking.Task#TASK Task
+  --- @field Wrapper.Unit#UNIT ProcessUnit
+  --- @field Core.Zone#ZONE_BASE TargetZone
   -- @extends #ACT_ASSIGN
   ACT_ASSIGN_ACCEPT = {
     ClassName = "ACT_ASSIGN_ACCEPT",
@@ -179,9 +179,9 @@ do -- ACT_ASSIGN_MENU_ACCEPT
 
   --- ACT_ASSIGN_MENU_ACCEPT class
   --- @type ACT_ASSIGN_MENU_ACCEPT
-  -- @field Tasking.Task#TASK Task
-  -- @field Wrapper.Unit#UNIT ProcessUnit
-  -- @field Core.Zone#ZONE_BASE TargetZone
+  --- @field Tasking.Task#TASK Task
+  --- @field Wrapper.Unit#UNIT ProcessUnit
+  --- @field Core.Zone#ZONE_BASE TargetZone
   -- @extends #ACT_ASSIGN
   ACT_ASSIGN_MENU_ACCEPT = {
     ClassName = "ACT_ASSIGN_MENU_ACCEPT",
@@ -190,7 +190,7 @@ do -- ACT_ASSIGN_MENU_ACCEPT
   --- Init.
   -- @param #ACT_ASSIGN_MENU_ACCEPT self
   -- @param #string TaskBriefing
-  -- @return #ACT_ASSIGN_MENU_ACCEPT self
+  --- @return #ACT_ASSIGN_MENU_ACCEPT self
   function ACT_ASSIGN_MENU_ACCEPT:New( TaskBriefing )
 
     -- Inherits from BASE
@@ -205,7 +205,7 @@ do -- ACT_ASSIGN_MENU_ACCEPT
   --- Creates a new task assignment state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.
   -- @param #ACT_ASSIGN_MENU_ACCEPT self
   -- @param #string TaskBriefing
-  -- @return #ACT_ASSIGN_MENU_ACCEPT self
+  --- @return #ACT_ASSIGN_MENU_ACCEPT self
   function ACT_ASSIGN_MENU_ACCEPT:Init( TaskBriefing )
 
     self.TaskBriefing = TaskBriefing

@@ -3284,9 +3284,9 @@ function RAT:_PickDestination(departure, q, minrange, maxrange, random, landing)
 
   if #destinations > 0 then
     --- Compare distance of destination airports.
-    -- @param Core.Point#COORDINATE a Coordinate of point a.
-    -- @param Core.Point#COORDINATE b Coordinate of point b.
-    -- @return #list Table sorted by distance.
+    --- @param Core.Point#COORDINATE a Coordinate of point a.
+    --- @param Core.Point#COORDINATE b Coordinate of point b.
+    --- @return #list Table sorted by distance.
     local function compare(a,b)
       local qa=q:Get2DDistance(a:GetCoordinate())
       local qb=q:Get2DDistance(b:GetCoordinate())
@@ -4989,10 +4989,10 @@ end
 
 
 ---Determine the heading from point a to point b.
---@param #RAT self
---@param Core.Point#COORDINATE a Point from.
---@param Core.Point#COORDINATE b Point to.
---@return #number Heading/angle in degrees.
+--- @param #RAT self
+--- @param Core.Point#COORDINATE a Point from.
+--- @param Core.Point#COORDINATE b Point to.
+--- @return #number Heading/angle in degrees.
 function RAT:_Course(a,b)
   local dx = b.x-a.x
   -- take the right value for y-coordinate (if we have "alt" then "y" if not "z")
@@ -5017,9 +5017,9 @@ function RAT:_Course(a,b)
 end
 
 ---Determine the heading for an aircraft to be entered in the route template.
---@param #RAT self
---@param #number course The course between two points in degrees.
---@return #number heading Heading in rad.
+--- @param #RAT self
+--- @param #number course The course between two points in degrees.
+--- @return #number heading Heading in rad.
 function RAT:_Heading(course)
   local h
   if course<=180 then

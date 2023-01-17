@@ -71,7 +71,7 @@ function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
   -- @param #string To To state.
   -- @param Wrapper.Airbase#AIRBASE Airbase Airbase where troops are picked up.
   -- @param #number Speed in km/h for travelling to pickup base.
-  -- @return #boolean
+  --- @return #boolean
   
   --- Pickup Handler OnAfter for AI_CARGO_AIRPLANE
   -- @function [parent=#AI_CARGO_AIRPLANE] OnAfterPickup
@@ -111,7 +111,7 @@ function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
   -- @param #string To
   -- @param Wrapper.Airbase#AIRBASE Airbase Destination airbase where troops are deployed.
   -- @param #number Speed Speed in km/h for travelling to deploy base.
-  -- @return #boolean
+  --- @return #boolean
   
   --- Deploy Handler OnAfter for AI_CARGO_AIRPLANE
   -- @function [parent=#AI_CARGO_AIRPLANE] OnAfterDeploy

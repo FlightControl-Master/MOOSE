@@ -273,114 +273,114 @@ function INTEL:New(DetectionSet, Coalition, Alias)
 
   --- Triggers the FSM event "Start". Starts the INTEL. Initializes parameters and starts event handlers.
   -- @function [parent=#INTEL] Start
-  -- @param #INTEL self
+  --- @param #INTEL self
 
   --- Triggers the FSM event "Start" after a delay. Starts the INTEL. Initializes parameters and starts event handlers.
   -- @function [parent=#INTEL] __Start
-  -- @param #INTEL self
-  -- @param #number delay Delay in seconds.
+  --- @param #INTEL self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Stop". Stops the INTEL and all its event handlers.
-  -- @param #INTEL self
+  --- @param #INTEL self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the INTEL and all its event handlers.
   -- @function [parent=#INTEL] __Stop
-  -- @param #INTEL self
-  -- @param #number delay Delay in seconds.
+  --- @param #INTEL self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#INTEL] Status
-  -- @param #INTEL self
+  --- @param #INTEL self
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#INTEL] __Status
-  -- @param #INTEL self
-  -- @param #number delay Delay in seconds.
+  --- @param #INTEL self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "NewContact".
   -- @function [parent=#INTEL] NewContact
-  -- @param #INTEL self
-  -- @param #INTEL.Contact Contact Detected contact.
+  --- @param #INTEL self
+  --- @param #INTEL.Contact Contact Detected contact.
 
   --- Triggers the FSM event "NewContact" after a delay.
   -- @function [parent=#INTEL] NewContact
-  -- @param #INTEL self
-  -- @param #number delay Delay in seconds.
-  -- @param #INTEL.Contact Contact Detected contact.
+  --- @param #INTEL self
+  --- @param #number delay Delay in seconds.
+  --- @param #INTEL.Contact Contact Detected contact.
 
   --- On After "NewContact" event.
   -- @function [parent=#INTEL] OnAfterNewContact
-  -- @param #INTEL self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #INTEL.Contact Contact Detected contact.
+  --- @param #INTEL self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #INTEL.Contact Contact Detected contact.
 
 
   --- Triggers the FSM event "LostContact".
   -- @function [parent=#INTEL] LostContact
-  -- @param #INTEL self
-  -- @param #INTEL.Contact Contact Lost contact.
+  --- @param #INTEL self
+  --- @param #INTEL.Contact Contact Lost contact.
 
   --- Triggers the FSM event "LostContact" after a delay.
   -- @function [parent=#INTEL] LostContact
-  -- @param #INTEL self
-  -- @param #number delay Delay in seconds.
-  -- @param #INTEL.Contact Contact Lost contact.
+  --- @param #INTEL self
+  --- @param #number delay Delay in seconds.
+  --- @param #INTEL.Contact Contact Lost contact.
 
   --- On After "LostContact" event.
   -- @function [parent=#INTEL] OnAfterLostContact
-  -- @param #INTEL self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #INTEL.Contact Contact Lost contact.
+  --- @param #INTEL self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #INTEL.Contact Contact Lost contact.
 
 
   --- Triggers the FSM event "NewCluster".
   -- @function [parent=#INTEL] NewCluster
-  -- @param #INTEL self
-  -- @param #INTEL.Cluster Cluster Detected cluster.
+  --- @param #INTEL self
+  --- @param #INTEL.Cluster Cluster Detected cluster.
 
   --- Triggers the FSM event "NewCluster" after a delay.
   -- @function [parent=#INTEL] NewCluster
-  -- @param #INTEL self
-  -- @param #number delay Delay in seconds.
-  -- @param #INTEL.Cluster Cluster Detected cluster.
+  --- @param #INTEL self
+  --- @param #number delay Delay in seconds.
+  --- @param #INTEL.Cluster Cluster Detected cluster.
 
   --- On After "NewCluster" event.
   -- @function [parent=#INTEL] OnAfterNewCluster
-  -- @param #INTEL self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #INTEL.Cluster Cluster Detected cluster.
+  --- @param #INTEL self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #INTEL.Cluster Cluster Detected cluster.
 
 
   --- Triggers the FSM event "LostCluster".
   -- @function [parent=#INTEL] LostCluster
-  -- @param #INTEL self
-  -- @param #INTEL.Cluster Cluster Lost cluster.
-  -- @param Ops.Auftrag#AUFTRAG Mission The Auftrag connected with this cluster or `nil`.
+  --- @param #INTEL self
+  --- @param #INTEL.Cluster Cluster Lost cluster.
+  --- @param Ops.Auftrag#AUFTRAG Mission The Auftrag connected with this cluster or `nil`.
 
   --- Triggers the FSM event "LostCluster" after a delay.
   -- @function [parent=#INTEL] LostCluster
-  -- @param #INTEL self
-  -- @param #number delay Delay in seconds.
-  -- @param #INTEL.Cluster Cluster Lost cluster.
-  -- @param Ops.Auftrag#AUFTRAG Mission The Auftrag connected with this cluster or `nil`.
+  --- @param #INTEL self
+  --- @param #number delay Delay in seconds.
+  --- @param #INTEL.Cluster Cluster Lost cluster.
+  --- @param Ops.Auftrag#AUFTRAG Mission The Auftrag connected with this cluster or `nil`.
 
   --- On After "LostCluster" event.
   -- @function [parent=#INTEL] OnAfterLostCluster
-  -- @param #INTEL self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #INTEL.Cluster Cluster Lost cluster.
-  -- @param Ops.Auftrag#AUFTRAG Mission The Auftrag connected with this cluster or `nil`.
+  --- @param #INTEL self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #INTEL.Cluster Cluster Lost cluster.
+  --- @param Ops.Auftrag#AUFTRAG Mission The Auftrag connected with this cluster or `nil`.
 
   return self
 end
@@ -2302,38 +2302,38 @@ function INTEL_DLINK:New(Intels, Alias, Interval, Cachetime)
   ----------------------------------------------------------------------------------------------
   --- Triggers the FSM event "Start". Starts the INTEL_DLINK.
   -- @function [parent=#INTEL_DLINK] Start
-  -- @param #INTEL_DLINK self
+  --- @param #INTEL_DLINK self
 
   --- Triggers the FSM event "Start" after a delay. Starts the INTEL_DLINK.
   -- @function [parent=#INTEL_DLINK] __Start
-  -- @param #INTEL_DLINK self
-  -- @param #number delay Delay in seconds.
+  --- @param #INTEL_DLINK self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Stop". Stops the INTEL_DLINK.
-  -- @param #INTEL_DLINK self
+  --- @param #INTEL_DLINK self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the INTEL_DLINK.
   -- @function [parent=#INTEL_DLINK] __Stop
-  -- @param #INTEL_DLINK self
-  -- @param #number delay Delay in seconds.
+  --- @param #INTEL_DLINK self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Collect". Used internally to collect all data.
   -- @function [parent=#INTEL_DLINK] Collect
-  -- @param #INTEL_DLINK self
+  --- @param #INTEL_DLINK self
 
   --- Triggers the FSM event "Collect" after a delay.
   -- @function [parent=#INTEL_DLINK] __Status
-  -- @param #INTEL_DLINK self
-  -- @param #number delay Delay in seconds.
+  --- @param #INTEL_DLINK self
+  --- @param #number delay Delay in seconds.
 
   --- On After "Collected" event. Data tables have been refreshed.
   -- @function [parent=#INTEL_DLINK] OnAfterCollected
-  -- @param #INTEL_DLINK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #table Contacts Table of #INTEL.Contact Contacts.
-  -- @param #table Clusters Table of #INTEL.Cluster Clusters.
+  --- @param #INTEL_DLINK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #table Contacts Table of #INTEL.Contact Contacts.
+  --- @param #table Clusters Table of #INTEL.Cluster Clusters.
 
   return self
 end

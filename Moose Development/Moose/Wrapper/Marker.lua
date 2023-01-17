@@ -207,93 +207,93 @@ function MARKER:New( Coordinate, Text )
 
   --- Triggers the FSM event "Added".
   -- @function [parent=#MARKER] Added
-  -- @param #MARKER self
-  -- @param Core.Event#EVENTDATA EventData Event data table.
+  --- @param #MARKER self
+  --- @param Core.Event#EVENTDATA EventData Event data table.
 
   --- Triggers the delayed FSM event "Added".
   -- @function [parent=#MARKER] __Added
-  -- @param #MARKER self
-  -- @param Core.Event#EVENTDATA EventData Event data table.
+  --- @param #MARKER self
+  --- @param Core.Event#EVENTDATA EventData Event data table.
 
   --- On after "Added" event user function.
   -- @function [parent=#MARKER] OnAfterAdded
-  -- @param #MARKER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Core.Event#EVENTDATA EventData Event data table.
+  --- @param #MARKER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Core.Event#EVENTDATA EventData Event data table.
 
   --- Triggers the FSM event "Removed".
   -- @function [parent=#MARKER] Removed
-  -- @param #MARKER self
-  -- @param Core.Event#EVENTDATA EventData Event data table.
+  --- @param #MARKER self
+  --- @param Core.Event#EVENTDATA EventData Event data table.
 
   --- Triggers the delayed FSM event "Removed".
   -- @function [parent=#MARKER] __Removed
-  -- @param #MARKER self
-  -- @param Core.Event#EVENTDATA EventData Event data table.
+  --- @param #MARKER self
+  --- @param Core.Event#EVENTDATA EventData Event data table.
 
   --- On after "Removed" event user function.
   -- @function [parent=#MARKER] OnAfterRemoved
-  -- @param #MARKER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Core.Event#EVENTDATA EventData Event data table.
+  --- @param #MARKER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Core.Event#EVENTDATA EventData Event data table.
 
   --- Triggers the FSM event "Changed".
   -- @function [parent=#MARKER] Changed
-  -- @param #MARKER self
-  -- @param Core.Event#EVENTDATA EventData Event data table.
+  --- @param #MARKER self
+  --- @param Core.Event#EVENTDATA EventData Event data table.
 
   --- Triggers the delayed FSM event "Changed".
   -- @function [parent=#MARKER] __Changed
-  -- @param #MARKER self
-  -- @param Core.Event#EVENTDATA EventData Event data table.
+  --- @param #MARKER self
+  --- @param Core.Event#EVENTDATA EventData Event data table.
 
   --- On after "Changed" event user function.
   -- @function [parent=#MARKER] OnAfterChanged
-  -- @param #MARKER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Core.Event#EVENTDATA EventData Event data table.
+  --- @param #MARKER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Core.Event#EVENTDATA EventData Event data table.
 
   --- Triggers the FSM event "TextUpdate".
   -- @function [parent=#MARKER] TextUpdate
-  -- @param #MARKER self
-  -- @param #string Text The new text.
+  --- @param #MARKER self
+  --- @param #string Text The new text.
 
   --- Triggers the delayed FSM event "TextUpdate".
   -- @function [parent=#MARKER] __TextUpdate
-  -- @param #MARKER self
-  -- @param #string Text The new text.
+  --- @param #MARKER self
+  --- @param #string Text The new text.
 
   --- On after "TextUpdate" event user function.
   -- @function [parent=#MARKER] OnAfterTextUpdate
-  -- @param #MARKER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string Text The new text.
+  --- @param #MARKER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string Text The new text.
 
   --- Triggers the FSM event "CoordUpdate".
   -- @function [parent=#MARKER] CoordUpdate
-  -- @param #MARKER self
-  -- @param Core.Point#COORDINATE Coordinate The new Coordinate.
+  --- @param #MARKER self
+  --- @param Core.Point#COORDINATE Coordinate The new Coordinate.
 
   --- Triggers the delayed FSM event "CoordUpdate".
   -- @function [parent=#MARKER] __CoordUpdate
-  -- @param #MARKER self
-  -- @param Core.Point#COORDINATE Coordinate The updated Coordinate.
+  --- @param #MARKER self
+  --- @param Core.Point#COORDINATE Coordinate The updated Coordinate.
 
   --- On after "CoordUpdate" event user function.
   -- @function [parent=#MARKER] OnAfterCoordUpdate
-  -- @param #MARKER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Core.Point#COORDINATE Coordinate The updated Coordinate.
+  --- @param #MARKER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Core.Point#COORDINATE Coordinate The updated Coordinate.
 
   -- Handle events.
   self:HandleEvent( EVENTS.MarkAdded )

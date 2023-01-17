@@ -63,7 +63,7 @@ SEAD = {
 }
 
   --- Missile enumerators
-  -- @field Harms
+  --- @field Harms
   SEAD.Harms = {
   ["AGM_88"] = "AGM_88",
   ["AGM_45"] = "AGM_45",
@@ -83,7 +83,7 @@ SEAD = {
   }
 
   --- Missile enumerators - from DCS ME and Wikipedia
-  -- @field HarmData
+  --- @field HarmData
   SEAD.HarmData = {
   -- km and mach
   ["AGM_88"] = { 150, 3},

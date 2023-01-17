@@ -90,7 +90,7 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   -- @param #string Event
   -- @param #string To
   -- @param Core.Point#COORDINATE Coordinate
-  -- @return #boolean
+  --- @return #boolean
   
   --- Pickup Handler OnAfter for AI_CARGO_HELICOPTER
   -- @function [parent=#AI_CARGO_HELICOPTER] OnAfterPickup
@@ -140,7 +140,7 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   -- @param #string To
   -- @param Core.Point#COORDINATE Coordinate Place at which cargo is deployed.
   -- @param #number Speed Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
-  -- @return #boolean
+  --- @return #boolean
   
   --- Deploy Handler OnAfter for AI_CARGO_HELICOPTER
   -- @function [parent=#AI_CARGO_HELICOPTER] OnAfterDeploy

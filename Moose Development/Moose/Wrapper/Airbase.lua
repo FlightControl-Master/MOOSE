@@ -403,7 +403,7 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Tal_Siman
 -- * AIRBASE.Syria.Deir_ez_Zor
 --
---@field Syria
+--- @field Syria
 AIRBASE.Syria={
   ["Kuweires"]="Kuweires",
   ["Marj_Ruhayyil"]="Marj Ruhayyil",
@@ -512,7 +512,7 @@ AIRBASE.MarianaIslands = {
 -- * AIRBASE.SouthAtlantic.Rio_Turbio
 -- * AIRBASE.SouthAtlantic.Rio_Chico_Airfield
 -- 
---@field MarianaIslands
+--- @field MarianaIslands
 AIRBASE.SouthAtlantic={
   ["Port_Stanley"]="Port Stanley",
   ["Mount_Pleasant"]="Mount Pleasant",

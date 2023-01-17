@@ -80,12 +80,12 @@
 do -- FSM
 
   --- @type FSM
-  -- @field #string ClassName Name of the class.
-  -- @field Core.Scheduler#SCHEDULER CallScheduler Call scheduler.
-  -- @field #table options Options.
-  -- @field #table subs Subs.
-  -- @field #table Scores Scores.
-  -- @field #string current Current state name.
+  --- @field #string ClassName Name of the class.
+  --- @field Core.Scheduler#SCHEDULER CallScheduler Call scheduler.
+  --- @field #table options Options.
+  --- @field #table subs Subs.
+  --- @field #table Scores Scores.
+  --- @field #string current Current state name.
   -- @extends Core.Base#BASE
 
   --- A Finite State Machine (FSM) models a process flow that transitions between various **States** through triggered **Events**.
@@ -342,14 +342,14 @@ do -- FSM
   --
   -- ===
   --
-  -- @field #FSM
+  --- @field #FSM
   FSM = {
     ClassName = "FSM",
   }
 
   --- Creates a new FSM object.
-  -- @param #FSM self
-  -- @return #FSM
+  --- @param #FSM self
+  --- @return #FSM
   function FSM:New()
 
     -- Inherits from BASE
@@ -377,26 +377,26 @@ do -- FSM
   end
 
   --- Sets the start state of the FSM.
-  -- @param #FSM self
-  -- @param #string State A string defining the start state.
+  --- @param #FSM self
+  --- @param #string State A string defining the start state.
   function FSM:SetStartState( State )
     self._StartState = State
     self.current = State
   end
 
   --- Returns the start state of the FSM.
-  -- @param #FSM self
-  -- @return #string A string containing the start state.
+  --- @param #FSM self
+  --- @return #string A string containing the start state.
   function FSM:GetStartState()
     return self._StartState or {}
   end
 
   --- Add a new transition rule to the FSM.
   -- A transition rule defines when and if the FSM can transition from a state towards another state upon a triggered event.
-  -- @param #FSM self
-  -- @param #table From Can contain a string indicating the From state or a table of strings containing multiple From states.
-  -- @param #string Event The Event name.
-  -- @param #string To The To state.
+  --- @param #FSM self
+  --- @param #table From Can contain a string indicating the From state or a table of strings containing multiple From states.
+  --- @param #string Event The Event name.
+  --- @param #string To The To state.
   function FSM:AddTransition( From, Event, To )
 
     local Transition = {}
@@ -412,19 +412,19 @@ do -- FSM
   end
 
   --- Returns a table of the transition rules defined within the FSM.
-  -- @param #FSM self
-  -- @return #table Transitions.
+  --- @param #FSM self
+  --- @return #table Transitions.
   function FSM:GetTransitions()
     return self._Transitions or {}
   end
 
   --- Set the default @{#FSM_PROCESS} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Wrapper.Controllable} by the task.
-  -- @param #FSM self
-  -- @param #table From Can contain a string indicating the From state or a table of strings containing multiple From states.
-  -- @param #string Event The Event name.
-  -- @param Core.Fsm#FSM_PROCESS Process An sub-process FSM.
-  -- @param #table ReturnEvents A table indicating for which returned events of the SubFSM which Event must be triggered in the FSM.
-  -- @return Core.Fsm#FSM_PROCESS The SubFSM.
+  --- @param #FSM self
+  --- @param #table From Can contain a string indicating the From state or a table of strings containing multiple From states.
+  --- @param #string Event The Event name.
+  --- @param Core.Fsm#FSM_PROCESS Process An sub-process FSM.
+  --- @param #table ReturnEvents A table indicating for which returned events of the SubFSM which Event must be triggered in the FSM.
+  --- @return Core.Fsm#FSM_PROCESS The SubFSM.
   function FSM:AddProcess( From, Event, Process, ReturnEvents )
     --self:T3( { From, Event } )
   
@@ -445,8 +445,8 @@ do -- FSM
   end
 
   --- Returns a table of the SubFSM rules defined within the FSM.
-  -- @param #FSM self
-  -- @return #table Sub processes.
+  --- @param #FSM self
+  --- @return #table Sub processes.
   function FSM:GetProcesses()
 
     self:F( { Processes = self._Processes } )
@@ -478,26 +478,26 @@ do -- FSM
   end
 
   --- Adds an End state.
-  -- @param #FSM self
-  -- @param #string State The FSM state.
+  --- @param #FSM self
+  --- @param #string State The FSM state.
   function FSM:AddEndState( State )
     self._EndStates[State] = State
     self.endstates[State] = State
   end
 
   --- Returns the End states.
-  -- @param #FSM self
-  -- @return #table End states.
+  --- @param #FSM self
+  --- @return #table End states.
   function FSM:GetEndStates()
     return self._EndStates or {}
   end
 
   --- Adds a score for the FSM to be achieved.
-  -- @param #FSM self
-  -- @param #string State is the state of the process when the score needs to be given. (See the relevant state descriptions of the process).
-  -- @param #string ScoreText is a text describing the score that is given according the status.
-  -- @param #number Score is a number providing the score of the status.
-  -- @return #FSM self
+  --- @param #FSM self
+  --- @param #string State is the state of the process when the score needs to be given. (See the relevant state descriptions of the process).
+  --- @param #string ScoreText is a text describing the score that is given according the status.
+  --- @param #number Score is a number providing the score of the status.
+  --- @return #FSM self
   function FSM:AddScore( State, ScoreText, Score )
     self:F( { State, ScoreText, Score } )
 
@@ -509,13 +509,13 @@ do -- FSM
   end
 
   --- Adds a score for the FSM_PROCESS to be achieved.
-  -- @param #FSM self
-  -- @param #string From is the From State of the main process.
-  -- @param #string Event is the Event of the main process.
-  -- @param #string State is the state of the process when the score needs to be given. (See the relevant state descriptions of the process).
-  -- @param #string ScoreText is a text describing the score that is given according the status.
-  -- @param #number Score is a number providing the score of the status.
-  -- @return #FSM self
+  --- @param #FSM self
+  --- @param #string From is the From State of the main process.
+  --- @param #string Event is the Event of the main process.
+  --- @param #string State is the state of the process when the score needs to be given. (See the relevant state descriptions of the process).
+  --- @param #string ScoreText is a text describing the score that is given according the status.
+  --- @param #number Score is a number providing the score of the status.
+  --- @return #FSM self
   function FSM:AddScoreProcess( From, Event, State, ScoreText, Score )
     self:F( { From, Event, State, ScoreText, Score } )
 
@@ -531,22 +531,22 @@ do -- FSM
   end
 
   --- Returns a table with the scores defined.
-  -- @param #FSM self
-  -- @return #table Scores.
+  --- @param #FSM self
+  --- @return #table Scores.
   function FSM:GetScores()
     return self._Scores or {}
   end
 
   --- Returns a table with the Subs defined.
-  -- @param #FSM self
-  -- @return #table Sub processes.
+  --- @param #FSM self
+  --- @return #table Sub processes.
   function FSM:GetSubs()
     return self.options.subs
   end
 
   --- Load call backs.
-  -- @param #FSM self
-  -- @param #table CallBackTable Table of call backs.
+  --- @param #FSM self
+  --- @param #table CallBackTable Table of call backs.
   function FSM:LoadCallBacks( CallBackTable )
 
     for name, callback in pairs( CallBackTable or {} ) do
@@ -556,9 +556,9 @@ do -- FSM
   end
 
   --- Event map.
-  -- @param #FSM self
-  -- @param #table Events Events.
-  -- @param #table EventStructure Event structure.
+  --- @param #FSM self
+  --- @param #table Events Events.
+  --- @param #table EventStructure Event structure.
   function FSM:_eventmap( Events, EventStructure )
   
       local Event = EventStructure.Event
@@ -576,10 +576,10 @@ do -- FSM
   end
 
   --- Sub maps.
-  -- @param #FSM self
-  -- @param #table subs Subs.
-  -- @param #table sub Sub.
-  -- @param #string name Name.
+  --- @param #FSM self
+  --- @param #table subs Subs.
+  --- @param #table sub Sub.
+  --- @param #string name Name.
   function FSM:_submap( subs, sub, name )
 
     subs[sub.From] = subs[sub.From] or {}
@@ -598,12 +598,12 @@ do -- FSM
   end
 
   --- Call handler.
-  -- @param #FSM self
-  -- @param #string step Step "onafter", "onbefore", "onenter", "onleave".
-  -- @param #string trigger Trigger.
-  -- @param #table params Parameters.
-  -- @param #string EventName Event name.
-  -- @return Value.
+  --- @param #FSM self
+  --- @param #string step Step "onafter", "onbefore", "onenter", "onleave".
+  --- @param #string trigger Trigger.
+  --- @param #table params Parameters.
+  --- @param #string EventName Event name.
+  --- @return Value.
   function FSM:_call_handler( step, trigger, params, EventName )
     -- env.info(string.format("FF T=%.3f _call_handler step=%s, trigger=%s, event=%s", timer.getTime(), step, trigger, EventName))
 
@@ -648,9 +648,9 @@ do -- FSM
   end
 
   --- Handler.
-  -- @param #FSM self
-  -- @param #string EventName Event name.
-  -- @param ... Arguments.
+  --- @param #FSM self
+  --- @param #string EventName Event name.
+  --- @param ... Arguments.
   function FSM._handler( self, EventName, ... )
 
     local Can, To = self:can( EventName )
@@ -776,9 +776,9 @@ do -- FSM
   end
 
   --- Delayed transition.
-  -- @param #FSM self
-  -- @param #string EventName Event name.
-  -- @return #function Function.
+  --- @param #FSM self
+  --- @param #string EventName Event name.
+  --- @return #function Function.
   function FSM:_delayed_transition( EventName )
 
     return function( self, DelaySeconds, ... )
@@ -824,9 +824,9 @@ do -- FSM
   end
 
   --- Create transition.
-  -- @param #FSM self
-  -- @param #string EventName Event name.
-  -- @return #function Function.
+  --- @param #FSM self
+  --- @param #string EventName Event name.
+  --- @return #function Function.
   function FSM:_create_transition( EventName )
     return function( self, ... )
       return self._handler( self, EventName, ... )
@@ -834,10 +834,10 @@ do -- FSM
   end
 
   --- Go sub.
-  -- @param #FSM self
-  -- @param #string ParentFrom Parent from state.
-  -- @param #string ParentEvent Parent event name.
-  -- @return #table Subs.
+  --- @param #FSM self
+  --- @param #string ParentFrom Parent from state.
+  --- @param #string ParentEvent Parent event name.
+  --- @return #table Subs.
   function FSM:_gosub( ParentFrom, ParentEvent )
     local fsmtable = {}
     if self.subs[ParentFrom] and self.subs[ParentFrom][ParentEvent] then
@@ -849,10 +849,10 @@ do -- FSM
   end
 
   --- Is end state.
-  -- @param #FSM self
-  -- @param #string Current Current state name.
-  -- @return #table FSM parent.
-  -- @return #string Event name.
+  --- @param #FSM self
+  --- @param #string Current Current state name.
+  --- @return #table FSM parent.
+  --- @return #string Event name.
   function FSM:_isendstate( Current )
     local FSMParent = self.fsmparent
 
@@ -874,9 +874,9 @@ do -- FSM
   end
 
   --- Add to map.
-  -- @param #FSM self
-  -- @param #table Map Map.
-  -- @param #table Event Event table.
+  --- @param #FSM self
+  --- @param #table Map Map.
+  --- @param #table Event Event table.
   function FSM:_add_to_map( Map, Event )
     self:F3( { Map, Event } )
 
@@ -892,40 +892,40 @@ do -- FSM
   end
 
   --- Get current state.
-  -- @param #FSM self
-  -- @return #string Current FSM state.
+  --- @param #FSM self
+  --- @return #string Current FSM state.
   function FSM:GetState()
     return self.current
   end
 
   --- Get current state.
-  -- @param #FSM self
-  -- @return #string Current FSM state.
+  --- @param #FSM self
+  --- @return #string Current FSM state.
   function FSM:GetCurrentState()
     return self.current
   end
 
   --- Check if FSM is in state.
-  -- @param #FSM self
-  -- @param #string State State name.
-  -- @return #boolean If true, FSM is in this state.
+  --- @param #FSM self
+  --- @param #string State State name.
+  --- @return #boolean If true, FSM is in this state.
   function FSM:Is( State )
     return self.current == State
   end
 
   --- Check if FSM is in state.
-  -- @param #FSM self
-  -- @param #string State State name.
-  -- @return #boolean If true, FSM is in this state.  
+  --- @param #FSM self
+  --- @param #string State State name.
+  --- @return #boolean If true, FSM is in this state.  
   function FSM:is(state)
     return self.current == state
   end
 
   --- Check if can do an event.
-  -- @param #FSM self
-  -- @param #string e Event name.
-  -- @return #boolean If true, FSM can do the event.
-  -- @return #string To state.
+  --- @param #FSM self
+  --- @param #string e Event name.
+  --- @return #boolean If true, FSM can do the event.
+  --- @return #string To state.
   function FSM:can( e )
 
     local Event = self.Events[e]
@@ -938,9 +938,9 @@ do -- FSM
   end
 
   --- Check if cannot do an event.
-  -- @param #FSM self
-  -- @param #string e Event name.
-  -- @return #boolean If true, FSM cannot do the event.
+  --- @param #FSM self
+  --- @param #string e Event name.
+  --- @return #boolean If true, FSM cannot do the event.
   function FSM:cannot( e )
     return not self:can( e )
   end
@@ -950,23 +950,23 @@ end
 do -- FSM_CONTROLLABLE
 
   --- @type FSM_CONTROLLABLE
-  -- @field Wrapper.Controllable#CONTROLLABLE Controllable
+  --- @field Wrapper.Controllable#CONTROLLABLE Controllable
   -- @extends Core.Fsm#FSM
 
   --- Models Finite State Machines for @{Wrapper.Controllable}s, which are @{Wrapper.Group}s, @{Wrapper.Unit}s, @{Wrapper.Client}s.
   --
   -- ===
   --
-  -- @field #FSM_CONTROLLABLE
+  --- @field #FSM_CONTROLLABLE
   FSM_CONTROLLABLE = {
     ClassName = "FSM_CONTROLLABLE",
   }
 
   --- Creates a new FSM_CONTROLLABLE object.
-  -- @param #FSM_CONTROLLABLE self
-  -- @param #table FSMT Finite State Machine Table
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable (optional) The CONTROLLABLE object that the FSM_CONTROLLABLE governs.
-  -- @return #FSM_CONTROLLABLE
+  --- @param #FSM_CONTROLLABLE self
+  --- @param #table FSMT Finite State Machine Table
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable (optional) The CONTROLLABLE object that the FSM_CONTROLLABLE governs.
+  --- @return #FSM_CONTROLLABLE
   function FSM_CONTROLLABLE:New( Controllable )
 
     -- Inherits from BASE
@@ -980,57 +980,57 @@ do -- FSM_CONTROLLABLE
 
     --- OnBefore Transition Handler for Event Stop.
     -- @function [parent=#FSM_CONTROLLABLE] OnBeforeStop
-    -- @param #FSM_CONTROLLABLE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
+    --- @param #FSM_CONTROLLABLE self
+    --- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+    --- @param #string From The From State string.
+    --- @param #string Event The Event string.
+    --- @param #string To The To State string.
+    --- @return #boolean Return false to cancel Transition.
 
     --- OnAfter Transition Handler for Event Stop.
     -- @function [parent=#FSM_CONTROLLABLE] OnAfterStop
-    -- @param #FSM_CONTROLLABLE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
+    --- @param #FSM_CONTROLLABLE self
+    --- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+    --- @param #string From The From State string.
+    --- @param #string Event The Event string.
+    --- @param #string To The To State string.
 
     --- Synchronous Event Trigger for Event Stop.
     -- @function [parent=#FSM_CONTROLLABLE] Stop
-    -- @param #FSM_CONTROLLABLE self
+    --- @param #FSM_CONTROLLABLE self
 
     --- Asynchronous Event Trigger for Event Stop.
     -- @function [parent=#FSM_CONTROLLABLE] __Stop
-    -- @param #FSM_CONTROLLABLE self
-    -- @param #number Delay The delay in seconds.  
+    --- @param #FSM_CONTROLLABLE self
+    --- @param #number Delay The delay in seconds.  
 
     --- OnLeave Transition Handler for State Stopped.
     -- @function [parent=#FSM_CONTROLLABLE] OnLeaveStopped
-    -- @param #FSM_CONTROLLABLE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
+    --- @param #FSM_CONTROLLABLE self
+    --- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+    --- @param #string From The From State string.
+    --- @param #string Event The Event string.
+    --- @param #string To The To State string.
+    --- @return #boolean Return false to cancel Transition.
 
     --- OnEnter Transition Handler for State Stopped.
     -- @function [parent=#FSM_CONTROLLABLE] OnEnterStopped
-    -- @param #FSM_CONTROLLABLE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
+    --- @param #FSM_CONTROLLABLE self
+    --- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+    --- @param #string From The From State string.
+    --- @param #string Event The Event string.
+    --- @param #string To The To State string.
 
     return self
   end
 
   --- OnAfter Transition Handler for Event Stop.
   -- @function [parent=#FSM_CONTROLLABLE] OnAfterStop
-  -- @param #FSM_CONTROLLABLE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
+  --- @param #FSM_CONTROLLABLE self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  --- @param #string From The From State string.
+  --- @param #string Event The Event string.
+  --- @param #string To The To State string.
   function FSM_CONTROLLABLE:OnAfterStop( Controllable, From, Event, To )
 
     -- Clear all pending schedules
@@ -1038,17 +1038,17 @@ do -- FSM_CONTROLLABLE
   end
 
   --- Sets the CONTROLLABLE object that the FSM_CONTROLLABLE governs.
-  -- @param #FSM_CONTROLLABLE self
-  -- @param Wrapper.Controllable#CONTROLLABLE FSMControllable
-  -- @return #FSM_CONTROLLABLE
+  --- @param #FSM_CONTROLLABLE self
+  --- @param Wrapper.Controllable#CONTROLLABLE FSMControllable
+  --- @return #FSM_CONTROLLABLE
   function FSM_CONTROLLABLE:SetControllable( FSMControllable )
     -- self:F( FSMControllable:GetName() )
     self.Controllable = FSMControllable
   end
 
   --- Gets the CONTROLLABLE object that the FSM_CONTROLLABLE governs.
-  -- @param #FSM_CONTROLLABLE self
-  -- @return Wrapper.Controllable#CONTROLLABLE
+  --- @param #FSM_CONTROLLABLE self
+  --- @return Wrapper.Controllable#CONTROLLABLE
   function FSM_CONTROLLABLE:GetControllable()
     return self.Controllable
   end
@@ -1083,20 +1083,20 @@ end
 do -- FSM_PROCESS
 
   --- @type FSM_PROCESS
-  -- @field Tasking.Task#TASK Task
+  --- @field Tasking.Task#TASK Task
   -- @extends Core.Fsm#FSM_CONTROLLABLE
 
   --- FSM_PROCESS class models Finite State Machines for @{Tasking.Task} actions, which control @{Wrapper.Client}s.
   -- 
   -- ===
   -- 
-  -- @field #FSM_PROCESS FSM_PROCESS
+  --- @field #FSM_PROCESS FSM_PROCESS
   -- 
   FSM_PROCESS = { ClassName = "FSM_PROCESS" }
 
   --- Creates a new FSM_PROCESS object.
-  -- @param #FSM_PROCESS self
-  -- @return #FSM_PROCESS
+  --- @param #FSM_PROCESS self
+  --- @return #FSM_PROCESS
   function FSM_PROCESS:New( Controllable, Task )
 
     local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- Core.Fsm#FSM_PROCESS
@@ -1143,8 +1143,8 @@ do -- FSM_PROCESS
   end
 
   --- Creates a new FSM_PROCESS object based on this FSM_PROCESS.
-  -- @param #FSM_PROCESS self
-  -- @return #FSM_PROCESS
+  --- @param #FSM_PROCESS self
+  --- @return #FSM_PROCESS
   function FSM_PROCESS:Copy( Controllable, Task )
     --self:T3( { self:GetClassNameAndID() } )
 
@@ -1185,8 +1185,8 @@ do -- FSM_PROCESS
   end
 
   --- Removes an FSM_PROCESS object.
-  -- @param #FSM_PROCESS self
-  -- @return #FSM_PROCESS
+  --- @param #FSM_PROCESS self
+  --- @return #FSM_PROCESS
   function FSM_PROCESS:Remove()
     self:F( { self:GetClassNameAndID() } )
 
@@ -1205,9 +1205,9 @@ do -- FSM_PROCESS
   end
 
   --- Sets the task of the process.
-  -- @param #FSM_PROCESS self
-  -- @param Tasking.Task#TASK Task
-  -- @return #FSM_PROCESS
+  --- @param #FSM_PROCESS self
+  --- @param Tasking.Task#TASK Task
+  --- @return #FSM_PROCESS
   function FSM_PROCESS:SetTask( Task )
 
     self.Task = Task
@@ -1216,24 +1216,24 @@ do -- FSM_PROCESS
   end
 
   --- Gets the task of the process.
-  -- @param #FSM_PROCESS self
-  -- @return Tasking.Task#TASK
+  --- @param #FSM_PROCESS self
+  --- @return Tasking.Task#TASK
   function FSM_PROCESS:GetTask()
 
     return self.Task
   end
 
   --- Gets the mission of the process.
-  -- @param #FSM_PROCESS self
-  -- @return Tasking.Mission#MISSION
+  --- @param #FSM_PROCESS self
+  --- @return Tasking.Mission#MISSION
   function FSM_PROCESS:GetMission()
 
     return self.Task.Mission
   end
 
   --- Gets the mission of the process.
-  -- @param #FSM_PROCESS self
-  -- @return Tasking.CommandCenter#COMMANDCENTER
+  --- @param #FSM_PROCESS self
+  --- @return Tasking.CommandCenter#COMMANDCENTER
   function FSM_PROCESS:GetCommandCenter()
 
     return self:GetTask():GetMission():GetCommandCenter()
@@ -1242,7 +1242,7 @@ do -- FSM_PROCESS
   -- TODO: Need to check and fix that an FSM_PROCESS is only for a UNIT. Not for a GROUP.  
 
   --- Send a message of the @{Tasking.Task} to the Group of the Unit.
-  -- @param #FSM_PROCESS self
+  --- @param #FSM_PROCESS self
   function FSM_PROCESS:Message( Message )
     self:F( { Message = Message } )
 
@@ -1259,10 +1259,10 @@ do -- FSM_PROCESS
   end
 
   --- Assign the process to a @{Wrapper.Unit} and activate the process.
-  -- @param #FSM_PROCESS self
-  -- @param Task.Tasking#TASK Task
-  -- @param Wrapper.Unit#UNIT ProcessUnit
-  -- @return #FSM_PROCESS self
+  --- @param #FSM_PROCESS self
+  --- @param Task.Tasking#TASK Task
+  --- @param Wrapper.Unit#UNIT ProcessUnit
+  --- @return #FSM_PROCESS self
   function FSM_PROCESS:Assign( ProcessUnit, Task )
     -- self:T( { Task:GetName(), ProcessUnit:GetName() } )
 
@@ -1289,11 +1289,11 @@ do -- FSM_PROCESS
   end
 
   --- StateMachine callback function for a FSM_PROCESS
-  -- @param #FSM_PROCESS self
-  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
+  --- @param #FSM_PROCESS self
+  --- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  --- @param #string Event
+  --- @param #string From
+  --- @param #string To
   function FSM_PROCESS:onstatechange( ProcessUnit, Task, From, Event, To )
 
     if From ~= To then
@@ -1322,23 +1322,23 @@ do -- FSM_TASK
 
   --- FSM_TASK class
   --- @type FSM_TASK
-  -- @field Tasking.Task#TASK Task
+  --- @field Tasking.Task#TASK Task
   -- @extends #FSM
 
   --- Models Finite State Machines for @{Tasking.Task}s.
   --
   -- ===
   --
-  -- @field #FSM_TASK FSM_TASK
+  --- @field #FSM_TASK FSM_TASK
   --
   FSM_TASK = {
     ClassName = "FSM_TASK",
   }
 
   --- Creates a new FSM_TASK object.
-  -- @param #FSM_TASK self
-  -- @param #string TaskName The name of the task.
-  -- @return #FSM_TASK
+  --- @param #FSM_TASK self
+  --- @param #string TaskName The name of the task.
+  --- @return #FSM_TASK
   function FSM_TASK:New( TaskName )
 
     local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- Core.Fsm#FSM_TASK
@@ -1379,7 +1379,7 @@ do -- FSM_SET
 
   --- FSM_SET class
   --- @type FSM_SET
-  -- @field Core.Set#SET_BASE Set
+  --- @field Core.Set#SET_BASE Set
   -- @extends Core.Fsm#FSM
 
   --- FSM_SET class models Finite State Machines for @{Core.Set}s. Note that these FSMs control multiple objects!!! So State concerns here
@@ -1387,16 +1387,16 @@ do -- FSM_SET
   --
   -- ===
   --
-  -- @field #FSM_SET FSM_SET
+  --- @field #FSM_SET FSM_SET
   FSM_SET = {
     ClassName = "FSM_SET",
   }
 
   --- Creates a new FSM_SET object.
-  -- @param #FSM_SET self
-  -- @param #table FSMT Finite State Machine Table
-  -- @param Set_SET_BASE FSMSet (optional) The Set object that the FSM_SET governs.
-  -- @return #FSM_SET
+  --- @param #FSM_SET self
+  --- @param #table FSMT Finite State Machine Table
+  --- @param Set_SET_BASE FSMSet (optional) The Set object that the FSM_SET governs.
+  --- @return #FSM_SET
   function FSM_SET:New( FSMSet )
 
     -- Inherits from BASE
@@ -1410,17 +1410,17 @@ do -- FSM_SET
   end
 
   --- Sets the SET_BASE object that the FSM_SET governs.
-  -- @param #FSM_SET self
-  -- @param Core.Set#SET_BASE FSMSet
-  -- @return #FSM_SET
+  --- @param #FSM_SET self
+  --- @param Core.Set#SET_BASE FSMSet
+  --- @return #FSM_SET
   function FSM_SET:Set( FSMSet )
     self:F( FSMSet )
     self.Set = FSMSet
   end
 
   --- Gets the SET_BASE object that the FSM_SET governs.
-  -- @param #FSM_SET self
-  -- @return Core.Set#SET_BASE
+  --- @param #FSM_SET self
+  --- @return Core.Set#SET_BASE
   function FSM_SET:Get()
     return self.Set
   end

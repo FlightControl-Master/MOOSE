@@ -55,7 +55,7 @@ do -- ACT_ACCOUNT
   --     These state transition methods need to provide a return value, which is specified at the function description.
   --
   --- @type ACT_ACCOUNT
-  -- @field Core.Set#SET_UNIT TargetSetUnit
+  --- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Core.Fsm#FSM_PROCESS
   ACT_ACCOUNT = {
     ClassName = "ACT_ACCOUNT",
@@ -64,7 +64,7 @@ do -- ACT_ACCOUNT
 
   --- Creates a new DESTROY process.
   -- @param #ACT_ACCOUNT self
-  -- @return #ACT_ACCOUNT
+  --- @return #ACT_ACCOUNT
   function ACT_ACCOUNT:New()
 
     -- Inherits from BASE
@@ -150,7 +150,7 @@ do -- ACT_ACCOUNT_DEADS
   --   * @{#ACT_ACCOUNT_DEADS.New}(): Creates a new ACT_ACCOUNT_DEADS object.
   --
   --- @type ACT_ACCOUNT_DEADS
-  -- @field Core.Set#SET_UNIT TargetSetUnit
+  --- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends #ACT_ACCOUNT
   ACT_ACCOUNT_DEADS = {
     ClassName = "ACT_ACCOUNT_DEADS",
@@ -269,7 +269,7 @@ do -- ACT_ACCOUNT_DEADS
 
   --- DCS Events
 
-  --- @param #ACT_ACCOUNT_DEADS self
+  -- @param #ACT_ACCOUNT_DEADS self
   -- @param Core.Event#EVENTDATA EventData
   function ACT_ACCOUNT_DEADS:OnEventHit( EventData )
     self:T( { "EventDead", EventData } )
@@ -280,7 +280,7 @@ do -- ACT_ACCOUNT_DEADS
     end
   end
 
-  --- @param #ACT_ACCOUNT_DEADS self
+  -- @param #ACT_ACCOUNT_DEADS self
   -- @param Core.Event#EVENTDATA EventData
   function ACT_ACCOUNT_DEADS:onfuncEventDead( EventData )
     self:T( { "EventDead", EventData } )
@@ -292,7 +292,7 @@ do -- ACT_ACCOUNT_DEADS
 
   --- DCS Events
 
-  --- @param #ACT_ACCOUNT_DEADS self
+  -- @param #ACT_ACCOUNT_DEADS self
   -- @param Core.Event#EVENTDATA EventData
   function ACT_ACCOUNT_DEADS:onfuncEventCrash( EventData )
     self:T( { "EventDead", EventData } )

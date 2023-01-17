@@ -109,196 +109,196 @@ function LEGION:New(WarehouseName, LegionName)
 
   --- Triggers the FSM event "Start". Starts the LEGION. Initializes parameters and starts event handlers.
   -- @function [parent=#LEGION] Start
-  -- @param #LEGION self
+  --- @param #LEGION self
 
   --- Triggers the FSM event "Start" after a delay. Starts the LEGION. Initializes parameters and starts event handlers.
   -- @function [parent=#LEGION] __Start
-  -- @param #LEGION self
-  -- @param #number delay Delay in seconds.
+  --- @param #LEGION self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Stop". Stops the LEGION and all its event handlers.
-  -- @param #LEGION self
+  --- @param #LEGION self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the LEGION and all its event handlers.
   -- @function [parent=#LEGION] __Stop
-  -- @param #LEGION self
-  -- @param #number delay Delay in seconds.
+  --- @param #LEGION self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "MissionCancel".
   -- @function [parent=#LEGION] MissionCancel
-  -- @param #LEGION self
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #LEGION self
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
 
   --- Triggers the FSM event "MissionAssign".
   -- @function [parent=#LEGION] MissionAssign
-  -- @param #LEGION self
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-  -- @param #table Legions The legion(s) from which the mission assets are requested.
+  --- @param #LEGION self
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #table Legions The legion(s) from which the mission assets are requested.
 
   --- Triggers the FSM event "MissionAssign" after a delay.
   -- @function [parent=#LEGION] __MissionAssign
-  -- @param #LEGION self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-  -- @param #table Legions The legion(s) from which the mission assets are requested.
+  --- @param #LEGION self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #table Legions The legion(s) from which the mission assets are requested.
 
   --- On after "MissionAssign" event.
   -- @function [parent=#LEGION] OnAfterMissionAssign
-  -- @param #LEGION self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-  -- @param #table Legions The legion(s) from which the mission assets are requested.
+  --- @param #LEGION self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #table Legions The legion(s) from which the mission assets are requested.
 
 
   --- Triggers the FSM event "MissionRequest".
   -- @function [parent=#LEGION] MissionRequest
-  -- @param #LEGION self
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-  -- @param #table Assets (Optional) Assets to add.
+  --- @param #LEGION self
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #table Assets (Optional) Assets to add.
 
   --- Triggers the FSM event "MissionRequest" after a delay.
   -- @function [parent=#LEGION] __MissionRequest
-  -- @param #LEGION self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-  -- @param #table Assets (Optional) Assets to add.
+  --- @param #LEGION self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #table Assets (Optional) Assets to add.
 
   --- On after "MissionRequest" event.
   -- @function [parent=#LEGION] OnAfterMissionRequest
-  -- @param #LEGION self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-  -- @param #table Assets (Optional) Assets to add.
+  --- @param #LEGION self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #table Assets (Optional) Assets to add.
 
 
   --- Triggers the FSM event "MissionCancel" after a delay.
   -- @function [parent=#LEGION] __MissionCancel
-  -- @param #LEGION self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #LEGION self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- On after "MissionCancel" event.
   -- @function [parent=#LEGION] OnAfterMissionCancel
-  -- @param #LEGION self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #LEGION self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
 
   --- Triggers the FSM event "TransportAssign".
   -- @function [parent=#LEGION] TransportAssign
-  -- @param #LEGION self
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
-  -- @param #table Legions The legion(s) to which this transport is assigned.
+  --- @param #LEGION self
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #table Legions The legion(s) to which this transport is assigned.
 
   --- Triggers the FSM event "TransportAssign" after a delay.
   -- @function [parent=#LEGION] __TransportAssign
-  -- @param #LEGION self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
-  -- @param #table Legions The legion(s) to which this transport is assigned.
+  --- @param #LEGION self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #table Legions The legion(s) to which this transport is assigned.
 
   --- On after "TransportAssign" event.
   -- @function [parent=#LEGION] OnAfterTransportAssign
-  -- @param #LEGION self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
-  -- @param #table Legions The legion(s) to which this transport is assigned.
+  --- @param #LEGION self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #table Legions The legion(s) to which this transport is assigned.
 
 
   --- Triggers the FSM event "TransportRequest".
   -- @function [parent=#LEGION] TransportRequest
-  -- @param #LEGION self
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #LEGION self
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
   --- Triggers the FSM event "TransportRequest" after a delay.
   -- @function [parent=#LEGION] __TransportRequest
-  -- @param #LEGION self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #LEGION self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
   --- On after "TransportRequest" event.
   -- @function [parent=#LEGION] OnAfterTransportRequest
-  -- @param #LEGION self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #LEGION self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
 
   --- Triggers the FSM event "TransportCancel".
   -- @function [parent=#LEGION] TransportCancel
-  -- @param #LEGION self
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #LEGION self
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
   --- Triggers the FSM event "TransportCancel" after a delay.
   -- @function [parent=#LEGION] __TransportCancel
-  -- @param #LEGION self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #LEGION self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
   --- On after "TransportCancel" event.
   -- @function [parent=#LEGION] OnAfterTransportCancel
-  -- @param #LEGION self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #LEGION self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
 
   --- Triggers the FSM event "OpsOnMission".
   -- @function [parent=#LEGION] OpsOnMission
-  -- @param #LEGION self
-  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #LEGION self
+  --- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- Triggers the FSM event "OpsOnMission" after a delay.
   -- @function [parent=#LEGION] __OpsOnMission
-  -- @param #LEGION self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #LEGION self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- On after "OpsOnMission" event.
   -- @function [parent=#LEGION] OnAfterOpsOnMission
-  -- @param #LEGION self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #LEGION self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
 
   --- Triggers the FSM event "LegionAssetReturned".
   -- @function [parent=#LEGION] LegionAssetReturned
-  -- @param #LEGION self
-  -- @param Ops.Cohort#COHORT Cohort The cohort the asset belongs to.
-  -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
+  --- @param #LEGION self
+  --- @param Ops.Cohort#COHORT Cohort The cohort the asset belongs to.
+  --- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
 
   --- Triggers the FSM event "LegionAssetReturned" after a delay.
   -- @function [parent=#LEGION] __LegionAssetReturned
-  -- @param #LEGION self
-  -- @param #number delay Delay in seconds. 
-  -- @param Ops.Cohort#COHORT Cohort The cohort the asset belongs to.
-  -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
+  --- @param #LEGION self
+  --- @param #number delay Delay in seconds. 
+  --- @param Ops.Cohort#COHORT Cohort The cohort the asset belongs to.
+  --- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
 
   --- On after "LegionAssetReturned" event. Triggered when an asset group returned to its Legion.
   -- @function [parent=#LEGION] OnAfterLegionAssetReturned
-  -- @param #LEGION self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.Cohort#COHORT Cohort The cohort the asset belongs to.
-  -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
+  --- @param #LEGION self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.Cohort#COHORT Cohort The cohort the asset belongs to.
+  --- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
 
 
   return self

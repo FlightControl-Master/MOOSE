@@ -2861,16 +2861,16 @@ end
 do -- ZONE_ELASTIC
 
   --- @type ZONE_ELASTIC
-  -- @field #table points Points in 2D.
-  -- @field #table setGroups Set of GROUPs.
-  -- @field #table setOpsGroups Set of OPSGROUPS.
-  -- @field #table setUnits Set of UNITs.
-  -- @field #number updateID Scheduler ID for updating.
+  --- @field #table points Points in 2D.
+  --- @field #table setGroups Set of GROUPs.
+  --- @field #table setOpsGroups Set of OPSGROUPS.
+  --- @field #table setUnits Set of UNITs.
+  --- @field #number updateID Scheduler ID for updating.
   -- @extends #ZONE_POLYGON_BASE
 
   --- The ZONE_ELASTIC class defines a dynamic polygon zone, where only the convex hull is used.
   --
-  -- @field #ZONE_ELASTIC
+  --- @field #ZONE_ELASTIC
   ZONE_ELASTIC = {
     ClassName="ZONE_ELASTIC",
     points={},
@@ -2878,10 +2878,10 @@ do -- ZONE_ELASTIC
     }
 
   --- Constructor to create a ZONE_ELASTIC instance.
-  -- @param #ZONE_ELASTIC self
-  -- @param #string ZoneName Name of the zone.
-  -- @param DCS#Vec2 Points (Optional) Fixed points.
-  -- @return #ZONE_ELASTIC self
+  --- @param #ZONE_ELASTIC self
+  --- @param #string ZoneName Name of the zone.
+  --- @param DCS#Vec2 Points (Optional) Fixed points.
+  --- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:New(ZoneName, Points)
 
     local self=BASE:Inherit(self, ZONE_POLYGON_BASE:New(ZoneName, Points)) --#ZONE_ELASTIC
@@ -2897,9 +2897,9 @@ do -- ZONE_ELASTIC
   end
 
   --- Add a vertex (point) to the polygon.
-  -- @param #ZONE_ELASTIC self
-  -- @param DCS#Vec2 Vec2 Point in 2D (with x and y coordinates).
-  -- @return #ZONE_ELASTIC self
+  --- @param #ZONE_ELASTIC self
+  --- @param DCS#Vec2 Vec2 Point in 2D (with x and y coordinates).
+  --- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:AddVertex2D(Vec2)
   
     -- Add vec2 to points.
@@ -2910,9 +2910,9 @@ do -- ZONE_ELASTIC
 
 
   --- Add a vertex (point) to the polygon.
-  -- @param #ZONE_ELASTIC self
-  -- @param DCS#Vec3 Vec3 Point in 3D (with x, y and z coordinates). Only the x and z coordinates are used.
-  -- @return #ZONE_ELASTIC self
+  --- @param #ZONE_ELASTIC self
+  --- @param DCS#Vec3 Vec3 Point in 3D (with x, y and z coordinates). Only the x and z coordinates are used.
+  --- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:AddVertex3D(Vec3)
     
     -- Add vec2 from vec3 to points.
@@ -2923,9 +2923,9 @@ do -- ZONE_ELASTIC
 
 
   --- Add a set of groups. Positions of the group will be considered as polygon vertices when contructing the convex hull.
-  -- @param #ZONE_ELASTIC self
-  -- @param Core.Set#SET_GROUP SetGroup Set of groups.
-  -- @return #ZONE_ELASTIC self
+  --- @param #ZONE_ELASTIC self
+  --- @param Core.Set#SET_GROUP SetGroup Set of groups.
+  --- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:AddSetGroup(GroupSet)
   
     -- Add set to table.
@@ -2937,10 +2937,10 @@ do -- ZONE_ELASTIC
 
   --- Update the convex hull of the polygon.
   -- This uses the [Graham scan](https://en.wikipedia.org/wiki/Graham_scan).
-  -- @param #ZONE_ELASTIC self
-  -- @param #number Delay Delay in seconds before the zone is updated. Default 0.
-  -- @param #boolean Draw Draw the zone. Default `nil`.
-  -- @return #ZONE_ELASTIC self
+  --- @param #ZONE_ELASTIC self
+  --- @param #number Delay Delay in seconds before the zone is updated. Default 0.
+  --- @param #boolean Draw Draw the zone. Default `nil`.
+  --- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:Update(Delay, Draw)
     
     -- Debug info.
@@ -2975,12 +2975,12 @@ do -- ZONE_ELASTIC
   end
   
   --- Start the updating scheduler.
-  -- @param #ZONE_ELASTIC self
-  -- @param #number Tstart Time in seconds before the updating starts.
-  -- @param #number dT Time interval in seconds between updates. Default 60 sec.
-  -- @param #number Tstop Time in seconds after which the updating stops. Default `nil`.
-  -- @param #boolean Draw Draw the zone. Default `nil`.
-  -- @return #ZONE_ELASTIC self
+  --- @param #ZONE_ELASTIC self
+  --- @param #number Tstart Time in seconds before the updating starts.
+  --- @param #number dT Time interval in seconds between updates. Default 60 sec.
+  --- @param #number Tstop Time in seconds after which the updating stops. Default `nil`.
+  --- @param #boolean Draw Draw the zone. Default `nil`.
+  --- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:StartUpdate(Tstart, dT, Tstop, Draw)
   
     self.updateID=self:ScheduleRepeat(Tstart, dT, 0, Tstop, ZONE_ELASTIC.Update, self, 0, Draw)
@@ -2989,9 +2989,9 @@ do -- ZONE_ELASTIC
   end
 
   --- Stop the updating scheduler.
-  -- @param #ZONE_ELASTIC self
-  -- @param #number Delay Delay in seconds before the scheduler will be stopped. Default 0.
-  -- @return #ZONE_ELASTIC self
+  --- @param #ZONE_ELASTIC self
+  --- @param #number Delay Delay in seconds before the scheduler will be stopped. Default 0.
+  --- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:StopUpdate(Delay)
   
     if Delay and Delay>0 then
@@ -3013,9 +3013,9 @@ do -- ZONE_ELASTIC
   
 
   --- Create a convec hull.
-  -- @param #ZONE_ELASTIC self
-  -- @param #table pl Points
-  -- @return #table Points
+  --- @param #ZONE_ELASTIC self
+  --- @param #table pl Points
+  --- @return #table Points
   function ZONE_ELASTIC:_ConvexHull(pl)
   
     if #pl == 0 then
@@ -3061,16 +3061,16 @@ end
 do -- ZONE_AIRBASE
 
   --- @type ZONE_AIRBASE
-  -- @field #boolean isShip If `true`, airbase is a ship.
-  -- @field #boolean isHelipad If `true`, airbase is a helipad.
-  -- @field #boolean isAirdrome If `true`, airbase is an airdrome.
+  --- @field #boolean isShip If `true`, airbase is a ship.
+  --- @field #boolean isHelipad If `true`, airbase is a helipad.
+  --- @field #boolean isAirdrome If `true`, airbase is an airdrome.
   -- @extends #ZONE_RADIUS
 
 
   --- The ZONE_AIRBASE class defines by a zone around a @{Wrapper.Airbase#AIRBASE} with a radius.
   -- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
   --
-  -- @field #ZONE_AIRBASE
+  --- @field #ZONE_AIRBASE
   ZONE_AIRBASE = {
     ClassName="ZONE_AIRBASE",
     }
@@ -3078,10 +3078,10 @@ do -- ZONE_AIRBASE
 
 
   --- Constructor to create a ZONE_AIRBASE instance, taking the zone name, a zone @{Wrapper.Airbase#AIRBASE} and a radius.
-  -- @param #ZONE_AIRBASE self
-  -- @param #string AirbaseName Name of the airbase.
-  -- @param DCS#Distance Radius (Optional)The radius of the zone in meters. Default 4000 meters.
-  -- @return #ZONE_AIRBASE self
+  --- @param #ZONE_AIRBASE self
+  --- @param #string AirbaseName Name of the airbase.
+  --- @param DCS#Distance Radius (Optional)The radius of the zone in meters. Default 4000 meters.
+  --- @return #ZONE_AIRBASE self
   function ZONE_AIRBASE:New( AirbaseName, Radius )
 
     Radius=Radius or 4000
@@ -3114,15 +3114,15 @@ do -- ZONE_AIRBASE
   end
 
   --- Get the airbase as part of the ZONE_AIRBASE object.
-  -- @param #ZONE_AIRBASE self
-  -- @return Wrapper.Airbase#AIRBASE The airbase.
+  --- @param #ZONE_AIRBASE self
+  --- @return Wrapper.Airbase#AIRBASE The airbase.
   function ZONE_AIRBASE:GetAirbase()
     return self._.ZoneAirbase
   end
 
   --- Returns the current location of the AIRBASE.
-  -- @param #ZONE_AIRBASE self
-  -- @return DCS#Vec2 The location of the zone based on the AIRBASE location.
+  --- @param #ZONE_AIRBASE self
+  --- @return DCS#Vec2 The location of the zone based on the AIRBASE location.
   function ZONE_AIRBASE:GetVec2()
     self:F( self.ZoneName )
 
@@ -3141,10 +3141,10 @@ do -- ZONE_AIRBASE
   end
 
   --- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone.
-  -- @param #ZONE_AIRBASE self
-  -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
-  -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
-  -- @return Core.Point#POINT_VEC2 The @{Core.Point#POINT_VEC2} object reflecting the random 3D location within the zone.
+  --- @param #ZONE_AIRBASE self
+  --- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
+  --- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+  --- @return Core.Point#POINT_VEC2 The @{Core.Point#POINT_VEC2} object reflecting the random 3D location within the zone.
   function ZONE_AIRBASE:GetRandomPointVec2( inner, outer )
     self:F( self.ZoneName, inner, outer )
 

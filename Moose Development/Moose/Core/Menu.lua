@@ -170,7 +170,7 @@ do -- MENU_BASE
   -- @extends Core.Base#BASE
   --- Defines the main MENU class where other MENU classes are derived from.
   -- This is an abstract class, so don't use it.
-  -- @field #MENU_BASE
+  --- @field #MENU_BASE
   MENU_BASE = {
     ClassName = "MENU_BASE",
     MenuPath = nil,
@@ -179,8 +179,8 @@ do -- MENU_BASE
   }
   
   --- Constructor
-  -- @param #MENU_BASE
-  -- @return #MENU_BASE
+  --- @param #MENU_BASE
+  --- @return #MENU_BASE
   function MENU_BASE:New( MenuText, ParentMenu )
   
     local MenuParentPath = {}
@@ -223,9 +223,9 @@ do -- MENU_BASE
     end
   end
   --- Sets a @{Menu} to remove automatically the parent menu when the menu removed is the last child menu of that parent @{Menu}.
-  -- @param #MENU_BASE self
-  -- @param #boolean RemoveParent If true, the parent menu is automatically removed when this menu is the last child menu of that parent @{Menu}.
-  -- @return #MENU_BASE
+  --- @param #MENU_BASE self
+  --- @param #boolean RemoveParent If true, the parent menu is automatically removed when this menu is the last child menu of that parent @{Menu}.
+  --- @return #MENU_BASE
   function MENU_BASE:SetRemoveParent( RemoveParent )
     --self:F( { RemoveParent } )
     self.MenuRemoveParent = RemoveParent
@@ -233,17 +233,17 @@ do -- MENU_BASE
   end
   
   --- Gets a @{Menu} from a parent @{Menu}
-  -- @param #MENU_BASE self
-  -- @param #string MenuText The text of the child menu.
-  -- @return #MENU_BASE
+  --- @param #MENU_BASE self
+  --- @param #string MenuText The text of the child menu.
+  --- @return #MENU_BASE
   function MENU_BASE:GetMenu( MenuText )
     return self.Menus[MenuText]
   end
   
   --- Sets a menu stamp for later prevention of menu removal.
-  -- @param #MENU_BASE self
-  -- @param MenuStamp
-  -- @return #MENU_BASE
+  --- @param #MENU_BASE self
+  --- @param MenuStamp
+  --- @return #MENU_BASE
   function MENU_BASE:SetStamp( MenuStamp )
     self.MenuStamp = MenuStamp
     return self
@@ -251,26 +251,26 @@ do -- MENU_BASE
   
   
   --- Gets a menu stamp for later prevention of menu removal.
-  -- @param #MENU_BASE self
-  -- @return MenuStamp
+  --- @param #MENU_BASE self
+  --- @return MenuStamp
   function MENU_BASE:GetStamp()
     return timer.getTime()
   end
   
   
   --- Sets a time stamp for later prevention of menu removal.
-  -- @param #MENU_BASE self
-  -- @param MenuStamp
-  -- @return #MENU_BASE
+  --- @param #MENU_BASE self
+  --- @param MenuStamp
+  --- @return #MENU_BASE
   function MENU_BASE:SetTime( MenuStamp )
     self.MenuStamp = MenuStamp
     return self
   end
   
   --- Sets a tag for later selection of menu refresh.
-  -- @param #MENU_BASE self
-  -- @param #string MenuTag A Tag or Key that will filter only menu items set with this key.
-  -- @return #MENU_BASE
+  --- @param #MENU_BASE self
+  --- @param #string MenuTag A Tag or Key that will filter only menu items set with this key.
+  --- @return #MENU_BASE
   function MENU_BASE:SetTag( MenuTag )
     self.MenuTag = MenuTag
     return self
@@ -279,13 +279,13 @@ do -- MENU_BASE
 end
 do -- MENU_COMMAND_BASE
   --- @type MENU_COMMAND_BASE
-  -- @field #function MenuCallHandler
+  --- @field #function MenuCallHandler
   -- @extends Core.Menu#MENU_BASE
   
   --- Defines the main MENU class where other MENU COMMAND_ 
   -- classes are derived from, in order to set commands.
   -- 
-  -- @field #MENU_COMMAND_BASE
+  --- @field #MENU_COMMAND_BASE
   MENU_COMMAND_BASE = {
     ClassName = "MENU_COMMAND_BASE",
     CommandMenuFunction = nil,
@@ -294,8 +294,8 @@ do -- MENU_COMMAND_BASE
   }
   
   --- Constructor
-  -- @param #MENU_COMMAND_BASE
-  -- @return #MENU_COMMAND_BASE
+  --- @param #MENU_COMMAND_BASE
+  --- @return #MENU_COMMAND_BASE
   function MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, CommandMenuArguments )
   
     local self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) ) -- #MENU_COMMAND_BASE
@@ -325,8 +325,8 @@ do -- MENU_COMMAND_BASE
   -- so that if a menu is regenerated, or if command function changes,
   -- that the function set for the menu is loosely coupled with the menu itself!!!
   -- If the function changes, no new menu needs to be generated if the menu text is the same!!!
-  -- @param #MENU_COMMAND_BASE
-  -- @return #MENU_COMMAND_BASE
+  --- @param #MENU_COMMAND_BASE
+  --- @return #MENU_COMMAND_BASE
   function MENU_COMMAND_BASE:SetCommandMenuFunction( CommandMenuFunction )
     self.CommandMenuFunction = CommandMenuFunction
     return self
@@ -335,8 +335,8 @@ do -- MENU_COMMAND_BASE
   -- so that if a menu is regenerated, or if command arguments change,
   -- that the arguments set for the menu are loosely coupled with the menu itself!!!
   -- If the arguments change, no new menu needs to be generated if the menu text is the same!!!
-  -- @param #MENU_COMMAND_BASE
-  -- @return #MENU_COMMAND_BASE
+  --- @param #MENU_COMMAND_BASE
+  --- @return #MENU_COMMAND_BASE
   function MENU_COMMAND_BASE:SetCommandMenuArguments( CommandMenuArguments )
     self.CommandMenuArguments = CommandMenuArguments
     return self
@@ -350,16 +350,16 @@ do -- MENU_MISSION
   -- 
   -- You can add menus with the @{#MENU_MISSION.New} method, which constructs a MENU_MISSION object and returns you the object reference.
   -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_MISSION.Remove}.
-  -- @field #MENU_MISSION
+  --- @field #MENU_MISSION
   MENU_MISSION = {
     ClassName = "MENU_MISSION",
   }
   
   --- MENU_MISSION constructor. Creates a new MENU_MISSION object and creates the menu for a complete mission file.
-  -- @param #MENU_MISSION self
-  -- @param #string MenuText The text for the menu.
-  -- @param #table ParentMenu The parent menu. This parameter can be ignored if you want the menu to be located at the parent menu of DCS world (under F10 other).
-  -- @return #MENU_MISSION
+  --- @param #MENU_MISSION self
+  --- @param #string MenuText The text for the menu.
+  --- @param #table ParentMenu The parent menu. This parameter can be ignored if you want the menu to be located at the parent menu of DCS world (under F10 other).
+  --- @return #MENU_MISSION
   function MENU_MISSION:New( MenuText, ParentMenu )
   
     MENU_INDEX:PrepareMission()
@@ -379,8 +379,8 @@ do -- MENU_MISSION
   end
   
   --- Refreshes a radio item for a mission
-  -- @param #MENU_MISSION self
-  -- @return #MENU_MISSION
+  --- @param #MENU_MISSION self
+  --- @return #MENU_MISSION
   function MENU_MISSION:Refresh()
     do
       missionCommands.removeItem( self.MenuPath )
@@ -390,8 +390,8 @@ do -- MENU_MISSION
   end
   
   --- Removes the sub menus recursively of this MENU_MISSION. Note that the main menu is kept!
-  -- @param #MENU_MISSION self
-  -- @return #MENU_MISSION
+  --- @param #MENU_MISSION self
+  --- @return #MENU_MISSION
   function MENU_MISSION:RemoveSubMenus()
   
     for MenuID, Menu in pairs( self.Menus or {} ) do
@@ -403,8 +403,8 @@ do -- MENU_MISSION
   end
   
   --- Removes the main menu and the sub menus recursively of this MENU_MISSION.
-  -- @param #MENU_MISSION self
-  -- @return #nil
+  --- @param #MENU_MISSION self
+  --- @return #nil
   function MENU_MISSION:Remove( MenuStamp, MenuTag )
   
     MENU_INDEX:PrepareMission()
@@ -441,18 +441,18 @@ do -- MENU_MISSION_COMMAND
   -- You can add menus with the @{#MENU_MISSION_COMMAND.New} method, which constructs a MENU_MISSION_COMMAND object and returns you the object reference.
   -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_MISSION_COMMAND.Remove}.
   -- 
-  -- @field #MENU_MISSION_COMMAND
+  --- @field #MENU_MISSION_COMMAND
   MENU_MISSION_COMMAND = {
     ClassName = "MENU_MISSION_COMMAND",
   }
   
   --- MENU_MISSION constructor. Creates a new radio command item for a complete mission file, which can invoke a function with parameters.
-  -- @param #MENU_MISSION_COMMAND self
-  -- @param #string MenuText The text for the menu.
-  -- @param Core.Menu#MENU_MISSION ParentMenu The parent menu.
-  -- @param CommandMenuFunction A function that is called when the menu key is pressed.
-  -- @param CommandMenuArgument An argument for the function. There can only be ONE argument given. So multiple arguments must be wrapped into a table. See the below example how to do this.
-  -- @return #MENU_MISSION_COMMAND self
+  --- @param #MENU_MISSION_COMMAND self
+  --- @param #string MenuText The text for the menu.
+  --- @param Core.Menu#MENU_MISSION ParentMenu The parent menu.
+  --- @param CommandMenuFunction A function that is called when the menu key is pressed.
+  --- @param CommandMenuArgument An argument for the function. There can only be ONE argument given. So multiple arguments must be wrapped into a table. See the below example how to do this.
+  --- @return #MENU_MISSION_COMMAND self
   function MENU_MISSION_COMMAND:New( MenuText, ParentMenu, CommandMenuFunction, ... )
   
     MENU_INDEX:PrepareMission()
@@ -472,8 +472,8 @@ do -- MENU_MISSION_COMMAND
     end
   end
   --- Refreshes a radio item for a mission
-  -- @param #MENU_MISSION_COMMAND self
-  -- @return #MENU_MISSION_COMMAND
+  --- @param #MENU_MISSION_COMMAND self
+  --- @return #MENU_MISSION_COMMAND
   function MENU_MISSION_COMMAND:Refresh()
     do
       missionCommands.removeItem( self.MenuPath )
@@ -483,8 +483,8 @@ do -- MENU_MISSION_COMMAND
   end
   
   --- Removes a radio command item for a coalition
-  -- @param #MENU_MISSION_COMMAND self
-  -- @return #nil
+  --- @param #MENU_MISSION_COMMAND self
+  --- @return #nil
   function MENU_MISSION_COMMAND:Remove()
   
     MENU_INDEX:PrepareMission()
@@ -562,11 +562,11 @@ do -- MENU_COALITION
   }
   
   --- MENU_COALITION constructor. Creates a new MENU_COALITION object and creates the menu for a complete coalition.
-  -- @param #MENU_COALITION self
-  -- @param DCS#coalition.side Coalition The coalition owning the menu.
-  -- @param #string MenuText The text for the menu.
-  -- @param #table ParentMenu The parent menu. This parameter can be ignored if you want the menu to be located at the parent menu of DCS world (under F10 other).
-  -- @return #MENU_COALITION self
+  --- @param #MENU_COALITION self
+  --- @param DCS#coalition.side Coalition The coalition owning the menu.
+  --- @param #string MenuText The text for the menu.
+  --- @param #table ParentMenu The parent menu. This parameter can be ignored if you want the menu to be located at the parent menu of DCS world (under F10 other).
+  --- @return #MENU_COALITION self
   function MENU_COALITION:New( Coalition, MenuText, ParentMenu )
     MENU_INDEX:PrepareCoalition( Coalition )
     local Path = MENU_INDEX:ParentPath( ParentMenu, MenuText )
@@ -585,8 +585,8 @@ do -- MENU_COALITION
     end
   end
   --- Refreshes a radio item for a coalition
-  -- @param #MENU_COALITION self
-  -- @return #MENU_COALITION
+  --- @param #MENU_COALITION self
+  --- @return #MENU_COALITION
   function MENU_COALITION:Refresh()
     do
       missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
@@ -596,8 +596,8 @@ do -- MENU_COALITION
   end
   
   --- Removes the sub menus recursively of this MENU_COALITION. Note that the main menu is kept!
-  -- @param #MENU_COALITION self
-  -- @return #MENU_COALITION
+  --- @param #MENU_COALITION self
+  --- @return #MENU_COALITION
   function MENU_COALITION:RemoveSubMenus()
   
     for MenuID, Menu in pairs( self.Menus or {} ) do
@@ -608,8 +608,8 @@ do -- MENU_COALITION
   end
   
   --- Removes the main menu and the sub menus recursively of this MENU_COALITION.
-  -- @param #MENU_COALITION self
-  -- @return #nil
+  --- @param #MENU_COALITION self
+  --- @return #nil
   function MENU_COALITION:Remove( MenuStamp, MenuTag )
   
     MENU_INDEX:PrepareCoalition( self.Coalition )
@@ -645,19 +645,19 @@ do -- MENU_COALITION_COMMAND
   -- You can add menus with the @{#MENU_COALITION_COMMAND.New} method, which constructs a MENU_COALITION_COMMAND object and returns you the object reference.
   -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_COALITION_COMMAND.Remove}.
   --
-  -- @field #MENU_COALITION_COMMAND
+  --- @field #MENU_COALITION_COMMAND
   MENU_COALITION_COMMAND = {
     ClassName = "MENU_COALITION_COMMAND"
   }
   
   --- MENU_COALITION constructor. Creates a new radio command item for a coalition, which can invoke a function with parameters.
-  -- @param #MENU_COALITION_COMMAND self
-  -- @param DCS#coalition.side Coalition The coalition owning the menu.
-  -- @param #string MenuText The text for the menu.
-  -- @param Core.Menu#MENU_COALITION ParentMenu The parent menu.
-  -- @param CommandMenuFunction A function that is called when the menu key is pressed.
-  -- @param CommandMenuArgument An argument for the function. There can only be ONE argument given. So multiple arguments must be wrapped into a table. See the below example how to do this.
-  -- @return #MENU_COALITION_COMMAND
+  --- @param #MENU_COALITION_COMMAND self
+  --- @param DCS#coalition.side Coalition The coalition owning the menu.
+  --- @param #string MenuText The text for the menu.
+  --- @param Core.Menu#MENU_COALITION ParentMenu The parent menu.
+  --- @param CommandMenuFunction A function that is called when the menu key is pressed.
+  --- @param CommandMenuArgument An argument for the function. There can only be ONE argument given. So multiple arguments must be wrapped into a table. See the below example how to do this.
+  --- @return #MENU_COALITION_COMMAND
   function MENU_COALITION_COMMAND:New( Coalition, MenuText, ParentMenu, CommandMenuFunction, ... )
   
     MENU_INDEX:PrepareCoalition( Coalition )
@@ -679,8 +679,8 @@ do -- MENU_COALITION_COMMAND
     end
   end
   --- Refreshes a radio item for a coalition
-  -- @param #MENU_COALITION_COMMAND self
-  -- @return #MENU_COALITION_COMMAND
+  --- @param #MENU_COALITION_COMMAND self
+  --- @return #MENU_COALITION_COMMAND
   function MENU_COALITION_COMMAND:Refresh()
     do
       missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
@@ -691,8 +691,8 @@ do -- MENU_COALITION_COMMAND
   end
   
   --- Removes a radio command item for a coalition
-  -- @param #MENU_COALITION_COMMAND self
-  -- @return #nil
+  --- @param #MENU_COALITION_COMMAND self
+  --- @return #nil
   function MENU_COALITION_COMMAND:Remove( MenuStamp, MenuTag )
   
     MENU_INDEX:PrepareCoalition( self.Coalition )
@@ -785,17 +785,17 @@ do
   --      end
   --    end, {}, 10, 10 )
   --
-  -- @field #MENU_GROUP
+  --- @field #MENU_GROUP
   MENU_GROUP = {
     ClassName = "MENU_GROUP"
   }
   
   --- MENU_GROUP constructor. Creates a new radio menu item for a group.
-  -- @param #MENU_GROUP self
-  -- @param Wrapper.Group#GROUP Group The Group owning the menu.
-  -- @param #string MenuText The text for the menu.
-  -- @param #table ParentMenu The parent menu.
-  -- @return #MENU_GROUP self
+  --- @param #MENU_GROUP self
+  --- @param Wrapper.Group#GROUP Group The Group owning the menu.
+  --- @param #string MenuText The text for the menu.
+  --- @param #table ParentMenu The parent menu.
+  --- @return #MENU_GROUP self
   function MENU_GROUP:New( Group, MenuText, ParentMenu )
   
     MENU_INDEX:PrepareGroup( Group )
@@ -817,8 +817,8 @@ do
   end
   
   --- Refreshes a new radio item for a group and submenus
-  -- @param #MENU_GROUP self
-  -- @return #MENU_GROUP
+  --- @param #MENU_GROUP self
+  --- @return #MENU_GROUP
   function MENU_GROUP:Refresh()
     do
       missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
@@ -833,8 +833,8 @@ do
   end
   
   --- Refreshes a new radio item for a group and submenus, ordering by (numerical) MenuTag
-  -- @param #MENU_GROUP self
-  -- @return #MENU_GROUP
+  --- @param #MENU_GROUP self
+  --- @return #MENU_GROUP
   function MENU_GROUP:RefreshAndOrderByTag()
 
     do
@@ -856,10 +856,10 @@ do
   end
   
   --- Removes the sub menus recursively of this MENU_GROUP.
-  -- @param #MENU_GROUP self
-  -- @param MenuStamp
-  -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
-  -- @return #MENU_GROUP self
+  --- @param #MENU_GROUP self
+  --- @param MenuStamp
+  --- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
+  --- @return #MENU_GROUP self
   function MENU_GROUP:RemoveSubMenus( MenuStamp, MenuTag )
     for MenuText, Menu in pairs( self.Menus or {} ) do
       Menu:Remove( MenuStamp, MenuTag )
@@ -870,10 +870,10 @@ do
   end
 
   --- Removes the main menu and sub menus recursively of this MENU_GROUP.
-  -- @param #MENU_GROUP self
-  -- @param MenuStamp
-  -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
-  -- @return #nil
+  --- @param #MENU_GROUP self
+  --- @param MenuStamp
+  --- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
+  --- @return #nil
   function MENU_GROUP:Remove( MenuStamp, MenuTag )
     MENU_INDEX:PrepareGroup( self.Group )
     local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
@@ -907,19 +907,19 @@ do
   -- You can add menus with the @{#MENU_GROUP_COMMAND.New} method, which constructs a MENU_GROUP_COMMAND object and returns you the object reference.
   -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_GROUP_COMMAND.Remove}.
   --
-  -- @field #MENU_GROUP_COMMAND
+  --- @field #MENU_GROUP_COMMAND
   MENU_GROUP_COMMAND = {
     ClassName = "MENU_GROUP_COMMAND"
   }
   
   --- Creates a new radio command item for a group
-  -- @param #MENU_GROUP_COMMAND self
-  -- @param Wrapper.Group#GROUP Group The Group owning the menu.
-  -- @param MenuText The text for the menu.
-  -- @param ParentMenu The parent menu.
-  -- @param CommandMenuFunction A function that is called when the menu key is pressed.
-  -- @param CommandMenuArgument An argument for the function.
-  -- @return #MENU_GROUP_COMMAND
+  --- @param #MENU_GROUP_COMMAND self
+  --- @param Wrapper.Group#GROUP Group The Group owning the menu.
+  --- @param MenuText The text for the menu.
+  --- @param ParentMenu The parent menu.
+  --- @param CommandMenuFunction A function that is called when the menu key is pressed.
+  --- @param CommandMenuArgument An argument for the function.
+  --- @return #MENU_GROUP_COMMAND
   function MENU_GROUP_COMMAND:New( Group, MenuText, ParentMenu, CommandMenuFunction, ... )
     MENU_INDEX:PrepareGroup( Group )
     local Path = MENU_INDEX:ParentPath( ParentMenu, MenuText )
@@ -942,8 +942,8 @@ do
     end
   end
   --- Refreshes a radio item for a group
-  -- @param #MENU_GROUP_COMMAND self
-  -- @return #MENU_GROUP_COMMAND
+  --- @param #MENU_GROUP_COMMAND self
+  --- @return #MENU_GROUP_COMMAND
   function MENU_GROUP_COMMAND:Refresh()
     do
       missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
@@ -954,10 +954,10 @@ do
   end
   
   --- Removes a menu structure for a group.
-  -- @param #MENU_GROUP_COMMAND self
-  -- @param MenuStamp
-  -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
-  -- @return #nil
+  --- @param #MENU_GROUP_COMMAND self
+  --- @param MenuStamp
+  --- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
+  --- @return #nil
   function MENU_GROUP_COMMAND:Remove( MenuStamp, MenuTag )
     MENU_INDEX:PrepareGroup( self.Group )
     local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
@@ -994,17 +994,17 @@ do
   -- This method is most of the time called after the "old" menu items have been removed from the sub menu.
   -- 
   --
-  -- @field #MENU_GROUP_DELAYED
+  --- @field #MENU_GROUP_DELAYED
   MENU_GROUP_DELAYED = {
     ClassName = "MENU_GROUP_DELAYED"
   }
   
   --- MENU_GROUP_DELAYED constructor. Creates a new radio menu item for a group.
-  -- @param #MENU_GROUP_DELAYED self
-  -- @param Wrapper.Group#GROUP Group The Group owning the menu.
-  -- @param #string MenuText The text for the menu.
-  -- @param #table ParentMenu The parent menu.
-  -- @return #MENU_GROUP_DELAYED self
+  --- @param #MENU_GROUP_DELAYED self
+  --- @param Wrapper.Group#GROUP Group The Group owning the menu.
+  --- @param #string MenuText The text for the menu.
+  --- @param #table ParentMenu The parent menu.
+  --- @return #MENU_GROUP_DELAYED self
   function MENU_GROUP_DELAYED:New( Group, MenuText, ParentMenu )
   
     MENU_INDEX:PrepareGroup( Group )
@@ -1031,8 +1031,8 @@ do
   end
 
   --- Refreshes a new radio item for a group and submenus
-  -- @param #MENU_GROUP_DELAYED self
-  -- @return #MENU_GROUP_DELAYED
+  --- @param #MENU_GROUP_DELAYED self
+  --- @return #MENU_GROUP_DELAYED
   function MENU_GROUP_DELAYED:Set()
     do
       if not self.MenuSet then
@@ -1047,8 +1047,8 @@ do
   end
 
   --- Refreshes a new radio item for a group and submenus
-  -- @param #MENU_GROUP_DELAYED self
-  -- @return #MENU_GROUP_DELAYED
+  --- @param #MENU_GROUP_DELAYED self
+  --- @return #MENU_GROUP_DELAYED
   function MENU_GROUP_DELAYED:Refresh()
     do
       missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
@@ -1063,10 +1063,10 @@ do
   end
   
   --- Removes the sub menus recursively of this MENU_GROUP_DELAYED.
-  -- @param #MENU_GROUP_DELAYED self
-  -- @param MenuStamp
-  -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
-  -- @return #MENU_GROUP_DELAYED self
+  --- @param #MENU_GROUP_DELAYED self
+  --- @param MenuStamp
+  --- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
+  --- @return #MENU_GROUP_DELAYED self
   function MENU_GROUP_DELAYED:RemoveSubMenus( MenuStamp, MenuTag )
     for MenuText, Menu in pairs( self.Menus or {} ) do
       Menu:Remove( MenuStamp, MenuTag )
@@ -1077,10 +1077,10 @@ do
   end
 
   --- Removes the main menu and sub menus recursively of this MENU_GROUP.
-  -- @param #MENU_GROUP_DELAYED self
-  -- @param MenuStamp
-  -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
-  -- @return #nil
+  --- @param #MENU_GROUP_DELAYED self
+  --- @param MenuStamp
+  --- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
+  --- @return #nil
   function MENU_GROUP_DELAYED:Remove( MenuStamp, MenuTag )
     MENU_INDEX:PrepareGroup( self.Group )
     local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
@@ -1115,19 +1115,19 @@ do
   -- You can add menus with the @{#MENU_GROUP_COMMAND_DELAYED.New} method, which constructs a MENU_GROUP_COMMAND_DELAYED object and returns you the object reference.
   -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_GROUP_COMMAND_DELAYED.Remove}.
   --
-  -- @field #MENU_GROUP_COMMAND_DELAYED
+  --- @field #MENU_GROUP_COMMAND_DELAYED
   MENU_GROUP_COMMAND_DELAYED = {
     ClassName = "MENU_GROUP_COMMAND_DELAYED"
   }
   
   --- Creates a new radio command item for a group
-  -- @param #MENU_GROUP_COMMAND_DELAYED self
-  -- @param Wrapper.Group#GROUP Group The Group owning the menu.
-  -- @param MenuText The text for the menu.
-  -- @param ParentMenu The parent menu.
-  -- @param CommandMenuFunction A function that is called when the menu key is pressed.
-  -- @param CommandMenuArgument An argument for the function.
-  -- @return #MENU_GROUP_COMMAND_DELAYED
+  --- @param #MENU_GROUP_COMMAND_DELAYED self
+  --- @param Wrapper.Group#GROUP Group The Group owning the menu.
+  --- @param MenuText The text for the menu.
+  --- @param ParentMenu The parent menu.
+  --- @param CommandMenuFunction A function that is called when the menu key is pressed.
+  --- @param CommandMenuArgument An argument for the function.
+  --- @return #MENU_GROUP_COMMAND_DELAYED
   function MENU_GROUP_COMMAND_DELAYED:New( Group, MenuText, ParentMenu, CommandMenuFunction, ... )
     MENU_INDEX:PrepareGroup( Group )
     local Path = MENU_INDEX:ParentPath( ParentMenu, MenuText )
@@ -1155,8 +1155,8 @@ do
     end
   end
   --- Refreshes a radio item for a group
-  -- @param #MENU_GROUP_COMMAND_DELAYED self
-  -- @return #MENU_GROUP_COMMAND_DELAYED
+  --- @param #MENU_GROUP_COMMAND_DELAYED self
+  --- @return #MENU_GROUP_COMMAND_DELAYED
   function MENU_GROUP_COMMAND_DELAYED:Set()
     do
       if not self.MenuSet then
@@ -1167,8 +1167,8 @@ do
   end
   
   --- Refreshes a radio item for a group
-  -- @param #MENU_GROUP_COMMAND_DELAYED self
-  -- @return #MENU_GROUP_COMMAND_DELAYED
+  --- @param #MENU_GROUP_COMMAND_DELAYED self
+  --- @return #MENU_GROUP_COMMAND_DELAYED
   function MENU_GROUP_COMMAND_DELAYED:Refresh()
     do
       missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
@@ -1179,10 +1179,10 @@ do
   end
   
   --- Removes a menu structure for a group.
-  -- @param #MENU_GROUP_COMMAND_DELAYED self
-  -- @param MenuStamp
-  -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
-  -- @return #nil
+  --- @param #MENU_GROUP_COMMAND_DELAYED self
+  --- @param MenuStamp
+  --- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
+  --- @return #nil
   function MENU_GROUP_COMMAND_DELAYED:Remove( MenuStamp, MenuTag )
     MENU_INDEX:PrepareGroup( self.Group )
     local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )

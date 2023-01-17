@@ -109,7 +109,7 @@ SHORAD = {
 do
   -- TODO Complete list?
   --- Missile enumerators
-  -- @field Harms
+  --- @field Harms
   SHORAD.Harms = {
   ["AGM_88"] = "AGM_88",
   ["AGM_45"] = "AGM_45",
@@ -126,7 +126,7 @@ do
   }
   
   --- TODO complete list?
-  -- @field Mavs
+  --- @field Mavs
   SHORAD.Mavs = {
   ["AGM"] = "AGM",
   ["C-701"] = "C-701",
@@ -138,14 +138,14 @@ do
   }
   
   --- Instantiates a new SHORAD object
-  -- @param #SHORAD self
-  -- @param #string Name Name of this SHORAD
-  -- @param #string ShoradPrefix Filter for the Shorad #SET_GROUP
-  -- @param Core.Set#SET_GROUP Samset The #SET_GROUP of SAM sites to defend
-  -- @param #number Radius Defense radius in meters, used to switch on SHORAD groups **within** this radius
-  -- @param #number ActiveTimer Determines how many seconds the systems stay on red alert after wake-up call
-  -- @param #string Coalition Coalition, i.e. "blue", "red", or "neutral"
-  -- @param #boolean UseEmOnOff Use Emissions On/Off rather than Alarm State Red/Green (default: use Emissions switch)
+  --- @param #SHORAD self
+  --- @param #string Name Name of this SHORAD
+  --- @param #string ShoradPrefix Filter for the Shorad #SET_GROUP
+  --- @param Core.Set#SET_GROUP Samset The #SET_GROUP of SAM sites to defend
+  --- @param #number Radius Defense radius in meters, used to switch on SHORAD groups **within** this radius
+  --- @param #number ActiveTimer Determines how many seconds the systems stay on red alert after wake-up call
+  --- @param #string Coalition Coalition, i.e. "blue", "red", or "neutral"
+  --- @param #boolean UseEmOnOff Use Emissions On/Off rather than Alarm State Red/Green (default: use Emissions switch)
   -- @retunr #SHORAD self
   function SHORAD:New(Name, ShoradPrefix, Samset, Radius, ActiveTimer, Coalition, UseEmOnOff) 
     local self = BASE:Inherit( self, FSM:New() )
@@ -181,7 +181,7 @@ do
   end
   
   --- Initially set all groups to alarm state GREEN
-  -- @param #SHORAD self
+  --- @param #SHORAD self
   function SHORAD:_InitState()
     self:T(self.lid .. " _InitState")
     local table = {}
@@ -206,8 +206,8 @@ do
   end
   
   --- Switch debug state on
-  -- @param #SHORAD self
-  -- @param #boolean debug Switch debug on (true) or off (false)
+  --- @param #SHORAD self
+  --- @param #boolean debug Switch debug on (true) or off (false)
   function SHORAD:SwitchDebug(onoff)
     self:T( { onoff } )
     if onoff then
@@ -219,7 +219,7 @@ do
   end
   
   --- Switch debug state on
-  -- @param #SHORAD self
+  --- @param #SHORAD self
   function SHORAD:SwitchDebugOn()
      self.debug = true
      --tracing
@@ -229,7 +229,7 @@ do
   end
   
   --- Switch debug state off
-  -- @param #SHORAD self
+  --- @param #SHORAD self
   function SHORAD:SwitchDebugOff()
     self.debug = false
     BASE:TraceOff()
@@ -237,8 +237,8 @@ do
   end
   
   --- Switch defense for HARMs
-  -- @param #SHORAD self
-  -- @param #boolean onoff
+  --- @param #SHORAD self
+  --- @param #boolean onoff
   function SHORAD:SwitchHARMDefense(onoff)
     self:T( { onoff } )
     local onoff = onoff or true
@@ -247,8 +247,8 @@ do
   end
   
   --- Switch defense for AGMs
-  -- @param #SHORAD self
-  -- @param #boolean onoff
+  --- @param #SHORAD self
+  --- @param #boolean onoff
   function SHORAD:SwitchAGMDefense(onoff)
     self:T( { onoff } )
     local onoff = onoff or true
@@ -257,9 +257,9 @@ do
   end
   
   --- Set defense probability limits
-  -- @param #SHORAD self
-  -- @param #number low Minimum detection limit, integer 1-100
-  -- @param #number high Maximum detection limit integer 1-100
+  --- @param #SHORAD self
+  --- @param #number low Minimum detection limit, integer 1-100
+  --- @param #number high Maximum detection limit integer 1-100
   function SHORAD:SetDefenseLimits(low,high)
     self:T( { low, high } )
     local low = low or 70
@@ -276,8 +276,8 @@ do
   end
   
   --- Set the number of seconds a SHORAD site will stay active
-  -- @param #SHORAD self
-  -- @param #number seconds Number of seconds systems stay active
+  --- @param #SHORAD self
+  --- @param #number seconds Number of seconds systems stay active
   function SHORAD:SetActiveTimer(seconds)
     self:T(self.lid .. " SetActiveTimer")
     local timer = seconds or 600
@@ -289,8 +289,8 @@ do
   end
 
   --- Set the number of meters for the SHORAD defense zone
-  -- @param #SHORAD self
-  -- @param #number meters Radius of the defense search zone in meters. #SHORADs in this range around a targeted group will go active 
+  --- @param #SHORAD self
+  --- @param #number meters Radius of the defense search zone in meters. #SHORADs in this range around a targeted group will go active 
   function SHORAD:SetDefenseRadius(meters)
   self:T(self.lid .. " SetDefenseRadius")
     local radius = meters or 20000
@@ -302,8 +302,8 @@ do
   end
   
   --- Set using Emission on/off instead of changing alarm state
-  -- @param #SHORAD self
-  -- @param #boolean switch Decide if we are changing alarm state or AI state
+  --- @param #SHORAD self
+  --- @param #boolean switch Decide if we are changing alarm state or AI state
   function SHORAD:SetUsingEmOnOff(switch)
   self:T(self.lid .. " SetUsingEmOnOff")
     self.UseEmOnOff = switch or false
@@ -311,9 +311,9 @@ do
   end
   
   --- Check if a HARM was fired
-  -- @param #SHORAD self
-  -- @param #string WeaponName
-  -- @return #boolean Returns true for a match
+  --- @param #SHORAD self
+  --- @param #string WeaponName
+  --- @return #boolean Returns true for a match
   function SHORAD:_CheckHarms(WeaponName)
     self:T(self.lid .. " _CheckHarms")
     self:T( { WeaponName } )
@@ -327,9 +327,9 @@ do
   end
   
   --- Check if an AGM was fired
-  -- @param #SHORAD self
-  -- @param #string WeaponName
-  -- @return #boolean Returns true for a match
+  --- @param #SHORAD self
+  --- @param #string WeaponName
+  --- @return #boolean Returns true for a match
   function SHORAD:_CheckMavs(WeaponName)
     self:T(self.lid .. " _CheckMavs")
     self:T( { WeaponName } )
@@ -343,9 +343,9 @@ do
   end
   
   --- Check the coalition of the attacker
-  -- @param #SHORAD self
-  -- @param #string Coalition name
-  -- @return #boolean Returns false for a match
+  --- @param #SHORAD self
+  --- @param #string Coalition name
+  --- @return #boolean Returns false for a match
   function SHORAD:_CheckCoalition(Coalition)
     self:T(self.lid .. " _CheckCoalition")
     local owncoalition = self.Coalition
@@ -366,9 +366,9 @@ do
   end
   
   --- Check if the missile is aimed at a SHORAD
-  -- @param #SHORAD self
-  -- @param #string TargetGroupName Name of the target group
-  -- @return #boolean Returns true for a match, else false
+  --- @param #SHORAD self
+  --- @param #string TargetGroupName Name of the target group
+  --- @return #boolean Returns true for a match, else false
   function SHORAD:_CheckShotAtShorad(TargetGroupName)
     self:T(self.lid .. " _CheckShotAtShorad")
     local tgtgrp = TargetGroupName
@@ -386,9 +386,9 @@ do
   end
   
   --- Check if the missile is aimed at a SAM site
-  -- @param #SHORAD self
-  -- @param #string TargetGroupName Name of the target group
-  -- @return #boolean Returns true for a match, else false
+  --- @param #SHORAD self
+  --- @param #string TargetGroupName Name of the target group
+  --- @return #boolean Returns true for a match, else false
   function SHORAD:_CheckShotAtSams(TargetGroupName)
     self:T(self.lid .. " _CheckShotAtSams")
     local tgtgrp = TargetGroupName
@@ -406,8 +406,8 @@ do
   end
   
   --- Calculate if the missile shot is detected
-  -- @param #SHORAD self
-  -- @return #boolean Returns true for a detection, else false
+  --- @param #SHORAD self
+  --- @return #boolean Returns true for a detection, else false
   function SHORAD:_ShotIsDetected()
     self:T(self.lid .. " _ShotIsDetected")
     if self.debug then return true end
@@ -421,11 +421,11 @@ do
   end
   
   --- Wake up #SHORADs in a zone with diameter Radius for ActiveTimer seconds
-  -- @param #SHORAD self
-  -- @param #string TargetGroup Name of the target group used to build the #ZONE
-  -- @param #number Radius Radius of the #ZONE
-  -- @param #number ActiveTimer Number of seconds to stay active
-  -- @param #number TargetCat (optional) Category, i.e. Object.Category.UNIT or Object.Category.STATIC
+  --- @param #SHORAD self
+  --- @param #string TargetGroup Name of the target group used to build the #ZONE
+  --- @param #number Radius Radius of the #ZONE
+  --- @param #number ActiveTimer Number of seconds to stay active
+  --- @param #number TargetCat (optional) Category, i.e. Object.Category.UNIT or Object.Category.STATIC
   -- @usage Use this function to integrate with other systems, example   
   -- 
   -- local SamSet = SET_GROUP:New():FilterPrefixes("Blue SAM"):FilterCoalitions("blue"):FilterStart()
@@ -559,8 +559,8 @@ function SHORAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEA
 end
   
   --- Main function - work on the EventData
-  -- @param #SHORAD self
-  -- @param Core.Event#EVENTDATA EventData The event details table data set
+  --- @param #SHORAD self
+  --- @param Core.Event#EVENTDATA EventData The event details table data set
   function SHORAD:HandleEventShot( EventData )
     self:T( { EventData } )
     self:T(self.lid .. " HandleEventShot")

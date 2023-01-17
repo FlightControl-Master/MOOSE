@@ -111,44 +111,44 @@ function BRIGADE:New(WarehouseName, BrigadeName)
 
   --- Triggers the FSM event "Start". Starts the BRIGADE. Initializes parameters and starts event handlers.
   -- @function [parent=#BRIGADE] Start
-  -- @param #BRIGADE self
+  --- @param #BRIGADE self
 
   --- Triggers the FSM event "Start" after a delay. Starts the BRIGADE. Initializes parameters and starts event handlers.
   -- @function [parent=#BRIGADE] __Start
-  -- @param #BRIGADE self
-  -- @param #number delay Delay in seconds.
+  --- @param #BRIGADE self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Stop". Stops the BRIGADE and all its event handlers.
-  -- @param #BRIGADE self
+  --- @param #BRIGADE self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the BRIGADE and all its event handlers.
   -- @function [parent=#BRIGADE] __Stop
-  -- @param #BRIGADE self
-  -- @param #number delay Delay in seconds.
+  --- @param #BRIGADE self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "ArmyOnMission".
   -- @function [parent=#BRIGADE] ArmyOnMission
-  -- @param #BRIGADE self
-  -- @param Ops.ArmyGroup#ARMYGROUP ArmyGroup The ARMYGROUP on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #BRIGADE self
+  --- @param Ops.ArmyGroup#ARMYGROUP ArmyGroup The ARMYGROUP on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- Triggers the FSM event "ArmyOnMission" after a delay.
   -- @function [parent=#BRIGADE] __ArmyOnMission
-  -- @param #BRIGADE self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.ArmyGroup#ARMYGROUP ArmyGroup The ARMYGROUP on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #BRIGADE self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.ArmyGroup#ARMYGROUP ArmyGroup The ARMYGROUP on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- On after "ArmyOnMission" event.
   -- @function [parent=#BRIGADE] OnAfterArmyOnMission
-  -- @param #BRIGADE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.ArmyGroup#ARMYGROUP ArmyGroup The ARMYGROUP on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #BRIGADE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.ArmyGroup#ARMYGROUP ArmyGroup The ARMYGROUP on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   return self
 end

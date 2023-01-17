@@ -146,7 +146,7 @@ function AI_CAP_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
+  --- @return #boolean Return false to cancel Transition.
 
   --- OnAfter Transition Handler for Event Engage.
   -- @function [parent=#AI_CAP_ZONE] OnAfterEngage
@@ -191,7 +191,7 @@ function AI_CAP_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
+  --- @return #boolean Return false to cancel Transition.
 
   --- OnAfter Transition Handler for Event Fired.
   -- @function [parent=#AI_CAP_ZONE] OnAfterFired
@@ -219,7 +219,7 @@ function AI_CAP_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
+  --- @return #boolean Return false to cancel Transition.
 
   --- OnAfter Transition Handler for Event Destroy.
   -- @function [parent=#AI_CAP_ZONE] OnAfterDestroy
@@ -247,7 +247,7 @@ function AI_CAP_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
+  --- @return #boolean Return false to cancel Transition.
 
   --- OnAfter Transition Handler for Event Abort.
   -- @function [parent=#AI_CAP_ZONE] OnAfterAbort
@@ -275,7 +275,7 @@ function AI_CAP_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
+  --- @return #boolean Return false to cancel Transition.
 
   --- OnAfter Transition Handler for Event Accomplish.
   -- @function [parent=#AI_CAP_ZONE] OnAfterAccomplish

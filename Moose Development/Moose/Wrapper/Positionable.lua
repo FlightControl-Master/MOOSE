@@ -1472,45 +1472,45 @@ end
 do -- Cargo
 
   --- Add cargo.
-  -- @param #POSITIONABLE self
-  -- @param Core.Cargo#CARGO Cargo
-  -- @return #POSITIONABLE
+  --- @param #POSITIONABLE self
+  --- @param Core.Cargo#CARGO Cargo
+  --- @return #POSITIONABLE
   function POSITIONABLE:AddCargo( Cargo )
     self.__.Cargo[Cargo] = Cargo
     return self
   end
 
   --- Get all contained cargo.
-  -- @param #POSITIONABLE self
-  -- @return #POSITIONABLE
+  --- @param #POSITIONABLE self
+  --- @return #POSITIONABLE
   function POSITIONABLE:GetCargo()
     return self.__.Cargo
   end
 
   --- Remove cargo.
-  -- @param #POSITIONABLE self
-  -- @param Core.Cargo#CARGO Cargo
-  -- @return #POSITIONABLE
+  --- @param #POSITIONABLE self
+  --- @param Core.Cargo#CARGO Cargo
+  --- @return #POSITIONABLE
   function POSITIONABLE:RemoveCargo( Cargo )
     self.__.Cargo[Cargo] = nil
     return self
   end
 
   --- Returns if carrier has given cargo.
-  -- @param #POSITIONABLE self
-  -- @return Core.Cargo#CARGO Cargo
+  --- @param #POSITIONABLE self
+  --- @return Core.Cargo#CARGO Cargo
   function POSITIONABLE:HasCargo( Cargo )
     return self.__.Cargo[Cargo]
   end
 
   --- Clear all cargo.
-  -- @param #POSITIONABLE self
+  --- @param #POSITIONABLE self
   function POSITIONABLE:ClearCargo()
     self.__.Cargo = {}
   end
 
   --- Is cargo bay empty.
-  -- @param #POSITIONABLE self
+  --- @param #POSITIONABLE self
   function POSITIONABLE:IsCargoEmpty()
     local IsEmpty = true
     for _, Cargo in pairs( self.__.Cargo ) do
@@ -1521,8 +1521,8 @@ do -- Cargo
   end
 
   --- Get cargo item count.
-  -- @param #POSITIONABLE self
-  -- @return Core.Cargo#CARGO Cargo
+  --- @param #POSITIONABLE self
+  --- @return Core.Cargo#CARGO Cargo
   function POSITIONABLE:CargoItemCount()
     local ItemCount = 0
     for CargoName, Cargo in pairs( self.__.Cargo ) do
@@ -1533,8 +1533,8 @@ do -- Cargo
 
   --- Get the number of infantry soldiers that can be embarked into an aircraft (airplane or helicopter).
   -- Returns `nil` for ground or ship units.
-  -- @param #POSITIONABLE self
-  -- @return #number Descent number of soldiers that fit into the unit. Returns `#nil` for ground and ship units. 
+  --- @param #POSITIONABLE self
+  --- @return #number Descent number of soldiers that fit into the unit. Returns `#nil` for ground and ship units. 
   function POSITIONABLE:GetTroopCapacity()
     local DCSunit=self:GetDCSObject() --DCS#Unit
     local capacity=DCSunit:getDescentCapacity()
@@ -1542,8 +1542,8 @@ do -- Cargo
   end
 
   --- Get Cargo Bay Free Weight in kg.
-  -- @param #POSITIONABLE self
-  -- @return #number CargoBayFreeWeight
+  --- @param #POSITIONABLE self
+  --- @return #number CargoBayFreeWeight
   function POSITIONABLE:GetCargoBayFreeWeight()
 
     -- When there is no cargo bay weight limit set, then calculate this for this POSITIONABLE!
@@ -1559,8 +1559,8 @@ do -- Cargo
   end
 
   --- Set Cargo Bay Weight Limit in kg.
-  -- @param #POSITIONABLE self
-  -- @param #number WeightLimit (Optional) Weight limit in kg. If not given, the value is taken from the descriptors or hard coded. 
+  --- @param #POSITIONABLE self
+  --- @param #number WeightLimit (Optional) Weight limit in kg. If not given, the value is taken from the descriptors or hard coded. 
   function POSITIONABLE:SetCargoBayWeightLimit( WeightLimit )
 
     if WeightLimit then 
@@ -1709,8 +1709,8 @@ do -- Cargo
   end
   
   --- Get Cargo Bay Weight Limit in kg.
-  -- @param #POSITIONABLE self
-  -- @return #number Max cargo weight in kg. 
+  --- @param #POSITIONABLE self
+  --- @return #number Max cargo weight in kg. 
   function POSITIONABLE:GetCargoBayWeightLimit()
   
     if self.__.CargoBayWeightLimit==nil then

@@ -219,12 +219,12 @@ do -- TASK_CARGO_CSAR
   -- You can use this event handler to post messages to players, or provide status updates etc.
   -- 
   --      --- CargoPickedUp event handler OnAfter for CLASS.
-  --      -- @param #CLASS self
-  --      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
-  --      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
-  --      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
-  --      -- @param Wrapper.Unit#UNIT TaskUnit The unit (client) of the player that has picked up the cargo.
-  --      -- @param Cargo.Cargo#CARGO Cargo The cargo object that has been picked up. Note that this can be a CARGO_GROUP, CARGO_CRATE or CARGO_SLINGLOAD object!
+  --      --- @param #CLASS self
+  --      --- @param #string From A string that contains the "*from state name*" when the event was triggered.
+  --      --- @param #string Event A string that contains the "*event name*" when the event was triggered.
+  --      --- @param #string To A string that contains the "*to state name*" when the event was triggered.
+  --      --- @param Wrapper.Unit#UNIT TaskUnit The unit (client) of the player that has picked up the cargo.
+  --      --- @param Cargo.Cargo#CARGO Cargo The cargo object that has been picked up. Note that this can be a CARGO_GROUP, CARGO_CRATE or CARGO_SLINGLOAD object!
   --      function CLASS:OnAfterCargoPickedUp( From, Event, To, TaskUnit, Cargo )
   --      
   --        -- Write here your own code.
@@ -247,13 +247,13 @@ do -- TASK_CARGO_CSAR
   -- 
   -- 
   --      --- CargoDeployed event handler OnAfter for CLASS.
-  --      -- @param #CLASS self
-  --      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
-  --      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
-  --      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
-  --      -- @param Wrapper.Unit#UNIT TaskUnit The unit (client) of the player that has deployed the cargo.
-  --      -- @param Cargo.Cargo#CARGO Cargo The cargo object that has been deployed. Note that this can be a CARGO_GROUP, CARGO_CRATE or CARGO_SLINGLOAD object!
-  --      -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+  --      --- @param #CLASS self
+  --      --- @param #string From A string that contains the "*from state name*" when the event was triggered.
+  --      --- @param #string Event A string that contains the "*event name*" when the event was triggered.
+  --      --- @param #string To A string that contains the "*to state name*" when the event was triggered.
+  --      --- @param Wrapper.Unit#UNIT TaskUnit The unit (client) of the player that has deployed the cargo.
+  --      --- @param Cargo.Cargo#CARGO Cargo The cargo object that has been deployed. Note that this can be a CARGO_GROUP, CARGO_CRATE or CARGO_SLINGLOAD object!
+  --      --- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
   --      function CLASS:OnAfterCargoDeployed( From, Event, To, TaskUnit, Cargo, DeployZone )
   --      
   --        -- Write here your own code.
@@ -262,19 +262,19 @@ do -- TASK_CARGO_CSAR
   --      
   -- ===
   -- 
-  -- @field #TASK_CARGO_CSAR
+  --- @field #TASK_CARGO_CSAR
   TASK_CARGO_CSAR = {
     ClassName = "TASK_CARGO_CSAR",
   }
   
   --- Instantiates a new TASK_CARGO_CSAR.
-  -- @param #TASK_CARGO_CSAR self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
-  -- @param #string TaskName The name of the Task.
-  -- @param Core.Set#SET_CARGO SetCargo The scope of the cargo to be transported.
-  -- @param #string TaskBriefing The Cargo Task briefing.
-  -- @return #TASK_CARGO_CSAR self
+  --- @param #TASK_CARGO_CSAR self
+  --- @param Tasking.Mission#MISSION Mission
+  --- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  --- @param #string TaskName The name of the Task.
+  --- @param Core.Set#SET_CARGO SetCargo The scope of the cargo to be transported.
+  --- @param #string TaskBriefing The Cargo Task briefing.
+  --- @return #TASK_CARGO_CSAR self
   function TASK_CARGO_CSAR:New( Mission, SetGroup, TaskName, SetCargo, TaskBriefing )
     local self = BASE:Inherit( self, TASK_CARGO:New( Mission, SetGroup, TaskName, SetCargo, "CSAR", TaskBriefing ) ) -- #TASK_CARGO_CSAR
     self:F()
@@ -291,22 +291,22 @@ do -- TASK_CARGO_CSAR
     
       --- OnAfter Transition Handler for Event CargoPickedUp.
       -- @function [parent=#TASK_CARGO_CSAR] OnAfterCargoPickedUp
-      -- @param #TASK_CARGO_CSAR self
-      -- @param #string From The From State string.
-      -- @param #string Event The Event string.
-      -- @param #string To The To State string.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
+      --- @param #TASK_CARGO_CSAR self
+      --- @param #string From The From State string.
+      --- @param #string Event The Event string.
+      --- @param #string To The To State string.
+      --- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
+      --- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
         
       --- OnAfter Transition Handler for Event CargoDeployed.
       -- @function [parent=#TASK_CARGO_CSAR] OnAfterCargoDeployed
-      -- @param #TASK_CARGO_CSAR self
-      -- @param #string From The From State string.
-      -- @param #string Event The Event string.
-      -- @param #string To The To State string.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
+      --- @param #TASK_CARGO_CSAR self
+      --- @param #string From The From State string.
+      --- @param #string Event The Event string.
+      --- @param #string To The To State string.
+      --- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
+      --- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
+      --- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
         
     local Fsm = self:GetUnitProcess()
 
@@ -340,8 +340,8 @@ do -- TASK_CARGO_CSAR
 
   
   --- 
-  -- @param #TASK_CARGO_CSAR self
-  -- @return #boolean
+  --- @param #TASK_CARGO_CSAR self
+  --- @return #boolean
   function TASK_CARGO_CSAR:IsAllCargoTransported()
   
     local CargoSet = self:GetCargoSet()

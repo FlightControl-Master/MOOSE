@@ -641,120 +641,120 @@ function RANGE:New( RangeName )
 
   --- Triggers the FSM event "Start". Starts the RANGE. Initializes parameters and starts event handlers.
   -- @function [parent=#RANGE] Start
-  -- @param #RANGE self
+  --- @param #RANGE self
 
   --- Triggers the FSM event "Start" after a delay. Starts the RANGE. Initializes parameters and starts event handlers.
   -- @function [parent=#RANGE] __Start
-  -- @param #RANGE self
-  -- @param #number delay Delay in seconds.
+  --- @param #RANGE self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Stop". Stops the RANGE and all its event handlers.
-  -- @param #RANGE self
+  --- @param #RANGE self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the RANGE and all its event handlers.
   -- @function [parent=#RANGE] __Stop
-  -- @param #RANGE self
-  -- @param #number delay Delay in seconds.
+  --- @param #RANGE self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#RANGE] Status
-  -- @param #RANGE self
+  --- @param #RANGE self
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#RANGE] __Status
-  -- @param #RANGE self
-  -- @param #number delay Delay in seconds.
+  --- @param #RANGE self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Impact".
   -- @function [parent=#RANGE] Impact
-  -- @param #RANGE self
-  -- @param #RANGE.BombResult result Data of bombing run.
-  -- @param #RANGE.PlayerData player Data of player settings etc.
+  --- @param #RANGE self
+  --- @param #RANGE.BombResult result Data of bombing run.
+  --- @param #RANGE.PlayerData player Data of player settings etc.
 
   --- Triggers the FSM delayed event "Impact".
   -- @function [parent=#RANGE] __Impact
-  -- @param #RANGE self
-  -- @param #number delay Delay in seconds before the function is called.
-  -- @param #RANGE.BombResult result Data of the bombing run.
-  -- @param #RANGE.PlayerData player Data of player settings etc.
+  --- @param #RANGE self
+  --- @param #number delay Delay in seconds before the function is called.
+  --- @param #RANGE.BombResult result Data of the bombing run.
+  --- @param #RANGE.PlayerData player Data of player settings etc.
 
   --- On after "Impact" event user function. Called when a bomb/rocket/missile impacted.
   -- @function [parent=#RANGE] OnAfterImpact
-  -- @param #RANGE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #RANGE.BombResult result Data of the bombing run.
-  -- @param #RANGE.PlayerData player Data of player settings etc.
+  --- @param #RANGE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #RANGE.BombResult result Data of the bombing run.
+  --- @param #RANGE.PlayerData player Data of player settings etc.
 
 
   --- Triggers the FSM event "RollingIn".
   -- @function [parent=#RANGE] RollingIn
-  -- @param #RANGE self
-  -- @param #RANGE.PlayerData player Data of player settings etc.
-  -- @param #RANGE.StrafeTarget target Strafe target.
+  --- @param #RANGE self
+  --- @param #RANGE.PlayerData player Data of player settings etc.
+  --- @param #RANGE.StrafeTarget target Strafe target.
 
   --- On after "RollingIn" event user function. Called when a player rolls in to a strafe taret.
   -- @function [parent=#RANGE] OnAfterRollingIn
-  -- @param #RANGE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #RANGE.PlayerData player Data of player settings etc.
-  -- @param #RANGE.StrafeTarget target Strafe target.
+  --- @param #RANGE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #RANGE.PlayerData player Data of player settings etc.
+  --- @param #RANGE.StrafeTarget target Strafe target.
 
   --- Triggers the FSM event "StrafeResult".
   -- @function [parent=#RANGE] StrafeResult
-  -- @param #RANGE self
-  -- @param #RANGE.PlayerData player Data of player settings etc.
-  -- @param #RANGE.StrafeResult result Data of the strafing run.
+  --- @param #RANGE self
+  --- @param #RANGE.PlayerData player Data of player settings etc.
+  --- @param #RANGE.StrafeResult result Data of the strafing run.
 
   --- On after "StrafeResult" event user function. Called when a player finished a strafing run.
   -- @function [parent=#RANGE] OnAfterStrafeResult
-  -- @param #RANGE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #RANGE.PlayerData player Data of player settings etc.
-  -- @param #RANGE.StrafeResult result Data of the strafing run.
+  --- @param #RANGE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #RANGE.PlayerData player Data of player settings etc.
+  --- @param #RANGE.StrafeResult result Data of the strafing run.
 
   --- Triggers the FSM event "EnterRange".
   -- @function [parent=#RANGE] EnterRange
-  -- @param #RANGE self
-  -- @param #RANGE.PlayerData player Data of player settings etc.
+  --- @param #RANGE self
+  --- @param #RANGE.PlayerData player Data of player settings etc.
 
   --- Triggers the FSM delayed event "EnterRange".
   -- @function [parent=#RANGE] __EnterRange
-  -- @param #RANGE self
-  -- @param #number delay Delay in seconds before the function is called.
-  -- @param #RANGE.PlayerData player Data of player settings etc.
+  --- @param #RANGE self
+  --- @param #number delay Delay in seconds before the function is called.
+  --- @param #RANGE.PlayerData player Data of player settings etc.
 
   --- On after "EnterRange" event user function. Called when a player enters the range zone.
   -- @function [parent=#RANGE] OnAfterEnterRange
-  -- @param #RANGE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #RANGE.PlayerData player Data of player settings etc.
+  --- @param #RANGE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #RANGE.PlayerData player Data of player settings etc.
 
   --- Triggers the FSM event "ExitRange".
   -- @function [parent=#RANGE] ExitRange
-  -- @param #RANGE self
-  -- @param #RANGE.PlayerData player Data of player settings etc.
+  --- @param #RANGE self
+  --- @param #RANGE.PlayerData player Data of player settings etc.
 
   --- Triggers the FSM delayed event "ExitRange".
   -- @function [parent=#RANGE] __ExitRange
-  -- @param #RANGE self
-  -- @param #number delay Delay in seconds before the function is called.
-  -- @param #RANGE.PlayerData player Data of player settings etc.
+  --- @param #RANGE self
+  --- @param #number delay Delay in seconds before the function is called.
+  --- @param #RANGE.PlayerData player Data of player settings etc.
 
   --- On after "ExitRange" event user function. Called when a player leaves the range zone.
   -- @function [parent=#RANGE] OnAfterExitRange
-  -- @param #RANGE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #RANGE.PlayerData player Data of player settings etc.
+  --- @param #RANGE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #RANGE.PlayerData player Data of player settings etc.
 
   -- Return object.
   return self

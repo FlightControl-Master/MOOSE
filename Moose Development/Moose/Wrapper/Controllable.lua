@@ -1933,8 +1933,8 @@ end
 do -- Patrol methods
 
   --- (GROUND) Patrol iteratively using the waypoints of the (parent) group.
-  -- @param #CONTROLLABLE self
-  -- @return #CONTROLLABLE
+  --- @param #CONTROLLABLE self
+  --- @return #CONTROLLABLE
   function CONTROLLABLE:PatrolRoute()
 
     local PatrolGroup = self -- Wrapper.Group#GROUP
@@ -1986,11 +1986,11 @@ do -- Patrol methods
 
   --- (GROUND) Patrol randomly to the waypoints the for the (parent) group.
   -- A random waypoint will be picked and the group will move towards that point.
-  -- @param #CONTROLLABLE self
-  -- @param #number Speed Speed in km/h.
-  -- @param #string Formation The formation the group uses.
-  -- @param Core.Point#COORDINATE ToWaypoint The waypoint where the group should move to.
-  -- @return #CONTROLLABLE
+  --- @param #CONTROLLABLE self
+  --- @param #number Speed Speed in km/h.
+  --- @param #string Formation The formation the group uses.
+  --- @param Core.Point#COORDINATE ToWaypoint The waypoint where the group should move to.
+  --- @return #CONTROLLABLE
   function CONTROLLABLE:PatrolRouteRandom( Speed, Formation, ToWaypoint )
 
     local PatrolGroup = self -- Wrapper.Group#GROUP
@@ -2053,13 +2053,13 @@ do -- Patrol methods
 
   --- (GROUND) Patrol randomly to the waypoints the for the (parent) group.
   -- A random waypoint will be picked and the group will move towards that point.
-  -- @param #CONTROLLABLE self
-  -- @param #table ZoneList Table of zones.
-  -- @param #number Speed Speed in km/h the group moves at.
-  -- @param #string Formation (Optional) Formation the group should use.
-  -- @param #number DelayMin Delay in seconds before the group progresses to the next route point. Default 1 sec.
-  -- @param #number DelayMax Max. delay in seconds. Actual delay is randomly chosen between DelayMin and DelayMax. Default equal to DelayMin.
-  -- @return #CONTROLLABLE
+  --- @param #CONTROLLABLE self
+  --- @param #table ZoneList Table of zones.
+  --- @param #number Speed Speed in km/h the group moves at.
+  --- @param #string Formation (Optional) Formation the group should use.
+  --- @param #number DelayMin Delay in seconds before the group progresses to the next route point. Default 1 sec.
+  --- @param #number DelayMax Max. delay in seconds. Actual delay is randomly chosen between DelayMin and DelayMax. Default equal to DelayMin.
+  --- @return #CONTROLLABLE
   function CONTROLLABLE:PatrolZones( ZoneList, Speed, Formation, DelayMin, DelayMax )
 
     if not type( ZoneList ) == "table" then
@@ -2142,10 +2142,10 @@ end
 do -- Route methods
 
   --- (AIR + GROUND) Make the Controllable move to fly to a given point.
-  -- @param #CONTROLLABLE self
-  -- @param DCS#Vec3 Point The destination point in Vec3 format.
-  -- @param #number Speed The speed [m/s] to travel.
-  -- @return #CONTROLLABLE self
+  --- @param #CONTROLLABLE self
+  --- @param DCS#Vec3 Point The destination point in Vec3 format.
+  --- @param #number Speed The speed [m/s] to travel.
+  --- @return #CONTROLLABLE self
   function CONTROLLABLE:RouteToVec2( Point, Speed )
     self:F2( { Point, Speed } )
 
@@ -2191,10 +2191,10 @@ do -- Route methods
   end
 
   --- (AIR + GROUND) Make the Controllable move to a given point.
-  -- @param #CONTROLLABLE self
-  -- @param DCS#Vec3 Point The destination point in Vec3 format.
-  -- @param #number Speed The speed [m/s] to travel.
-  -- @return #CONTROLLABLE self
+  --- @param #CONTROLLABLE self
+  --- @param DCS#Vec3 Point The destination point in Vec3 format.
+  --- @param #number Speed The speed [m/s] to travel.
+  --- @return #CONTROLLABLE self
   function CONTROLLABLE:RouteToVec3( Point, Speed )
     self:F2( { Point, Speed } )
 
@@ -2244,10 +2244,10 @@ do -- Route methods
   end
 
   --- Make the controllable to follow a given route.
-  -- @param #CONTROLLABLE self
-  -- @param #table Route A table of Route Points.
-  -- @param #number DelaySeconds (Optional) Wait for the specified seconds before executing the Route. Default is one second.
-  -- @return #CONTROLLABLE The CONTROLLABLE.
+  --- @param #CONTROLLABLE self
+  --- @param #table Route A table of Route Points.
+  --- @param #number DelaySeconds (Optional) Wait for the specified seconds before executing the Route. Default is one second.
+  --- @return #CONTROLLABLE The CONTROLLABLE.
   function CONTROLLABLE:Route( Route, DelaySeconds )
     self:F2( Route )
 
@@ -2262,10 +2262,10 @@ do -- Route methods
   end
 
   --- Make the controllable to push follow a given route.
-  -- @param #CONTROLLABLE self
-  -- @param #table Route A table of Route Points.
-  -- @param #number DelaySeconds (Optional) Wait for the specified seconds before executing the Route. Default is one second.
-  -- @return #CONTROLLABLE The CONTROLLABLE.
+  --- @param #CONTROLLABLE self
+  --- @param #table Route A table of Route Points.
+  --- @param #number DelaySeconds (Optional) Wait for the specified seconds before executing the Route. Default is one second.
+  --- @return #CONTROLLABLE The CONTROLLABLE.
   function CONTROLLABLE:RoutePush( Route, DelaySeconds )
     self:F2( Route )
 
@@ -2280,8 +2280,8 @@ do -- Route methods
   end
 
   --- Stops the movement of the vehicle on the route.
-  -- @param #CONTROLLABLE self
-  -- @return #CONTROLLABLE
+  --- @param #CONTROLLABLE self
+  --- @return #CONTROLLABLE
   function CONTROLLABLE:RouteStop()
     self:F( self:GetName() .. " RouteStop" )
 
@@ -2291,8 +2291,8 @@ do -- Route methods
   end
 
   --- Resumes the movement of the vehicle on the route.
-  -- @param #CONTROLLABLE self
-  -- @return #CONTROLLABLE
+  --- @param #CONTROLLABLE self
+  --- @return #CONTROLLABLE
   function CONTROLLABLE:RouteResume()
     self:F( self:GetName() .. " RouteResume" )
 
@@ -2302,14 +2302,14 @@ do -- Route methods
   end
 
   --- Make the GROUND Controllable to drive towards a specific point.
-  -- @param #CONTROLLABLE self
-  -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
-  -- @param #number Speed (optional) Speed in km/h. The default speed is 20 km/h.
-  -- @param #string Formation (optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".
-  -- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
-  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{#CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
-  -- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
-  -- @return #CONTROLLABLE The CONTROLLABLE.
+  --- @param #CONTROLLABLE self
+  --- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+  --- @param #number Speed (optional) Speed in km/h. The default speed is 20 km/h.
+  --- @param #string Formation (optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".
+  --- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
+  --- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{#CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
+  --- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
+  --- @return #CONTROLLABLE The CONTROLLABLE.
   function CONTROLLABLE:RouteGroundTo( ToCoordinate, Speed, Formation, DelaySeconds, WaypointFunction, WaypointFunctionArguments )
 
     local FromCoordinate = self:GetCoordinate()
@@ -2336,14 +2336,14 @@ do -- Route methods
   end
 
   --- Make the GROUND Controllable to drive towards a specific point using (mostly) roads.
-  -- @param #CONTROLLABLE self
-  -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
-  -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
-  -- @param #number DelaySeconds (Optional) Wait for the specified seconds before executing the Route. Default is one second.
-  -- @param #string OffRoadFormation (Optional) The formation at initial and final waypoint. Default is "Off Road".
-  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{#CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
-  -- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
-  -- @return #CONTROLLABLE The CONTROLLABLE.
+  --- @param #CONTROLLABLE self
+  --- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+  --- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
+  --- @param #number DelaySeconds (Optional) Wait for the specified seconds before executing the Route. Default is one second.
+  --- @param #string OffRoadFormation (Optional) The formation at initial and final waypoint. Default is "Off Road".
+  --- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{#CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
+  --- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
+  --- @return #CONTROLLABLE The CONTROLLABLE.
   function CONTROLLABLE:RouteGroundOnRoad( ToCoordinate, Speed, DelaySeconds, OffRoadFormation, WaypointFunction, WaypointFunctionArguments )
 
     -- Defaults.
@@ -2361,13 +2361,13 @@ do -- Route methods
   end
 
   --- Make the TRAIN Controllable to drive towards a specific point using railroads.
-  -- @param #CONTROLLABLE self
-  -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
-  -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
-  -- @param #number DelaySeconds (Optional) Wait for the specified seconds before executing the Route. Default is one second.
-  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{#CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
-  -- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
-  -- @return #CONTROLLABLE The CONTROLLABLE.
+  --- @param #CONTROLLABLE self
+  --- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+  --- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
+  --- @param #number DelaySeconds (Optional) Wait for the specified seconds before executing the Route. Default is one second.
+  --- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{#CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
+  --- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
+  --- @return #CONTROLLABLE The CONTROLLABLE.
   function CONTROLLABLE:RouteGroundOnRailRoads( ToCoordinate, Speed, DelaySeconds, WaypointFunction, WaypointFunctionArguments )
 
     -- Defaults.
@@ -2384,16 +2384,16 @@ do -- Route methods
   end
 
   --- Make a task for a GROUND Controllable to drive towards a specific point using (mostly) roads.
-  -- @param #CONTROLLABLE self
-  -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
-  -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
-  -- @param #string OffRoadFormation (Optional) The formation at initial and final waypoint. Default is "Off Road".
-  -- @param #boolean Shortcut (Optional) If true, controllable will take the direct route if the path on road is 10x longer or path on road is less than 5% of total path.
-  -- @param Core.Point#COORDINATE FromCoordinate (Optional) Explicit initial coordinate. Default is the position of the controllable.
-  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{#CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
-  -- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
-  -- @return DCS#Task Task.
-  -- @return #boolean If true, path on road is possible. If false, task will route the group directly to its destination.
+  --- @param #CONTROLLABLE self
+  --- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+  --- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
+  --- @param #string OffRoadFormation (Optional) The formation at initial and final waypoint. Default is "Off Road".
+  --- @param #boolean Shortcut (Optional) If true, controllable will take the direct route if the path on road is 10x longer or path on road is less than 5% of total path.
+  --- @param Core.Point#COORDINATE FromCoordinate (Optional) Explicit initial coordinate. Default is the position of the controllable.
+  --- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{#CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
+  --- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
+  --- @return DCS#Task Task.
+  --- @return #boolean If true, path on road is possible. If false, task will route the group directly to its destination.
   function CONTROLLABLE:TaskGroundOnRoad( ToCoordinate, Speed, OffRoadFormation, Shortcut, FromCoordinate, WaypointFunction, WaypointFunctionArguments )
     self:T( { ToCoordinate = ToCoordinate, Speed = Speed, OffRoadFormation = OffRoadFormation, WaypointFunction = WaypointFunction, Args = WaypointFunctionArguments } )
 
@@ -2490,12 +2490,12 @@ do -- Route methods
   end
 
   --- Make a task for a TRAIN Controllable to drive towards a specific point using railroad.
-  -- @param #CONTROLLABLE self
-  -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
-  -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
-  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{#CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
-  -- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
-  -- @return Task
+  --- @param #CONTROLLABLE self
+  --- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+  --- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
+  --- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{#CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
+  --- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
+  --- @return Task
   function CONTROLLABLE:TaskGroundOnRailRoads( ToCoordinate, Speed, WaypointFunction, WaypointFunctionArguments )
     self:F2( { ToCoordinate = ToCoordinate, Speed = Speed } )
 
@@ -2537,23 +2537,23 @@ do -- Route methods
   end
 
   --- Task function when controllable passes a waypoint.
-  -- @param #CONTROLLABLE controllable The controllable object.
-  -- @param #number n Current waypoint number passed.
-  -- @param #number N Total number of waypoints.
-  -- @param #function waypointfunction Function called when a waypoint is passed.
+  --- @param #CONTROLLABLE controllable The controllable object.
+  --- @param #number n Current waypoint number passed.
+  --- @param #number N Total number of waypoints.
+  --- @param #function waypointfunction Function called when a waypoint is passed.
   function CONTROLLABLE.___PassingWaypoint( controllable, n, N, waypointfunction, ... )
     waypointfunction( controllable, n, N, ... )
   end
 
   --- Make the AIR Controllable fly towards a specific point.
-  -- @param #CONTROLLABLE self
-  -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
-  -- @param Core.Point#COORDINATE.RoutePointAltType AltType The altitude type.
-  -- @param Core.Point#COORDINATE.RoutePointType Type The route point type.
-  -- @param Core.Point#COORDINATE.RoutePointAction Action The route point action.
-  -- @param #number Speed (optional) Speed in km/h. The default speed is 500 km/h.
-  -- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
-  -- @return #CONTROLLABLE The CONTROLLABLE.
+  --- @param #CONTROLLABLE self
+  --- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+  --- @param Core.Point#COORDINATE.RoutePointAltType AltType The altitude type.
+  --- @param Core.Point#COORDINATE.RoutePointType Type The route point type.
+  --- @param Core.Point#COORDINATE.RoutePointAction Action The route point action.
+  --- @param #number Speed (optional) Speed in km/h. The default speed is 500 km/h.
+  --- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
+  --- @return #CONTROLLABLE The CONTROLLABLE.
   function CONTROLLABLE:RouteAirTo( ToCoordinate, AltType, Type, Action, Speed, DelaySeconds )
 
     local FromCoordinate = self:GetCoordinate()
@@ -2570,11 +2570,11 @@ do -- Route methods
   -- The controllable final destination point can be randomized.
   -- A speed can be given in km/h.
   -- A given formation can be given.
-  -- @param #CONTROLLABLE self
-  -- @param Core.Zone#ZONE Zone The zone where to route to.
-  -- @param #boolean Randomize Defines whether to target point gets randomized within the Zone.
-  -- @param #number Speed The speed in m/s. Default is 5.555 m/s = 20 km/h.
-  -- @param Base#FORMATION Formation The formation string.
+  --- @param #CONTROLLABLE self
+  --- @param Core.Zone#ZONE Zone The zone where to route to.
+  --- @param #boolean Randomize Defines whether to target point gets randomized within the Zone.
+  --- @param #number Speed The speed in m/s. Default is 5.555 m/s = 20 km/h.
+  --- @param Base#FORMATION Formation The formation string.
   function CONTROLLABLE:TaskRouteToZone( Zone, Randomize, Speed, Formation )
     self:F2( Zone )
 
@@ -2631,10 +2631,10 @@ do -- Route methods
   --- (GROUND) Route the controllable to a given Vec2.
   -- A speed can be given in km/h.
   -- A given formation can be given.
-  -- @param #CONTROLLABLE self
-  -- @param DCS#Vec2 Vec2 The Vec2 where to route to.
-  -- @param #number Speed The speed in m/s. Default is 5.555 m/s = 20 km/h.
-  -- @param Base#FORMATION Formation The formation string.
+  --- @param #CONTROLLABLE self
+  --- @param DCS#Vec2 Vec2 The Vec2 where to route to.
+  --- @param #number Speed The speed in m/s. Default is 5.555 m/s = 20 km/h.
+  --- @param Base#FORMATION Formation The formation string.
   function CONTROLLABLE:TaskRouteToVec2( Vec2, Speed, Formation )
 
     local DCSControllable = self:GetDCSObject()

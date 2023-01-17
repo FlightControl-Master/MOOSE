@@ -209,99 +209,99 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
 
   --- Triggers the FSM event "Start". Starts the COHORT.
   -- @function [parent=#COHORT] Start
-  -- @param #COHORT self
+  --- @param #COHORT self
 
   --- Triggers the FSM event "Start" after a delay. Starts the COHORT.
   -- @function [parent=#COHORT] __Start
-  -- @param #COHORT self
-  -- @param #number delay Delay in seconds.
+  --- @param #COHORT self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Stop".
-  -- @param #COHORT self
+  --- @param #COHORT self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the COHORT and all its event handlers.
   -- @function [parent=#COHORT] __Stop
-  -- @param #COHORT self
-  -- @param #number delay Delay in seconds.
+  --- @param #COHORT self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#COHORT] Status
-  -- @param #COHORT self
+  --- @param #COHORT self
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#COHORT] __Status
-  -- @param #COHORT self
-  -- @param #number delay Delay in seconds.
+  --- @param #COHORT self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Pause".
   -- @function [parent=#COHORT] Pause
-  -- @param #COHORT self
+  --- @param #COHORT self
 
   --- Triggers the FSM event "Pause" after a delay.
   -- @function [parent=#COHORT] __Pause
-  -- @param #COHORT self
-  -- @param #number delay Delay in seconds.
+  --- @param #COHORT self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Pause" event.
   -- @function [parent=#COHORT] OnAfterPause
-  -- @param #COHORT self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #COHORT self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Unpause".
   -- @function [parent=#COHORT] Unpause
-  -- @param #COHORT self
+  --- @param #COHORT self
 
   --- Triggers the FSM event "Unpause" after a delay.
   -- @function [parent=#COHORT] __Unpause
-  -- @param #COHORT self
-  -- @param #number delay Delay in seconds.
+  --- @param #COHORT self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Unpause" event.
   -- @function [parent=#COHORT] OnAfterUnpause
-  -- @param #COHORT self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #COHORT self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Relocate".
   -- @function [parent=#COHORT] Relocate
-  -- @param #COHORT self
+  --- @param #COHORT self
 
   --- Triggers the FSM event "Relocate" after a delay.
   -- @function [parent=#COHORT] __Relocate
-  -- @param #COHORT self
-  -- @param #number delay Delay in seconds.
+  --- @param #COHORT self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Relocate" event.
   -- @function [parent=#COHORT] OnAfterRelocate
-  -- @param #COHORT self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #COHORT self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Relocated".
   -- @function [parent=#COHORT] Relocated
-  -- @param #COHORT self
+  --- @param #COHORT self
 
   --- Triggers the FSM event "Relocated" after a delay.
   -- @function [parent=#COHORT] __Relocated
-  -- @param #COHORT self
-  -- @param #number delay Delay in seconds.
+  --- @param #COHORT self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Relocated" event.
   -- @function [parent=#COHORT] OnAfterRelocated
-  -- @param #COHORT self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #COHORT self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   return self
 end

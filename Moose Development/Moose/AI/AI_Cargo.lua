@@ -71,7 +71,7 @@ function AI_CARGO:New( Carrier, CargoSet )
   -- @param #string To
   -- @param Core.Point#COORDINATE Coordinate
   -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do. 
-  -- @return #boolean
+  --- @return #boolean
   
   --- Pickup Handler OnAfter for AI_CARGO
   -- @function [parent=#AI_CARGO] OnAfterPickup
@@ -103,7 +103,7 @@ function AI_CARGO:New( Carrier, CargoSet )
   -- @param #string To
   -- @param Core.Point#COORDINATE Coordinate
   -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
-  -- @return #boolean
+  --- @return #boolean
   
   --- Deploy Handler OnAfter for AI_CARGO
   -- @function [parent=#AI_CARGO] OnAfterDeploy

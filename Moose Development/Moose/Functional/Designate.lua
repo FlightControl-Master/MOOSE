@@ -292,18 +292,18 @@ do -- DESIGNATE
   --     
   -- The example will activate the flashing of the status menu for this Designate object.
   -- 
-  -- @field #DESIGNATE
+  --- @field #DESIGNATE
   DESIGNATE = {
     ClassName = "DESIGNATE",
   }
 
   --- DESIGNATE Constructor. This class is an abstract class and should not be instantiated.
-  -- @param #DESIGNATE self
-  -- @param Tasking.CommandCenter#COMMANDCENTER CC
-  -- @param Functional.Detection#DETECTION_BASE Detection
-  -- @param Core.Set#SET_GROUP AttackSet The Attack collection of GROUP objects to designate and report for.
-  -- @param Tasking.Mission#MISSION Mission (Optional) The Mission where the menu needs to be attached.
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param Tasking.CommandCenter#COMMANDCENTER CC
+  --- @param Functional.Detection#DETECTION_BASE Detection
+  --- @param Core.Set#SET_GROUP AttackSet The Attack collection of GROUP objects to designate and report for.
+  --- @param Tasking.Mission#MISSION Mission (Optional) The Mission where the menu needs to be attached.
+  --- @return #DESIGNATE
   function DESIGNATE:New( CC, Detection, AttackSet, Mission )
   
     local self = BASE:Inherit( self, FSM:New() ) -- #DESIGNATE
@@ -314,129 +314,129 @@ do -- DESIGNATE
     self:AddTransition( "*", "Detect", "*" )
     --- Detect Handler OnBefore for DESIGNATE
     -- @function [parent=#DESIGNATE] OnBeforeDetect
-    -- @param #DESIGNATE self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
+    --- @param #DESIGNATE self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @return #boolean
     
     --- Detect Handler OnAfter for DESIGNATE
     -- @function [parent=#DESIGNATE] OnAfterDetect
-    -- @param #DESIGNATE self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
+    --- @param #DESIGNATE self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
     
     --- Detect Trigger for DESIGNATE
     -- @function [parent=#DESIGNATE] Detect
-    -- @param #DESIGNATE self
+    --- @param #DESIGNATE self
     
     --- Detect Asynchronous Trigger for DESIGNATE
     -- @function [parent=#DESIGNATE] __Detect
-    -- @param #DESIGNATE self
-    -- @param #number Delay
+    --- @param #DESIGNATE self
+    --- @param #number Delay
     
     self:AddTransition( "*", "LaseOn", "Lasing" )
     --- LaseOn Handler OnBefore for DESIGNATE 
     -- @function [parent=#DESIGNATE ] OnBeforeLaseOn
-    -- @param #DESIGNATE  self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
+    --- @param #DESIGNATE  self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @return #boolean
     
     --- LaseOn Handler OnAfter for DESIGNATE 
     -- @function [parent=#DESIGNATE ] OnAfterLaseOn
-    -- @param #DESIGNATE  self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
+    --- @param #DESIGNATE  self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
     
     --- LaseOn Trigger for DESIGNATE 
     -- @function [parent=#DESIGNATE ] LaseOn
-    -- @param #DESIGNATE  self
+    --- @param #DESIGNATE  self
     
     --- LaseOn Asynchronous Trigger for DESIGNATE 
     -- @function [parent=#DESIGNATE ] __LaseOn
-    -- @param #DESIGNATE  self
-    -- @param #number Delay
+    --- @param #DESIGNATE  self
+    --- @param #number Delay
     
     self:AddTransition( "Lasing", "Lasing", "Lasing" )
     
     self:AddTransition( "*", "LaseOff", "Designate" )
     --- LaseOff Handler OnBefore for DESIGNATE 
     -- @function [parent=#DESIGNATE ] OnBeforeLaseOff
-    -- @param #DESIGNATE  self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
+    --- @param #DESIGNATE  self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @return #boolean
     
     --- LaseOff Handler OnAfter for DESIGNATE 
     -- @function [parent=#DESIGNATE ] OnAfterLaseOff
-    -- @param #DESIGNATE  self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
+    --- @param #DESIGNATE  self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
     
     --- LaseOff Trigger for DESIGNATE 
     -- @function [parent=#DESIGNATE ] LaseOff
-    -- @param #DESIGNATE  self
+    --- @param #DESIGNATE  self
     
     --- LaseOff Asynchronous Trigger for DESIGNATE 
     -- @function [parent=#DESIGNATE ] __LaseOff
-    -- @param #DESIGNATE  self
-    -- @param #number Delay
+    --- @param #DESIGNATE  self
+    --- @param #number Delay
     
     self:AddTransition( "*", "Smoke", "*" )
     --- Smoke Handler OnBefore for DESIGNATE 
     -- @function [parent=#DESIGNATE ] OnBeforeSmoke
-    -- @param #DESIGNATE  self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
+    --- @param #DESIGNATE  self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @return #boolean
     
     --- Smoke Handler OnAfter for DESIGNATE 
     -- @function [parent=#DESIGNATE ] OnAfterSmoke
-    -- @param #DESIGNATE  self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
+    --- @param #DESIGNATE  self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
     
     --- Smoke Trigger for DESIGNATE 
     -- @function [parent=#DESIGNATE ] Smoke
-    -- @param #DESIGNATE  self
+    --- @param #DESIGNATE  self
     
     --- Smoke Asynchronous Trigger for DESIGNATE 
     -- @function [parent=#DESIGNATE ] __Smoke
-    -- @param #DESIGNATE  self
-    -- @param #number Delay
+    --- @param #DESIGNATE  self
+    --- @param #number Delay
     
     self:AddTransition( "*", "Illuminate", "*" )
     --- Illuminate Handler OnBefore for DESIGNATE
     -- @function [parent=#DESIGNATE] OnBeforeIlluminate
-    -- @param #DESIGNATE self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
+    --- @param #DESIGNATE self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @return #boolean
     
     --- Illuminate Handler OnAfter for DESIGNATE
     -- @function [parent=#DESIGNATE] OnAfterIlluminate
-    -- @param #DESIGNATE self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
+    --- @param #DESIGNATE self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
     
     --- Illuminate Trigger for DESIGNATE
     -- @function [parent=#DESIGNATE] Illuminate
-    -- @param #DESIGNATE self
+    --- @param #DESIGNATE self
     
     --- Illuminate Asynchronous Trigger for DESIGNATE
     -- @function [parent=#DESIGNATE] __Illuminate
-    -- @param #DESIGNATE self
-    -- @param #number Delay
+    --- @param #DESIGNATE self
+    --- @param #number Delay
 
     self:AddTransition( "*", "DoneSmoking", "*" )
     self:AddTransition( "*", "DoneIlluminating", "*" )
@@ -444,27 +444,27 @@ do -- DESIGNATE
     self:AddTransition( "*", "Status", "*" )
     --- Status Handler OnBefore for DESIGNATE 
     -- @function [parent=#DESIGNATE ] OnBeforeStatus
-    -- @param #DESIGNATE  self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
+    --- @param #DESIGNATE  self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @return #boolean
     
     --- Status Handler OnAfter for DESIGNATE 
     -- @function [parent=#DESIGNATE ] OnAfterStatus
-    -- @param #DESIGNATE  self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
+    --- @param #DESIGNATE  self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
     
     --- Status Trigger for DESIGNATE 
     -- @function [parent=#DESIGNATE ] Status
-    -- @param #DESIGNATE  self
+    --- @param #DESIGNATE  self
     
     --- Status Asynchronous Trigger for DESIGNATE 
     -- @function [parent=#DESIGNATE ] __Status
-    -- @param #DESIGNATE  self
-    -- @param #number Delay
+    --- @param #DESIGNATE  self
+    --- @param #number Delay
     
     self.CC = CC
     self.Detection = Detection
@@ -504,9 +504,9 @@ do -- DESIGNATE
   end
 
   --- Set the flashing of the status menu for all AttackGroups.
-  -- @param #DESIGNATE self
-  -- @param #boolean FlashMenu true: the status menu will be flashed every detection run; false: no flashing of the menu.
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param #boolean FlashMenu true: the status menu will be flashed every detection run; false: no flashing of the menu.
+  --- @return #DESIGNATE
   -- @usage
   -- 
   -- -- Enable the designate status message flashing...
@@ -533,9 +533,9 @@ do -- DESIGNATE
   end
 
   --- Set the flashing of the new detection messages.
-  -- @param #DESIGNATE self
-  -- @param #boolean FlashDetectionMessage true: The detection message will be flashed every time a new detection was done; false: no messages will be displayed.
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param #boolean FlashDetectionMessage true: The detection message will be flashed every time a new detection was done; false: no messages will be displayed.
+  --- @return #DESIGNATE
   -- @usage
   -- 
   -- -- Enable the message flashing...
@@ -564,9 +564,9 @@ do -- DESIGNATE
 
   --- Set the maximum amount of designations (target groups). This will put a limit on the amount of designations in scope.
   -- Using the menu system, the player can "forget" a designation, so that gradually a new designation can be put in scope when detected.
-  -- @param #DESIGNATE self
-  -- @param #number MaximumDesignations
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param #number MaximumDesignations
+  --- @return #DESIGNATE
   function DESIGNATE:SetMaximumDesignations( MaximumDesignations )
     self.MaximumDesignations = MaximumDesignations
     return self
@@ -574,9 +574,9 @@ do -- DESIGNATE
   
 
   --- Set the maximum ground designation distance.
-  -- @param #DESIGNATE self
-  -- @param #number MaximumDistanceGroundDesignation Maximum ground designation distance in meters.
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param #number MaximumDistanceGroundDesignation Maximum ground designation distance in meters.
+  --- @return #DESIGNATE
   function DESIGNATE:SetMaximumDistanceGroundDesignation( MaximumDistanceGroundDesignation )
     self.MaximumDistanceGroundDesignation = MaximumDistanceGroundDesignation
     return self
@@ -584,9 +584,9 @@ do -- DESIGNATE
   
   
   --- Set the maximum air designation distance.
-  -- @param #DESIGNATE self
-  -- @param #number MaximumDistanceAirDesignation Maximum air designation distance in meters.
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param #number MaximumDistanceAirDesignation Maximum air designation distance in meters.
+  --- @return #DESIGNATE
   function DESIGNATE:SetMaximumDistanceAirDesignation( MaximumDistanceAirDesignation )
     self.MaximumDistanceAirDesignation = MaximumDistanceAirDesignation
     return self
@@ -594,9 +594,9 @@ do -- DESIGNATE
   
   
   --- Set the overall maximum distance when designations can be accepted.
-  -- @param #DESIGNATE self
-  -- @param #number MaximumDistanceDesignations Maximum distance in meters to accept designations.
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param #number MaximumDistanceDesignations Maximum distance in meters to accept designations.
+  --- @return #DESIGNATE
   function DESIGNATE:SetMaximumDistanceDesignations( MaximumDistanceDesignations )
     self.MaximumDistanceDesignations = MaximumDistanceDesignations
     return self
@@ -604,9 +604,9 @@ do -- DESIGNATE
   
   
   --- Set the maximum amount of markings FACs will do, per designated target group. This will limit the number of parallelly marked units of a target group.
-  -- @param #DESIGNATE self
-  -- @param #number MaximumMarkings Maximum markings FACs will do, per designated target group.
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param #number MaximumMarkings Maximum markings FACs will do, per designated target group.
+  --- @return #DESIGNATE
   function DESIGNATE:SetMaximumMarkings( MaximumMarkings )
     self.MaximumMarkings = MaximumMarkings
     return self
@@ -615,9 +615,9 @@ do -- DESIGNATE
   
   --- Set an array of possible laser codes.
   -- Each new lase will select a code from this table.
-  -- @param #DESIGNATE self
-  -- @param #list<#number> LaserCodes
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param #list<#number> LaserCodes
+  --- @return #DESIGNATE
   function DESIGNATE:SetLaserCodes( LaserCodes ) --R2.1
 
     self.LaserCodes = ( type( LaserCodes ) == "table" ) and LaserCodes or { LaserCodes }
@@ -631,10 +631,10 @@ do -- DESIGNATE
 
   --- Add a specific lase code to the designate lase menu to lase targets with a specific laser code.
   -- The MenuText will appear in the lase menu.
-  -- @param #DESIGNATE self
-  -- @param #number LaserCode The specific laser code to be added to the lase menu.
-  -- @param #string MenuText The text to be shown to the player. If you specify a %d in the MenuText, the %d will be replaced with the LaserCode specified.
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param #number LaserCode The specific laser code to be added to the lase menu.
+  --- @param #string MenuText The text to be shown to the player. If you specify a %d in the MenuText, the %d will be replaced with the LaserCode specified.
+  --- @return #DESIGNATE
   -- @usage
   --   RecceDesignation:AddMenuLaserCode( 1113, "Lase with %d for Su-25T" )
   --   RecceDesignation:AddMenuLaserCode( 1680, "Lase with %d for A-10A" )
@@ -649,9 +649,9 @@ do -- DESIGNATE
   
   
   --- Removes a specific lase code from the designate lase menu.
-  -- @param #DESIGNATE self
-  -- @param #number LaserCode The specific laser code that was set to be added to the lase menu.
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param #number LaserCode The specific laser code that was set to be added to the lase menu.
+  --- @return #DESIGNATE
   -- @usage
   --   RecceDesignation:RemoveMenuLaserCode( 1113 )
   --   
@@ -668,9 +668,9 @@ do -- DESIGNATE
 
   --- Set the name of the designation. The name will appear in the menu.
   -- This method can be used to control different designations for different plane types.
-  -- @param #DESIGNATE self
-  -- @param #string DesignateName
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param #string DesignateName
+  --- @return #DESIGNATE
   function DESIGNATE:SetDesignateName( DesignateName ) 
 
     self.DesignateName = "Designation" .. ( DesignateName and ( " for " .. DesignateName ) or "" )
@@ -679,9 +679,9 @@ do -- DESIGNATE
   end
   
   --- Set the lase duration for designations.
-  -- @param #DESIGNATE self
-  -- @param #number LaseDuration The time in seconds a lase will continue to hold on target. The default is 120 seconds.
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param #number LaseDuration The time in seconds a lase will continue to hold on target. The default is 120 seconds.
+  --- @return #DESIGNATE
   function DESIGNATE:SetLaseDuration( LaseDuration )
     self.LaseDuration = LaseDuration or 120
     return self
@@ -694,8 +694,8 @@ do -- DESIGNATE
   -- -- and the last three digits must be between 1 and 8.
   --  The range used to be bugged so its not 1 - 8 but 0 - 7.
   -- function below will use the range 1-7 just in case
-  -- @param #DESIGNATE self
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @return #DESIGNATE
   function DESIGNATE:GenerateLaserCodes() --R2.1
 
     self.LaserCodes = {}
@@ -742,10 +742,10 @@ do -- DESIGNATE
   
   --- Set auto lase.
   -- Auto lase will start lasing targets immediately when these are in range.
-  -- @param #DESIGNATE self
-  -- @param #boolean AutoLase (optional) true sets autolase on, false off. Default is off.
-  -- @param #boolean Message (optional) true is send message, false or nil won't send a message. Default is no message sent.
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param #boolean AutoLase (optional) true sets autolase on, false off. Default is off.
+  --- @param #boolean Message (optional) true is send message, false or nil won't send a message. Default is no message sent.
+  --- @return #DESIGNATE
   function DESIGNATE:SetAutoLase( AutoLase, Message )
 
     self.AutoLase = AutoLase or false
@@ -765,9 +765,9 @@ do -- DESIGNATE
   end
 
   --- Set priorization of Targets based on the **Threat Level of the Target** in an Air to Ground context.
-  -- @param #DESIGNATE self
-  -- @param #boolean Prioritize
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param #boolean Prioritize
+  --- @return #DESIGNATE
   function DESIGNATE:SetThreatLevelPrioritization( Prioritize ) --R2.1
 
     self.ThreatLevelPrioritization = Prioritize
@@ -777,9 +777,9 @@ do -- DESIGNATE
   
   --- Set the MISSION object for which designate will function.
   -- When a MISSION object is assigned, the menu for the designation will be located at the Mission Menu.
-  -- @param #DESIGNATE self
-  -- @param Tasking.Mission#MISSION Mission The MISSION object.
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param Tasking.Mission#MISSION Mission The MISSION object.
+  --- @return #DESIGNATE
   function DESIGNATE:SetMission( Mission ) --R2.2
 
     self.Mission = Mission
@@ -789,8 +789,8 @@ do -- DESIGNATE
   
 
   --- 
-  -- @param #DESIGNATE self
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @return #DESIGNATE
   function DESIGNATE:onafterDetect()
     
     self:__Detect( -math.random( 60 ) )
@@ -805,8 +805,8 @@ do -- DESIGNATE
 
 
   --- Adapt the designation scope according the detected items.
-  -- @param #DESIGNATE self
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @return #DESIGNATE
   function DESIGNATE:DesignationScope()
 
     local DetectedItems = self.Detection:GetDetectedItemsByIndex()
@@ -873,8 +873,8 @@ do -- DESIGNATE
   end
 
   --- Coordinates the Auto Lase.
-  -- @param #DESIGNATE self
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @return #DESIGNATE
   function DESIGNATE:CoordinateLase()
 
     local DetectedItems = self.Detection:GetDetectedItemsByIndex()
@@ -893,10 +893,10 @@ do -- DESIGNATE
 
 
   --- Sends the status to the Attack Groups.
-  -- @param #DESIGNATE self
-  -- @param Wrapper.Group#GROUP AttackGroup
-  -- @param #number Duration The time in seconds the report should be visible.
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @param Wrapper.Group#GROUP AttackGroup
+  --- @param #number Duration The time in seconds the report should be visible.
+  --- @return #DESIGNATE
   function DESIGNATE:SendStatus( MenuAttackGroup )
 
     self.AttackSet:ForEachGroupAlive(
@@ -955,8 +955,8 @@ do -- DESIGNATE
 
 
   --- Sets the Designate Menu for one attack groups.
-  -- @param #DESIGNATE self
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @return #DESIGNATE
   function DESIGNATE:SetMenu( AttackGroup )
 
     self.MenuDesignate = self.MenuDesignate or {}
@@ -1048,8 +1048,8 @@ do -- DESIGNATE
 
 
   --- Sets the Designate Menu for all the attack groups.
-  -- @param #DESIGNATE self
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @return #DESIGNATE
   function DESIGNATE:SetDesignateMenu()
 
     self.AttackSet:Flush( self )
@@ -1071,7 +1071,7 @@ do -- DESIGNATE
   end
 
   --- 
-  -- @param #DESIGNATE self
+  --- @param #DESIGNATE self
   function DESIGNATE:MenuStatus( AttackGroup )
 
     self:F("Status")
@@ -1080,7 +1080,7 @@ do -- DESIGNATE
   end
   
   --- 
-  -- @param #DESIGNATE self
+  --- @param #DESIGNATE self
   function DESIGNATE:MenuFlashStatus( AttackGroup, Flash )
 
     self:F("Flash Status")
@@ -1091,7 +1091,7 @@ do -- DESIGNATE
 
   
   --- 
-  -- @param #DESIGNATE self
+  --- @param #DESIGNATE self
   function DESIGNATE:MenuForget( Index )
 
     self:F("Forget")
@@ -1101,7 +1101,7 @@ do -- DESIGNATE
   end
 
   --- 
-  -- @param #DESIGNATE self
+  --- @param #DESIGNATE self
   function DESIGNATE:MenuAutoLase( AutoLase )
 
     self:F("AutoLase")
@@ -1110,7 +1110,7 @@ do -- DESIGNATE
   end
 
   --- 
-  -- @param #DESIGNATE self
+  --- @param #DESIGNATE self
   function DESIGNATE:MenuSmoke( Index, Color )
 
     self:F("Designate through Smoke")
@@ -1123,7 +1123,7 @@ do -- DESIGNATE
   end
 
   --- 
-  -- @param #DESIGNATE self
+  --- @param #DESIGNATE self
   function DESIGNATE:MenuIlluminate( Index )
 
     self:F("Designate through Illumination")
@@ -1137,7 +1137,7 @@ do -- DESIGNATE
   end
 
   --- 
-  -- @param #DESIGNATE self
+  --- @param #DESIGNATE self
   function DESIGNATE:MenuLaseOn( Index, Duration )
 
     self:F("Designate through Lase")
@@ -1148,7 +1148,7 @@ do -- DESIGNATE
 
 
   --- 
-  -- @param #DESIGNATE self
+  --- @param #DESIGNATE self
   function DESIGNATE:MenuLaseCode( Index, Duration, LaserCode )
 
     self:F( "Designate through Lase using " .. LaserCode )
@@ -1159,7 +1159,7 @@ do -- DESIGNATE
 
 
   --- 
-  -- @param #DESIGNATE self
+  --- @param #DESIGNATE self
   function DESIGNATE:MenuLaseOff( Index, Duration )
 
     self:F("Lasing off")
@@ -1170,7 +1170,7 @@ do -- DESIGNATE
   end
 
   --- 
-  -- @param #DESIGNATE self
+  --- @param #DESIGNATE self
   function DESIGNATE:onafterLaseOn( From, Event, To, Index, Duration, LaserCode )
   
     if string.find( self.Designating[Index], "L", 1, true ) == nil then
@@ -1183,8 +1183,8 @@ do -- DESIGNATE
   
 
   --- 
-  -- @param #DESIGNATE self
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @return #DESIGNATE
   function DESIGNATE:onafterLasing( From, Event, To, Index, Duration, LaserCodeRequested )
   
   
@@ -1348,8 +1348,8 @@ do -- DESIGNATE
   end
     
   --- 
-  -- @param #DESIGNATE self
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @return #DESIGNATE
   function DESIGNATE:onafterLaseOff( From, Event, To, Index )
   
     local CC = self.CC:GetPositionable()
@@ -1379,8 +1379,8 @@ do -- DESIGNATE
 
 
   --- 
-  -- @param #DESIGNATE self
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @return #DESIGNATE
   function DESIGNATE:onafterSmoke( From, Event, To, Index, Color )
   
     local DetectedItem = self.Detection:GetDetectedItemByIndex( Index )
@@ -1424,8 +1424,8 @@ do -- DESIGNATE
   end
 
   --- Illuminating
-  -- @param #DESIGNATE self
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @return #DESIGNATE
   function DESIGNATE:onafterIlluminate( From, Event, To, Index )
   
     local DetectedItem = self.Detection:GetDetectedItemByIndex( Index )
@@ -1452,8 +1452,8 @@ do -- DESIGNATE
   end
 
   --- DoneSmoking
-  -- @param #DESIGNATE self
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @return #DESIGNATE
   function DESIGNATE:onafterDoneSmoking( From, Event, To, Index )
 
     self.Designating[Index] = string.gsub( self.Designating[Index], "S", "" )
@@ -1461,8 +1461,8 @@ do -- DESIGNATE
   end
 
   --- DoneIlluminating
-  -- @param #DESIGNATE self
-  -- @return #DESIGNATE
+  --- @param #DESIGNATE self
+  --- @return #DESIGNATE
   function DESIGNATE:onafterDoneIlluminating( From, Event, To, Index )
 
     self.Designating[Index] = string.gsub( self.Designating[Index], "I", "" )

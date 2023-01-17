@@ -436,12 +436,12 @@
 -- @{#WAREHOUSE.OnAfterSelfRequest}(*From*, *Event*, *To*, *groupset*, *request*) function.
 --
 --     --- OnAfterSelfRequest user function. Access groups spawned from the warehouse for further tasking.
---     -- @param #WAREHOUSE self
---     -- @param #string From From state.
---     -- @param #string Event Event.
---     -- @param #string To To state.
---     -- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered to the warehouse itself.
---     -- @param #WAREHOUSE.Pendingitem request Pending self request.
+--     --- @param #WAREHOUSE self
+--     --- @param #string From From state.
+--     --- @param #string Event Event.
+--     --- @param #string To To state.
+--     --- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered to the warehouse itself.
+--     --- @param #WAREHOUSE.Pendingitem request Pending self request.
 --     function WAREHOUSE:OnAfterSelfRequest(From, Event, To, groupset, request)
 --       local groupset=groupset --Core.Set#SET_GROUP
 --       local request=request   --Functional.Warehouse#WAREHOUSE.Pendingitem
@@ -2002,179 +2002,179 @@ function WAREHOUSE:New(warehouse, alias)
 
   --- Triggers the FSM event "Start". Starts the warehouse. Initializes parameters and starts event handlers.
   -- @function [parent=#WAREHOUSE] Start
-  -- @param #WAREHOUSE self
+  --- @param #WAREHOUSE self
 
   --- Triggers the FSM event "Start" after a delay. Starts the warehouse. Initializes parameters and starts event handlers.
   -- @function [parent=#WAREHOUSE] __Start
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Stop". Stops the warehouse and all its event handlers. All waiting and pending queue items are deleted as well and all assets are removed from stock.
   -- @function [parent=#WAREHOUSE] Stop
-  -- @param #WAREHOUSE self
+  --- @param #WAREHOUSE self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the warehouse and all its event handlers. All waiting and pending queue items are deleted as well and all assets are removed from stock.
   -- @function [parent=#WAREHOUSE] __Stop
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Restart". Restarts the warehouse from stopped state by reactivating the event handlers *only*.
   -- @function [parent=#WAREHOUSE] Restart
-  -- @param #WAREHOUSE self
+  --- @param #WAREHOUSE self
 
   --- Triggers the FSM event "Restart" after a delay. Restarts the warehouse from stopped state by reactivating the event handlers *only*.
   -- @function [parent=#WAREHOUSE] __Restart
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Respawn".
   -- @function [parent=#WAREHOUSE] Respawn
-  -- @param #WAREHOUSE self
+  --- @param #WAREHOUSE self
 
   --- Triggers the FSM event "Respawn" after a delay.
   -- @function [parent=#WAREHOUSE] __Respawn
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Respawn" event user function.
   -- @function [parent=#WAREHOUSE] OnAfterRespawn
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- Triggers the FSM event "Pause". Pauses the warehouse. Assets can still be added and requests be made. However, requests are not processed.
   -- @function [parent=#WAREHOUSE] Pause
-  -- @param #WAREHOUSE self
+  --- @param #WAREHOUSE self
 
   --- Triggers the FSM event "Pause" after a delay. Pauses the warehouse. Assets can still be added and requests be made. However, requests are not processed.
   -- @function [parent=#WAREHOUSE] __Pause
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Unpause". Unpauses the warehouse. Processing of queued requests is resumed.
   -- @function [parent=#WAREHOUSE] UnPause
-  -- @param #WAREHOUSE self
+  --- @param #WAREHOUSE self
 
   --- Triggers the FSM event "Unpause" after a delay. Unpauses the warehouse. Processing of queued requests is resumed.
   -- @function [parent=#WAREHOUSE] __Unpause
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Status". Queue is updated and requests are executed.
   -- @function [parent=#WAREHOUSE] Status
-  -- @param #WAREHOUSE self
+  --- @param #WAREHOUSE self
 
   --- Triggers the FSM event "Status" after a delay. Queue is updated and requests are executed.
   -- @function [parent=#WAREHOUSE] __Status
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
 
 
   --- Trigger the FSM event "AddAsset". Add a group to the warehouse stock.
   -- @function [parent=#WAREHOUSE] AddAsset
-  -- @param #WAREHOUSE self
-  -- @param Wrapper.Group#GROUP group Group to be added as new asset.
-  -- @param #number ngroups (Optional) Number of groups to add to the warehouse stock. Default is 1.
-  -- @param #WAREHOUSE.Attribute forceattribute (Optional) Explicitly force a generalized attribute for the asset. This has to be an @{#WAREHOUSE.Attribute}.
-  -- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
-  -- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
-  -- @param #number loadradius (Optional) The distance in meters when the cargo is loaded into the carrier. Default is the bounding box size of the carrier.
-  -- @param DCS#AI.Skill skill Skill of the asset.
-  -- @param #table liveries Table of livery names. When the asset is spawned one livery is chosen randomly.
-  -- @param #string assignment A free to choose string specifying an assignment for the asset. This can be used with the @{#WAREHOUSE.OnAfterNewAsset} function.
+  --- @param #WAREHOUSE self
+  --- @param Wrapper.Group#GROUP group Group to be added as new asset.
+  --- @param #number ngroups (Optional) Number of groups to add to the warehouse stock. Default is 1.
+  --- @param #WAREHOUSE.Attribute forceattribute (Optional) Explicitly force a generalized attribute for the asset. This has to be an @{#WAREHOUSE.Attribute}.
+  --- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
+  --- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
+  --- @param #number loadradius (Optional) The distance in meters when the cargo is loaded into the carrier. Default is the bounding box size of the carrier.
+  --- @param DCS#AI.Skill skill Skill of the asset.
+  --- @param #table liveries Table of livery names. When the asset is spawned one livery is chosen randomly.
+  --- @param #string assignment A free to choose string specifying an assignment for the asset. This can be used with the @{#WAREHOUSE.OnAfterNewAsset} function.
 
   --- Trigger the FSM event "AddAsset" with a delay. Add a group to the warehouse stock.
   -- @function [parent=#WAREHOUSE] __AddAsset
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param Wrapper.Group#GROUP group Group to be added as new asset.
-  -- @param #number ngroups (Optional) Number of groups to add to the warehouse stock. Default is 1.
-  -- @param #WAREHOUSE.Attribute forceattribute (Optional) Explicitly force a generalized attribute for the asset. This has to be an @{#WAREHOUSE.Attribute}.
-  -- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
-  -- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
-  -- @param #number loadradius (Optional) The distance in meters when the cargo is loaded into the carrier. Default is the bounding box size of the carrier.
-  -- @param DCS#AI.Skill skill Skill of the asset.
-  -- @param #table liveries Table of livery names. When the asset is spawned one livery is chosen randomly.
-  -- @param #string assignment A free to choose string specifying an assignment for the asset. This can be used with the @{#WAREHOUSE.OnAfterNewAsset} function.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
+  --- @param Wrapper.Group#GROUP group Group to be added as new asset.
+  --- @param #number ngroups (Optional) Number of groups to add to the warehouse stock. Default is 1.
+  --- @param #WAREHOUSE.Attribute forceattribute (Optional) Explicitly force a generalized attribute for the asset. This has to be an @{#WAREHOUSE.Attribute}.
+  --- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
+  --- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
+  --- @param #number loadradius (Optional) The distance in meters when the cargo is loaded into the carrier. Default is the bounding box size of the carrier.
+  --- @param DCS#AI.Skill skill Skill of the asset.
+  --- @param #table liveries Table of livery names. When the asset is spawned one livery is chosen randomly.
+  --- @param #string assignment A free to choose string specifying an assignment for the asset. This can be used with the @{#WAREHOUSE.OnAfterNewAsset} function.
 
 
   --- Triggers the FSM delayed event "NewAsset" when a new asset has been added to the warehouse stock.
   -- @function [parent=#WAREHOUSE] NewAsset
-  -- @param #WAREHOUSE self
-  -- @param #WAREHOUSE.Assetitem asset The new asset.
-  -- @param #string assignment (Optional) Assignment text for the asset.
+  --- @param #WAREHOUSE self
+  --- @param #WAREHOUSE.Assetitem asset The new asset.
+  --- @param #string assignment (Optional) Assignment text for the asset.
 
   --- Triggers the FSM delayed event "NewAsset" when a new asset has been added to the warehouse stock.
   -- @function [parent=#WAREHOUSE] __NewAsset
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param #WAREHOUSE.Assetitem asset The new asset.
-  -- @param #string assignment (Optional) Assignment text for the asset.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
+  --- @param #WAREHOUSE.Assetitem asset The new asset.
+  --- @param #string assignment (Optional) Assignment text for the asset.
 
   --- On after "NewAsset" event user function. A new asset has been added to the warehouse stock.
   -- @function [parent=#WAREHOUSE] OnAfterNewAsset
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #WAREHOUSE.Assetitem asset The asset that has just been added.
-  -- @param #string assignment (Optional) Assignment text for the asset.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #WAREHOUSE.Assetitem asset The asset that has just been added.
+  --- @param #string assignment (Optional) Assignment text for the asset.
 
 
   --- Triggers the FSM event "AddRequest". Add a request to the warehouse queue, which is processed when possible.
   -- @function [parent=#WAREHOUSE] AddRequest
-  -- @param #WAREHOUSE self
-  -- @param #WAREHOUSE warehouse The warehouse requesting supply.
-  -- @param #WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
-  -- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
-  -- @param #number nAsset Number of groups requested that match the asset specification.
-  -- @param #WAREHOUSE.TransportType TransportType Type of transport.
-  -- @param #number nTransport Number of transport units requested.
-  -- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
-  -- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets.
+  --- @param #WAREHOUSE self
+  --- @param #WAREHOUSE warehouse The warehouse requesting supply.
+  --- @param #WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
+  --- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
+  --- @param #number nAsset Number of groups requested that match the asset specification.
+  --- @param #WAREHOUSE.TransportType TransportType Type of transport.
+  --- @param #number nTransport Number of transport units requested.
+  --- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
+  --- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets.
 
   --- Triggers the FSM event "AddRequest" with a delay. Add a request to the warehouse queue, which is processed when possible.
   -- @function [parent=#WAREHOUSE] __AddRequest
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param #WAREHOUSE warehouse The warehouse requesting supply.
-  -- @param #WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
-  -- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
-  -- @param #number nAsset Number of groups requested that match the asset specification.
-  -- @param #WAREHOUSE.TransportType TransportType Type of transport.
-  -- @param #number nTransport Number of transport units requested.
-  -- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
-  -- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
+  --- @param #WAREHOUSE warehouse The warehouse requesting supply.
+  --- @param #WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
+  --- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
+  --- @param #number nAsset Number of groups requested that match the asset specification.
+  --- @param #WAREHOUSE.TransportType TransportType Type of transport.
+  --- @param #number nTransport Number of transport units requested.
+  --- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
+  --- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets.
 
 
   --- Triggers the FSM event "Request". Executes a request from the queue if possible.
   -- @function [parent=#WAREHOUSE] Request
-  -- @param #WAREHOUSE self
-  -- @param #WAREHOUSE.Queueitem Request Information table of the request.
+  --- @param #WAREHOUSE self
+  --- @param #WAREHOUSE.Queueitem Request Information table of the request.
 
   --- Triggers the FSM event "Request" after a delay. Executes a request from the queue if possible.
   -- @function [parent=#WAREHOUSE] __Request
-  -- @param #WAREHOUSE self
-  -- @param #number Delay Delay in seconds.
-  -- @param #WAREHOUSE.Queueitem Request Information table of the request.
+  --- @param #WAREHOUSE self
+  --- @param #number Delay Delay in seconds.
+  --- @param #WAREHOUSE.Queueitem Request Information table of the request.
 
   --- On before "Request" user function. The necessary cargo and transport assets will be spawned. Time to set some additional asset parameters.
   -- @function [parent=#WAREHOUSE] OnBeforeRequest
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #WAREHOUSE.Queueitem Request Information table of the request.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #WAREHOUSE.Queueitem Request Information table of the request.
 
   --- On after "Request" user function. The necessary cargo and transport assets were spawned.
   -- @function [parent=#WAREHOUSE] OnAfterRequest
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #WAREHOUSE.Queueitem Request Information table of the request.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #WAREHOUSE.Queueitem Request Information table of the request.
 
 
   --- Triggers the FSM event "Arrived" when a group has arrived at the destination warehouse.
@@ -2183,63 +2183,63 @@ function WAREHOUSE:New(warehouse, alias)
   -- is added to the sending warehouse since carriers are supposed to return to their home warehouse once
   -- all cargo was delivered.
   -- @function [parent=#WAREHOUSE] Arrived
-  -- @param #WAREHOUSE self
-  -- @param Wrapper.Group#GROUP group Group that has arrived.
+  --- @param #WAREHOUSE self
+  --- @param Wrapper.Group#GROUP group Group that has arrived.
 
   --- Triggers the FSM event "Arrived" after a delay when a group has arrived at the destination.
   -- This function should always be called from the sending and not the receiving warehouse.
   -- If the group is a cargo asset, it is added to the receiving warehouse. If the group is a transporter it
   -- is added to the sending warehouse since carriers are supposed to return to their home warehouse once
   -- @function [parent=#WAREHOUSE] __Arrived
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param Wrapper.Group#GROUP group Group that has arrived.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
+  --- @param Wrapper.Group#GROUP group Group that has arrived.
 
   --- On after "Arrived" event user function. Called when a group has arrived at its destination.
   -- @function [parent=#WAREHOUSE] OnAfterArrived
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Group#GROUP group Group that has arrived.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Group#GROUP group Group that has arrived.
 
 
   --- Triggers the FSM event "Delivered". All (cargo) assets of a request have been delivered to the receiving warehouse.
   -- @function [parent=#WAREHOUSE] Delivered
-  -- @param #WAREHOUSE self
-  -- @param #WAREHOUSE.Pendingitem request Pending request that was now delivered.
+  --- @param #WAREHOUSE self
+  --- @param #WAREHOUSE.Pendingitem request Pending request that was now delivered.
 
   --- Triggers the FSM event "Delivered" after a delay. A group has been delivered from the warehouse to another warehouse.
   -- @function [parent=#WAREHOUSE] __Delivered
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param #WAREHOUSE.Pendingitem request Pending request that was now delivered.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
+  --- @param #WAREHOUSE.Pendingitem request Pending request that was now delivered.
 
   --- On after "Delivered" event user function. Called when a group has been delivered from the warehouse to another warehouse.
   -- @function [parent=#WAREHOUSE] OnAfterDelivered
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #WAREHOUSE.Pendingitem request Pending request that was now delivered.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #WAREHOUSE.Pendingitem request Pending request that was now delivered.
 
 
   --- Triggers the FSM event "SelfRequest". Request was initiated from the warehouse to itself. Groups are just spawned at the warehouse or the associated airbase.
   -- If the warehouse is currently under attack when the self request is made, the self request is added to the defending table. One the attack is defeated,
   -- this request is used to put the groups back into the warehouse stock.
   -- @function [parent=#WAREHOUSE] SelfRequest
-  -- @param #WAREHOUSE self
-  -- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered to the warehouse itself.
-  -- @param #WAREHOUSE.Pendingitem request Pending self request.
+  --- @param #WAREHOUSE self
+  --- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered to the warehouse itself.
+  --- @param #WAREHOUSE.Pendingitem request Pending self request.
 
   --- Triggers the FSM event "SelfRequest" with a delay. Request was initiated from the warehouse to itself. Groups are just spawned at the warehouse or the associated airbase.
   -- If the warehouse is currently under attack when the self request is made, the self request is added to the defending table. One the attack is defeated,
   -- this request is used to put the groups back into the warehouse stock.
   -- @function [parent=#WAREHOUSE] __SelfRequest
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered to the warehouse itself.
-  -- @param #WAREHOUSE.Pendingitem request Pending self request.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
+  --- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered to the warehouse itself.
+  --- @param #WAREHOUSE.Pendingitem request Pending self request.
 
   --- On after "SelfRequest" event. Request was initiated from the warehouse to itself. Groups are simply spawned at the warehouse or the associated airbase.
   -- All requested assets are passed as a @{Core.Set#SET_GROUP} and can be used for further tasks or in other MOOSE classes.
@@ -2263,270 +2263,270 @@ function WAREHOUSE:New(warehouse, alias)
   -- end
   --
   -- @function [parent=#WAREHOUSE] OnAfterSelfRequest
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Core.Set#SET_GROUP groupset The set of (cargo) groups that was delivered to the warehouse itself.
-  -- @param #WAREHOUSE.Pendingitem request Pending self request.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Core.Set#SET_GROUP groupset The set of (cargo) groups that was delivered to the warehouse itself.
+  --- @param #WAREHOUSE.Pendingitem request Pending self request.
 
 
   --- Triggers the FSM event "Attacked" when a warehouse is under attack by an another coalition.
   -- @function [parent=#WAREHOUSE] Attacked
-  -- @param #WAREHOUSE self
-  -- @param DCS#coalition.side Coalition Coalition side which is attacking the warehouse, i.e. a number of @{DCS#coalition.side} enumerator.
-  -- @param DCS#country.id Country Country ID, which is attacking the warehouse, i.e. a number @{DCS#country.id} enumerator.
+  --- @param #WAREHOUSE self
+  --- @param DCS#coalition.side Coalition Coalition side which is attacking the warehouse, i.e. a number of @{DCS#coalition.side} enumerator.
+  --- @param DCS#country.id Country Country ID, which is attacking the warehouse, i.e. a number @{DCS#country.id} enumerator.
 
   --- Triggers the FSM event "Attacked" with a delay when a warehouse is under attack by an another coalition.
   -- @function [parent=#WAREHOUSE] __Attacked
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param DCS#coalition.side Coalition Coalition side which is attacking the warehouse, i.e. a number of @{DCS#coalition.side} enumerator.
-  -- @param DCS#country.id Country Country ID, which is attacking the warehouse, i.e. a number @{DCS#country.id} enumerator.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
+  --- @param DCS#coalition.side Coalition Coalition side which is attacking the warehouse, i.e. a number of @{DCS#coalition.side} enumerator.
+  --- @param DCS#country.id Country Country ID, which is attacking the warehouse, i.e. a number @{DCS#country.id} enumerator.
 
   --- On after "Attacked" event user function. Called when a warehouse (zone) is under attack by an enemy.
   -- @function [parent=#WAREHOUSE] OnAfterAttacked
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param DCS#coalition.side Coalition Coalition side which is attacking the warehouse, i.e. a number of @{DCS#coalition.side} enumerator.
-  -- @param DCS#country.id Country Country ID, which is attacking the warehouse, i.e. a number @{DCS#country.id} enumerator.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param DCS#coalition.side Coalition Coalition side which is attacking the warehouse, i.e. a number of @{DCS#coalition.side} enumerator.
+  --- @param DCS#country.id Country Country ID, which is attacking the warehouse, i.e. a number @{DCS#country.id} enumerator.
 
 
   --- Triggers the FSM event "Defeated" when an attack from an enemy was defeated.
   -- @function [parent=#WAREHOUSE] Defeated
-  -- @param #WAREHOUSE self
+  --- @param #WAREHOUSE self
 
   --- Triggers the FSM event "Defeated" with a delay when an attack from an enemy was defeated.
   -- @function [parent=#WAREHOUSE] __Defeated
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Defeated" event user function. Called when an enemy attack was defeated.
   -- @function [parent=#WAREHOUSE] OnAfterDefeate
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "ChangeCountry" so the warehouse is respawned with the new country.
   -- @function [parent=#WAREHOUSE] ChangeCountry
-  -- @param #WAREHOUSE self
-  -- @param DCS#country.id Country New country id of the warehouse.
+  --- @param #WAREHOUSE self
+  --- @param DCS#country.id Country New country id of the warehouse.
 
   --- Triggers the FSM event "ChangeCountry" after a delay so the warehouse is respawned with the new country.
   -- @function [parent=#WAREHOUSE] __ChangeCountry
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param DCS#country.id Country Country id which has captured the warehouse.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
+  --- @param DCS#country.id Country Country id which has captured the warehouse.
 
   --- On after "ChangeCountry" event user function. Called when the warehouse has changed its country.
   -- @function [parent=#WAREHOUSE] OnAfterChangeCountry
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param DCS#country.id Country New country id of the warehouse, i.e. a number @{DCS#country.id} enumerator.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param DCS#country.id Country New country id of the warehouse, i.e. a number @{DCS#country.id} enumerator.
 
 
   --- Triggers the FSM event "Captured" when a warehouse has been captured by another coalition.
   -- @function [parent=#WAREHOUSE] Captured
-  -- @param #WAREHOUSE self
-  -- @param DCS#coalition.side Coalition Coalition side which captured the warehouse.
-  -- @param DCS#country.id Country Country id which has captured the warehouse.
+  --- @param #WAREHOUSE self
+  --- @param DCS#coalition.side Coalition Coalition side which captured the warehouse.
+  --- @param DCS#country.id Country Country id which has captured the warehouse.
 
   --- Triggers the FSM event "Captured" with a delay when a warehouse has been captured by another coalition.
   -- @function [parent=#WAREHOUSE] __Captured
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param DCS#coalition.side Coalition Coalition side which captured the warehouse.
-  -- @param DCS#country.id Country Country id which has captured the warehouse.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
+  --- @param DCS#coalition.side Coalition Coalition side which captured the warehouse.
+  --- @param DCS#country.id Country Country id which has captured the warehouse.
 
   --- On after "Captured" event user function. Called when the warehouse has been captured by an enemy coalition.
   -- @function [parent=#WAREHOUSE] OnAfterCaptured
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param DCS#coalition.side Coalition Coalition side which captured the warehouse, i.e. a number of @{DCS#coalition.side} enumerator.
-  -- @param DCS#country.id Country Country id which has captured the warehouse, i.e. a number @{DCS#country.id} enumerator.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param DCS#coalition.side Coalition Coalition side which captured the warehouse, i.e. a number of @{DCS#coalition.side} enumerator.
+  --- @param DCS#country.id Country Country id which has captured the warehouse, i.e. a number @{DCS#country.id} enumerator.
   --
 
   --- Triggers the FSM event "AirbaseCaptured" when the airbase of the warehouse has been captured by another coalition.
   -- @function [parent=#WAREHOUSE] AirbaseCaptured
-  -- @param #WAREHOUSE self
-  -- @param DCS#coalition.side Coalition Coalition side which captured the airbase, i.e. a number of @{DCS#coalition.side} enumerator.
+  --- @param #WAREHOUSE self
+  --- @param DCS#coalition.side Coalition Coalition side which captured the airbase, i.e. a number of @{DCS#coalition.side} enumerator.
 
   --- Triggers the FSM event "AirbaseCaptured" with a delay when the airbase of the warehouse has been captured by another coalition.
   -- @function [parent=#WAREHOUSE] __AirbaseCaptured
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param DCS#coalition.side Coalition Coalition side which captured the airbase, i.e. a number of @{DCS#coalition.side} enumerator.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
+  --- @param DCS#coalition.side Coalition Coalition side which captured the airbase, i.e. a number of @{DCS#coalition.side} enumerator.
 
   --- On after "AirbaseCaptured" even user function. Called when the airbase of the warehouse has been captured by another coalition.
   -- @function [parent=#WAREHOUSE] OnAfterAirbaseCaptured
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param DCS#coalition.side Coalition Coalition side which captured the airbase, i.e. a number of @{DCS#coalition.side} enumerator.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param DCS#coalition.side Coalition Coalition side which captured the airbase, i.e. a number of @{DCS#coalition.side} enumerator.
 
 
   --- Triggers the FSM event "AirbaseRecaptured" when the airbase of the warehouse has been re-captured from the other coalition.
-  -- @param #WAREHOUSE self
+  --- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] AirbaseRecaptured
-  -- @param DCS#coalition.side Coalition Coalition which re-captured the airbase, i.e. the same as the current warehouse owner coalition.
+  --- @param DCS#coalition.side Coalition Coalition which re-captured the airbase, i.e. the same as the current warehouse owner coalition.
 
   --- Triggers the FSM event "AirbaseRecaptured" with a delay when the airbase of the warehouse has been re-captured from the other coalition.
   -- @function [parent=#WAREHOUSE] __AirbaseRecaptured
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param DCS#coalition.side Coalition Coalition which re-captured the airbase, i.e. the same as the current warehouse owner coalition.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
+  --- @param DCS#coalition.side Coalition Coalition which re-captured the airbase, i.e. the same as the current warehouse owner coalition.
 
   --- On after "AirbaseRecaptured" event user function. Called when the airbase of the warehouse has been re-captured from the other coalition.
   -- @function [parent=#WAREHOUSE] OnAfterAirbaseRecaptured
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param DCS#coalition.side Coalition Coalition which re-captured the airbase, i.e. the same as the current warehouse owner coalition.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param DCS#coalition.side Coalition Coalition which re-captured the airbase, i.e. the same as the current warehouse owner coalition.
 
 
   --- Triggers the FSM event "AssetDead" when an asset group has died.
   -- @function [parent=#WAREHOUSE] AssetDead
-  -- @param #WAREHOUSE self
-  -- @param #WAREHOUSE.Assetitem asset The asset that is dead.
-  -- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
+  --- @param #WAREHOUSE self
+  --- @param #WAREHOUSE.Assetitem asset The asset that is dead.
+  --- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
 
   --- Triggers the delayed FSM event "AssetDead" when an asset group has died.
   -- @function [parent=#WAREHOUSE] __AssetDead
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param #WAREHOUSE.Assetitem asset The asset that is dead.
-  -- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
+  --- @param #WAREHOUSE.Assetitem asset The asset that is dead.
+  --- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
 
   --- On after "AssetDead" event user function. Called when an asset group died.
   -- @function [parent=#WAREHOUSE] OnAfterAssetDead
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #WAREHOUSE.Assetitem asset The asset that is dead.
-  -- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #WAREHOUSE.Assetitem asset The asset that is dead.
+  --- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
 
 
   --- Triggers the FSM event "Destroyed" when the warehouse was destroyed. Services are stopped.
   -- @function [parent=#WAREHOUSE] Destroyed
-  -- @param #WAREHOUSE self
+  --- @param #WAREHOUSE self
 
   --- Triggers the FSM event "Destroyed" with a delay when the warehouse was destroyed. Services are stopped.
   -- @function [parent=#WAREHOUSE] __Destroyed
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Destroyed" event user function. Called when the warehouse was destroyed. Services are stopped.
   -- @function [parent=#WAREHOUSE] OnAfterDestroyed
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "AssetSpawned" when the warehouse has spawned an asset.
   -- @function [parent=#WAREHOUSE] AssetSpawned
-  -- @param #WAREHOUSE self
-  -- @param Wrapper.Group#GROUP group the group that was spawned.
-  -- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
-  -- @param #WAREHOUSE.Pendingitem request The request of the spawned asset.
+  --- @param #WAREHOUSE self
+  --- @param Wrapper.Group#GROUP group the group that was spawned.
+  --- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
+  --- @param #WAREHOUSE.Pendingitem request The request of the spawned asset.
 
   --- Triggers the FSM event "AssetSpawned" with a delay when the warehouse has spawned an asset.
   -- @function [parent=#WAREHOUSE] __AssetSpawned
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param Wrapper.Group#GROUP group the group that was spawned.
-  -- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
-  -- @param #WAREHOUSE.Pendingitem request The request of the spawned asset.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
+  --- @param Wrapper.Group#GROUP group the group that was spawned.
+  --- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
+  --- @param #WAREHOUSE.Pendingitem request The request of the spawned asset.
 
   --- On after "AssetSpawned" event user function. Called when the warehouse has spawned an asset.
   -- @function [parent=#WAREHOUSE] OnAfterAssetSpawned
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Group#GROUP group the group that was spawned.
-  -- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
-  -- @param #WAREHOUSE.Pendingitem request The request of the spawned asset.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Group#GROUP group the group that was spawned.
+  --- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
+  --- @param #WAREHOUSE.Pendingitem request The request of the spawned asset.
 
 
   --- Triggers the FSM event "AssetLowFuel" when an asset runs low on fuel
   -- @function [parent=#WAREHOUSE] AssetLowFuel
-  -- @param #WAREHOUSE self
-  -- @param #WAREHOUSE.Assetitem asset The asset that is low on fuel.
-  -- @param #WAREHOUSE.Pendingitem request The request of the asset that is low on fuel.
+  --- @param #WAREHOUSE self
+  --- @param #WAREHOUSE.Assetitem asset The asset that is low on fuel.
+  --- @param #WAREHOUSE.Pendingitem request The request of the asset that is low on fuel.
 
   --- Triggers the FSM event "AssetLowFuel" with a delay when an asset  runs low on fuel.
   -- @function [parent=#WAREHOUSE] __AssetLowFuel
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param #WAREHOUSE.Assetitem asset The asset that is low on fuel.
-  -- @param #WAREHOUSE.Pendingitem request The request of the asset that is low on fuel.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
+  --- @param #WAREHOUSE.Assetitem asset The asset that is low on fuel.
+  --- @param #WAREHOUSE.Pendingitem request The request of the asset that is low on fuel.
 
   --- On after "AssetLowFuel" event user function. Called when the an asset is low on fuel.
   -- @function [parent=#WAREHOUSE] OnAfterAssetLowFuel
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #WAREHOUSE.Assetitem asset The asset that is low on fuel.
-  -- @param #WAREHOUSE.Pendingitem request The request of the asset that is low on fuel.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #WAREHOUSE.Assetitem asset The asset that is low on fuel.
+  --- @param #WAREHOUSE.Pendingitem request The request of the asset that is low on fuel.
 
 
   --- Triggers the FSM event "Save" when the warehouse assets are saved to file on disk.
   -- @function [parent=#WAREHOUSE] Save
-  -- @param #WAREHOUSE self
-  -- @param #string path Path where the file is saved. Default is the DCS installation root directory.
-  -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
+  --- @param #WAREHOUSE self
+  --- @param #string path Path where the file is saved. Default is the DCS installation root directory.
+  --- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
 
   --- Triggers the FSM event "Save" with a delay when the warehouse assets are saved to a file.
   -- @function [parent=#WAREHOUSE] __Save
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param #string path Path where the file is saved. Default is the DCS installation root directory.
-  -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
+  --- @param #string path Path where the file is saved. Default is the DCS installation root directory.
+  --- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
 
   --- On after "Save" event user function. Called when the warehouse assets are saved to disk.
   -- @function [parent=#WAREHOUSE] OnAfterSave
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string path Path where the file is saved. Default is the DCS installation root directory.
-  -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string path Path where the file is saved. Default is the DCS installation root directory.
+  --- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
 
 
   --- Triggers the FSM event "Load" when the warehouse is loaded from a file on disk.
   -- @function [parent=#WAREHOUSE] Load
-  -- @param #WAREHOUSE self
-  -- @param #string path Path where the file is located. Default is the DCS installation root directory.
-  -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
+  --- @param #WAREHOUSE self
+  --- @param #string path Path where the file is located. Default is the DCS installation root directory.
+  --- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
 
   --- Triggers the FSM event "Load" with a delay when the warehouse assets are loaded from disk.
   -- @function [parent=#WAREHOUSE] __Load
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param #string path Path where the file is located. Default is the DCS installation root directory.
-  -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
+  --- @param #WAREHOUSE self
+  --- @param #number delay Delay in seconds.
+  --- @param #string path Path where the file is located. Default is the DCS installation root directory.
+  --- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
 
   --- On after "Load" event user function. Called when the warehouse assets are loaded from disk.
   -- @function [parent=#WAREHOUSE] OnAfterLoad
-  -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string path Path where the file is located. Default is the DCS installation root directory.
-  -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
+  --- @param #WAREHOUSE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string path Path where the file is located. Default is the DCS installation root directory.
+  --- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
 
 
   return self
@@ -7848,10 +7848,10 @@ function WAREHOUSE:_SimpleTaskFunctionWP(Function, group, n, N)
 end
 
 --- Get the proper terminal type based on generalized attribute of the group.
---@param #WAREHOUSE self
---@param #WAREHOUSE.Attribute _attribute Generlized attibute of unit.
---@param #number _category Airbase category.
---@return Wrapper.Airbase#AIRBASE.TerminalType Terminal type for this group.
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE.Attribute _attribute Generlized attibute of unit.
+--- @param #number _category Airbase category.
+--- @return Wrapper.Airbase#AIRBASE.TerminalType Terminal type for this group.
 function WAREHOUSE:_GetTerminal(_attribute, _category)
 
   -- Default terminal is "large".
@@ -8222,7 +8222,7 @@ end
 --- @return #number Request ID.
 function WAREHOUSE:_GetIDsFromGroupName(groupname)
 
-  ---@param #string text The text to analyse.
+  --- @param #string text The text to analyse.
   local function analyse(text)
 
     -- Get rid of #0001 tail from spawn.

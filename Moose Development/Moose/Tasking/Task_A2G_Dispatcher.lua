@@ -27,9 +27,9 @@ do -- TASK_A2G_DISPATCHER
 
   --- TASK\_A2G\_DISPATCHER class.
   --- @type TASK_A2G_DISPATCHER
-  -- @field Core.Set#SET_GROUP SetGroup The groups to which the FAC will report to.
-  -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
-  -- @field Tasking.Mission#MISSION Mission
+  --- @field Core.Set#SET_GROUP SetGroup The groups to which the FAC will report to.
+  --- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
+  --- @field Tasking.Mission#MISSION Mission
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
   --- Orchestrates dynamic **A2G Task Dispatching** based on the detection results of a linked @{Functional.Detection} object.
@@ -429,7 +429,7 @@ do -- TASK_A2G_DISPATCHER
   --
   --
   --
-  -- @field #TASK_A2G_DISPATCHER
+  --- @field #TASK_A2G_DISPATCHER
   TASK_A2G_DISPATCHER = {
     ClassName = "TASK_A2G_DISPATCHER",
     Mission = nil,
@@ -438,11 +438,11 @@ do -- TASK_A2G_DISPATCHER
   }
 
   --- TASK_A2G_DISPATCHER constructor.
-  -- @param #TASK_A2G_DISPATCHER self
-  -- @param Tasking.Mission#MISSION Mission The mission for which the task dispatching is done.
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups that can join the tasks within the mission.
-  -- @param Functional.Detection#DETECTION_BASE Detection The detection results that are used to dynamically assign new tasks to human players.
-  -- @return #TASK_A2G_DISPATCHER self
+  --- @param #TASK_A2G_DISPATCHER self
+  --- @param Tasking.Mission#MISSION Mission The mission for which the task dispatching is done.
+  --- @param Core.Set#SET_GROUP SetGroup The set of groups that can join the tasks within the mission.
+  --- @param Functional.Detection#DETECTION_BASE Detection The detection results that are used to dynamically assign new tasks to human players.
+  --- @return #TASK_A2G_DISPATCHER self
   function TASK_A2G_DISPATCHER:New( Mission, SetGroup, Detection )
 
     -- Inherits from DETECTION_MANAGER
@@ -458,13 +458,13 @@ do -- TASK_A2G_DISPATCHER
 
     --- OnAfter Transition Handler for Event Assign.
     -- @function [parent=#TASK_A2G_DISPATCHER] OnAfterAssign
-    -- @param #TASK_A2G_DISPATCHER self
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @param Tasking.Task_A2G#TASK_A2G Task
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param #string PlayerName
+    --- @param #TASK_A2G_DISPATCHER self
+    --- @param #string From The From State string.
+    --- @param #string Event The Event string.
+    --- @param #string To The To State string.
+    --- @param Tasking.Task_A2G#TASK_A2G Task
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param #string PlayerName
 
     self:__Start( 5 )
 
@@ -472,17 +472,17 @@ do -- TASK_A2G_DISPATCHER
   end
 
   --- Set flashing player messages on or off
-  -- @param #TASK_A2G_DISPATCHER self
-  -- @param #boolean onoff Set messages on (true) or off (false)
+  --- @param #TASK_A2G_DISPATCHER self
+  --- @param #boolean onoff Set messages on (true) or off (false)
   function TASK_A2G_DISPATCHER:SetSendMessages( onoff )
     self.FlashNewTask = onoff
   end
 
   --- Creates a SEAD task when there are targets for it.
-  -- @param #TASK_A2G_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_AREAS.DetectedItem DetectedItem
-  -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
-  -- @return #nil If there are no targets to be set.
+  --- @param #TASK_A2G_DISPATCHER self
+  --- @param Functional.Detection#DETECTION_AREAS.DetectedItem DetectedItem
+  --- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
+  --- @return #nil If there are no targets to be set.
   function TASK_A2G_DISPATCHER:EvaluateSEAD( DetectedItem )
     self:F( { DetectedItem.ItemID } )
 
@@ -507,10 +507,10 @@ do -- TASK_A2G_DISPATCHER
   end
 
   --- Creates a CAS task when there are targets for it.
-  -- @param #TASK_A2G_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_AREAS.DetectedItem DetectedItem
-  -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
-  -- @return #nil If there are no targets to be set.
+  --- @param #TASK_A2G_DISPATCHER self
+  --- @param Functional.Detection#DETECTION_AREAS.DetectedItem DetectedItem
+  --- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
+  --- @return #nil If there are no targets to be set.
   function TASK_A2G_DISPATCHER:EvaluateCAS( DetectedItem )
     self:F( { DetectedItem.ItemID } )
 
@@ -538,10 +538,10 @@ do -- TASK_A2G_DISPATCHER
   end
 
   --- Creates a BAI task when there are targets for it.
-  -- @param #TASK_A2G_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_AREAS.DetectedItem DetectedItem
-  -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
-  -- @return #nil If there are no targets to be set.
+  --- @param #TASK_A2G_DISPATCHER self
+  --- @param Functional.Detection#DETECTION_AREAS.DetectedItem DetectedItem
+  --- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
+  --- @return #nil If there are no targets to be set.
   function TASK_A2G_DISPATCHER:EvaluateBAI( DetectedItem, FriendlyCoalition )
     self:F( { DetectedItem.ItemID } )
 
@@ -575,12 +575,12 @@ do -- TASK_A2G_DISPATCHER
 
   --- Evaluates the removal of the Task from the Mission.
   -- Can only occur when the DetectedItem is Changed AND the state of the Task is "Planned".
-  -- @param #TASK_A2G_DISPATCHER self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Tasking.Task#TASK Task
-  -- @param #boolean DetectedItemID
-  -- @param #boolean DetectedItemChange
-  -- @return Tasking.Task#TASK
+  --- @param #TASK_A2G_DISPATCHER self
+  --- @param Tasking.Mission#MISSION Mission
+  --- @param Tasking.Task#TASK Task
+  --- @param #boolean DetectedItemID
+  --- @param #boolean DetectedItemChange
+  --- @return Tasking.Task#TASK
   function TASK_A2G_DISPATCHER:EvaluateRemoveTask( Mission, Task, TaskIndex, DetectedItemChanged )
 
     if Task then
@@ -594,9 +594,9 @@ do -- TASK_A2G_DISPATCHER
   end
 
   --- Assigns tasks in relation to the detected items to the @{Core.Set#SET_GROUP}.
-  -- @param #TASK_A2G_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Functional.Detection#DETECTION_BASE} derived object.
-  -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
+  --- @param #TASK_A2G_DISPATCHER self
+  --- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Functional.Detection#DETECTION_BASE} derived object.
+  --- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function TASK_A2G_DISPATCHER:ProcessDetected( Detection )
     self:F()
 

@@ -19,8 +19,8 @@
 do -- UserFlag
 
   --- @type USERFLAG
-  -- @field #string ClassName Name of the class
-  -- @field #string UserFlagName Name of the flag.
+  --- @field #string ClassName Name of the class
+  --- @field #string UserFlagName Name of the flag.
   -- @extends Core.Base#BASE
 
 
@@ -30,16 +30,16 @@ do -- UserFlag
   --   
   --   * @{#USERFLAG.New}(): Creates a new USERFLAG object.
   -- 
-  -- @field #USERFLAG
+  --- @field #USERFLAG
   USERFLAG = {
     ClassName    = "USERFLAG",
     UserFlagName = nil,
   }
 
   --- USERFLAG Constructor.
-  -- @param #USERFLAG self
-  -- @param #string UserFlagName The name of the userflag, which is a free text string.
-  -- @return #USERFLAG
+  --- @param #USERFLAG self
+  --- @param #string UserFlagName The name of the userflag, which is a free text string.
+  --- @return #USERFLAG
   function USERFLAG:New( UserFlagName ) --R2.3
 
     local self = BASE:Inherit( self, BASE:New() ) -- #USERFLAG
@@ -50,17 +50,17 @@ do -- UserFlag
   end
 
   --- Get the userflag name.
-  -- @param #USERFLAG self
-  -- @return #string Name of the user flag.
+  --- @param #USERFLAG self
+  --- @return #string Name of the user flag.
   function USERFLAG:GetName()
     return self.UserFlagName
   end  
 
   --- Set the userflag to a given Number.
-  -- @param #USERFLAG self
-  -- @param #number Number The number value to be checked if it is the same as the userflag.
-  -- @param #number Delay Delay in seconds, before the flag is set.
-  -- @return #USERFLAG The userflag instance.
+  --- @param #USERFLAG self
+  --- @param #number Number The number value to be checked if it is the same as the userflag.
+  --- @param #number Delay Delay in seconds, before the flag is set.
+  --- @return #USERFLAG The userflag instance.
   -- @usage
   --   local BlueVictory = USERFLAG:New( "VictoryBlue" )
   --   BlueVictory:Set( 100 ) -- Set the UserFlag VictoryBlue to 100.
@@ -78,8 +78,8 @@ do -- UserFlag
   end
 
   --- Get the userflag Number.
-  -- @param #USERFLAG self
-  -- @return #number Number The number value to be checked if it is the same as the userflag.
+  --- @param #USERFLAG self
+  --- @return #number Number The number value to be checked if it is the same as the userflag.
   -- @usage
   --   local BlueVictory = USERFLAG:New( "VictoryBlue" )
   --   local BlueVictoryValue = BlueVictory:Get() -- Get the UserFlag VictoryBlue value.
@@ -90,9 +90,9 @@ do -- UserFlag
   end
 
   --- Check if the userflag has a value of Number.
-  -- @param #USERFLAG self
-  -- @param #number Number The number value to be checked if it is the same as the userflag.
-  -- @return #boolean true if the Number is the value of the userflag.
+  --- @param #USERFLAG self
+  --- @param #number Number The number value to be checked if it is the same as the userflag.
+  --- @return #boolean true if the Number is the value of the userflag.
   -- @usage
   --   local BlueVictory = USERFLAG:New( "VictoryBlue" )
   --   if BlueVictory:Is( 1 ) then

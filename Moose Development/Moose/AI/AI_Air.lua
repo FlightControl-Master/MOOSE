@@ -76,7 +76,7 @@ function AI_AIR:New( AIGroup )
   -- @param #string From
   -- @param #string Event
   -- @param #string To
-  -- @return #boolean
+  --- @return #boolean
   
   --- Start Handler OnAfter for AI_AIR
   -- @function [parent=#AI_AIR] OnAfterStart
@@ -221,7 +221,7 @@ function AI_AIR:New( AIGroup )
   -- @param #string From
   -- @param #string Event
   -- @param #string To
-  -- @return #boolean
+  --- @return #boolean
   
   --- Refuel Handler OnAfter for AI_AIR
   -- @function [parent=#AI_AIR] OnAfterRefuel

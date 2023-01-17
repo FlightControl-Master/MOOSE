@@ -1107,9 +1107,9 @@ end
 do -- AI methods
 
   --- Turns the AI On or Off for the @{Wrapper.Group} when spawning.
-  -- @param #SPAWN self
-  -- @param #boolean AIOnOff A value of true sets the AI On, a value of false sets the AI Off.
-  -- @return #SPAWN The SPAWN object
+  --- @param #SPAWN self
+  --- @param #boolean AIOnOff A value of true sets the AI On, a value of false sets the AI Off.
+  --- @return #SPAWN The SPAWN object
   function SPAWN:InitAIOnOff( AIOnOff )
 
     self.AIOnOff = AIOnOff
@@ -1117,16 +1117,16 @@ do -- AI methods
   end
 
   --- Turns the AI On for the @{Wrapper.Group} when spawning.
-  -- @param #SPAWN self
-  -- @return #SPAWN The SPAWN object
+  --- @param #SPAWN self
+  --- @return #SPAWN The SPAWN object
   function SPAWN:InitAIOn()
 
     return self:InitAIOnOff( true )
   end
 
   --- Turns the AI Off for the @{Wrapper.Group} when spawning.
-  -- @param #SPAWN self
-  -- @return #SPAWN The SPAWN object
+  --- @param #SPAWN self
+  --- @return #SPAWN The SPAWN object
   function SPAWN:InitAIOff()
 
     return self:InitAIOnOff( false )
@@ -1137,9 +1137,9 @@ end -- AI methods
 do -- Delay methods
   --- Turns the Delay On or Off for the first @{Wrapper.Group} scheduled spawning.
   -- The default value is that for scheduled spawning, there is an initial delay when spawning the first @{Wrapper.Group}.
-  -- @param #SPAWN self
-  -- @param #boolean DelayOnOff A value of true sets the Delay On, a value of false sets the Delay Off.
-  -- @return #SPAWN The SPAWN object
+  --- @param #SPAWN self
+  --- @param #boolean DelayOnOff A value of true sets the Delay On, a value of false sets the Delay Off.
+  --- @return #SPAWN The SPAWN object
   function SPAWN:InitDelayOnOff( DelayOnOff )
 
     self.DelayOnOff = DelayOnOff
@@ -1147,16 +1147,16 @@ do -- Delay methods
   end
 
   --- Turns the Delay On for the @{Wrapper.Group} when spawning.
-  -- @param #SPAWN self
-  -- @return #SPAWN The SPAWN object
+  --- @param #SPAWN self
+  --- @return #SPAWN The SPAWN object
   function SPAWN:InitDelayOn()
 
     return self:InitDelayOnOff( true )
   end
 
   --- Turns the Delay Off for the @{Wrapper.Group} when spawning.
-  -- @param #SPAWN self
-  -- @return #SPAWN The SPAWN object
+  --- @param #SPAWN self
+  --- @return #SPAWN The SPAWN object
   function SPAWN:InitDelayOff()
 
     return self:InitDelayOnOff( false )

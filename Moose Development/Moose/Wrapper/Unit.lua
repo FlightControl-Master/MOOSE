@@ -442,8 +442,8 @@ function UNIT:GetClient()
 end
 
 --- [AIRPLANE] Get the NATO reporting name of a UNIT. Currently airplanes only!
---@param #UNIT self
---@return #string NatoReportingName or "Bogey" if unknown.
+--- @param #UNIT self
+--- @return #string NatoReportingName or "Bogey" if unknown.
 function UNIT:GetNatoReportingName()
   
   local typename = self:GetTypeName()
@@ -1341,10 +1341,10 @@ end
 do -- Event Handling
 
   --- Subscribe to a DCS Event.
-  -- @param #UNIT self
-  -- @param Core.Event#EVENTS EventID Event ID.
-  -- @param #function EventFunction (Optional) The function to be called when the event occurs for the unit.
-  -- @return #UNIT self
+  --- @param #UNIT self
+  --- @param Core.Event#EVENTS EventID Event ID.
+  --- @param #function EventFunction (Optional) The function to be called when the event occurs for the unit.
+  --- @return #UNIT self
   function UNIT:HandleEvent(EventID, EventFunction)
   
     self:EventDispatcher():OnEventForUnit(self:GetName(), EventFunction, self, EventID)
@@ -1353,9 +1353,9 @@ do -- Event Handling
   end
   
   --- UnSubscribe to a DCS event.
-  -- @param #UNIT self
-  -- @param Core.Event#EVENTS EventID Event ID.
-  -- @return #UNIT self
+  --- @param #UNIT self
+  --- @param Core.Event#EVENTS EventID Event ID.
+  --- @return #UNIT self
   function UNIT:UnHandleEvent(EventID)
   
     --self:EventDispatcher():RemoveForUnit( self:GetName(), self, EventID )
@@ -1367,8 +1367,8 @@ do -- Event Handling
   end
   
   --- Reset the subscriptions.
-  -- @param #UNIT self
-  -- @return #UNIT
+  --- @param #UNIT self
+  --- @return #UNIT
   function UNIT:ResetEvents()
   
     self:EventDispatcher():Reset( self )
@@ -1381,9 +1381,9 @@ end
 do -- Detection
 
   --- Returns if a unit is detecting the TargetUnit.
-  -- @param #UNIT self
-  -- @param #UNIT TargetUnit
-  -- @return #boolean true If the TargetUnit is detected by the unit, otherwise false.
+  --- @param #UNIT self
+  --- @param #UNIT TargetUnit
+  --- @return #boolean true If the TargetUnit is detected by the unit, otherwise false.
   function UNIT:IsDetected( TargetUnit ) --R2.1
 
     local TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity = self:IsTargetDetected( TargetUnit:GetDCSObject() )  
@@ -1392,9 +1392,9 @@ do -- Detection
   end
   
   --- Returns if a unit has Line of Sight (LOS) with the TargetUnit.
-  -- @param #UNIT self
-  -- @param #UNIT TargetUnit
-  -- @return #boolean true If the TargetUnit has LOS with the unit, otherwise false.
+  --- @param #UNIT self
+  --- @param #UNIT TargetUnit
+  --- @return #boolean true If the TargetUnit has LOS with the unit, otherwise false.
   function UNIT:IsLOS( TargetUnit ) --R2.1
 
     local IsLOS = self:GetPointVec3():IsLOS( TargetUnit:GetPointVec3() )
@@ -1404,10 +1404,10 @@ do -- Detection
 
   --- Forces the unit to become aware of the specified target, without the unit manually detecting the other unit itself.
   -- Applies only to a Unit Controller. Cannot be used at the group level.
-  -- @param #UNIT self
-  -- @param #UNIT TargetUnit The unit to be known.
-  -- @param #boolean TypeKnown The target type is known. If *false*, the type is not known.
-  -- @param #boolean DistanceKnown The distance to the target is known. If *false*, distance is unknown.
+  --- @param #UNIT self
+  --- @param #UNIT TargetUnit The unit to be known.
+  --- @param #boolean TypeKnown The target type is known. If *false*, the type is not known.
+  --- @param #boolean DistanceKnown The distance to the target is known. If *false*, distance is unknown.
   function UNIT:KnowUnit(TargetUnit, TypeKnown, DistanceKnown)
 
     -- Defaults.

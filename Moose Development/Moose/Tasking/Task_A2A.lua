@@ -15,7 +15,7 @@ do -- TASK_A2A
 
   --- The TASK_A2A class
   --- @type TASK_A2A
-  -- @field Core.Set#SET_UNIT TargetSetUnit
+  --- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   --- Defines Air To Air tasks for a @{Core.Set} of Target Units, 
@@ -36,21 +36,21 @@ do -- TASK_A2A
   --   * @{#TASK_A2A.SetScoreOnSuccess}(): Set a score when all the targets in scope of the A2A attack, have been destroyed.
   --   * @{#TASK_A2A.SetPenaltyOnFailed}(): Set a penalty when the A2A attack has failed.
   --
-  -- @field #TASK_A2A
+  --- @field #TASK_A2A
   TASK_A2A = {
     ClassName = "TASK_A2A"
   }
 
   --- Instantiates a new TASK_A2A.
-  -- @param #TASK_A2A self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Core.Set#SET_GROUP SetAttack The set of groups for which the Task can be assigned.
-  -- @param #string TaskName The name of the Task.
-  -- @param Core.Set#SET_UNIT UnitSetTargets
-  -- @param #number TargetDistance The distance to Target when the Player is considered to have "arrived" at the engagement range.
-  -- @param Core.Zone#ZONE_BASE TargetZone The target zone, if known.
+  --- @param #TASK_A2A self
+  --- @param Tasking.Mission#MISSION Mission
+  --- @param Core.Set#SET_GROUP SetAttack The set of groups for which the Task can be assigned.
+  --- @param #string TaskName The name of the Task.
+  --- @param Core.Set#SET_UNIT UnitSetTargets
+  --- @param #number TargetDistance The distance to Target when the Player is considered to have "arrived" at the engagement range.
+  --- @param Core.Zone#ZONE_BASE TargetZone The target zone, if known.
   -- If the TargetZone parameter is specified, the player will be routed to the center of the zone where all the targets are assumed to be.
-  -- @return #TASK_A2A self
+  --- @return #TASK_A2A self
   function TASK_A2A:New( Mission, SetAttack, TaskName, TargetSetUnit, TaskType, TaskBriefing )
     local self = BASE:Inherit( self, TASK:New( Mission, SetAttack, TaskName, TaskType, TaskBriefing ) ) -- Tasking.Task#TASK_A2A
     self:F()
@@ -80,9 +80,9 @@ do -- TASK_A2A
     Fsm:AddTransition( "Rejected", "Reject", "Aborted" )
     Fsm:AddTransition( "Failed", "Fail", "Failed" )
 
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param #TASK_CARGO Task
+    --- @param #FSM_PROCESS self
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param #TASK_CARGO Task
     function Fsm:OnLeaveAssigned( TaskUnit, Task )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
@@ -90,9 +90,9 @@ do -- TASK_A2A
     end
 
     --- Test
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_A2A#TASK_A2A Task
+    --- @param #FSM_PROCESS self
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param Tasking.Task_A2A#TASK_A2A Task
     function Fsm:onafterRouteToRendezVous( TaskUnit, Task )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       -- Determine the first Unit from the self.RendezVousSetUnit
@@ -109,9 +109,9 @@ do -- TASK_A2A
     end
 
     --- Test
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task#TASK_A2A Task
+    --- @param #FSM_PROCESS self
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param Tasking.Task#TASK_A2A Task
     function Fsm:OnAfterArriveAtRendezVous( TaskUnit, Task )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       -- Determine the first Unit from the self.TargetSetUnit
@@ -120,9 +120,9 @@ do -- TASK_A2A
     end
 
     --- Test
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task#TASK_A2A Task
+    --- @param #FSM_PROCESS self
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param Tasking.Task#TASK_A2A Task
     function Fsm:onafterEngage( TaskUnit, Task )
       self:F( { self } )
       self:__Account( 0.1 )
@@ -131,9 +131,9 @@ do -- TASK_A2A
     end
 
     --- Test
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_A2A#TASK_A2A Task
+    --- @param #FSM_PROCESS self
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param Tasking.Task_A2A#TASK_A2A Task
     function Fsm:onafterRouteToTarget( TaskUnit, Task )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       -- Determine the first Unit from the self.TargetSetUnit
@@ -152,9 +152,9 @@ do -- TASK_A2A
     end
 
     --- Test
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_A2A#TASK_A2A Task
+    --- @param #FSM_PROCESS self
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param Tasking.Task_A2A#TASK_A2A Task
     function Fsm:onafterRouteToTargets( TaskUnit, Task )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
@@ -169,7 +169,7 @@ do -- TASK_A2A
   end
 
   --- @param #TASK_A2A self
-  -- @param Core.Set#SET_UNIT TargetSetUnit The set of targets.
+  --- @param Core.Set#SET_UNIT TargetSetUnit The set of targets.
   function TASK_A2A:SetTargetSetUnit( TargetSetUnit )
 
     self.TargetSetUnit = TargetSetUnit
@@ -181,9 +181,9 @@ do -- TASK_A2A
   end
 
   --- @param #TASK_A2A self
-  -- @param Core.Point#COORDINATE RendezVousCoordinate The Coordinate object referencing to the 2D point where the RendezVous point is located on the map.
-  -- @param #number RendezVousRange The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
-  -- @param Wrapper.Unit#UNIT TaskUnit
+  --- @param Core.Point#COORDINATE RendezVousCoordinate The Coordinate object referencing to the 2D point where the RendezVous point is located on the map.
+  --- @param #number RendezVousRange The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
+  --- @param Wrapper.Unit#UNIT TaskUnit
   function TASK_A2A:SetRendezVousCoordinate( RendezVousCoordinate, RendezVousRange, TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -194,9 +194,9 @@ do -- TASK_A2A
   end
 
   --- @param #TASK_A2A self
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return Core.Point#COORDINATE The Coordinate object referencing to the 2D point where the RendezVous point is located on the map.
-  -- @return #number The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return Core.Point#COORDINATE The Coordinate object referencing to the 2D point where the RendezVous point is located on the map.
+  --- @return #number The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
   function TASK_A2A:GetRendezVousCoordinate( TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -206,8 +206,8 @@ do -- TASK_A2A
   end
 
   --- @param #TASK_A2A self
-  -- @param Core.Zone#ZONE_BASE RendezVousZone The Zone object where the RendezVous is located on the map.
-  -- @param Wrapper.Unit#UNIT TaskUnit
+  --- @param Core.Zone#ZONE_BASE RendezVousZone The Zone object where the RendezVous is located on the map.
+  --- @param Wrapper.Unit#UNIT TaskUnit
   function TASK_A2A:SetRendezVousZone( RendezVousZone, TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -217,8 +217,8 @@ do -- TASK_A2A
   end
 
   --- @param #TASK_A2A self
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return Core.Zone#ZONE_BASE The Zone object where the RendezVous is located on the map.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return Core.Zone#ZONE_BASE The Zone object where the RendezVous is located on the map.
   function TASK_A2A:GetRendezVousZone( TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -228,8 +228,8 @@ do -- TASK_A2A
   end
 
   --- @param #TASK_A2A self
-  -- @param Core.Point#COORDINATE TargetCoordinate The Coordinate object where the Target is located on the map.
-  -- @param Wrapper.Unit#UNIT TaskUnit
+  --- @param Core.Point#COORDINATE TargetCoordinate The Coordinate object where the Target is located on the map.
+  --- @param Wrapper.Unit#UNIT TaskUnit
   function TASK_A2A:SetTargetCoordinate( TargetCoordinate, TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -239,8 +239,8 @@ do -- TASK_A2A
   end
 
   --- @param #TASK_A2A self
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return Core.Point#COORDINATE The Coordinate object where the Target is located on the map.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return Core.Point#COORDINATE The Coordinate object where the Target is located on the map.
   function TASK_A2A:GetTargetCoordinate( TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -250,8 +250,8 @@ do -- TASK_A2A
   end
 
   --- @param #TASK_A2A self
-  -- @param Core.Zone#ZONE_BASE TargetZone The Zone object where the Target is located on the map.
-  -- @param Wrapper.Unit#UNIT TaskUnit
+  --- @param Core.Zone#ZONE_BASE TargetZone The Zone object where the Target is located on the map.
+  --- @param Wrapper.Unit#UNIT TaskUnit
   function TASK_A2A:SetTargetZone( TargetZone, Altitude, Heading, TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -261,8 +261,8 @@ do -- TASK_A2A
   end
 
   --- @param #TASK_A2A self
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return Core.Zone#ZONE_BASE The Zone object where the Target is located on the map.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return Core.Zone#ZONE_BASE The Zone object where the Target is located on the map.
   function TASK_A2A:GetTargetZone( TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -282,7 +282,7 @@ do -- TASK_A2A
   end
 
   --- Return the relative distance to the target vicinity from the player, in order to sort the targets in the reports per distance from the threats.
-  -- @param #TASK_A2A self
+  --- @param #TASK_A2A self
   function TASK_A2A:ReportOrder( ReportGroup )
     self:UpdateTaskInfo( self.DetectedItem )
 
@@ -293,7 +293,7 @@ do -- TASK_A2A
   end
 
   --- This method checks every 10 seconds if the goal has been reached of the task.
-  -- @param #TASK_A2A self
+  --- @param #TASK_A2A self
   function TASK_A2A:onafterGoal( TaskUnit, From, Event, To )
     local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
 
@@ -343,10 +343,10 @@ do -- TASK_A2A
   end
 
   --- This function is called from the @{Tasking.CommandCenter#COMMANDCENTER} to determine the method of automatic task selection.
-  -- @param #TASK_A2A self
-  -- @param #number AutoAssignMethod The method to be applied to the task.
-  -- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter The command center.
-  -- @param Wrapper.Group#GROUP TaskGroup The player group.
+  --- @param #TASK_A2A self
+  --- @param #number AutoAssignMethod The method to be applied to the task.
+  --- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter The command center.
+  --- @param Wrapper.Group#GROUP TaskGroup The player group.
   function TASK_A2A:GetAutoAssignPriority( AutoAssignMethod, CommandCenter, TaskGroup )
 
     if AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Random then
@@ -368,7 +368,7 @@ do -- TASK_A2A_INTERCEPT
 
   --- The TASK_A2A_INTERCEPT class
   --- @type TASK_A2A_INTERCEPT
-  -- @field Core.Set#SET_UNIT TargetSetUnit
+  --- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   --- Defines an intercept task for a human player to be executed.
@@ -380,19 +380,19 @@ do -- TASK_A2A_INTERCEPT
   -- The task is defined for a @{Tasking.Mission#MISSION}, where a friendly @{Core.Set#SET_GROUP} consisting of GROUPs with one human players each, is intercepting the targets.
   -- The task is given a name and a briefing, that is used in the menu structure and in the reporting.
   --
-  -- @field #TASK_A2A_INTERCEPT
+  --- @field #TASK_A2A_INTERCEPT
   TASK_A2A_INTERCEPT = {
     ClassName = "TASK_A2A_INTERCEPT"
   }
 
   --- Instantiates a new TASK_A2A_INTERCEPT.
-  -- @param #TASK_A2A_INTERCEPT self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
-  -- @param #string TaskName The name of the Task.
-  -- @param Core.Set#SET_UNIT TargetSetUnit
-  -- @param #string TaskBriefing The briefing of the task.
-  -- @return #TASK_A2A_INTERCEPT
+  --- @param #TASK_A2A_INTERCEPT self
+  --- @param Tasking.Mission#MISSION Mission
+  --- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  --- @param #string TaskName The name of the Task.
+  --- @param Core.Set#SET_UNIT TargetSetUnit
+  --- @param #string TaskBriefing The briefing of the task.
+  --- @return #TASK_A2A_INTERCEPT
   function TASK_A2A_INTERCEPT:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
     local self = BASE:Inherit( self, TASK_A2A:New( Mission, SetGroup, TaskName, TargetSetUnit, "INTERCEPT", TaskBriefing ) ) -- #TASK_A2A_INTERCEPT
     self:F()
@@ -405,11 +405,11 @@ do -- TASK_A2A_INTERCEPT
   end
 
   --- Set a score when a target in scope of the A2A attack, has been destroyed.
-  -- @param #TASK_A2A_INTERCEPT self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points to be granted when task process has been achieved.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2A_INTERCEPT
+  --- @param #TASK_A2A_INTERCEPT self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Score The score in points to be granted when task process has been achieved.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2A_INTERCEPT
   function TASK_A2A_INTERCEPT:SetScoreOnProgress( PlayerName, Score, TaskUnit )
     self:F( { PlayerName, Score, TaskUnit } )
 
@@ -421,11 +421,11 @@ do -- TASK_A2A_INTERCEPT
   end
 
   --- Set a score when all the targets in scope of the A2A attack, have been destroyed.
-  -- @param #TASK_A2A_INTERCEPT self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2A_INTERCEPT
+  --- @param #TASK_A2A_INTERCEPT self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Score The score in points.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2A_INTERCEPT
   function TASK_A2A_INTERCEPT:SetScoreOnSuccess( PlayerName, Score, TaskUnit )
     self:F( { PlayerName, Score, TaskUnit } )
 
@@ -437,11 +437,11 @@ do -- TASK_A2A_INTERCEPT
   end
 
   --- Set a penalty when the A2A attack has failed.
-  -- @param #TASK_A2A_INTERCEPT self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Penalty The penalty in points, must be a negative value!
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2A_INTERCEPT
+  --- @param #TASK_A2A_INTERCEPT self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Penalty The penalty in points, must be a negative value!
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2A_INTERCEPT
   function TASK_A2A_INTERCEPT:SetScoreOnFail( PlayerName, Penalty, TaskUnit )
     self:F( { PlayerName, Penalty, TaskUnit } )
 
@@ -458,7 +458,7 @@ do -- TASK_A2A_SWEEP
 
   --- The TASK_A2A_SWEEP class
   --- @type TASK_A2A_SWEEP
-  -- @field Core.Set#SET_UNIT TargetSetUnit
+  --- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   --- Defines a sweep task for a human player to be executed.
@@ -472,19 +472,19 @@ do -- TASK_A2A_SWEEP
   -- The task is defined for a @{Tasking.Mission#MISSION}, where a friendly @{Core.Set#SET_GROUP} consisting of GROUPs with one human players each, is sweeping the targets.
   -- The task is given a name and a briefing, that is used in the menu structure and in the reporting.
   --
-  -- @field #TASK_A2A_SWEEP
+  --- @field #TASK_A2A_SWEEP
   TASK_A2A_SWEEP = {
     ClassName = "TASK_A2A_SWEEP"
   }
 
   --- Instantiates a new TASK_A2A_SWEEP.
-  -- @param #TASK_A2A_SWEEP self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
-  -- @param #string TaskName The name of the Task.
-  -- @param Core.Set#SET_UNIT TargetSetUnit 
-  -- @param #string TaskBriefing The briefing of the task.
-  -- @return #TASK_A2A_SWEEP self
+  --- @param #TASK_A2A_SWEEP self
+  --- @param Tasking.Mission#MISSION Mission
+  --- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  --- @param #string TaskName The name of the Task.
+  --- @param Core.Set#SET_UNIT TargetSetUnit 
+  --- @param #string TaskBriefing The briefing of the task.
+  --- @return #TASK_A2A_SWEEP self
   function TASK_A2A_SWEEP:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
     local self = BASE:Inherit( self, TASK_A2A:New( Mission, SetGroup, TaskName, TargetSetUnit, "SWEEP", TaskBriefing ) ) -- #TASK_A2A_SWEEP
     self:F()
@@ -508,11 +508,11 @@ do -- TASK_A2A_SWEEP
   end
 
   --- Set a score when a target in scope of the A2A attack, has been destroyed.
-  -- @param #TASK_A2A_SWEEP self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points to be granted when task process has been achieved.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2A_SWEEP
+  --- @param #TASK_A2A_SWEEP self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Score The score in points to be granted when task process has been achieved.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2A_SWEEP
   function TASK_A2A_SWEEP:SetScoreOnProgress( PlayerName, Score, TaskUnit )
     self:F( { PlayerName, Score, TaskUnit } )
 
@@ -524,11 +524,11 @@ do -- TASK_A2A_SWEEP
   end
 
   --- Set a score when all the targets in scope of the A2A attack, have been destroyed.
-  -- @param #TASK_A2A_SWEEP self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2A_SWEEP
+  --- @param #TASK_A2A_SWEEP self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Score The score in points.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2A_SWEEP
   function TASK_A2A_SWEEP:SetScoreOnSuccess( PlayerName, Score, TaskUnit )
     self:F( { PlayerName, Score, TaskUnit } )
 
@@ -540,11 +540,11 @@ do -- TASK_A2A_SWEEP
   end
 
   --- Set a penalty when the A2A attack has failed.
-  -- @param #TASK_A2A_SWEEP self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Penalty The penalty in points, must be a negative value!
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2A_SWEEP
+  --- @param #TASK_A2A_SWEEP self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Penalty The penalty in points, must be a negative value!
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2A_SWEEP
   function TASK_A2A_SWEEP:SetScoreOnFail( PlayerName, Penalty, TaskUnit )
     self:F( { PlayerName, Penalty, TaskUnit } )
 
@@ -561,7 +561,7 @@ do -- TASK_A2A_ENGAGE
 
   --- The TASK_A2A_ENGAGE class
   --- @type TASK_A2A_ENGAGE
-  -- @field Core.Set#SET_UNIT TargetSetUnit
+  --- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   --- Defines an engage task for a human player to be executed.
@@ -573,19 +573,19 @@ do -- TASK_A2A_ENGAGE
   -- The task is defined for a @{Tasking.Mission#MISSION}, where a friendly @{Core.Set#SET_GROUP} consisting of GROUPs with one human players each, is engaging the targets.
   -- The task is given a name and a briefing, that is used in the menu structure and in the reporting.
   --
-  -- @field #TASK_A2A_ENGAGE
+  --- @field #TASK_A2A_ENGAGE
   TASK_A2A_ENGAGE = {
     ClassName = "TASK_A2A_ENGAGE"
   }
 
   --- Instantiates a new TASK_A2A_ENGAGE.
-  -- @param #TASK_A2A_ENGAGE self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
-  -- @param #string TaskName The name of the Task.
-  -- @param Core.Set#SET_UNIT TargetSetUnit
-  -- @param #string TaskBriefing The briefing of the task.
-  -- @return #TASK_A2A_ENGAGE self
+  --- @param #TASK_A2A_ENGAGE self
+  --- @param Tasking.Mission#MISSION Mission
+  --- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  --- @param #string TaskName The name of the Task.
+  --- @param Core.Set#SET_UNIT TargetSetUnit
+  --- @param #string TaskBriefing The briefing of the task.
+  --- @return #TASK_A2A_ENGAGE self
   function TASK_A2A_ENGAGE:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
     local self = BASE:Inherit( self, TASK_A2A:New( Mission, SetGroup, TaskName, TargetSetUnit, "ENGAGE", TaskBriefing ) ) -- #TASK_A2A_ENGAGE
     self:F()
@@ -598,11 +598,11 @@ do -- TASK_A2A_ENGAGE
   end
 
   --- Set a score when a target in scope of the A2A attack, has been destroyed .
-  -- @param #TASK_A2A_ENGAGE self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points to be granted when task process has been achieved.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2A_ENGAGE
+  --- @param #TASK_A2A_ENGAGE self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Score The score in points to be granted when task process has been achieved.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2A_ENGAGE
   function TASK_A2A_ENGAGE:SetScoreOnProgress( PlayerName, Score, TaskUnit )
     self:F( { PlayerName, Score, TaskUnit } )
 
@@ -614,11 +614,11 @@ do -- TASK_A2A_ENGAGE
   end
 
   --- Set a score when all the targets in scope of the A2A attack, have been destroyed.
-  -- @param #TASK_A2A_ENGAGE self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2A_ENGAGE
+  --- @param #TASK_A2A_ENGAGE self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Score The score in points.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2A_ENGAGE
   function TASK_A2A_ENGAGE:SetScoreOnSuccess( PlayerName, Score, TaskUnit )
     self:F( { PlayerName, Score, TaskUnit } )
 
@@ -630,11 +630,11 @@ do -- TASK_A2A_ENGAGE
   end
 
   --- Set a penalty when the A2A attack has failed.
-  -- @param #TASK_A2A_ENGAGE self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Penalty The penalty in points, must be a negative value!
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2A_ENGAGE
+  --- @param #TASK_A2A_ENGAGE self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Penalty The penalty in points, must be a negative value!
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2A_ENGAGE
   function TASK_A2A_ENGAGE:SetScoreOnFail( PlayerName, Penalty, TaskUnit )
     self:F( { PlayerName, Penalty, TaskUnit } )
 

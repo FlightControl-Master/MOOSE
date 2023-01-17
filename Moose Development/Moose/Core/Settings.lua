@@ -233,9 +233,9 @@ SETTINGS.__Enum.Era = {
 do -- SETTINGS
 
   --- SETTINGS constructor.
-  -- @param #SETTINGS self
-  -- @param #string PlayerName (Optional) Set settings for this player.
-  -- @return #SETTINGS
+  --- @param #SETTINGS self
+  --- @param #string PlayerName (Optional) Set settings for this player.
+  --- @return #SETTINGS
   function SETTINGS:Set( PlayerName )
 
     if PlayerName == nil then
@@ -265,236 +265,236 @@ do -- SETTINGS
 
   --- Set short text for menus on (*true*) or off (*false*).
   -- Short text are better suited for, e.g., VR.
-  -- @param #SETTINGS self
-  -- @param #boolean onoff If *true* use short menu texts. If *false* long ones (default).
+  --- @param #SETTINGS self
+  --- @param #boolean onoff If *true* use short menu texts. If *false* long ones (default).
   function SETTINGS:SetMenutextShort( onoff )
     _SETTINGS.MenuShort = onoff
   end
 
   --- Set menu to be static.
-  -- @param #SETTINGS self
-  -- @param #boolean onoff If *true* menu is static. If *false* menu will be updated after changes (default).
+  --- @param #SETTINGS self
+  --- @param #boolean onoff If *true* menu is static. If *false* menu will be updated after changes (default).
   function SETTINGS:SetMenuStatic( onoff )
     _SETTINGS.MenuStatic = onoff
   end
 
   --- Sets the SETTINGS metric.
-  -- @param #SETTINGS self
+  --- @param #SETTINGS self
   function SETTINGS:SetMetric()
     self.Metric = true
   end
   
   --- Sets the SETTINGS default text locale.
-  -- @param #SETTINGS self
-  -- @param #string Locale
+  --- @param #SETTINGS self
+  --- @param #string Locale
   function SETTINGS:SetLocale(Locale)
     self.Locale = Locale or "en"
   end
   
   --- Gets the SETTINGS text locale.
-  -- @param #SETTINGS self
-  -- @return #string
+  --- @param #SETTINGS self
+  --- @return #string
   function SETTINGS:GetLocale()
     return self.Locale or _SETTINGS:GetLocale()
   end
   
   --- Gets if the SETTINGS is metric.
-  -- @param #SETTINGS self
-  -- @return #boolean true if metric.
+  --- @param #SETTINGS self
+  --- @return #boolean true if metric.
   function SETTINGS:IsMetric()
     return (self.Metric ~= nil and self.Metric == true) or (self.Metric == nil and _SETTINGS:IsMetric())
   end
 
   --- Sets the SETTINGS imperial.
-  -- @param #SETTINGS self
+  --- @param #SETTINGS self
   function SETTINGS:SetImperial()
     self.Metric = false
   end
 
   --- Gets if the SETTINGS is imperial.
-  -- @param #SETTINGS self
-  -- @return #boolean true if imperial.
+  --- @param #SETTINGS self
+  --- @return #boolean true if imperial.
   function SETTINGS:IsImperial()
     return (self.Metric ~= nil and self.Metric == false) or (self.Metric == nil and _SETTINGS:IsImperial())
   end
 
   --- Sets the SETTINGS LL accuracy.
-  -- @param #SETTINGS self
-  -- @param #number LL_Accuracy
-  -- @return #SETTINGS
+  --- @param #SETTINGS self
+  --- @param #number LL_Accuracy
+  --- @return #SETTINGS
   function SETTINGS:SetLL_Accuracy( LL_Accuracy )
     self.LL_Accuracy = LL_Accuracy
   end
 
   --- Gets the SETTINGS LL accuracy.
-  -- @param #SETTINGS self
-  -- @return #number
+  --- @param #SETTINGS self
+  --- @return #number
   function SETTINGS:GetLL_DDM_Accuracy()
     return self.LL_DDM_Accuracy or _SETTINGS:GetLL_DDM_Accuracy()
   end
 
   --- Sets the SETTINGS MGRS accuracy.
-  -- @param #SETTINGS self
-  -- @param #number MGRS_Accuracy 0 to 5
-  -- @return #SETTINGS
+  --- @param #SETTINGS self
+  --- @param #number MGRS_Accuracy 0 to 5
+  --- @return #SETTINGS
   function SETTINGS:SetMGRS_Accuracy( MGRS_Accuracy )
     self.MGRS_Accuracy = MGRS_Accuracy
   end
 
   --- Gets the SETTINGS MGRS accuracy.
-  -- @param #SETTINGS self
-  -- @return #number
+  --- @param #SETTINGS self
+  --- @return #number
   function SETTINGS:GetMGRS_Accuracy()
     return self.MGRS_Accuracy or _SETTINGS:GetMGRS_Accuracy()
   end
 
   --- Sets the SETTINGS Message Display Timing of a MessageType
-  -- @param #SETTINGS self
-  -- @param Core.Message#MESSAGE MessageType The type of the message.
-  -- @param #number MessageTime The display time duration in seconds of the MessageType.
+  --- @param #SETTINGS self
+  --- @param Core.Message#MESSAGE MessageType The type of the message.
+  --- @param #number MessageTime The display time duration in seconds of the MessageType.
   function SETTINGS:SetMessageTime( MessageType, MessageTime )
     self.MessageTypeTimings = self.MessageTypeTimings or {}
     self.MessageTypeTimings[MessageType] = MessageTime
   end
 
   --- Gets the SETTINGS Message Display Timing of a MessageType
-  -- @param #SETTINGS self
-  -- @param Core.Message#MESSAGE MessageType The type of the message.
-  -- @return #number
+  --- @param #SETTINGS self
+  --- @param Core.Message#MESSAGE MessageType The type of the message.
+  --- @return #number
   function SETTINGS:GetMessageTime( MessageType )
     return (self.MessageTypeTimings and self.MessageTypeTimings[MessageType]) or _SETTINGS:GetMessageTime( MessageType )
   end
 
   --- Sets A2G LL DMS
-  -- @param #SETTINGS self
-  -- @return #SETTINGS
+  --- @param #SETTINGS self
+  --- @return #SETTINGS
   function SETTINGS:SetA2G_LL_DMS()
     self.A2GSystem = "LL DMS"
   end
 
   --- Sets A2G LL DDM
-  -- @param #SETTINGS self
-  -- @return #SETTINGS
+  --- @param #SETTINGS self
+  --- @return #SETTINGS
   function SETTINGS:SetA2G_LL_DDM()
     self.A2GSystem = "LL DDM"
   end
 
   --- Is LL DMS
-  -- @param #SETTINGS self
-  -- @return #boolean true if LL DMS
+  --- @param #SETTINGS self
+  --- @return #boolean true if LL DMS
   function SETTINGS:IsA2G_LL_DMS()
     return (self.A2GSystem and self.A2GSystem == "LL DMS") or (not self.A2GSystem and _SETTINGS:IsA2G_LL_DMS())
   end
 
   --- Is LL DDM
-  -- @param #SETTINGS self
-  -- @return #boolean true if LL DDM
+  --- @param #SETTINGS self
+  --- @return #boolean true if LL DDM
   function SETTINGS:IsA2G_LL_DDM()
     return (self.A2GSystem and self.A2GSystem == "LL DDM") or (not self.A2GSystem and _SETTINGS:IsA2G_LL_DDM())
   end
 
   --- Sets A2G MGRS
-  -- @param #SETTINGS self
-  -- @return #SETTINGS
+  --- @param #SETTINGS self
+  --- @return #SETTINGS
   function SETTINGS:SetA2G_MGRS()
     self.A2GSystem = "MGRS"
   end
 
   --- Is MGRS
-  -- @param #SETTINGS self
-  -- @return #boolean true if MGRS
+  --- @param #SETTINGS self
+  --- @return #boolean true if MGRS
   function SETTINGS:IsA2G_MGRS()
     return (self.A2GSystem and self.A2GSystem == "MGRS") or (not self.A2GSystem and _SETTINGS:IsA2G_MGRS())
   end
 
   --- Sets A2G BRA
-  -- @param #SETTINGS self
-  -- @return #SETTINGS
+  --- @param #SETTINGS self
+  --- @return #SETTINGS
   function SETTINGS:SetA2G_BR()
     self.A2GSystem = "BR"
   end
 
   --- Is BRA
-  -- @param #SETTINGS self
-  -- @return #boolean true if BRA
+  --- @param #SETTINGS self
+  --- @return #boolean true if BRA
   function SETTINGS:IsA2G_BR()
     return (self.A2GSystem and self.A2GSystem == "BR") or (not self.A2GSystem and _SETTINGS:IsA2G_BR())
   end
 
   --- Sets A2A BRA
-  -- @param #SETTINGS self
-  -- @return #SETTINGS
+  --- @param #SETTINGS self
+  --- @return #SETTINGS
   function SETTINGS:SetA2A_BRAA()
     self.A2ASystem = "BRAA"
   end
 
   --- Is BRA
-  -- @param #SETTINGS self
-  -- @return #boolean true if BRA
+  --- @param #SETTINGS self
+  --- @return #boolean true if BRA
   function SETTINGS:IsA2A_BRAA()
     return (self.A2ASystem and self.A2ASystem == "BRAA") or (not self.A2ASystem and _SETTINGS:IsA2A_BRAA())
   end
 
   --- Sets A2A BULLS
-  -- @param #SETTINGS self
-  -- @return #SETTINGS
+  --- @param #SETTINGS self
+  --- @return #SETTINGS
   function SETTINGS:SetA2A_BULLS()
     self.A2ASystem = "BULLS"
   end
 
   --- Is BULLS
-  -- @param #SETTINGS self
-  -- @return #boolean true if BULLS
+  --- @param #SETTINGS self
+  --- @return #boolean true if BULLS
   function SETTINGS:IsA2A_BULLS()
     return (self.A2ASystem and self.A2ASystem == "BULLS") or (not self.A2ASystem and _SETTINGS:IsA2A_BULLS())
   end
 
   --- Sets A2A LL DMS
-  -- @param #SETTINGS self
-  -- @return #SETTINGS
+  --- @param #SETTINGS self
+  --- @return #SETTINGS
   function SETTINGS:SetA2A_LL_DMS()
     self.A2ASystem = "LL DMS"
   end
 
   --- Sets A2A LL DDM
-  -- @param #SETTINGS self
-  -- @return #SETTINGS
+  --- @param #SETTINGS self
+  --- @return #SETTINGS
   function SETTINGS:SetA2A_LL_DDM()
     self.A2ASystem = "LL DDM"
   end
 
   --- Is LL DMS
-  -- @param #SETTINGS self
-  -- @return #boolean true if LL DMS
+  --- @param #SETTINGS self
+  --- @return #boolean true if LL DMS
   function SETTINGS:IsA2A_LL_DMS()
     return (self.A2ASystem and self.A2ASystem == "LL DMS") or (not self.A2ASystem and _SETTINGS:IsA2A_LL_DMS())
   end
 
   --- Is LL DDM
-  -- @param #SETTINGS self
-  -- @return #boolean true if LL DDM
+  --- @param #SETTINGS self
+  --- @return #boolean true if LL DDM
   function SETTINGS:IsA2A_LL_DDM()
     return (self.A2ASystem and self.A2ASystem == "LL DDM") or (not self.A2ASystem and _SETTINGS:IsA2A_LL_DDM())
   end
 
   --- Sets A2A MGRS
-  -- @param #SETTINGS self
-  -- @return #SETTINGS
+  --- @param #SETTINGS self
+  --- @return #SETTINGS
   function SETTINGS:SetA2A_MGRS()
     self.A2ASystem = "MGRS"
   end
 
   --- Is MGRS
-  -- @param #SETTINGS self
-  -- @return #boolean true if MGRS
+  --- @param #SETTINGS self
+  --- @return #boolean true if MGRS
   function SETTINGS:IsA2A_MGRS()
     return (self.A2ASystem and self.A2ASystem == "MGRS") or (not self.A2ASystem and _SETTINGS:IsA2A_MGRS())
   end
 
   --- @param #SETTINGS self
-  -- @param Wrapper.Group#GROUP MenuGroup Group for which to add menus.
-  -- @param #table RootMenu Root menu table
-  -- @return #SETTINGS
+  --- @param Wrapper.Group#GROUP MenuGroup Group for which to add menus.
+  --- @param #table RootMenu Root menu table
+  --- @return #SETTINGS
   function SETTINGS:SetSystemMenu( MenuGroup, RootMenu )
 
     local MenuText = "System Settings"
@@ -709,8 +709,8 @@ do -- SETTINGS
   --- Sets the player menus on, so that the **Player setting menus** show up for the players.
   -- But only when a player exits and reenters the slot these settings will have effect!
   -- It is advised to use this method at the start of the mission.
-  -- @param #SETTINGS self
-  -- @return #SETTINGS
+  --- @param #SETTINGS self
+  --- @return #SETTINGS
   -- @usage
   --   _SETTINGS:SetPlayerMenuOn() -- will enable the player menus.
   function SETTINGS:SetPlayerMenuOn()
@@ -720,8 +720,8 @@ do -- SETTINGS
   --- Sets the player menus off, so that the **Player setting menus** won't show up for the players.
   -- But only when a player exits and reenters the slot these settings will have effect!
   -- It is advised to use this method at the start of the mission.
-  -- @param #SETTINGS self
-  -- @return #SETTINGS self
+  --- @param #SETTINGS self
+  --- @return #SETTINGS self
   -- @usage
   --   _SETTINGS:SetPlayerMenuOff() -- will disable the player menus.
   function SETTINGS:SetPlayerMenuOff()
@@ -729,9 +729,9 @@ do -- SETTINGS
   end
 
   --- Updates the menu of the player seated in the PlayerUnit.
-  -- @param #SETTINGS self
-  -- @param Wrapper.Client#CLIENT PlayerUnit
-  -- @return #SETTINGS self
+  --- @param #SETTINGS self
+  --- @param Wrapper.Client#CLIENT PlayerUnit
+  --- @return #SETTINGS self
   function SETTINGS:SetPlayerMenu( PlayerUnit )
 
     if _SETTINGS.ShowPlayerMenu == true then
@@ -932,9 +932,9 @@ do -- SETTINGS
   end
 
   --- Removes the player menu from the PlayerUnit.
-  -- @param #SETTINGS self
-  -- @param Wrapper.Client#CLIENT PlayerUnit
-  -- @return #SETTINGS self
+  --- @param #SETTINGS self
+  --- @param Wrapper.Client#CLIENT PlayerUnit
+  --- @return #SETTINGS self
   function SETTINGS:RemovePlayerMenu( PlayerUnit )
 
     if self.PlayerMenu then
@@ -1047,8 +1047,8 @@ do -- SETTINGS
   end
 
   --- Configures the era of the mission to be WWII.
-  -- @param #SETTINGS self
-  -- @return #SETTINGS self
+  --- @param #SETTINGS self
+  --- @return #SETTINGS self
   function SETTINGS:SetEraWWII()
 
     self.Era = SETTINGS.__Enum.Era.WWII
@@ -1056,8 +1056,8 @@ do -- SETTINGS
   end
 
   --- Configures the era of the mission to be Korea.
-  -- @param #SETTINGS self
-  -- @return #SETTINGS self
+  --- @param #SETTINGS self
+  --- @return #SETTINGS self
   function SETTINGS:SetEraKorea()
 
     self.Era = SETTINGS.__Enum.Era.Korea
@@ -1065,8 +1065,8 @@ do -- SETTINGS
   end
 
   --- Configures the era of the mission to be Cold war.
-  -- @param #SETTINGS self
-  -- @return #SETTINGS self
+  --- @param #SETTINGS self
+  --- @return #SETTINGS self
   function SETTINGS:SetEraCold()
 
     self.Era = SETTINGS.__Enum.Era.Cold
@@ -1074,8 +1074,8 @@ do -- SETTINGS
   end
 
   --- Configures the era of the mission to be Modern war.
-  -- @param #SETTINGS self
-  -- @return #SETTINGS self
+  --- @param #SETTINGS self
+  --- @return #SETTINGS self
   function SETTINGS:SetEraModern()
 
     self.Era = SETTINGS.__Enum.Era.Modern

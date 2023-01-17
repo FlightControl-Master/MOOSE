@@ -217,8 +217,8 @@ end
 -- Event Handling
 
 --- Event handler for suppressed groups.
---@param #PSEUDOATC self
---@param #table Event Event data table. Holds event.id, event.initiator and event.target etc.
+--- @param #PSEUDOATC self
+--- @param #table Event Event data table. Holds event.id, event.initiator and event.target etc.
 function PSEUDOATC:onEvent(Event)
   if Event == nil or Event.initiator == nil or Unit.getByName(Event.initiator:getName()) == nil then
     return true

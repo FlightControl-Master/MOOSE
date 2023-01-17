@@ -577,10 +577,10 @@ function PLAYERRECCE:_GetViewZone(unit, vheading, minview, maxview, angle, camon
 end
 
 --- [Internal] 
---@param #PLAYERRECCE self
---@param Wrapper.Client#CLIENT client
---@return Core.Set#SET_UNIT Set of targets, can be empty!
---@return #number count Count of targets
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Client#CLIENT client
+--- @return Core.Set#SET_UNIT Set of targets, can be empty!
+--- @return #number count Count of targets
 function PLAYERRECCE:_GetKnownTargets(client)
   self:T(self.lid.."_GetKnownTargets")
   local finaltargets = SET_UNIT:New()
@@ -596,8 +596,8 @@ function PLAYERRECCE:_GetKnownTargets(client)
 end
 
 --- [Internal] 
---@param #PLAYERRECCE self
---@return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:_CleanupTargetCache()
   self:T(self.lid.."_CleanupTargetCache")
   local cleancache = FIFO:New()
@@ -631,12 +631,12 @@ function PLAYERRECCE:_CleanupTargetCache()
 end
 
 --- [Internal] 
---@param #PLAYERRECCE self
---@param Wrapper.Unit#UNIT unit The FACA unit
---@param #boolean camera If true, use the unit's camera for targets in sight
---@param #laser laser Use laser zone
---@return Core.Set#SET_UNIT Set of targets, can be empty!
---@return #number count Count of targets
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Unit#UNIT unit The FACA unit
+--- @param #boolean camera If true, use the unit's camera for targets in sight
+--- @param #laser laser Use laser zone
+--- @return Core.Set#SET_UNIT Set of targets, can be empty!
+--- @return #number count Count of targets
 function PLAYERRECCE:_GetTargetSet(unit,camera,laser)
   self:T(self.lid.."_GetTargetSet")
   local finaltargets = SET_UNIT:New()
@@ -707,9 +707,9 @@ function PLAYERRECCE:_GetTargetSet(unit,camera,laser)
 end
 
 ---[Internal] 
---@param #PLAYERRECCE self
---@param Core.Set#SET_UNIT targetset Set of targets, can be empty!
---@return Wrapper.Unit#UNIT Target or nil
+--- @param #PLAYERRECCE self
+--- @param Core.Set#SET_UNIT targetset Set of targets, can be empty!
+--- @return Wrapper.Unit#UNIT Target or nil
 function PLAYERRECCE:_GetHVTTarget(targetset)
    self:T(self.lid.."_GetHVTTarget")
    -- sort units
@@ -743,10 +743,10 @@ function PLAYERRECCE:_GetHVTTarget(targetset)
 end
 
 --- [Internal] 
---@param #PLAYERRECCE self
---@param Wrapper.Client#CLIENT client The FACA unit
---@param Core.Set#SET_UNIT targetset Set of targets, can be empty!
---@return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Client#CLIENT client The FACA unit
+--- @param Core.Set#SET_UNIT targetset Set of targets, can be empty!
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:_LaseTarget(client,targetset)
   self:T(self.lid.."_LaseTarget")
   -- get one target

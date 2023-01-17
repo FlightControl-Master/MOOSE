@@ -147,15 +147,15 @@ AMMOTRUCK.State = {
 
 ---
 --@type AMMOTRUCK.data
---@field Wrapper.Group#GROUP group
---@field #string name
---@field #AMMOTRUCK.State statusquo
---@field #number timestamp
---@field #number ammo
---@field Core.Point#COORDINATE coordinate
---@field #string targetname
---@field Wrapper.Group#GROUP targetgroup
---@field Core.Point#COORDINATE targetcoordinate
+--- @field Wrapper.Group#GROUP group
+--- @field #string name
+--- @field #AMMOTRUCK.State statusquo
+--- @field #number timestamp
+--- @field #number ammo
+--- @field Core.Point#COORDINATE coordinate
+--- @field #string targetname
+--- @field Wrapper.Group#GROUP targetgroup
+--- @field Core.Point#COORDINATE targetcoordinate
 
 ---
 --- @param #AMMOTRUCK self
@@ -215,53 +215,53 @@ function AMMOTRUCK:New(Truckset,Targetset,Coalition,Alias,Homezone)
 
   --- Triggers the FSM event "Stop". Stops the AMMOTRUCK and all its event handlers.
   -- @function [parent=#AMMOTRUCK] Stop
-  -- @param #AMMOTRUCK self
+  --- @param #AMMOTRUCK self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the AMMOTRUCK and all its event handlers.
   -- @function [parent=#AMMOTRUCK] __Stop
-  -- @param #AMMOTRUCK self
-  -- @param #number delay Delay in seconds.
+  --- @param #AMMOTRUCK self
+  --- @param #number delay Delay in seconds.
   
   --- On after "RouteTruck" event.
   -- @function [parent=#AMMOTRUCK] OnAfterRouteTruck
-  -- @param #AMMOTRUCK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #AMMOTRUCK.data Truck
-  -- @param #AMMOTRUCK.data Artillery
+  --- @param #AMMOTRUCK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #AMMOTRUCK.data Truck
+  --- @param #AMMOTRUCK.data Artillery
   
     --- On after "TruckUnloading" event.
   -- @function [parent=#AMMOTRUCK] OnAfterTruckUnloading
-  -- @param #AMMOTRUCK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #AMMOTRUCK.data Truck
+  --- @param #AMMOTRUCK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #AMMOTRUCK.data Truck
   
     --- On after "TruckReturning" event.
   -- @function [parent=#AMMOTRUCK] OnAfterTruckReturning
-  -- @param #AMMOTRUCK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #AMMOTRUCK.data Truck
+  --- @param #AMMOTRUCK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #AMMOTRUCK.data Truck
   
     --- On after "RouteTruck" event.
   -- @function [parent=#AMMOTRUCK] OnAfterRouteTruck
-  -- @param #AMMOTRUCK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #AMMOTRUCK.data Truck
+  --- @param #AMMOTRUCK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #AMMOTRUCK.data Truck
   
     --- On after "TruckHome" event.
   -- @function [parent=#AMMOTRUCK] OnAfterTruckHome
-  -- @param #AMMOTRUCK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #AMMOTRUCK.data Truck
+  --- @param #AMMOTRUCK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #AMMOTRUCK.data Truck
   
   return self
 end

@@ -206,7 +206,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   
   self:HandleEvent( EVENTS.Birth,
     --- @param #COMMANDCENTER self
-    -- @param Core.Event#EVENTDATA EventData
+    --- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
       if EventData.IniObjectCategory == 1 then
         local EventGroup = GROUP:Find( EventData.IniDCSGroup )
@@ -237,7 +237,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
 --  -- - Send a message to the other players in the group that this player has joined.
 --  self:HandleEvent( EVENTS.PlayerEnterUnit,
 --    --- @param #COMMANDCENTER self
---    -- @param Core.Event#EVENTDATA EventData
+--    --- @param Core.Event#EVENTDATA EventData
 --    function( self, EventData )
 --      local PlayerUnit = EventData.IniUnit
 --      for MissionID, Mission in pairs( self:GetMissions() ) do
@@ -254,7 +254,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   -- When there is no Unit left running the Task, the Task goes into Abort...
   self:HandleEvent( EVENTS.MissionEnd,
     --- @param #TASK self
-    -- @param Core.Event#EVENTDATA EventData
+    --- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
@@ -269,7 +269,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   -- When there is no Unit left running the Task, the Task goes into Abort...
   self:HandleEvent( EVENTS.PlayerLeaveUnit,
     --- @param #TASK self
-    -- @param Core.Event#EVENTDATA EventData
+    --- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
@@ -286,7 +286,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   -- When there is no Unit left running the Task, the Task goes into Abort...
   self:HandleEvent( EVENTS.Crash,
     --- @param #TASK self
-    -- @param Core.Event#EVENTDATA EventData
+    --- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do

@@ -128,44 +128,44 @@ function FLEET:New(WarehouseName, FleetName)
 
   --- Triggers the FSM event "Start". Starts the FLEET. Initializes parameters and starts event handlers.
   -- @function [parent=#FLEET] Start
-  -- @param #FLEET self
+  --- @param #FLEET self
 
   --- Triggers the FSM event "Start" after a delay. Starts the FLEET. Initializes parameters and starts event handlers.
   -- @function [parent=#FLEET] __Start
-  -- @param #FLEET self
-  -- @param #number delay Delay in seconds.
+  --- @param #FLEET self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Stop". Stops the FLEET and all its event handlers.
-  -- @param #FLEET self
+  --- @param #FLEET self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the FLEET and all its event handlers.
   -- @function [parent=#FLEET] __Stop
-  -- @param #FLEET self
-  -- @param #number delay Delay in seconds.
+  --- @param #FLEET self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "NavyOnMission".
   -- @function [parent=#FLEET] NavyOnMission
-  -- @param #FLEET self
-  -- @param Ops.NavyGroup#NAVYGROUP ArmyGroup The NAVYGROUP on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #FLEET self
+  --- @param Ops.NavyGroup#NAVYGROUP ArmyGroup The NAVYGROUP on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- Triggers the FSM event "NavyOnMission" after a delay.
   -- @function [parent=#FLEET] __NavyOnMission
-  -- @param #FLEET self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.NavyGroup#NAVYGROUP ArmyGroup The NAVYGROUP on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #FLEET self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.NavyGroup#NAVYGROUP ArmyGroup The NAVYGROUP on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- On after "NavyOnMission" event.
   -- @function [parent=#FLEET] OnAfterNavyOnMission
-  -- @param #FLEET self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.NavyGroup#NAVYGROUP NavyGroup The NAVYGROUP on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #FLEET self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.NavyGroup#NAVYGROUP NavyGroup The NAVYGROUP on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   return self
 end

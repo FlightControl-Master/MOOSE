@@ -741,134 +741,134 @@ function OPSGROUP:New(group)
 
   --- Triggers the FSM event "Stop". Stops the OPSGROUP and all its event handlers.
   -- @function [parent=#OPSGROUP] Stop
-  -- @param #OPSGROUP self
+  --- @param #OPSGROUP self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the OPSGROUP and all its event handlers.
   -- @function [parent=#OPSGROUP] __Stop
-  -- @param #OPSGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #OPSGROUP self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#OPSGROUP] Status
-  -- @param #OPSGROUP self
+  --- @param #OPSGROUP self
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#OPSGROUP] __Status
-  -- @param #OPSGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #OPSGROUP self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "MissionStart".
   -- @function [parent=#OPSGROUP] MissionStart
-  -- @param #OPSGROUP self
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #OPSGROUP self
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- Triggers the FSM event "MissionStart" after a delay.
   -- @function [parent=#OPSGROUP] __MissionStart
-  -- @param #OPSGROUP self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #OPSGROUP self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- On after "MissionStart" event.
   -- @function [parent=#OPSGROUP] OnAfterMissionStart
-  -- @param #OPSGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #OPSGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
 
   --- Triggers the FSM event "MissionExecute".
   -- @function [parent=#OPSGROUP] MissionExecute
-  -- @param #OPSGROUP self
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #OPSGROUP self
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- Triggers the FSM event "MissionExecute" after a delay.
   -- @function [parent=#OPSGROUP] __MissionExecute
-  -- @param #OPSGROUP self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #OPSGROUP self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- On after "MissionExecute" event.
   -- @function [parent=#OPSGROUP] OnAfterMissionExecute
-  -- @param #OPSGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #OPSGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
 
   --- Triggers the FSM event "MissionCancel".
   -- @function [parent=#OPSGROUP] MissionCancel
-  -- @param #OPSGROUP self
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #OPSGROUP self
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- Triggers the FSM event "MissionCancel" after a delay.
   -- @function [parent=#OPSGROUP] __MissionCancel
-  -- @param #OPSGROUP self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #OPSGROUP self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- On after "MissionCancel" event.
   -- @function [parent=#OPSGROUP] OnAfterMissionCancel
-  -- @param #OPSGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #OPSGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
 
   --- Triggers the FSM event "MissionDone".
   -- @function [parent=#OPSGROUP] MissionDone
-  -- @param #OPSGROUP self
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #OPSGROUP self
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- Triggers the FSM event "MissionDone" after a delay.
   -- @function [parent=#OPSGROUP] __MissionDone
-  -- @param #OPSGROUP self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #OPSGROUP self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- On after "MissionDone" event.
   -- @function [parent=#OPSGROUP] OnAfterMissionDone
-  -- @param #OPSGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #OPSGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- On after "HoverStart" event.
   -- @function [parent=#OPSGROUP] OnAfterHoverStart
-  -- @param #OPSGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #OPSGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
     --- On after "HoverEnd" event.
   -- @function [parent=#OPSGROUP] OnAfterHoverEnd
-  -- @param #OPSGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #OPSGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- Triggers the FSM event "TransportCancel".
   -- @function [parent=#OPSGROUP] TransportCancel
-  -- @param #OPSGROUP self
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #OPSGROUP self
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
   --- Triggers the FSM event "TransportCancel" after a delay.
   -- @function [parent=#OPSGROUP] __TransportCancel
-  -- @param #OPSGROUP self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #OPSGROUP self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
   --- On after "TransportCancel" event.
   -- @function [parent=#OPSGROUP] OnAfterTransportCancel
-  -- @param #OPSGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  --- @param #OPSGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
   -- TODO: Add pseudo functions.
 
@@ -10824,8 +10824,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Function called when a group is passing a waypoint.
---@param #OPSGROUP opsgroup Ops group object.
---@param #number uid Waypoint UID.
+--- @param #OPSGROUP opsgroup Ops group object.
+--- @param #number uid Waypoint UID.
 function OPSGROUP._PassingWaypoint(opsgroup, uid)
 
   -- Debug message.
@@ -11049,9 +11049,9 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
 end
 
 --- Function called when a task is executed.
---@param Wrapper.Group#GROUP group Group which should execute the task.
---@param #OPSGROUP opsgroup Ops group.
---@param #OPSGROUP.Task task Task.
+--- @param Wrapper.Group#GROUP group Group which should execute the task.
+--- @param #OPSGROUP opsgroup Ops group.
+--- @param #OPSGROUP.Task task Task.
 function OPSGROUP._TaskExecute(group, opsgroup, task)
 
   -- Debug message.
@@ -11065,9 +11065,9 @@ function OPSGROUP._TaskExecute(group, opsgroup, task)
 end
 
 --- Function called when a task is done.
---@param Wrapper.Group#GROUP group Group for which the task is done.
---@param #OPSGROUP opsgroup Ops group.
---@param #OPSGROUP.Task task Task.
+--- @param Wrapper.Group#GROUP group Group for which the task is done.
+--- @param #OPSGROUP opsgroup Ops group.
+--- @param #OPSGROUP.Task task Task.
 function OPSGROUP._TaskDone(group, opsgroup, task)
 
   -- Debug message.

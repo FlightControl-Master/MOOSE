@@ -443,35 +443,35 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing )
   
   --- Goal Handler OnBefore for TASK
   -- @function [parent=#TASK] OnBeforeGoal
-  -- @param #TASK self
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  -- @param Wrapper.Unit#UNIT PlayerUnit The @{Wrapper.Unit} of the player.
-  -- @param #string PlayerName The name of the player.
-  -- @return #boolean
+  --- @param #TASK self
+  --- @param #string From
+  --- @param #string Event
+  --- @param #string To
+  --- @param Wrapper.Unit#UNIT PlayerUnit The @{Wrapper.Unit} of the player.
+  --- @param #string PlayerName The name of the player.
+  --- @return #boolean
   
   --- Goal Handler OnAfter for TASK
   -- @function [parent=#TASK] OnAfterGoal
-  -- @param #TASK self
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  -- @param Wrapper.Unit#UNIT PlayerUnit The @{Wrapper.Unit} of the player.
-  -- @param #string PlayerName The name of the player.
+  --- @param #TASK self
+  --- @param #string From
+  --- @param #string Event
+  --- @param #string To
+  --- @param Wrapper.Unit#UNIT PlayerUnit The @{Wrapper.Unit} of the player.
+  --- @param #string PlayerName The name of the player.
   
   --- Goal Trigger for TASK
   -- @function [parent=#TASK] Goal
-  -- @param #TASK self
-  -- @param Wrapper.Unit#UNIT PlayerUnit The @{Wrapper.Unit} of the player.
-  -- @param #string PlayerName The name of the player.
+  --- @param #TASK self
+  --- @param Wrapper.Unit#UNIT PlayerUnit The @{Wrapper.Unit} of the player.
+  --- @param #string PlayerName The name of the player.
   
   --- Goal Asynchronous Trigger for TASK
   -- @function [parent=#TASK] __Goal
-  -- @param #TASK self
-  -- @param #number Delay
-  -- @param Wrapper.Unit#UNIT PlayerUnit The @{Wrapper.Unit} of the player.
-  -- @param #string PlayerName The name of the player.
+  --- @param #TASK self
+  --- @param #number Delay
+  --- @param Wrapper.Unit#UNIT PlayerUnit The @{Wrapper.Unit} of the player.
+  --- @param #string PlayerName The name of the player.
   
   
   
@@ -733,9 +733,9 @@ end
 do -- Group Assignment
 
   --- Returns if the @{#TASK} is assigned to the Group.
-  -- @param #TASK self
-  -- @param Wrapper.Group#GROUP TaskGroup
-  -- @return #boolean
+  --- @param #TASK self
+  --- @param Wrapper.Group#GROUP TaskGroup
+  --- @return #boolean
   function TASK:IsGroupAssigned( TaskGroup )
   
     local TaskGroupName = TaskGroup:GetName()
@@ -751,9 +751,9 @@ do -- Group Assignment
   
   
   --- Set @{Wrapper.Group} assigned to the @{#TASK}.
-  -- @param #TASK self
-  -- @param Wrapper.Group#GROUP TaskGroup
-  -- @return #TASK
+  --- @param #TASK self
+  --- @param Wrapper.Group#GROUP TaskGroup
+  --- @return #TASK
   function TASK:SetGroupAssigned( TaskGroup )
   
     local TaskName = self:GetName()
@@ -781,9 +781,9 @@ do -- Group Assignment
   end
   
   --- Clear the @{Wrapper.Group} assignment from the @{#TASK}.
-  -- @param #TASK self
-  -- @param Wrapper.Group#GROUP TaskGroup
-  -- @return #TASK
+  --- @param #TASK self
+  --- @param Wrapper.Group#GROUP TaskGroup
+  --- @return #TASK
   function TASK:ClearGroupAssignment( TaskGroup )
   
     local TaskName = self:GetName()
@@ -815,7 +815,7 @@ end
 do -- Group Assignment
 
   --- @param #TASK self
-  -- @param Actions.Act_Assign#ACT_ASSIGN AcceptClass
+  --- @param Actions.Act_Assign#ACT_ASSIGN AcceptClass
   function TASK:SetAssignMethod( AcceptClass )
   
     local ProcessTemplate = self:GetUnitProcess()
@@ -825,9 +825,9 @@ do -- Group Assignment
 
 
   --- Assign the @{#TASK} to a @{Wrapper.Group}.
-  -- @param #TASK self
-  -- @param Wrapper.Group#GROUP TaskGroup
-  -- @return #TASK
+  --- @param #TASK self
+  --- @param Wrapper.Group#GROUP TaskGroup
+  --- @return #TASK
   function TASK:AssignToGroup( TaskGroup )
     self:F( TaskGroup:GetName() )
     
@@ -862,8 +862,8 @@ do -- Group Assignment
   end
   
   --- UnAssign the @{#TASK} from a @{Wrapper.Group}.
-  -- @param #TASK self
-  -- @param Wrapper.Group#GROUP TaskGroup
+  --- @param #TASK self
+  --- @param Wrapper.Group#GROUP TaskGroup
   function TASK:UnAssignFromGroup( TaskGroup )
     self:F2( { TaskGroup = TaskGroup:GetName() } )
     
@@ -1742,35 +1742,35 @@ end
 do -- Links
 
   --- Set goal of a task
-  -- @param #TASK self
-  -- @param Core.Goal#GOAL Goal
-  -- @return #TASK
+  --- @param #TASK self
+  --- @param Core.Goal#GOAL Goal
+  --- @return #TASK
   function TASK:SetGoal( Goal )
     self.Goal = Goal
   end
 
 
   --- Get goal of a task
-  -- @param #TASK self
-  -- @return Core.Goal#GOAL The Goal
+  --- @param #TASK self
+  --- @return Core.Goal#GOAL The Goal
   function TASK:GetGoal()
     return self.Goal
   end
 
 
   --- Set dispatcher of a task
-  -- @param #TASK self
-  -- @param Tasking.DetectionManager#DETECTION_MANAGER Dispatcher
-  -- @return #TASK
+  --- @param #TASK self
+  --- @param Tasking.DetectionManager#DETECTION_MANAGER Dispatcher
+  --- @return #TASK
   function TASK:SetDispatcher( Dispatcher )
     self.Dispatcher = Dispatcher
   end
 
   --- Set detection of a task
-  -- @param #TASK self
-  -- @param Function.Detection#DETECTION_BASE Detection
-  -- @param DetectedItem
-  -- @return #TASK
+  --- @param #TASK self
+  --- @param Function.Detection#DETECTION_BASE Detection
+  --- @param DetectedItem
+  --- @return #TASK
   function TASK:SetDetection( Detection, DetectedItem )
     
     self:F( { DetectedItem, Detection } )
@@ -1913,12 +1913,12 @@ end -- Reporting
 do -- Additional Task Scoring and Task Progress
 
   --- Add Task Progress for a Player Name
-  -- @param #TASK self
-  -- @param #string PlayerName The name of the player.
-  -- @param #string ProgressText The text that explains the Progress achieved.
-  -- @param #number ProgressTime The time the progress was achieved.
+  --- @param #TASK self
+  --- @param #string PlayerName The name of the player.
+  --- @param #string ProgressText The text that explains the Progress achieved.
+  --- @param #number ProgressTime The time the progress was achieved.
   -- @oaram #number ProgressPoints The amount of points of magnitude granted. This will determine the shared Mission Success scoring.
-  -- @return #TASK
+  --- @return #TASK
   function TASK:AddProgress( PlayerName, ProgressText, ProgressTime, ProgressPoints )
     self.TaskProgress = self.TaskProgress or {}
     self.TaskProgress[ProgressTime] = self.TaskProgress[ProgressTime] or {}
@@ -1940,11 +1940,11 @@ do -- Additional Task Scoring and Task Progress
   end
 
   --- Set a score when progress has been made by the player.
-  -- @param #TASK self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points to be granted when task process has been achieved.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK
+  --- @param #TASK self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Score The score in points to be granted when task process has been achieved.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK
   function TASK:SetScoreOnProgress( PlayerName, Score, TaskUnit )
     self:F( { PlayerName, Score, TaskUnit } )
 
@@ -1956,11 +1956,11 @@ do -- Additional Task Scoring and Task Progress
   end
 
   --- Set a score when all the targets in scope of the A2A attack, have been destroyed.
-  -- @param #TASK self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK
+  --- @param #TASK self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Score The score in points.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK
   function TASK:SetScoreOnSuccess( PlayerName, Score, TaskUnit )
     self:F( { PlayerName, Score, TaskUnit } )
 
@@ -1972,11 +1972,11 @@ do -- Additional Task Scoring and Task Progress
   end
 
   --- Set a penalty when the A2A attack has failed.
-  -- @param #TASK self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Penalty The penalty in points, must be a negative value!
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK
+  --- @param #TASK self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Penalty The penalty in points, must be a negative value!
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK
   function TASK:SetScoreOnFail( PlayerName, Penalty, TaskUnit )
     self:F( { PlayerName, Penalty, TaskUnit } )
 
@@ -1996,9 +1996,9 @@ do -- Task Control Menu
   -- The Task Control Menu is linked to the process executing the task, so no task menu can be set to the main static task definition.
   
   --- Init Task Control Menu
-  -- @param #TASK self
-  -- @param Wrapper.Unit#UNIT TaskUnit The @{Wrapper.Unit} that contains a player.
-  -- @return Task Control Menu Refresh ID
+  --- @param #TASK self
+  --- @param Wrapper.Unit#UNIT TaskUnit The @{Wrapper.Unit} that contains a player.
+  --- @return Task Control Menu Refresh ID
   function TASK:InitTaskControlMenu( TaskUnit )
 
     self.TaskControlMenuTime = timer.getTime()
@@ -2007,9 +2007,9 @@ do -- Task Control Menu
   end
   
   --- Get Task Control Menu
-  -- @param #TASK self
-  -- @param Wrapper.Unit#UNIT TaskUnit The @{Wrapper.Unit} that contains a player.
-  -- @return Core.Menu#MENU_GROUP TaskControlMenu The Task Control Menu
+  --- @param #TASK self
+  --- @param Wrapper.Unit#UNIT TaskUnit The @{Wrapper.Unit} that contains a player.
+  --- @return Core.Menu#MENU_GROUP TaskControlMenu The Task Control Menu
   function TASK:GetTaskControlMenu( TaskUnit, TaskName )
   
     TaskName = TaskName or ""
@@ -2027,8 +2027,8 @@ do -- Task Control Menu
   end
 
   --- Remove Task Control Menu
-  -- @param #TASK self
-  -- @param Wrapper.Unit#UNIT TaskUnit The @{Wrapper.Unit} that contains a player.
+  --- @param #TASK self
+  --- @param Wrapper.Unit#UNIT TaskUnit The @{Wrapper.Unit} that contains a player.
   function TASK:RemoveTaskControlMenu( TaskUnit )
   
     if self.TaskControlMenu then
@@ -2038,10 +2038,10 @@ do -- Task Control Menu
   end
   
   --- Refresh Task Control Menu
-  -- @param #TASK self
-  -- @param Wrapper.Unit#UNIT TaskUnit The @{Wrapper.Unit} that contains a player.
-  -- @param MenuTime The refresh time that was used to refresh the Task Control Menu items.
-  -- @param MenuTag The tag.
+  --- @param #TASK self
+  --- @param Wrapper.Unit#UNIT TaskUnit The @{Wrapper.Unit} that contains a player.
+  --- @param MenuTime The refresh time that was used to refresh the Task Control Menu items.
+  --- @param MenuTag The tag.
   function TASK:RefreshTaskControlMenu( TaskUnit, MenuTime, MenuTag )
   
     if self.TaskControlMenu then

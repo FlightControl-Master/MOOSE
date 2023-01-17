@@ -15,7 +15,7 @@ do -- TASK_A2G
 
   --- The TASK_A2G class
   --- @type TASK_A2G
-  -- @field Core.Set#SET_UNIT TargetSetUnit
+  --- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   --- The TASK_A2G class defines Air To Ground tasks for a @{Core.Set} of Target Units,
@@ -36,21 +36,21 @@ do -- TASK_A2G
   --   * @{#TASK_A2G.SetScoreOnSuccess}(): Set a score when all the targets in scope of the A2G attack, have been destroyed.
   --   * @{#TASK_A2G.SetPenaltyOnFailed}(): Set a penalty when the A2G attack has failed.
   --
-  -- @field #TASK_A2G
+  --- @field #TASK_A2G
   TASK_A2G = {
     ClassName = "TASK_A2G"
   }
 
   --- Instantiates a new TASK_A2G.
-  -- @param #TASK_A2G self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
-  -- @param #string TaskName The name of the Task.
-  -- @param Core.Set#SET_UNIT UnitSetTargets
-  -- @param #number TargetDistance The distance to Target when the Player is considered to have "arrived" at the engagement range.
-  -- @param Core.Zone#ZONE_BASE TargetZone The target zone, if known.
+  --- @param #TASK_A2G self
+  --- @param Tasking.Mission#MISSION Mission
+  --- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  --- @param #string TaskName The name of the Task.
+  --- @param Core.Set#SET_UNIT UnitSetTargets
+  --- @param #number TargetDistance The distance to Target when the Player is considered to have "arrived" at the engagement range.
+  --- @param Core.Zone#ZONE_BASE TargetZone The target zone, if known.
   -- If the TargetZone parameter is specified, the player will be routed to the center of the zone where all the targets are assumed to be.
-  -- @return #TASK_A2G self
+  --- @return #TASK_A2G self
   function TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskType, TaskBriefing )
     local self = BASE:Inherit( self, TASK:New( Mission, SetGroup, TaskName, TaskType, TaskBriefing ) ) -- Tasking.Task#TASK_A2G
     self:F()
@@ -81,9 +81,9 @@ do -- TASK_A2G
     Fsm:AddTransition( "Failed", "Fail", "Failed" )
 
     --- Test
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_A2G#TASK_A2G Task
+    --- @param #FSM_PROCESS self
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param Tasking.Task_A2G#TASK_A2G Task
     function Fsm:onafterAssigned( TaskUnit, Task )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       -- Determine the first Unit from the self.RendezVousSetUnit
@@ -92,9 +92,9 @@ do -- TASK_A2G
     end
 
     --- Test
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_A2G#TASK_A2G Task
+    --- @param #FSM_PROCESS self
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param Tasking.Task_A2G#TASK_A2G Task
     function Fsm:onafterRouteToRendezVous( TaskUnit, Task )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       -- Determine the first Unit from the self.RendezVousSetUnit
@@ -111,9 +111,9 @@ do -- TASK_A2G
     end
 
     --- Test
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task#TASK_A2G Task
+    --- @param #FSM_PROCESS self
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param Tasking.Task#TASK_A2G Task
     function Fsm:OnAfterArriveAtRendezVous( TaskUnit, Task )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       -- Determine the first Unit from the self.TargetSetUnit
@@ -122,9 +122,9 @@ do -- TASK_A2G
     end
 
     --- Test
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task#TASK_A2G Task
+    --- @param #FSM_PROCESS self
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param Tasking.Task#TASK_A2G Task
     function Fsm:onafterEngage( TaskUnit, Task )
       self:F( { self } )
       self:__Account( 0.1 )
@@ -133,9 +133,9 @@ do -- TASK_A2G
     end
 
     --- Test
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_A2G#TASK_A2G Task
+    --- @param #FSM_PROCESS self
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param Tasking.Task_A2G#TASK_A2G Task
     function Fsm:onafterRouteToTarget( TaskUnit, Task )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       -- Determine the first Unit from the self.TargetSetUnit
@@ -154,9 +154,9 @@ do -- TASK_A2G
     end
 
     --- Test
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_A2G#TASK_A2G Task
+    --- @param #FSM_PROCESS self
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param Tasking.Task_A2G#TASK_A2G Task
     function Fsm:onafterRouteToTargets( TaskUnit, Task )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
@@ -171,7 +171,7 @@ do -- TASK_A2G
   end
 
   --- @param #TASK_A2G self
-  -- @param Core.Set#SET_UNIT TargetSetUnit The set of targets.
+  --- @param Core.Set#SET_UNIT TargetSetUnit The set of targets.
   function TASK_A2G:SetTargetSetUnit( TargetSetUnit )
 
     self.TargetSetUnit = TargetSetUnit
@@ -183,9 +183,9 @@ do -- TASK_A2G
   end
 
   --- @param #TASK_A2G self
-  -- @param Core.Point#COORDINATE RendezVousCoordinate The Coordinate object referencing to the 2D point where the RendezVous point is located on the map.
-  -- @param #number RendezVousRange The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
-  -- @param Wrapper.Unit#UNIT TaskUnit
+  --- @param Core.Point#COORDINATE RendezVousCoordinate The Coordinate object referencing to the 2D point where the RendezVous point is located on the map.
+  --- @param #number RendezVousRange The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
+  --- @param Wrapper.Unit#UNIT TaskUnit
   function TASK_A2G:SetRendezVousCoordinate( RendezVousCoordinate, RendezVousRange, TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -196,9 +196,9 @@ do -- TASK_A2G
   end
 
   --- @param #TASK_A2G self
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return Core.Point#COORDINATE The Coordinate object referencing to the 2D point where the RendezVous point is located on the map.
-  -- @return #number The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return Core.Point#COORDINATE The Coordinate object referencing to the 2D point where the RendezVous point is located on the map.
+  --- @return #number The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
   function TASK_A2G:GetRendezVousCoordinate( TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -208,8 +208,8 @@ do -- TASK_A2G
   end
 
   --- @param #TASK_A2G self
-  -- @param Core.Zone#ZONE_BASE RendezVousZone The Zone object where the RendezVous is located on the map.
-  -- @param Wrapper.Unit#UNIT TaskUnit
+  --- @param Core.Zone#ZONE_BASE RendezVousZone The Zone object where the RendezVous is located on the map.
+  --- @param Wrapper.Unit#UNIT TaskUnit
   function TASK_A2G:SetRendezVousZone( RendezVousZone, TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -219,8 +219,8 @@ do -- TASK_A2G
   end
 
   --- @param #TASK_A2G self
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return Core.Zone#ZONE_BASE The Zone object where the RendezVous is located on the map.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return Core.Zone#ZONE_BASE The Zone object where the RendezVous is located on the map.
   function TASK_A2G:GetRendezVousZone( TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -230,8 +230,8 @@ do -- TASK_A2G
   end
 
   --- @param #TASK_A2G self
-  -- @param Core.Point#COORDINATE TargetCoordinate The Coordinate object where the Target is located on the map.
-  -- @param Wrapper.Unit#UNIT TaskUnit
+  --- @param Core.Point#COORDINATE TargetCoordinate The Coordinate object where the Target is located on the map.
+  --- @param Wrapper.Unit#UNIT TaskUnit
   function TASK_A2G:SetTargetCoordinate( TargetCoordinate, TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -241,8 +241,8 @@ do -- TASK_A2G
   end
 
   --- @param #TASK_A2G self
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return Core.Point#COORDINATE The Coordinate object where the Target is located on the map.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return Core.Point#COORDINATE The Coordinate object where the Target is located on the map.
   function TASK_A2G:GetTargetCoordinate( TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -252,8 +252,8 @@ do -- TASK_A2G
   end
 
   --- @param #TASK_A2G self
-  -- @param Core.Zone#ZONE_BASE TargetZone The Zone object where the Target is located on the map.
-  -- @param Wrapper.Unit#UNIT TaskUnit
+  --- @param Core.Zone#ZONE_BASE TargetZone The Zone object where the Target is located on the map.
+  --- @param Wrapper.Unit#UNIT TaskUnit
   function TASK_A2G:SetTargetZone( TargetZone, TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -263,8 +263,8 @@ do -- TASK_A2G
   end
 
   --- @param #TASK_A2G self
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return Core.Zone#ZONE_BASE The Zone object where the Target is located on the map.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return Core.Zone#ZONE_BASE The Zone object where the Target is located on the map.
   function TASK_A2G:GetTargetZone( TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -284,7 +284,7 @@ do -- TASK_A2G
   end
 
   --- Return the relative distance to the target vicinity from the player, in order to sort the targets in the reports per distance from the threats.
-  -- @param #TASK_A2G self
+  --- @param #TASK_A2G self
   function TASK_A2G:ReportOrder( ReportGroup )
     self:UpdateTaskInfo( self.DetectedItem )
 
@@ -295,7 +295,7 @@ do -- TASK_A2G
   end
 
   --- This method checks every 10 seconds if the goal has been reached of the task.
-  -- @param #TASK_A2G self
+  --- @param #TASK_A2G self
   function TASK_A2G:onafterGoal( TaskUnit, From, Event, To )
     local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
 
@@ -349,10 +349,10 @@ do -- TASK_A2G
   end
 
   --- This function is called from the @{Tasking.CommandCenter#COMMANDCENTER} to determine the method of automatic task selection.
-  -- @param #TASK_A2G self
-  -- @param #number AutoAssignMethod The method to be applied to the task.
-  -- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter The command center.
-  -- @param Wrapper.Group#GROUP TaskGroup The player group.
+  --- @param #TASK_A2G self
+  --- @param #number AutoAssignMethod The method to be applied to the task.
+  --- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter The command center.
+  --- @param Wrapper.Group#GROUP TaskGroup The player group.
   function TASK_A2G:GetAutoAssignPriority( AutoAssignMethod, CommandCenter, TaskGroup )
 
     if AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Random then
@@ -375,7 +375,7 @@ do -- TASK_A2G_SEAD
 
   --- The TASK_A2G_SEAD class
   --- @type TASK_A2G_SEAD
-  -- @field Core.Set#SET_UNIT TargetSetUnit
+  --- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   --- Defines an Suppression or Extermination of Air Defenses task for a human player to be executed.
@@ -384,19 +384,19 @@ do -- TASK_A2G_SEAD
   -- The TASK_A2G_SEAD is used by the @{Tasking.Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create SEAD tasks 
   -- based on detected enemy ground targets.
   -- 
-  -- @field #TASK_A2G_SEAD
+  --- @field #TASK_A2G_SEAD
   TASK_A2G_SEAD = {
     ClassName = "TASK_A2G_SEAD"
   }
 
   --- Instantiates a new TASK_A2G_SEAD.
-  -- @param #TASK_A2G_SEAD self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
-  -- @param #string TaskName The name of the Task.
-  -- @param Core.Set#SET_UNIT TargetSetUnit 
-  -- @param #string TaskBriefing The briefing of the task.
-  -- @return #TASK_A2G_SEAD self
+  --- @param #TASK_A2G_SEAD self
+  --- @param Tasking.Mission#MISSION Mission
+  --- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  --- @param #string TaskName The name of the Task.
+  --- @param Core.Set#SET_UNIT TargetSetUnit 
+  --- @param #string TaskBriefing The briefing of the task.
+  --- @return #TASK_A2G_SEAD self
   function TASK_A2G_SEAD:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
     local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "SEAD", TaskBriefing ) ) -- #TASK_A2G_SEAD
     self:F()
@@ -409,11 +409,11 @@ do -- TASK_A2G_SEAD
   end
 
   --- Set a score when a target in scope of the A2G attack, has been destroyed .
-  -- @param #TASK_A2G_SEAD self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points to be granted when task process has been achieved.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_SEAD
+  --- @param #TASK_A2G_SEAD self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Score The score in points to be granted when task process has been achieved.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2G_SEAD
   function TASK_A2G_SEAD:SetScoreOnProgress( PlayerName, Score, TaskUnit )
     self:F( { PlayerName, Score, TaskUnit } )
 
@@ -425,11 +425,11 @@ do -- TASK_A2G_SEAD
   end
 
   --- Set a score when all the targets in scope of the A2G attack, have been destroyed.
-  -- @param #TASK_A2G_SEAD self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_SEAD
+  --- @param #TASK_A2G_SEAD self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Score The score in points.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2G_SEAD
   function TASK_A2G_SEAD:SetScoreOnSuccess( PlayerName, Score, TaskUnit )
     self:F( { PlayerName, Score, TaskUnit } )
 
@@ -441,11 +441,11 @@ do -- TASK_A2G_SEAD
   end
 
   --- Set a penalty when the A2G attack has failed.
-  -- @param #TASK_A2G_SEAD self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Penalty The penalty in points, must be a negative value!
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_SEAD
+  --- @param #TASK_A2G_SEAD self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Penalty The penalty in points, must be a negative value!
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2G_SEAD
   function TASK_A2G_SEAD:SetScoreOnFail( PlayerName, Penalty, TaskUnit )
     self:F( { PlayerName, Penalty, TaskUnit } )
 
@@ -462,7 +462,7 @@ do -- TASK_A2G_BAI
 
   --- The TASK_A2G_BAI class
   --- @type TASK_A2G_BAI
-  -- @field Core.Set#SET_UNIT TargetSetUnit
+  --- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   --- Defines a Battlefield Air Interdiction task for a human player to be executed.
@@ -472,17 +472,17 @@ do -- TASK_A2G_BAI
   -- The TASK_A2G_BAI is used by the @{Tasking.Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create BAI tasks 
   -- based on detected enemy ground targets.
   -- 
-  -- @field #TASK_A2G_BAI
+  --- @field #TASK_A2G_BAI
   TASK_A2G_BAI = { ClassName = "TASK_A2G_BAI" }
 
   --- Instantiates a new TASK_A2G_BAI.
-  -- @param #TASK_A2G_BAI self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
-  -- @param #string TaskName The name of the Task.
-  -- @param Core.Set#SET_UNIT TargetSetUnit 
-  -- @param #string TaskBriefing The briefing of the task.
-  -- @return #TASK_A2G_BAI self
+  --- @param #TASK_A2G_BAI self
+  --- @param Tasking.Mission#MISSION Mission
+  --- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  --- @param #string TaskName The name of the Task.
+  --- @param Core.Set#SET_UNIT TargetSetUnit 
+  --- @param #string TaskBriefing The briefing of the task.
+  --- @return #TASK_A2G_BAI self
   function TASK_A2G_BAI:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
     local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "BAI", TaskBriefing ) ) -- #TASK_A2G_BAI
     self:F()
@@ -495,11 +495,11 @@ do -- TASK_A2G_BAI
   end
 
   --- Set a score when a target in scope of the A2G attack, has been destroyed .
-  -- @param #TASK_A2G_BAI self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points to be granted when task process has been achieved.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_BAI
+  --- @param #TASK_A2G_BAI self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Score The score in points to be granted when task process has been achieved.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2G_BAI
   function TASK_A2G_BAI:SetScoreOnProgress( PlayerName, Score, TaskUnit )
     self:F( { PlayerName, Score, TaskUnit } )
 
@@ -511,11 +511,11 @@ do -- TASK_A2G_BAI
   end
 
   --- Set a score when all the targets in scope of the A2G attack, have been destroyed.
-  -- @param #TASK_A2G_BAI self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_BAI
+  --- @param #TASK_A2G_BAI self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Score The score in points.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2G_BAI
   function TASK_A2G_BAI:SetScoreOnSuccess( PlayerName, Score, TaskUnit )
     self:F( { PlayerName, Score, TaskUnit } )
 
@@ -527,11 +527,11 @@ do -- TASK_A2G_BAI
   end
 
   --- Set a penalty when the A2G attack has failed.
-  -- @param #TASK_A2G_BAI self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Penalty The penalty in points, must be a negative value!
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_BAI
+  --- @param #TASK_A2G_BAI self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Penalty The penalty in points, must be a negative value!
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2G_BAI
   function TASK_A2G_BAI:SetScoreOnFail( PlayerName, Penalty, TaskUnit )
     self:F( { PlayerName, Penalty, TaskUnit } )
 
@@ -548,7 +548,7 @@ do -- TASK_A2G_CAS
 
   --- The TASK_A2G_CAS class
   --- @type TASK_A2G_CAS
-  -- @field Core.Set#SET_UNIT TargetSetUnit
+  --- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   --- Defines an Close Air Support task for a human player to be executed.
@@ -557,17 +557,17 @@ do -- TASK_A2G_CAS
   -- The TASK_A2G_CAS is used by the @{Tasking.Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create CAS tasks 
   -- based on detected enemy ground targets.
   -- 
-  -- @field #TASK_A2G_CAS
+  --- @field #TASK_A2G_CAS
   TASK_A2G_CAS = { ClassName = "TASK_A2G_CAS" }
 
   --- Instantiates a new TASK_A2G_CAS.
-  -- @param #TASK_A2G_CAS self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
-  -- @param #string TaskName The name of the Task.
-  -- @param Core.Set#SET_UNIT TargetSetUnit 
-  -- @param #string TaskBriefing The briefing of the task.
-  -- @return #TASK_A2G_CAS self
+  --- @param #TASK_A2G_CAS self
+  --- @param Tasking.Mission#MISSION Mission
+  --- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  --- @param #string TaskName The name of the Task.
+  --- @param Core.Set#SET_UNIT TargetSetUnit 
+  --- @param #string TaskBriefing The briefing of the task.
+  --- @return #TASK_A2G_CAS self
   function TASK_A2G_CAS:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
     local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "CAS", TaskBriefing ) ) -- #TASK_A2G_CAS
     self:F()
@@ -580,11 +580,11 @@ do -- TASK_A2G_CAS
   end
 
   --- Set a score when a target in scope of the A2G attack, has been destroyed .
-  -- @param #TASK_A2G_CAS self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points to be granted when task process has been achieved.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_CAS
+  --- @param #TASK_A2G_CAS self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Score The score in points to be granted when task process has been achieved.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2G_CAS
   function TASK_A2G_CAS:SetScoreOnProgress( PlayerName, Score, TaskUnit )
     self:F( { PlayerName, Score, TaskUnit } )
 
@@ -596,11 +596,11 @@ do -- TASK_A2G_CAS
   end
 
   --- Set a score when all the targets in scope of the A2G attack, have been destroyed.
-  -- @param #TASK_A2G_CAS self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_CAS
+  --- @param #TASK_A2G_CAS self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Score The score in points.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2G_CAS
   function TASK_A2G_CAS:SetScoreOnSuccess( PlayerName, Score, TaskUnit )
     self:F( { PlayerName, Score, TaskUnit } )
 
@@ -612,11 +612,11 @@ do -- TASK_A2G_CAS
   end
 
   --- Set a penalty when the A2G attack has failed.
-  -- @param #TASK_A2G_CAS self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Penalty The penalty in points, must be a negative value!
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_CAS
+  --- @param #TASK_A2G_CAS self
+  --- @param #string PlayerName The name of the player.
+  --- @param #number Penalty The penalty in points, must be a negative value!
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return #TASK_A2G_CAS
   function TASK_A2G_CAS:SetScoreOnFail( PlayerName, Penalty, TaskUnit )
     self:F( { PlayerName, Penalty, TaskUnit } )
 

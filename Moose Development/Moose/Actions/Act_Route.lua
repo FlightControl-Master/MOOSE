@@ -80,10 +80,10 @@ do -- ACT_ROUTE
 
   --- ACT_ROUTE class
   --- @type ACT_ROUTE
-  -- @field Tasking.Task#TASK TASK
-  -- @field Wrapper.Unit#UNIT ProcessUnit
-  -- @field Core.Zone#ZONE_BASE Zone
-  -- @field Core.Point#COORDINATE Coordinate
+  --- @field Tasking.Task#TASK TASK
+  --- @field Wrapper.Unit#UNIT ProcessUnit
+  --- @field Core.Zone#ZONE_BASE Zone
+  --- @field Core.Point#COORDINATE Coordinate
   -- @extends Core.Fsm#FSM_PROCESS
   ACT_ROUTE = {
     ClassName = "ACT_ROUTE",
@@ -92,7 +92,7 @@ do -- ACT_ROUTE
 
   --- Creates a new routing state machine. The process will route a CLIENT to a ZONE until the CLIENT is within that ZONE.
   -- @param #ACT_ROUTE self
-  -- @return #ACT_ROUTE self
+  --- @return #ACT_ROUTE self
   function ACT_ROUTE:New()
 
     -- Inherits from BASE
@@ -123,7 +123,7 @@ do -- ACT_ROUTE
 
   --- Set a Cancel Menu item.
   -- @param #ACT_ROUTE self
-  -- @return #ACT_ROUTE
+  --- @return #ACT_ROUTE
   function ACT_ROUTE:SetMenuCancel( MenuGroup, MenuText, ParentMenu, MenuTime, MenuTag )
 
     self.CancelMenuGroupCommand = MENU_GROUP_COMMAND:New(
@@ -148,7 +148,7 @@ do -- ACT_ROUTE
   --   * SetRouteMode( "C" ): Route mode is LL or MGRS according coordinate system setup.
   --
   -- @param #ACT_ROUTE self
-  -- @return #ACT_ROUTE
+  --- @return #ACT_ROUTE
   function ACT_ROUTE:SetRouteMode( RouteMode )
 
     self.RouteMode = RouteMode
@@ -160,7 +160,7 @@ do -- ACT_ROUTE
   -- The route mode determines the text displayed.
   -- @param #ACT_ROUTE self
   -- @param Wrapper.Unit#UNIT Controllable
-  -- @return #string
+  --- @return #string
   function ACT_ROUTE:GetRouteText( Controllable )
 
     local RouteText = ""
@@ -233,7 +233,7 @@ do -- ACT_ROUTE
   --- Check if the controllable has arrived.
   -- @param #ACT_ROUTE self
   -- @param Wrapper.Unit#UNIT ProcessUnit
-  -- @return #boolean
+  --- @return #boolean
   function ACT_ROUTE:onfuncHasArrived( ProcessUnit )
     return false
   end
@@ -278,7 +278,7 @@ do -- ACT_ROUTE_POINT
 
   --- ACT_ROUTE_POINT class
   --- @type ACT_ROUTE_POINT
-  -- @field Tasking.Task#TASK TASK
+  --- @field Tasking.Task#TASK TASK
   -- @extends #ACT_ROUTE
   ACT_ROUTE_POINT = {
     ClassName = "ACT_ROUTE_POINT",
@@ -330,7 +330,7 @@ do -- ACT_ROUTE_POINT
 
   --- Get Coordinate
   -- @param #ACT_ROUTE_POINT self
-  -- @return Core.Point#COORDINATE Coordinate The Coordinate to route to.
+  --- @return Core.Point#COORDINATE Coordinate The Coordinate to route to.
   function ACT_ROUTE_POINT:GetCoordinate()
     self:F2( { self.Coordinate } )
     return self.Coordinate
@@ -346,7 +346,7 @@ do -- ACT_ROUTE_POINT
 
   --- Get Range around Coordinate
   -- @param #ACT_ROUTE_POINT self
-  -- @return #number The Range to consider the arrival. Default is 10000 meters.
+  --- @return #number The Range to consider the arrival. Default is 10000 meters.
   function ACT_ROUTE_POINT:GetRange()
     self:F2( { self.Range } )
     return self.Range
@@ -355,7 +355,7 @@ do -- ACT_ROUTE_POINT
   --- Method override to check if the controllable has arrived.
   -- @param #ACT_ROUTE_POINT self
   -- @param Wrapper.Unit#UNIT ProcessUnit
-  -- @return #boolean
+  --- @return #boolean
   function ACT_ROUTE_POINT:onfuncHasArrived( ProcessUnit )
 
     if ProcessUnit:IsAlive() then
@@ -393,9 +393,9 @@ do -- ACT_ROUTE_ZONE
 
   --- ACT_ROUTE_ZONE class
   --- @type ACT_ROUTE_ZONE
-  -- @field Tasking.Task#TASK TASK
-  -- @field Wrapper.Unit#UNIT ProcessUnit
-  -- @field Core.Zone#ZONE_BASE Zone
+  --- @field Tasking.Task#TASK TASK
+  --- @field Wrapper.Unit#UNIT ProcessUnit
+  --- @field Core.Zone#ZONE_BASE Zone
   -- @extends #ACT_ROUTE
   ACT_ROUTE_ZONE = {
     ClassName = "ACT_ROUTE_ZONE",
@@ -441,7 +441,7 @@ do -- ACT_ROUTE_ZONE
 
   --- Get Zone
   -- @param #ACT_ROUTE_ZONE self
-  -- @return Core.Zone#ZONE_BASE Zone The Zone object where to route to.
+  --- @return Core.Zone#ZONE_BASE Zone The Zone object where to route to.
   function ACT_ROUTE_ZONE:GetZone()
     return self.Zone
   end
@@ -449,7 +449,7 @@ do -- ACT_ROUTE_ZONE
   --- Method override to check if the controllable has arrived.
   -- @param #ACT_ROUTE self
   -- @param Wrapper.Unit#UNIT ProcessUnit
-  -- @return #boolean
+  --- @return #boolean
   function ACT_ROUTE_ZONE:onfuncHasArrived( ProcessUnit )
 
     if ProcessUnit:IsInZone( self.Zone ) then

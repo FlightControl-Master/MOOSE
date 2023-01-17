@@ -958,8 +958,8 @@ function GROUP:GetTypeName()
 end
 
 --- [AIRPLANE] Get the NATO reporting name (platform, e.g. "Flanker") of a GROUP (note - first unit the group). "Bogey" if not found. Currently airplanes only!
---@param #GROUP self
---@return #string NatoReportingName or "Bogey" if unknown.
+--- @param #GROUP self
+--- @return #string NatoReportingName or "Bogey" if unknown.
 function GROUP:GetNatoReportingName()
   self:F2( self.GroupName )
   
@@ -1559,9 +1559,9 @@ end
 do -- AI methods
 
   --- Turns the AI On or Off for the GROUP.
-  -- @param #GROUP self
-  -- @param #boolean AIOnOff The value true turns the AI On, the value false turns the AI Off.
-  -- @return #GROUP The GROUP.
+  --- @param #GROUP self
+  --- @param #boolean AIOnOff The value true turns the AI On, the value false turns the AI Off.
+  --- @return #GROUP The GROUP.
   function GROUP:SetAIOnOff( AIOnOff )
   
     local DCSGroup = self:GetDCSObject() -- DCS#Group
@@ -1578,16 +1578,16 @@ do -- AI methods
   end
 
   --- Turns the AI On for the GROUP.
-  -- @param #GROUP self
-  -- @return #GROUP The GROUP.
+  --- @param #GROUP self
+  --- @return #GROUP The GROUP.
   function GROUP:SetAIOn()
 
     return self:SetAIOnOff( true )  
   end
   
   --- Turns the AI Off for the GROUP.
-  -- @param #GROUP self
-  -- @return #GROUP The GROUP.
+  --- @param #GROUP self
+  --- @return #GROUP The GROUP.
   function GROUP:SetAIOff()
 
     return self:SetAIOnOff( false )  
@@ -2531,10 +2531,10 @@ do -- Route methods
   --   * When there is no @{Wrapper.Airbase} object specified, the group will return to the home base if the route of the group is pinned at take-off or at landing to a base.
   --   * When there is no @{Wrapper.Airbase} object specified and the group route is not pinned to any airbase, it will return to the nearest airbase.
   -- 
-  -- @param #GROUP self
-  -- @param Wrapper.Airbase#AIRBASE RTBAirbase (optional) The @{Wrapper.Airbase} to return to. If blank, the controllable will return to the nearest friendly airbase.
-  -- @param #number Speed (optional) The Speed, if no Speed is given, 80% of maximum Speed of the group is selected. 
-  -- @return #GROUP self
+  --- @param #GROUP self
+  --- @param Wrapper.Airbase#AIRBASE RTBAirbase (optional) The @{Wrapper.Airbase} to return to. If blank, the controllable will return to the nearest friendly airbase.
+  --- @param #number Speed (optional) The Speed, if no Speed is given, 80% of maximum Speed of the group is selected. 
+  --- @return #GROUP self
   function GROUP:RouteRTB( RTBAirbase, Speed )
     self:F( { RTBAirbase:GetName(), Speed } )
   
@@ -2596,10 +2596,10 @@ end
 do -- Event Handling
 
   --- Subscribe to a DCS Event.
-  -- @param #GROUP self
-  -- @param Core.Event#EVENTS Event
-  -- @param #function EventFunction (optional) The function to be called when the event occurs for the GROUP.
-  -- @return #GROUP
+  --- @param #GROUP self
+  --- @param Core.Event#EVENTS Event
+  --- @param #function EventFunction (optional) The function to be called when the event occurs for the GROUP.
+  --- @return #GROUP
   function GROUP:HandleEvent( Event, EventFunction, ... )
   
     self:EventDispatcher():OnEventForGroup( self:GetName(), EventFunction, self, Event, ... )
@@ -2608,9 +2608,9 @@ do -- Event Handling
   end
   
   --- UnSubscribe to a DCS event.
-  -- @param #GROUP self
-  -- @param Core.Event#EVENTS Event
-  -- @return #GROUP
+  --- @param #GROUP self
+  --- @param Core.Event#EVENTS Event
+  --- @return #GROUP
   function GROUP:UnHandleEvent( Event )
   
     self:EventDispatcher():RemoveEvent( self, Event )
@@ -2619,8 +2619,8 @@ do -- Event Handling
   end
 
   --- Reset the subscriptions.
-  -- @param #GROUP self
-  -- @return #GROUP
+  --- @param #GROUP self
+  --- @return #GROUP
   function GROUP:ResetEvents()
   
     self:EventDispatcher():Reset( self )
@@ -2637,9 +2637,9 @@ end
 do -- Players
 
   --- Get player names
-  -- @param #GROUP self
-  -- @return #table The group has players, an array of player names is returned.
-  -- @return #nil The group has no players
+  --- @param #GROUP self
+  --- @return #table The group has players, an array of player names is returned.
+  --- @return #nil The group has no players
   function GROUP:GetPlayerNames()
   
     local HasPlayers = false
@@ -2667,8 +2667,8 @@ do -- Players
 
 
   --- Get the active player count in the group.
-  -- @param #GROUP self
-  -- @return #number The amount of players.
+  --- @param #GROUP self
+  --- @return #number The amount of players.
   function GROUP:GetPlayerCount()
   
     local PlayerCount = 0

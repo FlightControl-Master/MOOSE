@@ -220,74 +220,74 @@ function TARGET:New(TargetObject)
 
   --- Triggers the FSM event "Start". Starts the TARGET. Initializes parameters and starts event handlers.
   -- @function [parent=#TARGET] Start
-  -- @param #TARGET self
+  --- @param #TARGET self
 
   --- Triggers the FSM event "Start" after a delay. Starts the TARGET. Initializes parameters and starts event handlers.
   -- @function [parent=#TARGET] __Start
-  -- @param #TARGET self
-  -- @param #number delay Delay in seconds.
+  --- @param #TARGET self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Stop". Stops the TARGET and all its event handlers.
-  -- @param #TARGET self
+  --- @param #TARGET self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the TARGET and all its event handlers.
   -- @function [parent=#TARGET] __Stop
-  -- @param #TARGET self
-  -- @param #number delay Delay in seconds.
+  --- @param #TARGET self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#TARGET] Status
-  -- @param #TARGET self
+  --- @param #TARGET self
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#TARGET] __Status
-  -- @param #TARGET self
-  -- @param #number delay Delay in seconds.
+  --- @param #TARGET self
+  --- @param #number delay Delay in seconds.
   
   --- On After "ObjectDamaged" event. A (sub-) target object has been damaged, e.g. a UNIT of a GROUP, or an object of a SET
   -- @function [parent=#TARGET] OnAfterObjectDamaged
-  -- @param #TARGET self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #TARGET.Object Target Target object.
+  --- @param #TARGET self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #TARGET.Object Target Target object.
   
   --- On After "ObjectDestroyed" event. A (sub-) target object has been destroyed, e.g. a UNIT of a GROUP, or an object of a SET
   -- @function [parent=#TARGET] OnAfterObjectDestroyed
-  -- @param #TARGET self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #TARGET.Object Target Target object.
+  --- @param #TARGET self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #TARGET.Object Target Target object.
   
   --- On After "ObjectDead" event. A (sub-) target object is dead, e.g. a UNIT of a GROUP, or an object of a SET
   -- @function [parent=#TARGET] OnAfterObjectDead
-  -- @param #TARGET self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #TARGET.Object Target Target object.
+  --- @param #TARGET self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #TARGET.Object Target Target object.
   
     --- On After "Damaged" event. The (whole) target object has been damaged.
   -- @function [parent=#TARGET] OnAfterDamaged
-  -- @param #TARGET self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #TARGET self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
   --- On After "ObjectDestroyed" event. The (whole) target object has been destroyed.
   -- @function [parent=#TARGET] OnAfterDestroyed
-  -- @param #TARGET self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #TARGET self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
   --- On After "ObjectDead" event. The (whole) target object is dead.
   -- @function [parent=#TARGET] OnAfterDead
-  -- @param #TARGET self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #TARGET self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   -- Start.
   self:__Start(-1)

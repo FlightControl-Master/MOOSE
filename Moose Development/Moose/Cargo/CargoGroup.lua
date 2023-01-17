@@ -20,8 +20,8 @@
 do -- CARGO_GROUP
 
   --- @type CARGO_GROUP
-  -- @field Core.Set#SET_CARGO CargoSet The collection of derived CARGO objects.
-  -- @field #string GroupName The name of the CargoGroup.
+  --- @field Core.Set#SET_CARGO CargoSet The collection of derived CARGO objects.
+  --- @field #string GroupName The name of the CargoGroup.
   -- @extends Cargo.Cargo#CARGO_REPORTABLE
   
   --- Defines a cargo that is represented by a @{Wrapper.Group} object within the simulator.
@@ -39,7 +39,7 @@ do -- CARGO_GROUP
   --   * @{Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT} to transport cargo by human players.
   --   * @{Tasking.Task_Cargo_Transport#TASK_CARGO_CSAR} to transport downed pilots by human players.
   -- 
-  -- @field #CARGO_GROUP CARGO_GROUP
+  --- @field #CARGO_GROUP CARGO_GROUP
   -- 
   CARGO_GROUP = {
     ClassName = "CARGO_GROUP",
@@ -48,13 +48,13 @@ do -- CARGO_GROUP
   --- CARGO_GROUP constructor.
   -- This make a new CARGO_GROUP from a @{Wrapper.Group} object.
   -- It will "ungroup" the group object within the sim, and will create a @{Core.Set} of individual Unit objects.
-  -- @param #CARGO_GROUP self
-  -- @param Wrapper.Group#GROUP CargoGroup Group to be transported as cargo.
-  -- @param #string Type Cargo type, e.g. "Infantry". This is the type used in SET_CARGO:New():FilterTypes("Infantry") to define the valid cargo groups of the set.
-  -- @param #string Name A user defined name of the cargo group. This name CAN be the same as the group object but can also have a different name. This name MUST be unique!
-  -- @param #number LoadRadius (optional) Distance in meters until which a cargo is loaded into the carrier. Cargo outside this radius has to be routed by other means to within the radius to be loaded.
-  -- @param #number NearRadius (optional) Once the units are within this radius of the carrier, they are actually loaded, i.e. disappear from the scene.
-  -- @return #CARGO_GROUP Cargo group object.
+  --- @param #CARGO_GROUP self
+  --- @param Wrapper.Group#GROUP CargoGroup Group to be transported as cargo.
+  --- @param #string Type Cargo type, e.g. "Infantry". This is the type used in SET_CARGO:New():FilterTypes("Infantry") to define the valid cargo groups of the set.
+  --- @param #string Name A user defined name of the cargo group. This name CAN be the same as the group object but can also have a different name. This name MUST be unique!
+  --- @param #number LoadRadius (optional) Distance in meters until which a cargo is loaded into the carrier. Cargo outside this radius has to be routed by other means to within the radius to be loaded.
+  --- @param #number NearRadius (optional) Once the units are within this radius of the carrier, they are actually loaded, i.e. disappear from the scene.
+  --- @return #CARGO_GROUP Cargo group object.
   function CARGO_GROUP:New( CargoGroup, Type, Name, LoadRadius, NearRadius )
   
     -- Inherit CAROG_REPORTABLE
@@ -138,7 +138,7 @@ do -- CARGO_GROUP
 
 
   --- Respawn the CargoGroup.
-  -- @param #CARGO_GROUP self
+  --- @param #CARGO_GROUP self
   function CARGO_GROUP:Respawn()
 
     self:F( { "Respawning" } )
@@ -170,7 +170,7 @@ do -- CARGO_GROUP
   -- This is required because by default a group will move in formation and this is really an issue for group control.
   -- Therefore this method is made to be able to ungroup a group.
   -- This works for ground only groups.
-  -- @param #CARGO_GROUP self
+  --- @param #CARGO_GROUP self
   function CARGO_GROUP:Ungroup()
 
     if self.Grouped == true then
@@ -219,7 +219,7 @@ do -- CARGO_GROUP
   -- This is required because by default a group will move in formation and this is really an issue for group control.
   -- Therefore this method is made to be able to regroup a group.
   -- This works for ground only groups.
-  -- @param #CARGO_GROUP self
+  --- @param #CARGO_GROUP self
   function CARGO_GROUP:Regroup()
   
     self:F("Regroup")
@@ -263,7 +263,7 @@ do -- CARGO_GROUP
 
 
   --- @param #CARGO_GROUP self
-  -- @param Core.Event#EVENTDATA EventData 
+  --- @param Core.Event#EVENTDATA EventData 
   function CARGO_GROUP:OnEventCargoDead( EventData )
   
     self:E(EventData)
@@ -297,12 +297,12 @@ do -- CARGO_GROUP
   end
 
   --- After Board Event.
-  -- @param #CARGO_GROUP self
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Wrapper.Unit#UNIT CargoCarrier
-  -- @param #number NearRadius If distance is smaller than this number, cargo is loaded into the carrier.
+  --- @param #CARGO_GROUP self
+  --- @param #string Event
+  --- @param #string From
+  --- @param #string To
+  --- @param Wrapper.Unit#UNIT CargoCarrier
+  --- @param #number NearRadius If distance is smaller than this number, cargo is loaded into the carrier.
   function CARGO_GROUP:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ... )
     self:F( { CargoCarrier.UnitName, From, Event, To, NearRadius = NearRadius } )
     
@@ -323,11 +323,11 @@ do -- CARGO_GROUP
   end
 
   --- Enter Loaded State.
-  -- @param #CARGO_GROUP self
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Wrapper.Unit#UNIT CargoCarrier
+  --- @param #CARGO_GROUP self
+  --- @param #string Event
+  --- @param #string From
+  --- @param #string To
+  --- @param Wrapper.Unit#UNIT CargoCarrier
   function CARGO_GROUP:onafterLoad( From, Event, To, CargoCarrier, ... )
     --self:F( { From, Event, To, CargoCarrier, ...} )
     
@@ -347,12 +347,12 @@ do -- CARGO_GROUP
   end
 
   --- Leave Boarding State.
-  -- @param #CARGO_GROUP self  
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Wrapper.Unit#UNIT CargoCarrier
-  -- @param #number NearRadius If distance is smaller than this number, cargo is loaded into the carrier.
+  --- @param #CARGO_GROUP self  
+  --- @param #string Event
+  --- @param #string From
+  --- @param #string To
+  --- @param Wrapper.Unit#UNIT CargoCarrier
+  --- @param #number NearRadius If distance is smaller than this number, cargo is loaded into the carrier.
   function CARGO_GROUP:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
     --self:F( { CargoCarrier.UnitName, From, Event, To } )
   
@@ -401,12 +401,12 @@ do -- CARGO_GROUP
   end
 
   --- Enter UnBoarding State.
-  -- @param #CARGO_GROUP self
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Core.Point#POINT_VEC2 ToPointVec2
-  -- @param #number NearRadius If distance is smaller than this number, cargo is loaded into the carrier.
+  --- @param #CARGO_GROUP self
+  --- @param #string Event
+  --- @param #string From
+  --- @param #string To
+  --- @param Core.Point#POINT_VEC2 ToPointVec2
+  --- @param #number NearRadius If distance is smaller than this number, cargo is loaded into the carrier.
   function CARGO_GROUP:onafterUnBoard( From, Event, To, ToPointVec2, NearRadius, ... )
     self:F( {From, Event, To, ToPointVec2, NearRadius } )
   
@@ -444,12 +444,12 @@ do -- CARGO_GROUP
   end
 
   --- Leave UnBoarding State.
-  -- @param #CARGO_GROUP self
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Core.Point#POINT_VEC2 ToPointVec2
-  -- @param #number NearRadius If distance is smaller than this number, cargo is loaded into the carrier.
+  --- @param #CARGO_GROUP self
+  --- @param #string Event
+  --- @param #string From
+  --- @param #string To
+  --- @param Core.Point#POINT_VEC2 ToPointVec2
+  --- @param #number NearRadius If distance is smaller than this number, cargo is loaded into the carrier.
   function CARGO_GROUP:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
     --self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
@@ -482,11 +482,11 @@ do -- CARGO_GROUP
   end
 
   --- Enter UnLoaded State.
-  -- @param #CARGO_GROUP self
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Core.Point#POINT_VEC2 ToPointVec2
+  --- @param #CARGO_GROUP self
+  --- @param #string Event
+  --- @param #string From
+  --- @param #string To
+  --- @param Core.Point#POINT_VEC2 ToPointVec2
   function CARGO_GROUP:onafterUnLoad( From, Event, To, ToPointVec2, ... )
     --self:F( { From, Event, To, ToPointVec2 } )
   
@@ -513,9 +513,9 @@ do -- CARGO_GROUP
 
 
   --- Get the current Coordinate of the CargoGroup.
-  -- @param #CARGO_GROUP self
-  -- @return Core.Point#COORDINATE The current Coordinate of the first Cargo of the CargoGroup.
-  -- @return #nil There is no valid Cargo in the CargoGroup.
+  --- @param #CARGO_GROUP self
+  --- @return Core.Point#COORDINATE The current Coordinate of the first Cargo of the CargoGroup.
+  --- @return #nil There is no valid Cargo in the CargoGroup.
   function CARGO_GROUP:GetCoordinate()
     local Cargo = self:GetFirstAlive() -- Cargo.Cargo#CARGO
     
@@ -527,8 +527,8 @@ do -- CARGO_GROUP
   end
 
   --- Get the x position of the cargo.
-  -- @param #CARGO_GROUP self
-  -- @return #number
+  --- @param #CARGO_GROUP self
+  --- @return #number
   function CARGO:GetX()
 
     local Cargo = self:GetFirstAlive() -- Cargo.Cargo#CARGO
@@ -541,8 +541,8 @@ do -- CARGO_GROUP
   end
   
   --- Get the y position of the cargo.
-  -- @param #CARGO_GROUP self
-  -- @return #number
+  --- @param #CARGO_GROUP self
+  --- @return #number
   function CARGO:GetY()
 
     local Cargo = self:GetFirstAlive() -- Cargo.Cargo#CARGO
@@ -557,9 +557,9 @@ do -- CARGO_GROUP
 
 
   --- Check if the CargoGroup is alive.
-  -- @param #CARGO_GROUP self
-  -- @return #boolean true if the CargoGroup is alive.
-  -- @return #boolean false if the CargoGroup is dead.
+  --- @param #CARGO_GROUP self
+  --- @return #boolean true if the CargoGroup is alive.
+  --- @return #boolean false if the CargoGroup is dead.
   function CARGO_GROUP:IsAlive()
 
     local Cargo = self:GetFirstAlive() -- Cargo.Cargo#CARGO
@@ -569,8 +569,8 @@ do -- CARGO_GROUP
 
   
   --- Get the first alive Cargo Unit of the Cargo Group.
-  -- @param #CARGO_GROUP self
-  -- @return #CARGO_GROUP
+  --- @param #CARGO_GROUP self
+  --- @return #CARGO_GROUP
   function CARGO_GROUP:GetFirstAlive()
     
     local CargoFirstAlive = nil
@@ -586,16 +586,16 @@ do -- CARGO_GROUP
 
   
   --- Get the amount of cargo units in the group.
-  -- @param #CARGO_GROUP self
-  -- @return #CARGO_GROUP
+  --- @param #CARGO_GROUP self
+  --- @return #CARGO_GROUP
   function CARGO_GROUP:GetCount()
     return self.CargoSet:Count()
   end
 
 
   --- Get the amount of cargo units in the group.
-  -- @param #CARGO_GROUP self
-  -- @return #CARGO_GROUP
+  --- @param #CARGO_GROUP self
+  --- @return #CARGO_GROUP
   function CARGO_GROUP:GetGroup( Cargo )
     local Cargo = Cargo or self:GetFirstAlive() -- Cargo.Cargo#CARGO
     return Cargo.CargoObject:GetGroup()
@@ -603,8 +603,8 @@ do -- CARGO_GROUP
 
 
   --- Route Cargo to Coordinate and randomize locations.
-  -- @param #CARGO_GROUP self
-  -- @param Core.Point#COORDINATE Coordinate
+  --- @param #CARGO_GROUP self
+  --- @param Core.Point#COORDINATE Coordinate
   function CARGO_GROUP:RouteTo( Coordinate )
     --self:F( {Coordinate = Coordinate } )
     
@@ -619,10 +619,10 @@ do -- CARGO_GROUP
   
   --- Check if Cargo is near to the Carrier.
   -- The Cargo is near to the Carrier if the first unit of the Cargo Group is within NearRadius.
-  -- @param #CARGO_GROUP self
-  -- @param Wrapper.Group#GROUP CargoCarrier
-  -- @param #number NearRadius
-  -- @return #boolean The Cargo is near to the Carrier or #nil if the Cargo is not near to the Carrier.
+  --- @param #CARGO_GROUP self
+  --- @param Wrapper.Group#GROUP CargoCarrier
+  --- @param #number NearRadius
+  --- @return #boolean The Cargo is near to the Carrier or #nil if the Cargo is not near to the Carrier.
   function CARGO_GROUP:IsNear( CargoCarrier, NearRadius )
     self:F( {NearRadius = NearRadius } )
     
@@ -640,9 +640,9 @@ do -- CARGO_GROUP
   end
 
   --- Check if Cargo Group is in the radius for the Cargo to be Boarded.
-  -- @param #CARGO_GROUP self
-  -- @param Core.Point#COORDINATE Coordinate
-  -- @return #boolean true if the Cargo Group is within the load radius.
+  --- @param #CARGO_GROUP self
+  --- @param Core.Point#COORDINATE Coordinate
+  --- @return #boolean true if the Cargo Group is within the load radius.
   function CARGO_GROUP:IsInLoadRadius( Coordinate )
     --self:F( { Coordinate } )
   
@@ -678,9 +678,9 @@ do -- CARGO_GROUP
 
 
   --- Check if Cargo Group is in the report radius.
-  -- @param #CARGO_GROUP self
-  -- @param Core.Point#Coordinate Coordinate
-  -- @return #boolean true if the Cargo Group is within the report radius.
+  --- @param #CARGO_GROUP self
+  --- @param Core.Point#Coordinate Coordinate
+  --- @return #boolean true if the Cargo Group is within the report radius.
   function CARGO_GROUP:IsInReportRadius( Coordinate )
     --self:F( { Coordinate } )
   
@@ -704,8 +704,8 @@ do -- CARGO_GROUP
 
 
   --- Signal a flare at the position of the CargoGroup.
-  -- @param #CARGO_GROUP self
-  -- @param Utilities.Utils#FLARECOLOR FlareColor
+  --- @param #CARGO_GROUP self
+  --- @param Utilities.Utils#FLARECOLOR FlareColor
   function CARGO_GROUP:Flare( FlareColor )
 
     local Cargo = self.CargoSet:GetFirst() -- Cargo.Cargo#CARGO
@@ -715,9 +715,9 @@ do -- CARGO_GROUP
   end
   
   --- Smoke the CargoGroup.
-  -- @param #CARGO_GROUP self
-  -- @param Utilities.Utils#SMOKECOLOR SmokeColor The color of the smoke.
-  -- @param #number Radius The radius of randomization around the center of the first element of the CargoGroup.
+  --- @param #CARGO_GROUP self
+  --- @param Utilities.Utils#SMOKECOLOR SmokeColor The color of the smoke.
+  --- @param #number Radius The radius of randomization around the center of the first element of the CargoGroup.
   function CARGO_GROUP:Smoke( SmokeColor, Radius )
 
     local Cargo = self.CargoSet:GetFirst() -- Cargo.Cargo#CARGO
@@ -728,10 +728,10 @@ do -- CARGO_GROUP
   end
   
   --- Check if the first element of the CargoGroup is the given @{Core.Zone}.
-  -- @param #CARGO_GROUP self
-  -- @param Core.Zone#ZONE_BASE Zone
-  -- @return #boolean **true** if the first element of the CargoGroup is in the Zone
-  -- @return #boolean **false** if there is no element of the CargoGroup in the Zone.
+  --- @param #CARGO_GROUP self
+  --- @param Core.Zone#ZONE_BASE Zone
+  --- @return #boolean **true** if the first element of the CargoGroup is in the Zone
+  --- @return #boolean **false** if there is no element of the CargoGroup in the Zone.
   function CARGO_GROUP:IsInZone( Zone )
     --self:F( { Zone } )
   
@@ -746,8 +746,8 @@ do -- CARGO_GROUP
   end
 
   --- Get the transportation method of the Cargo.
-  -- @param #CARGO_GROUP self
-  -- @return #string The transportation method of the Cargo.
+  --- @param #CARGO_GROUP self
+  --- @return #string The transportation method of the Cargo.
   function CARGO_GROUP:GetTransportationMethod()
     if self:IsLoaded() then
       return "for unboarding"

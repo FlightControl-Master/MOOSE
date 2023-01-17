@@ -25,7 +25,7 @@
 do -- Sound Base
 
   --- @type SOUNDBASE
-  -- @field #string ClassName Name of the class.
+  --- @field #string ClassName Name of the class.
   -- @extends Core.Base#BASE
 
 
@@ -33,14 +33,14 @@ do -- Sound Base
   -- 
   -- This class is **not** meant to be used by "ordinary" users.
   -- 
-  -- @field #SOUNDBASE
+  --- @field #SOUNDBASE
   SOUNDBASE={
     ClassName   = "SOUNDBASE",
   }
   
   --- Constructor to create a new SOUNDBASE object.
-  -- @param #SOUNDBASE self
-  -- @return #SOUNDBASE self
+  --- @param #SOUNDBASE self
+  --- @return #SOUNDBASE self
   function SOUNDBASE:New()
   
     -- Inherit BASE.
@@ -60,9 +60,9 @@ do -- Sound Base
   -- 
   -- * (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
   -- 
-  -- @param #string Text The text string to analyze.
-  -- @param #number Speed Speed factor. Default 1.
-  -- @param #boolean isGoogle If true, google text-to-speech is used.
+  --- @param #string Text The text string to analyze.
+  --- @param #number Speed Speed factor. Default 1.
+  --- @param #boolean isGoogle If true, google text-to-speech is used.
   function SOUNDBASE:GetSpeechTime(length,speed,isGoogle)
   
     local maxRateRatio = 3 
@@ -101,13 +101,13 @@ end
 do -- Sound File
 
   --- @type SOUNDFILE
-  -- @field #string ClassName Name of the class
-  -- @field #string filename Name of the flag.
-  -- @field #string path Directory path, where the sound file is located. This includes the final slash "/".
-  -- @field #string duration Duration of the sound file in seconds.
-  -- @field #string subtitle Subtitle of the transmission.
-  -- @field #number subduration Duration in seconds how long the subtitle is displayed.
-  -- @field #boolean useSRS If true, sound file is played via SRS. Sound file needs to be on local disk not inside the miz file!
+  --- @field #string ClassName Name of the class
+  --- @field #string filename Name of the flag.
+  --- @field #string path Directory path, where the sound file is located. This includes the final slash "/".
+  --- @field #string duration Duration of the sound file in seconds.
+  --- @field #string subtitle Subtitle of the transmission.
+  --- @field #number subduration Duration in seconds how long the subtitle is displayed.
+  --- @field #boolean useSRS If true, sound file is played via SRS. Sound file needs to be on local disk not inside the miz file!
   -- @extends Core.Base#BASE
 
 
@@ -144,7 +144,7 @@ do -- Sound File
   -- 
   -- SRS sound files need to be located on your local drive (not inside the miz). Therefore, you need to specify the full path.
   -- 
-  -- @field #SOUNDFILE
+  --- @field #SOUNDFILE
   SOUNDFILE={
     ClassName   = "SOUNDFILE",
     filename    =  nil,
@@ -156,11 +156,11 @@ do -- Sound File
   }
   
   --- Constructor to create a new SOUNDFILE object.
-  -- @param #SOUNDFILE self
-  -- @param #string FileName The name of the sound file, e.g. "Hello World.ogg".
-  -- @param #string Path The path of the directory, where the sound file is located. Default is "l10n/DEFAULT/" within the miz file.
-  -- @param #number Duration Duration in seconds, how long it takes to play the sound file. Default is 3 seconds.
-  -- @return #SOUNDFILE self
+  --- @param #SOUNDFILE self
+  --- @param #string FileName The name of the sound file, e.g. "Hello World.ogg".
+  --- @param #string Path The path of the directory, where the sound file is located. Default is "l10n/DEFAULT/" within the miz file.
+  --- @param #number Duration Duration in seconds, how long it takes to play the sound file. Default is 3 seconds.
+  --- @return #SOUNDFILE self
   function SOUNDFILE:New(FileName, Path, Duration)
   
     -- Inherit BASE.
@@ -182,9 +182,9 @@ do -- Sound File
   end
   
   --- Set path, where the sound file is located.
-  -- @param #SOUNDFILE self
-  -- @param #string Path Path to the directory, where the sound file is located. In case this is nil, it defaults to the DCS mission temp directory.
-  -- @return #SOUNDFILE self
+  --- @param #SOUNDFILE self
+  --- @param #string Path Path to the directory, where the sound file is located. In case this is nil, it defaults to the DCS mission temp directory.
+  --- @return #SOUNDFILE self
   function SOUNDFILE:SetPath(Path)
     
     -- Init path.
@@ -208,17 +208,17 @@ do -- Sound File
   end  
 
   --- Get path of the directory, where the sound file is located.
-  -- @param #SOUNDFILE self
-  -- @return #string Path.
+  --- @param #SOUNDFILE self
+  --- @return #string Path.
   function SOUNDFILE:GetPath()
     local path=self.path or "l10n/DEFAULT/"
     return path
   end
 
   --- Set sound file name. This must be a .ogg or .mp3 file!
-  -- @param #SOUNDFILE self
-  -- @param #string FileName Name of the file. Default is "Hello World.mp3".
-  -- @return #SOUNDFILE self
+  --- @param #SOUNDFILE self
+  --- @param #string FileName Name of the file. Default is "Hello World.mp3".
+  --- @return #SOUNDFILE self
   function SOUNDFILE:SetFileName(FileName)
     --TODO: check that sound file is really .ogg or .mp3
     self.filename=FileName or "Hello World.mp3"
@@ -226,32 +226,32 @@ do -- Sound File
   end
 
   --- Get the sound file name.
-  -- @param #SOUNDFILE self
-  -- @return #string Name of the soud file. This does *not* include its path.
+  --- @param #SOUNDFILE self
+  --- @return #string Name of the soud file. This does *not* include its path.
   function SOUNDFILE:GetFileName()    
     return self.filename
   end
 
 
   --- Set duration how long it takes to play the sound file.
-  -- @param #SOUNDFILE self
-  -- @param #string Duration Duration in seconds. Default 3 seconds.
-  -- @return #SOUNDFILE self
+  --- @param #SOUNDFILE self
+  --- @param #string Duration Duration in seconds. Default 3 seconds.
+  --- @return #SOUNDFILE self
   function SOUNDFILE:SetDuration(Duration)
     self.duration=Duration or 3
     return self
   end  
 
   --- Get duration how long the sound file takes to play.
-  -- @param #SOUNDFILE self
-  -- @return #number Duration in seconds.
+  --- @param #SOUNDFILE self
+  --- @return #number Duration in seconds.
   function SOUNDFILE:GetDuration()
     return self.duration or 3
   end
 
   --- Get the complete sound file name inlcuding its path.
-  -- @param #SOUNDFILE self
-  -- @return #string Name of the sound file.
+  --- @param #SOUNDFILE self
+  --- @return #string Name of the sound file.
   function SOUNDFILE:GetName()
     local path=self:GetPath()
     local filename=self:GetFileName()
@@ -260,9 +260,9 @@ do -- Sound File
   end
   
   --- Set whether sound files should be played via SRS.
-  -- @param #SOUNDFILE self
-  -- @param #boolean Switch If true or nil, use SRS. If false, use DCS transmission.
-  -- @return #SOUNDFILE self
+  --- @param #SOUNDFILE self
+  --- @param #boolean Switch If true or nil, use SRS. If false, use DCS transmission.
+  --- @return #SOUNDFILE self
   function SOUNDFILE:SetPlayWithSRS(Switch)
     if Switch==true or Switch==nil then
       self.useSRS=true
@@ -277,12 +277,12 @@ end
 do -- Text-To-Speech
 
   --- @type SOUNDTEXT
-  -- @field #string ClassName Name of the class
-  -- @field #string text Text to speak.
-  -- @field #number duration Duration in seconds.
-  -- @field #string gender Gender: "male", "female".
-  -- @field #string culture Culture, e.g. "en-GB".
-  -- @field #string voice Specific voice to use. Overrules `gender` and `culture` settings.
+  --- @field #string ClassName Name of the class
+  --- @field #string text Text to speak.
+  --- @field #number duration Duration in seconds.
+  --- @field #string gender Gender: "male", "female".
+  --- @field #string culture Culture, e.g. "en-GB".
+  --- @field #string voice Specific voice to use. Overrules `gender` and `culture` settings.
   -- @extends Core.Base#BASE
 
 
@@ -327,16 +327,16 @@ do -- Text-To-Speech
   -- 
   -- Note that this must be installed on your windos machine. Also note that this overrides any culture and gender settings.
   -- 
-  -- @field #SOUNDTEXT
+  --- @field #SOUNDTEXT
   SOUNDTEXT={
     ClassName   = "SOUNDTEXT",
   }
   
   --- Constructor to create a new SOUNDTEXT object.
-  -- @param #SOUNDTEXT self
-  -- @param #string Text The text to speak.
-  -- @param #number Duration Duration in seconds, how long it takes to play the text. Default is 3 seconds.
-  -- @return #SOUNDTEXT self
+  --- @param #SOUNDTEXT self
+  --- @param #string Text The text to speak.
+  --- @param #number Duration Duration in seconds, how long it takes to play the text. Default is 3 seconds.
+  --- @return #SOUNDTEXT self
   function SOUNDTEXT:New(Text, Duration)
   
     -- Inherit BASE.
@@ -354,9 +354,9 @@ do -- Text-To-Speech
   end
   
   --- Set text.
-  -- @param #SOUNDTEXT self
-  -- @param #string Text Text to speak. Default "Hello World!".
-  -- @return #SOUNDTEXT self
+  --- @param #SOUNDTEXT self
+  --- @param #string Text Text to speak. Default "Hello World!".
+  --- @return #SOUNDTEXT self
   function SOUNDTEXT:SetText(Text)
     
     self.text=Text or "Hello World!"
@@ -365,9 +365,9 @@ do -- Text-To-Speech
   end
   
   --- Set duration, how long it takes to speak the text.
-  -- @param #SOUNDTEXT self
-  -- @param #number Duration Duration in seconds. Default 3 seconds.
-  -- @return #SOUNDTEXT self
+  --- @param #SOUNDTEXT self
+  --- @param #number Duration Duration in seconds. Default 3 seconds.
+  --- @return #SOUNDTEXT self
   function SOUNDTEXT:SetDuration(Duration)
     
     self.duration=Duration or 3
@@ -376,9 +376,9 @@ do -- Text-To-Speech
   end    
   
   --- Set gender.
-  -- @param #SOUNDTEXT self
-  -- @param #string Gender Gender: "male" or "female" (default).
-  -- @return #SOUNDTEXT self
+  --- @param #SOUNDTEXT self
+  --- @param #string Gender Gender: "male" or "female" (default).
+  --- @return #SOUNDTEXT self
   function SOUNDTEXT:SetGender(Gender)
     
     self.gender=Gender or "female"
@@ -387,9 +387,9 @@ do -- Text-To-Speech
   end
   
   --- Set TTS culture - local for the voice.
-  -- @param #SOUNDTEXT self
-  -- @param #string Culture TTS culture. Default "en-GB".
-  -- @return #SOUNDTEXT self
+  --- @param #SOUNDTEXT self
+  --- @param #string Culture TTS culture. Default "en-GB".
+  --- @return #SOUNDTEXT self
   function SOUNDTEXT:SetCulture(Culture)
     
     self.culture=Culture or "en-GB"
@@ -399,9 +399,9 @@ do -- Text-To-Speech
   
   --- Set to use a specific voice name.
   -- See the list from `DCS-SR-ExternalAudio.exe --help` or if using google see [google voices](https://cloud.google.com/text-to-speech/docs/voices).
-  -- @param #SOUNDTEXT self
-  -- @param #string VoiceName Voice name. Note that this will overrule `Gender` and `Culture`.
-  -- @return #SOUNDTEXT self
+  --- @param #SOUNDTEXT self
+  --- @param #string VoiceName Voice name. Note that this will overrule `Gender` and `Culture`.
+  --- @return #SOUNDTEXT self
   function SOUNDTEXT:SetVoice(VoiceName)
     
     self.voice=VoiceName

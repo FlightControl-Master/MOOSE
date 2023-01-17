@@ -458,86 +458,86 @@ function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS, Port, 
 
   --- Triggers the FSM event "Start".
   -- @function [parent=#FLIGHTCONTROL] Start
-  -- @param #FLIGHTCONTROL self
+  --- @param #FLIGHTCONTROL self
 
   --- Triggers the FSM event "Start" after a delay.
   -- @function [parent=#FLIGHTCONTROL] __Start
-  -- @param #FLIGHTCONTROL self
-  -- @param #number delay Delay in seconds.
+  --- @param #FLIGHTCONTROL self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Stop".
   -- @function [parent=#FLIGHTCONTROL] Stop
-  -- @param #FLIGHTCONTROL self
+  --- @param #FLIGHTCONTROL self
 
   --- Triggers the FSM event "Stop" after a delay.
   -- @function [parent=#FLIGHTCONTROL] __Stop
-  -- @param #FLIGHTCONTROL self
-  -- @param #number delay Delay in seconds.
+  --- @param #FLIGHTCONTROL self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "StatusUpdate".
   -- @function [parent=#FLIGHTCONTROL] StatusUpdate
-  -- @param #FLIGHTCONTROL self
+  --- @param #FLIGHTCONTROL self
 
   --- Triggers the FSM event "StatusUpdate" after a delay.
   -- @function [parent=#FLIGHTCONTROL] __StatusUpdate
-  -- @param #FLIGHTCONTROL self
-  -- @param #number delay Delay in seconds.
+  --- @param #FLIGHTCONTROL self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "RunwayDestroyed".
   -- @function [parent=#FLIGHTCONTROL] RunwayDestroyed
-  -- @param #FLIGHTCONTROL self
+  --- @param #FLIGHTCONTROL self
 
   --- Triggers the FSM event "RunwayDestroyed" after a delay.
   -- @function [parent=#FLIGHTCONTROL] __RunwayDestroyed
-  -- @param #FLIGHTCONTROL self
-  -- @param #number delay Delay in seconds.
+  --- @param #FLIGHTCONTROL self
+  --- @param #number delay Delay in seconds.
 
   --- On after "RunwayDestroyed" event.
   -- @function [parent=#FLIGHTCONTROL] OnAfterRunwayDestroyed
-  -- @param #FLIGHTCONTROL self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #FLIGHTCONTROL self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "RunwayRepaired".
   -- @function [parent=#FLIGHTCONTROL] RunwayRepaired
-  -- @param #FLIGHTCONTROL self
+  --- @param #FLIGHTCONTROL self
 
   --- Triggers the FSM event "RunwayRepaired" after a delay.
   -- @function [parent=#FLIGHTCONTROL] __RunwayRepaired
-  -- @param #FLIGHTCONTROL self
-  -- @param #number delay Delay in seconds.
+  --- @param #FLIGHTCONTROL self
+  --- @param #number delay Delay in seconds.
 
   --- On after "RunwayRepaired" event.
   -- @function [parent=#FLIGHTCONTROL] OnAfterRunwayRepaired
-  -- @param #FLIGHTCONTROL self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #FLIGHTCONTROL self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "PlayerSpeeding".
   -- @function [parent=#FLIGHTCONTROL] PlayerSpeeding
-  -- @param #FLIGHTCONTROL self
-  -- @param Ops.FlightGroup#FLIGHTGROUP.PlayerData Player data.
+  --- @param #FLIGHTCONTROL self
+  --- @param Ops.FlightGroup#FLIGHTGROUP.PlayerData Player data.
 
   --- Triggers the FSM event "PlayerSpeeding" after a delay.
   -- @function [parent=#FLIGHTCONTROL] __PlayerSpeeding
-  -- @param #FLIGHTCONTROL self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.FlightGroup#FLIGHTGROUP.PlayerData Player data.
+  --- @param #FLIGHTCONTROL self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.FlightGroup#FLIGHTGROUP.PlayerData Player data.
 
   --- On after "PlayerSpeeding" event.
   -- @function [parent=#FLIGHTCONTROL] OnAfterPlayerSpeeding
-  -- @param #FLIGHTCONTROL self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.FlightGroup#FLIGHTGROUP.PlayerData Player data.
+  --- @param #FLIGHTCONTROL self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.FlightGroup#FLIGHTGROUP.PlayerData Player data.
 
 
   return self  

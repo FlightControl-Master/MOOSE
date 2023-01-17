@@ -62,11 +62,11 @@ do -- TASK_CAPTURE_DISPATCHER
   --- TASK_CAPTURE_DISPATCHER class.
   --- @type TASK_CAPTURE_DISPATCHER
   -- @extends Tasking.Task_Manager#TASK_MANAGER
-  -- @field TASK_CAPTURE_DISPATCHER.ZONE ZONE
+  --- @field TASK_CAPTURE_DISPATCHER.ZONE ZONE
 
   --- @type TASK_CAPTURE_DISPATCHER.CSAR
-  -- @field Wrapper.Unit#UNIT PilotUnit
-  -- @field Tasking.Task#TASK Task
+  --- @field Wrapper.Unit#UNIT PilotUnit
+  --- @field Tasking.Task#TASK Task
   
 
   --- Implements the dynamic dispatching of capture zone tasks.
@@ -160,7 +160,7 @@ do -- TASK_CAPTURE_DISPATCHER
   -- 
   --     
   -- 
-  -- @field #TASK_CAPTURE_DISPATCHER
+  --- @field #TASK_CAPTURE_DISPATCHER
   TASK_CAPTURE_DISPATCHER = {
     ClassName = "TASK_CAPTURE_DISPATCHER",
     Mission = nil,
@@ -174,10 +174,10 @@ do -- TASK_CAPTURE_DISPATCHER
   TASK_CAPTURE_DISPATCHER.AI_A2G_Dispatcher = nil -- AI.AI_A2G_Dispatcher#AI_A2G_DISPATCHER
   
   --- TASK_CAPTURE_DISPATCHER constructor.
-  -- @param #TASK_CAPTURE_DISPATCHER self
-  -- @param Tasking.Mission#MISSION Mission The mission for which the task dispatching is done.
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups that can join the tasks within the mission.
-  -- @return #TASK_CAPTURE_DISPATCHER self
+  --- @param #TASK_CAPTURE_DISPATCHER self
+  --- @param Tasking.Mission#MISSION Mission The mission for which the task dispatching is done.
+  --- @param Core.Set#SET_GROUP SetGroup The set of groups that can join the tasks within the mission.
+  --- @return #TASK_CAPTURE_DISPATCHER self
   function TASK_CAPTURE_DISPATCHER:New( Mission, SetGroup )
   
     -- Inherits from DETECTION_MANAGER
@@ -197,8 +197,8 @@ do -- TASK_CAPTURE_DISPATCHER
 
   --- Link a task capture dispatcher from the other coalition to understand its plan for defenses.
   -- This is used for the tactical overview, so the players also know the zones attacked by the other coalition!
-  -- @param #TASK_CAPTURE_DISPATCHER self
-  -- @param #TASK_CAPTURE_DISPATCHER DefenseTaskCaptureDispatcher
+  --- @param #TASK_CAPTURE_DISPATCHER self
+  --- @param #TASK_CAPTURE_DISPATCHER DefenseTaskCaptureDispatcher
   function TASK_CAPTURE_DISPATCHER:SetDefenseTaskCaptureDispatcher( DefenseTaskCaptureDispatcher )
   
     self.DefenseTaskCaptureDispatcher = DefenseTaskCaptureDispatcher
@@ -207,8 +207,8 @@ do -- TASK_CAPTURE_DISPATCHER
 
   --- Get the linked task capture dispatcher from the other coalition to understand its plan for defenses.
   -- This is used for the tactical overview, so the players also know the zones attacked by the other coalition!
-  -- @param #TASK_CAPTURE_DISPATCHER self
-  -- @return #TASK_CAPTURE_DISPATCHER
+  --- @param #TASK_CAPTURE_DISPATCHER self
+  --- @return #TASK_CAPTURE_DISPATCHER
   function TASK_CAPTURE_DISPATCHER:GetDefenseTaskCaptureDispatcher()
   
     return self.DefenseTaskCaptureDispatcher
@@ -217,8 +217,8 @@ do -- TASK_CAPTURE_DISPATCHER
 
   --- Link an AI A2G dispatcher from the other coalition to understand its plan for defenses.
   -- This is used for the tactical overview, so the players also know the zones attacked by the other AI A2G dispatcher!
-  -- @param #TASK_CAPTURE_DISPATCHER self
-  -- @param AI.AI_A2G_Dispatcher#AI_A2G_DISPATCHER DefenseAIA2GDispatcher
+  --- @param #TASK_CAPTURE_DISPATCHER self
+  --- @param AI.AI_A2G_Dispatcher#AI_A2G_DISPATCHER DefenseAIA2GDispatcher
   function TASK_CAPTURE_DISPATCHER:SetDefenseAIA2GDispatcher( DefenseAIA2GDispatcher )
   
     self.DefenseAIA2GDispatcher = DefenseAIA2GDispatcher
@@ -227,8 +227,8 @@ do -- TASK_CAPTURE_DISPATCHER
 
   --- Get the linked AI A2G dispatcher from the other coalition to understand its plan for defenses.
   -- This is used for the tactical overview, so the players also know the zones attacked by the AI A2G dispatcher!
-  -- @param #TASK_CAPTURE_DISPATCHER self
-  -- @return AI.AI_A2G_Dispatcher#AI_A2G_DISPATCHER
+  --- @param #TASK_CAPTURE_DISPATCHER self
+  --- @return AI.AI_A2G_Dispatcher#AI_A2G_DISPATCHER
   function TASK_CAPTURE_DISPATCHER:GetDefenseAIA2GDispatcher()
   
     return self.DefenseAIA2GDispatcher
@@ -236,13 +236,13 @@ do -- TASK_CAPTURE_DISPATCHER
 
 
   --- Add a capture zone task.
-  -- @param #TASK_CAPTURE_DISPATCHER self
-  -- @param #string TaskPrefix (optional) The prefix of the capture zone task. 
+  --- @param #TASK_CAPTURE_DISPATCHER self
+  --- @param #string TaskPrefix (optional) The prefix of the capture zone task. 
   -- If no TaskPrefix is given, then "Capture" will be used as the TaskPrefix. 
   -- The TaskPrefix will be appended with a . + a number of 3 digits, if the TaskPrefix already exists in the task collection.
-  -- @param Functional.CaptureZoneCoalition#ZONE_CAPTURE_COALITION CaptureZone The zone of the coalition to be captured as the task goal.
-  -- @param #string Briefing The briefing of the task to be shown to the player.
-  -- @return Tasking.Task_Capture_Zone#TASK_CAPTURE_ZONE
+  --- @param Functional.CaptureZoneCoalition#ZONE_CAPTURE_COALITION CaptureZone The zone of the coalition to be captured as the task goal.
+  --- @param #string Briefing The briefing of the task to be shown to the player.
+  --- @return Tasking.Task_Capture_Zone#TASK_CAPTURE_ZONE
   -- @usage
   -- 
   --  
@@ -267,9 +267,9 @@ do -- TASK_CAPTURE_DISPATCHER
 
 
   --- Link an AI_A2G_DISPATCHER to the TASK_CAPTURE_DISPATCHER.
-  -- @param #TASK_CAPTURE_DISPATCHER self
-  -- @param AI.AI_A2G_Dispatcher#AI_A2G_DISPATCHER AI_A2G_Dispatcher The AI Dispatcher to be linked to the tasking. 
-  -- @return Tasking.Task_Capture_Zone#TASK_CAPTURE_ZONE
+  --- @param #TASK_CAPTURE_DISPATCHER self
+  --- @param AI.AI_A2G_Dispatcher#AI_A2G_DISPATCHER AI_A2G_Dispatcher The AI Dispatcher to be linked to the tasking. 
+  --- @return Tasking.Task_Capture_Zone#TASK_CAPTURE_ZONE
   function TASK_CAPTURE_DISPATCHER:Link_AI_A2G_Dispatcher( AI_A2G_Dispatcher )
 
     self.AI_A2G_Dispatcher = AI_A2G_Dispatcher -- AI.AI_A2G_Dispatcher#AI_A2G_DISPATCHER
@@ -280,8 +280,8 @@ do -- TASK_CAPTURE_DISPATCHER
 
 
   --- Assigns tasks to the @{Core.Set#SET_GROUP}.
-  -- @param #TASK_CAPTURE_DISPATCHER self
-  -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
+  --- @param #TASK_CAPTURE_DISPATCHER self
+  --- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function TASK_CAPTURE_DISPATCHER:ManageTasks()
     self:F()
   

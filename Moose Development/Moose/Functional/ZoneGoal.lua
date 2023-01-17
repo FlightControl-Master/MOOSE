@@ -18,12 +18,12 @@
 do -- Zone
 
   --- @type ZONE_GOAL
-  -- @field #string ClassName Name of the class.
-  -- @field Core.Goal#GOAL Goal The goal object.
-  -- @field #number SmokeTime Time stamp in seconds when the last smoke of the zone was triggered.
-  -- @field Core.Scheduler#SCHEDULER SmokeScheduler Scheduler responsible for smoking the zone.
-  -- @field #number SmokeColor Color of the smoke.
-  -- @field #boolean SmokeZone If true, smoke zone.
+  --- @field #string ClassName Name of the class.
+  --- @field Core.Goal#GOAL Goal The goal object.
+  --- @field #number SmokeTime Time stamp in seconds when the last smoke of the zone was triggered.
+  --- @field Core.Scheduler#SCHEDULER SmokeScheduler Scheduler responsible for smoking the zone.
+  --- @field #number SmokeColor Color of the smoke.
+  --- @field #boolean SmokeZone If true, smoke zone.
   -- @extends Core.Zone#ZONE_RADIUS
 
   --- Models processes that have a Goal with a defined achievement involving a Zone. 
@@ -43,7 +43,7 @@ do -- Zone
   -- 
   --   * DestroyedUnit: A @{Wrapper.Unit} is destroyed in the Zone. The event will only get triggered if the method @{#ZONE_GOAL.MonitorDestroyedUnits}() is used.
   -- 
-  -- @field #ZONE_GOAL
+  --- @field #ZONE_GOAL
   ZONE_GOAL = {
     ClassName      = "ZONE_GOAL",
     Goal           = nil,
@@ -54,9 +54,9 @@ do -- Zone
   }
 
   --- ZONE_GOAL Constructor.
-  -- @param #ZONE_GOAL self
-  -- @param Core.Zone#ZONE_RADIUS Zone A @{Core.Zone} object with the goal to be achieved. Alternatively, can be handed as the name of late activated group describing a ZONE_POLYGON with its waypoints.
-  -- @return #ZONE_GOAL
+  --- @param #ZONE_GOAL self
+  --- @param Core.Zone#ZONE_RADIUS Zone A @{Core.Zone} object with the goal to be achieved. Alternatively, can be handed as the name of late activated group describing a ZONE_POLYGON with its waypoints.
+  --- @return #ZONE_GOAL
   function ZONE_GOAL:New( Zone )
 
     BASE:I({Zone=Zone})
@@ -79,44 +79,44 @@ do -- Zone
 
     --- DestroyedUnit event.
     -- @function [parent=#ZONE_GOAL] DestroyedUnit
-    -- @param #ZONE_GOAL self
+    --- @param #ZONE_GOAL self
 
     --- DestroyedUnit delayed event
     -- @function [parent=#ZONE_GOAL] __DestroyedUnit
-    -- @param #ZONE_GOAL self
-    -- @param #number delay Delay in seconds.
+    --- @param #ZONE_GOAL self
+    --- @param #number delay Delay in seconds.
 
     --- DestroyedUnit Handler OnAfter for ZONE_GOAL
     -- @function [parent=#ZONE_GOAL] OnAfterDestroyedUnit
-    -- @param #ZONE_GOAL self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @param Wrapper.Unit#UNIT DestroyedUnit The destroyed unit.
-    -- @param #string PlayerName The name of the player.
+    --- @param #ZONE_GOAL self
+    --- @param #string From
+    --- @param #string Event
+    --- @param #string To
+    --- @param Wrapper.Unit#UNIT DestroyedUnit The destroyed unit.
+    --- @param #string PlayerName The name of the player.
 
     return self
   end
 
   --- Get the Zone.
-  -- @param #ZONE_GOAL self
-  -- @return #ZONE_GOAL
+  --- @param #ZONE_GOAL self
+  --- @return #ZONE_GOAL
   function ZONE_GOAL:GetZone()
     return self
   end
 
 
   --- Get the name of the Zone.
-  -- @param #ZONE_GOAL self
-  -- @return #string
+  --- @param #ZONE_GOAL self
+  --- @return #string
   function ZONE_GOAL:GetZoneName()
     return self:GetName()
   end
 
   --- Activate smoking of zone with the color or the current owner.
-  -- @param #ZONE_GOAL self
-  -- @param #boolean switch If *true* or *nil* activate smoke. If *false* or *nil*, no smoke.
-  -- @return #ZONE_GOAL
+  --- @param #ZONE_GOAL self
+  --- @param #boolean switch If *true* or *nil* activate smoke. If *false* or *nil*, no smoke.
+  --- @return #ZONE_GOAL
   function ZONE_GOAL:SetSmokeZone(switch)
     self.SmokeZone=switch
     --[[
@@ -130,8 +130,8 @@ do -- Zone
   end
 
   --- Set the smoke color.
-  -- @param #ZONE_GOAL self
-  -- @param DCS#SMOKECOLOR.Color SmokeColor
+  --- @param #ZONE_GOAL self
+  --- @param DCS#SMOKECOLOR.Color SmokeColor
   function ZONE_GOAL:Smoke( SmokeColor ) 
     self:F( { SmokeColor = SmokeColor} )
 
@@ -139,14 +139,14 @@ do -- Zone
   end
 
   --- Flare the zone boundary.
-  -- @param #ZONE_GOAL self
-  -- @param DCS#SMOKECOLOR.Color FlareColor
+  --- @param #ZONE_GOAL self
+  --- @param DCS#SMOKECOLOR.Color FlareColor
   function ZONE_GOAL:Flare( FlareColor )
     self:FlareZone( FlareColor, 30)
   end
 
   --- When started, check the Smoke and the Zone status.
-  -- @param #ZONE_GOAL self
+  --- @param #ZONE_GOAL self
   function ZONE_GOAL:onafterGuard()
     self:F("Guard")
 
@@ -157,7 +157,7 @@ do -- Zone
   end
 
   --- Check status Smoke.
-  -- @param #ZONE_GOAL self
+  --- @param #ZONE_GOAL self
   function ZONE_GOAL:StatusSmoke()
     self:F({self.SmokeTime, self.SmokeColor})
 
@@ -179,7 +179,7 @@ do -- Zone
   end
 
   --- @param #ZONE_GOAL self
-  -- @param Core.Event#EVENTDATA EventData Event data table.
+  --- @param Core.Event#EVENTDATA EventData Event data table.
   function ZONE_GOAL:__Destroyed( EventData )
     self:F( { "EventDead", EventData } )
 
@@ -209,7 +209,7 @@ do -- Zone
   end
 
   --- Activate the event UnitDestroyed to be fired when a unit is destroyed in the zone.
-  -- @param #ZONE_GOAL self
+  --- @param #ZONE_GOAL self
   function ZONE_GOAL:MonitorDestroyedUnits()
 
     self:HandleEvent( EVENTS.Dead,  self.__Destroyed )

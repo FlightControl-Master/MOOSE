@@ -73,12 +73,12 @@
 -- 
 -- Setup is a one-liner:
 --            
---            -- @param #string Alias Name of this instance.
---            -- @param #number Coalition Coalition as in coalition.side.BLUE, can also be passed as "blue", "red" or "neutral"
---            -- @param #string Pilottemplate Pilot template name.
---            -- @param #string Helotemplate Helicopter template name.
---            -- @param Wrapper.Airbase#AIRBASE FARP FARP object or Airbase from where to start.
---            -- @param Core.Zone#ZONE MASHZone Zone where to drop pilots after rescue.
+--            --- @param #string Alias Name of this instance.
+--            --- @param #number Coalition Coalition as in coalition.side.BLUE, can also be passed as "blue", "red" or "neutral"
+--            --- @param #string Pilottemplate Pilot template name.
+--            --- @param #string Helotemplate Helicopter template name.
+--            --- @param Wrapper.Airbase#AIRBASE FARP FARP object or Airbase from where to start.
+--            --- @param Core.Zone#ZONE MASHZone Zone where to drop pilots after rescue.
 --            local my_aicsar=AICSAR:New("Luftrettung",coalition.side.BLUE,"Downed Pilot","Rescue Helo",AIRBASE:FindByName("Test FARP"),ZONE:New("MASH"))
 --
 -- ## Options are
@@ -362,63 +362,63 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#AICSAR] Status
-  -- @param #AICSAR self
+  --- @param #AICSAR self
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#AICSAR] __Status
-  -- @param #AICSAR self
-  -- @param #number delay Delay in seconds.
+  --- @param #AICSAR self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Stop".
   -- @function [parent=#AICSAR] Stop
-  -- @param #AICSAR self
+  --- @param #AICSAR self
 
   --- Triggers the FSM event "Stop" after a delay.
   -- @function [parent=#AICSAR] __Stop
-  -- @param #AICSAR self
-  -- @param #number delay Delay in seconds.
+  --- @param #AICSAR self
+  --- @param #number delay Delay in seconds.
   
   --- On after "PilotDown" event.
   -- @function [parent=#AICSAR] OnAfterPilotDown
-  -- @param #AICSAR self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Core.Point#COORDINATE Coordinate Location of the pilot.
-  -- @param #boolean InReach True if in maxdistance else false. 
+  --- @param #AICSAR self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Core.Point#COORDINATE Coordinate Location of the pilot.
+  --- @param #boolean InReach True if in maxdistance else false. 
   
   --- On after "PilotPickedUp" event.
   -- @function [parent=#AICSAR] OnAfterPilotPickedUp
-  -- @param #AICSAR self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.FlightGroup#FLIGHTGROUP Helo
-  -- @param #table CargoTable of Ops.OpsGroup#OPSGROUP Cargo objects
-  -- @param #number Index  
+  --- @param #AICSAR self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.FlightGroup#FLIGHTGROUP Helo
+  --- @param #table CargoTable of Ops.OpsGroup#OPSGROUP Cargo objects
+  --- @param #number Index  
   
   --- On after "PilotRescued" event.
   -- @function [parent=#AICSAR] OnAfterPilotRescued
-  -- @param #AICSAR self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state. 
+  --- @param #AICSAR self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state. 
 
   --- On after "PilotKIA" event.
   -- @function [parent=#AICSAR] OnAfterPilotKIA
-  -- @param #AICSAR self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state. 
+  --- @param #AICSAR self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state. 
 
   --- On after "HeloDown" event.
   -- @function [parent=#AICSAR] OnAfterHeloDown
-  -- @param #AICSAR self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.FlightGroup#FLIGHTGROUP Helo
-  -- @param #number Index
+  --- @param #AICSAR self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.FlightGroup#FLIGHTGROUP Helo
+  --- @param #number Index
   
   return self
 end

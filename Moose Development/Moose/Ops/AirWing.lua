@@ -235,44 +235,44 @@ function AIRWING:New(warehousename, airwingname)
 
   --- Triggers the FSM event "Start". Starts the AIRWING. Initializes parameters and starts event handlers.
   -- @function [parent=#AIRWING] Start
-  -- @param #AIRWING self
+  --- @param #AIRWING self
 
   --- Triggers the FSM event "Start" after a delay. Starts the AIRWING. Initializes parameters and starts event handlers.
   -- @function [parent=#AIRWING] __Start
-  -- @param #AIRWING self
-  -- @param #number delay Delay in seconds.
+  --- @param #AIRWING self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Stop". Stops the AIRWING and all its event handlers.
-  -- @param #AIRWING self
+  --- @param #AIRWING self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the AIRWING and all its event handlers.
   -- @function [parent=#AIRWING] __Stop
-  -- @param #AIRWING self
-  -- @param #number delay Delay in seconds.
+  --- @param #AIRWING self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "FlightOnMission".
   -- @function [parent=#AIRWING] FlightOnMission
-  -- @param #AIRWING self
-  -- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FLIGHTGROUP on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #AIRWING self
+  --- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FLIGHTGROUP on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- Triggers the FSM event "FlightOnMission" after a delay.
   -- @function [parent=#AIRWING] __FlightOnMission
-  -- @param #AIRWING self
-  -- @param #number delay Delay in seconds.
-  -- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FLIGHTGROUP on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #AIRWING self
+  --- @param #number delay Delay in seconds.
+  --- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FLIGHTGROUP on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- On after "FlightOnMission" event.
   -- @function [parent=#AIRWING] OnAfterFlightOnMission
-  -- @param #AIRWING self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup  The FLIGHTGROUP on mission.
-  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  --- @param #AIRWING self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup  The FLIGHTGROUP on mission.
+  --- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   return self
 end

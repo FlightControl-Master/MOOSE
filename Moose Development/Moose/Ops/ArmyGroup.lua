@@ -145,250 +145,250 @@ function ARMYGROUP:New(group)
 
   --- Triggers the FSM event "Cruise".
   -- @function [parent=#ARMYGROUP] Cruise
-  -- @param #ARMYGROUP self
-  -- @param #number Speed Speed in knots until next waypoint is reached.
-  -- @param #number Formation Formation.
+  --- @param #ARMYGROUP self
+  --- @param #number Speed Speed in knots until next waypoint is reached.
+  --- @param #number Formation Formation.
 
   --- Triggers the FSM event "Cruise" after a delay.
   -- @function [parent=#ARMYGROUP] __Cruise
-  -- @param #ARMYGROUP self
-  -- @param #number delay Delay in seconds.
-  -- @param #number Speed Speed in knots until next waypoint is reached.
-  -- @param #number Formation Formation.
+  --- @param #ARMYGROUP self
+  --- @param #number delay Delay in seconds.
+  --- @param #number Speed Speed in knots until next waypoint is reached.
+  --- @param #number Formation Formation.
 
   --- On after "Cruise" event.
   -- @function [parent=#ARMYGROUP] OnAfterCruise
-  -- @param #ARMYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #number Speed Speed in knots until next waypoint is reached.
-  -- @param #number Formation Formation. 
+  --- @param #ARMYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #number Speed Speed in knots until next waypoint is reached.
+  --- @param #number Formation Formation. 
 
 
   --- Triggers the FSM event "FullStop".
   -- @function [parent=#ARMYGROUP] FullStop
-  -- @param #ARMYGROUP self
+  --- @param #ARMYGROUP self
 
   --- Triggers the FSM event "FullStop" after a delay.
   -- @function [parent=#ARMYGROUP] __FullStop
-  -- @param #ARMYGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #ARMYGROUP self
+  --- @param #number delay Delay in seconds.
 
   --- On after "FullStop" event.
   -- @function [parent=#ARMYGROUP] OnAfterFullStop
-  -- @param #ARMYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARMYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "RTZ".
   -- @function [parent=#ARMYGROUP] RTZ
-  -- @param #ARMYGROUP self
+  --- @param #ARMYGROUP self
 
   --- Triggers the FSM event "RTZ" after a delay.
   -- @function [parent=#ARMYGROUP] __RTZ
-  -- @param #ARMYGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #ARMYGROUP self
+  --- @param #number delay Delay in seconds.
 
   --- On after "RTZ" event.
   -- @function [parent=#ARMYGROUP] OnAfterRTZ
-  -- @param #ARMYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARMYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Returned".
   -- @function [parent=#ARMYGROUP] Returned
-  -- @param #ARMYGROUP self
+  --- @param #ARMYGROUP self
 
   --- Triggers the FSM event "Returned" after a delay.
   -- @function [parent=#ARMYGROUP] __Returned
-  -- @param #ARMYGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #ARMYGROUP self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Returned" event.
   -- @function [parent=#ARMYGROUP] OnAfterReturned
-  -- @param #ARMYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARMYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Detour".
   -- @function [parent=#ARMYGROUP] Detour
-  -- @param #ARMYGROUP self
+  --- @param #ARMYGROUP self
 
   --- Triggers the FSM event "Detour" after a delay.
   -- @function [parent=#ARMYGROUP] __Detour
-  -- @param #ARMYGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #ARMYGROUP self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Detour" event.
   -- @function [parent=#ARMYGROUP] OnAfterDetour
-  -- @param #ARMYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARMYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "DetourReached".
   -- @function [parent=#ARMYGROUP] DetourReached
-  -- @param #ARMYGROUP self
+  --- @param #ARMYGROUP self
 
   --- Triggers the FSM event "DetourReached" after a delay.
   -- @function [parent=#ARMYGROUP] __DetourReached
-  -- @param #ARMYGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #ARMYGROUP self
+  --- @param #number delay Delay in seconds.
 
   --- On after "DetourReached" event.
   -- @function [parent=#ARMYGROUP] OnAfterDetourReached
-  -- @param #ARMYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARMYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Retreat".
   -- @function [parent=#ARMYGROUP] Retreat
-  -- @param #ARMYGROUP self
-  -- @param Core.Zone#ZONE_BASE Zone (Optional) Zone where to retreat. Default is the closest retreat zone.
-  -- @param #number Formation (Optional) Formation of the group.
+  --- @param #ARMYGROUP self
+  --- @param Core.Zone#ZONE_BASE Zone (Optional) Zone where to retreat. Default is the closest retreat zone.
+  --- @param #number Formation (Optional) Formation of the group.
 
   --- Triggers the FSM event "Retreat" after a delay.
   -- @function [parent=#ARMYGROUP] __Retreat
-  -- @param #ARMYGROUP self
-  -- @param Core.Zone#ZONE_BASE Zone (Optional) Zone where to retreat. Default is the closest retreat zone.
-  -- @param #number Formation (Optional) Formation of the group. 
-  -- @param #number delay Delay in seconds.
+  --- @param #ARMYGROUP self
+  --- @param Core.Zone#ZONE_BASE Zone (Optional) Zone where to retreat. Default is the closest retreat zone.
+  --- @param #number Formation (Optional) Formation of the group. 
+  --- @param #number delay Delay in seconds.
 
   --- On after "Retreat" event.
   -- @function [parent=#ARMYGROUP] OnAfterRetreat
-  -- @param #ARMYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Core.Zone#ZONE_BASE Zone Zone where to retreat.
-  -- @param #number Formation Formation of the group. Can be #nil.
+  --- @param #ARMYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Core.Zone#ZONE_BASE Zone Zone where to retreat.
+  --- @param #number Formation Formation of the group. Can be #nil.
 
   --- Triggers the FSM event "Retreated".
   -- @function [parent=#ARMYGROUP] Retreated
-  -- @param #ARMYGROUP self
+  --- @param #ARMYGROUP self
 
   --- Triggers the FSM event "Retreated" after a delay.
   -- @function [parent=#ARMYGROUP] __Retreated
-  -- @param #ARMYGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #ARMYGROUP self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Retreated" event.
   -- @function [parent=#ARMYGROUP] OnAfterRetreated
-  -- @param #ARMYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARMYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "EngageTarget".
   -- @function [parent=#ARMYGROUP] EngageTarget
-  -- @param #ARMYGROUP self
-  -- @param Ops.Target#TARGET Target The target to be engaged. Can also be a GROUP or UNIT object.
-  -- @param #number Speed Speed in knots.
-  -- @param #string Formation Formation used in the engagement.
+  --- @param #ARMYGROUP self
+  --- @param Ops.Target#TARGET Target The target to be engaged. Can also be a GROUP or UNIT object.
+  --- @param #number Speed Speed in knots.
+  --- @param #string Formation Formation used in the engagement.
 
   --- Triggers the FSM event "EngageTarget" after a delay.
   -- @function [parent=#ARMYGROUP] __EngageTarget
-  -- @param #ARMYGROUP self
-  -- @param #number delay Delay in seconds.
-  -- @param Wrapper.Group#GROUP Group the group to be engaged.
-  -- @param #number Speed Speed in knots.
-  -- @param #string Formation Formation used in the engagement.
+  --- @param #ARMYGROUP self
+  --- @param #number delay Delay in seconds.
+  --- @param Wrapper.Group#GROUP Group the group to be engaged.
+  --- @param #number Speed Speed in knots.
+  --- @param #string Formation Formation used in the engagement.
 
 
   --- On after "EngageTarget" event.
   -- @function [parent=#ARMYGROUP] OnAfterEngageTarget
-  -- @param #ARMYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Group#GROUP Group the group to be engaged.
-  -- @param #number Speed Speed in knots.
-  -- @param #string Formation Formation used in the engagement.
+  --- @param #ARMYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Group#GROUP Group the group to be engaged.
+  --- @param #number Speed Speed in knots.
+  --- @param #string Formation Formation used in the engagement.
 
 
   --- Triggers the FSM event "Disengage".
   -- @function [parent=#ARMYGROUP] Disengage
-  -- @param #ARMYGROUP self
+  --- @param #ARMYGROUP self
 
   --- Triggers the FSM event "Disengage" after a delay.
   -- @function [parent=#ARMYGROUP] __Disengage
-  -- @param #ARMYGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #ARMYGROUP self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Disengage" event.
   -- @function [parent=#ARMYGROUP] OnAfterDisengage
-  -- @param #ARMYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARMYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Rearm".
   -- @function [parent=#ARMYGROUP] Rearm
-  -- @param #ARMYGROUP self
-  -- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
-  -- @param #number Formation Formation of the group.
+  --- @param #ARMYGROUP self
+  --- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
+  --- @param #number Formation Formation of the group.
 
   --- Triggers the FSM event "Rearm" after a delay.
   -- @function [parent=#ARMYGROUP] __Rearm
-  -- @param #ARMYGROUP self
-  -- @param #number delay Delay in seconds.
-  -- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
-  -- @param #number Formation Formation of the group.
+  --- @param #ARMYGROUP self
+  --- @param #number delay Delay in seconds.
+  --- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
+  --- @param #number Formation Formation of the group.
 
   --- On after "Rearm" event.
   -- @function [parent=#ARMYGROUP] OnAfterRearm
-  -- @param #ARMYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
-  -- @param #number Formation Formation of the group.
+  --- @param #ARMYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
+  --- @param #number Formation Formation of the group.
 
 
   --- Triggers the FSM event "Rearming".
   -- @function [parent=#ARMYGROUP] Rearming
-  -- @param #ARMYGROUP self
+  --- @param #ARMYGROUP self
 
   --- Triggers the FSM event "Rearming" after a delay.
   -- @function [parent=#ARMYGROUP] __Rearming
-  -- @param #ARMYGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #ARMYGROUP self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Rearming" event.
   -- @function [parent=#ARMYGROUP] OnAfterRearming
-  -- @param #ARMYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARMYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Rearmed".
   -- @function [parent=#ARMYGROUP] Rearmed
-  -- @param #ARMYGROUP self
+  --- @param #ARMYGROUP self
 
   --- Triggers the FSM event "Rearmed" after a delay.
   -- @function [parent=#ARMYGROUP] __Rearmed
-  -- @param #ARMYGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #ARMYGROUP self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Rearmed" event.
   -- @function [parent=#ARMYGROUP] OnAfterRearmed
-  -- @param #ARMYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARMYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   -- TODO: Add pseudo functions.

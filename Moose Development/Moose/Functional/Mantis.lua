@@ -421,17 +421,17 @@ MANTIS.SamDataSMA = {
 
 do
   --- Function to instantiate a new object of class MANTIS
-  --@param #MANTIS self
-  --@param #string name Name of this MANTIS for reporting
-  --@param #string samprefix Prefixes for the SAM groups from the ME, e.g. all groups starting with "Red Sam..."
-  --@param #string ewrprefix Prefixes for the EWR groups from the ME, e.g. all groups starting with "Red EWR..."
-  --@param #string hq Group name of your HQ (optional)
-  --@param #string coalition Coalition side of your setup, e.g. "blue", "red" or "neutral"
-  --@param #boolean dynamic Use constant (true) filtering or just filter once (false, default) (optional)
-  --@param #string awacs Group name of your Awacs (optional)
-  --@param #boolean EmOnOff Make MANTIS switch Emissions on and off instead of changing the alarm state between RED and GREEN (optional)
-  --@param #number Padding For #SEAD - Extra number of seconds to add to radar switch-back-on time (optional)
-  --@return #MANTIS self
+  --- @param #MANTIS self
+  --- @param #string name Name of this MANTIS for reporting
+  --- @param #string samprefix Prefixes for the SAM groups from the ME, e.g. all groups starting with "Red Sam..."
+  --- @param #string ewrprefix Prefixes for the EWR groups from the ME, e.g. all groups starting with "Red EWR..."
+  --- @param #string hq Group name of your HQ (optional)
+  --- @param #string coalition Coalition side of your setup, e.g. "blue", "red" or "neutral"
+  --- @param #boolean dynamic Use constant (true) filtering or just filter once (false, default) (optional)
+  --- @param #string awacs Group name of your Awacs (optional)
+  --- @param #boolean EmOnOff Make MANTIS switch Emissions on and off instead of changing the alarm state between RED and GREEN (optional)
+  --- @param #number Padding For #SEAD - Extra number of seconds to add to radar switch-back-on time (optional)
+  --- @return #MANTIS self
   --@usage Start up your MANTIS with a basic setting
   --
   --        myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)
@@ -577,7 +577,7 @@ do
     end
     
     -- TODO Version
-    -- @field #string version
+    --- @field #string version
     self.version="0.8.9"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
@@ -606,107 +606,107 @@ do
 
   --- Triggers the FSM event "Start". Starts the MANTIS. Initializes parameters and starts event handlers.
   -- @function [parent=#MANTIS] Start
-  -- @param #MANTIS self
+  --- @param #MANTIS self
 
   --- Triggers the FSM event "Start" after a delay. Starts the MANTIS. Initializes parameters and starts event handlers.
   -- @function [parent=#MANTIS] __Start
-  -- @param #MANTIS self
-  -- @param #number delay Delay in seconds.
+  --- @param #MANTIS self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Stop". Stops the MANTIS and all its event handlers.
-  -- @param #MANTIS self
+  --- @param #MANTIS self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the MANTIS and all its event handlers.
   -- @function [parent=#MANTIS] __Stop
-  -- @param #MANTIS self
-  -- @param #number delay Delay in seconds.
+  --- @param #MANTIS self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#MANTIS] Status
-  -- @param #MANTIS self
+  --- @param #MANTIS self
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#MANTIS] __Status
-  -- @param #MANTIS self
-  -- @param #number delay Delay in seconds.
+  --- @param #MANTIS self
+  --- @param #number delay Delay in seconds.
 
   --- On After "Relocating" event. HQ and/or EWR moved.
   -- @function [parent=#MANTIS] OnAfterRelocating
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @return #MANTIS self
 
   --- On After "GreenState" event. A SAM group was switched to GREEN alert.
   -- @function [parent=#MANTIS] OnAfterGreenState
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @param Wrapper.Group#GROUP Group The GROUP object whose state was changed
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @param Wrapper.Group#GROUP Group The GROUP object whose state was changed
+  --- @return #MANTIS self
 
   --- On After "RedState" event. A SAM group was switched to RED alert.
   -- @function [parent=#MANTIS] OnAfterRedState
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @param Wrapper.Group#GROUP Group The GROUP object whose state was changed
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @param Wrapper.Group#GROUP Group The GROUP object whose state was changed
+  --- @return #MANTIS self
 
   --- On After "AdvStateChange" event. Advanced state changed, influencing detection speed.
   -- @function [parent=#MANTIS] OnAfterAdvStateChange
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @param #number Oldstate Old state - 0 = green, 1 = amber, 2 = red
-  -- @param #number Newstate New state - 0 = green, 1 = amber, 2 = red
-  -- @param #number Interval Calculated detection interval based on state and advanced feature setting
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @param #number Oldstate Old state - 0 = green, 1 = amber, 2 = red
+  --- @param #number Newstate New state - 0 = green, 1 = amber, 2 = red
+  --- @param #number Interval Calculated detection interval based on state and advanced feature setting
+  --- @return #MANTIS self
 
   --- On After "ShoradActivated" event. Mantis has activated a SHORAD.
   -- @function [parent=#MANTIS] OnAfterShoradActivated
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @param #string Name Name of the GROUP which SHORAD shall protect
-  -- @param #number Radius Radius around the named group to find SHORAD groups
-  -- @param #number Ontime Seconds the SHORAD will stay active
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @param #string Name Name of the GROUP which SHORAD shall protect
+  --- @param #number Radius Radius around the named group to find SHORAD groups
+  --- @param #number Ontime Seconds the SHORAD will stay active
 
   --- On After "SeadSuppressionPlanned" event. Mantis has planned to switch off a site to defend SEAD attack.
   -- @function [parent=#MANTIS] OnAfterSeadSuppressionPlanned
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
-  -- @param #string Name Name of the suppressed group
-  -- @param #number SuppressionStartTime Model start time of the suppression from `timer.getTime()`
-  -- @param #number SuppressionEndTime Model end time of the suppression from `timer.getTime()`
-  -- @param Wrapper.Group#GROUP Attacker The attacking GROUP object
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  --- @param #string Name Name of the suppressed group
+  --- @param #number SuppressionStartTime Model start time of the suppression from `timer.getTime()`
+  --- @param #number SuppressionEndTime Model end time of the suppression from `timer.getTime()`
+  --- @param Wrapper.Group#GROUP Attacker The attacking GROUP object
 
   --- On After "SeadSuppressionStart" event. Mantis has switched off a site to defend a SEAD attack.
   -- @function [parent=#MANTIS] OnAfterSeadSuppressionStart
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
-  -- @param #string Name Name of the suppressed group
-  -- @param Wrapper.Group#GROUP Attacker The attacking GROUP object
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  --- @param #string Name Name of the suppressed group
+  --- @param Wrapper.Group#GROUP Attacker The attacking GROUP object
 
   --- On After "SeadSuppressionEnd" event. Mantis has switched on a site after a SEAD attack.
   -- @function [parent=#MANTIS] OnAfterSeadSuppressionEnd
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
-  -- @param #string Name Name of the suppressed group
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  --- @param #string Name Name of the suppressed group
   
   return self
  end
@@ -716,16 +716,16 @@ do
 -----------------------------------------------------------------------
 
   --- [Internal] Function to get the self.SAM_Table
-  -- @param #MANTIS self
-  -- @return #table table
+  --- @param #MANTIS self
+  --- @return #table table
   function MANTIS:_GetSAMTable()
     self:T(self.lid .. "GetSAMTable")
     return self.SAM_Table
   end
 
   --- [Internal] Function to set the self.SAM_Table
-  -- @param #MANTIS self
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @return #MANTIS self
   function MANTIS:_SetSAMTable(table)
     self:T(self.lid .. "SetSAMTable")
     self.SAM_Table = table
@@ -733,8 +733,8 @@ do
   end
 
   --- Function to set the grouping radius of the detection in meters
-  -- @param #MANTIS self
-  -- @param #number radius Radius upon which detected objects will be grouped
+  --- @param #MANTIS self
+  --- @param #number radius Radius upon which detected objects will be grouped
   function MANTIS:SetEWRGrouping(radius)
     self:T(self.lid .. "SetEWRGrouping")
     local radius = radius or 5000
@@ -743,11 +743,11 @@ do
   end
   
   --- Function to set accept and reject zones.
-  -- @param #MANTIS self
-  -- @param #table AcceptZones Table of @{Core.Zone#ZONE} objects
-  -- @param #table RejectZones Table of @{Core.Zone#ZONE} objects
-  -- @param #table ConflictZones Table of @{Core.Zone#ZONE} objects
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @param #table AcceptZones Table of @{Core.Zone#ZONE} objects
+  --- @param #table RejectZones Table of @{Core.Zone#ZONE} objects
+  --- @param #table ConflictZones Table of @{Core.Zone#ZONE} objects
+  --- @return #MANTIS self
   -- @usage
   -- Parameters are **tables of Core.Zone#ZONE** objects!   
   -- This is effectively a 3-stage filter allowing for zone overlap. A coordinate is accepted first when   
@@ -765,8 +765,8 @@ do
   end
   
   --- Function to set the detection radius of the EWR in meters. (Deprecated, SAM range is used)
-  -- @param #MANTIS self
-  -- @param #number radius Radius of the EWR detection zone
+  --- @param #MANTIS self
+  --- @param #number radius Radius of the EWR detection zone
   function MANTIS:SetEWRRange(radius)
     self:T(self.lid .. "SetEWRRange")
     --local radius = radius or 80000
@@ -775,8 +775,8 @@ do
   end
 
   --- Function to set switch-on/off zone for the SAM sites in meters. Overwritten per SAM in automode.
-  -- @param #MANTIS self
-  -- @param #number radius Radius of the firing zone in classic mode
+  --- @param #MANTIS self
+  --- @param #number radius Radius of the firing zone in classic mode
   function MANTIS:SetSAMRadius(radius)
     self:T(self.lid .. "SetSAMRadius")
     local radius = radius or 25000
@@ -785,8 +785,8 @@ do
   end
 
   --- Function to set SAM firing engage range, 0-100 percent, e.g. 85
-  -- @param #MANTIS self
-  -- @param #number range Percent of the max fire range
+  --- @param #MANTIS self
+  --- @param #number range Percent of the max fire range
   function MANTIS:SetSAMRange(range)
     self:T(self.lid .. "SetSAMRange")
     local range = range or 95
@@ -798,12 +798,12 @@ do
   end
   
     --- Function to set number of SAMs going active on a valid, detected thread
-    -- @param #MANTIS self
-    -- @param #number Short Number of short-range systems activated, defaults to 1.
-    -- @param #number Mid Number of mid-range systems activated, defaults to 2.
-    -- @param #number Long Number of long-range systems activated, defaults to 2.
-    -- @param #number Classic (non-automode) Number of overall systems activated, defaults to 6.
-    -- @return #MANTIS self
+    --- @param #MANTIS self
+    --- @param #number Short Number of short-range systems activated, defaults to 1.
+    --- @param #number Mid Number of mid-range systems activated, defaults to 2.
+    --- @param #number Long Number of long-range systems activated, defaults to 2.
+    --- @param #number Classic (non-automode) Number of overall systems activated, defaults to 6.
+    --- @return #MANTIS self
   function MANTIS:SetMaxActiveSAMs(Short,Mid,Long,Classic)
     self:T(self.lid .. "SetMaxActiveSAMs")
     self.maxclassic = Classic or 6
@@ -814,8 +814,8 @@ do
   end
 
   --- Function to set a new SAM firing engage range, use this method to adjust range while running MANTIS, e.g. for different setups day and night
-  -- @param #MANTIS self
-  -- @param #number range Percent of the max fire range
+  --- @param #MANTIS self
+  --- @param #number range Percent of the max fire range
   function MANTIS:SetNewSAMRangeWhileRunning(range)
     self:T(self.lid .. "SetNewSAMRangeWhileRunning")
     local range = range or 95
@@ -829,8 +829,8 @@ do
   end
 
   --- Function to set switch-on/off the debug state
-  -- @param #MANTIS self
-  -- @param #boolean onoff Set true to switch on
+  --- @param #MANTIS self
+  --- @param #boolean onoff Set true to switch on
   function MANTIS:Debug(onoff)
     self:T(self.lid .. "SetDebug")
     local onoff = onoff or false
@@ -847,8 +847,8 @@ do
   end
 
   --- Function to get the HQ object for further use
-  -- @param #MANTIS self
-  -- @return Wrapper.GROUP#GROUP The HQ #GROUP object or *nil* if it doesn't exist
+  --- @param #MANTIS self
+  --- @return Wrapper.GROUP#GROUP The HQ #GROUP object or *nil* if it doesn't exist
   function MANTIS:GetCommandCenter()
     self:T(self.lid .. "GetCommandCenter")
     if self.HQ_CC then
@@ -859,8 +859,8 @@ do
   end
 
   --- Function to set separate AWACS detection instance
-  -- @param #MANTIS self
-  -- @param #string prefix Name of the AWACS group in the mission editor
+  --- @param #MANTIS self
+  --- @param #string prefix Name of the AWACS group in the mission editor
   function MANTIS:SetAwacs(prefix)
     self:T(self.lid .. "SetAwacs")
     if prefix ~= nil then
@@ -873,8 +873,8 @@ do
   end
 
   --- Function to set AWACS detection range. Defaults to 250.000m (250km) - use **before** starting your Mantis!
-  -- @param #MANTIS self
-  -- @param #number range Detection range of the AWACS group
+  --- @param #MANTIS self
+  --- @param #number range Detection range of the AWACS group
   function MANTIS:SetAwacsRange(range)
     self:T(self.lid .. "SetAwacsRange")
     local range = range or 250000
@@ -883,8 +883,8 @@ do
   end
 
   --- Function to set the HQ object for further use
-  -- @param #MANTIS self
-  -- @param Wrapper.GROUP#GROUP group The #GROUP object to be set as HQ
+  --- @param #MANTIS self
+  --- @param Wrapper.GROUP#GROUP group The #GROUP object to be set as HQ
   function MANTIS:SetCommandCenter(group)
     self:T(self.lid .. "SetCommandCenter")
     local group = group or nil
@@ -901,8 +901,8 @@ do
   end
 
   --- Function to set the detection interval
-  -- @param #MANTIS self
-  -- @param #number interval The interval in seconds
+  --- @param #MANTIS self
+  --- @param #number interval The interval in seconds
   function MANTIS:SetDetectInterval(interval)
     self:T(self.lid .. "SetDetectInterval")
     local interval = interval or 30
@@ -911,9 +911,9 @@ do
   end
 
   --- Function to set Advanded Mode
-  -- @param #MANTIS self
-  -- @param #boolean onoff If true, will activate Advanced Mode
-  -- @param #number ratio [optional] Percentage to use for advanced mode, defaults to 100%
+  --- @param #MANTIS self
+  --- @param #boolean onoff If true, will activate Advanced Mode
+  --- @param #number ratio [optional] Percentage to use for advanced mode, defaults to 100%
   -- @usage Advanced mode will *decrease* reactivity of MANTIS, if HQ and/or EWR network dies.  Set SAMs to RED state if both are dead.  Requires usage of an **HQ** object and the **dynamic** option.
   -- E.g. `mymantis:SetAdvancedMode(true, 90)`
   function MANTIS:SetAdvancedMode(onoff, ratio)
@@ -936,8 +936,8 @@ do
   end
 
   --- Set using Emissions on/off instead of changing alarm state
-  -- @param #MANTIS self
-  -- @param #boolean switch Decide if we are changing alarm state or Emission state
+  --- @param #MANTIS self
+  --- @param #boolean switch Decide if we are changing alarm state or Emission state
   function MANTIS:SetUsingEmOnOff(switch)
     self:T(self.lid .. "SetUsingEmOnOff")
     self.UseEmOnOff = switch or false
@@ -945,8 +945,8 @@ do
   end
 
   --- Set using your own #INTEL_DLINK object instead of #DETECTION
-  -- @param #MANTIS self
-  -- @param Ops.Intelligence#INTEL_DLINK DLink The data link object to be used.
+  --- @param #MANTIS self
+  --- @param Ops.Intelligence#INTEL_DLINK DLink The data link object to be used.
   function MANTIS:SetUsingDLink(DLink)
     self:T(self.lid .. "SetUsingDLink")
     self.DLink = true
@@ -956,8 +956,8 @@ do
   end
 
   --- [Internal] Function to check if HQ is alive
-  -- @param #MANTIS self
-  -- @return #boolean True if HQ is alive, else false
+  --- @param #MANTIS self
+  --- @return #boolean True if HQ is alive, else false
   function MANTIS:_CheckHQState()
     self:T(self.lid .. "CheckHQState")
     local text = self.lid.." Checking HQ State"
@@ -981,8 +981,8 @@ do
   end
 
   --- [Internal] Function to check if EWR is (at least partially) alive
-  -- @param #MANTIS self
-  -- @return #boolean True if EWR is alive, else false
+  --- @param #MANTIS self
+  --- @return #boolean True if EWR is alive, else false
   function MANTIS:_CheckEWRState()
     self:T(self.lid .. "CheckEWRState")
     local text = self.lid.." Checking EWR State"
@@ -1013,9 +1013,9 @@ do
   end
 
   --- [Internal] Function to determine state of the advanced mode
-  -- @param #MANTIS self
-  -- @return #number Newly calculated interval
-  -- @return #number Previous state for tracking 0, 1, or 2
+  --- @param #MANTIS self
+  --- @return #number Newly calculated interval
+  --- @return #number Previous state for tracking 0, 1, or 2
   function MANTIS:_CalcAdvState()
     self:T(self.lid .. "CalcAdvState")
     local m=MESSAGE:New(self.lid.." Calculating Advanced State",10,"MANTIS"):ToAllIf(self.debug)
@@ -1047,9 +1047,9 @@ do
   end
 
   --- Function to set autorelocation for HQ and EWR objects. Note: Units must be actually mobile in DCS!
-  -- @param #MANTIS self
-  -- @param #boolean hq If true, will relocate HQ object
-  -- @param #boolean ewr If true, will relocate  EWR objects
+  --- @param #MANTIS self
+  --- @param #boolean hq If true, will relocate HQ object
+  --- @param #boolean ewr If true, will relocate  EWR objects
   function MANTIS:SetAutoRelocate(hq, ewr)
     self:T(self.lid .. "SetAutoRelocate")
     --self:T({hq, ewr})
@@ -1064,8 +1064,8 @@ do
   end
 
   --- [Internal] Function to execute the relocation
-  -- @param #MANTIS self
-  -- @return #MANTIS self 
+  --- @param #MANTIS self
+  --- @return #MANTIS self 
   function MANTIS:_RelocateGroups()
     self:T(self.lid .. "RelocateGroups")
     local text = self.lid.." Relocating Groups"
@@ -1102,9 +1102,9 @@ do
   end
   
   --- [Internal] Function to check accept and reject zones
-  -- @param #MANTIS self
-  -- @param Core.Point#COORDINATE coord The coordinate to check
-  -- @return #boolean outcome
+  --- @param #MANTIS self
+  --- @param Core.Point#COORDINATE coord The coordinate to check
+  --- @return #boolean outcome
   function MANTIS:_CheckCoordinateInZones(coord)
     -- DEBUG
     self:T(self.lid.."_CheckCoordinateInZones")
@@ -1146,9 +1146,9 @@ do
   end
   
   --- [Internal] Function to prefilter height based
-  -- @param #MANTIS self
-  -- @param #number height
-  -- @return #table set
+  --- @param #MANTIS self
+  --- @param #number height
+  --- @return #table set
   function MANTIS:_PreFilterHeight(height)
     self:T(self.lid.."_PreFilterHeight")   
     local set = {}
@@ -1168,14 +1168,14 @@ do
   end
   
   --- [Internal] Function to check if any object is in the given SAM zone
-  -- @param #MANTIS self
-  -- @param #table dectset Table of coordinates of detected items
-  -- @param Core.Point#COORDINATE samcoordinate Coordinate object.
-  -- @param #number radius Radius to check.
-  -- @param #number height Height to check.
-  -- @param #boolean dlink Data from DLINK.
-  -- @return #boolean True if in any zone, else false
-  -- @return #number Distance Target distance in meters or zero when no object is in zone
+  --- @param #MANTIS self
+  --- @param #table dectset Table of coordinates of detected items
+  --- @param Core.Point#COORDINATE samcoordinate Coordinate object.
+  --- @param #number radius Radius to check.
+  --- @param #number height Height to check.
+  --- @param #boolean dlink Data from DLINK.
+  --- @return #boolean True if in any zone, else false
+  --- @return #number Distance Target distance in meters or zero when no object is in zone
   function MANTIS:_CheckObjectInZone(dectset, samcoordinate, radius, height, dlink)
     self:T(self.lid.."_CheckObjectInZone")
     -- check if non of the coordinate is in the given defense zone
@@ -1218,8 +1218,8 @@ do
   end
 
   --- [Internal] Function to start the detection via EWR groups - if INTEL isn\'t available
-  -- @param #MANTIS self
-  -- @return Functional.Detection #DETECTION_AREAS The running detection set
+  --- @param #MANTIS self
+  --- @return Functional.Detection #DETECTION_AREAS The running detection set
   function MANTIS:StartDetection()
     self:T(self.lid.."Starting Detection")
 
@@ -1239,8 +1239,8 @@ do
   end
   
   --- [Internal] Function to start the detection with INTEL via EWR groups
-  -- @param #MANTIS self
-  -- @return Ops.Intel#INTEL_DLINK The running detection set
+  --- @param #MANTIS self
+  --- @return Ops.Intel#INTEL_DLINK The running detection set
   function MANTIS:StartIntelDetection()
     self:T(self.lid.."Starting Intel Detection")
     -- DEBUG
@@ -1272,8 +1272,8 @@ do
   end
   
   --- [Internal] Function to start the detection via AWACS if defined as separate (classic)
-  -- @param #MANTIS self
-  -- @return Functional.Detection #DETECTION_AREAS The running detection set
+  --- @param #MANTIS self
+  --- @return Functional.Detection #DETECTION_AREAS The running detection set
   function MANTIS:StartAwacsDetection()
     self:T(self.lid.."Starting Awacs Detection")
 
@@ -1284,7 +1284,7 @@ do
     --local acceptrange = self.acceptrange or 80000
     local interval = self.detectinterval or 60
 
-    --@param Functional.Detection #DETECTION_AREAS _MANTISdetection [Internal] The MANTIS detection object
+    --- @param Functional.Detection #DETECTION_AREAS _MANTISdetection [Internal] The MANTIS detection object
     local MANTISAwacs = DETECTION_AREAS:New( groupset, grouping ) --[Internal] Grouping detected objects to 5000m zones
     MANTISAwacs:FilterCategories({ Unit.Category.AIRPLANE, Unit.Category.HELICOPTER })
     MANTISAwacs:SetAcceptRange(self.awacsrange)  --250km
@@ -1295,14 +1295,14 @@ do
   end
   
    --- [Internal] Function to get SAM firing data from units types.
-  -- @param #MANTIS self
-  -- @param #string grpname Name of the group
-  -- @param #boolean mod HDS mod flag
-  -- @param #boolean sma SMA mod flag
-  -- @return #number range Max firing range
-  -- @return #number height Max firing height
-  -- @return #string type Long, medium or short range
-  -- @return #number blind "blind" spot
+  --- @param #MANTIS self
+  --- @param #string grpname Name of the group
+  --- @param #boolean mod HDS mod flag
+  --- @param #boolean sma SMA mod flag
+  --- @return #number range Max firing range
+  --- @return #number height Max firing height
+  --- @return #string type Long, medium or short range
+  --- @return #number blind "blind" spot
   function MANTIS:_GetSAMDataFromUnits(grpname,mod,sma)
     self:T(self.lid.."_GetSAMRangeFromUnits")
     local found = false
@@ -1348,12 +1348,12 @@ do
   end
   
   --- [Internal] Function to get SAM firing data
-  -- @param #MANTIS self
-  -- @param #string grpname Name of the group
-  -- @return #number range Max firing range
-  -- @return #number height Max firing height
-  -- @return #string type Long, medium or short range
-  -- @return #number blind "blind" spot
+  --- @param #MANTIS self
+  --- @param #string grpname Name of the group
+  --- @return #number range Max firing range
+  --- @return #number height Max firing height
+  --- @return #string type Long, medium or short range
+  --- @return #number blind "blind" spot
   function MANTIS:_GetSAMRange(grpname)
     self:T(self.lid.."_GetSAMRange")
     local range = self.checkradius
@@ -1395,8 +1395,8 @@ do
   end
   
   --- [Internal] Function to set the SAM start state
-  -- @param #MANTIS self
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @return #MANTIS self
   function MANTIS:SetSAMStartState()
     -- DONE: if using dynamic filtering, update SAM_Table and the (active) SEAD groups, pull req #1405/#1406
     -- DONE: Auto mode
@@ -1463,8 +1463,8 @@ do
   end
 
   --- [Internal] Function to update SAM table and SEAD state
-  -- @param #MANTIS self
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @return #MANTIS self
   function MANTIS:_RefreshSAMTable()
     self:T(self.lid.."RefreshSAMTable")
     -- Requires SEAD 0.2.2 or better
@@ -1516,9 +1516,9 @@ do
   end
 
   --- Function to link up #MANTIS with a #SHORAD installation
-  -- @param #MANTIS self
-  -- @param Functional.Shorad#SHORAD Shorad The #SHORAD object
-  -- @param #number Shoradtime Number of seconds #SHORAD stays active post wake-up
+  --- @param #MANTIS self
+  --- @param Functional.Shorad#SHORAD Shorad The #SHORAD object
+  --- @param #number Shoradtime Number of seconds #SHORAD stays active post wake-up
   function MANTIS:AddShorad(Shorad,Shoradtime)
     self:T(self.lid.."AddShorad")
     local Shorad = Shorad or nil
@@ -1533,7 +1533,7 @@ do
   end
 
   --- Function to unlink #MANTIS from a #SHORAD installation
-  -- @param #MANTIS self
+  --- @param #MANTIS self
   function MANTIS:RemoveShorad()
     self:T(self.lid.."RemoveShorad")
     self.ShoradLink = false
@@ -1545,12 +1545,12 @@ do
 -----------------------------------------------------------------------
   
   --- [Internal] Check detection function
-  -- @param #MANTIS self
-  -- @param #table samset Table of SAM data
-  -- @param #table detset Table of COORDINATES
-  -- @param #boolean dlink Using DLINK
-  -- @param #number limit of SAM sites to go active on a contact
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @param #table samset Table of SAM data
+  --- @param #table detset Table of COORDINATES
+  --- @param #boolean dlink Using DLINK
+  --- @param #number limit of SAM sites to go active on a contact
+  --- @return #MANTIS self
   function MANTIS:_CheckLoop(samset,detset,dlink,limit)
     self:T(self.lid .. "CheckLoop " .. #detset .. " Coordinates")
     local switchedon = 0
@@ -1622,10 +1622,10 @@ do
   end
   
   --- [Internal] Check detection function
-  -- @param #MANTIS self
-  -- @param Functional.Detection#DETECTION_AREAS detection Detection object
-  -- @param #boolean dlink
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @param Functional.Detection#DETECTION_AREAS detection Detection object
+  --- @param #boolean dlink
+  --- @return #MANTIS self
   function MANTIS:_Check(detection,dlink)
     self:T(self.lid .. "Check")
     --get detected set
@@ -1652,8 +1652,8 @@ do
   end
 
   --- [Internal] Relocation relay function
-  -- @param #MANTIS self
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @return #MANTIS self
   function MANTIS:_Relocate()
     self:T(self.lid .. "Relocate")
     self:_RelocateGroups()
@@ -1661,8 +1661,8 @@ do
   end
 
   --- [Internal] Check advanced state
-  -- @param #MANTIS self
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @return #MANTIS self
   function MANTIS:_CheckAdvState()
     self:T(self.lid .. "CheckAdvSate")
     local interval, oldstate = self:_CalcAdvState()
@@ -1697,8 +1697,8 @@ do
   end
 
   --- [Internal] Check DLink state
-  -- @param #MANTIS self
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @return #MANTIS self
   function MANTIS:_CheckDLinkState()
     self:T(self.lid .. "_CheckDLinkState")
     local dlink = self.Detection -- Ops.Intelligence#INTEL_DLINK
@@ -1711,11 +1711,11 @@ do
   end
 
   --- [Internal] Function to set start state
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @return #MANTIS self
   function MANTIS:onafterStart(From, Event, To)
     self:T({From, Event, To})
     self:T(self.lid.."Starting MANTIS")
@@ -1741,11 +1741,11 @@ do
   end
 
   --- [Internal] Before status function for MANTIS
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @return #MANTIS self
   function MANTIS:onbeforeStatus(From, Event, To)
     self:T({From, Event, To})
     -- check detection
@@ -1790,11 +1790,11 @@ do
   end
 
   --- [Internal] Status function for MANTIS
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @return #MANTIS self
   function MANTIS:onafterStatus(From,Event,To)
     self:T({From, Event, To})
     -- Display some states
@@ -1810,86 +1810,86 @@ do
   end
 
   --- [Internal] Function to stop MANTIS
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @return #MANTIS self
   function MANTIS:onafterStop(From, Event, To)
     self:T({From, Event, To})
     return self
   end
 
   --- [Internal] Function triggered by Event Relocating
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @return #MANTIS self
   function MANTIS:onafterRelocating(From, Event, To)
     self:T({From, Event, To})
     return self
   end
 
   --- [Internal] Function triggered by Event GreenState
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @param Wrapper.Group#GROUP Group The GROUP object whose state was changed
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @param Wrapper.Group#GROUP Group The GROUP object whose state was changed
+  --- @return #MANTIS self
   function MANTIS:onafterGreenState(From, Event, To, Group)
     self:T({From, Event, To, Group:GetName()})
     return self
   end
 
   --- [Internal] Function triggered by Event RedState
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @param Wrapper.Group#GROUP Group The GROUP object whose state was changed
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @param Wrapper.Group#GROUP Group The GROUP object whose state was changed
+  --- @return #MANTIS self
   function MANTIS:onafterRedState(From, Event, To, Group)
     self:T({From, Event, To, Group:GetName()})
     return self
   end
 
   --- [Internal] Function triggered by Event AdvStateChange
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @param #number Oldstate Old state - 0 = green, 1 = amber, 2 = red
-  -- @param #number Newstate New state - 0 = green, 1 = amber, 2 = red
-  -- @param #number Interval Calculated detection interval based on state and advanced feature setting
-  -- @return #MANTIS self
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @param #number Oldstate Old state - 0 = green, 1 = amber, 2 = red
+  --- @param #number Newstate New state - 0 = green, 1 = amber, 2 = red
+  --- @param #number Interval Calculated detection interval based on state and advanced feature setting
+  --- @return #MANTIS self
   function MANTIS:onafterAdvStateChange(From, Event, To, Oldstate, Newstate, Interval)
     self:T({From, Event, To, Oldstate, Newstate, Interval})
     return self
   end
 
   --- [Internal] Function triggered by Event ShoradActivated
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @param #string Name Name of the GROUP which SHORAD shall protect
-  -- @param #number Radius Radius around the named group to find SHORAD groups
-  -- @param #number Ontime Seconds the SHORAD will stay active
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @param #string Name Name of the GROUP which SHORAD shall protect
+  --- @param #number Radius Radius around the named group to find SHORAD groups
+  --- @param #number Ontime Seconds the SHORAD will stay active
   function MANTIS:onafterShoradActivated(From, Event, To, Name, Radius, Ontime)
     self:T({From, Event, To, Name, Radius, Ontime})
     return self
   end
   
     --- [Internal] Function triggered by Event SeadSuppressionStart
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
-  -- @param #string Name Name of the suppressed group
-  -- @param Wrapper.Group#GROUP Attacker The attacking GROUP object
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  --- @param #string Name Name of the suppressed group
+  --- @param Wrapper.Group#GROUP Attacker The attacking GROUP object
   function MANTIS:onafterSeadSuppressionStart(From, Event, To, Group, Name, Attacker)
     self:T({From, Event, To, Name})
     self.SuppressedGroups[Name] = true
@@ -1904,12 +1904,12 @@ do
   end
   
     --- [Internal] Function triggered by Event SeadSuppressionEnd
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
-  -- @param #string Name Name of the suppressed group
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  --- @param #string Name Name of the suppressed group
   function MANTIS:onafterSeadSuppressionEnd(From, Event, To, Group, Name)
     self:T({From, Event, To, Name})
     self.SuppressedGroups[Name] = false
@@ -1917,15 +1917,15 @@ do
   end
   
     --- [Internal] Function triggered by Event SeadSuppressionPlanned
-  -- @param #MANTIS self
-  -- @param #string From The From State
-  -- @param #string Event The Event
-  -- @param #string To The To State
-  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
-  -- @param #string Name Name of the suppressed group
-  -- @param #number SuppressionStartTime Model start time of the suppression from `timer.getTime()`
-  -- @param #number SuppressionEndTime Model end time of the suppression from `timer.getTime()`
-  -- @param Wrapper.Group#GROUP Attacker The attacking GROUP object
+  --- @param #MANTIS self
+  --- @param #string From The From State
+  --- @param #string Event The Event
+  --- @param #string To The To State
+  --- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  --- @param #string Name Name of the suppressed group
+  --- @param #number SuppressionStartTime Model start time of the suppression from `timer.getTime()`
+  --- @param #number SuppressionEndTime Model end time of the suppression from `timer.getTime()`
+  --- @param Wrapper.Group#GROUP Attacker The attacking GROUP object
   function MANTIS:onafterSeadSuppressionPlanned(From, Event, To, Group, Name, SuppressionStartTime, SuppressionEndTime, Attacker)
     self:T({From, Event, To, Name})
     return self

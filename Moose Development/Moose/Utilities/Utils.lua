@@ -1777,8 +1777,8 @@ function UTILS.GetOSTime()
 end
 
 --- Shuffle a table accoring to Fisher Yeates algorithm
---@param #table t Table to be shuffled.
---@return #table Shuffled table.
+--- @param #table t Table to be shuffled.
+--- @return #table Shuffled table.
 function UTILS.ShuffleTable(t)
   if t == nil or type(t) ~= "table" then
     BASE:I("Error in ShuffleTable: Missing or wrong type of Argument")
@@ -1797,9 +1797,9 @@ function UTILS.ShuffleTable(t)
 end
 
 --- Get a random element of a table.
---@param #table t Table.
---@param #boolean replace If `true`, the drawn element is replaced, i.e. not deleted.
---@return #number Table element.
+--- @param #table t Table.
+--- @param #boolean replace If `true`, the drawn element is replaced, i.e. not deleted.
+--- @return #number Table element.
 function UTILS.GetRandomTableElement(t, replace)
 
   if t == nil or type(t) ~= "table" then
@@ -1823,8 +1823,8 @@ function UTILS.GetRandomTableElement(t, replace)
 end
 
 --- (Helicopter) Check if one loading door is open.
---@param #string unit_name Unit name to be checked
---@return #boolean Outcome - true if a (loading door) is open, false if not, nil if none exists.
+--- @param #string unit_name Unit name to be checked
+--- @return #boolean Outcome - true if a (loading door) is open, false if not, nil if none exists.
 function UTILS.IsLoadingDoorOpen( unit_name )
 
   local unit = Unit.getByName(unit_name)

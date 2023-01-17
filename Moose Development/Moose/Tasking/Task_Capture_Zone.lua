@@ -15,7 +15,7 @@ do -- TASK_ZONE_GOAL
 
   --- The TASK_ZONE_GOAL class
   --- @type TASK_ZONE_GOAL
-  -- @field Functional.ZoneGoal#ZONE_GOAL ZoneGoal
+  --- @field Functional.ZoneGoal#ZONE_GOAL ZoneGoal
   -- @extends Tasking.Task#TASK
 
   --- # TASK_ZONE_GOAL class, extends @{Tasking.Task#TASK}
@@ -37,18 +37,18 @@ do -- TASK_ZONE_GOAL
   --   * @{#TASK_ZONE_GOAL.SetScoreOnSuccess}(): Set a score when all the targets in scope of the A2G attack, have been destroyed.
   --   * @{#TASK_ZONE_GOAL.SetPenaltyOnFailed}(): Set a penalty when the A2G attack has failed.
   -- 
-  -- @field #TASK_ZONE_GOAL
+  --- @field #TASK_ZONE_GOAL
   TASK_ZONE_GOAL = {
     ClassName = "TASK_ZONE_GOAL",
   }
   
   --- Instantiates a new TASK_ZONE_GOAL.
-  -- @param #TASK_ZONE_GOAL self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
-  -- @param #string TaskName The name of the Task.
-  -- @param Functional.ZoneGoalCoalition#ZONE_GOAL_COALITION ZoneGoal
-  -- @return #TASK_ZONE_GOAL self
+  --- @param #TASK_ZONE_GOAL self
+  --- @param Tasking.Mission#MISSION Mission
+  --- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  --- @param #string TaskName The name of the Task.
+  --- @param Functional.ZoneGoalCoalition#ZONE_GOAL_COALITION ZoneGoal
+  --- @return #TASK_ZONE_GOAL self
   function TASK_ZONE_GOAL:New( Mission, SetGroup, TaskName, ZoneGoal, TaskType, TaskBriefing )
     local self = BASE:Inherit( self, TASK:New( Mission, SetGroup, TaskName, TaskType, TaskBriefing ) ) -- #TASK_ZONE_GOAL
     self:F()
@@ -69,9 +69,9 @@ do -- TASK_ZONE_GOAL
     self:SetTargetZone( self.ZoneGoal:GetZone() )
 
     --- Test 
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task#TASK Task
+    --- @param #FSM_PROCESS self
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param Tasking.Task#TASK Task
     function Fsm:OnAfterAssigned( TaskUnit, Task )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
@@ -80,27 +80,27 @@ do -- TASK_ZONE_GOAL
     end
     
     --- Test 
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task#TASK_ZONE_GOAL Task
+    --- @param #FSM_PROCESS self
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param Tasking.Task#TASK_ZONE_GOAL Task
     function Fsm:onafterStartMonitoring( TaskUnit, Task )
       self:F( { self } )
       self:__Monitor( 0.1 )
     end
     
     --- Monitor Loop
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task#TASK_ZONE_GOAL Task
+    --- @param #FSM_PROCESS self
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param Tasking.Task#TASK_ZONE_GOAL Task
     function Fsm:onafterMonitor( TaskUnit, Task )
       self:F( { self } )
       self:__Monitor( 15 )
     end
     
     --- Test 
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_A2G#TASK_ZONE_GOAL Task
+    --- @param #FSM_PROCESS self
+    --- @param Wrapper.Unit#UNIT TaskUnit
+    --- @param Tasking.Task_A2G#TASK_ZONE_GOAL Task
     function Fsm:onafterRouteTo( TaskUnit, Task )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       -- Determine the first Unit from the self.TargetSetUnit
@@ -115,7 +115,7 @@ do -- TASK_ZONE_GOAL
   end
 
   --- @param #TASK_ZONE_GOAL self
-  -- @param Functional.ZoneGoal#ZONE_GOAL ZoneGoal The ZoneGoal Engine.
+  --- @param Functional.ZoneGoal#ZONE_GOAL ZoneGoal The ZoneGoal Engine.
   function TASK_ZONE_GOAL:SetProtect( ZoneGoal )
   
     self.ZoneGoal = ZoneGoal -- Functional.ZoneGoal#ZONE_GOAL
@@ -130,8 +130,8 @@ do -- TASK_ZONE_GOAL
 
   
   --- @param #TASK_ZONE_GOAL self
-  -- @param Core.Zone#ZONE_BASE TargetZone The Zone object where the Target is located on the map.
-  -- @param Wrapper.Unit#UNIT TaskUnit
+  --- @param Core.Zone#ZONE_BASE TargetZone The Zone object where the Target is located on the map.
+  --- @param Wrapper.Unit#UNIT TaskUnit
   function TASK_ZONE_GOAL:SetTargetZone( TargetZone, TaskUnit )
   
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -142,8 +142,8 @@ do -- TASK_ZONE_GOAL
    
 
   --- @param #TASK_ZONE_GOAL self
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return Core.Zone#ZONE_BASE The Zone object where the Target is located on the map.
+  --- @param Wrapper.Unit#UNIT TaskUnit
+  --- @return Core.Zone#ZONE_BASE The Zone object where the Target is located on the map.
   function TASK_ZONE_GOAL:GetTargetZone( TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -169,7 +169,7 @@ do -- TASK_CAPTURE_ZONE
 
   --- The TASK_CAPTURE_ZONE class
   --- @type TASK_CAPTURE_ZONE
-  -- @field Functional.ZoneGoalCoalition#ZONE_GOAL_COALITION ZoneGoal
+  --- @field Functional.ZoneGoalCoalition#ZONE_GOAL_COALITION ZoneGoal
   -- @extends #TASK_ZONE_GOAL
 
   --- # TASK_CAPTURE_ZONE class, extends @{Tasking.Task_Capture_Zone#TASK_ZONE_GOAL}
@@ -180,20 +180,20 @@ do -- TASK_CAPTURE_ZONE
   -- The TASK_CAPTURE_ZONE is used by the @{Tasking.Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create SEAD tasks 
   -- based on detected enemy ground targets.
   -- 
-  -- @field #TASK_CAPTURE_ZONE
+  --- @field #TASK_CAPTURE_ZONE
   TASK_CAPTURE_ZONE = {
     ClassName = "TASK_CAPTURE_ZONE",
   }
   
 
   --- Instantiates a new TASK_CAPTURE_ZONE.
-  -- @param #TASK_CAPTURE_ZONE self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
-  -- @param #string TaskName The name of the Task.
-  -- @param Functional.ZoneGoalCoalition#ZONE_GOAL_COALITION ZoneGoalCoalition
-  -- @param #string TaskBriefing The briefing of the task.
-  -- @return #TASK_CAPTURE_ZONE self
+  --- @param #TASK_CAPTURE_ZONE self
+  --- @param Tasking.Mission#MISSION Mission
+  --- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  --- @param #string TaskName The name of the Task.
+  --- @param Functional.ZoneGoalCoalition#ZONE_GOAL_COALITION ZoneGoalCoalition
+  --- @param #string TaskBriefing The briefing of the task.
+  --- @return #TASK_CAPTURE_ZONE self
   function TASK_CAPTURE_ZONE:New( Mission, SetGroup, TaskName, ZoneGoalCoalition, TaskBriefing)
     local self = BASE:Inherit( self, TASK_ZONE_GOAL:New( Mission, SetGroup, TaskName, ZoneGoalCoalition, "CAPTURE", TaskBriefing ) ) -- #TASK_CAPTURE_ZONE
     self:F()
@@ -220,7 +220,7 @@ do -- TASK_CAPTURE_ZONE
 
 
   --- Instantiates a new TASK_CAPTURE_ZONE.
-  -- @param #TASK_CAPTURE_ZONE self
+  --- @param #TASK_CAPTURE_ZONE self
   function TASK_CAPTURE_ZONE:UpdateTaskInfo( Persist ) 
   
     Persist = Persist or false
@@ -282,7 +282,7 @@ do -- TASK_CAPTURE_ZONE
   
   
   --- @param #TASK_CAPTURE_ZONE self
-  -- @param Wrapper.Unit#UNIT TaskUnit
+  --- @param Wrapper.Unit#UNIT TaskUnit
   function TASK_CAPTURE_ZONE:OnAfterGoal( From, Event, To, PlayerUnit, PlayerName )
   
     self:F( { PlayerUnit = PlayerUnit, Achieved = self.ZoneGoal.Goal:IsAchieved() } )
@@ -306,10 +306,10 @@ do -- TASK_CAPTURE_ZONE
   end
 
   --- This function is called from the @{Tasking.CommandCenter#COMMANDCENTER} to determine the method of automatic task selection.
-  -- @param #TASK_CAPTURE_ZONE self
-  -- @param #number AutoAssignMethod The method to be applied to the task.
-  -- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter The command center.
-  -- @param Wrapper.Group#GROUP TaskGroup The player group.
+  --- @param #TASK_CAPTURE_ZONE self
+  --- @param #number AutoAssignMethod The method to be applied to the task.
+  --- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter The command center.
+  --- @param Wrapper.Group#GROUP TaskGroup The player group.
   function TASK_CAPTURE_ZONE:GetAutoAssignPriority( AutoAssignMethod, CommandCenter, TaskGroup, AutoAssignReference )
   
     if     AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Random then

@@ -1517,7 +1517,7 @@ end
 --   * @{#ATC_GROUND.SetMaximumKickSpeedKmph}(): Set the maximum speed allowed at an airbase in kilometers per hour.
 --   * @{#ATC_GROUND.SetMaximumKickSpeedMiph}(): Set the maximum speed allowed at an airbase in miles per hour.
 --     
----- @field #ATC_GROUND_MARIANAISLANDS
+--- @field #ATC_GROUND_MARIANAISLANDS
 ATC_GROUND_MARIANAISLANDS = {
   ClassName = "ATC_GROUND_MARIANAISLANDS",
 }

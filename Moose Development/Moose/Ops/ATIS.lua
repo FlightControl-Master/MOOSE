@@ -696,67 +696,67 @@ function ATIS:New(AirbaseName, Frequency, Modulation)
 
   --- Triggers the FSM event "Start". Starts the ATIS.
   -- @function [parent=#ATIS] Start
-  -- @param #ATIS self
+  --- @param #ATIS self
 
   --- Triggers the FSM event "Start" after a delay.
   -- @function [parent=#ATIS] __Start
-  -- @param #ATIS self
-  -- @param #number delay Delay in seconds.
+  --- @param #ATIS self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Stop". Stops the ATIS.
   -- @function [parent=#ATIS] Stop
-  -- @param #ATIS self
+  --- @param #ATIS self
 
   --- Triggers the FSM event "Stop" after a delay.
   -- @function [parent=#ATIS] __Stop
-  -- @param #ATIS self
-  -- @param #number delay Delay in seconds.
+  --- @param #ATIS self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#ATIS] Status
-  -- @param #ATIS self
+  --- @param #ATIS self
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#ATIS] __Status
-  -- @param #ATIS self
-  -- @param #number delay Delay in seconds.
+  --- @param #ATIS self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Broadcast".
   -- @function [parent=#ATIS] Broadcast
-  -- @param #ATIS self
+  --- @param #ATIS self
 
   --- Triggers the FSM event "Broadcast" after a delay.
   -- @function [parent=#ATIS] __Broadcast
-  -- @param #ATIS self
-  -- @param #number delay Delay in seconds.
+  --- @param #ATIS self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "CheckQueue".
   -- @function [parent=#ATIS] CheckQueue
-  -- @param #ATIS self
+  --- @param #ATIS self
 
   --- Triggers the FSM event "CheckQueue" after a delay.
   -- @function [parent=#ATIS] __CheckQueue
-  -- @param #ATIS self
-  -- @param #number delay Delay in seconds.
+  --- @param #ATIS self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Report".
   -- @function [parent=#ATIS] Report
-  -- @param #ATIS self
-  -- @param #string Text Report text.
+  --- @param #ATIS self
+  --- @param #string Text Report text.
 
   --- Triggers the FSM event "Report" after a delay.
   -- @function [parent=#ATIS] __Report
-  -- @param #ATIS self
-  -- @param #number delay Delay in seconds.
-  -- @param #string Text Report text.
+  --- @param #ATIS self
+  --- @param #number delay Delay in seconds.
+  --- @param #string Text Report text.
 
   --- On after "Report" event user function.
   -- @function [parent=#ATIS] OnAfterReport
-  -- @param #ATIS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string Text Report text.
+  --- @param #ATIS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string Text Report text.
 
   return self
 end

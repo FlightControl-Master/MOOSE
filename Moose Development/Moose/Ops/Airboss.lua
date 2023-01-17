@@ -2171,213 +2171,213 @@ function AIRBOSS:New( carriername, alias )
 
   --- Triggers the FSM event "Start" that starts the airboss. Initializes parameters and starts event handlers.
   -- @function [parent=#AIRBOSS] Start
-  -- @param #AIRBOSS self
+  --- @param #AIRBOSS self
 
   --- Triggers the FSM event "Start" that starts the airboss after a delay. Initializes parameters and starts event handlers.
   -- @function [parent=#AIRBOSS] __Start
-  -- @param #AIRBOSS self
-  -- @param #number delay Delay in seconds.
+  --- @param #AIRBOSS self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Start" user function. Called when the AIRBOSS FSM is started.
   -- @function [parent=#AIRBOSS] OnAfterStart
-  -- @param #AIRBOSS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AIRBOSS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- Triggers the FSM event "Idle" that puts the carrier into state "Idle" where no recoveries are carried out.
   -- @function [parent=#AIRBOSS] Idle
-  -- @param #AIRBOSS self
+  --- @param #AIRBOSS self
 
   --- Triggers the FSM delayed event "Idle" that puts the carrier into state "Idle" where no recoveries are carried out.
   -- @function [parent=#AIRBOSS] __Idle
-  -- @param #AIRBOSS self
-  -- @param #number delay Delay in seconds.
+  --- @param #AIRBOSS self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "RecoveryStart" that starts the recovery of aircraft. Marshalling aircraft are send to the landing pattern.
   -- @function [parent=#AIRBOSS] RecoveryStart
-  -- @param #AIRBOSS self
-  -- @param #number Case Recovery case (1, 2 or 3) that is started.
-  -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
+  --- @param #AIRBOSS self
+  --- @param #number Case Recovery case (1, 2 or 3) that is started.
+  --- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
 
   --- Triggers the FSM delayed event "RecoveryStart" that starts the recovery of aircraft. Marshalling aircraft are send to the landing pattern.
   -- @function [parent=#AIRBOSS] __RecoveryStart
-  -- @param #AIRBOSS self
-  -- @param #number delay Delay in seconds.
-  -- @param #number Case Recovery case (1, 2 or 3) that is started.
-  -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
+  --- @param #AIRBOSS self
+  --- @param #number delay Delay in seconds.
+  --- @param #number Case Recovery case (1, 2 or 3) that is started.
+  --- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
 
   --- On after "RecoveryStart" user function. Called when recovery of aircraft is started and carrier switches to state "Recovering".
   -- @function [parent=#AIRBOSS] OnAfterRecoveryStart
-  -- @param #AIRBOSS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #number Case The recovery case (1, 2 or 3) to start.
-  -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
+  --- @param #AIRBOSS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #number Case The recovery case (1, 2 or 3) to start.
+  --- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
 
   --- Triggers the FSM event "RecoveryStop" that stops the recovery of aircraft.
   -- @function [parent=#AIRBOSS] RecoveryStop
-  -- @param #AIRBOSS self
+  --- @param #AIRBOSS self
 
   --- Triggers the FSM delayed event "RecoveryStop" that stops the recovery of aircraft.
   -- @function [parent=#AIRBOSS] __RecoveryStop
-  -- @param #AIRBOSS self
-  -- @param #number delay Delay in seconds.
+  --- @param #AIRBOSS self
+  --- @param #number delay Delay in seconds.
 
   --- On after "RecoveryStop" user function. Called when recovery of aircraft is stopped.
   -- @function [parent=#AIRBOSS] OnAfterRecoveryStop
-  -- @param #AIRBOSS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AIRBOSS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- Triggers the FSM event "RecoveryPause" that pauses the recovery of aircraft.
   -- @function [parent=#AIRBOSS] RecoveryPause
-  -- @param #AIRBOSS self
-  -- @param #number duration Duration of pause in seconds. After that recovery is automatically resumed.
+  --- @param #AIRBOSS self
+  --- @param #number duration Duration of pause in seconds. After that recovery is automatically resumed.
 
   --- Triggers the FSM delayed event "RecoveryPause" that pauses the recovery of aircraft.
   -- @function [parent=#AIRBOSS] __RecoveryPause
-  -- @param #AIRBOSS self
-  -- @param #number delay Delay in seconds.
-  -- @param #number duration Duration of pause in seconds. After that recovery is automatically resumed.
+  --- @param #AIRBOSS self
+  --- @param #number delay Delay in seconds.
+  --- @param #number duration Duration of pause in seconds. After that recovery is automatically resumed.
 
   --- Triggers the FSM event "RecoveryUnpause" that resumes the recovery of aircraft if it was paused.
   -- @function [parent=#AIRBOSS] RecoveryUnpause
-  -- @param #AIRBOSS self
+  --- @param #AIRBOSS self
 
   --- Triggers the FSM delayed event "RecoveryUnpause" that resumes the recovery of aircraft if it was paused.
   -- @function [parent=#AIRBOSS] __RecoveryUnpause
-  -- @param #AIRBOSS self
-  -- @param #number delay Delay in seconds.
+  --- @param #AIRBOSS self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "RecoveryCase" that switches the aircraft recovery case.
   -- @function [parent=#AIRBOSS] RecoveryCase
-  -- @param #AIRBOSS self
-  -- @param #number Case The new recovery case (1, 2 or 3).
-  -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
+  --- @param #AIRBOSS self
+  --- @param #number Case The new recovery case (1, 2 or 3).
+  --- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
 
   --- Triggers the delayed FSM event "RecoveryCase" that sets the used aircraft recovery case.
   -- @function [parent=#AIRBOSS] __RecoveryCase
-  -- @param #AIRBOSS self
-  -- @param #number delay Delay in seconds.
-  -- @param #number Case The new recovery case (1, 2 or 3).
-  -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
+  --- @param #AIRBOSS self
+  --- @param #number delay Delay in seconds.
+  --- @param #number Case The new recovery case (1, 2 or 3).
+  --- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
 
   --- Triggers the FSM event "PassingWaypoint". Called when the carrier passes a waypoint.
   -- @function [parent=#AIRBOSS] PassingWaypoint
-  -- @param #AIRBOSS self
-  -- @param #number waypoint Number of waypoint.
+  --- @param #AIRBOSS self
+  --- @param #number waypoint Number of waypoint.
 
   --- Triggers the FSM delayed event "PassingWaypoint". Called when the carrier passes a waypoint.
   -- @function [parent=#AIRBOSS] __PassingWaypoint
-  -- @param #AIRBOSS self
-  -- @param #number delay Delay in seconds.
-  -- @param #number Case Recovery case (1, 2 or 3) that is started.
-  -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
+  --- @param #AIRBOSS self
+  --- @param #number delay Delay in seconds.
+  --- @param #number Case Recovery case (1, 2 or 3) that is started.
+  --- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
 
   --- On after "PassingWaypoint" user function. Called when the carrier passes a waypoint of its route.
   -- @function [parent=#AIRBOSS] OnAfterPassingWaypoint
-  -- @param #AIRBOSS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #number waypoint Number of waypoint.
+  --- @param #AIRBOSS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #number waypoint Number of waypoint.
 
   --- Triggers the FSM event "Save" that saved the player scores to a file.
   -- @function [parent=#AIRBOSS] Save
-  -- @param #AIRBOSS self
-  -- @param #string path Path where the file is saved. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
-  -- @param #string filename (Optional) File name. Default is AIRBOSS-*ALIAS*_LSOgrades.csv.
+  --- @param #AIRBOSS self
+  --- @param #string path Path where the file is saved. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
+  --- @param #string filename (Optional) File name. Default is AIRBOSS-*ALIAS*_LSOgrades.csv.
 
   --- Triggers the FSM delayed event "Save" that saved the player scores to a file.
   -- @function [parent=#AIRBOSS] __Save
-  -- @param #AIRBOSS self
-  -- @param #number delay Delay in seconds.
-  -- @param #string path Path where the file is saved. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
-  -- @param #string filename (Optional) File name. Default is AIRBOSS-*ALIAS*_LSOgrades.csv.
+  --- @param #AIRBOSS self
+  --- @param #number delay Delay in seconds.
+  --- @param #string path Path where the file is saved. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
+  --- @param #string filename (Optional) File name. Default is AIRBOSS-*ALIAS*_LSOgrades.csv.
 
   --- On after "Save" event user function. Called when the player scores are saved to disk.
   -- @function [parent=#AIRBOSS] OnAfterSave
-  -- @param #AIRBOSS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string path Path where the file is saved. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
-  -- @param #string filename (Optional) File name. Default is AIRBOSS-*ALIAS*_LSOgrades.csv.
+  --- @param #AIRBOSS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string path Path where the file is saved. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
+  --- @param #string filename (Optional) File name. Default is AIRBOSS-*ALIAS*_LSOgrades.csv.
 
   --- Triggers the FSM event "Load" that loads the player scores from a file. AIRBOSS FSM must **not** be started at this point.
   -- @function [parent=#AIRBOSS] Load
-  -- @param #AIRBOSS self
-  -- @param #string path Path where the file is located. Default is the DCS installation root directory.
-  -- @param #string filename (Optional) File name. Default is AIRBOSS-<ALIAS>_LSOgrades.csv.
+  --- @param #AIRBOSS self
+  --- @param #string path Path where the file is located. Default is the DCS installation root directory.
+  --- @param #string filename (Optional) File name. Default is AIRBOSS-<ALIAS>_LSOgrades.csv.
 
   --- Triggers the FSM delayed event "Load" that loads the player scores from a file. AIRBOSS FSM must **not** be started at this point.
   -- @function [parent=#AIRBOSS] __Load
-  -- @param #AIRBOSS self
-  -- @param #number delay Delay in seconds.
-  -- @param #string path Path where the file is located. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
-  -- @param #string filename (Optional) File name. Default is AIRBOSS-*ALIAS*_LSOgrades.csv.
+  --- @param #AIRBOSS self
+  --- @param #number delay Delay in seconds.
+  --- @param #string path Path where the file is located. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
+  --- @param #string filename (Optional) File name. Default is AIRBOSS-*ALIAS*_LSOgrades.csv.
 
   --- On after "Load" event user function. Called when the player scores are loaded from disk.
   -- @function [parent=#AIRBOSS] OnAfterLoad
-  -- @param #AIRBOSS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string path Path where the file is located. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
-  -- @param #string filename (Optional) File name. Default is AIRBOSS-*ALIAS*_LSOgrades.csv.
+  --- @param #AIRBOSS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string path Path where the file is located. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
+  --- @param #string filename (Optional) File name. Default is AIRBOSS-*ALIAS*_LSOgrades.csv.
 
   --- Triggers the FSM event "LSOGrade". Called when the LSO grades a player
   -- @function [parent=#AIRBOSS] LSOGrade
-  -- @param #AIRBOSS self
-  -- @param #AIRBOSS.PlayerData playerData Player Data.
-  -- @param #AIRBOSS.LSOgrade grade LSO grade.
+  --- @param #AIRBOSS self
+  --- @param #AIRBOSS.PlayerData playerData Player Data.
+  --- @param #AIRBOSS.LSOgrade grade LSO grade.
 
   --- Triggers the FSM event "LSOGrade". Delayed called when the LSO grades a player.
   -- @function [parent=#AIRBOSS] __LSOGrade
-  -- @param #AIRBOSS self
-  -- @param #number delay Delay in seconds.
-  -- @param #AIRBOSS.PlayerData playerData Player Data.
-  -- @param #AIRBOSS.LSOgrade grade LSO grade.
+  --- @param #AIRBOSS self
+  --- @param #number delay Delay in seconds.
+  --- @param #AIRBOSS.PlayerData playerData Player Data.
+  --- @param #AIRBOSS.LSOgrade grade LSO grade.
 
   --- On after "LSOGrade" user function. Called when the carrier passes a waypoint of its route.
   -- @function [parent=#AIRBOSS] OnAfterLSOGrade
-  -- @param #AIRBOSS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #AIRBOSS.PlayerData playerData Player Data.
-  -- @param #AIRBOSS.LSOgrade grade LSO grade.
+  --- @param #AIRBOSS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #AIRBOSS.PlayerData playerData Player Data.
+  --- @param #AIRBOSS.LSOgrade grade LSO grade.
 
   --- Triggers the FSM event "Marshal". Called when a flight is send to the Marshal stack.
   -- @function [parent=#AIRBOSS] Marshal
-  -- @param #AIRBOSS self
-  -- @param #AIRBOSS.FlightGroup flight The flight group data.
+  --- @param #AIRBOSS self
+  --- @param #AIRBOSS.FlightGroup flight The flight group data.
 
   --- Triggers the FSM event "Marshal". Delayed call when a flight is send to the Marshal stack.
   -- @function [parent=#AIRBOSS] __Marshal
-  -- @param #AIRBOSS self
-  -- @param #number delay Delay in seconds.
-  -- @param #AIRBOSS.FlightGroup flight The flight group data.
+  --- @param #AIRBOSS self
+  --- @param #number delay Delay in seconds.
+  --- @param #AIRBOSS.FlightGroup flight The flight group data.
 
   --- On after "Marshal" user function. Called when a flight is send to the Marshal stack.
   -- @function [parent=#AIRBOSS] OnAfterMarshal
-  -- @param #AIRBOSS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #AIRBOSS.FlightGroup flight The flight group data.
+  --- @param #AIRBOSS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #AIRBOSS.FlightGroup flight The flight group data.
 
   --- Triggers the FSM event "Stop" that stops the airboss. Event handlers are stopped.
   -- @function [parent=#AIRBOSS] Stop
-  -- @param #AIRBOSS self
+  --- @param #AIRBOSS self
 
   --- Triggers the FSM event "Stop" that stops the airboss after a delay. Event handlers are stopped.
   -- @function [parent=#AIRBOSS] __Stop
-  -- @param #AIRBOSS self
-  -- @param #number delay Delay in seconds.
+  --- @param #AIRBOSS self
+  --- @param #number delay Delay in seconds.
 
   return self
 end

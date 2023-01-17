@@ -30,21 +30,21 @@ do -- CARGO_UNIT
   -- 
   -- ===
   -- 
-  -- @field #CARGO_UNIT CARGO_UNIT
+  --- @field #CARGO_UNIT CARGO_UNIT
   --
   CARGO_UNIT = {
     ClassName = "CARGO_UNIT"
   }
 
   --- CARGO_UNIT Constructor.
-  -- @param #CARGO_UNIT self
-  -- @param Wrapper.Unit#UNIT CargoUnit
-  -- @param #string Type
-  -- @param #string Name
-  -- @param #number Weight
-  -- @param #number LoadRadius (optional)
-  -- @param #number NearRadius (optional)
-  -- @return #CARGO_UNIT
+  --- @param #CARGO_UNIT self
+  --- @param Wrapper.Unit#UNIT CargoUnit
+  --- @param #string Type
+  --- @param #string Name
+  --- @param #number Weight
+  --- @param #number LoadRadius (optional)
+  --- @param #number NearRadius (optional)
+  --- @return #CARGO_UNIT
   function CARGO_UNIT:New( CargoUnit, Type, Name, LoadRadius, NearRadius )
   
     -- Inherit CARGO_REPRESENTABLE.
@@ -63,12 +63,12 @@ do -- CARGO_UNIT
   end
   
   --- Enter UnBoarding State.
-  -- @param #CARGO_UNIT self
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Core.Point#POINT_VEC2 ToPointVec2
-  -- @param #number NearRadius (optional) Defaut 25 m.
+  --- @param #CARGO_UNIT self
+  --- @param #string Event
+  --- @param #string From
+  --- @param #string To
+  --- @param Core.Point#POINT_VEC2 ToPointVec2
+  --- @param #number NearRadius (optional) Defaut 25 m.
   function CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
@@ -136,12 +136,12 @@ do -- CARGO_UNIT
   end
   
   --- Leave UnBoarding State.
-  -- @param #CARGO_UNIT self
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Core.Point#POINT_VEC2 ToPointVec2
-  -- @param #number NearRadius (optional) Defaut 100 m.
+  --- @param #CARGO_UNIT self
+  --- @param #string Event
+  --- @param #string From
+  --- @param #string To
+  --- @param Core.Point#POINT_VEC2 ToPointVec2
+  --- @param #number NearRadius (optional) Defaut 100 m.
   function CARGO_UNIT:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
@@ -162,12 +162,12 @@ do -- CARGO_UNIT
   end
   
   --- UnBoard Event.
-  -- @param #CARGO_UNIT self
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Core.Point#POINT_VEC2 ToPointVec2
-  -- @param #number NearRadius (optional) Defaut 100 m.
+  --- @param #CARGO_UNIT self
+  --- @param #string Event
+  --- @param #string From
+  --- @param #string To
+  --- @param Core.Point#POINT_VEC2 ToPointVec2
+  --- @param #number NearRadius (optional) Defaut 100 m.
   function CARGO_UNIT:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
@@ -188,11 +188,11 @@ do -- CARGO_UNIT
   
   
   --- Enter UnLoaded State.
-  -- @param #CARGO_UNIT self
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Core.Point#POINT_VEC2
+  --- @param #CARGO_UNIT self
+  --- @param #string Event
+  --- @param #string From
+  --- @param #string To
+  --- @param Core.Point#POINT_VEC2
   function CARGO_UNIT:onenterUnLoaded( From, Event, To, ToPointVec2 )
     self:F( { ToPointVec2, From, Event, To } )
   
@@ -224,12 +224,12 @@ do -- CARGO_UNIT
   end
   
   --- Board Event.
-  -- @param #CARGO_UNIT self
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Wrapper.Group#GROUP CargoCarrier
-  -- @param #number NearRadius
+  --- @param #CARGO_UNIT self
+  --- @param #string Event
+  --- @param #string From
+  --- @param #string To
+  --- @param Wrapper.Group#GROUP CargoCarrier
+  --- @param #number NearRadius
   function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ... )
     self:F( { From, Event, To, CargoCarrier, NearRadius = NearRadius } )
   
@@ -286,12 +286,12 @@ do -- CARGO_UNIT
   
   
   --- Boarding Event.
-  -- @param #CARGO_UNIT self
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Wrapper.Client#CLIENT CargoCarrier
-  -- @param #number NearRadius Default 25 m.
+  --- @param #CARGO_UNIT self
+  --- @param #string Event
+  --- @param #string From
+  --- @param #string To
+  --- @param Wrapper.Client#CLIENT CargoCarrier
+  --- @param #number NearRadius Default 25 m.
   function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
     self:F( { From, Event, To, CargoCarrier:GetName(), NearRadius = NearRadius } )
     
@@ -350,11 +350,11 @@ do -- CARGO_UNIT
   
   
   --- Loaded State.
-  -- @param #CARGO_UNIT self
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Wrapper.Unit#UNIT CargoCarrier
+  --- @param #CARGO_UNIT self
+  --- @param #string Event
+  --- @param #string From
+  --- @param #string To
+  --- @param Wrapper.Unit#UNIT CargoCarrier
   function CARGO_UNIT:onenterLoaded( From, Event, To, CargoCarrier )
     self:F( { From, Event, To, CargoCarrier } )
   
@@ -370,8 +370,8 @@ do -- CARGO_UNIT
   end
 
   --- Get the transportation method of the Cargo.
-  -- @param #CARGO_UNIT self
-  -- @return #string The transportation method of the Cargo.
+  --- @param #CARGO_UNIT self
+  --- @return #string The transportation method of the Cargo.
   function CARGO_UNIT:GetTransportationMethod()
     if self:IsLoaded() then
       return "for unboarding"

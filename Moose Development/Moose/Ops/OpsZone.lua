@@ -240,133 +240,133 @@ function OPSZONE:New(Zone, CoalitionOwner)
 
   --- Triggers the FSM event "Start".
   -- @function [parent=#OPSZONE] Start
-  -- @param #OPSZONE self
+  --- @param #OPSZONE self
 
   --- Triggers the FSM event "Start" after a delay.
   -- @function [parent=#OPSZONE] __Start
-  -- @param #OPSZONE self
-  -- @param #number delay Delay in seconds.
+  --- @param #OPSZONE self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Stop".
   -- @function [parent=#OPSZONE] Stop
-  -- @param #OPSZONE self
+  --- @param #OPSZONE self
 
   --- Triggers the FSM event "Stop" after a delay.
   -- @function [parent=#OPSZONE] __Stop
-  -- @param #OPSZONE self
-  -- @param #number delay Delay in seconds.
+  --- @param #OPSZONE self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Evaluated".
   -- @function [parent=#OPSZONE] Evaluated
-  -- @param #OPSZONE self
+  --- @param #OPSZONE self
 
   --- Triggers the FSM event "Evaluated" after a delay.
   -- @function [parent=#OPSZONE] __Evaluated
-  -- @param #OPSZONE self
-  -- @param #number delay Delay in seconds.
+  --- @param #OPSZONE self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Evaluated" event.
   -- @function [parent=#OPSZONE] OnAfterEvaluated
-  -- @param #OPSZONE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #OPSZONE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Captured".
   -- @function [parent=#OPSZONE] Captured
-  -- @param #OPSZONE self
-  -- @param #number Coalition Coalition side that captured the zone.
+  --- @param #OPSZONE self
+  --- @param #number Coalition Coalition side that captured the zone.
 
   --- Triggers the FSM event "Captured" after a delay.
   -- @function [parent=#OPSZONE] __Captured
-  -- @param #OPSZONE self
-  -- @param #number delay Delay in seconds.
-  -- @param #number Coalition Coalition side that captured the zone.
+  --- @param #OPSZONE self
+  --- @param #number delay Delay in seconds.
+  --- @param #number Coalition Coalition side that captured the zone.
 
   --- On after "Captured" event.
   -- @function [parent=#OPSZONE] OnAfterCaptured
-  -- @param #OPSZONE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #number Coalition Coalition side that captured the zone.
+  --- @param #OPSZONE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #number Coalition Coalition side that captured the zone.
 
 
   --- Triggers the FSM event "Guarded".
   -- @function [parent=#OPSZONE] Guarded
-  -- @param #OPSZONE self
+  --- @param #OPSZONE self
 
   --- Triggers the FSM event "Guarded" after a delay.
   -- @function [parent=#OPSZONE] __Guarded
-  -- @param #OPSZONE self
-  -- @param #number delay Delay in seconds.
+  --- @param #OPSZONE self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Guarded" event.
   -- @function [parent=#OPSZONE] OnAfterGuarded
-  -- @param #OPSZONE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.  
+  --- @param #OPSZONE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.  
 
 
   --- Triggers the FSM event "Empty".
   -- @function [parent=#OPSZONE] Empty
-  -- @param #OPSZONE self
+  --- @param #OPSZONE self
 
   --- Triggers the FSM event "Empty" after a delay.
   -- @function [parent=#OPSZONE] __Empty
-  -- @param #OPSZONE self
-  -- @param #number delay Delay in seconds.
+  --- @param #OPSZONE self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Empty" event.
   -- @function [parent=#OPSZONE] OnAfterEmpty
-  -- @param #OPSZONE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.  
+  --- @param #OPSZONE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.  
 
 
   --- Triggers the FSM event "Attacked".
   -- @function [parent=#OPSZONE] Attacked
-  -- @param #OPSZONE self
-  -- @param #number AttackerCoalition Coalition side that is attacking the zone.
+  --- @param #OPSZONE self
+  --- @param #number AttackerCoalition Coalition side that is attacking the zone.
 
   --- Triggers the FSM event "Attacked" after a delay.
   -- @function [parent=#OPSZONE] __Attacked
-  -- @param #OPSZONE self
-  -- @param #number delay Delay in seconds.
-  -- @param #number AttackerCoalition Coalition side that is attacking the zone.
+  --- @param #OPSZONE self
+  --- @param #number delay Delay in seconds.
+  --- @param #number AttackerCoalition Coalition side that is attacking the zone.
 
   --- On after "Attacked" event.
   -- @function [parent=#OPSZONE] OnAfterAttacked
-  -- @param #OPSZONE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #number AttackerCoalition Coalition side that is attacking the zone.
+  --- @param #OPSZONE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #number AttackerCoalition Coalition side that is attacking the zone.
 
 
   --- Triggers the FSM event "Defeated".
   -- @function [parent=#OPSZONE] Defeated
-  -- @param #OPSZONE self
-  -- @param #number DefeatedCoalition Coalition side that was defeated.
+  --- @param #OPSZONE self
+  --- @param #number DefeatedCoalition Coalition side that was defeated.
 
   --- Triggers the FSM event "Defeated" after a delay.
   -- @function [parent=#OPSZONE] __Defeated
-  -- @param #OPSZONE self
-  -- @param #number delay Delay in seconds.
-  -- @param #number DefeatedCoalition Coalition side that was defeated.
+  --- @param #OPSZONE self
+  --- @param #number delay Delay in seconds.
+  --- @param #number DefeatedCoalition Coalition side that was defeated.
 
   --- On after "Defeated" event.
   -- @function [parent=#OPSZONE] OnAfterDefeated
-  -- @param #OPSZONE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #number DefeatedCoalition Coalition side that was defeated.
+  --- @param #OPSZONE self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #number DefeatedCoalition Coalition side that was defeated.
     
   return self
 end
@@ -1208,7 +1208,7 @@ function OPSZONE:EvaluateZone()
   local Tnow=timer.getAbsTime()
   
   --- Capture
-  -- @param #number coal Coaltion capturing.
+  --- @param #number coal Coaltion capturing.
   local function captured(coal)
   
     -- Blue captured red zone.

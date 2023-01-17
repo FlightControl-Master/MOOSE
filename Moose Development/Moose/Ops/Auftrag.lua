@@ -752,206 +752,206 @@ function AUFTRAG:New(Type)
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#AUFTRAG] Status
-  -- @param #AUFTRAG self
+  --- @param #AUFTRAG self
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#AUFTRAG] __Status
-  -- @param #AUFTRAG self
-  -- @param #number delay Delay in seconds.
+  --- @param #AUFTRAG self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Stop".
   -- @function [parent=#AUFTRAG] Stop
-  -- @param #AUFTRAG self
+  --- @param #AUFTRAG self
 
   --- Triggers the FSM event "Stop" after a delay.
   -- @function [parent=#AUFTRAG] __Stop
-  -- @param #AUFTRAG self
-  -- @param #number delay Delay in seconds.
+  --- @param #AUFTRAG self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Planned".
   -- @function [parent=#AUFTRAG] Planned
-  -- @param #AUFTRAG self
+  --- @param #AUFTRAG self
 
   --- Triggers the FSM event "Planned" after a delay.
   -- @function [parent=#AUFTRAG] __Planned
-  -- @param #AUFTRAG self
-  -- @param #number delay Delay in seconds.
+  --- @param #AUFTRAG self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Planned" event.
   -- @function [parent=#AUFTRAG] OnAfterPlanned
-  -- @param #AUFTRAG self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AUFTRAG self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Queued".
   -- @function [parent=#AUFTRAG] Queued
-  -- @param #AUFTRAG self
+  --- @param #AUFTRAG self
 
   --- Triggers the FSM event "Queued" after a delay.
   -- @function [parent=#AUFTRAG] __Queued
-  -- @param #AUFTRAG self
-  -- @param #number delay Delay in seconds.
+  --- @param #AUFTRAG self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Queued" event.
   -- @function [parent=#AUFTRAG] OnAfterQueued
-  -- @param #AUFTRAG self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AUFTRAG self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Requested".
   -- @function [parent=#AUFTRAG] Requested
-  -- @param #AUFTRAG self
+  --- @param #AUFTRAG self
 
   --- Triggers the FSM event "Requested" after a delay.
   -- @function [parent=#AUFTRAG] __Requested
-  -- @param #AUFTRAG self
-  -- @param #number delay Delay in seconds.
+  --- @param #AUFTRAG self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Requested" event.
   -- @function [parent=#AUFTRAG] OnAfterRequested
-  -- @param #AUFTRAG self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AUFTRAG self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Scheduled".
   -- @function [parent=#AUFTRAG] Scheduled
-  -- @param #AUFTRAG self
+  --- @param #AUFTRAG self
 
   --- Triggers the FSM event "Scheduled" after a delay.
   -- @function [parent=#AUFTRAG] __Scheduled
-  -- @param #AUFTRAG self
-  -- @param #number delay Delay in seconds.
+  --- @param #AUFTRAG self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Scheduled" event.
   -- @function [parent=#AUFTRAG] OnAfterScheduled
-  -- @param #AUFTRAG self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AUFTRAG self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Started".
   -- @function [parent=#AUFTRAG] Started
-  -- @param #AUFTRAG self
+  --- @param #AUFTRAG self
 
   --- Triggers the FSM event "Started" after a delay.
   -- @function [parent=#AUFTRAG] __Started
-  -- @param #AUFTRAG self
-  -- @param #number delay Delay in seconds.
+  --- @param #AUFTRAG self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Started" event.
   -- @function [parent=#AUFTRAG] OnAfterStarted
-  -- @param #AUFTRAG self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AUFTRAG self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Executing".
   -- @function [parent=#AUFTRAG] Executing
-  -- @param #AUFTRAG self
+  --- @param #AUFTRAG self
 
   --- Triggers the FSM event "Executing" after a delay.
   -- @function [parent=#AUFTRAG] __Executing
-  -- @param #AUFTRAG self
-  -- @param #number delay Delay in seconds.
+  --- @param #AUFTRAG self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Executing" event.
   -- @function [parent=#AUFTRAG] OnAfterExecuting
-  -- @param #AUFTRAG self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AUFTRAG self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Cancel".
   -- @function [parent=#AUFTRAG] Cancel
-  -- @param #AUFTRAG self
+  --- @param #AUFTRAG self
 
   --- Triggers the FSM event "Cancel" after a delay.
   -- @function [parent=#AUFTRAG] __Cancel
-  -- @param #AUFTRAG self
-  -- @param #number delay Delay in seconds.
+  --- @param #AUFTRAG self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Cancel" event.
   -- @function [parent=#AUFTRAG] OnAfterCancel
-  -- @param #AUFTRAG self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AUFTRAG self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Done".
   -- @function [parent=#AUFTRAG] Done
-  -- @param #AUFTRAG self
+  --- @param #AUFTRAG self
 
   --- Triggers the FSM event "Done" after a delay.
   -- @function [parent=#AUFTRAG] __Done
-  -- @param #AUFTRAG self
-  -- @param #number delay Delay in seconds.
+  --- @param #AUFTRAG self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Done" event.
   -- @function [parent=#AUFTRAG] OnAfterDone
-  -- @param #AUFTRAG self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AUFTRAG self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Success".
   -- @function [parent=#AUFTRAG] Success
-  -- @param #AUFTRAG self
+  --- @param #AUFTRAG self
 
   --- Triggers the FSM event "Success" after a delay.
   -- @function [parent=#AUFTRAG] __Success
-  -- @param #AUFTRAG self
-  -- @param #number delay Delay in seconds.
+  --- @param #AUFTRAG self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Success" event.
   -- @function [parent=#AUFTRAG] OnAfterSuccess
-  -- @param #AUFTRAG self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AUFTRAG self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- Triggers the FSM event "Failed".
   -- @function [parent=#AUFTRAG] Failed
-  -- @param #AUFTRAG self
+  --- @param #AUFTRAG self
 
   --- Triggers the FSM event "Failed" after a delay.
   -- @function [parent=#AUFTRAG] __Failed
-  -- @param #AUFTRAG self
-  -- @param #number delay Delay in seconds.
+  --- @param #AUFTRAG self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Failed" event.
   -- @function [parent=#AUFTRAG] OnAfterFailed
-  -- @param #AUFTRAG self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AUFTRAG self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- Triggers the FSM event "Repeat".
   -- @function [parent=#AUFTRAG] Repeat
-  -- @param #AUFTRAG self
+  --- @param #AUFTRAG self
 
   --- Triggers the FSM event "Repeat" after a delay.
   -- @function [parent=#AUFTRAG] __Repeat
-  -- @param #AUFTRAG self
-  -- @param #number delay Delay in seconds.
+  --- @param #AUFTRAG self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Repeat" event.
   -- @function [parent=#AUFTRAG] OnAfterRepeat
-  -- @param #AUFTRAG self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AUFTRAG self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   -- Init status update.
   self:__Status(-1)

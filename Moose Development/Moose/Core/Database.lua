@@ -248,9 +248,9 @@ end
 do -- Zones
 
   --- Finds a @{Core.Zone} based on the zone name.
-  -- @param #DATABASE self
-  -- @param #string ZoneName The name of the zone.
-  -- @return Core.Zone#ZONE_BASE The found ZONE.
+  --- @param #DATABASE self
+  --- @param #string ZoneName The name of the zone.
+  --- @return Core.Zone#ZONE_BASE The found ZONE.
   function DATABASE:FindZone( ZoneName )
 
     local ZoneFound = self.ZONES[ZoneName]
@@ -258,9 +258,9 @@ do -- Zones
   end
 
   --- Adds a @{Core.Zone} based on the zone name in the DATABASE.
-  -- @param #DATABASE self
-  -- @param #string ZoneName The name of the zone.
-  -- @param Core.Zone#ZONE_BASE Zone The zone.
+  --- @param #DATABASE self
+  --- @param #string ZoneName The name of the zone.
+  --- @param Core.Zone#ZONE_BASE Zone The zone.
   function DATABASE:AddZone( ZoneName, Zone )
 
     if not self.ZONES[ZoneName] then
@@ -270,8 +270,8 @@ do -- Zones
 
 
   --- Deletes a @{Core.Zone} from the DATABASE based on the zone name.
-  -- @param #DATABASE self
-  -- @param #string ZoneName The name of the zone.
+  --- @param #DATABASE self
+  --- @param #string ZoneName The name of the zone.
   function DATABASE:DeleteZone( ZoneName )
 
     self.ZONES[ZoneName] = nil
@@ -279,8 +279,8 @@ do -- Zones
 
 
   --- Private method that registers new ZONE_BASE derived objects within the DATABASE Object.
-  -- @param #DATABASE self
-  -- @return #DATABASE self
+  --- @param #DATABASE self
+  --- @return #DATABASE self
   function DATABASE:_RegisterZones()
 
     for ZoneID, ZoneData in pairs(env.mission.triggers.zones) do
@@ -381,9 +381,9 @@ end -- zone
 do -- Zone_Goal
 
   --- Finds a @{Core.Zone} based on the zone name.
-  -- @param #DATABASE self
-  -- @param #string ZoneName The name of the zone.
-  -- @return Core.Zone#ZONE_BASE The found ZONE.
+  --- @param #DATABASE self
+  --- @param #string ZoneName The name of the zone.
+  --- @return Core.Zone#ZONE_BASE The found ZONE.
   function DATABASE:FindZoneGoal( ZoneName )
 
     local ZoneFound = self.ZONES_GOAL[ZoneName]
@@ -391,9 +391,9 @@ do -- Zone_Goal
   end
 
   --- Adds a @{Core.Zone} based on the zone name in the DATABASE.
-  -- @param #DATABASE self
-  -- @param #string ZoneName The name of the zone.
-  -- @param Core.Zone#ZONE_BASE Zone The zone.
+  --- @param #DATABASE self
+  --- @param #string ZoneName The name of the zone.
+  --- @param Core.Zone#ZONE_BASE Zone The zone.
   function DATABASE:AddZoneGoal( ZoneName, Zone )
 
     if not self.ZONES_GOAL[ZoneName] then
@@ -403,8 +403,8 @@ do -- Zone_Goal
 
 
   --- Deletes a @{Core.Zone} from the DATABASE based on the zone name.
-  -- @param #DATABASE self
-  -- @param #string ZoneName The name of the zone.
+  --- @param #DATABASE self
+  --- @param #string ZoneName The name of the zone.
   function DATABASE:DeleteZoneGoal( ZoneName )
 
     self.ZONES_GOAL[ZoneName] = nil
@@ -415,9 +415,9 @@ end -- Zone_Goal
 do -- OpsZone
 
   --- Finds a @{Ops.OpsZone#OPSZONE} based on the zone name.
-  -- @param #DATABASE self
-  -- @param #string ZoneName The name of the zone.
-  -- @return Ops.OpsZone#OPSZONE The found OPSZONE.
+  --- @param #DATABASE self
+  --- @param #string ZoneName The name of the zone.
+  --- @return Ops.OpsZone#OPSZONE The found OPSZONE.
   function DATABASE:FindOpsZone( ZoneName )
 
     local ZoneFound = self.OPSZONES[ZoneName]
@@ -426,8 +426,8 @@ do -- OpsZone
   end
 
   --- Adds a @{Ops.OpsZone#OPSZONE} based on the zone name in the DATABASE.
-  -- @param #DATABASE self
-  -- @param Ops.OpsZone#OPSZONE OpsZone The zone.
+  --- @param #DATABASE self
+  --- @param Ops.OpsZone#OPSZONE OpsZone The zone.
   function DATABASE:AddOpsZone( OpsZone )
   
     if OpsZone then
@@ -443,8 +443,8 @@ do -- OpsZone
 
 
   --- Deletes a @{Ops.OpsZone#OPSZONE} from the DATABASE based on the zone name.
-  -- @param #DATABASE self
-  -- @param #string ZoneName The name of the zone.
+  --- @param #DATABASE self
+  --- @param #string ZoneName The name of the zone.
   function DATABASE:DeleteOpsZone( ZoneName )
     self.OPSZONES[ZoneName] = nil
   end
@@ -454,8 +454,8 @@ end -- OpsZone
 do -- cargo
 
   --- Adds a Cargo based on the Cargo Name in the DATABASE.
-  -- @param #DATABASE self
-  -- @param #string CargoName The name of the airbase
+  --- @param #DATABASE self
+  --- @param #string CargoName The name of the airbase
   function DATABASE:AddCargo( Cargo )
 
     if not self.CARGOS[Cargo.Name] then
@@ -465,17 +465,17 @@ do -- cargo
 
 
   --- Deletes a Cargo from the DATABASE based on the Cargo Name.
-  -- @param #DATABASE self
-  -- @param #string CargoName The name of the airbase
+  --- @param #DATABASE self
+  --- @param #string CargoName The name of the airbase
   function DATABASE:DeleteCargo( CargoName )
 
     self.CARGOS[CargoName] = nil
   end
 
   --- Finds an CARGO based on the CargoName.
-  -- @param #DATABASE self
-  -- @param #string CargoName
-  -- @return Wrapper.Cargo#CARGO The found CARGO.
+  --- @param #DATABASE self
+  --- @param #string CargoName
+  --- @return Wrapper.Cargo#CARGO The found CARGO.
   function DATABASE:FindCargo( CargoName )
 
     local CargoFound = self.CARGOS[CargoName]
@@ -484,9 +484,9 @@ do -- cargo
 
   --- Checks if the Template name has a #CARGO tag.
   -- If yes, the group is a cargo.
-  -- @param #DATABASE self
-  -- @param #string TemplateName
-  -- @return #boolean
+  --- @param #DATABASE self
+  --- @param #string TemplateName
+  --- @return #boolean
   function DATABASE:IsCargo( TemplateName )
 
     TemplateName = env.getValueDictByKey( TemplateName )
@@ -497,8 +497,8 @@ do -- cargo
   end
 
   --- Private method that registers new Static Templates within the DATABASE Object.
-  -- @param #DATABASE self
-  -- @return #DATABASE self
+  --- @param #DATABASE self
+  --- @return #DATABASE self
   function DATABASE:_RegisterCargos()
 
     local Groups = UTILS.DeepCopy( self.GROUPS ) -- This is a very important statement. CARGO_GROUP:New creates a new _DATABASE.GROUP entry, which will confuse the loop. I searched 4 hours on this to find the bug!
@@ -1732,8 +1732,8 @@ function DATABASE:_RegisterTemplates()
 end
 
   --- Account the Hits of the Players.
-  -- @param #DATABASE self
-  -- @param Core.Event#EVENTDATA Event
+  --- @param #DATABASE self
+  --- @param Core.Event#EVENTDATA Event
   function DATABASE:AccountHits( Event )
     self:F( { Event } )
 
@@ -1774,8 +1774,8 @@ end
   end
 
   --- Account the destroys.
-  -- @param #DATABASE self
-  -- @param Core.Event#EVENTDATA Event
+  --- @param #DATABASE self
+  --- @param Core.Event#EVENTDATA Event
   function DATABASE:AccountDestroys( Event )
     self:F( { Event } )
 

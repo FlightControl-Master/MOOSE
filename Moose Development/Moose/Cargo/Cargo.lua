@@ -367,16 +367,16 @@ do -- CARGO
 
   --- @type CARGO
   -- @extends Core.Fsm#FSM_PROCESS
-  -- @field #string Type A string defining the type of the cargo. eg. Engineers, Equipment, Screwdrivers.
-  -- @field #string Name A string defining the name of the cargo. The name is the unique identifier of the cargo.
-  -- @field #number Weight A number defining the weight of the cargo. The weight is expressed in kg.
-  -- @field #number NearRadius (optional) A number defining the radius in meters when the cargo is near to a Carrier, so that it can be loaded.
-  -- @field Wrapper.Unit#UNIT CargoObject The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...
-  -- @field Wrapper.Client#CLIENT CargoCarrier The alive DCS object carrying the cargo. This value can be nil, meaning, that the cargo is not contained anywhere...
-  -- @field #boolean Slingloadable This flag defines if the cargo can be slingloaded.
-  -- @field #boolean Moveable This flag defines if the cargo is moveable.
-  -- @field #boolean Representable This flag defines if the cargo can be represented by a DCS Unit.
-  -- @field #boolean Containable This flag defines if the cargo can be contained within a DCS Unit.
+  --- @field #string Type A string defining the type of the cargo. eg. Engineers, Equipment, Screwdrivers.
+  --- @field #string Name A string defining the name of the cargo. The name is the unique identifier of the cargo.
+  --- @field #number Weight A number defining the weight of the cargo. The weight is expressed in kg.
+  --- @field #number NearRadius (optional) A number defining the radius in meters when the cargo is near to a Carrier, so that it can be loaded.
+  --- @field Wrapper.Unit#UNIT CargoObject The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...
+  --- @field Wrapper.Client#CLIENT CargoCarrier The alive DCS object carrying the cargo. This value can be nil, meaning, that the cargo is not contained anywhere...
+  --- @field #boolean Slingloadable This flag defines if the cargo can be slingloaded.
+  --- @field #boolean Moveable This flag defines if the cargo is moveable.
+  --- @field #boolean Representable This flag defines if the cargo can be represented by a DCS Unit.
+  --- @field #boolean Containable This flag defines if the cargo can be contained within a DCS Unit.
 
   --- Defines the core functions that defines a cargo object within MOOSE.
   -- 
@@ -413,7 +413,7 @@ do -- CARGO
   --   * @{#CARGO.UnLoad}( ToPointVec2 ): UnLoads the cargo from a carrier.
   --   * @{#CARGO.Destroyed}( Controllable ): The cargo is dead. The cargo process will be ended.
   -- 
-  -- @field #CARGO
+  --- @field #CARGO
   CARGO = {
     ClassName = "CARGO",
     Type = nil,
@@ -438,7 +438,7 @@ do -- CARGO
   -- @param #number Weight
   -- @param #number LoadRadius (optional)
   -- @param #number NearRadius (optional)
-  -- @return #CARGO
+  --- @return #CARGO
   function CARGO:New( Type, Name, Weight, LoadRadius, NearRadius ) --R2.1
 
     local self = BASE:Inherit( self, FSM:New() ) -- #CARGO
@@ -486,7 +486,7 @@ do -- CARGO
   --- Find a CARGO in the _DATABASE.
   -- @param #CARGO self
   -- @param #string CargoName The Cargo Name.
-  -- @return #CARGO self
+  --- @return #CARGO self
   function CARGO:FindByName( CargoName )
 
     local CargoFound = _DATABASE:FindCargo( CargoName )
@@ -495,7 +495,7 @@ do -- CARGO
 
   --- Get the x position of the cargo.
   -- @param #CARGO self
-  -- @return #number
+  --- @return #number
   function CARGO:GetX()
     if self:IsLoaded() then
       return self.CargoCarrier:GetCoordinate().x
@@ -506,7 +506,7 @@ do -- CARGO
 
   --- Get the y position of the cargo.
   -- @param #CARGO self
-  -- @return #number
+  --- @return #number
   function CARGO:GetY()
     if self:IsLoaded() then
       return self.CargoCarrier:GetCoordinate().z
@@ -517,7 +517,7 @@ do -- CARGO
 
   --- Get the heading of the cargo.
   -- @param #CARGO self
-  -- @return #number
+  --- @return #number
   function CARGO:GetHeading()
     if self:IsLoaded() then
       return self.CargoCarrier:GetHeading()
@@ -567,14 +567,14 @@ do -- CARGO
 
   --- Get the name of the Cargo.
   -- @param #CARGO self
-  -- @return #string The name of the Cargo.
+  --- @return #string The name of the Cargo.
   function CARGO:GetName() --R2.1
     return self.Name
   end
 
   --- Get the current active object representing or being the Cargo.
   -- @param #CARGO self
-  -- @return Wrapper.Positionable#POSITIONABLE The object representing or being the Cargo.
+  --- @return Wrapper.Positionable#POSITIONABLE The object representing or being the Cargo.
   function CARGO:GetObject()
     if self:IsLoaded() then
       return self.CargoCarrier
@@ -585,7 +585,7 @@ do -- CARGO
 
   --- Get the object name of the Cargo.
   -- @param #CARGO self
-  -- @return #string The object name of the Cargo.
+  --- @return #string The object name of the Cargo.
   function CARGO:GetObjectName() --R2.1
     if self:IsLoaded() then
       return self.CargoCarrier:GetName()
@@ -596,28 +596,28 @@ do -- CARGO
 
   --- Get the amount of Cargo.
   -- @param #CARGO self
-  -- @return #number The amount of Cargo.
+  --- @return #number The amount of Cargo.
   function CARGO:GetCount()
     return 1
   end
 
   --- Get the type of the Cargo.
   -- @param #CARGO self
-  -- @return #string The type of the Cargo.
+  --- @return #string The type of the Cargo.
   function CARGO:GetType()
     return self.Type
   end
 
   --- Get the transportation method of the Cargo.
   -- @param #CARGO self
-  -- @return #string The transportation method of the Cargo.
+  --- @return #string The transportation method of the Cargo.
   function CARGO:GetTransportationMethod()
     return self.TransportationMethod
   end
 
   --- Get the coalition of the Cargo.
   -- @param #CARGO self
-  -- @return Coalition
+  --- @return Coalition
   function CARGO:GetCoalition()
     if self:IsLoaded() then
       return self.CargoCarrier:GetCoalition()
@@ -628,21 +628,21 @@ do -- CARGO
 
   --- Get the current coordinates of the Cargo.
   -- @param #CARGO self
-  -- @return Core.Point#COORDINATE The coordinates of the Cargo.
+  --- @return Core.Point#COORDINATE The coordinates of the Cargo.
   function CARGO:GetCoordinate()
     return self.CargoObject:GetCoordinate()
   end
 
   --- Check if cargo is destroyed.
   -- @param #CARGO self
-  -- @return #boolean true if destroyed
+  --- @return #boolean true if destroyed
   function CARGO:IsDestroyed()
     return self:Is( "Destroyed" )
   end
 
   --- Check if cargo is loaded.
   -- @param #CARGO self
-  -- @return #boolean true if loaded
+  --- @return #boolean true if loaded
   function CARGO:IsLoaded()
     return self:Is( "Loaded" )
   end
@@ -650,35 +650,35 @@ do -- CARGO
   --- Check if cargo is loaded.
   -- @param #CARGO self
   -- @param Wrapper.Unit#UNIT Carrier
-  -- @return #boolean true if loaded
+  --- @return #boolean true if loaded
   function CARGO:IsLoadedInCarrier( Carrier )
     return self.CargoCarrier and self.CargoCarrier:GetName() == Carrier:GetName()
   end
 
   --- Check if cargo is unloaded.
   -- @param #CARGO self
-  -- @return #boolean true if unloaded
+  --- @return #boolean true if unloaded
   function CARGO:IsUnLoaded()
     return self:Is( "UnLoaded" )
   end
 
   --- Check if cargo is boarding.
   -- @param #CARGO self
-  -- @return #boolean true if boarding
+  --- @return #boolean true if boarding
   function CARGO:IsBoarding()
     return self:Is( "Boarding" )
   end
 
   --- Check if cargo is unboarding.
   -- @param #CARGO self
-  -- @return #boolean true if unboarding
+  --- @return #boolean true if unboarding
   function CARGO:IsUnboarding()
     return self:Is( "UnBoarding" )
   end
 
   --- Check if cargo is alive.
   -- @param #CARGO self
-  -- @return #boolean true if unloaded
+  --- @return #boolean true if unloaded
   function CARGO:IsAlive()
 
     if self:IsLoaded() then
@@ -697,14 +697,14 @@ do -- CARGO
 
   --- Is the cargo deployed
   -- @param #CARGO self
-  -- @return #boolean
+  --- @return #boolean
   function CARGO:IsDeployed()
     return self.Deployed
   end
 
   --- Template method to spawn a new representation of the CARGO in the simulator.
   -- @param #CARGO self
-  -- @return #CARGO
+  --- @return #CARGO
   function CARGO:Spawn( PointVec2 )
     self:F()
 
@@ -790,14 +790,14 @@ do -- CARGO
   --- Set the Load radius, which is the radius till when the Cargo can be loaded.
   -- @param #CARGO self
   -- @param #number LoadRadius The radius till Cargo can be loaded.
-  -- @return #CARGO
+  --- @return #CARGO
   function CARGO:SetLoadRadius( LoadRadius )
     self.LoadRadius = LoadRadius or 150
   end
 
   --- Get the Load radius, which is the radius till when the Cargo can be loaded.
   -- @param #CARGO self
-  -- @return #number The radius till Cargo can be loaded.
+  --- @return #number The radius till Cargo can be loaded.
   function CARGO:GetLoadRadius()
     return self.LoadRadius
   end
@@ -805,7 +805,7 @@ do -- CARGO
   --- Check if Cargo is in the LoadRadius for the Cargo to be Boarded or Loaded.
   -- @param #CARGO self
   -- @param Core.Point#COORDINATE Coordinate
-  -- @return #boolean true if the CargoGroup is within the loading radius.
+  --- @return #boolean true if the CargoGroup is within the loading radius.
   function CARGO:IsInLoadRadius( Coordinate )
     self:F( { Coordinate, LoadRadius = self.LoadRadius } )
 
@@ -825,7 +825,7 @@ do -- CARGO
   --- Check if the Cargo can report itself to be Boarded or Loaded.
   -- @param #CARGO self
   -- @param Core.Point#COORDINATE Coordinate
-  -- @return #boolean true if the Cargo can report itself.
+  --- @return #boolean true if the Cargo can report itself.
   function CARGO:IsInReportRadius( Coordinate )
     self:F( { Coordinate } )
 
@@ -846,7 +846,7 @@ do -- CARGO
   -- @param #CARGO self
   -- @param Core.Point#COORDINATE Coordinate
   -- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).
-  -- @return #boolean
+  --- @return #boolean
   function CARGO:IsNear( Coordinate, NearRadius )
     --self:F( { PointVec2 = PointVec2, NearRadius = NearRadius } )
 
@@ -871,7 +871,7 @@ do -- CARGO
   --- Check if Cargo is the given @{Core.Zone}.
   -- @param #CARGO self
   -- @param Core.Zone#ZONE_BASE Zone
-  -- @return #boolean **true** if cargo is in the Zone, **false** if cargo is not in the Zone.
+  --- @return #boolean **true** if cargo is in the Zone, **false** if cargo is not in the Zone.
   function CARGO:IsInZone( Zone )
     --self:F( { Zone } )
 
@@ -892,21 +892,21 @@ do -- CARGO
 
   --- Get the current PointVec2 of the cargo.
   -- @param #CARGO self
-  -- @return Core.Point#POINT_VEC2
+  --- @return Core.Point#POINT_VEC2
   function CARGO:GetPointVec2()
     return self.CargoObject:GetPointVec2()
   end
 
   --- Get the current Coordinate of the cargo.
   -- @param #CARGO self
-  -- @return Core.Point#COORDINATE
+  --- @return Core.Point#COORDINATE
   function CARGO:GetCoordinate()
     return self.CargoObject:GetCoordinate()
   end
 
   --- Get the weight of the cargo.
   -- @param #CARGO self
-  -- @return #number Weight The weight in kg.
+  --- @return #number Weight The weight in kg.
   function CARGO:GetWeight()
     return self.Weight 
   end
@@ -914,7 +914,7 @@ do -- CARGO
   --- Set the weight of the cargo.
   -- @param #CARGO self
   -- @param #number Weight The weight in kg.
-  -- @return #CARGO
+  --- @return #CARGO
   function CARGO:SetWeight( Weight )
     self.Weight = Weight
     return self
@@ -922,7 +922,7 @@ do -- CARGO
 
   --- Get the volume of the cargo.
   -- @param #CARGO self
-  -- @return #number Volume The volume in kg.
+  --- @return #number Volume The volume in kg.
   function CARGO:GetVolume()
     return self.Volume 
   end
@@ -930,7 +930,7 @@ do -- CARGO
   --- Set the volume of the cargo.
   -- @param #CARGO self
   -- @param #number Volume The volume in kg.
-  -- @return #CARGO
+  --- @return #CARGO
   function CARGO:SetVolume( Volume )
     self.Volume = Volume
     return self
@@ -951,7 +951,7 @@ do -- CARGO
   -- @param #CARGO self
   -- @param #string Action The string describing the action for the cargo.
   -- @param Wrapper.Group#GROUP CarrierGroup The Carrier Group to send the report to.
-  -- @return #CARGO
+  --- @return #CARGO
   function CARGO:Report( ReportText, Action, CarrierGroup )
 
     if not self.Reported[CarrierGroup] or not self.Reported[CarrierGroup][Action] then
@@ -976,7 +976,7 @@ do -- CARGO
   --- Report to a Carrier Group with a Flaring signal.
   -- @param #CARGO self
   -- @param Utils#UTILS.FlareColor FlareColor the color of the flare.
-  -- @return #CARGO
+  --- @return #CARGO
   function CARGO:ReportFlare( FlareColor )
 
     self.ReportFlareColor = FlareColor 
@@ -985,7 +985,7 @@ do -- CARGO
   --- Report to a Carrier Group with a Smoking signal.
   -- @param #CARGO self
   -- @param Utils#UTILS.SmokeColor SmokeColor the color of the smoke.
-  -- @return #CARGO
+  --- @return #CARGO
   function CARGO:ReportSmoke( SmokeColor )
 
     self.ReportSmokeColor = SmokeColor 
@@ -995,7 +995,7 @@ do -- CARGO
   -- @param #CARGO self
   -- @param #string Action The string describing the action for the cargo.
   -- @param Wrapper.Group#GROUP CarrierGroup The Carrier Group to send the report to.
-  -- @return #CARGO
+  --- @return #CARGO
   function CARGO:ReportReset( Action, CarrierGroup )
 
     self.Reported[CarrierGroup][Action] = nil
@@ -1004,7 +1004,7 @@ do -- CARGO
   --- Reset all the reporting for a Carrier Group.
   -- @param #CARGO self
   -- @param Wrapper.Group#GROUP CarrierGroup The Carrier Group to send the report to.
-  -- @return #CARGO
+  --- @return #CARGO
   function CARGO:ReportResetAll( CarrierGroup )
 
     self.Reported[CarrierGroup] = nil
@@ -1031,10 +1031,10 @@ do -- CARGO_REPRESENTABLE
 
   --- @type CARGO_REPRESENTABLE
   -- @extends #CARGO
-  -- @field test
+  --- @field test
 
   --- Models CARGO that is representable by a Unit.
-  -- @field #CARGO_REPRESENTABLE CARGO_REPRESENTABLE
+  --- @field #CARGO_REPRESENTABLE CARGO_REPRESENTABLE
   CARGO_REPRESENTABLE = {
     ClassName = "CARGO_REPRESENTABLE"
   }
@@ -1046,7 +1046,7 @@ do -- CARGO_REPRESENTABLE
   -- @param #string Name Name.
   -- @param #number LoadRadius (optional) Radius in meters.
   -- @param #number NearRadius (optional) Radius in meters when the cargo is loaded into the carrier.
-  -- @return #CARGO_REPRESENTABLE
+  --- @return #CARGO_REPRESENTABLE
   function CARGO_REPRESENTABLE:New( CargoObject, Type, Name, LoadRadius, NearRadius )
 
     -- Inherit CARGO.
@@ -1077,7 +1077,7 @@ do -- CARGO_REPRESENTABLE
 
   --- CARGO_REPRESENTABLE Destructor.
   -- @param #CARGO_REPRESENTABLE self
-  -- @return #CARGO_REPRESENTABLE
+  --- @return #CARGO_REPRESENTABLE
   function CARGO_REPRESENTABLE:Destroy()
 
     -- Cargo objects are deleted from the _DATABASE and SET_CARGO objects.
@@ -1091,7 +1091,7 @@ do -- CARGO_REPRESENTABLE
   -- @param #CARGO_REPRESENTABLE self
   -- @param Core.Point#POINT_VEC2 ToPointVec2
   -- @param #number Speed
-  -- @return #CARGO_REPRESENTABLE
+  --- @return #CARGO_REPRESENTABLE
   function CARGO_REPRESENTABLE:RouteTo( ToPointVec2, Speed )
     self:F2( ToPointVec2 )
 
@@ -1150,7 +1150,7 @@ do -- CARGO_REPORTABLE
   -- @param #number Weight
   -- @param #number LoadRadius (optional)
   -- @param #number NearRadius (optional)
-  -- @return #CARGO_REPORTABLE
+  --- @return #CARGO_REPORTABLE
   function CARGO_REPORTABLE:New( Type, Name, Weight, LoadRadius, NearRadius )
     local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight, LoadRadius, NearRadius ) ) -- #CARGO_REPORTABLE
     self:F( { Type, Name, Weight, LoadRadius, NearRadius } )

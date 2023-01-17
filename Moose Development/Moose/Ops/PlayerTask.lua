@@ -179,81 +179,81 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
   
   --- On After "Planned" event. Task has been planned.
   -- @function [parent=#PLAYERTASK] OnAfterPlanned
-  -- @param #PLAYERTASK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #PLAYERTASK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
   --- On After "Requested" event. Task has been Requested.
   -- @function [parent=#PLAYERTASK] OnAfterRequested
-  -- @param #PLAYERTASK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #PLAYERTASK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
    
   --- On After "ClientAdded" event. Client has been added to the task.
   -- @function [parent=#PLAYERTASK] OnAfterClientAdded
-  -- @param #PLAYERTASK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Client#CLIENT Client
+  --- @param #PLAYERTASK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Client#CLIENT Client
    
   --- On After "ClientRemoved" event. Client has been removed from the task.
   -- @function [parent=#PLAYERTASK] OnAfterClientRemoved
-  -- @param #PLAYERTASK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #PLAYERTASK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
    
   --- On After "Executing" event. Task is executed by the 1st client.
   -- @function [parent=#PLAYERTASK] OnAfterExecuting
-  -- @param #PLAYERTASK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #PLAYERTASK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
    
   --- On After "Done" event. Task is done.
   -- @function [parent=#PLAYERTASK] OnAfterDone
-  -- @param #PLAYERTASK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #PLAYERTASK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
    
   --- On After "Cancel" event. Task has been cancelled.
   -- @function [parent=#PLAYERTASK] OnAfterCancel
-  -- @param #PLAYERTASK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #PLAYERTASK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
    
   --- On After "Planned" event. Task has been planned.
   -- @function [parent=#PLAYERTASK] OnAfterPilotPlanned
-  -- @param #PLAYERTASK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #PLAYERTASK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
    
   --- On After "Success" event. Task has been a success.
   -- @function [parent=#PLAYERTASK] OnAfterSuccess
-  -- @param #PLAYERTASK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #PLAYERTASK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
    
   --- On After "ClientAborted" event. A client has aborted the task.
   -- @function [parent=#PLAYERTASK] OnAfterClientAborted
-  -- @param #PLAYERTASK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #PLAYERTASK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
    
   --- On After "Failed" event. Task has been a failure.
   -- @function [parent=#PLAYERTASK] OnAfterFailed
-  -- @param #PLAYERTASK self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #PLAYERTASK self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
 end
 
@@ -1564,95 +1564,95 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   
   --- On After "TaskAdded" event. Task has been added.
   -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskAdded
-  -- @param #PLAYERTASKCONTROLLER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.PlayerTask#PLAYERTASK Task
+  --- @param #PLAYERTASKCONTROLLER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.PlayerTask#PLAYERTASK Task
   
    --- On After "TaskDone" event. Task is done.
   -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskDone
-  -- @param #PLAYERTASKCONTROLLER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.PlayerTask#PLAYERTASK Task
+  --- @param #PLAYERTASKCONTROLLER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.PlayerTask#PLAYERTASK Task
    
   --- On After "TaskCancelled" event. Task has been cancelled.
   -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskCancelled
-  -- @param #PLAYERTASKCONTROLLER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.PlayerTask#PLAYERTASK Task
+  --- @param #PLAYERTASKCONTROLLER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.PlayerTask#PLAYERTASK Task
    
   --- On After "TaskFailed" event. Task has failed.
   -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskFailed
-  -- @param #PLAYERTASKCONTROLLER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.PlayerTask#PLAYERTASK Task
+  --- @param #PLAYERTASKCONTROLLER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.PlayerTask#PLAYERTASK Task
    
   --- On After "TaskSuccess" event. Task has been a success.
   -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskSuccess
-  -- @param #PLAYERTASKCONTROLLER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.PlayerTask#PLAYERTASK Task
+  --- @param #PLAYERTASKCONTROLLER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.PlayerTask#PLAYERTASK Task
    
   --- On After "TaskRepeatOnFailed" event. Task has failed and will be repeated.
   -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskRepeatOnFailed
-  -- @param #PLAYERTASKCONTROLLER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.PlayerTask#PLAYERTASK Task
+  --- @param #PLAYERTASKCONTROLLER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.PlayerTask#PLAYERTASK Task
   
   --- On After "TaskTargetSmoked" event. Task smoked.
   -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskTargetSmoked
-  -- @param #PLAYERTASKCONTROLLER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.PlayerTask#PLAYERTASK Task
+  --- @param #PLAYERTASKCONTROLLER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.PlayerTask#PLAYERTASK Task
   
   --- On After "TaskTargetFlared" event. Task flared.
   -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskTargetFlared
-  -- @param #PLAYERTASKCONTROLLER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.PlayerTask#PLAYERTASK Task
+  --- @param #PLAYERTASKCONTROLLER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.PlayerTask#PLAYERTASK Task
   
   --- On After "TaskTargetIlluminated" event. Task illuminated.
   -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskTargetIlluminated
-  -- @param #PLAYERTASKCONTROLLER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Ops.PlayerTask#PLAYERTASK Task
+  --- @param #PLAYERTASKCONTROLLER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Ops.PlayerTask#PLAYERTASK Task
   
     --- On After "PlayerJoinedTask" event. Player joined a task.
   -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterPlayerJoinedTask
-  -- @param #PLAYERTASKCONTROLLER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Group#GROUP Group The player group object
-  -- @param Wrapper.Client#CLIENT Client The player client object
-  -- @param Ops.PlayerTask#PLAYERTASK Task
+  --- @param #PLAYERTASKCONTROLLER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Group#GROUP Group The player group object
+  --- @param Wrapper.Client#CLIENT Client The player client object
+  --- @param Ops.PlayerTask#PLAYERTASK Task
   
     --- On After "PlayerAbortedTask" event. Player aborted a task.
   -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterPlayerAbortedTask
-  -- @param #PLAYERTASKCONTROLLER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Group#GROUP Group The player group object
-  -- @param Wrapper.Client#CLIENT Client The player client object
-  -- @param Ops.PlayerTask#PLAYERTASK Task
+  --- @param #PLAYERTASKCONTROLLER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Group#GROUP Group The player group object
+  --- @param Wrapper.Client#CLIENT Client The player client object
+  --- @param Ops.PlayerTask#PLAYERTASK Task
   
 end
 

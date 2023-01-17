@@ -133,7 +133,7 @@ function AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, Pa
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
+  --- @return #boolean Return false to cancel Transition.
 
   --- OnAfter Transition Handler for Event Patrol.
   -- @function [parent=#AI_AIR_PATROL] OnAfterPatrol
@@ -159,7 +159,7 @@ function AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, Pa
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
+  --- @return #boolean Return false to cancel Transition.
 
   --- OnEnter Transition Handler for State Patrolling.
   -- @function [parent=#AI_AIR_PATROL] OnEnterPatrolling
@@ -178,7 +178,7 @@ function AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, Pa
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
+  --- @return #boolean Return false to cancel Transition.
 
   --- OnAfter Transition Handler for Event PatrolRoute.
   -- @function [parent=#AI_AIR_PATROL] OnAfterPatrolRoute

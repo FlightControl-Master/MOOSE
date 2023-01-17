@@ -590,7 +590,7 @@ AWACS = {
 }
 
 ---
---@field CallSignClear
+--- @field CallSignClear
 AWACS.CallSignClear = {
     [1]="Overlord",
     [2]="Magic",
@@ -687,7 +687,7 @@ AWACS.ROT = {
  }
  
 ---
---@field THREATLEVEL -- can be 1-10, thresholds
+--- @field THREATLEVEL -- can be 1-10, thresholds
 AWACS.THREATLEVEL = {
   GREEN = 3,
   AMBER = 7,
@@ -695,7 +695,7 @@ AWACS.THREATLEVEL = {
 }
 
 ---
---@field CapVoices -- Random CAP voices
+--- @field CapVoices -- Random CAP voices
 AWACS.CapVoices = {
   [1] = "de-DE-Wavenet-A",
   [2] = "de-DE-Wavenet-B",
@@ -907,14 +907,14 @@ AWACS.TaskStatus = {
 
 ---
 --@type RadioEntry
---@field #string TextTTS
---@field #string TextScreen
---@field #boolean IsNew
---@field #boolean IsGroup
---@field #boolean GroupID
---@field #number Duration
---@field #boolean ToScreen
---@field #boolean FromAI
+--- @field #string TextTTS
+--- @field #string TextScreen
+--- @field #boolean IsNew
+--- @field #boolean IsGroup
+--- @field #boolean GroupID
+--- @field #number Duration
+--- @field #boolean ToScreen
+--- @field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO-List 0.2.52
@@ -1239,111 +1239,111 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   
     --- Triggers the FSM event "Start". Starts the AWACS. Initializes parameters and starts event handlers.
   -- @function [parent=#AWACS] Start
-  -- @param #AWACS self
+  --- @param #AWACS self
 
   --- Triggers the FSM event "Start" after a delay. Starts the AWACS. Initializes parameters and starts event handlers.
   -- @function [parent=#AWACS] __Start
-  -- @param #AWACS self
-  -- @param #number delay Delay in seconds.
+  --- @param #AWACS self
+  --- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Stop". Stops the AWACS and all its event handlers.
-  -- @param #AWACS self
+  --- @param #AWACS self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the AWACS and all its event handlers.
   -- @function [parent=#AWACS] __Stop
-  -- @param #AWACS self
-  -- @param #number delay Delay in seconds.
+  --- @param #AWACS self
+  --- @param #number delay Delay in seconds.
   
   --- On After "CheckedIn" event. AI or Player checked in.
   -- @function [parent=#AWACS] OnAfterCheckedIn
-  -- @param #AWACS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AWACS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
     --- On After "CheckedOut" event. AI or Player checked out.
   -- @function [parent=#AWACS] OnAfterCheckedOut
-  -- @param #AWACS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AWACS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
     --- On After "AssignedAnchor" event. AI or Player has been assigned a CAP station.
   -- @function [parent=#AWACS] OnAfterAssignedAnchor
-  -- @param #AWACS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AWACS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
     --- On After "ReAnchor" event. AI or Player has been send back to station.
   -- @function [parent=#AWACS] OnAfterReAnchor
-  -- @param #AWACS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AWACS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
   --- On After "NewCluster" event. AWACS detected a cluster.
   -- @function [parent=#AWACS] OnAfterNewCluster
-  -- @param #AWACS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AWACS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
   --- On After "NewContact" event. AWACS detected a contact.
   -- @function [parent=#AWACS] OnAfterNewContact
-  -- @param #AWACS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AWACS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
   --- On After "LostCluster" event. AWACS lost a radar cluster.
   -- @function [parent=#AWACS] OnAfterLostCluster
-  -- @param #AWACS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AWACS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
   --- On After "LostContact" event. AWACS lost a radar contact.
   -- @function [parent=#AWACS] OnAfterLostContact
-  -- @param #AWACS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AWACS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
     --- On After "EscortShiftChange" event. AWACS escorts shift change.
   -- @function [parent=#AWACS] OnAfterEscortShiftChange
-  -- @param #AWACS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AWACS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
   --- On After "AwacsShiftChange" event. AWACS shift change.
   -- @function [parent=#AWACS] OnAfterAwacsShiftChange
-  -- @param #AWACS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AWACS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
   --- On After "Intercept" event. CAP send on intercept.
   -- @function [parent=#AWACS] OnAfterIntercept
-  -- @param #AWACS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AWACS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
   --- On After "InterceptSuccess" event. Intercept successful.
   -- @function [parent=#AWACS] OnAfterIntercept
-  -- @param #AWACS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AWACS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
   --- On After "InterceptFailure" event. Intercept failure.
   -- @function [parent=#AWACS] OnAfterIntercept
-  -- @param #AWACS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #AWACS self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
   
   return self
 end

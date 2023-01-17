@@ -211,11 +211,11 @@ do -- TASK_CARGO_TRANSPORT
   -- You can use this event handler to post messages to players, or provide status updates etc.
   -- 
   --      --- CargoPickedUp event handler OnAfter for "myclass".
-  --      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
-  --      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
-  --      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
-  --      -- @param Wrapper.Unit#UNIT TaskUnit The unit (client) of the player that has picked up the cargo.
-  --      -- @param Cargo.Cargo#CARGO Cargo The cargo object that has been picked up. Note that this can be a CARGO_GROUP, CARGO_CRATE or CARGO_SLINGLOAD object!
+  --      --- @param #string From A string that contains the "*from state name*" when the event was triggered.
+  --      --- @param #string Event A string that contains the "*event name*" when the event was triggered.
+  --      --- @param #string To A string that contains the "*to state name*" when the event was triggered.
+  --      --- @param Wrapper.Unit#UNIT TaskUnit The unit (client) of the player that has picked up the cargo.
+  --      --- @param Cargo.Cargo#CARGO Cargo The cargo object that has been picked up. Note that this can be a CARGO_GROUP, CARGO_CRATE or CARGO_SLINGLOAD object!
   --      function myclass:OnAfterCargoPickedUp( From, Event, To, TaskUnit, Cargo )
   --      
   --        -- Write here your own code.
@@ -240,12 +240,12 @@ do -- TASK_CARGO_TRANSPORT
   -- 
   -- 
   --      --- CargoDeployed event handler OnAfter foR "myclass".
-  --      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
-  --      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
-  --      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
-  --      -- @param Wrapper.Unit#UNIT TaskUnit The unit (client) of the player that has deployed the cargo.
-  --      -- @param Cargo.Cargo#CARGO Cargo The cargo object that has been deployed. Note that this can be a CARGO_GROUP, CARGO_CRATE or CARGO_SLINGLOAD object!
-  --      -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+  --      --- @param #string From A string that contains the "*from state name*" when the event was triggered.
+  --      --- @param #string Event A string that contains the "*event name*" when the event was triggered.
+  --      --- @param #string To A string that contains the "*to state name*" when the event was triggered.
+  --      --- @param Wrapper.Unit#UNIT TaskUnit The unit (client) of the player that has deployed the cargo.
+  --      --- @param Cargo.Cargo#CARGO Cargo The cargo object that has been deployed. Note that this can be a CARGO_GROUP, CARGO_CRATE or CARGO_SLINGLOAD object!
+  --      --- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
   --      function myclass:OnAfterCargoDeployed( From, Event, To, TaskUnit, Cargo, DeployZone )
   --      
   --        -- Write here your own code.
@@ -256,19 +256,19 @@ do -- TASK_CARGO_TRANSPORT
   -- 
   -- ===
   -- 
-  -- @field #TASK_CARGO_TRANSPORT
+  --- @field #TASK_CARGO_TRANSPORT
   TASK_CARGO_TRANSPORT = {
     ClassName = "TASK_CARGO_TRANSPORT",
   }
   
   --- Instantiates a new TASK_CARGO_TRANSPORT.
-  -- @param #TASK_CARGO_TRANSPORT self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
-  -- @param #string TaskName The name of the Task.
-  -- @param Core.Set#SET_CARGO SetCargo The scope of the cargo to be transported.
-  -- @param #string TaskBriefing The Cargo Task briefing.
-  -- @return #TASK_CARGO_TRANSPORT self
+  --- @param #TASK_CARGO_TRANSPORT self
+  --- @param Tasking.Mission#MISSION Mission
+  --- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  --- @param #string TaskName The name of the Task.
+  --- @param Core.Set#SET_CARGO SetCargo The scope of the cargo to be transported.
+  --- @param #string TaskBriefing The Cargo Task briefing.
+  --- @return #TASK_CARGO_TRANSPORT self
   function TASK_CARGO_TRANSPORT:New( Mission, SetGroup, TaskName, SetCargo, TaskBriefing )
     local self = BASE:Inherit( self, TASK_CARGO:New( Mission, SetGroup, TaskName, SetCargo, "Transport", TaskBriefing ) ) -- #TASK_CARGO_TRANSPORT
     self:F()
@@ -305,8 +305,8 @@ do -- TASK_CARGO_TRANSPORT
 
   
   --- 
-  -- @param #TASK_CARGO_TRANSPORT self
-  -- @return #boolean
+  --- @param #TASK_CARGO_TRANSPORT self
+  --- @return #boolean
   function TASK_CARGO_TRANSPORT:IsAllCargoTransported()
   
     local CargoSet = self:GetCargoSet()

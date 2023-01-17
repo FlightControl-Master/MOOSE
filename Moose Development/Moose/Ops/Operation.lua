@@ -208,134 +208,134 @@ function OPERATION:New(Name)
 
   --- Triggers the FSM event "Start".
   -- @function [parent=#OPERATION] Start
-  -- @param #OPERATION self
+  --- @param #OPERATION self
 
   --- Triggers the FSM event "Start" after a delay.
   -- @function [parent=#OPERATION] __Start
-  -- @param #OPERATION self
-  -- @param #number delay Delay in seconds.
+  --- @param #OPERATION self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Start" event.
   -- @function [parent=#OPERATION] OnAfterStart
-  -- @param #OPERATION self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #OPERATION self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- Triggers the FSM event "Stop".
   -- @function [parent=#OPERATION] Stop
-  -- @param #OPERATION self
+  --- @param #OPERATION self
 
   --- Triggers the FSM event "Stop" after a delay.
   -- @function [parent=#OPERATION] __Stop
-  -- @param #OPERATION self
-  -- @param #number delay Delay in seconds.
+  --- @param #OPERATION self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "StatusUpdate".
   -- @function [parent=#OPERATION] StatusUpdate
-  -- @param #OPERATION self
+  --- @param #OPERATION self
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#OPERATION] __StatusUpdate
-  -- @param #OPERATION self
-  -- @param #number delay Delay in seconds.
+  --- @param #OPERATION self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "PhaseChange".
   -- @function [parent=#OPERATION] PhaseChange
-  -- @param #OPERATION self
-  -- @param #OPERATION.Phase Phase The new phase.
+  --- @param #OPERATION self
+  --- @param #OPERATION.Phase Phase The new phase.
 
   --- Triggers the FSM event "PhaseChange" after a delay.
   -- @function [parent=#OPERATION] __PhaseChange
-  -- @param #OPERATION self
-  -- @param #number delay Delay in seconds.
-  -- @param #OPERATION.Phase Phase The new phase.
+  --- @param #OPERATION self
+  --- @param #number delay Delay in seconds.
+  --- @param #OPERATION.Phase Phase The new phase.
 
   --- On after "PhaseChange" event.
   -- @function [parent=#OPERATION] OnAfterPhaseChange
-  -- @param #OPERATION self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #OPERATION.Phase Phase The new phase.
+  --- @param #OPERATION self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #OPERATION.Phase Phase The new phase.
 
 
   --- Triggers the FSM event "PhaseNext".
   -- @function [parent=#OPERATION] PhaseNext
-  -- @param #OPERATION self
+  --- @param #OPERATION self
 
   --- Triggers the FSM event "PhaseNext" after a delay.
   -- @function [parent=#OPERATION] __PhaseNext
-  -- @param #OPERATION self
-  -- @param #number delay Delay in seconds.
+  --- @param #OPERATION self
+  --- @param #number delay Delay in seconds.
 
   --- On after "PhaseNext" event.
   -- @function [parent=#OPERATION] OnAfterPhaseNext
-  -- @param #OPERATION self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #OPERATION self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "PhaseOver".
   -- @function [parent=#OPERATION] PhaseOver
-  -- @param #OPERATION self
-  -- @param #OPERATION.Phase Phase The phase that is over.
+  --- @param #OPERATION self
+  --- @param #OPERATION.Phase Phase The phase that is over.
 
   --- Triggers the FSM event "PhaseOver" after a delay.
   -- @function [parent=#OPERATION] __PhaseOver
-  -- @param #OPERATION self
-  -- @param #number delay Delay in seconds.
-  -- @param #OPERATION.Phase Phase The phase that is over.
+  --- @param #OPERATION self
+  --- @param #number delay Delay in seconds.
+  --- @param #OPERATION.Phase Phase The phase that is over.
 
   --- On after "PhaseOver" event.
   -- @function [parent=#OPERATION] OnAfterPhaseOver
-  -- @param #OPERATION self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #OPERATION.Phase Phase The phase that is over.
+  --- @param #OPERATION self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #OPERATION.Phase Phase The phase that is over.
 
 
   --- Triggers the FSM event "BranchSwitch".
   -- @function [parent=#OPERATION] BranchSwitch
-  -- @param #OPERATION self
-  -- @param #OPERATION.Branch Branch The branch that is now active.
-  -- @param #OPERATION.Phase Phase The new phase.
+  --- @param #OPERATION self
+  --- @param #OPERATION.Branch Branch The branch that is now active.
+  --- @param #OPERATION.Phase Phase The new phase.
 
   --- Triggers the FSM event "BranchSwitch" after a delay.
   -- @function [parent=#OPERATION] __BranchSwitch
-  -- @param #OPERATION self
-  -- @param #number delay Delay in seconds.
-  -- @param #OPERATION.Branch Branch The branch that is now active.
-  -- @param #OPERATION.Phase Phase The new phase.
+  --- @param #OPERATION self
+  --- @param #number delay Delay in seconds.
+  --- @param #OPERATION.Branch Branch The branch that is now active.
+  --- @param #OPERATION.Phase Phase The new phase.
 
   --- On after "BranchSwitch" event.
   -- @function [parent=#OPERATION] OnAfterBranchSwitch
-  -- @param #OPERATION self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #OPERATION.Branch Branch The branch that is now active.
-  -- @param #OPERATION.Phase Phase The new phase.
+  --- @param #OPERATION self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #OPERATION.Branch Branch The branch that is now active.
+  --- @param #OPERATION.Phase Phase The new phase.
 
   --- Triggers the FSM event "Over".
   -- @function [parent=#OPERATION] Over
-  -- @param #OPERATION self
+  --- @param #OPERATION self
 
   --- Triggers the FSM event "Over" after a delay.
   -- @function [parent=#OPERATION] __Over
-  -- @param #OPERATION self
-  -- @param #number delay Delay in seconds.
+  --- @param #OPERATION self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Over" event.
   -- @function [parent=#OPERATION] OnAfterOver
-  -- @param #OPERATION self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #OPERATION self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   -- Init status update.
   self:__StatusUpdate(-1)

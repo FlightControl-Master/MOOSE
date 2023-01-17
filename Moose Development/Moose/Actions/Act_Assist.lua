@@ -75,7 +75,7 @@ do -- ACT_ASSIST
 
   --- Creates a new target smoking state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.
   -- @param #ACT_ASSIST self
-  -- @return #ACT_ASSIST
+  --- @return #ACT_ASSIST
   function ACT_ASSIST:New()
 
     -- Inherits from BASE
@@ -140,8 +140,8 @@ do -- ACT_ASSIST_SMOKE_TARGETS_ZONE
 
   --- ACT_ASSIST_SMOKE_TARGETS_ZONE class
   --- @type ACT_ASSIST_SMOKE_TARGETS_ZONE
-  -- @field Core.Set#SET_UNIT TargetSetUnit
-  -- @field Core.Zone#ZONE_BASE TargetZone
+  --- @field Core.Set#SET_UNIT TargetSetUnit
+  --- @field Core.Zone#ZONE_BASE TargetZone
   -- @extends #ACT_ASSIST
   ACT_ASSIST_SMOKE_TARGETS_ZONE = {
     ClassName = "ACT_ASSIST_SMOKE_TARGETS_ZONE",
@@ -177,7 +177,7 @@ do -- ACT_ASSIST_SMOKE_TARGETS_ZONE
   -- @param #ACT_ASSIST_SMOKE_TARGETS_ZONE self
   -- @param Core.Set#SET_UNIT TargetSetUnit
   -- @param Core.Zone#ZONE_BASE TargetZone
-  -- @return #ACT_ASSIST_SMOKE_TARGETS_ZONE self
+  --- @return #ACT_ASSIST_SMOKE_TARGETS_ZONE self
   function ACT_ASSIST_SMOKE_TARGETS_ZONE:Init( TargetSetUnit, TargetZone )
 
     self.TargetSetUnit = TargetSetUnit
@@ -195,7 +195,7 @@ do -- ACT_ASSIST_SMOKE_TARGETS_ZONE
   function ACT_ASSIST_SMOKE_TARGETS_ZONE:onenterSmoking( ProcessUnit, From, Event, To )
 
     self.TargetSetUnit:ForEachUnit(
-      --- @param Wrapper.Unit#UNIT SmokeUnit
+      -- @param Wrapper.Unit#UNIT SmokeUnit
       function( SmokeUnit )
         if math.random( 1, ( 100 * self.TargetSetUnit:Count() ) / 4 ) <= 100 then
           SCHEDULER:New( self,

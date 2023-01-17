@@ -181,22 +181,22 @@ function NAVYGROUP:New(group)
 
   --- Triggers the FSM event "Cruise".
   -- @function [parent=#NAVYGROUP] Cruise
-  -- @param #NAVYGROUP self
-  -- @param #number Speed Speed in knots until next waypoint is reached.
+  --- @param #NAVYGROUP self
+  --- @param #number Speed Speed in knots until next waypoint is reached.
 
   --- Triggers the FSM event "Cruise" after a delay.
   -- @function [parent=#NAVYGROUP] __Cruise
-  -- @param #NAVYGROUP self
-  -- @param #number delay Delay in seconds.
-  -- @param #number Speed Speed in knots until next waypoint is reached.
+  --- @param #NAVYGROUP self
+  --- @param #number delay Delay in seconds.
+  --- @param #number Speed Speed in knots until next waypoint is reached.
 
   --- On after "Cruise" event.
   -- @function [parent=#NAVYGROUP] OnAfterCruise
-  -- @param #NAVYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #number Speed Speed in knots until next waypoint is reached.
+  --- @param #NAVYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #number Speed Speed in knots until next waypoint is reached.
 
 
 
@@ -206,187 +206,187 @@ function NAVYGROUP:New(group)
 
   --- Triggers the FSM event "TurnIntoWind".
   -- @function [parent=#NAVYGROUP] TurnIntoWind
-  -- @param #NAVYGROUP self
-  -- @param #NAVYGROUP.IntoWind Into wind parameters.
+  --- @param #NAVYGROUP self
+  --- @param #NAVYGROUP.IntoWind Into wind parameters.
 
   --- Triggers the FSM event "TurnIntoWind" after a delay.
   -- @function [parent=#NAVYGROUP] __TurnIntoWind
-  -- @param #NAVYGROUP self
-  -- @param #number delay Delay in seconds.
-  -- @param #NAVYGROUP.IntoWind Into wind parameters.
+  --- @param #NAVYGROUP self
+  --- @param #number delay Delay in seconds.
+  --- @param #NAVYGROUP.IntoWind Into wind parameters.
 
   --- On after "TurnIntoWind" event.
   -- @function [parent=#NAVYGROUP] OnAfterTurnIntoWind
-  -- @param #NAVYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #NAVYGROUP.IntoWind Into wind parameters.
+  --- @param #NAVYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #NAVYGROUP.IntoWind Into wind parameters.
 
 
   --- Triggers the FSM event "TurnedIntoWind".
   -- @function [parent=#NAVYGROUP] TurnedIntoWind
-  -- @param #NAVYGROUP self
+  --- @param #NAVYGROUP self
 
   --- Triggers the FSM event "TurnedIntoWind" after a delay.
   -- @function [parent=#NAVYGROUP] __TurnedIntoWind
-  -- @param #NAVYGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #NAVYGROUP self
+  --- @param #number delay Delay in seconds.
 
   --- On after "TurnedIntoWind" event.
   -- @function [parent=#NAVYGROUP] OnAfterTurnedIntoWind
-  -- @param #NAVYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #NAVYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "TurnIntoWindStop".
   -- @function [parent=#NAVYGROUP] TurnIntoWindStop
-  -- @param #NAVYGROUP self
+  --- @param #NAVYGROUP self
 
   --- Triggers the FSM event "TurnIntoWindStop" after a delay.
   -- @function [parent=#NAVYGROUP] __TurnIntoWindStop
-  -- @param #NAVYGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #NAVYGROUP self
+  --- @param #number delay Delay in seconds.
 
   --- On after "TurnIntoWindStop" event.
   -- @function [parent=#NAVYGROUP] OnAfterTurnIntoWindStop
-  -- @param #NAVYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #NAVYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "TurnIntoWindOver".
   -- @function [parent=#NAVYGROUP] TurnIntoWindOver
-  -- @param #NAVYGROUP self
-  -- @param #NAVYGROUP.IntoWind IntoWindData Data table.
+  --- @param #NAVYGROUP self
+  --- @param #NAVYGROUP.IntoWind IntoWindData Data table.
 
   --- Triggers the FSM event "TurnIntoWindOver" after a delay.
   -- @function [parent=#NAVYGROUP] __TurnIntoWindOver
-  -- @param #NAVYGROUP self
-  -- @param #number delay Delay in seconds.
-  -- @param #NAVYGROUP.IntoWind IntoWindData Data table.
+  --- @param #NAVYGROUP self
+  --- @param #number delay Delay in seconds.
+  --- @param #NAVYGROUP.IntoWind IntoWindData Data table.
 
   --- On after "TurnIntoWindOver" event.
   -- @function [parent=#NAVYGROUP] OnAfterTurnIntoWindOver
-  -- @param #NAVYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #NAVYGROUP.IntoWind IntoWindData Data table.
+  --- @param #NAVYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #NAVYGROUP.IntoWind IntoWindData Data table.
 
 
   --- Triggers the FSM event "TurningStarted".
   -- @function [parent=#NAVYGROUP] TurningStarted
-  -- @param #NAVYGROUP self
+  --- @param #NAVYGROUP self
 
   --- Triggers the FSM event "TurningStarted" after a delay.
   -- @function [parent=#NAVYGROUP] __TurningStarted
-  -- @param #NAVYGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #NAVYGROUP self
+  --- @param #number delay Delay in seconds.
 
   --- On after "TurningStarted" event.
   -- @function [parent=#NAVYGROUP] OnAfterTurningStarted
-  -- @param #NAVYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #NAVYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "TurningStopped".
   -- @function [parent=#NAVYGROUP] TurningStopped
-  -- @param #NAVYGROUP self
+  --- @param #NAVYGROUP self
 
   --- Triggers the FSM event "TurningStopped" after a delay.
   -- @function [parent=#NAVYGROUP] __TurningStopped
-  -- @param #NAVYGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #NAVYGROUP self
+  --- @param #number delay Delay in seconds.
 
   --- On after "TurningStopped" event.
   -- @function [parent=#NAVYGROUP] OnAfterTurningStopped
-  -- @param #NAVYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #NAVYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "CollisionWarning".
   -- @function [parent=#NAVYGROUP] CollisionWarning
-  -- @param #NAVYGROUP self
+  --- @param #NAVYGROUP self
 
   --- Triggers the FSM event "CollisionWarning" after a delay.
   -- @function [parent=#NAVYGROUP] __CollisionWarning
-  -- @param #NAVYGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #NAVYGROUP self
+  --- @param #number delay Delay in seconds.
 
   --- On after "CollisionWarning" event.
   -- @function [parent=#NAVYGROUP] OnAfterCollisionWarning
-  -- @param #NAVYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #NAVYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "ClearAhead".
   -- @function [parent=#NAVYGROUP] ClearAhead
-  -- @param #NAVYGROUP self
+  --- @param #NAVYGROUP self
 
   --- Triggers the FSM event "ClearAhead" after a delay.
   -- @function [parent=#NAVYGROUP] __ClearAhead
-  -- @param #NAVYGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #NAVYGROUP self
+  --- @param #number delay Delay in seconds.
 
   --- On after "ClearAhead" event.
   -- @function [parent=#NAVYGROUP] OnAfterClearAhead
-  -- @param #NAVYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #NAVYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Triggers the FSM event "Dive".
   -- @function [parent=#NAVYGROUP] Dive
-  -- @param #NAVYGROUP self
-  -- @param #number Depth Dive depth in meters. Default 50 meters.
-  -- @param #number Speed Speed in knots until next waypoint is reached.
+  --- @param #NAVYGROUP self
+  --- @param #number Depth Dive depth in meters. Default 50 meters.
+  --- @param #number Speed Speed in knots until next waypoint is reached.
 
   --- Triggers the FSM event "Dive" after a delay.
   -- @function [parent=#NAVYGROUP] __Dive
-  -- @param #NAVYGROUP self
-  -- @param #number delay Delay in seconds.
-  -- @param #number Depth Dive depth in meters. Default 50 meters.
-  -- @param #number Speed Speed in knots until next waypoint is reached.
+  --- @param #NAVYGROUP self
+  --- @param #number delay Delay in seconds.
+  --- @param #number Depth Dive depth in meters. Default 50 meters.
+  --- @param #number Speed Speed in knots until next waypoint is reached.
 
   --- On after "Dive" event.
   -- @function [parent=#NAVYGROUP] OnAfterDive
-  -- @param #NAVYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #number Depth Dive depth in meters. Default 50 meters.
-  -- @param #number Speed Speed in knots until next waypoint is reached.
+  --- @param #NAVYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #number Depth Dive depth in meters. Default 50 meters.
+  --- @param #number Speed Speed in knots until next waypoint is reached.
 
 
   --- Triggers the FSM event "Surface".
   -- @function [parent=#NAVYGROUP] Surface
-  -- @param #NAVYGROUP self
-  -- @param #number Speed Speed in knots until next waypoint is reached.
+  --- @param #NAVYGROUP self
+  --- @param #number Speed Speed in knots until next waypoint is reached.
 
   --- Triggers the FSM event "Surface" after a delay.
   -- @function [parent=#NAVYGROUP] __Surface
-  -- @param #NAVYGROUP self
-  -- @param #number delay Delay in seconds.
-  -- @param #number Speed Speed in knots until next waypoint is reached.
+  --- @param #NAVYGROUP self
+  --- @param #number delay Delay in seconds.
+  --- @param #number Speed Speed in knots until next waypoint is reached.
 
   --- On after "Surface" event.
   -- @function [parent=#NAVYGROUP] OnAfterSurface
-  -- @param #NAVYGROUP self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #number Speed Speed in knots until next waypoint is reached.
+  --- @param #NAVYGROUP self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #number Speed Speed in knots until next waypoint is reached.
 
 
   -- Init waypoints.

@@ -342,108 +342,108 @@ function RESCUEHELO:New(carrierunit, helogroupname)
 
   --- Triggers the FSM event "Start" that starts the rescue helo. Initializes parameters and starts event handlers.
   -- @function [parent=#RESCUEHELO] Start
-  -- @param #RESCUEHELO self
+  --- @param #RESCUEHELO self
 
   --- Triggers the FSM event "Start" that starts the rescue helo after a delay. Initializes parameters and starts event handlers.
   -- @function [parent=#RESCUEHELO] __Start
-  -- @param #RESCUEHELO self
-  -- @param #number delay Delay in seconds.
+  --- @param #RESCUEHELO self
+  --- @param #number delay Delay in seconds.
 
   --- On after "Start" event function. Called when FSM is started.
   -- @function [parent=#RESCUEHELO] OnAfterStart
-  -- @param #RECOVERYTANKER self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #RECOVERYTANKER self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- Triggers the FSM event "Rescue" that sends the helo on a rescue mission to a specifc coordinate.
   -- @function [parent=#RESCUEHELO] Rescue
-  -- @param #RESCUEHELO self
-  -- @param Core.Point#COORDINATE RescueCoord Coordinate where the resue mission takes place.
+  --- @param #RESCUEHELO self
+  --- @param Core.Point#COORDINATE RescueCoord Coordinate where the resue mission takes place.
 
   --- Triggers the delayed FSM event "Rescue" that sends the helo on a rescue mission to a specifc coordinate.
   -- @function [parent=#RESCUEHELO] __Rescue
-  -- @param #RESCUEHELO self
-  -- @param #number delay Delay in seconds.
-  -- @param Core.Point#COORDINATE RescueCoord Coordinate where the resue mission takes place.
+  --- @param #RESCUEHELO self
+  --- @param #number delay Delay in seconds.
+  --- @param Core.Point#COORDINATE RescueCoord Coordinate where the resue mission takes place.
 
   --- On after "Rescue" event user function. Called when a the the helo goes on a rescue mission.
   -- @function [parent=#RESCUEHELO] OnAfterRescue
-  -- @param #RESCUEHELO self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Core.Point#COORDINATE RescueCoord Crash site where the rescue operation takes place.
+  --- @param #RESCUEHELO self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Core.Point#COORDINATE RescueCoord Crash site where the rescue operation takes place.
 
 
   --- Triggers the FSM event "RTB" that sends the helo home.
   -- @function [parent=#RESCUEHELO] RTB
-  -- @param #RESCUEHELO self
-  -- @param Wrapper.Airbase#AIRBASE airbase The airbase to return to. Default is the home base.
+  --- @param #RESCUEHELO self
+  --- @param Wrapper.Airbase#AIRBASE airbase The airbase to return to. Default is the home base.
 
   --- Triggers the FSM event "RTB" that sends the helo home after a delay.
   -- @function [parent=#RESCUEHELO] __RTB
-  -- @param #RESCUEHELO self
-  -- @param #number delay Delay in seconds.
-  -- @param Wrapper.Airbase#AIRBASE airbase The airbase to return to. Default is the home base.
+  --- @param #RESCUEHELO self
+  --- @param #number delay Delay in seconds.
+  --- @param Wrapper.Airbase#AIRBASE airbase The airbase to return to. Default is the home base.
 
   --- On after "RTB" event user function. Called when a the the helo returns to its home base.
   -- @function [parent=#RESCUEHELO] OnAfterRTB
-  -- @param #RESCUEHELO self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Airbase#AIRBASE airbase The airbase to return to. Default is the home base.
+  --- @param #RESCUEHELO self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Airbase#AIRBASE airbase The airbase to return to. Default is the home base.
 
 
   --- Triggers the FSM event "Returned" after the helo has landed.
   -- @function [parent=#RESCUEHELO] Returned
-  -- @param #RESCUEHELO self
-  -- @param Wrapper.Airbase#AIRBASE airbase The airbase the helo has landed.
+  --- @param #RESCUEHELO self
+  --- @param Wrapper.Airbase#AIRBASE airbase The airbase the helo has landed.
 
   --- Triggers the delayed FSM event "Returned" after the helo has landed.
   -- @function [parent=#RESCUEHELO] __Returned
-  -- @param #RESCUEHELO self
-  -- @param #number delay Delay in seconds.
-  -- @param Wrapper.Airbase#AIRBASE airbase The airbase the helo has landed.
+  --- @param #RESCUEHELO self
+  --- @param #number delay Delay in seconds.
+  --- @param Wrapper.Airbase#AIRBASE airbase The airbase the helo has landed.
 
   --- On after "Returned" event user function. Called when a the the helo has landed at an airbase.
   -- @function [parent=#RESCUEHELO] OnAfterReturned
-  -- @param #RESCUEHELO self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param Wrapper.Airbase#AIRBASE airbase The airbase the helo has landed.
+  --- @param #RESCUEHELO self
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param Wrapper.Airbase#AIRBASE airbase The airbase the helo has landed.
 
 
   --- Triggers the FSM event "Run".
   -- @function [parent=#RESCUEHELO] Run
-  -- @param #RESCUEHELO self
+  --- @param #RESCUEHELO self
 
   --- Triggers the delayed FSM event "Run".
   -- @function [parent=#RESCUEHELO] __Run
-  -- @param #RESCUEHELO self
-  -- @param #number delay Delay in seconds.
+  --- @param #RESCUEHELO self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Status" that updates the helo status.
   -- @function [parent=#RESCUEHELO] Status
-  -- @param #RESCUEHELO self
+  --- @param #RESCUEHELO self
 
   --- Triggers the delayed FSM event "Status" that updates the helo status.
   -- @function [parent=#RESCUEHELO] __Status
-  -- @param #RESCUEHELO self
-  -- @param #number delay Delay in seconds.
+  --- @param #RESCUEHELO self
+  --- @param #number delay Delay in seconds.
 
 
   --- Triggers the FSM event "Stop" that stops the rescue helo. Event handlers are stopped.
   -- @function [parent=#RESCUEHELO] Stop
-  -- @param #RESCUEHELO self
+  --- @param #RESCUEHELO self
 
   --- Triggers the FSM event "Stop" that stops the rescue helo after a delay. Event handlers are stopped.
   -- @function [parent=#RESCUEHELO] __Stop
-  -- @param #RESCUEHELO self
-  -- @param #number delay Delay in seconds.
+  --- @param #RESCUEHELO self
+  --- @param #number delay Delay in seconds.
   
   return self
 end

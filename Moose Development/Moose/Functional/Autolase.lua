@@ -233,64 +233,64 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   
   --- Triggers the FSM event "Monitor".
   -- @function [parent=#AUTOLASE] Status
-  -- @param #AUTOLASE self
+  --- @param #AUTOLASE self
 
   --- Triggers the FSM event "Monitor" after a delay.
   -- @function [parent=#AUTOLASE] __Status
-  -- @param #AUTOLASE self
-  -- @param #number delay Delay in seconds.
+  --- @param #AUTOLASE self
+  --- @param #number delay Delay in seconds.
   
   --- Triggers the FSM event "Cancel".
   -- @function [parent=#AUTOLASE] Cancel
-  -- @param #AUTOLASE self
+  --- @param #AUTOLASE self
 
   --- Triggers the FSM event "Cancel" after a delay.
   -- @function [parent=#AUTOLASE] __Cancel
-  -- @param #AUTOLASE self
-  -- @param #number delay Delay in seconds.
+  --- @param #AUTOLASE self
+  --- @param #number delay Delay in seconds.
   
   --- On After "RecceKIA" event.
   -- @function [parent=#AUTOLASE] OnAfterRecceKIA
-  -- @param #AUTOLASE self
-  -- @param #string From The from state
-  -- @param #string Event The event
-  -- @param #string To The to state
-  -- @param #string RecceName The lost Recce
+  --- @param #AUTOLASE self
+  --- @param #string From The from state
+  --- @param #string Event The event
+  --- @param #string To The to state
+  --- @param #string RecceName The lost Recce
     
   --- On After "TargetDestroyed" event.
   -- @function [parent=#AUTOLASE] OnAfterTargetDestroyed
-  -- @param #AUTOLASE self
-  -- @param #string From The from state
-  -- @param #string Event The event
-  -- @param #string To The to state
-  -- @param #string UnitName The destroyed unit\'s name
-  -- @param #string RecceName The Recce name lasing
+  --- @param #AUTOLASE self
+  --- @param #string From The from state
+  --- @param #string Event The event
+  --- @param #string To The to state
+  --- @param #string UnitName The destroyed unit\'s name
+  --- @param #string RecceName The Recce name lasing
   
   --- On After "TargetLost" event.
   -- @function [parent=#AUTOLASE] OnAfterTargetLost
-  -- @param #AUTOLASE self
-  -- @param #string From The from state
-  -- @param #string Event The event
-  -- @param #string To The to state
-  -- @param #string UnitName The lost unit\'s name
-  -- @param #string RecceName The Recce name lasing
+  --- @param #AUTOLASE self
+  --- @param #string From The from state
+  --- @param #string Event The event
+  --- @param #string To The to state
+  --- @param #string UnitName The lost unit\'s name
+  --- @param #string RecceName The Recce name lasing
   
   --- On After "LaserTimeout" event.
   -- @function [parent=#AUTOLASE] OnAfterLaserTimeout
-  -- @param #AUTOLASE self
-  -- @param #string From The from state
-  -- @param #string Event The event
-  -- @param #string To The to state
-  -- @param #string UnitName The lost unit\'s name
-  -- @param #string RecceName The Recce name lasing
+  --- @param #AUTOLASE self
+  --- @param #string From The from state
+  --- @param #string Event The event
+  --- @param #string To The to state
+  --- @param #string UnitName The lost unit\'s name
+  --- @param #string RecceName The Recce name lasing
   
   --- On After "Lasing" event.
   -- @function [parent=#AUTOLASE] OnAfterLasing
-  -- @param #AUTOLASE self
-  -- @param #string From The from state
-  -- @param #string Event The event
-  -- @param #string To The to state
-  -- @param Functional.Autolase#AUTOLASE.LaserSpot LaserSpot The LaserSpot data table
+  --- @param #AUTOLASE self
+  --- @param #string From The from state
+  --- @param #string Event The event
+  --- @param #string To The to state
+  --- @param Functional.Autolase#AUTOLASE.LaserSpot LaserSpot The LaserSpot data table
   
 end
 

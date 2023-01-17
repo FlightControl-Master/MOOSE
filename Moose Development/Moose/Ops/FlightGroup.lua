@@ -318,12 +318,12 @@ function FLIGHTGROUP:New(group)
   ------------------------
 
   --- Triggers the FSM event "Stop". Stops the FLIGHTGROUP and all its event handlers.
-  -- @param #FLIGHTGROUP self
+  --- @param #FLIGHTGROUP self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the FLIGHTGROUP and all its event handlers.
   -- @function [parent=#FLIGHTGROUP] __Stop
-  -- @param #FLIGHTGROUP self
-  -- @param #number delay Delay in seconds.
+  --- @param #FLIGHTGROUP self
+  --- @param #number delay Delay in seconds.
 
   -- TODO: Add pseudo functions.
 
@@ -4403,10 +4403,10 @@ function FLIGHTGROUP:_GetAttribute()
 end
 
 --- Get the proper terminal type based on generalized attribute of the group.
---@param #FLIGHTGROUP self
---@param #FLIGHTGROUP.Attribute _attribute Generlized attibute of unit.
---@param #number _category Airbase category.
---@return Wrapper.Airbase#AIRBASE.TerminalType Terminal type for this group.
+--- @param #FLIGHTGROUP self
+--- @param #FLIGHTGROUP.Attribute _attribute Generlized attibute of unit.
+--- @param #number _category Airbase category.
+--- @return Wrapper.Airbase#AIRBASE.TerminalType Terminal type for this group.
 function FLIGHTGROUP:_GetTerminal(_attribute, _category)
 
   -- Default terminal is "large".
@@ -4445,8 +4445,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Update menu.
---@param #FLIGHTGROUP self
---@param #number delay Delay in seconds.
+--- @param #FLIGHTGROUP self
+--- @param #number delay Delay in seconds.
 function FLIGHTGROUP:_UpdateMenu(delay)
 
   if delay and delay>0 then

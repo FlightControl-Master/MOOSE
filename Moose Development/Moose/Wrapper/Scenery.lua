@@ -35,10 +35,10 @@ SCENERY = {
 }
 
 --- Register scenery object as POSITIONABLE.
---@param #SCENERY self
---@param #string SceneryName Scenery name.
---@param #DCS.Object SceneryObject DCS scenery object.
---@return #SCENERY Scenery object.
+--- @param #SCENERY self
+--- @param #string SceneryName Scenery name.
+--- @param #DCS.Object SceneryObject DCS scenery object.
+--- @return #SCENERY Scenery object.
 function SCENERY:Register( SceneryName, SceneryObject )
   local self = BASE:Inherit( self, POSITIONABLE:New( SceneryName ) )
   self.SceneryName = SceneryName
@@ -52,15 +52,15 @@ function SCENERY:Register( SceneryName, SceneryObject )
 end
 
 --- Obtain DCS Object from the SCENERY Object.
---@param #SCENERY self
---@return #DCS.Object DCS scenery object.
+--- @param #SCENERY self
+--- @return #DCS.Object DCS scenery object.
 function SCENERY:GetDCSObject()
   return self.SceneryObject
 end
 
 --- Get current life points from the SCENERY Object.
---@param #SCENERY self
---@return #number life
+--- @param #SCENERY self
+--- @return #number life
 function SCENERY:GetLife()
   local life = 0
   if self.SceneryObject then
@@ -70,41 +70,41 @@ function SCENERY:GetLife()
 end
 
 --- Get current initial life points from the SCENERY Object.
---@param #SCENERY self
---@return #number life
+--- @param #SCENERY self
+--- @return #number life
 function SCENERY:GetLife0()
   return self.Life0 or 0
 end
 
 --- Check if SCENERY Object is alive.
---@param #SCENERY self
---@return #number life
+--- @param #SCENERY self
+--- @return #number life
 function SCENERY:IsAlive()
   return self:GetLife() >= 1 and true or false
 end 
 
 --- Check if SCENERY Object is dead.
---@param #SCENERY self
---@return #number life
+--- @param #SCENERY self
+--- @return #number life
 function SCENERY:IsDead()
   return self:GetLife() < 1 and true or false
 end 
 
 --- Get the threat level of a SCENERY object. Always 0.
---@param #SCENERY self
---@return #number Threat level 0.
---@return #string  "Scenery".
+--- @param #SCENERY self
+--- @return #number Threat level 0.
+--- @return #string  "Scenery".
 function SCENERY:GetThreatLevel()
   return 0, "Scenery"
 end
 
 --- Find a SCENERY object from its name or id. Since SCENERY isn't registered in the Moose database (just too many objects per map), we need to do a scan first
 -- to find the correct object.
---@param #SCENERY self
---@param #string Name The name/id of the scenery object as taken from the ME. Ex. '595785449'
---@param Core.Point#COORDINATE Coordinate Where to find the scenery object
---@param #number Radius (optional) Search radius around coordinate, defaults to 100
---@return #SCENERY Scenery Object or `nil` if it cannot be found
+--- @param #SCENERY self
+--- @param #string Name The name/id of the scenery object as taken from the ME. Ex. '595785449'
+--- @param Core.Point#COORDINATE Coordinate Where to find the scenery object
+--- @param #number Radius (optional) Search radius around coordinate, defaults to 100
+--- @return #SCENERY Scenery Object or `nil` if it cannot be found
 function SCENERY:FindByName(Name, Coordinate, Radius)
    
   local radius = Radius or 100
@@ -112,9 +112,9 @@ function SCENERY:FindByName(Name, Coordinate, Radius)
   local scenery = nil
   
   ---
-  -- @param Core.Point#COORDINATE coordinate
-  -- @param #number radius
-  -- @param #string name
+  --- @param Core.Point#COORDINATE coordinate
+  --- @param #number radius
+  --- @param #string name
   local function SceneryScan(coordinate, radius, name)
     if coordinate ~= nil then
       local scenerylist = coordinate:ScanScenery(radius)
@@ -140,11 +140,11 @@ end
 
 --- Find a SCENERY object from its name or id. Since SCENERY isn't registered in the Moose database (just too many objects per map), we need to do a scan first
 -- to find the correct object.
---@param #SCENERY self
---@param #string Name The name or id of the scenery object as taken from the ME. Ex. '595785449'
---@param Core.Zone#ZONE Zone Where to find the scenery object. Can be handed as zone name.
---@param #number Radius (optional) Search radius around coordinate, defaults to 100
---@return #SCENERY Scenery Object or `nil` if it cannot be found
+--- @param #SCENERY self
+--- @param #string Name The name or id of the scenery object as taken from the ME. Ex. '595785449'
+--- @param Core.Zone#ZONE Zone Where to find the scenery object. Can be handed as zone name.
+--- @param #number Radius (optional) Search radius around coordinate, defaults to 100
+--- @return #SCENERY Scenery Object or `nil` if it cannot be found
 function SCENERY:FindByNameInZone(Name, Zone, Radius)   
   local radius = Radius or 100
   local name = Name or "unknown"
@@ -157,9 +157,9 @@ end
 
 --- Find a SCENERY object from its zone name. Since SCENERY isn't registered in the Moose database (just too many objects per map), we need to do a scan first
 -- to find the correct object.
---@param #SCENERY self
---@param #string ZoneName The name of the scenery zone as created with a right-click on the map in the mission editor and select "assigned to...". Can be handed over as ZONE object.
---@return #SCENERY First found Scenery Object or `nil` if it cannot be found
+--- @param #SCENERY self
+--- @param #string ZoneName The name of the scenery zone as created with a right-click on the map in the mission editor and select "assigned to...". Can be handed over as ZONE object.
+--- @return #SCENERY First found Scenery Object or `nil` if it cannot be found
 function SCENERY:FindByZoneName( ZoneName )
   local zone = ZoneName -- Core.Zone#ZONE
   if type(ZoneName) == "string" then
@@ -197,9 +197,9 @@ end
 
 --- Scan and find all SCENERY objects from a zone by zone-name. Since SCENERY isn't registered in the Moose database (just too many objects per map), we need to do a scan first
 -- to find the correct object.
---@param #SCENERY self
---@param #string ZoneName The name of the zone, can be handed as ZONE_RADIUS or ZONE_POLYGON object
---@return #table of SCENERY Objects, or `nil` if nothing found
+--- @param #SCENERY self
+--- @param #string ZoneName The name of the zone, can be handed as ZONE_RADIUS or ZONE_POLYGON object
+--- @return #table of SCENERY Objects, or `nil` if nothing found
 function SCENERY:FindAllByZoneName( ZoneName )
   local zone = ZoneName -- Core.Zone#ZONE_RADIUS
   if type(ZoneName) == "string" then
@@ -227,8 +227,8 @@ function SCENERY:FindAllByZoneName( ZoneName )
 end
 
 --- SCENERY objects cannot be destroyed via the API (at the punishment of game crash).
---@param #SCENERY self
---@return #SCENERY self
+--- @param #SCENERY self
+--- @return #SCENERY self
 function SCENERY:Destroy()
   return self
 end

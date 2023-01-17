@@ -213,7 +213,7 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
   -- @param #number ZStart The start position on the Z-axis in meters for the first group.
   -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
-  -- @return #boolean
+  --- @return #boolean
   
   --- FormationLine Handler OnAfter for AI_FORMATION
   -- @function [parent=#AI_FORMATION] OnAfterFormationLine
@@ -260,7 +260,7 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #number XStart The start position on the X-axis in meters for the first group.
   -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
   -- @param #number YStart The start position on the Y-axis in meters for the first group.
-  -- @return #boolean
+  --- @return #boolean
   
   --- FormationTrail Handler OnAfter for AI_FORMATION
   -- @function [parent=#AI_FORMATION] OnAfterFormationTrail
@@ -298,7 +298,7 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
   -- @param #number YStart The start position on the Y-axis in meters for the first group.
   -- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
-  -- @return #boolean
+  --- @return #boolean
   
   --- FormationStack Handler OnAfter for AI_FORMATION
   -- @function [parent=#AI_FORMATION] OnAfterFormationStack
@@ -340,7 +340,7 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #number YStart The start position on the Y-axis in meters for the first group.
   -- @param #number ZStart The start position on the Z-axis in meters for the first group.
   -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
-  -- @return #boolean
+  --- @return #boolean
   
   --- FormationLeftLine Handler OnAfter for AI_FORMATION
   -- @function [parent=#AI_FORMATION] OnAfterFormationLeftLine
@@ -383,7 +383,7 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #number YStart The start position on the Y-axis in meters for the first group.
   -- @param #number ZStart The start position on the Z-axis in meters for the first group.
   -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
-  -- @return #boolean
+  --- @return #boolean
   
   --- FormationRightLine Handler OnAfter for AI_FORMATION
   -- @function [parent=#AI_FORMATION] OnAfterFormationRightLine
@@ -427,7 +427,7 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #number YStart The start position on the Y-axis in meters for the first group.
   -- @param #number ZStart The start position on the Z-axis in meters for the first group.
   -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
-  -- @return #boolean
+  --- @return #boolean
   
   --- FormationLeftWing Handler OnAfter for AI_FORMATION
   -- @function [parent=#AI_FORMATION] OnAfterFormationLeftWing
@@ -474,7 +474,7 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #number YStart The start position on the Y-axis in meters for the first group.
   -- @param #number ZStart The start position on the Z-axis in meters for the first group.
   -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
-  -- @return #boolean
+  --- @return #boolean
   
   --- FormationRightWing Handler OnAfter for AI_FORMATION
   -- @function [parent=#AI_FORMATION] OnAfterFormationRightWing
@@ -522,7 +522,7 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
   -- @param #number ZStart The start position on the Z-axis in meters for the first group.
   -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
-  -- @return #boolean
+  --- @return #boolean
   
   --- FormationCenterWing Handler OnAfter for AI_FORMATION
   -- @function [parent=#AI_FORMATION] OnAfterFormationCenterWing
@@ -572,7 +572,7 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
   -- @param #number ZStart The start position on the Z-axis in meters for the first group.
   -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
-  -- @return #boolean
+  --- @return #boolean
   
   --- FormationVic Handler OnAfter for AI_FORMATION
   -- @function [parent=#AI_FORMATION] OnAfterFormationVic
@@ -622,7 +622,7 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #number ZStart The start position on the Z-axis in meters for the first group.
   -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   -- @param #number ZLevels The amount of levels on the Z-axis.
-  -- @return #boolean
+  --- @return #boolean
   
   --- FormationBox Handler OnAfter for AI_FORMATION
   -- @function [parent=#AI_FORMATION] OnAfterFormationBox
@@ -1000,7 +1000,7 @@ function AI_FORMATION:SetFlightModeMission( FollowGroup )
     FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
   else
     self.FollowGroupSet:ForSomeGroupAlive(
-      --- @param Core.Group#GROUP EscortGroup
+      -- @param Core.Group#GROUP EscortGroup
       function( FollowGroup )
         FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
         FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
@@ -1024,7 +1024,7 @@ function AI_FORMATION:SetFlightModeAttack( FollowGroup )
     FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Attack )
   else
     self.FollowGroupSet:ForSomeGroupAlive(
-      --- @param Core.Group#GROUP EscortGroup
+      -- @param Core.Group#GROUP EscortGroup
       function( FollowGroup )
         FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
         FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Attack )
@@ -1048,7 +1048,7 @@ function AI_FORMATION:SetFlightModeFormation( FollowGroup )
     FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
   else
     self.FollowGroupSet:ForSomeGroupAlive(
-      --- @param Core.Group#GROUP EscortGroup
+      -- @param Core.Group#GROUP EscortGroup
       function( FollowGroup )
         FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
         FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )

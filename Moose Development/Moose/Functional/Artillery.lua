@@ -860,282 +860,282 @@ function ARTY:New(group, alias)
 
   --- User function for OnAfter "NewTarget" event.
   -- @function [parent=#ARTY] OnAfterNewTarget
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #table target Array holding the target info.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #table target Array holding the target info.
 
   --- User function for OnAfter "OpenFire" event.
   -- @function [parent=#ARTY] OnAfterOpenFire
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #table target Array holding the target info.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #table target Array holding the target info.
 
   --- User function for OnAfter "CeaseFire" event.
   -- @function [parent=#ARTY] OnAfterCeaseFire
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #table target Array holding the target info.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #table target Array holding the target info.
 
   --- User function for OnAfer "NewMove" event.
   -- @function [parent=#ARTY] OnAfterNewMove
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #table move Array holding the move info.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #table move Array holding the move info.
 
   --- User function for OnAfer "Move" event.
   -- @function [parent=#ARTY] OnAfterMove
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #table move Array holding the move info.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #table move Array holding the move info.
 
   --- User function for OnAfer "Arrived" event.
   -- @function [parent=#ARTY] OnAfterArrvied
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- User function for OnAfter "Winchester" event.
   -- @function [parent=#ARTY] OnAfterWinchester
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- User function for OnAfter "Rearm" event.
   -- @function [parent=#ARTY] OnAfterRearm
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- User function for OnAfter "Rearmed" event.
   -- @function [parent=#ARTY] OnAfterRearmed
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- User function for OnAfter "Start" event.
   -- @function [parent=#ARTY] OnAfterStart
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- User function for OnAfter "Status" event.
   -- @function [parent=#ARTY] OnAfterStatus
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- User function for OnAfter "Dead" event.
   -- @function [parent=#ARTY] OnAfterDead
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #string Unitname Name of the dead unit.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
+  --- @param #string Unitname Name of the dead unit.
 
   --- User function for OnAfter "Respawn" event.
   -- @function [parent=#ARTY] OnAfterRespawn
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- User function for OnEnter "CombatReady" state.
   -- @function [parent=#ARTY] OnEnterCombatReady
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- User function for OnEnter "Firing" state.
   -- @function [parent=#ARTY] OnEnterFiring
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- User function for OnEnter "OutOfAmmo" state.
   -- @function [parent=#ARTY] OnEnterOutOfAmmo
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- User function for OnEnter "Rearming" state.
   -- @function [parent=#ARTY] OnEnterRearming
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- User function for OnEnter "Rearmed" state.
   -- @function [parent=#ARTY] OnEnterRearmed
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
   --- User function for OnEnter "Moving" state.
   -- @function [parent=#ARTY] OnEnterMoving
-  -- @param #ARTY self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  --- @param #ARTY self
+  --- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  --- @param #string From From state.
+  --- @param #string Event Event.
+  --- @param #string To To state.
 
 
   --- Function to start the ARTY FSM process.
   -- @function [parent=#ARTY] Start
-  -- @param #ARTY self
+  --- @param #ARTY self
 
   --- Function to start the ARTY FSM process after a delay.
   -- @function [parent=#ARTY] __Start
-  -- @param #ARTY self
-  -- @param #number Delay before start in seconds.
+  --- @param #ARTY self
+  --- @param #number Delay before start in seconds.
 
   --- Function to update the status of the ARTY group and tigger FSM events. Triggers the FSM event "Status".
   -- @function [parent=#ARTY] Status
-  -- @param #ARTY self
+  --- @param #ARTY self
 
   --- Function to update the status of the ARTY group and tigger FSM events after a delay. Triggers the FSM event "Status".
   -- @function [parent=#ARTY] __Status
-  -- @param #ARTY self
-  -- @param #number Delay in seconds.
+  --- @param #ARTY self
+  --- @param #number Delay in seconds.
 
   --- Function called when a unit of the ARTY group died. Triggers the FSM event "Dead".
   -- @function [parent=#ARTY] Dead
-  -- @param #ARTY self
-  -- @param #string unitname Name of the unit that died.
+  --- @param #ARTY self
+  --- @param #string unitname Name of the unit that died.
 
   --- Function called when a unit of the ARTY group died after a delay. Triggers the FSM event "Dead".
   -- @function [parent=#ARTY] __Dead
-  -- @param #ARTY self
-  -- @param #number Delay in seconds.
-  -- @param #string unitname Name of the unit that died.
+  --- @param #ARTY self
+  --- @param #number Delay in seconds.
+  --- @param #string unitname Name of the unit that died.
 
   --- Add a new target for the ARTY group. Triggers the FSM event "NewTarget".
   -- @function [parent=#ARTY] NewTarget
-  -- @param #ARTY self
-  -- @param #table target Array holding the target data.
+  --- @param #ARTY self
+  --- @param #table target Array holding the target data.
 
   --- Add a new target for the ARTY group with a delay. Triggers the FSM event "NewTarget".
   -- @function [parent=#ARTY] __NewTarget
-  -- @param #ARTY self
-  -- @param #number delay Delay in seconds.
-  -- @param #table target Array holding the target data.
+  --- @param #ARTY self
+  --- @param #number delay Delay in seconds.
+  --- @param #table target Array holding the target data.
 
   --- Add a new relocation move for the ARTY group. Triggers the FSM event "NewMove".
   -- @function [parent=#ARTY] NewMove
-  -- @param #ARTY self
-  -- @param #table move Array holding the relocation move data.
+  --- @param #ARTY self
+  --- @param #table move Array holding the relocation move data.
 
   --- Add a new relocation for the ARTY group after a delay. Triggers the FSM event "NewMove".
   -- @function [parent=#ARTY] __NewMove
-  -- @param #ARTY self
-  -- @param #number delay Delay in seconds.
-  -- @param #table move Array holding the relocation move data.
+  --- @param #ARTY self
+  --- @param #number delay Delay in seconds.
+  --- @param #table move Array holding the relocation move data.
 
   --- Order ARTY group to open fire on a target. Triggers the FSM event "OpenFire".
   -- @function [parent=#ARTY] OpenFire
-  -- @param #ARTY self
-  -- @param #table target Array holding the target data.
+  --- @param #ARTY self
+  --- @param #table target Array holding the target data.
 
   --- Order ARTY group to open fire on a target with a delay. Triggers the FSM event "Move".
   -- @function [parent=#ARTY] __OpenFire
-  -- @param #ARTY self
-  -- @param #number delay Delay in seconds.
-  -- @param #table target Array holding the target data.
+  --- @param #ARTY self
+  --- @param #number delay Delay in seconds.
+  --- @param #table target Array holding the target data.
 
   --- Order ARTY group to cease firing on a target. Triggers the FSM event "CeaseFire".
   -- @function [parent=#ARTY] CeaseFire
-  -- @param #ARTY self
-  -- @param #table target Array holding the target data.
+  --- @param #ARTY self
+  --- @param #table target Array holding the target data.
 
   --- Order ARTY group to cease firing on a target after a delay. Triggers the FSM event "CeaseFire".
   -- @function [parent=#ARTY] __CeaseFire
-  -- @param #ARTY self
-  -- @param #number delay Delay in seconds.
-  -- @param #table target Array holding the target data.
+  --- @param #ARTY self
+  --- @param #number delay Delay in seconds.
+  --- @param #table target Array holding the target data.
 
   --- Order ARTY group to move to another location. Triggers the FSM event "Move".
   -- @function [parent=#ARTY] Move
-  -- @param #ARTY self
-  -- @param #table move Array holding the relocation move data.
+  --- @param #ARTY self
+  --- @param #table move Array holding the relocation move data.
 
   --- Order ARTY group to move to another location after a delay. Triggers the FSM event "Move".
   -- @function [parent=#ARTY] __Move
-  -- @param #ARTY self
-  -- @param #number delay Delay in seconds.
-  -- @param #table move Array holding the relocation move data.
+  --- @param #ARTY self
+  --- @param #number delay Delay in seconds.
+  --- @param #table move Array holding the relocation move data.
 
   --- Tell ARTY group it has arrived at its destination. Triggers the FSM event "Arrived".
   -- @function [parent=#ARTY] Arrived
-  -- @param #ARTY self
+  --- @param #ARTY self
 
   --- Tell ARTY group it has arrived at its destination after a delay. Triggers the FSM event "Arrived".
   -- @function [parent=#ARTY] __Arrived
-  -- @param #ARTY self
-  -- @param #number delay Delay in seconds.
+  --- @param #ARTY self
+  --- @param #number delay Delay in seconds.
 
   --- Tell ARTY group it is combat ready. Triggers the FSM event "CombatReady".
   -- @function [parent=#ARTY] CombatReady
-  -- @param #ARTY self
+  --- @param #ARTY self
 
   --- Tell ARTY group it is combat ready after a delay. Triggers the FSM event "CombatReady".
   -- @function [parent=#ARTY] __CombatReady
-  -- @param #ARTY self
-  -- @param #number delay Delay in seconds.
+  --- @param #ARTY self
+  --- @param #number delay Delay in seconds.
 
   --- Tell ARTY group it is out of ammo. Triggers the FSM event "Winchester".
   -- @function [parent=#ARTY] Winchester
-  -- @param #ARTY self
+  --- @param #ARTY self
 
   --- Tell ARTY group it is out of ammo after a delay. Triggers the FSM event "Winchester".
   -- @function [parent=#ARTY] __Winchester
-  -- @param #ARTY self
-  -- @param #number delay Delay in seconds.
+  --- @param #ARTY self
+  --- @param #number delay Delay in seconds.
 
   --- Respawn ARTY group.
   -- @function [parent=#ARTY] Respawn
-  -- @param #ARTY self
+  --- @param #ARTY self
 
   --- Respawn ARTY group after a delay.
   -- @function [parent=#ARTY] __Respawn
-  -- @param #ARTY self
-  -- @param #number delay Delay in seconds.
+  --- @param #ARTY self
+  --- @param #number delay Delay in seconds.
 
   return self
 end
@@ -2166,7 +2166,7 @@ function ARTY:OnEventShot(EventData)
         local _lastpos={x=0, y=0, z=0}
 
         --- Track the position of the weapon if it is supposed to model a tac nuke, illumination or smoke shell.
-        -- @param #table _weapon
+        --- @param #table _weapon
         local function _TrackWeapon(_data)
 
           -- When the pcall status returns false the weapon has hit.
@@ -4554,10 +4554,10 @@ function ARTY:_SortQueueTime(queue)
 end
 
 --- Heading from point a to point b in degrees.
---@param #ARTY self
---@param Core.Point#COORDINATE a Coordinate.
---@param Core.Point#COORDINATE b Coordinate.
---@return #number angle Angle from a to b in degrees.
+--- @param #ARTY self
+--- @param Core.Point#COORDINATE a Coordinate.
+--- @param Core.Point#COORDINATE b Coordinate.
+--- @return #number angle Angle from a to b in degrees.
 function ARTY:_GetHeading(a, b)
   local dx = b.x-a.x
   local dy = b.z-a.z

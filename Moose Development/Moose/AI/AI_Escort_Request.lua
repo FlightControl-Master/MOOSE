@@ -248,7 +248,7 @@ function AI_ESCORT_REQUEST:SpawnEscort()
       self:_InitEscortMenus( EscortGroup )
       self:_InitEscortRoute( EscortGroup )
 
-      --- @param #AI_ESCORT self
+      -- @param #AI_ESCORT self
       -- @param Core.Event#EVENTDATA EventData
       function EscortGroup:OnEventDeadOrCrash( EventData )
         self:F( { "EventDead", EventData } )
@@ -292,7 +292,7 @@ function AI_ESCORT_REQUEST:onafterStop( EscortGroupSet )
   self:F()
   
   EscortGroupSet:ForEachGroup(
-    --- @param Core.Group#GROUP EscortGroup
+    -- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
       EscortGroup:WayPointInitialize()
     

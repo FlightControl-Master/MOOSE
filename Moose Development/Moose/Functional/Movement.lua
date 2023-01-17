@@ -14,7 +14,7 @@
 -- @extends Core.Base#BASE
 
 ---
---@field #MOVEMENT
+--- @field #MOVEMENT
 MOVEMENT = {
 	ClassName = "MOVEMENT",
 }
