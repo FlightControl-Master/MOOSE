@@ -79,7 +79,7 @@
 do -- ACT_ROUTE
 
   --- ACT_ROUTE class
-  -- @type ACT_ROUTE
+  --- @type ACT_ROUTE
   -- @field Tasking.Task#TASK TASK
   -- @field Wrapper.Unit#UNIT ProcessUnit
   -- @field Core.Zone#ZONE_BASE Zone
@@ -277,7 +277,7 @@ end -- ACT_ROUTE
 do -- ACT_ROUTE_POINT
 
   --- ACT_ROUTE_POINT class
-  -- @type ACT_ROUTE_POINT
+  --- @type ACT_ROUTE_POINT
   -- @field Tasking.Task#TASK TASK
   -- @extends #ACT_ROUTE
   ACT_ROUTE_POINT = {
@@ -392,7 +392,7 @@ end -- ACT_ROUTE_POINT
 do -- ACT_ROUTE_ZONE
 
   --- ACT_ROUTE_ZONE class
-  -- @type ACT_ROUTE_ZONE
+  --- @type ACT_ROUTE_ZONE
   -- @field Tasking.Task#TASK TASK
   -- @field Wrapper.Unit#UNIT ProcessUnit
   -- @field Core.Zone#ZONE_BASE Zone

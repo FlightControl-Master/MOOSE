@@ -67,7 +67,7 @@
 do -- TASK_CARGO_DISPATCHER
 
   --- TASK_CARGO_DISPATCHER class.
-  -- @type TASK_CARGO_DISPATCHER
+  --- @type TASK_CARGO_DISPATCHER
   -- @extends Tasking.Task_Manager#TASK_MANAGER
   -- @field TASK_CARGO_DISPATCHER.CSAR CSAR
   -- @field Core.Set#SET_ZONE SetZonesCSAR

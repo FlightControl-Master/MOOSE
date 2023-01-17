@@ -288,7 +288,7 @@ do -- DETECTION_BASE
   -- @list <#DETECTION_BASE.DetectedItem>
 
   --- Detected item data structure.
-  -- @type DETECTION_BASE.DetectedItem
+  --- @type DETECTION_BASE.DetectedItem
   -- @field #boolean IsDetected Indicates if the DetectedItem has been detected or not.
   -- @field Core.Set#SET_UNIT Set The Set of Units in the detected area.
   -- @field Core.Zone#ZONE_UNIT Zone The Zone of the detected area.

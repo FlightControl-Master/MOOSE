@@ -85,7 +85,7 @@ OPSZONE = {
 
 
 --- Type of zone we are dealing with.
--- @type OPSZONE.ZoneType
+--- @type OPSZONE.ZoneType
 --- @field #string Circular Zone is circular.
 --- @field #string Polygon Zone is a polygon.
 OPSZONE.ZoneType={

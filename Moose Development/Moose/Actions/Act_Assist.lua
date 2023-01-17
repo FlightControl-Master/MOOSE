@@ -67,7 +67,7 @@
 do -- ACT_ASSIST
 
   --- ACT_ASSIST class
-  -- @type ACT_ASSIST
+  --- @type ACT_ASSIST
   -- @extends Core.Fsm#FSM_PROCESS
   ACT_ASSIST = {
     ClassName = "ACT_ASSIST",
@@ -139,7 +139,7 @@ end
 do -- ACT_ASSIST_SMOKE_TARGETS_ZONE
 
   --- ACT_ASSIST_SMOKE_TARGETS_ZONE class
-  -- @type ACT_ASSIST_SMOKE_TARGETS_ZONE
+  --- @type ACT_ASSIST_SMOKE_TARGETS_ZONE
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @field Core.Zone#ZONE_BASE TargetZone
   -- @extends #ACT_ASSIST

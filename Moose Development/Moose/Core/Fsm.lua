@@ -1321,7 +1321,7 @@ end
 do -- FSM_TASK
 
   --- FSM_TASK class
-  -- @type FSM_TASK
+  --- @type FSM_TASK
   -- @field Tasking.Task#TASK Task
   -- @extends #FSM
 
@@ -1378,7 +1378,7 @@ end -- FSM_TASK
 do -- FSM_SET
 
   --- FSM_SET class
-  -- @type FSM_SET
+  --- @type FSM_SET
   -- @field Core.Set#SET_BASE Set
   -- @extends Core.Fsm#FSM
 

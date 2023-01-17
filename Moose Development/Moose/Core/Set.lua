@@ -85,7 +85,7 @@ do -- SET_BASE
   }
 
   --- Filters
-  -- @type SET_BASE.Filters
+  --- @type SET_BASE.Filters
   -- @field #table Coalition Coalitions
   -- @field #table Prefix Prefixes.
 
@@ -7327,7 +7327,7 @@ end
 do -- SET_SCENERY
 
   ---
-  -- @type SET_SCENERY
+  --- @type SET_SCENERY
   -- @extends Core.Set#SET_BASE
 
   --- Mission designers can use the SET_SCENERY class to build sets of scenery belonging to certain:

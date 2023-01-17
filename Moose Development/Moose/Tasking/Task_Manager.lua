@@ -35,7 +35,7 @@
 do -- TASK_MANAGER
 
   --- TASK_MANAGER class.
-  -- @type TASK_MANAGER
+  --- @type TASK_MANAGER
   -- @field Core.Set#SET_GROUP SetGroup The set of group objects containing players for which tasks are managed.
   -- @extends Core.Fsm#FSM
   TASK_MANAGER = {

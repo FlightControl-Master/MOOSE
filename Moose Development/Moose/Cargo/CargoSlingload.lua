@@ -20,7 +20,7 @@
 do -- CARGO_SLINGLOAD
 
   --- Models the behaviour of cargo crates, which can only be slingloaded. 
-  -- @type CARGO_SLINGLOAD
+  --- @type CARGO_SLINGLOAD
   -- @extends Cargo.Cargo#CARGO_REPRESENTABLE
   
   --- Defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.

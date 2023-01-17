@@ -14,7 +14,7 @@
 do -- TASK_A2A
 
   --- The TASK_A2A class
-  -- @type TASK_A2A
+  --- @type TASK_A2A
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
@@ -367,7 +367,7 @@ end
 do -- TASK_A2A_INTERCEPT
 
   --- The TASK_A2A_INTERCEPT class
-  -- @type TASK_A2A_INTERCEPT
+  --- @type TASK_A2A_INTERCEPT
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
@@ -457,7 +457,7 @@ end
 do -- TASK_A2A_SWEEP
 
   --- The TASK_A2A_SWEEP class
-  -- @type TASK_A2A_SWEEP
+  --- @type TASK_A2A_SWEEP
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
@@ -560,7 +560,7 @@ end
 do -- TASK_A2A_ENGAGE
 
   --- The TASK_A2A_ENGAGE class
-  -- @type TASK_A2A_ENGAGE
+  --- @type TASK_A2A_ENGAGE
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 

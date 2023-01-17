@@ -267,7 +267,7 @@
 do -- AI_AIR_DISPATCHER
 
   --- AI_AIR_DISPATCHER class.
-  -- @type AI_AIR_DISPATCHER
+  --- @type AI_AIR_DISPATCHER
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
   --- Create an automated AIR defense system based on a detection network of reconnaissance vehicles and air units, coordinating SEAD, BAI and CAP operations.
@@ -890,7 +890,7 @@ do -- AI_AIR_DISPATCHER
   }
 
   --- Definition of a Squadron.
-  -- @type AI_AIR_DISPATCHER.Squadron
+  --- @type AI_AIR_DISPATCHER.Squadron
   -- @field #string Name The Squadron name.
   -- @field Wrapper.Airbase#AIRBASE Airbase The home airbase.
   -- @field #string AirbaseName The name of the home airbase.
@@ -902,14 +902,14 @@ do -- AI_AIR_DISPATCHER
 
 
   --- List of defense coordinates.
-  -- @type AI_AIR_DISPATCHER.DefenseCoordinates
+  --- @type AI_AIR_DISPATCHER.DefenseCoordinates
   -- @map <#string,Core.Point#COORDINATE> A list of all defense coordinates mapped per defense coordinate name.
 
   --- @field #AI_AIR_DISPATCHER.DefenseCoordinates DefenseCoordinates
   AI_AIR_DISPATCHER.DefenseCoordinates = {}
 
   --- Enumerator for spawns at airbases
-  -- @type AI_AIR_DISPATCHER.Takeoff
+  --- @type AI_AIR_DISPATCHER.Takeoff
   -- @extends Wrapper.Group#GROUP.Takeoff
 
   --- @field #AI_AIR_DISPATCHER.Takeoff Takeoff
@@ -924,7 +924,7 @@ do -- AI_AIR_DISPATCHER
   }
 
   --- A defense queue item description
-  -- @type AI_AIR_DISPATCHER.DefenseQueueItem
+  --- @type AI_AIR_DISPATCHER.DefenseQueueItem
   -- @field Squadron
   -- @field #AI_AIR_DISPATCHER.Squadron DefenderSquadron The squadron in the queue.
   -- @field DefendersNeeded
@@ -940,14 +940,14 @@ do -- AI_AIR_DISPATCHER
   -- Therefore, this queue concept is introduced that queues each defender request.
   -- Depending on the location of the launching site, the queued defenders will be launched at varying time intervals.
   -- This guarantees that launched defenders are also directly existing ...
-  -- @type AI_AIR_DISPATCHER.DefenseQueue
+  --- @type AI_AIR_DISPATCHER.DefenseQueue
   -- @list<#AI_AIR_DISPATCHER.DefenseQueueItem> DefenseQueueItem A list of all defenses being queued ...
 
   --- @field #AI_AIR_DISPATCHER.DefenseQueue DefenseQueue
   AI_AIR_DISPATCHER.DefenseQueue = {}
 
   --- Defense approach types
-  -- @type #AI_AIR_DISPATCHER.DefenseApproach
+  --- @type #AI_AIR_DISPATCHER.DefenseApproach
   AI_AIR_DISPATCHER.DefenseApproach = {
     Random = 1,
     Distance = 2,

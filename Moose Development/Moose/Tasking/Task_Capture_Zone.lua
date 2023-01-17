@@ -14,7 +14,7 @@
 do -- TASK_ZONE_GOAL
 
   --- The TASK_ZONE_GOAL class
-  -- @type TASK_ZONE_GOAL
+  --- @type TASK_ZONE_GOAL
   -- @field Functional.ZoneGoal#ZONE_GOAL ZoneGoal
   -- @extends Tasking.Task#TASK
 
@@ -168,7 +168,7 @@ end
 do -- TASK_CAPTURE_ZONE
 
   --- The TASK_CAPTURE_ZONE class
-  -- @type TASK_CAPTURE_ZONE
+  --- @type TASK_CAPTURE_ZONE
   -- @field Functional.ZoneGoalCoalition#ZONE_GOAL_COALITION ZoneGoal
   -- @extends #TASK_ZONE_GOAL
 

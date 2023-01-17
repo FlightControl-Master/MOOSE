@@ -996,7 +996,7 @@ end
 -- A table containing functions and variables for MSRS to use DCS-gRPC [DCS-gRPC](https://github.com/DCS-gRPC/rust-server) 0.7.0 or newer as a backend to transmit over SRS.
 -- This is not a standalone class. Instead, variables and functions under the `Vars` and `Functions` tables get added to or replace MSRS variables/functions when activated.
 -- 
--- @type MSRS_BACKEND_DCSGRPC 
+--- @type MSRS_BACKEND_DCSGRPC 
 --- @field #number version Version number of this alternate backend.
 --- @field #table Functions A table of functions that will add or replace the default MSRS class functions.
 --- @field #table Vars A table of variables that will add or replace the default MSRS class variables.

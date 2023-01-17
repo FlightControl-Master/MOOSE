@@ -84,7 +84,7 @@
 do -- ACT_ASSIGN
 
   --- ACT_ASSIGN class
-  -- @type ACT_ASSIGN
+  --- @type ACT_ASSIGN
   -- @field Tasking.Task#TASK Task
   -- @field Wrapper.Unit#UNIT ProcessUnit
   -- @field Core.Zone#ZONE_BASE TargetZone
@@ -123,7 +123,7 @@ end -- ACT_ASSIGN
 do -- ACT_ASSIGN_ACCEPT
 
   --- ACT_ASSIGN_ACCEPT class
-  -- @type ACT_ASSIGN_ACCEPT
+  --- @type ACT_ASSIGN_ACCEPT
   -- @field Tasking.Task#TASK Task
   -- @field Wrapper.Unit#UNIT ProcessUnit
   -- @field Core.Zone#ZONE_BASE TargetZone
@@ -178,7 +178,7 @@ end -- ACT_ASSIGN_ACCEPT
 do -- ACT_ASSIGN_MENU_ACCEPT
 
   --- ACT_ASSIGN_MENU_ACCEPT class
-  -- @type ACT_ASSIGN_MENU_ACCEPT
+  --- @type ACT_ASSIGN_MENU_ACCEPT
   -- @field Tasking.Task#TASK Task
   -- @field Wrapper.Unit#UNIT ProcessUnit
   -- @field Core.Zone#ZONE_BASE TargetZone

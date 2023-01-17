@@ -19,7 +19,7 @@
 do -- CARGO_CRATE
 
   --- Models the behaviour of cargo crates, which can be slingloaded and boarded on helicopters. 
-  -- @type CARGO_CRATE
+  --- @type CARGO_CRATE
   -- @extends Cargo.Cargo#CARGO_REPRESENTABLE
   
   --- Defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.

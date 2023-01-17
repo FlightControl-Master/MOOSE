@@ -14,7 +14,7 @@
 do -- TASK_A2G
 
   --- The TASK_A2G class
-  -- @type TASK_A2G
+  --- @type TASK_A2G
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
@@ -374,7 +374,7 @@ end
 do -- TASK_A2G_SEAD
 
   --- The TASK_A2G_SEAD class
-  -- @type TASK_A2G_SEAD
+  --- @type TASK_A2G_SEAD
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
@@ -461,7 +461,7 @@ end
 do -- TASK_A2G_BAI
 
   --- The TASK_A2G_BAI class
-  -- @type TASK_A2G_BAI
+  --- @type TASK_A2G_BAI
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
@@ -547,7 +547,7 @@ end
 do -- TASK_A2G_CAS
 
   --- The TASK_A2G_CAS class
-  -- @type TASK_A2G_CAS
+  --- @type TASK_A2G_CAS
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 

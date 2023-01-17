@@ -326,7 +326,7 @@ CTLD_CARGO = {
   }
   
   --- Define cargo types.
-  -- @type CTLD_CARGO.Enum
+  --- @type CTLD_CARGO.Enum
   -- @field #string VEHICLE
   -- @field #string TROOPS
   -- @field #string FOB
@@ -1019,7 +1019,7 @@ CTLD = {
 --- @field #number modulation -- i.e.CTLD.RadioModulation.FM or CTLD.RadioModulation.AM
 
 --- Radio Modulation
--- @type CTLD.RadioModulation
+--- @type CTLD.RadioModulation
 --- @field #number AM
 --- @field #number FM
 CTLD.RadioModulation = {

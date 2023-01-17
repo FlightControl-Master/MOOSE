@@ -216,7 +216,7 @@ do -- COORDINATE
   }
 
   --- Waypoint altitude types.
-  -- @type COORDINATE.WaypointAltType
+  --- @type COORDINATE.WaypointAltType
   -- @field #string BARO Barometric altitude.
   -- @field #string RADIO Radio altitude.
   COORDINATE.WaypointAltType = {
@@ -225,7 +225,7 @@ do -- COORDINATE
   }
 
   --- Waypoint actions.
-  -- @type COORDINATE.WaypointAction
+  --- @type COORDINATE.WaypointAction
   -- @field #string TurningPoint Turning point.
   -- @field #string FlyoverPoint Fly over point.
   -- @field #string FromParkingArea From parking area.
@@ -248,7 +248,7 @@ do -- COORDINATE
   }
 
   --- Waypoint types.
-  -- @type COORDINATE.WaypointType
+  --- @type COORDINATE.WaypointType
   -- @field #string TakeOffParking Take of parking.
   -- @field #string TakeOffParkingHot Take of parking hot.
   -- @field #string TakeOff Take off parking hot.
@@ -3252,7 +3252,7 @@ end
 do -- POINT_VEC3
 
   --- The POINT_VEC3 class
-  -- @type POINT_VEC3
+  --- @type POINT_VEC3
   -- @field #number x The x coordinate in 3D space.
   -- @field #number y The y coordinate in 3D space.
   -- @field #number z The z COORDINATE in 3D space.
@@ -3324,16 +3324,16 @@ do -- POINT_VEC3
   }
 
   --- RoutePoint AltTypes
-  -- @type POINT_VEC3.RoutePointAltType
+  --- @type POINT_VEC3.RoutePointAltType
   -- @field BARO "BARO"
 
   --- RoutePoint Types
-  -- @type POINT_VEC3.RoutePointType
+  --- @type POINT_VEC3.RoutePointType
   -- @field TakeOffParking "TakeOffParking"
   -- @field TurningPoint "Turning Point"
 
   --- RoutePoint Actions
-  -- @type POINT_VEC3.RoutePointAction
+  --- @type POINT_VEC3.RoutePointAction
   -- @field FromParkingArea "From Parking Area"
   -- @field TurningPoint "Turning Point"
 

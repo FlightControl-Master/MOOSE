@@ -10,7 +10,7 @@
 do -- world
 
   --- [DCS Enum world](https://wiki.hoggitworld.com/view/DCS_enum_world)
-  -- @type world
+  --- @type world
   -- @field #world.event event [https://wiki.hoggitworld.com/view/DCS_enum_world](https://wiki.hoggitworld.com/view/DCS_enum_world)
   -- @field #world.BirthPlace BirthPlace The birthplace enumerator is used to define where an aircraft or helicopter has spawned in association with birth events.
   -- @field #world.VolumeType VolumeType The volumeType enumerator defines the types of 3d geometery used within the [world.searchObjects](https://wiki.hoggitworld.com/view/DCS_func_searchObjects) function.
@@ -24,7 +24,7 @@ do -- world
   world = {}
   
   --- [https://wiki.hoggitworld.com/view/DCS_enum_world](https://wiki.hoggitworld.com/view/DCS_enum_world)
-  -- @type world.event
+  --- @type world.event
   -- @field S_EVENT_INVALID 
   -- @field S_EVENT_SHOT [https://wiki.hoggitworld.com/view/DCS_event_shot](https://wiki.hoggitworld.com/view/DCS_event_shot)
   -- @field S_EVENT_HIT [https://wiki.hoggitworld.com/view/DCS_event_hit](https://wiki.hoggitworld.com/view/DCS_event_hit)
@@ -59,7 +59,7 @@ do -- world
   -- @field S_EVENT_MAX
   
   --- The birthplace enumerator is used to define where an aircraft or helicopter has spawned in association with birth events.
-  -- @type world.BirthPlace
+  --- @type world.BirthPlace
   -- @field wsBirthPlace_Air
   -- @field wsBirthPlace_RunWay
   -- @field wsBirthPlace_Park
@@ -67,7 +67,7 @@ do -- world
   -- @field wsBirthPlace_Heliport_Cold
 
   --- The volumeType enumerator defines the types of 3d geometery used within the #world.searchObjects function.
-  -- @type world.VolumeType
+  --- @type world.VolumeType
   -- @field SEGMENT
   -- @field BOX
   -- @field SPHERE
@@ -109,7 +109,7 @@ end -- world
 do -- env
 
   --- [DCS Singleton env](https://wiki.hoggitworld.com/view/DCS_singleton_env)
-  -- @type env
+  --- @type env
 
   --- Add message to simulator log with caption "INFO". Message box is optional.
   -- @function [parent=#env] info
@@ -139,7 +139,7 @@ end -- env
 do -- timer
 
   --- [DCS Singleton timer](https://wiki.hoggitworld.com/view/DCS_singleton_timer)
-  -- @type timer
+  --- @type timer
   
   --- Returns model time in seconds.
   -- @function [parent=#timer] getTime
@@ -188,11 +188,11 @@ end
 do -- land
 
   --- [DCS Singleton land](https://wiki.hoggitworld.com/view/DCS_singleton_land)
-  -- @type land
+  --- @type land
   -- @field #land.SurfaceType SurfaceType
   
   --- [Type of surface enumerator](https://wiki.hoggitworld.com/view/DCS_singleton_land)
-  -- @type land.SurfaceType
+  --- @type land.SurfaceType
   -- @field LAND
   -- @field SHALLOW_WATER
   -- @field WATER
@@ -217,12 +217,12 @@ end -- land
 do -- country
 
   --- [DCS Enum country](https://wiki.hoggitworld.com/view/DCS_enum_country)
-  -- @type country
+  --- @type country
   -- @field #country.id id 
   
   
   --- [DCS enumerator country](https://wiki.hoggitworld.com/view/DCS_enum_country)
-  -- @type country.id
+  --- @type country.id
   -- @field RUSSIA
   -- @field UKRAINE
   -- @field USA
@@ -332,11 +332,11 @@ end -- Command
 do -- coalition
 
   --- [DCS Enum coalition](https://wiki.hoggitworld.com/view/DCS_enum_coalition)
-  -- @type coalition
+  --- @type coalition
   -- @field #coalition.side side
   
   --- [DCS Enum coalition.side](https://wiki.hoggitworld.com/view/DCS_enum_coalition)
-  -- @type coalition.side
+  --- @type coalition.side
   -- @field NEUTRAL
   -- @field RED
   -- @field BLUE
@@ -390,77 +390,77 @@ do -- Types
   -- @field #number category Unit category.
   
   --- A distance type
-  -- @type Distance
+  --- @type Distance
   
   --- An angle type
-  -- @type Angle
+  --- @type Angle
   
   --- Time is given in seconds.
-  -- @type Time
+  --- @type Time
   -- @extends #number Time in seconds.
   
   --- Model time is the time that drives the simulation. Model time may be stopped, accelerated and decelerated relative real time. 
-  -- @type ModelTime
+  --- @type ModelTime
   -- @extends #number
   
   --- Mission time is a model time plus time of the mission start.
-  -- @type MissionTime
+  --- @type MissionTime
   -- @extends #number Time in seconds.
   
   
   --- Distance is given in meters.
-  -- @type Distance
+  --- @type Distance
   -- @extends #number Distance in meters.
   
   --- Angle is given in radians.
-  -- @type Angle
+  --- @type Angle
   -- @extends #number Angle in radians.
   
   --- Azimuth is an angle of rotation around world axis y counter-clockwise.
-  -- @type Azimuth
+  --- @type Azimuth
   -- @extends #number Angle in radians.
   
   --- Mass is given in kilograms.
-  -- @type Mass
+  --- @type Mass
   -- @extends #number
   
   --- Vec3 type is a 3D-vector.
   -- DCS world has 3-dimensional coordinate system. DCS ground is an infinite plain.
-  -- @type Vec3
+  --- @type Vec3
   -- @field #Distance x is directed to the north
   -- @field #Distance z is directed to the east
   -- @field #Distance y is directed up
   
   --- Vec2 is a 2D-vector for the ground plane as a reference plane.
-  -- @type Vec2
+  --- @type Vec2
   -- @field #Distance x Vec2.x = Vec3.x
   -- @field #Distance y Vec2.y = Vec3.z
   
   --- Position is a composite structure. It consists of both coordinate vector and orientation matrix. Position3 (also known as "Pos3" for short) is a table that has following format: 
-  -- @type Position3
+  --- @type Position3
   -- @field #Vec3 p 3D position vector.
   -- @field #Vec3 x Orientation component of vector pointing East.
   -- @field #Vec3 y Orientation component of vector pointing up.
   -- @field #Vec3 z Orientation component of vector pointing North.
   
   --- 3-dimensional box.
-  -- @type Box3
+  --- @type Box3
   -- @field #Vec3 min Min.
   -- @field #Vec3 max Max
   
   --- Each object belongs to a type. Object type is a named couple of properties those independent of mission and common for all units of the same type. Name of unit type is a string. Samples of unit type: "Su-27", "KAMAZ" and "M2 Bradley". 
-  -- @type TypeName
+  --- @type TypeName
   -- @extends #string
   
   --- AttributeName = string 
   -- Each object type may have attributes.
   -- Attributes are enlisted in ./Scripts/Database/db_attributes.Lua.
   -- To know what attributes the object type has, look for the unit type script in sub-directories planes/, helicopter/s, vehicles, navy/ of ./Scripts/Database/ directory. 
-  -- @type AttributeName
+  --- @type AttributeName
   -- @extends #string
   
   --- List of @{#AttributeName}
-  -- @type AttributeNameArray 
+  --- @type AttributeNameArray 
   -- @list <#AttributeName>
 
   --- @type Zone
@@ -477,14 +477,14 @@ do -- Types
   
   --- A task descriptor (internal structure for DCS World). See [https://wiki.hoggitworld.com/view/Category:Tasks](https://wiki.hoggitworld.com/view/Category:Tasks).
   -- In MOOSE, these tasks can be accessed via @{Wrapper.Controllable#CONTROLLABLE}.
-  -- @type Task
+  --- @type Task
   -- @field #string id
   -- @field #Task.param param
   
   --- @type Task.param
   
   --- List of @{#Task}
-  -- @type TaskArray
+  --- @type TaskArray
   -- @list <#Task>
 
   ---
@@ -493,7 +493,7 @@ do -- Types
   --@field #boolean uncontrolled
 
   --- DCS template data structure.
-  -- @type Template
+  --- @type Template
   -- @field #boolean uncontrolled Aircraft is uncontrolled.
   -- @field #boolean lateActivation Group is late activated.
   -- @field #number x 2D Position on x-axis in meters.
@@ -515,12 +515,12 @@ end --
 do -- Object
 
   --- [DCS Class Object](https://wiki.hoggitworld.com/view/DCS_Class_Object)
-  -- @type Object
+  --- @type Object
   -- @field #Object.Category Category
   -- @field #Object.Desc Desc
   
   --- [DCS Enum Object.Category](https://wiki.hoggitworld.com/view/DCS_Class_Object)
-  -- @type Object.Category
+  --- @type Object.Category
   -- @field UNIT
   -- @field WEAPON
   -- @field STATIC
@@ -596,7 +596,7 @@ end -- Object
 do -- CoalitionObject
 
   --- [DCS Class CoalitionObject](https://wiki.hoggitworld.com/view/DCS_Class_Coalition_Object)
-  -- @type CoalitionObject
+  --- @type CoalitionObject
   -- @extends #Object
   
   --- Returns coalition of the object.
@@ -617,7 +617,7 @@ end -- CoalitionObject
 do -- Weapon
 
   --- [DCS Class Weapon](https://wiki.hoggitworld.com/view/DCS_Class_Weapon)
-  -- @type Weapon
+  --- @type Weapon
   -- @extends #CoalitionObject
   -- @field #Weapon.flag flag enum stores weapon flags. Some of them are combination of another flags.
   -- @field #Weapon.Category Category enum that stores weapon categories.
@@ -627,7 +627,7 @@ do -- Weapon
   -- @field #Weapon.Desc Desc The descriptor of a weapon.
 
   --- enum stores weapon flags. Some of them are combination of another flags.
-  -- @type Weapon.flag
+  --- @type Weapon.flag
   -- @field LGB
   -- @field TvGB
   -- @field SNSGB
@@ -678,7 +678,7 @@ do -- Weapon
   -- @field ArmWeapon = AnyWeapon - MarkerWeapon
 
   --- Weapon.Category enum that stores weapon categories.
-  -- @type Weapon.Category
+  --- @type Weapon.Category
   -- @field SHELL
   -- @field MISSILE
   -- @field ROCKET
@@ -686,7 +686,7 @@ do -- Weapon
   
 
   --- Weapon.GuidanceType enum that stores guidance methods. Available only for guided weapon (Weapon.Category.MISSILE and some Weapon.Category.BOMB). 
-  -- @type Weapon.GuidanceType
+  --- @type Weapon.GuidanceType
   -- @field INS
   -- @field IR
   -- @field RADAR_ACTIVE
@@ -698,7 +698,7 @@ do -- Weapon
 
   
   --- Weapon.MissileCategory enum that stores missile category. Available only for missiles (Weapon.Category.MISSILE). 
-  -- @type Weapon.MissileCategory
+  --- @type Weapon.MissileCategory
   -- @field AAM
   -- @field SAM
   -- @field BM
@@ -707,7 +707,7 @@ do -- Weapon
   -- @field OTHER
 
   --- Weapon.WarheadType enum that stores warhead types. 
-  -- @type Weapon.WarheadType
+  --- @type Weapon.WarheadType
   -- @field AP
   -- @field HE
   -- @field SHAPED_EXPLOSIVE
@@ -738,20 +738,20 @@ do -- Airbase
 
   --- [DCS Class Airbase](https://wiki.hoggitworld.com/view/DCS_Class_Airbase)
   -- Represents airbases: airdromes, helipads and ships with flying decks or landing pads.  
-  -- @type Airbase
+  --- @type Airbase
   -- @extends #CoalitionObject
   -- @field #Airbase.ID ID Identifier of an airbase. It assigned to an airbase by the Mission Editor automatically. This identifier is used in AI tasks to refer an airbase that exists (spawned and not dead) or not. 
   -- @field #Airbase.Category Category enum contains identifiers of airbase categories. 
   -- @field #Airbase.Desc Desc Airbase descriptor. Airdromes are unique and their types are unique, but helipads and ships are not always unique and may have the same type. 
   
   --- Enum contains identifiers of airbase categories.
-  -- @type Airbase.Category
+  --- @type Airbase.Category
   -- @field AIRDROME
   -- @field HELIPAD
   -- @field SHIP
   
   --- Airbase descriptor. Airdromes are unique and their types are unique, but helipads and ships are not always unique and may have the same type. 
-  -- @type Airbase.Desc
+  --- @type Airbase.Desc
   -- @extends #Desc
   -- @field #Airbase.Category category Category of the airbase type.
   
@@ -793,11 +793,11 @@ do -- Spot
 
   --- [DCS Class Spot](https://wiki.hoggitworld.com/view/DCS_Class_Spot)
   -- Represents a spot from laser or IR-pointer.
-  -- @type Spot 
+  --- @type Spot 
   -- @field #Spot.Category Category enum that stores spot categories. 
   
   --- Enum that stores spot categories. 
-  -- @type Spot.Category
+  --- @type Spot.Category
   -- @field #string INFRA_RED
   -- @field #string LASER
 
@@ -857,7 +857,7 @@ do -- Controller
   -- 
   -- * Tasks
   -- * Commands: Commands are instant actions those required zero time to perform. Commands may be used both for control unit/group behavior and control game mechanics. 
-  -- @type Controller
+  --- @type Controller
   -- @field #Controller.Detection Detection Enum contains identifiers of surface types. 
   
   --- Enables and disables the controller.
@@ -918,7 +918,7 @@ do -- Controller
   -- Detection
   
   --- Enum contains identifiers of surface types. 
-  -- @type Controller.Detection
+  --- @type Controller.Detection
   -- @field VISUAL
   -- @field OPTIC
   -- @field RADAR
@@ -927,7 +927,7 @@ do -- Controller
   -- @field DLINK
   
   --- Detected target. 
-  -- @type DetectedTarget
+  --- @type DetectedTarget
   -- @field Wrapper.Object#Object object The target
   -- @field #boolean visible The target is visible
   -- @field #boolean type The target type is known
@@ -992,7 +992,7 @@ do -- Unit
   
   
   --- Enum that stores unit categories.
-  -- @type Unit.Category
+  --- @type Unit.Category
   -- @field AIRPLANE
   -- @field HELICOPTER
   -- @field GROUND_UNIT
@@ -1000,38 +1000,38 @@ do -- Unit
   -- @field STRUCTURE
   
   --- Enum that stores aircraft refueling system types.
-  -- @type Unit.RefuelingSystem
+  --- @type Unit.RefuelingSystem
   -- @field BOOM_AND_RECEPTACLE Tanker with a boom.
   -- @field PROBE_AND_DROGUE Tanker with a probe.
   
   --- Enum that stores sensor types.
-  -- @type Unit.SensorType
+  --- @type Unit.SensorType
   -- @field OPTIC
   -- @field RADAR
   -- @field IRST
   -- @field RWR
   
   --- Enum that stores types of optic sensors.
-  -- @type Unit.OpticType
+  --- @type Unit.OpticType
   -- @field TV TV-sensor
   -- @field LLTV Low-level TV-sensor
   -- @field IR Infra-Red optic sensor
   
   --- Enum that stores radar types.
-  -- @type Unit.RadarType
+  --- @type Unit.RadarType
   -- @field AS air search radar
   -- @field SS surface/land search radar
   
   
   --- A unit descriptor. 
-  -- @type Unit.Desc
+  --- @type Unit.Desc
   -- @extends #Object.Desc
   -- @field #Unit.Category category Unit Category
   -- @field #Mass massEmpty mass of empty unit
   -- @field #number speedMax istance / Time, --maximal velocity
   
   --- An aircraft descriptor. 
-  -- @type Unit.DescAircraft
+  --- @type Unit.DescAircraft
   -- @extends #Unit.Desc
   -- @field #Mass fuelMassMax maximal inner fuel mass
   -- @field #Distance range Operational range
@@ -1042,43 +1042,43 @@ do -- Unit
   -- @field #Unit.RefuelingSystem tankerType refueling system type
   
   --- An airplane descriptor.
-  -- @type Unit.DescAirplane 
+  --- @type Unit.DescAirplane 
   -- @extends #Unit.DescAircraft
   -- @field #number speedMax0 Distance / Time maximal TAS at ground level
   -- @field #number speedMax10K Distance / Time maximal TAS at altitude of 10 km
   
   --- A helicopter descriptor.
-  -- @type Unit.DescHelicopter 
+  --- @type Unit.DescHelicopter 
   -- @extends #Unit.DescAircraft
   -- @field #Distance HmaxStat static ceiling
   
   --- A vehicle descriptor.
-  -- @type Unit.DescVehicle 
+  --- @type Unit.DescVehicle 
   -- @extends #Unit.Desc
   -- @field #Angle maxSlopeAngle maximal slope angle
   -- @field #boolean riverCrossing can the vehicle cross a rivers
   
   --- A ship descriptor.
-  -- @type Unit.DescShip 
+  --- @type Unit.DescShip 
   -- @extends #Unit.Desc
    
   --- ammunition item: "type-count" pair.
-  -- @type Unit.AmmoItem
+  --- @type Unit.AmmoItem
   -- @field #Weapon.Desc desc ammunition descriptor
   -- @field #number count ammunition count
   
   --- A unit sensor.
-  -- @type Unit.Sensor
+  --- @type Unit.Sensor
   -- @field #TypeName typeName
   -- @field #Unit.SensorType type
   
   --- An optic sensor.
-  -- @type Unit.Optic 
+  --- @type Unit.Optic 
   -- @extends #Unit.Sensor
   -- @field #Unit.OpticType opticType
   
   --- A radar.
-  -- @type  Unit.Radar 
+  --- @type  Unit.Radar 
   -- @extends #Unit.Sensor
   -- @field #Distance detectionDistanceRBM detection distance for RCS=1m^2 in real-beam mapping mode, nil if radar doesn't support surface/land search
   -- @field #Distance detectionDistanceHRM detection distance for RCS=1m^2 in high-resolution mapping mode, nil if radar has no HRM
@@ -1223,12 +1223,12 @@ end -- Unit
 do -- Group
 
   --- Represents group of Units.
-  -- @type Group
+  --- @type Group
   -- @field #ID ID Identifier of a group. It is assigned to a group by Mission Editor automatically. 
   -- @field #Group.Category Category Enum contains identifiers of group types. 
   
   --- Enum contains identifiers of group types.
-  -- @type Group.Category
+  --- @type Group.Category
   -- @field AIRPLANE
   -- @field HELICOPTER
   -- @field GROUND
@@ -1311,7 +1311,7 @@ end -- Group
 do -- StaticObject
 
   --- Represents a static object.
-  -- @type StaticObject
+  --- @type StaticObject
   -- @extends DCS#Object
 
   --- Returns the static object.
@@ -1326,7 +1326,7 @@ end
 do --Event
 
   --- Event structure. Note that present fields depend on type of event.
-  -- @type Event
+  --- @type Event
   -- @field #number id Event ID.
   -- @field #number time Mission time in seconds.
   -- @field DCS#Unit initiator Unit initiating the event.
@@ -1348,13 +1348,13 @@ end
 do -- AI
 
   --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
-  -- @type AI
+  --- @type AI
   -- @field #AI.Skill Skill
   -- @field #AI.Task Task
   -- @field #AI.Option Option
   
   --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
-  -- @type AI.Skill
+  --- @type AI.Skill
   -- @field AVERAGE
   -- @field GOOD
   -- @field HIGH
@@ -1363,7 +1363,7 @@ do -- AI
   -- @field CLIENT
   
   --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
-  -- @type AI.Task
+  --- @type AI.Task
   -- @field #AI.Task.WeaponExpend WeaponExpend
   -- @field #AI.Task.OrbitPattern OrbitPattern
   -- @field #AI.Task.Designation Designation
@@ -1373,7 +1373,7 @@ do -- AI
   -- @field #AI.Task.VehicleFormation VehicleFormation
   
   --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
-  -- @type AI.Task.WeaponExpend
+  --- @type AI.Task.WeaponExpend
   -- @field ONE
   -- @field TWO
   -- @field FOUR
@@ -1382,12 +1382,12 @@ do -- AI
   -- @field ALL
   
   --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
-  -- @type AI.Task.OrbitPattern
+  --- @type AI.Task.OrbitPattern
   -- @field CIRCLE
   -- @field RACE_TRACK
   
   --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
-  -- @type AI.Task.Designation
+  --- @type AI.Task.Designation
   -- @field NO
   -- @field AUTO
   -- @field WP

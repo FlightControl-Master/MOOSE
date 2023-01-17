@@ -56,7 +56,7 @@ CONDITION = {
 
 --- Condition function.
 <<<<<<< Updated upstream
--- @type CONDITION.Function
+--- @type CONDITION.Function
 --- @field #number uid Unique ID of the condition function.
 --- @field #string type Type of the condition function: "gen", "any", "all".
 --- @field #boolean persistence If `true`, this is persistent.

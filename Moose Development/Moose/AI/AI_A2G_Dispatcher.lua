@@ -265,7 +265,7 @@
 do -- AI_A2G_DISPATCHER
 
   --- AI_A2G_DISPATCHER class.
-  -- @type AI_A2G_DISPATCHER
+  --- @type AI_A2G_DISPATCHER
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
   --- Create an automated A2G defense system based on a detection network of reconnaissance vehicles and air units, coordinating SEAD, BAI and CAS operations.
@@ -895,7 +895,7 @@ do -- AI_A2G_DISPATCHER
   }
 
   --- Definition of a Squadron.
-  -- @type AI_A2G_DISPATCHER.Squadron
+  --- @type AI_A2G_DISPATCHER.Squadron
   -- @field #string Name The Squadron name.
   -- @field Wrapper.Airbase#AIRBASE Airbase The home airbase.
   -- @field #string AirbaseName The name of the home airbase.
@@ -906,14 +906,14 @@ do -- AI_A2G_DISPATCHER
   -- @field #number Overhead The overhead for the squadron.
 
   --- List of defense coordinates.
-  -- @type AI_A2G_DISPATCHER.DefenseCoordinates
+  --- @type AI_A2G_DISPATCHER.DefenseCoordinates
   -- @map <#string,Core.Point#COORDINATE> A list of all defense coordinates mapped per defense coordinate name.
 
   --- @field #AI_A2G_DISPATCHER.DefenseCoordinates DefenseCoordinates
   AI_A2G_DISPATCHER.DefenseCoordinates = {}
 
   --- Enumerator for spawns at airbases.
-  -- @type AI_A2G_DISPATCHER.Takeoff
+  --- @type AI_A2G_DISPATCHER.Takeoff
   -- @extends Wrapper.Group#GROUP.Takeoff
   
   --- @field #AI_A2G_DISPATCHER.Takeoff Takeoff
@@ -928,7 +928,7 @@ do -- AI_A2G_DISPATCHER
   }
   
   --- A defense queue item description.
-  -- @type AI_A2G_DISPATCHER.DefenseQueueItem
+  --- @type AI_A2G_DISPATCHER.DefenseQueueItem
   -- @field Squadron
   -- @field #AI_A2G_DISPATCHER.Squadron DefenderSquadron The squadron in the queue.
   -- @field DefendersNeeded
@@ -944,14 +944,14 @@ do -- AI_A2G_DISPATCHER
   -- Therefore, this queue concept is introduced that queues each defender request.
   -- Depending on the location of the launching site, the queued defenders will be launched at varying time intervals.
   -- This guarantees that launched defenders are also directly existing ...
-  -- @type AI_A2G_DISPATCHER.DefenseQueue
+  --- @type AI_A2G_DISPATCHER.DefenseQueue
   -- @list<#AI_A2G_DISPATCHER.DefenseQueueItem> DefenseQueueItem A list of all defenses being queued ...
   
   --- @field #AI_A2G_DISPATCHER.DefenseQueue DefenseQueue
   AI_A2G_DISPATCHER.DefenseQueue = {}
   
   --- Defense approach types.
-  -- @type #AI_A2G_DISPATCHER.DefenseApproach
+  --- @type #AI_A2G_DISPATCHER.DefenseApproach
   AI_A2G_DISPATCHER.DefenseApproach = {
     Random = 1,
     Distance = 2,

@@ -19,7 +19,7 @@
 do -- CARGO_UNIT
 
   --- Models CARGO in the form of units, which can be boarded, unboarded, loaded, unloaded. 
-  -- @type CARGO_UNIT
+  --- @type CARGO_UNIT
   -- @extends Cargo.Cargo#CARGO_REPRESENTABLE
   
   --- Defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.

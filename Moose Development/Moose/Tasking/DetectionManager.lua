@@ -319,7 +319,7 @@ end
 do -- DETECTION_REPORTING
 
   --- DETECTION_REPORTING class.
-  -- @type DETECTION_REPORTING
+  --- @type DETECTION_REPORTING
   -- @field Core.Set#SET_GROUP SetGroup The groups to which the FAC will report to.
   -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
   -- @extends #DETECTION_MANAGER

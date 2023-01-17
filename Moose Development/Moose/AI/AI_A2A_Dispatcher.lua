@@ -188,7 +188,7 @@
 do -- AI_A2A_DISPATCHER
 
   --- AI_A2A_DISPATCHER class.
-  -- @type AI_A2A_DISPATCHER
+  --- @type AI_A2A_DISPATCHER
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
   --- Create an automatic air defence system for a coalition.
@@ -851,7 +851,7 @@ do -- AI_A2A_DISPATCHER
   }
 
   --- Squadron data structure.
-  -- @type AI_A2A_DISPATCHER.Squadron
+  --- @type AI_A2A_DISPATCHER.Squadron
   -- @field #string Name Name of the squadron.
   -- @field #number ResourceCount Number of resources.
   -- @field #string AirbaseName Name of the home airbase.
@@ -879,7 +879,7 @@ do -- AI_A2A_DISPATCHER
   -- @field #number RacetrackDurationMax Max duration in seconds before the CAP flight changes its orbit position. Default never.
 
   --- Enumerator for spawns at airbases
-  -- @type AI_A2A_DISPATCHER.Takeoff
+  --- @type AI_A2A_DISPATCHER.Takeoff
   -- @extends Wrapper.Group#GROUP.Takeoff
   
   ---

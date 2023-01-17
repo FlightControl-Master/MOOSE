@@ -54,7 +54,7 @@ do -- ACT_ACCOUNT
   --     The state transition method needs to start with the name **OnAfter + the name of the state**.
   --     These state transition methods need to provide a return value, which is specified at the function description.
   --
-  -- @type ACT_ACCOUNT
+  --- @type ACT_ACCOUNT
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Core.Fsm#FSM_PROCESS
   ACT_ACCOUNT = {
@@ -149,7 +149,7 @@ do -- ACT_ACCOUNT_DEADS
   --
   --   * @{#ACT_ACCOUNT_DEADS.New}(): Creates a new ACT_ACCOUNT_DEADS object.
   --
-  -- @type ACT_ACCOUNT_DEADS
+  --- @type ACT_ACCOUNT_DEADS
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends #ACT_ACCOUNT
   ACT_ACCOUNT_DEADS = {
