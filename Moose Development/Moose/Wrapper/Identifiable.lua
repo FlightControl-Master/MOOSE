@@ -13,7 +13,7 @@
 
 --- @type IDENTIFIABLE
 -- @extends Wrapper.Object#OBJECT
--- @field #string IdentifiableName The name of the identifiable.
+--- @field #string IdentifiableName The name of the identifiable.
 
 --- Wrapper class to handle the DCS Identifiable objects.
 --
@@ -27,7 +27,7 @@
 --
 --  * @{#IDENTIFIABLE.New}(): Create a IDENTIFIABLE instance.
 --
--- @field #IDENTIFIABLE
+--- @field #IDENTIFIABLE
 IDENTIFIABLE = {
   ClassName = "IDENTIFIABLE",
   IdentifiableName = "",
@@ -42,9 +42,9 @@ local _CategoryName = {
   }
 
 --- Create a new IDENTIFIABLE from a DCSIdentifiable
--- @param #IDENTIFIABLE self
--- @param #string IdentifiableName The DCS Identifiable name
--- @return #IDENTIFIABLE self
+--- @param #IDENTIFIABLE self
+--- @param #string IdentifiableName The DCS Identifiable name
+--- @return #IDENTIFIABLE self
 function IDENTIFIABLE:New( IdentifiableName )
   local self = BASE:Inherit( self, OBJECT:New( IdentifiableName ) )
   self:F2( IdentifiableName )
@@ -55,8 +55,8 @@ end
 --- Returns if the Identifiable is alive.  
 -- If the Identifiable is not alive, nil is returned.  
 -- If the Identifiable is alive, true is returned.  
--- @param #IDENTIFIABLE self
--- @return #boolean true if Identifiable is alive or `#nil` if the Identifiable is not existing or is not alive.  
+--- @param #IDENTIFIABLE self
+--- @return #boolean true if Identifiable is alive or `#nil` if the Identifiable is not existing or is not alive.  
 function IDENTIFIABLE:IsAlive()
   self:F3( self.IdentifiableName )
 
@@ -75,8 +75,8 @@ end
 
 --- Returns DCS Identifiable object name. 
 -- The function provides access to non-activated objects too.
--- @param #IDENTIFIABLE self
--- @return #string The name of the DCS Identifiable or `#nil`.  
+--- @param #IDENTIFIABLE self
+--- @return #string The name of the DCS Identifiable or `#nil`.  
 function IDENTIFIABLE:GetName()
   local IdentifiableName = self.IdentifiableName
   return IdentifiableName
@@ -84,8 +84,8 @@ end
 
 
 --- Returns the type name of the DCS Identifiable.
--- @param #IDENTIFIABLE self
--- @return #string The type name of the DCS Identifiable.
+--- @param #IDENTIFIABLE self
+--- @return #string The type name of the DCS Identifiable.
 function IDENTIFIABLE:GetTypeName()
   self:F2( self.IdentifiableName )
   
@@ -111,8 +111,8 @@ end
 --  * Object.Category.SCENERY = 5
 --  * Object.Category.Cargo = 6
 --  
--- @param #IDENTIFIABLE self
--- @return DCS#Object.Category The category ID, i.e. a number.
+--- @param #IDENTIFIABLE self
+--- @return DCS#Object.Category The category ID, i.e. a number.
 function IDENTIFIABLE:GetCategory()
   self:F2( self.ObjectName )
 
@@ -128,8 +128,8 @@ end
 
 
 --- Returns the DCS Identifiable category name as defined within the DCS Identifiable Descriptor.
--- @param #IDENTIFIABLE self
--- @return #string The DCS Identifiable Category Name
+--- @param #IDENTIFIABLE self
+--- @return #string The DCS Identifiable Category Name
 function IDENTIFIABLE:GetCategoryName()
   local DCSIdentifiable = self:GetDCSObject()
   
@@ -143,8 +143,8 @@ function IDENTIFIABLE:GetCategoryName()
 end
 
 --- Returns coalition of the Identifiable.
--- @param #IDENTIFIABLE self
--- @return DCS#coalition.side The side of the coalition or `#nil` The DCS Identifiable is not existing or alive.  
+--- @param #IDENTIFIABLE self
+--- @return DCS#coalition.side The side of the coalition or `#nil` The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetCoalition()
   self:F2( self.IdentifiableName )
 
@@ -161,9 +161,9 @@ function IDENTIFIABLE:GetCoalition()
 end
 
 --- Returns the name of the coalition of the Identifiable.
--- @param #IDENTIFIABLE self
--- @return #string The name of the coalition.
--- @return #nil The DCS Identifiable is not existing or alive.  
+--- @param #IDENTIFIABLE self
+--- @return #string The name of the coalition.
+--- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetCoalitionName()
   self:F2( self.IdentifiableName )
 
@@ -184,8 +184,8 @@ function IDENTIFIABLE:GetCoalitionName()
 end
 
 --- Returns country of the Identifiable.
--- @param #IDENTIFIABLE self
--- @return DCS#country.id The country identifier or `#nil` The DCS Identifiable is not existing or alive.  
+--- @param #IDENTIFIABLE self
+--- @return DCS#country.id The country identifier or `#nil` The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetCountry()
   self:F2( self.IdentifiableName )
 
@@ -202,8 +202,8 @@ function IDENTIFIABLE:GetCountry()
 end
 
 --- Returns country name of the Identifiable.
--- @param #IDENTIFIABLE self
--- @return #string Name of the country.  
+--- @param #IDENTIFIABLE self
+--- @return #string Name of the country.  
 function IDENTIFIABLE:GetCountryName()
   self:F2( self.IdentifiableName ) 
   local countryid=self:GetCountry()
@@ -215,8 +215,8 @@ function IDENTIFIABLE:GetCountryName()
 end
 
 --- Returns Identifiable descriptor. Descriptor type depends on Identifiable category.
--- @param #IDENTIFIABLE self
--- @return DCS#Object.Desc The Identifiable descriptor or `#nil` The DCS Identifiable is not existing or alive.  
+--- @param #IDENTIFIABLE self
+--- @return DCS#Object.Desc The Identifiable descriptor or `#nil` The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetDesc()
   self:F2( self.IdentifiableName )
 
@@ -233,9 +233,9 @@ function IDENTIFIABLE:GetDesc()
 end
 
 --- Check if the Object has the attribute.
--- @param #IDENTIFIABLE self
--- @param #string AttributeName The attribute name.
--- @return #boolean true if the attribute exists or `#nil` The DCS Identifiable is not existing or alive.  
+--- @param #IDENTIFIABLE self
+--- @param #string AttributeName The attribute name.
+--- @return #boolean true if the attribute exists or `#nil` The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:HasAttribute( AttributeName )
   self:F2( self.IdentifiableName )
 
@@ -252,16 +252,16 @@ function IDENTIFIABLE:HasAttribute( AttributeName )
 end
 
 --- Gets the CallSign of the IDENTIFIABLE, which is a blank by default.
--- @param #IDENTIFIABLE self
--- @return #string The CallSign of the IDENTIFIABLE.
+--- @param #IDENTIFIABLE self
+--- @return #string The CallSign of the IDENTIFIABLE.
 function IDENTIFIABLE:GetCallsign()
   return ''
 end
 
 --- Gets the threat level.
--- @param #IDENTIFIABLE self
--- @return #number Threat level.
--- @return #string Type.
+--- @param #IDENTIFIABLE self
+--- @return #number Threat level.
+--- @return #string Type.
 function IDENTIFIABLE:GetThreatLevel()
   return 0, "Scenery"
 end

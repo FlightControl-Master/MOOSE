@@ -27,7 +27,7 @@
 -- @image SEAD.JPG
 
 ---
--- @type SEAD
+--- @type SEAD
 -- @extends Core.Base#BASE
 
 --- Make SAM sites execute evasive and defensive behaviour when being fired upon.
@@ -44,7 +44,7 @@
 --
 --       SEAD_RU_SAM_Defenses = SEAD:New( { 'RU SA-6 Kub', 'RU SA-6 Defenses', 'RU MI-26 Troops', 'RU Attack Gori' } )
 --
--- @field #SEAD
+--- @field #SEAD
 SEAD = {
   ClassName = "SEAD",
   TargetSkill = {
@@ -105,10 +105,10 @@ SEAD = {
 --- Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.
 -- When an anti radiation missile is fired (KH-58, KH-31P, KH-31A, KH-25MPU, HARM missiles), the SA will shut down their radars and will take evasive actions...
 -- Chances are big that the missile will miss.
--- @param #SEAD self
--- @param #table SEADGroupPrefixes Table of #string entries or single #string, which is a table of Prefixes of the SA Groups in the DCS mission editor on which evasive actions need to be taken.
--- @param #number Padding (Optional) Extra number of seconds to add to radar switch-back-on time
--- @return #SEAD self
+--- @param #SEAD self
+--- @param #table SEADGroupPrefixes Table of #string entries or single #string, which is a table of Prefixes of the SA Groups in the DCS mission editor on which evasive actions need to be taken.
+--- @param #number Padding (Optional) Extra number of seconds to add to radar switch-back-on time
+--- @return #SEAD self
 -- @usage
 -- -- CCCP SEAD Defenses
 -- -- Defends the Russian SA installations from SEAD attacks.
@@ -148,9 +148,9 @@ function SEAD:New( SEADGroupPrefixes, Padding )
 end
 
 --- Update the active SEAD Set (while running)
--- @param #SEAD self
--- @param #table SEADGroupPrefixes The prefixes to add, note: can also be a single #string
--- @return #SEAD self
+--- @param #SEAD self
+--- @param #table SEADGroupPrefixes The prefixes to add, note: can also be a single #string
+--- @return #SEAD self
 function SEAD:UpdateSet( SEADGroupPrefixes )
 
   self:T( SEADGroupPrefixes )
@@ -167,9 +167,9 @@ function SEAD:UpdateSet( SEADGroupPrefixes )
 end
 
 --- Sets the engagement range of the SAMs. Defaults to 75% to make it more deadly. Feature Request #1355
--- @param #SEAD self
--- @param #number range Set the engagement range in percent, e.g. 55 (default 75)
--- @return #SEAD self
+--- @param #SEAD self
+--- @param #number range Set the engagement range in percent, e.g. 55 (default 75)
+--- @return #SEAD self
 function SEAD:SetEngagementRange(range)
   self:T( { range } )
   range = range or 75
@@ -182,9 +182,9 @@ function SEAD:SetEngagementRange(range)
 end
 
 --- Set the padding in seconds, which extends the radar off time calculated by SEAD
--- @param #SEAD self
--- @param #number Padding Extra number of seconds to add for the switch-on (default 10 seconds)
--- @return #SEAD self
+--- @param #SEAD self
+--- @param #number Padding Extra number of seconds to add for the switch-on (default 10 seconds)
+--- @return #SEAD self
 function SEAD:SetPadding(Padding)
   self:T( { Padding } )
   local padding = Padding or 10
@@ -194,9 +194,9 @@ function SEAD:SetPadding(Padding)
 end
 
 --- Set SEAD to use emissions on/off in addition to alarm state.
--- @param #SEAD self
--- @param #boolean Switch True for on, false for off.
--- @return #SEAD self
+--- @param #SEAD self
+--- @param #boolean Switch True for on, false for off.
+--- @return #SEAD self
 function SEAD:SwitchEmissions(Switch)
   self:T({Switch})
   self.UseEmissionsOnOff = Switch
@@ -204,12 +204,12 @@ function SEAD:SwitchEmissions(Switch)
 end
 
 --- Add an object to call back when going evasive.
--- @param #SEAD self
--- @param #table Object The object to call. Needs to have object functions as follows:
+--- @param #SEAD self
+--- @param #table Object The object to call. Needs to have object functions as follows:
 -- `:SeadSuppressionPlanned(Group, Name, SuppressionStartTime, SuppressionEndTime)` 
 -- `:SeadSuppressionStart(Group, Name)`, 
 -- `:SeadSuppressionEnd(Group, Name)`, 
--- @return #SEAD self
+--- @return #SEAD self
 function SEAD:AddCallBack(Object)
   self:T({Class=Object.ClassName})
   self.CallBack = Object
@@ -218,10 +218,10 @@ function SEAD:AddCallBack(Object)
 end
 
 --- (Internal) Check if a known HARM was fired
--- @param #SEAD self
--- @param #string WeaponName
--- @return #boolean Returns true for a match
--- @return #string name Name of hit in table
+--- @param #SEAD self
+--- @param #string WeaponName
+--- @return #boolean Returns true for a match
+--- @return #string name Name of hit in table
 function SEAD:_CheckHarms(WeaponName)
   self:T( { WeaponName } )
   local hit = false
@@ -237,10 +237,10 @@ function SEAD:_CheckHarms(WeaponName)
 end
 
 --- (Internal) Return distance in meters between two coordinates or -1 on error.
--- @param #SEAD self
--- @param Core.Point#COORDINATE _point1 Coordinate one
--- @param Core.Point#COORDINATE _point2 Coordinate two
--- @return #number Distance in meters
+--- @param #SEAD self
+--- @param Core.Point#COORDINATE _point1 Coordinate one
+--- @param Core.Point#COORDINATE _point2 Coordinate two
+--- @return #number Distance in meters
 function SEAD:_GetDistance(_point1, _point2)
   self:T("_GetDistance")
   if _point1 and _point2 then
@@ -264,13 +264,13 @@ function SEAD:_GetDistance(_point1, _point2)
 end
 
 --- (Internal) Calculate hit zone of an AGM-88
--- @param #SEAD self
--- @param #table SEADWeapon DCS.Weapon object
--- @param Core.Point#COORDINATE pos0 Position of the plane when it fired
--- @param #number height Height when the missile was fired
--- @param Wrapper.Group#GROUP SEADGroup Attacker group
--- @param #string SEADWeaponName Weapon Name
--- @return #SEAD self 
+--- @param #SEAD self
+--- @param #table SEADWeapon DCS.Weapon object
+--- @param Core.Point#COORDINATE pos0 Position of the plane when it fired
+--- @param #number height Height when the missile was fired
+--- @param Wrapper.Group#GROUP SEADGroup Attacker group
+--- @param #string SEADWeaponName Weapon Name
+--- @return #SEAD self 
 function SEAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADGroup,SEADWeaponName)
   self:T("**** Calculating hit zone for " .. (SEADWeaponName or "None"))
   if SEADWeapon and SEADWeapon:isExist() then
@@ -341,14 +341,14 @@ function SEAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADG
 end
 
 --- (Internal) Handle Evasion
--- @param #SEAD self
--- @param #string _targetskill
--- @param Wrapper.Group#GROUP _targetgroup
--- @param Core.Point#COORDINATE SEADPlanePos
--- @param #string SEADWeaponName
--- @param Wrapper.Group#GROUP SEADGroup Attacker Group
--- @param #number timeoffset Offset for tti calc
--- @return #SEAD self 
+--- @param #SEAD self
+--- @param #string _targetskill
+--- @param Wrapper.Group#GROUP _targetgroup
+--- @param Core.Point#COORDINATE SEADPlanePos
+--- @param #string SEADWeaponName
+--- @param Wrapper.Group#GROUP SEADGroup Attacker Group
+--- @param #number timeoffset Offset for tti calc
+--- @return #SEAD self 
 function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADPlanePos,SEADWeaponName,SEADGroup,timeoffset)
   local timeoffset = timeoffset  or 0
   if _targetskill == "Random" then -- when skill is random, choose a skill
@@ -444,9 +444,9 @@ function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADP
 end
 
 --- (Internal) Detects if an SAM site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
--- @param #SEAD self
--- @param Core.Event#EVENTDATA EventData
--- @return #SEAD self
+--- @param #SEAD self
+--- @param Core.Event#EVENTDATA EventData
+--- @return #SEAD self
 function SEAD:HandleEventShot( EventData )
   self:T( { EventData.id } )
   local SEADPlane = EventData.IniUnit -- Wrapper.Unit#UNIT

@@ -23,96 +23,96 @@
 
 do
 --- Ops AWACS Class
--- @type AWACS
--- @field #string ClassName Name of this class.
--- @field #string version Versioning.
--- @field #string lid LID for log entries.
--- @field #number coalition Coalition side.
--- @field #string coalitiontxt e.g."blue"
--- @field Core.Zone#ZONE OpsZone,
--- @field Core.Zone#ZONE StationZone,
--- @field Core.Zone#ZONE BorderZone,
--- @field Core.Zone#ZONE RejectZone,
--- @field #number Frequency
--- @field #number Modulation
--- @field Wrapper.Airbase#AIRBASE Airbase
--- @field Ops.AirWing#AIRWING AirWing
--- @field #number AwacsAngels
--- @field Core.Zone#ZONE OrbitZone
--- @field #number CallSign
--- @field #number CallSignNo
--- @field #boolean debug
--- @field #number verbose
--- @field #table ManagedGrps
--- @field #number ManagedGrpID
--- @field #number ManagedTaskID
--- @field Utilities.FiFo#FIFO AnchorStacks
--- @field Utilities.FiFo#FIFO CAPIdleAI
--- @field Utilities.FiFo#FIFO CAPIdleHuman
--- @field Utilities.FiFo#FIFO TaskedCAPAI
--- @field Utilities.FiFo#FIFO TaskedCAPHuman
--- @field Utilities.FiFo#FIFO OpenTasks
--- @field Utilities.FiFo#FIFO ManagedTasks
--- @field Utilities.FiFo#FIFO PictureAO
--- @field Utilities.FiFo#FIFO PictureEWR
--- @field Utilities.FiFo#FIFO Contacts
--- @field #table CatchAllMissions
--- @field #table CatchAllFGs
--- @field #number Countactcounter
--- @field Utilities.FiFo#FIFO ContactsAO
--- @field Utilities.FiFo#FIFO RadioQueue
--- @field Utilities.FiFo#FIFO PrioRadioQueue
--- @field Utilities.FiFo#FIFO CAPAirwings
--- @field #number AwacsTimeOnStation
--- @field #number AwacsTimeStamp
--- @field #number EscortsTimeOnStation
--- @field #number EscortsTimeStamp
--- @field #string AwacsROE
--- @field #string AwacsROT
--- @field Ops.Auftrag#AUFTRAG AwacsMission
--- @field Ops.Auftrag#AUFTRAG EscortMission
--- @field Ops.Auftrag#AUFTRAG AwacsMissionReplacement
--- @field Ops.Auftrag#AUFTRAG EscortMissionReplacement
--- @field Utilities.FiFo#FIFO AICAPMissions FIFO for Ops.Auftrag#AUFTRAG for AI CAP
--- @field #boolean MenuStrict
--- @field #number MaxAIonCAP
--- @field #number AIonCAP
--- @field #boolean ShiftChangeAwacsFlag
--- @field #boolean ShiftChangeEscortsFlag
--- @field #boolean ShiftChangeAwacsRequested
--- @field #boolean ShiftChangeEscortsRequested
--- @field #AWACS.MonitoringData MonitoringData
--- @field #boolean MonitoringOn
--- @field Core.Set#SET_CLIENT clientset
--- @field Utilities.FiFo#FIFO FlightGroups
--- @field #number PictureInterval Interval in seconds for general picture
--- @field #number PictureTimeStamp Interval timestamp
--- @field #number maxassigndistance Only assing AI/Pilots to targets max this far away
--- @field #boolean PlayerGuidance if true additional callouts to guide/warn players
--- @field #boolean ModernEra if true we get more intel on targets, and EPLR on the AIC
--- @field #boolean callsignshort if true use short (group) callsigns, e.g. "Ghost 1", else "Ghost 1 1"
--- @field #boolean keepnumber if true, use the full string after # for a player custom callsign
--- @field #table callsignTranslations optional translations for callsigns
--- @field #number MeldDistance 25nm - distance for "Meld" Call , usually shortly before the actual engagement 
--- @field #number TacDistance 30nm - distance for "TAC" Call
--- @field #number ThreatDistance 15nm - distance to declare untargeted (new) threats
--- @field #string AOName name of the FEZ, e.g. Rock
--- @field Core.Point#COORDINATE AOCoordinate Coordinate of bulls eye
--- @field Utilities.FiFo#FIFO clientmenus
--- @field #number RadarBlur Radar blur in %
--- @field #number ReassignmentPause Wait this many seconds before re-assignment of a player
--- @field #boolean NoGroupTags Set to true if you don't want group tags.
--- @field #boolean SuppressScreenOutput Set to true to suppress all screen output.
--- @field #boolean NoMissileCalls Suppress missile callouts
--- @field #boolean PlayerCapAssignment Assign players to CAP tasks when they are logged on
--- @field #number GoogleTTSPadding
--- @field #number WindowsTTSPadding
--- @field #boolean AllowMarkers
--- @field #string PlayerStationName
--- @field #boolean GCI Act as GCI
--- @field Wrapper.Group#GROUP GCIGroup EWR group object for GCI ops
--- @field #string locale Localization
--- @field #boolean IncludeHelicopters
+--- @type AWACS
+--- @field #string ClassName Name of this class.
+--- @field #string version Versioning.
+--- @field #string lid LID for log entries.
+--- @field #number coalition Coalition side.
+--- @field #string coalitiontxt e.g."blue"
+--- @field Core.Zone#ZONE OpsZone,
+--- @field Core.Zone#ZONE StationZone,
+--- @field Core.Zone#ZONE BorderZone,
+--- @field Core.Zone#ZONE RejectZone,
+--- @field #number Frequency
+--- @field #number Modulation
+--- @field Wrapper.Airbase#AIRBASE Airbase
+--- @field Ops.AirWing#AIRWING AirWing
+--- @field #number AwacsAngels
+--- @field Core.Zone#ZONE OrbitZone
+--- @field #number CallSign
+--- @field #number CallSignNo
+--- @field #boolean debug
+--- @field #number verbose
+--- @field #table ManagedGrps
+--- @field #number ManagedGrpID
+--- @field #number ManagedTaskID
+--- @field Utilities.FiFo#FIFO AnchorStacks
+--- @field Utilities.FiFo#FIFO CAPIdleAI
+--- @field Utilities.FiFo#FIFO CAPIdleHuman
+--- @field Utilities.FiFo#FIFO TaskedCAPAI
+--- @field Utilities.FiFo#FIFO TaskedCAPHuman
+--- @field Utilities.FiFo#FIFO OpenTasks
+--- @field Utilities.FiFo#FIFO ManagedTasks
+--- @field Utilities.FiFo#FIFO PictureAO
+--- @field Utilities.FiFo#FIFO PictureEWR
+--- @field Utilities.FiFo#FIFO Contacts
+--- @field #table CatchAllMissions
+--- @field #table CatchAllFGs
+--- @field #number Countactcounter
+--- @field Utilities.FiFo#FIFO ContactsAO
+--- @field Utilities.FiFo#FIFO RadioQueue
+--- @field Utilities.FiFo#FIFO PrioRadioQueue
+--- @field Utilities.FiFo#FIFO CAPAirwings
+--- @field #number AwacsTimeOnStation
+--- @field #number AwacsTimeStamp
+--- @field #number EscortsTimeOnStation
+--- @field #number EscortsTimeStamp
+--- @field #string AwacsROE
+--- @field #string AwacsROT
+--- @field Ops.Auftrag#AUFTRAG AwacsMission
+--- @field Ops.Auftrag#AUFTRAG EscortMission
+--- @field Ops.Auftrag#AUFTRAG AwacsMissionReplacement
+--- @field Ops.Auftrag#AUFTRAG EscortMissionReplacement
+--- @field Utilities.FiFo#FIFO AICAPMissions FIFO for Ops.Auftrag#AUFTRAG for AI CAP
+--- @field #boolean MenuStrict
+--- @field #number MaxAIonCAP
+--- @field #number AIonCAP
+--- @field #boolean ShiftChangeAwacsFlag
+--- @field #boolean ShiftChangeEscortsFlag
+--- @field #boolean ShiftChangeAwacsRequested
+--- @field #boolean ShiftChangeEscortsRequested
+--- @field #AWACS.MonitoringData MonitoringData
+--- @field #boolean MonitoringOn
+--- @field Core.Set#SET_CLIENT clientset
+--- @field Utilities.FiFo#FIFO FlightGroups
+--- @field #number PictureInterval Interval in seconds for general picture
+--- @field #number PictureTimeStamp Interval timestamp
+--- @field #number maxassigndistance Only assing AI/Pilots to targets max this far away
+--- @field #boolean PlayerGuidance if true additional callouts to guide/warn players
+--- @field #boolean ModernEra if true we get more intel on targets, and EPLR on the AIC
+--- @field #boolean callsignshort if true use short (group) callsigns, e.g. "Ghost 1", else "Ghost 1 1"
+--- @field #boolean keepnumber if true, use the full string after # for a player custom callsign
+--- @field #table callsignTranslations optional translations for callsigns
+--- @field #number MeldDistance 25nm - distance for "Meld" Call , usually shortly before the actual engagement 
+--- @field #number TacDistance 30nm - distance for "TAC" Call
+--- @field #number ThreatDistance 15nm - distance to declare untargeted (new) threats
+--- @field #string AOName name of the FEZ, e.g. Rock
+--- @field Core.Point#COORDINATE AOCoordinate Coordinate of bulls eye
+--- @field Utilities.FiFo#FIFO clientmenus
+--- @field #number RadarBlur Radar blur in %
+--- @field #number ReassignmentPause Wait this many seconds before re-assignment of a player
+--- @field #boolean NoGroupTags Set to true if you don't want group tags.
+--- @field #boolean SuppressScreenOutput Set to true to suppress all screen output.
+--- @field #boolean NoMissileCalls Suppress missile callouts
+--- @field #boolean PlayerCapAssignment Assign players to CAP tasks when they are logged on
+--- @field #number GoogleTTSPadding
+--- @field #number WindowsTTSPadding
+--- @field #boolean AllowMarkers
+--- @field #string PlayerStationName
+--- @field #boolean GCI Act as GCI
+--- @field Wrapper.Group#GROUP GCIGroup EWR group object for GCI ops
+--- @field #string locale Localization
+--- @field #boolean IncludeHelicopters
 -- @extends Core.Fsm#FSM
 
 
@@ -496,7 +496,7 @@ do
 -- 
 -- 
 -- 
--- @field #AWACS
+--- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
   version = "0.2.53", -- #string
@@ -600,7 +600,7 @@ AWACS.CallSignClear = {
 }
 
 ---
--- @field AnchorNames
+--- @field AnchorNames
 AWACS.AnchorNames = {
   [1] = "One",
   [2] = "Two",
@@ -615,7 +615,7 @@ AWACS.AnchorNames = {
 }
 
 ---
--- @field IFF
+--- @field IFF
 AWACS.IFF =
 {
   SPADES = "Spades",
@@ -626,7 +626,7 @@ AWACS.IFF =
 }
 
 ---
--- @field Phonetic
+--- @field Phonetic
 AWACS.Phonetic =
 {
   [1] = 'Alpha',
@@ -658,7 +658,7 @@ AWACS.Phonetic =
 }
 
 ---
--- @field Shipsize
+--- @field Shipsize
 AWACS.Shipsize =
 {
   [1] = "Singleton",
@@ -668,7 +668,7 @@ AWACS.Shipsize =
 }
 
 ---
--- @field ROE
+--- @field ROE
 AWACS.ROE = {
   POLICE = "Police",
   VID = "Visual ID",
@@ -677,7 +677,7 @@ AWACS.ROE = {
 }
 
 ---
--- @field AWACS.ROT
+--- @field AWACS.ROT
 AWACS.ROT = {
     BYPASSESCAPE = "Bypass and Escape",
     EVADE = "Evade Fire",
@@ -710,7 +710,7 @@ AWACS.CapVoices = {
 }
 
 ---
--- @field Messages 
+--- @field Messages 
 AWACS.Messages = {
   EN =
     {
@@ -779,77 +779,77 @@ AWACS.Messages = {
 } 
 
 ---
--- @type AWACS.MonitoringData
--- @field #string AwacsStateMission
--- @field #string AwacsStateFG
--- @field #boolean AwacsShiftChange 
--- @field #string EscortsStateMission
--- @field #string EscortsStateFG
--- @field #boolean EscortsShiftChange
--- @field #number AICAPMax
--- @field #number AICAPCurrent
--- @field #number Airwings
--- @field #number Players
--- @field #number PlayersCheckedin
+--- @type AWACS.MonitoringData
+--- @field #string AwacsStateMission
+--- @field #string AwacsStateFG
+--- @field #boolean AwacsShiftChange 
+--- @field #string EscortsStateMission
+--- @field #string EscortsStateFG
+--- @field #boolean EscortsShiftChange
+--- @field #number AICAPMax
+--- @field #number AICAPCurrent
+--- @field #number Airwings
+--- @field #number Players
+--- @field #number PlayersCheckedin
 
 ---
--- @type AWACS.MenuStructure
--- @field #boolean menuset
--- @field #string groupname
--- @field Core.Menu#MENU_GROUP basemenu
--- @field Core.Menu#MENU_GROUP_COMMAND checkin
--- @field Core.Menu#MENU_GROUP_COMMAND checkout
--- @field Core.Menu#MENU_GROUP_COMMAND picture
--- @field Core.Menu#MENU_GROUP_COMMAND bogeydope
--- @field Core.Menu#MENU_GROUP_COMMAND declare
--- @field Core.Menu#MENU_GROUP tasking
--- @field Core.Menu#MENU_GROUP_COMMAND showtask
--- @field Core.Menu#MENU_GROUP_COMMAND judy
--- @field Core.Menu#MENU_GROUP_COMMAND unable
--- @field Core.Menu#MENU_GROUP_COMMAND abort
--- @field Core.Menu#MENU_GROUP_COMMAND commit
--- @field Core.Menu#MENU_GROUP vid
--- @field Core.Menu#MENU_GROUP_COMMAND neutral
--- @field Core.Menu#MENU_GROUP_COMMAND hostile
--- @field Core.Menu#MENU_GROUP_COMMAND friendly
+--- @type AWACS.MenuStructure
+--- @field #boolean menuset
+--- @field #string groupname
+--- @field Core.Menu#MENU_GROUP basemenu
+--- @field Core.Menu#MENU_GROUP_COMMAND checkin
+--- @field Core.Menu#MENU_GROUP_COMMAND checkout
+--- @field Core.Menu#MENU_GROUP_COMMAND picture
+--- @field Core.Menu#MENU_GROUP_COMMAND bogeydope
+--- @field Core.Menu#MENU_GROUP_COMMAND declare
+--- @field Core.Menu#MENU_GROUP tasking
+--- @field Core.Menu#MENU_GROUP_COMMAND showtask
+--- @field Core.Menu#MENU_GROUP_COMMAND judy
+--- @field Core.Menu#MENU_GROUP_COMMAND unable
+--- @field Core.Menu#MENU_GROUP_COMMAND abort
+--- @field Core.Menu#MENU_GROUP_COMMAND commit
+--- @field Core.Menu#MENU_GROUP vid
+--- @field Core.Menu#MENU_GROUP_COMMAND neutral
+--- @field Core.Menu#MENU_GROUP_COMMAND hostile
+--- @field Core.Menu#MENU_GROUP_COMMAND friendly
 
 --- Group Data
--- @type AWACS.ManagedGroup
--- @field Wrapper.Group#GROUP Group
--- @field #string GroupName
--- @field Ops.FlightGroup#FLIGHTGROUP FlightGroup for AI
--- @field #boolean IsPlayer
--- @field #boolean IsAI
--- @field #string CallSign
--- @field #number CurrentAuftrag -- Auftragsnummer for AI
--- @field #number CurrentTask -- ManagedTask ID
--- @field #boolean HasAssignedTask
--- @field #number GID
--- @field #number AnchorStackNo
--- @field #number AnchorStackAngels
--- @field #number ContactCID
--- @field Core.Point#COORDINATE LastKnownPosition
--- @field #number LastTasking TimeStamp
+--- @type AWACS.ManagedGroup
+--- @field Wrapper.Group#GROUP Group
+--- @field #string GroupName
+--- @field Ops.FlightGroup#FLIGHTGROUP FlightGroup for AI
+--- @field #boolean IsPlayer
+--- @field #boolean IsAI
+--- @field #string CallSign
+--- @field #number CurrentAuftrag -- Auftragsnummer for AI
+--- @field #number CurrentTask -- ManagedTask ID
+--- @field #boolean HasAssignedTask
+--- @field #number GID
+--- @field #number AnchorStackNo
+--- @field #number AnchorStackAngels
+--- @field #number ContactCID
+--- @field Core.Point#COORDINATE LastKnownPosition
+--- @field #number LastTasking TimeStamp
 
 --- Contact Data
--- @type AWACS.ManagedContact
--- @field #number CID
--- @field Ops.Intelligence#INTEL.Contact Contact
--- @field Ops.Intelligence#INTEL.Cluster Cluster
--- @field #string IFF -- ID'ed or not (yet)
--- @field Ops.Target#TARGET Target
--- @field #number LinkedTask --> TID
--- @field #number LinkedGroup --> GID
--- @field #string Status - #AWACS.TaskStatus
--- @field #string TargetGroupNaming -- Alpha, Charlie
--- @field #string ReportingName -- NATO platform name
--- @field #string EngagementTag
--- @field #boolean TACCallDone
--- @field #boolean MeldCallDone
--- @field #boolean MergeCallDone
+--- @type AWACS.ManagedContact
+--- @field #number CID
+--- @field Ops.Intelligence#INTEL.Contact Contact
+--- @field Ops.Intelligence#INTEL.Cluster Cluster
+--- @field #string IFF -- ID'ed or not (yet)
+--- @field Ops.Target#TARGET Target
+--- @field #number LinkedTask --> TID
+--- @field #number LinkedGroup --> GID
+--- @field #string Status - #AWACS.TaskStatus
+--- @field #string TargetGroupNaming -- Alpha, Charlie
+--- @field #string ReportingName -- NATO platform name
+--- @field #string EngagementTag
+--- @field #boolean TACCallDone
+--- @field #boolean MeldCallDone
+--- @field #boolean MergeCallDone
 
 ---
--- @type AWACS.TaskDescription
+--- @type AWACS.TaskDescription
 AWACS.TaskDescription = {
   ANCHOR = "Anchor",
   REANCHOR = "Re-Anchor",
@@ -861,7 +861,7 @@ AWACS.TaskDescription = {
 }
 
 ---
--- @type AWACS.TaskStatus
+--- @type AWACS.TaskStatus
 AWACS.TaskStatus = {
   IDLE = "Idle",
   UNASSIGNED = "Unassigned",
@@ -874,36 +874,36 @@ AWACS.TaskStatus = {
 }
 
 ---
--- @type AWACS.ManagedTask
--- @field #number TID
--- @field #number AssignedGroupID
--- @field #boolean IsPlayerTask
--- @field #boolean IsUnassigned
--- @field Ops.Target#TARGET Target
--- @field Ops.Auftrag#AUFTRAG Auftrag
--- @field #AWACS.TaskStatus Status
--- @field #AWACS.TaskDescription ToDo
--- @field #string ScreenText Long descrition
--- @field Ops.Intelligence#INTEL.Contact Contact
--- @field Ops.Intelligence#INTEL.Cluster Cluster
--- @field #number CurrentAuftrag
--- @field #number RequestedTimestamp
+--- @type AWACS.ManagedTask
+--- @field #number TID
+--- @field #number AssignedGroupID
+--- @field #boolean IsPlayerTask
+--- @field #boolean IsUnassigned
+--- @field Ops.Target#TARGET Target
+--- @field Ops.Auftrag#AUFTRAG Auftrag
+--- @field #AWACS.TaskStatus Status
+--- @field #AWACS.TaskDescription ToDo
+--- @field #string ScreenText Long descrition
+--- @field Ops.Intelligence#INTEL.Contact Contact
+--- @field Ops.Intelligence#INTEL.Cluster Cluster
+--- @field #number CurrentAuftrag
+--- @field #number RequestedTimestamp
 
 ---
--- @type AWACS.AnchorAssignedEntry
--- @field #number ID
--- @field #number Angels
+--- @type AWACS.AnchorAssignedEntry
+--- @field #number ID
+--- @field #number Angels
 
 ---
--- @type AWACS.AnchorData
--- @field #number AnchorBaseAngels
--- @field Core.Zone#ZONE_RADIUS StationZone
--- @field Core.Point#COORDINATE StationZoneCoordinate
--- @field #string StationZoneCoordinateText
--- @field #string StationName
--- @field Utilities.FiFo#FIFO AnchorAssignedID FiFo of #AWACS.AnchorAssignedEntry
--- @field Utilities.FiFo#FIFO Anchors FiFo of available stacks
--- @field Wrapper.Marker#MARKER AnchorMarker Tag for this station
+--- @type AWACS.AnchorData
+--- @field #number AnchorBaseAngels
+--- @field Core.Zone#ZONE_RADIUS StationZone
+--- @field Core.Point#COORDINATE StationZoneCoordinate
+--- @field #string StationZoneCoordinateText
+--- @field #string StationName
+--- @field Utilities.FiFo#FIFO AnchorAssignedID FiFo of #AWACS.AnchorAssignedEntry
+--- @field Utilities.FiFo#FIFO Anchors FiFo of available stacks
+--- @field Wrapper.Marker#MARKER AnchorMarker Tag for this station
 
 ---
 --@type RadioEntry
@@ -963,18 +963,18 @@ AWACS.TaskStatus = {
 -- TODO Constructor
 
 --- Set up a new AI AWACS.
--- @param #AWACS self
--- @param #string Name Name of this AWACS for the radio menu.
--- @param #string AirWing The core Ops.AirWing#AIRWING managing the AWACS, Escort and (optionally) AI CAP planes for us.
--- @param #number Coalition Coalition, e.g. coalition.side.BLUE. Can also be passed as "blue", "red" or "neutral".
--- @param #string AirbaseName Name of the home airbase.
--- @param #string AwacsOrbit Name of the round, mission editor created zone where this AWACS orbits.
--- @param #string OpsZone Name of the round, mission editor created Fighter Engagement operations zone (FEZ) this AWACS controls. Can be passed as #ZONE_POLYGON. 
+--- @param #AWACS self
+--- @param #string Name Name of this AWACS for the radio menu.
+--- @param #string AirWing The core Ops.AirWing#AIRWING managing the AWACS, Escort and (optionally) AI CAP planes for us.
+--- @param #number Coalition Coalition, e.g. coalition.side.BLUE. Can also be passed as "blue", "red" or "neutral".
+--- @param #string AirbaseName Name of the home airbase.
+--- @param #string AwacsOrbit Name of the round, mission editor created zone where this AWACS orbits.
+--- @param #string OpsZone Name of the round, mission editor created Fighter Engagement operations zone (FEZ) this AWACS controls. Can be passed as #ZONE_POLYGON. 
 -- The name of the zone will be used in reference calls as bulls eye name, so ensure a radio friendly name that does not collide with NATOPS keywords.
--- @param #string StationZone Name of the round, mission editor created anchor zone where CAP groups will be stationed. Usually a short city name.
--- @param #number Frequency Radio frequency, e.g. 271.
--- @param #number Modulation Radio modulation, e.g. radio.modulation.AM or radio.modulation.FM.
--- @return #AWACS self
+--- @param #string StationZone Name of the round, mission editor created anchor zone where CAP groups will be stationed. Usually a short city name.
+--- @param #number Frequency Radio frequency, e.g. 271.
+--- @param #number Modulation Radio modulation, e.g. radio.modulation.AM or radio.modulation.FM.
+--- @return #AWACS self
 -- @usage
 -- You can set up the OpsZone/FEZ in a number of ways:
 -- * As a string denominating a normal, round zone you have created and named in the mission editor, e.g. "Rock".
@@ -1354,8 +1354,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- [Internal] Init localization
--- @param #AWACS self
--- @return #AWACS self
+--- @param #AWACS self
+--- @return #AWACS self
 function AWACS:_InitLocalization()
   self:T(self.lid.."_InitLocalization")
   self.gettext = TEXTANDSOUND:New("AWACS","en") -- Core.TextAndSound#TEXTANDSOUND
@@ -1372,9 +1372,9 @@ function AWACS:_InitLocalization()
 end
 
 --- [User] Set locale for localization. Defaults to "en"
--- @param #AWACS self
--- @param #string Locale The locale to use
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string Locale The locale to use
+--- @return #AWACS self
 function AWACS:SetLocale(Locale)
   self:T(self.lid.."SetLocale")
   self.locale = Locale or "en"
@@ -1382,10 +1382,10 @@ function AWACS:SetLocale(Locale)
 end
 
 --- [User] Add additional frequency and modulation for AWACS SRS output.
--- @param #AWACS self
--- @param #number Frequency The frequency to add, e.g. 132.5
--- @param #number Modulation The modulation to add for the frequency, e.g. radio.modulation.AM
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #number Frequency The frequency to add, e.g. 132.5
+--- @param #number Modulation The modulation to add for the frequency, e.g. radio.modulation.AM
+--- @return #AWACS self
 function AWACS:AddFrequencyAndModulation(Frequency,Modulation)
   self:T(self.lid.."AddFrequencyAndModulation")
   table.insert(self.MultiFrequency,Frequency)
@@ -1398,10 +1398,10 @@ function AWACS:AddFrequencyAndModulation(Frequency,Modulation)
 end
 
 --- [User] Set this instance to act as GCI TACS Theater Air Control System
--- @param #AWACS self
--- @param Wrapper.Group#GROUP EWR The **main** Early Warning Radar (EWR) GROUP object for GCI.
--- @param #number Delay (option) Start after this many seconds (optional).
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP EWR The **main** Early Warning Radar (EWR) GROUP object for GCI.
+--- @param #number Delay (option) Start after this many seconds (optional).
+--- @return #AWACS self
 function AWACS:SetAsGCI(EWR,Delay)
   self:T(self.lid.."SetGCI")
   local delay = Delay or -5
@@ -1416,16 +1416,16 @@ function AWACS:SetAsGCI(EWR,Delay)
 end
 
 --- [Internal] Create a AIC-TTS message entry
--- @param #AWACS self
--- @param #string TextTTS Text to speak
--- @param #string TextScreen Text for screen
--- @param #number GID Group ID #AWACS.ManagedGroup GID
--- @param #boolean IsGroup Has a group
--- @param #boolean ToScreen Show on screen
--- @param #boolean IsNew New
--- @param #boolean FromAI From AI
--- @param #boolean IsPrio Priority entry
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string TextTTS Text to speak
+--- @param #string TextScreen Text for screen
+--- @param #number GID Group ID #AWACS.ManagedGroup GID
+--- @param #boolean IsGroup Has a group
+--- @param #boolean ToScreen Show on screen
+--- @param #boolean IsNew New
+--- @param #boolean FromAI From AI
+--- @param #boolean IsPrio Priority entry
+--- @return #AWACS self
 function AWACS:_NewRadioEntry(TextTTS, TextScreen,GID,IsGroup,ToScreen,IsNew,FromAI,IsPrio)
   self:T(self.lid.."_NewRadioEntry")
   local RadioEntry = {} -- #AWACS.RadioEntry
@@ -1446,9 +1446,9 @@ function AWACS:_NewRadioEntry(TextTTS, TextScreen,GID,IsGroup,ToScreen,IsNew,Fro
 end
 
 --- [User] Change the bulls eye alias for AWACS callout. Defaults to "Rock"
--- @param #AWACS self
--- @param #string Name
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string Name
+--- @return #AWACS self
 function AWACS:SetBullsEyeAlias(Name)
   self:T(self.lid.."_SetBullsEyeAlias")
   self.AOName = Name or "Rock"
@@ -1456,10 +1456,10 @@ function AWACS:SetBullsEyeAlias(Name)
 end
 
 --- [User] Set TOS Time-on-Station in Hours
--- @param #AWACS self
--- @param #number AICHours AWACS stays this number of hours on station before shift change, default is 4.
--- @param #number CapHours (optional) CAP stays this number of hours on station before shift change, default is 4.
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #number AICHours AWACS stays this number of hours on station before shift change, default is 4.
+--- @param #number CapHours (optional) CAP stays this number of hours on station before shift change, default is 4.
+--- @return #AWACS self
 function AWACS:SetTOS(AICHours,CapHours)
   self:T(self.lid.."SetTOS")
   self.AwacsTimeOnStation = AICHours or 4
@@ -1468,18 +1468,18 @@ function AWACS:SetTOS(AICHours,CapHours)
 end
 
 --- [User] Change number of seconds AWACS waits until a Player is re-assigned a different task. Defaults to 180.
--- @param #AWACS self
--- @param #number Seconds
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #number Seconds
+--- @return #AWACS self
 function AWACS:SetReassignmentPause(Seconds)
   self.ReassignmentPause = Seconds or 180
   return self
 end
 
 --- [User] Do not show messages on screen
--- @param #AWACS self
--- @param #boolean Switch If true, no messages will be shown on screen.
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #boolean Switch If true, no messages will be shown on screen.
+--- @return #AWACS self
 function AWACS:SuppressScreenMessages(Switch)
   self:T(self.lid.."_SetBullsEyeAlias")
   self.SuppressScreenOutput = Switch or false
@@ -1487,8 +1487,8 @@ function AWACS:SuppressScreenMessages(Switch)
 end
 
 --- [User] Do not show messages on screen, no extra calls for player guidance, use short callsigns etc.
--- @param #AWACS self
--- @return #AWACS self
+--- @param #AWACS self
+--- @return #AWACS self
 function AWACS:ZipLip()
   self:T(self.lid.."ZipLip")
   self:SuppressScreenMessages(true)
@@ -1500,9 +1500,9 @@ function AWACS:ZipLip()
 end
 
 --- [User] For CAP flights: Replace ME callsigns with user-defined callsigns for use with TTS and on-screen messaging
--- @param #AWACS self
--- @param #table translationTable with DCS callsigns as keys and replacements as values
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #table translationTable with DCS callsigns as keys and replacements as values
+--- @return #AWACS self
 -- @usage
 --            -- Set Custom CAP Flight Callsigns for use with TTS
 --            testawacs:SetCustomCallsigns({
@@ -1517,11 +1517,11 @@ function AWACS:SetCustomCallsigns(translationTable)
 end
 
 --- [Internal] Event handler
--- @param #AWACS self
--- @param Wrapper.Group#GROUP Group Group, can also be passed as #string group name
--- @return #boolean found
--- @return #number GID
--- @return #string CallSign
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP Group Group, can also be passed as #string group name
+--- @return #boolean found
+--- @return #number GID
+--- @return #string CallSign
 function AWACS:_GetGIDFromGroupOrName(Group)
   self:T(self.lid.."_GetGIDFromGroupOrName")
   self:T({Group})
@@ -1551,9 +1551,9 @@ function AWACS:_GetGIDFromGroupOrName(Group)
 end
 
 --- [Internal] Event handler
--- @param #AWACS self
--- @param Core.Event#EVENTDATA EventData
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Core.Event#EVENTDATA EventData
+--- @return #AWACS self
 function AWACS:_EventHandler(EventData)
   self:T(self.lid.."_EventHandler")
   self:T({Event = EventData.id})
@@ -1638,11 +1638,11 @@ function AWACS:_EventHandler(EventData)
 end
 
 --- [Internal] Missile Warning Callout
--- @param #AWACS self
--- @param Core.Point#COORDINATE Coordinate Where the shot happened
--- @param #string Type Type to call out, e.i. "SAM" or "Missile"
--- @param #number Warndist Distance in NM to find friendly planes
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Core.Point#COORDINATE Coordinate Where the shot happened
+--- @param #string Type Type to call out, e.i. "SAM" or "Missile"
+--- @param #number Warndist Distance in NM to find friendly planes
+--- @return #AWACS self
 function AWACS:_MissileWarning(Coordinate,Type,Warndist)
   self:T(self.lid.."_MissileWarning Type="..Type.." WarnDist="..Warndist)
   
@@ -1670,9 +1670,9 @@ function AWACS:_MissileWarning(Coordinate,Type,Warndist)
 end
 
 --- [User] Set AWACS Radar Blur - the radar contact count per group/cluster will be distored up or down by this number percent. Defaults to 15 in Modern Era and 25 in Cold War.
--- @param #AWACS self
--- @param #number Percent
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #number Percent
+--- @return #AWACS self
 function AWACS:SetRadarBlur(Percent)
   local percent = Percent or 15
   if percent < 0  then percent = 0 end
@@ -1683,8 +1683,8 @@ end
 
 --- [User] Set AWACS to Cold War standards - ROE to VID, ROT to Passive (bypass and escape). Radar blur 25%.
 -- Sets TAC/Meld/Threat call distances to 35, 25 and 15 nm.
--- @param #AWACS self
--- @return #AWACS self
+--- @param #AWACS self
+--- @return #AWACS self
 function AWACS:SetColdWar()
   self.ModernEra = false
   self.AwacsROT = AWACS.ROT.PASSIVE
@@ -1695,8 +1695,8 @@ function AWACS:SetColdWar()
 end
 
 --- [User] Set AWACS to Modern Era standards - ROE to BVR, ROT to defensive (evade fire). Radar blur 15%.
--- @param #AWACS self
--- @return #AWACS self
+--- @param #AWACS self
+--- @return #AWACS self
 function AWACS:SetModernEra()
   self.ModernEra = true
   self.AwacsROT = AWACS.ROT.EVADE
@@ -1706,8 +1706,8 @@ function AWACS:SetModernEra()
 end
 
 --- [User] Set AWACS to Modern Era standards - ROE to IFF, ROT to defensive (evade fire). Radar blur 15%.
--- @param #AWACS self
--- @return #AWACS self
+--- @param #AWACS self
+--- @return #AWACS self
 function AWACS:SetModernEraDefensive()
   self.ModernEra = true
   self.AwacsROT = AWACS.ROT.EVADE
@@ -1717,8 +1717,8 @@ function AWACS:SetModernEraDefensive()
 end
 
 --- [User] Set AWACS to Modern Era standards - ROE to BVR, ROT to return fire. Radar blur 15%.
--- @param #AWACS self
--- @return #AWACS self
+--- @param #AWACS self
+--- @return #AWACS self
 function AWACS:SetModernEraAggressive()
   self.ModernEra = true
   self.AwacsROT = AWACS.ROT.RETURNFIRE
@@ -1728,8 +1728,8 @@ function AWACS:SetModernEraAggressive()
 end
 
 --- [User] Set AWACS to Policing standards - ROE to VID, ROT to Lock (bypass and escape). Radar blur 15%.
--- @param #AWACS self
--- @return #AWACS self
+--- @param #AWACS self
+--- @return #AWACS self
 function AWACS:SetPolicingModern()
   self.ModernEra = true
   self.AwacsROT = AWACS.ROT.BYPASSESCAPE
@@ -1740,8 +1740,8 @@ end
 
 --- [User] Set AWACS to Policing standards - ROE to VID, ROT to Lock (bypass and escape). Radar blur 25%.
 -- Sets TAC/Meld/Threat call distances to 35, 25 and 15 nm.
--- @param #AWACS self
--- @return #AWACS self
+--- @param #AWACS self
+--- @return #AWACS self
 function AWACS:SetPolicingColdWar()
   self.ModernEra = false
   self.AwacsROT = AWACS.ROT.BYPASSESCAPE
@@ -1752,9 +1752,9 @@ function AWACS:SetPolicingColdWar()
 end
 
 --- [User] Set AWACS Player Guidance - influences missile callout and the "New" label in group callouts. 
--- @param #AWACS self
--- @param #boolean Switch If true (default) it is on, if false, it is off.
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #boolean Switch If true (default) it is on, if false, it is off.
+--- @return #AWACS self
 function AWACS:SetPlayerGuidance(Switch)
   if (Switch == nil) or (Switch == true) then
    self.PlayerGuidance = true
@@ -1765,18 +1765,18 @@ function AWACS:SetPlayerGuidance(Switch)
 end
 
 --- [User] Get AWACS Name
--- @param #AWACS self
--- @return #string Name of this instance
+--- @param #AWACS self
+--- @return #string Name of this instance
 function AWACS:GetName()
   return self.Name or "not set"
 end
 
 --- [User] Set AWACS intercept timeline support distance.
--- @param #AWACS self
--- @param #number TacDistance Distance for TAC call, default 45nm
--- @param #number MeldDistance Distance for Meld call, default 35nm
--- @param #number ThreatDistance Distance for Threat call, default 25nm
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #number TacDistance Distance for TAC call, default 45nm
+--- @param #number MeldDistance Distance for Meld call, default 35nm
+--- @param #number ThreatDistance Distance for Threat call, default 25nm
+--- @return #AWACS self
 function AWACS:SetInterceptTimeline(TacDistance, MeldDistance, ThreatDistance)
   self.TacDistance = TacDistance or 45
   self.MeldDistance = MeldDistance or 35
@@ -1785,10 +1785,10 @@ function AWACS:SetInterceptTimeline(TacDistance, MeldDistance, ThreatDistance)
 end
 
 --- [User] Set additional defensive zone, e.g. the zone behind the FEZ to also be defended
--- @param #AWACS self
--- @param Core.Zone#ZONE Zone
--- @param #boolean Draw Draw lines around this zone if true
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Core.Zone#ZONE Zone
+--- @param #boolean Draw Draw lines around this zone if true
+--- @return #AWACS self
 function AWACS:SetAdditionalZone(Zone, Draw)
   self:T(self.lid.."SetAdditionalZone")
   self.BorderZone = Zone
@@ -1802,10 +1802,10 @@ function AWACS:SetAdditionalZone(Zone, Draw)
 end
 
 --- [User] Set rejection zone, e.g. a border of a foreign country. Detected bogeys in here won't be engaged.
--- @param #AWACS self
--- @param Core.Zone#ZONE Zone
--- @param #boolean Draw Draw lines around this zone if true
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Core.Zone#ZONE Zone
+--- @param #boolean Draw Draw lines around this zone if true
+--- @return #AWACS self
 function AWACS:SetRejectionZone(Zone,Draw)
   self:T(self.lid.."SetRejectionZone")
   self.RejectZone = Zone
@@ -1820,22 +1820,22 @@ function AWACS:SetRejectionZone(Zone,Draw)
 end
 
 --- [User] Draw a line around the FEZ on the F10 map.
--- @param #AWACS self
--- @return #AWACS self
+--- @param #AWACS self
+--- @return #AWACS self
 function AWACS:DrawFEZ()
   self.OpsZone:DrawZone(self.coalition,{1,0,0},1,{1,0,0},0.2,5,true)
   return self
 end
 
 --- [User] Set AWACS flight details
--- @param #AWACS self
--- @param #number CallSign Defaults to CALLSIGN.AWACS.Magic
--- @param #number CallSignNo Defaults to 1
--- @param #number Angels Defaults to 25 (i.e. 25000 ft)
--- @param #number Speed Defaults to 250kn
--- @param #number Heading Defaults to 0 (North)
--- @param #number Leg Defaults to 25nm
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #number CallSign Defaults to CALLSIGN.AWACS.Magic
+--- @param #number CallSignNo Defaults to 1
+--- @param #number Angels Defaults to 25 (i.e. 25000 ft)
+--- @param #number Speed Defaults to 250kn
+--- @param #number Heading Defaults to 0 (North)
+--- @param #number Leg Defaults to 25nm
+--- @return #AWACS self
 function AWACS:SetAwacsDetails(CallSign,CallSignNo,Angels,Speed,Heading,Leg)
   self:T(self.lid.."SetAwacsDetails")
   self.CallSign = CallSign or CALLSIGN.AWACS.Magic
@@ -1850,9 +1850,9 @@ function AWACS:SetAwacsDetails(CallSign,CallSignNo,Angels,Speed,Heading,Leg)
 end
 
 --- [User] Set AWACS custom callsigns for TTS
--- @param #AWACS self
--- @param #table CallsignTable Table of custom callsigns to use with TTS
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #table CallsignTable Table of custom callsigns to use with TTS
+--- @return #AWACS self
 -- @usage
 -- You can overwrite the standard AWACS callsign for TTS usage with your own naming, e.g. like so:
 --              testawacs:SetCustomAWACSCallSign({
@@ -1870,9 +1870,9 @@ function AWACS:SetCustomAWACSCallSign(CallsignTable)
 end
 
 --- [User] Add a radar GROUP object to the INTEL detection SET_GROUP
--- @param #AWACS self
--- @param Wrapper.Group#GROUP Group The GROUP to be added. Can be passed as SET_GROUP.
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP Group The GROUP to be added. Can be passed as SET_GROUP.
+--- @return #AWACS self
 function AWACS:AddGroupToDetection(Group)
   self:T(self.lid.."AddGroupToDetection")
   if Group and Group.ClassName and Group.ClassName == "GROUP" then
@@ -1884,16 +1884,16 @@ function AWACS:AddGroupToDetection(Group)
 end
 
 --- [User] Set AWACS SRS TTS details - see @{Sound.SRS} for details
--- @param #AWACS self
--- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone"
--- @param #string Gender Defaults to "male"
--- @param #string Culture Defaults to "en-US"
--- @param #number Port Defaults to 5002
--- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
+--- @param #AWACS self
+--- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+--- @param #string Gender Defaults to "male"
+--- @param #string Culture Defaults to "en-US"
+--- @param #number Port Defaults to 5002
+--- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
--- @param #number Volume Volume - between 0.0 (silent) and 1.0 (loudest)
--- @param #string PathToGoogleKey Path to your google key if you want to use google TTS
--- @return #AWACS self
+--- @param #number Volume Volume - between 0.0 (silent) and 1.0 (loudest)
+--- @param #string PathToGoogleKey Path to your google key if you want to use google TTS
+--- @return #AWACS self
 function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
   self:T(self.lid.."SetSRS")
   self.PathToSRS = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
@@ -1919,12 +1919,12 @@ function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey
 end
 
 --- [User] Set AWACS Voice Details for AI CAP Planes  - SRS TTS - see @{Sound.SRS} for details
--- @param #AWACS self
--- @param #string Gender Defaults to "male"
--- @param #string Culture Defaults to "en-US"
--- @param #string Voice (Optional) Use a specifc voice with the @{#MSRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
+--- @param #AWACS self
+--- @param #string Gender Defaults to "male"
+--- @param #string Culture Defaults to "en-US"
+--- @param #string Voice (Optional) Use a specifc voice with the @{#MSRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
--- @return #AWACS self
+--- @return #AWACS self
 function AWACS:SetSRSVoiceCAP(Gender, Culture, Voice)
   self:T(self.lid.."SetSRSVoiceCAP")
   self.CAPGender = Gender or "male"
@@ -1934,12 +1934,12 @@ function AWACS:SetSRSVoiceCAP(Gender, Culture, Voice)
 end
 
 --- [User] Set AI CAP Plane Details
--- @param #AWACS self
--- @param #number Callsign Callsign name of AI CAP, e.g. CALLSIGN.Aircraft.Dodge. Defaults to CALLSIGN.Aircraft.Colt. Note that not all available callsigns work for all plane types.
--- @param #number MaxAICap Maximum number of AI CAP planes on station that AWACS will set up automatically. Default to 4.
--- @param #number TOS Time on station, in  hours. AI planes might go back to base earlier if they run out of fuel or missiles.
--- @param #number Speed Airspeed to be used in knots. Will be adjusted to flight height automatically. Defaults to 270.
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #number Callsign Callsign name of AI CAP, e.g. CALLSIGN.Aircraft.Dodge. Defaults to CALLSIGN.Aircraft.Colt. Note that not all available callsigns work for all plane types.
+--- @param #number MaxAICap Maximum number of AI CAP planes on station that AWACS will set up automatically. Default to 4.
+--- @param #number TOS Time on station, in  hours. AI planes might go back to base earlier if they run out of fuel or missiles.
+--- @param #number Speed Airspeed to be used in knots. Will be adjusted to flight height automatically. Defaults to 270.
+--- @return #AWACS self
 function AWACS:SetAICAPDetails(Callsign,MaxAICap,TOS,Speed)
   self:T(self.lid.."SetAICAPDetails")
   self.CapSpeedBase = Speed or 270
@@ -1950,9 +1950,9 @@ function AWACS:SetAICAPDetails(Callsign,MaxAICap,TOS,Speed)
 end
 
 --- [User] Set AWACS Escorts Template
--- @param #AWACS self
--- @param #number EscortNumber Number of fighther planes to accompany this AWACS. 0 or nil means no escorts.
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #number EscortNumber Number of fighther planes to accompany this AWACS. 0 or nil means no escorts.
+--- @return #AWACS self
 function AWACS:SetEscort(EscortNumber)
   self:T(self.lid.."SetEscort")
   if EscortNumber and EscortNumber > 0 then
@@ -1966,12 +1966,12 @@ function AWACS:SetEscort(EscortNumber)
 end
 
 --- [Internal] Message a vector BR to a position
--- @param #AWACS self
--- @param #number GID Group GID
--- @param #string Tag (optional) Text to add after Vector, e.g. " to Anchor" - NOTE the leading space
--- @param Core.Point#COORDINATE Coordinate The Coordinate to use
--- @param #number Angels (Optional) Add Angels 
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #number GID Group GID
+--- @param #string Tag (optional) Text to add after Vector, e.g. " to Anchor" - NOTE the leading space
+--- @param Core.Point#COORDINATE Coordinate The Coordinate to use
+--- @param #number Angels (Optional) Add Angels 
+--- @return #AWACS self
 function AWACS:_MessageVector(GID,Tag,Coordinate,Angels)
   self:T(self.lid.."_MessageVector")
   
@@ -2006,9 +2006,9 @@ function AWACS:_MessageVector(GID,Tag,Coordinate,Angels)
 end
 
 --- [Internal] Start AWACS Escorts FlightGroup
--- @param #AWACS self
--- @param #boolean Shiftchange This is a shift change call
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #boolean Shiftchange This is a shift change call
+--- @return #AWACS self
 function AWACS:_StartEscorts(Shiftchange)
   self:T(self.lid.."_StartEscorts")
   
@@ -2035,10 +2035,10 @@ function AWACS:_StartEscorts(Shiftchange)
 end
 
 --- [Internal] AWACS further Start Settings
--- @param #AWACS self
--- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup
--- @param Ops.Auftrag#AUFTRAG Mission
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup
+--- @param Ops.Auftrag#AUFTRAG Mission
+--- @return #AWACS self
 function AWACS:_StartSettings(FlightGroup,Mission)
   self:T(self.lid.."_StartSettings")
   
@@ -2140,11 +2140,11 @@ function AWACS:_StartSettings(FlightGroup,Mission)
 end
 
 --- [Internal] Return Bullseye BR for Alpha Check etc, returns e.g. "Rock 021, 16" ("Rock" being the set BE name)
--- @param #AWACS self
--- @param Core.Point#COORDINATE Coordinate
--- @param #boolean ssml Add SSML tag
--- @param #boolean TTS For non-Alpha checks, hand back in format "Rock 0 2 1, 16"
--- @return #string BullseyeBR
+--- @param #AWACS self
+--- @param Core.Point#COORDINATE Coordinate
+--- @param #boolean ssml Add SSML tag
+--- @param #boolean TTS For non-Alpha checks, hand back in format "Rock 0 2 1, 16"
+--- @return #string BullseyeBR
 function AWACS:_ToStringBULLS( Coordinate, ssml, TTS )
   self:T(self.lid.."_ToStringBULLS")
   local bullseyename = self.AOName or "Rock"
@@ -2169,9 +2169,9 @@ function AWACS:_ToStringBULLS( Coordinate, ssml, TTS )
 end
 
 --- [Internal] Change Bullseye string to be TTS friendly,  "Bullseye 021, 16" returns e.g. "Bulls eye 0 2 1. 1 6"
--- @param #AWACS self
--- @param #string Text Input text
--- @return #string BullseyeBRTTS
+--- @param #AWACS self
+--- @param #string Text Input text
+--- @return #string BullseyeBRTTS
 function AWACS:_ToStringBullsTTS(Text)
   local text = Text
   text=string.gsub(text,"Bullseye","Bulls eye")
@@ -2183,11 +2183,11 @@ end
 
 
 --- [Internal] Check if a group has checked in
--- @param #AWACS self
--- @param Wrapper.Group#GROUP Group Group to check
--- @return #number ID
--- @return #boolean CheckedIn
--- @return #string CallSign
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP Group Group to check
+--- @return #number ID
+--- @return #boolean CheckedIn
+--- @return #string CallSign
 function AWACS:_GetManagedGrpID(Group)
   if not Group or not Group:IsAlive() then
     self:T(self.lid.."_GetManagedGrpID - Requested Group is not alive!")
@@ -2211,11 +2211,11 @@ function AWACS:_GetManagedGrpID(Group)
 end
 
 --- [Internal] AWACS Get TTS compatible callsign
--- @param #AWACS self
--- @param Wrapper.Group#GROUP Group Group to use
--- @param #number GID GID to use
--- @param #boolean IsPlayer Check in player if true
--- @return #string Callsign
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP Group Group to use
+--- @param #number GID GID to use
+--- @param #boolean IsPlayer Check in player if true
+--- @return #string Callsign
 function AWACS:_GetCallSign(Group,GID, IsPlayer)
   self:T(self.lid.."_GetCallSign - GID "..tostring(GID))
   
@@ -2233,12 +2233,12 @@ function AWACS:_GetCallSign(Group,GID, IsPlayer)
 end
 
 --- [User] Set player callsign options for TTS output. See @{Wrapper.Group#GROUP.GetCustomCallSign}() on how to set customized callsigns.
--- @param #AWACS self
--- @param #boolean ShortCallsign If true, only call out the major flight number
--- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name as-is, no amendments or numbers.
--- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
+--- @param #AWACS self
+--- @param #boolean ShortCallsign If true, only call out the major flight number
+--- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name as-is, no amendments or numbers.
+--- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
 -- callsigns from playername or group name.
--- @return #AWACS self
+--- @return #AWACS self
 function AWACS:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations)
   if not ShortCallsign or ShortCallsign == false then
    self.callsignshort = false
@@ -2251,9 +2251,9 @@ function AWACS:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations)
 end
 
 --- [Internal] Update contact from cluster data
--- @param #AWACS self
--- @param #number CID Contact ID
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #number CID Contact ID
+--- @return #AWACS self
 function AWACS:_UpdateContactFromCluster(CID)
   self:T(self.lid.."_UpdateContactFromCluster CID="..CID)
   
@@ -2281,8 +2281,8 @@ function AWACS:_UpdateContactFromCluster(CID)
 end
 
 --- [Internal] Check merges for Players
--- @param #AWACS self
--- @return #AWACS self
+--- @param #AWACS self
+--- @return #AWACS self
 function AWACS:_CheckMerges()
   self:T(self.lid.."_CheckMerges") 
   for _id,_pilot in pairs (self.ManagedGrps) do
@@ -2315,8 +2315,8 @@ function AWACS:_CheckMerges()
 end
 
 --- [Internal] Clean up contacts list
--- @param #AWACS self
--- @return #AWACS self
+--- @param #AWACS self
+--- @return #AWACS self
 function AWACS:_CleanUpContacts()
   self:T(self.lid.."_CleanUpContacts")
   
@@ -2369,9 +2369,9 @@ function AWACS:_CleanUpContacts()
 end
 
 --- [Internal] Select pilots available for tasking, return AI and Human
--- @param #AWACS self
--- @return #table AIPilots Table of #AWACS.ManagedGroup
--- @return #table HumanPilots Table of #AWACS.ManagedGroup
+--- @param #AWACS self
+--- @return #table AIPilots Table of #AWACS.ManagedGroup
+--- @return #table HumanPilots Table of #AWACS.ManagedGroup
 function AWACS:_GetIdlePilots()
   self:T(self.lid.."_GetIdlePilots")
   local AIPilots = {}
@@ -2410,10 +2410,10 @@ function AWACS:_GetIdlePilots()
 end
 
 --- [Internal] Select max 3 targets for picture, bogey dope etc
--- @param #AWACS self
--- @param #boolean Untargeted Return not yet targeted contacts only
--- @return #boolean HaveTargets True if targets could be found, else false
--- @return Utilities.FiFo#FIFO Targetselection
+--- @param #AWACS self
+--- @param #boolean Untargeted Return not yet targeted contacts only
+--- @return #boolean HaveTargets True if targets could be found, else false
+--- @return Utilities.FiFo#FIFO Targetselection
 function AWACS:_TargetSelectionProcess(Untargeted)
   self:T(self.lid.."_TargetSelectionProcess")
   
@@ -2548,13 +2548,13 @@ function AWACS:_TargetSelectionProcess(Untargeted)
 end
 
 --- [Internal] AWACS Speak Picture AO/EWR entries
--- @param #AWACS self
--- @param #boolean AO If true this is for AO, else EWR
--- @param #string Callsign Callsign to address
--- @param #number GID GroupID for comms
--- @param #number MaxEntries Max entries to show
--- @param #boolean IsGeneral Is a general picture, address all stations
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #boolean AO If true this is for AO, else EWR
+--- @param #string Callsign Callsign to address
+--- @param #number GID GroupID for comms
+--- @param #number MaxEntries Max entries to show
+--- @param #boolean IsGeneral Is a general picture, address all stations
+--- @return #AWACS self
 function AWACS:_CreatePicture(AO,Callsign,GID,MaxEntries,IsGeneral)
   self:T(self.lid.."_CreatePicture AO="..tostring(AO).." for "..Callsign.." GID "..GID)
   
@@ -2684,10 +2684,10 @@ function AWACS:_CreatePicture(AO,Callsign,GID,MaxEntries,IsGeneral)
 end
 
 --- [Internal] AWACS Speak Bogey Dope entries
--- @param #AWACS self
--- @param #string Callsign Callsign to address
--- @param #number GID GroupID for comms
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string Callsign Callsign to address
+--- @param #number GID GroupID for comms
+--- @return #AWACS self
 function AWACS:_CreateBogeyDope(Callsign,GID)
   self:T(self.lid.."_CreateBogeyDope for "..Callsign.." GID "..GID)
   
@@ -2725,10 +2725,10 @@ function AWACS:_CreateBogeyDope(Callsign,GID)
 end
 
 --- [Internal] AWACS Menu for Picture
--- @param #AWACS self
--- @param Wrapper.Group#GROUP Group Group to use
--- @param #boolean IsGeneral General picture if true, address no-one specific
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP Group Group to use
+--- @param #boolean IsGeneral General picture if true, address no-one specific
+--- @return #AWACS self
 function AWACS:_Picture(Group,IsGeneral)
   self:T(self.lid.."_Picture")
   local text = ""
@@ -2837,9 +2837,9 @@ function AWACS:_Picture(Group,IsGeneral)
 end
 
 --- [Internal] AWACS Menu for Bogey Dope
--- @param #AWACS self
--- @param Wrapper.Group#GROUP Group Group to use
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP Group Group to use
+--- @return #AWACS self
 function AWACS:_BogeyDope(Group)
   self:T(self.lid.."_BogeyDope")
   local text = ""
@@ -2930,9 +2930,9 @@ function AWACS:_BogeyDope(Group)
 end
 
 --- [Internal] AWACS Menu for Show Info
--- @param #AWACS self
--- @param Wrapper.Group#GROUP Group Group to use
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP Group Group to use
+--- @return #AWACS self
 function AWACS:_ShowAwacsInfo(Group)
   self:T(self.lid.."_ShowAwacsInfo")
   local report = REPORT:New("Info")
@@ -2953,10 +2953,10 @@ function AWACS:_ShowAwacsInfo(Group)
 end
 
 --- [Internal] AWACS Menu for VID
--- @param #AWACS self
--- @param Wrapper.Group#GROUP Group Group to use
--- @param #string Declaration Text declaration the player used
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP Group Group to use
+--- @param #string Declaration Text declaration the player used
+--- @return #AWACS self
 function AWACS:_VID(Group,Declaration)
   self:T(self.lid.."_VID")
 
@@ -3024,9 +3024,9 @@ function AWACS:_VID(Group,Declaration)
 end
 
 --- [Internal] AWACS Menu for Declare
--- @param #AWACS self
--- @param Wrapper.Group#GROUP Group Group to use
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP Group Group to use
+--- @return #AWACS self
 function AWACS:_Declare(Group)
   self:T(self.lid.."_Declare")
 
@@ -3113,9 +3113,9 @@ function AWACS:_Declare(Group)
 end
 
 --- [Internal] AWACS Menu for Commit
--- @param #AWACS self
--- @param Wrapper.Group#GROUP Group Group to use
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP Group Group to use
+--- @return #AWACS self
 function AWACS:_Commit(Group)
   self:T(self.lid.."_Commit") 
   local GID, Outcome = self:_GetManagedGrpID(Group)
@@ -3160,9 +3160,9 @@ function AWACS:_Commit(Group)
 end
 
 --- [Internal] AWACS Menu for Judy
--- @param #AWACS self
--- @param Wrapper.Group#GROUP Group Group to use
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP Group Group to use
+--- @return #AWACS self
 function AWACS:_Judy(Group)
   self:T(self.lid.."_Judy")
   local GID, Outcome = self:_GetManagedGrpID(Group)
@@ -3201,9 +3201,9 @@ function AWACS:_Judy(Group)
 end
 
 --- [Internal] AWACS Menu for Unable
--- @param #AWACS self
--- @param Wrapper.Group#GROUP Group Group to use
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP Group Group to use
+--- @return #AWACS self
 function AWACS:_Unable(Group)
   self:T(self.lid.."_Unable")
   local GID, Outcome = self:_GetManagedGrpID(Group)
@@ -3249,9 +3249,9 @@ function AWACS:_Unable(Group)
 end
 
 --- [Internal] AWACS Menu for Abort
--- @param #AWACS self
--- @param Wrapper.Group#GROUP Group Group to use
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP Group Group to use
+--- @return #AWACS self
 function AWACS:_TaskAbort(Group)
   self:T(self.lid.."_TaskAbort")
   local Outcome,GID = self:_GetGIDFromGroupOrName(Group)
@@ -3300,9 +3300,9 @@ function AWACS:_TaskAbort(Group)
 end
 
 --- [Internal] AWACS Menu for Showtask
--- @param #AWACS self
--- @param Wrapper.Group#GROUP Group Group to use
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP Group Group to use
+--- @return #AWACS self
 function AWACS:_Showtask(Group)
   self:T(self.lid.."_Showtask")
 
@@ -3376,9 +3376,9 @@ function AWACS:_Showtask(Group)
 end
 
 --- [Internal] AWACS Menu for Check in
--- @param #AWACS self
--- @param Wrapper.Group#GROUP Group Group to use
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP Group Group to use
+--- @return #AWACS self
 function AWACS:_CheckIn(Group)
   self:T(self.lid.."_CheckIn "..Group:GetName())
   -- check if already known
@@ -3430,11 +3430,11 @@ function AWACS:_CheckIn(Group)
 end
 
 --- [Internal] AWACS Menu for CheckInAI
--- @param #AWACS self
--- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup to use
--- @param Wrapper.Group#GROUP Group Group to use
--- @param #number AuftragsNr Ops.Auftrag#AUFTRAG.auftragsnummer
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup to use
+--- @param Wrapper.Group#GROUP Group Group to use
+--- @param #number AuftragsNr Ops.Auftrag#AUFTRAG.auftragsnummer
+--- @return #AWACS self
 function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
   self:T(self.lid.."_CheckInAI "..Group:GetName() .. " to Auftrag Nr "..AuftragsNr)
   -- check if already known
@@ -3506,11 +3506,11 @@ function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
 end
 
 --- [Internal] AWACS Menu for Check Out
--- @param #AWACS self
--- @param Wrapper.Group#GROUP Group Group to use
--- @param #number GID GroupID
--- @param #boolean dead If true, group is dead crashed or otherwise n/a
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP Group Group to use
+--- @param #number GID GroupID
+--- @param #boolean dead If true, group is dead crashed or otherwise n/a
+--- @return #AWACS self
 function AWACS:_CheckOut(Group,GID,dead)
   self:T(self.lid.."_CheckOut")
 
@@ -3556,8 +3556,8 @@ function AWACS:_CheckOut(Group,GID,dead)
 end
 
 --- [Internal] AWACS set client menus
--- @param #AWACS self
--- @return #AWACS self
+--- @param #AWACS self
+--- @return #AWACS self
 function AWACS:_SetClientMenus()
   self:T(self.lid.."_SetClientMenus")
   local clientset = self.clientset -- Core.Set#SET_CLIENT
@@ -3700,8 +3700,8 @@ function AWACS:_SetClientMenus()
 end
 
 --- [Internal] AWACS Delete a new Anchor Stack from a Marker - only works if no assignments are on the station
--- @param #AWACS self
--- @return #AWACS self 
+--- @param #AWACS self
+--- @return #AWACS self 
 function AWACS:_DeleteAnchorStackFromMarker(Name,Coord)
   self:T(self.lid.."_DeleteAnchorStackFromMarker")
   if self.AnchorStacks:HasUniqueID(Name) and self.PlayerStationName == Name then
@@ -3726,8 +3726,8 @@ function AWACS:_DeleteAnchorStackFromMarker(Name,Coord)
 end
 
 --- [Internal] AWACS Move a new Anchor Stack from a Marker
--- @param #AWACS self
--- @return #AWACS self 
+--- @param #AWACS self
+--- @return #AWACS self 
 function AWACS:_MoveAnchorStackFromMarker(Name,Coord)
   self:T(self.lid.."_MoveAnchorStackFromMarker")
   if self.AnchorStacks:HasUniqueID(Name) and self.PlayerStationName == Name then
@@ -3753,8 +3753,8 @@ function AWACS:_MoveAnchorStackFromMarker(Name,Coord)
 end
 
 --- [Internal] AWACS Create a new Anchor Stack from a Marker - this then is the preferred station for players
--- @param #AWACS self
--- @return #AWACS self 
+--- @param #AWACS self
+--- @return #AWACS self 
 function AWACS:_CreateAnchorStackFromMarker(Name,Coord)
   self:T(self.lid.."_CreateAnchorStackFromMarker")
   local AnchorStackOne = {} -- #AWACS.AnchorData
@@ -3791,9 +3791,9 @@ function AWACS:_CreateAnchorStackFromMarker(Name,Coord)
 end
 
 --- [Internal] AWACS Create a new Anchor Stack
--- @param #AWACS self
--- @return #boolean success
--- @return #number AnchorStackNo
+--- @param #AWACS self
+--- @return #boolean success
+--- @return #number AnchorStackNo
 function AWACS:_CreateAnchorStack()
   self:T(self.lid.."_CreateAnchorStack")
   local stackscreated = self.AnchorStacks:GetSize()
@@ -3864,9 +3864,9 @@ function AWACS:_CreateAnchorStack()
 end
 
 --- [Internal] AWACS get free anchor stack for managed groups
--- @param #AWACS self
--- @return #number AnchorStackNo
--- @return #boolean free 
+--- @param #AWACS self
+--- @return #number AnchorStackNo
+--- @return #boolean free 
 function AWACS:_GetFreeAnchorStack()
   self:T(self.lid.."_GetFreeAnchorStack")
   local AnchorStackNo, Free = 0, false
@@ -3894,11 +3894,11 @@ function AWACS:_GetFreeAnchorStack()
 end
 
 --- [Internal] AWACS Assign Anchor Position to a Group
--- @param #AWACS self
--- @param #number GID Managed Group ID
--- @param #boolean HasOwnStation
--- @param #string StationName
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #number GID Managed Group ID
+--- @param #boolean HasOwnStation
+--- @param #string StationName
+--- @return #AWACS self
 function AWACS:_AssignAnchorToID(GID, HasOwnStation, StationName)
   self:T(self.lid.."_AssignAnchorToID")
   if not HasOwnStation then
@@ -3935,11 +3935,11 @@ function AWACS:_AssignAnchorToID(GID, HasOwnStation, StationName)
 end
 
 --- [Internal] Remove GID (group) from Anchor Stack
--- @param #AWACS self
--- @param #AWACS.ManagedGroup.GID ID
--- @param #number AnchorStackNo
--- @param #number Angels
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #AWACS.ManagedGroup.GID ID
+--- @param #number AnchorStackNo
+--- @param #number Angels
+--- @return #AWACS self
 function AWACS:_RemoveIDFromAnchor(GID,AnchorStackNo,Angels)
   local gid = GID or 0
   local stack = AnchorStackNo or 0
@@ -3959,9 +3959,9 @@ function AWACS:_RemoveIDFromAnchor(GID,AnchorStackNo,Angels)
 end
 
 --- [Internal] Start INTEL detection when we reach the AWACS Orbit Zone
--- @param #AWACS self
--- @param Wrapper.Group#GROUP awacs
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Wrapper.Group#GROUP awacs
+--- @return #AWACS self
 function AWACS:_StartIntel(awacs)
   self:T(self.lid.."_StartIntel")
   
@@ -4034,10 +4034,10 @@ function AWACS:_StartIntel(awacs)
 end
 
 --- [Internal] Get blurred size of group or cluster
--- @param #AWACS self
--- @param #number size
--- @return #number adjusted size
--- @return #string AWACS.Shipsize entry for size 1..4
+--- @param #AWACS self
+--- @param #number size
+--- @return #number adjusted size
+--- @return #string AWACS.Shipsize entry for size 1..4
 function AWACS:_GetBlurredSize(size)
   self:T(self.lid.."_GetBlurredSize")
   local threatsize = 0
@@ -4060,9 +4060,9 @@ function AWACS:_GetBlurredSize(size)
 end
 
 --- [Internal] Get threat level as clear test
--- @param #AWACS self
--- @param #number threatlevel
--- @return #string threattext
+--- @param #AWACS self
+--- @param #number threatlevel
+--- @return #string threattext
 function AWACS:_GetThreatLevelText(threatlevel)
   self:T(self.lid.."_GetThreatLevelText")
   local threattext = "GREEN"
@@ -4078,11 +4078,11 @@ end
 
 
 --- [Internal] Get BR text for TTS
--- @param #AWACS self
--- @param Core.Point#COORDINATE FromCoordinate
--- @param Core.Point#COORDINATE ToCoordinate
--- @return #string BRText Desired Output (BR) "214, 35 miles"
--- @return #string BRTextTTS Desired Output (BR) "2 1 4, 35 miles"
+--- @param #AWACS self
+--- @param Core.Point#COORDINATE FromCoordinate
+--- @param Core.Point#COORDINATE ToCoordinate
+--- @return #string BRText Desired Output (BR) "214, 35 miles"
+--- @return #string BRTextTTS Desired Output (BR) "2 1 4, 35 miles"
 function AWACS:_ToStringBR(FromCoordinate,ToCoordinate)
   self:T(self.lid.."_ToStringBR")
   local BRText = ""
@@ -4117,12 +4117,12 @@ function AWACS:_ToStringBR(FromCoordinate,ToCoordinate)
 end
 
 --- [Internal] Get BRA text for TTS
--- @param #AWACS self
--- @param Core.Point#COORDINATE FromCoordinate
--- @param Core.Point#COORDINATE ToCoordinate
--- @param #number Altitude Altitude in meters
--- @return #string BRText Desired Output (BRA) "214, 35 miles, 20 thousand"
--- @return #string BRTextTTS Desired Output (BRA) "2 1 4, 35 miles, 20 thousand"
+--- @param #AWACS self
+--- @param Core.Point#COORDINATE FromCoordinate
+--- @param Core.Point#COORDINATE ToCoordinate
+--- @param #number Altitude Altitude in meters
+--- @return #string BRText Desired Output (BRA) "214, 35 miles, 20 thousand"
+--- @return #string BRTextTTS Desired Output (BRA) "2 1 4, 35 miles, 20 thousand"
 function AWACS:_ToStringBRA(FromCoordinate,ToCoordinate,Altitude)
   self:T(self.lid.."_ToStringBRA")
   local BRText = ""
@@ -4163,10 +4163,10 @@ function AWACS:_ToStringBRA(FromCoordinate,ToCoordinate,Altitude)
 end
 
 --- [Internal] Get BR text for TTS - ie "Rock 214, 24 miles" and TTS "Rock 2 1 4, 24 miles"
--- @param #AWACS self
--- @param Core.Point#COORDINATE clustercoordinate
--- @return #string BRAText
--- @return #string BRATextTTS
+--- @param #AWACS self
+--- @param Core.Point#COORDINATE clustercoordinate
+--- @return #string BRAText
+--- @return #string BRATextTTS
 function AWACS:_GetBRAfromBullsOrAO(clustercoordinate)
   self:T(self.lid.."_GetBRAfromBullsOrAO")
   local refcoord = self.AOCoordinate -- Core.Point#COORDINATE
@@ -4182,16 +4182,16 @@ function AWACS:_GetBRAfromBullsOrAO(clustercoordinate)
 end
 
 --- [Internal] Register Task for Group by GID
--- @param #AWACS self
--- @param #number GroupID ManagedGroup ID
--- @param #AWACS.TaskDescription Description Short Description Task Type
--- @param #string ScreenText Long task description for screen output
--- @param #table Object Object for Ops.Target#TARGET assignment
--- @param #AWACS.TaskStatus TaskStatus Status of this task
--- @param Ops.Auftrag#AUFTRAG Auftrag The Auftrag for this task if any
--- @param Ops.Intelligence#INTEL.Cluster Cluster Intel Cluster for this task
--- @param Ops.Intelligence#INTEL.Contact Contact Intel Contact for this task
--- @return #number TID Task ID created
+--- @param #AWACS self
+--- @param #number GroupID ManagedGroup ID
+--- @param #AWACS.TaskDescription Description Short Description Task Type
+--- @param #string ScreenText Long task description for screen output
+--- @param #table Object Object for Ops.Target#TARGET assignment
+--- @param #AWACS.TaskStatus TaskStatus Status of this task
+--- @param Ops.Auftrag#AUFTRAG Auftrag The Auftrag for this task if any
+--- @param Ops.Intelligence#INTEL.Cluster Cluster Intel Cluster for this task
+--- @param Ops.Intelligence#INTEL.Contact Contact Intel Contact for this task
+--- @return #number TID Task ID created
 function AWACS:_CreateTaskForGroup(GroupID,Description,ScreenText,Object,TaskStatus,Auftrag,Cluster,Contact)
    self:T(self.lid.."_CreateTaskForGroup "..GroupID .." Description: "..Description)
    
@@ -4232,9 +4232,9 @@ function AWACS:_CreateTaskForGroup(GroupID,Description,ScreenText,Object,TaskSta
 end 
 
 --- [Internal] Read registered Task for Group by its ID
--- @param #AWACS self
--- @param #number GroupID ManagedGroup ID
--- @return #AWACS.ManagedTask Task or nil if n/e
+--- @param #AWACS self
+--- @param #number GroupID ManagedGroup ID
+--- @return #AWACS.ManagedTask Task or nil if n/e
 function AWACS:_ReadAssignedTaskFromGID(GroupID)
    self:T(self.lid.."_GetAssignedTaskFromGID "..GroupID)
    local managedgroup = self.ManagedGrps[GroupID] -- #AWACS.ManagedGroup
@@ -4248,9 +4248,9 @@ function AWACS:_ReadAssignedTaskFromGID(GroupID)
 end
 
 --- [Internal] Read assigned Group from a TaskID
--- @param #AWACS self
--- @param #number TaskID ManagedTask ID
--- @return #AWACS.ManagedGroup Group structure or nil if n/e
+--- @param #AWACS self
+--- @param #number TaskID ManagedTask ID
+--- @return #AWACS.ManagedGroup Group structure or nil if n/e
 function AWACS:_ReadAssignedGroupFromTID(TaskID)
    self:T(self.lid.."_ReadAssignedGroupFromTID "..TaskID)
    if self.ManagedTasks:HasUniqueID(TaskID) then
@@ -4263,9 +4263,9 @@ function AWACS:_ReadAssignedGroupFromTID(TaskID)
 end
  
 --- [Internal] Create radio entry to tell players that CAP is on station in Anchor
--- @param #AWACS self
--- @param #number GID Group ID 
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #number GID Group ID 
+--- @return #AWACS self
 function AWACS:_MessageAIReadyForTasking(GID)
   self:T(self.lid.."_MessageAIReadyForTasking")
   -- obtain group details
@@ -4280,13 +4280,13 @@ function AWACS:_MessageAIReadyForTasking(GID)
 end
 
 --- [Internal] Update Contact Tag
--- @param #AWACS self
--- @param #number CID Contact ID
--- @param #string Text Text to be used
--- @param #boolean TAC TAC Call done
--- @param #boolean MELD MELD Call done
--- @param #string TaskStatus Overwrite status with #AWACS.TaskStatus  Status
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #number CID Contact ID
+--- @param #string Text Text to be used
+--- @param #boolean TAC TAC Call done
+--- @param #boolean MELD MELD Call done
+--- @param #string TaskStatus Overwrite status with #AWACS.TaskStatus  Status
+--- @return #AWACS self
 function AWACS:_UpdateContactEngagementTag(CID,Text,TAC,MELD,TaskStatus)
   self:T(self.lid.."_UpdateContactEngagementTag")
   local text = Text or ""
@@ -4303,8 +4303,8 @@ function AWACS:_UpdateContactEngagementTag(CID,Text,TAC,MELD,TaskStatus)
 end
 
 --- [Internal] Check available tasks and status
--- @param #AWACS self
--- @return #AWACS self
+--- @param #AWACS self
+--- @return #AWACS self
 function AWACS:_CheckTaskQueue()
   self:T(self.lid.."_CheckTaskQueue")
   local opentasks = 0
@@ -4730,8 +4730,8 @@ function AWACS:_CheckTaskQueue()
 end
 
 --- [Internal] Write stats to log
--- @param #AWACS self
--- @return #AWACS self
+--- @param #AWACS self
+--- @return #AWACS self
 function AWACS:_LogStatistics()
   self:T(self.lid.."_LogStatistics")
   local text = string.gsub(UTILS.OneLineSerialize(self.MonitoringData),",","\n")
@@ -4746,10 +4746,10 @@ function AWACS:_LogStatistics()
 end
 
 --- [User] Add another AirWing for AI CAP Flights under management
--- @param #AWACS self
--- @param Ops.AirWing#AIRWING AirWing The AirWing to (also) obtain CAP flights from
--- @param Core.Zone#ZONE_RADIUS Zone (optional) This AirWing has it's own station zone, AI CAP will be send there
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Ops.AirWing#AIRWING AirWing The AirWing to (also) obtain CAP flights from
+--- @param Core.Zone#ZONE_RADIUS Zone (optional) This AirWing has it's own station zone, AI CAP will be send there
+--- @return #AWACS self
 function AWACS:AddCAPAirWing(AirWing,Zone)
   self:T(self.lid.."AddCAPAirWing")
   if AirWing then
@@ -4799,15 +4799,15 @@ function AWACS:AddCAPAirWing(AirWing,Zone)
 end
 
 --- [Internal] Announce a new contact
--- @param #AWACS self
--- @param #AWACS.ManagedContact Contact
--- @param #boolean IsNew Is a new contact
--- @param Wrapper.Group#GROUP Group Announce to Group if not nil
--- @param #boolean IsBogeyDope If true, this is a bogey dope announcement
--- @param #string Tag Tag name for this contact. Alpha, Brave, Charlie ... 
--- @param #boolean IsPopup This is a pop-up group
--- @param #string ReportingName The NATO code reporting name for the contact, e.g. "Foxbat". "Bogey" if unknown.
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #AWACS.ManagedContact Contact
+--- @param #boolean IsNew Is a new contact
+--- @param Wrapper.Group#GROUP Group Announce to Group if not nil
+--- @param #boolean IsBogeyDope If true, this is a bogey dope announcement
+--- @param #string Tag Tag name for this contact. Alpha, Brave, Charlie ... 
+--- @param #boolean IsPopup This is a pop-up group
+--- @param #string ReportingName The NATO code reporting name for the contact, e.g. "Foxbat". "Bogey" if unknown.
+--- @return #AWACS self
 function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag,IsPopup,ReportingName)
   self:T(self.lid.."_AnnounceContact")
   -- do we have a group to talk to?
@@ -4941,9 +4941,9 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag,IsPopup,Repo
 end
 
 --- [Internal] Check for alive OpsGroup from Mission OpsGroups table
--- @param #AWACS self
--- @param #table OpsGroups
--- @return Ops.OpsGroup#OPSGROUP or nil
+--- @param #AWACS self
+--- @param #table OpsGroups
+--- @return Ops.OpsGroup#OPSGROUP or nil
 function AWACS:_GetAliveOpsGroupFromTable(OpsGroups)
   self:T(self.lid.."_GetAliveOpsGroupFromTable")
   local handback = nil 
@@ -4958,10 +4958,10 @@ function AWACS:_GetAliveOpsGroupFromTable(OpsGroups)
 end
 
 --- [Internal] Clean up mission stack
--- @param #AWACS self
--- @return #number CAPMissions
--- @return #number Alert5Missions
--- @return #number InterceptMissions
+--- @param #AWACS self
+--- @return #number CAPMissions
+--- @return #number Alert5Missions
+--- @return #number InterceptMissions
 function AWACS:_CleanUpAIMissionStack()
   self:T(self.lid.."_CleanUpAIMissionStack")
   
@@ -5058,8 +5058,8 @@ function AWACS:_ConsistencyCheck()
 end
 
 --- [Internal] Check Enough AI CAP on Station
--- @param #AWACS self
--- @return #AWACS self
+--- @param #AWACS self
+--- @return #AWACS self
 function AWACS:_CheckAICAPOnStation()
   self:T(self.lid.."_CheckAICAPOnStation")
   
@@ -5178,10 +5178,10 @@ function AWACS:_CheckAICAPOnStation()
 end
 
 --- [Internal] Set ROE for AI CAP
--- @param #AWACS self
--- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup
--- @param Wrapper.Group#GROUP Group
--- @return #AWACS self
+--- @param #AWACS self
+--- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup
+--- @param Wrapper.Group#GROUP Group
+--- @return #AWACS self
 function AWACS:_SetAIROE(FlightGroup,Group)
   self:T(self.lid.."_SetAIROE")
   local ROE = self.AwacsROE or AWACS.ROE.POLICE
@@ -5223,10 +5223,10 @@ function AWACS:_SetAIROE(FlightGroup,Group)
 end
 
 --- [Internal] TAC Range Call to Pilot
--- @param #AWACS self
--- @param #number GID GID
--- @param #AWACS.ManagedContact Contact
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #number GID GID
+--- @param #AWACS.ManagedContact Contact
+--- @return #AWACS self
 function AWACS:_TACRangeCall(GID,Contact)
   self:T(self.lid.."_TACRangeCall")
   -- AIC: “Enforcer 11, single group, 30 miles.”
@@ -5251,10 +5251,10 @@ function AWACS:_TACRangeCall(GID,Contact)
 end
 
 --- [Internal] Meld Range Call to Pilot
--- @param #AWACS self
--- @param #number GID GID
--- @param #AWACS.ManagedContact Contact
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #number GID GID
+--- @param #AWACS.ManagedContact Contact
+--- @return #AWACS self
 function AWACS:_MeldRangeCall(GID,Contact)
   self:T(self.lid.."_MeldRangeCall")
   if not Contact then return self end
@@ -5283,8 +5283,8 @@ function AWACS:_MeldRangeCall(GID,Contact)
 end
 
 --- [Internal] Threat Range Call to Pilot
--- @param #AWACS self
--- @return #AWACS self
+--- @param #AWACS self
+--- @return #AWACS self
 function AWACS:_ThreatRangeCall(GID,Contact)
   self:T(self.lid.."_ThreatRangeCall")
   if not Contact then return self end
@@ -5313,9 +5313,9 @@ function AWACS:_ThreatRangeCall(GID,Contact)
 end
 
 --- [Internal] Merged Call to Pilot
--- @param #AWACS self
--- @param #number GID
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #number GID
+--- @return #AWACS self
 function AWACS:_MergedCall(GID)
   self:T(self.lid.."_MergedCall")
   -- AIC: “Enforcer, mergedb”
@@ -5327,10 +5327,10 @@ function AWACS:_MergedCall(GID)
 end
 
 --- [Internal] Assign a Pilot to a target
--- @param #AWACS self
--- @param #table Pilots Table of #AWACS.ManagedGroup Pilot 
--- @param Utilities.FiFo#FIFO Targets FiFo of #AWACS.ManagedContact Targets
--- @return #AWACS self 
+--- @param #AWACS self
+--- @param #table Pilots Table of #AWACS.ManagedGroup Pilot 
+--- @param Utilities.FiFo#FIFO Targets FiFo of #AWACS.ManagedContact Targets
+--- @return #AWACS self 
 function AWACS:_AssignPilotToTarget(Pilots,Targets)
   self:T(self.lid.."_AssignPilotToTarget")
   
@@ -5540,11 +5540,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- [Internal] onbeforeStart
--- @param #AWACS self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @return #AWACS self
 function AWACS:onbeforeStart(From,Event,to)
   self:T({From, Event, To})
   if self.IncludeHelicopters then
@@ -5554,11 +5554,11 @@ function AWACS:onbeforeStart(From,Event,to)
 end
 
 --- [Internal] onafterStart
--- @param #AWACS self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @return #AWACS self
 function AWACS:onafterStart(From, Event, To)
   self:T({From, Event, To})
   
@@ -5938,11 +5938,11 @@ function AWACS:_CheckAwacsStatus()
 end
 
 --- [Internal] onafterStatus
--- @param #AWACS self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @return #AWACS self
 function AWACS:onafterStatus(From, Event, To)
   self:T({From, Event, To})
   
@@ -6023,11 +6023,11 @@ function AWACS:onafterStatus(From, Event, To)
 end
 
 --- [Internal] onafterStop
--- @param #AWACS self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @return #AWACS self
 function AWACS:onafterStop(From, Event, To)
   self:T({From, Event, To})
   -- unhandle stuff, exit intel
@@ -6061,14 +6061,14 @@ function AWACS:onafterStop(From, Event, To)
 end
 
 --- [Internal] onafterAssignAnchor
--- @param #AWACS self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @param #number GID Group ID
--- @param #boolean HasOwnStation
--- @param #string HasOwnStation
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @param #number GID Group ID
+--- @param #boolean HasOwnStation
+--- @param #string HasOwnStation
+--- @return #AWACS self
 function AWACS:onafterAssignAnchor(From, Event, To, GID, HasOwnStation, StationName)
   self:T({From, Event, To, "GID = " .. GID})
   self:_AssignAnchorToID(GID, HasOwnStation, StationName)
@@ -6076,14 +6076,14 @@ function AWACS:onafterAssignAnchor(From, Event, To, GID, HasOwnStation, StationN
 end
 
 --- [Internal] onafterCheckedOut
--- @param #AWACS self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @param #AWACS.ManagedGroup.GID Group ID 
--- @param #number AnchorStackNo
--- @param #number Angels
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @param #AWACS.ManagedGroup.GID Group ID 
+--- @param #number AnchorStackNo
+--- @param #number Angels
+--- @return #AWACS self
 function AWACS:onafterCheckedOut(From, Event, To, GID, AnchorStackNo, Angels)
   self:T({From, Event, To, "GID = " .. GID})
   self:_RemoveIDFromAnchor(GID,AnchorStackNo,Angels)
@@ -6091,14 +6091,14 @@ function AWACS:onafterCheckedOut(From, Event, To, GID, AnchorStackNo, Angels)
 end
 
 --- [Internal] onafterAssignedAnchor
--- @param #AWACS self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @param #number GID Managed Group ID
--- @param #AWACS.AnchorData Anchor
--- @param #number AnchorStackNo
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @param #number GID Managed Group ID
+--- @param #AWACS.AnchorData Anchor
+--- @param #number AnchorStackNo
+--- @return #AWACS self
 function AWACS:onafterAssignedAnchor(From, Event, To, GID, Anchor, AnchorStackNo, AnchorAngels)
   self:T({From, Event, To, "GID=" .. GID, "Stack=" .. AnchorStackNo})
   -- TODO
@@ -6165,12 +6165,12 @@ function AWACS:onafterAssignedAnchor(From, Event, To, GID, Anchor, AnchorStackNo
 end
 
 --- [Internal] onafterNewCluster
--- @param #AWACS self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @param Ops.Intelligence#INTEL.Cluster Cluster
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @param Ops.Intelligence#INTEL.Cluster Cluster
+--- @return #AWACS self
 function AWACS:onafterNewCluster(From,Event,To,Cluster)
   self:T({From, Event, To, Cluster.index})
   
@@ -6258,12 +6258,12 @@ function AWACS:onafterNewCluster(From,Event,To,Cluster)
 end
   
 --- [Internal] onafterNewContact
--- @param #AWACS self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @param Ops.Intelligence#INTEL.Contact Contact
--- @return #AWACS self 
+--- @param #AWACS self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @param Ops.Intelligence#INTEL.Contact Contact
+--- @return #AWACS self 
 function AWACS:onafterNewContact(From,Event,To,Contact)
   self:T({From, Event, To, Contact})
   local tdist = self.ThreatDistance -- NM 
@@ -6287,36 +6287,36 @@ function AWACS:onafterNewContact(From,Event,To,Contact)
 end
   
 --- [Internal] onafterLostContact
--- @param #AWACS self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @param Ops.Intelligence#INTEL.Contact Contact
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @param Ops.Intelligence#INTEL.Contact Contact
+--- @return #AWACS self
 function AWACS:onafterLostContact(From,Event,To,Contact)
   self:T({From, Event, To, Contact})
   return self
 end
   
 --- [Internal] onafterLostCluster
--- @param #AWACS self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @param Ops.Intelligence#INTEL.Cluster Cluster
--- @param Ops.Auftrag#AUFTRAG Mission
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @param Ops.Intelligence#INTEL.Cluster Cluster
+--- @param Ops.Auftrag#AUFTRAG Mission
+--- @return #AWACS self
 function AWACS:onafterLostCluster(From,Event,To,Cluster,Mission)
   self:T({From, Event, To})
   return self
 end
 
 --- [Internal] onafterCheckRadioQueue
--- @param #AWACS self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @return #AWACS self
 function AWACS:onafterCheckRadioQueue(From,Event,To)
  self:T({From, Event, To})
  -- do we have messages queued?
@@ -6394,11 +6394,11 @@ function AWACS:onafterCheckRadioQueue(From,Event,To)
 end
 
 --- [Internal] onafterEscortShiftChange
--- @param #AWACS self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @return #AWACS self
 function AWACS:onafterEscortShiftChange(From,Event,To)
   self:T({From, Event, To})
   -- request new Escorts, check if AWACS-FG still alive first!
@@ -6418,11 +6418,11 @@ function AWACS:onafterEscortShiftChange(From,Event,To)
 end
 
 --- [Internal] onafterAwacsShiftChange
--- @param #AWACS self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @return #AWACS self
 function AWACS:onafterAwacsShiftChange(From,Event,To)
   self:T({From, Event, To})
   -- request new AWACS
@@ -6448,13 +6448,13 @@ function AWACS:onafterAwacsShiftChange(From,Event,To)
 end
 
 --- On after "FlightOnMission".
--- @param #AWACS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup on mission.
--- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup on mission.
+--- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
+--- @return #AWACS self
 function AWACS:onafterFlightOnMission(From, Event, To, FlightGroup, Mission)
   self:T({From, Event, To})
   -- coming back from AW, set up the flight
@@ -6474,12 +6474,12 @@ function AWACS:onafterFlightOnMission(From, Event, To, FlightGroup, Mission)
 end
 
 --- On after "ReAnchor".
--- @param #AWACS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number GID Group ID to check and re-anchor if possible
--- @return #AWACS self
+--- @param #AWACS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number GID Group ID to check and re-anchor if possible
+--- @return #AWACS self
 function AWACS:onafterReAnchor(From, Event, To, GID)
   self:T({From, Event, To, GID})
   -- get managedgroup, heck AI FG state, heck weapon state, check fuel state, vector back to anchor or RTB

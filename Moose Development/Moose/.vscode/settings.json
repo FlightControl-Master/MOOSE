@@ -13,5 +13,19 @@
     ],
     "Lua.completion.displayContext": 5,
     "Lua.runtime.version": "Lua 5.1",
-    "Lua.completion.callSnippet": "Both"
+    "Lua.completion.callSnippet": "Both",
+    "luahelper.base.ignoreFileOrDir": [
+        ".vscode/",
+        "one11.lua",
+        "Moose/"
+    ],
+    "luahelper.base.ignoreFileOrDirError": [
+        ".vscode/",
+        "one11.lua",
+        "Moose/"
+    ],
+    "Lua.workspace.library": [
+        "_Moose/"
+    ],
+    "Lua.type.weakNilCheck": true
 }

@@ -31,33 +31,33 @@ do
 -------------------------------------------------------------------------------------------------------------------
 
 --- PLAYERTASK class.
--- @type PLAYERTASK
--- @field #string ClassName Name of the class.
--- @field #boolean verbose Switch verbosity.
--- @field #string lid Class id string for output to DCS log file.
--- @field #number PlayerTaskNr (Globally unique) Number of the task.
--- @field Ops.Auftrag#AUFTRAG.Type Type The type of the task
--- @field Ops.Target#TARGET Target The target for this Task
--- @field Utilities.FiFo#FIFO Clients FiFo of Wrapper.Client#CLIENT planes executing this task
--- @field #boolean Repeat
--- @field #number repeats
--- @field #number RepeatNo
--- @field Wrapper.Marker#MARKER TargetMarker
--- @field #number SmokeColor
--- @field #number FlareColor
--- @field #table conditionSuccess   =   {},
--- @field #table conditionFailure   =   {},
--- @field Ops.PlayerTask#PLAYERTASKCONTROLLER TaskController
--- @field #number timestamp
--- @field #number lastsmoketime
--- @field #number coalition
--- @field #string Freetext
--- @field #string FreetextTTS
--- @field #string TaskSubType
--- @field #table NextTaskSuccess
--- @field #table NextTaskFailure
--- @field #string FinalState
--- @field #string TypeName
+--- @type PLAYERTASK
+--- @field #string ClassName Name of the class.
+--- @field #boolean verbose Switch verbosity.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #number PlayerTaskNr (Globally unique) Number of the task.
+--- @field Ops.Auftrag#AUFTRAG.Type Type The type of the task
+--- @field Ops.Target#TARGET Target The target for this Task
+--- @field Utilities.FiFo#FIFO Clients FiFo of Wrapper.Client#CLIENT planes executing this task
+--- @field #boolean Repeat
+--- @field #number repeats
+--- @field #number RepeatNo
+--- @field Wrapper.Marker#MARKER TargetMarker
+--- @field #number SmokeColor
+--- @field #number FlareColor
+--- @field #table conditionSuccess   =   {},
+--- @field #table conditionFailure   =   {},
+--- @field Ops.PlayerTask#PLAYERTASKCONTROLLER TaskController
+--- @field #number timestamp
+--- @field #number lastsmoketime
+--- @field #number coalition
+--- @field #string Freetext
+--- @field #string FreetextTTS
+--- @field #string TaskSubType
+--- @field #table NextTaskSuccess
+--- @field #table NextTaskFailure
+--- @field #string FinalState
+--- @field #string TypeName
 -- @extends Core.Fsm#FSM
 
 
@@ -65,7 +65,7 @@ do
 _PlayerTaskNr = 0
 
 ---
--- @field #PLAYERTASK
+--- @field #PLAYERTASK
 PLAYERTASK = {
   ClassName          = "PLAYERTASK",
   verbose            =   false,
@@ -95,22 +95,22 @@ PLAYERTASK = {
   }
   
 --- PLAYERTASK class version.
--- @field #string version
+--- @field #string version
 PLAYERTASK.version="0.1.12"
 
 --- Generic task condition.
--- @type PLAYERTASK.Condition
--- @field #function func Callback function to check for a condition. Should return a #boolean.
--- @field #table arg Optional arguments passed to the condition callback function.
+--- @type PLAYERTASK.Condition
+--- @field #function func Callback function to check for a condition. Should return a #boolean.
+--- @field #table arg Optional arguments passed to the condition callback function.
 
 --- Constructor
--- @param #PLAYERTASK self
--- @param Ops.Auftrag#AUFTRAG.Type Type Type of this task
--- @param Ops.Target#TARGET Target Target for this task
--- @param #boolean Repeat Repeat this task if true (default = false)
--- @param #number Times Repeat on failure this many times if Repeat is true (default = 1)
--- @param #string TTSType TTS friendly task type name
--- @return #PLAYERTASK self 
+--- @param #PLAYERTASK self
+--- @param Ops.Auftrag#AUFTRAG.Type Type Type of this task
+--- @param Ops.Target#TARGET Target Target for this task
+--- @param #boolean Repeat Repeat this task if true (default = false)
+--- @param #number Times Repeat on failure this many times if Repeat is true (default = 1)
+--- @param #string TTSType TTS friendly task type name
+--- @return #PLAYERTASK self 
 function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
 
   -- Inherit everything from FSM class.
@@ -258,9 +258,9 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
 end
 
 --- [Internal] Add a PLAYERTASKCONTROLLER for this task
--- @param #PLAYERTASK self
--- @param Ops.PlayerTask#PLAYERTASKCONTROLLER Controller
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param Ops.PlayerTask#PLAYERTASKCONTROLLER Controller
+--- @return #PLAYERTASK self
 function PLAYERTASK:_SetController(Controller)
   self:T(self.lid.."_SetController")
   self.TaskController = Controller
@@ -268,9 +268,9 @@ function PLAYERTASK:_SetController(Controller)
 end
 
 --- [User] Set a coalition side for this task
--- @param #PLAYERTASK self
--- @param #number Coalition Coaltion side to add, e.g. coalition.side.BLUE
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #number Coalition Coaltion side to add, e.g. coalition.side.BLUE
+--- @return #PLAYERTASK self
 function PLAYERTASK:SetCoalition(Coalition)
   self:T(self.lid.."SetCoalition")
   self.coalition = Coalition or coalition.side.BLUE
@@ -278,25 +278,25 @@ function PLAYERTASK:SetCoalition(Coalition)
 end
 
 --- [User] Get the coalition side for this task
--- @param #PLAYERTASK self
--- @return #number Coalition Coaltion side, e.g. coalition.side.BLUE, or nil if not set
+--- @param #PLAYERTASK self
+--- @return #number Coalition Coaltion side, e.g. coalition.side.BLUE, or nil if not set
 function PLAYERTASK:GetCoalition()
   self:T(self.lid.."GetCoalition")
   return self.coalition
 end
 
 --- [User] Get the Ops.Target#TARGET object for this task
--- @param #PLAYERTASK self
--- @return Ops.Target#TARGET Target
+--- @param #PLAYERTASK self
+--- @return Ops.Target#TARGET Target
 function PLAYERTASK:GetTarget()
   self:T(self.lid.."GetTarget")
   return self.Target
 end
 
 --- [USER] Add a free text description to this task.
--- @param #PLAYERTASK self
--- @param #string Text
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #string Text
+--- @return #PLAYERTASK self
 function PLAYERTASK:AddFreetext(Text)
   self:T(self.lid.."AddFreetext")
   self.Freetext = Text
@@ -304,25 +304,25 @@ function PLAYERTASK:AddFreetext(Text)
 end
 
 --- [USER] Query if a task has free text description.
--- @param #PLAYERTASK self
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @return #PLAYERTASK self
 function PLAYERTASK:HasFreetext()
   self:T(self.lid.."HasFreetext")
   return self.Freetext ~= nil and true or false
 end
 
 --- [USER] Query if a task has free text TTS description.
--- @param #PLAYERTASK self
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @return #PLAYERTASK self
 function PLAYERTASK:HasFreetextTTS()
   self:T(self.lid.."HasFreetextTTS")
   return self.FreetextTTS ~= nil and true or false
 end
 
 --- [USER] Set a task sub type description to this task.
--- @param #PLAYERTASK self
--- @param #string Type
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #string Type
+--- @return #PLAYERTASK self
 function PLAYERTASK:SetSubType(Type)
   self:T(self.lid.."AddSubType")
   self.TaskSubType = Type
@@ -330,25 +330,25 @@ function PLAYERTASK:SetSubType(Type)
 end
 
 --- [USER] Get task sub type description from this task.
--- @param #PLAYERTASK self
--- @return #string Type or nil
+--- @param #PLAYERTASK self
+--- @return #string Type or nil
 function PLAYERTASK:GetSubType()
   self:T(self.lid.."GetSubType")
   return self.TaskSubType
 end
 
 --- [USER] Get the free text description from this task.
--- @param #PLAYERTASK self
--- @return #string Text
+--- @param #PLAYERTASK self
+--- @return #string Text
 function PLAYERTASK:GetFreetext()
   self:T(self.lid.."GetFreetext")
   return self.Freetext  or self.FreetextTTS or "No Details"
 end
 
 --- [USER] Add a free text description for TTS to this task.
--- @param #PLAYERTASK self
--- @param #string TextTTS
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #string TextTTS
+--- @return #PLAYERTASK self
 function PLAYERTASK:AddFreetextTTS(TextTTS)
   self:T(self.lid.."AddFreetextTTS")
   self.FreetextTTS = TextTTS
@@ -356,17 +356,17 @@ function PLAYERTASK:AddFreetextTTS(TextTTS)
 end
 
 --- [USER] Get the free text TTS description from this task.
--- @param #PLAYERTASK self
--- @return #string Text
+--- @param #PLAYERTASK self
+--- @return #string Text
 function PLAYERTASK:GetFreetextTTS()
   self:T(self.lid.."GetFreetextTTS")
   return self.FreetextTTS  or self.Freetext or "No Details"
 end
 
 --- [USER] Add a short free text description for the menu entry of this task.
--- @param #PLAYERTASK self
--- @param #string Text
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #string Text
+--- @return #PLAYERTASK self
 function PLAYERTASK:SetMenuName(Text)
   self:T(self.lid.."SetMenuName")
   self.Target.name = Text
@@ -374,9 +374,9 @@ function PLAYERTASK:SetMenuName(Text)
 end
 
 --- [USER] Add a task to be assigned to same clients when task was a success.
--- @param #PLAYERTASK self
--- @param Ops.PlayerTask#PLAYERTASK Task
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param Ops.PlayerTask#PLAYERTASK Task
+--- @return #PLAYERTASK self
 function PLAYERTASK:AddNextTaskAfterSuccess(Task)
   self:T(self.lid.."AddNextTaskAfterSuccess")
   table.insert(self.NextTaskSuccess,Task)
@@ -384,9 +384,9 @@ function PLAYERTASK:AddNextTaskAfterSuccess(Task)
 end
 
 --- [USER] Add a task to be assigned to same clients when task was a failure.
--- @param #PLAYERTASK self
--- @param Ops.PlayerTask#PLAYERTASK Task
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param Ops.PlayerTask#PLAYERTASK Task
+--- @return #PLAYERTASK self
 function PLAYERTASK:AddNextTaskAfterFailure(Task)
   self:T(self.lid.."AddNextTaskAfterFailure")
   table.insert(self.NextTaskFailure,Task)
@@ -394,8 +394,8 @@ function PLAYERTASK:AddNextTaskAfterFailure(Task)
 end
 
 --- [User] Check if task is done
--- @param #PLAYERTASK self
--- @return #boolean done
+--- @param #PLAYERTASK self
+--- @return #boolean done
 function PLAYERTASK:IsDone()
   self:T(self.lid.."IsDone?")
   local IsDone = false
@@ -407,9 +407,9 @@ function PLAYERTASK:IsDone()
 end
 
 --- [User] Get client names assigned as table of #strings
--- @param #PLAYERTASK self
--- @return #table clients
--- @return #number clientcount
+--- @param #PLAYERTASK self
+--- @return #table clients
+--- @return #number clientcount
 function PLAYERTASK:GetClients()
   self:T(self.lid.."GetClients")
   local clientlist = self.Clients:GetIDStackSorted() or {}
@@ -418,9 +418,9 @@ function PLAYERTASK:GetClients()
 end
 
 --- [User] Get #CLIENT objects assigned as table
--- @param #PLAYERTASK self
--- @return #table clients
--- @return #number clientcount
+--- @param #PLAYERTASK self
+--- @return #table clients
+--- @return #number clientcount
 function PLAYERTASK:GetClientObjects()
   self:T(self.lid.."GetClientObjects")
   local clientlist = self.Clients:GetDataTable() or {}
@@ -429,26 +429,26 @@ function PLAYERTASK:GetClientObjects()
 end
 
 --- [User] Count clients
--- @param #PLAYERTASK self
--- @return #number clientcount
+--- @param #PLAYERTASK self
+--- @return #number clientcount
 function PLAYERTASK:CountClients()
   self:T(self.lid.."CountClients")
   return self.Clients:Count()
 end
 
 --- [User] Check if a player name is assigned to this task
--- @param #PLAYERTASK self
--- @param #string Name
--- @return #boolean HasName
+--- @param #PLAYERTASK self
+--- @param #string Name
+--- @return #boolean HasName
 function PLAYERTASK:HasPlayerName(Name)
   self:T(self.lid.."HasPlayerName?")
   return self.Clients:HasUniqueID(Name)
 end
 
 --- [User] Add a client to this task
--- @param #PLAYERTASK self
--- @param Wrapper.Client#CLIENT Client
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param Wrapper.Client#CLIENT Client
+--- @return #PLAYERTASK self
 function PLAYERTASK:AddClient(Client)
   self:T(self.lid.."AddClient")
   local name = Client:GetPlayerName()
@@ -460,9 +460,9 @@ function PLAYERTASK:AddClient(Client)
 end
 
 --- [User] Remove a client from this task
--- @param #PLAYERTASK self
--- @param Wrapper.Client#CLIENT Client
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param Wrapper.Client#CLIENT Client
+--- @return #PLAYERTASK self
 function PLAYERTASK:RemoveClient(Client)
   self:T(self.lid.."RemoveClient")
   local name = Client:GetPlayerName()
@@ -480,9 +480,9 @@ function PLAYERTASK:RemoveClient(Client)
 end
 
 --- [User] Client has aborted task this task
--- @param #PLAYERTASK self
--- @param Wrapper.Client#CLIENT Client (optional)
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param Wrapper.Client#CLIENT Client (optional)
+--- @return #PLAYERTASK self
 function PLAYERTASK:ClientAbort(Client)
   self:T(self.lid.."ClientAbort")
   if Client and Client:IsAlive() then
@@ -500,11 +500,11 @@ function PLAYERTASK:ClientAbort(Client)
 end
 
 --- [User] Create target mark on F10 map
--- @param #PLAYERTASK self
--- @param #string Text (optional) Text to show on the marker
--- @param #number Coalition (optional) Coalition this marker is for. Default = All.
--- @param #boolean ReadOnly (optional) Make target marker read-only. Default = false.
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #string Text (optional) Text to show on the marker
+--- @param #number Coalition (optional) Coalition this marker is for. Default = All.
+--- @param #boolean ReadOnly (optional) Make target marker read-only. Default = false.
+--- @return #PLAYERTASK self
 function PLAYERTASK:MarkTargetOnF10Map(Text,Coalition,ReadOnly)
   self:T(self.lid.."MarkTargetOnF10Map")
   if self.Target then
@@ -530,9 +530,9 @@ function PLAYERTASK:MarkTargetOnF10Map(Text,Coalition,ReadOnly)
 end
 
 --- [User] Smoke Target
--- @param #PLAYERTASK self
--- @param #number Color, defaults to SMOKECOLOR.Red
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #number Color, defaults to SMOKECOLOR.Red
+--- @return #PLAYERTASK self
 function PLAYERTASK:SmokeTarget(Color)
   self:T(self.lid.."SmokeTarget")
   local color = Color or SMOKECOLOR.Red
@@ -549,9 +549,9 @@ function PLAYERTASK:SmokeTarget(Color)
 end
 
 --- [User] Flare Target
--- @param #PLAYERTASK self
--- @param #number Color, defaults to FLARECOLOR.Red
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #number Color, defaults to FLARECOLOR.Red
+--- @return #PLAYERTASK self
 function PLAYERTASK:FlareTarget(Color)
   self:T(self.lid.."SmokeTarget")
   local color = Color or FLARECOLOR.Red
@@ -565,10 +565,10 @@ function PLAYERTASK:FlareTarget(Color)
 end
 
 --- [User] Illuminate Target Area
--- @param #PLAYERTASK self
--- @param #number Power Power of illumination bomb in Candela. Default 1000 cd.
--- @param #number Height Height above target used to release the bomb, default 150m.
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #number Power Power of illumination bomb in Candela. Default 1000 cd.
+--- @param #number Height Height above target used to release the bomb, default 150m.
+--- @return #PLAYERTASK self
 function PLAYERTASK:IlluminateTarget(Power,Height)
   self:T(self.lid.."IlluminateTarget")
   local Power = Power or 1000
@@ -586,10 +586,10 @@ end
 -- success / failure function addion courtesy @FunkyFranky.
 
 --- [User] Add success condition.
--- @param #PLAYERTASK self
--- @param #function ConditionFunction If this function returns `true`, the mission is cancelled.
--- @param ... Condition function arguments if any.
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #function ConditionFunction If this function returns `true`, the mission is cancelled.
+--- @param ... Condition function arguments if any.
+--- @return #PLAYERTASK self
 function PLAYERTASK:AddConditionSuccess(ConditionFunction, ...)
 
   local condition={} --#PLAYERTASK.Condition
@@ -606,10 +606,10 @@ function PLAYERTASK:AddConditionSuccess(ConditionFunction, ...)
 end
 
 --- [User] Add failure condition.
--- @param #PLAYERTASK self
--- @param #function ConditionFunction If this function returns `true`, the task is cancelled.
--- @param ... Condition function arguments if any.
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #function ConditionFunction If this function returns `true`, the task is cancelled.
+--- @param ... Condition function arguments if any.
+--- @return #PLAYERTASK self
 function PLAYERTASK:AddConditionFailure(ConditionFunction, ...)
 
   local condition={} --#PLAYERTASK.Condition
@@ -626,9 +626,9 @@ function PLAYERTASK:AddConditionFailure(ConditionFunction, ...)
 end
 
 --- [Internal] Check if any of the given conditions is true.
--- @param #PLAYERTASK self
--- @param #table Conditions Table of conditions.
--- @return #boolean If true, at least one condition is true.
+--- @param #PLAYERTASK self
+--- @param #table Conditions Table of conditions.
+--- @return #boolean If true, at least one condition is true.
 function PLAYERTASK:_EvalConditionsAny(Conditions)
 
   -- Any stop condition must be true.
@@ -650,11 +650,11 @@ function PLAYERTASK:_EvalConditionsAny(Conditions)
 end
 
 --- [Internal] On after status call
--- @param #PLAYERTASK self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @return #PLAYERTASK self
 function PLAYERTASK:onafterStatus(From, Event, To)
   self:T({From, Event, To})
   self:T(self.lid.."onafterStatus")
@@ -724,11 +724,11 @@ end
 
 
 --- [Internal] On after planned call
--- @param #PLAYERTASK self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @return #PLAYERTASK self
 function PLAYERTASK:onafterPlanned(From, Event, To)
   self:T({From, Event, To})
   self.timestamp = timer.getAbsTime()
@@ -736,11 +736,11 @@ function PLAYERTASK:onafterPlanned(From, Event, To)
 end
 
 --- [Internal] On after requested call
--- @param #PLAYERTASK self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @return #PLAYERTASK self
 function PLAYERTASK:onafterRequested(From, Event, To)
   self:T({From, Event, To})
   self.timestamp = timer.getAbsTime()
@@ -748,11 +748,11 @@ function PLAYERTASK:onafterRequested(From, Event, To)
 end
 
 --- [Internal] On after executing call
--- @param #PLAYERTASK self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @return #PLAYERTASK self
 function PLAYERTASK:onafterExecuting(From, Event, To)
   self:T({From, Event, To})
   self.timestamp = timer.getAbsTime()
@@ -760,11 +760,11 @@ function PLAYERTASK:onafterExecuting(From, Event, To)
 end
 
 --- [Internal] On after status call
--- @param #PLAYERTASK self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @return #PLAYERTASK self
 function PLAYERTASK:onafterStop(From, Event, To)
   self:T({From, Event, To})
   self.timestamp = timer.getAbsTime()
@@ -772,12 +772,12 @@ function PLAYERTASK:onafterStop(From, Event, To)
 end
 
 --- [Internal] On after client added call
--- @param #PLAYERTASK self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Wrapper.Client#CLIENT Client
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Wrapper.Client#CLIENT Client
+--- @return #PLAYERTASK self
 function PLAYERTASK:onafterClientAdded(From, Event, To, Client)
   self:T({From, Event, To})
   if Client and self.verbose then
@@ -789,11 +789,11 @@ function PLAYERTASK:onafterClientAdded(From, Event, To, Client)
 end
 
 --- [Internal] On after done call
--- @param #PLAYERTASK self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @return #PLAYERTASK self
 function PLAYERTASK:onafterDone(From, Event, To)
   self:T({From, Event, To})
   if self.TaskController then
@@ -805,11 +805,11 @@ function PLAYERTASK:onafterDone(From, Event, To)
 end
 
 --- [Internal] On after cancel call
--- @param #PLAYERTASK self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @return #PLAYERTASK self
 function PLAYERTASK:onafterCancel(From, Event, To)
   self:T({From, Event, To})
   if self.TaskController then
@@ -822,11 +822,11 @@ function PLAYERTASK:onafterCancel(From, Event, To)
 end
 
 --- [Internal] On after success call
--- @param #PLAYERTASK self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @return #PLAYERTASK self
 function PLAYERTASK:onafterSuccess(From, Event, To)
   self:T({From, Event, To})
   if self.TaskController then
@@ -842,11 +842,11 @@ function PLAYERTASK:onafterSuccess(From, Event, To)
 end
 
 --- [Internal] On after failed call
--- @param #PLAYERTASK self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #PLAYERTASK self
+--- @param #PLAYERTASK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @return #PLAYERTASK self
 function PLAYERTASK:onafterFailed(From, Event, To)
   self:T({From, Event, To})
   self.repeats = self.repeats + 1
@@ -886,59 +886,59 @@ do
 -------------------------------------------------------------------------------------------------------------------
 
 --- PLAYERTASKCONTROLLER class.
--- @type PLAYERTASKCONTROLLER
--- @field #string ClassName Name of the class.
--- @field #boolean verbose Switch verbosity.
--- @field #string lid Class id string for output to DCS log file.
--- @field Utilities.FiFo#FIFO TargetQueue
--- @field Utilities.FiFo#FIFO TaskQueue
--- @field Utilities.FiFo#FIFO TasksPerPlayer
--- @field Utilities.FiFo#FIFO PrecisionTasks
--- @field Core.Set#SET_CLIENT ClientSet
--- @field #string ClientFilter
--- @field #string Name
--- @field #string Type
--- @field #boolean UseGroupNames
--- @field #table PlayerMenu
--- @field #boolean usecluster
--- @field #number ClusterRadius
--- @field #string MenuName
--- @field #boolean NoScreenOutput
--- @field #number TargetRadius
--- @field #boolean UseWhiteList
--- @field #table WhiteList
--- @field #boolean UseBlackList
--- @field #table BlackList
--- @field Core.TextAndSound#TEXTANDSOUND gettext
--- @field #string locale
--- @field #boolean precisionbombing
--- @field Ops.FlightGroup#FLIGHTGROUP LasingDrone
--- @field Core.MarkerOps_BASE#MARKEROPS_BASE MarkerOps
--- @field #boolean taskinfomenu
--- @field #boolean MarkerReadOnly
--- @field #table FlashPlayer List of player who switched Flashing Direction Info on
--- @field #boolean AllowFlash Flashing directions for players allowed
--- @field #number menuitemlimit
--- @field #boolean activehasinfomenu
--- @field #number holdmenutime
--- @field #table customcallsigns
--- @field #boolean ShortCallsign
--- @field #boolean Keepnumber
--- @field #table CallsignTranslations
--- @field #table PlayerFlashMenu
--- @field #table PlayerJoinMenu
--- @field #table PlayerInfoMenu
--- @field #boolean noflaresmokemenu
--- @field #boolean TransmitOnlyWithPlayers
--- @field #boolean buddylasing
--- @field Ops.PlayerRecce#PLAYERRECCE PlayerRecce
--- @field #number Coalition
--- @field Core.Menu#MENU_MISSION MenuParent
--- @field #boolean ShowMagnetic Also show magnetic angles
--- @field #boolean InfoHasCoordinate
--- @field #boolean InfoHasLLDDM
--- @field #table PlayerMenuTag
--- @field #boolean UseTypeNames
+--- @type PLAYERTASKCONTROLLER
+--- @field #string ClassName Name of the class.
+--- @field #boolean verbose Switch verbosity.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field Utilities.FiFo#FIFO TargetQueue
+--- @field Utilities.FiFo#FIFO TaskQueue
+--- @field Utilities.FiFo#FIFO TasksPerPlayer
+--- @field Utilities.FiFo#FIFO PrecisionTasks
+--- @field Core.Set#SET_CLIENT ClientSet
+--- @field #string ClientFilter
+--- @field #string Name
+--- @field #string Type
+--- @field #boolean UseGroupNames
+--- @field #table PlayerMenu
+--- @field #boolean usecluster
+--- @field #number ClusterRadius
+--- @field #string MenuName
+--- @field #boolean NoScreenOutput
+--- @field #number TargetRadius
+--- @field #boolean UseWhiteList
+--- @field #table WhiteList
+--- @field #boolean UseBlackList
+--- @field #table BlackList
+--- @field Core.TextAndSound#TEXTANDSOUND gettext
+--- @field #string locale
+--- @field #boolean precisionbombing
+--- @field Ops.FlightGroup#FLIGHTGROUP LasingDrone
+--- @field Core.MarkerOps_BASE#MARKEROPS_BASE MarkerOps
+--- @field #boolean taskinfomenu
+--- @field #boolean MarkerReadOnly
+--- @field #table FlashPlayer List of player who switched Flashing Direction Info on
+--- @field #boolean AllowFlash Flashing directions for players allowed
+--- @field #number menuitemlimit
+--- @field #boolean activehasinfomenu
+--- @field #number holdmenutime
+--- @field #table customcallsigns
+--- @field #boolean ShortCallsign
+--- @field #boolean Keepnumber
+--- @field #table CallsignTranslations
+--- @field #table PlayerFlashMenu
+--- @field #table PlayerJoinMenu
+--- @field #table PlayerInfoMenu
+--- @field #boolean noflaresmokemenu
+--- @field #boolean TransmitOnlyWithPlayers
+--- @field #boolean buddylasing
+--- @field Ops.PlayerRecce#PLAYERRECCE PlayerRecce
+--- @field #number Coalition
+--- @field Core.Menu#MENU_MISSION MenuParent
+--- @field #boolean ShowMagnetic Also show magnetic angles
+--- @field #boolean InfoHasCoordinate
+--- @field #boolean InfoHasLLDDM
+--- @field #table PlayerMenuTag
+--- @field #boolean UseTypeNames
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1224,7 +1224,7 @@ do
 -- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) #ops-playertask channel.  
 -- 
 --                          
--- @field #PLAYERTASKCONTROLLER
+--- @field #PLAYERTASKCONTROLLER
 PLAYERTASKCONTROLLER = {
   ClassName          = "PLAYERTASKCONTROLLER",
   verbose            =   false,
@@ -1267,11 +1267,11 @@ PLAYERTASKCONTROLLER = {
   }
 
 ---
--- @type Type
--- @field #string A2A Air-to-Air Controller
--- @field #string A2G Air-to-Ground Controller
--- @field #string A2S Air-to-Ship Controller
--- @field #string A2GS Air-to-Ground-and-Ship Controller
+--- @type Type
+--- @field #string A2A Air-to-Air Controller
+--- @field #string A2G Air-to-Ground Controller
+--- @field #string A2S Air-to-Ship Controller
+--- @field #string A2GS Air-to-Ground-and-Ship Controller
 PLAYERTASKCONTROLLER.Type = {
   A2A = "Air-To-Air",
   A2G = "Air-To-Ground",
@@ -1285,10 +1285,10 @@ AUFTRAG.Type.CTLD = "Combat Transport"
 AUFTRAG.Type.CSAR = "Combat Rescue"
  
 --- 
--- @type SeadAttributes
--- @field #number SAM GROUP.Attribute.GROUND_SAM 
--- @field #number AAA GROUP.Attribute.GROUND_AAA
--- @field #number EWR GROUP.Attribute.GROUND_EWR 
+--- @type SeadAttributes
+--- @field #number SAM GROUP.Attribute.GROUND_SAM 
+--- @field #number AAA GROUP.Attribute.GROUND_AAA
+--- @field #number EWR GROUP.Attribute.GROUND_EWR 
 PLAYERTASKCONTROLLER.SeadAttributes = {
   SAM = GROUP.Attribute.GROUND_SAM,
   AAA = GROUP.Attribute.GROUND_AAA,
@@ -1296,7 +1296,7 @@ PLAYERTASKCONTROLLER.SeadAttributes = {
 }
  
 ---
--- @field Messages 
+--- @field Messages 
 PLAYERTASKCONTROLLER.Messages = {
   EN = {
     TASKABORT = "Task aborted!",
@@ -1445,16 +1445,16 @@ PLAYERTASKCONTROLLER.Messages = {
 }
   
 --- PLAYERTASK class version.
--- @field #string version
+--- @field #string version
 PLAYERTASKCONTROLLER.version="0.1.56"
 
 --- Create and run a new TASKCONTROLLER instance.
--- @param #PLAYERTASKCONTROLLER self
--- @param #string Name Name of this controller
--- @param #number Coalition of this controller, e.g. coalition.side.BLUE
--- @param #string Type Type of the tasks controlled, defaults to PLAYERTASKCONTROLLER.Type.A2G
--- @param #string ClientFilter (optional) Additional prefix filter for the SET_CLIENT. Can be handed as @{Core.Set#SET_CLIENT} also.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string Name Name of this controller
+--- @param #number Coalition of this controller, e.g. coalition.side.BLUE
+--- @param #string Type Type of the tasks controlled, defaults to PLAYERTASKCONTROLLER.Type.A2G
+--- @param #string ClientFilter (optional) Additional prefix filter for the SET_CLIENT. Can be handed as @{Core.Set#SET_CLIENT} also.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   
   -- Inherit everything from FSM class.
@@ -1657,8 +1657,8 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
 end
 
 --- [Internal] Init localization
--- @param #PLAYERTASKCONTROLLER self
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_InitLocalization()
   self:T(self.lid.."_InitLocalization")
   self.gettext = TEXTANDSOUND:New("PLAYERTASKCONTROLLER","en") -- Core.TextAndSound#TEXTANDSOUND
@@ -1675,8 +1675,8 @@ function PLAYERTASKCONTROLLER:_InitLocalization()
 end
 
 --- [User] Show target menu entries of type names for GROUND targets (off by default!), e.g. "Tank Group..."
--- @param #PLAYERTASKCONTROLLER self
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetEnableUseTypeNames()
   self:T(self.lid.."SetEnableUseTypeNames")
   self.UseTypeNames = true
@@ -1684,8 +1684,8 @@ function PLAYERTASKCONTROLLER:SetEnableUseTypeNames()
 end
 
 --- [User] Do not show target menu entries of type names for GROUND targets
--- @param #PLAYERTASKCONTROLLER self
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetDisableUseTypeNames()
   self:T(self.lid.."SetDisableUseTypeNames")
   self.UseTypeNames = false
@@ -1693,9 +1693,9 @@ function PLAYERTASKCONTROLLER:SetDisableUseTypeNames()
 end
 
 --- [User] Set flash directions option for player (player based info)
--- @param #PLAYERTASKCONTROLLER self
--- @param #boolean OnOff Set to `true` to switch on and `false` to switch off. Default is OFF.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #boolean OnOff Set to `true` to switch on and `false` to switch off. Default is OFF.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetAllowFlashDirection(OnOff)
   self:T(self.lid.."SetAllowFlashDirection")
   self.AllowFlash = OnOff
@@ -1703,8 +1703,8 @@ function PLAYERTASKCONTROLLER:SetAllowFlashDirection(OnOff)
 end
 
 --- [User] Do not show menu entries to smoke or flare targets
--- @param #PLAYERTASKCONTROLLER self
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetDisableSmokeFlareTask()
   self:T(self.lid.."SetDisableSmokeFlareTask")
   self.noflaresmokemenu = true
@@ -1712,9 +1712,9 @@ function PLAYERTASKCONTROLLER:SetDisableSmokeFlareTask()
 end
 
 --- [User] For SRS - Switch to only transmit if there are players on the server.
--- @param #PLAYERTASKCONTROLLER self
--- @param #boolean Switch If true, only send SRS if there are alive Players.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #boolean Switch If true, only send SRS if there are alive Players.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetTransmitOnlyWithPlayers(Switch)
   self.TransmitOnlyWithPlayers = Switch
   if self.SRSQueue then
@@ -1724,8 +1724,8 @@ function PLAYERTASKCONTROLLER:SetTransmitOnlyWithPlayers(Switch)
 end
 
 --- [User] Show menu entries to smoke or flare targets (on by default!)
--- @param #PLAYERTASKCONTROLLER self
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetEnableSmokeFlareTask()
   self:T(self.lid.."SetEnableSmokeFlareTask")
   self.noflaresmokemenu = false
@@ -1733,10 +1733,10 @@ function PLAYERTASKCONTROLLER:SetEnableSmokeFlareTask()
 end
 
 --- [User] Show info text on screen with a coordinate info in any case (OFF by default)
--- @param #PLAYERTASKCONTROLLER self
--- @param #boolean OnOff Switch on = true or off = false
--- @param #boolean LLDDM Show LLDDM = true or LLDMS = false
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #boolean OnOff Switch on = true or off = false
+--- @param #boolean LLDDM Show LLDDM = true or LLDMS = false
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetInfoShowsCoordinate(OnOff,LLDDM)
   self:T(self.lid.."SetInfoShowsCoordinate")
   self.InfoHasCoordinate = OnOff
@@ -1745,12 +1745,12 @@ function PLAYERTASKCONTROLLER:SetInfoShowsCoordinate(OnOff,LLDDM)
 end
 
 --- [User] Set callsign options for TTS output. See @{Wrapper.Group#GROUP.GetCustomCallSign}() on how to set customized callsigns.
--- @param #PLAYERTASKCONTROLLER self
--- @param #boolean ShortCallsign If true, only call out the major flight number
--- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name for players as-is, no amendments or numbers.
--- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #boolean ShortCallsign If true, only call out the major flight number
+--- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name for players as-is, no amendments or numbers.
+--- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
 -- callsigns from playername or group name.
--- @return #PLAYERTASKCONTROLLER self
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations)
   if not ShortCallsign or ShortCallsign == false then
    self.ShortCallsign = false
@@ -1764,9 +1764,9 @@ end
 
 --- [Internal] Get text for text-to-speech.
 -- Numbers are spaced out, e.g. "Heading 180" becomes "Heading 1 8 0 ".
--- @param #PLAYERTASKCONTROLLER self
--- @param #string text Original text.
--- @return #string Spoken text.
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string text Original text.
+--- @return #string Spoken text.
 function PLAYERTASKCONTROLLER:_GetTextForSpeech(text)
  self:T(self.lid.."_GetTextForSpeech")
   -- Space out numbers.
@@ -1780,10 +1780,10 @@ function PLAYERTASKCONTROLLER:_GetTextForSpeech(text)
 end
 
 --- [User] Set repetition options for tasks
--- @param #PLAYERTASKCONTROLLER self
--- @param #boolean OnOff Set to `true` to switch on and `false` to switch off (defaults to true)
--- @param #number Repeats Number of repeats (defaults to 5)
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #boolean OnOff Set to `true` to switch on and `false` to switch off (defaults to true)
+--- @param #number Repeats Number of repeats (defaults to 5)
+--- @return #PLAYERTASKCONTROLLER self
 -- @usage `taskmanager:SetTaskRepetition(true, 5)`
 function PLAYERTASKCONTROLLER:SetTaskRepetition(OnOff, Repeats)
   self:T(self.lid.."SetTaskRepetition")
@@ -1798,10 +1798,10 @@ function PLAYERTASKCONTROLLER:SetTaskRepetition(OnOff, Repeats)
 end
 
 --- [Internal] Send message to SET_CLIENT of players
--- @param #PLAYERTASKCONTROLLER self
--- @param #string Text the text to be send
--- @param #number Seconds (optional) Seconds to show, default 10
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string Text the text to be send
+--- @param #number Seconds (optional) Seconds to show, default 10
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_SendMessageToClients(Text,Seconds)
   self:T(self.lid.."_SendMessageToClients")
   local seconds = Seconds or 10
@@ -1814,11 +1814,11 @@ function PLAYERTASKCONTROLLER:_SendMessageToClients(Text,Seconds)
 end
 
 --- [User] Allow precision laser-guided bombing on statics and "high-value" ground units (MBT etc)
--- @param #PLAYERTASKCONTROLLER self
--- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FlightGroup (e.g. drone) to be used for lasing (one unit in one group only).
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FlightGroup (e.g. drone) to be used for lasing (one unit in one group only).
 -- Can optionally be handed as Ops.ArmyGroup#ARMYGROUP - **Note** might not find an LOS spot or get lost on the way. Cannot island-hop.
--- @param #number LaserCode The lasercode to be used. Defaults to 1688.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #number LaserCode The lasercode to be used. Defaults to 1688.
+--- @return #PLAYERTASKCONTROLLER self
 -- @usage
 -- -- Set up precision bombing, FlightGroup as lasing unit
 --        local FlightGroup = FLIGHTGROUP:New("LasingUnit")
@@ -1863,9 +1863,9 @@ end
 
 
 --- [User] Allow precision laser-guided bombing on statics and "high-value" ground units (MBT etc) with player units lasing.
--- @param #PLAYERTASKCONTROLLER self
--- @param Ops.PlayerRecce#PLAYERRECCE Recce (Optional) The PLAYERRECCE object governing the lasing players.
--- @return #PLAYERTASKCONTROLLER self 
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Ops.PlayerRecce#PLAYERRECCE Recce (Optional) The PLAYERRECCE object governing the lasing players.
+--- @return #PLAYERTASKCONTROLLER self 
 function PLAYERTASKCONTROLLER:EnableBuddyLasing(Recce)
   self:T(self.lid.."EnableBuddyLasing")
   self.buddylasing = true
@@ -1874,8 +1874,8 @@ function PLAYERTASKCONTROLLER:EnableBuddyLasing(Recce)
 end
 
 --- [User] Allow precision laser-guided bombing on statics and "high-value" ground units (MBT etc) with player units lasing.
--- @param #PLAYERTASKCONTROLLER self
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:DisableBuddyLasing()
   self:T(self.lid.."DisableBuddyLasing")
   self.buddylasing = false
@@ -1883,9 +1883,9 @@ function PLAYERTASKCONTROLLER:DisableBuddyLasing()
 end
 
 --- [User] Allow addition of targets with user F10 map markers.
--- @param #PLAYERTASKCONTROLLER self
--- @param #string Tag (Optional) The tagname to use to identify commands, defaults to "TASK"
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string Tag (Optional) The tagname to use to identify commands, defaults to "TASK"
+--- @return #PLAYERTASKCONTROLLER self
 -- @usage
 -- Enable the function like so:
 --          mycontroller:EnableMarkerOps("TASK")
@@ -1934,10 +1934,10 @@ function PLAYERTASKCONTROLLER:EnableMarkerOps(Tag)
 end
 
 --- [Internal] Get player name
--- @param #PLAYERTASKCONTROLLER self
--- @param Wrapper.Client#CLIENT Client
--- @return #string playername
--- @return #string ttsplayername
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Wrapper.Client#CLIENT Client
+--- @return #string playername
+--- @return #string ttsplayername
 function PLAYERTASKCONTROLLER:_GetPlayerName(Client)
   self:T(self.lid.."_GetPlayerName")
   local playername = Client:GetPlayerName()
@@ -1955,8 +1955,8 @@ function PLAYERTASKCONTROLLER:_GetPlayerName(Client)
 end
 
 --- [User] Disable precision laser-guided bombing on statics and "high-value" ground units (MBT etc)
--- @param #PLAYERTASKCONTROLLER self
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:DisablePrecisionBombing(FlightGroup,LaserCode)
   self:T(self.lid.."DisablePrecisionBombing")
   self.autolase = nil
@@ -1965,8 +1965,8 @@ function PLAYERTASKCONTROLLER:DisablePrecisionBombing(FlightGroup,LaserCode)
 end
 
 --- [User] Enable extra menu to show task detail information before joining
--- @param #PLAYERTASKCONTROLLER self
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:EnableTaskInfoMenu()
   self:T(self.lid.."EnableTaskInfoMenu")
   self.taskinfomenu = true
@@ -1974,8 +1974,8 @@ function PLAYERTASKCONTROLLER:EnableTaskInfoMenu()
 end
 
 --- [User] Disable extra menu to show task detail information before joining
--- @param #PLAYERTASKCONTROLLER self
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:DisableTaskInfoMenu()
   self:T(self.lid.."DisableTaskInfoMenu")
   self.taskinfomenu = false
@@ -1983,12 +1983,12 @@ function PLAYERTASKCONTROLLER:DisableTaskInfoMenu()
 end
 
 --- [User] Set menu build fine-tuning options
--- @param #PLAYERTASKCONTROLLER self
--- @param #boolean InfoMenu If `true` this option will allow to show the Task Info-Menu also when a player has an active task. 
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #boolean InfoMenu If `true` this option will allow to show the Task Info-Menu also when a player has an active task. 
 -- Since the menu isn't refreshed if a player holds an active task, the info in there might be stale.
--- @param #number ItemLimit Number of items per task type to show, default 5. 
--- @param #number HoldTime Minimum number of seconds between menu refreshes (called every 30 secs) if a player has **no active task**.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #number ItemLimit Number of items per task type to show, default 5. 
+--- @param #number HoldTime Minimum number of seconds between menu refreshes (called every 30 secs) if a player has **no active task**.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetMenuOptions(InfoMenu,ItemLimit,HoldTime)
   self:T(self.lid.."SetMenuOptions")
   self.activehasinfomenu = InfoMenu or false
@@ -2001,8 +2001,8 @@ function PLAYERTASKCONTROLLER:SetMenuOptions(InfoMenu,ItemLimit,HoldTime)
 end
 
 --- [User] Forbid F10 markers to be deleted by pilots. Note: Marker will auto-delete when the undelying task is done.
--- @param #PLAYERTASKCONTROLLER self
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetMarkerReadOnly()
   self:T(self.lid.."SetMarkerReadOnly")
   self.MarkerReadOnly = true
@@ -2010,8 +2010,8 @@ function PLAYERTASKCONTROLLER:SetMarkerReadOnly()
 end
 
 --- [User] Allow F10 markers to be deleted by pilots. Note: Marker will auto-delete when the undelying task is done.
--- @param #PLAYERTASKCONTROLLER self
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetMarkerDeleteable()
   self:T(self.lid.."SetMarkerDeleteable")
   self.MarkerReadOnly = false
@@ -2019,9 +2019,9 @@ function PLAYERTASKCONTROLLER:SetMarkerDeleteable()
 end
 
 --- [Internal] Event handling
--- @param #PLAYERTASKCONTROLLER self
--- @param Core.Event#EVENTDATA EventData
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Core.Event#EVENTDATA EventData
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_EventHandler(EventData)
   self:T(self.lid.."_EventHandler: "..EventData.id)
   if EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
@@ -2087,9 +2087,9 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
 end
 
 --- [User] Set locale for localization. Defaults to "en"
--- @param #PLAYERTASKCONTROLLER self
--- @param #string Locale The locale to use
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string Locale The locale to use
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetLocale(Locale)
   self:T(self.lid.."SetLocale")
   self.locale = Locale or "en"
@@ -2097,9 +2097,9 @@ function PLAYERTASKCONTROLLER:SetLocale(Locale)
 end
 
 --- [User] Switch screen output.
--- @param #PLAYERTASKCONTROLLER self
--- @param #boolean OnOff. Switch screen output off (true) or on (false)
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #boolean OnOff. Switch screen output off (true) or on (false)
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SuppressScreenOutput(OnOff)
   self:T(self.lid.."SuppressScreenOutput")
   self.NoScreenOutput = OnOff or false
@@ -2107,9 +2107,9 @@ function PLAYERTASKCONTROLLER:SuppressScreenOutput(OnOff)
 end
 
 --- [User] Set target radius. Determines the zone radius to distinguish CAS from BAI tasks and to find enemies if the TARGET object is a COORDINATE.
--- @param #PLAYERTASKCONTROLLER self
--- @param #number Radius Radius to use in meters. Defaults to 500 meters.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #number Radius Radius to use in meters. Defaults to 500 meters.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetTargetRadius(Radius)
   self:T(self.lid.."SetTargetRadius")
   self.TargetRadius = Radius or 500
@@ -2118,9 +2118,9 @@ end
 
 --- [User] Set the cluster radius if you want to use target clusters rather than single group detection. 
 -- Note that for a controller type A2A target clustering is on by default. Also remember that the diameter of the resulting zone is double the radius.
--- @param #PLAYERTASKCONTROLLER self
--- @param #number Radius Target cluster radius in kilometers. Default is 0.5km.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #number Radius Target cluster radius in kilometers. Default is 0.5km.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetClusterRadius(Radius)
   self:T(self.lid.."SetClusterRadius")
   self.ClusterRadius = Radius or 0.5
@@ -2129,9 +2129,9 @@ function PLAYERTASKCONTROLLER:SetClusterRadius(Radius)
 end
 
 --- [User] Manually cancel a specific task
--- @param #PLAYERTASKCONTROLLER self
--- @param Ops.PlayerTask#PLAYERTASK Task The task to be cancelled
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Ops.PlayerTask#PLAYERTASK Task The task to be cancelled
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:CancelTask(Task)
   self:T(self.lid.."CancelTask")
   Task:__Cancel(-1)
@@ -2139,9 +2139,9 @@ function PLAYERTASKCONTROLLER:CancelTask(Task)
 end
 
 --- [User] Switch usage of target names for menu entries on or off
--- @param #PLAYERTASKCONTROLLER self
--- @param #boolean OnOff If true, set to on (default), if nil or false, set to off
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #boolean OnOff If true, set to on (default), if nil or false, set to off
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SwitchUseGroupNames(OnOff)
   self:T(self.lid.."SwitchUseGroupNames")
   if OnOff then
@@ -2153,9 +2153,9 @@ function PLAYERTASKCONTROLLER:SwitchUseGroupNames(OnOff)
 end
 
 --- [User] Switch showing additional magnetic angles
--- @param #PLAYERTASKCONTROLLER self
--- @param #boolean OnOff If true, set to on (default), if nil or false, set to off
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #boolean OnOff If true, set to on (default), if nil or false, set to off
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SwitchMagenticAngles(OnOff)
   self:T(self.lid.."SwitchMagenticAngles")
   if OnOff then
@@ -2167,8 +2167,8 @@ function PLAYERTASKCONTROLLER:SwitchMagenticAngles(OnOff)
 end
 
 --- [Internal] Get task types for the menu
--- @param #PLAYERTASKCONTROLLER self
--- @return #table TaskTypes
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #table TaskTypes
 function PLAYERTASKCONTROLLER:_GetAvailableTaskTypes()
   self:T(self.lid.."_GetAvailableTaskTypes")
   local tasktypes = {}
@@ -2183,8 +2183,8 @@ function PLAYERTASKCONTROLLER:_GetAvailableTaskTypes()
 end
 
 --- [Internal] Get task per type for the menu
--- @param #PLAYERTASKCONTROLLER self
--- @return #table TasksPerTypes
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #table TasksPerTypes
 function PLAYERTASKCONTROLLER:_GetTasksPerType()
   self:T(self.lid.."_GetTasksPerType")
   local tasktypes = self:_GetAvailableTaskTypes()
@@ -2217,8 +2217,8 @@ function PLAYERTASKCONTROLLER:_GetTasksPerType()
 end
 
 --- [Internal] Check target queue
--- @param #PLAYERTASKCONTROLLER self
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_CheckTargetQueue()
  self:T(self.lid.."_CheckTargetQueue")
  if self.TargetQueue:Count() > 0 then
@@ -2268,8 +2268,8 @@ function PLAYERTASKCONTROLLER:_CheckTargetQueue()
 end
 
 --- [Internal] Check task queue
--- @param #PLAYERTASKCONTROLLER self
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_CheckTaskQueue()
  self:T(self.lid.."_CheckTaskQueue")
  if self.TaskQueue:Count() > 0 then
@@ -2315,8 +2315,8 @@ function PLAYERTASKCONTROLLER:_CheckTaskQueue()
 end
 
 --- [Internal] Check precision task queue
--- @param #PLAYERTASKCONTROLLER self
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
  self:T(self.lid.."_CheckTaskQueue")
  if self.PrecisionTasks:Count() > 0 and self.precisionbombing then
@@ -2442,17 +2442,17 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
 end
 
 --- [Internal] Check task queue for a specific player name
--- @param #PLAYERTASKCONTROLLER self
--- @return #boolean outcome
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #boolean outcome
 function PLAYERTASKCONTROLLER:_CheckPlayerHasTask(PlayerName)
   self:T(self.lid.."_CheckPlayerHasTask")
   return self.TasksPerPlayer:HasUniqueID(PlayerName)
 end
 
 --- [User] Add a target object to the target queue
--- @param #PLAYERTASKCONTROLLER self
--- @param Wrapper.Positionable#POSITIONABLE Target The target GROUP, SET\_GROUP, UNIT, SET\_UNIT, STATIC, SET\_STATIC, AIRBASE, ZONE or COORDINATE.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Wrapper.Positionable#POSITIONABLE Target The target GROUP, SET\_GROUP, UNIT, SET\_UNIT, STATIC, SET\_STATIC, AIRBASE, ZONE or COORDINATE.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:AddTarget(Target)
   self:T(self.lid.."AddTarget")
   self.TargetQueue:Push(Target)
@@ -2460,9 +2460,9 @@ function PLAYERTASKCONTROLLER:AddTarget(Target)
 end
 
 --- [Internal] Check for allowed task type, if there is a (positive) whitelist
--- @param #PLAYERTASKCONTROLLER self
--- @param #string Type
--- @return #boolean Outcome
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string Type
+--- @return #boolean Outcome
 function PLAYERTASKCONTROLLER:_CheckTaskTypeAllowed(Type)
   self:T(self.lid.."_CheckTaskTypeAllowed")
   local Outcome = false
@@ -2480,9 +2480,9 @@ function PLAYERTASKCONTROLLER:_CheckTaskTypeAllowed(Type)
 end
 
 --- [Internal] Check for allowed task type, if there is a (negative) blacklist
--- @param #PLAYERTASKCONTROLLER self
--- @param #string Type
--- @return #boolean Outcome
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string Type
+--- @return #boolean Outcome
 function PLAYERTASKCONTROLLER:_CheckTaskTypeDisallowed(Type)
   self:T(self.lid.."_CheckTaskTypeDisallowed")
   local Outcome = false
@@ -2500,9 +2500,9 @@ function PLAYERTASKCONTROLLER:_CheckTaskTypeDisallowed(Type)
 end
 
 --- [User] Set up a (positive) whitelist of allowed task types. Only these types will be generated.
--- @param #PLAYERTASKCONTROLLER self
--- @param #table WhiteList Table of task types that can be generated. Use to restrict available types.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #table WhiteList Table of task types that can be generated. Use to restrict available types.
+--- @return #PLAYERTASKCONTROLLER self
 -- @usage Currently, the following task types will be generated, if detection has been set up:
 -- A2A - AUFTRAG.Type.INTERCEPT
 -- A2S - AUFTRAG.Type.ANTISHIP
@@ -2520,9 +2520,9 @@ function PLAYERTASKCONTROLLER:SetTaskWhiteList(WhiteList)
 end
 
 --- [User] Set up a (negative) blacklist of forbidden task types. These types will **not** be generated.
--- @param #PLAYERTASKCONTROLLER self
--- @param #table BlackList Table of task types that cannot be generated. Use to restrict available types.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #table BlackList Table of task types that cannot be generated. Use to restrict available types.
+--- @return #PLAYERTASKCONTROLLER self
 -- @usage Currently, the following task types will be generated, if detection has been set up:
 -- A2A - AUFTRAG.Type.INTERCEPT
 -- A2S - AUFTRAG.Type.ANTISHIP
@@ -2540,9 +2540,9 @@ function PLAYERTASKCONTROLLER:SetTaskBlackList(BlackList)
 end
 
 --- [User] Change the list of attributes, which are considered on GROUP or SET\_GROUP level of a target to create SEAD player tasks.
--- @param #PLAYERTASKCONTROLLER self
--- @param #table Attributes Table of attribute types considered to lead to a SEAD type player task.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #table Attributes Table of attribute types considered to lead to a SEAD type player task.
+--- @return #PLAYERTASKCONTROLLER self
 -- @usage
 -- Default attribute types are: GROUP.Attribute.GROUND_SAM, GROUP.Attribute.GROUND_AAA, and GROUP.Attribute.GROUND_EWR.
 -- If you want to e.g. exclude AAA, so target groups with this attribute are assigned CAS or BAI tasks, and not SEAD, use this function as follows:
@@ -2559,9 +2559,9 @@ function PLAYERTASKCONTROLLER:SetSEADAttributes(Attributes)
 end
 
 --- [Internal] Function the check against SeadAttributes
--- @param #PLAYERTASKCONTROLLER self
--- @param #string Attribute
--- @return #boolean IsSead
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string Attribute
+--- @return #boolean IsSead
 function PLAYERTASKCONTROLLER:_IsAttributeSead(Attribute)
   self:T(self.lid.."_IsAttributeSead?")
   local IsSead = false
@@ -2575,9 +2575,9 @@ function PLAYERTASKCONTROLLER:_IsAttributeSead(Attribute)
 end
 
 --- [Internal] Add a task to the task queue
--- @param #PLAYERTASKCONTROLLER self
--- @param Ops.Target#TARGET Target
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Ops.Target#TARGET Target
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_AddTask(Target)
   self:T(self.lid.."_AddTask")
   local cat = Target:GetCategory()
@@ -2772,11 +2772,11 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
 end
 
 --- [User] Add a PLAYERTASK object to the list of (open) tasks
--- @param #PLAYERTASKCONTROLLER self
--- @param Ops.PlayerTask#PLAYERTASK PlayerTask
--- @param #boolean Silent If true, make no "has new task" announcement
--- @param #boolen TaskFilter If true, apply the white/black-list task filters here, also
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Ops.PlayerTask#PLAYERTASK PlayerTask
+--- @param #boolean Silent If true, make no "has new task" announcement
+--- @param #boolen TaskFilter If true, apply the white/black-list task filters here, also
+--- @return #PLAYERTASKCONTROLLER self
 -- @usage
 -- Example to create a PLAYERTASK of type CTLD and give Players 10 minutes to complete:
 -- 
@@ -2820,12 +2820,12 @@ function PLAYERTASKCONTROLLER:AddPlayerTaskToQueue(PlayerTask,Silent,TaskFilter)
 end
 
 --- [Internal] Join a player to a task
--- @param #PLAYERTASKCONTROLLER self
--- @param Wrapper.Group#GROUP Group
--- @param Wrapper.Client#CLIENT Client
--- @param Ops.PlayerTask#PLAYERTASK Task
--- @param #boolean Force Assign task even if client already has one
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Wrapper.Group#GROUP Group
+--- @param Wrapper.Client#CLIENT Client
+--- @param Ops.PlayerTask#PLAYERTASK Task
+--- @param #boolean Force Assign task even if client already has one
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task, Force)
   self:T(self.lid.."_JoinTask")
   local playername, ttsplayername = self:_GetPlayerName(Client)
@@ -2871,10 +2871,10 @@ function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task, Force)
 end
 
 --- [Internal] Switch flashing info for a client
--- @param #PLAYERTASKCONTROLLER self
--- @param Wrapper.Group#GROUP Group
--- @param Wrapper.Client#CLIENT Client
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Wrapper.Group#GROUP Group
+--- @param Wrapper.Client#CLIENT Client
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_SwitchFlashing(Group, Client)
   self:T(self.lid.."_SwitchFlashing")
   local playername, ttsplayername = self:_GetPlayerName(Client)
@@ -2895,8 +2895,8 @@ function PLAYERTASKCONTROLLER:_SwitchFlashing(Group, Client)
 end
 
 --- [Internal] Flashing directional info for a client
--- @param #PLAYERTASKCONTROLLER self
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_FlashInfo()
   self:T(self.lid.."_FlashInfo")
   for _playername,_client in pairs(self.FlashPlayer) do
@@ -2920,11 +2920,11 @@ function PLAYERTASKCONTROLLER:_FlashInfo()
 end
 
 --- [Internal] Show active task info
--- @param #PLAYERTASKCONTROLLER self
--- @param Wrapper.Group#GROUP Group
--- @param Wrapper.Client#CLIENT Client
--- @param Ops.PlayerTask#PLAYERTASK Task
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Wrapper.Group#GROUP Group
+--- @param Wrapper.Client#CLIENT Client
+--- @param Ops.PlayerTask#PLAYERTASK Task
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
   self:T(self.lid.."_ActiveTaskInfo")
   local playername, ttsplayername = self:_GetPlayerName(Client)
@@ -3103,10 +3103,10 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
 end
 
 --- [Internal] Mark task on F10 map
--- @param #PLAYERTASKCONTROLLER self
--- @param Wrapper.Group#GROUP Group
--- @param Wrapper.Client#CLIENT Client
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Wrapper.Group#GROUP Group
+--- @param Wrapper.Client#CLIENT Client
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_MarkTask(Group, Client)
   self:T(self.lid.."_MarkTask")
   local playername, ttsplayername = self:_GetPlayerName(Client)
@@ -3132,10 +3132,10 @@ function PLAYERTASKCONTROLLER:_MarkTask(Group, Client)
 end
 
 --- [Internal] Smoke task location
--- @param #PLAYERTASKCONTROLLER self
--- @param Wrapper.Group#GROUP Group
--- @param Wrapper.Client#CLIENT Client
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Wrapper.Group#GROUP Group
+--- @param Wrapper.Client#CLIENT Client
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_SmokeTask(Group, Client)
   self:T(self.lid.."_SmokeTask")
   local playername, ttsplayername = self:_GetPlayerName(Client) 
@@ -3161,10 +3161,10 @@ function PLAYERTASKCONTROLLER:_SmokeTask(Group, Client)
 end
 
 --- [Internal] Flare task location
--- @param #PLAYERTASKCONTROLLER self
--- @param Wrapper.Group#GROUP Group
--- @param Wrapper.Client#CLIENT Client
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Wrapper.Group#GROUP Group
+--- @param Wrapper.Client#CLIENT Client
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_FlareTask(Group, Client)
   self:T(self.lid.."_FlareTask")
   local playername, ttsplayername = self:_GetPlayerName(Client)
@@ -3190,10 +3190,10 @@ function PLAYERTASKCONTROLLER:_FlareTask(Group, Client)
 end
 
 --- [Internal] Illuminate task location
--- @param #PLAYERTASKCONTROLLER self
--- @param Wrapper.Group#GROUP Group
--- @param Wrapper.Client#CLIENT Client
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Wrapper.Group#GROUP Group
+--- @param Wrapper.Client#CLIENT Client
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_IlluminateTask(Group, Client)
   self:T(self.lid.."_IlluminateTask")
   local playername, ttsplayername = self:_GetPlayerName(Client)
@@ -3219,10 +3219,10 @@ function PLAYERTASKCONTROLLER:_IlluminateTask(Group, Client)
 end
 
 --- [Internal] Abort Task
--- @param #PLAYERTASKCONTROLLER self
--- @param Wrapper.Group#GROUP Group
--- @param Wrapper.Client#CLIENT Client
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Wrapper.Group#GROUP Group
+--- @param Wrapper.Client#CLIENT Client
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_AbortTask(Group, Client)
   self:T(self.lid.."_AbortTask")
   local playername, ttsplayername = self:_GetPlayerName(Client)
@@ -3250,15 +3250,15 @@ function PLAYERTASKCONTROLLER:_AbortTask(Group, Client)
 end
 
 --- [Internal] Build Task Info Menu
--- @param #PLAYERTASKCONTROLLER self
--- @param Wrapper.Group#GROUP group
--- @param Wrapper.Client#CLIENT client
--- @param #string playername
--- @param Core.Menu#MENU_BASE topmenu
--- @param #table tasktypes
--- @param #table taskpertype
--- @param #string newtag
--- @return #table taskinfomenu
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Wrapper.Group#GROUP group
+--- @param Wrapper.Client#CLIENT client
+--- @param #string playername
+--- @param Core.Menu#MENU_BASE topmenu
+--- @param #table tasktypes
+--- @param #table taskpertype
+--- @param #string newtag
+--- @return #table taskinfomenu
 function PLAYERTASKCONTROLLER:_BuildTaskInfoMenu(group,client,playername,topmenu,tasktypes,taskpertype,newtag)
   self:T(self.lid.."_BuildTaskInfoMenu")
   local taskinfomenu = nil
@@ -3311,11 +3311,11 @@ function PLAYERTASKCONTROLLER:_BuildTaskInfoMenu(group,client,playername,topmenu
 end
 
 --- [Internal] Build client menus
--- @param #PLAYERTASKCONTROLLER self
--- @param Wrapper.Client#CLIENT Client (optional) build for this client name only
--- @param #boolean enforced
--- @param #boolean fromsuccess
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Wrapper.Client#CLIENT Client (optional) build for this client name only
+--- @param #boolean enforced
+--- @param #boolean fromsuccess
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
   self:T(self.lid.."_BuildMenus")
 
@@ -3513,9 +3513,9 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
 end
 
 --- [User] Add agent group to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
--- @param #PLAYERTASKCONTROLLER self
--- @param Wrapper.Group#GROUP Recce Group of agents. Can also be an @{Ops.OpsGroup#OPSGROUP} object.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Wrapper.Group#GROUP Recce Group of agents. Can also be an @{Ops.OpsGroup#OPSGROUP} object.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:AddAgent(Recce)
   self:T(self.lid.."AddAgent")
   if self.Intel then
@@ -3527,9 +3527,9 @@ function PLAYERTASKCONTROLLER:AddAgent(Recce)
 end
 
 --- [User] Set up detection of STATIC objects. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
--- @param #PLAYERTASKCONTROLLER self
--- @param #boolean OnOff Set to `true`for on and `false`for off.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #boolean OnOff Set to `true`for on and `false`for off.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SwitchDetectStatics(OnOff)
   self:T(self.lid.."SwitchDetectStatics")
   if self.Intel then
@@ -3541,9 +3541,9 @@ function PLAYERTASKCONTROLLER:SwitchDetectStatics(OnOff)
 end
 
 --- [User] Add accept zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
--- @param #PLAYERTASKCONTROLLER self
--- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:AddAcceptZone(AcceptZone)
   self:T(self.lid.."AddAcceptZone")
   if self.Intel then
@@ -3555,9 +3555,9 @@ function PLAYERTASKCONTROLLER:AddAcceptZone(AcceptZone)
 end
 
 --- [User] Add accept SET_ZONE to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
--- @param #PLAYERTASKCONTROLLER self
--- @param Core.Set#SET_ZONE AcceptZoneSet Add a SET_ZONE to the accept zone set.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Core.Set#SET_ZONE AcceptZoneSet Add a SET_ZONE to the accept zone set.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:AddAcceptZoneSet(AcceptZoneSet)
   self:T(self.lid.."AddAcceptZoneSet")
   if self.Intel then
@@ -3569,9 +3569,9 @@ function PLAYERTASKCONTROLLER:AddAcceptZoneSet(AcceptZoneSet)
 end
 
 --- [User] Add reject zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
--- @param #PLAYERTASKCONTROLLER self
--- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:AddRejectZone(RejectZone)
   self:T(self.lid.."AddRejectZone")
   if self.Intel then
@@ -3583,9 +3583,9 @@ function PLAYERTASKCONTROLLER:AddRejectZone(RejectZone)
 end
 
 --- [User] Add reject SET_ZONE to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
--- @param #PLAYERTASKCONTROLLER self
--- @param Core.Set#SET_ZONE  RejectZoneSet Add a zone to the reject zone set.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Core.Set#SET_ZONE  RejectZoneSet Add a zone to the reject zone set.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:AddRejectZoneSet(RejectZoneSet)
   self:T(self.lid.."AddRejectZoneSet")
   if self.Intel then
@@ -3597,9 +3597,9 @@ function PLAYERTASKCONTROLLER:AddRejectZoneSet(RejectZoneSet)
 end
 
 --- [User] Remove accept zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
--- @param #PLAYERTASKCONTROLLER self
--- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:RemoveAcceptZone(AcceptZone)
   self:T(self.lid.."RemoveAcceptZone")
   if self.Intel then
@@ -3611,9 +3611,9 @@ function PLAYERTASKCONTROLLER:RemoveAcceptZone(AcceptZone)
 end
 
 --- [User] Remove reject zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
--- @param #PLAYERTASKCONTROLLER self
--- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:RemoveRejectZoneSet(RejectZone)
   self:T(self.lid.."RemoveRejectZone")
   if self.Intel then
@@ -3625,9 +3625,9 @@ function PLAYERTASKCONTROLLER:RemoveRejectZoneSet(RejectZone)
 end
 
 --- [User] Set the top menu name to a custom string.
--- @param #PLAYERTASKCONTROLLER self
--- @param #string Name The name to use as the top menu designation.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string Name The name to use as the top menu designation.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetMenuName(Name)
  self:T(self.lid.."SetMenuName: "..Name)
  self.MenuName = Name
@@ -3635,9 +3635,9 @@ function PLAYERTASKCONTROLLER:SetMenuName(Name)
 end
 
 --- [User] Set the top menu to be a sub-menu of another MENU entry.
--- @param #PLAYERTASKCONTROLLER self
--- @param Core.Menu#MENU_MISSION Menu
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param Core.Menu#MENU_MISSION Menu
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetParentMenu(Menu)
  self:T(self.lid.."SetParentName")
  self.MenuParent = Menu
@@ -3645,9 +3645,9 @@ function PLAYERTASKCONTROLLER:SetParentMenu(Menu)
 end
 
 --- [User] Set up INTEL detection
--- @param #PLAYERTASKCONTROLLER self
--- @param #string RecceName This name will be used to build a detection group set. All groups with this string somewhere in their group name will be added as Recce.
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string RecceName This name will be used to build a detection group set. All groups with this string somewhere in their group name will be added as Recce.
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
   self:T(self.lid.."SetupIntel")
   self.RecceSet = SET_GROUP:New():FilterCoalitions(self.CoalitionName):FilterPrefixes(RecceName):FilterStart()
@@ -3733,18 +3733,18 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
 end
 
 --- [User] Set SRS TTS details - see @{Sound.SRS} for details
--- @param #PLAYERTASKCONTROLLER self
--- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 271 or {127,251}. There needs to be exactly the same number of modulations!
--- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}. There needs to be exactly the same number of frequencies!
--- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone"
--- @param #string Gender (Optional) Defaults to "male"
--- @param #string Culture (Optional) Defaults to "en-US"
--- @param #number Port (Optional) Defaults to 5002
--- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 271 or {127,251}. There needs to be exactly the same number of modulations!
+--- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}. There needs to be exactly the same number of frequencies!
+--- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+--- @param #string Gender (Optional) Defaults to "male"
+--- @param #string Culture (Optional) Defaults to "en-US"
+--- @param #number Port (Optional) Defaults to 5002
+--- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
--- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
--- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS
--- @return #PLAYERTASKCONTROLLER self
+--- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
+--- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
   self:T(self.lid.."SetSRS")
   self.PathToSRS = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone" --
@@ -3776,10 +3776,10 @@ function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Cultu
 end
 
 --- [User] Set SRS Broadcast - for the announcement to joining players which SRS frequency, modulation to use. Use in case you want to set this differently to the standard SRS.
--- @param #PLAYERTASKCONTROLLER self
--- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 271 or {127,251}.  There needs to be exactly the same number of modulations!
--- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}.  There needs to be exactly the same number of frequencies!
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 271 or {127,251}.  There needs to be exactly the same number of modulations!
+--- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}.  There needs to be exactly the same number of frequencies!
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetSRSBroadcast(Frequency,Modulation)
   self:T(self.lid.."SetSRSBroadcast")
   if self.SRS then
@@ -3795,11 +3795,11 @@ end
 -------------------------------------------------------------------------------------------------------------------
 
 --- [Internal] On after Status call
--- @param #PLAYERTASKCONTROLLER self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterStatus(From, Event, To)
   self:T({From, Event, To})
   
@@ -3835,12 +3835,12 @@ function PLAYERTASKCONTROLLER:onafterStatus(From, Event, To)
 end
 
 --- [Internal] On after task done
--- @param #PLAYERTASKCONTROLLER self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Ops.PlayerTask#PLAYERTASK Task
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Ops.PlayerTask#PLAYERTASK Task
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterTaskDone(From, Event, To, Task)
   self:T({From, Event, To})
   self:T(self.lid.."TaskDone")
@@ -3848,12 +3848,12 @@ function PLAYERTASKCONTROLLER:onafterTaskDone(From, Event, To, Task)
 end
 
 --- [Internal] On after task cancelled
--- @param #PLAYERTASKCONTROLLER self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Ops.PlayerTask#PLAYERTASK Task
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Ops.PlayerTask#PLAYERTASK Task
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterTaskCancelled(From, Event, To, Task)
   self:T({From, Event, To})
   self:T(self.lid.."TaskCancelled")
@@ -3872,12 +3872,12 @@ function PLAYERTASKCONTROLLER:onafterTaskCancelled(From, Event, To, Task)
 end
 
 --- [Internal] On after task success
--- @param #PLAYERTASKCONTROLLER self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Ops.PlayerTask#PLAYERTASK Task
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Ops.PlayerTask#PLAYERTASK Task
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterTaskSuccess(From, Event, To, Task)
   self:T({From, Event, To})
   self:T(self.lid.."TaskSuccess")
@@ -3900,12 +3900,12 @@ function PLAYERTASKCONTROLLER:onafterTaskSuccess(From, Event, To, Task)
 end
 
 --- [Internal] On after task failed
--- @param #PLAYERTASKCONTROLLER self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Ops.PlayerTask#PLAYERTASK Task
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Ops.PlayerTask#PLAYERTASK Task
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterTaskFailed(From, Event, To, Task)
   self:T({From, Event, To})
   self:T(self.lid.."TaskFailed")
@@ -3924,12 +3924,12 @@ function PLAYERTASKCONTROLLER:onafterTaskFailed(From, Event, To, Task)
 end
 
 --- [Internal] On after task failed, repeat planned
--- @param #PLAYERTASKCONTROLLER self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Ops.PlayerTask#PLAYERTASK Task
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Ops.PlayerTask#PLAYERTASK Task
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterTaskRepeatOnFailed(From, Event, To, Task)
   self:T({From, Event, To})
   self:T(self.lid.."RepeatOnFailed")
@@ -3948,12 +3948,12 @@ function PLAYERTASKCONTROLLER:onafterTaskRepeatOnFailed(From, Event, To, Task)
 end
 
 --- [Internal] On after task added
--- @param #PLAYERTASKCONTROLLER self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Ops.PlayerTask#PLAYERTASK Task
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Ops.PlayerTask#PLAYERTASK Task
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterTaskAdded(From, Event, To, Task)
   self:T({From, Event, To})
   self:T(self.lid.."TaskAdded")
@@ -3971,11 +3971,11 @@ function PLAYERTASKCONTROLLER:onafterTaskAdded(From, Event, To, Task)
 end
 
 --- [Internal] On after Stop call
--- @param #PLAYERTASKCONTROLLER self
--- @param #string From
--- @param #string Event 
--- @param #string To
--- @return #PLAYERTASKCONTROLLER self
+--- @param #PLAYERTASKCONTROLLER self
+--- @param #string From
+--- @param #string Event 
+--- @param #string To
+--- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:onafterStop(From, Event, To)
   self:T({From, Event, To})
   self:T(self.lid.."Stopped.")

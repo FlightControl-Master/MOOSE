@@ -15,29 +15,29 @@
 
 
 --- INTEL class.
--- @type INTEL
--- @field #string ClassName Name of the class.
--- @field #number verbose Verbosity level.
--- @field #string lid Class id string for output to DCS log file.
--- @field #number coalition Coalition side number, e.g. `coalition.side.RED`.
--- @field #string alias Name of the agency.
--- @field Core.Set#SET_GROUP detectionset Set of detection groups, aka agents.
--- @field #table filterCategory Filter for unit categories.
--- @field #table filterCategoryGroup Filter for group categories.
--- @field Core.Set#SET_ZONE acceptzoneset Set of accept zones. If defined, only contacts in these zones are considered.
--- @field Core.Set#SET_ZONE rejectzoneset Set of reject zones. Contacts in these zones are not considered, even if they are in accept zones.
--- @field #table Contacts Table of detected items.
--- @field #table ContactsLost Table of lost detected items.
--- @field #table ContactsUnknown Table of new detected items.
--- @field #table Clusters Clusters of detected groups.
--- @field #boolean clusteranalysis If true, create clusters of detected targets.
--- @field #boolean clustermarkers If true, create cluster markers on F10 map.
--- @field #number clustercounter Running number of clusters.
--- @field #number dTforget Time interval in seconds before a known contact which is not detected any more is forgotten.
--- @field #number clusterradius Radius in meters in which groups/units are considered to belong to a cluster.
--- @field #number prediction Seconds default to be used with CalcClusterFuturePosition.
--- @field #boolean detectStatics If `true`, detect STATIC objects. Default `false`.
--- @field #number statusupdate Time interval in seconds after which the status is refreshed. Default 60 sec. Should be negative.
+--- @type INTEL
+--- @field #string ClassName Name of the class.
+--- @field #number verbose Verbosity level.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #number coalition Coalition side number, e.g. `coalition.side.RED`.
+--- @field #string alias Name of the agency.
+--- @field Core.Set#SET_GROUP detectionset Set of detection groups, aka agents.
+--- @field #table filterCategory Filter for unit categories.
+--- @field #table filterCategoryGroup Filter for group categories.
+--- @field Core.Set#SET_ZONE acceptzoneset Set of accept zones. If defined, only contacts in these zones are considered.
+--- @field Core.Set#SET_ZONE rejectzoneset Set of reject zones. Contacts in these zones are not considered, even if they are in accept zones.
+--- @field #table Contacts Table of detected items.
+--- @field #table ContactsLost Table of lost detected items.
+--- @field #table ContactsUnknown Table of new detected items.
+--- @field #table Clusters Clusters of detected groups.
+--- @field #boolean clusteranalysis If true, create clusters of detected targets.
+--- @field #boolean clustermarkers If true, create cluster markers on F10 map.
+--- @field #number clustercounter Running number of clusters.
+--- @field #number dTforget Time interval in seconds before a known contact which is not detected any more is forgotten.
+--- @field #number clusterradius Radius in meters in which groups/units are considered to belong to a cluster.
+--- @field #number prediction Seconds default to be used with CalcClusterFuturePosition.
+--- @field #boolean detectStatics If `true`, detect STATIC objects. Default `false`.
+--- @field #number statusupdate Time interval in seconds after which the status is refreshed. Default 60 sec. Should be negative.
 -- @extends Core.Fsm#FSM
 
 --- Top Secret!
@@ -82,7 +82,7 @@
 --     end
 --
 --
--- @field #INTEL
+--- @field #INTEL
 INTEL = {
   ClassName       = "INTEL",
   verbose         =     0,
@@ -104,52 +104,52 @@ INTEL = {
 }
 
 --- Detected item info.
--- @type INTEL.Contact
--- @field #string groupname Name of the group.
--- @field Wrapper.Group#GROUP group The contact group.
--- @field #string typename Type name of detected item.
--- @field #number category Category number.
--- @field #string categoryname Category name.
--- @field #string attribute Generalized attribute.
--- @field #number threatlevel Threat level of this item.
--- @field #number Tdetected Time stamp in abs. mission time seconds when this item was last detected.
--- @field Core.Point#COORDINATE position Last known position of the item.
--- @field DCS#Vec3 velocity 3D velocity vector. Components x,y and z in m/s.
--- @field #number speed Last known speed in m/s.
--- @field #boolean isship If `true`, contact is a naval group.
--- @field #boolean ishelo If `true`, contact is a helo group.
--- @field #boolean isground If `true`, contact is a ground group.
--- @field #boolean isStatic If `true`, contact is a STATIC object.
--- @field Ops.Auftrag#AUFTRAG mission The current Auftrag attached to this contact.
--- @field Ops.Target#TARGET target The Target attached to this contact.
--- @field #string recce The name of the recce unit that detected this contact.
--- @field #string ctype Contact type of #INTEL.Ctype.
--- @field #string platform [AIR] Contact platform name, e.g. Foxbat, Flanker_E, defaults to Bogey if unknown
--- @field #number heading [AIR] Heading of the contact, if available.
--- @field #boolean maneuvering [AIR] Contact has changed direction by >10 deg.
--- @field #number altitude [AIR] Flight altitude of the contact in meters.
+--- @type INTEL.Contact
+--- @field #string groupname Name of the group.
+--- @field Wrapper.Group#GROUP group The contact group.
+--- @field #string typename Type name of detected item.
+--- @field #number category Category number.
+--- @field #string categoryname Category name.
+--- @field #string attribute Generalized attribute.
+--- @field #number threatlevel Threat level of this item.
+--- @field #number Tdetected Time stamp in abs. mission time seconds when this item was last detected.
+--- @field Core.Point#COORDINATE position Last known position of the item.
+--- @field DCS#Vec3 velocity 3D velocity vector. Components x,y and z in m/s.
+--- @field #number speed Last known speed in m/s.
+--- @field #boolean isship If `true`, contact is a naval group.
+--- @field #boolean ishelo If `true`, contact is a helo group.
+--- @field #boolean isground If `true`, contact is a ground group.
+--- @field #boolean isStatic If `true`, contact is a STATIC object.
+--- @field Ops.Auftrag#AUFTRAG mission The current Auftrag attached to this contact.
+--- @field Ops.Target#TARGET target The Target attached to this contact.
+--- @field #string recce The name of the recce unit that detected this contact.
+--- @field #string ctype Contact type of #INTEL.Ctype.
+--- @field #string platform [AIR] Contact platform name, e.g. Foxbat, Flanker_E, defaults to Bogey if unknown
+--- @field #number heading [AIR] Heading of the contact, if available.
+--- @field #boolean maneuvering [AIR] Contact has changed direction by >10 deg.
+--- @field #number altitude [AIR] Flight altitude of the contact in meters.
 
 --- Cluster info.
--- @type INTEL.Cluster
--- @field #number index Cluster index.
--- @field #number size Number of groups in the cluster.
--- @field #table Contacts Table of contacts in the cluster.
--- @field #number threatlevelMax Max threat level of cluster.
--- @field #number threatlevelSum Sum of threat levels.
--- @field #number threatlevelAve Average of threat levels.
--- @field Core.Point#COORDINATE coordinate Coordinate of the cluster.
--- @field Wrapper.Marker#MARKER marker F10 marker.
--- @field #number markerID Marker ID.
--- @field Ops.Auftrag#AUFTRAG mission The current Auftrag attached to this cluster.
--- @field #string ctype Cluster type of #INTEL.Ctype.
--- @field #number altitude [AIR] Average flight altitude of the cluster in meters.
+--- @type INTEL.Cluster
+--- @field #number index Cluster index.
+--- @field #number size Number of groups in the cluster.
+--- @field #table Contacts Table of contacts in the cluster.
+--- @field #number threatlevelMax Max threat level of cluster.
+--- @field #number threatlevelSum Sum of threat levels.
+--- @field #number threatlevelAve Average of threat levels.
+--- @field Core.Point#COORDINATE coordinate Coordinate of the cluster.
+--- @field Wrapper.Marker#MARKER marker F10 marker.
+--- @field #number markerID Marker ID.
+--- @field Ops.Auftrag#AUFTRAG mission The current Auftrag attached to this cluster.
+--- @field #string ctype Cluster type of #INTEL.Ctype.
+--- @field #number altitude [AIR] Average flight altitude of the cluster in meters.
 
 --- Contact or cluster type.
--- @type INTEL.Ctype
--- @field #string GROUND Ground.
--- @field #string NAVAL Ship.
--- @field #string AIRCRAFT Airpane or helicopter.
--- @field #string STRUCTURE Static structure.
+--- @type INTEL.Ctype
+--- @field #string GROUND Ground.
+--- @field #string NAVAL Ship.
+--- @field #string AIRCRAFT Airpane or helicopter.
+--- @field #string STRUCTURE Static structure.
 INTEL.Ctype={
   GROUND="Ground",
   NAVAL="Naval",
@@ -158,7 +158,7 @@ INTEL.Ctype={
 }
 
 --- INTEL class version.
--- @field #string version
+--- @field #string version
 INTEL.version="0.3.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -181,11 +181,11 @@ INTEL.version="0.3.5"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new INTEL object and start the FSM.
--- @param #INTEL self
--- @param Core.Set#SET_GROUP DetectionSet Set of detection groups.
--- @param #number Coalition Coalition side. Can also be passed as a string "red", "blue" or "neutral".
--- @param #string Alias An *optional* alias how this object is called in the logs etc.
--- @return #INTEL self
+--- @param #INTEL self
+--- @param Core.Set#SET_GROUP DetectionSet Set of detection groups.
+--- @param #number Coalition Coalition side. Can also be passed as a string "red", "blue" or "neutral".
+--- @param #string Alias An *optional* alias how this object is called in the logs etc.
+--- @return #INTEL self
 function INTEL:New(DetectionSet, Coalition, Alias)
 
   -- Inherit everything from FSM class.
@@ -389,27 +389,27 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set accept zones. Only contacts detected in this/these zone(s) are considered.
--- @param #INTEL self
--- @param Core.Set#SET_ZONE AcceptZoneSet Set of accept zones.
--- @return #INTEL self
+--- @param #INTEL self
+--- @param Core.Set#SET_ZONE AcceptZoneSet Set of accept zones.
+--- @return #INTEL self
 function INTEL:SetAcceptZones(AcceptZoneSet)
   self.acceptzoneset=AcceptZoneSet or SET_ZONE:New()
   return self
 end
 
 --- Add an accept zone. Only contacts detected in this zone are considered.
--- @param #INTEL self
--- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
--- @return #INTEL self
+--- @param #INTEL self
+--- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
+--- @return #INTEL self
 function INTEL:AddAcceptZone(AcceptZone)
   self.acceptzoneset:AddZone(AcceptZone)
   return self
 end
 
 --- Remove an accept zone from the accept zone set.
--- @param #INTEL self
--- @param Core.Zone#ZONE AcceptZone Remove a zone from the accept zone set.
--- @return #INTEL self
+--- @param #INTEL self
+--- @param Core.Zone#ZONE AcceptZone Remove a zone from the accept zone set.
+--- @return #INTEL self
 function INTEL:RemoveAcceptZone(AcceptZone)
   self.acceptzoneset:Remove(AcceptZone:GetName(), true)
   return self
@@ -417,9 +417,9 @@ end
 
 --- Set reject zones. Contacts detected in this/these zone(s) are rejected and not reported by the detection.
 -- Note that reject zones overrule accept zones, i.e. if a unit is inside and accept zone and inside a reject zone, it is rejected.
--- @param #INTEL self
--- @param Core.Set#SET_ZONE RejectZoneSet Set of reject zone(s).
--- @return #INTEL self
+--- @param #INTEL self
+--- @param Core.Set#SET_ZONE RejectZoneSet Set of reject zone(s).
+--- @return #INTEL self
 function INTEL:SetRejectZones(RejectZoneSet)
   self.rejectzoneset=RejectZoneSet or SET_ZONE:New()
   return self
@@ -427,18 +427,18 @@ end
 
 --- Add a reject zone. Contacts detected in this zone are rejected and not reported by the detection.
 -- Note that reject zones overrule accept zones, i.e. if a unit is inside and accept zone and inside a reject zone, it is rejected.
--- @param #INTEL self
--- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
--- @return #INTEL self
+--- @param #INTEL self
+--- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
+--- @return #INTEL self
 function INTEL:AddRejectZone(RejectZone)
   self.rejectzoneset:AddZone(RejectZone)
   return self
 end
 
 --- Remove a reject zone from the reject zone set.
--- @param #INTEL self
--- @param Core.Zone#ZONE RejectZone Remove a zone from the reject zone set.
--- @return #INTEL self
+--- @param #INTEL self
+--- @param Core.Zone#ZONE RejectZone Remove a zone from the reject zone set.
+--- @return #INTEL self
 function INTEL:RemoveRejectZone(RejectZone)
   self.rejectzoneset:Remove(RejectZone:GetName(), true)
   return self
@@ -447,9 +447,9 @@ end
 --- **OBSOLETE, will be removed in next version!**  Set forget contacts time interval.
 -- Previously known contacts that are not detected any more, are "lost" after this time.
 -- This avoids fast oscillations between a contact being detected and undetected.
--- @param #INTEL self
--- @param #number TimeInterval Time interval in seconds. Default is 120 sec.
--- @return #INTEL self
+--- @param #INTEL self
+--- @param #number TimeInterval Time interval in seconds. Default is 120 sec.
+--- @return #INTEL self
 function INTEL:SetForgetTime(TimeInterval)
   return self
 end
@@ -462,9 +462,9 @@ end
 -- * Unit.Category.SHIP
 -- * Unit.Category.STRUCTURE
 --
--- @param #INTEL self
--- @param #table Categories Filter categories, e.g. {Unit.Category.AIRPLANE, Unit.Category.HELICOPTER}.
--- @return #INTEL self
+--- @param #INTEL self
+--- @param #table Categories Filter categories, e.g. {Unit.Category.AIRPLANE, Unit.Category.HELICOPTER}.
+--- @return #INTEL self
 function INTEL:SetFilterCategory(Categories)
   if type(Categories)~="table" then
     Categories={Categories}
@@ -489,9 +489,9 @@ end
 -- * Group.Category.SHIP
 -- * Group.Category.TRAIN
 --
--- @param #INTEL self
--- @param #table GroupCategories Filter categories, e.g. `{Group.Category.AIRPLANE, Group.Category.HELICOPTER}`.
--- @return #INTEL self
+--- @param #INTEL self
+--- @param #table GroupCategories Filter categories, e.g. `{Group.Category.AIRPLANE, Group.Category.HELICOPTER}`.
+--- @return #INTEL self
 function INTEL:FilterCategoryGroup(GroupCategories)
   if type(GroupCategories)~="table" then
     GroupCategories={GroupCategories}
@@ -509,9 +509,9 @@ function INTEL:FilterCategoryGroup(GroupCategories)
 end
 
 --- Add a group to the detection set.
--- @param #INTEL self
--- @param Wrapper.Group#GROUP AgentGroup Group of agents. Can also be an @{Ops.OpsGroup#OPSGROUP} object.
--- @return #INTEL self
+--- @param #INTEL self
+--- @param Wrapper.Group#GROUP AgentGroup Group of agents. Can also be an @{Ops.OpsGroup#OPSGROUP} object.
+--- @return #INTEL self
 function INTEL:AddAgent(AgentGroup)
 
   -- Check if this was an OPS group.
@@ -526,11 +526,11 @@ end
 
 --- Enable or disable cluster analysis of detected targets.
 -- Targets will be grouped in coupled clusters.
--- @param #INTEL self
--- @param #boolean Switch If true, enable cluster analysis.
--- @param #boolean Markers If true, place markers on F10 map.
--- @param #boolean Arrows If true, draws arrows on F10 map.
--- @return #INTEL self
+--- @param #INTEL self
+--- @param #boolean Switch If true, enable cluster analysis.
+--- @param #boolean Markers If true, place markers on F10 map.
+--- @param #boolean Arrows If true, draws arrows on F10 map.
+--- @return #INTEL self
 function INTEL:SetClusterAnalysis(Switch, Markers, Arrows)
   self.clusteranalysis=Switch
   self.clustermarkers=Markers
@@ -539,9 +539,9 @@ function INTEL:SetClusterAnalysis(Switch, Markers, Arrows)
 end
 
 --- Set whether STATIC objects are detected.
--- @param #INTEL self
--- @param #boolean Switch If `true`, statics are detected.
--- @return #INTEL self
+--- @param #INTEL self
+--- @param #boolean Switch If `true`, statics are detected.
+--- @return #INTEL self
 function INTEL:SetDetectStatics(Switch)
   if Switch and Switch==true then
     self.detectStatics=true
@@ -552,19 +552,19 @@ function INTEL:SetDetectStatics(Switch)
 end
 
 --- Set verbosity level for debugging.
--- @param #INTEL self
--- @param #number Verbosity The higher, the noisier, e.g. 0=off, 2=debug
--- @return #INTEL self
+--- @param #INTEL self
+--- @param #number Verbosity The higher, the noisier, e.g. 0=off, 2=debug
+--- @return #INTEL self
 function INTEL:SetVerbosity(Verbosity)
   self.verbose=Verbosity or 2
   return self
 end
 
 --- Add a Mission (Auftrag) to a contact for tracking.
--- @param #INTEL self
--- @param #INTEL.Contact Contact The contact
--- @param Ops.Auftrag#AUFTRAG Mission The mission connected with this contact
--- @return #INTEL self
+--- @param #INTEL self
+--- @param #INTEL.Contact Contact The contact
+--- @param Ops.Auftrag#AUFTRAG Mission The mission connected with this contact
+--- @return #INTEL self
 function INTEL:AddMissionToContact(Contact, Mission)
   if Mission and Contact then
     Contact.mission = Mission
@@ -573,10 +573,10 @@ function INTEL:AddMissionToContact(Contact, Mission)
 end
 
 --- Add a Mission (Auftrag) to a cluster for tracking.
--- @param #INTEL self
--- @param #INTEL.Cluster Cluster The cluster
--- @param Ops.Auftrag#AUFTRAG Mission The mission connected with this cluster
--- @return #INTEL self
+--- @param #INTEL self
+--- @param #INTEL.Cluster Cluster The cluster
+--- @param Ops.Auftrag#AUFTRAG Mission The mission connected with this cluster
+--- @return #INTEL self
 function INTEL:AddMissionToCluster(Cluster, Mission)
   if Mission and Cluster then
     Cluster.mission = Mission
@@ -585,23 +585,23 @@ function INTEL:AddMissionToCluster(Cluster, Mission)
 end
 
 --- Change radius of the Clusters.
--- @param #INTEL self
--- @param #number radius The radius of the clusters in kilometers. Default 15 km.
--- @return #INTEL self
+--- @param #INTEL self
+--- @param #number radius The radius of the clusters in kilometers. Default 15 km.
+--- @return #INTEL self
 function INTEL:SetClusterRadius(radius)
   self.clusterradius = (radius or 15)*1000
   return self
 end
 
 --- Set detection types for this #INTEL - all default to true.
--- @param #INTEL self
--- @param #boolean DetectVisual Visual detection
--- @param #boolean DetectOptical Optical detection
--- @param #boolean DetectRadar Radar detection
--- @param #boolean DetectIRST IRST detection
--- @param #boolean DetectRWR RWR detection
--- @param #boolean DetectDLINK Data link detection
--- @return self
+--- @param #INTEL self
+--- @param #boolean DetectVisual Visual detection
+--- @param #boolean DetectOptical Optical detection
+--- @param #boolean DetectRadar Radar detection
+--- @param #boolean DetectIRST IRST detection
+--- @param #boolean DetectRWR RWR detection
+--- @param #boolean DetectDLINK Data link detection
+--- @return self
 function INTEL:SetDetectionTypes(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
   self.DetectVisual = DetectVisual and true
   self.DetectOptical = DetectOptical and true
@@ -613,8 +613,8 @@ function INTEL:SetDetectionTypes(DetectVisual, DetectOptical, DetectRadar, Detec
 end
 
 --- Get table of #INTEL.Contact objects
--- @param #INTEL self
--- @return #table Contacts or nil if not running
+--- @param #INTEL self
+--- @return #table Contacts or nil if not running
 function INTEL:GetContactTable()
   if self:Is("Running") then
     return self.Contacts
@@ -624,8 +624,8 @@ function INTEL:GetContactTable()
 end
 
 --- Get table of #INTEL.Cluster objects
--- @param #INTEL self
--- @return #table Clusters or nil if not running
+--- @param #INTEL self
+--- @return #table Clusters or nil if not running
 function INTEL:GetClusterTable()
   if self:Is("Running") and self.clusteranalysis then
     return self.Clusters
@@ -635,50 +635,50 @@ function INTEL:GetClusterTable()
 end
 
 --- Get name of a contact.
--- @param #INTEL self
--- @param #INTEL.Contact Contact The contact.
--- @return #string Name of the contact.
+--- @param #INTEL self
+--- @param #INTEL.Contact Contact The contact.
+--- @return #string Name of the contact.
 function INTEL:GetContactName(Contact)
   return Contact.groupname
 end
 
 --- Get group of a contact.
--- @param #INTEL self
--- @param #INTEL.Contact Contact The contact.
--- @return Wrapper.Group#GROUP Group object.
+--- @param #INTEL self
+--- @param #INTEL.Contact Contact The contact.
+--- @return Wrapper.Group#GROUP Group object.
 function INTEL:GetContactGroup(Contact)
   return Contact.group
 end
 
 --- Get threatlevel of a contact.
--- @param #INTEL self
--- @param #INTEL.Contact Contact The contact.
--- @return #number Threat level.
+--- @param #INTEL self
+--- @param #INTEL.Contact Contact The contact.
+--- @return #number Threat level.
 function INTEL:GetContactThreatlevel(Contact)
   return Contact.threatlevel
 end
 
 
 --- Get type name of a contact.
--- @param #INTEL self
--- @param #INTEL.Contact Contact The contact.
--- @return #string Type name.
+--- @param #INTEL self
+--- @param #INTEL.Contact Contact The contact.
+--- @return #string Type name.
 function INTEL:GetContactTypeName(Contact)
   return Contact.typename
 end
 
 --- Get category name of a contact.
--- @param #INTEL self
--- @param #INTEL.Contact Contact The contact.
--- @return #string Category name.
+--- @param #INTEL self
+--- @param #INTEL.Contact Contact The contact.
+--- @return #string Category name.
 function INTEL:GetContactCategoryName(Contact)
   return Contact.categoryname
 end
 
 --- Get coordinate of a contact.
--- @param #INTEL self
--- @param #INTEL.Contact Contact The contact.
--- @return Core.Point#COORDINATE Coordinates.
+--- @param #INTEL self
+--- @param #INTEL.Contact Contact The contact.
+--- @return Core.Point#COORDINATE Coordinates.
 function INTEL:GetContactCoordinate(Contact)
   return Contact.position
 end
@@ -688,10 +688,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
--- @param #INTEL self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #INTEL self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function INTEL:onafterStart(From, Event, To)
 
   -- Short info.
@@ -704,10 +704,10 @@ function INTEL:onafterStart(From, Event, To)
 end
 
 --- On after "Status" event.
--- @param #INTEL self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #INTEL self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function INTEL:onafterStatus(From, Event, To)
 
   -- FSM state.
@@ -751,7 +751,7 @@ end
 
 
 --- Update detected items.
--- @param #INTEL self
+--- @param #INTEL self
 function INTEL:UpdateIntel()
 
   -- Set of all detected units.
@@ -871,9 +871,9 @@ function INTEL:UpdateIntel()
 end
 
 --- Update an #INTEL.Contact item.
--- @param #INTEL self
--- @param #INTEL.Contact Contact Contact.
--- @return #INTEL.Contact The contact.
+--- @param #INTEL self
+--- @param #INTEL.Contact Contact Contact.
+--- @return #INTEL.Contact The contact.
 function INTEL:_UpdateContact(Contact)
 
   if Contact.isStatic then
@@ -908,10 +908,10 @@ function INTEL:_UpdateContact(Contact)
 end
 
 --- Create an #INTEL.Contact item from a given GROUP or STATIC object.
--- @param #INTEL self
--- @param Wrapper.Positionable#POSITIONABLE Positionable The GROUP or STATIC object.
--- @param #string RecceName The name of the recce group that has detected this contact.
--- @return #INTEL.Contact The contact.
+--- @param #INTEL self
+--- @param Wrapper.Positionable#POSITIONABLE Positionable The GROUP or STATIC object.
+--- @param #string RecceName The name of the recce group that has detected this contact.
+--- @return #INTEL.Contact The contact.
 function INTEL:_CreateContact(Positionable, RecceName)
 
   if Positionable and Positionable:IsAlive() then
@@ -990,10 +990,10 @@ function INTEL:_CreateContact(Positionable, RecceName)
 end
 
 --- Create detected items.
--- @param #INTEL self
--- @param #table DetectedGroups Table of detected Groups.
--- @param #table DetectedStatics Table of detected Statics.
--- @param #table RecceDetecting Table of detecting recce names.
+--- @param #INTEL self
+--- @param #table DetectedGroups Table of detected Groups.
+--- @param #table DetectedStatics Table of detected Statics.
+--- @param #table RecceDetecting Table of detecting recce names.
 function INTEL:CreateDetectedItems(DetectedGroups, DetectedStatics, RecceDetecting)
   self:F({RecceDetecting=RecceDetecting})
 
@@ -1039,16 +1039,16 @@ end
 --- (Internal) Return the detected target groups of the controllable as a @{SET_GROUP}.
 -- The optional parametes specify the detection methods that can be applied.
 -- If no detection method is given, the detection will use all the available methods by default.
--- @param #INTEL self
--- @param Wrapper.Unit#UNIT Unit The unit detecting.
--- @param #table DetectedUnits Table of detected units to be filled.
--- @param #table RecceDetecting Table of recce per unit to be filled.
--- @param #boolean DetectVisual (Optional) If *false*, do not include visually detected targets.
--- @param #boolean DetectOptical (Optional) If *false*, do not include optically detected targets.
--- @param #boolean DetectRadar (Optional) If *false*, do not include targets detected by radar.
--- @param #boolean DetectIRST (Optional) If *false*, do not include targets detected by IRST.
--- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
--- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
+--- @param #INTEL self
+--- @param Wrapper.Unit#UNIT Unit The unit detecting.
+--- @param #table DetectedUnits Table of detected units to be filled.
+--- @param #table RecceDetecting Table of recce per unit to be filled.
+--- @param #boolean DetectVisual (Optional) If *false*, do not include visually detected targets.
+--- @param #boolean DetectOptical (Optional) If *false*, do not include optically detected targets.
+--- @param #boolean DetectRadar (Optional) If *false*, do not include targets detected by radar.
+--- @param #boolean DetectIRST (Optional) If *false*, do not include targets detected by IRST.
+--- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
+--- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
 function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
 
   -- Get detected DCS units.
@@ -1101,11 +1101,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "NewContact" event.
--- @param #INTEL self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #INTEL.Contact Contact Detected contact.
+--- @param #INTEL self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #INTEL.Contact Contact Detected contact.
 function INTEL:onafterNewContact(From, Event, To, Contact)
 
   -- Debug text.
@@ -1117,11 +1117,11 @@ function INTEL:onafterNewContact(From, Event, To, Contact)
 end
 
 --- On after "LostContact" event.
--- @param #INTEL self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #INTEL.Contact Contact Lost contact.
+--- @param #INTEL self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #INTEL.Contact Contact Lost contact.
 function INTEL:onafterLostContact(From, Event, To, Contact)
 
   -- Debug text.
@@ -1133,11 +1133,11 @@ function INTEL:onafterLostContact(From, Event, To, Contact)
 end
 
 --- On after "NewCluster" event.
--- @param #INTEL self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #INTEL.Cluster Cluster Detected cluster.
+--- @param #INTEL self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #INTEL.Cluster Cluster Detected cluster.
 function INTEL:onafterNewCluster(From, Event, To, Cluster)
 
   -- Debug text.
@@ -1149,12 +1149,12 @@ function INTEL:onafterNewCluster(From, Event, To, Cluster)
 end
 
 --- On after "LostCluster" event.
--- @param #INTEL self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #INTEL.Cluster Cluster Lost cluster.
--- @param Ops.Auftrag#AUFTRAG Mission The Auftrag connected with this cluster or `nil`.
+--- @param #INTEL self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #INTEL.Cluster Cluster Lost cluster.
+--- @param Ops.Auftrag#AUFTRAG Mission The Auftrag connected with this cluster or `nil`.
 function INTEL:onafterLostCluster(From, Event, To, Cluster, Mission)
 
   -- Debug text.
@@ -1174,11 +1174,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Make the INTEL aware of a object that was not detected (yet). This will add the object to the contacts table and trigger a `NewContact` event.
--- @param #INTEL self
--- @param Wrapper.Positionable#POSITIONABLE Positionable Group or static object.
--- @param #string RecceName Name of the recce group that detected this object.
--- @param #number Tdetected Abs. mission time in seconds, when the object is detected. Default now.
--- @return #INTEL self
+--- @param #INTEL self
+--- @param Wrapper.Positionable#POSITIONABLE Positionable Group or static object.
+--- @param #string RecceName Name of the recce group that detected this object.
+--- @param #number Tdetected Abs. mission time in seconds, when the object is detected. Default now.
+--- @return #INTEL self
 function INTEL:KnowObject(Positionable, RecceName, Tdetected)
 
   local Tnow=timer.getAbsTime()
@@ -1228,9 +1228,9 @@ function INTEL:KnowObject(Positionable, RecceName, Tdetected)
 end
 
 --- Get a contact by name.
--- @param #INTEL self
--- @param #string groupname Name of the contact group.
--- @return #INTEL.Contact The contact.
+--- @param #INTEL self
+--- @param #string groupname Name of the contact group.
+--- @return #INTEL.Contact The contact.
 function INTEL:GetContactByName(groupname)
 
   for i,_contact in pairs(self.Contacts) do
@@ -1244,9 +1244,9 @@ function INTEL:GetContactByName(groupname)
 end
 
 --- Check if a Contact is already known. It is checked, whether the contact is in the contacts table.
--- @param #INTEL self
--- @param #INTEL.Contact Contact The contact to be added.
--- @return #boolean If `true`, contact is already known.
+--- @param #INTEL self
+--- @param #INTEL.Contact Contact The contact to be added.
+--- @return #boolean If `true`, contact is already known.
 function INTEL:_IsContactKnown(Contact)
 
   for i,_contact in pairs(self.Contacts) do
@@ -1261,9 +1261,9 @@ end
 
 
 --- Add a contact to our list.
--- @param #INTEL self
--- @param #INTEL.Contact Contact The contact to be added.
--- @return #INTEL self
+--- @param #INTEL self
+--- @param #INTEL.Contact Contact The contact to be added.
+--- @return #INTEL self
 function INTEL:AddContact(Contact)
 
   -- First check if the contact is already in the table.
@@ -1278,8 +1278,8 @@ function INTEL:AddContact(Contact)
 end
 
 --- Remove a contact from our list.
--- @param #INTEL self
--- @param #INTEL.Contact Contact The contact to be removed.
+--- @param #INTEL self
+--- @param #INTEL.Contact Contact The contact to be removed.
 function INTEL:RemoveContact(Contact)
 
   for i,_contact in pairs(self.Contacts) do
@@ -1294,9 +1294,9 @@ function INTEL:RemoveContact(Contact)
 end
 
 --- Check if a contact was lost.
--- @param #INTEL self
--- @param #INTEL.Contact Contact The contact to be removed.
--- @return #boolean If true, contact was not detected for at least *dTforget* seconds.
+--- @param #INTEL self
+--- @param #INTEL.Contact Contact The contact to be removed.
+--- @return #boolean If true, contact was not detected for at least *dTforget* seconds.
 function INTEL:_CheckContactLost(Contact)
 
   -- Group dead?
@@ -1339,7 +1339,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- [Internal] Paint picture of the battle field. Does Cluster analysis and updates clusters. Sets markers if markers are enabled.
--- @param #INTEL self
+--- @param #INTEL self
 function INTEL:PaintPicture()
   self:F(self.lid.."Painting Picture!")
 
@@ -1497,8 +1497,8 @@ function INTEL:PaintPicture()
 end
 
 --- Create a new cluster.
--- @param #INTEL self
--- @return #INTEL.Cluster cluster The cluster.
+--- @param #INTEL self
+--- @return #INTEL.Cluster cluster The cluster.
 function INTEL:_CreateCluster()
 
   -- Create new cluster.
@@ -1519,9 +1519,9 @@ function INTEL:_CreateCluster()
 end
 
 --- Create a new cluster from a first contact. The contact is automatically added to the cluster.
--- @param #INTEL self
--- @param #INTEL.Contact Contact The first contact.
--- @return #INTEL.Cluster cluster The cluster.
+--- @param #INTEL self
+--- @param #INTEL.Contact Contact The first contact.
+--- @return #INTEL.Cluster cluster The cluster.
 function INTEL:_CreateClusterFromContact(Contact)
 
   local cluster=self:_CreateCluster()
@@ -1538,8 +1538,8 @@ function INTEL:_CreateClusterFromContact(Contact)
 end
 
 --- Add cluster to table.
--- @param #INTEL self
--- @param #INTEL.Cluster Cluster The cluster to add.
+--- @param #INTEL self
+--- @param #INTEL.Cluster Cluster The cluster to add.
 function INTEL:_AddCluster(Cluster)
 
   --TODO: Check if cluster is already in the table.
@@ -1551,9 +1551,9 @@ function INTEL:_AddCluster(Cluster)
 end
 
 --- Add a contact to the cluster.
--- @param #INTEL self
--- @param #INTEL.Contact contact The contact.
--- @param #INTEL.Cluster cluster The cluster.
+--- @param #INTEL self
+--- @param #INTEL.Contact contact The contact.
+--- @param #INTEL.Cluster cluster The cluster.
 function INTEL:AddContactToCluster(contact, cluster)
 
   if contact and cluster then
@@ -1578,9 +1578,9 @@ function INTEL:AddContactToCluster(contact, cluster)
 end
 
 --- Remove a contact from a cluster.
--- @param #INTEL self
--- @param #INTEL.Contact contact The contact.
--- @param #INTEL.Cluster cluster The cluster.
+--- @param #INTEL self
+--- @param #INTEL.Contact contact The contact.
+--- @param #INTEL.Cluster cluster The cluster.
 function INTEL:RemoveContactFromCluster(contact, cluster)
 
   if contact and cluster then
@@ -1612,9 +1612,9 @@ function INTEL:RemoveContactFromCluster(contact, cluster)
 end
 
 --- Calculate cluster threat level sum.
--- @param #INTEL self
--- @param #INTEL.Cluster cluster The cluster of contacts.
--- @return #number Sum of all threat levels of all groups in the cluster.
+--- @param #INTEL self
+--- @param #INTEL.Cluster cluster The cluster of contacts.
+--- @return #number Sum of all threat levels of all groups in the cluster.
 function INTEL:CalcClusterThreatlevelSum(cluster)
 
   local threatlevel=0
@@ -1630,9 +1630,9 @@ function INTEL:CalcClusterThreatlevelSum(cluster)
 end
 
 --- Calculate cluster threat level average.
--- @param #INTEL self
--- @param #INTEL.Cluster cluster The cluster of contacts.
--- @return #number Average of all threat levels of all groups in the cluster.
+--- @param #INTEL self
+--- @param #INTEL.Cluster cluster The cluster of contacts.
+--- @return #number Average of all threat levels of all groups in the cluster.
 function INTEL:CalcClusterThreatlevelAverage(cluster)
 
   local threatlevel=self:CalcClusterThreatlevelSum(cluster)
@@ -1642,9 +1642,9 @@ function INTEL:CalcClusterThreatlevelAverage(cluster)
 end
 
 --- Calculate max cluster threat level.
--- @param #INTEL self
--- @param #INTEL.Cluster cluster The cluster of contacts.
--- @return #number Max threat levels of all groups in the cluster.
+--- @param #INTEL self
+--- @param #INTEL.Cluster cluster The cluster of contacts.
+--- @return #number Max threat levels of all groups in the cluster.
 function INTEL:CalcClusterThreatlevelMax(cluster)
 
   local threatlevel=0
@@ -1663,9 +1663,9 @@ function INTEL:CalcClusterThreatlevelMax(cluster)
 end
 
 --- Calculate cluster heading.
--- @param #INTEL self
--- @param #INTEL.Cluster cluster The cluster of contacts.
--- @return #number Heading average of all groups in the cluster.
+--- @param #INTEL self
+--- @param #INTEL.Cluster cluster The cluster of contacts.
+--- @return #number Heading average of all groups in the cluster.
 function INTEL:CalcClusterDirection(cluster)
 
   local direction = 0
@@ -1700,9 +1700,9 @@ function INTEL:CalcClusterDirection(cluster)
 end
 
 --- Calculate cluster speed.
--- @param #INTEL self
--- @param #INTEL.Cluster cluster The cluster of contacts.
--- @return #number Speed average of all groups in the cluster in MPS.
+--- @param #INTEL self
+--- @param #INTEL.Cluster cluster The cluster of contacts.
+--- @return #number Speed average of all groups in the cluster in MPS.
 function INTEL:CalcClusterSpeed(cluster)
 
   local velocity = 0 ; local n=0
@@ -1724,9 +1724,9 @@ function INTEL:CalcClusterSpeed(cluster)
 end
 
 --- Calculate cluster velocity vector.
--- @param #INTEL self
--- @param #INTEL.Cluster cluster The cluster of contacts.
--- @return DCS#Vec3 Velocity vector in m/s.
+--- @param #INTEL self
+--- @param #INTEL.Cluster cluster The cluster of contacts.
+--- @return DCS#Vec3 Velocity vector in m/s.
 function INTEL:CalcClusterVelocityVec3(cluster)
 
   local v={x=0, y=0, z=0} --DCS#Vec3
@@ -1746,10 +1746,10 @@ function INTEL:CalcClusterVelocityVec3(cluster)
 end
 
 --- Calculate cluster future position after given seconds.
--- @param #INTEL self
--- @param #INTEL.Cluster cluster The cluster of contacts.
--- @param #number seconds Time interval in seconds. Default is `self.prediction`.
--- @return Core.Point#COORDINATE Calculated future position of the cluster.
+--- @param #INTEL self
+--- @param #INTEL.Cluster cluster The cluster of contacts.
+--- @param #number seconds Time interval in seconds. Default is `self.prediction`.
+--- @return Core.Point#COORDINATE Calculated future position of the cluster.
 function INTEL:CalcClusterFuturePosition(cluster, seconds)
 
   -- Get current position of the cluster.
@@ -1780,9 +1780,9 @@ end
 
 
 --- Check if contact is in any known cluster.
--- @param #INTEL self
--- @param #INTEL.Contact contact The contact.
--- @return #boolean If true, contact is in clusters
+--- @param #INTEL self
+--- @param #INTEL.Contact contact The contact.
+--- @return #boolean If true, contact is in clusters
 function INTEL:CheckContactInClusters(contact)
 
   for _,_cluster in pairs(self.Clusters) do
@@ -1801,11 +1801,11 @@ function INTEL:CheckContactInClusters(contact)
 end
 
 --- Check if contact is close to any other contact this cluster.
--- @param #INTEL self
--- @param #INTEL.Contact contact The contact.
--- @param #INTEL.Cluster cluster The cluster the check.
--- @return #boolean If `true`, contact is connected to this cluster.
--- @return #number Distance to cluster in meters.
+--- @param #INTEL self
+--- @param #INTEL.Contact contact The contact.
+--- @param #INTEL.Cluster cluster The cluster the check.
+--- @return #boolean If `true`, contact is connected to this cluster.
+--- @return #number Distance to cluster in meters.
 function INTEL:IsContactConnectedToCluster(contact, cluster)
 
   -- Must be of the same type. We do not want to mix aircraft with ground units.
@@ -1844,9 +1844,9 @@ function INTEL:IsContactConnectedToCluster(contact, cluster)
 end
 
 --- Check if contact is close to any contact of known clusters.
--- @param #INTEL self
--- @param #INTEL.Contact contact The contact.
--- @return #INTEL.Cluster The cluster this contact is part of or nil otherwise.
+--- @param #INTEL self
+--- @param #INTEL.Contact contact The contact.
+--- @return #INTEL.Cluster The cluster this contact is part of or nil otherwise.
 function INTEL:IsContactPartOfAnyClusters(contact)
 
   for _,_cluster in pairs(self.Clusters) do
@@ -1861,10 +1861,10 @@ function INTEL:IsContactPartOfAnyClusters(contact)
 end
 
 --- Get distance to cluster.
--- @param #INTEL self
--- @param #INTEL.Contact Contact The contact.
--- @param #INTEL.Cluster Cluster The cluster to which the distance is calculated.
--- @return #number Distance in meters.
+--- @param #INTEL self
+--- @param #INTEL.Contact Contact The contact.
+--- @param #INTEL.Cluster Cluster The cluster to which the distance is calculated.
+--- @return #number Distance in meters.
 function INTEL:_GetDistContactToCluster(Contact, Cluster)
 
   local distmin=math.huge
@@ -1887,10 +1887,10 @@ function INTEL:_GetDistContactToCluster(Contact, Cluster)
 end
 
 --- Get closest cluster of contact.
--- @param #INTEL self
--- @param #INTEL.Contact Contact The contact.
--- @return #INTEL.Cluster The cluster this contact is part of or `#nil` otherwise.
--- @return #number Distance to cluster in meters.
+--- @param #INTEL self
+--- @param #INTEL.Contact Contact The contact.
+--- @return #INTEL.Cluster The cluster this contact is part of or `#nil` otherwise.
+--- @return #number Distance to cluster in meters.
 function INTEL:_GetClosestClusterOfContact(Contact)
 
   local Cluster=nil  --#INTEL.Cluster
@@ -1933,9 +1933,9 @@ function INTEL:_GetClosestClusterOfContact(Contact)
 end
 
 --- Get the cluster this contact belongs to (if any).
--- @param #INTEL self
--- @param #INTEL.Contact contact The contact.
--- @return #INTEL.Cluster The cluster this contact belongs to or nil.
+--- @param #INTEL self
+--- @param #INTEL.Contact contact The contact.
+--- @return #INTEL.Cluster The cluster this contact belongs to or nil.
 function INTEL:GetClusterOfContact(contact)
 
   for _,_cluster in pairs(self.Clusters) do
@@ -1954,10 +1954,10 @@ function INTEL:GetClusterOfContact(contact)
 end
 
 --- Get the altitude of a cluster.
--- @param #INTEL self
--- @param #INTEL.Cluster Cluster The cluster.
--- @param #boolean Update If `true`, update the altitude. Default is to just return the last stored altitude.
--- @return #number The average altitude (ASL) of this cluster in meters.
+--- @param #INTEL self
+--- @param #INTEL.Cluster Cluster The cluster.
+--- @param #boolean Update If `true`, update the altitude. Default is to just return the last stored altitude.
+--- @return #number The average altitude (ASL) of this cluster in meters.
 function INTEL:GetClusterAltitude(Cluster, Update)
 
   -- Init.
@@ -1988,10 +1988,10 @@ function INTEL:GetClusterAltitude(Cluster, Update)
 end
 
 --- Get the coordinate of a cluster.
--- @param #INTEL self
--- @param #INTEL.Cluster Cluster The cluster.
--- @param #boolean Update If `true`, update the coordinate. Default is to just return the last stored position.
--- @return Core.Point#COORDINATE The coordinate of this cluster.
+--- @param #INTEL self
+--- @param #INTEL.Cluster Cluster The cluster.
+--- @param #boolean Update If `true`, update the coordinate. Default is to just return the last stored position.
+--- @return Core.Point#COORDINATE The coordinate of this cluster.
 function INTEL:GetClusterCoordinate(Cluster, Update)
 
   -- Init.
@@ -2039,11 +2039,11 @@ function INTEL:GetClusterCoordinate(Cluster, Update)
 end
 
 --- Check if the coorindate of the cluster changed.
--- @param #INTEL self
--- @param #INTEL.Cluster Cluster The cluster.
--- @param #number Threshold in meters. Default 100 m.
--- @param Core.Point#COORDINATE Coordinate Reference coordinate. Default is the last known coordinate of the cluster.
--- @return #boolean If `true`, the coordinate changed by more than the given threshold.
+--- @param #INTEL self
+--- @param #INTEL.Cluster Cluster The cluster.
+--- @param #number Threshold in meters. Default 100 m.
+--- @param Core.Point#COORDINATE Coordinate Reference coordinate. Default is the last known coordinate of the cluster.
+--- @return #boolean If `true`, the coordinate changed by more than the given threshold.
 function INTEL:_CheckClusterCoordinateChanged(Cluster, Coordinate, Threshold)
 
   Threshold=Threshold or 100
@@ -2065,7 +2065,7 @@ function INTEL:_CheckClusterCoordinateChanged(Cluster, Coordinate, Threshold)
 end
 
 --- Update coordinates of the known clusters.
--- @param #INTEL self
+--- @param #INTEL self
 function INTEL:_UpdateClusterPositions()
   for _,_cluster in pairs (self.Clusters) do
     local cluster=_cluster --#INTEL.Cluster
@@ -2081,9 +2081,9 @@ function INTEL:_UpdateClusterPositions()
 end
 
 --- Count number of alive units in contact.
--- @param #INTEL self
--- @param #INTEL.Contact Contact The contact.
--- @return #number unitcount
+--- @param #INTEL self
+--- @param #INTEL.Contact Contact The contact.
+--- @return #number unitcount
 function INTEL:ContactCountUnits(Contact)
   if Contact.isStatic then
     if Contact.group and Contact.group:IsAlive() then
@@ -2102,9 +2102,9 @@ function INTEL:ContactCountUnits(Contact)
 end
 
 --- Count number of alive units in cluster.
--- @param #INTEL self
--- @param #INTEL.Cluster Cluster The cluster
--- @return #number unitcount
+--- @param #INTEL self
+--- @param #INTEL.Cluster Cluster The cluster
+--- @return #number unitcount
 function INTEL:ClusterCountUnits(Cluster)
   local unitcount = 0
   for _,_contact in pairs (Cluster.Contacts) do
@@ -2115,9 +2115,9 @@ function INTEL:ClusterCountUnits(Cluster)
 end
 
 --- Update cluster F10 marker.
--- @param #INTEL self
--- @param #INTEL.Cluster cluster The cluster.
--- @return #INTEL self
+--- @param #INTEL self
+--- @param #INTEL.Cluster cluster The cluster.
+--- @return #INTEL self
 function INTEL:UpdateClusterMarker(cluster)
 
   -- Create a marker.
@@ -2157,9 +2157,9 @@ function INTEL:UpdateClusterMarker(cluster)
 end
 
 --- Get the contact with the highest threat level from the cluster.
--- @param #INTEL self
--- @param #INTEL.Cluster Cluster The cluster.
--- @return #INTEL.Contact the contact or nil if none
+--- @param #INTEL self
+--- @param #INTEL.Cluster Cluster The cluster.
+--- @return #INTEL.Contact the contact or nil if none
 function INTEL:GetHighestThreatContact(Cluster)
   local threatlevel=-1
   local rcontact = nil
@@ -2199,20 +2199,20 @@ end
 -- ### Author: **applevangelist**
 
 --- INTEL_DLINK class.
--- @type INTEL_DLINK
--- @field #string ClassName Name of the class.
--- @field #string lid Class id string for output to DCS log file.
--- @field #number verbose Make the logging verbose.
--- @field #string alias Alias name for logging.
--- @field #number cachetime Number of seconds to keep an object.
--- @field #number interval Number of seconds between collection runs.
--- @field #table contacts Table of Ops.Intelligence#INTEL.Contact contacts.
--- @field #table clusters Table of Ops.Intelligence#INTEL.Cluster clusters.
--- @field #table contactcoords Table of contacts' Core.Point#COORDINATE objects.
+--- @type INTEL_DLINK
+--- @field #string ClassName Name of the class.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #number verbose Make the logging verbose.
+--- @field #string alias Alias name for logging.
+--- @field #number cachetime Number of seconds to keep an object.
+--- @field #number interval Number of seconds between collection runs.
+--- @field #table contacts Table of Ops.Intelligence#INTEL.Contact contacts.
+--- @field #table clusters Table of Ops.Intelligence#INTEL.Cluster clusters.
+--- @field #table contactcoords Table of contacts' Core.Point#COORDINATE objects.
 -- @extends Core.Fsm#FSM
 
 --- INTEL_DLINK data aggregator
--- @field #INTEL_DLINK
+--- @field #INTEL_DLINK
 INTEL_DLINK = {
   ClassName       = "INTEL_DLINK",
   verbose         =     0,
@@ -2226,15 +2226,15 @@ INTEL_DLINK = {
 }
 
 --- Version string
--- @field #string version
+--- @field #string version
 INTEL_DLINK.version = "0.0.1"
 
 --- Function to instantiate a new object
--- @param #INTEL_DLINK self
--- @param #table Intels Table of Ops.Intelligence#INTEL objects.
--- @param #string Alias (optional) Name of this instance. Default "SPECTRE"
--- @param #number Interval (optional) When to query #INTEL objects for detected items (default 20 seconds).
--- @param #number Cachetime (optional) How long to cache detected items (default 300 seconds).
+--- @param #INTEL_DLINK self
+--- @param #table Intels Table of Ops.Intelligence#INTEL objects.
+--- @param #string Alias (optional) Name of this instance. Default "SPECTRE"
+--- @param #number Interval (optional) When to query #INTEL objects for detected items (default 20 seconds).
+--- @param #number Cachetime (optional) How long to cache detected items (default 300 seconds).
 -- @usage Use #INTEL_DLINK if you want to merge data from a number of #INTEL objects into one. This might be useful to simulate a
 -- Data Link, e.g. for Russian-tech based EWR, realising a Star Topology @{https://en.wikipedia.org/wiki/Network_topology#Star}
 -- in a basic setup. It will collect the contacts and clusters from the #INTEL objects.
@@ -2342,9 +2342,9 @@ end
 ----------------------------------------------------------------------------------------------
 
 --- Function to add an #INTEL object to the aggregator
--- @param #INTEL_DLINK self
--- @param Ops.Intelligence#INTEL Intel the #INTEL object to add
--- @return #INTEL_DLINK self
+--- @param #INTEL_DLINK self
+--- @param Ops.Intelligence#INTEL Intel the #INTEL object to add
+--- @return #INTEL_DLINK self
 function INTEL_DLINK:AddIntel(Intel)
    self:T(self.lid .. "AddIntel")
    if Intel then
@@ -2358,11 +2358,11 @@ end
 ----------------------------------------------------------------------------------------------
 
 --- Function to start the work.
--- @param #INTEL_DLINK self
--- @param #string From The From state
--- @param #string Event The Event triggering this call
--- @param #string To The To state
--- @return #INTEL_DLINK self
+--- @param #INTEL_DLINK self
+--- @param #string From The From state
+--- @param #string Event The Event triggering this call
+--- @param #string To The To state
+--- @return #INTEL_DLINK self
 function INTEL_DLINK:onafterStart(From, Event, To)
   self:T({From, Event, To})
   local text = string.format("Version %s started.", self.version)
@@ -2372,11 +2372,11 @@ function INTEL_DLINK:onafterStart(From, Event, To)
 end
 
 --- Function to collect data from the various #INTEL
--- @param #INTEL_DLINK self
--- @param #string From The From state
--- @param #string Event The Event triggering this call
--- @param #string To The To state
--- @return #INTEL_DLINK self
+--- @param #INTEL_DLINK self
+--- @param #string From The From state
+--- @param #string Event The Event triggering this call
+--- @param #string To The To state
+--- @return #INTEL_DLINK self
 function INTEL_DLINK:onbeforeCollect(From, Event, To)
   self:T({From, Event, To})
   -- run through our #INTEL objects and gather the contacts tables
@@ -2436,24 +2436,24 @@ function INTEL_DLINK:onbeforeCollect(From, Event, To)
 end
 
 --- Function called after collection is done
--- @param #INTEL_DLINK self
--- @param #string From The From state
--- @param #string Event The Event triggering this call
--- @param #string To The To state
--- @param #table Contacts The table of collected #INTEL.Contact contacts
--- @param #table Clusters The table of collected #INTEL.Cluster clusters
--- @return #INTEL_DLINK self
+--- @param #INTEL_DLINK self
+--- @param #string From The From state
+--- @param #string Event The Event triggering this call
+--- @param #string To The To state
+--- @param #table Contacts The table of collected #INTEL.Contact contacts
+--- @param #table Clusters The table of collected #INTEL.Cluster clusters
+--- @return #INTEL_DLINK self
 function INTEL_DLINK:onbeforeCollected(From, Event, To, Contacts, Clusters)
   self:T({From, Event, To})
   return self
 end
 
 --- Function to stop
--- @param #INTEL_DLINK self
--- @param #string From The From state
--- @param #string Event The Event triggering this call
--- @param #string To The To state
--- @return #INTEL_DLINK self
+--- @param #INTEL_DLINK self
+--- @param #string From The From state
+--- @param #string Event The Event triggering this call
+--- @param #string To The To state
+--- @return #INTEL_DLINK self
 function INTEL_DLINK:onafterStop(From, Event, To)
   self:T({From, Event, To})
   local text = string.format("Version %s stopped.", self.version)
@@ -2462,24 +2462,24 @@ function INTEL_DLINK:onafterStop(From, Event, To)
 end
 
 --- Function to query the detected contacts
--- @param #INTEL_DLINK self
--- @return #table Table of #INTEL.Contact contacts
+--- @param #INTEL_DLINK self
+--- @return #table Table of #INTEL.Contact contacts
 function INTEL_DLINK:GetContactTable()
   self:T(self.lid .. "GetContactTable")
   return self.contacts
 end
 
 --- Function to query the detected clusters
--- @param #INTEL_DLINK self
--- @return #table Table of #INTEL.Cluster clusters
+--- @param #INTEL_DLINK self
+--- @return #table Table of #INTEL.Cluster clusters
 function INTEL_DLINK:GetClusterTable()
   self:T(self.lid .. "GetClusterTable")
   return self.clusters
 end
 
 --- Function to query the detected contact coordinates
--- @param #INTEL_DLINK self
--- @return #table Table of the contacts' Core.Point#COORDINATE objects.
+--- @param #INTEL_DLINK self
+--- @return #table Table of the contacts' Core.Point#COORDINATE objects.
 function INTEL_DLINK:GetDetectedItemCoordinates()
   self:T(self.lid .. "GetDetectedItemCoordinates")
   return self.contactcoords

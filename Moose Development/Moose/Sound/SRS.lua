@@ -30,23 +30,23 @@
 -- @image Sound_MSRS.png
 
 --- MSRS class.
--- @type MSRS
--- @field #string ClassName Name of the class.
--- @field #string lid Class id string for output to DCS log file.
--- @field #table frequencies Frequencies used in the transmissions.
--- @field #table modulations Modulations used in the transmissions.
--- @field #number coalition Coalition of the transmission.
--- @field #number port Port. Default 5002.
--- @field #string name Name. Default "DCS-STTS".
--- @field #number volume Volume between 0 (min) and 1 (max). Default 1.
--- @field #string culture Culture. Default "en-GB".
--- @field #string gender Gender. Default "female".
--- @field #string voice Specifc voce.
--- @field Core.Point#COORDINATE coordinate Coordinate from where the transmission is send.
--- @field #string path Path to the SRS exe. This includes the final slash "/".
--- @field #string google Full path google credentials JSON file, e.g. "C:\Users\username\Downloads\service-account-file.json".
--- @field #string Label Label showing up on the SRS radio overlay. Default is "ROBOT". No spaces allowed.
--- @field #table AltBackend Table containing functions and variables to enable an alternate backend to transmit to SRS.
+--- @type MSRS
+--- @field #string ClassName Name of the class.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #table frequencies Frequencies used in the transmissions.
+--- @field #table modulations Modulations used in the transmissions.
+--- @field #number coalition Coalition of the transmission.
+--- @field #number port Port. Default 5002.
+--- @field #string name Name. Default "DCS-STTS".
+--- @field #number volume Volume between 0 (min) and 1 (max). Default 1.
+--- @field #string culture Culture. Default "en-GB".
+--- @field #string gender Gender. Default "female".
+--- @field #string voice Specifc voce.
+--- @field Core.Point#COORDINATE coordinate Coordinate from where the transmission is send.
+--- @field #string path Path to the SRS exe. This includes the final slash "/".
+--- @field #string google Full path google credentials JSON file, e.g. "C:\Users\username\Downloads\service-account-file.json".
+--- @field #string Label Label showing up on the SRS radio overlay. Default is "ROBOT". No spaces allowed.
+--- @field #table AltBackend Table containing functions and variables to enable an alternate backend to transmit to SRS.
 -- @extends Core.Base#BASE
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -156,7 +156,7 @@
 --     msrs:PlaySoundText(text, 30)
 --
 --
--- @field #MSRS
+--- @field #MSRS
 MSRS = {
   ClassName      =     "MSRS",
   lid            =        nil,
@@ -176,11 +176,11 @@ MSRS = {
 }
 
 --- MSRS class version.
--- @field #string version
+--- @field #string version
 MSRS.version="0.1.2"
 
 --- Voices
--- @type Voices
+--- @type Voices
 MSRS.Voices = {
   Microsoft = {
     ["Hedda"] = "Microsoft Hedda Desktop", -- de-DE
@@ -293,13 +293,13 @@ MSRS.Voices = {
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new MSRS object.
--- @param #MSRS self
--- @param #string PathToSRS Path to the directory, where SRS is located.
--- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. Can also be given as a #table of multiple frequencies.
--- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a #table of multiple modulations.
--- @param #number Volume Volume - 1.0 is max, 0.0 is silence
--- @param #table AltBackend Optional table containing tables 'Functions' and 'Vars' which add/replace functions and variables for the MSRS instance to allow alternate backends for transmitting to SRS.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #string PathToSRS Path to the directory, where SRS is located.
+--- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. Can also be given as a #table of multiple frequencies.
+--- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a #table of multiple modulations.
+--- @param #number Volume Volume - 1.0 is max, 0.0 is silence
+--- @param #table AltBackend Optional table containing tables 'Functions' and 'Vars' which add/replace functions and variables for the MSRS instance to allow alternate backends for transmitting to SRS.
+--- @return #MSRS self
 function MSRS:New(PathToSRS, Frequency, Modulation, Volume, AltBackend)
 
   -- Defaults.
@@ -349,9 +349,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set path to SRS install directory. More precisely, path to where the DCS-
--- @param #MSRS self
--- @param #string Path Path to the directory, where the sound file is located. This does **not** contain a final backslash or slash.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #string Path Path to the directory, where the sound file is located. This does **not** contain a final backslash or slash.
+--- @return #MSRS self
 function MSRS:SetPath(Path)
 
   if Path==nil then
@@ -376,16 +376,16 @@ function MSRS:SetPath(Path)
 end
 
 --- Get path to SRS directory.
--- @param #MSRS self
--- @return #string Path to the directory. This includes the final slash "/".
+--- @param #MSRS self
+--- @return #string Path to the directory. This includes the final slash "/".
 function MSRS:GetPath()
   return self.path
 end
 
 --- Set SRS volume.
--- @param #MSRS self
--- @param #number Volume Volume - 1.0 is max, 0.0 is silence
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #number Volume Volume - 1.0 is max, 0.0 is silence
+--- @return #MSRS self
 function MSRS:SetVolume(Volume)
   local volume = Volume or 1
   if volume > 1 then volume = 1 elseif volume < 0 then volume = 0 end
@@ -394,65 +394,65 @@ function MSRS:SetVolume(Volume)
 end
 
 --- Get SRS volume.
--- @param #MSRS self 
--- @return #number Volume Volume - 1.0 is max, 0.0 is silence
+--- @param #MSRS self 
+--- @return #number Volume Volume - 1.0 is max, 0.0 is silence
 function MSRS:GetVolume()
   return self.volume
 end
 
 --- Set label.
--- @param #MSRS self
--- @param #number Label. Default "ROBOT"
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #number Label. Default "ROBOT"
+--- @return #MSRS self
 function MSRS:SetLabel(Label)
   self.Label=Label or "ROBOT"
   return self
 end
 
 --- Get label.
--- @param #MSRS self
--- @return #number Label.
+--- @param #MSRS self
+--- @return #number Label.
 function MSRS:GetLabel()
   return self.Label
 end
 
 --- Set port.
--- @param #MSRS self
--- @param #number Port Port. Default 5002.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #number Port Port. Default 5002.
+--- @return #MSRS self
 function MSRS:SetPort(Port)
   self.port=Port or 5002
   return self
 end
 
 --- Get port.
--- @param #MSRS self
--- @return #number Port.
+--- @param #MSRS self
+--- @return #number Port.
 function MSRS:GetPort()
   return self.port
 end
 
 --- Set coalition.
--- @param #MSRS self
--- @param #number Coalition Coalition. Default 0.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #number Coalition Coalition. Default 0.
+--- @return #MSRS self
 function MSRS:SetCoalition(Coalition)
   self.coalition=Coalition or 0
   return self
 end
 
 --- Get coalition.
--- @param #MSRS self
--- @return #number Coalition.
+--- @param #MSRS self
+--- @return #number Coalition.
 function MSRS:GetCoalition()
   return self.coalition
 end
 
 
 --- Set frequencies.
--- @param #MSRS self
--- @param #table Frequencies Frequencies in MHz. Can also be given as a #number if only one frequency should be used.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #table Frequencies Frequencies in MHz. Can also be given as a #number if only one frequency should be used.
+--- @return #MSRS self
 function MSRS:SetFrequencies(Frequencies)
 
   -- Ensure table.
@@ -466,9 +466,9 @@ function MSRS:SetFrequencies(Frequencies)
 end
 
 --- Add frequencies.
--- @param #MSRS self
--- @param #table Frequencies Frequencies in MHz. Can also be given as a #number if only one frequency should be used.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #table Frequencies Frequencies in MHz. Can also be given as a #number if only one frequency should be used.
+--- @return #MSRS self
 function MSRS:AddFrequencies(Frequencies)
 
   -- Ensure table.
@@ -484,17 +484,17 @@ function MSRS:AddFrequencies(Frequencies)
 end
 
 --- Get frequencies.
--- @param #MSRS self
--- @param #table Frequencies in MHz.
+--- @param #MSRS self
+--- @param #table Frequencies in MHz.
 function MSRS:GetFrequencies()
   return self.frequencies
 end
 
 
 --- Set modulations.
--- @param #MSRS self
--- @param #table Modulations Modulations. Can also be given as a #number if only one modulation should be used.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #table Modulations Modulations. Can also be given as a #number if only one modulation should be used.
+--- @return #MSRS self
 function MSRS:SetModulations(Modulations)
 
   -- Ensure table.
@@ -508,9 +508,9 @@ function MSRS:SetModulations(Modulations)
 end
 
 --- Add modulations.
--- @param #MSRS self
--- @param #table Modulations Modulations. Can also be given as a #number if only one modulation should be used.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #table Modulations Modulations. Can also be given as a #number if only one modulation should be used.
+--- @return #MSRS self
 function MSRS:AddModulations(Modulations)
 
   -- Ensure table.
@@ -526,16 +526,16 @@ function MSRS:AddModulations(Modulations)
 end
 
 --- Get modulations.
--- @param #MSRS self
--- @param #table Modulations.
+--- @param #MSRS self
+--- @param #table Modulations.
 function MSRS:GetModulations()
   return self.modulations
 end
 
 --- Set gender.
--- @param #MSRS self
--- @param #string Gender Gender: "male" or "female" (default).
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #string Gender Gender: "male" or "female" (default).
+--- @return #MSRS self
 function MSRS:SetGender(Gender)
   
   Gender=Gender or "female"
@@ -549,9 +549,9 @@ function MSRS:SetGender(Gender)
 end
 
 --- Set culture.
--- @param #MSRS self
--- @param #string Culture Culture, e.g. "en-GB" (default).
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #string Culture Culture, e.g. "en-GB" (default).
+--- @return #MSRS self
 function MSRS:SetCulture(Culture)
 
   self.culture=Culture
@@ -560,9 +560,9 @@ function MSRS:SetCulture(Culture)
 end
 
 --- Set to use a specific voice. Will override gender and culture settings. 
--- @param #MSRS self
--- @param #string Voice Voice.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #string Voice Voice.
+--- @return #MSRS self
 function MSRS:SetVoice(Voice)
 
   self.voice=Voice
@@ -571,9 +571,9 @@ function MSRS:SetVoice(Voice)
 end
 
 --- Set the coordinate from which the transmissions will be broadcasted.
--- @param #MSRS self
--- @param Core.Point#COORDINATE Coordinate Origin of the transmission.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param Core.Point#COORDINATE Coordinate Origin of the transmission.
+--- @return #MSRS self
 function MSRS:SetCoordinate(Coordinate)
 
   self.coordinate=Coordinate
@@ -582,9 +582,9 @@ function MSRS:SetCoordinate(Coordinate)
 end
 
 --- Use google text-to-speech.
--- @param #MSRS self
--- @param PathToCredentials Full path to the google credentials JSON file, e.g. "C:\Users\username\Downloads\service-account-file.json".
--- @return #MSRS self
+--- @param #MSRS self
+--- @param PathToCredentials Full path to the google credentials JSON file, e.g. "C:\Users\username\Downloads\service-account-file.json".
+--- @return #MSRS self
 function MSRS:SetGoogle(PathToCredentials)
 
   self.google=PathToCredentials
@@ -593,8 +593,8 @@ function MSRS:SetGoogle(PathToCredentials)
 end
 
 --- Print SRS STTS help to DCS log file.
--- @param #MSRS self
--- @return #MSRS self
+--- @param #MSRS self
+--- @return #MSRS self
 function MSRS:Help()
 
   -- Path and exe.
@@ -622,8 +622,8 @@ function MSRS:Help()
 end
 
 --- Sets an alternate SRS backend to be used by MSRS to transmit over SRS for all new MSRS class instances.
--- @param #table A table containing a table `Functions` with new/replacement class functions and `Vars` with new/replacement variables. 
--- @return #boolean Returns 'true' on success.
+--- @param #table A table containing a table `Functions` with new/replacement class functions and `Vars` with new/replacement variables. 
+--- @return #boolean Returns 'true' on success.
 function MSRS.SetDefaultBackend(Backend)
   if type(Backend) == "table" then
     MSRS.AltBackend = UTILS.DeepCopy(Backend)
@@ -635,14 +635,14 @@ function MSRS.SetDefaultBackend(Backend)
 end
 
 --- Restores default SRS backend (DCS-SR-ExternalAudio.exe) to be used by all new MSRS class instances to transmit over SRS.
--- @return #boolean Returns 'true' on success.
+--- @return #boolean Returns 'true' on success.
 function MSRS.ResetDefaultBackend()
   MSRS.AltBackend = nil
   return true
 end
 
 --- Sets DCS-gRPC as the default SRS backend for all new MSRS class instances.
--- @return #boolean Returns 'true' on success.
+--- @return #boolean Returns 'true' on success.
 function MSRS.SetDefaultBackendGRPC()
   return MSRS.SetDefaultBackend(MSRS_BACKEND_DCSGRPC)
 end
@@ -652,10 +652,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Play sound file (ogg or mp3) via SRS.
--- @param #MSRS self
--- @param Sound.SoundFile#SOUNDFILE Soundfile Sound file to play.
--- @param #number Delay Delay in seconds, before the sound file is played.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param Sound.SoundFile#SOUNDFILE Soundfile Sound file to play.
+--- @param #number Delay Delay in seconds, before the sound file is played.
+--- @return #MSRS self
 function MSRS:PlaySoundFile(Soundfile, Delay)
 
   if Delay and Delay>0 then
@@ -680,10 +680,10 @@ function MSRS:PlaySoundFile(Soundfile, Delay)
 end
 
 --- Play a SOUNDTEXT text-to-speech object.
--- @param #MSRS self
--- @param Sound.SoundFile#SOUNDTEXT SoundText Sound text.
--- @param #number Delay Delay in seconds, before the sound file is played.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param Sound.SoundFile#SOUNDTEXT SoundText Sound text.
+--- @param #number Delay Delay in seconds, before the sound file is played.
+--- @return #MSRS self
 function MSRS:PlaySoundText(SoundText, Delay)
 
   if Delay and Delay>0 then
@@ -705,10 +705,10 @@ function MSRS:PlaySoundText(SoundText, Delay)
 end
 
 --- Play text message via STTS.
--- @param #MSRS self
--- @param #string Text Text message.
--- @param #number Delay Delay in seconds, before the message is played.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #string Text Text message.
+--- @param #number Delay Delay in seconds, before the message is played.
+--- @return #MSRS self
 function MSRS:PlayText(Text, Delay)
 
   if Delay and Delay>0 then
@@ -730,17 +730,17 @@ function MSRS:PlayText(Text, Delay)
 end
 
 --- Play text message via STTS with explicitly specified options.
--- @param #MSRS self
--- @param #string Text Text message.
--- @param #number Delay Delay in seconds, before the message is played.
--- @param #table Frequencies Radio frequencies.
--- @param #table Modulations Radio modulations.
--- @param #string Gender Gender.
--- @param #string Culture Culture.
--- @param #string Voice Voice.
--- @param #number Volume Volume.
--- @param #string Label Label.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #string Text Text message.
+--- @param #number Delay Delay in seconds, before the message is played.
+--- @param #table Frequencies Radio frequencies.
+--- @param #table Modulations Radio modulations.
+--- @param #string Gender Gender.
+--- @param #string Culture Culture.
+--- @param #string Voice Voice.
+--- @param #number Volume Volume.
+--- @param #string Label Label.
+--- @return #MSRS self
 function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label)
 
   if Delay and Delay>0 then
@@ -773,10 +773,10 @@ end
 
 
 --- Play text file via STTS.
--- @param #MSRS self
--- @param #string TextFile Full path to the file.
--- @param #number Delay Delay in seconds, before the message is played.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #string TextFile Full path to the file.
+--- @param #number Delay Delay in seconds, before the message is played.
+--- @return #MSRS self
 function MSRS:PlayTextFile(TextFile, Delay)
 
   if Delay and Delay>0 then
@@ -816,9 +816,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Adds or replaces functions and variables in the current MSRS class instance to enable an alternate backends for transmitting to SRS.
--- @param #MSRS self
--- @param #table A table containing a table `Functions` with new/replacement class functions and `Vars` with new/replacement variables. 
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #table A table containing a table `Functions` with new/replacement class functions and `Vars` with new/replacement variables. 
+--- @return #MSRS self
 function MSRS:_NewAltBackend(Backend)
   BASE:T('Entering MSRS:_NewAltBackend()')
 
@@ -845,9 +845,9 @@ function MSRS:_NewAltBackend(Backend)
 end
 
 --- Execute SRS command to play sound using the `DCS-SR-ExternalAudio.exe`.
--- @param #MSRS self
--- @param #string command Command to executer
--- @return #number Return value of os.execute() command.
+--- @param #MSRS self
+--- @param #string command Command to executer
+--- @return #number Return value of os.execute() command.
 function MSRS:_ExecCommand(command)
 
     -- Create a tmp file.
@@ -907,11 +907,11 @@ function MSRS:_ExecCommand(command)
 end
 
 --- Get lat, long and alt from coordinate.
--- @param #MSRS self
--- @param Core.Point#Coordinate Coordinate Coordinate. Can also be a DCS#Vec3.
--- @return #number Latitude.
--- @return #number Longitude.
--- @return #number Altitude.
+--- @param #MSRS self
+--- @param Core.Point#Coordinate Coordinate Coordinate. Can also be a DCS#Vec3.
+--- @return #number Latitude.
+--- @return #number Longitude.
+--- @return #number Altitude.
 function MSRS:_GetLatLongAlt(Coordinate)
   
   local lat, lon, alt=coord.LOtoLL(Coordinate)
@@ -921,18 +921,18 @@ end
 
 
 --- Get SRS command to play sound using the `DCS-SR-ExternalAudio.exe`.
--- @param #MSRS self
--- @param #table freqs Frequencies in MHz.
--- @param #table modus Modulations.
--- @param #number coal Coalition.
--- @param #string gender Gender.
--- @param #string voice Voice.
--- @param #string culture Culture.
--- @param #number volume Volume.
--- @param #number speed Speed.
--- @param #number port Port.
--- @param #string label Label, defaults to "ROBOT" (displayed sender name in the radio overlay of SRS) - No spaces allowed!
--- @return #string Command.
+--- @param #MSRS self
+--- @param #table freqs Frequencies in MHz.
+--- @param #table modus Modulations.
+--- @param #number coal Coalition.
+--- @param #string gender Gender.
+--- @param #string voice Voice.
+--- @param #string culture Culture.
+--- @param #number volume Volume.
+--- @param #number speed Speed.
+--- @param #number port Port.
+--- @param #string label Label, defaults to "ROBOT" (displayed sender name in the radio overlay of SRS) - No spaces allowed!
+--- @return #string Command.
 function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, speed, port,label)
 
   local path=self:GetPath() or STTS.DIRECTORY    
@@ -997,9 +997,9 @@ end
 -- This is not a standalone class. Instead, variables and functions under the `Vars` and `Functions` tables get added to or replace MSRS variables/functions when activated.
 -- 
 -- @type MSRS_BACKEND_DCSGRPC 
--- @field #number version Version number of this alternate backend.
--- @field #table Functions A table of functions that will add or replace the default MSRS class functions.
--- @field #table Vars A table of variables that will add or replace the default MSRS class variables.
+--- @field #number version Version number of this alternate backend.
+--- @field #table Functions A table of functions that will add or replace the default MSRS class functions.
+--- @field #table Vars A table of variables that will add or replace the default MSRS class variables.
 MSRS_BACKEND_DCSGRPC = {}
 MSRS_BACKEND_DCSGRPC.version = 0.1
 
@@ -1007,8 +1007,8 @@ MSRS_BACKEND_DCSGRPC.Functions = {}
 MSRS_BACKEND_DCSGRPC.Vars = { provider = 'win' }
 
 --- Called by @{#MSRS._NewAltBackend} (if present) immediately after an alternate backend functions and variables for MSRS are added/replaced.
--- @param #MSRS self
--- @return #MSRS self
+--- @param #MSRS self
+--- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions._MSRSbackendInit = function (self)
   BASE:I('Loaded MSRS DCS-gRPC alternate backend version ' .. self.AltBackend.version or 'unspecified')
 
@@ -1020,39 +1020,39 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- No-op replacement function for @{#MSRS.SetPath} (Not Applicable)
--- @param #MSRS self
--- @return #MSRS self
+--- @param #MSRS self
+--- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions.SetPath = function (self)
   return self
 end
 
 --- No-op replacement function for @{#MSRS.GetPath} (Not Applicable)
--- @param #MSRS self
--- @return #string Empty string
+--- @param #MSRS self
+--- @return #string Empty string
 MSRS_BACKEND_DCSGRPC.Functions.GetPath = function (self)
   return ''
 end
 
 --- No-op replacement function for @{#MSRS.SetVolume} (Not Applicable)
--- @param #MSRS self
--- @return #MSRS self
+--- @param #MSRS self
+--- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions.SetVolume = function (self)
   BASE:I('NOTE: MSRS:SetVolume() not used with DCS-gRPC backend.')
   return self
 end
 
 --- No-op replacement function for @{#MSRS.GetVolume} (Not Applicable)
--- @param #MSRS self
--- @return #MSRS self
+--- @param #MSRS self
+--- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions.GetVolume = function (self)
   BASE:I('NOTE: MSRS:GetVolume() not used with DCS-gRPC backend.')
   return 1
 end
 
 --- No-op replacement function for @{#MSRS.SetGender} (Not Applicable)
--- @param #MSRS self
+--- @param #MSRS self
 -- #string Gender Gender: "male" or "female"
--- @return #MSRS self
+--- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions.SetGender = function (self, Gender)
   -- Use DCS-gRPC default if not specified
 
@@ -1066,40 +1066,40 @@ MSRS_BACKEND_DCSGRPC.Functions.SetGender = function (self, Gender)
 end
 
 --- Replacement function for @{#MSRS.SetGoogle} to use google text-to-speech.  (API key set as part of DCS-gRPC configuration)
--- @param #MSRS self
--- @return #MSRS self
+--- @param #MSRS self
+--- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions.SetGoogle = function (self)
     self.provider = 'gcloud'
     return self
 end
 
 --- MSRS:SetAWS() Use AWS text-to-speech. (API key set as part of DCS-gRPC configuration)
--- @param #MSRS self
--- @return #MSRS self
+--- @param #MSRS self
+--- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions.SetAWS = function (self)
     self.provider = 'aws'
     return self
 end
 
 --- MSRS:SetAzure() Use Azure text-to-speech. (API key set as part of DCS-gRPC configuration)
--- @param #MSRS self
--- @return #MSRS self
+--- @param #MSRS self
+--- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions.SetAzure = function (self)
     self.provider = 'azure'
     return self
 end
 
 --- MSRS:SetWin() Use local Windows OS text-to-speech (Windows Server 2019 / Windows 11 / Windows 10? or newer). (Default)
--- @param #MSRS self
--- @return #MSRS self
+--- @param #MSRS self
+--- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions.SetWin = function (self)
     self.provider = 'win'
     return self
 end
 
 --- Replacement function for @{#MSRS.Help} to display help.
--- @param #MSRS self
--- @return #MSRS self
+--- @param #MSRS self
+--- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions.Help = function (self)
     env.info('For DCS-gRPC help, please see: https://github.com/DCS-gRPC/rust-server')
     return self
@@ -1110,18 +1110,18 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- No-op replacement function for @{#MSRS.PlaySoundFile} (Not Applicable)
--- @param #MSRS self
--- @return #MSRS self
+--- @param #MSRS self
+--- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions.PlaySoundFile = function (self)
     BASE:E("ERROR: MSRS:PlaySoundFile() is not supported by the DCS-gRPC backend.")
     return self
 end
 
 --- Replacement function for @{#MSRS.PlaySoundText} 
--- @param #MSRS self
--- @param Sound.SoundFile#SOUNDTEXT SoundText Sound text.
--- @param #number Delay Delay in seconds, before the sound file is played.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param Sound.SoundFile#SOUNDTEXT SoundText Sound text.
+--- @param #number Delay Delay in seconds, before the sound file is played.
+--- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions.PlaySoundText = function (self, SoundText, Delay)
 
     if Delay and Delay>0 then
@@ -1134,10 +1134,10 @@ MSRS_BACKEND_DCSGRPC.Functions.PlaySoundText = function (self, SoundText, Delay)
 end
 
 --- Replacement function for @{#MSRS.PlayText} 
--- @param #MSRS self
--- @param #string Text Text message.
--- @param #number Delay Delay in seconds, before the message is played.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #string Text Text message.
+--- @param #number Delay Delay in seconds, before the message is played.
+--- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions.PlayText = function (self, Text, Delay)
 
     if Delay and Delay>0 then
@@ -1150,17 +1150,17 @@ MSRS_BACKEND_DCSGRPC.Functions.PlayText = function (self, Text, Delay)
 end
 
 --- Replacement function for @{#MSRS.PlayText} 
--- @param #MSRS self
--- @param #string Text Text message.
--- @param #number Delay Delay in seconds, before the message is played.
--- @param #table Frequencies Radio frequencies.
--- @param #table Modulations Radio modulations. (Non-functional, DCS-gRPC sets automatically)
--- @param #string Gender Gender. (Non-functional, only 'Voice' supported)
--- @param #string Culture Culture. (Non-functional, only 'Voice' supported)
--- @param #string Voice Voice. 
--- @param #number Volume Volume. (Non-functional, all transmissions full volume with DCS-gRPC)
--- @param #string Label Label.
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #string Text Text message.
+--- @param #number Delay Delay in seconds, before the message is played.
+--- @param #table Frequencies Radio frequencies.
+--- @param #table Modulations Radio modulations. (Non-functional, DCS-gRPC sets automatically)
+--- @param #string Gender Gender. (Non-functional, only 'Voice' supported)
+--- @param #string Culture Culture. (Non-functional, only 'Voice' supported)
+--- @param #string Voice Voice. 
+--- @param #number Volume Volume. (Non-functional, all transmissions full volume with DCS-gRPC)
+--- @param #string Label Label.
+--- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions.PlayTextExt = function (self, Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label)
   if Delay and Delay>0 then
       self:ScheduleOnce(Delay, self.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label)
@@ -1172,8 +1172,8 @@ MSRS_BACKEND_DCSGRPC.Functions.PlayTextExt = function (self, Text, Delay, Freque
 end
 
 --- No-op replacement function for @{#MSRS.PlayTextFile} (Not Applicable)
--- @param #MSRS self
--- @return #MSRS self
+--- @param #MSRS self
+--- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions.PlayTextFile = function (self, TextFile, Delay)
   BASE:E("ERROR: MSRS:PlayTextFile() is not supported by the DCS-gRPC backend.")
   return self
@@ -1219,13 +1219,13 @@ end
 -- }
 
 --- Make DCS-gRPC API call to transmit text-to-speech over SRS.
--- @param #MSRS self
--- @param #string Text Text of message to transmit (can also be SSML).
--- @param #string Optional plaintext version of message (for accessiblity)
--- @param #table Frequencies Radio frequencies to transmit on. Can also accept a number in MHz.
--- @param #string Voice Voice for the TTS provider to user. 
--- @param #string Label Label (SRS diplays as name of the transmitter).
--- @return #MSRS self
+--- @param #MSRS self
+--- @param #string Text Text of message to transmit (can also be SSML).
+--- @param #string Optional plaintext version of message (for accessiblity)
+--- @param #table Frequencies Radio frequencies to transmit on. Can also accept a number in MHz.
+--- @param #string Voice Voice for the TTS provider to user. 
+--- @param #string Label Label (SRS diplays as name of the transmitter).
+--- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions._DCSgRPCtts = function (self, Text, Plaintext, Frequencies, Voice, Label)
 
     BASE:T("MSRS_BACKEND_DCSGRPC:_DCSgRPCtts()")
@@ -1299,14 +1299,14 @@ end
 -- The purpose of the MSRSQUEUE class is to manage SRS text-to-speech (TTS) messages using the MSRS class.
 -- This can be used to submit multiple TTS messages and the class takes care that they are transmitted one after the other (and not overlapping).
 -- 
--- @type MSRSQUEUE
--- @field #string ClassName Name of the class "MSRSQUEUE".
--- @field #string lid ID for dcs.log.
--- @field #table queue The queue of transmissions.
--- @field #string alias Name of the radio queue.
--- @field #number dt Time interval in seconds for checking the radio queue. 
--- @field #number Tlast Time (abs) when the last transmission finished.
--- @field #boolean checking If `true`, the queue update function is scheduled to be called again.
+--- @type MSRSQUEUE
+--- @field #string ClassName Name of the class "MSRSQUEUE".
+--- @field #string lid ID for dcs.log.
+--- @field #table queue The queue of transmissions.
+--- @field #string alias Name of the radio queue.
+--- @field #number dt Time interval in seconds for checking the radio queue. 
+--- @field #number Tlast Time (abs) when the last transmission finished.
+--- @field #boolean checking If `true`, the queue update function is scheduled to be called again.
 -- @extends Core.Base#BASE
 MSRSQUEUE = {
   ClassName   = "MSRSQUEUE",
@@ -1320,26 +1320,26 @@ MSRSQUEUE = {
 }
 
 --- Radio queue transmission data.
--- @type MSRSQUEUE.Transmission
--- @field #string text Text to be transmitted.
--- @field Sound.SRS#MSRS msrs MOOSE SRS object.
--- @field #number duration Duration in seconds.
--- @field #table subgroups Groups to send subtitle to.
--- @field #string subtitle Subtitle of the transmission.
--- @field #number subduration Duration of the subtitle being displayed.
--- @field #number frequency Frequency.
--- @field #number modulation Modulation.
--- @field #number Tstarted Mission time (abs) in seconds when the transmission started.
--- @field #boolean isplaying If true, transmission is currently playing.
--- @field #number Tplay Mission time (abs) in seconds when the transmission should be played.
--- @field #number interval Interval in seconds before next transmission.
--- @field #boolean TransmitOnlyWithPlayers If true, only transmit if there are alive Players.
--- @field Core.Set#SET_CLIENT PlayerSet PlayerSet created when TransmitOnlyWithPlayers == true
+--- @type MSRSQUEUE.Transmission
+--- @field #string text Text to be transmitted.
+--- @field Sound.SRS#MSRS msrs MOOSE SRS object.
+--- @field #number duration Duration in seconds.
+--- @field #table subgroups Groups to send subtitle to.
+--- @field #string subtitle Subtitle of the transmission.
+--- @field #number subduration Duration of the subtitle being displayed.
+--- @field #number frequency Frequency.
+--- @field #number modulation Modulation.
+--- @field #number Tstarted Mission time (abs) in seconds when the transmission started.
+--- @field #boolean isplaying If true, transmission is currently playing.
+--- @field #number Tplay Mission time (abs) in seconds when the transmission should be played.
+--- @field #number interval Interval in seconds before next transmission.
+--- @field #boolean TransmitOnlyWithPlayers If true, only transmit if there are alive Players.
+--- @field Core.Set#SET_CLIENT PlayerSet PlayerSet created when TransmitOnlyWithPlayers == true
 
 --- Create a new MSRSQUEUE object for a given radio frequency/modulation.
--- @param #MSRSQUEUE self
--- @param #string alias (Optional) Name of the radio queue.
--- @return #MSRSQUEUE self The MSRSQUEUE object.
+--- @param #MSRSQUEUE self
+--- @param #string alias (Optional) Name of the radio queue.
+--- @return #MSRSQUEUE self The MSRSQUEUE object.
 function MSRSQUEUE:New(alias)
 
   -- Inherit base
@@ -1355,8 +1355,8 @@ function MSRSQUEUE:New(alias)
 end
 
 --- Clear the radio queue.
--- @param #MSRSQUEUE self
--- @return #MSRSQUEUE self The MSRSQUEUE object.
+--- @param #MSRSQUEUE self
+--- @return #MSRSQUEUE self The MSRSQUEUE object.
 function MSRSQUEUE:Clear()
   self:I(self.lid.."Clearning MSRSQUEUE")
   self.queue={}
@@ -1365,9 +1365,9 @@ end
 
 
 --- Add a transmission to the radio queue.
--- @param #MSRSQUEUE self
--- @param #MSRSQUEUE.Transmission transmission The transmission data table. 
--- @return #MSRSQUEUE self
+--- @param #MSRSQUEUE self
+--- @param #MSRSQUEUE.Transmission transmission The transmission data table. 
+--- @return #MSRSQUEUE self
 function MSRSQUEUE:AddTransmission(transmission)
   
   -- Init.
@@ -1386,9 +1386,9 @@ function MSRSQUEUE:AddTransmission(transmission)
 end
 
 --- Switch to only transmit if there are players on the server.
--- @param #MSRSQUEUE self
--- @param #boolean Switch If true, only send SRS if there are alive Players.
--- @return #MSRSQUEUE self
+--- @param #MSRSQUEUE self
+--- @param #boolean Switch If true, only send SRS if there are alive Players.
+--- @return #MSRSQUEUE self
 function MSRSQUEUE:SetTransmitOnlyWithPlayers(Switch)
   self.TransmitOnlyWithPlayers = Switch
   if Switch == false or Switch==nil then
@@ -1403,18 +1403,18 @@ function MSRSQUEUE:SetTransmitOnlyWithPlayers(Switch)
 end
 
 --- Create a new transmission and add it to the radio queue.
--- @param #MSRSQUEUE self
--- @param #string text Text to play.
--- @param #number duration Duration in seconds the file lasts. Default is determined by number of characters of the text message.
--- @param Sound.SRS#MSRS msrs MOOSE SRS object.
--- @param #number tstart Start time (abs) seconds. Default now.
--- @param #number interval Interval in seconds after the last transmission finished.
--- @param #table subgroups Groups that should receive the subtiltle.
--- @param #string subtitle Subtitle displayed when the message is played.
--- @param #number subduration Duration [sec] of the subtitle being displayed. Default 5 sec.
--- @param #number frequency Radio frequency if other than MSRS default.
--- @param #number modulation Radio modulation if other then MSRS default.
--- @return #MSRSQUEUE.Transmission Radio transmission table.
+--- @param #MSRSQUEUE self
+--- @param #string text Text to play.
+--- @param #number duration Duration in seconds the file lasts. Default is determined by number of characters of the text message.
+--- @param Sound.SRS#MSRS msrs MOOSE SRS object.
+--- @param #number tstart Start time (abs) seconds. Default now.
+--- @param #number interval Interval in seconds after the last transmission finished.
+--- @param #table subgroups Groups that should receive the subtiltle.
+--- @param #string subtitle Subtitle displayed when the message is played.
+--- @param #number subduration Duration [sec] of the subtitle being displayed. Default 5 sec.
+--- @param #number frequency Radio frequency if other than MSRS default.
+--- @param #number modulation Radio modulation if other then MSRS default.
+--- @return #MSRSQUEUE.Transmission Radio transmission table.
 function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation)
   
   if self.TransmitOnlyWithPlayers then
@@ -1458,8 +1458,8 @@ function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgr
 end
 
 --- Broadcast radio message.
--- @param #MSRSQUEUE self
--- @param #MSRSQUEUE.Transmission transmission The transmission.
+--- @param #MSRSQUEUE self
+--- @param #MSRSQUEUE.Transmission transmission The transmission.
 function MSRSQUEUE:Broadcast(transmission)
   
   if transmission.frequency then
@@ -1491,8 +1491,8 @@ function MSRSQUEUE:Broadcast(transmission)
 end
 
 --- Calculate total transmission duration of all transmission in the queue.
--- @param #MSRSQUEUE self
--- @return #number Total transmission duration.
+--- @param #MSRSQUEUE self
+--- @return #number Total transmission duration.
 function MSRSQUEUE:CalcTransmisstionDuration()
 
   local Tnow=timer.getAbsTime()
@@ -1518,8 +1518,8 @@ function MSRSQUEUE:CalcTransmisstionDuration()
 end
 
 --- Check radio queue for transmissions to be broadcasted.
--- @param #MSRSQUEUE self
--- @param #number delay Delay in seconds before checking.
+--- @param #MSRSQUEUE self
+--- @param #number delay Delay in seconds before checking.
 function MSRSQUEUE:_CheckRadioQueue(delay)
 
   -- Transmissions in queue.  

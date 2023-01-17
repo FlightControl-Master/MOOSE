@@ -26,38 +26,38 @@
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
--- @type MANTIS
--- @field #string ClassName
--- @field #string name Name of this Mantis
--- @field #string SAM_Templates_Prefix Prefix to build the #SET_GROUP for SAM sites
--- @field Core.Set#SET_GROUP SAM_Group The SAM #SET_GROUP
--- @field #string EWR_Templates_Prefix Prefix to build the #SET_GROUP for EWR group
--- @field Core.Set#SET_GROUP EWR_Group The EWR #SET_GROUP
--- @field Core.Set#SET_GROUP Adv_EWR_Group The EWR #SET_GROUP used for advanced mode
--- @field #string HQ_Template_CC The ME name of the HQ object
--- @field Wrapper.Group#GROUP HQ_CC The #GROUP object of the HQ
--- @field #table SAM_Table Table of SAM sites
--- @field #string lid Prefix for logging
--- @field Functional.Detection#DETECTION_AREAS Detection The #DETECTION_AREAS object for EWR
--- @field Functional.Detection#DETECTION_AREAS AWACS_Detection The #DETECTION_AREAS object for AWACS
--- @field #boolean debug Switch on extra messages
--- @field #boolean verbose Switch on extra logging
--- @field #number checkradius Radius of the SAM sites
--- @field #number grouping Radius to group detected objects
--- @field #number acceptrange Radius of the EWR detection
--- @field #number detectinterval Interval in seconds for the target detection
--- @field #number engagerange Firing engage range of the SAMs, see [https://wiki.hoggitworld.com/view/DCS_option_engagementRange]
--- @field #boolean autorelocate Relocate HQ and EWR groups in random intervals. Note: You need to select units for this which are *actually mobile*
--- @field #boolean advanced Use advanced mode, will decrease reactivity of MANTIS, if HQ and/or EWR network dies. Set SAMs to RED state if both are dead. Requires usage of an HQ object
--- @field #number adv_ratio Percentage to use for advanced mode, defaults to 100%
--- @field #number adv_state Advanced mode state tracker
--- @field #boolean advAwacs Boolean switch to use Awacs as a separate detection stream
--- @field #number awacsrange Detection range of an optional Awacs unit
--- @field #boolean UseEmOnOff Decide if we are using Emissions on/off (true) or AlarmState red/green (default)
--- @field Functional.Shorad#SHORAD Shorad SHORAD Object, if available
--- @field #boolean ShoradLink If true, #MANTIS has #SHORAD enabled
--- @field #number ShoradTime Timer in seconds, how long #SHORAD will be active after a detection inside of the defense range
--- @field #number ShoradActDistance Distance of an attacker in meters from a Mantis SAM site, on which Shorad will be switched on. Useful to not give away Shorad sites too early. Default 15km. Should be smaller than checkradius.
+--- @type MANTIS
+--- @field #string ClassName
+--- @field #string name Name of this Mantis
+--- @field #string SAM_Templates_Prefix Prefix to build the #SET_GROUP for SAM sites
+--- @field Core.Set#SET_GROUP SAM_Group The SAM #SET_GROUP
+--- @field #string EWR_Templates_Prefix Prefix to build the #SET_GROUP for EWR group
+--- @field Core.Set#SET_GROUP EWR_Group The EWR #SET_GROUP
+--- @field Core.Set#SET_GROUP Adv_EWR_Group The EWR #SET_GROUP used for advanced mode
+--- @field #string HQ_Template_CC The ME name of the HQ object
+--- @field Wrapper.Group#GROUP HQ_CC The #GROUP object of the HQ
+--- @field #table SAM_Table Table of SAM sites
+--- @field #string lid Prefix for logging
+--- @field Functional.Detection#DETECTION_AREAS Detection The #DETECTION_AREAS object for EWR
+--- @field Functional.Detection#DETECTION_AREAS AWACS_Detection The #DETECTION_AREAS object for AWACS
+--- @field #boolean debug Switch on extra messages
+--- @field #boolean verbose Switch on extra logging
+--- @field #number checkradius Radius of the SAM sites
+--- @field #number grouping Radius to group detected objects
+--- @field #number acceptrange Radius of the EWR detection
+--- @field #number detectinterval Interval in seconds for the target detection
+--- @field #number engagerange Firing engage range of the SAMs, see [https://wiki.hoggitworld.com/view/DCS_option_engagementRange]
+--- @field #boolean autorelocate Relocate HQ and EWR groups in random intervals. Note: You need to select units for this which are *actually mobile*
+--- @field #boolean advanced Use advanced mode, will decrease reactivity of MANTIS, if HQ and/or EWR network dies. Set SAMs to RED state if both are dead. Requires usage of an HQ object
+--- @field #number adv_ratio Percentage to use for advanced mode, defaults to 100%
+--- @field #number adv_state Advanced mode state tracker
+--- @field #boolean advAwacs Boolean switch to use Awacs as a separate detection stream
+--- @field #number awacsrange Detection range of an optional Awacs unit
+--- @field #boolean UseEmOnOff Decide if we are using Emissions on/off (true) or AlarmState red/green (default)
+--- @field Functional.Shorad#SHORAD Shorad SHORAD Object, if available
+--- @field #boolean ShoradLink If true, #MANTIS has #SHORAD enabled
+--- @field #number ShoradTime Timer in seconds, how long #SHORAD will be active after a detection inside of the defense range
+--- @field #number ShoradActDistance Distance of an attacker in meters from a Mantis SAM site, on which Shorad will be switched on. Useful to not give away Shorad sites too early. Default 15km. Should be smaller than checkradius.
 -- @extends Core.Base#BASE
 
 
@@ -269,7 +269,7 @@
 --          -- your code here - SAM site is back online
 --        end
 --  
--- @field #MANTIS
+--- @field #MANTIS
 MANTIS = {
   ClassName             = "MANTIS",
   name                  = "mymantis",
@@ -319,7 +319,7 @@ MANTIS = {
 }
 
 --- Advanced state enumerator
--- @type MANTIS.AdvancedState
+--- @type MANTIS.AdvancedState
 MANTIS.AdvancedState = {
   GREEN = 0,
   AMBER = 1,
@@ -327,7 +327,7 @@ MANTIS.AdvancedState = {
 }
 
 --- SAM Type
--- @type MANTIS.SamType
+--- @type MANTIS.SamType
 MANTIS.SamType = {
   SHORT = "Short",
   MEDIUM = "Medium",
@@ -335,12 +335,12 @@ MANTIS.SamType = {
 }
 
 --- SAM data
--- @type MANTIS.SamData
--- @field #number Range Max firing range in km
--- @field #number Blindspot no-firing range (green circle)
--- @field #number Height Max firing height in km
--- @field #string Type #MANTIS.SamType of SAM, i.e. SHORT, MEDIUM or LONG (range)
--- @field #string Radar Radar typename on unit level (used as key)
+--- @type MANTIS.SamData
+--- @field #number Range Max firing range in km
+--- @field #number Blindspot no-firing range (green circle)
+--- @field #number Height Max firing height in km
+--- @field #string Type #MANTIS.SamType of SAM, i.e. SHORT, MEDIUM or LONG (range)
+--- @field #string Radar Radar typename on unit level (used as key)
 MANTIS.SamData = {
   ["Hawk"] = { Range=44, Blindspot=0, Height=9, Type="Medium", Radar="Hawk" }, -- measures in km
   ["NASAMS"] = { Range=14, Blindspot=0, Height=3, Type="Short", Radar="NSAMS" },
@@ -372,12 +372,12 @@ MANTIS.SamData = {
 }
 
 --- SAM data HDS
--- @type MANTIS.SamDataHDS
--- @field #number Range Max firing range in km
--- @field #number Blindspot no-firing range (green circle)
--- @field #number Height Max firing height in km
--- @field #string Type #MANTIS.SamType of SAM, i.e. SHORT, MEDIUM or LONG (range)
--- @field #string Radar Radar typename on unit level (used as key)
+--- @type MANTIS.SamDataHDS
+--- @field #number Range Max firing range in km
+--- @field #number Blindspot no-firing range (green circle)
+--- @field #number Height Max firing height in km
+--- @field #string Type #MANTIS.SamType of SAM, i.e. SHORT, MEDIUM or LONG (range)
+--- @field #string Radar Radar typename on unit level (used as key)
 MANTIS.SamDataHDS = {
   -- units from HDS Mod, multi launcher options is tricky
   -- group name MUST contain HDS to ID launcher type correctly!
@@ -393,12 +393,12 @@ MANTIS.SamDataHDS = {
 }
 
 --- SAM data SMA
--- @type MANTIS.SamDataSMA
--- @field #number Range Max firing range in km
--- @field #number Blindspot no-firing range (green circle)
--- @field #number Height Max firing height in km
--- @field #string Type #MANTIS.SamType of SAM, i.e. SHORT, MEDIUM or LONG (range)
--- @field #string Radar Radar typename on unit level (used as key)
+--- @type MANTIS.SamDataSMA
+--- @field #number Range Max firing range in km
+--- @field #number Blindspot no-firing range (green circle)
+--- @field #number Height Max firing height in km
+--- @field #string Type #MANTIS.SamType of SAM, i.e. SHORT, MEDIUM or LONG (range)
+--- @field #string Radar Radar typename on unit level (used as key)
 MANTIS.SamDataSMA = {
   -- units from SMA Mod (Sweedish Military Assets)
   -- https://forum.dcs.world/topic/295202-swedish-military-assets-for-dcs-by-currenthill/

@@ -33,17 +33,17 @@
 
 
 --- NAVYGROUP class.
--- @type NAVYGROUP
--- @field #boolean turning If true, group is currently turning.
--- @field #NAVYGROUP.IntoWind intowind Into wind info.
--- @field #table Qintowind Queue of "into wind" turns.
--- @field #number intowindcounter Counter of into wind IDs.
--- @field #number depth Ordered depth in meters.
--- @field #boolean collisionwarning If true, collition warning.
--- @field #boolean pathfindingOn If true, enable pathfining.
--- @field #number pathCorridor Path corrdidor width in meters.
--- @field #boolean ispathfinding If true, group is currently path finding.
--- @field #NAVYGROUP.Target engage Engage target.
+--- @type NAVYGROUP
+--- @field #boolean turning If true, group is currently turning.
+--- @field #NAVYGROUP.IntoWind intowind Into wind info.
+--- @field #table Qintowind Queue of "into wind" turns.
+--- @field #number intowindcounter Counter of into wind IDs.
+--- @field #number depth Ordered depth in meters.
+--- @field #boolean collisionwarning If true, collition warning.
+--- @field #boolean pathfindingOn If true, enable pathfining.
+--- @field #number pathCorridor Path corrdidor width in meters.
+--- @field #boolean ispathfinding If true, group is currently path finding.
+--- @field #NAVYGROUP.Target engage Engage target.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
@@ -54,7 +54,7 @@
 -- 
 -- This class enhances naval groups.
 -- 
--- @field #NAVYGROUP
+--- @field #NAVYGROUP
 NAVYGROUP = {
   ClassName       = "NAVYGROUP",
   turning         = false,
@@ -66,30 +66,30 @@ NAVYGROUP = {
 }
 
 --- Turn into wind parameters.
--- @type NAVYGROUP.IntoWind
--- @field #number Tstart Time to start.
--- @field #number Tstop Time to stop.
--- @field #boolean Uturn U-turn.
--- @field #number Speed Speed in knots.
--- @field #number Offset Offset angle in degrees.
--- @field #number Id Unique ID of the turn.
--- @field Ops.OpsGroup#OPSGROUP.Waypoint waypoint Turn into wind waypoint.
--- @field Core.Point#COORDINATE Coordinate Coordinate where we left the route.
--- @field #number Heading Heading the boat will take in degrees.
--- @field #boolean Open Currently active.
--- @field #boolean Over This turn is over.
--- @field #boolean Recovery If `true` this is a recovery window. If `false`, this is a launch window. If `nil` this is just a turn into the wind.
+--- @type NAVYGROUP.IntoWind
+--- @field #number Tstart Time to start.
+--- @field #number Tstop Time to stop.
+--- @field #boolean Uturn U-turn.
+--- @field #number Speed Speed in knots.
+--- @field #number Offset Offset angle in degrees.
+--- @field #number Id Unique ID of the turn.
+--- @field Ops.OpsGroup#OPSGROUP.Waypoint waypoint Turn into wind waypoint.
+--- @field Core.Point#COORDINATE Coordinate Coordinate where we left the route.
+--- @field #number Heading Heading the boat will take in degrees.
+--- @field #boolean Open Currently active.
+--- @field #boolean Over This turn is over.
+--- @field #boolean Recovery If `true` this is a recovery window. If `false`, this is a launch window. If `nil` this is just a turn into the wind.
 
 --- Engage Target.
--- @type NAVYGROUP.Target
--- @field Ops.Target#TARGET Target The target.
--- @field Core.Point#COORDINATE Coordinate Last known coordinate of the target.
--- @field Ops.OpsGroup#OPSGROUP.Waypoint Waypoint the waypoint created to go to the target.
--- @field #number roe ROE backup.
--- @field #number alarmstate Alarm state backup.
+--- @type NAVYGROUP.Target
+--- @field Ops.Target#TARGET Target The target.
+--- @field Core.Point#COORDINATE Coordinate Last known coordinate of the target.
+--- @field Ops.OpsGroup#OPSGROUP.Waypoint Waypoint the waypoint created to go to the target.
+--- @field #number roe ROE backup.
+--- @field #number alarmstate Alarm state backup.
 
 --- NavyGroup version.
--- @field #string version
+--- @field #string version
 NAVYGROUP.version="0.7.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -113,9 +113,9 @@ NAVYGROUP.version="0.7.9"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new NAVYGROUP class object.
--- @param #NAVYGROUP self
--- @param Wrapper.Group#GROUP group The group object. Can also be given by its group name as `#string`.
--- @return #NAVYGROUP self
+--- @param #NAVYGROUP self
+--- @param Wrapper.Group#GROUP group The group object. Can also be given by its group name as `#string`.
+--- @return #NAVYGROUP self
 function NAVYGROUP:New(group)
 
   -- First check if we already have an OPS group for this group.
@@ -420,9 +420,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Group patrols ad inifintum. If the last waypoint is reached, it will go to waypoint one and repeat its route.
--- @param #NAVYGROUP self
--- @param #boolean switch If true or nil, patrol until the end of time. If false, go along the waypoints once and stop.
--- @return #NAVYGROUP self
+--- @param #NAVYGROUP self
+--- @param #boolean switch If true or nil, patrol until the end of time. If false, go along the waypoints once and stop.
+--- @return #NAVYGROUP self
 function NAVYGROUP:SetPatrolAdInfinitum(switch)
   if switch==false then
     self.adinfinitum=false
@@ -433,10 +433,10 @@ function NAVYGROUP:SetPatrolAdInfinitum(switch)
 end
 
 --- Enable/disable pathfinding.
--- @param #NAVYGROUP self
--- @param #boolean Switch If true, enable pathfinding.
--- @param #number CorridorWidth Corridor with in meters. Default 400 m.
--- @return #NAVYGROUP self
+--- @param #NAVYGROUP self
+--- @param #boolean Switch If true, enable pathfinding.
+--- @param #number CorridorWidth Corridor with in meters. Default 400 m.
+--- @return #NAVYGROUP self
 function NAVYGROUP:SetPathfinding(Switch, CorridorWidth)
   self.pathfindingOn=Switch
   self.pathCorridor=CorridorWidth or 400
@@ -444,17 +444,17 @@ function NAVYGROUP:SetPathfinding(Switch, CorridorWidth)
 end
 
 --- Enable pathfinding.
--- @param #NAVYGROUP self
--- @param #number CorridorWidth Corridor with in meters. Default 400 m.
--- @return #NAVYGROUP self
+--- @param #NAVYGROUP self
+--- @param #number CorridorWidth Corridor with in meters. Default 400 m.
+--- @return #NAVYGROUP self
 function NAVYGROUP:SetPathfindingOn(CorridorWidth)
   self:SetPathfinding(true, CorridorWidth)
   return self
 end
 
 --- Disable pathfinding.
--- @param #NAVYGROUP self
--- @return #NAVYGROUP self
+--- @param #NAVYGROUP self
+--- @return #NAVYGROUP self
 function NAVYGROUP:SetPathfindingOff()
   self:SetPathfinding(false, self.pathCorridor)
   return self
@@ -462,14 +462,14 @@ end
 
 
 --- Add a *scheduled* task.
--- @param #NAVYGROUP self
--- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
--- @param #string Clock Time when to start the attack.
--- @param #number Radius Radius in meters. Default 100 m.
--- @param #number Nshots Number of shots to fire. Default 3.
--- @param #number WeaponType Type of weapon. Default auto.
--- @param #number Prio Priority of the task.
--- @return Ops.OpsGroup#OPSGROUP.Task The task data.
+--- @param #NAVYGROUP self
+--- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
+--- @param #string Clock Time when to start the attack.
+--- @param #number Radius Radius in meters. Default 100 m.
+--- @param #number Nshots Number of shots to fire. Default 3.
+--- @param #number WeaponType Type of weapon. Default auto.
+--- @param #number Prio Priority of the task.
+--- @return Ops.OpsGroup#OPSGROUP.Task The task data.
 function NAVYGROUP:AddTaskFireAtPoint(Coordinate, Clock, Radius, Nshots, WeaponType, Prio)
 
   local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, Coordinate:GetVec2(), Radius, Nshots, WeaponType)
@@ -480,15 +480,15 @@ function NAVYGROUP:AddTaskFireAtPoint(Coordinate, Clock, Radius, Nshots, WeaponT
 end
 
 --- Add a *waypoint* task.
--- @param #NAVYGROUP self
--- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
--- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint Where the task is executed. Default is next waypoint.
--- @param #number Radius Radius in meters. Default 100 m.
--- @param #number Nshots Number of shots to fire. Default 3.
--- @param #number WeaponType Type of weapon. Default auto.
--- @param #number Prio Priority of the task.
--- @param #number Duration Duration in seconds after which the task is cancelled. Default *never*.
--- @return Ops.OpsGroup#OPSGROUP.Task The task table.
+--- @param #NAVYGROUP self
+--- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
+--- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint Where the task is executed. Default is next waypoint.
+--- @param #number Radius Radius in meters. Default 100 m.
+--- @param #number Nshots Number of shots to fire. Default 3.
+--- @param #number WeaponType Type of weapon. Default auto.
+--- @param #number Prio Priority of the task.
+--- @param #number Duration Duration in seconds after which the task is cancelled. Default *never*.
+--- @return Ops.OpsGroup#OPSGROUP.Task The task table.
 function NAVYGROUP:AddTaskWaypointFireAtPoint(Coordinate, Waypoint, Radius, Nshots, WeaponType, Prio, Duration)
 
   Waypoint=Waypoint or self:GetWaypointNext()
@@ -502,13 +502,13 @@ end
 
 
 --- Add a *scheduled* task.
--- @param #NAVYGROUP self
--- @param Wrapper.Group#GROUP TargetGroup Target group.
--- @param #number WeaponExpend How much weapons does are used.
--- @param #number WeaponType Type of weapon. Default auto.
--- @param #string Clock Time when to start the attack.
--- @param #number Prio Priority of the task.
--- @return Ops.OpsGroup#OPSGROUP.Task The task data.
+--- @param #NAVYGROUP self
+--- @param Wrapper.Group#GROUP TargetGroup Target group.
+--- @param #number WeaponExpend How much weapons does are used.
+--- @param #number WeaponType Type of weapon. Default auto.
+--- @param #string Clock Time when to start the attack.
+--- @param #number Prio Priority of the task.
+--- @return Ops.OpsGroup#OPSGROUP.Task The task data.
 function NAVYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clock, Prio)
 
   local DCStask=CONTROLLABLE.TaskAttackGroup(nil, TargetGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit, GroupAttack)
@@ -519,13 +519,13 @@ function NAVYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clo
 end
 
 --- Create a turn into wind window. Note that this is not executed as it not added to the queue.
--- @param #NAVYGROUP self
--- @param #string starttime Start time, e.g. "8:00" for eight o'clock. Default now.
--- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
--- @param #number speed Speed in knots during turn into wind leg.
--- @param #boolean uturn If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
--- @param #number offset Offset angle in degrees, e.g. to account for an angled runway. Default 0 deg.
--- @return #NAVYGROUP.IntoWind Recovery window.
+--- @param #NAVYGROUP self
+--- @param #string starttime Start time, e.g. "8:00" for eight o'clock. Default now.
+--- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
+--- @param #number speed Speed in knots during turn into wind leg.
+--- @param #boolean uturn If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
+--- @param #number offset Offset angle in degrees, e.g. to account for an angled runway. Default 0 deg.
+--- @return #NAVYGROUP.IntoWind Recovery window.
 function NAVYGROUP:_CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
 
   -- Absolute mission time in seconds.
@@ -586,13 +586,13 @@ function NAVYGROUP:_CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset
 end
 
 --- Add a time window, where the groups steams into the wind.
--- @param #NAVYGROUP self
--- @param #string starttime Start time, e.g. "8:00" for eight o'clock. Default now.
--- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
--- @param #number speed Wind speed on deck in knots during turn into wind leg. Default 20 knots.
--- @param #boolean uturn If `true` (or `nil`), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
--- @param #number offset Offset angle in degrees, e.g. to account for an angled runway. Default 0 deg.
--- @return #NAVYGROUP.IntoWind Turn into window data table.
+--- @param #NAVYGROUP self
+--- @param #string starttime Start time, e.g. "8:00" for eight o'clock. Default now.
+--- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
+--- @param #number speed Wind speed on deck in knots during turn into wind leg. Default 20 knots.
+--- @param #boolean uturn If `true` (or `nil`), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
+--- @param #number offset Offset angle in degrees, e.g. to account for an angled runway. Default 0 deg.
+--- @return #NAVYGROUP.IntoWind Turn into window data table.
 function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn, offset)
 
   local recovery=self:_CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
@@ -606,9 +606,9 @@ function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn, offset)
 end
 
 --- Remove steam into wind window from queue. If the window is currently active, it is stopped first.
--- @param #NAVYGROUP self
--- @param #NAVYGROUP.IntoWind IntoWindData Turn into window data table.
--- @return #NAVYGROUP self
+--- @param #NAVYGROUP self
+--- @param #NAVYGROUP.IntoWind IntoWindData Turn into window data table.
+--- @return #NAVYGROUP self
 function NAVYGROUP:RemoveTurnIntoWind(IntoWindData)
 
   -- Check if this is a window currently open.
@@ -631,44 +631,44 @@ end
 
 
 --- Check if the group is currently holding its positon.
--- @param #NAVYGROUP self
--- @return #boolean If true, group was ordered to hold.
+--- @param #NAVYGROUP self
+--- @return #boolean If true, group was ordered to hold.
 function NAVYGROUP:IsHolding()
   return self:Is("Holding")
 end
 
 --- Check if the group is currently cruising.
--- @param #NAVYGROUP self
--- @return #boolean If true, group cruising.
+--- @param #NAVYGROUP self
+--- @return #boolean If true, group cruising.
 function NAVYGROUP:IsCruising()
   return self:Is("Cruising")
 end
 
 --- Check if the group is currently on a detour.
--- @param #NAVYGROUP self
--- @return #boolean If true, group is on a detour
+--- @param #NAVYGROUP self
+--- @return #boolean If true, group is on a detour
 function NAVYGROUP:IsOnDetour()
   return self:Is("OnDetour")
 end
 
 
 --- Check if the group is currently diving.
--- @param #NAVYGROUP self
--- @return #boolean If true, group is currently diving.
+--- @param #NAVYGROUP self
+--- @return #boolean If true, group is currently diving.
 function NAVYGROUP:IsDiving()
   return self:Is("Diving")
 end
 
 --- Check if the group is currently turning.
--- @param #NAVYGROUP self
--- @return #boolean If true, group is currently turning.
+--- @param #NAVYGROUP self
+--- @return #boolean If true, group is currently turning.
 function NAVYGROUP:IsTurning()
   return self.turning
 end
 
 --- Check if the group is currently steaming into the wind.
--- @param #NAVYGROUP self
--- @return #boolean If true, group is currently steaming into the wind.
+--- @param #NAVYGROUP self
+--- @return #boolean If true, group is currently steaming into the wind.
 function NAVYGROUP:IsSteamingIntoWind()
   if self.intowind then
     return true
@@ -678,8 +678,8 @@ function NAVYGROUP:IsSteamingIntoWind()
 end
 
 --- Check if the group is currently recovering aircraft.
--- @param #NAVYGROUP self
--- @return #boolean If true, group is currently recovering.
+--- @param #NAVYGROUP self
+--- @return #boolean If true, group is currently recovering.
 function NAVYGROUP:IsRecovering()
   if self.intowind then
     if self.intowind.Recovery==true then
@@ -693,8 +693,8 @@ function NAVYGROUP:IsRecovering()
 end
 
 --- Check if the group is currently launching aircraft.
--- @param #NAVYGROUP self
--- @return #boolean If true, group is currently launching.
+--- @param #NAVYGROUP self
+--- @return #boolean If true, group is currently launching.
 function NAVYGROUP:IsLaunching()
   if self.intowind then
     if self.intowind.Recovery==false then
@@ -713,7 +713,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Update status.
--- @param #NAVYGROUP self
+--- @param #NAVYGROUP self
 function NAVYGROUP:Status(From, Event, To)
 
   -- FSM state.
@@ -935,11 +935,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "ElementSpawned" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP.Element Element The group element.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsGroup#OPSGROUP.Element Element The group element.
 function NAVYGROUP:onafterElementSpawned(From, Event, To, Element)
   self:T(self.lid..string.format("Element spawned %s", Element.name))
 
@@ -949,10 +949,10 @@ function NAVYGROUP:onafterElementSpawned(From, Event, To, Element)
 end
 
 --- On after "Spawned" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function NAVYGROUP:onafterSpawned(From, Event, To)
   self:T(self.lid..string.format("Group spawned!"))
 
@@ -1029,14 +1029,14 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
 end
 
 --- On before "UpdateRoute" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
--- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
--- @param #number Speed Speed in knots to the next waypoint.
--- @param #number Depth Depth in meters to the next waypoint.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+--- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
+--- @param #number Speed Speed in knots to the next waypoint.
+--- @param #number Depth Depth in meters to the next waypoint.
 function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Depth)
   -- Is transition allowed? We assume yes until proven otherwise.
   local allowed=true
@@ -1110,14 +1110,14 @@ function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Depth)
 end
 
 --- On after "UpdateRoute" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
--- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
--- @param #number Speed Speed in knots to the next waypoint.
--- @param #number Depth Depth in meters to the next waypoint.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+--- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
+--- @param #number Speed Speed in knots to the next waypoint.
+--- @param #number Depth Depth in meters to the next waypoint.
 function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth)
 
   -- Update route from this waypoint number onwards.
@@ -1206,14 +1206,14 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth)
 end
 
 --- On after "Detour" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Point#COORDINATE Coordinate Coordinate where to go.
--- @param #number Speed Speed in knots. Default cruise speed.
--- @param #number Depth Depth in meters. Default 0 meters.
--- @param #number ResumeRoute If true, resume route after detour point was reached. If false, the group will stop at the detour point and wait for futher commands.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Point#COORDINATE Coordinate Coordinate where to go.
+--- @param #number Speed Speed in knots. Default cruise speed.
+--- @param #number Depth Depth in meters. Default 0 meters.
+--- @param #number ResumeRoute If true, resume route after detour point was reached. If false, the group will stop at the detour point and wait for futher commands.
 function NAVYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Depth, ResumeRoute)
     
   -- Depth for submarines.
@@ -1238,20 +1238,20 @@ function NAVYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Depth, Resu
 end
 
 --- On after "DetourReached" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function NAVYGROUP:onafterDetourReached(From, Event, To)
   self:T(self.lid.."Group reached detour coordinate.")
 end
 
 --- On after "TurnIntoWind" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #NAVYGROUP.IntoWind Into wind parameters.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #NAVYGROUP.IntoWind Into wind parameters.
 function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
 
   IntoWind.Heading=self:GetHeadingIntoWind(IntoWind.Offset)
@@ -1294,10 +1294,10 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
 end
 
 --- On before "TurnIntoWindStop" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function NAVYGROUP:onbeforeTurnIntoWindStop(From, Event, To)
 
   if self.intowind then
@@ -1309,20 +1309,20 @@ function NAVYGROUP:onbeforeTurnIntoWindStop(From, Event, To)
 end
 
 --- On after "TurnIntoWindStop" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function NAVYGROUP:onafterTurnIntoWindStop(From, Event, To)
   self:TurnIntoWindOver(self.intowind)
 end
 
 --- On after "TurnIntoWindOver" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #NAVYGROUP.IntoWind IntoWindData Data table.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #NAVYGROUP.IntoWind IntoWindData Data table.
 function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To, IntoWindData)
 
   if IntoWindData and self.intowind and IntoWindData.Id==self.intowind.Id then
@@ -1379,10 +1379,10 @@ function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To, IntoWindData)
 end
 
 --- On after "FullStop" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function NAVYGROUP:onafterFullStop(From, Event, To)
   self:T(self.lid.."Full stop ==> holding")
 
@@ -1398,11 +1398,11 @@ function NAVYGROUP:onafterFullStop(From, Event, To)
 end
 
 --- On after "Cruise" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number Speed Speed in knots until next waypoint is reached. Default is speed set for waypoint.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number Speed Speed in knots until next waypoint is reached. Default is speed set for waypoint.
 function NAVYGROUP:onafterCruise(From, Event, To, Speed)
 
   -- Not waiting anymore.
@@ -1417,12 +1417,12 @@ function NAVYGROUP:onafterCruise(From, Event, To, Speed)
 end
 
 --- On after "Dive" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number Depth Dive depth in meters. Default 50 meters.
--- @param #number Speed Speed in knots until next waypoint is reached.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number Depth Dive depth in meters. Default 50 meters.
+--- @param #number Speed Speed in knots until next waypoint is reached.
 function NAVYGROUP:onafterDive(From, Event, To, Depth, Speed)
 
   Depth=Depth or 50
@@ -1436,11 +1436,11 @@ function NAVYGROUP:onafterDive(From, Event, To, Depth, Speed)
 end
 
 --- On after "Surface" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number Speed Speed in knots until next waypoint is reached.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number Speed Speed in knots until next waypoint is reached.
 function NAVYGROUP:onafterSurface(From, Event, To, Speed)
 
   self.depth=0
@@ -1450,19 +1450,19 @@ function NAVYGROUP:onafterSurface(From, Event, To, Speed)
 end
 
 --- On after "TurningStarted" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function NAVYGROUP:onafterTurningStarted(From, Event, To)
   self.turning=true
 end
 
 --- On after "TurningStarted" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function NAVYGROUP:onafterTurningStopped(From, Event, To)
   self.turning=false
   self.collisionwarning=false
@@ -1474,22 +1474,22 @@ function NAVYGROUP:onafterTurningStopped(From, Event, To)
 end
 
 --- On after "CollisionWarning" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number Distance Distance in meters where obstacle was detected.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number Distance Distance in meters where obstacle was detected.
 function NAVYGROUP:onafterCollisionWarning(From, Event, To, Distance)
   self:T(self.lid..string.format("Iceberg ahead in %d meters!", Distance or -1))
   self.collisionwarning=true
 end
 
 --- On after "EngageTarget" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Group#GROUP Group the group to be engaged.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Wrapper.Group#GROUP Group the group to be engaged.
 function NAVYGROUP:onafterEngageTarget(From, Event, To, Target)
   self:T(self.lid.."Engaging Target")
 
@@ -1527,7 +1527,7 @@ function NAVYGROUP:onafterEngageTarget(From, Event, To, Target)
 end
 
 --- Update engage target.
--- @param #NAVYGROUP self
+--- @param #NAVYGROUP self
 function NAVYGROUP:_UpdateEngageTarget()
 
   if self.engage.Target and self.engage.Target:IsAlive() then
@@ -1581,10 +1581,10 @@ function NAVYGROUP:_UpdateEngageTarget()
 end
 
 --- On after "Disengage" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function NAVYGROUP:onafterDisengage(From, Event, To)
   self:T(self.lid.."Disengage Target")
 
@@ -1611,10 +1611,10 @@ function NAVYGROUP:onafterDisengage(From, Event, To)
 end
 
 --- On after "OutOfAmmo" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function NAVYGROUP:onafterOutOfAmmo(From, Event, To)
   self:T(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))
   
@@ -1642,12 +1642,12 @@ function NAVYGROUP:onafterOutOfAmmo(From, Event, To)
 end
 
 --- On after "RTZ" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE Zone The zone to return to.
--- @param #number Formation Formation of the group.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Zone#ZONE Zone The zone to return to.
+--- @param #number Formation Formation of the group.
 function NAVYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
   
   -- Zone.
@@ -1686,10 +1686,10 @@ end
 
 
 --- On after "Returned" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #NAVYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function NAVYGROUP:onafterReturned(From, Event, To)
 
   -- Debug info.
@@ -1711,13 +1711,13 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Add an a waypoint to the route.
--- @param #NAVYGROUP self
--- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use `COORDINATE:SetAltitude()` to define the altitude.
--- @param #number Speed Speed in knots. Default is default cruise speed or 70% of max speed.
--- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
--- @param #number Depth Depth at waypoint in feet. Only for submarines.
--- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
--- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
+--- @param #NAVYGROUP self
+--- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use `COORDINATE:SetAltitude()` to define the altitude.
+--- @param #number Speed Speed in knots. Default is default cruise speed or 70% of max speed.
+--- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
+--- @param #number Depth Depth at waypoint in feet. Only for submarines.
+--- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
+--- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Updateroute)
 
   -- Create coordinate.
@@ -1755,9 +1755,9 @@ function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Up
 end
 
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
--- @param #NAVYGROUP self
--- @param #table Template Template used to init the group. Default is `self.template`.
--- @return #NAVYGROUP self
+--- @param #NAVYGROUP self
+--- @param #table Template Template used to init the group. Default is `self.template`.
+--- @return #NAVYGROUP self
 function NAVYGROUP:_InitGroup(Template)
 
   -- First check if group was already initialized.
@@ -1845,10 +1845,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check for possible collisions between two coordinates.
--- @param #NAVYGROUP self
--- @param #number DistanceMax Max distance in meters ahead to check. Default 5000.
--- @param #number dx
--- @return #number Free distance in meters.
+--- @param #NAVYGROUP self
+--- @param #number DistanceMax Max distance in meters ahead to check. Default 5000.
+--- @param #number dx
+--- @return #number Free distance in meters.
 function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
 
   local distance=DistanceMax or 5000
@@ -1925,7 +1925,7 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
 end
 
 --- Check if group is turning.
--- @param #NAVYGROUP self
+--- @param #NAVYGROUP self
 function NAVYGROUP:_CheckTurning()
 
   local unit=self.group:GetUnit(1)
@@ -1969,7 +1969,7 @@ end
 
 
 --- Check queued turns into wind.
--- @param #NAVYGROUP self
+--- @param #NAVYGROUP self
 function NAVYGROUP:_CheckTurnsIntoWind()
 
   -- Get current abs time.
@@ -1997,8 +1997,8 @@ function NAVYGROUP:_CheckTurnsIntoWind()
 end
 
 --- Get the next turn into wind window, which is not yet running.
--- @param #NAVYGROUP self
--- @return #NAVYGROUP.IntoWind Next into wind data. Could be `nil` if there is not next window.
+--- @param #NAVYGROUP self
+--- @return #NAVYGROUP.IntoWind Next into wind data. Could be `nil` if there is not next window.
 function NAVYGROUP:GetTurnIntoWindNext()
 
   if #self.Qintowind>0 then
@@ -2024,16 +2024,16 @@ function NAVYGROUP:GetTurnIntoWindNext()
 end
 
 --- Get the turn into wind window, which is currently open. 
--- @param #NAVYGROUP self
--- @return #NAVYGROUP.IntoWind Current into wind data. Could be `nil` if there is no window currenly open.
+--- @param #NAVYGROUP self
+--- @return #NAVYGROUP.IntoWind Current into wind data. Could be `nil` if there is no window currenly open.
 function NAVYGROUP:GetTurnIntoWindCurrent()
   return self.intowind
 end
 
 --- Get wind direction and speed at current position.
--- @param #NAVYGROUP self
--- @return #number Direction the wind is blowing **from** in degrees.
--- @return #number Wind speed in m/s.
+--- @param #NAVYGROUP self
+--- @return #number Direction the wind is blowing **from** in degrees.
+--- @return #number Wind speed in m/s.
 function NAVYGROUP:GetWind()
 
   -- Current position of the carrier or input.
@@ -2046,9 +2046,9 @@ function NAVYGROUP:GetWind()
 end
 
 --- Get heading of group into the wind.
--- @param #NAVYGROUP self
--- @param #number Offset Offset angle in degrees, e.g. to account for an angled runway.
--- @return #number Carrier heading in degrees.
+--- @param #NAVYGROUP self
+--- @param #number Offset Offset angle in degrees, e.g. to account for an angled runway.
+--- @return #number Carrier heading in degrees.
 function NAVYGROUP:GetHeadingIntoWind(Offset)
 
   Offset=Offset or 0
@@ -2073,8 +2073,8 @@ function NAVYGROUP:GetHeadingIntoWind(Offset)
 end
 
 --- Find free path to next waypoint.
--- @param #NAVYGROUP self
--- @return #boolean If true, a path was found.
+--- @param #NAVYGROUP self
+--- @return #boolean If true, a path was found.
 function NAVYGROUP:_FindPathToNextWaypoint()
   self:T3(self.lid.."Path finding")
   

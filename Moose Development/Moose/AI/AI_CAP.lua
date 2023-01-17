@@ -32,8 +32,8 @@
 -- @image AI_Combat_Air_Patrol.JPG
 
 --- @type AI_CAP_ZONE
--- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
--- @field Core.Zone#ZONE_BASE TargetZone The @{Core.Zone} where the patrol needs to be executed.
+--- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
+--- @field Core.Zone#ZONE_BASE TargetZone The @{Core.Zone} where the patrol needs to be executed.
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
 --- Implements the core functions to patrol a @{Core.Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group} 
@@ -115,20 +115,20 @@
 --  
 -- ===
 -- 
--- @field #AI_CAP_ZONE
+--- @field #AI_CAP_ZONE
 AI_CAP_ZONE = {
   ClassName = "AI_CAP_ZONE",
 }
 
 --- Creates a new AI_CAP_ZONE object
--- @param #AI_CAP_ZONE self
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
--- @return #AI_CAP_ZONE self
+--- @param #AI_CAP_ZONE self
+--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
+--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
+--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
+--- @return #AI_CAP_ZONE self
 function AI_CAP_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
   -- Inherits from BASE
@@ -167,20 +167,20 @@ function AI_CAP_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
 
 --- OnLeave Transition Handler for State Engaging.
 -- @function [parent=#AI_CAP_ZONE] OnLeaveEngaging
--- @param #AI_CAP_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @return #boolean Return false to cancel Transition.
+--- @param #AI_CAP_ZONE self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @return #boolean Return false to cancel Transition.
 
 --- OnEnter Transition Handler for State Engaging.
 -- @function [parent=#AI_CAP_ZONE] OnEnterEngaging
--- @param #AI_CAP_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_CAP_ZONE self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 
   self:AddTransition( "Engaging", "Fired", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAP_ZONE.
 
@@ -298,9 +298,9 @@ function AI_CAP_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
 end
 
 --- Set the Engage Zone which defines where the AI will engage bogies. 
--- @param #AI_CAP_ZONE self
--- @param Core.Zone#ZONE EngageZone The zone where the AI is performing CAP.
--- @return #AI_CAP_ZONE self
+--- @param #AI_CAP_ZONE self
+--- @param Core.Zone#ZONE EngageZone The zone where the AI is performing CAP.
+--- @return #AI_CAP_ZONE self
 function AI_CAP_ZONE:SetEngageZone( EngageZone )
   self:F2()
 
@@ -312,9 +312,9 @@ function AI_CAP_ZONE:SetEngageZone( EngageZone )
 end
 
 --- Set the Engage Range when the AI will engage with airborne enemies. 
--- @param #AI_CAP_ZONE self
--- @param #number EngageRange The Engage Range.
--- @return #AI_CAP_ZONE self
+--- @param #AI_CAP_ZONE self
+--- @param #number EngageRange The Engage Range.
+--- @return #AI_CAP_ZONE self
 function AI_CAP_ZONE:SetEngageRange( EngageRange )
   self:F2()
 
@@ -326,11 +326,11 @@ function AI_CAP_ZONE:SetEngageRange( EngageRange )
 end
 
 --- onafter State Transition for Event Start.
--- @param #AI_CAP_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_CAP_ZONE self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_CAP_ZONE:onafterStart( Controllable, From, Event, To )
 
   -- Call the parent Start event handler
@@ -340,7 +340,7 @@ function AI_CAP_ZONE:onafterStart( Controllable, From, Event, To )
 end
 
 --- @param AI.AI_CAP#AI_CAP_ZONE 
--- @param Wrapper.Group#GROUP EngageGroup
+--- @param Wrapper.Group#GROUP EngageGroup
 function AI_CAP_ZONE.EngageRoute( EngageGroup, Fsm )
 
   EngageGroup:F( { "AI_CAP_ZONE.EngageRoute:", EngageGroup:GetName() } )
@@ -351,10 +351,10 @@ function AI_CAP_ZONE.EngageRoute( EngageGroup, Fsm )
 end
 
 --- @param #AI_CAP_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_CAP_ZONE:onbeforeEngage( Controllable, From, Event, To )
   
   if self.Accomplished == true then
@@ -363,10 +363,10 @@ function AI_CAP_ZONE:onbeforeEngage( Controllable, From, Event, To )
 end
 
 --- @param #AI_CAP_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_CAP_ZONE:onafterDetected( Controllable, From, Event, To )
 
   if From ~= "Engaging" then
@@ -391,20 +391,20 @@ function AI_CAP_ZONE:onafterDetected( Controllable, From, Event, To )
 end
 
 --- @param #AI_CAP_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_CAP_ZONE:onafterAbort( Controllable, From, Event, To )
   Controllable:ClearTasks()
   self:__Route( 1 )
 end
 
 --- @param #AI_CAP_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
 
   if Controllable and Controllable:IsAlive() then
@@ -501,21 +501,21 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
 end
 
 --- @param #AI_CAP_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_CAP_ZONE:onafterAccomplish( Controllable, From, Event, To )
   self.Accomplished = true
   self:SetDetectionOff()
 end
 
 --- @param #AI_CAP_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @param Core.Event#EVENTDATA EventData
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @param Core.Event#EVENTDATA EventData
 function AI_CAP_ZONE:onafterDestroy( Controllable, From, Event, To, EventData )
 
   if EventData.IniUnit then
@@ -524,7 +524,7 @@ function AI_CAP_ZONE:onafterDestroy( Controllable, From, Event, To, EventData )
 end
 
 --- @param #AI_CAP_ZONE self
--- @param Core.Event#EVENTDATA EventData
+--- @param Core.Event#EVENTDATA EventData
 function AI_CAP_ZONE:OnEventDead( EventData )
   self:F( { "EventDead", EventData } )
 

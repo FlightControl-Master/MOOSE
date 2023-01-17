@@ -131,130 +131,130 @@
 -- @image Ops_Airboss.png
 
 --- AIRBOSS class.
--- @type AIRBOSS
--- @field #string ClassName Name of the class.
--- @field #boolean Debug Debug mode. Messages to all about status.
--- @field #string lid Class id string for output to DCS log file.
--- @field #string theatre The DCS map used in the mission.
--- @field Wrapper.Unit#UNIT carrier Aircraft carrier unit on which we want to practice.
--- @field #string carriertype Type name of aircraft carrier.
--- @field #AIRBOSS.CarrierParameters carrierparam Carrier specific parameters.
--- @field #string alias Alias of the carrier.
--- @field Wrapper.Airbase#AIRBASE airbase Carrier airbase object.
--- @field #table waypoints Waypoint coordinates of carrier.
--- @field #number currentwp Current waypoint, i.e. the one that has been passed last.
--- @field Core.Beacon#BEACON beacon Carrier beacon for TACAN and ICLS.
--- @field #boolean TACANon Automatic TACAN is activated.
--- @field #number TACANchannel TACAN channel.
--- @field #string TACANmode TACAN mode, i.e. "X" or "Y".
--- @field #string TACANmorse TACAN morse code, e.g. "STN".
--- @field #boolean ICLSon Automatic ICLS is activated.
--- @field #number ICLSchannel ICLS channel.
--- @field #string ICLSmorse ICLS morse code, e.g. "STN".
--- @field #AIRBOSS.Radio LSORadio Radio for LSO calls.
--- @field #number LSOFreq LSO radio frequency in MHz.
--- @field #string LSOModu LSO radio modulation "AM" or "FM".
--- @field #AIRBOSS.Radio MarshalRadio Radio for carrier calls.
--- @field #number MarshalFreq Marshal radio frequency in MHz.
--- @field #string MarshalModu Marshal radio modulation "AM" or "FM".
--- @field #number TowerFreq Tower radio frequency in MHz.
--- @field Core.Scheduler#SCHEDULER radiotimer Radio queue scheduler.
--- @field Core.Zone#ZONE_UNIT zoneCCA Carrier controlled area (CCA), i.e. a zone of 50 NM radius around the carrier.
--- @field Core.Zone#ZONE_UNIT zoneCCZ Carrier controlled zone (CCZ), i.e. a zone of 5 NM radius around the carrier.
--- @field #table players Table of players.
--- @field #table menuadded Table of units where the F10 radio menu was added.
--- @field #AIRBOSS.Checkpoint BreakEntry Break entry checkpoint.
--- @field #AIRBOSS.Checkpoint BreakEarly Early break checkpoint.
--- @field #AIRBOSS.Checkpoint BreakLate Late break checkpoint.
--- @field #AIRBOSS.Checkpoint Abeam Abeam checkpoint.
--- @field #AIRBOSS.Checkpoint Ninety At the ninety checkpoint.
--- @field #AIRBOSS.Checkpoint Wake Checkpoint right behind the carrier.
--- @field #AIRBOSS.Checkpoint Final Checkpoint when turning to final.
--- @field #AIRBOSS.Checkpoint Groove In the groove checkpoint.
--- @field #AIRBOSS.Checkpoint Platform Case II/III descent at 2000 ft/min at 5000 ft platform.
--- @field #AIRBOSS.Checkpoint DirtyUp Case II/III dirty up and on speed position at 1200 ft and 10-12 NM from the carrier.
--- @field #AIRBOSS.Checkpoint Bullseye Case III intercept glideslope and follow ICLS aka "bullseye".
--- @field #number defaultcase Default recovery case. This is the case used if not specified otherwise.
--- @field #number case Recovery case I, II or III currently in progress.
--- @field #table recoverytimes List of time windows when aircraft are recovered including the recovery case and holding offset.
--- @field #number defaultoffset Default holding pattern update if not specified otherwise.
--- @field #number holdingoffset Offset [degrees] of Case II/III holding pattern.
--- @field #table flights List of all flights in the CCA.
--- @field #table Qmarshal Queue of marshalling aircraft groups.
--- @field #table Qpattern Queue of aircraft groups in the landing pattern.
--- @field #table Qwaiting Queue of aircraft groups waiting outside 10 NM zone for the next free Marshal stack.
--- @field #table Qspinning Queue of aircraft currently spinning.
--- @field #table RQMarshal Radio queue of marshal.
--- @field #number TQMarshal Abs mission time, the last transmission ended.
--- @field #table RQLSO Radio queue of LSO.
--- @field #number TQLSO Abs mission time, the last transmission ended.
--- @field #number Nmaxpattern Max number of aircraft in landing pattern.
--- @field #number Nmaxmarshal Number of max Case I Marshal stacks available. Default 3, i.e. angels 2, 3 and 4.
--- @field #number NmaxSection Number of max section members (excluding the lead itself), i.e. NmaxSection=1 is a section of two.
--- @field #number NmaxStack Number of max flights per stack. Default 2.
--- @field #boolean handleai If true (default), handle AI aircraft.
--- @field Ops.RecoveryTanker#RECOVERYTANKER tanker Recovery tanker flying overhead of carrier.
--- @field DCS#Vec3 Corientation Carrier orientation in space.
--- @field DCS#Vec3 Corientlast Last known carrier orientation.
--- @field Core.Point#COORDINATE Cposition Carrier position.
--- @field #string defaultskill Default player skill @{#AIRBOSS.Difficulty}.
--- @field #boolean adinfinitum If true, carrier patrols ad infinitum, i.e. when reaching its last waypoint it starts at waypoint one again.
--- @field #number magvar Magnetic declination in degrees.
--- @field #number Tcollapse Last time timer.gettime() the stack collapsed.
--- @field #AIRBOSS.Recovery recoverywindow Current or next recovery window opened.
--- @field #boolean usersoundradio Use user sound output instead of radio transmissions.
--- @field #number Tqueue Last time in seconds of timer.getTime() the queue was updated.
--- @field #number dTqueue Time interval in seconds for updating the queues etc.
--- @field #number dTstatus Time interval for call FSM status updates.
--- @field #boolean menumarkzones If false, disables the option to mark zones via smoke or flares.
--- @field #boolean menusmokezones If false, disables the option to mark zones via smoke.
--- @field #table playerscores Table holding all player scores and grades.
--- @field #boolean autosave If true, all player grades are automatically saved to a file on disk.
--- @field #string autosavepath Path where the player grades file is saved on auto save.
--- @field #string autosavefilename File name of the auto player grades save file. Default is auto generated from carrier name/alias.
--- @field #number marshalradius Radius of the Marshal stack zone.
--- @field #boolean airbossnice Airboss is a nice guy.
--- @field #boolean staticweather Mission uses static rather than dynamic weather.
--- @field #number windowcount Running number counting the recovery windows.
--- @field #number LSOdT Time interval in seconds before the LSO will make its next call.
--- @field #string senderac Name of the aircraft acting as sender for broadcasting radio messages from the carrier. DCS shortcoming workaround.
--- @field #string radiorelayLSO Name of the aircraft acting as sender for broadcasting LSO radio messages from the carrier. DCS shortcoming workaround.
--- @field #string radiorelayMSH Name of the aircraft acting as sender for broadcasting Marhsal radio messages from the carrier. DCS shortcoming workaround.
--- @field #boolean turnintowind If true, carrier is currently turning into the wind.
--- @field #boolean detour If true, carrier is currently making a detour from its path along the ME waypoints.
--- @field Core.Point#COORDINATE Creturnto Position to return to after turn into the wind leg is over.
--- @field Core.Set#SET_GROUP squadsetAI AI groups in this set will be handled by the airboss.
--- @field Core.Set#SET_GROUP excludesetAI AI groups in this set will be explicitly excluded from handling by the airboss and not forced into the Marshal pattern.
--- @field #boolean menusingle If true, menu is optimized for a single carrier.
--- @field #number collisiondist Distance up to which collision checks are done.
--- @field #number holdtimestamp Timestamp when the carrier first came to an unexpected hold.
--- @field #number Tmessage Default duration in seconds messages are displayed to players.
--- @field #string soundfolder Folder within the mission (miz) file where airboss sound files are located.
--- @field #string soundfolderLSO Folder withing the mission (miz) file where LSO sound files are stored.
--- @field #string soundfolderMSH Folder withing the mission (miz) file where Marshal sound files are stored.
--- @field #boolean despawnshutdown Despawn group after engine shutdown.
--- @field #number Tbeacon Last time the beacons were refeshed.
--- @field #number dTbeacon Time interval to refresh the beacons. Default 5 minutes.
--- @field #AIRBOSS.LSOCalls LSOCall Radio voice overs of the LSO.
--- @field #AIRBOSS.MarshalCalls MarshalCall Radio voice over of the Marshal/Airboss.
--- @field #AIRBOSS.PilotCalls PilotCall Radio voice over from AI pilots.
--- @field #number lowfuelAI Low fuel threshold for AI groups in percent.
--- @field #boolean emergency If true (default), allow emergency landings, i.e. bypass any pattern and go for final approach.
--- @field #boolean respawnAI If true, respawn AI flights as they enter the CCA to detach and airfields from the mission plan. Default false.
--- @field #boolean turning If true, carrier is currently turning.
--- @field #AIRBOSS.GLE gle Glidesope error thresholds.
--- @field #AIRBOSS.LUE lue Lineup error thresholds.
--- @field #boolean trapsheet If true, players can save their trap sheets.
--- @field #string trappath Path where to save the trap sheets.
--- @field #string trapprefix File prefix for trap sheet files.
--- @field #number initialmaxalt Max altitude in meters to register in the inital zone.
--- @field #boolean welcome If true, display welcome message to player.
--- @field #boolean skipperMenu If true, add skipper menu.
--- @field #number skipperSpeed Speed in knots for manual recovery start.
--- @field #number skipperCase Manual recovery case.
--- @field #boolean skipperUturn U-turn on/off via menu.
--- @field #number skipperOffset Holding offset angle in degrees for Case II/III manual recoveries.
--- @field #number skipperTime Recovery time in min for manual recovery.
+--- @type AIRBOSS
+--- @field #string ClassName Name of the class.
+--- @field #boolean Debug Debug mode. Messages to all about status.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #string theatre The DCS map used in the mission.
+--- @field Wrapper.Unit#UNIT carrier Aircraft carrier unit on which we want to practice.
+--- @field #string carriertype Type name of aircraft carrier.
+--- @field #AIRBOSS.CarrierParameters carrierparam Carrier specific parameters.
+--- @field #string alias Alias of the carrier.
+--- @field Wrapper.Airbase#AIRBASE airbase Carrier airbase object.
+--- @field #table waypoints Waypoint coordinates of carrier.
+--- @field #number currentwp Current waypoint, i.e. the one that has been passed last.
+--- @field Core.Beacon#BEACON beacon Carrier beacon for TACAN and ICLS.
+--- @field #boolean TACANon Automatic TACAN is activated.
+--- @field #number TACANchannel TACAN channel.
+--- @field #string TACANmode TACAN mode, i.e. "X" or "Y".
+--- @field #string TACANmorse TACAN morse code, e.g. "STN".
+--- @field #boolean ICLSon Automatic ICLS is activated.
+--- @field #number ICLSchannel ICLS channel.
+--- @field #string ICLSmorse ICLS morse code, e.g. "STN".
+--- @field #AIRBOSS.Radio LSORadio Radio for LSO calls.
+--- @field #number LSOFreq LSO radio frequency in MHz.
+--- @field #string LSOModu LSO radio modulation "AM" or "FM".
+--- @field #AIRBOSS.Radio MarshalRadio Radio for carrier calls.
+--- @field #number MarshalFreq Marshal radio frequency in MHz.
+--- @field #string MarshalModu Marshal radio modulation "AM" or "FM".
+--- @field #number TowerFreq Tower radio frequency in MHz.
+--- @field Core.Scheduler#SCHEDULER radiotimer Radio queue scheduler.
+--- @field Core.Zone#ZONE_UNIT zoneCCA Carrier controlled area (CCA), i.e. a zone of 50 NM radius around the carrier.
+--- @field Core.Zone#ZONE_UNIT zoneCCZ Carrier controlled zone (CCZ), i.e. a zone of 5 NM radius around the carrier.
+--- @field #table players Table of players.
+--- @field #table menuadded Table of units where the F10 radio menu was added.
+--- @field #AIRBOSS.Checkpoint BreakEntry Break entry checkpoint.
+--- @field #AIRBOSS.Checkpoint BreakEarly Early break checkpoint.
+--- @field #AIRBOSS.Checkpoint BreakLate Late break checkpoint.
+--- @field #AIRBOSS.Checkpoint Abeam Abeam checkpoint.
+--- @field #AIRBOSS.Checkpoint Ninety At the ninety checkpoint.
+--- @field #AIRBOSS.Checkpoint Wake Checkpoint right behind the carrier.
+--- @field #AIRBOSS.Checkpoint Final Checkpoint when turning to final.
+--- @field #AIRBOSS.Checkpoint Groove In the groove checkpoint.
+--- @field #AIRBOSS.Checkpoint Platform Case II/III descent at 2000 ft/min at 5000 ft platform.
+--- @field #AIRBOSS.Checkpoint DirtyUp Case II/III dirty up and on speed position at 1200 ft and 10-12 NM from the carrier.
+--- @field #AIRBOSS.Checkpoint Bullseye Case III intercept glideslope and follow ICLS aka "bullseye".
+--- @field #number defaultcase Default recovery case. This is the case used if not specified otherwise.
+--- @field #number case Recovery case I, II or III currently in progress.
+--- @field #table recoverytimes List of time windows when aircraft are recovered including the recovery case and holding offset.
+--- @field #number defaultoffset Default holding pattern update if not specified otherwise.
+--- @field #number holdingoffset Offset [degrees] of Case II/III holding pattern.
+--- @field #table flights List of all flights in the CCA.
+--- @field #table Qmarshal Queue of marshalling aircraft groups.
+--- @field #table Qpattern Queue of aircraft groups in the landing pattern.
+--- @field #table Qwaiting Queue of aircraft groups waiting outside 10 NM zone for the next free Marshal stack.
+--- @field #table Qspinning Queue of aircraft currently spinning.
+--- @field #table RQMarshal Radio queue of marshal.
+--- @field #number TQMarshal Abs mission time, the last transmission ended.
+--- @field #table RQLSO Radio queue of LSO.
+--- @field #number TQLSO Abs mission time, the last transmission ended.
+--- @field #number Nmaxpattern Max number of aircraft in landing pattern.
+--- @field #number Nmaxmarshal Number of max Case I Marshal stacks available. Default 3, i.e. angels 2, 3 and 4.
+--- @field #number NmaxSection Number of max section members (excluding the lead itself), i.e. NmaxSection=1 is a section of two.
+--- @field #number NmaxStack Number of max flights per stack. Default 2.
+--- @field #boolean handleai If true (default), handle AI aircraft.
+--- @field Ops.RecoveryTanker#RECOVERYTANKER tanker Recovery tanker flying overhead of carrier.
+--- @field DCS#Vec3 Corientation Carrier orientation in space.
+--- @field DCS#Vec3 Corientlast Last known carrier orientation.
+--- @field Core.Point#COORDINATE Cposition Carrier position.
+--- @field #string defaultskill Default player skill @{#AIRBOSS.Difficulty}.
+--- @field #boolean adinfinitum If true, carrier patrols ad infinitum, i.e. when reaching its last waypoint it starts at waypoint one again.
+--- @field #number magvar Magnetic declination in degrees.
+--- @field #number Tcollapse Last time timer.gettime() the stack collapsed.
+--- @field #AIRBOSS.Recovery recoverywindow Current or next recovery window opened.
+--- @field #boolean usersoundradio Use user sound output instead of radio transmissions.
+--- @field #number Tqueue Last time in seconds of timer.getTime() the queue was updated.
+--- @field #number dTqueue Time interval in seconds for updating the queues etc.
+--- @field #number dTstatus Time interval for call FSM status updates.
+--- @field #boolean menumarkzones If false, disables the option to mark zones via smoke or flares.
+--- @field #boolean menusmokezones If false, disables the option to mark zones via smoke.
+--- @field #table playerscores Table holding all player scores and grades.
+--- @field #boolean autosave If true, all player grades are automatically saved to a file on disk.
+--- @field #string autosavepath Path where the player grades file is saved on auto save.
+--- @field #string autosavefilename File name of the auto player grades save file. Default is auto generated from carrier name/alias.
+--- @field #number marshalradius Radius of the Marshal stack zone.
+--- @field #boolean airbossnice Airboss is a nice guy.
+--- @field #boolean staticweather Mission uses static rather than dynamic weather.
+--- @field #number windowcount Running number counting the recovery windows.
+--- @field #number LSOdT Time interval in seconds before the LSO will make its next call.
+--- @field #string senderac Name of the aircraft acting as sender for broadcasting radio messages from the carrier. DCS shortcoming workaround.
+--- @field #string radiorelayLSO Name of the aircraft acting as sender for broadcasting LSO radio messages from the carrier. DCS shortcoming workaround.
+--- @field #string radiorelayMSH Name of the aircraft acting as sender for broadcasting Marhsal radio messages from the carrier. DCS shortcoming workaround.
+--- @field #boolean turnintowind If true, carrier is currently turning into the wind.
+--- @field #boolean detour If true, carrier is currently making a detour from its path along the ME waypoints.
+--- @field Core.Point#COORDINATE Creturnto Position to return to after turn into the wind leg is over.
+--- @field Core.Set#SET_GROUP squadsetAI AI groups in this set will be handled by the airboss.
+--- @field Core.Set#SET_GROUP excludesetAI AI groups in this set will be explicitly excluded from handling by the airboss and not forced into the Marshal pattern.
+--- @field #boolean menusingle If true, menu is optimized for a single carrier.
+--- @field #number collisiondist Distance up to which collision checks are done.
+--- @field #number holdtimestamp Timestamp when the carrier first came to an unexpected hold.
+--- @field #number Tmessage Default duration in seconds messages are displayed to players.
+--- @field #string soundfolder Folder within the mission (miz) file where airboss sound files are located.
+--- @field #string soundfolderLSO Folder withing the mission (miz) file where LSO sound files are stored.
+--- @field #string soundfolderMSH Folder withing the mission (miz) file where Marshal sound files are stored.
+--- @field #boolean despawnshutdown Despawn group after engine shutdown.
+--- @field #number Tbeacon Last time the beacons were refeshed.
+--- @field #number dTbeacon Time interval to refresh the beacons. Default 5 minutes.
+--- @field #AIRBOSS.LSOCalls LSOCall Radio voice overs of the LSO.
+--- @field #AIRBOSS.MarshalCalls MarshalCall Radio voice over of the Marshal/Airboss.
+--- @field #AIRBOSS.PilotCalls PilotCall Radio voice over from AI pilots.
+--- @field #number lowfuelAI Low fuel threshold for AI groups in percent.
+--- @field #boolean emergency If true (default), allow emergency landings, i.e. bypass any pattern and go for final approach.
+--- @field #boolean respawnAI If true, respawn AI flights as they enter the CCA to detach and airfields from the mission plan. Default false.
+--- @field #boolean turning If true, carrier is currently turning.
+--- @field #AIRBOSS.GLE gle Glidesope error thresholds.
+--- @field #AIRBOSS.LUE lue Lineup error thresholds.
+--- @field #boolean trapsheet If true, players can save their trap sheets.
+--- @field #string trappath Path where to save the trap sheets.
+--- @field #string trapprefix File prefix for trap sheet files.
+--- @field #number initialmaxalt Max altitude in meters to register in the inital zone.
+--- @field #boolean welcome If true, display welcome message to player.
+--- @field #boolean skipperMenu If true, add skipper menu.
+--- @field #number skipperSpeed Speed in knots for manual recovery start.
+--- @field #number skipperCase Manual recovery case.
+--- @field #boolean skipperUturn U-turn on/off via menu.
+--- @field #number skipperOffset Holding offset angle in degrees for Case II/III manual recoveries.
+--- @field #number skipperTime Recovery time in min for manual recovery.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -1140,7 +1140,7 @@
 -- You have the option to enable the debug mode for this class via the @{#AIRBOSS.SetDebugModeON} function.
 -- If enabled, status and debug text messages will be displayed on the screen. Also informative marks on the F10 map are created.
 --
--- @field #AIRBOSS
+--- @field #AIRBOSS
 AIRBOSS = {
   ClassName      = "AIRBOSS",
   Debug          = false,
@@ -1266,19 +1266,19 @@ AIRBOSS = {
 }
 
 --- Aircraft types capable of landing on carrier (human+AI).
--- @type AIRBOSS.AircraftCarrier
--- @field #string AV8B AV-8B Night Harrier. Works only with the HMS Hermes, HMS Invincible, USS Tarawa, USS America, and Juan Carlos I.
--- @field #string A4EC A-4E Community mod.
--- @field #string HORNET F/A-18C Lot 20 Hornet by Eagle Dynamics.
--- @field #string F14A F-14A by Heatblur.
--- @field #string F14B F-14B by Heatblur.
--- @field #string F14A_AI F-14A Tomcat (AI).
--- @field #string FA18C F/A-18C Hornet (AI).
--- @field #string S3B Lockheed S-3B Viking.
--- @field #string S3BTANKER Lockheed S-3B Viking tanker.
--- @field #string E2D Grumman E-2D Hawkeye AWACS.
--- @field #string C2A Grumman C-2A Greyhound from Military Aircraft Mod.
--- @field #string T45C T-45C by VNAO
+--- @type AIRBOSS.AircraftCarrier
+--- @field #string AV8B AV-8B Night Harrier. Works only with the HMS Hermes, HMS Invincible, USS Tarawa, USS America, and Juan Carlos I.
+--- @field #string A4EC A-4E Community mod.
+--- @field #string HORNET F/A-18C Lot 20 Hornet by Eagle Dynamics.
+--- @field #string F14A F-14A by Heatblur.
+--- @field #string F14B F-14B by Heatblur.
+--- @field #string F14A_AI F-14A Tomcat (AI).
+--- @field #string FA18C F/A-18C Hornet (AI).
+--- @field #string S3B Lockheed S-3B Viking.
+--- @field #string S3BTANKER Lockheed S-3B Viking tanker.
+--- @field #string E2D Grumman E-2D Hawkeye AWACS.
+--- @field #string C2A Grumman C-2A Greyhound from Military Aircraft Mod.
+--- @field #string T45C T-45C by VNAO
 AIRBOSS.AircraftCarrier={
   AV8B="AV8BNA",
   HORNET="FA-18C_hornet",
@@ -1295,21 +1295,21 @@ AIRBOSS.AircraftCarrier={
 }
 
 --- Carrier types.
--- @type AIRBOSS.CarrierType
--- @field #string ROOSEVELT USS Theodore Roosevelt (CVN-71) [Super Carrier Module]
--- @field #string LINCOLN USS Abraham Lincoln (CVN-72) [Super Carrier Module]
--- @field #string WASHINGTON USS George Washington (CVN-73) [Super Carrier Module]
--- @field #string STENNIS USS John C. Stennis (CVN-74)
--- @field #string TRUMAN USS Harry S. Truman (CVN-75) [Super Carrier Module]
--- @field #string FORRESTAL USS Forrestal (CV-59) [Heatblur Carrier Module]
--- @field #string VINSON USS Carl Vinson (CVN-70) [Obsolete]
--- @field #string HERMES HMS Hermes (R12) [V/STOL Carrier]
--- @field #string INVINCIBLE HMS Invincible (R05) [V/STOL Carrier]
--- @field #string TARAWA USS Tarawa (LHA-1) [V/STOL Carrier]
--- @field #string AMERICA USS America (LHA-6) [V/STOL Carrier]
--- @field #string JCARLOS Juan Carlos I (L61) [V/STOL Carrier]
--- @field #string HMAS Canberra (L02) [V/STOL Carrier]
--- @field #string KUZNETSOV Admiral Kuznetsov (CV 1143.5)
+--- @type AIRBOSS.CarrierType
+--- @field #string ROOSEVELT USS Theodore Roosevelt (CVN-71) [Super Carrier Module]
+--- @field #string LINCOLN USS Abraham Lincoln (CVN-72) [Super Carrier Module]
+--- @field #string WASHINGTON USS George Washington (CVN-73) [Super Carrier Module]
+--- @field #string STENNIS USS John C. Stennis (CVN-74)
+--- @field #string TRUMAN USS Harry S. Truman (CVN-75) [Super Carrier Module]
+--- @field #string FORRESTAL USS Forrestal (CV-59) [Heatblur Carrier Module]
+--- @field #string VINSON USS Carl Vinson (CVN-70) [Obsolete]
+--- @field #string HERMES HMS Hermes (R12) [V/STOL Carrier]
+--- @field #string INVINCIBLE HMS Invincible (R05) [V/STOL Carrier]
+--- @field #string TARAWA USS Tarawa (LHA-1) [V/STOL Carrier]
+--- @field #string AMERICA USS America (LHA-6) [V/STOL Carrier]
+--- @field #string JCARLOS Juan Carlos I (L61) [V/STOL Carrier]
+--- @field #string HMAS Canberra (L02) [V/STOL Carrier]
+--- @field #string KUZNETSOV Admiral Kuznetsov (CV 1143.5)
 AIRBOSS.CarrierType = {
   ROOSEVELT = "CVN_71",
   LINCOLN = "CVN_72",
@@ -1328,82 +1328,82 @@ AIRBOSS.CarrierType = {
 }
 
 --- Carrier specific parameters.
--- @type AIRBOSS.CarrierParameters
--- @field #number rwyangle Runway angle in degrees. for carriers with angled deck. For USS Stennis -9 degrees.
--- @field #number sterndist Distance in meters from carrier position to stern of carrier. For USS Stennis -150 meters.
--- @field #number deckheight Height of deck in meters. For USS Stennis ~63 ft = 19 meters.
--- @field #number wire1 Distance in meters from carrier position to first wire.
--- @field #number wire2 Distance in meters from carrier position to second wire.
--- @field #number wire3 Distance in meters from carrier position to third wire.
--- @field #number wire4 Distance in meters from carrier position to fourth wire.
--- @field #number landingdist Distance in meeters to the landing position.
--- @field #number rwylength Length of the landing runway in meters.
--- @field #number rwywidth Width of the landing runway in meters.
--- @field #number totlength Total length of carrier.
--- @field #number totwidthstarboard Total with of the carrier from stern position to starboard side (asymmetric carriers).
--- @field #number totwidthport Total with of the carrier from stern position to port side (asymmetric carriers).
+--- @type AIRBOSS.CarrierParameters
+--- @field #number rwyangle Runway angle in degrees. for carriers with angled deck. For USS Stennis -9 degrees.
+--- @field #number sterndist Distance in meters from carrier position to stern of carrier. For USS Stennis -150 meters.
+--- @field #number deckheight Height of deck in meters. For USS Stennis ~63 ft = 19 meters.
+--- @field #number wire1 Distance in meters from carrier position to first wire.
+--- @field #number wire2 Distance in meters from carrier position to second wire.
+--- @field #number wire3 Distance in meters from carrier position to third wire.
+--- @field #number wire4 Distance in meters from carrier position to fourth wire.
+--- @field #number landingdist Distance in meeters to the landing position.
+--- @field #number rwylength Length of the landing runway in meters.
+--- @field #number rwywidth Width of the landing runway in meters.
+--- @field #number totlength Total length of carrier.
+--- @field #number totwidthstarboard Total with of the carrier from stern position to starboard side (asymmetric carriers).
+--- @field #number totwidthport Total with of the carrier from stern position to port side (asymmetric carriers).
 
 --- Aircraft specific Angle of Attack (AoA) (or alpha) parameters.
--- @type AIRBOSS.AircraftAoA
--- @field #number OnSpeedMin Minimum on speed AoA. Values below are fast
--- @field #number OnSpeedMax Maximum on speed AoA. Values above are slow.
--- @field #number OnSpeed Optimal on-speed AoA.
--- @field #number Fast Fast AoA threshold. Smaller means faster.
--- @field #number Slow Slow AoA threshold. Larger means slower.
--- @field #number FAST Really fast AoA threshold.
--- @field #number SLOW Really slow AoA threshold.
+--- @type AIRBOSS.AircraftAoA
+--- @field #number OnSpeedMin Minimum on speed AoA. Values below are fast
+--- @field #number OnSpeedMax Maximum on speed AoA. Values above are slow.
+--- @field #number OnSpeed Optimal on-speed AoA.
+--- @field #number Fast Fast AoA threshold. Smaller means faster.
+--- @field #number Slow Slow AoA threshold. Larger means slower.
+--- @field #number FAST Really fast AoA threshold.
+--- @field #number SLOW Really slow AoA threshold.
 
 --- Glideslope error thresholds in degrees.
--- @type AIRBOSS.GLE
--- @field #number _max Max _OK_ value. Default 0.4 deg.
--- @field #number _min Min _OK_ value. Default -0.3 deg.
--- @field #number High (H) threshold. Default 0.8 deg.
--- @field #number Low  (L) threshold. Default -0.6 deg.
--- @field #number HIGH  H  threshold. Default 1.5 deg.
--- @field #number LOW   L  threshold. Default -0.9 deg.
+--- @type AIRBOSS.GLE
+--- @field #number _max Max _OK_ value. Default 0.4 deg.
+--- @field #number _min Min _OK_ value. Default -0.3 deg.
+--- @field #number High (H) threshold. Default 0.8 deg.
+--- @field #number Low  (L) threshold. Default -0.6 deg.
+--- @field #number HIGH  H  threshold. Default 1.5 deg.
+--- @field #number LOW   L  threshold. Default -0.9 deg.
 
 --- Lineup error thresholds in degrees.
--- @type AIRBOSS.LUE
--- @field #number _max Max _OK_ value. Default 0.5 deg.
--- @field #number _min Min _OK_ value. Default -0.5 deg.
--- @field #number Left  (LUR) threshold. Default -1.0 deg.
--- @field #number Right (LUL) threshold. Default 1.0 deg.
--- @field #number LeftMed threshold for AA/OS measuring. Default -2.0 deg.
--- @field #number RightMed threshold for AA/OS measuring. Default 2.0 deg.
--- @field #number LEFT   LUR  threshold. Default -3.0 deg.
--- @field #number RIGHT  LUL  threshold. Default 3.0 deg.
+--- @type AIRBOSS.LUE
+--- @field #number _max Max _OK_ value. Default 0.5 deg.
+--- @field #number _min Min _OK_ value. Default -0.5 deg.
+--- @field #number Left  (LUR) threshold. Default -1.0 deg.
+--- @field #number Right (LUL) threshold. Default 1.0 deg.
+--- @field #number LeftMed threshold for AA/OS measuring. Default -2.0 deg.
+--- @field #number RightMed threshold for AA/OS measuring. Default 2.0 deg.
+--- @field #number LEFT   LUR  threshold. Default -3.0 deg.
+--- @field #number RIGHT  LUL  threshold. Default 3.0 deg.
 
 --- Pattern steps.
--- @type AIRBOSS.PatternStep
--- @field #string UNDEFINED "Undefined".
--- @field #string REFUELING "Refueling".
--- @field #string SPINNING "Spinning".
--- @field #string COMMENCING "Commencing".
--- @field #string HOLDING "Holding".
--- @field #string WAITING "Waiting for free Marshal stack".
--- @field #string PLATFORM "Platform".
--- @field #string ARCIN "Arc Turn In".
--- @field #string ARCOUT "Arc Turn Out".
--- @field #string DIRTYUP "Dirty Up".
--- @field #string BULLSEYE "Bullseye".
--- @field #string INITIAL "Initial".
--- @field #string BREAKENTRY "Break Entry".
--- @field #string EARLYBREAK "Early Break".
--- @field #string LATEBREAK "Late Break".
--- @field #string ABEAM "Abeam".
--- @field #string NINETY "Ninety".
--- @field #string WAKE "Wake".
--- @field #string FINAL "Final".
--- @field #string GROOVE_XX "Groove X".
--- @field #string GROOVE_IM "Groove In the Middle".
--- @field #string GROOVE_IC "Groove In Close".
--- @field #string GROOVE_AR "Groove At the Ramp".
--- @field #string GROOVE_AL "Groove Abeam Landing Spot".
--- @field #string GROOVE_LC "Groove Level Cross".
--- @field #string GROOVE_IW "Groove In the Wires".
--- @field #string BOLTER "Bolter Pattern".
--- @field #string EMERGENCY "Emergency Landing".
--- @field #string DEBRIEF "Debrief".
+--- @type AIRBOSS.PatternStep
+--- @field #string UNDEFINED "Undefined".
+--- @field #string REFUELING "Refueling".
+--- @field #string SPINNING "Spinning".
+--- @field #string COMMENCING "Commencing".
+--- @field #string HOLDING "Holding".
+--- @field #string WAITING "Waiting for free Marshal stack".
+--- @field #string PLATFORM "Platform".
+--- @field #string ARCIN "Arc Turn In".
+--- @field #string ARCOUT "Arc Turn Out".
+--- @field #string DIRTYUP "Dirty Up".
+--- @field #string BULLSEYE "Bullseye".
+--- @field #string INITIAL "Initial".
+--- @field #string BREAKENTRY "Break Entry".
+--- @field #string EARLYBREAK "Early Break".
+--- @field #string LATEBREAK "Late Break".
+--- @field #string ABEAM "Abeam".
+--- @field #string NINETY "Ninety".
+--- @field #string WAKE "Wake".
+--- @field #string FINAL "Final".
+--- @field #string GROOVE_XX "Groove X".
+--- @field #string GROOVE_IM "Groove In the Middle".
+--- @field #string GROOVE_IC "Groove In Close".
+--- @field #string GROOVE_AR "Groove At the Ramp".
+--- @field #string GROOVE_AL "Groove Abeam Landing Spot".
+--- @field #string GROOVE_LC "Groove Level Cross".
+--- @field #string GROOVE_IW "Groove In the Wires".
+--- @field #string BOLTER "Bolter Pattern".
+--- @field #string EMERGENCY "Emergency Landing".
+--- @field #string DEBRIEF "Debrief".
 AIRBOSS.PatternStep = {
   UNDEFINED = "Undefined",
   REFUELING = "Refueling",
@@ -1437,15 +1437,15 @@ AIRBOSS.PatternStep = {
 }
 
 --- Groove position.
--- @type AIRBOSS.GroovePos
--- @field #string X0 "X0": Entering the groove.
--- @field #string XX "XX": At the start, i.e. 3/4 from the run down.
--- @field #string IM "IM": In the middle.
--- @field #string IC "IC": In close.
--- @field #string AR "AR": At the ramp.
--- @field #string AL "AL": Abeam landing position (V/STOL).
--- @field #string LC "LC": Level crossing (V/STOL).
--- @field #string IW "IW": In the wires.
+--- @type AIRBOSS.GroovePos
+--- @field #string X0 "X0": Entering the groove.
+--- @field #string XX "XX": At the start, i.e. 3/4 from the run down.
+--- @field #string IM "IM": In the middle.
+--- @field #string IC "IC": In close.
+--- @field #string AR "AR": At the ramp.
+--- @field #string AL "AL": Abeam landing position (V/STOL).
+--- @field #string LC "LC": Level crossing (V/STOL).
+--- @field #string IW "IW": In the wires.
 AIRBOSS.GroovePos = {
   X0 = "X0",
   XX = "XX",
@@ -1458,136 +1458,136 @@ AIRBOSS.GroovePos = {
 }
 
 --- Radio.
--- @type AIRBOSS.Radio
--- @field #number frequency Frequency in Hz.
--- @field #number modulation Band modulation.
--- @field #string alias Radio alias.
+--- @type AIRBOSS.Radio
+--- @field #number frequency Frequency in Hz.
+--- @field #number modulation Band modulation.
+--- @field #string alias Radio alias.
 
 --- Radio sound file and subtitle.
--- @type AIRBOSS.RadioCall
--- @field #string file Sound file name without suffix.
--- @field #string suffix File suffix/extension, e.g. "ogg".
--- @field #boolean loud Loud version of sound file available.
--- @field #string subtitle Subtitle displayed during transmission.
--- @field #number duration Duration of the sound in seconds. This is also the duration the subtitle is displayed.
--- @field #number subduration Duration in seconds the subtitle is displayed.
--- @field #string modexsender Onboard number of the sender (optional).
--- @field #string modexreceiver Onboard number of the receiver (optional).
--- @field #string sender Sender of the message (optional). Default radio alias.
+--- @type AIRBOSS.RadioCall
+--- @field #string file Sound file name without suffix.
+--- @field #string suffix File suffix/extension, e.g. "ogg".
+--- @field #boolean loud Loud version of sound file available.
+--- @field #string subtitle Subtitle displayed during transmission.
+--- @field #number duration Duration of the sound in seconds. This is also the duration the subtitle is displayed.
+--- @field #number subduration Duration in seconds the subtitle is displayed.
+--- @field #string modexsender Onboard number of the sender (optional).
+--- @field #string modexreceiver Onboard number of the receiver (optional).
+--- @field #string sender Sender of the message (optional). Default radio alias.
 
 --- Pilot radio calls.
 -- type AIRBOSS.PilotCalls
--- @field #AIRBOSS.RadioCall N0 "Zero" call.
--- @field #AIRBOSS.RadioCall N1 "One" call.
--- @field #AIRBOSS.RadioCall N2 "Two" call.
--- @field #AIRBOSS.RadioCall N3 "Three" call.
--- @field #AIRBOSS.RadioCall N4 "Four" call.
--- @field #AIRBOSS.RadioCall N5 "Five" call.
--- @field #AIRBOSS.RadioCall N6 "Six" call.
--- @field #AIRBOSS.RadioCall N7 "Seven" call.
--- @field #AIRBOSS.RadioCall N8 "Eight" call.
--- @field #AIRBOSS.RadioCall N9 "Nine" call.
--- @field #AIRBOSS.RadioCall POINT "Point" call.
--- @field #AIRBOSS.RadioCall BALL "Ball" call.
--- @field #AIRBOSS.RadioCall HARRIER "Harrier" call.
--- @field #AIRBOSS.RadioCall HAWKEYE "Hawkeye" call.
--- @field #AIRBOSS.RadioCall HORNET "Hornet" call.
--- @field #AIRBOSS.RadioCall SKYHAWK "Skyhawk" call.
--- @field #AIRBOSS.RadioCall TOMCAT "Tomcat" call.
--- @field #AIRBOSS.RadioCall VIKING "Viking" call.
--- @field #AIRBOSS.RadioCall BINGOFUEL "Bingo Fuel" call.
--- @field #AIRBOSS.RadioCall GASATDIVERT "Going for gas at the divert field" call.
--- @field #AIRBOSS.RadioCall GASATTANKER "Going for gas at the recovery tanker" call.
+--- @field #AIRBOSS.RadioCall N0 "Zero" call.
+--- @field #AIRBOSS.RadioCall N1 "One" call.
+--- @field #AIRBOSS.RadioCall N2 "Two" call.
+--- @field #AIRBOSS.RadioCall N3 "Three" call.
+--- @field #AIRBOSS.RadioCall N4 "Four" call.
+--- @field #AIRBOSS.RadioCall N5 "Five" call.
+--- @field #AIRBOSS.RadioCall N6 "Six" call.
+--- @field #AIRBOSS.RadioCall N7 "Seven" call.
+--- @field #AIRBOSS.RadioCall N8 "Eight" call.
+--- @field #AIRBOSS.RadioCall N9 "Nine" call.
+--- @field #AIRBOSS.RadioCall POINT "Point" call.
+--- @field #AIRBOSS.RadioCall BALL "Ball" call.
+--- @field #AIRBOSS.RadioCall HARRIER "Harrier" call.
+--- @field #AIRBOSS.RadioCall HAWKEYE "Hawkeye" call.
+--- @field #AIRBOSS.RadioCall HORNET "Hornet" call.
+--- @field #AIRBOSS.RadioCall SKYHAWK "Skyhawk" call.
+--- @field #AIRBOSS.RadioCall TOMCAT "Tomcat" call.
+--- @field #AIRBOSS.RadioCall VIKING "Viking" call.
+--- @field #AIRBOSS.RadioCall BINGOFUEL "Bingo Fuel" call.
+--- @field #AIRBOSS.RadioCall GASATDIVERT "Going for gas at the divert field" call.
+--- @field #AIRBOSS.RadioCall GASATTANKER "Going for gas at the recovery tanker" call.
 
 --- LSO radio calls.
--- @type AIRBOSS.LSOCalls
--- @field #AIRBOSS.RadioCall BOLTER "Bolter, Bolter" call.
--- @field #AIRBOSS.RadioCall CALLTHEBALL "Call the Ball" call.
--- @field #AIRBOSS.RadioCall CHECK "CHECK" call.
--- @field #AIRBOSS.RadioCall CLEAREDTOLAND "Cleared to land" call.
--- @field #AIRBOSS.RadioCall COMELEFT "Come left" call.
--- @field #AIRBOSS.RadioCall DEPARTANDREENTER "Depart and re-enter" call.
--- @field #AIRBOSS.RadioCall EXPECTHEAVYWAVEOFF "Expect heavy wavoff" call.
--- @field #AIRBOSS.RadioCall EXPECTSPOT75 "Expect spot 7.5" call.
--- @field #AIRBOSS.RadioCall EXPECTSPOT5 "Expect spot 5" call.
--- @field #AIRBOSS.RadioCall FAST "You're fast" call.
--- @field #AIRBOSS.RadioCall FOULDECK "Foul Deck" call.
--- @field #AIRBOSS.RadioCall HIGH "You're high" call.
--- @field #AIRBOSS.RadioCall IDLE "Idle" call.
--- @field #AIRBOSS.RadioCall LONGINGROOVE "You're long in the groove" call.
--- @field #AIRBOSS.RadioCall LOW "You're low" call.
--- @field #AIRBOSS.RadioCall N0 "Zero" call.
--- @field #AIRBOSS.RadioCall N1 "One" call.
--- @field #AIRBOSS.RadioCall N2 "Two" call.
--- @field #AIRBOSS.RadioCall N3 "Three" call.
--- @field #AIRBOSS.RadioCall N4 "Four" call.
--- @field #AIRBOSS.RadioCall N5 "Five" call.
--- @field #AIRBOSS.RadioCall N6 "Six" call.
--- @field #AIRBOSS.RadioCall N7 "Seven" call.
--- @field #AIRBOSS.RadioCall N8 "Eight" call.
--- @field #AIRBOSS.RadioCall N9 "Nine" call.
--- @field #AIRBOSS.RadioCall PADDLESCONTACT "Paddles, contact" call.
--- @field #AIRBOSS.RadioCall POWER "Power" call.
--- @field #AIRBOSS.RadioCall RADIOCHECK "Paddles, radio check" call.
--- @field #AIRBOSS.RadioCall RIGHTFORLINEUP "Right for line up" call.
--- @field #AIRBOSS.RadioCall ROGERBALL "Roger ball" call.
--- @field #AIRBOSS.RadioCall SLOW "You're slow" call.
--- @field #AIRBOSS.RadioCall STABILIZED "Stabilized" call.
--- @field #AIRBOSS.RadioCall WAVEOFF "Wave off" call.
--- @field #AIRBOSS.RadioCall WELCOMEABOARD "Welcome aboard" call.
--- @field #AIRBOSS.RadioCall CLICK Radio end transmission click sound.
--- @field #AIRBOSS.RadioCall NOISE Static noise sound.
--- @field #AIRBOSS.RadioCall SPINIT "Spin it" call.
+--- @type AIRBOSS.LSOCalls
+--- @field #AIRBOSS.RadioCall BOLTER "Bolter, Bolter" call.
+--- @field #AIRBOSS.RadioCall CALLTHEBALL "Call the Ball" call.
+--- @field #AIRBOSS.RadioCall CHECK "CHECK" call.
+--- @field #AIRBOSS.RadioCall CLEAREDTOLAND "Cleared to land" call.
+--- @field #AIRBOSS.RadioCall COMELEFT "Come left" call.
+--- @field #AIRBOSS.RadioCall DEPARTANDREENTER "Depart and re-enter" call.
+--- @field #AIRBOSS.RadioCall EXPECTHEAVYWAVEOFF "Expect heavy wavoff" call.
+--- @field #AIRBOSS.RadioCall EXPECTSPOT75 "Expect spot 7.5" call.
+--- @field #AIRBOSS.RadioCall EXPECTSPOT5 "Expect spot 5" call.
+--- @field #AIRBOSS.RadioCall FAST "You're fast" call.
+--- @field #AIRBOSS.RadioCall FOULDECK "Foul Deck" call.
+--- @field #AIRBOSS.RadioCall HIGH "You're high" call.
+--- @field #AIRBOSS.RadioCall IDLE "Idle" call.
+--- @field #AIRBOSS.RadioCall LONGINGROOVE "You're long in the groove" call.
+--- @field #AIRBOSS.RadioCall LOW "You're low" call.
+--- @field #AIRBOSS.RadioCall N0 "Zero" call.
+--- @field #AIRBOSS.RadioCall N1 "One" call.
+--- @field #AIRBOSS.RadioCall N2 "Two" call.
+--- @field #AIRBOSS.RadioCall N3 "Three" call.
+--- @field #AIRBOSS.RadioCall N4 "Four" call.
+--- @field #AIRBOSS.RadioCall N5 "Five" call.
+--- @field #AIRBOSS.RadioCall N6 "Six" call.
+--- @field #AIRBOSS.RadioCall N7 "Seven" call.
+--- @field #AIRBOSS.RadioCall N8 "Eight" call.
+--- @field #AIRBOSS.RadioCall N9 "Nine" call.
+--- @field #AIRBOSS.RadioCall PADDLESCONTACT "Paddles, contact" call.
+--- @field #AIRBOSS.RadioCall POWER "Power" call.
+--- @field #AIRBOSS.RadioCall RADIOCHECK "Paddles, radio check" call.
+--- @field #AIRBOSS.RadioCall RIGHTFORLINEUP "Right for line up" call.
+--- @field #AIRBOSS.RadioCall ROGERBALL "Roger ball" call.
+--- @field #AIRBOSS.RadioCall SLOW "You're slow" call.
+--- @field #AIRBOSS.RadioCall STABILIZED "Stabilized" call.
+--- @field #AIRBOSS.RadioCall WAVEOFF "Wave off" call.
+--- @field #AIRBOSS.RadioCall WELCOMEABOARD "Welcome aboard" call.
+--- @field #AIRBOSS.RadioCall CLICK Radio end transmission click sound.
+--- @field #AIRBOSS.RadioCall NOISE Static noise sound.
+--- @field #AIRBOSS.RadioCall SPINIT "Spin it" call.
 
 --- Marshal radio calls.
--- @type AIRBOSS.MarshalCalls
--- @field #AIRBOSS.RadioCall AFFIRMATIVE "Affirmative" call.
--- @field #AIRBOSS.RadioCall ALTIMETER "Altimeter" call.
--- @field #AIRBOSS.RadioCall BRC "BRC" call.
--- @field #AIRBOSS.RadioCall CARRIERTURNTOHEADING "Turn to heading" call.
--- @field #AIRBOSS.RadioCall CASE "Case" call.
--- @field #AIRBOSS.RadioCall CHARLIETIME "Charlie Time" call.
--- @field #AIRBOSS.RadioCall CLEAREDFORRECOVERY "You're cleared for case" call.
--- @field #AIRBOSS.RadioCall DECKCLOSED "Deck closed" sound.
--- @field #AIRBOSS.RadioCall DEGREES "Degrees" call.
--- @field #AIRBOSS.RadioCall EXPECTED "Expected" call.
--- @field #AIRBOSS.RadioCall FLYNEEDLES "Fly your needles" call.
--- @field #AIRBOSS.RadioCall HOLDATANGELS "Hold at angels" call.
--- @field #AIRBOSS.RadioCall HOURS "Hours" sound.
--- @field #AIRBOSS.RadioCall MARSHALRADIAL "Marshal radial" call.
--- @field #AIRBOSS.RadioCall N0 "Zero" call.
--- @field #AIRBOSS.RadioCall N1 "One" call.
--- @field #AIRBOSS.RadioCall N2 "Two" call.
--- @field #AIRBOSS.RadioCall N3 "Three" call.
--- @field #AIRBOSS.RadioCall N4 "Four" call.
--- @field #AIRBOSS.RadioCall N5 "Five" call.
--- @field #AIRBOSS.RadioCall N6 "Six" call.
--- @field #AIRBOSS.RadioCall N7 "Seven" call.
--- @field #AIRBOSS.RadioCall N8 "Eight" call.
--- @field #AIRBOSS.RadioCall N9 "Nine" call.
--- @field #AIRBOSS.RadioCall NEGATIVE "Negative" sound.
--- @field #AIRBOSS.RadioCall NEWFB "New final bearing" call.
--- @field #AIRBOSS.RadioCall OBS "Obs" call.
--- @field #AIRBOSS.RadioCall POINT "Point" call.
--- @field #AIRBOSS.RadioCall RADIOCHECK "Radio check" call.
--- @field #AIRBOSS.RadioCall RECOVERY "Recovery" call.
--- @field #AIRBOSS.RadioCall RECOVERYOPSSTOPPED "Recovery ops stopped" sound.
--- @field #AIRBOSS.RadioCall RECOVERYPAUSEDNOTICE "Recovery paused until further notice" call.
--- @field #AIRBOSS.RadioCall RECOVERYPAUSEDRESUMED "Recovery paused and will be resumed at" call.
--- @field #AIRBOSS.RadioCall RESUMERECOVERY "Resuming aircraft recovery" call.
--- @field #AIRBOSS.RadioCall REPORTSEEME "Report see me" call.
--- @field #AIRBOSS.RadioCall ROGER "Roger" call.
--- @field #AIRBOSS.RadioCall SAYNEEDLES "Say needles" call.
--- @field #AIRBOSS.RadioCall STACKFULL "Marshal stack is currently full. Hold outside 10 NM zone and wait for further instructions" call.
--- @field #AIRBOSS.RadioCall STARTINGRECOVERY "Starting aircraft recovery" call.
--- @field #AIRBOSS.RadioCall CLICK Radio end transmission click sound.
--- @field #AIRBOSS.RadioCall NOISE Static noise sound.
+--- @type AIRBOSS.MarshalCalls
+--- @field #AIRBOSS.RadioCall AFFIRMATIVE "Affirmative" call.
+--- @field #AIRBOSS.RadioCall ALTIMETER "Altimeter" call.
+--- @field #AIRBOSS.RadioCall BRC "BRC" call.
+--- @field #AIRBOSS.RadioCall CARRIERTURNTOHEADING "Turn to heading" call.
+--- @field #AIRBOSS.RadioCall CASE "Case" call.
+--- @field #AIRBOSS.RadioCall CHARLIETIME "Charlie Time" call.
+--- @field #AIRBOSS.RadioCall CLEAREDFORRECOVERY "You're cleared for case" call.
+--- @field #AIRBOSS.RadioCall DECKCLOSED "Deck closed" sound.
+--- @field #AIRBOSS.RadioCall DEGREES "Degrees" call.
+--- @field #AIRBOSS.RadioCall EXPECTED "Expected" call.
+--- @field #AIRBOSS.RadioCall FLYNEEDLES "Fly your needles" call.
+--- @field #AIRBOSS.RadioCall HOLDATANGELS "Hold at angels" call.
+--- @field #AIRBOSS.RadioCall HOURS "Hours" sound.
+--- @field #AIRBOSS.RadioCall MARSHALRADIAL "Marshal radial" call.
+--- @field #AIRBOSS.RadioCall N0 "Zero" call.
+--- @field #AIRBOSS.RadioCall N1 "One" call.
+--- @field #AIRBOSS.RadioCall N2 "Two" call.
+--- @field #AIRBOSS.RadioCall N3 "Three" call.
+--- @field #AIRBOSS.RadioCall N4 "Four" call.
+--- @field #AIRBOSS.RadioCall N5 "Five" call.
+--- @field #AIRBOSS.RadioCall N6 "Six" call.
+--- @field #AIRBOSS.RadioCall N7 "Seven" call.
+--- @field #AIRBOSS.RadioCall N8 "Eight" call.
+--- @field #AIRBOSS.RadioCall N9 "Nine" call.
+--- @field #AIRBOSS.RadioCall NEGATIVE "Negative" sound.
+--- @field #AIRBOSS.RadioCall NEWFB "New final bearing" call.
+--- @field #AIRBOSS.RadioCall OBS "Obs" call.
+--- @field #AIRBOSS.RadioCall POINT "Point" call.
+--- @field #AIRBOSS.RadioCall RADIOCHECK "Radio check" call.
+--- @field #AIRBOSS.RadioCall RECOVERY "Recovery" call.
+--- @field #AIRBOSS.RadioCall RECOVERYOPSSTOPPED "Recovery ops stopped" sound.
+--- @field #AIRBOSS.RadioCall RECOVERYPAUSEDNOTICE "Recovery paused until further notice" call.
+--- @field #AIRBOSS.RadioCall RECOVERYPAUSEDRESUMED "Recovery paused and will be resumed at" call.
+--- @field #AIRBOSS.RadioCall RESUMERECOVERY "Resuming aircraft recovery" call.
+--- @field #AIRBOSS.RadioCall REPORTSEEME "Report see me" call.
+--- @field #AIRBOSS.RadioCall ROGER "Roger" call.
+--- @field #AIRBOSS.RadioCall SAYNEEDLES "Say needles" call.
+--- @field #AIRBOSS.RadioCall STACKFULL "Marshal stack is currently full. Hold outside 10 NM zone and wait for further instructions" call.
+--- @field #AIRBOSS.RadioCall STARTINGRECOVERY "Starting aircraft recovery" call.
+--- @field #AIRBOSS.RadioCall CLICK Radio end transmission click sound.
+--- @field #AIRBOSS.RadioCall NOISE Static noise sound.
 
 --- Difficulty level.
--- @type AIRBOSS.Difficulty
--- @field #string EASY Flight Student. Shows tips and hints in important phases of the approach.
--- @field #string NORMAL Naval aviator. Moderate number of hints but not really zip lip.
--- @field #string HARD TOPGUN graduate. For people who know what they are doing. Nearly *ziplip*.
+--- @type AIRBOSS.Difficulty
+--- @field #string EASY Flight Student. Shows tips and hints in important phases of the approach.
+--- @field #string NORMAL Naval aviator. Moderate number of hints but not really zip lip.
+--- @field #string HARD TOPGUN graduate. For people who know what they are doing. Nearly *ziplip*.
 AIRBOSS.Difficulty = {
   EASY = "Flight Student",
   NORMAL = "Naval Aviator",
@@ -1595,147 +1595,147 @@ AIRBOSS.Difficulty = {
 }
 
 --- Recovery window parameters.
--- @type AIRBOSS.Recovery
--- @field #number START Start of recovery in seconds of abs mission time.
--- @field #number STOP End of recovery in seconds of abs mission time.
--- @field #number CASE Recovery case (1-3) of that time slot.
--- @field #number OFFSET Angle offset of the holding pattern in degrees. Usually 0, +-15, or +-30 degrees.
--- @field #boolean OPEN Recovery window is currently open.
--- @field #boolean OVER Recovery window is over and closed.
--- @field #boolean WIND Carrier will turn into the wind.
--- @field #number SPEED The speed in knots the carrier has during the recovery.
--- @field #boolean UTURN If true, carrier makes a U-turn to the point it came from before resuming its route to the next waypoint.
--- @field #number ID Recovery window ID.
+--- @type AIRBOSS.Recovery
+--- @field #number START Start of recovery in seconds of abs mission time.
+--- @field #number STOP End of recovery in seconds of abs mission time.
+--- @field #number CASE Recovery case (1-3) of that time slot.
+--- @field #number OFFSET Angle offset of the holding pattern in degrees. Usually 0, +-15, or +-30 degrees.
+--- @field #boolean OPEN Recovery window is currently open.
+--- @field #boolean OVER Recovery window is over and closed.
+--- @field #boolean WIND Carrier will turn into the wind.
+--- @field #number SPEED The speed in knots the carrier has during the recovery.
+--- @field #boolean UTURN If true, carrier makes a U-turn to the point it came from before resuming its route to the next waypoint.
+--- @field #number ID Recovery window ID.
 
 --- Groove data.
--- @type AIRBOSS.GrooveData
--- @field #number Step Current step.
--- @field #number Time Time in seconds.
--- @field #number Rho Distance in meters.
--- @field #number X Distance in meters.
--- @field #number Z Distance in meters.
--- @field #number AoA Angle of Attack.
--- @field #number Alt Altitude in meters.
--- @field #number GSE Glideslope error in degrees.
--- @field #number LUE Lineup error in degrees.
--- @field #number Pitch Pitch angle in degrees.
--- @field #number Roll Roll angle in degrees.
--- @field #number Yaw Yaw angle in degrees.
--- @field #number Vel Total velocity in m/s.
--- @field #number Vy Vertical velocity in m/s.
--- @field #number Gamma Relative heading player to carrier's runway. 0=parallel, +-90=perpendicular.
--- @field #string Grade LSO grade.
--- @field #number GradePoints LSO grade points
--- @field #string GradeDetail LSO grade details.
--- @field #string FlyThrough Fly through up "/" or fly through down "\\".
+--- @type AIRBOSS.GrooveData
+--- @field #number Step Current step.
+--- @field #number Time Time in seconds.
+--- @field #number Rho Distance in meters.
+--- @field #number X Distance in meters.
+--- @field #number Z Distance in meters.
+--- @field #number AoA Angle of Attack.
+--- @field #number Alt Altitude in meters.
+--- @field #number GSE Glideslope error in degrees.
+--- @field #number LUE Lineup error in degrees.
+--- @field #number Pitch Pitch angle in degrees.
+--- @field #number Roll Roll angle in degrees.
+--- @field #number Yaw Yaw angle in degrees.
+--- @field #number Vel Total velocity in m/s.
+--- @field #number Vy Vertical velocity in m/s.
+--- @field #number Gamma Relative heading player to carrier's runway. 0=parallel, +-90=perpendicular.
+--- @field #string Grade LSO grade.
+--- @field #number GradePoints LSO grade points
+--- @field #string GradeDetail LSO grade details.
+--- @field #string FlyThrough Fly through up "/" or fly through down "\\".
 
 --- LSO grade data.
--- @type AIRBOSS.LSOgrade
--- @field #string grade LSO grade, i.e. _OK_, OK, (OK), --, CUT
--- @field #number points Points received.
--- @field #number finalscore Points received after player has finally landed. This is the average over all incomplete passes (bolter, waveoff) before.
--- @field #string details Detailed flight analysis.
--- @field #number wire Wire caught.
--- @field #number Tgroove Time in the groove in seconds.
--- @field #number case Recovery case.
--- @field #string wind Wind speed on deck in knots.
--- @field #string modex Onboard number.
--- @field #string airframe Aircraft type name of player.
--- @field #string carriertype Carrier type name.
--- @field #string carriername Carrier name/alias.
--- @field #string theatre DCS map.
--- @field #string mitime Mission time in hh:mm:ss+d format
--- @field #string midate Mission date in yyyy/mm/dd format.
--- @field #string osdate Real live date. Needs **os** to be desanitized.
+--- @type AIRBOSS.LSOgrade
+--- @field #string grade LSO grade, i.e. _OK_, OK, (OK), --, CUT
+--- @field #number points Points received.
+--- @field #number finalscore Points received after player has finally landed. This is the average over all incomplete passes (bolter, waveoff) before.
+--- @field #string details Detailed flight analysis.
+--- @field #number wire Wire caught.
+--- @field #number Tgroove Time in the groove in seconds.
+--- @field #number case Recovery case.
+--- @field #string wind Wind speed on deck in knots.
+--- @field #string modex Onboard number.
+--- @field #string airframe Aircraft type name of player.
+--- @field #string carriertype Carrier type name.
+--- @field #string carriername Carrier name/alias.
+--- @field #string theatre DCS map.
+--- @field #string mitime Mission time in hh:mm:ss+d format
+--- @field #string midate Mission date in yyyy/mm/dd format.
+--- @field #string osdate Real live date. Needs **os** to be desanitized.
 
 --- Checkpoint parameters triggering the next step in the pattern.
--- @type AIRBOSS.Checkpoint
--- @field #string name Name of checkpoint.
--- @field #number Xmin Minimum allowed longitual distance to carrier.
--- @field #number Xmax Maximum allowed longitual distance to carrier.
--- @field #number Zmin Minimum allowed latitudal distance to carrier.
--- @field #number Zmax Maximum allowed latitudal distance to carrier.
--- @field #number LimitXmin Latitudal threshold for triggering the next step if X<Xmin.
--- @field #number LimitXmax Latitudal threshold for triggering the next step if X>Xmax.
--- @field #number LimitZmin Latitudal threshold for triggering the next step if Z<Zmin.
--- @field #number LimitZmax Latitudal threshold for triggering the next step if Z>Zmax.
+--- @type AIRBOSS.Checkpoint
+--- @field #string name Name of checkpoint.
+--- @field #number Xmin Minimum allowed longitual distance to carrier.
+--- @field #number Xmax Maximum allowed longitual distance to carrier.
+--- @field #number Zmin Minimum allowed latitudal distance to carrier.
+--- @field #number Zmax Maximum allowed latitudal distance to carrier.
+--- @field #number LimitXmin Latitudal threshold for triggering the next step if X<Xmin.
+--- @field #number LimitXmax Latitudal threshold for triggering the next step if X>Xmax.
+--- @field #number LimitZmin Latitudal threshold for triggering the next step if Z<Zmin.
+--- @field #number LimitZmax Latitudal threshold for triggering the next step if Z>Zmax.
 
 --- Parameters of a flight group.
--- @type AIRBOSS.FlightGroup
--- @field Wrapper.Group#GROUP group Flight group.
--- @field #string groupname Name of the group.
--- @field #number nunits Number of units in group.
--- @field #number dist0 Distance to carrier in meters when the group was first detected inside the CCA.
--- @field #number time Timestamp in seconds of timer.getAbsTime() of the last important event, e.g. added to the queue.
--- @field #number flag Flag value describing the current stack.
--- @field #boolean ai If true, flight is purly AI.
--- @field #string actype Aircraft type name.
--- @field #table onboardnumbers Onboard numbers of aircraft in the group.
--- @field #string onboard Onboard number of player or first unit in group.
--- @field #number case Recovery case of flight.
--- @field #string seclead Name of section lead.
--- @field #table section Other human flight groups belonging to this flight. This flight is the lead.
--- @field #boolean holding If true, flight is in holding zone.
--- @field #boolean ballcall If true, flight called the ball in the groove.
--- @field #table elements Flight group elements.
--- @field #number Tcharlie Charlie (abs) time in seconds.
--- @field #string name Player name or name of first AI unit.
--- @field #boolean refueling Flight is refueling.
+--- @type AIRBOSS.FlightGroup
+--- @field Wrapper.Group#GROUP group Flight group.
+--- @field #string groupname Name of the group.
+--- @field #number nunits Number of units in group.
+--- @field #number dist0 Distance to carrier in meters when the group was first detected inside the CCA.
+--- @field #number time Timestamp in seconds of timer.getAbsTime() of the last important event, e.g. added to the queue.
+--- @field #number flag Flag value describing the current stack.
+--- @field #boolean ai If true, flight is purly AI.
+--- @field #string actype Aircraft type name.
+--- @field #table onboardnumbers Onboard numbers of aircraft in the group.
+--- @field #string onboard Onboard number of player or first unit in group.
+--- @field #number case Recovery case of flight.
+--- @field #string seclead Name of section lead.
+--- @field #table section Other human flight groups belonging to this flight. This flight is the lead.
+--- @field #boolean holding If true, flight is in holding zone.
+--- @field #boolean ballcall If true, flight called the ball in the groove.
+--- @field #table elements Flight group elements.
+--- @field #number Tcharlie Charlie (abs) time in seconds.
+--- @field #string name Player name or name of first AI unit.
+--- @field #boolean refueling Flight is refueling.
 
 --- Parameters of an element in a flight group.
--- @type AIRBOSS.FlightElement
--- @field Wrapper.Unit#UNIT unit Aircraft unit.
--- @field #string unitname Name of the unit.
--- @field #boolean ai If true, AI sits inside. If false, human player is flying.
--- @field #string onboard Onboard number of the aircraft.
--- @field #boolean ballcall If true, flight called the ball in the groove.
--- @field #boolean recovered If true, element was successfully recovered.
+--- @type AIRBOSS.FlightElement
+--- @field Wrapper.Unit#UNIT unit Aircraft unit.
+--- @field #string unitname Name of the unit.
+--- @field #boolean ai If true, AI sits inside. If false, human player is flying.
+--- @field #string onboard Onboard number of the aircraft.
+--- @field #boolean ballcall If true, flight called the ball in the groove.
+--- @field #boolean recovered If true, element was successfully recovered.
 
 --- Player data table holding all important parameters of each player.
--- @type AIRBOSS.PlayerData
--- @field Wrapper.Unit#UNIT unit Aircraft of the player.
--- @field #string unitname Name of the unit.
--- @field Wrapper.Client#CLIENT client Client object of player.
--- @field #string callsign Callsign of player.
--- @field #string difficulty Difficulty level.
--- @field #string step Current/next pattern step.
--- @field #boolean warning Set true once the player got a warning.
--- @field #number passes Number of passes.
--- @field #boolean attitudemonitor If true, display aircraft attitude and other parameters constantly.
--- @field #table debrief Debrief analysis of the current step of this pass.
--- @field #table lastdebrief Debrief of player performance of last completed pass.
--- @field #boolean landed If true, player landed or attempted to land.
--- @field #boolean boltered If true, player boltered.
--- @field #boolean waveoff If true, player was waved off during final approach.
--- @field #boolean wop If true, player was waved off during the pattern.
--- @field #boolean lig If true, player was long in the groove.
--- @field #boolean owo If true, own waveoff by player.
--- @field #boolean wofd If true, player was waved off because of a foul deck.
--- @field #number Tlso Last time the LSO gave an advice.
--- @field #number Tgroove Time in the groove in seconds.
--- @field #number TIG0 Time in groove start timer.getTime().
--- @field #number wire Wire caught by player when trapped.
--- @field #AIRBOSS.GroovePos groove Data table at each position in the groove. Elements are of type @{#AIRBOSS.GrooveData}.
--- @field #table points Points of passes until finally landed.
--- @field #number finalscore Final score if points are averaged over multiple passes.
--- @field #boolean valid If true, player made a valid approach. Is set true on start of Groove X.
--- @field #boolean subtitles If true, display subtitles of radio messages.
--- @field #boolean showhints If true, show step hints.
--- @field #table trapsheet Groove data table recorded every 0.5 seconds.
--- @field #boolean trapon If true, save trap sheets.
--- @field #string debriefschedulerID Debrief scheduler ID.
+--- @type AIRBOSS.PlayerData
+--- @field Wrapper.Unit#UNIT unit Aircraft of the player.
+--- @field #string unitname Name of the unit.
+--- @field Wrapper.Client#CLIENT client Client object of player.
+--- @field #string callsign Callsign of player.
+--- @field #string difficulty Difficulty level.
+--- @field #string step Current/next pattern step.
+--- @field #boolean warning Set true once the player got a warning.
+--- @field #number passes Number of passes.
+--- @field #boolean attitudemonitor If true, display aircraft attitude and other parameters constantly.
+--- @field #table debrief Debrief analysis of the current step of this pass.
+--- @field #table lastdebrief Debrief of player performance of last completed pass.
+--- @field #boolean landed If true, player landed or attempted to land.
+--- @field #boolean boltered If true, player boltered.
+--- @field #boolean waveoff If true, player was waved off during final approach.
+--- @field #boolean wop If true, player was waved off during the pattern.
+--- @field #boolean lig If true, player was long in the groove.
+--- @field #boolean owo If true, own waveoff by player.
+--- @field #boolean wofd If true, player was waved off because of a foul deck.
+--- @field #number Tlso Last time the LSO gave an advice.
+--- @field #number Tgroove Time in the groove in seconds.
+--- @field #number TIG0 Time in groove start timer.getTime().
+--- @field #number wire Wire caught by player when trapped.
+--- @field #AIRBOSS.GroovePos groove Data table at each position in the groove. Elements are of type @{#AIRBOSS.GrooveData}.
+--- @field #table points Points of passes until finally landed.
+--- @field #number finalscore Final score if points are averaged over multiple passes.
+--- @field #boolean valid If true, player made a valid approach. Is set true on start of Groove X.
+--- @field #boolean subtitles If true, display subtitles of radio messages.
+--- @field #boolean showhints If true, show step hints.
+--- @field #table trapsheet Groove data table recorded every 0.5 seconds.
+--- @field #boolean trapon If true, save trap sheets.
+--- @field #string debriefschedulerID Debrief scheduler ID.
 -- @extends #AIRBOSS.FlightGroup
 
 --- Main group level radio menu: F10 Other/Airboss.
--- @field #table MenuF10
+--- @field #table MenuF10
 AIRBOSS.MenuF10 = {}
 
 --- Airboss mission level F10 root menu.
--- @field #table MenuF10Root
+--- @field #table MenuF10Root
 AIRBOSS.MenuF10Root = nil
 
 --- Airboss class version.
--- @field #string version
+--- @field #string version
 AIRBOSS.version = "1.3.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1805,10 +1805,10 @@ AIRBOSS.version = "1.3.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new AIRBOSS class object for a specific aircraft carrier unit.
--- @param #AIRBOSS self
--- @param carriername Name of the aircraft carrier unit as defined in the mission editor.
--- @param alias (Optional) Alias for the carrier. This will be used for radio messages and the F10 radius menu. Default is the carrier name as defined in the mission editor.
--- @return #AIRBOSS self or nil if carrier unit does not exist.
+--- @param #AIRBOSS self
+--- @param carriername Name of the aircraft carrier unit as defined in the mission editor.
+--- @param alias (Optional) Alias for the carrier. This will be used for radio messages and the F10 radius menu. Default is the carrier name as defined in the mission editor.
+--- @return #AIRBOSS self or nil if carrier unit does not exist.
 function AIRBOSS:New( carriername, alias )
 
   -- Inherit everthing from FSM class.
@@ -2387,9 +2387,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set welcome messages for players.
--- @param #AIRBOSS self
--- @param #boolean Switch If true, display welcome message to player.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #boolean Switch If true, display welcome message to player.
+--- @return #AIRBOSS self
 function AIRBOSS:SetWelcomePlayers( Switch )
 
   self.welcome = Switch
@@ -2399,9 +2399,9 @@ end
 
 --- Set carrier controlled area (CCA).
 -- This is a large zone around the carrier, which is constantly updated wrt the carrier position.
--- @param #AIRBOSS self
--- @param #number Radius Radius of zone in nautical miles (NM). Default 50 NM.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number Radius Radius of zone in nautical miles (NM). Default 50 NM.
+--- @return #AIRBOSS self
 function AIRBOSS:SetCarrierControlledArea( Radius )
 
   Radius = UTILS.NMToMeters( Radius or 50 )
@@ -2413,9 +2413,9 @@ end
 
 --- Set carrier controlled zone (CCZ).
 -- This is a small zone (usually 5 NM radius) around the carrier, which is constantly updated wrt the carrier position.
--- @param #AIRBOSS self
--- @param #number Radius Radius of zone in nautical miles (NM). Default 5 NM.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number Radius Radius of zone in nautical miles (NM). Default 5 NM.
+--- @return #AIRBOSS self
 function AIRBOSS:SetCarrierControlledZone( Radius )
 
   Radius = UTILS.NMToMeters( Radius or 5 )
@@ -2426,18 +2426,18 @@ function AIRBOSS:SetCarrierControlledZone( Radius )
 end
 
 --- Set distance up to which water ahead is scanned for collisions.
--- @param #AIRBOSS self
--- @param #number Distance Distance in NM. Default 5 NM.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number Distance Distance in NM. Default 5 NM.
+--- @return #AIRBOSS self
 function AIRBOSS:SetCollisionDistance( Distance )
   self.collisiondist = UTILS.NMToMeters( Distance or 5 )
   return self
 end
 
 --- Set the default recovery case.
--- @param #AIRBOSS self
--- @param #number Case Case of recovery. Either 1, 2 or 3. Default 1.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number Case Case of recovery. Either 1, 2 or 3. Default 1.
+--- @return #AIRBOSS self
 function AIRBOSS:SetRecoveryCase( Case )
 
   -- Set default case or 1.
@@ -2452,9 +2452,9 @@ end
 --- Set holding pattern offset from final bearing for Case II/III recoveries.
 -- Usually, this is +-15 or +-30 degrees. You should not use and offset angle >= 90 degrees, because this will cause a devision by zero in some of the equations used to calculate the approach corridor.
 -- So best stick to the defaults up to 30 degrees.
--- @param #AIRBOSS self
--- @param #number Offset Offset angle in degrees. Default 0.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number Offset Offset angle in degrees. Default 0.
+--- @return #AIRBOSS self
 function AIRBOSS:SetHoldingOffsetAngle( Offset )
 
   -- Set default angle or 0.
@@ -2467,12 +2467,12 @@ function AIRBOSS:SetHoldingOffsetAngle( Offset )
 end
 
 --- Enable F10 menu to manually start recoveries.
--- @param #AIRBOSS self
--- @param #number Duration Default duration of the recovery in minutes. Default 30 min.
--- @param #number WindOnDeck Default wind on deck in knots. Default 25 knots.
--- @param #boolean Uturn U-turn after recovery window closes on=true or off=false/nil. Default off.
--- @param #number Offset Relative Marshal radial in degrees for Case II/III recoveries. Default 30°.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number Duration Default duration of the recovery in minutes. Default 30 min.
+--- @param #number WindOnDeck Default wind on deck in knots. Default 25 knots.
+--- @param #boolean Uturn U-turn after recovery window closes on=true or off=false/nil. Default off.
+--- @param #number Offset Relative Marshal radial in degrees for Case II/III recoveries. Default 30°.
+--- @return #AIRBOSS self
 function AIRBOSS:SetMenuRecovery( Duration, WindOnDeck, Uturn, Offset )
 
   self.skipperMenu = true
@@ -2490,15 +2490,15 @@ function AIRBOSS:SetMenuRecovery( Duration, WindOnDeck, Uturn, Offset )
 end
 
 --- Add aircraft recovery time window and recovery case.
--- @param #AIRBOSS self
--- @param #string starttime Start time, e.g. "8:00" for eight o'clock. Default now.
--- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
--- @param #number case Recovery case for that time slot. Number between one and three.
--- @param #number holdingoffset Only for CASE II/III: Angle in degrees the holding pattern is offset.
--- @param #boolean turnintowind If true, carrier will turn into the wind 5 minutes before the recovery window opens.
--- @param #number speed Speed in knots during turn into wind leg.
--- @param #boolean uturn If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
--- @return #AIRBOSS.Recovery Recovery window.
+--- @param #AIRBOSS self
+--- @param #string starttime Start time, e.g. "8:00" for eight o'clock. Default now.
+--- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
+--- @param #number case Recovery case for that time slot. Number between one and three.
+--- @param #number holdingoffset Only for CASE II/III: Angle in degrees the holding pattern is offset.
+--- @param #boolean turnintowind If true, carrier will turn into the wind 5 minutes before the recovery window opens.
+--- @param #number speed Speed in knots during turn into wind leg.
+--- @param #boolean uturn If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
+--- @return #AIRBOSS.Recovery Recovery window.
 function AIRBOSS:AddRecoveryWindow( starttime, stoptime, case, holdingoffset, turnintowind, speed, uturn )
 
   -- Absolute mission time in seconds.
@@ -2570,27 +2570,27 @@ function AIRBOSS:AddRecoveryWindow( starttime, stoptime, case, holdingoffset, tu
 end
 
 --- Define a set of AI groups that are handled by the airboss.
--- @param #AIRBOSS self
--- @param Core.Set#SET_GROUP SetGroup The set of AI groups which are handled by the airboss.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param Core.Set#SET_GROUP SetGroup The set of AI groups which are handled by the airboss.
+--- @return #AIRBOSS self
 function AIRBOSS:SetSquadronAI( SetGroup )
   self.squadsetAI = SetGroup
   return self
 end
 
 --- Define a set of AI groups that excluded from AI handling. Members of this set will be left allone by the airboss and not forced into the Marshal pattern.
--- @param #AIRBOSS self
--- @param Core.Set#SET_GROUP SetGroup The set of AI groups which are excluded.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param Core.Set#SET_GROUP SetGroup The set of AI groups which are excluded.
+--- @return #AIRBOSS self
 function AIRBOSS:SetExcludeAI( SetGroup )
   self.excludesetAI = SetGroup
   return self
 end
 
 --- Add a group to the exclude set. If no set exists, it is created.
--- @param #AIRBOSS self
--- @param Wrapper.Group#GROUP Group The group to be excluded.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param Wrapper.Group#GROUP Group The group to be excluded.
+--- @return #AIRBOSS self
 function AIRBOSS:AddExcludeAI( Group )
 
   self.excludesetAI = self.excludesetAI or SET_GROUP:New()
@@ -2601,8 +2601,8 @@ function AIRBOSS:AddExcludeAI( Group )
 end
 
 --- Close currently running recovery window and stop recovery ops. Recovery window is deleted.
--- @param #AIRBOSS self
--- @param #number Delay (Optional) Delay in seconds before the window is deleted.
+--- @param #AIRBOSS self
+--- @param #number Delay (Optional) Delay in seconds before the window is deleted.
 function AIRBOSS:CloseCurrentRecoveryWindow( Delay )
 
   if Delay and Delay > 0 then
@@ -2619,9 +2619,9 @@ function AIRBOSS:CloseCurrentRecoveryWindow( Delay )
 end
 
 --- Delete all recovery windows.
--- @param #AIRBOSS self
--- @param #number Delay (Optional) Delay in seconds before the windows are deleted.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number Delay (Optional) Delay in seconds before the windows are deleted.
+--- @return #AIRBOSS self
 function AIRBOSS:DeleteAllRecoveryWindows( Delay )
 
   -- Loop over all recovery windows.
@@ -2634,9 +2634,9 @@ function AIRBOSS:DeleteAllRecoveryWindows( Delay )
 end
 
 --- Return the recovery window of the given ID.
--- @param #AIRBOSS self
--- @param #number id The ID of the recovery window.
--- @return #AIRBOSS.Recovery Recovery window with the right ID or nil if no such window exists.
+--- @param #AIRBOSS self
+--- @param #number id The ID of the recovery window.
+--- @return #AIRBOSS.Recovery Recovery window with the right ID or nil if no such window exists.
 function AIRBOSS:GetRecoveryWindowByID( id )
   if id then
     for _, _window in pairs( self.recoverytimes ) do
@@ -2650,9 +2650,9 @@ function AIRBOSS:GetRecoveryWindowByID( id )
 end
 
 --- Delete a recovery window. If the window is currently open, it is closed and the recovery stopped.
--- @param #AIRBOSS self
--- @param #AIRBOSS.Recovery Window Recovery window.
--- @param #number Delay Delay in seconds, before the window is deleted.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.Recovery Window Recovery window.
+--- @param #number Delay Delay in seconds, before the window is deleted.
 function AIRBOSS:DeleteRecoveryWindow( Window, Delay )
 
   if Delay and Delay > 0 then
@@ -2678,45 +2678,45 @@ function AIRBOSS:DeleteRecoveryWindow( Window, Delay )
 end
 
 --- Set time before carrier turns and recovery window opens.
--- @param #AIRBOSS self
--- @param #number Interval Time interval in seconds. Default 300 sec.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number Interval Time interval in seconds. Default 300 sec.
+--- @return #AIRBOSS self
 function AIRBOSS:SetRecoveryTurnTime( Interval )
   self.dTturn = Interval or 300
   return self
 end
 
 --- Set multiplayer environment wire correction.
--- @param #AIRBOSS self
--- @param #number Dcorr Correction distance in meters. Default 12 m.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number Dcorr Correction distance in meters. Default 12 m.
+--- @return #AIRBOSS self
 function AIRBOSS:SetMPWireCorrection( Dcorr )
   self.mpWireCorrection = Dcorr or 12
   return self
 end
 
 --- Set time interval for updating queues and other stuff.
--- @param #AIRBOSS self
--- @param #number TimeInterval Time interval in seconds. Default 30 sec.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number TimeInterval Time interval in seconds. Default 30 sec.
+--- @return #AIRBOSS self
 function AIRBOSS:SetQueueUpdateTime( TimeInterval )
   self.dTqueue = TimeInterval or 30
   return self
 end
 
 --- Set time interval between LSO calls. Optimal time in the groove is ~16 seconds. So the default of 4 seconds gives around 3-4 correction calls in the groove.
--- @param #AIRBOSS self
--- @param #number TimeInterval Time interval in seconds between LSO calls. Default 4 sec.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number TimeInterval Time interval in seconds between LSO calls. Default 4 sec.
+--- @return #AIRBOSS self
 function AIRBOSS:SetLSOCallInterval( TimeInterval )
   self.LSOdT = TimeInterval or 4
   return self
 end
 
 --- Airboss is a rather nice guy and not strictly following the rules. Fore example, he does allow you into the landing pattern if you are not coming from the Marshal stack.
--- @param #AIRBOSS self
--- @param #boolean Switch If true or nil, Airboss bends the rules a bit.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #boolean Switch If true or nil, Airboss bends the rules a bit.
+--- @return #AIRBOSS self
 function AIRBOSS:SetAirbossNiceGuy( Switch )
   if Switch == true or Switch == nil then
     self.airbossnice = true
@@ -2727,9 +2727,9 @@ function AIRBOSS:SetAirbossNiceGuy( Switch )
 end
 
 --- Allow emergency landings, i.e. bypassing any pattern and go directly to final approach.
--- @param #AIRBOSS self
--- @param #boolean Switch If true or nil, emergency landings are okay.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #boolean Switch If true or nil, emergency landings are okay.
+--- @return #AIRBOSS self
 function AIRBOSS:SetEmergencyLandings( Switch )
   if Switch == true or Switch == nil then
     self.emergency = true
@@ -2740,9 +2740,9 @@ function AIRBOSS:SetEmergencyLandings( Switch )
 end
 
 --- Despawn AI groups after they they shut down their engines.
--- @param #AIRBOSS self
--- @param #boolean Switch If true or nil, AI groups are despawned.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #boolean Switch If true or nil, AI groups are despawned.
+--- @return #AIRBOSS self
 function AIRBOSS:SetDespawnOnEngineShutdown( Switch )
   if Switch == true or Switch == nil then
     self.despawnshutdown = true
@@ -2753,9 +2753,9 @@ function AIRBOSS:SetDespawnOnEngineShutdown( Switch )
 end
 
 --- Respawn AI groups once they reach the CCA. Clears any attached airbases and allows making them land on the carrier via script.
--- @param #AIRBOSS self
--- @param #boolean Switch If true or nil, AI groups are respawned.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #boolean Switch If true or nil, AI groups are respawned.
+--- @return #AIRBOSS self
 function AIRBOSS:SetRespawnAI( Switch )
   if Switch == true or Switch == nil then
     self.respawnAI = true
@@ -2766,18 +2766,18 @@ function AIRBOSS:SetRespawnAI( Switch )
 end
 
 --- Give AI aircraft the refueling task if a recovery tanker is present or send them to the nearest divert airfield.
--- @param #AIRBOSS self
--- @param #number LowFuelThreshold Low fuel threshold in percent. AI will go refueling if their fuel level drops below this value. Default 10 %.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number LowFuelThreshold Low fuel threshold in percent. AI will go refueling if their fuel level drops below this value. Default 10 %.
+--- @return #AIRBOSS self
 function AIRBOSS:SetRefuelAI( LowFuelThreshold )
   self.lowfuelAI = LowFuelThreshold or 10
   return self
 end
 
 --- Set max altitude to register flights in the initial zone. Aircraft above this altitude will not be registerered.
--- @param #AIRBOSS self
--- @param #number MaxAltitude Max altitude in feet. Default 1300 ft.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number MaxAltitude Max altitude in feet. Default 1300 ft.
+--- @return #AIRBOSS self
 function AIRBOSS:SetInitialMaxAlt( MaxAltitude )
   self.initialmaxalt = UTILS.FeetToMeters( MaxAltitude or 1300 )
   return self
@@ -2786,9 +2786,9 @@ end
 --- Set folder path where the airboss sound files are located **within you mission (miz) file**.
 -- The default path is "l10n/DEFAULT/" but sound files simply copied there will be removed by DCS the next time you save the mission.
 -- However, if you create a new folder inside the miz file, which contains the sounds, it will not be deleted and can be used.
--- @param #AIRBOSS self
--- @param #string FolderPath The path to the sound files, e.g. "Airboss Soundfiles/".
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #string FolderPath The path to the sound files, e.g. "Airboss Soundfiles/".
+--- @return #AIRBOSS self
 function AIRBOSS:SetSoundfilesFolder( FolderPath )
 
   -- Check that it ends with /
@@ -2809,32 +2809,32 @@ function AIRBOSS:SetSoundfilesFolder( FolderPath )
 end
 
 --- Set time interval for updating player status and other things.
--- @param #AIRBOSS self
--- @param #number TimeInterval Time interval in seconds. Default 0.5 sec.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number TimeInterval Time interval in seconds. Default 0.5 sec.
+--- @return #AIRBOSS self
 function AIRBOSS:SetStatusUpdateTime( TimeInterval )
   self.dTstatus = TimeInterval or 0.5
   return self
 end
 
 --- Set duration how long messages are displayed to players.
--- @param #AIRBOSS self
--- @param #number Duration Duration in seconds. Default 10 sec.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number Duration Duration in seconds. Default 10 sec.
+--- @return #AIRBOSS self
 function AIRBOSS:SetDefaultMessageDuration( Duration )
   self.Tmessage = Duration or 10
   return self
 end
 
 --- Set glideslope error thresholds.
--- @param #AIRBOSS self
--- @param #number _max
--- @param #number _min
--- @param #number High
--- @param #number HIGH
--- @param #number Low
--- @param #number LOW
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number _max
+--- @param #number _min
+--- @param #number High
+--- @param #number HIGH
+--- @param #number Low
+--- @param #number LOW
+--- @return #AIRBOSS self
 
 function AIRBOSS:SetGlideslopeErrorThresholds(_max,_min, High, HIGH, Low, LOW)
 
@@ -2862,16 +2862,16 @@ function AIRBOSS:SetGlideslopeErrorThresholds(_max,_min, High, HIGH, Low, LOW)
 end
 
 --- Set lineup error thresholds.
--- @param #AIRBOSS self
--- @param #number _max
--- @param #number _min
--- @param #number Left
--- @param #number LeftMed
--- @param #number LEFT
--- @param #number Right
--- @param #number RightMed
--- @param #number RIGHT
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number _max
+--- @param #number _min
+--- @param #number Left
+--- @param #number LeftMed
+--- @param #number LEFT
+--- @param #number Right
+--- @param #number RightMed
+--- @param #number RIGHT
+--- @return #AIRBOSS self
 
 function AIRBOSS:SetLineupErrorThresholds(_max,_min, Left, LeftMed, LEFT, Right, RightMed, RIGHT)
 
@@ -2904,9 +2904,9 @@ end
 
 --- Set Case I Marshal radius. This is the radius of the valid zone around "the post" aircraft are supposed to be holding in the Case I Marshal stack.
 -- The post is 2.5 NM port of the carrier.
--- @param #AIRBOSS self
--- @param #number Radius Radius in NM. Default 2.8 NM, which gives a diameter of 5.6 NM.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number Radius Radius in NM. Default 2.8 NM, which gives a diameter of 5.6 NM.
+--- @return #AIRBOSS self
 function AIRBOSS:SetMarshalRadius( Radius )
   self.marshalradius = UTILS.NMToMeters( Radius or 2.8 )
   return self
@@ -2914,9 +2914,9 @@ end
 
 --- Optimized F10 radio menu for a single carrier. The menu entries will be stored directly under F10 Other/Airboss/ and not F10 Other/Airboss/"Carrier Alias"/.
 -- **WARNING**: If you use this with two airboss objects/carriers, the radio menu will be screwed up!
--- @param #AIRBOSS self
--- @param #boolean Switch If true or nil single menu is enabled. If false, menu is for multiple carriers in the mission.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #boolean Switch If true or nil single menu is enabled. If false, menu is for multiple carriers in the mission.
+--- @return #AIRBOSS self
 function AIRBOSS:SetMenuSingleCarrier( Switch )
   if Switch == true or Switch == nil then
     self.menusingle = true
@@ -2927,9 +2927,9 @@ function AIRBOSS:SetMenuSingleCarrier( Switch )
 end
 
 --- Enable or disable F10 radio menu for marking zones via smoke or flares.
--- @param #AIRBOSS self
--- @param #boolean Switch If true or nil, menu is enabled. If false, menu is not available to players.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #boolean Switch If true or nil, menu is enabled. If false, menu is not available to players.
+--- @return #AIRBOSS self
 function AIRBOSS:SetMenuMarkZones( Switch )
   if Switch == nil or Switch == true then
     self.menumarkzones = true
@@ -2940,9 +2940,9 @@ function AIRBOSS:SetMenuMarkZones( Switch )
 end
 
 --- Enable or disable F10 radio menu for marking zones via smoke.
--- @param #AIRBOSS self
--- @param #boolean Switch If true or nil, menu is enabled. If false, menu is not available to players.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #boolean Switch If true or nil, menu is enabled. If false, menu is not available to players.
+--- @return #AIRBOSS self
 function AIRBOSS:SetMenuSmokeZones( Switch )
   if Switch == nil or Switch == true then
     self.menusmokezones = true
@@ -2953,10 +2953,10 @@ function AIRBOSS:SetMenuSmokeZones( Switch )
 end
 
 --- Enable saving of player's trap sheets and specify an optional directory path.
--- @param #AIRBOSS self
--- @param #string Path (Optional) Path where to save the trap sheets.
--- @param #string Prefix (Optional) Prefix for trap sheet files. File name will be saved as *prefix_aircrafttype-0001.csv*, *prefix_aircrafttype-0002.csv*, etc.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #string Path (Optional) Path where to save the trap sheets.
+--- @param #string Prefix (Optional) Prefix for trap sheet files. File name will be saved as *prefix_aircrafttype-0001.csv*, *prefix_aircrafttype-0002.csv*, etc.
+--- @return #AIRBOSS self
 function AIRBOSS:SetTrapSheet( Path, Prefix )
   if io then
     self.trapsheet = true
@@ -2969,9 +2969,9 @@ function AIRBOSS:SetTrapSheet( Path, Prefix )
 end
 
 --- Specify weather the mission has set static or dynamic weather.
--- @param #AIRBOSS self
--- @param #boolean Switch If true or nil, mission uses static weather. If false, dynamic weather is used in this mission.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #boolean Switch If true or nil, mission uses static weather. If false, dynamic weather is used in this mission.
+--- @return #AIRBOSS self
 function AIRBOSS:SetStaticWeather( Switch )
   if Switch == nil or Switch == true then
     self.staticweather = true
@@ -2982,19 +2982,19 @@ function AIRBOSS:SetStaticWeather( Switch )
 end
 
 --- Disable automatic TACAN activation
--- @param #AIRBOSS self
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @return #AIRBOSS self
 function AIRBOSS:SetTACANoff()
   self.TACANon = false
   return self
 end
 
 --- Set TACAN channel of carrier and switches TACAN on.
--- @param #AIRBOSS self
--- @param #number Channel (Optional) TACAN channel. Default 74.
--- @param #string Mode (Optional) TACAN mode, i.e. "X" or "Y". Default "X".
--- @param #string MorseCode (Optional) Morse code identifier. Three letters, e.g. "STN". Default "STN".
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number Channel (Optional) TACAN channel. Default 74.
+--- @param #string Mode (Optional) TACAN mode, i.e. "X" or "Y". Default "X".
+--- @param #string MorseCode (Optional) Morse code identifier. Three letters, e.g. "STN". Default "STN".
+--- @return #AIRBOSS self
 function AIRBOSS:SetTACAN( Channel, Mode, MorseCode )
 
   self.TACANchannel = Channel or 74
@@ -3006,18 +3006,18 @@ function AIRBOSS:SetTACAN( Channel, Mode, MorseCode )
 end
 
 --- Disable automatic ICLS activation.
--- @param #AIRBOSS self
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @return #AIRBOSS self
 function AIRBOSS:SetICLSoff()
   self.ICLSon = false
   return self
 end
 
 --- Set ICLS channel of carrier.
--- @param #AIRBOSS self
--- @param #number Channel (Optional) ICLS channel. Default 1.
--- @param #string MorseCode (Optional) Morse code identifier. Three letters, e.g. "STN". Default "STN".
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number Channel (Optional) ICLS channel. Default 1.
+--- @param #string MorseCode (Optional) Morse code identifier. Three letters, e.g. "STN". Default "STN".
+--- @return #AIRBOSS self
 function AIRBOSS:SetICLS( Channel, MorseCode )
 
   self.ICLSchannel = Channel or 1
@@ -3028,19 +3028,19 @@ function AIRBOSS:SetICLS( Channel, MorseCode )
 end
 
 --- Set beacon (TACAN/ICLS) time refresh interfal in case the beacons die.
--- @param #AIRBOSS self
--- @param #number TimeInterval (Optional) Time interval in seconds. Default 1200 sec = 20 min.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number TimeInterval (Optional) Time interval in seconds. Default 1200 sec = 20 min.
+--- @return #AIRBOSS self
 function AIRBOSS:SetBeaconRefresh( TimeInterval )
   self.dTbeacon = TimeInterval or (20 * 60)
   return self
 end
 
 --- Set LSO radio frequency and modulation. Default frequency is 264 MHz AM.
--- @param #AIRBOSS self
--- @param #number Frequency (Optional) Frequency in MHz. Default 264 MHz.
--- @param #string Modulation (Optional) Modulation, "AM" or "FM". Default "AM".
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number Frequency (Optional) Frequency in MHz. Default 264 MHz.
+--- @param #string Modulation (Optional) Modulation, "AM" or "FM". Default "AM".
+--- @return #AIRBOSS self
 function AIRBOSS:SetLSORadio( Frequency, Modulation )
 
   self.LSOFreq = (Frequency or 264)
@@ -3061,10 +3061,10 @@ function AIRBOSS:SetLSORadio( Frequency, Modulation )
 end
 
 --- Set carrier radio frequency and modulation. Default frequency is 305 MHz AM.
--- @param #AIRBOSS self
--- @param #number Frequency (Optional) Frequency in MHz. Default 305 MHz.
--- @param #string Modulation (Optional) Modulation, "AM" or "FM". Default "AM".
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number Frequency (Optional) Frequency in MHz. Default 305 MHz.
+--- @param #string Modulation (Optional) Modulation, "AM" or "FM". Default "AM".
+--- @return #AIRBOSS self
 function AIRBOSS:SetMarshalRadio( Frequency, Modulation )
 
   self.MarshalFreq = Frequency or 305
@@ -3085,44 +3085,44 @@ function AIRBOSS:SetMarshalRadio( Frequency, Modulation )
 end
 
 --- Set unit name for sending radio messages.
--- @param #AIRBOSS self
--- @param #string unitname Name of the unit.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #string unitname Name of the unit.
+--- @return #AIRBOSS self
 function AIRBOSS:SetRadioUnitName( unitname )
   self.senderac = unitname
   return self
 end
 
 --- Set unit acting as radio relay for the LSO radio.
--- @param #AIRBOSS self
--- @param #string unitname Name of the unit.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #string unitname Name of the unit.
+--- @return #AIRBOSS self
 function AIRBOSS:SetRadioRelayLSO( unitname )
   self.radiorelayLSO = unitname
   return self
 end
 
 --- Set unit acting as radio relay for the Marshal radio.
--- @param #AIRBOSS self
--- @param #string unitname Name of the unit.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #string unitname Name of the unit.
+--- @return #AIRBOSS self
 function AIRBOSS:SetRadioRelayMarshal( unitname )
   self.radiorelayMSH = unitname
   return self
 end
 
 --- Use user sound output instead of radio transmission for messages. Might be handy if radio transmissions are broken.
--- @param #AIRBOSS self
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @return #AIRBOSS self
 function AIRBOSS:SetUserSoundRadio()
   self.usersoundradio = true
   return self
 end
 
 --- Test LSO radio sounds.
--- @param #AIRBOSS self
--- @param #number delay Delay in seconds be sound check starts.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number delay Delay in seconds be sound check starts.
+--- @return #AIRBOSS self
 function AIRBOSS:SoundCheckLSO( delay )
 
   if delay and delay > 0 then
@@ -3155,9 +3155,9 @@ function AIRBOSS:SoundCheckLSO( delay )
 end
 
 --- Test Marshal radio sounds.
--- @param #AIRBOSS self
--- @param #number delay Delay in seconds be sound check starts.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number delay Delay in seconds be sound check starts.
+--- @return #AIRBOSS self
 function AIRBOSS:SoundCheckMarshal( delay )
 
   if delay and delay > 0 then
@@ -3190,9 +3190,9 @@ function AIRBOSS:SoundCheckMarshal( delay )
 end
 
 --- Set number of aircraft units, which can be in the landing pattern before the pattern is full.
--- @param #AIRBOSS self
--- @param #number nmax Max number. Default 4. Minimum is 1, maximum is 6.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number nmax Max number. Default 4. Minimum is 1, maximum is 6.
+--- @return #AIRBOSS self
 function AIRBOSS:SetMaxLandingPattern( nmax )
   nmax = nmax or 4
   nmax = math.max( nmax, 1 )
@@ -3203,9 +3203,9 @@ end
 
 --- Set number available Case I Marshal stacks. If Marshal stacks are full, flights requesting Marshal will be told to hold outside 10 NM zone until a stack becomes available again.
 -- Marshal stacks for Case II/III are unlimited.
--- @param #AIRBOSS self
--- @param #number nmax Max number of stacks available to players and AI flights. Default 3, i.e. angels 2, 3, 4. Minimum is 1.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number nmax Max number of stacks available to players and AI flights. Default 3, i.e. angels 2, 3, 4. Minimum is 1.
+--- @return #AIRBOSS self
 function AIRBOSS:SetMaxMarshalStacks( nmax )
   self.Nmaxmarshal = nmax or 3
   self.Nmaxmarshal = math.max( self.Nmaxmarshal, 1 )
@@ -3213,9 +3213,9 @@ function AIRBOSS:SetMaxMarshalStacks( nmax )
 end
 
 --- Set max number of section members. Minimum is one, i.e. the section lead itself. Maximum number is four. Default is two, i.e. the lead and one other human flight.
--- @param #AIRBOSS self
--- @param #number nmax Number of max allowed members including the lead itself. For example, Nmax=2 means a section lead plus one member.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number nmax Number of max allowed members including the lead itself. For example, Nmax=2 means a section lead plus one member.
+--- @return #AIRBOSS self
 function AIRBOSS:SetMaxSectionSize( nmax )
   nmax = nmax or 2
   nmax = math.max( nmax, 1 )
@@ -3225,9 +3225,9 @@ function AIRBOSS:SetMaxSectionSize( nmax )
 end
 
 --- Set max number of flights per stack. All members of a section count as one "flight".
--- @param #AIRBOSS self
--- @param #number nmax Number of max allowed flights per stack. Default is two. Minimum is one, maximum is 4.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number nmax Number of max allowed flights per stack. Default is two. Minimum is one, maximum is 4.
+--- @return #AIRBOSS self
 function AIRBOSS:SetMaxFlightsPerStack( nmax )
   nmax = nmax or 2
   nmax = math.max( nmax, 1 )
@@ -3237,52 +3237,52 @@ function AIRBOSS:SetMaxFlightsPerStack( nmax )
 end
 
 --- Handle AI aircraft.
--- @param #AIRBOSS self
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @return #AIRBOSS self
 function AIRBOSS:SetHandleAION()
   self.handleai = true
   return self
 end
 
 --- Will play the inbound calls, commencing, initial, etc. from the player when requesteing marshal
--- @param #AIRBOSS self
--- @param #AIRBOSS status Boolean to activate (true) / deactivate (false) the radio inbound calls (default is ON)
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #AIRBOSS status Boolean to activate (true) / deactivate (false) the radio inbound calls (default is ON)
+--- @return #AIRBOSS self
 function AIRBOSS:SetExtraVoiceOvers(status)
   self.xtVoiceOvers=status
   return self
 end
 
 --- Will simulate the inbound call, commencing, initial, etc from the AI when requested by Airboss
--- @param #AIRBOSS self
--- @param #AIRBOSS status Boolean to activate (true) / deactivate (false) the radio inbound calls (default is ON)
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #AIRBOSS status Boolean to activate (true) / deactivate (false) the radio inbound calls (default is ON)
+--- @return #AIRBOSS self
 function AIRBOSS:SetExtraVoiceOversAI(status)
   self.xtVoiceOversAI=status
   return self
 end
  
 --- Do not handle AI aircraft.
--- @param #AIRBOSS self
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @return #AIRBOSS self
 function AIRBOSS:SetHandleAIOFF()
   self.handleai = false
   return self
 end
 
 --- Define recovery tanker associated with the carrier.
--- @param #AIRBOSS self
--- @param Ops.RecoveryTanker#RECOVERYTANKER recoverytanker Recovery tanker object.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param Ops.RecoveryTanker#RECOVERYTANKER recoverytanker Recovery tanker object.
+--- @return #AIRBOSS self
 function AIRBOSS:SetRecoveryTanker( recoverytanker )
   self.tanker = recoverytanker
   return self
 end
 
 --- Define an AWACS associated with the carrier.
--- @param #AIRBOSS self
--- @param Ops.RecoveryTanker#RECOVERYTANKER awacs AWACS (recovery tanker) object.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param Ops.RecoveryTanker#RECOVERYTANKER awacs AWACS (recovery tanker) object.
+--- @return #AIRBOSS self
 function AIRBOSS:SetAWACS( awacs )
   self.awacs = awacs
   return self
@@ -3293,9 +3293,9 @@ end
 -- * "Flight Student" = @{#AIRBOSS.Difficulty.Easy}
 -- * "Naval Aviator" = @{#AIRBOSS.Difficulty.Normal}
 -- * "TOPGUN Graduate" = @{#AIRBOSS.Difficulty.Hard}
--- @param #AIRBOSS self
--- @param #string skill Player skill. Default "Naval Aviator".
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #string skill Player skill. Default "Naval Aviator".
+--- @return #AIRBOSS self
 function AIRBOSS:SetDefaultPlayerSkill( skill )
 
   -- Set skill or normal.
@@ -3319,10 +3319,10 @@ function AIRBOSS:SetDefaultPlayerSkill( skill )
 end
 
 --- Enable auto save of player results each time a player is *finally* graded. *Finally* means after the player landed on the carrier! After intermediate passes (bolter or waveoff) the stats are *not* saved.
--- @param #AIRBOSS self
--- @param #string path Path where to save the asset data file. Default is the DCS root installation directory or your "Saved Games\\DCS" folder if lfs was desanitized.
--- @param #string filename File name. Default is generated automatically from airboss carrier name/alias.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #string path Path where to save the asset data file. Default is the DCS root installation directory or your "Saved Games\\DCS" folder if lfs was desanitized.
+--- @param #string filename File name. Default is generated automatically from airboss carrier name/alias.
+--- @return #AIRBOSS self
 function AIRBOSS:SetAutoSave( path, filename )
   self.autosave = true
   self.autosavepath = path
@@ -3331,17 +3331,17 @@ function AIRBOSS:SetAutoSave( path, filename )
 end
 
 --- Activate debug mode. Display debug messages on screen.
--- @param #AIRBOSS self
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @return #AIRBOSS self
 function AIRBOSS:SetDebugModeON()
   self.Debug = true
   return self
 end
 
 --- Carrier patrols ad inifintum. If the last waypoint is reached, it will go to waypoint one and repeat its route.
--- @param #AIRBOSS self
--- @param #boolean switch If true or nil, patrol until the end of time. If false, go along the waypoints once and stop.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #boolean switch If true or nil, patrol until the end of time. If false, go along the waypoints once and stop.
+--- @return #AIRBOSS self
 function AIRBOSS:SetPatrolAdInfinitum( switch )
   if switch == false then
     self.adinfinitum = false
@@ -3352,17 +3352,17 @@ function AIRBOSS:SetPatrolAdInfinitum( switch )
 end
 
 --- Set the magnetic declination (or variation). By default this is set to the standard declination of the map.
--- @param #AIRBOSS self
--- @param #number declination Declination in degrees or nil for default declination of the map.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number declination Declination in degrees or nil for default declination of the map.
+--- @return #AIRBOSS self
 function AIRBOSS:SetMagneticDeclination( declination )
   self.magvar = declination or UTILS.GetMagneticDeclination()
   return self
 end
 
 --- Deactivate debug mode. This is also the default setting.
--- @param #AIRBOSS self
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @return #AIRBOSS self
 function AIRBOSS:SetDebugModeOFF()
   self.Debug = false
   return self
@@ -3371,10 +3371,10 @@ end
 
 --- Set FunkMan socket. LSO grades and trap sheets will be send to your Discord bot.
 -- **Requires running FunkMan program**.
--- @param #AIRBOSS self
--- @param #number Port Port. Default `10042`.
--- @param #string Host Host. Default `"127.0.0.1"`.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number Port Port. Default `10042`.
+--- @param #string Host Host. Default `"127.0.0.1"`.
+--- @return #AIRBOSS self
 function AIRBOSS:SetFunkManOn(Port, Host)
   
   self.funkmanSocket=SOCKET:New(Port, Host)
@@ -3383,10 +3383,10 @@ function AIRBOSS:SetFunkManOn(Port, Host)
 end
 
 --- Get next time the carrier will start recovering aircraft.
--- @param #AIRBOSS self
--- @param #boolean InSeconds If true, abs. mission time seconds is returned. Default is a clock #string.
--- @return #string Clock start (or start time in abs. seconds).
--- @return #string Clock stop (or stop time in abs. seconds).
+--- @param #AIRBOSS self
+--- @param #boolean InSeconds If true, abs. mission time seconds is returned. Default is a clock #string.
+--- @return #string Clock start (or start time in abs. seconds).
+--- @return #string Clock stop (or stop time in abs. seconds).
 function AIRBOSS:GetNextRecoveryTime( InSeconds )
   if self.recoverywindow then
     if InSeconds then
@@ -3404,28 +3404,28 @@ function AIRBOSS:GetNextRecoveryTime( InSeconds )
 end
 
 --- Check if carrier is recovering aircraft.
--- @param #AIRBOSS self
--- @return #boolean If true, time slot for recovery is open.
+--- @param #AIRBOSS self
+--- @return #boolean If true, time slot for recovery is open.
 function AIRBOSS:IsRecovering()
   return self:is( "Recovering" )
 end
 
 --- Check if carrier is idle, i.e. no operations are carried out.
--- @param #AIRBOSS self
--- @return #boolean If true, carrier is in idle state.
+--- @param #AIRBOSS self
+--- @return #boolean If true, carrier is in idle state.
 function AIRBOSS:IsIdle()
   return self:is( "Idle" )
 end
 
 --- Check if recovery of aircraft is paused.
--- @param #AIRBOSS self
--- @return #boolean If true, recovery is paused
+--- @param #AIRBOSS self
+--- @return #boolean If true, recovery is paused
 function AIRBOSS:IsPaused()
   return self:is( "Paused" )
 end
 
 --- Activate TACAN and ICLS beacons.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_ActivateBeacons()
   self:T( self.lid .. string.format( "Activating Beacons (TACAN=%s, ICLS=%s)", tostring( self.TACANon ), tostring( self.ICLSon ) ) )
 
@@ -3450,10 +3450,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after Start event. Starts the AIRBOSS. Adds event handlers and schedules status updates of requests and queue.
--- @param #AIRBOSS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AIRBOSS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AIRBOSS:onafterStart( From, Event, To )
 
   -- Events are handled my MOOSE.
@@ -3514,10 +3514,10 @@ function AIRBOSS:onafterStart( From, Event, To )
 end
 
 --- On after Status event. Checks for new flights, updates queue and checks player status.
--- @param #AIRBOSS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AIRBOSS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AIRBOSS:onafterStatus( From, Event, To )
 
   -- Get current time.
@@ -3629,7 +3629,7 @@ function AIRBOSS:onafterStatus( From, Event, To )
 end
 
 --- Check AI status. Pattern queue AI in the groove? Marshal queue AI arrived in holding zone?
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_Status()
 
   -- Check player status.
@@ -3641,7 +3641,7 @@ function AIRBOSS:_Status()
 end
 
 --- Check AI status. Pattern queue AI in the groove? Marshal queue AI arrived in holding zone?
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_CheckAIStatus()
 
   -- Loop over all flights in Marshal stack.
@@ -3725,8 +3725,8 @@ function AIRBOSS:_CheckAIStatus()
 end
 
 --- Check if player in the landing pattern is too close to another aircarft in the pattern.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData player Player data.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData player Player data.
 function AIRBOSS:_CheckPlayerPatternDistance( player )
 
   -- Check if player is too close to another aircraft in the pattern.
@@ -3836,7 +3836,7 @@ function AIRBOSS:_CheckPlayerPatternDistance( player )
 end
 
 --- Check recovery times and start/stop recovery mode of aircraft.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_CheckRecoveryTimes()
 
   -- Get current abs time.
@@ -4023,10 +4023,10 @@ function AIRBOSS:_CheckRecoveryTimes()
 end
 
 --- Get section lead of a flight.
--- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup flight
--- @return #AIRBOSS.FlightGroup The leader of the section. Could be the flight itself.
--- @return #boolean If true, flight is lead.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.FlightGroup flight
+--- @return #AIRBOSS.FlightGroup The leader of the section. Could be the flight itself.
+--- @return #boolean If true, flight is lead.
 function AIRBOSS:_GetFlightLead( flight )
 
   if flight.name ~= flight.seclead then
@@ -4041,12 +4041,12 @@ function AIRBOSS:_GetFlightLead( flight )
 end
 
 --- On before "RecoveryCase" event. Check if case or holding offset did change. If not transition is denied.
--- @param #AIRBOSS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number Case The recovery case (1, 2 or 3) to switch to.
--- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
+--- @param #AIRBOSS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number Case The recovery case (1, 2 or 3) to switch to.
+--- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
 function AIRBOSS:onbeforeRecoveryCase( From, Event, To, Case, Offset )
 
   -- Input or default value.
@@ -4063,12 +4063,12 @@ function AIRBOSS:onbeforeRecoveryCase( From, Event, To, Case, Offset )
 end
 
 --- On after "RecoveryCase" event. Sets new aircraft recovery case. Updates
--- @param #AIRBOSS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number Case The recovery case (1, 2 or 3) to switch to.
--- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
+--- @param #AIRBOSS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number Case The recovery case (1, 2 or 3) to switch to.
+--- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
 function AIRBOSS:onafterRecoveryCase( From, Event, To, Case, Offset )
 
   -- Input or default value.
@@ -4117,12 +4117,12 @@ function AIRBOSS:onafterRecoveryCase( From, Event, To, Case, Offset )
 end
 
 --- On after "RecoveryStart" event. Recovery of aircraft is started and carrier switches to state "Recovering".
--- @param #AIRBOSS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number Case The recovery case (1, 2 or 3) to start.
--- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
+--- @param #AIRBOSS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number Case The recovery case (1, 2 or 3) to start.
+--- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
 function AIRBOSS:onafterRecoveryStart( From, Event, To, Case, Offset )
 
   -- Input or default value.
@@ -4139,10 +4139,10 @@ function AIRBOSS:onafterRecoveryStart( From, Event, To, Case, Offset )
 end
 
 --- On after "RecoveryStop" event. Recovery of aircraft is stopped and carrier switches to state "Idle". Running recovery window is deleted.
--- @param #AIRBOSS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AIRBOSS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AIRBOSS:onafterRecoveryStop( From, Event, To )
   -- Debug output.
   self:T( self.lid .. string.format( "Stopping aircraft recovery." ) )
@@ -4177,11 +4177,11 @@ function AIRBOSS:onafterRecoveryStop( From, Event, To )
 end
 
 --- On after "RecoveryPause" event. Recovery of aircraft is paused. Marshal queue stays intact.
--- @param #AIRBOSS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number duration Duration of pause in seconds. After that recovery is resumed automatically.
+--- @param #AIRBOSS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number duration Duration of pause in seconds. After that recovery is resumed automatically.
 function AIRBOSS:onafterRecoveryPause( From, Event, To, duration )
   -- Debug output.
   self:T( self.lid .. string.format( "Pausing aircraft recovery." ) )
@@ -4210,10 +4210,10 @@ function AIRBOSS:onafterRecoveryPause( From, Event, To, duration )
 end
 
 --- On after "RecoveryUnpause" event. Recovery of aircraft is resumed.
--- @param #AIRBOSS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AIRBOSS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AIRBOSS:onafterRecoveryUnpause( From, Event, To )
   -- Debug output.
   self:T( self.lid .. string.format( "Unpausing aircraft recovery." ) )
@@ -4224,31 +4224,31 @@ function AIRBOSS:onafterRecoveryUnpause( From, Event, To )
 end
 
 --- On after "PassingWaypoint" event. Carrier has just passed a waypoint
--- @param #AIRBOSS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number n Number of waypoint that was passed.
+--- @param #AIRBOSS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number n Number of waypoint that was passed.
 function AIRBOSS:onafterPassingWaypoint( From, Event, To, n )
   -- Debug output.
   self:I( self.lid .. string.format( "Carrier passed waypoint %d.", n ) )
 end
 
 --- On after "Idle" event. Carrier goes to state "Idle".
--- @param #AIRBOSS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AIRBOSS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AIRBOSS:onafterIdle( From, Event, To )
   -- Debug output.
   self:T( self.lid .. string.format( "Carrier goes to idle." ) )
 end
 
 --- On after Stop event. Unhandle events.
--- @param #AIRBOSS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AIRBOSS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AIRBOSS:onafterStop( From, Event, To )
   self:I( self.lid .. string.format( "Stopping airboss script." ) )
 
@@ -4270,7 +4270,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Init parameters for USS Stennis carrier.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_InitStennis()
 
   -- Carrier Parameters.
@@ -4420,7 +4420,7 @@ function AIRBOSS:_InitStennis()
 end
 
 --- Init parameters for Nimitz class super carriers.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_InitNimitz()
 
   -- Init Stennis as default.
@@ -4452,7 +4452,7 @@ function AIRBOSS:_InitNimitz()
 end
 
 --- Init parameters for Forrestal class super carriers.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_InitForrestal()
 
   -- Init Nimitz as default.
@@ -4484,7 +4484,7 @@ function AIRBOSS:_InitForrestal()
 end
 
 --- Init parameters for R12 HMS Hermes carrier.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_InitHermes()
 
   -- Init Stennis as default.
@@ -4530,7 +4530,7 @@ function AIRBOSS:_InitHermes()
 end
 
 --- Init parameters for R05 HMS Invincible carrier.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_InitInvincible()
 
   -- Init Stennis as default.
@@ -4576,7 +4576,7 @@ function AIRBOSS:_InitInvincible()
 end
 
 --- Init parameters for LHA-1 Tarawa carrier.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_InitTarawa()
 
   -- Init Stennis as default.
@@ -4622,7 +4622,7 @@ function AIRBOSS:_InitTarawa()
 end
 
 --- Init parameters for LHA-6 America carrier.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_InitAmerica()
 
   -- Init Stennis as default.
@@ -4668,7 +4668,7 @@ function AIRBOSS:_InitAmerica()
 end
 
 --- Init parameters for L61 Juan Carlos carrier.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_InitJcarlos()
 
   -- Init Stennis as default.
@@ -4714,7 +4714,7 @@ function AIRBOSS:_InitJcarlos()
 end
 
 --- Init parameters for L02 Canberra carrier.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_InitCanberra()
 
     -- Init Juan Carlos as default.
@@ -4723,8 +4723,8 @@ function AIRBOSS:_InitCanberra()
 end
 
 --- Init parameters for Marshal Voice overs *Gabriella* by HighwaymanEd.
--- @param #AIRBOSS self
--- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
+--- @param #AIRBOSS self
+--- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
 function AIRBOSS:SetVoiceOversMarshalByGabriella( mizfolder )
 
   -- Set sound files folder.
@@ -4785,8 +4785,8 @@ function AIRBOSS:SetVoiceOversMarshalByGabriella( mizfolder )
 end
 
 --- Init parameters for Marshal Voice overs by *Raynor*.
--- @param #AIRBOSS self
--- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
+--- @param #AIRBOSS self
+--- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
 function AIRBOSS:SetVoiceOversMarshalByRaynor( mizfolder )
 
   -- Set sound files folder.
@@ -4847,8 +4847,8 @@ function AIRBOSS:SetVoiceOversMarshalByRaynor( mizfolder )
 end
 
 --- Set parameters for LSO Voice overs by *Raynor*.
--- @param #AIRBOSS self
--- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
+--- @param #AIRBOSS self
+--- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
 function AIRBOSS:SetVoiceOversLSOByRaynor( mizfolder )
 
   -- Set sound files folder.
@@ -4904,8 +4904,8 @@ function AIRBOSS:SetVoiceOversLSOByRaynor( mizfolder )
 end
 
 --- Set parameters for LSO Voice overs by *funkyfranky*.
--- @param #AIRBOSS self
--- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
+--- @param #AIRBOSS self
+--- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
 function AIRBOSS:SetVoiceOversLSOByFF( mizfolder )
 
   -- Set sound files folder.
@@ -4961,8 +4961,8 @@ function AIRBOSS:SetVoiceOversLSOByFF( mizfolder )
 end
 
 --- Intit parameters for Marshal Voice overs by *funkyfranky*.
--- @param #AIRBOSS self
--- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
+--- @param #AIRBOSS self
+--- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
 function AIRBOSS:SetVoiceOversMarshalByFF( mizfolder )
 
   -- Set sound files folder.
@@ -5023,7 +5023,7 @@ function AIRBOSS:SetVoiceOversMarshalByFF( mizfolder )
 end
 
 --- Init voice over radio transmission call.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_InitVoiceOvers()
 
   ---------------
@@ -5156,13 +5156,13 @@ function AIRBOSS:_InitVoiceOvers()
 end
 
 --- Init voice over radio transmission call.
--- @param #AIRBOSS self
--- @param #AIRBOSS.RadioCall radiocall LSO or Marshal radio call object.
--- @param #number duration Duration of the voice over in seconds.
--- @param #string subtitle (Optional) Subtitle to be displayed along with voice over.
--- @param #number subduration (Optional) Duration how long the subtitle is displayed.
--- @param #string filename (Optional) Name of the voice over sound file.
--- @param #string suffix (Optional) Extention of file. Default ".ogg".
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.RadioCall radiocall LSO or Marshal radio call object.
+--- @param #number duration Duration of the voice over in seconds.
+--- @param #string subtitle (Optional) Subtitle to be displayed along with voice over.
+--- @param #number subduration (Optional) Duration how long the subtitle is displayed.
+--- @param #string filename (Optional) Name of the voice over sound file.
+--- @param #string suffix (Optional) Extention of file. Default ".ogg".
 function AIRBOSS:SetVoiceOver( radiocall, duration, subtitle, subduration, filename, suffix )
   radiocall.duration = duration
   radiocall.subtitle = subtitle or radiocall.subtitle
@@ -5171,9 +5171,9 @@ function AIRBOSS:SetVoiceOver( radiocall, duration, subtitle, subduration, filen
 end
 
 --- Get optimal aircraft AoA parameters..
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @return #AIRBOSS.AircraftAoA AoA parameters for the given aircraft type.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @return #AIRBOSS.AircraftAoA AoA parameters for the given aircraft type.
 function AIRBOSS:_GetAircraftAoA( playerData )
 
   -- Get AC type.
@@ -5242,10 +5242,10 @@ function AIRBOSS:_GetAircraftAoA( playerData )
 end
 
 --- Convert AoA from arbitrary units to degrees.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @param #number aoaunits AoA in arbitrary units.
--- @return #number AoA in degrees.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #number aoaunits AoA in arbitrary units.
+--- @return #number AoA in degrees.
 function AIRBOSS:_AoAUnit2Deg( playerData, aoaunits )
 
   -- Init.
@@ -5285,10 +5285,10 @@ function AIRBOSS:_AoAUnit2Deg( playerData, aoaunits )
 end
 
 --- Convert AoA from degrees to arbitrary units.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @param #number degrees AoA in degrees.
--- @return #number AoA in arbitrary units.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #number degrees AoA in degrees.
+--- @return #number AoA in arbitrary units.
 function AIRBOSS:_AoADeg2Units( playerData, degrees )
 
   -- Init.
@@ -5327,13 +5327,13 @@ function AIRBOSS:_AoADeg2Units( playerData, degrees )
 end
 
 --- Get optimal aircraft flight parameters at checkpoint.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @param #string step Pattern step.
--- @return #number Altitude in meters or nil.
--- @return #number Angle of Attack or nil.
--- @return #number Distance to carrier in meters or nil.
--- @return #number Speed in m/s or nil.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #string step Pattern step.
+--- @return #number Altitude in meters or nil.
+--- @return #number Angle of Attack or nil.
+--- @return #number Distance to carrier in meters or nil.
+--- @return #number Speed in m/s or nil.
 function AIRBOSS:_GetAircraftParameters( playerData, step )
 
   -- Get parameters depended on step.
@@ -5505,8 +5505,8 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get next marshal flight which is ready to enter the landing pattern.
--- @param #AIRBOSS self
--- @return #AIRBOSS.FlightGroup Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
+--- @param #AIRBOSS self
+--- @return #AIRBOSS.FlightGroup Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
 function AIRBOSS:_GetNextMarshalFight()
 
   -- Loop over all marshal flights.
@@ -5545,7 +5545,7 @@ function AIRBOSS:_GetNextMarshalFight()
 end
 
 --- Check marshal and pattern queues.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_CheckQueue()
 
   -- Print queues.
@@ -5694,8 +5694,8 @@ end
 
 --- Clear flight for landing. AI are removed from Marshal queue and the Marshal stack is collapsed.
 -- If next in line is an AI flight, this is done. If human player is next, we wait for "Commence" via F10 radio menu command.
--- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup flight Flight to go to pattern.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.FlightGroup flight Flight to go to pattern.
 function AIRBOSS:_ClearForLanding( flight )
 
   -- Check if flight is AI or human. If AI, we collapse the stack and commence. If human, we suggest to commence.
@@ -5730,10 +5730,10 @@ function AIRBOSS:_ClearForLanding( flight )
 end
 
 --- Set player step. Any warning is erased and next step hint shown.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #string step Next step.
--- @param #number delay (Optional) Set set after a delay in seconds.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #string step Next step.
+--- @param #number delay (Optional) Set set after a delay in seconds.
 function AIRBOSS:_SetPlayerStep( playerData, step, delay )
 
   if delay and delay > 0 then
@@ -5760,7 +5760,7 @@ function AIRBOSS:_SetPlayerStep( playerData, step, delay )
 end
 
 --- Scan carrier zone for (new) units.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_ScanCarrierZone()
 
   -- Carrier position.
@@ -5888,8 +5888,8 @@ function AIRBOSS:_ScanCarrierZone()
 end
 
 --- Tell player to wait outside the 10 NM zone until a Marshal stack is available.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
 function AIRBOSS:_WaitPlayer( playerData )
 
   -- Check if flight is known to the airboss already.
@@ -5924,9 +5924,9 @@ function AIRBOSS:_WaitPlayer( playerData )
 end
 
 --- Orbit at a specified position at a specified altitude with a specified speed.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #number stack The Marshal stack the player gets.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #number stack The Marshal stack the player gets.
 function AIRBOSS:_MarshalPlayer( playerData, stack )
 
   -- Check if flight is known to the airboss already.
@@ -5971,9 +5971,9 @@ end
 
 --- Command AI flight to orbit outside the 10 NM zone and wait for a free Marshal stack.
 -- If the flight is not already holding in the Marshal stack, it is guided there first.
--- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup flight Flight group.
--- @param #boolean respawn If true respawn the group. Otherwise reset the mission task with new waypoints.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.FlightGroup flight Flight group.
+--- @param #boolean respawn If true respawn the group. Otherwise reset the mission task with new waypoints.
 function AIRBOSS:_WaitAI( flight, respawn )
 
   -- Set flag to something other than -100 and <0
@@ -6057,10 +6057,10 @@ end
 
 --- Command AI flight to orbit at a specified position at a specified altitude with a specified speed. If flight is not in the Marshal queue yet, it is added. This fixes the recovery case.
 -- If the flight is not already holding in the Marshal stack, it is guided there first.
--- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup flight Flight group.
--- @param #number nstack Stack number of group. Can also be the current stack if AI position needs to be updated wrt to changed carrier position.
--- @param #boolean respawn If true, respawn the flight otherwise update mission task with new waypoints.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.FlightGroup flight Flight group.
+--- @param #number nstack Stack number of group. Can also be the current stack if AI position needs to be updated wrt to changed carrier position.
+--- @param #boolean respawn If true, respawn the flight otherwise update mission task with new waypoints.
 function AIRBOSS:_MarshalAI( flight, nstack, respawn )
   self:F2( { flight = flight, nstack = nstack, respawn = respawn } )
 
@@ -6229,8 +6229,8 @@ function AIRBOSS:_MarshalAI( flight, nstack, respawn )
 end
 
 --- Tell AI to refuel. Either at the recovery tanker or at the nearest divert airfield.
--- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup flight Flight group.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.FlightGroup flight Flight group.
 function AIRBOSS:_RefuelAI( flight )
 
   -- Waypoints array.
@@ -6335,8 +6335,8 @@ function AIRBOSS:_RefuelAI( flight )
 end
 
 --- Tell AI to land on the carrier.
--- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup flight Flight group.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.FlightGroup flight Flight group.
 function AIRBOSS:_LandAI( flight )
 
   -- Debug info.
@@ -6390,12 +6390,12 @@ function AIRBOSS:_LandAI( flight )
 end
 
 --- Get marshal altitude and two positions of a counter-clockwise race track pattern.
--- @param #AIRBOSS self
--- @param #number stack Assigned stack number. Counting starts at one, i.e. stack=1 is the first stack.
--- @param #number case Recovery case. Default is self.case.
--- @return #number Holding altitude in meters.
--- @return Core.Point#COORDINATE First race track coordinate.
--- @return Core.Point#COORDINATE Second race track coordinate.
+--- @param #AIRBOSS self
+--- @param #number stack Assigned stack number. Counting starts at one, i.e. stack=1 is the first stack.
+--- @param #number case Recovery case. Default is self.case.
+--- @return #number Holding altitude in meters.
+--- @return Core.Point#COORDINATE First race track coordinate.
+--- @return Core.Point#COORDINATE Second race track coordinate.
 function AIRBOSS:_GetMarshalAltitude( stack, case )
 
   -- Stack <= 0.
@@ -6478,9 +6478,9 @@ function AIRBOSS:_GetMarshalAltitude( stack, case )
 end
 
 --- Calculate an estimate of the charlie time of the player based on how many other aircraft are in the marshal or pattern queue before him.
--- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup flightgroup Flight data.
--- @return #number Charlie (abs) time in seconds. Or nil, if stack<0 or no recovery window will open.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.FlightGroup flightgroup Flight data.
+--- @return #number Charlie (abs) time in seconds. Or nil, if stack<0 or no recovery window will open.
 function AIRBOSS:_GetCharlieTime( flightgroup )
 
   -- Get current stack of player.
@@ -6575,9 +6575,9 @@ function AIRBOSS:_GetCharlieTime( flightgroup )
 end
 
 --- Add a flight group to the Marshal queue at a specific stack. Flight is informed via message. This fixes the recovery case to the current case ops in progress self.case).
--- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup flight Flight group.
--- @param #number stack Marshal stack. This (re-)sets the flag value.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.FlightGroup flight Flight group.
+--- @param #number stack Marshal stack. This (re-)sets the flag value.
 function AIRBOSS:_AddMarshalGroup( flight, stack )
 
   -- Set flag value. This corresponds to the stack number which starts at 1.
@@ -6628,9 +6628,9 @@ function AIRBOSS:_AddMarshalGroup( flight, stack )
 end
 
 --- Collapse marshal stack.
--- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup flight Flight that left the marshal stack.
--- @param #boolean nopattern If true, flight does not go to pattern.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.FlightGroup flight Flight that left the marshal stack.
+--- @param #boolean nopattern If true, flight does not go to pattern.
 function AIRBOSS:_CollapseMarshalStack( flight, nopattern )
   self:F2( { flight = flight, nopattern = nopattern } )
 
@@ -6748,11 +6748,11 @@ function AIRBOSS:_CollapseMarshalStack( flight, nopattern )
 end
 
 --- Get next free Marshal stack. Depending on AI/human and recovery case.
--- @param #AIRBOSS self
--- @param #boolean ai If true, get a free stack for an AI flight group.
--- @param #number case Recovery case. Default current (self) case in progress.
--- @param #boolean empty Return lowest stack that is completely empty.
--- @return #number Lowest free stack available for the given case or nil if all Case I stacks are taken.
+--- @param #AIRBOSS self
+--- @param #boolean ai If true, get a free stack for an AI flight group.
+--- @param #number case Recovery case. Default current (self) case in progress.
+--- @param #boolean empty Return lowest stack that is completely empty.
+--- @return #number Lowest free stack available for the given case or nil if all Case I stacks are taken.
 function AIRBOSS:_GetFreeStack( ai, case, empty )
 
   -- Recovery case.
@@ -6838,11 +6838,11 @@ function AIRBOSS:_GetFreeStack( ai, case, empty )
 end
 
 --- Get next free Marshal stack. Depending on AI/human and recovery case.
--- @param #AIRBOSS self
--- @param #boolean ai If true, get a free stack for an AI flight group.
--- @param #number case Recovery case. Default current (self) case in progress.
--- @param #boolean empty Return lowest stack that is completely empty.
--- @return #number Lowest free stack available for the given case or nil if all Case I stacks are taken.
+--- @param #AIRBOSS self
+--- @param #boolean ai If true, get a free stack for an AI flight group.
+--- @param #number case Recovery case. Default current (self) case in progress.
+--- @param #boolean empty Return lowest stack that is completely empty.
+--- @return #number Lowest free stack available for the given case or nil if all Case I stacks are taken.
 function AIRBOSS:_GetFreeStack_Old( ai, case, empty )
 
   -- Recovery case.
@@ -6906,12 +6906,12 @@ function AIRBOSS:_GetFreeStack_Old( ai, case, empty )
 end
 
 --- Get number of (airborne) units in a flight.
--- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup flight The flight group.
--- @param #boolean onground If true, include units on the ground. By default only airborne units are counted.
--- @return #number Number of units in flight including section members.
--- @return #number Number of units in flight excluding section members.
--- @return #number Number of section members.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.FlightGroup flight The flight group.
+--- @param #boolean onground If true, include units on the ground. By default only airborne units are counted.
+--- @return #number Number of units in flight including section members.
+--- @return #number Number of units in flight excluding section members.
+--- @return #number Number of section members.
 function AIRBOSS:_GetFlightUnits( flight, onground )
 
   -- Default is only airborne.
@@ -6960,11 +6960,11 @@ function AIRBOSS:_GetFlightUnits( flight, onground )
 end
 
 --- Get number of groups and units in queue, which are alive and airborne. In units we count the section members as well.
--- @param #AIRBOSS self
--- @param #table queue The queue. Can be self.flights, self.Qmarshal or self.Qpattern.
--- @param #number case (Optional) Only count flights, which are in a specific recovery case. Note that you can use case=23 for flights that are either in Case II or III. By default all groups/units regardless of case are counted.
--- @return #number Total number of flight groups in queue.
--- @return #number Total number of aircraft in queue since each flight group can contain multiple aircraft.
+--- @param #AIRBOSS self
+--- @param #table queue The queue. Can be self.flights, self.Qmarshal or self.Qpattern.
+--- @param #number case (Optional) Only count flights, which are in a specific recovery case. Note that you can use case=23 for flights that are either in Case II or III. By default all groups/units regardless of case are counted.
+--- @return #number Total number of flight groups in queue.
+--- @return #number Total number of aircraft in queue since each flight group can contain multiple aircraft.
 function AIRBOSS:_GetQueueInfo( queue, case )
 
   local ngroup = 0
@@ -7021,9 +7021,9 @@ function AIRBOSS:_GetQueueInfo( queue, case )
 end
 
 --- Print holding queue.
--- @param #AIRBOSS self
--- @param #table queue Queue to print.
--- @param #string name Queue name.
+--- @param #AIRBOSS self
+--- @param #table queue Queue to print.
+--- @param #string name Queue name.
 function AIRBOSS:_PrintQueue( queue, name )
 
   -- local nqueue=#queue
@@ -7070,9 +7070,9 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new flight group. Usually when a flight appears in the CCA.
--- @param #AIRBOSS self
--- @param Wrapper.Group#GROUP group Aircraft group.
--- @return #AIRBOSS.FlightGroup Flight group.
+--- @param #AIRBOSS self
+--- @param Wrapper.Group#GROUP group Aircraft group.
+--- @return #AIRBOSS.FlightGroup Flight group.
 function AIRBOSS:_CreateFlightGroup( group )
 
   -- Debug info.
@@ -7146,9 +7146,9 @@ function AIRBOSS:_CreateFlightGroup( group )
 end
 
 --- Initialize player data after birth event of player unit.
--- @param #AIRBOSS self
--- @param #string unitname Name of the player unit.
--- @return #AIRBOSS.PlayerData Player data.
+--- @param #AIRBOSS self
+--- @param #string unitname Name of the player unit.
+--- @return #AIRBOSS.PlayerData Player data.
 function AIRBOSS:_NewPlayer( unitname )
 
   -- Get player unit and name.
@@ -7237,10 +7237,10 @@ function AIRBOSS:_NewPlayer( unitname )
 end
 
 --- Initialize player data by (re-)setting parmeters to initial values.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #string step (Optional) New player step. Default UNDEFINED.
--- @return #AIRBOSS.PlayerData Initialized player data.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #string step (Optional) New player step. Default UNDEFINED.
+--- @return #AIRBOSS.PlayerData Initialized player data.
 function AIRBOSS:_InitPlayer( playerData, step )
   self:T( self.lid .. string.format( "Initializing player data for %s callsign %s.", playerData.name, playerData.callsign ) )
 
@@ -7281,11 +7281,11 @@ function AIRBOSS:_InitPlayer( playerData, step )
 end
 
 --- Get flight from group in a queue.
--- @param #AIRBOSS self
--- @param Wrapper.Group#GROUP group Group that will be removed from queue.
--- @param #table queue The queue from which the group will be removed.
--- @return #AIRBOSS.FlightGroup Flight group or nil.
--- @return #number Queue index or nil.
+--- @param #AIRBOSS self
+--- @param Wrapper.Group#GROUP group Group that will be removed from queue.
+--- @param #table queue The queue from which the group will be removed.
+--- @return #AIRBOSS.FlightGroup Flight group or nil.
+--- @return #number Queue index or nil.
 function AIRBOSS:_GetFlightFromGroupInQueue( group, queue )
 
   if group then
@@ -7310,11 +7310,11 @@ function AIRBOSS:_GetFlightFromGroupInQueue( group, queue )
 end
 
 --- Get element in flight.
--- @param #AIRBOSS self
--- @param #string unitname Name of the unit.
--- @return #AIRBOSS.FlightElement Element of the flight or nil.
--- @return #number Element index or nil.
--- @return #AIRBOSS.FlightGroup The Flight group or nil
+--- @param #AIRBOSS self
+--- @param #string unitname Name of the unit.
+--- @return #AIRBOSS.FlightElement Element of the flight or nil.
+--- @return #number Element index or nil.
+--- @return #AIRBOSS.FlightGroup The Flight group or nil
 function AIRBOSS:_GetFlightElement( unitname )
 
   -- Get the unit.
@@ -7346,9 +7346,9 @@ function AIRBOSS:_GetFlightElement( unitname )
 end
 
 --- Get element in flight.
--- @param #AIRBOSS self
--- @param #string unitname Name of the unit.
--- @return #boolean If true, element could be removed or nil otherwise.
+--- @param #AIRBOSS self
+--- @param #string unitname Name of the unit.
+--- @return #boolean If true, element could be removed or nil otherwise.
 function AIRBOSS:_RemoveFlightElement( unitname )
 
   -- Get table index.
@@ -7364,10 +7364,10 @@ function AIRBOSS:_RemoveFlightElement( unitname )
 end
 
 --- Check if a group is in a queue.
--- @param #AIRBOSS self
--- @param #table queue The queue to check.
--- @param Wrapper.Group#GROUP group The group to be checked.
--- @return #boolean If true, group is in the queue. False otherwise.
+--- @param #AIRBOSS self
+--- @param #table queue The queue to check.
+--- @param Wrapper.Group#GROUP group The group to be checked.
+--- @return #boolean If true, group is in the queue. False otherwise.
 function AIRBOSS:_InQueue( queue, group )
   local name = group:GetName()
   for _, _flight in pairs( queue ) do
@@ -7380,9 +7380,9 @@ function AIRBOSS:_InQueue( queue, group )
 end
 
 --- Remove dead flight groups from all queues.
--- @param #AIRBOSS self
--- @param Wrapper.Group#GROUP group Aircraft group.
--- @return #AIRBOSS.FlightGroup Flight group.
+--- @param #AIRBOSS self
+--- @param Wrapper.Group#GROUP group Aircraft group.
+--- @return #AIRBOSS.FlightGroup Flight group.
 function AIRBOSS:_RemoveDeadFlightGroups()
 
   -- Remove dead flights from all flights table.
@@ -7415,9 +7415,9 @@ function AIRBOSS:_RemoveDeadFlightGroups()
 end
 
 --- Get the lead flight group of a flight group.
--- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup flight Flight group to check.
--- @return #AIRBOSS.FlightGroup Flight group of the leader or flight itself if no other leader.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.FlightGroup flight Flight group to check.
+--- @return #AIRBOSS.FlightGroup Flight group of the leader or flight itself if no other leader.
 function AIRBOSS:_GetLeadFlight( flight )
 
   -- Init.
@@ -7433,9 +7433,9 @@ end
 
 --- Check if all elements of a flight were recovered. This also checks potential section members.
 -- If so, flight is removed from the queue.
--- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup flight Flight group to check.
--- @return #boolean If true, all elements landed.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.FlightGroup flight Flight group to check.
+--- @return #boolean If true, all elements landed.
 function AIRBOSS:_CheckSectionRecovered( flight )
 
   -- Nil check.
@@ -7485,8 +7485,8 @@ function AIRBOSS:_CheckSectionRecovered( flight )
 end
 
 --- Add flight to pattern queue and set recoverd to false for all elements of the flight and its section members.
--- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup Flight group of element.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.FlightGroup Flight group of element.
 function AIRBOSS:_AddFlightToPatternQueue( flight )
 
   -- Add flight to table.
@@ -7515,9 +7515,9 @@ function AIRBOSS:_AddFlightToPatternQueue( flight )
 end
 
 --- Sets flag recovered=true for a flight element, which was successfully recovered (landed).
--- @param #AIRBOSS self
--- @param Wrapper.Unit#UNIT unit The aircraft unit that was recovered.
--- @return #AIRBOSS.FlightGroup Flight group of element.
+--- @param #AIRBOSS self
+--- @param Wrapper.Unit#UNIT unit The aircraft unit that was recovered.
+--- @return #AIRBOSS.FlightGroup Flight group of element.
 function AIRBOSS:_RecoveredElement( unit )
 
   -- Get element of flight.
@@ -7532,11 +7532,11 @@ function AIRBOSS:_RecoveredElement( unit )
 end
 
 --- Remove a flight group from the Marshal queue. Marshal stack is collapsed, too, if flight was in the queue. Waiting flights are send to marshal.
--- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup flight Flight group that will be removed from queue.
--- @param #boolean nopattern If true, flight is NOT going to landing pattern.
--- @return #boolean True, flight was removed or false otherwise.
--- @return #number Table index of the flight in the Marshal queue.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.FlightGroup flight Flight group that will be removed from queue.
+--- @param #boolean nopattern If true, flight is NOT going to landing pattern.
+--- @return #boolean True, flight was removed or false otherwise.
+--- @return #number Table index of the flight in the Marshal queue.
 function AIRBOSS:_RemoveFlightFromMarshalQueue( flight, nopattern )
 
   -- Remove flight from marshal queue if it is in.
@@ -7583,11 +7583,11 @@ function AIRBOSS:_RemoveFlightFromMarshalQueue( flight, nopattern )
 end
 
 --- Remove a flight group from a queue.
--- @param #AIRBOSS self
--- @param #table queue The queue from which the group will be removed.
--- @param #AIRBOSS.FlightGroup flight Flight group that will be removed from queue.
--- @return #boolean True, flight was in Queue and removed. False otherwise.
--- @return #number Table index of removed queue element or nil.
+--- @param #AIRBOSS self
+--- @param #table queue The queue from which the group will be removed.
+--- @param #AIRBOSS.FlightGroup flight Flight group that will be removed from queue.
+--- @return #boolean True, flight was in Queue and removed. False otherwise.
+--- @return #number Table index of removed queue element or nil.
 function AIRBOSS:_RemoveFlightFromQueue( queue, flight )
 
   -- Loop over all flights in group.
@@ -7606,8 +7606,8 @@ function AIRBOSS:_RemoveFlightFromQueue( queue, flight )
 end
 
 --- Remove a unit and its element from a flight group (e.g. when landed) and update all queues if the whole flight group is gone.
--- @param #AIRBOSS self
--- @param Wrapper.Unit#UNIT unit The unit to be removed.
+--- @param #AIRBOSS self
+--- @param Wrapper.Unit#UNIT unit The unit to be removed.
 function AIRBOSS:_RemoveUnitFromFlight( unit )
 
   -- Check if unit exists.
@@ -7653,8 +7653,8 @@ function AIRBOSS:_RemoveUnitFromFlight( unit )
 end
 
 --- Remove a flight, which is a member of a section, from this section.
--- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup flight The flight to be removed from the section
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.FlightGroup flight The flight to be removed from the section
 function AIRBOSS:_RemoveFlightFromSection( flight )
 
   -- First check if player is not the lead.
@@ -7678,8 +7678,8 @@ end
 --- Update section if a flight is removed.
 -- If removed flight is member of a section, he is removed for the leaders section.
 -- If removed flight is the section lead, we try to find a new leader.
--- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup flight The flight to be removed.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.FlightGroup flight The flight to be removed.
 function AIRBOSS:_UpdateFlightSection( flight )
 
   -- Check if this player is the leader of a section.
@@ -7727,9 +7727,9 @@ end
 
 --- Remove a flight from Marshal, Pattern and Waiting queues. If flight is in Marhal queue, the above stack is collapsed.
 -- Also set player step to undefined if applicable or remove human flight if option *completely* is true.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData flight The flight to be removed.
--- @param #boolean completely If true, also remove human flight from all flights table.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData flight The flight to be removed.
+--- @param #boolean completely If true, also remove human flight from all flights table.
 function AIRBOSS:_RemoveFlight( flight, completely )
   self:F( self.lid .. string.format( "Removing flight %s, ai=%s completely=%s.", tostring( flight.groupname ), tostring( flight.ai ), tostring( completely ) ) )
 
@@ -7800,7 +7800,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check current player status.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_CheckPlayerStatus()
 
   -- Loop over all players.
@@ -7984,8 +7984,8 @@ function AIRBOSS:_CheckPlayerStatus()
 end
 
 --- Checks if a player is in the pattern queue and has missed a step in Case II/III approach.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
 function AIRBOSS:_CheckMissedStepOnEntry( playerData )
 
   -- Conditions to be met: Case II/III, in pattern queue, flag!=42 (will be set to 42 at the end if player missed a step).
@@ -8044,8 +8044,8 @@ function AIRBOSS:_CheckMissedStepOnEntry( playerData )
 end
 
 --- Set time in the groove for player.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
 function AIRBOSS:_SetTimeInGroove( playerData )
 
   -- Set time in the groove
@@ -8058,9 +8058,9 @@ function AIRBOSS:_SetTimeInGroove( playerData )
 end
 
 --- Get time in the groove of player.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @return #number Player's time in groove in seconds.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @return #number Player's time in groove in seconds.
 function AIRBOSS:_GetTimeInGroove( playerData )
 
   local Tgroove = 999
@@ -8078,8 +8078,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Airboss event handler for event birth.
--- @param #AIRBOSS self
--- @param Core.Event#EVENTDATA EventData
+--- @param #AIRBOSS self
+--- @param Core.Event#EVENTDATA EventData
 function AIRBOSS:OnEventBirth( EventData )
   self:F3( { eventbirth = EventData } )
 
@@ -8141,8 +8141,8 @@ function AIRBOSS:OnEventBirth( EventData )
 end
 
 --- Airboss event handler for event land.
--- @param #AIRBOSS self
--- @param Core.Event#EVENTDATA EventData
+--- @param #AIRBOSS self
+--- @param Core.Event#EVENTDATA EventData
 function AIRBOSS:OnEventLand( EventData )
   self:F3( { eventland = EventData } )
 
@@ -8340,8 +8340,8 @@ function AIRBOSS:OnEventLand( EventData )
 end
 
 --- Airboss event handler for event that a unit shuts down its engines.
--- @param #AIRBOSS self
--- @param Core.Event#EVENTDATA EventData
+--- @param #AIRBOSS self
+--- @param Core.Event#EVENTDATA EventData
 function AIRBOSS:OnEventEngineShutdown( EventData )
   self:F3( { eventengineshutdown = EventData } )
 
@@ -8406,8 +8406,8 @@ function AIRBOSS:OnEventEngineShutdown( EventData )
 end
 
 --- Airboss event handler for event that a unit takes off.
--- @param #AIRBOSS self
--- @param Core.Event#EVENTDATA EventData
+--- @param #AIRBOSS self
+--- @param Core.Event#EVENTDATA EventData
 function AIRBOSS:OnEventTakeoff( EventData )
   self:F3( { eventtakeoff = EventData } )
 
@@ -8470,8 +8470,8 @@ function AIRBOSS:OnEventTakeoff( EventData )
 end
 
 --- Airboss event handler for event crash.
--- @param #AIRBOSS self
--- @param Core.Event#EVENTDATA EventData
+--- @param #AIRBOSS self
+--- @param Core.Event#EVENTDATA EventData
 function AIRBOSS:OnEventCrash( EventData )
   self:F3( { eventcrash = EventData } )
 
@@ -8518,8 +8518,8 @@ function AIRBOSS:OnEventCrash( EventData )
 end
 
 --- Airboss event handler for event Ejection.
--- @param #AIRBOSS self
--- @param Core.Event#EVENTDATA EventData
+--- @param #AIRBOSS self
+--- @param Core.Event#EVENTDATA EventData
 function AIRBOSS:OnEventEjection( EventData )
   self:F3( { eventland = EventData } )
 
@@ -8569,8 +8569,8 @@ function AIRBOSS:OnEventEjection( EventData )
 end
 
 --- Airboss event handler for event REMOVEUNIT.
--- @param #AIRBOSS self
--- @param Core.Event#EVENTDATA EventData
+--- @param #AIRBOSS self
+--- @param Core.Event#EVENTDATA EventData
 function AIRBOSS:OnEventRemoveUnit( EventData )
   self:F3( { eventland = EventData } )
 
@@ -8620,8 +8620,8 @@ function AIRBOSS:OnEventRemoveUnit( EventData )
 end
 
 --- Airboss event handler for event player leave unit.
--- @param #AIRBOSS self
--- @param Core.Event#EVENTDATA EventData
+--- @param #AIRBOSS self
+--- @param Core.Event#EVENTDATA EventData
 -- function AIRBOSS:OnEventPlayerLeaveUnit(EventData)
 function AIRBOSS:_PlayerLeft( EventData )
   self:F3( { eventleave = EventData } )
@@ -8664,8 +8664,8 @@ end
 
 --- Airboss event function handling the mission end event.
 -- Handles the case when the mission is ended.
--- @param #AIRBOSS self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #AIRBOSS self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function AIRBOSS:OnEventMissionEnd( EventData )
   self:T3( self.lid .. "Mission Ended" )
 end
@@ -8675,8 +8675,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Spinning
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
 function AIRBOSS:_Spinning( playerData )
 
   -- Early break.
@@ -8708,8 +8708,8 @@ function AIRBOSS:_Spinning( playerData )
 end
 
 --- Waiting outside 10 NM zone for free Marshal stack.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
 function AIRBOSS:_Waiting( playerData )
 
   -- Create 10 NM zone around the carrier.
@@ -8737,8 +8737,8 @@ function AIRBOSS:_Waiting( playerData )
 end
 
 --- Holding.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
 function AIRBOSS:_Holding( playerData )
 
   -- Player unit and flight.
@@ -8918,9 +8918,9 @@ end
 -- * Case 1: Initial
 -- * Case 2/3: Platform
 --
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #boolean zonecheck If true, zone is checked before player is released.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #boolean zonecheck If true, zone is checked before player is released.
 function AIRBOSS:_Commencing( playerData, zonecheck )
 
   -- Check for auto commence
@@ -8995,9 +8995,9 @@ function AIRBOSS:_Commencing( playerData, zonecheck )
 end
 
 --- Start pattern when player enters the initial zone in case I/II recoveries.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @return #boolean True if player is in the initial zone.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @return #boolean True if player is in the initial zone.
 function AIRBOSS:_Initial( playerData )
 
   -- Check if player is in initial zone and entering the CASE I pattern.
@@ -9040,8 +9040,8 @@ function AIRBOSS:_Initial( playerData )
 end
 
 --- Check if player is in CASE II/III approach corridor.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_CheckCorridor( playerData )
 
   -- Check if player is in valid zone
@@ -9065,8 +9065,8 @@ function AIRBOSS:_CheckCorridor( playerData )
 end
 
 --- Platform at 5k ft for case II/III recoveries. Descent at 2000 ft/min.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_Platform( playerData )
 
   -- Check if player left or got back to the approach corridor.
@@ -9103,8 +9103,8 @@ function AIRBOSS:_Platform( playerData )
 end
 
 --- Arc in turn for case II/III recoveries.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_ArcInTurn( playerData )
 
   -- Check if player left or got back to the approach corridor.
@@ -9125,8 +9125,8 @@ function AIRBOSS:_ArcInTurn( playerData )
 end
 
 --- Arc out turn for case II/III recoveries.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_ArcOutTurn( playerData )
 
   -- Check if player left or got back to the approach corridor.
@@ -9156,8 +9156,8 @@ function AIRBOSS:_ArcOutTurn( playerData )
 end
 
 --- Dirty up and level out at 1200 ft for case III recovery.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_DirtyUp( playerData )
 
   -- Check if player left or got back to the approach corridor.
@@ -9188,9 +9188,9 @@ function AIRBOSS:_DirtyUp( playerData )
 end
 
 --- Intercept glide slop and follow ICLS, aka Bullseye for case III recovery.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @return #boolean If true, player is in bullseye zone.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @return #boolean If true, player is in bullseye zone.
 function AIRBOSS:_Bullseye( playerData )
 
   -- Check if player left or got back to the approach corridor.
@@ -9224,8 +9224,8 @@ function AIRBOSS:_Bullseye( playerData )
 end
 
 --- Bolter pattern. Sends player to abeam for Case I/II or Bullseye for Case III ops.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_BolterPattern( playerData )
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
@@ -9256,8 +9256,8 @@ function AIRBOSS:_BolterPattern( playerData )
 end
 
 --- Break entry for case I/II recoveries.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_BreakEntry( playerData )
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
@@ -9282,9 +9282,9 @@ function AIRBOSS:_BreakEntry( playerData )
 end
 
 --- Break.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @param #string part Part of the break.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #string part Part of the break.
 function AIRBOSS:_Break( playerData, part )
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
@@ -9336,8 +9336,8 @@ function AIRBOSS:_Break( playerData, part )
 end
 
 --- Long downwind leg check.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_CheckForLongDownwind( playerData )
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
@@ -9373,8 +9373,8 @@ function AIRBOSS:_CheckForLongDownwind( playerData )
 end
 
 --- Abeam position.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_Abeam( playerData )
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
@@ -9411,8 +9411,8 @@ function AIRBOSS:_Abeam( playerData )
 end
 
 --- At the Ninety.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_Ninety( playerData )
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
@@ -9453,8 +9453,8 @@ function AIRBOSS:_Ninety( playerData )
 end
 
 --- At the Wake.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_Wake( playerData )
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
@@ -9479,9 +9479,9 @@ function AIRBOSS:_Wake( playerData )
 end
 
 --- Get groove data.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @return #AIRBOSS.GrooveData Groove data table.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @return #AIRBOSS.GrooveData Groove data table.
 function AIRBOSS:_GetGrooveData( playerData )
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier).
@@ -9534,9 +9534,9 @@ function AIRBOSS:_GetGrooveData( playerData )
 end
 
 --- Turn to final.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @param #boolean nocheck If true, player is not checked to be in the right position.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #boolean nocheck If true, player is not checked to be in the right position.
 function AIRBOSS:_Final( playerData, nocheck )
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
@@ -9589,8 +9589,8 @@ function AIRBOSS:_Final( playerData, nocheck )
 end
 
 --- In the groove.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_Groove( playerData )
 
   -- Ranges in the groove.
@@ -9935,12 +9935,12 @@ end
 -- * Glideslope error <1.2 or >1.8 degrees.
 -- * |Line up error| > 3 degrees.
 -- * AoA check but only for TOPGUN graduates.
--- @param #AIRBOSS self
--- @param #number glideslopeError Glideslope error in degrees.
--- @param #number lineupError Line up error in degrees.
--- @param #number AoA Angle of attack of player aircraft.
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @return #boolean If true, player should wave off!
+--- @param #AIRBOSS self
+--- @param #number glideslopeError Glideslope error in degrees.
+--- @param #number lineupError Line up error in degrees.
+--- @param #number AoA Angle of attack of player aircraft.
+--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @return #boolean If true, player should wave off!
 function AIRBOSS:_CheckWaveOff( glideslopeError, lineupError, AoA, playerData )
 
   -- Assume we're all good.
@@ -10004,9 +10004,9 @@ function AIRBOSS:_CheckWaveOff( glideslopeError, lineupError, AoA, playerData )
 end
 
 --- Check if other aircraft are currently on the landing runway.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @return boolean If true, we have a foul deck.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @return boolean If true, we have a foul deck.
 function AIRBOSS:_CheckFoulDeck( playerData )
 
   -- Assume no check necessary.
@@ -10113,8 +10113,8 @@ function AIRBOSS:_CheckFoulDeck( playerData )
 end
 
 --- Get "stern" coordinate.
--- @param #AIRBOSS self
--- @return Core.Point#COORDINATE Coordinate at the rundown of the carrier.
+--- @param #AIRBOSS self
+--- @return Core.Point#COORDINATE Coordinate at the rundown of the carrier.
 function AIRBOSS:_GetSternCoord()
 
   -- Heading of carrier (true).
@@ -10155,10 +10155,10 @@ function AIRBOSS:_GetSternCoord()
 end
 
 --- Get wire from landing position.
--- @param #AIRBOSS self
--- @param Core.Point#COORDINATE Lcoord Landing position.
--- @param #number dc Distance correction. Shift the landing coord back if dc>0 and forward if dc<0.
--- @return #number Trapped wire (1-4) or 99 if no wire was trapped.
+--- @param #AIRBOSS self
+--- @param Core.Point#COORDINATE Lcoord Landing position.
+--- @param #number dc Distance correction. Shift the landing coord back if dc>0 and forward if dc<0.
+--- @return #number Trapped wire (1-4) or 99 if no wire was trapped.
 function AIRBOSS:_GetWire( Lcoord, dc )
 
   -- Final bearing (true).
@@ -10239,8 +10239,8 @@ function AIRBOSS:_GetWire( Lcoord, dc )
 end
 
 --- Trapped? Check if in air or not after landing event.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_Trapped( playerData )
 
   if playerData.unit:InAir() == false then
@@ -10354,9 +10354,9 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get Initial zone for Case I or II.
--- @param #AIRBOSS self
--- @param #number case Recovery Case.
--- @return Core.Zone#ZONE_POLYGON_BASE Initial zone.
+--- @param #AIRBOSS self
+--- @param #number case Recovery Case.
+--- @return Core.Zone#ZONE_POLYGON_BASE Initial zone.
 function AIRBOSS:_GetZoneInitial( case )
 
   self.zoneInitial = self.zoneInitial or ZONE_POLYGON_BASE:New( "Zone CASE I/II Initial" )
@@ -10408,8 +10408,8 @@ function AIRBOSS:_GetZoneInitial( case )
 end
 
 --- Get lineup groove zone.
--- @param #AIRBOSS self
--- @return Core.Zone#ZONE_POLYGON_BASE Lineup zone.
+--- @param #AIRBOSS self
+--- @return Core.Zone#ZONE_POLYGON_BASE Lineup zone.
 function AIRBOSS:_GetZoneLineup()
 
   self.zoneLineup = self.zoneLineup or ZONE_POLYGON_BASE:New( "Zone Lineup" )
@@ -10440,11 +10440,11 @@ function AIRBOSS:_GetZoneLineup()
 end
 
 --- Get groove zone.
--- @param #AIRBOSS self
--- @param #number l Length of the groove in NM. Default 1.5 NM.
--- @param #number w Width of the groove in NM. Default 0.25 NM.
--- @param #number b Width of the beginning in NM. Default 0.10 NM.
--- @return Core.Zone#ZONE_POLYGON_BASE Groove zone.
+--- @param #AIRBOSS self
+--- @param #number l Length of the groove in NM. Default 1.5 NM.
+--- @param #number w Width of the groove in NM. Default 0.25 NM.
+--- @param #number b Width of the beginning in NM. Default 0.10 NM.
+--- @return Core.Zone#ZONE_POLYGON_BASE Groove zone.
 function AIRBOSS:_GetZoneGroove( l, w, b )
 
   self.zoneGroove = self.zoneGroove or ZONE_POLYGON_BASE:New( "Zone Groove" )
@@ -10480,9 +10480,9 @@ function AIRBOSS:_GetZoneGroove( l, w, b )
 end
 
 --- Get Bullseye zone with radius 1 NM and DME 3 NM from the carrier. Radial depends on recovery case.
--- @param #AIRBOSS self
--- @param #number case Recovery case.
--- @return Core.Zone#ZONE_RADIUS Arc in zone.
+--- @param #AIRBOSS self
+--- @param #number case Recovery case.
+--- @return Core.Zone#ZONE_RADIUS Arc in zone.
 function AIRBOSS:_GetZoneBullseye( case )
 
   -- Radius = 1 NM.
@@ -10506,9 +10506,9 @@ function AIRBOSS:_GetZoneBullseye( case )
 end
 
 --- Get dirty up zone with radius 1 NM and DME 9 NM from the carrier. Radial depends on recovery case.
--- @param #AIRBOSS self
--- @param #number case Recovery case.
--- @return Core.Zone#ZONE_RADIUS Dirty up zone.
+--- @param #AIRBOSS self
+--- @param #number case Recovery case.
+--- @return Core.Zone#ZONE_RADIUS Dirty up zone.
 function AIRBOSS:_GetZoneDirtyUp( case )
 
   -- Radius = 1 NM.
@@ -10531,9 +10531,9 @@ function AIRBOSS:_GetZoneDirtyUp( case )
 end
 
 --- Get arc out zone with radius 1 NM and DME 12 NM from the carrier. Radial depends on recovery case.
--- @param #AIRBOSS self
--- @param #number case Recovery case.
--- @return Core.Zone#ZONE_RADIUS Arc in zone.
+--- @param #AIRBOSS self
+--- @param #number case Recovery case.
+--- @return Core.Zone#ZONE_RADIUS Arc in zone.
 function AIRBOSS:_GetZoneArcOut( case )
 
   -- Radius = 1.25 NM.
@@ -10555,9 +10555,9 @@ function AIRBOSS:_GetZoneArcOut( case )
 end
 
 --- Get arc in zone with radius 1 NM and DME 14 NM from the carrier. Radial depends on recovery case.
--- @param #AIRBOSS self
--- @param #number case Recovery case.
--- @return Core.Zone#ZONE_RADIUS Arc in zone.
+--- @param #AIRBOSS self
+--- @param #number case Recovery case.
+--- @return Core.Zone#ZONE_RADIUS Arc in zone.
 function AIRBOSS:_GetZoneArcIn( case )
 
   -- Radius = 1.25 NM.
@@ -10585,9 +10585,9 @@ function AIRBOSS:_GetZoneArcIn( case )
 end
 
 --- Get platform zone with radius 1 NM and DME 19 NM from the carrier. Radial depends on recovery case.
--- @param #AIRBOSS self
--- @param #number case Recovery case.
--- @return Core.Zone#ZONE_RADIUS Circular platform zone.
+--- @param #AIRBOSS self
+--- @param #number case Recovery case.
+--- @return Core.Zone#ZONE_RADIUS Circular platform zone.
 function AIRBOSS:_GetZonePlatform( case )
 
   -- Radius = 1 NM.
@@ -10612,10 +10612,10 @@ function AIRBOSS:_GetZonePlatform( case )
 end
 
 --- Get approach corridor zone. Shape depends on recovery case.
--- @param #AIRBOSS self
--- @param #number case Recovery case.
--- @param #number l Length of the zone in NM. Default 31 (=21+10) NM.
--- @return Core.Zone#ZONE_POLYGON_BASE Box zone.
+--- @param #AIRBOSS self
+--- @param #number case Recovery case.
+--- @param #number l Length of the zone in NM. Default 31 (=21+10) NM.
+--- @return Core.Zone#ZONE_POLYGON_BASE Box zone.
 function AIRBOSS:_GetZoneCorridor( case, l )
 
   -- Total length.
@@ -10691,8 +10691,8 @@ function AIRBOSS:_GetZoneCorridor( case, l )
 end
 
 --- Get zone of carrier. Carrier is approximated as rectangle.
--- @param #AIRBOSS self
--- @return Core.Zone#ZONE Zone surrounding the carrier.
+--- @param #AIRBOSS self
+--- @return Core.Zone#ZONE Zone surrounding the carrier.
 function AIRBOSS:_GetZoneCarrierBox()
 
   self.zoneCarrierbox = self.zoneCarrierbox or ZONE_POLYGON_BASE:New( "Carrier Box Zone" )
@@ -10734,8 +10734,8 @@ function AIRBOSS:_GetZoneCarrierBox()
 end
 
 --- Get zone of landing runway.
--- @param #AIRBOSS self
--- @return Core.Zone#ZONE_POLYGON Zone surrounding landing runway.
+--- @param #AIRBOSS self
+--- @return Core.Zone#ZONE_POLYGON Zone surrounding landing runway.
 function AIRBOSS:_GetZoneRunwayBox()
 
   self.zoneRunwaybox = self.zoneRunwaybox or ZONE_POLYGON_BASE:New( "Landing Runway Zone" )
@@ -10773,8 +10773,8 @@ end
 --- Get zone of primary abeam landing position of HMS Hermes, HMS Invincible, USS Tarawa, USS America and Juan Carlos. Box length 50 meters and width 30 meters.
 
 --- Allow for Clear to land call from LSO approaching abeam the landing spot if stable as per NATOPS 00-80T
--- @param #AIRBOSS self
--- @return Core.Zone#ZONE_POLYGON Zone surrounding landing runway.
+--- @param #AIRBOSS self
+--- @return Core.Zone#ZONE_POLYGON Zone surrounding landing runway.
 function AIRBOSS:_GetZoneAbeamLandingSpot()
 
   -- Primary landing Spot coordinate.
@@ -10805,8 +10805,8 @@ function AIRBOSS:_GetZoneAbeamLandingSpot()
 end
 
 --- Get zone of the primary landing spot of the USS Tarawa.
--- @param #AIRBOSS self
--- @return Core.Zone#ZONE_POLYGON Zone surrounding landing runway.
+--- @param #AIRBOSS self
+--- @return Core.Zone#ZONE_POLYGON Zone surrounding landing runway.
 function AIRBOSS:_GetZoneLandingSpot()
 
   -- Primary landing Spot coordinate.
@@ -10837,10 +10837,10 @@ function AIRBOSS:_GetZoneLandingSpot()
 end
 
 --- Get holding zone of player.
--- @param #AIRBOSS self
--- @param #number case Recovery case.
--- @param #number stack Marshal stack number.
--- @return Core.Zone#ZONE Holding zone.
+--- @param #AIRBOSS self
+--- @param #number case Recovery case.
+--- @param #number stack Marshal stack number.
+--- @return Core.Zone#ZONE Holding zone.
 function AIRBOSS:_GetZoneHolding( case, stack )
 
   -- Holding zone.
@@ -10903,10 +10903,10 @@ function AIRBOSS:_GetZoneHolding( case, stack )
 end
 
 --- Get zone where player are automatically commence when enter.
--- @param #AIRBOSS self
--- @param #number case Recovery case.
--- @param #number stack Stack for Case II/III as we commence from stack>=1.
--- @return Core.Zone#ZONE Holding zone.
+--- @param #AIRBOSS self
+--- @param #number case Recovery case.
+--- @param #number stack Stack for Case II/III as we commence from stack>=1.
+--- @return Core.Zone#ZONE Holding zone.
 function AIRBOSS:_GetZoneCommence( case, stack )
 
   -- Commence zone.
@@ -10986,8 +10986,8 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Provide info about player status on the fly.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
 function AIRBOSS:_AttitudeMonitor( playerData )
 
   -- Player unit.
@@ -11075,10 +11075,10 @@ function AIRBOSS:_AttitudeMonitor( playerData )
 end
 
 --- Get glide slope of aircraft unit.
--- @param #AIRBOSS self
--- @param Wrapper.Unit#UNIT unit Aircraft unit.
--- @param #number optangle (Optional) Return glide slope relative to this angle, i.e. the error from the optimal glide slope ~3.5 degrees.
--- @return #number Glide slope angle in degrees measured from the deck of the carrier and third wire.
+--- @param #AIRBOSS self
+--- @param Wrapper.Unit#UNIT unit Aircraft unit.
+--- @param #number optangle (Optional) Return glide slope relative to this angle, i.e. the error from the optimal glide slope ~3.5 degrees.
+--- @return #number Glide slope angle in degrees measured from the deck of the carrier and third wire.
 function AIRBOSS:_Glideslope( unit, optangle )
 
   if optangle == nil then
@@ -11112,10 +11112,10 @@ function AIRBOSS:_Glideslope( unit, optangle )
 end
 
 --- Get glide slope of aircraft unit.
--- @param #AIRBOSS self
--- @param Wrapper.Unit#UNIT unit Aircraft unit.
--- @param #number optangle (Optional) Return glide slope relative to this angle, i.e. the error from the optimal glide slope ~3.5 degrees.
--- @return #number Glide slope angle in degrees measured from the deck of the carrier and third wire.
+--- @param #AIRBOSS self
+--- @param Wrapper.Unit#UNIT unit Aircraft unit.
+--- @param #number optangle (Optional) Return glide slope relative to this angle, i.e. the error from the optimal glide slope ~3.5 degrees.
+--- @return #number Glide slope angle in degrees measured from the deck of the carrier and third wire.
 function AIRBOSS:_Glideslope2( unit, optangle )
 
   if optangle == nil then
@@ -11152,10 +11152,10 @@ function AIRBOSS:_Glideslope2( unit, optangle )
 end
 
 --- Get line up of player wrt to carrier.
--- @param #AIRBOSS self
--- @param Wrapper.Unit#UNIT unit Aircraft unit.
--- @param #boolean runway If true, include angled runway.
--- @return #number Line up with runway heading in degrees. 0 degrees = perfect line up. +1 too far left. -1 too far right.
+--- @param #AIRBOSS self
+--- @param Wrapper.Unit#UNIT unit Aircraft unit.
+--- @param #boolean runway If true, include angled runway.
+--- @return #number Line up with runway heading in degrees. 0 degrees = perfect line up. +1 too far left. -1 too far right.
 function AIRBOSS:_Lineup( unit, runway )
 
   -- Landing coordinate
@@ -11204,9 +11204,9 @@ function AIRBOSS:_Lineup( unit, runway )
 end
 
 --- Get altitude of aircraft wrt carrier deck. Should give zero when the aircraft touched down.
--- @param #AIRBOSS self
--- @param Wrapper.Unit#UNIT unit Aircraft unit.
--- @return #number Altitude in meters wrt carrier height.
+--- @param #AIRBOSS self
+--- @param Wrapper.Unit#UNIT unit Aircraft unit.
+--- @return #number Altitude in meters wrt carrier height.
 function AIRBOSS:_GetAltCarrier( unit )
 
   -- TODO: Value 4 meters is for the Hornet. Adjust for Harrier, A4E and
@@ -11218,8 +11218,8 @@ function AIRBOSS:_GetAltCarrier( unit )
 end
 
 --- Get optimal landing position of the aircraft. Usually between second and third wire. In case of Tarawa, Canberrra, Juan Carlos and America we take the abeam landing spot 120 ft above and 21 ft abeam the 7.5 position, for the Juan Carlos I, HMS Invincible, and HMS Hermes and Invincible it is 120 ft above and 21 ft abeam the 5 position. For CASE III it is 120ft directly above the landing spot.
--- @param #AIRBOSS self
--- @return Core.Point#COORDINATE Optimal landing coordinate.
+--- @param #AIRBOSS self
+--- @return Core.Point#COORDINATE Optimal landing coordinate.
 function AIRBOSS:_GetOptLandingCoordinate()
 
   -- Start with stern coordiante.
@@ -11269,8 +11269,8 @@ function AIRBOSS:_GetOptLandingCoordinate()
 end
 
 --- Get landing spot on Tarawa and others.
--- @param #AIRBOSS self
--- @return Core.Point#COORDINATE Primary landing spot coordinate.
+--- @param #AIRBOSS self
+--- @return Core.Point#COORDINATE Primary landing spot coordinate.
 function AIRBOSS:_GetLandingSpotCoordinate()
 
   -- Start at stern coordinate.
@@ -11286,9 +11286,9 @@ function AIRBOSS:_GetLandingSpotCoordinate()
 end
 
 --- Get true (or magnetic) heading of carrier.
--- @param #AIRBOSS self
--- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
--- @return #number Carrier heading in degrees.
+--- @param #AIRBOSS self
+--- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
+--- @return #number Carrier heading in degrees.
 function AIRBOSS:GetHeading( magnetic )
   self:F3( { magnetic = magnetic } )
 
@@ -11310,19 +11310,19 @@ end
 
 --- Get base recovery course (BRC) of carrier.
 -- The is the magnetic heading of the carrier.
--- @param #AIRBOSS self
--- @return #number BRC in degrees.
+--- @param #AIRBOSS self
+--- @return #number BRC in degrees.
 function AIRBOSS:GetBRC()
   return self:GetHeading( true )
 end
 
 --- Get wind direction and speed at carrier position.
--- @param #AIRBOSS self
--- @param #number alt Altitude ASL in meters. Default 15 m.
--- @param #boolean magnetic Direction including magnetic declination.
--- @param Core.Point#COORDINATE coord (Optional) Coordinate at which to get the wind. Default is current carrier position.
--- @return #number Direction the wind is blowing **from** in degrees.
--- @return #number Wind speed in m/s.
+--- @param #AIRBOSS self
+--- @param #number alt Altitude ASL in meters. Default 15 m.
+--- @param #boolean magnetic Direction including magnetic declination.
+--- @param Core.Point#COORDINATE coord (Optional) Coordinate at which to get the wind. Default is current carrier position.
+--- @return #number Direction the wind is blowing **from** in degrees.
+--- @return #number Wind speed in m/s.
 function AIRBOSS:GetWind( alt, magnetic, coord )
 
   -- Current position of the carrier or input.
@@ -11344,11 +11344,11 @@ function AIRBOSS:GetWind( alt, magnetic, coord )
 end
 
 --- Get wind speed on carrier deck parallel and perpendicular to runway.
--- @param #AIRBOSS self
--- @param #number alt Altitude in meters. Default 18 m.
--- @return #number Wind component parallel to runway im m/s.
--- @return #number Wind component perpendicular to runway in m/s.
--- @return #number Total wind strength in m/s.
+--- @param #AIRBOSS self
+--- @param #number alt Altitude in meters. Default 18 m.
+--- @return #number Wind component parallel to runway im m/s.
+--- @return #number Wind component perpendicular to runway in m/s.
+--- @return #number Total wind strength in m/s.
 function AIRBOSS:GetWindOnDeck( alt )
 
   -- Position of carrier.
@@ -11389,10 +11389,10 @@ function AIRBOSS:GetWindOnDeck( alt )
 end
 
 --- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
--- @param #AIRBOSS self
--- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
--- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
--- @return #number Carrier heading in degrees.
+--- @param #AIRBOSS self
+--- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
+--- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
+--- @return #number Carrier heading in degrees.
 function AIRBOSS:GetHeadingIntoWind( magnetic, coord )
 
   -- Get direction the wind is blowing from. This is where we want to go.
@@ -11421,8 +11421,8 @@ end
 
 --- Get base recovery course (BRC) when the carrier would head into the wind.
 -- This includes the current wind direction and accounts for the angled runway.
--- @param #AIRBOSS self
--- @return #number BRC into the wind in degrees.
+--- @param #AIRBOSS self
+--- @return #number BRC into the wind in degrees.
 function AIRBOSS:GetBRCintoWind()
   -- BRC is the magnetic heading.
   return self:GetHeadingIntoWind( true )
@@ -11431,9 +11431,9 @@ end
 --- Get final bearing (FB) of carrier.
 -- By default, the routine returns the magnetic FB depending on the current map (Caucasus, NTTR, Normandy, Persion Gulf etc).
 -- The true bearing can be obtained by setting the *TrueNorth* parameter to true.
--- @param #AIRBOSS self
--- @param #boolean magnetic If true, magnetic FB is returned.
--- @return #number FB in degrees.
+--- @param #AIRBOSS self
+--- @param #boolean magnetic If true, magnetic FB is returned.
+--- @return #number FB in degrees.
 function AIRBOSS:GetFinalBearing( magnetic )
 
   -- First get the heading.
@@ -11456,12 +11456,12 @@ end
 -- * case=2: radial=HDG-180 (+offset)
 -- * case=3: radial=FB-180 (+offset)
 --
--- @param #AIRBOSS self
--- @param #number case Recovery case.
--- @param #boolean magnetic If true, magnetic radial is returned. Default is true radial.
--- @param #boolean offset If true, inlcude holding offset.
--- @param #boolean inverse Return inverse, i.e. radial-180 degrees.
--- @return #number Radial in degrees.
+--- @param #AIRBOSS self
+--- @param #number case Recovery case.
+--- @param #boolean magnetic If true, magnetic radial is returned. Default is true radial.
+--- @param #boolean offset If true, inlcude holding offset.
+--- @param #boolean inverse Return inverse, i.e. radial-180 degrees.
+--- @return #number Radial in degrees.
 function AIRBOSS:GetRadial( case, magnetic, offset, inverse )
 
   -- Case or current case.
@@ -11520,10 +11520,10 @@ function AIRBOSS:GetRadial( case, magnetic, offset, inverse )
 end
 
 --- Get difference between to headings in degrees taking into accound the [0,360) periodocity.
--- @param #AIRBOSS self
--- @param #number hdg1 Heading one.
--- @param #number hdg2 Heading two.
--- @return #number Difference between the two headings in degrees.
+--- @param #AIRBOSS self
+--- @param #number hdg1 Heading one.
+--- @param #number hdg2 Heading two.
+--- @return #number Difference between the two headings in degrees.
 function AIRBOSS:_GetDeltaHeading( hdg1, hdg2 )
 
   local V = {} -- DCS#Vec3
@@ -11544,10 +11544,10 @@ end
 --- Get relative heading of player wrt carrier.
 -- This is the angle between the direction/orientation vector of the carrier and the direction/orientation vector of the provided unit.
 -- Note that this is calculated in the X-Z plane, i.e. the altitude Y is not taken into account.
--- @param #AIRBOSS self
--- @param Wrapper.Unit#UNIT unit Player unit.
--- @param #boolean runway (Optional) If true, return relative heading of unit wrt to angled runway of the carrier.
--- @return #number Relative heading in degrees. An angle of 0 means, unit fly parallel to carrier. An angle of + or - 90 degrees means, unit flies perpendicular to carrier.
+--- @param #AIRBOSS self
+--- @param Wrapper.Unit#UNIT unit Player unit.
+--- @param #boolean runway (Optional) If true, return relative heading of unit wrt to angled runway of the carrier.
+--- @return #number Relative heading in degrees. An angle of 0 means, unit fly parallel to carrier. An angle of + or - 90 degrees means, unit flies perpendicular to carrier.
 function AIRBOSS:_GetRelativeHeading( unit, runway )
 
   -- Direction vector of the carrier.
@@ -11573,9 +11573,9 @@ function AIRBOSS:_GetRelativeHeading( unit, runway )
 end
 
 --- Get relative velocity of player unit wrt to carrier
--- @param #AIRBOSS self
--- @param Wrapper.Unit#UNIT unit Player unit.
--- @return #number Relative velocity in m/s.
+--- @param #AIRBOSS self
+--- @param Wrapper.Unit#UNIT unit Player unit.
+--- @return #number Relative velocity in m/s.
 function AIRBOSS:_GetRelativeVelocity( unit )
 
   local vC = self.carrier:GetVelocityVec3()
@@ -11591,12 +11591,12 @@ function AIRBOSS:_GetRelativeVelocity( unit )
 end
 
 --- Calculate distances between carrier and aircraft unit.
--- @param #AIRBOSS self
--- @param Wrapper.Unit#UNIT unit Aircraft unit.
--- @return #number Distance [m] in the direction of the orientation of the carrier.
--- @return #number Distance [m] perpendicular to the orientation of the carrier.
--- @return #number Distance [m] to the carrier.
--- @return #number Angle [Deg] from carrier to plane. Phi=0 if the plane is directly behind the carrier, phi=90 if the plane is starboard, phi=180 if the plane is in front of the carrier.
+--- @param #AIRBOSS self
+--- @param Wrapper.Unit#UNIT unit Aircraft unit.
+--- @return #number Distance [m] in the direction of the orientation of the carrier.
+--- @return #number Distance [m] perpendicular to the orientation of the carrier.
+--- @return #number Distance [m] to the carrier.
+--- @return #number Angle [Deg] from carrier to plane. Phi=0 if the plane is directly behind the carrier, phi=90 if the plane is starboard, phi=180 if the plane is in front of the carrier.
 function AIRBOSS:_GetDistances( unit )
 
   -- Vector to carrier
@@ -11635,11 +11635,11 @@ function AIRBOSS:_GetDistances( unit )
 end
 
 --- Check limits for reaching next step.
--- @param #AIRBOSS self
--- @param #number X X position of player unit.
--- @param #number Z Z position of player unit.
--- @param #AIRBOSS.Checkpoint check Checkpoint.
--- @return #boolean If true, checkpoint condition for next step was reached.
+--- @param #AIRBOSS self
+--- @param #number X X position of player unit.
+--- @param #number Z Z position of player unit.
+--- @param #AIRBOSS.Checkpoint check Checkpoint.
+--- @return #boolean If true, checkpoint condition for next step was reached.
 function AIRBOSS:_CheckLimits( X, Z, check )
 
   -- Limits
@@ -11663,10 +11663,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- LSO advice radio call.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @param #number glideslopeError Error in degrees.
--- @param #number lineupError Error in degrees.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #number glideslopeError Error in degrees.
+--- @param #number lineupError Error in degrees.
 function AIRBOSS:_LSOadvice( playerData, glideslopeError, lineupError )
 
   -- Advice time.
@@ -11776,9 +11776,9 @@ end
 --
 -- If you manage to be between 60.0 and 65.0 seconds in the AV-8B, you will even get and okay underline "\_OK\_"
 --
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @return #string LSO grade for time in groove, i.e. \_OK\_, OK, (OK), --.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @return #string LSO grade for time in groove, i.e. \_OK\_, OK, (OK), --.
 function AIRBOSS:_EvalGrooveTime( playerData )
 
   -- Time in groove.
@@ -11818,11 +11818,11 @@ function AIRBOSS:_EvalGrooveTime( playerData )
 end
 
 --- Grade approach.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @return #string LSO grade, i.g. _OK_, OK, (OK), --, etc.
--- @return #number Points.
--- @return #string LSO analysis of flight path.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @return #string LSO grade, i.g. _OK_, OK, (OK), --, etc.
+--- @return #number Points.
+--- @return #string LSO analysis of flight path.
 function AIRBOSS:_LSOgrade( playerData )
 
   --- Count deviations.
@@ -11976,12 +11976,12 @@ function AIRBOSS:_LSOgrade( playerData )
 end
 
 --- Grade flight data.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #string groovestep Step in the groove.
--- @param #AIRBOSS.GrooveData fdata Flight data in the groove.
--- @return #string LSO grade or empty string if flight data table is nil.
--- @return #number Number of deviations from perfect flight path.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #string groovestep Step in the groove.
+--- @param #AIRBOSS.GrooveData fdata Flight data in the groove.
+--- @return #string LSO grade or empty string if flight data table is nil.
+--- @return #number Number of deviations from perfect flight path.
 function AIRBOSS:_Flightdata2Text( playerData, groovestep )
 
   local function little( text )
@@ -12150,10 +12150,10 @@ function AIRBOSS:_Flightdata2Text( playerData, groovestep )
 end
 
 --- Get short name of the grove step.
--- @param #AIRBOSS self
--- @param #string step Player step.
--- @param #number n Use -1 for previous or +1 for next. Default 0.
--- @return #string Shortcut name "X", "RB", "IM", "AR", "IW".
+--- @param #AIRBOSS self
+--- @param #string step Player step.
+--- @param #number n Use -1 for previous or +1 for next. Default 0.
+--- @return #string Shortcut name "X", "RB", "IM", "AR", "IW".
 function AIRBOSS:_GS( step, n )
   local gp
   n = n or 0
@@ -12223,11 +12223,11 @@ function AIRBOSS:_GS( step, n )
 end
 
 --- Check if a player is within the right area.
--- @param #AIRBOSS self
--- @param #number X X distance player to carrier.
--- @param #number Z Z distance player to carrier.
--- @param #AIRBOSS.Checkpoint pos Position data limits.
--- @return #boolean If true, approach should be aborted.
+--- @param #AIRBOSS self
+--- @param #number X X distance player to carrier.
+--- @param #number Z Z distance player to carrier.
+--- @param #AIRBOSS.Checkpoint pos Position data limits.
+--- @return #boolean If true, approach should be aborted.
 function AIRBOSS:_CheckAbort( X, Z, pos )
 
   local abort = false
@@ -12249,10 +12249,10 @@ function AIRBOSS:_CheckAbort( X, Z, pos )
 end
 
 --- Generate a text if a player is too far from where he should be.
--- @param #AIRBOSS self
--- @param #number X X distance player to carrier.
--- @param #number Z Z distance player to carrier.
--- @param #AIRBOSS.Checkpoint posData Checkpoint data.
+--- @param #AIRBOSS self
+--- @param #number X X distance player to carrier.
+--- @param #number Z Z distance player to carrier.
+--- @param #AIRBOSS.Checkpoint posData Checkpoint data.
 function AIRBOSS:_TooFarOutText( X, Z, posData )
 
   -- Intro.
@@ -12311,12 +12311,12 @@ function AIRBOSS:_TooFarOutText( X, Z, posData )
 end
 
 --- Pattern aborted.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #number X X distance player to carrier.
--- @param #number Z Z distance player to carrier.
--- @param #AIRBOSS.Checkpoint posData Checkpoint data.
--- @param #boolean patternwo (Optional) Pattern wave off.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #number X X distance player to carrier.
+--- @param #number Z Z distance player to carrier.
+--- @param #AIRBOSS.Checkpoint posData Checkpoint data.
+--- @param #boolean patternwo (Optional) Pattern wave off.
 function AIRBOSS:_AbortPattern( playerData, X, Z, posData, patternwo )
 
   -- Text where we are wrong.
@@ -12349,10 +12349,10 @@ function AIRBOSS:_AbortPattern( playerData, X, Z, posData, patternwo )
 end
 
 --- Display hint to player.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @param #number delay Delay before playing sound messages. Default 0 sec.
--- @param #boolean soundoff If true, don't play and sound hint.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #number delay Delay before playing sound messages. Default 0 sec.
+--- @param #boolean soundoff If true, don't play and sound hint.
 function AIRBOSS:_PlayerHint( playerData, delay, soundoff )
 
   -- No hint for the pros.
@@ -12479,9 +12479,9 @@ function AIRBOSS:_PlayerHint( playerData, delay, soundoff )
 end
 
 --- Display hint for flight students about the (next) step. Message is displayed after one second.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #string step Step for which hint is given.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #string step Step for which hint is given.
 function AIRBOSS:_StepHint( playerData, step )
 
   -- Set step.
@@ -12549,12 +12549,12 @@ function AIRBOSS:_StepHint( playerData, step )
 end
 
 --- Evaluate player's altitude at checkpoint.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @param #number altopt Optimal altitude in meters.
--- @return #string Feedback text.
--- @return #string Debriefing text.
--- @return #AIRBOSS.RadioCall Radio call.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #number altopt Optimal altitude in meters.
+--- @return #string Feedback text.
+--- @return #string Debriefing text.
+--- @return #AIRBOSS.RadioCall Radio call.
 function AIRBOSS:_AltitudeCheck( playerData, altopt )
 
   if altopt == nil then
@@ -12609,12 +12609,12 @@ function AIRBOSS:_AltitudeCheck( playerData, altopt )
 end
 
 --- Score for correct AoA.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #number optaoa Optimal AoA.
--- @return #string Feedback message text or easy and normal difficulty level or nil for hard.
--- @return #string Debriefing text.
--- @return #AIRBOSS.RadioCall Radio call.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #number optaoa Optimal AoA.
+--- @return #string Feedback message text or easy and normal difficulty level or nil for hard.
+--- @return #string Debriefing text.
+--- @return #AIRBOSS.RadioCall Radio call.
 function AIRBOSS:_AoACheck( playerData, optaoa )
 
   if optaoa == nil then
@@ -12677,12 +12677,12 @@ function AIRBOSS:_AoACheck( playerData, optaoa )
 end
 
 --- Evaluate player's speed.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @param #number speedopt Optimal speed in m/s.
--- @return #string Feedback text.
--- @return #string Debriefing text.
--- @return #AIRBOSS.RadioCall Radio call.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #number speedopt Optimal speed in m/s.
+--- @return #string Feedback text.
+--- @return #string Debriefing text.
+--- @return #AIRBOSS.RadioCall Radio call.
 function AIRBOSS:_SpeedCheck( playerData, speedopt )
 
   if speedopt == nil then
@@ -12736,12 +12736,12 @@ function AIRBOSS:_SpeedCheck( playerData, speedopt )
 end
 
 --- Evaluate player's distance to the boat at checkpoint.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @param #number optdist Optimal distance in meters.
--- @return #string Feedback message text.
--- @return #string Debriefing text.
--- @return #AIRBOSS.RadioCall Distance radio call. Not implemented yet.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #number optdist Optimal distance in meters.
+--- @return #string Feedback message text.
+--- @return #string Debriefing text.
+--- @return #AIRBOSS.RadioCall Distance radio call. Not implemented yet.
 function AIRBOSS:_DistanceCheck( playerData, optdist )
 
   if optdist == nil then
@@ -12793,18 +12793,18 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Append text to debriefing.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #string hint Debrief text of this step.
--- @param #string step (Optional) Current step in the pattern. Default from playerData.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #string hint Debrief text of this step.
+--- @param #string step (Optional) Current step in the pattern. Default from playerData.
 function AIRBOSS:_AddToDebrief( playerData, hint, step )
   step = step or playerData.step
   table.insert( playerData.debrief, { step = step, hint = hint } )
 end
 
 --- Debrief player and set next step.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
 function AIRBOSS:_Debrief( playerData )
   self:F( self.lid .. string.format( "Debriefing of player %s.", playerData.name ) )
 
@@ -13105,11 +13105,11 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check for possible collisions between two coordinates.
--- @param #AIRBOSS self
--- @param Core.Point#COORDINATE coordto Coordinate to which the collision is check.
--- @param Core.Point#COORDINATE coordfrom Coordinate from which the collision is check.
--- @return #boolean If true, surface type ahead is not deep water.
--- @return #number Max free distance in meters.
+--- @param #AIRBOSS self
+--- @param Core.Point#COORDINATE coordto Coordinate to which the collision is check.
+--- @param Core.Point#COORDINATE coordfrom Coordinate from which the collision is check.
+--- @return #boolean If true, surface type ahead is not deep water.
+--- @return #number Max free distance in meters.
 function AIRBOSS:_CheckCollisionCoord( coordto, coordfrom )
 
   -- Increment in meters.
@@ -13167,9 +13167,9 @@ function AIRBOSS:_CheckCollisionCoord( coordto, coordfrom )
 end
 
 --- Check Collision.
--- @param #AIRBOSS self
--- @param Core.Point#COORDINATE fromcoord Coordinate from which the path to the next WP is calculated. Default current carrier position.
--- @return #boolean If true, surface type ahead is not deep water.
+--- @param #AIRBOSS self
+--- @param Core.Point#COORDINATE fromcoord Coordinate from which the path to the next WP is calculated. Default current carrier position.
+--- @return #boolean If true, surface type ahead is not deep water.
 function AIRBOSS:_CheckFreePathToNextWP( fromcoord )
 
   -- Position.
@@ -13188,7 +13188,7 @@ function AIRBOSS:_CheckFreePathToNextWP( fromcoord )
 end
 
 --- Find free path to the next waypoint.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_Pathfinder()
 
   -- Heading and current coordiante.
@@ -13232,9 +13232,9 @@ function AIRBOSS:_Pathfinder()
 end
 
 --- Carrier resumes the route at its next waypoint.
--- @param #AIRBOSS self
--- @param Core.Point#COORDINATE gotocoord (Optional) First goto this coordinate before resuming route.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param Core.Point#COORDINATE gotocoord (Optional) First goto this coordinate before resuming route.
+--- @return #AIRBOSS self
 function AIRBOSS:CarrierResumeRoute( gotocoord )
 
   -- Make carrier resume its route.
@@ -13244,13 +13244,13 @@ function AIRBOSS:CarrierResumeRoute( gotocoord )
 end
 
 --- Let the carrier make a detour to a given point. When it reaches the point, it will resume its normal route.
--- @param #AIRBOSS self
--- @param Core.Point#COORDINATE coord Coordinate of the detour.
--- @param #number speed Speed in knots. Default is current carrier velocity.
--- @param #boolean uturn (Optional) If true, carrier will go back to where it came from before it resumes its route to the next waypoint.
--- @param #number uspeed Speed in knots after U-turn. Default is same as before.
--- @param Core.Point#COORDINATE tcoord Additional coordinate to make turn smoother.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param Core.Point#COORDINATE coord Coordinate of the detour.
+--- @param #number speed Speed in knots. Default is current carrier velocity.
+--- @param #boolean uturn (Optional) If true, carrier will go back to where it came from before it resumes its route to the next waypoint.
+--- @param #number uspeed Speed in knots after U-turn. Default is same as before.
+--- @param Core.Point#COORDINATE tcoord Additional coordinate to make turn smoother.
+--- @return #AIRBOSS self
 function AIRBOSS:CarrierDetour( coord, speed, uturn, uspeed, tcoord )
 
   -- Current coordinate of the carrier.
@@ -13318,11 +13318,11 @@ function AIRBOSS:CarrierDetour( coord, speed, uturn, uspeed, tcoord )
 end
 
 --- Let the carrier turn into the wind.
--- @param #AIRBOSS self
--- @param #number time Time in seconds.
--- @param #number vdeck Speed on deck m/s. Carrier will
--- @param #boolean uturn Make U-turn and go back to initial after downwind leg.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number time Time in seconds.
+--- @param #number vdeck Speed on deck m/s. Carrier will
+--- @param #boolean uturn Make U-turn and go back to initial after downwind leg.
+--- @return #AIRBOSS self
 function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
 
   -- Wind speed.
@@ -13430,9 +13430,9 @@ function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
 end
 
 --- Get next waypoint of the carrier.
--- @param #AIRBOSS self
--- @return Core.Point#COORDINATE Coordinate of the next waypoint.
--- @return #number Number of waypoint.
+--- @param #AIRBOSS self
+--- @return Core.Point#COORDINATE Coordinate of the next waypoint.
+--- @return #number Number of waypoint.
 function AIRBOSS:_GetNextWaypoint()
 
   -- Next waypoint.
@@ -13454,8 +13454,8 @@ function AIRBOSS:_GetNextWaypoint()
 end
 
 --- Initialize Mission Editor waypoints.
--- @param #AIRBOSS self
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @return #AIRBOSS self
 function AIRBOSS:_InitWaypoints()
 
   -- Waypoints of group as defined in the ME.
@@ -13487,9 +13487,9 @@ function AIRBOSS:_InitWaypoints()
 end
 
 --- Patrol carrier.
--- @param #AIRBOSS self
--- @param #number n Next waypoint number.
--- @return #AIRBOSS self
+--- @param #AIRBOSS self
+--- @param #number n Next waypoint number.
+--- @return #AIRBOSS self
 function AIRBOSS:_PatrolRoute( n )
 
   -- Get next waypoint coordinate and number.
@@ -13534,8 +13534,8 @@ function AIRBOSS:_PatrolRoute( n )
 end
 
 --- Estimated the carrier position at some point in the future given the current waypoints and speeds.
--- @param #AIRBOSS self
--- @return DCS#time ETA abs. time in seconds.
+--- @param #AIRBOSS self
+--- @return DCS#time ETA abs. time in seconds.
 function AIRBOSS:_GetETAatNextWP()
 
   -- Current waypoint
@@ -13572,7 +13572,7 @@ function AIRBOSS:_GetETAatNextWP()
 end
 
 --- Check if carrier is turning. If turning started or stopped, we inform the players via radio message.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_CheckCarrierTurning()
 
   -- Current orientation of carrier.
@@ -13633,7 +13633,7 @@ function AIRBOSS:_CheckCarrierTurning()
 end
 
 --- Check if heading or position of carrier have changed significantly.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_CheckPatternUpdate()
 
   ----------------------------------------
@@ -13729,10 +13729,10 @@ function AIRBOSS:_CheckPatternUpdate()
 end
 
 --- Function called when a group is passing a waypoint.
--- @param Wrapper.Group#GROUP group Group that passed the waypoint
--- @param #AIRBOSS airboss Airboss object.
--- @param #number i Waypoint number that has been reached.
--- @param #number final Final waypoint number.
+--- @param Wrapper.Group#GROUP group Group that passed the waypoint
+--- @param #AIRBOSS airboss Airboss object.
+--- @param #number i Waypoint number that has been reached.
+--- @param #number final Final waypoint number.
 function AIRBOSS._PassingWaypoint( group, airboss, i, final )
 
   -- Debug message.
@@ -13765,9 +13765,9 @@ function AIRBOSS._PassingWaypoint( group, airboss, i, final )
 end
 
 --- Carrier Strike Group resumes the route of the waypoints defined in the mission editor.
--- @param Wrapper.Group#GROUP group Carrier Strike Group that passed the waypoint.
--- @param #AIRBOSS airboss Airboss object.
--- @param Core.Point#COORDINATE gotocoord Go to coordinate before route is resumed.
+--- @param Wrapper.Group#GROUP group Carrier Strike Group that passed the waypoint.
+--- @param #AIRBOSS airboss Airboss object.
+--- @param Core.Point#COORDINATE gotocoord Go to coordinate before route is resumed.
 function AIRBOSS._ResumeRoute( group, airboss, gotocoord )
 
   -- Get next waypoint
@@ -13874,9 +13874,9 @@ function AIRBOSS._ResumeRoute( group, airboss, gotocoord )
 end
 
 --- Function called when a group has reached the holding zone.
--- @param Wrapper.Group#GROUP group Group that reached the holding zone.
--- @param #AIRBOSS airboss Airboss object.
--- @param #AIRBOSS.FlightGroup flight Flight group that has reached the holding zone.
+--- @param Wrapper.Group#GROUP group Group that reached the holding zone.
+--- @param #AIRBOSS airboss Airboss object.
+--- @param #AIRBOSS.FlightGroup flight Flight group that has reached the holding zone.
 function AIRBOSS._ReachedHoldingZone( group, airboss, flight )
 
   -- Debug message.
@@ -13897,9 +13897,9 @@ function AIRBOSS._ReachedHoldingZone( group, airboss, flight )
 end
 
 --- Function called when a group should be send to the Marshal stack. If stack is full, it is send to wait.
--- @param Wrapper.Group#GROUP group Group that reached the holding zone.
--- @param #AIRBOSS airboss Airboss object.
--- @param #AIRBOSS.FlightGroup flight Flight group that has reached the holding zone.
+--- @param Wrapper.Group#GROUP group Group that reached the holding zone.
+--- @param #AIRBOSS airboss Airboss object.
+--- @param #AIRBOSS.FlightGroup flight Flight group that has reached the holding zone.
 function AIRBOSS._TaskFunctionMarshalAI( group, airboss, flight )
 
   -- Debug message.
@@ -13939,9 +13939,9 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get aircraft nickname.
--- @param #AIRBOSS self
--- @param #string actype Aircraft type name.
--- @return #string Aircraft nickname. E.g. "Hornet" for the F/A-18C or "Tomcat" For the F-14A.
+--- @param #AIRBOSS self
+--- @param #string actype Aircraft type name.
+--- @return #string Aircraft nickname. E.g. "Hornet" for the F/A-18C or "Tomcat" For the F-14A.
 function AIRBOSS:_GetACNickname( actype )
 
   local nickname = "unknown"
@@ -13965,18 +13965,18 @@ function AIRBOSS:_GetACNickname( actype )
 end
 
 --- Get onboard number of player or client.
--- @param #AIRBOSS self
--- @param Wrapper.Group#GROUP group Aircraft group.
--- @return #string Onboard number as string.
+--- @param #AIRBOSS self
+--- @param Wrapper.Group#GROUP group Aircraft group.
+--- @return #string Onboard number as string.
 function AIRBOSS:_GetOnboardNumberPlayer( group )
   return self:_GetOnboardNumbers( group, true )
 end
 
 --- Get onboard numbers of all units in a group.
--- @param #AIRBOSS self
--- @param Wrapper.Group#GROUP group Aircraft group.
--- @param #boolean playeronly If true, return the onboard number for player or client skill units.
--- @return #table Table of onboard numbers.
+--- @param #AIRBOSS self
+--- @param Wrapper.Group#GROUP group Aircraft group.
+--- @param #boolean playeronly If true, return the onboard number for player or client skill units.
+--- @return #table Table of onboard numbers.
 function AIRBOSS:_GetOnboardNumbers( group, playeronly )
   -- self:F({groupname=group:GetName})
 
@@ -14017,7 +14017,7 @@ function AIRBOSS:_GetOnboardNumbers( group, playeronly )
 end
 
 --- Get Tower frequency of carrier.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_GetTowerFrequency()
 
   -- Tower frequency in MHz
@@ -14041,10 +14041,10 @@ end
 -- * Naval Aviators: 5% and 10%
 -- * TOPGUN Graduates: 2.5% and 5%
 --
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @return #number Error margin for still being okay.
--- @return #number Error margin for really sucking.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @return #number Error margin for still being okay.
+--- @return #number Error margin for really sucking.
 function AIRBOSS:_GetGoodBadScore( playerData )
 
   local lowscore
@@ -14064,9 +14064,9 @@ function AIRBOSS:_GetGoodBadScore( playerData )
 end
 
 --- Check if aircraft is capable of landing on this aircraft carrier.
--- @param #AIRBOSS self
--- @param Wrapper.Unit#UNIT unit Aircraft unit. (Will also work with groups as given parameter.)
--- @return #boolean If true, aircraft can land on a carrier.
+--- @param #AIRBOSS self
+--- @param Wrapper.Unit#UNIT unit Aircraft unit. (Will also work with groups as given parameter.)
+--- @return #boolean If true, aircraft can land on a carrier.
 function AIRBOSS:_IsCarrierAircraft( unit )
 
   -- Get aircraft type name
@@ -14102,9 +14102,9 @@ function AIRBOSS:_IsCarrierAircraft( unit )
 end
 
 --- Checks if a human player sits in the unit.
--- @param #AIRBOSS self
--- @param Wrapper.Unit#UNIT unit Aircraft unit.
--- @return #boolean If true, human player inside the unit.
+--- @param #AIRBOSS self
+--- @param Wrapper.Unit#UNIT unit Aircraft unit.
+--- @return #boolean If true, human player inside the unit.
 function AIRBOSS:_IsHumanUnit( unit )
 
   -- Get player unit or nil if no player unit.
@@ -14118,9 +14118,9 @@ function AIRBOSS:_IsHumanUnit( unit )
 end
 
 --- Checks if a group has a human player.
--- @param #AIRBOSS self
--- @param Wrapper.Group#GROUP group Aircraft group.
--- @return #boolean If true, human player inside group.
+--- @param #AIRBOSS self
+--- @param Wrapper.Group#GROUP group Aircraft group.
+--- @return #boolean If true, human player inside group.
 function AIRBOSS:_IsHuman( group )
 
   -- Get all units of the group.
@@ -14139,9 +14139,9 @@ function AIRBOSS:_IsHuman( group )
 end
 
 --- Get fuel state in pounds.
--- @param #AIRBOSS self
--- @param Wrapper.Unit#UNIT unit The unit for which the mass is determined.
--- @return #number Fuel state in pounds.
+--- @param #AIRBOSS self
+--- @param Wrapper.Unit#UNIT unit The unit for which the mass is determined.
+--- @return #number Fuel state in pounds.
 function AIRBOSS:_GetFuelState( unit )
 
   -- Get relative fuel [0,1].
@@ -14160,9 +14160,9 @@ function AIRBOSS:_GetFuelState( unit )
 end
 
 --- Convert altitude from meters to angels (thousands of feet).
--- @param #AIRBOSS self
--- @param alt altitude in meters.
--- @return #number Altitude in Anglels = thousands of feet using math.floor().
+--- @param #AIRBOSS self
+--- @param alt altitude in meters.
+--- @return #number Altitude in Anglels = thousands of feet using math.floor().
 function AIRBOSS:_GetAngels( alt )
 
   if alt then
@@ -14175,12 +14175,12 @@ function AIRBOSS:_GetAngels( alt )
 end
 
 --- Get unit masses especially fuel from DCS descriptor values.
--- @param #AIRBOSS self
--- @param Wrapper.Unit#UNIT unit The unit for which the mass is determined.
--- @return #number Mass of fuel in kg.
--- @return #number Empty weight of unit in kg.
--- @return #number Max weight of unit in kg.
--- @return #number Max cargo weight in kg.
+--- @param #AIRBOSS self
+--- @param Wrapper.Unit#UNIT unit The unit for which the mass is determined.
+--- @return #number Mass of fuel in kg.
+--- @return #number Empty weight of unit in kg.
+--- @return #number Max weight of unit in kg.
+--- @return #number Max cargo weight in kg.
 function AIRBOSS:_GetUnitMasses( unit )
 
   -- Get DCS descriptors table.
@@ -14205,9 +14205,9 @@ function AIRBOSS:_GetUnitMasses( unit )
 end
 
 --- Get player data from unit object
--- @param #AIRBOSS self
--- @param Wrapper.Unit#UNIT unit Unit in question.
--- @return #AIRBOSS.PlayerData Player data or nil if not player with this name or unit exists.
+--- @param #AIRBOSS self
+--- @param Wrapper.Unit#UNIT unit Unit in question.
+--- @return #AIRBOSS.PlayerData Player data or nil if not player with this name or unit exists.
 function AIRBOSS:_GetPlayerDataUnit( unit )
   if unit:IsAlive() then
     local unitname = unit:GetName()
@@ -14220,9 +14220,9 @@ function AIRBOSS:_GetPlayerDataUnit( unit )
 end
 
 --- Get player data from group object.
--- @param #AIRBOSS self
--- @param Wrapper.Group#GROUP group Group in question.
--- @return #AIRBOSS.PlayerData Player data or nil if not player with this name or unit exists.
+--- @param #AIRBOSS self
+--- @param Wrapper.Group#GROUP group Group in question.
+--- @return #AIRBOSS.PlayerData Player data or nil if not player with this name or unit exists.
 function AIRBOSS:_GetPlayerDataGroup( group )
   local units = group:GetUnits()
   for _, unit in pairs( units ) do
@@ -14235,10 +14235,10 @@ function AIRBOSS:_GetPlayerDataGroup( group )
 end
 
 --- Returns the unit of a player and the player name from the self.players table if it exists.
--- @param #AIRBOSS self
--- @param #string _unitName Name of the player unit.
--- @return Wrapper.Unit#UNIT Unit of player or nil.
--- @return #string Name of player or nil.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name of the player unit.
+--- @return Wrapper.Unit#UNIT Unit of player or nil.
+--- @return #string Name of player or nil.
 function AIRBOSS:_GetPlayerUnit( _unitName )
 
   for _, _player in pairs( self.players ) do
@@ -14256,10 +14256,10 @@ function AIRBOSS:_GetPlayerUnit( _unitName )
 end
 
 --- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned.
--- @param #AIRBOSS self
--- @param #string _unitName Name of the player unit.
--- @return Wrapper.Unit#UNIT Unit of player or nil.
--- @return #string Name of the player or nil.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name of the player unit.
+--- @return Wrapper.Unit#UNIT Unit of player or nil.
+--- @return #string Name of the player or nil.
 function AIRBOSS:_GetPlayerUnitAndName( _unitName )
   self:F2( _unitName )
 
@@ -14302,32 +14302,32 @@ function AIRBOSS:_GetPlayerUnitAndName( _unitName )
 end
 
 --- Get carrier coalition.
--- @param #AIRBOSS self
--- @return #number Coalition side of carrier.
+--- @param #AIRBOSS self
+--- @return #number Coalition side of carrier.
 function AIRBOSS:GetCoalition()
   return self.carrier:GetCoalition()
 end
 
 --- Get carrier coordinate.
--- @param #AIRBOSS self
--- @return Core.Point#COORDINATE Carrier coordinate.
+--- @param #AIRBOSS self
+--- @return Core.Point#COORDINATE Carrier coordinate.
 function AIRBOSS:GetCoordinate()
   return self.carrier:GetCoord()
 end
 
 --- Get carrier coordinate.
--- @param #AIRBOSS self
--- @return Core.Point#COORDINATE Carrier coordinate.
+--- @param #AIRBOSS self
+--- @return Core.Point#COORDINATE Carrier coordinate.
 function AIRBOSS:GetCoord()
   return self.carrier:GetCoord()
 end
 
 --- Get static weather of this mission from env.mission.weather.
--- @param #AIRBOSS self
--- @param #table Clouds table which has entries "thickness", "density", "base", "iprecptns".
--- @param #number Visibility distance in meters.
--- @param #table Fog table, which has entries "thickness", "visibility" or nil if fog is disabled in the mission.
--- @param #number Dust density or nil if dust is disabled in the mission.
+--- @param #AIRBOSS self
+--- @param #table Clouds table which has entries "thickness", "density", "base", "iprecptns".
+--- @param #number Visibility distance in meters.
+--- @param #table Fog table, which has entries "thickness", "visibility" or nil if fog is disabled in the mission.
+--- @param #number Dust density or nil if dust is disabled in the mission.
 function AIRBOSS:_GetStaticWeather()
 
   -- Weather data from mission file.
@@ -14380,27 +14380,27 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Function called by DCS timer. Unused.
--- @param #table param Parameters.
--- @param #number time Time.
+--- @param #table param Parameters.
+--- @param #number time Time.
 function AIRBOSS._CheckRadioQueueT( param, time )
   AIRBOSS._CheckRadioQueue( param.airboss, param.radioqueue, param.name )
   return time + 0.05
 end
 
 --- Radio queue item.
--- @type AIRBOSS.Radioitem
--- @field #number Tplay Abs time when transmission should be played.
--- @field #number Tstarted Abs time when transmission began to play.
--- @field #boolean isplaying Currently playing.
--- @field #AIRBOSS.Radio radio Radio object.
--- @field #AIRBOSS.RadioCall call Radio call.
--- @field #boolean loud If true, play loud version of file.
--- @field #number interval Interval in seconds after the last sound was played.
+--- @type AIRBOSS.Radioitem
+--- @field #number Tplay Abs time when transmission should be played.
+--- @field #number Tstarted Abs time when transmission began to play.
+--- @field #boolean isplaying Currently playing.
+--- @field #AIRBOSS.Radio radio Radio object.
+--- @field #AIRBOSS.RadioCall call Radio call.
+--- @field #boolean loud If true, play loud version of file.
+--- @field #number interval Interval in seconds after the last sound was played.
 
 --- Check radio queue for transmissions to be broadcasted.
--- @param #AIRBOSS self
--- @param #table radioqueue The radio queue.
--- @param #string name Name of the queue.
+--- @param #AIRBOSS self
+--- @param #table radioqueue The radio queue.
+--- @param #string name Name of the queue.
 function AIRBOSS:_CheckRadioQueue( radioqueue, name )
 
   -- env.info(string.format("FF %s #radioqueue %d", name, #radioqueue))
@@ -14513,14 +14513,14 @@ function AIRBOSS:_CheckRadioQueue( radioqueue, name )
 end
 
 --- Add Radio transmission to radio queue.
--- @param #AIRBOSS self
--- @param #AIRBOSS.Radio radio Radio sending the transmission.
--- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
--- @param #boolean loud If true, play loud sound file version.
--- @param #number delay Delay in seconds, before the message is broadcasted.
--- @param #number interval Interval in seconds after the last sound has been played.
--- @param #boolean click If true, play radio click at the end.
--- @param #boolean pilotcall If true, it's a pilot call.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.Radio radio Radio sending the transmission.
+--- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
+--- @param #boolean loud If true, play loud sound file version.
+--- @param #number delay Delay in seconds, before the message is broadcasted.
+--- @param #number interval Interval in seconds after the last sound has been played.
+--- @param #boolean click If true, play radio click at the end.
+--- @param #boolean pilotcall If true, it's a pilot call.
 function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, pilotcall )
   self:F2( { radio = radio, call = call, loud = loud, delay = delay, interval = interval, click = click } )
 
@@ -14584,9 +14584,9 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
 end
 
 --- Check if a call needs a subtitle because the complete voice overs are not available.
--- @param #AIRBOSS self
--- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
--- @return #boolean If true, call needs a subtitle.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
+--- @return #boolean If true, call needs a subtitle.
 function AIRBOSS:_NeedsSubtitle( call )
   -- Currently we play the noise file.
   if call.file == self.MarshalCall.NOISE.file or call.file == self.LSOCall.NOISE.file then
@@ -14597,10 +14597,10 @@ function AIRBOSS:_NeedsSubtitle( call )
 end
 
 --- Broadcast radio message.
--- @param #AIRBOSS self
--- @param #AIRBOSS.Radio radio Radio sending transmission.
--- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
--- @param #boolean loud Play loud version of file.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.Radio radio Radio sending transmission.
+--- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
+--- @param #boolean loud Play loud version of file.
 function AIRBOSS:Broadcast( radio, call, loud )
   self:F( call )
 
@@ -14714,12 +14714,12 @@ function AIRBOSS:Broadcast( radio, call, loud )
 end
 
 --- Player user sound to player if he is inside the CCA.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #AIRBOSS.Radio radio The radio used for transmission.
--- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
--- @param #boolean loud If true, play loud sound file version.
--- @param #number delay Delay in seconds, before the message is broadcasted.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #AIRBOSS.Radio radio The radio used for transmission.
+--- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
+--- @param #boolean loud If true, play loud sound file version.
+--- @param #number delay Delay in seconds, before the message is broadcasted.
 function AIRBOSS:Sound2Player( playerData, radio, call, loud, delay )
 
   -- Only to players inside the CCA.
@@ -14743,11 +14743,11 @@ function AIRBOSS:Sound2Player( playerData, radio, call, loud, delay )
 end
 
 --- Create radio subtitle from radio call.
--- @param #AIRBOSS self
--- @param #AIRBOSS.Radio radio The radio used for transmission.
--- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
--- @param #boolean loud If true, append "!" else ".".
--- @return #string Subtitle to be displayed.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.Radio radio The radio used for transmission.
+--- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
+--- @param #boolean loud If true, append "!" else ".".
+--- @return #string Subtitle to be displayed.
 function AIRBOSS:_RadioSubtitle( radio, call, loud )
 
   -- No subtitle if call is nil, or subtitle is nil or subtitle is empty.
@@ -14793,11 +14793,11 @@ function AIRBOSS:_RadioSubtitle( radio, call, loud )
 end
 
 --- Get full file name for radio call.
--- @param #AIRBOSS self
--- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
--- @param #boolean loud Use loud version of file if available.
--- @param #string channel Radio channel alias "LSO" or "LSOCall", "MARSHAL" or "MarshalCall".
--- @return #string The file name of the radio sound.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
+--- @param #boolean loud Use loud version of file if available.
+--- @param #string channel Radio channel alias "LSO" or "LSOCall", "MARSHAL" or "MarshalCall".
+--- @return #string The file name of the radio sound.
 function AIRBOSS:_RadioFilename( call, loud, channel )
 
   -- Construct file name and subtitle.
@@ -14828,14 +14828,14 @@ end
 
 --- Send text message to player client.
 -- Message format will be "SENDER: RECCEIVER, MESSAGE".
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #string message The message to send.
--- @param #string sender The person who sends the message or nil.
--- @param #string receiver The person who receives the message. Default player's onboard number. Set to "" for no receiver.
--- @param #number duration Display message duration. Default 10 seconds.
--- @param #boolean clear If true, clear screen from previous messages.
--- @param #number delay Delay in seconds, before the message is displayed.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #string message The message to send.
+--- @param #string sender The person who sends the message or nil.
+--- @param #string receiver The person who receives the message. Default player's onboard number. Set to "" for no receiver.
+--- @param #number duration Display message duration. Default 10 seconds.
+--- @param #boolean clear If true, clear screen from previous messages.
+--- @param #number delay Delay in seconds, before the message is displayed.
 function AIRBOSS:MessageToPlayer( playerData, message, sender, receiver, duration, clear, delay )
 
   if playerData and message and message ~= "" then
@@ -14915,13 +14915,13 @@ end
 
 --- Send text message to all players in the pattern queue.
 -- Message format will be "SENDER: RECCEIVER, MESSAGE".
--- @param #AIRBOSS self
--- @param #string message The message to send.
--- @param #string sender The person who sends the message or nil.
--- @param #string receiver The person who receives the message. Default player's onboard number. Set to "" for no receiver.
--- @param #number duration Display message duration. Default 10 seconds.
--- @param #boolean clear If true, clear screen from previous messages.
--- @param #number delay Delay in seconds, before the message is displayed.
+--- @param #AIRBOSS self
+--- @param #string message The message to send.
+--- @param #string sender The person who sends the message or nil.
+--- @param #string receiver The person who receives the message. Default player's onboard number. Set to "" for no receiver.
+--- @param #number duration Display message duration. Default 10 seconds.
+--- @param #boolean clear If true, clear screen from previous messages.
+--- @param #number delay Delay in seconds, before the message is displayed.
 function AIRBOSS:MessageToPattern( message, sender, receiver, duration, clear, delay )
 
   -- Create new (fake) radio call to show the subtitile.
@@ -14934,13 +14934,13 @@ end
 
 --- Send text message to all players in the marshal queue.
 -- Message format will be "SENDER: RECCEIVER, MESSAGE".
--- @param #AIRBOSS self
--- @param #string message The message to send.
--- @param #string sender The person who sends the message or nil.
--- @param #string receiver The person who receives the message. Default player's onboard number. Set to "" for no receiver.
--- @param #number duration Display message duration. Default 10 seconds.
--- @param #boolean clear If true, clear screen from previous messages.
--- @param #number delay Delay in seconds, before the message is displayed.
+--- @param #AIRBOSS self
+--- @param #string message The message to send.
+--- @param #string sender The person who sends the message or nil.
+--- @param #string receiver The person who receives the message. Default player's onboard number. Set to "" for no receiver.
+--- @param #number duration Display message duration. Default 10 seconds.
+--- @param #boolean clear If true, clear screen from previous messages.
+--- @param #number delay Delay in seconds, before the message is displayed.
 function AIRBOSS:MessageToMarshal( message, sender, receiver, duration, clear, delay )
 
   -- Create new (fake) radio call to show the subtitile.
@@ -14952,13 +14952,13 @@ function AIRBOSS:MessageToMarshal( message, sender, receiver, duration, clear, d
 end
 
 --- Generate a new radio call (deepcopy) from an existing default call.
--- @param #AIRBOSS self
--- @param #AIRBOSS.RadioCall call Radio call to be enhanced.
--- @param #string sender Sender of the message. Default is the radio alias.
--- @param #string subtitle Subtitle of the message. Default from original radio call. Use "" for no subtitle.
--- @param #number subduration Time in seconds the subtitle is displayed. Default 10 seconds.
--- @param #string modexreceiver Onboard number of the receiver or nil.
--- @param #string modexsender Onboard number of the sender or nil.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.RadioCall call Radio call to be enhanced.
+--- @param #string sender Sender of the message. Default is the radio alias.
+--- @param #string subtitle Subtitle of the message. Default from original radio call. Use "" for no subtitle.
+--- @param #number subduration Time in seconds the subtitle is displayed. Default 10 seconds.
+--- @param #string modexreceiver Onboard number of the receiver or nil.
+--- @param #string modexsender Onboard number of the sender or nil.
 function AIRBOSS:_NewRadioCall( call, sender, subtitle, subduration, modexreceiver, modexsender )
 
   -- Create a new call
@@ -14987,9 +14987,9 @@ function AIRBOSS:_NewRadioCall( call, sender, subtitle, subduration, modexreceiv
 end
 
 --- Get unit from which we want to transmit a radio message. This has to be an aircraft for subtitles to work.
--- @param #AIRBOSS self
--- @param #AIRBOSS.Radio radio Airboss radio data.
--- @return Wrapper.Unit#UNIT Sending aircraft unit or nil if was not setup, is not an aircraft or is not alive.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.Radio radio Airboss radio data.
+--- @return Wrapper.Unit#UNIT Sending aircraft unit or nil if was not setup, is not an aircraft or is not alive.
 function AIRBOSS:_GetRadioSender( radio )
 
   -- Check if we have a sending aircraft.
@@ -15023,9 +15023,9 @@ function AIRBOSS:_GetRadioSender( radio )
 end
 
 --- Check if text is an onboard number of a flight.
--- @param #AIRBOSS self
--- @param #string text Text to check.
--- @return #boolean If true, text is an onboard number of a flight.
+--- @param #AIRBOSS self
+--- @param #string text Text to check.
+--- @return #boolean If true, text is an onboard number of a flight.
 function AIRBOSS:_IsOnboard( text )
 
   -- Nil check.
@@ -15055,12 +15055,12 @@ function AIRBOSS:_IsOnboard( text )
 end
 
 --- Convert a number (as string) into an outsound and play it to a player group. E.g. for board number or headings.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #string sender Who is sending the call, either "LSO" or "MARSHAL".
--- @param #string number Number string, e.g. "032" or "183".
--- @param #number delay Delay before transmission in seconds.
--- @return #number Duration of the call in seconds.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data.
+--- @param #string sender Who is sending the call, either "LSO" or "MARSHAL".
+--- @param #string number Number string, e.g. "032" or "183".
+--- @param #number delay Delay before transmission in seconds.
+--- @return #number Duration of the call in seconds.
 function AIRBOSS:_Number2Sound( playerData, sender, number, delay )
 
   -- Default.
@@ -15117,13 +15117,13 @@ end
 
 --- Convert a number (as string) into a radio message.
 -- E.g. for board number or headings.
--- @param #AIRBOSS self
--- @param #AIRBOSS.Radio radio Radio used for transmission.
--- @param #string number Number string, e.g. "032" or "183".
--- @param #number delay Delay before transmission in seconds.
--- @param #number interval Interval between the next call.
--- @param #boolean pilotcall If true, use pilot sound files.
--- @return #number Duration of the call in seconds.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.Radio radio Radio used for transmission.
+--- @param #string number Number string, e.g. "032" or "183".
+--- @param #number delay Delay before transmission in seconds.
+--- @param #number interval Interval between the next call.
+--- @param #boolean pilotcall If true, use pilot sound files.
+--- @return #number Duration of the call in seconds.
 function AIRBOSS:_Number2Radio( radio, number, delay, interval, pilotcall )
 
   --- Split string into characters.
@@ -15181,9 +15181,9 @@ function AIRBOSS:_Number2Radio( radio, number, delay, interval, pilotcall )
 end
 
 --- Aircraft request marshal (Inbound call both for players and AI).
--- @param #AIRBOSS self
--- @return Wrapper.Unit#UNIT Unit of player or nil.
--- @param #string modex Tail number.
+--- @param #AIRBOSS self
+--- @return Wrapper.Unit#UNIT Unit of player or nil.
+--- @param #string modex Tail number.
 function AIRBOSS:_MarshallInboundCall(unit, modex)
 
   -- Calculate 
@@ -15236,9 +15236,9 @@ function AIRBOSS:_MarshallInboundCall(unit, modex)
 end
 
 --- Aircraft commencing call (both for players and AI).
--- @param #AIRBOSS self
--- @return Wrapper.Unit#UNIT Unit of player or nil.
--- @param #string modex Tail number.
+--- @param #AIRBOSS self
+--- @return Wrapper.Unit#UNIT Unit of player or nil.
+--- @param #string modex Tail number.
 function AIRBOSS:_CommencingCall(unit, modex)
 
   -- Pilot: "[modex], commencing"
@@ -15261,10 +15261,10 @@ function AIRBOSS:_CommencingCall(unit, modex)
 end
 
 --- AI aircraft calls the ball.
--- @param #AIRBOSS self
--- @param #string modex Tail number.
--- @param #string nickname Aircraft nickname.
--- @param #number fuelstate Aircraft fuel state in thouthands of pounds.
+--- @param #AIRBOSS self
+--- @param #string modex Tail number.
+--- @param #string nickname Aircraft nickname.
+--- @param #number fuelstate Aircraft fuel state in thouthands of pounds.
 function AIRBOSS:_LSOCallAircraftBall( modex, nickname, fuelstate )
 
   -- Pilot: "405, Hornet Ball, 3.2"
@@ -15299,8 +15299,8 @@ function AIRBOSS:_LSOCallAircraftBall( modex, nickname, fuelstate )
 end
 
 --- AI is bingo and goes to the recovery tanker.
--- @param #AIRBOSS self
--- @param #string modex Tail number.
+--- @param #AIRBOSS self
+--- @param #string modex Tail number.
 function AIRBOSS:_MarshalCallGasAtTanker( modex )
 
   -- Subtitle.
@@ -15322,9 +15322,9 @@ function AIRBOSS:_MarshalCallGasAtTanker( modex )
 end
 
 --- AI is bingo and goes to the divert field.
--- @param #AIRBOSS self
--- @param #string modex Tail number.
--- @param #string divertname Name of the divert field.
+--- @param #AIRBOSS self
+--- @param #string modex Tail number.
+--- @param #string divertname Name of the divert field.
 function AIRBOSS:_MarshalCallGasAtDivert( modex, divertname )
 
   -- Subtitle.
@@ -15345,8 +15345,8 @@ function AIRBOSS:_MarshalCallGasAtDivert( modex, divertname )
 end
 
 --- Inform everyone that recovery ops are stopped and deck is closed.
--- @param #AIRBOSS self
--- @param #number case Recovery case.
+--- @param #AIRBOSS self
+--- @param #number case Recovery case.
 function AIRBOSS:_MarshalCallRecoveryStopped( case )
 
   -- Subtitle.
@@ -15370,7 +15370,7 @@ function AIRBOSS:_MarshalCallRecoveryStopped( case )
 end
 
 --- Inform everyone that recovery is paused and will resume at a certain time.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_MarshalCallRecoveryPausedUntilFurtherNotice()
 
   -- Create new call. Subtitle already set.
@@ -15382,8 +15382,8 @@ function AIRBOSS:_MarshalCallRecoveryPausedUntilFurtherNotice()
 end
 
 --- Inform everyone that recovery is paused and will resume at a certain time.
--- @param #AIRBOSS self
--- @param #string clock Time.
+--- @param #AIRBOSS self
+--- @param #string clock Time.
 function AIRBOSS:_MarshalCallRecoveryPausedResumedAt( clock )
 
   -- Get relevant part of clock.
@@ -15412,9 +15412,9 @@ function AIRBOSS:_MarshalCallRecoveryPausedResumedAt( clock )
 end
 
 --- Inform flight that he is cleared for recovery.
--- @param #AIRBOSS self
--- @param #string modex Tail number.
--- @param #number case Recovery case.
+--- @param #AIRBOSS self
+--- @param #string modex Tail number.
+--- @param #number case Recovery case.
 function AIRBOSS:_MarshalCallClearedForRecovery( modex, case )
 
   -- Subtitle.
@@ -15439,7 +15439,7 @@ function AIRBOSS:_MarshalCallClearedForRecovery( modex, case )
 end
 
 --- Inform everyone that recovery is resumed after pause.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_MarshalCallResumeRecovery()
 
   -- Create new call with full subtitle.
@@ -15451,8 +15451,8 @@ function AIRBOSS:_MarshalCallResumeRecovery()
 end
 
 --- Inform everyone about new final bearing.
--- @param #AIRBOSS self
--- @param #number FB Final Bearing in degrees.
+--- @param #AIRBOSS self
+--- @param #number FB Final Bearing in degrees.
 function AIRBOSS:_MarshalCallNewFinalBearing( FB )
 
   -- Subtitle.
@@ -15474,8 +15474,8 @@ function AIRBOSS:_MarshalCallNewFinalBearing( FB )
 end
 
 --- Compile a radio call when Marshal tells a flight the holding altitude.
--- @param #AIRBOSS self
--- @param #number hdg Heading in degrees.
+--- @param #AIRBOSS self
+--- @param #number hdg Heading in degrees.
 function AIRBOSS:_MarshalCallCarrierTurnTo( hdg )
 
   -- Subtitle.
@@ -15497,9 +15497,9 @@ function AIRBOSS:_MarshalCallCarrierTurnTo( hdg )
 end
 
 --- Compile a radio call when Marshal tells a flight the holding altitude.
--- @param #AIRBOSS self
--- @param #string modex Tail number.
--- @param #number nwaiting Number of flights already waiting.
+--- @param #AIRBOSS self
+--- @param #string modex Tail number.
+--- @param #number nwaiting Number of flights already waiting.
 function AIRBOSS:_MarshalCallStackFull( modex, nwaiting )
 
   -- Subtitle.
@@ -15523,7 +15523,7 @@ function AIRBOSS:_MarshalCallStackFull( modex, nwaiting )
 end
 
 --- Compile a radio call when Marshal tells a flight the holding altitude.
--- @param #AIRBOSS self
+--- @param #AIRBOSS self
 function AIRBOSS:_MarshalCallRecoveryStart( case )
 
   -- Marshal radial.
@@ -15563,13 +15563,13 @@ function AIRBOSS:_MarshalCallRecoveryStart( case )
 end
 
 --- Compile a radio call when Marshal tells a flight the holding altitude.
--- @param #AIRBOSS self
--- @param #string modex Tail number.
--- @param #number case Recovery case.
--- @param #number brc Base recovery course.
--- @param #number altitude Holding altitude.
--- @param #string charlie Charlie Time estimate.
--- @param #number qfe Alitmeter inHg.
+--- @param #AIRBOSS self
+--- @param #string modex Tail number.
+--- @param #number case Recovery case.
+--- @param #number brc Base recovery course.
+--- @param #number altitude Holding altitude.
+--- @param #string charlie Charlie Time estimate.
+--- @param #number qfe Alitmeter inHg.
 function AIRBOSS:_MarshalCallArrived( modex, case, brc, altitude, charlie, qfe )
   self:F( { modex = modex, case = case, brc = brc, altitude = altitude, charlie = charlie, qfe = qfe } )
 
@@ -15638,8 +15638,8 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Add menu commands for player.
--- @param #AIRBOSS self
--- @param #string _unitName Name of player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name of player unit.
 function AIRBOSS:_AddF10Commands( _unitName )
   self:F( _unitName )
 
@@ -15798,9 +15798,9 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Reset player status. Player is removed from all queues and its status is set to undefined.
--- @param #AIRBOSS self
--- @param #string _unitName Name fo the player unit.
--- @param #number case Recovery case.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name fo the player unit.
+--- @param #number case Recovery case.
 function AIRBOSS:_SkipperStartRecovery( _unitName, case )
 
   -- Get player unit and name.
@@ -15838,8 +15838,8 @@ function AIRBOSS:_SkipperStartRecovery( _unitName, case )
 end
 
 --- Skipper Stop recovery function.
--- @param #AIRBOSS self
--- @param #string _unitName Name fo the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name fo the player unit.
 function AIRBOSS:_SkipperStopRecovery( _unitName )
 
   -- Get player unit and name.
@@ -15866,9 +15866,9 @@ function AIRBOSS:_SkipperStopRecovery( _unitName )
 end
 
 --- Skipper set recovery offset angle.
--- @param #AIRBOSS self
--- @param #string _unitName Name fo the player unit.
--- @param #number offset Recovery holding offset angle in degrees for Case II/III.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name fo the player unit.
+--- @param #number offset Recovery holding offset angle in degrees for Case II/III.
 function AIRBOSS:_SkipperRecoveryOffset( _unitName, offset )
 
   -- Get player unit and name.
@@ -15890,9 +15890,9 @@ function AIRBOSS:_SkipperRecoveryOffset( _unitName, offset )
 end
 
 --- Skipper set recovery time.
--- @param #AIRBOSS self
--- @param #string _unitName Name fo the player unit.
--- @param #number time Recovery time in minutes.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name fo the player unit.
+--- @param #number time Recovery time in minutes.
 function AIRBOSS:_SkipperRecoveryTime( _unitName, time )
 
   -- Get player unit and name.
@@ -15915,9 +15915,9 @@ function AIRBOSS:_SkipperRecoveryTime( _unitName, time )
 end
 
 --- Skipper set recovery speed.
--- @param #AIRBOSS self
--- @param #string _unitName Name fo the player unit.
--- @param #number speed Recovery speed in knots.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name fo the player unit.
+--- @param #number speed Recovery speed in knots.
 function AIRBOSS:_SkipperRecoverySpeed( _unitName, speed )
 
   -- Get player unit and name.
@@ -15939,8 +15939,8 @@ function AIRBOSS:_SkipperRecoverySpeed( _unitName, speed )
 end
 
 --- Skipper set recovery speed.
--- @param #AIRBOSS self
--- @param #string _unitName Name fo the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name fo the player unit.
 function AIRBOSS:_SkipperRecoveryUturn( _unitName )
 
   -- Get player unit and name.
@@ -15967,8 +15967,8 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Reset player status. Player is removed from all queues and its status is set to undefined.
--- @param #AIRBOSS self
--- @param #string _unitName Name fo the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name fo the player unit.
 function AIRBOSS:_ResetPlayerStatus( _unitName )
   self:F( _unitName )
 
@@ -16002,8 +16002,8 @@ function AIRBOSS:_ResetPlayerStatus( _unitName )
 end
 
 --- Request marshal.
--- @param #AIRBOSS self
--- @param #string _unitName Name fo the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name fo the player unit.
 function AIRBOSS:_RequestMarshal( _unitName )
   self:F( _unitName )
 
@@ -16088,8 +16088,8 @@ function AIRBOSS:_RequestMarshal( _unitName )
 end
 
 --- Request emergency landing.
--- @param #AIRBOSS self
--- @param #string _unitName Name fo the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name fo the player unit.
 function AIRBOSS:_RequestEmergency( _unitName )
   self:F( _unitName )
 
@@ -16193,8 +16193,8 @@ function AIRBOSS:_RequestEmergency( _unitName )
 end
 
 --- Request spinning.
--- @param #AIRBOSS self
--- @param #string _unitName Name fo the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name fo the player unit.
 function AIRBOSS:_RequestSpinning( _unitName )
   self:F( _unitName )
 
@@ -16255,8 +16255,8 @@ function AIRBOSS:_RequestSpinning( _unitName )
 end
 
 --- Request to commence landing approach.
--- @param #AIRBOSS self
--- @param #string _unitName Name fo the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name fo the player unit.
 function AIRBOSS:_RequestCommence( _unitName )
   self:F( _unitName )
 
@@ -16392,8 +16392,8 @@ function AIRBOSS:_RequestCommence( _unitName )
 end
 
 --- Player requests refueling.
--- @param #AIRBOSS self
--- @param #string _unitName Name of the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name of the player unit.
 function AIRBOSS:_RequestRefueling( _unitName )
 
   -- Get player unit and name.
@@ -16465,10 +16465,10 @@ function AIRBOSS:_RequestRefueling( _unitName )
 end
 
 --- Remove a member from the player's section.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player
--- @param #AIRBOSS.PlayerData sectionmember The section member to be removed.
--- @return #boolean If true, flight was a section member and could be removed. False otherwise.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player
+--- @param #AIRBOSS.PlayerData sectionmember The section member to be removed.
+--- @return #boolean If true, flight was a section member and could be removed. False otherwise.
 function AIRBOSS:_RemoveSectionMember( playerData, sectionmember )
   -- Loop over all flights in player's section
   for i, _flight in pairs( playerData.section ) do
@@ -16482,8 +16482,8 @@ function AIRBOSS:_RemoveSectionMember( playerData, sectionmember )
 end
 
 --- Set all flights within 100 meters to be part of my section.
--- @param #AIRBOSS self
--- @param #string _unitName Name of the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name of the player unit.
 function AIRBOSS:_SetSection( _unitName )
 
   -- Get player unit and name.
@@ -16637,8 +16637,8 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Display top 10 player scores.
--- @param #AIRBOSS self
--- @param #string _unitName Name fo the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name fo the player unit.
 function AIRBOSS:_DisplayScoreBoard( _unitName )
   self:F( _unitName )
 
@@ -16725,8 +16725,8 @@ function AIRBOSS:_DisplayScoreBoard( _unitName )
 end
 
 --- Display top 10 player scores.
--- @param #AIRBOSS self
--- @param #string _unitName Name fo the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name fo the player unit.
 function AIRBOSS:_DisplayPlayerGrades( _unitName )
   self:F( _unitName )
 
@@ -16800,8 +16800,8 @@ function AIRBOSS:_DisplayPlayerGrades( _unitName )
 end
 
 --- Display last debriefing.
--- @param #AIRBOSS self
--- @param #string _unitName Name fo the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name fo the player unit.
 function AIRBOSS:_DisplayDebriefing( _unitName )
   self:F( _unitName )
 
@@ -16842,9 +16842,9 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Display marshal or pattern queue.
--- @param #AIRBOSS self
--- @param #string _unitname Name of the player unit.
--- @param #string qname Name of the queue.
+--- @param #AIRBOSS self
+--- @param #string _unitname Name of the player unit.
+--- @param #string qname Name of the queue.
 function AIRBOSS:_DisplayQueue( _unitname, qname )
 
   -- Get player unit and player name.
@@ -16908,8 +16908,8 @@ function AIRBOSS:_DisplayQueue( _unitname, qname )
 end
 
 --- Report information about carrier.
--- @param #AIRBOSS self
--- @param #string _unitname Name of the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitname Name of the player unit.
 function AIRBOSS:_DisplayCarrierInfo( _unitname )
   self:F2( _unitname )
 
@@ -17037,8 +17037,8 @@ function AIRBOSS:_DisplayCarrierInfo( _unitname )
 end
 
 --- Report weather conditions at the carrier location. Temperature, QFE pressure and wind data.
--- @param #AIRBOSS self
--- @param #string _unitname Name of the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitname Name of the player unit.
 function AIRBOSS:_DisplayCarrierWeather( _unitname )
   self:F2( _unitname )
 
@@ -17121,9 +17121,9 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set difficulty level.
--- @param #AIRBOSS self
--- @param #string _unitname Name of the player unit.
--- @param #AIRBOSS.Difficulty difficulty Difficulty level.
+--- @param #AIRBOSS self
+--- @param #string _unitname Name of the player unit.
+--- @param #AIRBOSS.Difficulty difficulty Difficulty level.
 function AIRBOSS:_SetDifficulty( _unitname, difficulty )
   self:T2( { difficulty = difficulty, unitname = _unitname } )
 
@@ -17155,8 +17155,8 @@ function AIRBOSS:_SetDifficulty( _unitname, difficulty )
 end
 
 --- Turn player's aircraft attitude display on or off.
--- @param #AIRBOSS self
--- @param #string _unitname Name of the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitname Name of the player unit.
 function AIRBOSS:_SetHintsOnOff( _unitname )
   self:F2( _unitname )
 
@@ -17188,8 +17188,8 @@ function AIRBOSS:_SetHintsOnOff( _unitname )
 end
 
 --- Turn player's aircraft attitude display on or off.
--- @param #AIRBOSS self
--- @param #string _unitname Name of the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitname Name of the player unit.
 function AIRBOSS:_DisplayAttitude( _unitname )
   self:F2( _unitname )
 
@@ -17210,8 +17210,8 @@ function AIRBOSS:_DisplayAttitude( _unitname )
 end
 
 --- Turn radio subtitles of player on or off.
--- @param #AIRBOSS self
--- @param #string _unitname Name of the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitname Name of the player unit.
 function AIRBOSS:_SubtitlesOnOff( _unitname )
   self:F2( _unitname )
 
@@ -17240,8 +17240,8 @@ function AIRBOSS:_SubtitlesOnOff( _unitname )
 end
 
 --- Turn radio subtitles of player on or off.
--- @param #AIRBOSS self
--- @param #string _unitname Name of the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitname Name of the player unit.
 function AIRBOSS:_TrapsheetOnOff( _unitname )
   self:F2( _unitname )
 
@@ -17282,8 +17282,8 @@ function AIRBOSS:_TrapsheetOnOff( _unitname )
 end
 
 --- Display player status.
--- @param #AIRBOSS self
--- @param #string _unitName Name of the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name of the player unit.
 function AIRBOSS:_DisplayPlayerStatus( _unitName )
 
   -- Get player unit and name.
@@ -17393,9 +17393,9 @@ function AIRBOSS:_DisplayPlayerStatus( _unitName )
 end
 
 --- Mark current marshal zone of player by either smoke or flares.
--- @param #AIRBOSS self
--- @param #string _unitName Name of the player unit.
--- @param #boolean flare If true, flare the zone. If false, smoke the zone.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name of the player unit.
+--- @param #boolean flare If true, flare the zone. If false, smoke the zone.
 function AIRBOSS:_MarkMarshalZone( _unitName, flare )
 
   -- Get player unit and name.
@@ -17462,9 +17462,9 @@ function AIRBOSS:_MarkMarshalZone( _unitName, flare )
 end
 
 --- Mark CASE I or II/II zones by either smoke or flares.
--- @param #AIRBOSS self
--- @param #string _unitName Name of the player unit.
--- @param #boolean flare If true, flare the zone. If false, smoke the zone.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name of the player unit.
+--- @param #boolean flare If true, flare the zone. If false, smoke the zone.
 function AIRBOSS:_MarkCaseZones( _unitName, flare )
 
   -- Get player unit and name.
@@ -17597,8 +17597,8 @@ function AIRBOSS:_MarkCaseZones( _unitName, flare )
 end
 
 --- LSO radio check. Will broadcase LSO message at given LSO frequency.
--- @param #AIRBOSS self
--- @param #string _unitName Name fo the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name fo the player unit.
 function AIRBOSS:_LSORadioCheck( _unitName )
   self:F( _unitName )
 
@@ -17616,8 +17616,8 @@ function AIRBOSS:_LSORadioCheck( _unitName )
 end
 
 --- Marshal radio check. Will broadcase Marshal message at given Marshal frequency.
--- @param #AIRBOSS self
--- @param #string _unitName Name fo the player unit.
+--- @param #AIRBOSS self
+--- @param #string _unitName Name fo the player unit.
 function AIRBOSS:_MarshalRadioCheck( _unitName )
   self:F( _unitName )
 
@@ -17639,9 +17639,9 @@ end
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Save trapsheet data.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @param #AIRBOSS.LSOgrade grade LSO grad data.
+--- @param #AIRBOSS self
+--- @param #AIRBOSS.PlayerData playerData Player data table.
+--- @param #AIRBOSS.LSOgrade grade LSO grad data.
 function AIRBOSS:_SaveTrapSheet( playerData, grade )
 
   -- Nothing to save.
@@ -17731,12 +17731,12 @@ function AIRBOSS:_SaveTrapSheet( playerData, grade )
 end
 
 --- On before "Save" event. Checks if io and lfs are available.
--- @param #AIRBOSS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string path (Optional) Path where the file is saved. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
--- @param #string filename (Optional) File name for saving the player grades. Default is "AIRBOSS-<ALIAS>_LSOgrades.csv".
+--- @param #AIRBOSS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #string path (Optional) Path where the file is saved. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+--- @param #string filename (Optional) File name for saving the player grades. Default is "AIRBOSS-<ALIAS>_LSOgrades.csv".
 function AIRBOSS:onbeforeSave( From, Event, To, path, filename )
 
   -- Check io module is available.
@@ -17754,12 +17754,12 @@ function AIRBOSS:onbeforeSave( From, Event, To, path, filename )
 end
 
 --- On after "Save" event. Player data is saved to file.
--- @param #AIRBOSS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string path Path where the file is saved. If nil, file is saved in the DCS root installtion directory or your "Saved Games" folder if lfs was desanitized.
--- @param #string filename (Optional) File name for saving the player grades. Default is "AIRBOSS-<ALIAS>_LSOgrades.csv".
+--- @param #AIRBOSS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #string path Path where the file is saved. If nil, file is saved in the DCS root installtion directory or your "Saved Games" folder if lfs was desanitized.
+--- @param #string filename (Optional) File name for saving the player grades. Default is "AIRBOSS-<ALIAS>_LSOgrades.csv".
 function AIRBOSS:onafterSave( From, Event, To, path, filename )
 
   --- Function that saves data to file
@@ -17824,12 +17824,12 @@ function AIRBOSS:onafterSave( From, Event, To, path, filename )
 end
 
 --- On before "Load" event. Checks if the file that the player grades from exists.
--- @param #AIRBOSS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string path (Optional) Path where the file is loaded from. Default is the DCS installation root directory or your "Saved Games\\DCS" folder if lfs was desanizized.
--- @param #string filename (Optional) File name for saving the player grades. Default is "AIRBOSS-<ALIAS>_LSOgrades.csv".
+--- @param #AIRBOSS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #string path (Optional) Path where the file is loaded from. Default is the DCS installation root directory or your "Saved Games\\DCS" folder if lfs was desanizized.
+--- @param #string filename (Optional) File name for saving the player grades. Default is "AIRBOSS-<ALIAS>_LSOgrades.csv".
 function AIRBOSS:onbeforeLoad( From, Event, To, path, filename )
 
   --- Function that check if a file exists.
@@ -17880,12 +17880,12 @@ function AIRBOSS:onbeforeLoad( From, Event, To, path, filename )
 end
 
 --- On after "Load" event. Loads grades of all players from file.
--- @param #AIRBOSS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string path Path where the file is loaded from. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if lfs was desanizied.
--- @param #string filename (Optional) File name for saving the player grades. Default is "AIRBOSS-<ALIAS>_LSOgrades.csv".
+--- @param #AIRBOSS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #string path Path where the file is loaded from. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if lfs was desanizied.
+--- @param #string filename (Optional) File name for saving the player grades. Default is "AIRBOSS-<ALIAS>_LSOgrades.csv".
 function AIRBOSS:onafterLoad( From, Event, To, path, filename )
 
   --- Function that load data from a file.
@@ -17986,12 +17986,12 @@ function AIRBOSS:onafterLoad( From, Event, To, path, filename )
 end
 
 --- On after "LSOGrade" event.
--- @param #AIRBOSS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #AIRBOSS.PlayerData playerData Player Data.
--- @param #AIRBOSS.LSOgrade grade LSO grade.
+--- @param #AIRBOSS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #AIRBOSS.PlayerData playerData Player Data.
+--- @param #AIRBOSS.LSOgrade grade LSO grade.
 function AIRBOSS:onafterLSOGrade(From, Event, To, playerData, grade)
 
   if self.funkmanSocket then

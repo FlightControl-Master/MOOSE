@@ -35,9 +35,9 @@ local _TraceClassMethod = {}
 local _ClassID = 0
 
 --- @type BASE
--- @field ClassName The name of the class.
--- @field ClassID The ID number of the class.
--- @field ClassNameAndID The name of the class concatenated with the ID number of the class.
+--- @field ClassName The name of the class.
+--- @field ClassID The ID number of the class.
+--- @field ClassNameAndID The name of the class concatenated with the ID number of the class.
 
 --- BASE class
 --
@@ -191,7 +191,7 @@ local _ClassID = 0
 --
 -- ===
 --
--- @field #BASE
+--- @field #BASE
 BASE = {
   ClassName = "BASE",
   ClassID = 0,
@@ -210,8 +210,8 @@ BASE._ = {
 }
 
 --- The Formation Class
--- @type FORMATION
--- @field Cone A cone formation.
+--- @type FORMATION
+--- @field Cone A cone formation.
 FORMATION = {
   Cone = "Cone",
   Vee = "Vee",
@@ -226,8 +226,8 @@ FORMATION = {
 --       return self
 --     end
 --
--- @param #BASE self
--- @return #BASE
+--- @param #BASE self
+--- @return #BASE
 function BASE:New()
   --local self = routines.utils.deepCopy( self ) -- Create a new self instance
   local self = UTILS.DeepCopy(self)
@@ -245,10 +245,10 @@ function BASE:New()
 end
 
 --- This is the worker method to inherit from a parent class.
--- @param #BASE self
--- @param Child is the Child class that inherits.
--- @param #BASE Parent is the Parent class that the Child inherits from.
--- @return #BASE Child
+--- @param #BASE self
+--- @param Child is the Child class that inherits.
+--- @param #BASE Parent is the Parent class that the Child inherits from.
+--- @return #BASE Child
 function BASE:Inherit( Child, Parent )
 
   -- Create child.
@@ -292,10 +292,10 @@ end
 --     self:GetParent(self):ParentMethod()
 --
 --
--- @param #BASE self
--- @param #BASE Child This is the Child class from which the Parent class needs to be retrieved.
--- @param #BASE FromClass (Optional) The class from which to get the parent.
--- @return #BASE
+--- @param #BASE self
+--- @param #BASE Child This is the Child class from which the Parent class needs to be retrieved.
+--- @param #BASE FromClass (Optional) The class from which to get the parent.
+--- @return #BASE
 function BASE:GetParent( Child, FromClass )
 
   local Parent
@@ -333,9 +333,9 @@ end
 --
 --    * ZONE:New( 'some zone' ):IsInstanceOf( 'GROUP' ) will return false
 --
--- @param #BASE self
--- @param ClassName is the name of the class or the class itself to run the check against
--- @return #boolean
+--- @param #BASE self
+--- @param ClassName is the name of the class or the class itself to run the check against
+--- @return #boolean
 function BASE:IsInstanceOf( ClassName )
 
   -- Is className NOT a string ?
@@ -382,22 +382,22 @@ function BASE:IsInstanceOf( ClassName )
 end
 --- Get the ClassName + ClassID of the class instance.
 -- The ClassName + ClassID is formatted as '%s#%09d'.
--- @param #BASE self
--- @return #string The ClassName + ClassID of the class instance.
+--- @param #BASE self
+--- @return #string The ClassName + ClassID of the class instance.
 function BASE:GetClassNameAndID()
   return string.format( '%s#%09d', self.ClassName, self.ClassID )
 end
 
 --- Get the ClassName of the class instance.
--- @param #BASE self
--- @return #string The ClassName of the class instance.
+--- @param #BASE self
+--- @return #string The ClassName of the class instance.
 function BASE:GetClassName()
   return self.ClassName
 end
 
 --- Get the ClassID of the class instance.
--- @param #BASE self
--- @return #string The ClassID of the class instance.
+--- @param #BASE self
+--- @return #string The ClassID of the class instance.
 function BASE:GetClassID()
   return self.ClassID
 end
@@ -744,12 +744,12 @@ do -- Event Handling
 end
 
 --- Creation of a Birth Event.
--- @param #BASE self
--- @param DCS#Time EventTime The time stamp of the event.
--- @param DCS#Object Initiator The initiating object of the event.
--- @param #string IniUnitName The initiating unit name.
--- @param place
--- @param subplace
+--- @param #BASE self
+--- @param DCS#Time EventTime The time stamp of the event.
+--- @param DCS#Object Initiator The initiating object of the event.
+--- @param #string IniUnitName The initiating unit name.
+--- @param place
+--- @param subplace
 function BASE:CreateEventBirth( EventTime, Initiator, IniUnitName, place, subplace )
   self:F( { EventTime, Initiator, IniUnitName, place, subplace } )
 
@@ -766,9 +766,9 @@ function BASE:CreateEventBirth( EventTime, Initiator, IniUnitName, place, subpla
 end
 
 --- Creation of a Crash Event.
--- @param #BASE self
--- @param DCS#Time EventTime The time stamp of the event.
--- @param DCS#Object Initiator The initiating object of the event.
+--- @param #BASE self
+--- @param DCS#Time EventTime The time stamp of the event.
+--- @param DCS#Object Initiator The initiating object of the event.
 function BASE:CreateEventCrash( EventTime, Initiator, IniObjectCategory )
   self:F( { EventTime, Initiator } )
 
@@ -783,9 +783,9 @@ function BASE:CreateEventCrash( EventTime, Initiator, IniObjectCategory )
 end
 
 --- Creation of a Crash Event.
--- @param #BASE self
--- @param DCS#Time EventTime The time stamp of the event.
--- @param DCS#Object Initiator The initiating object of the event.
+--- @param #BASE self
+--- @param DCS#Time EventTime The time stamp of the event.
+--- @param DCS#Object Initiator The initiating object of the event.
 function BASE:CreateEventUnitLost(EventTime, Initiator)
   self:F( { EventTime, Initiator } )
 
@@ -799,9 +799,9 @@ function BASE:CreateEventUnitLost(EventTime, Initiator)
 end
 
 --- Creation of a Dead Event.
--- @param #BASE self
--- @param DCS#Time EventTime The time stamp of the event.
--- @param DCS#Object Initiator The initiating object of the event.
+--- @param #BASE self
+--- @param DCS#Time EventTime The time stamp of the event.
+--- @param DCS#Object Initiator The initiating object of the event.
 function BASE:CreateEventDead( EventTime, Initiator, IniObjectCategory )
   self:F( { EventTime, Initiator, IniObjectCategory } )
 
@@ -816,9 +816,9 @@ function BASE:CreateEventDead( EventTime, Initiator, IniObjectCategory )
 end
 
 --- Creation of a Remove Unit Event.
--- @param #BASE self
--- @param DCS#Time EventTime The time stamp of the event.
--- @param DCS#Object Initiator The initiating object of the event.
+--- @param #BASE self
+--- @param DCS#Time EventTime The time stamp of the event.
+--- @param DCS#Object Initiator The initiating object of the event.
 function BASE:CreateEventRemoveUnit( EventTime, Initiator )
   self:F( { EventTime, Initiator } )
 
@@ -832,9 +832,9 @@ function BASE:CreateEventRemoveUnit( EventTime, Initiator )
 end
 
 --- Creation of a Takeoff Event.
--- @param #BASE self
--- @param DCS#Time EventTime The time stamp of the event.
--- @param DCS#Object Initiator The initiating object of the event.
+--- @param #BASE self
+--- @param DCS#Time EventTime The time stamp of the event.
+--- @param DCS#Object Initiator The initiating object of the event.
 function BASE:CreateEventTakeoff( EventTime, Initiator )
   self:F( { EventTime, Initiator } )
 
@@ -863,8 +863,8 @@ end
   end  
                   
 --- The main event handling function... This function captures all events generated for the class.
--- @param #BASE self
--- @param DCS#Event event
+--- @param #BASE self
+--- @param DCS#Event event
 function BASE:onEvent( event )
 
   if self then
@@ -990,11 +990,11 @@ end
 
 --- Set a state or property of the Object given a Key and a Value.
 -- Note that if the Object is destroyed, set to nil, or garbage collected, then the Values and Keys will also be gone.
--- @param #BASE self
--- @param Object The object that will hold the Value set by the Key.
--- @param Key The key that is used as a reference of the value. Note that the key can be a #string, but it can also be any other type!
--- @param Value The value to is stored in the object.
--- @return The Value set. 
+--- @param #BASE self
+--- @param Object The object that will hold the Value set by the Key.
+--- @param Key The key that is used as a reference of the value. Note that the key can be a #string, but it can also be any other type!
+--- @param Value The value to is stored in the object.
+--- @return The Value set. 
 function BASE:SetState( Object, Key, Value )
 
   local ClassNameAndID = Object:GetClassNameAndID()
@@ -1007,10 +1007,10 @@ end
 
 --- Get a Value given a Key from the Object.
 -- Note that if the Object is destroyed, set to nil, or garbage collected, then the Values and Keys will also be gone.
--- @param #BASE self
--- @param Object The object that holds the Value set by the Key.
--- @param Key The key that is used to retrieve the value. Note that the key can be a #string, but it can also be any other type!
--- @return The Value retrieved or nil if the Key was not found and thus the Value could not be retrieved.
+--- @param #BASE self
+--- @param Object The object that holds the Value set by the Key.
+--- @param Key The key that is used to retrieve the value. Note that the key can be a #string, but it can also be any other type!
+--- @return The Value retrieved or nil if the Key was not found and thus the Value could not be retrieved.
 function BASE:GetState( Object, Key )
 
   local ClassNameAndID = Object:GetClassNameAndID()
@@ -1024,9 +1024,9 @@ function BASE:GetState( Object, Key )
 end
 
 --- Clear the state of an object.
--- @param #BASE self
--- @param Object The object that holds the Value set by the Key.
--- @param StateName The key that is should be cleared.
+--- @param #BASE self
+--- @param Object The object that holds the Value set by the Key.
+--- @param StateName The key that is should be cleared.
 function BASE:ClearState( Object, StateName )
 
   local ClassNameAndID = Object:GetClassNameAndID()
@@ -1041,7 +1041,7 @@ end
 -- TODO: Make trace function using variable parameters.
 
 --- Set trace on.
--- @param #BASE self
+--- @param #BASE self
 -- @usage
 -- -- Switch the tracing On
 -- BASE:TraceOn()
@@ -1050,7 +1050,7 @@ function BASE:TraceOn()
 end
 
 --- Set trace off.
--- @param #BASE self
+--- @param #BASE self
 -- @usage
 -- -- Switch the tracing Off
 -- BASE:TraceOff()
@@ -1063,8 +1063,8 @@ end
 -- When Moose is loaded statically, (as one file), tracing is switched off by default.
 -- So tracing must be switched on manually in your mission if you are using Moose statically.
 -- When moose is loading dynamically (for moose class development), tracing is switched on by default.
--- @param #BASE self
--- @param #boolean TraceOnOff Switch the tracing on or off.
+--- @param #BASE self
+--- @param #boolean TraceOnOff Switch the tracing on or off.
 -- @usage
 --
 --   -- Switch the tracing On
@@ -1084,8 +1084,8 @@ function BASE:TraceOnOff( TraceOnOff )
 end
 
 --- Enquires if tracing is on (for the class).
--- @param #BASE self
--- @return #boolean
+--- @param #BASE self
+--- @return #boolean
 function BASE:IsTrace()
 
   if BASE.Debug and (_TraceAll == true) or (_TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName]) then
@@ -1096,16 +1096,16 @@ function BASE:IsTrace()
 end
 
 --- Set trace level
--- @param #BASE self
--- @param #number Level
+--- @param #BASE self
+--- @param #number Level
 function BASE:TraceLevel( Level )
   _TraceLevel = Level or 1
   self:I( "Tracing level " .. _TraceLevel )
 end
 
 --- Trace all methods in MOOSE
--- @param #BASE self
--- @param #boolean TraceAll true = trace all methods in MOOSE.
+--- @param #BASE self
+--- @param #boolean TraceAll true = trace all methods in MOOSE.
 function BASE:TraceAll( TraceAll )
 
   if TraceAll == false then
@@ -1122,8 +1122,8 @@ function BASE:TraceAll( TraceAll )
 end
 
 --- Set tracing for a class
--- @param #BASE self
--- @param #string Class Class name.
+--- @param #BASE self
+--- @param #string Class Class name.
 function BASE:TraceClass( Class )
   _TraceClass[Class] = true
   _TraceClassMethod[Class] = {}
@@ -1131,9 +1131,9 @@ function BASE:TraceClass( Class )
 end
 
 --- Set tracing for a specific method of  class
--- @param #BASE self
--- @param #string Class Class name.
--- @param #string Method Method.
+--- @param #BASE self
+--- @param #string Class Class name.
+--- @param #string Method Method.
 function BASE:TraceClassMethod( Class, Method )
   if not _TraceClassMethod[Class] then
     _TraceClassMethod[Class] = {}
@@ -1144,8 +1144,8 @@ function BASE:TraceClassMethod( Class, Method )
 end
 
 --- Trace a function call. This function is private.
--- @param #BASE self
--- @param Arguments A #table or any field.
+--- @param #BASE self
+--- @param Arguments A #table or any field.
 function BASE:_F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
   if BASE.Debug and (_TraceAll == true) or (_TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName]) then
@@ -1173,8 +1173,8 @@ function BASE:_F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 end
 
 --- Trace a function call. Must be at the beginning of the function logic.
--- @param #BASE self
--- @param Arguments A #table or any field.
+--- @param #BASE self
+--- @param Arguments A #table or any field.
 function BASE:F( Arguments )
 
   if BASE.Debug and _TraceOnOff then
@@ -1188,8 +1188,8 @@ function BASE:F( Arguments )
 end
 
 --- Trace a function call level 2. Must be at the beginning of the function logic.
--- @param #BASE self
--- @param Arguments A #table or any field.
+--- @param #BASE self
+--- @param Arguments A #table or any field.
 function BASE:F2( Arguments )
 
   if BASE.Debug and _TraceOnOff then
@@ -1203,8 +1203,8 @@ function BASE:F2( Arguments )
 end
 
 --- Trace a function call level 3. Must be at the beginning of the function logic.
--- @param #BASE self
--- @param Arguments A #table or any field.
+--- @param #BASE self
+--- @param Arguments A #table or any field.
 function BASE:F3( Arguments )
 
   if BASE.Debug and _TraceOnOff then
@@ -1218,8 +1218,8 @@ function BASE:F3( Arguments )
 end
 
 --- Trace a function logic.
--- @param #BASE self
--- @param Arguments A #table or any field.
+--- @param #BASE self
+--- @param Arguments A #table or any field.
 function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
   if BASE.Debug and (_TraceAll == true) or (_TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName]) then
@@ -1247,8 +1247,8 @@ function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 end
 
 --- Trace a function logic level 1. Can be anywhere within the function logic.
--- @param #BASE self
--- @param Arguments A #table or any field.
+--- @param #BASE self
+--- @param Arguments A #table or any field.
 function BASE:T( Arguments )
 
   if BASE.Debug and _TraceOnOff then
@@ -1262,8 +1262,8 @@ function BASE:T( Arguments )
 end
 
 --- Trace a function logic level 2. Can be anywhere within the function logic.
--- @param #BASE self
--- @param Arguments A #table or any field.
+--- @param #BASE self
+--- @param Arguments A #table or any field.
 function BASE:T2( Arguments )
 
   if BASE.Debug and _TraceOnOff then
@@ -1277,8 +1277,8 @@ function BASE:T2( Arguments )
 end
 
 --- Trace a function logic level 3. Can be anywhere within the function logic.
--- @param #BASE self
--- @param Arguments A #table or any field.
+--- @param #BASE self
+--- @param Arguments A #table or any field.
 function BASE:T3( Arguments )
 
   if BASE.Debug and _TraceOnOff then
@@ -1292,8 +1292,8 @@ function BASE:T3( Arguments )
 end
 
 --- Log an exception which will be traced always. Can be anywhere within the function logic.
--- @param #BASE self
--- @param Arguments A #table or any field.
+--- @param #BASE self
+--- @param Arguments A #table or any field.
 function BASE:E( Arguments )
 
   if BASE.Debug then
@@ -1319,8 +1319,8 @@ function BASE:E( Arguments )
 end
 
 --- Log an information which will be traced always. Can be anywhere within the function logic.
--- @param #BASE self
--- @param Arguments A #table or any field.
+--- @param #BASE self
+--- @param Arguments A #table or any field.
 function BASE:I( Arguments )
 
   if BASE.Debug then

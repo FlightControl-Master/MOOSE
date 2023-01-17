@@ -55,19 +55,19 @@
 -- coordinate. The Ship will follow the Shipping Lane to ensure consistent cargo transportation within the simulation environment.
 --
 --
--- @field #AI_CARGO_SHIP
+--- @field #AI_CARGO_SHIP
 AI_CARGO_SHIP = {
     ClassName = "AI_CARGO_SHIP",
     Coordinate = nil -- Core.Point#COORDINATE
 }
 
 --- Creates a new AI_CARGO_SHIP object.
--- @param #AI_CARGO_SHIP self
--- @param Wrapper.Group#GROUP Ship  The carrier Ship group
--- @param Core.Set#SET_CARGO CargoSet  The set of cargo to be transported
--- @param #number CombatRadius  Provide the combat radius to defend the carrier by unboarding the cargo when enemies are nearby. When CombatRadius is 0, no defense will occur.
--- @param #table ShippingLane  Table containing list of Shipping Lanes to be used
--- @return #AI_CARGO_SHIP
+--- @param #AI_CARGO_SHIP self
+--- @param Wrapper.Group#GROUP Ship  The carrier Ship group
+--- @param Core.Set#SET_CARGO CargoSet  The set of cargo to be transported
+--- @param #number CombatRadius  Provide the combat radius to defend the carrier by unboarding the cargo when enemies are nearby. When CombatRadius is 0, no defense will occur.
+--- @param #table ShippingLane  Table containing list of Shipping Lanes to be used
+--- @return #AI_CARGO_SHIP
 function AI_CARGO_SHIP:New( Ship, CargoSet, CombatRadius, ShippingLane )
 
     local self = BASE:Inherit( self, AI_CARGO:New( Ship, CargoSet ) ) -- #AI_CARGO_SHIP
@@ -85,9 +85,9 @@ function AI_CARGO_SHIP:New( Ship, CargoSet, CombatRadius, ShippingLane )
 end
 
 --- Set the Carrier
--- @param #AI_CARGO_SHIP self
--- @param Wrapper.Group#GROUP CargoCarrier
--- @return #AI_CARGO_SHIP
+--- @param #AI_CARGO_SHIP self
+--- @param Wrapper.Group#GROUP CargoCarrier
+--- @return #AI_CARGO_SHIP
 function AI_CARGO_SHIP:SetCarrier( CargoCarrier )
     self.CargoCarrier = CargoCarrier -- Wrapper.Group#GROUIP
     self.CargoCarrier:SetState( self.CargoCarrier, "AI_CARGO_SHIP", self )
@@ -117,10 +117,10 @@ end
 
 
 --- FInd a free Carrier within a radius
--- @param #AI_CARGO_SHIP self
--- @param Core.Point#COORDINATE Coordinate
--- @param #number Radius
--- @return Wrapper.Group#GROUP NewCarrier
+--- @param #AI_CARGO_SHIP self
+--- @param Core.Point#COORDINATE Coordinate
+--- @param #number Radius
+--- @return Wrapper.Group#GROUP NewCarrier
 function AI_CARGO_SHIP:FindCarrier( Coordinate, Radius )
 
     local CoordinateZone = ZONE_RADIUS:New( "Zone", Coordinate:GetVec2(), Radius )
@@ -154,11 +154,11 @@ end
 
 
 --- Follow Infantry to the Carrier
--- @param #AI_CARGO_SHIP self
--- @param #AI_CARGO_SHIP Me
--- @param Wrapper.Unit#UNIT ShipUnit
--- @param Cargo.CargoGroup#CARGO_GROUP Cargo
--- @return #AI_CARGO_SHIP
+--- @param #AI_CARGO_SHIP self
+--- @param #AI_CARGO_SHIP Me
+--- @param Wrapper.Unit#UNIT ShipUnit
+--- @param Cargo.CargoGroup#CARGO_GROUP Cargo
+--- @return #AI_CARGO_SHIP
 function AI_CARGO_SHIP:FollowToCarrier( Me, ShipUnit, CargoGroup )
 
     local InfantryGroup = CargoGroup:GetGroup()
@@ -260,8 +260,8 @@ function AI_CARGO_SHIP:onafterMonitor( Ship, From, Event, To )
 end
 
 --- Check if cargo ship is alive and trigger Load event
--- @param Wrapper.Group#Group Ship
--- @param #AI_CARGO_SHIP self
+--- @param Wrapper.Group#Group Ship
+--- @param #AI_CARGO_SHIP self
 function AI_CARGO_SHIP._Pickup( Ship, self, Coordinate, Speed, PickupZone )
     
     Ship:F( { "AI_CARGO_Ship._Pickup:", Ship:GetName() } )
@@ -272,8 +272,8 @@ function AI_CARGO_SHIP._Pickup( Ship, self, Coordinate, Speed, PickupZone )
 end
 
 --- Check if cargo ship is alive and trigger Unload event. Good time to remind people that Lua is case sensitive and Unload != UnLoad
--- @param Wrapper.Group#GROUP Ship
--- @param #AI_CARGO_SHIP self
+--- @param Wrapper.Group#GROUP Ship
+--- @param #AI_CARGO_SHIP self
 function AI_CARGO_SHIP._Deploy( Ship, self, Coordinate, DeployZone )
     Ship:F( { "AI_CARGO_Ship._Deploy:", Ship } )
 
@@ -283,14 +283,14 @@ function AI_CARGO_SHIP._Deploy( Ship, self, Coordinate, DeployZone )
 end
 
 --- on after Pickup event.
--- @param AI_CARGO_SHIP Ship
--- @param From
--- @param Event
--- @param To
--- @param Core.Point#COORDINATE  Coordinate of the pickup point
--- @param #number Speed  Speed in km/h to sail to the pickup coordinate. Default is 50% of max speed for the unit
--- @param #number Height  Altitude in meters to move to the pickup coordinate. This parameter is ignored for Ships
--- @param Core.Zone#ZONE PickupZone (optional)  The zone where the cargo will be picked up. The PickupZone can be nil if there was no PickupZoneSet provided
+--- @param AI_CARGO_SHIP Ship
+--- @param From
+--- @param Event
+--- @param To
+--- @param Core.Point#COORDINATE  Coordinate of the pickup point
+--- @param #number Speed  Speed in km/h to sail to the pickup coordinate. Default is 50% of max speed for the unit
+--- @param #number Height  Altitude in meters to move to the pickup coordinate. This parameter is ignored for Ships
+--- @param Core.Zone#ZONE PickupZone (optional)  The zone where the cargo will be picked up. The PickupZone can be nil if there was no PickupZoneSet provided
 function AI_CARGO_SHIP:onafterPickup( Ship, From, Event, To, Coordinate, Speed, Height, PickupZone )
     
     if Ship and Ship:IsAlive() then
@@ -300,15 +300,15 @@ function AI_CARGO_SHIP:onafterPickup( Ship, From, Event, To, Coordinate, Speed, 
 end
 
 --- On after Deploy event.
--- @param #AI_CARGO_SHIP self
--- @param Wrapper.Group#GROUP SHIP
--- @param From
--- @param Event
--- @param To
--- @param Core.Point#COORDINATE Coordinate  Coordinate of the deploy point
--- @param #number Speed  Speed in km/h to sail to the deploy coordinate. Default is 50% of max speed for the unit
--- @param #number Height  Altitude in meters to move to the deploy coordinate. This parameter is ignored for Ships
--- @param Core.Zone#ZONE  DeployZone The zone where the cargo will be deployed.
+--- @param #AI_CARGO_SHIP self
+--- @param Wrapper.Group#GROUP SHIP
+--- @param From
+--- @param Event
+--- @param To
+--- @param Core.Point#COORDINATE Coordinate  Coordinate of the deploy point
+--- @param #number Speed  Speed in km/h to sail to the deploy coordinate. Default is 50% of max speed for the unit
+--- @param #number Height  Altitude in meters to move to the deploy coordinate. This parameter is ignored for Ships
+--- @param Core.Zone#ZONE  DeployZone The zone where the cargo will be deployed.
 function AI_CARGO_SHIP:onafterDeploy( Ship, From, Event, To, Coordinate, Speed, Height, DeployZone )
 
   if Ship and Ship:IsAlive() then
@@ -337,12 +337,12 @@ function AI_CARGO_SHIP:onafterDeploy( Ship, From, Event, To, Coordinate, Speed, 
 end
 
 --- On after Unload event.
--- @param #AI_CARGO_SHIP self
--- @param Wrapper.Group#GROUP Ship
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+--- @param #AI_CARGO_SHIP self
+--- @param Wrapper.Group#GROUP Ship
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
 function AI_CARGO_SHIP:onafterUnload( Ship, From, Event, To, DeployZone, Defend )
     self:F( { Ship, From, Event, To, DeployZone, Defend = Defend } )
   

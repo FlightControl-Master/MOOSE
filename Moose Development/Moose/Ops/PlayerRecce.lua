@@ -40,45 +40,45 @@
 -------------------------------------------------------------------------------------------------------------------
 
 --- PLAYERRECCE class.
--- @type PLAYERRECCE
--- @field #string ClassName Name of the class.
--- @field #boolean verbose Switch verbosity.
--- @field #string lid Class id string for output to DCS log file.
--- @field #string version
--- @field #table ViewZone
--- @field #table ViewZoneVisual
--- @field #table ViewZoneLaser
--- @field #table LaserFOV
--- @field #table LaserTarget
--- @field Core.Set#SET_CLIENT PlayerSet
--- @field #string Name
--- @field #number Coalition
--- @field #string CoalitionName
--- @field #boolean debug
--- @field #table LaserSpots
--- @field #table UnitLaserCodes
--- @field #table LaserCodes
--- @field #table ClientMenus
--- @field #table OnStation
--- @field #number minthreatlevel
--- @field #number lasingtime
--- @field #table AutoLase
--- @field Core.Set#SET_CLIENT AttackSet
--- @field #boolean TransmitOnlyWithPlayers
--- @field Sound.SRS#MSRS SRS
--- @field Sound.SRS#MSRSQUEUE SRSQueue
--- @field #boolean UseController
--- @field Ops.PlayerTask#PLAYERTASKCONTROLLER Controller
--- @field #boolean ShortCallsign
--- @field #boolean Keepnumber
--- @field #table CallsignTranslations
--- @field Core.Point#COORDINATE ReferencePoint
--- @field #string RPName
--- @field Wrapper.Marker#MARKER RPMarker
--- @field #number TForget
--- @field Utilities.FiFo#FIFO TargetCache
--- @field #boolean smokeownposition
--- @field #table SmokeOwn
+--- @type PLAYERRECCE
+--- @field #string ClassName Name of the class.
+--- @field #boolean verbose Switch verbosity.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #string version
+--- @field #table ViewZone
+--- @field #table ViewZoneVisual
+--- @field #table ViewZoneLaser
+--- @field #table LaserFOV
+--- @field #table LaserTarget
+--- @field Core.Set#SET_CLIENT PlayerSet
+--- @field #string Name
+--- @field #number Coalition
+--- @field #string CoalitionName
+--- @field #boolean debug
+--- @field #table LaserSpots
+--- @field #table UnitLaserCodes
+--- @field #table LaserCodes
+--- @field #table ClientMenus
+--- @field #table OnStation
+--- @field #number minthreatlevel
+--- @field #number lasingtime
+--- @field #table AutoLase
+--- @field Core.Set#SET_CLIENT AttackSet
+--- @field #boolean TransmitOnlyWithPlayers
+--- @field Sound.SRS#MSRS SRS
+--- @field Sound.SRS#MSRSQUEUE SRSQueue
+--- @field #boolean UseController
+--- @field Ops.PlayerTask#PLAYERTASKCONTROLLER Controller
+--- @field #boolean ShortCallsign
+--- @field #boolean Keepnumber
+--- @field #table CallsignTranslations
+--- @field Core.Point#COORDINATE ReferencePoint
+--- @field #string RPName
+--- @field Wrapper.Marker#MARKER RPMarker
+--- @field #number TForget
+--- @field Utilities.FiFo#FIFO TargetCache
+--- @field #boolean smokeownposition
+--- @field #table SmokeOwn
 -- @extends Core.Fsm#FSM
 
 ---
@@ -99,7 +99,7 @@
 -- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) channel.  
 -- 
 --                          
--- @field #PLAYERRECCE
+--- @field #PLAYERRECCE
 PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
@@ -135,15 +135,15 @@ PLAYERRECCE = {
 }
 
 --- 
--- @type PlayerRecceDetected
--- @field #boolean detected
--- @field Wrapper.Client#CLIENT recce
--- @field #string playername
--- @field #number timestamp
+--- @type PlayerRecceDetected
+--- @field #boolean detected
+--- @field Wrapper.Client#CLIENT recce
+--- @field #string playername
+--- @field #number timestamp
 
 ---
--- @type LaserRelativePos
--- @field #string typename Unit type name
+--- @type LaserRelativePos
+--- @field #string typename Unit type name
 PLAYERRECCE.LaserRelativePos = {
   ["SA342M"] = { x = 1.7, y = 1.2, z = 0 },
   ["SA342Mistral"] = { x = 1.7, y = 1.2, z = 0 },
@@ -153,8 +153,8 @@ PLAYERRECCE.LaserRelativePos = {
 }
 
 ---
--- @type MaxViewDistance
--- @field #string typename Unit type name
+--- @type MaxViewDistance
+--- @field #string typename Unit type name
 PLAYERRECCE.MaxViewDistance = {
   ["SA342M"] = 8000,
   ["SA342Mistral"] = 8000,
@@ -164,8 +164,8 @@ PLAYERRECCE.MaxViewDistance = {
 }
 
 ---
--- @type Cameraheight
--- @field #string typename Unit type name
+--- @type Cameraheight
+--- @field #string typename Unit type name
 PLAYERRECCE.Cameraheight = {
   ["SA342M"] = 2.85,
   ["SA342Mistral"] = 2.85,
@@ -175,8 +175,8 @@ PLAYERRECCE.Cameraheight = {
 }
 
 ---
--- @type CanLase
--- @field #string typename Unit type name
+--- @type CanLase
+--- @field #string typename Unit type name
 PLAYERRECCE.CanLase = {
   ["SA342M"] = true,
   ["SA342Mistral"] = true,
@@ -186,8 +186,8 @@ PLAYERRECCE.CanLase = {
 }
 
 ---
--- @type SmokeColor
--- @field #string color
+--- @type SmokeColor
+--- @field #string color
 PLAYERRECCE.SmokeColor = {
   ["highsmoke"] = SMOKECOLOR.Orange,
   ["medsmoke"] = SMOKECOLOR.White,
@@ -197,8 +197,8 @@ PLAYERRECCE.SmokeColor = {
 }
 
 ---
--- @type FlareColor
--- @field #string color
+--- @type FlareColor
+--- @field #string color
 PLAYERRECCE.FlareColor = {
   ["highflare"] =FLARECOLOR.Yellow,
   ["medflare"] = FLARECOLOR.White,
@@ -208,11 +208,11 @@ PLAYERRECCE.FlareColor = {
 }
 
 --- Create and run a new PlayerRecce instance.
--- @param #PLAYERRECCE self
--- @param #string Name The name of this instance
--- @param #number Coalition, e.g. coalition.side.BLUE
--- @param Core.Set#SET_CLIENT PlayerSet The set of pilots working as recce
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #string Name The name of this instance
+--- @param #number Coalition, e.g. coalition.side.BLUE
+--- @param Core.Set#SET_CLIENT PlayerSet The set of pilots working as recce
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:New(Name, Coalition, PlayerSet)
   
   -- Inherit everything from FSM class.
@@ -272,9 +272,9 @@ end
 ------------------------------------------------------------------------------------------
 
 --- [Internal] Event handling
--- @param #PLAYERRECCE self
--- @param Core.Event#EVENTDATA EventData
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param Core.Event#EVENTDATA EventData
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:_EventHandler(EventData)
   self:T(self.lid.."_EventHandler: "..EventData.id)
   if EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
@@ -315,10 +315,10 @@ function PLAYERRECCE:_EventHandler(EventData)
 end
 
 --- (Internal) Function to determine clockwise direction to target.
--- @param #PLAYERRECCE self
--- @param Wrapper.Unit#UNIT unit The Helicopter
--- @param Wrapper.Unit#UNIT target The downed Group
--- @return #number direction
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Unit#UNIT unit The Helicopter
+--- @param Wrapper.Unit#UNIT target The downed Group
+--- @return #number direction
 function PLAYERRECCE:_GetClockDirection(unit, target)
   self:T(self.lid .. " _GetClockDirection")
  
@@ -347,19 +347,19 @@ end
 
 --- [User] Set a table of possible laser codes.
 -- Each new RECCE can select a code from this table, default is 1688.
--- @param #PLAYERRECCE self
--- @param #list<#number> LaserCodes
--- @return #PLAYERRECCE
+--- @param #PLAYERRECCE self
+--- @param #list<#number> LaserCodes
+--- @return #PLAYERRECCE
 function PLAYERRECCE:SetLaserCodes( LaserCodes )
   self.LaserCodes = ( type( LaserCodes ) == "table" ) and LaserCodes or { LaserCodes }
   return self
 end
 
 --- [User] Set a reference point coordinate for A2G Operations. Will be used in coordinate references.
--- @param #PLAYERRECCE self
--- @param Core.Point#COORDINATE Coordinate Coordinate of the RP
--- @param #string Name Name of the RP
--- @return #PLAYERRECCE
+--- @param #PLAYERRECCE self
+--- @param Core.Point#COORDINATE Coordinate Coordinate of the RP
+--- @param #string Name Name of the RP
+--- @return #PLAYERRECCE
 function PLAYERRECCE:SetReferencePoint(Coordinate,Name)
   self.ReferencePoint = Coordinate
   self.RPName = Name
@@ -377,9 +377,9 @@ function PLAYERRECCE:SetReferencePoint(Coordinate,Name)
 end
 
 --- [User] Set PlayerTaskController. Allows to upload target reports to the controller, in turn creating tasks for other players.
--- @param #PLAYERRECCE self
--- @param Ops.PlayerTask#PLAYERTASKCONTROLLER Controller
--- @return #PLAYERRECCE
+--- @param #PLAYERRECCE self
+--- @param Ops.PlayerTask#PLAYERTASKCONTROLLER Controller
+--- @return #PLAYERRECCE
 function PLAYERRECCE:SetPlayerTaskController(Controller)
   self.UseController = true
   self.Controller = Controller
@@ -387,19 +387,19 @@ function PLAYERRECCE:SetPlayerTaskController(Controller)
 end
 
 --- [User] Set a set of clients which will receive target reports
--- @param #PLAYERRECCE self
--- @param Core.Set#SET_CLIENT AttackSet
--- @return #PLAYERRECCE
+--- @param #PLAYERRECCE self
+--- @param Core.Set#SET_CLIENT AttackSet
+--- @return #PLAYERRECCE
 function PLAYERRECCE:SetAttackSet(AttackSet)
   self.AttackSet = AttackSet
   return self
 end
 
 ---[Internal] Check Gazelle camera in on
--- @param #PLAYERRECCE self
--- @param Wrapper.Client#CLIENT client
--- @param #string playername
--- @return #boolen OnOff
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Client#CLIENT client
+--- @param #string playername
+--- @return #boolen OnOff
 function PLAYERRECCE:_CameraOn(client,playername)
   local camera = true
   local unit = client -- Wrapper.Unit#UNIT
@@ -419,12 +419,12 @@ function PLAYERRECCE:_CameraOn(client,playername)
 end
 
 --- [Internal] Get the view parameters from a Gazelle camera
--- @param #PLAYERRECCE self
--- @param Wrapper.Unit#UNIT Gazelle
--- @return #number cameraheading in degrees.
--- @return #number cameranodding in degrees.
--- @return #number maxview in meters.
--- @return #boolean cameraison If true, camera is on, else off.
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Unit#UNIT Gazelle
+--- @return #number cameraheading in degrees.
+--- @return #number cameranodding in degrees.
+--- @return #number maxview in meters.
+--- @return #boolean cameraison If true, camera is on, else off.
 function PLAYERRECCE:_GetGazelleVivianneSight(Gazelle)
   self:T(self.lid.."GetGazelleVivianneSight")
   local unit = Gazelle -- Wrapper.Unit#UNIT
@@ -479,12 +479,12 @@ function PLAYERRECCE:_GetGazelleVivianneSight(Gazelle)
 end
 
 --- [Internal] Get the max line of sight based on unit head and camera nod via trigonometrie. Returns 0 if camera is off.
--- @param #PLAYERRECCE self
--- @param Wrapper.Unit#UNIT unit The unit which LOS we want
--- @param #number vheading Heading where the unit or camera is looking
--- @param #number vnod Nod down in degrees
--- @param #boolean vivoff Camera on or off
--- @return #number maxview Max view distance in meters
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Unit#UNIT unit The unit which LOS we want
+--- @param #number vheading Heading where the unit or camera is looking
+--- @param #number vnod Nod down in degrees
+--- @param #boolean vivoff Camera on or off
+--- @return #number maxview Max view distance in meters
 function PLAYERRECCE:_GetActualMaxLOSight(unit,vheading, vnod, vivoff)
   self:T(self.lid.."_GetActualMaxLOSight")
   if vivoff then return 0 end
@@ -509,12 +509,12 @@ function PLAYERRECCE:_GetActualMaxLOSight(unit,vheading, vnod, vivoff)
 end
 
 --- [User] Set callsign options for TTS output. See @{Wrapper.Group#GROUP.GetCustomCallSign}() on how to set customized callsigns.
--- @param #PLAYERRECCE self
--- @param #boolean ShortCallsign If true, only call out the major flight number
--- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name for players as-is, no amendments or numbers.
--- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
+--- @param #PLAYERRECCE self
+--- @param #boolean ShortCallsign If true, only call out the major flight number
+--- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name for players as-is, no amendments or numbers.
+--- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
 -- callsigns from playername or group name.
--- @return #PLAYERRECCE self
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations)
   if not ShortCallsign or ShortCallsign == false then
    self.ShortCallsign = false
@@ -527,15 +527,15 @@ function PLAYERRECCE:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTransla
 end
 
 --- [Internal] Build a ZONE_POLYGON from a given viewport of a unit
--- @param #PLAYERRECCE self
--- @param Wrapper.Unit#UNIT unit The unit which is looking
--- @param #number vheading Heading where the unit or camera is looking
--- @param #number minview Min line of sight - for lasing
--- @param #number maxview Max line of sight
--- @param #number angle  Angle left/right to be added to heading to form a triangle
--- @param #boolean camon Camera is switched on
--- @param #boolean laser Zone is for lasing
--- @return Core.Zone#ZONE_POLYGON ViewZone or nil if camera is off
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Unit#UNIT unit The unit which is looking
+--- @param #number vheading Heading where the unit or camera is looking
+--- @param #number minview Min line of sight - for lasing
+--- @param #number maxview Max line of sight
+--- @param #number angle  Angle left/right to be added to heading to form a triangle
+--- @param #boolean camon Camera is switched on
+--- @param #boolean laser Zone is for lasing
+--- @return Core.Zone#ZONE_POLYGON ViewZone or nil if camera is off
 function PLAYERRECCE:_GetViewZone(unit, vheading, minview, maxview, angle, camon, laser)
   self:T(self.lid.."_GetViewZone")
   local viewzone = nil
@@ -795,11 +795,11 @@ function PLAYERRECCE:_LaseTarget(client,targetset)
 end
 
 --- [Internal] 
--- @param #PLAYERRECCE self
--- @param Wrapper.Client#CLIENT client
--- @param Wrapper.Group#GROUP group
--- @param #string playername
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Client#CLIENT client
+--- @param Wrapper.Group#GROUP group
+--- @param #string playername
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:_SetClientLaserCode(client,group,playername,code)
   self:T(self.lid.."_SetClientLaserCode")
   self.UnitLaserCodes[playername] = code or 1688
@@ -811,11 +811,11 @@ function PLAYERRECCE:_SetClientLaserCode(client,group,playername,code)
 end
 
 --- [Internal] 
--- @param #PLAYERRECCE self
--- @param Wrapper.Client#CLIENT client
--- @param Wrapper.Group#GROUP group
--- @param #string playername
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Client#CLIENT client
+--- @param Wrapper.Group#GROUP group
+--- @param #string playername
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:_SwitchOnStation(client,group,playername)
   self:T(self.lid.."_SwitchOnStation")
   if not self.OnStation[playername] then
@@ -833,11 +833,11 @@ function PLAYERRECCE:_SwitchOnStation(client,group,playername)
 end
 
 --- [Internal] 
--- @param #PLAYERRECCE self
--- @param Wrapper.Client#CLIENT client
--- @param Wrapper.Group#GROUP group
--- @param #string playername
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Client#CLIENT client
+--- @param Wrapper.Group#GROUP group
+--- @param #string playername
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:_SwitchSmoke(client,group,playername)
   self:T(self.lid.."_SwitchLasing")
   if not self.SmokeOwn[playername] then
@@ -855,11 +855,11 @@ function PLAYERRECCE:_SwitchSmoke(client,group,playername)
 end
 
 --- [Internal] 
--- @param #PLAYERRECCE self
--- @param Wrapper.Client#CLIENT client
--- @param Wrapper.Group#GROUP group
--- @param #string playername
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Client#CLIENT client
+--- @param Wrapper.Group#GROUP group
+--- @param #string playername
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:_SwitchLasing(client,group,playername)
   self:T(self.lid.."_SwitchLasing")
   if not self.AutoLase[playername] then
@@ -877,13 +877,13 @@ function PLAYERRECCE:_SwitchLasing(client,group,playername)
 end
 
 --- [Internal] 
--- @param #PLAYERRECCE self
--- @param Wrapper.Client#CLIENT client
--- @param Wrapper.Group#GROUP group
--- @param #string playername
--- @param #number mindist
--- @param #number maxdist
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Client#CLIENT client
+--- @param Wrapper.Group#GROUP group
+--- @param #string playername
+--- @param #number mindist
+--- @param #number maxdist
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:_SwitchLasingDist(client,group,playername,mindist,maxdist)
   self:T(self.lid.."_SwitchLasingDist")
   local mind  = mindist or 100
@@ -906,22 +906,22 @@ function PLAYERRECCE:_SwitchLasingDist(client,group,playername,mindist,maxdist)
 end
 
 --- [Internal] 
--- @param #PLAYERRECCE self
--- @param Wrapper.Client#CLIENT client
--- @param Wrapper.Group#GROUP group
--- @param #string playername
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Client#CLIENT client
+--- @param Wrapper.Group#GROUP group
+--- @param #string playername
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:_WIP(client,group,playername)
   self:T(self.lid.."_WIP")
   return self
 end
 
 --- [Internal] 
--- @param #PLAYERRECCE self
--- @param Wrapper.Client#CLIENT client
--- @param Wrapper.Group#GROUP group
--- @param #string playername
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Client#CLIENT client
+--- @param Wrapper.Group#GROUP group
+--- @param #string playername
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:_SmokeTargets(client,group,playername)
   self:T(self.lid.."_SmokeTargets")
   local cameraset = self:_GetTargetSet(client,true) -- Core.Set#SET_UNIT
@@ -972,11 +972,11 @@ function PLAYERRECCE:_SmokeTargets(client,group,playername)
 end
 
 --- [Internal] 
--- @param #PLAYERRECCE self
--- @param Wrapper.Client#CLIENT client
--- @param Wrapper.Group#GROUP group
--- @param #string playername
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Client#CLIENT client
+--- @param Wrapper.Group#GROUP group
+--- @param #string playername
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:_FlareTargets(client,group,playername)
   self:T(self.lid.."_FlareTargets")
   local cameraset = self:_GetTargetSet(client,true) -- Core.Set#SET_UNIT
@@ -1018,11 +1018,11 @@ function PLAYERRECCE:_FlareTargets(client,group,playername)
 end
 
 --- [Internal] 
--- @param #PLAYERRECCE self
--- @param Wrapper.Client#CLIENT client
--- @param Wrapper.Group#GROUP group
--- @param #string playername
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Client#CLIENT client
+--- @param Wrapper.Group#GROUP group
+--- @param #string playername
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:_IlluTargets(client,group,playername)
   self:T(self.lid.."_IlluTargets")
   local totalset, count = self:_GetKnownTargets(client) -- Core.Set#SET_UNIT
@@ -1036,11 +1036,11 @@ function PLAYERRECCE:_IlluTargets(client,group,playername)
 end
 
 --- [Internal] 
--- @param #PLAYERRECCE self
--- @param Wrapper.Client#CLIENT client
--- @param Wrapper.Group#GROUP group
--- @param #string playername
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Client#CLIENT client
+--- @param Wrapper.Group#GROUP group
+--- @param #string playername
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:_UploadTargets(client,group,playername)
   self:T(self.lid.."_UploadTargets")
   --local targetset, number = self:_GetTargetSet(client,true)
@@ -1057,11 +1057,11 @@ function PLAYERRECCE:_UploadTargets(client,group,playername)
 end
 
 --- [Internal] 
--- @param #PLAYERRECCE self
--- @param Wrapper.Client#CLIENT client
--- @param Wrapper.Group#GROUP group
--- @param #string playername
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Client#CLIENT client
+--- @param Wrapper.Group#GROUP group
+--- @param #string playername
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:_ReportLaserTargets(client,group,playername)
 self:T(self.lid.."_ReportLaserTargets")
   local targetset, number = self:_GetTargetSet(client,true,true)
@@ -1101,11 +1101,11 @@ self:T(self.lid.."_ReportLaserTargets")
 end
 
 --- [Internal] 
--- @param #PLAYERRECCE self
--- @param Wrapper.Client#CLIENT client
--- @param Wrapper.Group#GROUP group
--- @param #string playername
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param Wrapper.Client#CLIENT client
+--- @param Wrapper.Group#GROUP group
+--- @param #string playername
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:_ReportVisualTargets(client,group,playername)
   self:T(self.lid.."_ReportVisualTargets")
   local targetset, number = self:_GetKnownTargets(client)
@@ -1143,8 +1143,8 @@ function PLAYERRECCE:_ReportVisualTargets(client,group,playername)
 end
 
 --- [Internal] 
--- @param #PLAYERRECCE self
--- @param #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #PLAYERRECCE self
 function PLAYERRECCE:_BuildMenus()
   self:T(self.lid.."_BuildMenus")
   local clients = self.PlayerSet -- Core.Set#SET_CLIENT
@@ -1224,11 +1224,11 @@ function PLAYERRECCE:_BuildMenus()
 end
 
 --- [Internal] 
--- @param #PLAYERRECCE self
--- @param Core.Set#SET_UNIT targetset
--- @param Wrapper.Client#CLIENT client
--- @param #string playername
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param Core.Set#SET_UNIT targetset
+--- @param Wrapper.Client#CLIENT client
+--- @param #string playername
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:_CheckNewTargets(targetset,client,playername)
   self:T(self.lid.."_CheckNewTargets")
   local tempset = SET_UNIT:New()
@@ -1287,18 +1287,18 @@ function PLAYERRECCE:_CheckNewTargets(targetset,client,playername)
 end
 
 --- [User] Set SRS TTS details - see @{Sound.SRS} for details
--- @param #PLAYERRECCE self
--- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 271 or {127,251}. There needs to be exactly the same number of modulations!
--- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}. There needs to be exactly the same number of frequencies!
--- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone"
--- @param #string Gender (Optional) Defaults to "male"
--- @param #string Culture (Optional) Defaults to "en-US"
--- @param #number Port (Optional) Defaults to 5002
--- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
+--- @param #PLAYERRECCE self
+--- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 271 or {127,251}. There needs to be exactly the same number of modulations!
+--- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}. There needs to be exactly the same number of frequencies!
+--- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+--- @param #string Gender (Optional) Defaults to "male"
+--- @param #string Culture (Optional) Defaults to "en-US"
+--- @param #number Port (Optional) Defaults to 5002
+--- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
--- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
--- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS
--- @return #PLAYERRECCE self
+--- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
+--- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
   self:T(self.lid.."SetSRS")
   self.PathToSRS = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone" --
@@ -1330,9 +1330,9 @@ function PLAYERRECCE:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,V
 end
 
 --- [User] For SRS - Switch to only transmit if there are players on the server.
--- @param #PLAYERRECCE self
--- @param #boolean Switch If true, only send SRS if there are alive Players.
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #boolean Switch If true, only send SRS if there are alive Players.
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:SetTransmitOnlyWithPlayers(Switch)
   self.TransmitOnlyWithPlayers = Switch
   if self.SRSQueue then
@@ -1342,9 +1342,9 @@ function PLAYERRECCE:SetTransmitOnlyWithPlayers(Switch)
 end
 
 --- [User] Set the top menu name to a custom string.
--- @param #PLAYERRECCE self
--- @param #string Name The name to use as the top menu designation.
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #string Name The name to use as the top menu designation.
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:SetMenuName(Name)
  self:T(self.lid.."SetMenuName: "..Name)
  self.MenuName = Name
@@ -1352,8 +1352,8 @@ function PLAYERRECCE:SetMenuName(Name)
 end
 
 --- [User] Enable smoking of own position
--- @param #PLAYERRECCE self
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:EnableSmokeOwnPosition()
   self:T(self.lid.."ENableSmokeOwnPosition")
   self.smokeownposition = true
@@ -1361,8 +1361,8 @@ function PLAYERRECCE:EnableSmokeOwnPosition()
 end
 
 --- [User] Disable smoking of own position
--- @param #PLAYERRECCE self
--- @return #PLAYERRECCE 
+--- @param #PLAYERRECCE self
+--- @return #PLAYERRECCE 
 function PLAYERRECCE:DisableSmokeOwnPosition()
   self:T(self.lid.."DisableSmokeOwnPosition")
   self.smokeownposition = false
@@ -1371,9 +1371,9 @@ end
 
 --- [Internal] Get text for text-to-speech.
 -- Numbers are spaced out, e.g. "Heading 180" becomes "Heading 1 8 0 ".
--- @param #PLAYERRECCE self
--- @param #string text Original text.
--- @return #string Spoken text.
+--- @param #PLAYERRECCE self
+--- @param #string text Original text.
+--- @return #string Spoken text.
 function PLAYERRECCE:_GetTextForSpeech(text)
   
   -- Space out numbers.
@@ -1393,11 +1393,11 @@ end
 ------------------------------------------------------------------------------------------
 
 --- [Internal] Status Loop
--- @param #PLAYERRECCE self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterStatus(From, Event, To)
   self:T({From, Event, To})
   
@@ -1490,13 +1490,13 @@ function PLAYERRECCE:onafterStatus(From, Event, To)
 end
 
 --- [Internal] Recce on station
--- @param #PLAYERRECCE self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Wrapper.Client#CLIENT Client
--- @param #string Playername
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Wrapper.Client#CLIENT Client
+--- @param #string Playername
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterRecceOnStation(From, Event, To, Client, Playername)
   self:T({From, Event, To})
   local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
@@ -1526,13 +1526,13 @@ function PLAYERRECCE:onafterRecceOnStation(From, Event, To, Client, Playername)
 end
 
 --- [Internal] Recce off station
--- @param #PLAYERRECCE self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Wrapper.Client#CLIENT Client
--- @param #string Playername
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Wrapper.Client#CLIENT Client
+--- @param #string Playername
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterRecceOffStation(From, Event, To, Client, Playername)
   self:T({From, Event, To})
   local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
@@ -1561,14 +1561,14 @@ function PLAYERRECCE:onafterRecceOffStation(From, Event, To, Client, Playername)
 end
 
 --- [Internal] Target Detected
--- @param #PLAYERRECCE self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param #table Targetsbyclock
--- @param Wrapper.Client#CLIENT Client
--- @param #string Playername
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param #table Targetsbyclock
+--- @param Wrapper.Client#CLIENT Client
+--- @param #string Playername
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetDetected(From, Event, To, Targetsbyclock, Client, Playername)
   self:T({From, Event, To})
 
@@ -1654,14 +1654,14 @@ function PLAYERRECCE:onafterTargetDetected(From, Event, To, Targetsbyclock, Clie
 end
 
 --- [Internal] Targets Illuminated
--- @param #PLAYERRECCE self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Wrapper.Client#CLIENT Client
--- @param #string Playername
--- @param Core.Set#SET_UNIT TargetSet
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Wrapper.Client#CLIENT Client
+--- @param #string Playername
+--- @param Core.Set#SET_UNIT TargetSet
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterIllumination(From, Event, To, Client, Playername, TargetSet)
   self:T({From, Event, To})
   local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
@@ -1693,14 +1693,14 @@ function PLAYERRECCE:onafterIllumination(From, Event, To, Client, Playername, Ta
 end
 
 --- [Internal] Targets Smoked
--- @param #PLAYERRECCE self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Wrapper.Client#CLIENT Client
--- @param #string Playername
--- @param Core.Set#SET_UNIT TargetSet
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Wrapper.Client#CLIENT Client
+--- @param #string Playername
+--- @param Core.Set#SET_UNIT TargetSet
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetsSmoked(From, Event, To, Client, Playername, TargetSet)
   self:T({From, Event, To})
   local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
@@ -1732,14 +1732,14 @@ function PLAYERRECCE:onafterTargetsSmoked(From, Event, To, Client, Playername, T
 end
 
 --- [Internal] Targets Flared
--- @param #PLAYERRECCE self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Wrapper.Client#CLIENT Client
--- @param #string Playername
--- @param Core.Set#SET_UNIT TargetSet
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Wrapper.Client#CLIENT Client
+--- @param #string Playername
+--- @param Core.Set#SET_UNIT TargetSet
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetsFlared(From, Event, To, Client, Playername, TargetSet)
   self:T({From, Event, To})
   local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
@@ -1771,15 +1771,15 @@ function PLAYERRECCE:onafterTargetsFlared(From, Event, To, Client, Playername, T
 end
  
 --- [Internal] Target lasing
--- @param #PLAYERRECCE self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Wrapper.Client#CLIENT Client
--- @param Wrapper.Unit#UNIT Target
--- @param #number Lasercode
--- @param #number Lasingtime
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Wrapper.Client#CLIENT Client
+--- @param Wrapper.Unit#UNIT Target
+--- @param #number Lasercode
+--- @param #number Lasingtime
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetLasing(From, Event, To, Client, Target, Lasercode, Lasingtime)
   self:T({From, Event, To})
   local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
@@ -1816,14 +1816,14 @@ function PLAYERRECCE:onafterTargetLasing(From, Event, To, Client, Target, Laserc
 end
 
 --- [Internal] Lased target destroyed
--- @param #PLAYERRECCE self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Wrapper.Client#CLIENT Client
--- @param Wrapper.Unit#UNIT Target
--- @param #string Targettype
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Wrapper.Client#CLIENT Client
+--- @param Wrapper.Unit#UNIT Target
+--- @param #string Targettype
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterShack(From, Event, To, Client, Target, Targettype)
   self:T({From, Event, To})
   local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
@@ -1860,13 +1860,13 @@ function PLAYERRECCE:onafterShack(From, Event, To, Client, Target, Targettype)
 end
 
 --- [Internal] Laser lost LOS
--- @param #PLAYERRECCE self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Wrapper.Client#CLIENT Client
--- @param Wrapper.Unit#UNIT Target
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Wrapper.Client#CLIENT Client
+--- @param Wrapper.Unit#UNIT Target
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetLOSLost(From, Event, To, Client, Target)
   self:T({From, Event, To})
   local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
@@ -1903,15 +1903,15 @@ function PLAYERRECCE:onafterTargetLOSLost(From, Event, To, Client, Target)
 end
 
 --- [Internal] Target report
--- @param #PLAYERRECCE self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Wrapper.Client#CLIENT Client
--- @param Core.Set#SET_UNIT TargetSet
--- @param Wrapper.Unit#UNIT Target
--- @param #string Text
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Wrapper.Client#CLIENT Client
+--- @param Core.Set#SET_UNIT TargetSet
+--- @param Wrapper.Unit#UNIT Target
+--- @param #string Text
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetReport(From, Event, To, Client, TargetSet, Target, Text)
   self:T({From, Event, To})
   MESSAGE:New(Text,45,self.Name or "FACA"):ToClient(Client)
@@ -1929,15 +1929,15 @@ function PLAYERRECCE:onafterTargetReport(From, Event, To, Client, TargetSet, Tar
 end
 
 --- [Internal] Target data upload
--- @param #PLAYERRECCE self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Wrapper.Client#CLIENT Client
--- @param Core.Set#SET_UNIT TargetSet
--- @param Wrapper.Unit#UNIT Target
--- @param #string Text
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Wrapper.Client#CLIENT Client
+--- @param Core.Set#SET_UNIT TargetSet
+--- @param Wrapper.Unit#UNIT Target
+--- @param #string Text
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetReportSent(From, Event, To, Client, TargetSet)
   self:T({From, Event, To})
   local text = "Upload completed!"
@@ -1951,11 +1951,11 @@ function PLAYERRECCE:onafterTargetReportSent(From, Event, To, Client, TargetSet)
 end
 
 --- [Internal] Stop
--- @param #PLAYERRECCE self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #PLAYERRECCE self
+--- @param #PLAYERRECCE self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterStop(From, Event, To)
   self:I({From, Event, To})
   -- Player Events

@@ -42,16 +42,16 @@
 --  
 -- IMPORTANT: ONE SHOULD NEVER SANITIZE these STATIC OBJECT REFERENCES! (make the STATIC object references nil).
 -- 
--- @field #STATIC
+--- @field #STATIC
 STATIC = {
   ClassName = "STATIC",
 }
 
 
 --- Register a static object.
--- @param #STATIC self
--- @param #string StaticName Name of the static object.
--- @return #STATIC self
+--- @param #STATIC self
+--- @param #string StaticName Name of the static object.
+--- @return #STATIC self
 function STATIC:Register( StaticName )
   local self = BASE:Inherit( self, POSITIONABLE:New( StaticName ) )
   self.StaticName = StaticName
@@ -66,15 +66,15 @@ function STATIC:Register( StaticName )
 end
 
 --- Get initial life points
--- @param #STATIC self
--- @return #number lifepoints
+--- @param #STATIC self
+--- @return #number lifepoints
 function STATIC:GetLife0()
   return self.Life0 or 1
 end
 
 --- Get current life points
--- @param #STATIC self
--- @return #number lifepoints or nil
+--- @param #STATIC self
+--- @return #number lifepoints or nil
 function STATIC:GetLife()
   local DCSStatic = StaticObject.getByName( self.StaticName )
   if DCSStatic then
@@ -84,9 +84,9 @@ function STATIC:GetLife()
 end
 
 --- Finds a STATIC from the _DATABASE using a DCSStatic object.
--- @param #STATIC self
--- @param DCS#StaticObject DCSStatic An existing DCS Static object reference.
--- @return #STATIC self
+--- @param #STATIC self
+--- @param DCS#StaticObject DCSStatic An existing DCS Static object reference.
+--- @return #STATIC self
 function STATIC:Find( DCSStatic )
 
   local StaticName = DCSStatic:getName()
@@ -96,10 +96,10 @@ end
 
 --- Finds a STATIC from the _DATABASE using the relevant Static Name.
 -- As an optional parameter, a briefing text can be given also.
--- @param #STATIC self
--- @param #string StaticName Name of the DCS **Static** as defined within the Mission Editor.
--- @param #boolean RaiseError Raise an error if not found.
--- @return #STATIC self or *nil*
+--- @param #STATIC self
+--- @param #string StaticName Name of the DCS **Static** as defined within the Mission Editor.
+--- @param #boolean RaiseError Raise an error if not found.
+--- @return #STATIC self or *nil*
 function STATIC:FindByName( StaticName, RaiseError )
 
   -- Find static in DB.
@@ -120,9 +120,9 @@ function STATIC:FindByName( StaticName, RaiseError )
 end
 
 --- Destroys the STATIC.
--- @param #STATIC self
--- @param #boolean GenerateEvent (Optional) true if you want to generate a crash or dead event for the static.
--- @return #nil The DCS StaticObject is not existing or alive.  
+--- @param #STATIC self
+--- @param #boolean GenerateEvent (Optional) true if you want to generate a crash or dead event for the static.
+--- @return #nil The DCS StaticObject is not existing or alive.  
 -- @usage
 -- -- Air static example: destroy the static Helicopter and generate a S_EVENT_CRASH.
 -- Helicopter = STATIC:FindByName( "Helicopter" )
@@ -174,8 +174,8 @@ end
 
 
 --- Get DCS object of static of static.
--- @param #STATIC self
--- @return DCS static object
+--- @param #STATIC self
+--- @return DCS static object
 function STATIC:GetDCSObject()
   local DCSStatic = StaticObject.getByName( self.StaticName )
   
@@ -187,8 +187,8 @@ function STATIC:GetDCSObject()
 end
 
 --- Returns a list of one @{Wrapper.Static}.
--- @param #STATIC self
--- @return #list<Wrapper.Static#STATIC> A list of one @{Wrapper.Static}.
+--- @param #STATIC self
+--- @return #list<Wrapper.Static#STATIC> A list of one @{Wrapper.Static}.
 function STATIC:GetUnits()
   self:F2( { self.StaticName } )
   local DCSStatic = self:GetDCSObject()
@@ -206,18 +206,18 @@ end
 
 
 --- Get threat level of static.
--- @param #STATIC self
--- @return #number Threat level 1.
--- @return #string "Static"
+--- @param #STATIC self
+--- @return #number Threat level 1.
+--- @return #string "Static"
 function STATIC:GetThreatLevel()
   return 1, "Static"
 end
 
 --- Spawn the @{Wrapper.Static} at a specific coordinate and heading.
--- @param #STATIC self
--- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
--- @param #number Heading The heading of the static respawn in degrees. Default is 0 deg.
--- @param #number Delay Delay in seconds before the static is spawned.
+--- @param #STATIC self
+--- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
+--- @param #number Heading The heading of the static respawn in degrees. Default is 0 deg.
+--- @param #number Delay Delay in seconds before the static is spawned.
 function STATIC:SpawnAt(Coordinate, Heading, Delay)
 
   Heading=Heading or 0
@@ -238,9 +238,9 @@ end
 
 --- Respawn the @{Wrapper.Unit} at the same location with the same properties.
 -- This is useful to respawn a cargo after it has been destroyed.
--- @param #STATIC self
--- @param DCS#country.id CountryID (Optional) The country ID used for spawning the new static. Default is same as currently.
--- @param #number Delay (Optional) Delay in seconds before static is respawned. Default now.
+--- @param #STATIC self
+--- @param DCS#country.id CountryID (Optional) The country ID used for spawning the new static. Default is same as currently.
+--- @param #number Delay (Optional) Delay in seconds before static is respawned. Default now.
 function STATIC:ReSpawn(CountryID, Delay)
 
   if Delay and Delay>0 then
@@ -260,10 +260,10 @@ end
 
 
 --- Respawn the @{Wrapper.Unit} at a defined Coordinate with an optional heading.
--- @param #STATIC self
--- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
--- @param #number Heading (Optional) The heading of the static respawn in degrees. Default the current heading.
--- @param #number Delay (Optional) Delay in seconds before static is respawned. Default now.
+--- @param #STATIC self
+--- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
+--- @param #number Heading (Optional) The heading of the static respawn in degrees. Default the current heading.
+--- @param #number Delay (Optional) Delay in seconds before static is respawned. Default now.
 function STATIC:ReSpawnAt(Coordinate, Heading, Delay)
 
   --Heading=Heading or 0

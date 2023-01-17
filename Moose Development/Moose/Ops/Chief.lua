@@ -18,22 +18,22 @@
 
 
 --- CHIEF class.
--- @type CHIEF
--- @field #string ClassName Name of the class.
--- @field #number verbose Verbosity level.
--- @field #string lid Class id string for output to DCS log file.
--- @field #table targetqueue Target queue.
--- @field #table zonequeue Strategic zone queue.
--- @field Core.Set#SET_ZONE borderzoneset Set of zones defining the border of our territory.
--- @field Core.Set#SET_ZONE yellowzoneset Set of zones defining the extended border. Defcon is set to YELLOW if enemy activity is detected.
--- @field Core.Set#SET_ZONE engagezoneset Set of zones where enemies are actively engaged.
--- @field #number threatLevelMin Lowest threat level of targets to attack.
--- @field #number threatLevelMax Highest threat level of targets to attack.
--- @field #string Defcon Defence condition.
--- @field #string strategy Strategy of the CHIEF.
--- @field Ops.Commander#COMMANDER commander Commander of assigned legions.
--- @field #number Nsuccess Number of successful missions.
--- @field #number Nfailure Number of failed mission.
+--- @type CHIEF
+--- @field #string ClassName Name of the class.
+--- @field #number verbose Verbosity level.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #table targetqueue Target queue.
+--- @field #table zonequeue Strategic zone queue.
+--- @field Core.Set#SET_ZONE borderzoneset Set of zones defining the border of our territory.
+--- @field Core.Set#SET_ZONE yellowzoneset Set of zones defining the extended border. Defcon is set to YELLOW if enemy activity is detected.
+--- @field Core.Set#SET_ZONE engagezoneset Set of zones where enemies are actively engaged.
+--- @field #number threatLevelMin Lowest threat level of targets to attack.
+--- @field #number threatLevelMax Highest threat level of targets to attack.
+--- @field #string Defcon Defence condition.
+--- @field #string strategy Strategy of the CHIEF.
+--- @field Ops.Commander#COMMANDER commander Commander of assigned legions.
+--- @field #number Nsuccess Number of successful missions.
+--- @field #number Nfailure Number of failed mission.
 -- @extends Ops.Intelligence#INTEL
 
 --- *In preparing for battle I have always found that plans are useless, but planning is indispensable* -- Dwight D Eisenhower
@@ -243,7 +243,7 @@
 -- 
 -- 
 --
--- @field #CHIEF
+--- @field #CHIEF
 CHIEF = {
   ClassName      = "CHIEF",
   verbose        =     0,
@@ -259,10 +259,10 @@ CHIEF = {
 }
 
 --- Defence condition.
--- @type CHIEF.DEFCON
--- @field #string GREEN No enemy activities detected in our terretory or conflict zones.
--- @field #string YELLOW Enemy in conflict zones.
--- @field #string RED Enemy within our border.
+--- @type CHIEF.DEFCON
+--- @field #string GREEN No enemy activities detected in our terretory or conflict zones.
+--- @field #string YELLOW Enemy in conflict zones.
+--- @field #string RED Enemy within our border.
 CHIEF.DEFCON = {
   GREEN="Green",
   YELLOW="Yellow",
@@ -270,12 +270,12 @@ CHIEF.DEFCON = {
 }
 
 --- Strategy.
--- @type CHIEF.Strategy
--- @field #string PASSIVE No targets at all are engaged.
--- @field #string DEFENSIVE Only target in our own terretory are engaged.
--- @field #string OFFENSIVE Targets in own terretory and yellow zones are engaged.
--- @field #string AGGRESSIVE Targets in own terretory, conflict zones and attack zones are engaged.
--- @field #string TOTALWAR Anything is engaged anywhere.
+--- @type CHIEF.Strategy
+--- @field #string PASSIVE No targets at all are engaged.
+--- @field #string DEFENSIVE Only target in our own terretory are engaged.
+--- @field #string OFFENSIVE Targets in own terretory and yellow zones are engaged.
+--- @field #string AGGRESSIVE Targets in own terretory, conflict zones and attack zones are engaged.
+--- @field #string TOTALWAR Anything is engaged anywhere.
 CHIEF.Strategy = {
   PASSIVE="Passive",
   DEFENSIVE="Defensive",
@@ -285,52 +285,52 @@ CHIEF.Strategy = {
 }
 
 --- Mission performance.
--- @type CHIEF.MissionPerformance
--- @field #string MissionType Mission Type.
--- @field #number Performance Performance: a number between 0 and 100, where 100 is best performance.
+--- @type CHIEF.MissionPerformance
+--- @field #string MissionType Mission Type.
+--- @field #number Performance Performance: a number between 0 and 100, where 100 is best performance.
 
 --- Asset numbers for detected targets.
--- @type CHIEF.AssetNumber
--- @field #number nAssetMin Min number of assets.
--- @field #number nAssetMax Max number of assets.
--- @field #number threatlevel Threat level.
--- @field #string targetCategory Target category.
--- @field #string missionType Mission type.
--- @field #number nUnits Number of enemy units.
--- @field #string defcon Defense condition.
--- @field #string strategy Strategy.
+--- @type CHIEF.AssetNumber
+--- @field #number nAssetMin Min number of assets.
+--- @field #number nAssetMax Max number of assets.
+--- @field #number threatlevel Threat level.
+--- @field #string targetCategory Target category.
+--- @field #string missionType Mission type.
+--- @field #number nUnits Number of enemy units.
+--- @field #string defcon Defense condition.
+--- @field #string strategy Strategy.
 
 --- Strategic zone.
--- @type CHIEF.StrategicZone
--- @field Ops.OpsZone#OPSZONE opszone OPS zone.
--- @field #number prio Priority.
--- @field #number importance Importance.
--- @field #CHIEF.Resources resourceEmpty List of resources employed when the zone is empty.
--- @field #CHIEF.Resources resourceOccup List of resources employed when the zone is occupied by an enemy.
--- @field #table missions Mission.
+--- @type CHIEF.StrategicZone
+--- @field Ops.OpsZone#OPSZONE opszone OPS zone.
+--- @field #number prio Priority.
+--- @field #number importance Importance.
+--- @field #CHIEF.Resources resourceEmpty List of resources employed when the zone is empty.
+--- @field #CHIEF.Resources resourceOccup List of resources employed when the zone is occupied by an enemy.
+--- @field #table missions Mission.
 
 --- Resource list.
--- @type CHIEF.Resources
--- @field <#CHIEF.Resource> List of resources.
+--- @type CHIEF.Resources
+--- @field <#CHIEF.Resource> List of resources.
 
 --- Resource.
--- @type CHIEF.Resource
--- @field #string MissionType Mission type, e.g. `AUFTRAG.Type.BAI`.
--- @field #number Nmin Min number of assets.
--- @field #number Nmax Max number of assets.
--- @field #table Attributes Generalized attribute, e.g. `{GROUP.Attribute.GROUND_INFANTRY}`.
--- @field #table Properties Properties ([DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)), e.g. `"Attack helicopters"` or `"Mobile AAA"`.
--- @field #table Categories Categories Group categories.
--- @field Ops.Auftrag#AUFTRAG mission Attached mission.
--- @field #number carrierNmin Min number of assets.
--- @field #number carrierNmax Max number of assets.
--- @field #table carrierCategories Group categories.
--- @field #table carrierAttributes Generalized attribute, e.g. `{GROUP.Attribute.GROUND_INFANTRY}`.
--- @field #table carrierProperties Properties ([DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)), e.g. `"Attack helicopters"` or `"Mobile AAA"`.
+--- @type CHIEF.Resource
+--- @field #string MissionType Mission type, e.g. `AUFTRAG.Type.BAI`.
+--- @field #number Nmin Min number of assets.
+--- @field #number Nmax Max number of assets.
+--- @field #table Attributes Generalized attribute, e.g. `{GROUP.Attribute.GROUND_INFANTRY}`.
+--- @field #table Properties Properties ([DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)), e.g. `"Attack helicopters"` or `"Mobile AAA"`.
+--- @field #table Categories Categories Group categories.
+--- @field Ops.Auftrag#AUFTRAG mission Attached mission.
+--- @field #number carrierNmin Min number of assets.
+--- @field #number carrierNmax Max number of assets.
+--- @field #table carrierCategories Group categories.
+--- @field #table carrierAttributes Generalized attribute, e.g. `{GROUP.Attribute.GROUND_INFANTRY}`.
+--- @field #table carrierProperties Properties ([DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)), e.g. `"Attack helicopters"` or `"Mobile AAA"`.
 
 
 --- CHIEF class version.
--- @field #string version
+--- @field #string version
 CHIEF.version="0.6.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -359,11 +359,11 @@ CHIEF.version="0.6.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new CHIEF object and start the FSM.
--- @param #CHIEF self
--- @param #number Coalition Coalition side, e.g. `coaliton.side.BLUE`. Can also be passed as a string "red", "blue" or "neutral".
--- @param Core.Set#SET_GROUP AgentSet Set of agents (groups) providing intel. Default is an empty set.
--- @param #string Alias An *optional* alias how this object is called in the logs etc.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param #number Coalition Coalition side, e.g. `coaliton.side.BLUE`. Can also be passed as a string "red", "blue" or "neutral".
+--- @param Core.Set#SET_GROUP AgentSet Set of agents (groups) providing intel. Default is an empty set.
+--- @param #string Alias An *optional* alias how this object is called in the logs etc.
+--- @return #CHIEF self
 function CHIEF:New(Coalition, AgentSet, Alias)
 
   -- Set alias.
@@ -685,8 +685,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set this to be an air-to-any dispatcher, i.e. engaging air, ground and naval targets. This is the default anyway.
--- @param #CHIEF self
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @return #CHIEF self
 function CHIEF:SetAirToAny()
 
   self:SetFilterCategory({})
@@ -695,8 +695,8 @@ function CHIEF:SetAirToAny()
 end
 
 --- Set this to be an air-to-air dispatcher.
--- @param #CHIEF self
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @return #CHIEF self
 function CHIEF:SetAirToAir()
 
   self:SetFilterCategory({Unit.Category.AIRPLANE, Unit.Category.HELICOPTER})
@@ -705,8 +705,8 @@ function CHIEF:SetAirToAir()
 end
 
 --- Set this to be an air-to-ground dispatcher, i.e. engage only ground units
--- @param #CHIEF self
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @return #CHIEF self
 function CHIEF:SetAirToGround()
 
   self:SetFilterCategory({Unit.Category.GROUND_UNIT})
@@ -715,8 +715,8 @@ function CHIEF:SetAirToGround()
 end
 
 --- Set this to be an air-to-sea dispatcher, i.e. engage only naval units.
--- @param #CHIEF self
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @return #CHIEF self
 function CHIEF:SetAirToSea()
 
   self:SetFilterCategory({Unit.Category.SHIP})
@@ -725,8 +725,8 @@ function CHIEF:SetAirToSea()
 end
 
 --- Set this to be an air-to-surface dispatcher, i.e. engaging ground and naval groups.
--- @param #CHIEF self
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @return #CHIEF self
 function CHIEF:SetAirToSurface()
 
   self:SetFilterCategory({Unit.Category.GROUND_UNIT, Unit.Category.SHIP})
@@ -736,10 +736,10 @@ end
 
 --- Set a threat level range that will be engaged. Threat level is a number between 0 and 10, where 10 is a very dangerous threat.
 -- Targets with threat level 0 are usually harmless.
--- @param #CHIEF self
--- @param #number ThreatLevelMin Min threat level. Default 1.
--- @param #number ThreatLevelMax Max threat level. Default 10.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param #number ThreatLevelMin Min threat level. Default 1.
+--- @param #number ThreatLevelMax Max threat level. Default 10.
+--- @return #CHIEF self
 function CHIEF:SetThreatLevelRange(ThreatLevelMin, ThreatLevelMax)
 
   self.threatLevelMin=ThreatLevelMin or 1
@@ -749,9 +749,9 @@ function CHIEF:SetThreatLevelRange(ThreatLevelMin, ThreatLevelMax)
 end
 
 --- Set defence condition.
--- @param #CHIEF self
--- @param #string Defcon Defence condition. See @{#CHIEF.DEFCON}, e.g. `CHIEF.DEFCON.RED`.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param #string Defcon Defence condition. See @{#CHIEF.DEFCON}, e.g. `CHIEF.DEFCON.RED`.
+--- @return #CHIEF self
 function CHIEF:SetDefcon(Defcon)
 
   -- Check if valid string was passed.
@@ -778,15 +778,15 @@ function CHIEF:SetDefcon(Defcon)
 end
 
 --- Create a new resource list of required assets.
--- @param #CHIEF self
--- @param #string MissionType The mission type.
--- @param #number Nmin Min number of required assets. Default 1.
--- @param #number Nmax Max number of requried assets. Default 1.
--- @param #table Attributes Generalized attribute(s). Default `nil`.
--- @param #table Properties DCS attribute(s). Default `nil`.
--- @param #table Categories Group categories.
--- @return #CHIEF.Resources The newly created resource list table.
--- @return #CHIEF.Resource The resource object that was added.
+--- @param #CHIEF self
+--- @param #string MissionType The mission type.
+--- @param #number Nmin Min number of required assets. Default 1.
+--- @param #number Nmax Max number of requried assets. Default 1.
+--- @param #table Attributes Generalized attribute(s). Default `nil`.
+--- @param #table Properties DCS attribute(s). Default `nil`.
+--- @param #table Categories Group categories.
+--- @return #CHIEF.Resources The newly created resource list table.
+--- @return #CHIEF.Resource The resource object that was added.
 function CHIEF:CreateResource(MissionType, Nmin, Nmax, Attributes, Properties, Categories)
 
   local resources={}
@@ -797,15 +797,15 @@ function CHIEF:CreateResource(MissionType, Nmin, Nmax, Attributes, Properties, C
 end
 
 --- Add mission type and number of required assets to resource list.
--- @param #CHIEF self
--- @param #CHIEF.Resources Resource List of resources.
--- @param #string MissionType Mission Type.
--- @param #number Nmin Min number of required assets. Default 1.
--- @param #number Nmax Max number of requried assets. Default equal `Nmin`.
--- @param #table Attributes Generalized attribute(s).
--- @param #table Properties DCS attribute(s). Default `nil`.
--- @param #table Categories Group categories.
--- @return #CHIEF.Resource Resource table.
+--- @param #CHIEF self
+--- @param #CHIEF.Resources Resource List of resources.
+--- @param #string MissionType Mission Type.
+--- @param #number Nmin Min number of required assets. Default 1.
+--- @param #number Nmax Max number of requried assets. Default equal `Nmin`.
+--- @param #table Attributes Generalized attribute(s).
+--- @param #table Properties DCS attribute(s). Default `nil`.
+--- @param #table Categories Group categories.
+--- @return #CHIEF.Resource Resource table.
 function CHIEF:AddToResource(Resource, MissionType, Nmin, Nmax, Attributes, Properties, Categories)
     
   -- Create new resource table.
@@ -841,14 +841,14 @@ function CHIEF:AddToResource(Resource, MissionType, Nmin, Nmax, Attributes, Prop
 end
 
 --- Define which assets will be transported and define the number and attributes/properties of the cargo carrier assets.
--- @param #CHIEF self
--- @param #CHIEF.Resource Resource Resource table.
--- @param #number Nmin Min number of required assets. Default 1.
--- @param #number Nmax Max number of requried assets. Default is equal to `Nmin`.
--- @param #table CarrierAttributes Generalized attribute(s) of the carrier assets.
--- @param #table CarrierProperties DCS attribute(s) of the carrier assets.
--- @param #table CarrierCategories Group categories of the carrier assets.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param #CHIEF.Resource Resource Resource table.
+--- @param #number Nmin Min number of required assets. Default 1.
+--- @param #number Nmax Max number of requried assets. Default is equal to `Nmin`.
+--- @param #table CarrierAttributes Generalized attribute(s) of the carrier assets.
+--- @param #table CarrierProperties DCS attribute(s) of the carrier assets.
+--- @param #table CarrierCategories Group categories of the carrier assets.
+--- @return #CHIEF self
 function CHIEF:AddTransportToResource(Resource, Nmin, Nmax, CarrierAttributes, CarrierProperties, CarrierCategories)
 
   Resource.carrierNmin=Nmin or 1
@@ -861,10 +861,10 @@ function CHIEF:AddTransportToResource(Resource, Nmin, Nmax, CarrierAttributes, C
 end
 
 --- Delete mission type from resource list. All running missions are cancelled.
--- @param #CHIEF self
--- @param #table Resource Resource table.
--- @param #string MissionType Mission Type.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param #table Resource Resource table.
+--- @param #string MissionType Mission Type.
+--- @return #CHIEF self
 function CHIEF:DeleteFromResource(Resource, MissionType)
   
   for i=#Resource,1,-1 do
@@ -881,16 +881,16 @@ function CHIEF:DeleteFromResource(Resource, MissionType)
 end
 
 --- Set number of assets requested for detected targets.
--- @param #CHIEF self
--- @param #number NassetsMin Min number of assets. Should be at least 1. Default 1.
--- @param #number NassetsMax Max number of assets. Default is same as `NassetsMin`.
--- @param #number ThreatLevel Only apply this setting if the target threat level is greater or equal this number. Default 0.
--- @param #string TargetCategory Only apply this setting if the target is of this category, e.g. `TARGET.Category.AIRCRAFT`.
--- @param #string MissionType Only apply this setting for this mission type, e.g. `AUFTRAG.Type.INTERCEPT`.
--- @param #string Nunits Only apply this setting if the number of enemy units is greater or equal this number.
--- @param #string Defcon Only apply this setting if this defense condition is in place.
--- @param #string Strategy Only apply this setting if this strategy is in currently. place.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param #number NassetsMin Min number of assets. Should be at least 1. Default 1.
+--- @param #number NassetsMax Max number of assets. Default is same as `NassetsMin`.
+--- @param #number ThreatLevel Only apply this setting if the target threat level is greater or equal this number. Default 0.
+--- @param #string TargetCategory Only apply this setting if the target is of this category, e.g. `TARGET.Category.AIRCRAFT`.
+--- @param #string MissionType Only apply this setting for this mission type, e.g. `AUFTRAG.Type.INTERCEPT`.
+--- @param #string Nunits Only apply this setting if the number of enemy units is greater or equal this number.
+--- @param #string Defcon Only apply this setting if this defense condition is in place.
+--- @param #string Strategy Only apply this setting if this strategy is in currently. place.
+--- @return #CHIEF self
 function CHIEF:SetResponseOnTarget(NassetsMin, NassetsMax, ThreatLevel, TargetCategory, MissionType, Nunits, Defcon, Strategy)
   
   local bla={} --#CHIEF.AssetNumber
@@ -912,11 +912,11 @@ function CHIEF:SetResponseOnTarget(NassetsMin, NassetsMax, ThreatLevel, TargetCa
 end
 
 --- Add mission type and number of required assets to resource.
--- @param #CHIEF self
--- @param Ops.Target#TARGET Target The target.
--- @param #string MissionType Mission type.
--- @return #number Number of min assets.
--- @return #number Number of max assets.
+--- @param #CHIEF self
+--- @param Ops.Target#TARGET Target The target.
+--- @param #string MissionType Mission type.
+--- @return #number Number of min assets.
+--- @return #number Number of max assets.
 function CHIEF:_GetAssetsForTarget(Target, MissionType)
 
   -- Threat level.
@@ -1028,33 +1028,33 @@ function CHIEF:_GetAssetsForTarget(Target, MissionType)
 end
 
 --- Get defence condition.
--- @param #CHIEF self
--- @param #string Current Defence condition. See @{#CHIEF.DEFCON}, e.g. `CHIEF.DEFCON.RED`.
+--- @param #CHIEF self
+--- @param #string Current Defence condition. See @{#CHIEF.DEFCON}, e.g. `CHIEF.DEFCON.RED`.
 function CHIEF:GetDefcon(Defcon)  
   return self.Defcon
 end
 
 --- Set limit for number of total or specific missions to be executed simultaniously.
--- @param #CHIEF self
--- @param #number Limit Number of max. mission of this type. Default 10.
--- @param #string MissionType Type of mission, e.g. `AUFTRAG.Type.BAI`. Default `"Total"` for total number of missions.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param #number Limit Number of max. mission of this type. Default 10.
+--- @param #string MissionType Type of mission, e.g. `AUFTRAG.Type.BAI`. Default `"Total"` for total number of missions.
+--- @return #CHIEF self
 function CHIEF:SetLimitMission(Limit, MissionType)
   self.commander:SetLimitMission(Limit, MissionType)
   return self
 end
 
 --- Set tactical overview on.
--- @param #CHIEF self
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @return #CHIEF self
 function CHIEF:SetTacticalOverviewOn()  
   self.tacview=true
   return self
 end
 
 --- Set tactical overview off.
--- @param #CHIEF self
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @return #CHIEF self
 function CHIEF:SetTacticalOverviewOff()  
   self.tacview=false
   return self
@@ -1062,9 +1062,9 @@ end
 
 
 --- Set strategy.
--- @param #CHIEF self
--- @param #string Strategy Strategy. See @{#CHIEF.strategy}, e.g. `CHIEF.Strategy.DEFENSIVE` (default).
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param #string Strategy Strategy. See @{#CHIEF.strategy}, e.g. `CHIEF.Strategy.DEFENSIVE` (default).
+--- @return #CHIEF self
 function CHIEF:SetStrategy(Strategy)
 
   -- Trigger event if Strategy changed.
@@ -1079,25 +1079,25 @@ function CHIEF:SetStrategy(Strategy)
 end
 
 --- Get defence condition.
--- @param #CHIEF self
--- @param #string Current Defence condition. See @{#CHIEF.DEFCON}, e.g. `CHIEF.DEFCON.RED`.
+--- @param #CHIEF self
+--- @param #string Current Defence condition. See @{#CHIEF.DEFCON}, e.g. `CHIEF.DEFCON.RED`.
 function CHIEF:GetDefcon(Defcon)  
   return self.Defcon
 end
 
 
 --- Get the commander.
--- @param #CHIEF self
--- @return Ops.Commander#COMMANDER The commander.
+--- @param #CHIEF self
+--- @return Ops.Commander#COMMANDER The commander.
 function CHIEF:GetCommander()
   return self.commander
 end
 
 
 --- Add an AIRWING to the chief's commander.
--- @param #CHIEF self
--- @param Ops.AirWing#AIRWING Airwing The airwing to add.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Ops.AirWing#AIRWING Airwing The airwing to add.
+--- @return #CHIEF self
 function CHIEF:AddAirwing(Airwing)
 
   -- Add airwing to the commander.
@@ -1107,9 +1107,9 @@ function CHIEF:AddAirwing(Airwing)
 end
 
 --- Add a BRIGADE to the chief's commander.
--- @param #CHIEF self
--- @param Ops.Brigade#BRIGADE Brigade The brigade to add.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Ops.Brigade#BRIGADE Brigade The brigade to add.
+--- @return #CHIEF self
 function CHIEF:AddBrigade(Brigade)
 
   -- Add brigade to the commander.
@@ -1119,9 +1119,9 @@ function CHIEF:AddBrigade(Brigade)
 end
 
 --- Add a FLEET to the chief's commander.
--- @param #CHIEF self
--- @param Ops.Fleet#FLEET Fleet The fleet to add.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Ops.Fleet#FLEET Fleet The fleet to add.
+--- @return #CHIEF self
 function CHIEF:AddFleet(Fleet)
 
   -- Add fleet to the commander.
@@ -1131,9 +1131,9 @@ function CHIEF:AddFleet(Fleet)
 end
 
 --- Add a LEGION to the chief's commander.
--- @param #CHIEF self
--- @param Ops.Legion#LEGION Legion The legion to add.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Ops.Legion#LEGION Legion The legion to add.
+--- @return #CHIEF self
 function CHIEF:AddLegion(Legion)
 
   -- Set chief of the legion.
@@ -1146,9 +1146,9 @@ function CHIEF:AddLegion(Legion)
 end
 
 --- Remove a LEGION to the chief's commander.
--- @param #CHIEF self
--- @param Ops.Legion#LEGION Legion The legion to add.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Ops.Legion#LEGION Legion The legion to add.
+--- @return #CHIEF self
 function CHIEF:RemoveLegion(Legion)
 
   -- Set chief of the legion.
@@ -1162,9 +1162,9 @@ end
 
 
 --- Add mission to mission queue of the COMMANDER.
--- @param #CHIEF self
--- @param Ops.Auftrag#AUFTRAG Mission Mission to be added.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Ops.Auftrag#AUFTRAG Mission Mission to be added.
+--- @return #CHIEF self
 function CHIEF:AddMission(Mission)
 
   Mission.chief=self
@@ -1179,9 +1179,9 @@ function CHIEF:AddMission(Mission)
 end
 
 --- Remove mission from queue.
--- @param #CHIEF self
--- @param Ops.Auftrag#AUFTRAG Mission Mission to be removed.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Ops.Auftrag#AUFTRAG Mission Mission to be removed.
+--- @return #CHIEF self
 function CHIEF:RemoveMission(Mission)
 
   Mission.chief=nil
@@ -1192,9 +1192,9 @@ function CHIEF:RemoveMission(Mission)
 end
 
 --- Add transport to transport queue of the COMMANDER.
--- @param #CHIEF self
--- @param Ops.OpsTransport#OPSTRANSPORT Transport Transport to be added.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Ops.OpsTransport#OPSTRANSPORT Transport Transport to be added.
+--- @return #CHIEF self
 function CHIEF:AddOpsTransport(Transport)
 
   Transport.chief=self
@@ -1205,9 +1205,9 @@ function CHIEF:AddOpsTransport(Transport)
 end
 
 --- Remove transport from queue.
--- @param #CHIEF self
--- @param Ops.OpsTransport#OPSTRANSPORT Transport Transport to be removed.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Ops.OpsTransport#OPSTRANSPORT Transport Transport to be removed.
+--- @return #CHIEF self
 function CHIEF:RemoveTransport(Transport)
 
   Transport.chief=nil
@@ -1218,9 +1218,9 @@ function CHIEF:RemoveTransport(Transport)
 end
 
 --- Add target.
--- @param #CHIEF self
--- @param Ops.Target#TARGET Target Target object to be added.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Ops.Target#TARGET Target Target object to be added.
+--- @return #CHIEF self
 function CHIEF:AddTarget(Target)
 
   if not self:IsTarget(Target) then
@@ -1232,9 +1232,9 @@ function CHIEF:AddTarget(Target)
 end
 
 --- Check if a TARGET is already in the queue. 
--- @param #CHIEF self
--- @param Ops.Target#TARGET Target Target object to be added.
--- @return #boolean If `true`, target exists in the target queue.
+--- @param #CHIEF self
+--- @param Ops.Target#TARGET Target Target object to be added.
+--- @return #boolean If `true`, target exists in the target queue.
 function CHIEF:IsTarget(Target)
 
   for _,_target in pairs(self.targetqueue) do
@@ -1248,9 +1248,9 @@ function CHIEF:IsTarget(Target)
 end
 
 --- Remove target from queue.
--- @param #CHIEF self
--- @param Ops.Target#TARGET Target The target.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Ops.Target#TARGET Target The target.
+--- @return #CHIEF self
 function CHIEF:RemoveTarget(Target)
 
   for i,_target in pairs(self.targetqueue) do
@@ -1282,13 +1282,13 @@ end
 -- 
 -- Resources can be created with the @{#CHIEF.CreateResource} and @{#CHIEF.AddToResource} functions.
 -- 
--- @param #CHIEF self
--- @param Ops.OpsZone#OPSZONE OpsZone OPS zone object.
--- @param #number Priority Priority. Default 50.
--- @param #number Importance Importance. Default `#nil`.
--- @param #CHIEF.Resources ResourceOccupied (Optional) Resources used then zone is occupied by the enemy.
--- @param #CHIEF.Resources ResourceEmpty (Optional) Resources used then zone is empty.
--- @return #CHIEF.StrategicZone The strategic zone.
+--- @param #CHIEF self
+--- @param Ops.OpsZone#OPSZONE OpsZone OPS zone object.
+--- @param #number Priority Priority. Default 50.
+--- @param #number Importance Importance. Default `#nil`.
+--- @param #CHIEF.Resources ResourceOccupied (Optional) Resources used then zone is occupied by the enemy.
+--- @param #CHIEF.Resources ResourceEmpty (Optional) Resources used then zone is empty.
+--- @return #CHIEF.StrategicZone The strategic zone.
 function CHIEF:AddStrategicZone(OpsZone, Priority, Importance, ResourceOccupied, ResourceEmpty)
 
   local stratzone={} --#CHIEF.StrategicZone
@@ -1333,11 +1333,11 @@ function CHIEF:AddStrategicZone(OpsZone, Priority, Importance, ResourceOccupied,
 end
 
 --- Set the resource list of missions and assets employed when the zone is empty.
--- @param #CHIEF self
--- @param #CHIEF.StrategicZone StrategicZone The strategic zone.
--- @param #CHIEF.Resource Resource Resource list of missions and assets.
--- @param #boolean NoCopy If `true`, do **not** create a deep copy of the resource.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param #CHIEF.StrategicZone StrategicZone The strategic zone.
+--- @param #CHIEF.Resource Resource Resource list of missions and assets.
+--- @param #boolean NoCopy If `true`, do **not** create a deep copy of the resource.
+--- @return #CHIEF self
 function CHIEF:SetStrategicZoneResourceEmpty(StrategicZone, Resource, NoCopy)
   if NoCopy then
     StrategicZone.resourceEmpty=Resource
@@ -1348,11 +1348,11 @@ function CHIEF:SetStrategicZoneResourceEmpty(StrategicZone, Resource, NoCopy)
 end
 
 --- Set the resource list of missions and assets employed when the zone is occupied by the enemy.
--- @param #CHIEF self
--- @param #CHIEF.StrategicZone StrategicZone The strategic zone.
--- @param #CHIEF.Resource Resource Resource list of missions and assets.
--- @param #boolean NoCopy If `true`, do **not** create a deep copy of the resource.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param #CHIEF.StrategicZone StrategicZone The strategic zone.
+--- @param #CHIEF.Resource Resource Resource list of missions and assets.
+--- @param #boolean NoCopy If `true`, do **not** create a deep copy of the resource.
+--- @return #CHIEF self
 function CHIEF:SetStrategicZoneResourceOccupied(StrategicZone, Resource, NoCopy)
   if NoCopy then
     StrategicZone.resourceOccup=Resource
@@ -1363,27 +1363,27 @@ function CHIEF:SetStrategicZoneResourceOccupied(StrategicZone, Resource, NoCopy)
 end
 
 --- Get the resource list of missions and assets employed when the zone is empty.
--- @param #CHIEF self
--- @param #CHIEF.StrategicZone StrategicZone The strategic zone.
--- @return #CHIEF.Resource Resource list of missions and assets.
+--- @param #CHIEF self
+--- @param #CHIEF.StrategicZone StrategicZone The strategic zone.
+--- @return #CHIEF.Resource Resource list of missions and assets.
 function CHIEF:GetStrategicZoneResourceEmpty(StrategicZone)
   return StrategicZone.resourceEmpty
 end
 
 --- Get the resource list of missions and assets employed when the zone is occupied by the enemy.
--- @param #CHIEF self
--- @param #CHIEF.StrategicZone StrategicZone The strategic zone.
--- @return #CHIEF.Resource Resource list of missions and assets.
+--- @param #CHIEF self
+--- @param #CHIEF.StrategicZone StrategicZone The strategic zone.
+--- @return #CHIEF.Resource Resource list of missions and assets.
 function CHIEF:GetStrategicZoneResourceOccupied(StrategicZone)
   return StrategicZone.resourceOccup
 end
 
 
 --- Remove strategically important zone. All runing missions are cancelled.
--- @param #CHIEF self
--- @param Ops.OpsZone#OPSZONE OpsZone OPS zone object.
--- @param #number Delay Delay in seconds before the zone is removed. Default immidiately.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Ops.OpsZone#OPSZONE OpsZone OPS zone object.
+--- @param #number Delay Delay in seconds before the zone is removed. Default immidiately.
+--- @return #CHIEF self
 function CHIEF:RemoveStrategicZone(OpsZone, Delay)
 
   if Delay and Delay>0 then
@@ -1430,9 +1430,9 @@ function CHIEF:RemoveStrategicZone(OpsZone, Delay)
 end
 
 --- Add a rearming zone.
--- @param #CHIEF self
--- @param Core.Zone#ZONE RearmingZone Rearming zone.
--- @return Ops.Brigade#BRIGADE.SupplyZone The rearming zone data.
+--- @param #CHIEF self
+--- @param Core.Zone#ZONE RearmingZone Rearming zone.
+--- @return Ops.Brigade#BRIGADE.SupplyZone The rearming zone data.
 function CHIEF:AddRearmingZone(RearmingZone)
 
   -- Hand over to commander.
@@ -1442,9 +1442,9 @@ function CHIEF:AddRearmingZone(RearmingZone)
 end
 
 --- Add a refuelling zone.
--- @param #CHIEF self
--- @param Core.Zone#ZONE RefuellingZone Refuelling zone.
--- @return Ops.Brigade#BRIGADE.SupplyZone The refuelling zone data.
+--- @param #CHIEF self
+--- @param Core.Zone#ZONE RefuellingZone Refuelling zone.
+--- @return Ops.Brigade#BRIGADE.SupplyZone The refuelling zone data.
 function CHIEF:AddRefuellingZone(RefuellingZone)
 
   -- Hand over to commander.
@@ -1454,13 +1454,13 @@ function CHIEF:AddRefuellingZone(RefuellingZone)
 end
 
 --- Add a CAP zone. Flights will engage detected targets inside this zone. 
--- @param #CHIEF self
--- @param Core.Zone#ZONE Zone CAP Zone. Has to be a circular zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 30 NM.
--- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
+--- @param #CHIEF self
+--- @param Core.Zone#ZONE Zone CAP Zone. Has to be a circular zone.
+--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+--- @param #number Leg Length of race-track in NM. Default 30 NM.
+--- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
 function CHIEF:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
 
   -- Hand over to commander.
@@ -1470,13 +1470,13 @@ function CHIEF:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
 end
 
 --- Add a GCI CAP.
--- @param #CHIEF self
--- @param Core.Zone#ZONE Zone Zone, where the flight orbits.
--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 30 NM.
--- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
+--- @param #CHIEF self
+--- @param Core.Zone#ZONE Zone Zone, where the flight orbits.
+--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+--- @param #number Leg Length of race-track in NM. Default 30 NM.
+--- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
 function CHIEF:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
 
   -- Hand over to commander.
@@ -1486,13 +1486,13 @@ function CHIEF:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
 end
 
 --- Add an AWACS zone.
--- @param #CHIEF self
--- @param Core.Zone#ZONE Zone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 30 NM.
--- @return Ops.AirWing#AIRWING.PatrolZone The AWACS zone data.
+--- @param #CHIEF self
+--- @param Core.Zone#ZONE Zone Zone.
+--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+--- @param #number Leg Length of race-track in NM. Default 30 NM.
+--- @return Ops.AirWing#AIRWING.PatrolZone The AWACS zone data.
 function CHIEF:AddAwacsZone(Zone, Altitude, Speed, Heading, Leg)
 
   -- Hand over to commander.
@@ -1502,14 +1502,14 @@ function CHIEF:AddAwacsZone(Zone, Altitude, Speed, Heading, Leg)
 end
 
 --- Add a refuelling tanker zone.
--- @param #CHIEF self
--- @param Core.Zone#ZONE Zone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 30 NM.
--- @param #number RefuelSystem Refuelling system.
--- @return Ops.AirWing#AIRWING.TankerZone The tanker zone data.
+--- @param #CHIEF self
+--- @param Core.Zone#ZONE Zone Zone.
+--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+--- @param #number Leg Length of race-track in NM. Default 30 NM.
+--- @param #number RefuelSystem Refuelling system.
+--- @return Ops.AirWing#AIRWING.TankerZone The tanker zone data.
 function CHIEF:AddTankerZone(Zone, Altitude, Speed, Heading, Leg, RefuelSystem)
 
   -- Hand over to commander.
@@ -1524,9 +1524,9 @@ end
 -- * Detected enemy troops in these zones will trigger defence condition `RED`.
 -- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.DEFENSIVE`.
 -- 
--- @param #CHIEF self
--- @param Core.Set#SET_ZONE BorderZoneSet Set of zones defining our borders.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Core.Set#SET_ZONE BorderZoneSet Set of zones defining our borders.
+--- @return #CHIEF self
 function CHIEF:SetBorderZones(BorderZoneSet)
 
   -- Border zones.
@@ -1540,9 +1540,9 @@ end
 -- * Detected enemy troops in these zones will trigger defence condition `RED`.
 -- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.DEFENSIVE`.
 -- 
--- @param #CHIEF self
--- @param Core.Zone#ZONE Zone The zone to be added.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Core.Zone#ZONE Zone The zone to be added.
+--- @return #CHIEF self
 function CHIEF:AddBorderZone(Zone)
 
   -- Add a border zone.
@@ -1552,9 +1552,9 @@ function CHIEF:AddBorderZone(Zone)
 end
 
 --- Remove a border zone defining your territory. 
--- @param #CHIEF self
--- @param Core.Zone#ZONE Zone The zone to be removed.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Core.Zone#ZONE Zone The zone to be removed.
+--- @return #CHIEF self
 function CHIEF:RemoveBorderZone(Zone)
 
   -- Add a border zone.
@@ -1568,9 +1568,9 @@ end
 -- * Detected enemy troops in these zones will trigger defence condition `YELLOW`.
 -- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.OFFENSIVE`.
 -- 
--- @param #CHIEF self
--- @param Core.Set#SET_ZONE ZoneSet Set of zones.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Core.Set#SET_ZONE ZoneSet Set of zones.
+--- @return #CHIEF self
 function CHIEF:SetConflictZones(ZoneSet)
 
   -- Conflict zones.
@@ -1584,9 +1584,9 @@ end
 -- * Detected enemy troops in these zones will trigger defence condition `YELLOW`.
 -- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.OFFENSIVE`.
 -- 
--- @param #CHIEF self
--- @param Core.Zone#ZONE Zone The zone to be added.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Core.Zone#ZONE Zone The zone to be added.
+--- @return #CHIEF self
 function CHIEF:AddConflictZone(Zone)
 
   -- Add a conflict zone.
@@ -1596,9 +1596,9 @@ function CHIEF:AddConflictZone(Zone)
 end
 
 --- Remove a conflict zone.
--- @param #CHIEF self
--- @param Core.Zone#ZONE Zone The zone to be removed.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Core.Zone#ZONE Zone The zone to be removed.
+--- @return #CHIEF self
 function CHIEF:RemoveConflictZone(Zone)
 
   -- Add a conflict zone.
@@ -1612,9 +1612,9 @@ end
 -- 
 -- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.AGGRESSIVE`.
 -- 
--- @param #CHIEF self
--- @param Core.Set#SET_ZONE ZoneSet Set of zones.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Core.Set#SET_ZONE ZoneSet Set of zones.
+--- @return #CHIEF self
 function CHIEF:SetAttackZones(ZoneSet)
 
   -- Attacak zones.
@@ -1627,9 +1627,9 @@ end
 -- 
 -- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.AGGRESSIVE`.
 -- 
--- @param #CHIEF self
--- @param Core.Zone#ZONE Zone The zone to add.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Core.Zone#ZONE Zone The zone to add.
+--- @return #CHIEF self
 function CHIEF:AddAttackZone(Zone)
 
   -- Add an attack zone.
@@ -1639,9 +1639,9 @@ function CHIEF:AddAttackZone(Zone)
 end
 
 --- Remove an attack zone.
--- @param #CHIEF self
--- @param Core.Zone#ZONE Zone The zone to be removed.
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @param Core.Zone#ZONE Zone The zone to be removed.
+--- @return #CHIEF self
 function CHIEF:RemoveAttackZone(Zone)
 
   -- Add an attack zone.
@@ -1652,8 +1652,8 @@ end
 
 --- Allow chief to use GROUND units for transport tasks. Helicopters are still preferred, and be aware there's no check as of now
 -- if a destination can be reached on land.
--- @param #CHIEF self
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @return #CHIEF self
 function CHIEF:AllowGroundTransport()
   env.warning("WARNING: CHIEF:AllowGroundTransport() is deprecated and will be removed in the future!")
   self.TransportCategories = {Group.Category.GROUND, Group.Category.HELICOPTER}
@@ -1661,8 +1661,8 @@ function CHIEF:AllowGroundTransport()
 end
 
 --- Forbid chief to use GROUND units for transport tasks. Restrict to Helicopters. This is the default
--- @param #CHIEF self
--- @return #CHIEF self
+--- @param #CHIEF self
+--- @return #CHIEF self
 function CHIEF:ForbidGroundTransport()
   env.warning("WARNING: CHIEF:ForbidGroundTransport() is deprecated and will be removed in the future!")
   self.TransportCategories = {Group.Category.HELICOPTER}
@@ -1670,36 +1670,36 @@ function CHIEF:ForbidGroundTransport()
 end
 
 --- Check if current strategy is passive.
--- @param #CHIEF self
--- @return #boolean If `true`, strategy is passive.
+--- @param #CHIEF self
+--- @return #boolean If `true`, strategy is passive.
 function CHIEF:IsPassive()
   return self.strategy==CHIEF.Strategy.PASSIVE
 end
 
 --- Check if current strategy is defensive.
--- @param #CHIEF self
--- @return #boolean If `true`, strategy is defensive.
+--- @param #CHIEF self
+--- @return #boolean If `true`, strategy is defensive.
 function CHIEF:IsDefensive()
   return self.strategy==CHIEF.Strategy.DEFENSIVE
 end
 
 --- Check if current strategy is offensive.
--- @param #CHIEF self
--- @return #boolean If `true`, strategy is offensive.
+--- @param #CHIEF self
+--- @return #boolean If `true`, strategy is offensive.
 function CHIEF:IsOffensive()
   return self.strategy==CHIEF.Strategy.OFFENSIVE
 end
 
 --- Check if current strategy is aggressive.
--- @param #CHIEF self
--- @return #boolean If `true`, strategy is agressive.
+--- @param #CHIEF self
+--- @return #boolean If `true`, strategy is agressive.
 function CHIEF:IsAgressive()
   return self.strategy==CHIEF.Strategy.AGGRESSIVE
 end
 
 --- Check if current strategy is total war.
--- @param #CHIEF self
--- @return #boolean If `true`, strategy is total war.
+--- @param #CHIEF self
+--- @return #boolean If `true`, strategy is total war.
 function CHIEF:IsTotalWar()
   return self.strategy==CHIEF.Strategy.TOTALWAR
 end
@@ -1710,11 +1710,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after Start event.
--- @param #CHIEF self
--- @param Wrapper.Group#GROUP Group Flight group.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #CHIEF self
+--- @param Wrapper.Group#GROUP Group Flight group.
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function CHIEF:onafterStart(From, Event, To)
 
   -- Short info.
@@ -1734,11 +1734,11 @@ function CHIEF:onafterStart(From, Event, To)
 end
 
 --- On after "Status" event.
--- @param #CHIEF self
--- @param Wrapper.Group#GROUP Group Flight group.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #CHIEF self
+--- @param Wrapper.Group#GROUP Group Flight group.
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function CHIEF:onafterStatus(From, Event, To)
 
   -- Start parent INTEL.
@@ -2034,11 +2034,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "MissionAssignToAny" event.
--- @param #CHIEF self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
+--- @param #CHIEF self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.Auftrag#AUFTRAG Mission The mission.
   -- @param #table Legions The Legion(s) to which the mission is assigned.
 function CHIEF:onafterMissionAssign(From, Event, To, Mission, Legions)
 
@@ -2054,11 +2054,11 @@ function CHIEF:onafterMissionAssign(From, Event, To, Mission, Legions)
 end
 
 --- On after "MissionCancel" event.
--- @param #CHIEF self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
+--- @param #CHIEF self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.Auftrag#AUFTRAG Mission The mission.
 function CHIEF:onafterMissionCancel(From, Event, To, Mission)
 
   -- Debug info.
@@ -2084,11 +2084,11 @@ function CHIEF:onafterMissionCancel(From, Event, To, Mission)
 end
 
 --- On after "TransportCancel" event.
--- @param #CHIEF self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+--- @param #CHIEF self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 function CHIEF:onafterTransportCancel(From, Event, To, Transport)
 
   -- Debug info.
@@ -2111,32 +2111,32 @@ function CHIEF:onafterTransportCancel(From, Event, To, Transport)
 end
 
 --- On after "DefconChange" event.
--- @param #CHIEF self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string Defcon New defence condition.
+--- @param #CHIEF self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #string Defcon New defence condition.
 function CHIEF:onafterDefconChange(From, Event, To, Defcon)
   self:T(self.lid..string.format("Changing Defcon from %s --> %s", self.Defcon, Defcon))
 end
 
 --- On after "StrategyChange" event.
--- @param #CHIEF self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string Strategy
+--- @param #CHIEF self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #string Strategy
 function CHIEF:onafterStrategyChange(From, Event, To, Strategy)
   self:T(self.lid..string.format("Changing Strategy from %s --> %s", self.strategy, Strategy))
 end
 
 --- On after "OpsOnMission".
--- @param #CHIEF self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP OpsGroup Ops group on mission
--- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
+--- @param #CHIEF self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsGroup#OPSGROUP OpsGroup Ops group on mission
+--- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
 function CHIEF:onafterOpsOnMission(From, Event, To, OpsGroup, Mission)
   -- Debug info.
   self:T(self.lid..string.format("Group %s on mission %s [%s]", OpsGroup:GetName(), Mission:GetName(), Mission:GetType()))
@@ -2144,11 +2144,11 @@ end
 
 
 --- On after "ZoneCaptured".
--- @param #CHIEF self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsZone#OPSZONE OpsZone The zone that was captured by us.
+--- @param #CHIEF self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsZone#OPSZONE OpsZone The zone that was captured by us.
 function CHIEF:onafterZoneCaptured(From, Event, To, OpsZone)
   -- Debug info.
   self:T(self.lid..string.format("Zone %s captured!", OpsZone:GetName()))
@@ -2156,33 +2156,33 @@ end
 
 
 --- On after "ZoneLost".
--- @param #CHIEF self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsZone#OPSZONE OpsZone The zone that was lost.
+--- @param #CHIEF self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsZone#OPSZONE OpsZone The zone that was lost.
 function CHIEF:onafterZoneLost(From, Event, To, OpsZone)
   -- Debug info.
   self:T(self.lid..string.format("Zone %s lost!", OpsZone:GetName()))
 end
 
 --- On after "ZoneEmpty".
--- @param #CHIEF self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsZone#OPSZONE OpsZone The zone that is empty now.
+--- @param #CHIEF self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsZone#OPSZONE OpsZone The zone that is empty now.
 function CHIEF:onafterZoneEmpty(From, Event, To, OpsZone)
   -- Debug info.
   self:T(self.lid..string.format("Zone %s empty!", OpsZone:GetName()))
 end
 
 --- On after "ZoneAttacked".
--- @param #CHIEF self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsZone#OPSZONE OpsZone The zone that being attacked.
+--- @param #CHIEF self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsZone#OPSZONE OpsZone The zone that being attacked.
 function CHIEF:onafterZoneAttacked(From, Event, To, OpsZone)
   -- Debug info.
   self:T(self.lid..string.format("Zone %s attacked!", OpsZone:GetName()))
@@ -2194,7 +2194,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Display tactical overview.
--- @param #CHIEF self 
+--- @param #CHIEF self 
 function CHIEF:_TacticalOverview()
 
   if self.tacview then
@@ -2266,7 +2266,7 @@ end
 
 
 --- Check target queue and assign ONE valid target by adding it to the mission queue of the COMMANDER.
--- @param #CHIEF self 
+--- @param #CHIEF self 
 function CHIEF:CheckTargetQueue()
 
   -- Number of missions.
@@ -2472,17 +2472,17 @@ function CHIEF:CheckTargetQueue()
 end
 
 --- Check if limit of missions has been reached.
--- @param #CHIEF self 
--- @param #string MissionType Type of mission.
--- @return #boolean If `true`, mission limit has **not** been reached. If `false`, limit has been reached.
+--- @param #CHIEF self 
+--- @param #string MissionType Type of mission.
+--- @return #boolean If `true`, mission limit has **not** been reached. If `false`, limit has been reached.
 function CHIEF:_CheckMissionLimit(MissionType)
   return self.commander:_CheckMissionLimit(MissionType)
 end
 
 --- Get mission limit.
--- @param #CHIEF self 
--- @param #string MissionType Type of mission.
--- @return #number Limit. Unlimited mission types are returned as 999.
+--- @param #CHIEF self 
+--- @param #string MissionType Type of mission.
+--- @return #number Limit. Unlimited mission types are returned as 999.
 function CHIEF:GetMissionLimit(MissionType)
   local l=self.commander.limitMission[MissionType]
   if not l then
@@ -2496,7 +2496,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check strategic zone queue.
--- @param #CHIEF self 
+--- @param #CHIEF self 
 function CHIEF:CheckOpsZoneQueue()
 
   -- Number of zones.
@@ -2660,9 +2660,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check if group is inside our border.
--- @param #CHIEF self
--- @param Wrapper.Group#GROUP group The group.
--- @return #boolean If true, group is in any border zone.
+--- @param #CHIEF self
+--- @param Wrapper.Group#GROUP group The group.
+--- @return #boolean If true, group is in any border zone.
 function CHIEF:CheckGroupInBorder(group)
 
   local inside=self:CheckGroupInZones(group, self.borderzoneset)
@@ -2671,9 +2671,9 @@ function CHIEF:CheckGroupInBorder(group)
 end
 
 --- Check if group is in a conflict zone.
--- @param #CHIEF self
--- @param Wrapper.Group#GROUP group The group.
--- @return #boolean If true, group is in any conflict zone.
+--- @param #CHIEF self
+--- @param Wrapper.Group#GROUP group The group.
+--- @return #boolean If true, group is in any conflict zone.
 function CHIEF:CheckGroupInConflict(group)
 
   -- Check inside yellow but not inside our border.
@@ -2683,9 +2683,9 @@ function CHIEF:CheckGroupInConflict(group)
 end
 
 --- Check if group is in a attack zone.
--- @param #CHIEF self
--- @param Wrapper.Group#GROUP group The group.
--- @return #boolean If true, group is in any attack zone.
+--- @param #CHIEF self
+--- @param Wrapper.Group#GROUP group The group.
+--- @return #boolean If true, group is in any attack zone.
 function CHIEF:CheckGroupInAttack(group)
 
   -- Check inside yellow but not inside our border.
@@ -2695,10 +2695,10 @@ function CHIEF:CheckGroupInAttack(group)
 end
 
 --- Check if group is inside a zone.
--- @param #CHIEF self
--- @param Wrapper.Group#GROUP group The group.
--- @param Core.Set#SET_ZONE zoneset Set of zones.
--- @return #boolean If true, group is in any zone.
+--- @param #CHIEF self
+--- @param Wrapper.Group#GROUP group The group.
+--- @param Core.Set#SET_ZONE zoneset Set of zones.
+--- @return #boolean If true, group is in any zone.
 function CHIEF:CheckGroupInZones(group, zoneset)
 
   for _,_zone in pairs(zoneset.Set or {}) do
@@ -2713,10 +2713,10 @@ function CHIEF:CheckGroupInZones(group, zoneset)
 end
 
 --- Check if group is inside a zone.
--- @param #CHIEF self
--- @param Ops.Target#TARGET target The target.
--- @param Core.Set#SET_ZONE zoneset Set of zones.
--- @return #boolean If true, group is in any zone.
+--- @param #CHIEF self
+--- @param Ops.Target#TARGET target The target.
+--- @param Core.Set#SET_ZONE zoneset Set of zones.
+--- @return #boolean If true, group is in any zone.
 function CHIEF:CheckTargetInZones(target, zoneset)
 
   for _,_zone in pairs(zoneset.Set or {}) do
@@ -2735,10 +2735,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a mission performance table.
--- @param #CHIEF self
--- @param #string MissionType Mission type.
--- @param #number Performance Performance.
--- @return #CHIEF.MissionPerformance Mission performance.
+--- @param #CHIEF self
+--- @param #string MissionType Mission type.
+--- @param #number Performance Performance.
+--- @return #CHIEF.MissionPerformance Mission performance.
 function CHIEF:_CreateMissionPerformance(MissionType, Performance)
   local mp={} --#CHIEF.MissionPerformance
   mp.MissionType=MissionType
@@ -2747,9 +2747,9 @@ function CHIEF:_CreateMissionPerformance(MissionType, Performance)
 end
 
 --- Get mission performance for a given TARGET.
--- @param #CHIEF self
--- @param Ops.Target#TARGET Target The target.
--- @return #table Mission performances of type `#CHIEF.MissionPerformance`.
+--- @param #CHIEF self
+--- @param Ops.Target#TARGET Target The target.
+--- @return #table Mission performances of type `#CHIEF.MissionPerformance`.
 function CHIEF:_GetMissionPerformanceFromTarget(Target)
 
   -- Possible target objects.
@@ -2921,9 +2921,9 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
 end
 
 --- Get mission performances for a given Group Attribute.
--- @param #CHIEF self
--- @param #string Attribute Group attibute.
--- @return #table Mission performances of type `#CHIEF.MissionPerformance`.
+--- @param #CHIEF self
+--- @param #string Attribute Group attibute.
+--- @return #table Mission performances of type `#CHIEF.MissionPerformance`.
 function CHIEF:_GetMissionTypeForGroupAttribute(Attribute)
 
   local missionperf={} --#CHIEF.MissionPerformance
@@ -2958,10 +2958,10 @@ end
 
 
 --- Recruit assets for a given OPS zone.
--- @param #CHIEF self
--- @param #CHIEF.StrategicZone StratZone The strategic zone.
--- @param #CHIEF.Resource Resource The required resources.
--- @return #boolean If `true` enough assets could be recruited.
+--- @param #CHIEF self
+--- @param #CHIEF.StrategicZone StratZone The strategic zone.
+--- @param #CHIEF.Resource Resource The required resources.
+--- @return #boolean If `true` enough assets could be recruited.
 function CHIEF:RecruitAssetsForZone(StratZone, Resource)
 
   -- Cohorts.
@@ -3214,11 +3214,11 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
 end
 
 --- Filter assets, which have certain categories, attributes and/or properties.
--- @param #table Assets The assets to be filtered.
--- @param #table Categories Group categories.
--- @param #table Attributes Generalized attributes.
--- @param #table Properties DCS attributes
--- @return #table Table of filtered assets.
+--- @param #table Assets The assets to be filtered.
+--- @param #table Categories Group categories.
+--- @param #table Attributes Generalized attributes.
+--- @param #table Properties DCS attributes
+--- @return #table Table of filtered assets.
 function CHIEF._FilterAssets(Assets, Categories, Attributes, Properties)
 
   local filtered={}
@@ -3240,9 +3240,9 @@ function CHIEF._FilterAssets(Assets, Categories, Attributes, Properties)
 end
 
 --- Check if a given asset has certain attribute(s).
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset item.
--- @param #table Attributes The required attributes. See `WAREHOUSE.Attribute` enum. Can also be passed as a single attribute `#string`.
--- @return #boolean Returns `true`, the asset has at least one requested attribute.
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset item.
+--- @param #table Attributes The required attributes. See `WAREHOUSE.Attribute` enum. Can also be passed as a single attribute `#string`.
+--- @return #boolean Returns `true`, the asset has at least one requested attribute.
 function CHIEF._CheckAssetAttributes(Asset, Attributes)
 
   if not Attributes then
@@ -3259,9 +3259,9 @@ function CHIEF._CheckAssetAttributes(Asset, Attributes)
 end
 
 --- Check if a given asset has certain categories.
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset item.
--- @param #table Categories DCS group categories.
--- @return #boolean Returns `true`, the asset has at least one requested category.
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset item.
+--- @param #table Categories DCS group categories.
+--- @return #boolean Returns `true`, the asset has at least one requested category.
 function CHIEF._CheckAssetCategories(Asset, Categories)
 
   if not Categories then
@@ -3278,9 +3278,9 @@ function CHIEF._CheckAssetCategories(Asset, Categories)
 end
 
 --- Check if a given asset has certain properties.
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset item.
--- @param #table Categories DCS group categories.
--- @return #boolean Returns `true`, the asset has at least one requested property.
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset item.
+--- @param #table Categories DCS group categories.
+--- @return #boolean Returns `true`, the asset has at least one requested property.
 function CHIEF._CheckAssetProperties(Asset, Properties)
 
   if not Properties then

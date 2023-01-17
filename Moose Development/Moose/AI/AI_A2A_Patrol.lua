@@ -114,21 +114,21 @@
 -- 
 -- ===
 -- 
--- @field #AI_A2A_PATROL
+--- @field #AI_A2A_PATROL
 AI_A2A_PATROL = {
   ClassName = "AI_A2A_PATROL",
 }
 
 --- Creates a new AI_A2A_PATROL object
--- @param #AI_A2A_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The patrol group object.
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to BARO
--- @return #AI_A2A_PATROL self
+--- @param #AI_A2A_PATROL self
+--- @param Wrapper.Group#GROUP AIPatrol The patrol group object.
+--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
+--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
+--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
+--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to BARO
+--- @return #AI_A2A_PATROL self
 -- @usage
 -- -- Define a new AI_A2A_PATROL Object. This PatrolArea will patrol a Group within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
 -- PatrolZone = ZONE:New( 'PatrolZone' )
@@ -158,74 +158,74 @@ function AI_A2A_PATROL:New( AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCei
 
 --- OnBefore Transition Handler for Event Patrol.
 -- @function [parent=#AI_A2A_PATROL] OnBeforePatrol
--- @param #AI_A2A_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @return #boolean Return false to cancel Transition.
+--- @param #AI_A2A_PATROL self
+--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @return #boolean Return false to cancel Transition.
 
 --- OnAfter Transition Handler for Event Patrol.
 -- @function [parent=#AI_A2A_PATROL] OnAfterPatrol
--- @param #AI_A2A_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_A2A_PATROL self
+--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 	
 --- Synchronous Event Trigger for Event Patrol.
 -- @function [parent=#AI_A2A_PATROL] Patrol
--- @param #AI_A2A_PATROL self
+--- @param #AI_A2A_PATROL self
 
 --- Asynchronous Event Trigger for Event Patrol.
 -- @function [parent=#AI_A2A_PATROL] __Patrol
--- @param #AI_A2A_PATROL self
--- @param #number Delay The delay in seconds.
+--- @param #AI_A2A_PATROL self
+--- @param #number Delay The delay in seconds.
 
 --- OnLeave Transition Handler for State Patrolling.
 -- @function [parent=#AI_A2A_PATROL] OnLeavePatrolling
--- @param #AI_A2A_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @return #boolean Return false to cancel Transition.
+--- @param #AI_A2A_PATROL self
+--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @return #boolean Return false to cancel Transition.
 
 --- OnEnter Transition Handler for State Patrolling.
 -- @function [parent=#AI_A2A_PATROL] OnEnterPatrolling
--- @param #AI_A2A_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_A2A_PATROL self
+--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 
   self:AddTransition( "Patrolling", "Route", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_PATROL.
 
 --- OnBefore Transition Handler for Event Route.
 -- @function [parent=#AI_A2A_PATROL] OnBeforeRoute
--- @param #AI_A2A_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @return #boolean Return false to cancel Transition.
+--- @param #AI_A2A_PATROL self
+--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @return #boolean Return false to cancel Transition.
 
 --- OnAfter Transition Handler for Event Route.
 -- @function [parent=#AI_A2A_PATROL] OnAfterRoute
--- @param #AI_A2A_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_A2A_PATROL self
+--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 	
 --- Synchronous Event Trigger for Event Route.
 -- @function [parent=#AI_A2A_PATROL] Route
--- @param #AI_A2A_PATROL self
+--- @param #AI_A2A_PATROL self
 
 --- Asynchronous Event Trigger for Event Route.
 -- @function [parent=#AI_A2A_PATROL] __Route
--- @param #AI_A2A_PATROL self
--- @param #number Delay The delay in seconds.
+--- @param #AI_A2A_PATROL self
+--- @param #number Delay The delay in seconds.
 
 
 
@@ -238,10 +238,10 @@ end
 
 
 --- Sets (modifies) the minimum and maximum speed of the patrol.
--- @param #AI_A2A_PATROL self
--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
--- @return #AI_A2A_PATROL self
+--- @param #AI_A2A_PATROL self
+--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
+--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
+--- @return #AI_A2A_PATROL self
 function AI_A2A_PATROL:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
   self:F2( { PatrolMinSpeed, PatrolMaxSpeed } )
   
@@ -252,10 +252,10 @@ end
 
 
 --- Sets the floor and ceiling altitude of the patrol.
--- @param #AI_A2A_PATROL self
--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @return #AI_A2A_PATROL self
+--- @param #AI_A2A_PATROL self
+--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+--- @return #AI_A2A_PATROL self
 function AI_A2A_PATROL:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
   self:F2( { PatrolFloorAltitude, PatrolCeilingAltitude } )
   
@@ -265,12 +265,12 @@ end
 
 
 --- Defines a new patrol route using the @{AI.AI_Patrol#AI_PATROL_ZONE} parameters and settings.
--- @param #AI_A2A_PATROL self
--- @return #AI_A2A_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_A2A_PATROL self
+--- @return #AI_A2A_PATROL self
+--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_A2A_PATROL:onafterPatrol( AIPatrol, From, Event, To )
   self:F2()
 
@@ -289,8 +289,8 @@ end
 
 --- This static method is called from the route path within the last task at the last waypoint of the AIPatrol.
 -- Note that this method is required, as triggers the next route when patrolling for the AIPatrol.
--- @param Wrapper.Group#GROUP AIPatrol The AI group.
--- @param #AI_A2A_PATROL Fsm The FSM.
+--- @param Wrapper.Group#GROUP AIPatrol The AI group.
+--- @param #AI_A2A_PATROL Fsm The FSM.
 function AI_A2A_PATROL.PatrolRoute( AIPatrol, Fsm )
 
   AIPatrol:F( { "AI_A2A_PATROL.PatrolRoute:", AIPatrol:GetName() } )
@@ -303,11 +303,11 @@ end
 
 
 --- Defines a new patrol route using the @{AI.AI_Patrol#AI_PATROL_ZONE} parameters and settings.
--- @param #AI_A2A_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The Group managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_A2A_PATROL self
+--- @param Wrapper.Group#GROUP AIPatrol The Group managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_A2A_PATROL:onafterRoute( AIPatrol, From, Event, To )
   self:F2()
 

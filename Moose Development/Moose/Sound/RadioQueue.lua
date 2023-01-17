@@ -19,27 +19,27 @@
 -- The underlying problem is that radio transmissions in DCS are not queued but played "on top" of each other.
 -- Therefore, to achive the goal, it is vital to know the precise duration how long it takes to play the sound file.
 -- 
--- @type RADIOQUEUE
--- @field #string ClassName Name of the class "RADIOQUEUE".
--- @field #boolean Debugmode Debug mode. More info.
--- @field #string lid ID for dcs.log.
--- @field #number frequency The radio frequency in Hz.
--- @field #number modulation The radio modulation. Either radio.modulation.AM or radio.modulation.FM.
--- @field Core.Scheduler#SCHEDULER scheduler The scheduler.
--- @field #string RQid The radio queue scheduler ID.
--- @field #table queue The queue of transmissions.
--- @field #string alias Name of the radio.
--- @field #number dt Time interval in seconds for checking the radio queue.
--- @field #number delay Time delay before starting the radio queue. 
--- @field #number Tlast Time (abs) when the last transmission finished.
--- @field Core.Point#COORDINATE sendercoord Coordinate from where transmissions are broadcasted.
--- @field #number sendername Name of the sending unit or static.
--- @field #boolean senderinit Set frequency was initialized.
--- @field #number power Power of radio station in Watts. Default 100 W.
--- @field #table numbers Table of number transmission parameters.
--- @field #boolean checking Scheduler is checking the radio queue. 
--- @field #boolean schedonce Call ScheduleOnce instead of normal scheduler.
--- @field Sound.SRS#MSRS msrs Moose SRS class.
+--- @type RADIOQUEUE
+--- @field #string ClassName Name of the class "RADIOQUEUE".
+--- @field #boolean Debugmode Debug mode. More info.
+--- @field #string lid ID for dcs.log.
+--- @field #number frequency The radio frequency in Hz.
+--- @field #number modulation The radio modulation. Either radio.modulation.AM or radio.modulation.FM.
+--- @field Core.Scheduler#SCHEDULER scheduler The scheduler.
+--- @field #string RQid The radio queue scheduler ID.
+--- @field #table queue The queue of transmissions.
+--- @field #string alias Name of the radio.
+--- @field #number dt Time interval in seconds for checking the radio queue.
+--- @field #number delay Time delay before starting the radio queue. 
+--- @field #number Tlast Time (abs) when the last transmission finished.
+--- @field Core.Point#COORDINATE sendercoord Coordinate from where transmissions are broadcasted.
+--- @field #number sendername Name of the sending unit or static.
+--- @field #boolean senderinit Set frequency was initialized.
+--- @field #number power Power of radio station in Watts. Default 100 W.
+--- @field #table numbers Table of number transmission parameters.
+--- @field #boolean checking Scheduler is checking the radio queue. 
+--- @field #boolean schedonce Call ScheduleOnce instead of normal scheduler.
+--- @field Sound.SRS#MSRS msrs Moose SRS class.
 -- @extends Core.Base#BASE
 RADIOQUEUE = {
   ClassName   = "RADIOQUEUE",
@@ -64,26 +64,26 @@ RADIOQUEUE = {
 }
 
 --- Radio queue transmission data.
--- @type RADIOQUEUE.Transmission
--- @field #string filename Name of the file to be transmitted.
--- @field #string path Path in miz file where the file is located.
--- @field #number duration Duration in seconds.
--- @field #string subtitle Subtitle of the transmission.
--- @field #number subduration Duration of the subtitle being displayed.
--- @field #number Tstarted Mission time (abs) in seconds when the transmission started.
--- @field #boolean isplaying If true, transmission is currently playing.
--- @field #number Tplay Mission time (abs) in seconds when the transmission should be played.
--- @field #number interval Interval in seconds before next transmission.
--- @field Sound.SoundOutput#SOUNDFILE soundfile Sound file object to play via SRS.
--- @field Sound.SoundOutput#SOUNDTEXT soundtext Sound TTS object to play via SRS.
+--- @type RADIOQUEUE.Transmission
+--- @field #string filename Name of the file to be transmitted.
+--- @field #string path Path in miz file where the file is located.
+--- @field #number duration Duration in seconds.
+--- @field #string subtitle Subtitle of the transmission.
+--- @field #number subduration Duration of the subtitle being displayed.
+--- @field #number Tstarted Mission time (abs) in seconds when the transmission started.
+--- @field #boolean isplaying If true, transmission is currently playing.
+--- @field #number Tplay Mission time (abs) in seconds when the transmission should be played.
+--- @field #number interval Interval in seconds before next transmission.
+--- @field Sound.SoundOutput#SOUNDFILE soundfile Sound file object to play via SRS.
+--- @field Sound.SoundOutput#SOUNDTEXT soundtext Sound TTS object to play via SRS.
 
 
 --- Create a new RADIOQUEUE object for a given radio frequency/modulation.
--- @param #RADIOQUEUE self
--- @param #number frequency The radio frequency in MHz.
--- @param #number modulation (Optional) The radio modulation. Default `radio.modulation.AM` (=0).
--- @param #string alias (Optional) Name of the radio queue.
--- @return #RADIOQUEUE self The RADIOQUEUE object.
+--- @param #RADIOQUEUE self
+--- @param #number frequency The radio frequency in MHz.
+--- @param #number modulation (Optional) The radio modulation. Default `radio.modulation.AM` (=0).
+--- @param #string alias (Optional) Name of the radio queue.
+--- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:New(frequency, modulation, alias)
 
   -- Inherit base
@@ -115,10 +115,10 @@ function RADIOQUEUE:New(frequency, modulation, alias)
 end
 
 --- Start the radio queue.
--- @param #RADIOQUEUE self
--- @param #number delay (Optional) Delay in seconds, before the radio queue is started. Default 1 sec.
--- @param #number dt (Optional) Time step in seconds for checking the queue. Default 0.01 sec.
--- @return #RADIOQUEUE self The RADIOQUEUE object.
+--- @param #RADIOQUEUE self
+--- @param #number delay (Optional) Delay in seconds, before the radio queue is started. Default 1 sec.
+--- @param #number dt (Optional) Time step in seconds for checking the queue. Default 0.01 sec.
+--- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:Start(delay, dt)
   
   -- Delay before start.
@@ -141,8 +141,8 @@ function RADIOQUEUE:Start(delay, dt)
 end
 
 --- Stop the radio queue. Stop scheduler and delete queue.
--- @param #RADIOQUEUE self
--- @return #RADIOQUEUE self The RADIOQUEUE object.
+--- @param #RADIOQUEUE self
+--- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:Stop()
   self:I(self.lid.."Stopping RADIOQUEUE.")
   self.scheduler:Stop(self.RQid)
@@ -151,37 +151,37 @@ function RADIOQUEUE:Stop()
 end
 
 --- Set coordinate from where the transmission is broadcasted.
--- @param #RADIOQUEUE self
--- @param Core.Point#COORDINATE coordinate Coordinate of the sender.
--- @return #RADIOQUEUE self The RADIOQUEUE object.
+--- @param #RADIOQUEUE self
+--- @param Core.Point#COORDINATE coordinate Coordinate of the sender.
+--- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:SetSenderCoordinate(coordinate)
   self.sendercoord=coordinate
   return self
 end
 
 --- Set name of unit or static from which transmissions are made.
--- @param #RADIOQUEUE self
--- @param #string name Name of the unit or static used for transmissions.
--- @return #RADIOQUEUE self The RADIOQUEUE object.
+--- @param #RADIOQUEUE self
+--- @param #string name Name of the unit or static used for transmissions.
+--- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:SetSenderUnitName(name)
   self.sendername=name
   return self
 end
 
 --- Set radio power. Note that this only applies if no relay unit is used.
--- @param #RADIOQUEUE self
--- @param #number power Radio power in Watts. Default 100 W.
--- @return #RADIOQUEUE self The RADIOQUEUE object.
+--- @param #RADIOQUEUE self
+--- @param #number power Radio power in Watts. Default 100 W.
+--- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:SetRadioPower(power)
   self.power=power or 100
   return self
 end
 
 --- Set SRS.
--- @param #RADIOQUEUE self
--- @param #string PathToSRS Path to SRS.
--- @param #number Port SRS port. Default 5002.
--- @return #RADIOQUEUE self The RADIOQUEUE object.
+--- @param #RADIOQUEUE self
+--- @param #string PathToSRS Path to SRS.
+--- @param #number Port SRS port. Default 5002.
+--- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:SetSRS(PathToSRS, Port)
   self.msrs=MSRS:New(PathToSRS, self.frequency/1000000, self.modulation)
   self.msrs:SetPort(Port)
@@ -189,14 +189,14 @@ function RADIOQUEUE:SetSRS(PathToSRS, Port)
 end
 
 --- Set parameters of a digit.
--- @param #RADIOQUEUE self
--- @param #number digit The digit 0-9.
--- @param #string filename The name of the sound file.
--- @param #number duration The duration of the sound file in seconds.
--- @param #string path The directory within the miz file where the sound is located. Default "l10n/DEFAULT/".
--- @param #string subtitle Subtitle of the transmission.
--- @param #number subduration Duration [sec] of the subtitle being displayed. Default 5 sec.
--- @return #RADIOQUEUE self The RADIOQUEUE object.
+--- @param #RADIOQUEUE self
+--- @param #number digit The digit 0-9.
+--- @param #string filename The name of the sound file.
+--- @param #number duration The duration of the sound file in seconds.
+--- @param #string path The directory within the miz file where the sound is located. Default "l10n/DEFAULT/".
+--- @param #string subtitle Subtitle of the transmission.
+--- @param #number subduration Duration [sec] of the subtitle being displayed. Default 5 sec.
+--- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:SetDigit(digit, filename, duration, path, subtitle, subduration)
 
   local transmission={} --#RADIOQUEUE.Transmission
@@ -218,9 +218,9 @@ function RADIOQUEUE:SetDigit(digit, filename, duration, path, subtitle, subdurat
 end
 
 --- Add a transmission to the radio queue.
--- @param #RADIOQUEUE self
--- @param #RADIOQUEUE.Transmission transmission The transmission data table. 
--- @return #RADIOQUEUE self
+--- @param #RADIOQUEUE self
+--- @param #RADIOQUEUE.Transmission transmission The transmission data table. 
+--- @return #RADIOQUEUE self
 function RADIOQUEUE:AddTransmission(transmission)
   self:F({transmission=transmission})
   
@@ -240,15 +240,15 @@ function RADIOQUEUE:AddTransmission(transmission)
 end
 
 --- Create a new transmission and add it to the radio queue.
--- @param #RADIOQUEUE self
--- @param #string filename Name of the sound file. Usually an ogg or wav file type.
--- @param #number duration Duration in seconds the file lasts.
--- @param #number path Directory path inside the miz file where the sound file is located. Default "l10n/DEFAULT/".
--- @param #number tstart Start time (abs) seconds. Default now.
--- @param #number interval Interval in seconds after the last transmission finished.
--- @param #string subtitle Subtitle of the transmission.
--- @param #number subduration Duration [sec] of the subtitle being displayed. Default 5 sec.
--- @return #RADIOQUEUE.Transmission Radio transmission table.
+--- @param #RADIOQUEUE self
+--- @param #string filename Name of the sound file. Usually an ogg or wav file type.
+--- @param #number duration Duration in seconds the file lasts.
+--- @param #number path Directory path inside the miz file where the sound file is located. Default "l10n/DEFAULT/".
+--- @param #number tstart Start time (abs) seconds. Default now.
+--- @param #number interval Interval in seconds after the last transmission finished.
+--- @param #string subtitle Subtitle of the transmission.
+--- @param #number subduration Duration [sec] of the subtitle being displayed. Default 5 sec.
+--- @return #RADIOQUEUE.Transmission Radio transmission table.
 function RADIOQUEUE:NewTransmission(filename, duration, path, tstart, interval, subtitle, subduration)
 
   -- Sanity checks.
@@ -291,11 +291,11 @@ function RADIOQUEUE:NewTransmission(filename, duration, path, tstart, interval, 
 end
 
 --- Add a SOUNDFILE to the radio queue.
--- @param #RADIOQUEUE self
--- @param Sound.SoundOutput#SOUNDFILE soundfile Sound file object to be added.
--- @param #number tstart Start time (abs) seconds. Default now.
--- @param #number interval Interval in seconds after the last transmission finished.
--- @return #RADIOQUEUE self
+--- @param #RADIOQUEUE self
+--- @param Sound.SoundOutput#SOUNDFILE soundfile Sound file object to be added.
+--- @param #number tstart Start time (abs) seconds. Default now.
+--- @param #number interval Interval in seconds after the last transmission finished.
+--- @return #RADIOQUEUE self
 function RADIOQUEUE:AddSoundFile(soundfile, tstart, interval)
   --env.info(string.format("FF add soundfile: name=%s%s", soundfile:GetPath(), soundfile:GetFileName()))
   local transmission=self:NewTransmission(soundfile:GetFileName(), soundfile.duration, soundfile:GetPath(), tstart, interval, soundfile.subtitle, soundfile.subduration)
@@ -304,11 +304,11 @@ function RADIOQUEUE:AddSoundFile(soundfile, tstart, interval)
 end
 
 --- Add a SOUNDTEXT to the radio queue.
--- @param #RADIOQUEUE self
--- @param Sound.SoundOutput#SOUNDTEXT soundtext Text-to-speech text.
--- @param #number tstart Start time (abs) seconds. Default now.
--- @param #number interval Interval in seconds after the last transmission finished.
--- @return #RADIOQUEUE self
+--- @param #RADIOQUEUE self
+--- @param Sound.SoundOutput#SOUNDTEXT soundtext Text-to-speech text.
+--- @param #number tstart Start time (abs) seconds. Default now.
+--- @param #number interval Interval in seconds after the last transmission finished.
+--- @return #RADIOQUEUE self
 function RADIOQUEUE:AddSoundText(soundtext, tstart, interval)
 
   local transmission=self:NewTransmission("SoundText.ogg", soundtext.duration, nil, tstart, interval, soundtext.subtitle, soundtext.subduration)
@@ -319,11 +319,11 @@ end
 
 --- Convert a number (as string) into a radio transmission.
 -- E.g. for board number or headings.
--- @param #RADIOQUEUE self
--- @param #string number Number string, e.g. "032" or "183".
--- @param #number delay Delay before transmission in seconds.
--- @param #number interval Interval between the next call.
--- @return #number Duration of the call in seconds.
+--- @param #RADIOQUEUE self
+--- @param #string number Number string, e.g. "032" or "183".
+--- @param #number delay Delay before transmission in seconds.
+--- @param #number interval Interval between the next call.
+--- @return #number Duration of the call in seconds.
 function RADIOQUEUE:Number2Transmission(number, delay, interval)
   
   -- Split string into characters.
@@ -356,8 +356,8 @@ end
 
 
 --- Broadcast radio message.
--- @param #RADIOQUEUE self
--- @param #RADIOQUEUE.Transmission transmission The transmission.
+--- @param #RADIOQUEUE self
+--- @param #RADIOQUEUE.Transmission transmission The transmission.
 function RADIOQUEUE:Broadcast(transmission)
 
   if ((transmission.soundfile and transmission.soundfile.useSRS) or transmission.soundtext) and self.msrs then
@@ -457,8 +457,8 @@ function RADIOQUEUE:Broadcast(transmission)
 end
 
 --- Broadcast radio message.
--- @param #RADIOQUEUE self
--- @param #RADIOQUEUE.Transmission transmission The transmission.
+--- @param #RADIOQUEUE self
+--- @param #RADIOQUEUE.Transmission transmission The transmission.
 function RADIOQUEUE:_BroadcastSRS(transmission)
 
   if transmission.soundfile and transmission.soundfile.useSRS then
@@ -470,15 +470,15 @@ function RADIOQUEUE:_BroadcastSRS(transmission)
 end
 
 --- Start checking the radio queue.
--- @param #RADIOQUEUE self
--- @param #number delay Delay in seconds before checking.
+--- @param #RADIOQUEUE self
+--- @param #number delay Delay in seconds before checking.
 function RADIOQUEUE:_CheckRadioQueueDelayed(delay)
   self.checking=true
   self:ScheduleOnce(delay or self.dt, RADIOQUEUE._CheckRadioQueue, self)
 end
 
 --- Check radio queue for transmissions to be broadcasted.
--- @param #RADIOQUEUE self
+--- @param #RADIOQUEUE self
 function RADIOQUEUE:_CheckRadioQueue()
   --env.info("FF check radio queue "..self.alias)
 
@@ -577,8 +577,8 @@ function RADIOQUEUE:_CheckRadioQueue()
 end
 
 --- Get unit from which we want to transmit a radio message. This has to be an aircraft for subtitles to work.
--- @param #RADIOQUEUE self
--- @return Wrapper.Unit#UNIT Sending unit or nil if was not setup, is not an aircraft or ground unit or is not alive.
+--- @param #RADIOQUEUE self
+--- @return Wrapper.Unit#UNIT Sending unit or nil if was not setup, is not an aircraft or ground unit or is not alive.
 function RADIOQUEUE:_GetRadioSender()
 
   -- Check if we have a sending aircraft.
@@ -601,8 +601,8 @@ function RADIOQUEUE:_GetRadioSender()
 end
 
 --- Get unit from which we want to transmit a radio message. This has to be an aircraft or ground unit for subtitles to work.
--- @param #RADIOQUEUE self
--- @return DCS#Vec3 Vector 3D.
+--- @param #RADIOQUEUE self
+--- @return DCS#Vec3 Vector 3D.
 function RADIOQUEUE:_GetRadioSenderCoord()
 
   local vec3=nil

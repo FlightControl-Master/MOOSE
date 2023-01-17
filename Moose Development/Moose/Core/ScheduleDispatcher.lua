@@ -35,16 +35,16 @@
 -- @image Core_Schedule_Dispatcher.JPG
 
 --- SCHEDULEDISPATCHER class.
--- @type SCHEDULEDISPATCHER
--- @field #string ClassName Name of the class.
--- @field #number CallID Call ID counter.
--- @field #table PersistentSchedulers Persistent schedulers.
--- @field #table ObjectSchedulers Schedulers that only exist as long as the master object exists.
--- @field #table Schedule Meta table setmetatable( {}, { __mode = "k" } ).
+--- @type SCHEDULEDISPATCHER
+--- @field #string ClassName Name of the class.
+--- @field #number CallID Call ID counter.
+--- @field #table PersistentSchedulers Persistent schedulers.
+--- @field #table ObjectSchedulers Schedulers that only exist as long as the master object exists.
+--- @field #table Schedule Meta table setmetatable( {}, { __mode = "k" } ).
 -- @extends Core.Base#BASE
 
 --- The SCHEDULEDISPATCHER structure
--- @type SCHEDULEDISPATCHER
+--- @type SCHEDULEDISPATCHER
 SCHEDULEDISPATCHER = {
   ClassName = "SCHEDULEDISPATCHER",
   CallID = 0,
@@ -54,21 +54,21 @@ SCHEDULEDISPATCHER = {
 }
 
 --- Player data table holding all important parameters of each player.
--- @type SCHEDULEDISPATCHER.ScheduleData
--- @field #function Function The schedule function to be called.
--- @field #table Arguments Schedule function arguments.
--- @field #number Start Start time in seconds.
--- @field #number Repeat Repeat time interval in seconds.
--- @field #number Randomize Randomization factor [0,1].
--- @field #number Stop Stop time in seconds.
--- @field #number StartTime Time in seconds when the scheduler is created.
--- @field #number ScheduleID Schedule ID.
--- @field #function CallHandler Function to be passed to the DCS timer.scheduleFunction().
--- @field #boolean ShowTrace If true, show tracing info.
+--- @type SCHEDULEDISPATCHER.ScheduleData
+--- @field #function Function The schedule function to be called.
+--- @field #table Arguments Schedule function arguments.
+--- @field #number Start Start time in seconds.
+--- @field #number Repeat Repeat time interval in seconds.
+--- @field #number Randomize Randomization factor [0,1].
+--- @field #number Stop Stop time in seconds.
+--- @field #number StartTime Time in seconds when the scheduler is created.
+--- @field #number ScheduleID Schedule ID.
+--- @field #function CallHandler Function to be passed to the DCS timer.scheduleFunction().
+--- @field #boolean ShowTrace If true, show tracing info.
 
 --- Create a new schedule dispatcher object.
--- @param #SCHEDULEDISPATCHER self
--- @return #SCHEDULEDISPATCHER self
+--- @param #SCHEDULEDISPATCHER self
+--- @return #SCHEDULEDISPATCHER self
 function SCHEDULEDISPATCHER:New()
   local self = BASE:Inherit( self, BASE:New() )
   self:F3()
@@ -79,17 +79,17 @@ end
 -- The development of this method was really tidy.
 -- It is constructed as such that a garbage collection is executed on the weak tables, when the Scheduler is set to nil.
 -- Nothing of this code should be modified without testing it thoroughly.
--- @param #SCHEDULEDISPATCHER self
--- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
--- @param #function ScheduleFunction Scheduler function.
--- @param #table ScheduleArguments Table of arguments passed to the ScheduleFunction.
--- @param #number Start Start time in seconds.
--- @param #number Repeat Repeat interval in seconds.
--- @param #number Randomize Randomization factor [0,1].
--- @param #number Stop Stop time in seconds.
--- @param #number TraceLevel Trace level [0,3].
--- @param Core.Fsm#FSM Fsm Finite state model.
--- @return #string Call ID or nil.
+--- @param #SCHEDULEDISPATCHER self
+--- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
+--- @param #function ScheduleFunction Scheduler function.
+--- @param #table ScheduleArguments Table of arguments passed to the ScheduleFunction.
+--- @param #number Start Start time in seconds.
+--- @param #number Repeat Repeat interval in seconds.
+--- @param #number Randomize Randomization factor [0,1].
+--- @param #number Stop Stop time in seconds.
+--- @param #number TraceLevel Trace level [0,3].
+--- @param Core.Fsm#FSM Fsm Finite state model.
+--- @return #string Call ID or nil.
 function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop, TraceLevel, Fsm )
   self:F2( { Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop, TraceLevel, Fsm } )
 
@@ -265,9 +265,9 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
 end
 
 --- Remove schedule.
--- @param #SCHEDULEDISPATCHER self
--- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
--- @param #table CallID Call ID.
+--- @param #SCHEDULEDISPATCHER self
+--- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
+--- @param #table CallID Call ID.
 function SCHEDULEDISPATCHER:RemoveSchedule( Scheduler, CallID )
   self:F2( { Remove = CallID, Scheduler = Scheduler } )
 
@@ -278,10 +278,10 @@ function SCHEDULEDISPATCHER:RemoveSchedule( Scheduler, CallID )
 end
 
 --- Start dispatcher.
--- @param #SCHEDULEDISPATCHER self
--- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
--- @param #table CallID (Optional) Call ID.
--- @param #string Info (Optional) Debug info.
+--- @param #SCHEDULEDISPATCHER self
+--- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
+--- @param #table CallID (Optional) Call ID.
+--- @param #string Info (Optional) Debug info.
 function SCHEDULEDISPATCHER:Start( Scheduler, CallID, Info )
   self:F2( { Start = CallID, Scheduler = Scheduler } )
 
@@ -315,9 +315,9 @@ function SCHEDULEDISPATCHER:Start( Scheduler, CallID, Info )
 end
 
 --- Stop dispatcher.
--- @param #SCHEDULEDISPATCHER self
--- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
--- @param #string CallID (Optional) Scheduler Call ID. If nil, all pending schedules are stopped recursively.
+--- @param #SCHEDULEDISPATCHER self
+--- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
+--- @param #string CallID (Optional) Scheduler Call ID. If nil, all pending schedules are stopped recursively.
 function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
   self:F2( { Stop = CallID, Scheduler = Scheduler } )
 
@@ -349,8 +349,8 @@ function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
 end
 
 --- Clear all schedules by stopping all dispatchers.
--- @param #SCHEDULEDISPATCHER self
--- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
+--- @param #SCHEDULEDISPATCHER self
+--- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
 function SCHEDULEDISPATCHER:Clear( Scheduler )
   self:F2( { Scheduler = Scheduler } )
 
@@ -360,16 +360,16 @@ function SCHEDULEDISPATCHER:Clear( Scheduler )
 end
 
 --- Show tracing info.
--- @param #SCHEDULEDISPATCHER self
--- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
+--- @param #SCHEDULEDISPATCHER self
+--- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
 function SCHEDULEDISPATCHER:ShowTrace( Scheduler )
   self:F2( { Scheduler = Scheduler } )
   Scheduler.ShowTrace = true
 end
 
 --- No tracing info.
--- @param #SCHEDULEDISPATCHER self
--- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
+--- @param #SCHEDULEDISPATCHER self
+--- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
 function SCHEDULEDISPATCHER:NoTrace( Scheduler )
   self:F2( { Scheduler = Scheduler } )
   Scheduler.ShowTrace = false

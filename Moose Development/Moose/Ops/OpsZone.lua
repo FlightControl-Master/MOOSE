@@ -16,42 +16,42 @@
 
 
 --- OPSZONE class.
--- @type OPSZONE
--- @field #string ClassName Name of the class.
--- @field #string lid DCS log ID string.
--- @field #number verbose Verbosity of output.
--- @field Core.Zone#ZONE zone The zone.
--- @field Core.Zone#ZONE_RADIUS zoneCircular The circular zone.
--- @field Wrapper.Airbase#AIRBASE airbase The airbase that is monitored.
--- @field #string airbaseName Name of the airbase that is monitored.
--- @field #string zoneName Name of the zone.
--- @field #number zoneRadius Radius of the zone in meters.
--- @field #number ownerCurrent Coalition of the current owner of the zone.
--- @field #number ownerPrevious Coalition of the previous owner of the zone.
--- @field Core.Timer#TIMER timerStatus Timer for calling the status update.
--- @field #number Nred Number of red units in the zone.
--- @field #number Nblu Number of blue units in the zone.
--- @field #number Nnut Number of neutral units in the zone.
--- @field #number Tred Threat level of red units in the zone.
--- @field #number Tblu Threat level of blue units in the zone.
--- @field #number Tnut Threat level of neutral units in the zone.
--- @field #number TminCaptured Time interval in seconds how long an attacker must have troops inside the zone to capture.
--- @field #number Tcaptured Time stamp (abs.) when the attacker destroyed all owning troops.
--- @field #table ObjectCategories Object categories for the scan.
--- @field #table UnitCategories Unit categories for the scan.
--- @field #number Tattacked Abs. mission time stamp when an attack was started.
--- @field #number dTCapture Time interval in seconds until a zone is captured.
--- @field #boolean neutralCanCapture Neutral units can capture. Default `false`.
--- @field #boolean drawZone If `true`, draw the zone on the F10 map.
--- @field #boolean markZone If `true`, mark the zone on the F10 map.
--- @field Wrapper.Marker#MARKER marker Marker on the F10 map.
--- @field #string markerText Text shown in the maker.
--- @field #table chiefs Chiefs that monitor this zone.
--- @field #table Missions Missions that are attached to this OpsZone.
--- @field #number nunitsCapture Number of units necessary to capture a zone.
--- @field #number threatlevelCapture Threat level necessary to capture a zone.
--- @field Core.Set#SET_UNIT ScanUnitSet Set of scanned units.
--- @field Core.Set#SET_GROUP ScanGroupSet Set of scanned groups.
+--- @type OPSZONE
+--- @field #string ClassName Name of the class.
+--- @field #string lid DCS log ID string.
+--- @field #number verbose Verbosity of output.
+--- @field Core.Zone#ZONE zone The zone.
+--- @field Core.Zone#ZONE_RADIUS zoneCircular The circular zone.
+--- @field Wrapper.Airbase#AIRBASE airbase The airbase that is monitored.
+--- @field #string airbaseName Name of the airbase that is monitored.
+--- @field #string zoneName Name of the zone.
+--- @field #number zoneRadius Radius of the zone in meters.
+--- @field #number ownerCurrent Coalition of the current owner of the zone.
+--- @field #number ownerPrevious Coalition of the previous owner of the zone.
+--- @field Core.Timer#TIMER timerStatus Timer for calling the status update.
+--- @field #number Nred Number of red units in the zone.
+--- @field #number Nblu Number of blue units in the zone.
+--- @field #number Nnut Number of neutral units in the zone.
+--- @field #number Tred Threat level of red units in the zone.
+--- @field #number Tblu Threat level of blue units in the zone.
+--- @field #number Tnut Threat level of neutral units in the zone.
+--- @field #number TminCaptured Time interval in seconds how long an attacker must have troops inside the zone to capture.
+--- @field #number Tcaptured Time stamp (abs.) when the attacker destroyed all owning troops.
+--- @field #table ObjectCategories Object categories for the scan.
+--- @field #table UnitCategories Unit categories for the scan.
+--- @field #number Tattacked Abs. mission time stamp when an attack was started.
+--- @field #number dTCapture Time interval in seconds until a zone is captured.
+--- @field #boolean neutralCanCapture Neutral units can capture. Default `false`.
+--- @field #boolean drawZone If `true`, draw the zone on the F10 map.
+--- @field #boolean markZone If `true`, mark the zone on the F10 map.
+--- @field Wrapper.Marker#MARKER marker Marker on the F10 map.
+--- @field #string markerText Text shown in the maker.
+--- @field #table chiefs Chiefs that monitor this zone.
+--- @field #table Missions Missions that are attached to this OpsZone.
+--- @field #number nunitsCapture Number of units necessary to capture a zone.
+--- @field #number threatlevelCapture Threat level necessary to capture a zone.
+--- @field Core.Set#SET_UNIT ScanUnitSet Set of scanned units.
+--- @field Core.Set#SET_GROUP ScanGroupSet Set of scanned groups.
 -- @extends Core.Fsm#FSM
 
 --- *Gentlemen, when the enemy is committed to a mistake we must not interrupt him too soon.* --- Horation Nelson
@@ -63,7 +63,7 @@
 -- An OPSZONE is a strategically important area.
 --
 --
--- @field #OPSZONE
+--- @field #OPSZONE
 OPSZONE = {
   ClassName      = "OPSZONE",
   verbose        =     0,
@@ -78,23 +78,23 @@ OPSZONE = {
 }
 
 --- OPSZONE.MISSION
--- @type OPSZONE.MISSION
--- @field #number Coalition Coalition
--- @field #string Type Type of mission
--- @field Ops.Auftrag#AUFTRAG Mission The actual attached mission
+--- @type OPSZONE.MISSION
+--- @field #number Coalition Coalition
+--- @field #string Type Type of mission
+--- @field Ops.Auftrag#AUFTRAG Mission The actual attached mission
 
 
 --- Type of zone we are dealing with.
 -- @type OPSZONE.ZoneType
--- @field #string Circular Zone is circular.
--- @field #string Polygon Zone is a polygon.
+--- @field #string Circular Zone is circular.
+--- @field #string Polygon Zone is a polygon.
 OPSZONE.ZoneType={
   Circular="Circular",
   Polygon="Polygon",
 }
 
 --- OPSZONE class version.
--- @field #string version
+--- @field #string version
 OPSZONE.version="0.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -115,10 +115,10 @@ OPSZONE.version="0.5.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new OPSZONE class object.
--- @param #OPSZONE self
--- @param Core.Zone#ZONE Zone The zone. Needs to be a ZONE\_RADIUS (round) zone. Can be passed as ZONE\_AIRBASE or simply as the name of the airbase.
--- @param #number CoalitionOwner Initial owner of the coaliton. Default `coalition.side.NEUTRAL`.
--- @return #OPSZONE self
+--- @param #OPSZONE self
+--- @param Core.Zone#ZONE Zone The zone. Needs to be a ZONE\_RADIUS (round) zone. Can be passed as ZONE\_AIRBASE or simply as the name of the airbase.
+--- @param #number CoalitionOwner Initial owner of the coaliton. Default `coalition.side.NEUTRAL`.
+--- @return #OPSZONE self
 -- @usage
 -- myopszone = OPSZONE:New(ZONE:FindByName("OpsZoneOne"), coalition.side.RED) -- base zone from the mission editor
 -- myopszone = OPSZONE:New(ZONE_RADIUS:New("OpsZoneTwo", mycoordinate:GetVec2(),5000),coalition.side.BLUE) -- radius zone of 5km at a coordinate
@@ -376,9 +376,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set verbosity level.
--- @param #OPSZONE self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
--- @return #OPSZONE self
+--- @param #OPSZONE self
+--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+--- @return #OPSZONE self
 function OPSZONE:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
   return self
@@ -391,9 +391,9 @@ end
 -- 
 -- Which units can capture zones can be further refined by `:SetUnitCategories()`.
 -- 
--- @param #OPSZONE self
--- @param #table Categories Object categories. Default is `{Object.Category.UNIT, Object.Category.STATIC}`.
--- @return #OPSZONE self
+--- @param #OPSZONE self
+--- @param #table Categories Object categories. Default is `{Object.Category.UNIT, Object.Category.STATIC}`.
+--- @return #OPSZONE self
 function OPSZONE:SetObjectCategories(Categories)
 
   -- Ensure table if something was passed.
@@ -408,9 +408,9 @@ function OPSZONE:SetObjectCategories(Categories)
 end
 
 --- Set categories of units that can capture or hold the zone. See [DCS Class Unit](https://wiki.hoggitworld.com/view/DCS_Class_Unit).
--- @param #OPSZONE self
--- @param #table Categories Table of unit categories. Default `{Unit.Category.GROUND_UNIT}`.
--- @return #OPSZONE self
+--- @param #OPSZONE self
+--- @param #table Categories Table of unit categories. Default `{Unit.Category.GROUND_UNIT}`.
+--- @return #OPSZONE self
 function OPSZONE:SetUnitCategories(Categories)
 
   -- Ensure table.
@@ -426,9 +426,9 @@ end
 
 --- Set threat level threshold that the offending units must have to capture a zone.
 -- The reason why you might want to set this is that unarmed units (*e.g.* fuel trucks) should not be able to capture a zone as they do not pose a threat.
--- @param #OPSZONE self
--- @param #number Threatlevel Threat level threshold. Default 0.
--- @return #OPSZONE self
+--- @param #OPSZONE self
+--- @param #number Threatlevel Threat level threshold. Default 0.
+--- @return #OPSZONE self
 function OPSZONE:SetCaptureThreatlevel(Threatlevel)
 
   self.threatlevelCapture=Threatlevel or 0
@@ -437,9 +437,9 @@ function OPSZONE:SetCaptureThreatlevel(Threatlevel)
 end
 
 --- Set how many units must be present in a zone to capture it. By default, one unit is enough.
--- @param #OPSZONE self
--- @param #number Nunits Number of units. Default 1.
--- @return #OPSZONE self
+--- @param #OPSZONE self
+--- @param #number Nunits Number of units. Default 1.
+--- @return #OPSZONE self
 function OPSZONE:SetCaptureNunits(Nunits)
 
   Nunits=Nunits or 1
@@ -451,9 +451,9 @@ end
 
 
 --- Set time how long an attacking coalition must have troops inside a zone before it captures the zone.
--- @param #OPSZONE self
--- @param #number Tcapture Time in seconds. Default 0.
--- @return #OPSZONE self
+--- @param #OPSZONE self
+--- @param #number Tcapture Time in seconds. Default 0.
+--- @return #OPSZONE self
 function OPSZONE:SetCaptureTime(Tcapture)
 
   self.TminCaptured=Tcapture or 0
@@ -463,18 +463,18 @@ end
 
 
 --- Set whether *neutral* units can capture the zone.
--- @param #OPSZONE self
--- @param #boolean CanCapture If `true`, neutral units can.
--- @return #OPSZONE self
+--- @param #OPSZONE self
+--- @param #boolean CanCapture If `true`, neutral units can.
+--- @return #OPSZONE self
 function OPSZONE:SetNeutralCanCapture(CanCapture)
   self.neutralCanCapture=CanCapture
   return self
 end
 
 --- Set if zone is drawn on the F10 map. Color will change depending on current owning coalition.
--- @param #OPSZONE self
--- @param #boolean Switch If `true` or `nil`, draw zone. If `false`, zone is not drawn.
--- @return #OPSZONE self
+--- @param #OPSZONE self
+--- @param #boolean Switch If `true` or `nil`, draw zone. If `false`, zone is not drawn.
+--- @return #OPSZONE self
 function OPSZONE:SetDrawZone(Switch)
   if Switch==false then
     self.drawZone=false
@@ -485,10 +485,10 @@ function OPSZONE:SetDrawZone(Switch)
 end
 
 --- Set if a marker on the F10 map shows the current zone status.
--- @param #OPSZONE self
--- @param #boolean Switch If `true`, zone is marked. If `false` or `nil`, zone is not marked.
--- @param #boolean ReadOnly If `true` or `nil` then mark is read only.
--- @return #OPSZONE self
+--- @param #OPSZONE self
+--- @param #boolean Switch If `true`, zone is marked. If `false` or `nil`, zone is not marked.
+--- @param #boolean ReadOnly If `true` or `nil` then mark is read only.
+--- @return #OPSZONE self
 function OPSZONE:SetMarkZone(Switch, ReadOnly)
   if Switch then
     self.markZone=true
@@ -513,48 +513,48 @@ end
 
 
 --- Get current owner of the zone.
--- @param #OPSZONE self
--- @return #number Owner coalition.
+--- @param #OPSZONE self
+--- @return #number Owner coalition.
 function OPSZONE:GetOwner()
   return self.ownerCurrent
 end
 
 --- Get coalition name of current owner of the zone.
--- @param #OPSZONE self
--- @return #string  Owner coalition.
+--- @param #OPSZONE self
+--- @return #string  Owner coalition.
 function OPSZONE:GetOwnerName()
   return UTILS.GetCoalitionName(self.ownerCurrent)
 end
 
 --- Get coordinate of zone.
--- @param #OPSZONE self
--- @return Core.Point#COORDINATE Coordinate of the zone.
+--- @param #OPSZONE self
+--- @return Core.Point#COORDINATE Coordinate of the zone.
 function OPSZONE:GetCoordinate()
   local coordinate=self.zone:GetCoordinate()
   return coordinate
 end
 
 --- Get scanned units inside the zone.
--- @param #OPSZONE self
--- @return Core.Set#SET_UNIT Set of units inside the zone.
+--- @param #OPSZONE self
+--- @return Core.Set#SET_UNIT Set of units inside the zone.
 function OPSZONE:GetScannedUnitSet()
   return self.ScanUnitSet
 end
 
 
 --- Get scanned groups inside the zone.
--- @param #OPSZONE self
--- @return Core.Set#SET_GROUP Set of groups inside the zone.
+--- @param #OPSZONE self
+--- @return Core.Set#SET_GROUP Set of groups inside the zone.
 function OPSZONE:GetScannedGroupSet()
   return self.ScanGroupSet
 end
 
 --- Returns a random coordinate in the zone.
--- @param #OPSZONE self
--- @param #number inner (Optional) Minimal distance from the center of the zone in meters. Default is 0 m.
--- @param #number outer (Optional) Maximal distance from the outer edge of the zone in meters. Default is the radius of the zone.
--- @param #table surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type!
--- @return Core.Point#COORDINATE The random coordinate.
+--- @param #OPSZONE self
+--- @param #number inner (Optional) Minimal distance from the center of the zone in meters. Default is 0 m.
+--- @param #number outer (Optional) Maximal distance from the outer edge of the zone in meters. Default is the radius of the zone.
+--- @param #table surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type!
+--- @return Core.Point#COORDINATE The random coordinate.
 function OPSZONE:GetRandomCoordinate(inner, outer, surfacetypes)
 
   local zone=self:GetZone()
@@ -565,29 +565,29 @@ function OPSZONE:GetRandomCoordinate(inner, outer, surfacetypes)
 end
 
 --- Get zone name.
--- @param #OPSZONE self
--- @return #string Name of the zone.
+--- @param #OPSZONE self
+--- @return #string Name of the zone.
 function OPSZONE:GetName()
   return self.zoneName
 end
 
 --- Get the zone object.
--- @param #OPSZONE self
--- @return Core.Zone#ZONE The zone.
+--- @param #OPSZONE self
+--- @return Core.Zone#ZONE The zone.
 function OPSZONE:GetZone()
   return self.zone
 end
 
 --- Get previous owner of the zone.
--- @param #OPSZONE self
--- @return #number Previous owner coalition.
+--- @param #OPSZONE self
+--- @return #number Previous owner coalition.
 function OPSZONE:GetPreviousOwner()
   return self.ownerPrevious
 end
 
 --- Get duration of the current attack.
--- @param #OPSZONE self
--- @return #number Duration in seconds since when the last attack began. Is `nil` if the zone is not under attack currently.
+--- @param #OPSZONE self
+--- @return #number Duration in seconds since when the last attack began. Is `nil` if the zone is not under attack currently.
 function OPSZONE:GetAttackDuration()
   if self:IsAttacked() and self.Tattacked then
     
@@ -600,88 +600,88 @@ end
 
 
 --- Check if the red coalition is currently owning the zone.
--- @param #OPSZONE self 
--- @return #boolean If `true`, zone is red.
+--- @param #OPSZONE self 
+--- @return #boolean If `true`, zone is red.
 function OPSZONE:IsRed()
   local is=self.ownerCurrent==coalition.side.RED
   return is
 end
 
 --- Check if the blue coalition is currently owning the zone.
--- @param #OPSZONE self 
--- @return #boolean If `true`, zone is blue.
+--- @param #OPSZONE self 
+--- @return #boolean If `true`, zone is blue.
 function OPSZONE:IsBlue()
   local is=self.ownerCurrent==coalition.side.BLUE
   return is
 end
 
 --- Check if the neutral coalition is currently owning the zone.
--- @param #OPSZONE self 
--- @return #boolean If `true`, zone is neutral.
+--- @param #OPSZONE self 
+--- @return #boolean If `true`, zone is neutral.
 function OPSZONE:IsNeutral()
   local is=self.ownerCurrent==coalition.side.NEUTRAL
   return is
 end
 
 --- Check if a certain coalition is currently owning the zone.
--- @param #OPSZONE self 
--- @param #number Coalition The Coalition that is supposed to own the zone.
--- @return #boolean If `true`, zone is owned by the given coalition.
+--- @param #OPSZONE self 
+--- @param #number Coalition The Coalition that is supposed to own the zone.
+--- @return #boolean If `true`, zone is owned by the given coalition.
 function OPSZONE:IsCoalition(Coalition)
   local is=self.ownerCurrent==Coalition
   return is
 end
 
 --- Check if zone is started (not stopped).
--- @param #OPSZONE self 
--- @return #boolean If `true`, zone is started.
+--- @param #OPSZONE self 
+--- @return #boolean If `true`, zone is started.
 function OPSZONE:IsStarted()
   local is=not self:IsStopped()
   return is
 end
 
 --- Check if zone is stopped.
--- @param #OPSZONE self 
--- @return #boolean If `true`, zone is stopped.
+--- @param #OPSZONE self 
+--- @return #boolean If `true`, zone is stopped.
 function OPSZONE:IsStopped()
   local is=self:is("Stopped")
   return is
 end
 
 --- Check if zone is guarded.
--- @param #OPSZONE self 
--- @return #boolean If `true`, zone is guarded.
+--- @param #OPSZONE self 
+--- @return #boolean If `true`, zone is guarded.
 function OPSZONE:IsGuarded()
   local is=self:is("Guarded")
   return is
 end
 
 --- Check if zone is empty.
--- @param #OPSZONE self 
--- @return #boolean If `true`, zone is empty.
+--- @param #OPSZONE self 
+--- @return #boolean If `true`, zone is empty.
 function OPSZONE:IsEmpty()
   local is=self:is("Empty")
   return is
 end
 
 --- Check if zone is being attacked by the opposite coalition.
--- @param #OPSZONE self 
--- @return #boolean If `true`, zone is being attacked.
+--- @param #OPSZONE self 
+--- @return #boolean If `true`, zone is being attacked.
 function OPSZONE:IsAttacked()
   local is=self:is("Attacked")
   return is
 end
 
 --- Check if zone is contested. Contested here means red *and* blue units are present in the zone.
--- @param #OPSZONE self 
--- @return #boolean If `true`, zone is contested.
+--- @param #OPSZONE self 
+--- @return #boolean If `true`, zone is contested.
 function OPSZONE:IsContested()
   return self.isContested
 end
 
 --- Check if FMS is stopped.
--- @param #OPSZONE self 
--- @return #boolean If `true`, FSM is stopped
+--- @param #OPSZONE self 
+--- @return #boolean If `true`, FSM is stopped
 function OPSZONE:IsStopped()
   local is=self:is("Stopped")
   return is
@@ -692,10 +692,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Start OPSZONE FSM.
--- @param #OPSZONE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSZONE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSZONE:onafterStart(From, Event, To)
 
   -- Info.
@@ -715,10 +715,10 @@ function OPSZONE:onafterStart(From, Event, To)
 end
 
 --- Stop OPSZONE FSM.
--- @param #OPSZONE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSZONE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSZONE:onafterStop(From, Event, To)
 
   -- Info.
@@ -751,7 +751,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Update status.
--- @param #OPSZONE self
+--- @param #OPSZONE self
 function OPSZONE:Status()
 
   -- Current FSM state.
@@ -787,11 +787,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On before "Captured" event.
--- @param #OPSZONE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number NewOwnerCoalition Coalition of the new owner.
+--- @param #OPSZONE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number NewOwnerCoalition Coalition of the new owner.
 function OPSZONE:onbeforeCaptured(From, Event, To, NewOwnerCoalition)
 
   -- Check if owner changed.
@@ -804,11 +804,11 @@ function OPSZONE:onbeforeCaptured(From, Event, To, NewOwnerCoalition)
 end
 
 --- On after "Captured" event.
--- @param #OPSZONE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number NewOwnerCoalition Coalition of the new owner.
+--- @param #OPSZONE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number NewOwnerCoalition Coalition of the new owner.
 function OPSZONE:onafterCaptured(From, Event, To, NewOwnerCoalition)
 
   -- Debug info.
@@ -830,10 +830,10 @@ function OPSZONE:onafterCaptured(From, Event, To, NewOwnerCoalition)
 end
 
 --- On after "Empty" event.
--- @param #OPSZONE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSZONE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSZONE:onafterEmpty(From, Event, To)
 
   -- Debug info.
@@ -842,11 +842,11 @@ function OPSZONE:onafterEmpty(From, Event, To)
 end
 
 --- On after "Attacked" event.
--- @param #OPSZONE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number AttackerCoalition Coalition of the attacking ground troops.
+--- @param #OPSZONE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number AttackerCoalition Coalition of the attacking ground troops.
 function OPSZONE:onafterAttacked(From, Event, To, AttackerCoalition)
 
   -- Debug info.
@@ -855,11 +855,11 @@ function OPSZONE:onafterAttacked(From, Event, To, AttackerCoalition)
 end
 
 --- On after "Defeated" event.
--- @param #OPSZONE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number DefeatedCoalition Coalition side that was defeated.
+--- @param #OPSZONE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number DefeatedCoalition Coalition side that was defeated.
 function OPSZONE:onafterDefeated(From, Event, To, DefeatedCoalition)
 
   -- Debug info.
@@ -871,10 +871,10 @@ function OPSZONE:onafterDefeated(From, Event, To, DefeatedCoalition)
 end
 
 --- On enter "Guarded" state.
--- @param #OPSZONE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSZONE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSZONE:onenterGuarded(From, Event, To)
   
   if From~=To then
@@ -899,11 +899,11 @@ function OPSZONE:onenterGuarded(From, Event, To)
 end
 
 --- On enter "Attacked" state.
--- @param #OPSZONE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number AttackerCoalition Coalition of the attacking ground troops.
+--- @param #OPSZONE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number AttackerCoalition Coalition of the attacking ground troops.
 function OPSZONE:onenterAttacked(From, Event, To, AttackerCoalition)
 
   -- Time stamp when the attack started.
@@ -943,10 +943,10 @@ function OPSZONE:onenterAttacked(From, Event, To, AttackerCoalition)
 end
 
 --- On enter "Empty" event.
--- @param #OPSZONE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSZONE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSZONE:onenterEmpty(From, Event, To)
 
   if From~=To then
@@ -977,8 +977,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Scan zone.
--- @param #OPSZONE self
--- @return #OPSZONE self
+--- @param #OPSZONE self
+--- @return #OPSZONE self
 function OPSZONE:Scan()
 
   -- Debug info.
@@ -1196,8 +1196,8 @@ function OPSZONE:Scan()
 end
 
 --- Evaluate zone.
--- @param #OPSZONE self
--- @return #OPSZONE self
+--- @param #OPSZONE self
+--- @return #OPSZONE self
 function OPSZONE:EvaluateZone()
 
   -- Set values.
@@ -1395,8 +1395,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Monitor hit events.
--- @param #OPSZONE self
--- @param Core.Event#EVENTDATA EventData The event data.
+--- @param #OPSZONE self
+--- @param Core.Event#EVENTDATA EventData The event data.
 function OPSZONE:OnEventHit(EventData)
 
   if self.HitsOn then
@@ -1422,8 +1422,8 @@ function OPSZONE:OnEventHit(EventData)
 end
 
 --- Monitor base captured events.
--- @param #OPSZONE self
--- @param Core.Event#EVENTDATA EventData The event data.
+--- @param #OPSZONE self
+--- @param Core.Event#EVENTDATA EventData The event data.
 function OPSZONE:OnEventBaseCaptured(EventData)
 
   if EventData and EventData.Place and self.airbase and self.airbaseName then
@@ -1456,8 +1456,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get RGB color of zone depending on current owner.
--- @param #OPSZONE self
--- @return #table RGB color.
+--- @param #OPSZONE self
+--- @return #table RGB color.
 function OPSZONE:_GetZoneColor()
 
   local color={0,0,0}
@@ -1476,7 +1476,7 @@ function OPSZONE:_GetZoneColor()
 end
 
 --- Update marker on the F10 map.
--- @param #OPSZONE self
+--- @param #OPSZONE self
 function OPSZONE:_UpdateMarker()
 
   if self.markZone then
@@ -1497,8 +1497,8 @@ function OPSZONE:_UpdateMarker()
 end
 
 --- Get marker text.
--- @param #OPSZONE self
--- @return #string Marker text.
+--- @param #OPSZONE self
+--- @return #string Marker text.
 function OPSZONE:_GetMarkerText()
 
   local owner=UTILS.GetCoalitionName(self.ownerCurrent)
@@ -1514,9 +1514,9 @@ function OPSZONE:_GetMarkerText()
 end
 
 --- Add a chief that monitors this zone. Chief will be informed about capturing etc.
--- @param #OPSZONE self
--- @param Ops.Chief#CHIEF Chief The chief.
--- @return #table RGB color.
+--- @param #OPSZONE self
+--- @param Ops.Chief#CHIEF Chief The chief.
+--- @return #table RGB color.
 function OPSZONE:_AddChief(Chief)
 
   -- Add chief.
@@ -1525,11 +1525,11 @@ function OPSZONE:_AddChief(Chief)
 end
 
 --- Add an entry to the OpsZone mission table
--- @param #OPSZONE self
--- @param #number Coalition Coalition of type e.g. coalition.side.NEUTRAL
--- @param #string Type Type of mission, e.g. AUFTRAG.Type.CAS
--- @param Ops.Auftrag#AUFTRAG Auftrag The Auftrag itself
--- @return #OPSZONE self
+--- @param #OPSZONE self
+--- @param #number Coalition Coalition of type e.g. coalition.side.NEUTRAL
+--- @param #string Type Type of mission, e.g. AUFTRAG.Type.CAS
+--- @param Ops.Auftrag#AUFTRAG Auftrag The Auftrag itself
+--- @return #OPSZONE self
 function OPSZONE:_AddMission(Coalition,Type,Auftrag)
   
   -- Add a mission
@@ -1544,18 +1544,18 @@ function OPSZONE:_AddMission(Coalition,Type,Auftrag)
 end
 
 --- Get the OpsZone mission table. #table of #OPSZONE.MISSION entries
--- @param #OPSZONE self
--- @return #table Missions
+--- @param #OPSZONE self
+--- @return #table Missions
 function OPSZONE:_GetMissions()
   return self.Missions
 end
 
 --- Add an entry to the OpsZone mission table.
--- @param #OPSZONE self
--- @param #number Coalition Coalition of type e.g. `coalition.side.NEUTRAL`.
--- @param #string Type Type of mission, e.g. `AUFTRAG.Type.CAS`.
--- @return #boolean found True if we have that kind of mission, else false.
--- @return #table Missions Table of `Ops.Auftrag#AUFTRAG` entries.
+--- @param #OPSZONE self
+--- @param #number Coalition Coalition of type e.g. `coalition.side.NEUTRAL`.
+--- @param #string Type Type of mission, e.g. `AUFTRAG.Type.CAS`.
+--- @return #boolean found True if we have that kind of mission, else false.
+--- @return #table Missions Table of `Ops.Auftrag#AUFTRAG` entries.
 function OPSZONE:_FindMissions(Coalition, Type)
   -- search the table
   local foundmissions = {}
@@ -1571,8 +1571,8 @@ function OPSZONE:_FindMissions(Coalition, Type)
 end
 
 --- Clean mission table from missions that are over.
--- @param #OPSZONE self
--- @return #OPSZONE self
+--- @param #OPSZONE self
+--- @return #OPSZONE self
 function OPSZONE:_CleanMissionTable()
   local missions = {}
   for _,_entry in pairs(self.Missions) do

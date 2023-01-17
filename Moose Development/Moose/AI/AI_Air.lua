@@ -46,7 +46,7 @@
 --   * **Stop**: Stop the transport process.
 --   * **Monitor**: Monitor and take action.
 --
--- @field #AI_AIR
+--- @field #AI_AIR
 AI_AIR = {
   ClassName = "AI_AIR",
 }
@@ -54,9 +54,9 @@ AI_AIR = {
 AI_AIR.TaskDelay = 0.5 -- The delay of each task given to the AI.
 
 --- Creates a new AI_AIR process.
--- @param #AI_AIR self
--- @param Wrapper.Group#GROUP AIGroup The group object to receive the A2G Process.
--- @return #AI_AIR
+--- @param #AI_AIR self
+--- @param Wrapper.Group#GROUP AIGroup The group object to receive the A2G Process.
+--- @return #AI_AIR
 function AI_AIR:New( AIGroup )
 
   -- Inherits from BASE
@@ -98,119 +98,119 @@ function AI_AIR:New( AIGroup )
 
 --- OnLeave Transition Handler for State Stopped.
 -- @function [parent=#AI_AIR] OnLeaveStopped
--- @param #AI_AIR self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @return #boolean Return false to cancel Transition.
+--- @param #AI_AIR self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @return #boolean Return false to cancel Transition.
 
 --- OnEnter Transition Handler for State Stopped.
 -- @function [parent=#AI_AIR] OnEnterStopped
--- @param #AI_AIR self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_AIR self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 
 --- OnBefore Transition Handler for Event Stop.
 -- @function [parent=#AI_AIR] OnBeforeStop
--- @param #AI_AIR self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @return #boolean Return false to cancel Transition.
+--- @param #AI_AIR self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @return #boolean Return false to cancel Transition.
 
 --- OnAfter Transition Handler for Event Stop.
 -- @function [parent=#AI_AIR] OnAfterStop
--- @param #AI_AIR self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_AIR self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 	
 --- Synchronous Event Trigger for Event Stop.
 -- @function [parent=#AI_AIR] Stop
--- @param #AI_AIR self
+--- @param #AI_AIR self
 
 --- Asynchronous Event Trigger for Event Stop.
 -- @function [parent=#AI_AIR] __Stop
--- @param #AI_AIR self
--- @param #number Delay The delay in seconds.
+--- @param #AI_AIR self
+--- @param #number Delay The delay in seconds.
 
   self:AddTransition( "*", "Status", "*" ) -- FSM_CONTROLLABLE Transition for type #AI_AIR.
 
 --- OnBefore Transition Handler for Event Status.
 -- @function [parent=#AI_AIR] OnBeforeStatus
--- @param #AI_AIR self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @return #boolean Return false to cancel Transition.
+--- @param #AI_AIR self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @return #boolean Return false to cancel Transition.
 
 --- OnAfter Transition Handler for Event Status.
 -- @function [parent=#AI_AIR] OnAfterStatus
--- @param #AI_AIR self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_AIR self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 	
 --- Synchronous Event Trigger for Event Status.
 -- @function [parent=#AI_AIR] Status
--- @param #AI_AIR self
+--- @param #AI_AIR self
 
 --- Asynchronous Event Trigger for Event Status.
 -- @function [parent=#AI_AIR] __Status
--- @param #AI_AIR self
--- @param #number Delay The delay in seconds.
+--- @param #AI_AIR self
+--- @param #number Delay The delay in seconds.
 
   self:AddTransition( "*", "RTB", "*" ) -- FSM_CONTROLLABLE Transition for type #AI_AIR.
 
 --- OnBefore Transition Handler for Event RTB.
 -- @function [parent=#AI_AIR] OnBeforeRTB
--- @param #AI_AIR self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @return #boolean Return false to cancel Transition.
+--- @param #AI_AIR self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @return #boolean Return false to cancel Transition.
 
 --- OnAfter Transition Handler for Event RTB.
 -- @function [parent=#AI_AIR] OnAfterRTB
--- @param #AI_AIR self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_AIR self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 	
 --- Synchronous Event Trigger for Event RTB.
 -- @function [parent=#AI_AIR] RTB
--- @param #AI_AIR self
+--- @param #AI_AIR self
 
 --- Asynchronous Event Trigger for Event RTB.
 -- @function [parent=#AI_AIR] __RTB
--- @param #AI_AIR self
--- @param #number Delay The delay in seconds.
+--- @param #AI_AIR self
+--- @param #number Delay The delay in seconds.
 
 --- OnLeave Transition Handler for State Returning.
 -- @function [parent=#AI_AIR] OnLeaveReturning
--- @param #AI_AIR self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @return #boolean Return false to cancel Transition.
+--- @param #AI_AIR self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @return #boolean Return false to cancel Transition.
 
 --- OnEnter Transition Handler for State Returning.
 -- @function [parent=#AI_AIR] OnEnterReturning
--- @param #AI_AIR self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_AIR self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 
   self:AddTransition( "Patrolling", "Refuel", "Refuelling" ) 
 
@@ -260,7 +260,7 @@ function AI_AIR:New( AIGroup )
 end
 
 --- @param Wrapper.Group#GROUP self
--- @param Core.Event#EVENTDATA EventData
+--- @param Core.Event#EVENTDATA EventData
 function GROUP:OnEventTakeoff( EventData, Fsm )
   Fsm:Takeoff()
   self:UnHandleEvent( EVENTS.Takeoff )
@@ -293,10 +293,10 @@ end
 
 
 --- Sets (modifies) the minimum and maximum speed of the patrol.
--- @param #AI_AIR self
--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
--- @return #AI_AIR self
+--- @param #AI_AIR self
+--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
+--- @return #AI_AIR self
 function AI_AIR:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
   self:F2( { PatrolMinSpeed, PatrolMaxSpeed } )
   
@@ -306,10 +306,10 @@ end
 
 
 --- Sets (modifies) the minimum and maximum RTB speed of the patrol.
--- @param #AI_AIR self
--- @param DCS#Speed  RTBMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
--- @param DCS#Speed  RTBMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
--- @return #AI_AIR self
+--- @param #AI_AIR self
+--- @param DCS#Speed  RTBMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+--- @param DCS#Speed  RTBMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
+--- @return #AI_AIR self
 function AI_AIR:SetRTBSpeed( RTBMinSpeed, RTBMaxSpeed )
   self:F( { RTBMinSpeed, RTBMaxSpeed } )
   
@@ -319,10 +319,10 @@ end
 
 
 --- Sets the floor and ceiling altitude of the patrol.
--- @param #AI_AIR self
--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @return #AI_AIR self
+--- @param #AI_AIR self
+--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+--- @return #AI_AIR self
 function AI_AIR:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
   self:F2( { PatrolFloorAltitude, PatrolCeilingAltitude } )
   
@@ -332,9 +332,9 @@ end
 
 
 --- Sets the home airbase.
--- @param #AI_AIR self
--- @param Wrapper.Airbase#AIRBASE HomeAirbase
--- @return #AI_AIR self
+--- @param #AI_AIR self
+--- @param Wrapper.Airbase#AIRBASE HomeAirbase
+--- @return #AI_AIR self
 function AI_AIR:SetHomeAirbase( HomeAirbase )
   self:F2( { HomeAirbase } )
   
@@ -342,9 +342,9 @@ function AI_AIR:SetHomeAirbase( HomeAirbase )
 end
 
 --- Sets to refuel at the given tanker.
--- @param #AI_AIR self
--- @param Wrapper.Group#GROUP TankerName The group name of the tanker as defined within the Mission Editor or spawned.
--- @return #AI_AIR self
+--- @param #AI_AIR self
+--- @param Wrapper.Group#GROUP TankerName The group name of the tanker as defined within the Mission Editor or spawned.
+--- @return #AI_AIR self
 function AI_AIR:SetTanker( TankerName )
   self:F2( { TankerName } )
   
@@ -353,9 +353,9 @@ end
 
 
 --- Sets the disengage range, that when engaging a target beyond the specified range, the engagement will be cancelled and the plane will RTB.
--- @param #AI_AIR self
--- @param #number DisengageRadius The disengage range.
--- @return #AI_AIR self
+--- @param #AI_AIR self
+--- @param #number DisengageRadius The disengage range.
+--- @return #AI_AIR self
 function AI_AIR:SetDisengageRadius( DisengageRadius )
   self:F2( { DisengageRadius } )
   
@@ -363,8 +363,8 @@ function AI_AIR:SetDisengageRadius( DisengageRadius )
 end
 
 --- Set the status checking off.
--- @param #AI_AIR self
--- @return #AI_AIR self
+--- @param #AI_AIR self
+--- @return #AI_AIR self
 function AI_AIR:SetStatusOff()
   self:F2()
   
@@ -376,10 +376,10 @@ end
 -- Therefore, with a parameter and a calculation of the distance to the home base, the fuel threshold is calculated.
 -- When the fuel threshold is reached, the AI will continue for a given time its patrol task in orbit, while a new AIControllable is targeted to the AI_AIR.
 -- Once the time is finished, the old AI will return to the base.
--- @param #AI_AIR self
--- @param #number FuelThresholdPercentage The threshold in percentage (between 0 and 1) when the AIControllable is considered to get out of fuel.
--- @param #number OutOfFuelOrbitTime The amount of seconds the out of fuel AIControllable will orbit before returning to the base.
--- @return #AI_AIR self
+--- @param #AI_AIR self
+--- @param #number FuelThresholdPercentage The threshold in percentage (between 0 and 1) when the AIControllable is considered to get out of fuel.
+--- @param #number OutOfFuelOrbitTime The amount of seconds the out of fuel AIControllable will orbit before returning to the base.
+--- @return #AI_AIR self
 function AI_AIR:SetFuelThreshold( FuelThresholdPercentage, OutOfFuelOrbitTime )
 
   self.FuelThresholdPercentage = FuelThresholdPercentage
@@ -396,9 +396,9 @@ end
 -- the AI will return immediately to the home base (RTB).
 -- Note that for groups, the average damage of the complete group will be calculated.
 -- So, in a group of 4 airplanes, 2 lost and 2 with damage 0.2, the damage threshold will be 0.25.
--- @param #AI_AIR self
--- @param #number PatrolDamageThreshold The threshold in percentage (between 0 and 1) when the AI is considered to be damaged.
--- @return #AI_AIR self
+--- @param #AI_AIR self
+--- @param #number PatrolDamageThreshold The threshold in percentage (between 0 and 1) when the AI is considered to be damaged.
+--- @return #AI_AIR self
 function AI_AIR:SetDamageThreshold( PatrolDamageThreshold )
 
   self.PatrolManageDamage = true
@@ -410,12 +410,12 @@ end
 
 
 --- Defines a new patrol route using the @{AI.AI_Patrol#AI_PATROL_ZONE} parameters and settings.
--- @param #AI_AIR self
--- @return #AI_AIR self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_AIR self
+--- @return #AI_AIR self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_AIR:onafterStart( Controllable, From, Event, To )
 
   self:__Status( 10 ) -- Check status status every 30 seconds.
@@ -429,12 +429,12 @@ function AI_AIR:onafterStart( Controllable, From, Event, To )
 end
 
 --- Coordinates the approriate returning action.
--- @param #AI_AIR self
--- @return #AI_AIR self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_AIR self
+--- @return #AI_AIR self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_AIR:onafterReturn( Controllable, From, Event, To )
 
   self:__RTB( self.TaskDelay )
@@ -582,10 +582,10 @@ end
 --- Set the min and max factors on RTB speed. Use this, if your planes are heading back to base too fast. Default values are 0.5 and 0.6. 
 -- The RTB speed is calculated as the max speed of the unit multiplied by MinFactor (lower bracket) and multiplied by MaxFactor (upper bracket). 
 -- A random value in this bracket is then applied in the waypoint routing generation.
--- @param #AI_AIR self
--- @param #number MinFactor Lower bracket factor. Defaults to 0.5.
--- @param #number MaxFactor Upper bracket factor. Defaults to 0.6.
--- @return #AI_AIR self
+--- @param #AI_AIR self
+--- @param #number MinFactor Lower bracket factor. Defaults to 0.5.
+--- @param #number MaxFactor Upper bracket factor. Defaults to 0.6.
+--- @return #AI_AIR self
 function AI_AIR:SetRTBSpeedFactors(MinFactor,MaxFactor)
   self.RTBSpeedMaxFactor = MaxFactor or 0.6
   self.RTBSpeedMinFactor = MinFactor or 0.5
@@ -594,7 +594,7 @@ end
 
 
 --- @param #AI_AIR self
--- @param Wrapper.Group#GROUP AIGroup
+--- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR:onafterRTB( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
 
@@ -682,7 +682,7 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
 end
 
 --- @param #AI_AIR self
--- @param Wrapper.Group#GROUP AIGroup
+--- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR:onafterHome( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
 
@@ -696,7 +696,7 @@ end
 
 
 --- @param #AI_AIR self
--- @param Wrapper.Group#GROUP AIGroup
+--- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR:onafterHold( AIGroup, From, Event, To, HoldTime )
   self:F( { AIGroup, From, Event, To } )
 
@@ -728,7 +728,7 @@ function AI_AIR.Resume( AIGroup, Fsm )
 end
 
 --- @param #AI_AIR self
--- @param Wrapper.Group#GROUP AIGroup
+--- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR:onafterRefuel( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
 
@@ -800,7 +800,7 @@ end
 
 
 --- @param #AI_AIR self
--- @param Core.Event#EVENTDATA EventData
+--- @param Core.Event#EVENTDATA EventData
 function AI_AIR:OnCrash( EventData )
 
   if self.Controllable:IsAlive() and EventData.IniDCSGroupName == self.Controllable:GetName() then
@@ -811,7 +811,7 @@ function AI_AIR:OnCrash( EventData )
 end
 
 --- @param #AI_AIR self
--- @param Core.Event#EVENTDATA EventData
+--- @param Core.Event#EVENTDATA EventData
 function AI_AIR:OnEjection( EventData )
 
   if self.Controllable:IsAlive() and EventData.IniDCSGroupName == self.Controllable:GetName() then
@@ -820,7 +820,7 @@ function AI_AIR:OnEjection( EventData )
 end
 
 --- @param #AI_AIR self
--- @param Core.Event#EVENTDATA EventData
+--- @param Core.Event#EVENTDATA EventData
 function AI_AIR:OnPilotDead( EventData )
 
   if self.Controllable:IsAlive() and EventData.IniDCSGroupName == self.Controllable:GetName() then

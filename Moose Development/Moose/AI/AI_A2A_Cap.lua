@@ -94,26 +94,26 @@
 --
 -- ===
 --
--- @field #AI_A2A_CAP
+--- @field #AI_A2A_CAP
 AI_A2A_CAP = {
   ClassName = "AI_A2A_CAP",
 }
 
 --- Creates a new AI_A2A_CAP object
--- @param #AI_A2A_CAP self
--- @param Wrapper.Group#GROUP AICap
--- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
--- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
--- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
--- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
--- @param DCS#AltitudeType EngageAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
--- @return #AI_A2A_CAP
+--- @param #AI_A2A_CAP self
+--- @param Wrapper.Group#GROUP AICap
+--- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
+--- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
+--- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
+--- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
+--- @param DCS#AltitudeType EngageAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
+--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
+--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
+--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
+--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
+--- @return #AI_A2A_CAP
 function AI_A2A_CAP:New2( AICap, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType, PatrolZone, PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType )
 
   -- Multiple inheritance ... :-)
@@ -131,17 +131,17 @@ function AI_A2A_CAP:New2( AICap, EngageMinSpeed, EngageMaxSpeed, EngageFloorAlti
 end
 
 --- Creates a new AI_A2A_CAP object
--- @param #AI_A2A_CAP self
--- @param Wrapper.Group#GROUP AICap
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
--- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
--- @return #AI_A2A_CAP
+--- @param #AI_A2A_CAP self
+--- @param Wrapper.Group#GROUP AICap
+--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
+--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
+--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
+--- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
+--- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
+--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
+--- @return #AI_A2A_CAP
 function AI_A2A_CAP:New( AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, PatrolAltType )
 
   return self:New2( AICap, EngageMinSpeed, EngageMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType, PatrolZone, PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType )
@@ -149,11 +149,11 @@ function AI_A2A_CAP:New( AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAl
 end
 
 --- onafter State Transition for Event Patrol.
--- @param #AI_A2A_CAP self
--- @param Wrapper.Group#GROUP AICap The AI Group managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_A2A_CAP self
+--- @param Wrapper.Group#GROUP AICap The AI Group managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_A2A_CAP:onafterStart( AICap, From, Event, To )
 
   self:GetParent( self, AI_A2A_CAP ).onafterStart( self, AICap, From, Event, To )
@@ -162,9 +162,9 @@ function AI_A2A_CAP:onafterStart( AICap, From, Event, To )
 end
 
 --- Set the Engage Zone which defines where the AI will engage bogies.
--- @param #AI_A2A_CAP self
--- @param Core.Zone#ZONE EngageZone The zone where the AI is performing CAP.
--- @return #AI_A2A_CAP self
+--- @param #AI_A2A_CAP self
+--- @param Core.Zone#ZONE EngageZone The zone where the AI is performing CAP.
+--- @return #AI_A2A_CAP self
 function AI_A2A_CAP:SetEngageZone( EngageZone )
   self:F2()
 
@@ -176,9 +176,9 @@ function AI_A2A_CAP:SetEngageZone( EngageZone )
 end
 
 --- Set the Engage Range when the AI will engage with airborne enemies.
--- @param #AI_A2A_CAP self
--- @param #number EngageRange The Engage Range.
--- @return #AI_A2A_CAP self
+--- @param #AI_A2A_CAP self
+--- @param #number EngageRange The Engage Range.
+--- @return #AI_A2A_CAP self
 function AI_A2A_CAP:SetEngageRange( EngageRange )
   self:F2()
 
@@ -190,11 +190,11 @@ function AI_A2A_CAP:SetEngageRange( EngageRange )
 end
 
 --- Evaluate the attack and create an AttackUnitTask list.
--- @param #AI_A2A_CAP self
--- @param Core.Set#SET_UNIT AttackSetUnit The set of units to attack.
--- @param Wrapper.Group#GROUP DefenderGroup The group of defenders.
--- @param #number EngageAltitude The altitude to engage the targets.
--- @return #AI_A2A_CAP self
+--- @param #AI_A2A_CAP self
+--- @param Core.Set#SET_UNIT AttackSetUnit The set of units to attack.
+--- @param Wrapper.Group#GROUP DefenderGroup The group of defenders.
+--- @param #number EngageAltitude The altitude to engage the targets.
+--- @return #AI_A2A_CAP self
 function AI_A2A_CAP:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageAltitude )
 
   local AttackUnitTasks = {}

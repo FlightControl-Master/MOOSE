@@ -95,7 +95,7 @@
 --
 -- ===
 --
--- @field #AI_A2A_GCI
+--- @field #AI_A2A_GCI
 AI_A2A_GCI = {
   ClassName = "AI_A2A_GCI",
 }
@@ -103,14 +103,14 @@ AI_A2A_GCI = {
 
 
 --- Creates a new AI_A2A_GCI object
--- @param #AI_A2A_GCI self
--- @param Wrapper.Group#GROUP AIIntercept
--- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
--- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
--- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
--- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
--- @param DCS#AltitudeType EngageAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
--- @return #AI_A2A_GCI
+--- @param #AI_A2A_GCI self
+--- @param Wrapper.Group#GROUP AIIntercept
+--- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
+--- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
+--- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
+--- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
+--- @param DCS#AltitudeType EngageAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
+--- @return #AI_A2A_GCI
 function AI_A2A_GCI:New2( AIIntercept, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType )
 
   local AI_Air = AI_AIR:New( AIIntercept )
@@ -125,25 +125,25 @@ function AI_A2A_GCI:New2( AIIntercept, EngageMinSpeed, EngageMaxSpeed, EngageFlo
 end
 
 --- Creates a new AI_A2A_GCI object
--- @param #AI_A2A_GCI self
--- @param Wrapper.Group#GROUP AIIntercept
--- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
--- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
--- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
--- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
--- @param DCS#AltitudeType EngageAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
--- @return #AI_A2A_GCI
+--- @param #AI_A2A_GCI self
+--- @param Wrapper.Group#GROUP AIIntercept
+--- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
+--- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
+--- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
+--- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
+--- @param DCS#AltitudeType EngageAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
+--- @return #AI_A2A_GCI
 function AI_A2A_GCI:New( AIIntercept, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType )
 
   return self:New2( AIIntercept, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType )
 end
 
 --- onafter State Transition for Event Patrol.
--- @param #AI_A2A_GCI self
--- @param Wrapper.Group#GROUP AIIntercept The AI Group managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_A2A_GCI self
+--- @param Wrapper.Group#GROUP AIIntercept The AI Group managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_A2A_GCI:onafterStart( AIIntercept, From, Event, To )
 
   self:GetParent( self, AI_A2A_GCI ).onafterStart( self, AIIntercept, From, Event, To )
@@ -151,11 +151,11 @@ end
 
 
 --- Evaluate the attack and create an AttackUnitTask list.
--- @param #AI_A2A_GCI self
--- @param Core.Set#SET_UNIT AttackSetUnit The set of units to attack.
--- @param Wrapper.Group#GROUP DefenderGroup The group of defenders.
--- @param #number EngageAltitude The altitude to engage the targets.
--- @return #AI_A2A_GCI self
+--- @param #AI_A2A_GCI self
+--- @param Core.Set#SET_UNIT AttackSetUnit The set of units to attack.
+--- @param Wrapper.Group#GROUP DefenderGroup The group of defenders.
+--- @param #number EngageAltitude The altitude to engage the targets.
+--- @return #AI_A2A_GCI self
 function AI_A2A_GCI:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageAltitude )
 
   local AttackUnitTasks = {}

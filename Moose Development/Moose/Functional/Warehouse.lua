@@ -43,51 +43,51 @@
 -- @image Warehouse.JPG
 
 --- WAREHOUSE class.
--- @type WAREHOUSE
--- @field #string ClassName Name of the class.
--- @field #boolean Debug If true, send debug messages to all.
--- @field #number verbosity Verbosity level.
--- @field #string wid Identifier of the warehouse printed before other output to DCS.log file.
--- @field #boolean Report If true, send status messages to coalition.
--- @field Wrapper.Static#STATIC warehouse The phyical warehouse structure.
--- @field #string alias Alias of the warehouse. Name its called when sending messages.
--- @field Core.Zone#ZONE zone Zone around the warehouse. If this zone is captured, the warehouse and all its assets goes to the capturing coalition.
--- @field Wrapper.Airbase#AIRBASE airbase Airbase the warehouse belongs to.
--- @field #string airbasename Name of the airbase associated to the warehouse.
--- @field Core.Point#COORDINATE road Closest point to warehouse on road.
--- @field Core.Point#COORDINATE rail Closest point to warehouse on rail.
--- @field Core.Zone#ZONE spawnzone Zone in which assets are spawned.
--- @field #number uid Unique ID of the warehouse.
--- @field #boolean markerOn If true, markers are displayed on the F10 map.
--- @field Wrapper.Marker#MARKER markerWarehouse Marker warehouse.
--- @field Wrapper.Marker#MARKER markerRoad Road connection.
--- @field Wrapper.Marker#MARKER markerRail Rail road connection.
--- @field #number markerid ID of the warehouse marker at the airbase.
--- @field #number dTstatus Time interval in seconds of updating the warehouse status and processing new events. Default 30 seconds.
--- @field #number queueid Unit id of each request in the queue. Essentially a running number starting at one and incremented when a new request is added.
--- @field #table stock Table holding all assets in stock. Table entries are of type @{#WAREHOUSE.Assetitem}.
--- @field #table queue Table holding all queued requests. Table entries are of type @{#WAREHOUSE.Queueitem}.
--- @field #table pending Table holding all pending requests, i.e. those that are currently in progress. Table elements are of type @{#WAREHOUSE.Pendingitem}.
--- @field #table transporting Table holding assets currently transporting cargo assets.
--- @field #table delivered Table holding all delivered requests. Table elements are #boolean. If true, all cargo has been delivered.
--- @field #table defending Table holding all defending requests, i.e. self requests that were if the warehouse is under attack. Table elements are of type @{#WAREHOUSE.Pendingitem}.
--- @field Core.Zone#ZONE portzone Zone defining the port of a warehouse. This is where naval assets are spawned.
--- @field #table shippinglanes Table holding the user defined shipping between warehouses.
--- @field #table offroadpaths Table holding user defined paths from one warehouse to another.
--- @field #boolean autodefence When the warehouse is under attack, automatically spawn assets to defend the warehouse.
--- @field #number spawnzonemaxdist Max distance between warehouse and spawn zone. Default 5000 meters.
--- @field #boolean autosave Automatically save assets to file when mission ends.
--- @field #string autosavepath Path where the asset file is saved on auto save.
--- @field #string autosavefile File name of the auto asset save file. Default is auto generated from warehouse id and name.
--- @field #boolean safeparking If true, parking spots for aircraft are considered as occupied if e.g. a client aircraft is parked there. Default false.
--- @field #boolean isUnit If `true`, warehouse is represented by a unit instead of a static.
--- @field #boolean isShip If `true`, warehouse is represented by a ship unit.
--- @field #number lowfuelthresh Low fuel threshold. Triggers the event AssetLowFuel if for any unit fuel goes below this number.
--- @field #boolean respawnafterdestroyed If true, warehouse is respawned after it was destroyed. Assets are kept.
--- @field #number respawndelay Delay before respawn in seconds.
--- @field #number runwaydestroyed Time stamp timer.getAbsTime() when the runway was destroyed.
--- @field #number runwayrepairtime Time in seconds until runway will be repaired after it was destroyed. Default is 3600 sec (one hour).
--- @field Ops.FlightControl#FLIGHTCONTROL flightcontrol Flight control of this warehouse.
+--- @type WAREHOUSE
+--- @field #string ClassName Name of the class.
+--- @field #boolean Debug If true, send debug messages to all.
+--- @field #number verbosity Verbosity level.
+--- @field #string wid Identifier of the warehouse printed before other output to DCS.log file.
+--- @field #boolean Report If true, send status messages to coalition.
+--- @field Wrapper.Static#STATIC warehouse The phyical warehouse structure.
+--- @field #string alias Alias of the warehouse. Name its called when sending messages.
+--- @field Core.Zone#ZONE zone Zone around the warehouse. If this zone is captured, the warehouse and all its assets goes to the capturing coalition.
+--- @field Wrapper.Airbase#AIRBASE airbase Airbase the warehouse belongs to.
+--- @field #string airbasename Name of the airbase associated to the warehouse.
+--- @field Core.Point#COORDINATE road Closest point to warehouse on road.
+--- @field Core.Point#COORDINATE rail Closest point to warehouse on rail.
+--- @field Core.Zone#ZONE spawnzone Zone in which assets are spawned.
+--- @field #number uid Unique ID of the warehouse.
+--- @field #boolean markerOn If true, markers are displayed on the F10 map.
+--- @field Wrapper.Marker#MARKER markerWarehouse Marker warehouse.
+--- @field Wrapper.Marker#MARKER markerRoad Road connection.
+--- @field Wrapper.Marker#MARKER markerRail Rail road connection.
+--- @field #number markerid ID of the warehouse marker at the airbase.
+--- @field #number dTstatus Time interval in seconds of updating the warehouse status and processing new events. Default 30 seconds.
+--- @field #number queueid Unit id of each request in the queue. Essentially a running number starting at one and incremented when a new request is added.
+--- @field #table stock Table holding all assets in stock. Table entries are of type @{#WAREHOUSE.Assetitem}.
+--- @field #table queue Table holding all queued requests. Table entries are of type @{#WAREHOUSE.Queueitem}.
+--- @field #table pending Table holding all pending requests, i.e. those that are currently in progress. Table elements are of type @{#WAREHOUSE.Pendingitem}.
+--- @field #table transporting Table holding assets currently transporting cargo assets.
+--- @field #table delivered Table holding all delivered requests. Table elements are #boolean. If true, all cargo has been delivered.
+--- @field #table defending Table holding all defending requests, i.e. self requests that were if the warehouse is under attack. Table elements are of type @{#WAREHOUSE.Pendingitem}.
+--- @field Core.Zone#ZONE portzone Zone defining the port of a warehouse. This is where naval assets are spawned.
+--- @field #table shippinglanes Table holding the user defined shipping between warehouses.
+--- @field #table offroadpaths Table holding user defined paths from one warehouse to another.
+--- @field #boolean autodefence When the warehouse is under attack, automatically spawn assets to defend the warehouse.
+--- @field #number spawnzonemaxdist Max distance between warehouse and spawn zone. Default 5000 meters.
+--- @field #boolean autosave Automatically save assets to file when mission ends.
+--- @field #string autosavepath Path where the asset file is saved on auto save.
+--- @field #string autosavefile File name of the auto asset save file. Default is auto generated from warehouse id and name.
+--- @field #boolean safeparking If true, parking spots for aircraft are considered as occupied if e.g. a client aircraft is parked there. Default false.
+--- @field #boolean isUnit If `true`, warehouse is represented by a unit instead of a static.
+--- @field #boolean isShip If `true`, warehouse is represented by a ship unit.
+--- @field #number lowfuelthresh Low fuel threshold. Triggers the event AssetLowFuel if for any unit fuel goes below this number.
+--- @field #boolean respawnafterdestroyed If true, warehouse is respawned after it was destroyed. Assets are kept.
+--- @field #number respawndelay Delay before respawn in seconds.
+--- @field #number runwaydestroyed Time stamp timer.getAbsTime() when the runway was destroyed.
+--- @field #number runwayrepairtime Time in seconds until runway will be repaired after it was destroyed. Default is 3600 sec (one hour).
+--- @field Ops.FlightControl#FLIGHTCONTROL flightcontrol Flight control of this warehouse.
 -- @extends Core.Fsm#FSM
 
 --- Have your assets at the right place at the right time - or not!
@@ -1559,7 +1559,7 @@
 --     end
 --
 --
--- @field #WAREHOUSE
+--- @field #WAREHOUSE
 WAREHOUSE = {
   ClassName     = "WAREHOUSE",
   Debug         = false,
@@ -1601,87 +1601,87 @@ WAREHOUSE = {
 }
 
 --- Item of the warehouse stock table.
--- @type WAREHOUSE.Assetitem
--- @field #number uid Unique id of the asset.
--- @field #number wid ID of the warehouse this asset belongs to.
--- @field #number rid Request ID of this asset (if any).
--- @field #string templatename Name of the template group.
--- @field #table template The spawn template of the group.
--- @field DCS#Group.Category category Category of the group.
--- @field #string unittype Type of the first unit of the group as obtained by the Object.getTypeName() DCS API function.
--- @field #number nunits Number of units in the group.
--- @field #number range Range of the unit in meters.
--- @field #number speedmax Maximum speed in km/h the group can do.
--- @field #number size Maximum size in length and with of the asset in meters.
--- @field #number weight The weight of the whole asset group in kilograms.
--- @field DCS#Object.Desc DCSdesc All DCS descriptors.
--- @field #WAREHOUSE.Attribute attribute Generalized attribute of the group.
--- @field #table cargobay Array of cargo bays of all units in an asset group.
--- @field #number cargobaytot Total weight in kg that fits in the cargo bay of all asset group units.
--- @field #number cargobaymax Largest cargo bay of all units in the group.
--- @field #number loadradius Distance when cargo is loaded into the carrier.
--- @field DCS#AI.Skill skill Skill of AI unit.
--- @field #string livery Livery of the asset.
--- @field #string assignment Assignment of the asset. This could, e.g., be used in the @{#WAREHOUSE.OnAfterNewAsset) function.
--- @field #boolean spawned If true, asset was spawned into the cruel world. If false, it is still in stock.
--- @field #string spawngroupname Name of the spawned group.
--- @field #boolean iscargo If true, asset is cargo. If false asset is transport. Nil if in stock.
--- @field #boolean arrived If true, asset arrived at its destination.
+--- @type WAREHOUSE.Assetitem
+--- @field #number uid Unique id of the asset.
+--- @field #number wid ID of the warehouse this asset belongs to.
+--- @field #number rid Request ID of this asset (if any).
+--- @field #string templatename Name of the template group.
+--- @field #table template The spawn template of the group.
+--- @field DCS#Group.Category category Category of the group.
+--- @field #string unittype Type of the first unit of the group as obtained by the Object.getTypeName() DCS API function.
+--- @field #number nunits Number of units in the group.
+--- @field #number range Range of the unit in meters.
+--- @field #number speedmax Maximum speed in km/h the group can do.
+--- @field #number size Maximum size in length and with of the asset in meters.
+--- @field #number weight The weight of the whole asset group in kilograms.
+--- @field DCS#Object.Desc DCSdesc All DCS descriptors.
+--- @field #WAREHOUSE.Attribute attribute Generalized attribute of the group.
+--- @field #table cargobay Array of cargo bays of all units in an asset group.
+--- @field #number cargobaytot Total weight in kg that fits in the cargo bay of all asset group units.
+--- @field #number cargobaymax Largest cargo bay of all units in the group.
+--- @field #number loadradius Distance when cargo is loaded into the carrier.
+--- @field DCS#AI.Skill skill Skill of AI unit.
+--- @field #string livery Livery of the asset.
+--- @field #string assignment Assignment of the asset. This could, e.g., be used in the @{#WAREHOUSE.OnAfterNewAsset) function.
+--- @field #boolean spawned If true, asset was spawned into the cruel world. If false, it is still in stock.
+--- @field #string spawngroupname Name of the spawned group.
+--- @field #boolean iscargo If true, asset is cargo. If false asset is transport. Nil if in stock.
+--- @field #boolean arrived If true, asset arrived at its destination.
 -- 
--- @field #number damage Damage of asset group in percent.
--- @field Ops.AirWing#AIRWING.Payload payload The payload of the asset.
--- @field Ops.OpsGroup#OPSGROUP flightgroup The flightgroup object.
--- @field Ops.Cohort#COHORT cohort The cohort this asset belongs to.
--- @field Ops.Legion#LEGION legion The legion this asset belonts to.
--- @field #string squadname Name of the squadron this asset belongs to.
--- @field #number Treturned Time stamp when asset returned to its legion (airwing, brigade).
--- @field #boolean requested If `true`, asset was requested and cannot be selected by another request.
--- @field #boolean isReserved If `true`, asset was reserved and cannot be selected by another request.
+--- @field #number damage Damage of asset group in percent.
+--- @field Ops.AirWing#AIRWING.Payload payload The payload of the asset.
+--- @field Ops.OpsGroup#OPSGROUP flightgroup The flightgroup object.
+--- @field Ops.Cohort#COHORT cohort The cohort this asset belongs to.
+--- @field Ops.Legion#LEGION legion The legion this asset belonts to.
+--- @field #string squadname Name of the squadron this asset belongs to.
+--- @field #number Treturned Time stamp when asset returned to its legion (airwing, brigade).
+--- @field #boolean requested If `true`, asset was requested and cannot be selected by another request.
+--- @field #boolean isReserved If `true`, asset was reserved and cannot be selected by another request.
 
 --- Item of the warehouse queue table.
--- @type WAREHOUSE.Queueitem
--- @field #number uid Unique id of the queue item.
--- @field #WAREHOUSE warehouse Requesting warehouse.
--- @field #WAREHOUSE.Descriptor assetdesc Descriptor of the requested asset. Enumerator of type @{#WAREHOUSE.Descriptor}.
--- @field assetdescval Value of the asset descriptor. Type depends on "assetdesc" descriptor.
--- @field #number nasset Number of asset groups requested.
--- @field #WAREHOUSE.TransportType transporttype Transport unit type.
--- @field #number ntransport Max. number of transport units requested.
--- @field #string assignment A keyword or text that later be used to identify this request and postprocess the assets.
--- @field #number prio Priority of the request. Number between 1 (high) and 100 (low).
--- @field Wrapper.Airbase#AIRBASE airbase The airbase beloning to requesting warehouse if any.
--- @field DCS#Airbase.Category category Category of the requesting airbase, i.e. airdrome, helipad/farp or ship.
--- @field #boolean toself Self request, i.e. warehouse requests assets from itself.
--- @field #table assets Table of self propelled (or cargo) and transport assets. Each element of the table is a @{#WAREHOUSE.Assetitem} and can be accessed by their asset ID.
--- @field #table cargoassets Table of cargo (or self propelled) assets. Each element of the table is a @{#WAREHOUSE.Assetitem}.
--- @field #number cargoattribute Attribute of cargo assets of type @{#WAREHOUSE.Attribute}.
--- @field #number cargocategory Category of cargo assets of type @{#WAREHOUSE.Category}.
--- @field #table transportassets Table of transport carrier assets. Each element of the table is a @{#WAREHOUSE.Assetitem}.
--- @field #number transportattribute Attribute of transport assets of type @{#WAREHOUSE.Attribute}.
--- @field #number transportcategory Category of transport assets of type @{#WAREHOUSE.Category}.
--- @field #boolean lateActivation Assets are spawned in late activated state.
+--- @type WAREHOUSE.Queueitem
+--- @field #number uid Unique id of the queue item.
+--- @field #WAREHOUSE warehouse Requesting warehouse.
+--- @field #WAREHOUSE.Descriptor assetdesc Descriptor of the requested asset. Enumerator of type @{#WAREHOUSE.Descriptor}.
+--- @field assetdescval Value of the asset descriptor. Type depends on "assetdesc" descriptor.
+--- @field #number nasset Number of asset groups requested.
+--- @field #WAREHOUSE.TransportType transporttype Transport unit type.
+--- @field #number ntransport Max. number of transport units requested.
+--- @field #string assignment A keyword or text that later be used to identify this request and postprocess the assets.
+--- @field #number prio Priority of the request. Number between 1 (high) and 100 (low).
+--- @field Wrapper.Airbase#AIRBASE airbase The airbase beloning to requesting warehouse if any.
+--- @field DCS#Airbase.Category category Category of the requesting airbase, i.e. airdrome, helipad/farp or ship.
+--- @field #boolean toself Self request, i.e. warehouse requests assets from itself.
+--- @field #table assets Table of self propelled (or cargo) and transport assets. Each element of the table is a @{#WAREHOUSE.Assetitem} and can be accessed by their asset ID.
+--- @field #table cargoassets Table of cargo (or self propelled) assets. Each element of the table is a @{#WAREHOUSE.Assetitem}.
+--- @field #number cargoattribute Attribute of cargo assets of type @{#WAREHOUSE.Attribute}.
+--- @field #number cargocategory Category of cargo assets of type @{#WAREHOUSE.Category}.
+--- @field #table transportassets Table of transport carrier assets. Each element of the table is a @{#WAREHOUSE.Assetitem}.
+--- @field #number transportattribute Attribute of transport assets of type @{#WAREHOUSE.Attribute}.
+--- @field #number transportcategory Category of transport assets of type @{#WAREHOUSE.Category}.
+--- @field #boolean lateActivation Assets are spawned in late activated state.
 
 --- Item of the warehouse pending queue table.
--- @type WAREHOUSE.Pendingitem
--- @field #number timestamp Absolute mission time in seconds when the request was processed.
--- @field #table assetproblem Table with assets that might have problems (damage or stuck).
--- @field Core.Set#SET_GROUP cargogroupset Set of cargo groups do be delivered.
--- @field #number ndelivered Number of groups delivered to destination.
--- @field Core.Set#SET_GROUP transportgroupset Set of cargo transport carrier groups.
--- @field Core.Set#SET_CARGO transportcargoset Set of cargo objects.
--- @field #table carriercargo Table holding the cargo groups of each carrier unit.
--- @field #number ntransporthome Number of transports back home.
--- @field #boolean lowfuel If true, at least one asset group is low on fuel.
+--- @type WAREHOUSE.Pendingitem
+--- @field #number timestamp Absolute mission time in seconds when the request was processed.
+--- @field #table assetproblem Table with assets that might have problems (damage or stuck).
+--- @field Core.Set#SET_GROUP cargogroupset Set of cargo groups do be delivered.
+--- @field #number ndelivered Number of groups delivered to destination.
+--- @field Core.Set#SET_GROUP transportgroupset Set of cargo transport carrier groups.
+--- @field Core.Set#SET_CARGO transportcargoset Set of cargo objects.
+--- @field #table carriercargo Table holding the cargo groups of each carrier unit.
+--- @field #number ntransporthome Number of transports back home.
+--- @field #boolean lowfuel If true, at least one asset group is low on fuel.
 -- @extends #WAREHOUSE.Queueitem
 
 --- Descriptors enumerator describing the type of the asset.
--- @type WAREHOUSE.Descriptor
--- @field #string GROUPNAME Name of the asset template.
--- @field #string UNITTYPE Typename of the DCS unit, e.g. "A-10C".
--- @field #string ATTRIBUTE Generalized attribute @{#WAREHOUSE.Attribute}.
--- @field #string CATEGORY Asset category of type DCS#Group.Category, i.e. GROUND, AIRPLANE, HELICOPTER, SHIP, TRAIN.
--- @field #string ASSIGNMENT Assignment of asset when it was added.
--- @field #string ASSETLIST List of specific assets gives as a table of assets. Mind the curly brackets {}.
+--- @type WAREHOUSE.Descriptor
+--- @field #string GROUPNAME Name of the asset template.
+--- @field #string UNITTYPE Typename of the DCS unit, e.g. "A-10C".
+--- @field #string ATTRIBUTE Generalized attribute @{#WAREHOUSE.Attribute}.
+--- @field #string CATEGORY Asset category of type DCS#Group.Category, i.e. GROUND, AIRPLANE, HELICOPTER, SHIP, TRAIN.
+--- @field #string ASSIGNMENT Assignment of asset when it was added.
+--- @field #string ASSETLIST List of specific assets gives as a table of assets. Mind the curly brackets {}.
 WAREHOUSE.Descriptor = {
   GROUPNAME="templatename",
   UNITTYPE="unittype",
@@ -1692,33 +1692,33 @@ WAREHOUSE.Descriptor = {
 }
 
 --- Generalized asset attributes. Can be used to request assets with certain general characteristics. See [DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes) on hoggit.
--- @type WAREHOUSE.Attribute
--- @field #string AIR_TRANSPORTPLANE Airplane with transport capability. This can be used to transport other assets.
--- @field #string AIR_AWACS Airborne Early Warning and Control System.
--- @field #string AIR_FIGHTER Fighter, interceptor, ... airplane.
--- @field #string AIR_BOMBER Aircraft which can be used for strategic bombing.
--- @field #string AIR_TANKER Airplane which can refuel other aircraft.
--- @field #string AIR_TRANSPORTHELO Helicopter with transport capability. This can be used to transport other assets.
--- @field #string AIR_ATTACKHELO Attack helicopter.
--- @field #string AIR_UAV Unpiloted Aerial Vehicle, e.g. drones.
--- @field #string AIR_OTHER Any airborne unit that does not fall into any other airborne category.
--- @field #string GROUND_APC Infantry carriers, in particular Amoured Personell Carrier. This can be used to transport other assets.
--- @field #string GROUND_TRUCK Unarmed ground vehicles, which has the DCS "Truck" attribute.
--- @field #string GROUND_INFANTRY Ground infantry assets.
--- @field #string GROUND_IFV Ground infantry fighting vehicle.
--- @field #string GROUND_ARTILLERY Artillery assets.
--- @field #string GROUND_TANK Tanks (modern or old).
--- @field #string GROUND_TRAIN Trains. Not that trains are **not** yet properly implemented in DCS and cannot be used currently.
--- @field #string GROUND_EWR Early Warning Radar.
--- @field #string GROUND_AAA Anti-Aircraft Artillery.
--- @field #string GROUND_SAM Surface-to-Air Missile system or components.
--- @field #string GROUND_OTHER Any ground unit that does not fall into any other ground category.
--- @field #string NAVAL_AIRCRAFTCARRIER Aircraft carrier.
--- @field #string NAVAL_WARSHIP War ship, i.e. cruisers, destroyers, firgates and corvettes.
--- @field #string NAVAL_ARMEDSHIP Any armed ship that is not an aircraft carrier, a cruiser, destroyer, firgatte or corvette.
--- @field #string NAVAL_UNARMEDSHIP Any unarmed naval vessel.
--- @field #string NAVAL_OTHER Any naval unit that does not fall into any other naval category.
--- @field #string OTHER_UNKNOWN Anything that does not fall into any other category.
+--- @type WAREHOUSE.Attribute
+--- @field #string AIR_TRANSPORTPLANE Airplane with transport capability. This can be used to transport other assets.
+--- @field #string AIR_AWACS Airborne Early Warning and Control System.
+--- @field #string AIR_FIGHTER Fighter, interceptor, ... airplane.
+--- @field #string AIR_BOMBER Aircraft which can be used for strategic bombing.
+--- @field #string AIR_TANKER Airplane which can refuel other aircraft.
+--- @field #string AIR_TRANSPORTHELO Helicopter with transport capability. This can be used to transport other assets.
+--- @field #string AIR_ATTACKHELO Attack helicopter.
+--- @field #string AIR_UAV Unpiloted Aerial Vehicle, e.g. drones.
+--- @field #string AIR_OTHER Any airborne unit that does not fall into any other airborne category.
+--- @field #string GROUND_APC Infantry carriers, in particular Amoured Personell Carrier. This can be used to transport other assets.
+--- @field #string GROUND_TRUCK Unarmed ground vehicles, which has the DCS "Truck" attribute.
+--- @field #string GROUND_INFANTRY Ground infantry assets.
+--- @field #string GROUND_IFV Ground infantry fighting vehicle.
+--- @field #string GROUND_ARTILLERY Artillery assets.
+--- @field #string GROUND_TANK Tanks (modern or old).
+--- @field #string GROUND_TRAIN Trains. Not that trains are **not** yet properly implemented in DCS and cannot be used currently.
+--- @field #string GROUND_EWR Early Warning Radar.
+--- @field #string GROUND_AAA Anti-Aircraft Artillery.
+--- @field #string GROUND_SAM Surface-to-Air Missile system or components.
+--- @field #string GROUND_OTHER Any ground unit that does not fall into any other ground category.
+--- @field #string NAVAL_AIRCRAFTCARRIER Aircraft carrier.
+--- @field #string NAVAL_WARSHIP War ship, i.e. cruisers, destroyers, firgates and corvettes.
+--- @field #string NAVAL_ARMEDSHIP Any armed ship that is not an aircraft carrier, a cruiser, destroyer, firgatte or corvette.
+--- @field #string NAVAL_UNARMEDSHIP Any unarmed naval vessel.
+--- @field #string NAVAL_OTHER Any naval unit that does not fall into any other naval category.
+--- @field #string OTHER_UNKNOWN Anything that does not fall into any other category.
 WAREHOUSE.Attribute = {
   AIR_TRANSPORTPLANE="Air_TransportPlane",
   AIR_AWACS="Air_AWACS",
@@ -1749,13 +1749,13 @@ WAREHOUSE.Attribute = {
 }
 
 --- Cargo transport type. Defines how assets are transported to their destination.
--- @type WAREHOUSE.TransportType
--- @field #string AIRPLANE Transports are carried out by airplanes.
--- @field #string HELICOPTER Transports are carried out by helicopters.
--- @field #string APC Transports are conducted by APCs.
--- @field #string SHIP Transports are conducted by ships. Not implemented yet.
--- @field #string TRAIN Transports are conducted by trains. Not implemented yet. Also trains are buggy in DCS.
--- @field #string SELFPROPELLED Assets go to their destination by themselves. No transport carrier needed.
+--- @type WAREHOUSE.TransportType
+--- @field #string AIRPLANE Transports are carried out by airplanes.
+--- @field #string HELICOPTER Transports are carried out by helicopters.
+--- @field #string APC Transports are conducted by APCs.
+--- @field #string SHIP Transports are conducted by ships. Not implemented yet.
+--- @field #string TRAIN Transports are conducted by trains. Not implemented yet. Also trains are buggy in DCS.
+--- @field #string SELFPROPELLED Assets go to their destination by themselves. No transport carrier needed.
 WAREHOUSE.TransportType = {
   AIRPLANE         = "Air_TransportPlane",
   HELICOPTER       = "Air_TransportHelo",
@@ -1769,12 +1769,12 @@ WAREHOUSE.TransportType = {
 }
 
 --- Warehouse quantity enumerator for selecting number of assets, e.g. all, half etc. of what is in stock rather than an absolute number.
--- @type WAREHOUSE.Quantity
--- @field #string ALL All "all" assets currently in stock.
--- @field #string THREEQUARTERS Three quarters "3/4" of assets in stock.
--- @field #string HALF Half "1/2" of assets in stock.
--- @field #string THIRD One third "1/3" of assets in stock.
--- @field #string QUARTER One quarter "1/4" of assets in stock.
+--- @type WAREHOUSE.Quantity
+--- @field #string ALL All "all" assets currently in stock.
+--- @field #string THREEQUARTERS Three quarters "3/4" of assets in stock.
+--- @field #string HALF Half "1/2" of assets in stock.
+--- @field #string THIRD One third "1/3" of assets in stock.
+--- @field #string QUARTER One quarter "1/4" of assets in stock.
 WAREHOUSE.Quantity = {
   ALL           = "all",
   THREEQUARTERS = "3/4",
@@ -1784,11 +1784,11 @@ WAREHOUSE.Quantity = {
 }
 
 --- Warehouse database. Note that this is a global array to have easier exchange between warehouses.
--- @type _WAREHOUSEDB
--- @field #number AssetID Unique ID of each asset. This is a running number, which is increased each time a new asset is added.
--- @field #table Assets Table holding registered assets, which are of type @{Functional.Warehouse#WAREHOUSE.Assetitem}.#
--- @field #number WarehouseID Unique ID of the warehouse. Running number.
--- @field #table Warehouses Table holding all defined @{#WAREHOUSE} objects by their unique ids.
+--- @type _WAREHOUSEDB
+--- @field #number AssetID Unique ID of each asset. This is a running number, which is increased each time a new asset is added.
+--- @field #table Assets Table holding registered assets, which are of type @{Functional.Warehouse#WAREHOUSE.Assetitem}.#
+--- @field #number WarehouseID Unique ID of the warehouse. Running number.
+--- @field #table Warehouses Table holding all defined @{#WAREHOUSE} objects by their unique ids.
 _WAREHOUSEDB  = {
   AssetID     = 0,
   Assets      = {},
@@ -1797,7 +1797,7 @@ _WAREHOUSEDB  = {
 }
 
 --- Warehouse class version.
--- @field #string version
+--- @field #string version
 WAREHOUSE.version="1.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1858,10 +1858,10 @@ WAREHOUSE.version="1.0.2"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- The WAREHOUSE constructor. Creates a new WAREHOUSE object from a static object. Parameters like the coalition and country are taken from the static object structure.
--- @param #WAREHOUSE self
--- @param Wrapper.Static#STATIC warehouse The physical structure representing the warehouse. Can also be a @{Wrapper.Unit#UNIT}.
--- @param #string alias (Optional) Alias of the warehouse, i.e. the name it will be called when sending messages etc. Default is the name of the static/unit representing the warehouse.
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param Wrapper.Static#STATIC warehouse The physical structure representing the warehouse. Can also be a @{Wrapper.Unit#UNIT}.
+--- @param #string alias (Optional) Alias of the warehouse, i.e. the name it will be called when sending messages etc. Default is the name of the static/unit representing the warehouse.
+--- @return #WAREHOUSE self
 function WAREHOUSE:New(warehouse, alias)
 
   -- Inherit everthing from FSM class.
@@ -2537,32 +2537,32 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set debug mode on. Error messages will be displayed on screen, units will be smoked at some events.
--- @param #WAREHOUSE self
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetDebugOn()
   self.Debug=true
   return self
 end
 
 --- Set debug mode off. This is the default
--- @param #WAREHOUSE self
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetDebugOff()
   self.Debug=false
   return self
 end
 
 --- Set report on. Messages at events will be displayed on screen to the coalition owning the warehouse.
--- @param #WAREHOUSE self
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetReportOn()
   self.Report=true
   return self
 end
 
 --- Set report off. Warehouse does not report about its status and at certain events.
--- @param #WAREHOUSE self
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetReportOff()
   self.Report=false
   return self
@@ -2570,61 +2570,61 @@ end
 
 --- Enable safe parking option, i.e. parking spots at an airbase will be considered as occupied when a client aircraft is parked there (even if the client slot is not taken by a player yet).
 -- Note that also incoming aircraft can reserve/occupie parking spaces.
--- @param #WAREHOUSE self
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetSafeParkingOn()
   self.safeparking=true
   return self
 end
 
 --- Disable safe parking option. Note that is the default setting.
--- @param #WAREHOUSE self
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetSafeParkingOff()
   self.safeparking=false
   return self
 end
 
 --- Set wether client parking spots can be used for spawning.
--- @param #WAREHOUSE self
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetAllowSpawnOnClientParking()
   self.allowSpawnOnClientSpots=true
   return self
 end
 
 --- Set low fuel threshold. If one unit of an asset has less fuel than this number, the event AssetLowFuel will be fired.
--- @param #WAREHOUSE self
--- @param #number threshold Relative low fuel threshold, i.e. a number in [0,1]. Default 0.15 (15%).
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param #number threshold Relative low fuel threshold, i.e. a number in [0,1]. Default 0.15 (15%).
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetLowFuelThreshold(threshold)
   self.lowfuelthresh=threshold or 0.15
   return self
 end
 
 --- Set interval of status updates. Note that normally only one request can be processed per time interval.
--- @param #WAREHOUSE self
--- @param #number timeinterval Time interval in seconds.
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param #number timeinterval Time interval in seconds.
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetStatusUpdate(timeinterval)
   self.dTstatus=timeinterval
   return self
 end
 
 --- Set verbosity level.
--- @param #WAREHOUSE self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetVerbosityLevel(VerbosityLevel)
   self.verbosity=VerbosityLevel or 0
   return self
 end
 
 --- Set a zone where the (ground) assets of the warehouse are spawned once requested.
--- @param #WAREHOUSE self
--- @param Core.Zone#ZONE zone The spawn zone.
--- @param #number maxdist (Optional) Maximum distance in meters between spawn zone and warehouse. Units are not spawned if distance is larger. Default is 5000 m.
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param Core.Zone#ZONE zone The spawn zone.
+--- @param #number maxdist (Optional) Maximum distance in meters between spawn zone and warehouse. Units are not spawned if distance is larger. Default is 5000 m.
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetSpawnZone(zone, maxdist)
   self.spawnzone=zone
   self.spawnzonemaxdist=maxdist or 5000
@@ -2632,48 +2632,48 @@ function WAREHOUSE:SetSpawnZone(zone, maxdist)
 end
 
 --- Get the spawn zone.
--- @param #WAREHOUSE self
--- @return Core.Zone#ZONE The spawn zone.
+--- @param #WAREHOUSE self
+--- @return Core.Zone#ZONE The spawn zone.
 function WAREHOUSE:GetSpawnZone()
   return self.spawnzone
 end
 
 --- Set a warehouse zone. If this zone is captured, the warehouse and all its assets fall into the hands of the enemy.
--- @param #WAREHOUSE self
--- @param Core.Zone#ZONE zone The warehouse zone. Note that this **cannot** be a polygon zone!
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param Core.Zone#ZONE zone The warehouse zone. Note that this **cannot** be a polygon zone!
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetWarehouseZone(zone)
   self.zone=zone
   return self
 end
 
 --- Get the warehouse zone.
--- @param #WAREHOUSE self
--- @return Core.Zone#ZONE The warehouse zone.
+--- @param #WAREHOUSE self
+--- @return Core.Zone#ZONE The warehouse zone.
 function WAREHOUSE:GetWarehouseZone()
   return self.zone
 end
 
 --- Set auto defence on. When the warehouse is under attack, all ground assets are spawned automatically and will defend the warehouse zone.
--- @param #WAREHOUSE self
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetAutoDefenceOn()
   self.autodefence=true
   return self
 end
 
 --- Set auto defence off. This is the default.
--- @param #WAREHOUSE self
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetAutoDefenceOff()
   self.autodefence=false
   return self
 end
 
 --- Set valid parking spot IDs.
--- @param #WAREHOUSE self
--- @param #table ParkingIDs Table of numbers.
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param #table ParkingIDs Table of numbers.
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetParkingIDs(ParkingIDs)
   if type(ParkingIDs)~="table" then
     ParkingIDs={ParkingIDs}
@@ -2683,9 +2683,9 @@ function WAREHOUSE:SetParkingIDs(ParkingIDs)
 end
 
 --- Check parking ID.
--- @param #WAREHOUSE self
--- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot Parking spot.
--- @return #boolean If true, parking is valid.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot Parking spot.
+--- @return #boolean If true, parking is valid.
 function WAREHOUSE:_CheckParkingValid(spot)
 
   if self.parkingIDs==nil then
@@ -2702,9 +2702,9 @@ function WAREHOUSE:_CheckParkingValid(spot)
 end
 
 --- Check parking ID for an asset.
--- @param #WAREHOUSE self
--- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot Parking spot.
--- @return #boolean If true, parking is valid.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot Parking spot.
+--- @return #boolean If true, parking is valid.
 function WAREHOUSE:_CheckParkingAsset(spot, asset)
 
   if asset.parkingIDs==nil then
@@ -2722,10 +2722,10 @@ end
 
 
 --- Enable auto save of warehouse assets at mission end event.
--- @param #WAREHOUSE self
--- @param #string path Path where to save the asset data file.
--- @param #string filename File name. Default is generated automatically from warehouse id.
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param #string path Path where to save the asset data file.
+--- @param #string filename File name. Default is generated automatically from warehouse id.
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetSaveOnMissionEnd(path, filename)
   self.autosave=true
   self.autosavepath=path
@@ -2734,9 +2734,9 @@ function WAREHOUSE:SetSaveOnMissionEnd(path, filename)
 end
 
 --- Show or don't show markers on the F10 map displaying the Warehouse stock and road/rail connections.
--- @param #WAREHOUSE self
--- @param #boolean switch If true (or nil), markers are on. If false, markers are not displayed.
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param #boolean switch If true (or nil), markers are on. If false, markers are not displayed.
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetMarker(switch)
   if switch==false then
     self.markerOn=false
@@ -2747,8 +2747,8 @@ function WAREHOUSE:SetMarker(switch)
 end
 
 --- Set respawn after destroy.
--- @param #WAREHOUSE self
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetRespawnAfterDestroyed(delay)
   self.respawnafterdestroyed=true
   self.respawndelay=delay
@@ -2759,9 +2759,9 @@ end
 --- Set the airbase belonging to this warehouse.
 -- Note that it has to be of the same coalition as the warehouse.
 -- Also, be reasonable and do not put it too far from the phyiscal warehouse structure because you troops might have a long way to get to their transports.
--- @param #WAREHOUSE self
--- @param Wrapper.Airbase#AIRBASE airbase The airbase object associated to this warehouse.
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param Wrapper.Airbase#AIRBASE airbase The airbase object associated to this warehouse.
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetAirbase(airbase)
   self.airbase=airbase
   if airbase~=nil then
@@ -2776,9 +2776,9 @@ end
 -- Ground assets spawned in the warehouse spawn zone will first go to this point and from there travel on road to the requesting warehouse.
 -- Note that by default the road connection is set to the closest point on road from the center of the spawn zone if it is withing 3000 meters.
 -- Also note, that if the parameter "coordinate" is passed as nil, any road connection is disabled and ground assets cannot travel of be transportet on the ground.
--- @param #WAREHOUSE self
--- @param Core.Point#COORDINATE coordinate The road connection. Technically, the closest point on road from this coordinate is determined by DCS API function. So this point must not be exactly on the road.
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param Core.Point#COORDINATE coordinate The road connection. Technically, the closest point on road from this coordinate is determined by DCS API function. So this point must not be exactly on the road.
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetRoadConnection(coordinate)
   if coordinate then
     self.road=coordinate:GetClosestPointToRoad()
@@ -2790,9 +2790,9 @@ end
 
 --- Set the connection of the warehouse to the railroad.
 -- This is the place where train assets or transports will be spawned.
--- @param #WAREHOUSE self
--- @param Core.Point#COORDINATE coordinate The railroad connection. Technically, the closest point on rails from this coordinate is determined by DCS API function. So this point must not be exactly on the a railroad connection.
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param Core.Point#COORDINATE coordinate The railroad connection. Technically, the closest point on rails from this coordinate is determined by DCS API function. So this point must not be exactly on the a railroad connection.
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetRailConnection(coordinate)
   if coordinate then
     self.rail=coordinate:GetClosestPointToRoad(true)
@@ -2804,9 +2804,9 @@ end
 
 --- Set the port zone for this warehouse.
 -- The port zone is the zone, where all naval assets of the warehouse are spawned.
--- @param #WAREHOUSE self
--- @param Core.Zone#ZONE zone The zone defining the naval port of the warehouse.
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param Core.Zone#ZONE zone The zone defining the naval port of the warehouse.
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetPortZone(zone)
   self.portzone=zone
   return self
@@ -2816,9 +2816,9 @@ end
 -- Both warehouses must have the harbor zone defined for units to properly spawn on both the 
 -- sending and receiving side. The harbor zone should be within 3km of the port zone used for 
 -- warehouse in order to facilitate the boarding process.
--- @param #WAREHOUSE self
--- @param Core.Zone#ZONE zone The zone defining the naval embarcation/debarcation point for cargo units
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param Core.Zone#ZONE zone The zone defining the naval embarcation/debarcation point for cargo units
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetHarborZone(zone)
   self.harborzone=zone
   return self
@@ -2828,11 +2828,11 @@ end
 -- Note that both warehouses must have a port zone defined before a shipping lane can be added!
 -- Shipping lane is taken from the waypoints of a (late activated) template group. So set up a group, e.g. a ship or a helicopter, and place its
 -- waypoints along the shipping lane you want to add.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE remotewarehouse The remote warehouse to where the shipping lane is added
--- @param Wrapper.Group#GROUP group Waypoints of this group will define the shipping lane between to warehouses.
--- @param #boolean oneway (Optional) If true, the lane can only be used from this warehouse to the other but not other way around. Default false.
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE remotewarehouse The remote warehouse to where the shipping lane is added
+--- @param Wrapper.Group#GROUP group Waypoints of this group will define the shipping lane between to warehouses.
+--- @param #boolean oneway (Optional) If true, the lane can only be used from this warehouse to the other but not other way around. Default false.
+--- @return #WAREHOUSE self
 function WAREHOUSE:AddShippingLane(remotewarehouse, group, oneway)
 
   -- Check that port zones are defined.
@@ -2881,11 +2881,11 @@ end
 --- Add an off-road path from this warehouse to another and back.
 -- The start and end points are automatically set to one random point in the respective spawn zones of the two warehouses.
 -- By default, the reverse path is also added as path from the remote warehouse to this warehouse.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE remotewarehouse The remote warehouse to which the path leads.
--- @param Wrapper.Group#GROUP group Waypoints of this group will define the path between to warehouses.
--- @param #boolean oneway (Optional) If true, the path can only be used from this warehouse to the other but not other way around. Default false.
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE remotewarehouse The remote warehouse to which the path leads.
+--- @param Wrapper.Group#GROUP group Waypoints of this group will define the path between to warehouses.
+--- @param #boolean oneway (Optional) If true, the path can only be used from this warehouse to the other but not other way around. Default false.
+--- @return #WAREHOUSE self
 function WAREHOUSE:AddOffRoadPath(remotewarehouse, group, oneway)
 
   -- Initial and final points are random points within the spawn zone.
@@ -2929,11 +2929,11 @@ function WAREHOUSE:AddOffRoadPath(remotewarehouse, group, oneway)
 end
 
 --- Create a new path from a template group.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group Group used for extracting the waypoints.
--- @param Core.Point#COORDINATE startcoord First coordinate.
--- @param Core.Point#COORDINATE finalcoord Final coordinate.
--- @return #table Table with route points.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Group#GROUP group Group used for extracting the waypoints.
+--- @param Core.Point#COORDINATE startcoord First coordinate.
+--- @param Core.Point#COORDINATE finalcoord Final coordinate.
+--- @return #table Table with route points.
 function WAREHOUSE:_NewLane(group, startcoord, finalcoord)
 
   local lane=nil
@@ -2981,61 +2981,61 @@ end
 
 
 --- Check if the warehouse has not been started yet, i.e. is in the state "NotReadyYet".
--- @param #WAREHOUSE self
--- @return #boolean If true, the warehouse object has been created but the warehouse has not been started yet.
+--- @param #WAREHOUSE self
+--- @return #boolean If true, the warehouse object has been created but the warehouse has not been started yet.
 function WAREHOUSE:IsNotReadyYet()
   return self:is("NotReadyYet")
 end
 
 --- Check if the warehouse has been loaded from disk via the "Load" event.
--- @param #WAREHOUSE self
--- @return #boolean If true, the warehouse was loaded from disk.
+--- @param #WAREHOUSE self
+--- @return #boolean If true, the warehouse was loaded from disk.
 function WAREHOUSE:IsLoaded()
   return self:is("Loaded")
 end
 
 --- Check if the warehouse is running.
--- @param #WAREHOUSE self
--- @return #boolean If true, the warehouse is running and requests are processed.
+--- @param #WAREHOUSE self
+--- @return #boolean If true, the warehouse is running and requests are processed.
 function WAREHOUSE:IsRunning()
   return self:is("Running")
 end
 
 --- Check if the warehouse is paused. In this state, requests are not processed.
--- @param #WAREHOUSE self
--- @return #boolean If true, the warehouse is paused.
+--- @param #WAREHOUSE self
+--- @return #boolean If true, the warehouse is paused.
 function WAREHOUSE:IsPaused()
   return self:is("Paused")
 end
 
 --- Check if the warehouse is under attack by another coalition.
--- @param #WAREHOUSE self
--- @return #boolean If true, the warehouse is attacked.
+--- @param #WAREHOUSE self
+--- @return #boolean If true, the warehouse is attacked.
 function WAREHOUSE:IsAttacked()
   return self:is("Attacked")
 end
 
 --- Check if the warehouse has been destroyed.
--- @param #WAREHOUSE self
--- @return #boolean If true, the warehouse had been destroyed.
+--- @param #WAREHOUSE self
+--- @return #boolean If true, the warehouse had been destroyed.
 function WAREHOUSE:IsDestroyed()
   return self:is("Destroyed")
 end
 
 --- Check if the warehouse is stopped.
--- @param #WAREHOUSE self
--- @return #boolean If true, the warehouse is stopped.
+--- @param #WAREHOUSE self
+--- @return #boolean If true, the warehouse is stopped.
 function WAREHOUSE:IsStopped()
   return self:is("Stopped")
 end
 
 --- Check if the warehouse has a road connection to another warehouse. Both warehouses need to be started!
--- @param #WAREHOUSE self
--- @param #WAREHOUSE warehouse The remote warehouse to where the connection is checked.
--- @param #boolean markpath If true, place markers of path segments on the F10 map.
--- @param #boolean smokepath If true, put green smoke on path segments.
--- @return #boolean If true, the two warehouses are connected by road.
--- @return #number Path length in meters. Negative distance -1 meter indicates no connection.
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE warehouse The remote warehouse to where the connection is checked.
+--- @param #boolean markpath If true, place markers of path segments on the F10 map.
+--- @param #boolean smokepath If true, put green smoke on path segments.
+--- @return #boolean If true, the two warehouses are connected by road.
+--- @return #number Path length in meters. Negative distance -1 meter indicates no connection.
 function WAREHOUSE:HasConnectionRoad(warehouse, markpath, smokepath)
   if warehouse then
     if self.road and warehouse.road then
@@ -3050,12 +3050,12 @@ function WAREHOUSE:HasConnectionRoad(warehouse, markpath, smokepath)
 end
 
 --- Check if the warehouse has a railroad connection to another warehouse. Both warehouses need to be started!
--- @param #WAREHOUSE self
--- @param #WAREHOUSE warehouse The remote warehouse to where the connection is checked.
--- @param #boolean markpath If true, place markers of path segments on the F10 map.
--- @param #boolean smokepath If true, put green smoke on path segments.
--- @return #boolean If true, the two warehouses are connected by road.
--- @return #number Path length in meters. Negative distance -1 meter indicates no connection.
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE warehouse The remote warehouse to where the connection is checked.
+--- @param #boolean markpath If true, place markers of path segments on the F10 map.
+--- @param #boolean smokepath If true, put green smoke on path segments.
+--- @return #boolean If true, the two warehouses are connected by road.
+--- @return #number Path length in meters. Negative distance -1 meter indicates no connection.
 function WAREHOUSE:HasConnectionRail(warehouse, markpath, smokepath)
   if warehouse then
     if self.rail and warehouse.rail then
@@ -3070,12 +3070,12 @@ function WAREHOUSE:HasConnectionRail(warehouse, markpath, smokepath)
 end
 
 --- Check if the warehouse has a shipping lane defined to another warehouse.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE warehouse The remote warehouse to where the connection is checked.
--- @param #boolean markpath If true, place markers of path segments on the F10 map.
--- @param #boolean smokepath If true, put green smoke on path segments.
--- @return #boolean If true, the two warehouses are connected by road.
--- @return #number Path length in meters. Negative distance -1 meter indicates no connection.
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE warehouse The remote warehouse to where the connection is checked.
+--- @param #boolean markpath If true, place markers of path segments on the F10 map.
+--- @param #boolean smokepath If true, put green smoke on path segments.
+--- @return #boolean If true, the two warehouses are connected by road.
+--- @return #number Path length in meters. Negative distance -1 meter indicates no connection.
 function WAREHOUSE:HasConnectionNaval(warehouse, markpath, smokepath)
 
   if warehouse then
@@ -3100,12 +3100,12 @@ function WAREHOUSE:HasConnectionNaval(warehouse, markpath, smokepath)
 end
 
 --- Check if the warehouse has an off road path defined to another warehouse.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE warehouse The remote warehouse to where the connection is checked.
--- @param #boolean markpath If true, place markers of path segments on the F10 map.
--- @param #boolean smokepath If true, put green smoke on path segments.
--- @return #boolean If true, the two warehouses are connected by road.
--- @return #number Path length in meters. Negative distance -1 meter indicates no connection.
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE warehouse The remote warehouse to where the connection is checked.
+--- @param #boolean markpath If true, place markers of path segments on the F10 map.
+--- @param #boolean smokepath If true, put green smoke on path segments.
+--- @return #boolean If true, the two warehouses are connected by road.
+--- @return #number Path length in meters. Negative distance -1 meter indicates no connection.
 function WAREHOUSE:HasConnectionOffRoad(warehouse, markpath, smokepath)
 
   if warehouse then
@@ -3131,11 +3131,11 @@ end
 
 
 --- Get number of assets in warehouse stock. Optionally, only specific assets can be counted.
--- @param #WAREHOUSE self
--- @param #string Descriptor (Optional) Descriptor return the number of a specifc asset type. See @{#WAREHOUSE.Descriptor} for possible values.
--- @param DescriptorValue (Optional) Descriptor value selecting the type of assets.
--- @param #boolean OnlyMobile (Optional) If true only mobile units are considered.
--- @return #number Number of assets in stock.
+--- @param #WAREHOUSE self
+--- @param #string Descriptor (Optional) Descriptor return the number of a specifc asset type. See @{#WAREHOUSE.Descriptor} for possible values.
+--- @param DescriptorValue (Optional) Descriptor value selecting the type of assets.
+--- @param #boolean OnlyMobile (Optional) If true only mobile units are considered.
+--- @return #number Number of assets in stock.
 function WAREHOUSE:GetNumberOfAssets(Descriptor, DescriptorValue, OnlyMobile)
 
   if Descriptor==nil or DescriptorValue==nil then
@@ -3150,23 +3150,23 @@ function WAREHOUSE:GetNumberOfAssets(Descriptor, DescriptorValue, OnlyMobile)
 end
 
 --- Get coordinate of warehouse static.
--- @param #WAREHOUSE self
--- @return Core.Point#COORDINATE The coordinate of the warehouse.
+--- @param #WAREHOUSE self
+--- @return Core.Point#COORDINATE The coordinate of the warehouse.
 function WAREHOUSE:GetCoordinate()
   return self.warehouse:GetCoordinate()
 end
 
 --- Get 3D vector of warehouse static.
--- @param #WAREHOUSE self
--- @return DCS#Vec3 The 3D vector of the warehouse.
+--- @param #WAREHOUSE self
+--- @return DCS#Vec3 The 3D vector of the warehouse.
 function WAREHOUSE:GetVec3()
   local vec3=self.warehouse:GetVec3()
   return vec3
 end
 
 --- Get 2D vector of warehouse static.
--- @param #WAREHOUSE self
--- @return DCS#Vec2 The 2D vector of the warehouse.
+--- @param #WAREHOUSE self
+--- @return DCS#Vec2 The 2D vector of the warehouse.
 function WAREHOUSE:GetVec2()
   local vec2=self.warehouse:GetVec2()
   return vec2
@@ -3174,43 +3174,43 @@ end
 
 
 --- Get coalition side of warehouse static.
--- @param #WAREHOUSE self
--- @return #number Coalition side, i.e. number of @{DCS#coalition.side}.
+--- @param #WAREHOUSE self
+--- @return #number Coalition side, i.e. number of @{DCS#coalition.side}.
 function WAREHOUSE:GetCoalition()
   return self.warehouse:GetCoalition()
 end
 
 --- Get coalition name of warehouse static.
--- @param #WAREHOUSE self
--- @return #number Coalition side, i.e. number of @{DCS#coalition.side}.
+--- @param #WAREHOUSE self
+--- @return #number Coalition side, i.e. number of @{DCS#coalition.side}.
 function WAREHOUSE:GetCoalitionName()
   return self.warehouse:GetCoalitionName()
 end
 
 --- Get country id of warehouse static.
--- @param #WAREHOUSE self
--- @return #number Country id, i.e. number of @{DCS#country.id}.
+--- @param #WAREHOUSE self
+--- @return #number Country id, i.e. number of @{DCS#country.id}.
 function WAREHOUSE:GetCountry()
   return self.warehouse:GetCountry()
 end
 
 --- Get country name of warehouse static.
--- @param #WAREHOUSE self
--- @return #number Country id, i.e. number of @{DCS#coalition.side}.
+--- @param #WAREHOUSE self
+--- @return #number Country id, i.e. number of @{DCS#coalition.side}.
 function WAREHOUSE:GetCountryName()
   return self.warehouse:GetCountryName()
 end
 
 --- Get airbase associated to the warehouse.
--- @param #WAREHOUSE self
--- @return Wrapper.Airbase#AIRBASE Airbase object or nil if warehouse has no airbase connection.
+--- @param #WAREHOUSE self
+--- @return Wrapper.Airbase#AIRBASE Airbase object or nil if warehouse has no airbase connection.
 function WAREHOUSE:GetAirbase()
   return self.airbase
 end
 
 --- Get name airbase associated to the warehouse.
--- @param #WAREHOUSE self
--- @return #string name of the airbase assosicated to the warehouse or "none" if the airbase has not airbase connection currently.
+--- @param #WAREHOUSE self
+--- @return #string name of the airbase assosicated to the warehouse or "none" if the airbase has not airbase connection currently.
 function WAREHOUSE:GetAirbaseName()
   local name="none"
   if self.airbase then
@@ -3220,8 +3220,8 @@ function WAREHOUSE:GetAirbaseName()
 end
 
 --- Get category of airbase associated to the warehouse.
--- @param #WAREHOUSE self
--- @return #number Category of airbase or -1 if warehouse has (currently) no airbase.
+--- @param #WAREHOUSE self
+--- @return #number Category of airbase or -1 if warehouse has (currently) no airbase.
 function WAREHOUSE:GetAirbaseCategory()
   local category=-1
   if self.airbase then
@@ -3231,31 +3231,31 @@ function WAREHOUSE:GetAirbaseCategory()
 end
 
 --- Get assignment of a request.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE.Pendingitem request The request from which the assignment is extracted.
--- @return #string The assignment text.
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE.Pendingitem request The request from which the assignment is extracted.
+--- @return #string The assignment text.
 function WAREHOUSE:GetAssignment(request)
   return tostring(request.assignment)
 end
 
 --- Find a warehouse in the global warehouse data base.
--- @param #WAREHOUSE self
--- @param #number uid The unique ID of the warehouse.
--- @return #WAREHOUSE The warehouse object or nil if no warehouse exists.
+--- @param #WAREHOUSE self
+--- @param #number uid The unique ID of the warehouse.
+--- @return #WAREHOUSE The warehouse object or nil if no warehouse exists.
 function WAREHOUSE:FindWarehouseInDB(uid)
   return _WAREHOUSEDB.Warehouses[uid]
 end
 
 --- Find nearest warehouse in service, i.e. warehouses which are not started, stopped or destroyed are not considered.
 -- Optionally, only warehouses with (specific) assets can be included in the search or warehouses of a certain coalition.
--- @param #WAREHOUSE self
--- @param MinAssets (Optional) Minimum number of assets the warehouse should have. Default 0.
--- @param #string Descriptor (Optional) Descriptor describing the selected assets which should be in stock. See @{#WAREHOUSE.Descriptor} for possible values.
--- @param DescriptorValue (Optional) Descriptor value selecting the type of assets which should be in stock.
--- @param DCS#Coalition.side Coalition (Optional) Coalition side of the warehouse. Default is the same coalition as the present warehouse. Set to false for any coalition.
--- @param Core.Point#COORDINATE RefCoordinate (Optional) Coordinate to which the closest warehouse is searched. Default is the warehouse calling this function.
--- @return #WAREHOUSE The the nearest warehouse object. Or nil if no warehouse is found.
--- @return #number The distance to the nearest warehouse in meters. Or nil if no warehouse is found.
+--- @param #WAREHOUSE self
+--- @param MinAssets (Optional) Minimum number of assets the warehouse should have. Default 0.
+--- @param #string Descriptor (Optional) Descriptor describing the selected assets which should be in stock. See @{#WAREHOUSE.Descriptor} for possible values.
+--- @param DescriptorValue (Optional) Descriptor value selecting the type of assets which should be in stock.
+--- @param DCS#Coalition.side Coalition (Optional) Coalition side of the warehouse. Default is the same coalition as the present warehouse. Set to false for any coalition.
+--- @param Core.Point#COORDINATE RefCoordinate (Optional) Coordinate to which the closest warehouse is searched. Default is the warehouse calling this function.
+--- @return #WAREHOUSE The the nearest warehouse object. Or nil if no warehouse is found.
+--- @return #number The distance to the nearest warehouse in meters. Or nil if no warehouse is found.
 function WAREHOUSE:FindNearestWarehouse(MinAssets, Descriptor, DescriptorValue, Coalition, RefCoordinate)
 
   -- Defaults
@@ -3329,9 +3329,9 @@ end
 
 --- Find an asset in the the global warehouse data base. Parameter is the MOOSE group object.
 -- Note that the group name must contain they "AID" keyword.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group The group from which it is assumed that it has a registered asset.
--- @return #WAREHOUSE.Assetitem The asset from the data base or nil if it could not be found.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Group#GROUP group The group from which it is assumed that it has a registered asset.
+--- @return #WAREHOUSE.Assetitem The asset from the data base or nil if it could not be found.
 function WAREHOUSE:FindAssetInDB(group)
 
   -- Get unique ids from group name.
@@ -3352,8 +3352,8 @@ function WAREHOUSE:FindAssetInDB(group)
 end
 
 --- Check if runway is operational.
--- @param #WAREHOUSE self
--- @return #boolean If `true`, runway is operational.
+--- @param #WAREHOUSE self
+--- @return #boolean If `true`, runway is operational.
 function WAREHOUSE:IsRunwayOperational()
   if self.airbase then
     if self.runwaydestroyed then
@@ -3368,17 +3368,17 @@ end
 --- Set the time until the runway(s) of an airdrome are repaired after it has been destroyed.
 -- Note that this is the time, the DCS engine uses not something we can control on a user level or we could get via scripting.
 -- You need to input the value. On the DCS forum it was stated that this is currently one hour. Hence this is the default value.
--- @param #WAREHOUSE self
--- @param #number RepairTime Time in seconds until the runway is repaired. Default 3600 sec (one hour).
--- @return #WAREHOUSE self
+--- @param #WAREHOUSE self
+--- @param #number RepairTime Time in seconds until the runway is repaired. Default 3600 sec (one hour).
+--- @return #WAREHOUSE self
 function WAREHOUSE:SetRunwayRepairtime(RepairTime)
   self.runwayrepairtime=RepairTime or 3600
   return self
 end
 
 --- Check if runway is operational.
--- @param #WAREHOUSE self
--- @return #number Time in seconds until the runway is repaired. Will return 0 if runway is repaired.
+--- @param #WAREHOUSE self
+--- @return #number Time in seconds until the runway is repaired. Will return 0 if runway is repaired.
 function WAREHOUSE:GetRunwayRepairtime()
   if self.runwaydestroyed then
     local Tnow=timer.getAbsTime()
@@ -3390,22 +3390,22 @@ function WAREHOUSE:GetRunwayRepairtime()
 end
 
 --- Check if warehouse physical representation is a unit (not a static) object.
--- @param #WAREHOUSE self
--- @return #boolean If `true`, warehouse object is a unit.
+--- @param #WAREHOUSE self
+--- @return #boolean If `true`, warehouse object is a unit.
 function WAREHOUSE:IsUnit()
   return self.isUnit
 end
 
 --- Check if warehouse physical representation is a static (not a unit) object.
--- @param #WAREHOUSE self
--- @return #boolean If `true`, warehouse object is a static.
+--- @param #WAREHOUSE self
+--- @return #boolean If `true`, warehouse object is a static.
 function WAREHOUSE:IsStatic()
   return not self.isUnit
 end
 
 --- Check if warehouse physical representation is a ship.
--- @param #WAREHOUSE self
--- @return #boolean If `true`, warehouse object is a ship.
+--- @param #WAREHOUSE self
+--- @return #boolean If `true`, warehouse object is a ship.
 function WAREHOUSE:IsShip()
   return self.isShip
 end
@@ -3415,10 +3415,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after Start event. Starts the warehouse. Addes event handlers and schedules status updates of reqests and queue.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function WAREHOUSE:onafterStart(From, Event, To)
 
   -- Short info.
@@ -3481,10 +3481,10 @@ function WAREHOUSE:onafterStart(From, Event, To)
 end
 
 --- On after "Restart" event. Restarts the warehouse when it was in stopped state by reactivating the event handlers *only*.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function WAREHOUSE:onafterRestart(From, Event, To)
 
   self:I(self.lid..string.format("Restarting Warehouse %s.", self.alias))
@@ -3511,10 +3511,10 @@ function WAREHOUSE:onafterRestart(From, Event, To)
 end
 
 --- On after "Stop" event. Stops the warehouse, unhandles all events.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function WAREHOUSE:onafterStop(From, Event, To)
   self:_InfoMessage(string.format("Warehouse %s stopped!", self.alias))
 
@@ -3544,19 +3544,19 @@ function WAREHOUSE:onafterStop(From, Event, To)
 end
 
 --- On after "Pause" event. Pauses the warehouse, i.e. no requests are processed. However, new requests and new assets can be added in this state.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function WAREHOUSE:onafterPause(From, Event, To)
   self:I(self.lid..string.format("Warehouse %s paused! Queued requests are not processed in this state.", self.alias))
 end
 
 --- On after "Unpause" event. Unpauses the warehouse, i.e. requests in queue are processed again.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function WAREHOUSE:onafterUnpause(From, Event, To)
   self:I(self.lid..string.format("Warehouse %s unpaused! Processing of requests is resumed.", self.alias))
 end
@@ -3564,10 +3564,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after Status event. Checks the queue and handles requests.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function WAREHOUSE:onafterStatus(From, Event, To)
 
   -- General info.
@@ -3636,7 +3636,7 @@ end
 
 
 --- Function that checks if a pending job is done and can be removed from queue.
--- @param #WAREHOUSE self
+--- @param #WAREHOUSE self
 function WAREHOUSE:_JobDone()
 
   -- For jobs that are done, i.e. all cargo and transport assets are delivered, home or dead!
@@ -3822,7 +3822,7 @@ function WAREHOUSE:_JobDone()
 end
 
 --- Function that checks if an asset group is still okay.
--- @param #WAREHOUSE self
+--- @param #WAREHOUSE self
 function WAREHOUSE:_CheckAssetStatus()
 
   -- Check if a unit of the group has problems.
@@ -3901,20 +3901,20 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "AddAsset" event. Add a group to the warehouse stock. If the group is alive, it is destroyed.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Group#GROUP group Group or template group to be added to the warehouse stock.
--- @param #number ngroups Number of groups to add to the warehouse stock. Default is 1.
--- @param #WAREHOUSE.Attribute forceattribute (Optional) Explicitly force a generalized attribute for the asset. This has to be an @{#WAREHOUSE.Attribute}.
--- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
--- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
--- @param #number loadradius (Optional) Radius in meters when the cargo is loaded into the carrier.
--- @param DCS#AI.Skill skill Skill of the asset.
--- @param #table liveries Table of livery names. When the asset is spawned one livery is chosen randomly.
--- @param #string assignment A free to choose string specifying an assignment for the asset. This can be used with the @{#WAREHOUSE.OnAfterNewAsset} function.
--- @param #table other (Optional) Table of other useful data. Can be collected via WAREHOUSE.OnAfterNewAsset() function for example
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Wrapper.Group#GROUP group Group or template group to be added to the warehouse stock.
+--- @param #number ngroups Number of groups to add to the warehouse stock. Default is 1.
+--- @param #WAREHOUSE.Attribute forceattribute (Optional) Explicitly force a generalized attribute for the asset. This has to be an @{#WAREHOUSE.Attribute}.
+--- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
+--- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
+--- @param #number loadradius (Optional) Radius in meters when the cargo is loaded into the carrier.
+--- @param DCS#AI.Skill skill Skill of the asset.
+--- @param #table liveries Table of livery names. When the asset is spawned one livery is chosen randomly.
+--- @param #string assignment A free to choose string specifying an assignment for the asset. This can be used with the @{#WAREHOUSE.OnAfterNewAsset} function.
+--- @param #table other (Optional) Table of other useful data. Can be collected via WAREHOUSE.OnAfterNewAsset() function for example
 function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribute, forcecargobay, forceweight, loadradius, skill, liveries, assignment, other)
   self:T({group=group, ngroups=ngroups, forceattribute=forceattribute, forcecargobay=forcecargobay, forceweight=forceweight})
 
@@ -4081,17 +4081,17 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
 end
 
 --- Register new asset in globase warehouse data base.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group The group that will be added to the warehouse stock.
--- @param #number ngroups Number of groups to be added.
--- @param #string forceattribute Forced generalized attribute.
--- @param #number forcecargobay Cargo bay weight limit in kg.
--- @param #number forceweight Weight of units in kg.
--- @param #number loadradius Radius in meters when cargo is loaded into the carrier.
--- @param #table liveries Table of liveries.
--- @param DCS#AI.Skill skill Skill of AI.
--- @param #string assignment Assignment attached to the asset item.
--- @return #table A table containing all registered assets.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Group#GROUP group The group that will be added to the warehouse stock.
+--- @param #number ngroups Number of groups to be added.
+--- @param #string forceattribute Forced generalized attribute.
+--- @param #number forcecargobay Cargo bay weight limit in kg.
+--- @param #number forceweight Weight of units in kg.
+--- @param #number loadradius Radius in meters when cargo is loaded into the carrier.
+--- @param #table liveries Table of liveries.
+--- @param DCS#AI.Skill skill Skill of AI.
+--- @param #string assignment Assignment attached to the asset item.
+--- @return #table A table containing all registered assets.
 function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay, forceweight, loadradius, liveries, skill, assignment)
   self:F({groupname=group:GetName(), ngroups=ngroups, forceattribute=forceattribute, forcecargobay=forcecargobay, forceweight=forceweight})
 
@@ -4220,8 +4220,8 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
 end
 
 --- Asset item characteristics.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE.Assetitem asset The asset for which info in printed in trace mode.
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE.Assetitem asset The asset for which info in printed in trace mode.
 function WAREHOUSE:_AssetItemInfo(asset)
   -- Info about asset:
   local text=string.format("\nNew asset with id=%d for warehouse %s:\n", asset.uid, self.alias)
@@ -4246,12 +4246,12 @@ function WAREHOUSE:_AssetItemInfo(asset)
 end
 
 --- On after "NewAsset" event. A new asset has been added to the warehouse stock.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #WAREHOUSE.Assetitem asset The asset that has just been added.
--- @param #string assignment The (optional) assignment for the asset.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #WAREHOUSE.Assetitem asset The asset that has just been added.
+--- @param #string assignment The (optional) assignment for the asset.
 function WAREHOUSE:onafterNewAsset(From, Event, To, asset, assignment)
   self:T(self.lid..string.format("New asset %s id=%d with assignment %s.", tostring(asset.templatename), asset.uid, tostring(assignment)))
 end
@@ -4259,19 +4259,19 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On before "AddRequest" event. Checks some basic properties of the given parameters.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #WAREHOUSE warehouse The warehouse requesting supply.
--- @param #WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
--- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
--- @param #number nAsset Number of groups requested that match the asset specification.
--- @param #WAREHOUSE.TransportType TransportType Type of transport.
--- @param #number nTransport Number of transport units requested.
--- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
--- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets.
--- @return #boolean If true, request is okay at first glance.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #WAREHOUSE warehouse The warehouse requesting supply.
+--- @param #WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
+--- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
+--- @param #number nAsset Number of groups requested that match the asset specification.
+--- @param #WAREHOUSE.TransportType TransportType Type of transport.
+--- @param #number nTransport Number of transport units requested.
+--- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
+--- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets.
+--- @return #boolean If true, request is okay at first glance.
 function WAREHOUSE:onbeforeAddRequest(From, Event, To, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Assignment, Prio)
 
   -- Request is okay.
@@ -4354,18 +4354,18 @@ function WAREHOUSE:onbeforeAddRequest(From, Event, To, warehouse, AssetDescripto
 end
 
 --- On after "AddRequest" event. Add a request to the warehouse queue, which is processed when possible.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #WAREHOUSE warehouse The warehouse requesting supply.
--- @param #WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
--- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
--- @param #number nAsset Number of groups requested that match the asset specification.
--- @param #WAREHOUSE.TransportType TransportType Type of transport.
--- @param #number nTransport Number of transport units requested.
--- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
--- @param #string Assignment A keyword or text that can later be used to identify this request and postprocess the assets.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #WAREHOUSE warehouse The warehouse requesting supply.
+--- @param #WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
+--- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
+--- @param #number nAsset Number of groups requested that match the asset specification.
+--- @param #WAREHOUSE.TransportType TransportType Type of transport.
+--- @param #number nTransport Number of transport units requested.
+--- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
+--- @param #string Assignment A keyword or text that can later be used to identify this request and postprocess the assets.
 function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Prio, Assignment)
 
   -- Defaults.
@@ -4427,12 +4427,12 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On before "Request" event. Checks if the request can be fulfilled.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #WAREHOUSE.Queueitem Request Information table of the request.
--- @return #boolean If true, request is granted.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #WAREHOUSE.Queueitem Request Information table of the request.
+--- @return #boolean If true, request is granted.
 function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
   self:T3({warehouse=self.alias, request=Request})
 
@@ -4473,11 +4473,11 @@ end
 
 
 --- On after "Request" event. Spawns the necessary cargo and transport assets.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #WAREHOUSE.Queueitem Request Information table of the request.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #WAREHOUSE.Queueitem Request Information table of the request.
 function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
   -- Info message.
@@ -4595,13 +4595,13 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 end
 
 --- On after "RequestSpawned" event. Initiates the transport of the assets to the requesting warehouse.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #WAREHOUSE.Pendingitem Request Information table of the request.
--- @param Core.Set#SET_GROUP CargoGroupSet Set of cargo groups.
--- @param Core.Set#SET_GROUP TransportGroupSet Set of transport groups if any.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #WAREHOUSE.Pendingitem Request Information table of the request.
+--- @param Core.Set#SET_GROUP CargoGroupSet Set of cargo groups.
+--- @param Core.Set#SET_GROUP TransportGroupSet Set of transport groups if any.
 function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet, TransportGroupSet)
 
   -- General type and category.
@@ -4946,11 +4946,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "Unloaded" event. Triggered when a group was unloaded from the carrier.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Group#GROUP group The group that was delivered.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Wrapper.Group#GROUP group The group that was delivered.
 function WAREHOUSE:onafterUnloaded(From, Event, To, group)
   -- Debug info.
   self:_DebugMessage(string.format("Cargo %s unloaded!", tostring(group:GetName())), 5)
@@ -4987,11 +4987,11 @@ function WAREHOUSE:onafterUnloaded(From, Event, To, group)
 end
 
 --- On before "Arrived" event. Triggered when a group has arrived at its destination warehouse.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Group#GROUP group The group that was delivered.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Wrapper.Group#GROUP group The group that was delivered.
 function WAREHOUSE:onbeforeArrived(From, Event, To, group)
 
   local asset=self:FindAssetInDB(group)
@@ -5020,11 +5020,11 @@ end
 -- The routine should be called by the warehouse sending this asset and not by the receiving warehouse.
 -- It is checked if this asset is cargo (or self propelled) or transport. If it is cargo it is put into the stock of receiving warehouse.
 -- If it is a transporter it is put back into the sending warehouse since transports are supposed to return their home warehouse.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Group#GROUP group The group that was delivered.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Wrapper.Group#GROUP group The group that was delivered.
 function WAREHOUSE:onafterArrived(From, Event, To, group)
 
   -- Debug message and smoke.
@@ -5066,11 +5066,11 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
 end
 
 --- On after "Delivered" event. Triggered when all asset groups have reached their destination. Corresponding request is deleted from the pending queue.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #WAREHOUSE.Pendingitem request The pending request that is finished and deleted from the pending queue.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #WAREHOUSE.Pendingitem request The pending request that is finished and deleted from the pending queue.
 function WAREHOUSE:onafterDelivered(From, Event, To, request)
 
   -- Debug info
@@ -5093,12 +5093,12 @@ end
 --- On after "SelfRequest" event. Request was initiated to the warehouse itself. Groups are just spawned at the warehouse or the associated airbase.
 -- If the warehouse is currently under attack when the self request is made, the self request is added to the defending table. One the attack is defeated,
 -- this request is used to put the groups back into the warehouse stock.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Set#SET_GROUP groupset The set of asset groups that was delivered to the warehouse itself.
--- @param #WAREHOUSE.Pendingitem request Pending self request.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Set#SET_GROUP groupset The set of asset groups that was delivered to the warehouse itself.
+--- @param #WAREHOUSE.Pendingitem request Pending self request.
 function WAREHOUSE:onafterSelfRequest(From, Event, To, groupset, request)
 
   -- Debug info.
@@ -5133,12 +5133,12 @@ function WAREHOUSE:onafterSelfRequest(From, Event, To, groupset, request)
 end
 
 --- On after "Attacked" event. Warehouse is under attack by an another coalition.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param DCS#coalition.side Coalition which is attacking the warehouse.
--- @param DCS#country.id Country which is attacking the warehouse.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param DCS#coalition.side Coalition which is attacking the warehouse.
+--- @param DCS#country.id Country which is attacking the warehouse.
 function WAREHOUSE:onafterAttacked(From, Event, To, Coalition, Country)
 
   -- Warning.
@@ -5171,10 +5171,10 @@ function WAREHOUSE:onafterAttacked(From, Event, To, Coalition, Country)
 end
 
 --- On after "Defeated" event. Warehouse defeated an attack by another coalition. Defender assets are added back to warehouse stock.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function WAREHOUSE:onafterDefeated(From, Event, To)
 
   -- Message.
@@ -5212,10 +5212,10 @@ function WAREHOUSE:onafterDefeated(From, Event, To)
 end
 
 --- Respawn warehouse.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function WAREHOUSE:onafterRespawn(From, Event, To)
 
   -- Info message.
@@ -5228,11 +5228,11 @@ function WAREHOUSE:onafterRespawn(From, Event, To)
 end
 
 --- On before "ChangeCountry" event. Checks whether a change of country is necessary by comparing the actual country to the the requested one.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param DCS#country.id Country which has captured the warehouse.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param DCS#country.id Country which has captured the warehouse.
 function WAREHOUSE:onbeforeChangeCountry(From, Event, To, Country)
 
   local currentCountry=self:GetCountry()
@@ -5251,11 +5251,11 @@ end
 
 --- On after "ChangeCountry" event. Warehouse is respawned with the specified country. All queued requests are deleted and the owned airbase is reset if the coalition is changed by changing the
 -- country.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param DCS#country.id Country Country which has captured the warehouse.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param DCS#country.id Country Country which has captured the warehouse.
 function WAREHOUSE:onafterChangeCountry(From, Event, To, Country)
 
   local CoalitionOld=self:GetCoalition()
@@ -5298,12 +5298,12 @@ function WAREHOUSE:onafterChangeCountry(From, Event, To, Country)
 end
 
 --- On before "Captured" event. Warehouse has been captured by another coalition.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param DCS#coalition.side Coalition which captured the warehouse.
--- @param DCS#country.id Country which has captured the warehouse.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param DCS#coalition.side Coalition which captured the warehouse.
+--- @param DCS#country.id Country which has captured the warehouse.
 function WAREHOUSE:onbeforeCaptured(From, Event, To, Coalition, Country)
 
   -- Warehouse respawned.
@@ -5312,12 +5312,12 @@ function WAREHOUSE:onbeforeCaptured(From, Event, To, Coalition, Country)
 end
 
 --- On after "Captured" event. Warehouse has been captured by another coalition.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param DCS#coalition.side Coalition which captured the warehouse.
--- @param DCS#country.id Country which has captured the warehouse.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param DCS#coalition.side Coalition which captured the warehouse.
+--- @param DCS#country.id Country which has captured the warehouse.
 function WAREHOUSE:onafterCaptured(From, Event, To, Coalition, Country)
 
   -- Message.
@@ -5328,11 +5328,11 @@ end
 
 
 --- On after "AirbaseCaptured" event. Airbase of warehouse has been captured by another coalition.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param DCS#coalition.side Coalition which captured the warehouse.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param DCS#coalition.side Coalition which captured the warehouse.
 function WAREHOUSE:onafterAirbaseCaptured(From, Event, To, Coalition)
 
   -- Message.
@@ -5353,11 +5353,11 @@ function WAREHOUSE:onafterAirbaseCaptured(From, Event, To, Coalition)
 end
 
 --- On after "AirbaseRecaptured" event. Airbase of warehouse has been re-captured from other coalition.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param DCS#coalition.side Coalition Coalition side which originally captured the warehouse.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param DCS#coalition.side Coalition Coalition side which originally captured the warehouse.
 function WAREHOUSE:onafterAirbaseRecaptured(From, Event, To, Coalition)
 
   -- Message.
@@ -5379,10 +5379,10 @@ function WAREHOUSE:onafterAirbaseRecaptured(From, Event, To, Coalition)
 end
 
 --- On after "RunwayDestroyed" event.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function WAREHOUSE:onafterRunwayDestroyed(From, Event, To)
 
   -- Message.
@@ -5394,10 +5394,10 @@ function WAREHOUSE:onafterRunwayDestroyed(From, Event, To)
 end
 
 --- On after "RunwayRepaired" event.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function WAREHOUSE:onafterRunwayRepaired(From, Event, To)
 
   -- Message.
@@ -5410,13 +5410,13 @@ end
 
 
 --- On after "AssetSpawned" event triggered when an asset group is spawned into the cruel world.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Group#GROUP group The group spawned.
--- @param #WAREHOUSE.Assetitem asset The asset that is dead.
--- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Wrapper.Group#GROUP group The group spawned.
+--- @param #WAREHOUSE.Assetitem asset The asset that is dead.
+--- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
 function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
   local text=string.format("Asset %s from request id=%d was spawned!", asset.spawngroupname, request.uid)
   self:T(self.lid..text)
@@ -5470,12 +5470,12 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
 end
 
 --- On after "AssetDead" event triggered when an asset group died.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #WAREHOUSE.Assetitem asset The asset that is dead.
--- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #WAREHOUSE.Assetitem asset The asset that is dead.
+--- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
 function WAREHOUSE:onafterAssetDead(From, Event, To, asset, request)
 
   if asset and request then
@@ -5540,10 +5540,10 @@ end
 
 
 --- On after "Destroyed" event. Warehouse was destroyed. All services are stopped. Warehouse is going to "Stopped" state in one minute.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function WAREHOUSE:onafterDestroyed(From, Event, To)
 
   -- Message.
@@ -5587,12 +5587,12 @@ end
 
 
 --- On after "Save" event. Warehouse assets are saved to file on disk.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string path Path where the file is saved. If nil, file is saved in the DCS root installtion directory.
--- @param #string filename (Optional) Name of the file containing the asset data.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #string path Path where the file is saved. If nil, file is saved in the DCS root installtion directory.
+--- @param #string filename (Optional) Name of the file containing the asset data.
 function WAREHOUSE:onafterSave(From, Event, To, path, filename)
 
   local function _savefile(filename, data)
@@ -5650,12 +5650,12 @@ end
 
 
 --- On before "Load" event. Checks if the file the warehouse data should be loaded from exists.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string path Path where the file is loaded from.
--- @param #string filename (Optional) Name of the file containing the asset data.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #string path Path where the file is loaded from.
+--- @param #string filename (Optional) Name of the file containing the asset data.
 function WAREHOUSE:onbeforeLoad(From, Event, To, path, filename)
 
 
@@ -5691,12 +5691,12 @@ end
 
 
 --- On after "Load" event. Warehouse assets are loaded from file on disk.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string path Path where the file is loaded from.
--- @param #string filename (Optional) Name of the file containing the asset data.
+--- @param #WAREHOUSE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #string path Path where the file is loaded from.
+--- @param #string filename (Optional) Name of the file containing the asset data.
 function WAREHOUSE:onafterLoad(From, Event, To, path, filename)
 
   local function _loadfile(filename)
@@ -5806,8 +5806,8 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Spawns requested assets at warehouse or associated airbase.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE.Queueitem Request Information table of the request.
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE.Queueitem Request Information table of the request.
 function WAREHOUSE:_SpawnAssetRequest(Request)
   self:F2({requestUID=Request.uid})
 
@@ -5894,13 +5894,13 @@ end
 
 
 --- Spawn a ground or naval asset in the corresponding spawn zone of the warehouse.
--- @param #WAREHOUSE self
--- @param #string alias Alias name of the asset group.
--- @param #WAREHOUSE.Assetitem asset Ground asset that will be spawned.
--- @param #WAREHOUSE.Queueitem request Request belonging to this asset. Needed for the name/alias.
--- @param Core.Zone#ZONE spawnzone Zone where the assets should be spawned.
--- @param #boolean lateactivated If true, groups are spawned late activated.
--- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
+--- @param #WAREHOUSE self
+--- @param #string alias Alias name of the asset group.
+--- @param #WAREHOUSE.Assetitem asset Ground asset that will be spawned.
+--- @param #WAREHOUSE.Queueitem request Request belonging to this asset. Needed for the name/alias.
+--- @param Core.Zone#ZONE spawnzone Zone where the assets should be spawned.
+--- @param #boolean lateactivated If true, groups are spawned late activated.
+--- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
 function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, lateactivated)
 
   if asset and (asset.category==Group.Category.GROUND or asset.category==Group.Category.SHIP or asset.category==Group.Category.TRAIN) then
@@ -5965,14 +5965,14 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, late
 end
 
 --- Spawn an aircraft asset (plane or helo) at the airbase associated with the warehouse.
--- @param #WAREHOUSE self
--- @param #string alias Alias name of the asset group.
--- @param #WAREHOUSE.Assetitem asset Ground asset that will be spawned.
--- @param #WAREHOUSE.Queueitem request Request belonging to this asset. Needed for the name/alias.
--- @param #table parking Parking data for this asset.
--- @param #boolean uncontrolled Spawn aircraft in uncontrolled state.
--- @param #boolean lateactivated If true, groups are spawned late activated.
--- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
+--- @param #WAREHOUSE self
+--- @param #string alias Alias name of the asset group.
+--- @param #WAREHOUSE.Assetitem asset Ground asset that will be spawned.
+--- @param #WAREHOUSE.Queueitem request Request belonging to this asset. Needed for the name/alias.
+--- @param #table parking Parking data for this asset.
+--- @param #boolean uncontrolled Spawn aircraft in uncontrolled state.
+--- @param #boolean lateactivated If true, groups are spawned late activated.
+--- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
 function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrolled, lateactivated)
 
   if asset and asset.category==Group.Category.AIRPLANE or asset.category==Group.Category.HELICOPTER then
@@ -6143,10 +6143,10 @@ end
 
 
 --- Prepare a spawn template for the asset. Deep copy of asset template, adjusting template and unit names, nillifying group and unit ids.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE.Assetitem asset Ground asset that will be spawned.
--- @param #string alias Alias name of the group.
--- @return #table Prepared new spawn template.
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE.Assetitem asset Ground asset that will be spawned.
+--- @param #string alias Alias name of the group.
+--- @return #table Prepared new spawn template.
 function WAREHOUSE:_SpawnAssetPrepareTemplate(asset, alias)
 
   -- Create an own copy of the template!
@@ -6201,9 +6201,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Route ground units to destination. ROE is set to return fire and alarm state to green.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group The ground group to be routed
--- @param #WAREHOUSE.Queueitem request The request for this group.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Group#GROUP group The ground group to be routed
+--- @param #WAREHOUSE.Queueitem request The request for this group.
 function WAREHOUSE:_RouteGround(group, request)
 
   if group and group:IsAlive() then
@@ -6268,9 +6268,9 @@ function WAREHOUSE:_RouteGround(group, request)
 end
 
 --- Route naval units along user defined shipping lanes to destination warehouse. ROE is set to return fire.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group The naval group to be routed
--- @param #WAREHOUSE.Queueitem request The request for this group.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Group#GROUP group The naval group to be routed
+--- @param #WAREHOUSE.Queueitem request The request for this group.
 function WAREHOUSE:_RouteNaval(group, request)
 
   -- Check if we have a group and it is alive.
@@ -6325,8 +6325,8 @@ end
 
 --- Route the airplane from one airbase another. Activates uncontrolled aircraft and sets ROE/ROT for ferry flights.
 -- ROE is set to return fire and ROT to passive defence.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP aircraft Airplane group to be routed.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Group#GROUP aircraft Airplane group to be routed.
 function WAREHOUSE:_RouteAir(aircraft)
 
   if aircraft and aircraft:IsAlive()~=nil then
@@ -6355,10 +6355,10 @@ function WAREHOUSE:_RouteAir(aircraft)
 end
 
 --- Route trains to their destination - or at least to the closest point on rail of the desired final destination.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP Group The train group.
--- @param Core.Point#COORDINATE Coordinate of the destination. Tail will be routed to the closest point
--- @param #number Speed Speed in km/h to drive to the destination coordinate. Default is 60% of max possible speed the unit can go.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Group#GROUP Group The train group.
+--- @param Core.Point#COORDINATE Coordinate of the destination. Tail will be routed to the closest point
+--- @param #number Speed Speed in km/h to drive to the destination coordinate. Default is 60% of max possible speed the unit can go.
 function WAREHOUSE:_RouteTrain(Group, Coordinate, Speed)
 
   if Group and Group:IsAlive() then
@@ -6381,8 +6381,8 @@ function WAREHOUSE:_RouteTrain(Group, Coordinate, Speed)
 end
 
 --- Task function for last waypoint. Triggering the "Arrived" event.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group The group that arrived.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Group#GROUP group The group that arrived.
 function WAREHOUSE:_Arrived(group)
   self:_DebugMessage(string.format("Group %s arrived!", tostring(group:GetName())))
 
@@ -6394,10 +6394,10 @@ function WAREHOUSE:_Arrived(group)
 end
 
 --- Task function for when passing a waypoint.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group The group that arrived.
--- @param #number n Waypoint passed.
--- @param #number N Final waypoint.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Group#GROUP group The group that arrived.
+--- @param #number n Waypoint passed.
+--- @param #number N Final waypoint.
 function WAREHOUSE:_PassingWaypoint(group, n, N)
   self:T(self.lid..string.format("Group %s passing waypoint %d of %d!", tostring(group:GetName()), n, N))
 
@@ -6413,9 +6413,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get a warehouse asset from its unique id.
--- @param #WAREHOUSE self
--- @param #number id Asset ID.
--- @return #WAREHOUSE.Assetitem The warehouse asset.
+--- @param #WAREHOUSE self
+--- @param #number id Asset ID.
+--- @return #WAREHOUSE.Assetitem The warehouse asset.
 function WAREHOUSE:GetAssetByID(id)
   if id then
     return _WAREHOUSEDB.Assets[id]
@@ -6425,9 +6425,9 @@ function WAREHOUSE:GetAssetByID(id)
 end
 
 --- Get a warehouse asset from its name.
--- @param #WAREHOUSE self
--- @param #string GroupName Spawn group name.
--- @return #WAREHOUSE.Assetitem The warehouse asset.
+--- @param #WAREHOUSE self
+--- @param #string GroupName Spawn group name.
+--- @return #WAREHOUSE.Assetitem The warehouse asset.
 function WAREHOUSE:GetAssetByName(GroupName)
 
   local name=self:_GetNameWithOut(GroupName)
@@ -6441,10 +6441,10 @@ function WAREHOUSE:GetAssetByName(GroupName)
 end
 
 --- Get a warehouse request from its unique id.
--- @param #WAREHOUSE self
--- @param #number id Request ID.
--- @return #WAREHOUSE.Pendingitem The warehouse requested - either queued or pending.
--- @return #boolean If *true*, request is queued, if *false*, request is pending, if *nil*, request could not be found.
+--- @param #WAREHOUSE self
+--- @param #number id Request ID.
+--- @return #WAREHOUSE.Pendingitem The warehouse requested - either queued or pending.
+--- @return #boolean If *true*, request is queued, if *false*, request is pending, if *nil*, request could not be found.
 function WAREHOUSE:GetRequestByID(id)
 
   if id then
@@ -6469,8 +6469,8 @@ function WAREHOUSE:GetRequestByID(id)
 end
 
 --- Warehouse event function, handling the birth of a unit.
--- @param #WAREHOUSE self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #WAREHOUSE self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventBirth(EventData)
   self:T3(self.lid..string.format("Warehouse %s (id=%s) captured event birth!", self.alias, self.uid))
 
@@ -6508,8 +6508,8 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Function handling the event when a (warehouse) unit starts its engines.
--- @param #WAREHOUSE self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #WAREHOUSE self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventEngineStartup(EventData)
   self:T3(self.lid..string.format("Warehouse %s captured event engine startup!",self.alias))
 
@@ -6525,8 +6525,8 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Function handling the event when a (warehouse) unit takes off.
--- @param #WAREHOUSE self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #WAREHOUSE self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventTakeOff(EventData)
   self:T3(self.lid..string.format("Warehouse %s captured event takeoff!",self.alias))
 
@@ -6542,8 +6542,8 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Function handling the event when a (warehouse) unit lands.
--- @param #WAREHOUSE self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #WAREHOUSE self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventLanding(EventData)
   self:T3(self.lid..string.format("Warehouse %s captured event landing!", self.alias))
 
@@ -6566,8 +6566,8 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Function handling the event when a (warehouse) unit shuts down its engines.
--- @param #WAREHOUSE self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #WAREHOUSE self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventEngineShutdown(EventData)
   self:T3(self.lid..string.format("Warehouse %s captured event engine shutdown!", self.alias))
 
@@ -6583,8 +6583,8 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Arrived event if an air unit/group arrived at its destination. This can be an engine shutdown or a landing event.
--- @param #WAREHOUSE self
--- @param Core.Event#EVENTDATA EventData Event data table.
+--- @param #WAREHOUSE self
+--- @param Core.Event#EVENTDATA EventData Event data table.
 function WAREHOUSE:_OnEventArrived(EventData)
 
   if EventData and EventData.IniUnit then
@@ -6653,8 +6653,8 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Warehouse event handling function.
--- @param #WAREHOUSE self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #WAREHOUSE self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventCrashOrDead(EventData)
   self:T3(self.lid..string.format("Warehouse %s captured event dead or crash!", self.alias))
 
@@ -6711,10 +6711,10 @@ end
 
 --- A unit of a group just died. Update group sets in request.
 -- This is important in order to determine if a job is done and can be removed from the (pending) queue.
--- @param #WAREHOUSE self
--- @param Wrapper.Unit#UNIT deadunit Unit that died.
--- @param Wrapper.Group#GROUP deadgroup Group of unit that died.
--- @param #WAREHOUSE.Pendingitem request Request that needs to be updated.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Unit#UNIT deadunit Unit that died.
+--- @param Wrapper.Group#GROUP deadgroup Group of unit that died.
+--- @param #WAREHOUSE.Pendingitem request Request that needs to be updated.
 function WAREHOUSE:_UnitDead(deadunit, deadgroup, request)
   self:F(self.lid.."FF unit dead "..deadunit:GetName())
 
@@ -6794,8 +6794,8 @@ end
 
 --- Warehouse event handling function.
 -- Handles the case when the airbase associated with the warehous is captured.
--- @param #WAREHOUSE self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #WAREHOUSE self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventBaseCaptured(EventData)
   self:T3(self.lid..string.format("Warehouse %s captured event base captured!",self.alias))
 
@@ -6839,8 +6839,8 @@ end
 
 --- Warehouse event handling function.
 -- Handles the case when the mission is ended.
--- @param #WAREHOUSE self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #WAREHOUSE self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventMissionEnd(EventData)
   self:T3(self.lid..string.format("Warehouse %s captured event mission end!",self.alias))
 
@@ -6854,7 +6854,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Checks if the warehouse zone was conquered by antoher coalition.
--- @param #WAREHOUSE self
+--- @param #WAREHOUSE self
 function WAREHOUSE:_CheckConquered()
 
   -- Get coordinate and radius to check.
@@ -6965,7 +6965,7 @@ function WAREHOUSE:_CheckConquered()
 end
 
 --- Checks if the associated airbase still belongs to the warehouse.
--- @param #WAREHOUSE self
+--- @param #WAREHOUSE self
 function WAREHOUSE:_CheckAirbaseOwner()
   -- The airbasename is set at start and not deleted if the airbase was captured.
   if self.airbasename then
@@ -6994,9 +6994,9 @@ end
 
 --- Checks if the request can be fulfilled in general. If not, it is removed from the queue.
 -- Check if departure and destination bases are of the right type.
--- @param #WAREHOUSE self
--- @param #table queue The queue which is holding the requests to check.
--- @return #boolean If true, request can be executed. If false, something is not right.
+--- @param #WAREHOUSE self
+--- @param #table queue The queue which is holding the requests to check.
+--- @return #boolean If true, request can be executed. If false, something is not right.
 function WAREHOUSE:_CheckRequestConsistancy(queue)
   self:T3(self.lid..string.format("Number of queued requests = %d", #queue))
 
@@ -7056,9 +7056,9 @@ end
 --- Check if a request is valid in general. If not, it will be removed from the queue.
 -- This routine needs to have at least one asset in stock that matches the request descriptor in order to determine whether the request category of troops.
 -- If no asset is in stock, the request will remain in the queue but cannot be executed.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE.Queueitem request The request to be checked.
--- @return #boolean If true, request can be executed. If false, something is not right.
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE.Queueitem request The request to be checked.
+--- @return #boolean If true, request can be executed. If false, something is not right.
 function WAREHOUSE:_CheckRequestValid(request)
 
   -- Check if number of requested assets is in stock.
@@ -7352,9 +7352,9 @@ end
 
 --- Checks if the request can be fulfilled right now.
 -- Check for current parking situation, number of assets and transports currently in stock.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE.Queueitem request The request to be checked.
--- @return #boolean If true, request can be executed. If false, something is not right.
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE.Queueitem request The request to be checked.
+--- @return #boolean If true, request can be executed. If false, something is not right.
 function WAREHOUSE:_CheckRequestNow(request)
 
   -- Check if receiving warehouse is running. We do allow self requests if the warehouse is under attack though!
@@ -7559,8 +7559,8 @@ function WAREHOUSE:_CheckRequestNow(request)
 end
 
 ---Get (optimized) transport carriers for the given assets to be transported.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE.Pendingitem Chosen request.
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE.Pendingitem Chosen request.
 function WAREHOUSE:_GetTransportsForAssets(request)
 
   -- Get all transports of the requested type in stock.
@@ -7709,10 +7709,10 @@ function WAREHOUSE:_GetTransportsForAssets(request)
 end
 
 ---Relative to absolute quantity.
--- @param #WAREHOUSE self
--- @param #string relative Relative number in terms of @{#WAREHOUSE.Quantity}.
--- @param #number ntot Total number.
--- @return #number Absolute number.
+--- @param #WAREHOUSE self
+--- @param #string relative Relative number in terms of @{#WAREHOUSE.Quantity}.
+--- @param #number ntot Total number.
+--- @return #number Absolute number.
 function WAREHOUSE:_QuantityRel2Abs(relative, ntot)
 
   local nabs=0
@@ -7742,8 +7742,8 @@ function WAREHOUSE:_QuantityRel2Abs(relative, ntot)
 end
 
 ---Sorts the queue and checks if the request can be fulfilled.
--- @param #WAREHOUSE self
--- @return #WAREHOUSE.Queueitem Chosen request.
+--- @param #WAREHOUSE self
+--- @return #WAREHOUSE.Queueitem Chosen request.
 function WAREHOUSE:_CheckQueue()
 
   -- Sort queue wrt to first prio and then qid.
@@ -7788,9 +7788,9 @@ function WAREHOUSE:_CheckQueue()
 end
 
 --- Simple task function. Can be used to call a function which has the warehouse and the executing group as parameters.
--- @param #WAREHOUSE self
--- @param #string Function The name of the function to call passed as string.
--- @param Wrapper.Group#GROUP group The group which is meant.
+--- @param #WAREHOUSE self
+--- @param #string Function The name of the function to call passed as string.
+--- @param Wrapper.Group#GROUP group The group which is meant.
 function WAREHOUSE:_SimpleTaskFunction(Function, group)
   self:F2({Function})
 
@@ -7817,11 +7817,11 @@ function WAREHOUSE:_SimpleTaskFunction(Function, group)
 end
 
 --- Simple task function. Can be used to call a function which has the warehouse and the executing group as parameters.
--- @param #WAREHOUSE self
--- @param #string Function The name of the function to call passed as string.
--- @param Wrapper.Group#GROUP group The group which is meant.
--- @param #number n Waypoint passed.
--- @param #number N Final waypoint number.
+--- @param #WAREHOUSE self
+--- @param #string Function The name of the function to call passed as string.
+--- @param Wrapper.Group#GROUP group The group which is meant.
+--- @param #number n Waypoint passed.
+--- @param #number N Final waypoint number.
 function WAREHOUSE:_SimpleTaskFunctionWP(Function, group, n, N)
   self:F2({Function})
 
@@ -7884,10 +7884,10 @@ end
 --- Seach unoccupied parking spots at the airbase for a list of assets. For each asset group a list of parking spots is returned.
 -- During the search also the not yet spawned asset aircraft are considered.
 -- If not enough spots for all asset units could be found, the routine returns nil!
--- @param #WAREHOUSE self
--- @param Wrapper.Airbase#AIRBASE airbase The airbase where we search for parking spots.
--- @param #table assets A table of assets for which the parking spots are needed.
--- @return #table Table of coordinates and terminal IDs of free parking spots. Each table entry has the elements .Coordinate and .TerminalID.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Airbase#AIRBASE airbase The airbase where we search for parking spots.
+--- @param #table assets A table of assets for which the parking spots are needed.
+--- @return #table Table of coordinates and terminal IDs of free parking spots. Each table entry has the elements .Coordinate and .TerminalID.
 function WAREHOUSE:_FindParkingForAssets(airbase, assets)
 
   -- Init default
@@ -8114,10 +8114,10 @@ end
 
 
 --- Get the request belonging to a group.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group The group from which the info is gathered.
--- @param #table queue Queue holding all requests.
--- @return #WAREHOUSE.Pendingitem The request belonging to this group.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Group#GROUP group The group from which the info is gathered.
+--- @param #table queue Queue holding all requests.
+--- @return #WAREHOUSE.Pendingitem The request belonging to this group.
 function WAREHOUSE:_GetRequestOfGroup(group, queue)
 
   -- Get warehouse, asset and request ID from group name.
@@ -8134,10 +8134,10 @@ function WAREHOUSE:_GetRequestOfGroup(group, queue)
 end
 
 --- Is the group a used as transporter for a given request?
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group The group from which the info is gathered.
--- @param #WAREHOUSE.Pendingitem request Request.
--- @return #boolean True if group is transport, false if group is cargo and nil otherwise.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Group#GROUP group The group from which the info is gathered.
+--- @param #WAREHOUSE.Pendingitem request Request.
+--- @return #boolean True if group is transport, false if group is cargo and nil otherwise.
 function WAREHOUSE:_GroupIsTransport(group, request)
 
   local asset=self:FindAssetInDB(group)
@@ -8175,9 +8175,9 @@ end
 
 
 --- Get group name without any spawn or cargo suffix #CARGO etc.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group The group from which the info is gathered.
--- @return #string Name of the object without trailing #...
+--- @param #WAREHOUSE self
+--- @param Wrapper.Group#GROUP group The group from which the info is gathered.
+--- @return #string Name of the object without trailing #...
 function WAREHOUSE:_GetNameWithOut(group)
 
   local groupname=type(group)=="string" and group or group:GetName()
@@ -8193,11 +8193,11 @@ end
 
 
 --- Get warehouse id, asset id and request id from group name (alias).
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group The group from which the info is gathered.
--- @return #number Warehouse ID.
--- @return #number Asset ID.
--- @return #number Request ID.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Group#GROUP group The group from which the info is gathered.
+--- @return #number Warehouse ID.
+--- @return #number Asset ID.
+--- @return #number Request ID.
 function WAREHOUSE:_GetIDsFromGroup(group)
 
   if group then
@@ -8215,11 +8215,11 @@ function WAREHOUSE:_GetIDsFromGroup(group)
 end
 
 --- Get warehouse id, asset id and request id from group name (alias).
--- @param #WAREHOUSE self
--- @param #string groupname Name of the group from which the info is gathered.
--- @return #number Warehouse ID.
--- @return #number Asset ID.
--- @return #number Request ID.
+--- @param #WAREHOUSE self
+--- @param #string groupname Name of the group from which the info is gathered.
+--- @return #number Warehouse ID.
+--- @return #number Asset ID.
+--- @return #number Request ID.
 function WAREHOUSE:_GetIDsFromGroupName(groupname)
 
   ---@param #string text The text to analyse.
@@ -8274,28 +8274,28 @@ function WAREHOUSE:_GetIDsFromGroupName(groupname)
 end
 
 --- Filter stock assets by descriptor and attribute.
--- @param #WAREHOUSE self
--- @param #string descriptor Descriptor describing the filtered assets.
--- @param attribute Value of the descriptor.
--- @param #number nmax (Optional) Maximum number of items that will be returned. Default nmax=nil is all matching items are returned.
--- @param #boolean mobile (Optional) If true, filter only mobile assets.
--- @return #table Filtered assets in stock with the specified descriptor value.
--- @return #number Total number of (requested) assets available.
--- @return #boolean If true, enough assets are available.
+--- @param #WAREHOUSE self
+--- @param #string descriptor Descriptor describing the filtered assets.
+--- @param attribute Value of the descriptor.
+--- @param #number nmax (Optional) Maximum number of items that will be returned. Default nmax=nil is all matching items are returned.
+--- @param #boolean mobile (Optional) If true, filter only mobile assets.
+--- @return #table Filtered assets in stock with the specified descriptor value.
+--- @return #number Total number of (requested) assets available.
+--- @return #boolean If true, enough assets are available.
 function WAREHOUSE:FilterStock(descriptor, attribute, nmax, mobile)
   return self:_FilterStock(self.stock, descriptor, attribute, nmax, mobile)
 end
 
 --- Filter stock assets by table entry.
--- @param #WAREHOUSE self
--- @param #table stock Table holding all assets in stock of the warehouse. Each entry is of type @{#WAREHOUSE.Assetitem}.
--- @param #string descriptor Descriptor describing the filtered assets.
--- @param attribute Value of the descriptor.
--- @param #number nmax (Optional) Maximum number of items that will be returned. Default nmax=nil is all matching items are returned.
--- @param #boolean mobile (Optional) If true, filter only mobile assets.
--- @return #table Filtered stock items table.
--- @return #number Total number of (requested) assets available.
--- @return #boolean If true, enough assets are available.
+--- @param #WAREHOUSE self
+--- @param #table stock Table holding all assets in stock of the warehouse. Each entry is of type @{#WAREHOUSE.Assetitem}.
+--- @param #string descriptor Descriptor describing the filtered assets.
+--- @param attribute Value of the descriptor.
+--- @param #number nmax (Optional) Maximum number of items that will be returned. Default nmax=nil is all matching items are returned.
+--- @param #boolean mobile (Optional) If true, filter only mobile assets.
+--- @return #table Filtered stock items table.
+--- @return #number Total number of (requested) assets available.
+--- @return #boolean If true, enough assets are available.
 function WAREHOUSE:_FilterStock(stock, descriptor, attribute, nmax, mobile)
 
   -- Default all.
@@ -8372,10 +8372,10 @@ function WAREHOUSE:_FilterStock(stock, descriptor, attribute, nmax, mobile)
 end
 
 --- Check if a group has a generalized attribute.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group MOOSE group object.
--- @param #WAREHOUSE.Attribute attribute Attribute to check.
--- @return #boolean True if group has the specified attribute.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Group#GROUP group MOOSE group object.
+--- @param #WAREHOUSE.Attribute attribute Attribute to check.
+--- @return #boolean True if group has the specified attribute.
 function WAREHOUSE:_HasAttribute(group, attribute)
 
   if group then
@@ -8388,9 +8388,9 @@ end
 
 --- Get the generalized attribute of a group.
 -- Note that for a heterogenious group, the attribute is determined from the attribute of the first unit!
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group MOOSE group object.
--- @return #WAREHOUSE.Attribute Generalized attribute of the group.
+--- @param #WAREHOUSE self
+--- @param Wrapper.Group#GROUP group MOOSE group object.
+--- @return #WAREHOUSE.Attribute Generalized attribute of the group.
 function WAREHOUSE:_GetAttribute(group)
 
   -- Default
@@ -8499,12 +8499,12 @@ function WAREHOUSE:_GetAttribute(group)
 end
 
 --- Size of the bounding box of a DCS object derived from the DCS descriptor table. If boundinb box is nil, a size of zero is returned.
--- @param #WAREHOUSE self
--- @param DCS#Object DCSobject The DCS object for which the size is needed.
--- @return #number Max size of object in meters (length (x) or width (z) components not including height (y)).
--- @return #number Length (x component) of size.
--- @return #number Height (y component) of size.
--- @return #number Width (z component) of size.
+--- @param #WAREHOUSE self
+--- @param DCS#Object DCSobject The DCS object for which the size is needed.
+--- @return #number Max size of object in meters (length (x) or width (z) components not including height (y)).
+--- @return #number Length (x component) of size.
+--- @return #number Height (y component) of size.
+--- @return #number Width (z component) of size.
 function WAREHOUSE:_GetObjectSize(DCSobject)
   local DCSdesc=DCSobject:getDesc()
   if DCSdesc.box then
@@ -8517,9 +8517,9 @@ function WAREHOUSE:_GetObjectSize(DCSobject)
 end
 
 --- Returns the number of assets for each generalized attribute.
--- @param #WAREHOUSE self
--- @param #table stock The stock of the warehouse.
--- @return #table Data table holding the numbers, i.e. data[attibute]=n.
+--- @param #WAREHOUSE self
+--- @param #table stock The stock of the warehouse.
+--- @return #table Data table holding the numbers, i.e. data[attibute]=n.
 function WAREHOUSE:GetStockInfo(stock)
 
   local _data={}
@@ -8540,8 +8540,8 @@ function WAREHOUSE:GetStockInfo(stock)
 end
 
 --- Delete an asset item from stock.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE.Assetitem stockitem Asset item to delete from stock table.
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE.Assetitem stockitem Asset item to delete from stock table.
 function WAREHOUSE:_DeleteStockItem(stockitem)
   for i=1,#self.stock do
     local item=self.stock[i] --#WAREHOUSE.Assetitem
@@ -8553,9 +8553,9 @@ function WAREHOUSE:_DeleteStockItem(stockitem)
 end
 
 --- Delete item from queue.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE.Queueitem qitem Item of queue to be removed.
--- @param #table queue The queue from which the item should be deleted.
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE.Queueitem qitem Item of queue to be removed.
+--- @param #table queue The queue from which the item should be deleted.
 function WAREHOUSE:_DeleteQueueItem(qitem, queue)
   self:F({qitem=qitem, queue=queue})
 
@@ -8570,9 +8570,9 @@ function WAREHOUSE:_DeleteQueueItem(qitem, queue)
 end
 
 --- Delete item from queue.
--- @param #WAREHOUSE self
--- @param #number qitemID ID of queue item to be removed.
--- @param #table queue The queue from which the item should be deleted.
+--- @param #WAREHOUSE self
+--- @param #number qitemID ID of queue item to be removed.
+--- @param #table queue The queue from which the item should be deleted.
 function WAREHOUSE:_DeleteQueueItemByID(qitemID, queue)
 
   for i=1,#queue do
@@ -8586,7 +8586,7 @@ function WAREHOUSE:_DeleteQueueItemByID(qitemID, queue)
 end
 
 --- Sort requests queue wrt prio and request uid.
--- @param #WAREHOUSE self
+--- @param #WAREHOUSE self
 function WAREHOUSE:_SortQueue()
   self:F3()
   -- Sort.
@@ -8597,7 +8597,7 @@ function WAREHOUSE:_SortQueue()
 end
 
 --- Checks fuel on all pening assets.
--- @param #WAREHOUSE self
+--- @param #WAREHOUSE self
 function WAREHOUSE:_CheckFuel()
 
   for i,qitem in ipairs(self.pending) do
@@ -8666,9 +8666,9 @@ end
 
 
 --- Prints the queue to DCS.log file.
--- @param #WAREHOUSE self
--- @param #table queue Queue to print.
--- @param #string name Name of the queue for info reasons.
+--- @param #WAREHOUSE self
+--- @param #table queue Queue to print.
+--- @param #string name Name of the queue for info reasons.
 function WAREHOUSE:_PrintQueue(queue, name)
 
   if self.verbosity>=2 then
@@ -8740,7 +8740,7 @@ function WAREHOUSE:_PrintQueue(queue, name)
 end
 
 --- Display status of warehouse.
--- @param #WAREHOUSE self
+--- @param #WAREHOUSE self
 function WAREHOUSE:_DisplayStatus()
   if self.verbosity>=3 then
     local text=string.format("\n------------------------------------------------------\n")
@@ -8758,9 +8758,9 @@ function WAREHOUSE:_DisplayStatus()
 end
 
 --- Get text about warehouse stock.
--- @param #WAREHOUSE self
--- @param #boolean messagetoall If true, send message to all.
--- @return #string Text about warehouse stock
+--- @param #WAREHOUSE self
+--- @param #boolean messagetoall If true, send message to all.
+--- @return #string Text about warehouse stock
 function WAREHOUSE:_GetStockAssetsText(messagetoall)
 
   -- Get assets in stock.
@@ -8788,8 +8788,8 @@ end
 
 --- Create or update mark text at warehouse, which is displayed in F10 map showing how many assets of each type are in stock.
 -- Only the coalition of the warehouse owner is able to see it.
--- @param #WAREHOUSE self
--- @return #string Text about warehouse stock
+--- @param #WAREHOUSE self
+--- @return #string Text about warehouse stock
 function WAREHOUSE:_UpdateWarehouseMarkText()
 
   if self.markerOn then
@@ -8840,8 +8840,8 @@ function WAREHOUSE:_UpdateWarehouseMarkText()
 end
 
 --- Display stock items of warehouse.
--- @param #WAREHOUSE self
--- @param #table stock Table holding all assets in stock of the warehouse. Each entry is of type @{#WAREHOUSE.Assetitem}.
+--- @param #WAREHOUSE self
+--- @param #table stock Table holding all assets in stock of the warehouse. Each entry is of type @{#WAREHOUSE.Assetitem}.
 function WAREHOUSE:_DisplayStockItems(stock)
 
   local text=self.lid..string.format("Warehouse %s stock assets:", self.alias)
@@ -8867,8 +8867,8 @@ function WAREHOUSE:_DisplayStockItems(stock)
 end
 
 --- Fireworks!
--- @param #WAREHOUSE self
--- @param Core.Point#COORDINATE coord
+--- @param #WAREHOUSE self
+--- @param Core.Point#COORDINATE coord
 function WAREHOUSE:_Fireworks(coord)
 
   -- Place.
@@ -8882,9 +8882,9 @@ function WAREHOUSE:_Fireworks(coord)
 end
 
 --- Info Message. Message send to coalition if reports or debug mode activated (and duration > 0). Text self:I(text) added to DCS.log file.
--- @param #WAREHOUSE self
--- @param #string text The text of the error message.
--- @param #number duration Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
+--- @param #WAREHOUSE self
+--- @param #string text The text of the error message.
+--- @param #number duration Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
 function WAREHOUSE:_InfoMessage(text, duration)
   duration=duration or 20
   if duration>0 and self.Debug or self.Report then
@@ -8895,9 +8895,9 @@ end
 
 
 --- Debug message. Message send to all if debug mode is activated (and duration > 0). Text self:T(text) added to DCS.log file.
--- @param #WAREHOUSE self
--- @param #string text The text of the error message.
--- @param #number duration Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
+--- @param #WAREHOUSE self
+--- @param #string text The text of the error message.
+--- @param #number duration Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
 function WAREHOUSE:_DebugMessage(text, duration)
   duration=duration or 20
   if self.Debug and duration>0 then
@@ -8907,9 +8907,9 @@ function WAREHOUSE:_DebugMessage(text, duration)
 end
 
 --- Error message. Message send to all (if duration > 0). Text self:E(text) added to DCS.log file.
--- @param #WAREHOUSE self
--- @param #string text The text of the error message.
--- @param #number duration Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
+--- @param #WAREHOUSE self
+--- @param #string text The text of the error message.
+--- @param #number duration Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
 function WAREHOUSE:_ErrorMessage(text, duration)
   duration=duration or 20
   if duration>0 then
@@ -8920,14 +8920,14 @@ end
 
 
 --- Calculate the maximum height an aircraft can reach for the given parameters.
--- @param #WAREHOUSE self
--- @param #number D Total distance in meters from Departure to holding point at destination.
--- @param #number alphaC Climb angle in rad.
--- @param #number alphaD Descent angle in rad.
--- @param #number Hdep AGL altitude of departure point.
--- @param #number Hdest AGL altitude of destination point.
--- @param #number Deltahhold Relative altitude of holding point above destination.
--- @return #number Maximum height the aircraft can reach.
+--- @param #WAREHOUSE self
+--- @param #number D Total distance in meters from Departure to holding point at destination.
+--- @param #number alphaC Climb angle in rad.
+--- @param #number alphaD Descent angle in rad.
+--- @param #number Hdep AGL altitude of departure point.
+--- @param #number Hdest AGL altitude of destination point.
+--- @param #number Deltahhold Relative altitude of holding point above destination.
+--- @return #number Maximum height the aircraft can reach.
 function WAREHOUSE:_GetMaxHeight(D, alphaC, alphaD, Hdep, Hdest, Deltahhold)
 
   local Hhold=Hdest+Deltahhold
@@ -8994,12 +8994,12 @@ end
 
 
 --- Make a flight plan from a departure to a destination airport.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE.Assetitem asset
--- @param Wrapper.Airbase#AIRBASE departure Departure airbase.
--- @param Wrapper.Airbase#AIRBASE destination Destination airbase.
--- @return #table Table of flightplan waypoints.
--- @return #table Table of flightplan coordinates.
+--- @param #WAREHOUSE self
+--- @param #WAREHOUSE.Assetitem asset
+--- @param Wrapper.Airbase#AIRBASE departure Departure airbase.
+--- @param Wrapper.Airbase#AIRBASE destination Destination airbase.
+--- @return #table Table of flightplan waypoints.
+--- @return #table Table of flightplan coordinates.
 function WAREHOUSE:_GetFlightplan(asset, departure, destination)
 
   -- Parameters in SI units (m/s, m).

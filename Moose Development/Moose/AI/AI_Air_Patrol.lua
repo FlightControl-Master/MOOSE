@@ -91,22 +91,22 @@
 --  
 -- ===
 -- 
--- @field #AI_AIR_PATROL
+--- @field #AI_AIR_PATROL
 AI_AIR_PATROL = {
   ClassName = "AI_AIR_PATROL",
 }
 
 --- Creates a new AI_AIR_PATROL object
--- @param #AI_AIR_PATROL self
--- @param AI.AI_Air#AI_AIR AI_Air The AI_AIR FSM.
--- @param Wrapper.Group#GROUP AIGroup The AI group.
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
--- @param DCS#Altitude PatrolFloorAltitude (optional, default = 1000m ) The lowest altitude in meters where to execute the patrol.
--- @param DCS#Altitude PatrolCeilingAltitude (optional, default = 1500m ) The highest altitude in meters where to execute the patrol.
--- @param DCS#Speed  PatrolMinSpeed (optional, default = 50% of max speed) The minimum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#Speed  PatrolMaxSpeed (optional, default = 75% of max speed) The maximum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO.
--- @return #AI_AIR_PATROL
+--- @param #AI_AIR_PATROL self
+--- @param AI.AI_Air#AI_AIR AI_Air The AI_AIR FSM.
+--- @param Wrapper.Group#GROUP AIGroup The AI group.
+--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
+--- @param DCS#Altitude PatrolFloorAltitude (optional, default = 1000m ) The lowest altitude in meters where to execute the patrol.
+--- @param DCS#Altitude PatrolCeilingAltitude (optional, default = 1500m ) The highest altitude in meters where to execute the patrol.
+--- @param DCS#Speed  PatrolMinSpeed (optional, default = 50% of max speed) The minimum speed of the @{Wrapper.Group} in km/h.
+--- @param DCS#Speed  PatrolMaxSpeed (optional, default = 75% of max speed) The maximum speed of the @{Wrapper.Group} in km/h.
+--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO.
+--- @return #AI_AIR_PATROL
 function AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
   -- Inherits from BASE
@@ -203,9 +203,9 @@ function AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, Pa
 end
 
 --- Set the Engage Range when the AI will engage with airborne enemies. 
--- @param #AI_AIR_PATROL self
--- @param #number EngageRange The Engage Range.
--- @return #AI_AIR_PATROL self
+--- @param #AI_AIR_PATROL self
+--- @param #number EngageRange The Engage Range.
+--- @return #AI_AIR_PATROL self
 function AI_AIR_PATROL:SetEngageRange( EngageRange )
   self:F2()
 
@@ -217,15 +217,15 @@ function AI_AIR_PATROL:SetEngageRange( EngageRange )
 end
 
 --- Set race track parameters. CAP flights will perform race track patterns rather than randomly patrolling the zone.
--- @param #AI_AIR_PATROL self
--- @param #number LegMin Min Length of the race track leg in meters. Default 10,000 m.
--- @param #number LegMax Max length of the race track leg in meters. Default 15,000 m.
--- @param #number HeadingMin Min heading of the race track in degrees. Default 0 deg, i.e. from South to North.
--- @param #number HeadingMax Max heading of the race track in degrees. Default 180 deg, i.e. from South to North.
--- @param #number DurationMin (Optional) Min duration before switching the orbit position. Default is keep same orbit until RTB or engage.
--- @param #number DurationMax (Optional) Max duration before switching the orbit position. Default is keep same orbit until RTB or engage.
--- @param #table CapCoordinates Table of coordinates of first race track point. Second point is determined by leg length and heading. 
--- @return #AI_AIR_PATROL self
+--- @param #AI_AIR_PATROL self
+--- @param #number LegMin Min Length of the race track leg in meters. Default 10,000 m.
+--- @param #number LegMax Max length of the race track leg in meters. Default 15,000 m.
+--- @param #number HeadingMin Min heading of the race track in degrees. Default 0 deg, i.e. from South to North.
+--- @param #number HeadingMax Max heading of the race track in degrees. Default 180 deg, i.e. from South to North.
+--- @param #number DurationMin (Optional) Min duration before switching the orbit position. Default is keep same orbit until RTB or engage.
+--- @param #number DurationMax (Optional) Max duration before switching the orbit position. Default is keep same orbit until RTB or engage.
+--- @param #table CapCoordinates Table of coordinates of first race track point. Second point is determined by leg length and heading. 
+--- @return #AI_AIR_PATROL self
 function AI_AIR_PATROL:SetRaceTrackPattern(LegMin, LegMax, HeadingMin, HeadingMax, DurationMin, DurationMax, CapCoordinates)
 
   self.racetrack=true
@@ -245,12 +245,12 @@ function AI_AIR_PATROL:SetRaceTrackPattern(LegMin, LegMax, HeadingMin, HeadingMa
 end
 
 --- Defines a new patrol route using the @{AI.AI_Patrol#AI_PATROL_ZONE} parameters and settings.
--- @param #AI_AIR_PATROL self
--- @return #AI_AIR_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_AIR_PATROL self
+--- @return #AI_AIR_PATROL self
+--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_AIR_PATROL:onafterPatrol( AIPatrol, From, Event, To )
   self:F2()
 
@@ -268,8 +268,8 @@ end
 
 --- This static method is called from the route path within the last task at the last waypoint of the AIPatrol.
 -- Note that this method is required, as triggers the next route when patrolling for the AIPatrol.
--- @param Wrapper.Group#GROUP AIPatrol The AI group.
--- @param #AI_AIR_PATROL Fsm The FSM.
+--- @param Wrapper.Group#GROUP AIPatrol The AI group.
+--- @param #AI_AIR_PATROL Fsm The FSM.
 function AI_AIR_PATROL.___PatrolRoute( AIPatrol, Fsm )
 
   AIPatrol:F( { "AI_AIR_PATROL.___PatrolRoute:", AIPatrol:GetName() } )
@@ -281,11 +281,11 @@ function AI_AIR_PATROL.___PatrolRoute( AIPatrol, Fsm )
 end
 
 --- Defines a new patrol route using the @{AI.AI_Patrol#AI_PATROL_ZONE} parameters and settings.
--- @param #AI_AIR_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The Group managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_AIR_PATROL self
+--- @param Wrapper.Group#GROUP AIPatrol The Group managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_AIR_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
 
   self:F2()
@@ -381,8 +381,8 @@ function AI_AIR_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
 end
 
 --- Resumes the AIPatrol
--- @param Wrapper.Group#GROUP AIPatrol
--- @param Core.Fsm#FSM Fsm
+--- @param Wrapper.Group#GROUP AIPatrol
+--- @param Core.Fsm#FSM Fsm
 function AI_AIR_PATROL.Resume( AIPatrol, Fsm )
 
   AIPatrol:F( { "AI_AIR_PATROL.Resume:", AIPatrol:GetName() } )

@@ -16,16 +16,16 @@
 -- @image MOOSE_Core.JPG
 
 --- Marker class.
--- @type MARKER
--- @field #string ClassName Name of the class.
--- @field #boolean Debug Debug mode. Messages to all about status.
--- @field #string lid Class id string for output to DCS log file.
--- @field #number mid Marker ID.
--- @field Core.Point#COORDINATE coordinate Coordinate of the mark.
--- @field #string text Text displayed in the mark panel.
--- @field #string message Message displayed when the mark is added.
--- @field #boolean readonly Marker is read-only.
--- @field #number coalition Coalition to which the marker is displayed.
+--- @type MARKER
+--- @field #string ClassName Name of the class.
+--- @field #boolean Debug Debug mode. Messages to all about status.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #number mid Marker ID.
+--- @field Core.Point#COORDINATE coordinate Coordinate of the mark.
+--- @field #string text Text displayed in the mark panel.
+--- @field #string message Message displayed when the mark is added.
+--- @field #boolean readonly Marker is read-only.
+--- @field #number coalition Coalition to which the marker is displayed.
 -- @extends Core.Fsm#FSM
 
 --- Just because...
@@ -132,7 +132,7 @@
 --
 -- # Examples
 --
--- @field #MARKER
+--- @field #MARKER
 MARKER = {
   ClassName = "MARKER",
   Debug = false,
@@ -149,7 +149,7 @@ MARKER = {
 _MARKERID = 0
 
 --- Marker class version.
--- @field #string version
+--- @field #string version
 MARKER.version="0.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -166,10 +166,10 @@ MARKER.version="0.1.1"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new MARKER class object.
--- @param #MARKER self
--- @param Core.Point#COORDINATE Coordinate Coordinate where to place the marker.
--- @param #string Text Text displayed on the mark panel.
--- @return #MARKER self
+--- @param #MARKER self
+--- @param Core.Point#COORDINATE Coordinate Coordinate where to place the marker.
+--- @param #string Text Text displayed on the mark panel.
+--- @return #MARKER self
 function MARKER:New( Coordinate, Text )
 
   -- Inherit everything from FSM class.
@@ -308,8 +308,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Marker is readonly. Text cannot be changed and marker cannot be removed.
--- @param #MARKER self
--- @return #MARKER self
+--- @param #MARKER self
+--- @return #MARKER self
 function MARKER:ReadOnly()
 
   self.readonly = true
@@ -318,8 +318,8 @@ function MARKER:ReadOnly()
 end
 
 --- Marker is readonly. Text cannot be changed and marker cannot be removed.
--- @param #MARKER self
--- @return #MARKER self
+--- @param #MARKER self
+--- @return #MARKER self
 function MARKER:ReadWrite()
 
   self.readonly=false
@@ -328,9 +328,9 @@ function MARKER:ReadWrite()
 end
 
 --- Set message that is displayed on screen if the marker is added.
--- @param #MARKER self
--- @param #string Text Message displayed when the marker is added.
--- @return #MARKER self
+--- @param #MARKER self
+--- @param #string Text Message displayed when the marker is added.
+--- @return #MARKER self
 function MARKER:Message( Text )
 
   self.message = Text or ""
@@ -339,9 +339,9 @@ function MARKER:Message( Text )
 end
 
 --- Place marker visible for everyone.
--- @param #MARKER self
--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
--- @return #MARKER self
+--- @param #MARKER self
+--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
+--- @return #MARKER self
 function MARKER:ToAll( Delay )
 
   if Delay and Delay > 0 then
@@ -371,10 +371,10 @@ function MARKER:ToAll( Delay )
 end
 
 --- Place marker visible for a specific coalition only.
--- @param #MARKER self
--- @param #number Coalition Coalition 1=Red, 2=Blue, 0=Neutral. See `coalition.side.RED`.
--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
--- @return #MARKER self
+--- @param #MARKER self
+--- @param #number Coalition Coalition 1=Red, 2=Blue, 0=Neutral. See `coalition.side.RED`.
+--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
+--- @return #MARKER self
 function MARKER:ToCoalition( Coalition, Delay )
 
   if Delay and Delay > 0 then
@@ -405,37 +405,37 @@ function MARKER:ToCoalition( Coalition, Delay )
 end
 
 --- Place marker visible for the blue coalition only.
--- @param #MARKER self
--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
--- @return #MARKER self
+--- @param #MARKER self
+--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
+--- @return #MARKER self
 function MARKER:ToBlue( Delay )
   self:ToCoalition( coalition.side.BLUE, Delay )
   return self
 end
 
 --- Place marker visible for the blue coalition only.
--- @param #MARKER self
--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
--- @return #MARKER self
+--- @param #MARKER self
+--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
+--- @return #MARKER self
 function MARKER:ToRed( Delay )
   self:ToCoalition( coalition.side.RED, Delay )
   return self
 end
 
 --- Place marker visible for the neutral coalition only.
--- @param #MARKER self
--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
--- @return #MARKER self
+--- @param #MARKER self
+--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
+--- @return #MARKER self
 function MARKER:ToNeutral( Delay )
   self:ToCoalition( coalition.side.NEUTRAL, Delay )
   return self
 end
 
 --- Place marker visible for a specific group only.
--- @param #MARKER self
--- @param Wrapper.Group#GROUP Group The group to which the marker is displayed.
--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
--- @return #MARKER self
+--- @param #MARKER self
+--- @param Wrapper.Group#GROUP Group The group to which the marker is displayed.
+--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
+--- @return #MARKER self
 function MARKER:ToGroup( Group, Delay )
 
   if Delay and Delay > 0 then
@@ -478,10 +478,10 @@ function MARKER:ToGroup( Group, Delay )
 end
 
 --- Update the text displayed on the mark panel.
--- @param #MARKER self
--- @param #string Text Updated text.
--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
--- @return #MARKER self
+--- @param #MARKER self
+--- @param #string Text Updated text.
+--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
+--- @return #MARKER self
 function MARKER:UpdateText( Text, Delay )
 
   if Delay and Delay > 0 then
@@ -500,10 +500,10 @@ function MARKER:UpdateText( Text, Delay )
 end
 
 --- Update the coordinate where the marker is displayed.
--- @param #MARKER self
--- @param Core.Point#COORDINATE Coordinate The new coordinate.
--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
--- @return #MARKER self
+--- @param #MARKER self
+--- @param Core.Point#COORDINATE Coordinate The new coordinate.
+--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
+--- @return #MARKER self
 function MARKER:UpdateCoordinate( Coordinate, Delay )
 
   if Delay and Delay > 0 then
@@ -522,9 +522,9 @@ function MARKER:UpdateCoordinate( Coordinate, Delay )
 end
 
 --- Refresh the marker.
--- @param #MARKER self
--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
--- @return #MARKER self
+--- @param #MARKER self
+--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
+--- @return #MARKER self
 function MARKER:Refresh( Delay )
 
   if Delay and Delay > 0 then
@@ -555,9 +555,9 @@ function MARKER:Refresh( Delay )
 end
 
 --- Remove a marker.
--- @param #MARKER self
--- @param #number Delay (Optional) Delay in seconds, before the marker is removed.
--- @return #MARKER self
+--- @param #MARKER self
+--- @param #number Delay (Optional) Delay in seconds, before the marker is removed.
+--- @return #MARKER self
 function MARKER:Remove( Delay )
 
   if Delay and Delay > 0 then
@@ -577,38 +577,38 @@ function MARKER:Remove( Delay )
 end
 
 --- Get position of the marker.
--- @param #MARKER self
--- @return Core.Point#COORDINATE The coordinate of the marker.
+--- @param #MARKER self
+--- @return Core.Point#COORDINATE The coordinate of the marker.
 function MARKER:GetCoordinate()
   return self.coordinate
 end
 
 --- Get text that is displayed in the marker panel.
--- @param #MARKER self
--- @return #string Marker text.
+--- @param #MARKER self
+--- @return #string Marker text.
 function MARKER:GetText()
   return self.text
 end
 
 --- Set text that is displayed in the marker panel. Note this does not show the marker.
--- @param #MARKER self
--- @param #string Text Marker text. Default is an empty string "".
--- @return #MARKER self
+--- @param #MARKER self
+--- @param #string Text Marker text. Default is an empty string "".
+--- @return #MARKER self
 function MARKER:SetText( Text )
   self.text = Text and tostring( Text ) or ""
   return self
 end
 
 --- Check if marker is currently visible on the F10 map.
--- @param #MARKER self
--- @return #boolean True if the marker is currently visible.
+--- @param #MARKER self
+--- @return #boolean True if the marker is currently visible.
 function MARKER:IsVisible()
   return self:Is( "Visible" )
 end
 
 --- Check if marker is currently invisible on the F10 map.
--- @param #MARKER self
--- @return
+--- @param #MARKER self
+--- @return
 function MARKER:IsInvisible()
   return self:Is( "Invisible" )
 end
@@ -618,8 +618,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Event function when a MARKER is added.
--- @param #MARKER self
--- @param Core.Event#EVENTDATA EventData
+--- @param #MARKER self
+--- @param Core.Event#EVENTDATA EventData
 function MARKER:OnEventMarkAdded( EventData )
 
   if EventData and EventData.MarkID then
@@ -641,8 +641,8 @@ function MARKER:OnEventMarkAdded( EventData )
 end
 
 --- Event function when a MARKER is removed.
--- @param #MARKER self
--- @param Core.Event#EVENTDATA EventData
+--- @param #MARKER self
+--- @param Core.Event#EVENTDATA EventData
 function MARKER:OnEventMarkRemoved( EventData )
 
   if EventData and EventData.MarkID then
@@ -666,8 +666,8 @@ function MARKER:OnEventMarkRemoved( EventData )
 end
 
 --- Event function when a MARKER changed.
--- @param #MARKER self
--- @param Core.Event#EVENTDATA EventData
+--- @param #MARKER self
+--- @param Core.Event#EVENTDATA EventData
 function MARKER:OnEventMarkChange( EventData )
 
   if EventData and EventData.MarkID then
@@ -699,11 +699,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "Added" event.
--- @param #MARKER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Event#EVENTDATA EventData Event data table.
+--- @param #MARKER self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Event#EVENTDATA EventData Event data table.
 function MARKER:onafterAdded( From, Event, To, EventData )
 
   -- Debug info.
@@ -719,11 +719,11 @@ function MARKER:onafterAdded( From, Event, To, EventData )
 end
 
 --- On after "Removed" event.
--- @param #MARKER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Event#EVENTDATA EventData Event data table.
+--- @param #MARKER self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Event#EVENTDATA EventData Event data table.
 function MARKER:onafterRemoved( From, Event, To, EventData )
 
   -- Debug info.
@@ -739,11 +739,11 @@ function MARKER:onafterRemoved( From, Event, To, EventData )
 end
 
 --- On after "Changed" event.
--- @param #MARKER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Event#EVENTDATA EventData Event data table.
+--- @param #MARKER self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Event#EVENTDATA EventData Event data table.
 function MARKER:onafterChanged( From, Event, To, EventData )
 
   -- Debug info.
@@ -759,11 +759,11 @@ function MARKER:onafterChanged( From, Event, To, EventData )
 end
 
 --- On after "TextUpdate" event.
--- @param #MARKER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string Text The updated text, displayed in the mark panel.
+--- @param #MARKER self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #string Text The updated text, displayed in the mark panel.
 function MARKER:onafterTextUpdate( From, Event, To, Text )
 
   self:T( self.lid .. string.format( "New Marker Text:\n%s", Text ) )
@@ -771,11 +771,11 @@ function MARKER:onafterTextUpdate( From, Event, To, Text )
 end
 
 --- On after "CoordUpdate" event.
--- @param #MARKER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Point#COORDINATE Coordinate The updated coordinates.
+--- @param #MARKER self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Point#COORDINATE Coordinate The updated coordinates.
 function MARKER:onafterCoordUpdate( From, Event, To, Coordinate )
 
   self:T( self.lid .. string.format( "New Marker Coordinate in LL DMS: %s", Coordinate:ToStringLLDMS() ) )

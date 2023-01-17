@@ -22,35 +22,35 @@
 
 
 --- AIRWING class.
--- @type AIRWING
--- @field #string ClassName Name of the class.
--- @field #number verbose Verbosity of output.
--- @field #string lid Class id string for output to DCS log file.
--- @field #table menu Table of menu items.
--- @field #table squadrons Table of squadrons.
--- @field #table missionqueue Mission queue table.
--- @field #table payloads Playloads for specific aircraft and mission types.
--- @field #number payloadcounter Running index of payloads.
--- @field Core.Set#SET_ZONE zonesetCAP Set of CAP zones.
--- @field Core.Set#SET_ZONE zonesetTANKER Set of TANKER zones.
--- @field Core.Set#SET_ZONE zonesetAWACS Set of AWACS zones.
--- @field #number nflightsCAP Number of CAP flights constantly in the air.
--- @field #number nflightsAWACS Number of AWACS flights constantly in the air.
--- @field #number nflightsTANKERboom Number of TANKER flights with BOOM constantly in the air.
--- @field #number nflightsTANKERprobe Number of TANKER flights with PROBE constantly in the air.
--- @field #number nflightsRescueHelo Number of Rescue helo flights constantly in the air.
--- @field #table pointsCAP Table of CAP points.
--- @field #table pointsTANKER Table of Tanker points.
--- @field #table pointsAWACS Table of AWACS points.
--- @field #boolean markpoints Display markers on the F10 map.
--- @field Ops.Airboss#AIRBOSS airboss Airboss attached to this wing.
+--- @type AIRWING
+--- @field #string ClassName Name of the class.
+--- @field #number verbose Verbosity of output.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #table menu Table of menu items.
+--- @field #table squadrons Table of squadrons.
+--- @field #table missionqueue Mission queue table.
+--- @field #table payloads Playloads for specific aircraft and mission types.
+--- @field #number payloadcounter Running index of payloads.
+--- @field Core.Set#SET_ZONE zonesetCAP Set of CAP zones.
+--- @field Core.Set#SET_ZONE zonesetTANKER Set of TANKER zones.
+--- @field Core.Set#SET_ZONE zonesetAWACS Set of AWACS zones.
+--- @field #number nflightsCAP Number of CAP flights constantly in the air.
+--- @field #number nflightsAWACS Number of AWACS flights constantly in the air.
+--- @field #number nflightsTANKERboom Number of TANKER flights with BOOM constantly in the air.
+--- @field #number nflightsTANKERprobe Number of TANKER flights with PROBE constantly in the air.
+--- @field #number nflightsRescueHelo Number of Rescue helo flights constantly in the air.
+--- @field #table pointsCAP Table of CAP points.
+--- @field #table pointsTANKER Table of Tanker points.
+--- @field #table pointsAWACS Table of AWACS points.
+--- @field #boolean markpoints Display markers on the F10 map.
+--- @field Ops.Airboss#AIRBOSS airboss Airboss attached to this wing.
 --
--- @field Ops.RescueHelo#RESCUEHELO rescuehelo The rescue helo.
--- @field Ops.RecoveryTanker#RECOVERYTANKER recoverytanker The recoverytanker.
+--- @field Ops.RescueHelo#RESCUEHELO rescuehelo The rescue helo.
+--- @field Ops.RecoveryTanker#RECOVERYTANKER recoverytanker The recoverytanker.
 -- 
--- @field #string takeoffType Take of type.
--- @field #boolean despawnAfterLanding Aircraft are despawned after landing.
--- @field #boolean despawnAfterHolding Aircraft are despawned after holding.
+--- @field #string takeoffType Take of type.
+--- @field #boolean despawnAfterLanding Aircraft are despawned after landing.
+--- @field #boolean despawnAfterHolding Aircraft are despawned after holding.
 --
 -- @extends Ops.Legion#LEGION
 
@@ -112,7 +112,7 @@
 -- started.
 --
 --
--- @field #AIRWING
+--- @field #AIRWING
 AIRWING = {
   ClassName      = "AIRWING",
   verbose        =     0,
@@ -127,54 +127,54 @@ AIRWING = {
 }
 
 --- Payload data.
--- @type AIRWING.Payload
--- @field #number uid Unique payload ID.
--- @field #string unitname Name of the unit this pylon was extracted from.
--- @field #string aircrafttype Type of aircraft, which can use this payload.
--- @field #table capabilities Mission types and performances for which this payload can be used.
--- @field #table pylons Pylon data extracted for the unit template.
--- @field #number navail Number of available payloads of this type.
--- @field #boolean unlimited If true, this payload is unlimited and does not get consumed.
+--- @type AIRWING.Payload
+--- @field #number uid Unique payload ID.
+--- @field #string unitname Name of the unit this pylon was extracted from.
+--- @field #string aircrafttype Type of aircraft, which can use this payload.
+--- @field #table capabilities Mission types and performances for which this payload can be used.
+--- @field #table pylons Pylon data extracted for the unit template.
+--- @field #number navail Number of available payloads of this type.
+--- @field #boolean unlimited If true, this payload is unlimited and does not get consumed.
 
 --- Patrol data.
--- @type AIRWING.PatrolData
--- @field #string type Type name.
--- @field Core.Point#COORDINATE coord Patrol coordinate.
--- @field #number altitude Altitude in feet.
--- @field #number heading Heading in degrees.
--- @field #number leg Leg length in NM.
--- @field #number speed Speed in knots.
--- @field #number refuelsystem Refueling system type: `0=Unit.RefuelingSystem.BOOM_AND_RECEPTACLE`, `1=Unit.RefuelingSystem.PROBE_AND_DROGUE`.
--- @field #number noccupied Number of flights on this patrol point.
--- @field Wrapper.Marker#MARKER marker F10 marker.
+--- @type AIRWING.PatrolData
+--- @field #string type Type name.
+--- @field Core.Point#COORDINATE coord Patrol coordinate.
+--- @field #number altitude Altitude in feet.
+--- @field #number heading Heading in degrees.
+--- @field #number leg Leg length in NM.
+--- @field #number speed Speed in knots.
+--- @field #number refuelsystem Refueling system type: `0=Unit.RefuelingSystem.BOOM_AND_RECEPTACLE`, `1=Unit.RefuelingSystem.PROBE_AND_DROGUE`.
+--- @field #number noccupied Number of flights on this patrol point.
+--- @field Wrapper.Marker#MARKER marker F10 marker.
 
 --- Patrol zone.
--- @type AIRWING.PatrolZone
--- @field Core.Zone#ZONE zone Zone.
--- @field #number altitude Altitude in feet.
--- @field #number heading Heading in degrees.
--- @field #number leg Leg length in NM.
--- @field #number speed Speed in knots.
--- @field Ops.Auftrag#AUFTRAG mission Mission assigned.
--- @field Wrapper.Marker#MARKER marker F10 marker.
+--- @type AIRWING.PatrolZone
+--- @field Core.Zone#ZONE zone Zone.
+--- @field #number altitude Altitude in feet.
+--- @field #number heading Heading in degrees.
+--- @field #number leg Leg length in NM.
+--- @field #number speed Speed in knots.
+--- @field Ops.Auftrag#AUFTRAG mission Mission assigned.
+--- @field Wrapper.Marker#MARKER marker F10 marker.
 
 --- AWACS zone.
--- @type AIRWING.AwacsZone
--- @field Core.Zone#ZONE zone Zone.
--- @field #number altitude Altitude in feet.
--- @field #number heading Heading in degrees.
--- @field #number leg Leg length in NM.
--- @field #number speed Speed in knots.
--- @field Ops.Auftrag#AUFTRAG mission Mission assigned.
--- @field Wrapper.Marker#MARKER marker F10 marker.
+--- @type AIRWING.AwacsZone
+--- @field Core.Zone#ZONE zone Zone.
+--- @field #number altitude Altitude in feet.
+--- @field #number heading Heading in degrees.
+--- @field #number leg Leg length in NM.
+--- @field #number speed Speed in knots.
+--- @field Ops.Auftrag#AUFTRAG mission Mission assigned.
+--- @field Wrapper.Marker#MARKER marker F10 marker.
 
 --- Tanker zone.
--- @type AIRWING.TankerZone
--- @field #number refuelsystem Refueling system type: `0=Unit.RefuelingSystem.BOOM_AND_RECEPTACLE`, `1=Unit.RefuelingSystem.PROBE_AND_DROGUE`.
+--- @type AIRWING.TankerZone
+--- @field #number refuelsystem Refueling system type: `0=Unit.RefuelingSystem.BOOM_AND_RECEPTACLE`, `1=Unit.RefuelingSystem.PROBE_AND_DROGUE`.
 -- @extends #AIRWING.PatrolZone
 
 --- AIRWING class version.
--- @field #string version
+--- @field #string version
 AIRWING.version="0.9.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -198,10 +198,10 @@ AIRWING.version="0.9.2"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new AIRWING class object for a specific aircraft carrier unit.
--- @param #AIRWING self
--- @param #string warehousename Name of the warehouse static or unit object representing the warehouse.
--- @param #string airwingname Name of the air wing, e.g. "AIRWING-8".
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param #string warehousename Name of the warehouse static or unit object representing the warehouse.
+--- @param #string airwingname Name of the air wing, e.g. "AIRWING-8".
+--- @return #AIRWING self
 function AIRWING:New(warehousename, airwingname)
 
   -- Inherit everything from LEGION class.
@@ -282,9 +282,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Add a squadron to the air wing.
--- @param #AIRWING self
--- @param Ops.Squadron#SQUADRON Squadron The squadron object.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param Ops.Squadron#SQUADRON Squadron The squadron object.
+--- @return #AIRWING self
 function AIRWING:AddSquadron(Squadron)
 
   -- Add squadron to airwing.
@@ -315,12 +315,12 @@ function AIRWING:AddSquadron(Squadron)
 end
 
 --- Add a **new** payload to the airwing resources.
--- @param #AIRWING self
--- @param Wrapper.Unit#UNIT Unit The unit, the payload is extracted from. Can also be given as *#string* name of the unit.
--- @param #number Npayloads Number of payloads to add to the airwing resources. Default 99 (which should be enough for most scenarios). Set to -1 for unlimited.
--- @param #table MissionTypes Mission types this payload can be used for.
--- @param #number Performance A number between 0 (worst) and 100 (best) to describe the performance of the loadout for the given mission types. Default is 50.
--- @return #AIRWING.Payload The payload table or nil if the unit does not exist.
+--- @param #AIRWING self
+--- @param Wrapper.Unit#UNIT Unit The unit, the payload is extracted from. Can also be given as *#string* name of the unit.
+--- @param #number Npayloads Number of payloads to add to the airwing resources. Default 99 (which should be enough for most scenarios). Set to -1 for unlimited.
+--- @param #table MissionTypes Mission types this payload can be used for.
+--- @param #number Performance A number between 0 (worst) and 100 (best) to describe the performance of the loadout for the given mission types. Default is 50.
+--- @return #AIRWING.Payload The payload table or nil if the unit does not exist.
 function AIRWING:NewPayload(Unit, Npayloads, MissionTypes,  Performance)
 
   -- Default performance.
@@ -400,10 +400,10 @@ function AIRWING:NewPayload(Unit, Npayloads, MissionTypes,  Performance)
 end
 
 --- Set the number of payload available.
--- @param #AIRWING self
--- @param #AIRWING.Payload Payload The payload table created by the `:NewPayload` function.
--- @param #number Navailable Number of payloads available to the airwing resources. Default 99 (which should be enough for most scenarios). Set to -1 for unlimited.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param #AIRWING.Payload Payload The payload table created by the `:NewPayload` function.
+--- @param #number Navailable Number of payloads available to the airwing resources. Default 99 (which should be enough for most scenarios). Set to -1 for unlimited.
+--- @return #AIRWING self
 function AIRWING:SetPayloadAmount(Payload, Navailable)
 
   Navailable=Navailable or 99
@@ -423,10 +423,10 @@ function AIRWING:SetPayloadAmount(Payload, Navailable)
 end
 
 --- Increase or decrease the amount of available payloads. Unlimited playloads first need to be set to a limited number with the `SetPayloadAmount` function.
--- @param #AIRWING self
--- @param #AIRWING.Payload Payload The payload table created by the `:NewPayload` function.
--- @param #number N Number of payloads to be added. Use negative number to decrease amount. Default 1.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param #AIRWING.Payload Payload The payload table created by the `:NewPayload` function.
+--- @param #number N Number of payloads to be added. Use negative number to decrease amount. Default 1.
+--- @return #AIRWING self
 function AIRWING:IncreasePayloadAmount(Payload, N)
 
   N=N or 1
@@ -445,27 +445,27 @@ function AIRWING:IncreasePayloadAmount(Payload, N)
 end
 
 --- Get amount of payloads available for a given playload.
--- @param #AIRWING self
--- @param #AIRWING.Payload Payload The payload table created by the `:NewPayload` function.
--- @return #number Number of payloads available. Unlimited payloads will return -1.
+--- @param #AIRWING self
+--- @param #AIRWING.Payload Payload The payload table created by the `:NewPayload` function.
+--- @return #number Number of payloads available. Unlimited payloads will return -1.
 function AIRWING:GetPayloadAmount(Payload)
   return Payload.navail
 end
 
 --- Get capabilities of a given playload.
--- @param #AIRWING self
--- @param #AIRWING.Payload Payload The payload data table.
--- @return #table Capabilities.
+--- @param #AIRWING self
+--- @param #AIRWING.Payload Payload The payload data table.
+--- @return #table Capabilities.
 function AIRWING:GetPayloadCapabilities(Payload)
   return Payload.capabilities
 end
 
 --- Add a mission capability to an existing payload.
--- @param #AIRWING self
--- @param #AIRWING.Payload Payload The payload table to which the capability should be added.
--- @param #table MissionTypes Mission types to be added.
--- @param #number Performance A number between 0 (worst) and 100 (best) to describe the performance of the loadout for the given mission types. Default is 50.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param #AIRWING.Payload Payload The payload table to which the capability should be added.
+--- @param #table MissionTypes Mission types to be added.
+--- @param #number Performance A number between 0 (worst) and 100 (best) to describe the performance of the loadout for the given mission types. Default is 50.
+--- @return #AIRWING self
 function AIRWING:AddPayloadCapability(Payload, MissionTypes, Performance)
 
   -- Ensure Missiontypes is a table.
@@ -491,11 +491,11 @@ end
 
 --- Fetch a payload from the airwing resources for a given unit and mission type.
 -- The payload with the highest priority is preferred.
--- @param #AIRWING self
--- @param #string UnitType The type of the unit.
--- @param #string MissionType The mission type.
--- @param #table Payloads Specific payloads only to be considered.
--- @return #AIRWING.Payload Payload table or *nil*.
+--- @param #AIRWING self
+--- @param #string UnitType The type of the unit.
+--- @param #string MissionType The mission type.
+--- @param #table Payloads Specific payloads only to be considered.
+--- @return #AIRWING.Payload Payload table or *nil*.
 function AIRWING:FetchPayloadFromStock(UnitType, MissionType, Payloads)
 
   -- Quick check if we have any payloads.
@@ -603,8 +603,8 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType, Payloads)
 end
 
 --- Return payload from asset back to stock.
--- @param #AIRWING self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The squadron asset.
+--- @param #AIRWING self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The squadron asset.
 function AIRWING:ReturnPayloadFromAsset(asset)
 
   local payload=asset.payload
@@ -627,10 +627,10 @@ end
 
 
 --- Add asset group(s) to squadron.
--- @param #AIRWING self
--- @param Ops.Squadron#SQUADRON Squadron The squadron object.
--- @param #number Nassets Number of asset groups to add.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param Ops.Squadron#SQUADRON Squadron The squadron object.
+--- @param #number Nassets Number of asset groups to add.
+--- @return #AIRWING self
 function AIRWING:AddAssetToSquadron(Squadron, Nassets)
 
   if Squadron then
@@ -659,25 +659,25 @@ function AIRWING:AddAssetToSquadron(Squadron, Nassets)
 end
 
 --- Get squadron by name.
--- @param #AIRWING self
--- @param #string SquadronName Name of the squadron, e.g. "VFA-37".
--- @return Ops.Squadron#SQUADRON The squadron object.
+--- @param #AIRWING self
+--- @param #string SquadronName Name of the squadron, e.g. "VFA-37".
+--- @return Ops.Squadron#SQUADRON The squadron object.
 function AIRWING:GetSquadron(SquadronName)
   local squad=self:_GetCohort(SquadronName)
   return squad
 end
 
 --- Get squadron of an asset.
--- @param #AIRWING self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The squadron asset.
--- @return Ops.Squadron#SQUADRON The squadron object.
+--- @param #AIRWING self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The squadron asset.
+--- @return Ops.Squadron#SQUADRON The squadron object.
 function AIRWING:GetSquadronOfAsset(Asset)
   return self:GetSquadron(Asset.squadname)
 end
 
 --- Remove asset from squadron.
--- @param #AIRWING self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The squad asset.
+--- @param #AIRWING self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The squad asset.
 function AIRWING:RemoveAssetFromSquadron(Asset)
   local squad=self:GetSquadronOfAsset(Asset)
   if squad then
@@ -686,27 +686,27 @@ function AIRWING:RemoveAssetFromSquadron(Asset)
 end
 
 --- Set number of CAP flights constantly carried out.
--- @param #AIRWING self
--- @param #number n Number of flights. Default 1.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param #number n Number of flights. Default 1.
+--- @return #AIRWING self
 function AIRWING:SetNumberCAP(n)
   self.nflightsCAP=n or 1
   return self
 end
 
 --- Set number of TANKER flights with Boom constantly in the air.
--- @param #AIRWING self
--- @param #number Nboom Number of flights. Default 1.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param #number Nboom Number of flights. Default 1.
+--- @return #AIRWING self
 function AIRWING:SetNumberTankerBoom(Nboom)
   self.nflightsTANKERboom=Nboom or 1
   return self
 end
 
 --- Set markers on the map for Patrol Points.
--- @param #AIRWING self
--- @param #boolean onoff Set to true to switch markers on.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param #boolean onoff Set to true to switch markers on.
+--- @return #AIRWING self
 function AIRWING:ShowPatrolPointMarkers(onoff)
   if onoff then
     self.markpoints = true
@@ -717,36 +717,36 @@ function AIRWING:ShowPatrolPointMarkers(onoff)
 end
 
 --- Set number of TANKER flights with Probe constantly in the air.
--- @param #AIRWING self
--- @param #number Nprobe Number of flights. Default 1.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param #number Nprobe Number of flights. Default 1.
+--- @return #AIRWING self
 function AIRWING:SetNumberTankerProbe(Nprobe)
   self.nflightsTANKERprobe=Nprobe or 1
   return self
 end
 
 --- Set number of AWACS flights constantly in the air.
--- @param #AIRWING self
--- @param #number n Number of flights. Default 1.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param #number n Number of flights. Default 1.
+--- @return #AIRWING self
 function AIRWING:SetNumberAWACS(n)
   self.nflightsAWACS=n or 1
   return self
 end
 
 --- Set number of Rescue helo flights constantly in the air.
--- @param #AIRWING self
--- @param #number n Number of flights. Default 1.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param #number n Number of flights. Default 1.
+--- @return #AIRWING self
 function AIRWING:SetNumberRescuehelo(n)
   self.nflightsRescueHelo=n or 1
   return self
 end
 
 ---
--- @param #AIRWING self
--- @param #AIRWING.PatrolData point Patrol point table.
--- @return #string Marker text.
+--- @param #AIRWING self
+--- @param #AIRWING.PatrolData point Patrol point table.
+--- @return #string Marker text.
 function AIRWING:_PatrolPointMarkerText(point)
 
   local text=string.format("%s Occupied=%d, \nheading=%03d, leg=%d NM, alt=%d ft, speed=%d kts",
@@ -756,7 +756,7 @@ function AIRWING:_PatrolPointMarkerText(point)
 end
 
 --- Update marker of the patrol point.
--- @param #AIRWING.PatrolData point Patrol point table.
+--- @param #AIRWING.PatrolData point Patrol point table.
 function AIRWING:UpdatePatrolPointMarker(point)
   if self.markpoints then -- sometimes there's a direct call from #OPSGROUP
     local text=string.format("%s Occupied=%d\nheading=%03d, leg=%d NM, alt=%d ft, speed=%d kts",
@@ -768,15 +768,15 @@ end
 
 
 --- Create a new generic patrol point.
--- @param #AIRWING self
--- @param #string Type Patrol point type, e.g. "CAP" or "AWACS". Default "Unknown".
--- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point. Default 10-15 NM away from the location of the airwing.
--- @param #number Altitude Orbit altitude in feet. Default random between Angels 10 and 20.
--- @param #number Heading Heading in degrees. Default random (0, 360] degrees.
--- @param #number LegLength Length of race-track orbit in NM. Default 15 NM.
--- @param #number Speed Orbit speed in knots. Default 350 knots.
--- @param #number RefuelSystem Refueling system: 0=Boom, 1=Probe. Default nil=any.
--- @return #AIRWING.PatrolData Patrol point table.
+--- @param #AIRWING self
+--- @param #string Type Patrol point type, e.g. "CAP" or "AWACS". Default "Unknown".
+--- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point. Default 10-15 NM away from the location of the airwing.
+--- @param #number Altitude Orbit altitude in feet. Default random between Angels 10 and 20.
+--- @param #number Heading Heading in degrees. Default random (0, 360] degrees.
+--- @param #number LegLength Length of race-track orbit in NM. Default 15 NM.
+--- @param #number Speed Orbit speed in knots. Default 350 knots.
+--- @param #number RefuelSystem Refueling system: 0=Boom, 1=Probe. Default nil=any.
+--- @return #AIRWING.PatrolData Patrol point table.
 function AIRWING:NewPatrolPoint(Type, Coordinate, Altitude, Speed, Heading, LegLength, RefuelSystem)
 
   -- Check if a zone was passed instead of a coordinate.
@@ -803,13 +803,13 @@ function AIRWING:NewPatrolPoint(Type, Coordinate, Altitude, Speed, Heading, LegL
 end
 
 --- Add a patrol Point for CAP missions.
--- @param #AIRWING self
--- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
--- @param #number Altitude Orbit altitude in feet.
--- @param #number Speed Orbit speed in knots.
--- @param #number Heading Heading in degrees.
--- @param #number LegLength Length of race-track orbit in NM.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
+--- @param #number Altitude Orbit altitude in feet.
+--- @param #number Speed Orbit speed in knots.
+--- @param #number Heading Heading in degrees.
+--- @param #number LegLength Length of race-track orbit in NM.
+--- @return #AIRWING self
 function AIRWING:AddPatrolPointCAP(Coordinate, Altitude, Speed, Heading, LegLength)
 
   local patrolpoint=self:NewPatrolPoint("CAP", Coordinate, Altitude, Speed, Heading, LegLength)
@@ -820,14 +820,14 @@ function AIRWING:AddPatrolPointCAP(Coordinate, Altitude, Speed, Heading, LegLeng
 end
 
 --- Add a patrol Point for TANKER missions.
--- @param #AIRWING self
--- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
--- @param #number Altitude Orbit altitude in feet.
--- @param #number Speed Orbit speed in knots.
--- @param #number Heading Heading in degrees.
--- @param #number LegLength Length of race-track orbit in NM.
--- @param #number RefuelSystem Set refueling system of tanker: 0=boom, 1=probe. Default any (=nil).
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
+--- @param #number Altitude Orbit altitude in feet.
+--- @param #number Speed Orbit speed in knots.
+--- @param #number Heading Heading in degrees.
+--- @param #number LegLength Length of race-track orbit in NM.
+--- @param #number RefuelSystem Set refueling system of tanker: 0=boom, 1=probe. Default any (=nil).
+--- @return #AIRWING self
 function AIRWING:AddPatrolPointTANKER(Coordinate, Altitude, Speed, Heading, LegLength, RefuelSystem)
 
   local patrolpoint=self:NewPatrolPoint("Tanker", Coordinate, Altitude, Speed, Heading, LegLength, RefuelSystem)
@@ -838,13 +838,13 @@ function AIRWING:AddPatrolPointTANKER(Coordinate, Altitude, Speed, Heading, LegL
 end
 
 --- Add a patrol Point for AWACS missions.
--- @param #AIRWING self
--- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
--- @param #number Altitude Orbit altitude in feet.
--- @param #number Speed Orbit speed in knots.
--- @param #number Heading Heading in degrees.
--- @param #number LegLength Length of race-track orbit in NM.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
+--- @param #number Altitude Orbit altitude in feet.
+--- @param #number Speed Orbit speed in knots.
+--- @param #number Heading Heading in degrees.
+--- @param #number LegLength Length of race-track orbit in NM.
+--- @return #AIRWING self
 function AIRWING:AddPatrolPointAWACS(Coordinate, Altitude, Speed, Heading, LegLength)
 
   local patrolpoint=self:NewPatrolPoint("AWACS", Coordinate, Altitude, Speed, Heading, LegLength)
@@ -855,9 +855,9 @@ function AIRWING:AddPatrolPointAWACS(Coordinate, Altitude, Speed, Heading, LegLe
 end
 
 --- Set airboss of this wing. He/she will take care that no missions are launched if the carrier is recovering.
--- @param #AIRWING self
--- @param Ops.Airboss#AIRBOSS airboss The AIRBOSS object.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param Ops.Airboss#AIRBOSS airboss The AIRBOSS object.
+--- @return #AIRWING self
 function AIRWING:SetAirboss(airboss)
   self.airboss=airboss
   return self
@@ -865,9 +865,9 @@ end
 
 --- Set takeoff type. All assets of this airwing will be spawned with this takeoff type.
 -- Spawning on runways is not supported.
--- @param #AIRWING self
--- @param #string TakeoffType Take off type: "Cold" (default) or "Hot" with engines on or "Air" for spawning in air.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param #string TakeoffType Take off type: "Cold" (default) or "Hot" with engines on or "Air" for spawning in air.
+--- @return #AIRWING self
 function AIRWING:SetTakeoffType(TakeoffType)
   TakeoffType=TakeoffType or "Cold"
   if TakeoffType:lower()=="hot" then
@@ -883,24 +883,24 @@ function AIRWING:SetTakeoffType(TakeoffType)
 end
 
 --- Set takeoff type cold (default). All assets of this squadron will be spawned with engines off (cold).
--- @param #AIRWING self
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @return #AIRWING self
 function AIRWING:SetTakeoffCold()
   self:SetTakeoffType("Cold")
   return self
 end
 
 --- Set takeoff type hot. All assets of this squadron will be spawned with engines on (hot).
--- @param #AIRWING self
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @return #AIRWING self
 function AIRWING:SetTakeoffHot()
   self:SetTakeoffType("Hot")
   return self
 end
 
 --- Set takeoff type air. All assets of this squadron will be spawned in air above the airbase.
--- @param #AIRWING self
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @return #AIRWING self
 function AIRWING:SetTakeoffAir()
   self:SetTakeoffType("Air")
   return self
@@ -908,9 +908,9 @@ end
 
 --- Set despawn after landing. Aircraft will be despawned after the landing event.
 -- Can help to avoid DCS AI taxiing issues.
--- @param #AIRWING self
--- @param #boolean Switch If `true` (default), activate despawn after landing.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param #boolean Switch If `true` (default), activate despawn after landing.
+--- @return #AIRWING self
 function AIRWING:SetDespawnAfterLanding(Switch)
   if Switch then
     self.despawnAfterLanding=Switch
@@ -922,9 +922,9 @@ end
 
 --- Set despawn after holding. Aircraft will be despawned when they arrive at their holding position at the airbase.
 -- Can help to avoid DCS AI taxiing issues.
--- @param #AIRWING self
--- @param #boolean Switch If `true` (default), activate despawn after landing.
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param #boolean Switch If `true` (default), activate despawn after landing.
+--- @return #AIRWING self
 function AIRWING:SetDespawnAfterHolding(Switch)
   if Switch then
     self.despawnAfterHolding=Switch
@@ -939,7 +939,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Start AIRWING FSM.
--- @param #AIRWING self
+--- @param #AIRWING self
 function AIRWING:onafterStart(From, Event, To)
 
   -- Start parent Warehouse.
@@ -951,7 +951,7 @@ function AIRWING:onafterStart(From, Event, To)
 end
 
 --- Update status.
--- @param #AIRWING self
+--- @param #AIRWING self
 function AIRWING:onafterStatus(From, Event, To)
 
   -- Status of parent Warehouse.
@@ -1044,10 +1044,10 @@ function AIRWING:onafterStatus(From, Event, To)
 end
 
 --- Get patrol data.
--- @param #AIRWING self
--- @param #table PatrolPoints Patrol data points.
--- @param #number RefuelSystem If provided, only return points with the specific refueling system.
--- @return #AIRWING.PatrolData Patrol point data table.
+--- @param #AIRWING self
+--- @param #table PatrolPoints Patrol data points.
+--- @param #number RefuelSystem If provided, only return points with the specific refueling system.
+--- @return #AIRWING.PatrolData Patrol point data table.
 function AIRWING:_GetPatrolData(PatrolPoints, RefuelSystem)
 
   -- Sort wrt lowest number of flights on this point.
@@ -1074,8 +1074,8 @@ function AIRWING:_GetPatrolData(PatrolPoints, RefuelSystem)
 end
 
 --- Check how many CAP missions are assigned and add number of missing missions.
--- @param #AIRWING self
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @return #AIRWING self
 function AIRWING:CheckCAP()
 
   local Ncap=0 --self:CountMissionsInQueue({AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT})
@@ -1112,8 +1112,8 @@ function AIRWING:CheckCAP()
 end
 
 --- Check how many TANKER missions are assigned and add number of missing missions.
--- @param #AIRWING self
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @return #AIRWING self
 function AIRWING:CheckTANKER()
 
   local Nboom=0
@@ -1176,8 +1176,8 @@ function AIRWING:CheckTANKER()
 end
 
 --- Check how many AWACS missions are assigned and add number of missing missions.
--- @param #AIRWING self
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @return #AIRWING self
 function AIRWING:CheckAWACS()
 
   local N=0 --self:CountMissionsInQueue({AUFTRAG.Type.AWACS})
@@ -1215,8 +1215,8 @@ function AIRWING:CheckAWACS()
 end
 
 --- Check how many Rescue helos are currently in the air.
--- @param #AIRWING self
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @return #AIRWING self
 function AIRWING:CheckRescuhelo()
 
   local N=self:CountMissionsInQueue({AUFTRAG.Type.RESCUEHELO})
@@ -1237,9 +1237,9 @@ function AIRWING:CheckRescuhelo()
 end
 
 --- Check how many AWACS missions are assigned and add number of missing missions.
--- @param #AIRWING self
--- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flightgroup.
--- @return Functional.Warehouse#WAREHOUSE.Assetitem The tanker asset.
+--- @param #AIRWING self
+--- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flightgroup.
+--- @return Functional.Warehouse#WAREHOUSE.Assetitem The tanker asset.
 function AIRWING:GetTankerForFlight(flightgroup)
 
   local tankers=self:GetAssetsOnMission(AUFTRAG.Type.TANKER)
@@ -1281,9 +1281,9 @@ function AIRWING:GetTankerForFlight(flightgroup)
 end
 
 --- Add the ability to call back an Ops.Awacs#AWACS object with an FSM call "FlightOnMission(FlightGroup, Mission)".
--- @param #AIRWING self
--- @param Ops.Awacs#AWACS ConnectecdAwacs
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @param Ops.Awacs#AWACS ConnectecdAwacs
+--- @return #AIRWING self
 function AIRWING:SetUsingOpsAwacs(ConnectecdAwacs)
   self:I(self.lid .. "Added AWACS Object: "..ConnectecdAwacs:GetName() or "unknown")
   self.UseConnectedOpsAwacs = true
@@ -1292,8 +1292,8 @@ function AIRWING:SetUsingOpsAwacs(ConnectecdAwacs)
 end
 
 --- Remove the ability to call back an Ops.Awacs#AWACS object with an FSM call "FlightOnMission(FlightGroup, Mission)".
--- @param #AIRWING self
--- @return #AIRWING self
+--- @param #AIRWING self
+--- @return #AIRWING self
 function AIRWING:RemoveUsingOpsAwacs()
   self:I(self.lid .. "Reomve AWACS Object: "..self.ConnectedOpsAwacs:GetName() or "unknown")
   self.UseConnectedOpsAwacs = false
@@ -1305,12 +1305,12 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "FlightOnMission".
--- @param #AIRWING self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup Ops flight group on mission.
--- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
+--- @param #AIRWING self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup Ops flight group on mission.
+--- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
 function AIRWING:onafterFlightOnMission(From, Event, To, FlightGroup, Mission)
   -- Debug info.
   self:T(self.lid..string.format("Group %s on %s mission %s", FlightGroup:GetName(), Mission:GetType(), Mission:GetName()))
@@ -1324,11 +1324,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Count payloads in stock.
--- @param #AIRWING self
--- @param #table MissionTypes Types on mission to be checked. Default *all* possible types `AUFTRAG.Type`.
--- @param #table UnitTypes Types of units.
--- @param #table Payloads Specific payloads to be counted only.
--- @return #number Count of available payloads in stock.
+--- @param #AIRWING self
+--- @param #table MissionTypes Types on mission to be checked. Default *all* possible types `AUFTRAG.Type`.
+--- @param #table UnitTypes Types of units.
+--- @param #table Payloads Specific payloads to be counted only.
+--- @return #number Count of available payloads in stock.
 function AIRWING:CountPayloadsInStock(MissionTypes, UnitTypes, Payloads)
 
   if MissionTypes then
@@ -1400,10 +1400,10 @@ function AIRWING:CountPayloadsInStock(MissionTypes, UnitTypes, Payloads)
 end
 
 --- Get payload performance for a given type of misson type.
--- @param #AIRWING self
--- @param #AIRWING.Payload Payload The payload table.
--- @param #string MissionType Type of mission.
--- @return #number Performance or -1.
+--- @param #AIRWING self
+--- @param #AIRWING.Payload Payload The payload table.
+--- @param #string MissionType Type of mission.
+--- @return #number Performance or -1.
 function AIRWING:GetPayloadPeformance(Payload, MissionType)
 
   if Payload then
@@ -1423,9 +1423,9 @@ function AIRWING:GetPayloadPeformance(Payload, MissionType)
 end
 
 --- Get mission types a payload can perform.
--- @param #AIRWING self
--- @param #AIRWING.Payload Payload The payload table.
--- @return #table Mission types.
+--- @param #AIRWING self
+--- @param #AIRWING.Payload Payload The payload table.
+--- @return #table Mission types.
 function AIRWING:GetPayloadMissionTypes(Payload)
 
   local missiontypes={}

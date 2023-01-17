@@ -208,7 +208,7 @@
 --
 -- ===
 --
--- @field #SETTINGS
+--- @field #SETTINGS
 SETTINGS = {
   ClassName = "SETTINGS",
   ShowPlayerMenu = true,
@@ -219,10 +219,10 @@ SETTINGS = {
 SETTINGS.__Enum = {}
 
 --- @type SETTINGS.__Enum.Era
--- @field #number WWII
--- @field #number Korea
--- @field #number Cold
--- @field #number Modern
+--- @field #number WWII
+--- @field #number Korea
+--- @field #number Cold
+--- @field #number Modern
 SETTINGS.__Enum.Era = {
   WWII = 1,
   Korea = 2,

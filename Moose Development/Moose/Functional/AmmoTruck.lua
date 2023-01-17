@@ -21,25 +21,25 @@
 
 -------------------------------------------------------------------------
 --- **AMMOTRUCK** class, extends Core.FSM#FSM
--- @type AMMOTRUCK
--- @field #string ClassName Class Name
--- @field #string lid Lid for log entries
--- @field #string version Version string
--- @field #string alias Alias name
--- @field #boolean debug Debug flag
--- @field #table trucklist List of (alive) #AMMOTRUCK.data trucks
--- @field #table targetlist  List of (alive) #AMMOTRUCK.data artillery
--- @field #number coalition Coalition this is for
--- @field Core.Set#SET_GROUP truckset SET of trucks
--- @field Core.Set#SET_GROUP targetset SET of artillery
--- @field #table remunitionqueue List of (alive) #AMMOTRUCK.data artillery to be reloaded
--- @field #table waitingtargets  List of (alive) #AMMOTRUCK.data artillery waiting
--- @field #number ammothreshold Threshold (min) ammo before sending a truck
--- @field #number remunidist Max distance trucks will go
--- @field #number monitor Monitor interval in seconds
--- @field #number unloadtime Unload time in seconds
--- @field #number waitingtime Max waiting time in seconds
--- @field #boolean routeonroad Route truck on road if true (default)
+--- @type AMMOTRUCK
+--- @field #string ClassName Class Name
+--- @field #string lid Lid for log entries
+--- @field #string version Version string
+--- @field #string alias Alias name
+--- @field #boolean debug Debug flag
+--- @field #table trucklist List of (alive) #AMMOTRUCK.data trucks
+--- @field #table targetlist  List of (alive) #AMMOTRUCK.data artillery
+--- @field #number coalition Coalition this is for
+--- @field Core.Set#SET_GROUP truckset SET of trucks
+--- @field Core.Set#SET_GROUP targetset SET of artillery
+--- @field #table remunitionqueue List of (alive) #AMMOTRUCK.data artillery to be reloaded
+--- @field #table waitingtargets  List of (alive) #AMMOTRUCK.data artillery waiting
+--- @field #number ammothreshold Threshold (min) ammo before sending a truck
+--- @field #number remunidist Max distance trucks will go
+--- @field #number monitor Monitor interval in seconds
+--- @field #number unloadtime Unload time in seconds
+--- @field #number waitingtime Max waiting time in seconds
+--- @field #boolean routeonroad Route truck on road if true (default)
 -- @extends Core.FSM#FSM
 
 --- *Amateurs talk about tactics, but professionals study logistics.* - General Robert H Barrow, USMC
@@ -109,7 +109,7 @@
 --              ...
 --            end 
 --                        
--- @field #AMMOTRUCK
+--- @field #AMMOTRUCK
 AMMOTRUCK = {
   ClassName = "AMMOTRUCK",
   lid = "",
@@ -132,7 +132,7 @@ AMMOTRUCK = {
 }
 
 ---
--- @type AMMOTRUCK.State
+--- @type AMMOTRUCK.State
 AMMOTRUCK.State = {
   IDLE = "idle",
   DRIVING = "driving",
@@ -158,13 +158,13 @@ AMMOTRUCK.State = {
 --@field Core.Point#COORDINATE targetcoordinate
 
 ---
--- @param #AMMOTRUCK self
--- @param Core.Set#SET_GROUP Truckset Set of truck groups
--- @param Core.Set#SET_GROUP Targetset Set of artillery groups
--- @param #number Coalition Coalition
--- @param #string Alias Alias Name
--- @param Core.Zone#ZONE Homezone Home, return zone for trucks 
--- @return #AMMOTRUCK self
+--- @param #AMMOTRUCK self
+--- @param Core.Set#SET_GROUP Truckset Set of truck groups
+--- @param Core.Set#SET_GROUP Targetset Set of artillery groups
+--- @param #number Coalition Coalition
+--- @param #string Alias Alias Name
+--- @param Core.Zone#ZONE Homezone Home, return zone for trucks 
+--- @return #AMMOTRUCK self
 -- @usage
 -- Define a set of trucks and a set of artillery:  
 --            local truckset = SET_GROUP:New():FilterCoalitions("blue"):FilterActive(true):FilterCategoryGround():FilterPrefixes("Ammo Truck"):FilterStart()
@@ -267,9 +267,9 @@ function AMMOTRUCK:New(Truckset,Targetset,Coalition,Alias,Homezone)
 end
 
 ---
--- @param #AMMOTRUCK self
--- @param #table dataset table of #AMMOTRUCK.data entries
--- @return #AMMOTRUCK self 
+--- @param #AMMOTRUCK self
+--- @param #table dataset table of #AMMOTRUCK.data entries
+--- @return #AMMOTRUCK self 
 function AMMOTRUCK:CheckDrivingTrucks(dataset)
   self:T(self.lid .. " CheckDrivingTrucks")
   local data = dataset 
@@ -317,18 +317,18 @@ function AMMOTRUCK:CheckDrivingTrucks(dataset)
 end
 
 ---
--- @param #AMMOTRUCK self
--- @param Wrapper.Group#GROUP Group
--- @return #AMMOTRUCK self 
+--- @param #AMMOTRUCK self
+--- @param Wrapper.Group#GROUP Group
+--- @return #AMMOTRUCK self 
 function AMMOTRUCK:GetAmmoStatus(Group)
   local ammotot, shells, rockets, bombs, missiles, narti = Group:GetAmmunition()
   return rockets+missiles+narti
 end
 
 ---
--- @param #AMMOTRUCK self
--- @param #table dataset table of #AMMOTRUCK.data entries
--- @return #AMMOTRUCK self 
+--- @param #AMMOTRUCK self
+--- @param #table dataset table of #AMMOTRUCK.data entries
+--- @return #AMMOTRUCK self 
 function AMMOTRUCK:CheckWaitingTargets(dataset)
   self:T(self.lid .. " CheckWaitingTargets")
   local data = dataset 
@@ -350,9 +350,9 @@ function AMMOTRUCK:CheckWaitingTargets(dataset)
 end
 
 ---
--- @param #AMMOTRUCK self
--- @param #table dataset table of #AMMOTRUCK.data entries
--- @return #AMMOTRUCK self 
+--- @param #AMMOTRUCK self
+--- @param #table dataset table of #AMMOTRUCK.data entries
+--- @return #AMMOTRUCK self 
 function AMMOTRUCK:CheckReturningTrucks(dataset)
   self:T(self.lid .. " CheckReturningTrucks")
   local data = dataset
@@ -376,9 +376,9 @@ function AMMOTRUCK:CheckReturningTrucks(dataset)
 end
 
 ---
--- @param #AMMOTRUCK self
--- @param #string name Artillery group name to find
--- @return #AMMOTRUCK.data Data
+--- @param #AMMOTRUCK self
+--- @param #string name Artillery group name to find
+--- @return #AMMOTRUCK.data Data
 function AMMOTRUCK:FindTarget(name)
   self:T(self.lid .. " FindTarget")
   local data = nil
@@ -394,9 +394,9 @@ function AMMOTRUCK:FindTarget(name)
 end
 
 ---
--- @param #AMMOTRUCK self
--- @param #string name Truck group name to find
--- @return #AMMOTRUCK.data Data
+--- @param #AMMOTRUCK self
+--- @param #string name Truck group name to find
+--- @return #AMMOTRUCK.data Data
 function AMMOTRUCK:FindTruck(name)
   self:T(self.lid .. " FindTruck")
   local data = nil
@@ -412,9 +412,9 @@ function AMMOTRUCK:FindTruck(name)
 end
 
 ---
--- @param #AMMOTRUCK self
--- @param #table dataset table of #AMMOTRUCK.data entries
--- @return #AMMOTRUCK self 
+--- @param #AMMOTRUCK self
+--- @param #table dataset table of #AMMOTRUCK.data entries
+--- @return #AMMOTRUCK self 
 function AMMOTRUCK:CheckArrivedTrucks(dataset)
   self:T(self.lid .. " CheckArrivedTrucks")
   local data = dataset 
@@ -435,9 +435,9 @@ function AMMOTRUCK:CheckArrivedTrucks(dataset)
 end
 
 ---
--- @param #AMMOTRUCK self
--- @param #table dataset table of #AMMOTRUCK.data entries
--- @return #AMMOTRUCK self 
+--- @param #AMMOTRUCK self
+--- @param #table dataset table of #AMMOTRUCK.data entries
+--- @return #AMMOTRUCK self 
 function AMMOTRUCK:CheckUnloadingTrucks(dataset)
   self:T(self.lid .. " CheckUnloadingTrucks")
   local data = dataset 
@@ -463,8 +463,8 @@ function AMMOTRUCK:CheckUnloadingTrucks(dataset)
 end
 
 ---
--- @param #AMMOTRUCK self
--- @return #AMMOTRUCK self 
+--- @param #AMMOTRUCK self
+--- @return #AMMOTRUCK self 
 function AMMOTRUCK:CheckTargetsAlive()
   self:T(self.lid .. " CheckTargetsAlive")
   local arilist = self.targetlist
@@ -499,8 +499,8 @@ function AMMOTRUCK:CheckTargetsAlive()
 end
 
 ---
--- @param #AMMOTRUCK self
--- @return #AMMOTRUCK self 
+--- @param #AMMOTRUCK self
+--- @return #AMMOTRUCK self 
 function AMMOTRUCK:CheckTrucksAlive()
   self:T(self.lid .. " CheckTrucksAlive")
   local trucklist = self.trucklist
@@ -547,11 +547,11 @@ function AMMOTRUCK:CheckTrucksAlive()
 end
 
 ---
--- @param #AMMOTRUCK self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #AMMOTRUCK self 
+--- @param #AMMOTRUCK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @return #AMMOTRUCK self 
 function AMMOTRUCK:onafterStart(From, Event, To)
   self:T({From, Event, To})
   if ARMYGROUP and self.usearmygroup then
@@ -570,11 +570,11 @@ function AMMOTRUCK:onafterStart(From, Event, To)
 end
 
 ---
--- @param #AMMOTRUCK self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #AMMOTRUCK self 
+--- @param #AMMOTRUCK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @return #AMMOTRUCK self 
 function AMMOTRUCK:onafterMonitor(From, Event, To)
   self:T({From, Event, To})
   self:CheckTargetsAlive()
@@ -685,13 +685,13 @@ function AMMOTRUCK:onafterMonitor(From, Event, To)
 end
 
 ---
--- @param #AMMOTRUCK self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param #AMMOTRUCK.data Truckdata
--- @param #AMMOTRUCK.data Aridata
--- @return #AMMOTRUCK self 
+--- @param #AMMOTRUCK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param #AMMOTRUCK.data Truckdata
+--- @param #AMMOTRUCK.data Aridata
+--- @return #AMMOTRUCK self 
 function AMMOTRUCK:onafterRouteTruck(From, Event, To, Truckdata, Aridata)
   self:T({From, Event, To, Truckdata.name, Aridata.name})
   local truckdata = Truckdata -- #AMMOTRUCK.data
@@ -721,12 +721,12 @@ function AMMOTRUCK:onafterRouteTruck(From, Event, To, Truckdata, Aridata)
 end
 
 ---
--- @param #AMMOTRUCK self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param #AMMOTRUCK.data Truckdata
--- @return #AMMOTRUCK self 
+--- @param #AMMOTRUCK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param #AMMOTRUCK.data Truckdata
+--- @return #AMMOTRUCK self 
  function AMMOTRUCK:onafterTruckUnloading(From, Event, To, Truckdata)
    local m = MESSAGE:New("Truck "..Truckdata.name.." unloading!",15,"AmmoTruck"):ToCoalitionIf(self.coalition,self.debug)
    local truck = Truckdata -- Functional.AmmoTruck#AMMOTRUCK.data
@@ -753,12 +753,12 @@ end
  end 
 
 ---
--- @param #AMMOTRUCK self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param #AMMOTRUCK.data Truck
--- @return #AMMOTRUCK self 
+--- @param #AMMOTRUCK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param #AMMOTRUCK.data Truck
+--- @return #AMMOTRUCK self 
 function AMMOTRUCK:onafterTruckReturning(From, Event, To, Truck)
   self:T({From, Event, To, Truck.name})
   -- route home
@@ -781,11 +781,11 @@ function AMMOTRUCK:onafterTruckReturning(From, Event, To, Truck)
 end
 
 ---
--- @param #AMMOTRUCK self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #AMMOTRUCK self 
+--- @param #AMMOTRUCK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @return #AMMOTRUCK self 
 function AMMOTRUCK:onafterStop(From, Event, To)
   self:T({From, Event, To})
   return self

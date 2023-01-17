@@ -31,9 +31,9 @@
 -- @{Wrapper.Positionable#POSITIONABLE} that don't move, or move very slowly. Use @{#BEACON.RadioBeacon}() to set the beacon parameters and start the beacon.
 -- Use @{#BEACON.StopRadioBeacon}() to stop it.
 -- 
--- @type BEACON
--- @field #string ClassName Name of the class "BEACON".
--- @field Wrapper.Controllable#CONTROLLABLE Positionable The @{Wrapper.Controllable#CONTROLLABLE} that will receive radio capabilities.
+--- @type BEACON
+--- @field #string ClassName Name of the class "BEACON".
+--- @field Wrapper.Controllable#CONTROLLABLE Positionable The @{Wrapper.Controllable#CONTROLLABLE} that will receive radio capabilities.
 -- @extends Core.Base#BASE
 BEACON = {
   ClassName    = "BEACON",
@@ -42,28 +42,28 @@ BEACON = {
 }
 
 --- Beacon types supported by DCS. 
--- @type BEACON.Type
--- @field #number NULL
--- @field #number VOR
--- @field #number DME
--- @field #number VOR_DME
--- @field #number TACAN TACtical Air Navigation system.
--- @field #number VORTAC
--- @field #number RSBN
--- @field #number BROADCAST_STATION
--- @field #number HOMER
--- @field #number AIRPORT_HOMER
--- @field #number AIRPORT_HOMER_WITH_MARKER
--- @field #number ILS_FAR_HOMER
--- @field #number ILS_NEAR_HOMER
--- @field #number ILS_LOCALIZER
--- @field #number ILS_GLIDESLOPE
--- @field #number PRMG_LOCALIZER
--- @field #number PRMG_GLIDESLOPE
--- @field #number ICLS Same as ICLS glideslope.
--- @field #number ICLS_LOCALIZER
--- @field #number ICLS_GLIDESLOPE
--- @field #number NAUTICAL_HOMER
+--- @type BEACON.Type
+--- @field #number NULL
+--- @field #number VOR
+--- @field #number DME
+--- @field #number VOR_DME
+--- @field #number TACAN TACtical Air Navigation system.
+--- @field #number VORTAC
+--- @field #number RSBN
+--- @field #number BROADCAST_STATION
+--- @field #number HOMER
+--- @field #number AIRPORT_HOMER
+--- @field #number AIRPORT_HOMER_WITH_MARKER
+--- @field #number ILS_FAR_HOMER
+--- @field #number ILS_NEAR_HOMER
+--- @field #number ILS_LOCALIZER
+--- @field #number ILS_GLIDESLOPE
+--- @field #number PRMG_LOCALIZER
+--- @field #number PRMG_GLIDESLOPE
+--- @field #number ICLS Same as ICLS glideslope.
+--- @field #number ICLS_LOCALIZER
+--- @field #number ICLS_GLIDESLOPE
+--- @field #number NAUTICAL_HOMER
 BEACON.Type={
   NULL                      = 0, 
   VOR                       = 1,
@@ -89,24 +89,24 @@ BEACON.Type={
 }
 
 --- Beacon systems supported by DCS. https://wiki.hoggitworld.com/view/DCS_command_activateBeacon
--- @type BEACON.System
--- @field #number PAR_10 ?
--- @field #number RSBN_5 Russian VOR/DME system.
--- @field #number TACAN TACtical Air Navigation system on ground.
--- @field #number TACAN_TANKER_X TACtical Air Navigation system for tankers on X band.
--- @field #number TACAN_TANKER_Y TACtical Air Navigation system for tankers on Y band.
--- @field #number VOR Very High Frequency Omni-Directional Range
--- @field #number ILS_LOCALIZER ILS localizer
--- @field #number ILS_GLIDESLOPE ILS glide slope.
--- @field #number PRGM_LOCALIZER PRGM localizer.
--- @field #number PRGM_GLIDESLOPE PRGM glide slope.
--- @field #number BROADCAST_STATION Broadcast station.
--- @field #number VORTAC Radio-based navigational aid for aircraft pilots consisting of a co-located VHF omni-directional range (VOR) beacon and a tactical air navigation system (TACAN) beacon.
--- @field #number TACAN_AA_MODE_X TACtical Air Navigation for aircraft on X band.
--- @field #number TACAN_AA_MODE_Y TACtical Air Navigation for aircraft on Y band.
--- @field #number VORDME Radio beacon that combines a VHF omnidirectional range (VOR) with a distance measuring equipment (DME).
--- @field #number ICLS_LOCALIZER Carrier landing system.
--- @field #number ICLS_GLIDESLOPE Carrier landing system.
+--- @type BEACON.System
+--- @field #number PAR_10 ?
+--- @field #number RSBN_5 Russian VOR/DME system.
+--- @field #number TACAN TACtical Air Navigation system on ground.
+--- @field #number TACAN_TANKER_X TACtical Air Navigation system for tankers on X band.
+--- @field #number TACAN_TANKER_Y TACtical Air Navigation system for tankers on Y band.
+--- @field #number VOR Very High Frequency Omni-Directional Range
+--- @field #number ILS_LOCALIZER ILS localizer
+--- @field #number ILS_GLIDESLOPE ILS glide slope.
+--- @field #number PRGM_LOCALIZER PRGM localizer.
+--- @field #number PRGM_GLIDESLOPE PRGM glide slope.
+--- @field #number BROADCAST_STATION Broadcast station.
+--- @field #number VORTAC Radio-based navigational aid for aircraft pilots consisting of a co-located VHF omni-directional range (VOR) beacon and a tactical air navigation system (TACAN) beacon.
+--- @field #number TACAN_AA_MODE_X TACtical Air Navigation for aircraft on X band.
+--- @field #number TACAN_AA_MODE_Y TACtical Air Navigation for aircraft on Y band.
+--- @field #number VORDME Radio beacon that combines a VHF omnidirectional range (VOR) with a distance measuring equipment (DME).
+--- @field #number ICLS_LOCALIZER Carrier landing system.
+--- @field #number ICLS_GLIDESLOPE Carrier landing system.
 BEACON.System={
   PAR_10            = 1,
   RSBN_5            = 2,
@@ -129,9 +129,9 @@ BEACON.System={
 
 --- Create a new BEACON Object. This doesn't activate the beacon, though, use @{#BEACON.ActivateTACAN} etc.
 -- If you want to create a BEACON, you probably should use @{Wrapper.Positionable#POSITIONABLE.GetBeacon}() instead.
--- @param #BEACON self
--- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Wrapper.Positionable} that will receive radio capabilities.
--- @return #BEACON Beacon object or #nil if the positionable is invalid.
+--- @param #BEACON self
+--- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Wrapper.Positionable} that will receive radio capabilities.
+--- @return #BEACON Beacon object or #nil if the positionable is invalid.
 function BEACON:New(Positionable)
 
   -- Inherit BASE.
@@ -153,13 +153,13 @@ function BEACON:New(Positionable)
 end
 
 --- Activates a TACAN BEACON.
--- @param #BEACON self
--- @param #number Channel TACAN channel, i.e. the "10" part in "10Y".
--- @param #string Mode TACAN mode, i.e. the "Y" part in "10Y".
--- @param #string Message The Message that is going to be coded in Morse and broadcasted by the beacon.
--- @param #boolean Bearing If true, beacon provides bearing information. If false (or nil), only distance information is available.
--- @param #number Duration How long will the beacon last in seconds. Omit for forever.
--- @return #BEACON self
+--- @param #BEACON self
+--- @param #number Channel TACAN channel, i.e. the "10" part in "10Y".
+--- @param #string Mode TACAN mode, i.e. the "Y" part in "10Y".
+--- @param #string Message The Message that is going to be coded in Morse and broadcasted by the beacon.
+--- @param #boolean Bearing If true, beacon provides bearing information. If false (or nil), only distance information is available.
+--- @param #number Duration How long will the beacon last in seconds. Omit for forever.
+--- @return #BEACON self
 -- @usage
 -- -- Let's create a TACAN Beacon for a tanker
 -- local myUnit = UNIT:FindByName("MyUnit") 
@@ -219,11 +219,11 @@ function BEACON:ActivateTACAN(Channel, Mode, Message, Bearing, Duration)
 end
 
 --- Activates an ICLS BEACON. The unit the BEACON is attached to should be an aircraft carrier supporting this system.
--- @param #BEACON self
--- @param #number Channel ICLS channel.
--- @param #string Callsign The Message that is going to be coded in Morse and broadcasted by the beacon.
--- @param #number Duration How long will the beacon last in seconds. Omit for forever.
--- @return #BEACON self
+--- @param #BEACON self
+--- @param #number Channel ICLS channel.
+--- @param #string Callsign The Message that is going to be coded in Morse and broadcasted by the beacon.
+--- @param #number Duration How long will the beacon last in seconds. Omit for forever.
+--- @return #BEACON self
 function BEACON:ActivateICLS(Channel, Callsign, Duration)
   self:F({Channel=Channel, Callsign=Callsign, Duration=Duration})
 
@@ -245,11 +245,11 @@ function BEACON:ActivateICLS(Channel, Callsign, Duration)
 end
 
 --- Activates a LINK4 BEACON. The unit the BEACON is attached to should be an aircraft carrier supporting this system.
--- @param #BEACON self
--- @param #number Frequency LINK4 FRequency in MHz, eg 336.
--- @param #string Morse The ID that is going to be coded in Morse and broadcasted by the beacon.
--- @param #number Duration How long will the beacon last in seconds. Omit for forever.
--- @return #BEACON self
+--- @param #BEACON self
+--- @param #number Frequency LINK4 FRequency in MHz, eg 336.
+--- @param #string Morse The ID that is going to be coded in Morse and broadcasted by the beacon.
+--- @param #number Duration How long will the beacon last in seconds. Omit for forever.
+--- @return #BEACON self
 function BEACON:ActivateLink4(Frequency, Morse, Duration)
   self:F({Frequency=Frequency, Morse=Morse, Duration=Duration})
 
@@ -272,12 +272,12 @@ end
 
 --- DEPRECATED: Please use @{#BEACON.ActivateTACAN}() instead.
 -- Activates a TACAN BEACON on an Aircraft.
--- @param #BEACON self
--- @param #number TACANChannel (the "10" part in "10Y"). Note that AA TACAN are only available on Y Channels
--- @param #string Message The Message that is going to be coded in Morse and broadcasted by the beacon
--- @param #boolean Bearing Can the BEACON be homed on ?
--- @param #number BeaconDuration How long will the beacon last in seconds. Omit for forever.
--- @return #BEACON self
+--- @param #BEACON self
+--- @param #number TACANChannel (the "10" part in "10Y"). Note that AA TACAN are only available on Y Channels
+--- @param #string Message The Message that is going to be coded in Morse and broadcasted by the beacon
+--- @param #boolean Bearing Can the BEACON be homed on ?
+--- @param #number BeaconDuration How long will the beacon last in seconds. Omit for forever.
+--- @return #BEACON self
 -- @usage
 -- -- Let's create a TACAN Beacon for a tanker
 -- local myUnit = UNIT:FindByName("MyUnit") 
@@ -335,8 +335,8 @@ function BEACON:AATACAN(TACANChannel, Message, Bearing, BeaconDuration)
 end
 
 --- Stops the AA TACAN BEACON
--- @param #BEACON self
--- @return #BEACON self
+--- @param #BEACON self
+--- @return #BEACON self
 function BEACON:StopAATACAN()
   self:F()
   if not self.Positionable then
@@ -360,13 +360,13 @@ end
 -- * ARK9 -> 150-1300KHz
 -- * **Huey**
 -- * AN/ARC-131 -> 30-76 Mhz FM
--- @param #BEACON self
--- @param #string FileName The name of the audio file
--- @param #number Frequency in MHz
--- @param #number Modulation either radio.modulation.AM or radio.modulation.FM
--- @param #number Power in W
--- @param #number BeaconDuration How long will the beacon last in seconds. Omit for forever.
--- @return #BEACON self
+--- @param #BEACON self
+--- @param #string FileName The name of the audio file
+--- @param #number Frequency in MHz
+--- @param #number Modulation either radio.modulation.AM or radio.modulation.FM
+--- @param #number Power in W
+--- @param #number BeaconDuration How long will the beacon last in seconds. Omit for forever.
+--- @return #BEACON self
 -- @usage
 -- -- Let's create a beacon for a unit in distress.
 -- -- Frequency will be 40MHz FM (home-able by a Huey's AN/ARC-131)
@@ -428,8 +428,8 @@ function BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDurati
 end
 
 --- Stops the Radio Beacon
--- @param #BEACON self
--- @return #BEACON self
+--- @param #BEACON self
+--- @return #BEACON self
 function BEACON:StopRadioBeacon()
   self:F()
   -- The unique name of the transmission is the class ID
@@ -438,11 +438,11 @@ function BEACON:StopRadioBeacon()
 end
 
 --- Converts a TACAN Channel/Mode couple into a frequency in Hz
--- @param #BEACON self
--- @param #number TACANChannel
--- @param #string TACANMode
--- @return #number Frequecy
--- @return #nil if parameters are invalid
+--- @param #BEACON self
+--- @param #number TACANChannel
+--- @param #string TACANMode
+--- @return #number Frequecy
+--- @return #nil if parameters are invalid
 function BEACON:_TACANToFrequency(TACANChannel, TACANMode)
   self:F3({TACANChannel, TACANMode})
 

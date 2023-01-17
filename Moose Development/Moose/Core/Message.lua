@@ -18,7 +18,7 @@
 -- @image Core_Message.JPG
 
 --- The MESSAGE class
--- @type MESSAGE
+--- @type MESSAGE
 -- @extends Core.Base#BASE
 
 --- Message System to display Messages to Clients, Coalitions or All.
@@ -56,7 +56,7 @@
 --
 -- ===
 --
--- @field #MESSAGE
+--- @field #MESSAGE
 MESSAGE = {
   ClassName = "MESSAGE",
   MessageCategory = 0,
@@ -64,7 +64,7 @@ MESSAGE = {
 }
 
 --- Message Types
--- @type MESSAGE.Type
+--- @type MESSAGE.Type
 MESSAGE.Type = {
   Update = "Update",
   Information = "Information",
@@ -74,12 +74,12 @@ MESSAGE.Type = {
 }
 
 --- Creates a new MESSAGE object. Note that these MESSAGE objects are not yet displayed on the display panel. You must use the functions @{ToClient} or @{ToCoalition} or @{ToAll} to send these Messages to the respective recipients.
--- @param self
--- @param #string MessageText is the text of the Message.
--- @param #number MessageDuration is a number in seconds of how long the MESSAGE should be shown on the display panel.
--- @param #string MessageCategory (optional) is a string expressing the "category" of the Message. The category will be shown as the first text in the message followed by a ": ".
--- @param #boolean ClearScreen (optional) Clear all previous messages if true.
--- @return #MESSAGE
+--- @param self
+--- @param #string MessageText is the text of the Message.
+--- @param #number MessageDuration is a number in seconds of how long the MESSAGE should be shown on the display panel.
+--- @param #string MessageCategory (optional) is a string expressing the "category" of the Message. The category will be shown as the first text in the message followed by a ": ".
+--- @param #boolean ClearScreen (optional) Clear all previous messages if true.
+--- @return #MESSAGE
 -- @usage
 --
 --    -- Create a series of new Messages.
@@ -129,11 +129,11 @@ end
 -- Note that these MESSAGE objects are not yet displayed on the display panel.
 -- You must use the functions @{ToClient} or @{ToCoalition} or @{ToAll} to send these Messages to the respective recipients.
 -- The message display times are automatically defined based on the timing settings in the @{Core.Settings} menu.
--- @param self
--- @param #string MessageText is the text of the Message.
--- @param #MESSAGE.Type MessageType The type of the message.
--- @param #boolean ClearScreen (optional) Clear all previous messages.
--- @return #MESSAGE
+--- @param self
+--- @param #string MessageText is the text of the Message.
+--- @param #MESSAGE.Type MessageType The type of the message.
+--- @param #boolean ClearScreen (optional) Clear all previous messages.
+--- @return #MESSAGE
 -- @usage
 --
 --   MessageAll = MESSAGE:NewType( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", MESSAGE.Type.Information )
@@ -160,8 +160,8 @@ function MESSAGE:NewType( MessageText, MessageType, ClearScreen )
 end
 
 --- Clears all previous messages from the screen before the new message is displayed. Not that this must come before all functions starting with ToX(), e.g. ToAll(), ToGroup() etc.
--- @param #MESSAGE self
--- @return #MESSAGE
+--- @param #MESSAGE self
+--- @return #MESSAGE
 function MESSAGE:Clear()
   self:F()
   self.ClearScreen = true
@@ -169,10 +169,10 @@ function MESSAGE:Clear()
 end
 
 --- Sends a MESSAGE to a Client Group. Note that the Group needs to be defined within the ME with the skillset "Client" or "Player".
--- @param #MESSAGE self
--- @param Wrapper.Client#CLIENT Client is the Group of the Client.
--- @param Core.Settings#SETTINGS Settings used to display the message.
--- @return #MESSAGE
+--- @param #MESSAGE self
+--- @param Wrapper.Client#CLIENT Client is the Group of the Client.
+--- @param Core.Settings#SETTINGS Settings used to display the message.
+--- @return #MESSAGE
 -- @usage
 --
 --   -- Send the 2 messages created with the @{New} method to the Client Group.
@@ -215,10 +215,10 @@ function MESSAGE:ToClient( Client, Settings )
 end
 
 --- Sends a MESSAGE to a Group.
--- @param #MESSAGE self
--- @param Wrapper.Group#GROUP Group to which the message is displayed.
--- @param Core.Settings#Settings Settings (Optional) Settings for message display.
--- @return #MESSAGE Message object.
+--- @param #MESSAGE self
+--- @param Wrapper.Group#GROUP Group to which the message is displayed.
+--- @param Core.Settings#Settings Settings (Optional) Settings for message display.
+--- @return #MESSAGE Message object.
 function MESSAGE:ToGroup( Group, Settings )
   self:F( Group.GroupName )
 
@@ -240,10 +240,10 @@ function MESSAGE:ToGroup( Group, Settings )
 end
 
 --- Sends a MESSAGE to a Unit. 
--- @param #MESSAGE self
--- @param Wrapper.Unit#UNIT Unit to which the message is displayed.
--- @param Core.Settings#Settings Settings (Optional) Settings for message display.
--- @return #MESSAGE Message object.
+--- @param #MESSAGE self
+--- @param Wrapper.Unit#UNIT Unit to which the message is displayed.
+--- @param Core.Settings#Settings Settings (Optional) Settings for message display.
+--- @return #MESSAGE Message object.
 function MESSAGE:ToUnit( Unit, Settings )
   self:F( Unit.IdentifiableName )
 
@@ -265,10 +265,10 @@ function MESSAGE:ToUnit( Unit, Settings )
 end
 
 --- Sends a MESSAGE to a Country. 
--- @param #MESSAGE self
--- @param #number Country to which the message is displayed, e.g. country.id.GERMANY. For all country numbers see here: [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_country)
--- @param Core.Settings#Settings Settings (Optional) Settings for message display.
--- @return #MESSAGE Message object.
+--- @param #MESSAGE self
+--- @param #number Country to which the message is displayed, e.g. country.id.GERMANY. For all country numbers see here: [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_country)
+--- @param Core.Settings#Settings Settings (Optional) Settings for message display.
+--- @return #MESSAGE Message object.
 function MESSAGE:ToCountry( Country, Settings )
   self:F(Country )
   if Country then   
@@ -286,11 +286,11 @@ function MESSAGE:ToCountry( Country, Settings )
 end
 
 --- Sends a MESSAGE to a Country. 
--- @param #MESSAGE self
--- @param #number Country to which the message is displayed, , e.g. country.id.GERMANY. For all country numbers see here: [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_country)
--- @param #boolean Condition Sends the message only if the condition is true.
--- @param Core.Settings#Settings Settings (Optional) Settings for message display.
--- @return #MESSAGE Message object.
+--- @param #MESSAGE self
+--- @param #number Country to which the message is displayed, , e.g. country.id.GERMANY. For all country numbers see here: [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_country)
+--- @param #boolean Condition Sends the message only if the condition is true.
+--- @param Core.Settings#Settings Settings (Optional) Settings for message display.
+--- @return #MESSAGE Message object.
 function MESSAGE:ToCountryIf( Country, Condition, Settings )
   self:F(Country )
   if Country and Condition == true then
@@ -300,8 +300,8 @@ function MESSAGE:ToCountryIf( Country, Condition, Settings )
 end
 
 --- Sends a MESSAGE to the Blue coalition.
--- @param #MESSAGE self
--- @return #MESSAGE
+--- @param #MESSAGE self
+--- @return #MESSAGE
 -- @usage
 --
 --   -- Send a message created with the @{New} method to the BLUE coalition.
@@ -321,8 +321,8 @@ function MESSAGE:ToBlue()
 end
 
 --- Sends a MESSAGE to the Red Coalition.
--- @param #MESSAGE self
--- @return #MESSAGE
+--- @param #MESSAGE self
+--- @return #MESSAGE
 -- @usage
 --
 --   -- Send a message created with the @{New} method to the RED coalition.
@@ -342,10 +342,10 @@ function MESSAGE:ToRed()
 end
 
 --- Sends a MESSAGE to a Coalition.
--- @param #MESSAGE self
--- @param #DCS.coalition.side CoalitionSide @{#DCS.coalition.side} to which the message is displayed.
--- @param Core.Settings#SETTINGS Settings (Optional) Settings for message display.
--- @return #MESSAGE Message object.
+--- @param #MESSAGE self
+--- @param #DCS.coalition.side CoalitionSide @{#DCS.coalition.side} to which the message is displayed.
+--- @param Core.Settings#SETTINGS Settings (Optional) Settings for message display.
+--- @return #MESSAGE Message object.
 -- @usage
 --
 --   -- Send a message created with the @{New} method to the RED coalition.
@@ -376,10 +376,10 @@ function MESSAGE:ToCoalition( CoalitionSide, Settings )
 end
 
 --- Sends a MESSAGE to a Coalition if the given Condition is true.
--- @param #MESSAGE self
--- @param CoalitionSide needs to be filled out by the defined structure of the standard scripting engine @{coalition.side}.
--- @param #boolean Condition Sends the message only if the condition is true.
--- @return #MESSAGE self
+--- @param #MESSAGE self
+--- @param CoalitionSide needs to be filled out by the defined structure of the standard scripting engine @{coalition.side}.
+--- @param #boolean Condition Sends the message only if the condition is true.
+--- @return #MESSAGE self
 function MESSAGE:ToCoalitionIf( CoalitionSide, Condition )
   self:F( CoalitionSide )
 
@@ -391,9 +391,9 @@ function MESSAGE:ToCoalitionIf( CoalitionSide, Condition )
 end
 
 --- Sends a MESSAGE to all players. 
--- @param #MESSAGE self
--- @param Core.Settings#Settings Settings (Optional) Settings for message display.
--- @return #MESSAGE
+--- @param #MESSAGE self
+--- @param Core.Settings#Settings Settings (Optional) Settings for message display.
+--- @return #MESSAGE
 -- @usage
 --
 --   -- Send a message created to all players.
@@ -422,9 +422,9 @@ function MESSAGE:ToAll( Settings )
 end
 
 --- Sends a MESSAGE to all players if the given Condition is true.
--- @param #MESSAGE self
--- @param #boolean Condition
--- @return #MESSAGE
+--- @param #MESSAGE self
+--- @param #boolean Condition
+--- @return #MESSAGE
 function MESSAGE:ToAllIf( Condition )
 
   if Condition and Condition == true then
@@ -435,8 +435,8 @@ function MESSAGE:ToAllIf( Condition )
 end
 
 --- Sends a MESSAGE to DCS log file.
--- @param #MESSAGE self
--- @return #MESSAGE self
+--- @param #MESSAGE self
+--- @return #MESSAGE self
 function MESSAGE:ToLog()
 
   env.info(self.MessageCategory .. self.MessageText:gsub( "\n$", "" ):gsub( "\n$", "" ))
@@ -445,8 +445,8 @@ function MESSAGE:ToLog()
 end
 
 --- Sends a MESSAGE to DCS log file if the given Condition is true.
--- @param #MESSAGE self
--- @return #MESSAGE self
+--- @param #MESSAGE self
+--- @return #MESSAGE self
 function MESSAGE:ToLogIf( Condition )
   
   if Condition and Condition == true then

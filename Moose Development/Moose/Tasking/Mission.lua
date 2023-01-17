@@ -20,9 +20,9 @@
 -- @image Task_Mission.JPG
 
 --- @type MISSION
--- @field #MISSION.Clients _Clients
--- @field Core.Menu#MENU_COALITION MissionMenu
--- @field #string MissionBriefing
+--- @field #MISSION.Clients _Clients
+--- @field Core.Menu#MENU_COALITION MissionMenu
+--- @field #string MissionBriefing
 -- @extends Core.Fsm#FSM
 
 --- Models goals to be achieved and can contain multiple tasks to be executed to achieve the goals.
@@ -118,7 +118,7 @@
 --   - @{#MISSION.ReportPlayersProgress}(): Generates a report showing the task progress per player.
 -- 
 -- 
--- @field #MISSION 
+--- @field #MISSION 
 MISSION = {
 	ClassName = "MISSION",
 	Name = "",
@@ -127,13 +127,13 @@ MISSION = {
 }
 
 --- This is the main MISSION declaration method. Each Mission is like the master or a Mission orchestration between, Clients, Tasks, Stages etc.
--- @param #MISSION self
--- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter
--- @param #string MissionName Name of the mission. This name will be used to reference the status of each mission by the players.
--- @param #string MissionPriority String indicating the "priority" of the Mission. e.g. "Primary", "Secondary". It is free format and up to the Mission designer to choose. There are no rules behind this field.
--- @param #string MissionBriefing String indicating the mission briefing to be shown when a player joins a @{Wrapper.Client#CLIENT}.
--- @param DCS#coalition.side MissionCoalition Side of the coalition, i.e. and enumerator @{#DCS.coalition.side} corresponding to RED, BLUE or NEUTRAL.
--- @return #MISSION self
+--- @param #MISSION self
+--- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter
+--- @param #string MissionName Name of the mission. This name will be used to reference the status of each mission by the players.
+--- @param #string MissionPriority String indicating the "priority" of the Mission. e.g. "Primary", "Secondary". It is free format and up to the Mission designer to choose. There are no rules behind this field.
+--- @param #string MissionBriefing String indicating the mission briefing to be shown when a player joins a @{Wrapper.Client#CLIENT}.
+--- @param DCS#coalition.side MissionCoalition Side of the coalition, i.e. and enumerator @{#DCS.coalition.side} corresponding to RED, BLUE or NEUTRAL.
+--- @return #MISSION self
 function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefing, MissionCoalition )
 
   local self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM
@@ -371,34 +371,34 @@ end
 
 
 --- FSM function for a MISSION
--- @param #MISSION self
--- @param #string From
--- @param #string Event
--- @param #string To
+--- @param #MISSION self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
 function MISSION:onenterCOMPLETED( From, Event, To )
 
   self:GetCommandCenter():MessageTypeToCoalition( self:GetText() .. " has been completed! Good job guys!", MESSAGE.Type.Information )
 end
 
 --- Gets the mission name.
--- @param #MISSION self
--- @return #MISSION self
+--- @param #MISSION self
+--- @return #MISSION self
 function MISSION:GetName()
   return self.Name
 end
 
 
 --- Gets the mission text.
--- @param #MISSION self
--- @return #MISSION self
+--- @param #MISSION self
+--- @return #MISSION self
 function MISSION:GetText()
   return string.format( 'Mission "%s (%s)"', self.Name, self.MissionPriority )
 end
 
 
 --- Gets the short mission text.
--- @param #MISSION self
--- @return #MISSION self
+--- @param #MISSION self
+--- @return #MISSION self
 function MISSION:GetShortText()
   return string.format( 'Mission "%s"', self.Name )
 end
@@ -408,10 +408,10 @@ end
 -- For each Task within the Mission, the Unit is joined with the Task.
 -- If the Unit was not part of a Task in the Mission, false is returned.
 -- If the Unit is part of a Task in the Mission, true is returned.
--- @param #MISSION self
--- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
--- @param Wrapper.Group#GROUP PlayerGroup The GROUP of the player joining the Mission.
--- @return #boolean true if Unit is part of a Task in the Mission.
+--- @param #MISSION self
+--- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
+--- @param Wrapper.Group#GROUP PlayerGroup The GROUP of the player joining the Mission.
+--- @return #boolean true if Unit is part of a Task in the Mission.
 function MISSION:JoinUnit( PlayerUnit, PlayerGroup )
   self:T( { Mission = self:GetName(), PlayerUnit = PlayerUnit, PlayerGroup = PlayerGroup } )
   
@@ -431,9 +431,9 @@ end
 -- For each Task within the Mission, the PlayerUnit is removed from Task where it is assigned.
 -- If the Unit was not part of a Task in the Mission, false is returned.
 -- If the Unit is part of a Task in the Mission, true is returned.
--- @param #MISSION self
--- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
--- @return #MISSION
+--- @param #MISSION self
+--- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
+--- @return #MISSION
 function MISSION:AbortUnit( PlayerUnit )
   self:F( { PlayerUnit = PlayerUnit } )
   
@@ -450,9 +450,9 @@ end
 -- For each Task within the Mission, the PlayerUnit is removed from Task where it is assigned.
 -- If the Unit was not part of a Task in the Mission, false is returned.
 -- If the Unit is part of a Task in the Mission, true is returned.
--- @param #MISSION self
--- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player crashing.
--- @return #MISSION
+--- @param #MISSION self
+--- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player crashing.
+--- @return #MISSION
 function MISSION:CrashUnit( PlayerUnit )
   self:F( { PlayerUnit = PlayerUnit } )
   
@@ -466,24 +466,24 @@ function MISSION:CrashUnit( PlayerUnit )
 end
 
 --- Add a scoring to the mission.
--- @param #MISSION self
--- @return #MISSION self
+--- @param #MISSION self
+--- @return #MISSION self
 function MISSION:AddScoring( Scoring )
   self.Scoring = Scoring
   return self
 end
 
 --- Get the scoring object of a mission.
--- @param #MISSION self
--- @return #SCORING Scoring
+--- @param #MISSION self
+--- @return #SCORING Scoring
 function MISSION:GetScoring()
   return self.Scoring
 end
 
 --- Gets the groups for which TASKS are given in the mission
--- @param #MISSION self
--- @param Core.Set#SET_GROUP GroupSet
--- @return Core.Set#SET_GROUP
+--- @param #MISSION self
+--- @param Core.Set#SET_GROUP GroupSet
+--- @return Core.Set#SET_GROUP
 function MISSION:GetGroups()
   
   return self:AddGroups()
@@ -491,9 +491,9 @@ function MISSION:GetGroups()
 end
 
 --- Adds the groups for which TASKS are given in the mission
--- @param #MISSION self
--- @param Core.Set#SET_GROUP GroupSet
--- @return Core.Set#SET_GROUP
+--- @param #MISSION self
+--- @param Core.Set#SET_GROUP GroupSet
+--- @return Core.Set#SET_GROUP
 function MISSION:AddGroups( GroupSet )
   
   GroupSet = GroupSet or SET_GROUP:New()
@@ -509,8 +509,8 @@ end
 
 
 --- Sets the Planned Task menu.
--- @param #MISSION self
--- @param #number MenuTime
+--- @param #MISSION self
+--- @param #number MenuTime
 function MISSION:SetMenu( MenuTime )
   self:F( { self:GetName(), MenuTime } )
   
@@ -528,8 +528,8 @@ function MISSION:SetMenu( MenuTime )
 end
 
 --- Removes the Planned Task menu.
--- @param #MISSION self
--- @param #number MenuTime
+--- @param #MISSION self
+--- @param #number MenuTime
 function MISSION:RemoveMenu( MenuTime )
   self:F( { self:GetName(), MenuTime } )
   
@@ -594,17 +594,17 @@ do -- Group Assignment
 end
 
 --- Gets the COMMANDCENTER.
--- @param #MISSION self
--- @return Tasking.CommandCenter#COMMANDCENTER
+--- @param #MISSION self
+--- @return Tasking.CommandCenter#COMMANDCENTER
 function MISSION:GetCommandCenter()
   return self.CommandCenter
 end
 
 
 --- Removes a Task menu.
--- @param #MISSION self
--- @param Tasking.Task#TASK Task
--- @return #MISSION self
+--- @param #MISSION self
+--- @param Tasking.Task#TASK Task
+--- @return #MISSION self
 function MISSION:RemoveTaskMenu( Task )
     
   Task:RemoveMenu()  
@@ -612,9 +612,9 @@ end
 
 
 --- Gets the root mission menu for the TaskGroup. Obsolete?! Originally no reference to TaskGroup parameter!
--- @param #MISSION self
--- @param Wrapper.Group#GROUP TaskGroup Task group.
--- @return Core.Menu#MENU_COALITION self
+--- @param #MISSION self
+--- @param Wrapper.Group#GROUP TaskGroup Task group.
+--- @return Core.Menu#MENU_COALITION self
 function MISSION:GetRootMenu( TaskGroup ) -- R2.2
 
   local CommandCenter = self:GetCommandCenter()
@@ -629,9 +629,9 @@ function MISSION:GetRootMenu( TaskGroup ) -- R2.2
 end
 
 --- Gets the mission menu for the TaskGroup.
--- @param #MISSION self
--- @param Wrapper.Group#GROUP TaskGroup Task group.
--- @return Core.Menu#MENU_COALITION self
+--- @param #MISSION self
+--- @param Wrapper.Group#GROUP TaskGroup Task group.
+--- @return Core.Menu#MENU_COALITION self
 function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
 
   local CommandCenter = self:GetCommandCenter()
@@ -667,9 +667,9 @@ end
 
 
 --- Get the TASK identified by the TaskNumber from the Mission. This function is useful in GoalFunctions.
--- @param #string TaskName The Name of the @{Tasking.Task} within the @{Tasking.Mission}.
--- @return Tasking.Task#TASK The Task
--- @return #nil Returns nil if no task was found.
+--- @param #string TaskName The Name of the @{Tasking.Task} within the @{Tasking.Mission}.
+--- @return Tasking.Task#TASK The Task
+--- @return #nil Returns nil if no task was found.
 function MISSION:GetTask( TaskName )
   self:F( { TaskName } )
 
@@ -678,9 +678,9 @@ end
 
 
 --- Return the next @{Tasking.Task} ID to be completed within the @{Tasking.Mission}. 
--- @param #MISSION self
--- @param Tasking.Task#TASK Task is the @{Tasking.Task} object.
--- @return Tasking.Task#TASK The task added.
+--- @param #MISSION self
+--- @param Tasking.Task#TASK Task is the @{Tasking.Task} object.
+--- @return Tasking.Task#TASK The task added.
 function MISSION:GetNextTaskID( Task )
 
   self.TaskNumber = self.TaskNumber + 1
@@ -692,9 +692,9 @@ end
 --- Register a @{Tasking.Task} to be completed within the @{Tasking.Mission}. 
 -- Note that there can be multiple @{Tasking.Task}s registered to be completed. 
 -- Each Task can be set a certain Goals. The Mission will not be completed until all Goals are reached.
--- @param #MISSION self
--- @param Tasking.Task#TASK Task is the @{Tasking.Task} object.
--- @return Tasking.Task#TASK The task added.
+--- @param #MISSION self
+--- @param Tasking.Task#TASK Task is the @{Tasking.Task} object.
+--- @return Tasking.Task#TASK The task added.
 function MISSION:AddTask( Task )
 
   local TaskName = Task:GetTaskName()
@@ -711,9 +711,9 @@ end
 --- Removes a @{Tasking.Task} to be completed within the @{Tasking.Mission}. 
 -- Note that there can be multiple @{Tasking.Task}s registered to be completed. 
 -- Each Task can be set a certain Goals. The Mission will not be completed until all Goals are reached.
--- @param #MISSION self
--- @param Tasking.Task#TASK Task is the @{Tasking.Task} object.
--- @return #nil The cleaned Task reference.
+--- @param #MISSION self
+--- @param Tasking.Task#TASK Task is the @{Tasking.Task} object.
+--- @return #nil The cleaned Task reference.
 function MISSION:RemoveTask( Task )
 
   local TaskName = Task:GetTaskName()
@@ -734,43 +734,43 @@ function MISSION:RemoveTask( Task )
 end
 
 --- Is the @{Tasking.Mission} **COMPLETED**.
--- @param #MISSION self
--- @return #boolean
+--- @param #MISSION self
+--- @return #boolean
 function MISSION:IsCOMPLETED()
   return self:Is( "COMPLETED" )
 end
 
 --- Is the @{Tasking.Mission} **IDLE**.
--- @param #MISSION self
--- @return #boolean
+--- @param #MISSION self
+--- @return #boolean
 function MISSION:IsIDLE()
   return self:Is( "IDLE" )
 end
 
 --- Is the @{Tasking.Mission} **ENGAGED**.
--- @param #MISSION self
--- @return #boolean
+--- @param #MISSION self
+--- @return #boolean
 function MISSION:IsENGAGED()
   return self:Is( "ENGAGED" )
 end
 
 --- Is the @{Tasking.Mission} **FAILED**.
--- @param #MISSION self
--- @return #boolean
+--- @param #MISSION self
+--- @return #boolean
 function MISSION:IsFAILED()
   return self:Is( "FAILED" )
 end
 
 --- Is the @{Tasking.Mission} **HOLD**.
--- @param #MISSION self
--- @return #boolean
+--- @param #MISSION self
+--- @return #boolean
 function MISSION:IsHOLD()
   return self:Is( "HOLD" )
 end
 
 --- Validates if the Mission has a Group
--- @param #MISSION
--- @return #boolean true if the Mission has a Group.
+--- @param #MISSION
+--- @return #boolean true if the Mission has a Group.
 function MISSION:HasGroup( TaskGroup )
   local Has = false
   
@@ -786,7 +786,7 @@ function MISSION:HasGroup( TaskGroup )
 end
 
 --- @param #MISSION self
--- @return #number
+--- @return #number
 function MISSION:GetTasksRemaining()
   -- Determine how many tasks are remaining.
   local TasksRemaining = 0
@@ -801,7 +801,7 @@ function MISSION:GetTasksRemaining()
 end
 
 --- @param #MISSION self
--- @return #number
+--- @return #number
 function MISSION:GetTaskTypes()
   -- Determine how many tasks are remaining.
   local TaskTypeList = {}
@@ -827,8 +827,8 @@ end
 
 
 --- Create a briefing report of the Mission.
--- @param #MISSION self
--- @return #string
+--- @param #MISSION self
+--- @return #string
 function MISSION:ReportBriefing()
 
   local Report = REPORT:New()
@@ -908,8 +908,8 @@ end
 --      - Player <PlayerName>: Task <TaskName> <TaskStatus>, Task <TaskName> <TaskStatus>
 --      - ..
 -- 
--- @param #MISSION self
--- @return #string
+--- @param #MISSION self
+--- @return #string
 function MISSION:ReportPlayersPerTask( ReportGroup )
 
   local Report = REPORT:New()
@@ -949,8 +949,8 @@ end
 --      - Player <PlayerName>: Task <TaskName> <TaskStatus>: <Progress>
 --      - ..
 -- 
--- @param #MISSION self
--- @return #string
+--- @param #MISSION self
+--- @return #string
 function MISSION:ReportPlayersProgress( ReportGroup )
 
   local Report = REPORT:New()
@@ -994,9 +994,9 @@ end
 
 
 --- Mark all the target locations on the Map.
--- @param #MISSION self
--- @param Wrapper.Group#GROUP ReportGroup
--- @return #string
+--- @param #MISSION self
+--- @param Wrapper.Group#GROUP ReportGroup
+--- @return #string
 function MISSION:MarkTargetLocations( ReportGroup )
 
   local Report = REPORT:New()
@@ -1020,9 +1020,9 @@ end
 
 
 --- Create a summary report of the Mission (one line).
--- @param #MISSION self
--- @param Wrapper.Group#GROUP ReportGroup
--- @return #string
+--- @param #MISSION self
+--- @param Wrapper.Group#GROUP ReportGroup
+--- @return #string
 function MISSION:ReportSummary( ReportGroup )
 
   local Report = REPORT:New()
@@ -1045,8 +1045,8 @@ function MISSION:ReportSummary( ReportGroup )
 end
 
 --- Create a overview report of the Mission (multiple lines).
--- @param #MISSION self
--- @return #string
+--- @param #MISSION self
+--- @return #string
 function MISSION:ReportOverview( ReportGroup, TaskStatus )
 
   self:F( { TaskStatus = TaskStatus } )
@@ -1079,8 +1079,8 @@ function MISSION:ReportOverview( ReportGroup, TaskStatus )
 end
 
 --- Create a detailed report of the Mission, listing all the details of the Task.
--- @param #MISSION self
--- @return #string
+--- @param #MISSION self
+--- @return #string
 function MISSION:ReportDetails( ReportGroup )
 
   local Report = REPORT:New()
@@ -1105,7 +1105,7 @@ function MISSION:ReportDetails( ReportGroup )
 end
 
 --- Get all the TASKs from the Mission. This function is useful in GoalFunctions.
--- @return {TASK,...} Structure of TASKS with the @{Tasking.Task#TASK} number as the key.
+--- @return {TASK,...} Structure of TASKS with the @{Tasking.Task#TASK} number as the key.
 -- @usage
 -- -- Get Tasks from the Mission.
 -- Tasks = Mission:GetTasks()
@@ -1116,9 +1116,9 @@ function MISSION:GetTasks()
 end
 
 --- Get the relevant tasks of a TaskGroup.
--- @param #MISSION
--- @param Wrapper.Group#GROUP TaskGroup
--- @return #list<Tasking.Task#TASK>
+--- @param #MISSION
+--- @param Wrapper.Group#GROUP TaskGroup
+--- @return #list<Tasking.Task#TASK>
 function MISSION:GetGroupTasks( TaskGroup )
 
   local Tasks = {}
@@ -1135,8 +1135,8 @@ end
 
 
 --- Reports the briefing.
--- @param #MISSION self
--- @param Wrapper.Group#GROUP ReportGroup The group to which the report needs to be sent.
+--- @param #MISSION self
+--- @param Wrapper.Group#GROUP ReportGroup The group to which the report needs to be sent.
 function MISSION:MenuReportBriefing( ReportGroup )
 
   local Report = self:ReportBriefing()
@@ -1146,8 +1146,8 @@ end
 
 
 --- Mark all the targets of the Mission on the Map.
--- @param #MISSION self
--- @param Wrapper.Group#GROUP ReportGroup
+--- @param #MISSION self
+--- @param Wrapper.Group#GROUP ReportGroup
 function MISSION:MenuMarkTargetLocations( ReportGroup )
 
   local Report = self:MarkTargetLocations( ReportGroup )
@@ -1158,8 +1158,8 @@ end
 
 
 --- Report the task summary.
--- @param #MISSION self
--- @param Wrapper.Group#GROUP ReportGroup
+--- @param #MISSION self
+--- @param Wrapper.Group#GROUP ReportGroup
 function MISSION:MenuReportTasksSummary( ReportGroup )
 
   local Report = self:ReportSummary( ReportGroup )
@@ -1171,8 +1171,8 @@ end
 
 
 --- @param #MISSION self
--- @param #string TaskStatus The status
--- @param Wrapper.Group#GROUP ReportGroup
+--- @param #string TaskStatus The status
+--- @param Wrapper.Group#GROUP ReportGroup
 function MISSION:MenuReportTasksPerStatus( ReportGroup, TaskStatus )
 
   local Report = self:ReportOverview( ReportGroup, TaskStatus )
@@ -1182,7 +1182,7 @@ end
 
 
 --- @param #MISSION self
--- @param Wrapper.Group#GROUP ReportGroup
+--- @param Wrapper.Group#GROUP ReportGroup
 function MISSION:MenuReportPlayersPerTask( ReportGroup )
 
   local Report = self:ReportPlayersPerTask()
@@ -1191,7 +1191,7 @@ function MISSION:MenuReportPlayersPerTask( ReportGroup )
 end
 
 --- @param #MISSION self
--- @param Wrapper.Group#GROUP ReportGroup
+--- @param Wrapper.Group#GROUP ReportGroup
 function MISSION:MenuReportPlayersProgress( ReportGroup )
 
   local Report = self:ReportPlayersProgress()

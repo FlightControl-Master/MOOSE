@@ -14,10 +14,10 @@
 
 
 --- @type SCENERY
--- @field #string ClassName
--- @field #string SceneryName
--- @field #DCS.Object SceneryObject
--- @field #number Life0
+--- @field #string ClassName
+--- @field #string SceneryName
+--- @field #DCS.Object SceneryObject
+--- @field #number Life0
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 

@@ -3,8 +3,8 @@
 -- @image MOOSE.JPG
 
 --- @type ZONE_DETECTION
--- @field DCS#Vec2 Vec2 The current location of the zone.
--- @field DCS#Distance Radius The radius of the zone.
+--- @field DCS#Vec2 Vec2 The current location of the zone.
+--- @field DCS#Distance Radius The radius of the zone.
 -- @extends #ZONE_BASE
 
 --- The ZONE_DETECTION class defined by a zone name, a location and a radius.
@@ -14,17 +14,17 @@
 -- 
 --   * @{#ZONE_DETECTION.New}(): Constructor.
 -- 
--- @field #ZONE_DETECTION
+--- @field #ZONE_DETECTION
 ZONE_DETECTION = {
   ClassName="ZONE_DETECTION",
   }
 
 --- Constructor of @{#ZONE_DETECTION}, taking the zone name, the zone location and a radius.
--- @param #ZONE_DETECTION self
--- @param #string ZoneName Name of the zone.
--- @param Functional.Detection#DETECTION_BASE Detection The detection object defining the locations of the central detections.
--- @param DCS#Distance Radius The radius around the detections defining the combined zone.
--- @return #ZONE_DETECTION self
+--- @param #ZONE_DETECTION self
+--- @param #string ZoneName Name of the zone.
+--- @param Functional.Detection#DETECTION_BASE Detection The detection object defining the locations of the central detections.
+--- @param DCS#Distance Radius The radius around the detections defining the combined zone.
+--- @return #ZONE_DETECTION self
 function ZONE_DETECTION:New( ZoneName, Detection, Radius )
   local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) ) -- #ZONE_DETECTION
   self:F( { ZoneName, Detection, Radius } )
@@ -36,11 +36,11 @@ function ZONE_DETECTION:New( ZoneName, Detection, Radius )
 end
 
 --- Bounds the zone with tires.
--- @param #ZONE_DETECTION self
--- @param #number Points (optional) The amount of points in the circle. Default 360.
--- @param DCS#country.id CountryID The country id of the tire objects, e.g. country.id.USA for blue or country.id.RUSSIA for red.
--- @param #boolean UnBound (Optional) If true the tyres will be destroyed.
--- @return #ZONE_DETECTION self
+--- @param #ZONE_DETECTION self
+--- @param #number Points (optional) The amount of points in the circle. Default 360.
+--- @param DCS#country.id CountryID The country id of the tire objects, e.g. country.id.USA for blue or country.id.RUSSIA for red.
+--- @param #boolean UnBound (Optional) If true the tyres will be destroyed.
+--- @return #ZONE_DETECTION self
 function ZONE_DETECTION:BoundZone( Points, CountryID, UnBound )
 
   local Point = {}
@@ -82,12 +82,12 @@ end
 
 
 --- Smokes the zone boundaries in a color.
--- @param #ZONE_DETECTION self
--- @param Utilities.Utils#SMOKECOLOR SmokeColor The smoke color.
--- @param #number Points (optional) The amount of points in the circle.
--- @param #number AddHeight (optional) The height to be added for the smoke.
--- @param #number AddOffSet (optional) The angle to be added for the smoking start position.
--- @return #ZONE_DETECTION self
+--- @param #ZONE_DETECTION self
+--- @param Utilities.Utils#SMOKECOLOR SmokeColor The smoke color.
+--- @param #number Points (optional) The amount of points in the circle.
+--- @param #number AddHeight (optional) The height to be added for the smoke.
+--- @param #number AddOffSet (optional) The angle to be added for the smoking start position.
+--- @return #ZONE_DETECTION self
 function ZONE_DETECTION:SmokeZone( SmokeColor, Points, AddHeight, AngleOffset )
   self:F2( SmokeColor )
 
@@ -114,12 +114,12 @@ end
 
 
 --- Flares the zone boundaries in a color.
--- @param #ZONE_DETECTION self
--- @param Utilities.Utils#FLARECOLOR FlareColor The flare color.
--- @param #number Points (optional) The amount of points in the circle.
--- @param DCS#Azimuth Azimuth (optional) Azimuth The azimuth of the flare.
--- @param #number AddHeight (optional) The height to be added for the smoke.
--- @return #ZONE_DETECTION self
+--- @param #ZONE_DETECTION self
+--- @param Utilities.Utils#FLARECOLOR FlareColor The flare color.
+--- @param #number Points (optional) The amount of points in the circle.
+--- @param DCS#Azimuth Azimuth (optional) Azimuth The azimuth of the flare.
+--- @param #number AddHeight (optional) The height to be added for the smoke.
+--- @return #ZONE_DETECTION self
 function ZONE_DETECTION:FlareZone( FlareColor, Points, Azimuth, AddHeight )
   self:F2( { FlareColor, Azimuth } )
 
@@ -144,8 +144,8 @@ function ZONE_DETECTION:FlareZone( FlareColor, Points, Azimuth, AddHeight )
 end
 
 --- Returns the radius around the detected locations defining the combine zone.
--- @param #ZONE_DETECTION self
--- @return DCS#Distance The radius.
+--- @param #ZONE_DETECTION self
+--- @return DCS#Distance The radius.
 function ZONE_DETECTION:GetRadius()
   self:F2( self.ZoneName )
 
@@ -155,9 +155,9 @@ function ZONE_DETECTION:GetRadius()
 end
 
 --- Sets the radius around the detected locations defining the combine zone.
--- @param #ZONE_DETECTION self
--- @param DCS#Distance Radius The radius.
--- @return #ZONE_DETECTION self
+--- @param #ZONE_DETECTION self
+--- @param DCS#Distance Radius The radius.
+--- @return #ZONE_DETECTION self
 function ZONE_DETECTION:SetRadius( Radius )
   self:F2( self.ZoneName )
 
@@ -170,9 +170,9 @@ end
 
 
 --- Returns if a location is within the zone.
--- @param #ZONE_DETECTION self
--- @param DCS#Vec2 Vec2 The location to test.
--- @return #boolean true if the location is within the zone.
+--- @param #ZONE_DETECTION self
+--- @param DCS#Vec2 Vec2 The location to test.
+--- @return #boolean true if the location is within the zone.
 function ZONE_DETECTION:IsVec2InZone( Vec2 )
   self:F2( Vec2 )
 
@@ -191,9 +191,9 @@ function ZONE_DETECTION:IsVec2InZone( Vec2 )
 end
 
 --- Returns if a point is within the zone.
--- @param #ZONE_DETECTION self
--- @param DCS#Vec3 Vec3 The point to test.
--- @return #boolean true if the point is within the zone.
+--- @param #ZONE_DETECTION self
+--- @param DCS#Vec3 Vec3 The point to test.
+--- @return #boolean true if the point is within the zone.
 function ZONE_DETECTION:IsVec3InZone( Vec3 )
   self:F2( Vec3 )
 

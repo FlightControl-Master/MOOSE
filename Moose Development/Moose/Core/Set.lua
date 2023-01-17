@@ -1811,7 +1811,7 @@ do -- SET_GROUP
   --  return self
   -- end
   --
-  --
+  ---
   ----- Iterate the SET_GROUP and call an iterator function for each client, providing the Client to the function and optional parameters.
   ---- @param #SET_GROUP self
   ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a CLIENT parameter.
@@ -1884,7 +1884,7 @@ do -- SET_GROUP
       end
       MGroupInclude = MGroupInclude and MGroupPrefix
     end
-    
+    env.info(string.format('About to filter zones: %s', type(self.Filter.Zones)))
     if self.Filter.Zones then
       local MGroupZone = false
       for ZoneName, Zone in pairs( self.Filter.Zones ) do

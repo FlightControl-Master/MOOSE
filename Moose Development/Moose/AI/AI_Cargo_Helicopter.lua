@@ -44,7 +44,7 @@
 -- 
 -- ===
 -- 
--- @field #AI_CARGO_HELICOPTER
+--- @field #AI_CARGO_HELICOPTER
 AI_CARGO_HELICOPTER = {
   ClassName = "AI_CARGO_HELICOPTER",
   Coordinate = nil, -- Core.Point#COORDINATE,
@@ -53,10 +53,10 @@ AI_CARGO_HELICOPTER = {
 AI_CARGO_QUEUE = {}
 
 --- Creates a new AI_CARGO_HELICOPTER object.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param Core.Set#SET_CARGO CargoSet
--- @return #AI_CARGO_HELICOPTER
+--- @param #AI_CARGO_HELICOPTER self
+--- @param Wrapper.Group#GROUP Helicopter
+--- @param Core.Set#SET_CARGO CargoSet
+--- @return #AI_CARGO_HELICOPTER
 function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
 
   local self = BASE:Inherit( self, AI_CARGO:New( Helicopter, CargoSet ) ) -- #AI_CARGO_HELICOPTER
@@ -222,9 +222,9 @@ end
 
 
 --- Set the Carrier.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @return #AI_CARGO_HELICOPTER
+--- @param #AI_CARGO_HELICOPTER self
+--- @param Wrapper.Group#GROUP Helicopter
+--- @return #AI_CARGO_HELICOPTER
 function AI_CARGO_HELICOPTER:SetCarrier( Helicopter )
 
   local AICargo = self
@@ -263,10 +263,10 @@ function AI_CARGO_HELICOPTER:SetCarrier( Helicopter )
 end
 
 --- Set landingspeed and -height for helicopter landings. Adjust after tracing if your helis get stuck after landing.
--- @param #AI_CARGO_HELICOPTER self
--- @param #number speed Landing speed in kph(!), e.g. 15
--- @param #number height Landing height in meters(!), e.g. 5.5
--- @return #AI_CARGO_HELICOPTER self
+--- @param #AI_CARGO_HELICOPTER self
+--- @param #number speed Landing speed in kph(!), e.g. 15
+--- @param #number height Landing height in meters(!), e.g. 5.5
+--- @return #AI_CARGO_HELICOPTER self
 -- @usage If your choppers get stuck, add tracing to your script to determine if they hit the right parameters like so:
 --    
 --        BASE:TraceOn()
@@ -283,10 +283,10 @@ function AI_CARGO_HELICOPTER:SetLandingSpeedAndHeight(speed, height)
 end
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param From
--- @param Event
--- @param To
+--- @param Wrapper.Group#GROUP Helicopter
+--- @param From
+--- @param Event
+--- @param To
 function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
   self:F({From, Event, To})
   Helicopter:F( { Name = Helicopter:GetName() } )
@@ -322,12 +322,12 @@ function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
 end
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param From
--- @param Event
--- @param To
--- @param Core.Point#COORDINATE Coordinate
--- @param #number Speed
+--- @param Wrapper.Group#GROUP Helicopter
+--- @param From
+--- @param Event
+--- @param To
+--- @param Core.Point#COORDINATE Coordinate
+--- @param #number Speed
 function AI_CARGO_HELICOPTER:onafterQueue( Helicopter, From, Event, To, Coordinate, Speed, DeployZone )
   self:F({From, Event, To, Coordinate, Speed, DeployZone})
   local HelicopterInZone = false
@@ -405,12 +405,12 @@ end
 
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param From
--- @param Event
--- @param To
--- @param Core.Point#COORDINATE Coordinate
--- @param #number Speed
+--- @param Wrapper.Group#GROUP Helicopter
+--- @param From
+--- @param Event
+--- @param To
+--- @param Core.Point#COORDINATE Coordinate
+--- @param #number Speed
 function AI_CARGO_HELICOPTER:onafterOrbit( Helicopter, From, Event, To, Coordinate )
   self:F({From, Event, To, Coordinate})
   
@@ -439,14 +439,14 @@ end
 
 
 --- On after Deployed event.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Cargo.Cargo#CARGO Cargo Cargo object.
--- @param #boolean Deployed Cargo is deployed.
--- @return #boolean True if all cargo has been unloaded.
+--- @param #AI_CARGO_HELICOPTER self
+--- @param Wrapper.Group#GROUP Helicopter
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Cargo.Cargo#CARGO Cargo Cargo object.
+--- @param #boolean Deployed Cargo is deployed.
+--- @return #boolean True if all cargo has been unloaded.
 function AI_CARGO_HELICOPTER:onafterDeployed( Helicopter, From, Event, To, DeployZone )
   self:F( { From, Event, To, DeployZone = DeployZone } )
 
@@ -464,15 +464,15 @@ function AI_CARGO_HELICOPTER:onafterDeployed( Helicopter, From, Event, To, Deplo
 end
 
 --- On after Pickup event.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param From
--- @param Event
--- @param To
--- @param Core.Point#COORDINATE Coordinate Pickup place.
--- @param #number Speed Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
--- @param #number Height Height in meters to move to the pickup coordinate. This parameter is ignored for APCs.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
+--- @param #AI_CARGO_HELICOPTER self
+--- @param Wrapper.Group#GROUP Helicopter
+--- @param From
+--- @param Event
+--- @param To
+--- @param Core.Point#COORDINATE Coordinate Pickup place.
+--- @param #number Speed Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+--- @param #number Height Height in meters to move to the pickup coordinate. This parameter is ignored for APCs.
+--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
 function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordinate, Speed, Height, PickupZone )
   self:F({Coordinate, Speed, Height, PickupZone })
   
@@ -525,22 +525,22 @@ function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordin
 end
 
 --- Depoloy function and queue.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP AICargoHelicopter
--- @param Core.Point#COORDINATE Coordinate Coordinate
+--- @param #AI_CARGO_HELICOPTER self
+--- @param Wrapper.Group#GROUP AICargoHelicopter
+--- @param Core.Point#COORDINATE Coordinate Coordinate
 function AI_CARGO_HELICOPTER:_Deploy( AICargoHelicopter, Coordinate, DeployZone )
   AICargoHelicopter:__Queue( -10, Coordinate, 100, DeployZone )
 end
 
 --- On after Deploy event.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter Transport helicopter.
--- @param From
--- @param Event
--- @param To
--- @param Core.Point#COORDINATE Coordinate Place at which the cargo is deployed.
--- @param #number Speed Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
--- @param #number Height Height in meters to move to the deploy coordinate.
+--- @param #AI_CARGO_HELICOPTER self
+--- @param Wrapper.Group#GROUP Helicopter Transport helicopter.
+--- @param From
+--- @param Event
+--- @param To
+--- @param Core.Point#COORDINATE Coordinate Place at which the cargo is deployed.
+--- @param #number Speed Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+--- @param #number Height Height in meters to move to the deploy coordinate.
 function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordinate, Speed, Height, DeployZone )
   self:F({From, Event, To, Coordinate, Speed, Height, DeployZone})
   if Helicopter and Helicopter:IsAlive() ~= nil then
@@ -598,15 +598,15 @@ end
 
 
 --- On after Home event.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param From
--- @param Event
--- @param To
--- @param Core.Point#COORDINATE Coordinate Home place.
--- @param #number Speed Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
--- @param #number Height Height in meters to move to the home coordinate.
--- @param Core.Zone#ZONE HomeZone The zone wherein the carrier will return when all cargo has been transported. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+--- @param #AI_CARGO_HELICOPTER self
+--- @param Wrapper.Group#GROUP Helicopter
+--- @param From
+--- @param Event
+--- @param To
+--- @param Core.Point#COORDINATE Coordinate Home place.
+--- @param #number Speed Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+--- @param #number Height Height in meters to move to the home coordinate.
+--- @param Core.Zone#ZONE HomeZone The zone wherein the carrier will return when all cargo has been transported. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
 function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinate, Speed, Height, HomeZone )
   self:F({From, Event, To, Coordinate, Speed, Height})
   

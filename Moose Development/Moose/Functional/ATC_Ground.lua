@@ -27,11 +27,11 @@
 -- @image Air_Traffic_Control_Ground_Operations.JPG
 
 --- @type ATC_GROUND
--- @field Core.Set#SET_CLIENT SetClient
+--- @field Core.Set#SET_CLIENT SetClient
 -- @extends Core.Base#BASE
 
 --- [DEPRECATED, use ATC_GROUND_UNIVERSAL] Base class for ATC\_GROUND implementations.
--- @field #ATC_GROUND
+--- @field #ATC_GROUND
 ATC_GROUND = {
   ClassName = "ATC_GROUND",
   SetClient = nil,
@@ -44,9 +44,9 @@ ATC_GROUND = {
 
 
 --- [DEPRECATED, use ATC_GROUND_UNIVERSAL] Creates a new ATC\_GROUND object.
--- @param #ATC_GROUND self
--- @param Airbases A table of Airbase Names.
--- @return #ATC_GROUND self
+--- @param #ATC_GROUND self
+--- @param Airbases A table of Airbase Names.
+--- @return #ATC_GROUND self
 function ATC_GROUND:New( Airbases, AirbaseList )
 
   -- Inherits from BASE
@@ -100,9 +100,9 @@ function ATC_GROUND:New( Airbases, AirbaseList )
 end
 
 --- Smoke the airbases runways.
--- @param #ATC_GROUND self
--- @param Utilities.Utils#SMOKECOLOR SmokeColor The color of the smoke around the runways.
--- @return #ATC_GROUND self
+--- @param #ATC_GROUND self
+--- @param Utilities.Utils#SMOKECOLOR SmokeColor The color of the smoke around the runways.
+--- @return #ATC_GROUND self
 function ATC_GROUND:SmokeRunways( SmokeColor )
 
   for AirbaseID, Airbase in pairs( self.Airbases ) do
@@ -114,10 +114,10 @@ end
 
 --- Set the maximum speed in meters per second (Mps) until the player gets kicked.
 -- An airbase can be specified to set the kick speed for.
--- @param #ATC_GROUND self
--- @param #number KickSpeed The speed in Mps.
--- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
--- @return #ATC_GROUND self
+--- @param #ATC_GROUND self
+--- @param #number KickSpeed The speed in Mps.
+--- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
+--- @return #ATC_GROUND self
 -- @usage
 -- 
 --   -- Declare Atc_Ground using one of those, depending on the map.
@@ -147,10 +147,10 @@ function ATC_GROUND:SetKickSpeed( KickSpeed, Airbase )
 end
 
 --- Set the maximum speed in Kmph until the player gets kicked.
--- @param #ATC_GROUND self
--- @param #number KickSpeed Set the speed in Kmph.
--- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
--- @return #ATC_GROUND self
+--- @param #ATC_GROUND self
+--- @param #number KickSpeed Set the speed in Kmph.
+--- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
+--- @return #ATC_GROUND self
 -- 
 --   Atc_Ground:SetKickSpeedKmph( 80 ) -- Kick the players at 80 kilometers per hour
 -- 
@@ -162,10 +162,10 @@ function ATC_GROUND:SetKickSpeedKmph( KickSpeed, Airbase )
 end
 
 --- Set the maximum speed in Miph until the player gets kicked.
--- @param #ATC_GROUND self
--- @param #number KickSpeedMiph Set the speed in Mph.
--- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
--- @return #ATC_GROUND self
+--- @param #ATC_GROUND self
+--- @param #number KickSpeedMiph Set the speed in Mph.
+--- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
+--- @return #ATC_GROUND self
 -- 
 --   Atc_Ground:SetKickSpeedMiph( 100 ) -- Kick the players at 100 miles per hour
 -- 
@@ -180,10 +180,10 @@ end
 --- Set the maximum kick speed in meters per second (Mps) until the player gets kicked.
 -- There are no warnings given if this speed is reached, and is to prevent players to take off from the airbase!
 -- An airbase can be specified to set the maximum kick speed for.
--- @param #ATC_GROUND self
--- @param #number MaximumKickSpeed The speed in Mps.
--- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
--- @return #ATC_GROUND self
+--- @param #ATC_GROUND self
+--- @param #number MaximumKickSpeed The speed in Mps.
+--- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
+--- @return #ATC_GROUND self
 -- @usage
 -- 
 --   -- Declare Atc_Ground using one of those, depending on the map.
@@ -215,10 +215,10 @@ end
 --- Set the maximum kick speed in kilometers per hour (Kmph) until the player gets kicked.
 -- There are no warnings given if this speed is reached, and is to prevent players to take off from the airbase!
 -- An airbase can be specified to set the maximum kick speed for.
--- @param #ATC_GROUND self
--- @param #number MaximumKickSpeed Set the speed in Kmph.
--- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
--- @return #ATC_GROUND self
+--- @param #ATC_GROUND self
+--- @param #number MaximumKickSpeed Set the speed in Kmph.
+--- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
+--- @return #ATC_GROUND self
 -- 
 --   Atc_Ground:SetMaximumKickSpeedKmph( 150 ) -- Kick the players at 150 kilometers per hour
 -- 
@@ -232,10 +232,10 @@ end
 --- Set the maximum kick speed in miles per hour (Miph) until the player gets kicked.
 -- There are no warnings given if this speed is reached, and is to prevent players to take off from the airbase!
 -- An airbase can be specified to set the maximum kick speed for.
--- @param #ATC_GROUND self
--- @param #number MaximumKickSpeedMiph Set the speed in Mph.
--- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
--- @return #ATC_GROUND self
+--- @param #ATC_GROUND self
+--- @param #number MaximumKickSpeedMiph Set the speed in Mph.
+--- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
+--- @return #ATC_GROUND self
 -- 
 --   Atc_Ground:SetMaximumKickSpeedMiph( 100 ) -- Kick the players at 100 miles per hour
 -- 
@@ -402,17 +402,17 @@ function ATC_GROUND:_AirbaseMonitor()
 end
 
 ---
--- @type ATC_GROUND_UNIVERSAL
--- @field Core.Set#SET_CLIENT SetClient
--- @field #string Version
--- @field #string ClassName
--- @field #table Airbases
--- @field #table AirbaseList
--- @field #number KickSpeed
+--- @type ATC_GROUND_UNIVERSAL
+--- @field Core.Set#SET_CLIENT SetClient
+--- @field #string Version
+--- @field #string ClassName
+--- @field #table Airbases
+--- @field #table AirbaseList
+--- @field #number KickSpeed
 -- @extends Core.Base#BASE
 
 --- Base class for ATC\_GROUND\_UNIVERSAL implementations.
--- @field #ATC_GROUND_UNIVERSAL
+--- @field #ATC_GROUND_UNIVERSAL
 ATC_GROUND_UNIVERSAL = {
   ClassName = "ATC_GROUND_UNIVERSAL",
   Version = "0.0.1",
@@ -423,9 +423,9 @@ ATC_GROUND_UNIVERSAL = {
 }
 
 --- Creates a new ATC\_GROUND\_UNIVERSAL object. This works on any map.
--- @param #ATC_GROUND_UNIVERSAL self
--- @param AirbaseList (Optional) A table of Airbase Names.
--- @return #ATC_GROUND_UNIVERSAL self
+--- @param #ATC_GROUND_UNIVERSAL self
+--- @param AirbaseList (Optional) A table of Airbase Names.
+--- @return #ATC_GROUND_UNIVERSAL self
 function ATC_GROUND_UNIVERSAL:New(AirbaseList)
 
   -- Inherits from BASE
@@ -484,19 +484,19 @@ end
 
 
 --- Add a specific Airbase Boundary if you don't want to use the round zone that is auto-created.
--- @param #ATC_GROUND_UNIVERSAL self
--- @param #string Airbase The name of the Airbase
--- @param Core.Zone#ZONE Zone The ZONE object to be used, e.g. a ZONE_POLYGON
--- @return #ATC_GROUND_UNIVERSAL self
+--- @param #ATC_GROUND_UNIVERSAL self
+--- @param #string Airbase The name of the Airbase
+--- @param Core.Zone#ZONE Zone The ZONE object to be used, e.g. a ZONE_POLYGON
+--- @return #ATC_GROUND_UNIVERSAL self
 function ATC_GROUND_UNIVERSAL:SetAirbaseBoundaries(Airbase, Zone)
   self.Airbases[Airbase].ZoneBoundary = Zone
   return self
 end
 
 --- Smoke the airbases runways.
--- @param #ATC_GROUND_UNIVERSAL self
--- @param Utilities.Utils#SMOKECOLOR SmokeColor The color of the smoke around the runways.
--- @return #ATC_GROUND_UNIVERSAL self
+--- @param #ATC_GROUND_UNIVERSAL self
+--- @param Utilities.Utils#SMOKECOLOR SmokeColor The color of the smoke around the runways.
+--- @return #ATC_GROUND_UNIVERSAL self
 function ATC_GROUND_UNIVERSAL:SmokeRunways( SmokeColor )
   
   local SmokeColor = SmokeColor or SMOKECOLOR.Red
@@ -513,9 +513,9 @@ function ATC_GROUND_UNIVERSAL:SmokeRunways( SmokeColor )
 end
 
 --- Draw the airbases runways.
--- @param #ATC_GROUND_UNIVERSAL self
--- @param #table Color The color of the line around the runways, in RGB, e.g `{1,0,0}` for red.
--- @return #ATC_GROUND_UNIVERSAL self
+--- @param #ATC_GROUND_UNIVERSAL self
+--- @param #table Color The color of the line around the runways, in RGB, e.g `{1,0,0}` for red.
+--- @return #ATC_GROUND_UNIVERSAL self
 function ATC_GROUND_UNIVERSAL:DrawRunways( Color )
   
   local Color = Color or {1,0,0}
@@ -532,9 +532,9 @@ function ATC_GROUND_UNIVERSAL:DrawRunways( Color )
 end
 
 --- Draw the airbases boundaries.
--- @param #ATC_GROUND_UNIVERSAL self
--- @param #table Color The color of the line around the runways, in RGB, e.g `{1,0,0}` for red.
--- @return #ATC_GROUND_UNIVERSAL self
+--- @param #ATC_GROUND_UNIVERSAL self
+--- @param #table Color The color of the line around the runways, in RGB, e.g `{1,0,0}` for red.
+--- @return #ATC_GROUND_UNIVERSAL self
 function ATC_GROUND_UNIVERSAL:DrawBoundaries( Color )
   
   local Color = Color or {1,0,0}
@@ -549,10 +549,10 @@ end
 
 --- Set the maximum speed in meters per second (Mps) until the player gets kicked.
 -- An airbase can be specified to set the kick speed for.
--- @param #ATC_GROUND_UNIVERSAL self
--- @param #number KickSpeed The speed in Mps.
--- @param #string Airbase (optional) The airbase name to set the kick speed for.
--- @return #ATC_GROUND_UNIVERSAL self
+--- @param #ATC_GROUND_UNIVERSAL self
+--- @param #number KickSpeed The speed in Mps.
+--- @param #string Airbase (optional) The airbase name to set the kick speed for.
+--- @return #ATC_GROUND_UNIVERSAL self
 -- @usage
 -- 
 --   -- Declare Atc_Ground
@@ -579,10 +579,10 @@ function ATC_GROUND_UNIVERSAL:SetKickSpeed( KickSpeed, Airbase )
 end
 
 --- Set the maximum speed in Kmph until the player gets kicked.
--- @param #ATC_GROUND_UNIVERSAL self
--- @param #number KickSpeed Set the speed in Kmph.
--- @param #string Airbase (optional) The airbase name to set the kick speed for.
--- @return #ATC_GROUND_UNIVERSAL self
+--- @param #ATC_GROUND_UNIVERSAL self
+--- @param #number KickSpeed Set the speed in Kmph.
+--- @param #string Airbase (optional) The airbase name to set the kick speed for.
+--- @return #ATC_GROUND_UNIVERSAL self
 -- 
 --   Atc_Ground:SetKickSpeedKmph( 80 ) -- Kick the players at 80 kilometers per hour
 -- 
@@ -594,10 +594,10 @@ function ATC_GROUND_UNIVERSAL:SetKickSpeedKmph( KickSpeed, Airbase )
 end
 
 --- Set the maximum speed in Miph until the player gets kicked.
--- @param #ATC_GROUND_UNIVERSAL self
--- @param #number KickSpeedMiph Set the speed in Mph.
--- @param #string Airbase (optional) The airbase name to set the kick speed for.
--- @return #ATC_GROUND_UNIVERSAL self
+--- @param #ATC_GROUND_UNIVERSAL self
+--- @param #number KickSpeedMiph Set the speed in Mph.
+--- @param #string Airbase (optional) The airbase name to set the kick speed for.
+--- @return #ATC_GROUND_UNIVERSAL self
 -- 
 --   Atc_Ground:SetKickSpeedMiph( 100 ) -- Kick the players at 100 miles per hour
 -- 
@@ -612,10 +612,10 @@ end
 --- Set the maximum kick speed in meters per second (Mps) until the player gets kicked.
 -- There are no warnings given if this speed is reached, and is to prevent players to take off from the airbase!
 -- An airbase can be specified to set the maximum kick speed for.
--- @param #ATC_GROUND_UNIVERSAL self
--- @param #number MaximumKickSpeed The speed in Mps.
--- @param #string Airbase (optional) The airbase name to set the kick speed for.
--- @return #ATC_GROUND_UNIVERSAL self
+--- @param #ATC_GROUND_UNIVERSAL self
+--- @param #number MaximumKickSpeed The speed in Mps.
+--- @param #string Airbase (optional) The airbase name to set the kick speed for.
+--- @return #ATC_GROUND_UNIVERSAL self
 -- @usage
 -- 
 --   -- Declare Atc_Ground
@@ -644,10 +644,10 @@ end
 --- Set the maximum kick speed in kilometers per hour (Kmph) until the player gets kicked.
 -- There are no warnings given if this speed is reached, and is to prevent players to take off from the airbase!
 -- An airbase can be specified to set the maximum kick speed for.
--- @param #ATC_GROUND_UNIVERSAL self
--- @param #number MaximumKickSpeed Set the speed in Kmph.
--- @param #string Airbase (optional) The airbase name to set the kick speed for.
--- @return #ATC_GROUND_UNIVERSAL self
+--- @param #ATC_GROUND_UNIVERSAL self
+--- @param #number MaximumKickSpeed Set the speed in Kmph.
+--- @param #string Airbase (optional) The airbase name to set the kick speed for.
+--- @return #ATC_GROUND_UNIVERSAL self
 -- 
 --   Atc_Ground:SetMaximumKickSpeedKmph( 150 ) -- Kick the players at 150 kilometers per hour
 -- 
@@ -661,10 +661,10 @@ end
 --- Set the maximum kick speed in miles per hour (Miph) until the player gets kicked.
 -- There are no warnings given if this speed is reached, and is to prevent players to take off from the airbase!
 -- An airbase can be specified to set the maximum kick speed for.
--- @param #ATC_GROUND_UNIVERSAL self
--- @param #number MaximumKickSpeedMiph Set the speed in Mph.
--- @param #string Airbase (optional) The airbase name to set the kick speed for.
--- @return #ATC_GROUND_UNIVERSAL self
+--- @param #ATC_GROUND_UNIVERSAL self
+--- @param #number MaximumKickSpeedMiph Set the speed in Mph.
+--- @param #string Airbase (optional) The airbase name to set the kick speed for.
+--- @return #ATC_GROUND_UNIVERSAL self
 -- 
 --   Atc_Ground:SetMaximumKickSpeedMiph( 100 ) -- Kick the players at 100 miles per hour
 -- 
@@ -676,8 +676,8 @@ function ATC_GROUND_UNIVERSAL:SetMaximumKickSpeedMiph( MaximumKickSpeedMiph, Air
 end
 
 --- [Internal] Monitoring function
--- @param #ATC_GROUND_UNIVERSAL self
--- @return #ATC_GROUND_UNIVERSAL self
+--- @param #ATC_GROUND_UNIVERSAL self
+--- @return #ATC_GROUND_UNIVERSAL self
 function ATC_GROUND_UNIVERSAL:_AirbaseMonitor()
 
   self.SetClient:ForEachClient(
@@ -837,9 +837,9 @@ function ATC_GROUND_UNIVERSAL:_AirbaseMonitor()
 end
 
 --- Start SCHEDULER for ATC_GROUND_UNIVERSAL object.
--- @param #ATC_GROUND_UNIVERSAL self
--- @param RepeatScanSeconds Time in second for defining occurency of alerts.
--- @return #ATC_GROUND_UNIVERSAL self
+--- @param #ATC_GROUND_UNIVERSAL self
+--- @param RepeatScanSeconds Time in second for defining occurency of alerts.
+--- @return #ATC_GROUND_UNIVERSAL self
 function ATC_GROUND_UNIVERSAL:Start( RepeatScanSeconds )
   RepeatScanSeconds = RepeatScanSeconds or 0.05
   self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
@@ -954,15 +954,15 @@ end
 --   * @{#ATC_GROUND.SetMaximumKickSpeedMiph}(): Set the maximum speed allowed at an airbase in miles per hour.
 --   
 -- 
--- @field #ATC_GROUND_CAUCASUS
+--- @field #ATC_GROUND_CAUCASUS
 ATC_GROUND_CAUCASUS = {
   ClassName = "ATC_GROUND_CAUCASUS",
 }
 
 --- Creates a new ATC_GROUND_CAUCASUS object.
--- @param #ATC_GROUND_CAUCASUS self
--- @param AirbaseNames A list {} of airbase names (Use AIRBASE.Caucasus enumerator).
--- @return #ATC_GROUND_CAUCASUS self
+--- @param #ATC_GROUND_CAUCASUS self
+--- @param AirbaseNames A list {} of airbase names (Use AIRBASE.Caucasus enumerator).
+--- @return #ATC_GROUND_CAUCASUS self
 function ATC_GROUND_CAUCASUS:New( AirbaseNames )
 
   -- Inherits from BASE
@@ -976,9 +976,9 @@ end
 
 
 --- Start SCHEDULER for ATC_GROUND_CAUCASUS object.
--- @param #ATC_GROUND_CAUCASUS self
--- @param RepeatScanSeconds Time in second for defining occurency of alerts.
--- @return nothing
+--- @param #ATC_GROUND_CAUCASUS self
+--- @param RepeatScanSeconds Time in second for defining occurency of alerts.
+--- @return nothing
 function ATC_GROUND_CAUCASUS:Start( RepeatScanSeconds )
   RepeatScanSeconds = RepeatScanSeconds or 0.05
   self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
@@ -1094,15 +1094,15 @@ end
 --   * @{#ATC_GROUND.SetMaximumKickSpeedMiph}(): Set the maximum speed allowed at an airbase in miles per hour.
 -- 
 --   
--- @field #ATC_GROUND_NEVADA
+--- @field #ATC_GROUND_NEVADA
 ATC_GROUND_NEVADA = {
   ClassName = "ATC_GROUND_NEVADA",
 }
 
 --- Creates a new ATC_GROUND_NEVADA object.
--- @param #ATC_GROUND_NEVADA self
--- @param AirbaseNames A list {} of airbase names (Use AIRBASE.Nevada enumerator).
--- @return #ATC_GROUND_NEVADA self
+--- @param #ATC_GROUND_NEVADA self
+--- @param AirbaseNames A list {} of airbase names (Use AIRBASE.Nevada enumerator).
+--- @return #ATC_GROUND_NEVADA self
 function ATC_GROUND_NEVADA:New( AirbaseNames )
 
   -- Inherits from BASE
@@ -1115,9 +1115,9 @@ function ATC_GROUND_NEVADA:New( AirbaseNames )
 end
 
 --- Start SCHEDULER for ATC_GROUND_NEVADA object.
--- @param #ATC_GROUND_NEVADA self
--- @param RepeatScanSeconds Time in second for defining occurency of alerts.
--- @return nothing
+--- @param #ATC_GROUND_NEVADA self
+--- @param RepeatScanSeconds Time in second for defining occurency of alerts.
+--- @return nothing
 function ATC_GROUND_NEVADA:Start( RepeatScanSeconds )
   RepeatScanSeconds = RepeatScanSeconds or 0.05
   self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
@@ -1249,16 +1249,16 @@ end
 --   * @{#ATC_GROUND.SetMaximumKickSpeedKmph}(): Set the maximum speed allowed at an airbase in kilometers per hour.
 --   * @{#ATC_GROUND.SetMaximumKickSpeedMiph}(): Set the maximum speed allowed at an airbase in miles per hour.
 --   
--- @field #ATC_GROUND_NORMANDY
+--- @field #ATC_GROUND_NORMANDY
 ATC_GROUND_NORMANDY = {
   ClassName = "ATC_GROUND_NORMANDY", 
 }
 
 
 --- Creates a new ATC_GROUND_NORMANDY object.
--- @param #ATC_GROUND_NORMANDY self
--- @param AirbaseNames A list {} of airbase names (Use AIRBASE.Normandy enumerator).
--- @return #ATC_GROUND_NORMANDY self
+--- @param #ATC_GROUND_NORMANDY self
+--- @param AirbaseNames A list {} of airbase names (Use AIRBASE.Normandy enumerator).
+--- @return #ATC_GROUND_NORMANDY self
 function ATC_GROUND_NORMANDY:New( AirbaseNames )
 
   -- Inherits from BASE
@@ -1272,9 +1272,9 @@ end
 
      
 --- Start SCHEDULER for ATC_GROUND_NORMANDY object.
--- @param #ATC_GROUND_NORMANDY self
--- @param RepeatScanSeconds Time in second for defining occurency of alerts.
--- @return nothing
+--- @param #ATC_GROUND_NORMANDY self
+--- @param RepeatScanSeconds Time in second for defining occurency of alerts.
+--- @return nothing
 function ATC_GROUND_NORMANDY:Start( RepeatScanSeconds )
   RepeatScanSeconds = RepeatScanSeconds or 0.05
   self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
@@ -1394,15 +1394,15 @@ end
 --   * @{#ATC_GROUND.SetMaximumKickSpeedKmph}(): Set the maximum speed allowed at an airbase in kilometers per hour.
 --   * @{#ATC_GROUND.SetMaximumKickSpeedMiph}(): Set the maximum speed allowed at an airbase in miles per hour.
 --   
--- @field #ATC_GROUND_PERSIANGULF
+--- @field #ATC_GROUND_PERSIANGULF
 ATC_GROUND_PERSIANGULF = {
   ClassName = "ATC_GROUND_PERSIANGULF",
 }
 
 --- Creates a new ATC_GROUND_PERSIANGULF object.
--- @param #ATC_GROUND_PERSIANGULF self
--- @param AirbaseNames A list {} of airbase names (Use AIRBASE.PersianGulf enumerator).
--- @return #ATC_GROUND_PERSIANGULF self
+--- @param #ATC_GROUND_PERSIANGULF self
+--- @param AirbaseNames A list {} of airbase names (Use AIRBASE.PersianGulf enumerator).
+--- @return #ATC_GROUND_PERSIANGULF self
 function ATC_GROUND_PERSIANGULF:New( AirbaseNames )
 
   -- Inherits from BASE
@@ -1414,9 +1414,9 @@ function ATC_GROUND_PERSIANGULF:New( AirbaseNames )
 end
 
 --- Start SCHEDULER for ATC_GROUND_PERSIANGULF object.
--- @param #ATC_GROUND_PERSIANGULF self
--- @param RepeatScanSeconds Time in second for defining occurency of alerts.
--- @return nothing
+--- @param #ATC_GROUND_PERSIANGULF self
+--- @param RepeatScanSeconds Time in second for defining occurency of alerts.
+--- @return nothing
 function ATC_GROUND_PERSIANGULF:Start( RepeatScanSeconds )
   RepeatScanSeconds = RepeatScanSeconds or 0.05
   self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
@@ -1523,9 +1523,9 @@ ATC_GROUND_MARIANAISLANDS = {
 }
 
 --- Creates a new ATC_GROUND_MARIANAISLANDS object.
--- @param #ATC_GROUND_MARIANAISLANDS self
--- @param AirbaseNames A list {} of airbase names (Use AIRBASE.MarianaIslands enumerator).
--- @return #ATC_GROUND_MARIANAISLANDS self
+--- @param #ATC_GROUND_MARIANAISLANDS self
+--- @param AirbaseNames A list {} of airbase names (Use AIRBASE.MarianaIslands enumerator).
+--- @return #ATC_GROUND_MARIANAISLANDS self
 function ATC_GROUND_MARIANAISLANDS:New( AirbaseNames )
 
   -- Inherits from BASE
@@ -1538,9 +1538,9 @@ function ATC_GROUND_MARIANAISLANDS:New( AirbaseNames )
 end
 
 --- Start SCHEDULER for ATC_GROUND_MARIANAISLANDS object.
--- @param #ATC_GROUND_MARIANAISLANDS self
--- @param RepeatScanSeconds Time in second for defining occurency of alerts.
--- @return nothing
+--- @param #ATC_GROUND_MARIANAISLANDS self
+--- @param RepeatScanSeconds Time in second for defining occurency of alerts.
+--- @return nothing
 function ATC_GROUND_MARIANAISLANDS:Start( RepeatScanSeconds )
   RepeatScanSeconds = RepeatScanSeconds or 0.05
   self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )

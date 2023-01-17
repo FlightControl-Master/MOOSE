@@ -30,27 +30,27 @@
 
 
 --- AI CSAR class.
--- @type AICSAR
--- @field #string ClassName Name of this class.
--- @field #string version Versioning.
--- @field #string lid LID for log entries.
--- @field #number coalition Colition side.
--- @field #string template Template for pilot.
--- @field #string helotemplate Template for CSAR helo.
--- @field #string alias Alias Name.
--- @field Wrapper.Airbase#AIRBASE farp FARP object from where to start.
--- @field Core.Zone#ZONE farpzone MASH zone to drop rescued pilots.
--- @field #number maxdistance Max distance to go for a rescue.
--- @field #table pilotqueue Queue of pilots to rescue.
--- @field #number pilotindex Table index to bind pilot to helo.
--- @field #table helos Table of Ops.FlightGroup#FLIGHTGROUP objects
--- @field #boolean verbose Switch more output.
--- @field #number rescuezoneradius Radius around downed pilot for the helo to land in.
--- @field #table rescued Track number of rescued pilot.
--- @field #boolean autoonoff Only send a helo when no human heli pilots are available.
--- @field Core.Set#SET_CLIENT playerset Track if alive heli pilots are available.
--- @field #boolean limithelos limit available number of helos going on mission (defaults to true)
--- @field #number helonumber number of helos available (default: 3)
+--- @type AICSAR
+--- @field #string ClassName Name of this class.
+--- @field #string version Versioning.
+--- @field #string lid LID for log entries.
+--- @field #number coalition Colition side.
+--- @field #string template Template for pilot.
+--- @field #string helotemplate Template for CSAR helo.
+--- @field #string alias Alias Name.
+--- @field Wrapper.Airbase#AIRBASE farp FARP object from where to start.
+--- @field Core.Zone#ZONE farpzone MASH zone to drop rescued pilots.
+--- @field #number maxdistance Max distance to go for a rescue.
+--- @field #table pilotqueue Queue of pilots to rescue.
+--- @field #number pilotindex Table index to bind pilot to helo.
+--- @field #table helos Table of Ops.FlightGroup#FLIGHTGROUP objects
+--- @field #boolean verbose Switch more output.
+--- @field #number rescuezoneradius Radius around downed pilot for the helo to land in.
+--- @field #table rescued Track number of rescued pilot.
+--- @field #boolean autoonoff Only send a helo when no human heli pilots are available.
+--- @field Core.Set#SET_CLIENT playerset Track if alive heli pilots are available.
+--- @field #boolean limithelos limit available number of helos going on mission (defaults to true)
+--- @field #number helonumber number of helos available (default: 3)
 -- @extends Core.Fsm#FSM
 
 
@@ -158,7 +158,7 @@
 -- ===
 ---
 --
--- @field #AICSAR
+--- @field #AICSAR
 AICSAR = {
   ClassName = "AICSAR",
   version = "0.0.8",
@@ -198,7 +198,7 @@ AICSAR = {
 
 -- TODO Messages
 --- Messages enum
--- @field Messages
+--- @field Messages
 AICSAR.Messages = {
   EN = {
   INITIALOK = "Roger, Pilot, we hear you. Stay where you are, a helo is on the way!",
@@ -222,7 +222,7 @@ AICSAR.Messages = {
 
 -- TODO Radio Messages
 --- Radio Messages enum for ogg files
--- @field RadioMessages
+--- @field RadioMessages
 AICSAR.RadioMessages = {
   EN = {
   INITIALOK = "initialok.ogg", -- 4.1 secs
@@ -237,7 +237,7 @@ AICSAR.RadioMessages = {
 
 -- TODO Radio Messages
 --- Radio Messages enum for ogg files length in secs
--- @field RadioLength
+--- @field RadioLength
 AICSAR.RadioLength = {
   EN = {
   INITIALOK = 4.1,
@@ -255,14 +255,14 @@ AICSAR.RadioLength = {
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Function to create a new AICSAR object
--- @param #AICSAR self
--- @param #string Alias Name of this instance.
--- @param #number Coalition Coalition as in coalition.side.BLUE, can also be passed as "blue", "red" or "neutral"
--- @param #string Pilottemplate Pilot template name.
--- @param #string Helotemplate Helicopter template name.
--- @param Wrapper.Airbase#AIRBASE FARP FARP object or Airbase from where to start.
--- @param Core.Zone#ZONE MASHZone Zone where to drop pilots after rescue.
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @param #string Alias Name of this instance.
+--- @param #number Coalition Coalition as in coalition.side.BLUE, can also be passed as "blue", "red" or "neutral"
+--- @param #string Pilottemplate Pilot template name.
+--- @param #string Helotemplate Helicopter template name.
+--- @param Wrapper.Airbase#AIRBASE FARP FARP object or Airbase from where to start.
+--- @param Core.Zone#ZONE MASHZone Zone where to drop pilots after rescue.
+--- @return #AICSAR self
 function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New())
@@ -428,8 +428,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- [Internal] Create the Moose TextAndSoundEntries
--- @param #AICSAR self
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @return #AICSAR self
 function AICSAR:InitLocalization()
   self:T(self.lid .. "InitLocalization")
   -- English standard localization
@@ -454,14 +454,14 @@ function AICSAR:InitLocalization()
 end
 
 --- [User] Switch sound output on and use SRS
--- @param #AICSAR self
--- @param #boolean OnOff Switch on (true) or off (false).
--- @param #string Path Path to your SRS Server Component, e.g. "E:\\\\Program Files\\\\DCS-SimpleRadio-Standalone"
--- @param #number Frequency Defaults to 243 (guard)
--- @param #number Modulation Radio modulation. Defaults to radio.modulation.AM
--- @param #string SoundPath Where to find the audio files. Defaults to nil, i.e. add messages via "Sound to..." in the Mission Editor.
--- @param #number Port Port of the SRS, defaults to 5002.
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @param #boolean OnOff Switch on (true) or off (false).
+--- @param #string Path Path to your SRS Server Component, e.g. "E:\\\\Program Files\\\\DCS-SimpleRadio-Standalone"
+--- @param #number Frequency Defaults to 243 (guard)
+--- @param #number Modulation Radio modulation. Defaults to radio.modulation.AM
+--- @param #string SoundPath Where to find the audio files. Defaults to nil, i.e. add messages via "Sound to..." in the Mission Editor.
+--- @param #number Port Port of the SRS, defaults to 5002.
+--- @return #AICSAR self
 function AICSAR:SetSRSRadio(OnOff,Path,Frequency,Modulation,SoundPath,Port)
   self:T(self.lid .. "SetSRSRadio")
   self:T(self.lid .. "SetSRSRadio to "..tostring(OnOff))
@@ -480,12 +480,12 @@ function AICSAR:SetSRSRadio(OnOff,Path,Frequency,Modulation,SoundPath,Port)
 end
 
 --- [User] Switch sound output on and use normale (DCS) radio
--- @param #AICSAR self
--- @param #boolean OnOff Switch on (true) or off (false).
--- @param #number Frequency Defaults to 243 (guard).
--- @param #number Modulation Radio modulation. Defaults to radio.modulation.AM.
--- @param Wrapper.Group#GROUP Group The group to use as sending station.
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @param #boolean OnOff Switch on (true) or off (false).
+--- @param #number Frequency Defaults to 243 (guard).
+--- @param #number Modulation Radio modulation. Defaults to radio.modulation.AM.
+--- @param Wrapper.Group#GROUP Group The group to use as sending station.
+--- @return #AICSAR self
 function AICSAR:SetDCSRadio(OnOff,Frequency,Modulation,Group)
   self:T(self.lid .. "SetDCSRadio")
   self:T(self.lid .. "SetDCSRadio to "..tostring(OnOff))
@@ -507,11 +507,11 @@ function AICSAR:SetDCSRadio(OnOff,Frequency,Modulation,Group)
 end
 
 --- [Internal] Sound output via non-SRS Radio. Add message files (.ogg) via "Sound to..." in the ME.
--- @param #AICSAR self
--- @param #string Soundfile Name of the soundfile
--- @param #number Duration Duration of the sound
--- @param #string Subtitle Text to display
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @param #string Soundfile Name of the soundfile
+--- @param #number Duration Duration of the sound
+--- @param #string Subtitle Text to display
+--- @return #AICSAR self
 function AICSAR:DCSRadioBroadcast(Soundfile,Duration,Subtitle)
   self:T(self.lid .. "DCSRadioBroadcast")
   local radioqueue = self.DCSRadioQueue -- Sound.RadioQueue#RADIOQUEUE
@@ -520,9 +520,9 @@ function AICSAR:DCSRadioBroadcast(Soundfile,Duration,Subtitle)
 end
 
 --- [Internal] Catch the landing after ejection and spawn a pilot in situ.
--- @param #AICSAR self
--- @param Core.Event#EVENTDATA EventData
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @param Core.Event#EVENTDATA EventData
+--- @return #AICSAR self
 function AICSAR:OnEventLandingAfterEjection(EventData)
   self:T(self.lid .. "OnEventLandingAfterEjection ID=" .. EventData.id)
   
@@ -587,8 +587,8 @@ function AICSAR:OnEventLandingAfterEjection(EventData)
 end
 
 --- [Internal] Get FlightGroup
--- @param #AICSAR self
--- @return Ops.FlightGroup#FLIGHTGROUP The FlightGroup
+--- @param #AICSAR self
+--- @return Ops.FlightGroup#FLIGHTGROUP The FlightGroup
 function AICSAR:_GetFlight()
   self:T(self.lid .. "_GetFlight")
   -- Helo Carrier.
@@ -604,10 +604,10 @@ function AICSAR:_GetFlight()
 end
 
 --- [Internal] Create a new rescue mission
--- @param #AICSAR self
--- @param Wrapper.Group#GROUP Pilot The pilot to be rescued.
--- @param #number Index Index number of this pilot
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @param Wrapper.Group#GROUP Pilot The pilot to be rescued.
+--- @param #number Index Index number of this pilot
+--- @return #AICSAR self
 function AICSAR:_InitMission(Pilot,Index)
   self:T(self.lid .. "_InitMission")
   
@@ -648,9 +648,9 @@ function AICSAR:_InitMission(Pilot,Index)
 end
 
 --- [Internal] Check if pilot arrived in rescue zone (MASH)
--- @param #AICSAR self
--- @param Wrapper.Group#GROUP Pilot The pilot to be rescued.
--- @return #boolean outcome
+--- @param #AICSAR self
+--- @param Wrapper.Group#GROUP Pilot The pilot to be rescued.
+--- @return #boolean outcome
 function AICSAR:_CheckInMashZone(Pilot)
   self:T(self.lid .. "_CheckQueue")
   if Pilot:IsInZone(self.farpzone) then
@@ -661,8 +661,8 @@ function AICSAR:_CheckInMashZone(Pilot)
 end
 
 --- [Internal] Check helo queue 
--- @param #AICSAR self
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @return #AICSAR self
 function AICSAR:_CheckHelos()
   self:T(self.lid .. "_CheckHelos")
   for _index,_helo in pairs(self.helos) do
@@ -683,8 +683,8 @@ function AICSAR:_CheckHelos()
 end
 
 --- [Internal] Count helos queue 
--- @param #AICSAR self
--- @return #number Number of helos on mission
+--- @param #AICSAR self
+--- @return #number Number of helos on mission
 function AICSAR:_CountHelos()
   self:T(self.lid .. "_CountHelos")
   local count = 0
@@ -695,8 +695,8 @@ function AICSAR:_CountHelos()
 end
 
 --- [Internal] Check pilot queue for next mission
--- @param #AICSAR self
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @return #AICSAR self
 function AICSAR:_CheckQueue()
   self:T(self.lid .. "_CheckQueue")
   for _index, _pilot in pairs(self.pilotqueue) do
@@ -748,11 +748,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- [Internal] onafterStart
--- @param #AICSAR self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @return #AICSAR self
 function AICSAR:onafterStart(From, Event, To)
   self:T({From, Event, To})
   self:__Status(3)
@@ -760,11 +760,11 @@ function AICSAR:onafterStart(From, Event, To)
 end
 
 --- [Internal] onafterStatus
--- @param #AICSAR self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @return #AICSAR self
 function AICSAR:onafterStatus(From, Event, To)
   self:T({From, Event, To})
   self:_CheckQueue()
@@ -774,11 +774,11 @@ function AICSAR:onafterStatus(From, Event, To)
 end
 
 --- [Internal] onafterStop
--- @param #AICSAR self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @return #AICSAR self
 function AICSAR:onafterStop(From, Event, To)
   self:T({From, Event, To})
   self:UnHandleEvent(EVENTS.LandingAfterEjection)
@@ -789,13 +789,13 @@ function AICSAR:onafterStop(From, Event, To)
 end
 
 --- [Internal] onafterPilotDown
--- @param #AICSAR self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @param Core.Point#COORDINATE Coordinate Location of the pilot.
--- @param #boolean InReach True if in maxdistance else false.
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @param Core.Point#COORDINATE Coordinate Location of the pilot.
+--- @param #boolean InReach True if in maxdistance else false.
+--- @return #AICSAR self
 function AICSAR:onafterPilotDown(From, Event, To, Coordinate, InReach)
   self:T({From, Event, To})
   local CoordinateText = Coordinate:ToStringMGRS()
@@ -834,11 +834,11 @@ function AICSAR:onafterPilotDown(From, Event, To, Coordinate, InReach)
 end
 
 --- [Internal] onafterPilotKIA
--- @param #AICSAR self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @return #AICSAR self
 function AICSAR:onafterPilotKIA(From, Event, To)
   self:T({From, Event, To})
   local text,Soundfile,Soundlength,Subtitle = self.gettext:GetEntry("PILOTKIA",self.locale)
@@ -856,13 +856,13 @@ function AICSAR:onafterPilotKIA(From, Event, To)
 end
 
 --- [Internal] onafterHeloDown
--- @param #AICSAR self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @param Ops.FlightGroup#FLIGHTGROUP Helo
--- @param #number Index
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @param Ops.FlightGroup#FLIGHTGROUP Helo
+--- @param #number Index
+--- @return #AICSAR self
 function AICSAR:onafterHeloDown(From, Event, To, Helo, Index)
   self:T({From, Event, To})
   local text,Soundfile,Soundlength,Subtitle = self.gettext:GetEntry("HELODOWN",self.locale)
@@ -910,11 +910,11 @@ function AICSAR:onafterHeloDown(From, Event, To, Helo, Index)
 end
 
 --- [Internal] onafterPilotRescued
--- @param #AICSAR self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @return #AICSAR self
 function AICSAR:onafterPilotRescued(From, Event, To)
   self:T({From, Event, To})
   local text,Soundfile,Soundlength,Subtitle = self.gettext:GetEntry("PILOTRESCUED",self.locale)
@@ -932,14 +932,14 @@ function AICSAR:onafterPilotRescued(From, Event, To)
 end
 
 --- [Internal] onafterPilotPickedUp
--- @param #AICSAR self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @param Ops.FlightGroup#FLIGHTGROUP Helo
--- @param #table CargoTable of Ops.OpsGroup#OPSGROUP Cargo objects
--- @param #number Index 
--- @return #AICSAR self
+--- @param #AICSAR self
+--- @param #string From 
+--- @param #string Event
+--- @param #string To
+--- @param Ops.FlightGroup#FLIGHTGROUP Helo
+--- @param #table CargoTable of Ops.OpsGroup#OPSGROUP Cargo objects
+--- @param #number Index 
+--- @return #AICSAR self
 function AICSAR:onafterPilotPickedUp(From, Event, To, Helo, CargoTable, Index)
   self:T({From, Event, To})
   local text,Soundfile,Soundlength,Subtitle = self.gettext:GetEntry("PILOTINHELO",self.locale)

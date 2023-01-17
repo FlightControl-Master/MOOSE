@@ -102,7 +102,7 @@ function MENU_INDEX:PrepareCoalition( CoalitionSide )
     self.Coalition[CoalitionSide].Menus = self.Coalition[CoalitionSide].Menus or {}
 end
 ---
--- @param Wrapper.Group#GROUP Group
+--- @param Wrapper.Group#GROUP Group
 function MENU_INDEX:PrepareGroup( Group )
   if Group and Group:IsAlive() ~= nil  then -- something was changed here!
     local GroupName = Group:GetName()

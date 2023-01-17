@@ -12,130 +12,130 @@
 
 
 --- OPSGROUP class.
--- @type OPSGROUP
--- @field #string ClassName Name of the class.
--- @field #number verbose Verbosity level. 0=silent.
--- @field #string lid Class id string for output to DCS log file.
--- @field #string groupname Name of the group.
--- @field Wrapper.Group#GROUP group Group object.
--- @field DCS#Group dcsgroup The DCS group object.
--- @field DCS#Controller controller The DCS controller of the group.
--- @field DCS#Template template Template table of the group.
--- @field #table elements Table of elements, i.e. units of the group.
--- @field #boolean isLateActivated Is the group late activated.
--- @field #boolean isUncontrolled Is the group uncontrolled.
--- @field #boolean isFlightgroup Is a FLIGHTGROUP.
--- @field #boolean isArmygroup Is an ARMYGROUP.
--- @field #boolean isNavygroup Is a NAVYGROUP.
--- @field #boolean isHelo If true, this is a helicopter group.
--- @field #boolean isVTOL If true, this is capable of Vertical TakeOff and Landing (VTOL).
--- @field #boolean isSubmarine If true, this is a submarine group.
--- @field #boolean isAI If true, group is purely AI.
--- @field #boolean isDestroyed If true, the whole group was destroyed.
--- @field #boolean isDead If true, the whole group is dead.
--- @field #table waypoints Table of waypoints.
--- @field #table waypoints0 Table of initial waypoints.
--- @field #boolean useMEtasks If `true`, use tasks set in the ME. Default `false`.
--- @field Wrapper.Airbase#AIRBASE homebase The home base of the flight group.
--- @field Wrapper.Airbase#AIRBASE destbase The destination base of the flight group.
--- @field Wrapper.Airbase#AIRBASE currbase The current airbase of the flight group, i.e. where it is currently located or landing at.
--- @field Core.Zone#ZONE homezone The home zone of the flight group. Set when spawn happens in air.
--- @field Core.Zone#ZONE destzone The destination zone of the flight group. Set when final waypoint is in air.
--- @field #number currentwp Current waypoint index. This is the index of the last passed waypoint.
--- @field #boolean adinfinitum Resume route at first waypoint when final waypoint is reached.
--- @field #number Twaiting Abs. mission time stamp when the group was ordered to wait.
--- @field #number dTwait Time to wait in seconds. Default `nil` (for ever).
--- @field #table taskqueue Queue of tasks.
--- @field #number taskcounter Running number of task ids.
--- @field #number taskcurrent ID of current task. If 0, there is no current task assigned.
--- @field #table taskenroute Enroute task of the group.
--- @field #table taskpaused Paused tasks.
--- @field #table missionqueue Queue of missions.
--- @field #number currentmission The ID (auftragsnummer) of the currently assigned AUFTRAG.
--- @field Core.Set#SET_UNIT detectedunits Set of detected units.
--- @field Core.Set#SET_GROUP detectedgroups Set of detected groups.
--- @field #string attribute Generalized attribute.
--- @field #number speedMax Max speed in km/h.
--- @field #number speedCruise Cruising speed in km/h.
--- @field #number speedWp Speed to the next waypoint in m/s.
--- @field #boolean isMobile If `true`, group is mobile (speed > 1 m/s)
--- @field #boolean passedfinalwp Group has passed the final waypoint.
--- @field #number wpcounter Running number counting waypoints.
--- @field Core.Set#SET_ZONE checkzones Set of zones.
--- @field Core.Set#SET_ZONE inzones Set of zones in which the group is currently in.
--- @field Core.Timer#TIMER timerStatus Timer for status update.
--- @field Core.Timer#TIMER timerCheckZone Timer for check zones.
--- @field Core.Timer#TIMER timerQueueUpdate Timer for queue updates.
--- @field #boolean groupinitialized If true, group parameters were initialized.
--- @field #boolean detectionOn If true, detected units of the group are analyzed.
--- @field #table pausedmissions Paused missions.
--- @field #number Ndestroyed Number of destroyed units.
--- @field #number Nkills Number kills of this groups.
--- @field #number Nhit Number of hits taken.
+--- @type OPSGROUP
+--- @field #string ClassName Name of the class.
+--- @field #number verbose Verbosity level. 0=silent.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #string groupname Name of the group.
+--- @field Wrapper.Group#GROUP group Group object.
+--- @field DCS#Group dcsgroup The DCS group object.
+--- @field DCS#Controller controller The DCS controller of the group.
+--- @field DCS#Template template Template table of the group.
+--- @field #table elements Table of elements, i.e. units of the group.
+--- @field #boolean isLateActivated Is the group late activated.
+--- @field #boolean isUncontrolled Is the group uncontrolled.
+--- @field #boolean isFlightgroup Is a FLIGHTGROUP.
+--- @field #boolean isArmygroup Is an ARMYGROUP.
+--- @field #boolean isNavygroup Is a NAVYGROUP.
+--- @field #boolean isHelo If true, this is a helicopter group.
+--- @field #boolean isVTOL If true, this is capable of Vertical TakeOff and Landing (VTOL).
+--- @field #boolean isSubmarine If true, this is a submarine group.
+--- @field #boolean isAI If true, group is purely AI.
+--- @field #boolean isDestroyed If true, the whole group was destroyed.
+--- @field #boolean isDead If true, the whole group is dead.
+--- @field #table waypoints Table of waypoints.
+--- @field #table waypoints0 Table of initial waypoints.
+--- @field #boolean useMEtasks If `true`, use tasks set in the ME. Default `false`.
+--- @field Wrapper.Airbase#AIRBASE homebase The home base of the flight group.
+--- @field Wrapper.Airbase#AIRBASE destbase The destination base of the flight group.
+--- @field Wrapper.Airbase#AIRBASE currbase The current airbase of the flight group, i.e. where it is currently located or landing at.
+--- @field Core.Zone#ZONE homezone The home zone of the flight group. Set when spawn happens in air.
+--- @field Core.Zone#ZONE destzone The destination zone of the flight group. Set when final waypoint is in air.
+--- @field #number currentwp Current waypoint index. This is the index of the last passed waypoint.
+--- @field #boolean adinfinitum Resume route at first waypoint when final waypoint is reached.
+--- @field #number Twaiting Abs. mission time stamp when the group was ordered to wait.
+--- @field #number dTwait Time to wait in seconds. Default `nil` (for ever).
+--- @field #table taskqueue Queue of tasks.
+--- @field #number taskcounter Running number of task ids.
+--- @field #number taskcurrent ID of current task. If 0, there is no current task assigned.
+--- @field #table taskenroute Enroute task of the group.
+--- @field #table taskpaused Paused tasks.
+--- @field #table missionqueue Queue of missions.
+--- @field #number currentmission The ID (auftragsnummer) of the currently assigned AUFTRAG.
+--- @field Core.Set#SET_UNIT detectedunits Set of detected units.
+--- @field Core.Set#SET_GROUP detectedgroups Set of detected groups.
+--- @field #string attribute Generalized attribute.
+--- @field #number speedMax Max speed in km/h.
+--- @field #number speedCruise Cruising speed in km/h.
+--- @field #number speedWp Speed to the next waypoint in m/s.
+--- @field #boolean isMobile If `true`, group is mobile (speed > 1 m/s)
+--- @field #boolean passedfinalwp Group has passed the final waypoint.
+--- @field #number wpcounter Running number counting waypoints.
+--- @field Core.Set#SET_ZONE checkzones Set of zones.
+--- @field Core.Set#SET_ZONE inzones Set of zones in which the group is currently in.
+--- @field Core.Timer#TIMER timerStatus Timer for status update.
+--- @field Core.Timer#TIMER timerCheckZone Timer for check zones.
+--- @field Core.Timer#TIMER timerQueueUpdate Timer for queue updates.
+--- @field #boolean groupinitialized If true, group parameters were initialized.
+--- @field #boolean detectionOn If true, detected units of the group are analyzed.
+--- @field #table pausedmissions Paused missions.
+--- @field #number Ndestroyed Number of destroyed units.
+--- @field #number Nkills Number kills of this groups.
+--- @field #number Nhit Number of hits taken.
 --
--- @field #boolean rearmOnOutOfAmmo If `true`, group will go to rearm once it runs out of ammo.
+--- @field #boolean rearmOnOutOfAmmo If `true`, group will go to rearm once it runs out of ammo.
 --
--- @field Ops.Legion#LEGION legion Legion the group belongs to.
--- @field Ops.Cohort#COHORT cohort Cohort the group belongs to.
+--- @field Ops.Legion#LEGION legion Legion the group belongs to.
+--- @field Ops.Cohort#COHORT cohort Cohort the group belongs to.
 --
--- @field Core.Point#COORDINATE coordinate Current coordinate.
+--- @field Core.Point#COORDINATE coordinate Current coordinate.
 --
--- @field DCS#Vec3 position Position of the group at last status check.
--- @field DCS#Vec3 positionLast Backup of last position vec to monitor changes.
--- @field #number heading Heading of the group at last status check.
--- @field #number headingLast Backup of last heading to monitor changes.
--- @field DCS#Vec3 orientX Orientation at last status check.
--- @field DCS#Vec3 orientXLast Backup of last orientation to monitor changes.
--- @field #number traveldist Distance traveled in meters. This is a lower bound.
--- @field #number traveltime Time.
+--- @field DCS#Vec3 position Position of the group at last status check.
+--- @field DCS#Vec3 positionLast Backup of last position vec to monitor changes.
+--- @field #number heading Heading of the group at last status check.
+--- @field #number headingLast Backup of last heading to monitor changes.
+--- @field DCS#Vec3 orientX Orientation at last status check.
+--- @field DCS#Vec3 orientXLast Backup of last orientation to monitor changes.
+--- @field #number traveldist Distance traveled in meters. This is a lower bound.
+--- @field #number traveltime Time.
 --
--- @field Core.Astar#ASTAR Astar path finding.
--- @field #boolean ispathfinding If true, group is on pathfinding route.
+--- @field Core.Astar#ASTAR Astar path finding.
+--- @field #boolean ispathfinding If true, group is on pathfinding route.
 --
--- @field #boolean engagedetectedOn If `true`, auto engage detected targets.
--- @field #number engagedetectedRmax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
--- @field #table engagedetectedTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default "All".
--- @field Core.Set#SET_ZONE engagedetectedEngageZones Set of zones in which targets are engaged. Default is anywhere.
--- @field Core.Set#SET_ZONE engagedetectedNoEngageZones Set of zones in which targets are *not* engaged. Default is nowhere.
+--- @field #boolean engagedetectedOn If `true`, auto engage detected targets.
+--- @field #number engagedetectedRmax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
+--- @field #table engagedetectedTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default "All".
+--- @field Core.Set#SET_ZONE engagedetectedEngageZones Set of zones in which targets are engaged. Default is anywhere.
+--- @field Core.Set#SET_ZONE engagedetectedNoEngageZones Set of zones in which targets are *not* engaged. Default is nowhere.
 --
--- @field #OPSGROUP.Radio radio Current radio settings.
--- @field #OPSGROUP.Radio radioDefault Default radio settings.
--- @field Core.RadioQueue#RADIOQUEUE radioQueue Radio queue.
+--- @field #OPSGROUP.Radio radio Current radio settings.
+--- @field #OPSGROUP.Radio radioDefault Default radio settings.
+--- @field Core.RadioQueue#RADIOQUEUE radioQueue Radio queue.
 --
--- @field #OPSGROUP.Beacon tacan Current TACAN settings.
--- @field #OPSGROUP.Beacon tacanDefault Default TACAN settings.
+--- @field #OPSGROUP.Beacon tacan Current TACAN settings.
+--- @field #OPSGROUP.Beacon tacanDefault Default TACAN settings.
 --
--- @field #OPSGROUP.Beacon icls Current ICLS settings.
--- @field #OPSGROUP.Beacon iclsDefault Default ICLS settings.
+--- @field #OPSGROUP.Beacon icls Current ICLS settings.
+--- @field #OPSGROUP.Beacon iclsDefault Default ICLS settings.
 --
--- @field #OPSGROUP.Option option Current optional settings.
--- @field #OPSGROUP.Option optionDefault Default option settings.
+--- @field #OPSGROUP.Option option Current optional settings.
+--- @field #OPSGROUP.Option optionDefault Default option settings.
 --
--- @field #OPSGROUP.Callsign callsign Current callsign settings.
--- @field #OPSGROUP.Callsign callsignDefault Default callsign settings.
--- @field #string callsignName Callsign name.
--- @field #string callsignAlias Callsign alias.
+--- @field #OPSGROUP.Callsign callsign Current callsign settings.
+--- @field #OPSGROUP.Callsign callsignDefault Default callsign settings.
+--- @field #string callsignName Callsign name.
+--- @field #string callsignAlias Callsign alias.
 --
--- @field #OPSGROUP.Spot spot Laser and IR spot.
+--- @field #OPSGROUP.Spot spot Laser and IR spot.
 --
--- @field #OPSGROUP.Ammo ammo Initial ammount of ammo.
--- @field #OPSGROUP.WeaponData weaponData Weapon data table with key=BitType.
+--- @field #OPSGROUP.Ammo ammo Initial ammount of ammo.
+--- @field #OPSGROUP.WeaponData weaponData Weapon data table with key=BitType.
 --
--- @field #OPSGROUP.Element carrier Carrier the group is loaded into as cargo.
--- @field #OPSGROUP carrierGroup Carrier group transporting this group as cargo.
--- @field #OPSGROUP.MyCarrier mycarrier Carrier group for this group.
--- @field #table cargoqueue Table containing cargo groups to be transported.
--- @field #table cargoBay Table containing OPSGROUP loaded into this group.
--- @field Ops.OpsTransport#OPSTRANSPORT cargoTransport Current cargo transport assignment.
--- @field Ops.OpsTransport#OPSTRANSPORT.TransportZoneCombo cargoTZC Transport zone combo (pickup, deploy etc.) currently used.
--- @field #string cargoStatus Cargo status of this group acting as cargo.
--- @field #number cargoTransportUID Unique ID of the transport assignment this cargo group is associated with.
--- @field #string carrierStatus Carrier status of this group acting as cargo carrier.
--- @field #OPSGROUP.CarrierLoader carrierLoader Carrier loader parameters.
--- @field #OPSGROUP.CarrierLoader carrierUnloader Carrier unloader parameters.
+--- @field #OPSGROUP.Element carrier Carrier the group is loaded into as cargo.
+--- @field #OPSGROUP carrierGroup Carrier group transporting this group as cargo.
+--- @field #OPSGROUP.MyCarrier mycarrier Carrier group for this group.
+--- @field #table cargoqueue Table containing cargo groups to be transported.
+--- @field #table cargoBay Table containing OPSGROUP loaded into this group.
+--- @field Ops.OpsTransport#OPSTRANSPORT cargoTransport Current cargo transport assignment.
+--- @field Ops.OpsTransport#OPSTRANSPORT.TransportZoneCombo cargoTZC Transport zone combo (pickup, deploy etc.) currently used.
+--- @field #string cargoStatus Cargo status of this group acting as cargo.
+--- @field #number cargoTransportUID Unique ID of the transport assignment this cargo group is associated with.
+--- @field #string carrierStatus Carrier status of this group acting as cargo carrier.
+--- @field #OPSGROUP.CarrierLoader carrierLoader Carrier loader parameters.
+--- @field #OPSGROUP.CarrierLoader carrierUnloader Carrier unloader parameters.
 --
--- @field #boolean useSRS Use SRS for transmissions.
--- @field Sound.SRS#MSRS msrs MOOSE SRS wrapper.
+--- @field #boolean useSRS Use SRS for transmissions.
+--- @field Sound.SRS#MSRS msrs MOOSE SRS wrapper.
 --
 -- @extends Core.Fsm#FSM
 
@@ -151,7 +151,7 @@
 -- This class is **NOT** meant to be used by the end user itself.
 --
 --
--- @field #OPSGROUP
+--- @field #OPSGROUP
 OPSGROUP = {
   ClassName          = "OPSGROUP",
   verbose            =     0,
@@ -199,69 +199,69 @@ OPSGROUP = {
 
 
 --- OPS group element.
--- @type OPSGROUP.Element
--- @field #string name Name of the element, i.e. the unit.
--- @field #string status The element status. See @{#OPSGROUP.ElementStatus}.
--- @field Wrapper.Unit#UNIT unit The UNIT object.
--- @field Wrapper.Group#GROUP group The GROUP object.
--- @field DCS#Unit DCSunit The DCS unit object.
--- @field DCS#Controller controller The DCS controller of the unit.
--- @field #boolean ai If true, element is AI.
--- @field #string skill Skill level.
--- @field #string playerName Name of player if this is a client.
--- @field #number Nhit Number of times the element was hit.
--- @field #boolean engineOn If `true`, engines were started.
+--- @type OPSGROUP.Element
+--- @field #string name Name of the element, i.e. the unit.
+--- @field #string status The element status. See @{#OPSGROUP.ElementStatus}.
+--- @field Wrapper.Unit#UNIT unit The UNIT object.
+--- @field Wrapper.Group#GROUP group The GROUP object.
+--- @field DCS#Unit DCSunit The DCS unit object.
+--- @field DCS#Controller controller The DCS controller of the unit.
+--- @field #boolean ai If true, element is AI.
+--- @field #string skill Skill level.
+--- @field #string playerName Name of player if this is a client.
+--- @field #number Nhit Number of times the element was hit.
+--- @field #boolean engineOn If `true`, engines were started.
 --
--- @field Core.Zone#ZONE_POLYGON_BASE zoneBoundingbox Bounding box zone of the element unit.
--- @field Core.Zone#ZONE_POLYGON_BASE zoneLoad Loading zone.
--- @field Core.Zone#ZONE_POLYGON_BASE zoneUnload Unloading zone.
+--- @field Core.Zone#ZONE_POLYGON_BASE zoneBoundingbox Bounding box zone of the element unit.
+--- @field Core.Zone#ZONE_POLYGON_BASE zoneLoad Loading zone.
+--- @field Core.Zone#ZONE_POLYGON_BASE zoneUnload Unloading zone.
 --
--- @field #string typename Type name.
--- @field #number category Aircraft category.
--- @field #string categoryname Aircraft category name.
+--- @field #string typename Type name.
+--- @field #number category Aircraft category.
+--- @field #string categoryname Aircraft category name.
 --
--- @field #number size Size (max of length, width, height) in meters.
--- @field #number length Length of element in meters.
--- @field #number width Width of element in meters.
--- @field #number height Height of element in meters.
+--- @field #number size Size (max of length, width, height) in meters.
+--- @field #number length Length of element in meters.
+--- @field #number width Width of element in meters.
+--- @field #number height Height of element in meters.
 --
--- @field DCS#Vec3 vec3 Last known 3D position vector.
--- @field DCS#Vec3 orientX Last known ordientation vector in the direction of the nose X.
--- @field #number heading Last known heading in degrees.
+--- @field DCS#Vec3 vec3 Last known 3D position vector.
+--- @field DCS#Vec3 orientX Last known ordientation vector in the direction of the nose X.
+--- @field #number heading Last known heading in degrees.
 --
--- @field #number life0 Initial life points.
--- @field #number life Life points when last updated.
--- @field #number damage Damage of element in percent.
+--- @field #number life0 Initial life points.
+--- @field #number life Life points when last updated.
+--- @field #number damage Damage of element in percent.
 --
--- @field DCS#Object.Desc descriptors Descriptors table.
--- @field #number weightEmpty Empty weight in kg.
--- @field #number weightMaxTotal Max. total weight in kg.
--- @field #number weightMaxCargo Max. cargo weight in kg.
--- @field #number weightCargo Current cargo weight in kg.
--- @field #number weight Current weight including cargo in kg.
--- @field #table cargoBay Cargo bay.
+--- @field DCS#Object.Desc descriptors Descriptors table.
+--- @field #number weightEmpty Empty weight in kg.
+--- @field #number weightMaxTotal Max. total weight in kg.
+--- @field #number weightMaxCargo Max. cargo weight in kg.
+--- @field #number weightCargo Current cargo weight in kg.
+--- @field #number weight Current weight including cargo in kg.
+--- @field #table cargoBay Cargo bay.
 --
--- @field #string modex Tail number.
--- @field Wrapper.Client#CLIENT client The client if element is occupied by a human player.
--- @field #table pylons Table of pylons.
--- @field #number fuelmass Mass of fuel in kg.
--- @field #string callsign Call sign, e.g. "Uzi 1-1".
--- @field Wrapper.Airbase#AIRBASE.ParkingSpot parking The parking spot table the element is parking on.
+--- @field #string modex Tail number.
+--- @field Wrapper.Client#CLIENT client The client if element is occupied by a human player.
+--- @field #table pylons Table of pylons.
+--- @field #number fuelmass Mass of fuel in kg.
+--- @field #string callsign Call sign, e.g. "Uzi 1-1".
+--- @field Wrapper.Airbase#AIRBASE.ParkingSpot parking The parking spot table the element is parking on.
 
 
 --- Status of group element.
--- @type OPSGROUP.ElementStatus
--- @field #string INUTERO Element was not spawned yet or its status is unknown so far.
--- @field #string SPAWNED Element was spawned into the world.
--- @field #string PARKING Element is parking after spawned on ramp.
--- @field #string ENGINEON Element started its engines.
--- @field #string TAXIING Element is taxiing after engine startup.
--- @field #string TAKEOFF Element took of after takeoff event.
--- @field #string AIRBORNE Element is airborne. Either after takeoff or after air start.
--- @field #string LANDING Element is landing.
--- @field #string LANDED Element landed and is taxiing to its parking spot.
--- @field #string ARRIVED Element arrived at its parking spot and shut down its engines.
--- @field #string DEAD Element is dead after it crashed, pilot ejected or pilot dead events.
+--- @type OPSGROUP.ElementStatus
+--- @field #string INUTERO Element was not spawned yet or its status is unknown so far.
+--- @field #string SPAWNED Element was spawned into the world.
+--- @field #string PARKING Element is parking after spawned on ramp.
+--- @field #string ENGINEON Element started its engines.
+--- @field #string TAXIING Element is taxiing after engine startup.
+--- @field #string TAKEOFF Element took of after takeoff event.
+--- @field #string AIRBORNE Element is airborne. Either after takeoff or after air start.
+--- @field #string LANDING Element is landing.
+--- @field #string LANDED Element landed and is taxiing to its parking spot.
+--- @field #string ARRIVED Element arrived at its parking spot and shut down its engines.
+--- @field #string DEAD Element is dead after it crashed, pilot ejected or pilot dead events.
 OPSGROUP.ElementStatus={
   INUTERO="InUtero",
   SPAWNED="Spawned",
@@ -277,15 +277,15 @@ OPSGROUP.ElementStatus={
 }
 
 --- Status of group.
--- @type OPSGROUP.GroupStatus
--- @field #string INUTERO Not spawned yet or its status is unknown so far.
--- @field #string PARKING Parking after spawned on ramp.
--- @field #string TAXIING Taxiing after engine startup.
--- @field #string AIRBORNE Element is airborne. Either after takeoff or after air start.
--- @field #string LANDING Landing.
--- @field #string LANDED Landed and is taxiing to its parking spot.
--- @field #string ARRIVED Arrived at its parking spot and shut down its engines.
--- @field #string DEAD Element is dead after it crashed, pilot ejected or pilot dead events.
+--- @type OPSGROUP.GroupStatus
+--- @field #string INUTERO Not spawned yet or its status is unknown so far.
+--- @field #string PARKING Parking after spawned on ramp.
+--- @field #string TAXIING Taxiing after engine startup.
+--- @field #string AIRBORNE Element is airborne. Either after takeoff or after air start.
+--- @field #string LANDING Landing.
+--- @field #string LANDED Landed and is taxiing to its parking spot.
+--- @field #string ARRIVED Arrived at its parking spot and shut down its engines.
+--- @field #string DEAD Element is dead after it crashed, pilot ejected or pilot dead events.
 OPSGROUP.GroupStatus={
   INUTERO="InUtero",
   PARKING="Parking",
@@ -299,11 +299,11 @@ OPSGROUP.GroupStatus={
 }
 
 --- Ops group task status.
--- @type OPSGROUP.TaskStatus
--- @field #string SCHEDULED Task is scheduled.
--- @field #string EXECUTING Task is being executed.
--- @field #string PAUSED Task is paused.
--- @field #string DONE Task is done.
+---@type OPSGROUP.TaskStatus
+--- @field #string SCHEDULED Task is scheduled.
+--- @field #string EXECUTING Task is being executed.
+--- @field #string PAUSED Task is paused.
+--- @field #string DONE Task is done.
 OPSGROUP.TaskStatus={
   SCHEDULED="scheduled",
   EXECUTING="executing",
@@ -312,144 +312,144 @@ OPSGROUP.TaskStatus={
 }
 
 --- Ops group task status.
--- @type OPSGROUP.TaskType
--- @field #string SCHEDULED Task is scheduled and will be executed at a given time.
--- @field #string WAYPOINT Task is executed at a specific waypoint.
+--- @type OPSGROUP.TaskType
+--- @field #string SCHEDULED Task is scheduled and will be executed at a given time.
+--- @field #string WAYPOINT Task is executed at a specific waypoint.
 OPSGROUP.TaskType={
   SCHEDULED="scheduled",
   WAYPOINT="waypoint",
 }
 
 --- Task structure.
--- @type OPSGROUP.Task
--- @field #string type Type of task: either SCHEDULED or WAYPOINT.
--- @field #boolean ismission This is an AUFTRAG task.
--- @field #number id Task ID. Running number to get the task.
--- @field #number prio Priority.
--- @field #number time Abs. mission time when to execute the task.
--- @field #table dcstask DCS task structure.
--- @field #string description Brief text which describes the task.
--- @field #string status Task status.
--- @field #number duration Duration before task is cancelled in seconds. Default never.
--- @field #number timestamp Abs. mission time, when task was started.
--- @field #number waypoint Waypoint index if task is a waypoint task.
--- @field Core.UserFlag#USERFLAG stopflag If flag is set to 1 (=true), the task is stopped.
--- @field #number backupROE Rules of engagement that are restored once the task is over.
--- @field Ops.Target#TARGET target Target object.
+--- @type OPSGROUP.Task
+--- @field #string type Type of task: either SCHEDULED or WAYPOINT.
+--- @field #boolean ismission This is an AUFTRAG task.
+--- @field #number id Task ID. Running number to get the task.
+--- @field #number prio Priority.
+--- @field #number time Abs. mission time when to execute the task.
+--- @field #table dcstask DCS task structure.
+--- @field #string description Brief text which describes the task.
+--- @field #string status Task status.
+--- @field #number duration Duration before task is cancelled in seconds. Default never.
+--- @field #number timestamp Abs. mission time, when task was started.
+--- @field #number waypoint Waypoint index if task is a waypoint task.
+--- @field Core.UserFlag#USERFLAG stopflag If flag is set to 1 (=true), the task is stopped.
+--- @field #number backupROE Rules of engagement that are restored once the task is over.
+--- @field Ops.Target#TARGET target Target object.
 
 --- Option data.
--- @type OPSGROUP.Option
--- @field #number ROE Rule of engagement.
--- @field #number ROT Reaction on threat.
--- @field #number Alarm Alarm state.
--- @field #number Formation Formation.
--- @field #boolean EPLRS data link.
--- @field #boolean Disperse Disperse under fire.
--- @field #boolean Emission Emission on/off.
--- @field #boolean Invisible Invisible on/off.
--- @field #boolean Immortal Immortal on/off.
+--- @type OPSGROUP.Option
+--- @field #number ROE Rule of engagement.
+--- @field #number ROT Reaction on threat.
+--- @field #number Alarm Alarm state.
+--- @field #number Formation Formation.
+--- @field #boolean EPLRS data link.
+--- @field #boolean Disperse Disperse under fire.
+--- @field #boolean Emission Emission on/off.
+--- @field #boolean Invisible Invisible on/off.
+--- @field #boolean Immortal Immortal on/off.
 
 --- Beacon data.
--- @type OPSGROUP.Beacon
--- @field #number Channel Channel.
--- @field #number Morse Morse Code.
--- @field #string Band Band "X" or "Y" for TACAN beacon.
--- @field #string BeaconName Name of the unit acting as beacon.
--- @field Wrapper.Unit#UNIT BeaconUnit Unit object acting as beacon.
--- @field #boolean On If true, beacon is on, if false, beacon is turned off. If nil, has not been used yet.
+--- @type OPSGROUP.Beacon
+--- @field #number Channel Channel.
+--- @field #number Morse Morse Code.
+--- @field #string Band Band "X" or "Y" for TACAN beacon.
+--- @field #string BeaconName Name of the unit acting as beacon.
+--- @field Wrapper.Unit#UNIT BeaconUnit Unit object acting as beacon.
+--- @field #boolean On If true, beacon is on, if false, beacon is turned off. If nil, has not been used yet.
 
 --- Radio data.
--- @type OPSGROUP.Radio
--- @field #number Freq Frequency
--- @field #number Modu Modulation.
--- @field #boolean On If true, radio is on, if false, radio is turned off. If nil, has not been used yet.
+--- @type OPSGROUP.Radio
+--- @field #number Freq Frequency
+--- @field #number Modu Modulation.
+--- @field #boolean On If true, radio is on, if false, radio is turned off. If nil, has not been used yet.
 
 --- Callsign data.
--- @type OPSGROUP.Callsign
--- @field #number NumberSquad Squadron number corresponding to a name like "Uzi".
--- @field #number NumberGroup Group number. First number after name, e.g. "Uzi-**1**-1".
--- @field #string NameSquad Name of the squad, e.g. "Uzi".
+--- @type OPSGROUP.Callsign
+--- @field #number NumberSquad Squadron number corresponding to a name like "Uzi".
+--- @field #number NumberGroup Group number. First number after name, e.g. "Uzi-**1**-1".
+--- @field #string NameSquad Name of the squad, e.g. "Uzi".
 
 --- Weapon range data.
--- @type OPSGROUP.WeaponData
--- @field #number BitType Type of weapon.
--- @field #number RangeMin Min range in meters.
--- @field #number RangeMax Max range in meters.
--- @field #number ReloadTime Time to reload in seconds.
+--- @type OPSGROUP.WeaponData
+--- @field #number BitType Type of weapon.
+--- @field #number RangeMin Min range in meters.
+--- @field #number RangeMax Max range in meters.
+--- @field #number ReloadTime Time to reload in seconds.
 
 --- Laser and IR spot data.
--- @type OPSGROUP.Spot
--- @field #boolean CheckLOS If true, check LOS to target.
--- @field #boolean IRon If true, turn IR pointer on.
--- @field #number dt Update time interval in seconds.
--- @field DCS#Spot Laser Laser spot.
--- @field DCS#Spot IR Infra-red spot.
--- @field #number Code Laser code.
--- @field Wrapper.Group#GROUP TargetGroup The target group.
--- @field Wrapper.Positionable#POSITIONABLE TargetUnit The current target unit.
--- @field Core.Point#COORDINATE Coordinate where the spot is pointing.
--- @field #number TargetType Type of target: 0=coordinate, 1=static, 2=unit, 3=group.
--- @field #boolean On If true, the laser is on.
--- @field #boolean Paused If true, laser is paused.
--- @field #boolean lostLOS If true, laser lost LOS.
--- @field #OPSGROUP.Element element The element of the group that is lasing.
--- @field DCS#Vec3 vec3 The 3D positon vector of the laser (and IR) spot.
--- @field DCS#Vec3 offset Local offset of the laser source.
--- @field DCS#Vec3 offsetTarget Offset of the target.
--- @field Core.Timer#TIMER timer Spot timer.
+--- @type OPSGROUP.Spot
+--- @field #boolean CheckLOS If true, check LOS to target.
+--- @field #boolean IRon If true, turn IR pointer on.
+--- @field #number dt Update time interval in seconds.
+--- @field DCS#Spot Laser Laser spot.
+--- @field DCS#Spot IR Infra-red spot.
+--- @field #number Code Laser code.
+--- @field Wrapper.Group#GROUP TargetGroup The target group.
+--- @field Wrapper.Positionable#POSITIONABLE TargetUnit The current target unit.
+--- @field Core.Point#COORDINATE Coordinate where the spot is pointing.
+--- @field #number TargetType Type of target: 0=coordinate, 1=static, 2=unit, 3=group.
+--- @field #boolean On If true, the laser is on.
+--- @field #boolean Paused If true, laser is paused.
+--- @field #boolean lostLOS If true, laser lost LOS.
+--- @field #OPSGROUP.Element element The element of the group that is lasing.
+--- @field DCS#Vec3 vec3 The 3D positon vector of the laser (and IR) spot.
+--- @field DCS#Vec3 offset Local offset of the laser source.
+--- @field DCS#Vec3 offsetTarget Offset of the target.
+--- @field Core.Timer#TIMER timer Spot timer.
 
 --- Ammo data.
--- @type OPSGROUP.Ammo
--- @field #number Total Total amount of ammo.
--- @field #number Guns Amount of gun shells.
--- @field #number Bombs Amount of bombs.
--- @field #number Rockets Amount of rockets.
--- @field #number Torpedos Amount of torpedos.
--- @field #number Missiles Amount of missiles.
--- @field #number MissilesAA Amount of air-to-air missiles.
--- @field #number MissilesAG Amount of air-to-ground missiles.
--- @field #number MissilesAS Amount of anti-ship missiles.
--- @field #number MissilesCR Amount of cruise missiles.
--- @field #number MissilesBM Amount of ballistic missiles.
--- @field #number MissilesSA Amount of surfe-to-air missiles.
+--- @type OPSGROUP.Ammo
+--- @field #number Total Total amount of ammo.
+--- @field #number Guns Amount of gun shells.
+--- @field #number Bombs Amount of bombs.
+--- @field #number Rockets Amount of rockets.
+--- @field #number Torpedos Amount of torpedos.
+--- @field #number Missiles Amount of missiles.
+--- @field #number MissilesAA Amount of air-to-air missiles.
+--- @field #number MissilesAG Amount of air-to-ground missiles.
+--- @field #number MissilesAS Amount of anti-ship missiles.
+--- @field #number MissilesCR Amount of cruise missiles.
+--- @field #number MissilesBM Amount of ballistic missiles.
+--- @field #number MissilesSA Amount of surfe-to-air missiles.
 
 --- Spawn point data.
--- @type OPSGROUP.Spawnpoint
--- @field Core.Point#COORDINATE Coordinate Coordinate where to spawn
--- @field Wrapper.Airbase#AIRBASE Airport Airport where to spawn.
--- @field #table TerminalIDs Terminal IDs, where to spawn the group. It is a table of `#number`s because a group can consist of multiple units.
+--- @type OPSGROUP.Spawnpoint
+--- @field Core.Point#COORDINATE Coordinate Coordinate where to spawn
+--- @field Wrapper.Airbase#AIRBASE Airport Airport where to spawn.
+--- @field #table TerminalIDs Terminal IDs, where to spawn the group. It is a table of `#number`s because a group can consist of multiple units.
 
 --- Waypoint data.
--- @type OPSGROUP.Waypoint
--- @field #number uid Waypoint's unit id, which is a running number.
--- @field #number speed Speed in m/s.
--- @field #number alt Altitude in meters. For submaries use negative sign for depth.
--- @field #string action Waypoint action (turning point, etc.). Ground groups have the formation here.
--- @field #table task Waypoint DCS task combo.
--- @field #string type Waypoint type.
--- @field #string name Waypoint description. Shown in the F10 map.
--- @field #number x Waypoint x-coordinate.
--- @field #number y Waypoint y-coordinate.
--- @field #number detour Signifies that this waypoint is not part of the normal route: 0=Hold, 1=Resume Route.
--- @field #boolean intowind If true, this waypoint is a turn into wind route point.
--- @field #boolean astar If true, this waypint was found by A* pathfinding algorithm.
--- @field #boolean temp If true, this is a temporary waypoint and will be deleted when passed. Also the passing waypoint FSM event is not triggered.
--- @field #number npassed Number of times a groups passed this waypoint.
--- @field Core.Point#COORDINATE coordinate Waypoint coordinate.
--- @field Core.Point#COORDINATE roadcoord Closest point to road.
--- @field #number roaddist Distance to closest point on road.
--- @field Wrapper.Marker#MARKER marker Marker on the F10 map.
--- @field #string formation Ground formation. Similar to action but on/off road.
--- @field #number missionUID Mission UID (Auftragsnr) this waypoint belongs to.
+--- @type OPSGROUP.Waypoint
+--- @field #number uid Waypoint's unit id, which is a running number.
+--- @field #number speed Speed in m/s.
+--- @field #number alt Altitude in meters. For submaries use negative sign for depth.
+--- @field #string action Waypoint action (turning point, etc.). Ground groups have the formation here.
+--- @field #table task Waypoint DCS task combo.
+--- @field #string type Waypoint type.
+--- @field #string name Waypoint description. Shown in the F10 map.
+--- @field #number x Waypoint x-coordinate.
+--- @field #number y Waypoint y-coordinate.
+--- @field #number detour Signifies that this waypoint is not part of the normal route: 0=Hold, 1=Resume Route.
+--- @field #boolean intowind If true, this waypoint is a turn into wind route point.
+--- @field #boolean astar If true, this waypint was found by A* pathfinding algorithm.
+--- @field #boolean temp If true, this is a temporary waypoint and will be deleted when passed. Also the passing waypoint FSM event is not triggered.
+--- @field #number npassed Number of times a groups passed this waypoint.
+--- @field Core.Point#COORDINATE coordinate Waypoint coordinate.
+--- @field Core.Point#COORDINATE roadcoord Closest point to road.
+--- @field #number roaddist Distance to closest point on road.
+--- @field Wrapper.Marker#MARKER marker Marker on the F10 map.
+--- @field #string formation Ground formation. Similar to action but on/off road.
+--- @field #number missionUID Mission UID (Auftragsnr) this waypoint belongs to.
 
 --- Cargo Carrier status.
--- @type OPSGROUP.CarrierStatus
--- @field #string NOTCARRIER This group is not a carrier yet.
--- @field #string PICKUP Carrier is on its way to pickup cargo.
--- @field #string LOADING Carrier is loading cargo.
--- @field #string LOADED Carrier has loaded cargo.
--- @field #string TRANSPORTING Carrier is transporting cargo.
--- @field #string UNLOADING Carrier is unloading cargo.
+--- @type OPSGROUP.CarrierStatus
+--- @field #string NOTCARRIER This group is not a carrier yet.
+--- @field #string PICKUP Carrier is on its way to pickup cargo.
+--- @field #string LOADING Carrier is loading cargo.
+--- @field #string LOADED Carrier has loaded cargo.
+--- @field #string TRANSPORTING Carrier is transporting cargo.
+--- @field #string UNLOADING Carrier is unloading cargo.
 OPSGROUP.CarrierStatus={
   NOTCARRIER="not carrier",
   PICKUP="pickup",
@@ -460,12 +460,12 @@ OPSGROUP.CarrierStatus={
 }
 
 --- Cargo status.
--- @type OPSGROUP.CargoStatus
--- @field #string AWAITING Group is awaiting carrier.
--- @field #string NOTCARGO This group is no cargo yet.
--- @field #string ASSIGNED Cargo is assigned to a carrier. (Not used!)
--- @field #string BOARDING Cargo is boarding a carrier.
--- @field #string LOADED Cargo is loaded into a carrier.
+--- @type OPSGROUP.CargoStatus
+--- @field #string AWAITING Group is awaiting carrier.
+--- @field #string NOTCARGO This group is no cargo yet.
+--- @field #string ASSIGNED Cargo is assigned to a carrier. (Not used!)
+--- @field #string BOARDING Cargo is boarding a carrier.
+--- @field #string LOADED Cargo is loaded into a carrier.
 OPSGROUP.CargoStatus={
   AWAITING="Awaiting carrier",
   NOTCARGO="not cargo",
@@ -475,31 +475,31 @@ OPSGROUP.CargoStatus={
 }
 
 --- Cargo carrier loader parameters.
--- @type OPSGROUP.CarrierLoader
--- @field #string type Loader type "Front", "Back", "Left", "Right", "All".
--- @field #number length Length of (un-)loading zone in meters.
--- @field #number width Width of (un-)loading zone in meters.
+--- @type OPSGROUP.CarrierLoader
+--- @field #string type Loader type "Front", "Back", "Left", "Right", "All".
+--- @field #number length Length of (un-)loading zone in meters.
+--- @field #number width Width of (un-)loading zone in meters.
 
 --- Data of the carrier that has loaded this group.
--- @type OPSGROUP.MyCarrier
--- @field #OPSGROUP group The carrier group.
--- @field #OPSGROUP.Element element The carrier element.
--- @field #boolean reserved If `true`, the carrier has caro space reserved for me.
+--- @type OPSGROUP.MyCarrier
+--- @field #OPSGROUP group The carrier group.
+--- @field #OPSGROUP.Element element The carrier element.
+--- @field #boolean reserved If `true`, the carrier has caro space reserved for me.
 
 --- Element cargo bay data.
--- @type OPSGROUP.MyCargo
--- @field #OPSGROUP group The cargo group.
--- @field #boolean reserved If `true`, the cargo bay space is reserved but cargo has not actually been loaded yet.
+--- @type OPSGROUP.MyCargo
+--- @field #OPSGROUP group The cargo group.
+--- @field #boolean reserved If `true`, the cargo bay space is reserved but cargo has not actually been loaded yet.
 
 --- Cargo group data.
--- @type OPSGROUP.CargoGroup
--- @field #OPSGROUP opsgroup The cargo opsgroup.
--- @field #boolean delivered If `true`, group was delivered.
--- @field #boolean disembarkActivation If `true`, group is activated. If `false`, group is late activated.
--- @field #string status Status of the cargo group. Not used yet.
+--- @type OPSGROUP.CargoGroup
+--- @field #OPSGROUP opsgroup The cargo opsgroup.
+--- @field #boolean delivered If `true`, group was delivered.
+--- @field #boolean disembarkActivation If `true`, group is activated. If `false`, group is late activated.
+--- @field #string status Status of the cargo group. Not used yet.
 
 --- OpsGroup version.
--- @field #string version
+--- @field #string version
 OPSGROUP.version="0.9.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -523,9 +523,9 @@ OPSGROUP.version="0.9.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new OPSGROUP class object.
--- @param #OPSGROUP self
--- @param Wrapper.Group#GROUP group The GROUP object. Can also be given by its group name as `#string`.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param Wrapper.Group#GROUP group The GROUP object. Can also be given by its group name as `#string`.
+--- @return #OPSGROUP self
 function OPSGROUP:New(group)
 
   -- Inherit everything from FSM class.
@@ -880,17 +880,17 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get coalition.
--- @param #OPSGROUP self
--- @return #number Coalition side of carrier.
+--- @param #OPSGROUP self
+--- @return #number Coalition side of carrier.
 function OPSGROUP:GetCoalition()
   return self.group:GetCoalition()
 end
 
 --- Returns the absolute total life points of the group.
--- @param #OPSGROUP self
--- @param #OPSGROUP.Element Element (Optional) Only get life points of this element.
--- @return #number Life points, *i.e.* the sum of life points over all units in the group (unless a specific element was passed).  
--- @return #number Initial life points.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP.Element Element (Optional) Only get life points of this element.
+--- @return #number Life points, *i.e.* the sum of life points over all units in the group (unless a specific element was passed).  
+--- @return #number Initial life points.
 function OPSGROUP:GetLifePoints(Element)
 
   local life=0
@@ -920,25 +920,25 @@ function OPSGROUP:GetLifePoints(Element)
 end
 
 --- Get generalized attribute.
--- @param #OPSGROUP self
--- @return #string Generalized attribute.
+--- @param #OPSGROUP self
+--- @return #string Generalized attribute.
 function OPSGROUP:GetAttribute()
   return self.attribute
 end
 
 --- Set verbosity level.
--- @param #OPSGROUP self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+--- @return #OPSGROUP self
 function OPSGROUP:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
   return self
 end
 
 --- Set legion this ops group belongs to.
--- @param #OPSGROUP self
--- @param Ops.Legion#LEGION Legion The Legion.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param Ops.Legion#LEGION Legion The Legion.
+--- @return #OPSGROUP self
 function OPSGROUP:_SetLegion(Legion)
   self:T2(self.lid..string.format("Adding opsgroup to legion %s", Legion.alias))
   self.legion=Legion
@@ -946,9 +946,9 @@ function OPSGROUP:_SetLegion(Legion)
 end
 
 --- Set default cruise speed.
--- @param #OPSGROUP self
--- @param #number Speed Speed in knots.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Speed Speed in knots.
+--- @return #OPSGROUP self
 function OPSGROUP:SetDefaultSpeed(Speed)
   if Speed then
     self.speedCruise=UTILS.KnotsToKmph(Speed)
@@ -957,17 +957,17 @@ function OPSGROUP:SetDefaultSpeed(Speed)
 end
 
 --- Get default cruise speed.
--- @param #OPSGROUP self
--- @return #number Cruise speed (>0) in knots.
+--- @param #OPSGROUP self
+--- @return #number Cruise speed (>0) in knots.
 function OPSGROUP:GetSpeedCruise()
   local speed=UTILS.KmphToKnots(self.speedCruise or self.speedMax*0.7)
   return speed
 end
 
 --- Set default cruise altitude.
--- @param #OPSGROUP self
--- @param #number Altitude Altitude in feet. Default is 10,000 ft for airplanes and 1,500 feet for helicopters.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Altitude Altitude in feet. Default is 10,000 ft for airplanes and 1,500 feet for helicopters.
+--- @return #OPSGROUP self
 function OPSGROUP:SetDefaultAltitude(Altitude)
   if Altitude then
     self.altitudeCruise=UTILS.FeetToMeters(Altitude)
@@ -986,18 +986,18 @@ function OPSGROUP:SetDefaultAltitude(Altitude)
 end
 
 --- Get default cruise speed.
--- @param #OPSGROUP self
--- @return #number Cruise altitude in feet.
+--- @param #OPSGROUP self
+--- @return #number Cruise altitude in feet.
 function OPSGROUP:GetCruiseAltitude()
   local alt=UTILS.MetersToFeet(self.altitudeCruise)
   return alt
 end
 
 --- Set current altitude.
--- @param #OPSGROUP self
--- @param #number Altitude Altitude in feet. Default is 10,000 ft for airplanes and 1,500 feet for helicopters.
--- @param #boolean Keep If `true` the group will maintain that speed on passing waypoints. If `nil` or `false` the group will return to the speed as defined by their route.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Altitude Altitude in feet. Default is 10,000 ft for airplanes and 1,500 feet for helicopters.
+--- @param #boolean Keep If `true` the group will maintain that speed on passing waypoints. If `nil` or `false` the group will return to the speed as defined by their route.
+--- @return #OPSGROUP self
 function OPSGROUP:SetAltitude(Altitude, Keep, RadarAlt)
   if Altitude then
     Altitude=UTILS.FeetToMeters(Altitude)
@@ -1026,8 +1026,8 @@ function OPSGROUP:SetAltitude(Altitude, Keep, RadarAlt)
 end
 
 --- Set current altitude.
--- @param #OPSGROUP self
--- @return #number Altitude in feet.
+--- @param #OPSGROUP self
+--- @return #number Altitude in feet.
 function OPSGROUP:GetAltitude()
 
   local alt=0
@@ -1044,11 +1044,11 @@ function OPSGROUP:GetAltitude()
 end
 
 --- Set current speed.
--- @param #OPSGROUP self
--- @param #number Speed Speed in knots. Default is 70% of max speed.
--- @param #boolean Keep If `true` the group will maintain that speed on passing waypoints. If `nil` or `false` the group will return to the speed as defined by their route.
--- @param #boolean AltCorrected If `true`, use altitude corrected indicated air speed.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Speed Speed in knots. Default is 70% of max speed.
+--- @param #boolean Keep If `true` the group will maintain that speed on passing waypoints. If `nil` or `false` the group will return to the speed as defined by their route.
+--- @param #boolean AltCorrected If `true`, use altitude corrected indicated air speed.
+--- @return #OPSGROUP self
 function OPSGROUP:SetSpeed(Speed, Keep, AltCorrected)
   if Speed then
   
@@ -1073,9 +1073,9 @@ end
 
 --- Set detection on or off.
 -- If detection is on, detected targets of the group will be evaluated and FSM events triggered.
--- @param #OPSGROUP self
--- @param #boolean Switch If `true`, detection is on. If `false` or `nil`, detection is off. Default is off.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #boolean Switch If `true`, detection is on. If `false` or `nil`, detection is off. Default is off.
+--- @return #OPSGROUP self
 function OPSGROUP:SetDetection(Switch)
   self:T(self.lid..string.format("Detection is %s", tostring(Switch)))
   self.detectionOn=Switch
@@ -1083,20 +1083,20 @@ function OPSGROUP:SetDetection(Switch)
 end
 
 --- Get DCS group object.
--- @param #OPSGROUP self
--- @return DCS#Group DCS group object.
+--- @param #OPSGROUP self
+--- @return DCS#Group DCS group object.
 function OPSGROUP:GetDCSObject()
   return self.dcsgroup
 end
 
 --- Set detection on or off.
 -- If detection is on, detected targets of the group will be evaluated and FSM events triggered.
--- @param #OPSGROUP self
--- @param Wrapper.Positionable#POSITIONABLE TargetObject The target object.
--- @param #boolean KnowType Make type known.
--- @param #boolean KnowDist Make distance known.
--- @param #number Delay Delay in seconds before the target is known.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param Wrapper.Positionable#POSITIONABLE TargetObject The target object.
+--- @param #boolean KnowType Make type known.
+--- @param #boolean KnowDist Make distance known.
+--- @param #number Delay Delay in seconds before the target is known.
+--- @return #OPSGROUP self
 function OPSGROUP:KnowTarget(TargetObject, KnowType, KnowDist, Delay)
 
   if Delay and Delay>0 then
@@ -1130,9 +1130,9 @@ function OPSGROUP:KnowTarget(TargetObject, KnowType, KnowDist, Delay)
 end
 
 --- Check if target is detected.
--- @param #OPSGROUP self
--- @param Wrapper.Positionable#POSITIONABLE TargetObject The target object.
--- @return #boolean If `true`, target was detected.
+--- @param #OPSGROUP self
+--- @param Wrapper.Positionable#POSITIONABLE TargetObject The target object.
+--- @return #boolean If `true`, target was detected.
 function OPSGROUP:IsTargetDetected(TargetObject)
     
   local objects={}
@@ -1185,11 +1185,11 @@ function OPSGROUP:IsTargetDetected(TargetObject)
 end
 
 --- Check if a given coordinate is in weapon range.
--- @param #OPSGROUP self
--- @param Core.Point#COORDINATE TargetCoord Coordinate of the target.
--- @param #number WeaponBitType Weapon type.
--- @param Core.Point#COORDINATE RefCoord Reference coordinate.
--- @return #boolean If `true`, coordinate is in range.
+--- @param #OPSGROUP self
+--- @param Core.Point#COORDINATE TargetCoord Coordinate of the target.
+--- @param #number WeaponBitType Weapon type.
+--- @param Core.Point#COORDINATE RefCoord Reference coordinate.
+--- @return #boolean If `true`, coordinate is in range.
 function OPSGROUP:InWeaponRange(TargetCoord, WeaponBitType, RefCoord)
 
   RefCoord=RefCoord or self:GetCoordinate()
@@ -1229,11 +1229,11 @@ function OPSGROUP:InWeaponRange(TargetCoord, WeaponBitType, RefCoord)
 end
 
 --- Get a coordinate, which is in weapon range.
--- @param #OPSGROUP self
--- @param Core.Point#COORDINATE TargetCoord Coordinate of the target.
--- @param #number WeaponBitType Weapon type.
--- @param Core.Point#COORDINATE RefCoord Reference coordinate.
--- @return Core.Point#COORDINATE Coordinate in weapon range
+--- @param #OPSGROUP self
+--- @param Core.Point#COORDINATE TargetCoord Coordinate of the target.
+--- @param #number WeaponBitType Weapon type.
+--- @param Core.Point#COORDINATE RefCoord Reference coordinate.
+--- @return Core.Point#COORDINATE Coordinate in weapon range
 function OPSGROUP:GetCoordinateInRange(TargetCoord, WeaponBitType, RefCoord)
 
   local coordInRange=nil --Core.Point#COORDINATE
@@ -1284,12 +1284,12 @@ function OPSGROUP:GetCoordinateInRange(TargetCoord, WeaponBitType, RefCoord)
 end
 
 --- Set LASER parameters.
--- @param #OPSGROUP self
--- @param #number Code Laser code. Default 1688.
--- @param #boolean CheckLOS Check if lasing unit has line of sight to target coordinate. Default is `true`.
--- @param #boolean IROff If true, then dont switch on the additional IR pointer.
--- @param #number UpdateTime Time interval in seconds the beam gets up for moving targets. Default every 0.5 sec.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Code Laser code. Default 1688.
+--- @param #boolean CheckLOS Check if lasing unit has line of sight to target coordinate. Default is `true`.
+--- @param #boolean IROff If true, then dont switch on the additional IR pointer.
+--- @param #number UpdateTime Time interval in seconds the beam gets up for moving targets. Default every 0.5 sec.
+--- @return #OPSGROUP self
 function OPSGROUP:SetLaser(Code, CheckLOS, IROff, UpdateTime)
   self.spot.Code=Code or 1688
   if CheckLOS~=nil then
@@ -1303,39 +1303,39 @@ function OPSGROUP:SetLaser(Code, CheckLOS, IROff, UpdateTime)
 end
 
 --- Get LASER code.
--- @param #OPSGROUP self
--- @return #number Current Laser code.
+--- @param #OPSGROUP self
+--- @return #number Current Laser code.
 function OPSGROUP:GetLaserCode()
   return self.spot.Code
 end
 
 --- Get current LASER coordinate, i.e. where the beam is pointing at if the LASER is on.
--- @param #OPSGROUP self
--- @return Core.Point#COORDINATE Current position where the LASER is pointing at.
+--- @param #OPSGROUP self
+--- @return Core.Point#COORDINATE Current position where the LASER is pointing at.
 function OPSGROUP:GetLaserCoordinate()
   return self.spot.Coordinate
 end
 
 --- Get current target of the LASER. This can be a STATIC or UNIT object.
--- @param #OPSGROUP self
--- @return Wrapper.Positionable#POSITIONABLE Current target object.
+--- @param #OPSGROUP self
+--- @return Wrapper.Positionable#POSITIONABLE Current target object.
 function OPSGROUP:GetLaserTarget()
   return self.spot.TargetUnit
 end
 
 --- Define a SET of zones that trigger and event if the group enters or leaves any of the zones.
--- @param #OPSGROUP self
--- @param Core.Set#SET_ZONE CheckZonesSet Set of zones.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param Core.Set#SET_ZONE CheckZonesSet Set of zones.
+--- @return #OPSGROUP self
 function OPSGROUP:SetCheckZones(CheckZonesSet)
   self.checkzones=CheckZonesSet
   return self
 end
 
 --- Add a zone that triggers and event if the group enters or leaves any of the zones.
--- @param #OPSGROUP self
--- @param Core.Zone#ZONE CheckZone Zone to check.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param Core.Zone#ZONE CheckZone Zone to check.
+--- @return #OPSGROUP self
 function OPSGROUP:AddCheckZone(CheckZone)
   if not self.checkzones then
     self.checkzones=SET_ZONE:New()
@@ -1346,11 +1346,11 @@ end
 
 
 --- Add a weapon range for ARTY auftrag.
--- @param #OPSGROUP self
--- @param #number RangeMin Minimum range in nautical miles. Default 0 NM.
--- @param #number RangeMax Maximum range in nautical miles. Default 10 NM.
--- @param #number BitType Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number RangeMin Minimum range in nautical miles. Default 0 NM.
+--- @param #number RangeMax Maximum range in nautical miles. Default 10 NM.
+--- @param #number BitType Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
+--- @return #OPSGROUP self
 function OPSGROUP:AddWeaponRange(RangeMin, RangeMax, BitType)
 
   RangeMin=UTILS.NMToMeters(RangeMin or 0)
@@ -1369,9 +1369,9 @@ function OPSGROUP:AddWeaponRange(RangeMin, RangeMax, BitType)
 end
 
 --- Get weapon data.
--- @param #OPSGROUP self
--- @param #number BitType Type of weapon.
--- @return #OPSGROUP.WeaponData Weapon range data.
+--- @param #OPSGROUP self
+--- @param #number BitType Type of weapon.
+--- @return #OPSGROUP.WeaponData Weapon range data.
 function OPSGROUP:GetWeaponData(BitType)
 
   BitType=tostring(BitType or ENUMS.WeaponFlag.Auto)
@@ -1385,32 +1385,32 @@ function OPSGROUP:GetWeaponData(BitType)
 end
 
 --- Get set of detected units.
--- @param #OPSGROUP self
--- @return Core.Set#SET_UNIT Set of detected units.
+--- @param #OPSGROUP self
+--- @return Core.Set#SET_UNIT Set of detected units.
 function OPSGROUP:GetDetectedUnits()
   return self.detectedunits or {}
 end
 
 --- Get set of detected groups.
--- @param #OPSGROUP self
--- @return Core.Set#SET_GROUP Set of detected groups.
+--- @param #OPSGROUP self
+--- @return Core.Set#SET_GROUP Set of detected groups.
 function OPSGROUP:GetDetectedGroups()
   return self.detectedgroups or {}
 end
 
 --- Get inital amount of ammunition.
--- @param #OPSGROUP self
--- @return #OPSGROUP.Ammo Initial ammo table.
+--- @param #OPSGROUP self
+--- @return #OPSGROUP.Ammo Initial ammo table.
 function OPSGROUP:GetAmmo0()
   return self.ammo
 end
 
 --- Get highest detected threat. Detection must be turned on. The threat level is a number between 0 and 10, where 0 is the lowest, e.g. unarmed units.
--- @param #OPSGROUP self
--- @param #number ThreatLevelMin Only consider threats with level greater or equal to this number. Default 1 (so unarmed units wont be considered).
--- @param #number ThreatLevelMax Only consider threats with level smaller or queal to this number. Default 10.
--- @return Wrapper.Unit#UNIT Highest threat unit detected by the group or `nil` if no threat is currently detected.
--- @return #number Threat level.
+--- @param #OPSGROUP self
+--- @param #number ThreatLevelMin Only consider threats with level greater or equal to this number. Default 1 (so unarmed units wont be considered).
+--- @param #number ThreatLevelMax Only consider threats with level smaller or queal to this number. Default 10.
+--- @return Wrapper.Unit#UNIT Highest threat unit detected by the group or `nil` if no threat is currently detected.
+--- @return #number Threat level.
 function OPSGROUP:GetThreat(ThreatLevelMin, ThreatLevelMax)
 
   ThreatLevelMin=ThreatLevelMin or 1
@@ -1440,9 +1440,9 @@ function OPSGROUP:GetThreat(ThreatLevelMin, ThreatLevelMax)
 end
 
 --- Get highest threat.
--- @param #OPSGROUP self
--- @return Wrapper.Unit#UNIT The highest threat unit.
--- @return #number Threat level of the unit.
+--- @param #OPSGROUP self
+--- @return Wrapper.Unit#UNIT The highest threat unit.
+--- @return #number Threat level of the unit.
 function OPSGROUP:GetHighestThreat()
 
   local threat=nil
@@ -1463,12 +1463,12 @@ function OPSGROUP:GetHighestThreat()
 end
 
 --- Enable to automatically engage detected targets.
--- @param #OPSGROUP self
--- @param #number RangeMax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
--- @param #table TargetTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default "All".
--- @param Core.Set#SET_ZONE EngageZoneSet Set of zones in which targets are engaged. Default is anywhere.
--- @param Core.Set#SET_ZONE NoEngageZoneSet Set of zones in which targets are *not* engaged. Default is nowhere.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number RangeMax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
+--- @param #table TargetTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default "All".
+--- @param Core.Set#SET_ZONE EngageZoneSet Set of zones in which targets are engaged. Default is anywhere.
+--- @param Core.Set#SET_ZONE NoEngageZoneSet Set of zones in which targets are *not* engaged. Default is nowhere.
+--- @return #OPSGROUP self
 function OPSGROUP:SetEngageDetectedOn(RangeMax, TargetTypes, EngageZoneSet, NoEngageZoneSet)
 
   -- Ensure table.
@@ -1507,8 +1507,8 @@ function OPSGROUP:SetEngageDetectedOn(RangeMax, TargetTypes, EngageZoneSet, NoEn
 end
 
 --- Disable to automatically engage detected targets.
--- @param #OPSGROUP self
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @return #OPSGROUP self
 function OPSGROUP:SetEngageDetectedOff()
   self:T(self.lid..string.format("Engage detected OFF"))
   self.engagedetectedOn=false
@@ -1516,36 +1516,36 @@ function OPSGROUP:SetEngageDetectedOff()
 end
 
 --- Set that group is going to rearm once it runs out of ammo.
--- @param #OPSGROUP self
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @return #OPSGROUP self
 function OPSGROUP:SetRearmOnOutOfAmmo()
   self.rearmOnOutOfAmmo=true
   return self
 end
 
 --- Set that group is retreating once it runs out of ammo.
--- @param #OPSGROUP self
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @return #OPSGROUP self
 function OPSGROUP:SetRetreatOnOutOfAmmo()
   self.retreatOnOutOfAmmo=true
   return self
 end
 
 --- Set that group is return to legion once it runs out of ammo.
--- @param #OPSGROUP self
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @return #OPSGROUP self
 function OPSGROUP:SetReturnOnOutOfAmmo()
   self.rtzOnOutOfAmmo=true
   return self
 end
 
 --- Check if an element of the group has line of sight to a coordinate.
--- @param #OPSGROUP self
--- @param Core.Point#COORDINATE Coordinate The position to which we check the LoS. Can also be a DCS#Vec3.
--- @param #OPSGROUP.Element Element The (optinal) element. If not given, all elements are checked.
--- @param DCS#Vec3 OffsetElement Offset vector of the element.
--- @param DCS#Vec3 OffsetCoordinate Offset vector of the coordinate.
--- @return #boolean If `true`, there is line of sight to the specified coordinate.
+--- @param #OPSGROUP self
+--- @param Core.Point#COORDINATE Coordinate The position to which we check the LoS. Can also be a DCS#Vec3.
+--- @param #OPSGROUP.Element Element The (optinal) element. If not given, all elements are checked.
+--- @param DCS#Vec3 OffsetElement Offset vector of the element.
+--- @param DCS#Vec3 OffsetCoordinate Offset vector of the coordinate.
+--- @return #boolean If `true`, there is line of sight to the specified coordinate.
 function OPSGROUP:HasLoS(Coordinate, Element, OffsetElement, OffsetCoordinate)
 
   if Coordinate then
@@ -1606,31 +1606,31 @@ function OPSGROUP:HasLoS(Coordinate, Element, OffsetElement, OffsetCoordinate)
 end
 
 --- Get MOOSE GROUP object.
--- @param #OPSGROUP self
--- @return Wrapper.Group#GROUP Moose group object.
+--- @param #OPSGROUP self
+--- @return Wrapper.Group#GROUP Moose group object.
 function OPSGROUP:GetGroup()
   return self.group
 end
 
 --- Get the group name.
--- @param #OPSGROUP self
--- @return #string Group name.
+--- @param #OPSGROUP self
+--- @return #string Group name.
 function OPSGROUP:GetName()
   return self.groupname
 end
 
 --- Get DCS GROUP object.
--- @param #OPSGROUP self
--- @return DCS#Group DCS group object.
+--- @param #OPSGROUP self
+--- @return DCS#Group DCS group object.
 function OPSGROUP:GetDCSGroup()
   local DCSGroup=Group.getByName(self.groupname)
   return DCSGroup
 end
 
 --- Get MOOSE UNIT object.
--- @param #OPSGROUP self
--- @param #number UnitNumber Number of the unit in the group. Default first unit.
--- @return Wrapper.Unit#UNIT The MOOSE UNIT object.
+--- @param #OPSGROUP self
+--- @param #number UnitNumber Number of the unit in the group. Default first unit.
+--- @return Wrapper.Unit#UNIT The MOOSE UNIT object.
 function OPSGROUP:GetUnit(UnitNumber)
 
   local DCSUnit=self:GetDCSUnit(UnitNumber)
@@ -1644,9 +1644,9 @@ function OPSGROUP:GetUnit(UnitNumber)
 end
 
 --- Get DCS GROUP object.
--- @param #OPSGROUP self
--- @param #number UnitNumber Number of the unit in the group. Default first unit.
--- @return DCS#Unit DCS group object.
+--- @param #OPSGROUP self
+--- @param #number UnitNumber Number of the unit in the group. Default first unit.
+--- @return DCS#Unit DCS group object.
 function OPSGROUP:GetDCSUnit(UnitNumber)
 
   local DCSGroup=self:GetDCSGroup()
@@ -1660,8 +1660,8 @@ function OPSGROUP:GetDCSUnit(UnitNumber)
 end
 
 --- Get DCS units.
--- @param #OPSGROUP self
--- @return #list<DCS#Unit> DCS units.
+--- @param #OPSGROUP self
+--- @return #list<DCS#Unit> DCS units.
 function OPSGROUP:GetDCSUnits()
 
   local DCSGroup=self:GetDCSGroup()
@@ -1676,9 +1676,9 @@ end
 
 
 --- Get current 2D position vector of the group.
--- @param #OPSGROUP self
--- @param #string UnitName (Optional) Get position of a specifc unit of the group. Default is the first existing unit in the group.
--- @return DCS#Vec2 Vector with x,y components.
+--- @param #OPSGROUP self
+--- @param #string UnitName (Optional) Get position of a specifc unit of the group. Default is the first existing unit in the group.
+--- @return DCS#Vec2 Vector with x,y components.
 function OPSGROUP:GetVec2(UnitName)
 
   local vec3=self:GetVec3(UnitName)
@@ -1693,9 +1693,9 @@ end
 
 
 --- Get current 3D position vector of the group.
--- @param #OPSGROUP self
--- @param #string UnitName (Optional) Get position of a specifc unit of the group. Default is the first existing unit in the group.
--- @return DCS#Vec3 Vector with x,y,z components.
+--- @param #OPSGROUP self
+--- @param #string UnitName (Optional) Get position of a specifc unit of the group. Default is the first existing unit in the group.
+--- @return DCS#Vec3 Vector with x,y,z components.
 function OPSGROUP:GetVec3(UnitName)
 
   local vec3=nil --DCS#Vec3
@@ -1736,10 +1736,10 @@ function OPSGROUP:GetVec3(UnitName)
 end
 
 --- Get current coordinate of the group. If the current position cannot be determined, the last known position is returned.
--- @param #OPSGROUP self
--- @param #boolean NewObject Create a new coordiante object.
--- @param #string UnitName (Optional) Get position of a specifc unit of the group. Default is the first existing unit in the group.
--- @return Core.Point#COORDINATE The coordinate (of the first unit) of the group.
+--- @param #OPSGROUP self
+--- @param #boolean NewObject Create a new coordiante object.
+--- @param #string UnitName (Optional) Get position of a specifc unit of the group. Default is the first existing unit in the group.
+--- @return Core.Point#COORDINATE The coordinate (of the first unit) of the group.
 function OPSGROUP:GetCoordinate(NewObject, UnitName)
 
   local vec3=self:GetVec3(UnitName) or self.position --DCS#Vec3
@@ -1766,9 +1766,9 @@ function OPSGROUP:GetCoordinate(NewObject, UnitName)
 end
 
 --- Get current velocity of the group.
--- @param #OPSGROUP self
--- @param #string UnitName (Optional) Get heading of a specific unit of the group. Default is from the first existing unit in the group.
--- @return #number Velocity in m/s.
+--- @param #OPSGROUP self
+--- @param #string UnitName (Optional) Get heading of a specific unit of the group. Default is from the first existing unit in the group.
+--- @return #number Velocity in m/s.
 function OPSGROUP:GetVelocity(UnitName)
 
   if self:IsExist() then
@@ -1801,9 +1801,9 @@ function OPSGROUP:GetVelocity(UnitName)
 end
 
 --- Get current heading of the group or (optionally) of a specific unit of the group.
--- @param #OPSGROUP self
--- @param #string UnitName (Optional) Get heading of a specific unit of the group. Default is from the first existing unit in the group.
--- @return #number Current heading of the group in degrees.
+--- @param #OPSGROUP self
+--- @param #string UnitName (Optional) Get heading of a specific unit of the group. Default is from the first existing unit in the group.
+--- @return #number Current heading of the group in degrees.
 function OPSGROUP:GetHeading(UnitName)
 
   if self:IsExist() then
@@ -1838,11 +1838,11 @@ function OPSGROUP:GetHeading(UnitName)
 end
 
 --- Get current orientation of the group.
--- @param #OPSGROUP self
--- @param #string UnitName (Optional) Get orientation of a specific unit of the group. Default is the first existing unit of the group.
--- @return DCS#Vec3 Orientation X parallel to where the "nose" is pointing.
--- @return DCS#Vec3 Orientation Y pointing "upwards".
--- @return DCS#Vec3 Orientation Z perpendicular to the "nose".
+--- @param #OPSGROUP self
+--- @param #string UnitName (Optional) Get orientation of a specific unit of the group. Default is the first existing unit of the group.
+--- @return DCS#Vec3 Orientation X parallel to where the "nose" is pointing.
+--- @return DCS#Vec3 Orientation Y pointing "upwards".
+--- @return DCS#Vec3 Orientation Z perpendicular to the "nose".
 function OPSGROUP:GetOrientation(UnitName)
 
   if self:IsExist() then
@@ -1870,9 +1870,9 @@ function OPSGROUP:GetOrientation(UnitName)
 end
 
 --- Get current "X" orientation of the first unit in the group.
--- @param #OPSGROUP self
--- @param #string UnitName (Optional) Get orientation of a specific unit of the group. Default is the first existing unit of the group.
--- @return DCS#Vec3 Orientation X parallel to where the "nose" is pointing.
+--- @param #OPSGROUP self
+--- @param #string UnitName (Optional) Get orientation of a specific unit of the group. Default is the first existing unit of the group.
+--- @return DCS#Vec3 Orientation X parallel to where the "nose" is pointing.
 function OPSGROUP:GetOrientationX(UnitName)
 
   local X,Y,Z=self:GetOrientation(UnitName)
@@ -1883,9 +1883,9 @@ end
 
 
 --- Check if task description is unique.
--- @param #OPSGROUP self
--- @param #string description Task destription
--- @return #boolean If true, no other task has the same description.
+--- @param #OPSGROUP self
+--- @param #string description Task destription
+--- @return #boolean If true, no other task has the same description.
 function OPSGROUP:CheckTaskDescriptionUnique(description)
 
   -- Loop over tasks in queue
@@ -1901,11 +1901,11 @@ end
 
 
 --- Despawn a unit of the group. A "Remove Unit" event is generated by default.
--- @param #OPSGROUP self
--- @param #string UnitName Name of the unit
--- @param #number Delay Delay in seconds before the group will be despawned. Default immediately.
--- @param #boolean NoEventRemoveUnit If true, no event "Remove Unit" is generated.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #string UnitName Name of the unit
+--- @param #number Delay Delay in seconds before the group will be despawned. Default immediately.
+--- @param #boolean NoEventRemoveUnit If true, no event "Remove Unit" is generated.
+--- @return #OPSGROUP self
 function OPSGROUP:DespawnUnit(UnitName, Delay, NoEventRemoveUnit)
 
   -- Debug info.
@@ -1938,11 +1938,11 @@ function OPSGROUP:DespawnUnit(UnitName, Delay, NoEventRemoveUnit)
 end
 
 --- Despawn an element/unit of the group.
--- @param #OPSGROUP self
--- @param #OPSGROUP.Element Element The element that will be despawned.
--- @param #number Delay Delay in seconds before the element will be despawned. Default immediately.
--- @param #boolean NoEventRemoveUnit If true, no event "Remove Unit" is generated.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #OPSGROUP.Element Element The element that will be despawned.
+--- @param #number Delay Delay in seconds before the element will be despawned. Default immediately.
+--- @param #boolean NoEventRemoveUnit If true, no event "Remove Unit" is generated.
+--- @return #OPSGROUP self
 function OPSGROUP:DespawnElement(Element, Delay, NoEventRemoveUnit)
 
   if Delay and Delay>0 then
@@ -1976,10 +1976,10 @@ end
 --- Despawn the group. The whole group is despawned and a "`Remove Unit`" event is generated for all current units of the group.
 -- If no `Remove Unit` event should be generated, the second optional parameter needs to be set to `true`.
 -- If this group belongs to an AIRWING, BRIGADE or FLEET, it will be added to the warehouse stock if the `NoEventRemoveUnit` parameter is `false` or `nil`.
--- @param #OPSGROUP self
--- @param #number Delay Delay in seconds before the group will be despawned. Default immediately.
--- @param #boolean NoEventRemoveUnit If `true`, **no** event "Remove Unit" is generated.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Delay Delay in seconds before the group will be despawned. Default immediately.
+--- @param #boolean NoEventRemoveUnit If `true`, **no** event "Remove Unit" is generated.
+--- @return #OPSGROUP self
 function OPSGROUP:Despawn(Delay, NoEventRemoveUnit)
 
   if Delay and Delay>0 then
@@ -2019,9 +2019,9 @@ end
 
 --- Return group back to the legion it belongs to.
 -- Group is despawned and added back to the stock.
--- @param #OPSGROUP self
--- @param #number Delay Delay in seconds before the group will be despawned. Default immediately
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Delay Delay in seconds before the group will be despawned. Default immediately
+--- @return #OPSGROUP self
 function OPSGROUP:ReturnToLegion(Delay)
 
   if Delay and Delay>0 then
@@ -2042,10 +2042,10 @@ function OPSGROUP:ReturnToLegion(Delay)
 end
 
 --- Destroy a unit of the group. A *Unit Lost* for aircraft or *Dead* event for ground/naval units is generated.
--- @param #OPSGROUP self
--- @param #string UnitName Name of the unit which should be destroyed.
--- @param #number Delay Delay in seconds before the group will be destroyed. Default immediately.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #string UnitName Name of the unit which should be destroyed.
+--- @param #number Delay Delay in seconds before the group will be destroyed. Default immediately.
+--- @return #OPSGROUP self
 function OPSGROUP:DestroyUnit(UnitName, Delay)
 
   if Delay and Delay>0 then
@@ -2075,9 +2075,9 @@ function OPSGROUP:DestroyUnit(UnitName, Delay)
 end
 
 --- Destroy group. The whole group is despawned and a *Unit Lost* for aircraft or *Dead* event for ground/naval units is generated for all current units.
--- @param #OPSGROUP self
--- @param #number Delay Delay in seconds before the group will be destroyed. Default immediately.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Delay Delay in seconds before the group will be destroyed. Default immediately.
+--- @return #OPSGROUP self
 function OPSGROUP:Destroy(Delay)
 
   if Delay and Delay>0 then
@@ -2104,9 +2104,9 @@ function OPSGROUP:Destroy(Delay)
 end
 
 --- Activate a *late activated* group.
--- @param #OPSGROUP self
--- @param #number delay (Optional) Delay in seconds before the group is activated. Default is immediately.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number delay (Optional) Delay in seconds before the group is activated. Default is immediately.
+--- @return #OPSGROUP self
 function OPSGROUP:Activate(delay)
 
   if delay and delay>0 then
@@ -2132,9 +2132,9 @@ function OPSGROUP:Activate(delay)
 end
 
 --- Deactivate the group. Group will be respawned in late activated state.
--- @param #OPSGROUP self
--- @param #number delay (Optional) Delay in seconds before the group is deactivated. Default is immediately.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number delay (Optional) Delay in seconds before the group is deactivated. Default is immediately.
+--- @return #OPSGROUP self
 function OPSGROUP:Deactivate(delay)
 
   if delay and delay>0 then
@@ -2157,10 +2157,10 @@ function OPSGROUP:Deactivate(delay)
 end
 
 --- Self destruction of group. An explosion is created at the position of each element.
--- @param #OPSGROUP self
--- @param #number Delay Delay in seconds. Default now.
--- @param #number ExplosionPower (Optional) Explosion power in kg TNT. Default 100 kg.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Delay Delay in seconds. Default now.
+--- @param #number ExplosionPower (Optional) Explosion power in kg TNT. Default 100 kg.
+--- @return #OPSGROUP self
 function OPSGROUP:SelfDestruction(Delay, ExplosionPower)
 
   if Delay and Delay>0 then
@@ -2183,16 +2183,16 @@ function OPSGROUP:SelfDestruction(Delay, ExplosionPower)
 end
 
 --- Use SRS Simple-Text-To-Speech for transmissions.
--- @param #OPSGROUP self
--- @param #string PathToSRS Path to SRS directory.
--- @param #string Gender Gender: "male" or "female" (default).
--- @param #string Culture Culture, e.g. "en-GB" (default).
--- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
--- @param #number Port SRS port. Default 5002.
--- @param #string PathToGoogleKey Full path to the google credentials JSON file, e.g. `"C:\Users\myUsername\Downloads\key.json"`.
--- @param #string Label Label of the SRS comms for the SRS Radio overlay. Defaults to "ROBOT". No spaces allowed!
--- @param #number Volume Volume to be set, 0.0 = silent, 1.0 = loudest. Defaults to 1.0
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #string PathToSRS Path to SRS directory.
+--- @param #string Gender Gender: "male" or "female" (default).
+--- @param #string Culture Culture, e.g. "en-GB" (default).
+--- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
+--- @param #number Port SRS port. Default 5002.
+--- @param #string PathToGoogleKey Full path to the google credentials JSON file, e.g. `"C:\Users\myUsername\Downloads\key.json"`.
+--- @param #string Label Label of the SRS comms for the SRS Radio overlay. Defaults to "ROBOT". No spaces allowed!
+--- @param #number Volume Volume to be set, 0.0 = silent, 1.0 = loudest. Defaults to 1.0
+--- @return #OPSGROUP self
 function OPSGROUP:SetSRS(PathToSRS, Gender, Culture, Voice, Port, PathToGoogleKey, Label, Volume)
   self.useSRS=true
   self.msrs=MSRS:New(PathToSRS, self.frequency, self.modulation)
@@ -2210,12 +2210,12 @@ function OPSGROUP:SetSRS(PathToSRS, Gender, Culture, Voice, Port, PathToGoogleKe
 end
 
 --- Send a radio transmission via SRS Text-To-Speech.
--- @param #OPSGROUP self
--- @param #string Text Text of transmission.
--- @param #number Delay Delay in seconds before the transmission is started.
--- @param #boolean SayCallsign If `true`, the callsign is prepended to the given text. Default `false`.
--- @param #number Frequency Override sender frequency, helpful when you need multiple radios from the same sender. Default is the frequency set for the OpsGroup.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #string Text Text of transmission.
+--- @param #number Delay Delay in seconds before the transmission is started.
+--- @param #boolean SayCallsign If `true`, the callsign is prepended to the given text. Default `false`.
+--- @param #number Frequency Override sender frequency, helpful when you need multiple radios from the same sender. Default is the frequency set for the OpsGroup.
+--- @return #OPSGROUP self
 function OPSGROUP:RadioTransmission(Text, Delay, SayCallsign, Frequency)
 
   if Delay and Delay>0 then
@@ -2250,10 +2250,10 @@ function OPSGROUP:RadioTransmission(Text, Delay, SayCallsign, Frequency)
 end
 
 --- Set that this carrier is an all aspect loader.
--- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Length Length of loading zone in meters. Default 50 m.
+--- @param #number Width Width of loading zone in meters. Default 20 m.
+--- @return #OPSGROUP self
 function OPSGROUP:SetCarrierLoaderAllAspect(Length, Width)
   self.carrierLoader.type="front"
   self.carrierLoader.length=Length or 50
@@ -2262,10 +2262,10 @@ function OPSGROUP:SetCarrierLoaderAllAspect(Length, Width)
 end
 
 --- Set that this carrier is a front loader.
--- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Length Length of loading zone in meters. Default 50 m.
+--- @param #number Width Width of loading zone in meters. Default 20 m.
+--- @return #OPSGROUP self
 function OPSGROUP:SetCarrierLoaderFront(Length, Width)
   self.carrierLoader.type="front"
   self.carrierLoader.length=Length or 50
@@ -2274,10 +2274,10 @@ function OPSGROUP:SetCarrierLoaderFront(Length, Width)
 end
 
 --- Set that this carrier is a back loader.
--- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Length Length of loading zone in meters. Default 50 m.
+--- @param #number Width Width of loading zone in meters. Default 20 m.
+--- @return #OPSGROUP self
 function OPSGROUP:SetCarrierLoaderBack(Length, Width)
   self.carrierLoader.type="back"
   self.carrierLoader.length=Length or 50
@@ -2286,10 +2286,10 @@ function OPSGROUP:SetCarrierLoaderBack(Length, Width)
 end
 
 --- Set that this carrier is a starboard (right side) loader.
--- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Length Length of loading zone in meters. Default 50 m.
+--- @param #number Width Width of loading zone in meters. Default 20 m.
+--- @return #OPSGROUP self
 function OPSGROUP:SetCarrierLoaderStarboard(Length, Width)
   self.carrierLoader.type="right"
   self.carrierLoader.length=Length or 50
@@ -2298,10 +2298,10 @@ function OPSGROUP:SetCarrierLoaderStarboard(Length, Width)
 end
 
 --- Set that this carrier is a port (left side) loader.
--- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Length Length of loading zone in meters. Default 50 m.
+--- @param #number Width Width of loading zone in meters. Default 20 m.
+--- @return #OPSGROUP self
 function OPSGROUP:SetCarrierLoaderPort(Length, Width)
   self.carrierLoader.type="left"
   self.carrierLoader.length=Length or 50
@@ -2311,10 +2311,10 @@ end
 
 
 --- Set that this carrier is an all aspect unloader.
--- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Length Length of loading zone in meters. Default 50 m.
+--- @param #number Width Width of loading zone in meters. Default 20 m.
+--- @return #OPSGROUP self
 function OPSGROUP:SetCarrierUnloaderAllAspect(Length, Width)
   self.carrierUnloader.type="front"
   self.carrierUnloader.length=Length or 50
@@ -2323,10 +2323,10 @@ function OPSGROUP:SetCarrierUnloaderAllAspect(Length, Width)
 end
 
 --- Set that this carrier is a front unloader.
--- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Length Length of loading zone in meters. Default 50 m.
+--- @param #number Width Width of loading zone in meters. Default 20 m.
+--- @return #OPSGROUP self
 function OPSGROUP:SetCarrierUnloaderFront(Length, Width)
   self.carrierUnloader.type="front"
   self.carrierUnloader.length=Length or 50
@@ -2335,10 +2335,10 @@ function OPSGROUP:SetCarrierUnloaderFront(Length, Width)
 end
 
 --- Set that this carrier is a back unloader.
--- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Length Length of loading zone in meters. Default 50 m.
+--- @param #number Width Width of loading zone in meters. Default 20 m.
+--- @return #OPSGROUP self
 function OPSGROUP:SetCarrierUnloaderBack(Length, Width)
   self.carrierUnloader.type="back"
   self.carrierUnloader.length=Length or 50
@@ -2347,10 +2347,10 @@ function OPSGROUP:SetCarrierUnloaderBack(Length, Width)
 end
 
 --- Set that this carrier is a starboard (right side) unloader.
--- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Length Length of loading zone in meters. Default 50 m.
+--- @param #number Width Width of loading zone in meters. Default 20 m.
+--- @return #OPSGROUP self
 function OPSGROUP:SetCarrierUnloaderStarboard(Length, Width)
   self.carrierUnloader.type="right"
   self.carrierUnloader.length=Length or 50
@@ -2359,10 +2359,10 @@ function OPSGROUP:SetCarrierUnloaderStarboard(Length, Width)
 end
 
 --- Set that this carrier is a port (left side) unloader.
--- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Length Length of loading zone in meters. Default 50 m.
+--- @param #number Width Width of loading zone in meters. Default 20 m.
+--- @return #OPSGROUP self
 function OPSGROUP:SetCarrierUnloaderPort(Length, Width)
   self.carrierUnloader.type="left"
   self.carrierUnloader.length=Length or 50
@@ -2371,9 +2371,9 @@ function OPSGROUP:SetCarrierUnloaderPort(Length, Width)
 end
 
 --- Check if group is currently inside a zone.
--- @param #OPSGROUP self
--- @param Core.Zone#ZONE Zone The zone.
--- @return #boolean If true, group is in this zone
+--- @param #OPSGROUP self
+--- @param Core.Zone#ZONE Zone The zone.
+--- @return #boolean If true, group is in this zone
 function OPSGROUP:IsInZone(Zone)
   local vec2=self:GetVec2()
   local is=false
@@ -2386,9 +2386,9 @@ function OPSGROUP:IsInZone(Zone)
 end
 
 --- Get 2D distance to a coordinate.
--- @param #OPSGROUP self
--- @param Core.Point#COORDINATE Coordinate. Can also be a DCS#Vec2 or DCS#Vec3.
--- @return #number Distance in meters.
+--- @param #OPSGROUP self
+--- @param Core.Point#COORDINATE Coordinate. Can also be a DCS#Vec2 or DCS#Vec3.
+--- @return #number Distance in meters.
 function OPSGROUP:Get2DDistance(Coordinate)
 
   local a=self:GetVec2()
@@ -2407,30 +2407,30 @@ function OPSGROUP:Get2DDistance(Coordinate)
 end
 
 --- Check if this is a FLIGHTGROUP.
--- @param #OPSGROUP self
--- @return #boolean If true, this is an airplane or helo group.
+--- @param #OPSGROUP self
+--- @return #boolean If true, this is an airplane or helo group.
 function OPSGROUP:IsFlightgroup()
   return self.isFlightgroup
 end
 
 --- Check if this is a ARMYGROUP.
--- @param #OPSGROUP self
--- @return #boolean If true, this is a ground group.
+--- @param #OPSGROUP self
+--- @return #boolean If true, this is a ground group.
 function OPSGROUP:IsArmygroup()
   return self.isArmygroup
 end
 
 --- Check if this is a NAVYGROUP.
--- @param #OPSGROUP self
--- @return #boolean If true, this is a ship group.
+--- @param #OPSGROUP self
+--- @return #boolean If true, this is a ship group.
 function OPSGROUP:IsNavygroup()
   return self.isNavygroup
 end
 
 
 --- Check if group is exists.
--- @param #OPSGROUP self
--- @return #boolean If true, the group exists or false if the group does not exist. If nil, the DCS group could not be found.
+--- @param #OPSGROUP self
+--- @return #boolean If true, the group exists or false if the group does not exist. If nil, the DCS group could not be found.
 function OPSGROUP:IsExist()
 
   local DCSGroup=self:GetDCSGroup()
@@ -2444,8 +2444,8 @@ function OPSGROUP:IsExist()
 end
 
 --- Check if group is activated.
--- @param #OPSGROUP self
--- @return #boolean If true, the group exists or false if the group does not exist. If nil, the DCS group could not be found.
+--- @param #OPSGROUP self
+--- @return #boolean If true, the group exists or false if the group does not exist. If nil, the DCS group could not be found.
 function OPSGROUP:IsActive()
 
   if self.group then
@@ -2457,8 +2457,8 @@ function OPSGROUP:IsActive()
 end
 
 --- Check if group is alive.
--- @param #OPSGROUP self
--- @return #boolean *true* if group is exists and is activated, *false* if group is exist but is NOT activated. *nil* otherwise, e.g. the GROUP object is *nil* or the group is not spawned yet.
+--- @param #OPSGROUP self
+--- @return #boolean *true* if group is exists and is activated, *false* if group is exist but is NOT activated. *nil* otherwise, e.g. the GROUP object is *nil* or the group is not spawned yet.
 function OPSGROUP:IsAlive()
 
   if self.group then
@@ -2470,126 +2470,126 @@ function OPSGROUP:IsAlive()
 end
 
 --- Check if this group is currently "late activated" and needs to be "activated" to appear in the mission.
--- @param #OPSGROUP self
--- @return #boolean Is this the group late activated?
+--- @param #OPSGROUP self
+--- @return #boolean Is this the group late activated?
 function OPSGROUP:IsLateActivated()
   return self.isLateActivated
 end
 
 --- Check if group is in state in utero. Note that dead groups are also in utero but will return `false` here.
--- @param #OPSGROUP self
--- @return #boolean If true, group is not spawned yet.
+--- @param #OPSGROUP self
+--- @return #boolean If true, group is not spawned yet.
 function OPSGROUP:IsInUtero()
   local is=self:Is("InUtero") and not self:IsDead()
   return is
 end
 
 --- Check if group is in state spawned.
--- @param #OPSGROUP self
--- @return #boolean If true, group is spawned.
+--- @param #OPSGROUP self
+--- @return #boolean If true, group is spawned.
 function OPSGROUP:IsSpawned()
   local is=self:Is("Spawned")
   return is
 end
 
 --- Check if group is dead. Could be destroyed or despawned. FSM state of dead group is `InUtero` though.
--- @param #OPSGROUP self
--- @return #boolean If true, all units/elements of the group are dead.
+--- @param #OPSGROUP self
+--- @return #boolean If true, all units/elements of the group are dead.
 function OPSGROUP:IsDead()
   return self.isDead
 end
 
 --- Check if group was destroyed.
--- @param #OPSGROUP self
--- @return #boolean If true, all units/elements of the group were destroyed.
+--- @param #OPSGROUP self
+--- @return #boolean If true, all units/elements of the group were destroyed.
 function OPSGROUP:IsDestroyed()
   return self.isDestroyed
 end
 
 --- Check if FSM is stopped.
--- @param #OPSGROUP self
--- @return #boolean If true, FSM state is stopped.
+--- @param #OPSGROUP self
+--- @return #boolean If true, FSM state is stopped.
 function OPSGROUP:IsStopped()
   local is=self:Is("Stopped")
   return is
 end
 
 --- Check if this group is currently "uncontrolled" and needs to be "started" to begin its route.
--- @param #OPSGROUP self
--- @return #boolean If true, this group uncontrolled.
+--- @param #OPSGROUP self
+--- @return #boolean If true, this group uncontrolled.
 function OPSGROUP:IsUncontrolled()
   return self.isUncontrolled
 end
 
 --- Check if this group has passed its final waypoint.
--- @param #OPSGROUP self
--- @return #boolean If true, this group has passed the final waypoint.
+--- @param #OPSGROUP self
+--- @return #boolean If true, this group has passed the final waypoint.
 function OPSGROUP:HasPassedFinalWaypoint()
   return self.passedfinalwp
 end
 
 --- Check if the group is currently rearming or on its way to the rearming place.
--- @param #OPSGROUP self
--- @return #boolean If true, group is rearming.
+--- @param #OPSGROUP self
+--- @return #boolean If true, group is rearming.
 function OPSGROUP:IsRearming()
   local rearming=self:Is("Rearming") or self:Is("Rearm")
   return rearming
 end
 
 --- Check if the group is completely out of ammo.
--- @param #OPSGROUP self
--- @return #boolean If `true`, group is out-of-ammo.
+--- @param #OPSGROUP self
+--- @return #boolean If `true`, group is out-of-ammo.
 function OPSGROUP:IsOutOfAmmo()
   return self.outofAmmo
 end
 
 --- Check if the group is out of bombs.
--- @param #OPSGROUP self
--- @return #boolean If `true`, group is out of bombs.
+--- @param #OPSGROUP self
+--- @return #boolean If `true`, group is out of bombs.
 function OPSGROUP:IsOutOfBombs()
   return self.outofBombs
 end
 
 --- Check if the group is out of guns.
--- @param #OPSGROUP self
--- @return #boolean If `true`, group is out of guns.
+--- @param #OPSGROUP self
+--- @return #boolean If `true`, group is out of guns.
 function OPSGROUP:IsOutOfGuns()
   return self.outofGuns
 end
 
 --- Check if the group is out of missiles.
--- @param #OPSGROUP self
--- @return #boolean If `true`, group is out of missiles.
+--- @param #OPSGROUP self
+--- @return #boolean If `true`, group is out of missiles.
 function OPSGROUP:IsOutOfMissiles()
   return self.outofMissiles
 end
 
 --- Check if the group is out of torpedos.
--- @param #OPSGROUP self
--- @return #boolean If `true`, group is out of torpedos.
+--- @param #OPSGROUP self
+--- @return #boolean If `true`, group is out of torpedos.
 function OPSGROUP:IsOutOfTorpedos()
   return self.outofTorpedos
 end
 
 
 --- Check if the group has currently switched a LASER on.
--- @param #OPSGROUP self
--- @return #boolean If true, LASER of the group is on.
+--- @param #OPSGROUP self
+--- @return #boolean If true, LASER of the group is on.
 function OPSGROUP:IsLasing()
   return self.spot.On
 end
 
 --- Check if the group is currently retreating or retreated.
--- @param #OPSGROUP self
--- @return #boolean If true, group is retreating or retreated.
+--- @param #OPSGROUP self
+--- @return #boolean If true, group is retreating or retreated.
 function OPSGROUP:IsRetreating()
   local is=self:is("Retreating") or self:is("Retreated")
   return is
 end
 
 --- Check if the group is retreated (has reached its retreat zone).
--- @param #OPSGROUP self
--- @return #boolean If true, group is retreated.
+--- @param #OPSGROUP self
+--- @return #boolean If true, group is retreated.
 function OPSGROUP:IsRetreated()
   local is=self:is("Retreated")
   return is
@@ -2597,24 +2597,24 @@ end
 
 
 --- Check if the group is currently returning to a zone.
--- @param #OPSGROUP self
--- @return #boolean If true, group is returning.
+--- @param #OPSGROUP self
+--- @return #boolean If true, group is returning.
 function OPSGROUP:IsReturning()
   local is=self:is("Returning")
   return is
 end
 
 --- Check if the group is engaging another unit or group.
--- @param #OPSGROUP self
--- @return #boolean If true, group is engaging.
+--- @param #OPSGROUP self
+--- @return #boolean If true, group is engaging.
 function OPSGROUP:IsEngaging()
   local is=self:is("Engaging")
   return is
 end
 
 --- Check if group is currently waiting.
--- @param #OPSGROUP self
--- @return #boolean If true, group is currently waiting.
+--- @param #OPSGROUP self
+--- @return #boolean If true, group is currently waiting.
 function OPSGROUP:IsWaiting()
   if self.Twaiting then
     return true
@@ -2623,60 +2623,60 @@ function OPSGROUP:IsWaiting()
 end
 
 --- Check if the group is not a carrier yet.
--- @param #OPSGROUP self
--- @return #boolean If true, group is not a carrier.
+--- @param #OPSGROUP self
+--- @return #boolean If true, group is not a carrier.
 function OPSGROUP:IsNotCarrier()
   return self.carrierStatus==OPSGROUP.CarrierStatus.NOTCARRIER
 end
 
 --- Check if the group is a carrier.
--- @param #OPSGROUP self
--- @return #boolean If true, group is a carrier.
+--- @param #OPSGROUP self
+--- @return #boolean If true, group is a carrier.
 function OPSGROUP:IsCarrier()
   return not self:IsNotCarrier()
 end
 
 --- Check if the group is picking up cargo.
--- @param #OPSGROUP self
--- @return #boolean If true, group is picking up.
+--- @param #OPSGROUP self
+--- @return #boolean If true, group is picking up.
 function OPSGROUP:IsPickingup()
   return self.carrierStatus==OPSGROUP.CarrierStatus.PICKUP
 end
 
 --- Check if the group is loading cargo.
--- @param #OPSGROUP self
--- @return #boolean If true, group is loading.
+--- @param #OPSGROUP self
+--- @return #boolean If true, group is loading.
 function OPSGROUP:IsLoading()
   return self.carrierStatus==OPSGROUP.CarrierStatus.LOADING
 end
 
 --- Check if the group is transporting cargo.
--- @param #OPSGROUP self
--- @return #boolean If true, group is transporting.
+--- @param #OPSGROUP self
+--- @return #boolean If true, group is transporting.
 function OPSGROUP:IsTransporting()
   return self.carrierStatus==OPSGROUP.CarrierStatus.TRANSPORTING
 end
 
 --- Check if the group is unloading cargo.
--- @param #OPSGROUP self
--- @return #boolean If true, group is unloading.
+--- @param #OPSGROUP self
+--- @return #boolean If true, group is unloading.
 function OPSGROUP:IsUnloading()
   return self.carrierStatus==OPSGROUP.CarrierStatus.UNLOADING
 end
 
 
 --- Check if the group is assigned as cargo.
--- @param #OPSGROUP self
--- @param #boolean CheckTransport If `true` or `nil`, also check if cargo is associated with a transport assignment. If not, we consider it not cargo.
--- @return #boolean If true, group is cargo.
+--- @param #OPSGROUP self
+--- @param #boolean CheckTransport If `true` or `nil`, also check if cargo is associated with a transport assignment. If not, we consider it not cargo.
+--- @return #boolean If true, group is cargo.
 function OPSGROUP:IsCargo(CheckTransport)
   return not self:IsNotCargo(CheckTransport)
 end
 
 --- Check if the group is **not** cargo.
--- @param #OPSGROUP self
--- @param #boolean CheckTransport If `true` or `nil`, also check if cargo is associated with a transport assignment. If not, we consider it not cargo.
--- @return #boolean If true, group is *not* cargo.
+--- @param #OPSGROUP self
+--- @param #boolean CheckTransport If `true` or `nil`, also check if cargo is associated with a transport assignment. If not, we consider it not cargo.
+--- @return #boolean If true, group is *not* cargo.
 function OPSGROUP:IsNotCargo(CheckTransport)
   local notcargo=self.cargoStatus==OPSGROUP.CargoStatus.NOTCARGO
 
@@ -2706,9 +2706,9 @@ function OPSGROUP:IsNotCargo(CheckTransport)
 end
 
 --- Check if awaiting a transport.
--- @param #OPSGROUP self
--- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+--- @return #OPSGROUP self
 function OPSGROUP:_AddMyLift(Transport)
   self.mylifts=self.mylifts or {}
   self.mylifts[Transport.uid]=true
@@ -2716,9 +2716,9 @@ function OPSGROUP:_AddMyLift(Transport)
 end
 
 --- Remove my lift.
--- @param #OPSGROUP self
--- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+--- @return #OPSGROUP self
 function OPSGROUP:_DelMyLift(Transport)
   if self.mylifts then
     self.mylifts[Transport.uid]=nil
@@ -2728,9 +2728,9 @@ end
 
 
 --- Check if awaiting a transport lift.
--- @param #OPSGROUP self
--- @param Ops.OpsTransport#OPSTRANSPORT Transport (Optional) The transport.
--- @return #boolean If true, group is awaiting transport lift..
+--- @param #OPSGROUP self
+--- @param Ops.OpsTransport#OPSTRANSPORT Transport (Optional) The transport.
+--- @return #boolean If true, group is awaiting transport lift..
 function OPSGROUP:IsAwaitingLift(Transport)
 
   if self.mylifts then
@@ -2749,8 +2749,8 @@ function OPSGROUP:IsAwaitingLift(Transport)
 end
 
 --- Get paused mission.
--- @param #OPSGROUP self
--- @return Ops.Auftrag#AUFTRAG Paused mission or nil.
+--- @param #OPSGROUP self
+--- @return Ops.Auftrag#AUFTRAG Paused mission or nil.
 function OPSGROUP:_GetPausedMission()
 
   if self.pausedmissions and #self.pausedmissions>0 then
@@ -2768,8 +2768,8 @@ function OPSGROUP:_GetPausedMission()
 end
 
 --- Count paused mission.
--- @param #OPSGROUP self
--- @return #number Number of paused missions.
+--- @param #OPSGROUP self
+--- @return #number Number of paused missions.
 function OPSGROUP:_CountPausedMissions()
   local N=0
   if self.pausedmissions and #self.pausedmissions>0 then
@@ -2785,9 +2785,9 @@ function OPSGROUP:_CountPausedMissions()
 end
 
 --- Remove paused mission from the table.
--- @param #OPSGROUP self
--- @param #number AuftragsNummer Mission ID of the paused mission to remove.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number AuftragsNummer Mission ID of the paused mission to remove.
+--- @return #OPSGROUP self
 function OPSGROUP:_RemovePausedMission(AuftragsNummer)
 
   if self.pausedmissions and #self.pausedmissions>0 then
@@ -2804,9 +2804,9 @@ function OPSGROUP:_RemovePausedMission(AuftragsNummer)
 end
 
 --- Check if the group is currently boarding a carrier.
--- @param #OPSGROUP self
--- @param #string CarrierGroupName (Optional) Additionally check if group is boarding this particular carrier group.
--- @return #boolean If true, group is boarding.
+--- @param #OPSGROUP self
+--- @param #string CarrierGroupName (Optional) Additionally check if group is boarding this particular carrier group.
+--- @return #boolean If true, group is boarding.
 function OPSGROUP:IsBoarding(CarrierGroupName)
   if CarrierGroupName then
     local carrierGroup=self:_GetMyCarrierGroup()
@@ -2818,9 +2818,9 @@ function OPSGROUP:IsBoarding(CarrierGroupName)
 end
 
 --- Check if the group is currently loaded into a carrier.
--- @param #OPSGROUP self
--- @param #string CarrierGroupName (Optional) Additionally check if group is loaded into a particular carrier group(s).
--- @return #boolean If true, group is loaded.
+--- @param #OPSGROUP self
+--- @param #string CarrierGroupName (Optional) Additionally check if group is loaded into a particular carrier group(s).
+--- @return #boolean If true, group is loaded.
 function OPSGROUP:IsLoaded(CarrierGroupName)
   if CarrierGroupName then
     if type(CarrierGroupName)~="table" then
@@ -2845,8 +2845,8 @@ end
 -- * Pickingup, Loading, Transporting, Unloading
 -- * Engageing
 --
--- @param #OPSGROUP self
--- @return #boolean If `true`, group is busy.
+--- @param #OPSGROUP self
+--- @return #boolean If `true`, group is busy.
 function OPSGROUP:IsBusy()
 
   if self:IsBoarding() then
@@ -2879,16 +2879,16 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get the waypoints.
--- @param #OPSGROUP self
--- @return #table Table of all waypoints.
+--- @param #OPSGROUP self
+--- @return #table Table of all waypoints.
 function OPSGROUP:GetWaypoints()
   return self.waypoints
 end
 
 --- Mark waypoints on F10 map.
--- @param #OPSGROUP self
--- @param #number Duration Duration in seconds how long the waypoints are displayed before they are automatically removed. Default is that they are never removed.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Duration Duration in seconds how long the waypoints are displayed before they are automatically removed. Default is that they are never removed.
+--- @return #OPSGROUP self
 function OPSGROUP:MarkWaypoints(Duration)
 
   for i,_waypoint in pairs(self.waypoints or {}) do
@@ -2916,9 +2916,9 @@ function OPSGROUP:MarkWaypoints(Duration)
 end
 
 --- Remove waypoints markers on the F10 map.
--- @param #OPSGROUP self
--- @param #number Delay Delay in seconds before the markers are removed. Default is immediately.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Delay Delay in seconds before the markers are removed. Default is immediately.
+--- @return #OPSGROUP self
 function OPSGROUP:RemoveWaypointMarkers(Delay)
 
   if Delay and Delay>0 then
@@ -2940,9 +2940,9 @@ end
 
 
 --- Get the waypoint from its unique ID.
--- @param #OPSGROUP self
--- @param #number uid Waypoint unique ID.
--- @return #OPSGROUP.Waypoint Waypoint data.
+--- @param #OPSGROUP self
+--- @param #number uid Waypoint unique ID.
+--- @return #OPSGROUP.Waypoint Waypoint data.
 function OPSGROUP:GetWaypointByID(uid)
 
   for _,_waypoint in pairs(self.waypoints or {}) do
@@ -2956,9 +2956,9 @@ function OPSGROUP:GetWaypointByID(uid)
 end
 
 --- Get the waypoint from its index.
--- @param #OPSGROUP self
--- @param #number index Waypoint index.
--- @return #OPSGROUP.Waypoint Waypoint data.
+--- @param #OPSGROUP self
+--- @param #number index Waypoint index.
+--- @return #OPSGROUP.Waypoint Waypoint data.
 function OPSGROUP:GetWaypointByIndex(index)
 
   for i,_waypoint in pairs(self.waypoints) do
@@ -2972,9 +2972,9 @@ function OPSGROUP:GetWaypointByIndex(index)
 end
 
 --- Get the waypoint UID from its index, i.e. its current position in the waypoints table.
--- @param #OPSGROUP self
--- @param #number index Waypoint index.
--- @return #number Unique waypoint ID.
+--- @param #OPSGROUP self
+--- @param #number index Waypoint index.
+--- @return #number Unique waypoint ID.
 function OPSGROUP:GetWaypointUIDFromIndex(index)
 
   for i,_waypoint in pairs(self.waypoints) do
@@ -2988,9 +2988,9 @@ function OPSGROUP:GetWaypointUIDFromIndex(index)
 end
 
 --- Get the waypoint index (its position in the current waypoints table).
--- @param #OPSGROUP self
--- @param #number uid Waypoint unique ID.
--- @return #OPSGROUP.Waypoint Waypoint data.
+--- @param #OPSGROUP self
+--- @param #number uid Waypoint unique ID.
+--- @return #OPSGROUP.Waypoint Waypoint data.
 function OPSGROUP:GetWaypointIndex(uid)
 
   if uid then
@@ -3006,10 +3006,10 @@ function OPSGROUP:GetWaypointIndex(uid)
 end
 
 --- Get next waypoint index.
--- @param #OPSGROUP self
--- @param #boolean cyclic If `true`, return first waypoint if last waypoint was reached. Default is patrol ad infinitum value set.
--- @param #number i Waypoint index from which the next index is returned. Default is the last waypoint passed.
--- @return #number Next waypoint index.
+--- @param #OPSGROUP self
+--- @param #boolean cyclic If `true`, return first waypoint if last waypoint was reached. Default is patrol ad infinitum value set.
+--- @param #number i Waypoint index from which the next index is returned. Default is the last waypoint passed.
+--- @return #number Next waypoint index.
 function OPSGROUP:GetWaypointIndexNext(cyclic, i)
 
   -- If not specified, we take the adinititum value.
@@ -3035,16 +3035,16 @@ function OPSGROUP:GetWaypointIndexNext(cyclic, i)
 end
 
 --- Get current waypoint index. This is the index of the last passed waypoint.
--- @param #OPSGROUP self
--- @return #number Current waypoint index.
+--- @param #OPSGROUP self
+--- @return #number Current waypoint index.
 function OPSGROUP:GetWaypointIndexCurrent()
   return self.currentwp or 1
 end
 
 --- Get waypoint index after waypoint with given ID. So if the waypoint has index 3 it will return 4.
--- @param #OPSGROUP self
--- @param #number uid Unique ID of the waypoint. Default is new waypoint index after the last current one.
--- @return #number Index after waypoint with given ID.
+--- @param #OPSGROUP self
+--- @param #number uid Unique ID of the waypoint. Default is new waypoint index after the last current one.
+--- @return #number Index after waypoint with given ID.
 function OPSGROUP:GetWaypointIndexAfterID(uid)
 
   local index=self:GetWaypointIndex(uid)
@@ -3057,24 +3057,24 @@ function OPSGROUP:GetWaypointIndexAfterID(uid)
 end
 
 --- Get waypoint.
--- @param #OPSGROUP self
--- @param #number indx Waypoint index.
--- @return #OPSGROUP.Waypoint Waypoint table.
+--- @param #OPSGROUP self
+--- @param #number indx Waypoint index.
+--- @return #OPSGROUP.Waypoint Waypoint table.
 function OPSGROUP:GetWaypoint(indx)
   return self.waypoints[indx]
 end
 
 --- Get final waypoint.
--- @param #OPSGROUP self
--- @return #OPSGROUP.Waypoint Final waypoint table.
+--- @param #OPSGROUP self
+--- @return #OPSGROUP.Waypoint Final waypoint table.
 function OPSGROUP:GetWaypointFinal()
   return self.waypoints[#self.waypoints]
 end
 
 --- Get next waypoint.
--- @param #OPSGROUP self
--- @param #boolean cyclic If true, return first waypoint if last waypoint was reached.
--- @return #OPSGROUP.Waypoint Next waypoint table.
+--- @param #OPSGROUP self
+--- @param #boolean cyclic If true, return first waypoint if last waypoint was reached.
+--- @return #OPSGROUP.Waypoint Next waypoint table.
 function OPSGROUP:GetWaypointNext(cyclic)
 
   local n=self:GetWaypointIndexNext(cyclic)
@@ -3083,15 +3083,15 @@ function OPSGROUP:GetWaypointNext(cyclic)
 end
 
 --- Get current waypoint.
--- @param #OPSGROUP self
--- @return #OPSGROUP.Waypoint Current waypoint table.
+--- @param #OPSGROUP self
+--- @return #OPSGROUP.Waypoint Current waypoint table.
 function OPSGROUP:GetWaypointCurrent()
   return self.waypoints[self.currentwp]
 end
 
 --- Get current waypoint UID.
--- @param #OPSGROUP self
--- @return #number Current waypoint UID.
+--- @param #OPSGROUP self
+--- @return #number Current waypoint UID.
 function OPSGROUP:GetWaypointCurrentUID()
   local wp=self:GetWaypointCurrent()
   if wp then
@@ -3101,9 +3101,9 @@ function OPSGROUP:GetWaypointCurrentUID()
 end
 
 --- Get coordinate of next waypoint of the group.
--- @param #OPSGROUP self
--- @param #boolean cyclic If true, return first waypoint if last waypoint was reached.
--- @return Core.Point#COORDINATE Coordinate of the next waypoint.
+--- @param #OPSGROUP self
+--- @param #boolean cyclic If true, return first waypoint if last waypoint was reached.
+--- @return Core.Point#COORDINATE Coordinate of the next waypoint.
 function OPSGROUP:GetNextWaypointCoordinate(cyclic)
 
   -- Get next waypoint
@@ -3113,9 +3113,9 @@ function OPSGROUP:GetNextWaypointCoordinate(cyclic)
 end
 
 --- Get waypoint coordinates.
--- @param #OPSGROUP self
--- @param #number index Waypoint index.
--- @return Core.Point#COORDINATE Coordinate of the next waypoint.
+--- @param #OPSGROUP self
+--- @param #number index Waypoint index.
+--- @return Core.Point#COORDINATE Coordinate of the next waypoint.
 function OPSGROUP:GetWaypointCoordinate(index)
   local waypoint=self:GetWaypoint(index)
   if waypoint then
@@ -3125,9 +3125,9 @@ function OPSGROUP:GetWaypointCoordinate(index)
 end
 
 --- Get waypoint speed.
--- @param #OPSGROUP self
--- @param #number indx Waypoint index.
--- @return #number Speed set at waypoint in knots.
+--- @param #OPSGROUP self
+--- @param #number indx Waypoint index.
+--- @return #number Speed set at waypoint in knots.
 function OPSGROUP:GetWaypointSpeed(indx)
 
   local waypoint=self:GetWaypoint(indx)
@@ -3140,17 +3140,17 @@ function OPSGROUP:GetWaypointSpeed(indx)
 end
 
 --- Get unique ID of waypoint.
--- @param #OPSGROUP self
--- @param #OPSGROUP.Waypoint waypoint The waypoint data table.
--- @return #number Unique ID.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP.Waypoint waypoint The waypoint data table.
+--- @return #number Unique ID.
 function OPSGROUP:GetWaypointUID(waypoint)
   return waypoint.uid
 end
 
 --- Get unique ID of waypoint given its index.
--- @param #OPSGROUP self
--- @param #number indx Waypoint index.
--- @return #number Unique ID.
+--- @param #OPSGROUP self
+--- @param #number indx Waypoint index.
+--- @return #number Unique ID.
 function OPSGROUP:GetWaypointID(indx)
 
   local waypoint=self:GetWaypoint(indx)
@@ -3164,9 +3164,9 @@ function OPSGROUP:GetWaypointID(indx)
 end
 
 --- Returns a non-zero speed to the next waypoint (even if the waypoint speed is zero).
--- @param #OPSGROUP self
--- @param #number indx Waypoint index.
--- @return #number Speed to next waypoint (>0) in knots.
+--- @param #OPSGROUP self
+--- @param #number indx Waypoint index.
+--- @return #number Speed to next waypoint (>0) in knots.
 function OPSGROUP:GetSpeedToWaypoint(indx)
 
   local speed=self:GetWaypointSpeed(indx)
@@ -3179,9 +3179,9 @@ function OPSGROUP:GetSpeedToWaypoint(indx)
 end
 
 --- Get distance to waypoint.
--- @param #OPSGROUP self
--- @param #number indx Waypoint index. Default is the next waypoint.
--- @return #number Distance in meters.
+--- @param #OPSGROUP self
+--- @param #number indx Waypoint index. Default is the next waypoint.
+--- @return #number Distance in meters.
 function OPSGROUP:GetDistanceToWaypoint(indx)
   local dist=0
 
@@ -3204,9 +3204,9 @@ function OPSGROUP:GetDistanceToWaypoint(indx)
 end
 
 --- Get time to waypoint based on current velocity.
--- @param #OPSGROUP self
--- @param #number indx Waypoint index. Default is the next waypoint.
--- @return #number Time in seconds. If velocity is 0
+--- @param #OPSGROUP self
+--- @param #number indx Waypoint index. Default is the next waypoint.
+--- @return #number Time in seconds. If velocity is 0
 function OPSGROUP:GetTimeToWaypoint(indx)
 
   local s=self:GetDistanceToWaypoint(indx)
@@ -3226,8 +3226,8 @@ function OPSGROUP:GetTimeToWaypoint(indx)
 end
 
 --- Returns the currently expected speed.
--- @param #OPSGROUP self
--- @return #number Expected speed in m/s.
+--- @param #OPSGROUP self
+--- @return #number Expected speed in m/s.
 function OPSGROUP:GetExpectedSpeed()
 
   if self:IsHolding() or self:Is("Rearming") or self:IsWaiting() or self:IsRetreated() then
@@ -3239,9 +3239,9 @@ function OPSGROUP:GetExpectedSpeed()
 end
 
 --- Remove a waypoint with a ceratin UID.
--- @param #OPSGROUP self
--- @param #number uid Waypoint UID.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number uid Waypoint UID.
+--- @return #OPSGROUP self
 function OPSGROUP:RemoveWaypointByID(uid)
 
   local index=self:GetWaypointIndex(uid)
@@ -3254,9 +3254,9 @@ function OPSGROUP:RemoveWaypointByID(uid)
 end
 
 --- Remove a waypoint.
--- @param #OPSGROUP self
--- @param #number wpindex Waypoint number.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number wpindex Waypoint number.
+--- @return #OPSGROUP self
 function OPSGROUP:RemoveWaypoint(wpindex)
 
   if self.waypoints then
@@ -3353,8 +3353,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Event function handling the birth of a unit.
--- @param #OPSGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #OPSGROUP self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function OPSGROUP:OnEventBirth(EventData)
 
   -- Check that this is the right group.
@@ -3400,8 +3400,8 @@ function OPSGROUP:OnEventBirth(EventData)
 end
 
 --- Event function handling the hit of a unit.
--- @param #OPSGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #OPSGROUP self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function OPSGROUP:OnEventHit(EventData)
 
   -- Check that this is the right group. Here the hit group is stored as target.
@@ -3429,8 +3429,8 @@ function OPSGROUP:OnEventHit(EventData)
 end
 
 --- Event function handling the dead of a unit.
--- @param #OPSGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #OPSGROUP self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function OPSGROUP:OnEventDead(EventData)
 
   -- Check that this is the right group.
@@ -3454,8 +3454,8 @@ function OPSGROUP:OnEventDead(EventData)
 end
 
 --- Event function handling when a unit is removed from the game.
--- @param #OPSGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #OPSGROUP self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function OPSGROUP:OnEventRemoveUnit(EventData)
 
   -- Check that this is the right group.
@@ -3479,8 +3479,8 @@ function OPSGROUP:OnEventRemoveUnit(EventData)
 end
 
 --- Event function handling when a unit is removed from the game.
--- @param #OPSGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #OPSGROUP self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function OPSGROUP:OnEventPlayerLeaveUnit(EventData)
 
   -- Check that this is the right group.
@@ -3504,8 +3504,8 @@ function OPSGROUP:OnEventPlayerLeaveUnit(EventData)
 end
 
 --- Event function handling the event that a unit achieved a kill.
--- @param #OPSGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #OPSGROUP self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function OPSGROUP:OnEventKill(EventData)
   --self:I("FF event kill")
   --self:I(EventData)
@@ -3551,9 +3551,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set DCS task. Enroute tasks are injected automatically.
--- @param #OPSGROUP self
--- @param #table DCSTask DCS task structure.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #table DCSTask DCS task structure.
+--- @return #OPSGROUP self
 function OPSGROUP:SetTask(DCSTask)
 
   if self:IsAlive() then
@@ -3589,9 +3589,9 @@ function OPSGROUP:SetTask(DCSTask)
 end
 
 --- Push DCS task.
--- @param #OPSGROUP self
--- @param #table DCSTask DCS task structure.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #table DCSTask DCS task structure.
+--- @return #OPSGROUP self
 function OPSGROUP:PushTask(DCSTask)
 
   if self:IsAlive() then
@@ -3627,8 +3627,8 @@ function OPSGROUP:PushTask(DCSTask)
 end
 
 --- Returns true if the DCS controller currently has a task.
--- @param #OPSGROUP self
--- @return #boolean True or false if the controller has a task. Nil if no controller.
+--- @param #OPSGROUP self
+--- @return #boolean True or false if the controller has a task. Nil if no controller.
 function OPSGROUP:HasTaskController()
   local hastask=nil
   if self.controller then
@@ -3639,8 +3639,8 @@ function OPSGROUP:HasTaskController()
 end
 
 --- Clear DCS tasks.
--- @param #OPSGROUP self
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @return #OPSGROUP self
 function OPSGROUP:ClearTasks()
   local hastask=self:HasTaskController()
   if self:IsAlive() and self.controller and self:HasTaskController() then
@@ -3653,13 +3653,13 @@ end
 
 
 --- Add a *scheduled* task.
--- @param #OPSGROUP self
--- @param #table task DCS task table structure.
--- @param #string clock Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
--- @param #string description Brief text describing the task, e.g. "Attack SAM".
--- @param #number prio Priority of the task.
--- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
--- @return #OPSGROUP.Task The task structure.
+--- @param #OPSGROUP self
+--- @param #table task DCS task table structure.
+--- @param #string clock Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
+--- @param #string description Brief text describing the task, e.g. "Attack SAM".
+--- @param #number prio Priority of the task.
+--- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
+--- @return #OPSGROUP.Task The task structure.
 function OPSGROUP:AddTask(task, clock, description, prio, duration)
 
   local newtask=self:NewTaskScheduled(task, clock, description, prio, duration)
@@ -3675,13 +3675,13 @@ function OPSGROUP:AddTask(task, clock, description, prio, duration)
 end
 
 --- Create a *scheduled* task.
--- @param #OPSGROUP self
--- @param #table task DCS task table structure.
--- @param #string clock Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
--- @param #string description Brief text describing the task, e.g. "Attack SAM".
--- @param #number prio Priority of the task.
--- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
--- @return #OPSGROUP.Task The task structure.
+--- @param #OPSGROUP self
+--- @param #table task DCS task table structure.
+--- @param #string clock Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
+--- @param #string description Brief text describing the task, e.g. "Attack SAM".
+--- @param #number prio Priority of the task.
+--- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
+--- @return #OPSGROUP.Task The task structure.
 function OPSGROUP:NewTaskScheduled(task, clock, description, prio, duration)
 
   -- Increase counter.
@@ -3715,13 +3715,13 @@ function OPSGROUP:NewTaskScheduled(task, clock, description, prio, duration)
 end
 
 --- Add a *waypoint* task.
--- @param #OPSGROUP self
--- @param #table task DCS task table structure.
--- @param #OPSGROUP.Waypoint Waypoint where the task is executed. Default is the at *next* waypoint.
--- @param #string description Brief text describing the task, e.g. "Attack SAM".
--- @param #number prio Priority of the task. Number between 1 and 100. Default is 50.
--- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
--- @return #OPSGROUP.Task The task structure.
+--- @param #OPSGROUP self
+--- @param #table task DCS task table structure.
+--- @param #OPSGROUP.Waypoint Waypoint where the task is executed. Default is the at *next* waypoint.
+--- @param #string description Brief text describing the task, e.g. "Attack SAM".
+--- @param #number prio Priority of the task. Number between 1 and 100. Default is 50.
+--- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
+--- @return #OPSGROUP.Task The task structure.
 function OPSGROUP:AddTaskWaypoint(task, Waypoint, description, prio, duration)
 
   -- Waypoint of task.
@@ -3763,8 +3763,8 @@ function OPSGROUP:AddTaskWaypoint(task, Waypoint, description, prio, duration)
 end
 
 --- Add an *enroute* task.
--- @param #OPSGROUP self
--- @param #table task DCS task table structure.
+--- @param #OPSGROUP self
+--- @param #table task DCS task table structure.
 function OPSGROUP:AddTaskEnroute(task)
 
   if not self.taskenroute then
@@ -3788,9 +3788,9 @@ function OPSGROUP:AddTaskEnroute(task)
 end
 
 --- Get the unfinished waypoint tasks
--- @param #OPSGROUP self
--- @param #number id Unique waypoint ID.
--- @return #table Table of tasks. Table could also be empty {}.
+--- @param #OPSGROUP self
+--- @param #number id Unique waypoint ID.
+--- @return #table Table of tasks. Table could also be empty {}.
 function OPSGROUP:GetTasksWaypoint(id)
 
   -- Tasks table.
@@ -3811,9 +3811,9 @@ function OPSGROUP:GetTasksWaypoint(id)
 end
 
 --- Count remaining waypoint tasks.
--- @param #OPSGROUP self
--- @param #number uid Unique waypoint ID.
--- @return #number Number of waypoint tasks.
+--- @param #OPSGROUP self
+--- @param #number uid Unique waypoint ID.
+--- @return #number Number of waypoint tasks.
 function OPSGROUP:CountTasksWaypoint(id)
 
   -- Tasks table.
@@ -3831,7 +3831,7 @@ function OPSGROUP:CountTasksWaypoint(id)
 end
 
 --- Sort task queue.
--- @param #OPSGROUP self
+--- @param #OPSGROUP self
 function OPSGROUP:_SortTaskQueue()
 
   -- Sort results table wrt prio and then start time.
@@ -3848,10 +3848,10 @@ end
 
 
 --- Count the number of tasks that still pending in the queue.
--- @param #OPSGROUP self
--- @return #number Total number of tasks remaining.
--- @return #number Number of SCHEDULED tasks remaining.
--- @return #number Number of WAYPOINT tasks remaining.
+--- @param #OPSGROUP self
+--- @return #number Total number of tasks remaining.
+--- @return #number Number of SCHEDULED tasks remaining.
+--- @return #number Number of WAYPOINT tasks remaining.
 function OPSGROUP:CountRemainingTasks()
 
   local Ntot=0
@@ -3882,9 +3882,9 @@ function OPSGROUP:CountRemainingTasks()
 end
 
 --- Remove task from task queue.
--- @param #OPSGROUP self
--- @param #OPSGROUP.Task Task The task to be removed from the queue.
--- @return #boolean True if task could be removed.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP.Task Task The task to be removed from the queue.
+--- @return #boolean True if task could be removed.
 function OPSGROUP:RemoveTask(Task)
 
   for i=#self.taskqueue,1,-1 do
@@ -3908,8 +3908,8 @@ function OPSGROUP:RemoveTask(Task)
 end
 
 --- Get next task in queue. Task needs to be in state SCHEDULED and time must have passed.
--- @param #OPSGROUP self
--- @return #OPSGROUP.Task The next task in line or `nil`.
+--- @param #OPSGROUP self
+--- @return #OPSGROUP.Task The next task in line or `nil`.
 function OPSGROUP:_GetNextTask()
 
   if self.taskpaused then
@@ -3938,18 +3938,18 @@ function OPSGROUP:_GetNextTask()
 end
 
 --- Get the currently executed task if there is any.
--- @param #OPSGROUP self
--- @return #OPSGROUP.Task Current task or nil.
+--- @param #OPSGROUP self
+--- @return #OPSGROUP.Task Current task or nil.
 function OPSGROUP:GetTaskCurrent()
   local task=self:GetTaskByID(self.taskcurrent, OPSGROUP.TaskStatus.EXECUTING)
   return task
 end
 
 --- Get task by its id.
--- @param #OPSGROUP self
--- @param #number id Task id.
--- @param #string status (Optional) Only return tasks with this status, e.g. OPSGROUP.TaskStatus.SCHEDULED.
--- @return #OPSGROUP.Task The task or nil.
+--- @param #OPSGROUP self
+--- @param #number id Task id.
+--- @param #string status (Optional) Only return tasks with this status, e.g. OPSGROUP.TaskStatus.SCHEDULED.
+--- @return #OPSGROUP.Task The task or nil.
 function OPSGROUP:GetTaskByID(id, status)
 
   for _,_task in pairs(self.taskqueue) do
@@ -3967,11 +3967,11 @@ function OPSGROUP:GetTaskByID(id, status)
 end
 
 --- On before "TaskExecute" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP.Task Task The task.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsGroup#OPSGROUP.Task Task The task.
 function OPSGROUP:onbeforeTaskExecute(From, Event, To, Task)
 
   -- Get mission of this task (if any).
@@ -4062,11 +4062,11 @@ function OPSGROUP:onbeforeTaskExecute(From, Event, To, Task)
 end
 
 --- On after "TaskExecute" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP.Task Task The task.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsGroup#OPSGROUP.Task Task The task.
 function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
   -- Debug message.
@@ -4111,9 +4111,9 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 end
 
 --- Update (DCS) task.
--- @param #OPSGROUP self
--- @param Ops.OpsGroup#OPSGROUP.Task Task The task.
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
+--- @param #OPSGROUP self
+--- @param Ops.OpsGroup#OPSGROUP.Task Task The task.
+--- @param Ops.Auftrag#AUFTRAG Mission The mission.
 function OPSGROUP:_UpdateTask(Task, Mission)
 
   Mission=Mission or self:GetMissionByTaskID(self.taskcurrent)
@@ -4571,11 +4571,11 @@ function OPSGROUP:_UpdateTask(Task, Mission)
 end
 
 --- Sandwitch DCS task in stop condition and push the task to the group.
--- @param #OPSGROUP self
--- @param DCS#Task DCSTask The DCS task.
--- @param Ops.OpsGroup#OPSGROUP.Task Task
--- @param #boolean SetTask Set task instead of pushing it.
--- @param #number Delay Delay in seconds. Default nil.
+--- @param #OPSGROUP self
+--- @param DCS#Task DCSTask The DCS task.
+--- @param Ops.OpsGroup#OPSGROUP.Task Task
+--- @param #boolean SetTask Set task instead of pushing it.
+--- @param #number Delay Delay in seconds. Default nil.
 function OPSGROUP:_SandwitchDCSTask(DCSTask, Task, SetTask, Delay)
 
   if Delay and Delay>0 then
@@ -4624,11 +4624,11 @@ end
 
 
 --- On after "TaskCancel" event. Cancels the current task or simply sets the status to DONE if the task is not the current one.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPSGROUP.Task Task The task to cancel. Default is the current task (if any).
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPSGROUP.Task Task The task to cancel. Default is the current task (if any).
 function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
 
   -- Get current task.
@@ -4703,11 +4703,11 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
 end
 
 --- On before "TaskDone" event. Deny transition if task status is PAUSED.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPSGROUP.Task Task
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPSGROUP.Task Task
 function OPSGROUP:onbeforeTaskDone(From, Event, To, Task)
 
   local allowed=true
@@ -4720,11 +4720,11 @@ function OPSGROUP:onbeforeTaskDone(From, Event, To, Task)
 end
 
 --- On after "TaskDone" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPSGROUP.Task Task
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPSGROUP.Task Task
 function OPSGROUP:onafterTaskDone(From, Event, To, Task)
 
   -- Debug message.
@@ -4823,9 +4823,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Add mission to queue.
--- @param #OPSGROUP self
--- @param Ops.Auftrag#AUFTRAG Mission Mission for this group.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param Ops.Auftrag#AUFTRAG Mission Mission for this group.
+--- @return #OPSGROUP self
 function OPSGROUP:AddMission(Mission)
 
   -- Add group to mission.
@@ -4858,9 +4858,9 @@ function OPSGROUP:AddMission(Mission)
 end
 
 --- Remove mission from queue.
--- @param #OPSGROUP self
--- @param Ops.Auftrag#AUFTRAG Mission Mission to be removed.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param Ops.Auftrag#AUFTRAG Mission Mission to be removed.
+--- @return #OPSGROUP self
 function OPSGROUP:RemoveMission(Mission)
 
   --for i,_mission in pairs(self.missionqueue) do
@@ -4899,7 +4899,7 @@ function OPSGROUP:RemoveMission(Mission)
 end
 
 --- Cancel all missions in mission queue that are not already done or cancelled.
--- @param #OPSGROUP self
+--- @param #OPSGROUP self
 function OPSGROUP:CancelAllMissions()
   self:T(self.lid.."Cancelling ALL missions!")
 
@@ -4921,8 +4921,8 @@ function OPSGROUP:CancelAllMissions()
 end
 
 --- Count remaining missons.
--- @param #OPSGROUP self
--- @return #number Number of missions to be done.
+--- @param #OPSGROUP self
+--- @return #number Number of missions to be done.
 function OPSGROUP:CountRemainingMissison()
 
   local N=0
@@ -4947,8 +4947,8 @@ function OPSGROUP:CountRemainingMissison()
 end
 
 --- Count remaining cargo transport assignments.
--- @param #OPSGROUP self
--- @return #number Number of unfinished transports in the queue.
+--- @param #OPSGROUP self
+--- @return #number Number of unfinished transports in the queue.
 function OPSGROUP:CountRemainingTransports()
 
   local N=0
@@ -4980,8 +4980,8 @@ function OPSGROUP:CountRemainingTransports()
 end
 
 --- Get next mission.
--- @param #OPSGROUP self
--- @return Ops.Auftrag#AUFTRAG Next mission or *nil*.
+--- @param #OPSGROUP self
+--- @return Ops.Auftrag#AUFTRAG Next mission or *nil*.
 function OPSGROUP:_GetNextMission()
 
   -- Check if group is acting as carrier or cargo at the moment.
@@ -5066,9 +5066,9 @@ function OPSGROUP:_GetNextMission()
 end
 
 --- Get mission by its id (auftragsnummer).
--- @param #OPSGROUP self
--- @param #number id Mission id (auftragsnummer).
--- @return Ops.Auftrag#AUFTRAG The mission.
+--- @param #OPSGROUP self
+--- @param #number id Mission id (auftragsnummer).
+--- @return Ops.Auftrag#AUFTRAG The mission.
 function OPSGROUP:GetMissionByID(id)
 
   if not id then
@@ -5088,9 +5088,9 @@ function OPSGROUP:GetMissionByID(id)
 end
 
 --- Check if a given mission is already in the queue.
--- @param #OPSGROUP self
--- @param Ops.Auftrag#AUFTRAG Mission the mission to check
--- @return #boolean If `true`, the mission is in the queue.
+--- @param #OPSGROUP self
+--- @param Ops.Auftrag#AUFTRAG Mission the mission to check
+--- @return #boolean If `true`, the mission is in the queue.
 function OPSGROUP:IsMissionInQueue(Mission)
 
   for _,_mission in pairs(self.missionqueue) do
@@ -5106,9 +5106,9 @@ function OPSGROUP:IsMissionInQueue(Mission)
 end
 
 --- Check if a given mission type is already in the queue.
--- @param #OPSGROUP self
--- @param #string MissionType MissionType Type of mission.
--- @return #boolean If `true`, the mission type is in the queue.
+--- @param #OPSGROUP self
+--- @param #string MissionType MissionType Type of mission.
+--- @return #boolean If `true`, the mission type is in the queue.
 function OPSGROUP:IsMissionTypeInQueue(MissionType)
 
   for _,_mission in pairs(self.missionqueue) do
@@ -5124,9 +5124,9 @@ function OPSGROUP:IsMissionTypeInQueue(MissionType)
 end
 
 --- Get mission by its task id.
--- @param #OPSGROUP self
--- @param #number taskid The id of the (waypoint) task of the mission.
--- @return Ops.Auftrag#AUFTRAG The mission.
+--- @param #OPSGROUP self
+--- @param #number taskid The id of the (waypoint) task of the mission.
+--- @return Ops.Auftrag#AUFTRAG The mission.
 function OPSGROUP:GetMissionByTaskID(taskid)
 
   if taskid then
@@ -5146,16 +5146,16 @@ function OPSGROUP:GetMissionByTaskID(taskid)
 end
 
 --- Get current mission.
--- @param #OPSGROUP self
--- @return Ops.Auftrag#AUFTRAG The current mission or *nil*.
+--- @param #OPSGROUP self
+--- @return Ops.Auftrag#AUFTRAG The current mission or *nil*.
 function OPSGROUP:GetMissionCurrent()
   return self:GetMissionByID(self.currentmission)
 end
 
 --- Check if group is currently on a mission.
--- @param #OPSGROUP self
--- @param #number MissionUID (Optional) Check if group is currently on a mission with this UID. Default is to check for any current mission.
--- @return #boolean If `true`, group is currently on a mission.
+--- @param #OPSGROUP self
+--- @param #number MissionUID (Optional) Check if group is currently on a mission with this UID. Default is to check for any current mission.
+--- @return #boolean If `true`, group is currently on a mission.
 function OPSGROUP:IsOnMission(MissionUID)
   if self.currentmission==nil then
     -- No current mission.
@@ -5174,11 +5174,11 @@ function OPSGROUP:IsOnMission(MissionUID)
 end
 
 --- On before "MissionStart" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission The mission table.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.Auftrag#AUFTRAG Mission The mission table.
 function OPSGROUP:onbeforeMissionStart(From, Event, To, Mission)
 
   -- Debug info.
@@ -5212,11 +5212,11 @@ function OPSGROUP:onbeforeMissionStart(From, Event, To, Mission)
 end
 
 --- On after "MissionStart" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission The mission table.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.Auftrag#AUFTRAG Mission The mission table.
 function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
 
   -- Debug output.
@@ -5266,11 +5266,11 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
 end
 
 --- On after "MissionExecute" event. Mission execution began.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission The mission table.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.Auftrag#AUFTRAG Mission The mission table.
 function OPSGROUP:onafterMissionExecute(From, Event, To, Mission)
 
   local text=string.format("Executing %s Mission %s, target %s", Mission.type, tostring(Mission.name), Mission:GetTargetName())
@@ -5295,10 +5295,10 @@ function OPSGROUP:onafterMissionExecute(From, Event, To, Mission)
 end
 
 --- On after "PauseMission" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterPauseMission(From, Event, To)
 
   local Mission=self:GetMissionCurrent()
@@ -5327,10 +5327,10 @@ function OPSGROUP:onafterPauseMission(From, Event, To)
 end
 
 --- On after "UnpauseMission" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterUnpauseMission(From, Event, To)
   
   -- Get paused mission.
@@ -5362,11 +5362,11 @@ end
 
 
 --- On after "MissionCancel" event. Cancels the mission.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission The mission to be cancelled.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.Auftrag#AUFTRAG Mission The mission to be cancelled.
 function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
 
   if self:IsOnMission(Mission.auftragsnummer) then
@@ -5435,9 +5435,9 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
 end
 
 --- On after "MissionDone" event.
--- @param #OPSGROUP self
--- @param Ops.Auftrag#AUFTRAG Mission
--- @param #boolean Silently Remove waypoints by `table.remove()` and do not update the route.
+--- @param #OPSGROUP self
+--- @param Ops.Auftrag#AUFTRAG Mission
+--- @param #boolean Silently Remove waypoints by `table.remove()` and do not update the route.
 function OPSGROUP:_RemoveMissionWaypoints(Mission, Silently)
 
   for i=#self.waypoints,1,-1 do
@@ -5454,11 +5454,11 @@ function OPSGROUP:_RemoveMissionWaypoints(Mission, Silently)
 end
 
 --- On after "MissionDone" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission The mission that is done.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.Auftrag#AUFTRAG Mission The mission that is done.
 function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
 
   -- Debug info.
@@ -5589,9 +5589,9 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
 end
 
 --- Route group to mission.
--- @param #OPSGROUP self
--- @param Ops.Auftrag#AUFTRAG mission The mission table.
--- @param #number delay Delay in seconds.
+--- @param #OPSGROUP self
+--- @param Ops.Auftrag#AUFTRAG mission The mission table.
+--- @param #number delay Delay in seconds.
 function OPSGROUP:RouteToMission(mission, delay)
 
   if delay and delay>0 then
@@ -5954,8 +5954,8 @@ function OPSGROUP:RouteToMission(mission, delay)
 end
 
 --- Set mission specific options for ROE, Alarm state, etc.
--- @param #OPSGROUP self
--- @param Ops.Auftrag#AUFTRAG mission The mission table.
+--- @param #OPSGROUP self
+--- @param Ops.Auftrag#AUFTRAG mission The mission table.
 function OPSGROUP:_SetMissionOptions(mission)
 
   -- ROE
@@ -6010,7 +6010,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "QueueUpdate" event.
--- @param #OPSGROUP self
+--- @param #OPSGROUP self
 function OPSGROUP:_QueueUpdate()
 
   ---
@@ -6073,11 +6073,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On before "Wait" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number Duration Duration how long the group will be waiting in seconds. Default `nil` (=forever).
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number Duration Duration how long the group will be waiting in seconds. Default `nil` (=forever).
 function OPSGROUP:onbeforeWait(From, Event, To, Duration)
 
   local allowed=true
@@ -6112,11 +6112,11 @@ function OPSGROUP:onbeforeWait(From, Event, To, Duration)
 end
 
 --- On after "Wait" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number Duration Duration in seconds how long the group will be waiting. Default `nil` (for ever).
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number Duration Duration in seconds how long the group will be waiting. Default `nil` (for ever).
 function OPSGROUP:onafterWait(From, Event, To, Duration)
 
   -- Order Group to hold.
@@ -6132,11 +6132,11 @@ end
 
 
 --- On after "PassingWaypoint" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPSGROUP.Waypoint Waypoint Waypoint data passed.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPSGROUP.Waypoint Waypoint Waypoint data passed.
 function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
 
   -- Get the current task.
@@ -6420,9 +6420,9 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
 end
 
 --- Set tasks at this waypoint
--- @param #OPSGROUP self
--- @param #OPSGROUP.Waypoint Waypoint The waypoint.
--- @return #number Number of tasks.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP.Waypoint Waypoint The waypoint.
+--- @return #number Number of tasks.
 function OPSGROUP:_SetWaypointTasks(Waypoint)
 
   -- Get all waypoint tasks.
@@ -6489,10 +6489,10 @@ function OPSGROUP:_SetWaypointTasks(Waypoint)
 end
 
 --- On after "PassedFinalWaypoint" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterPassedFinalWaypoint(From, Event, To)
   self:T(self.lid..string.format("Group passed final waypoint"))
 
@@ -6502,12 +6502,12 @@ function OPSGROUP:onafterPassedFinalWaypoint(From, Event, To)
 end
 
 --- On after "GotoWaypoint" event. Group will got to the given waypoint and execute its route from there.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number UID The goto waypoint unique ID.
--- @param #number Speed (Optional) Speed to waypoint in knots.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number UID The goto waypoint unique ID.
+--- @param #number Speed (Optional) Speed to waypoint in knots.
 function OPSGROUP:onafterGotoWaypoint(From, Event, To, UID, Speed)
 
   local n=self:GetWaypointIndex(UID)
@@ -6528,11 +6528,11 @@ function OPSGROUP:onafterGotoWaypoint(From, Event, To, UID, Speed)
 end
 
 --- On after "DetectedUnit" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Unit#UNIT Unit The detected unit.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Wrapper.Unit#UNIT Unit The detected unit.
 function OPSGROUP:onafterDetectedUnit(From, Event, To, Unit)
 
   -- Get unit name.
@@ -6552,11 +6552,11 @@ function OPSGROUP:onafterDetectedUnit(From, Event, To, Unit)
 end
 
 --- On after "DetectedUnitNew" event. Add newly detected unit to detected unit set.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Unit#UNIT Unit The detected unit.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Wrapper.Unit#UNIT Unit The detected unit.
 function OPSGROUP:onafterDetectedUnitNew(From, Event, To, Unit)
 
   -- Debug info.
@@ -6567,11 +6567,11 @@ function OPSGROUP:onafterDetectedUnitNew(From, Event, To, Unit)
 end
 
 --- On after "DetectedGroup" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Group#GROUP Group The detected Group.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Wrapper.Group#GROUP Group The detected Group.
 function OPSGROUP:onafterDetectedGroup(From, Event, To, Group)
 
   -- Get group name.
@@ -6591,11 +6591,11 @@ function OPSGROUP:onafterDetectedGroup(From, Event, To, Group)
 end
 
 --- On after "DetectedGroupNew" event. Add newly detected group to detected group set.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Group#GROUP Group The detected group.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Wrapper.Group#GROUP Group The detected group.
 function OPSGROUP:onafterDetectedGroupNew(From, Event, To, Group)
 
   -- Debug info.
@@ -6606,11 +6606,11 @@ function OPSGROUP:onafterDetectedGroupNew(From, Event, To, Group)
 end
 
 --- On after "EnterZone" event. Sets self.inzones[zonename]=true.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE Zone The zone that the group entered.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Zone#ZONE Zone The zone that the group entered.
 function OPSGROUP:onafterEnterZone(From, Event, To, Zone)
   local zonename=Zone and Zone:GetName() or "unknown"
   self:T2(self.lid..string.format("Entered Zone %s", zonename))
@@ -6618,11 +6618,11 @@ function OPSGROUP:onafterEnterZone(From, Event, To, Zone)
 end
 
 --- On after "LeaveZone" event. Sets self.inzones[zonename]=false.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE Zone The zone that the group entered.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Zone#ZONE Zone The zone that the group entered.
 function OPSGROUP:onafterLeaveZone(From, Event, To, Zone)
   local zonename=Zone and Zone:GetName() or "unknown"
   self:T2(self.lid..string.format("Left Zone %s", zonename))
@@ -6630,11 +6630,11 @@ function OPSGROUP:onafterLeaveZone(From, Event, To, Zone)
 end
 
 --- On before "LaserOn" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Point#COORDINATE Target Target Coordinate. Target can also be any POSITIONABLE from which we can obtain its coordinates.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Point#COORDINATE Target Target Coordinate. Target can also be any POSITIONABLE from which we can obtain its coordinates.
 function OPSGROUP:onbeforeLaserOn(From, Event, To, Target)
 
   -- Check if LASER is already on.
@@ -6698,11 +6698,11 @@ function OPSGROUP:onbeforeLaserOn(From, Event, To, Target)
 end
 
 --- On after "LaserOn" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Point#COORDINATE Target Target Coordinate. Target can also be any POSITIONABLE from which we can obtain its coordinates.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Point#COORDINATE Target Target Coordinate. Target can also be any POSITIONABLE from which we can obtain its coordinates.
 function OPSGROUP:onafterLaserOn(From, Event, To, Target)
 
   -- Start timer that calls the update twice per sec by default.
@@ -6731,19 +6731,19 @@ function OPSGROUP:onafterLaserOn(From, Event, To, Target)
 end
 
 --- On before "LaserOff" event. Check if LASER is on.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onbeforeLaserOff(From, Event, To)
   return self.spot.On or self.spot.Paused
 end
 
 --- On after "LaserOff" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterLaserOff(From, Event, To)
 
   -- Debug message.
@@ -6773,10 +6773,10 @@ function OPSGROUP:onafterLaserOff(From, Event, To)
 end
 
 --- On after "LaserPause" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterLaserPause(From, Event, To)
 
   -- Debug message.
@@ -6799,19 +6799,19 @@ function OPSGROUP:onafterLaserPause(From, Event, To)
 end
 
 --- On before "LaserResume" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onbeforeLaserResume(From, Event, To)
   return self.spot.Paused
 end
 
 --- On after "LaserResume" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterLaserResume(From, Event, To)
 
   -- Debug info.
@@ -6842,11 +6842,11 @@ function OPSGROUP:onafterLaserResume(From, Event, To)
 end
 
 --- On after "LaserCode" event. Changes the LASER code.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number Code Laser code. Default is 1688.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number Code Laser code. Default is 1688.
 function OPSGROUP:onafterLaserCode(From, Event, To, Code)
 
   -- Default is 1688.
@@ -6867,10 +6867,10 @@ function OPSGROUP:onafterLaserCode(From, Event, To, Code)
 end
 
 --- On after "LaserLostLOS" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterLaserLostLOS(From, Event, To)
 
   -- No of sight.
@@ -6889,10 +6889,10 @@ function OPSGROUP:onafterLaserLostLOS(From, Event, To)
 end
 
 --- On after "LaserGotLOS" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterLaserGotLOS(From, Event, To)
 
   -- Has line of sight.
@@ -6913,8 +6913,8 @@ function OPSGROUP:onafterLaserGotLOS(From, Event, To)
 end
 
 --- Set LASER target.
--- @param #OPSGROUP self
--- @param Wrapper.Positionable#POSITIONABLE Target The target to lase. Can also be a COORDINATE object.
+--- @param #OPSGROUP self
+--- @param Wrapper.Positionable#POSITIONABLE Target The target to lase. Can also be a COORDINATE object.
 function OPSGROUP:SetLaserTarget(Target)
 
   if Target then
@@ -6982,7 +6982,7 @@ function OPSGROUP:SetLaserTarget(Target)
 end
 
 --- Update laser point.
--- @param #OPSGROUP self
+--- @param #OPSGROUP self
 function OPSGROUP:_UpdateLaser()
 
   -- Check if we have a POSITIONABLE to lase.
@@ -7078,11 +7078,11 @@ function OPSGROUP:_UpdateLaser()
 end
 
 --- On before "ElementSpawned" event. Check that element is not in status spawned already.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPSGROUP.Element Element The flight group element.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPSGROUP.Element Element The flight group element.
 function OPSGROUP:onbeforeElementSpawned(From, Event, To, Element)
 
   if Element and Element.status==OPSGROUP.ElementStatus.SPAWNED then
@@ -7094,11 +7094,11 @@ function OPSGROUP:onbeforeElementSpawned(From, Event, To, Element)
 end
 
 --- On after "ElementInUtero" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPSGROUP.Element Element The flight group element.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPSGROUP.Element Element The flight group element.
 function OPSGROUP:onafterElementInUtero(From, Event, To, Element)
   self:T(self.lid..string.format("Element in utero %s", Element.name))
 
@@ -7108,11 +7108,11 @@ function OPSGROUP:onafterElementInUtero(From, Event, To, Element)
 end
 
 --- On after "ElementDamaged" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPSGROUP.Element Element The flight group element.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPSGROUP.Element Element The flight group element.
 function OPSGROUP:onafterElementDamaged(From, Event, To, Element)
   self:T(self.lid..string.format("Element damaged %s", Element.name))
   
@@ -7140,12 +7140,12 @@ function OPSGROUP:onafterElementDamaged(From, Event, To, Element)
 end
 
 --- On after "ElementHit" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPSGROUP.Element Element The flight group element.
--- @param Wrapper.Unit#UNIT Enemy Unit that hit the element or `nil`.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPSGROUP.Element Element The flight group element.
+--- @param Wrapper.Unit#UNIT Enemy Unit that hit the element or `nil`.
 function OPSGROUP:onafterElementHit(From, Event, To, Element, Enemy)
 
   -- Increase element hit counter.
@@ -7160,22 +7160,22 @@ function OPSGROUP:onafterElementHit(From, Event, To, Element, Enemy)
 end
 
 --- On after "Hit" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Unit#UNIT Enemy Unit that hit the element or `nil`.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Wrapper.Unit#UNIT Enemy Unit that hit the element or `nil`.
 function OPSGROUP:onafterHit(From, Event, To, Enemy)
   self:T(self.lid..string.format("Group hit by %s", Enemy and Enemy:GetName() or "unknown"))  
 end
 
 
 --- On after "ElementDestroyed" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPSGROUP.Element Element The flight group element.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPSGROUP.Element Element The flight group element.
 function OPSGROUP:onafterElementDestroyed(From, Event, To, Element)
   self:T(self.lid..string.format("Element destroyed %s", Element.name))
 
@@ -7196,11 +7196,11 @@ function OPSGROUP:onafterElementDestroyed(From, Event, To, Element)
 end
 
 --- On after "ElementDead" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPSGROUP.Element Element The flight group element.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPSGROUP.Element Element The flight group element.
 function OPSGROUP:onafterElementDead(From, Event, To, Element)
 
   -- Debug info.
@@ -7281,11 +7281,11 @@ function OPSGROUP:onafterElementDead(From, Event, To, Element)
 end
 
 --- On after "Respawn" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #table Template The template used to respawn the group. Default is the inital template of the group.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #table Template The template used to respawn the group. Default is the inital template of the group.
 function OPSGROUP:onafterRespawn(From, Event, To, Template)
 
   -- Debug info.
@@ -7302,11 +7302,11 @@ function OPSGROUP:onafterRespawn(From, Event, To, Template)
 end
 
 --- Teleport the group to a different location.
--- @param #OPSGROUP self
--- @param Core.Point#COORDINATE Coordinate Coordinate where the group is teleported to.
--- @param #number Delay Delay in seconds before respawn happens. Default 0.
--- @param #boolean NoPauseMission If `true`, dont pause a running mission.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param Core.Point#COORDINATE Coordinate Coordinate where the group is teleported to.
+--- @param #number Delay Delay in seconds before respawn happens. Default 0.
+--- @param #boolean NoPauseMission If `true`, dont pause a running mission.
+--- @return #OPSGROUP self
 function OPSGROUP:Teleport(Coordinate, Delay, NoPauseMission)
     
   if Delay and Delay>0 then
@@ -7391,11 +7391,11 @@ function OPSGROUP:Teleport(Coordinate, Delay, NoPauseMission)
 end
 
 --- Respawn the group.
--- @param #OPSGROUP self
--- @param #number Delay Delay in seconds before respawn happens. Default 0.
--- @param DCS#Template Template (optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
--- @param #boolean Reset Reset waypoints and reinit group if `true`.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Delay Delay in seconds before respawn happens. Default 0.
+--- @param DCS#Template Template (optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
+--- @param #boolean Reset Reset waypoints and reinit group if `true`.
+--- @return #OPSGROUP self
 function OPSGROUP:_Respawn(Delay, Template, Reset)
 
   if Delay and Delay>0 then
@@ -7519,20 +7519,20 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
 end
 
 --- On after "InUtero" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterInUtero(From, Event, To)
   self:T(self.lid..string.format("Group inutero at t=%.3f", timer.getTime()))
   --TODO: set element status to inutero
 end
 
 --- On after "Damaged" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterDamaged(From, Event, To)
   self:T(self.lid..string.format("Group damaged at t=%.3f", timer.getTime()))
 
@@ -7556,20 +7556,20 @@ function OPSGROUP:onafterDamaged(From, Event, To)
 end
 
 --- On after "Destroyed" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterDestroyed(From, Event, To)
   self:T(self.lid..string.format("Group destroyed at t=%.3f", timer.getTime()))
   self.isDestroyed=true
 end
 
 --- On before "Dead" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onbeforeDead(From, Event, To)
   if self.Ndestroyed==#self.elements then
     self:Destroyed()
@@ -7577,10 +7577,10 @@ function OPSGROUP:onbeforeDead(From, Event, To)
 end
 
 --- On after "Dead" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterDead(From, Event, To)
 
   -- Debug info.
@@ -7662,10 +7662,10 @@ function OPSGROUP:onafterDead(From, Event, To)
 end
 
 --- On before "Stop" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onbeforeStop(From, Event, To)
 
   -- We check if
@@ -7678,10 +7678,10 @@ function OPSGROUP:onbeforeStop(From, Event, To)
 end
 
 --- On after "Stop" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterStop(From, Event, To)
 
   -- Handle events:
@@ -7745,10 +7745,10 @@ function OPSGROUP:onafterStop(From, Event, To)
 end
 
 --- On after "OutOfAmmo" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterOutOfAmmo(From, Event, To)
   self:T(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))
 end
@@ -7758,8 +7758,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check cargo transport assignments.
--- @param #OPSGROUP self
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @return #OPSGROUP self
 function OPSGROUP:_CheckCargoTransport()
 
   -- Abs. missin time in seconds.
@@ -7978,9 +7978,9 @@ end
 
 
 --- Check if a group is in the cargo bay.
--- @param #OPSGROUP self
--- @param #OPSGROUP OpsGroup Group to check.
--- @return #boolean If `true`, group is in the cargo bay.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP OpsGroup Group to check.
+--- @return #boolean If `true`, group is in the cargo bay.
 function OPSGROUP:_IsInCargobay(OpsGroup)
 
   for _,_element in pairs(self.elements) do
@@ -7997,10 +7997,10 @@ function OPSGROUP:_IsInCargobay(OpsGroup)
 end
 
 --- Add OPSGROUP to cargo bay of a carrier.
--- @param #OPSGROUP self
--- @param #OPSGROUP CargoGroup Cargo group.
--- @param #OPSGROUP.Element CarrierElement The element of the carrier.
--- @param #boolean Reserved Only reserve the cargo bay space.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP CargoGroup Cargo group.
+--- @param #OPSGROUP.Element CarrierElement The element of the carrier.
+--- @param #boolean Reserved Only reserve the cargo bay space.
 function OPSGROUP:_AddCargobay(CargoGroup, CarrierElement, Reserved)
 
   --TODO: Check group is not already in cargobay of this carrier or any other carrier.
@@ -8039,9 +8039,9 @@ function OPSGROUP:_AddCargobay(CargoGroup, CarrierElement, Reserved)
 end
 
 --- Get all groups currently loaded as cargo.
--- @param #OPSGROUP self
--- @param #string CarrierName (Optional) Only return cargo groups loaded into a particular carrier unit.
--- @return #table Cargo ops groups.
+--- @param #OPSGROUP self
+--- @param #string CarrierName (Optional) Only return cargo groups loaded into a particular carrier unit.
+--- @return #table Cargo ops groups.
 function OPSGROUP:GetCargoGroups(CarrierName)
   local cargos={}
 
@@ -8061,11 +8061,11 @@ function OPSGROUP:GetCargoGroups(CarrierName)
 end
 
 --- Get cargo bay item.
--- @param #OPSGROUP self
--- @param #OPSGROUP CargoGroup Cargo group.
--- @return #OPSGROUP.MyCargo Cargo bay item or `nil` if the group is not in the carrier.
--- @return #number CargoBayIndex Index of item in the cargo bay table.
--- @return #OPSGROUP.Element Carrier element.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP CargoGroup Cargo group.
+--- @return #OPSGROUP.MyCargo Cargo bay item or `nil` if the group is not in the carrier.
+--- @return #number CargoBayIndex Index of item in the cargo bay table.
+--- @return #OPSGROUP.Element Carrier element.
 function OPSGROUP:_GetCargobay(CargoGroup)
 
   -- Loop over elements and their cargo bay items.
@@ -8086,9 +8086,9 @@ function OPSGROUP:_GetCargobay(CargoGroup)
 end
 
 --- Remove OPSGROUP from cargo bay of a carrier.
--- @param #OPSGROUP self
--- @param #OPSGROUP CargoGroup Cargo group.
--- @return #boolean If `true`, cargo could be removed.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP CargoGroup Cargo group.
+--- @return #boolean If `true`, cargo could be removed.
 function OPSGROUP:_DelCargobay(CargoGroup)
 
   if self.cargoBay[CargoGroup.groupname] then
@@ -8123,8 +8123,8 @@ function OPSGROUP:_DelCargobay(CargoGroup)
 end
 
 --- Get cargo transport from cargo queue.
--- @param #OPSGROUP self
--- @return Ops.OpsTransport#OPSTRANSPORT The next due cargo transport or `nil`.
+--- @param #OPSGROUP self
+--- @return Ops.OpsTransport#OPSTRANSPORT The next due cargo transport or `nil`.
 function OPSGROUP:_GetNextCargoTransport()
 
   -- Current position.
@@ -8170,9 +8170,9 @@ function OPSGROUP:_GetNextCargoTransport()
 end
 
 --- Check if all cargo of this transport assignment was delivered.
--- @param #OPSGROUP self
--- @param Ops.OpsTransport#OPSTRANSPORT CargoTransport The next due cargo transport or `nil`.
--- @return #boolean If true, all cargo was delivered.
+--- @param #OPSGROUP self
+--- @param Ops.OpsTransport#OPSTRANSPORT CargoTransport The next due cargo transport or `nil`.
+--- @return #boolean If true, all cargo was delivered.
 function OPSGROUP:_CheckDelivered(CargoTransport)
 
   local done=true
@@ -8201,9 +8201,9 @@ end
 
 
 --- Check if all cargo of this transport assignment was delivered.
--- @param #OPSGROUP self
--- @param Ops.OpsTransport#OPSTRANSPORT CargoTransport The next due cargo transport or `nil`.
--- @return #boolean If true, all cargo was delivered.
+--- @param #OPSGROUP self
+--- @param Ops.OpsTransport#OPSTRANSPORT CargoTransport The next due cargo transport or `nil`.
+--- @return #boolean If true, all cargo was delivered.
 function OPSGROUP:_CheckGoPickup(CargoTransport)
 
   local done=true
@@ -8238,9 +8238,9 @@ function OPSGROUP:_CheckGoPickup(CargoTransport)
 end
 
 --- Create a cargo transport assignment.
--- @param #OPSGROUP self
--- @param Ops.OpsTransport#OPSTRANSPORT OpsTransport The troop transport assignment.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param Ops.OpsTransport#OPSTRANSPORT OpsTransport The troop transport assignment.
+--- @return #OPSGROUP self
 function OPSGROUP:AddOpsTransport(OpsTransport)
 
   -- Scheduled.
@@ -8259,9 +8259,9 @@ function OPSGROUP:AddOpsTransport(OpsTransport)
 end
 
 --- Delete a cargo transport assignment from the cargo queue.
--- @param #OPSGROUP self
--- @param Ops.OpsTransport#OPSTRANSPORT CargoTransport Cargo transport do be deleted.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param Ops.OpsTransport#OPSTRANSPORT CargoTransport Cargo transport do be deleted.
+--- @return #OPSGROUP self
 function OPSGROUP:DelOpsTransport(CargoTransport)
 
   for i=#self.cargoqueue,1,-1 do
@@ -8285,9 +8285,9 @@ function OPSGROUP:DelOpsTransport(CargoTransport)
 end
 
 --- Get cargo transport assignment from the cargo queue by its unique ID.
--- @param #OPSGROUP self
--- @param #number uid Unique ID of the transport
--- @return Ops.OpsTransport#OPSTRANSPORT Transport.
+--- @param #OPSGROUP self
+--- @param #number uid Unique ID of the transport
+--- @return Ops.OpsTransport#OPSTRANSPORT Transport.
 function OPSGROUP:GetOpsTransportByUID(uid)
 
   for i=#self.cargoqueue,1,-1 do
@@ -8302,10 +8302,10 @@ end
 
 
 --- Get total weight of the group including cargo. Optionally, the total weight of a specific unit can be requested.
--- @param #OPSGROUP self
--- @param #string UnitName Name of the unit. Default is of the whole group.
--- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
--- @return #number Total weight in kg.
+--- @param #OPSGROUP self
+--- @param #string UnitName Name of the unit. Default is of the whole group.
+--- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
+--- @return #number Total weight in kg.
 function OPSGROUP:GetWeightTotal(UnitName, IncludeReserved)
 
   local weight=0
@@ -8338,10 +8338,10 @@ function OPSGROUP:GetWeightTotal(UnitName, IncludeReserved)
 end
 
 --- Get free cargo bay weight.
--- @param #OPSGROUP self
--- @param #string UnitName Name of the unit. Default is of the whole group.
--- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
--- @return #number Free cargo bay in kg.
+--- @param #OPSGROUP self
+--- @param #string UnitName Name of the unit. Default is of the whole group.
+--- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
+--- @return #number Free cargo bay in kg.
 function OPSGROUP:GetFreeCargobay(UnitName, IncludeReserved)
 
   -- Max cargo weight.
@@ -8360,10 +8360,10 @@ function OPSGROUP:GetFreeCargobay(UnitName, IncludeReserved)
 end
 
 --- Get relative free cargo bay in percent.
--- @param #OPSGROUP self
--- @param #string UnitName Name of the unit. Default is of the whole group.
--- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
--- @return #number Free cargo bay in percent.
+--- @param #OPSGROUP self
+--- @param #string UnitName Name of the unit. Default is of the whole group.
+--- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
+--- @return #number Free cargo bay in percent.
 function OPSGROUP:GetFreeCargobayRelative(UnitName, IncludeReserved)
 
   local free=self:GetFreeCargobay(UnitName, IncludeReserved)
@@ -8376,10 +8376,10 @@ function OPSGROUP:GetFreeCargobayRelative(UnitName, IncludeReserved)
 end
 
 --- Get relative used (loaded) cargo bay in percent.
--- @param #OPSGROUP self
--- @param #string UnitName Name of the unit. Default is of the whole group.
--- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
--- @return #number Used cargo bay in percent.
+--- @param #OPSGROUP self
+--- @param #string UnitName Name of the unit. Default is of the whole group.
+--- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
+--- @return #number Used cargo bay in percent.
 function OPSGROUP:GetUsedCargobayRelative(UnitName, IncludeReserved)
   local free=self:GetFreeCargobayRelative(UnitName, IncludeReserved)
   return 100-free
@@ -8387,9 +8387,9 @@ end
 
 --- Get max weight of cargo (group) this group can load. This is the largest free cargo bay of any (not dead) element of the group.
 -- Optionally, you can calculate the current max weight possible, which accounts for currently loaded cargo.
--- @param #OPSGROUP self
--- @param #boolean Currently If true, calculate the max weight currently possible in case there is already cargo loaded.
--- @return #number Max weight in kg.
+--- @param #OPSGROUP self
+--- @param #boolean Currently If true, calculate the max weight currently possible in case there is already cargo loaded.
+--- @return #number Max weight in kg.
 function OPSGROUP:GetFreeCargobayMax(Currently)
 
   local maxweight=0
@@ -8417,10 +8417,10 @@ end
 
 
 --- Get weight of the internal cargo the group is carriing right now.
--- @param #OPSGROUP self
--- @param #string UnitName Name of the unit. Default is of the whole group.
--- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
--- @return #number Cargo weight in kg.
+--- @param #OPSGROUP self
+--- @param #string UnitName Name of the unit. Default is of the whole group.
+--- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
+--- @return #number Cargo weight in kg.
 function OPSGROUP:GetWeightCargo(UnitName, IncludeReserved)
 
   -- Calculate weight based on actual cargo weight.
@@ -8464,9 +8464,9 @@ function OPSGROUP:GetWeightCargo(UnitName, IncludeReserved)
 end
 
 --- Get max weight of the internal cargo the group can carry. Optionally, the max cargo weight of a specific unit can be requested.
--- @param #OPSGROUP self
--- @param #string UnitName Name of the unit. Default is of the whole group.
--- @return #number Max cargo weight in kg. This does **not** include any cargo loaded or reserved currently.
+--- @param #OPSGROUP self
+--- @param #string UnitName Name of the unit. Default is of the whole group.
+--- @return #number Max cargo weight in kg. This does **not** include any cargo loaded or reserved currently.
 function OPSGROUP:GetWeightCargoMax(UnitName)
 
   local weight=0
@@ -8485,8 +8485,8 @@ function OPSGROUP:GetWeightCargoMax(UnitName)
 end
 
 --- Get OPSGROUPs in the cargo bay.
--- @param #OPSGROUP self
--- @return #table Cargo OPSGROUPs.
+--- @param #OPSGROUP self
+--- @return #table Cargo OPSGROUPs.
 function OPSGROUP:GetCargoOpsGroups()
 
   local opsgroups={}
@@ -8502,9 +8502,9 @@ function OPSGROUP:GetCargoOpsGroups()
 end
 
 --- Add weight to the internal cargo of an element of the group.
--- @param #OPSGROUP self
--- @param #string UnitName Name of the unit. Default is of the whole group.
--- @param #number Weight Cargo weight to be added in kg.
+--- @param #OPSGROUP self
+--- @param #string UnitName Name of the unit. Default is of the whole group.
+--- @param #number Weight Cargo weight to be added in kg.
 function OPSGROUP:AddWeightCargo(UnitName, Weight)
 
   local element=self:GetElementByName(UnitName)
@@ -8528,9 +8528,9 @@ function OPSGROUP:AddWeightCargo(UnitName, Weight)
 end
 
 --- Reduce weight to the internal cargo of an element of the group.
--- @param #OPSGROUP self
--- @param #string UnitName Name of the unit.
--- @param #number Weight Cargo weight to be reduced in kg.
+--- @param #OPSGROUP self
+--- @param #string UnitName Name of the unit.
+--- @param #number Weight Cargo weight to be reduced in kg.
 function OPSGROUP:RedWeightCargo(UnitName, Weight)
 
   -- Reduce weight by adding negative weight.
@@ -8541,9 +8541,9 @@ end
 
 --- Check if the group can *in principle* be carrier of a cargo group. This checks the max cargo capacity of the group but *not* how much cargo is already loaded (if any).
 -- **Note** that the cargo group *cannot* be split into units, i.e. the largest cargo bay of any element of the group must be able to load the whole cargo group in one piece.
--- @param #OPSGROUP self
--- @param #OPSGROUP CargoGroup Cargo group, which needs a carrier.
--- @return #boolean If `true`, there is an element of the group that can load the whole cargo group.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP CargoGroup Cargo group, which needs a carrier.
+--- @return #boolean If `true`, there is an element of the group that can load the whole cargo group.
 function OPSGROUP:CanCargo(CargoGroup)
 
   if CargoGroup then
@@ -8566,9 +8566,9 @@ function OPSGROUP:CanCargo(CargoGroup)
 end
 
 --- Add weight to the internal cargo of an element of the group.
--- @param #OPSGROUP self
--- @param #OPSGROUP CargoGroup Cargo group, which needs a carrier.
--- @return #OPSGROUP.Element Carrier able to transport the cargo.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP CargoGroup Cargo group, which needs a carrier.
+--- @return #OPSGROUP.Element Carrier able to transport the cargo.
 function OPSGROUP:FindCarrierForCargo(CargoGroup)
 
   local weight=CargoGroup:GetWeightTotal()
@@ -8590,10 +8590,10 @@ function OPSGROUP:FindCarrierForCargo(CargoGroup)
 end
 
 --- Set my carrier.
--- @param #OPSGROUP self
--- @param #OPSGROUP CarrierGroup Carrier group.
--- @param #OPSGROUP.Element CarrierElement Carrier element.
--- @param #boolean Reserved If `true`, reserve space for me.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP CarrierGroup Carrier group.
+--- @param #OPSGROUP.Element CarrierElement Carrier element.
+--- @param #boolean Reserved If `true`, reserve space for me.
 function OPSGROUP:_SetMyCarrier(CarrierGroup, CarrierElement, Reserved)
 
   -- Debug info.
@@ -8608,8 +8608,8 @@ function OPSGROUP:_SetMyCarrier(CarrierGroup, CarrierElement, Reserved)
 end
 
 --- Get my carrier group.
--- @param #OPSGROUP self
--- @return #OPSGROUP Carrier group.
+--- @param #OPSGROUP self
+--- @return #OPSGROUP Carrier group.
 function OPSGROUP:_GetMyCarrierGroup()
   if self.mycarrier and self.mycarrier.group then
     return self.mycarrier.group
@@ -8618,8 +8618,8 @@ function OPSGROUP:_GetMyCarrierGroup()
 end
 
 --- Get my carrier element.
--- @param #OPSGROUP self
--- @return #OPSGROUP.Element Carrier element.
+--- @param #OPSGROUP self
+--- @return #OPSGROUP.Element Carrier element.
 function OPSGROUP:_GetMyCarrierElement()
   if self.mycarrier and self.mycarrier.element then
     return self.mycarrier.element
@@ -8628,8 +8628,8 @@ function OPSGROUP:_GetMyCarrierElement()
 end
 
 --- Is my carrier reserved.
--- @param #OPSGROUP self
--- @return #boolean If `true`, space for me was reserved.
+--- @param #OPSGROUP self
+--- @return #boolean If `true`, space for me was reserved.
 function OPSGROUP:_IsMyCarrierReserved()
   if self.mycarrier then
     return self.mycarrier.reserved
@@ -8640,18 +8640,18 @@ end
 
 
 --- Get my carrier.
--- @param #OPSGROUP self
--- @return #OPSGROUP Carrier group.
--- @return #OPSGROUP.Element Carrier element.
--- @return #boolean If `true`, space is reserved for me
+--- @param #OPSGROUP self
+--- @return #OPSGROUP Carrier group.
+--- @return #OPSGROUP.Element Carrier element.
+--- @return #boolean If `true`, space is reserved for me
 function OPSGROUP:_GetMyCarrier()
   return self.mycarrier.group, self.mycarrier.element, self.mycarrier.reserved
 end
 
 
 --- Remove my carrier.
--- @param #OPSGROUP self
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @return #OPSGROUP self
 function OPSGROUP:_RemoveMyCarrier()
   self:T(self.lid..string.format("Removing my carrier!"))
   self.mycarrier.group=nil
@@ -8663,10 +8663,10 @@ function OPSGROUP:_RemoveMyCarrier()
 end
 
 --- On after "Pickup" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterPickup(From, Event, To)
 
   -- Old status.
@@ -8864,10 +8864,10 @@ end
 
 
 --- On after "Loading" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterLoading(From, Event, To)
 
   -- Set carrier status.
@@ -8944,8 +8944,8 @@ function OPSGROUP:onafterLoading(From, Event, To)
 end
 
 --- Set (new) cargo status.
--- @param #OPSGROUP self
--- @param #string Status New status.
+--- @param #OPSGROUP self
+--- @param #string Status New status.
 function OPSGROUP:_NewCargoStatus(Status)
 
   -- Debug info.
@@ -8959,8 +8959,8 @@ function OPSGROUP:_NewCargoStatus(Status)
 end
 
 --- Set (new) carrier status.
--- @param #OPSGROUP self
--- @param #string Status New status.
+--- @param #OPSGROUP self
+--- @param #string Status New status.
 function OPSGROUP:_NewCarrierStatus(Status)
 
   -- Debug info.
@@ -8974,10 +8974,10 @@ function OPSGROUP:_NewCarrierStatus(Status)
 end
 
 --- Transfer cargo from to another carrier.
--- @param #OPSGROUP self
--- @param #OPSGROUP CargoGroup The cargo group to be transferred.
--- @param #OPSGROUP CarrierGroup The new carrier group.
--- @param #OPSGROUP.Element CarrierElement The new carrier element.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP CargoGroup The cargo group to be transferred.
+--- @param #OPSGROUP CarrierGroup The new carrier group.
+--- @param #OPSGROUP.Element CarrierElement The new carrier element.
 function OPSGROUP:_TransferCargo(CargoGroup, CarrierGroup, CarrierElement)
 
   -- Debug info.
@@ -8990,12 +8990,12 @@ function OPSGROUP:_TransferCargo(CargoGroup, CarrierGroup, CarrierElement)
 end
 
 --- On after "Load" event. Carrier loads a cargo group into ints cargo bay.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPSGROUP CargoGroup The OPSGROUP loaded as cargo.
--- @param #OPSGROUP.Element Carrier The carrier element/unit.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPSGROUP CargoGroup The OPSGROUP loaded as cargo.
+--- @param #OPSGROUP.Element Carrier The carrier element/unit.
 function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
 
   -- Debug info.
@@ -9051,10 +9051,10 @@ function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
 end
 
 --- On after "LoadingDone" event. Carrier has loaded all (possible) cargo at the pickup zone.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterLoadingDone(From, Event, To)
 
   -- Debug info.
@@ -9066,10 +9066,10 @@ function OPSGROUP:onafterLoadingDone(From, Event, To)
 end
 
 --- On before "Transport" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onbeforeTransport(From, Event, To)
 
   if self.cargoTransport==nil then
@@ -9083,10 +9083,10 @@ end
 
 
 --- On after "Transport" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterTransport(From, Event, To)
 
   -- Set carrier status.
@@ -9257,10 +9257,10 @@ function OPSGROUP:onafterTransport(From, Event, To)
 end
 
 --- On after "Unloading" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterUnloading(From, Event, To)
 
   -- Set carrier status to UNLOADING.
@@ -9402,13 +9402,13 @@ function OPSGROUP:onafterUnloading(From, Event, To)
 end
 
 --- On before "Unload" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPSGROUP OpsGroup The OPSGROUP loaded as cargo.
--- @param Core.Point#COORDINATE Coordinate Coordinate were the group is unloaded to.
--- @param #number Heading Heading of group.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPSGROUP OpsGroup The OPSGROUP loaded as cargo.
+--- @param Core.Point#COORDINATE Coordinate Coordinate were the group is unloaded to.
+--- @param #number Heading Heading of group.
 function OPSGROUP:onbeforeUnload(From, Event, To, OpsGroup, Coordinate, Heading)
 
   -- Remove group from carrier bay. If group is not in cargo bay, function will return false and transition is denied.
@@ -9418,14 +9418,14 @@ function OPSGROUP:onbeforeUnload(From, Event, To, OpsGroup, Coordinate, Heading)
 end
 
 --- On after "Unload" event. Carrier unloads a cargo group from its cargo bay.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPSGROUP OpsGroup The OPSGROUP loaded as cargo.
--- @param Core.Point#COORDINATE Coordinate Coordinate were the group is unloaded to.
--- @param #boolean Activated If `true`, group is active. If `false`, group is spawned in late activated state.
--- @param #number Heading (Optional) Heading of group in degrees. Default is random heading for each unit.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPSGROUP OpsGroup The OPSGROUP loaded as cargo.
+--- @param Core.Point#COORDINATE Coordinate Coordinate were the group is unloaded to.
+--- @param #boolean Activated If `true`, group is active. If `false`, group is spawned in late activated state.
+--- @param #number Heading (Optional) Heading of group in degrees. Default is random heading for each unit.
 function OPSGROUP:onafterUnload(From, Event, To, OpsGroup, Coordinate, Activated, Heading)
 
   -- New cargo status.
@@ -9516,11 +9516,11 @@ function OPSGROUP:onafterUnload(From, Event, To, OpsGroup, Coordinate, Activated
 end
 
 --- On after "Unloaded" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPSGROUP OpsGroupCargo Cargo OPSGROUP that was unloaded from a carrier.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPSGROUP OpsGroupCargo Cargo OPSGROUP that was unloaded from a carrier.
 function OPSGROUP:onafterUnloaded(From, Event, To, OpsGroupCargo)
   self:T(self.lid..string.format("Unloaded OPSGROUP %s", OpsGroupCargo:GetName()))
   
@@ -9540,10 +9540,10 @@ end
 
 
 --- On after "UnloadingDone" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSGROUP:onafterUnloadingDone(From, Event, To)
 
   -- Debug info
@@ -9590,11 +9590,11 @@ function OPSGROUP:onafterUnloadingDone(From, Event, To)
 end
 
 --- On after "Delivered" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsTransport#OPSTRANSPORT CargoTransport The cargo transport assignment.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsTransport#OPSTRANSPORT CargoTransport The cargo transport assignment.
 function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
 
   -- Check if this was the current transport.
@@ -9662,11 +9662,11 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
 end
 
 --- On after "TransportCancel" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsTransport#OPSTRANSPORT The transport to be cancelled.
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsTransport#OPSTRANSPORT The transport to be cancelled.
 function OPSGROUP:onafterTransportCancel(From, Event, To, Transport)
 
   if self.cargoTransport and self.cargoTransport.uid==Transport.uid then
@@ -9773,12 +9773,12 @@ end
 ---
 
 --- On before "Board" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPSGROUP CarrierGroup The carrier group.
--- @param #OPSGROUP.Element Carrier The OPSGROUP element
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPSGROUP CarrierGroup The carrier group.
+--- @param #OPSGROUP.Element Carrier The OPSGROUP element
 function OPSGROUP:onbeforeBoard(From, Event, To, CarrierGroup, Carrier)
 
   if self:IsDead() then
@@ -9798,12 +9798,12 @@ function OPSGROUP:onbeforeBoard(From, Event, To, CarrierGroup, Carrier)
 end
 
 --- On after "Board" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPSGROUP CarrierGroup The carrier group.
--- @param #OPSGROUP.Element Carrier The OPSGROUP element
+--- @param #OPSGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPSGROUP CarrierGroup The carrier group.
+--- @param #OPSGROUP.Element Carrier The OPSGROUP element
 function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
 
   -- Army or Navy group.
@@ -9904,7 +9904,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check if group is in zones.
--- @param #OPSGROUP self
+--- @param #OPSGROUP self
 function OPSGROUP:_CheckInZones()
 
   if self.checkzones and self:IsAlive() then
@@ -9957,7 +9957,7 @@ function OPSGROUP:_CheckInZones()
 end
 
 --- Check detected units.
--- @param #OPSGROUP self
+--- @param #OPSGROUP self
 function OPSGROUP:_CheckDetectedUnits()
 
   if self.detectionOn and self.group and not self:IsDead() then
@@ -10057,8 +10057,8 @@ function OPSGROUP:_CheckDetectedUnits()
 end
 
 --- Check if passed the final waypoint and, if necessary, update route.
--- @param #OPSGROUP self
--- @param #number delay Delay in seconds.
+--- @param #OPSGROUP self
+--- @param #number delay Delay in seconds.
 function OPSGROUP:_CheckGroupDone(delay)
 
   -- FSM state.
@@ -10236,7 +10236,7 @@ function OPSGROUP:_CheckGroupDone(delay)
 end
 
 --- Check if group got stuck.
--- @param #OPSGROUP self
+--- @param #OPSGROUP self
 function OPSGROUP:_CheckStuck()
 
   -- Cases we are not stuck.
@@ -10327,8 +10327,8 @@ end
 
 
 --- Check damage.
--- @param #OPSGROUP self
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @return #OPSGROUP self
 function OPSGROUP:_CheckDamage()
 
   self:T(self.lid..string.format("Checking damage..."))
@@ -10365,8 +10365,8 @@ function OPSGROUP:_CheckDamage()
 end
 
 --- Check ammo is full.
--- @param #OPSGROUP self
--- @return #boolean If true, ammo is full.
+--- @param #OPSGROUP self
+--- @return #boolean If true, ammo is full.
 function OPSGROUP:_CheckAmmoFull()
 
   -- Get current ammo.
@@ -10385,7 +10385,7 @@ function OPSGROUP:_CheckAmmoFull()
 end
 
 --- Check ammo status.
--- @param #OPSGROUP self
+--- @param #OPSGROUP self
 function OPSGROUP:_CheckAmmoStatus()
 
   -- First check if there was ammo initially.
@@ -10497,7 +10497,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Print info on mission and task status to DCS log file.
--- @param #OPSGROUP self
+--- @param #OPSGROUP self
 function OPSGROUP:_PrintTaskAndMissionStatus()
 
   ---
@@ -10563,9 +10563,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Simple task function. Can be used to call a function which has the warehouse and the executing group as parameters.
--- @param #OPSGROUP self
--- @param #string Function The name of the function to call passed as string.
--- @param #number uid Waypoint UID.
+--- @param #OPSGROUP self
+--- @param #string Function The name of the function to call passed as string.
+--- @param #number uid Waypoint UID.
 function OPSGROUP:_SimpleTaskFunction(Function, uid)
 
   -- Task script.
@@ -10583,9 +10583,9 @@ function OPSGROUP:_SimpleTaskFunction(Function, uid)
 end
 
 --- Enhance waypoint table.
--- @param #OPSGROUP self
--- @param #OPSGROUP.Waypoint Waypoint data.
--- @return #OPSGROUP.Waypoint Modified waypoint data.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP.Waypoint Waypoint data.
+--- @return #OPSGROUP.Waypoint Modified waypoint data.
 function OPSGROUP:_CreateWaypoint(waypoint)
 
   -- Set uid.
@@ -10623,9 +10623,9 @@ function OPSGROUP:_CreateWaypoint(waypoint)
 end
 
 --- Initialize Mission Editor waypoints.
--- @param #OPSGROUP self
--- @param #OPSGROUP.Waypoint waypoint Waypoint data.
--- @param #number wpnumber Waypoint index/number. Default is as last waypoint.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP.Waypoint waypoint Waypoint data.
+--- @param #number wpnumber Waypoint index/number. Default is as last waypoint.
 function OPSGROUP:_AddWaypoint(waypoint, wpnumber)
 
   -- Index.
@@ -10645,10 +10645,10 @@ function OPSGROUP:_AddWaypoint(waypoint, wpnumber)
 end
 
 --- Initialize Mission Editor waypoints.
--- @param #OPSGROUP self
--- @param #number WpIndexMin
--- @param #number WpIndexMax
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number WpIndexMin
+--- @param #number WpIndexMax
+--- @return #OPSGROUP self
 function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
 
   -- Template waypoints.
@@ -10750,10 +10750,10 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
 end
 
 --- Route group along waypoints.
--- @param #OPSGROUP self
--- @param #table waypoints Table of waypoints.
--- @param #number delay Delay in seconds.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #table waypoints Table of waypoints.
+--- @param #number delay Delay in seconds.
+--- @return #OPSGROUP self
 function OPSGROUP:Route(waypoints, delay)
 
   if delay and delay>0 then
@@ -10788,8 +10788,8 @@ end
 
 
 --- Initialize Mission Editor waypoints.
--- @param #OPSGROUP self
--- @param #number n Waypoint
+--- @param #OPSGROUP self
+--- @param #number n Waypoint
 function OPSGROUP:_UpdateWaypointTasks(n)
 
   local waypoints=self.waypoints or {}
@@ -11085,18 +11085,18 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set the default ROE for the group. This is the ROE state gets when the group is spawned or to which it defaults back after a mission.
--- @param #OPSGROUP self
--- @param #number roe ROE of group. Default is `ENUMS.ROE.ReturnFire`.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number roe ROE of group. Default is `ENUMS.ROE.ReturnFire`.
+--- @return #OPSGROUP self
 function OPSGROUP:SetDefaultROE(roe)
   self.optionDefault.ROE=roe or ENUMS.ROE.ReturnFire
   return self
 end
 
 --- Set current ROE for the group.
--- @param #OPSGROUP self
--- @param #string roe ROE of group. Default is value set in `SetDefaultROE` (usually `ENUMS.ROE.ReturnFire`).
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #string roe ROE of group. Default is value set in `SetDefaultROE` (usually `ENUMS.ROE.ReturnFire`).
+--- @return #OPSGROUP self
 function OPSGROUP:SwitchROE(roe)
 
   if self:IsAlive() or self:IsInUtero() then
@@ -11121,8 +11121,8 @@ function OPSGROUP:SwitchROE(roe)
 end
 
 --- Get name of ROE corresponding to the numerical value.
--- @param #OPSGROUP self
--- @return #string Name of ROE.
+--- @param #OPSGROUP self
+--- @return #string Name of ROE.
 function OPSGROUP:_GetROEName(roe)
   local name="unknown"
   if roe==0 then
@@ -11140,25 +11140,25 @@ function OPSGROUP:_GetROEName(roe)
 end
 
 --- Get current ROE of the group.
--- @param #OPSGROUP self
--- @return #number Current ROE.
+--- @param #OPSGROUP self
+--- @return #number Current ROE.
 function OPSGROUP:GetROE()
   return self.option.ROE or self.optionDefault.ROE
 end
 
 --- Set the default ROT for the group. This is the ROT state gets when the group is spawned or to which it defaults back after a mission.
--- @param #OPSGROUP self
--- @param #number rot ROT of group. Default is `ENUMS.ROT.PassiveDefense`.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number rot ROT of group. Default is `ENUMS.ROT.PassiveDefense`.
+--- @return #OPSGROUP self
 function OPSGROUP:SetDefaultROT(rot)
   self.optionDefault.ROT=rot or ENUMS.ROT.PassiveDefense
   return self
 end
 
 --- Set ROT for the group.
--- @param #OPSGROUP self
--- @param #string rot ROT of group. Default is value set in `:SetDefaultROT` (usually `ENUMS.ROT.PassiveDefense`).
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #string rot ROT of group. Default is value set in `:SetDefaultROT` (usually `ENUMS.ROT.PassiveDefense`).
+--- @return #OPSGROUP self
 function OPSGROUP:SwitchROT(rot)
 
   if self:IsFlightgroup() then
@@ -11188,17 +11188,17 @@ function OPSGROUP:SwitchROT(rot)
 end
 
 --- Get current ROT of the group.
--- @param #OPSGROUP self
--- @return #number Current ROT.
+--- @param #OPSGROUP self
+--- @return #number Current ROT.
 function OPSGROUP:GetROT()
   return self.option.ROT or self.optionDefault.ROT
 end
 
 
 --- Set the default Alarm State for the group. This is the state gets when the group is spawned or to which it defaults back after a mission.
--- @param #OPSGROUP self
--- @param #number alarmstate Alarm state of group. Default is `AI.Option.Ground.val.ALARM_STATE.AUTO` (0).
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number alarmstate Alarm state of group. Default is `AI.Option.Ground.val.ALARM_STATE.AUTO` (0).
+--- @return #OPSGROUP self
 function OPSGROUP:SetDefaultAlarmstate(alarmstate)
   self.optionDefault.Alarm=alarmstate or 0
   return self
@@ -11210,9 +11210,9 @@ end
 -- * 1 = "Green"
 -- * 2 = "Red"
 --
--- @param #OPSGROUP self
--- @param #number alarmstate Alarm state of group. Default is 0="Auto".
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number alarmstate Alarm state of group. Default is 0="Auto".
+--- @return #OPSGROUP self
 function OPSGROUP:SwitchAlarmstate(alarmstate)
 
   if self:IsAlive() or self:IsInUtero() then
@@ -11250,16 +11250,16 @@ function OPSGROUP:SwitchAlarmstate(alarmstate)
 end
 
 --- Get current Alarm State of the group.
--- @param #OPSGROUP self
--- @return #number Current Alarm State.
+--- @param #OPSGROUP self
+--- @return #number Current Alarm State.
 function OPSGROUP:GetAlarmstate()
   return self.option.Alarm or self.optionDefault.Alarm
 end
 
 --- Set the default EPLRS for the group.
--- @param #OPSGROUP self
--- @param #boolean OnOffSwitch If `true`, EPLRS is on by default. If `false` default EPLRS setting is off. If `nil`, default is on if group has EPLRS and off if it does not have a datalink.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #boolean OnOffSwitch If `true`, EPLRS is on by default. If `false` default EPLRS setting is off. If `nil`, default is on if group has EPLRS and off if it does not have a datalink.
+--- @return #OPSGROUP self
 function OPSGROUP:SetDefaultEPLRS(OnOffSwitch)
 
   if OnOffSwitch==nil then
@@ -11272,9 +11272,9 @@ function OPSGROUP:SetDefaultEPLRS(OnOffSwitch)
 end
 
 --- Switch EPLRS datalink on or off.
--- @param #OPSGROUP self
--- @param #boolean OnOffSwitch If `true` or `nil`, switch EPLRS on. If `false` EPLRS switched off.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #boolean OnOffSwitch If `true` or `nil`, switch EPLRS on. If `false` EPLRS switched off.
+--- @return #OPSGROUP self
 function OPSGROUP:SwitchEPLRS(OnOffSwitch)
 
   if self:IsAlive() or self:IsInUtero() then
@@ -11305,16 +11305,16 @@ function OPSGROUP:SwitchEPLRS(OnOffSwitch)
 end
 
 --- Get current EPLRS state.
--- @param #OPSGROUP self
--- @return #boolean If `true`, EPLRS is on.
+--- @param #OPSGROUP self
+--- @return #boolean If `true`, EPLRS is on.
 function OPSGROUP:GetEPLRS()
   return self.option.EPLRS or self.optionDefault.EPLRS
 end
 
 --- Set the default EPLRS for the group.
--- @param #OPSGROUP self
--- @param #boolean OnOffSwitch If `true`, EPLRS is on by default. If `false` default EPLRS setting is off. If `nil`, default is on if group has EPLRS and off if it does not have a datalink.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #boolean OnOffSwitch If `true`, EPLRS is on by default. If `false` default EPLRS setting is off. If `nil`, default is on if group has EPLRS and off if it does not have a datalink.
+--- @return #OPSGROUP self
 function OPSGROUP:SetDefaultEmission(OnOffSwitch)
 
   if OnOffSwitch==nil then
@@ -11327,9 +11327,9 @@ function OPSGROUP:SetDefaultEmission(OnOffSwitch)
 end
 
 --- Switch emission on or off.
--- @param #OPSGROUP self
--- @param #boolean OnOffSwitch If `true` or `nil`, switch emission on. If `false` emission switched off.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #boolean OnOffSwitch If `true` or `nil`, switch emission on. If `false` emission switched off.
+--- @return #OPSGROUP self
 function OPSGROUP:SwitchEmission(OnOffSwitch)
 
   if self:IsAlive() or self:IsInUtero() then
@@ -11360,16 +11360,16 @@ function OPSGROUP:SwitchEmission(OnOffSwitch)
 end
 
 --- Get current emission state.
--- @param #OPSGROUP self
--- @return #boolean If `true`, emission is on.
+--- @param #OPSGROUP self
+--- @return #boolean If `true`, emission is on.
 function OPSGROUP:GetEmission()
   return self.option.Emission or self.optionDefault.Emission
 end
 
 --- Set the default invisible for the group.
--- @param #OPSGROUP self
--- @param #boolean OnOffSwitch If `true`, group is ivisible by default.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #boolean OnOffSwitch If `true`, group is ivisible by default.
+--- @return #OPSGROUP self
 function OPSGROUP:SetDefaultInvisible(OnOffSwitch)
 
   if OnOffSwitch==nil then
@@ -11382,9 +11382,9 @@ function OPSGROUP:SetDefaultInvisible(OnOffSwitch)
 end
 
 --- Switch invisibility on or off.
--- @param #OPSGROUP self
--- @param #boolean OnOffSwitch If `true` or `nil`, switch invisibliity on. If `false` invisibility switched off.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #boolean OnOffSwitch If `true` or `nil`, switch invisibliity on. If `false` invisibility switched off.
+--- @return #OPSGROUP self
 function OPSGROUP:SwitchInvisible(OnOffSwitch)
 
   if self:IsAlive() or self:IsInUtero() then
@@ -11416,9 +11416,9 @@ end
 
 
 --- Set the default immortal for the group.
--- @param #OPSGROUP self
--- @param #boolean OnOffSwitch If `true`, group is immortal by default.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #boolean OnOffSwitch If `true`, group is immortal by default.
+--- @return #OPSGROUP self
 function OPSGROUP:SetDefaultImmortal(OnOffSwitch)
 
   if OnOffSwitch==nil then
@@ -11431,9 +11431,9 @@ function OPSGROUP:SetDefaultImmortal(OnOffSwitch)
 end
 
 --- Switch immortality on or off.
--- @param #OPSGROUP self
--- @param #boolean OnOffSwitch If `true` or `nil`, switch immortality on. If `false` immortality switched off.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #boolean OnOffSwitch If `true` or `nil`, switch immortality on. If `false` immortality switched off.
+--- @return #OPSGROUP self
 function OPSGROUP:SwitchImmortal(OnOffSwitch)
 
   if self:IsAlive() or self:IsInUtero() then
@@ -11468,13 +11468,13 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set default TACAN parameters.
--- @param #OPSGROUP self
--- @param #number Channel TACAN channel. Default is 74.
--- @param #string Morse Morse code. Default "XXX".
--- @param #string UnitName Name of the unit acting as beacon.
--- @param #string Band TACAN mode. Default is "X" for ground and "Y" for airborne units.
--- @param #boolean OffSwitch If true, TACAN is off by default.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Channel TACAN channel. Default is 74.
+--- @param #string Morse Morse code. Default "XXX".
+--- @param #string UnitName Name of the unit acting as beacon.
+--- @param #string Band TACAN mode. Default is "X" for ground and "Y" for airborne units.
+--- @param #boolean OffSwitch If true, TACAN is off by default.
+--- @return #OPSGROUP self
 function OPSGROUP:SetDefaultTACAN(Channel, Morse, UnitName, Band, OffSwitch)
 
   self.tacanDefault={}
@@ -11501,9 +11501,9 @@ end
 
 
 --- Activate/switch TACAN beacon settings.
--- @param #OPSGROUP self
--- @param #OPSGROUP.Beacon Tacan TACAN data table. Default is the default TACAN settings.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #OPSGROUP.Beacon Tacan TACAN data table. Default is the default TACAN settings.
+--- @return #OPSGROUP self
 function OPSGROUP:_SwitchTACAN(Tacan)
 
   if Tacan then
@@ -11523,12 +11523,12 @@ function OPSGROUP:_SwitchTACAN(Tacan)
 end
 
 --- Activate/switch TACAN beacon settings.
--- @param #OPSGROUP self
--- @param #number Channel TACAN Channel.
--- @param #string Morse TACAN morse code. Default is the value set in @{#OPSGROUP.SetDefaultTACAN} or if not set "XXX".
--- @param #string UnitName Name of the unit in the group which should activate the TACAN beacon. Can also be given as #number to specify the unit number. Default is the first unit of the group.
--- @param #string Band TACAN channel mode "X" or "Y". Default is "Y" for aircraft and "X" for ground and naval groups.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Channel TACAN Channel.
+--- @param #string Morse TACAN morse code. Default is the value set in @{#OPSGROUP.SetDefaultTACAN} or if not set "XXX".
+--- @param #string UnitName Name of the unit in the group which should activate the TACAN beacon. Can also be given as #number to specify the unit number. Default is the first unit of the group.
+--- @param #string Band TACAN channel mode "X" or "Y". Default is "Y" for aircraft and "X" for ground and naval groups.
+--- @return #OPSGROUP self
 function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
 
   if self:IsInUtero() then
@@ -11600,8 +11600,8 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
 end
 
 --- Deactivate TACAN beacon.
--- @param #OPSGROUP self
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @return #OPSGROUP self
 function OPSGROUP:TurnOffTACAN()
 
   if self.tacan.BeaconUnit and self.tacan.BeaconUnit:IsAlive() then
@@ -11614,31 +11614,31 @@ function OPSGROUP:TurnOffTACAN()
 end
 
 --- Get current TACAN parameters.
--- @param #OPSGROUP self
--- @return #number TACAN channel.
--- @return #string TACAN Morse code.
--- @return #string TACAN band ("X" or "Y").
--- @return #boolean TACAN is On (true) or Off (false).
--- @return #string UnitName Name of the unit acting as beacon.
+--- @param #OPSGROUP self
+--- @return #number TACAN channel.
+--- @return #string TACAN Morse code.
+--- @return #string TACAN band ("X" or "Y").
+--- @return #boolean TACAN is On (true) or Off (false).
+--- @return #string UnitName Name of the unit acting as beacon.
 function OPSGROUP:GetTACAN()
   return self.tacan.Channel, self.tacan.Morse, self.tacan.Band, self.tacan.On, self.tacan.BeaconName
 end
 
 --- Get current TACAN parameters.
--- @param #OPSGROUP self
--- @return #OPSGROUP.Beacon TACAN beacon.
+--- @param #OPSGROUP self
+--- @return #OPSGROUP.Beacon TACAN beacon.
 function OPSGROUP:GetBeaconTACAN()
   return self.tacan
 end
 
 
 --- Set default ICLS parameters.
--- @param #OPSGROUP self
--- @param #number Channel ICLS channel. Default is 1.
--- @param #string Morse Morse code. Default "XXX".
--- @param #string UnitName Name of the unit acting as beacon.
--- @param #boolean OffSwitch If true, TACAN is off by default.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Channel ICLS channel. Default is 1.
+--- @param #string Morse Morse code. Default "XXX".
+--- @param #string UnitName Name of the unit acting as beacon.
+--- @param #boolean OffSwitch If true, TACAN is off by default.
+--- @return #OPSGROUP self
 function OPSGROUP:SetDefaultICLS(Channel, Morse, UnitName, OffSwitch)
 
   self.iclsDefault={}
@@ -11657,9 +11657,9 @@ end
 
 
 --- Activate/switch ICLS beacon settings.
--- @param #OPSGROUP self
--- @param #OPSGROUP.Beacon Icls ICLS data table.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #OPSGROUP.Beacon Icls ICLS data table.
+--- @return #OPSGROUP self
 function OPSGROUP:_SwitchICLS(Icls)
 
   if Icls then
@@ -11679,11 +11679,11 @@ function OPSGROUP:_SwitchICLS(Icls)
 end
 
 --- Activate/switch ICLS beacon settings.
--- @param #OPSGROUP self
--- @param #number Channel ICLS Channel. Default is what is set in `SetDefaultICLS()` so usually channel 1.
--- @param #string Morse ICLS morse code. Default is what is set in `SetDefaultICLS()` so usually "XXX".
--- @param #string UnitName Name of the unit in the group which should activate the ICLS beacon. Can also be given as #number to specify the unit number. Default is the first unit of the group.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Channel ICLS Channel. Default is what is set in `SetDefaultICLS()` so usually channel 1.
+--- @param #string Morse ICLS morse code. Default is what is set in `SetDefaultICLS()` so usually "XXX".
+--- @param #string UnitName Name of the unit in the group which should activate the ICLS beacon. Can also be given as #number to specify the unit number. Default is the first unit of the group.
+--- @return #OPSGROUP self
 function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
 
   if self:IsInUtero() then
@@ -11740,8 +11740,8 @@ function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
 end
 
 --- Deactivate ICLS beacon.
--- @param #OPSGROUP self
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @return #OPSGROUP self
 function OPSGROUP:TurnOffICLS()
 
   if self.icls.BeaconUnit and self.icls.BeaconUnit:IsAlive() then
@@ -11755,11 +11755,11 @@ end
 
 
 --- Set default Radio frequency and modulation.
--- @param #OPSGROUP self
--- @param #number Frequency Radio frequency in MHz. Default 251 MHz.
--- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
--- @param #boolean OffSwitch If true, radio is OFF by default.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Frequency Radio frequency in MHz. Default 251 MHz.
+--- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
+--- @param #boolean OffSwitch If true, radio is OFF by default.
+--- @return #OPSGROUP self
 function OPSGROUP:SetDefaultRadio(Frequency, Modulation, OffSwitch)
 
   self.radioDefault={}
@@ -11775,19 +11775,19 @@ function OPSGROUP:SetDefaultRadio(Frequency, Modulation, OffSwitch)
 end
 
 --- Get current Radio frequency and modulation.
--- @param #OPSGROUP self
--- @return #number Radio frequency in MHz or nil.
--- @return #number Radio modulation or nil.
--- @return #boolean If true, the radio is on. Otherwise, radio is turned off.
+--- @param #OPSGROUP self
+--- @return #number Radio frequency in MHz or nil.
+--- @return #number Radio modulation or nil.
+--- @return #boolean If true, the radio is on. Otherwise, radio is turned off.
 function OPSGROUP:GetRadio()
   return self.radio.Freq, self.radio.Modu, self.radio.On
 end
 
 --- Turn radio on or switch frequency/modulation.
--- @param #OPSGROUP self
--- @param #number Frequency Radio frequency in MHz. Default is value set in `SetDefaultRadio` (usually 251 MHz).
--- @param #number Modulation Radio modulation. Default is value set in `SetDefaultRadio` (usually `radio.modulation.AM`).
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Frequency Radio frequency in MHz. Default is value set in `SetDefaultRadio` (usually 251 MHz).
+--- @param #number Modulation Radio modulation. Default is value set in `SetDefaultRadio` (usually `radio.modulation.AM`).
+--- @return #OPSGROUP self
 function OPSGROUP:SwitchRadio(Frequency, Modulation)
 
   if self:IsInUtero() then
@@ -11826,8 +11826,8 @@ function OPSGROUP:SwitchRadio(Frequency, Modulation)
 end
 
 --- Turn radio off.
--- @param #OPSGROUP self
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @return #OPSGROUP self
 function OPSGROUP:TurnOffRadio()
 
   if self:IsAlive() then
@@ -11853,9 +11853,9 @@ end
 
 
 --- Set default formation.
--- @param #OPSGROUP self
--- @param #number Formation The formation the groups flies in.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Formation The formation the groups flies in.
+--- @return #OPSGROUP self
 function OPSGROUP:SetDefaultFormation(Formation)
 
   self.optionDefault.Formation=Formation
@@ -11864,9 +11864,9 @@ function OPSGROUP:SetDefaultFormation(Formation)
 end
 
 --- Switch to a specific formation.
--- @param #OPSGROUP self
--- @param #number Formation New formation the group will fly in. Default is the setting of `SetDefaultFormation()`.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number Formation New formation the group will fly in. Default is the setting of `SetDefaultFormation()`.
+--- @return #OPSGROUP self
 function OPSGROUP:SwitchFormation(Formation)
 
   if self:IsAlive() then
@@ -11900,10 +11900,10 @@ end
 
 
 --- Set default callsign.
--- @param #OPSGROUP self
--- @param #number CallsignName Callsign name.
--- @param #number CallsignNumber Callsign number. Default 1.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number CallsignName Callsign name.
+--- @param #number CallsignNumber Callsign number. Default 1.
+--- @return #OPSGROUP self
 function OPSGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
 
   self.callsignDefault={} --#OPSGROUP.Callsign
@@ -11917,10 +11917,10 @@ function OPSGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
 end
 
 --- Switch to a specific callsign.
--- @param #OPSGROUP self
--- @param #number CallsignName Callsign name.
--- @param #number CallsignNumber Callsign number.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #number CallsignName Callsign name.
+--- @param #number CallsignNumber Callsign number.
+--- @return #OPSGROUP self
 function OPSGROUP:SwitchCallsign(CallsignName, CallsignNumber)
 
   if self:IsInUtero() then
@@ -11964,11 +11964,11 @@ function OPSGROUP:SwitchCallsign(CallsignName, CallsignNumber)
 end
 
 --- Get callsign of the first element alive.
--- @param #OPSGROUP self
--- @param #boolean ShortCallsign If true, append major flight number only
--- @param #boolean Keepnumber (Player only) If true, and using a customized callsign in the #GROUP name after an #-sign, use all of that information.
--- @param #table CallsignTranslations (optional) Translation table between callsigns
--- @return #string Callsign name, e.g. Uzi11, or "Ghostrider11".
+--- @param #OPSGROUP self
+--- @param #boolean ShortCallsign If true, append major flight number only
+--- @param #boolean Keepnumber (Player only) If true, and using a customized callsign in the #GROUP name after an #-sign, use all of that information.
+--- @param #table CallsignTranslations (optional) Translation table between callsigns
+--- @return #string Callsign name, e.g. Uzi11, or "Ghostrider11".
 function OPSGROUP:GetCallsignName(ShortCallsign,Keepnumber,CallsignTranslations)
 
   local element=self:GetElementAlive()
@@ -11991,8 +11991,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check if all elements of the group have the same status (or are dead).
--- @param #OPSGROUP self
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @return #OPSGROUP self
 function OPSGROUP:_UpdatePosition()
 
   if self:IsExist() then
@@ -12035,8 +12035,8 @@ function OPSGROUP:_UpdatePosition()
 end
 
 --- Check if all elements of the group have the same status (or are dead).
--- @param #OPSGROUP self
--- @param #string unitname Name of unit.
+--- @param #OPSGROUP self
+--- @param #string unitname Name of unit.
 function OPSGROUP:_AllSameStatus(status)
 
   for _,_element in pairs(self.elements) do
@@ -12055,9 +12055,9 @@ function OPSGROUP:_AllSameStatus(status)
 end
 
 --- Check if all elements of the group have the same status (or are dead).
--- @param #OPSGROUP self
--- @param #string status Status to check.
--- @return #boolean If true, all elements have a similar status.
+--- @param #OPSGROUP self
+--- @param #string status Status to check.
+--- @return #boolean If true, all elements have a similar status.
 function OPSGROUP:_AllSimilarStatus(status)
 
   -- Check if all are dead.
@@ -12189,10 +12189,10 @@ function OPSGROUP:_AllSimilarStatus(status)
 end
 
 --- Check if all elements of the group have the same status or are dead.
--- @param #OPSGROUP self
--- @param #OPSGROUP.Element element Element.
--- @param #string newstatus New status of element
--- @param Wrapper.Airbase#AIRBASE airbase Airbase if applicable.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP.Element element Element.
+--- @param #string newstatus New status of element
+--- @param Wrapper.Airbase#AIRBASE airbase Airbase if applicable.
 function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
 
   -- Old status.
@@ -12312,8 +12312,8 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
 end
 
 --- Set status for all elements (except dead ones).
--- @param #OPSGROUP self
--- @param #string status Element status.
+--- @param #OPSGROUP self
+--- @param #string status Element status.
 function OPSGROUP:_SetElementStatusAll(status)
 
   for _,_element in pairs(self.elements) do
@@ -12326,9 +12326,9 @@ function OPSGROUP:_SetElementStatusAll(status)
 end
 
 --- Get the element of a group.
--- @param #OPSGROUP self
--- @param #string unitname Name of unit.
--- @return #OPSGROUP.Element The element.
+--- @param #OPSGROUP self
+--- @param #string unitname Name of unit.
+--- @return #OPSGROUP.Element The element.
 function OPSGROUP:GetElementByName(unitname)
 
   if unitname and type(unitname)=="string" then
@@ -12348,9 +12348,9 @@ function OPSGROUP:GetElementByName(unitname)
 end
 
 --- Get the bounding box of the element.
--- @param #OPSGROUP self
--- @param #string UnitName Name of unit.
--- @return Core.Zone#ZONE_POLYGON Bounding box polygon zone.
+--- @param #OPSGROUP self
+--- @param #string UnitName Name of unit.
+--- @return Core.Zone#ZONE_POLYGON Bounding box polygon zone.
 function OPSGROUP:GetElementZoneBoundingBox(UnitName)
 
   local element=self:GetElementByName(UnitName)
@@ -12404,9 +12404,9 @@ function OPSGROUP:GetElementZoneBoundingBox(UnitName)
 end
 
 --- Get the loading zone of the element.
--- @param #OPSGROUP self
--- @param #string UnitName Name of unit.
--- @return Core.Zone#ZONE_POLYGON Bounding box polygon zone.
+--- @param #OPSGROUP self
+--- @param #string UnitName Name of unit.
+--- @return Core.Zone#ZONE_POLYGON Bounding box polygon zone.
 function OPSGROUP:GetElementZoneLoad(UnitName)
 
   local element=self:GetElementByName(UnitName)
@@ -12424,9 +12424,9 @@ function OPSGROUP:GetElementZoneLoad(UnitName)
 end
 
 --- Get the unloading zone of the element.
--- @param #OPSGROUP self
--- @param #string UnitName Name of unit.
--- @return Core.Zone#ZONE_POLYGON Bounding box polygon zone.
+--- @param #OPSGROUP self
+--- @param #string UnitName Name of unit.
+--- @return Core.Zone#ZONE_POLYGON Bounding box polygon zone.
 function OPSGROUP:GetElementZoneUnload(UnitName)
 
   local element=self:GetElementByName(UnitName)
@@ -12444,11 +12444,11 @@ function OPSGROUP:GetElementZoneUnload(UnitName)
 end
 
 --- Get/update the (un-)loading zone of the element.
--- @param #OPSGROUP self
--- @param #OPSGROUP.Element Element Element.
--- @param Core.Zone#ZONE_POLYGON Zone The zone.
--- @param #OPSGROUP.CarrierLoader Loader Loader parameters.
--- @return Core.Zone#ZONE_POLYGON Bounding box polygon zone.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP.Element Element Element.
+--- @param Core.Zone#ZONE_POLYGON Zone The zone.
+--- @param #OPSGROUP.CarrierLoader Loader Loader parameters.
+--- @return Core.Zone#ZONE_POLYGON Bounding box polygon zone.
 function OPSGROUP:_GetElementZoneLoader(Element, Zone, Loader)
 
   if Element.status~=OPSGROUP.ElementStatus.DEAD then
@@ -12523,8 +12523,8 @@ end
 
 
 --- Get the first element of a group, which is alive.
--- @param #OPSGROUP self
--- @return #OPSGROUP.Element The element or `#nil` if no element is alive any more.
+--- @param #OPSGROUP self
+--- @return #OPSGROUP.Element The element or `#nil` if no element is alive any more.
 function OPSGROUP:GetElementAlive()
 
   for _,_element in pairs(self.elements) do
@@ -12541,9 +12541,9 @@ end
 
 
 --- Get number of elements alive.
--- @param #OPSGROUP self
--- @param #string status (Optional) Only count number, which are in a special status.
--- @return #number Number of elements.
+--- @param #OPSGROUP self
+--- @param #string status (Optional) Only count number, which are in a special status.
+--- @return #number Number of elements.
 function OPSGROUP:GetNelements(status)
 
   local n=0
@@ -12563,16 +12563,16 @@ function OPSGROUP:GetNelements(status)
 end
 
 --- Get the number of shells a unit or group currently has. For a group the ammo count of all units is summed up.
--- @param #OPSGROUP self
--- @param #OPSGROUP.Element element The element.
--- @return #OPSGROUP.Ammo Ammo data.
+--- @param #OPSGROUP self
+--- @param #OPSGROUP.Element element The element.
+--- @return #OPSGROUP.Ammo Ammo data.
 function OPSGROUP:GetAmmoElement(element)
   return self:GetAmmoUnit(element.unit)
 end
 
 --- Get total amount of ammunition of the whole group.
--- @param #OPSGROUP self
--- @return #OPSGROUP.Ammo Ammo data.
+--- @param #OPSGROUP self
+--- @return #OPSGROUP.Ammo Ammo data.
 function OPSGROUP:GetAmmoTot()
 
   local units=self.group:GetUnits()
@@ -12619,10 +12619,10 @@ function OPSGROUP:GetAmmoTot()
 end
 
 --- Get the number of shells a unit or group currently has. For a group the ammo count of all units is summed up.
--- @param #OPSGROUP self
--- @param Wrapper.Unit#UNIT unit The unit object.
--- @param #boolean display Display ammo table as message to all. Default false.
--- @return #OPSGROUP.Ammo Ammo data.
+--- @param #OPSGROUP self
+--- @param Wrapper.Unit#UNIT unit The unit object.
+--- @param #boolean display Display ammo table as message to all. Default false.
+--- @return #OPSGROUP.Ammo Ammo data.
 function OPSGROUP:GetAmmoUnit(unit, display)
 
   -- Default is display false.
@@ -12780,9 +12780,9 @@ function OPSGROUP:GetAmmoUnit(unit, display)
 end
 
 --- Returns a name of a missile category.
--- @param #OPSGROUP self
--- @param #number categorynumber Number of missile category from weapon missile category enumerator. See https://wiki.hoggitworld.com/view/DCS_Class_Weapon
--- @return #string Missile category name.
+--- @param #OPSGROUP self
+--- @param #number categorynumber Number of missile category from weapon missile category enumerator. See https://wiki.hoggitworld.com/view/DCS_Class_Weapon
+--- @return #string Missile category name.
 function OPSGROUP:_MissileCategoryName(categorynumber)
   local cat="unknown"
   if categorynumber==Weapon.MissileCategory.AAM then
@@ -12802,9 +12802,9 @@ function OPSGROUP:_MissileCategoryName(categorynumber)
 end
 
 --- Set passed final waypoint value.
--- @param #OPSGROUP self
--- @param #boolean final If `true`, final waypoint was passed.
--- @param #string comment Some comment as to why the final waypoint was passed.
+--- @param #OPSGROUP self
+--- @param #boolean final If `true`, final waypoint was passed.
+--- @param #string comment Some comment as to why the final waypoint was passed.
 function OPSGROUP:_PassedFinalWaypoint(final, comment)
 
   -- Debug info.
@@ -12820,9 +12820,9 @@ end
 
 
 --- Get coordinate from an object.
--- @param #OPSGROUP self
--- @param Wrapper.Object#OBJECT Object The object.
--- @return Core.Point#COORDINATE The coordinate of the object.
+--- @param #OPSGROUP self
+--- @param Wrapper.Object#OBJECT Object The object.
+--- @return Core.Point#COORDINATE The coordinate of the object.
 function OPSGROUP:_CoordinateFromObject(Object)
 
   if Object then
@@ -12845,9 +12845,9 @@ function OPSGROUP:_CoordinateFromObject(Object)
 end
 
 --- Check if a unit is an element of the flightgroup.
--- @param #OPSGROUP self
--- @param #string unitname Name of unit.
--- @return #boolean If true, unit is element of the flight group or false if otherwise.
+--- @param #OPSGROUP self
+--- @param #string unitname Name of unit.
+--- @return #boolean If true, unit is element of the flight group or false if otherwise.
 function OPSGROUP:_IsElement(unitname)
 
   for _,_element in pairs(self.elements) do
@@ -12863,9 +12863,9 @@ function OPSGROUP:_IsElement(unitname)
 end
 
 --- Count elements of the group.
--- @param #OPSGROUP self
--- @param #table States (Optional) Only count elements in specific states. Can also be a single state passed as #string.
--- @return #number Number of elements.
+--- @param #OPSGROUP self
+--- @param #table States (Optional) Only count elements in specific states. Can also be a single state passed as #string.
+--- @return #number Number of elements.
 function OPSGROUP:CountElements(States)
 
   if States then
@@ -12895,9 +12895,9 @@ function OPSGROUP:CountElements(States)
 end
 
 --- Add a unit/element to the OPS group.
--- @param #OPSGROUP self
--- @param #string unitname Name of unit.
--- @return #OPSGROUP.Element The element or nil.
+--- @param #OPSGROUP self
+--- @param #string unitname Name of unit.
+--- @return #OPSGROUP.Element The element or nil.
 function OPSGROUP:_AddElementByName(unitname)
 
   local unit=UNIT:FindByName(unitname)
@@ -13033,9 +13033,9 @@ function OPSGROUP:_AddElementByName(unitname)
 end
 
 --- Set the template of the group.
--- @param #OPSGROUP self
--- @param #table Template Template to set. Default is from the GROUP.
--- @return #OPSGROUP self
+--- @param #OPSGROUP self
+--- @param #table Template Template to set. Default is from the GROUP.
+--- @return #OPSGROUP self
 function OPSGROUP:_SetTemplate(Template)
 
   -- Set the template.
@@ -13048,9 +13048,9 @@ function OPSGROUP:_SetTemplate(Template)
 end
 
 --- Get the template of the group.
--- @param #OPSGROUP self
--- @param #boolean Copy Get a deep copy of the template.
--- @return #table Template table.
+--- @param #OPSGROUP self
+--- @param #boolean Copy Get a deep copy of the template.
+--- @return #table Template table.
 function OPSGROUP:_GetTemplate(Copy)
 
   if self.template then
@@ -13070,9 +13070,9 @@ function OPSGROUP:_GetTemplate(Copy)
 end
 
 --- Clear waypoints.
--- @param #OPSGROUP self
--- @param #number IndexMin Clear waypoints up to this min WP index. Default 1.
--- @param #number IndexMax Clear waypoints up to this max WP index. Default `#self.waypoints`.
+--- @param #OPSGROUP self
+--- @param #number IndexMin Clear waypoints up to this min WP index. Default 1.
+--- @param #number IndexMax Clear waypoints up to this max WP index. Default `#self.waypoints`.
 function OPSGROUP:ClearWaypoints(IndexMin, IndexMax)
 
   IndexMin=IndexMin or 1
@@ -13086,9 +13086,9 @@ function OPSGROUP:ClearWaypoints(IndexMin, IndexMax)
 end
 
 --- Get target group.
--- @param #OPSGROUP self
--- @return Wrapper.Group#GROUP Detected target group.
--- @return #number Distance to target.
+--- @param #OPSGROUP self
+--- @return Wrapper.Group#GROUP Detected target group.
+--- @return #number Distance to target.
 function OPSGROUP:_GetDetectedTarget()
 
   -- Target.

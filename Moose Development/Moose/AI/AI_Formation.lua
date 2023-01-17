@@ -25,18 +25,18 @@
 -- @image AI_Large_Formations.JPG
 
 --- AI_FORMATION class
--- @type AI_FORMATION
+--- @type AI_FORMATION
 -- @extends Core.Fsm#FSM_SET
--- @field Wrapper.Unit#UNIT FollowUnit
--- @field Core.Set#SET_GROUP FollowGroupSet
--- @field #string FollowName
--- @field #AI_FORMATION.MODE FollowMode The mode the escort is in.
--- @field Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
--- @field #number FollowDistance The current follow distance.
--- @field #boolean ReportTargets If true, nearby targets are reported.
--- @Field DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the FollowGroup.
--- @field DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the FollowGroup.
--- @field #number dtFollow Time step between position updates.
+--- @field Wrapper.Unit#UNIT FollowUnit
+--- @field Core.Set#SET_GROUP FollowGroupSet
+--- @field #string FollowName
+--- @field #AI_FORMATION.MODE FollowMode The mode the escort is in.
+--- @field Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
+--- @field #number FollowDistance The current follow distance.
+--- @field #boolean ReportTargets If true, nearby targets are reported.
+--- @field DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the FollowGroup.
+--- @field DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the FollowGroup.
+--- @field #number dtFollow Time step between position updates.
 
 
 --- Build large formations, make AI follow a @{Wrapper.Client#CLIENT} (player) leader or a @{Wrapper.Unit#UNIT} (AI) leader.
@@ -93,7 +93,7 @@
 -- LargeFormation:FormationCenterWing( 500, 50, 0, 250, 250 )
 -- LargeFormation:__Start( 1 )
 -- 
--- @field #AI_FORMATION 
+--- @field #AI_FORMATION 
 AI_FORMATION = {
   ClassName = "AI_FORMATION",
   FollowName = nil, -- The Follow Name
@@ -113,16 +113,16 @@ AI_FORMATION = {
 AI_FORMATION.__Enum = {}
 
 --- @type AI_FORMATION.__Enum.Formation
--- @field #number None
--- @field #number Line
--- @field #number Trail
--- @field #number Stack
--- @field #number LeftLine
--- @field #number RightLine
--- @field #number LeftWing
--- @field #number RightWing
--- @field #number Vic
--- @field #number Box
+--- @field #number None
+--- @field #number Line
+--- @field #number Trail
+--- @field #number Stack
+--- @field #number LeftLine
+--- @field #number RightLine
+--- @field #number LeftWing
+--- @field #number RightWing
+--- @field #number Vic
+--- @field #number Box
 AI_FORMATION.__Enum.Formation = {
   None = 0,
   Mission = 1,
@@ -138,8 +138,8 @@ AI_FORMATION.__Enum.Formation = {
 }
 
 --- @type AI_FORMATION.__Enum.Mode
--- @field #number Mission
--- @field #number Formation
+--- @field #number Mission
+--- @field #number Formation
 AI_FORMATION.__Enum.Mode = {
   Mission = "M",
   Formation = "F",
@@ -148,10 +148,10 @@ AI_FORMATION.__Enum.Mode = {
 }
 
 --- @type AI_FORMATION.__Enum.ReportType
--- @field #number All
--- @field #number Airborne
--- @field #number GroundRadar
--- @field #number Ground
+--- @field #number All
+--- @field #number Airborne
+--- @field #number GroundRadar
+--- @field #number Ground
 AI_FORMATION.__Enum.ReportType = {
   Airborne = "*",
   Airborne = "A",
@@ -162,19 +162,19 @@ AI_FORMATION.__Enum.ReportType = {
 
 
 --- MENUPARAM type
--- @type MENUPARAM
--- @field #AI_FORMATION ParamSelf
--- @field #number ParamDistance
--- @field #function ParamFunction
--- @field #string ParamMessage
+--- @type MENUPARAM
+--- @field #AI_FORMATION ParamSelf
+--- @field #number ParamDistance
+--- @field #function ParamFunction
+--- @field #string ParamMessage
 
 --- AI_FORMATION class constructor for an AI group
--- @param #AI_FORMATION self
--- @param Wrapper.Unit#UNIT FollowUnit The UNIT leading the FolllowGroupSet.
--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
--- @param #string FollowName Name of the escort.
--- @param #string FollowBriefing Briefing.
--- @return #AI_FORMATION self
+--- @param #AI_FORMATION self
+--- @param Wrapper.Unit#UNIT FollowUnit The UNIT leading the FolllowGroupSet.
+--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+--- @param #string FollowName Name of the escort.
+--- @param #string FollowBriefing Briefing.
+--- @return #AI_FORMATION self
 function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefing ) --R2.1
   local self = BASE:Inherit( self, FSM_SET:New( FollowGroupSet ) )
   self:F( { FollowUnit, FollowGroupSet, FollowName } )
@@ -680,9 +680,9 @@ end
 
 
 --- Set time interval between updates of the formation.
--- @param #AI_FORMATION self
--- @param #number dt Time step in seconds between formation updates. Default is every 0.5 seconds.
--- @return #AI_FORMATION
+--- @param #AI_FORMATION self
+--- @param #number dt Time step in seconds between formation updates. Default is every 0.5 seconds.
+--- @return #AI_FORMATION
 function AI_FORMATION:SetFollowTimeInterval(dt) --R2.1
   self.dtFollow=dt or 0.5
   return self
@@ -690,27 +690,27 @@ end
 
 --- This function is for test, it will put on the frequency of the FollowScheduler a red smoke at the direction vector calculated for the escort to fly to.
 -- This allows to visualize where the escort is flying to.
--- @param #AI_FORMATION self
--- @param #boolean SmokeDirection If true, then the direction vector will be smoked.
--- @return #AI_FORMATION
+--- @param #AI_FORMATION self
+--- @param #boolean SmokeDirection If true, then the direction vector will be smoked.
+--- @return #AI_FORMATION
 function AI_FORMATION:TestSmokeDirectionVector( SmokeDirection ) --R2.1
   self.SmokeDirectionVector = ( SmokeDirection == true ) and true or false
   return self
 end
 
 --- FormationLine Handler OnAfter for AI_FORMATION
--- @param #AI_FORMATION self
--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #number YStart The start position on the Y-axis in meters for the first group.
--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @param #number ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
--- @return #AI_FORMATION
+--- @param #AI_FORMATION self
+--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #number YStart The start position on the Y-axis in meters for the first group.
+--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+--- @param #number ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @return #AI_FORMATION
 function AI_FORMATION:onafterFormationLine( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace, Formation ) --R2.1
   self:F( { FollowGroupSet, From , Event ,To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace, Formation } )
 
@@ -746,15 +746,15 @@ function AI_FORMATION:onafterFormationLine( FollowGroupSet, From , Event , To, X
 end
 
 --- FormationTrail Handler OnAfter for AI_FORMATION
--- @param #AI_FORMATION self
--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #number YStart The start position on the Y-axis in meters for the first group.
--- @return #AI_FORMATION
+--- @param #AI_FORMATION self
+--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #number YStart The start position on the Y-axis in meters for the first group.
+--- @return #AI_FORMATION
 function AI_FORMATION:onafterFormationTrail( FollowGroupSet, From , Event , To, XStart, XSpace, YStart ) --R2.1
 
   self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,0,0,0, self.__Enum.Formation.Trail )
@@ -764,16 +764,16 @@ end
 
 
 --- FormationStack Handler OnAfter for AI_FORMATION
--- @param #AI_FORMATION self
--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #number YStart The start position on the Y-axis in meters for the first group.
--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @return #AI_FORMATION
+--- @param #AI_FORMATION self
+--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #number YStart The start position on the Y-axis in meters for the first group.
+--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+--- @return #AI_FORMATION
 function AI_FORMATION:onafterFormationStack( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, YSpace ) --R2.1
 
   self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,YSpace,0,0, self.__Enum.Formation.Stack )
@@ -785,16 +785,16 @@ end
 
 
 --- FormationLeftLine Handler OnAfter for AI_FORMATION
--- @param #AI_FORMATION self
--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number YStart The start position on the Y-axis in meters for the first group.
--- @param #number ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
--- @return #AI_FORMATION
+--- @param #AI_FORMATION self
+--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number YStart The start position on the Y-axis in meters for the first group.
+--- @param #number ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @return #AI_FORMATION
 function AI_FORMATION:onafterFormationLeftLine( FollowGroupSet, From , Event , To, XStart, YStart, ZStart, ZSpace ) --R2.1
 
   self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,0,YStart,0,-ZStart,-ZSpace, self.__Enum.Formation.LeftLine )
@@ -804,16 +804,16 @@ end
 
 
 --- FormationRightLine Handler OnAfter for AI_FORMATION
--- @param #AI_FORMATION self
--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number YStart The start position on the Y-axis in meters for the first group.
--- @param #number ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
--- @return #AI_FORMATION
+--- @param #AI_FORMATION self
+--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number YStart The start position on the Y-axis in meters for the first group.
+--- @param #number ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @return #AI_FORMATION
 function AI_FORMATION:onafterFormationRightLine( FollowGroupSet, From , Event , To, XStart, YStart, ZStart, ZSpace ) --R2.1
 
   self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,0,YStart,0,ZStart,ZSpace,self.__Enum.Formation.RightLine)
@@ -823,16 +823,16 @@ end
 
 
 --- FormationLeftWing Handler OnAfter for AI_FORMATION
--- @param #AI_FORMATION self
--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #number YStart The start position on the Y-axis in meters for the first group.
--- @param #number ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @param #AI_FORMATION self
+--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #number YStart The start position on the Y-axis in meters for the first group.
+--- @param #number ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 function AI_FORMATION:onafterFormationLeftWing( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, ZStart, ZSpace ) --R2.1
 
   self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,0,-ZStart,-ZSpace,self.__Enum.Formation.LeftWing)
@@ -843,16 +843,16 @@ end
 
 --- FormationRightWing Handler OnAfter for AI_FORMATION
 -- @function [parent=#AI_FORMATION] OnAfterFormationRightWing
--- @param #AI_FORMATION self
--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #number YStart The start position on the Y-axis in meters for the first group.
--- @param #number ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @param #AI_FORMATION self
+--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #number YStart The start position on the Y-axis in meters for the first group.
+--- @param #number ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 function AI_FORMATION:onafterFormationRightWing( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, ZStart, ZSpace ) --R2.1
 
   self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,0,ZStart,ZSpace,self.__Enum.Formation.RightWing)
@@ -862,17 +862,17 @@ end
 
 
 --- FormationCenterWing Handler OnAfter for AI_FORMATION
--- @param #AI_FORMATION self
--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #number YStart The start position on the Y-axis in meters for the first group.
--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @param #number ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @param #AI_FORMATION self
+--- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #number YStart The start position on the Y-axis in meters for the first group.
+--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+--- @param #number ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 function AI_FORMATION:onafterFormationCenterWing( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace ) --R2.1
 
   local FollowSet = FollowGroupSet:GetSet()
@@ -901,17 +901,17 @@ end
 
 
 --- FormationVic Handle for AI_FORMATION
--- @param #AI_FORMATION self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #number YStart The start position on the Y-axis in meters for the first group.
--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @param #number ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
--- @return #AI_FORMATION
+--- @param #AI_FORMATION self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #number YStart The start position on the Y-axis in meters for the first group.
+--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+--- @param #number ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @return #AI_FORMATION
 function AI_FORMATION:onafterFormationVic( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace ) --R2.1
 
   self:onafterFormationCenterWing(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,YSpace,ZStart,ZSpace)
@@ -920,18 +920,18 @@ function AI_FORMATION:onafterFormationVic( FollowGroupSet, From , Event , To, XS
 end
 
 --- FormationBox Handler OnAfter for AI_FORMATION
--- @param #AI_FORMATION self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #number YStart The start position on the Y-axis in meters for the first group.
--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @param #number ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
--- @param #number ZLevels The amount of levels on the Z-axis.
--- @return #AI_FORMATION
+--- @param #AI_FORMATION self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #number YStart The start position on the Y-axis in meters for the first group.
+--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+--- @param #number ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @param #number ZLevels The amount of levels on the Z-axis.
+--- @return #AI_FORMATION
 function AI_FORMATION:onafterFormationBox( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace, ZLevels ) --R2.1
 
   local FollowSet = FollowGroupSet:GetSet()
@@ -961,9 +961,9 @@ end
 
 
 --- Use the method @{AI.AI_Formation#AI_FORMATION.SetFlightRandomization}() to make the air units in your formation randomize their flight a bit while in formation.
--- @param #AI_FORMATION self
--- @param #number FlightRandomization The formation flying errors that pilots can make while in formation. Is a range set in meters.
--- @return #AI_FORMATION
+--- @param #AI_FORMATION self
+--- @param #number FlightRandomization The formation flying errors that pilots can make while in formation. Is a range set in meters.
+--- @return #AI_FORMATION
 function AI_FORMATION:SetFlightRandomization( FlightRandomization ) --R2.1
 
   self.FlightRandomization = FlightRandomization
@@ -973,9 +973,9 @@ end
 
 
 --- Gets your escorts to flight mode.
--- @param #AI_FORMATION self
--- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
--- @return #AI_FORMATION
+--- @param #AI_FORMATION self
+--- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
+--- @return #AI_FORMATION
 function AI_FORMATION:GetFlightMode( FollowGroup )
 
   if FollowGroup then
@@ -990,9 +990,9 @@ end
 
 
 --- This sets your escorts to fly a mission.
--- @param #AI_FORMATION self
--- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
--- @return #AI_FORMATION
+--- @param #AI_FORMATION self
+--- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
+--- @return #AI_FORMATION
 function AI_FORMATION:SetFlightModeMission( FollowGroup )
 
   if FollowGroup then
@@ -1014,9 +1014,9 @@ end
 
 
 --- This sets your escorts to execute an attack.
--- @param #AI_FORMATION self
--- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
--- @return #AI_FORMATION
+--- @param #AI_FORMATION self
+--- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
+--- @return #AI_FORMATION
 function AI_FORMATION:SetFlightModeAttack( FollowGroup )
 
   if FollowGroup then
@@ -1038,9 +1038,9 @@ end
 
 
 --- This sets your escorts to fly in a formation.
--- @param #AI_FORMATION self
--- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
--- @return #AI_FORMATION
+--- @param #AI_FORMATION self
+--- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
+--- @return #AI_FORMATION
 function AI_FORMATION:SetFlightModeFormation( FollowGroup )
 
   if FollowGroup then
@@ -1063,21 +1063,21 @@ end
 
 
 --- Stop function. Formation will not be updated any more.
--- @param #AI_FORMATION self
--- @param Core.Set#SET_GROUP FollowGroupSet The following set of groups.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To The to state.
+--- @param #AI_FORMATION self
+--- @param Core.Set#SET_GROUP FollowGroupSet The following set of groups.
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To The to state.
 function AI_FORMATION:onafterStop(FollowGroupSet, From, Event, To) --R2.1
   self:E("Stopping formation.")
 end
 
 --- Follow event fuction. Check if coming from state "stopped". If so the transition is rejected.
--- @param #AI_FORMATION self
--- @param Core.Set#SET_GROUP FollowGroupSet The following set of groups.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To The to state.
+--- @param #AI_FORMATION self
+--- @param Core.Set#SET_GROUP FollowGroupSet The following set of groups.
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To The to state.
 function AI_FORMATION:onbeforeFollow( FollowGroupSet, From, Event, To ) --R2.1
   if From=="Stopped" then
     return false  -- Deny transition.
@@ -1086,11 +1086,11 @@ function AI_FORMATION:onbeforeFollow( FollowGroupSet, From, Event, To ) --R2.1
 end
 
 --- Enter following state.
--- @param #AI_FORMATION self
--- @param Core.Set#SET_GROUP FollowGroupSet The following set of groups.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To The to state.
+--- @param #AI_FORMATION self
+--- @param Core.Set#SET_GROUP FollowGroupSet The following set of groups.
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To The to state.
 function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
 
   if self.FollowUnit:IsAlive() then
@@ -1131,13 +1131,13 @@ end
 
 
 --- Follow me.
--- @param #AI_FORMATION self
--- @param Wrapper.Group#GROUP FollowGroup Follow group.
--- @param Wrapper.Unit#UNIT ClientUnit Client Unit.
--- @param DCS#Time CT1 Time
--- @param DCS#Vec3 CV1 Vec3
--- @param DCS#Time CT2 Time
--- @param DCS#Vec3 CV2 Vec3
+--- @param #AI_FORMATION self
+--- @param Wrapper.Group#GROUP FollowGroup Follow group.
+--- @param Wrapper.Unit#UNIT ClientUnit Client Unit.
+--- @param DCS#Time CT1 Time
+--- @param DCS#Vec3 CV1 Vec3
+--- @param DCS#Time CT2 Time
+--- @param DCS#Vec3 CV2 Vec3
 function AI_FORMATION:FollowMe(FollowGroup, ClientUnit, CT1, CV1, CT2, CV2)
 
   if FollowGroup:GetState( FollowGroup, "Mode" ) == self.__Enum.Mode.Formation and not self:Is("Stopped") then

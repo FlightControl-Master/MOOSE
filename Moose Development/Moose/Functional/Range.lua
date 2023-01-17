@@ -52,60 +52,60 @@
 -- @image Range.JPG
 
 --- RANGE class
--- @type RANGE
--- @field #string ClassName Name of the Class.
--- @field #boolean Debug If true, debug info is sent as messages on the screen.
--- @field #boolean verbose Verbosity level. Higher means more output to DCS log file.
--- @field #string id String id of range for output in DCS log.
--- @field #string rangename Name of the range.
--- @field Core.Point#COORDINATE location Coordinate of the range location.
--- @field #number rangeradius Radius of range defining its total size for e.g. smoking bomb impact points and sending radio messages. Default 5 km.
--- @field Core.Zone#ZONE rangezone MOOSE zone object of the range. For example, no bomb impacts are smoked if bombs fall outside of the range zone.
--- @field #table strafeTargets Table of strafing targets.
--- @field #table bombingTargets Table of targets to bomb.
--- @field #number nbombtargets Number of bombing targets.
--- @field #number nstrafetargets Number of strafing targets.
--- @field #boolean messages Globally enable/disable all messages to players.
--- @field #table MenuAddedTo Table for monitoring which players already got an F10 menu.
--- @field #table planes Table for administration.
--- @field #table strafeStatus Table containing the current strafing target a player as assigned to.
--- @field #table strafePlayerResults Table containing the strafing results of each player.
--- @field #table bombPlayerResults Table containing the bombing results of each player.
--- @field #table PlayerSettings Individual player settings.
--- @field #number dtBombtrack Time step [sec] used for tracking released bomb/rocket positions. Default 0.005 seconds.
--- @field #number BombtrackThreshold Bombs/rockets/missiles are only tracked if player-range distance is smaller than this threshold [m]. Default 25000 m.
--- @field #number Tmsg Time [sec] messages to players are displayed. Default 30 sec.
--- @field #string examinergroupname Name of the examiner group which should get all messages.
--- @field #boolean examinerexclusive If true, only the examiner gets messages. If false, clients and examiner get messages.
--- @field #number strafemaxalt Maximum altitude in meters AGL for registering for a strafe run. Default is 914 m = 3000 ft.
--- @field #number ndisplayresult Number of (player) results that a displayed. Default is 10.
--- @field Utilities.Utils#SMOKECOLOR BombSmokeColor Color id used for smoking bomb targets.
--- @field Utilities.Utils#SMOKECOLOR StrafeSmokeColor Color id used to smoke strafe targets.
--- @field Utilities.Utils#SMOKECOLOR StrafePitSmokeColor Color id used to smoke strafe pit approach boxes.
--- @field #number illuminationminalt Minimum altitude in meters AGL at which illumination bombs are fired. Default is 500 m.
--- @field #number illuminationmaxalt Maximum altitude in meters AGL at which illumination bombs are fired. Default is 1000 m.
--- @field #number scorebombdistance Distance from closest target up to which bomb hits are counted. Default 1000 m.
--- @field #number TdelaySmoke Time delay in seconds between impact of bomb and starting the smoke. Default 3 seconds.
--- @field #boolean eventmoose If true, events are handled by MOOSE. If false, events are handled directly by DCS eventhandler. Default true.
--- @field #boolean trackbombs If true (default), all bomb types are tracked and impact point to closest bombing target is evaluated.
--- @field #boolean trackrockets If true (default), all rocket types are tracked and impact point to closest bombing target is evaluated.
--- @field #boolean trackmissiles If true (default), all missile types are tracked and impact point to closest bombing target is evaluated.
--- @field #boolean defaultsmokebomb If true, initialize player settings to smoke bomb.
--- @field #boolean autosave If true, automatically save results every X seconds.
--- @field #number instructorfreq Frequency on which the range control transmitts.
--- @field Sound.RadioQueue#RADIOQUEUE instructor Instructor radio queue.
--- @field #number rangecontrolfreq Frequency on which the range control transmitts.
--- @field Sound.RadioQueue#RADIOQUEUE rangecontrol Range control radio queue.
--- @field #string rangecontrolrelayname Name of relay unit.
--- @field #string instructorrelayname Name of relay unit.
--- @field #string soundpath Path inside miz file where the sound files are located. Default is "Range Soundfiles/".
--- @field #boolean targetsheet If true, players can save their target sheets. Rangeboss will not work if targetsheets do not save.
--- @field #string targetpath Path where to save the target sheets.
--- @field #string targetprefix File prefix for target sheet files.
--- @field Sound.SRS#MSRS controlmsrs
--- @field Sound.SRS#MSRSQUEUE controlsrsQ
--- @field Sound.SRS#MSRS instructmsrs
--- @field Sound.SRS#MSRSQUEUE instructsrsQ
+--- @type RANGE
+--- @field #string ClassName Name of the Class.
+--- @field #boolean Debug If true, debug info is sent as messages on the screen.
+--- @field #boolean verbose Verbosity level. Higher means more output to DCS log file.
+--- @field #string id String id of range for output in DCS log.
+--- @field #string rangename Name of the range.
+--- @field Core.Point#COORDINATE location Coordinate of the range location.
+--- @field #number rangeradius Radius of range defining its total size for e.g. smoking bomb impact points and sending radio messages. Default 5 km.
+--- @field Core.Zone#ZONE rangezone MOOSE zone object of the range. For example, no bomb impacts are smoked if bombs fall outside of the range zone.
+--- @field #table strafeTargets Table of strafing targets.
+--- @field #table bombingTargets Table of targets to bomb.
+--- @field #number nbombtargets Number of bombing targets.
+--- @field #number nstrafetargets Number of strafing targets.
+--- @field #boolean messages Globally enable/disable all messages to players.
+--- @field #table MenuAddedTo Table for monitoring which players already got an F10 menu.
+--- @field #table planes Table for administration.
+--- @field #table strafeStatus Table containing the current strafing target a player as assigned to.
+--- @field #table strafePlayerResults Table containing the strafing results of each player.
+--- @field #table bombPlayerResults Table containing the bombing results of each player.
+--- @field #table PlayerSettings Individual player settings.
+--- @field #number dtBombtrack Time step [sec] used for tracking released bomb/rocket positions. Default 0.005 seconds.
+--- @field #number BombtrackThreshold Bombs/rockets/missiles are only tracked if player-range distance is smaller than this threshold [m]. Default 25000 m.
+--- @field #number Tmsg Time [sec] messages to players are displayed. Default 30 sec.
+--- @field #string examinergroupname Name of the examiner group which should get all messages.
+--- @field #boolean examinerexclusive If true, only the examiner gets messages. If false, clients and examiner get messages.
+--- @field #number strafemaxalt Maximum altitude in meters AGL for registering for a strafe run. Default is 914 m = 3000 ft.
+--- @field #number ndisplayresult Number of (player) results that a displayed. Default is 10.
+--- @field Utilities.Utils#SMOKECOLOR BombSmokeColor Color id used for smoking bomb targets.
+--- @field Utilities.Utils#SMOKECOLOR StrafeSmokeColor Color id used to smoke strafe targets.
+--- @field Utilities.Utils#SMOKECOLOR StrafePitSmokeColor Color id used to smoke strafe pit approach boxes.
+--- @field #number illuminationminalt Minimum altitude in meters AGL at which illumination bombs are fired. Default is 500 m.
+--- @field #number illuminationmaxalt Maximum altitude in meters AGL at which illumination bombs are fired. Default is 1000 m.
+--- @field #number scorebombdistance Distance from closest target up to which bomb hits are counted. Default 1000 m.
+--- @field #number TdelaySmoke Time delay in seconds between impact of bomb and starting the smoke. Default 3 seconds.
+--- @field #boolean eventmoose If true, events are handled by MOOSE. If false, events are handled directly by DCS eventhandler. Default true.
+--- @field #boolean trackbombs If true (default), all bomb types are tracked and impact point to closest bombing target is evaluated.
+--- @field #boolean trackrockets If true (default), all rocket types are tracked and impact point to closest bombing target is evaluated.
+--- @field #boolean trackmissiles If true (default), all missile types are tracked and impact point to closest bombing target is evaluated.
+--- @field #boolean defaultsmokebomb If true, initialize player settings to smoke bomb.
+--- @field #boolean autosave If true, automatically save results every X seconds.
+--- @field #number instructorfreq Frequency on which the range control transmitts.
+--- @field Sound.RadioQueue#RADIOQUEUE instructor Instructor radio queue.
+--- @field #number rangecontrolfreq Frequency on which the range control transmitts.
+--- @field Sound.RadioQueue#RADIOQUEUE rangecontrol Range control radio queue.
+--- @field #string rangecontrolrelayname Name of relay unit.
+--- @field #string instructorrelayname Name of relay unit.
+--- @field #string soundpath Path inside miz file where the sound files are located. Default is "Range Soundfiles/".
+--- @field #boolean targetsheet If true, players can save their target sheets. Rangeboss will not work if targetsheets do not save.
+--- @field #string targetpath Path where to save the target sheets.
+--- @field #string targetprefix File prefix for target sheet files.
+--- @field Sound.SRS#MSRS controlmsrs
+--- @field Sound.SRS#MSRSQUEUE controlsrsQ
+--- @field Sound.SRS#MSRS instructmsrs
+--- @field Sound.SRS#MSRSQUEUE instructsrsQ
 -- @extends Core.Fsm#FSM
 
 --- *Don't only practice your art, but force your way into its secrets; art deserves that, for it and knowledge can raise man to the Divine.* - Ludwig van Beethoven
@@ -308,7 +308,7 @@
 -- Note that it can happen that the RANGE radio menu is not shown. Check that the range object is defined as a **global** variable rather than a local one.
 -- The could avoid the lua garbage collection to accidentally/falsely deallocate the RANGE objects.
 --
--- @field #RANGE
+--- @field #RANGE
 RANGE = {
   ClassName = "RANGE",
   Debug = false,
@@ -376,10 +376,10 @@ RANGE.Defaults = {
 }
 
 --- Target type, i.e. unit, static, or coordinate.
--- @type RANGE.TargetType
--- @field #string UNIT Target is a unit.
--- @field #string STATIC Target is a static.
--- @field #string COORD Target is a coordinate.
+--- @type RANGE.TargetType
+--- @field #string UNIT Target is a unit.
+--- @field #string STATIC Target is a static.
+--- @field #string COORD Target is a coordinate.
 RANGE.TargetType = {
   UNIT = "Unit",
   STATIC = "Static",
@@ -387,136 +387,136 @@ RANGE.TargetType = {
 }
 
 --- Player settings.
--- @type RANGE.PlayerData
--- @field #boolean smokebombimpact Smoke bomb impact points.
--- @field #boolean flaredirecthits Flare when player directly hits a target.
--- @field #number smokecolor Color of smoke.
--- @field #number flarecolor Color of flares.
--- @field #boolean messages Display info messages.
--- @field Wrapper.Client#CLIENT client Client object of player.
--- @field #string unitname Name of player aircraft unit.
--- @field #string playername Name of player.
--- @field #string airframe Aircraft type name.
--- @field #boolean inzone If true, player is inside the range zone.
+--- @type RANGE.PlayerData
+--- @field #boolean smokebombimpact Smoke bomb impact points.
+--- @field #boolean flaredirecthits Flare when player directly hits a target.
+--- @field #number smokecolor Color of smoke.
+--- @field #number flarecolor Color of flares.
+--- @field #boolean messages Display info messages.
+--- @field Wrapper.Client#CLIENT client Client object of player.
+--- @field #string unitname Name of player aircraft unit.
+--- @field #string playername Name of player.
+--- @field #string airframe Aircraft type name.
+--- @field #boolean inzone If true, player is inside the range zone.
 
 --- Bomb target data.
--- @type RANGE.BombTarget
--- @field #string name Name of unit.
--- @field Wrapper.Unit#UNIT target Target unit.
--- @field Core.Point#COORDINATE coordinate Coordinate of the target.
--- @field #number goodhitrange Range in meters for a good hit.
--- @field #boolean move If true, unit move randomly.
--- @field #number speed Speed of unit.
--- @field #RANGE.TargetType type Type of target.
+--- @type RANGE.BombTarget
+--- @field #string name Name of unit.
+--- @field Wrapper.Unit#UNIT target Target unit.
+--- @field Core.Point#COORDINATE coordinate Coordinate of the target.
+--- @field #number goodhitrange Range in meters for a good hit.
+--- @field #boolean move If true, unit move randomly.
+--- @field #number speed Speed of unit.
+--- @field #RANGE.TargetType type Type of target.
 
 --- Strafe target data.
--- @type RANGE.StrafeTarget
--- @field #string name Name of the unit.
--- @field Core.Zone#ZONE_POLYGON polygon Polygon zone.
--- @field Core.Point#COORDINATE coordinate Center coordinate of the pit.
--- @field #number goodPass Number of hits for a good pass.
--- @field #table targets Table of target units.
--- @field #number foulline Foul line
--- @field #number smokepoints Number of smoke points.
--- @field #number heading Heading of pit.
+--- @type RANGE.StrafeTarget
+--- @field #string name Name of the unit.
+--- @field Core.Zone#ZONE_POLYGON polygon Polygon zone.
+--- @field Core.Point#COORDINATE coordinate Center coordinate of the pit.
+--- @field #number goodPass Number of hits for a good pass.
+--- @field #table targets Table of target units.
+--- @field #number foulline Foul line
+--- @field #number smokepoints Number of smoke points.
+--- @field #number heading Heading of pit.
 
 --- Strafe status for player.
--- @type RANGE.StrafeStatus
--- @field #number hits Number of hits on target.
--- @field #number time Number of times.
--- @field #number ammo Amount of ammo.
--- @field #boolean pastfoulline If `true`, player passed foul line. Invalid pass.
--- @field #RANGE.StrafeTarget zone Strafe target.
+--- @type RANGE.StrafeStatus
+--- @field #number hits Number of hits on target.
+--- @field #number time Number of times.
+--- @field #number ammo Amount of ammo.
+--- @field #boolean pastfoulline If `true`, player passed foul line. Invalid pass.
+--- @field #RANGE.StrafeTarget zone Strafe target.
 
 --- Bomb target result.
--- @type RANGE.BombResult
--- @field #string name Name of closest target.
--- @field #number distance Distance in meters.
--- @field #number radial Radial in degrees.
--- @field #string weapon Name of the weapon.
--- @field #string quality Hit quality.
--- @field #string player Player name.
--- @field #string airframe Aircraft type of player.
--- @field #number time Time via timer.getAbsTime() in seconds of impact.
--- @field #string date OS date.
--- @field #number attackHdg Attack heading in degrees.
--- @field #number attackVel Attack velocity in knots.
--- @field #number attackAlt Attack altitude in feet.
--- @field #string clock Time of the run.
--- @field #string rangename Name of the range.
+--- @type RANGE.BombResult
+--- @field #string name Name of closest target.
+--- @field #number distance Distance in meters.
+--- @field #number radial Radial in degrees.
+--- @field #string weapon Name of the weapon.
+--- @field #string quality Hit quality.
+--- @field #string player Player name.
+--- @field #string airframe Aircraft type of player.
+--- @field #number time Time via timer.getAbsTime() in seconds of impact.
+--- @field #string date OS date.
+--- @field #number attackHdg Attack heading in degrees.
+--- @field #number attackVel Attack velocity in knots.
+--- @field #number attackAlt Attack altitude in feet.
+--- @field #string clock Time of the run.
+--- @field #string rangename Name of the range.
 
 --- Strafe result.
--- @type RANGE.StrafeResult
--- @field #string player Player name.
--- @field #string airframe Aircraft type of player.
--- @field #number time Time via timer.getAbsTime() in seconds of impact.
--- @field #string date OS date.
--- @field #string name Name of the target pit.
--- @field #number roundsFired Number of rounds fired.
--- @field #number roundsHit Number of rounds that hit the target.
--- @field #number strafeAccuracy Accuracy of the run in percent.
--- @field #string clock Time of the run.
--- @field #string rangename Name of the range.
--- @field #boolean invalid Invalid pass.
+--- @type RANGE.StrafeResult
+--- @field #string player Player name.
+--- @field #string airframe Aircraft type of player.
+--- @field #number time Time via timer.getAbsTime() in seconds of impact.
+--- @field #string date OS date.
+--- @field #string name Name of the target pit.
+--- @field #number roundsFired Number of rounds fired.
+--- @field #number roundsHit Number of rounds that hit the target.
+--- @field #number strafeAccuracy Accuracy of the run in percent.
+--- @field #string clock Time of the run.
+--- @field #string rangename Name of the range.
+--- @field #boolean invalid Invalid pass.
 
 --- Strafe result.
--- @type RANGE.StrafeResult
--- @field #string player Player name.
--- @field #string airframe Aircraft type of player.
--- @field #number time Time via timer.getAbsTime() in seconds of impact.
--- @field #string date OS date.
+--- @type RANGE.StrafeResult
+--- @field #string player Player name.
+--- @field #string airframe Aircraft type of player.
+--- @field #number time Time via timer.getAbsTime() in seconds of impact.
+--- @field #string date OS date.
 
 --- Sound file data.
--- @type RANGE.Soundfile
--- @field #string filename Name of the file
--- @field #number duration Duration in seconds.
+--- @type RANGE.Soundfile
+--- @field #string filename Name of the file
+--- @field #number duration Duration in seconds.
 
 --- Sound files.
--- @type RANGE.Sound
--- @field #RANGE.Soundfile RC0
--- @field #RANGE.Soundfile RC1
--- @field #RANGE.Soundfile RC2
--- @field #RANGE.Soundfile RC3
--- @field #RANGE.Soundfile RC4
--- @field #RANGE.Soundfile RC5
--- @field #RANGE.Soundfile RC6
--- @field #RANGE.Soundfile RC7
--- @field #RANGE.Soundfile RC8
--- @field #RANGE.Soundfile RC9
--- @field #RANGE.Soundfile RCAccuracy
--- @field #RANGE.Soundfile RCDegrees
--- @field #RANGE.Soundfile RCExcellentHit
--- @field #RANGE.Soundfile RCExcellentPass
--- @field #RANGE.Soundfile RCFeet
--- @field #RANGE.Soundfile RCFor
--- @field #RANGE.Soundfile RCGoodHit
--- @field #RANGE.Soundfile RCGoodPass
--- @field #RANGE.Soundfile RCHitsOnTarget
--- @field #RANGE.Soundfile RCImpact
--- @field #RANGE.Soundfile RCIneffectiveHit
--- @field #RANGE.Soundfile RCIneffectivePass
--- @field #RANGE.Soundfile RCInvalidHit
--- @field #RANGE.Soundfile RCLeftStrafePitTooQuickly
--- @field #RANGE.Soundfile RCPercent
--- @field #RANGE.Soundfile RCPoorHit
--- @field #RANGE.Soundfile RCPoorPass
--- @field #RANGE.Soundfile RCRollingInOnStrafeTarget
--- @field #RANGE.Soundfile RCTotalRoundsFired
--- @field #RANGE.Soundfile RCWeaponImpactedTooFar
--- @field #RANGE.Soundfile IR0
--- @field #RANGE.Soundfile IR1
--- @field #RANGE.Soundfile IR2
--- @field #RANGE.Soundfile IR3
--- @field #RANGE.Soundfile IR4
--- @field #RANGE.Soundfile IR5
--- @field #RANGE.Soundfile IR6
--- @field #RANGE.Soundfile IR7
--- @field #RANGE.Soundfile IR8
--- @field #RANGE.Soundfile IR9
--- @field #RANGE.Soundfile IRDecimal
--- @field #RANGE.Soundfile IRMegaHertz
--- @field #RANGE.Soundfile IREnterRange
--- @field #RANGE.Soundfile IRExitRange
+--- @type RANGE.Sound
+--- @field #RANGE.Soundfile RC0
+--- @field #RANGE.Soundfile RC1
+--- @field #RANGE.Soundfile RC2
+--- @field #RANGE.Soundfile RC3
+--- @field #RANGE.Soundfile RC4
+--- @field #RANGE.Soundfile RC5
+--- @field #RANGE.Soundfile RC6
+--- @field #RANGE.Soundfile RC7
+--- @field #RANGE.Soundfile RC8
+--- @field #RANGE.Soundfile RC9
+--- @field #RANGE.Soundfile RCAccuracy
+--- @field #RANGE.Soundfile RCDegrees
+--- @field #RANGE.Soundfile RCExcellentHit
+--- @field #RANGE.Soundfile RCExcellentPass
+--- @field #RANGE.Soundfile RCFeet
+--- @field #RANGE.Soundfile RCFor
+--- @field #RANGE.Soundfile RCGoodHit
+--- @field #RANGE.Soundfile RCGoodPass
+--- @field #RANGE.Soundfile RCHitsOnTarget
+--- @field #RANGE.Soundfile RCImpact
+--- @field #RANGE.Soundfile RCIneffectiveHit
+--- @field #RANGE.Soundfile RCIneffectivePass
+--- @field #RANGE.Soundfile RCInvalidHit
+--- @field #RANGE.Soundfile RCLeftStrafePitTooQuickly
+--- @field #RANGE.Soundfile RCPercent
+--- @field #RANGE.Soundfile RCPoorHit
+--- @field #RANGE.Soundfile RCPoorPass
+--- @field #RANGE.Soundfile RCRollingInOnStrafeTarget
+--- @field #RANGE.Soundfile RCTotalRoundsFired
+--- @field #RANGE.Soundfile RCWeaponImpactedTooFar
+--- @field #RANGE.Soundfile IR0
+--- @field #RANGE.Soundfile IR1
+--- @field #RANGE.Soundfile IR2
+--- @field #RANGE.Soundfile IR3
+--- @field #RANGE.Soundfile IR4
+--- @field #RANGE.Soundfile IR5
+--- @field #RANGE.Soundfile IR6
+--- @field #RANGE.Soundfile IR7
+--- @field #RANGE.Soundfile IR8
+--- @field #RANGE.Soundfile IR9
+--- @field #RANGE.Soundfile IRDecimal
+--- @field #RANGE.Soundfile IRMegaHertz
+--- @field #RANGE.Soundfile IREnterRange
+--- @field #RANGE.Soundfile IRExitRange
 RANGE.Sound = {
   RC0 = { filename = "RC-0.ogg", duration = 0.60 },
   RC1 = { filename = "RC-1.ogg", duration = 0.47 },
@@ -565,19 +565,19 @@ RANGE.Sound = {
 }
 
 --- Global list of all defined range names.
--- @field #table Names
+--- @field #table Names
 RANGE.Names = {}
 
 --- Main radio menu on group level.
--- @field #table MenuF10 Root menu table on group level.
+--- @field #table MenuF10 Root menu table on group level.
 RANGE.MenuF10 = {}
 
 --- Main radio menu on mission level.
--- @field #table MenuF10Root Root menu on mission level.
+--- @field #table MenuF10Root Root menu on mission level.
 RANGE.MenuF10Root = nil
 
 --- Range script version.
--- @field #string version
+--- @field #string version
 RANGE.version = "2.5.0"
 
 -- TODO list:
@@ -597,9 +597,9 @@ RANGE.version = "2.5.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- RANGE contructor. Creates a new RANGE object.
--- @param #RANGE self
--- @param #string RangeName Name of the range. Has to be unique. Will we used to create F10 menu items etc.
--- @return #RANGE RANGE object.
+--- @param #RANGE self
+--- @param #string RangeName Name of the range. Has to be unique. Will we used to create F10 menu items etc.
+--- @return #RANGE RANGE object.
 function RANGE:New( RangeName )
 
   -- Inherit BASE.
@@ -761,10 +761,10 @@ function RANGE:New( RangeName )
 end
 
 --- Initializes number of targets and location of the range. Starts the event handlers.
--- @param #RANGE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #RANGE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function RANGE:onafterStart()
 
   -- Location/coordinate of range.
@@ -920,53 +920,53 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set maximal strafing altitude. Player entering a strafe pit above that altitude are not registered for a valid pass.
--- @param #RANGE self
--- @param #number maxalt Maximum altitude in meters AGL. Default is 914 m = 3000 ft.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #number maxalt Maximum altitude in meters AGL. Default is 914 m = 3000 ft.
+--- @return #RANGE self
 function RANGE:SetMaxStrafeAlt( maxalt )
   self.strafemaxalt = maxalt or RANGE.Defaults.strafemaxalt
   return self
 end
 
 --- Set time interval for tracking bombs. A smaller time step increases accuracy but needs more CPU time.
--- @param #RANGE self
--- @param #number dt Time interval in seconds. Default is 0.005 s.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #number dt Time interval in seconds. Default is 0.005 s.
+--- @return #RANGE self
 function RANGE:SetBombtrackTimestep( dt )
   self.dtBombtrack = dt or RANGE.Defaults.dtBombtrack
   return self
 end
 
 --- Set time how long (most) messages are displayed.
--- @param #RANGE self
--- @param #number time Time in seconds. Default is 30 s.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #number time Time in seconds. Default is 30 s.
+--- @return #RANGE self
 function RANGE:SetMessageTimeDuration( time )
   self.Tmsg = time or RANGE.Defaults.Tmsg
   return self
 end
 
 --- Automatically save player results to disc.
--- @param #RANGE self
--- @return #RANGE self
+--- @param #RANGE self
+--- @return #RANGE self
 function RANGE:SetAutosaveOn()
   self.autosave = true
   return self
 end
 
 --- Switch off auto save player results.
--- @param #RANGE self
--- @return #RANGE self
+--- @param #RANGE self
+--- @return #RANGE self
 function RANGE:SetAutosaveOff()
   self.autosave = false
   return self
 end
 
 --- Enable saving of player's target sheets and specify an optional directory path.
--- @param #RANGE self
--- @param #string path (Optional) Path where to save the target sheets.
--- @param #string prefix (Optional) Prefix for target sheet files. File name will be saved as *prefix_aircrafttype-0001.csv*, *prefix_aircrafttype-0002.csv*, etc.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #string path (Optional) Path where to save the target sheets.
+--- @param #string prefix (Optional) Prefix for target sheet files. File name will be saved as *prefix_aircrafttype-0001.csv*, *prefix_aircrafttype-0002.csv*, etc.
+--- @return #RANGE self
 function RANGE:SetTargetSheet( path, prefix )
   if io then
     self.targetsheet = true
@@ -980,10 +980,10 @@ end
 
 --- Set FunkMan socket. Bombing and strafing results will be send to your Discord bot.
 -- **Requires running FunkMan program**.
--- @param #RANGE self
--- @param #number Port Port. Default `10042`.
--- @param #string Host Host. Default "127.0.0.1".
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #number Port Port. Default `10042`.
+--- @param #string Host Host. Default "127.0.0.1".
+--- @return #RANGE self
 function RANGE:SetFunkManOn(Port, Host)
   
   self.funkmanSocket=SOCKET:New(Port, Host)
@@ -992,10 +992,10 @@ function RANGE:SetFunkManOn(Port, Host)
 end
 
 --- Set messages to examiner. The examiner will receive messages from all clients.
--- @param #RANGE self
--- @param #string examinergroupname Name of the group of the examiner.
--- @param #boolean exclusively If true, messages are send exclusively to the examiner, i.e. not to the clients.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #string examinergroupname Name of the group of the examiner.
+--- @param #boolean exclusively If true, messages are send exclusively to the examiner, i.e. not to the clients.
+--- @return #RANGE self
 function RANGE:SetMessageToExaminer( examinergroupname, exclusively )
   self.examinergroupname = examinergroupname
   self.examinerexclusive = exclusively
@@ -1003,27 +1003,27 @@ function RANGE:SetMessageToExaminer( examinergroupname, exclusively )
 end
 
 --- Set max number of player results that are displayed.
--- @param #RANGE self
--- @param #number nmax Number of results. Default is 10.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #number nmax Number of results. Default is 10.
+--- @return #RANGE self
 function RANGE:SetDisplayedMaxPlayerResults( nmax )
   self.ndisplayresult = nmax or RANGE.Defaults.ndisplayresult
   return self
 end
 
 --- Set range radius. Defines the area in which e.g. bomb impacts are smoked.
--- @param #RANGE self
--- @param #number radius Radius in km. Default 5 km.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #number radius Radius in km. Default 5 km.
+--- @return #RANGE self
 function RANGE:SetRangeRadius( radius )
   self.rangeradius = radius * 1000 or RANGE.Defaults.rangeradius
   return self
 end
 
 --- Set player setting whether bomb impact points are smoked or not.
--- @param #RANGE self
--- @param #boolean switch If true nor nil default is to smoke impact points of bombs.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #boolean switch If true nor nil default is to smoke impact points of bombs.
+--- @return #RANGE self
 function RANGE:SetDefaultPlayerSmokeBomb( switch )
   if switch == true or switch == nil then
     self.defaultsmokebomb = true
@@ -1034,9 +1034,9 @@ function RANGE:SetDefaultPlayerSmokeBomb( switch )
 end
 
 --- Set bomb track threshold distance. Bombs/rockets/missiles are only tracked if player-range distance is less than this distance. Default 25 km.
--- @param #RANGE self
--- @param #number distance Threshold distance in km. Default 25 km.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #number distance Threshold distance in km. Default 25 km.
+--- @return #RANGE self
 function RANGE:SetBombtrackThreshold( distance )
   self.BombtrackThreshold = (distance or 25) * 1000
   return self
@@ -1044,9 +1044,9 @@ end
 
 --- Set range location. If this is not done, one (random) unit position of the range is used to determine the location of the range.
 -- The range location determines the position at which the weather data is evaluated.
--- @param #RANGE self
--- @param Core.Point#COORDINATE coordinate Coordinate of the range.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param Core.Point#COORDINATE coordinate Coordinate of the range.
+--- @return #RANGE self
 function RANGE:SetRangeLocation( coordinate )
   self.location = coordinate
   return self
@@ -1054,149 +1054,149 @@ end
 
 --- Set range zone. For example, no bomb impact points are smoked if a bomb falls outside of this zone.
 -- If a zone is not explicitly specified, the range zone is determined by its location and radius.
--- @param #RANGE self
--- @param Core.Zone#ZONE zone MOOSE zone defining the range perimeters.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param Core.Zone#ZONE zone MOOSE zone defining the range perimeters.
+--- @return #RANGE self
 function RANGE:SetRangeZone( zone )
   self.rangezone = zone
   return self
 end
 
 --- Set smoke color for marking bomb targets. By default bomb targets are marked by red smoke.
--- @param #RANGE self
--- @param Utilities.Utils#SMOKECOLOR colorid Color id. Default SMOKECOLOR.Red.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param Utilities.Utils#SMOKECOLOR colorid Color id. Default SMOKECOLOR.Red.
+--- @return #RANGE self
 function RANGE:SetBombTargetSmokeColor( colorid )
   self.BombSmokeColor = colorid or SMOKECOLOR.Red
   return self
 end
 
 --- Set score bomb distance.
--- @param #RANGE self
--- @param #number distance Distance in meters. Default 1000 m.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #number distance Distance in meters. Default 1000 m.
+--- @return #RANGE self
 function RANGE:SetScoreBombDistance( distance )
   self.scorebombdistance = distance or 1000
   return self
 end
 
 --- Set smoke color for marking strafe targets. By default strafe targets are marked by green smoke.
--- @param #RANGE self
--- @param Utilities.Utils#SMOKECOLOR colorid Color id. Default SMOKECOLOR.Green.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param Utilities.Utils#SMOKECOLOR colorid Color id. Default SMOKECOLOR.Green.
+--- @return #RANGE self
 function RANGE:SetStrafeTargetSmokeColor( colorid )
   self.StrafeSmokeColor = colorid or SMOKECOLOR.Green
   return self
 end
 
 --- Set smoke color for marking strafe pit approach boxes. By default strafe pit boxes are marked by white smoke.
--- @param #RANGE self
--- @param Utilities.Utils#SMOKECOLOR colorid Color id. Default SMOKECOLOR.White.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param Utilities.Utils#SMOKECOLOR colorid Color id. Default SMOKECOLOR.White.
+--- @return #RANGE self
 function RANGE:SetStrafePitSmokeColor( colorid )
   self.StrafePitSmokeColor = colorid or SMOKECOLOR.White
   return self
 end
 
 --- Set time delay between bomb impact and starting to smoke the impact point.
--- @param #RANGE self
--- @param #number delay Time delay in seconds. Default is 3 seconds.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #number delay Time delay in seconds. Default is 3 seconds.
+--- @return #RANGE self
 function RANGE:SetSmokeTimeDelay( delay )
   self.TdelaySmoke = delay or RANGE.Defaults.TdelaySmoke
   return self
 end
 
 --- Enable debug modus.
--- @param #RANGE self
--- @return #RANGE self
+--- @param #RANGE self
+--- @return #RANGE self
 function RANGE:DebugON()
   self.Debug = true
   return self
 end
 
 --- Disable debug modus.
--- @param #RANGE self
--- @return #RANGE self
+--- @param #RANGE self
+--- @return #RANGE self
 function RANGE:DebugOFF()
   self.Debug = false
   return self
 end
 
 --- Disable ALL messages to players.
--- @param #RANGE self
--- @return #RANGE self
+--- @param #RANGE self
+--- @return #RANGE self
 function RANGE:SetMessagesOFF()
   self.messages = false
   return self
 end
 
 --- Enable messages to players. This is the default
--- @param #RANGE self
--- @return #RANGE self
+--- @param #RANGE self
+--- @return #RANGE self
 function RANGE:SetMessagesON()
   self.messages = true
   return self
 end
 
 --- Enables tracking of all bomb types. Note that this is the default setting.
--- @param #RANGE self
--- @return #RANGE self
+--- @param #RANGE self
+--- @return #RANGE self
 function RANGE:TrackBombsON()
   self.trackbombs = true
   return self
 end
 
 --- Disables tracking of all bomb types.
--- @param #RANGE self
--- @return #RANGE self
+--- @param #RANGE self
+--- @return #RANGE self
 function RANGE:TrackBombsOFF()
   self.trackbombs = false
   return self
 end
 
 --- Enables tracking of all rocket types. Note that this is the default setting.
--- @param #RANGE self
--- @return #RANGE self
+--- @param #RANGE self
+--- @return #RANGE self
 function RANGE:TrackRocketsON()
   self.trackrockets = true
   return self
 end
 
 --- Disables tracking of all rocket types.
--- @param #RANGE self
--- @return #RANGE self
+--- @param #RANGE self
+--- @return #RANGE self
 function RANGE:TrackRocketsOFF()
   self.trackrockets = false
   return self
 end
 
 --- Enables tracking of all missile types. Note that this is the default setting.
--- @param #RANGE self
--- @return #RANGE self
+--- @param #RANGE self
+--- @return #RANGE self
 function RANGE:TrackMissilesON()
   self.trackmissiles = true
   return self
 end
 
 --- Disables tracking of all missile types.
--- @param #RANGE self
--- @return #RANGE self
+--- @param #RANGE self
+--- @return #RANGE self
 function RANGE:TrackMissilesOFF()
   self.trackmissiles = false
   return self
 end
 
 --- Use SRS Simple-Text-To-Speech for transmissions. No sound files necessary.
--- @param #RANGE self
--- @param #string PathToSRS Path to SRS directory.
--- @param #number Port SRS port. Default 5002.
--- @param #number Coalition Coalition side, e.g. coalition.side.BLUE or coalition.side.RED
--- @param #number Frequency Frequency to use, defaults to 256 (same as rangecontrol)
--- @param #number Modulation Modulation to use, defaults to radio.modulation.AM
--- @param #number Volume Volume, between 0.0 and 1.0. Defaults to 1.0
--- @param #string PathToGoogleKey Path to Google TTS credentials.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #string PathToSRS Path to SRS directory.
+--- @param #number Port SRS port. Default 5002.
+--- @param #number Coalition Coalition side, e.g. coalition.side.BLUE or coalition.side.RED
+--- @param #number Frequency Frequency to use, defaults to 256 (same as rangecontrol)
+--- @param #number Modulation Modulation to use, defaults to radio.modulation.AM
+--- @param #number Volume Volume, between 0.0 and 1.0. Defaults to 1.0
+--- @param #string PathToGoogleKey Path to Google TTS credentials.
+--- @return #RANGE self
 function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume, PathToGoogleKey)
   if PathToSRS then
   
@@ -1221,14 +1221,14 @@ function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume,
 end
 
 --- (SRS) Set range control frequency and voice.
--- @param #RANGE self
--- @param #number frequency Frequency in MHz. Default 256 MHz.
--- @param #number modulation Modulation, defaults to radio.modulation.AM.
--- @param #string voice Voice.
--- @param #string culture Culture, defaults to "en-US".
--- @param #string gender Gender, defaults to "female".
--- @param #string relayunitname Name of the unit used for transmission location.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #number frequency Frequency in MHz. Default 256 MHz.
+--- @param #number modulation Modulation, defaults to radio.modulation.AM.
+--- @param #string voice Voice.
+--- @param #string culture Culture, defaults to "en-US".
+--- @param #string gender Gender, defaults to "female".
+--- @param #string relayunitname Name of the unit used for transmission location.
+--- @return #RANGE self
 function RANGE:SetSRSRangeControl( frequency, modulation, voice, culture, gender, relayunitname )
   self.rangecontrolfreq = frequency or 256
   self.controlmsrs:SetFrequencies(self.rangecontrolfreq)
@@ -1246,14 +1246,14 @@ function RANGE:SetSRSRangeControl( frequency, modulation, voice, culture, gender
 end
 
 --- (SRS) Set range instructor frequency and voice.
--- @param #RANGE self
--- @param #number frequency Frequency in MHz. Default 305 MHz.
--- @param #number modulation Modulation, defaults to radio.modulation.AM.
--- @param #string voice Voice.
--- @param #string culture Culture, defaults to "en-US".
--- @param #string gender Gender, defaults to "male".
--- @param #string relayunitname Name of the unit used for transmission location.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #number frequency Frequency in MHz. Default 305 MHz.
+--- @param #number modulation Modulation, defaults to radio.modulation.AM.
+--- @param #string voice Voice.
+--- @param #string culture Culture, defaults to "en-US".
+--- @param #string gender Gender, defaults to "male".
+--- @param #string relayunitname Name of the unit used for transmission location.
+--- @return #RANGE self
 function RANGE:SetSRSRangeInstructor( frequency, modulation, voice, culture, gender, relayunitname )
   self.instructorfreq = frequency or 305
   self.instructmsrs:SetFrequencies(self.instructorfreq)
@@ -1272,10 +1272,10 @@ function RANGE:SetSRSRangeInstructor( frequency, modulation, voice, culture, gen
 end
 
 --- Enable range control and set frequency (non-SRS).
--- @param #RANGE self
--- @param #number frequency Frequency in MHz. Default 256 MHz.
--- @param #string relayunitname Name of the unit used for transmission.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #number frequency Frequency in MHz. Default 256 MHz.
+--- @param #string relayunitname Name of the unit used for transmission.
+--- @return #RANGE self
 function RANGE:SetRangeControl( frequency, relayunitname )
   self.rangecontrolfreq = frequency or 256
   self.rangecontrolrelayname = relayunitname
@@ -1283,10 +1283,10 @@ function RANGE:SetRangeControl( frequency, relayunitname )
 end
 
 --- Enable instructor radio and set frequency (non-SRS).
--- @param #RANGE self
--- @param #number frequency Frequency in MHz. Default 305 MHz.
--- @param #string relayunitname Name of the unit used for transmission.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #number frequency Frequency in MHz. Default 305 MHz.
+--- @param #string relayunitname Name of the unit used for transmission.
+--- @return #RANGE self
 function RANGE:SetInstructorRadio( frequency, relayunitname )
   self.instructorfreq = frequency or 305
   self.instructorrelayname = relayunitname
@@ -1294,9 +1294,9 @@ function RANGE:SetInstructorRadio( frequency, relayunitname )
 end
 
 --- Set sound files folder within miz file.
--- @param #RANGE self
--- @param #string path Path for sound files. Default "Range Soundfiles/". Mind the slash "/" at the end!
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #string path Path for sound files. Default "Range Soundfiles/". Mind the slash "/" at the end!
+--- @return #RANGE self
 function RANGE:SetSoundfilesPath( path )
   self.soundpath = tostring( path or "Range Soundfiles/" )
   self:I( self.id .. string.format( "Setting sound files path to %s", self.soundpath ) )
@@ -1306,15 +1306,15 @@ end
 --- Add new strafe pit. For a strafe pit, hits from guns are counted. One pit can consist of several units.
 -- A strafe run approach is only valid if the player enters via a zone in front of the pit, which is defined by boxlength, boxwidth, and heading.
 -- Furthermore, the player must not be too high and fly in the direction of the pit to make a valid target apporoach.
--- @param #RANGE self
--- @param #table targetnames Single or multiple (Table) unit or static names defining the strafe targets. The first target in the list determines the approach box origin (heading and box).
--- @param #number boxlength (Optional) Length of the approach box in meters. Default is 3000 m.
--- @param #number boxwidth (Optional) Width of the approach box in meters. Default is 300 m.
--- @param #number heading (Optional) Approach box heading in degrees (originating FROM the target). Default is the heading set in the ME for the first target unit
--- @param #boolean inverseheading (Optional) Use inverse heading (heading --> heading - 180 Degrees). Default is false.
--- @param #number goodpass (Optional) Number of hits for a "good" strafing pass. Default is 20.
--- @param #number foulline (Optional) Foul line distance. Hits from closer than this distance are not counted. Default is 610 m = 2000 ft. Set to 0 for no foul line.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #table targetnames Single or multiple (Table) unit or static names defining the strafe targets. The first target in the list determines the approach box origin (heading and box).
+--- @param #number boxlength (Optional) Length of the approach box in meters. Default is 3000 m.
+--- @param #number boxwidth (Optional) Width of the approach box in meters. Default is 300 m.
+--- @param #number heading (Optional) Approach box heading in degrees (originating FROM the target). Default is the heading set in the ME for the first target unit
+--- @param #boolean inverseheading (Optional) Use inverse heading (heading --> heading - 180 Degrees). Default is false.
+--- @param #number goodpass (Optional) Number of hits for a "good" strafing pass. Default is 20.
+--- @param #number foulline (Optional) Foul line distance. Hits from closer than this distance are not counted. Default is 610 m = 2000 ft. Set to 0 for no foul line.
+--- @return #RANGE self
 function RANGE:AddStrafePit( targetnames, boxlength, boxwidth, heading, inverseheading, goodpass, foulline )
   self:F( { targetnames = targetnames, boxlength = boxlength, boxwidth = boxwidth, heading = heading, inverseheading = inverseheading, goodpass = goodpass, foulline = foulline } )
 
@@ -1447,15 +1447,15 @@ end
 -- For a strafe pit, hits from guns are counted. One pit can consist of several units.
 -- Note, an approach is only valid, if the player enters via a zone in front of the pit, which defined by boxlength and boxheading.
 -- Furthermore, the player must not be too high and fly in the direction of the pit to make a valid target apporoach.
--- @param #RANGE self
--- @param Wrapper.Group#GROUP group MOOSE group of unit names defining the strafe target pit. The first unit in the group determines the approach zone (heading and box).
--- @param #number boxlength (Optional) Length of the approach box in meters. Default is 3000 m.
--- @param #number boxwidth (Optional) Width of the approach box in meters. Default is 300 m.
--- @param #number heading (Optional) Approach heading in Degrees. Default is heading of the unit as defined in the mission editor.
--- @param #boolean inverseheading (Optional) Take inverse heading (heading --> heading - 180 Degrees). Default is false.
--- @param #number goodpass (Optional) Number of hits for a "good" strafing pass. Default is 20.
--- @param #number foulline (Optional) Foul line distance. Hits from closer than this distance are not counted. Default 610 m = 2000 ft. Set to 0 for no foul line.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param Wrapper.Group#GROUP group MOOSE group of unit names defining the strafe target pit. The first unit in the group determines the approach zone (heading and box).
+--- @param #number boxlength (Optional) Length of the approach box in meters. Default is 3000 m.
+--- @param #number boxwidth (Optional) Width of the approach box in meters. Default is 300 m.
+--- @param #number heading (Optional) Approach heading in Degrees. Default is heading of the unit as defined in the mission editor.
+--- @param #boolean inverseheading (Optional) Take inverse heading (heading --> heading - 180 Degrees). Default is false.
+--- @param #number goodpass (Optional) Number of hits for a "good" strafing pass. Default is 20.
+--- @param #number foulline (Optional) Foul line distance. Hits from closer than this distance are not counted. Default 610 m = 2000 ft. Set to 0 for no foul line.
+--- @return #RANGE self
 function RANGE:AddStrafePitGroup( group, boxlength, boxwidth, heading, inverseheading, goodpass, foulline )
   self:F( { group = group, boxlength = boxlength, boxwidth = boxwidth, heading = heading, inverseheading = inverseheading, goodpass = goodpass, foulline = foulline } )
 
@@ -1485,11 +1485,11 @@ function RANGE:AddStrafePitGroup( group, boxlength, boxwidth, heading, inversehe
 end
 
 --- Add bombing target(s) to range.
--- @param #RANGE self
--- @param #table targetnames Single or multiple (Table) names of unit or static objects serving as bomb targets.
--- @param #number goodhitrange (Optional) Max distance from target unit (in meters) which is considered as a good hit. Default is 25 m.
--- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param #table targetnames Single or multiple (Table) names of unit or static objects serving as bomb targets.
+--- @param #number goodhitrange (Optional) Max distance from target unit (in meters) which is considered as a good hit. Default is 25 m.
+--- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
+--- @return #RANGE self
 function RANGE:AddBombingTargets( targetnames, goodhitrange, randommove )
   self:F( { targetnames = targetnames, goodhitrange = goodhitrange, randommove = randommove } )
 
@@ -1524,11 +1524,11 @@ function RANGE:AddBombingTargets( targetnames, goodhitrange, randommove )
 end
 
 --- Add a unit or static object as bombing target.
--- @param #RANGE self
--- @param Wrapper.Positionable#POSITIONABLE unit Positionable (unit or static) of the strafe target.
--- @param #number goodhitrange Max distance from unit which is considered as a good hit.
--- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param Wrapper.Positionable#POSITIONABLE unit Positionable (unit or static) of the strafe target.
+--- @param #number goodhitrange Max distance from unit which is considered as a good hit.
+--- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
+--- @return #RANGE self
 function RANGE:AddBombingTargetUnit( unit, goodhitrange, randommove )
   self:F( { unit = unit, goodhitrange = goodhitrange, randommove = randommove } )
 
@@ -1581,11 +1581,11 @@ function RANGE:AddBombingTargetUnit( unit, goodhitrange, randommove )
 end
 
 --- Add a coordinate of a bombing target. This
--- @param #RANGE self
--- @param Core.Point#COORDINATE coord The coordinate.
--- @param #string name Name of target.
--- @param #number goodhitrange Max distance from unit which is considered as a good hit.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param Core.Point#COORDINATE coord The coordinate.
+--- @param #string name Name of target.
+--- @param #number goodhitrange Max distance from unit which is considered as a good hit.
+--- @return #RANGE self
 function RANGE:AddBombingTargetCoordinate( coord, name, goodhitrange )
 
   local target = {} -- #RANGE.BombTarget
@@ -1604,11 +1604,11 @@ function RANGE:AddBombingTargetCoordinate( coord, name, goodhitrange )
 end
 
 --- Add all units of a group as bombing targets.
--- @param #RANGE self
--- @param Wrapper.Group#GROUP group Group of bombing targets.
--- @param #number goodhitrange Max distance from unit which is considered as a good hit.
--- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
--- @return #RANGE self
+--- @param #RANGE self
+--- @param Wrapper.Group#GROUP group Group of bombing targets.
+--- @param #number goodhitrange Max distance from unit which is considered as a good hit.
+--- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
+--- @return #RANGE self
 function RANGE:AddBombingTargetGroup( group, goodhitrange, randommove )
   self:F( { group = group, goodhitrange = goodhitrange, randommove = randommove } )
 
@@ -1627,10 +1627,10 @@ function RANGE:AddBombingTargetGroup( group, goodhitrange, randommove )
 end
 
 --- Measures the foule line distance between two unit or static objects.
--- @param #RANGE self
--- @param #string namepit Name of the strafe pit target object.
--- @param #string namefoulline Name of the fould line distance marker object.
--- @return #number Foul line distance in meters.
+--- @param #RANGE self
+--- @param #string namepit Name of the strafe pit target object.
+--- @param #string namefoulline Name of the fould line distance marker object.
+--- @return #number Foul line distance in meters.
 function RANGE:GetFoullineDistance( namepit, namefoulline )
   self:F( { namepit = namepit, namefoulline = namefoulline } )
 
@@ -1675,8 +1675,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- General event handler.
--- @param #RANGE self
--- @param #table Event DCS event table.
+--- @param #RANGE self
+--- @param #table Event DCS event table.
 function RANGE:onEvent( Event )
   self:F3( Event )
 
@@ -1742,8 +1742,8 @@ function RANGE:onEvent( Event )
 end
 
 --- Range event handler for event birth.
--- @param #RANGE self
--- @param Core.Event#EVENTDATA EventData
+--- @param #RANGE self
+--- @param Core.Event#EVENTDATA EventData
 function RANGE:OnEventBirth( EventData )
   self:F( { eventbirth = EventData } )
 
@@ -1795,8 +1795,8 @@ function RANGE:OnEventBirth( EventData )
 end
 
 --- Range event handler for event hit.
--- @param #RANGE self
--- @param Core.Event#EVENTDATA EventData
+--- @param #RANGE self
+--- @param Core.Event#EVENTDATA EventData
 function RANGE:OnEventHit( EventData )
   self:F( { eventhit = EventData } )
 
@@ -1890,15 +1890,15 @@ function RANGE:OnEventHit( EventData )
 end
 
 --- Range event handler for event shot (when a unit releases a rocket or bomb (but not a fast firing gun).
--- @param #RANGE self
--- @param #table weapon Weapon
+--- @param #RANGE self
+--- @param #table weapon Weapon
 function RANGE:_TrackWeapon(weapon)
 
 end
 
 --- Range event handler for event shot (when a unit releases a rocket or bomb (but not a fast firing gun).
--- @param #RANGE self
--- @param Core.Event#EVENTDATA EventData
+--- @param #RANGE self
+--- @param Core.Event#EVENTDATA EventData
 function RANGE:OnEventShot( EventData )
   self:F( { eventshot = EventData } )
 
@@ -2143,10 +2143,10 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check spawn queue and spawn aircraft if necessary.
--- @param #RANGE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #RANGE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function RANGE:onafterStatus( From, Event, To )
 
   if self.verbose > 0 then
@@ -2190,11 +2190,11 @@ function RANGE:onafterStatus( From, Event, To )
 end
 
 --- Function called after player enters the range zone.
--- @param #RANGE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #RANGE.PlayerData player Player data.
+--- @param #RANGE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #RANGE.PlayerData player Player data.
 function RANGE:onafterEnterRange( From, Event, To, player )
 
   if self.instructor and self.rangecontrol then
@@ -2223,11 +2223,11 @@ function RANGE:onafterEnterRange( From, Event, To, player )
 end
 
 --- Function called after player leaves the range zone.
--- @param #RANGE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #RANGE.PlayerData player Player data.
+--- @param #RANGE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #RANGE.PlayerData player Player data.
 function RANGE:onafterExitRange( From, Event, To, player )
 
   if self.instructor then
@@ -2244,12 +2244,12 @@ function RANGE:onafterExitRange( From, Event, To, player )
 end
 
 --- Function called after bomb impact on range.
--- @param #RANGE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #RANGE.BombResult result Result of bomb impact.
--- @param #RANGE.PlayerData player Player data table.
+--- @param #RANGE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #RANGE.BombResult result Result of bomb impact.
+--- @param #RANGE.PlayerData player Player data table.
 function RANGE:onafterImpact( From, Event, To, result, player )
 
   -- Only display target name if there is more than one bomb target.
@@ -2315,12 +2315,12 @@ function RANGE:onafterImpact( From, Event, To, result, player )
 end
 
 --- Function called after strafing run.
--- @param #RANGE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #RANGE.PlayerData player Player data table.
--- @param #RANGE.StrafeResult result Result of run.
+--- @param #RANGE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #RANGE.PlayerData player Player data table.
+--- @param #RANGE.StrafeResult result Result of run.
 function RANGE:onafterStrafeResult( From, Event, To, player, result)
 
   if self.funkmanSocket then
@@ -2330,10 +2330,10 @@ function RANGE:onafterStrafeResult( From, Event, To, player, result)
 end
 
 --- Function called before save event. Checks that io and lfs are desanitized.
--- @param #RANGE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #RANGE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function RANGE:onbeforeSave( From, Event, To )
   if io and lfs then
     return true
@@ -2344,10 +2344,10 @@ function RANGE:onbeforeSave( From, Event, To )
 end
 
 --- Function called after save.
--- @param #RANGE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #RANGE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function RANGE:onafterSave( From, Event, To )
 
   local function _savefile( filename, data )
@@ -2395,10 +2395,10 @@ function RANGE:onafterSave( From, Event, To )
 end
 
 --- Function called before save event. Checks that io and lfs are desanitized.
--- @param #RANGE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #RANGE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function RANGE:onbeforeLoad( From, Event, To )
   if io and lfs then
     return true
@@ -2409,10 +2409,10 @@ function RANGE:onbeforeLoad( From, Event, To )
 end
 
 --- On after "Load" event. Loads results of all players from file.
--- @param #RANGE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #RANGE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function RANGE:onafterLoad( From, Event, To )
 
   --- Function that load data from a file.
@@ -2486,9 +2486,9 @@ function RANGE:onafterLoad( From, Event, To )
 end
 
 --- Save target sheet.
--- @param #RANGE self
--- @param #string _playername Player name.
--- @param #RANGE.StrafeResult result Results table.
+--- @param #RANGE self
+--- @param #string _playername Player name.
+--- @param #RANGE.StrafeResult result Results table.
 function RANGE:_SaveTargetSheet( _playername, result ) -- RangeBoss Specific Function
 
   --- Function that saves data to file
@@ -2557,15 +2557,15 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Start smoking a coordinate with a delay.
--- @param #table _args Argements passed.
+--- @param #table _args Argements passed.
 function RANGE._DelayedSmoke( _args )
   _args.coord:Smoke(_args.color)
   --trigger.action.smoke( _args.coord:GetVec3(), _args.color )
 end
 
 --- Display top 10 stafing results of a specific player.
--- @param #RANGE self
--- @param #string _unitName Name of the player unit.
+--- @param #RANGE self
+--- @param #string _unitName Name of the player unit.
 function RANGE:_DisplayMyStrafePitResults( _unitName )
   self:F( _unitName )
 
@@ -2627,8 +2627,8 @@ function RANGE:_DisplayMyStrafePitResults( _unitName )
 end
 
 --- Display top 10 strafing results of all players.
--- @param #RANGE self
--- @param #string _unitName Name fo the player unit.
+--- @param #RANGE self
+--- @param #string _unitName Name fo the player unit.
 function RANGE:_DisplayStrafePitResults( _unitName )
   self:F( _unitName )
 
@@ -2685,8 +2685,8 @@ function RANGE:_DisplayStrafePitResults( _unitName )
 end
 
 --- Display top 10 bombing run results of specific player.
--- @param #RANGE self
--- @param #string _unitName Name of the player unit.
+--- @param #RANGE self
+--- @param #string _unitName Name of the player unit.
 function RANGE:_DisplayMyBombingResults( _unitName )
   self:F( _unitName )
 
@@ -2742,8 +2742,8 @@ function RANGE:_DisplayMyBombingResults( _unitName )
 end
 
 --- Display best bombing results of top 10 players.
--- @param #RANGE self
--- @param #string _unitName Name of player unit.
+--- @param #RANGE self
+--- @param #string _unitName Name of player unit.
 function RANGE:_DisplayBombingResults( _unitName )
   self:F( _unitName )
 
@@ -2800,8 +2800,8 @@ function RANGE:_DisplayBombingResults( _unitName )
 end
 
 --- Report information like bearing and range from player unit to range.
--- @param #RANGE self
--- @param #string _unitname Name of the player unit.
+--- @param #RANGE self
+--- @param #string _unitname Name of the player unit.
 function RANGE:_DisplayRangeInfo( _unitname )
   self:F( _unitname )
 
@@ -2910,8 +2910,8 @@ function RANGE:_DisplayRangeInfo( _unitname )
 end
 
 --- Display bombing target locations to player.
--- @param #RANGE self
--- @param #string _unitname Name of the player unit.
+--- @param #RANGE self
+--- @param #string _unitname Name of the player unit.
 function RANGE:_DisplayBombTargets( _unitname )
   self:F( _unitname )
 
@@ -2953,8 +2953,8 @@ function RANGE:_DisplayBombTargets( _unitname )
 end
 
 --- Display pit location and heading to player.
--- @param #RANGE self
--- @param #string _unitname Name of the player unit.
+--- @param #RANGE self
+--- @param #string _unitname Name of the player unit.
 function RANGE:_DisplayStrafePits( _unitname )
   self:F( _unitname )
 
@@ -2993,8 +2993,8 @@ function RANGE:_DisplayStrafePits( _unitname )
 end
 
 --- Report weather conditions at range. Temperature, QFE pressure and wind data.
--- @param #RANGE self
--- @param #string _unitname Name of the player unit.
+--- @param #RANGE self
+--- @param #string _unitname Name of the player unit.
 function RANGE:_DisplayRangeWeather( _unitname )
   self:F( _unitname )
 
@@ -3061,8 +3061,8 @@ end
 -- Timer Functions
 
 --- Check status of players.
--- @param #RANGE self
--- @param #string _unitName Name of player unit.
+--- @param #RANGE self
+--- @param #string _unitName Name of player unit.
 function RANGE:_CheckPlayers()
 
   for playername, _playersettings in pairs( self.PlayerSettings ) do
@@ -3102,8 +3102,8 @@ function RANGE:_CheckPlayers()
 end
 
 --- Check if player is inside a strafing zone. If he is, we start looking for hits. If he was and left the zone again, the result is stored.
--- @param #RANGE self
--- @param #string _unitName Name of player unit.
+--- @param #RANGE self
+--- @param #string _unitName Name of player unit.
 function RANGE:_CheckInZone( _unitName )
   self:F2( _unitName )
 
@@ -3353,8 +3353,8 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Add menu commands for player.
--- @param #RANGE self
--- @param #string _unitName Name of player unit.
+--- @param #RANGE self
+--- @param #string _unitName Name of player unit.
 function RANGE:_AddF10Commands( _unitName )
   self:F( _unitName )
 
@@ -3461,9 +3461,9 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get the number of shells a unit currently has.
--- @param #RANGE self
--- @param #RANGE.BombTarget target Bomb target data.
--- @return Core.Point#COORDINATE Target coordinate.
+--- @param #RANGE self
+--- @param #RANGE.BombTarget target Bomb target data.
+--- @return Core.Point#COORDINATE Target coordinate.
 function RANGE:_GetBombTargetCoordinate( target )
 
   local coord = nil -- Core.Point#COORDINATE
@@ -3498,9 +3498,9 @@ function RANGE:_GetBombTargetCoordinate( target )
 end
 
 --- Get the number of shells a unit currently has.
--- @param #RANGE self
--- @param #string unitname Name of the player unit.
--- @return Number of shells left
+--- @param #RANGE self
+--- @param #string unitname Name of the player unit.
+--- @return Number of shells left
 function RANGE:_GetAmmo( unitname )
   self:F2( unitname )
 
@@ -3546,8 +3546,8 @@ function RANGE:_GetAmmo( unitname )
 end
 
 --- Mark targets on F10 map.
--- @param #RANGE self
--- @param #string _unitName Name of the player unit.
+--- @param #RANGE self
+--- @param #string _unitName Name of the player unit.
 function RANGE:_MarkTargetsOnMap( _unitName )
   self:F( _unitName )
 
@@ -3593,8 +3593,8 @@ function RANGE:_MarkTargetsOnMap( _unitName )
 end
 
 --- Illuminate targets. Fires illumination bombs at one random bomb and one random strafe target at a random altitude between 400 and 800 m.
--- @param #RANGE self
--- @param #string _unitName (Optional) Name of the player unit.
+--- @param #RANGE self
+--- @param #string _unitName (Optional) Name of the player unit.
 function RANGE:_IlluminateBombTargets( _unitName )
   self:F( _unitName )
 
@@ -3643,8 +3643,8 @@ function RANGE:_IlluminateBombTargets( _unitName )
 end
 
 --- Reset player statistics.
--- @param #RANGE self
--- @param #string _unitName Name of the player unit.
+--- @param #RANGE self
+--- @param #string _unitName Name of the player unit.
 function RANGE:_ResetRangeStats( _unitName )
   self:F( _unitName )
 
@@ -3660,12 +3660,12 @@ function RANGE:_ResetRangeStats( _unitName )
 end
 
 --- Display message to group.
--- @param #RANGE self
--- @param Wrapper.Unit#UNIT _unit Player unit.
--- @param #string _text Message text.
--- @param #number _time Duration how long the message is displayed.
--- @param #boolean _clear Clear up old messages.
--- @param #boolean display If true, display message regardless of player setting "Messages Off".
+--- @param #RANGE self
+--- @param Wrapper.Unit#UNIT _unit Player unit.
+--- @param #string _text Message text.
+--- @param #number _time Duration how long the message is displayed.
+--- @param #boolean _clear Clear up old messages.
+--- @param #boolean display If true, display message regardless of player setting "Messages Off".
 function RANGE:_DisplayMessageToGroup( _unit, _text, _time, _clear, display )
   self:F( { unit = _unit, text = _text, time = _time, clear = _clear } )
 
@@ -3710,8 +3710,8 @@ function RANGE:_DisplayMessageToGroup( _unit, _text, _time, _clear, display )
 end
 
 --- Toggle status of smoking bomb impact points.
--- @param #RANGE self
--- @param #string unitname Name of the player unit.
+--- @param #RANGE self
+--- @param #string unitname Name of the player unit.
 function RANGE:_SmokeBombImpactOnOff( unitname )
   self:F( unitname )
 
@@ -3731,8 +3731,8 @@ function RANGE:_SmokeBombImpactOnOff( unitname )
 end
 
 --- Toggle status of time delay for smoking bomb impact points
--- @param #RANGE self
--- @param #string unitname Name of the player unit.
+--- @param #RANGE self
+--- @param #string unitname Name of the player unit.
 function RANGE:_SmokeBombDelayOnOff( unitname )
   self:F( unitname )
 
@@ -3752,8 +3752,8 @@ function RANGE:_SmokeBombDelayOnOff( unitname )
 end
 
 --- Toggle display messages to player.
--- @param #RANGE self
--- @param #string unitname Name of the player unit.
+--- @param #RANGE self
+--- @param #string unitname Name of the player unit.
 function RANGE:_MessagesToPlayerOnOff( unitname )
   self:F( unitname )
 
@@ -3772,8 +3772,8 @@ function RANGE:_MessagesToPlayerOnOff( unitname )
 end
 
 --- Targetsheet saves if player on or off.
--- @param #RANGE self
--- @param #string _unitname Name of the player unit.
+--- @param #RANGE self
+--- @param #string _unitname Name of the player unit.
 function RANGE:_TargetsheetOnOff( _unitname )
   self:F2( _unitname )
 
@@ -3815,8 +3815,8 @@ function RANGE:_TargetsheetOnOff( _unitname )
 end
 
 --- Toggle status of flaring direct hits of range targets.
--- @param #RANGE self
--- @param #string unitname Name of the player unit.
+--- @param #RANGE self
+--- @param #string unitname Name of the player unit.
 function RANGE:_FlareDirectHitsOnOff( unitname )
   self:F( unitname )
 
@@ -3836,8 +3836,8 @@ function RANGE:_FlareDirectHitsOnOff( unitname )
 end
 
 --- Mark bombing targets with smoke.
--- @param #RANGE self
--- @param #string unitname Name of the player unit.
+--- @param #RANGE self
+--- @param #string unitname Name of the player unit.
 function RANGE:_SmokeBombTargets( unitname )
   self:F( unitname )
 
@@ -3858,8 +3858,8 @@ function RANGE:_SmokeBombTargets( unitname )
 end
 
 --- Mark strafing targets with smoke.
--- @param #RANGE self
--- @param #string unitname Name of the player unit.
+--- @param #RANGE self
+--- @param #string unitname Name of the player unit.
 function RANGE:_SmokeStrafeTargets( unitname )
   self:F( unitname )
 
@@ -3876,8 +3876,8 @@ function RANGE:_SmokeStrafeTargets( unitname )
 end
 
 --- Mark approach boxes of strafe targets with smoke.
--- @param #RANGE self
--- @param #string unitname Name of the player unit.
+--- @param #RANGE self
+--- @param #string unitname Name of the player unit.
 function RANGE:_SmokeStrafeTargetBoxes( unitname )
   self:F( unitname )
 
@@ -3898,9 +3898,9 @@ function RANGE:_SmokeStrafeTargetBoxes( unitname )
 end
 
 --- Sets the smoke color used to smoke players bomb impact points.
--- @param #RANGE self
--- @param #string _unitName Name of the player unit.
--- @param Utilities.Utils#SMOKECOLOR color ID of the smoke color.
+--- @param #RANGE self
+--- @param #string _unitName Name of the player unit.
+--- @param Utilities.Utils#SMOKECOLOR color ID of the smoke color.
 function RANGE:_playersmokecolor( _unitName, color )
   self:F( { unitname = _unitName, color = color } )
 
@@ -3914,9 +3914,9 @@ function RANGE:_playersmokecolor( _unitName, color )
 end
 
 --- Sets the flare color used when player makes a direct hit on target.
--- @param #RANGE self
--- @param #string _unitName Name of the player unit.
--- @param Utilities.Utils#FLARECOLOR color ID of flare color.
+--- @param #RANGE self
+--- @param #string _unitName Name of the player unit.
+--- @param Utilities.Utils#FLARECOLOR color ID of flare color.
 function RANGE:_playerflarecolor( _unitName, color )
   self:F( { unitname = _unitName, color = color } )
 
@@ -3930,9 +3930,9 @@ function RANGE:_playerflarecolor( _unitName, color )
 end
 
 --- Converts a smoke color id to text. E.g. SMOKECOLOR.Blue --> "blue".
--- @param #RANGE self
--- @param Utilities.Utils#SMOKECOLOR color Color Id.
--- @return #string Color text.
+--- @param #RANGE self
+--- @param Utilities.Utils#SMOKECOLOR color Color Id.
+--- @return #string Color text.
 function RANGE:_smokecolor2text( color )
   self:F( color )
 
@@ -3955,9 +3955,9 @@ function RANGE:_smokecolor2text( color )
 end
 
 --- Sets the flare color used to flare players direct target hits.
--- @param #RANGE self
--- @param Utilities.Utils#FLARECOLOR color Color Id.
--- @return #string Color text.
+--- @param #RANGE self
+--- @param Utilities.Utils#FLARECOLOR color Color Id.
+--- @return #string Color text.
 function RANGE:_flarecolor2text( color )
   self:F( color )
 
@@ -3978,9 +3978,9 @@ function RANGE:_flarecolor2text( color )
 end
 
 --- Checks if a static object with a certain name exists. It also added it to the MOOSE data base, if it is not already in there.
--- @param #RANGE self
--- @param #string name Name of the potential static object.
--- @return #boolean Returns true if a static with this name exists. Retruns false if a unit with this name exists. Returns nil if neither unit or static exist.
+--- @param #RANGE self
+--- @param #string name Name of the potential static object.
+--- @return #boolean Returns true if a static with this name exists. Retruns false if a unit with this name exists. Returns nil if neither unit or static exist.
 function RANGE:_CheckStatic( name )
   self:F2( name )
 
@@ -4015,9 +4015,9 @@ function RANGE:_CheckStatic( name )
 end
 
 --- Get max speed of controllable.
--- @param #RANGE self
--- @param Wrapper.Controllable#CONTROLLABLE controllable
--- @return Maximum speed in km/h.
+--- @param #RANGE self
+--- @param Wrapper.Controllable#CONTROLLABLE controllable
+--- @return Maximum speed in km/h.
 function RANGE:_GetSpeed( controllable )
   self:F2( controllable )
 
@@ -4035,11 +4035,11 @@ function RANGE:_GetSpeed( controllable )
 end
 
 --- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned.
--- @param #RANGE self
--- @param #string _unitName Name of the player unit.
--- @return Wrapper.Unit#UNIT Unit of player.
--- @return #string Name of the player.
--- @return nil If player does not exist.
+--- @param #RANGE self
+--- @param #string _unitName Name of the player unit.
+--- @return Wrapper.Unit#UNIT Unit of player.
+--- @return #string Name of the player.
+--- @return nil If player does not exist.
 function RANGE:_GetPlayerUnitAndName( _unitName )
   self:F2( _unitName )
 
@@ -4068,8 +4068,8 @@ function RANGE:_GetPlayerUnitAndName( _unitName )
 end
 
 --- Returns a string which consists of the player name.
--- @param #RANGE self
--- @param #string unitname Name of the player unit.
+--- @param #RANGE self
+--- @param #string unitname Name of the player unit.
 function RANGE:_myname( unitname )
   self:F2( unitname )
   local pname = "Ghost 1 1"

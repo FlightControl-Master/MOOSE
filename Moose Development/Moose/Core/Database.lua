@@ -33,9 +33,9 @@
 
 
 --- @type DATABASE
--- @field #string ClassName Name of the class.
--- @field #table Templates Templates: Units, Groups, Statics, ClientsByName, ClientsByID.
--- @field #table CLIENTS Clients.
+--- @field #string ClassName Name of the class.
+--- @field #table Templates Templates: Units, Groups, Statics, ClientsByName, ClientsByID.
+--- @field #table CLIENTS Clients.
 -- @extends Core.Base#BASE
 
 --- Contains collections of wrapper objects defined within MOOSE that reflect objects within the simulator.
@@ -56,7 +56,7 @@
 -- The singleton object **_DATABASE** is automatically created by MOOSE, that administers all objects within the mission.
 -- Moose refers to **_DATABASE** within the framework extensively, but you can also refer to the _DATABASE object within your missions if required.
 --
--- @field #DATABASE
+--- @field #DATABASE
 DATABASE = {
   ClassName = "DATABASE",
   Templates = {
@@ -109,8 +109,8 @@ local _DATABASECategory =
 
 
 --- Creates a new DATABASE object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
--- @param #DATABASE self
--- @return #DATABASE
+--- @param #DATABASE self
+--- @return #DATABASE
 -- @usage
 -- -- Define a new DATABASE Object. This DBObject will contain a reference to all Group and Unit Templates defined within the ME and the DCSRTE.
 -- DBObject = DATABASE:New()
@@ -147,9 +147,9 @@ function DATABASE:New()
 end
 
 --- Finds a Unit based on the Unit Name.
--- @param #DATABASE self
--- @param #string UnitName
--- @return Wrapper.Unit#UNIT The found Unit.
+--- @param #DATABASE self
+--- @param #string UnitName
+--- @return Wrapper.Unit#UNIT The found Unit.
 function DATABASE:FindUnit( UnitName )
 
   local UnitFound = self.UNITS[UnitName]
@@ -158,9 +158,9 @@ end
 
 
 --- Adds a Unit based on the Unit Name in the DATABASE.
--- @param #DATABASE self
--- @param #string DCSUnitName Unit name.
--- @return Wrapper.Unit#UNIT The added unit.
+--- @param #DATABASE self
+--- @param #string DCSUnitName Unit name.
+--- @return Wrapper.Unit#UNIT The added unit.
 function DATABASE:AddUnit( DCSUnitName )
 
   if not self.UNITS[DCSUnitName] then
@@ -176,15 +176,15 @@ end
 
 
 --- Deletes a Unit from the DATABASE based on the Unit Name.
--- @param #DATABASE self
+--- @param #DATABASE self
 function DATABASE:DeleteUnit( DCSUnitName )
   self.UNITS[DCSUnitName] = nil
 end
 
 --- Adds a Static based on the Static Name in the DATABASE.
--- @param #DATABASE self
--- @param #string DCSStaticName Name of the static.
--- @return Wrapper.Static#STATIC The static object.
+--- @param #DATABASE self
+--- @param #string DCSStaticName Name of the static.
+--- @return Wrapper.Static#STATIC The static object.
 function DATABASE:AddStatic( DCSStaticName )
 
   if not self.STATICS[DCSStaticName] then
@@ -197,15 +197,15 @@ end
 
 
 --- Deletes a Static from the DATABASE based on the Static Name.
--- @param #DATABASE self
+--- @param #DATABASE self
 function DATABASE:DeleteStatic( DCSStaticName )
   self.STATICS[DCSStaticName] = nil
 end
 
 --- Finds a STATIC based on the StaticName.
--- @param #DATABASE self
--- @param #string StaticName
--- @return Wrapper.Static#STATIC The found STATIC.
+--- @param #DATABASE self
+--- @param #string StaticName
+--- @return Wrapper.Static#STATIC The found STATIC.
 function DATABASE:FindStatic( StaticName )
 
   local StaticFound = self.STATICS[StaticName]
@@ -213,9 +213,9 @@ function DATABASE:FindStatic( StaticName )
 end
 
 --- Adds a Airbase based on the Airbase Name in the DATABASE.
--- @param #DATABASE self
--- @param #string AirbaseName The name of the airbase.
--- @return Wrapper.Airbase#AIRBASE Airbase object.
+--- @param #DATABASE self
+--- @param #string AirbaseName The name of the airbase.
+--- @return Wrapper.Airbase#AIRBASE Airbase object.
 function DATABASE:AddAirbase( AirbaseName )
 
   if not self.AIRBASES[AirbaseName] then
@@ -227,17 +227,17 @@ end
 
 
 --- Deletes a Airbase from the DATABASE based on the Airbase Name.
--- @param #DATABASE self
--- @param #string AirbaseName The name of the airbase
+--- @param #DATABASE self
+--- @param #string AirbaseName The name of the airbase
 function DATABASE:DeleteAirbase( AirbaseName )
 
   self.AIRBASES[AirbaseName] = nil
 end
 
 --- Finds an AIRBASE based on the AirbaseName.
--- @param #DATABASE self
--- @param #string AirbaseName
--- @return Wrapper.Airbase#AIRBASE The found AIRBASE.
+--- @param #DATABASE self
+--- @param #string AirbaseName
+--- @return Wrapper.Airbase#AIRBASE The found AIRBASE.
 function DATABASE:FindAirbase( AirbaseName )
 
   local AirbaseFound = self.AIRBASES[AirbaseName]
@@ -548,9 +548,9 @@ do -- cargo
 end -- cargo
 
 --- Finds a CLIENT based on the ClientName.
--- @param #DATABASE self
--- @param #string ClientName
--- @return Wrapper.Client#CLIENT The found CLIENT.
+--- @param #DATABASE self
+--- @param #string ClientName
+--- @return Wrapper.Client#CLIENT The found CLIENT.
 function DATABASE:FindClient( ClientName )
 
   local ClientFound = self.CLIENTS[ClientName]
@@ -559,9 +559,9 @@ end
 
 
 --- Adds a CLIENT based on the ClientName in the DATABASE.
--- @param #DATABASE self
--- @param #string ClientName Name of the Client unit.
--- @return Wrapper.Client#CLIENT The client object.
+--- @param #DATABASE self
+--- @param #string ClientName Name of the Client unit.
+--- @return Wrapper.Client#CLIENT The client object.
 function DATABASE:AddClient( ClientName )
 
   if not self.CLIENTS[ClientName] then
@@ -573,9 +573,9 @@ end
 
 
 --- Finds a GROUP based on the GroupName.
--- @param #DATABASE self
--- @param #string GroupName
--- @return Wrapper.Group#GROUP The found GROUP.
+--- @param #DATABASE self
+--- @param #string GroupName
+--- @return Wrapper.Group#GROUP The found GROUP.
 function DATABASE:FindGroup( GroupName )
 
   local GroupFound = self.GROUPS[GroupName]
@@ -584,7 +584,7 @@ end
 
 
 --- Adds a GROUP based on the GroupName in the DATABASE.
--- @param #DATABASE self
+--- @param #DATABASE self
 function DATABASE:AddGroup( GroupName )
 
   if not self.GROUPS[GroupName] then
@@ -596,7 +596,7 @@ function DATABASE:AddGroup( GroupName )
 end
 
 --- Adds a player based on the Player Name in the DATABASE.
--- @param #DATABASE self
+--- @param #DATABASE self
 function DATABASE:AddPlayer( UnitName, PlayerName )
 
   if PlayerName then
@@ -608,7 +608,7 @@ function DATABASE:AddPlayer( UnitName, PlayerName )
 end
 
 --- Deletes a player from the DATABASE based on the Player Name.
--- @param #DATABASE self
+--- @param #DATABASE self
 function DATABASE:DeletePlayer( UnitName, PlayerName )
 
   if PlayerName then
@@ -620,7 +620,7 @@ end
 
 --- Get the player table from the DATABASE.
 -- The player table contains all unit names with the key the name of the player (PlayerName).
--- @param #DATABASE self
+--- @param #DATABASE self
 -- @usage
 --   local Players = _DATABASE:GetPlayers()
 --   for PlayerName, UnitName in pairs( Players ) do
@@ -633,7 +633,7 @@ end
 
 --- Get the player table from the DATABASE, which contains all UNIT objects.
 -- The player table contains all UNIT objects of the player with the key the name of the player (PlayerName).
--- @param #DATABASE self
+--- @param #DATABASE self
 -- @usage
 --   local PlayerUnits = _DATABASE:GetPlayerUnits()
 --   for PlayerName, PlayerUnit in pairs( PlayerUnits ) do
@@ -646,7 +646,7 @@ end
 
 --- Get the player table from the DATABASE which have joined in the mission historically.
 -- The player table contains all UNIT objects with the key the name of the player (PlayerName).
--- @param #DATABASE self
+--- @param #DATABASE self
 -- @usage
 --   local PlayersJoined = _DATABASE:GetPlayersJoined()
 --   for PlayerName, PlayerUnit in pairs( PlayersJoined ) do
@@ -661,9 +661,9 @@ end
 -- This method expects EXACTLY the same structure as a structure within the ME, and needs 2 additional fields defined:
 -- SpawnCountryID, SpawnCategoryID
 -- This method is used by the SPAWN class.
--- @param #DATABASE self
--- @param #table SpawnTemplate Template of the group to spawn.
--- @return Wrapper.Group#GROUP Spawned group.
+--- @param #DATABASE self
+--- @param #table SpawnTemplate Template of the group to spawn.
+--- @return Wrapper.Group#GROUP Spawned group.
 function DATABASE:Spawn( SpawnTemplate )
   self:F( SpawnTemplate.name )
 
@@ -699,9 +699,9 @@ function DATABASE:Spawn( SpawnTemplate )
 end
 
 --- Set a status to a Group within the Database, this to check crossing events for example.
--- @param #DATABASE self
--- @param #string GroupName Group name.
--- @param #string Status Status.
+--- @param #DATABASE self
+--- @param #string GroupName Group name.
+--- @param #string Status Status.
 function DATABASE:SetStatusGroup( GroupName, Status )
   self:F2( Status )
 
@@ -709,9 +709,9 @@ function DATABASE:SetStatusGroup( GroupName, Status )
 end
 
 --- Get a status to a Group within the Database, this to check crossing events for example.
--- @param #DATABASE self
--- @param #string GroupName Group name.
--- @return #string Status or an empty string "".
+--- @param #DATABASE self
+--- @param #string GroupName Group name.
+--- @return #string Status or an empty string "".
 function DATABASE:GetStatusGroup( GroupName )
   self:F2( GroupName )
 
@@ -723,13 +723,13 @@ function DATABASE:GetStatusGroup( GroupName )
 end
 
 --- Private method that registers new Group Templates within the DATABASE Object.
--- @param #DATABASE self
--- @param #table GroupTemplate
--- @param DCS#coalition.side CoalitionSide The coalition.side of the object.
--- @param DCS#Object.Category CategoryID The Object.category of the object.
--- @param DCS#country.id CountryID the country ID of the object.
--- @param #string GroupName (Optional) The name of the group. Default is `GroupTemplate.name`.
--- @return #DATABASE self
+--- @param #DATABASE self
+--- @param #table GroupTemplate
+--- @param DCS#coalition.side CoalitionSide The coalition.side of the object.
+--- @param DCS#Object.Category CategoryID The Object.category of the object.
+--- @param DCS#country.id CountryID the country ID of the object.
+--- @param #string GroupName (Optional) The name of the group. Default is `GroupTemplate.name`.
+--- @return #DATABASE self
 function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, CategoryID, CountryID, GroupName )
 
   local GroupTemplateName = GroupName or env.getValueDictByKey( GroupTemplate.name )
@@ -795,9 +795,9 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
 end
 
 --- Get group template.
--- @param #DATABASE self
--- @param #string GroupName Group name.
--- @return #table Group template table.
+--- @param #DATABASE self
+--- @param #string GroupName Group name.
+--- @return #table Group template table.
 function DATABASE:GetGroupTemplate( GroupName )
   local GroupTemplate = self.Templates.Groups[GroupName].Template
   GroupTemplate.SpawnCoalitionID = self.Templates.Groups[GroupName].CoalitionID
@@ -807,12 +807,12 @@ function DATABASE:GetGroupTemplate( GroupName )
 end
 
 --- Private method that registers new Static Templates within the DATABASE Object.
--- @param #DATABASE self
--- @param #table StaticTemplate Template table.
--- @param #number CoalitionID Coalition ID.
--- @param #number CategoryID Category ID.
--- @param #number CountryID Country ID.
--- @return #DATABASE self
+--- @param #DATABASE self
+--- @param #table StaticTemplate Template table.
+--- @param #number CoalitionID Coalition ID.
+--- @param #number CategoryID Category ID.
+--- @param #number CountryID Country ID.
+--- @return #DATABASE self
 function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, CategoryID, CountryID )
 
   local StaticTemplate = UTILS.DeepCopy( StaticTemplate )
@@ -848,9 +848,9 @@ function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, Category
 end
 
 --- Get static group template.
--- @param #DATABASE self
--- @param #string StaticName Name of the static.
--- @return #table Static template table.
+--- @param #DATABASE self
+--- @param #string StaticName Name of the static.
+--- @return #table Static template table.
 function DATABASE:GetStaticGroupTemplate( StaticName )
   if self.Templates.Statics[StaticName] then
     local StaticTemplate = self.Templates.Statics[StaticName].GroupTemplate
@@ -862,9 +862,9 @@ function DATABASE:GetStaticGroupTemplate( StaticName )
 end
 
 --- Get static unit template.
--- @param #DATABASE self
--- @param #string StaticName Name of the static.
--- @return #table Static template table.
+--- @param #DATABASE self
+--- @param #string StaticName Name of the static.
+--- @return #table Static template table.
 function DATABASE:GetStaticUnitTemplate( StaticName )
   if self.Templates.Statics[StaticName] then
     local UnitTemplate = self.Templates.Statics[StaticName].UnitTemplate
@@ -876,9 +876,9 @@ function DATABASE:GetStaticUnitTemplate( StaticName )
 end
 
 --- Get group name from unit name.
--- @param #DATABASE self
--- @param #string UnitName Name of the unit.
--- @return #string Group name.
+--- @param #DATABASE self
+--- @param #string UnitName Name of the unit.
+--- @return #string Group name.
 function DATABASE:GetGroupNameFromUnitName( UnitName )
   if self.Templates.Units[UnitName] then
     return self.Templates.Units[UnitName].GroupName
@@ -889,9 +889,9 @@ function DATABASE:GetGroupNameFromUnitName( UnitName )
 end
 
 --- Get group template from unit name.
--- @param #DATABASE self
--- @param #string UnitName Name of the unit.
--- @return #table Group template.
+--- @param #DATABASE self
+--- @param #string UnitName Name of the unit.
+--- @return #table Group template.
 function DATABASE:GetGroupTemplateFromUnitName( UnitName )
   if self.Templates.Units[UnitName] then
     return self.Templates.Units[UnitName].GroupTemplate
@@ -902,9 +902,9 @@ function DATABASE:GetGroupTemplateFromUnitName( UnitName )
 end
 
 --- Get group template from unit name.
--- @param #DATABASE self
--- @param #string UnitName Name of the unit.
--- @return #table Group template.
+--- @param #DATABASE self
+--- @param #string UnitName Name of the unit.
+--- @return #table Group template.
 function DATABASE:GetUnitTemplateFromUnitName( UnitName )
   if self.Templates.Units[UnitName] then
     return self.Templates.Units[UnitName]
@@ -916,25 +916,25 @@ end
 
 
 --- Get coalition ID from client name.
--- @param #DATABASE self
--- @param #string ClientName Name of the Client.
--- @return #number Coalition ID.
+--- @param #DATABASE self
+--- @param #string ClientName Name of the Client.
+--- @return #number Coalition ID.
 function DATABASE:GetCoalitionFromClientTemplate( ClientName )
   return self.Templates.ClientsByName[ClientName].CoalitionID
 end
 
 --- Get category ID from client name.
--- @param #DATABASE self
--- @param #string ClientName Name of the Client.
--- @return #number Category ID.
+--- @param #DATABASE self
+--- @param #string ClientName Name of the Client.
+--- @return #number Category ID.
 function DATABASE:GetCategoryFromClientTemplate( ClientName )
   return self.Templates.ClientsByName[ClientName].CategoryID
 end
 
 --- Get country ID from client name.
--- @param #DATABASE self
--- @param #string ClientName Name of the Client.
--- @return #number Country ID.
+--- @param #DATABASE self
+--- @param #string ClientName Name of the Client.
+--- @return #number Country ID.
 function DATABASE:GetCountryFromClientTemplate( ClientName )
   return self.Templates.ClientsByName[ClientName].CountryID
 end
@@ -942,17 +942,17 @@ end
 --- Airbase
 
 --- Get coalition ID from airbase name.
--- @param #DATABASE self
--- @param #string AirbaseName Name of the airbase.
--- @return #number Coalition ID.
+--- @param #DATABASE self
+--- @param #string AirbaseName Name of the airbase.
+--- @return #number Coalition ID.
 function DATABASE:GetCoalitionFromAirbase( AirbaseName )
   return self.AIRBASES[AirbaseName]:GetCoalition()
 end
 
 --- Get category from airbase name.
--- @param #DATABASE self
--- @param #string AirbaseName Name of the airbase.
--- @return #number Category.
+--- @param #DATABASE self
+--- @param #string AirbaseName Name of the airbase.
+--- @return #number Category.
 function DATABASE:GetCategoryFromAirbase( AirbaseName )
   return self.AIRBASES[AirbaseName]:GetCategory()
 end
@@ -960,8 +960,8 @@ end
 
 
 --- Private method that registers all alive players in the mission.
--- @param #DATABASE self
--- @return #DATABASE self
+--- @param #DATABASE self
+--- @return #DATABASE self
 function DATABASE:_RegisterPlayers()
 
   local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ), AlivePlayersNeutral = coalition.getPlayers( coalition.side.NEUTRAL ) }
@@ -984,8 +984,8 @@ end
 
 
 --- Private method that registers all Groups and Units within in the mission.
--- @param #DATABASE self
--- @return #DATABASE self
+--- @param #DATABASE self
+--- @return #DATABASE self
 function DATABASE:_RegisterGroupsAndUnits()
 
   local CoalitionsData = { GroupsRed = coalition.getGroups( coalition.side.RED ), GroupsBlue = coalition.getGroups( coalition.side.BLUE ),  GroupsNeutral = coalition.getGroups( coalition.side.NEUTRAL ) }
@@ -1025,8 +1025,8 @@ function DATABASE:_RegisterGroupsAndUnits()
 end
 
 --- Private method that registers all Units of skill Client or Player within in the mission.
--- @param #DATABASE self
--- @return #DATABASE self
+--- @param #DATABASE self
+--- @return #DATABASE self
 function DATABASE:_RegisterClients()
 
   for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
@@ -1039,7 +1039,7 @@ function DATABASE:_RegisterClients()
 end
 
 --- Private method that registeres all static objects.
--- @param #DATABASE self
+--- @param #DATABASE self
 function DATABASE:_RegisterStatics()
 
   local CoalitionsData={GroupsRed=coalition.getStaticObjects(coalition.side.RED), GroupsBlue=coalition.getStaticObjects(coalition.side.BLUE), GroupsNeutral=coalition.getStaticObjects(coalition.side.NEUTRAL)}
@@ -1062,8 +1062,8 @@ function DATABASE:_RegisterStatics()
 end
 
 --- Register all world airbases.
--- @param #DATABASE self
--- @return #DATABASE self
+--- @param #DATABASE self
+--- @return #DATABASE self
 function DATABASE:_RegisterAirbases()
 
  for DCSAirbaseId, DCSAirbase in pairs(world.getAirbases()) do
@@ -1076,9 +1076,9 @@ function DATABASE:_RegisterAirbases()
 end
 
 --- Register a DCS airbase.
--- @param #DATABASE self
--- @param DCS#Airbase airbase Airbase.
--- @return #DATABASE self
+--- @param #DATABASE self
+--- @param DCS#Airbase airbase Airbase.
+--- @return #DATABASE self
 function DATABASE:_RegisterAirbase(airbase)
 
   if airbase then
@@ -1114,8 +1114,8 @@ end
 --- Events
 
 --- Handles the OnBirth event for the alive units set.
--- @param #DATABASE self
--- @param Core.Event#EVENTDATA Event
+--- @param #DATABASE self
+--- @param Core.Event#EVENTDATA Event
 function DATABASE:_EventOnBirth( Event )
   self:F( { Event } )
 
@@ -1195,8 +1195,8 @@ end
 
 
 --- Handles the OnDead or OnCrash event for alive units set.
--- @param #DATABASE self
--- @param Core.Event#EVENTDATA Event
+--- @param #DATABASE self
+--- @param Core.Event#EVENTDATA Event
 function DATABASE:_EventOnDeadOrCrash( Event )
 
   if Event.IniDCSUnit then
@@ -1266,8 +1266,8 @@ end
 
 
 --- Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).
--- @param #DATABASE self
--- @param Core.Event#EVENTDATA Event
+--- @param #DATABASE self
+--- @param Core.Event#EVENTDATA Event
 function DATABASE:_EventOnPlayerEnterUnit( Event )
   self:F2( { Event } )
 
@@ -1304,8 +1304,8 @@ end
 
 
 --- Handles the OnPlayerLeaveUnit event to clean the active players table.
--- @param #DATABASE self
--- @param Core.Event#EVENTDATA Event
+--- @param #DATABASE self
+--- @param Core.Event#EVENTDATA Event
 function DATABASE:_EventOnPlayerLeaveUnit( Event )
   self:F2( { Event } )
 
@@ -1342,9 +1342,9 @@ end
 --- Iterators
 
 --- Iterate the DATABASE and call an iterator function for the given set, providing the Object for each element within the set and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive player in the database.
--- @return #DATABASE self
+--- @param #DATABASE self
+--- @param #function IteratorFunction The function that will be called when there is an alive player in the database.
+--- @return #DATABASE self
 function DATABASE:ForEach( IteratorFunction, FinalizeFunction, arg, Set )
   self:F2( arg )
 
@@ -1390,9 +1390,9 @@ end
 
 
 --- Iterate the DATABASE and call an iterator function for each **alive** STATIC, providing the STATIC and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a STATIC parameter.
--- @return #DATABASE self
+--- @param #DATABASE self
+--- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a STATIC parameter.
+--- @return #DATABASE self
 function DATABASE:ForEachStatic( IteratorFunction, FinalizeFunction, ... )  --R2.1
   self:F2( arg )
 
@@ -1403,9 +1403,9 @@ end
 
 
 --- Iterate the DATABASE and call an iterator function for each **alive** UNIT, providing the UNIT and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a UNIT parameter.
--- @return #DATABASE self
+--- @param #DATABASE self
+--- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a UNIT parameter.
+--- @return #DATABASE self
 function DATABASE:ForEachUnit( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
 
@@ -1416,9 +1416,9 @@ end
 
 
 --- Iterate the DATABASE and call an iterator function for each **alive** GROUP, providing the GROUP and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a GROUP parameter.
--- @return #DATABASE self
+--- @param #DATABASE self
+--- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a GROUP parameter.
+--- @return #DATABASE self
 function DATABASE:ForEachGroup( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
 
@@ -1429,9 +1429,9 @@ end
 
 
 --- Iterate the DATABASE and call an iterator function for each **ALIVE** player, providing the player name and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept the player name.
--- @return #DATABASE self
+--- @param #DATABASE self
+--- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept the player name.
+--- @return #DATABASE self
 function DATABASE:ForEachPlayer( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
 
@@ -1442,9 +1442,9 @@ end
 
 
 --- Iterate the DATABASE and call an iterator function for each player who has joined the mission, providing the Unit of the player and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a UNIT parameter.
--- @return #DATABASE self
+--- @param #DATABASE self
+--- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a UNIT parameter.
+--- @return #DATABASE self
 function DATABASE:ForEachPlayerJoined( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
 
@@ -1454,9 +1454,9 @@ function DATABASE:ForEachPlayerJoined( IteratorFunction, FinalizeFunction, ... )
 end
 
 --- Iterate the DATABASE and call an iterator function for each **ALIVE** player UNIT, providing the player UNIT and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept the player name.
--- @return #DATABASE self
+--- @param #DATABASE self
+--- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept the player name.
+--- @return #DATABASE self
 function DATABASE:ForEachPlayerUnit( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
 
@@ -1467,9 +1467,9 @@ end
 
 
 --- Iterate the DATABASE and call an iterator function for each CLIENT, providing the CLIENT to the function and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called object in the database. The function needs to accept a CLIENT parameter.
--- @return #DATABASE self
+--- @param #DATABASE self
+--- @param #function IteratorFunction The function that will be called object in the database. The function needs to accept a CLIENT parameter.
+--- @return #DATABASE self
 function DATABASE:ForEachClient( IteratorFunction, ... )
   self:F2( arg )
 
@@ -1479,9 +1479,9 @@ function DATABASE:ForEachClient( IteratorFunction, ... )
 end
 
 --- Iterate the DATABASE and call an iterator function for each CARGO, providing the CARGO object to the function and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a CLIENT parameter.
--- @return #DATABASE self
+--- @param #DATABASE self
+--- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a CLIENT parameter.
+--- @return #DATABASE self
 function DATABASE:ForEachCargo( IteratorFunction, ... )
   self:F2( arg )
 
@@ -1492,8 +1492,8 @@ end
 
 
 --- Handles the OnEventNewCargo event.
--- @param #DATABASE self
--- @param Core.Event#EVENTDATA EventData
+--- @param #DATABASE self
+--- @param Core.Event#EVENTDATA EventData
 function DATABASE:OnEventNewCargo( EventData )
   self:F2( { EventData } )
 
@@ -1504,8 +1504,8 @@ end
 
 
 --- Handles the OnEventDeleteCargo.
--- @param #DATABASE self
--- @param Core.Event#EVENTDATA EventData
+--- @param #DATABASE self
+--- @param Core.Event#EVENTDATA EventData
 function DATABASE:OnEventDeleteCargo( EventData )
   self:F2( { EventData } )
 
@@ -1516,8 +1516,8 @@ end
 
 
 --- Handles the OnEventNewZone event.
--- @param #DATABASE self
--- @param Core.Event#EVENTDATA EventData
+--- @param #DATABASE self
+--- @param Core.Event#EVENTDATA EventData
 function DATABASE:OnEventNewZone( EventData )
   self:F2( { EventData } )
 
@@ -1528,8 +1528,8 @@ end
 
 
 --- Handles the OnEventDeleteZone.
--- @param #DATABASE self
--- @param Core.Event#EVENTDATA EventData
+--- @param #DATABASE self
+--- @param Core.Event#EVENTDATA EventData
 function DATABASE:OnEventDeleteZone( EventData )
   self:F2( { EventData } )
 
@@ -1541,9 +1541,9 @@ end
 
 
 --- Gets the player settings
--- @param #DATABASE self
--- @param #string PlayerName
--- @return Core.Settings#SETTINGS
+--- @param #DATABASE self
+--- @param #string PlayerName
+--- @return Core.Settings#SETTINGS
 function DATABASE:GetPlayerSettings( PlayerName )
   self:F2( { PlayerName } )
   return self.PLAYERSETTINGS[PlayerName]
@@ -1551,27 +1551,27 @@ end
 
 
 --- Sets the player settings
--- @param #DATABASE self
--- @param #string PlayerName
--- @param Core.Settings#SETTINGS Settings
--- @return Core.Settings#SETTINGS
+--- @param #DATABASE self
+--- @param #string PlayerName
+--- @param Core.Settings#SETTINGS Settings
+--- @return Core.Settings#SETTINGS
 function DATABASE:SetPlayerSettings( PlayerName, Settings )
   self:F2( { PlayerName, Settings } )
   self.PLAYERSETTINGS[PlayerName] = Settings
 end
 
 --- Add an OPS group (FLIGHTGROUP, ARMYGROUP, NAVYGROUP) to the data base.
--- @param #DATABASE self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group added to the DB.
+--- @param #DATABASE self
+--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group added to the DB.
 function DATABASE:AddOpsGroup(opsgroup)
   --env.info("Adding OPSGROUP "..tostring(opsgroup.groupname))
   self.FLIGHTGROUPS[opsgroup.groupname]=opsgroup
 end
 
 --- Get an OPS group (FLIGHTGROUP, ARMYGROUP, NAVYGROUP) from the data base.
--- @param #DATABASE self
--- @param #string groupname Group name of the group. Can also be passed as GROUP object.
--- @return Ops.OpsGroup#OPSGROUP OPS group object.
+--- @param #DATABASE self
+--- @param #string groupname Group name of the group. Can also be passed as GROUP object.
+--- @return Ops.OpsGroup#OPSGROUP OPS group object.
 function DATABASE:GetOpsGroup(groupname)
 
   -- Get group and group name.
@@ -1585,9 +1585,9 @@ function DATABASE:GetOpsGroup(groupname)
 end
 
 --- Find an OPSGROUP (FLIGHTGROUP, ARMYGROUP, NAVYGROUP) in the data base.
--- @param #DATABASE self
--- @param #string groupname Group name of the group. Can also be passed as GROUP object.
--- @return Ops.OpsGroup#OPSGROUP OPS group object.
+--- @param #DATABASE self
+--- @param #string groupname Group name of the group. Can also be passed as GROUP object.
+--- @return Ops.OpsGroup#OPSGROUP OPS group object.
 function DATABASE:FindOpsGroup(groupname)
 
   -- Get group and group name.
@@ -1601,9 +1601,9 @@ function DATABASE:FindOpsGroup(groupname)
 end
 
 --- Find an OPSGROUP (FLIGHTGROUP, ARMYGROUP, NAVYGROUP) in the data base for a given unit.
--- @param #DATABASE self
--- @param #string unitname Unit name. Can also be passed as UNIT object.
--- @return Ops.OpsGroup#OPSGROUP OPS group object.
+--- @param #DATABASE self
+--- @param #string unitname Unit name. Can also be passed as UNIT object.
+--- @return Ops.OpsGroup#OPSGROUP OPS group object.
 function DATABASE:FindOpsGroupFromUnit(unitname)
 
   local unit=nil --Wrapper.Unit#UNIT
@@ -1628,17 +1628,17 @@ function DATABASE:FindOpsGroupFromUnit(unitname)
 end
 
 --- Add a flight control to the data base.
--- @param #DATABASE self
--- @param Ops.FlightControl#FLIGHTCONTROL flightcontrol
+--- @param #DATABASE self
+--- @param Ops.FlightControl#FLIGHTCONTROL flightcontrol
 function DATABASE:AddFlightControl(flightcontrol)
   self:F2( { flightcontrol } )
   self.FLIGHTCONTROLS[flightcontrol.airbasename]=flightcontrol
 end
 
 --- Get a flight control object from the data base.
--- @param #DATABASE self
--- @param #string airbasename Name of the associated airbase.
--- @return Ops.FlightControl#FLIGHTCONTROL The FLIGHTCONTROL object.s
+--- @param #DATABASE self
+--- @param #string airbasename Name of the associated airbase.
+--- @return Ops.FlightControl#FLIGHTCONTROL The FLIGHTCONTROL object.s
 function DATABASE:GetFlightControl(airbasename)
   return self.FLIGHTCONTROLS[airbasename]
 end

@@ -28,9 +28,9 @@
 -- @image AI_Balancing.JPG
 
 --- @type AI_BALANCER
--- @field Core.Set#SET_CLIENT SetClient
--- @field Core.Spawn#SPAWN SpawnAI
--- @field Wrapper.Group#GROUP Test
+--- @field Core.Set#SET_CLIENT SetClient
+--- @field Core.Spawn#SPAWN SpawnAI
+--- @field Wrapper.Group#GROUP Test
 -- @extends Core.Fsm#FSM_SET
 
 
@@ -86,7 +86,7 @@
 -- Note that when AI returns to an airbase, the AI_BALANCER will trigger the **Return** event and the AI will return, 
 -- otherwise the AI_BALANCER will trigger a **Destroy** event, and the AI will be destroyed.
 -- 
--- @field #AI_BALANCER
+--- @field #AI_BALANCER
 AI_BALANCER = {
   ClassName = "AI_BALANCER",
   PatrolZones = {},
@@ -98,10 +98,10 @@ AI_BALANCER = {
 
 
 --- Creates a new AI_BALANCER object
--- @param #AI_BALANCER self
--- @param Core.Set#SET_CLIENT SetClient A SET\_CLIENT object that will contain the CLIENT objects to be monitored if they are alive or not (joined by a player).
--- @param Core.Spawn#SPAWN SpawnAI The default Spawn object to spawn new AI Groups when needed.
--- @return #AI_BALANCER
+--- @param #AI_BALANCER self
+--- @param Core.Set#SET_CLIENT SetClient A SET\_CLIENT object that will contain the CLIENT objects to be monitored if they are alive or not (joined by a player).
+--- @param Core.Spawn#SPAWN SpawnAI The default Spawn object to spawn new AI Groups when needed.
+--- @return #AI_BALANCER
 function AI_BALANCER:New( SetClient, SpawnAI )
   
   -- Inherits from BASE
@@ -131,10 +131,10 @@ end
 
 --- Sets the earliest to the latest interval in seconds how long AI_BALANCER will wait to spawn a new AI.
 -- Provide 2 identical seconds if the interval should be a fixed amount of seconds.
--- @param #AI_BALANCER self
--- @param #number Earliest The earliest a new AI can be spawned in seconds.
--- @param #number Latest The latest a new AI can be spawned in seconds.
--- @return self
+--- @param #AI_BALANCER self
+--- @param #number Earliest The earliest a new AI can be spawned in seconds.
+--- @param #number Latest The latest a new AI can be spawned in seconds.
+--- @return self
 function AI_BALANCER:InitSpawnInterval( Earliest, Latest )
 
   self.Earliest = Earliest
@@ -144,9 +144,9 @@ function AI_BALANCER:InitSpawnInterval( Earliest, Latest )
 end
 
 --- Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
--- @param #AI_BALANCER self
--- @param DCS#Distance ReturnThresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnThresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
--- @param Core.Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Core.Set#SET_AIRBASE}s to evaluate where to return to.
+--- @param #AI_BALANCER self
+--- @param DCS#Distance ReturnThresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnThresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
+--- @param Core.Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Core.Set#SET_AIRBASE}s to evaluate where to return to.
 function AI_BALANCER:ReturnToNearestAirbases( ReturnThresholdRange, ReturnAirbaseSet )
 
   self.ToNearestAirbase = true
@@ -155,8 +155,8 @@ function AI_BALANCER:ReturnToNearestAirbases( ReturnThresholdRange, ReturnAirbas
 end
 
 --- Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
--- @param #AI_BALANCER self
--- @param DCS#Distance ReturnThresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnThresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
+--- @param #AI_BALANCER self
+--- @param DCS#Distance ReturnThresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnThresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
 function AI_BALANCER:ReturnToHomeAirbase( ReturnThresholdRange )
 
   self.ToHomeAirbase = true
@@ -164,9 +164,9 @@ function AI_BALANCER:ReturnToHomeAirbase( ReturnThresholdRange )
 end
 
 --- @param #AI_BALANCER self
--- @param Core.Set#SET_GROUP SetGroup
--- @param #string ClientName
--- @param Wrapper.Group#GROUP AIGroup
+--- @param Core.Set#SET_GROUP SetGroup
+--- @param #string ClientName
+--- @param Wrapper.Group#GROUP AIGroup
 function AI_BALANCER:onenterSpawning( SetGroup, From, Event, To, ClientName )
 
   -- OK, Spawn a new group from the default SpawnAI object provided.
@@ -186,8 +186,8 @@ function AI_BALANCER:onenterSpawning( SetGroup, From, Event, To, ClientName )
 end
 
 --- @param #AI_BALANCER self
--- @param Core.Set#SET_GROUP SetGroup
--- @param Wrapper.Group#GROUP AIGroup
+--- @param Core.Set#SET_GROUP SetGroup
+--- @param Wrapper.Group#GROUP AIGroup
 function AI_BALANCER:onenterDestroying( SetGroup, From, Event, To, ClientName, AIGroup )
 
   AIGroup:Destroy()
@@ -197,12 +197,12 @@ function AI_BALANCER:onenterDestroying( SetGroup, From, Event, To, ClientName, A
 end
 
 --- RTB
--- @param #AI_BALANCER self
--- @param Core.Set#SET_GROUP SetGroup
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Wrapper.Group#GROUP AIGroup
+--- @param #AI_BALANCER self
+--- @param Core.Set#SET_GROUP SetGroup
+--- @param #string From
+--- @param #string Event
+--- @param #string To
+--- @param Wrapper.Group#GROUP AIGroup
 function AI_BALANCER:onenterReturning( SetGroup, From, Event, To, AIGroup )
 
     local AIGroupTemplate = AIGroup:GetTemplate()

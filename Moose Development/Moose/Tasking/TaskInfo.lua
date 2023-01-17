@@ -19,7 +19,7 @@
 -- 
 -- ## The TASKINFO class implements the methods to contain information and display information of a task. 
 -- 
--- @field #TASKINFO
+--- @field #TASKINFO
 TASKINFO = {
   ClassName = "TASKINFO",
 }
@@ -33,9 +33,9 @@ TASKINFO = {
 TASKINFO.Detail = ""
 
 --- Instantiates a new TASKINFO. 
--- @param #TASKINFO self
--- @param Tasking.Task#TASK Task The task owning the information.
--- @return #TASKINFO self
+--- @param #TASKINFO self
+--- @param Tasking.Task#TASK Task The task owning the information.
+--- @return #TASKINFO self
 function TASKINFO:New( Task )
 
   local self = BASE:Inherit( self, BASE:New() ) -- Core.Base#BASE
@@ -51,13 +51,13 @@ end
 
 
 --- Add taskinfo. 
--- @param #TASKINFO self
--- @param #string Key The info key.
--- @param Data The data of the info.
--- @param #number Order The display order, which is a number from 0 to 100.
--- @param #TASKINFO.Detail Detail The detail Level.
--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
--- @return #TASKINFO self
+--- @param #TASKINFO self
+--- @param #string Key The info key.
+--- @param Data The data of the info.
+--- @param #number Order The display order, which is a number from 0 to 100.
+--- @param #TASKINFO.Detail Detail The detail Level.
+--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+--- @return #TASKINFO self
 function TASKINFO:AddInfo( Key, Data, Order, Detail, Keep, ShowKey, Type )
   self.VolatileInfo:Add( Key, { Data = Data, Order = Order, Detail = Detail, ShowKey = ShowKey, Type = Type } )
   if Keep == true then
@@ -68,11 +68,11 @@ end
 
 
 --- Get taskinfo. 
--- @param #TASKINFO self
--- @param #string The info key.
--- @return Data The data of the info.
--- @return #number Order The display order, which is a number from 0 to 100.
--- @return #TASKINFO.Detail Detail The detail Level.
+--- @param #TASKINFO self
+--- @param #string The info key.
+--- @return Data The data of the info.
+--- @return #number Order The display order, which is a number from 0 to 100.
+--- @return #TASKINFO.Detail Detail The detail Level.
 function TASKINFO:GetInfo( Key )
   local Object = self:Get( Key )
   return Object.Data, Object.Order, Object.Detail
@@ -80,9 +80,9 @@ end
 
 
 --- Get data. 
--- @param #TASKINFO self
--- @param #string The info key.
--- @return Data The data of the info.
+--- @param #TASKINFO self
+--- @param #string The info key.
+--- @return Data The data of the info.
 function TASKINFO:GetData( Key )
   local Object = self.Info:Get( Key )
   return Object and Object.Data
@@ -90,13 +90,13 @@ end
 
 
 --- Add Text. 
--- @param #TASKINFO self
--- @param #string Key The key.
--- @param #string Text The text.
--- @param #number Order The display order, which is a number from 0 to 100.
--- @param #TASKINFO.Detail Detail The detail Level.
--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
--- @return #TASKINFO self
+--- @param #TASKINFO self
+--- @param #string Key The key.
+--- @param #string Text The text.
+--- @param #number Order The display order, which is a number from 0 to 100.
+--- @param #TASKINFO.Detail Detail The detail Level.
+--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+--- @return #TASKINFO self
 function TASKINFO:AddText( Key, Text, Order, Detail, Keep )
   self:AddInfo( Key, Text, Order, Detail, Keep )
   return self
@@ -104,11 +104,11 @@ end
 
 
 --- Add the task name. 
--- @param #TASKINFO self
--- @param #number Order The display order, which is a number from 0 to 100.
--- @param #TASKINFO.Detail Detail The detail Level.
--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
--- @return #TASKINFO self
+--- @param #TASKINFO self
+--- @param #number Order The display order, which is a number from 0 to 100.
+--- @param #TASKINFO.Detail Detail The detail Level.
+--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+--- @return #TASKINFO self
 function TASKINFO:AddTaskName( Order, Detail, Keep )
   self:AddInfo( "TaskName", self.Task:GetName(), Order, Detail, Keep )
   return self
@@ -118,12 +118,12 @@ end
 
 
 --- Add a Coordinate. 
--- @param #TASKINFO self
--- @param Core.Point#COORDINATE Coordinate
--- @param #number Order The display order, which is a number from 0 to 100.
--- @param #TASKINFO.Detail Detail The detail Level.
--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
--- @return #TASKINFO self
+--- @param #TASKINFO self
+--- @param Core.Point#COORDINATE Coordinate
+--- @param #number Order The display order, which is a number from 0 to 100.
+--- @param #TASKINFO.Detail Detail The detail Level.
+--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+--- @return #TASKINFO self
 function TASKINFO:AddCoordinate( Coordinate, Order, Detail, Keep, ShowKey, Name )
   self:AddInfo( Name or "Coordinate", Coordinate, Order, Detail, Keep, ShowKey, "Coordinate" )
   return self
@@ -131,8 +131,8 @@ end
 
 
 --- Get the Coordinate. 
--- @param #TASKINFO self
--- @return Core.Point#COORDINATE Coordinate
+--- @param #TASKINFO self
+--- @return Core.Point#COORDINATE Coordinate
 function TASKINFO:GetCoordinate( Name )
   return self:GetData( Name or "Coordinate" )
 end
@@ -140,12 +140,12 @@ end
 
 
 --- Add Coordinates. 
--- @param #TASKINFO self
--- @param #list<Core.Point#COORDINATE> Coordinates
--- @param #number Order The display order, which is a number from 0 to 100.
--- @param #TASKINFO.Detail Detail The detail Level.
--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
--- @return #TASKINFO self
+--- @param #TASKINFO self
+--- @param #list<Core.Point#COORDINATE> Coordinates
+--- @param #number Order The display order, which is a number from 0 to 100.
+--- @param #TASKINFO.Detail Detail The detail Level.
+--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+--- @return #TASKINFO self
 function TASKINFO:AddCoordinates( Coordinates, Order, Detail, Keep )
   self:AddInfo( "Coordinates", Coordinates, Order, Detail, Keep )
   return self
@@ -154,13 +154,13 @@ end
 
 
 --- Add Threat. 
--- @param #TASKINFO self
--- @param #string ThreatText The text of the Threat.
--- @param #string ThreatLevel The level of the Threat.
--- @param #number Order The display order, which is a number from 0 to 100.
--- @param #TASKINFO.Detail Detail The detail Level.
--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
--- @return #TASKINFO self
+--- @param #TASKINFO self
+--- @param #string ThreatText The text of the Threat.
+--- @param #string ThreatLevel The level of the Threat.
+--- @param #number Order The display order, which is a number from 0 to 100.
+--- @param #TASKINFO.Detail Detail The detail Level.
+--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+--- @return #TASKINFO self
 function TASKINFO:AddThreat( ThreatText, ThreatLevel, Order, Detail, Keep )
   self:AddInfo( "Threat", " [" .. string.rep(  "■", ThreatLevel ) .. string.rep(  "□", 10 - ThreatLevel ) .. "]:" .. ThreatText, Order, Detail, Keep )
   return self
@@ -168,8 +168,8 @@ end
 
 
 --- Get Threat. 
--- @param #TASKINFO self
--- @return #string The threat
+--- @param #TASKINFO self
+--- @return #string The threat
 function TASKINFO:GetThreat()
   self:GetInfo( "Threat" )
   return self
@@ -178,33 +178,33 @@ end
 
 
 --- Add the Target count. 
--- @param #TASKINFO self
--- @param #number TargetCount The amount of targets.
--- @param #number Order The display order, which is a number from 0 to 100.
--- @param #TASKINFO.Detail Detail The detail Level.
--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
--- @return #TASKINFO self
+--- @param #TASKINFO self
+--- @param #number TargetCount The amount of targets.
+--- @param #number Order The display order, which is a number from 0 to 100.
+--- @param #TASKINFO.Detail Detail The detail Level.
+--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+--- @return #TASKINFO self
 function TASKINFO:AddTargetCount( TargetCount, Order, Detail, Keep )
   self:AddInfo( "Counting", string.format( "%d", TargetCount ), Order, Detail, Keep )
   return self
 end
 
 --- Add the Targets. 
--- @param #TASKINFO self
--- @param #number TargetCount The amount of targets.
--- @param #string TargetTypes The text containing the target types.
--- @param #number Order The display order, which is a number from 0 to 100.
--- @param #TASKINFO.Detail Detail The detail Level.
--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
--- @return #TASKINFO self
+--- @param #TASKINFO self
+--- @param #number TargetCount The amount of targets.
+--- @param #string TargetTypes The text containing the target types.
+--- @param #number Order The display order, which is a number from 0 to 100.
+--- @param #TASKINFO.Detail Detail The detail Level.
+--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+--- @return #TASKINFO self
 function TASKINFO:AddTargets( TargetCount, TargetTypes, Order, Detail, Keep )
   self:AddInfo( "Targets", string.format( "%d of %s", TargetCount, TargetTypes ), Order, Detail, Keep )
   return self
 end
 
 --- Get Targets. 
--- @param #TASKINFO self
--- @return #string The targets
+--- @param #TASKINFO self
+--- @return #string The targets
 function TASKINFO:GetTargets()
   self:GetInfo( "Targets" )
   return self
@@ -214,48 +214,48 @@ end
 
 
 --- Add the QFE at a Coordinate. 
--- @param #TASKINFO self
--- @param Core.Point#COORDINATE Coordinate
--- @param #number Order The display order, which is a number from 0 to 100.
--- @param #TASKINFO.Detail Detail The detail Level.
--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
--- @return #TASKINFO self
+--- @param #TASKINFO self
+--- @param Core.Point#COORDINATE Coordinate
+--- @param #number Order The display order, which is a number from 0 to 100.
+--- @param #TASKINFO.Detail Detail The detail Level.
+--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+--- @return #TASKINFO self
 function TASKINFO:AddQFEAtCoordinate( Coordinate, Order, Detail, Keep )
   self:AddInfo( "QFE", Coordinate, Order, Detail, Keep )
   return self
 end
 
 --- Add the Temperature at a Coordinate. 
--- @param #TASKINFO self
--- @param Core.Point#COORDINATE Coordinate
--- @param #number Order The display order, which is a number from 0 to 100.
--- @param #TASKINFO.Detail Detail The detail Level.
--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
--- @return #TASKINFO self
+--- @param #TASKINFO self
+--- @param Core.Point#COORDINATE Coordinate
+--- @param #number Order The display order, which is a number from 0 to 100.
+--- @param #TASKINFO.Detail Detail The detail Level.
+--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+--- @return #TASKINFO self
 function TASKINFO:AddTemperatureAtCoordinate( Coordinate, Order, Detail, Keep )
   self:AddInfo( "Temperature", Coordinate, Order, Detail, Keep )
   return self
 end
 
 --- Add the Wind at a Coordinate. 
--- @param #TASKINFO self
--- @param Core.Point#COORDINATE Coordinate
--- @param #number Order The display order, which is a number from 0 to 100.
--- @param #TASKINFO.Detail Detail The detail Level.
--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
--- @return #TASKINFO self
+--- @param #TASKINFO self
+--- @param Core.Point#COORDINATE Coordinate
+--- @param #number Order The display order, which is a number from 0 to 100.
+--- @param #TASKINFO.Detail Detail The detail Level.
+--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+--- @return #TASKINFO self
 function TASKINFO:AddWindAtCoordinate( Coordinate, Order, Detail, Keep )
   self:AddInfo( "Wind", Coordinate, Order, Detail, Keep )
   return self
 end
 
 --- Add Cargo. 
--- @param #TASKINFO self
--- @param Core.Cargo#CARGO Cargo
--- @param #number Order The display order, which is a number from 0 to 100.
--- @param #TASKINFO.Detail Detail The detail Level.
--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
--- @return #TASKINFO self
+--- @param #TASKINFO self
+--- @param Core.Cargo#CARGO Cargo
+--- @param #number Order The display order, which is a number from 0 to 100.
+--- @param #TASKINFO.Detail Detail The detail Level.
+--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+--- @return #TASKINFO self
 function TASKINFO:AddCargo( Cargo, Order, Detail, Keep )
   self:AddInfo( "Cargo", Cargo, Order, Detail, Keep )
   return self
@@ -263,12 +263,12 @@ end
 
 
 --- Add Cargo set. 
--- @param #TASKINFO self
--- @param Core.Set#SET_CARGO SetCargo
--- @param #number Order The display order, which is a number from 0 to 100.
--- @param #TASKINFO.Detail Detail The detail Level.
--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
--- @return #TASKINFO self
+--- @param #TASKINFO self
+--- @param Core.Set#SET_CARGO SetCargo
+--- @param #number Order The display order, which is a number from 0 to 100.
+--- @param #TASKINFO.Detail Detail The detail Level.
+--- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+--- @return #TASKINFO self
 function TASKINFO:AddCargoSet( SetCargo, Order, Detail, Keep )
 
   local CargoReport = REPORT:New()
@@ -289,12 +289,12 @@ end
 
 
 --- Create the taskinfo Report
--- @param #TASKINFO self
--- @param Core.Report#REPORT Report
--- @param #TASKINFO.Detail Detail The detail Level.
--- @param Wrapper.Group#GROUP ReportGroup
--- @param Tasking.Task#TASK Task
--- @return #TASKINFO self
+--- @param #TASKINFO self
+--- @param Core.Report#REPORT Report
+--- @param #TASKINFO.Detail Detail The detail Level.
+--- @param Wrapper.Group#GROUP ReportGroup
+--- @param Tasking.Task#TASK Task
+--- @return #TASKINFO self
 function TASKINFO:Report( Report, Detail, ReportGroup, Task )
 
   local Line = 0

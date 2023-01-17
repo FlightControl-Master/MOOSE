@@ -22,9 +22,9 @@
 
 
 --- @type UNIT
--- @field #string ClassName Name of the class.
--- @field #string UnitName Name of the unit.
--- @field #string GroupName Name of the group the unit belongs to.
+--- @field #string ClassName Name of the class.
+--- @field #string UnitName Name of the unit.
+--- @field #string GroupName Name of the group the unit belongs to.
 -- @extends Wrapper.Controllable#CONTROLLABLE
 
 --- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
@@ -87,7 +87,7 @@
 --   * Use the @{#UNIT.IsLOS}() method to check if the given unit is within line of sight.
 -- 
 -- 
--- @field #UNIT
+--- @field #UNIT
 UNIT = {
 	ClassName="UNIT",
 	UnitName=nil,
@@ -96,19 +96,19 @@ UNIT = {
 
 
 --- Unit.SensorType
--- @type Unit.SensorType
--- @field OPTIC
--- @field RADAR
--- @field IRST
--- @field RWR
+--- @type Unit.SensorType
+--- @field OPTIC
+--- @field RADAR
+--- @field IRST
+--- @field RWR
 
 
 -- Registration.
   
 --- Create a new UNIT from DCSUnit.
--- @param #UNIT self
--- @param #string UnitName The name of the DCS unit.
--- @return #UNIT self
+--- @param #UNIT self
+--- @param #string UnitName The name of the DCS unit.
+--- @return #UNIT self
 function UNIT:Register( UnitName )
 
   -- Inherit CONTROLLABLE.
@@ -135,9 +135,9 @@ end
 -- Reference methods.
 
 --- Finds a UNIT from the _DATABASE using a DCSUnit object.
--- @param #UNIT self
--- @param DCS#Unit DCSUnit An existing DCS Unit object reference.
--- @return #UNIT self
+--- @param #UNIT self
+--- @param DCS#Unit DCSUnit An existing DCS Unit object reference.
+--- @return #UNIT self
 function UNIT:Find( DCSUnit )
   if DCSUnit then
     local UnitName = DCSUnit:getName()
@@ -148,9 +148,9 @@ function UNIT:Find( DCSUnit )
 end
 
 --- Find a UNIT in the _DATABASE using the name of an existing DCS Unit.
--- @param #UNIT self
--- @param #string UnitName The Unit Name.
--- @return #UNIT self
+--- @param #UNIT self
+--- @param #string UnitName The Unit Name.
+--- @return #UNIT self
 function UNIT:FindByName( UnitName )
   
   local UnitFound = _DATABASE:FindUnit( UnitName )
@@ -158,16 +158,16 @@ function UNIT:FindByName( UnitName )
 end
 
 --- Return the name of the UNIT.
--- @param #UNIT self
--- @return #string The UNIT name.
+--- @param #UNIT self
+--- @return #string The UNIT name.
 function UNIT:Name()
   
   return self.UnitName
 end
 
 --- Get the DCS unit object.
--- @param #UNIT self
--- @return DCS#Unit
+--- @param #UNIT self
+--- @return DCS#Unit
 function UNIT:GetDCSObject()
 
   local DCSUnit = Unit.getByName( self.UnitName )
@@ -180,9 +180,9 @@ function UNIT:GetDCSObject()
 end
 
 --- Returns the unit altitude above sea level in meters.
--- @param Wrapper.Unit#UNIT self
--- @param #boolean FromGround Measure from the ground or from sea level (ASL). Provide **true** for measuring from the ground (AGL). **false** or **nil** if you measure from sea level. 
--- @return #number The height of the group or nil if is not existing or alive.  
+--- @param Wrapper.Unit#UNIT self
+--- @param #boolean FromGround Measure from the ground or from sea level (ASL). Provide **true** for measuring from the ground (AGL). **false** or **nil** if you measure from sea level. 
+--- @return #number The height of the group or nil if is not existing or alive.  
 function UNIT:GetAltitude(FromGround)
   
   local DCSUnit = Unit.getByName( self.UnitName )
@@ -210,9 +210,9 @@ end
 --  * When the unit is alive, it will tweak the template x, y and heading coordinates of the group and the embedded units to the current units positions.
 --  * Then it will respawn the re-modelled group.
 --  
--- @param #UNIT self
--- @param Core.Point#COORDINATE Coordinate The position where to Spawn the new Unit at.
--- @param #number Heading The heading of the unit respawn.
+--- @param #UNIT self
+--- @param Core.Point#COORDINATE Coordinate The position where to Spawn the new Unit at.
+--- @param #number Heading The heading of the unit respawn.
 function UNIT:ReSpawnAt( Coordinate, Heading )
 
   self:T( self:Name() )
@@ -297,8 +297,8 @@ end
 
 
 --- Returns if the unit is activated.
--- @param #UNIT self
--- @return #boolean `true` if Unit is activated. `nil` The DCS Unit is not existing or alive.  
+--- @param #UNIT self
+--- @return #boolean `true` if Unit is activated. `nil` The DCS Unit is not existing or alive.  
 function UNIT:IsActive()
   self:F2( self.UnitName )
 
@@ -317,8 +317,8 @@ end
 -- If the Unit is not alive, nil is returned.  
 -- If the Unit is alive and active, true is returned.    
 -- If the Unit is alive but not active, false is returned.  
--- @param #UNIT self
--- @return #boolean `true` if Unit is alive and active. `false` if Unit is alive but not active. `nil` if the Unit is not existing or is not alive.
+--- @param #UNIT self
+--- @return #boolean `true` if Unit is alive and active. `false` if Unit is alive but not active. `nil` if the Unit is not existing or is not alive.
 function UNIT:IsAlive()
   self:F3( self.UnitName )
 
@@ -335,8 +335,8 @@ end
 
 
 --- Returns the Unit's callsign - the localized string.
--- @param #UNIT self
--- @return #string The Callsign of the Unit.
+--- @param #UNIT self
+--- @return #string The Callsign of the Unit.
 function UNIT:GetCallsign()
   self:F2( self.UnitName )
 
@@ -355,8 +355,8 @@ function UNIT:GetCallsign()
 end
 
 --- Check if an (air) unit is a client or player slot. Information is retrieved from the group template.
--- @param #UNIT self
--- @return #boolean If true, unit is associated with a client or player slot.
+--- @param #UNIT self
+--- @return #boolean If true, unit is associated with a client or player slot.
 function UNIT:IsPlayer()
   
   -- Get group.
@@ -382,9 +382,9 @@ end
 
 
 --- Returns name of the player that control the unit or nil if the unit is controlled by A.I.
--- @param #UNIT self
--- @return #string Player Name
--- @return #nil The DCS Unit is not existing or alive.  
+--- @param #UNIT self
+--- @return #string Player Name
+--- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPlayerName()
   self:F( self.UnitName )
 
@@ -416,8 +416,8 @@ function UNIT:GetPlayerName()
 end
 
 --- Checks is the unit is a *Player* or *Client* slot.  
--- @param #UNIT self
--- @return #boolean If true, unit is a player or client aircraft  
+--- @param #UNIT self
+--- @return #boolean If true, unit is a player or client aircraft  
 function UNIT:IsClient()
 
   if _DATABASE.CLIENTS[self.UnitName] then
@@ -428,8 +428,8 @@ function UNIT:IsClient()
 end
 
 --- Get the CLIENT of the unit  
--- @param #UNIT self
--- @return Wrapper.Client#CLIENT  
+--- @param #UNIT self
+--- @return Wrapper.Client#CLIENT  
 function UNIT:GetClient()
 
   local client=_DATABASE.CLIENTS[self.UnitName]
@@ -456,9 +456,9 @@ end
 -- The number is the same number the unit has in ME. 
 -- It may not be changed during the mission. 
 -- If any unit in the group is destroyed, the numbers of another units will not be changed.
--- @param #UNIT self
--- @return #number The Unit number. 
--- @return #nil The DCS Unit is not existing or alive.  
+--- @param #UNIT self
+--- @return #number The Unit number. 
+--- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetNumber()
   self:F2( self.UnitName )
 
@@ -474,8 +474,8 @@ end
 
 
 --- Returns the unit's max speed in km/h derived from the DCS descriptors.
--- @param #UNIT self
--- @return #number Speed in km/h. 
+--- @param #UNIT self
+--- @return #number Speed in km/h. 
 function UNIT:GetSpeedMax()
   self:F2( self.UnitName )
 
@@ -491,8 +491,8 @@ end
 
 --- Returns the unit's max range in meters derived from the DCS descriptors.
 -- For ground units it will return a range of 10,000 km as they have no real range.
--- @param #UNIT self
--- @return #number Range in meters.
+--- @param #UNIT self
+--- @return #number Range in meters.
 function UNIT:GetRange()
   self:F2( self.UnitName )
 
@@ -512,9 +512,9 @@ function UNIT:GetRange()
 end
 
 --- Check if the unit is refuelable. Also retrieves the refuelling system (boom or probe) if applicable.
--- @param #UNIT self
--- @return #boolean If true, unit is refuelable (checks for the attribute "Refuelable").
--- @return #number Refueling system (if any): 0=boom, 1=probe.
+--- @param #UNIT self
+--- @return #boolean If true, unit is refuelable (checks for the attribute "Refuelable").
+--- @return #number Refueling system (if any): 0=boom, 1=probe.
 function UNIT:IsRefuelable()
   self:F2( self.UnitName )
 
@@ -531,9 +531,9 @@ function UNIT:IsRefuelable()
 end
 
 --- Check if the unit is a tanker. Also retrieves the refuelling system (boom or probe) if applicable.
--- @param #UNIT self
--- @return #boolean If true, unit is refuelable (checks for the attribute "Refuelable").
--- @return #number Refueling system (if any): 0=boom, 1=probe.
+--- @param #UNIT self
+--- @return #boolean If true, unit is refuelable (checks for the attribute "Refuelable").
+--- @return #number Refueling system (if any): 0=boom, 1=probe.
 function UNIT:IsTanker()
   self:F2( self.UnitName )
 
@@ -576,8 +576,8 @@ end
 -- 
 -- This list needs to be extended, if DCS adds other units capable of supplying ammo.
 -- 
--- @param #UNIT self
--- @return #boolean If `true`, unit can supply ammo.
+--- @param #UNIT self
+--- @return #boolean If `true`, unit can supply ammo.
 function UNIT:IsAmmoSupply()
 
   -- Type name is the only thing we can check. There is no attribute (Sep. 2021) which would tell us.
@@ -606,8 +606,8 @@ end
 -- 
 -- This list needs to be extended, if DCS adds other units capable of supplying fuel.
 -- 
--- @param #UNIT self
--- @return #boolean If `true`, unit can supply fuel.
+--- @param #UNIT self
+--- @return #boolean If `true`, unit can supply fuel.
 function UNIT:IsFuelSupply()
 
   -- Type name is the only thing we can check. There is no attribute (Sep. 2021) which would tell us.
@@ -627,8 +627,8 @@ function UNIT:IsFuelSupply()
 end
 
 --- Returns the unit's group if it exist and nil otherwise.
--- @param Wrapper.Unit#UNIT self
--- @return Wrapper.Group#GROUP The Group of the Unit or `nil` if the unit does not exist.  
+--- @param Wrapper.Unit#UNIT self
+--- @return Wrapper.Group#GROUP The Group of the Unit or `nil` if the unit does not exist.  
 function UNIT:GetGroup()
   self:F2( self.UnitName )  
   local UnitGroup = GROUP:FindByName(self.GroupName)
@@ -650,9 +650,9 @@ end
 --- Returns the prefix name of the DCS Unit. A prefix name is a part of the name before a '#'-sign.
 -- DCS Units spawned with the @{Core.Spawn#SPAWN} class contain a '#'-sign to indicate the end of the (base) DCS Unit name. 
 -- The spawn sequence number and unit number are contained within the name after the '#' sign. 
--- @param #UNIT self
--- @return #string The name of the DCS Unit.
--- @return #nil The DCS Unit is not existing or alive.  
+--- @param #UNIT self
+--- @return #string The name of the DCS Unit.
+--- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPrefix()
   self:F2( self.UnitName )
 
@@ -668,8 +668,8 @@ function UNIT:GetPrefix()
 end
 
 --- Returns the Unit's ammunition.
--- @param #UNIT self
--- @return DCS#Unit.Ammo Table with ammuntion of the unit (or nil). This can be a complex table!  
+--- @param #UNIT self
+--- @return DCS#Unit.Ammo Table with ammuntion of the unit (or nil). This can be a complex table!  
 function UNIT:GetAmmo()
   self:F2( self.UnitName )
 
@@ -684,9 +684,9 @@ function UNIT:GetAmmo()
 end
 
 --- Sets the Unit's Internal Cargo Mass, in kg
--- @param #UNIT self
--- @param #number mass to set cargo to
--- @return #UNIT self
+--- @param #UNIT self
+--- @param #number mass to set cargo to
+--- @return #UNIT self
 function UNIT:SetUnitInternalCargo(mass)
   local DCSUnit = self:GetDCSObject()
   if DCSUnit then
@@ -696,13 +696,13 @@ function UNIT:SetUnitInternalCargo(mass)
 end
 
 --- Get the number of ammunition and in particular the number of shells, rockets, bombs and missiles a unit currently has.
--- @param #UNIT self
--- @return #number Total amount of ammo the unit has left. This is the sum of shells, rockets, bombs and missiles.
--- @return #number Number of shells left.
--- @return #number Number of rockets left.
--- @return #number Number of bombs left.
--- @return #number Number of missiles left.
--- @return #number Number of artillery shells left (with explosive mass, included in shells; shells can also be machine gun ammo)
+--- @param #UNIT self
+--- @return #number Total amount of ammo the unit has left. This is the sum of shells, rockets, bombs and missiles.
+--- @return #number Number of shells left.
+--- @return #number Number of rockets left.
+--- @return #number Number of bombs left.
+--- @return #number Number of missiles left.
+--- @return #number Number of artillery shells left (with explosive mass, included in shells; shells can also be machine gun ammo)
 function UNIT:GetAmmunition()
 
   -- Init counter.
@@ -793,8 +793,8 @@ function UNIT:GetAmmunition()
 end
 
 --- Returns the unit sensors.
--- @param #UNIT self
--- @return DCS#Unit.Sensors Table of sensors.  
+--- @param #UNIT self
+--- @return DCS#Unit.Sensors Table of sensors.  
 function UNIT:GetSensors()
   self:F2( self.UnitName )
 
@@ -812,8 +812,8 @@ end
 --  unit:hasSensors(Unit.SensorType.RADAR, Unit.RadarType.AS)
 
 --- Returns if the unit has sensors of a certain type.
--- @param #UNIT self
--- @return #boolean returns true if the unit has specified types of sensors. This function is more preferable than Unit.getSensors() if you don't want to get information about all the unit's sensors, and just want to check if the unit has specified types of sensors. 
+--- @param #UNIT self
+--- @return #boolean returns true if the unit has specified types of sensors. This function is more preferable than Unit.getSensors() if you don't want to get information about all the unit's sensors, and just want to check if the unit has specified types of sensors. 
 function UNIT:HasSensors( ... )
   self:F2( arg )
 
@@ -828,8 +828,8 @@ function UNIT:HasSensors( ... )
 end
 
 --- Returns if the unit is SEADable.
--- @param #UNIT self
--- @return #boolean returns true if the unit is SEADable. 
+--- @param #UNIT self
+--- @return #boolean returns true if the unit is SEADable. 
 function UNIT:HasSEAD()
   self:F2()
 
@@ -855,9 +855,9 @@ end
 -- 
 --  * First value indicates if at least one of the unit's radar(s) is on.
 --  * Second value is the object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
--- @param #UNIT self
--- @return #boolean  Indicates if at least one of the unit's radar(s) is on.
--- @return DCS#Object The object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
+--- @param #UNIT self
+--- @return #boolean  Indicates if at least one of the unit's radar(s) is on.
+--- @return DCS#Object The object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
 function UNIT:GetRadar()
   self:F2( self.UnitName )
 
@@ -872,8 +872,8 @@ function UNIT:GetRadar()
 end
 
 --- Returns relative amount of fuel (from 0.0 to 1.0) the UNIT has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
--- @param #UNIT self
--- @return #number The relative amount of fuel (from 0.0 to 1.0) or *nil* if the DCS Unit is not existing or alive. 
+--- @param #UNIT self
+--- @return #number The relative amount of fuel (from 0.0 to 1.0) or *nil* if the DCS Unit is not existing or alive. 
 function UNIT:GetFuel()
   self:F3( self.UnitName )
 
@@ -889,8 +889,8 @@ end
 
 
 --- Returns a list of one @{Wrapper.Unit}.
--- @param #UNIT self
--- @return #list<Wrapper.Unit#UNIT> A list of one @{Wrapper.Unit}.
+--- @param #UNIT self
+--- @return #list<Wrapper.Unit#UNIT> A list of one @{Wrapper.Unit}.
 function UNIT:GetUnits()
   self:F3( { self.UnitName } )
   local DCSUnit = self:GetDCSObject()
@@ -908,8 +908,8 @@ end
 
 
 --- Returns the unit's health. Dead units has health <= 1.0.
--- @param #UNIT self
--- @return #number The Unit's health value or -1 if unit does not exist any more.
+--- @param #UNIT self
+--- @return #number The Unit's health value or -1 if unit does not exist any more.
 function UNIT:GetLife()
   self:F2( self.UnitName )
 
@@ -924,8 +924,8 @@ function UNIT:GetLife()
 end
 
 --- Returns the Unit's initial health.
--- @param #UNIT self
--- @return #number The Unit's initial health value or 0 if unit does not exist any more.  
+--- @param #UNIT self
+--- @return #number The Unit's initial health value or 0 if unit does not exist any more.  
 function UNIT:GetLife0()
   self:F2( self.UnitName )
 
@@ -940,8 +940,8 @@ function UNIT:GetLife0()
 end
 
 --- Returns the unit's relative health.
--- @param #UNIT self
--- @return #number The Unit's relative health value, i.e. a number in [0,1] or -1 if unit does not exist any more.
+--- @param #UNIT self
+--- @return #number The Unit's relative health value, i.e. a number in [0,1] or -1 if unit does not exist any more.
 function UNIT:GetLifeRelative()
   self:F2(self.UnitName)
 
@@ -955,8 +955,8 @@ function UNIT:GetLifeRelative()
 end
 
 --- Returns the unit's relative damage, i.e. 1-life.
--- @param #UNIT self
--- @return #number The Unit's relative health value, i.e. a number in [0,1] or 1 if unit does not exist any more.
+--- @param #UNIT self
+--- @return #number The Unit's relative health value, i.e. a number in [0,1] or 1 if unit does not exist any more.
 function UNIT:GetDamageRelative()
   self:F2(self.UnitName)
 
@@ -975,8 +975,8 @@ end
 -- * Unit.Category.SHIP
 -- * Unit.Category.STRUCTURE
 -- 
--- @param #UNIT self
--- @return #number Unit category from `getDesc().category`.
+--- @param #UNIT self
+--- @return #number Unit category from `getDesc().category`.
 function UNIT:GetUnitCategory()
   self:F3( self.UnitName )
 
@@ -989,8 +989,8 @@ function UNIT:GetUnitCategory()
 end
 
 --- Returns the category name of the #UNIT.
--- @param #UNIT self
--- @return #string Category name = Helicopter, Airplane, Ground Unit, Ship
+--- @param #UNIT self
+--- @return #string Category name = Helicopter, Airplane, Ground Unit, Ship
 function UNIT:GetCategoryName()
   self:F3( self.UnitName )
 
@@ -1065,9 +1065,9 @@ end
 --   * Threat level  10: Unit is AAA.
 --  
 -- 
--- @param #UNIT self
--- @return #number Number between 0 (low threat level) and 10 (high threat level).
--- @return #string Some text.
+--- @param #UNIT self
+--- @return #number Number between 0 (low threat level) and 10 (high threat level).
+--- @return #string Some text.
 function UNIT:GetThreatLevel()
 
 
@@ -1192,10 +1192,10 @@ function UNIT:GetThreatLevel()
 end
 
 --- Triggers an explosion at the coordinates of the unit.
--- @param #UNIT self
--- @param #number power Power of the explosion in kg TNT. Default 100 kg TNT.
--- @param #number delay (Optional) Delay of explosion in seconds.
--- @return #UNIT self
+--- @param #UNIT self
+--- @param #number power Power of the explosion in kg TNT. Default 100 kg TNT.
+--- @param #number delay (Optional) Delay of explosion in seconds.
+--- @return #UNIT self
 function UNIT:Explode(power, delay)
 
   -- Default.
@@ -1224,11 +1224,11 @@ end
 
 
 --- Returns true if there is an **other** DCS Unit within a radius of the current 2D point of the DCS Unit.
--- @param #UNIT self
--- @param #UNIT AwaitUnit The other UNIT wrapper object.
--- @param Radius The radius in meters with the DCS Unit in the centre.
--- @return true If the other DCS Unit is within the radius of the 2D point of the DCS Unit. 
--- @return #nil The DCS Unit is not existing or alive.  
+--- @param #UNIT self
+--- @param #UNIT AwaitUnit The other UNIT wrapper object.
+--- @param Radius The radius in meters with the DCS Unit in the centre.
+--- @return true If the other DCS Unit is within the radius of the 2D point of the DCS Unit. 
+--- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
   self:F2( { self.UnitName, AwaitUnit.UnitName, Radius } )
 
@@ -1257,8 +1257,8 @@ end
 
 
 --- Returns if the unit is a friendly unit.
--- @param #UNIT self
--- @return #boolean IsFriendly evaluation result.
+--- @param #UNIT self
+--- @return #boolean IsFriendly evaluation result.
 function UNIT:IsFriendly( FriendlyCoalition )
   self:F2()
   
@@ -1279,8 +1279,8 @@ end
 
 --- Returns if the unit is of a ship category.
 -- If the unit is a ship, this method will return true, otherwise false.
--- @param #UNIT self
--- @return #boolean Ship category evaluation result.
+--- @param #UNIT self
+--- @return #boolean Ship category evaluation result.
 function UNIT:IsShip()
   self:F2()
   
@@ -1300,9 +1300,9 @@ function UNIT:IsShip()
 end
 
 --- Returns true if the UNIT is in the air.
--- @param #UNIT self
--- @param #boolean NoHeloCheck If true, no additonal checks for helos are performed.
--- @return #boolean Return true if in the air or #nil if the UNIT is not existing or alive.   
+--- @param #UNIT self
+--- @param #boolean NoHeloCheck If true, no additonal checks for helos are performed.
+--- @return #boolean Return true if in the air or #nil if the UNIT is not existing or alive.   
 function UNIT:InAir(NoHeloCheck)
   self:F2( self.UnitName )
 
@@ -1445,8 +1445,8 @@ do -- Detection
 end
 
 --- Get the unit table from a unit's template.
--- @param #UNIT self
--- @return #table Table of the unit template (deep copy) or #nil.
+--- @param #UNIT self
+--- @return #table Table of the unit template (deep copy) or #nil.
 function UNIT:GetTemplate()
 
   local group=self:GetGroup()
@@ -1480,8 +1480,8 @@ end
 --    * chaff
 --    * gun
 --    
--- @param #UNIT self
--- @return #table Payload table (deep copy) or #nil.
+--- @param #UNIT self
+--- @return #table Payload table (deep copy) or #nil.
 function UNIT:GetTemplatePayload()
 
   local unit=self:GetTemplate()
@@ -1494,8 +1494,8 @@ function UNIT:GetTemplatePayload()
 end
 
 --- Get the pylons table from a unit's template. This can be a complex table depending on the weapons the unit is carrying.
--- @param #UNIT self
--- @return #table Table of pylons (deepcopy) or #nil.
+--- @param #UNIT self
+--- @return #table Table of pylons (deepcopy) or #nil.
 function UNIT:GetTemplatePylons()
 
   local payload=self:GetTemplatePayload()
@@ -1508,8 +1508,8 @@ function UNIT:GetTemplatePylons()
 end
 
 --- Get the fuel of the unit from its template.
--- @param #UNIT self
--- @return #number Fuel of unit in kg.
+--- @param #UNIT self
+--- @return #number Fuel of unit in kg.
 function UNIT:GetTemplateFuel()
 
   local payload=self:GetTemplatePayload()
@@ -1522,9 +1522,9 @@ function UNIT:GetTemplateFuel()
 end
 
 --- GROUND - Switch on/off radar emissions of a unit.
--- @param #UNIT self
--- @param #boolean switch If true, emission is enabled. If false, emission is disabled. 
--- @return #UNIT self
+--- @param #UNIT self
+--- @param #boolean switch If true, emission is enabled. If false, emission is disabled. 
+--- @return #UNIT self
 function UNIT:EnableEmission(switch)
   self:F2( self.UnitName )
   
@@ -1542,8 +1542,8 @@ function UNIT:EnableEmission(switch)
 end
 
 --- Get skill from Unit.
--- @param #UNIT self
--- @return #string Skill String of skill name.
+--- @param #UNIT self
+--- @return #string Skill String of skill name.
 function UNIT:GetSkill()
   self:F2( self.UnitName )
   local name = self.UnitName

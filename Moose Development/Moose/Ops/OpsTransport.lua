@@ -23,46 +23,46 @@
 
 
 --- OPSTRANSPORT class.
--- @type OPSTRANSPORT
--- @field #string ClassName Name of the class.
--- @field #string lid Log ID.
--- @field #number uid Unique ID of the transport.
--- @field #number verbose Verbosity level.
+--- @type OPSTRANSPORT
+--- @field #string ClassName Name of the class.
+--- @field #string lid Log ID.
+--- @field #number uid Unique ID of the transport.
+--- @field #number verbose Verbosity level.
 -- 
--- @field #number prio Priority of this transport. Should be a number between 0 (high prio) and 100 (low prio).
--- @field #boolean urgent If true, transport is urgent.
--- @field #number importance Importance of this transport. Smaller=higher.
--- @field #number Tstart Start time in *abs.* seconds.
--- @field #number Tstop Stop time in *abs.* seconds. Default `#nil` (never stops).
--- @field #number duration Duration (`Tstop-Tstart`) of the transport in seconds.
--- @field #table conditionStart Start conditions.
+--- @field #number prio Priority of this transport. Should be a number between 0 (high prio) and 100 (low prio).
+--- @field #boolean urgent If true, transport is urgent.
+--- @field #number importance Importance of this transport. Smaller=higher.
+--- @field #number Tstart Start time in *abs.* seconds.
+--- @field #number Tstop Stop time in *abs.* seconds. Default `#nil` (never stops).
+--- @field #number duration Duration (`Tstop-Tstart`) of the transport in seconds.
+--- @field #table conditionStart Start conditions.
 -- 
--- @field #table carriers Carriers assigned for this transport.
--- @field #table carrierTransportStatus Status of each carrier.
+--- @field #table carriers Carriers assigned for this transport.
+--- @field #table carrierTransportStatus Status of each carrier.
 --  
--- @field #table tzCombos Table of transport zone combos. Each element of the table is of type `#OPSTRANSPORT.TransportZoneCombo`.
--- @field #number tzcCounter Running number of added transport zone combos.
--- @field #OPSTRANSPORT.TransportZoneCombo tzcDefault Default transport zone combo.
+--- @field #table tzCombos Table of transport zone combos. Each element of the table is of type `#OPSTRANSPORT.TransportZoneCombo`.
+--- @field #number tzcCounter Running number of added transport zone combos.
+--- @field #OPSTRANSPORT.TransportZoneCombo tzcDefault Default transport zone combo.
 -- 
--- @field #number Ncargo Total number of cargo groups.
--- @field #number Ncarrier Total number of assigned carriers.
--- @field #number Ndelivered Total number of cargo groups delivered.
--- @field #number NcarrierDead Total number of dead carrier groups
--- @field #number NcargoDead Totalnumber of dead cargo groups.
+--- @field #number Ncargo Total number of cargo groups.
+--- @field #number Ncarrier Total number of assigned carriers.
+--- @field #number Ndelivered Total number of cargo groups delivered.
+--- @field #number NcarrierDead Total number of dead carrier groups
+--- @field #number NcargoDead Totalnumber of dead cargo groups.
 -- 
--- @field #string formationArmy Default formation for ground vehicles.
--- @field #string formationHelo Default formation for helicopters.
--- @field #string formationPlane Default formation for airplanes.
+--- @field #string formationArmy Default formation for ground vehicles.
+--- @field #string formationHelo Default formation for helicopters.
+--- @field #string formationPlane Default formation for airplanes.
 -- 
--- @field Ops.Auftrag#AUFTRAG mission The mission attached to this transport.
--- @field #table assets Warehouse assets assigned for this transport.
--- @field #table legions Assigned legions.
--- @field #table statusLegion Transport status of all assigned LEGIONs.
--- @field #string statusCommander Staus of the COMMANDER.
--- @field Ops.Commander#COMMANDER commander Commander of the transport.
--- @field Ops.Chief#CHIEF chief Chief of the transport.
--- @field Ops.OpsZone#OPSZONE opszone OPS zone.
--- @field #table requestID The ID of the queued warehouse request. Necessary to cancel the request if the transport was cancelled before the request is processed.
+--- @field Ops.Auftrag#AUFTRAG mission The mission attached to this transport.
+--- @field #table assets Warehouse assets assigned for this transport.
+--- @field #table legions Assigned legions.
+--- @field #table statusLegion Transport status of all assigned LEGIONs.
+--- @field #string statusCommander Staus of the COMMANDER.
+--- @field Ops.Commander#COMMANDER commander Commander of the transport.
+--- @field Ops.Chief#CHIEF chief Chief of the transport.
+--- @field Ops.OpsZone#OPSZONE opszone OPS zone.
+--- @field #table requestID The ID of the queued warehouse request. Necessary to cancel the request if the transport was cancelled before the request is processed.
 -- 
 -- @extends Core.Fsm#FSM
 
@@ -118,7 +118,7 @@
 --     carrier:AddOpsTransport(opstransport)
 -- 
 -- 
--- @field #OPSTRANSPORT
+--- @field #OPSTRANSPORT
 OPSTRANSPORT = {
   ClassName       = "OPSTRANSPORT",
   verbose         =   0,
@@ -134,16 +134,16 @@ OPSTRANSPORT = {
 }
 
 --- Cargo transport status.
--- @type OPSTRANSPORT.Status
--- @field #string PLANNED Planning state.
--- @field #string QUEUED Queued state.
--- @field #string REQUESTED Requested state.
--- @field #string SCHEDULED Transport is scheduled in the cargo queue.
--- @field #string EXECUTING Transport is being executed.
--- @field #string DELIVERED Transport was delivered. 
--- @field #string CANCELLED Transport was cancelled.
--- @field #string SUCCESS Transport was a success.
--- @field #string FAILED Transport failed.
+--- @type OPSTRANSPORT.Status
+--- @field #string PLANNED Planning state.
+--- @field #string QUEUED Queued state.
+--- @field #string REQUESTED Requested state.
+--- @field #string SCHEDULED Transport is scheduled in the cargo queue.
+--- @field #string EXECUTING Transport is being executed.
+--- @field #string DELIVERED Transport was delivered. 
+--- @field #string CANCELLED Transport was cancelled.
+--- @field #string SUCCESS Transport was a success.
+--- @field #string FAILED Transport failed.
 OPSTRANSPORT.Status={
   PLANNED="planned",
   QUEUED="queued",
@@ -157,44 +157,44 @@ OPSTRANSPORT.Status={
 }
 
 --- Transport zone combination.
--- @type OPSTRANSPORT.TransportZoneCombo
--- @field #number uid Unique ID of the TZ combo.
--- @field #number Ncarriers Number of carrier groups using this transport zone.
--- @field #number Ncargo Number of cargos assigned. This is a running number and *not* decreased if cargo is delivered or dead.
--- @field #table Cargos Cargo groups of the TZ combo. Each element is of type `Ops.OpsGroup#OPSGROUP.CargoGroup`.
--- @field Core.Zone#ZONE PickupZone Pickup zone.
--- @field Core.Zone#ZONE DeployZone Deploy zone.
--- @field Core.Zone#ZONE EmbarkZone Embark zone if different from pickup zone.
--- @field Core.Zone#ZONE DisembarkZone Zone where the troops are disembared to.
--- @field Wrapper.Airbase#AIRBASE PickupAirbase Airbase for pickup.
--- @field Wrapper.Airbase#AIRBASE DeployAirbase Airbase for deploy.
--- @field #table PickupPaths Paths for pickup. 
--- @field #table TransportPaths Path for Transport. Each elment of the table is of type `#OPSTRANSPORT.Path`. 
--- @field #table RequiredCargos Required cargos.
--- @field #table DisembarkCarriers Carriers where the cargo is directly disembarked to.
--- @field #boolean disembarkActivation If true, troops are spawned in late activated state when disembarked from carrier.
--- @field #boolean disembarkInUtero If true, troops are disembarked "in utero".
--- @field #boolean assets Cargo assets.
--- @field #number PickupFormation Formation used to pickup.
--- @field #number TransportFormation Formation used to transport.
+--- @type OPSTRANSPORT.TransportZoneCombo
+--- @field #number uid Unique ID of the TZ combo.
+--- @field #number Ncarriers Number of carrier groups using this transport zone.
+--- @field #number Ncargo Number of cargos assigned. This is a running number and *not* decreased if cargo is delivered or dead.
+--- @field #table Cargos Cargo groups of the TZ combo. Each element is of type `Ops.OpsGroup#OPSGROUP.CargoGroup`.
+--- @field Core.Zone#ZONE PickupZone Pickup zone.
+--- @field Core.Zone#ZONE DeployZone Deploy zone.
+--- @field Core.Zone#ZONE EmbarkZone Embark zone if different from pickup zone.
+--- @field Core.Zone#ZONE DisembarkZone Zone where the troops are disembared to.
+--- @field Wrapper.Airbase#AIRBASE PickupAirbase Airbase for pickup.
+--- @field Wrapper.Airbase#AIRBASE DeployAirbase Airbase for deploy.
+--- @field #table PickupPaths Paths for pickup. 
+--- @field #table TransportPaths Path for Transport. Each elment of the table is of type `#OPSTRANSPORT.Path`. 
+--- @field #table RequiredCargos Required cargos.
+--- @field #table DisembarkCarriers Carriers where the cargo is directly disembarked to.
+--- @field #boolean disembarkActivation If true, troops are spawned in late activated state when disembarked from carrier.
+--- @field #boolean disembarkInUtero If true, troops are disembarked "in utero".
+--- @field #boolean assets Cargo assets.
+--- @field #number PickupFormation Formation used to pickup.
+--- @field #number TransportFormation Formation used to transport.
 
 --- Path used for pickup or transport.
--- @type OPSTRANSPORT.Path
--- @field #table waypoints Table of waypoints.
--- @field #number category Category for which carriers this path is used.
--- @field #number radius Radomization radius for waypoints in meters. Default 0 m.
--- @field #boolean reverse If `true`, path is used in reversed order.
+--- @type OPSTRANSPORT.Path
+--- @field #table waypoints Table of waypoints.
+--- @field #number category Category for which carriers this path is used.
+--- @field #number radius Radomization radius for waypoints in meters. Default 0 m.
+--- @field #boolean reverse If `true`, path is used in reversed order.
 
 --- Generic transport condition.
--- @type OPSTRANSPORT.Condition
--- @field #function func Callback function to check for a condition. Should return a #boolean.
--- @field #table arg Optional arguments passed to the condition callback function.
+--- @type OPSTRANSPORT.Condition
+--- @field #function func Callback function to check for a condition. Should return a #boolean.
+--- @field #table arg Optional arguments passed to the condition callback function.
 
 --- Transport ID.
 _OPSTRANSPORTID=0
 
 --- Army Group version.
--- @field #string version
+--- @field #string version
 OPSTRANSPORT.version="0.6.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -215,11 +215,11 @@ OPSTRANSPORT.version="0.6.1"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new OPSTRANSPORT class object. Essential input are the troops that should be transported and the zones where the troops are picked up and deployed.
--- @param #OPSTRANSPORT self
--- @param Core.Set#SET_GROUP CargoGroups Groups to be transported as cargo. Can also be a single @{Wrapper.Group#GROUP} or @{Ops.OpsGroup#OPSGROUP} object.
--- @param Core.Zone#ZONE PickupZone Pickup zone. This is the zone, where the carrier is going to pickup the cargo. **Important**: only cargo is considered, if it is in this zone when the carrier starts loading!
--- @param Core.Zone#ZONE DeployZone Deploy zone. This is the zone, where the carrier is going to drop off the cargo.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Core.Set#SET_GROUP CargoGroups Groups to be transported as cargo. Can also be a single @{Wrapper.Group#GROUP} or @{Ops.OpsGroup#OPSGROUP} object.
+--- @param Core.Zone#ZONE PickupZone Pickup zone. This is the zone, where the carrier is going to pickup the cargo. **Important**: only cargo is considered, if it is in this zone when the carrier starts loading!
+--- @param Core.Zone#ZONE DeployZone Deploy zone. This is the zone, where the carrier is going to drop off the cargo.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
 
   -- Inherit everything from FSM class.
@@ -473,11 +473,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Add pickup and deploy zone combination.
--- @param #OPSTRANSPORT self
--- @param Core.Set#SET_GROUP CargoGroups Groups to be transported as cargo. Can also be a single @{Wrapper.Group#GROUP} or @{Ops.OpsGroup#OPSGROUP} object.
--- @param Core.Zone#ZONE PickupZone Zone where the troops are picked up.
--- @param Core.Zone#ZONE DeployZone Zone where the troops are picked up.
--- @return #OPSTRANSPORT.TransportZoneCombo Transport zone table.
+--- @param #OPSTRANSPORT self
+--- @param Core.Set#SET_GROUP CargoGroups Groups to be transported as cargo. Can also be a single @{Wrapper.Group#GROUP} or @{Ops.OpsGroup#OPSGROUP} object.
+--- @param Core.Zone#ZONE PickupZone Zone where the troops are picked up.
+--- @param Core.Zone#ZONE DeployZone Zone where the troops are picked up.
+--- @return #OPSTRANSPORT.TransportZoneCombo Transport zone table.
 function OPSTRANSPORT:AddTransportZoneCombo(CargoGroups, PickupZone, DeployZone)
 
   -- Increase counter.
@@ -512,11 +512,11 @@ function OPSTRANSPORT:AddTransportZoneCombo(CargoGroups, PickupZone, DeployZone)
 end
 
 --- Add cargo groups to be transported.
--- @param #OPSTRANSPORT self
--- @param Core.Set#SET_GROUP GroupSet Set of groups to be transported. Can also be passed as a single GROUP or OPSGROUP object.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @param #boolean DisembarkActivation If `true`, cargo group is activated when disembarked. If `false`, cargo groups are late activated when disembarked. Default `nil` (usually activated). 
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Core.Set#SET_GROUP GroupSet Set of groups to be transported. Can also be passed as a single GROUP or OPSGROUP object.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @param #boolean DisembarkActivation If `true`, cargo group is activated when disembarked. If `false`, cargo groups are late activated when disembarked. Default `nil` (usually activated). 
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:AddCargoGroups(GroupSet, TransportZoneCombo, DisembarkActivation)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -574,10 +574,10 @@ end
 
 
 --- Set pickup zone.
--- @param #OPSTRANSPORT self
--- @param Core.Zone#ZONE PickupZone Zone where the troops are picked up.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Core.Zone#ZONE PickupZone Zone where the troops are picked up.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetPickupZone(PickupZone, TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -593,9 +593,9 @@ function OPSTRANSPORT:SetPickupZone(PickupZone, TransportZoneCombo)
 end
 
 --- Get pickup zone.
--- @param #OPSTRANSPORT self
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return Core.Zone#ZONE Zone where the troops are picked up.
+--- @param #OPSTRANSPORT self
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return Core.Zone#ZONE Zone where the troops are picked up.
 function OPSTRANSPORT:GetPickupZone(TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -605,10 +605,10 @@ function OPSTRANSPORT:GetPickupZone(TransportZoneCombo)
 end
 
 --- Set deploy zone.
--- @param #OPSTRANSPORT self
--- @param Core.Zone#ZONE DeployZone Zone where the troops are deployed.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Core.Zone#ZONE DeployZone Zone where the troops are deployed.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetDeployZone(DeployZone, TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -626,9 +626,9 @@ function OPSTRANSPORT:SetDeployZone(DeployZone, TransportZoneCombo)
 end
 
 --- Get deploy zone.
--- @param #OPSTRANSPORT self
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return Core.Zone#ZONE Zone where the troops are deployed.
+--- @param #OPSTRANSPORT self
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return Core.Zone#ZONE Zone where the troops are deployed.
 function OPSTRANSPORT:GetDeployZone(TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -638,10 +638,10 @@ function OPSTRANSPORT:GetDeployZone(TransportZoneCombo)
 end
 
 --- Set embark zone.
--- @param #OPSTRANSPORT self
--- @param Core.Zone#ZONE EmbarkZone Zone where the troops are embarked.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Core.Zone#ZONE EmbarkZone Zone where the troops are embarked.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetEmbarkZone(EmbarkZone, TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -653,9 +653,9 @@ function OPSTRANSPORT:SetEmbarkZone(EmbarkZone, TransportZoneCombo)
 end
 
 --- Get embark zone.
--- @param #OPSTRANSPORT self
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return Core.Zone#ZONE Zone where the troops are embarked from.
+--- @param #OPSTRANSPORT self
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return Core.Zone#ZONE Zone where the troops are embarked from.
 function OPSTRANSPORT:GetEmbarkZone(TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -665,10 +665,10 @@ function OPSTRANSPORT:GetEmbarkZone(TransportZoneCombo)
 end
 
 --- Set disembark zone.
--- @param #OPSTRANSPORT self
--- @param Core.Zone#ZONE DisembarkZone Zone where the troops are disembarked.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Core.Zone#ZONE DisembarkZone Zone where the troops are disembarked.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetDisembarkZone(DisembarkZone, TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -680,9 +680,9 @@ function OPSTRANSPORT:SetDisembarkZone(DisembarkZone, TransportZoneCombo)
 end
 
 --- Get disembark zone.
--- @param #OPSTRANSPORT self
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return Core.Zone#ZONE Zone where the troops are disembarked to.
+--- @param #OPSTRANSPORT self
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return Core.Zone#ZONE Zone where the troops are disembarked to.
 function OPSTRANSPORT:GetDisembarkZone(TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -692,10 +692,10 @@ function OPSTRANSPORT:GetDisembarkZone(TransportZoneCombo)
 end
 
 --- Set activation status of group when disembarked from transport carrier.
--- @param #OPSTRANSPORT self
--- @param #boolean Active If `true` or `nil`, group is activated when disembarked. If `false`, group is late activated and needs to be activated manually.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param #boolean Active If `true` or `nil`, group is activated when disembarked. If `false`, group is late activated and needs to be activated manually.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetDisembarkActivation(Active, TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -711,9 +711,9 @@ function OPSTRANSPORT:SetDisembarkActivation(Active, TransportZoneCombo)
 end
 
 --- Get disembark activation.
--- @param #OPSTRANSPORT self
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #boolean If `true`, groups are spawned in late activated state.
+--- @param #OPSTRANSPORT self
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #boolean If `true`, groups are spawned in late activated state.
 function OPSTRANSPORT:GetDisembarkActivation(TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -723,10 +723,10 @@ function OPSTRANSPORT:GetDisembarkActivation(TransportZoneCombo)
 end
 
 --- Set transfer carrier(s). These are carrier groups, where the cargo is directly loaded into when disembarked.
--- @param #OPSTRANSPORT self
--- @param Core.Set#SET_GROUP Carriers Carrier set. Can also be passed as a #GROUP, #OPSGROUP or #SET_OPSGROUP object.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Core.Set#SET_GROUP Carriers Carrier set. Can also be passed as a #GROUP, #OPSGROUP or #SET_OPSGROUP object.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetDisembarkCarriers(Carriers, TransportZoneCombo)
 
   -- Debug info.
@@ -759,9 +759,9 @@ function OPSTRANSPORT:SetDisembarkCarriers(Carriers, TransportZoneCombo)
 end
 
 --- Get transfer carrier(s). These are carrier groups, where the cargo is directly loaded into when disembarked.
--- @param #OPSTRANSPORT self
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #table Table of carrier OPS groups.
+--- @param #OPSTRANSPORT self
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #table Table of carrier OPS groups.
 function OPSTRANSPORT:GetDisembarkCarriers(TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -772,10 +772,10 @@ end
 
 
 --- Set if group remains *in utero* after disembarkment from carrier. Can be used to directly load the group into another carrier. Similar to disembark in late activated state.
--- @param #OPSTRANSPORT self
--- @param #boolean InUtero If `true` or `nil`, group remains *in utero* after disembarkment.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param #boolean InUtero If `true` or `nil`, group remains *in utero* after disembarkment.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetDisembarkInUtero(InUtero, TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -791,9 +791,9 @@ function OPSTRANSPORT:SetDisembarkInUtero(InUtero, TransportZoneCombo)
 end
 
 --- Get disembark in utero.
--- @param #OPSTRANSPORT self
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #boolean If `true`, groups stay in utero after disembarkment.
+--- @param #OPSTRANSPORT self
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #boolean If `true`, groups stay in utero after disembarkment.
 function OPSTRANSPORT:GetDisembarkInUtero(TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -803,10 +803,10 @@ function OPSTRANSPORT:GetDisembarkInUtero(TransportZoneCombo)
 end
 
 --- Set pickup formation.
--- @param #OPSTRANSPORT self
--- @param #number Formation Pickup formation.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param #number Formation Pickup formation.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetFormationPickup(Formation, TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -818,9 +818,9 @@ function OPSTRANSPORT:SetFormationPickup(Formation, TransportZoneCombo)
 end
 
 --- Get pickup formation.
--- @param #OPSTRANSPORT self
--- @param Ops.OpsGroup#OPSGROUP OpsGroup
--- @return #string Formation.
+--- @param #OPSTRANSPORT self
+--- @param Ops.OpsGroup#OPSGROUP OpsGroup
+--- @return #string Formation.
 function OPSTRANSPORT:_GetFormationDefault(OpsGroup)
 
   if OpsGroup.isArmygroup then
@@ -843,10 +843,10 @@ function OPSTRANSPORT:_GetFormationDefault(OpsGroup)
 end
 
 --- Get pickup formation.
--- @param #OPSTRANSPORT self
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @param Ops.OpsGroup#OPSGROUP OpsGroup
--- @return #number Formation.
+--- @param #OPSTRANSPORT self
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @param Ops.OpsGroup#OPSGROUP OpsGroup
+--- @return #number Formation.
 function OPSTRANSPORT:_GetFormationPickup(TransportZoneCombo, OpsGroup)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -858,10 +858,10 @@ function OPSTRANSPORT:_GetFormationPickup(TransportZoneCombo, OpsGroup)
 end
 
 --- Set transport formation.
--- @param #OPSTRANSPORT self
--- @param #number Formation Pickup formation.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param #number Formation Pickup formation.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetFormationTransport(Formation, TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -873,10 +873,10 @@ function OPSTRANSPORT:SetFormationTransport(Formation, TransportZoneCombo)
 end
 
 --- Get transport formation.
--- @param #OPSTRANSPORT self
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @param Ops.OpsGroup#OPSGROUP OpsGroup
--- @return #number Formation.
+--- @param #OPSTRANSPORT self
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @param Ops.OpsGroup#OPSGROUP OpsGroup
+--- @return #number Formation.
 function OPSTRANSPORT:_GetFormationTransport(TransportZoneCombo, OpsGroup)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -890,10 +890,10 @@ end
 
 
 --- Set required cargo. This is a list of cargo groups that need to be loaded before the **first** transport will start.
--- @param #OPSTRANSPORT self
--- @param Core.Set#SET_GROUP Cargos Required cargo set. Can also be passed as a #GROUP, #OPSGROUP or #SET_OPSGROUP object.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Core.Set#SET_GROUP Cargos Required cargo set. Can also be passed as a #GROUP, #OPSGROUP or #SET_OPSGROUP object.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetRequiredCargos(Cargos, TransportZoneCombo)
 
   -- Debug info.
@@ -929,9 +929,9 @@ function OPSTRANSPORT:SetRequiredCargos(Cargos, TransportZoneCombo)
 end
 
 --- Get required cargos. This is a list of cargo groups that need to be loaded before the **first** transport will start.
--- @param #OPSTRANSPORT self
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #table Table of required cargo ops groups.
+--- @param #OPSTRANSPORT self
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #table Table of required cargo ops groups.
 function OPSTRANSPORT:GetRequiredCargos(TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -941,10 +941,10 @@ function OPSTRANSPORT:GetRequiredCargos(TransportZoneCombo)
 end
 
 --- Set number of required carrier groups for an OPSTRANSPORT assignment. Only used if transport is assigned at **LEGION** or higher level.
--- @param #OPSTRANSPORT self
--- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
--- @param #number NcarriersMax Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
+--- @param #number NcarriersMax Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetRequiredCarriers(NcarriersMin, NcarriersMax)
 
   self.nCarriersMin=NcarriersMin or 1
@@ -960,18 +960,18 @@ function OPSTRANSPORT:SetRequiredCarriers(NcarriersMin, NcarriersMax)
 end
 
 --- Get the number of required carrier groups for an OPSTRANSPORT assignment. Only used if transport is assigned at **LEGION** or higher level.
--- @param #OPSTRANSPORT self
--- @return #number Number of carriers *at least* required.
--- @return #number Number of carriers *at most* used for transportation.
+--- @param #OPSTRANSPORT self
+--- @return #number Number of carriers *at least* required.
+--- @return #number Number of carriers *at most* used for transportation.
 function OPSTRANSPORT:GetRequiredCarriers()
   return self.nCarriersMin, self.nCarriersMax
 end
 
 
 --- Add a carrier assigned for this transport.
--- @param #OPSTRANSPORT self
--- @param Ops.OpsGroup#OPSGROUP CarrierGroup Carrier OPSGROUP.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Ops.OpsGroup#OPSGROUP CarrierGroup Carrier OPSGROUP.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:_AddCarrier(CarrierGroup)
 
   -- Check that this is not already an assigned carrier.
@@ -995,10 +995,10 @@ function OPSTRANSPORT:_AddCarrier(CarrierGroup)
 end
 
 --- Remove group from the current carrier list/table.
--- @param #OPSTRANSPORT self
--- @param Ops.OpsGroup#OPSGROUP CarrierGroup Carrier OPSGROUP.
--- @param #number Delay Delay in seconds before the carrier is removed.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Ops.OpsGroup#OPSGROUP CarrierGroup Carrier OPSGROUP.
+--- @param #number Delay Delay in seconds before the carrier is removed.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:_DelCarrier(CarrierGroup, Delay)
 
   if Delay and Delay>0 then
@@ -1021,8 +1021,8 @@ function OPSTRANSPORT:_DelCarrier(CarrierGroup, Delay)
 end
 
 --- Get a list of alive carriers.
--- @param #OPSTRANSPORT self
--- @return #table Names of all carriers
+--- @param #OPSTRANSPORT self
+--- @return #table Names of all carriers
 function OPSTRANSPORT:_GetCarrierNames()
 
   local names={}
@@ -1037,11 +1037,11 @@ function OPSTRANSPORT:_GetCarrierNames()
 end
 
 --- Get (all) cargo @{Ops.OpsGroup#OPSGROUP}s. Optionally, only delivered or undelivered groups can be returned.
--- @param #OPSTRANSPORT self
--- @param #boolean Delivered If `true`, only delivered groups are returned. If `false` only undelivered groups are returned. If `nil`, all groups are returned.
--- @param Ops.OpsGroup#OPSGROUP Carrier (Optional) Only count cargo groups that fit into the given carrier group. Current cargo is not a factor.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #table Cargo Ops groups. Can be and empty table `{}`.
+--- @param #OPSTRANSPORT self
+--- @param #boolean Delivered If `true`, only delivered groups are returned. If `false` only undelivered groups are returned. If `nil`, all groups are returned.
+--- @param Ops.OpsGroup#OPSGROUP Carrier (Optional) Only count cargo groups that fit into the given carrier group. Current cargo is not a factor.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #table Cargo Ops groups. Can be and empty table `{}`.
 function OPSTRANSPORT:GetCargoOpsGroups(Delivered, Carrier, TransportZoneCombo)
 
   local cargos=self:GetCargos(TransportZoneCombo)
@@ -1062,16 +1062,16 @@ function OPSTRANSPORT:GetCargoOpsGroups(Delivered, Carrier, TransportZoneCombo)
 end
 
 --- Get carriers.
--- @param #OPSTRANSPORT self
--- @return #table Carrier Ops groups.
+--- @param #OPSTRANSPORT self
+--- @return #table Carrier Ops groups.
 function OPSTRANSPORT:GetCarriers()
   return self.carriers
 end
 
 --- Get cargos.
--- @param #OPSTRANSPORT self
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #table Cargos.
+--- @param #OPSTRANSPORT self
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #table Cargos.
 function OPSTRANSPORT:GetCargos(TransportZoneCombo)
 
   if TransportZoneCombo then
@@ -1090,10 +1090,10 @@ function OPSTRANSPORT:GetCargos(TransportZoneCombo)
 end
 
 --- Set transport start and stop time.
--- @param #OPSTRANSPORT self
--- @param #string ClockStart Time the transport is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
--- @param #string ClockStop (Optional) Time the transport is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param #string ClockStart Time the transport is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
+--- @param #string ClockStop (Optional) Time the transport is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetTime(ClockStart, ClockStop)
 
   -- Current mission time.
@@ -1126,11 +1126,11 @@ function OPSTRANSPORT:SetTime(ClockStart, ClockStop)
 end
 
 --- Set mission priority and (optional) urgency. Urgent missions can cancel other running missions. 
--- @param #OPSTRANSPORT self
--- @param #number Prio Priority 1=high, 100=low. Default 50.
--- @param #number Importance Number 1-10. If missions with lower value are in the queue, these have to be finished first. Default is `nil`.
--- @param #boolean Urgent If *true*, another running mission might be cancelled if it has a lower priority.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param #number Prio Priority 1=high, 100=low. Default 50.
+--- @param #number Importance Number 1-10. If missions with lower value are in the queue, these have to be finished first. Default is `nil`.
+--- @param #boolean Urgent If *true*, another running mission might be cancelled if it has a lower priority.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetPriority(Prio, Importance, Urgent)
   self.prio=Prio or 50
   self.urgent=Urgent
@@ -1139,19 +1139,19 @@ function OPSTRANSPORT:SetPriority(Prio, Importance, Urgent)
 end
 
 --- Set verbosity. 
--- @param #OPSTRANSPORT self
--- @param #number Verbosity Be more verbose. Default 0
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param #number Verbosity Be more verbose. Default 0
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetVerbosity(Verbosity)
   self.verbose=Verbosity or 0
   return self
 end
 
 --- Add start condition.
--- @param #OPSTRANSPORT self
--- @param #function ConditionFunction Function that needs to be true before the transport can be started. Must return a #boolean.
--- @param ... Condition function arguments if any.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param #function ConditionFunction Function that needs to be true before the transport can be started. Must return a #boolean.
+--- @param ... Condition function arguments if any.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:AddConditionStart(ConditionFunction, ...)
 
   if ConditionFunction then
@@ -1176,11 +1176,11 @@ end
 -- **NOTE** that the category group defines for which carriers this path is valid.
 -- For example, if you specify a GROUND group to provide the waypoints, only assigned GROUND carriers will use the
 -- path. 
--- @param #OPSTRANSPORT self
--- @param Wrapper.Group#GROUP PathGroup A (late activated) GROUP defining a transport path by their waypoints.
--- @param #number Radius Randomization radius in meters. Default 0 m.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport Zone combo.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Wrapper.Group#GROUP PathGroup A (late activated) GROUP defining a transport path by their waypoints.
+--- @param #number Radius Randomization radius in meters. Default 0 m.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport Zone combo.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:AddPathTransport(PathGroup, Reversed, Radius, TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -1204,10 +1204,10 @@ function OPSTRANSPORT:AddPathTransport(PathGroup, Reversed, Radius, TransportZon
 end
 
 --- Get a path for transportation.
--- @param #OPSTRANSPORT self
--- @param #number Category Group category.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport Zone combo.
--- @return #OPSTRANSPORT.Path The path object.
+--- @param #OPSTRANSPORT self
+--- @param #number Category Group category.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport Zone combo.
+--- @return #OPSTRANSPORT.Path The path object.
 function OPSTRANSPORT:_GetPathTransport(Category, TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -1238,10 +1238,10 @@ function OPSTRANSPORT:_GetPathTransport(Category, TransportZoneCombo)
 end
 
 --- Add a carrier assigned for this transport.
--- @param #OPSTRANSPORT self
--- @param Ops.OpsGroup#OPSGROUP CarrierGroup Carrier OPSGROUP.
--- @param #string Status Carrier Status.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Ops.OpsGroup#OPSGROUP CarrierGroup Carrier OPSGROUP.
+--- @param #string Status Carrier Status.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetCarrierTransportStatus(CarrierGroup, Status)
 
   -- Old status
@@ -1257,47 +1257,47 @@ function OPSTRANSPORT:SetCarrierTransportStatus(CarrierGroup, Status)
 end
 
 --- Get carrier transport status.
--- @param #OPSTRANSPORT self
--- @param Ops.OpsGroup#OPSGROUP CarrierGroup Carrier OPSGROUP.
--- @return #string Carrier status.
+--- @param #OPSTRANSPORT self
+--- @param Ops.OpsGroup#OPSGROUP CarrierGroup Carrier OPSGROUP.
+--- @return #string Carrier status.
 function OPSTRANSPORT:GetCarrierTransportStatus(CarrierGroup)
   local status=self.carrierTransportStatus[CarrierGroup.groupname] or "unknown"
   return status
 end
 
 --- Get unique ID of the transport assignment.
--- @param #OPSTRANSPORT self
--- @return #number UID.
+--- @param #OPSTRANSPORT self
+--- @return #number UID.
 function OPSTRANSPORT:GetUID()
   return self.uid
 end
 
 --- Get number of delivered cargo groups.
--- @param #OPSTRANSPORT self
--- @return #number Total number of delivered cargo groups.
+--- @param #OPSTRANSPORT self
+--- @return #number Total number of delivered cargo groups.
 function OPSTRANSPORT:GetNcargoDelivered()
   return self.Ndelivered
 end
 
 --- Get number of cargo groups.
--- @param #OPSTRANSPORT self
--- @return #number Total number of cargo groups.
+--- @param #OPSTRANSPORT self
+--- @return #number Total number of cargo groups.
 function OPSTRANSPORT:GetNcargoTotal()
   return self.Ncargo
 end
 
 --- Get number of carrier groups assigned for this transport.
--- @param #OPSTRANSPORT self
--- @return #number Total number of carrier groups.
+--- @param #OPSTRANSPORT self
+--- @return #number Total number of carrier groups.
 function OPSTRANSPORT:GetNcarrier()
   return self.Ncarrier
 end
 
 --- Add carrier asset to transport.
--- @param #OPSTRANSPORT self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be added.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be added.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:AddAsset(Asset, TransportZoneCombo)
 
   -- Debug info
@@ -1312,9 +1312,9 @@ function OPSTRANSPORT:AddAsset(Asset, TransportZoneCombo)
 end
 
 --- Delete carrier asset from transport.
--- @param #OPSTRANSPORT self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be removed.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be removed.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:DelAsset(Asset)
 
   for i,_asset in pairs(self.assets or {}) do
@@ -1332,10 +1332,10 @@ function OPSTRANSPORT:DelAsset(Asset)
 end
 
 --- Add cargo asset.
--- @param #OPSTRANSPORT self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be added.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be added.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:AddAssetCargo(Asset, TransportZoneCombo)
 
   -- Debug info
@@ -1354,9 +1354,9 @@ function OPSTRANSPORT:AddAssetCargo(Asset, TransportZoneCombo)
 end
 
 --- Get transport zone combo of cargo group.
--- @param #OPSTRANSPORT self
--- @param #string GroupName Group name of cargo.
--- @return #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @param #OPSTRANSPORT self
+--- @param #string GroupName Group name of cargo.
+--- @return #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
 function OPSTRANSPORT:GetTZCofCargo(GroupName)
 
   for _,_tzc in pairs(self.tzCombos) do
@@ -1373,9 +1373,9 @@ function OPSTRANSPORT:GetTZCofCargo(GroupName)
 end
 
 --- Add LEGION to the transport.
--- @param #OPSTRANSPORT self
--- @param Ops.Legion#LEGION Legion The legion.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Ops.Legion#LEGION Legion The legion.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:AddLegion(Legion)
 
   -- Debug info.
@@ -1388,9 +1388,9 @@ function OPSTRANSPORT:AddLegion(Legion)
 end
 
 --- Remove LEGION from transport.
--- @param #OPSTRANSPORT self
--- @param Ops.Legion#LEGION Legion The legion.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Ops.Legion#LEGION Legion The legion.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:RemoveLegion(Legion)
 
   -- Loop over legions
@@ -1409,9 +1409,9 @@ function OPSTRANSPORT:RemoveLegion(Legion)
 end
 
 --- Check if an OPS group is assigned as carrier for this transport.
--- @param #OPSTRANSPORT self
--- @param Ops.OpsGroup#OPSGROUP CarrierGroup Potential carrier OPSGROUP.
--- @return #boolean If true, group is an assigned carrier. 
+--- @param #OPSTRANSPORT self
+--- @param Ops.OpsGroup#OPSGROUP CarrierGroup Potential carrier OPSGROUP.
+--- @return #boolean If true, group is an assigned carrier. 
 function OPSTRANSPORT:IsCarrier(CarrierGroup)
 
   if CarrierGroup then
@@ -1430,8 +1430,8 @@ end
 -- * Start time passed.
 -- * Stop time did not pass already.
 -- * All start conditions are true.
--- @param #OPSTRANSPORT self
--- @return #boolean If true, mission can be started.
+--- @param #OPSTRANSPORT self
+--- @return #boolean If true, mission can be started.
 function OPSTRANSPORT:IsReadyToGo()
 
   -- Debug text.
@@ -1484,10 +1484,10 @@ function OPSTRANSPORT:IsReadyToGo()
 end
 
 --- Set LEGION transport status.
--- @param #OPSTRANSPORT self
--- @param Ops.Legion#LEGION Legion The legion.
--- @param #string Status New status.
--- @return #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
+--- @param Ops.Legion#LEGION Legion The legion.
+--- @param #string Status New status.
+--- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetLegionStatus(Legion, Status)
 
   -- Old status
@@ -1503,9 +1503,9 @@ function OPSTRANSPORT:SetLegionStatus(Legion, Status)
 end
 
 --- Get LEGION transport status.
--- @param #OPSTRANSPORT self
--- @param Ops.Legion#LEGION Legion The legion.
--- @return #string status Current status.
+--- @param #OPSTRANSPORT self
+--- @param Ops.Legion#LEGION Legion The legion.
+--- @return #string status Current status.
 function OPSTRANSPORT:GetLegionStatus(Legion)
 
   -- Current status.
@@ -1515,17 +1515,17 @@ function OPSTRANSPORT:GetLegionStatus(Legion)
 end
 
 --- Check if state is PLANNED.
--- @param #OPSTRANSPORT self
--- @return #boolean If true, status is PLANNED. 
+--- @param #OPSTRANSPORT self
+--- @return #boolean If true, status is PLANNED. 
 function OPSTRANSPORT:IsPlanned()
   local is=self:is(OPSTRANSPORT.Status.PLANNED)
   return is
 end
 
 --- Check if state is QUEUED.
--- @param #OPSTRANSPORT self
--- @param Ops.Legion#LEGION Legion (Optional) Check if transport is queued at this legion.
--- @return #boolean If true, status is QUEUED. 
+--- @param #OPSTRANSPORT self
+--- @param Ops.Legion#LEGION Legion (Optional) Check if transport is queued at this legion.
+--- @return #boolean If true, status is QUEUED. 
 function OPSTRANSPORT:IsQueued(Legion)
   local is=self:is(OPSTRANSPORT.Status.QUEUED)
   if Legion then
@@ -1535,9 +1535,9 @@ function OPSTRANSPORT:IsQueued(Legion)
 end
 
 --- Check if state is REQUESTED.
--- @param #OPSTRANSPORT self
--- @param Ops.Legion#LEGION Legion (Optional) Check if transport is queued at this legion.
--- @return #boolean If true, status is REQUESTED. 
+--- @param #OPSTRANSPORT self
+--- @param Ops.Legion#LEGION Legion (Optional) Check if transport is queued at this legion.
+--- @return #boolean If true, status is REQUESTED. 
 function OPSTRANSPORT:IsRequested(Legion)
   local is=self:is(OPSTRANSPORT.Status.REQUESTED)
   if Legion then
@@ -1547,25 +1547,25 @@ function OPSTRANSPORT:IsRequested(Legion)
 end
 
 --- Check if state is SCHEDULED.
--- @param #OPSTRANSPORT self
--- @return #boolean If true, status is SCHEDULED. 
+--- @param #OPSTRANSPORT self
+--- @return #boolean If true, status is SCHEDULED. 
 function OPSTRANSPORT:IsScheduled()
   local is=self:is(OPSTRANSPORT.Status.SCHEDULED)
   return is
 end
 
 --- Check if state is EXECUTING.
--- @param #OPSTRANSPORT self
--- @return #boolean If true, status is EXECUTING. 
+--- @param #OPSTRANSPORT self
+--- @return #boolean If true, status is EXECUTING. 
 function OPSTRANSPORT:IsExecuting()
   local is=self:is(OPSTRANSPORT.Status.EXECUTING)
   return is
 end
 
 --- Check if all cargo was delivered (or is dead).
--- @param #OPSTRANSPORT self
--- @param #number Nmin Number of groups that must be actually delivered (and are not dead). Default 0.
--- @return #boolean If true, all possible cargo was delivered. 
+--- @param #OPSTRANSPORT self
+--- @param #number Nmin Number of groups that must be actually delivered (and are not dead). Default 0.
+--- @return #boolean If true, all possible cargo was delivered. 
 function OPSTRANSPORT:IsDelivered(Nmin)
   local is=self:is(OPSTRANSPORT.Status.DELIVERED)
   Nmin=Nmin or 0
@@ -1583,10 +1583,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "StatusUpdate" event.
--- @param #OPSTRANSPORT self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSTRANSPORT self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSTRANSPORT:onafterStatusUpdate(From, Event, To)
 
   -- Current FSM state.
@@ -1645,9 +1645,9 @@ function OPSTRANSPORT:onafterStatusUpdate(From, Event, To)
 end
 
 --- Check if a cargo group was delivered.
--- @param #OPSTRANSPORT self
--- @param #string GroupName Name of the group.
--- @return #boolean If `true`, cargo was delivered.
+--- @param #OPSTRANSPORT self
+--- @param #string GroupName Name of the group.
+--- @return #boolean If `true`, cargo was delivered.
 function OPSTRANSPORT:IsCargoDelivered(GroupName)
 
   for _,_cargo in pairs(self:GetCargos()) do
@@ -1667,37 +1667,37 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "Planned" event.
--- @param #OPSTRANSPORT self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSTRANSPORT self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSTRANSPORT:onafterPlanned(From, Event, To)
   self:T(self.lid..string.format("New status: %s-->%s", From, To))
 end
 
 --- On after "Scheduled" event.
--- @param #OPSTRANSPORT self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSTRANSPORT self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSTRANSPORT:onafterScheduled(From, Event, To)
   self:T(self.lid..string.format("New status: %s-->%s", From, To))
 end
 
 --- On after "Executing" event.
--- @param #OPSTRANSPORT self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSTRANSPORT self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSTRANSPORT:onafterExecuting(From, Event, To)
   self:T(self.lid..string.format("New status: %s-->%s", From, To))
 end
 
 --- On before "Delivered" event.
--- @param #OPSTRANSPORT self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSTRANSPORT self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSTRANSPORT:onbeforeDelivered(From, Event, To)
 
   -- Check that we do not call delivered again.
@@ -1709,10 +1709,10 @@ function OPSTRANSPORT:onbeforeDelivered(From, Event, To)
 end
 
 --- On after "Delivered" event.
--- @param #OPSTRANSPORT self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSTRANSPORT self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSTRANSPORT:onafterDelivered(From, Event, To)
   self:T(self.lid..string.format("New status: %s-->%s", From, To))
   
@@ -1727,34 +1727,34 @@ function OPSTRANSPORT:onafterDelivered(From, Event, To)
 end
 
 --- On after "Loaded" event.
--- @param #OPSTRANSPORT self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP OpsGroupCargo OPSGROUP that was loaded into a carrier.
--- @param Ops.OpsGroup#OPSGROUP OpsGroupCarrier OPSGROUP that was loaded into a carrier.
--- @param Ops.OpsGroup#OPSGROUP.Element CarrierElement Carrier element.
+--- @param #OPSTRANSPORT self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsGroup#OPSGROUP OpsGroupCargo OPSGROUP that was loaded into a carrier.
+--- @param Ops.OpsGroup#OPSGROUP OpsGroupCarrier OPSGROUP that was loaded into a carrier.
+--- @param Ops.OpsGroup#OPSGROUP.Element CarrierElement Carrier element.
 function OPSTRANSPORT:onafterLoaded(From, Event, To, OpsGroupCargo, OpsGroupCarrier, CarrierElement)
   self:I(self.lid..string.format("Loaded OPSGROUP %s into carrier %s", OpsGroupCargo:GetName(), tostring(CarrierElement.name)))
 end
 
 --- On after "Unloaded" event.
--- @param #OPSTRANSPORT self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP OpsGroupCargo Cargo OPSGROUP that was unloaded from a carrier.
--- @param Ops.OpsGroup#OPSGROUP OpsGroupCarrier Carrier OPSGROUP that unloaded the cargo.
+--- @param #OPSTRANSPORT self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsGroup#OPSGROUP OpsGroupCargo Cargo OPSGROUP that was unloaded from a carrier.
+--- @param Ops.OpsGroup#OPSGROUP OpsGroupCarrier Carrier OPSGROUP that unloaded the cargo.
 function OPSTRANSPORT:onafterUnloaded(From, Event, To, OpsGroupCargo, OpsGroupCarrier)
   self:I(self.lid..string.format("Unloaded OPSGROUP %s", OpsGroupCargo:GetName()))
 end
 
 --- On after "DeadCarrierGroup" event.
--- @param #OPSTRANSPORT self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP OpsGroup Carrier OPSGROUP that is dead. 
+--- @param #OPSTRANSPORT self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsGroup#OPSGROUP OpsGroup Carrier OPSGROUP that is dead. 
 function OPSTRANSPORT:onafterDeadCarrierGroup(From, Event, To, OpsGroup)
   self:I(self.lid..string.format("Carrier OPSGROUP %s dead!", OpsGroup:GetName()))
 
@@ -1770,10 +1770,10 @@ function OPSTRANSPORT:onafterDeadCarrierGroup(From, Event, To, OpsGroup)
 end
 
 --- On after "DeadCarrierAll" event.
--- @param #OPSTRANSPORT self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state. 
+--- @param #OPSTRANSPORT self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state. 
 function OPSTRANSPORT:onafterDeadCarrierAll(From, Event, To)
   self:I(self.lid..string.format("ALL Carrier OPSGROUPs are dead!"))
 
@@ -1802,10 +1802,10 @@ function OPSTRANSPORT:onafterDeadCarrierAll(From, Event, To)
 end
 
 --- On after "Cancel" event.
--- @param #OPSTRANSPORT self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPSTRANSPORT self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPSTRANSPORT:onafterCancel(From, Event, To)
 
   -- Number of OPSGROUPS assigned and alive.
@@ -1882,7 +1882,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check if all cargo of this transport assignment was delivered.
--- @param #OPSTRANSPORT self
+--- @param #OPSTRANSPORT self
 function OPSTRANSPORT:_CheckDelivered()
 
   -- First check that at least one cargo was added (as we allow to do that later).
@@ -1926,9 +1926,9 @@ function OPSTRANSPORT:_CheckDelivered()
 end
 
 --- Check if all required cargos are loaded.
--- @param #OPSTRANSPORT self
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #boolean If true, all required cargos are loaded or there is no required cargo.
+--- @param #OPSTRANSPORT self
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #boolean If true, all required cargos are loaded or there is no required cargo.
 function OPSTRANSPORT:_CheckRequiredCargos(TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -1957,9 +1957,9 @@ function OPSTRANSPORT:_CheckRequiredCargos(TransportZoneCombo)
 end
 
 --- Check if all given condition are true.
--- @param #OPSTRANSPORT self
--- @param #table Conditions Table of conditions.
--- @return #boolean If true, all conditions were true. Returns false if at least one condition returned false.
+--- @param #OPSTRANSPORT self
+--- @param #table Conditions Table of conditions.
+--- @return #boolean If true, all conditions were true. Returns false if at least one condition returned false.
 function OPSTRANSPORT:EvalConditionsAll(Conditions)
 
   -- Any stop condition must be true.
@@ -1983,12 +1983,12 @@ end
 
 
 --- Find transfer carrier element for cargo group.
--- @param #OPSTRANSPORT self
--- @param Ops.OpsGroup#OPSGROUP CargoGroup The cargo group that needs to be loaded into a carrier unit/element of the carrier group.
--- @param Core.Zone#ZONE Zone (Optional) Zone where the carrier must be in.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return Ops.OpsGroup#OPSGROUP.Element New carrier element for cargo or nil.
--- @return Ops.OpsGroup#OPSGROUP New carrier group for cargo or nil.
+--- @param #OPSTRANSPORT self
+--- @param Ops.OpsGroup#OPSGROUP CargoGroup The cargo group that needs to be loaded into a carrier unit/element of the carrier group.
+--- @param Core.Zone#ZONE Zone (Optional) Zone where the carrier must be in.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return Ops.OpsGroup#OPSGROUP.Element New carrier element for cargo or nil.
+--- @return Ops.OpsGroup#OPSGROUP New carrier group for cargo or nil.
 function OPSTRANSPORT:FindTransferCarrierForCargo(CargoGroup, Zone, TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -2025,11 +2025,11 @@ function OPSTRANSPORT:FindTransferCarrierForCargo(CargoGroup, Zone, TransportZon
 end
 
 --- Create a cargo group data structure.
--- @param #OPSTRANSPORT self
--- @param Wrapper.Group#GROUP group The GROUP or OPSGROUP object.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @param #boolean DisembarkActivation If `true`, cargo group is activated when disembarked. 
--- @return Ops.OpsGroup#OPSGROUP.CargoGroup Cargo group data.
+--- @param #OPSTRANSPORT self
+--- @param Wrapper.Group#GROUP group The GROUP or OPSGROUP object.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @param #boolean DisembarkActivation If `true`, cargo group is activated when disembarked. 
+--- @return Ops.OpsGroup#OPSGROUP.CargoGroup Cargo group data.
 function OPSTRANSPORT:_CreateCargoGroupData(group, TransportZoneCombo, DisembarkActivation)
 
   -- Get ops group.
@@ -2058,12 +2058,12 @@ function OPSTRANSPORT:_CreateCargoGroupData(group, TransportZoneCombo, Disembark
 end
 
 --- Count how many cargo groups are inside a zone.
--- @param #OPSTRANSPORT self
--- @param Core.Zone#ZONE Zone The zone object.
--- @param #boolean Delivered If `true`, only delivered groups are returned. If `false` only undelivered groups are returned. If `nil`, all groups are returned.
--- @param Ops.OpsGroup#OPSGROUP Carrier (Optional) Only count cargo groups that fit into the given carrier group. Current cargo is not a factor.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #number Number of cargo groups.
+--- @param #OPSTRANSPORT self
+--- @param Core.Zone#ZONE Zone The zone object.
+--- @param #boolean Delivered If `true`, only delivered groups are returned. If `false` only undelivered groups are returned. If `nil`, all groups are returned.
+--- @param Ops.OpsGroup#OPSGROUP Carrier (Optional) Only count cargo groups that fit into the given carrier group. Current cargo is not a factor.
+--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+--- @return #number Number of cargo groups.
 function OPSTRANSPORT:_CountCargosInZone(Zone, Delivered, Carrier, TransportZoneCombo)
 
   -- Get cargo ops groups.
@@ -2123,9 +2123,9 @@ function OPSTRANSPORT:_CountCargosInZone(Zone, Delivered, Carrier, TransportZone
 end
 
 --- Get a transport zone combination (TZC) for a carrier group. The pickup zone will be a zone, where the most cargo groups are located that fit into the carrier.
--- @param #OPSTRANSPORT self
--- @param Ops.OpsGroup#OPSGROUP Carrier The carrier OPS group.
--- @return Core.Zone#ZONE Pickup zone or `#nil`.
+--- @param #OPSTRANSPORT self
+--- @param Ops.OpsGroup#OPSGROUP Carrier The carrier OPS group.
+--- @return Core.Zone#ZONE Pickup zone or `#nil`.
 function OPSTRANSPORT:_GetTransportZoneCombo(Carrier)
 
   --- Selection criteria
@@ -2211,9 +2211,9 @@ function OPSTRANSPORT:_GetTransportZoneCombo(Carrier)
 end
 
 --- Get an OPSGROUP from a given OPSGROUP or GROUP object. If the object is a GROUP, an OPSGROUP is created automatically. 
--- @param #OPSTRANSPORT self
--- @param Core.Base#BASE Object The object, which can be a GROUP or OPSGROUP.
--- @return Ops.OpsGroup#OPSGROUP Ops Group.
+--- @param #OPSTRANSPORT self
+--- @param Core.Base#BASE Object The object, which can be a GROUP or OPSGROUP.
+--- @return Ops.OpsGroup#OPSGROUP Ops Group.
 function OPSTRANSPORT:_GetOpsGroupFromObject(Object)
 
   local opsgroup=nil

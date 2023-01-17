@@ -32,9 +32,9 @@
 -- @image AI_Close_Air_Support.JPG
 
 --- AI_CAS_ZONE class
--- @type AI_CAS_ZONE
--- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
--- @field Core.Zone#ZONE_BASE TargetZone The @{Core.Zone} where the patrol needs to be executed.
+--- @type AI_CAS_ZONE
+--- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
+--- @field Core.Zone#ZONE_BASE TargetZone The @{Core.Zone} where the patrol needs to be executed.
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
 --- Implements the core functions to provide Close Air Support in an Engage @{Core.Zone} by an AIR @{Wrapper.Controllable} or @{Wrapper.Group}.
@@ -121,7 +121,7 @@
 -- 
 -- ===
 -- 
--- @field #AI_CAS_ZONE
+--- @field #AI_CAS_ZONE
 AI_CAS_ZONE = {
   ClassName = "AI_CAS_ZONE",
 }
@@ -129,15 +129,15 @@ AI_CAS_ZONE = {
 
 
 --- Creates a new AI_CAS_ZONE object
--- @param #AI_CAS_ZONE self
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
--- @param Core.Zone#ZONE_BASE EngageZone The zone where the engage will happen.
--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
--- @return #AI_CAS_ZONE self
+--- @param #AI_CAS_ZONE self
+--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
+--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
+--- @param Core.Zone#ZONE_BASE EngageZone The zone where the engage will happen.
+--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
+--- @return #AI_CAS_ZONE self
 function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone, PatrolAltType )
 
   -- Inherits from BASE
@@ -193,20 +193,20 @@ function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
 
 --- OnLeave Transition Handler for State Engaging.
 -- @function [parent=#AI_CAS_ZONE] OnLeaveEngaging
--- @param #AI_CAS_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @return #boolean Return false to cancel Transition.
+--- @param #AI_CAS_ZONE self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @return #boolean Return false to cancel Transition.
 
 --- OnEnter Transition Handler for State Engaging.
 -- @function [parent=#AI_CAS_ZONE] OnEnterEngaging
--- @param #AI_CAS_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_CAS_ZONE self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 
   self:AddTransition( "Engaging", "Target", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
 
@@ -328,9 +328,9 @@ end
 
 
 --- Set the Engage Zone where the AI is performing CAS. Note that if the EngageZone is changed, the AI needs to re-detect targets.
--- @param #AI_CAS_ZONE self
--- @param Core.Zone#ZONE EngageZone The zone where the AI is performing CAS.
--- @return #AI_CAS_ZONE self
+--- @param #AI_CAS_ZONE self
+--- @param Core.Zone#ZONE EngageZone The zone where the AI is performing CAS.
+--- @return #AI_CAS_ZONE self
 function AI_CAS_ZONE:SetEngageZone( EngageZone )
   self:F2()
 
@@ -344,11 +344,11 @@ end
 
 
 --- onafter State Transition for Event Start.
--- @param #AI_CAS_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_CAS_ZONE self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_CAS_ZONE:onafterStart( Controllable, From, Event, To )
 
   -- Call the parent Start event handler
@@ -359,7 +359,7 @@ function AI_CAS_ZONE:onafterStart( Controllable, From, Event, To )
 end
 
 --- @param AI.AI_CAS#AI_CAS_ZONE 
--- @param Wrapper.Group#GROUP EngageGroup
+--- @param Wrapper.Group#GROUP EngageGroup
 function AI_CAS_ZONE.EngageRoute( EngageGroup, Fsm )
 
   EngageGroup:F( { "AI_CAS_ZONE.EngageRoute:", EngageGroup:GetName() } )
@@ -371,10 +371,10 @@ end
 
 
 --- @param #AI_CAS_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_CAS_ZONE:onbeforeEngage( Controllable, From, Event, To )
   
   if self.Accomplished == true then
@@ -383,10 +383,10 @@ function AI_CAS_ZONE:onbeforeEngage( Controllable, From, Event, To )
 end
 
 --- @param #AI_CAS_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_CAS_ZONE:onafterTarget( Controllable, From, Event, To )
 
   if Controllable:IsAlive() then
@@ -416,25 +416,25 @@ end
 
 
 --- @param #AI_CAS_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_CAS_ZONE:onafterAbort( Controllable, From, Event, To )
   Controllable:ClearTasks()
   self:__Route( 1 )
 end
 
 --- @param #AI_CAS_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
--- @param DCS#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
--- @param DCS#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
--- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
--- @param DCS#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
+--- @param DCS#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
+--- @param DCS#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
+--- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+--- @param DCS#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To, 
                                     EngageSpeed, 
                                     EngageAltitude, 
@@ -526,10 +526,10 @@ end
 
 
 --- @param #AI_CAS_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_CAS_ZONE:onafterAccomplish( Controllable, From, Event, To )
   self.Accomplished = true
   self:SetDetectionDeactivated()
@@ -537,11 +537,11 @@ end
 
 
 --- @param #AI_CAS_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @param Core.Event#EVENTDATA EventData
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @param Core.Event#EVENTDATA EventData
 function AI_CAS_ZONE:onafterDestroy( Controllable, From, Event, To, EventData )
 
   if EventData.IniUnit then
@@ -551,7 +551,7 @@ end
 
 
 --- @param #AI_CAS_ZONE self
--- @param Core.Event#EVENTDATA EventData
+--- @param Core.Event#EVENTDATA EventData
 function AI_CAS_ZONE:OnEventDead( EventData )
   self:F( { "EventDead", EventData } )
 

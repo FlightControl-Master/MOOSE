@@ -143,18 +143,18 @@
 -- 
 -- ===
 -- 
--- @field #AI_CARGO_DISPATCHER_HELICOPTER
+--- @field #AI_CARGO_DISPATCHER_HELICOPTER
 AI_CARGO_DISPATCHER_HELICOPTER = {
   ClassName = "AI_CARGO_DISPATCHER_HELICOPTER",
 }
 
 --- Creates a new AI_CARGO_DISPATCHER_HELICOPTER object.
--- @param #AI_CARGO_DISPATCHER_HELICOPTER self
--- @param Core.Set#SET_GROUP HelicopterSet The set of @{Wrapper.Group#GROUP} objects of helicopters that will transport the cargo.
--- @param Core.Set#SET_CARGO CargoSet The set of @{Cargo.Cargo#CARGO} objects, which can be CARGO_GROUP, CARGO_CRATE, CARGO_SLINGLOAD objects.
--- @param Core.Set#SET_ZONE PickupZoneSet (optional) The set of pickup zones, which are used to where the cargo can be picked up by the APCs. If nil, then cargo can be picked up everywhere. 
--- @param Core.Set#SET_ZONE DeployZoneSet The set of deploy zones, which are used to where the cargo will be deployed by the Helicopters. 
--- @return #AI_CARGO_DISPATCHER_HELICOPTER
+--- @param #AI_CARGO_DISPATCHER_HELICOPTER self
+--- @param Core.Set#SET_GROUP HelicopterSet The set of @{Wrapper.Group#GROUP} objects of helicopters that will transport the cargo.
+--- @param Core.Set#SET_CARGO CargoSet The set of @{Cargo.Cargo#CARGO} objects, which can be CARGO_GROUP, CARGO_CRATE, CARGO_SLINGLOAD objects.
+--- @param Core.Set#SET_ZONE PickupZoneSet (optional) The set of pickup zones, which are used to where the cargo can be picked up by the APCs. If nil, then cargo can be picked up everywhere. 
+--- @param Core.Set#SET_ZONE DeployZoneSet The set of deploy zones, which are used to where the cargo will be deployed by the Helicopters. 
+--- @return #AI_CARGO_DISPATCHER_HELICOPTER
 -- @usage
 -- 
 --      -- An AI dispatcher object for a helicopter squadron, moving infantry from pickup zones to deploy zones.

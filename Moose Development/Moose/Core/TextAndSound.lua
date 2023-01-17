@@ -25,18 +25,18 @@
 -- @image MOOSE.JPG
 
 --- Text and Sound class.
--- @type TEXTANDSOUND
--- @field #string ClassName Name of this class.
--- @field #string version Versioning.
--- @field #string lid LID for log entries.
--- @field #string locale Default locale of this object.
--- @field #table entries Table of entries.
--- @field #string textclass Name of the class the texts belong to.
+--- @type TEXTANDSOUND
+--- @field #string ClassName Name of this class.
+--- @field #string version Versioning.
+--- @field #string lid LID for log entries.
+--- @field #string locale Default locale of this object.
+--- @field #table entries Table of entries.
+--- @field #string textclass Name of the class the texts belong to.
 -- @extends Core.Base#BASE
 
 ---
 --
--- @field #TEXTANDSOUND
+--- @field #TEXTANDSOUND
 TEXTANDSOUND = {
   ClassName = "TEXTANDSOUND",
   version = "0.0.1",
@@ -47,24 +47,24 @@ TEXTANDSOUND = {
 }
 
 --- Text and Sound entry.
--- @type TEXTANDSOUND.Entry
--- @field #string Classname Name of the class this entry is for.
--- @field #string Locale Locale of this entry, defaults to "en".
--- @field #table Data The list of entries.
+--- @type TEXTANDSOUND.Entry
+--- @field #string Classname Name of the class this entry is for.
+--- @field #string Locale Locale of this entry, defaults to "en".
+--- @field #table Data The list of entries.
 
 --- Text and Sound data
--- @type TEXTANDSOUND.Data
--- @field #string ID ID of this entry for retrieval.
--- @field #string Text Text of this entry.
--- @field #string Soundfile (optional) Soundfile File name of the corresponding sound file.
--- @field #number Soundlength (optional)  Length of the sound file in seconds.
--- @field #string Subtitle (optional)  Subtitle for the sound file.
+--- @type TEXTANDSOUND.Data
+--- @field #string ID ID of this entry for retrieval.
+--- @field #string Text Text of this entry.
+--- @field #string Soundfile (optional) Soundfile File name of the corresponding sound file.
+--- @field #number Soundlength (optional)  Length of the sound file in seconds.
+--- @field #string Subtitle (optional)  Subtitle for the sound file.
 
 --- Instantiate a new object
--- @param #TEXTANDSOUND self
--- @param #string ClassName Name of the class this instance is providing texts for.
--- @param #string Defaultlocale (Optional) Default locale of this instance, defaults to "en". 
--- @return #TEXTANDSOUND self
+--- @param #TEXTANDSOUND self
+--- @param #string ClassName Name of the class this instance is providing texts for.
+--- @param #string Defaultlocale (Optional) Default locale of this instance, defaults to "en". 
+--- @return #TEXTANDSOUND self
 function TEXTANDSOUND:New(ClassName,Defaultlocale)
     -- Inherit everything from BASE class.
   local self=BASE:Inherit(self, BASE:New())
@@ -84,14 +84,14 @@ function TEXTANDSOUND:New(ClassName,Defaultlocale)
 end
 
 --- Add an entry
--- @param #TEXTANDSOUND self
--- @param #string Locale Locale to set for this entry, e.g. "de".
--- @param #string ID Unique(!) ID of this entry under this locale (i.e. use the same ID to get localized text for the entry in another language).
--- @param #string Text Text for this entry.
--- @param #string Soundfile (Optional) Sound file name for this entry.
--- @param #number Soundlength (Optional) Length of the sound file in seconds.
--- @param #string Subtitle (Optional) Subtitle to be used alongside the sound file.
--- @return #TEXTANDSOUND self
+--- @param #TEXTANDSOUND self
+--- @param #string Locale Locale to set for this entry, e.g. "de".
+--- @param #string ID Unique(!) ID of this entry under this locale (i.e. use the same ID to get localized text for the entry in another language).
+--- @param #string Text Text for this entry.
+--- @param #string Soundfile (Optional) Sound file name for this entry.
+--- @param #number Soundlength (Optional) Length of the sound file in seconds.
+--- @param #string Subtitle (Optional) Subtitle to be used alongside the sound file.
+--- @return #TEXTANDSOUND self
 function TEXTANDSOUND:AddEntry(Locale,ID,Text,Soundfile,Soundlength,Subtitle)
   self:T(self.lid .. "AddEntry")
   local locale = Locale or self.locale
@@ -114,13 +114,13 @@ function TEXTANDSOUND:AddEntry(Locale,ID,Text,Soundfile,Soundlength,Subtitle)
 end
 
 --- Get an entry
--- @param #TEXTANDSOUND self
--- @param #string ID The unique ID of the data to be retrieved.
--- @param #string Locale (Optional) The locale of the text to be retrieved - defauls to default locale set with `New()`.
--- @return #string Text Text or nil if not found and no fallback.
--- @return #string Soundfile Filename or nil if not found and no fallback.
--- @return #string Soundlength Length of the sound or 0 if not found and no fallback.
--- @return #string Subtitle Text for subtitle or nil if not found and no fallback.
+--- @param #TEXTANDSOUND self
+--- @param #string ID The unique ID of the data to be retrieved.
+--- @param #string Locale (Optional) The locale of the text to be retrieved - defauls to default locale set with `New()`.
+--- @return #string Text Text or nil if not found and no fallback.
+--- @return #string Soundfile Filename or nil if not found and no fallback.
+--- @return #string Soundlength Length of the sound or 0 if not found and no fallback.
+--- @return #string Subtitle Text for subtitle or nil if not found and no fallback.
 function TEXTANDSOUND:GetEntry(ID,Locale)
   self:T(self.lid .. "GetEntry")
   local locale = Locale or self.locale
@@ -153,17 +153,17 @@ function TEXTANDSOUND:GetEntry(ID,Locale)
 end
 
 --- Get the default locale of this object
--- @param #TEXTANDSOUND self
--- @return #string locale
+--- @param #TEXTANDSOUND self
+--- @return #string locale
 function TEXTANDSOUND:GetDefaultLocale()
   self:T(self.lid .. "GetDefaultLocale")
   return self.locale
 end
 
 --- Set default locale of this object
--- @param #TEXTANDSOUND self
--- @param #string locale
--- @return #TEXTANDSOUND self 
+--- @param #TEXTANDSOUND self
+--- @param #string locale
+--- @return #TEXTANDSOUND self 
 function TEXTANDSOUND:SetDefaultLocale(locale)
   self:T(self.lid .. "SetDefaultLocale")
   self.locale = locale or "en"
@@ -171,16 +171,16 @@ function TEXTANDSOUND:SetDefaultLocale(locale)
 end
 
 --- Check if a locale exists
--- @param #TEXTANDSOUND self
--- @return #boolean outcome
+--- @param #TEXTANDSOUND self
+--- @return #boolean outcome
 function TEXTANDSOUND:HasLocale(Locale)
   self:T(self.lid .. "HasLocale")
   return self.entries[Locale] and true or false
 end
 
 --- Flush all entries to the log
--- @param #TEXTANDSOUND self
--- @return #TEXTANDSOUND self
+--- @param #TEXTANDSOUND self
+--- @return #TEXTANDSOUND self
 function TEXTANDSOUND:FlushToLog()
   self:I(self.lid .. "Flushing entries:")
   local text = string.format("Textclass: %s | Default Locale: %s",self.textclass, self.locale)

@@ -26,162 +26,162 @@
 
 
 --- AUFTRAG class.
--- @type AUFTRAG
--- @field #string ClassName Name of the class.
--- @field #number verbose Verbosity level.
--- @field #string lid Class id string for output to DCS log file.
--- @field #number auftragsnummer Auftragsnummer.
--- @field #string type Mission type.
--- @field #table categories Mission categories.
--- @field #string status Mission status.
--- @field #table legions Assigned legions.
--- @field #table statusLegion Mission status of all assigned LEGIONs.
--- @field #string statusCommander Mission status of the COMMANDER.
--- @field #string statusChief Mission status of the CHIEF.
--- @field #table groupdata Group specific data.
--- @field #string name Mission name.
--- @field #number prio Mission priority.
--- @field #boolean urgent Mission is urgent. Running missions with lower prio might be cancelled.
--- @field #number importance Importance.
--- @field #number Tstart Mission start time in abs. seconds.
--- @field #number Tstop Mission stop time in abs. seconds.
--- @field #number duration Mission duration in seconds.
--- @field #number durationExe Mission execution time in seconds.
--- @field #number Texecuting Time stamp (abs) when mission is executing. Is `#nil` on start.
--- @field #number Tpush Mission push/execute time in abs. seconds.
--- @field #number Tstarted Time stamp (abs) when mission is started.
--- @field Wrapper.Marker#MARKER marker F10 map marker.
--- @field #boolean markerOn If true, display marker on F10 map with the AUFTRAG status.
--- @field #number markerCoaliton Coalition to which the marker is dispayed.
--- @field #table DCStask DCS task structure.
--- @field #number Ncasualties Number of own casualties during mission.
--- @field #number Nkills Number of (enemy) units killed by assets of this mission.
--- @field #number Ndead Number of assigned groups that are dead.
--- @field #number Nassigned Number of assigned groups.
--- @field #number Nelements Number of elements (units) assigned to mission.
--- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
--- @field #number Tover Mission abs. time stamp, when mission was over.
--- @field #boolean updateDCSTask If `true`, DCS task is updated at every status update of the assigned groups.
--- @field #table conditionStart Condition(s) that have to be true, before the mission will be started.
--- @field #table conditionSuccess If all conditions are true, the mission is cancelled.
--- @field #table conditionFailure If all conditions are true, the mission is cancelled.
--- @field #table conditionPush If all conditions are true, the mission is executed. Before, the group(s) wait at the mission execution waypoint.
+--- @type AUFTRAG
+--- @field #string ClassName Name of the class.
+--- @field #number verbose Verbosity level.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #number auftragsnummer Auftragsnummer.
+--- @field #string type Mission type.
+--- @field #table categories Mission categories.
+--- @field #string status Mission status.
+--- @field #table legions Assigned legions.
+--- @field #table statusLegion Mission status of all assigned LEGIONs.
+--- @field #string statusCommander Mission status of the COMMANDER.
+--- @field #string statusChief Mission status of the CHIEF.
+--- @field #table groupdata Group specific data.
+--- @field #string name Mission name.
+--- @field #number prio Mission priority.
+--- @field #boolean urgent Mission is urgent. Running missions with lower prio might be cancelled.
+--- @field #number importance Importance.
+--- @field #number Tstart Mission start time in abs. seconds.
+--- @field #number Tstop Mission stop time in abs. seconds.
+--- @field #number duration Mission duration in seconds.
+--- @field #number durationExe Mission execution time in seconds.
+--- @field #number Texecuting Time stamp (abs) when mission is executing. Is `#nil` on start.
+--- @field #number Tpush Mission push/execute time in abs. seconds.
+--- @field #number Tstarted Time stamp (abs) when mission is started.
+--- @field Wrapper.Marker#MARKER marker F10 map marker.
+--- @field #boolean markerOn If true, display marker on F10 map with the AUFTRAG status.
+--- @field #number markerCoaliton Coalition to which the marker is dispayed.
+--- @field #table DCStask DCS task structure.
+--- @field #number Ncasualties Number of own casualties during mission.
+--- @field #number Nkills Number of (enemy) units killed by assets of this mission.
+--- @field #number Ndead Number of assigned groups that are dead.
+--- @field #number Nassigned Number of assigned groups.
+--- @field #number Nelements Number of elements (units) assigned to mission.
+--- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
+--- @field #number Tover Mission abs. time stamp, when mission was over.
+--- @field #boolean updateDCSTask If `true`, DCS task is updated at every status update of the assigned groups.
+--- @field #table conditionStart Condition(s) that have to be true, before the mission will be started.
+--- @field #table conditionSuccess If all conditions are true, the mission is cancelled.
+--- @field #table conditionFailure If all conditions are true, the mission is cancelled.
+--- @field #table conditionPush If all conditions are true, the mission is executed. Before, the group(s) wait at the mission execution waypoint.
 --
--- @field #number orbitSpeed Orbit speed in m/s.
--- @field #number orbitAltitude Orbit altitude in meters.
--- @field #number orbitHeading Orbit heading in degrees.
--- @field #number orbitLeg Length of orbit leg in meters.
--- @field DCS#Vec2 orbitOffsetVec2 2D offset vector.
--- @field DCS#Vec2 orbitVec2 2D orbit vector.
--- @field #number orbitDeltaR Distance threshold in meters for moving orbit targets.
+--- @field #number orbitSpeed Orbit speed in m/s.
+--- @field #number orbitAltitude Orbit altitude in meters.
+--- @field #number orbitHeading Orbit heading in degrees.
+--- @field #number orbitLeg Length of orbit leg in meters.
+--- @field DCS#Vec2 orbitOffsetVec2 2D offset vector.
+--- @field DCS#Vec2 orbitVec2 2D orbit vector.
+--- @field #number orbitDeltaR Distance threshold in meters for moving orbit targets.
 --
--- @field Ops.Target#TARGET engageTarget Target data to engage.
--- @field #number targetHeading Heading of target in degrees.
+--- @field Ops.Target#TARGET engageTarget Target data to engage.
+--- @field #number targetHeading Heading of target in degrees.
 -- 
--- @field Ops.Operation#OPERATION operation Operation this mission is part of.
+--- @field Ops.Operation#OPERATION operation Operation this mission is part of.
 -- 
--- @field #boolean teleport Groups are teleported to the mission ingress waypoint.
+--- @field #boolean teleport Groups are teleported to the mission ingress waypoint.
 --
--- @field Core.Zone#ZONE_RADIUS engageZone *Circular* engagement zone.
--- @field #table engageTargetTypes Table of target types that are engaged in the engagement zone.
--- @field #number engageAltitude Engagement altitude in meters.
--- @field #number engageDirection Engagement direction in degrees.
--- @field #number engageQuantity Number of times a target is engaged.
--- @field #number engageWeaponType Weapon type used.
--- @field #number engageWeaponExpend How many weapons are used.
--- @field #boolean engageAsGroup Group attack.
--- @field #number engageMaxDistance Max engage distance.
--- @field #number refuelSystem Refuel type (boom or probe) for TANKER missions.
+--- @field Core.Zone#ZONE_RADIUS engageZone *Circular* engagement zone.
+--- @field #table engageTargetTypes Table of target types that are engaged in the engagement zone.
+--- @field #number engageAltitude Engagement altitude in meters.
+--- @field #number engageDirection Engagement direction in degrees.
+--- @field #number engageQuantity Number of times a target is engaged.
+--- @field #number engageWeaponType Weapon type used.
+--- @field #number engageWeaponExpend How many weapons are used.
+--- @field #boolean engageAsGroup Group attack.
+--- @field #number engageMaxDistance Max engage distance.
+--- @field #number refuelSystem Refuel type (boom or probe) for TANKER missions.
 --
--- @field Wrapper.Group#GROUP escortGroup The group to be escorted.
--- @field #string escortGroupName Name of the escorted group.
--- @field DCS#Vec3 escortVec3 The 3D offset vector from the escorted group to the escort group.
+--- @field Wrapper.Group#GROUP escortGroup The group to be escorted.
+--- @field #string escortGroupName Name of the escorted group.
+--- @field DCS#Vec3 escortVec3 The 3D offset vector from the escorted group to the escort group.
 --
--- @field #number facDesignation FAC designation type.
--- @field #boolean facDatalink FAC datalink enabled.
--- @field #number facFreq FAC radio frequency in MHz.
--- @field #number facModu FAC radio modulation 0=AM 1=FM.
+--- @field #number facDesignation FAC designation type.
+--- @field #boolean facDatalink FAC datalink enabled.
+--- @field #number facFreq FAC radio frequency in MHz.
+--- @field #number facModu FAC radio modulation 0=AM 1=FM.
 --
--- @field Core.Set#SET_GROUP transportGroupSet Groups to be transported.
--- @field Core.Point#COORDINATE transportPickup Coordinate where to pickup the cargo.
--- @field Core.Point#COORDINATE transportDropoff Coordinate where to drop off the cargo.
--- @field #number transportPickupRadius Radius in meters for pickup zone. Default 500 m.
+--- @field Core.Set#SET_GROUP transportGroupSet Groups to be transported.
+--- @field Core.Point#COORDINATE transportPickup Coordinate where to pickup the cargo.
+--- @field Core.Point#COORDINATE transportDropoff Coordinate where to drop off the cargo.
+--- @field #number transportPickupRadius Radius in meters for pickup zone. Default 500 m.
 --
--- @field Ops.OpsTransport#OPSTRANSPORT opstransport OPS transport assignment.
--- @field #number NcarriersMin Min number of required carrier assets.
--- @field #number NcarriersMax Max number of required carrier assets.
--- @field Core.Zone#ZONE transportDeployZone Deploy zone of an OPSTRANSPORT.
--- @field Core.Zone#ZONE transportDisembarkZone Disembark zone of an OPSTRANSPORT.
+--- @field Ops.OpsTransport#OPSTRANSPORT opstransport OPS transport assignment.
+--- @field #number NcarriersMin Min number of required carrier assets.
+--- @field #number NcarriersMax Max number of required carrier assets.
+--- @field Core.Zone#ZONE transportDeployZone Deploy zone of an OPSTRANSPORT.
+--- @field Core.Zone#ZONE transportDisembarkZone Disembark zone of an OPSTRANSPORT.
 --
--- @field #number artyRadius Radius in meters.
--- @field #number artyShots Number of shots fired.
--- @field #number artyAltitude Altitude in meters. Can be used for a Barrage.
--- @field #number artyHeading Heading in degrees (for Barrage).
--- @field #number artyAngle Shooting angle in degrees (for Barrage).
+--- @field #number artyRadius Radius in meters.
+--- @field #number artyShots Number of shots fired.
+--- @field #number artyAltitude Altitude in meters. Can be used for a Barrage.
+--- @field #number artyHeading Heading in degrees (for Barrage).
+--- @field #number artyAngle Shooting angle in degrees (for Barrage).
 --
--- @field #string alert5MissionType Alert 5 mission type. This is the mission type, the alerted assets will be able to carry out.
+--- @field #string alert5MissionType Alert 5 mission type. This is the mission type, the alerted assets will be able to carry out.
 -- 
--- @field #table attributes Generalized attribute(s) of assets.
--- @field #table properties DCS attribute(s) of assets.
+--- @field #table attributes Generalized attribute(s) of assets.
+--- @field #table properties DCS attribute(s) of assets.
 --
--- @field Ops.Chief#CHIEF chief The CHIEF managing this mission.
--- @field Ops.Commander#COMMANDER commander The COMMANDER managing this mission.
--- @field #table assets Warehouse assets assigned for this mission.
--- @field #number NassetsMin Min. number of required warehouse assets.
--- @field #number NassetsMax Max. number of required warehouse assets.
--- @field #number NescortMin Min. number of required escort assets for each group the mission is assigned to.
--- @field #number NescortMax Max. number of required escort assets for each group the mission is assigned to.
--- @field #string escortMissionType Escort mission type.
--- @field #table escortTargetTypes Target types that will be engaged.
--- @field #number escortEngageRange Engage range in nautical miles (NM).
--- @field #number Nassets Number of requested warehouse assets.
--- @field #table NassetsLegMin Number of required warehouse assets for each assigned legion.
--- @field #table NassetsLegMax Number of required warehouse assets for each assigned legion.
--- @field #table requestID The ID of the queued warehouse request. Necessary to cancel the request if the mission was cancelled before the request is processed.
--- @field #table payloads User specified airwing payloads for this mission. Only these will be considered for the job!
--- @field Ops.AirWing#AIRWING.PatrolData patroldata Patrol data.
+--- @field Ops.Chief#CHIEF chief The CHIEF managing this mission.
+--- @field Ops.Commander#COMMANDER commander The COMMANDER managing this mission.
+--- @field #table assets Warehouse assets assigned for this mission.
+--- @field #number NassetsMin Min. number of required warehouse assets.
+--- @field #number NassetsMax Max. number of required warehouse assets.
+--- @field #number NescortMin Min. number of required escort assets for each group the mission is assigned to.
+--- @field #number NescortMax Max. number of required escort assets for each group the mission is assigned to.
+--- @field #string escortMissionType Escort mission type.
+--- @field #table escortTargetTypes Target types that will be engaged.
+--- @field #number escortEngageRange Engage range in nautical miles (NM).
+--- @field #number Nassets Number of requested warehouse assets.
+--- @field #table NassetsLegMin Number of required warehouse assets for each assigned legion.
+--- @field #table NassetsLegMax Number of required warehouse assets for each assigned legion.
+--- @field #table requestID The ID of the queued warehouse request. Necessary to cancel the request if the mission was cancelled before the request is processed.
+--- @field #table payloads User specified airwing payloads for this mission. Only these will be considered for the job!
+--- @field Ops.AirWing#AIRWING.PatrolData patroldata Patrol data.
 --
--- @field #table specialLegions User specified legions assigned for this mission. Only these will be considered for the job!
--- @field #table specialCohorts User specified cohorts assigned for this mission. Only these will be considered for the job!
--- @field #table transportLegions Legions explicitly requested for providing transport carrier assets.
--- @field #table transportCohorts Cohorts explicitly requested for providing transport carrier assets.
--- @field #table escortLegions Legions explicitly requested for providing escorting assets.
--- @field #table escortCohorts Cohorts explicitly requested for providing escorting assets.
+--- @field #table specialLegions User specified legions assigned for this mission. Only these will be considered for the job!
+--- @field #table specialCohorts User specified cohorts assigned for this mission. Only these will be considered for the job!
+--- @field #table transportLegions Legions explicitly requested for providing transport carrier assets.
+--- @field #table transportCohorts Cohorts explicitly requested for providing transport carrier assets.
+--- @field #table escortLegions Legions explicitly requested for providing escorting assets.
+--- @field #table escortCohorts Cohorts explicitly requested for providing escorting assets.
 --
--- @field #string missionTask Mission task. See `ENUMS.MissionTask`.
--- @field #number missionAltitude Mission altitude in meters.
--- @field #number missionSpeed Mission speed in km/h.
--- @field #number missionFraction Mission coordiante fraction. Default is 0.5.
--- @field #number missionRange Mission range in meters. Used by LEGION classes (AIRWING, BRIGADE, ...).
--- @field Core.Point#COORDINATE missionWaypointCoord Mission waypoint coordinate.
--- @field Core.Point#COORDINATE missionEgressCoord Mission egress waypoint coordinate.
--- @field #number missionWaypointRadius Random radius in meters.
+--- @field #string missionTask Mission task. See `ENUMS.MissionTask`.
+--- @field #number missionAltitude Mission altitude in meters.
+--- @field #number missionSpeed Mission speed in km/h.
+--- @field #number missionFraction Mission coordiante fraction. Default is 0.5.
+--- @field #number missionRange Mission range in meters. Used by LEGION classes (AIRWING, BRIGADE, ...).
+--- @field Core.Point#COORDINATE missionWaypointCoord Mission waypoint coordinate.
+--- @field Core.Point#COORDINATE missionEgressCoord Mission egress waypoint coordinate.
+--- @field #number missionWaypointRadius Random radius in meters.
 --
--- @field #table enrouteTasks Mission enroute tasks.
+--- @field #table enrouteTasks Mission enroute tasks.
 --
--- @field #number repeated Number of times mission was repeated.
--- @field #number repeatedSuccess Number of times mission was repeated after a success.
--- @field #number repeatedFailure Number of times mission was repeated after a failure.
--- @field #number Nrepeat Number of times the mission is repeated.
--- @field #number NrepeatFailure Number of times mission is repeated if failed.
--- @field #number NrepeatSuccess Number of times mission is repeated if successful.
+--- @field #number repeated Number of times mission was repeated.
+--- @field #number repeatedSuccess Number of times mission was repeated after a success.
+--- @field #number repeatedFailure Number of times mission was repeated after a failure.
+--- @field #number Nrepeat Number of times the mission is repeated.
+--- @field #number NrepeatFailure Number of times mission is repeated if failed.
+--- @field #number NrepeatSuccess Number of times mission is repeated if successful.
 --
--- @field Ops.OpsGroup#OPSGROUP.Radio radio Radio freq and modulation.
--- @field Ops.OpsGroup#OPSGROUP.Beacon tacan TACAN setting.
--- @field Ops.OpsGroup#OPSGROUP.Beacon icls ICLS setting.
+--- @field Ops.OpsGroup#OPSGROUP.Radio radio Radio freq and modulation.
+--- @field Ops.OpsGroup#OPSGROUP.Beacon tacan TACAN setting.
+--- @field Ops.OpsGroup#OPSGROUP.Beacon icls ICLS setting.
 --
--- @field #number optionROE ROE.
--- @field #number optionROT ROT.
--- @field #number optionAlarm Alarm state.
--- @field #number optionFormation Formation.
--- @field #boolean optionEPLRS EPLRS datalink.
--- @field #number optionCM Counter measures.
--- @field #number optionRTBammo RTB on out-of-ammo.
--- @field #number optionRTBfuel RTB on out-of-fuel.
--- @field #number optionECM ECM.
--- @field #boolean optionEmission Emission is on or off.
--- @field #boolean optionInvisible Invisible is on/off.
--- @field #boolean optionImmortal Immortal is on/off.
+--- @field #number optionROE ROE.
+--- @field #number optionROT ROT.
+--- @field #number optionAlarm Alarm state.
+--- @field #number optionFormation Formation.
+--- @field #boolean optionEPLRS EPLRS datalink.
+--- @field #number optionCM Counter measures.
+--- @field #number optionRTBammo RTB on out-of-ammo.
+--- @field #number optionRTBfuel RTB on out-of-fuel.
+--- @field #number optionECM ECM.
+--- @field #boolean optionEmission Emission is on or off.
+--- @field #boolean optionInvisible Invisible is on/off.
+--- @field #boolean optionImmortal Immortal is on/off.
 --
 -- @extends Core.Fsm#FSM
 
@@ -356,7 +356,7 @@
 -- TODO
 --
 --
--- @field #AUFTRAG
+--- @field #AUFTRAG
 AUFTRAG = {
   ClassName          = "AUFTRAG",
   verbose            =     0,
@@ -385,49 +385,49 @@ _AUFTRAGSNR=0
 
 
 --- Mission types.
--- @type AUFTRAG.Type
--- @field #string ANTISHIP Anti-ship mission.
--- @field #string AWACS AWACS mission.
--- @field #string BAI Battlefield Air Interdiction.
--- @field #string BOMBING Bombing mission.
--- @field #string BOMBRUNWAY Bomb runway of an airbase.
--- @field #string BOMBCARPET Carpet bombing.
--- @field #string CAP Combat Air Patrol.
--- @field #string CAS Close Air Support.
--- @field #string ESCORT Escort mission.
--- @field #string FACA Forward AirController airborne mission.
--- @field #string FERRY Ferry mission.
--- @field #string INTERCEPT Intercept mission.
--- @field #string ORBIT Orbit mission.
--- @field #string GCICAP Similar to CAP but no auto engage targets.
--- @field #string RECON Recon mission.
--- @field #string RECOVERYTANKER Recovery tanker mission. Not implemented yet.
--- @field #string RESCUEHELO Rescue helo.
--- @field #string SEAD Suppression/destruction of enemy air defences.
--- @field #string STRIKE Strike mission.
--- @field #string TANKER Tanker mission.
--- @field #string TROOPTRANSPORT Troop transport mission.
--- @field #string ARTY Fire at point.
--- @field #string PATROLZONE Patrol a zone.
--- @field #string OPSTRANSPORT Ops transport.
--- @field #string AMMOSUPPLY Ammo supply.
--- @field #string FUELSUPPLY Fuel supply.
--- @field #string ALERT5 Alert 5.
--- @field #string ONGUARD On guard.
--- @field #string ARMOREDGUARD On guard - with armored groups.
--- @field #string BARRAGE Barrage.
--- @field #string ARMORATTACK Armor attack.
--- @field #string CASENHANCED Enhanced CAS.
--- @field #string HOVER Hover.
--- @field #string GROUNDATTACK Ground attack.
--- @field #string CARGOTRANSPORT Cargo transport.
--- @field #string RELOCATECOHORT Relocate a cohort from one legion to another.
--- @field #string AIRDEFENSE Air defense.
--- @field #string EWR Early Warning Radar.
--- @field #string RECOVERYTANKER Recovery tanker.
--- @field #string REARMING Rearming mission.
--- @field #string CAPTUREZONE Capture zone mission.
--- @field #string NOTHING Nothing.
+--- @type AUFTRAG.Type
+--- @field #string ANTISHIP Anti-ship mission.
+--- @field #string AWACS AWACS mission.
+--- @field #string BAI Battlefield Air Interdiction.
+--- @field #string BOMBING Bombing mission.
+--- @field #string BOMBRUNWAY Bomb runway of an airbase.
+--- @field #string BOMBCARPET Carpet bombing.
+--- @field #string CAP Combat Air Patrol.
+--- @field #string CAS Close Air Support.
+--- @field #string ESCORT Escort mission.
+--- @field #string FACA Forward AirController airborne mission.
+--- @field #string FERRY Ferry mission.
+--- @field #string INTERCEPT Intercept mission.
+--- @field #string ORBIT Orbit mission.
+--- @field #string GCICAP Similar to CAP but no auto engage targets.
+--- @field #string RECON Recon mission.
+--- @field #string RECOVERYTANKER Recovery tanker mission. Not implemented yet.
+--- @field #string RESCUEHELO Rescue helo.
+--- @field #string SEAD Suppression/destruction of enemy air defences.
+--- @field #string STRIKE Strike mission.
+--- @field #string TANKER Tanker mission.
+--- @field #string TROOPTRANSPORT Troop transport mission.
+--- @field #string ARTY Fire at point.
+--- @field #string PATROLZONE Patrol a zone.
+--- @field #string OPSTRANSPORT Ops transport.
+--- @field #string AMMOSUPPLY Ammo supply.
+--- @field #string FUELSUPPLY Fuel supply.
+--- @field #string ALERT5 Alert 5.
+--- @field #string ONGUARD On guard.
+--- @field #string ARMOREDGUARD On guard - with armored groups.
+--- @field #string BARRAGE Barrage.
+--- @field #string ARMORATTACK Armor attack.
+--- @field #string CASENHANCED Enhanced CAS.
+--- @field #string HOVER Hover.
+--- @field #string GROUNDATTACK Ground attack.
+--- @field #string CARGOTRANSPORT Cargo transport.
+--- @field #string RELOCATECOHORT Relocate a cohort from one legion to another.
+--- @field #string AIRDEFENSE Air defense.
+--- @field #string EWR Early Warning Radar.
+--- @field #string RECOVERYTANKER Recovery tanker.
+--- @field #string REARMING Rearming mission.
+--- @field #string CAPTUREZONE Capture zone mission.
+--- @field #string NOTHING Nothing.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",
@@ -474,26 +474,26 @@ AUFTRAG.Type={
 }
 
 --- Special task description.
--- @type AUFTRAG.SpecialTask
--- @field #string FORMATION AI formation task.
--- @field #string PATROLZONE Patrol zone task.
--- @field #string RECON Recon task.
--- @field #string AMMOSUPPLY Ammo Supply.
--- @field #string FUELSUPPLY Fuel Supply.
--- @field #string ALERT5 Alert 5 task.
--- @field #string ONGUARD On guard.
--- @field #string ARMOREDGUARD On guard with armor.
--- @field #string BARRAGE Barrage.
--- @field #string HOVER Hover.
--- @field #string GROUNDATTACK Ground attack.
--- @field #string FERRY Ferry mission.
--- @field #string RELOCATECOHORT Relocate cohort.
--- @field #string AIRDEFENSE Air defense.
--- @field #string EWR Early Warning Radar.
--- @field #string RECOVERYTANKER Recovery tanker.
--- @field #string REARMING Rearming.
--- @field #string CAPTUREZONE Capture OPS zone.
--- @field #string NOTHING Nothing.
+--- @type AUFTRAG.SpecialTask
+--- @field #string FORMATION AI formation task.
+--- @field #string PATROLZONE Patrol zone task.
+--- @field #string RECON Recon task.
+--- @field #string AMMOSUPPLY Ammo Supply.
+--- @field #string FUELSUPPLY Fuel Supply.
+--- @field #string ALERT5 Alert 5 task.
+--- @field #string ONGUARD On guard.
+--- @field #string ARMOREDGUARD On guard with armor.
+--- @field #string BARRAGE Barrage.
+--- @field #string HOVER Hover.
+--- @field #string GROUNDATTACK Ground attack.
+--- @field #string FERRY Ferry mission.
+--- @field #string RELOCATECOHORT Relocate cohort.
+--- @field #string AIRDEFENSE Air defense.
+--- @field #string EWR Early Warning Radar.
+--- @field #string RECOVERYTANKER Recovery tanker.
+--- @field #string REARMING Rearming.
+--- @field #string CAPTUREZONE Capture OPS zone.
+--- @field #string NOTHING Nothing.
 AUFTRAG.SpecialTask={
   FORMATION="Formation",
   PATROLZONE="PatrolZone",
@@ -518,17 +518,17 @@ AUFTRAG.SpecialTask={
 }
 
 --- Mission status.
--- @type AUFTRAG.Status
--- @field #string PLANNED Mission is at the early planning stage and has not been added to any queue.
--- @field #string QUEUED Mission is queued at a LEGION.
--- @field #string REQUESTED Mission assets were requested from the warehouse.
--- @field #string SCHEDULED Mission is scheduled in an OPSGROUP queue waiting to be started.
--- @field #string STARTED Mission has started but is not executed yet.
--- @field #string EXECUTING Mission is being executed.
--- @field #string DONE Mission is over.
--- @field #string CANCELLED Mission was cancelled.
--- @field #string SUCCESS Mission was a success.
--- @field #string FAILED Mission failed.
+--- @type AUFTRAG.Status
+--- @field #string PLANNED Mission is at the early planning stage and has not been added to any queue.
+--- @field #string QUEUED Mission is queued at a LEGION.
+--- @field #string REQUESTED Mission assets were requested from the warehouse.
+--- @field #string SCHEDULED Mission is scheduled in an OPSGROUP queue waiting to be started.
+--- @field #string STARTED Mission has started but is not executed yet.
+--- @field #string EXECUTING Mission is being executed.
+--- @field #string DONE Mission is over.
+--- @field #string CANCELLED Mission was cancelled.
+--- @field #string SUCCESS Mission was a success.
+--- @field #string FAILED Mission failed.
 AUFTRAG.Status={
   PLANNED="planned",
   QUEUED="queued",
@@ -543,13 +543,13 @@ AUFTRAG.Status={
 }
 
 --- Mission status of an assigned group.
--- @type AUFTRAG.GroupStatus
--- @field #string SCHEDULED Mission is scheduled in a FLIGHGROUP queue waiting to be started.
--- @field #string STARTED Ops group started this mission but it is not executed yet.
--- @field #string EXECUTING Ops group is executing this mission.
--- @field #string PAUSED Ops group has paused this mission, e.g. for refuelling.
--- @field #string DONE Mission task of the Ops group is done.
--- @field #string CANCELLED Mission was cancelled.
+--- @type AUFTRAG.GroupStatus
+--- @field #string SCHEDULED Mission is scheduled in a FLIGHGROUP queue waiting to be started.
+--- @field #string STARTED Ops group started this mission but it is not executed yet.
+--- @field #string EXECUTING Ops group is executing this mission.
+--- @field #string PAUSED Ops group has paused this mission, e.g. for refuelling.
+--- @field #string DONE Mission task of the Ops group is done.
+--- @field #string CANCELLED Mission was cancelled.
 AUFTRAG.GroupStatus={
   SCHEDULED="scheduled",
   STARTED="started",
@@ -560,14 +560,14 @@ AUFTRAG.GroupStatus={
 }
 
 --- Target type.
--- @type AUFTRAG.TargetType
--- @field #string GROUP Target is a GROUP object.
--- @field #string UNIT Target is a UNIT object.
--- @field #string STATIC Target is a STATIC object.
--- @field #string COORDINATE Target is a COORDINATE.
--- @field #string AIRBASE Target is an AIRBASE.
--- @field #string SETGROUP Target is a SET of GROUPs.
--- @field #string SETUNIT Target is a SET of UNITs.
+--- @type AUFTRAG.TargetType
+--- @field #string GROUP Target is a GROUP object.
+--- @field #string UNIT Target is a UNIT object.
+--- @field #string STATIC Target is a STATIC object.
+--- @field #string COORDINATE Target is a COORDINATE.
+--- @field #string AIRBASE Target is an AIRBASE.
+--- @field #string SETGROUP Target is a SET of GROUPs.
+--- @field #string SETUNIT Target is a SET of UNITs.
 AUFTRAG.TargetType={
   GROUP="Group",
   UNIT="Unit",
@@ -579,12 +579,12 @@ AUFTRAG.TargetType={
 }
 
 --- Mission category.
--- @type AUFTRAG.Category
--- @field #string AIRCRAFT Airplanes and helicopters.
--- @field #string AIRPLANE Airplanes.
--- @field #string HELICOPTER Helicopter.
--- @field #string GROUND Ground troops.
--- @field #string NAVAL Naval grous.
+--- @type AUFTRAG.Category
+--- @field #string AIRCRAFT Airplanes and helicopters.
+--- @field #string AIRPLANE Airplanes.
+--- @field #string HELICOPTER Helicopter.
+--- @field #string GROUND Ground troops.
+--- @field #string NAVAL Naval grous.
 AUFTRAG.Category={
   ALL="All",
   AIRCRAFT="Aircraft",
@@ -595,46 +595,46 @@ AUFTRAG.Category={
 }
 
 --- Target data.
--- @type AUFTRAG.TargetData
--- @field Wrapper.Positionable#POSITIONABLE Target Target Object.
--- @field #string Type Target type: "Group", "Unit", "Static", "Coordinate", "Airbase", "SetGroup", "SetUnit".
--- @field #string Name Target name.
--- @field #number Ninital Number of initial targets.
--- @field #number Lifepoints Total life points.
--- @field #number Lifepoints0 Inital life points.
+--- @type AUFTRAG.TargetData
+--- @field Wrapper.Positionable#POSITIONABLE Target Target Object.
+--- @field #string Type Target type: "Group", "Unit", "Static", "Coordinate", "Airbase", "SetGroup", "SetUnit".
+--- @field #string Name Target name.
+--- @field #number Ninital Number of initial targets.
+--- @field #number Lifepoints Total life points.
+--- @field #number Lifepoints0 Inital life points.
 
 --- Mission capability.
--- @type AUFTRAG.Capability
--- @field #string MissionType Type of mission.
--- @field #number Performance Number describing the performance level. The higher the better.
+--- @type AUFTRAG.Capability
+--- @field #string MissionType Type of mission.
+--- @field #number Performance Number describing the performance level. The higher the better.
 
 --- Mission success.
--- @type AUFTRAG.Success
--- @field #string SURVIVED Group did survive.
--- @field #string ENGAGED Target was engaged.
--- @field #string DAMAGED Target was damaged.
--- @field #string DESTROYED Target was destroyed.
+--- @type AUFTRAG.Success
+--- @field #string SURVIVED Group did survive.
+--- @field #string ENGAGED Target was engaged.
+--- @field #string DAMAGED Target was damaged.
+--- @field #string DESTROYED Target was destroyed.
 
 --- Generic mission condition.
--- @type AUFTRAG.Condition
--- @field #function func Callback function to check for a condition. Should return a #boolean.
--- @field #table arg Optional arguments passed to the condition callback function.
+--- @type AUFTRAG.Condition
+--- @field #function func Callback function to check for a condition. Should return a #boolean.
+--- @field #table arg Optional arguments passed to the condition callback function.
 
 --- Group specific data. Each ops group subscribed to this mission has different data for this.
--- @type AUFTRAG.GroupData
--- @field Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
--- @field Core.Point#COORDINATE waypointcoordinate Ingress waypoint coordinate.
--- @field #number waypointindex Mission (ingress) Waypoint UID.
--- @field #number waypointEgressUID Egress Waypoint UID.
--- @field Core.Point#COORDINATE wpegresscoordinate Egress waypoint coordinate.
+--- @type AUFTRAG.GroupData
+--- @field Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
+--- @field Core.Point#COORDINATE waypointcoordinate Ingress waypoint coordinate.
+--- @field #number waypointindex Mission (ingress) Waypoint UID.
+--- @field #number waypointEgressUID Egress Waypoint UID.
+--- @field Core.Point#COORDINATE wpegresscoordinate Egress waypoint coordinate.
 --
--- @field Ops.OpsGroup#OPSGROUP.Task waypointtask Waypoint task.
--- @field #string status Group mission status.
--- @field Functional.Warehouse#WAREHOUSE.Assetitem asset The warehouse asset.
+--- @field Ops.OpsGroup#OPSGROUP.Task waypointtask Waypoint task.
+--- @field #string status Group mission status.
+--- @field Functional.Warehouse#WAREHOUSE.Assetitem asset The warehouse asset.
 
 
 --- AUFTRAG class version.
--- @field #string version
+--- @field #string version
 AUFTRAG.version="0.9.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -670,9 +670,9 @@ AUFTRAG.version="0.9.9"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new generic AUFTRAG object.
--- @param #AUFTRAG self
--- @param #string Type Mission type.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #string Type Mission type.
+--- @return #AUFTRAG self
 function AUFTRAG:New(Type)
 
   -- Inherit everything from FSM class.
@@ -964,10 +964,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- **[AIR]** Create an ANTI-SHIP mission.
--- @param #AUFTRAG self
--- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be passed as a @{Wrapper.Group#GROUP} or @{Wrapper.Unit#UNIT} object.
--- @param #number Altitude Engage altitude in feet. Default 2000 ft.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be passed as a @{Wrapper.Group#GROUP} or @{Wrapper.Unit#UNIT} object.
+--- @param #number Altitude Engage altitude in feet. Default 2000 ft.
+--- @return #AUFTRAG self
 function AUFTRAG:NewANTISHIP(Target, Altitude)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ANTISHIP)
@@ -994,13 +994,13 @@ function AUFTRAG:NewANTISHIP(Target, Altitude)
 end
 
 --- **[AIR ROTARY]** Create an HOVER mission.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Where to hover.
--- @param #number Altitude Hover altitude in feet AGL. Default is 50 feet above ground.
--- @param #number Time Time in seconds to hold the hover. Default 300 seconds.
--- @param #number Speed Speed in knots to fly to the target coordinate. Default 150kn.
--- @param #number MissionAlt Altitide to fly towards the mission in feet AGL. Default 1000ft.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE Coordinate Where to hover.
+--- @param #number Altitude Hover altitude in feet AGL. Default is 50 feet above ground.
+--- @param #number Time Time in seconds to hold the hover. Default 300 seconds.
+--- @param #number Speed Speed in knots to fly to the target coordinate. Default 150kn.
+--- @param #number MissionAlt Altitide to fly towards the mission in feet AGL. Default 1000ft.
+--- @return #AUFTRAG self
 function AUFTRAG:NewHOVER(Coordinate, Altitude, Time, Speed, MissionAlt)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.HOVER)
@@ -1032,13 +1032,13 @@ function AUFTRAG:NewHOVER(Coordinate, Altitude, Time, Speed, MissionAlt)
 end
 
 --- **[AIR]** Create an ORBIT mission, which can be either a circular orbit or a race-track pattern.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Where to orbit.
--- @param #number Altitude Orbit altitude in feet above sea level. Default is y component of `Coordinate`.
--- @param #number Speed Orbit speed in knots. Default 350 KIAS.
--- @param #number Heading Heading of race-track pattern in degrees. If not specified, a circular orbit is performed.
--- @param #number Leg Length of race-track in NM. If not specified, a circular orbit is performed.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE Coordinate Where to orbit.
+--- @param #number Altitude Orbit altitude in feet above sea level. Default is y component of `Coordinate`.
+--- @param #number Speed Orbit speed in knots. Default 350 KIAS.
+--- @param #number Heading Heading of race-track pattern in degrees. If not specified, a circular orbit is performed.
+--- @param #number Leg Length of race-track in NM. If not specified, a circular orbit is performed.
+--- @return #AUFTRAG self
 function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ORBIT)
@@ -1086,11 +1086,11 @@ function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
 end
 
 --- **[AIR]** Create an ORBIT mission, where the aircraft will go in a circle around the specified coordinate.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Position where to orbit around.
--- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
--- @param #number Speed Orbit speed in knots. Default 350 KIAS.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE Coordinate Position where to orbit around.
+--- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
+--- @param #number Speed Orbit speed in knots. Default 350 KIAS.
+--- @return #AUFTRAG self
 function AUFTRAG:NewORBIT_CIRCLE(Coordinate, Altitude, Speed)
 
   local mission=AUFTRAG:NewORBIT(Coordinate, Altitude, Speed)
@@ -1099,13 +1099,13 @@ function AUFTRAG:NewORBIT_CIRCLE(Coordinate, Altitude, Speed)
 end
 
 --- **[AIR]** Create an ORBIT mission, where the aircraft will fly a race-track pattern.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Where to orbit.
--- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
--- @param #number Speed Orbit speed in knots. Default 350 KIAS.
--- @param #number Heading Heading of race-track pattern in degrees. Default random in [0, 360) degrees.
--- @param #number Leg Length of race-track in NM. Default 10 NM.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE Coordinate Where to orbit.
+--- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
+--- @param #number Speed Orbit speed in knots. Default 350 KIAS.
+--- @param #number Heading Heading of race-track pattern in degrees. Default random in [0, 360) degrees.
+--- @param #number Leg Length of race-track in NM. Default 10 NM.
+--- @return #AUFTRAG self
 function AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
 
   Heading = Heading or math.random(360)
@@ -1117,15 +1117,15 @@ function AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
 end
 
 --- **[AIR]** Create an ORBIT mission, where the aircraft will fly a circular or race-track pattern over a given group or unit.
--- @param #AUFTRAG self
--- @param Wrapper.Group#GROUP Group Group where to orbit around. Can also be a UNIT object.
--- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
--- @param #number Speed Orbit speed in knots. Default 350 KIAS.
--- @param #number Leg Length of race-track in NM. Default nil.
--- @param #number Heading Heading of race-track pattern in degrees. Default is heading of the group.
--- @param DCS#Vec2 OffsetVec2 Offset 2D-vector {x=0, y=0} in NM with respect to the group. Default directly overhead. Can also be given in polar coordinates `{r=5, phi=45}`.
--- @param #number Distance Threshold distance in NM before orbit pattern is updated. Default 5 NM.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Wrapper.Group#GROUP Group Group where to orbit around. Can also be a UNIT object.
+--- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
+--- @param #number Speed Orbit speed in knots. Default 350 KIAS.
+--- @param #number Leg Length of race-track in NM. Default nil.
+--- @param #number Heading Heading of race-track pattern in degrees. Default is heading of the group.
+--- @param DCS#Vec2 OffsetVec2 Offset 2D-vector {x=0, y=0} in NM with respect to the group. Default directly overhead. Can also be given in polar coordinates `{r=5, phi=45}`.
+--- @param #number Distance Threshold distance in NM before orbit pattern is updated. Default 5 NM.
+--- @return #AUFTRAG self
 function AUFTRAG:NewORBIT_GROUP(Group, Altitude, Speed, Leg, Heading, OffsetVec2, Distance)
 
   -- Set default altitude.
@@ -1165,13 +1165,13 @@ end
 
 --- **[AIR]** Create a Ground Controlled CAP (GCICAP) mission. Flights with this task are considered for A2A INTERCEPT missions by the CHIEF class. They will perform a compat air patrol but not engage by
 -- themselfs. They wait for the CHIEF to tell them whom to engage.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Where to orbit.
--- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
--- @param #number Speed Orbit speed in knots. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default random in [0, 360) degrees.
--- @param #number Leg Length of race-track in NM. Default 10 NM.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE Coordinate Where to orbit.
+--- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
+--- @param #number Speed Orbit speed in knots. Default 350 kts.
+--- @param #number Heading Heading of race-track pattern in degrees. Default random in [0, 360) degrees.
+--- @param #number Leg Length of race-track in NM. Default 10 NM.
+--- @return #AUFTRAG self
 function AUFTRAG:NewGCICAP(Coordinate, Altitude, Speed, Heading, Leg)
 
   -- Create ORBIT first.
@@ -1192,14 +1192,14 @@ function AUFTRAG:NewGCICAP(Coordinate, Altitude, Speed, Heading, Leg)
 end
 
 --- **[AIR]** Create a TANKER mission.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Where to orbit.
--- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
--- @param #number Speed Orbit speed in knots. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 10 NM.
--- @param #number RefuelSystem Refueling system (0=boom, 1=probe). This info is *only* for AIRWINGs so they launch the right tanker type.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE Coordinate Where to orbit.
+--- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
+--- @param #number Speed Orbit speed in knots. Default 350 kts.
+--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+--- @param #number Leg Length of race-track in NM. Default 10 NM.
+--- @param #number RefuelSystem Refueling system (0=boom, 1=probe). This info is *only* for AIRWINGs so they launch the right tanker type.
+--- @return #AUFTRAG self
 function AUFTRAG:NewTANKER(Coordinate, Altitude, Speed, Heading, Leg, RefuelSystem)
 
   -- Create ORBIT first.
@@ -1225,13 +1225,13 @@ function AUFTRAG:NewTANKER(Coordinate, Altitude, Speed, Heading, Leg, RefuelSyst
 end
 
 --- **[AIR]** Create a AWACS mission.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Where to orbit. Altitude is also taken from the coordinate.
--- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
--- @param #number Speed Orbit speed in knots. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 10 NM.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE Coordinate Where to orbit. Altitude is also taken from the coordinate.
+--- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
+--- @param #number Speed Orbit speed in knots. Default 350 kts.
+--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+--- @param #number Leg Length of race-track in NM. Default 10 NM.
+--- @return #AUFTRAG self
 function AUFTRAG:NewAWACS(Coordinate, Altitude, Speed, Heading, Leg)
 
   -- Create ORBIT first.
@@ -1257,9 +1257,9 @@ end
 
 
 --- **[AIR]** Create an INTERCEPT mission.
--- @param #AUFTRAG self
--- @param Wrapper.Positionable#POSITIONABLE Target The target to intercept. Can also be passed as simple @{Wrapper.Group#GROUP} or @{Wrapper.Unit#UNIT} object.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Wrapper.Positionable#POSITIONABLE Target The target to intercept. Can also be passed as simple @{Wrapper.Group#GROUP} or @{Wrapper.Unit#UNIT} object.
+--- @return #AUFTRAG self
 function AUFTRAG:NewINTERCEPT(Target)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.INTERCEPT)
@@ -1280,15 +1280,15 @@ function AUFTRAG:NewINTERCEPT(Target)
 end
 
 --- **[AIR]** Create a CAP mission.
--- @param #AUFTRAG self
--- @param Core.Zone#ZONE_RADIUS ZoneCAP Circular CAP zone. Detected targets in this zone will be engaged.
--- @param #number Altitude Altitude at which to orbit in feet. Default is 10,000 ft.
--- @param #number Speed Orbit speed in knots. Default 350 kts.
--- @param Core.Point#COORDINATE Coordinate Where to orbit. Default is the center of the CAP zone.
--- @param #number Heading Heading of race-track pattern in degrees. If not specified, a simple circular orbit is performed.
--- @param #number Leg Length of race-track in NM. If not specified, a simple circular orbit is performed.
--- @param #table TargetTypes Table of target types. Default {"Air"}.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Zone#ZONE_RADIUS ZoneCAP Circular CAP zone. Detected targets in this zone will be engaged.
+--- @param #number Altitude Altitude at which to orbit in feet. Default is 10,000 ft.
+--- @param #number Speed Orbit speed in knots. Default 350 kts.
+--- @param Core.Point#COORDINATE Coordinate Where to orbit. Default is the center of the CAP zone.
+--- @param #number Heading Heading of race-track pattern in degrees. If not specified, a simple circular orbit is performed.
+--- @param #number Leg Length of race-track in NM. If not specified, a simple circular orbit is performed.
+--- @param #table TargetTypes Table of target types. Default {"Air"}.
+--- @return #AUFTRAG self
 function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, TargetTypes)
 
   -- Ensure given TargetTypes parameter is a table.
@@ -1323,18 +1323,18 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
 end
 
 --- **[AIR]** Create a CAP mission on a group.
--- @param #AUFTRAG self
--- @param Wrapper.Group#GROUP Grp.
--- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
--- @param #number Speed Orbit speed in knots. Default 250 KIAS.
--- @param #number RelHeading Relative heading [0, 360) of race-track pattern in degrees wrt heading of the carrier. Default is heading of the carrier.
--- @param #number Leg Length of race-track in NM. Default 14 NM.
--- @param #number OffsetDist Relative distance of the first race-track point wrt to the carrier. Default 6 NM.
--- @param #number OffsetAngle Relative angle of the first race-track point wrt. to the carrier. Default 180 (behind the boat).
--- @param #number UpdateDistance Threshold distance in NM before orbit pattern is updated. Default 5 NM.
--- @param #table TargetTypes (Optional) Table of target types. Default `{"Air"}`.
--- @param #number EngageRange Max range in nautical miles that the escort group(s) will engage enemies. Default 32 NM (60 km).
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Wrapper.Group#GROUP Grp.
+--- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
+--- @param #number Speed Orbit speed in knots. Default 250 KIAS.
+--- @param #number RelHeading Relative heading [0, 360) of race-track pattern in degrees wrt heading of the carrier. Default is heading of the carrier.
+--- @param #number Leg Length of race-track in NM. Default 14 NM.
+--- @param #number OffsetDist Relative distance of the first race-track point wrt to the carrier. Default 6 NM.
+--- @param #number OffsetAngle Relative angle of the first race-track point wrt. to the carrier. Default 180 (behind the boat).
+--- @param #number UpdateDistance Threshold distance in NM before orbit pattern is updated. Default 5 NM.
+--- @param #table TargetTypes (Optional) Table of target types. Default `{"Air"}`.
+--- @param #number EngageRange Max range in nautical miles that the escort group(s) will engage enemies. Default 32 NM (60 km).
+--- @return #AUFTRAG self
 function AUFTRAG:NewCAPGROUP(Grp, Altitude, Speed, RelHeading, Leg, OffsetDist, OffsetAngle, UpdateDistance, TargetTypes, EngageRange)
 
   -- Ensure given TargetTypes parameter is a table.
@@ -1379,15 +1379,15 @@ function AUFTRAG:NewCAPGROUP(Grp, Altitude, Speed, RelHeading, Leg, OffsetDist, 
 end
 
 --- **[AIR]** Create a CAS mission.
--- @param #AUFTRAG self
--- @param Core.Zone#ZONE_RADIUS ZoneCAS Circular CAS zone. Detected targets in this zone will be engaged.
--- @param #number Altitude Altitude at which to orbit. Default is 10,000 ft.
--- @param #number Speed Orbit speed in knots. Default 350 KIAS.
--- @param Core.Point#COORDINATE Coordinate Where to orbit. Default is the center of the CAS zone.
--- @param #number Heading Heading of race-track pattern in degrees. If not specified, a simple circular orbit is performed.
--- @param #number Leg Length of race-track in NM. If not specified, a simple circular orbit is performed.
--- @param #table TargetTypes (Optional) Table of target types. Default `{"Helicopters", "Ground Units", "Light armed ships"}`.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Zone#ZONE_RADIUS ZoneCAS Circular CAS zone. Detected targets in this zone will be engaged.
+--- @param #number Altitude Altitude at which to orbit. Default is 10,000 ft.
+--- @param #number Speed Orbit speed in knots. Default 350 KIAS.
+--- @param Core.Point#COORDINATE Coordinate Where to orbit. Default is the center of the CAS zone.
+--- @param #number Heading Heading of race-track pattern in degrees. If not specified, a simple circular orbit is performed.
+--- @param #number Leg Length of race-track in NM. If not specified, a simple circular orbit is performed.
+--- @param #table TargetTypes (Optional) Table of target types. Default `{"Helicopters", "Ground Units", "Light armed ships"}`.
+--- @return #AUFTRAG self
 function AUFTRAG:NewCAS(ZoneCAS, Altitude, Speed, Coordinate, Heading, Leg, TargetTypes)
 
   -- Ensure given TargetTypes parameter is a table.
@@ -1421,14 +1421,14 @@ function AUFTRAG:NewCAS(ZoneCAS, Altitude, Speed, Coordinate, Heading, Leg, Targ
 end
 
 --- **[AIR]** Create a CASENHANCED mission. Group(s) will go to the zone and patrol it randomly.
--- @param #AUFTRAG self
--- @param Core.Zone#ZONE CasZone The CAS zone.
--- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
--- @param #number Speed Speed in knots.
--- @param #number RangeMax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
--- @param Core.Set#SET_ZONE NoEngageZoneSet Set of zones in which targets are *not* engaged. Default is nowhere.
--- @param #table TargetTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default `{"Helicopters", "Ground Units", "Light armed ships"}`.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Zone#ZONE CasZone The CAS zone.
+--- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
+--- @param #number Speed Speed in knots.
+--- @param #number RangeMax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
+--- @param Core.Set#SET_ZONE NoEngageZoneSet Set of zones in which targets are *not* engaged. Default is nowhere.
+--- @param #table TargetTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default `{"Helicopters", "Ground Units", "Light armed ships"}`.
+--- @return #AUFTRAG self
 function AUFTRAG:NewCASENHANCED(CasZone, Altitude, Speed, RangeMax, NoEngageZoneSet, TargetTypes)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.CASENHANCED)
@@ -1460,13 +1460,13 @@ end
 
 
 --- **[AIR]** Create a FACA mission.
--- @param #AUFTRAG self
--- @param Wrapper.Group#GROUP Target Target group. Must be a GROUP object.
--- @param #string Designation Designation of target. See `AI.Task.Designation`. Default `AI.Task.Designation.AUTO`.
--- @param #boolean DataLink Enable data link. Default `true`.
--- @param #number Frequency Radio frequency in MHz the FAC uses for communication. Default is 133 MHz.
--- @param #number Modulation Radio modulation band. Default 0=AM. Use 1 for FM. See radio.modulation.AM or radio.modulaton.FM.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Wrapper.Group#GROUP Target Target group. Must be a GROUP object.
+--- @param #string Designation Designation of target. See `AI.Task.Designation`. Default `AI.Task.Designation.AUTO`.
+--- @param #boolean DataLink Enable data link. Default `true`.
+--- @param #number Frequency Radio frequency in MHz the FAC uses for communication. Default is 133 MHz.
+--- @param #number Modulation Radio modulation band. Default 0=AM. Use 1 for FM. See radio.modulation.AM or radio.modulaton.FM.
+--- @return #AUFTRAG self
 function AUFTRAG:NewFACA(Target, Designation, DataLink, Frequency, Modulation)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.FACA)
@@ -1497,10 +1497,10 @@ end
 
 
 --- **[AIR]** Create a BAI mission.
--- @param #AUFTRAG self
--- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP, UNIT or STATIC object.
--- @param #number Altitude Engage altitude in feet. Default 5000 ft.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP, UNIT or STATIC object.
+--- @param #number Altitude Engage altitude in feet. Default 5000 ft.
+--- @return #AUFTRAG self
 function AUFTRAG:NewBAI(Target, Altitude)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.BAI)
@@ -1527,10 +1527,10 @@ function AUFTRAG:NewBAI(Target, Altitude)
 end
 
 --- **[AIR]** Create a SEAD mission.
--- @param #AUFTRAG self
--- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP or UNIT object.
--- @param #number Altitude Engage altitude in feet. Default 25000 ft.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP or UNIT object.
+--- @param #number Altitude Engage altitude in feet. Default 25000 ft.
+--- @return #AUFTRAG self
 function AUFTRAG:NewSEAD(Target, Altitude)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.SEAD)
@@ -1557,10 +1557,10 @@ function AUFTRAG:NewSEAD(Target, Altitude)
 end
 
 --- **[AIR]** Create a STRIKE mission. Flight will attack the closest map object to the specified coordinate.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Target The target coordinate. Can also be given as a GROUP, UNIT, STATIC or TARGET object.
--- @param #number Altitude Engage altitude in feet. Default 2000 ft.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE Target The target coordinate. Can also be given as a GROUP, UNIT, STATIC or TARGET object.
+--- @param #number Altitude Engage altitude in feet. Default 2000 ft.
+--- @return #AUFTRAG self
 function AUFTRAG:NewSTRIKE(Target, Altitude)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.STRIKE)
@@ -1587,10 +1587,10 @@ function AUFTRAG:NewSTRIKE(Target, Altitude)
 end
 
 --- **[AIR]** Create a BOMBING mission. Flight will drop bombs a specified coordinate.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT, STATIC or TARGET object.
--- @param #number Altitude Engage altitude in feet. Default 25000 ft.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT, STATIC or TARGET object.
+--- @param #number Altitude Engage altitude in feet. Default 25000 ft.
+--- @return #AUFTRAG self
 function AUFTRAG:NewBOMBING(Target, Altitude)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.BOMBING)
@@ -1621,10 +1621,10 @@ function AUFTRAG:NewBOMBING(Target, Altitude)
 end
 
 --- **[AIR]** Create a BOMBRUNWAY mission.
--- @param #AUFTRAG self
--- @param Wrapper.Airbase#AIRBASE Airdrome The airbase to bomb. This must be an airdrome (not a FARP or ship) as these to not have a runway.
--- @param #number Altitude Engage altitude in feet. Default 25000 ft.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Wrapper.Airbase#AIRBASE Airdrome The airbase to bomb. This must be an airdrome (not a FARP or ship) as these to not have a runway.
+--- @param #number Altitude Engage altitude in feet. Default 25000 ft.
+--- @return #AUFTRAG self
 function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
 
   if type(Airdrome)=="string" then
@@ -1659,11 +1659,11 @@ function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
 end
 
 --- **[AIR]** Create a CARPET BOMBING mission.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT or STATIC object.
--- @param #number Altitude Engage altitude in feet. Default 25000 ft.
--- @param #number CarpetLength Length of bombing carpet in meters. Default 500 m.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT or STATIC object.
+--- @param #number Altitude Engage altitude in feet. Default 25000 ft.
+--- @param #number CarpetLength Length of bombing carpet in meters. Default 500 m.
+--- @return #AUFTRAG self
 function AUFTRAG:NewBOMBCARPET(Target, Altitude, CarpetLength)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.BOMBCARPET)
@@ -1698,12 +1698,12 @@ end
 
 
 --- **[AIR]** Create an ESCORT (or FOLLOW) mission. Flight will escort another group and automatically engage certain target types.
--- @param #AUFTRAG self
--- @param Wrapper.Group#GROUP EscortGroup The group to escort.
--- @param DCS#Vec3 OffsetVector A table with x, y and z components specifying the offset of the flight to the escorted group. Default {x=-100, y=0, z=200} for z=200 meters to the right, same alitude (y=0), x=-100 meters behind.
--- @param #number EngageMaxDistance Max engage distance of targets in nautical miles. Default auto 32 NM.
--- @param #table TargetTypes Types of targets to engage automatically. Default is {"Air"}, i.e. all enemy airborne units. Use an empty set {} for a simple "FOLLOW" mission.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Wrapper.Group#GROUP EscortGroup The group to escort.
+--- @param DCS#Vec3 OffsetVector A table with x, y and z components specifying the offset of the flight to the escorted group. Default {x=-100, y=0, z=200} for z=200 meters to the right, same alitude (y=0), x=-100 meters behind.
+--- @param #number EngageMaxDistance Max engage distance of targets in nautical miles. Default auto 32 NM.
+--- @param #table TargetTypes Types of targets to engage automatically. Default is {"Air"}, i.e. all enemy airborne units. Use an empty set {} for a simple "FOLLOW" mission.
+--- @return #AUFTRAG self
 function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetTypes)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ESCORT)
@@ -1736,9 +1736,9 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
 end
 
 --- **[AIR ROTARY]** Create a RESCUE HELO mission.
--- @param #AUFTRAG self
--- @param Wrapper.Unit#UNIT Carrier The carrier unit.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Wrapper.Unit#UNIT Carrier The carrier unit.
+--- @return #AUFTRAG self
 function AUFTRAG:NewRESCUEHELO(Carrier)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.RESCUEHELO)
@@ -1759,16 +1759,16 @@ function AUFTRAG:NewRESCUEHELO(Carrier)
 end
 
 --- **[AIRPANE]** Create a RECOVERY TANKER mission.
--- @param #AUFTRAG self
--- @param Wrapper.Unit#UNIT Carrier The carrier unit.
--- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
--- @param #number Speed Orbit speed in knots. Default 250 KIAS.
--- @param #number Leg Length of race-track in NM. Default 14 NM.
--- @param #number RelHeading Relative heading [0, 360) of race-track pattern in degrees wrt heading of the carrier. Default is heading of the carrier.
--- @param #number OffsetDist Relative distance of the first race-track point wrt to the carrier. Default 6 NM.
--- @param #number OffsetAngle Relative angle of the first race-track point wrt. to the carrier. Default 180 (behind the boat).
--- @param #number UpdateDistance Threshold distance in NM before orbit pattern is updated. Default 5 NM.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Wrapper.Unit#UNIT Carrier The carrier unit.
+--- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
+--- @param #number Speed Orbit speed in knots. Default 250 KIAS.
+--- @param #number Leg Length of race-track in NM. Default 14 NM.
+--- @param #number RelHeading Relative heading [0, 360) of race-track pattern in degrees wrt heading of the carrier. Default is heading of the carrier.
+--- @param #number OffsetDist Relative distance of the first race-track point wrt to the carrier. Default 6 NM.
+--- @param #number OffsetAngle Relative angle of the first race-track point wrt. to the carrier. Default 180 (behind the boat).
+--- @param #number UpdateDistance Threshold distance in NM before orbit pattern is updated. Default 5 NM.
+--- @return #AUFTRAG self
 function AUFTRAG:NewRECOVERYTANKER(Carrier, Altitude, Speed, Leg, RelHeading, OffsetDist, OffsetAngle, UpdateDistance)
  
    -- Six NM astern.
@@ -1806,12 +1806,12 @@ end
 
 
 --- **[AIR ROTARY, GROUND]** Create a TROOP TRANSPORT mission.
--- @param #AUFTRAG self
--- @param Core.Set#SET_GROUP TransportGroupSet The set group(s) to be transported.
--- @param Core.Point#COORDINATE DropoffCoordinate Coordinate where the helo will land drop off the the troops.
--- @param Core.Point#COORDINATE PickupCoordinate Coordinate where the helo will land to pick up the the cargo. Default is the first transport group.
--- @param #number PickupRadius Radius around the pickup coordinate in meters. Default 100 m.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Set#SET_GROUP TransportGroupSet The set group(s) to be transported.
+--- @param Core.Point#COORDINATE DropoffCoordinate Coordinate where the helo will land drop off the the troops.
+--- @param Core.Point#COORDINATE PickupCoordinate Coordinate where the helo will land to pick up the the cargo. Default is the first transport group.
+--- @param #number PickupRadius Radius around the pickup coordinate in meters. Default 100 m.
+--- @return #AUFTRAG self
 function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupCoordinate, PickupRadius)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.TROOPTRANSPORT)
@@ -1854,10 +1854,10 @@ end
 -- **Important Note:**
 -- The dropoff zone has to be a zone defined in the Mission Editor. This is due to a restriction in the used DCS task, which takes the zone ID as input.
 -- Only ME zones have an ID that can be referenced.
--- @param #AUFTRAG self
--- @param Wrapper.Static#STATIC StaticCargo Static cargo object.
--- @param Core.Zone#ZONE DropZone Zone where to drop off the cargo. **Has to be a zone defined in the ME!**
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Wrapper.Static#STATIC StaticCargo Static cargo object.
+--- @param Core.Zone#ZONE DropZone Zone where to drop off the cargo. **Has to be a zone defined in the ME!**
+--- @return #AUFTRAG self
 function AUFTRAG:NewCARGOTRANSPORT(StaticCargo, DropZone)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.CARGOTRANSPORT)
@@ -1885,11 +1885,11 @@ end
 --[[
 
 --- **[AIR, GROUND, NAVAL]** Create a OPS TRANSPORT mission.
--- @param #AUFTRAG self
--- @param Core.Set#SET_GROUP CargoGroupSet The set group(s) to be transported.
--- @param Core.Zone#ZONE PickupZone Pick up zone
--- @param Core.Zone#ZONE DeployZone Deploy zone
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Set#SET_GROUP CargoGroupSet The set group(s) to be transported.
+--- @param Core.Zone#ZONE PickupZone Pick up zone
+--- @param Core.Zone#ZONE DeployZone Deploy zone
+--- @return #AUFTRAG self
 function AUFTRAG:NewOPSTRANSPORT(CargoGroupSet, PickupZone, DeployZone)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.OPSTRANSPORT)
@@ -1922,12 +1922,12 @@ end
 ]]
 
 --- **[GROUND, NAVAL]** Create an ARTY mission.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Target Center of the firing solution.
--- @param #number Nshots Number of shots to be fired. Default `#nil`.
--- @param #number Radius Radius of the shells in meters. Default 100 meters.
--- @param #number Altitude Altitude in meters. Can be used to setup a Barrage. Default `#nil`.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE Target Center of the firing solution.
+--- @param #number Nshots Number of shots to be fired. Default `#nil`.
+--- @param #number Radius Radius of the shells in meters. Default 100 meters.
+--- @param #number Altitude Altitude in meters. Can be used to setup a Barrage. Default `#nil`.
+--- @return #AUFTRAG self
 function AUFTRAG:NewARTY(Target, Nshots, Radius, Altitude)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ARTY)
@@ -1956,14 +1956,14 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius, Altitude)
 end
 
 --- **[GROUND, NAVAL]** Create an BARRAGE mission. Assigned groups will move to a random coordinate within a given zone and start firing into the air.
--- @param #AUFTRAG self
--- @param Core.Zone#ZONE Zone The zone where the unit will go.
--- @param #number Heading Heading in degrees. Default random heading [0, 360).
--- @param #number Angle Shooting angle in degrees. Default random [45, 85].
--- @param #number Radius Radius of the shells in meters. Default 100 meters.
--- @param #number Altitude Altitude in meters. Default 500 m.
--- @param #number Nshots Number of shots to be fired. Default is until ammo is empty (`#nil`).
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Zone#ZONE Zone The zone where the unit will go.
+--- @param #number Heading Heading in degrees. Default random heading [0, 360).
+--- @param #number Angle Shooting angle in degrees. Default random [45, 85].
+--- @param #number Radius Radius of the shells in meters. Default 100 meters.
+--- @param #number Altitude Altitude in meters. Default 500 m.
+--- @param #number Nshots Number of shots to be fired. Default is until ammo is empty (`#nil`).
+--- @return #AUFTRAG self
 function AUFTRAG:NewBARRAGE(Zone, Heading, Angle, Radius, Altitude, Nshots)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.BARRAGE)
@@ -1994,12 +1994,12 @@ function AUFTRAG:NewBARRAGE(Zone, Heading, Angle, Radius, Altitude, Nshots)
 end
 
 --- **[AIR, GROUND, NAVAL]** Create a PATROLZONE mission. Group(s) will go to the zone and patrol it randomly.
--- @param #AUFTRAG self
--- @param Core.Zone#ZONE Zone The patrol zone.
--- @param #number Speed Speed in knots.
--- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
--- @param #string Formation Formation used by ground units during patrol. Default "Off Road".
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Zone#ZONE Zone The patrol zone.
+--- @param #number Speed Speed in knots.
+--- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
+--- @param #string Formation Formation used by ground units during patrol. Default "Off Road".
+--- @return #AUFTRAG self
 function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude, Formation)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.PATROLZONE)
@@ -2031,13 +2031,13 @@ function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude, Formation)
 end
 
 --- **[AIR, GROUND, NAVAL]** Create a CAPTUREZONE mission. Group(s) will go to the zone and patrol it randomly.
--- @param #AUFTRAG self
--- @param Ops.OpsZone#OPSZONE OpsZone The OPS zone to capture.
--- @param #number Coalition The coalition which should capture the zone for the mission to be successful.
--- @param #number Speed Speed in knots.
--- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
--- @param #string Formation Formation used by ground units during patrol. Default "Off Road".
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.OpsZone#OPSZONE OpsZone The OPS zone to capture.
+--- @param #number Coalition The coalition which should capture the zone for the mission to be successful.
+--- @param #number Speed Speed in knots.
+--- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
+--- @param #string Formation Formation used by ground units during patrol. Default "Off Road".
+--- @return #AUFTRAG self
 function AUFTRAG:NewCAPTUREZONE(OpsZone, Coalition, Speed, Altitude, Formation)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.CAPTUREZONE)
@@ -2078,11 +2078,11 @@ end
 
 --- **[OBSOLETE]** Create a ARMORATTACK mission.
 -- ** Note that this is actually creating a GROUNDATTACK mission!** 
--- @param #AUFTRAG self
--- @param Ops.Target#TARGET Target The target to attack. Can be a GROUP, UNIT or STATIC object.
--- @param #number Speed Speed in knots.
--- @param #string Formation The attack formation, e.g. "Wedge", "Vee" etc.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.Target#TARGET Target The target to attack. Can be a GROUP, UNIT or STATIC object.
+--- @param #number Speed Speed in knots.
+--- @param #string Formation The attack formation, e.g. "Wedge", "Vee" etc.
+--- @return #AUFTRAG self
 function AUFTRAG:NewARMORATTACK(Target, Speed, Formation)
 
   local mission=AUFTRAG:NewGROUNDATTACK(Target, Speed, Formation)
@@ -2094,11 +2094,11 @@ function AUFTRAG:NewARMORATTACK(Target, Speed, Formation)
 end
 
 --- **[GROUND]** Create a GROUNDATTACK mission. Ground group(s) will go to a target object and attack.
--- @param #AUFTRAG self
--- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP, UNIT or STATIC object.
--- @param #number Speed Speed in knots. Default max.
--- @param #string Formation The attack formation, e.g. "Wedge", "Vee" etc. Default `ENUMS.Formation.Vehicle.Vee`.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP, UNIT or STATIC object.
+--- @param #number Speed Speed in knots. Default max.
+--- @param #string Formation The attack formation, e.g. "Wedge", "Vee" etc. Default `ENUMS.Formation.Vehicle.Vee`.
+--- @return #AUFTRAG self
 function AUFTRAG:NewGROUNDATTACK(Target, Speed, Formation)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.GROUNDATTACK)
@@ -2125,14 +2125,14 @@ function AUFTRAG:NewGROUNDATTACK(Target, Speed, Formation)
 end
 
 --- **[AIR, GROUND, NAVAL]** Create a RECON mission.
--- @param #AUFTRAG self
--- @param Core.Set#SET_ZONE ZoneSet The recon zones.
--- @param #number Speed Speed in knots.
--- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
--- @param #boolean Adinfinitum If `true`, the group will start over again after reaching the final zone.
--- @param #boolean Randomly If `true`, the group will select a random zone.
--- @param #string Formation Formation used during recon route.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Set#SET_ZONE ZoneSet The recon zones.
+--- @param #number Speed Speed in knots.
+--- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
+--- @param #boolean Adinfinitum If `true`, the group will start over again after reaching the final zone.
+--- @param #boolean Randomly If `true`, the group will select a random zone.
+--- @param #string Formation Formation used during recon route.
+--- @return #AUFTRAG self
 function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly, Formation)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.RECON)
@@ -2160,9 +2160,9 @@ function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly, Forma
 end
 
 --- **[GROUND]** Create a AMMO SUPPLY mission.
--- @param #AUFTRAG self
--- @param Core.Zone#ZONE Zone The zone, where supply units go.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Zone#ZONE Zone The zone, where supply units go.
+--- @return #AUFTRAG self
 function AUFTRAG:NewAMMOSUPPLY(Zone)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.AMMOSUPPLY)
@@ -2184,9 +2184,9 @@ function AUFTRAG:NewAMMOSUPPLY(Zone)
 end
 
 --- **[GROUND]** Create a FUEL SUPPLY mission.
--- @param #AUFTRAG self
--- @param Core.Zone#ZONE Zone The zone, where supply units go.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Zone#ZONE Zone The zone, where supply units go.
+--- @return #AUFTRAG self
 function AUFTRAG:NewFUELSUPPLY(Zone)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.FUELSUPPLY)
@@ -2206,9 +2206,9 @@ function AUFTRAG:NewFUELSUPPLY(Zone)
 end
 
 --- **[GROUND]** Create a REARMING mission.
--- @param #AUFTRAG self
--- @param Core.Zone#ZONE Zone The zone, where units go and look for ammo supply.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Zone#ZONE Zone The zone, where units go and look for ammo supply.
+--- @return #AUFTRAG self
 function AUFTRAG:NewREARMING(Zone)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.REARMING)
@@ -2232,9 +2232,9 @@ end
 
 --- **[AIR]** Create an ALERT 5 mission. Aircraft will be spawned uncontrolled and wait for an assignment. You must specify **one** mission type which is performed.
 -- This determines the payload and the DCS mission task which are used when the aircraft is spawned.
--- @param #AUFTRAG self
--- @param #string MissionType Mission type `AUFTRAG.Type.XXX`. Determines payload and mission task (intercept, ground attack, etc.).
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #string MissionType Mission type `AUFTRAG.Type.XXX`. Determines payload and mission task (intercept, ground attack, etc.).
+--- @return #AUFTRAG self
 function AUFTRAG:NewALERT5(MissionType)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ALERT5)
@@ -2256,9 +2256,9 @@ function AUFTRAG:NewALERT5(MissionType)
 end
 
 --- **[GROUND, NAVAL]** Create an ON GUARD mission.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Coordinate, where to stand guard.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE Coordinate Coordinate, where to stand guard.
+--- @return #AUFTRAG self
 function AUFTRAG:NewONGUARD(Coordinate)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ONGUARD)
@@ -2278,9 +2278,9 @@ function AUFTRAG:NewONGUARD(Coordinate)
 end
 
 --- **[GROUND, NAVAL]** Create an AIRDEFENSE mission.
--- @param #AUFTRAG self
--- @param Core.Zone#ZONE Zone Zone where the air defense group(s) should be stationed.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Zone#ZONE Zone Zone where the air defense group(s) should be stationed.
+--- @return #AUFTRAG self
 function AUFTRAG:NewAIRDEFENSE(Zone)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.AIRDEFENSE)
@@ -2300,9 +2300,9 @@ function AUFTRAG:NewAIRDEFENSE(Zone)
 end
 
 --- **[GROUND]** Create an EWR mission.
--- @param #AUFTRAG self
--- @param Core.Zone#ZONE Zone Zone where the Early Warning Radar group(s) should be stationed.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Zone#ZONE Zone Zone where the Early Warning Radar group(s) should be stationed.
+--- @return #AUFTRAG self
 function AUFTRAG:NewEWR(Zone)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.EWR)
@@ -2323,10 +2323,10 @@ end
 
 
 --- **[PRIVATE, AIR, GROUND, NAVAL]** Create a mission to relocate all cohort assets to another LEGION.
--- @param #AUFTRAG self
--- @param Ops.Legion#LEGION Legion The new legion.
--- @param Ops.Cohort#COHORT Cohort The cohort to be relocated.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.Legion#LEGION Legion The new legion.
+--- @param Ops.Cohort#COHORT Cohort The cohort to be relocated.
+--- @return #AUFTRAG self
 function AUFTRAG:_NewRELOCATECOHORT(Legion, Cohort)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.RELOCATECOHORT)
@@ -2353,9 +2353,9 @@ function AUFTRAG:_NewRELOCATECOHORT(Legion, Cohort)
 end
 
 --- **[GROUND, NAVAL]** Create a mission to do NOTHING.
--- @param #AUFTRAG self
--- @param Core.Zone#ZONE RelaxZone Zone where the assets are supposed to do nothing.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Zone#ZONE RelaxZone Zone where the assets are supposed to do nothing.
+--- @return #AUFTRAG self
 function AUFTRAG:NewNOTHING(RelaxZone)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.NOTHING)
@@ -2375,10 +2375,10 @@ function AUFTRAG:NewNOTHING(RelaxZone)
 end
 
 --- **[GROUND]** Create an ARMORED ON GUARD mission.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Coordinate, where to stand guard.
--- @param #string Formation Formation to take, e.g. "On Road", "Vee" etc.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE Coordinate Coordinate, where to stand guard.
+--- @param #string Formation Formation to take, e.g. "On Road", "Vee" etc.
+--- @return #AUFTRAG self
 function AUFTRAG:NewARMOREDGUARD(Coordinate,Formation)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ARMOREDGUARD)
@@ -2399,10 +2399,10 @@ function AUFTRAG:NewARMOREDGUARD(Coordinate,Formation)
 end
 
 --- Create a mission to attack a TARGET object.
--- @param #AUFTRAG self
--- @param Ops.Target#TARGET Target The target.
--- @param #string MissionType The mission type.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.Target#TARGET Target The target.
+--- @param #string MissionType The mission type.
+--- @return #AUFTRAG self
 function AUFTRAG:NewFromTarget(Target, MissionType)
 
   local mission=nil --#AUFTRAG
@@ -2442,9 +2442,9 @@ end
 
 
 --- Create a mission to attack a group. Mission type is automatically chosen from the group category.
--- @param #AUFTRAG self
--- @param Wrapper.Positionable#POSITIONABLE Target Target object.
--- @return #string Auftrag type, e.g. `AUFTRAG.Type.BAI` (="BAI").
+--- @param #AUFTRAG self
+--- @param Wrapper.Positionable#POSITIONABLE Target Target object.
+--- @return #string Auftrag type, e.g. `AUFTRAG.Type.BAI` (="BAI").
 function AUFTRAG:_DetermineAuftragType(Target)
 
   local group=nil      --Wrapper.Group#GROUP
@@ -2535,9 +2535,9 @@ function AUFTRAG:_DetermineAuftragType(Target)
 end
 
 --- Create a mission to attack a group. Mission type is automatically chosen from the group category.
--- @param #AUFTRAG self
--- @param Wrapper.Group#GROUP EngageGroup Group to be engaged.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Wrapper.Group#GROUP EngageGroup Group to be engaged.
+--- @return #AUFTRAG self
 function AUFTRAG:NewAUTO(EngageGroup)
 
   local mission=nil --#AUFTRAG
@@ -2604,10 +2604,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set mission start and stop time.
--- @param #AUFTRAG self
--- @param #string ClockStart Time the mission is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
--- @param #string ClockStop (Optional) Time the mission is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #string ClockStart Time the mission is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
+--- @param #string ClockStop (Optional) Time the mission is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
+--- @return #AUFTRAG self
 function AUFTRAG:SetTime(ClockStart, ClockStop)
 
   -- Current mission time.
@@ -2640,18 +2640,18 @@ function AUFTRAG:SetTime(ClockStart, ClockStop)
 end
 
 --- Set time how long the mission is executed. Once this time limit has passed, the mission is cancelled.
--- @param #AUFTRAG self
--- @param #number Duration Duration in seconds.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number Duration Duration in seconds.
+--- @return #AUFTRAG self
 function AUFTRAG:SetDuration(Duration)
   self.durationExe=Duration
   return self
 end
 
 --- Set that mission assets are teleported to the mission execution waypoint.
--- @param #AUFTRAG self
--- @param #boolean Switch If `true` or `nil`, teleporting is on. If `false`, teleporting is off.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #boolean Switch If `true` or `nil`, teleporting is on. If `false`, teleporting is off.
+--- @return #AUFTRAG self
 function AUFTRAG:SetTeleport(Switch)
   if Switch==nil then
     Switch=true
@@ -2662,9 +2662,9 @@ end
 
 
 --- Set mission push time. This is the time the mission is executed. If the push time is not passed, the group will wait at the mission execution waypoint.
--- @param #AUFTRAG self
--- @param #string ClockPush Time the mission is executed, e.g. "05:00" for 5 am. Can also be given as a `#number`, where it is interpreted as relative push time in seconds.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #string ClockPush Time the mission is executed, e.g. "05:00" for 5 am. Can also be given as a `#number`, where it is interpreted as relative push time in seconds.
+--- @return #AUFTRAG self
 function AUFTRAG:SetPushTime(ClockPush)
 
   if ClockPush then
@@ -2679,11 +2679,11 @@ function AUFTRAG:SetPushTime(ClockPush)
 end
 
 --- Set mission priority and (optional) urgency. Urgent missions can cancel other running missions.
--- @param #AUFTRAG self
--- @param #number Prio Priority 1=high, 100=low. Default 50.
--- @param #boolean Urgent If *true*, another running mission might be cancelled if it has a lower priority.
--- @param #number Importance Number 1-10. If missions with lower value are in the queue, these have to be finished first. Default is `nil`.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number Prio Priority 1=high, 100=low. Default 50.
+--- @param #boolean Urgent If *true*, another running mission might be cancelled if it has a lower priority.
+--- @param #number Importance Number 1-10. If missions with lower value are in the queue, these have to be finished first. Default is `nil`.
+--- @return #AUFTRAG self
 function AUFTRAG:SetPriority(Prio, Urgent, Importance)
   self.prio=Prio or 50
   self.urgent=Urgent
@@ -2692,46 +2692,46 @@ function AUFTRAG:SetPriority(Prio, Urgent, Importance)
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set how many times the mission is repeated. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, FLEET) or higher level.
--- @param #AUFTRAG self
--- @param #number Nrepeat Number of repeats. Default 0.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number Nrepeat Number of repeats. Default 0.
+--- @return #AUFTRAG self
 function AUFTRAG:SetRepeat(Nrepeat)
   self.Nrepeat=Nrepeat or 0
   return self
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set how many times the mission is repeated if it fails. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, FLEET) or higher level.
--- @param #AUFTRAG self
--- @param #number Nrepeat Number of repeats. Default 0.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number Nrepeat Number of repeats. Default 0.
+--- @return #AUFTRAG self
 function AUFTRAG:SetRepeatOnFailure(Nrepeat)
   self.NrepeatFailure=Nrepeat or 0
   return self
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set how many times the mission is repeated if it was successful. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, FLEET) or higher level.
--- @param #AUFTRAG self
--- @param #number Nrepeat Number of repeats. Default 0.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number Nrepeat Number of repeats. Default 0.
+--- @return #AUFTRAG self
 function AUFTRAG:SetRepeatOnSuccess(Nrepeat)
   self.NrepeatSuccess=Nrepeat or 0
   return self
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set that mission assets get reinforced if their number drops below Nmin.
--- @param #AUFTRAG self
--- @param #number Nreinforce Number of max asset groups used to reinforce.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number Nreinforce Number of max asset groups used to reinforce.
+--- @return #AUFTRAG self
 function AUFTRAG:SetReinforce(Nreinforce)
   self.reinforce=Nreinforce
   return self
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Define how many assets are required to do the job. Only used if the mission is handled by a **LEGION** (AIRWING, BRIGADE, ...) or higher level.
--- @param #AUFTRAG self
--- @param #number NassetsMin Minimum number of asset groups. Default 1.
--- @param #number NassetsMax Maximum Number of asset groups. Default is same as `NassetsMin`.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number NassetsMin Minimum number of asset groups. Default 1.
+--- @param #number NassetsMax Maximum Number of asset groups. Default is same as `NassetsMin`.
+--- @return #AUFTRAG self
 function AUFTRAG:SetRequiredAssets(NassetsMin, NassetsMax)
 
   self.NassetsMin=NassetsMin or 1
@@ -2747,9 +2747,9 @@ function AUFTRAG:SetRequiredAssets(NassetsMin, NassetsMax)
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Get number of required assets.
--- @param #AUFTRAG self
--- @return #number Min. number of required assets.
--- @return #number Max. number of required assets.
+--- @param #AUFTRAG self
+--- @return #number Min. number of required assets.
+--- @return #number Max. number of required assets.
 function AUFTRAG:GetRequiredAssets()
   
   local Nmin=self.NassetsMin
@@ -2780,9 +2780,9 @@ function AUFTRAG:GetRequiredAssets()
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set that only alive (spawned) assets are considered.
--- @param #AUFTRAG self
--- @param #boolean Switch If true or nil, only active assets. If false
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #boolean Switch If true or nil, only active assets. If false
+--- @return #AUFTRAG self
 function AUFTRAG:SetAssetsStayAlive(Switch)
 
   if Switch==nil then
@@ -2796,13 +2796,13 @@ end
 
 --- **[LEGION, COMMANDER, CHIEF]** Define how many assets are required that escort the mission assets. 
 -- Only used if the mission is handled by a **LEGION** (AIRWING, BRIGADE, FLEET) or higher level.
--- @param #AUFTRAG self
--- @param #number NescortMin Minimum number of asset groups. Default 1.
--- @param #number NescortMax Maximum Number of asset groups. Default is same as `NassetsMin`.
--- @param #string MissionType Mission type assets will be optimized for and payload selected, *e.g.* `AUFTRAG.Type.SEAD`. Default nil.
--- @param #table TargetTypes Target Types that will be engaged by the escort group(s). Default `{"Air"}` for aircraft and `{"Ground Units"}` for helos. Set, *e.g.*, `{"Air Defence"}` for SEAD.
--- @param #number EngageRange Max range in nautical miles that the escort group(s) will engage enemies. Default 32 NM (60 km).
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number NescortMin Minimum number of asset groups. Default 1.
+--- @param #number NescortMax Maximum Number of asset groups. Default is same as `NassetsMin`.
+--- @param #string MissionType Mission type assets will be optimized for and payload selected, *e.g.* `AUFTRAG.Type.SEAD`. Default nil.
+--- @param #table TargetTypes Target Types that will be engaged by the escort group(s). Default `{"Air"}` for aircraft and `{"Ground Units"}` for helos. Set, *e.g.*, `{"Air Defence"}` for SEAD.
+--- @param #number EngageRange Max range in nautical miles that the escort group(s) will engage enemies. Default 32 NM (60 km).
+--- @return #AUFTRAG self
 function AUFTRAG:SetRequiredEscorts(NescortMin, NescortMax, MissionType, TargetTypes, EngageRange)
 
   -- Set number of escort assets.
@@ -2826,18 +2826,18 @@ function AUFTRAG:SetRequiredEscorts(NescortMin, NescortMax, MissionType, TargetT
 end
 
 --- Set mission name.
--- @param #AUFTRAG self
--- @param #string Name Name of the mission. Default is "Auftrag Nr. X", where X is a running number, which is automatically increased.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #string Name Name of the mission. Default is "Auftrag Nr. X", where X is a running number, which is automatically increased.
+--- @return #AUFTRAG self
 function AUFTRAG:SetName(Name)
   self.name=Name or string.format("Auftrag Nr. %d", self.auftragsnummer)
   return self
 end
 
 --- Enable markers, which dispay the mission status on the F10 map.
--- @param #AUFTRAG self
--- @param #number Coalition The coaliton side to which the markers are dispayed. Default is to all.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number Coalition The coaliton side to which the markers are dispayed. Default is to all.
+--- @return #AUFTRAG self
 function AUFTRAG:SetEnableMarkers(Coalition)
   self.markerOn=true
   self.markerCoaliton=Coalition or -1
@@ -2845,18 +2845,18 @@ function AUFTRAG:SetEnableMarkers(Coalition)
 end
 
 --- Set verbosity level.
--- @param #AUFTRAG self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+--- @return #AUFTRAG self
 function AUFTRAG:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
   return self
 end
 
 --- Set weapon type used for the engagement.
--- @param #AUFTRAG self
--- @param #number WeaponType Weapon type. Default is `ENUMS.WeaponFlag.Auto`.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number WeaponType Weapon type. Default is `ENUMS.WeaponFlag.Auto`.
+--- @return #AUFTRAG self
 function AUFTRAG:SetWeaponType(WeaponType)
 
   self.engageWeaponType=WeaponType or ENUMS.WeaponFlag.Auto
@@ -2868,9 +2868,9 @@ function AUFTRAG:SetWeaponType(WeaponType)
 end
 
 --- Set number of weapons to expend.
--- @param #AUFTRAG self
--- @param #number WeaponExpend How much of the weapon load is expended during the attack, e.g. `AI.Task.WeaponExpend.ALL`. Default "Auto".
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number WeaponExpend How much of the weapon load is expended during the attack, e.g. `AI.Task.WeaponExpend.ALL`. Default "Auto".
+--- @return #AUFTRAG self
 function AUFTRAG:SetWeaponExpend(WeaponExpend)
 
   self.engageWeaponExpend=WeaponExpend or "Auto"
@@ -2882,9 +2882,9 @@ function AUFTRAG:SetWeaponExpend(WeaponExpend)
 end
 
 --- Set whether target will be attack as group.
--- @param #AUFTRAG self
--- @param #boolean Switch If true or nil, engage as group. If false, not.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #boolean Switch If true or nil, engage as group. If false, not.
+--- @return #AUFTRAG self
 function AUFTRAG:SetEngageAsGroup(Switch)
 
   if Switch==nil then
@@ -2900,9 +2900,9 @@ function AUFTRAG:SetEngageAsGroup(Switch)
 end
 
 --- Set engage altitude. This is the altitude passed to the DCS task. In the ME it is the tickbox ALTITUDE ABOVE.
--- @param #AUFTRAG self
--- @param #string Altitude Altitude in feet. Default 6000 ft.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #string Altitude Altitude in feet. Default 6000 ft.
+--- @return #AUFTRAG self
 function AUFTRAG:SetEngageAltitude(Altitude)
 
   self.engageAltitude=UTILS.FeetToMeters(Altitude or 6000)
@@ -2914,12 +2914,12 @@ function AUFTRAG:SetEngageAltitude(Altitude)
 end
 
 --- Enable to automatically engage detected targets.
--- @param #AUFTRAG self
--- @param #number RangeMax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
--- @param #table TargetTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default "All".
--- @param Core.Set#SET_ZONE EngageZoneSet Set of zones in which targets are engaged. Default is anywhere.
--- @param Core.Set#SET_ZONE NoEngageZoneSet Set of zones in which targets are *not* engaged. Default is nowhere.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number RangeMax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
+--- @param #table TargetTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default "All".
+--- @param Core.Set#SET_ZONE EngageZoneSet Set of zones in which targets are engaged. Default is anywhere.
+--- @param Core.Set#SET_ZONE NoEngageZoneSet Set of zones in which targets are *not* engaged. Default is nowhere.
+--- @return #AUFTRAG self
 function AUFTRAG:SetEngageDetected(RangeMax, TargetTypes, EngageZoneSet, NoEngageZoneSet)
 
   -- Ensure table.
@@ -2952,55 +2952,55 @@ function AUFTRAG:SetEngageDetected(RangeMax, TargetTypes, EngageZoneSet, NoEngag
 end
 
 --- Set mission altitude. This is the altitude of the waypoint create where the DCS task is executed.
--- @param #AUFTRAG self
--- @param #string Altitude Altitude in feet.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #string Altitude Altitude in feet.
+--- @return #AUFTRAG self
 function AUFTRAG:SetMissionAltitude(Altitude)
   self.missionAltitude=UTILS.FeetToMeters(Altitude)
   return self
 end
 
 --- Set mission speed. That is the speed the group uses to get to the mission waypoint.
--- @param #AUFTRAG self
--- @param #string Speed Mission speed in knots.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #string Speed Mission speed in knots.
+--- @return #AUFTRAG self
 function AUFTRAG:SetMissionSpeed(Speed)
   self.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
   return self
 end
 
 --- Set max mission range. Only applies if the AUFTRAG is handled by an AIRWING or CHIEF. This is the max allowed distance from the airbase to the target.
--- @param #AUFTRAG self
--- @param #number Range Max range in NM. Default 100 NM.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number Range Max range in NM. Default 100 NM.
+--- @return #AUFTRAG self
 function AUFTRAG:SetMissionRange(Range)
   self.engageRange=UTILS.NMToMeters(Range or 100)
   return self
 end
 
 --- Attach OPS transport to the mission. Mission assets will be transported before the mission is started at the OPSGROUP level.
--- @param #AUFTRAG self
--- @param Ops.OpsTransport#OPSTRANSPORT OpsTransport The OPS transport assignment attached to the mission.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.OpsTransport#OPSTRANSPORT OpsTransport The OPS transport assignment attached to the mission.
+--- @return #AUFTRAG self
 function AUFTRAG:SetOpsTransport(OpsTransport)
   self.opstransport=OpsTransport
   return self
 end
 
 --- Get the attach OPS transport of the mission.
--- @param #AUFTRAG self
--- @return Ops.OpsTransport#OPSTRANSPORT The OPS transport assignment attached to the mission.
+--- @param #AUFTRAG self
+--- @return Ops.OpsTransport#OPSTRANSPORT The OPS transport assignment attached to the mission.
 function AUFTRAG:GetOpsTransport()
   return self.opstransport
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Attach OPS transport to the mission. Mission assets will be transported before the mission is started at the OPSGROUP level.
--- @param #AUFTRAG self
--- @param Core.Zone#ZONE DeployZone Zone where assets are deployed.
--- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
--- @param #number NcarriersMax Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
--- @param Core.Zone#ZONE DisembarkZone Zone where assets are disembarked to.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Zone#ZONE DeployZone Zone where assets are deployed.
+--- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
+--- @param #number NcarriersMax Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
+--- @param Core.Zone#ZONE DisembarkZone Zone where assets are disembarked to.
+--- @return #AUFTRAG self
 function AUFTRAG:SetRequiredTransport(DeployZone, NcarriersMin, NcarriersMax, DisembarkZone)
 
   -- OPS transport from pickup to deploy zone.
@@ -3014,9 +3014,9 @@ function AUFTRAG:SetRequiredTransport(DeployZone, NcarriersMin, NcarriersMax, Di
 end
 
 --- Add carriers for a transport of mission assets.
--- @param #AUFTRAG self
--- @param Core.Set#SET_OPSGROUP Carriers Set of carriers. Can also be a single group.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Set#SET_OPSGROUP Carriers Set of carriers. Can also be a single group.
+--- @return #AUFTRAG self
 function AUFTRAG:AddTransportCarriers(Carriers)
 
   if self.opstransport then
@@ -3037,9 +3037,9 @@ function AUFTRAG:AddTransportCarriers(Carriers)
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set required attribute(s) the assets must have.
--- @param #AUFTRAG self
--- @param #table Attributes Generalized attribute(s).
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #table Attributes Generalized attribute(s).
+--- @return #AUFTRAG self
 function AUFTRAG:SetRequiredAttribute(Attributes)
   self.attributes=UTILS.EnsureTable(Attributes, true)
   return self
@@ -3047,19 +3047,19 @@ end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set required property or properties the assets must have.
 -- These are [DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes).
--- @param #AUFTRAG self
--- @param #table Properties Property or table of properties.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #table Properties Property or table of properties.
+--- @return #AUFTRAG self
 function AUFTRAG:SetRequiredProperty(Properties)
   self.properties=UTILS.EnsureTable(Properties, true)
   return self
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set number of required carrier groups if an OPSTRANSPORT assignment is required.
--- @param #AUFTRAG self
--- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
--- @param #number NcarriersMax Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
+--- @param #number NcarriersMax Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
+--- @return #AUFTRAG self
 function AUFTRAG:SetRequiredCarriers(NcarriersMin, NcarriersMax)
 
   self.NcarriersMin=NcarriersMin or 1
@@ -3076,9 +3076,9 @@ end
 
 
 --- **[LEGION, COMMANDER, CHIEF]** Assign a legion cohort to the mission. Only these cohorts will be considered for the job.
--- @param #AUFTRAG self
--- @param Ops.Cohort#COHORT Cohort The cohort.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.Cohort#COHORT Cohort The cohort.
+--- @return #AUFTRAG self
 function AUFTRAG:AssignCohort(Cohort)
 
   self.specialCohorts=self.specialCohorts or {}
@@ -3092,9 +3092,9 @@ function AUFTRAG:AssignCohort(Cohort)
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Assign a legion to the mission. Only cohorts of this legion will be considered for the job. You can assign multiple legions.
--- @param #AUFTRAG self
--- @param Ops.Legion#LEGION Legion The legion.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.Legion#LEGION Legion The legion.
+--- @return #AUFTRAG self
 function AUFTRAG:AssignLegion(Legion)
 
   self.specialLegions=self.specialLegions or {}
@@ -3109,9 +3109,9 @@ end
 
 
 --- **[LEGION, COMMANDER, CHIEF]** Assign airwing squadron(s) to the mission. Only these squads will be considered for the job.
--- @param #AUFTRAG self
--- @param #table Squadrons A table of SQUADRON(s). **Has to be a table {}** even if a single squad is given.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #table Squadrons A table of SQUADRON(s). **Has to be a table {}** even if a single squad is given.
+--- @return #AUFTRAG self
 function AUFTRAG:AssignSquadrons(Squadrons)
 
   for _,_squad in pairs(Squadrons) do
@@ -3125,8 +3125,8 @@ end
 
 
 --- **[LEGION, COMMANDER, CHIEF]** Assign a transport Legion.
--- @param #AUFTRAG self
--- @param Ops.Legion#LEGION Legion The legion.
+--- @param #AUFTRAG self
+--- @param Ops.Legion#LEGION Legion The legion.
 function AUFTRAG:AssignTransportLegion(Legion)
 
   self.transportLegions=self.transportLegions or {}
@@ -3137,8 +3137,8 @@ function AUFTRAG:AssignTransportLegion(Legion)
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Assign a transport cohort.
--- @param #AUFTRAG self
--- @param Ops.Cohort#Cohort Cohort The cohort.
+--- @param #AUFTRAG self
+--- @param Ops.Cohort#Cohort Cohort The cohort.
 function AUFTRAG:AssignTransportCohort(Cohort)
 
   self.transportCohorts=self.transportCohorts or {}
@@ -3150,8 +3150,8 @@ end
 
 
 --- **[LEGION, COMMANDER, CHIEF]** Add an escort Legion.
--- @param #AUFTRAG self
--- @param Ops.Legion#LEGION Legion The legion.
+--- @param #AUFTRAG self
+--- @param Ops.Legion#LEGION Legion The legion.
 function AUFTRAG:AssignEscortLegion(Legion)
 
   self.escortLegions=self.escortLegions or {}
@@ -3162,8 +3162,8 @@ function AUFTRAG:AssignEscortLegion(Legion)
 end
 
 --- **[LEGION, COMMANDER, CHIEF]** Assign an escort cohort.
--- @param #AUFTRAG self
--- @param Ops.Cohort#Cohort Cohort The cohort.
+--- @param #AUFTRAG self
+--- @param Ops.Cohort#Cohort Cohort The cohort.
 function AUFTRAG:AssignEscortCohort(Cohort)
 
   self.escortCohorts=self.escortCohorts or {}
@@ -3176,9 +3176,9 @@ end
 
 
 --- Set Rules of Engagement (ROE) for this mission.
--- @param #AUFTRAG self
--- @param #string roe Mission ROE.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #string roe Mission ROE.
+--- @return #AUFTRAG self
 function AUFTRAG:SetROE(roe)
 
   self.optionROE=roe
@@ -3188,9 +3188,9 @@ end
 
 
 --- Set Reaction on Threat (ROT) for this mission.
--- @param #AUFTRAG self
--- @param #string rot Mission ROT.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #string rot Mission ROT.
+--- @return #AUFTRAG self
 function AUFTRAG:SetROT(rot)
 
   self.optionROT=rot
@@ -3199,9 +3199,9 @@ function AUFTRAG:SetROT(rot)
 end
 
 --- Set alarm state for this mission.
--- @param #AUFTRAG self
--- @param #number Alarmstate Alarm state 0=Auto, 1=Green, 2=Red.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number Alarmstate Alarm state 0=Auto, 1=Green, 2=Red.
+--- @return #AUFTRAG self
 function AUFTRAG:SetAlarmstate(Alarmstate)
 
   self.optionAlarm=Alarmstate
@@ -3210,9 +3210,9 @@ function AUFTRAG:SetAlarmstate(Alarmstate)
 end
 
 --- Set EPLRS datalink setting for this mission.
--- @param #AUFTRAG self
--- @param #boolean OnOffSwitch If `true` or `nil`, EPLRS is on. If `false`, EPLRS is off.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #boolean OnOffSwitch If `true` or `nil`, EPLRS is on. If `false`, EPLRS is off.
+--- @return #AUFTRAG self
 function AUFTRAG:SetEPLRS(OnOffSwitch)
 
   if OnOffSwitch==nil then
@@ -3225,9 +3225,9 @@ function AUFTRAG:SetEPLRS(OnOffSwitch)
 end
 
 --- Set emission setting for this mission.
--- @param #AUFTRAG self
--- @param #boolean OnOffSwitch If `true` or `nil`, emission is on. If `false`, emission is off.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #boolean OnOffSwitch If `true` or `nil`, emission is on. If `false`, emission is off.
+--- @return #AUFTRAG self
 function AUFTRAG:SetEmission(OnOffSwitch)
 
   if OnOffSwitch==nil then
@@ -3240,9 +3240,9 @@ function AUFTRAG:SetEmission(OnOffSwitch)
 end
 
 --- Set invisibility setting for this mission.
--- @param #AUFTRAG self
--- @param #boolean OnOffSwitch If `true` or `nil`, invisible is on. If `false`, invisible is off.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #boolean OnOffSwitch If `true` or `nil`, invisible is on. If `false`, invisible is off.
+--- @return #AUFTRAG self
 function AUFTRAG:SetInvisible(OnOffSwitch)
 
   if OnOffSwitch==nil then
@@ -3255,9 +3255,9 @@ function AUFTRAG:SetInvisible(OnOffSwitch)
 end
 
 --- Set immortality setting for this mission.
--- @param #AUFTRAG self
--- @param #boolean OnOffSwitch If `true` or `nil`, immortal is on. If `false`, immortal is off.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #boolean OnOffSwitch If `true` or `nil`, immortal is on. If `false`, immortal is off.
+--- @return #AUFTRAG self
 function AUFTRAG:SetImmortal(OnOffSwitch)
 
   if OnOffSwitch==nil then
@@ -3270,9 +3270,9 @@ function AUFTRAG:SetImmortal(OnOffSwitch)
 end
 
 --- Set formation for this mission.
--- @param #AUFTRAG self
--- @param #number Formation Formation.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number Formation Formation.
+--- @return #AUFTRAG self
 function AUFTRAG:SetFormation(Formation)
 
   self.optionFormation=Formation
@@ -3281,10 +3281,10 @@ function AUFTRAG:SetFormation(Formation)
 end
 
 --- Set radio frequency and modulation for this mission.
--- @param #AUFTRAG self
--- @param #number Frequency Frequency in MHz.
--- @param #number Modulation Radio modulation. Default 0=AM.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number Frequency Frequency in MHz.
+--- @param #number Modulation Radio modulation. Default 0=AM.
+--- @return #AUFTRAG self
 function AUFTRAG:SetRadio(Frequency, Modulation)
 
   self.radio={}
@@ -3295,12 +3295,12 @@ function AUFTRAG:SetRadio(Frequency, Modulation)
 end
 
 --- Set TACAN beacon channel and Morse code for this mission.
--- @param #AUFTRAG self
--- @param #number Channel TACAN channel.
--- @param #string Morse Morse code. Default "XXX".
--- @param #string UnitName Name of the unit in the group for which acts as TACAN beacon. Default is the first unit in the group.
--- @param #string Band Tacan channel mode ("X" or "Y"). Default is "X" for ground/naval and "Y" for aircraft.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number Channel TACAN channel.
+--- @param #string Morse Morse code. Default "XXX".
+--- @param #string UnitName Name of the unit in the group for which acts as TACAN beacon. Default is the first unit in the group.
+--- @param #string Band Tacan channel mode ("X" or "Y"). Default is "X" for ground/naval and "Y" for aircraft.
+--- @return #AUFTRAG self
 function AUFTRAG:SetTACAN(Channel, Morse, UnitName, Band)
 
   self.tacan={}
@@ -3313,11 +3313,11 @@ function AUFTRAG:SetTACAN(Channel, Morse, UnitName, Band)
 end
 
 --- Set ICLS beacon channel and Morse code for this mission.
--- @param #AUFTRAG self
--- @param #number Channel ICLS channel.
--- @param #string Morse Morse code. Default "XXX".
--- @param #string UnitName Name of the unit in the group for which acts as ICLS beacon. Default is the first unit in the group.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number Channel ICLS channel.
+--- @param #string Morse Morse code. Default "XXX".
+--- @param #string UnitName Name of the unit in the group for which acts as ICLS beacon. Default is the first unit in the group.
+--- @return #AUFTRAG self
 function AUFTRAG:SetICLS(Channel, Morse, UnitName)
 
   self.icls={}
@@ -3329,9 +3329,9 @@ function AUFTRAG:SetICLS(Channel, Morse, UnitName)
 end
 
 --- Set time interval between mission done and success/failure evaluation.
--- @param #AUFTRAG self
--- @param #number Teval Time in seconds before the mission result is evaluated. Default depends on mission type.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number Teval Time in seconds before the mission result is evaluated. Default depends on mission type.
+--- @return #AUFTRAG self
 function AUFTRAG:SetEvaluationTime(Teval)
 
   self.dTevaluate=Teval or 60
@@ -3340,67 +3340,67 @@ function AUFTRAG:SetEvaluationTime(Teval)
 end
 
 --- Get mission type.
--- @param #AUFTRAG self
--- @return #string Mission type, e.g. "BAI".
+--- @param #AUFTRAG self
+--- @return #string Mission type, e.g. "BAI".
 function AUFTRAG:GetType()
   return self.type
 end
 
 --- Get mission name.
--- @param #AUFTRAG self
--- @return #string Mission name, e.g. "Auftrag Nr.1".
+--- @param #AUFTRAG self
+--- @return #string Mission name, e.g. "Auftrag Nr.1".
 function AUFTRAG:GetName()
   return self.name
 end
 
 --- Get number of required assets.
--- @param #AUFTRAG self
--- @return #number Numer of required assets.
+--- @param #AUFTRAG self
+--- @return #number Numer of required assets.
 function AUFTRAG:GetNumberOfRequiredAssets()
   return self.Nassets or self.NassetsMin
 end
 
 --- Get mission priority.
--- @param #AUFTRAG self
--- @return #number Priority. Smaller is higher.
+--- @param #AUFTRAG self
+--- @return #number Priority. Smaller is higher.
 function AUFTRAG:GetPriority()
   return self.prio
 end
 
 --- Get casualties, i.e. number of units that died during this mission.
--- @param #AUFTRAG self
--- @return #number Number of dead units.
+--- @param #AUFTRAG self
+--- @return #number Number of dead units.
 function AUFTRAG:GetCasualties()
   return self.Ncasualties or 0
 end
 
 --- Get kills, i.e. number of units that were destroyed by assets of this mission.
--- @param #AUFTRAG self
--- @return #number Number of units destroyed.
+--- @param #AUFTRAG self
+--- @return #number Number of units destroyed.
 function AUFTRAG:GetKills()
   return self.Nkills or 0
 end
 
 
 --- Check if mission is "urgent".
--- @param #AUFTRAG self
--- @return #boolean If `true`, mission is "urgent".
+--- @param #AUFTRAG self
+--- @return #boolean If `true`, mission is "urgent".
 function AUFTRAG:IsUrgent()
   return self.urgent
 end
 
 --- Get mission importance.
--- @param #AUFTRAG self
--- @return #number Importance. Smaller is higher.
+--- @param #AUFTRAG self
+--- @return #number Importance. Smaller is higher.
 function AUFTRAG:GetImportance()
   return self.importance
 end
 
 --- Add start condition.
--- @param #AUFTRAG self
--- @param #function ConditionFunction Function that needs to be true before the mission can be started. Must return a #boolean.
--- @param ... Condition function arguments if any.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #function ConditionFunction Function that needs to be true before the mission can be started. Must return a #boolean.
+--- @param ... Condition function arguments if any.
+--- @return #AUFTRAG self
 function AUFTRAG:AddConditionStart(ConditionFunction, ...)
 
   local condition={} --#AUFTRAG.Condition
@@ -3417,10 +3417,10 @@ function AUFTRAG:AddConditionStart(ConditionFunction, ...)
 end
 
 --- Add success condition.
--- @param #AUFTRAG self
--- @param #function ConditionFunction If this function returns `true`, the mission is cancelled.
--- @param ... Condition function arguments if any.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #function ConditionFunction If this function returns `true`, the mission is cancelled.
+--- @param ... Condition function arguments if any.
+--- @return #AUFTRAG self
 function AUFTRAG:AddConditionSuccess(ConditionFunction, ...)
 
   local condition={} --#AUFTRAG.Condition
@@ -3437,10 +3437,10 @@ function AUFTRAG:AddConditionSuccess(ConditionFunction, ...)
 end
 
 --- Add failure condition.
--- @param #AUFTRAG self
--- @param #function ConditionFunction If this function returns `true`, the mission is cancelled.
--- @param ... Condition function arguments if any.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #function ConditionFunction If this function returns `true`, the mission is cancelled.
+--- @param ... Condition function arguments if any.
+--- @return #AUFTRAG self
 function AUFTRAG:AddConditionFailure(ConditionFunction, ...)
 
   local condition={} --#AUFTRAG.Condition
@@ -3457,10 +3457,10 @@ function AUFTRAG:AddConditionFailure(ConditionFunction, ...)
 end
 
 --- Add push condition.
--- @param #AUFTRAG self
--- @param #function ConditionFunction If this function returns `true`, the mission is executed.
--- @param ... Condition function arguments if any.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #function ConditionFunction If this function returns `true`, the mission is executed.
+--- @param ... Condition function arguments if any.
+--- @return #AUFTRAG self
 function AUFTRAG:AddConditionPush(ConditionFunction, ...)
 
   local condition={} --#AUFTRAG.Condition
@@ -3477,9 +3477,9 @@ function AUFTRAG:AddConditionPush(ConditionFunction, ...)
 end
 
 --- Add a required payload for this mission. Only these payloads will be used for this mission. If they are not available, the mission cannot start. Only available for use with an AIRWING.
--- @param #AUFTRAG self
--- @param Ops.AirWing#AIRWING.Payload Payload Required payload.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.AirWing#AIRWING.Payload Payload Required payload.
+--- @return #AUFTRAG self
 function AUFTRAG:AddRequiredPayload(Payload)
 
   self.payloads=self.payloads or {}
@@ -3491,9 +3491,9 @@ end
 
 
 --- Add a Ops group to the mission.
--- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPSGROUP object.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPSGROUP object.
+--- @return #AUFTRAG self
 function AUFTRAG:AddOpsGroup(OpsGroup)
   self:T(self.lid..string.format("Adding Ops group %s", OpsGroup.groupname))
 
@@ -3522,9 +3522,9 @@ function AUFTRAG:AddOpsGroup(OpsGroup)
 end
 
 --- Remove an Ops group from the mission.
--- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPSGROUP object.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPSGROUP object.
+--- @return #AUFTRAG self
 function AUFTRAG:DelOpsGroup(OpsGroup)
   self:T(self.lid..string.format("Removing OPS group %s", OpsGroup and OpsGroup.groupname or "nil (ERROR)!"))
 
@@ -3541,16 +3541,16 @@ function AUFTRAG:DelOpsGroup(OpsGroup)
 end
 
 --- Check if mission is PLANNED.
--- @param #AUFTRAG self
--- @return #boolean If true, mission is in the planning state.
+--- @param #AUFTRAG self
+--- @return #boolean If true, mission is in the planning state.
 function AUFTRAG:IsPlanned()
   return self.status==AUFTRAG.Status.PLANNED
 end
 
 --- Check if mission is QUEUED at a LEGION mission queue.
--- @param #AUFTRAG self
--- @param Ops.Legion#LEGION Legion (Optional) Check if mission is queued at this legion.
--- @return #boolean If true, mission is queued.
+--- @param #AUFTRAG self
+--- @param Ops.Legion#LEGION Legion (Optional) Check if mission is queued at this legion.
+--- @return #boolean If true, mission is queued.
 function AUFTRAG:IsQueued(Legion)
   local is=self.status==AUFTRAG.Status.QUEUED
   if Legion then
@@ -3560,9 +3560,9 @@ function AUFTRAG:IsQueued(Legion)
 end
 
 --- Check if mission is REQUESTED. The mission request out to the WAREHOUSE.
--- @param #AUFTRAG self
--- @param Ops.Legion#LEGION Legion (Optional) Check if mission is requested at this legion.
--- @return #boolean If true, mission is requested.
+--- @param #AUFTRAG self
+--- @param Ops.Legion#LEGION Legion (Optional) Check if mission is requested at this legion.
+--- @return #boolean If true, mission is requested.
 function AUFTRAG:IsRequested(Legion)
   local is=self.status==AUFTRAG.Status.REQUESTED
   if Legion then
@@ -3572,23 +3572,23 @@ function AUFTRAG:IsRequested(Legion)
 end
 
 --- Check if mission is SCHEDULED. The first OPSGROUP has been assigned.
--- @param #AUFTRAG self
--- @return #boolean If true, mission is queued.
+--- @param #AUFTRAG self
+--- @return #boolean If true, mission is queued.
 function AUFTRAG:IsScheduled()
   return self.status==AUFTRAG.Status.SCHEDULED
 end
 
 --- Check if mission is STARTED. The first OPSGROUP is on its way to the mission execution waypoint.
--- @param #AUFTRAG self
--- @return #boolean If true, mission is started.
+--- @param #AUFTRAG self
+--- @return #boolean If true, mission is started.
 function AUFTRAG:IsStarted()
   return self.status==AUFTRAG.Status.STARTED
 end
 
 --- Check if mission is EXECUTING. The first OPSGROUP has reached the mission execution waypoint and is not executing the mission task.
--- @param #AUFTRAG self
--- @param #boolean AllGroups (Optional) Check that all groups are currently executing the mission.
--- @return #boolean If true, mission is currently executing.
+--- @param #AUFTRAG self
+--- @param #boolean AllGroups (Optional) Check that all groups are currently executing the mission.
+--- @return #boolean If true, mission is currently executing.
 function AUFTRAG:IsExecuting(AllGroups)
 
   local isExecuting=self.status==AUFTRAG.Status.EXECUTING
@@ -3617,44 +3617,44 @@ function AUFTRAG:IsExecuting(AllGroups)
 end
 
 --- Check if mission was cancelled.
--- @param #AUFTRAG self
--- @return #boolean If true, mission was cancelled.
+--- @param #AUFTRAG self
+--- @return #boolean If true, mission was cancelled.
 function AUFTRAG:IsCancelled()
   return self.status==AUFTRAG.Status.CANCELLED
 end
 
 --- Check if mission is done.
--- @param #AUFTRAG self
--- @return #boolean If true, mission is done.
+--- @param #AUFTRAG self
+--- @return #boolean If true, mission is done.
 function AUFTRAG:IsDone()
   return self.status==AUFTRAG.Status.DONE
 end
 
 --- Check if mission was a success.
--- @param #AUFTRAG self
--- @return #boolean If true, mission was successful.
+--- @param #AUFTRAG self
+--- @return #boolean If true, mission was successful.
 function AUFTRAG:IsSuccess()
   return self.status==AUFTRAG.Status.SUCCESS
 end
 
 --- Check if mission is over. This could be state DONE, CANCELLED, SUCCESS, FAILED.
--- @param #AUFTRAG self
--- @return #boolean If true, mission is over.
+--- @param #AUFTRAG self
+--- @return #boolean If true, mission is over.
 function AUFTRAG:IsOver()
   local over = self.status==AUFTRAG.Status.DONE or self.status==AUFTRAG.Status.CANCELLED or self.status==AUFTRAG.Status.SUCCESS or self.status==AUFTRAG.Status.FAILED
   return over
 end
 
 --- Check if mission is NOT over.
--- @param #AUFTRAG self
--- @return #boolean If true, mission is NOT over yet.
+--- @param #AUFTRAG self
+--- @return #boolean If true, mission is NOT over yet.
 function AUFTRAG:IsNotOver()
   return not self:IsOver()
 end
 
 --- Check if mission is for aircarft (airplanes and/or helicopters).
--- @param #AUFTRAG self
--- @return #boolean If `true`, mission is for aircraft.
+--- @param #AUFTRAG self
+--- @return #boolean If `true`, mission is for aircraft.
 function AUFTRAG:IsAircraft()
   for _,category in pairs(self.categories) do
     if category==AUFTRAG.Category.AIRCRAFT or category==AUFTRAG.Category.AIRPLANE or category==AUFTRAG.Category.HELICOPTER then
@@ -3665,8 +3665,8 @@ function AUFTRAG:IsAircraft()
 end
 
 --- Check if mission is for airplanes.
--- @param #AUFTRAG self
--- @return #boolean If `true`, mission is for airplanes.
+--- @param #AUFTRAG self
+--- @return #boolean If `true`, mission is for airplanes.
 function AUFTRAG:IsAirplane()
   for _,category in pairs(self.categories) do
     if category==AUFTRAG.Category.AIRPLANE then
@@ -3677,8 +3677,8 @@ function AUFTRAG:IsAirplane()
 end
 
 --- Check if mission is for helicopters.
--- @param #AUFTRAG self
--- @return #boolean If `true`, mission is for helicopters.
+--- @param #AUFTRAG self
+--- @return #boolean If `true`, mission is for helicopters.
 function AUFTRAG:IsHelicopters()
   for _,category in pairs(self.categories) do
     if category==AUFTRAG.Category.HELICOPTER then
@@ -3689,8 +3689,8 @@ function AUFTRAG:IsHelicopters()
 end
 
 --- Check if mission is for ground units.
--- @param #AUFTRAG self
--- @return #boolean If `true`, mission is for ground units.
+--- @param #AUFTRAG self
+--- @return #boolean If `true`, mission is for ground units.
 function AUFTRAG:IsGround()
   for _,category in pairs(self.categories) do
     if category==AUFTRAG.Category.GROUND then
@@ -3701,8 +3701,8 @@ function AUFTRAG:IsGround()
 end
 
 --- Check if mission is for naval units.
--- @param #AUFTRAG self
--- @return #boolean If `true`, mission is for naval units.
+--- @param #AUFTRAG self
+--- @return #boolean If `true`, mission is for naval units.
 function AUFTRAG:IsNaval()
   for _,category in pairs(self.categories) do
     if category==AUFTRAG.Category.NAVAL then
@@ -3717,8 +3717,8 @@ end
 -- * Mission start time passed.
 -- * Mission stop time did not pass already.
 -- * All start conditions are true.
--- @param #AUFTRAG self
--- @return #boolean If true, mission can be started.
+--- @param #AUFTRAG self
+--- @return #boolean If true, mission can be started.
 function AUFTRAG:IsReadyToGo()
 
   local Tnow=timer.getAbsTime()
@@ -3748,8 +3748,8 @@ end
 --- Check if mission is ready to be started.
 -- * Mission stop already passed.
 -- * Any stop condition is true.
--- @param #AUFTRAG self
--- @return #boolean If true, mission should be cancelled.
+--- @param #AUFTRAG self
+--- @return #boolean If true, mission should be cancelled.
 function AUFTRAG:IsReadyToCancel()
 
   local Tnow=timer.getAbsTime()
@@ -3782,8 +3782,8 @@ end
 --- Check if mission is ready to be pushed.
 -- * Mission push time already passed.
 -- * **All** push conditions are true.
--- @param #AUFTRAG self
--- @return #boolean If true, mission groups can push.
+--- @param #AUFTRAG self
+--- @return #boolean If true, mission groups can push.
 function AUFTRAG:IsReadyToPush()
 
   local Tnow=timer.getAbsTime()
@@ -3800,9 +3800,9 @@ function AUFTRAG:IsReadyToPush()
 end
 
 --- Check if all given condition are true.
--- @param #AUFTRAG self
--- @param #table Conditions Table of conditions.
--- @return #boolean If true, all conditions were true. Returns false if at least one condition returned false.
+--- @param #AUFTRAG self
+--- @param #table Conditions Table of conditions.
+--- @return #boolean If true, all conditions were true. Returns false if at least one condition returned false.
 function AUFTRAG:EvalConditionsAll(Conditions)
 
   -- Any stop condition must be true.
@@ -3825,9 +3825,9 @@ end
 
 
 --- Check if any of the given conditions is true.
--- @param #AUFTRAG self
--- @param #table Conditions Table of conditions.
--- @return #boolean If true, at least one condition is true.
+--- @param #AUFTRAG self
+--- @param #table Conditions Table of conditions.
+--- @return #boolean If true, at least one condition is true.
 function AUFTRAG:EvalConditionsAny(Conditions)
 
   -- Any stop condition must be true.
@@ -3853,10 +3853,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "Status" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AUFTRAG:onafterStatus(From, Event, To)
 
   -- Current abs. mission time.
@@ -4022,8 +4022,8 @@ function AUFTRAG:onafterStatus(From, Event, To)
 end
 
 --- Evaluate mission outcome - success or failure.
--- @param #AUFTRAG self
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @return #AUFTRAG self
 function AUFTRAG:Evaluate()
 
   -- Assume success and check if any failed condition applies.
@@ -4154,8 +4154,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get all OPS groups.
--- @param #AUFTRAG self
--- @return #table Table of Ops.OpsGroup#OPSGROUP or {}.
+--- @param #AUFTRAG self
+--- @return #table Table of Ops.OpsGroup#OPSGROUP or {}.
 function AUFTRAG:GetOpsGroups()
   local opsgroups={}
   for _,_groupdata in pairs(self.groupdata or {}) do
@@ -4166,17 +4166,17 @@ function AUFTRAG:GetOpsGroups()
 end
 
 --- Get asset data table.
--- @param #AUFTRAG self
--- @param #string AssetName Name of the asset.
--- @return #AUFTRAG.GroupData Group data or *nil* if OPS group does not exist.
+--- @param #AUFTRAG self
+--- @param #string AssetName Name of the asset.
+--- @return #AUFTRAG.GroupData Group data or *nil* if OPS group does not exist.
 function AUFTRAG:GetAssetDataByName(AssetName)
   return self.groupdata[tostring(AssetName)]
 end
 
 --- Get flight data table.
--- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
--- @return #AUFTRAG.GroupData Flight data or nil if opsgroup does not exist.
+--- @param #AUFTRAG self
+--- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
+--- @return #AUFTRAG.GroupData Flight data or nil if opsgroup does not exist.
 function AUFTRAG:GetGroupData(opsgroup)
   if opsgroup and self.groupdata then
     return self.groupdata[opsgroup.groupname]
@@ -4185,10 +4185,10 @@ function AUFTRAG:GetGroupData(opsgroup)
 end
 
 --- Set opsgroup mission status.
--- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
--- @param #string status New status.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
+--- @param #string status New status.
+--- @return #AUFTRAG self
 function AUFTRAG:SetGroupStatus(opsgroup, status)
 
   -- Current status.
@@ -4229,9 +4229,9 @@ function AUFTRAG:SetGroupStatus(opsgroup, status)
 end
 
 --- Get ops group mission status.
--- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
--- @return #string The group status.
+--- @param #AUFTRAG self
+--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
+--- @return #string The group status.
 function AUFTRAG:GetGroupStatus(opsgroup)
   self:T3(self.lid..string.format("Trying to get Flight status for flight group %s", opsgroup and opsgroup.groupname or "nil"))
 
@@ -4248,9 +4248,9 @@ function AUFTRAG:GetGroupStatus(opsgroup)
 end
 
 --- Add LEGION to mission.
--- @param #AUFTRAG self
--- @param Ops.Legion#LEGION Legion The legion.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.Legion#LEGION Legion The legion.
+--- @return #AUFTRAG self
 function AUFTRAG:AddLegion(Legion)
 
   -- Debug info.
@@ -4263,9 +4263,9 @@ function AUFTRAG:AddLegion(Legion)
 end
 
 --- Remove LEGION from mission.
--- @param #AUFTRAG self
--- @param Ops.Legion#LEGION Legion The legion.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.Legion#LEGION Legion The legion.
+--- @return #AUFTRAG self
 function AUFTRAG:RemoveLegion(Legion)
 
   -- Loop over legions
@@ -4291,10 +4291,10 @@ function AUFTRAG:RemoveLegion(Legion)
 end
 
 --- Set LEGION mission status.
--- @param #AUFTRAG self
--- @param Ops.Legion#LEGION Legion The legion.
--- @param #string Status New status.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.Legion#LEGION Legion The legion.
+--- @param #string Status New status.
+--- @return #AUFTRAG self
 function AUFTRAG:SetLegionStatus(Legion, Status)
 
   -- Old status
@@ -4310,9 +4310,9 @@ function AUFTRAG:SetLegionStatus(Legion, Status)
 end
 
 --- Get LEGION mission status.
--- @param #AUFTRAG self
--- @param Ops.Legion#LEGION Legion The legion.
--- @return #string status Current status.
+--- @param #AUFTRAG self
+--- @param Ops.Legion#LEGION Legion The legion.
+--- @return #string status Current status.
 function AUFTRAG:GetLegionStatus(Legion)
 
   -- New status.
@@ -4323,10 +4323,10 @@ end
 
 
 --- Set mission (ingress) waypoint coordinate for OPS group.
--- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
--- @param Core.Point#COORDINATE coordinate Waypoint Coordinate.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
+--- @param Core.Point#COORDINATE coordinate Waypoint Coordinate.
+--- @return #AUFTRAG self
 function AUFTRAG:SetGroupWaypointCoordinate(opsgroup, coordinate)
   local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
@@ -4336,9 +4336,9 @@ function AUFTRAG:SetGroupWaypointCoordinate(opsgroup, coordinate)
 end
 
 --- Get mission (ingress) waypoint coordinate of OPS group
--- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
--- @return Core.Point#COORDINATE Waypoint Coordinate.
+--- @param #AUFTRAG self
+--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
+--- @return Core.Point#COORDINATE Waypoint Coordinate.
 function AUFTRAG:GetGroupWaypointCoordinate(opsgroup)
   local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
@@ -4348,9 +4348,9 @@ end
 
 
 --- Set mission waypoint task for OPS group.
--- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
--- @param Ops.OpsGroup#OPSGROUP.Task task Waypoint task.
+--- @param #AUFTRAG self
+--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
+--- @param Ops.OpsGroup#OPSGROUP.Task task Waypoint task.
 function AUFTRAG:SetGroupWaypointTask(opsgroup, task)
   self:T2(self.lid..string.format("Setting waypoint task %s", task and task.description or "WTF"))
   local groupdata=self:GetGroupData(opsgroup)
@@ -4360,9 +4360,9 @@ function AUFTRAG:SetGroupWaypointTask(opsgroup, task)
 end
 
 --- Get mission waypoint task of OPS group.
--- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
--- @return Ops.OpsGroup#OPSGROUP.Task task Waypoint task. Waypoint task.
+--- @param #AUFTRAG self
+--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
+--- @return Ops.OpsGroup#OPSGROUP.Task task Waypoint task. Waypoint task.
 function AUFTRAG:GetGroupWaypointTask(opsgroup)
   local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
@@ -4371,10 +4371,10 @@ function AUFTRAG:GetGroupWaypointTask(opsgroup)
 end
 
 --- Set mission (ingress) waypoint UID for OPS group.
--- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
--- @param #number waypointindex Waypoint UID.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
+--- @param #number waypointindex Waypoint UID.
+--- @return #AUFTRAG self
 function AUFTRAG:SetGroupWaypointIndex(opsgroup, waypointindex)
   self:T2(self.lid..string.format("Setting Mission waypoint UID=%d", waypointindex))
   local groupdata=self:GetGroupData(opsgroup)
@@ -4385,9 +4385,9 @@ function AUFTRAG:SetGroupWaypointIndex(opsgroup, waypointindex)
 end
 
 --- Get mission (ingress) waypoint UID of OPS group.
--- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
--- @return #number Waypoint UID.
+--- @param #AUFTRAG self
+--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
+--- @return #number Waypoint UID.
 function AUFTRAG:GetGroupWaypointIndex(opsgroup)
   local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
@@ -4396,10 +4396,10 @@ function AUFTRAG:GetGroupWaypointIndex(opsgroup)
 end
 
 --- Set Egress waypoint UID for OPS group.
--- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
--- @param #number waypointindex Waypoint UID.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
+--- @param #number waypointindex Waypoint UID.
+--- @return #AUFTRAG self
 function AUFTRAG:SetGroupEgressWaypointUID(opsgroup, waypointindex)
   self:T2(self.lid..string.format("Setting Egress waypoint UID=%d", waypointindex))
   local groupdata=self:GetGroupData(opsgroup)
@@ -4410,9 +4410,9 @@ function AUFTRAG:SetGroupEgressWaypointUID(opsgroup, waypointindex)
 end
 
 --- Get Egress waypoint UID of OPS group.
--- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
--- @return #number Waypoint UID.
+--- @param #AUFTRAG self
+--- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
+--- @return #number Waypoint UID.
 function AUFTRAG:GetGroupEgressWaypointUID(opsgroup)
   local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
@@ -4421,8 +4421,8 @@ function AUFTRAG:GetGroupEgressWaypointUID(opsgroup)
 end
 
 --- Check if all groups are done with their mission (or dead).
--- @param #AUFTRAG self
--- @return #boolean If `true`, all groups are done with the mission.
+--- @param #AUFTRAG self
+--- @return #boolean If `true`, all groups are done with the mission.
 function AUFTRAG:CheckGroupsDone()
 
   -- Check status of all OPS groups.
@@ -4491,8 +4491,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Unit lost event.
--- @param #AUFTRAG self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #AUFTRAG self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function AUFTRAG:OnEventUnitLost(EventData)
 
   -- Check that this is the right group.
@@ -4518,20 +4518,20 @@ end
 
 
 --- On after "Planned" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AUFTRAG:onafterPlanned(From, Event, To)
   self.status=AUFTRAG.Status.PLANNED
   self:T(self.lid..string.format("New mission status=%s", self.status))
 end
 
 --- On after "Queue" event. Mission is added to the mission queue of a LEGION.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AUFTRAG:onafterQueued(From, Event, To, Airwing)
   self.status=AUFTRAG.Status.QUEUED
   self:T(self.lid..string.format("New mission status=%s", self.status))
@@ -4539,40 +4539,40 @@ end
 
 
 --- On after "Requested" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AUFTRAG:onafterRequested(From, Event, To)
   self.status=AUFTRAG.Status.REQUESTED
   self:T(self.lid..string.format("New mission status=%s", self.status))
 end
 
 --- On after "Assign" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AUFTRAG:onafterAssign(From, Event, To)
   self.status=AUFTRAG.Status.ASSIGNED
   self:T(self.lid..string.format("New mission status=%s", self.status))
 end
 
 --- On after "Schedule" event. Mission is added to the mission queue of an OPSGROUP.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AUFTRAG:onafterScheduled(From, Event, To)
   self.status=AUFTRAG.Status.SCHEDULED
   self:T(self.lid..string.format("New mission status=%s", self.status))
 end
 
 --- On after "Start" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AUFTRAG:onafterStarted(From, Event, To)
   self.status=AUFTRAG.Status.STARTED
   self.Tstarted=timer.getAbsTime()
@@ -4580,10 +4580,10 @@ function AUFTRAG:onafterStarted(From, Event, To)
 end
 
 --- On after "Execute" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AUFTRAG:onafterExecuting(From, Event, To)
   self.status=AUFTRAG.Status.EXECUTING
   self.Texecuting=timer.getAbsTime()
@@ -4591,23 +4591,23 @@ function AUFTRAG:onafterExecuting(From, Event, To)
 end
 
 --- On after "ElementDestroyed" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP OpsGroup The ops group to which the element belongs.
--- @param Ops.OpsGroup#OPSGROUP.Element Element The element that got destroyed.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsGroup#OPSGROUP OpsGroup The ops group to which the element belongs.
+--- @param Ops.OpsGroup#OPSGROUP.Element Element The element that got destroyed.
 function AUFTRAG:onafterElementDestroyed(From, Event, To, OpsGroup, Element)
   -- Increase number of own casualties.
   self.Ncasualties=self.Ncasualties+1
 end
 
 --- On after "GroupDead" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP OpsGroup The ops group that is dead now.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsGroup#OPSGROUP OpsGroup The ops group that is dead now.
 function AUFTRAG:onafterGroupDead(From, Event, To, OpsGroup)
 
   local asset=self:GetAssetByName(OpsGroup.groupname)
@@ -4622,11 +4622,11 @@ function AUFTRAG:onafterGroupDead(From, Event, To, OpsGroup)
 end
 
 --- On after "AssetDead" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
 function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
 
   -- Number of groups alive.
@@ -4656,10 +4656,10 @@ function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
 end
 
 --- On after "Cancel" event. Cancells the mission.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AUFTRAG:onafterCancel(From, Event, To)
 
   -- Number of OPSGROUPS assigned and alive.
@@ -4731,10 +4731,10 @@ function AUFTRAG:onafterCancel(From, Event, To)
 end
 
 --- On after "Done" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AUFTRAG:onafterDone(From, Event, To)
   self.status=AUFTRAG.Status.DONE
   self:T(self.lid..string.format("New mission status=%s", self.status))
@@ -4789,10 +4789,10 @@ function AUFTRAG:onafterDone(From, Event, To)
 end
 
 --- On after "Success" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AUFTRAG:onafterSuccess(From, Event, To)
 
   self.status=AUFTRAG.Status.SUCCESS
@@ -4831,10 +4831,10 @@ function AUFTRAG:onafterSuccess(From, Event, To)
 end
 
 --- On after "Failed" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AUFTRAG:onafterFailed(From, Event, To)
 
   self.status=AUFTRAG.Status.FAILED
@@ -4873,10 +4873,10 @@ function AUFTRAG:onafterFailed(From, Event, To)
 end
 
 --- On before "Repeat" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AUFTRAG:onbeforeRepeat(From, Event, To)
 
   if not (self.chief or self.commander or #self.legions>0) then
@@ -4889,10 +4889,10 @@ function AUFTRAG:onbeforeRepeat(From, Event, To)
 end
 
 --- On after "Repeat" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AUFTRAG:onafterRepeat(From, Event, To)
 
   -- Set mission status to PLANNED.
@@ -4989,10 +4989,10 @@ function AUFTRAG:onafterRepeat(From, Event, To)
 end
 
 --- On after "Stop" event. Remove mission from LEGION and OPSGROUP mission queues.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AUFTRAG self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AUFTRAG:onafterStop(From, Event, To)
 
   -- Debug info.
@@ -5040,8 +5040,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create target data from a given object.
--- @param #AUFTRAG self
--- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC.
+--- @param #AUFTRAG self
+--- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC.
 function AUFTRAG:_TargetFromObject(Object)
 
   if not self.engageTarget then
@@ -5070,8 +5070,8 @@ end
 
 
 --- Count alive mission targets.
--- @param #AUFTRAG self
--- @return #number Number of alive target units.
+--- @param #AUFTRAG self
+--- @return #number Number of alive target units.
 function AUFTRAG:CountMissionTargets()
 
   local N=0
@@ -5087,8 +5087,8 @@ function AUFTRAG:CountMissionTargets()
 end
 
 --- Get initial number of targets.
--- @param #AUFTRAG self
--- @return #number Number of initial life points when mission was planned.
+--- @param #AUFTRAG self
+--- @return #number Number of initial life points when mission was planned.
 function AUFTRAG:GetTargetInitialNumber()
   local target=self:GetTargetData()
   if target then
@@ -5100,8 +5100,8 @@ end
 
 
 --- Get target life points.
--- @param #AUFTRAG self
--- @return #number Number of initial life points when mission was planned.
+--- @param #AUFTRAG self
+--- @return #number Number of initial life points when mission was planned.
 function AUFTRAG:GetTargetInitialLife()
   local target=self:GetTargetData()
   if target then
@@ -5112,8 +5112,8 @@ function AUFTRAG:GetTargetInitialLife()
 end
 
 --- Get target damage.
--- @param #AUFTRAG self
--- @return #number Damage in percent.
+--- @param #AUFTRAG self
+--- @return #number Damage in percent.
 function AUFTRAG:GetTargetDamage()
   local target=self:GetTargetData()
   if target then
@@ -5125,8 +5125,8 @@ end
 
 
 --- Get target life points.
--- @param #AUFTRAG self
--- @return #number Life points of target.
+--- @param #AUFTRAG self
+--- @return #number Life points of target.
 function AUFTRAG:GetTargetLife()
   local target=self:GetTargetData()
   if target then
@@ -5137,17 +5137,17 @@ function AUFTRAG:GetTargetLife()
 end
 
 --- Get target.
--- @param #AUFTRAG self
--- @return Ops.Target#TARGET The target object. Could be many things.
+--- @param #AUFTRAG self
+--- @return Ops.Target#TARGET The target object. Could be many things.
 function AUFTRAG:GetTargetData()
   return self.engageTarget
 end
 
 --- Get mission objective object. Could be many things depending on the mission type.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE RefCoordinate (Optional) Reference coordinate from which the closest target is determined.
--- @param #table Coalitions (Optional) Only consider targets of the given coalition(s). 
--- @return Wrapper.Positionable#POSITIONABLE The target object. Could be many things.
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE RefCoordinate (Optional) Reference coordinate from which the closest target is determined.
+--- @param #table Coalitions (Optional) Only consider targets of the given coalition(s). 
+--- @return Wrapper.Positionable#POSITIONABLE The target object. Could be many things.
 function AUFTRAG:GetObjective(RefCoordinate, Coalitions)
   
   local objective=self:GetTargetData():GetObject(RefCoordinate, Coalitions)
@@ -5156,8 +5156,8 @@ function AUFTRAG:GetObjective(RefCoordinate, Coalitions)
 end
 
 --- Get type of target.
--- @param #AUFTRAG self
--- @return #string The target type.
+--- @param #AUFTRAG self
+--- @return #string The target type.
 function AUFTRAG:GetTargetType()
   local target=self.engageTarget
   if target then
@@ -5173,8 +5173,8 @@ function AUFTRAG:GetTargetType()
 end
 
 --- Get 2D vector of target.
--- @param #AUFTRAG self
--- @return DCS#VEC2 The target 2D vector or *nil*.
+--- @param #AUFTRAG self
+--- @return DCS#VEC2 The target 2D vector or *nil*.
 function AUFTRAG:GetTargetVec2()
   local coord=self:GetTargetCoordinate()
   if coord then
@@ -5185,8 +5185,8 @@ function AUFTRAG:GetTargetVec2()
 end
 
 --- Get coordinate of target.
--- @param #AUFTRAG self
--- @return Core.Point#COORDINATE The target coordinate or *nil*.
+--- @param #AUFTRAG self
+--- @return Core.Point#COORDINATE The target coordinate or *nil*.
 function AUFTRAG:GetTargetCoordinate()
 
   if self.transportPickup then
@@ -5212,8 +5212,8 @@ function AUFTRAG:GetTargetCoordinate()
 end
 
 --- Get heading of target.
--- @param #AUFTRAG self
--- @return #number Heading of target in degrees.
+--- @param #AUFTRAG self
+--- @return #number Heading of target in degrees.
 function AUFTRAG:GetTargetHeading()
   if self.engageTarget then
     local heading=self.engageTarget:GetHeading()
@@ -5223,8 +5223,8 @@ function AUFTRAG:GetTargetHeading()
 end
 
 --- Get name of the target.
--- @param #AUFTRAG self
--- @return #string Name of the target or "N/A".
+--- @param #AUFTRAG self
+--- @return #string Name of the target or "N/A".
 function AUFTRAG:GetTargetName()
 
   if self.engageTarget then
@@ -5237,9 +5237,9 @@ end
 
 
 --- Get distance to target.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE FromCoord The coordinate from which the distance is measured.
--- @return #number Distance in meters or 0.
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE FromCoord The coordinate from which the distance is measured.
+--- @return #number Distance in meters or 0.
 function AUFTRAG:GetTargetDistance(FromCoord)
 
   local TargetCoord=self:GetTargetCoordinate()
@@ -5259,9 +5259,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Add asset to mission.
--- @param #AUFTRAG self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be added to the mission.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be added to the mission.
+--- @return #AUFTRAG self
 function AUFTRAG:AddAsset(Asset)
 
   -- Debug info
@@ -5281,9 +5281,9 @@ function AUFTRAG:AddAsset(Asset)
 end
 
 --- Add assets to mission.
--- @param #AUFTRAG self
--- @param #table Assets List of assets.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #table Assets List of assets.
+--- @return #AUFTRAG self
 function AUFTRAG:_AddAssets(Assets)
 
   for _,asset in pairs(Assets) do
@@ -5294,9 +5294,9 @@ function AUFTRAG:_AddAssets(Assets)
 end
 
 --- Delete asset from mission.
--- @param #AUFTRAG self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset  The asset to be removed.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset  The asset to be removed.
+--- @return #AUFTRAG self
 function AUFTRAG:DelAsset(Asset)
 
   for i,_asset in pairs(self.assets or {}) do
@@ -5314,9 +5314,9 @@ function AUFTRAG:DelAsset(Asset)
 end
 
 --- Get asset by its spawn group name.
--- @param #AUFTRAG self
--- @param #string Name Asset spawn group name.
--- @return Functional.Warehouse#WAREHOUSE.Assetitem Asset.
+--- @param #AUFTRAG self
+--- @param #string Name Asset spawn group name.
+--- @return Functional.Warehouse#WAREHOUSE.Assetitem Asset.
 function AUFTRAG:GetAssetByName(Name)
 
   for i,_asset in pairs(self.assets or {}) do
@@ -5332,8 +5332,8 @@ function AUFTRAG:GetAssetByName(Name)
 end
 
 --- Count alive OPS groups assigned for this mission.
--- @param #AUFTRAG self
--- @return #number Number of alive OPS groups.
+--- @param #AUFTRAG self
+--- @return #number Number of alive OPS groups.
 function AUFTRAG:CountOpsGroups()
   local N=0
   for _,_groupdata in pairs(self.groupdata) do
@@ -5346,9 +5346,9 @@ function AUFTRAG:CountOpsGroups()
 end
 
 --- Count OPS groups in a certain status.
--- @param #AUFTRAG self
--- @param #string Status Status of group, e.g. `AUFTRAG.GroupStatus.EXECUTING`.
--- @return #number Number of alive OPS groups.
+--- @param #AUFTRAG self
+--- @param #string Status Status of group, e.g. `AUFTRAG.GroupStatus.EXECUTING`.
+--- @return #number Number of alive OPS groups.
 function AUFTRAG:CountOpsGroupsInStatus(Status)
   local N=0
   for _,_groupdata in pairs(self.groupdata) do
@@ -5363,9 +5363,9 @@ end
 
 
 --- Get coordinate of target. First unit/group of the set is used.
--- @param #AUFTRAG self
--- @param #table MissionTypes A table of mission types.
--- @return #string Comma separated list of mission types.
+--- @param #AUFTRAG self
+--- @param #table MissionTypes A table of mission types.
+--- @return #string Comma separated list of mission types.
 function AUFTRAG:GetMissionTypesText(MissionTypes)
 
   local text=""
@@ -5377,9 +5377,9 @@ function AUFTRAG:GetMissionTypesText(MissionTypes)
 end
 
 --- Set the mission waypoint coordinate where the mission is executed. Note that altitude is set via `:SetMissionAltitude`.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Coordinate where the mission is executed.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE Coordinate Coordinate where the mission is executed.
+--- @return #AUFTRAG self
 function AUFTRAG:SetMissionWaypointCoord(Coordinate)
 
   -- Obviously a zone was passed. We get the coordinate.
@@ -5392,19 +5392,19 @@ function AUFTRAG:SetMissionWaypointCoord(Coordinate)
 end
 
 --- Set randomization of the mission waypoint coordinate. Each assigned group will get a random ingress coordinate, where the mission is executed.
--- @param #AUFTRAG self
--- @param #number Radius Distance in meters. Default `#nil`.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param #number Radius Distance in meters. Default `#nil`.
+--- @return #AUFTRAG self
 function AUFTRAG:SetMissionWaypointRandomization(Radius)
   self.missionWaypointRadius=Radius
   return self
 end
 
 --- Set the mission egress coordinate. This is the coordinate where the assigned group will go once the mission is finished.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Egrees coordinate.
--- @param #number Altitude (Optional) Altitude in feet. Default is y component of coordinate.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Core.Point#COORDINATE Coordinate Egrees coordinate.
+--- @param #number Altitude (Optional) Altitude in feet. Default is y component of coordinate.
+--- @return #AUFTRAG self
 function AUFTRAG:SetMissionEgressCoord(Coordinate, Altitude)
 
   -- Obviously a zone was passed. We get the coordinate.
@@ -5420,15 +5420,15 @@ function AUFTRAG:SetMissionEgressCoord(Coordinate, Altitude)
 end
 
 --- Get the mission egress coordinate if this was defined.
--- @param #AUFTRAG self
--- @return Core.Point#COORDINATE Coordinate Coordinate or nil.
+--- @param #AUFTRAG self
+--- @return Core.Point#COORDINATE Coordinate Coordinate or nil.
 function AUFTRAG:GetMissionEgressCoord()
   return self.missionEgressCoord
 end
 
 --- Get coordinate which was set as mission waypoint coordinate.
--- @param #AUFTRAG self
--- @return Core.Point#COORDINATE Coordinate where the mission is executed or `#nil`.
+--- @param #AUFTRAG self
+--- @return Core.Point#COORDINATE Coordinate where the mission is executed or `#nil`.
 function AUFTRAG:_GetMissionWaypointCoordSet()
 
   -- Check if a coord has been explicitly set.
@@ -5445,11 +5445,11 @@ function AUFTRAG:_GetMissionWaypointCoordSet()
 end
 
 --- Get coordinate of target. First unit/group of the set is used.
--- @param #AUFTRAG self
--- @param Wrapper.Group#GROUP group Group.
--- @param #number randomradius Random radius in meters.
--- @param #table surfacetypes Surface types of random zone.
--- @return Core.Point#COORDINATE Coordinate where the mission is executed.
+--- @param #AUFTRAG self
+--- @param Wrapper.Group#GROUP group Group.
+--- @param #number randomradius Random radius in meters.
+--- @param #table surfacetypes Surface types of random zone.
+--- @return Core.Point#COORDINATE Coordinate where the mission is executed.
 function AUFTRAG:GetMissionWaypointCoord(group, randomradius, surfacetypes)
 
   -- Check if a coord has been explicitly set.
@@ -5480,8 +5480,8 @@ end
 
 
 --- Set log ID string.
--- @param #AUFTRAG self
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @return #AUFTRAG self
 function AUFTRAG:_SetLogID()
   self.lid=string.format("Auftrag #%d %s | ", self.auftragsnummer, tostring(self.type))
   return self
@@ -5489,9 +5489,9 @@ end
 
 
 --- Get request ID from legion this mission requested assets from
--- @param #AUFTRAG self
--- @param Ops.Legion#LEGION Legion The legion from which to get the request ID.
--- @return #number Request ID (if any).
+--- @param #AUFTRAG self
+--- @param Ops.Legion#LEGION Legion The legion from which to get the request ID.
+--- @return #number Request ID (if any).
 function AUFTRAG:_GetRequestID(Legion)
 
   local requestid=nil
@@ -5512,9 +5512,9 @@ end
 
 
 --- Get request from legion this mission requested assets from.
--- @param #AUFTRAG self
--- @param Ops.Legion#LEGION Legion The legion from which to get the request ID.
--- @return Functional.Warehouse#WAREHOUSE.PendingItem Request.
+--- @param #AUFTRAG self
+--- @param Ops.Legion#LEGION Legion The legion from which to get the request ID.
+--- @return Functional.Warehouse#WAREHOUSE.PendingItem Request.
 function AUFTRAG:_GetRequest(Legion)
 
   local request=nil
@@ -5529,10 +5529,10 @@ function AUFTRAG:_GetRequest(Legion)
 end
 
 --- Set request ID from legion this mission requested assets from
--- @param #AUFTRAG self
--- @param Ops.Legion#LEGION Legion The legion from which to get the request ID.
--- @param #number RequestID Request ID.
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @param Ops.Legion#LEGION Legion The legion from which to get the request ID.
+--- @param #number RequestID Request ID.
+--- @return #AUFTRAG self
 function AUFTRAG:_SetRequestID(Legion, RequestID)
 
   local requestid=nil
@@ -5556,8 +5556,8 @@ end
 
 
 --- Update mission F10 map marker.
--- @param #AUFTRAG self
--- @return #AUFTRAG self
+--- @param #AUFTRAG self
+--- @return #AUFTRAG self
 function AUFTRAG:UpdateMarker()
 
   -- Marker text.
@@ -5589,8 +5589,8 @@ function AUFTRAG:UpdateMarker()
 end
 
 --- Get DCS task table for the given mission.
--- @param #AUFTRAG self
--- @return DCS#Task The DCS task table. If multiple tasks are necessary, this is returned as a combo task.
+--- @param #AUFTRAG self
+--- @return DCS#Task The DCS task table. If multiple tasks are necessary, this is returned as a combo task.
 function AUFTRAG:GetDCSMissionTask()
 
   local DCStasks={}
@@ -6277,10 +6277,10 @@ function AUFTRAG:GetDCSMissionTask()
 end
 
 --- Get DCS task table for an attack group or unit task.
--- @param #AUFTRAG self
--- @param Ops.Target#TARGET Target Target data.
--- @param #table DCStasks DCS DCS tasks table to which the task is added.
--- @return DCS#Task The DCS task table.
+--- @param #AUFTRAG self
+--- @param Ops.Target#TARGET Target Target data.
+--- @param #table DCStasks DCS DCS tasks table to which the task is added.
+--- @return DCS#Task The DCS task table.
 function AUFTRAG:_GetDCSAttackTask(Target, DCStasks)
 
   DCStasks=DCStasks or {}
@@ -6308,9 +6308,9 @@ function AUFTRAG:_GetDCSAttackTask(Target, DCStasks)
 end
 
 --- Get DCS task table for an attack group or unit task.
--- @param #AUFTRAG self
--- @param #string MissionType Mission (AUFTAG) type.
--- @return #string DCS mission task for the auftrag type.
+--- @param #AUFTRAG self
+--- @param #string MissionType Mission (AUFTAG) type.
+--- @return #string DCS mission task for the auftrag type.
 function AUFTRAG:GetMissionTaskforMissionType(MissionType)
 
   local mtask=ENUMS.MissionTask.NOTHING
@@ -6371,9 +6371,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Checks if a mission type is contained in a table of possible types.
--- @param #string MissionType The requested mission type.
--- @param #table PossibleTypes A table with possible mission types.
--- @return #boolean If true, the requested mission type is part of the possible mission types.
+--- @param #string MissionType The requested mission type.
+--- @param #table PossibleTypes A table with possible mission types.
+--- @return #boolean If true, the requested mission type is part of the possible mission types.
 function AUFTRAG.CheckMissionType(MissionType, PossibleTypes)
 
   if type(PossibleTypes)=="string" then
@@ -6390,10 +6390,10 @@ function AUFTRAG.CheckMissionType(MissionType, PossibleTypes)
 end
 
 --- Check if a mission type is contained in a list of possible capabilities.
--- @param #table MissionTypes The requested mission type. Can also be passed as a single mission type `#string`.
--- @param #table Capabilities A table with possible capabilities `Ops.Auftrag#AUFTRAG.Capability`.
--- @param #boolean All If `true`, given mission type must be includedin ALL capabilities. If `false` or `nil`, it must only match one.
--- @return #boolean If true, the requested mission type is part of the possible mission types.
+--- @param #table MissionTypes The requested mission type. Can also be passed as a single mission type `#string`.
+--- @param #table Capabilities A table with possible capabilities `Ops.Auftrag#AUFTRAG.Capability`.
+--- @param #boolean All If `true`, given mission type must be includedin ALL capabilities. If `false` or `nil`, it must only match one.
+--- @return #boolean If true, the requested mission type is part of the possible mission types.
 function AUFTRAG.CheckMissionCapability(MissionTypes, Capabilities, All)
 
   -- Ensure table.
@@ -6425,9 +6425,9 @@ end
 
 
 --- Check if a mission type is contained in a list of possible capabilities.
--- @param #table MissionTypes The requested mission type. Can also be passed as a single mission type `#string`.
--- @param #table Capabilities A table with possible capabilities `Ops.Auftrag#AUFTRAG.Capability`.
--- @return #boolean If true, the requested mission type is part of the possible mission types.
+--- @param #table MissionTypes The requested mission type. Can also be passed as a single mission type `#string`.
+--- @param #table Capabilities A table with possible capabilities `Ops.Auftrag#AUFTRAG.Capability`.
+--- @return #boolean If true, the requested mission type is part of the possible mission types.
 function AUFTRAG.CheckMissionCapabilityAny(MissionTypes, Capabilities)
 
   local res=AUFTRAG.CheckMissionCapability(MissionTypes, Capabilities, false)
@@ -6437,9 +6437,9 @@ end
 
 
 --- Check if a mission type is contained in a list of possible capabilities.
--- @param #table MissionTypes The requested mission type. Can also be passed as a single mission type `#string`.
--- @param #table Capabilities A table with possible capabilities `Ops.Auftrag#AUFTRAG.Capability`.
--- @return #boolean If true, the requested mission type is part of the possible mission types.
+--- @param #table MissionTypes The requested mission type. Can also be passed as a single mission type `#string`.
+--- @param #table Capabilities A table with possible capabilities `Ops.Auftrag#AUFTRAG.Capability`.
+--- @return #boolean If true, the requested mission type is part of the possible mission types.
 function AUFTRAG.CheckMissionCapabilityAll(MissionTypes, Capabilities)
 
   local res=AUFTRAG.CheckMissionCapability(MissionTypes, Capabilities, true)

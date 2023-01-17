@@ -31,9 +31,9 @@
 
 
 --- AI_BAI_ZONE class
--- @type AI_BAI_ZONE
--- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
--- @field Core.Zone#ZONE_BASE TargetZone The @{Core.Zone} where the patrol needs to be executed.
+--- @type AI_BAI_ZONE
+--- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
+--- @field Core.Zone#ZONE_BASE TargetZone The @{Core.Zone} where the patrol needs to be executed.
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
 --- Implements the core functions to provide BattleGround Air Interdiction in an Engage @{Core.Zone} by an AIR @{Wrapper.Controllable} or @{Wrapper.Group}.
@@ -133,7 +133,7 @@
 -- 
 -- ===
 -- 
--- @field #AI_BAI_ZONE
+--- @field #AI_BAI_ZONE
 AI_BAI_ZONE = {
   ClassName = "AI_BAI_ZONE",
 }
@@ -141,15 +141,15 @@ AI_BAI_ZONE = {
 
 
 --- Creates a new AI_BAI_ZONE object
--- @param #AI_BAI_ZONE self
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
--- @param Core.Zone#ZONE_BASE EngageZone The zone where the engage will happen.
--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
--- @return #AI_BAI_ZONE self
+--- @param #AI_BAI_ZONE self
+--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
+--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
+--- @param Core.Zone#ZONE_BASE EngageZone The zone where the engage will happen.
+--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
+--- @return #AI_BAI_ZONE self
 function AI_BAI_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone, PatrolAltType )
 
   -- Inherits from BASE
@@ -206,20 +206,20 @@ function AI_BAI_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
 
 --- OnLeave Transition Handler for State Engaging.
 -- @function [parent=#AI_BAI_ZONE] OnLeaveEngaging
--- @param #AI_BAI_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @return #boolean Return false to cancel Transition.
+--- @param #AI_BAI_ZONE self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @return #boolean Return false to cancel Transition.
 
 --- OnEnter Transition Handler for State Engaging.
 -- @function [parent=#AI_BAI_ZONE] OnEnterEngaging
--- @param #AI_BAI_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_BAI_ZONE self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 
   self:AddTransition( "Engaging", "Target", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_BAI_ZONE.
 
@@ -341,9 +341,9 @@ end
 
 
 --- Set the Engage Zone where the AI is performing BOMB. Note that if the EngageZone is changed, the AI needs to re-detect targets.
--- @param #AI_BAI_ZONE self
--- @param Core.Zone#ZONE EngageZone The zone where the AI is performing BOMB.
--- @return #AI_BAI_ZONE self
+--- @param #AI_BAI_ZONE self
+--- @param Core.Zone#ZONE EngageZone The zone where the AI is performing BOMB.
+--- @return #AI_BAI_ZONE self
 function AI_BAI_ZONE:SetEngageZone( EngageZone )
   self:F2()
 
@@ -357,8 +357,8 @@ end
 
 --- Specifies whether to search for potential targets in the zone, or let the center of the zone be the bombing coordinate.
 -- AI_BAI_ZONE will search for potential targets by default.
--- @param #AI_BAI_ZONE self
--- @return #AI_BAI_ZONE
+--- @param #AI_BAI_ZONE self
+--- @return #AI_BAI_ZONE
 function AI_BAI_ZONE:SearchOnOff( Search )
 
   self.Search = Search
@@ -367,8 +367,8 @@ function AI_BAI_ZONE:SearchOnOff( Search )
 end
 
 --- If Search is Off, the current zone coordinate will be the center of the bombing.
--- @param #AI_BAI_ZONE self
--- @return #AI_BAI_ZONE
+--- @param #AI_BAI_ZONE self
+--- @return #AI_BAI_ZONE
 function AI_BAI_ZONE:SearchOff()
 
   self:SearchOnOff( false )
@@ -378,8 +378,8 @@ end
 
 
 --- If Search is On, BAI will search for potential targets in the zone.
--- @param #AI_BAI_ZONE self
--- @return #AI_BAI_ZONE
+--- @param #AI_BAI_ZONE self
+--- @return #AI_BAI_ZONE
 function AI_BAI_ZONE:SearchOn()
 
   self:SearchOnOff( true )
@@ -389,11 +389,11 @@ end
 
 
 --- onafter State Transition for Event Start.
--- @param #AI_BAI_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_BAI_ZONE self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_BAI_ZONE:onafterStart( Controllable, From, Event, To )
 
   -- Call the parent Start event handler
@@ -413,10 +413,10 @@ end
 
 
 --- @param #AI_BAI_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_BAI_ZONE:onbeforeEngage( Controllable, From, Event, To )
   
   if self.Accomplished == true then
@@ -425,10 +425,10 @@ function AI_BAI_ZONE:onbeforeEngage( Controllable, From, Event, To )
 end
 
 --- @param #AI_BAI_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_BAI_ZONE:onafterTarget( Controllable, From, Event, To )
   self:F({"onafterTarget",self.Search,Controllable:IsAlive()})
   
@@ -474,25 +474,25 @@ end
 
 
 --- @param #AI_BAI_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_BAI_ZONE:onafterAbort( Controllable, From, Event, To )
   Controllable:ClearTasks()
   self:__Route( 1 )
 end
 
 --- @param #AI_BAI_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
--- @param DCS#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
--- @param DCS#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
--- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
--- @param DCS#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
+--- @param DCS#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
+--- @param DCS#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
+--- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+--- @param DCS#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 function AI_BAI_ZONE:onafterEngage( Controllable, From, Event, To, 
                                     EngageSpeed, 
                                     EngageAltitude, 
@@ -608,10 +608,10 @@ end
 
 
 --- @param #AI_BAI_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_BAI_ZONE:onafterAccomplish( Controllable, From, Event, To )
   self.Accomplished = true
   self:SetDetectionDeactivated()
@@ -619,11 +619,11 @@ end
 
 
 --- @param #AI_BAI_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @param Core.Event#EVENTDATA EventData
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @param Core.Event#EVENTDATA EventData
 function AI_BAI_ZONE:onafterDestroy( Controllable, From, Event, To, EventData )
 
   if EventData.IniUnit then
@@ -633,7 +633,7 @@ end
 
 
 --- @param #AI_BAI_ZONE self
--- @param Core.Event#EVENTDATA EventData
+--- @param Core.Event#EVENTDATA EventData
 function AI_BAI_ZONE:OnEventDead( EventData )
   self:F( { "EventDead", EventData } )
 

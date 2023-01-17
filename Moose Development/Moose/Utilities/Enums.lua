@@ -17,22 +17,31 @@
 -- @image MOOSE.JPG
 
 --- [DCS Enum world](https://wiki.hoggitworld.com/view/DCS_enum_world)
--- @type ENUMS
+--- @type ENUMS
 
 --- Because ENUMS are just better practice.
 -- 
 --  The ENUMS class adds some handy variables, which help you to make your code better and more general.
 --
--- @field #ENUMS
+--- @field #ENUMS
 ENUMS = {}
 
 --- Rules of Engagement.
+<<<<<<< Updated upstream
 -- @type ENUMS.ROE
--- @field #number WeaponFree [AIR] AI will engage any enemy group it detects. Target prioritization is based based on the threat of the target.
--- @field #number OpenFireWeaponFree [AIR] AI will engage any enemy group it detects, but will prioritize targets specified in the groups tasking.
--- @field #number OpenFire [AIR, GROUND, NAVAL] AI will engage only targets specified in its taskings.
--- @field #number ReturnFire [AIR, GROUND, NAVAL] AI will only engage threats that shoot first.
--- @field #number WeaponHold [AIR, GROUND, NAVAL] AI will hold fire under all circumstances.
+--- @field #number WeaponFree [AIR] AI will engage any enemy group it detects. Target prioritization is based based on the threat of the target.
+--- @field #number OpenFireWeaponFree [AIR] AI will engage any enemy group it detects, but will prioritize targets specified in the groups tasking.
+--- @field #number OpenFire [AIR, GROUND, NAVAL] AI will engage only targets specified in its taskings.
+--- @field #number ReturnFire [AIR, GROUND, NAVAL] AI will only engage threats that shoot first.
+--- @field #number WeaponHold [AIR, GROUND, NAVAL] AI will hold fire under all circumstances.
+=======
+--- @type ENUMS.ROE
+--- @field #number WeaponFree AI will engage any enemy group it detects. Target prioritization is based based on the threat of the target.
+--- @field #number OpenFireWeaponFree AI will engage any enemy group it detects, but will prioritize targets specified in the groups tasking.
+--- @field #number OpenFire AI will engage only targets specified in its taskings.
+--- @field #number ReturnFire AI will only engage threats that shoot first.
+--- @field #number WeaponHold AI will hold fire under all circumstances.
+>>>>>>> Stashed changes
 ENUMS.ROE = {
   WeaponFree=0,
   OpenFireWeaponFree=1,
@@ -42,12 +51,12 @@ ENUMS.ROE = {
   }
 
 --- Reaction On Threat.
--- @type ENUMS.ROT
--- @field #number NoReaction No defensive actions will take place to counter threats.
--- @field #number PassiveDefense AI will use jammers and other countermeasures in an attempt to defeat the threat. AI will not attempt a maneuver to defeat a threat.
--- @field #number EvadeFire AI will react by performing defensive maneuvers against incoming threats. AI will also use passive defense.
--- @field #number BypassAndEscape AI will attempt to avoid enemy threat zones all together. This includes attempting to fly above or around threats.
--- @field #number AllowAbortMission If a threat is deemed severe enough the AI will abort its mission and return to base.
+--- @type ENUMS.ROT
+--- @field #number NoReaction No defensive actions will take place to counter threats.
+--- @field #number PassiveDefense AI will use jammers and other countermeasures in an attempt to defeat the threat. AI will not attempt a maneuver to defeat a threat.
+--- @field #number EvadeFire AI will react by performing defensive maneuvers against incoming threats. AI will also use passive defense.
+--- @field #number BypassAndEscape AI will attempt to avoid enemy threat zones all together. This includes attempting to fly above or around threats.
+--- @field #number AllowAbortMission If a threat is deemed severe enough the AI will abort its mission and return to base.
 ENUMS.ROT = {
   NoReaction=0,
   PassiveDefense=1,
@@ -57,10 +66,10 @@ ENUMS.ROT = {
 }
 
 --- Alarm state.
--- @type ENUMS.AlarmState
--- @field #number Auto AI will automatically switch alarm states based on the presence of threats. The AI kind of cheats in this regard.
--- @field #number Green Group is not combat ready. Sensors are stowed if possible.
--- @field #number Red Group is combat ready and actively searching for targets. Some groups like infantry will not move in this state.
+--- @type ENUMS.AlarmState
+--- @field #number Auto AI will automatically switch alarm states based on the presence of threats. The AI kind of cheats in this regard.
+--- @field #number Green Group is not combat ready. Sensors are stowed if possible.
+--- @field #number Red Group is combat ready and actively searching for targets. Some groups like infantry will not move in this state.
 ENUMS.AlarmState = {
   Auto=0,
   Green=1,
@@ -68,7 +77,7 @@ ENUMS.AlarmState = {
 }
 
 --- Weapon types. See the [Weapon Flag](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag) enumerotor on hoggit wiki.
--- @type ENUMS.WeaponFlag
+--- @type ENUMS.WeaponFlag
 ENUMS.WeaponFlag={
   -- Bombs
   LGB                  =          2,
@@ -139,14 +148,14 @@ ENUMS.WeaponFlag={
 }
 
 --- Weapon types by category. See the [Weapon Flag](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag) enumerator on hoggit wiki.
--- @type ENUMS.WeaponType
--- @field #table Bomb Bombs.
--- @field #table Rocket Rocket.
--- @field #table Gun Guns.
--- @field #table Missile Missiles.
--- @field #table AAM Air-to-Air missiles.
--- @field #table Torpedo Torpedos.
--- @field #table Any Combinations.
+--- @type ENUMS.WeaponType
+--- @field #table Bomb Bombs.
+--- @field #table Rocket Rocket.
+--- @field #table Gun Guns.
+--- @field #table Missile Missiles.
+--- @field #table AAM Air-to-Air missiles.
+--- @field #table Torpedo Torpedos.
+--- @field #table Any Combinations.
 ENUMS.WeaponType={}
 ENUMS.WeaponType.Bomb={
   -- Bombs
@@ -226,23 +235,23 @@ ENUMS.WeaponType.Any={
 
 
 --- Mission tasks.
--- @type ENUMS.MissionTask
--- @field #string NOTHING No special task. Group can perform the minimal tasks: Orbit, Refuelling, Follow and Aerobatics.
--- @field #string AFAC Forward Air Controller Air. Can perform the tasks: Attack Group, Attack Unit, FAC assign group, Bombing, Attack Map Object.
--- @field #string ANTISHIPSTRIKE Naval ops. Can perform the tasks: Attack Group, Attack Unit.
--- @field #string AWACS AWACS.
--- @field #string CAP Combat Air Patrol.
--- @field #string CAS Close Air Support.
--- @field #string ESCORT Escort another group.
--- @field #string FIGHTERSWEEP Fighter sweep.
--- @field #string GROUNDATTACK Ground attack.
--- @field #string INTERCEPT Intercept.
--- @field #string PINPOINTSTRIKE Pinpoint strike.
--- @field #string RECONNAISSANCE Reconnaissance mission.
--- @field #string REFUELING Refueling mission.
--- @field #string RUNWAYATTACK Attack the runway of an airdrome.
--- @field #string SEAD Suppression of Enemy Air Defenses.
--- @field #string TRANSPORT Troop transport.
+--- @type ENUMS.MissionTask
+--- @field #string NOTHING No special task. Group can perform the minimal tasks: Orbit, Refuelling, Follow and Aerobatics.
+--- @field #string AFAC Forward Air Controller Air. Can perform the tasks: Attack Group, Attack Unit, FAC assign group, Bombing, Attack Map Object.
+--- @field #string ANTISHIPSTRIKE Naval ops. Can perform the tasks: Attack Group, Attack Unit.
+--- @field #string AWACS AWACS.
+--- @field #string CAP Combat Air Patrol.
+--- @field #string CAS Close Air Support.
+--- @field #string ESCORT Escort another group.
+--- @field #string FIGHTERSWEEP Fighter sweep.
+--- @field #string GROUNDATTACK Ground attack.
+--- @field #string INTERCEPT Intercept.
+--- @field #string PINPOINTSTRIKE Pinpoint strike.
+--- @field #string RECONNAISSANCE Reconnaissance mission.
+--- @field #string REFUELING Refueling mission.
+--- @field #string RUNWAYATTACK Attack the runway of an airdrome.
+--- @field #string SEAD Suppression of Enemy Air Defenses.
+--- @field #string TRANSPORT Troop transport.
 ENUMS.MissionTask={
   NOTHING="Nothing",
   AFAC="AFAC",
@@ -263,7 +272,7 @@ ENUMS.MissionTask={
 }
 
 --- Formations (new). See the [Formations](https://wiki.hoggitworld.com/view/DCS_enum_formation) on hoggit wiki.
--- @type ENUMS.Formation
+--- @type ENUMS.Formation
 ENUMS.Formation={}
 ENUMS.Formation.FixedWing={}
 ENUMS.Formation.FixedWing.LineAbreast={}
@@ -334,7 +343,7 @@ ENUMS.Formation.Vehicle.Diamond="Diamond"
 
 --- Formations (old). The old format is a simplified version of the new formation enums, which allow more sophisticated settings.
 -- See the [Formations](https://wiki.hoggitworld.com/view/DCS_enum_formation) on hoggit wiki.
--- @type ENUMS.FormationOld
+--- @type ENUMS.FormationOld
 ENUMS.FormationOld={}
 ENUMS.FormationOld.FixedWing={}
 ENUMS.FormationOld.FixedWing.LineAbreast=1
@@ -361,7 +370,7 @@ ENUMS.FormationOld.RotaryWing.Column=11
 -- 
 -- Pulses are separated by a blank character " ".
 -- 
--- @type ENUMS.Morse
+--- @type ENUMS.Morse
 ENUMS.Morse={}
 ENUMS.Morse.A="* -"
 ENUMS.Morse.B="- * * *"
@@ -403,7 +412,7 @@ ENUMS.Morse[" "]=" "
 
 --- ISO (639-1) 2-letter Language Codes. See the [Wikipedia](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
 -- 
--- @type ENUMS.ISOLang
+--- @type ENUMS.ISOLang
 ENUMS.ISOLang = 
 {
   Arabic    = 'AR',
@@ -419,7 +428,7 @@ ENUMS.ISOLang =
 
 --- Phonetic Alphabet (NATO). See the [Wikipedia](https://en.wikipedia.org/wiki/NATO_phonetic_alphabet).
 -- 
--- @type ENUMS.Phonetic
+--- @type ENUMS.Phonetic
 ENUMS.Phonetic =
 {
   A = 'Alpha',
@@ -453,7 +462,7 @@ ENUMS.Phonetic =
 --- Reporting Names (NATO). See the [Wikipedia](https://en.wikipedia.org/wiki/List_of_NATO_reporting_names_for_fighter_aircraft).
 -- DCS known aircraft types
 -- 
--- @type ENUMS.ReportingName
+--- @type ENUMS.ReportingName
 ENUMS.ReportingName =
 {
   NATO = {

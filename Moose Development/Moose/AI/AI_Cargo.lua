@@ -26,7 +26,7 @@
 --    * @{AI.AI_Cargo_Helicopter} - Cargo transportation using helicopters between zones.
 --    * @{AI.AI_Cargo_Airplane} - Cargo transportation using airplanes to and from airbases.
 --    
--- @field #AI_CARGO
+--- @field #AI_CARGO
 AI_CARGO = {
   ClassName = "AI_CARGO",
   Coordinate = nil, -- Core.Point#COORDINATE,
@@ -34,10 +34,10 @@ AI_CARGO = {
 }
 
 --- Creates a new AI_CARGO object.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier Cargo carrier group.
--- @param Core.Set#SET_CARGO CargoSet Set of cargo(s) to transport.
--- @return #AI_CARGO self
+--- @param #AI_CARGO self
+--- @param Wrapper.Group#GROUP Carrier Cargo carrier group.
+--- @param Core.Set#SET_CARGO CargoSet Set of cargo(s) to transport.
+--- @return #AI_CARGO self
 function AI_CARGO:New( Carrier, CargoSet )
 
   local self = BASE:Inherit( self, FSM_CONTROLLABLE:New( Carrier ) ) -- #AI_CARGO
@@ -180,15 +180,15 @@ end
 
 
 --- On after Pickup event.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP APC
--- @param From
--- @param Event
--- @param To
--- @param Core.Point#COORDINATE Coordinate of the pickup point.
--- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
--- @param #number Height Height in meters to move to the home coordinate.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
+--- @param #AI_CARGO self
+--- @param Wrapper.Group#GROUP APC
+--- @param From
+--- @param Event
+--- @param To
+--- @param Core.Point#COORDINATE Coordinate of the pickup point.
+--- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+--- @param #number Height Height in meters to move to the home coordinate.
+--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
 function AI_CARGO:onafterPickup( APC, From, Event, To, Coordinate, Speed, Height, PickupZone )
 
   self.Transporting = false
@@ -198,15 +198,15 @@ end
 
 
 --- On after Deploy event.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP APC
--- @param From
--- @param Event
--- @param To
--- @param Core.Point#COORDINATE Coordinate Deploy place.
--- @param #number Speed Speed in km/h to drive to the depoly coordinate. Default is 50% of max possible speed the unit can go.
--- @param #number Height Height in meters to move to the deploy coordinate.
--- @param Core.Zone#ZONE DeployZone The zone where the cargo will be deployed.
+--- @param #AI_CARGO self
+--- @param Wrapper.Group#GROUP APC
+--- @param From
+--- @param Event
+--- @param To
+--- @param Core.Point#COORDINATE Coordinate Deploy place.
+--- @param #number Speed Speed in km/h to drive to the depoly coordinate. Default is 50% of max possible speed the unit can go.
+--- @param #number Height Height in meters to move to the deploy coordinate.
+--- @param Core.Zone#ZONE DeployZone The zone where the cargo will be deployed.
 function AI_CARGO:onafterDeploy( APC, From, Event, To, Coordinate, Speed, Height, DeployZone )
 
   self.Relocating = false
@@ -215,12 +215,12 @@ function AI_CARGO:onafterDeploy( APC, From, Event, To, Coordinate, Speed, Height
 end
 
 --- On before Load event.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
+--- @param #AI_CARGO self
+--- @param Wrapper.Group#GROUP Carrier
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
 function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
   self:F( { Carrier, From, Event, To } )
 
@@ -311,12 +311,12 @@ end
 
 
 --- On before Reload event.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
+--- @param #AI_CARGO self
+--- @param Wrapper.Group#GROUP Carrier
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
 function AI_CARGO:onbeforeReload( Carrier, From, Event, To )
   self:F( { Carrier, From, Event, To } )
 
@@ -384,14 +384,14 @@ function AI_CARGO:onbeforeReload( Carrier, From, Event, To )
 end
 
 --- On after Board event.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Cargo.Cargo#CARGO Cargo Cargo object.
--- @param Wrapper.Unit#UNIT CarrierUnit
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
+--- @param #AI_CARGO self
+--- @param Wrapper.Group#GROUP Carrier
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Cargo.Cargo#CARGO Cargo Cargo object.
+--- @param Wrapper.Unit#UNIT CarrierUnit
+--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
 function AI_CARGO:onafterBoard( Carrier, From, Event, To, Cargo, CarrierUnit, PickupZone )
   self:F( { Carrier, From, Event, To, Cargo, CarrierUnit:GetName() } )
 
@@ -408,13 +408,13 @@ function AI_CARGO:onafterBoard( Carrier, From, Event, To, Cargo, CarrierUnit, Pi
 end
 
 --- On after Loaded event.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @return #boolean Cargo loaded.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
+--- @param #AI_CARGO self
+--- @param Wrapper.Group#GROUP Carrier
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @return #boolean Cargo loaded.
+--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
 function AI_CARGO:onafterLoaded( Carrier, From, Event, To, Cargo, PickupZone )
   self:F( { Carrier, From, Event, To } )
 
@@ -437,12 +437,12 @@ function AI_CARGO:onafterLoaded( Carrier, From, Event, To, Cargo, PickupZone )
 end
 
 --- On after PickedUp event.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
+--- @param #AI_CARGO self
+--- @param Wrapper.Group#GROUP Carrier
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
 function AI_CARGO:onafterPickedUp( Carrier, From, Event, To, PickupZone )
   self:F( { Carrier, From, Event, To } )
 
@@ -468,12 +468,12 @@ end
 
 
 --- On after Unload event.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+--- @param #AI_CARGO self
+--- @param Wrapper.Group#GROUP Carrier
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
 function AI_CARGO:onafterUnload( Carrier, From, Event, To, DeployZone, Defend )
   self:F( { Carrier, From, Event, To, DeployZone, Defend = Defend } )
 
@@ -501,13 +501,13 @@ function AI_CARGO:onafterUnload( Carrier, From, Event, To, DeployZone, Defend )
 end
 
 --- On after Unboard event.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string Cargo.Cargo#CARGO Cargo Cargo object.
--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+--- @param #AI_CARGO self
+--- @param Wrapper.Group#GROUP Carrier
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #string Cargo.Cargo#CARGO Cargo Cargo object.
+--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
 function AI_CARGO:onafterUnboard( Carrier, From, Event, To, Cargo, CarrierUnit, DeployZone, Defend )
   self:F( { Carrier, From, Event, To, Cargo:GetName(), DeployZone = DeployZone, Defend = Defend } )
 
@@ -523,14 +523,14 @@ function AI_CARGO:onafterUnboard( Carrier, From, Event, To, Cargo, CarrierUnit, 
 end
 
 --- On after Unloaded event.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string Cargo.Cargo#CARGO Cargo Cargo object.
--- @param #boolean Deployed Cargo is deployed.
--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+--- @param #AI_CARGO self
+--- @param Wrapper.Group#GROUP Carrier
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #string Cargo.Cargo#CARGO Cargo Cargo object.
+--- @param #boolean Deployed Cargo is deployed.
+--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
 function AI_CARGO:onafterUnloaded( Carrier, From, Event, To, Cargo, CarrierUnit, DeployZone, Defend )
   self:F( { Carrier, From, Event, To, Cargo:GetName(), DeployZone = DeployZone, Defend = Defend } )
 
@@ -564,13 +564,13 @@ function AI_CARGO:onafterUnloaded( Carrier, From, Event, To, Cargo, CarrierUnit,
 end
 
 --- On after Deployed event.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
--- @param #boolean Defend Defend for APCs.
+--- @param #AI_CARGO self
+--- @param Wrapper.Group#GROUP Carrier
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+--- @param #boolean Defend Defend for APCs.
 function AI_CARGO:onafterDeployed( Carrier, From, Event, To, DeployZone, Defend )
   self:F( { Carrier, From, Event, To, DeployZone = DeployZone, Defend = Defend } )
 

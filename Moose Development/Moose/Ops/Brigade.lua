@@ -22,12 +22,12 @@
 
 
 --- BRIGADE class.
--- @type BRIGADE
--- @field #string ClassName Name of the class.
--- @field #number verbose Verbosity of output.
--- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.SupplyZone`.
--- @field #table refuellingZones Refuelling zones. Each element is of type `#BRIGADE.SupplyZone`.
--- @field Core.Set#SET_ZONE retreatZones Retreat zone set.
+--- @type BRIGADE
+--- @field #string ClassName Name of the class.
+--- @field #number verbose Verbosity of output.
+--- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.SupplyZone`.
+--- @field #table refuellingZones Refuelling zones. Each element is of type `#BRIGADE.SupplyZone`.
+--- @field Core.Set#SET_ZONE retreatZones Retreat zone set.
 -- @extends Ops.Legion#LEGION
 
 --- *I am not afraid of an Army of lions lead by a sheep; I am afraid of sheep lead by a lion* -- Alexander the Great
@@ -39,7 +39,7 @@
 -- A BRIGADE consists of one or multiple PLATOONs. These platoons "live" in a WAREHOUSE that has a phyiscal struction (STATIC or UNIT) and can be captured or destroyed.
 --
 --
--- @field #BRIGADE
+--- @field #BRIGADE
 BRIGADE = {
   ClassName       = "BRIGADE",
   verbose         =     0,
@@ -48,14 +48,14 @@ BRIGADE = {
 }
 
 --- Supply Zone.
--- @type BRIGADE.SupplyZone
--- @field Core.Zone#ZONE zone The zone.
--- @field Ops.Auftrag#AUFTRAG mission Mission assigned to supply ammo or fuel.
--- @field #boolean markerOn If `true`, marker is on.
--- @field Wrapper.Marker#MARKER marker F10 marker.
+--- @type BRIGADE.SupplyZone
+--- @field Core.Zone#ZONE zone The zone.
+--- @field Ops.Auftrag#AUFTRAG mission Mission assigned to supply ammo or fuel.
+--- @field #boolean markerOn If `true`, marker is on.
+--- @field Wrapper.Marker#MARKER marker F10 marker.
 
 --- BRIGADE class version.
--- @field #string version
+--- @field #string version
 BRIGADE.version="0.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -72,10 +72,10 @@ BRIGADE.version="0.1.1"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new BRIGADE class object.
--- @param #BRIGADE self
--- @param #string WarehouseName Name of the warehouse STATIC or UNIT object representing the warehouse.
--- @param #string BrigadeName Name of the brigade.
--- @return #BRIGADE self
+--- @param #BRIGADE self
+--- @param #string WarehouseName Name of the warehouse STATIC or UNIT object representing the warehouse.
+--- @param #string BrigadeName Name of the brigade.
+--- @return #BRIGADE self
 function BRIGADE:New(WarehouseName, BrigadeName)
 
   -- Inherit everything from LEGION class.
@@ -158,9 +158,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Add a platoon to the brigade.
--- @param #BRIGADE self
--- @param Ops.Platoon#PLATOON Platoon The platoon object.
--- @return #BRIGADE self
+--- @param #BRIGADE self
+--- @param Ops.Platoon#PLATOON Platoon The platoon object.
+--- @return #BRIGADE self
 function BRIGADE:AddPlatoon(Platoon)
 
   -- Add platoon to brigade.
@@ -181,10 +181,10 @@ function BRIGADE:AddPlatoon(Platoon)
 end
 
 --- Add asset group(s) to platoon.
--- @param #BRIGADE self
--- @param Ops.Platoon#PLATOON Platoon The platoon object.
--- @param #number Nassets Number of asset groups to add.
--- @return #BRIGADE self
+--- @param #BRIGADE self
+--- @param Ops.Platoon#PLATOON Platoon The platoon object.
+--- @param #number Nassets Number of asset groups to add.
+--- @return #BRIGADE self
 function BRIGADE:AddAssetToPlatoon(Platoon, Nassets)
 
   if Platoon then
@@ -213,34 +213,34 @@ function BRIGADE:AddAssetToPlatoon(Platoon, Nassets)
 end
 
 --- Define a set of retreat zones.
--- @param #BRIGADE self
--- @param Core.Set#SET_ZONE RetreatZoneSet Set of retreat zones.
--- @return #BRIGADE self
+--- @param #BRIGADE self
+--- @param Core.Set#SET_ZONE RetreatZoneSet Set of retreat zones.
+--- @return #BRIGADE self
 function BRIGADE:SetRetreatZones(RetreatZoneSet)
   self.retreatZones=RetreatZoneSet or SET_ZONE:New()
   return self
 end
 
 --- Add a retreat zone.
--- @param #BRIGADE self
--- @param Core.Zone#ZONE RetreatZone Retreat zone.
--- @return #BRIGADE self
+--- @param #BRIGADE self
+--- @param Core.Zone#ZONE RetreatZone Retreat zone.
+--- @return #BRIGADE self
 function BRIGADE:AddRetreatZone(RetreatZone)
   self.retreatZones:AddZone(RetreatZone)
   return self
 end
 
 --- Get retreat zones.
--- @param #BRIGADE self
--- @return Core.Set#SET_ZONE Set of retreat zones.
+--- @param #BRIGADE self
+--- @return Core.Set#SET_ZONE Set of retreat zones.
 function BRIGADE:GetRetreatZones()
   return self.retreatZones
 end
 
 --- Add a rearming zone.
--- @param #BRIGADE self
--- @param Core.Zone#ZONE RearmingZone Rearming zone.
--- @return #BRIGADE.SupplyZone The rearming zone data.
+--- @param #BRIGADE self
+--- @param Core.Zone#ZONE RearmingZone Rearming zone.
+--- @return #BRIGADE.SupplyZone The rearming zone data.
 function BRIGADE:AddRearmingZone(RearmingZone)
 
   local rearmingzone={} --#BRIGADE.SupplyZone
@@ -256,9 +256,9 @@ end
 
 
 --- Add a refuelling zone.
--- @param #BRIGADE self
--- @param Core.Zone#ZONE RefuellingZone Refuelling zone.
--- @return #BRIGADE.SupplyZone The refuelling zone data.
+--- @param #BRIGADE self
+--- @param Core.Zone#ZONE RefuellingZone Refuelling zone.
+--- @return #BRIGADE.SupplyZone The refuelling zone data.
 function BRIGADE:AddRefuellingZone(RefuellingZone)
 
   local supplyzone={} --#BRIGADE.SupplyZone
@@ -274,26 +274,26 @@ end
 
 
 --- Get platoon by name.
--- @param #BRIGADE self
--- @param #string PlatoonName Name of the platoon.
--- @return Ops.Platoon#PLATOON The Platoon object.
+--- @param #BRIGADE self
+--- @param #string PlatoonName Name of the platoon.
+--- @return Ops.Platoon#PLATOON The Platoon object.
 function BRIGADE:GetPlatoon(PlatoonName)
   local platoon=self:_GetCohort(PlatoonName)
   return platoon
 end
 
 --- Get platoon of an asset.
--- @param #BRIGADE self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The platoon asset.
--- @return Ops.Platoon#PLATOON The platoon object.
+--- @param #BRIGADE self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The platoon asset.
+--- @return Ops.Platoon#PLATOON The platoon object.
 function BRIGADE:GetPlatoonOfAsset(Asset)
   local platoon=self:GetPlatoon(Asset.squadname)
   return platoon
 end
 
 --- Remove asset from platoon.
--- @param #BRIGADE self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The platoon asset.
+--- @param #BRIGADE self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The platoon asset.
 function BRIGADE:RemoveAssetFromPlatoon(Asset)
   local platoon=self:GetPlatoonOfAsset(Asset)
   if platoon then
@@ -303,10 +303,10 @@ end
 
 
 --- [ GROUND ] Function to load back an asset in the field that has been filed before.
--- @param #BRIGADE self
--- @param #string Templatename e.g."1 PzDv LogRg I\_AID-976" - that's the alias (name) of an platoon spawned as `"platoon - alias"_AID-"asset-ID"`
--- @param Core.Point#COORDINATE Position where to spawn the platoon
--- @return #BRIGADE self
+--- @param #BRIGADE self
+--- @param #string Templatename e.g."1 PzDv LogRg I\_AID-976" - that's the alias (name) of an platoon spawned as `"platoon - alias"_AID-"asset-ID"`
+--- @param Core.Point#COORDINATE Position where to spawn the platoon
+--- @return #BRIGADE self
 -- @usage
 -- Prerequisites:
 -- Save the assets spawned by BRIGADE/CHIEF regularly (~every 5 mins) into a file, e.g. like this: 
@@ -426,7 +426,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Start BRIGADE FSM.
--- @param #BRIGADE self
+--- @param #BRIGADE self
 function BRIGADE:onafterStart(From, Event, To)
 
   -- Start parent Warehouse.
@@ -438,7 +438,7 @@ function BRIGADE:onafterStart(From, Event, To)
 end
 
 --- Update status.
--- @param #BRIGADE self
+--- @param #BRIGADE self
 function BRIGADE:onafterStatus(From, Event, To)
 
   -- Status of parent Warehouse.
@@ -605,12 +605,12 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "ArmyOnMission".
--- @param #BRIGADE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.ArmyGroup#ARMYGROUP ArmyGroup Ops army group on mission.
--- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
+--- @param #BRIGADE self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.ArmyGroup#ARMYGROUP ArmyGroup Ops army group on mission.
+--- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
 function BRIGADE:onafterArmyOnMission(From, Event, To, ArmyGroup, Mission)
   -- Debug info.
   self:T(self.lid..string.format("Group %s on %s mission %s", ArmyGroup:GetName(), Mission:GetType(), Mission:GetName()))  

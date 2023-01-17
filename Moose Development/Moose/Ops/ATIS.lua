@@ -50,51 +50,51 @@
 -- @image OPS_ATIS.png
 
 --- ATIS class.
--- @type ATIS
--- @field #string ClassName Name of the class.
--- @field #string lid Class id string for output to DCS log file.
--- @field #string theatre DCS map name.
--- @field #string airbasename The name of the airbase.
--- @field Wrapper.Airbase#AIRBASE airbase The airbase object.
--- @field #number frequency Radio frequency in MHz.
--- @field #number modulation Radio modulation 0=AM or 1=FM.
--- @field #number power Radio power in Watts. Default 100 W.
--- @field Sound.RadioQueue#RADIOQUEUE radioqueue Radio queue for broadcasing messages.
--- @field #string soundpath Path to sound files.
--- @field #string relayunitname Name of the radio relay unit.
--- @field #table towerfrequency Table with tower frequencies.
--- @field #string activerunway The active runway specified by the user.
--- @field #number subduration Duration how long subtitles are displayed in seconds.
--- @field #boolean metric If true, use metric units. If false, use imperial (default).
--- @field #boolean PmmHg If true, give pressure in millimeters of Mercury. Default is inHg for imperial and hectopascal (hPa, which is the same as millibar - mbar) for metric units.
--- @field #boolean qnhonly If true, suppresses reporting QFE. Default is to report both QNH and QFE.
--- @field #boolean TDegF If true, give temperature in degrees Fahrenheit. Default is in degrees Celsius independent of chosen unit system.
--- @field #number zuludiff Time difference local vs. zulu in hours.
--- @field #boolean zulutimeonly If true, suppresses report of local time, sunrise, and sunset.
--- @field #number magvar Magnetic declination/variation at the airport in degrees.
--- @field #table ils Table of ILS frequencies (can be runway specific).
--- @field #table ndbinner Table of inner NDB frequencies (can be runway specific).
--- @field #table ndbouter Table of outer NDB frequencies (can be runway specific).
--- @field #number tacan TACAN channel.
--- @field #number vor VOR frequency.
--- @field #number rsbn RSBN channel.
--- @field #table prmg PRMG channels (can be runway specific).
--- @field #boolean rwylength If true, give info on runway length.
--- @field #boolean elevation If true, give info on airfield elevation.
--- @field #table runwaymag Table of magnetic runway headings.
--- @field #number runwaym2t Optional correction for magnetic to true runway heading conversion (and vice versa) in degrees.
--- @field #boolean windtrue Report true (from) heading of wind. Default is magnetic.
--- @field #boolean altimeterQNH Report altimeter QNH.
--- @field #boolean usemarker Use mark on the F10 map.
--- @field #number markerid Numerical ID of the F10 map mark point.
--- @field #number relHumidity Relative humidity (used to approximately calculate the dew point).
--- @field #boolean useSRS If true, use SRS for transmission.
--- @field Sound.SRS#MSRS msrs Moose SRS object.
--- @field #number dTQueueCheck Time interval to check the radio queue. Default 5 sec or 90 sec if SRS is used.
--- @field #boolean ReportmBar Report mBar/hpa even if not metric, i.e. for Mirage flights
--- @field #boolean TransmitOnlyWithPlayers For SRS - If true, only transmit if there are alive Players.
--- @field #string SRSText Text of the complete SRS message (if done at least once, else nil)
--- @field #boolean ATISforFARPs Will be set to true if the base given is a FARP/Helipad
+--- @type ATIS
+--- @field #string ClassName Name of the class.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #string theatre DCS map name.
+--- @field #string airbasename The name of the airbase.
+--- @field Wrapper.Airbase#AIRBASE airbase The airbase object.
+--- @field #number frequency Radio frequency in MHz.
+--- @field #number modulation Radio modulation 0=AM or 1=FM.
+--- @field #number power Radio power in Watts. Default 100 W.
+--- @field Sound.RadioQueue#RADIOQUEUE radioqueue Radio queue for broadcasing messages.
+--- @field #string soundpath Path to sound files.
+--- @field #string relayunitname Name of the radio relay unit.
+--- @field #table towerfrequency Table with tower frequencies.
+--- @field #string activerunway The active runway specified by the user.
+--- @field #number subduration Duration how long subtitles are displayed in seconds.
+--- @field #boolean metric If true, use metric units. If false, use imperial (default).
+--- @field #boolean PmmHg If true, give pressure in millimeters of Mercury. Default is inHg for imperial and hectopascal (hPa, which is the same as millibar - mbar) for metric units.
+--- @field #boolean qnhonly If true, suppresses reporting QFE. Default is to report both QNH and QFE.
+--- @field #boolean TDegF If true, give temperature in degrees Fahrenheit. Default is in degrees Celsius independent of chosen unit system.
+--- @field #number zuludiff Time difference local vs. zulu in hours.
+--- @field #boolean zulutimeonly If true, suppresses report of local time, sunrise, and sunset.
+--- @field #number magvar Magnetic declination/variation at the airport in degrees.
+--- @field #table ils Table of ILS frequencies (can be runway specific).
+--- @field #table ndbinner Table of inner NDB frequencies (can be runway specific).
+--- @field #table ndbouter Table of outer NDB frequencies (can be runway specific).
+--- @field #number tacan TACAN channel.
+--- @field #number vor VOR frequency.
+--- @field #number rsbn RSBN channel.
+--- @field #table prmg PRMG channels (can be runway specific).
+--- @field #boolean rwylength If true, give info on runway length.
+--- @field #boolean elevation If true, give info on airfield elevation.
+--- @field #table runwaymag Table of magnetic runway headings.
+--- @field #number runwaym2t Optional correction for magnetic to true runway heading conversion (and vice versa) in degrees.
+--- @field #boolean windtrue Report true (from) heading of wind. Default is magnetic.
+--- @field #boolean altimeterQNH Report altimeter QNH.
+--- @field #boolean usemarker Use mark on the F10 map.
+--- @field #number markerid Numerical ID of the F10 map mark point.
+--- @field #number relHumidity Relative humidity (used to approximately calculate the dew point).
+--- @field #boolean useSRS If true, use SRS for transmission.
+--- @field Sound.SRS#MSRS msrs Moose SRS object.
+--- @field #number dTQueueCheck Time interval to check the radio queue. Default 5 sec or 90 sec if SRS is used.
+--- @field #boolean ReportmBar Report mBar/hpa even if not metric, i.e. for Mirage flights
+--- @field #boolean TransmitOnlyWithPlayers For SRS - If true, only transmit if there are alive Players.
+--- @field #string SRSText Text of the complete SRS message (if done at least once, else nil)
+--- @field #boolean ATISforFARPs Will be set to true if the base given is a FARP/Helipad
 -- @extends Core.Fsm#FSM
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -324,7 +324,7 @@
 --      atis:SetAdditionalInformation("Welcome to the Jungle!")
 --      atis:__Start(3)
 --
--- @field #ATIS
+--- @field #ATIS
 ATIS = {
   ClassName      = "ATIS",
   lid            =   nil,
@@ -369,7 +369,7 @@ ATIS = {
 }
 
 --- NATO alphabet.
--- @type ATIS.Alphabet
+--- @type ATIS.Alphabet
 ATIS.Alphabet = {
   [1]  = "Alfa",
   [2]  = "Bravo",
@@ -402,14 +402,14 @@ ATIS.Alphabet = {
 }
 
 --- Runway correction for converting true to magnetic heading.
--- @type ATIS.RunwayM2T
--- @field #number Caucasus 0° (East).
--- @field #number Nevada +12° (East).
--- @field #number Normandy -10° (West).
--- @field #number PersianGulf +2° (East).
--- @field #number TheChannel -10° (West).
--- @field #number Syria +5° (East).
--- @field #number MarianaIslands +2° (East).
+--- @type ATIS.RunwayM2T
+--- @field #number Caucasus 0° (East).
+--- @field #number Nevada +12° (East).
+--- @field #number Normandy -10° (West).
+--- @field #number PersianGulf +2° (East).
+--- @field #number TheChannel -10° (West).
+--- @field #number Syria +5° (East).
+--- @field #number MarianaIslands +2° (East).
 ATIS.RunwayM2T = {
   Caucasus = 0,
   Nevada = 12,
@@ -421,14 +421,14 @@ ATIS.RunwayM2T = {
 }
 
 --- Whether ICAO phraseology is used for ATIS broadcasts.
--- @type ATIS.ICAOPhraseology
--- @field #boolean Caucasus true.
--- @field #boolean Nevada false.
--- @field #boolean Normandy true.
--- @field #boolean PersianGulf true.
--- @field #boolean TheChannel true.
--- @field #boolean Syria true.
--- @field #boolean MarianaIslands true.
+--- @type ATIS.ICAOPhraseology
+--- @field #boolean Caucasus true.
+--- @field #boolean Nevada false.
+--- @field #boolean Normandy true.
+--- @field #boolean PersianGulf true.
+--- @field #boolean TheChannel true.
+--- @field #boolean Syria true.
+--- @field #boolean MarianaIslands true.
 ATIS.ICAOPhraseology = {
   Caucasus = true,
   Nevada = false,
@@ -440,90 +440,90 @@ ATIS.ICAOPhraseology = {
 }
 
 --- Nav point data.
--- @type ATIS.NavPoint
--- @field #number frequency Nav point frequency.
--- @field #string runway Runway, *e.g.* "21".
--- @field #boolean leftright If true, runway has left "L" and right "R" runways.
+--- @type ATIS.NavPoint
+--- @field #number frequency Nav point frequency.
+--- @field #string runway Runway, *e.g.* "21".
+--- @field #boolean leftright If true, runway has left "L" and right "R" runways.
 
 --- Sound file data.
--- @type ATIS.Soundfile
--- @field #string filename Name of the file
--- @field #number duration Duration in seconds.
+--- @type ATIS.Soundfile
+--- @field #string filename Name of the file
+--- @field #number duration Duration in seconds.
 
 --- Sound files.
--- @type ATIS.Sound
--- @field #ATIS.Soundfile ActiveRunway
--- @field #ATIS.Soundfile AdviceOnInitial
--- @field #ATIS.Soundfile Airport
--- @field #ATIS.Soundfile Altimeter
--- @field #ATIS.Soundfile At
--- @field #ATIS.Soundfile CloudBase
--- @field #ATIS.Soundfile CloudCeiling
--- @field #ATIS.Soundfile CloudsBroken
--- @field #ATIS.Soundfile CloudsFew
--- @field #ATIS.Soundfile CloudsNo
--- @field #ATIS.Soundfile CloudsNotAvailable
--- @field #ATIS.Soundfile CloudsOvercast
--- @field #ATIS.Soundfile CloudsScattered
--- @field #ATIS.Soundfile Decimal
--- @field #ATIS.Soundfile DegreesCelsius
--- @field #ATIS.Soundfile DegreesFahrenheit
--- @field #ATIS.Soundfile DewPoint
--- @field #ATIS.Soundfile Dust
--- @field #ATIS.Soundfile Elevation
--- @field #ATIS.Soundfile EndOfInformation
--- @field #ATIS.Soundfile Feet
--- @field #ATIS.Soundfile Fog
--- @field #ATIS.Soundfile Gusting
--- @field #ATIS.Soundfile HectoPascal
--- @field #ATIS.Soundfile Hundred
--- @field #ATIS.Soundfile InchesOfMercury
--- @field #ATIS.Soundfile Information
--- @field #ATIS.Soundfile Kilometers
--- @field #ATIS.Soundfile Knots
--- @field #ATIS.Soundfile Left
--- @field #ATIS.Soundfile MegaHertz
--- @field #ATIS.Soundfile Meters
--- @field #ATIS.Soundfile MetersPerSecond
--- @field #ATIS.Soundfile Miles
--- @field #ATIS.Soundfile MillimetersOfMercury
--- @field #ATIS.Soundfile N0
--- @field #ATIS.Soundfile N1
--- @field #ATIS.Soundfile N2
--- @field #ATIS.Soundfile N3
--- @field #ATIS.Soundfile N4
--- @field #ATIS.Soundfile N5
--- @field #ATIS.Soundfile N6
--- @field #ATIS.Soundfile N7
--- @field #ATIS.Soundfile N8
--- @field #ATIS.Soundfile N9
--- @field #ATIS.Soundfile NauticalMiles
--- @field #ATIS.Soundfile None
--- @field #ATIS.Soundfile QFE
--- @field #ATIS.Soundfile QNH
--- @field #ATIS.Soundfile Rain
--- @field #ATIS.Soundfile Right
--- @field #ATIS.Soundfile Snow
--- @field #ATIS.Soundfile SnowStorm
--- @field #ATIS.Soundfile SunriseAt
--- @field #ATIS.Soundfile SunsetAt
--- @field #ATIS.Soundfile Temperature
--- @field #ATIS.Soundfile Thousand
--- @field #ATIS.Soundfile ThunderStorm
--- @field #ATIS.Soundfile TimeLocal
--- @field #ATIS.Soundfile TimeZulu
--- @field #ATIS.Soundfile TowerFrequency
--- @field #ATIS.Soundfile Visibilty
--- @field #ATIS.Soundfile WeatherPhenomena
--- @field #ATIS.Soundfile WindFrom
--- @field #ATIS.Soundfile ILSFrequency
--- @field #ATIS.Soundfile InnerNDBFrequency
--- @field #ATIS.Soundfile OuterNDBFrequency
--- @field #ATIS.Soundfile PRMGChannel
--- @field #ATIS.Soundfile RSBNChannel
--- @field #ATIS.Soundfile RunwayLength
--- @field #ATIS.Soundfile TACANChannel
--- @field #ATIS.Soundfile VORFrequency
+--- @type ATIS.Sound
+--- @field #ATIS.Soundfile ActiveRunway
+--- @field #ATIS.Soundfile AdviceOnInitial
+--- @field #ATIS.Soundfile Airport
+--- @field #ATIS.Soundfile Altimeter
+--- @field #ATIS.Soundfile At
+--- @field #ATIS.Soundfile CloudBase
+--- @field #ATIS.Soundfile CloudCeiling
+--- @field #ATIS.Soundfile CloudsBroken
+--- @field #ATIS.Soundfile CloudsFew
+--- @field #ATIS.Soundfile CloudsNo
+--- @field #ATIS.Soundfile CloudsNotAvailable
+--- @field #ATIS.Soundfile CloudsOvercast
+--- @field #ATIS.Soundfile CloudsScattered
+--- @field #ATIS.Soundfile Decimal
+--- @field #ATIS.Soundfile DegreesCelsius
+--- @field #ATIS.Soundfile DegreesFahrenheit
+--- @field #ATIS.Soundfile DewPoint
+--- @field #ATIS.Soundfile Dust
+--- @field #ATIS.Soundfile Elevation
+--- @field #ATIS.Soundfile EndOfInformation
+--- @field #ATIS.Soundfile Feet
+--- @field #ATIS.Soundfile Fog
+--- @field #ATIS.Soundfile Gusting
+--- @field #ATIS.Soundfile HectoPascal
+--- @field #ATIS.Soundfile Hundred
+--- @field #ATIS.Soundfile InchesOfMercury
+--- @field #ATIS.Soundfile Information
+--- @field #ATIS.Soundfile Kilometers
+--- @field #ATIS.Soundfile Knots
+--- @field #ATIS.Soundfile Left
+--- @field #ATIS.Soundfile MegaHertz
+--- @field #ATIS.Soundfile Meters
+--- @field #ATIS.Soundfile MetersPerSecond
+--- @field #ATIS.Soundfile Miles
+--- @field #ATIS.Soundfile MillimetersOfMercury
+--- @field #ATIS.Soundfile N0
+--- @field #ATIS.Soundfile N1
+--- @field #ATIS.Soundfile N2
+--- @field #ATIS.Soundfile N3
+--- @field #ATIS.Soundfile N4
+--- @field #ATIS.Soundfile N5
+--- @field #ATIS.Soundfile N6
+--- @field #ATIS.Soundfile N7
+--- @field #ATIS.Soundfile N8
+--- @field #ATIS.Soundfile N9
+--- @field #ATIS.Soundfile NauticalMiles
+--- @field #ATIS.Soundfile None
+--- @field #ATIS.Soundfile QFE
+--- @field #ATIS.Soundfile QNH
+--- @field #ATIS.Soundfile Rain
+--- @field #ATIS.Soundfile Right
+--- @field #ATIS.Soundfile Snow
+--- @field #ATIS.Soundfile SnowStorm
+--- @field #ATIS.Soundfile SunriseAt
+--- @field #ATIS.Soundfile SunsetAt
+--- @field #ATIS.Soundfile Temperature
+--- @field #ATIS.Soundfile Thousand
+--- @field #ATIS.Soundfile ThunderStorm
+--- @field #ATIS.Soundfile TimeLocal
+--- @field #ATIS.Soundfile TimeZulu
+--- @field #ATIS.Soundfile TowerFrequency
+--- @field #ATIS.Soundfile Visibilty
+--- @field #ATIS.Soundfile WeatherPhenomena
+--- @field #ATIS.Soundfile WindFrom
+--- @field #ATIS.Soundfile ILSFrequency
+--- @field #ATIS.Soundfile InnerNDBFrequency
+--- @field #ATIS.Soundfile OuterNDBFrequency
+--- @field #ATIS.Soundfile PRMGChannel
+--- @field #ATIS.Soundfile RSBNChannel
+--- @field #ATIS.Soundfile RunwayLength
+--- @field #ATIS.Soundfile TACANChannel
+--- @field #ATIS.Soundfile VORFrequency
 ATIS.Sound = {
   ActiveRunway = { filename = "ActiveRunway.ogg", duration = 0.99 },
   AdviceOnInitial = { filename = "AdviceOnInitial.ogg", duration = 3.00 },
@@ -603,11 +603,11 @@ ATIS.Sound = {
 }
 
 --- ATIS table containing all defined ATISes.
--- @field #table _ATIS
+--- @field #table _ATIS
 _ATIS = {}
 
 --- ATIS class version.
--- @field #string version
+--- @field #string version
 ATIS.version = "0.9.14"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -635,11 +635,11 @@ ATIS.version = "0.9.14"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new ATIS class object for a specific aircraft carrier unit.
--- @param #ATIS self
--- @param #string AirbaseName Name of the airbase.
--- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz.
--- @param #number Modulation Radio modulation: 0=AM, 1=FM. Default 0=AM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #string AirbaseName Name of the airbase.
+--- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz.
+--- @param #number Modulation Radio modulation: 0=AM, 1=FM. Default 0=AM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators.
+--- @return #ATIS self
 function ATIS:New(AirbaseName, Frequency, Modulation)
 
   -- Inherit everything from FSM class.
@@ -766,9 +766,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set sound files folder within miz file.
--- @param #ATIS self
--- @param #string path Path for sound files. Default "ATIS Soundfiles/". Mind the slash "/" at the end!
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #string path Path for sound files. Default "ATIS Soundfiles/". Mind the slash "/" at the end!
+--- @return #ATIS self
 function ATIS:SetSoundfilesPath( path )
   self.soundpath = tostring( path or "ATIS Soundfiles/" )
   self:T( self.lid .. string.format( "Setting sound files path to %s", self.soundpath ) )
@@ -777,9 +777,9 @@ end
 
 --- Set airborne unit (airplane or helicopter), used to transmit radio messages including subtitles.
 -- Best is to place the unit on a parking spot of the airbase and set it to *uncontrolled* in the mission editor.
--- @param #ATIS self
--- @param #string unitname Name of the unit.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #string unitname Name of the unit.
+--- @return #ATIS self
 function ATIS:SetRadioRelayUnitName( unitname )
   self.relayunitname = unitname
   self:T( self.lid .. string.format( "Setting radio relay unit to %s", self.relayunitname ) )
@@ -787,9 +787,9 @@ function ATIS:SetRadioRelayUnitName( unitname )
 end
 
 --- Set tower frequencies.
--- @param #ATIS self
--- @param #table freqs Table of frequencies in MHz. A single frequency can be given as a plain number (*i.e.* must not be table).
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #table freqs Table of frequencies in MHz. A single frequency can be given as a plain number (*i.e.* must not be table).
+--- @return #ATIS self
 function ATIS:SetTowerFrequencies( freqs )
   if type( freqs ) == "table" then
     -- nothing to do
@@ -801,9 +801,9 @@ function ATIS:SetTowerFrequencies( freqs )
 end
 
 --- For SRS - Switch to only transmit if there are players on the server.
--- @param #ATIS self
--- @param #boolean Switch If true, only send SRS if there are alive Players.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #boolean Switch If true, only send SRS if there are alive Players.
+--- @return #ATIS self
 function ATIS:SetTransmitOnlyWithPlayers(Switch)
   self.TransmitOnlyWithPlayers = Switch
   if self.msrsQ then
@@ -814,9 +814,9 @@ end
 
 --- Set active runway for **landing** operations. This can be used if the automatic runway determination via the wind direction gives incorrect results.
 -- For example, use this if there are two runways with the same directions.
--- @param #ATIS self
--- @param #string runway Active runway, *e.g.* "31L".
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #string runway Active runway, *e.g.* "31L".
+--- @return #ATIS self
 function ATIS:SetActiveRunway( runway )
   self.activerunway = tostring( runway )
   local prefer = nil
@@ -830,36 +830,36 @@ function ATIS:SetActiveRunway( runway )
 end
 
 --- Set the active runway for landing.
--- @param #ATIS self
--- @param #string runway : Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
--- @param #boolean preferleft : If true, perfer the left runway. If false, prefer the right runway. If nil (default), do not care about left or right.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #string runway : Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
+--- @param #boolean preferleft : If true, perfer the left runway. If false, prefer the right runway. If nil (default), do not care about left or right.
+--- @return #ATIS self
 function ATIS:SetActiveRunwayLanding(runway, preferleft)
   self.airbase:SetActiveRunwayLanding(runway,preferleft)
   return self
 end
 
 --- Set the active runway for take-off.
--- @param #ATIS self
--- @param #string runway : Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
--- @param #boolean preferleft : If true, perfer the left runway. If false, prefer the right runway. If nil (default), do not care about left or right.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #string runway : Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
+--- @param #boolean preferleft : If true, perfer the left runway. If false, prefer the right runway. If nil (default), do not care about left or right.
+--- @return #ATIS self
 function ATIS:SetActiveRunwayTakeoff(runway,preferleft)
   self.airbase:SetActiveRunwayTakeoff(runway,preferleft)
   return self
 end
 
 --- Give information on runway length.
--- @param #ATIS self
--- @return #ATIS self
+--- @param #ATIS self
+--- @return #ATIS self
 function ATIS:SetRunwayLength()
   self.rwylength = true
   return self
 end
 
 --- Give information on runway length.
--- @param #ATIS self
--- @return #ATIS self
+--- @param #ATIS self
+--- @return #ATIS self
 function ATIS:SetRunwayLength()
   self.rwylength=true
   return self
@@ -867,26 +867,26 @@ end
 
 
 --- Give information on airfield elevation
--- @param #ATIS self
--- @return #ATIS self
+--- @param #ATIS self
+--- @return #ATIS self
 function ATIS:SetElevation()
   self.elevation = true
   return self
 end
 
 --- Set radio power. Note that this only applies if no relay unit is used.
--- @param #ATIS self
--- @param #number power Radio power in Watts. Default 100 W.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #number power Radio power in Watts. Default 100 W.
+--- @return #ATIS self
 function ATIS:SetRadioPower( power )
   self.power = power or 100
   return self
 end
 
 --- Use F10 map mark points.
--- @param #ATIS self
--- @param #boolean switch If *true* or *nil*, marks are placed on F10 map. If *false* this feature is set to off (default).
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #boolean switch If *true* or *nil*, marks are placed on F10 map. If *false* this feature is set to off (default).
+--- @return #ATIS self
 function ATIS:SetMapMarks( switch )
   if switch == nil or switch == true then
     self.usemarker = true
@@ -897,16 +897,16 @@ function ATIS:SetMapMarks( switch )
 end
 
 --- Return the complete SRS Text block, if at least generated once. Else nil.
--- @param #ATIS self
--- @return #string SRSText
+--- @param #ATIS self
+--- @return #string SRSText
 function ATIS:GetSRSText()
   return self.SRSText
 end
 
 --- Set magnetic runway headings as depicted on the runway, *e.g.* "13" for 130° or "25L" for the left runway with magnetic heading 250°.
--- @param #ATIS self
--- @param #table headings Magnetic headings. Inverse (-180°) headings are added automatically. You only need to specify one heading per runway direction. "L"eft and "R" right can also be appended.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #table headings Magnetic headings. Inverse (-180°) headings are added automatically. You only need to specify one heading per runway direction. "L"eft and "R" right can also be appended.
+--- @return #ATIS self
 function ATIS:SetRunwayHeadingsMagnetic( headings )
 
   -- First make sure, we have a table.
@@ -953,25 +953,25 @@ function ATIS:SetRunwayHeadingsMagnetic( headings )
 end
 
 --- Set duration how long subtitles are displayed.
--- @param #ATIS self
--- @param #number duration Duration in seconds. Default 10 seconds.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #number duration Duration in seconds. Default 10 seconds.
+--- @return #ATIS self
 function ATIS:SetSubtitleDuration( duration )
   self.subduration = tonumber( duration or 10 )
   return self
 end
 
 --- Set unit system to metric units.
--- @param #ATIS self
--- @return #ATIS self
+--- @param #ATIS self
+--- @return #ATIS self
 function ATIS:SetMetricUnits()
   self.metric = true
   return self
 end
 
 --- Set unit system to imperial units.
--- @param #ATIS self
--- @return #ATIS self
+--- @param #ATIS self
+--- @return #ATIS self
 function ATIS:SetImperialUnits()
   self.metric = false
   return self
@@ -979,16 +979,16 @@ end
 
 --- Set pressure unit to millimeters of mercury (mmHg).
 -- Default is inHg for imperial and hPa (=mBar) for metric units.
--- @param #ATIS self
--- @return #ATIS self
+--- @param #ATIS self
+--- @return #ATIS self
 function ATIS:SetPressureMillimetersMercury()
   self.PmmHg = true
   return self
 end
 
 --- Set temperature to be given in degrees Fahrenheit.
--- @param #ATIS self
--- @return #ATIS self
+--- @param #ATIS self
+--- @return #ATIS self
 function ATIS:SetTemperatureFahrenheit()
   self.TDegF = true
   return self
@@ -996,18 +996,18 @@ end
 
 --- Set relative humidity. This is used to approximately calculate the dew point.
 -- Note that the dew point is only an artificial information as DCS does not have an atmospheric model that includes humidity (yet). 
--- @param #ATIS self
--- @param #number Humidity Relative Humidity, i.e. a number between 0 and 100 %. Default is 50 %. 
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #number Humidity Relative Humidity, i.e. a number between 0 and 100 %. Default is 50 %. 
+--- @return #ATIS self
 function ATIS:SetRelativeHumidity( Humidity )
   self.relHumidity = Humidity or 50
   return self
 end
 
 --- Report altimeter QNH.
--- @param #ATIS self
--- @param #boolean switch If true or nil, report altimeter QHN. If false, report QFF.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #boolean switch If true or nil, report altimeter QHN. If false, report QFF.
+--- @return #ATIS self
 function ATIS:SetAltimeterQNH( switch )
 
   if switch == true or switch == nil then
@@ -1020,9 +1020,9 @@ function ATIS:SetAltimeterQNH( switch )
 end
 
 --- Additionally report altimeter QNH/QFE in hPa, even if not set to metric.
--- @param #ATIS self
--- @param #boolean switch If true or nil, report mBar/hPa in addition.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #boolean switch If true or nil, report mBar/hPa in addition.
+--- @return #ATIS self
 function ATIS:SetReportmBar(switch)
   if switch == true or switch == nil then
     self.ReportmBar = true
@@ -1033,17 +1033,17 @@ function ATIS:SetReportmBar(switch)
 end
 
 --- Additionally report free text, only working with SRS(!)
--- @param #ATIS self
--- @param #string text The text to report at the end of the ATIS message, e.g. runway closure, warnings, etc.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #string text The text to report at the end of the ATIS message, e.g. runway closure, warnings, etc.
+--- @return #ATIS self
 function ATIS:SetAdditionalInformation(text)
   self.AdditionalInformation = text
   return self
 end
 
 --- Suppresses QFE readout. Default is to report both QNH and QFE.
--- @param #ATIS self
--- @return #ATIS self
+--- @param #ATIS self
+--- @return #ATIS self
 function ATIS:ReportQNHOnly()
   self.qnhonly = true
   return self
@@ -1071,26 +1071,26 @@ end
 -- 
 -- Or you make your life simple and just include the sign so you don't have to bother about East/West.
 --
--- @param #ATIS self
--- @param #number magvar Magnetic variation in degrees. Positive for easterly and negative for westerly variation. Default is magnatic declinaton of the used map, c.f. @{Utilities.Utils#UTILS.GetMagneticDeclination}.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #number magvar Magnetic variation in degrees. Positive for easterly and negative for westerly variation. Default is magnatic declinaton of the used map, c.f. @{Utilities.Utils#UTILS.GetMagneticDeclination}.
+--- @return #ATIS self
 function ATIS:SetMagneticDeclination( magvar )
   self.magvar = magvar or UTILS.GetMagneticDeclination()
   return self
 end
 
 --- Explicitly set correction of magnetic to true heading for runways.
--- @param #ATIS self
--- @param #number correction Correction of magnetic to true heading for runways in degrees.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #number correction Correction of magnetic to true heading for runways in degrees.
+--- @return #ATIS self
 function ATIS:SetRunwayCorrectionMagnetic2True( correction )
   self.runwaym2t = correction or ATIS.RunwayM2T[UTILS.GetDCSMap()]
   return self
 end
 
 --- Set wind direction (from) to be reported as *true* heading. Default is magnetic.
--- @param #ATIS self
--- @return #ATIS self
+--- @param #ATIS self
+--- @return #ATIS self
 function ATIS:SetReportWindTrue()
   self.windtrue = true
   return self
@@ -1105,27 +1105,27 @@ end
 --    * Persian Gulf +4
 --    * The Channel +2 (should be 0)
 --
--- @param #ATIS self
--- @param #number delta Time difference in hours.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #number delta Time difference in hours.
+--- @return #ATIS self
 function ATIS:SetZuluTimeDifference( delta )
   self.zuludiff = delta
   return self
 end
 
 --- Suppresses local time, sunrise, and sunset. Default is to report all these times.
--- @param #ATIS self
--- @return #ATIS self
+--- @param #ATIS self
+--- @return #ATIS self
 function ATIS:ReportZuluTimeOnly()
   self.zulutimeonly = true
   return self
 end
 
 --- Add ILS station. Note that this can be runway specific.
--- @param #ATIS self
--- @param #number frequency ILS frequency in MHz.
--- @param #string runway (Optional) Runway for which the given ILS frequency applies. Default all (*nil*).
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #number frequency ILS frequency in MHz.
+--- @param #string runway (Optional) Runway for which the given ILS frequency applies. Default all (*nil*).
+--- @return #ATIS self
 function ATIS:AddILS( frequency, runway )
   local ils = {} -- #ATIS.NavPoint
   ils.frequency = tonumber( frequency )
@@ -1135,19 +1135,19 @@ function ATIS:AddILS( frequency, runway )
 end
 
 --- Set VOR station.
--- @param #ATIS self
--- @param #number frequency VOR frequency.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #number frequency VOR frequency.
+--- @return #ATIS self
 function ATIS:SetVOR( frequency )
   self.vor = frequency
   return self
 end
 
 --- Add outer NDB. Note that this can be runway specific.
--- @param #ATIS self
--- @param #number frequency NDB frequency in MHz.
--- @param #string runway (Optional) Runway for which the given NDB frequency applies. Default all (*nil*).
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #number frequency NDB frequency in MHz.
+--- @param #string runway (Optional) Runway for which the given NDB frequency applies. Default all (*nil*).
+--- @return #ATIS self
 function ATIS:AddNDBouter( frequency, runway )
   local ndb = {} -- #ATIS.NavPoint
   ndb.frequency = tonumber( frequency )
@@ -1157,10 +1157,10 @@ function ATIS:AddNDBouter( frequency, runway )
 end
 
 --- Add inner NDB. Note that this can be runway specific.
--- @param #ATIS self
--- @param #number frequency NDB frequency in MHz.
--- @param #string runway (Optional) Runway for which the given NDB frequency applies. Default all (*nil*).
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #number frequency NDB frequency in MHz.
+--- @param #string runway (Optional) Runway for which the given NDB frequency applies. Default all (*nil*).
+--- @return #ATIS self
 function ATIS:AddNDBinner( frequency, runway )
   local ndb = {} -- #ATIS.NavPoint
   ndb.frequency = tonumber( frequency )
@@ -1170,28 +1170,28 @@ function ATIS:AddNDBinner( frequency, runway )
 end
 
 --- Set TACAN channel.
--- @param #ATIS self
--- @param #number channel TACAN channel.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #number channel TACAN channel.
+--- @return #ATIS self
 function ATIS:SetTACAN( channel )
   self.tacan = channel
   return self
 end
 
 --- Set RSBN channel.
--- @param #ATIS self
--- @param #number channel RSBN channel.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #number channel RSBN channel.
+--- @return #ATIS self
 function ATIS:SetRSBN( channel )
   self.rsbn = channel
   return self
 end
 
 --- Add PRMG channel. Note that this can be runway specific.
--- @param #ATIS self
--- @param #number channel PRMG channel.
--- @param #string runway (Optional) Runway for which the given PRMG channel applies. Default all (*nil*).
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #number channel PRMG channel.
+--- @param #string runway (Optional) Runway for which the given PRMG channel applies. Default all (*nil*).
+--- @return #ATIS self
 function ATIS:AddPRMG( channel, runway )
   local ndb = {} -- #ATIS.NavPoint
   ndb.frequency = tonumber( channel )
@@ -1201,8 +1201,8 @@ function ATIS:AddPRMG( channel, runway )
 end
 
 --- Place marks with runway data on the F10 map.
--- @param #ATIS self
--- @param #boolean markall If true, mark all runways of the map. By default only the current ATIS runways are marked.
+--- @param #ATIS self
+--- @param #boolean markall If true, mark all runways of the map. By default only the current ATIS runways are marked.
 function ATIS:MarkRunways( markall )
   local airbases = AIRBASE.GetAllAirbases()
   for _, _airbase in pairs( airbases ) do
@@ -1214,14 +1214,14 @@ function ATIS:MarkRunways( markall )
 end
 
 --- Use SRS Simple-Text-To-Speech for transmissions. No sound files necessary.
--- @param #ATIS self
--- @param #string PathToSRS Path to SRS directory.
--- @param #string Gender Gender: "male" or "female" (default).
--- @param #string Culture Culture, e.g. "en-GB" (default).
--- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
--- @param #number Port SRS port. Default 5002.
--- @param #string GoogleKey Path to Google JSON-Key.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #string PathToSRS Path to SRS directory.
+--- @param #string Gender Gender: "male" or "female" (default).
+--- @param #string Culture Culture, e.g. "en-GB" (default).
+--- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
+--- @param #number Port SRS port. Default 5002.
+--- @param #string GoogleKey Path to Google JSON-Key.
+--- @return #ATIS self
 function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey)
   if PathToSRS then
     self.useSRS=true
@@ -1245,16 +1245,16 @@ function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey)
 end
 
 --- Set the time interval between radio queue updates.
--- @param #ATIS self
--- @param #number TimeInterval Interval in seconds. Default 5 sec.
--- @return #ATIS self
+--- @param #ATIS self
+--- @param #number TimeInterval Interval in seconds. Default 5 sec.
+--- @return #ATIS self
 function ATIS:SetQueueUpdateTime( TimeInterval )
   self.dTQueueCheck = TimeInterval or 5
 end
 
 --- Get the coalition of the associated airbase.
--- @param #ATIS self
--- @return #number Coalition of the associcated airbase.
+--- @param #ATIS self
+--- @return #number Coalition of the associcated airbase.
 function ATIS:GetCoalition()
   local coal = self.airbase and self.airbase:GetCoalition() or nil
   return coal
@@ -1265,10 +1265,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Start ATIS FSM.
--- @param #ATIS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #ATIS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function ATIS:onafterStart( From, Event, To )
 
   -- Check that this is an airdrome.
@@ -1326,10 +1326,10 @@ function ATIS:onafterStart( From, Event, To )
 end
 
 --- Update status.
--- @param #ATIS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #ATIS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function ATIS:onafterStatus( From, Event, To )
 
   -- Get FSM state.
@@ -1362,10 +1362,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check if radio queue is empty. If so, start broadcasting the message again.
--- @param #ATIS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #ATIS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function ATIS:onafterCheckQueue( From, Event, To )
 
   if self.useSRS then
@@ -1390,10 +1390,10 @@ function ATIS:onafterCheckQueue( From, Event, To )
 end
 
 --- Broadcast ATIS radio message.
--- @param #ATIS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #ATIS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function ATIS:onafterBroadcast( From, Event, To )
 
   -- Get current coordinate.
@@ -2395,11 +2395,11 @@ function ATIS:onafterBroadcast( From, Event, To )
 end
 
 --- Text report of ATIS information. Information delimitor is a semicolon ";" and a line break "\n".
--- @param #ATIS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string Text Report text.
+--- @param #ATIS self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #string Text Report text.
 function ATIS:onafterReport( From, Event, To, Text )
   self:T( self.lid .. string.format( "Report:\n%s", Text ) )
 
@@ -2440,8 +2440,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Base captured
--- @param #ATIS self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #ATIS self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function ATIS:OnEventBaseCaptured( EventData )
 
   if EventData and EventData.Place then
@@ -2470,13 +2470,13 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Update F10 map marker.
--- @param #ATIS self
--- @param #string information Information tag text.
--- @param #string runact Active runway text.
--- @param #string wind Wind text.
--- @param #string altimeter Altimeter text.
--- @param #string temperature Temperature text.
--- @return #number Marker ID.
+--- @param #ATIS self
+--- @param #string information Information tag text.
+--- @param #string runact Active runway text.
+--- @param #string wind Wind text.
+--- @param #string altimeter Altimeter text.
+--- @param #string temperature Temperature text.
+--- @return #number Marker ID.
 function ATIS:UpdateMarker( information, runact, wind, altimeter, temperature )
 
   if self.markerid then
@@ -2497,10 +2497,10 @@ function ATIS:UpdateMarker( information, runact, wind, altimeter, temperature )
 end
 
 --- Get active runway runway.
--- @param #ATIS self
--- @param #boolean Takeoff If `true`, get runway for takeoff. Default is for landing.
--- @return #string Active runway, e.g. "31" for 310 deg.
--- @return #boolean Use Left=true, Right=false, or nil.
+--- @param #ATIS self
+--- @param #boolean Takeoff If `true`, get runway for takeoff. Default is for landing.
+--- @return #string Active runway, e.g. "31" for 310 deg.
+--- @return #boolean Use Left=true, Right=false, or nil.
 function ATIS:GetActiveRunway(Takeoff)
   
   local runway=nil --Wrapper.Airbase#AIRBASE.Runway
@@ -2514,9 +2514,9 @@ function ATIS:GetActiveRunway(Takeoff)
 end
 
 --- Get runway from user supplied magnetic heading.
--- @param #ATIS self
--- @param #number windfrom Wind direction (from) in degrees.
--- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130°.
+--- @param #ATIS self
+--- @param #number windfrom Wind direction (from) in degrees.
+--- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130°.
 function ATIS:GetMagneticRunway( windfrom )
 
   local diffmin = nil
@@ -2537,11 +2537,11 @@ function ATIS:GetMagneticRunway( windfrom )
 end
 
 --- Get nav aid data.
--- @param #ATIS self
--- @param #table navpoints Nav points data table.
--- @param #string runway (Active) runway, *e.g.* "31".
--- @param #boolean left If *true*, left runway, if *false, right, else does not matter.
--- @return #ATIS.NavPoint Nav point data table.
+--- @param #ATIS self
+--- @param #table navpoints Nav points data table.
+--- @param #string runway (Active) runway, *e.g.* "31".
+--- @param #boolean left If *true*, left runway, if *false, right, else does not matter.
+--- @return #ATIS.NavPoint Nav point data table.
 function ATIS:GetNavPoint( navpoints, runway, left )
 
   -- Loop over all defined nav aids.
@@ -2571,9 +2571,9 @@ function ATIS:GetNavPoint( navpoints, runway, left )
 end
 
 --- Get runway heading without left or right info.
--- @param #ATIS self
--- @param #string runway Runway heading, *e.g.* "31L".
--- @return #string Runway heading without left or right, *e.g.* "31".
+--- @param #ATIS self
+--- @param #string runway Runway heading, *e.g.* "31L".
+--- @return #string Runway heading without left or right, *e.g.* "31".
 function ATIS:GetRunwayWithoutLR( runway )
   local rwywo = runway:gsub( "%D+", "" )
   -- self:T(string.format("FF runway=%s ==> rwywo=%s", runway, rwywo))
@@ -2581,9 +2581,9 @@ function ATIS:GetRunwayWithoutLR( runway )
 end
 
 --- Get info if left or right runway is active.
--- @param #ATIS self
--- @param #string runway Runway heading, *e.g.* "31L".
--- @return #boolean If *true*, left runway is active. If *false*, right runway. If *nil*, neither applies.
+--- @param #ATIS self
+--- @param #string runway Runway heading, *e.g.* "31L".
+--- @return #boolean If *true*, left runway is active. If *false*, right runway. If *nil*, neither applies.
 function ATIS:GetRunwayLR( runway )
 
   -- Get left/right if specified.
@@ -2601,17 +2601,17 @@ function ATIS:GetRunwayLR( runway )
 end
 
 --- Transmission via RADIOQUEUE.
--- @param #ATIS self
--- @param #ATIS.Soundfile sound ATIS sound object.
--- @param #number interval Interval in seconds after the last transmission finished.
--- @param #string subtitle Subtitle of the transmission.
--- @param #string path Path to sound file. Default self.soundpath.
+--- @param #ATIS self
+--- @param #ATIS.Soundfile sound ATIS sound object.
+--- @param #number interval Interval in seconds after the last transmission finished.
+--- @param #string subtitle Subtitle of the transmission.
+--- @param #string path Path to sound file. Default self.soundpath.
 function ATIS:Transmission( sound, interval, subtitle, path )
   self.radioqueue:NewTransmission( sound.filename, sound.duration, path or self.soundpath, nil, interval, subtitle, self.subduration )
 end
 
 --- Play all audio files.
--- @param #ATIS self
+--- @param #ATIS self
 function ATIS:SoundCheck()
 
   for _, _sound in pairs( ATIS.Sound ) do
@@ -2624,13 +2624,13 @@ function ATIS:SoundCheck()
 end
 
 --- Get weather of this mission from env.mission.weather variable.
--- @param #ATIS self
--- @return #table Clouds table which has entries "thickness", "density", "base", "iprecptns".
--- @return #number Visibility distance in meters.
--- @return #number Ground turbulence in m/s.
--- @return #table Fog table, which has entries "thickness", "visibility" or nil if fog is disabled in the mission.
--- @return #number Dust density or nil if dust is disabled in the mission.
--- @return #boolean static If true, static weather is used. If false, dynamic weather is used.
+--- @param #ATIS self
+--- @return #table Clouds table which has entries "thickness", "density", "base", "iprecptns".
+--- @return #number Visibility distance in meters.
+--- @return #number Ground turbulence in m/s.
+--- @return #table Fog table, which has entries "thickness", "visibility" or nil if fog is disabled in the mission.
+--- @return #number Dust density or nil if dust is disabled in the mission.
+--- @return #boolean static If true, static weather is used. If false, dynamic weather is used.
 function ATIS:GetMissionWeather()
 
   -- Weather data from mission file.
@@ -2692,10 +2692,10 @@ function ATIS:GetMissionWeather()
 end
 
 --- Get thousands of a number.
--- @param #ATIS self
--- @param #number n Number, *e.g.* 4359.
--- @return #string Thousands of n, *e.g.* "4" for 4359.
--- @return #string Hundreds of n, *e.g.* "4" for 4359 because its rounded.
+--- @param #ATIS self
+--- @param #number n Number, *e.g.* 4359.
+--- @return #string Thousands of n, *e.g.* "4" for 4359.
+--- @return #string Hundreds of n, *e.g.* "4" for 4359 because its rounded.
 function ATIS:_GetThousandsAndHundreds( n )
 
   local N = UTILS.Round( n / 1000, 1 )

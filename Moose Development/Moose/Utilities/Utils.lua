@@ -14,24 +14,24 @@
 
 
 --- @type SMOKECOLOR
--- @field Green
--- @field Red
--- @field White
--- @field Orange
--- @field Blue
+--- @field Green
+--- @field Red
+--- @field White
+--- @field Orange
+--- @field Blue
 
 SMOKECOLOR = trigger.smokeColor -- #SMOKECOLOR
 
 --- @type FLARECOLOR
--- @field Green
--- @field Red
--- @field White
--- @field Yellow
+--- @field Green
+--- @field Red
+--- @field White
+--- @field Yellow
 
 FLARECOLOR = trigger.flareColor -- #FLARECOLOR
 
 --- Big smoke preset enum.
--- @type BIGSMOKEPRESET
+--- @type BIGSMOKEPRESET
 BIGSMOKEPRESET = {
   SmallSmokeAndFire=1,
   MediumSmokeAndFire=2,
@@ -44,15 +44,15 @@ BIGSMOKEPRESET = {
 }
 
 --- DCS map as returned by env.mission.theatre.
--- @type DCSMAP
--- @field #string Caucasus Caucasus map.
--- @field #string Normandy Normandy map.
--- @field #string NTTR Nevada Test and Training Range map.
--- @field #string PersianGulf Persian Gulf map.
--- @field #string TheChannel The Channel map.
--- @field #string Syria Syria map.
--- @field #string MarianaIslands Mariana Islands map.
--- @field #string Falklands South Atlantic map.
+--- @type DCSMAP
+--- @field #string Caucasus Caucasus map.
+--- @field #string Normandy Normandy map.
+--- @field #string NTTR Nevada Test and Training Range map.
+--- @field #string PersianGulf Persian Gulf map.
+--- @field #string TheChannel The Channel map.
+--- @field #string Syria Syria map.
+--- @field #string MarianaIslands Mariana Islands map.
+--- @field #string Falklands South Atlantic map.
 DCSMAP = {
   Caucasus="Caucasus",
   NTTR="Nevada",
@@ -66,7 +66,7 @@ DCSMAP = {
 
 
 --- See [DCS_enum_callsigns](https://wiki.hoggitworld.com/view/DCS_enum_callsigns)
--- @type CALLSIGN
+--- @type CALLSIGN
 CALLSIGN={
   -- Aircraft
   Aircraft={
@@ -192,8 +192,8 @@ CALLSIGN={
 } --#CALLSIGN
 
 --- Utilities static class.
--- @type UTILS
--- @field #number _MarkID Marker index counter. Running number when marker is added.
+--- @type UTILS
+--- @field #number _MarkID Marker index counter. Running number when marker is added.
 UTILS = {
   _MarkID = 1
 }
@@ -216,9 +216,9 @@ UTILS = {
 --    * UTILS.IsInstanceOf( ZONE:New( 'some zone', 'GROUP' ) will return false
 --
 --
--- @param object is the object to be evaluated
--- @param className is the name of the class to evaluate (can be either a string or a Moose class)
--- @return #boolean
+--- @param object is the object to be evaluated
+--- @param className is the name of the class to evaluate (can be either a string or a Moose class)
+--- @return #boolean
 UTILS.IsInstanceOf = function( object, className )
   -- Is className NOT a string ?
   if not type( className ) == 'string' then
@@ -262,8 +262,8 @@ end
 
 
 --- Deep copy a table. See http://lua-users.org/wiki/CopyTable
--- @param #table object The input table.
--- @return #table Copy of the input table.
+--- @param #table object The input table.
+--- @return #table Copy of the input table.
 UTILS.DeepCopy = function(object)
 
   local lookup_table = {}
@@ -294,7 +294,7 @@ end
 
 
 --- Porting in Slmod's serialize_slmod2.
--- @param #table tbl Input table.
+--- @param #table tbl Input table.
 UTILS.OneLineSerialize = function( tbl )  -- serialization of a table all on a single line, no comments, made to replace old get_table_string function
 
   lookup_table = {}
@@ -451,22 +451,22 @@ UTILS.MiphToMps = function( miph )
 end
 
 --- Convert meters per second to miles per hour.
--- @param #number mps Speed in m/s.
--- @return #number Speed in miles per hour.
+--- @param #number mps Speed in m/s.
+--- @return #number Speed in miles per hour.
 UTILS.MpsToMiph = function( mps )
   return mps / 0.44704
 end
 
 --- Convert meters per second to knots.
--- @param #number mps Speed in m/s.
--- @return #number Speed in knots.
+--- @param #number mps Speed in m/s.
+--- @return #number Speed in knots.
 UTILS.MpsToKnots = function( mps )
   return mps * 1.94384 --3600 / 1852
 end
 
 --- Convert knots to meters per second.
--- @param #number knots Speed in knots.
--- @return #number Speed in m/s.
+--- @param #number knots Speed in knots.
+--- @return #number Speed in m/s.
 UTILS.KnotsToMps = function( knots )
   if type(knots) == "number" then
     return knots / 1.94384 --* 1852 / 3600
@@ -476,37 +476,37 @@ UTILS.KnotsToMps = function( knots )
 end
 
 --- Convert temperature from Celsius to Fahrenheit.
--- @param #number Celcius Temperature in degrees Celsius.
--- @return #number Temperature in degrees Fahrenheit.
+--- @param #number Celcius Temperature in degrees Celsius.
+--- @return #number Temperature in degrees Fahrenheit.
 UTILS.CelsiusToFahrenheit = function( Celcius )
   return Celcius * 9/5 + 32
 end
 
 --- Convert pressure from hecto Pascal (hPa) to inches of mercury (inHg).
--- @param #number hPa Pressure in hPa.
--- @return #number Pressure in inHg.
+--- @param #number hPa Pressure in hPa.
+--- @return #number Pressure in inHg.
 UTILS.hPa2inHg = function( hPa )
   return hPa * 0.0295299830714
 end
 
 --- Convert knots to altitude corrected KIAS, e.g. for tankers.
--- @param #number knots Speed in knots.
--- @param #number altitude Altitude in feet
--- @return #number Corrected KIAS
+--- @param #number knots Speed in knots.
+--- @param #number altitude Altitude in feet
+--- @return #number Corrected KIAS
 UTILS.KnotsToAltKIAS = function( knots, altitude )
   return (knots * 0.018 * (altitude / 1000)) + knots
 end
 
 --- Convert pressure from hecto Pascal (hPa) to millimeters of mercury (mmHg).
--- @param #number hPa Pressure in hPa.
--- @return #number Pressure in mmHg.
+--- @param #number hPa Pressure in hPa.
+--- @return #number Pressure in mmHg.
 UTILS.hPa2mmHg = function( hPa )
   return hPa * 0.7500615613030
 end
 
 --- Convert kilo gramms (kg) to pounds (lbs).
--- @param #number kg Mass in kg.
--- @return #number Mass in lbs.
+--- @param #number kg Mass in kg.
+--- @return #number Mass in lbs.
 UTILS.kg2lbs = function( kg )
   return kg * 2.20462
 end
@@ -736,8 +736,8 @@ function UTILS.GetMarkID()
 end
 
 --- Remove an object (marker, circle, arrow, text, quad, ...) on the F10 map.
--- @param #number MarkID Unique ID of the object.
--- @param #number Delay (Optional) Delay in seconds before the mark is removed.
+--- @param #number MarkID Unique ID of the object.
+--- @param #number Delay (Optional) Delay in seconds before the mark is removed.
 function UTILS.RemoveMark(MarkID, Delay)
   if Delay and Delay>0 then
     TIMER:New(UTILS.RemoveMark, MarkID):Start(Delay)
@@ -766,9 +766,9 @@ function UTILS.IsInSphere( InVec3, Vec3, Radius )
 end
 
 --- Beaufort scale: returns Beaufort number and wind description as a function of wind speed in m/s.
--- @param #number speed Wind speed in m/s.
--- @return #number Beaufort number.
--- @return #string Beauford wind description.
+--- @param #number speed Wind speed in m/s.
+--- @return #number Beaufort number.
+--- @return #string Beauford wind description.
 function UTILS.BeaufortScale(speed)
   local bn=nil
   local bd=nil
@@ -816,9 +816,9 @@ function UTILS.BeaufortScale(speed)
 end
 
 --- Split string at seperators. C.f. [split-string-in-lua](http://stackoverflow.com/questions/1426954/split-string-in-lua).
--- @param #string str Sting to split.
--- @param #string sep Speparator for split.
--- @return #table Split text.
+--- @param #string str Sting to split.
+--- @param #string sep Speparator for split.
+--- @return #table Split text.
 function UTILS.Split(str, sep)
   local result = {}
   local regex = ("([^%s]+)"):format(sep)
@@ -829,8 +829,8 @@ function UTILS.Split(str, sep)
 end
 
 --- Get a table of all characters in a string.
--- @param #string str Sting.
--- @return #table Individual characters.
+--- @param #string str Sting.
+--- @return #table Individual characters.
 function UTILS.GetCharacters(str)
 
   local chars={}
@@ -844,9 +844,9 @@ function UTILS.GetCharacters(str)
 end
 
 --- Convert time in seconds to hours, minutes and seconds.
--- @param #number seconds Time in seconds, e.g. from timer.getAbsTime() function.
--- @param #boolean short (Optional) If true, use short output, i.e. (HH:)MM:SS without day.
--- @return #string Time in format Hours:Minutes:Seconds+Days (HH:MM:SS+D).
+--- @param #number seconds Time in seconds, e.g. from timer.getAbsTime() function.
+--- @param #boolean short (Optional) If true, use short output, i.e. (HH:)MM:SS without day.
+--- @return #string Time in format Hours:Minutes:Seconds+Days (HH:MM:SS+D).
 function UTILS.SecondsToClock(seconds, short)
 
   -- Nil check.
@@ -881,7 +881,7 @@ function UTILS.SecondsToClock(seconds, short)
 end
 
 --- Seconds of today.
--- @return #number Seconds passed since last midnight.
+--- @return #number Seconds passed since last midnight.
 function UTILS.SecondsOfToday()
 
     -- Time in seconds.
@@ -895,14 +895,14 @@ function UTILS.SecondsOfToday()
 end
 
 --- Cound seconds until next midnight.
--- @return #number Seconds to midnight.
+--- @return #number Seconds to midnight.
 function UTILS.SecondsToMidnight()
   return 24*60*60-UTILS.SecondsOfToday()
 end
 
 --- Convert clock time from hours, minutes and seconds to seconds.
--- @param #string clock String of clock time. E.g., "06:12:35" or "5:1:30+1". Format is (H)H:(M)M:((S)S)(+D) H=Hours, M=Minutes, S=Seconds, D=Days.
--- @return #number Seconds. Corresponds to what you cet from timer.getAbsTime() function.
+--- @param #string clock String of clock time. E.g., "06:12:35" or "5:1:30+1". Format is (H)H:(M)M:((S)S)(+D) H=Hours, M=Minutes, S=Seconds, D=Days.
+--- @return #number Seconds. Corresponds to what you cet from timer.getAbsTime() function.
 function UTILS.ClockToSeconds(clock)
 
   -- Nil check.
@@ -944,7 +944,7 @@ function UTILS.ClockToSeconds(clock)
 end
 
 --- Display clock and mission time on screen as a message to all.
--- @param #number duration Duration in seconds how long the time is displayed. Default is 5 seconds.
+--- @param #number duration Duration in seconds how long the time is displayed. Default is 5 seconds.
 function UTILS.DisplayMissionTime(duration)
   duration=duration or 5
   local Tnow=timer.getAbsTime()
@@ -957,9 +957,9 @@ function UTILS.DisplayMissionTime(duration)
 end
 
 --- Replace illegal characters [<>|/?*:\\] in a string.
--- @param #string Text Input text.
--- @param #string ReplaceBy Replace illegal characters by this character or string. Default underscore "_".
--- @return #string The input text with illegal chars replaced.
+--- @param #string Text Input text.
+--- @param #string ReplaceBy Replace illegal characters by this character or string. Default underscore "_".
+--- @return #string The input text with illegal chars replaced.
 function UTILS.ReplaceIllegalCharacters(Text, ReplaceBy)
   ReplaceBy=ReplaceBy or "_"
   local text=Text:gsub("[<>|/?*:\\]", ReplaceBy)
@@ -967,12 +967,12 @@ function UTILS.ReplaceIllegalCharacters(Text, ReplaceBy)
 end
 
 --- Generate a Gaussian pseudo-random number.
--- @param #number x0 Expectation value of distribution.
--- @param #number sigma (Optional) Standard deviation. Default 10.
--- @param #number xmin (Optional) Lower cut-off value.
--- @param #number xmax (Optional) Upper cut-off value.
--- @param #number imax (Optional) Max number of tries to get a value between xmin and xmax (if specified). Default 100.
--- @return #number Gaussian random number.
+--- @param #number x0 Expectation value of distribution.
+--- @param #number sigma (Optional) Standard deviation. Default 10.
+--- @param #number xmin (Optional) Lower cut-off value.
+--- @param #number xmax (Optional) Upper cut-off value.
+--- @param #number imax (Optional) Max number of tries to get a value between xmin and xmax (if specified). Default 100.
+--- @return #number Gaussian random number.
 function UTILS.RandomGaussian(x0, sigma, xmin, xmax, imax)
 
   -- Standard deviation. Default 10 if not given.
@@ -1003,11 +1003,11 @@ function UTILS.RandomGaussian(x0, sigma, xmin, xmax, imax)
 end
 
 --- Randomize a value by a certain amount.
--- @param #number value The value which should be randomized
--- @param #number fac Randomization factor.
--- @param #number lower (Optional) Lower limit of the returned value.
--- @param #number upper (Optional) Upper limit of the returned value.
--- @return #number Randomized value.
+--- @param #number value The value which should be randomized
+--- @param #number fac Randomization factor.
+--- @param #number lower (Optional) Lower limit of the returned value.
+--- @param #number upper (Optional) Upper limit of the returned value.
+--- @return #number Randomized value.
 -- @usage UTILS.Randomize(100, 0.1) returns a value between 90 and 110, i.e. a plus/minus ten percent variation.
 -- @usage UTILS.Randomize(100, 0.5, nil, 120) returns a value between 50 and 120, i.e. a plus/minus fivty percent variation with upper bound 120.
 function UTILS.Randomize(value, fac, lower, upper)
@@ -1030,40 +1030,40 @@ function UTILS.Randomize(value, fac, lower, upper)
 end
 
 --- Calculate the [dot product](https://en.wikipedia.org/wiki/Dot_product) of two vectors. The result is a number.
--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
--- @param DCS#Vec3 b Vector in 3D with x, y, z components.
--- @return #number Scalar product of the two vectors a*b.
+--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+--- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+--- @return #number Scalar product of the two vectors a*b.
 function UTILS.VecDot(a, b)
   return a.x*b.x + a.y*b.y + a.z*b.z
 end
 
 --- Calculate the [dot product](https://en.wikipedia.org/wiki/Dot_product) of two 2D vectors. The result is a number.
--- @param DCS#Vec2 a Vector in 2D with x, y components.
--- @param DCS#Vec2 b Vector in 2D with x, y components.
--- @return #number Scalar product of the two vectors a*b.
+--- @param DCS#Vec2 a Vector in 2D with x, y components.
+--- @param DCS#Vec2 b Vector in 2D with x, y components.
+--- @return #number Scalar product of the two vectors a*b.
 function UTILS.Vec2Dot(a, b)
   return a.x*b.x + a.y*b.y
 end
 
 
 --- Calculate the [euclidean norm](https://en.wikipedia.org/wiki/Euclidean_distance) (length) of a 3D vector.
--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
--- @return #number Norm of the vector.
+--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+--- @return #number Norm of the vector.
 function UTILS.VecNorm(a)
   return math.sqrt(UTILS.VecDot(a, a))
 end
 
 --- Calculate the [euclidean norm](https://en.wikipedia.org/wiki/Euclidean_distance) (length) of a 2D vector.
--- @param DCS#Vec2 a Vector in 2D with x, y components.
--- @return #number Norm of the vector.
+--- @param DCS#Vec2 a Vector in 2D with x, y components.
+--- @return #number Norm of the vector.
 function UTILS.Vec2Norm(a)
   return math.sqrt(UTILS.Vec2Dot(a, a))
 end
 
 --- Calculate the distance between two 2D vectors.
--- @param DCS#Vec2 a Vector in 2D with x, y components.
--- @param DCS#Vec2 b Vector in 2D with x, y components.
--- @return #number Distance between the vectors.
+--- @param DCS#Vec2 a Vector in 2D with x, y components.
+--- @param DCS#Vec2 b Vector in 2D with x, y components.
+--- @return #number Distance between the vectors.
 function UTILS.VecDist2D(a, b)
 
   local d = math.huge
@@ -1079,9 +1079,9 @@ end
 
 
 --- Calculate the distance between two 3D vectors.
--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
--- @param DCS#Vec3 b Vector in 3D with x, y, z components.
--- @return #number Distance between the vectors.
+--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+--- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+--- @return #number Distance between the vectors.
 function UTILS.VecDist3D(a, b)
   
     
@@ -1097,49 +1097,49 @@ function UTILS.VecDist3D(a, b)
 end
 
 --- Calculate the [cross product](https://en.wikipedia.org/wiki/Cross_product) of two 3D vectors. The result is a 3D vector.
--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
--- @param DCS#Vec3 b Vector in 3D with x, y, z components.
--- @return DCS#Vec3 Vector
+--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+--- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+--- @return DCS#Vec3 Vector
 function UTILS.VecCross(a, b)
   return {x=a.y*b.z - a.z*b.y, y=a.z*b.x - a.x*b.z, z=a.x*b.y - a.y*b.x}
 end
 
 --- Calculate the difference between two 3D vectors by substracting the x,y,z components from each other.
--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
--- @param DCS#Vec3 b Vector in 3D with x, y, z components.
--- @return DCS#Vec3 Vector c=a-b with c(i)=a(i)-b(i), i=x,y,z.
+--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+--- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+--- @return DCS#Vec3 Vector c=a-b with c(i)=a(i)-b(i), i=x,y,z.
 function UTILS.VecSubstract(a, b)
   return {x=a.x-b.x, y=a.y-b.y, z=a.z-b.z}
 end
 
 --- Calculate the difference between two 2D vectors by substracting the x,y components from each other.
--- @param DCS#Vec2 a Vector in 2D with x, y components.
--- @param DCS#Vec2 b Vector in 2D with x, y components.
--- @return DCS#Vec2 Vector c=a-b with c(i)=a(i)-b(i), i=x,y.
+--- @param DCS#Vec2 a Vector in 2D with x, y components.
+--- @param DCS#Vec2 b Vector in 2D with x, y components.
+--- @return DCS#Vec2 Vector c=a-b with c(i)=a(i)-b(i), i=x,y.
 function UTILS.Vec2Substract(a, b)
   return {x=a.x-b.x, y=a.y-b.y}
 end
 
 --- Calculate the total vector of two 3D vectors by adding the x,y,z components of each other.
--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
--- @param DCS#Vec3 b Vector in 3D with x, y, z components.
--- @return DCS#Vec3 Vector c=a+b with c(i)=a(i)+b(i), i=x,y,z.
+--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+--- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+--- @return DCS#Vec3 Vector c=a+b with c(i)=a(i)+b(i), i=x,y,z.
 function UTILS.VecAdd(a, b)
   return {x=a.x+b.x, y=a.y+b.y, z=a.z+b.z}
 end
 
 --- Calculate the total vector of two 2D vectors by adding the x,y components of each other.
--- @param DCS#Vec2 a Vector in 2D with x, y components.
--- @param DCS#Vec2 b Vector in 2D with x, y components.
--- @return DCS#Vec2 Vector c=a+b with c(i)=a(i)+b(i), i=x,y.
+--- @param DCS#Vec2 a Vector in 2D with x, y components.
+--- @param DCS#Vec2 b Vector in 2D with x, y components.
+--- @return DCS#Vec2 Vector c=a+b with c(i)=a(i)+b(i), i=x,y.
 function UTILS.Vec2Add(a, b)
   return {x=a.x+b.x, y=a.y+b.y}
 end
 
 --- Calculate the angle between two 3D vectors.
--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
--- @param DCS#Vec3 b Vector in 3D with x, y, z components.
--- @return #number Angle alpha between and b in degrees. alpha=acos(a*b)/(|a||b|), (* denotes the dot product).
+--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+--- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+--- @return #number Angle alpha between and b in degrees. alpha=acos(a*b)/(|a||b|), (* denotes the dot product).
 function UTILS.VecAngle(a, b)
 
   local cosalpha=UTILS.VecDot(a,b)/(UTILS.VecNorm(a)*UTILS.VecNorm(b))
@@ -1157,8 +1157,8 @@ function UTILS.VecAngle(a, b)
 end
 
 --- Calculate "heading" of a 3D vector in the X-Z plane.
--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
--- @return #number Heading in degrees in [0,360).
+--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+--- @return #number Heading in degrees in [0,360).
 function UTILS.VecHdg(a)
   local h=math.deg(math.atan2(a.z, a.x))
   if h<0 then
@@ -1168,8 +1168,8 @@ function UTILS.VecHdg(a)
 end
 
 --- Calculate "heading" of a 2D vector in the X-Y plane.
--- @param DCS#Vec2 a Vector in 2D with x, y components.
--- @return #number Heading in degrees in [0,360).
+--- @param DCS#Vec2 a Vector in 2D with x, y components.
+--- @return #number Heading in degrees in [0,360).
 function UTILS.Vec2Hdg(a)
   local h=math.deg(math.atan2(a.y, a.x))
   if h<0 then
@@ -1179,9 +1179,9 @@ function UTILS.Vec2Hdg(a)
 end
 
 --- Calculate the difference between two "heading", i.e. angles in [0,360) deg.
--- @param #number h1 Heading one.
--- @param #number h2 Heading two.
--- @return #number Heading difference in degrees.
+--- @param #number h1 Heading one.
+--- @param #number h2 Heading two.
+--- @return #number Heading difference in degrees.
 function UTILS.HdgDiff(h1, h2)
 
   -- Angle in rad.
@@ -1199,10 +1199,10 @@ end
 
 
 --- Translate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged.
--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
--- @param #number distance The distance to translate.
--- @param #number angle Rotation angle in degrees.
--- @return DCS#Vec3 Vector rotated in the (x,z) plane.
+--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+--- @param #number distance The distance to translate.
+--- @param #number angle Rotation angle in degrees.
+--- @return DCS#Vec3 Vector rotated in the (x,z) plane.
 function UTILS.VecTranslate(a, distance, angle)
 
   local SX = a.x
@@ -1215,10 +1215,10 @@ function UTILS.VecTranslate(a, distance, angle)
 end
 
 --- Translate 2D vector in the 2D (x,z) plane.
--- @param DCS#Vec2 a Vector in 2D with x, y components.
--- @param #number distance The distance to translate.
--- @param #number angle Rotation angle in degrees.
--- @return DCS#Vec2 Translated vector.
+--- @param DCS#Vec2 a Vector in 2D with x, y components.
+--- @param #number distance The distance to translate.
+--- @param #number angle Rotation angle in degrees.
+--- @return DCS#Vec2 Translated vector.
 function UTILS.Vec2Translate(a, distance, angle)
 
   local SX = a.x
@@ -1231,9 +1231,9 @@ function UTILS.Vec2Translate(a, distance, angle)
 end
 
 --- Rotate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged.
--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
--- @param #number angle Rotation angle in degrees.
--- @return DCS#Vec3 Vector rotated in the (x,z) plane.
+--- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+--- @param #number angle Rotation angle in degrees.
+--- @return DCS#Vec3 Vector rotated in the (x,z) plane.
 function UTILS.Rotate2D(a, angle)
 
   local phi=math.rad(angle)
@@ -1251,9 +1251,9 @@ function UTILS.Rotate2D(a, angle)
 end
 
 --- Rotate 2D vector in the 2D (x,z) plane.
--- @param DCS#Vec2 a Vector in 2D with x, y components.
--- @param #number angle Rotation angle in degrees.
--- @return DCS#Vec2 Vector rotated in the (x,y) plane.
+--- @param DCS#Vec2 a Vector in 2D with x, y components.
+--- @param #number angle Rotation angle in degrees.
+--- @return DCS#Vec2 Vector rotated in the (x,y) plane.
 function UTILS.Vec2Rotate2D(a, angle)
 
   local phi=math.rad(angle)
@@ -1271,9 +1271,9 @@ end
 
 
 --- Converts a TACAN Channel/Mode couple into a frequency in Hz.
--- @param #number TACANChannel The TACAN channel, i.e. the 10 in "10X".
--- @param #string TACANMode The TACAN mode, i.e. the "X" in "10X".
--- @return #number Frequency in Hz or #nil if parameters are invalid.
+--- @param #number TACANChannel The TACAN channel, i.e. the 10 in "10X".
+--- @param #string TACANMode The TACAN mode, i.e. the "X" in "10X".
+--- @return #number Frequency in Hz or #nil if parameters are invalid.
 function UTILS.TACANToFrequency(TACANChannel, TACANMode)
 
   if type(TACANChannel) ~= "number" then
@@ -1308,16 +1308,16 @@ end
 
 
 --- Returns the DCS map/theatre as optained by env.mission.theatre
--- @return #string DCS map name.
+--- @return #string DCS map name.
 function UTILS.GetDCSMap()
   return env.mission.theatre
 end
 
 --- Returns the mission date. This is the date the mission **started**.
--- @return #string Mission date in yyyy/mm/dd format.
--- @return #number The year anno domini.
--- @return #number The month.
--- @return #number The day.
+--- @return #string Mission date in yyyy/mm/dd format.
+--- @return #number The year anno domini.
+--- @return #number The month.
+--- @return #number The day.
 function UTILS.GetDCSMissionDate()
   local year=tostring(env.mission.date.Year)
   local month=tostring(env.mission.date.Month)
@@ -1326,8 +1326,8 @@ function UTILS.GetDCSMissionDate()
 end
 
 --- Returns the day of the mission.
--- @param #number Time (Optional) Abs. time in seconds. Default now, i.e. the value return from timer.getAbsTime().
--- @return #number Day of the mission. Mission starts on day 0.
+--- @param #number Time (Optional) Abs. time in seconds. Default now, i.e. the value return from timer.getAbsTime().
+--- @return #number Day of the mission. Mission starts on day 0.
 function UTILS.GetMissionDay(Time)
 
   Time=Time or timer.getAbsTime()
@@ -1340,8 +1340,8 @@ function UTILS.GetMissionDay(Time)
 end
 
 --- Returns the current day of the year of the mission.
--- @param #number Time (Optional) Abs. time in seconds. Default now, i.e. the value return from timer.getAbsTime().
--- @return #number Current day of year of the mission. For example, January 1st returns 0, January 2nd returns 1 etc.
+--- @param #number Time (Optional) Abs. time in seconds. Default now, i.e. the value return from timer.getAbsTime().
+--- @return #number Current day of year of the mission. For example, January 1st returns 0, January 2nd returns 1 etc.
 function UTILS.GetMissionDayOfYear(Time)
 
   local Date, Year, Month, Day=UTILS.GetDCSMissionDate()
@@ -1363,8 +1363,8 @@ end
 -- * Syria +5 (East)
 -- * Mariana Islands +2 (East)
 -- * Falklands +12 (East) - note there's a LOT of deviation across the map, as we're closer to the South Pole
--- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
--- @return #number Declination in degrees.
+--- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
+--- @return #number Declination in degrees.
 function UTILS.GetMagneticDeclination(map)
 
   -- Map.
@@ -1395,8 +1395,8 @@ function UTILS.GetMagneticDeclination(map)
 end
 
 --- Checks if a file exists or not. This requires **io** to be desanitized.
--- @param #string file File that should be checked.
--- @return #boolean True if the file exists, false if the file does not exist or nil if the io module is not available and the check could not be performed.
+--- @param #string file File that should be checked.
+--- @return #boolean True if the file exists, false if the file does not exist or nil if the io module is not available and the check could not be performed.
 function UTILS.FileExists(file)
   if io then
     local f=io.open(file, "r")
@@ -1412,8 +1412,8 @@ function UTILS.FileExists(file)
 end
 
 --- Checks the current memory usage collectgarbage("count"). Info is printed to the DCS log file. Time stamp is the current mission runtime.
--- @param #boolean output If true, print to DCS log file.
--- @return #number Memory usage in kByte.
+--- @param #boolean output If true, print to DCS log file.
+--- @return #number Memory usage in kByte.
 function UTILS.CheckMemory(output)
   local time=timer.getTime()
   local clock=UTILS.SecondsToClock(time)
@@ -1426,8 +1426,8 @@ end
 
 
 --- Get the coalition name from its numerical ID, e.g. coalition.side.RED.
--- @param #number Coalition The coalition ID.
--- @return #string The coalition name, i.e. "Neutral", "Red" or "Blue" (or "Unknown").
+--- @param #number Coalition The coalition ID.
+--- @return #string The coalition name, i.e. "Neutral", "Red" or "Blue" (or "Unknown").
 function UTILS.GetCoalitionName(Coalition)
 
   if Coalition then
@@ -1447,9 +1447,9 @@ function UTILS.GetCoalitionName(Coalition)
 end
 
 --- Get the enemy coalition for a given coalition.
--- @param #number Coalition The coalition ID.
--- @param #boolean Neutral Include neutral as enemy.
--- @return #table Enemy coalition table.
+--- @param #number Coalition The coalition ID.
+--- @param #boolean Neutral Include neutral as enemy.
+--- @return #table Enemy coalition table.
 function UTILS.GetCoalitionEnemy(Coalition, Neutral)
 
   local Coalitions={}
@@ -1471,8 +1471,8 @@ function UTILS.GetCoalitionEnemy(Coalition, Neutral)
 end
 
 --- Get the modulation name from its numerical value.
--- @param #number Modulation The modulation enumerator number. Can be either 0 or 1.
--- @return #string The modulation name, i.e. "AM"=0 or "FM"=1. Anything else will return "Unknown".
+--- @param #number Modulation The modulation enumerator number. Can be either 0 or 1.
+--- @return #string The modulation name, i.e. "AM"=0 or "FM"=1. Anything else will return "Unknown".
 function UTILS.GetModulationName(Modulation)
 
   if Modulation then
@@ -1490,8 +1490,8 @@ function UTILS.GetModulationName(Modulation)
 end
 
 --- Get the NATO reporting name of a unit type name
--- @param #number Typename The type name.
--- @return #string The Reporting name or "Bogey".
+--- @param #number Typename The type name.
+--- @return #string The Reporting name or "Bogey".
 function UTILS.GetReportingName(Typename)
   
   local typename = string.lower(Typename)
@@ -1507,8 +1507,8 @@ function UTILS.GetReportingName(Typename)
 end
 
 --- Get the callsign name from its enumerator value
--- @param #number Callsign The enumerator callsign.
--- @return #string The callsign name or "Ghostrider".
+--- @param #number Callsign The enumerator callsign.
+--- @return #string The callsign name or "Ghostrider".
 function UTILS.GetCallsignName(Callsign)
 
   for name, value in pairs(CALLSIGN.Aircraft) do
@@ -1581,7 +1581,7 @@ function UTILS.GetCallsignName(Callsign)
 end
 
 --- Get the time difference between GMT and local time.
--- @return #number Local time difference in hours compared to GMT. E.g. Dubai is GMT+4 ==> +4 is returned.
+--- @return #number Local time difference in hours compared to GMT. E.g. Dubai is GMT+4 ==> +4 is returned.
 function UTILS.GMTToLocalTimeDifference()
 
   local theatre=UTILS.GetDCSMap()
@@ -1611,10 +1611,10 @@ end
 
 
 --- Get the day of the year. Counting starts on 1st of January.
--- @param #number Year The year.
--- @param #number Month The month.
--- @param #number Day The day.
--- @return #number The day of the year.
+--- @param #number Year The year.
+--- @param #number Month The month.
+--- @param #number Day The day.
+--- @return #number The day of the year.
 function UTILS.GetDayOfYear(Year, Month, Day)
 
   local floor = math.floor
@@ -1627,12 +1627,12 @@ function UTILS.GetDayOfYear(Year, Month, Day)
 end
 
 --- Get sunrise or sun set of a specific day of the year at a specific location.
--- @param #number DayOfYear The day of the year.
--- @param #number Latitude Latitude.
--- @param #number Longitude Longitude.
--- @param #boolean Rising If true, calc sun rise, or sun set otherwise.
--- @param #number Tlocal Local time offset in hours. E.g. +4 for a location which has GMT+4.
--- @return #number Sun rise/set in seconds of the day.
+--- @param #number DayOfYear The day of the year.
+--- @param #number Latitude Latitude.
+--- @param #number Longitude Longitude.
+--- @param #boolean Rising If true, calc sun rise, or sun set otherwise.
+--- @param #number Tlocal Local time offset in hours. E.g. +4 for a location which has GMT+4.
+--- @return #number Sun rise/set in seconds of the day.
 function UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, Rising, Tlocal)
 
   -- Defaults
@@ -1729,14 +1729,14 @@ function UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, Rising, Tlocal)
  end
 
 --- Get sun rise of a specific day of the year at a specific location.
--- @param #number Day Day of the year.
--- @param #number Month Month of the year.
--- @param #number Year Year.
--- @param #number Latitude Latitude.
--- @param #number Longitude Longitude.
--- @param #boolean Rising If true, calc sun rise, or sun set otherwise.
--- @param #number Tlocal Local time offset in hours. E.g. +4 for a location which has GMT+4. Default 0.
--- @return #number Sun rise in seconds of the day.
+--- @param #number Day Day of the year.
+--- @param #number Month Month of the year.
+--- @param #number Year Year.
+--- @param #number Latitude Latitude.
+--- @param #number Longitude Longitude.
+--- @param #boolean Rising If true, calc sun rise, or sun set otherwise.
+--- @param #number Tlocal Local time offset in hours. E.g. +4 for a location which has GMT+4. Default 0.
+--- @return #number Sun rise in seconds of the day.
 function UTILS.GetSunrise(Day, Month, Year, Latitude, Longitude, Tlocal)
 
   local DayOfYear=UTILS.GetDayOfYear(Year, Month, Day)
@@ -1745,14 +1745,14 @@ function UTILS.GetSunrise(Day, Month, Year, Latitude, Longitude, Tlocal)
 end
 
 --- Get sun set of a specific day of the year at a specific location.
--- @param #number Day Day of the year.
--- @param #number Month Month of the year.
--- @param #number Year Year.
--- @param #number Latitude Latitude.
--- @param #number Longitude Longitude.
--- @param #boolean Rising If true, calc sun rise, or sun set otherwise.
--- @param #number Tlocal Local time offset in hours. E.g. +4 for a location which has GMT+4. Default 0.
--- @return #number Sun rise in seconds of the day.
+--- @param #number Day Day of the year.
+--- @param #number Month Month of the year.
+--- @param #number Year Year.
+--- @param #number Latitude Latitude.
+--- @param #number Longitude Longitude.
+--- @param #boolean Rising If true, calc sun rise, or sun set otherwise.
+--- @param #number Tlocal Local time offset in hours. E.g. +4 for a location which has GMT+4. Default 0.
+--- @return #number Sun rise in seconds of the day.
 function UTILS.GetSunset(Day, Month, Year, Latitude, Longitude, Tlocal)
 
   local DayOfYear=UTILS.GetDayOfYear(Year, Month, Day)
@@ -1761,7 +1761,7 @@ function UTILS.GetSunset(Day, Month, Year, Latitude, Longitude, Tlocal)
 end
 
 --- Get OS time. Needs os to be desanitized!
--- @return #number Os time in seconds.
+--- @return #number Os time in seconds.
 function UTILS.GetOSTime()
   if os then
     local ts = 0
@@ -1901,7 +1901,7 @@ function UTILS.IsLoadingDoorOpen( unit_name )
 end
 
 --- Function to generate valid FM frequencies in mHz for radio beacons (FM).
--- @return #table Table of frequencies.
+--- @return #table Table of frequencies.
 function UTILS.GenerateFMFrequencies()
     local FreeFMFrequencies = {}
     for _first = 3, 7 do
@@ -1916,7 +1916,7 @@ function UTILS.GenerateFMFrequencies()
 end
 
 --- Function to generate valid VHF frequencies in kHz for radio beacons (FM).
--- @return #table VHFrequencies
+--- @return #table VHFrequencies
 function UTILS.GenerateVHFrequencies()
 
   -- known and sorted map-wise NDBs in kHz
@@ -1994,7 +1994,7 @@ function UTILS.GenerateVHFrequencies()
 end
 
 --- Function to generate valid UHF Frequencies in mHz (AM).
--- @return #table UHF Frequencies
+--- @return #table UHF Frequencies
 function UTILS.GenerateUHFrequencies()
 
     local FreeUHFFrequencies = {}
@@ -2009,7 +2009,7 @@ function UTILS.GenerateUHFrequencies()
 end
 
 --- Function to generate valid laser codes for JTAC.
--- @return #table Laser Codes.
+--- @return #table Laser Codes.
 function UTILS.GenerateLaserCodes()
     local jtacGeneratedLaserCodes = {}
 
@@ -2046,9 +2046,9 @@ function UTILS.GenerateLaserCodes()
 end
 
 --- Ensure the passed object is a table. 
--- @param #table Object The object that should be a table.
--- @param #boolean ReturnNil If `true`, return `#nil` if `Object` is nil. Otherwise an empty table `{}` is returned.
--- @return #table The object that now certainly *is* a table.
+--- @param #table Object The object that should be a table.
+--- @param #boolean ReturnNil If `true`, return `#nil` if `Object` is nil. Otherwise an empty table `{}` is returned.
+--- @return #table The object that now certainly *is* a table.
 function UTILS.EnsureTable(Object, ReturnNil)
 
   if Object then
@@ -2068,10 +2068,10 @@ function UTILS.EnsureTable(Object, ReturnNil)
 end
 
 --- Function to save an object to a file
--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
--- @param #string Filename The name of the file. Existing file will be overwritten.
--- @param #table Data The LUA data structure to save. This will be e.g. a table of text lines with an \\n at the end of each line.
--- @return #boolean outcome True if saving is possible, else false.
+--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+--- @param #string Filename The name of the file. Existing file will be overwritten.
+--- @param #table Data The LUA data structure to save. This will be e.g. a table of text lines with an \\n at the end of each line.
+--- @return #boolean outcome True if saving is possible, else false.
 function UTILS.SaveToFile(Path,Filename,Data)
   -- Thanks to @FunkyFranky 
   -- Check io module is available.
@@ -2105,10 +2105,10 @@ function UTILS.SaveToFile(Path,Filename,Data)
 end
 
 --- Function to save an object to a file
--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
--- @param #string Filename The name of the file.
--- @return #boolean outcome True if reading is possible and successful, else false.
--- @return #table data The data read from the filesystem (table of lines of text). Each line is one single #string!
+--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+--- @param #string Filename The name of the file.
+--- @return #boolean outcome True if reading is possible and successful, else false.
+--- @return #table data The data read from the filesystem (table of lines of text). Each line is one single #string!
 function UTILS.LoadFromFile(Path,Filename)
   -- Thanks to @FunkyFranky    
   -- Check io module is available.
@@ -2152,9 +2152,9 @@ function UTILS.LoadFromFile(Path,Filename)
 end
 
 --- Function to check if a file exists.
--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
--- @param #string Filename The name of the file.
--- @return #boolean outcome True if reading is possible, else false.
+--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+--- @param #string Filename The name of the file.
+--- @return #boolean outcome True if reading is possible, else false.
 function UTILS.CheckFileExists(Path,Filename)
   -- Thanks to @FunkyFranky
   -- Function that check if a file exists.
@@ -2202,8 +2202,8 @@ function UTILS.CheckFileExists(Path,Filename)
 end
 
 --- Function to obtain a table of typenames from the group given with the number of units of the same type in the group.
--- @param Wrapper.Group#GROUP Group The group to list
--- @return #table Table of typnames and typename counts, e.g. `{["KAMAZ Truck"]=3,["ATZ-5"]=1}`
+--- @param Wrapper.Group#GROUP Group The group to list
+--- @return #table Table of typnames and typename counts, e.g. `{["KAMAZ Truck"]=3,["ATZ-5"]=1}`
 function UTILS.GetCountPerTypeName(Group)
   local units = Group:GetUnits()
   local TypeNameTable = {}
@@ -2220,11 +2220,11 @@ function UTILS.GetCountPerTypeName(Group)
 end
 
 --- Function to save the state of a list of groups found by name
--- @param #table List Table of strings with groupnames
--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
--- @param #string Filename The name of the file.
--- @param #boolean Structured Append the data with a list of typenames in the group plus their count.
--- @return #boolean outcome True if saving is successful, else false.
+--- @param #table List Table of strings with groupnames
+--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+--- @param #string Filename The name of the file.
+--- @param #boolean Structured Append the data with a list of typenames in the group plus their count.
+--- @return #boolean outcome True if saving is successful, else false.
 -- @usage
 -- We will go through the list and find the corresponding group and save the current group size (0 when dead).
 -- These groups are supposed to be put on the map in the ME and have *not* moved (e.g. stationary SAM sites). 
@@ -2259,11 +2259,11 @@ function UTILS.SaveStationaryListOfGroups(List,Path,Filename,Structured)
 end
 
 --- Function to save the state of a set of Wrapper.Group#GROUP objects.
--- @param Core.Set#SET_BASE Set of objects to save
--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
--- @param #string Filename The name of the file.
--- @param #boolean Structured Append the data with a list of typenames in the group plus their count.
--- @return #boolean outcome True if saving is successful, else false.
+--- @param Core.Set#SET_BASE Set of objects to save
+--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+--- @param #string Filename The name of the file.
+--- @param #boolean Structured Append the data with a list of typenames in the group plus their count.
+--- @return #boolean outcome True if saving is successful, else false.
 -- @usage
 -- We will go through the set and find the corresponding group and save the current group size and current position.
 -- The idea is to respawn the groups **spawned during an earlier run of the mission** at the given location and reduce 
@@ -2304,10 +2304,10 @@ function UTILS.SaveSetOfGroups(Set,Path,Filename,Structured)
 end
 
 --- Function to save the state of a set of Wrapper.Static#STATIC objects.
--- @param Core.Set#SET_BASE Set of objects to save
--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
--- @param #string Filename The name of the file.
--- @return #boolean outcome True if saving is successful, else false.
+--- @param Core.Set#SET_BASE Set of objects to save
+--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+--- @param #string Filename The name of the file.
+--- @return #boolean outcome True if saving is successful, else false.
 -- @usage
 -- We will go through the set and find the corresponding static and save the current name and postion when alive.
 -- The data will be a simple comma separated list of name and state etc, with one header line.
@@ -2329,10 +2329,10 @@ function UTILS.SaveSetOfStatics(Set,Path,Filename)
 end
 
 --- Function to save the state of a list of statics found by name
--- @param #table List Table of strings with statics names
--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
--- @param #string Filename The name of the file.
--- @return #boolean outcome True if saving is successful, else false.
+--- @param #table List Table of strings with statics names
+--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+--- @param #string Filename The name of the file.
+--- @return #boolean outcome True if saving is successful, else false.
 -- @usage
 -- We will go through the list and find the corresponding static and save the current alive state as 1 (0 when dead).
 -- Position is saved for your usage. **Note** this works on UNIT-name level.
@@ -2356,15 +2356,15 @@ function UTILS.SaveStationaryListOfStatics(List,Path,Filename)
 end
 
 --- Load back a stationary list of groups from file.
--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
--- @param #string Filename The name of the file.
--- @param #boolean Reduce If false, existing loaded groups will not be reduced to fit the saved number.
--- @param #boolean Structured (Optional, needs Reduce = true) If true, and the data has been saved as structure before, remove the correct unit types as per the saved list.
--- @param #boolean Cinematic (Optional, needs Structured = true) If true, place a fire/smoke effect on the dead static position.
--- @param #number Effect (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
--- @param #number Density (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
--- @return #table Table of data objects (tables) containing groupname, coordinate and group object. Returns nil when file cannot be read.
--- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )`
+--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+--- @param #string Filename The name of the file.
+--- @param #boolean Reduce If false, existing loaded groups will not be reduced to fit the saved number.
+--- @param #boolean Structured (Optional, needs Reduce = true) If true, and the data has been saved as structure before, remove the correct unit types as per the saved list.
+--- @param #boolean Cinematic (Optional, needs Structured = true) If true, place a fire/smoke effect on the dead static position.
+--- @param #number Effect (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
+--- @param #number Density (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
+--- @return #table Table of data objects (tables) containing groupname, coordinate and group object. Returns nil when file cannot be read.
+--- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )`
 function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce,Structured,Cinematic,Effect,Density)
   
   local fires = {}
@@ -2464,16 +2464,16 @@ function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce,Structured,Cinema
 end
 
 --- Load back a SET of groups from file.
--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
--- @param #string Filename The name of the file.
--- @param #boolean Spawn If set to false, do not re-spawn the groups loaded in location and reduce to size.
--- @param #boolean Structured (Optional, needs Spawn=true)If true, and the data has been saved as structure before, remove the correct unit types as per the saved list.
--- @param #boolean Cinematic (Optional, needs Structured=true) If true, place a fire/smoke effect on the dead static position.
--- @param #number Effect (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
--- @param #number Density (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
--- @return Core.Set#SET_GROUP Set of GROUP objects. 
+--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+--- @param #string Filename The name of the file.
+--- @param #boolean Spawn If set to false, do not re-spawn the groups loaded in location and reduce to size.
+--- @param #boolean Structured (Optional, needs Spawn=true)If true, and the data has been saved as structure before, remove the correct unit types as per the saved list.
+--- @param #boolean Cinematic (Optional, needs Structured=true) If true, place a fire/smoke effect on the dead static position.
+--- @param #number Effect (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
+--- @param #number Density (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
+--- @return Core.Set#SET_GROUP Set of GROUP objects. 
 -- Returns nil when file cannot be read. Returns a table of data entries if Spawn is false: `{ groupname=groupname, size=size, coordinate=coordinate, template=template }`
--- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )`
+--- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )`
 function UTILS.LoadSetOfGroups(Path,Filename,Spawn,Structured,Cinematic,Effect,Density)
   
   local fires = {}
@@ -2587,9 +2587,9 @@ function UTILS.LoadSetOfGroups(Path,Filename,Spawn,Structured,Cinematic,Effect,D
 end
 
 --- Load back a SET of statics from file.
--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
--- @param #string Filename The name of the file.
--- @return Core.Set#SET_STATIC Set SET_STATIC containing the static objects.
+--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+--- @param #string Filename The name of the file.
+--- @return Core.Set#SET_STATIC Set SET_STATIC containing the static objects.
 function UTILS.LoadSetOfStatics(Path,Filename)
   local filename = Filename or "SetOfStatics"
   local datatable = SET_STATIC:New()
@@ -2612,15 +2612,15 @@ function UTILS.LoadSetOfStatics(Path,Filename)
 end
 
 --- Load back a stationary list of statics from file.
--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
--- @param #string Filename The name of the file.
--- @param #boolean Reduce If false, do not destroy the units with size=0.
--- @param #boolean Dead (Optional, needs Reduce = true) If Dead is true, re-spawn the dead object as dead and do not just delete it.
--- @param #boolean Cinematic (Optional, needs Dead = true) If true, place a fire/smoke effect on the dead static position.
--- @param #number Effect (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
--- @param #number Density (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
--- @return #table Table of data objects (tables) containing staticname, size (0=dead else 1), coordinate and the static object. Dead objects will have coordinate points `{x=0,y=0,z=0}`
--- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )` 
+--- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+--- @param #string Filename The name of the file.
+--- @param #boolean Reduce If false, do not destroy the units with size=0.
+--- @param #boolean Dead (Optional, needs Reduce = true) If Dead is true, re-spawn the dead object as dead and do not just delete it.
+--- @param #boolean Cinematic (Optional, needs Dead = true) If true, place a fire/smoke effect on the dead static position.
+--- @param #number Effect (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
+--- @param #number Density (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
+--- @return #table Table of data objects (tables) containing staticname, size (0=dead else 1), coordinate and the static object. Dead objects will have coordinate points `{x=0,y=0,z=0}`
+--- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )` 
 -- Returns nil when file cannot be read.
 function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce,Dead,Cinematic,Effect,Density)
   local fires = {}
@@ -2674,8 +2674,8 @@ function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce,Dead,Cinematic,E
 end
 
 --- Heading Degrees (0-360) to Cardinal
--- @param #number Heading The heading
--- @return #string Cardinal, e.g. "NORTH"
+--- @param #number Heading The heading
+--- @return #string Cardinal, e.g. "NORTH"
 function UTILS.BearingToCardinal(Heading)
   if     Heading >= 0   and Heading <= 22  then return "North"
     elseif Heading >= 23  and Heading <= 66  then return "North-East"
@@ -2690,9 +2690,9 @@ function UTILS.BearingToCardinal(Heading)
 end
 
 --- Create a BRAA NATO call string BRAA between two GROUP objects
--- @param Wrapper.Group#GROUP FromGrp GROUP object
--- @param Wrapper.Group#GROUP ToGrp GROUP object
--- @return #string Formatted BRAA NATO call
+--- @param Wrapper.Group#GROUP FromGrp GROUP object
+--- @param Wrapper.Group#GROUP ToGrp GROUP object
+--- @return #string Formatted BRAA NATO call
 function UTILS.ToStringBRAANATO(FromGrp,ToGrp)
   local BRAANATO = "Merged."
   local GroupNumber = FromGrp:GetSize()
@@ -2721,10 +2721,10 @@ function UTILS.ToStringBRAANATO(FromGrp,ToGrp)
 end
 
 --- Check if an object is contained in a table.
--- @param #table Table The table.
--- @param #table Object The object to check.
--- @param #string Key (Optional) Key to check. By default, the object itself is checked.
--- @return #booolen Returns `true` if object is in table.
+--- @param #table Table The table.
+--- @param #table Object The object to check.
+--- @param #string Key (Optional) Key to check. By default, the object itself is checked.
+--- @return #booolen Returns `true` if object is in table.
 function UTILS.IsInTable(Table, Object, Key)
 
   for key, object in pairs(Table) do
@@ -2743,10 +2743,10 @@ function UTILS.IsInTable(Table, Object, Key)
 end
 
 --- Check if any object of multiple given objects is contained in a table.
--- @param #table Table The table.
--- @param #table Objects The objects to check.
--- @param #string Key (Optional) Key to check.
--- @return #booolen Returns `true` if object is in table.
+--- @param #table Table The table.
+--- @param #table Objects The objects to check.
+--- @param #string Key (Optional) Key to check.
+--- @return #booolen Returns `true` if object is in table.
 function UTILS.IsAnyInTable(Table, Objects, Key)
 
   for _,Object in pairs(UTILS.EnsureTable(Objects)) do

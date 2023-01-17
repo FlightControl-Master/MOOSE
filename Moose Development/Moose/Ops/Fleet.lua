@@ -21,11 +21,11 @@
 
 
 --- FLEET class.
--- @type FLEET
--- @field #string ClassName Name of the class.
--- @field #number verbose Verbosity of output.
--- @field Core.Set#SET_ZONE retreatZones Retreat zone set.
--- @field #boolean pathfinding Set pathfinding on for all spawned navy groups.
+--- @type FLEET
+--- @field #string ClassName Name of the class.
+--- @field #number verbose Verbosity of output.
+--- @field Core.Set#SET_ZONE retreatZones Retreat zone set.
+--- @field #boolean pathfinding Set pathfinding on for all spawned navy groups.
 -- @extends Ops.Legion#LEGION
 
 --- *A fleet of British ships at war are the best negotiators.* -- Horatio Nelson
@@ -58,7 +58,7 @@
 --     
 --
 --
--- @field #FLEET
+--- @field #FLEET
 FLEET = {
   ClassName       = "FLEET",
   verbose         =       0,
@@ -66,14 +66,14 @@ FLEET = {
 }
 
 --- Supply Zone.
--- @type FLEET.SupplyZone
--- @field Core.Zone#ZONE zone The zone.
--- @field Ops.Auftrag#AUFTRAG mission Mission assigned to supply ammo or fuel.
--- @field #boolean markerOn If `true`, marker is on.
--- @field Wrapper.Marker#MARKER marker F10 marker.
+--- @type FLEET.SupplyZone
+--- @field Core.Zone#ZONE zone The zone.
+--- @field Ops.Auftrag#AUFTRAG mission Mission assigned to supply ammo or fuel.
+--- @field #boolean markerOn If `true`, marker is on.
+--- @field Wrapper.Marker#MARKER marker F10 marker.
 
 --- FLEET class version.
--- @field #string version
+--- @field #string version
 FLEET.version="0.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -88,10 +88,10 @@ FLEET.version="0.0.1"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new FLEET class object.
--- @param #FLEET self
--- @param #string WarehouseName Name of the warehouse STATIC or UNIT object representing the warehouse.
--- @param #string FleetName Name of the fleet.
--- @return #FLEET self
+--- @param #FLEET self
+--- @param #string WarehouseName Name of the warehouse STATIC or UNIT object representing the warehouse.
+--- @param #string FleetName Name of the fleet.
+--- @return #FLEET self
 function FLEET:New(WarehouseName, FleetName)
 
   -- Inherit everything from LEGION class.
@@ -175,9 +175,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Add a flotilla to the fleet.
--- @param #FLEET self
--- @param Ops.Flotilla#FLOTILLA Flotilla The flotilla object.
--- @return #FLEET self
+--- @param #FLEET self
+--- @param Ops.Flotilla#FLOTILLA Flotilla The flotilla object.
+--- @return #FLEET self
 function FLEET:AddFlotilla(Flotilla)
 
   -- Add flotilla to fleet.
@@ -198,10 +198,10 @@ function FLEET:AddFlotilla(Flotilla)
 end
 
 --- Add asset group(s) to flotilla.
--- @param #FLEET self
--- @param Ops.Flotilla#FLOTILLA Flotilla The flotilla object.
--- @param #number Nassets Number of asset groups to add.
--- @return #FLEET self
+--- @param #FLEET self
+--- @param Ops.Flotilla#FLOTILLA Flotilla The flotilla object.
+--- @param #number Nassets Number of asset groups to add.
+--- @return #FLEET self
 function FLEET:AddAssetToFlotilla(Flotilla, Nassets)
 
   if Flotilla then
@@ -230,60 +230,60 @@ function FLEET:AddAssetToFlotilla(Flotilla, Nassets)
 end
 
 --- Set pathfinding for all spawned naval groups.
--- @param #FLEET self
--- @param #boolean Switch If `true`, pathfinding is used.
--- @return #FLEET self
+--- @param #FLEET self
+--- @param #boolean Switch If `true`, pathfinding is used.
+--- @return #FLEET self
 function FLEET:SetPathfinding(Switch)
   self.pathfinding=Switch
   return self
 end
 
 --- Define a set of retreat zones.
--- @param #FLEET self
--- @param Core.Set#SET_ZONE RetreatZoneSet Set of retreat zones.
--- @return #FLEET self
+--- @param #FLEET self
+--- @param Core.Set#SET_ZONE RetreatZoneSet Set of retreat zones.
+--- @return #FLEET self
 function FLEET:SetRetreatZones(RetreatZoneSet)
   self.retreatZones=RetreatZoneSet or SET_ZONE:New()
   return self
 end
 
 --- Add a retreat zone.
--- @param #FLEET self
--- @param Core.Zone#ZONE RetreatZone Retreat zone.
--- @return #FLEET self
+--- @param #FLEET self
+--- @param Core.Zone#ZONE RetreatZone Retreat zone.
+--- @return #FLEET self
 function FLEET:AddRetreatZone(RetreatZone)
   self.retreatZones:AddZone(RetreatZone)
   return self
 end
 
 --- Get retreat zones.
--- @param #FLEET self
--- @return Core.Set#SET_ZONE Set of retreat zones.
+--- @param #FLEET self
+--- @return Core.Set#SET_ZONE Set of retreat zones.
 function FLEET:GetRetreatZones()
   return self.retreatZones
 end
 
 --- Get flotilla by name.
--- @param #FLEET self
--- @param #string FlotillaName Name of the flotilla.
--- @return Ops.Flotilla#FLOTILLA The Flotilla object.
+--- @param #FLEET self
+--- @param #string FlotillaName Name of the flotilla.
+--- @return Ops.Flotilla#FLOTILLA The Flotilla object.
 function FLEET:GetFlotilla(FlotillaName)
   local flotilla=self:_GetCohort(FlotillaName)
   return flotilla
 end
 
 --- Get flotilla of an asset.
--- @param #FLEET self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The flotilla asset.
--- @return Ops.Flotilla#FLOTILLA The flotilla object.
+--- @param #FLEET self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The flotilla asset.
+--- @return Ops.Flotilla#FLOTILLA The flotilla object.
 function FLEET:GetFlotillaOfAsset(Asset)
   local flotilla=self:GetFlotilla(Asset.squadname)
   return flotilla
 end
 
 --- Remove asset from flotilla.
--- @param #FLEET self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The flotilla asset.
+--- @param #FLEET self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The flotilla asset.
 function FLEET:RemoveAssetFromFlotilla(Asset)
   local flotilla=self:GetFlotillaOfAsset(Asset)
   if flotilla then
@@ -296,7 +296,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Start FLEET FSM.
--- @param #FLEET self
+--- @param #FLEET self
 function FLEET:onafterStart(From, Event, To)
 
   -- Start parent Warehouse.
@@ -308,7 +308,7 @@ function FLEET:onafterStart(From, Event, To)
 end
 
 --- Update status.
--- @param #FLEET self
+--- @param #FLEET self
 function FLEET:onafterStatus(From, Event, To)
 
   -- Status of parent Warehouse.
@@ -409,12 +409,12 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "NavyOnMission".
--- @param #FLEET self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.ArmyGroup#ARMYGROUP ArmyGroup Ops army group on mission.
--- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
+--- @param #FLEET self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.ArmyGroup#ARMYGROUP ArmyGroup Ops army group on mission.
+--- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
 function FLEET:onafterNavyOnMission(From, Event, To, NavyGroup, Mission)
   -- Debug info.
   self:T(self.lid..string.format("Group %s on %s mission %s", NavyGroup:GetName(), Mission:GetType(), Mission:GetName()))  

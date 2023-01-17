@@ -24,23 +24,23 @@
 
 -------------------------------------------------------------------------
 --- **SHORAD** class, extends Core.Base#BASE
--- @type SHORAD
--- @field #string ClassName
--- @field #string name Name of this Shorad
--- @field #boolean debug Set the debug state
--- @field #string Prefixes String to be used to build the @{#Core.Set#SET_GROUP} 
--- @field #number Radius Shorad defense radius in meters
--- @field Core.Set#SET_GROUP Groupset The set of Shorad groups
--- @field Core.Set#SET_GROUP Samset The set of SAM groups to defend
--- @field #string Coalition The coalition of this Shorad
--- @field #number ActiveTimer How long a Shorad stays active after wake-up in seconds
--- @field #table ActiveGroups Table for the timer function
--- @field #string lid The log ID for the dcs.log
--- @field #boolean DefendHarms Default true, intercept incoming HARMS
--- @field #boolean DefendMavs Default true, intercept incoming AG-Missiles
--- @field #number DefenseLowProb Default 70, minimum detection limit
--- @field #number DefenseHighProb Default 90, maximim detection limit
--- @field #boolean UseEmOnOff Decide if we are using Emission on/off (default) or AlarmState red/green.
+--- @type SHORAD
+--- @field #string ClassName
+--- @field #string name Name of this Shorad
+--- @field #boolean debug Set the debug state
+--- @field #string Prefixes String to be used to build the @{#Core.Set#SET_GROUP} 
+--- @field #number Radius Shorad defense radius in meters
+--- @field Core.Set#SET_GROUP Groupset The set of Shorad groups
+--- @field Core.Set#SET_GROUP Samset The set of SAM groups to defend
+--- @field #string Coalition The coalition of this Shorad
+--- @field #number ActiveTimer How long a Shorad stays active after wake-up in seconds
+--- @field #table ActiveGroups Table for the timer function
+--- @field #string lid The log ID for the dcs.log
+--- @field #boolean DefendHarms Default true, intercept incoming HARMS
+--- @field #boolean DefendMavs Default true, intercept incoming AG-Missiles
+--- @field #number DefenseLowProb Default 70, minimum detection limit
+--- @field #number DefenseHighProb Default 90, maximim detection limit
+--- @field #boolean UseEmOnOff Decide if we are using Emission on/off (default) or AlarmState red/green.
 -- @extends Core.Base#BASE
 
 
@@ -82,7 +82,7 @@
 --  * SHORAD:SetActiveTimer(seconds)
 --  * SHORAD:SetDefenseRadius(meters)
 --
--- @field #SHORAD
+--- @field #SHORAD
 SHORAD = {
   ClassName = "SHORAD",
   name = "MyShorad",
@@ -489,12 +489,12 @@ do
   end
   
 --- (Internal) Calculate hit zone of an AGM-88
--- @param #SHORAD self
--- @param #table SEADWeapon DCS.Weapon object
--- @param Core.Point#COORDINATE pos0 Position of the plane when it fired
--- @param #number height Height when the missile was fired
--- @param Wrapper.Group#GROUP SEADGroup Attacker group
--- @return #SHORAD self 
+--- @param #SHORAD self
+--- @param #table SEADWeapon DCS.Weapon object
+--- @param Core.Point#COORDINATE pos0 Position of the plane when it fired
+--- @param #number height Height when the missile was fired
+--- @param Wrapper.Group#GROUP SEADGroup Attacker group
+--- @return #SHORAD self 
 function SHORAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADGroup)
   self:T("**** Calculating hit zone")
   if SEADWeapon and SEADWeapon:isExist() then

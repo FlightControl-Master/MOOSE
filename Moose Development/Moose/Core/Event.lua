@@ -174,11 +174,11 @@
 
 
 --- @type EVENT
--- @field #EVENT.Events Events
+--- @field #EVENT.Events Events
 -- @extends Core.Base#BASE
 
 --- The EVENT class
--- @field #EVENT
+--- @field #EVENT
 EVENT = {
   ClassName = "EVENT",
   ClassID = 0,
@@ -197,7 +197,7 @@ world.event.S_EVENT_PLAYER_ENTER_AIRCRAFT = world.event.S_EVENT_MAX + 1007
 
 --- The different types of events supported by MOOSE.
 -- Use this structure to subscribe to events using the @{Core.Base#BASE.HandleEvent}() method.
--- @type EVENTS
+--- @type EVENTS
 EVENTS = {
   Shot =              world.event.S_EVENT_SHOT,
   Hit =               world.event.S_EVENT_HIT,
@@ -268,53 +268,53 @@ EVENTS = {
 --   * A (Object.Category.)UNIT : A UNIT object type is involved in the Event.
 --   * A (Object.Category.)STATIC : A STATIC object type is involved in the Event.
 --
--- @type EVENTDATA
--- @field #number id The identifier of the event.
+--- @type EVENTDATA
+--- @field #number id The identifier of the event.
 --
--- @field DCS#Unit initiator (UNIT/STATIC/SCENERY) The initiating @{DCS#Unit} or @{DCS#StaticObject}.
--- @field DCS#Object.Category IniObjectCategory (UNIT/STATIC/SCENERY) The initiator object category ( Object.Category.UNIT or Object.Category.STATIC ).
--- @field DCS#Unit IniDCSUnit (UNIT/STATIC) The initiating @{DCS#Unit} or @{DCS#StaticObject}.
--- @field #string IniDCSUnitName (UNIT/STATIC) The initiating Unit name.
--- @field Wrapper.Unit#UNIT IniUnit (UNIT/STATIC) The initiating MOOSE wrapper @{Wrapper.Unit#UNIT} of the initiator Unit object.
--- @field #string IniUnitName (UNIT/STATIC) The initiating UNIT name (same as IniDCSUnitName).
--- @field DCS#Group IniDCSGroup (UNIT) The initiating {DCSGroup#Group}.
--- @field #string IniDCSGroupName (UNIT) The initiating Group name.
--- @field Wrapper.Group#GROUP IniGroup (UNIT) The initiating MOOSE wrapper @{Wrapper.Group#GROUP} of the initiator Group object.
--- @field #string IniGroupName UNIT) The initiating GROUP name (same as IniDCSGroupName).
--- @field #string IniPlayerName (UNIT) The name of the initiating player in case the Unit is a client or player slot.
--- @field DCS#coalition.side IniCoalition (UNIT) The coalition of the initiator.
--- @field DCS#Unit.Category IniCategory (UNIT) The category of the initiator.
--- @field #string IniTypeName (UNIT) The type name of the initiator.
+--- @field DCS#Unit initiator (UNIT/STATIC/SCENERY) The initiating @{DCS#Unit} or @{DCS#StaticObject}.
+--- @field DCS#Object.Category IniObjectCategory (UNIT/STATIC/SCENERY) The initiator object category ( Object.Category.UNIT or Object.Category.STATIC ).
+--- @field DCS#Unit IniDCSUnit (UNIT/STATIC) The initiating @{DCS#Unit} or @{DCS#StaticObject}.
+--- @field #string IniDCSUnitName (UNIT/STATIC) The initiating Unit name.
+--- @field Wrapper.Unit#UNIT IniUnit (UNIT/STATIC) The initiating MOOSE wrapper @{Wrapper.Unit#UNIT} of the initiator Unit object.
+--- @field #string IniUnitName (UNIT/STATIC) The initiating UNIT name (same as IniDCSUnitName).
+--- @field DCS#Group IniDCSGroup (UNIT) The initiating {DCSGroup#Group}.
+--- @field #string IniDCSGroupName (UNIT) The initiating Group name.
+--- @field Wrapper.Group#GROUP IniGroup (UNIT) The initiating MOOSE wrapper @{Wrapper.Group#GROUP} of the initiator Group object.
+--- @field #string IniGroupName UNIT) The initiating GROUP name (same as IniDCSGroupName).
+--- @field #string IniPlayerName (UNIT) The name of the initiating player in case the Unit is a client or player slot.
+--- @field DCS#coalition.side IniCoalition (UNIT) The coalition of the initiator.
+--- @field DCS#Unit.Category IniCategory (UNIT) The category of the initiator.
+--- @field #string IniTypeName (UNIT) The type name of the initiator.
 --
--- @field DCS#Unit target (UNIT/STATIC) The target @{DCS#Unit} or @{DCS#StaticObject}.
--- @field DCS#Object.Category TgtObjectCategory (UNIT/STATIC) The target object category ( Object.Category.UNIT or Object.Category.STATIC ).
--- @field DCS#Unit TgtDCSUnit (UNIT/STATIC) The target @{DCS#Unit} or @{DCS#StaticObject}.
--- @field #string TgtDCSUnitName (UNIT/STATIC) The target Unit name.
--- @field Wrapper.Unit#UNIT TgtUnit (UNIT/STATIC) The target MOOSE wrapper @{Wrapper.Unit#UNIT} of the target Unit object.
--- @field #string TgtUnitName (UNIT/STATIC) The target UNIT name (same as TgtDCSUnitName).
--- @field DCS#Group TgtDCSGroup (UNIT) The target {DCSGroup#Group}.
--- @field #string TgtDCSGroupName (UNIT) The target Group name.
--- @field Wrapper.Group#GROUP TgtGroup (UNIT) The target MOOSE wrapper @{Wrapper.Group#GROUP} of the target Group object.
--- @field #string TgtGroupName (UNIT) The target GROUP name (same as TgtDCSGroupName).
--- @field #string TgtPlayerName (UNIT) The name of the target player in case the Unit is a client or player slot.
--- @field DCS#coalition.side TgtCoalition (UNIT) The coalition of the target.
--- @field DCS#Unit.Category TgtCategory (UNIT) The category of the target.
--- @field #string TgtTypeName (UNIT) The type name of the target.
+--- @field DCS#Unit target (UNIT/STATIC) The target @{DCS#Unit} or @{DCS#StaticObject}.
+--- @field DCS#Object.Category TgtObjectCategory (UNIT/STATIC) The target object category ( Object.Category.UNIT or Object.Category.STATIC ).
+--- @field DCS#Unit TgtDCSUnit (UNIT/STATIC) The target @{DCS#Unit} or @{DCS#StaticObject}.
+--- @field #string TgtDCSUnitName (UNIT/STATIC) The target Unit name.
+--- @field Wrapper.Unit#UNIT TgtUnit (UNIT/STATIC) The target MOOSE wrapper @{Wrapper.Unit#UNIT} of the target Unit object.
+--- @field #string TgtUnitName (UNIT/STATIC) The target UNIT name (same as TgtDCSUnitName).
+--- @field DCS#Group TgtDCSGroup (UNIT) The target {DCSGroup#Group}.
+--- @field #string TgtDCSGroupName (UNIT) The target Group name.
+--- @field Wrapper.Group#GROUP TgtGroup (UNIT) The target MOOSE wrapper @{Wrapper.Group#GROUP} of the target Group object.
+--- @field #string TgtGroupName (UNIT) The target GROUP name (same as TgtDCSGroupName).
+--- @field #string TgtPlayerName (UNIT) The name of the target player in case the Unit is a client or player slot.
+--- @field DCS#coalition.side TgtCoalition (UNIT) The coalition of the target.
+--- @field DCS#Unit.Category TgtCategory (UNIT) The category of the target.
+--- @field #string TgtTypeName (UNIT) The type name of the target.
 --
--- @field DCS#Airbase place The @{DCS#Airbase}
--- @field Wrapper.Airbase#AIRBASE Place The MOOSE airbase object.
--- @field #string PlaceName The name of the airbase.
+--- @field DCS#Airbase place The @{DCS#Airbase}
+--- @field Wrapper.Airbase#AIRBASE Place The MOOSE airbase object.
+--- @field #string PlaceName The name of the airbase.
 --
--- @field #table weapon The weapon used during the event.
--- @field #table Weapon
--- @field #string WeaponName Name of the weapon.
--- @field DCS#Unit WeaponTgtDCSUnit Target DCS unit of the weapon.
+--- @field #table weapon The weapon used during the event.
+--- @field #table Weapon
+--- @field #string WeaponName Name of the weapon.
+--- @field DCS#Unit WeaponTgtDCSUnit Target DCS unit of the weapon.
 --
--- @field Cargo.Cargo#CARGO Cargo The cargo object.
--- @field #string CargoName The name of the cargo object.
+--- @field Cargo.Cargo#CARGO Cargo The cargo object.
+--- @field #string CargoName The name of the cargo object.
 --
--- @field Core.ZONE#ZONE Zone The zone object.
--- @field #string ZoneName The name of the zone.
+--- @field Core.ZONE#ZONE Zone The zone object.
+--- @field #string ZoneName The name of the zone.
 
 
 
@@ -636,12 +636,12 @@ local _EVENTMETA = {
 }
 
 --- The Events structure
--- @type EVENT.Events
--- @field #number IniUnit
+--- @type EVENT.Events
+--- @field #number IniUnit
 
 --- Create new event handler.
--- @param #EVENT self
--- @return #EVENT self
+--- @param #EVENT self
+--- @return #EVENT self
 function EVENT:New()
 
   -- Inherit base.
@@ -655,10 +655,10 @@ end
 
 
 --- Initializes the Events structure for the event.
--- @param #EVENT self
--- @param DCS#world.event EventID Event ID.
--- @param Core.Base#BASE EventClass The class object for which events are handled.
--- @return #EVENT.Events
+--- @param #EVENT self
+--- @param DCS#world.event EventID Event ID.
+--- @param Core.Base#BASE EventClass The class object for which events are handled.
+--- @return #EVENT.Events
 function EVENT:Init( EventID, EventClass )
   self:F3( { _EVENTMETA[EventID].Text, EventClass } )
 
@@ -682,10 +682,10 @@ function EVENT:Init( EventID, EventClass )
 end
 
 --- Removes a subscription
--- @param #EVENT self
--- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
--- @param DCS#world.event EventID Event ID.
--- @return #EVENT self
+--- @param #EVENT self
+--- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
+--- @param DCS#world.event EventID Event ID.
+--- @return #EVENT self
 function EVENT:RemoveEvent( EventClass, EventID  )
 
   -- Debug info.
@@ -706,10 +706,10 @@ function EVENT:RemoveEvent( EventClass, EventID  )
 end
 
 --- Resets subscriptions.
--- @param #EVENT self
--- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
--- @param DCS#world.event EventID Event ID.
--- @return #EVENT.Events
+--- @param #EVENT self
+--- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
+--- @param DCS#world.event EventID Event ID.
+--- @return #EVENT.Events
 function EVENT:Reset( EventObject ) --R2.1
 
   self:F( { "Resetting subscriptions for class: ", EventObject:GetClassNameAndID() } )
@@ -731,9 +731,9 @@ end
 
 
 --- Clears all event subscriptions for a @{Core.Base#BASE} derived object.
--- @param #EVENT self
--- @param Core.Base#BASE EventClass The self class object for which the events are removed.
--- @return #EVENT self
+--- @param #EVENT self
+--- @param Core.Base#BASE EventClass The self class object for which the events are removed.
+--- @return #EVENT self
 function EVENT:RemoveAll(EventClass)
 
   local EventClassName = EventClass:GetClassNameAndID()
@@ -751,12 +751,12 @@ end
 
 
 --- Create an OnDead event handler for a group
--- @param #EVENT self
--- @param #table EventTemplate
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @param EventClass The instance of the class for which the event is.
--- @param #function OnEventFunction
--- @return #EVENT self
+--- @param #EVENT self
+--- @param #table EventTemplate
+--- @param #function EventFunction The function to be called when the event occurs for the unit.
+--- @param EventClass The instance of the class for which the event is.
+--- @param #function OnEventFunction
+--- @return #EVENT self
 function EVENT:OnEventForTemplate( EventTemplate, EventFunction, EventClass, EventID )
   self:F2( EventTemplate.name )
 
@@ -767,11 +767,11 @@ function EVENT:OnEventForTemplate( EventTemplate, EventFunction, EventClass, Eve
 end
 
 --- Set a new listener for an `S_EVENT_X` event independent from a unit or a weapon.
--- @param #EVENT self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @param Core.Base#BASE EventClass The self instance of the class for which the event is captured. When the event happens, the event process will be called in this class provided.
--- @param EventID
--- @return #EVENT
+--- @param #EVENT self
+--- @param #function EventFunction The function to be called when the event occurs for the unit.
+--- @param Core.Base#BASE EventClass The self instance of the class for which the event is captured. When the event happens, the event process will be called in this class provided.
+--- @param EventID
+--- @return #EVENT
 function EVENT:OnEventGeneric( EventFunction, EventClass, EventID )
   self:F2( { EventID, EventClass, EventFunction } )
 
@@ -783,12 +783,12 @@ end
 
 
 --- Set a new listener for an `S_EVENT_X` event for a UNIT.
--- @param #EVENT self
--- @param #string UnitName The name of the UNIT.
--- @param #function EventFunction The function to be called when the event occurs for the GROUP.
--- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
--- @param EventID
--- @return #EVENT self
+--- @param #EVENT self
+--- @param #string UnitName The name of the UNIT.
+--- @param #function EventFunction The function to be called when the event occurs for the GROUP.
+--- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
+--- @param EventID
+--- @return #EVENT self
 function EVENT:OnEventForUnit( UnitName, EventFunction, EventClass, EventID )
   self:F2( UnitName )
 
@@ -799,13 +799,13 @@ function EVENT:OnEventForUnit( UnitName, EventFunction, EventClass, EventID )
 end
 
 --- Set a new listener for an S_EVENT_X event for a GROUP.
--- @param #EVENT self
--- @param #string GroupName The name of the GROUP.
--- @param #function EventFunction The function to be called when the event occurs for the GROUP.
--- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
--- @param #number EventID Event ID.
--- @param ... Optional arguments passed to the event function.
--- @return #EVENT self
+--- @param #EVENT self
+--- @param #string GroupName The name of the GROUP.
+--- @param #function EventFunction The function to be called when the event occurs for the GROUP.
+--- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
+--- @param #number EventID Event ID.
+--- @param ... Optional arguments passed to the event function.
+--- @return #EVENT self
 function EVENT:OnEventForGroup( GroupName, EventFunction, EventClass, EventID, ... )
 
   local Event = self:Init( EventID, EventClass )
@@ -1051,8 +1051,8 @@ do -- Event Creation
 end
 
 --- Main event function.
--- @param #EVENT self
--- @param #EVENTDATA Event Event data table.
+--- @param #EVENT self
+--- @param #EVENTDATA Event Event data table.
 function EVENT:onEvent( Event )
 
   --- Function to handle errors.
@@ -1474,7 +1474,7 @@ function EVENT:onEvent( Event )
 end
 
 --- The EVENTHANDLER structure.
--- @type EVENTHANDLER
+--- @type EVENTHANDLER
 -- @extends Core.Base#BASE
 EVENTHANDLER = {
   ClassName = "EVENTHANDLER",
@@ -1482,8 +1482,8 @@ EVENTHANDLER = {
 }
 
 --- The EVENTHANDLER constructor.
--- @param #EVENTHANDLER self
--- @return #EVENTHANDLER self
+--- @param #EVENTHANDLER self
+--- @return #EVENTHANDLER self
 function EVENTHANDLER:New()
   self = BASE:Inherit( self, BASE:New() ) -- #EVENTHANDLER
   return self

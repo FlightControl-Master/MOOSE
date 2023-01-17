@@ -12,18 +12,18 @@
 
 
 --- The CLIENT class
--- @type CLIENT
--- @field #string ClassName Name of the class.
--- @field #string ClientName Name of the client.
--- @field #string ClientBriefing Briefing.
--- @field #function ClientCallBack Callback function.
--- @field #table ClientParameters Parameters of the callback function.
--- @field #number ClientGroupID Group ID of the client.
--- @field #string ClientGroupName Group name.
--- @field #boolean ClientAlive Client alive.
--- @field #boolean ClientAlive2 Client alive 2.
--- @field #table Players Player table.
--- @field Core.Point#COORDINATE SpawnCoord Spawn coordinate from the template.
+--- @type CLIENT
+--- @field #string ClassName Name of the class.
+--- @field #string ClientName Name of the client.
+--- @field #string ClientBriefing Briefing.
+--- @field #function ClientCallBack Callback function.
+--- @field #table ClientParameters Parameters of the callback function.
+--- @field #number ClientGroupID Group ID of the client.
+--- @field #string ClientGroupName Group name.
+--- @field #boolean ClientAlive Client alive.
+--- @field #boolean ClientAlive2 Client alive 2.
+--- @field #table Players Player table.
+--- @field Core.Point#COORDINATE SpawnCoord Spawn coordinate from the template.
 -- @extends Wrapper.Unit#UNIT
 
 
@@ -60,7 +60,7 @@
 --  
 -- **IMPORTANT: ONE SHOULD NEVER SANITIZE these CLIENT OBJECT REFERENCES! (make the CLIENT object references nil).**
 -- 
--- @field #CLIENT
+--- @field #CLIENT
 CLIENT = {
 	ClassName = "CLIENT",
 	ClientName = nil,
@@ -75,10 +75,10 @@ CLIENT = {
 
 
 --- Finds a CLIENT from the _DATABASE using the relevant DCS Unit.
--- @param #CLIENT self
--- @param DCS#Unit DCSUnit The DCS unit of the client.
--- @param #boolean Error Throw an error message.
--- @return #CLIENT The CLIENT found in the _DATABASE.
+--- @param #CLIENT self
+--- @param DCS#Unit DCSUnit The DCS unit of the client.
+--- @param #boolean Error Throw an error message.
+--- @return #CLIENT The CLIENT found in the _DATABASE.
 function CLIENT:Find(DCSUnit, Error)
 
   local ClientName = DCSUnit:getName()
@@ -98,11 +98,11 @@ end
 
 --- Finds a CLIENT from the _DATABASE using the relevant Client Unit Name.
 -- As an optional parameter, a briefing text can be given also.
--- @param #CLIENT self
--- @param #string ClientName Name of the DCS **Unit** as defined within the Mission Editor.
--- @param #string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
--- @param #boolean Error A flag that indicates whether an error should be raised if the CLIENT cannot be found. By default an error will be raised.
--- @return #CLIENT
+--- @param #CLIENT self
+--- @param #string ClientName Name of the DCS **Unit** as defined within the Mission Editor.
+--- @param #string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
+--- @param #boolean Error A flag that indicates whether an error should be raised if the CLIENT cannot be found. By default an error will be raised.
+--- @return #CLIENT
 -- @usage
 -- -- Create new Clients.
 --	local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
@@ -133,9 +133,9 @@ function CLIENT:FindByName( ClientName, ClientBriefing, Error )
 end
 
 --- Transport defines that the Client is a Transport. Transports show cargo.
--- @param #CLIENT self
--- @param #string ClientName Name of the client unit.
--- @return #CLIENT self
+--- @param #CLIENT self
+--- @param #string ClientName Name of the client unit.
+--- @return #CLIENT self
 function CLIENT:Register(ClientName)
 
   -- Inherit unit.
@@ -155,17 +155,17 @@ end
 
 
 --- Transport defines that the Client is a Transport. Transports show cargo.
--- @param #CLIENT self
--- @return #CLIENT self
+--- @param #CLIENT self
+--- @return #CLIENT self
 function CLIENT:Transport()
   self.ClientTransport = true
   return self
 end
 
 --- Adds a briefing to a CLIENT when a player joins a mission.
--- @param #CLIENT self
--- @param #string ClientBriefing is the text defining the Mission briefing.
--- @return #CLIENT self
+--- @param #CLIENT self
+--- @param #string ClientBriefing is the text defining the Mission briefing.
+--- @return #CLIENT self
 function CLIENT:AddBriefing( ClientBriefing )
 
   self.ClientBriefing = ClientBriefing
@@ -175,9 +175,9 @@ function CLIENT:AddBriefing( ClientBriefing )
 end
 
 --- Add player name.
--- @param #CLIENT self
--- @param #string PlayerName Name of the player.
--- @return #CLIENT self
+--- @param #CLIENT self
+--- @param #string PlayerName Name of the player.
+--- @return #CLIENT self
 function CLIENT:AddPlayer(PlayerName)
 
   table.insert(self.Players, PlayerName)
@@ -186,15 +186,15 @@ function CLIENT:AddPlayer(PlayerName)
 end
 
 --- Get player name(s).
--- @param #CLIENT self
--- @return #table List of player names or an empty table `{}`.
+--- @param #CLIENT self
+--- @return #table List of player names or an empty table `{}`.
 function CLIENT:GetPlayers()
   return self.Players
 end
 
 --- Get name of player.
--- @param #CLIENT self
--- @return #string Player name or `nil`.
+--- @param #CLIENT self
+--- @return #string Player name or `nil`.
 function CLIENT:GetPlayer()
   if #self.Players>0 then
     return self.Players[1]
@@ -203,9 +203,9 @@ function CLIENT:GetPlayer()
 end
 
 --- Remove player.
--- @param #CLIENT self
--- @param #string PlayerName Name of the player.
--- @return #CLIENT self
+--- @param #CLIENT self
+--- @param #string PlayerName Name of the player.
+--- @return #CLIENT self
 function CLIENT:RemovePlayer(PlayerName)
 
   for i,playername in pairs(self.Players) do
@@ -219,8 +219,8 @@ function CLIENT:RemovePlayer(PlayerName)
 end
 
 --- Remove all players.
--- @param #CLIENT self
--- @return #CLIENT self
+--- @param #CLIENT self
+--- @return #CLIENT self
 function CLIENT:RemovePlayers()
   self.Players={}
   return self
@@ -228,8 +228,8 @@ end
 
 
 --- Show the briefing of a CLIENT.
--- @param #CLIENT self
--- @return #CLIENT self
+--- @param #CLIENT self
+--- @return #CLIENT self
 function CLIENT:ShowBriefing()
 
   if not self.ClientBriefingShown then
@@ -245,9 +245,9 @@ function CLIENT:ShowBriefing()
 end
 
 --- Show the mission briefing of a MISSION to the CLIENT.
--- @param #CLIENT self
--- @param #string MissionBriefing
--- @return #CLIENT self
+--- @param #CLIENT self
+--- @param #string MissionBriefing
+--- @return #CLIENT self
 function CLIENT:ShowMissionBriefing( MissionBriefing )
   self:F( { self.ClientName } )
 
@@ -259,8 +259,8 @@ function CLIENT:ShowMissionBriefing( MissionBriefing )
 end
 
 --- Resets a CLIENT.
--- @param #CLIENT self
--- @param #string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
+--- @param #CLIENT self
+--- @param #string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
 function CLIENT:Reset( ClientName )
 	self:F()
 	self._Menus = {}
@@ -269,8 +269,8 @@ end
 -- Is Functions
 
 --- Checks if the CLIENT is a multi-seated UNIT.
--- @param #CLIENT self
--- @return #boolean true if multi-seated.
+--- @param #CLIENT self
+--- @return #boolean true if multi-seated.
 function CLIENT:IsMultiSeated()
   self:F( self.ClientName )
 
@@ -291,10 +291,10 @@ function CLIENT:IsMultiSeated()
 end
 
 --- Checks for a client alive event and calls a function on a continuous basis.
--- @param #CLIENT self
--- @param #function CallBackFunction Create a function that will be called when a player joins the slot.
--- @param ... (Optional) Arguments for callback function as comma separated list.
--- @return #CLIENT
+--- @param #CLIENT self
+--- @param #function CallBackFunction Create a function that will be called when a player joins the slot.
+--- @param ... (Optional) Arguments for callback function as comma separated list.
+--- @return #CLIENT
 function CLIENT:Alive( CallBackFunction, ... )
   self:F()
   
@@ -341,8 +341,8 @@ end
 
 --- Return the DCSGroup of a Client.
 -- This function is modified to deal with a couple of bugs in DCS 1.5.3
--- @param #CLIENT self
--- @return DCS#Group The group of the Client.
+--- @param #CLIENT self
+--- @return DCS#Group The group of the Client.
 function CLIENT:GetDCSGroup()
   self:F3()
 
@@ -430,8 +430,8 @@ end
 
 
 --- Get the group ID of the client.
--- @param #CLIENT self
--- @return #number DCS#Group ID.
+--- @param #CLIENT self
+--- @return #number DCS#Group ID.
 function CLIENT:GetClientGroupID()
 
   -- This updates the ID.
@@ -442,8 +442,8 @@ end
 
 
 --- Get the name of the group of the client.
--- @param #CLIENT self
--- @return #string
+--- @param #CLIENT self
+--- @return #string
 function CLIENT:GetClientGroupName()
 
   -- This updates the group name.
@@ -453,8 +453,8 @@ function CLIENT:GetClientGroupName()
 end
 
 --- Returns the UNIT of the CLIENT.
--- @param #CLIENT self
--- @return Wrapper.Unit#UNIT The client UNIT or `nil`.
+--- @param #CLIENT self
+--- @return Wrapper.Unit#UNIT The client UNIT or `nil`.
 function CLIENT:GetClientGroupUnit()
   self:F2()
   
@@ -471,8 +471,8 @@ function CLIENT:GetClientGroupUnit()
 end
 
 --- Returns the DCSUnit of the CLIENT.
--- @param #CLIENT self
--- @return DCS#Unit
+--- @param #CLIENT self
+--- @return DCS#Unit
 function CLIENT:GetClientGroupDCSUnit()
 	self:F2()
 
@@ -486,8 +486,8 @@ end
 
 
 --- Evaluates if the CLIENT is a transport.
--- @param #CLIENT self
--- @return #boolean true is a transport.
+--- @param #CLIENT self
+--- @return #boolean true is a transport.
 function CLIENT:IsTransport()
 	self:F()
 	return self.ClientTransport
@@ -495,7 +495,7 @@ end
 
 --- Shows the @{AI.AI_Cargo#CARGO} contained within the CLIENT to the player as a message.
 -- The @{AI.AI_Cargo#CARGO} is shown using the @{Core.Message#MESSAGE} distribution system.
--- @param #CLIENT self
+--- @param #CLIENT self
 function CLIENT:ShowCargo()
 	self:F()
 
@@ -519,12 +519,12 @@ end
 
 --- The main message driver for the CLIENT.
 -- This function displays various messages to the Player logged into the CLIENT through the DCS World Messaging system.
--- @param #CLIENT self
--- @param #string Message is the text describing the message.
--- @param #number MessageDuration is the duration in seconds that the Message should be displayed.
--- @param #string MessageCategory is the category of the message (the title).
--- @param #number MessageInterval is the interval in seconds between the display of the @{Core.Message#MESSAGE} when the CLIENT is in the air.
--- @param #string MessageID is the identifier of the message when displayed with intervals.
+--- @param #CLIENT self
+--- @param #string Message is the text describing the message.
+--- @param #number MessageDuration is the duration in seconds that the Message should be displayed.
+--- @param #string MessageCategory is the category of the message (the title).
+--- @param #number MessageInterval is the interval in seconds between the display of the @{Core.Message#MESSAGE} when the CLIENT is in the air.
+--- @param #string MessageID is the identifier of the message when displayed with intervals.
 function CLIENT:Message( Message, MessageDuration, MessageCategory, MessageInterval, MessageID )
 	self:F( { Message, MessageDuration, MessageCategory, MessageInterval } )
 

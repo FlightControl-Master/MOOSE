@@ -12,15 +12,15 @@
 
 
 --- LEGION class.
--- @type LEGION
--- @field #string ClassName Name of the class.
--- @field #number verbose Verbosity of output.
--- @field #string lid Class id string for output to DCS log file.
--- @field #table missionqueue Mission queue table.
--- @field #table transportqueue Transport queue.
--- @field #table cohorts Cohorts of this legion.
--- @field Ops.Commander#COMMANDER commander Commander of this legion.
--- @field Ops.Chief#CHIEF chief Chief of this legion.
+--- @type LEGION
+--- @field #string ClassName Name of the class.
+--- @field #number verbose Verbosity of output.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #table missionqueue Mission queue table.
+--- @field #table transportqueue Transport queue.
+--- @field #table cohorts Cohorts of this legion.
+--- @field Ops.Commander#COMMANDER commander Commander of this legion.
+--- @field Ops.Chief#CHIEF chief Chief of this legion.
 -- @extends Functional.Warehouse#WAREHOUSE
 
 --- *Per aspera ad astra.*
@@ -35,7 +35,7 @@
 -- 
 -- ** The LEGION class is not meant to be used directly. Use AIRWING, BRIGADE or FLEET instead! **
 --
--- @field #LEGION
+--- @field #LEGION
 LEGION = {
   ClassName      = "LEGION",
   verbose        =     0,
@@ -46,7 +46,7 @@ LEGION = {
 }
 
 --- LEGION class version.
--- @field #string version
+--- @field #string version
 LEGION.version="0.4.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -64,10 +64,10 @@ LEGION.version="0.4.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new LEGION class object.
--- @param #LEGION self
--- @param #string WarehouseName Name of the warehouse STATIC or UNIT object representing the warehouse.
--- @param #string LegionName Name of the legion. Must be **unique**!
--- @return #LEGION self
+--- @param #LEGION self
+--- @param #string WarehouseName Name of the warehouse STATIC or UNIT object representing the warehouse.
+--- @param #string LegionName Name of the legion. Must be **unique**!
+--- @return #LEGION self
 function LEGION:New(WarehouseName, LegionName)
 
   -- Inherit everything from WAREHOUSE class.
@@ -309,18 +309,18 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set verbosity level.
--- @param #LEGION self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
--- @return #LEGION self
+--- @param #LEGION self
+--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+--- @return #LEGION self
 function LEGION:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
   return self
 end
 
 --- Add a mission for the legion. It will pick the best available assets for the mission and lauch it when ready. 
--- @param #LEGION self
--- @param Ops.Auftrag#AUFTRAG Mission Mission for this legion.
--- @return #LEGION self
+--- @param #LEGION self
+--- @param Ops.Auftrag#AUFTRAG Mission Mission for this legion.
+--- @return #LEGION self
 function LEGION:AddMission(Mission)
 
   -- Set status to QUEUED. This event is only allowed for the first legion that calls it.
@@ -349,9 +349,9 @@ function LEGION:AddMission(Mission)
 end
 
 --- Remove mission from queue.
--- @param #LEGION self
--- @param Ops.Auftrag#AUFTRAG Mission Mission to be removed.
--- @return #LEGION self
+--- @param #LEGION self
+--- @param Ops.Auftrag#AUFTRAG Mission Mission to be removed.
+--- @return #LEGION self
 function LEGION:RemoveMission(Mission)
 
   for i,_mission in pairs(self.missionqueue) do
@@ -369,9 +369,9 @@ function LEGION:RemoveMission(Mission)
 end
 
 --- Add transport assignment to queue. 
--- @param #LEGION self
--- @param Ops.OpsTransport#OPSTRANSPORT OpsTransport Transport assignment.
--- @return #LEGION self
+--- @param #LEGION self
+--- @param Ops.OpsTransport#OPSTRANSPORT OpsTransport Transport assignment.
+--- @return #LEGION self
 function LEGION:AddOpsTransport(OpsTransport)
 
   -- Is not queued at a legion.
@@ -395,9 +395,9 @@ function LEGION:AddOpsTransport(OpsTransport)
 end
 
 --- Add cohort to cohort table of this legion.
--- @param #LEGION self
--- @param Ops.Cohort#COHORT Cohort The cohort to be added.
--- @return #LEGION self
+--- @param #LEGION self
+--- @param Ops.Cohort#COHORT Cohort The cohort to be added.
+--- @return #LEGION self
 function LEGION:AddCohort(Cohort)
   
   if self:IsCohort(Cohort.name) then
@@ -415,9 +415,9 @@ function LEGION:AddCohort(Cohort)
 end
 
 --- Remove cohort from cohor table of this legion.
--- @param #LEGION self
--- @param Ops.Cohort#COHORT Cohort The cohort to be added.
--- @return #LEGION self
+--- @param #LEGION self
+--- @param Ops.Cohort#COHORT Cohort The cohort to be added.
+--- @return #LEGION self
 function LEGION:DelCohort(Cohort)
 
   for i=#self.cohorts,1,-1 do
@@ -436,14 +436,14 @@ end
 -- Assets in stock are spawned and routed to the new legion.
 -- If assets are spawned, running missions will be cancelled.
 -- Cohort assets will not be available until relocation is finished.
--- @param #LEGION self
--- @param Ops.Cohort#COHORT Cohort The cohort to be relocated.
--- @param Ops.Legion#LEGION Legion The legion where the cohort is relocated to.
--- @param #number Delay Delay in seconds before relocation takes place. Default `nil`, *i.e.* ASAP.
--- @param #number NcarriersMin Min number of transport carriers in case the troops should be transported. Default `nil` for no transport.
--- @param #number NcarriersMax Max number of transport carriers.
--- @param #table TransportLegions Legion(s) assigned for transportation. Default is that transport assets can only be recruited from this legion.
--- @return #LEGION self
+--- @param #LEGION self
+--- @param Ops.Cohort#COHORT Cohort The cohort to be relocated.
+--- @param Ops.Legion#LEGION Legion The legion where the cohort is relocated to.
+--- @param #number Delay Delay in seconds before relocation takes place. Default `nil`, *i.e.* ASAP.
+--- @param #number NcarriersMin Min number of transport carriers in case the troops should be transported. Default `nil` for no transport.
+--- @param #number NcarriersMax Max number of transport carriers.
+--- @param #table TransportLegions Legion(s) assigned for transportation. Default is that transport assets can only be recruited from this legion.
+--- @return #LEGION self
 function LEGION:RelocateCohort(Cohort, Legion, Delay, NcarriersMin, NcarriersMax, TransportLegions)
 
   if Delay and Delay>0 then
@@ -521,9 +521,9 @@ function LEGION:RelocateCohort(Cohort, Legion, Delay, NcarriersMin, NcarriersMax
 end
 
 --- Get cohort by name.
--- @param #LEGION self
--- @param #string CohortName Name of the platoon.
--- @return Ops.Cohort#COHORT The Cohort object.
+--- @param #LEGION self
+--- @param #string CohortName Name of the platoon.
+--- @return Ops.Cohort#COHORT The Cohort object.
 function LEGION:_GetCohort(CohortName)
 
   for _,_cohort in pairs(self.cohorts) do
@@ -539,9 +539,9 @@ function LEGION:_GetCohort(CohortName)
 end
 
 --- Check if cohort is part of this legion.
--- @param #LEGION self
--- @param #string CohortName Name of the platoon.
--- @return #boolean If `true`, cohort is part of this legion.
+--- @param #LEGION self
+--- @param #string CohortName Name of the platoon.
+--- @return #boolean If `true`, cohort is part of this legion.
 function LEGION:IsCohort(CohortName)
 
   for _,_cohort in pairs(self.cohorts) do
@@ -557,16 +557,16 @@ function LEGION:IsCohort(CohortName)
 end
 
 --- Get name of legion. This is the alias of the warehouse.
--- @param #LEGION self
--- @return #string Name of legion.
+--- @param #LEGION self
+--- @return #string Name of legion.
 function LEGION:GetName()
   return self.alias
 end
 
 --- Get cohort of an asset.
--- @param #LEGION self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
--- @return Ops.Cohort#COHORT The Cohort object.
+--- @param #LEGION self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
+--- @return Ops.Cohort#COHORT The Cohort object.
 function LEGION:_GetCohortOfAsset(Asset)
   local cohort=self:_GetCohort(Asset.squadname)
   return cohort
@@ -574,24 +574,24 @@ end
 
 
 --- Check if a BRIGADE class is calling.
--- @param #LEGION self
--- @return #boolean If true, this is a BRIGADE.
+--- @param #LEGION self
+--- @return #boolean If true, this is a BRIGADE.
 function LEGION:IsBrigade()
   local is=self.ClassName==BRIGADE.ClassName
   return is
 end
 
 --- Check if the AIRWING class is calling.
--- @param #LEGION self
--- @return #boolean If true, this is an AIRWING.
+--- @param #LEGION self
+--- @return #boolean If true, this is an AIRWING.
 function LEGION:IsAirwing()
   local is=self.ClassName==AIRWING.ClassName
   return is
 end
 
 --- Check if the FLEET class is calling.
--- @param #LEGION self
--- @return #boolean If true, this is a FLEET.
+--- @param #LEGION self
+--- @return #boolean If true, this is a FLEET.
 function LEGION:IsFleet()
   local is=self.ClassName==FLEET.ClassName
   return is
@@ -602,7 +602,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Start LEGION FSM.
--- @param #LEGION self
+--- @param #LEGION self
 function LEGION:onafterStart(From, Event, To)
 
   -- Start parent Warehouse.
@@ -614,8 +614,8 @@ function LEGION:onafterStart(From, Event, To)
 end
 
 --- Check mission queue and assign ONE mission.
--- @param #LEGION self
--- @return #boolean If `true`, a mission was found and requested.
+--- @param #LEGION self
+--- @return #boolean If `true`, a mission was found and requested.
 function LEGION:CheckMissionQueue()
 
   -- Number of missions.
@@ -750,8 +750,8 @@ function LEGION:CheckMissionQueue()
 end
 
 --- Check transport queue and assign ONE transport.
--- @param #LEGION self
--- @return #boolean If `true`, a transport was found and requested.
+--- @param #LEGION self
+--- @return #boolean If `true`, a transport was found and requested.
 function LEGION:CheckTransportQueue()
 
   -- Number of missions.
@@ -820,12 +820,12 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "MissionAssign" event. Mission is added to a LEGION mission queue and already requested. Needs assets to be added to the mission already.
--- @param #LEGION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @param #table Legions The LEGIONs.
+--- @param #LEGION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.Auftrag#AUFTRAG Mission The mission.
+--- @param #table Legions The LEGIONs.
 function LEGION:onafterMissionAssign(From, Event, To, Mission, Legions)
   
   for _,_Legion in pairs(Legions) do
@@ -845,13 +845,13 @@ function LEGION:onafterMissionAssign(From, Event, To, Mission, Legions)
 end
 
 --- Create a request and add it to the warehouse queue.
--- @param #LEGION self
--- @param Functional.Warehouse#WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
--- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
--- @param #number nAsset Number of groups requested that match the asset specification.
--- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
--- @param #string Assignment A keyword or text that can later be used to identify this request and postprocess the assets.
--- @return Functional.Warehouse#WAREHOUSE.Queueitem The request.
+--- @param #LEGION self
+--- @param Functional.Warehouse#WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
+--- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
+--- @param #number nAsset Number of groups requested that match the asset specification.
+--- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
+--- @param #string Assignment A keyword or text that can later be used to identify this request and postprocess the assets.
+--- @return Functional.Warehouse#WAREHOUSE.Queueitem The request.
 function LEGION:_AddRequest(AssetDescriptor, AssetDescriptorValue, nAsset, Prio, Assignment)
 
   -- Defaults.
@@ -900,12 +900,12 @@ end
 
 
 --- On after "MissionRequest" event. Performs a self request to the warehouse for the mission assets. Sets mission status to REQUESTED.
--- @param #LEGION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
--- @param #table Assets (Optional) Assets to add.
+--- @param #LEGION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
+--- @param #table Assets (Optional) Assets to add.
 function LEGION:onafterMissionRequest(From, Event, To, Mission, Assets)
 
   -- Debug info.
@@ -1094,12 +1094,12 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission, Assets)
 end
 
 --- On after "TransportAssign" event. Transport is added to a LEGION transport queue and assets are requested from the LEGION warehouse.
--- @param #LEGION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
--- @param #table Legions The legion(s) to which the transport is assigned.
+--- @param #LEGION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+--- @param #table Legions The legion(s) to which the transport is assigned.
 function LEGION:onafterTransportAssign(From, Event, To, Transport, Legions)
 
   for _,_Legion in pairs(Legions) do
@@ -1119,11 +1119,11 @@ function LEGION:onafterTransportAssign(From, Event, To, Transport, Legions)
 end
 
 --- On after "TransportRequest" event. Performs a self request to the warehouse for the transport assets. Sets transport status to REQUESTED.
--- @param #LEGION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsTransport#OPSTRANSPORT Opstransport The requested mission.
+--- @param #LEGION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsTransport#OPSTRANSPORT Opstransport The requested mission.
 function LEGION:onafterTransportRequest(From, Event, To, OpsTransport)
   
   -- List of assets that will be requested.
@@ -1172,11 +1172,11 @@ function LEGION:onafterTransportRequest(From, Event, To, OpsTransport)
 end
 
 --- On after "TransportCancel" event.
--- @param #LEGION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport to be cancelled.
+--- @param #LEGION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport to be cancelled.
 function LEGION:onafterTransportCancel(From, Event, To, Transport)
 
   -- Info message.
@@ -1234,11 +1234,11 @@ end
 
 
 --- On after "MissionCancel" event. Cancels the missions of all flightgroups. Deletes request from warehouse queue.
--- @param #LEGION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission The mission to be cancelled.
+--- @param #LEGION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.Auftrag#AUFTRAG Mission The mission to be cancelled.
 function LEGION:onafterMissionCancel(From, Event, To, Mission)
 
   -- Info message.
@@ -1278,12 +1278,12 @@ function LEGION:onafterMissionCancel(From, Event, To, Mission)
 end
 
 --- On after "OpsOnMission".
--- @param #LEGION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP OpsGroup Ops group on mission
--- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
+--- @param #LEGION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsGroup#OPSGROUP OpsGroup Ops group on mission
+--- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
 function LEGION:onafterOpsOnMission(From, Event, To, OpsGroup, Mission)
   -- Debug info.
   self:T2(self.lid..string.format("Group %s on mission %s [%s]", OpsGroup:GetName(), Mission:GetName(), Mission:GetType()))
@@ -1318,12 +1318,12 @@ function LEGION:onafterOpsOnMission(From, Event, To, OpsGroup, Mission)
 end
 
 --- On after "NewAsset" event. Asset is added to the given cohort (asset assignment).
--- @param #LEGION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset that has just been added.
--- @param #string assignment The (optional) assignment for the asset.
+--- @param #LEGION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset that has just been added.
+--- @param #string assignment The (optional) assignment for the asset.
 function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
 
   -- Call parent WAREHOUSE function first.
@@ -1430,12 +1430,12 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
 end
 
 --- On after "LegionAssetReturned" event. Triggered when an asset group returned to its legion.
--- @param #LEGION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Cohort#COHORT Cohort The cohort the asset belongs to.
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
+--- @param #LEGION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.Cohort#COHORT Cohort The cohort the asset belongs to.
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
 function LEGION:onafterLegionAssetReturned(From, Event, To, Cohort, Asset)
   -- Debug message.
   self:I(self.lid..string.format("Asset %s from Cohort %s returned! asset.assignment=\"%s\"", Asset.spawngroupname, Cohort.name, tostring(Asset.assignment)))
@@ -1463,13 +1463,13 @@ end
 
 --- On after "AssetSpawned" event triggered when an asset group is spawned into the cruel world.
 -- Creates a new flightgroup element and adds the mission to the flightgroup queue.
--- @param #LEGION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Group#GROUP group The group spawned.
--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset that was spawned.
--- @param Functional.Warehouse#WAREHOUSE.Pendingitem request The request of the dead asset.
+--- @param #LEGION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Wrapper.Group#GROUP group The group spawned.
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset that was spawned.
+--- @param Functional.Warehouse#WAREHOUSE.Pendingitem request The request of the dead asset.
 function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
   self:T({From, Event, To, group:GetName(), asset.assignment, request.assignment})
   
@@ -1612,12 +1612,12 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
 end
 
 --- On after "AssetDead" event triggered when an asset group died.
--- @param #LEGION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset that is dead.
--- @param Functional.Warehouse#WAREHOUSE.Pendingitem request The request of the dead asset.
+--- @param #LEGION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset that is dead.
+--- @param Functional.Warehouse#WAREHOUSE.Pendingitem request The request of the dead asset.
 function LEGION:onafterAssetDead(From, Event, To, asset, request)
 
   -- Call parent warehouse function first.
@@ -1633,10 +1633,10 @@ function LEGION:onafterAssetDead(From, Event, To, asset, request)
 end
 
 --- On after "Destroyed" event. Remove assets from cohorts. Stop cohorts.
--- @param #LEGION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #LEGION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function LEGION:onafterDestroyed(From, Event, To)
 
   -- Debug message.
@@ -1662,11 +1662,11 @@ end
 
 
 --- On after "Request" event.
--- @param #LEGION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Functional.Warehouse#WAREHOUSE.Queueitem Request Information table of the request.
+--- @param #LEGION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Functional.Warehouse#WAREHOUSE.Queueitem Request Information table of the request.
 function LEGION:onafterRequest(From, Event, To, Request)
 
   if Request.toself then
@@ -1694,12 +1694,12 @@ function LEGION:onafterRequest(From, Event, To, Request)
 end
 
 --- On after "SelfRequest" event.
--- @param #LEGION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Set#SET_GROUP groupset The set of asset groups that was delivered to the warehouse itself.
--- @param Functional.Warehouse#WAREHOUSE.Pendingitem request Pending self request.
+--- @param #LEGION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Set#SET_GROUP groupset The set of asset groups that was delivered to the warehouse itself.
+--- @param Functional.Warehouse#WAREHOUSE.Pendingitem request Pending self request.
 function LEGION:onafterSelfRequest(From, Event, To, groupset, request)
 
   -- Call parent warehouse function first.
@@ -1719,13 +1719,13 @@ function LEGION:onafterSelfRequest(From, Event, To, groupset, request)
 end
 
 --- On after "RequestSpawned" event.
--- @param #LEGION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Functional.Warehouse#WAREHOUSE.Pendingitem Request Information table of the request.
--- @param Core.Set#SET_GROUP CargoGroupSet Set of cargo groups.
--- @param Core.Set#SET_GROUP TransportGroupSet Set of transport groups if any.
+--- @param #LEGION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Functional.Warehouse#WAREHOUSE.Pendingitem Request Information table of the request.
+--- @param Core.Set#SET_GROUP CargoGroupSet Set of cargo groups.
+--- @param Core.Set#SET_GROUP TransportGroupSet Set of transport groups if any.
 function LEGION:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet, TransportGroupSet)
 
   -- Call parent warehouse function.
@@ -1734,12 +1734,12 @@ function LEGION:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet, T
 end
 
 --- On after "Captured" event.
--- @param #LEGION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param DCS#coalition.side Coalition which captured the warehouse.
--- @param DCS#country.id Country which has captured the warehouse.
+--- @param #LEGION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param DCS#coalition.side Coalition which captured the warehouse.
+--- @param DCS#country.id Country which has captured the warehouse.
 function LEGION:onafterCaptured(From, Event, To, Coalition, Country)
 
   -- Call parent warehouse function.
@@ -1766,9 +1766,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new flight group after an asset was spawned.
--- @param #LEGION self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset.
--- @return Ops.FlightGroup#FLIGHTGROUP The created flightgroup object.
+--- @param #LEGION self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset.
+--- @return Ops.FlightGroup#FLIGHTGROUP The created flightgroup object.
 function LEGION:_CreateFlightGroup(asset)
 
   -- Create flightgroup.
@@ -1831,10 +1831,10 @@ end
 
 
 --- Check if an asset is currently on a mission (STARTED or EXECUTING).
--- @param #LEGION self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset.
--- @param #table MissionTypes Types on mission to be checked. Default all.
--- @return #boolean If true, asset has at least one mission of that type in the queue.
+--- @param #LEGION self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset.
+--- @param #table MissionTypes Types on mission to be checked. Default all.
+--- @return #boolean If true, asset has at least one mission of that type in the queue.
 function LEGION:IsAssetOnMission(asset, MissionTypes)
 
   if MissionTypes then
@@ -1872,9 +1872,9 @@ function LEGION:IsAssetOnMission(asset, MissionTypes)
 end
 
 --- Get the current mission of the asset.
--- @param #LEGION self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset.
--- @return Ops.Auftrag#AUFTRAG Current mission or *nil*.
+--- @param #LEGION self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset.
+--- @return Ops.Auftrag#AUFTRAG Current mission or *nil*.
 function LEGION:GetAssetCurrentMission(asset)
 
   if asset.flightgroup then
@@ -1885,11 +1885,11 @@ function LEGION:GetAssetCurrentMission(asset)
 end
 
 --- Count payloads in stock.
--- @param #LEGION self
--- @param #table MissionTypes Types on mission to be checked. Default *all* possible types `AUFTRAG.Type`.
--- @param #table UnitTypes Types of units.
--- @param #table Payloads Specific payloads to be counted only.
--- @return #number Count of available payloads in stock.
+--- @param #LEGION self
+--- @param #table MissionTypes Types on mission to be checked. Default *all* possible types `AUFTRAG.Type`.
+--- @param #table UnitTypes Types of units.
+--- @param #table Payloads Specific payloads to be counted only.
+--- @return #number Count of available payloads in stock.
 function LEGION:CountPayloadsInStock(MissionTypes, UnitTypes, Payloads)
 
   if MissionTypes then
@@ -1961,9 +1961,9 @@ function LEGION:CountPayloadsInStock(MissionTypes, UnitTypes, Payloads)
 end
 
 --- Count missions in mission queue.
--- @param #LEGION self
--- @param #table MissionTypes Types on mission to be checked. Default *all* possible types `AUFTRAG.Type`.
--- @return #number Number of missions that are not over yet.
+--- @param #LEGION self
+--- @param #table MissionTypes Types on mission to be checked. Default *all* possible types `AUFTRAG.Type`.
+--- @return #number Number of missions that are not over yet.
 function LEGION:CountMissionsInQueue(MissionTypes)
 
   MissionTypes=MissionTypes or AUFTRAG.Type
@@ -1983,11 +1983,11 @@ function LEGION:CountMissionsInQueue(MissionTypes)
 end
 
 --- Count total number of assets of the legion.
--- @param #LEGION self
--- @param #boolean InStock If `true`, only assets that are in the warehouse stock/inventory are counted.
--- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
--- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
--- @return #number Amount of asset groups in stock.
+--- @param #LEGION self
+--- @param #boolean InStock If `true`, only assets that are in the warehouse stock/inventory are counted.
+--- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+--- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+--- @return #number Amount of asset groups in stock.
 function LEGION:CountAssets(InStock, MissionTypes, Attributes)
 
   local N=0
@@ -2001,10 +2001,10 @@ function LEGION:CountAssets(InStock, MissionTypes, Attributes)
 end
 
 --- Get OPSGROUPs that are spawned and alive.
--- @param #LEGION self
--- @param #table MissionTypes (Optional) Get only assest that can perform certain mission type(s). Default is all types.
--- @param #table Attributes (Optional) Get only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
--- @return Core.Set#SET_OPSGROUP The set of OPSGROUPs. Can be empty if no groups are spawned or alive!
+--- @param #LEGION self
+--- @param #table MissionTypes (Optional) Get only assest that can perform certain mission type(s). Default is all types.
+--- @param #table Attributes (Optional) Get only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+--- @return Core.Set#SET_OPSGROUP The set of OPSGROUPs. Can be empty if no groups are spawned or alive!
 function LEGION:GetOpsGroups(MissionTypes, Attributes)
 
   local setLegion=SET_OPSGROUP:New()
@@ -2026,11 +2026,11 @@ function LEGION:GetOpsGroups(MissionTypes, Attributes)
 end
 
 --- Count total number of assets in LEGION warehouse stock that also have a payload.
--- @param #LEGION self
--- @param #boolean Payloads (Optional) Specifc payloads to consider. Default all.
--- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
--- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
--- @return #number Amount of asset groups in stock.
+--- @param #LEGION self
+--- @param #boolean Payloads (Optional) Specifc payloads to consider. Default all.
+--- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+--- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+--- @return #number Amount of asset groups in stock.
 function LEGION:CountAssetsWithPayloadsInStock(Payloads, MissionTypes, Attributes)
 
   -- Total number counted.
@@ -2071,12 +2071,12 @@ function LEGION:CountAssetsWithPayloadsInStock(Payloads, MissionTypes, Attribute
 end
 
 --- Count assets on mission.
--- @param #LEGION self
--- @param #table MissionTypes Types on mission to be checked. Default all.
--- @param Ops.Cohort#COHORT Cohort Only count assets of this cohort. Default count assets of all cohorts.
--- @return #number Number of pending and queued assets.
--- @return #number Number of pending assets.
--- @return #number Number of queued assets.
+--- @param #LEGION self
+--- @param #table MissionTypes Types on mission to be checked. Default all.
+--- @param Ops.Cohort#COHORT Cohort Only count assets of this cohort. Default count assets of all cohorts.
+--- @return #number Number of pending and queued assets.
+--- @return #number Number of pending assets.
+--- @return #number Number of queued assets.
 function LEGION:CountAssetsOnMission(MissionTypes, Cohort)
 
   local Nq=0
@@ -2115,9 +2115,9 @@ function LEGION:CountAssetsOnMission(MissionTypes, Cohort)
 end
 
 --- Get assets on mission.
--- @param #LEGION self
--- @param #table MissionTypes Types on mission to be checked. Default all.
--- @return #table Assets on pending requests.
+--- @param #LEGION self
+--- @param #table MissionTypes Types on mission to be checked. Default all.
+--- @return #table Assets on pending requests.
 function LEGION:GetAssetsOnMission(MissionTypes)
 
   local assets={}
@@ -2147,10 +2147,10 @@ function LEGION:GetAssetsOnMission(MissionTypes)
 end
 
 --- Get the unit types of this legion. These are the unit types of all assigned cohorts.
--- @param #LEGION self
--- @param #boolean onlyactive Count only the active ones.
--- @param #table cohorts Table of cohorts. Default all.
--- @return #table Table of unit types.
+--- @param #LEGION self
+--- @param #boolean onlyactive Count only the active ones.
+--- @param #table cohorts Table of cohorts. Default all.
+--- @return #table Table of unit types.
 function LEGION:GetAircraftTypes(onlyactive, cohorts)
 
   -- Get all unit types that can do the job.
@@ -2180,11 +2180,11 @@ function LEGION:GetAircraftTypes(onlyactive, cohorts)
 end
 
 --- Count payloads of all cohorts for all unit types.
--- @param #LEGION self
--- @param #string MissionType Mission type.
--- @param #table Cohorts Cohorts included.
--- @param #table Payloads (Optional) Special payloads.
--- @return #table Table of payloads for each unit type.
+--- @param #LEGION self
+--- @param #string MissionType Mission type.
+--- @param #table Cohorts Cohorts included.
+--- @param #table Payloads (Optional) Special payloads.
+--- @return #table Table of payloads for each unit type.
 function LEGION:_CountPayloads(MissionType, Cohorts, Payloads)
 
   -- Number of payloads in stock per aircraft type.
@@ -2213,11 +2213,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Recruit assets for a given mission.
--- @param #LEGION self
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @return #boolean If `true` enough assets could be recruited.
--- @return #table Recruited assets.
--- @return #table Legions of recruited assets.
+--- @param #LEGION self
+--- @param Ops.Auftrag#AUFTRAG Mission The mission.
+--- @return #boolean If `true` enough assets could be recruited.
+--- @return #table Recruited assets.
+--- @return #table Legions of recruited assets.
 function LEGION:RecruitAssetsForMission(Mission)
 
   -- Get required assets.
@@ -2281,11 +2281,11 @@ function LEGION:RecruitAssetsForMission(Mission)
 end
 
 --- Recruit assets for a given OPS transport.
--- @param #LEGION self
--- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport.
--- @return #boolean If `true`, enough assets could be recruited.
--- @return #table assets Recruited assets.
--- @return #table legions Legions of recruited assets.
+--- @param #LEGION self
+--- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport.
+--- @return #boolean If `true`, enough assets could be recruited.
+--- @return #table assets Recruited assets.
+--- @return #table legions Legions of recruited assets.
 function LEGION:RecruitAssetsForTransport(Transport)
 
   -- Get all undelivered cargo ops groups.
@@ -2329,10 +2329,10 @@ function LEGION:RecruitAssetsForTransport(Transport)
 end
 
 --- Recruit assets performing an escort mission for a given asset.
--- @param #LEGION self
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @param #table Assets Table of assets.
--- @return #boolean If `true`, enough assets could be recruited or no escort was required in the first place.
+--- @param #LEGION self
+--- @param Ops.Auftrag#AUFTRAG Mission The mission.
+--- @param #table Assets Table of assets.
+--- @return #boolean If `true`, enough assets could be recruited or no escort was required in the first place.
 function LEGION:RecruitAssetsForEscort(Mission, Assets)
 
   -- Is an escort requested in the first place?
@@ -2370,11 +2370,11 @@ function LEGION:RecruitAssetsForEscort(Mission, Assets)
 end
 
 --- Get cohorts.
--- @param #table Legions Special legions.
--- @param #table Cohorts Special cohorts.
--- @param Ops.Operation#OPERATION Operation Operation.
--- @param #table OpsQueue Queue of operations.
--- @return #table Cohorts.
+--- @param #table Legions Special legions.
+--- @param #table Cohorts Special cohorts.
+--- @param Ops.Operation#OPERATION Operation Operation.
+--- @param #table OpsQueue Queue of operations.
+--- @return #table Cohorts.
 function LEGION._GetCohorts(Legions, Cohorts, Operation, OpsQueue)
 
   OpsQueue=OpsQueue or {}
@@ -2465,18 +2465,18 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Recruit assets from Cohorts for the given parameters. **NOTE** that we set the `asset.isReserved=true` flag so it cant be recruited by anyone else.
--- @param Ops.Cohort#COHORT Cohort The Cohort.
--- @param #string MissionType Misson type(s).
--- @param #table Categories Group categories.
--- @param #table Attributes Group attributes. See `GROUP.Attribute.`
--- @param #table Properties DCS attributes.
--- @param #table WeaponTypes Bit of weapon types.
--- @param DCS#Vec2 TargetVec2 Target position.
--- @param RangeMax Max range in meters.
--- @param #number RefuelSystem Refueling system (boom or probe).
--- @param #number CargoWeight Cargo weight [kg]. This checks the cargo bay of the cohort assets and ensures that it is large enough to carry the given cargo weight.
--- @param #number MaxWeight Max weight [kg]. This checks whether the cohort asset group is not too heavy.
--- @return #boolean Returns `true` if given cohort can meet all requirements.
+--- @param Ops.Cohort#COHORT Cohort The Cohort.
+--- @param #string MissionType Misson type(s).
+--- @param #table Categories Group categories.
+--- @param #table Attributes Group attributes. See `GROUP.Attribute.`
+--- @param #table Properties DCS attributes.
+--- @param #table WeaponTypes Bit of weapon types.
+--- @param DCS#Vec2 TargetVec2 Target position.
+--- @param RangeMax Max range in meters.
+--- @param #number RefuelSystem Refueling system (boom or probe).
+--- @param #number CargoWeight Cargo weight [kg]. This checks the cargo bay of the cohort assets and ensures that it is large enough to carry the given cargo weight.
+--- @param #number MaxWeight Max weight [kg]. This checks whether the cohort asset group is not too heavy.
+--- @return #boolean Returns `true` if given cohort can meet all requirements.
 function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properties, WeaponTypes, TargetVec2, RangeMax, RefuelSystem, CargoWeight, MaxWeight)
 
   --- Function to check category.
@@ -2682,25 +2682,25 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
 end
 
 --- Recruit assets from Cohorts for the given parameters. **NOTE** that we set the `asset.isReserved=true` flag so it cant be recruited by anyone else.
--- @param #table Cohorts Cohorts included.
--- @param #string MissionTypeRecruit Mission type for recruiting the cohort assets.
--- @param #string MissionTypeOpt Mission type for which the assets are optimized. Default is the same as `MissionTypeRecruit`.
--- @param #number NreqMin Minimum number of required assets.
--- @param #number NreqMax Maximum number of required assets.
--- @param DCS#Vec2 TargetVec2 Target position as 2D vector.
--- @param #table Payloads Special payloads.
--- @param #number RangeMax Max range in meters.
--- @param #number RefuelSystem Refuelsystem.
--- @param #number CargoWeight Cargo weight for recruiting transport carriers.
--- @param #number TotalWeight Total cargo weight in kg.
--- @param #number MaxWeight Max weight [kg] of the asset group.
--- @param #table Categories Group categories. 
--- @param #table Attributes Group attributes. See `GROUP.Attribute.`
--- @param #table Properties DCS attributes.
--- @param #table WeaponTypes Bit of weapon types.
--- @return #boolean If `true` enough assets could be recruited.
--- @return #table Recruited assets. **NOTE** that we set the `asset.isReserved=true` flag so it cant be recruited by anyone else.
--- @return #table Legions of recruited assets.
+--- @param #table Cohorts Cohorts included.
+--- @param #string MissionTypeRecruit Mission type for recruiting the cohort assets.
+--- @param #string MissionTypeOpt Mission type for which the assets are optimized. Default is the same as `MissionTypeRecruit`.
+--- @param #number NreqMin Minimum number of required assets.
+--- @param #number NreqMax Maximum number of required assets.
+--- @param DCS#Vec2 TargetVec2 Target position as 2D vector.
+--- @param #table Payloads Special payloads.
+--- @param #number RangeMax Max range in meters.
+--- @param #number RefuelSystem Refuelsystem.
+--- @param #number CargoWeight Cargo weight for recruiting transport carriers.
+--- @param #number TotalWeight Total cargo weight in kg.
+--- @param #number MaxWeight Max weight [kg] of the asset group.
+--- @param #table Categories Group categories. 
+--- @param #table Attributes Group attributes. See `GROUP.Attribute.`
+--- @param #table Properties DCS attributes.
+--- @param #table WeaponTypes Bit of weapon types.
+--- @return #boolean If `true` enough assets could be recruited.
+--- @return #table Recruited assets. **NOTE** that we set the `asset.isReserved=true` flag so it cant be recruited by anyone else.
+--- @return #table Legions of recruited assets.
 function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt, NreqMin, NreqMax, TargetVec2, Payloads, RangeMax, RefuelSystem, CargoWeight, TotalWeight, MaxWeight, Categories, Attributes, Properties, WeaponTypes)
 
   -- The recruited assets.
@@ -2842,8 +2842,8 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
 end
 
 --- Unrecruit assets. Set `isReserved` to false, return payload to airwing and (optionally) remove from assigned mission.
--- @param #table Assets List of assets.
--- @param Ops.Auftrag#AUFTRAG Mission (Optional) The mission from which the assets will be deleted.
+--- @param #table Assets List of assets.
+--- @param Ops.Auftrag#AUFTRAG Mission (Optional) The mission from which the assets will be deleted.
 function LEGION.UnRecruitAssets(Assets, Mission)
 
   -- Return payloads of assets.    
@@ -2866,15 +2866,15 @@ end
 
 
 --- Recruit and assign assets performing an escort mission for a given asset list. Note that each asset gets an escort.
--- @param #LEGION self
--- @param #table Cohorts Cohorts for escorting assets.
--- @param #table Assets Table of assets to be escorted.
--- @param #number NescortMin Min number of escort groups required per escorted asset.
--- @param #number NescortMax Max number of escort groups required per escorted asset.
--- @param #string MissionType Mission type.
--- @param #string TargetTypes Types of targets that are engaged.
--- @param #number EngageRange EngageRange in Nautical Miles.
--- @return #boolean If `true`, enough assets could be recruited or no escort was required in the first place.
+--- @param #LEGION self
+--- @param #table Cohorts Cohorts for escorting assets.
+--- @param #table Assets Table of assets to be escorted.
+--- @param #number NescortMin Min number of escort groups required per escorted asset.
+--- @param #number NescortMax Max number of escort groups required per escorted asset.
+--- @param #string MissionType Mission type.
+--- @param #string TargetTypes Types of targets that are engaged.
+--- @param #number EngageRange EngageRange in Nautical Miles.
+--- @return #boolean If `true`, enough assets could be recruited or no escort was required in the first place.
 function LEGION:AssignAssetsForEscort(Cohorts, Assets, NescortMin, NescortMax, MissionType, TargetTypes, EngageRange)
 
   -- Is an escort requested in the first place?
@@ -2992,18 +2992,18 @@ function LEGION:AssignAssetsForEscort(Cohorts, Assets, NescortMin, NescortMax, M
 end
 
 --- Recruit and assign assets performing an OPSTRANSPORT for a given asset list.
--- @param #LEGION self
--- @param #table Legions Transport legions.
--- @param #table CargoAssets Weight of the heaviest cargo group to be transported.
--- @param #number NcarriersMin Min number of carrier assets.
--- @param #number NcarriersMax Max number of carrier assets.
--- @param Core.Zone#ZONE DeployZone Deploy zone.
--- @param Core.Zone#ZONE DisembarkZone (Optional) Disembark zone. 
--- @param #table Categories Group categories.
--- @param #table Attributes Generalizes group attributes.
--- @param #table Properties DCS attributes.
--- @return #boolean If `true`, enough assets could be recruited and an OPSTRANSPORT object was created.
--- @return Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+--- @param #LEGION self
+--- @param #table Legions Transport legions.
+--- @param #table CargoAssets Weight of the heaviest cargo group to be transported.
+--- @param #number NcarriersMin Min number of carrier assets.
+--- @param #number NcarriersMax Max number of carrier assets.
+--- @param Core.Zone#ZONE DeployZone Deploy zone.
+--- @param Core.Zone#ZONE DisembarkZone (Optional) Disembark zone. 
+--- @param #table Categories Group categories.
+--- @param #table Attributes Generalizes group attributes.
+--- @param #table Properties DCS attributes.
+--- @return #boolean If `true`, enough assets could be recruited and an OPSTRANSPORT object was created.
+--- @return Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 function LEGION:AssignAssetsForTransport(Legions, CargoAssets, NcarriersMin, NcarriersMax, DeployZone, DisembarkZone, Categories, Attributes, Properties)
 
   -- Is an escort requested in the first place?
@@ -3099,11 +3099,11 @@ end
 
 
 --- Calculate the mission score of an asset.
--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset Asset
--- @param #string MissionType Mission type for which the best assets are desired.
--- @param DCS#Vec2 TargetVec2 Target 2D vector.
--- @param #boolean IncludePayload If `true`, include the payload in the calulation if the asset has one attached.
--- @return #number Mission score.
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset Asset
+--- @param #string MissionType Mission type for which the best assets are desired.
+--- @param DCS#Vec2 TargetVec2 Target 2D vector.
+--- @param #boolean IncludePayload If `true`, include the payload in the calulation if the asset has one attached.
+--- @return #number Mission score.
 function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, IncludePayload)
   
   -- Mission score.
@@ -3208,10 +3208,10 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
 end
 
 --- Optimize chosen assets for the mission at hand.
--- @param #table assets Table of (unoptimized) assets.
--- @param #string MissionType Mission type.
--- @param DCS#Vec2 TargetVec2 Target position as 2D vector.
--- @param #boolean IncludePayload If `true`, include the payload in the calulation if the asset has one attached.
+--- @param #table assets Table of (unoptimized) assets.
+--- @param #string MissionType Mission type.
+--- @param DCS#Vec2 TargetVec2 Target position as 2D vector.
+--- @param #boolean IncludePayload If `true`, include the payload in the calulation if the asset has one attached.
 function LEGION._OptimizeAssetSelection(assets, MissionType, TargetVec2, IncludePayload)
 
   -- Calculate the mission score of all assets.
@@ -3247,9 +3247,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Returns the mission for a given mission ID (Autragsnummer).
--- @param #LEGION self
--- @param #number mid Mission ID (Auftragsnummer).
--- @return Ops.Auftrag#AUFTRAG Mission table.
+--- @param #LEGION self
+--- @param #number mid Mission ID (Auftragsnummer).
+--- @return Ops.Auftrag#AUFTRAG Mission table.
 function LEGION:GetMissionByID(mid)
 
   for _,_mission in pairs(self.missionqueue) do
@@ -3265,9 +3265,9 @@ function LEGION:GetMissionByID(mid)
 end
 
 --- Returns the mission for a given ID.
--- @param #LEGION self
--- @param #number uid Transport UID.
--- @return Ops.OpsTransport#OPSTRANSPORT Transport assignment.
+--- @param #LEGION self
+--- @param #number uid Transport UID.
+--- @return Ops.OpsTransport#OPSTRANSPORT Transport assignment.
 function LEGION:GetTransportByID(uid)
 
   for _,_transport in pairs(self.transportqueue) do
@@ -3283,9 +3283,9 @@ function LEGION:GetTransportByID(uid)
 end
 
 --- Returns the mission for a given request ID.
--- @param #LEGION self
--- @param #number RequestID Unique ID of the request.
--- @return Ops.Auftrag#AUFTRAG Mission table or *nil*.
+--- @param #LEGION self
+--- @param #number RequestID Unique ID of the request.
+--- @return Ops.Auftrag#AUFTRAG Mission table or *nil*.
 function LEGION:GetMissionFromRequestID(RequestID)
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
@@ -3298,28 +3298,28 @@ function LEGION:GetMissionFromRequestID(RequestID)
 end
 
 --- Returns the mission for a given request.
--- @param #LEGION self
--- @param Functional.Warehouse#WAREHOUSE.Queueitem Request The warehouse request.
--- @return Ops.Auftrag#AUFTRAG Mission table or *nil*.
+--- @param #LEGION self
+--- @param Functional.Warehouse#WAREHOUSE.Queueitem Request The warehouse request.
+--- @return Ops.Auftrag#AUFTRAG Mission table or *nil*.
 function LEGION:GetMissionFromRequest(Request)
   return self:GetMissionFromRequestID(Request.uid)
 end
 
 --- Fetch a payload from the airwing resources for a given unit and mission type.
 -- The payload with the highest priority is preferred.
--- @param #LEGION self
--- @param #string UnitType The type of the unit.
--- @param #string MissionType The mission type.
--- @param #table Payloads Specific payloads only to be considered.
--- @return Ops.Airwing#AIRWING.Payload Payload table or *nil*.
+--- @param #LEGION self
+--- @param #string UnitType The type of the unit.
+--- @param #string MissionType The mission type.
+--- @param #table Payloads Specific payloads only to be considered.
+--- @return Ops.Airwing#AIRWING.Payload Payload table or *nil*.
 function LEGION:FetchPayloadFromStock(UnitType, MissionType, Payloads)
   -- Polymorphic. Will return something when called by airwing.
   return nil
 end
 
 --- Return payload from asset back to stock.
--- @param #LEGION self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The squadron asset.
+--- @param #LEGION self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The squadron asset.
 function LEGION:ReturnPayloadFromAsset(asset)
   -- Polymorphic.
   return nil

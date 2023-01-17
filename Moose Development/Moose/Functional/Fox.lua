@@ -24,29 +24,29 @@
 -- @image Functional_FOX.png
 
 --- FOX class.
--- @type FOX
--- @field #string ClassName Name of the class.
--- @field #boolean Debug Debug mode. Messages to all about status.
--- @field #string lid Class id string for output to DCS log file.
--- @field #table menuadded Table of groups the menu was added for.
--- @field #boolean menudisabled If true, F10 menu for players is disabled.
--- @field #boolean destroy Default player setting for destroying missiles.
--- @field #boolean launchalert Default player setting for launch alerts.
--- @field #boolean marklaunch Default player setting for mark launch coordinates.
--- @field #table players Table of players.
--- @field #table missiles Table of tracked missiles.
--- @field #table safezones Table of practice zones.
--- @field #table launchzones Table of launch zones.
--- @field Core.Set#SET_GROUP protectedset Set of protected groups.
--- @field #number explosionpower Power of explostion when destroying the missile in kg TNT. Default 5 kg TNT.
--- @field #number explosiondist Missile player distance in meters for destroying smaller missiles. Default 200 m.
--- @field #number explosiondist2 Missile player distance in meters for destroying big missiles. Default 500 m.
--- @field #number bigmissilemass Explosion power of big missiles. Default 50 kg TNT. Big missiles will be destroyed earlier.
--- @field #number dt50 Time step [sec] for missile position updates if distance to target > 50 km. Default 5 sec.
--- @field #number dt10 Time step [sec] for missile position updates if distance to target > 10 km and < 50 km. Default 1 sec.
--- @field #number dt05 Time step [sec] for missile position updates if distance to target > 5 km and < 10 km. Default 0.5 sec.
--- @field #number dt01 Time step [sec] for missile position updates if distance to target > 1 km and < 5 km. Default 0.1 sec.
--- @field #number dt00 Time step [sec] for missile position updates if distance to target < 1 km. Default 0.01 sec. 
+--- @type FOX
+--- @field #string ClassName Name of the class.
+--- @field #boolean Debug Debug mode. Messages to all about status.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #table menuadded Table of groups the menu was added for.
+--- @field #boolean menudisabled If true, F10 menu for players is disabled.
+--- @field #boolean destroy Default player setting for destroying missiles.
+--- @field #boolean launchalert Default player setting for launch alerts.
+--- @field #boolean marklaunch Default player setting for mark launch coordinates.
+--- @field #table players Table of players.
+--- @field #table missiles Table of tracked missiles.
+--- @field #table safezones Table of practice zones.
+--- @field #table launchzones Table of launch zones.
+--- @field Core.Set#SET_GROUP protectedset Set of protected groups.
+--- @field #number explosionpower Power of explostion when destroying the missile in kg TNT. Default 5 kg TNT.
+--- @field #number explosiondist Missile player distance in meters for destroying smaller missiles. Default 200 m.
+--- @field #number explosiondist2 Missile player distance in meters for destroying big missiles. Default 500 m.
+--- @field #number bigmissilemass Explosion power of big missiles. Default 50 kg TNT. Big missiles will be destroyed earlier.
+--- @field #number dt50 Time step [sec] for missile position updates if distance to target > 50 km. Default 5 sec.
+--- @field #number dt10 Time step [sec] for missile position updates if distance to target > 10 km and < 50 km. Default 1 sec.
+--- @field #number dt05 Time step [sec] for missile position updates if distance to target > 5 km and < 10 km. Default 0.5 sec.
+--- @field #number dt01 Time step [sec] for missile position updates if distance to target > 1 km and < 5 km. Default 0.1 sec.
+--- @field #number dt00 Time step [sec] for missile position updates if distance to target < 1 km. Default 0.01 sec. 
 -- @extends Core.Fsm#FSM
 
 --- Fox 3!
@@ -121,7 +121,7 @@
 -- Todo!
 -- 
 -- 
--- @field #FOX
+--- @field #FOX
 FOX = {
   ClassName      = "FOX",
   Debug          = false,
@@ -150,52 +150,52 @@ FOX = {
 
 
 --- Player data table holding all important parameters of each player.
--- @type FOX.PlayerData
--- @field Wrapper.Unit#UNIT unit Aircraft of the player.
--- @field #string unitname Name of the unit.
--- @field Wrapper.Client#CLIENT client Client object of player.
--- @field #string callsign Callsign of player.
--- @field Wrapper.Group#GROUP group Aircraft group of player.
--- @field #string groupname Name of the the player aircraft group.
--- @field #string name Player name.
--- @field #number coalition Coalition number of player.
--- @field #boolean destroy Destroy missile.
--- @field #boolean launchalert Alert player on detected missile launch.
--- @field #boolean marklaunch Mark position of launched missile on F10 map.
--- @field #number defeated Number of missiles defeated.
--- @field #number dead Number of missiles not defeated.
--- @field #boolean inzone Player is inside a protected zone.
+--- @type FOX.PlayerData
+--- @field Wrapper.Unit#UNIT unit Aircraft of the player.
+--- @field #string unitname Name of the unit.
+--- @field Wrapper.Client#CLIENT client Client object of player.
+--- @field #string callsign Callsign of player.
+--- @field Wrapper.Group#GROUP group Aircraft group of player.
+--- @field #string groupname Name of the the player aircraft group.
+--- @field #string name Player name.
+--- @field #number coalition Coalition number of player.
+--- @field #boolean destroy Destroy missile.
+--- @field #boolean launchalert Alert player on detected missile launch.
+--- @field #boolean marklaunch Mark position of launched missile on F10 map.
+--- @field #number defeated Number of missiles defeated.
+--- @field #number dead Number of missiles not defeated.
+--- @field #boolean inzone Player is inside a protected zone.
 
 --- Missile data table.
--- @type FOX.MissileData
--- @field Wrapper.Unit#UNIT weapon Missile weapon unit.
--- @field #boolean active If true the missile is active.
--- @field #string missileType Type of missile.
--- @field #string missileName Name of missile.
--- @field #number missileRange Range of missile in meters.
--- @field #number fuseDist Fuse distance in meters.
--- @field #number explosive Explosive mass in kg TNT.
--- @field Wrapper.Unit#UNIT shooterUnit Unit that shot the missile.
--- @field Wrapper.Group#GROUP shooterGroup Group that shot the missile.
--- @field #number shooterCoalition Coalition side of the shooter.
--- @field #string shooterName Name of the shooter unit.
--- @field #number shotTime Abs. mission time in seconds the missile was fired.
--- @field Core.Point#COORDINATE shotCoord Coordinate where the missile was fired.
--- @field Wrapper.Unit#UNIT targetUnit Unit that was targeted.
--- @field #string targetName Name of the target unit or "unknown".
--- @field #string targetOrig Name of the "original" target, i.e. the one right after launched.
--- @field #FOX.PlayerData targetPlayer Player that was targeted or nil.
+--- @type FOX.MissileData
+--- @field Wrapper.Unit#UNIT weapon Missile weapon unit.
+--- @field #boolean active If true the missile is active.
+--- @field #string missileType Type of missile.
+--- @field #string missileName Name of missile.
+--- @field #number missileRange Range of missile in meters.
+--- @field #number fuseDist Fuse distance in meters.
+--- @field #number explosive Explosive mass in kg TNT.
+--- @field Wrapper.Unit#UNIT shooterUnit Unit that shot the missile.
+--- @field Wrapper.Group#GROUP shooterGroup Group that shot the missile.
+--- @field #number shooterCoalition Coalition side of the shooter.
+--- @field #string shooterName Name of the shooter unit.
+--- @field #number shotTime Abs. mission time in seconds the missile was fired.
+--- @field Core.Point#COORDINATE shotCoord Coordinate where the missile was fired.
+--- @field Wrapper.Unit#UNIT targetUnit Unit that was targeted.
+--- @field #string targetName Name of the target unit or "unknown".
+--- @field #string targetOrig Name of the "original" target, i.e. the one right after launched.
+--- @field #FOX.PlayerData targetPlayer Player that was targeted or nil.
 
 --- Main radio menu on group level.
--- @field #table MenuF10 Root menu table on group level.
+--- @field #table MenuF10 Root menu table on group level.
 FOX.MenuF10={}
 
 --- Main radio menu on mission level.
--- @field #table MenuF10Root Root menu on mission level.
+--- @field #table MenuF10Root Root menu on mission level.
 FOX.MenuF10Root=nil
 
 --- FOX class version.
--- @field #string version
+--- @field #string version
 FOX.version="0.6.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -211,8 +211,8 @@ FOX.version="0.6.1"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new FOX class object.
--- @param #FOX self
--- @return #FOX self.
+--- @param #FOX self
+--- @return #FOX self.
 function FOX:New()
 
   self.lid="FOX | "
@@ -356,10 +356,10 @@ function FOX:New()
 end
 
 --- On after Start event. Starts the missile trainer and adds event handlers.
--- @param #FOX self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #FOX self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function FOX:onafterStart(From, Event, To)
 
   -- Short info.
@@ -383,10 +383,10 @@ function FOX:onafterStart(From, Event, To)
 end
 
 --- On after Stop event. Stops the missile trainer and unhandles events.
--- @param #FOX self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #FOX self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function FOX:onafterStop(From, Event, To)
 
   -- Short info.
@@ -408,9 +408,9 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Add a training zone. Players in the zone are safe.
--- @param #FOX self
--- @param Core.Zone#ZONE zone Training zone.
--- @return #FOX self
+--- @param #FOX self
+--- @param Core.Zone#ZONE zone Training zone.
+--- @return #FOX self
 function FOX:AddSafeZone(zone)
 
   table.insert(self.safezones, zone)
@@ -419,9 +419,9 @@ function FOX:AddSafeZone(zone)
 end
 
 --- Add a launch zone. Only missiles launched within these zones will be tracked.
--- @param #FOX self
--- @param Core.Zone#ZONE zone Training zone.
--- @return #FOX self
+--- @param #FOX self
+--- @param Core.Zone#ZONE zone Training zone.
+--- @return #FOX self
 function FOX:AddLaunchZone(zone)
 
   table.insert(self.launchzones, zone)
@@ -430,18 +430,18 @@ function FOX:AddLaunchZone(zone)
 end
 
 --- Add a protected set of groups.
--- @param #FOX self
--- @param Core.Set#SET_GROUP groupset The set of groups.
--- @return #FOX self
+--- @param #FOX self
+--- @param Core.Set#SET_GROUP groupset The set of groups.
+--- @return #FOX self
 function FOX:SetProtectedGroupSet(groupset)
   self.protectedset=groupset
   return self
 end
 
 --- Add a group to the protected set.
--- @param #FOX self
--- @param Wrapper.Group#GROUP group Protected group.
--- @return #FOX self
+--- @param #FOX self
+--- @param Wrapper.Group#GROUP group Protected group.
+--- @return #FOX self
 function FOX:AddProtectedGroup(group)
   
   if not self.protectedset then
@@ -455,9 +455,9 @@ end
 
 --- Set explosion power. This is an "artificial" explosion generated when the missile is destroyed. Just for the visual effect.
 -- Don't set the explosion power too big or it will harm the aircraft in the vicinity.
--- @param #FOX self
--- @param #number power Explosion power in kg TNT. Default 0.1 kg.
--- @return #FOX self
+--- @param #FOX self
+--- @param #number power Explosion power in kg TNT. Default 0.1 kg.
+--- @return #FOX self
 function FOX:SetExplosionPower(power)
 
   self.explosionpower=power or 0.1
@@ -466,9 +466,9 @@ function FOX:SetExplosionPower(power)
 end
 
 --- Set missile-player distance when missile is destroyed.
--- @param #FOX self
--- @param #number distance Distance in meters. Default 200 m.
--- @return #FOX self
+--- @param #FOX self
+--- @param #number distance Distance in meters. Default 200 m.
+--- @return #FOX self
 function FOX:SetExplosionDistance(distance)
 
   self.explosiondist=distance or 200
@@ -477,10 +477,10 @@ function FOX:SetExplosionDistance(distance)
 end
 
 --- Set missile-player distance when BIG missiles are destroyed.
--- @param #FOX self
--- @param #number distance Distance in meters. Default 500 m.
--- @param #number explosivemass Explosive mass of missile threshold in kg TNT. Default 50 kg.
--- @return #FOX self
+--- @param #FOX self
+--- @param #number distance Distance in meters. Default 500 m.
+--- @param #number explosivemass Explosive mass of missile threshold in kg TNT. Default 50 kg.
+--- @return #FOX self
 function FOX:SetExplosionDistanceBigMissiles(distance, explosivemass)
 
   self.explosiondist2=distance or 500
@@ -491,8 +491,8 @@ function FOX:SetExplosionDistanceBigMissiles(distance, explosivemass)
 end
 
 --- Disable F10 menu for all players.
--- @param #FOX self
--- @return #FOX self
+--- @param #FOX self
+--- @return #FOX self
 function FOX:SetDisableF10Menu()
 
   self.menudisabled=true
@@ -501,8 +501,8 @@ function FOX:SetDisableF10Menu()
 end
 
 --- Enable F10 menu for all players.
--- @param #FOX self
--- @return #FOX self
+--- @param #FOX self
+--- @return #FOX self
 function FOX:SetEnableF10Menu()
 
   self.menudisabled=false
@@ -511,9 +511,9 @@ function FOX:SetEnableF10Menu()
 end
 
 --- Set default player setting for missile destruction.
--- @param #FOX self
--- @param #boolean switch If true missiles are destroyed. If false/nil missiles are not destroyed.
--- @return #FOX self
+--- @param #FOX self
+--- @param #boolean switch If true missiles are destroyed. If false/nil missiles are not destroyed.
+--- @return #FOX self
 function FOX:SetDefaultMissileDestruction(switch)
 
   if switch==nil then
@@ -526,9 +526,9 @@ function FOX:SetDefaultMissileDestruction(switch)
 end
 
 --- Set default player setting for launch alerts.
--- @param #FOX self
--- @param #boolean switch If true launch alerts to players are active. If false/nil no launch alerts are given.
--- @return #FOX self
+--- @param #FOX self
+--- @param #boolean switch If true launch alerts to players are active. If false/nil no launch alerts are given.
+--- @return #FOX self
 function FOX:SetDefaultLaunchAlerts(switch)
 
   if switch==nil then
@@ -541,9 +541,9 @@ function FOX:SetDefaultLaunchAlerts(switch)
 end
 
 --- Set default player setting for marking missile launch coordinates
--- @param #FOX self
--- @param #boolean switch If true missile launches are marked. If false/nil marks are disabled.
--- @return #FOX self
+--- @param #FOX self
+--- @param #boolean switch If true missile launches are marked. If false/nil marks are disabled.
+--- @return #FOX self
 function FOX:SetDefaultLaunchMarks(switch)
 
   if switch==nil then
@@ -557,9 +557,9 @@ end
 
 
 --- Set debug mode on/off.
--- @param #FOX self
--- @param #boolean switch If true debug mode on. If false/nil debug mode off.
--- @return #FOX self
+--- @param #FOX self
+--- @param #boolean switch If true debug mode on. If false/nil debug mode off.
+--- @return #FOX self
 function FOX:SetDebugOnOff(switch)
 
   if switch==nil then
@@ -572,16 +572,16 @@ function FOX:SetDebugOnOff(switch)
 end
 
 --- Set debug mode on.
--- @param #FOX self
--- @return #FOX self
+--- @param #FOX self
+--- @return #FOX self
 function FOX:SetDebugOn()
   self:SetDebugOnOff(true)
   return self
 end
 
 --- Set debug mode off.
--- @param #FOX self
--- @return #FOX self
+--- @param #FOX self
+--- @return #FOX self
 function FOX:SetDebugOff()
   self:SetDebugOff(false)
   return self
@@ -592,10 +592,10 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check spawn queue and spawn aircraft if necessary.
--- @param #FOX self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #FOX self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function FOX:onafterStatus(From, Event, To)
 
   -- Get FSM state.
@@ -619,7 +619,7 @@ function FOX:onafterStatus(From, Event, To)
 end
 
 --- Check status of players.
--- @param #FOX self
+--- @param #FOX self
 function FOX:_CheckPlayers()
 
   for playername,_playersettings in pairs(self.players) do
@@ -664,8 +664,8 @@ function FOX:_CheckPlayers()
 end
 
 --- Remove missile.
--- @param #FOX self
--- @param #FOX.MissileData missile Missile data.
+--- @param #FOX self
+--- @param #FOX.MissileData missile Missile data.
 function FOX:_RemoveMissile(missile)
 
   if missile then
@@ -681,7 +681,7 @@ function FOX:_RemoveMissile(missile)
 end
 
 --- Missile status.
--- @param #FOX self
+--- @param #FOX self
 function FOX:_CheckMissileStatus()
 
   local text="Missiles:"
@@ -726,9 +726,9 @@ function FOX:_CheckMissileStatus()
 end
 
 --- Check if missile target is protected.
--- @param #FOX self
--- @param Wrapper.Unit#UNIT targetunit Target unit.
--- @return #boolean If true, unit is protected.
+--- @param #FOX self
+--- @param Wrapper.Unit#UNIT targetunit Target unit.
+--- @return #boolean If true, unit is protected.
 function FOX:_IsProtected(targetunit)
 
   if not self.protectedset then
@@ -763,11 +763,11 @@ function FOX:_IsProtected(targetunit)
 end
 
 --- Missle launch event.
--- @param #FOX self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #FOX.MissileData missile Fired missile
+--- @param #FOX self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #FOX.MissileData missile Fired missile
 function FOX:onafterMissileLaunch(From, Event, To, missile)
 
   -- Tracking info and init of last bomb position.
@@ -1124,15 +1124,15 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- FOX event handler for event birth.
--- @param #FOX self
--- @param Core.Event#EVENTDATA EventData
+--- @param #FOX self
+--- @param Core.Event#EVENTDATA EventData
 function FOX:OnEventPlayerEnterAircraft(EventData)
 
 end
 
 --- FOX event handler for event birth.
--- @param #FOX self
--- @param Core.Event#EVENTDATA EventData
+--- @param #FOX self
+--- @param Core.Event#EVENTDATA EventData
 function FOX:OnEventBirth(EventData)
   self:F3({eventbirth = EventData})
   
@@ -1201,8 +1201,8 @@ function FOX:OnEventBirth(EventData)
 end
 
 --- Get missile target.
--- @param #FOX self
--- @param #FOX.MissileData missile The missile data table.
+--- @param #FOX self
+--- @param #FOX.MissileData missile The missile data table.
 function FOX:GetMissileTarget(missile)
 
   local target=nil
@@ -1242,8 +1242,8 @@ function FOX:GetMissileTarget(missile)
 end
 
 --- FOX event handler for event shot (when a unit releases a rocket or bomb (but not a fast firing gun). 
--- @param #FOX self
--- @param Core.Event#EVENTDATA EventData
+--- @param #FOX self
+--- @param Core.Event#EVENTDATA EventData
 function FOX:OnEventShot(EventData)
   self:T2({eventshot=EventData})
   
@@ -1336,8 +1336,8 @@ function FOX:OnEventShot(EventData)
 end
 
 --- FOX event handler for event hit.
--- @param #FOX self
--- @param Core.Event#EVENTDATA EventData
+--- @param #FOX self
+--- @param Core.Event#EVENTDATA EventData
 function FOX:OnEventHit(EventData)
   self:T({eventhit = EventData})
   
@@ -1371,8 +1371,8 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Add menu commands for player.
--- @param #FOX self
--- @param #string _unitName Name of player unit.
+--- @param #FOX self
+--- @param #string _unitName Name of player unit.
 function FOX:_AddF10Commands(_unitName)
   self:F(_unitName)
   
@@ -1448,8 +1448,8 @@ end
 
 
 --- Turn player's launch alert on/off.
--- @param #FOX self
--- @param #string _unitname Name of the player unit.
+--- @param #FOX self
+--- @param #string _unitname Name of the player unit.
 function FOX:_MyStatus(_unitname)
   self:F2(_unitname)
   
@@ -1484,10 +1484,10 @@ function FOX:_MyStatus(_unitname)
 end
 
 --- Turn player's launch alert on/off.
--- @param #FOX self
--- @param #string playername Name of the player.
--- @return #number Number of missiles targeting the player.
--- @return #string Missile info.
+--- @param #FOX self
+--- @param #string playername Name of the player.
+--- @return #number Number of missiles targeting the player.
+--- @return #string Missile info.
 function FOX:_GetTargetMissiles(playername)
 
   local text=""
@@ -1506,8 +1506,8 @@ function FOX:_GetTargetMissiles(playername)
 end
 
 --- Turn player's launch alert on/off.
--- @param #FOX self
--- @param #string _unitname Name of the player unit.
+--- @param #FOX self
+--- @param #string _unitname Name of the player unit.
 function FOX:_ToggleLaunchAlert(_unitname)
   self:F2(_unitname)
   
@@ -1539,8 +1539,8 @@ function FOX:_ToggleLaunchAlert(_unitname)
 end
 
 --- Turn player's launch marks on/off.
--- @param #FOX self
--- @param #string _unitname Name of the player unit.
+--- @param #FOX self
+--- @param #string _unitname Name of the player unit.
 function FOX:_ToggleLaunchMark(_unitname)
   self:F2(_unitname)
   
@@ -1573,8 +1573,8 @@ end
 
 
 --- Turn destruction of missiles on/off for player.
--- @param #FOX self
--- @param #string _unitname Name of the player unit.
+--- @param #FOX self
+--- @param #string _unitname Name of the player unit.
 function FOX:_ToggleDestroyMissiles(_unitname)
   self:F2(_unitname)
   
@@ -1611,8 +1611,8 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get a random text message in case you die.
--- @param #FOX self
--- @return #string Text in case you die.
+--- @param #FOX self
+--- @return #string Text in case you die.
 function FOX:_DeadText()
 
   local texts={}
@@ -1630,9 +1630,9 @@ end
 
 
 --- Check if a coordinate lies within a safe training zone.
--- @param #FOX self
--- @param Core.Point#COORDINATE coord Coordinate to check.
--- @return #boolean True if safe.
+--- @param #FOX self
+--- @param Core.Point#COORDINATE coord Coordinate to check.
+--- @return #boolean True if safe.
 function FOX:_CheckCoordSafe(coord)
 
   -- No safe zones defined ==> Everything is safe.
@@ -1653,9 +1653,9 @@ function FOX:_CheckCoordSafe(coord)
 end
 
 --- Check if a coordinate lies within a launch zone.
--- @param #FOX self
--- @param Core.Point#COORDINATE coord Coordinate to check.
--- @return #boolean True if in launch zone.
+--- @param #FOX self
+--- @param Core.Point#COORDINATE coord Coordinate to check.
+--- @return #boolean True if in launch zone.
 function FOX:_CheckCoordLaunch(coord)
 
   -- No safe zones defined ==> Everything is safe.
@@ -1676,9 +1676,9 @@ function FOX:_CheckCoordLaunch(coord)
 end
 
 --- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned. 
--- @param #FOX self
--- @param DCS#Weapon weapon The weapon.
--- @return #number Heading of weapon in degrees or -1.
+--- @param #FOX self
+--- @param DCS#Weapon weapon The weapon.
+--- @return #number Heading of weapon in degrees or -1.
 function FOX:_GetWeapongHeading(weapon)
 
   if weapon and weapon:isExist() then
@@ -1700,9 +1700,9 @@ function FOX:_GetWeapongHeading(weapon)
 end
 
 --- Tell player notching headings. 
--- @param #FOX self
--- @param #FOX.PlayerData playerData Player data.
--- @param DCS#Weapon weapon The weapon.
+--- @param #FOX self
+--- @param #FOX.PlayerData playerData Player data.
+--- @param DCS#Weapon weapon The weapon.
 function FOX:_SayNotchingHeadings(playerData, weapon)
 
   if playerData and playerData.unit and playerData.unit:IsAlive() then
@@ -1719,10 +1719,10 @@ function FOX:_SayNotchingHeadings(playerData, weapon)
 end
 
 --- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned. 
--- @param #FOX self
--- @param DCS#Weapon weapon The weapon.
--- @return #number Notching heading right, i.e. missile heading +90°.
--- @return #number Notching heading left, i.e. missile heading -90°.
+--- @param #FOX self
+--- @param DCS#Weapon weapon The weapon.
+--- @return #number Notching heading right, i.e. missile heading +90°.
+--- @return #number Notching heading left, i.e. missile heading -90°.
 function FOX:_GetNotchingHeadings(weapon)
 
   if weapon then
@@ -1746,9 +1746,9 @@ function FOX:_GetNotchingHeadings(weapon)
 end
 
 --- Returns the player data from a unit name.
--- @param #FOX self
--- @param #string unitName Name of the unit.
--- @return #FOX.PlayerData Player data.
+--- @param #FOX self
+--- @param #string unitName Name of the unit.
+--- @return #FOX.PlayerData Player data.
 function FOX:_GetPlayerFromUnitname(unitName)
 
   for _,_player in pairs(self.players) do  
@@ -1763,9 +1763,9 @@ function FOX:_GetPlayerFromUnitname(unitName)
 end
 
 --- Retruns the player data from a unit.
--- @param #FOX self
--- @param Wrapper.Unit#UNIT unit
--- @return #FOX.PlayerData Player data.
+--- @param #FOX self
+--- @param Wrapper.Unit#UNIT unit
+--- @return #FOX.PlayerData Player data.
 function FOX:_GetPlayerFromUnit(unit)
 
   if unit and unit:IsAlive() then
@@ -1787,10 +1787,10 @@ function FOX:_GetPlayerFromUnit(unit)
 end
 
 --- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned. 
--- @param #FOX self
--- @param #string _unitName Name of the player unit.
--- @return Wrapper.Unit#UNIT Unit of player or nil.
--- @return #string Name of the player or nil.
+--- @param #FOX self
+--- @param #string _unitName Name of the player unit.
+--- @return Wrapper.Unit#UNIT Unit of player or nil.
+--- @return #string Name of the player or nil.
 function FOX:_GetPlayerUnitAndName(_unitName)
   self:F2(_unitName)
 

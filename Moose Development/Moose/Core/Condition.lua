@@ -20,18 +20,18 @@
 -- @image MOOSE.JPG
 
 --- CONDITON class.
--- @type CONDITION
--- @field #string ClassName Name of the class.
--- @field #string lid Class id string for output to DCS log file.
--- @field #string name Name of the condition.
--- @field #boolean isAny General functions are evaluated as any condition.
--- @field #boolean negateResult Negate result of evaluation.
--- @field #boolean noneResult Boolean that is returned if no condition functions at all were specified.
--- @field #table functionsGen General condition functions.
--- @field #table functionsAny Any condition functions.
--- @field #table functionsAll All condition functions.
--- @field #number functionCounter Running number to determine the unique ID of condition functions.
--- @field #boolean defaultPersist Default persistence of condition functions.
+--- @type CONDITION
+--- @field #string ClassName Name of the class.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #string name Name of the condition.
+--- @field #boolean isAny General functions are evaluated as any condition.
+--- @field #boolean negateResult Negate result of evaluation.
+--- @field #boolean noneResult Boolean that is returned if no condition functions at all were specified.
+--- @field #table functionsGen General condition functions.
+--- @field #table functionsAny Any condition functions.
+--- @field #table functionsAll All condition functions.
+--- @field #number functionCounter Running number to determine the unique ID of condition functions.
+--- @field #boolean defaultPersist Default persistence of condition functions.
 -- 
 -- @extends Core.Base#BASE
 
@@ -43,7 +43,7 @@
 -- 
 -- 
 --
--- @field #CONDITION
+--- @field #CONDITION
 CONDITION = {
   ClassName       = "CONDITION",
   lid             =   nil,
@@ -55,15 +55,20 @@ CONDITION = {
 }
 
 --- Condition function.
+<<<<<<< Updated upstream
 -- @type CONDITION.Function
--- @field #number uid Unique ID of the condition function.
--- @field #string type Type of the condition function: "gen", "any", "all".
--- @field #boolean persistence If `true`, this is persistent.
--- @field #function func Callback function to check for a condition. Must return a `#boolean`.
--- @field #table arg (Optional) Arguments passed to the condition callback function if any.
+--- @field #number uid Unique ID of the condition function.
+--- @field #string type Type of the condition function: "gen", "any", "all".
+--- @field #boolean persistence If `true`, this is persistent.
+--- @field #function func Callback function to check for a condition. Must return a `#boolean`.
+=======
+--- @type CONDITION.Function
+--- @field #function func Callback function to check for a condition. Should return a `#boolean`.
+>>>>>>> Stashed changes
+--- @field #table arg (Optional) Arguments passed to the condition callback function if any.
 
 --- CONDITION class version.
--- @field #string version
+--- @field #string version
 CONDITION.version="0.3.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -79,9 +84,9 @@ CONDITION.version="0.3.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new CONDITION object.
--- @param #CONDITION self
--- @param #string Name (Optional) Name used in the logs. 
--- @return #CONDITION self
+--- @param #CONDITION self
+--- @param #string Name (Optional) Name used in the logs. 
+--- @return #CONDITION self
 function CONDITION:New(Name)
 
   -- Inherit BASE.
@@ -97,27 +102,27 @@ function CONDITION:New(Name)
 end
 
 --- Set that general condition functions return `true` if `any` function returns `true`. Default is that *all* functions must return `true`.
--- @param #CONDITION self
--- @param #boolean Any If `true`, *any* condition can be true. Else *all* conditions must result `true`.
--- @return #CONDITION self
+--- @param #CONDITION self
+--- @param #boolean Any If `true`, *any* condition can be true. Else *all* conditions must result `true`.
+--- @return #CONDITION self
 function CONDITION:SetAny(Any)
   self.isAny=Any
   return self
 end
 
 --- Negate result.
--- @param #CONDITION self
--- @param #boolean Negate If `true`, result is negated else  not.
--- @return #CONDITION self
+--- @param #CONDITION self
+--- @param #boolean Negate If `true`, result is negated else  not.
+--- @return #CONDITION self
 function CONDITION:SetNegateResult(Negate)
   self.negateResult=Negate
   return self
 end
 
 --- Set whether `true` or `false` is returned, if no conditions at all were specified. By default `false` is returned.
--- @param #CONDITION self
--- @param #boolean ReturnValue Returns this boolean.
--- @return #CONDITION self
+--- @param #CONDITION self
+--- @param #boolean ReturnValue Returns this boolean.
+--- @return #CONDITION self
 function CONDITION:SetNoneResult(ReturnValue)
   if not ReturnValue then
     self.noneResult=false
@@ -128,18 +133,18 @@ function CONDITION:SetNoneResult(ReturnValue)
 end
 
 --- Set whether condition functions are persistent, *i.e.* are removed.
--- @param #CONDITION self
--- @param #boolean IsPersistent If `true`, condition functions are persistent.
--- @return #CONDITION self
+--- @param #CONDITION self
+--- @param #boolean IsPersistent If `true`, condition functions are persistent.
+--- @return #CONDITION self
 function CONDITION:SetDefaultPersistence(IsPersistent)
   self.defaultPersist=IsPersistent
   return self
 end
 
 --- Add a function that is evaluated. It must return a `#boolean` value, *i.e.* either `true` or `false` (or `nil`).
--- @param #CONDITION self
--- @param #function Function The function to call.
--- @param ... (Optional) Parameters passed to the function (if any).
+--- @param #CONDITION self
+--- @param #function Function The function to call.
+--- @param ... (Optional) Parameters passed to the function (if any).
 -- 
 -- @usage
 -- local function isAequalB(a, b)
@@ -148,7 +153,7 @@ end
 -- 
 -- myCondition:AddFunction(isAequalB, a, b)
 -- 
--- @return #CONDITION.Function Condition function table.
+--- @return #CONDITION.Function Condition function table.
 function CONDITION:AddFunction(Function, ...)
 
   -- Condition function.
@@ -161,10 +166,10 @@ function CONDITION:AddFunction(Function, ...)
 end
 
 --- Add a function that is evaluated. It must return a `#boolean` value, *i.e.* either `true` or `false` (or `nil`).
--- @param #CONDITION self
--- @param #function Function The function to call.
--- @param ... (Optional) Parameters passed to the function (if any).
--- @return #CONDITION.Function Condition function table.
+--- @param #CONDITION self
+--- @param #function Function The function to call.
+--- @param ... (Optional) Parameters passed to the function (if any).
+--- @return #CONDITION.Function Condition function table.
 function CONDITION:AddFunctionAny(Function, ...)
 
   -- Condition function.
@@ -177,10 +182,10 @@ function CONDITION:AddFunctionAny(Function, ...)
 end
 
 --- Add a function that is evaluated. It must return a `#boolean` value, *i.e.* either `true` or `false` (or `nil`).
--- @param #CONDITION self
--- @param #function Function The function to call.
--- @param ... (Optional) Parameters passed to the function (if any).
--- @return #CONDITION.Function Condition function table.
+--- @param #CONDITION self
+--- @param #function Function The function to call.
+--- @param ... (Optional) Parameters passed to the function (if any).
+--- @return #CONDITION.Function Condition function table.
 function CONDITION:AddFunctionAll(Function, ...)
 
   -- Condition function.
@@ -193,9 +198,9 @@ function CONDITION:AddFunctionAll(Function, ...)
 end
 
 --- Remove a condition function.
--- @param #CONDITION self
--- @param #CONDITION.Function ConditionFunction The condition function to be removed.
--- @return #CONDITION self
+--- @param #CONDITION self
+--- @param #CONDITION.Function ConditionFunction The condition function to be removed.
+--- @return #CONDITION self
 function CONDITION:RemoveFunction(ConditionFunction)
 
   if ConditionFunction then
@@ -226,8 +231,8 @@ function CONDITION:RemoveFunction(ConditionFunction)
 end
 
 --- Remove all non-persistant condition functions.
--- @param #CONDITION self
--- @return #CONDITION self
+--- @param #CONDITION self
+--- @return #CONDITION self
 function CONDITION:RemoveNonPersistant()
 
   for i=#self.functionsGen,1,-1 do
@@ -256,9 +261,9 @@ end
 
 
 --- Evaluate conditon functions.
--- @param #CONDITION self
--- @param #boolean AnyTrue If `true`, evaluation return `true` if *any* condition function returns `true`. By default, *all* condition functions must return true.
--- @return #boolean Result of condition functions.
+--- @param #CONDITION self
+--- @param #boolean AnyTrue If `true`, evaluation return `true` if *any* condition function returns `true`. By default, *all* condition functions must return true.
+--- @return #boolean Result of condition functions.
 function CONDITION:Evaluate(AnyTrue)
 
   -- Check if at least one function was given.
@@ -304,9 +309,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check if all given condition are true.
--- @param #CONDITION self
--- @param #table functions Functions to evaluate.
--- @return #boolean If true, all conditions were true (or functions was empty/nil). Returns false if at least one condition returned false.
+--- @param #CONDITION self
+--- @param #table functions Functions to evaluate.
+--- @return #boolean If true, all conditions were true (or functions was empty/nil). Returns false if at least one condition returned false.
 function CONDITION:_EvalConditionsAll(functions)
 
   -- At least one condition?
@@ -336,9 +341,9 @@ end
 
 
 --- Check if any of the given conditions is true.
--- @param #CONDITION self
--- @param #table functions Functions to evaluate.
--- @return #boolean If true, at least one condition is true (or functions was emtpy/nil).
+--- @param #CONDITION self
+--- @param #table functions Functions to evaluate.
+--- @return #boolean If true, at least one condition is true (or functions was emtpy/nil).
 function CONDITION:_EvalConditionsAny(functions)
 
   -- At least one condition?
@@ -371,11 +376,11 @@ function CONDITION:_EvalConditionsAny(functions)
 end
 
 --- Create conditon function object.
--- @param #CONDITION self
--- @param #number Ftype Function type: 0=Gen, 1=All, 2=Any.
--- @param #function Function The function to call.
--- @param ... (Optional) Parameters passed to the function (if any).
--- @return #CONDITION.Function Condition function.
+--- @param #CONDITION self
+--- @param #number Ftype Function type: 0=Gen, 1=All, 2=Any.
+--- @param #function Function The function to call.
+--- @param ... (Optional) Parameters passed to the function (if any).
+--- @return #CONDITION.Function Condition function.
 function CONDITION:_CreateCondition(Ftype, Function, ...)
 
   -- Increase counter.
@@ -400,9 +405,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Condition to check if time is greater than a given threshold time.
--- @param #number Time Time in seconds.
--- @param #boolean Absolute If `true`, abs. mission time from `timer.getAbsTime()` is checked. Default is relative mission time from `timer.getTime()`.
--- @return #boolean Returns `true` if time is greater than give the time.
+--- @param #number Time Time in seconds.
+--- @param #boolean Absolute If `true`, abs. mission time from `timer.getAbsTime()` is checked. Default is relative mission time from `timer.getTime()`.
+--- @return #boolean Returns `true` if time is greater than give the time.
 function CONDITION.IsTimeGreater(Time, Absolute)
 
   local Tnow=nil 
@@ -424,8 +429,8 @@ end
 
 --- Function that returns `true` (success) with a certain probability. For example, if you specify `Probability=80` there is an 80% chance that `true` is returned.
 -- Technically, a random number between 0 and 100 is created. If the given success probability is less then this number, `true` is returned.
--- @param #number Probability Success probability in percent. Default 50 %.
--- @return #boolean Returns `true` for success and `false` otherwise.
+--- @param #number Probability Success probability in percent. Default 50 %.
+--- @return #boolean Returns `true` for success and `false` otherwise.
 function CONDITION.IsRandomSuccess(Probability)
 
   Probability=Probability or 50
@@ -447,13 +452,13 @@ function CONDITION.IsRandomSuccess(Probability)
 end
 
 --- Function that returns always `true`
--- @return #boolean Returns `true` unconditionally.
+--- @return #boolean Returns `true` unconditionally.
 function CONDITION.ReturnTrue()
   return true
 end
 
 --- Function that returns always `false`
--- @return #boolean Returns `false` unconditionally.
+--- @return #boolean Returns `false` unconditionally.
 function CONDITION.ReturnFalse()
   return false
 end

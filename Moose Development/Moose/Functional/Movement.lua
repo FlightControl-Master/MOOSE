@@ -20,9 +20,9 @@ MOVEMENT = {
 }
 
 --- Creates the main object which is handling the GROUND forces movement.
--- @param table{string,...}|string MovePrefixes is a table of the Prefixes (names) of the GROUND Groups that need to be controlled by the MOVEMENT Object.
--- @param number MoveMaximum is a number that defines the maximum amount of GROUND Units to be moving during one minute.
--- @return MOVEMENT
+--- @param table{string,...}|string MovePrefixes is a table of the Prefixes (names) of the GROUND Groups that need to be controlled by the MOVEMENT Object.
+--- @param number MoveMaximum is a number that defines the maximum amount of GROUND Units to be moving during one minute.
+--- @return MOVEMENT
 -- @usage
 -- -- Limit the amount of simultaneous moving units on the ground to prevent lag.
 -- Movement_US_Platoons = MOVEMENT:New( { 'US Tank Platoon Left', 'US Tank Platoon Middle', 'US Tank Platoon Right', 'US CH-47D Troops' }, 15 )
@@ -68,8 +68,8 @@ end
 
 --- Captures the birth events when new Units were spawned.
 -- @todo This method should become obsolete. The global _DATABASE object (an instance of @{Core.Database#DATABASE}) will handle the collection administration.
--- @param #MOVEMENT self
--- @param Core.Event#EVENTDATA self
+--- @param #MOVEMENT self
+--- @param Core.Event#EVENTDATA self
 function MOVEMENT:OnEventBirth( EventData )
 	self:F( { EventData } )
 

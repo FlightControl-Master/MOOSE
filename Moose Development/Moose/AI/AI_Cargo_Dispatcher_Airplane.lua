@@ -110,18 +110,18 @@
 -- 
 -- 
 -- 
--- @field #AI_CARGO_DISPATCHER_AIRPLANE
+--- @field #AI_CARGO_DISPATCHER_AIRPLANE
 AI_CARGO_DISPATCHER_AIRPLANE = {
   ClassName = "AI_CARGO_DISPATCHER_AIRPLANE",
 }
 
 --- Creates a new AI_CARGO_DISPATCHER_AIRPLANE object.
--- @param #AI_CARGO_DISPATCHER_AIRPLANE self
--- @param Core.Set#SET_GROUP AirplaneSet The set of @{Wrapper.Group#GROUP} objects of airplanes that will transport the cargo.
--- @param Core.Set#SET_CARGO CargoSet The set of @{Cargo.Cargo#CARGO} objects, which can be CARGO_GROUP, CARGO_CRATE, CARGO_SLINGLOAD objects.
--- @param Core.Zone#SET_ZONE PickupZoneSet The set of zone airbases where the cargo has to be picked up.
--- @param Core.Zone#SET_ZONE DeployZoneSet The set of zone airbases where the cargo is deployed. Choice for each cargo is random.
--- @return #AI_CARGO_DISPATCHER_AIRPLANE self
+--- @param #AI_CARGO_DISPATCHER_AIRPLANE self
+--- @param Core.Set#SET_GROUP AirplaneSet The set of @{Wrapper.Group#GROUP} objects of airplanes that will transport the cargo.
+--- @param Core.Set#SET_CARGO CargoSet The set of @{Cargo.Cargo#CARGO} objects, which can be CARGO_GROUP, CARGO_CRATE, CARGO_SLINGLOAD objects.
+--- @param Core.Zone#SET_ZONE PickupZoneSet The set of zone airbases where the cargo has to be picked up.
+--- @param Core.Zone#SET_ZONE DeployZoneSet The set of zone airbases where the cargo is deployed. Choice for each cargo is random.
+--- @return #AI_CARGO_DISPATCHER_AIRPLANE self
 -- @usage
 -- 
 --      -- An AI dispatcher object for an airplane squadron, moving infantry and vehicles from pickup airbases to deploy airbases.

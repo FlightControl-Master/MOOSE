@@ -89,7 +89,7 @@
 -- @image Scoring.JPG
 
 --- @type SCORING
--- @field Players A collection of the current players that have joined the game.
+--- @field Players A collection of the current players that have joined the game.
 -- @extends Core.Base#BASE
 
 --- SCORING class
@@ -220,7 +220,7 @@
 --
 -- ===
 --
--- @field #SCORING
+--- @field #SCORING
 SCORING = {
   ClassName = "SCORING",
   ClassID = 0,
@@ -242,9 +242,9 @@ local _SCORINGCategory = {
 }
 
 --- Creates a new SCORING object to administer the scoring achieved by players.
--- @param #SCORING self
--- @param #string GameName The name of the game. This name is also logged in the CSV score file.
--- @return #SCORING self
+--- @param #SCORING self
+--- @param #string GameName The name of the game. This name is also logged in the CSV score file.
+--- @return #SCORING self
 -- @usage
 --
 --   -- Define a new scoring object for the mission Gori Valley.
@@ -315,9 +315,9 @@ function SCORING:New( GameName )
 end
 
 --- Set a prefix string that will be displayed at each scoring message sent.
--- @param #SCORING self
--- @param #string DisplayMessagePrefix (Default="Scoring: ") The scoring prefix string.
--- @return #SCORING
+--- @param #SCORING self
+--- @param #string DisplayMessagePrefix (Default="Scoring: ") The scoring prefix string.
+--- @return #SCORING
 function SCORING:SetDisplayMessagePrefix( DisplayMessagePrefix )
   self.DisplayMessagePrefix = DisplayMessagePrefix or ""
   return self
@@ -326,8 +326,8 @@ end
 --- Set the scale for scoring valid destroys (enemy destroys).
 -- A default calculated score is a value between 1 and 10.
 -- The scale magnifies the scores given to the players.
--- @param #SCORING self
--- @param #number Scale The scale of the score given.
+--- @param #SCORING self
+--- @param #number Scale The scale of the score given.
 function SCORING:SetScaleDestroyScore( Scale )
   self.ScaleDestroyScore = Scale
   return self
@@ -336,9 +336,9 @@ end
 --- Set the scale for scoring penalty destroys (friendly destroys).
 -- A default calculated penalty is a value between 1 and 10.
 -- The scale magnifies the scores given to the players.
--- @param #SCORING self
--- @param #number Scale The scale of the score given.
--- @return #SCORING
+--- @param #SCORING self
+--- @param #number Scale The scale of the score given.
+--- @return #SCORING
 function SCORING:SetScaleDestroyPenalty( Scale )
 
   self.ScaleDestroyPenalty = Scale
@@ -349,10 +349,10 @@ end
 --- Add a @{Wrapper.Unit} for additional scoring when the @{Wrapper.Unit} is destroyed.
 -- Note that if there was already a @{Wrapper.Unit} declared within the scoring with the same name,
 -- then the old @{Wrapper.Unit}  will be replaced with the new @{Wrapper.Unit}.
--- @param #SCORING self
--- @param Wrapper.Unit#UNIT ScoreUnit The @{Wrapper.Unit} for which the Score needs to be given.
--- @param #number Score The Score value.
--- @return #SCORING
+--- @param #SCORING self
+--- @param Wrapper.Unit#UNIT ScoreUnit The @{Wrapper.Unit} for which the Score needs to be given.
+--- @param #number Score The Score value.
+--- @return #SCORING
 function SCORING:AddUnitScore( ScoreUnit, Score )
 
   local UnitName = ScoreUnit:GetName()
@@ -363,9 +363,9 @@ function SCORING:AddUnitScore( ScoreUnit, Score )
 end
 
 --- Removes a @{Wrapper.Unit} for additional scoring when the @{Wrapper.Unit} is destroyed.
--- @param #SCORING self
--- @param Wrapper.Unit#UNIT ScoreUnit The @{Wrapper.Unit} for which the Score needs to be given.
--- @return #SCORING
+--- @param #SCORING self
+--- @param Wrapper.Unit#UNIT ScoreUnit The @{Wrapper.Unit} for which the Score needs to be given.
+--- @return #SCORING
 function SCORING:RemoveUnitScore( ScoreUnit )
 
   local UnitName = ScoreUnit:GetName()
@@ -378,10 +378,10 @@ end
 --- Add a @{Wrapper.Static} for additional scoring when the @{Wrapper.Static} is destroyed.
 -- Note that if there was already a @{Wrapper.Static} declared within the scoring with the same name,
 -- then the old @{Wrapper.Static}  will be replaced with the new @{Wrapper.Static}.
--- @param #SCORING self
--- @param Wrapper.Static#UNIT ScoreStatic The @{Wrapper.Static} for which the Score needs to be given.
--- @param #number Score The Score value.
--- @return #SCORING
+--- @param #SCORING self
+--- @param Wrapper.Static#UNIT ScoreStatic The @{Wrapper.Static} for which the Score needs to be given.
+--- @param #number Score The Score value.
+--- @return #SCORING
 function SCORING:AddStaticScore( ScoreStatic, Score )
 
   local StaticName = ScoreStatic:GetName()
@@ -392,9 +392,9 @@ function SCORING:AddStaticScore( ScoreStatic, Score )
 end
 
 --- Removes a @{Wrapper.Static} for additional scoring when the @{Wrapper.Static} is destroyed.
--- @param #SCORING self
--- @param Wrapper.Static#UNIT ScoreStatic The @{Wrapper.Static} for which the Score needs to be given.
--- @return #SCORING
+--- @param #SCORING self
+--- @param Wrapper.Static#UNIT ScoreStatic The @{Wrapper.Static} for which the Score needs to be given.
+--- @return #SCORING
 function SCORING:RemoveStaticScore( ScoreStatic )
 
   local StaticName = ScoreStatic:GetName()
@@ -405,10 +405,10 @@ function SCORING:RemoveStaticScore( ScoreStatic )
 end
 
 --- Specify a special additional score for a @{Wrapper.Group}.
--- @param #SCORING self
--- @param Wrapper.Group#GROUP ScoreGroup The @{Wrapper.Group} for which each @{Wrapper.Unit} a Score is given.
--- @param #number Score The Score value.
--- @return #SCORING
+--- @param #SCORING self
+--- @param Wrapper.Group#GROUP ScoreGroup The @{Wrapper.Group} for which each @{Wrapper.Unit} a Score is given.
+--- @param #number Score The Score value.
+--- @return #SCORING
 function SCORING:AddScoreGroup( ScoreGroup, Score )
 
   local ScoreUnits = ScoreGroup:GetUnits()
@@ -424,11 +424,11 @@ end
 --- Add a @{Core.Zone} to define additional scoring when any object is destroyed in that zone.
 -- Note that if a @{Core.Zone} with the same name is already within the scoring added, the @{Core.Zone} (type) and Score will be replaced!
 -- This allows for a dynamic destruction zone evolution within your mission.
--- @param #SCORING self
--- @param Core.Zone#ZONE_BASE ScoreZone The @{Core.Zone} which defines the destruction score perimeters.
+--- @param #SCORING self
+--- @param Core.Zone#ZONE_BASE ScoreZone The @{Core.Zone} which defines the destruction score perimeters.
 -- Note that a zone can be a polygon or a moving zone.
--- @param #number Score The Score value.
--- @return #SCORING
+--- @param #number Score The Score value.
+--- @return #SCORING
 function SCORING:AddZoneScore( ScoreZone, Score )
 
   local ZoneName = ScoreZone:GetName()
@@ -443,10 +443,10 @@ end
 --- Remove a @{Core.Zone} for additional scoring.
 -- The scoring will search if any @{Core.Zone} is added with the given name, and will remove that zone from the scoring.
 -- This allows for a dynamic destruction zone evolution within your mission.
--- @param #SCORING self
--- @param Core.Zone#ZONE_BASE ScoreZone The @{Core.Zone} which defines the destruction score perimeters.
+--- @param #SCORING self
+--- @param Core.Zone#ZONE_BASE ScoreZone The @{Core.Zone} which defines the destruction score perimeters.
 -- Note that a zone can be a polygon or a moving zone.
--- @return #SCORING
+--- @return #SCORING
 function SCORING:RemoveZoneScore( ScoreZone )
 
   local ZoneName = ScoreZone:GetName()
@@ -457,9 +457,9 @@ function SCORING:RemoveZoneScore( ScoreZone )
 end
 
 --- Configure to send messages after a target has been hit.
--- @param #SCORING self
--- @param #boolean OnOff If true is given, the messages are sent.
--- @return #SCORING
+--- @param #SCORING self
+--- @param #boolean OnOff If true is given, the messages are sent.
+--- @return #SCORING
 function SCORING:SetMessagesHit( OnOff )
 
   self.MessagesHit = OnOff
@@ -467,17 +467,17 @@ function SCORING:SetMessagesHit( OnOff )
 end
 
 --- If to send messages after a target has been hit.
--- @param #SCORING self
--- @return #boolean
+--- @param #SCORING self
+--- @return #boolean
 function SCORING:IfMessagesHit()
 
   return self.MessagesHit
 end
 
 --- Configure to send messages after a target has been destroyed.
--- @param #SCORING self
--- @param #boolean OnOff If true is given, the messages are sent.
--- @return #SCORING
+--- @param #SCORING self
+--- @param #boolean OnOff If true is given, the messages are sent.
+--- @return #SCORING
 function SCORING:SetMessagesDestroy( OnOff )
 
   self.MessagesDestroy = OnOff
@@ -485,17 +485,17 @@ function SCORING:SetMessagesDestroy( OnOff )
 end
 
 --- If to send messages after a target has been destroyed.
--- @param #SCORING self
--- @return #boolean
+--- @param #SCORING self
+--- @return #boolean
 function SCORING:IfMessagesDestroy()
 
   return self.MessagesDestroy
 end
 
 --- Configure to send messages after a target has been destroyed and receives additional scores.
--- @param #SCORING self
--- @param #boolean OnOff If true is given, the messages are sent.
--- @return #SCORING
+--- @param #SCORING self
+--- @param #boolean OnOff If true is given, the messages are sent.
+--- @return #SCORING
 function SCORING:SetMessagesScore( OnOff )
 
   self.MessagesScore = OnOff
@@ -503,17 +503,17 @@ function SCORING:SetMessagesScore( OnOff )
 end
 
 --- If to send messages after a target has been destroyed and receives additional scores.
--- @param #SCORING self
--- @return #boolean
+--- @param #SCORING self
+--- @return #boolean
 function SCORING:IfMessagesScore()
 
   return self.MessagesScore
 end
 
 --- Configure to send messages after a target has been hit in a zone, and additional score is received.
--- @param #SCORING self
--- @param #boolean OnOff If true is given, the messages are sent.
--- @return #SCORING
+--- @param #SCORING self
+--- @param #boolean OnOff If true is given, the messages are sent.
+--- @return #SCORING
 function SCORING:SetMessagesZone( OnOff )
 
   self.MessagesZone = OnOff
@@ -521,16 +521,16 @@ function SCORING:SetMessagesZone( OnOff )
 end
 
 --- If to send messages after a target has been hit in a zone, and additional score is received.
--- @param #SCORING self
--- @return #boolean
+--- @param #SCORING self
+--- @return #boolean
 function SCORING:IfMessagesZone()
 
   return self.MessagesZone
 end
 
 --- Configure to send messages to all players.
--- @param #SCORING self
--- @return #SCORING
+--- @param #SCORING self
+--- @return #SCORING
 function SCORING:SetMessagesToAll()
 
   self.MessagesAudience = 1
@@ -538,16 +538,16 @@ function SCORING:SetMessagesToAll()
 end
 
 --- If to send messages to all players.
--- @param #SCORING self
--- @return #boolean
+--- @param #SCORING self
+--- @return #boolean
 function SCORING:IfMessagesToAll()
 
   return self.MessagesAudience == 1
 end
 
 --- Configure to send messages to only those players within the same coalition as the player.
--- @param #SCORING self
--- @return #SCORING
+--- @param #SCORING self
+--- @return #SCORING
 function SCORING:SetMessagesToCoalition()
 
   self.MessagesAudience = 2
@@ -555,8 +555,8 @@ function SCORING:SetMessagesToCoalition()
 end
 
 --- If to send messages to only those players within the same coalition as the player.
--- @param #SCORING self
--- @return #boolean
+--- @param #SCORING self
+--- @return #boolean
 function SCORING:IfMessagesToCoalition()
 
   return self.MessagesAudience == 2
@@ -565,9 +565,9 @@ end
 --- When a player commits too much damage to friendlies, his penalty score will reach a certain level.
 -- Use this method to define the level when a player gets kicked.
 -- By default, the fratricide level is the default penalty multiplier * 2 for the penalty score.
--- @param #SCORING self
--- @param #number Fratricide The amount of maximum penalty that may be inflicted by a friendly player before he gets kicked. 
--- @return #SCORING
+--- @param #SCORING self
+--- @param #number Fratricide The amount of maximum penalty that may be inflicted by a friendly player before he gets kicked. 
+--- @return #SCORING
 function SCORING:SetFratricide( Fratricide )
 
   self.Fratricide = Fratricide
@@ -575,18 +575,18 @@ function SCORING:SetFratricide( Fratricide )
 end
 
 --- Decide if fratricide is leading to penalties (true) or not (false)
--- @param #SCORING self
--- @param #boolean OnOff Switch for Fratricide
--- @return #SCORING
+--- @param #SCORING self
+--- @param #boolean OnOff Switch for Fratricide
+--- @return #SCORING
 function SCORING:SwitchFratricide( OnOff )
   self.penaltyonfratricide = OnOff
   return self
 end
 
 --- Decide if a change of coalition is leading to penalties (true) or not (false)
--- @param #SCORING self
--- @param #boolean OnOff Switch for Coalition Changes.
--- @return #SCORING
+--- @param #SCORING self
+--- @param #boolean OnOff Switch for Coalition Changes.
+--- @return #SCORING
 function SCORING:SwitchTreason( OnOff )
   self.penaltyoncoalitionchange = OnOff
   return self
@@ -595,9 +595,9 @@ end
 --- When a player changes the coalition, he can receive a penalty score.
 -- Use the method @{#SCORING.SetCoalitionChangePenalty}() to define the penalty when a player changes coalition.
 -- By default, the penalty for changing coalition is the default penalty scale.
--- @param #SCORING self
--- @param #number CoalitionChangePenalty The amount of penalty that is given.
--- @return #SCORING
+--- @param #SCORING self
+--- @param #number CoalitionChangePenalty The amount of penalty that is given.
+--- @return #SCORING
 function SCORING:SetCoalitionChangePenalty( CoalitionChangePenalty )
 
   self.CoalitionChangePenalty = CoalitionChangePenalty
@@ -605,8 +605,8 @@ function SCORING:SetCoalitionChangePenalty( CoalitionChangePenalty )
 end
 
 --- Sets the scoring menu.
--- @param #SCORING self
--- @return #SCORING
+--- @param #SCORING self
+--- @return #SCORING
 function SCORING:SetScoringMenu( ScoringGroup )
   local Menu = MENU_GROUP:New( ScoringGroup, 'Scoring and Statistics' )
   local ReportGroupSummary = MENU_GROUP_COMMAND:New( ScoringGroup, 'Summary report players in group', Menu, SCORING.ReportScoreGroupSummary, self, ScoringGroup )
@@ -617,8 +617,8 @@ function SCORING:SetScoringMenu( ScoringGroup )
 end
 
 --- Add a new player entering a Unit.
--- @param #SCORING self
--- @param Wrapper.Unit#UNIT UnitData
+--- @param #SCORING self
+--- @param Wrapper.Unit#UNIT UnitData
 function SCORING:_AddPlayerFromUnit( UnitData )
   self:F( UnitData )
 
@@ -699,11 +699,11 @@ end
 -- The GoalTag is a string or identifier that is taken into the CSV file scoring log to identify the goal.
 -- A free text can be given that is shown to the players.
 -- The Score can be both positive and negative.
--- @param #SCORING self
--- @param #string PlayerName The name of the Player.
--- @param #string GoalTag The string or identifier that is used in the CSV file to identify the goal (sort or group later in Excel).
--- @param #string Text A free text that is shown to the players.
--- @param #number Score The score can be both positive or negative ( Penalty ).
+--- @param #SCORING self
+--- @param #string PlayerName The name of the Player.
+--- @param #string GoalTag The string or identifier that is used in the CSV file to identify the goal (sort or group later in Excel).
+--- @param #string Text A free text that is shown to the players.
+--- @param #number Score The score can be both positive or negative ( Penalty ).
 function SCORING:AddGoalScorePlayer( PlayerName, GoalTag, Text, Score )
 
   self:F( { PlayerName, PlayerName, GoalTag, Text, Score } )
@@ -729,11 +729,11 @@ end
 -- The GoalTag is a string or identifier that is taken into the CSV file scoring log to identify the goal.
 -- A free text can be given that is shown to the players.
 -- The Score can be both positive and negative.
--- @param #SCORING self
--- @param Wrapper.Unit#UNIT PlayerUnit The @{Wrapper.Unit} of the Player. Other Properties for the scoring are taken from this PlayerUnit, like coalition, type etc.
--- @param #string GoalTag The string or identifier that is used in the CSV file to identify the goal (sort or group later in Excel).
--- @param #string Text A free text that is shown to the players.
--- @param #number Score The score can be both positive or negative ( Penalty ).
+--- @param #SCORING self
+--- @param Wrapper.Unit#UNIT PlayerUnit The @{Wrapper.Unit} of the Player. Other Properties for the scoring are taken from this PlayerUnit, like coalition, type etc.
+--- @param #string GoalTag The string or identifier that is used in the CSV file to identify the goal (sort or group later in Excel).
+--- @param #string Text A free text that is shown to the players.
+--- @param #number Score The score can be both positive or negative ( Penalty ).
 function SCORING:AddGoalScore( PlayerUnit, GoalTag, Text, Score )
 
   local PlayerName = PlayerUnit:GetPlayerName()
@@ -757,11 +757,11 @@ function SCORING:AddGoalScore( PlayerUnit, GoalTag, Text, Score )
 end
 
 --- Registers Scores the players completing a Mission Task.
--- @param #SCORING self
--- @param Tasking.Mission#MISSION Mission
--- @param Wrapper.Unit#UNIT PlayerUnit
--- @param #string Text
--- @param #number Score
+--- @param #SCORING self
+--- @param Tasking.Mission#MISSION Mission
+--- @param Wrapper.Unit#UNIT PlayerUnit
+--- @param #string Text
+--- @param #number Score
 function SCORING:_AddMissionTaskScore( Mission, PlayerUnit, Text, Score )
 
   local PlayerName = PlayerUnit:GetPlayerName()
@@ -794,11 +794,11 @@ function SCORING:_AddMissionTaskScore( Mission, PlayerUnit, Text, Score )
 end
 
 --- Registers Scores the players completing a Mission Task.
--- @param #SCORING self
--- @param Tasking.Mission#MISSION Mission
--- @param #string PlayerName
--- @param #string Text
--- @param #number Score
+--- @param #SCORING self
+--- @param Tasking.Mission#MISSION Mission
+--- @param #string PlayerName
+--- @param #string Text
+--- @param #number Score
 function SCORING:_AddMissionGoalScore( Mission, PlayerName, Text, Score )
 
   local MissionName = Mission:GetName()
@@ -828,11 +828,11 @@ function SCORING:_AddMissionGoalScore( Mission, PlayerName, Text, Score )
 end
 
 --- Registers Mission Scores for possible multiple players that contributed in the Mission.
--- @param #SCORING self
--- @param Tasking.Mission#MISSION Mission
--- @param Wrapper.Unit#UNIT PlayerUnit
--- @param #string Text
--- @param #number Score
+--- @param #SCORING self
+--- @param Tasking.Mission#MISSION Mission
+--- @param Wrapper.Unit#UNIT PlayerUnit
+--- @param #string Text
+--- @param #number Score
 function SCORING:_AddMissionScore( Mission, Text, Score )
 
   local MissionName = Mission:GetName()
@@ -858,8 +858,8 @@ function SCORING:_AddMissionScore( Mission, Text, Score )
 end
 
 --- Handles the OnPlayerEnterUnit event for the scoring.
--- @param #SCORING self
--- @param Core.Event#EVENTDATA Event
+--- @param #SCORING self
+--- @param Core.Event#EVENTDATA Event
 -- function SCORING:OnEventPlayerEnterUnit( Event )
 --  if Event.IniUnit then
 --    self:_AddPlayerFromUnit( Event.IniUnit )
@@ -868,8 +868,8 @@ end
 -- end
 
 --- Handles the OnBirth event for the scoring.
--- @param #SCORING self
--- @param Core.Event#EVENTDATA Event
+--- @param #SCORING self
+--- @param Core.Event#EVENTDATA Event
 function SCORING:OnEventBirth( Event )
 
   if Event.IniUnit then
@@ -884,8 +884,8 @@ function SCORING:OnEventBirth( Event )
 end
 
 --- Handles the OnPlayerLeaveUnit event for the scoring.
--- @param #SCORING self
--- @param Core.Event#EVENTDATA Event
+--- @param #SCORING self
+--- @param Core.Event#EVENTDATA Event
 function SCORING:OnEventPlayerLeaveUnit( Event )
   if Event.IniUnit then
     local Menu = self:GetState( Event.IniUnit:GetGroup(), "ScoringMenu" ) -- Core.Menu#MENU_GROUP
@@ -897,8 +897,8 @@ function SCORING:OnEventPlayerLeaveUnit( Event )
 end
 
 --- Handles the OnHit event for the scoring.
--- @param #SCORING self
--- @param Core.Event#EVENTDATA Event
+--- @param #SCORING self
+--- @param Core.Event#EVENTDATA Event
 function SCORING:_EventOnHit( Event )
   self:F( { Event } )
 
@@ -1155,8 +1155,8 @@ function SCORING:_EventOnHit( Event )
 end
 
 --- Track  DEAD or CRASH events for the scoring.
--- @param #SCORING self
--- @param Core.Event#EVENTDATA Event
+--- @param #SCORING self
+--- @param Core.Event#EVENTDATA Event
 function SCORING:_EventOnDeadOrCrash( Event )
   self:F( { Event } )
 
@@ -1351,9 +1351,9 @@ function SCORING:_EventOnDeadOrCrash( Event )
 end
 
 --- Produce detailed report of player hit scores.
--- @param #SCORING self
--- @param #string PlayerName The name of the player.
--- @return #string The report.
+--- @param #SCORING self
+--- @param #string PlayerName The name of the player.
+--- @return #string The report.
 function SCORING:ReportDetailedPlayerHits( PlayerName )
 
   local ScoreMessage = ""
@@ -1403,9 +1403,9 @@ function SCORING:ReportDetailedPlayerHits( PlayerName )
 end
 
 --- Produce detailed report of player destroy scores.
--- @param #SCORING self
--- @param #string PlayerName The name of the player.
--- @return #string The report.
+--- @param #SCORING self
+--- @param #string PlayerName The name of the player.
+--- @return #string The report.
 function SCORING:ReportDetailedPlayerDestroys( PlayerName )
 
   local ScoreMessage = ""
@@ -1460,9 +1460,9 @@ function SCORING:ReportDetailedPlayerDestroys( PlayerName )
 end
 
 --- Produce detailed report of player penalty scores because of changing the coalition.
--- @param #SCORING self
--- @param #string PlayerName The name of the player.
--- @return #string The report.
+--- @param #SCORING self
+--- @param #string PlayerName The name of the player.
+--- @return #string The report.
 function SCORING:ReportDetailedPlayerCoalitionChanges( PlayerName )
 
   local ScoreMessage = ""
@@ -1493,9 +1493,9 @@ function SCORING:ReportDetailedPlayerCoalitionChanges( PlayerName )
 end
 
 --- Produce detailed report of player goal scores.
--- @param #SCORING self
--- @param #string PlayerName The name of the player.
--- @return #string The report.
+--- @param #SCORING self
+--- @param #string PlayerName The name of the player.
+--- @return #string The report.
 function SCORING:ReportDetailedPlayerGoals( PlayerName )
 
   local ScoreMessage = ""
@@ -1530,9 +1530,9 @@ function SCORING:ReportDetailedPlayerGoals( PlayerName )
 end
 
 --- Produce detailed report of player penalty scores because of changing the coalition.
--- @param #SCORING self
--- @param #string PlayerName The name of the player.
--- @return #string The report.
+--- @param #SCORING self
+--- @param #string PlayerName The name of the player.
+--- @return #string The report.
 function SCORING:ReportDetailedPlayerMissions( PlayerName )
 
   local ScoreMessage = ""
@@ -1568,8 +1568,8 @@ function SCORING:ReportDetailedPlayerMissions( PlayerName )
 end
 
 --- Report Group Score Summary
--- @param #SCORING self
--- @param Wrapper.Group#GROUP PlayerGroup The player group.
+--- @param #SCORING self
+--- @param Wrapper.Group#GROUP PlayerGroup The player group.
 function SCORING:ReportScoreGroupSummary( PlayerGroup )
 
   local PlayerMessage = ""
@@ -1619,8 +1619,8 @@ function SCORING:ReportScoreGroupSummary( PlayerGroup )
 end
 
 --- Report Group Score Detailed
--- @param #SCORING self
--- @param Wrapper.Group#GROUP PlayerGroup The player group.
+--- @param #SCORING self
+--- @param Wrapper.Group#GROUP PlayerGroup The player group.
 function SCORING:ReportScoreGroupDetailed( PlayerGroup )
 
   local PlayerMessage = ""
@@ -1676,8 +1676,8 @@ function SCORING:ReportScoreGroupDetailed( PlayerGroup )
 end
 
 --- Report all players score
--- @param #SCORING self
--- @param Wrapper.Group#GROUP PlayerGroup The player group.
+--- @param #SCORING self
+--- @param Wrapper.Group#GROUP PlayerGroup The player group.
 function SCORING:ReportScoreAllSummary( PlayerGroup )
 
   local PlayerMessage = ""
@@ -1740,9 +1740,9 @@ function SCORING:SecondsToClock( sSeconds )
 end
 
 --- Opens a score CSV file to log the scores.
--- @param #SCORING self
--- @param #string ScoringCSV
--- @return #SCORING self
+--- @param #SCORING self
+--- @param #string ScoringCSV
+--- @return #SCORING self
 -- @usage
 -- -- Open a new CSV file to log the scores of the game Gori Valley. Let the name of the CSV file begin with "Player Scores".
 -- ScoringObject = SCORING:New( "Gori Valley" )
@@ -1773,21 +1773,21 @@ function SCORING:OpenCSV( ScoringCSV )
 end
 
 --- Registers a score for a player.
--- @param #SCORING self
--- @param #string PlayerName The name of the player.
--- @param #string TargetPlayerName The name of the target player.
--- @param #string ScoreType The type of the score.
--- @param #string ScoreTimes The amount of scores achieved.
--- @param #string ScoreAmount The score given.
--- @param #string PlayerUnitName The unit name of the player.
--- @param #string PlayerUnitCoalition The coalition of the player unit.
--- @param #string PlayerUnitCategory The category of the player unit.
--- @param #string PlayerUnitType The type of the player unit.
--- @param #string TargetUnitName The name of the target unit.
--- @param #string TargetUnitCoalition The coalition of the target unit.
--- @param #string TargetUnitCategory The category of the target unit.
--- @param #string TargetUnitType The type of the target unit.
--- @return #SCORING self
+--- @param #SCORING self
+--- @param #string PlayerName The name of the player.
+--- @param #string TargetPlayerName The name of the target player.
+--- @param #string ScoreType The type of the score.
+--- @param #string ScoreTimes The amount of scores achieved.
+--- @param #string ScoreAmount The score given.
+--- @param #string PlayerUnitName The unit name of the player.
+--- @param #string PlayerUnitCoalition The coalition of the player unit.
+--- @param #string PlayerUnitCategory The category of the player unit.
+--- @param #string PlayerUnitType The type of the player unit.
+--- @param #string TargetUnitName The name of the target unit.
+--- @param #string TargetUnitCoalition The coalition of the target unit.
+--- @param #string TargetUnitCategory The category of the target unit.
+--- @param #string TargetUnitType The type of the target unit.
+--- @return #SCORING self
 function SCORING:ScoreCSV( PlayerName, TargetPlayerName, ScoreType, ScoreTimes, ScoreAmount, PlayerUnitName, PlayerUnitCoalition, PlayerUnitCategory, PlayerUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
   -- write statistic information to file
   local ScoreTime = self:SecondsToClock( timer.getTime() )
@@ -1855,8 +1855,8 @@ function SCORING:ScoreCSV( PlayerName, TargetPlayerName, ScoreType, ScoreTimes, 
 end
 
 --- Close CSV file
--- @param #SCORING self
--- @return #SCORING self
+--- @param #SCORING self
+--- @return #SCORING self
 function SCORING:CloseCSV()
   if lfs and io and os and self.AutoSave then
     self.CSVFile:close()
@@ -1864,9 +1864,9 @@ function SCORING:CloseCSV()
 end
 
 --- Registers a score for a player.
--- @param #SCORING self
--- @param #boolean OnOff Switch saving to CSV on = true or off = false
--- @return #SCORING self
+--- @param #SCORING self
+--- @param #boolean OnOff Switch saving to CSV on = true or off = false
+--- @return #SCORING self
 function SCORING:SwitchAutoSave(OnOff)
   self.AutoSave = OnOff
   return self

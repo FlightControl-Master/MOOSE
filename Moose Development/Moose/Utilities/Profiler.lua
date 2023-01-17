@@ -10,20 +10,20 @@
 -- @image Utils_Profiler.jpg
 
 --- PROFILER class.
--- @type PROFILER
--- @field #string ClassName Name of the class.
--- @field #table Counters Function counters.
--- @field #table dInfo Info.
--- @field #table fTime Function time.
--- @field #table fTimeTotal Total function time.
--- @field #table eventhandler Event handler to get mission end event.
--- @field #number TstartGame Game start time timer.getTime().
--- @field #number TstartOS OS real start time os.clock.
--- @field #boolean logUnknown Log unknown functions. Default is off.
--- @field #number ThreshCPS Low calls per second threshold. Only write output if function has more calls per second than this value.
--- @field #number ThreshTtot Total time threshold. Only write output if total function CPU time is more than this value.
--- @field #string fileNamePrefix Output file name prefix, e.g. "MooseProfiler".
--- @field #string fileNameSuffix Output file name prefix, e.g. "txt"
+--- @type PROFILER
+--- @field #string ClassName Name of the class.
+--- @field #table Counters Function counters.
+--- @field #table dInfo Info.
+--- @field #table fTime Function time.
+--- @field #table fTimeTotal Total function time.
+--- @field #table eventhandler Event handler to get mission end event.
+--- @field #number TstartGame Game start time timer.getTime().
+--- @field #number TstartOS OS real start time os.clock.
+--- @field #boolean logUnknown Log unknown functions. Default is off.
+--- @field #number ThreshCPS Low calls per second threshold. Only write output if function has more calls per second than this value.
+--- @field #number ThreshTtot Total time threshold. Only write output if total function CPU time is more than this value.
+--- @field #string fileNamePrefix Output file name prefix, e.g. "MooseProfiler".
+--- @field #string fileNameSuffix Output file name prefix, e.g. "txt"
 
 --- *The emperor counsels simplicity.* *First principles. Of each particular thing, ask: What is it in itself, in its own constitution? What is its causal nature?*
 --
@@ -98,7 +98,7 @@
 --
 -- With this setting, which is also the default, only functions which in total used more than 5 milliseconds CPU time.
 --
--- @field #PROFILER
+--- @field #PROFILER
 PROFILER = {
   ClassName      = "PROFILER",
   Counters       = {},
@@ -114,20 +114,20 @@ PROFILER = {
 }
 
 --- Waypoint data.
--- @type PROFILER.Data
--- @field #string func The function name.
--- @field #string src The source file.
--- @field #number line The line number
--- @field #number count Number of function calls.
--- @field #number tm Total time in seconds.
+--- @type PROFILER.Data
+--- @field #string func The function name.
+--- @field #string src The source file.
+--- @field #number line The line number
+--- @field #number count Number of function calls.
+--- @field #number tm Total time in seconds.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start/Stop Profiler
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Start profiler.
--- @param #number Delay Delay in seconds before profiler is stated. Default is immediately.
--- @param #number Duration Duration in (game) seconds before the profiler is stopped. Default is when mission ends.
+--- @param #number Delay Delay in seconds before profiler is stated. Default is immediately.
+--- @param #number Duration Duration in (game) seconds before the profiler is stopped. Default is when mission ends.
 function PROFILER.Start( Delay, Duration )
 
   -- Check if os, io and lfs are available.
@@ -190,7 +190,7 @@ function PROFILER.Start( Delay, Duration )
 end
 
 --- Stop profiler.
--- @param #number Delay Delay before stop in seconds.
+--- @param #number Delay Delay before stop in seconds.
 function PROFILER.Stop( Delay )
 
   if Delay and Delay > 0 then
@@ -236,7 +236,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Debug hook.
--- @param #table event Event.
+--- @param #table event Event.
 function PROFILER.hook(event)
 
   local f=debug.getinfo(2, "f").func
@@ -276,11 +276,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get data.
--- @param #function func Function.
--- @return #string Function name.
--- @return #string Source file name.
--- @return #string Line number.
--- @return #number Function time in seconds.
+--- @param #function func Function.
+--- @return #string Function name.
+--- @return #string Source file name.
+--- @return #string Line number.
+--- @return #number Function time in seconds.
 function PROFILER.getData( func )
 
   local n=PROFILER.dInfo[func]
@@ -293,16 +293,16 @@ function PROFILER.getData( func )
 end
 
 --- Write text to log file.
--- @param #function f The file.
--- @param #string txt The text.
+--- @param #function f The file.
+--- @param #string txt The text.
 function PROFILER._flog( f, txt )
   f:write( txt .. "\r\n" )
 end
 
 --- Show table.
--- @param #table data Data table.
--- @param #function f The file.
--- @param #number runTimeGame Game run time in seconds.
+--- @param #table data Data table.
+--- @param #function f The file.
+--- @param #number runTimeGame Game run time in seconds.
 function PROFILER.showTable( data, f, runTimeGame )
 
   -- Loop over data.
@@ -327,8 +327,8 @@ function PROFILER.showTable( data, f, runTimeGame )
 end
 
 --- Print csv file.
--- @param #table data Data table.
--- @param #number runTimeGame Game run time in seconds.
+--- @param #table data Data table.
+--- @param #number runTimeGame Game run time in seconds.
 function PROFILER.printCSV( data, runTimeGame )
 
   -- Output file.
@@ -357,8 +357,8 @@ function PROFILER.printCSV( data, runTimeGame )
 end
 
 --- Write info to output file.
--- @param #string ext Extension.
--- @return #string File name.
+--- @param #string ext Extension.
+--- @return #string File name.
 function PROFILER.getfilename(ext)
 
   local dir=lfs.writedir()..[[Logs\]]
@@ -384,8 +384,8 @@ function PROFILER.getfilename(ext)
 end
 
 --- Write info to output file.
--- @param #number runTimeGame Game time in seconds.
--- @param #number runTimeOS OS time in seconds.
+--- @param #number runTimeGame Game time in seconds.
+--- @param #number runTimeOS OS time in seconds.
 function PROFILER.showInfo( runTimeGame, runTimeOS )
 
   -- Output file.

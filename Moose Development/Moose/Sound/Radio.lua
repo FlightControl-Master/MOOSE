@@ -72,16 +72,16 @@
 --   * For reference, a standard VOR station has a 100 W antenna, a standard AA TACAN has a 120 W antenna, and civilian ATC's antenna usually range between 300 and 500 W,
 --   * Note that if the transmission has a subtitle, it will be readable, regardless of the quality of the transmission.
 --
--- @type RADIO
--- @field Wrapper.Controllable#CONTROLLABLE Positionable The @{#CONTROLLABLE} that will transmit the radio calls.
--- @field #string FileName Name of the sound file played.
--- @field #number Frequency Frequency of the transmission in Hz.
--- @field #number Modulation Modulation of the transmission (either radio.modulation.AM or radio.modulation.FM).
--- @field #string Subtitle Subtitle of the transmission.
--- @field #number SubtitleDuration Duration of the Subtitle in seconds.
--- @field #number Power Power of the antenna is Watts.
--- @field #boolean Loop Transmission is repeated (default true).
--- @field #string alias Name of the radio transmitter.
+--- @type RADIO
+--- @field Wrapper.Controllable#CONTROLLABLE Positionable The @{#CONTROLLABLE} that will transmit the radio calls.
+--- @field #string FileName Name of the sound file played.
+--- @field #number Frequency Frequency of the transmission in Hz.
+--- @field #number Modulation Modulation of the transmission (either radio.modulation.AM or radio.modulation.FM).
+--- @field #string Subtitle Subtitle of the transmission.
+--- @field #number SubtitleDuration Duration of the Subtitle in seconds.
+--- @field #number Power Power of the antenna is Watts.
+--- @field #boolean Loop Transmission is repeated (default true).
+--- @field #string alias Name of the radio transmitter.
 -- @extends Core.Base#BASE
 RADIO = {
   ClassName        = "RADIO",
@@ -97,9 +97,9 @@ RADIO = {
 
 --- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{#RADIO.Broadcast} to actually broadcast.
 -- If you want to create a RADIO, you probably should use @{Wrapper.Positionable#POSITIONABLE.GetRadio}() instead.
--- @param #RADIO self
--- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Wrapper.Positionable#POSITIONABLE} that will receive radio capabilities.
--- @return #RADIO The RADIO object or #nil if Positionable is invalid.
+--- @param #RADIO self
+--- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Wrapper.Positionable#POSITIONABLE} that will receive radio capabilities.
+--- @return #RADIO The RADIO object or #nil if Positionable is invalid.
 function RADIO:New(Positionable)
 
   -- Inherit base
@@ -116,25 +116,25 @@ function RADIO:New(Positionable)
 end
 
 --- Set alias of the transmitter.
--- @param #RADIO self
--- @param #string alias Name of the radio transmitter.
--- @return #RADIO self
+--- @param #RADIO self
+--- @param #string alias Name of the radio transmitter.
+--- @return #RADIO self
 function RADIO:SetAlias(alias)
   self.alias=tostring(alias)
   return self
 end
 
 --- Get alias of the transmitter.
--- @param #RADIO self
--- @return #string Name of the transmitter.
+--- @param #RADIO self
+--- @return #string Name of the transmitter.
 function RADIO:GetAlias()
   return tostring(self.alias)
 end
 
 --- Set the file name for the radio transmission.
--- @param #RADIO self
--- @param #string FileName File name of the sound file (i.e. "Noise.ogg")
--- @return #RADIO self
+--- @param #RADIO self
+--- @param #string FileName File name of the sound file (i.e. "Noise.ogg")
+--- @return #RADIO self
 function RADIO:SetFileName(FileName)
   self:F2(FileName)
 
@@ -156,9 +156,9 @@ end
 
 --- Set the frequency for the radio transmission.
 -- If the transmitting positionable is a unit or group, this also set the command "SetFrequency" with the defined frequency and modulation.
--- @param #RADIO self
--- @param #number Frequency Frequency in MHz.
--- @return #RADIO self
+--- @param #RADIO self
+--- @param #number Frequency Frequency in MHz.
+--- @return #RADIO self
 function RADIO:SetFrequency(Frequency)
   self:F2(Frequency)
 
@@ -194,9 +194,9 @@ function RADIO:SetFrequency(Frequency)
 end
 
 --- Set AM or FM modulation of the radio transmitter.
--- @param #RADIO self
--- @param #number Modulation Modulation is either radio.modulation.AM or radio.modulation.FM.
--- @return #RADIO self
+--- @param #RADIO self
+--- @param #number Modulation Modulation is either radio.modulation.AM or radio.modulation.FM.
+--- @return #RADIO self
 function RADIO:SetModulation(Modulation)
   self:F2(Modulation)
   if type(Modulation) == "number" then
@@ -210,9 +210,9 @@ function RADIO:SetModulation(Modulation)
 end
 
 --- Check validity of the power passed and sets RADIO.Power
--- @param #RADIO self
--- @param #number Power Power in W.
--- @return #RADIO self
+--- @param #RADIO self
+--- @param #number Power Power in W.
+--- @return #RADIO self
 function RADIO:SetPower(Power)
   self:F2(Power)
 
@@ -226,9 +226,9 @@ function RADIO:SetPower(Power)
 end
 
 --- Set message looping on or off.
--- @param #RADIO self
--- @param #boolean Loop If true, message is repeated indefinitely.
--- @return #RADIO self
+--- @param #RADIO self
+--- @param #boolean Loop If true, message is repeated indefinitely.
+--- @return #RADIO self
 function RADIO:SetLoop(Loop)
   self:F2(Loop)
   if type(Loop) == "boolean" then
@@ -241,10 +241,10 @@ end
 
 --- Check validity of the subtitle and the subtitleDuration  passed and sets RADIO.subtitle and RADIO.subtitleDuration
 -- Both parameters are mandatory, since it wouldn't make much sense to change the Subtitle and not its duration
--- @param #RADIO self
--- @param #string Subtitle
--- @param #number SubtitleDuration in s
--- @return #RADIO self
+--- @param #RADIO self
+--- @param #string Subtitle
+--- @param #number SubtitleDuration in s
+--- @return #RADIO self
 -- @usage
 -- -- create the broadcaster and attaches it a RADIO
 -- local MyUnit = UNIT:FindByName("MyUnit")
@@ -273,12 +273,12 @@ end
 -- In this function the data is especially relevant if the broadcaster is anything but a UNIT or a GROUP,
 -- but it will work with a UNIT or a GROUP anyway.
 -- Only the #RADIO and the Filename are mandatory
--- @param #RADIO self
--- @param #string FileName Name of the sound file that will be transmitted.
--- @param #number Frequency Frequency in MHz.
--- @param #number Modulation Modulation of frequency, which is either radio.modulation.AM or radio.modulation.FM.
--- @param #number Power Power in W.
--- @return #RADIO self
+--- @param #RADIO self
+--- @param #string FileName Name of the sound file that will be transmitted.
+--- @param #number Frequency Frequency in MHz.
+--- @param #number Modulation Modulation of frequency, which is either radio.modulation.AM or radio.modulation.FM.
+--- @param #number Power Power in W.
+--- @return #RADIO self
 function RADIO:NewGenericTransmission(FileName, Frequency, Modulation, Power, Loop)
   self:F({FileName, Frequency, Modulation, Power})
 
@@ -296,14 +296,14 @@ end
 -- In this function the data is especially relevant if the broadcaster is a UNIT or a GROUP,
 -- but it will work for any @{Wrapper.Positionable#POSITIONABLE}.
 -- Only the RADIO and the Filename are mandatory.
--- @param #RADIO self
--- @param #string FileName Name of sound file.
--- @param #string Subtitle Subtitle to be displayed with sound file.
--- @param #number SubtitleDuration Duration of subtitle display in seconds.
--- @param #number Frequency Frequency in MHz.
--- @param #number Modulation Modulation which can be either radio.modulation.AM or radio.modulation.FM
--- @param #boolean Loop If true, loop message.
--- @return #RADIO self
+--- @param #RADIO self
+--- @param #string FileName Name of sound file.
+--- @param #string Subtitle Subtitle to be displayed with sound file.
+--- @param #number SubtitleDuration Duration of subtitle display in seconds.
+--- @param #number Frequency Frequency in MHz.
+--- @param #number Modulation Modulation which can be either radio.modulation.AM or radio.modulation.FM
+--- @param #boolean Loop If true, loop message.
+--- @return #RADIO self
 function RADIO:NewUnitTransmission(FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop)
   self:F({FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop})
 
@@ -341,9 +341,9 @@ end
 -- * If the POSITIONABLE is a UNIT or a GROUP, we use the "TransmitMessage" Command
 -- * If your POSITIONABLE is a UNIT or a GROUP, the Power is ignored.
 -- * If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration are ignored
--- @param #RADIO self
--- @param #boolean viatrigger Use trigger.action.radioTransmission() in any case, i.e. also for UNITS and GROUPS.
--- @return #RADIO self
+--- @param #RADIO self
+--- @param #boolean viatrigger Use trigger.action.radioTransmission() in any case, i.e. also for UNITS and GROUPS.
+--- @return #RADIO self
 function RADIO:Broadcast(viatrigger)
   self:F({viatrigger=viatrigger})
 
@@ -376,8 +376,8 @@ end
 
 --- Stops a transmission
 -- This function is especially useful to stop the broadcast of looped transmissions
--- @param #RADIO self
--- @return #RADIO self
+--- @param #RADIO self
+--- @return #RADIO self
 function RADIO:StopBroadcast()
   self:F()
   -- If the POSITIONABLE is a UNIT or a GROUP, stop the transmission with the DCS "StopTransmission" command

@@ -71,7 +71,7 @@
 --  
 -- ===
 -- 
--- @field #AI_AIR_ENGAGE
+--- @field #AI_AIR_ENGAGE
 AI_AIR_ENGAGE = {
   ClassName = "AI_AIR_ENGAGE",
 }
@@ -79,15 +79,15 @@ AI_AIR_ENGAGE = {
 
 
 --- Creates a new AI_AIR_ENGAGE object
--- @param #AI_AIR_ENGAGE self
--- @param AI.AI_Air#AI_AIR AI_Air The AI_AIR FSM.
--- @param Wrapper.Group#GROUP AIGroup The AI group.
--- @param DCS#Speed EngageMinSpeed (optional, default = 50% of max speed) The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
--- @param DCS#Speed  EngageMaxSpeed (optional, default = 75% of max speed) The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
--- @param DCS#Altitude EngageFloorAltitude (optional, default = 1000m ) The lowest altitude in meters where to execute the engagement.
--- @param DCS#Altitude EngageCeilingAltitude (optional, default = 1500m ) The highest altitude in meters where to execute the engagement.
--- @param DCS#AltitudeType EngageAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
--- @return #AI_AIR_ENGAGE
+--- @param #AI_AIR_ENGAGE self
+--- @param AI.AI_Air#AI_AIR AI_Air The AI_AIR FSM.
+--- @param Wrapper.Group#GROUP AIGroup The AI group.
+--- @param DCS#Speed EngageMinSpeed (optional, default = 50% of max speed) The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
+--- @param DCS#Speed  EngageMaxSpeed (optional, default = 75% of max speed) The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
+--- @param DCS#Altitude EngageFloorAltitude (optional, default = 1000m ) The lowest altitude in meters where to execute the engagement.
+--- @param DCS#Altitude EngageCeilingAltitude (optional, default = 1500m ) The highest altitude in meters where to execute the engagement.
+--- @param DCS#AltitudeType EngageAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
+--- @return #AI_AIR_ENGAGE
 function AI_AIR_ENGAGE:New( AI_Air, AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType )
 
   -- Inherits from BASE
@@ -134,20 +134,20 @@ function AI_AIR_ENGAGE:New( AI_Air, AIGroup, EngageMinSpeed, EngageMaxSpeed, Eng
 
 --- OnLeave Transition Handler for State Engaging.
 -- @function [parent=#AI_AIR_ENGAGE] OnLeaveEngaging
--- @param #AI_AIR_ENGAGE self
--- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @return #boolean Return false to cancel Transition.
+--- @param #AI_AIR_ENGAGE self
+--- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @return #boolean Return false to cancel Transition.
 
 --- OnEnter Transition Handler for State Engaging.
 -- @function [parent=#AI_AIR_ENGAGE] OnEnterEngaging
--- @param #AI_AIR_ENGAGE self
--- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_AIR_ENGAGE self
+--- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 
   self:AddTransition( { "Started", "Engaging", "Returning", "Airborne", "Patrolling" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_AIR_ENGAGE.
 
@@ -179,20 +179,20 @@ function AI_AIR_ENGAGE:New( AI_Air, AIGroup, EngageMinSpeed, EngageMaxSpeed, Eng
 
 --- OnLeave Transition Handler for State Engaging.
 -- @function [parent=#AI_AIR_ENGAGE] OnLeaveEngaging
--- @param #AI_AIR_ENGAGE self
--- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @return #boolean Return false to cancel Transition.
+--- @param #AI_AIR_ENGAGE self
+--- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @return #boolean Return false to cancel Transition.
 
 --- OnEnter Transition Handler for State Engaging.
 -- @function [parent=#AI_AIR_ENGAGE] OnEnterEngaging
--- @param #AI_AIR_ENGAGE self
--- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_AIR_ENGAGE self
+--- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 
   self:AddTransition( "Engaging", "Fired", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_AIR_ENGAGE.
   
@@ -313,11 +313,11 @@ function AI_AIR_ENGAGE:New( AI_Air, AIGroup, EngageMinSpeed, EngageMaxSpeed, Eng
 end
 
 --- onafter event handler for Start event.
--- @param #AI_AIR_ENGAGE self
--- @param Wrapper.Group#GROUP AIGroup The AI group managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_AIR_ENGAGE self
+--- @param Wrapper.Group#GROUP AIGroup The AI group managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_AIR_ENGAGE:onafterStart( AIGroup, From, Event, To )
 
   self:GetParent( self, AI_AIR_ENGAGE ).onafterStart( self, AIGroup, From, Event, To )
@@ -329,11 +329,11 @@ end
 
 
 --- onafter event handler for Engage event.
--- @param #AI_AIR_ENGAGE self
--- @param Wrapper.Group#GROUP AIGroup The AI Group managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_AIR_ENGAGE self
+--- @param Wrapper.Group#GROUP AIGroup The AI Group managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_AIR_ENGAGE:onafterEngage( AIGroup, From, Event, To )
   -- TODO: This function is overwritten below!
   self:HandleEvent( EVENTS.Dead )
@@ -343,11 +343,11 @@ end
 
 
 --- onbefore event handler for Engage event.
--- @param #AI_AIR_ENGAGE self
--- @param Wrapper.Group#GROUP AIGroup The group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_AIR_ENGAGE self
+--- @param Wrapper.Group#GROUP AIGroup The group Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_AIR_ENGAGE:onbeforeEngage( AIGroup, From, Event, To )
   if self.Accomplished == true then
     return false
@@ -356,11 +356,11 @@ function AI_AIR_ENGAGE:onbeforeEngage( AIGroup, From, Event, To )
 end
 
 --- onafter event handler for Abort event.
--- @param #AI_AIR_ENGAGE self
--- @param Wrapper.Group#GROUP AIGroup The AI Group managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param #AI_AIR_ENGAGE self
+--- @param Wrapper.Group#GROUP AIGroup The AI Group managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_AIR_ENGAGE:onafterAbort( AIGroup, From, Event, To )
   AIGroup:ClearTasks()
   self:Return()
@@ -368,21 +368,21 @@ end
 
 
 --- @param #AI_AIR_ENGAGE self
--- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
+--- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
 function AI_AIR_ENGAGE:onafterAccomplish( AIGroup, From, Event, To )
   self.Accomplished = true
   --self:SetDetectionOff()
 end
 
 --- @param #AI_AIR_ENGAGE self
--- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @param Core.Event#EVENTDATA EventData
+--- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @param Core.Event#EVENTDATA EventData
 function AI_AIR_ENGAGE:onafterDestroy( AIGroup, From, Event, To, EventData )
 
   if EventData.IniUnit then
@@ -391,7 +391,7 @@ function AI_AIR_ENGAGE:onafterDestroy( AIGroup, From, Event, To, EventData )
 end
 
 --- @param #AI_AIR_ENGAGE self
--- @param Core.Event#EVENTDATA EventData
+--- @param Core.Event#EVENTDATA EventData
 function AI_AIR_ENGAGE:OnEventDead( EventData )
   self:F( { "EventDead", EventData } )
 
@@ -414,11 +414,11 @@ end
 
 
 --- @param #AI_AIR_ENGAGE self
--- @param Wrapper.Group#GROUP DefenderGroup The GroupGroup managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @param Core.Set#SET_UNIT AttackSetUnit Unit set to be attacked.
+--- @param Wrapper.Group#GROUP DefenderGroup The GroupGroup managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @param Core.Set#SET_UNIT AttackSetUnit Unit set to be attacked.
 function AI_AIR_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, AttackSetUnit )
   self:I( { DefenderGroup, From, Event, To, AttackSetUnit } )
   
@@ -507,11 +507,11 @@ end
 
 
 --- @param #AI_AIR_ENGAGE self
--- @param Wrapper.Group#GROUP DefenderGroup The GroupGroup managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @param Core.Set#SET_UNIT AttackSetUnit Set of units to be attacked.
+--- @param Wrapper.Group#GROUP DefenderGroup The GroupGroup managed by the FSM.
+--- @param #string From The From State string.
+--- @param #string Event The Event string.
+--- @param #string To The To State string.
+--- @param Core.Set#SET_UNIT AttackSetUnit Set of units to be attacked.
 function AI_AIR_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit )
   self:F( { DefenderGroup, From, Event, To, AttackSetUnit} )
   

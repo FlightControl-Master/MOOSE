@@ -36,16 +36,16 @@
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- PSEUDOATC class
--- @type PSEUDOATC
--- @field #string ClassName Name of the Class.
--- @field #table player Table comprising each player info.
--- @field #boolean Debug If true, print debug info to dcs.log file.
--- @field #number mdur Duration in seconds how low messages to the player are displayed.
--- @field #number mrefresh Interval in seconds after which the F10 menu is refreshed. E.g. by the closest airports. Default is 120 sec.
--- @field #number talt Interval in seconds between reporting altitude until touchdown. Default 3 sec.
--- @field #boolean chatty Display some messages on events like take-off and touchdown.
--- @field #boolean eventsmoose If true, events are handled by MOOSE. If false, events are handled directly by DCS eventhandler.
--- @field #boolean reportplayername If true, use playername not callsign on callouts
+--- @type PSEUDOATC
+--- @field #string ClassName Name of the Class.
+--- @field #table player Table comprising each player info.
+--- @field #boolean Debug If true, print debug info to dcs.log file.
+--- @field #number mdur Duration in seconds how low messages to the player are displayed.
+--- @field #number mrefresh Interval in seconds after which the F10 menu is refreshed. E.g. by the closest airports. Default is 120 sec.
+--- @field #number talt Interval in seconds between reporting altitude until touchdown. Default 3 sec.
+--- @field #boolean chatty Display some messages on events like take-off and touchdown.
+--- @field #boolean eventsmoose If true, events are handled by MOOSE. If false, events are handled directly by DCS eventhandler.
+--- @field #boolean reportplayername If true, use playername not callsign on callouts
 -- @extends Core.Base#BASE
 
 --- Adds some rudimentary ATC functionality via the radio menu.
@@ -79,7 +79,7 @@
 --     pseudoATC:Start()
 -- 
 -- 
--- @field #PSEUDOATC
+--- @field #PSEUDOATC
 PSEUDOATC={
   ClassName = "PSEUDOATC",
   group={},
@@ -95,11 +95,11 @@ PSEUDOATC={
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Some ID to identify who we are in output of the DCS.log file.
--- @field #string id
+--- @field #string id
 PSEUDOATC.id="PseudoATC | "
 
 --- PSEUDOATC version.
--- @field #number version
+--- @field #number version
 PSEUDOATC.version="0.9.4"
 
 -----------------------------------------------------------------------------------------------------------------------------------------
@@ -111,8 +111,8 @@ PSEUDOATC.version="0.9.4"
 -----------------------------------------------------------------------------------------------------------------------------------------
 
 --- PSEUDOATC contructor.
--- @param #PSEUDOATC self
--- @return #PSEUDOATC Returns a PSEUDOATC object.
+--- @param #PSEUDOATC self
+--- @return #PSEUDOATC Returns a PSEUDOATC object.
 function PSEUDOATC:New()
 
   -- Inherit BASE.
@@ -126,7 +126,7 @@ function PSEUDOATC:New()
 end
 
 --- Starts the PseudoATC event handlers.
--- @param #PSEUDOATC self
+--- @param #PSEUDOATC self
 function PSEUDOATC:Start()
   self:F()
   
@@ -155,60 +155,60 @@ end
 -- User Functions
 
 --- Debug mode on. Send messages to everone.
--- @param #PSEUDOATC self
+--- @param #PSEUDOATC self
 function PSEUDOATC:DebugOn()
   self.Debug=true
 end
 
 --- Debug mode off. This is the default setting.
--- @param #PSEUDOATC self
+--- @param #PSEUDOATC self
 function PSEUDOATC:DebugOff()
   self.Debug=false
 end
 
 --- Chatty mode on. Display some messages on take-off and touchdown.
--- @param #PSEUDOATC self
+--- @param #PSEUDOATC self
 function PSEUDOATC:ChattyOn()
   self.chatty=true
 end
 
 --- Chatty mode off. Don't display some messages on take-off and touchdown.
--- @param #PSEUDOATC self
+--- @param #PSEUDOATC self
 function PSEUDOATC:ChattyOff()
   self.chatty=false
 end
 
 --- Set duration how long messages are displayed.
--- @param #PSEUDOATC self
--- @param #number duration Time in seconds. Default is 30 sec.
+--- @param #PSEUDOATC self
+--- @param #number duration Time in seconds. Default is 30 sec.
 function PSEUDOATC:SetMessageDuration(duration)
   self.mdur=duration or 30
 end
 
 --- Use player name, not call sign, in callouts
--- @param #PSEUDOATC self
+--- @param #PSEUDOATC self
 function PSEUDOATC:SetReportPlayername()
   self.reportplayername = true
   return self
 end
 
 --- Set time interval after which the F10 radio menu is refreshed.
--- @param #PSEUDOATC self
--- @param #number interval Interval in seconds. Default is every 120 sec.
+--- @param #PSEUDOATC self
+--- @param #number interval Interval in seconds. Default is every 120 sec.
 function PSEUDOATC:SetMenuRefresh(interval)
   self.mrefresh=interval or 120
 end
 
 --- Enable/disable event handling by MOOSE or DCS.
--- @param #PSEUDOATC self
--- @param #boolean switch If true, events are handled by MOOSE (default). If false, events are handled directly by DCS.
+--- @param #PSEUDOATC self
+--- @param #boolean switch If true, events are handled by MOOSE (default). If false, events are handled directly by DCS.
 function PSEUDOATC:SetEventsMoose(switch)
   self.eventsmoose=switch
 end
 
 --- Set time interval for reporting altitude until touchdown.
--- @param #PSEUDOATC self
--- @param #number interval Interval in seconds. Default is every 3 sec.
+--- @param #PSEUDOATC self
+--- @param #number interval Interval in seconds. Default is every 3 sec.
 function PSEUDOATC:SetReportAltInterval(interval)
   self.talt=interval or 3
 end
@@ -296,8 +296,8 @@ function PSEUDOATC:onEvent(Event)
 end
 
 --- Function called my MOOSE event handler when a player enters a unit.
--- @param #PSEUDOATC self
--- @param Core.Event#EVENTDATA EventData
+--- @param #PSEUDOATC self
+--- @param Core.Event#EVENTDATA EventData
 function PSEUDOATC:_OnBirth(EventData)
   self:F({EventData=EventData})
   
@@ -313,8 +313,8 @@ function PSEUDOATC:_OnBirth(EventData)
 end
 
 --- Function called by MOOSE event handler when a player leaves a unit or dies. 
--- @param #PSEUDOATC self
--- @param Core.Event#EVENTDATA EventData
+--- @param #PSEUDOATC self
+--- @param Core.Event#EVENTDATA EventData
 function PSEUDOATC:_PlayerLeft(EventData)
   self:F({EventData=EventData})
 
@@ -329,8 +329,8 @@ function PSEUDOATC:_PlayerLeft(EventData)
 end
 
 --- Function called by MOOSE event handler when a player landed. 
--- @param #PSEUDOATC self
--- @param Core.Event#EVENTDATA EventData
+--- @param #PSEUDOATC self
+--- @param Core.Event#EVENTDATA EventData
 function PSEUDOATC:_PlayerLanded(EventData)
   self:F({EventData=EventData})
 
@@ -355,8 +355,8 @@ function PSEUDOATC:_PlayerLanded(EventData)
 end
 
 --- Function called by MOOSE/DCS event handler when a player took off. 
--- @param #PSEUDOATC self
--- @param Core.Event#EVENTDATA EventData
+--- @param #PSEUDOATC self
+--- @param Core.Event#EVENTDATA EventData
 function PSEUDOATC:_PlayerTakeOff(EventData)
   self:F({EventData=EventData})
 
@@ -380,8 +380,8 @@ end
 -- Event Functions
 
 --- Function called when a player enters a unit.
--- @param #PSEUDOATC self
--- @param Wrapper.Unit#UNIT unit Unit the player entered.
+--- @param #PSEUDOATC self
+--- @param Wrapper.Unit#UNIT unit Unit the player entered.
 function PSEUDOATC:PlayerEntered(unit)
   self:F2({unit=unit})
 
@@ -440,9 +440,9 @@ function PSEUDOATC:PlayerEntered(unit)
 end
 
 --- Function called when a player has landed.
--- @param #PSEUDOATC self
--- @param Wrapper.Unit#UNIT unit Unit of player which has landed.
--- @param #string place Name of the place the player landed at.
+--- @param #PSEUDOATC self
+--- @param Wrapper.Unit#UNIT unit Unit of player which has landed.
+--- @param #string place Name of the place the player landed at.
 function PSEUDOATC:PlayerLanded(unit, place)
   self:F2({unit=unit, place=place})
   
@@ -475,9 +475,9 @@ function PSEUDOATC:PlayerLanded(unit, place)
 end
 
 --- Function called when a player took off.
--- @param #PSEUDOATC self
--- @param Wrapper.Unit#UNIT unit Unit of player which has landed.
--- @param #string place Name of the place the player landed at.
+--- @param #PSEUDOATC self
+--- @param Wrapper.Unit#UNIT unit Unit of player which has landed.
+--- @param #string place Name of the place the player landed at.
 function PSEUDOATC:PlayerTakeOff(unit, place)
   self:F2({unit=unit, place=place})
   
@@ -511,8 +511,8 @@ function PSEUDOATC:PlayerTakeOff(unit, place)
 end
 
 --- Function called when a player leaves a unit or dies. 
--- @param #PSEUDOATC self
--- @param Wrapper.Unit#UNIT unit Player unit which was left.
+--- @param #PSEUDOATC self
+--- @param Wrapper.Unit#UNIT unit Player unit which was left.
 function PSEUDOATC:PlayerLeft(unit)
   self:F({unit=unit})
  
@@ -564,9 +564,9 @@ end
 -- Menu Functions
 
 --- Refreshes all player menues.
--- @param #PSEUDOATC self.
--- @param #number GID Group id of player unit.
--- @param #number UID Unit id of player. 
+--- @param #PSEUDOATC self.
+--- @param #number GID Group id of player unit.
+--- @param #number UID Unit id of player. 
 function PSEUDOATC:MenuRefresh(GID,UID)
   self:F({GID=GID,UID=UID})
   -- Debug message.
@@ -589,9 +589,9 @@ function PSEUDOATC:MenuRefresh(GID,UID)
 end
 
 --- Create player menus.
--- @param #PSEUDOATC self.
--- @param #number GID Group id of player unit.
--- @param #number UID Unit id of player. 
+--- @param #PSEUDOATC self.
+--- @param #number GID Group id of player unit.
+--- @param #number UID Unit id of player. 
 function PSEUDOATC:MenuCreatePlayer(GID,UID)
   self:F({GID=GID,UID=UID})
   -- Table for menu entries.
@@ -602,9 +602,9 @@ end
 
 
 --- Clear player menus.
--- @param #PSEUDOATC self.
--- @param #number GID Group id of player unit.
--- @param #number UID Unit id of player. 
+--- @param #PSEUDOATC self.
+--- @param #number GID Group id of player unit.
+--- @param #number UID Unit id of player. 
 function PSEUDOATC:MenuClear(GID,UID)
   self:F({GID=GID,UID=UID})
 
@@ -642,9 +642,9 @@ function PSEUDOATC:MenuClear(GID,UID)
 end
 
 --- Create "F10/Pseudo ATC/Local Airports/Airport Name/" menu items each containing weather report and BR request.
--- @param #PSEUDOATC self
--- @param #number GID Group id of player unit.
--- @param #number UID Unit id of player. 
+--- @param #PSEUDOATC self
+--- @param #number GID Group id of player unit.
+--- @param #number UID Unit id of player. 
 function PSEUDOATC:MenuAirports(GID,UID)
   self:F({GID=GID,UID=UID})
 
@@ -676,9 +676,9 @@ function PSEUDOATC:MenuAirports(GID,UID)
 end
 
 --- Create "F10/Pseudo ATC/Waypoints/<Waypoint i>  menu items.
--- @param #PSEUDOATC self
--- @param #number GID Group id of player unit.
--- @param #number UID Unit id of player. 
+--- @param #PSEUDOATC self
+--- @param #number GID Group id of player unit.
+--- @param #number UID Unit id of player. 
 function PSEUDOATC:MenuWaypoints(GID, UID)
   self:F({GID=GID, UID=UID})
 
@@ -725,11 +725,11 @@ end
 -- Reporting Functions
 
 --- Weather Report. Report pressure QFE/QNH, temperature, wind at certain location.
--- @param #PSEUDOATC self
--- @param #number GID Group id of player unit.
--- @param #number UID Unit id of player. 
--- @param Core.Point#COORDINATE position Coordinates at which the pressure is measured.
--- @param #string location Name of the location at which the pressure is measured.
+--- @param #PSEUDOATC self
+--- @param #number GID Group id of player unit.
+--- @param #number UID Unit id of player. 
+--- @param Core.Point#COORDINATE position Coordinates at which the pressure is measured.
+--- @param #string location Name of the location at which the pressure is measured.
 function PSEUDOATC:ReportWeather(GID, UID, position, location)
   self:F({GID=GID, UID=UID, position=position, location=location})
   
@@ -794,11 +794,11 @@ function PSEUDOATC:ReportWeather(GID, UID, position, location)
 end
 
 --- Report absolute bearing and range form player unit to airport.
--- @param #PSEUDOATC self
--- @param #number GID Group id of player unit.
--- @param #number UID Unit id of player. 
--- @param Core.Point#COORDINATE position Coordinates at which the pressure is measured.
--- @param #string location Name of the location at which the pressure is measured.
+--- @param #PSEUDOATC self
+--- @param #number GID Group id of player unit.
+--- @param #number UID Unit id of player. 
+--- @param Core.Point#COORDINATE position Coordinates at which the pressure is measured.
+--- @param #string location Name of the location at which the pressure is measured.
 function PSEUDOATC:ReportBR(GID, UID, position, location)
   self:F({GID=GID, UID=UID, position=position, location=location})
 
@@ -833,12 +833,12 @@ function PSEUDOATC:ReportBR(GID, UID, position, location)
 end
 
 --- Report altitude above ground level of player unit.
--- @param #PSEUDOATC self
--- @param #number GID Group id of player unit.
--- @param #number UID Unit id of player. 
--- @param #number dt (Optional) Duration the message is displayed.
--- @param #boolean _clear (Optional) Clear previouse messages. 
--- @return #number Altitude above ground.
+--- @param #PSEUDOATC self
+--- @param #number GID Group id of player unit.
+--- @param #number UID Unit id of player. 
+--- @param #number dt (Optional) Duration the message is displayed.
+--- @param #boolean _clear (Optional) Clear previouse messages. 
+--- @return #number Altitude above ground.
 function PSEUDOATC:ReportHeight(GID, UID, dt, _clear)
   self:F({GID=GID, UID=UID, dt=dt})
 
@@ -898,9 +898,9 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Toggle report altitude reporting on/off.
--- @param #PSEUDOATC self.
--- @param #number GID Group id of player unit.
--- @param #number UID Unit id of player. 
+--- @param #PSEUDOATC self.
+--- @param #number GID Group id of player unit.
+--- @param #number UID Unit id of player. 
 function PSEUDOATC:AltidudeTimerToggle(GID,UID)
   self:F({GID=GID, UID=UID})
   
@@ -914,9 +914,9 @@ function PSEUDOATC:AltidudeTimerToggle(GID,UID)
 end
 
 --- Start altitude reporting scheduler.
--- @param #PSEUDOATC self.
--- @param #number GID Group id of player unit.
--- @param #number UID Unit id of player. 
+--- @param #PSEUDOATC self.
+--- @param #number GID Group id of player unit.
+--- @param #number UID Unit id of player. 
 function PSEUDOATC:AltitudeTimeStart(GID, UID)
   self:F({GID=GID, UID=UID})
   
@@ -928,9 +928,9 @@ function PSEUDOATC:AltitudeTimeStart(GID, UID)
 end
 
 --- Stop/destroy DCS scheduler function for reporting altitude.
--- @param #PSEUDOATC self.
--- @param #number GID Group id of player unit.
--- @param #number UID Unit id of player. 
+--- @param #PSEUDOATC self.
+--- @param #number GID Group id of player unit.
+--- @param #number UID Unit id of player. 
 function PSEUDOATC:AltitudeTimerStop(GID, UID)
   self:F({GID=GID,UID=UID})
   -- Debug info.
@@ -949,9 +949,9 @@ end
 -- Misc
 
 --- Create list of nearby airports sorted by distance to player unit.
--- @param #PSEUDOATC self
--- @param #number GID Group id of player unit.
--- @param #number UID Unit id of player. 
+--- @param #PSEUDOATC self
+--- @param #number GID Group id of player unit.
+--- @param #number UID Unit id of player. 
 function PSEUDOATC:LocalAirports(GID, UID)
   self:F({GID=GID, UID=UID})
 
@@ -995,11 +995,11 @@ function PSEUDOATC:LocalAirports(GID, UID)
 end
 
 --- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned. 
--- @param #PSEUDOATC self
--- @param #string _unitName Name of the player unit.
--- @return Wrapper.Unit#UNIT Unit of player.
--- @return #string Name of the player.
--- @return nil If player does not exist.
+--- @param #PSEUDOATC self
+--- @param #string _unitName Name of the player unit.
+--- @return Wrapper.Unit#UNIT Unit of player.
+--- @return #string Name of the player.
+--- @return nil If player does not exist.
 function PSEUDOATC:_GetPlayerUnitAndName(_unitName)
   self:F(_unitName)
 
@@ -1029,11 +1029,11 @@ end
 
 
 --- Display message to group.
--- @param #PSEUDOATC self
--- @param Wrapper.Unit#UNIT _unit Player unit.
--- @param #string _text Message text.
--- @param #number _time Duration how long the message is displayed.
--- @param #boolean _clear Clear up old messages.
+--- @param #PSEUDOATC self
+--- @param Wrapper.Unit#UNIT _unit Player unit.
+--- @param #string _text Message text.
+--- @param #number _time Duration how long the message is displayed.
+--- @param #boolean _clear Clear up old messages.
 function PSEUDOATC:_DisplayMessageToGroup(_unit, _text, _time, _clear)
   self:F({unit=_unit, text=_text, time=_time, clear=_clear})
   
@@ -1056,8 +1056,8 @@ function PSEUDOATC:_DisplayMessageToGroup(_unit, _text, _time, _clear)
 end
 
 --- Returns a string which consits of this callsign and the player name.  
--- @param #PSEUDOATC self
--- @param #string unitname Name of the player unit.
+--- @param #PSEUDOATC self
+--- @param #string unitname Name of the player unit.
 function PSEUDOATC:_myname(unitname)
   self:F2(unitname)
   

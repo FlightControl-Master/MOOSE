@@ -5,8 +5,8 @@
 -- @image MOOSE.JPG
 
 --- [DCS Enum world](https://wiki.hoggitworld.com/view/DCS_enum_world)
--- @type STTS
--- @field #string DIRECTORY Path of the SRS directory.
+--- @type STTS
+--- @field #string DIRECTORY Path of the SRS directory.
 
 --- Simple Text-To-Speech
 --
@@ -73,7 +73,7 @@
 --
 --     STTS.PlayMP3("C:\\Users\\Ciaran\\Downloads\\PR-Music.mp3","255,31","AM,FM","0.5","Multiple",0)
 --
--- @field #STTS
+--- @field #STTS
 STTS = {
   ClassName = "STTS",
   DIRECTORY = "",
@@ -105,8 +105,8 @@ function STTS.uuid()
 end
 
 --- Round a number.
--- @param #number x Number.
--- @param #number n Precision.
+--- @param #number x Number.
+--- @param #number n Precision.
 function STTS.round( x, n )
   n = math.pow( 10, n or 0 )
   x = x * n
@@ -127,9 +127,9 @@ end
 --
 -- * (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 -- 
--- @param #number length can also be passed as #string
--- @param #number speed Defaults to 1.0
--- @param #boolean isGoogle We're using Google TTS
+--- @param #number length can also be passed as #string
+--- @param #number speed Defaults to 1.0
+--- @param #boolean isGoogle We're using Google TTS
 function STTS.getSpeechTime(length,speed,isGoogle)
 
   local maxRateRatio = 3
@@ -235,10 +235,10 @@ function STTS.TextToSpeech( message, freqs, modulations, volume, name, coalition
 end
 
 --- Play mp3 function.
--- @param #string pathToMP3 Path to the sound file.
--- @param #string freqs Frequencies, e.g. "305, 256".
--- @param #string modulations Modulations, e.g. "AM, FM".
--- @param #string volume Volume, e.g. "0.5".
+--- @param #string pathToMP3 Path to the sound file.
+--- @param #string freqs Frequencies, e.g. "305, 256".
+--- @param #string modulations Modulations, e.g. "AM, FM".
+--- @param #string volume Volume, e.g. "0.5".
 function STTS.PlayMP3( pathToMP3, freqs, modulations, volume, name, coalition, point )
 
   local cmd = string.format( "start \"\" /d \"%s\" /b /min \"%s\" -i \"%s\" -f %s -m %s -c %s -p %s -n \"%s\" -v %s -h", STTS.DIRECTORY, STTS.EXECUTABLE, pathToMP3, freqs or "305", modulations or "AM", coalition or "0", STTS.SRS_PORT, name or "ROBOT", volume or "1" )

@@ -77,17 +77,17 @@
 -- Last Update: Aug 2022
 --
 --- Class AUTOLASE
--- @type AUTOLASE
--- @field #string ClassName
--- @field #string lid
--- @field #number verbose
--- @field #string alias
--- @field #boolean debug
--- @field #string version
+--- @type AUTOLASE
+--- @field #string ClassName
+--- @field #string lid
+--- @field #number verbose
+--- @field #string alias
+--- @field #boolean debug
+--- @field #string version
 -- @extends Ops.Intel#INTEL
 
 ---
--- @field #AUTOLASE
+--- @field #AUTOLASE
 AUTOLASE = {
   ClassName = "AUTOLASE",
   lid = "",
@@ -97,20 +97,20 @@ AUTOLASE = {
 }
 
 --- Laser spot info
--- @type AUTOLASE.LaserSpot
--- @field Core.Spot#SPOT laserspot 
--- @field Wrapper.Unit#UNIT lasedunit
--- @field Wrapper.Unit#UNIT lasingunit
--- @field #number lasercode
--- @field #string location
--- @field #number timestamp
--- @field #string unitname
--- @field #string reccename
--- @field #string unittype
--- @field Core.Point#COORDINATE coordinate
+--- @type AUTOLASE.LaserSpot
+--- @field Core.Spot#SPOT laserspot 
+--- @field Wrapper.Unit#UNIT lasedunit
+--- @field Wrapper.Unit#UNIT lasingunit
+--- @field #number lasercode
+--- @field #string location
+--- @field #number timestamp
+--- @field #string unitname
+--- @field #string reccename
+--- @field #string unittype
+--- @field Core.Point#COORDINATE coordinate
 
 --- AUTOLASE class version.
--- @field #string version
+--- @field #string version
 AUTOLASE.version = "0.1.21"
 
 -------------------------------------------------------------------
@@ -118,12 +118,12 @@ AUTOLASE.version = "0.1.21"
 -------------------------------------------------------------------
 
 --- Constructor for a new Autolase instance.
--- @param #AUTOLASE self
--- @param Core.Set#SET_GROUP RecceSet Set of detecting and lasing units
--- @param #number Coalition Coalition side. Can also be passed as a string "red", "blue" or "neutral".
--- @param #string Alias (Optional) An alias how this object is called in the logs etc.
--- @param Core.Set#SET_CLIENT PilotSet (Optional) Set of clients for precision bombing, steering menu creation. Leave nil for a coalition-wide F10 entry and display.
--- @return #AUTOLASE self 
+--- @param #AUTOLASE self
+--- @param Core.Set#SET_GROUP RecceSet Set of detecting and lasing units
+--- @param #number Coalition Coalition side. Can also be passed as a string "red", "blue" or "neutral".
+--- @param #string Alias (Optional) An alias how this object is called in the logs etc.
+--- @param Core.Set#SET_CLIENT PilotSet (Optional) Set of clients for precision bombing, steering menu creation. Leave nil for a coalition-wide F10 entry and display.
+--- @return #AUTOLASE self 
 function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   BASE:T({RecceSet, Coalition, Alias, PilotSet})
   
@@ -299,8 +299,8 @@ end
 -------------------------------------------------------------------
 
 --- (Internal) Function to set pilot menu.
--- @param #AUTOLASE self
--- @return #AUTOLASE self 
+--- @param #AUTOLASE self
+--- @return #AUTOLASE self 
 function AUTOLASE:SetPilotMenu()
   if self.usepilotset then
     local pilottable = self.pilotset:GetSetObjects() or {}
@@ -321,18 +321,18 @@ function AUTOLASE:SetPilotMenu()
 end
 
 --- (Internal) Event function for new pilots.
--- @param #AUTOLASE self
--- @param Core.Event#EVENTDATA EventData
--- @return #AUTOLASE self 
+--- @param #AUTOLASE self
+--- @param Core.Event#EVENTDATA EventData
+--- @return #AUTOLASE self 
 function AUTOLASE:OnEventPlayerEnterAircraft(EventData)
   self:SetPilotMenu()
   return self
 end
 
 --- (User) Set minimum threat level for target selection, can be 0 (lowest) to 10 (highest).
--- @param #AUTOLASE self
--- @param #number Level Level used for filtering, defaults to 0. SAM systems and manpads have level 7 to 10, AAA level 6, MTBs and armoured vehicles level 3 to 5, APC, Artillery, Infantry and EWR level 1 to 2.
--- @return #AUTOLASE self
+--- @param #AUTOLASE self
+--- @param #number Level Level used for filtering, defaults to 0. SAM systems and manpads have level 7 to 10, AAA level 6, MTBs and armoured vehicles level 3 to 5, APC, Artillery, Infantry and EWR level 1 to 2.
+--- @return #AUTOLASE self
 -- @usage Filter for level 3 and above:
 --            `myautolase:SetMinThreatLevel(3)`
 function AUTOLASE:SetMinThreatLevel(Level)
@@ -343,9 +343,9 @@ function AUTOLASE:SetMinThreatLevel(Level)
 end
 
 --- (User) Set list of #UNIT level attributes that won't be lased. For list of attributes see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_attributes) and [GitHub](https://github.com/mrSkortch/DCS-miscScripts/tree/master/ObjectDB) 
--- @param #AUTOLASE self
--- @param #table Attributes Table of #string attributes to blacklist. Can be handed over as a single #string.
--- @return #AUTOLASE self
+--- @param #AUTOLASE self
+--- @param #table Attributes Table of #string attributes to blacklist. Can be handed over as a single #string.
+--- @return #AUTOLASE self
 -- @usage To exclude e.g. manpads from being lased:
 -- 
 --            `myautolase:AddBlackListAttributes("MANPADS")`
@@ -366,9 +366,9 @@ function AUTOLASE:AddBlackListAttributes(Attributes)
 end
 
 --- (Internal) Function to get a laser code by recce name
--- @param #AUTOLASE self
--- @param #string RecceName Unit(!) name of the Recce
--- @return #AUTOLASE self 
+--- @param #AUTOLASE self
+--- @param #string RecceName Unit(!) name of the Recce
+--- @return #AUTOLASE self 
 function AUTOLASE:GetLaserCode(RecceName)
   local code = 1688
   if self.RecceLaserCode[RecceName] == nil then
@@ -381,9 +381,9 @@ function AUTOLASE:GetLaserCode(RecceName)
 end
 
 --- (Internal) Function to get a smoke color by recce name
--- @param #AUTOLASE self
--- @param #string RecceName Unit(!) name of the Recce
--- @return #AUTOLASE self 
+--- @param #AUTOLASE self
+--- @param #string RecceName Unit(!) name of the Recce
+--- @return #AUTOLASE self 
 function AUTOLASE:GetSmokeColor(RecceName)
   local color = self.smokecolor
   if self.RecceSmokeColor[RecceName] == nil then
@@ -395,20 +395,20 @@ function AUTOLASE:GetSmokeColor(RecceName)
 end
 
 --- (User) Function enable sending messages via SRS.
--- @param #AUTOLASE self
--- @param #boolean OnOff Switch usage on and off
--- @param #string Path Path to SRS directory, e.g. C:\\Program Files\\DCS-SimpleRadio-Standalon
--- @param #number Frequency Frequency to send, e.g. 243
--- @param #number Modulation Modulation i.e. radio.modulation.AM or radio.modulation.FM
--- @param #string Label (Optional) Short label to be used on the SRS Client Overlay
--- @param #string Gender (Optional) Defaults to "male"
--- @param #string Culture (Optional) Defaults to "en-US"
--- @param #number Port (Optional) Defaults to 5002
--- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
+--- @param #AUTOLASE self
+--- @param #boolean OnOff Switch usage on and off
+--- @param #string Path Path to SRS directory, e.g. C:\\Program Files\\DCS-SimpleRadio-Standalon
+--- @param #number Frequency Frequency to send, e.g. 243
+--- @param #number Modulation Modulation i.e. radio.modulation.AM or radio.modulation.FM
+--- @param #string Label (Optional) Short label to be used on the SRS Client Overlay
+--- @param #string Gender (Optional) Defaults to "male"
+--- @param #string Culture (Optional) Defaults to "en-US"
+--- @param #number Port (Optional) Defaults to 5002
+--- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
--- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
--- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS
--- @return #AUTOLASE self 
+--- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
+--- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS
+--- @return #AUTOLASE self 
 function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
   if OnOff then
     self.useSRS = true
@@ -444,28 +444,28 @@ function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Cultu
 end
 
 --- (User) Function set max lasing targets
--- @param #AUTOLASE self
--- @param #number Number Max number of targets to lase at once
--- @return #AUTOLASE self 
+--- @param #AUTOLASE self
+--- @param #number Number Max number of targets to lase at once
+--- @return #AUTOLASE self 
 function AUTOLASE:SetMaxLasingTargets(Number)
   self.maxlasing = Number or 4
   return self
 end
 
 --- (Internal) Function set notify pilots on events
--- @param #AUTOLASE self
--- @param #boolean OnOff Switch messaging on (true) or off (false)
--- @return #AUTOLASE self 
+--- @param #AUTOLASE self
+--- @param #boolean OnOff Switch messaging on (true) or off (false)
+--- @return #AUTOLASE self 
 function AUTOLASE:SetNotifyPilots(OnOff)
   self.notifypilots = OnOff and true
   return self
 end
 
 --- (User) Function to set a specific code to a Recce.
--- @param #AUTOLASE self
--- @param #string RecceName (Unit!) Name of the Recce
--- @param #number Code The lase code
--- @return #AUTOLASE self 
+--- @param #AUTOLASE self
+--- @param #string RecceName (Unit!) Name of the Recce
+--- @param #number Code The lase code
+--- @return #AUTOLASE self 
 function AUTOLASE:SetRecceLaserCode(RecceName, Code)
   local code = Code or 1688
   self.RecceLaserCode[RecceName] = code
@@ -473,10 +473,10 @@ function AUTOLASE:SetRecceLaserCode(RecceName, Code)
 end
 
 --- (User) Function to set a specific smoke color for a Recce.
--- @param #AUTOLASE self
--- @param #string RecceName (Unit!) Name of the Recce
--- @param #number Color The color, e.g. SMOKECOLOR.Red, SMOKECOLOR.Green etc
--- @return #AUTOLASE self 
+--- @param #AUTOLASE self
+--- @param #string RecceName (Unit!) Name of the Recce
+--- @param #number Color The color, e.g. SMOKECOLOR.Red, SMOKECOLOR.Green etc
+--- @return #AUTOLASE self 
 function AUTOLASE:SetRecceSmokeColor(RecceName, Color)
   local color = Color or self.smokecolor
   self.RecceSmokeColor[RecceName] = color
@@ -484,10 +484,10 @@ function AUTOLASE:SetRecceSmokeColor(RecceName, Color)
 end
 
 --- (User) Function to force laser cooldown and cool down time
--- @param #AUTOLASE self
--- @param #boolean OnOff Switch cool down on (true) or off (false) - defaults to true
--- @param #number Seconds Number of seconds for cooldown - dafaults to 60 seconds
--- @return #AUTOLASE self 
+--- @param #AUTOLASE self
+--- @param #boolean OnOff Switch cool down on (true) or off (false) - defaults to true
+--- @param #number Seconds Number of seconds for cooldown - dafaults to 60 seconds
+--- @return #AUTOLASE self 
 function AUTOLASE:SetLaserCoolDown(OnOff, Seconds)
   self.forcecooldown = OnOff and true
   self.cooldowntime = Seconds or 60
@@ -495,10 +495,10 @@ function AUTOLASE:SetLaserCoolDown(OnOff, Seconds)
 end
   
 --- (User) Function to set message show times.
--- @param #AUTOLASE self
--- @param #number long Longer show time
--- @param #number short Shorter show time
--- @return #AUTOLASE self 
+--- @param #AUTOLASE self
+--- @param #number long Longer show time
+--- @param #number short Shorter show time
+--- @return #AUTOLASE self 
 function AUTOLASE:SetReportingTimes(long, short)
   self.reporttimeshort = short or 10
   self.reporttimelong = long or 30
@@ -506,10 +506,10 @@ function AUTOLASE:SetReportingTimes(long, short)
 end
 
 --- (User) Function to set lasing distance in meters and duration in seconds
--- @param #AUTOLASE self
--- @param #number Distance (Max) distance for lasing in meters - default 5000 meters
--- @param #number Duration (Max) duration for lasing in seconds - default 300 secs
--- @return #AUTOLASE self 
+--- @param #AUTOLASE self
+--- @param #number Distance (Max) distance for lasing in meters - default 5000 meters
+--- @param #number Duration (Max) duration for lasing in seconds - default 300 secs
+--- @return #AUTOLASE self 
 function AUTOLASE:SetLasingParameters(Distance, Duration)
   self.LaseDistance = Distance or 5000
   self.LaseDuration = Duration or 300
@@ -517,10 +517,10 @@ function AUTOLASE:SetLasingParameters(Distance, Duration)
 end
 
 --- (User) Function to set smoking of targets.
--- @param #AUTOLASE self
--- @param #boolean OnOff Switch smoking on or off
--- @param #number Color Smokecolor, e.g. SMOKECOLOR.Red
--- @return #AUTOLASE self 
+--- @param #AUTOLASE self
+--- @param #boolean OnOff Switch smoking on or off
+--- @param #number Color Smokecolor, e.g. SMOKECOLOR.Red
+--- @return #AUTOLASE self 
 function AUTOLASE:SetSmokeTargets(OnOff,Color)
   self.smoketargets = OnOff
   self.smokecolor = Color or SMOKECOLOR.Red
@@ -528,9 +528,9 @@ function AUTOLASE:SetSmokeTargets(OnOff,Color)
 end
 
 --- (Internal) Function to calculate line of sight.
--- @param #AUTOLASE self
--- @param Wrapper.Unit#UNIT Unit 
--- @return #number LOS Line of sight in meters
+--- @param #AUTOLASE self
+--- @param Wrapper.Unit#UNIT Unit 
+--- @return #number LOS Line of sight in meters
 function AUTOLASE:GetLosFromUnit(Unit)
   local lasedistance = self.LaseDistance
   local unitheight = Unit:GetHeight()
@@ -545,8 +545,8 @@ function AUTOLASE:GetLosFromUnit(Unit)
 end
 
 --- (Internal) Function to check on lased targets.
--- @param #AUTOLASE self
--- @return #AUTOLASE self
+--- @param #AUTOLASE self
+--- @return #AUTOLASE self
 function AUTOLASE:CleanCurrentLasing()
   local lasingtable = self.CurrentLasing
   local newtable = {}
@@ -636,10 +636,10 @@ function AUTOLASE:CleanCurrentLasing()
 end
 
 --- (Internal) Function to show status.
--- @param #AUTOLASE self
--- @param Wrapper.Group#GROUP Group (Optional) show to a certain group
--- @param Wrapper.Unit#UNIT Unit (Optional) show to a certain unit
--- @return #AUTOLASE self
+--- @param #AUTOLASE self
+--- @param Wrapper.Group#GROUP Group (Optional) show to a certain group
+--- @param Wrapper.Unit#UNIT Unit (Optional) show to a certain unit
+--- @return #AUTOLASE self
 function AUTOLASE:ShowStatus(Group,Unit)
   local report = REPORT:New("Autolase")
   local reccetable = self.RecceSet:GetSetObjects()
@@ -703,10 +703,10 @@ function AUTOLASE:ShowStatus(Group,Unit)
 end
 
 --- (Internal) Function to show messages.
--- @param #AUTOLASE self
--- @param #string Message The message to be sent
--- @param #number Duration Duration in seconds
--- @return #AUTOLASE self
+--- @param #AUTOLASE self
+--- @param #string Message The message to be sent
+--- @param #number Duration Duration in seconds
+--- @return #AUTOLASE self
 function AUTOLASE:NotifyPilots(Message,Duration)
   if self.usepilotset then
     local pilotset = self.pilotset:GetSetObjects() --#table
@@ -727,9 +727,9 @@ function AUTOLASE:NotifyPilots(Message,Duration)
 end
 
 --- (User) Send messages via SRS.
--- @param #AUTOLASE self
--- @param #string Message The (short!) message to be sent, e.g. "Lasing target!"
--- @return #AUTOLASE self
+--- @param #AUTOLASE self
+--- @param #string Message The (short!) message to be sent, e.g. "Lasing target!"
+--- @return #AUTOLASE self
 -- @usage Step 1 - set up the radio basics **once** with
 --            my_autolase:SetUsingSRS(true,"C:\\path\\SRS-Folder",251,radio.modulation.AM)
 -- Step 2 - send a message, e.g.
@@ -745,9 +745,9 @@ function AUTOLASE:NotifyPilotsWithSRS(Message)
 end
 
 --- (Internal) Function to check if a unit is already lased.
--- @param #AUTOLASE self
--- @param #string unitname Name of the unit to check
--- @return #boolean outcome True or false
+--- @param #AUTOLASE self
+--- @param #string unitname Name of the unit to check
+--- @return #boolean outcome True or false
 function AUTOLASE:CheckIsLased(unitname)
   local outcome = false
   for _,_laserspot in pairs(self.CurrentLasing) do
@@ -761,10 +761,10 @@ function AUTOLASE:CheckIsLased(unitname)
 end
 
 --- (Internal) Function to check if a unit can be lased.
--- @param #AUTOLASE self
--- @param Wrapper.Unit#UNIT Recce The Recce #UNIT
--- @param Wrapper.Unit#UNIT Unit The lased #UNIT
--- @return #boolean outcome True or false
+--- @param #AUTOLASE self
+--- @param Wrapper.Unit#UNIT Recce The Recce #UNIT
+--- @param Wrapper.Unit#UNIT Unit The lased #UNIT
+--- @return #boolean outcome True or false
 function AUTOLASE:CanLase(Recce,Unit)
   
   local function HasNoBlackListAttribute(Unit)
@@ -812,11 +812,11 @@ end
 -------------------------------------------------------------------
 
 --- (Internal) FSM Function for monitoring
--- @param #AUTOLASE self
--- @param #string From The from state
--- @param #string Event The event
--- @param #string To The to state
--- @return #AUTOLASE self
+--- @param #AUTOLASE self
+--- @param #string From The from state
+--- @param #string Event The event
+--- @param #string To The to state
+--- @return #AUTOLASE self
 function AUTOLASE:onbeforeMonitor(From, Event, To)
   self:T({From, Event, To})
   -- Check if group has detected any units.
@@ -825,11 +825,11 @@ function AUTOLASE:onbeforeMonitor(From, Event, To)
 end
 
 --- (Internal) FSM Function for monitoring
--- @param #AUTOLASE self
--- @param #string From The from state
--- @param #string Event The event
--- @param #string To The to state
--- @return #AUTOLASE self
+--- @param #AUTOLASE self
+--- @param #string From The from state
+--- @param #string Event The event
+--- @param #string To The to state
+--- @return #AUTOLASE self
 function AUTOLASE:onafterMonitor(From, Event, To)
   self:T({From, Event, To})
 
@@ -986,12 +986,12 @@ function AUTOLASE:onafterMonitor(From, Event, To)
 end
 
 --- (Internal) FSM Function onbeforeRecceKIA
--- @param #AUTOLASE self
--- @param #string From The from state
--- @param #string Event The event
--- @param #string To The to state
--- @param #string RecceName The lost Recce
--- @return #AUTOLASE self
+--- @param #AUTOLASE self
+--- @param #string From The from state
+--- @param #string Event The event
+--- @param #string To The to state
+--- @param #string RecceName The lost Recce
+--- @return #AUTOLASE self
 function AUTOLASE:onbeforeRecceKIA(From,Event,To,RecceName)
   self:T({From, Event, To, RecceName})
   if self.notifypilots or self.debug then
@@ -1002,13 +1002,13 @@ function AUTOLASE:onbeforeRecceKIA(From,Event,To,RecceName)
 end
 
 --- (Internal) FSM Function onbeforeTargetDestroyed
--- @param #AUTOLASE self
--- @param #string From The from state
--- @param #string Event The event
--- @param #string To The to state
--- @param #string UnitName The destroyed unit\'s name
--- @param #string RecceName The Recce name lasing
--- @return #AUTOLASE self
+--- @param #AUTOLASE self
+--- @param #string From The from state
+--- @param #string Event The event
+--- @param #string To The to state
+--- @param #string UnitName The destroyed unit\'s name
+--- @param #string RecceName The Recce name lasing
+--- @return #AUTOLASE self
 function AUTOLASE:onbeforeTargetDestroyed(From,Event,To,UnitName,RecceName)
   self:T({From, Event, To, UnitName, RecceName})
   if self.notifypilots or self.debug then
@@ -1019,13 +1019,13 @@ function AUTOLASE:onbeforeTargetDestroyed(From,Event,To,UnitName,RecceName)
 end
 
 --- (Internal) FSM Function onbeforeTargetLost
--- @param #AUTOLASE self
--- @param #string From The from state
--- @param #string Event The event
--- @param #string To The to state
--- @param #string UnitName The lost unit\'s name
--- @param #string RecceName The Recce name lasing
--- @return #AUTOLASE self
+--- @param #AUTOLASE self
+--- @param #string From The from state
+--- @param #string Event The event
+--- @param #string To The to state
+--- @param #string UnitName The lost unit\'s name
+--- @param #string RecceName The Recce name lasing
+--- @return #AUTOLASE self
 function AUTOLASE:onbeforeTargetLost(From,Event,To,UnitName,RecceName)
   self:T({From, Event, To, UnitName,RecceName})
   if self.notifypilots or self.debug then
@@ -1036,13 +1036,13 @@ function AUTOLASE:onbeforeTargetLost(From,Event,To,UnitName,RecceName)
 end
 
 --- (Internal) FSM Function onbeforeLaserTimeout
--- @param #AUTOLASE self
--- @param #string From The from state
--- @param #string Event The event
--- @param #string To The to state
--- @param #string UnitName The lost unit\'s name
--- @param #string RecceName The Recce name lasing
--- @return #AUTOLASE self
+--- @param #AUTOLASE self
+--- @param #string From The from state
+--- @param #string Event The event
+--- @param #string To The to state
+--- @param #string UnitName The lost unit\'s name
+--- @param #string RecceName The Recce name lasing
+--- @return #AUTOLASE self
 function AUTOLASE:onbeforeLaserTimeout(From,Event,To,UnitName,RecceName)
   self:T({From, Event, To, UnitName,RecceName})
   if self.notifypilots or self.debug then
@@ -1053,12 +1053,12 @@ function AUTOLASE:onbeforeLaserTimeout(From,Event,To,UnitName,RecceName)
 end
 
 --- (Internal) FSM Function onbeforeLasing
--- @param #AUTOLASE self
--- @param #string From The from state
--- @param #string Event The event
--- @param #string To The to state
--- @param Functional.Autolase#AUTOLASE.LaserSpot LaserSpot The LaserSpot data table
--- @return #AUTOLASE self
+--- @param #AUTOLASE self
+--- @param #string From The from state
+--- @param #string Event The event
+--- @param #string To The to state
+--- @param Functional.Autolase#AUTOLASE.LaserSpot LaserSpot The LaserSpot data table
+--- @return #AUTOLASE self
 function AUTOLASE:onbeforeLasing(From,Event,To,LaserSpot)
   self:T({From, Event, To, LaserSpot.unittype})
   if self.notifypilots or self.debug then
@@ -1074,11 +1074,11 @@ function AUTOLASE:onbeforeLasing(From,Event,To,LaserSpot)
 end
 
 --- (Internal) FSM Function onbeforeCancel
--- @param #AUTOLASE self
--- @param #string From The from state
--- @param #string Event The event
--- @param #string To The to state
--- @return #AUTOLASE self
+--- @param #AUTOLASE self
+--- @param #string From The from state
+--- @param #string Event The event
+--- @param #string To The to state
+--- @return #AUTOLASE self
 function AUTOLASE:onbeforeCancel(From,Event,To)
   self:UnHandleEvent(EVENTS.PlayerEnterAircraft)
   self:__Stop(2)

@@ -77,18 +77,18 @@
 -- 
 -- 
 -- 
--- @field #AI_CARGO_APC
+--- @field #AI_CARGO_APC
 AI_CARGO_APC = {
   ClassName = "AI_CARGO_APC",
   Coordinate = nil, -- Core.Point#COORDINATE,
 }
 
 --- Creates a new AI_CARGO_APC object.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP APC The carrier APC group.
--- @param Core.Set#SET_CARGO CargoSet The set of cargo to be transported.
--- @param #number CombatRadius Provide the combat radius to defend the carrier by unboarding the cargo when enemies are nearby. When the combat radius is 0, no defense will happen of the carrier.
--- @return #AI_CARGO_APC
+--- @param #AI_CARGO_APC self
+--- @param Wrapper.Group#GROUP APC The carrier APC group.
+--- @param Core.Set#SET_CARGO CargoSet The set of cargo to be transported.
+--- @param #number CombatRadius Provide the combat radius to defend the carrier by unboarding the cargo when enemies are nearby. When the combat radius is 0, no defense will happen of the carrier.
+--- @return #AI_CARGO_APC
 function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
 
   local self = BASE:Inherit( self, AI_CARGO:New( APC, CargoSet ) ) -- #AI_CARGO_APC
@@ -111,9 +111,9 @@ end
 
 
 --- Set the Carrier.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP CargoCarrier
--- @return #AI_CARGO_APC
+--- @param #AI_CARGO_APC self
+--- @param Wrapper.Group#GROUP CargoCarrier
+--- @return #AI_CARGO_APC
 function AI_CARGO_APC:SetCarrier( CargoCarrier )
 
   self.CargoCarrier = CargoCarrier -- Wrapper.Group#GROUP
@@ -159,10 +159,10 @@ function AI_CARGO_APC:SetCarrier( CargoCarrier )
 end
 
 --- Set whether or not the carrier will use roads to *pickup* and *deploy* the cargo.
--- @param #AI_CARGO_APC self
--- @param #boolean Offroad If true, carrier will not use roads. If `nil` or `false` the carrier will use roads when available.
--- @param #number Formation Offroad formation used. Default is `ENUMS.Formation.Vehicle.Offroad`.
--- @return #AI_CARGO_APC self
+--- @param #AI_CARGO_APC self
+--- @param #boolean Offroad If true, carrier will not use roads. If `nil` or `false` the carrier will use roads when available.
+--- @param #number Formation Offroad formation used. Default is `ENUMS.Formation.Vehicle.Offroad`.
+--- @return #AI_CARGO_APC self
 function AI_CARGO_APC:SetOffRoad(Offroad, Formation)
 
   self:SetPickupOffRoad(Offroad, Formation)
@@ -172,10 +172,10 @@ function AI_CARGO_APC:SetOffRoad(Offroad, Formation)
 end
 
 --- Set whether the carrier will *not* use roads to *pickup* the cargo.
--- @param #AI_CARGO_APC self
--- @param #boolean Offroad If true, carrier will not use roads.
--- @param #number Formation Offroad formation used. Default is `ENUMS.Formation.Vehicle.Offroad`.
--- @return #AI_CARGO_APC self
+--- @param #AI_CARGO_APC self
+--- @param #boolean Offroad If true, carrier will not use roads.
+--- @param #number Formation Offroad formation used. Default is `ENUMS.Formation.Vehicle.Offroad`.
+--- @return #AI_CARGO_APC self
 function AI_CARGO_APC:SetPickupOffRoad(Offroad, Formation)
 
   self.pickupOffroad=Offroad
@@ -185,10 +185,10 @@ function AI_CARGO_APC:SetPickupOffRoad(Offroad, Formation)
 end
 
 --- Set whether the carrier will *not* use roads to *deploy* the cargo.
--- @param #AI_CARGO_APC self
--- @param #boolean Offroad If true, carrier will not use roads.
--- @param #number Formation Offroad formation used. Default is `ENUMS.Formation.Vehicle.Offroad`.
--- @return #AI_CARGO_APC self
+--- @param #AI_CARGO_APC self
+--- @param #boolean Offroad If true, carrier will not use roads.
+--- @param #number Formation Offroad formation used. Default is `ENUMS.Formation.Vehicle.Offroad`.
+--- @return #AI_CARGO_APC self
 function AI_CARGO_APC:SetDeployOffRoad(Offroad, Formation)
 
   self.deployOffroad=Offroad
@@ -199,10 +199,10 @@ end
 
 
 --- Find a free Carrier within a radius.
--- @param #AI_CARGO_APC self
--- @param Core.Point#COORDINATE Coordinate
--- @param #number Radius
--- @return Wrapper.Group#GROUP NewCarrier
+--- @param #AI_CARGO_APC self
+--- @param Core.Point#COORDINATE Coordinate
+--- @param #number Radius
+--- @return Wrapper.Group#GROUP NewCarrier
 function AI_CARGO_APC:FindCarrier( Coordinate, Radius )
 
   local CoordinateZone = ZONE_RADIUS:New( "Zone" , Coordinate:GetVec2(), Radius )
@@ -225,11 +225,11 @@ end
 
 --- Enable/Disable unboarding of cargo (infantry) when enemies are nearby (to help defend the carrier).
 -- This is only valid for APCs and trucks etc, thus ground vehicles.
--- @param #AI_CARGO_APC self
--- @param #number CombatRadius Provide the combat radius to defend the carrier by unboarding the cargo when enemies are nearby. 
+--- @param #AI_CARGO_APC self
+--- @param #number CombatRadius Provide the combat radius to defend the carrier by unboarding the cargo when enemies are nearby. 
 -- When the combat radius is 0, no defense will happen of the carrier. 
 -- When the combat radius is not provided, no defense will happen!
--- @return #AI_CARGO_APC
+--- @return #AI_CARGO_APC
 -- @usage
 -- 
 -- -- Disembark the infantry when the carrier is under attack.
@@ -250,11 +250,11 @@ end
 
 
 --- Follow Infantry to the Carrier.
--- @param #AI_CARGO_APC self
--- @param #AI_CARGO_APC Me
--- @param Wrapper.Unit#UNIT APCUnit
--- @param Cargo.CargoGroup#CARGO_GROUP Cargo
--- @return #AI_CARGO_APC
+--- @param #AI_CARGO_APC self
+--- @param #AI_CARGO_APC Me
+--- @param Wrapper.Unit#UNIT APCUnit
+--- @param Cargo.CargoGroup#CARGO_GROUP Cargo
+--- @return #AI_CARGO_APC
 function AI_CARGO_APC:FollowToCarrier( Me, APCUnit, CargoGroup )
 
   local InfantryGroup = CargoGroup:GetGroup()
@@ -305,11 +305,11 @@ end
 
 
 --- On after Monitor event.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP APC
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AI_CARGO_APC self
+--- @param Wrapper.Group#GROUP APC
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AI_CARGO_APC:onafterMonitor( APC, From, Event, To )
   self:F( { APC, From, Event, To, IsTransporting = self:IsTransporting() } )
 
@@ -369,11 +369,11 @@ end
 
 
 --- On after Follow event.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP APC
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #AI_CARGO_APC self
+--- @param Wrapper.Group#GROUP APC
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function AI_CARGO_APC:onafterFollow( APC, From, Event, To )
   self:F( { APC, From, Event, To } )
 
@@ -391,11 +391,11 @@ function AI_CARGO_APC:onafterFollow( APC, From, Event, To )
 end
 
 --- Pickup task function. Triggers Load event.
--- @param Wrapper.Group#GROUP APC The cargo carrier group.
--- @param #AI_CARGO_APC sel `AI_CARGO_APC` class.
--- @param Core.Point#COORDINATE Coordinate. The coordinate (not used).
--- @param #number Speed Speed (not used).
--- @param Core.Zone#ZONE PickupZone Pickup zone.
+--- @param Wrapper.Group#GROUP APC The cargo carrier group.
+--- @param #AI_CARGO_APC sel `AI_CARGO_APC` class.
+--- @param Core.Point#COORDINATE Coordinate. The coordinate (not used).
+--- @param #number Speed Speed (not used).
+--- @param Core.Zone#ZONE PickupZone Pickup zone.
 function AI_CARGO_APC._Pickup(APC, self, Coordinate, Speed, PickupZone)
 
   APC:F( { "AI_CARGO_APC._Pickup:", APC:GetName() } )
@@ -406,10 +406,10 @@ function AI_CARGO_APC._Pickup(APC, self, Coordinate, Speed, PickupZone)
 end
 
 --- Deploy task function. Triggers Unload event.
--- @param Wrapper.Group#GROUP APC The cargo carrier group.
--- @param #AI_CARGO_APC self `AI_CARGO_APC` class.
--- @param Core.Point#COORDINATE Coordinate. The coordinate (not used).
--- @param Core.Zone#ZONE DeployZone Deploy zone.
+--- @param Wrapper.Group#GROUP APC The cargo carrier group.
+--- @param #AI_CARGO_APC self `AI_CARGO_APC` class.
+--- @param Core.Point#COORDINATE Coordinate. The coordinate (not used).
+--- @param Core.Zone#ZONE DeployZone Deploy zone.
 function AI_CARGO_APC._Deploy(APC, self, Coordinate, DeployZone)
 
   APC:F( { "AI_CARGO_APC._Deploy:", APC } )
@@ -422,15 +422,15 @@ end
 
 
 --- On after Pickup event.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP APC
--- @param From
--- @param Event
--- @param To
--- @param Core.Point#COORDINATE Coordinate of the pickup point.
--- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
--- @param #number Height Height in meters to move to the pickup coordinate. This parameter is ignored for APCs.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
+--- @param #AI_CARGO_APC self
+--- @param Wrapper.Group#GROUP APC
+--- @param From
+--- @param Event
+--- @param To
+--- @param Core.Point#COORDINATE Coordinate of the pickup point.
+--- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+--- @param #number Height Height in meters to move to the pickup coordinate. This parameter is ignored for APCs.
+--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
 function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate, Speed, Height, PickupZone )
 
   if APC and APC:IsAlive() then
@@ -468,15 +468,15 @@ end
 
 
 --- On after Deploy event.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP APC
--- @param From
--- @param Event
--- @param To
--- @param Core.Point#COORDINATE Coordinate Deploy place.
--- @param #number Speed Speed in km/h to drive to the depoly coordinate. Default is 50% of max possible speed the unit can go.
--- @param #number Height Height in meters to move to the deploy coordinate. This parameter is ignored for APCs.
--- @param Core.Zone#ZONE DeployZone The zone where the cargo will be deployed.
+--- @param #AI_CARGO_APC self
+--- @param Wrapper.Group#GROUP APC
+--- @param From
+--- @param Event
+--- @param To
+--- @param Core.Point#COORDINATE Coordinate Deploy place.
+--- @param #number Speed Speed in km/h to drive to the depoly coordinate. Default is 50% of max possible speed the unit can go.
+--- @param #number Height Height in meters to move to the deploy coordinate. This parameter is ignored for APCs.
+--- @param Core.Zone#ZONE DeployZone The zone where the cargo will be deployed.
 function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed, Height, DeployZone )
 
   if APC and APC:IsAlive() then
@@ -518,14 +518,14 @@ function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed, He
 end
 
 --- On after Unloaded event.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP Carrier
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string Cargo.Cargo#CARGO Cargo Cargo object.
--- @param #boolean Deployed Cargo is deployed.
--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+--- @param #AI_CARGO_APC self
+--- @param Wrapper.Group#GROUP Carrier
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #string Cargo.Cargo#CARGO Cargo Cargo object.
+--- @param #boolean Deployed Cargo is deployed.
+--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
 function AI_CARGO_APC:onafterUnloaded( Carrier, From, Event, To, Cargo, CarrierUnit, DeployZone, Defend )
   self:F( { Carrier, From, Event, To, DeployZone = DeployZone, Defend = Defend } )
 
@@ -557,12 +557,12 @@ function AI_CARGO_APC:onafterUnloaded( Carrier, From, Event, To, Cargo, CarrierU
 end
 
 --- On after Deployed event.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP Carrier
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+--- @param #AI_CARGO_APC self
+--- @param Wrapper.Group#GROUP Carrier
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
 function AI_CARGO_APC:onafterDeployed( APC, From, Event, To, DeployZone, Defend )
   self:F( { APC, From, Event, To, DeployZone = DeployZone, Defend = Defend } )
 
@@ -574,14 +574,14 @@ end
 
 
 --- On after Home event.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP APC
--- @param From
--- @param Event
--- @param To
--- @param Core.Point#COORDINATE Coordinate Home place.
--- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
--- @param #number Height Height in meters to move to the home coordinate. This parameter is ignored for APCs.
+--- @param #AI_CARGO_APC self
+--- @param Wrapper.Group#GROUP APC
+--- @param From
+--- @param Event
+--- @param To
+--- @param Core.Point#COORDINATE Coordinate Home place.
+--- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+--- @param #number Height Height in meters to move to the home coordinate. This parameter is ignored for APCs.
 function AI_CARGO_APC:onafterHome( APC, From, Event, To, Coordinate, Speed, Height, HomeZone )
 
   if APC and APC:IsAlive() ~= nil then

@@ -16,31 +16,31 @@
 
 
 --- TARGET class.
--- @type TARGET
--- @field #string ClassName Name of the class.
--- @field #number verbose Verbosity level.
--- @field #number uid Unique ID of the target.
--- @field #string lid Class id string for output to DCS log file.
--- @field #table targets Table of target objects.
--- @field #number targetcounter Running number to generate target object IDs.
--- @field #number life Total life points on last status update.
--- @field #number life0 Total life points of completely healthy targets.
--- @field #number threatlevel0 Initial threat level.
--- @field #number category Target category (Ground, Air, Sea).
--- @field #number N0 Number of initial target elements/units.
--- @field #number Ntargets0 Number of initial target objects.
--- @field #number Ndestroyed Number of target elements/units that were destroyed.
--- @field #number Ndead Number of target elements/units that are dead (destroyed or despawned).
--- @field #table elements Table of target elements/units.
--- @field #table casualties Table of dead element names.
--- @field #number prio Priority.
--- @field #number importance Importance.
--- @field Ops.Auftrag#AUFTRAG mission Mission attached to this target.
--- @field Ops.Intelligence#INTEL.Contact contact Contact attached to this target.
--- @field #boolean isDestroyed If true, target objects were destroyed.
--- @field #table resources Resource list.
--- @field #table conditionStart Start condition functions.
--- @field Ops.Operation#OPERATION operation Operation this target is part of.
+--- @type TARGET
+--- @field #string ClassName Name of the class.
+--- @field #number verbose Verbosity level.
+--- @field #number uid Unique ID of the target.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #table targets Table of target objects.
+--- @field #number targetcounter Running number to generate target object IDs.
+--- @field #number life Total life points on last status update.
+--- @field #number life0 Total life points of completely healthy targets.
+--- @field #number threatlevel0 Initial threat level.
+--- @field #number category Target category (Ground, Air, Sea).
+--- @field #number N0 Number of initial target elements/units.
+--- @field #number Ntargets0 Number of initial target objects.
+--- @field #number Ndestroyed Number of target elements/units that were destroyed.
+--- @field #number Ndead Number of target elements/units that are dead (destroyed or despawned).
+--- @field #table elements Table of target elements/units.
+--- @field #table casualties Table of dead element names.
+--- @field #number prio Priority.
+--- @field #number importance Importance.
+--- @field Ops.Auftrag#AUFTRAG mission Mission attached to this target.
+--- @field Ops.Intelligence#INTEL.Contact contact Contact attached to this target.
+--- @field #boolean isDestroyed If true, target objects were destroyed.
+--- @field #table resources Resource list.
+--- @field #table conditionStart Start condition functions.
+--- @field Ops.Operation#OPERATION operation Operation this target is part of.
 -- @extends Core.Fsm#FSM
 
 --- **It is far more important to be able to hit the target than it is to haggle over who makes a weapon or who pulls a trigger** -- Dwight D Eisenhower
@@ -54,7 +54,7 @@
 -- A target can consist of one or multiple "objects".
 --
 --
--- @field #TARGET
+--- @field #TARGET
 TARGET = {
   ClassName      = "TARGET",
   verbose        =     0,
@@ -76,15 +76,15 @@ TARGET = {
 
 
 --- Type.
--- @type TARGET.ObjectType
--- @field #string GROUP Target is a GROUP object.
--- @field #string UNIT Target is a UNIT object.
--- @field #string STATIC Target is a STATIC object.
--- @field #string SCENERY Target is a SCENERY object.
--- @field #string COORDINATE Target is a COORDINATE.
--- @field #string AIRBASE Target is an AIRBASE.
--- @field #string ZONE Target is a ZONE object.
--- @field #string OPSZONE Target is an OPSZONE object.
+--- @type TARGET.ObjectType
+--- @field #string GROUP Target is a GROUP object.
+--- @field #string UNIT Target is a UNIT object.
+--- @field #string STATIC Target is a STATIC object.
+--- @field #string SCENERY Target is a SCENERY object.
+--- @field #string COORDINATE Target is a COORDINATE.
+--- @field #string AIRBASE Target is an AIRBASE.
+--- @field #string ZONE Target is a ZONE object.
+--- @field #string OPSZONE Target is an OPSZONE object.
 TARGET.ObjectType={
   GROUP="Group",
   UNIT="Unit",
@@ -98,13 +98,13 @@ TARGET.ObjectType={
 
 
 --- Category.
--- @type TARGET.Category
--- @field #string AIRCRAFT 
--- @field #string GROUND
--- @field #string NAVAL
--- @field #string AIRBASE
--- @field #string COORDINATE
--- @field #string ZONE
+--- @type TARGET.Category
+--- @field #string AIRCRAFT 
+--- @field #string GROUND
+--- @field #string NAVAL
+--- @field #string AIRBASE
+--- @field #string COORDINATE
+--- @field #string ZONE
 TARGET.Category={
   AIRCRAFT="Aircraft",
   GROUND="Ground",
@@ -115,10 +115,10 @@ TARGET.Category={
 }
 
 --- Object status.
--- @type TARGET.ObjectStatus
--- @field #string ALIVE Object is alive.
--- @field #string DEAD Object is dead.
--- @field #string DAMAGED Object is damaged.
+--- @type TARGET.ObjectStatus
+--- @field #string ALIVE Object is alive.
+--- @field #string DEAD Object is dead.
+--- @field #string DAMAGED Object is damaged.
 TARGET.ObjectStatus={
   ALIVE="Alive",
   DEAD="Dead",
@@ -126,33 +126,33 @@ TARGET.ObjectStatus={
 }
 
 --- Resource.
--- @type TARGET.Resource
--- @field #string MissionType Mission type, e.g. `AUFTRAG.Type.BAI`.
--- @field #number Nmin Min number of assets.
--- @field #number Nmax Max number of assets.
--- @field #table Attributes Generalized attribute, e.g. `{GROUP.Attribute.GROUND_INFANTRY}`.
--- @field #table Properties Properties ([DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)), e.g. `"Attack helicopters"` or `"Mobile AAA"`.
--- @field Ops.Auftrag#AUFTRAG mission Attached mission.
+--- @type TARGET.Resource
+--- @field #string MissionType Mission type, e.g. `AUFTRAG.Type.BAI`.
+--- @field #number Nmin Min number of assets.
+--- @field #number Nmax Max number of assets.
+--- @field #table Attributes Generalized attribute, e.g. `{GROUP.Attribute.GROUND_INFANTRY}`.
+--- @field #table Properties Properties ([DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)), e.g. `"Attack helicopters"` or `"Mobile AAA"`.
+--- @field Ops.Auftrag#AUFTRAG mission Attached mission.
 
 --- Target object.
--- @type TARGET.Object
--- @field #number ID Target unique ID.
--- @field #string Name Target name.
--- @field #string Type Target type.
--- @field Wrapper.Positionable#POSITIONABLE Object The object, which can be many things, e.g. a UNIT, GROUP, STATIC, SCENERY, AIRBASE or COORDINATE object.
--- @field #number Life Life points on last status update.
--- @field #number Life0 Life points of completely healthy target.
--- @field #number N0 Number of initial elements.
--- @field #number Ndead Number of dead elements.
--- @field #number Ndestroyed Number of destroyed elements.
--- @field #string Status Status "Alive" or "Dead".
--- @field Core.Point#COORDINATE Coordinate of the target object.
+--- @type TARGET.Object
+--- @field #number ID Target unique ID.
+--- @field #string Name Target name.
+--- @field #string Type Target type.
+--- @field Wrapper.Positionable#POSITIONABLE Object The object, which can be many things, e.g. a UNIT, GROUP, STATIC, SCENERY, AIRBASE or COORDINATE object.
+--- @field #number Life Life points on last status update.
+--- @field #number Life0 Life points of completely healthy target.
+--- @field #number N0 Number of initial elements.
+--- @field #number Ndead Number of dead elements.
+--- @field #number Ndestroyed Number of destroyed elements.
+--- @field #string Status Status "Alive" or "Dead".
+--- @field Core.Point#COORDINATE Coordinate of the target object.
 
 --- Global target ID counter.
 _TARGETID=0
 
 --- TARGET class version.
--- @field #string version
+--- @field #string version
 TARGET.version="0.6.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -168,9 +168,9 @@ TARGET.version="0.6.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new TARGET object and start the FSM.
--- @param #TARGET self
--- @param #table TargetObject Target object. Can be a: UNIT, GROUP, STATIC, SCENERY, AIRBASE, COORDINATE, ZONE, SET_GROUP, SET_UNIT, SET_STATIC, SET_SCENERY, SET_ZONE
--- @return #TARGET self
+--- @param #TARGET self
+--- @param #table TargetObject Target object. Can be a: UNIT, GROUP, STATIC, SCENERY, AIRBASE, COORDINATE, ZONE, SET_GROUP, SET_UNIT, SET_STATIC, SET_SCENERY, SET_ZONE
+--- @return #TARGET self
 function TARGET:New(TargetObject)
 
   -- Inherit everything from INTEL class.
@@ -316,8 +316,8 @@ end
 -- * SET_ZONE
 -- * SET_OPSZONE
 -- 
--- @param #TARGET self
--- @param Wrapper.Positionable#POSITIONABLE Object The target UNIT, GROUP, STATIC, SCENERY, AIRBASE, COORDINATE, ZONE, SET_GROUP, SET_UNIT, SET_STATIC, SET_SCENERY, SET_ZONE
+--- @param #TARGET self
+--- @param Wrapper.Positionable#POSITIONABLE Object The target UNIT, GROUP, STATIC, SCENERY, AIRBASE, COORDINATE, ZONE, SET_GROUP, SET_UNIT, SET_STATIC, SET_SCENERY, SET_ZONE
 function TARGET:AddObject(Object)
     
   if Object:IsInstanceOf("SET_GROUP")    or 
@@ -366,28 +366,28 @@ function TARGET:AddObject(Object)
 end
 
 --- Set priority of the target.
--- @param #TARGET self
--- @param #number Priority Priority of the target. Default 50.
--- @return #TARGET self
+--- @param #TARGET self
+--- @param #number Priority Priority of the target. Default 50.
+--- @return #TARGET self
 function TARGET:SetPriority(Priority)
   self.prio=Priority or 50
   return self
 end
 
 --- Set importance of the target.
--- @param #TARGET self
--- @param #number Importance Importance of the target. Default `nil`.
--- @return #TARGET self
+--- @param #TARGET self
+--- @param #number Importance Importance of the target. Default `nil`.
+--- @return #TARGET self
 function TARGET:SetImportance(Importance)
   self.importance=Importance
   return self
 end
 
 --- Add start condition.
--- @param #TARGET self
--- @param #function ConditionFunction Function that needs to be true before the mission can be started. Must return a #boolean.
--- @param ... Condition function arguments if any.
--- @return #TARGET self
+--- @param #TARGET self
+--- @param #function ConditionFunction Function that needs to be true before the mission can be started. Must return a #boolean.
+--- @param ... Condition function arguments if any.
+--- @return #TARGET self
 function TARGET:AddConditionStart(ConditionFunction, ...)
 
   local condition={} --Ops.Auftrag#AUFTRAG.Condition
@@ -404,10 +404,10 @@ function TARGET:AddConditionStart(ConditionFunction, ...)
 end
 
 --- Add stop condition.
--- @param #TARGET self
--- @param #function ConditionFunction Function that needs to be true before the mission can be started. Must return a #boolean.
--- @param ... Condition function arguments if any.
--- @return #TARGET self
+--- @param #TARGET self
+--- @param #function ConditionFunction Function that needs to be true before the mission can be started. Must return a #boolean.
+--- @param ... Condition function arguments if any.
+--- @return #TARGET self
 function TARGET:AddConditionStop(ConditionFunction, ...)
 
   local condition={} --Ops.Auftrag#AUFTRAG.Condition
@@ -424,9 +424,9 @@ function TARGET:AddConditionStop(ConditionFunction, ...)
 end
 
 --- Check if all given condition are true.
--- @param #TARGET self
--- @param #table Conditions Table of conditions.
--- @return #boolean If true, all conditions were true. Returns false if at least one condition returned false.
+--- @param #TARGET self
+--- @param #table Conditions Table of conditions.
+--- @return #boolean If true, all conditions were true. Returns false if at least one condition returned false.
 function TARGET:EvalConditionsAll(Conditions)
 
   -- Any stop condition must be true.
@@ -449,9 +449,9 @@ end
 
 
 --- Check if any of the given conditions is true.
--- @param #TARGET self
--- @param #table Conditions Table of conditions.
--- @return #boolean If true, at least one condition is true.
+--- @param #TARGET self
+--- @param #table Conditions Table of conditions.
+--- @return #boolean If true, at least one condition is true.
 function TARGET:EvalConditionsAny(Conditions)
 
   -- Any stop condition must be true.
@@ -473,13 +473,13 @@ function TARGET:EvalConditionsAny(Conditions)
 end
 
 --- Add mission type and number of required assets to resource.
--- @param #TARGET self
--- @param #string MissionType Mission Type.
--- @param #number Nmin Min number of required assets.
--- @param #number Nmax Max number of requried assets.
--- @param #table Attributes Generalized attribute(s).
--- @param #table Properties DCS attribute(s). Default `nil`.
--- @return #TARGET.Resource The resource table.
+--- @param #TARGET self
+--- @param #string MissionType Mission Type.
+--- @param #number Nmin Min number of required assets.
+--- @param #number Nmax Max number of requried assets.
+--- @param #table Attributes Generalized attribute(s).
+--- @param #table Properties DCS attribute(s). Default `nil`.
+--- @return #TARGET.Resource The resource table.
 function TARGET:AddResource(MissionType, Nmin, Nmax, Attributes, Properties)
   
   -- Ensure table.
@@ -520,8 +520,8 @@ function TARGET:AddResource(MissionType, Nmin, Nmax, Attributes, Properties)
 end
 
 --- Check if TARGET is alive.
--- @param #TARGET self
--- @return #boolean If true, target is alive.
+--- @param #TARGET self
+--- @return #boolean If true, target is alive.
 function TARGET:IsAlive()
 
   for _,_target in pairs(self.targets) do
@@ -535,16 +535,16 @@ function TARGET:IsAlive()
 end
 
 --- Check if TARGET is destroyed.
--- @param #TARGET self
--- @return #boolean If true, target is destroyed.
+--- @param #TARGET self
+--- @return #boolean If true, target is destroyed.
 function TARGET:IsDestroyed()
   return self.isDestroyed
 end
 
 
 --- Check if TARGET is dead.
--- @param #TARGET self
--- @return #boolean If true, target is dead.
+--- @param #TARGET self
+--- @return #boolean If true, target is dead.
 function TARGET:IsDead()
   local is=self:Is("Dead")
   return is
@@ -555,11 +555,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
--- @param #TARGET self
--- @param Wrapper.Group#GROUP Group Flight group.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #TARGET self
+--- @param Wrapper.Group#GROUP Group Flight group.
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function TARGET:onafterStart(From, Event, To)
   self:T({From, Event, To})
   -- Short info.
@@ -575,11 +575,11 @@ function TARGET:onafterStart(From, Event, To)
 end
 
 --- On after "Status" event.
--- @param #TARGET self
--- @param Wrapper.Group#GROUP Group Flight group.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #TARGET self
+--- @param Wrapper.Group#GROUP Group Flight group.
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function TARGET:onafterStatus(From, Event, To)
   self:T({From, Event, To})
   -- FSM state.
@@ -660,11 +660,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "ObjectDamaged" event.
--- @param #TARGET self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #TARGET.Object Target Target object.
+--- @param #TARGET self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #TARGET.Object Target Target object.
 function TARGET:onafterObjectDamaged(From, Event, To, Target)
   self:T({From, Event, To})
   -- Debug info.
@@ -674,11 +674,11 @@ function TARGET:onafterObjectDamaged(From, Event, To, Target)
 end
 
 --- On after "ObjectDestroyed" event.
--- @param #TARGET self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #TARGET.Object Target Target object.
+--- @param #TARGET self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #TARGET.Object Target Target object.
 function TARGET:onafterObjectDestroyed(From, Event, To, Target)
   self:T({From, Event, To})
   -- Debug message.
@@ -694,11 +694,11 @@ function TARGET:onafterObjectDestroyed(From, Event, To, Target)
 end
 
 --- On after "ObjectDead" event.
--- @param #TARGET self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #TARGET.Object Target Target object.
+--- @param #TARGET self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #TARGET.Object Target Target object.
 function TARGET:onafterObjectDead(From, Event, To, Target)
   self:T({From, Event, To})
   -- Debug message.
@@ -741,10 +741,10 @@ function TARGET:onafterObjectDead(From, Event, To, Target)
 end
 
 --- On after "Damaged" event.
--- @param #TARGET self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #TARGET self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function TARGET:onafterDamaged(From, Event, To)
   self:T({From, Event, To})
   
@@ -754,10 +754,10 @@ function TARGET:onafterDamaged(From, Event, To)
 end
 
 --- On after "Destroyed" event.
--- @param #TARGET self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #TARGET self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function TARGET:onafterDestroyed(From, Event, To)
   
   self:T({From, Event, To})
@@ -770,10 +770,10 @@ function TARGET:onafterDestroyed(From, Event, To)
 end
 
 --- On after "Dead" event.
--- @param #TARGET self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #TARGET self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function TARGET:onafterDead(From, Event, To)
   self:T({From, Event, To})
   
@@ -787,8 +787,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Event function handling the loss of a unit.
--- @param #TARGET self
--- @param Core.Event#EVENTDATA EventData Event data.
+--- @param #TARGET self
+--- @param Core.Event#EVENTDATA EventData Event data.
 function TARGET:OnEventUnitDeadOrLost(EventData)
 
   local Name=EventData and EventData.IniUnitName or nil
@@ -857,8 +857,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create target data from a given object.
--- @param #TARGET self
--- @param Wrapper.Positionable#POSITIONABLE Object The target UNIT, GROUP, STATIC, SCENERY, AIRBASE, COORDINATE, ZONE, SET_GROUP, SET_UNIT, SET_STATIC, SET_SCENERY, SET_ZONE
+--- @param #TARGET self
+--- @param Wrapper.Positionable#POSITIONABLE Object The target UNIT, GROUP, STATIC, SCENERY, AIRBASE, COORDINATE, ZONE, SET_GROUP, SET_UNIT, SET_STATIC, SET_SCENERY, SET_ZONE
 function TARGET:_AddObject(Object)
 
   local target={}  --#TARGET.Object
@@ -1044,15 +1044,15 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get target life points.
--- @param #TARGET self
--- @return #number Number of initial life points when mission was planned.
+--- @param #TARGET self
+--- @return #number Number of initial life points when mission was planned.
 function TARGET:GetLife0()
   return self.life0
 end
 
 --- Get current damage.
--- @param #TARGET self
--- @return #number Damage in percent.
+--- @param #TARGET self
+--- @return #number Damage in percent.
 function TARGET:GetDamage()
   local life=self:GetLife()/self:GetLife0()
   local damage=1-life
@@ -1060,9 +1060,9 @@ function TARGET:GetDamage()
 end
 
 --- Get target life points.
--- @param #TARGET self
--- @param #TARGET.Object Target Target object.
--- @return #number Life points of target.
+--- @param #TARGET self
+--- @param #TARGET.Object Target Target object.
+--- @return #number Life points of target.
 function TARGET:GetTargetLife(Target)
 
   if Target.Type==TARGET.ObjectType.GROUP then
@@ -1138,8 +1138,8 @@ function TARGET:GetTargetLife(Target)
 end
 
 --- Get current total life points. This is the sum of all target objects.
--- @param #TARGET self
--- @return #number Life points of target.
+--- @param #TARGET self
+--- @return #number Life points of target.
 function TARGET:GetLife()
   
   local N=0
@@ -1155,9 +1155,9 @@ function TARGET:GetLife()
 end
 
 --- Get target threat level
--- @param #TARGET self
--- @param #TARGET.Object Target Target object.
--- @return #number Threat level of target.
+--- @param #TARGET self
+--- @param #TARGET.Object Target Target object.
+--- @return #number Threat level of target.
 function TARGET:GetTargetThreatLevelMax(Target)
 
   if Target.Type==TARGET.ObjectType.GROUP then
@@ -1215,8 +1215,8 @@ end
 
 
 --- Get threat level.
--- @param #TARGET self
--- @return #number Threat level.
+--- @param #TARGET self
+--- @return #number Threat level.
 function TARGET:GetThreatLevelMax()
   
   local N=0
@@ -1236,9 +1236,9 @@ function TARGET:GetThreatLevelMax()
 end
 
 --- Get target 2D position vector.
--- @param #TARGET self
--- @param #TARGET.Object Target Target object.
--- @return DCS#Vec2 Vector with x,y components.
+--- @param #TARGET self
+--- @param #TARGET.Object Target Target object.
+--- @return DCS#Vec2 Vector with x,y components.
 function TARGET:GetTargetVec2(Target)
 
   local vec3=self:GetTargetVec3(Target)
@@ -1251,10 +1251,10 @@ function TARGET:GetTargetVec2(Target)
 end
 
 --- Get target 3D position vector.
--- @param #TARGET self
--- @param #TARGET.Object Target Target object.
--- @param #boolean Average
--- @return DCS#Vec3 Vector with x,y,z components.
+--- @param #TARGET self
+--- @param #TARGET.Object Target Target object.
+--- @param #boolean Average
+--- @return DCS#Vec3 Vector with x,y,z components.
 function TARGET:GetTargetVec3(Target, Average)
 
   if Target.Type==TARGET.ObjectType.GROUP then
@@ -1348,9 +1348,9 @@ function TARGET:GetTargetVec3(Target, Average)
 end
 
 --- Get heading of the target.
--- @param #TARGET self
--- @param #TARGET.Object Target Target object.
--- @return #number Heading in degrees.
+--- @param #TARGET self
+--- @param #TARGET.Object Target Target object.
+--- @return #number Heading in degrees.
 function TARGET:GetTargetHeading(Target)
 
   if Target.Type==TARGET.ObjectType.GROUP then
@@ -1432,10 +1432,10 @@ end
 
 
 --- Get target coordinate.
--- @param #TARGET self
--- @param #TARGET.Object Target Target object.
--- @param #boolean Average
--- @return Core.Point#COORDINATE Coordinate of the target.
+--- @param #TARGET self
+--- @param #TARGET.Object Target Target object.
+--- @param #boolean Average
+--- @return Core.Point#COORDINATE Coordinate of the target.
 function TARGET:GetTargetCoordinate(Target, Average)
 
   if Target.Type==TARGET.ObjectType.COORDINATE then
@@ -1463,9 +1463,9 @@ function TARGET:GetTargetCoordinate(Target, Average)
 end
 
 --- Get target name.
--- @param #TARGET self
--- @param #TARGET.Object Target Target object.
--- @return #string Name of the target object.
+--- @param #TARGET self
+--- @param #TARGET.Object Target Target object.
+--- @return #string Name of the target object.
 function TARGET:GetTargetName(Target)
 
   if Target.Type==TARGET.ObjectType.GROUP then
@@ -1517,16 +1517,16 @@ function TARGET:GetTargetName(Target)
 end
 
 --- Get name.
--- @param #TARGET self
--- @return #string Name of the target usually the first object.
+--- @param #TARGET self
+--- @return #string Name of the target usually the first object.
 function TARGET:GetName()
   local name=self.name or "Unknown"
   return name
 end
 
 --- Get 2D vector.
--- @param #TARGET self
--- @return DCS#Vec2 2D vector of the target.
+--- @param #TARGET self
+--- @return DCS#Vec2 2D vector of the target.
 function TARGET:GetVec2()
 
   for _,_target in pairs(self.targets) do
@@ -1545,8 +1545,8 @@ function TARGET:GetVec2()
 end
 
 --- Get 3D vector.
--- @param #TARGET self
--- @return DCS#Vec3 3D vector of the target.
+--- @param #TARGET self
+--- @return DCS#Vec3 3D vector of the target.
 function TARGET:GetVec3()
 
   for _,_target in pairs(self.targets) do
@@ -1565,8 +1565,8 @@ function TARGET:GetVec3()
 end
 
 --- Get coordinate.
--- @param #TARGET self
--- @return Core.Point#COORDINATE Coordinate of the target.
+--- @param #TARGET self
+--- @return Core.Point#COORDINATE Coordinate of the target.
 function TARGET:GetCoordinate()
 
   for _,_target in pairs(self.targets) do
@@ -1585,8 +1585,8 @@ function TARGET:GetCoordinate()
 end
 
 --- Get average coordinate.
--- @param #TARGET self
--- @return Core.Point#COORDINATE Coordinate of the target.
+--- @param #TARGET self
+--- @return Core.Point#COORDINATE Coordinate of the target.
 function TARGET:GetAverageCoordinate()
 
   for _,_target in pairs(self.targets) do
@@ -1605,8 +1605,8 @@ function TARGET:GetAverageCoordinate()
 end
 
 --- Get heading of target.
--- @param #TARGET self
--- @return #number Heading of the target in degrees.
+--- @param #TARGET self
+--- @return #number Heading of the target in degrees.
 function TARGET:GetHeading()
 
   for _,_target in pairs(self.targets) do
@@ -1625,17 +1625,17 @@ function TARGET:GetHeading()
 end
 
 --- Get category.
--- @param #TARGET self
--- @return #string Target category. See `TARGET.Category.X`, where `X=AIRCRAFT, GROUND`.
+--- @param #TARGET self
+--- @return #string Target category. See `TARGET.Category.X`, where `X=AIRCRAFT, GROUND`.
 function TARGET:GetCategory()
   return self.category
 end
 
 
 --- Get target category.
--- @param #TARGET self
--- @param #TARGET.Object Target Target object.
--- @return #TARGET.Category Target category.
+--- @param #TARGET self
+--- @param #TARGET.Object Target Target object.
+--- @return #TARGET.Category Target category.
 function TARGET:GetTargetCategory(Target)
 
   local category=nil
@@ -1710,9 +1710,9 @@ end
 
 
 --- Get coalition of target object. If an object has no coalition (*e.g.* a coordinate) it is returned as neutral.
--- @param #TARGET self
--- @param #TARGET.Object Target Target object.
--- @return #number Coalition number.
+--- @param #TARGET self
+--- @param #TARGET.Object Target Target object.
+--- @return #number Coalition number.
 function TARGET:GetTargetCoalition(Target)
 
 
@@ -1779,9 +1779,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get a target object by its name.
--- @param #TARGET self
--- @param #string ObjectName Object name.
--- @return #TARGET.Object The target object table or nil.
+--- @param #TARGET self
+--- @param #string ObjectName Object name.
+--- @return #TARGET.Object The target object table or nil.
 function TARGET:GetTargetByName(ObjectName)
 
   for _,_target in pairs(self.targets) do
@@ -1796,10 +1796,10 @@ end
 
 
 --- Get the first target objective alive.
--- @param #TARGET self
--- @param Core.Point#COORDINATE RefCoordinate (Optional) Reference coordinate to determine the closest target objective.
--- @param #table Coalitions (Optional) Only consider targets of the given coalition(s). 
--- @return #TARGET.Object The target objective.
+--- @param #TARGET self
+--- @param Core.Point#COORDINATE RefCoordinate (Optional) Reference coordinate to determine the closest target objective.
+--- @param #table Coalitions (Optional) Only consider targets of the given coalition(s). 
+--- @return #TARGET.Object The target objective.
 function TARGET:GetObjective(RefCoordinate, Coalitions)
 
   if RefCoordinate then
@@ -1842,10 +1842,10 @@ function TARGET:GetObjective(RefCoordinate, Coalitions)
 end
 
 --- Get the first target object alive.
--- @param #TARGET self
--- @param Core.Point#COORDINATE RefCoordinate Reference coordinate to determine the closest target objective.
--- @param #table Coalitions (Optional) Only consider targets of the given coalition(s). 
--- @return Wrapper.Positionable#POSITIONABLE The target object or nil.
+--- @param #TARGET self
+--- @param Core.Point#COORDINATE RefCoordinate Reference coordinate to determine the closest target objective.
+--- @param #table Coalitions (Optional) Only consider targets of the given coalition(s). 
+--- @return Wrapper.Positionable#POSITIONABLE The target object or nil.
 function TARGET:GetObject(RefCoordinate, Coalitions)
 
   local target=self:GetObjective(RefCoordinate, Coalitions)
@@ -1858,10 +1858,10 @@ function TARGET:GetObject(RefCoordinate, Coalitions)
 end
 
 --- Count alive objects.
--- @param #TARGET self
--- @param #TARGET.Object Target Target objective.
--- @param #table Coalitions (Optional) Only count targets of the given coalition(s). 
--- @return #number Number of alive target objects.
+--- @param #TARGET self
+--- @param #TARGET.Object Target Target objective.
+--- @param #table Coalitions (Optional) Only count targets of the given coalition(s). 
+--- @return #number Number of alive target objects.
 function TARGET:CountObjectives(Target, Coalitions)
 
   local N=0
@@ -1941,9 +1941,9 @@ function TARGET:CountObjectives(Target, Coalitions)
 end
 
 --- Count alive targets.
--- @param #TARGET self
--- @param #table Coalitions (Optional) Only count targets of the given coalition(s). 
--- @return #number Number of alive target objects.
+--- @param #TARGET self
+--- @param #table Coalitions (Optional) Only count targets of the given coalition(s). 
+--- @return #number Number of alive target objects.
 function TARGET:CountTargets(Coalitions)
   
   local N=0
@@ -1959,9 +1959,9 @@ function TARGET:CountTargets(Coalitions)
 end
 
 --- Check if something is an element of the TARGET.
--- @param #TARGET self
--- @param #string Name The name of the potential element.
--- @return #boolean If `true`, this name is part of this TARGET.
+--- @param #TARGET self
+--- @param #string Name The name of the potential element.
+--- @return #boolean If `true`, this name is part of this TARGET.
 function TARGET:IsElement(Name)
 
   if Name==nil then
@@ -1978,9 +1978,9 @@ function TARGET:IsElement(Name)
 end
 
 --- Check if something is a a casualty of this TARGET.
--- @param #TARGET self
--- @param #string Name The name of the potential element.
--- @return #boolean If `true`, this name is a casualty of this TARGET.
+--- @param #TARGET self
+--- @param #string Name The name of the potential element.
+--- @return #boolean If `true`, this name is a casualty of this TARGET.
 function TARGET:IsCasualty(Name)
 
   if Name==nil then

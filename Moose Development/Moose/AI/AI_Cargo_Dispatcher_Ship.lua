@@ -133,19 +133,19 @@
 -- 
 -- ===
 -- 
--- @field #AI_CARGO_DISPATCHER_SHIP
+--- @field #AI_CARGO_DISPATCHER_SHIP
 AI_CARGO_DISPATCHER_SHIP = {
     ClassName = "AI_CARGO_DISPATCHER_SHIP"
   }
   
 --- Creates a new AI_CARGO_DISPATCHER_SHIP object.
--- @param #AI_CARGO_DISPATCHER_SHIP self
--- @param Core.Set#SET_GROUP ShipSet  The set of @{Wrapper.Group#GROUP} objects of Ships that will transport the cargo
--- @param Core.Set#SET_CARGO CargoSet  The set of @{Cargo.Cargo#CARGO} objects, which can be CARGO_GROUP, CARGO_CRATE, or CARGO_SLINGLOAD objects.
--- @param Core.Set#SET_ZONE PickupZoneSet  The set of pickup zones which are used to determine from where the cargo can be picked up by the Ship. 
--- @param Core.Set#SET_ZONE DeployZoneSet  The set of deploy zones which determine where the cargo will be deployed by the Ship.
--- @param #table ShippingLane  Table containing list of Shipping Lanes to be used
--- @return #AI_CARGO_DISPATCHER_SHIP
+--- @param #AI_CARGO_DISPATCHER_SHIP self
+--- @param Core.Set#SET_GROUP ShipSet  The set of @{Wrapper.Group#GROUP} objects of Ships that will transport the cargo
+--- @param Core.Set#SET_CARGO CargoSet  The set of @{Cargo.Cargo#CARGO} objects, which can be CARGO_GROUP, CARGO_CRATE, or CARGO_SLINGLOAD objects.
+--- @param Core.Set#SET_ZONE PickupZoneSet  The set of pickup zones which are used to determine from where the cargo can be picked up by the Ship. 
+--- @param Core.Set#SET_ZONE DeployZoneSet  The set of deploy zones which determine where the cargo will be deployed by the Ship.
+--- @param #table ShippingLane  Table containing list of Shipping Lanes to be used
+--- @return #AI_CARGO_DISPATCHER_SHIP
 -- @usage
 --
 --      -- An AI dispatcher object for a naval group, moving cargo from pickup zones to deploy zones via a predetermined Shipping Lane

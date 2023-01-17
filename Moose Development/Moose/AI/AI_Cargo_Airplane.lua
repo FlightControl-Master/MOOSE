@@ -42,17 +42,17 @@
 -- time is not so much of an issue ... 
 -- 
 -- 
--- @field #AI_CARGO_AIRPLANE
+--- @field #AI_CARGO_AIRPLANE
 AI_CARGO_AIRPLANE = {
   ClassName = "AI_CARGO_AIRPLANE",
   Coordinate = nil, -- Core.Point#COORDINATE
 }
 
 --- Creates a new AI_CARGO_AIRPLANE object.
--- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Group#GROUP Airplane Plane used for transportation of cargo.
--- @param Core.Set#SET_CARGO CargoSet Cargo set to be transported.
--- @return #AI_CARGO_AIRPLANE
+--- @param #AI_CARGO_AIRPLANE self
+--- @param Wrapper.Group#GROUP Airplane Plane used for transportation of cargo.
+--- @param Core.Set#SET_CARGO CargoSet Cargo set to be transported.
+--- @return #AI_CARGO_AIRPLANE
 function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
 
   local self = BASE:Inherit( self, AI_CARGO:New( Airplane, CargoSet ) ) -- #AI_CARGO_AIRPLANE
@@ -168,9 +168,9 @@ end
 
 
 --- Set the Carrier (controllable). Also initializes events for carrier and defines the coalition.
--- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Group#GROUP Airplane Transport plane.
--- @return #AI_CARGO_AIRPLANE self
+--- @param #AI_CARGO_AIRPLANE self
+--- @param Wrapper.Group#GROUP Airplane Transport plane.
+--- @return #AI_CARGO_AIRPLANE self
 function AI_CARGO_AIRPLANE:SetCarrier( Airplane )
 
   local AICargo = self
@@ -224,10 +224,10 @@ end
 
 
 --- Find a free Carrier within a range.
--- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Airbase#AIRBASE Airbase
--- @param #number Radius
--- @return Wrapper.Group#GROUP NewCarrier
+--- @param #AI_CARGO_AIRPLANE self
+--- @param Wrapper.Airbase#AIRBASE Airbase
+--- @param #number Radius
+--- @return Wrapper.Group#GROUP NewCarrier
 function AI_CARGO_AIRPLANE:FindCarrier( Coordinate, Radius )
 
   local CoordinateZone = ZONE_RADIUS:New( "Zone" , Coordinate:GetVec2(), Radius )
@@ -248,11 +248,11 @@ function AI_CARGO_AIRPLANE:FindCarrier( Coordinate, Radius )
 end
 
 --- On after "Landed" event. Called on engine shutdown and initiates the pickup mission or unloading event.
--- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Group#GROUP Airplane Cargo transport plane.
--- @param From
--- @param Event
--- @param To
+--- @param #AI_CARGO_AIRPLANE self
+--- @param Wrapper.Group#GROUP Airplane Cargo transport plane.
+--- @param From
+--- @param Event
+--- @param To
 function AI_CARGO_AIRPLANE:onafterLanded( Airplane, From, Event, To )
 
   self:F({Airplane, From, Event, To})
@@ -276,15 +276,15 @@ end
 
 
 --- On after "Pickup" event. Routes transport to pickup airbase.
--- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Group#GROUP Airplane Cargo transport plane.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Point#COORDINATE Coordinate The coordinate where to pickup stuff.
--- @param #number Speed Speed in km/h for travelling to pickup base.
--- @param #number Height Height in meters to move to the pickup coordinate.
--- @param Core.Zone#ZONE_AIRBASE PickupZone The airbase zone where the cargo will be picked up.
+--- @param #AI_CARGO_AIRPLANE self
+--- @param Wrapper.Group#GROUP Airplane Cargo transport plane.
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Point#COORDINATE Coordinate The coordinate where to pickup stuff.
+--- @param #number Speed Speed in km/h for travelling to pickup base.
+--- @param #number Height Height in meters to move to the pickup coordinate.
+--- @param Core.Zone#ZONE_AIRBASE PickupZone The airbase zone where the cargo will be picked up.
 function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Coordinate, Speed, Height, PickupZone )
 
   if Airplane and Airplane:IsAlive() then
@@ -336,15 +336,15 @@ function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Coordinate,
 end
 
 --- On after Depoly event. Routes plane to the airbase where the troops are deployed.
--- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Group#GROUP Airplane Cargo transport plane.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Point#COORDINATE Coordinate Coordinate where to deploy stuff.
--- @param #number Speed Speed in km/h for travelling to the deploy base.
--- @param #number Height Height in meters to move to the home coordinate.
--- @param Core.Zone#ZONE_AIRBASE DeployZone The airbase zone where the cargo will be deployed.
+--- @param #AI_CARGO_AIRPLANE self
+--- @param Wrapper.Group#GROUP Airplane Cargo transport plane.
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Point#COORDINATE Coordinate Coordinate where to deploy stuff.
+--- @param #number Speed Speed in km/h for travelling to the deploy base.
+--- @param #number Height Height in meters to move to the home coordinate.
+--- @param Core.Zone#ZONE_AIRBASE DeployZone The airbase zone where the cargo will be deployed.
 function AI_CARGO_AIRPLANE:onafterDeploy( Airplane, From, Event, To, Coordinate, Speed, Height, DeployZone )
 
   if Airplane and Airplane:IsAlive()~=nil then
@@ -376,12 +376,12 @@ end
 
 
 --- On after Unload event. Cargo is beeing unloaded, i.e. the unboarding process is started.
--- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Group#GROUP Airplane Cargo transport plane.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE_AIRBASE DeployZone The airbase zone where the cargo will be deployed.
+--- @param #AI_CARGO_AIRPLANE self
+--- @param Wrapper.Group#GROUP Airplane Cargo transport plane.
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Zone#ZONE_AIRBASE DeployZone The airbase zone where the cargo will be deployed.
 function AI_CARGO_AIRPLANE:onafterUnload( Airplane, From, Event, To, DeployZone )
 
   local UnboardInterval = 10
@@ -409,12 +409,12 @@ function AI_CARGO_AIRPLANE:onafterUnload( Airplane, From, Event, To, DeployZone 
 end
 
 --- Route the airplane from one airport or it's current position to another airbase.
--- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Group#GROUP Airplane Airplane group to be routed.
--- @param Wrapper.Airbase#AIRBASE Airbase Destination airbase.
--- @param #number Speed Speed in km/h. Default is 80% of max possible speed the group can do.
--- @param #number Height Height in meters to move to the Airbase.
--- @param #boolean Uncontrolled If true, spawn group in uncontrolled state.
+--- @param #AI_CARGO_AIRPLANE self
+--- @param Wrapper.Group#GROUP Airplane Airplane group to be routed.
+--- @param Wrapper.Airbase#AIRBASE Airbase Destination airbase.
+--- @param #number Speed Speed in km/h. Default is 80% of max possible speed the group can do.
+--- @param #number Height Height in meters to move to the Airbase.
+--- @param #boolean Uncontrolled If true, spawn group in uncontrolled state.
 function AI_CARGO_AIRPLANE:Route( Airplane, Airbase, Speed, Height, Uncontrolled )
 
   if Airplane and Airplane:IsAlive() then
@@ -478,15 +478,15 @@ function AI_CARGO_AIRPLANE:Route( Airplane, Airbase, Speed, Height, Uncontrolled
 end
 
 --- On after Home event. Aircraft will be routed to their home base.
--- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Group#GROUP Airplane The cargo plane.
--- @param From From state.
--- @param Event Event.
--- @param To To State.
--- @param Core.Point#COORDINATE Coordinate Home place (not used).
--- @param #number Speed Speed in km/h to fly to the home airbase (zone). Default is 80% of max possible speed the unit can go.
--- @param #number Height Height in meters to move to the home coordinate.
--- @param Core.Zone#ZONE_AIRBASE HomeZone The home airbase (zone) where the plane should return to.
+--- @param #AI_CARGO_AIRPLANE self
+--- @param Wrapper.Group#GROUP Airplane The cargo plane.
+--- @param From From state.
+--- @param Event Event.
+--- @param To To State.
+--- @param Core.Point#COORDINATE Coordinate Home place (not used).
+--- @param #number Speed Speed in km/h to fly to the home airbase (zone). Default is 80% of max possible speed the unit can go.
+--- @param #number Height Height in meters to move to the home coordinate.
+--- @param Core.Zone#ZONE_AIRBASE HomeZone The home airbase (zone) where the plane should return to.
 function AI_CARGO_AIRPLANE:onafterHome(Airplane, From, Event, To, Coordinate, Speed, Height, HomeZone )
   if Airplane and Airplane:IsAlive() then
 

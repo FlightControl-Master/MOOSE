@@ -112,24 +112,24 @@
 
 
 --- @type AI_CARGO_DISPATCHER
--- @field Core.Set#SET_GROUP CarrierSet The set of @{Wrapper.Group#GROUP} objects of carriers that will transport the cargo. 
--- @field Core.Set#SET_CARGO CargoSet The set of @{Cargo.Cargo#CARGO} objects, which can be CARGO_GROUP, CARGO_CRATE, CARGO_SLINGLOAD objects.
--- @field Core.Zone#SET_ZONE PickupZoneSet The set of pickup zones, which are used to where the cargo can be picked up by the carriers. If nil, then cargo can be picked up everywhere. 
--- @field Core.Zone#SET_ZONE DeployZoneSet The set of deploy zones, which are used to where the cargo will be deployed by the carriers. 
--- @field #number PickupMaxSpeed The maximum speed to move to the cargo pickup location.
--- @field #number PickupMinSpeed The minimum speed to move to the cargo pickup location.
--- @field #number DeployMaxSpeed The maximum speed to move to the cargo deploy location.
--- @field #number DeployMinSpeed The minimum speed to move to the cargo deploy location.
--- @field #number PickupMaxHeight The maximum height to fly to the cargo pickup location.
--- @field #number PickupMinHeight The minimum height to fly to the cargo pickup location.
--- @field #number DeployMaxHeight The maximum height to fly to the cargo deploy location.
--- @field #number DeployMinHeight The minimum height to fly to the cargo deploy location.
--- @field #number PickupOuterRadius The outer radius in meters around the cargo coordinate to pickup the cargo.
--- @field #number PickupInnerRadius The inner radius in meters around the cargo coordinate to pickup the cargo.
--- @field #number DeployOuterRadius The outer radius in meters around the cargo coordinate to deploy the cargo.
--- @field #number DeployInnerRadius The inner radius in meters around the cargo coordinate to deploy the cargo.
--- @field Core.Zone#ZONE_BASE HomeZone The home zone where the carriers will return when there is no more cargo to pickup.
--- @field #number MonitorTimeInterval The interval in seconds when the cargo dispatcher will search for new cargo to be picked up.
+--- @field Core.Set#SET_GROUP CarrierSet The set of @{Wrapper.Group#GROUP} objects of carriers that will transport the cargo. 
+--- @field Core.Set#SET_CARGO CargoSet The set of @{Cargo.Cargo#CARGO} objects, which can be CARGO_GROUP, CARGO_CRATE, CARGO_SLINGLOAD objects.
+--- @field Core.Zone#SET_ZONE PickupZoneSet The set of pickup zones, which are used to where the cargo can be picked up by the carriers. If nil, then cargo can be picked up everywhere. 
+--- @field Core.Zone#SET_ZONE DeployZoneSet The set of deploy zones, which are used to where the cargo will be deployed by the carriers. 
+--- @field #number PickupMaxSpeed The maximum speed to move to the cargo pickup location.
+--- @field #number PickupMinSpeed The minimum speed to move to the cargo pickup location.
+--- @field #number DeployMaxSpeed The maximum speed to move to the cargo deploy location.
+--- @field #number DeployMinSpeed The minimum speed to move to the cargo deploy location.
+--- @field #number PickupMaxHeight The maximum height to fly to the cargo pickup location.
+--- @field #number PickupMinHeight The minimum height to fly to the cargo pickup location.
+--- @field #number DeployMaxHeight The maximum height to fly to the cargo deploy location.
+--- @field #number DeployMinHeight The minimum height to fly to the cargo deploy location.
+--- @field #number PickupOuterRadius The outer radius in meters around the cargo coordinate to pickup the cargo.
+--- @field #number PickupInnerRadius The inner radius in meters around the cargo coordinate to pickup the cargo.
+--- @field #number DeployOuterRadius The outer radius in meters around the cargo coordinate to deploy the cargo.
+--- @field #number DeployInnerRadius The inner radius in meters around the cargo coordinate to deploy the cargo.
+--- @field Core.Zone#ZONE_BASE HomeZone The home zone where the carriers will return when there is no more cargo to pickup.
+--- @field #number MonitorTimeInterval The interval in seconds when the cargo dispatcher will search for new cargo to be picked up.
 -- @extends Core.Fsm#FSM
 
 
@@ -571,7 +571,7 @@
 -- 
 -- ===
 --   
--- @field #AI_CARGO_DISPATCHER
+--- @field #AI_CARGO_DISPATCHER
 AI_CARGO_DISPATCHER = {
   ClassName = "AI_CARGO_DISPATCHER",
   AI_Cargo = {},
@@ -586,12 +586,12 @@ AI_CARGO_DISPATCHER.PickupCargo = {}
 
 
 --- Creates a new AI_CARGO_DISPATCHER object.
--- @param #AI_CARGO_DISPATCHER self
--- @param Core.Set#SET_GROUP CarrierSet The set of @{Wrapper.Group#GROUP} objects of carriers that will transport the cargo. 
--- @param Core.Set#SET_CARGO CargoSet The set of @{Cargo.Cargo#CARGO} objects, which can be CARGO_GROUP, CARGO_CRATE, CARGO_SLINGLOAD objects.
--- @param Core.Set#SET_ZONE PickupZoneSet (optional) The set of pickup zones, which are used to where the cargo can be picked up by the carriers. If nil, then cargo can be picked up everywhere. 
--- @param Core.Set#SET_ZONE DeployZoneSet The set of deploy zones, which are used to where the cargo will be deployed by the carriers. 
--- @return #AI_CARGO_DISPATCHER
+--- @param #AI_CARGO_DISPATCHER self
+--- @param Core.Set#SET_GROUP CarrierSet The set of @{Wrapper.Group#GROUP} objects of carriers that will transport the cargo. 
+--- @param Core.Set#SET_CARGO CargoSet The set of @{Cargo.Cargo#CARGO} objects, which can be CARGO_GROUP, CARGO_CRATE, CARGO_SLINGLOAD objects.
+--- @param Core.Set#SET_ZONE PickupZoneSet (optional) The set of pickup zones, which are used to where the cargo can be picked up by the carriers. If nil, then cargo can be picked up everywhere. 
+--- @param Core.Set#SET_ZONE DeployZoneSet The set of deploy zones, which are used to where the cargo will be deployed by the carriers. 
+--- @return #AI_CARGO_DISPATCHER
 -- @usage
 -- 
 --      -- An AI dispatcher object for a helicopter squadron, moving infantry from pickup zones to deploy zones.
@@ -687,9 +687,9 @@ end
 
 
 --- Set the monitor time interval.
--- @param #AI_CARGO_DISPATCHER self
--- @param #number MonitorTimeInterval The interval in seconds when the cargo dispatcher will search for new cargo to be picked up.
--- @return #AI_CARGO_DISPATCHER
+--- @param #AI_CARGO_DISPATCHER self
+--- @param #number MonitorTimeInterval The interval in seconds when the cargo dispatcher will search for new cargo to be picked up.
+--- @return #AI_CARGO_DISPATCHER
 function AI_CARGO_DISPATCHER:SetMonitorTimeInterval( MonitorTimeInterval )
 
   self.MonitorTimeInterval = MonitorTimeInterval
@@ -701,9 +701,9 @@ end
 --- Set the home zone.
 -- When there is nothing anymore to pickup, the carriers will go to a random coordinate in this zone.
 -- They will await here new orders.
--- @param #AI_CARGO_DISPATCHER self
--- @param Core.Zone#ZONE_BASE HomeZone The home zone where the carriers will return when there is no more cargo to pickup.
--- @return #AI_CARGO_DISPATCHER
+--- @param #AI_CARGO_DISPATCHER self
+--- @param Core.Zone#ZONE_BASE HomeZone The home zone where the carriers will return when there is no more cargo to pickup.
+--- @return #AI_CARGO_DISPATCHER
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher
@@ -733,10 +733,10 @@ end
 --     So, for the best operation of cargo operations, always ensure that the cargo is located at open spaces.
 -- 
 -- The default radius is 0, so the center. In case of a polygon zone, a random location will be selected as the center in the zone.
--- @param #AI_CARGO_DISPATCHER self
--- @param #number OuterRadius The outer radius in meters around the cargo coordinate.
--- @param #number InnerRadius (optional) The inner radius in meters around the cargo coordinate.
--- @return #AI_CARGO_DISPATCHER
+--- @param #AI_CARGO_DISPATCHER self
+--- @param #number OuterRadius The outer radius in meters around the cargo coordinate.
+--- @param #number InnerRadius (optional) The inner radius in meters around the cargo coordinate.
+--- @return #AI_CARGO_DISPATCHER
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher
@@ -758,10 +758,10 @@ end
 
 
 --- Set the speed or randomizes the speed in km/h to pickup the cargo.
--- @param #AI_CARGO_DISPATCHER self
--- @param #number MaxSpeed (optional) The maximum speed to move to the cargo pickup location.
--- @param #number MinSpeed The minimum speed to move to the cargo pickup location.
--- @return #AI_CARGO_DISPATCHER
+--- @param #AI_CARGO_DISPATCHER self
+--- @param #number MaxSpeed (optional) The maximum speed to move to the cargo pickup location.
+--- @param #number MinSpeed The minimum speed to move to the cargo pickup location.
+--- @return #AI_CARGO_DISPATCHER
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher
@@ -791,10 +791,10 @@ end
 --     So, for the best operation of cargo operations, always ensure that the cargo is located at open spaces.
 -- 
 -- The default radius is 0, so the center. In case of a polygon zone, a random location will be selected as the center in the zone.
--- @param #AI_CARGO_DISPATCHER self
--- @param #number OuterRadius The outer radius in meters around the cargo coordinate.
--- @param #number InnerRadius (optional) The inner radius in meters around the cargo coordinate.
--- @return #AI_CARGO_DISPATCHER
+--- @param #AI_CARGO_DISPATCHER self
+--- @param #number OuterRadius The outer radius in meters around the cargo coordinate.
+--- @param #number InnerRadius (optional) The inner radius in meters around the cargo coordinate.
+--- @return #AI_CARGO_DISPATCHER
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher
@@ -816,10 +816,10 @@ end
 
 
 --- Sets or randomizes the speed in km/h to deploy the cargo.
--- @param #AI_CARGO_DISPATCHER self
--- @param #number MaxSpeed The maximum speed to move to the cargo deploy location.
--- @param #number MinSpeed (optional) The minimum speed to move to the cargo deploy location.
--- @return #AI_CARGO_DISPATCHER
+--- @param #AI_CARGO_DISPATCHER self
+--- @param #number MaxSpeed The maximum speed to move to the cargo deploy location.
+--- @param #number MinSpeed (optional) The minimum speed to move to the cargo deploy location.
+--- @return #AI_CARGO_DISPATCHER
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher
@@ -841,10 +841,10 @@ end
 
 
 --- Set the height or randomizes the height in meters to fly and pickup the cargo. The default height is 200 meters.
--- @param #AI_CARGO_DISPATCHER self
--- @param #number MaxHeight (optional) The maximum height to fly to the cargo pickup location.
--- @param #number MinHeight (optional) The minimum height to fly to the cargo pickup location.
--- @return #AI_CARGO_DISPATCHER
+--- @param #AI_CARGO_DISPATCHER self
+--- @param #number MaxHeight (optional) The maximum height to fly to the cargo pickup location.
+--- @param #number MinHeight (optional) The minimum height to fly to the cargo pickup location.
+--- @return #AI_CARGO_DISPATCHER
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher
@@ -866,10 +866,10 @@ end
 
 
 --- Set the height or randomizes the height in meters to fly and deploy the cargo.  The default height is 200 meters.
--- @param #AI_CARGO_DISPATCHER self
--- @param #number MaxHeight (optional) The maximum height to fly to the cargo deploy location.
--- @param #number MinHeight (optional) The minimum height to fly to the cargo deploy location.
--- @return #AI_CARGO_DISPATCHER
+--- @param #AI_CARGO_DISPATCHER self
+--- @param #number MaxHeight (optional) The maximum height to fly to the cargo deploy location.
+--- @param #number MinHeight (optional) The minimum height to fly to the cargo deploy location.
+--- @return #AI_CARGO_DISPATCHER
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher
@@ -891,7 +891,7 @@ end
 
 
 --- The Start trigger event, which actually takes action at the specified time interval.
--- @param #AI_CARGO_DISPATCHER self
+--- @param #AI_CARGO_DISPATCHER self
 function AI_CARGO_DISPATCHER:onafterMonitor()
 
   self:F("Carriers")
@@ -1184,12 +1184,12 @@ end
 
 --- Start Trigger for AI_CARGO_DISPATCHER
 -- @function [parent=#AI_CARGO_DISPATCHER] Start
--- @param #AI_CARGO_DISPATCHER self
+--- @param #AI_CARGO_DISPATCHER self
 
 --- Start Asynchronous Trigger for AI_CARGO_DISPATCHER
 -- @function [parent=#AI_CARGO_DISPATCHER] __Start
--- @param #AI_CARGO_DISPATCHER self
--- @param #number Delay
+--- @param #AI_CARGO_DISPATCHER self
+--- @param #number Delay
 
 function AI_CARGO_DISPATCHER:onafterStart( From, Event, To )
   self:__Monitor( -1 )
@@ -1198,22 +1198,22 @@ end
 
 --- Stop Trigger for AI_CARGO_DISPATCHER
 -- @function [parent=#AI_CARGO_DISPATCHER] Stop
--- @param #AI_CARGO_DISPATCHER self
+--- @param #AI_CARGO_DISPATCHER self
 
 --- Stop Asynchronous Trigger for AI_CARGO_DISPATCHER
 -- @function [parent=#AI_CARGO_DISPATCHER] __Stop
--- @param #AI_CARGO_DISPATCHER self
--- @param #number Delay
+--- @param #AI_CARGO_DISPATCHER self
+--- @param #number Delay
 
 
 --- Make a Carrier run for a cargo deploy action after the cargo has been loaded, by default.
--- @param #AI_CARGO_DISPATCHER self
--- @param From
--- @param Event
--- @param To
--- @param Wrapper.Group#GROUP Carrier
--- @param Cargo.Cargo#CARGO Cargo
--- @return #AI_CARGO_DISPATCHER
+--- @param #AI_CARGO_DISPATCHER self
+--- @param From
+--- @param Event
+--- @param To
+--- @param Wrapper.Group#GROUP Carrier
+--- @param Cargo.Cargo#CARGO Cargo
+--- @return #AI_CARGO_DISPATCHER
 function AI_CARGO_DISPATCHER:onafterTransport( From, Event, To, Carrier, Cargo )
 
   if self.DeployZoneSet then

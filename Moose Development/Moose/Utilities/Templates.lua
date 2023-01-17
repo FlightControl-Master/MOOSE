@@ -6,8 +6,8 @@
 -- @image MOOSE.JPG
 
 --- TEMPLATE class.
--- @type TEMPLATE
--- @field #string ClassName Name of the class.
+--- @type TEMPLATE
+--- @field #string ClassName Name of the class.
 
 --- *Templates*
 --
@@ -35,7 +35,7 @@
 -- 
 -- Helicopters are not implemented yet.
 -- 
--- @field #TEMPLATE
+--- @field #TEMPLATE
 TEMPLATE = {
   ClassName      = "TEMPLATE",
   Ground         = {},
@@ -45,8 +45,8 @@ TEMPLATE = {
 }
 
 --- Ground unit type names.
--- @type TEMPLATE.TypeGround
--- @param #string InfantryAK
+--- @type TEMPLATE.TypeGround
+--- @param #string InfantryAK
 TEMPLATE.TypeGround={
   InfantryAK="Infantry AK",
   ParatrooperAKS74="Paratrooper AKS-74",
@@ -57,22 +57,22 @@ TEMPLATE.TypeGround={
 }
 
 --- Naval unit type names.
--- @type TEMPLATE.TypeNaval
--- @param #string Ticonderoga
+--- @type TEMPLATE.TypeNaval
+--- @param #string Ticonderoga
 TEMPLATE.TypeNaval={
   Ticonderoga="TICONDEROG",
 }
 
 --- Rotary wing unit type names.
--- @type TEMPLATE.TypeAirplane
--- @param #string A10C
+--- @type TEMPLATE.TypeAirplane
+--- @param #string A10C
 TEMPLATE.TypeAirplane={
   A10C="A-10C",
 }
 
 --- Rotary wing unit type names.
--- @type TEMPLATE.TypeHelicopter
--- @param #string AH1W
+--- @type TEMPLATE.TypeHelicopter
+--- @param #string AH1W
 TEMPLATE.TypeHelicopter={
   AH1W="AH-1W",
 }
@@ -82,13 +82,13 @@ TEMPLATE.TypeHelicopter={
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get template for ground units.
--- @param #string TypeName Type name of the unit(s) in the groups. See `TEMPLATE.Ground`.
--- @param #string GroupName Name of the spawned group. **Must be unique!**
--- @param #number CountryID Country ID. Default `country.id.USA`. Coalition is automatically determined by the one the country belongs to.
--- @param DCS#Vec3 Vec3 Position of the group and the first unit.
--- @param #number Nunits Number of units. Default 1.
--- @param #number Radius Spawn radius for additonal units in meters. Default 50 m.
--- @return #table Template Template table.
+--- @param #string TypeName Type name of the unit(s) in the groups. See `TEMPLATE.Ground`.
+--- @param #string GroupName Name of the spawned group. **Must be unique!**
+--- @param #number CountryID Country ID. Default `country.id.USA`. Coalition is automatically determined by the one the country belongs to.
+--- @param DCS#Vec3 Vec3 Position of the group and the first unit.
+--- @param #number Nunits Number of units. Default 1.
+--- @param #number Radius Spawn radius for additonal units in meters. Default 50 m.
+--- @return #table Template Template table.
 function TEMPLATE.GetGround(TypeName, GroupName, CountryID, Vec3, Nunits, Radius)
 
   -- Defaults.
@@ -129,13 +129,13 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get template for ground units.
--- @param #string TypeName Type name of the unit(s) in the groups. See `TEMPLATE.Ground`.
--- @param #string GroupName Name of the spawned group. **Must be unique!**
--- @param #number CountryID Country ID. Default `country.id.USA`. Coalition is automatically determined by the one the country belongs to.
--- @param DCS#Vec3 Vec3 Position of the group and the first unit.
--- @param #number Nunits Number of units. Default 1.
--- @param #number Radius Spawn radius for additonal units in meters. Default 500 m.
--- @return #table Template Template table.
+--- @param #string TypeName Type name of the unit(s) in the groups. See `TEMPLATE.Ground`.
+--- @param #string GroupName Name of the spawned group. **Must be unique!**
+--- @param #number CountryID Country ID. Default `country.id.USA`. Coalition is automatically determined by the one the country belongs to.
+--- @param DCS#Vec3 Vec3 Position of the group and the first unit.
+--- @param #number Nunits Number of units. Default 1.
+--- @param #number Radius Spawn radius for additonal units in meters. Default 500 m.
+--- @return #table Template Template table.
 function TEMPLATE.GetNaval(TypeName, GroupName, CountryID, Vec3, Nunits, Radius)
 
   -- Defaults.
@@ -176,13 +176,13 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get template for fixed wing units.
--- @param #string TypeName Type name of the unit(s) in the groups. See `TEMPLATE.Ground`.
--- @param #string GroupName Name of the spawned group. **Must be unique!**
--- @param #number CountryID Country ID. Default `country.id.USA`. Coalition is automatically determined by the one the country belongs to.
--- @param DCS#Vec3 Vec3 Position of the group and the first unit.
--- @param #number Nunits Number of units. Default 1.
--- @param #number Radius Spawn radius for additonal units in meters. Default 500 m.
--- @return #table Template Template table.
+--- @param #string TypeName Type name of the unit(s) in the groups. See `TEMPLATE.Ground`.
+--- @param #string GroupName Name of the spawned group. **Must be unique!**
+--- @param #number CountryID Country ID. Default `country.id.USA`. Coalition is automatically determined by the one the country belongs to.
+--- @param DCS#Vec3 Vec3 Position of the group and the first unit.
+--- @param #number Nunits Number of units. Default 1.
+--- @param #number Radius Spawn radius for additonal units in meters. Default 500 m.
+--- @return #table Template Template table.
 function TEMPLATE.GetAirplane(TypeName, GroupName, CountryID, Vec3, Nunits, Radius)
 
   -- Defaults.
@@ -199,13 +199,13 @@ function TEMPLATE.GetAirplane(TypeName, GroupName, CountryID, Vec3, Nunits, Radi
 end
 
 --- Get template for fixed wing units.
--- @param #string TypeName Type name of the unit(s) in the groups. See `TEMPLATE.Ground`.
--- @param #string GroupName Name of the spawned group. **Must be unique!**
--- @param #number CountryID Country ID. Default `country.id.USA`. Coalition is automatically determined by the one the country belongs to.
--- @param DCS#Vec3 Vec3 Position of the group and the first unit.
--- @param #number Nunits Number of units. Default 1.
--- @param #number Radius Spawn radius for additonal units in meters. Default 500 m.
--- @return #table Template Template table.
+--- @param #string TypeName Type name of the unit(s) in the groups. See `TEMPLATE.Ground`.
+--- @param #string GroupName Name of the spawned group. **Must be unique!**
+--- @param #number CountryID Country ID. Default `country.id.USA`. Coalition is automatically determined by the one the country belongs to.
+--- @param DCS#Vec3 Vec3 Position of the group and the first unit.
+--- @param #number Nunits Number of units. Default 1.
+--- @param #number Radius Spawn radius for additonal units in meters. Default 500 m.
+--- @return #table Template Template table.
 function TEMPLATE.GetHelicopter(TypeName, GroupName, CountryID, Vec3, Nunits, Radius)
 
   -- Defaults.
@@ -226,14 +226,14 @@ end
 
 
 --- Get template for aircraft units.
--- @param #boolean Airplane If true, this is a fixed wing. Else, rotary wing.
--- @param #string TypeName Type name of the unit(s) in the groups. See `TEMPLATE.Ground`.
--- @param #string GroupName Name of the spawned group. **Must be unique!**
--- @param #number CountryID Country ID. Default `country.id.USA`. Coalition is automatically determined by the one the country belongs to.
--- @param DCS#Vec3 Vec3 Position of the group and the first unit.
--- @param #number Nunits Number of units. Default 1.
--- @param #number Radius Spawn radius for additonal units in meters. Default 500 m.
--- @return #table Template Template table.
+--- @param #boolean Airplane If true, this is a fixed wing. Else, rotary wing.
+--- @param #string TypeName Type name of the unit(s) in the groups. See `TEMPLATE.Ground`.
+--- @param #string GroupName Name of the spawned group. **Must be unique!**
+--- @param #number CountryID Country ID. Default `country.id.USA`. Coalition is automatically determined by the one the country belongs to.
+--- @param DCS#Vec3 Vec3 Position of the group and the first unit.
+--- @param #number Nunits Number of units. Default 1.
+--- @param #number Radius Spawn radius for additonal units in meters. Default 500 m.
+--- @return #table Template Template table.
 function TEMPLATE._GetAircraft(Airplane, TypeName, GroupName, CountryID, Vec3, Nunits, Radius)
 
   -- Defaults.
@@ -279,8 +279,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set the position of the template.
--- @param #table Template The template to be modified.
--- @param DCS#Vec2 Vec2 2D Position vector with x and y components of the group.
+--- @param #table Template The template to be modified.
+--- @param DCS#Vec2 Vec2 2D Position vector with x and y components of the group.
 function TEMPLATE.SetPositionFromVec2(Template, Vec2)
 
   Template.x=Vec2.x
@@ -298,8 +298,8 @@ function TEMPLATE.SetPositionFromVec2(Template, Vec2)
 end
 
 --- Set the position of the template.
--- @param #table Template The template to be modified.
--- @param DCS#Vec3 Vec3 Position vector of the group.
+--- @param #table Template The template to be modified.
+--- @param DCS#Vec3 Vec3 Position vector of the group.
 function TEMPLATE.SetPositionFromVec3(Template, Vec3)
 
   local Vec2={x=Vec3.x, y=Vec3.z}
@@ -309,10 +309,10 @@ function TEMPLATE.SetPositionFromVec3(Template, Vec3)
 end
 
 --- Set the position of the template.
--- @param #table Template The template to be modified.
--- @param #number N Total number of units in the group. 
--- @param Core.Point#COORDINATE Coordinate Position of the first unit.
--- @param #number Radius Radius in meters to randomly place the additional units.
+--- @param #table Template The template to be modified.
+--- @param #number N Total number of units in the group. 
+--- @param Core.Point#COORDINATE Coordinate Position of the first unit.
+--- @param #number Radius Radius in meters to randomly place the additional units.
 function TEMPLATE.SetUnits(Template, N, Coordinate, Radius)
 
   local units=Template.units
@@ -343,10 +343,10 @@ function TEMPLATE.SetUnits(Template, N, Coordinate, Radius)
 end
 
 --- Set the position of the template.
--- @param #table Template The template to be modified.
--- @param Wrapper.Airbase#AIRBASE AirBase The airbase where the aircraft are spawned.
--- @param #table ParkingSpots List of parking spot IDs. Every unit needs one!
--- @param #boolean EngineOn If true, aircraft are spawned hot.
+--- @param #table Template The template to be modified.
+--- @param Wrapper.Airbase#AIRBASE AirBase The airbase where the aircraft are spawned.
+--- @param #table ParkingSpots List of parking spot IDs. Every unit needs one!
+--- @param #boolean EngineOn If true, aircraft are spawned hot.
 function TEMPLATE.SetAirbase(Template, AirBase, ParkingSpots, EngineOn)
 
   -- Airbase ID.
@@ -378,8 +378,8 @@ function TEMPLATE.SetAirbase(Template, AirBase, ParkingSpots, EngineOn)
 end
 
 --- Add a waypoint.
--- @param #table Template The template to be modified.
--- @param #table Waypoint Waypoint table.
+--- @param #table Template The template to be modified.
+--- @param #table Waypoint Waypoint table.
 function TEMPLATE.AddWaypoint(Template, Waypoint)
 
   table.insert(Template.route.points, Waypoint)

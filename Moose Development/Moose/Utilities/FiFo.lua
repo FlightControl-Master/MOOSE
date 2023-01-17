@@ -17,24 +17,24 @@
 
 do
 --- FIFO class.
--- @type FIFO
--- @field #string ClassName Name of the class.
--- @field #string lid Class id string for output to DCS log file.
--- @field #string version Version of FiFo.
--- @field #number counter Counter.
--- @field #number pointer Pointer.
--- @field #table stackbypointer Stack by pointer.
--- @field #table stackbyid Stack by ID.
+--- @type FIFO
+--- @field #string ClassName Name of the class.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #string version Version of FiFo.
+--- @field #number counter Counter.
+--- @field #number pointer Pointer.
+--- @field #table stackbypointer Stack by pointer.
+--- @field #table stackbyid Stack by ID.
 -- @extends Core.Base#BASE
 
 ---
--- @type FIFO.IDEntry
--- @field #number pointer
--- @field #table data
--- @field #table uniqueID
+--- @type FIFO.IDEntry
+--- @field #number pointer
+--- @field #table data
+--- @field #table uniqueID
 
 ---
--- @field #FIFO
+--- @field #FIFO
 FIFO = {
   ClassName = "FIFO",
   lid = "",
@@ -46,8 +46,8 @@ FIFO = {
 }
 
 --- Instantiate a new FIFO Stack.
--- @param #FIFO self
--- @return #FIFO self
+--- @param #FIFO self
+--- @return #FIFO self
 function FIFO:New()
   -- Inherit everything from BASE class.
   local self=BASE:Inherit(self, BASE:New()) --#FIFO
@@ -63,8 +63,8 @@ function FIFO:New()
 end
 
 --- Empty FIFO Stack.
--- @param #FIFO self
--- @return #FIFO self
+--- @param #FIFO self
+--- @return #FIFO self
 function FIFO:Clear()
   self:T(self.lid.."Clear")
   self.pointer = 0
@@ -78,10 +78,10 @@ function FIFO:Clear()
 end
 
 --- FIFO Push Object to Stack.
--- @param #FIFO self
--- @param #table Object
--- @param #string UniqueID (optional) - will default to current pointer + 1. Note - if you intend to use `FIFO:GetIDStackSorted()` keep the UniqueID numerical!
--- @return #FIFO self
+--- @param #FIFO self
+--- @param #table Object
+--- @param #string UniqueID (optional) - will default to current pointer + 1. Note - if you intend to use `FIFO:GetIDStackSorted()` keep the UniqueID numerical!
+--- @return #FIFO self
 function FIFO:Push(Object,UniqueID)
   self:T(self.lid.."Push")
   self:T({Object,UniqueID})
@@ -98,8 +98,8 @@ function FIFO:Push(Object,UniqueID)
 end
 
 --- FIFO Pull Object from Stack.
--- @param #FIFO self
--- @return #table Object or nil if stack is empty
+--- @param #FIFO self
+--- @return #table Object or nil if stack is empty
 function FIFO:Pull()
   self:T(self.lid.."Pull")
   if self.counter == 0 then return nil end
@@ -114,9 +114,9 @@ function FIFO:Pull()
 end
 
 --- FIFO Pull Object from Stack by Pointer
--- @param #FIFO self
--- @param #number Pointer
--- @return #table Object or nil if stack is empty
+--- @param #FIFO self
+--- @param #number Pointer
+--- @return #table Object or nil if stack is empty
 function FIFO:PullByPointer(Pointer)
   self:T(self.lid.."PullByPointer " .. tostring(Pointer))
   if self.counter == 0 then return nil end
@@ -134,9 +134,9 @@ end
 
 
 --- FIFO Read, not Pull, Object from Stack by Pointer
--- @param #FIFO self
--- @param #number Pointer
--- @return #table Object or nil if stack is empty or pointer does not exist
+--- @param #FIFO self
+--- @param #number Pointer
+--- @return #table Object or nil if stack is empty or pointer does not exist
 function FIFO:ReadByPointer(Pointer)
   self:T(self.lid.."ReadByPointer " .. tostring(Pointer))
   if self.counter == 0 or not Pointer or not self.stackbypointer[Pointer]  then return nil end
@@ -149,9 +149,9 @@ function FIFO:ReadByPointer(Pointer)
 end
 
 --- FIFO Read, not Pull, Object from Stack by UniqueID
--- @param #FIFO self
--- @param #number UniqueID
--- @return #table Object data or nil if stack is empty or ID does not exist
+--- @param #FIFO self
+--- @param #number UniqueID
+--- @return #table Object data or nil if stack is empty or ID does not exist
 function FIFO:ReadByID(UniqueID)
   self:T(self.lid.."ReadByID " .. tostring(UniqueID))
   if self.counter == 0 or not UniqueID or not self.stackbyid[UniqueID]  then return nil end
@@ -164,9 +164,9 @@ function FIFO:ReadByID(UniqueID)
 end
 
 --- FIFO Pull Object from Stack by UniqueID
--- @param #FIFO self
--- @param #tableUniqueID
--- @return #table Object or nil if stack is empty
+--- @param #FIFO self
+--- @param #tableUniqueID
+--- @return #table Object or nil if stack is empty
 function FIFO:PullByID(UniqueID)
   self:T(self.lid.."PullByID " .. tostring(UniqueID))
   if self.counter == 0 then return nil end
@@ -180,8 +180,8 @@ function FIFO:PullByID(UniqueID)
 end
 
 --- FIFO Housekeeping
--- @param #FIFO self
--- @return #FIFO self
+--- @param #FIFO self
+--- @return #FIFO self
 function FIFO:Flatten()
   self:T(self.lid.."Flatten")
   -- rebuild stacks
@@ -205,48 +205,48 @@ function FIFO:Flatten()
 end
 
 --- FIFO Check Stack is empty
--- @param #FIFO self
--- @return #boolean empty
+--- @param #FIFO self
+--- @return #boolean empty
 function FIFO:IsEmpty()
   self:T(self.lid.."IsEmpty")
   return self.counter == 0 and true or false
 end
 
 --- FIFO Get stack size
--- @param #FIFO self
--- @return #number size
+--- @param #FIFO self
+--- @return #number size
 function FIFO:GetSize()
   self:T(self.lid.."GetSize")
   return self.counter
 end
 
 --- FIFO Get stack size
--- @param #FIFO self
--- @return #number size
+--- @param #FIFO self
+--- @return #number size
 function FIFO:Count()
   self:T(self.lid.."Count")
   return self.counter
 end
 
 --- FIFO Check Stack is NOT empty
--- @param #FIFO self
--- @return #boolean notempty
+--- @param #FIFO self
+--- @return #boolean notempty
 function FIFO:IsNotEmpty()
   self:T(self.lid.."IsNotEmpty")
   return not self:IsEmpty()
 end
 
 --- FIFO Get the data stack by pointer
--- @param #FIFO self
--- @return #table Table of #FIFO.IDEntry entries
+--- @param #FIFO self
+--- @return #table Table of #FIFO.IDEntry entries
 function FIFO:GetPointerStack()
   self:T(self.lid.."GetPointerStack")
   return self.stackbypointer
 end
 
 --- FIFO Check if a certain UniqeID exists
--- @param #FIFO self
--- @return #boolean exists
+--- @param #FIFO self
+--- @return #boolean exists
 function FIFO:HasUniqueID(UniqueID)
   self:T(self.lid.."HasUniqueID")
   if self.stackbyid[UniqueID] ~= nil then
@@ -257,16 +257,16 @@ function FIFO:HasUniqueID(UniqueID)
 end
 
 --- FIFO Get the data stack by UniqueID
--- @param #FIFO self
--- @return #table Table of #FIFO.IDEntry entries
+--- @param #FIFO self
+--- @return #table Table of #FIFO.IDEntry entries
 function FIFO:GetIDStack()
   self:T(self.lid.."GetIDStack")
   return self.stackbyid
 end
 
 --- FIFO Get table of UniqueIDs sorted smallest to largest
--- @param #FIFO self
--- @return #table Table with index [1] to [n] of UniqueID entries
+--- @param #FIFO self
+--- @return #table Table with index [1] to [n] of UniqueID entries
 function FIFO:GetIDStackSorted()
   self:T(self.lid.."GetIDStackSorted")
   
@@ -288,8 +288,8 @@ function FIFO:GetIDStackSorted()
 end
 
 --- FIFO Get table of data entries
--- @param #FIFO self
--- @return #table Raw table indexed [1] to [n] of object entries - might be empty!
+--- @param #FIFO self
+--- @return #table Raw table indexed [1] to [n] of object entries - might be empty!
 function FIFO:GetDataTable()
   self:T(self.lid.."GetDataTable")
   local datatable = {}
@@ -300,8 +300,8 @@ function FIFO:GetDataTable()
 end
 
 --- FIFO Get sorted table of data entries by UniqueIDs (must be numerical UniqueIDs only!)
--- @param #FIFO self
--- @return #table Table indexed [1] to [n] of sorted object entries - might be empty!
+--- @param #FIFO self
+--- @return #table Table indexed [1] to [n] of sorted object entries - might be empty!
 function FIFO:GetSortedDataTable()
   self:T(self.lid.."GetSortedDataTable")
   local datatable = {}
@@ -313,12 +313,12 @@ function FIFO:GetSortedDataTable()
 end
 
 --- Iterate the FIFO and call an iterator function for the given FIFO data, providing the object for each element of the stack and optional parameters.
--- @param #FIFO self
--- @param #function IteratorFunction The function that will be called.
--- @param #table Arg (Optional) Further Arguments of the IteratorFunction.
--- @param #function Function (Optional) A function returning a #boolean true/false. Only if true, the IteratorFunction is called.
--- @param #table FunctionArguments (Optional) Function arguments.
--- @return #FIFO self
+--- @param #FIFO self
+--- @param #function IteratorFunction The function that will be called.
+--- @param #table Arg (Optional) Further Arguments of the IteratorFunction.
+--- @param #function Function (Optional) A function returning a #boolean true/false. Only if true, the IteratorFunction is called.
+--- @param #table FunctionArguments (Optional) Function arguments.
+--- @return #FIFO self
 function FIFO:ForEach( IteratorFunction, Arg, Function, FunctionArguments )
   self:T(self.lid.."ForEach")
 
@@ -365,8 +365,8 @@ function FIFO:ForEach( IteratorFunction, Arg, Function, FunctionArguments )
 end
    
 --- FIFO Print stacks to dcs.log
--- @param #FIFO self
--- @return #FIFO self
+--- @param #FIFO self
+--- @return #FIFO self
 function FIFO:Flush()
   self:T(self.lid.."FiFo Flush")
   self:I("FIFO Flushing Stack by Pointer")
@@ -405,24 +405,24 @@ do
 -- ### Author: **applevangelist**
 
 --- LIFO class.
--- @type LIFO
--- @field #string ClassName Name of the class.
--- @field #string lid Class id string for output to DCS log file.
--- @field #string version Version of LiFo
--- @field #number counter
--- @field #number pointer
--- @field #table stackbypointer
--- @field #table stackbyid
+--- @type LIFO
+--- @field #string ClassName Name of the class.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #string version Version of LiFo
+--- @field #number counter
+--- @field #number pointer
+--- @field #table stackbypointer
+--- @field #table stackbyid
 -- @extends Core.Base#BASE
 
 ---
--- @type LIFO.IDEntry
--- @field #number pointer
--- @field #table data
--- @field #table uniqueID
+--- @type LIFO.IDEntry
+--- @field #number pointer
+--- @field #table data
+--- @field #table uniqueID
 
 ---
--- @field #LIFO
+--- @field #LIFO
 LIFO = {
   ClassName = "LIFO",
   lid = "",
@@ -434,8 +434,8 @@ LIFO = {
 }
 
 --- Instantiate a new LIFO Stack
--- @param #LIFO self
--- @return #LIFO self
+--- @param #LIFO self
+--- @return #LIFO self
 function LIFO:New()
   -- Inherit everything from BASE class.
   local self=BASE:Inherit(self, BASE:New())
@@ -451,8 +451,8 @@ function LIFO:New()
 end
 
 --- Empty LIFO Stack
--- @param #LIFO self
--- @return #LIFO self
+--- @param #LIFO self
+--- @return #LIFO self
 function LIFO:Clear()
   self:T(self.lid.."Clear")
   self.pointer = 0
@@ -466,10 +466,10 @@ function LIFO:Clear()
 end
 
 --- LIFO Push Object to Stack
--- @param #LIFO self
--- @param #table Object
--- @param #string UniqueID (optional) - will default to current pointer + 1
--- @return #LIFO self
+--- @param #LIFO self
+--- @param #table Object
+--- @param #string UniqueID (optional) - will default to current pointer + 1
+--- @return #LIFO self
 function LIFO:Push(Object,UniqueID)
   self:T(self.lid.."Push")
   self:T({Object,UniqueID})
@@ -486,8 +486,8 @@ function LIFO:Push(Object,UniqueID)
 end
 
 --- LIFO Pull Object from Stack
--- @param #LIFO self
--- @return #table Object or nil if stack is empty
+--- @param #LIFO self
+--- @return #table Object or nil if stack is empty
 function LIFO:Pull()
   self:T(self.lid.."Pull")
   if self.counter == 0 then return nil end
@@ -502,9 +502,9 @@ function LIFO:Pull()
 end
 
 --- LIFO Pull Object from Stack by Pointer
--- @param #LIFO self
--- @param #number Pointer
--- @return #table Object or nil if stack is empty
+--- @param #LIFO self
+--- @param #number Pointer
+--- @return #table Object or nil if stack is empty
 function LIFO:PullByPointer(Pointer)
   self:T(self.lid.."PullByPointer " .. tostring(Pointer))
   if self.counter == 0 then return nil end
@@ -521,9 +521,9 @@ function LIFO:PullByPointer(Pointer)
 end
 
 --- LIFO Read, not Pull, Object from Stack by Pointer
--- @param #LIFO self
--- @param #number Pointer
--- @return #table Object or nil if stack is empty or pointer does not exist
+--- @param #LIFO self
+--- @param #number Pointer
+--- @return #table Object or nil if stack is empty or pointer does not exist
 function LIFO:ReadByPointer(Pointer)
   self:T(self.lid.."ReadByPointer " .. tostring(Pointer))
   if self.counter == 0 or not Pointer or not self.stackbypointer[Pointer]  then return nil end
@@ -536,9 +536,9 @@ function LIFO:ReadByPointer(Pointer)
 end
 
 --- LIFO Read, not Pull, Object from Stack by UniqueID
--- @param #LIFO self
--- @param #number UniqueID
--- @return #table Object or nil if stack is empty or ID does not exist
+--- @param #LIFO self
+--- @param #number UniqueID
+--- @return #table Object or nil if stack is empty or ID does not exist
 function LIFO:ReadByID(UniqueID)
   self:T(self.lid.."ReadByID " .. tostring(UniqueID))
   if self.counter == 0 or not UniqueID or not self.stackbyid[UniqueID]  then return nil end
@@ -551,9 +551,9 @@ function LIFO:ReadByID(UniqueID)
 end
 
 --- LIFO Pull Object from Stack by UniqueID
--- @param #LIFO self
--- @param #tableUniqueID
--- @return #table Object or nil if stack is empty
+--- @param #LIFO self
+--- @param #tableUniqueID
+--- @return #table Object or nil if stack is empty
 function LIFO:PullByID(UniqueID)
   self:T(self.lid.."PullByID " .. tostring(UniqueID))
   if self.counter == 0 then return nil end
@@ -567,8 +567,8 @@ function LIFO:PullByID(UniqueID)
 end
 
 --- LIFO Housekeeping
--- @param #LIFO self
--- @return #LIFO self
+--- @param #LIFO self
+--- @return #LIFO self
 function LIFO:Flatten()
   self:T(self.lid.."Flatten")
   -- rebuild stacks
@@ -592,56 +592,56 @@ function LIFO:Flatten()
 end
 
 --- LIFO Check Stack is empty
--- @param #LIFO self
--- @return #boolean empty
+--- @param #LIFO self
+--- @return #boolean empty
 function LIFO:IsEmpty()
   self:T(self.lid.."IsEmpty")
   return self.counter == 0 and true or false
 end
 
 --- LIFO Get stack size
--- @param #LIFO self
--- @return #number size
+--- @param #LIFO self
+--- @return #number size
 function LIFO:GetSize()
   self:T(self.lid.."GetSize")
   return self.counter
 end
 
 --- LIFO Get stack size
--- @param #LIFO self
--- @return #number size
+--- @param #LIFO self
+--- @return #number size
 function LIFO:Count()
   self:T(self.lid.."Count")
   return self.counter
 end
 
 --- LIFO Check Stack is NOT empty
--- @param #LIFO self
--- @return #boolean notempty
+--- @param #LIFO self
+--- @return #boolean notempty
 function LIFO:IsNotEmpty()
   self:T(self.lid.."IsNotEmpty")
   return not self:IsEmpty()
 end
 
 --- LIFO Get the data stack by pointer
--- @param #LIFO self
--- @return #table Table of #LIFO.IDEntry entries
+--- @param #LIFO self
+--- @return #table Table of #LIFO.IDEntry entries
 function LIFO:GetPointerStack()
   self:T(self.lid.."GetPointerStack")
   return self.stackbypointer
 end
 
 --- LIFO Get the data stack by UniqueID
--- @param #LIFO self
--- @return #table Table of #LIFO.IDEntry entries
+--- @param #LIFO self
+--- @return #table Table of #LIFO.IDEntry entries
 function LIFO:GetIDStack()
   self:T(self.lid.."GetIDStack")
   return self.stackbyid
 end
 
 --- LIFO Get table of UniqueIDs sorted smallest to largest
--- @param #LIFO self
--- @return #table Table of #LIFO.IDEntry entries
+--- @param #LIFO self
+--- @return #table Table of #LIFO.IDEntry entries
 function LIFO:GetIDStackSorted()
   self:T(self.lid.."GetIDStackSorted")
   
@@ -663,16 +663,16 @@ function LIFO:GetIDStackSorted()
 end
 
 --- LIFO Check if a certain UniqeID exists
--- @param #LIFO self
--- @return #boolean exists
+--- @param #LIFO self
+--- @return #boolean exists
 function LIFO:HasUniqueID(UniqueID)
   self:T(self.lid.."HasUniqueID")
   return  self.stackbyid[UniqueID] and true or false
 end
 
 --- LIFO Print stacks to dcs.log
--- @param #LIFO self
--- @return #LIFO self
+--- @param #LIFO self
+--- @return #LIFO self
 function LIFO:Flush()
   self:T(self.lid.."FiFo Flush")
   self:I("LIFO Flushing Stack by Pointer")
@@ -691,8 +691,8 @@ function LIFO:Flush()
 end
 
 --- LIFO Get table of data entries
--- @param #LIFO self
--- @return #table Raw table indexed [1] to [n] of object entries - might be empty!
+--- @param #LIFO self
+--- @return #table Raw table indexed [1] to [n] of object entries - might be empty!
 function LIFO:GetDataTable()
   self:T(self.lid.."GetDataTable")
   local datatable = {}
@@ -703,8 +703,8 @@ function LIFO:GetDataTable()
 end
 
 --- LIFO Get sorted table of data entries by UniqueIDs (must be numerical UniqueIDs only!)
--- @param #LIFO self
--- @return #table Table indexed [1] to [n] of sorted object entries - might be empty!
+--- @param #LIFO self
+--- @return #table Table indexed [1] to [n] of sorted object entries - might be empty!
 function LIFO:GetSortedDataTable()
   self:T(self.lid.."GetSortedDataTable")
   local datatable = {}
@@ -716,12 +716,12 @@ function LIFO:GetSortedDataTable()
 end
 
 --- Iterate the LIFO and call an iterator function for the given LIFO data, providing the object for each element of the stack and optional parameters.
--- @param #LIFO self
--- @param #function IteratorFunction The function that will be called.
--- @param #table Arg (Optional) Further Arguments of the IteratorFunction.
--- @param #function Function (Optional) A function returning a #boolean true/false. Only if true, the IteratorFunction is called.
--- @param #table FunctionArguments (Optional) Function arguments.
--- @return #LIFO self
+--- @param #LIFO self
+--- @param #function IteratorFunction The function that will be called.
+--- @param #table Arg (Optional) Further Arguments of the IteratorFunction.
+--- @param #function Function (Optional) A function returning a #boolean true/false. Only if true, the IteratorFunction is called.
+--- @param #table FunctionArguments (Optional) Function arguments.
+--- @return #LIFO self
 function LIFO:ForEach( IteratorFunction, Arg, Function, FunctionArguments )
   self:T(self.lid.."ForEach")
 

@@ -28,17 +28,17 @@
 
 
 --- ARMYGROUP class.
--- @type ARMYGROUP
--- @field #boolean adinfinitum Resume route at first waypoint when final waypoint is reached.
--- @field #boolean formationPerma Formation that is used permanently and overrules waypoint formations.
--- @field #boolean isMobile If true, group is mobile.
--- @field #ARMYGROUP.Target engage Engage target.
--- @field Core.Set#SET_ZONE retreatZones Set of retreat zones.
--- @field #boolean suppressOn Bla
--- @field #boolean isSuppressed Bla
--- @field #number TsuppressMin Bla
--- @field #number TsuppressMax Bla
--- @field #number TsuppressAve Bla
+--- @type ARMYGROUP
+--- @field #boolean adinfinitum Resume route at first waypoint when final waypoint is reached.
+--- @field #boolean formationPerma Formation that is used permanently and overrules waypoint formations.
+--- @field #boolean isMobile If true, group is mobile.
+--- @field #ARMYGROUP.Target engage Engage target.
+--- @field Core.Set#SET_ZONE retreatZones Set of retreat zones.
+--- @field #boolean suppressOn Bla
+--- @field #boolean isSuppressed Bla
+--- @field #number TsuppressMin Bla
+--- @field #number TsuppressMax Bla
+--- @field #number TsuppressAve Bla
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Your soul may belong to Jesus, but your ass belongs to the marines.* -- Eugene B Sledge
@@ -49,7 +49,7 @@
 -- 
 -- This class enhances ground groups.
 -- 
--- @field #ARMYGROUP
+--- @field #ARMYGROUP
 ARMYGROUP = {
   ClassName       = "ARMYGROUP",
   formationPerma  = nil,
@@ -57,17 +57,17 @@ ARMYGROUP = {
 }
 
 --- Engage Target.
--- @type ARMYGROUP.Target
--- @field Ops.Target#TARGET Target The target.
--- @field Core.Point#COORDINATE Coordinate Last known coordinate of the target.
--- @field Ops.OpsGroup#OPSGROUP.Waypoint Waypoint the waypoint created to go to the target.
--- @field #number Speed Speed in knots.
--- @field #string Formation Formation used in the engagement.
--- @field #number roe ROE backup.
--- @field #number alarmstate Alarm state backup.
+--- @type ARMYGROUP.Target
+--- @field Ops.Target#TARGET Target The target.
+--- @field Core.Point#COORDINATE Coordinate Last known coordinate of the target.
+--- @field Ops.OpsGroup#OPSGROUP.Waypoint Waypoint the waypoint created to go to the target.
+--- @field #number Speed Speed in knots.
+--- @field #string Formation Formation used in the engagement.
+--- @field #number roe ROE backup.
+--- @field #number alarmstate Alarm state backup.
 
 --- Army Group version.
--- @field #string version
+--- @field #string version
 ARMYGROUP.version="0.9.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -85,9 +85,9 @@ ARMYGROUP.version="0.9.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new ARMYGROUP class object.
--- @param #ARMYGROUP self
--- @param Wrapper.Group#GROUP group The GROUP object. Can also be given by its group name as `#string`.
--- @return #ARMYGROUP self
+--- @param #ARMYGROUP self
+--- @param Wrapper.Group#GROUP group The GROUP object. Can also be given by its group name as `#string`.
+--- @return #ARMYGROUP self
 function ARMYGROUP:New(group)
   
   -- First check if we already have an OPS group for this group.
@@ -425,9 +425,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Group patrols ad inifintum. If the last waypoint is reached, it will go to waypoint one and repeat its route.
--- @param #ARMYGROUP self
--- @param #boolean switch If true or nil, patrol until the end of time. If false, go along the waypoints once and stop.
--- @return #ARMYGROUP self
+--- @param #ARMYGROUP self
+--- @param #boolean switch If true or nil, patrol until the end of time. If false, go along the waypoints once and stop.
+--- @return #ARMYGROUP self
 function ARMYGROUP:SetPatrolAdInfinitum(switch)
   if switch==false then
     self.adinfinitum=false
@@ -438,16 +438,16 @@ function ARMYGROUP:SetPatrolAdInfinitum(switch)
 end
 
 --- Get coordinate of the closest road.
--- @param #ARMYGROUP self
--- @return Core.Point#COORDINATE Coordinate of a road closest to the group.
+--- @param #ARMYGROUP self
+--- @return Core.Point#COORDINATE Coordinate of a road closest to the group.
 function ARMYGROUP:GetClosestRoad()
   local coord=self:GetCoordinate():GetClosestPointToRoad()
   return coord
 end
 
 --- Get 2D distance to the closest road.
--- @param #ARMYGROUP self
--- @return #number Distance in meters to the closest road.
+--- @param #ARMYGROUP self
+--- @return #number Distance in meters to the closest road.
 function ARMYGROUP:GetClosestRoadDist()
   local road=self:GetClosestRoad()
   if road then
@@ -459,14 +459,14 @@ end
 
 
 --- Add a *scheduled* task to fire at a given coordinate.
--- @param #ARMYGROUP self
--- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
--- @param #string Clock Time when to start the attack.
--- @param #number Radius Radius in meters. Default 100 m.
--- @param #number Nshots Number of shots to fire. Default 3.
--- @param #number WeaponType Type of weapon. Default auto.
--- @param #number Prio Priority of the task.
--- @return Ops.OpsGroup#OPSGROUP.Task The task table.
+--- @param #ARMYGROUP self
+--- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
+--- @param #string Clock Time when to start the attack.
+--- @param #number Radius Radius in meters. Default 100 m.
+--- @param #number Nshots Number of shots to fire. Default 3.
+--- @param #number WeaponType Type of weapon. Default auto.
+--- @param #number Prio Priority of the task.
+--- @return Ops.OpsGroup#OPSGROUP.Task The task table.
 function ARMYGROUP:AddTaskFireAtPoint(Coordinate, Clock, Radius, Nshots, WeaponType, Prio)
 
   Coordinate=self:_CoordinateFromObject(Coordinate)
@@ -479,16 +479,16 @@ function ARMYGROUP:AddTaskFireAtPoint(Coordinate, Clock, Radius, Nshots, WeaponT
 end
 
 --- Add a *scheduled* task to fire at a given coordinate.
--- @param #ARMYGROUP self
--- @param #string Clock Time when to start the attack.
--- @param #number Heading Heading min in Degrees.
--- @param #number Alpha Shooting angle in Degrees.
--- @param #number Altitude Altitude in meters.
--- @param #number Radius Radius in meters. Default 100 m.
--- @param #number Nshots Number of shots to fire. Default nil.
--- @param #number WeaponType Type of weapon. Default auto.
--- @param #number Prio Priority of the task.
--- @return Ops.OpsGroup#OPSGROUP.Task The task table.
+--- @param #ARMYGROUP self
+--- @param #string Clock Time when to start the attack.
+--- @param #number Heading Heading min in Degrees.
+--- @param #number Alpha Shooting angle in Degrees.
+--- @param #number Altitude Altitude in meters.
+--- @param #number Radius Radius in meters. Default 100 m.
+--- @param #number Nshots Number of shots to fire. Default nil.
+--- @param #number WeaponType Type of weapon. Default auto.
+--- @param #number Prio Priority of the task.
+--- @return Ops.OpsGroup#OPSGROUP.Task The task table.
 function ARMYGROUP:AddTaskBarrage(Clock, Heading, Alpha, Altitude, Radius, Nshots, WeaponType, Prio)
 
   Heading=Heading or 0
@@ -513,14 +513,14 @@ function ARMYGROUP:AddTaskBarrage(Clock, Heading, Alpha, Altitude, Radius, Nshot
 end
 
 --- Add a *waypoint* task to fire at a given coordinate.
--- @param #ARMYGROUP self
--- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
--- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint Where the task is executed. Default is next waypoint.
--- @param #number Radius Radius in meters. Default 100 m.
--- @param #number Nshots Number of shots to fire. Default 3.
--- @param #number WeaponType Type of weapon. Default auto.
--- @param #number Prio Priority of the task.
--- @return Ops.OpsGroup#OPSGROUP.Task The task table.
+--- @param #ARMYGROUP self
+--- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
+--- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint Where the task is executed. Default is next waypoint.
+--- @param #number Radius Radius in meters. Default 100 m.
+--- @param #number Nshots Number of shots to fire. Default 3.
+--- @param #number WeaponType Type of weapon. Default auto.
+--- @param #number Prio Priority of the task.
+--- @return Ops.OpsGroup#OPSGROUP.Task The task table.
 function ARMYGROUP:AddTaskWaypointFireAtPoint(Coordinate, Waypoint, Radius, Nshots, WeaponType, Prio)
 
   Coordinate=self:_CoordinateFromObject(Coordinate)
@@ -535,13 +535,13 @@ function ARMYGROUP:AddTaskWaypointFireAtPoint(Coordinate, Waypoint, Radius, Nsho
 end
 
 --- Add a *scheduled* task.
--- @param #ARMYGROUP self
--- @param Wrapper.Group#GROUP TargetGroup Target group.
--- @param #number WeaponExpend How much weapons does are used.
--- @param #number WeaponType Type of weapon. Default auto.
--- @param #string Clock Time when to start the attack.
--- @param #number Prio Priority of the task.
--- @return Ops.OpsGroup#OPSGROUP.Task The task table.
+--- @param #ARMYGROUP self
+--- @param Wrapper.Group#GROUP TargetGroup Target group.
+--- @param #number WeaponExpend How much weapons does are used.
+--- @param #number WeaponType Type of weapon. Default auto.
+--- @param #string Clock Time when to start the attack.
+--- @param #number Prio Priority of the task.
+--- @return Ops.OpsGroup#OPSGROUP.Task The task table.
 function ARMYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clock, Prio)
 
   local DCStask=CONTROLLABLE.TaskAttackGroup(nil, TargetGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit, GroupAttack)
@@ -552,13 +552,13 @@ function ARMYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clo
 end
 
 --- Add a *scheduled* task to transport group(s).
--- @param #ARMYGROUP self
--- @param Core.Set#SET_GROUP GroupSet Set of cargo groups. Can also be a singe @{Wrapper.Group#GROUP} object.
--- @param Core.Zone#ZONE PickupZone Zone where the cargo is picked up.
--- @param Core.Zone#ZONE DeployZone Zone where the cargo is delivered to.
--- @param #string Clock Time when to start the attack.
--- @param #number Prio Priority of the task.
--- @return Ops.OpsGroup#OPSGROUP.Task The task table.
+--- @param #ARMYGROUP self
+--- @param Core.Set#SET_GROUP GroupSet Set of cargo groups. Can also be a singe @{Wrapper.Group#GROUP} object.
+--- @param Core.Zone#ZONE PickupZone Zone where the cargo is picked up.
+--- @param Core.Zone#ZONE DeployZone Zone where the cargo is delivered to.
+--- @param #string Clock Time when to start the attack.
+--- @param #number Prio Priority of the task.
+--- @return Ops.OpsGroup#OPSGROUP.Task The task table.
 function ARMYGROUP:AddTaskCargoGroup(GroupSet, PickupZone, DeployZone, Clock, Prio)
 
   local DCStask={}
@@ -572,29 +572,29 @@ function ARMYGROUP:AddTaskCargoGroup(GroupSet, PickupZone, DeployZone, Clock, Pr
 end
 
 --- Define a set of possible retreat zones.
--- @param #ARMYGROUP self
--- @param Core.Set#SET_ZONE RetreatZoneSet The retreat zone set. Default is an empty set.
--- @return #ARMYGROUP self
+--- @param #ARMYGROUP self
+--- @param Core.Set#SET_ZONE RetreatZoneSet The retreat zone set. Default is an empty set.
+--- @return #ARMYGROUP self
 function ARMYGROUP:SetRetreatZones(RetreatZoneSet)
   self.retreatZones=RetreatZoneSet or SET_ZONE:New()
   return self
 end
 
 --- Add a zone to the retreat zone set.
--- @param #ARMYGROUP self
--- @param Core.Zone#ZONE_BASE RetreatZone The retreat zone.
--- @return #ARMYGROUP self
+--- @param #ARMYGROUP self
+--- @param Core.Zone#ZONE_BASE RetreatZone The retreat zone.
+--- @return #ARMYGROUP self
 function ARMYGROUP:AddRetreatZone(RetreatZone)
   self.retreatZones:AddZone(RetreatZone)
   return self
 end
 
 --- Set suppression on. average, minimum and maximum time a unit is suppressed each time it gets hit.
--- @param #ARMYGROUP self
--- @param #number Tave Average time [seconds] a group will be suppressed. Default is 15 seconds.
--- @param #number Tmin (Optional) Minimum time [seconds] a group will be suppressed. Default is 5 seconds.
--- @param #number Tmax (Optional) Maximum time a group will be suppressed. Default is 25 seconds.
--- @return #ARMYGROUP self
+--- @param #ARMYGROUP self
+--- @param #number Tave Average time [seconds] a group will be suppressed. Default is 15 seconds.
+--- @param #number Tmin (Optional) Minimum time [seconds] a group will be suppressed. Default is 5 seconds.
+--- @param #number Tmax (Optional) Maximum time a group will be suppressed. Default is 25 seconds.
+--- @return #ARMYGROUP self
 function ARMYGROUP:SetSuppressionOn(Tave, Tmin, Tmax)
   
   -- Activate suppression.
@@ -622,8 +622,8 @@ function ARMYGROUP:SetSuppressionOn(Tave, Tmin, Tmax)
 end
 
 --- Set suppression off.
--- @param #ARMYGROUP self
--- @return #ARMYGROUP self
+--- @param #ARMYGROUP self
+--- @return #ARMYGROUP self
 function ARMYGROUP:SetSuppressionOff()
   -- Activate suppression.
   self.suppressionOn=false
@@ -631,29 +631,29 @@ end
 
 
 --- Check if the group is currently holding its positon.
--- @param #ARMYGROUP self
--- @return #boolean If true, group was ordered to hold.
+--- @param #ARMYGROUP self
+--- @return #boolean If true, group was ordered to hold.
 function ARMYGROUP:IsHolding()
   return self:Is("Holding")
 end
 
 --- Check if the group is currently cruising.
--- @param #ARMYGROUP self
--- @return #boolean If true, group cruising.
+--- @param #ARMYGROUP self
+--- @return #boolean If true, group cruising.
 function ARMYGROUP:IsCruising()
   return self:Is("Cruising")
 end
 
 --- Check if the group is currently on a detour.
--- @param #ARMYGROUP self
--- @return #boolean If true, group is on a detour.
+--- @param #ARMYGROUP self
+--- @return #boolean If true, group is on a detour.
 function ARMYGROUP:IsOnDetour()
   return self:Is("OnDetour")
 end
 
 --- Check if the group is ready for combat. I.e. not reaming, retreating, retreated, out of ammo or engaging.
--- @param #ARMYGROUP self
--- @return #boolean If true, group is on a combat ready.
+--- @param #ARMYGROUP self
+--- @return #boolean If true, group is on a combat ready.
 function ARMYGROUP:IsCombatReady()
   local combatready=true
   
@@ -674,7 +674,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Update status.
--- @param #ARMYGROUP self
+--- @param #ARMYGROUP self
 function ARMYGROUP:Status()
 
   -- FSM state.
@@ -887,11 +887,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "ElementSpawned" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP.Element Element The group element.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsGroup#OPSGROUP.Element Element The group element.
 function ARMYGROUP:onafterElementSpawned(From, Event, To, Element)
   self:T(self.lid..string.format("Element spawned %s", Element.name))
 
@@ -901,10 +901,10 @@ function ARMYGROUP:onafterElementSpawned(From, Event, To, Element)
 end
 
 --- On after "Spawned" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function ARMYGROUP:onafterSpawned(From, Event, To)
   self:T(self.lid..string.format("Group spawned!"))
 
@@ -987,14 +987,14 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
 end
 
 --- On before "UpdateRoute" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
--- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
--- @param #number Speed Speed in knots. Default cruise speed.
--- @param #number Formation Formation of the group.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+--- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
+--- @param #number Speed Speed in knots. Default cruise speed.
+--- @param #number Formation Formation of the group.
 function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Formation)
 
   -- Is transition allowed? We assume yes until proven otherwise.
@@ -1074,14 +1074,14 @@ function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Formation)
 end
 
 --- On after "UpdateRoute" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
--- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
--- @param #number Speed Speed in knots. Default cruise speed.
--- @param #number Formation Formation of the group.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+--- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
+--- @param #number Speed Speed in knots. Default cruise speed.
+--- @param #number Formation Formation of the group.
 function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
 
   -- Update route from this waypoint number onwards.
@@ -1324,13 +1324,13 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
 end
 
 --- On after "GotoWaypoint" event. Group will got to the given waypoint and execute its route from there.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number UID The goto waypoint unique ID.
--- @param #number Speed (Optional) Speed to waypoint in knots.
--- @param #number Formation (Optional) Formation to waypoint.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number UID The goto waypoint unique ID.
+--- @param #number Speed (Optional) Speed to waypoint in knots.
+--- @param #number Formation (Optional) Formation to waypoint.
 function ARMYGROUP:onafterGotoWaypoint(From, Event, To, UID, Speed, Formation)
 
   local n=self:GetWaypointIndex(UID)
@@ -1348,14 +1348,14 @@ function ARMYGROUP:onafterGotoWaypoint(From, Event, To, UID, Speed, Formation)
 end
 
 --- On after "Detour" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Point#COORDINATE Coordinate Coordinate where to go.
--- @param #number Speed Speed in knots. Default cruise speed.
--- @param #number Formation Formation of the group.
--- @param #number ResumeRoute If true, resume route after detour point was reached. If false, the group will stop at the detour point and wait for futher commands.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Point#COORDINATE Coordinate Coordinate where to go.
+--- @param #number Speed Speed in knots. Default cruise speed.
+--- @param #number Formation Formation of the group.
+--- @param #number ResumeRoute If true, resume route after detour point was reached. If false, the group will stop at the detour point and wait for futher commands.
 function ARMYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Formation, ResumeRoute)
 
   for _,_wp in pairs(self.waypoints) do
@@ -1384,10 +1384,10 @@ function ARMYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Formation, 
 end
 
 --- On after "OutOfAmmo" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function ARMYGROUP:onafterOutOfAmmo(From, Event, To)
   self:T(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))
   
@@ -1430,12 +1430,12 @@ end
 
 
 --- On before "Rearm" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
--- @param #number Formation Formation of the group.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
+--- @param #number Formation Formation of the group.
 function ARMYGROUP:onbeforeRearm(From, Event, To, Coordinate, Formation)
 
   local dt=nil
@@ -1482,12 +1482,12 @@ function ARMYGROUP:onbeforeRearm(From, Event, To, Coordinate, Formation)
 end
 
 --- On after "Rearm" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
--- @param #number Formation Formation of the group.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
+--- @param #number Formation Formation of the group.
 function ARMYGROUP:onafterRearm(From, Event, To, Coordinate, Formation)
 
   -- Debug info.
@@ -1505,10 +1505,10 @@ function ARMYGROUP:onafterRearm(From, Event, To, Coordinate, Formation)
 end
 
 --- On after "Rearmed" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function ARMYGROUP:onafterRearmed(From, Event, To)
   self:T(self.lid.."Group rearmed")
   
@@ -1531,12 +1531,12 @@ function ARMYGROUP:onafterRearmed(From, Event, To)
 end
 
 --- On before "RTZ" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE Zone The zone to return to.
--- @param #number Formation Formation of the group.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Zone#ZONE Zone The zone to return to.
+--- @param #number Formation Formation of the group.
 function ARMYGROUP:onbeforeRTZ(From, Event, To, Zone, Formation)
   self:T2(self.lid.."onbeforeRTZ")
 
@@ -1559,12 +1559,12 @@ function ARMYGROUP:onbeforeRTZ(From, Event, To, Zone, Formation)
 end
 
 --- On after "RTZ" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE Zone The zone to return to.
--- @param #number Formation Formation of the group.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Zone#ZONE Zone The zone to return to.
+--- @param #number Formation Formation of the group.
 function ARMYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
   self:T2(self.lid.."onafterRTZ")
   
@@ -1603,10 +1603,10 @@ function ARMYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
 end
 
 --- On after "Returned" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function ARMYGROUP:onafterReturned(From, Event, To)
 
   -- Debug info.
@@ -1623,10 +1623,10 @@ function ARMYGROUP:onafterReturned(From, Event, To)
 end
 
 --- On after "Rearming" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function ARMYGROUP:onafterRearming(From, Event, To)
 
   -- Get current position.
@@ -1641,12 +1641,12 @@ function ARMYGROUP:onafterRearming(From, Event, To)
 end
 
 --- On before "Retreat" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE_BASE Zone (Optional) Zone where to retreat. Default is the closest retreat zone.
--- @param #number Formation (Optional) Formation of the group.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Zone#ZONE_BASE Zone (Optional) Zone where to retreat. Default is the closest retreat zone.
+--- @param #number Formation (Optional) Formation of the group.
 function ARMYGROUP:onbeforeRetreat(From, Event, To, Zone, Formation)
 
   if not Zone then
@@ -1680,12 +1680,12 @@ function ARMYGROUP:onbeforeRetreat(From, Event, To, Zone, Formation)
 end
 
 --- On after "Retreat" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE_BASE Zone (Optional) Zone where to retreat. Default is the closest retreat zone.
--- @param #number Formation (Optional) Formation of the group.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Core.Zone#ZONE_BASE Zone (Optional) Zone where to retreat. Default is the closest retreat zone.
+--- @param #number Formation (Optional) Formation of the group.
 function ARMYGROUP:onafterRetreat(From, Event, To, Zone, Formation)
 
   -- ID of current waypoint.
@@ -1709,10 +1709,10 @@ function ARMYGROUP:onafterRetreat(From, Event, To, Zone, Formation)
 end
 
 --- On after "Retreated" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function ARMYGROUP:onafterRetreated(From, Event, To)
 
   -- Get current position.
@@ -1727,13 +1727,13 @@ function ARMYGROUP:onafterRetreated(From, Event, To)
 end
 
 --- On after "EngageTarget" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Group#GROUP Group the group to be engaged.
--- @param #number Speed Speed in knots.
--- @param #string Formation Formation used in the engagement. Default `ENUMS.Formation.Vehicle.Vee`.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Wrapper.Group#GROUP Group the group to be engaged.
+--- @param #number Speed Speed in knots.
+--- @param #string Formation Formation used in the engagement. Default `ENUMS.Formation.Vehicle.Vee`.
 function ARMYGROUP:onbeforeEngageTarget(From, Event, To, Target, Speed, Formation)
 
   local dt=nil
@@ -1768,13 +1768,13 @@ function ARMYGROUP:onbeforeEngageTarget(From, Event, To, Target, Speed, Formatio
 end
 
 --- On after "EngageTarget" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Target#TARGET Target The target to be engaged. Can also be a group or unit.
--- @param #number Speed Attack speed in knots.
--- @param #string Formation Formation used in the engagement. Default `ENUMS.Formation.Vehicle.Vee`.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.Target#TARGET Target The target to be engaged. Can also be a group or unit.
+--- @param #number Speed Attack speed in knots.
+--- @param #string Formation Formation used in the engagement. Default `ENUMS.Formation.Vehicle.Vee`.
 function ARMYGROUP:onafterEngageTarget(From, Event, To, Target, Speed, Formation)
   self:T(self.lid.."Engaging Target")
 
@@ -1817,7 +1817,7 @@ function ARMYGROUP:onafterEngageTarget(From, Event, To, Target, Speed, Formation
 end
 
 --- Update engage target.
--- @param #ARMYGROUP self
+--- @param #ARMYGROUP self
 function ARMYGROUP:_UpdateEngageTarget()
 
   if self.engage.Target and self.engage.Target:IsAlive() then
@@ -1874,10 +1874,10 @@ function ARMYGROUP:_UpdateEngageTarget()
 end
 
 --- On after "Disengage" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function ARMYGROUP:onafterDisengage(From, Event, To)
   self:T(self.lid.."Disengage Target")
 
@@ -1904,20 +1904,20 @@ function ARMYGROUP:onafterDisengage(From, Event, To)
 end
 
 --- On after "DetourReached" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function ARMYGROUP:onafterDetourReached(From, Event, To)
   self:T(self.lid.."Group reached detour coordinate")
 end
 
 
 --- On after "FullStop" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function ARMYGROUP:onafterFullStop(From, Event, To)
 
   -- Debug info.
@@ -1935,12 +1935,12 @@ function ARMYGROUP:onafterFullStop(From, Event, To)
 end
 
 --- On after "Cruise" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number Speed Speed in knots.
--- @param #number Formation Formation.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #number Speed Speed in knots.
+--- @param #number Formation Formation.
 function ARMYGROUP:onafterCruise(From, Event, To, Speed, Formation)
 
   -- Not waiting anymore.
@@ -1956,11 +1956,11 @@ function ARMYGROUP:onafterCruise(From, Event, To, Speed, Formation)
 end
 
 --- On after "Hit" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Unit#UNIT Enemy Unit that hit the element or `nil`.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Wrapper.Unit#UNIT Enemy Unit that hit the element or `nil`.
 function ARMYGROUP:onafterHit(From, Event, To, Enemy)
   self:T(self.lid..string.format("ArmyGroup hit by %s", Enemy and Enemy:GetName() or "unknown"))
   
@@ -1975,13 +1975,13 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Add an a waypoint to the route.
--- @param #ARMYGROUP self
--- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint.
--- @param #number Speed Speed in knots. Default is default cruise speed or 70% of max speed.
--- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
--- @param #string Formation Formation the group will use.
--- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
--- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
+--- @param #ARMYGROUP self
+--- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint.
+--- @param #number Speed Speed in knots. Default is default cruise speed or 70% of max speed.
+--- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
+--- @param #string Formation Formation the group will use.
+--- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
+--- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation, Updateroute)
 
   -- Debug info.
@@ -2040,9 +2040,9 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
 end
 
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
--- @param #ARMYGROUP self
--- @param #table Template Template used to init the group. Default is `self.template`.
--- @return #ARMYGROUP self
+--- @param #ARMYGROUP self
+--- @param #table Template Template used to init the group. Default is `self.template`.
+--- @return #ARMYGROUP self
 function ARMYGROUP:_InitGroup(Template)
 
   -- First check if group was already initialized.
@@ -2127,11 +2127,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Switch to a specific formation.
--- @param #ARMYGROUP self
--- @param #number Formation New formation the group will fly in. Default is the setting of `SetDefaultFormation()`.
--- @param #boolean Permanently If true, formation always used from now on.
--- @param #boolean NoRouteUpdate If true, route is not updated.
--- @return #ARMYGROUP self
+--- @param #ARMYGROUP self
+--- @param #number Formation New formation the group will fly in. Default is the setting of `SetDefaultFormation()`.
+--- @param #boolean Permanently If true, formation always used from now on.
+--- @param #boolean NoRouteUpdate If true, route is not updated.
+--- @return #ARMYGROUP self
 function ARMYGROUP:SwitchFormation(Formation, Permanently, NoRouteUpdate)
 
   if self:IsAlive() or self:IsInUtero() then
@@ -2173,10 +2173,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Find the neares ammo supply group within a given radius.
--- @param #ARMYGROUP self
--- @param #number Radius Search radius in NM. Default 30 NM.
--- @return Wrapper.Group#GROUP Closest ammo supplying group or `nil` if no group is in the given radius.
--- @return #number Distance to closest group in meters.
+--- @param #ARMYGROUP self
+--- @param #number Radius Search radius in NM. Default 30 NM.
+--- @return Wrapper.Group#GROUP Closest ammo supplying group or `nil` if no group is in the given radius.
+--- @return #number Distance to closest group in meters.
 function ARMYGROUP:FindNearestAmmoSupply(Radius)
 
   -- Radius in meters.
@@ -2222,7 +2222,7 @@ function ARMYGROUP:FindNearestAmmoSupply(Radius)
 end
 
 --- Suppress fire of the group by setting its ROE to weapon hold.
--- @param #ARMYGROUP self
+--- @param #ARMYGROUP self
 function ARMYGROUP:_Suppress()
 
   -- Current time.
@@ -2271,11 +2271,11 @@ function ARMYGROUP:_Suppress()
 end
 
 --- Before "Recovered" event. Check if suppression time is over.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @return #boolean
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @return #boolean
 function ARMYGROUP:onbeforeUnsuppressed(From, Event, To)
 
   -- Current time.
@@ -2294,10 +2294,10 @@ function ARMYGROUP:onbeforeUnsuppressed(From, Event, To)
 end
 
 --- After "Recovered" event. Group has recovered and its ROE is set back to the "normal" unsuppressed state. Optionally the group is flared green.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #ARMYGROUP self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function ARMYGROUP:onafterUnsuppressed(From, Event, To)
   
   -- Debug message.

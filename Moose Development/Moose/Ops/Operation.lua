@@ -23,28 +23,28 @@
 
 
 --- OPERATION class.
--- @type OPERATION
--- @field #string ClassName Name of the class.
--- @field #number verbose Verbosity level.
--- @field #number uid Unique ID of the operation.
--- @field #string lid Class id string for output to DCS log file.
--- @field #string name Name of the operation.
--- @field #number Tstart Start time in seconds of abs mission time.
--- @field #number Tstop Stop time in seconds of abs mission time.
--- @field #number duration Duration of the operation in seconds.
--- @field Core.Condition#CONDITION conditionStart Start condition.
--- @field Core.Condition#CONDITION conditionOver Over condition.
--- @field #table branches Branches.
--- @field #OPERATION.Branch branchMaster Master branch.
--- @field #OPERATION.Branch branchActive Active branch.
--- @field #number counterPhase Running number counting the phases.
--- @field #number counterBranch Running number counting the branches.
--- @field #OPERATION.Phase phase Currently active phase (if any).
--- @field #OPERATION.Phase phaseLast The phase that was active before the current one.
--- @field #table cohorts Dedicated cohorts.
--- @field #table legions Dedicated legions.
--- @field #table targets Targets.
--- @field #table missions Missions.
+--- @type OPERATION
+--- @field #string ClassName Name of the class.
+--- @field #number verbose Verbosity level.
+--- @field #number uid Unique ID of the operation.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #string name Name of the operation.
+--- @field #number Tstart Start time in seconds of abs mission time.
+--- @field #number Tstop Stop time in seconds of abs mission time.
+--- @field #number duration Duration of the operation in seconds.
+--- @field Core.Condition#CONDITION conditionStart Start condition.
+--- @field Core.Condition#CONDITION conditionOver Over condition.
+--- @field #table branches Branches.
+--- @field #OPERATION.Branch branchMaster Master branch.
+--- @field #OPERATION.Branch branchActive Active branch.
+--- @field #number counterPhase Running number counting the phases.
+--- @field #number counterBranch Running number counting the branches.
+--- @field #OPERATION.Phase phase Currently active phase (if any).
+--- @field #OPERATION.Phase phaseLast The phase that was active before the current one.
+--- @field #table cohorts Dedicated cohorts.
+--- @field #table legions Dedicated legions.
+--- @field #table targets Targets.
+--- @field #table missions Missions.
 -- @extends Core.Fsm#FSM
 
 --- *Before this time tomorrow I shall have gained a peerage, or Westminster Abbey.* -- Horatio Nelson
@@ -71,7 +71,7 @@
 -- 
 --
 --
--- @field #OPERATION
+--- @field #OPERATION
 OPERATION = {
   ClassName          = "OPERATION",
   verbose            =     0,
@@ -89,37 +89,37 @@ OPERATION = {
 _OPERATIONID=0
 
 --- Operation phase.
--- @type OPERATION.Phase
--- @field #number uid Unique ID of the phase.
--- @field #string name Name of the phase.
--- @field Core.Condition#CONDITION conditionOver Conditions when the phase is over.
--- @field #string status Phase status.
--- @field #number Tstart Abs. mission time when the phase was started.
--- @field #number nActive Number of times the phase was active.
--- @field #number duration Duration in seconds how long the phase should be active after it started.
--- @field #OPERATION.Branch branch The branch this phase belongs to.
+--- @type OPERATION.Phase
+--- @field #number uid Unique ID of the phase.
+--- @field #string name Name of the phase.
+--- @field Core.Condition#CONDITION conditionOver Conditions when the phase is over.
+--- @field #string status Phase status.
+--- @field #number Tstart Abs. mission time when the phase was started.
+--- @field #number nActive Number of times the phase was active.
+--- @field #number duration Duration in seconds how long the phase should be active after it started.
+--- @field #OPERATION.Branch branch The branch this phase belongs to.
 
 --- Operation branch.
--- @type OPERATION.Branch
--- @field #number uid Unique ID of the branch.
--- @field #string name Name of the branch.
--- @field #table phases Phases of this branch.
--- @field #table edges Edges of this branch.
+--- @type OPERATION.Branch
+--- @field #number uid Unique ID of the branch.
+--- @field #string name Name of the branch.
+--- @field #table phases Phases of this branch.
+--- @field #table edges Edges of this branch.
 
 --- Operation edge.
--- @type OPERATION.Edge
--- @field #number uid Unique ID of the edge.
--- @field #OPERATION.Branch branchFrom The from branch.
--- @field #OPERATION.Phase phaseFrom The from phase after which to switch.
--- @field #OPERATION.Branch branchTo The branch to switch to.
--- @field #OPERATION.Phase phaseTo The phase to switch to.
--- @field Core.Condition#CONDITION conditionSwitch Conditions when to switch the branch.
+--- @type OPERATION.Edge
+--- @field #number uid Unique ID of the edge.
+--- @field #OPERATION.Branch branchFrom The from branch.
+--- @field #OPERATION.Phase phaseFrom The from phase after which to switch.
+--- @field #OPERATION.Branch branchTo The branch to switch to.
+--- @field #OPERATION.Phase phaseTo The phase to switch to.
+--- @field Core.Condition#CONDITION conditionSwitch Conditions when to switch the branch.
 
 --- Operation phase.
--- @type OPERATION.PhaseStatus
--- @field #string PLANNED Planned.
--- @field #string ACTIVE Active phase.
--- @field #string OVER Phase is over.
+--- @type OPERATION.PhaseStatus
+--- @field #string PLANNED Planned.
+--- @field #string ACTIVE Active phase.
+--- @field #string OVER Phase is over.
 OPERATION.PhaseStatus={
   PLANNED="Planned",
   ACTIVE="Active",
@@ -127,7 +127,7 @@ OPERATION.PhaseStatus={
 }
 
 --- OPERATION class version.
--- @field #string version
+--- @field #string version
 OPERATION.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -144,9 +144,9 @@ OPERATION.version="0.2.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new generic OPERATION object.
--- @param #OPERATION self
--- @param #string Name Name of the operation. Be creative! Default "Operation-01" where the last number is a running number.
--- @return #OPERATION self
+--- @param #OPERATION self
+--- @param #string Name Name of the operation. Be creative! Default "Operation-01" where the last number is a running number.
+--- @return #OPERATION self
 function OPERATION:New(Name)
 
   -- Inherit everything from FSM class.
@@ -348,19 +348,19 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set verbosity level.
--- @param #OPERATION self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
--- @return #OPERATION self
+--- @param #OPERATION self
+--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+--- @return #OPERATION self
 function OPERATION:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
   return self
 end
 
 --- Set start and stop time of the operation.
--- @param #OPERATION self
--- @param #string ClockStart Time the mission is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
--- @param #string ClockStop (Optional) Time the mission is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
--- @return #OPERATION self
+--- @param #OPERATION self
+--- @param #string ClockStart Time the mission is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
+--- @param #string ClockStop (Optional) Time the mission is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
+--- @return #OPERATION self
 function OPERATION:SetTime(ClockStart, ClockStop)
 
   -- Current mission time.
@@ -393,20 +393,20 @@ function OPERATION:SetTime(ClockStart, ClockStop)
 end
 
 --- Add (all) condition function when the whole operation is over. Must return a `#boolean`.
--- @param #OPERATION self
--- @param #function Function Function that needs to be `true` before the operation is over. 
--- @param ... Condition function arguments if any.
--- @return Core.Condition#CONDITION.Function Condition function table.
+--- @param #OPERATION self
+--- @param #function Function Function that needs to be `true` before the operation is over. 
+--- @param ... Condition function arguments if any.
+--- @return Core.Condition#CONDITION.Function Condition function table.
 function OPERATION:AddConditonOverAll(Function, ...)
   local cf=self.conditionOver:AddFunctionAll(Function, ...)
   return cf  
 end
 
 --- Add (any) condition function when the whole operation is over. Must return a `#boolean`.
--- @param #OPERATION self
--- @param #function Function Function that needs to be `true` before the operation is over. 
--- @param ... Condition function arguments if any.
--- @return Core.Condition#CONDITION.Function Condition function table.
+--- @param #OPERATION self
+--- @param #function Function Function that needs to be `true` before the operation is over. 
+--- @param ... Condition function arguments if any.
+--- @return Core.Condition#CONDITION.Function Condition function table.
 function OPERATION:AddConditonOverAny(Phase, Function, ...)
   local cf=self.conditionOver:AddFunctionAny(Function, ...)
   return cf  
@@ -414,11 +414,11 @@ end
 
 
 --- Add a new phase to the operation. This is added add the end of all previously added phases (if any).
--- @param #OPERATION self
--- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
--- @param #OPERATION.Branch Branch The branch to which this phase is added. Default is the master branch.
--- @param #number Duration Duration in seconds how long the phase will last. Default `nil`=forever.
--- @return #OPERATION.Phase Phase table object.
+--- @param #OPERATION self
+--- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
+--- @param #OPERATION.Branch Branch The branch to which this phase is added. Default is the master branch.
+--- @param #number Duration Duration in seconds how long the phase will last. Default `nil`=forever.
+--- @return #OPERATION.Phase Phase table object.
 function OPERATION:AddPhase(Name, Branch, Duration)
 
   -- Branch.
@@ -443,10 +443,10 @@ function OPERATION:AddPhase(Name, Branch, Duration)
 end
 
 ---Insert a new phase after an already defined phase of the operation.
--- @param #OPERATION self
--- @param #OPERATION.Phase PhaseAfter The phase after which the new phase is inserted.
--- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
--- @return #OPERATION.Phase Phase table object.
+--- @param #OPERATION self
+--- @param #OPERATION.Phase PhaseAfter The phase after which the new phase is inserted.
+--- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
+--- @return #OPERATION.Phase Phase table object.
 function OPERATION:InsertPhaseAfter(PhaseAfter, Name)
 
   for i=1,#self.phases do
@@ -464,16 +464,16 @@ function OPERATION:InsertPhaseAfter(PhaseAfter, Name)
 end
 
 --- Get a name of this operation.
--- @param #OPERATION self
--- @return #string Name of this operation or "Unknown".
+--- @param #OPERATION self
+--- @return #string Name of this operation or "Unknown".
 function OPERATION:GetName()
   return self.name or "Unknown"
 end
 
 --- Get a phase by its name.
--- @param #OPERATION self
--- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
--- @return #OPERATION.Phase Phase table object or nil if phase could not be found.
+--- @param #OPERATION self
+--- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
+--- @return #OPERATION.Phase Phase table object or nil if phase could not be found.
 function OPERATION:GetPhaseByName(Name)
 
   for _,_branch in pairs(self.branches) do
@@ -490,10 +490,10 @@ function OPERATION:GetPhaseByName(Name)
 end
 
 --- Set status of a phase.
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase.
--- @param #string Status New status, *e.g.* `OPERATION.PhaseStatus.OVER`.
--- @return #OPERATION self
+--- @param #OPERATION self
+--- @param #OPERATION.Phase Phase The phase.
+--- @param #string Status New status, *e.g.* `OPERATION.PhaseStatus.OVER`.
+--- @return #OPERATION self
 function OPERATION:SetPhaseStatus(Phase, Status)
 
   if Phase then
@@ -519,18 +519,18 @@ function OPERATION:SetPhaseStatus(Phase, Status)
 end
 
 --- Get status of a phase.
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase.
--- @return #string Phase status, *e.g.* `OPERATION.PhaseStatus.OVER`.
+--- @param #OPERATION self
+--- @param #OPERATION.Phase Phase The phase.
+--- @return #string Phase status, *e.g.* `OPERATION.PhaseStatus.OVER`.
 function OPERATION:GetPhaseStatus(Phase)
   return Phase.status
 end
 
 --- Set condition when the given phase is over.
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase.
--- @param Core.Condition#CONDITION Condition Condition when the phase is over.
--- @return #OPERATION self
+--- @param #OPERATION self
+--- @param #OPERATION.Phase Phase The phase.
+--- @param Core.Condition#CONDITION Condition Condition when the phase is over.
+--- @return #OPERATION self
 function OPERATION:SetPhaseConditonOver(Phase, Condition)
   if Phase then
     self:T(self.lid..string.format("Setting phase %s conditon over %s", self:GetPhaseName(Phase), Condition and Condition.name or "None"))
@@ -540,11 +540,11 @@ function OPERATION:SetPhaseConditonOver(Phase, Condition)
 end
 
 --- Add condition function when the given phase is over. Must return a `#boolean`.
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase.
--- @param #function Function Function that needs to be `true` before the phase is over. 
--- @param ... Condition function arguments if any.
--- @return Core.Condition#CONDITION.Function Condition function table.
+--- @param #OPERATION self
+--- @param #OPERATION.Phase Phase The phase.
+--- @param #function Function Function that needs to be `true` before the phase is over. 
+--- @param ... Condition function arguments if any.
+--- @return Core.Condition#CONDITION.Function Condition function table.
 function OPERATION:AddPhaseConditonOverAll(Phase, Function, ...)
   if Phase then
     local cf=Phase.conditionOver:AddFunctionAll(Function, ...)
@@ -554,11 +554,11 @@ function OPERATION:AddPhaseConditonOverAll(Phase, Function, ...)
 end
 
 --- Add condition function when the given phase is over. Must return a `#boolean`.
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase.
--- @param #function Function Function that needs to be `true` before the phase is over. 
--- @param ... Condition function arguments if any.
--- @return Core.Condition#CONDITION.Function Condition function table.
+--- @param #OPERATION self
+--- @param #OPERATION.Phase Phase The phase.
+--- @param #function Function Function that needs to be `true` before the phase is over. 
+--- @param ... Condition function arguments if any.
+--- @return Core.Condition#CONDITION.Function Condition function table.
 function OPERATION:AddPhaseConditonOverAny(Phase, Function, ...)
   if Phase then
     local cf=Phase.conditionOver:AddFunctionAny(Function, ...)
@@ -568,10 +568,10 @@ function OPERATION:AddPhaseConditonOverAny(Phase, Function, ...)
 end
 
 --- Set persistence of condition function. By default, condition functions are removed after a phase is over.
--- @param #OPERATION self
--- @param Core.Condition#CONDITION.Function ConditionFunction Condition function table.
--- @param #boolean IsPersistent If `true` or `nil`, condition function is persistent.
--- @return #OPERATION self
+--- @param #OPERATION self
+--- @param Core.Condition#CONDITION.Function ConditionFunction Condition function table.
+--- @param #boolean IsPersistent If `true` or `nil`, condition function is persistent.
+--- @return #OPERATION self
 function OPERATION:SetConditionFunctionPersistence(ConditionFunction, IsPersistent)
   ConditionFunction.persistence=IsPersistent
   return self
@@ -579,11 +579,11 @@ end
 
 --- Add condition function when the given phase is to be repeated. The provided function must return a `#boolean`.
 -- If the condition evaluation returns `true`, the phase is set to state `Planned` instead of `Over` and can be repeated.
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase.
--- @param #function Function Function that needs to be `true` before the phase is over. 
--- @param ... Condition function arguments if any.
--- @return #OPERATION self
+--- @param #OPERATION self
+--- @param #OPERATION.Phase Phase The phase.
+--- @param #function Function Function that needs to be `true` before the phase is over. 
+--- @param ... Condition function arguments if any.
+--- @return #OPERATION self
 function OPERATION:AddPhaseConditonRepeatAll(Phase, Function, ...)
   if Phase then
     Phase.conditionRepeat:AddFunctionAll(Function, ...)  
@@ -593,25 +593,25 @@ end
 
 
 --- Get condition when the given phase is over.
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase.
--- @return Core.Condition#CONDITION Condition when the phase is over (if any).
+--- @param #OPERATION self
+--- @param #OPERATION.Phase Phase The phase.
+--- @return Core.Condition#CONDITION Condition when the phase is over (if any).
 function OPERATION:GetPhaseConditonOver(Phase, Condition)
   return Phase.conditionOver
 end
 
 --- Get how many times a phase has been active.
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase.
--- @return #number Number of times the phase has been active.
+--- @param #OPERATION self
+--- @param #OPERATION.Phase Phase The phase.
+--- @return #number Number of times the phase has been active.
 function OPERATION:GetPhaseNactive(Phase)
   return Phase.nActive
 end
 
 --- Get name of a phase.
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase of which the name is returned. Default is the currently active phase.
--- @return #string The name of the phase or "None" if no phase is given or active.
+--- @param #OPERATION self
+--- @param #OPERATION.Phase Phase The phase of which the name is returned. Default is the currently active phase.
+--- @return #string The name of the phase or "None" if no phase is given or active.
 function OPERATION:GetPhaseName(Phase)
 
   Phase=Phase or self.phase
@@ -624,17 +624,17 @@ function OPERATION:GetPhaseName(Phase)
 end
 
 --- Get currrently active phase.
--- @param #OPERATION self
--- @return #OPERATION.Phase Current phase or `nil` if no current phase is active.
+--- @param #OPERATION self
+--- @return #OPERATION.Phase Current phase or `nil` if no current phase is active.
 function OPERATION:GetPhaseActive()
   return self.phase
 end
 
 --- Get index of phase.
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase.
--- @return #number The index.
--- @return #OPERATION.Branch The branch.
+--- @param #OPERATION self
+--- @param #OPERATION.Phase Phase The phase.
+--- @return #number The index.
+--- @return #OPERATION.Branch The branch.
 function OPERATION:GetPhaseIndex(Phase)
 
   local branch=Phase.branch
@@ -650,10 +650,10 @@ function OPERATION:GetPhaseIndex(Phase)
 end
 
 --- Get next phase.
--- @param #OPERATION self
--- @param #OPERATION.Branch Branch (Optional) The branch from which the next phase is retrieved. Default is the currently active branch.
--- @param #string PhaseStatus (Optional) Only return a phase, which is in this status. For example, `OPERATION.PhaseStatus.PLANNED` to make sure, the next phase is planned.
--- @return #OPERATION.Phase Next phase or `nil` if no next phase exists.
+--- @param #OPERATION self
+--- @param #OPERATION.Branch Branch (Optional) The branch from which the next phase is retrieved. Default is the currently active branch.
+--- @param #string PhaseStatus (Optional) Only return a phase, which is in this status. For example, `OPERATION.PhaseStatus.PLANNED` to make sure, the next phase is planned.
+--- @return #OPERATION.Phase Next phase or `nil` if no next phase exists.
 function OPERATION:GetPhaseNext(Branch, PhaseStatus)
 
   -- Branch.
@@ -701,10 +701,10 @@ function OPERATION:GetPhaseNext(Branch, PhaseStatus)
 end
 
 --- Count phases.
--- @param #OPERATION self
--- @param #string Status (Optional) Only count phases in a certain status, e.g. `OPERATION.PhaseStatus.PLANNED`.
--- @param #OPERATION.Branch Branch (Optional) Branch.
--- @return #number Number of phases
+--- @param #OPERATION self
+--- @param #string Status (Optional) Only count phases in a certain status, e.g. `OPERATION.PhaseStatus.PLANNED`.
+--- @param #OPERATION.Branch Branch (Optional) Branch.
+--- @return #number Number of phases
 function OPERATION:CountPhases(Status, Branch)
 
   Branch=Branch or self.branchActive
@@ -722,9 +722,9 @@ end
 
 
 --- Add a new branch to the operation.
--- @param #OPERATION self
--- @param #string Name
--- @return #OPERATION.Branch Branch table object.
+--- @param #OPERATION self
+--- @param #string Name
+--- @return #OPERATION.Branch Branch table object.
 function OPERATION:AddBranch(Name)
 
   -- Create a new branch.
@@ -737,23 +737,23 @@ function OPERATION:AddBranch(Name)
 end
 
 --- Get the master branch. This is the default branch and should always exist (if it was not explicitly deleted).
--- @param #OPERATION self
--- @return #OPERATION.Branch The master branch.
+--- @param #OPERATION self
+--- @return #OPERATION.Branch The master branch.
 function OPERATION:GetBranchMaster()
   return self.branchMaster
 end
 
 --- Get the currently active branch.
--- @param #OPERATION self
--- @return #OPERATION.Branch The active branch. If no branch is active, the master branch is returned.
+--- @param #OPERATION self
+--- @return #OPERATION.Branch The active branch. If no branch is active, the master branch is returned.
 function OPERATION:GetBranchActive()
   return self.branchActive or self.branchMaster
 end
 
 --- Get name of the branch.
--- @param #OPERATION self
--- @param #OPERATION.Branch Branch The branch of which the name is requested. Default is the currently active or master branch.
--- @return #string Name Name or "None"
+--- @param #OPERATION self
+--- @param #OPERATION.Branch Branch The branch of which the name is requested. Default is the currently active or master branch.
+--- @return #string Name Name or "None"
 function OPERATION:GetBranchName(Branch)
   Branch=Branch or self:GetBranchActive()
   if Branch then
@@ -763,11 +763,11 @@ function OPERATION:GetBranchName(Branch)
 end
 
 --- Add an edge between two branches.
--- @param #OPERATION self
--- @param #OPERATION.Phase PhaseFrom The phase of the *from* branch *after* which to switch.
--- @param #OPERATION.Phase PhaseTo The phase of the *to* branch *to* which to switch.
--- @param Core.Condition#CONDITION ConditionSwitch (Optional) Condition(s) when to switch the branches.
--- @return #OPERATION.Edge Edge table object.
+--- @param #OPERATION self
+--- @param #OPERATION.Phase PhaseFrom The phase of the *from* branch *after* which to switch.
+--- @param #OPERATION.Phase PhaseTo The phase of the *to* branch *to* which to switch.
+--- @param Core.Condition#CONDITION ConditionSwitch (Optional) Condition(s) when to switch the branches.
+--- @return #OPERATION.Edge Edge table object.
 function OPERATION:AddEdge(PhaseFrom, PhaseTo, ConditionSwitch)
 
   local edge={} --#OPERATION.Edge
@@ -792,11 +792,11 @@ end
 
 --- Add condition function to an edge when branches are switched. The function must return a `#boolean`.
 -- If multiple condition functions are added, all of these must return true for the branch switch to occur.
--- @param #OPERATION self
--- @param #OPERATION.Edge Edge The edge connecting the two branches.
--- @param #function Function Function that needs to be `true` for switching between the branches. 
--- @param ... Condition function arguments if any.
--- @return Core.Condition#CONDITION.Function Condition function table.
+--- @param #OPERATION self
+--- @param #OPERATION.Edge Edge The edge connecting the two branches.
+--- @param #function Function Function that needs to be `true` for switching between the branches. 
+--- @param ... Condition function arguments if any.
+--- @return Core.Condition#CONDITION.Function Condition function table.
 function OPERATION:AddEdgeConditonSwitchAll(Edge, Function, ...)
   if Edge then
     local cf=Edge.conditionSwitch:AddFunctionAll(Function, ...)
@@ -806,9 +806,9 @@ function OPERATION:AddEdgeConditonSwitchAll(Edge, Function, ...)
 end
 
 --- Add mission to operation.
--- @param #OPERATION self
--- @param Ops.Auftrag#AUFTRAG Mission The mission to add.
--- @param #OPERATION.Phase Phase (Optional) The phase in which the mission should be executed. If no phase is given, it will be exectuted ASAP.
+--- @param #OPERATION self
+--- @param Ops.Auftrag#AUFTRAG Mission The mission to add.
+--- @param #OPERATION.Phase Phase (Optional) The phase in which the mission should be executed. If no phase is given, it will be exectuted ASAP.
 function OPERATION:AddMission(Mission, Phase)
 
   Mission.phase=Phase
@@ -820,9 +820,9 @@ function OPERATION:AddMission(Mission, Phase)
 end
 
 --- Add Target to operation.
--- @param #OPERATION self
--- @param Ops.Target#TARGET Target The target to add.
--- @param #OPERATION.Phase Phase (Optional) The phase in which the target should be attacked. If no phase is given, it will be attacked ASAP.
+--- @param #OPERATION self
+--- @param Ops.Target#TARGET Target The target to add.
+--- @param #OPERATION.Phase Phase (Optional) The phase in which the target should be attacked. If no phase is given, it will be attacked ASAP.
 function OPERATION:AddTarget(Target, Phase)
 
   Target.phase=Phase
@@ -834,9 +834,9 @@ function OPERATION:AddTarget(Target, Phase)
 end
 
 --- Get targets of operation.
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase (Optional) Only return targets set for this phase. Default is targets of all phases.
--- @return #table Targets Table of #TARGET objects 
+--- @param #OPERATION self
+--- @param #OPERATION.Phase Phase (Optional) Only return targets set for this phase. Default is targets of all phases.
+--- @return #table Targets Table of #TARGET objects 
 function OPERATION:GetTargets(Phase)
   local N = {}
   for _,_target in pairs(self.targets) do
@@ -849,9 +849,9 @@ function OPERATION:GetTargets(Phase)
 end
 
 --- Count targets alive.
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase (Optional) Only count targets set for this phase.
--- @return #number Number of phases
+--- @param #OPERATION self
+--- @param #OPERATION.Phase Phase (Optional) Only count targets set for this phase.
+--- @return #number Number of phases
 function OPERATION:CountTargets(Phase)
 
   local N=0
@@ -867,9 +867,9 @@ function OPERATION:CountTargets(Phase)
 end
 
 --- Assign cohort to operation.
--- @param #OPERATION self
--- @param Ops.Cohort#COHORT Cohort The cohort
--- @return #OPERATION self
+--- @param #OPERATION self
+--- @param Ops.Cohort#COHORT Cohort The cohort
+--- @return #OPERATION self
 function OPERATION:AssignCohort(Cohort)
 
   self:T(self.lid..string.format("Assiging Cohort %s to operation", Cohort.name))
@@ -878,9 +878,9 @@ function OPERATION:AssignCohort(Cohort)
 end
 
 --- Assign legion to operation. All cohorts of this legion will be assigned and are only available.
--- @param #OPERATION self
--- @param Ops.Legion#LEGION Legion The legion to be assigned.
--- @return #OPERATION self
+--- @param #OPERATION self
+--- @param Ops.Legion#LEGION Legion The legion to be assigned.
+--- @return #OPERATION self
 function OPERATION:AssignLegion(Legion)
 
   self.legions[Legion.alias]=Legion
@@ -888,9 +888,9 @@ function OPERATION:AssignLegion(Legion)
 end
 
 --- Check if a given legion is assigned to this operation. All cohorts of this legion will be checked.
--- @param #OPERATION self
--- @param Ops.Legion#LEGION Legion The legion to be assigned.
--- @return #boolean If `true`, legion is assigned to this operation.
+--- @param #OPERATION self
+--- @param Ops.Legion#LEGION Legion The legion to be assigned.
+--- @return #boolean If `true`, legion is assigned to this operation.
 function OPERATION:IsAssignedLegion(Legion)
 
   local legion=self.legions[Legion.alias]
@@ -906,9 +906,9 @@ function OPERATION:IsAssignedLegion(Legion)
 end
 
 --- Check if a given cohort is assigned to this operation.
--- @param #OPERATION self
--- @param Ops.Cohort#COHORT Cohort The Cohort.
--- @return #boolean If `true`, cohort is assigned to this operation.
+--- @param #OPERATION self
+--- @param Ops.Cohort#COHORT Cohort The Cohort.
+--- @return #boolean If `true`, cohort is assigned to this operation.
 function OPERATION:IsAssignedCohort(Cohort)
 
   local cohort=self.cohorts[Cohort.name]
@@ -933,9 +933,9 @@ function OPERATION:IsAssignedCohort(Cohort)
 end
 
 --- Check if a given cohort or legion is assigned to this operation.
--- @param #OPERATION self
--- @param Wrapper.Object#OBJECT Object The cohort or legion object.
--- @return #boolean If `true`, cohort is assigned to this operation.
+--- @param #OPERATION self
+--- @param Wrapper.Object#OBJECT Object The cohort or legion object.
+--- @return #boolean If `true`, cohort is assigned to this operation.
 function OPERATION:IsAssignedCohortOrLegion(Object)
 
   local isAssigned=nil
@@ -951,57 +951,57 @@ function OPERATION:IsAssignedCohortOrLegion(Object)
 end
 
 --- Check if operation is in FSM state "Planned".
--- @param #OPERATION self
--- @return #boolean If `true`, operation is "Planned".
+--- @param #OPERATION self
+--- @return #boolean If `true`, operation is "Planned".
 function OPERATION:IsPlanned()
   local is=self:is("Planned")
   return is
 end
 
 --- Check if operation is in FSM state "Running".
--- @param #OPERATION self
--- @return #boolean If `true`, operation is "Running".
+--- @param #OPERATION self
+--- @return #boolean If `true`, operation is "Running".
 function OPERATION:IsRunning()
   local is=self:is("Running")
   return is
 end
 
 --- Check if operation is in FSM state "Paused".
--- @param #OPERATION self
--- @return #boolean If `true`, operation is "Paused".
+--- @param #OPERATION self
+--- @return #boolean If `true`, operation is "Paused".
 function OPERATION:IsPaused()
   local is=self:is("Paused")
   return is
 end
 
 --- Check if operation is in FSM state "Over".
--- @param #OPERATION self
--- @return #boolean If `true`, operation is "Over".
+--- @param #OPERATION self
+--- @return #boolean If `true`, operation is "Over".
 function OPERATION:IsOver()
   local is=self:is("Over")
   return is
 end
 
 --- Check if operation is in FSM state "Stopped".
--- @param #OPERATION self
--- @return #boolean If `true`, operation is "Stopped".
+--- @param #OPERATION self
+--- @return #boolean If `true`, operation is "Stopped".
 function OPERATION:IsStopped()
   local is=self:is("Stopped")
   return is
 end
 
 --- Check if operation is **not** "Over" or "Stopped".
--- @param #OPERATION self
--- @return #boolean If `true`, operation is not "Over" or "Stopped".
+--- @param #OPERATION self
+--- @return #boolean If `true`, operation is not "Over" or "Stopped".
 function OPERATION:IsNotOver()
   local is=not (self:IsOver() or self:IsStopped())
   return is
 end
 
 --- Check if phase is in status "Active".
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase.
--- @return #boolean If `true`, phase is active.
+--- @param #OPERATION self
+--- @param #OPERATION.Phase Phase The phase.
+--- @return #boolean If `true`, phase is active.
 function OPERATION:IsPhaseActive(Phase)
   if Phase and Phase.status and Phase.status==OPERATION.PhaseStatus.ACTIVE then
     return true
@@ -1010,9 +1010,9 @@ function OPERATION:IsPhaseActive(Phase)
 end
 
 --- Check if a phase is the currently active one.
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase to check.
--- @return #boolean If `true`, this phase is currently active.
+--- @param #OPERATION self
+--- @param #OPERATION.Phase Phase The phase to check.
+--- @return #boolean If `true`, this phase is currently active.
 function OPERATION:IsPhaseActive(Phase)
   local phase=self:GetPhaseActive()
   if phase and phase.uid==Phase.uid then
@@ -1024,9 +1024,9 @@ function OPERATION:IsPhaseActive(Phase)
 end
 
 --- Check if phase is in status "Planned".
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase.
--- @return #boolean If `true`, phase is Planned.
+--- @param #OPERATION self
+--- @param #OPERATION.Phase Phase The phase.
+--- @return #boolean If `true`, phase is Planned.
 function OPERATION:IsPhasePlanned(Phase)
   if Phase and Phase.status and Phase.status==OPERATION.PhaseStatus.PLANNED then
     return true
@@ -1035,9 +1035,9 @@ function OPERATION:IsPhasePlanned(Phase)
 end
 
 --- Check if phase is in status "Over".
--- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase.
--- @return #boolean If `true`, phase is over.
+--- @param #OPERATION self
+--- @param #OPERATION.Phase Phase The phase.
+--- @return #boolean If `true`, phase is over.
 function OPERATION:IsPhaseOver(Phase)
   if Phase and Phase.status and Phase.status==OPERATION.PhaseStatus.OVER then
     return true
@@ -1051,10 +1051,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "Start" event.
--- @param #OPERATION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPERATION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPERATION:onafterStart(From, Event, To)
 
   -- Debug message.
@@ -1064,10 +1064,10 @@ end
 
 
 --- On after "StatusUpdate" event.
--- @param #OPERATION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPERATION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPERATION:onafterStatusUpdate(From, Event, To)
 
   -- Current abs. mission time.
@@ -1142,10 +1142,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "PhaseNext" event.
--- @param #OPERATION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPERATION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPERATION:onafterPhaseNext(From, Event, To)
 
   -- Get next phase.
@@ -1168,11 +1168,11 @@ end
 
 
 --- On after "PhaseChange" event.
--- @param #OPERATION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPERATION.Phase Phase The new phase.
+--- @param #OPERATION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPERATION.Phase Phase The new phase.
 function OPERATION:onafterPhaseChange(From, Event, To, Phase)
 
   -- Previous phase (if any).
@@ -1197,11 +1197,11 @@ function OPERATION:onafterPhaseChange(From, Event, To, Phase)
 end
 
 --- On after "PhaseOver" event.
--- @param #OPERATION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPERATION.Phase Phase The phase that is over.
+--- @param #OPERATION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPERATION.Phase Phase The phase that is over.
 function OPERATION:onafterPhaseOver(From, Event, To, Phase)
   
   -- Remove all non-persistant condition functions.
@@ -1210,12 +1210,12 @@ function OPERATION:onafterPhaseOver(From, Event, To, Phase)
 end
 
 --- On after "BranchSwitch" event.
--- @param #OPERATION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #OPERATION.Branch Branch The new branch.
--- @param #OPERATION.Phase Phase The phase.
+--- @param #OPERATION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param #OPERATION.Branch Branch The new branch.
+--- @param #OPERATION.Phase Phase The phase.
 function OPERATION:onafterBranchSwitch(From, Event, To, Branch, Phase)
 
   -- Debug info.
@@ -1231,10 +1231,10 @@ function OPERATION:onafterBranchSwitch(From, Event, To, Branch, Phase)
 end
 
 --- On after "Over" event.
--- @param #OPERATION self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #OPERATION self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function OPERATION:onafterOver(From, Event, To)
 
   -- Debug message.
@@ -1262,7 +1262,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check phases.
--- @param #OPERATION self
+--- @param #OPERATION self
 function OPERATION:_CheckPhases()
 
   -- Currently active phase.
@@ -1335,9 +1335,9 @@ function OPERATION:_CheckPhases()
 end
 
 --- Create a new phase object.
--- @param #OPERATION self
--- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
--- @return #OPERATION.Phase Phase table object.
+--- @param #OPERATION self
+--- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
+--- @return #OPERATION.Phase Phase table object.
 function OPERATION:_CreatePhase(Name)
 
   -- Increase phase counter.
@@ -1355,9 +1355,9 @@ function OPERATION:_CreatePhase(Name)
 end
 
 --- Create a new branch object.
--- @param #OPERATION self
--- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
--- @return #OPERATION.Branch Branch table object.
+--- @param #OPERATION self
+--- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
+--- @return #OPERATION.Branch Branch table object.
 function OPERATION:_CreateBranch(Name)
 
   -- Increase phase counter.

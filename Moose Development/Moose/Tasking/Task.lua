@@ -216,13 +216,13 @@
 -- @image MOOSE.JPG
 
 --- @type TASK
--- @field Core.Scheduler#SCHEDULER TaskScheduler
--- @field Tasking.Mission#MISSION Mission
--- @field Core.Set#SET_GROUP SetGroup The Set of Groups assigned to the Task
--- @field Core.Fsm#FSM_PROCESS FsmTemplate
--- @field Tasking.Mission#MISSION Mission
--- @field Tasking.CommandCenter#COMMANDCENTER CommandCenter
--- @field Tasking.TaskInfo#TASKINFO TaskInfo
+--- @field Core.Scheduler#SCHEDULER TaskScheduler
+--- @field Tasking.Mission#MISSION Mission
+--- @field Core.Set#SET_GROUP SetGroup The Set of Groups assigned to the Task
+--- @field Core.Fsm#FSM_PROCESS FsmTemplate
+--- @field Tasking.Mission#MISSION Mission
+--- @field Tasking.CommandCenter#COMMANDCENTER CommandCenter
+--- @field Tasking.TaskInfo#TASKINFO TaskInfo
 -- @extends Core.Fsm#FSM_TASK
 
 --- Governs the main engine to administer human taskings.
@@ -326,7 +326,7 @@
 -- @{#TASK.SetBriefing}() method.
 -- 
 -- 
--- @field #TASK TASK
+--- @field #TASK TASK
 -- 
 TASK = {
   ClassName = "TASK",
@@ -346,80 +346,80 @@ TASK = {
 
 --- FSM PlayerAborted event handler prototype for TASK.
 -- @function [parent=#TASK] OnAfterPlayerAborted
--- @param #TASK self
--- @param Wrapper.Unit#UNIT PlayerUnit The Unit of the Player when he went back to spectators or left the mission.
--- @param #string PlayerName The name of the Player.
+--- @param #TASK self
+--- @param Wrapper.Unit#UNIT PlayerUnit The Unit of the Player when he went back to spectators or left the mission.
+--- @param #string PlayerName The name of the Player.
 
 --- FSM PlayerCrashed event handler prototype for TASK.
 -- @function [parent=#TASK] OnAfterPlayerCrashed
--- @param #TASK self
--- @param Wrapper.Unit#UNIT PlayerUnit The Unit of the Player when he crashed in the mission.
--- @param #string PlayerName The name of the Player.
+--- @param #TASK self
+--- @param Wrapper.Unit#UNIT PlayerUnit The Unit of the Player when he crashed in the mission.
+--- @param #string PlayerName The name of the Player.
 
 --- FSM PlayerDead event handler prototype for TASK.
 -- @function [parent=#TASK] OnAfterPlayerDead
--- @param #TASK self
--- @param Wrapper.Unit#UNIT PlayerUnit The Unit of the Player when he died in the mission.
--- @param #string PlayerName The name of the Player.
+--- @param #TASK self
+--- @param Wrapper.Unit#UNIT PlayerUnit The Unit of the Player when he died in the mission.
+--- @param #string PlayerName The name of the Player.
 
 --- FSM Fail synchronous event function for TASK.
 -- Use this event to Fail the Task.
 -- @function [parent=#TASK] Fail
--- @param #TASK self
+--- @param #TASK self
 
 --- FSM Fail asynchronous event function for TASK.
 -- Use this event to Fail the Task.
 -- @function [parent=#TASK] __Fail
--- @param #TASK self
+--- @param #TASK self
 
 --- FSM Abort synchronous event function for TASK.
 -- Use this event to Abort the Task.
 -- @function [parent=#TASK] Abort
--- @param #TASK self
+--- @param #TASK self
 
 --- FSM Abort asynchronous event function for TASK.
 -- Use this event to Abort the Task.
 -- @function [parent=#TASK] __Abort
--- @param #TASK self
+--- @param #TASK self
 
 --- FSM Success synchronous event function for TASK.
 -- Use this event to make the Task a Success.
 -- @function [parent=#TASK] Success
--- @param #TASK self
+--- @param #TASK self
 
 --- FSM Success asynchronous event function for TASK.
 -- Use this event to make the Task a Success.
 -- @function [parent=#TASK] __Success
--- @param #TASK self
+--- @param #TASK self
 
 --- FSM Cancel synchronous event function for TASK.
 -- Use this event to Cancel the Task.
 -- @function [parent=#TASK] Cancel
--- @param #TASK self
+--- @param #TASK self
 
 --- FSM Cancel asynchronous event function for TASK.
 -- Use this event to Cancel the Task.
 -- @function [parent=#TASK] __Cancel
--- @param #TASK self
+--- @param #TASK self
 
 --- FSM Replan synchronous event function for TASK.
 -- Use this event to Replan the Task.
 -- @function [parent=#TASK] Replan
--- @param #TASK self
+--- @param #TASK self
 
 --- FSM Replan asynchronous event function for TASK.
 -- Use this event to Replan the Task.
 -- @function [parent=#TASK] __Replan
--- @param #TASK self
+--- @param #TASK self
 
 
 --- Instantiates a new TASK. Should never be used. Interface Class.
--- @param #TASK self
--- @param Tasking.Mission#MISSION Mission The mission wherein the Task is registered.
--- @param Core.Set#SET_GROUP SetGroupAssign The set of groups for which the Task can be assigned.
--- @param #string TaskName The name of the Task
--- @param #string TaskType The type of the Task
--- @return #TASK self
+--- @param #TASK self
+--- @param Tasking.Mission#MISSION Mission The mission wherein the Task is registered.
+--- @param Core.Set#SET_GROUP SetGroupAssign The set of groups for which the Task can be assigned.
+--- @param #string TaskName The name of the Task
+--- @param #string TaskType The type of the Task
+--- @return #TASK self
 function TASK:New( Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing )
 
   local self = BASE:Inherit( self, FSM_TASK:New( TaskName ) ) -- Tasking.Task#TASK
@@ -506,8 +506,8 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing )
 end
 
 --- Get the Task FSM Process Template
--- @param #TASK self
--- @return Core.Fsm#FSM_PROCESS
+--- @param #TASK self
+--- @return Core.Fsm#FSM_PROCESS
 function TASK:GetUnitProcess( TaskUnit )
 
   if TaskUnit then
@@ -519,8 +519,8 @@ function TASK:GetUnitProcess( TaskUnit )
 end
 
 --- Sets the Task FSM Process Template
--- @param #TASK self
--- @param Core.Fsm#FSM_PROCESS
+--- @param #TASK self
+--- @param Core.Fsm#FSM_PROCESS
 function TASK:SetUnitProcess( FsmTemplate )
 
   self.FsmTemplate = FsmTemplate
@@ -530,10 +530,10 @@ end
 -- For each Group within the Task, the Unit is checked if it can join the Task.
 -- If the Unit was not part of the Task, false is returned.
 -- If the Unit is part of the Task, true is returned.
--- @param #TASK self
--- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
--- @param Wrapper.Group#GROUP PlayerGroup The GROUP of the player joining the Mission.
--- @return #boolean true if Unit is part of the Task.
+--- @param #TASK self
+--- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
+--- @param Wrapper.Group#GROUP PlayerGroup The GROUP of the player joining the Mission.
+--- @return #boolean true if Unit is part of the Task.
 function TASK:JoinUnit( PlayerUnit, PlayerGroup )
   self:F( { PlayerUnit = PlayerUnit, PlayerGroup = PlayerGroup } )
   
@@ -564,9 +564,9 @@ function TASK:JoinUnit( PlayerUnit, PlayerGroup )
 end
 
 --- A group rejecting a planned task.
--- @param #TASK self
--- @param Wrapper.Group#GROUP PlayerGroup The group rejecting the task.
--- @return #TASK
+--- @param #TASK self
+--- @param Wrapper.Group#GROUP PlayerGroup The group rejecting the task.
+--- @return #TASK
 function TASK:RejectGroup( PlayerGroup )
   
   local PlayerGroups = self:GetGroups()
@@ -596,9 +596,9 @@ end
 
 
 --- A group aborting the task.
--- @param #TASK self
--- @param Wrapper.Group#GROUP PlayerGroup The group aborting the task.
--- @return #TASK
+--- @param #TASK self
+--- @param Wrapper.Group#GROUP PlayerGroup The group aborting the task.
+--- @return #TASK
 function TASK:AbortGroup( PlayerGroup )
   
   local PlayerGroups = self:GetGroups()
@@ -644,9 +644,9 @@ end
 
 
 --- A group crashing and thus aborting from the task.
--- @param #TASK self
--- @param Wrapper.Group#GROUP PlayerGroup The group aborting the task.
--- @return #TASK
+--- @param #TASK self
+--- @param Wrapper.Group#GROUP PlayerGroup The group aborting the task.
+--- @return #TASK
 function TASK:CrashGroup( PlayerGroup )
   self:F( { PlayerGroup = PlayerGroup } )
   
@@ -695,8 +695,8 @@ end
 
 
 --- Gets the Mission to where the TASK belongs.
--- @param #TASK self
--- @return Tasking.Mission#MISSION
+--- @param #TASK self
+--- @return Tasking.Mission#MISSION
 function TASK:GetMission()
 
   return self.Mission
@@ -704,8 +704,8 @@ end
 
 
 --- Gets the SET_GROUP assigned to the TASK.
--- @param #TASK self
--- @return Core.Set#SET_GROUP
+--- @param #TASK self
+--- @return Core.Set#SET_GROUP
 function TASK:GetGroups()
 
   return self.SetGroup
@@ -713,9 +713,9 @@ end
 
 
 --- Gets the SET_GROUP assigned to the TASK.
--- @param #TASK self
--- @param Core.Set#SET_GROUP GroupSet
--- @return Core.Set#SET_GROUP
+--- @param #TASK self
+--- @param Core.Set#SET_GROUP GroupSet
+--- @return Core.Set#SET_GROUP
 function TASK:AddGroups( GroupSet )
 
   GroupSet = GroupSet or SET_GROUP:New()
@@ -889,9 +889,9 @@ end
 
 
 ---
--- @param #TASK self
--- @param Wrapper.Group#GROUP FindGroup
--- @return #boolean
+--- @param #TASK self
+--- @param Wrapper.Group#GROUP FindGroup
+--- @return #boolean
 function TASK:HasGroup( FindGroup )
 
   local SetAttackGroup = self:GetGroups()
@@ -900,9 +900,9 @@ function TASK:HasGroup( FindGroup )
 end
 
 --- Assign the @{#TASK} to an alive @{Wrapper.Unit}.
--- @param #TASK self
--- @param Wrapper.Unit#UNIT TaskUnit
--- @return #TASK self
+--- @param #TASK self
+--- @param Wrapper.Unit#UNIT TaskUnit
+--- @return #TASK self
 function TASK:AssignToUnit( TaskUnit )
   self:F( TaskUnit:GetName() )
   
@@ -919,9 +919,9 @@ function TASK:AssignToUnit( TaskUnit )
 end
 
 --- UnAssign the @{#TASK} from an alive @{Wrapper.Unit}.
--- @param #TASK self
--- @param Wrapper.Unit#UNIT TaskUnit
--- @return #TASK self
+--- @param #TASK self
+--- @param Wrapper.Unit#UNIT TaskUnit
+--- @return #TASK self
 function TASK:UnAssignFromUnit( TaskUnit )
   self:F( TaskUnit:GetName() )
   
@@ -933,9 +933,9 @@ function TASK:UnAssignFromUnit( TaskUnit )
 end
 
 --- Sets the TimeOut for the @{#TASK}. If @{#TASK} stayed planned for longer than TimeOut, it gets into Cancelled status.
--- @param #TASK self
--- @param #integer Timer in seconds
--- @return #TASK self
+--- @param #TASK self
+--- @param #integer Timer in seconds
+--- @return #TASK self
 function TASK:SetTimeOut ( Timer )
   self:F( Timer )
   self.TimeOut = Timer
@@ -944,7 +944,7 @@ function TASK:SetTimeOut ( Timer )
 end
 
 --- Send a message of the @{#TASK} to the assigned @{Wrapper.Group}s.
--- @param #TASK self
+--- @param #TASK self
 function TASK:MessageToGroups( Message )
   self:F( { Message = Message } )
 
@@ -961,7 +961,7 @@ end
 
 
 --- Send the briefing message of the @{#TASK} to the assigned @{Wrapper.Group}s.
--- @param #TASK self
+--- @param #TASK self
 function TASK:SendBriefingToAssignedGroups()
   self:F2()
   
@@ -976,7 +976,7 @@ end
 
 
 --- UnAssign the @{#TASK} from the @{Wrapper.Group}s.
--- @param #TASK self
+--- @param #TASK self
 function TASK:UnAssignFromGroups()
   self:F2()
   
@@ -992,8 +992,8 @@ end
 
 
 --- Returns if the @{#TASK} has still alive and assigned Units.
--- @param #TASK self
--- @return #boolean
+--- @param #TASK self
+--- @return #boolean
 function TASK:HasAliveUnits()
   self:F()
   
@@ -1017,9 +1017,9 @@ function TASK:HasAliveUnits()
 end
 
 --- Set the menu options of the @{#TASK} to all the groups in the SetGroup.
--- @param #TASK self
--- @param #number MenuTime
--- @return #TASK
+--- @param #TASK self
+--- @param #number MenuTime
+--- @return #TASK
 function TASK:SetMenu( MenuTime ) --R2.1 Mission Reports and Task Reports added. Fixes issue #424.
   self:F( { self:GetName(), MenuTime } )
 
@@ -1043,9 +1043,9 @@ end
 
 
 --- Set the Menu for a Group
--- @param #TASK self
--- @param #number MenuTime
--- @return #TASK
+--- @param #TASK self
+--- @param #number MenuTime
+--- @return #TASK
 function TASK:SetMenuForGroup( TaskGroup, MenuTime )
 
   if self:IsStatePlanned() or self:IsStateAssigned() then
@@ -1058,11 +1058,11 @@ end
 
 
 --- Set the planned menu option of the @{#TASK}.
--- @param #TASK self
--- @param Wrapper.Group#GROUP TaskGroup
--- @param #string MenuText The menu text.
--- @param #number MenuTime
--- @return #TASK self
+--- @param #TASK self
+--- @param Wrapper.Group#GROUP TaskGroup
+--- @param #string MenuText The menu text.
+--- @param #number MenuTime
+--- @return #TASK self
 function TASK:SetPlannedMenuForGroup( TaskGroup, MenuTime )
   self:F( TaskGroup:GetName() )
 
@@ -1093,10 +1093,10 @@ function TASK:SetPlannedMenuForGroup( TaskGroup, MenuTime )
 end
 
 --- Set the assigned menu options of the @{#TASK}.
--- @param #TASK self
--- @param Wrapper.Group#GROUP TaskGroup
--- @param #number MenuTime
--- @return #TASK self
+--- @param #TASK self
+--- @param Wrapper.Group#GROUP TaskGroup
+--- @param #number MenuTime
+--- @return #TASK self
 function TASK:SetAssignedMenuForGroup( TaskGroup, MenuTime )
   self:F( { TaskGroup:GetName(), MenuTime } )
 
@@ -1128,9 +1128,9 @@ function TASK:SetAssignedMenuForGroup( TaskGroup, MenuTime )
 end
 
 --- Remove the menu options of the @{#TASK} to all the groups in the SetGroup.
--- @param #TASK self
--- @param #number MenuTime
--- @return #TASK
+--- @param #TASK self
+--- @param #number MenuTime
+--- @return #TASK
 function TASK:RemoveMenu( MenuTime )
   self:F( { self:GetName(), MenuTime } )
 
@@ -1146,10 +1146,10 @@ end
 
 
 --- Remove the menu option of the @{#TASK} for a @{Wrapper.Group}.
--- @param #TASK self
--- @param Wrapper.Group#GROUP TaskGroup
--- @param #number MenuTime
--- @return #TASK self
+--- @param #TASK self
+--- @param Wrapper.Group#GROUP TaskGroup
+--- @param #number MenuTime
+--- @return #TASK self
 function TASK:RefreshMenus( TaskGroup, MenuTime )
   self:F( { TaskGroup:GetName(), MenuTime } )
 
@@ -1177,10 +1177,10 @@ function TASK:RefreshMenus( TaskGroup, MenuTime )
 end
 
 --- Remove the assigned menu option of the @{#TASK} for a @{Wrapper.Group}.
--- @param #TASK self
--- @param Wrapper.Group#GROUP TaskGroup
--- @param #number MenuTime
--- @return #TASK self
+--- @param #TASK self
+--- @param Wrapper.Group#GROUP TaskGroup
+--- @param #number MenuTime
+--- @return #TASK self
 function TASK:RemoveAssignedMenuForGroup( TaskGroup )
   self:F()
 
@@ -1195,7 +1195,7 @@ function TASK:RemoveAssignedMenuForGroup( TaskGroup )
 end
 
 --- @param #TASK self
--- @param Wrapper.Group#GROUP TaskGroup
+--- @param Wrapper.Group#GROUP TaskGroup
 function TASK:MenuAssignToGroup( TaskGroup )
 
   self:F( "Join Task menu selected")
@@ -1204,7 +1204,7 @@ function TASK:MenuAssignToGroup( TaskGroup )
 end
 
 --- @param #TASK self
--- @param Wrapper.Group#GROUP TaskGroup
+--- @param Wrapper.Group#GROUP TaskGroup
 function TASK:MenuMarkToGroup( TaskGroup )
   self:F()
 
@@ -1234,8 +1234,8 @@ function TASK:MenuMarkToGroup( TaskGroup )
 end
 
 --- Report the task status.
--- @param #TASK self
--- @param Wrapper.Group#GROUP TaskGroup
+--- @param #TASK self
+--- @param Wrapper.Group#GROUP TaskGroup
 function TASK:MenuTaskStatus( TaskGroup )
 
   if TaskGroup:IsAlive() then
@@ -1249,7 +1249,7 @@ function TASK:MenuTaskStatus( TaskGroup )
 end
 
 --- Report the task status.
--- @param #TASK self
+--- @param #TASK self
 function TASK:MenuFlashTaskStatus( TaskGroup, Flash )
 
   self.FlashTaskStatus = Flash
@@ -1267,7 +1267,7 @@ function TASK:MenuFlashTaskStatus( TaskGroup, Flash )
 end
 
 --- Report the task status.
--- @param #TASK self
+--- @param #TASK self
 function TASK:MenuTaskAbort( TaskGroup )
 
   self:AbortGroup( TaskGroup )
@@ -1276,15 +1276,15 @@ end
 
 
 --- Returns the @{#TASK} name.
--- @param #TASK self
--- @return #string TaskName
+--- @param #TASK self
+--- @return #string TaskName
 function TASK:GetTaskName()
   return self.TaskName
 end
 
 --- Returns the @{#TASK} briefing.
--- @param #TASK self
--- @return #string Task briefing.
+--- @param #TASK self
+--- @return #string Task briefing.
 function TASK:GetTaskBriefing()
   return self.TaskBriefing
 end
@@ -1293,9 +1293,9 @@ end
 
 
 --- Get the default or currently assigned @{Core.Fsm#FSM_PROCESS} template with key ProcessName.
--- @param #TASK self
--- @param #string ProcessName
--- @return Core.Fsm#FSM_PROCESS
+--- @param #TASK self
+--- @param #string ProcessName
+--- @return Core.Fsm#FSM_PROCESS
 function TASK:GetProcessTemplate( ProcessName )
 
   local ProcessTemplate = self.ProcessClasses[ProcessName]
@@ -1307,9 +1307,9 @@ end
 
 -- TODO: Obsolete?
 --- Fail processes from @{#TASK} with key @{Wrapper.Unit}.
--- @param #TASK self
--- @param #string TaskUnitName
--- @return #TASK self
+--- @param #TASK self
+--- @param #string TaskUnitName
+--- @return #TASK self
 function TASK:FailProcesses( TaskUnitName )
 
   for ProcessID, ProcessData in pairs( self.Processes[TaskUnitName] ) do
@@ -1319,10 +1319,10 @@ function TASK:FailProcesses( TaskUnitName )
 end
 
 --- Add a FiniteStateMachine to @{#TASK} with key @{Wrapper.Unit}.
--- @param #TASK self
--- @param Wrapper.Unit#UNIT TaskUnit
--- @param Core.Fsm#FSM_PROCESS Fsm
--- @return #TASK self
+--- @param #TASK self
+--- @param Wrapper.Unit#UNIT TaskUnit
+--- @param Core.Fsm#FSM_PROCESS Fsm
+--- @return #TASK self
 function TASK:SetStateMachine( TaskUnit, Fsm )
   self:F2( { TaskUnit, self.Fsm[TaskUnit] ~= nil, Fsm:GetClassNameAndID() } )
 
@@ -1332,9 +1332,9 @@ function TASK:SetStateMachine( TaskUnit, Fsm )
 end
 
 --- Gets the FiniteStateMachine of @{#TASK} with key @{Wrapper.Unit}.
--- @param #TASK self
--- @param Wrapper.Unit#UNIT TaskUnit
--- @return Core.Fsm#FSM_PROCESS
+--- @param #TASK self
+--- @param Wrapper.Unit#UNIT TaskUnit
+--- @return Core.Fsm#FSM_PROCESS
 function TASK:GetStateMachine( TaskUnit )
   self:F2( { TaskUnit, self.Fsm[TaskUnit] ~= nil } )
 
@@ -1342,9 +1342,9 @@ function TASK:GetStateMachine( TaskUnit )
 end
 
 --- Remove FiniteStateMachines from @{#TASK} with key @{Wrapper.Unit}.
--- @param #TASK self
--- @param Wrapper.Unit#UNIT TaskUnit
--- @return #TASK self
+--- @param #TASK self
+--- @param Wrapper.Unit#UNIT TaskUnit
+--- @return #TASK self
 function TASK:RemoveStateMachine( TaskUnit )
   self:F( { TaskUnit = TaskUnit:GetName(), HasFsm = ( self.Fsm[TaskUnit] ~= nil ) } )
 
@@ -1366,9 +1366,9 @@ end
 
 
 --- Checks if there is a FiniteStateMachine assigned to @{Wrapper.Unit} for @{#TASK}.
--- @param #TASK self
--- @param Wrapper.Unit#UNIT TaskUnit
--- @return #TASK self
+--- @param #TASK self
+--- @param Wrapper.Unit#UNIT TaskUnit
+--- @return #TASK self
 function TASK:HasStateMachine( TaskUnit )
   self:F( { TaskUnit, self.Fsm[TaskUnit] ~= nil } )
 
@@ -1377,16 +1377,16 @@ end
 
 
 --- Gets the Scoring of the task
--- @param #TASK self
--- @return Functional.Scoring#SCORING Scoring
+--- @param #TASK self
+--- @return Functional.Scoring#SCORING Scoring
 function TASK:GetScoring()
   return self.Mission:GetScoring()
 end
 
 
 --- Gets the Task Index, which is a combination of the Task type, the Task name.
--- @param #TASK self
--- @return #string The Task ID
+--- @param #TASK self
+--- @return #string The Task ID
 function TASK:GetTaskIndex()
 
   local TaskType = self:GetType()
@@ -1396,162 +1396,162 @@ function TASK:GetTaskIndex()
 end
 
 --- Sets the Name of the Task
--- @param #TASK self
--- @param #string TaskName
+--- @param #TASK self
+--- @param #string TaskName
 function TASK:SetName( TaskName )
   self.TaskName = TaskName
 end
 
 --- Gets the Name of the Task
--- @param #TASK self
--- @return #string The Task Name
+--- @param #TASK self
+--- @return #string The Task Name
 function TASK:GetName()
   return self.TaskName
 end
 
 --- Sets the Type of the Task
--- @param #TASK self
--- @param #string TaskType
+--- @param #TASK self
+--- @param #string TaskType
 function TASK:SetType( TaskType )
   self.TaskType = TaskType
 end
 
 --- Gets the Type of the Task
--- @param #TASK self
--- @return #string TaskType
+--- @param #TASK self
+--- @return #string TaskType
 function TASK:GetType()
   return self.TaskType
 end
 
 --- Sets the ID of the Task
--- @param #TASK self
--- @param #string TaskID
+--- @param #TASK self
+--- @param #string TaskID
 function TASK:SetID( TaskID )
   self.TaskID = TaskID
 end
 
 --- Gets the ID of the Task
--- @param #TASK self
--- @return #string TaskID
+--- @param #TASK self
+--- @return #string TaskID
 function TASK:GetID()
   return self.TaskID
 end
 
 
 --- Sets a @{#TASK} to status **Success**.
--- @param #TASK self
+--- @param #TASK self
 function TASK:StateSuccess()
   self:SetState( self, "State", "Success" )
   return self
 end
 
 --- Is the @{#TASK} status **Success**.
--- @param #TASK self
+--- @param #TASK self
 function TASK:IsStateSuccess()
   return self:Is( "Success" )
 end
 
 --- Sets a @{#TASK} to status **Failed**.
--- @param #TASK self
+--- @param #TASK self
 function TASK:StateFailed()
   self:SetState( self, "State", "Failed" )
   return self
 end
 
 --- Is the @{#TASK} status **Failed**.
--- @param #TASK self
+--- @param #TASK self
 function TASK:IsStateFailed()
   return self:Is( "Failed" )
 end
 
 --- Sets a @{#TASK} to status **Planned**.
--- @param #TASK self
+--- @param #TASK self
 function TASK:StatePlanned()
   self:SetState( self, "State", "Planned" )
   return self
 end
 
 --- Is the @{#TASK} status **Planned**.
--- @param #TASK self
+--- @param #TASK self
 function TASK:IsStatePlanned()
   return self:Is( "Planned" )
 end
 
 --- Sets a @{#TASK} to status **Aborted**.
--- @param #TASK self
+--- @param #TASK self
 function TASK:StateAborted()
   self:SetState( self, "State", "Aborted" )
   return self
 end
 
 --- Is the @{#TASK} status **Aborted**.
--- @param #TASK self
+--- @param #TASK self
 function TASK:IsStateAborted()
   return self:Is( "Aborted" )
 end
 
 --- Sets a @{#TASK} to status **Cancelled**.
--- @param #TASK self
+--- @param #TASK self
 function TASK:StateCancelled()
   self:SetState( self, "State", "Cancelled" )
   return self
 end
 
 --- Is the @{#TASK} status **Cancelled**.
--- @param #TASK self
+--- @param #TASK self
 function TASK:IsStateCancelled()
   return self:Is( "Cancelled" )
 end
 
 --- Sets a @{#TASK} to status **Assigned**.
--- @param #TASK self
+--- @param #TASK self
 function TASK:StateAssigned()
   self:SetState( self, "State", "Assigned" )
   return self
 end
 
 --- Is the @{#TASK} status **Assigned**.
--- @param #TASK self
+--- @param #TASK self
 function TASK:IsStateAssigned()
   return self:Is( "Assigned" )
 end
 
 --- Sets a @{#TASK} to status **Hold**.
--- @param #TASK self
+--- @param #TASK self
 function TASK:StateHold()
   self:SetState( self, "State", "Hold" )
   return self
 end
 
 --- Is the @{#TASK} status **Hold**.
--- @param #TASK self
+--- @param #TASK self
 function TASK:IsStateHold()
   return self:Is( "Hold" )
 end
 
 --- Sets a @{#TASK} to status **Replanned**.
--- @param #TASK self
+--- @param #TASK self
 function TASK:StateReplanned()
   self:SetState( self, "State", "Replanned" )
   return self
 end
 
 --- Is the @{#TASK} status **Replanned**.
--- @param #TASK self
+--- @param #TASK self
 function TASK:IsStateReplanned()
   return self:Is( "Replanned" )
 end
 
 --- Gets the @{#TASK} status.
--- @param #TASK self
+--- @param #TASK self
 function TASK:GetStateString()
   return self:GetState( self, "State" )
 end
 
 --- Sets a @{#TASK} briefing.
--- @param #TASK self
--- @param #string TaskBriefing
--- @return #TASK self
+--- @param #TASK self
+--- @param #string TaskBriefing
+--- @return #TASK self
 function TASK:SetBriefing( TaskBriefing )
   self:F(TaskBriefing)
   self.TaskBriefing = TaskBriefing
@@ -1559,8 +1559,8 @@ function TASK:SetBriefing( TaskBriefing )
 end
 
 --- Gets the @{#TASK} briefing.
--- @param #TASK self
--- @return #string The briefing text.
+--- @param #TASK self
+--- @return #string The briefing text.
 function TASK:GetBriefing()
   return self.TaskBriefing
 end
@@ -1569,10 +1569,10 @@ end
 
 
 --- FSM function for a TASK
--- @param #TASK self
--- @param #string Event
--- @param #string From
--- @param #string To
+--- @param #TASK self
+--- @param #string Event
+--- @param #string From
+--- @param #string To
 function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
 
   --- This test is required, because the state transition will be fired also when the state does not change in case of an event.  
@@ -1609,10 +1609,10 @@ end
 
 
 --- FSM function for a TASK
--- @param #TASK self
--- @param #string Event
--- @param #string From
--- @param #string To
+--- @param #TASK self
+--- @param #string Event
+--- @param #string From
+--- @param #string To
 function TASK:onenterSuccess( From, Event, To )
 
   self:F( { "<-> Task Replanned", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
@@ -1627,10 +1627,10 @@ end
 
 
 --- FSM function for a TASK
--- @param #TASK self
--- @param #string From
--- @param #string Event
--- @param #string To
+--- @param #TASK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
 function TASK:onenterAborted( From, Event, To )
 
   self:F( { "<-- Task Aborted", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
@@ -1646,10 +1646,10 @@ end
 
 
 --- FSM function for a TASK
--- @param #TASK self
--- @param #string From
--- @param #string Event
--- @param #string To
+--- @param #TASK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
 function TASK:onenterCancelled( From, Event, To )
 
   self:F( { "<-- Task Cancelled", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
@@ -1664,10 +1664,10 @@ function TASK:onenterCancelled( From, Event, To )
 end
 
 --- FSM function for a TASK
--- @param #TASK self
--- @param #string From
--- @param #string Event
--- @param #string To
+--- @param #TASK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
 function TASK:onafterReplan( From, Event, To )
 
   self:F( { "Task Replanned", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
@@ -1680,10 +1680,10 @@ function TASK:onafterReplan( From, Event, To )
 end
 
 --- FSM function for a TASK
--- @param #TASK self
--- @param #string From
--- @param #string Event
--- @param #string To
+--- @param #TASK self
+--- @param #string From
+--- @param #string Event
+--- @param #string To
 function TASK:onenterFailed( From, Event, To )
 
   self:F( { "Task Failed", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
@@ -1695,10 +1695,10 @@ function TASK:onenterFailed( From, Event, To )
 end
 
 --- FSM function for a TASK
--- @param #TASK self
--- @param #string Event
--- @param #string From
--- @param #string To
+--- @param #TASK self
+--- @param #string Event
+--- @param #string From
+--- @param #string To
 function TASK:onstatechange( From, Event, To )
 
   if self:IsTrace() then
@@ -1716,10 +1716,10 @@ function TASK:onstatechange( From, Event, To )
 end
 
 --- FSM function for a TASK
--- @param #TASK self
--- @param #string Event
--- @param #string From
--- @param #string To
+--- @param #TASK self
+--- @param #string Event
+--- @param #string From
+--- @param #string To
 function TASK:onenterPlanned( From, Event, To)
   if not self.TimeOut == 0 then 
     self.__TimeOut( self.TimeOut )
@@ -1727,10 +1727,10 @@ function TASK:onenterPlanned( From, Event, To)
 end
 
 --- FSM function for a TASK
--- @param #TASK self
--- @param #string Event
--- @param #string From
--- @param #string To
+--- @param #TASK self
+--- @param #string Event
+--- @param #string From
+--- @param #string To
 function TASK:onbeforeTimeOut( From, Event, To )
   if From == "Planned" then
     self:RemoveMenu()
@@ -1785,9 +1785,9 @@ do -- Reporting
 
 --- Create a summary report of the Task.
 -- List the Task Name and Status
--- @param #TASK self
--- @param Wrapper.Group#GROUP ReportGroup
--- @return #string
+--- @param #TASK self
+--- @param Wrapper.Group#GROUP ReportGroup
+--- @return #string
 function TASK:ReportSummary( ReportGroup ) 
 
   self:UpdateTaskInfo( self.DetectedItem )
@@ -1807,8 +1807,8 @@ end
 
 --- Create an overiew report of the Task.
 -- List the Task Name and Status
--- @param #TASK self
--- @return #string
+--- @param #TASK self
+--- @return #string
 function TASK:ReportOverview( ReportGroup )
 
   self:UpdateTaskInfo( self.DetectedItem )
@@ -1823,8 +1823,8 @@ function TASK:ReportOverview( ReportGroup )
 end
 
 --- Create a count of the players in the Task.
--- @param #TASK self
--- @return #number The total number of players in the task.
+--- @param #TASK self
+--- @return #number The total number of players in the task.
 function TASK:GetPlayerCount() --R2.1 Get a count of the players.
 
   local PlayerCount = 0
@@ -1845,8 +1845,8 @@ end
 
 
 --- Create a list of the players in the Task.
--- @param #TASK self
--- @return #map<#string,Wrapper.Group#GROUP> A map of the players
+--- @param #TASK self
+--- @return #map<#string,Wrapper.Group#GROUP> A map of the players
 function TASK:GetPlayerNames() --R2.1 Get a map of the players.
 
   local PlayerNameMap = {}
@@ -1870,9 +1870,9 @@ end
 
 --- Create a detailed report of the Task.
 -- List the Task Status, and the Players assigned to the Task.
--- @param #TASK self
--- @param Wrapper.Group#GROUP TaskGroup
--- @return #string
+--- @param #TASK self
+--- @param Wrapper.Group#GROUP TaskGroup
+--- @return #string
 function TASK:ReportDetails( ReportGroup )
 
   self:UpdateTaskInfo( self.DetectedItem )

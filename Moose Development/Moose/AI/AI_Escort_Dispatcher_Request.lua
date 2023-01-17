@@ -23,7 +23,7 @@
 -- 
 -- ===
 --   
--- @field #AI_ESCORT_DISPATCHER_REQUEST
+--- @field #AI_ESCORT_DISPATCHER_REQUEST
 AI_ESCORT_DISPATCHER_REQUEST = {
   ClassName = "AI_ESCORT_DISPATCHER_REQUEST",
 }
@@ -33,13 +33,13 @@ AI_ESCORT_DISPATCHER_REQUEST.AI_Escorts = {}
 
 
 --- Creates a new AI_ESCORT_DISPATCHER_REQUEST object.
--- @param #AI_ESCORT_DISPATCHER_REQUEST self
--- @param Core.Set#SET_GROUP CarrierSet The set of @{Wrapper.Group#GROUP} objects of carriers for which escorts are requested. 
--- @param Core.Spawn#SPAWN EscortSpawn The spawn object that will spawn in the Escorts.
--- @param Wrapper.Airbase#AIRBASE EscortAirbase The airbase where the escorts are spawned.
--- @param #string EscortName Name of the escort, which will also be the name of the escort menu.
--- @param #string EscortBriefing A text showing the briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
--- @return #AI_ESCORT_DISPATCHER_REQUEST
+--- @param #AI_ESCORT_DISPATCHER_REQUEST self
+--- @param Core.Set#SET_GROUP CarrierSet The set of @{Wrapper.Group#GROUP} objects of carriers for which escorts are requested. 
+--- @param Core.Spawn#SPAWN EscortSpawn The spawn object that will spawn in the Escorts.
+--- @param Wrapper.Airbase#AIRBASE EscortAirbase The airbase where the escorts are spawned.
+--- @param #string EscortName Name of the escort, which will also be the name of the escort menu.
+--- @param #string EscortBriefing A text showing the briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
+--- @return #AI_ESCORT_DISPATCHER_REQUEST
 function AI_ESCORT_DISPATCHER_REQUEST:New( CarrierSet, EscortSpawn, EscortAirbase, EscortName, EscortBriefing )
 
   local self = BASE:Inherit( self, FSM:New() ) -- #AI_ESCORT_DISPATCHER_REQUEST
@@ -76,7 +76,7 @@ function AI_ESCORT_DISPATCHER_REQUEST:onafterStart( From, Event, To )
 end
 
 --- @param #AI_ESCORT_DISPATCHER_REQUEST self
--- @param Core.Event#EVENTDATA EventData
+--- @param Core.Event#EVENTDATA EventData
 function AI_ESCORT_DISPATCHER_REQUEST:OnEventExit( EventData )
 
   local PlayerGroupName = EventData.IniGroupName
@@ -93,7 +93,7 @@ function AI_ESCORT_DISPATCHER_REQUEST:OnEventExit( EventData )
 end
 
 --- @param #AI_ESCORT_DISPATCHER_REQUEST self
--- @param Core.Event#EVENTDATA EventData
+--- @param Core.Event#EVENTDATA EventData
 function AI_ESCORT_DISPATCHER_REQUEST:OnEventBirth( EventData )
 
   local PlayerGroupName = EventData.IniGroupName
@@ -123,21 +123,21 @@ end
 
 --- Start Trigger for AI_ESCORT_DISPATCHER_REQUEST
 -- @function [parent=#AI_ESCORT_DISPATCHER_REQUEST] Start
--- @param #AI_ESCORT_DISPATCHER_REQUEST self
+--- @param #AI_ESCORT_DISPATCHER_REQUEST self
 
 --- Start Asynchronous Trigger for AI_ESCORT_DISPATCHER_REQUEST
 -- @function [parent=#AI_ESCORT_DISPATCHER_REQUEST] __Start
--- @param #AI_ESCORT_DISPATCHER_REQUEST self
--- @param #number Delay
+--- @param #AI_ESCORT_DISPATCHER_REQUEST self
+--- @param #number Delay
 
 --- Stop Trigger for AI_ESCORT_DISPATCHER_REQUEST
 -- @function [parent=#AI_ESCORT_DISPATCHER_REQUEST] Stop
--- @param #AI_ESCORT_DISPATCHER_REQUEST self
+--- @param #AI_ESCORT_DISPATCHER_REQUEST self
 
 --- Stop Asynchronous Trigger for AI_ESCORT_DISPATCHER_REQUEST
 -- @function [parent=#AI_ESCORT_DISPATCHER_REQUEST] __Stop
--- @param #AI_ESCORT_DISPATCHER_REQUEST self
--- @param #number Delay
+--- @param #AI_ESCORT_DISPATCHER_REQUEST self
+--- @param #number Delay
 
 
 

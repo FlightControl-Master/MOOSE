@@ -17,38 +17,38 @@
 
 
 --- COHORT class.
--- @type COHORT
--- @field #string ClassName Name of the class.
--- @field #number verbose Verbosity level.
--- @field #string lid Class id string for output to DCS log file.
--- @field #string name Name of the cohort.
--- @field #string templatename Name of the template group.
--- @field #string aircrafttype Type of the units the cohort is using.
--- @field #number category Group category of the assets: `Group.Category.AIRPLANE`, `Group.Category.HELICOPTER`, `Group.Category.GROUND`, `Group.Category.SHIP`, `Group.Category.TRAIN`.
--- @field Wrapper.Group#GROUP templategroup Template group.
--- @field #boolean isAir
--- @field #boolean isGround Is ground.
--- @field #boolean isNaval Is naval. 
--- @field #table assets Cohort assets.
--- @field #table missiontypes Capabilities (mission types and performances) of the cohort.
--- @field #number maintenancetime Time in seconds needed for maintenance of a returned flight.
--- @field #number repairtime Time in seconds for each
--- @field #string livery Livery of the cohort.
--- @field #number skill Skill of cohort members.
--- @field Ops.Legion#LEGION legion The LEGION object the cohort belongs to.
--- @field #number Ngroups Number of asset OPS groups this cohort has.
--- @field #number Nkilled Number of destroyed asset groups.
--- @field #number engageRange Mission range in meters.
--- @field #string attribute Generalized attribute of the cohort template group.
--- @field #table descriptors DCS descriptors.
--- @field #table properties DCS attributes.
--- @field #table tacanChannel List of TACAN channels available to the cohort.
--- @field #number radioFreq Radio frequency in MHz the cohort uses.
--- @field #number radioModu Radio modulation the cohort uses.
--- @field #table tacanChannel List of TACAN channels available to the cohort.
--- @field #number weightAsset Weight of one assets group in kg.
--- @field #number cargobayLimit Cargo bay capacity in kg.
--- @field #table operations Operations this cohort is part of.
+--- @type COHORT
+--- @field #string ClassName Name of the class.
+--- @field #number verbose Verbosity level.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #string name Name of the cohort.
+--- @field #string templatename Name of the template group.
+--- @field #string aircrafttype Type of the units the cohort is using.
+--- @field #number category Group category of the assets: `Group.Category.AIRPLANE`, `Group.Category.HELICOPTER`, `Group.Category.GROUND`, `Group.Category.SHIP`, `Group.Category.TRAIN`.
+--- @field Wrapper.Group#GROUP templategroup Template group.
+--- @field #boolean isAir
+--- @field #boolean isGround Is ground.
+--- @field #boolean isNaval Is naval. 
+--- @field #table assets Cohort assets.
+--- @field #table missiontypes Capabilities (mission types and performances) of the cohort.
+--- @field #number maintenancetime Time in seconds needed for maintenance of a returned flight.
+--- @field #number repairtime Time in seconds for each
+--- @field #string livery Livery of the cohort.
+--- @field #number skill Skill of cohort members.
+--- @field Ops.Legion#LEGION legion The LEGION object the cohort belongs to.
+--- @field #number Ngroups Number of asset OPS groups this cohort has.
+--- @field #number Nkilled Number of destroyed asset groups.
+--- @field #number engageRange Mission range in meters.
+--- @field #string attribute Generalized attribute of the cohort template group.
+--- @field #table descriptors DCS descriptors.
+--- @field #table properties DCS attributes.
+--- @field #table tacanChannel List of TACAN channels available to the cohort.
+--- @field #number radioFreq Radio frequency in MHz the cohort uses.
+--- @field #number radioModu Radio modulation the cohort uses.
+--- @field #table tacanChannel List of TACAN channels available to the cohort.
+--- @field #number weightAsset Weight of one assets group in kg.
+--- @field #number cargobayLimit Cargo bay capacity in kg.
+--- @field #table operations Operations this cohort is part of.
 -- @extends Core.Fsm#FSM
 
 --- *I came, I saw, I conquered.* -- Julius Caesar
@@ -61,7 +61,7 @@
 --
 --
 --
--- @field #COHORT
+--- @field #COHORT
 COHORT = {
   ClassName      = "COHORT",
   verbose        =     0,
@@ -87,7 +87,7 @@ COHORT = {
 }
 
 --- COHORT class version.
--- @field #string version
+--- @field #string version
 COHORT.version="0.3.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -103,11 +103,11 @@ COHORT.version="0.3.5"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new COHORT object and start the FSM.
--- @param #COHORT self
--- @param #string TemplateGroupName Name of the template group.
--- @param #number Ngroups Number of asset groups of this Cohort. Default 3.
--- @param #string CohortName Name of the cohort.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param #string TemplateGroupName Name of the template group.
+--- @param #number Ngroups Number of asset groups of this Cohort. Default 3.
+--- @param #string CohortName Name of the cohort.
+--- @return #COHORT self
 function COHORT:New(TemplateGroupName, Ngroups, CohortName)
 
   -- Inherit everything from FSM class.
@@ -322,38 +322,38 @@ end
 -- 
 -- Or personal liveries you have installed somewhere in your saved games folder.
 --  
--- @param #COHORT self
--- @param #string LiveryName Name of the livery.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param #string LiveryName Name of the livery.
+--- @return #COHORT self
 function COHORT:SetLivery(LiveryName)
   self.livery=LiveryName
   return self
 end
 
 --- Set skill level of all cohort team members.
--- @param #COHORT self
--- @param #string Skill Skill of all flights.
+--- @param #COHORT self
+--- @param #string Skill Skill of all flights.
 -- @usage mycohort:SetSkill(AI.Skill.EXCELLENT)
--- @return #COHORT self
+--- @return #COHORT self
 function COHORT:SetSkill(Skill)
   self.skill=Skill
   return self
 end
 
 --- Set verbosity level.
--- @param #COHORT self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+--- @return #COHORT self
 function COHORT:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
   return self
 end
 
 --- Set turnover and repair time. If an asset returns from a mission, it will need some time until the asset is available for further missions.
--- @param #COHORT self
--- @param #number MaintenanceTime Time in minutes it takes until a flight is combat ready again. Default is 0 min.
--- @param #number RepairTime Time in minutes it takes to repair a flight for each life point taken. Default is 0 min.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param #number MaintenanceTime Time in minutes it takes until a flight is combat ready again. Default is 0 min.
+--- @param #number RepairTime Time in minutes it takes to repair a flight for each life point taken. Default is 0 min.
+--- @return #COHORT self
 function COHORT:SetTurnoverTime(MaintenanceTime, RepairTime)
   self.maintenancetime=MaintenanceTime and MaintenanceTime*60 or 0
   self.repairtime=RepairTime and RepairTime*60 or 0
@@ -361,10 +361,10 @@ function COHORT:SetTurnoverTime(MaintenanceTime, RepairTime)
 end
 
 --- Set radio frequency and modulation the cohort uses.
--- @param #COHORT self
--- @param #number Frequency Radio frequency in MHz. Default 251 MHz.
--- @param #number Modulation Radio modulation. Default 0=AM.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param #number Frequency Radio frequency in MHz. Default 251 MHz.
+--- @param #number Modulation Radio modulation. Default 0=AM.
+--- @return #COHORT self
 function COHORT:SetRadio(Frequency, Modulation)
   self.radioFreq=Frequency or 251
   self.radioModu=Modulation or radio.modulation.AM
@@ -372,19 +372,19 @@ function COHORT:SetRadio(Frequency, Modulation)
 end
 
 --- Set number of units in groups.
--- @param #COHORT self
--- @param #number nunits Number of units. Default 2.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param #number nunits Number of units. Default 2.
+--- @return #COHORT self
 function COHORT:SetGrouping(nunits)
   self.ngrouping=nunits or 2
   return self
 end
 
 --- Set mission types this cohort is able to perform.
--- @param #COHORT self
--- @param #table MissionTypes Table of mission types. Can also be passed as a #string if only one type.
--- @param #number Performance Performance describing how good this mission can be performed. Higher is better. Default 50. Max 100.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param #table MissionTypes Table of mission types. Can also be passed as a #string if only one type.
+--- @param #number Performance Performance describing how good this mission can be performed. Higher is better. Default 50. Max 100.
+--- @return #COHORT self
 function COHORT:AddMissionCapability(MissionTypes, Performance)
 
   -- Ensure Missiontypes is a table.
@@ -420,9 +420,9 @@ function COHORT:AddMissionCapability(MissionTypes, Performance)
 end
 
 --- Get missin capability for a given mission type.
--- @param #COHORT self
--- @param #string MissionType Mission type, e.g. `AUFTRAG.Type.BAI`.
--- @return Ops.Auftrag#AUFTRAG.Capability Capability table or `nil` if the capability does not exist.
+--- @param #COHORT self
+--- @param #string MissionType Mission type, e.g. `AUFTRAG.Type.BAI`.
+--- @return Ops.Auftrag#AUFTRAG.Capability Capability table or `nil` if the capability does not exist.
 function COHORT:GetMissionCapability(MissionType)
   
   for _,_capability in pairs(self.missiontypes) do
@@ -436,9 +436,9 @@ function COHORT:GetMissionCapability(MissionType)
 end
 
 --- Check if cohort assets have a given property (DCS attribute).
--- @param #COHORT self
--- @param #string Property The property.
--- @return #boolean If `true`, cohort assets have the attribute.
+--- @param #COHORT self
+--- @param #string Property The property.
+--- @return #boolean If `true`, cohort assets have the attribute.
 function COHORT:HasProperty(Property)
 
   for _,property in pairs(self.properties) do
@@ -451,8 +451,8 @@ function COHORT:HasProperty(Property)
 end
 
 --- Get mission types this cohort is able to perform.
--- @param #COHORT self
--- @return #table Table of mission types. Could be empty {}.
+--- @param #COHORT self
+--- @return #table Table of mission types. Could be empty {}.
 function COHORT:GetMissionTypes()
 
   local missiontypes={}
@@ -466,16 +466,16 @@ function COHORT:GetMissionTypes()
 end
 
 --- Get mission capabilities of this cohort.
--- @param #COHORT self
--- @return #table Table of mission capabilities.
+--- @param #COHORT self
+--- @return #table Table of mission capabilities.
 function COHORT:GetMissionCapabilities()
   return self.missiontypes
 end
 
 --- Get mission performance for a given type of misson.
--- @param #COHORT self
--- @param #string MissionType Type of mission.
--- @return #number Performance or -1.
+--- @param #COHORT self
+--- @param #string MissionType Type of mission.
+--- @return #number Performance or -1.
 function COHORT:GetMissionPeformance(MissionType)
 
   for _,Capability in pairs(self.missiontypes) do
@@ -489,19 +489,19 @@ function COHORT:GetMissionPeformance(MissionType)
 end
 
 --- Set max mission range. Only missions in a circle of this radius around the cohort base are executed.
--- @param #COHORT self
--- @param #number Range Range in NM. Default 150 NM.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param #number Range Range in NM. Default 150 NM.
+--- @return #COHORT self
 function COHORT:SetMissionRange(Range)
   self.engageRange=UTILS.NMToMeters(Range or 150)
   return self
 end
 
 --- Set call sign.
--- @param #COHORT self
--- @param #number Callsign Callsign from CALLSIGN.Aircraft, e.g. "Chevy" for CALLSIGN.Aircraft.CHEVY.
--- @param #number Index Callsign index, Chevy-**1**.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param #number Callsign Callsign from CALLSIGN.Aircraft, e.g. "Chevy" for CALLSIGN.Aircraft.CHEVY.
+--- @param #number Index Callsign index, Chevy-**1**.
+--- @return #COHORT self
 function COHORT:SetCallsign(Callsign, Index)
   self.callsignName=Callsign
   self.callsignIndex=Index
@@ -509,42 +509,42 @@ function COHORT:SetCallsign(Callsign, Index)
 end
 
 --- Set generalized attribute.
--- @param #COHORT self
--- @param #string Attribute Generalized attribute, e.g. `GROUP.Attribute.Ground_Infantry`.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param #string Attribute Generalized attribute, e.g. `GROUP.Attribute.Ground_Infantry`.
+--- @return #COHORT self
 function COHORT:SetAttribute(Attribute)
   self.attribute=Attribute
   return self
 end
 
 --- Get generalized attribute.
--- @param #COHORT self
--- @return #string Generalized attribute, e.g. `GROUP.Attribute.Ground_Infantry`.
+--- @param #COHORT self
+--- @return #string Generalized attribute, e.g. `GROUP.Attribute.Ground_Infantry`.
 function COHORT:GetAttribute()
   return self.attribute
 end
 
 --- Get group category.
--- @param #COHORT self
--- @return #string Group category
+--- @param #COHORT self
+--- @return #string Group category
 function COHORT:GetCategory()
   return self.category
 end
 
 --- Get properties, *i.e.* DCS attributes.
--- @param #COHORT self
--- @return #table Properties table.
+--- @param #COHORT self
+--- @return #table Properties table.
 function COHORT:GetProperties()
   return self.properties
 end
 
 
 --- Set modex.
--- @param #COHORT self
--- @param #number Modex A number like 100.
--- @param #string Prefix A prefix string, which is put before the `Modex` number.
--- @param #string Suffix A suffix string, which is put after the `Modex` number. 
--- @return #COHORT self
+--- @param #COHORT self
+--- @param #number Modex A number like 100.
+--- @param #string Prefix A prefix string, which is put before the `Modex` number.
+--- @param #string Suffix A suffix string, which is put after the `Modex` number. 
+--- @return #COHORT self
 function COHORT:SetModex(Modex, Prefix, Suffix)
   self.modex=Modex
   self.modexPrefix=Prefix
@@ -553,18 +553,18 @@ function COHORT:SetModex(Modex, Prefix, Suffix)
 end
 
 --- Set Legion.
--- @param #COHORT self
--- @param Ops.Legion#LEGION Legion The Legion.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param Ops.Legion#LEGION Legion The Legion.
+--- @return #COHORT self
 function COHORT:SetLegion(Legion)
   self.legion=Legion
   return self
 end
 
 --- Add asset to cohort.
--- @param #COHORT self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The warehouse asset.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The warehouse asset.
+--- @return #COHORT self
 function COHORT:AddAsset(Asset)
   self:T(self.lid..string.format("Adding asset %s of type %s", Asset.spawngroupname, Asset.unittype))
   Asset.squadname=self.name
@@ -575,9 +575,9 @@ function COHORT:AddAsset(Asset)
 end
 
 --- Remove asset from chort.
--- @param #COHORT self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
+--- @return #COHORT self
 function COHORT:DelAsset(Asset)
   for i,_asset in pairs(self.assets) do
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
@@ -591,9 +591,9 @@ function COHORT:DelAsset(Asset)
 end
 
 --- Remove asset group from cohort.
--- @param #COHORT self
--- @param #string GroupName Name of the asset group.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param #string GroupName Name of the asset group.
+--- @return #COHORT self
 function COHORT:DelGroup(GroupName)
   for i,_asset in pairs(self.assets) do
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
@@ -607,24 +607,24 @@ function COHORT:DelGroup(GroupName)
 end
 
 --- Get name of the cohort.
--- @param #COHORT self
--- @return #string Name of the cohort.
+--- @param #COHORT self
+--- @return #string Name of the cohort.
 function COHORT:GetName()
   return self.name
 end
 
 --- Get radio frequency and modulation.
--- @param #COHORT self
--- @return #number Radio frequency in MHz.
--- @return #number Radio Modulation (0=AM, 1=FM).
+--- @param #COHORT self
+--- @return #number Radio frequency in MHz.
+--- @return #number Radio Modulation (0=AM, 1=FM).
 function COHORT:GetRadio()
   return self.radioFreq, self.radioModu
 end
 
 --- Create a callsign for the asset.
--- @param #COHORT self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The warehouse asset.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The warehouse asset.
+--- @return #COHORT self
 function COHORT:GetCallsign(Asset)
 
   if self.callsignName then
@@ -658,9 +658,9 @@ function COHORT:GetCallsign(Asset)
 end
 
 --- Create a modex for the asset.
--- @param #COHORT self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The warehouse asset.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The warehouse asset.
+--- @return #COHORT self
 function COHORT:GetModex(Asset)
 
   if self.modex then
@@ -683,10 +683,10 @@ end
 
 
 --- Add TACAN channels to the cohort. Note that channels can only range from 1 to 126.
--- @param #COHORT self
--- @param #number ChannelMin Channel.
--- @param #number ChannelMax Channel.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param #number ChannelMin Channel.
+--- @param #number ChannelMax Channel.
+--- @return #COHORT self
 -- @usage mysquad:AddTacanChannel(64,69)  -- adds channels 64, 65, 66, 67, 68, 69
 function COHORT:AddTacanChannel(ChannelMin, ChannelMax)
 
@@ -709,8 +709,8 @@ function COHORT:AddTacanChannel(ChannelMin, ChannelMax)
 end
 
 --- Get an unused TACAN channel.
--- @param #COHORT self
--- @return #number TACAN channel or *nil* if no channel is free.
+--- @param #COHORT self
+--- @return #number TACAN channel or *nil* if no channel is free.
 function COHORT:FetchTacan()
 
   -- Get the smallest free channel if there is one.
@@ -732,19 +732,19 @@ function COHORT:FetchTacan()
 end
 
 --- "Return" a used TACAN channel.
--- @param #COHORT self
--- @param #number channel The channel that is available again.
+--- @param #COHORT self
+--- @param #number channel The channel that is available again.
 function COHORT:ReturnTacan(channel)
   self:T(self.lid..string.format("Returning Tacan channel %d", channel))
   self.tacanChannel[channel]=true
 end
 
 --- Add a weapon range for ARTY missions (@{Ops.Auftrag#AUFTRAG}).
--- @param #COHORT self
--- @param #number RangeMin Minimum range in nautical miles. Default 0 NM.
--- @param #number RangeMax Maximum range in nautical miles. Default 10 NM.
--- @param #number BitType Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param #number RangeMin Minimum range in nautical miles. Default 0 NM.
+--- @param #number RangeMax Maximum range in nautical miles. Default 10 NM.
+--- @param #number BitType Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
+--- @return #COHORT self
 function COHORT:AddWeaponRange(RangeMin, RangeMax, BitType)
 
   RangeMin=UTILS.NMToMeters(RangeMin or 0)
@@ -775,37 +775,37 @@ function COHORT:AddWeaponRange(RangeMin, RangeMax, BitType)
 end
 
 --- Get weapon range for given bit type.
--- @param #COHORT self
--- @param #number BitType Bit mask of weapon type.
--- @return Ops.OpsGroup#OPSGROUP.WeaponData Weapon data.
+--- @param #COHORT self
+--- @param #number BitType Bit mask of weapon type.
+--- @return Ops.OpsGroup#OPSGROUP.WeaponData Weapon data.
 function COHORT:GetWeaponData(BitType)
   return self.weaponData[tostring(BitType)]
 end
 
 --- Check if cohort is "OnDuty".
--- @param #COHORT self
--- @return #boolean If true, cohort is in state "OnDuty".
+--- @param #COHORT self
+--- @return #boolean If true, cohort is in state "OnDuty".
 function COHORT:IsOnDuty()
   return self:Is("OnDuty")
 end
 
 --- Check if cohort is "Stopped".
--- @param #COHORT self
--- @return #boolean If true, cohort is in state "Stopped".
+--- @param #COHORT self
+--- @return #boolean If true, cohort is in state "Stopped".
 function COHORT:IsStopped()
   return self:Is("Stopped")
 end
 
 --- Check if cohort is "Paused".
--- @param #COHORT self
--- @return #boolean If true, cohort is in state "Paused".
+--- @param #COHORT self
+--- @return #boolean If true, cohort is in state "Paused".
 function COHORT:IsPaused()
   return self:Is("Paused")
 end
 
 --- Check if cohort is "Relocating".
--- @param #COHORT self
--- @return #boolean If true, cohort is relocating.
+--- @param #COHORT self
+--- @return #boolean If true, cohort is relocating.
 function COHORT:IsRelocating()
   return self:Is("Relocating")
 end
@@ -815,10 +815,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
--- @param #COHORT self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #COHORT self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function COHORT:onafterStart(From, Event, To)
 
   -- Short info.
@@ -830,7 +830,7 @@ function COHORT:onafterStart(From, Event, To)
 end
 
 --- Check asset status.
--- @param #COHORT self
+--- @param #COHORT self
 function COHORT:_CheckAssetStatus()
 
   if self.verbose>=2 and #self.assets>0 then
@@ -922,10 +922,10 @@ function COHORT:_CheckAssetStatus()
 end
 
 --- On after "Stop" event.
--- @param #COHORT self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #COHORT self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function COHORT:onafterStop(From, Event, To)
 
   -- Debug info.
@@ -948,9 +948,9 @@ end
 
 --- Check if there is a cohort that can execute a given mission.
 -- We check the mission type, the refuelling system, mission range.
--- @param #COHORT self
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @return #boolean If true, Cohort can do that type of mission.
+--- @param #COHORT self
+--- @param Ops.Auftrag#AUFTRAG Mission The mission.
+--- @return #boolean If true, Cohort can do that type of mission.
 function COHORT:CanMission(Mission)
   
   local cando=true
@@ -995,11 +995,11 @@ function COHORT:CanMission(Mission)
 end
 
 --- Count assets in legion warehouse stock.
--- @param #COHORT self
--- @param #boolean InStock If `true`, only assets that are in the warehouse stock/inventory are counted. If `false`, only assets that are NOT in stock (i.e. spawned) are counted. If `nil`, all assets are counted.
--- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
--- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
--- @return #number Number of assets.
+--- @param #COHORT self
+--- @param #boolean InStock If `true`, only assets that are in the warehouse stock/inventory are counted. If `false`, only assets that are NOT in stock (i.e. spawned) are counted. If `nil`, all assets are counted.
+--- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+--- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+--- @return #number Number of assets.
 function COHORT:CountAssets(InStock, MissionTypes, Attributes)
 
   local N=0
@@ -1025,10 +1025,10 @@ function COHORT:CountAssets(InStock, MissionTypes, Attributes)
 end
 
 --- Get OPSGROUPs.
--- @param #COHORT self
--- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
--- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
--- @return Core.Set#SET_OPSGROUP Ops groups set.
+--- @param #COHORT self
+--- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+--- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+--- @return Core.Set#SET_OPSGROUP Ops groups set.
 function COHORT:GetOpsGroups(MissionTypes, Attributes)
 
   local set=SET_OPSGROUP:New()
@@ -1049,11 +1049,11 @@ function COHORT:GetOpsGroups(MissionTypes, Attributes)
 end
 
 --- Get assets for a mission.
--- @param #COHORT self
--- @param #string MissionType Mission type.
--- @param #number Npayloads Number of payloads available.
--- @return #table Assets that can do the required mission.
--- @return #number Number of payloads still available after recruiting the assets.
+--- @param #COHORT self
+--- @param #string MissionType Mission type.
+--- @param #number Npayloads Number of payloads available.
+--- @return #table Assets that can do the required mission.
+--- @return #number Number of payloads still available after recruiting the assets.
 function COHORT:RecruitAssets(MissionType, Npayloads)
 
   -- Debug info.
@@ -1252,9 +1252,9 @@ end
 
 
 --- Get the time an asset needs to be repaired.
--- @param #COHORT self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
--- @return #number Time in seconds until asset is repaired.
+--- @param #COHORT self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
+--- @return #number Time in seconds until asset is repaired.
 function COHORT:GetRepairTime(Asset)
 
   if Asset.Treturned then
@@ -1275,9 +1275,9 @@ function COHORT:GetRepairTime(Asset)
 end
 
 --- Get max mission range. We add the largest weapon range, e.g. for arty or naval if weapon data is available.
--- @param #COHORT self
--- @param #table WeaponTypes (Optional) Weapon bit type(s) to add to the total range. Default is the max weapon type available.  
--- @return #number Range in meters.
+--- @param #COHORT self
+--- @param #table WeaponTypes (Optional) Weapon bit type(s) to add to the total range. Default is the max weapon type available.  
+--- @return #number Range in meters.
 function COHORT:GetMissionRange(WeaponTypes)
 
   if WeaponTypes and type(WeaponTypes)~="table" then
@@ -1311,9 +1311,9 @@ function COHORT:GetMissionRange(WeaponTypes)
 end
 
 --- Checks if a mission type is contained in a table of possible types.
--- @param #COHORT self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
--- @return #boolean If true, the requested mission type is part of the possible mission types.
+--- @param #COHORT self
+--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
+--- @return #boolean If true, the requested mission type is part of the possible mission types.
 function COHORT:IsRepaired(Asset)
 
   if Asset.Treturned then
@@ -1332,9 +1332,9 @@ function COHORT:IsRepaired(Asset)
 end
 
 --- Check if the cohort attribute matches the given attribute(s).
--- @param #COHORT self
--- @param #table Attributes The requested attributes. See `WAREHOUSE.Attribute` enum. Can also be passed as a single attribute `#string`.
--- @return #boolean If true, the cohort has the requested attribute.
+--- @param #COHORT self
+--- @param #table Attributes The requested attributes. See `WAREHOUSE.Attribute` enum. Can also be passed as a single attribute `#string`.
+--- @return #boolean If true, the cohort has the requested attribute.
 function COHORT:CheckAttribute(Attributes)
 
   if type(Attributes)~="table" then
@@ -1351,8 +1351,8 @@ function COHORT:CheckAttribute(Attributes)
 end
 
 --- Check ammo.
--- @param #COHORT self
--- @return Ops.OpsGroup#OPSGROUP.Ammo Ammo.
+--- @param #COHORT self
+--- @return Ops.OpsGroup#OPSGROUP.Ammo Ammo.
 function COHORT:_CheckAmmo()
 
   -- Get units of group.
@@ -1561,9 +1561,9 @@ function COHORT:_CheckAmmo()
 end
 
 --- Returns a name of a missile category.
--- @param #COHORT self
--- @param #number categorynumber Number of missile category from weapon missile category enumerator. See https://wiki.hoggitworld.com/view/DCS_Class_Weapon
--- @return #string Missile category name.
+--- @param #COHORT self
+--- @param #number categorynumber Number of missile category from weapon missile category enumerator. See https://wiki.hoggitworld.com/view/DCS_Class_Weapon
+--- @return #string Missile category name.
 function COHORT:_MissileCategoryName(categorynumber)
   local cat="unknown"
   if categorynumber==Weapon.MissileCategory.AAM then
@@ -1583,9 +1583,9 @@ function COHORT:_MissileCategoryName(categorynumber)
 end
 
 --- Add an OPERATION.
--- @param #COHORT self
--- @param Ops.Operation#OPERATION Operation The operation this cohort is part of.
--- @return #COHORT self
+--- @param #COHORT self
+--- @param Ops.Operation#OPERATION Operation The operation this cohort is part of.
+--- @return #COHORT self
 function COHORT:_AddOperation(Operation)
 
   self.operations[Operation.name]=Operation

@@ -42,10 +42,10 @@
 -- @image Core_Scheduler.JPG
 
 --- The SCHEDULER class
--- @type SCHEDULER
--- @field #table Schedules Table of schedules.
--- @field #table MasterObject Master object.
--- @field #boolean ShowTrace Trace info if true.
+--- @type SCHEDULER
+--- @field #table Schedules Table of schedules.
+--- @field #table MasterObject Master object.
+--- @field #boolean ShowTrace Trace info if true.
 -- @extends Core.Base#BASE
 
 --- Creates and handles schedules over time, which allow to execute code at specific time intervals with randomization.
@@ -190,7 +190,7 @@
 -- which is in this example between **30** and **90** seconds.
 -- The schedule will stop after **300** seconds.
 --
--- @field #SCHEDULER
+--- @field #SCHEDULER
 SCHEDULER = {
   ClassName = "SCHEDULER",
   Schedules = {},
@@ -199,16 +199,16 @@ SCHEDULER = {
 }
 
 --- SCHEDULER constructor.
--- @param #SCHEDULER self
--- @param #table MasterObject Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.
--- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
--- @param #table SchedulerArguments Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
--- @param #number Start Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
--- @param #number Repeat Specifies the interval in seconds when the scheduler will call the event function.
--- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
--- @param #number Stop Specifies the amount of seconds when the scheduler will be stopped.
--- @return #SCHEDULER self.
--- @return #table The ScheduleID of the planned schedule.
+--- @param #SCHEDULER self
+--- @param #table MasterObject Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.
+--- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
+--- @param #table SchedulerArguments Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
+--- @param #number Start Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
+--- @param #number Repeat Specifies the interval in seconds when the scheduler will call the event function.
+--- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
+--- @param #number Stop Specifies the amount of seconds when the scheduler will be stopped.
+--- @return #SCHEDULER self.
+--- @return #table The ScheduleID of the planned schedule.
 function SCHEDULER:New( MasterObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop )
 
   local self = BASE:Inherit( self, BASE:New() ) -- #SCHEDULER
@@ -227,17 +227,17 @@ function SCHEDULER:New( MasterObject, SchedulerFunction, SchedulerArguments, Sta
 end
 
 --- Schedule a new time event. Note that the schedule will only take place if the scheduler is *started*. Even for a single schedule event, the scheduler needs to be started also.
--- @param #SCHEDULER self
--- @param #table MasterObject Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.
--- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
--- @param #table SchedulerArguments Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
--- @param #number Start Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
--- @param #number Repeat Specifies the time interval in seconds when the scheduler will call the event function.
--- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
--- @param #number Stop Time interval in seconds after which the scheduler will be stopped.
--- @param #number TraceLevel Trace level [0,3]. Default 3.
--- @param Core.Fsm#FSM Fsm Finite state model.
--- @return #string The Schedule ID of the planned schedule.
+--- @param #SCHEDULER self
+--- @param #table MasterObject Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.
+--- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
+--- @param #table SchedulerArguments Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
+--- @param #number Start Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
+--- @param #number Repeat Specifies the time interval in seconds when the scheduler will call the event function.
+--- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
+--- @param #number Stop Time interval in seconds after which the scheduler will be stopped.
+--- @param #number TraceLevel Trace level [0,3]. Default 3.
+--- @param Core.Fsm#FSM Fsm Finite state model.
+--- @return #string The Schedule ID of the planned schedule.
 function SCHEDULER:Schedule( MasterObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, TraceLevel, Fsm )
   self:F2( { Start, Repeat, RandomizeFactor, Stop } )
   self:T3( { SchedulerArguments } )
@@ -270,8 +270,8 @@ function SCHEDULER:Schedule( MasterObject, SchedulerFunction, SchedulerArguments
 end
 
 --- (Re-)Starts the schedules or a specific schedule if a valid ScheduleID is provided.
--- @param #SCHEDULER self
--- @param #string ScheduleID (Optional) The Schedule ID of the planned (repeating) schedule.
+--- @param #SCHEDULER self
+--- @param #string ScheduleID (Optional) The Schedule ID of the planned (repeating) schedule.
 function SCHEDULER:Start( ScheduleID )
   self:F3( { ScheduleID } )
   self:T( string.format( "Starting scheduler ID=%s", tostring( ScheduleID ) ) )
@@ -279,8 +279,8 @@ function SCHEDULER:Start( ScheduleID )
 end
 
 --- Stops the schedules or a specific schedule if a valid ScheduleID is provided.
--- @param #SCHEDULER self
--- @param #string ScheduleID (Optional) The ScheduleID of the planned (repeating) schedule.
+--- @param #SCHEDULER self
+--- @param #string ScheduleID (Optional) The ScheduleID of the planned (repeating) schedule.
 function SCHEDULER:Stop( ScheduleID )
   self:F3( { ScheduleID } )
   self:T( string.format( "Stopping scheduler ID=%s", tostring( ScheduleID ) ) )
@@ -288,8 +288,8 @@ function SCHEDULER:Stop( ScheduleID )
 end
 
 --- Removes a specific schedule if a valid ScheduleID is provided.
--- @param #SCHEDULER self
--- @param #string ScheduleID (optional) The ScheduleID of the planned (repeating) schedule.
+--- @param #SCHEDULER self
+--- @param #string ScheduleID (optional) The ScheduleID of the planned (repeating) schedule.
 function SCHEDULER:Remove( ScheduleID )
   self:F3( { ScheduleID } )
   self:T( string.format( "Removing scheduler ID=%s", tostring( ScheduleID ) ) )
@@ -297,7 +297,7 @@ function SCHEDULER:Remove( ScheduleID )
 end
 
 --- Clears all pending schedules.
--- @param #SCHEDULER self
+--- @param #SCHEDULER self
 function SCHEDULER:Clear()
   self:F3()
   self:T( string.format( "Clearing scheduler" ) )
@@ -305,13 +305,13 @@ function SCHEDULER:Clear()
 end
 
 --- Show tracing for this scheduler.
--- @param #SCHEDULER self
+--- @param #SCHEDULER self
 function SCHEDULER:ShowTrace()
   _SCHEDULEDISPATCHER:ShowTrace( self )
 end
 
 --- No tracing for this scheduler.
--- @param #SCHEDULER self
+--- @param #SCHEDULER self
 function SCHEDULER:NoTrace()
   _SCHEDULEDISPATCHER:NoTrace( self )
 end

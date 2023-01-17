@@ -16,10 +16,10 @@
 
 
 --- FLOTILLA class.
--- @type FLOTILLA
--- @field #string ClassName Name of the class.
--- @field #number verbose Verbosity level.
--- @field Ops.OpsGroup#OPSGROUP.WeaponData weaponData Weapon data table with key=BitType.
+--- @type FLOTILLA
+--- @field #string ClassName Name of the class.
+--- @field #number verbose Verbosity level.
+--- @field Ops.OpsGroup#OPSGROUP.WeaponData weaponData Weapon data table with key=BitType.
 -- @extends Ops.Cohort#COHORT
 
 --- *No captain can do very wrong if he places his ship alongside that of an enemy.* -- Horation Nelson
@@ -32,7 +32,7 @@
 --
 --
 --
--- @field #FLOTILLA
+--- @field #FLOTILLA
 FLOTILLA = {
   ClassName      = "FLOTILLA",
   verbose        =     0,
@@ -40,7 +40,7 @@ FLOTILLA = {
 }
 
 --- FLOTILLA class version.
--- @field #string version
+--- @field #string version
 FLOTILLA.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -54,11 +54,11 @@ FLOTILLA.version="0.1.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new FLOTILLA object and start the FSM.
--- @param #FLOTILLA self
--- @param #string TemplateGroupName Name of the template group.
--- @param #number Ngroups Number of asset groups of this flotilla. Default 3.
--- @param #string FlotillaName Name of the flotilla. Must be **unique**!
--- @return #FLOTILLA self
+--- @param #FLOTILLA self
+--- @param #string TemplateGroupName Name of the template group.
+--- @param #number Ngroups Number of asset groups of this flotilla. Default 3.
+--- @param #string FlotillaName Name of the flotilla. Must be **unique**!
+--- @return #FLOTILLA self
 function FLOTILLA:New(TemplateGroupName, Ngroups, FlotillaName)
 
   -- Inherit everything from COHORT class.
@@ -83,17 +83,17 @@ end
   -- TODO: Flotilla specific user functions.
 
 --- Set fleet of this flotilla.
--- @param #FLOTILLA self
--- @param Ops.Fleet#FLEET Fleet The fleet.
--- @return #FLOTILLA self
+--- @param #FLOTILLA self
+--- @param Ops.Fleet#FLEET Fleet The fleet.
+--- @return #FLOTILLA self
 function FLOTILLA:SetFleet(Fleet)
   self.legion=Fleet
   return self
 end
 
 --- Get fleet of this flotilla.
--- @param #FLOTILLA self
--- @return Ops.Fleet#FLEET The fleet.
+--- @param #FLOTILLA self
+--- @return Ops.Fleet#FLEET The fleet.
 function FLOTILLA:GetFleet()
   return self.legion
 end
@@ -103,10 +103,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
--- @param #FLOTILLA self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #FLOTILLA self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function FLOTILLA:onafterStart(From, Event, To)
 
   -- Short info.
@@ -118,10 +118,10 @@ function FLOTILLA:onafterStart(From, Event, To)
 end
 
 --- On after "Status" event.
--- @param #FLOTILLA self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #FLOTILLA self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function FLOTILLA:onafterStatus(From, Event, To)
 
   if self.verbose>=1 then

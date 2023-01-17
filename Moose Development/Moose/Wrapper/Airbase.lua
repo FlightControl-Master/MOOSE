@@ -13,23 +13,23 @@
 
 
 --- @type AIRBASE
--- @field #string ClassName Name of the class, i.e. "AIRBASE".
--- @field #table CategoryName Names of airbase categories.
--- @field #string AirbaseName Name of the airbase.
--- @field #number AirbaseID Airbase ID.
--- @field Core.Zone#ZONE AirbaseZone Circular zone around the airbase with a radius of 2500 meters. For ships this is a ZONE_UNIT object.
--- @field #number category Airbase category.
--- @field #table descriptors DCS descriptors.
--- @field #boolean isAirdrome Airbase is an airdrome.
--- @field #boolean isHelipad Airbase is a helipad.
--- @field #boolean isShip Airbase is a ship.
--- @field #table parking Parking spot data.
--- @field #table parkingByID Parking spot data table with ID as key.
--- @field #table parkingWhitelist List of parking spot terminal IDs considered for spawning.
--- @field #table parkingBlacklist List of parking spot terminal IDs **not** considered for spawning.
--- @field #table runways Runways of airdromes.
--- @field #AIRBASE.Runway runwayLanding Runway used for landing.
--- @field #AIRBASE.Runway runwayTakeoff Runway used for takeoff.
+--- @field #string ClassName Name of the class, i.e. "AIRBASE".
+--- @field #table CategoryName Names of airbase categories.
+--- @field #string AirbaseName Name of the airbase.
+--- @field #number AirbaseID Airbase ID.
+--- @field Core.Zone#ZONE AirbaseZone Circular zone around the airbase with a radius of 2500 meters. For ships this is a ZONE_UNIT object.
+--- @field #number category Airbase category.
+--- @field #table descriptors DCS descriptors.
+--- @field #boolean isAirdrome Airbase is an airdrome.
+--- @field #boolean isHelipad Airbase is a helipad.
+--- @field #boolean isShip Airbase is a ship.
+--- @field #table parking Parking spot data.
+--- @field #table parkingByID Parking spot data table with ID as key.
+--- @field #table parkingWhitelist List of parking spot terminal IDs considered for spawning.
+--- @field #table parkingBlacklist List of parking spot terminal IDs **not** considered for spawning.
+--- @field #table runways Runways of airdromes.
+--- @field #AIRBASE.Runway runwayLanding Runway used for landing.
+--- @field #AIRBASE.Runway runwayTakeoff Runway used for takeoff.
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 --- Wrapper class to handle the DCS Airbase objects:
@@ -63,7 +63,7 @@
 -- the first letter of the method is also capitalized. So, by example, the DCS Airbase method @{DCSWrapper.Airbase#Airbase.getName}()
 -- is implemented in the AIRBASE class as @{#AIRBASE.GetName}().
 --
--- @field #AIRBASE AIRBASE
+--- @field #AIRBASE AIRBASE
 AIRBASE = {
   ClassName = "AIRBASE",
   CategoryName = {
@@ -100,7 +100,7 @@ AIRBASE = {
 --   * AIRBASE.Caucasus.Mozdok
 --   * AIRBASE.Caucasus.Beslan
 --
--- @field Caucasus
+--- @field Caucasus
 AIRBASE.Caucasus = {
   ["Gelendzhik"] = "Gelendzhik",
   ["Krasnodar_Pashkovsky"] = "Krasnodar-Pashkovsky",
@@ -145,7 +145,7 @@ AIRBASE.Caucasus = {
 --   * AIRBASE.Nevada.Tonopah_Airport
 --   * AIRBASE.Nevada.Tonopah_Test_Range_Airfield
 --
--- @field Nevada
+--- @field Nevada
 AIRBASE.Nevada = {
   ["Creech_AFB"] = "Creech",
   ["Groom_Lake_AFB"] = "Groom Lake",
@@ -200,7 +200,7 @@ AIRBASE.Nevada = {
 --   * AIRBASE.Normandy.Tangmere
 --   * AIRBASE.Normandy.Ford_AF
 --   
--- @field Normandy
+--- @field Normandy
 AIRBASE.Normandy = {
   ["Saint_Pierre_du_Mont"] = "Saint Pierre du Mont",
   ["Lignerolles"] = "Lignerolles",
@@ -274,7 +274,7 @@ AIRBASE.Normandy = {
 -- * AIRBASE.PersianGulf.Tunb_Island_AFB
 -- * AIRBASE.PersianGulf.Tunb_Kochak
 -- 
--- @field PersianGulf
+--- @field PersianGulf
 AIRBASE.PersianGulf = {
   ["Abu_Dhabi_International_Airport"] = "Abu Dhabi Intl",
   ["Abu_Musa_Island_Airport"] = "Abu Musa Island",
@@ -322,7 +322,7 @@ AIRBASE.PersianGulf = {
 -- * AIRBASE.TheChannel.Eastchurch
 -- * AIRBASE.TheChannel.Headcorn
 -- 
--- @field TheChannel
+--- @field TheChannel
 AIRBASE.TheChannel = {
   ["Abbeville_Drucat"] = "Abbeville Drucat",
   ["Merville_Calonne"] = "Merville Calonne",
@@ -479,7 +479,7 @@ AIRBASE.Syria={
 -- * AIRBASE.MarianaIslands.Tinian_Intl
 -- * AIRBASE.MarianaIslands.Olf_Orote
 --
--- @field MarianaIslands
+--- @field MarianaIslands
 AIRBASE.MarianaIslands = {
   ["Rota_Intl"] = "Rota Intl",
   ["Andersen_AFB"] = "Andersen AFB",
@@ -537,22 +537,22 @@ AIRBASE.SouthAtlantic={
 }
 
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
--- @type AIRBASE.ParkingSpot
--- @field Core.Point#COORDINATE Coordinate Coordinate of the parking spot.
--- @field #number TerminalID Terminal ID of the spot. Generally, this is not the same number as displayed in the mission editor.
--- @field #AIRBASE.TerminalType TerminalType Type of the spot, i.e. for which type of aircraft it can be used.
--- @field #boolean TOAC Takeoff or landing aircarft. I.e. this stop is occupied currently by an aircraft until it took of or until it landed.
--- @field #boolean Free This spot is currently free, i.e. there is no alive aircraft on it at the present moment.
--- @field #number TerminalID0 Unknown what this means. If you know, please tell us!
--- @field #number DistToRwy Distance to runway in meters. Currently bugged and giving the same number as the TerminalID.
--- @field #string AirbaseName Name of the airbase.
--- @field #number MarkerID Numerical ID of marker placed at parking spot.
--- @field Wrapper.Marker#MARKER Marker The marker on the F10 map.
--- @field #string ClientSpot If `true`, this is a parking spot of a client aircraft.
--- @field #string ClientName Client unit name of this spot.
--- @field #string Status Status of spot e.g. `AIRBASE.SpotStatus.FREE`.
--- @field #string OccupiedBy Name of the aircraft occupying the spot or "unknown". Can be *nil* if spot is not occupied.
--- @field #string ReservedBy Name of the aircraft for which this spot is reserved. Can be *nil* if spot is not reserved.
+--- @type AIRBASE.ParkingSpot
+--- @field Core.Point#COORDINATE Coordinate Coordinate of the parking spot.
+--- @field #number TerminalID Terminal ID of the spot. Generally, this is not the same number as displayed in the mission editor.
+--- @field #AIRBASE.TerminalType TerminalType Type of the spot, i.e. for which type of aircraft it can be used.
+--- @field #boolean TOAC Takeoff or landing aircarft. I.e. this stop is occupied currently by an aircraft until it took of or until it landed.
+--- @field #boolean Free This spot is currently free, i.e. there is no alive aircraft on it at the present moment.
+--- @field #number TerminalID0 Unknown what this means. If you know, please tell us!
+--- @field #number DistToRwy Distance to runway in meters. Currently bugged and giving the same number as the TerminalID.
+--- @field #string AirbaseName Name of the airbase.
+--- @field #number MarkerID Numerical ID of marker placed at parking spot.
+--- @field Wrapper.Marker#MARKER Marker The marker on the F10 map.
+--- @field #string ClientSpot If `true`, this is a parking spot of a client aircraft.
+--- @field #string ClientName Client unit name of this spot.
+--- @field #string Status Status of spot e.g. `AIRBASE.SpotStatus.FREE`.
+--- @field #string OccupiedBy Name of the aircraft occupying the spot or "unknown". Can be *nil* if spot is not occupied.
+--- @field #string ReservedBy Name of the aircraft for which this spot is reserved. Can be *nil* if spot is not reserved.
 
 --- Terminal Types of parking spots. See also https://wiki.hoggitworld.com/view/DCS_func_getParking
 --
@@ -567,15 +567,15 @@ AIRBASE.SouthAtlantic={
 -- * AIRBASE.TerminalType.HelicopterUsable = 216: Combines HelicopterOnly, OpenMed and OpenBig.
 -- * AIRBASE.TerminalType.FighterAircraft = 244: Combines Shelter. OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
 --
--- @type AIRBASE.TerminalType
--- @field #number Runway 16: Valid spawn points on runway.
--- @field #number HelicopterOnly 40: Special spots for Helicopers.
--- @field #number Shelter 68: Hardened Air Shelter. Currently only on Caucaus map.
--- @field #number OpenMed 72: Open/Shelter air airplane only.
--- @field #number OpenBig 104: Open air spawn points. Generally larger but does not guarantee large aircraft are capable of spawning there.
--- @field #number OpenMedOrBig 176: Combines OpenMed and OpenBig spots.
--- @field #number HelicopterUsable 216: Combines HelicopterOnly, OpenMed and OpenBig.
--- @field #number FighterAircraft 244: Combines Shelter. OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
+--- @type AIRBASE.TerminalType
+--- @field #number Runway 16: Valid spawn points on runway.
+--- @field #number HelicopterOnly 40: Special spots for Helicopers.
+--- @field #number Shelter 68: Hardened Air Shelter. Currently only on Caucaus map.
+--- @field #number OpenMed 72: Open/Shelter air airplane only.
+--- @field #number OpenBig 104: Open air spawn points. Generally larger but does not guarantee large aircraft are capable of spawning there.
+--- @field #number OpenMedOrBig 176: Combines OpenMed and OpenBig spots.
+--- @field #number HelicopterUsable 216: Combines HelicopterOnly, OpenMed and OpenBig.
+--- @field #number FighterAircraft 244: Combines Shelter. OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
 AIRBASE.TerminalType = {
   Runway=16,
   HelicopterOnly=40,
@@ -588,10 +588,10 @@ AIRBASE.TerminalType = {
 }
 
 --- Status of a parking spot.
--- @type AIRBASE.SpotStatus
--- @field #string FREE Spot is free.
--- @field #string OCCUPIED Spot is occupied.
--- @field #string RESERVED Spot is reserved.
+--- @type AIRBASE.SpotStatus
+--- @field #string FREE Spot is free.
+--- @field #string OCCUPIED Spot is occupied.
+--- @field #string RESERVED Spot is reserved.
 AIRBASE.SpotStatus = {
   FREE="Free",
   OCCUPIED="Occupied",
@@ -599,27 +599,27 @@ AIRBASE.SpotStatus = {
 }
 
 --- Runway data.
--- @type AIRBASE.Runway
--- @field #string name Runway name.
--- @field #string idx Runway ID: heading 070° ==> idx="07".
--- @field #number heading True heading of the runway in degrees.
--- @field #number magheading Magnetic heading of the runway in degrees. This is what is marked on the runway.
--- @field #number length Length of runway in meters.
--- @field #number width Width of runway in meters.
--- @field Core.Zone#ZONE_POLYGON zone Runway zone.
--- @field Core.Point#COORDINATE center Center of the runway.
--- @field Core.Point#COORDINATE position Position of runway start.
--- @field Core.Point#COORDINATE endpoint End point of runway.
--- @field #boolean isLeft If `true`, this is the left of two parallel runways. If `false`, this is the right of two runways. If `nil`, no parallel runway exists.
+--- @type AIRBASE.Runway
+--- @field #string name Runway name.
+--- @field #string idx Runway ID: heading 070° ==> idx="07".
+--- @field #number heading True heading of the runway in degrees.
+--- @field #number magheading Magnetic heading of the runway in degrees. This is what is marked on the runway.
+--- @field #number length Length of runway in meters.
+--- @field #number width Width of runway in meters.
+--- @field Core.Zone#ZONE_POLYGON zone Runway zone.
+--- @field Core.Point#COORDINATE center Center of the runway.
+--- @field Core.Point#COORDINATE position Position of runway start.
+--- @field Core.Point#COORDINATE endpoint End point of runway.
+--- @field #boolean isLeft If `true`, this is the left of two parallel runways. If `false`, this is the right of two runways. If `nil`, no parallel runway exists.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Registration
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new AIRBASE from DCSAirbase.
--- @param #AIRBASE self
--- @param #string AirbaseName The name of the airbase.
--- @return #AIRBASE self
+--- @param #AIRBASE self
+--- @param #string AirbaseName The name of the airbase.
+--- @return #AIRBASE self
 function AIRBASE:Register(AirbaseName)
 
   -- Inherit everything from positionable.
@@ -699,9 +699,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Finds a AIRBASE from the _DATABASE using a DCSAirbase object.
--- @param #AIRBASE self
--- @param DCS#Airbase DCSAirbase An existing DCS Airbase object reference.
--- @return Wrapper.Airbase#AIRBASE self
+--- @param #AIRBASE self
+--- @param DCS#Airbase DCSAirbase An existing DCS Airbase object reference.
+--- @return Wrapper.Airbase#AIRBASE self
 function AIRBASE:Find( DCSAirbase )
 
   local AirbaseName = DCSAirbase:getName()
@@ -710,9 +710,9 @@ function AIRBASE:Find( DCSAirbase )
 end
 
 --- Find a AIRBASE in the _DATABASE using the name of an existing DCS Airbase.
--- @param #AIRBASE self
--- @param #string AirbaseName The Airbase Name.
--- @return #AIRBASE self
+--- @param #AIRBASE self
+--- @param #string AirbaseName The Airbase Name.
+--- @return #AIRBASE self
 function AIRBASE:FindByName( AirbaseName )
 
   local AirbaseFound = _DATABASE:FindAirbase( AirbaseName )
@@ -720,9 +720,9 @@ function AIRBASE:FindByName( AirbaseName )
 end
 
 --- Find a AIRBASE in the _DATABASE by its ID.
--- @param #AIRBASE self
--- @param #number id Airbase ID.
--- @return #AIRBASE self
+--- @param #AIRBASE self
+--- @param #number id Airbase ID.
+--- @return #AIRBASE self
 function AIRBASE:FindByID(id)
 
   for name,_airbase in pairs(_DATABASE.AIRBASES) do
@@ -740,8 +740,8 @@ function AIRBASE:FindByID(id)
 end
 
 --- Get the DCS object of an airbase
--- @param #AIRBASE self
--- @return DCS#Airbase DCS airbase object.
+--- @param #AIRBASE self
+--- @return DCS#Airbase DCS airbase object.
 function AIRBASE:GetDCSObject()
 
   -- Get the DCS object.
@@ -755,16 +755,16 @@ function AIRBASE:GetDCSObject()
 end
 
 --- Get the airbase zone.
--- @param #AIRBASE self
--- @return Core.Zone#ZONE_RADIUS The zone radius of the airbase.
+--- @param #AIRBASE self
+--- @return Core.Zone#ZONE_RADIUS The zone radius of the airbase.
 function AIRBASE:GetZone()
   return self.AirbaseZone
 end
 
 --- Get all airbases of the current map. This includes ships and FARPS.
--- @param DCS#Coalition coalition (Optional) Return only airbases belonging to the specified coalition. By default, all airbases of the map are returned.
--- @param #number category (Optional) Return only airbases of a certain category, e.g. Airbase.Category.FARP
--- @return #table Table containing all airbase objects of the current map.
+--- @param DCS#Coalition coalition (Optional) Return only airbases belonging to the specified coalition. By default, all airbases of the map are returned.
+--- @param #number category (Optional) Return only airbases of a certain category, e.g. Airbase.Category.FARP
+--- @return #table Table containing all airbase objects of the current map.
 function AIRBASE.GetAllAirbases(coalition, category)
 
   local airbases={}
@@ -781,9 +781,9 @@ function AIRBASE.GetAllAirbases(coalition, category)
 end
 
 --- Get all airbase names of the current map. This includes ships and FARPS.
--- @param DCS#Coalition coalition (Optional) Return only airbases belonging to the specified coalition. By default, all airbases of the map are returned.
--- @param #number category (Optional) Return only airbases of a certain category, e.g. `Airbase.Category.HELIPAD`.
--- @return #table Table containing all airbase names of the current map.
+--- @param DCS#Coalition coalition (Optional) Return only airbases belonging to the specified coalition. By default, all airbases of the map are returned.
+--- @param #number category (Optional) Return only airbases of a certain category, e.g. `Airbase.Category.HELIPAD`.
+--- @return #table Table containing all airbase names of the current map.
 function AIRBASE.GetAllAirbaseNames(coalition, category)
 
   local airbases={}
@@ -800,9 +800,9 @@ function AIRBASE.GetAllAirbaseNames(coalition, category)
 end
 
 --- Get ID of the airbase.
--- @param #AIRBASE self
--- @param #boolean unique (Optional) If true, ships will get a negative sign as the unit ID might be the same as an airbase ID. Default off!
--- @return #number The airbase ID.
+--- @param #AIRBASE self
+--- @param #boolean unique (Optional) If true, ships will get a negative sign as the unit ID might be the same as an airbase ID. Default off!
+--- @return #number The airbase ID.
 function AIRBASE:GetID(unique)
 
   if self.AirbaseID then
@@ -840,9 +840,9 @@ end
 --- Set parking spot whitelist. Only these spots will be considered for spawning.
 -- Black listed spots overrule white listed spots.
 -- **NOTE** that terminal IDs are not necessarily the same as those displayed in the mission editor!
--- @param #AIRBASE self
--- @param #table TerminalIdWhitelist Table of white listed terminal IDs.
--- @return #AIRBASE self
+--- @param #AIRBASE self
+--- @param #table TerminalIdWhitelist Table of white listed terminal IDs.
+--- @return #AIRBASE self
 -- @usage AIRBASE:FindByName("Batumi"):SetParkingSpotWhitelist({2, 3, 4}) --Only allow terminal IDs 2, 3, 4
 function AIRBASE:SetParkingSpotWhitelist(TerminalIdWhitelist)
 
@@ -864,9 +864,9 @@ end
 --- Set parking spot blacklist. These parking spots will *not* be used for spawning.
 -- Black listed spots overrule white listed spots.
 -- **NOTE** that terminal IDs are not necessarily the same as those displayed in the mission editor!
--- @param #AIRBASE self
--- @param #table TerminalIdBlacklist Table of black listed terminal IDs.
--- @return #AIRBASE self
+--- @param #AIRBASE self
+--- @param #table TerminalIdBlacklist Table of black listed terminal IDs.
+--- @return #AIRBASE self
 -- @usage AIRBASE:FindByName("Batumi"):SetParkingSpotBlacklist({2, 3, 4}) --Forbit terminal IDs 2, 3, 4
 function AIRBASE:SetParkingSpotBlacklist(TerminalIdBlacklist)
 
@@ -887,9 +887,9 @@ end
 
 --- Sets the ATC belonging to an airbase object to be silent and unresponsive. This is useful for disabling the award winning ATC behavior in DCS. 
 -- Note that this DOES NOT remove the airbase from the list. It just makes it unresponsive and silent to any radio calls to it.
--- @param #AIRBASE self
--- @param #boolean Silent If `true`, enable silent mode. If `false` or `nil`, disable silent mode.
--- @return #AIRBASE self
+--- @param #AIRBASE self
+--- @param #boolean Silent If `true`, enable silent mode. If `false` or `nil`, disable silent mode.
+--- @return #AIRBASE self
 function AIRBASE:SetRadioSilentMode(Silent)
 
   -- Get DCS airbase object.
@@ -904,8 +904,8 @@ function AIRBASE:SetRadioSilentMode(Silent)
 end
 
 --- Check whether or not the airbase has been silenced.
--- @param #AIRBASE self
--- @return #boolean If `true`, silent mode is enabled.
+--- @param #AIRBASE self
+--- @return #boolean If `true`, silent mode is enabled.
 function AIRBASE:GetRadioSilentMode()
   
   -- Is silent?
@@ -923,29 +923,29 @@ function AIRBASE:GetRadioSilentMode()
 end
 
 --- Get category of airbase.
--- @param #AIRBASE self
--- @return #number Category of airbase from GetDesc().category.
+--- @param #AIRBASE self
+--- @return #number Category of airbase from GetDesc().category.
 function AIRBASE:GetAirbaseCategory()
   return self.category
 end
 
 --- Check if airbase is an airdrome.
--- @param #AIRBASE self
--- @return #boolean If true, airbase is an airdrome.
+--- @param #AIRBASE self
+--- @return #boolean If true, airbase is an airdrome.
 function AIRBASE:IsAirdrome()
   return self.isAirdrome
 end
 
 --- Check if airbase is a helipad.
--- @param #AIRBASE self
--- @return #boolean If true, airbase is a helipad.
+--- @param #AIRBASE self
+--- @return #boolean If true, airbase is a helipad.
 function AIRBASE:IsHelipad()
   return self.isHelipad
 end
 
 --- Check if airbase is a ship.
--- @param #AIRBASE self
--- @return #boolean If true, airbase is a ship.
+--- @param #AIRBASE self
+--- @return #boolean If true, airbase is a ship.
 function AIRBASE:IsShip()
   return self.isShip
 end
@@ -971,9 +971,9 @@ end
 -- * vTerminal pos is its vec3 position in the world
 -- * fDistToRW is the distance to the take-off position for the active runway from the parking.
 --
--- @param #AIRBASE self
--- @param #boolean available If true, only available parking spots will be returned.
--- @return #table Table with parking data. See https://wiki.hoggitworld.com/view/DCS_func_getParking
+--- @param #AIRBASE self
+--- @param #boolean available If true, only available parking spots will be returned.
+--- @return #table Table with parking data. See https://wiki.hoggitworld.com/view/DCS_func_getParking
 function AIRBASE:GetParkingData(available)
   self:F2(available)
 
@@ -991,9 +991,9 @@ function AIRBASE:GetParkingData(available)
 end
 
 --- Get number of parking spots at an airbase. Optionally, a specific terminal type can be requested.
--- @param #AIRBASE self
--- @param #AIRBASE.TerminalType termtype Terminal type of which the number of spots is counted. Default all spots but spawn points on runway.
--- @return #number Number of parking spots at this airbase.
+--- @param #AIRBASE self
+--- @param #AIRBASE.TerminalType termtype Terminal type of which the number of spots is counted. Default all spots but spawn points on runway.
+--- @return #number Number of parking spots at this airbase.
 function AIRBASE:GetParkingSpotsNumber(termtype)
 
   -- Get free parking spots data.
@@ -1010,10 +1010,10 @@ function AIRBASE:GetParkingSpotsNumber(termtype)
 end
 
 --- Get number of free parking spots at an airbase.
--- @param #AIRBASE self
--- @param #AIRBASE.TerminalType termtype Terminal type.
--- @param #boolean allowTOAC If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships.
--- @return #number Number of free parking spots at this airbase.
+--- @param #AIRBASE self
+--- @param #AIRBASE.TerminalType termtype Terminal type.
+--- @param #boolean allowTOAC If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships.
+--- @return #number Number of free parking spots at this airbase.
 function AIRBASE:GetFreeParkingSpotsNumber(termtype, allowTOAC)
 
   -- Get free parking spots data.
@@ -1033,10 +1033,10 @@ function AIRBASE:GetFreeParkingSpotsNumber(termtype, allowTOAC)
 end
 
 --- Get the coordinates of free parking spots at an airbase.
--- @param #AIRBASE self
--- @param #AIRBASE.TerminalType termtype Terminal type.
--- @param #boolean allowTOAC If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships.
--- @return #table Table of coordinates of the free parking spots.
+--- @param #AIRBASE self
+--- @param #AIRBASE.TerminalType termtype Terminal type.
+--- @param #boolean allowTOAC If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships.
+--- @return #table Table of coordinates of the free parking spots.
 function AIRBASE:GetFreeParkingSpotsCoordinates(termtype, allowTOAC)
 
   -- Get free parking spots data.
@@ -1057,9 +1057,9 @@ function AIRBASE:GetFreeParkingSpotsCoordinates(termtype, allowTOAC)
 end
 
 --- Get the coordinates of all parking spots at an airbase. Optionally only those of a specific terminal type. Spots on runways are excluded if not explicitly requested by terminal type.
--- @param #AIRBASE self
--- @param #AIRBASE.TerminalType termtype (Optional) Terminal type. Default all.
--- @return #table Table of coordinates of parking spots.
+--- @param #AIRBASE self
+--- @param #AIRBASE.TerminalType termtype (Optional) Terminal type. Default all.
+--- @return #table Table of coordinates of parking spots.
 function AIRBASE:GetParkingSpotsCoordinates(termtype)
 
   -- Get all parking spots data.
@@ -1085,8 +1085,8 @@ function AIRBASE:GetParkingSpotsCoordinates(termtype)
 end
 
 --- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
--- @param #AIRBASE self
--- @return#AIRBASE self
+--- @param #AIRBASE self
+--- @return#AIRBASE self
 function AIRBASE:_InitParkingSpots()
 
   -- Get parking data of all spots (free or occupied)
@@ -1149,17 +1149,17 @@ function AIRBASE:_InitParkingSpots()
 end
 
 --- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
--- @param #AIRBASE self
--- @param #number TerminalID Terminal ID.
--- @return #AIRBASE.ParkingSpot Parking spot.
+--- @param #AIRBASE self
+--- @param #number TerminalID Terminal ID.
+--- @return #AIRBASE.ParkingSpot Parking spot.
 function AIRBASE:_GetParkingSpotByID(TerminalID)
   return self.parkingByID[TerminalID]
 end
 
 --- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
--- @param #AIRBASE self
--- @param #AIRBASE.TerminalType termtype Terminal type.
--- @return #table Table free parking spots. Table has the elements ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
+--- @param #AIRBASE self
+--- @param #AIRBASE.TerminalType termtype Terminal type.
+--- @return #table Table free parking spots. Table has the elements ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
 function AIRBASE:GetParkingSpotsTable(termtype)
 
   -- Get parking data of all spots (free or occupied)
@@ -1208,10 +1208,10 @@ function AIRBASE:GetParkingSpotsTable(termtype)
 end
 
 --- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
--- @param #AIRBASE self
--- @param #AIRBASE.TerminalType termtype Terminal type.
--- @param #boolean allowTOAC If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships.
--- @return #table Table free parking spots. Table has the elements ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
+--- @param #AIRBASE self
+--- @param #AIRBASE.TerminalType termtype Terminal type.
+--- @param #boolean allowTOAC If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships.
+--- @return #table Table free parking spots. Table has the elements ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
 function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
 
   -- Get parking data of all free spots.
@@ -1239,9 +1239,9 @@ function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
 end
 
 --- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
--- @param #AIRBASE self
--- @param #number TerminalID The terminal ID of the parking spot.
--- @return #AIRBASE.ParkingSpot Table free parking spots. Table has the elements ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
+--- @param #AIRBASE self
+--- @param #number TerminalID The terminal ID of the parking spot.
+--- @return #AIRBASE.ParkingSpot Table free parking spots. Table has the elements ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
 function AIRBASE:GetParkingSpotData(TerminalID)
 
   -- Get parking data.
@@ -1260,9 +1260,9 @@ function AIRBASE:GetParkingSpotData(TerminalID)
 end
 
 --- Place markers of parking spots on the F10 map.
--- @param #AIRBASE self
--- @param #AIRBASE.TerminalType termtype Terminal type for which marks should be placed.
--- @param #boolean mark If false, do not place markers but only give output to DCS.log file. Default true.
+--- @param #AIRBASE self
+--- @param #AIRBASE.TerminalType termtype Terminal type for which marks should be placed.
+--- @param #boolean mark If false, do not place markers but only give output to DCS.log file. Default true.
 function AIRBASE:MarkParkingSpots(termtype, mark)
 
   -- Default is true.
@@ -1297,17 +1297,17 @@ end
 
 --- Seach unoccupied parking spots at the airbase for a specific group of aircraft. The routine also optionally checks for other unit, static and scenery options in a certain radius around the parking spot.
 -- The dimension of the spawned aircraft and of the potential obstacle are taken into account. Note that the routine can only return so many spots that are free.
--- @param #AIRBASE self
--- @param Wrapper.Group#GROUP group Aircraft group for which the parking spots are requested.
--- @param #AIRBASE.TerminalType terminaltype (Optional) Only search spots at a specific terminal type. Default is all types execpt on runway.
--- @param #number scanradius (Optional) Radius in meters around parking spot to scan for obstacles. Default 50 m.
--- @param #boolean scanunits (Optional) Scan for units as obstacles. Default true.
--- @param #boolean scanstatics (Optional) Scan for statics as obstacles. Default true.
--- @param #boolean scanscenery (Optional) Scan for scenery as obstacles. Default false. Can cause problems with e.g. shelters.
--- @param #boolean verysafe (Optional) If true, wait until an aircraft has taken off until the parking spot is considered to be free. Defaul false.
--- @param #number nspots (Optional) Number of freeparking spots requested. Default is the number of aircraft in the group.
--- @param #table parkingdata (Optional) Parking spots data table. If not given it is automatically derived from the GetParkingSpotsTable() function.
--- @return #table Table of coordinates and terminal IDs of free parking spots. Each table entry has the elements .Coordinate and .TerminalID.
+--- @param #AIRBASE self
+--- @param Wrapper.Group#GROUP group Aircraft group for which the parking spots are requested.
+--- @param #AIRBASE.TerminalType terminaltype (Optional) Only search spots at a specific terminal type. Default is all types execpt on runway.
+--- @param #number scanradius (Optional) Radius in meters around parking spot to scan for obstacles. Default 50 m.
+--- @param #boolean scanunits (Optional) Scan for units as obstacles. Default true.
+--- @param #boolean scanstatics (Optional) Scan for statics as obstacles. Default true.
+--- @param #boolean scanscenery (Optional) Scan for scenery as obstacles. Default false. Can cause problems with e.g. shelters.
+--- @param #boolean verysafe (Optional) If true, wait until an aircraft has taken off until the parking spot is considered to be free. Defaul false.
+--- @param #number nspots (Optional) Number of freeparking spots requested. Default is the number of aircraft in the group.
+--- @param #table parkingdata (Optional) Parking spots data table. If not given it is automatically derived from the GetParkingSpotsTable() function.
+--- @return #table Table of coordinates and terminal IDs of free parking spots. Each table entry has the elements .Coordinate and .TerminalID.
 function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nspots, parkingdata)
 
   -- Init default
@@ -1497,9 +1497,9 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
 end
 
 --- Check black and white lists.
--- @param #AIRBASE self
--- @param #number TerminalID Terminal ID to check.
--- @return #boolean `true` if this is a valid spot.
+--- @param #AIRBASE self
+--- @param #number TerminalID Terminal ID to check.
+--- @return #boolean `true` if this is a valid spot.
 function AIRBASE:_CheckParkingLists(TerminalID)
 
   -- First check the black list. If we find a match, this spot is forbidden!
@@ -1530,9 +1530,9 @@ function AIRBASE:_CheckParkingLists(TerminalID)
 end
 
 --- Helper function to check for the correct terminal type including "artificial" ones.
--- @param #number Term_Type Termial type from getParking routine.
--- @param #AIRBASE.TerminalType termtype Terminal type from AIRBASE.TerminalType enumerator.
--- @return #boolean True if terminal types match.
+--- @param #number Term_Type Termial type from getParking routine.
+--- @param #AIRBASE.TerminalType termtype Terminal type from AIRBASE.TerminalType enumerator.
+--- @return #boolean True if terminal types match.
 function AIRBASE._CheckTerminalType(Term_Type, termtype)
 
   -- Nill check for Term_Type.
@@ -1580,16 +1580,16 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get runways.
--- @param #AIRBASE self
--- @return #table Runway data.
+--- @param #AIRBASE self
+--- @return #table Runway data.
 function AIRBASE:GetRunways()
   return self.runways or {}
 end
 
 --- Get runway by its name.
--- @param #AIRBASE self
--- @param #string Name Name of the runway, e.g. "31" or "21L".
--- @return #AIRBASE.Runway Runway data.
+--- @param #AIRBASE self
+--- @param #string Name Name of the runway, e.g. "31" or "21L".
+--- @return #AIRBASE.Runway Runway data.
 function AIRBASE:GetRunwayByName(Name)
   
   if Name==nil then
@@ -1614,9 +1614,9 @@ function AIRBASE:GetRunwayByName(Name)
 end
 
 --- Init runways.
--- @param #AIRBASE self
--- @param #boolean IncludeInverse If `true` or `nil`, include inverse runways.
--- @return #table Runway data.
+--- @param #AIRBASE self
+--- @param #boolean IncludeInverse If `true` or `nil`, include inverse runways.
+--- @return #table Runway data.
 function AIRBASE:_InitRunways(IncludeInverse)
 
   -- Default is true.
@@ -1805,10 +1805,10 @@ end
 
 
 --- Get runways data. Only for airdromes!
--- @param #AIRBASE self
--- @param #number magvar (Optional) Magnetic variation in degrees.
--- @param #boolean mark (Optional) Place markers with runway data on F10 map.
--- @return #table Runway data.
+--- @param #AIRBASE self
+--- @param #number magvar (Optional) Magnetic variation in degrees.
+--- @param #boolean mark (Optional) Place markers with runway data on F10 map.
+--- @return #table Runway data.
 function AIRBASE:GetRunwayData(magvar, mark)
 
   -- Runway table.
@@ -1972,9 +1972,9 @@ function AIRBASE:GetRunwayData(magvar, mark)
 end
 
 --- Set the active runway for landing and takeoff.
--- @param #AIRBASE self
--- @param #string Name Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
--- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
+--- @param #AIRBASE self
+--- @param #string Name Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
+--- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
 function AIRBASE:SetActiveRunway(Name, PreferLeft)
   
   self:SetActiveRunwayTakeoff(Name, PreferLeft)
@@ -1984,10 +1984,10 @@ function AIRBASE:SetActiveRunway(Name, PreferLeft)
 end
 
 --- Set the active runway for landing.
--- @param #AIRBASE self
--- @param #string Name Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
--- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
--- @return #AIRBASE.Runway The active runway for landing.
+--- @param #AIRBASE self
+--- @param #string Name Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
+--- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
+--- @return #AIRBASE.Runway The active runway for landing.
 function AIRBASE:SetActiveRunwayLanding(Name, PreferLeft)
 
   local runway=self:GetRunwayByName(Name)
@@ -2008,34 +2008,34 @@ function AIRBASE:SetActiveRunwayLanding(Name, PreferLeft)
 end
 
 --- Get the active runways.
--- @param #AIRBASE self
--- @return #AIRBASE.Runway The active runway for landing.
--- @return #AIRBASE.Runway The active runway for takeoff.
+--- @param #AIRBASE self
+--- @return #AIRBASE.Runway The active runway for landing.
+--- @return #AIRBASE.Runway The active runway for takeoff.
 function AIRBASE:GetActiveRunway()
   return self.runwayLanding, self.runwayTakeoff
 end
 
 
 --- Get the active runway for landing.
--- @param #AIRBASE self
--- @return #AIRBASE.Runway The active runway for landing.
+--- @param #AIRBASE self
+--- @return #AIRBASE.Runway The active runway for landing.
 function AIRBASE:GetActiveRunwayLanding()
   return self.runwayLanding
 end
 
 --- Get the active runway for takeoff.
--- @param #AIRBASE self
--- @return #AIRBASE.Runway The active runway for takeoff.
+--- @param #AIRBASE self
+--- @return #AIRBASE.Runway The active runway for takeoff.
 function AIRBASE:GetActiveRunwayTakeoff()
   return self.runwayTakeoff
 end
 
 
 --- Set the active runway for takeoff.
--- @param #AIRBASE self
--- @param #string Name Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
--- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
--- @return #AIRBASE.Runway The active runway for landing.
+--- @param #AIRBASE self
+--- @param #string Name Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
+--- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
+--- @return #AIRBASE.Runway The active runway for landing.
 function AIRBASE:SetActiveRunwayTakeoff(Name, PreferLeft)
 
   local runway=self:GetRunwayByName(Name)
@@ -2058,9 +2058,9 @@ end
 
 --- Get the runway where aircraft would be taking of or landing into the direction of the wind.
 -- NOTE that this requires the wind to be non-zero as set in the mission editor.
--- @param #AIRBASE self
--- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
--- @return #AIRBASE.Runway Active runway data table.
+--- @param #AIRBASE self
+--- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
+--- @return #AIRBASE.Runway Active runway data table.
 function AIRBASE:GetRunwayIntoWind(PreferLeft)
   
   -- Get runway data.
@@ -2114,10 +2114,10 @@ function AIRBASE:GetRunwayIntoWind(PreferLeft)
 end
 
 --- Get name of a given runway, e.g. "31L".
--- @param #AIRBASE self
--- @param #AIRBASE.Runway Runway The runway. Default is the active runway.
--- @param #boolean LongLeftRight If `true`, return "Left" or "Right" instead of "L" or "R".
--- @return #string Name of the runway or "XX" if it could not be found.
+--- @param #AIRBASE self
+--- @param #AIRBASE.Runway Runway The runway. Default is the active runway.
+--- @param #boolean LongLeftRight If `true`, return "Left" or "Right" instead of "L" or "R".
+--- @return #string Name of the runway or "XX" if it could not be found.
 function AIRBASE:GetRunwayName(Runway, LongLeftRight)
 
   Runway=Runway or self:GetActiveRunway()
@@ -2144,11 +2144,11 @@ function AIRBASE:GetRunwayName(Runway, LongLeftRight)
 end
 
 --- Function that checks if at leat one unit of a group has been spawned close to a spawn point on the runway.
--- @param #AIRBASE self
--- @param Wrapper.Group#GROUP group Group to be checked.
--- @param #number radius Radius around the spawn point to be checked. Default is 50 m.
--- @param #boolean despawn If true, the group is destroyed.
--- @return #boolean True if group is within radius around spawn points on runway.
+--- @param #AIRBASE self
+--- @param Wrapper.Group#GROUP group Group to be checked.
+--- @param #number radius Radius around the spawn point to be checked. Default is 50 m.
+--- @param #boolean despawn If true, the group is destroyed.
+--- @return #boolean True if group is within radius around spawn points on runway.
 function AIRBASE:CheckOnRunWay(group, radius, despawn)
 
   -- Default radius.

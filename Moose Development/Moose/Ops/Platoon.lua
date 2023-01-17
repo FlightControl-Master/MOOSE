@@ -15,10 +15,10 @@
 
 
 --- PLATOON class.
--- @type PLATOON
--- @field #string ClassName Name of the class.
--- @field #number verbose Verbosity level.
--- @field Ops.OpsGroup#OPSGROUP.WeaponData weaponData Weapon data table with key=BitType.
+--- @type PLATOON
+--- @field #string ClassName Name of the class.
+--- @field #number verbose Verbosity level.
+--- @field Ops.OpsGroup#OPSGROUP.WeaponData weaponData Weapon data table with key=BitType.
 -- @extends Ops.Cohort#COHORT
 
 --- *Some cool cohort quote* -- Known Author
@@ -31,7 +31,7 @@
 --
 --
 --
--- @field #PLATOON
+--- @field #PLATOON
 PLATOON = {
   ClassName      = "PLATOON",
   verbose        =     0,
@@ -39,7 +39,7 @@ PLATOON = {
 }
 
 --- PLATOON class version.
--- @field #string version
+--- @field #string version
 PLATOON.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -53,11 +53,11 @@ PLATOON.version="0.1.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new PLATOON object and start the FSM.
--- @param #PLATOON self
--- @param #string TemplateGroupName Name of the template group.
--- @param #number Ngroups Number of asset groups of this platoon. Default 3.
--- @param #string PlatoonName Name of the platoon. Must be **unique**!
--- @return #PLATOON self
+--- @param #PLATOON self
+--- @param #string TemplateGroupName Name of the template group.
+--- @param #number Ngroups Number of asset groups of this platoon. Default 3.
+--- @param #string PlatoonName Name of the platoon. Must be **unique**!
+--- @return #PLATOON self
 function PLATOON:New(TemplateGroupName, Ngroups, PlatoonName)
 
   -- Inherit everything from COHORT class.
@@ -82,17 +82,17 @@ end
   -- TODO: Platoon specific user functions.
 
 --- Set brigade of this platoon.
--- @param #PLATOON self
--- @param Ops.Brigade#BRIGADE Brigade The brigade.
--- @return #PLATOON self
+--- @param #PLATOON self
+--- @param Ops.Brigade#BRIGADE Brigade The brigade.
+--- @return #PLATOON self
 function PLATOON:SetBrigade(Brigade)
   self.legion=Brigade
   return self
 end
 
 --- Get brigade of this platoon.
--- @param #PLATOON self
--- @return Ops.Brigade#BRIGADE The brigade.
+--- @param #PLATOON self
+--- @return Ops.Brigade#BRIGADE The brigade.
 function PLATOON:GetBrigade()
   return self.legion
 end
@@ -102,10 +102,10 @@ end
 
 --[[
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
--- @param #PLATOON self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #PLATOON self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function PLATOON:onafterStart(From, Event, To)
 
   -- Short info.
@@ -118,10 +118,10 @@ end
 ]]
 
 --- On after "Status" event.
--- @param #PLATOON self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #PLATOON self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function PLATOON:onafterStatus(From, Event, To)
 
   if self.verbose>=1 then

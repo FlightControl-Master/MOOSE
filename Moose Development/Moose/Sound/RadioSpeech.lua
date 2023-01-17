@@ -19,7 +19,7 @@
 -- # RADIOSPEECH usage
 --
 --
--- @type RADIOSPEECH
+--- @type RADIOSPEECH
 -- @extends Core.RadioQueue#RADIOQUEUE
 RADIOSPEECH = {
   ClassName = "RADIOSPEECH",
@@ -192,10 +192,10 @@ RADIOSPEECH.Vocabulary.RU = {
 }
 
 --- Create a new RADIOSPEECH object for a given radio frequency/modulation.
--- @param #RADIOSPEECH self
--- @param #number frequency The radio frequency in MHz.
--- @param #number modulation (Optional) The radio modulation. Default radio.modulation.AM.
--- @return #RADIOSPEECH self The RADIOSPEECH object.
+--- @param #RADIOSPEECH self
+--- @param #number frequency The radio frequency in MHz.
+--- @param #number modulation (Optional) The radio modulation. Default radio.modulation.AM.
+--- @return #RADIOSPEECH self The RADIOSPEECH object.
 function RADIOSPEECH:New(frequency, modulation)
 
   -- Inherit base
@@ -215,12 +215,12 @@ end
 
 
 --- Add Sentence to the Speech collection.
--- @param #RADIOSPEECH self
--- @param #string RemainingSentence The remaining sentence during recursion.
--- @param #table Speech The speech node.
--- @param #string Sentence The full sentence.
--- @param #string Data The speech data.
--- @return #RADIOSPEECH self The RADIOSPEECH object.
+--- @param #RADIOSPEECH self
+--- @param #string RemainingSentence The remaining sentence during recursion.
+--- @param #table Speech The speech node.
+--- @param #string Sentence The full sentence.
+--- @param #string Data The speech data.
+--- @return #RADIOSPEECH self The RADIOSPEECH object.
 function RADIOSPEECH:AddSentenceToSpeech( RemainingSentence, Speech, Sentence, Data )
 
   self:I( { RemainingSentence, Speech, Sentence, Data } )
@@ -257,8 +257,8 @@ function RADIOSPEECH:AddSentenceToSpeech( RemainingSentence, Speech, Sentence, D
 end
 
 --- Build the tree structure based on the language words, in order to find the correct sentences and to ignore incomprehensible words.
--- @param #RADIOSPEECH self
--- @return #RADIOSPEECH self The RADIOSPEECH object.
+--- @param #RADIOSPEECH self
+--- @return #RADIOSPEECH self The RADIOSPEECH object.
 function RADIOSPEECH:BuildTree()
 
   self.Speech = {}
@@ -278,8 +278,8 @@ function RADIOSPEECH:BuildTree()
 end
 
 --- Speak a sentence.
--- @param #RADIOSPEECH self
--- @param #string Sentence The sentence to be spoken.
+--- @param #RADIOSPEECH self
+--- @param #string Sentence The sentence to be spoken.
 function RADIOSPEECH:SpeakWords( Sentence, Speech, Language )
 
   local OriginalSentence = Sentence
@@ -318,8 +318,8 @@ function RADIOSPEECH:SpeakWords( Sentence, Speech, Language )
 end
 
 --- Speak a sentence.
--- @param #RADIOSPEECH self
--- @param #string Sentence The sentence to be spoken.
+--- @param #RADIOSPEECH self
+--- @param #string Sentence The sentence to be spoken.
 function RADIOSPEECH:SpeakDigits( Sentence, Speech, Langauge )
 
   local OriginalSentence = Sentence
@@ -367,8 +367,8 @@ end
 
 
 --- Speak a sentence.
--- @param #RADIOSPEECH self
--- @param #string Sentence The sentence to be spoken.
+--- @param #RADIOSPEECH self
+--- @param #string Sentence The sentence to be spoken.
 function RADIOSPEECH:Speak( Sentence, Language )
 
   self:I( { Sentence, Language } )

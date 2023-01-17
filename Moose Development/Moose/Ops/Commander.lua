@@ -15,25 +15,25 @@
 
 
 --- COMMANDER class.
--- @type COMMANDER
--- @field #string ClassName Name of the class.
--- @field #number verbose Verbosity level.
--- @field #string lid Class id string for output to DCS log file.
--- @field #number coalition Coalition side of the commander.
--- @field #string alias Alias name.
--- @field #table legions Table of legions which are commanded.
--- @field #table missionqueue Mission queue.
--- @field #table transportqueue Transport queue.
--- @field #table targetqueue Target queue.
--- @field #table opsqueue Operations queue.
--- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.SupplyZone`.
--- @field #table refuellingZones Refuelling zones. Each element is of type `#BRIGADE.SupplyZone`.
--- @field #table capZones CAP zones. Each element is of type `#AIRWING.PatrolZone`.
--- @field #table gcicapZones GCICAP zones. Each element is of type `#AIRWING.PatrolZone`.
--- @field #table awacsZones AWACS zones. Each element is of type `#AIRWING.PatrolZone`.
--- @field #table tankerZones Tanker zones. Each element is of type `#AIRWING.TankerZone`.
--- @field Ops.Chief#CHIEF chief Chief of staff.
--- @field #table limitMission Table of limits for mission types.
+--- @type COMMANDER
+--- @field #string ClassName Name of the class.
+--- @field #number verbose Verbosity level.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #number coalition Coalition side of the commander.
+--- @field #string alias Alias name.
+--- @field #table legions Table of legions which are commanded.
+--- @field #table missionqueue Mission queue.
+--- @field #table transportqueue Transport queue.
+--- @field #table targetqueue Target queue.
+--- @field #table opsqueue Operations queue.
+--- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.SupplyZone`.
+--- @field #table refuellingZones Refuelling zones. Each element is of type `#BRIGADE.SupplyZone`.
+--- @field #table capZones CAP zones. Each element is of type `#AIRWING.PatrolZone`.
+--- @field #table gcicapZones GCICAP zones. Each element is of type `#AIRWING.PatrolZone`.
+--- @field #table awacsZones AWACS zones. Each element is of type `#AIRWING.PatrolZone`.
+--- @field #table tankerZones Tanker zones. Each element is of type `#AIRWING.TankerZone`.
+--- @field Ops.Chief#CHIEF chief Chief of staff.
+--- @field #table limitMission Table of limits for mission types.
 -- @extends Core.Fsm#FSM
 
 --- *He who has never leared to obey cannot be a good commander.* -- Aristotle
@@ -119,7 +119,7 @@
 -- 
 -- The cancel command will be forwarded to all assigned legions and OPS groups, which will abort their mission or remove it from their queue.
 --
--- @field #COMMANDER
+--- @field #COMMANDER
 COMMANDER = {
   ClassName       = "COMMANDER",
   verbose         =     0,
@@ -139,7 +139,7 @@ COMMANDER = {
 }
 
 --- COMMANDER class version.
--- @field #string version
+--- @field #string version
 COMMANDER.version="0.1.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -159,10 +159,10 @@ COMMANDER.version="0.1.3"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new COMMANDER object and start the FSM.
--- @param #COMMANDER self
--- @param #number Coalition Coaliton of the commander.
--- @param #string Alias Some name you want the commander to be called.
--- @return #COMMANDER self
+--- @param #COMMANDER self
+--- @param #number Coalition Coaliton of the commander.
+--- @param #string Alias Some name you want the commander to be called.
+--- @return #COMMANDER self
 function COMMANDER:New(Coalition, Alias)
 
   -- Inherit everything from INTEL class.
@@ -387,19 +387,19 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set verbosity level.
--- @param #COMMANDER self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
--- @return #COMMANDER self
+--- @param #COMMANDER self
+--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+--- @return #COMMANDER self
 function COMMANDER:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
   return self
 end
 
 --- Set limit for number of total or specific missions to be executed simultaniously.
--- @param #COMMANDER self
--- @param #number Limit Number of max. mission of this type. Default 10.
--- @param #string MissionType Type of mission, e.g. `AUFTRAG.Type.BAI`. Default `"Total"` for total number of missions.
--- @return #COMMANDER self
+--- @param #COMMANDER self
+--- @param #number Limit Number of max. mission of this type. Default 10.
+--- @param #string MissionType Type of mission, e.g. `AUFTRAG.Type.BAI`. Default `"Total"` for total number of missions.
+--- @return #COMMANDER self
 function COMMANDER:SetLimitMission(Limit, MissionType)
   MissionType=MissionType or "Total"
   if MissionType then
@@ -412,16 +412,16 @@ end
 
 
 --- Get coalition.
--- @param #COMMANDER self
--- @return #number Coalition.
+--- @param #COMMANDER self
+--- @return #number Coalition.
 function COMMANDER:GetCoalition()
   return self.coalition
 end
 
 --- Add an AIRWING to the commander.
--- @param #COMMANDER self
--- @param Ops.AirWing#AIRWING Airwing The airwing to add.
--- @return #COMMANDER self
+--- @param #COMMANDER self
+--- @param Ops.AirWing#AIRWING Airwing The airwing to add.
+--- @return #COMMANDER self
 function COMMANDER:AddAirwing(Airwing)
 
   -- Add legion.
@@ -431,9 +431,9 @@ function COMMANDER:AddAirwing(Airwing)
 end
 
 --- Add a BRIGADE to the commander.
--- @param #COMMANDER self
--- @param Ops.Brigade#BRIGADE Brigade The brigade to add.
--- @return #COMMANDER self
+--- @param #COMMANDER self
+--- @param Ops.Brigade#BRIGADE Brigade The brigade to add.
+--- @return #COMMANDER self
 function COMMANDER:AddBrigade(Brigade)
 
   -- Add legion.
@@ -443,9 +443,9 @@ function COMMANDER:AddBrigade(Brigade)
 end
 
 --- Add a FLEET to the commander.
--- @param #COMMANDER self
--- @param Ops.Fleet#FLEET Fleet The fleet to add.
--- @return #COMMANDER self
+--- @param #COMMANDER self
+--- @param Ops.Fleet#FLEET Fleet The fleet to add.
+--- @return #COMMANDER self
 function COMMANDER:AddFleet(Fleet)
 
   -- Add legion.
@@ -456,9 +456,9 @@ end
 
 
 --- Add a LEGION to the commander.
--- @param #COMMANDER self
--- @param Ops.Legion#LEGION Legion The legion to add.
--- @return #COMMANDER self
+--- @param #COMMANDER self
+--- @param Ops.Legion#LEGION Legion The legion to add.
+--- @return #COMMANDER self
 function COMMANDER:AddLegion(Legion)
 
   -- This legion is managed by the commander. 
@@ -471,9 +471,9 @@ function COMMANDER:AddLegion(Legion)
 end
 
 --- Remove a LEGION to the commander.
--- @param #COMMANDER self
--- @param Ops.Legion#LEGION Legion The legion to be removed.
--- @return #COMMANDER self
+--- @param #COMMANDER self
+--- @param Ops.Legion#LEGION Legion The legion to be removed.
+--- @return #COMMANDER self
 function COMMANDER:RemoveLegion(Legion)
     
   for i,_legion in pairs(self.legions) do
@@ -488,9 +488,9 @@ function COMMANDER:RemoveLegion(Legion)
 end
 
 --- Add mission to mission queue.
--- @param #COMMANDER self
--- @param Ops.Auftrag#AUFTRAG Mission Mission to be added.
--- @return #COMMANDER self
+--- @param #COMMANDER self
+--- @param Ops.Auftrag#AUFTRAG Mission Mission to be added.
+--- @return #COMMANDER self
 function COMMANDER:AddMission(Mission)
 
   if not self:IsMission(Mission) then
@@ -507,9 +507,9 @@ function COMMANDER:AddMission(Mission)
 end
 
 --- Add transport to queue.
--- @param #COMMANDER self
--- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport to be added.
--- @return #COMMANDER self
+--- @param #COMMANDER self
+--- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport to be added.
+--- @return #COMMANDER self
 function COMMANDER:AddOpsTransport(Transport)
 
   Transport.commander=self
@@ -522,9 +522,9 @@ function COMMANDER:AddOpsTransport(Transport)
 end
 
 --- Remove mission from queue.
--- @param #COMMANDER self
--- @param Ops.Auftrag#AUFTRAG Mission Mission to be removed.
--- @return #COMMANDER self
+--- @param #COMMANDER self
+--- @param Ops.Auftrag#AUFTRAG Mission Mission to be removed.
+--- @return #COMMANDER self
 function COMMANDER:RemoveMission(Mission)
 
   for i,_mission in pairs(self.missionqueue) do
@@ -543,9 +543,9 @@ function COMMANDER:RemoveMission(Mission)
 end
 
 --- Remove transport from queue.
--- @param #COMMANDER self
--- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport to be removed.
--- @return #COMMANDER self
+--- @param #COMMANDER self
+--- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport to be removed.
+--- @return #COMMANDER self
 function COMMANDER:RemoveTransport(Transport)
 
   for i,_transport in pairs(self.transportqueue) do
@@ -564,9 +564,9 @@ function COMMANDER:RemoveTransport(Transport)
 end
 
 --- Add target.
--- @param #COMMANDER self
--- @param Ops.Target#TARGET Target Target object to be added.
--- @return #COMMANDER self
+--- @param #COMMANDER self
+--- @param Ops.Target#TARGET Target Target object to be added.
+--- @return #COMMANDER self
 function COMMANDER:AddTarget(Target)
 
   if not self:IsTarget(Target) then
@@ -577,9 +577,9 @@ function COMMANDER:AddTarget(Target)
 end
 
 --- Add operation.
--- @param #COMMANDER self
--- @param Ops.Operation#OPERATION Operation The operation to be added.
--- @return #COMMANDER self
+--- @param #COMMANDER self
+--- @param Ops.Operation#OPERATION Operation The operation to be added.
+--- @return #COMMANDER self
 function COMMANDER:AddOperation(Operation)
 
   -- TODO: Check that is not already added.
@@ -591,9 +591,9 @@ function COMMANDER:AddOperation(Operation)
 end
 
 --- Check if a TARGET is already in the queue. 
--- @param #COMMANDER self
--- @param Ops.Target#TARGET Target Target object to be added.
--- @return #boolean If `true`, target exists in the target queue.
+--- @param #COMMANDER self
+--- @param Ops.Target#TARGET Target Target object to be added.
+--- @return #boolean If `true`, target exists in the target queue.
 function COMMANDER:IsTarget(Target)
 
   for _,_target in pairs(self.targetqueue) do
@@ -607,9 +607,9 @@ function COMMANDER:IsTarget(Target)
 end
 
 --- Remove target from queue.
--- @param #COMMANDER self
--- @param Ops.Target#TARGET Target The target.
--- @return #COMMANDER self
+--- @param #COMMANDER self
+--- @param Ops.Target#TARGET Target The target.
+--- @return #COMMANDER self
 function COMMANDER:RemoveTarget(Target)
 
   for i,_target in pairs(self.targetqueue) do
@@ -627,9 +627,9 @@ function COMMANDER:RemoveTarget(Target)
 end
 
 --- Add a rearming zone.
--- @param #COMMANDER self
--- @param Core.Zone#ZONE RearmingZone Rearming zone.
--- @return Ops.Brigade#BRIGADE.SupplyZone The rearming zone data.
+--- @param #COMMANDER self
+--- @param Core.Zone#ZONE RearmingZone Rearming zone.
+--- @return Ops.Brigade#BRIGADE.SupplyZone The rearming zone data.
 function COMMANDER:AddRearmingZone(RearmingZone)
 
   local rearmingzone={} --Ops.Brigade#BRIGADE.SupplyZone
@@ -644,9 +644,9 @@ function COMMANDER:AddRearmingZone(RearmingZone)
 end
 
 --- Add a refuelling zone.
--- @param #COMMANDER self
--- @param Core.Zone#ZONE RefuellingZone Refuelling zone.
--- @return Ops.Brigade#BRIGADE.SupplyZone The refuelling zone data.
+--- @param #COMMANDER self
+--- @param Core.Zone#ZONE RefuellingZone Refuelling zone.
+--- @return Ops.Brigade#BRIGADE.SupplyZone The refuelling zone data.
 function COMMANDER:AddRefuellingZone(RefuellingZone)
 
   local rearmingzone={} --Ops.Brigade#BRIGADE.SupplyZone
@@ -661,13 +661,13 @@ function COMMANDER:AddRefuellingZone(RefuellingZone)
 end
 
 --- Add a CAP zone.
--- @param #COMMANDER self
--- @param Core.Zone#ZONE Zone CapZone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 30 NM.
--- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
+--- @param #COMMANDER self
+--- @param Core.Zone#ZONE Zone CapZone Zone.
+--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+--- @param #number Leg Length of race-track in NM. Default 30 NM.
+--- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
 function COMMANDER:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
 
   local patrolzone={} --Ops.AirWing#AIRWING.PatrolZone
@@ -686,13 +686,13 @@ function COMMANDER:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
 end
 
 --- Add a GCICAP zone.
--- @param #COMMANDER self
--- @param Core.Zone#ZONE Zone CapZone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 30 NM.
--- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
+--- @param #COMMANDER self
+--- @param Core.Zone#ZONE Zone CapZone Zone.
+--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+--- @param #number Leg Length of race-track in NM. Default 30 NM.
+--- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
 function COMMANDER:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
 
   local patrolzone={} --Ops.AirWing#AIRWING.PatrolZone
@@ -711,13 +711,13 @@ function COMMANDER:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
 end
 
 --- Add an AWACS zone.
--- @param #COMMANDER self
--- @param Core.Zone#ZONE Zone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 30 NM.
--- @return Ops.AirWing#AIRWING.PatrolZone The AWACS zone data.
+--- @param #COMMANDER self
+--- @param Core.Zone#ZONE Zone Zone.
+--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+--- @param #number Leg Length of race-track in NM. Default 30 NM.
+--- @return Ops.AirWing#AIRWING.PatrolZone The AWACS zone data.
 function COMMANDER:AddAwacsZone(Zone, Altitude, Speed, Heading, Leg)
 
   local awacszone={} --Ops.AirWing#AIRWING.PatrolZone
@@ -736,14 +736,14 @@ function COMMANDER:AddAwacsZone(Zone, Altitude, Speed, Heading, Leg)
 end
 
 --- Add a refuelling tanker zone.
--- @param #COMMANDER self
--- @param Core.Zone#ZONE Zone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 30 NM.
--- @param #number RefuelSystem Refuelling system.
--- @return Ops.AirWing#AIRWING.TankerZone The tanker zone data.
+--- @param #COMMANDER self
+--- @param Core.Zone#ZONE Zone Zone.
+--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+--- @param #number Leg Length of race-track in NM. Default 30 NM.
+--- @param #number RefuelSystem Refuelling system.
+--- @return Ops.AirWing#AIRWING.TankerZone The tanker zone data.
 function COMMANDER:AddTankerZone(Zone, Altitude, Speed, Heading, Leg, RefuelSystem)
 
   local tankerzone={} --Ops.AirWing#AIRWING.TankerZone
@@ -763,9 +763,9 @@ function COMMANDER:AddTankerZone(Zone, Altitude, Speed, Heading, Leg, RefuelSyst
 end
 
 --- Check if this mission is already in the queue.
--- @param #COMMANDER self
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @return #boolean If `true`, this mission is in the queue.
+--- @param #COMMANDER self
+--- @param Ops.Auftrag#AUFTRAG Mission The mission.
+--- @return #boolean If `true`, this mission is in the queue.
 function COMMANDER:IsMission(Mission)
 
   for _,_mission in pairs(self.missionqueue) do
@@ -782,14 +782,14 @@ end
 -- Assets in stock are spawned and routed to the new legion.
 -- If assets are spawned, running missions will be cancelled.
 -- Cohort assets will not be available until relocation is finished.
--- @param #COMMANDER self
--- @param Ops.Cohort#COHORT Cohort The cohort to be relocated.
--- @param Ops.Legion#LEGION Legion The legion where the cohort is relocated to.
--- @param #number Delay Delay in seconds before relocation takes place. Default `nil`, *i.e.* ASAP.
--- @param #number NcarriersMin Min number of transport carriers in case the troops should be transported. Default `nil` for no transport.
--- @param #number NcarriersMax Max number of transport carriers.
--- @param #table TransportLegions Legion(s) assigned for transportation. Default is all legions of the commander.
--- @return #COMMANDER self
+--- @param #COMMANDER self
+--- @param Ops.Cohort#COHORT Cohort The cohort to be relocated.
+--- @param Ops.Legion#LEGION Legion The legion where the cohort is relocated to.
+--- @param #number Delay Delay in seconds before relocation takes place. Default `nil`, *i.e.* ASAP.
+--- @param #number NcarriersMin Min number of transport carriers in case the troops should be transported. Default `nil` for no transport.
+--- @param #number NcarriersMax Max number of transport carriers.
+--- @param #table TransportLegions Legion(s) assigned for transportation. Default is all legions of the commander.
+--- @return #COMMANDER self
 function COMMANDER:RelocateCohort(Cohort, Legion, Delay, NcarriersMin, NcarriersMax, TransportLegions)
 
   if Delay and Delay>0 then
@@ -863,11 +863,11 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
--- @param #COMMANDER self
--- @param Wrapper.Group#GROUP Group Flight group.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #COMMANDER self
+--- @param Wrapper.Group#GROUP Group Flight group.
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function COMMANDER:onafterStart(From, Event, To)
 
   -- Short info.
@@ -886,11 +886,11 @@ function COMMANDER:onafterStart(From, Event, To)
 end
 
 --- On after "Status" event.
--- @param #COMMANDER self
--- @param Wrapper.Group#GROUP Group Flight group.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
+--- @param #COMMANDER self
+--- @param Wrapper.Group#GROUP Group Flight group.
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
 function COMMANDER:onafterStatus(From, Event, To)
 
   -- FSM state.
@@ -1133,12 +1133,12 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "MissionAssign" event. Mission is added to a LEGION mission queue and already requested. Needs assets to be added to the mission already.
--- @param #COMMANDER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @param #table Legions The Legion(s) to which the mission is assigned.
+--- @param #COMMANDER self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.Auftrag#AUFTRAG Mission The mission.
+--- @param #table Legions The Legion(s) to which the mission is assigned.
 function COMMANDER:onafterMissionAssign(From, Event, To, Mission, Legions)
     
   -- Add mission to queue.
@@ -1164,11 +1164,11 @@ function COMMANDER:onafterMissionAssign(From, Event, To, Mission, Legions)
 end
 
 --- On after "MissionCancel" event.
--- @param #COMMANDER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
+--- @param #COMMANDER self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.Auftrag#AUFTRAG Mission The mission.
 function COMMANDER:onafterMissionCancel(From, Event, To, Mission)
 
   -- Debug info.
@@ -1201,11 +1201,11 @@ function COMMANDER:onafterMissionCancel(From, Event, To, Mission)
 end
 
 --- On after "TransportAssign" event. Transport is added to a LEGION transport queue.
--- @param #COMMANDER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+--- @param #COMMANDER self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
   -- @param #table Legions The legion(s) to which this transport is assigned.
 function COMMANDER:onafterTransportAssign(From, Event, To, Transport, Legions)
   
@@ -1229,11 +1229,11 @@ function COMMANDER:onafterTransportAssign(From, Event, To, Transport, Legions)
 end
 
 --- On after "TransportCancel" event.
--- @param #COMMANDER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+--- @param #COMMANDER self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 function COMMANDER:onafterTransportCancel(From, Event, To, Transport)
 
   -- Debug info.
@@ -1266,12 +1266,12 @@ function COMMANDER:onafterTransportCancel(From, Event, To, Transport)
 end
 
 --- On after "OpsOnMission".
--- @param #COMMANDER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP OpsGroup Ops group on mission
--- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
+--- @param #COMMANDER self
+--- @param #string From From state.
+--- @param #string Event Event.
+--- @param #string To To state.
+--- @param Ops.OpsGroup#OPSGROUP OpsGroup Ops group on mission
+--- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
 function COMMANDER:onafterOpsOnMission(From, Event, To, OpsGroup, Mission)
   -- Debug info.
   self:T2(self.lid..string.format("Group \"%s\" on mission \"%s\" [%s]", OpsGroup:GetName(), Mission:GetName(), Mission:GetType()))
@@ -1282,7 +1282,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check OPERATIONs queue.
--- @param #COMMANDER self 
+--- @param #COMMANDER self 
 function COMMANDER:CheckOpsQueue()
 
   -- Number of missions.
@@ -1324,7 +1324,7 @@ function COMMANDER:CheckOpsQueue()
 end
 
 --- Check target queue and assign ONE valid target by adding it to the mission queue of the COMMANDER.
--- @param #COMMANDER self 
+--- @param #COMMANDER self 
 function COMMANDER:CheckTargetQueue()
 
   -- Number of missions.
@@ -1436,7 +1436,7 @@ end
 
 
 --- Check mission queue and assign ONE planned mission.
--- @param #COMMANDER self 
+--- @param #COMMANDER self 
 function COMMANDER:CheckMissionQueue()
 
   -- Number of missions.
@@ -1547,11 +1547,11 @@ function COMMANDER:CheckMissionQueue()
 end
 
 --- Get cohorts.
--- @param #COMMANDER self
--- @param #table Legions Special legions.
--- @param #table Cohorts Special cohorts.
--- @param Ops.Operation#OPERATION Operation Operation.
--- @return #table Cohorts.
+--- @param #COMMANDER self
+--- @param #table Legions Special legions.
+--- @param #table Cohorts Special cohorts.
+--- @param Ops.Operation#OPERATION Operation Operation.
+--- @return #table Cohorts.
 function COMMANDER:_GetCohorts(Legions, Cohorts, Operation)
   
   --- Function that check if a legion or cohort is part of an operation.
@@ -1662,11 +1662,11 @@ function COMMANDER:_GetCohorts(Legions, Cohorts, Operation)
 end
 
 --- Recruit assets for a given mission.
--- @param #COMMANDER self
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @return #boolean If `true` enough assets could be recruited.
--- @return #table Recruited assets.
--- @return #table Legions that have recruited assets.
+--- @param #COMMANDER self
+--- @param Ops.Auftrag#AUFTRAG Mission The mission.
+--- @return #boolean If `true` enough assets could be recruited.
+--- @return #table Recruited assets.
+--- @return #table Legions that have recruited assets.
 function COMMANDER:RecruitAssetsForMission(Mission)
 
   -- Debug info.
@@ -1735,10 +1735,10 @@ function COMMANDER:RecruitAssetsForMission(Mission)
 end
 
 --- Recruit assets performing an escort mission for a given asset.
--- @param #COMMANDER self
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @param #table Assets Table of assets to be escorted.
--- @return #boolean If `true`, enough assets could be recruited or no escort was required in the first place.
+--- @param #COMMANDER self
+--- @param Ops.Auftrag#AUFTRAG Mission The mission.
+--- @param #table Assets Table of assets to be escorted.
+--- @return #boolean If `true`, enough assets could be recruited or no escort was required in the first place.
 function COMMANDER:RecruitAssetsForEscort(Mission, Assets)
 
   -- Is an escort requested in the first place?
@@ -1757,14 +1757,14 @@ function COMMANDER:RecruitAssetsForEscort(Mission, Assets)
 end
 
 --- Recruit assets for a given TARGET.
--- @param #COMMANDER self
--- @param Ops.Target#TARGET Target The target.
--- @param #string MissionType Mission Type.
--- @param #number NassetsMin Min number of required assets.
--- @param #number NassetsMax Max number of required assets.
--- @return #boolean If `true` enough assets could be recruited.
--- @return #table Assets that have been recruited from all legions.
--- @return #table Legions that have recruited assets.
+--- @param #COMMANDER self
+--- @param Ops.Target#TARGET Target The target.
+--- @param #string MissionType Mission Type.
+--- @param #number NassetsMin Min number of required assets.
+--- @param #number NassetsMax Max number of required assets.
+--- @return #boolean If `true` enough assets could be recruited.
+--- @return #table Assets that have been recruited from all legions.
+--- @return #table Legions that have recruited assets.
 function COMMANDER:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMax)
 
   -- Cohorts.
@@ -1785,7 +1785,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check transport queue and assign ONE planned transport.
--- @param #COMMANDER self 
+--- @param #COMMANDER self 
 function COMMANDER:CheckTransportQueue()
 
   -- Number of missions.
@@ -1884,13 +1884,13 @@ function COMMANDER:CheckTransportQueue()
 end
 
 --- Recruit assets for a given OPS transport.
--- @param #COMMANDER self
--- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport.
--- @param #number CargoWeight Weight of the heaviest cargo group.
--- @param #number TotalWeight Total weight of all cargo groups.
--- @return #boolean If `true`, enough assets could be recruited.
--- @return #table Recruited assets.
--- @return #table Legions that have recruited assets.
+--- @param #COMMANDER self
+--- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport.
+--- @param #number CargoWeight Weight of the heaviest cargo group.
+--- @param #number TotalWeight Total weight of all cargo groups.
+--- @return #boolean If `true`, enough assets could be recruited.
+--- @return #table Recruited assets.
+--- @return #table Legions that have recruited assets.
 function COMMANDER:RecruitAssetsForTransport(Transport, CargoWeight, TotalWeight)
   
   if CargoWeight==0 then
@@ -1918,9 +1918,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check if limit of missions has been reached.
--- @param #COMMANDER self 
--- @param #string MissionType Type of mission.
--- @return #boolean If `true`, mission limit has **not** been reached. If `false`, limit has been reached.
+--- @param #COMMANDER self 
+--- @param #string MissionType Type of mission.
+--- @return #boolean If `true`, mission limit has **not** been reached. If `false`, limit has been reached.
 function COMMANDER:_CheckMissionLimit(MissionType)
 
   local limit=self.limitMission[MissionType]
@@ -1943,11 +1943,11 @@ end
 
 
 --- Count assets of all assigned legions.
--- @param #COMMANDER self
--- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
--- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
--- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
--- @return #number Amount of asset groups.
+--- @param #COMMANDER self
+--- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
+--- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+--- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+--- @return #number Amount of asset groups.
 function COMMANDER:CountAssets(InStock, MissionTypes, Attributes)
 
   local N=0
@@ -1960,10 +1960,10 @@ function COMMANDER:CountAssets(InStock, MissionTypes, Attributes)
 end
 
 --- Count assets of all assigned legions.
--- @param #COMMANDER self
--- @param #table MissionTypes (Optional) Count only missions of these types. Default is all types.
--- @param #boolean OnlyRunning If `true`, only count running missions.
--- @return #number Amount missions.
+--- @param #COMMANDER self
+--- @param #table MissionTypes (Optional) Count only missions of these types. Default is all types.
+--- @param #boolean OnlyRunning If `true`, only count running missions.
+--- @return #number Amount missions.
 function COMMANDER:CountMissions(MissionTypes, OnlyRunning)
 
   local N=0
@@ -1985,12 +1985,12 @@ function COMMANDER:CountMissions(MissionTypes, OnlyRunning)
 end
 
 --- Count assets of all assigned legions.
--- @param #COMMANDER self
--- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
--- @param #table Legions (Optional) Table of legions. Default is all legions.
--- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
--- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
--- @return #number Amount of asset groups.
+--- @param #COMMANDER self
+--- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
+--- @param #table Legions (Optional) Table of legions. Default is all legions.
+--- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+--- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+--- @return #number Amount of asset groups.
 function COMMANDER:GetAssets(InStock, Legions, MissionTypes, Attributes)
 
   -- Selected assets.
@@ -2021,9 +2021,9 @@ function COMMANDER:GetAssets(InStock, Legions, MissionTypes, Attributes)
 end
 
 --- Check all legions if they are able to do a specific mission type at a certain location with a given number of assets.
--- @param #COMMANDER self
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @return #table Table of LEGIONs that can do the mission and have at least one asset available right now.
+--- @param #COMMANDER self
+--- @param Ops.Auftrag#AUFTRAG Mission The mission.
+--- @return #table Table of LEGIONs that can do the mission and have at least one asset available right now.
 function COMMANDER:GetLegionsForMission(Mission)
 
   -- Table of legions that can do the mission.
@@ -2076,9 +2076,9 @@ function COMMANDER:GetLegionsForMission(Mission)
 end
 
 --- Get assets on given mission or missions.
--- @param #COMMANDER self
--- @param #table MissionTypes Types on mission to be checked. Default all.
--- @return #table Assets on pending requests.
+--- @param #COMMANDER self
+--- @param #table MissionTypes Types on mission to be checked. Default all.
+--- @return #table Assets on pending requests.
 function COMMANDER:GetAssetsOnMission(MissionTypes)
 
   local assets={}

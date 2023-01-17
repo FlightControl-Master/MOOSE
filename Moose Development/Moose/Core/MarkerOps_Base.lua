@@ -23,12 +23,12 @@
 --------------------------------------------------------------------------
 
 --- MARKEROPS_BASE class.
--- @type MARKEROPS_BASE
--- @field #string ClassName Name of the class.
--- @field #string Tag Tag to identify commands.
--- @field #table Keywords Table of keywords to recognize.
--- @field #string version Version of #MARKEROPS_BASE.
--- @field #boolean Casesensitive Enforce case when identifying the Tag, i.e. tag ~= Tag
+--- @type MARKEROPS_BASE
+--- @field #string ClassName Name of the class.
+--- @field #string Tag Tag to identify commands.
+--- @field #table Keywords Table of keywords to recognize.
+--- @field #string version Version of #MARKEROPS_BASE.
+--- @field #boolean Casesensitive Enforce case when identifying the Tag, i.e. tag ~= Tag
 -- @extends Core.Fsm#FSM
 
 --- *Fiat lux.* -- Latin proverb.
@@ -39,7 +39,7 @@
 -- 
 -- This class enable scripting text-based actions from markers.
 -- 
--- @field #MARKEROPS_BASE
+--- @field #MARKEROPS_BASE
 MARKEROPS_BASE = {
   ClassName = "MARKEROPS",
   Tag = "mytag",
@@ -50,11 +50,11 @@ MARKEROPS_BASE = {
 }
 
 --- Function to instantiate a new #MARKEROPS_BASE object.
--- @param #MARKEROPS_BASE self
--- @param #string Tagname Name to identify us from the event text.
--- @param #table Keywords Table of keywords  recognized from the event text.
--- @param #boolean Casesensitive (Optional) Switch case sensitive identification of Tagname. Defaults to true.
--- @return #MARKEROPS_BASE self
+--- @param #MARKEROPS_BASE self
+--- @param #string Tagname Name to identify us from the event text.
+--- @param #table Keywords Table of keywords  recognized from the event text.
+--- @param #boolean Casesensitive (Optional) Switch case sensitive identification of Tagname. Defaults to true.
+--- @return #MARKEROPS_BASE self
 function MARKEROPS_BASE:New(Tagname,Keywords,Casesensitive)
    -- Inherit FSM
   local self=BASE:Inherit(self, FSM:New()) -- #MARKEROPS_BASE
@@ -132,8 +132,8 @@ function MARKEROPS_BASE:New(Tagname,Keywords,Casesensitive)
 end
 
 --- (internal) Handle events.
--- @param #MARKEROPS_BASE self
--- @param Core.Event#EVENTDATA Event
+--- @param #MARKEROPS_BASE self
+--- @param Core.Event#EVENTDATA Event
 function MARKEROPS_BASE:OnEventMark(Event)
   self:T({Event})
     if Event == nil or Event.idx == nil then
@@ -182,9 +182,9 @@ function MARKEROPS_BASE:OnEventMark(Event)
 end
 
 --- (internal) Match tag.
--- @param #MARKEROPS_BASE self
--- @param #string Eventtext Text added to the marker.
--- @return #boolean
+--- @param #MARKEROPS_BASE self
+--- @param #string Eventtext Text added to the marker.
+--- @return #boolean
 function MARKEROPS_BASE:_MatchTag(Eventtext)
   local matches = false
   if not self.Casesensitive then
@@ -202,9 +202,9 @@ function MARKEROPS_BASE:_MatchTag(Eventtext)
 end
 
 --- (internal) Match keywords table.
--- @param #MARKEROPS_BASE self
--- @param #string Eventtext Text added to the marker.
--- @return #table
+--- @param #MARKEROPS_BASE self
+--- @param #string Eventtext Text added to the marker.
+--- @return #table
 function MARKEROPS_BASE:_MatchKeywords(Eventtext)
   local matchtable = {}
   local keytable = self.Keywords

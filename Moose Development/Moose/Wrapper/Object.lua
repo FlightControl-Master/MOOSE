@@ -14,7 +14,7 @@
 
 --- @type OBJECT
 -- @extends Core.Base#BASE
--- @field #string ObjectName The name of the Object.
+--- @field #string ObjectName The name of the Object.
 
 
 --- Wrapper class to hendle the DCS Object objects.
@@ -29,20 +29,20 @@
 --
 --  * @{Wrapper.Object#OBJECT.New}(): Create a OBJECT instance.
 --
--- @field #OBJECT
+--- @field #OBJECT
 OBJECT = {
   ClassName = "OBJECT",
   ObjectName = "",
 }
 
 --- A DCSObject
--- @type DCSObject
--- @field id_ The ID of the controllable in DCS
+--- @type DCSObject
+--- @field id_ The ID of the controllable in DCS
 
 --- Create a new OBJECT from a DCSObject
--- @param #OBJECT self
--- @param DCS#Object ObjectName The Object name
--- @return #OBJECT self
+--- @param #OBJECT self
+--- @param DCS#Object ObjectName The Object name
+--- @return #OBJECT self
 function OBJECT:New( ObjectName, Test )
   local self = BASE:Inherit( self, BASE:New() )
   self:F2( ObjectName )
@@ -53,8 +53,8 @@ end
 
 
 --- Returns the unit's unique identifier.
--- @param Wrapper.Object#OBJECT self
--- @return DCS#Object.ID ObjectID or #nil if the DCS Object is not existing or alive. Note that the ID is passed as a string and not a number. 
+--- @param Wrapper.Object#OBJECT self
+--- @return DCS#Object.ID ObjectID or #nil if the DCS Object is not existing or alive. Note that the ID is passed as a string and not a number. 
 function OBJECT:GetID()
 
   local DCSObject = self:GetDCSObject()
@@ -70,9 +70,9 @@ function OBJECT:GetID()
 end
 
 --- Destroys the OBJECT.
--- @param #OBJECT self
--- @return #boolean true if the object is destroyed.
--- @return #nil The DCS Unit is not existing or alive.  
+--- @param #OBJECT self
+--- @return #boolean true if the object is destroyed.
+--- @return #nil The DCS Unit is not existing or alive.  
 function OBJECT:Destroy()
 
   local DCSObject = self:GetDCSObject()

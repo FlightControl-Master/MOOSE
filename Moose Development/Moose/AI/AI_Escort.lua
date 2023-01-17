@@ -173,7 +173,7 @@
 -- -- Now use these 2 objects to construct the new EscortPlanes object.
 -- EscortPlanes = AI_ESCORT:New( EscortUnit, EscortGroup, "Desert", "Welcome to the mission. You are escorted by a plane with code name 'Desert', which can be instructed through the F10 radio menu." )
 --
--- @field #AI_ESCORT
+--- @field #AI_ESCORT
 AI_ESCORT = {
   ClassName = "AI_ESCORT",
   EscortName = nil, -- The Escort Name
@@ -193,19 +193,19 @@ AI_ESCORT = {
 AI_ESCORT.Detection = nil
 
 --- MENUPARAM type
--- @type MENUPARAM
--- @field #AI_ESCORT ParamSelf
--- @field #Distance ParamDistance
--- @field #function ParamFunction
--- @field #string ParamMessage
+--- @type MENUPARAM
+--- @field #AI_ESCORT ParamSelf
+--- @field #Distance ParamDistance
+--- @field #function ParamFunction
+--- @field #string ParamMessage
 
 --- AI_ESCORT class constructor for an AI group
--- @param #AI_ESCORT self
--- @param Wrapper.Client#CLIENT EscortUnit The client escorted by the EscortGroup.
--- @param Core.Set#SET_GROUP EscortGroupSet The set of group AI escorting the EscortUnit.
--- @param #string EscortName Name of the escort.
--- @param #string EscortBriefing A text showing the AI_ESCORT briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
--- @return #AI_ESCORT self
+--- @param #AI_ESCORT self
+--- @param Wrapper.Client#CLIENT EscortUnit The client escorted by the EscortGroup.
+--- @param Core.Set#SET_GROUP EscortGroupSet The set of group AI escorting the EscortUnit.
+--- @param #string EscortName Name of the escort.
+--- @param #string EscortBriefing A text showing the AI_ESCORT briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
+--- @return #AI_ESCORT self
 -- @usage
 -- -- Declare a new EscortPlanes object as follows:
 -- 
@@ -326,7 +326,7 @@ end
 
 
 --- @param #AI_ESCORT self
--- @param Core.Set#SET_GROUP EscortGroupSet
+--- @param Core.Set#SET_GROUP EscortGroupSet
 function AI_ESCORT:onafterStart( EscortGroupSet )
 
   self:F()
@@ -395,7 +395,7 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
 end
 
 --- @param #AI_ESCORT self
--- @param Core.Set#SET_GROUP EscortGroupSet
+--- @param Core.Set#SET_GROUP EscortGroupSet
 function AI_ESCORT:onafterStop( EscortGroupSet )
 
   self:F()
@@ -418,8 +418,8 @@ end
 
 --- Set a Detection method for the EscortUnit to be reported upon.
 -- Detection methods are based on the derived classes from DETECTION_BASE.
--- @param #AI_ESCORT self
--- @param Functional.Detection#DETECTION_AREAS Detection
+--- @param #AI_ESCORT self
+--- @param Functional.Detection#DETECTION_AREAS Detection
 function AI_ESCORT:SetDetection( Detection )
 
   self.Detection = Detection
@@ -432,23 +432,23 @@ end
 
 --- This function is for test, it will put on the frequency of the FollowScheduler a red smoke at the direction vector calculated for the escort to fly to.
 -- This allows to visualize where the escort is flying to.
--- @param #AI_ESCORT self
--- @param #boolean SmokeDirection If true, then the direction vector will be smoked.
+--- @param #AI_ESCORT self
+--- @param #boolean SmokeDirection If true, then the direction vector will be smoked.
 function AI_ESCORT:TestSmokeDirectionVector( SmokeDirection )
   self.SmokeDirectionVector = ( SmokeDirection == true ) and true or false
 end
 
 
 --- Defines the default menus for helicopters.
--- @param #AI_ESCORT self
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
--- @param #number ZLevels The amount of levels on the Z-axis.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @param #number ZLevels The amount of levels on the Z-axis.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenusHelicopters( XStart, XSpace, YStart, YSpace, ZStart, ZSpace, ZLevels )
   self:F()
 
@@ -490,15 +490,15 @@ end
 
 
 --- Defines the default menus for airplanes.
--- @param #AI_ESCORT self
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
--- @param #number ZLevels The amount of levels on the Z-axis.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @param #number ZLevels The amount of levels on the Z-axis.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenusAirplanes( XStart, XSpace, YStart, YSpace, ZStart, ZSpace, ZLevels )
   self:F()
 
@@ -577,11 +577,11 @@ end
 
 --- Defines a menu slot to let the escort to join in a trail formation.
 -- This menu will appear under **Formation**.
--- @param #AI_ESCORT self
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationTrail( XStart, XSpace, YStart )
 
   self:MenuFormation( "Trail", XStart, XSpace, YStart )
@@ -591,12 +591,12 @@ end
 
 --- Defines a menu slot to let the escort to join in a stacked formation.
 -- This menu will appear under **Formation**.
--- @param #AI_ESCORT self
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationStack( XStart, XSpace, YStart, YSpace )
 
   self:MenuFormation( "Stack", XStart, XSpace, YStart, YSpace )
@@ -607,12 +607,12 @@ end
 
 --- Defines a menu slot to let the escort to join in a leFt wing formation.
 -- This menu will appear under **Formation**.
--- @param #AI_ESCORT self
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationLeftLine( XStart, YStart, ZStart, ZSpace )
 
   self:MenuFormation( "LeftLine", XStart, YStart, ZStart, ZSpace )
@@ -623,12 +623,12 @@ end
 
 --- Defines a menu slot to let the escort to join in a right line formation.
 -- This menu will appear under **Formation**.
--- @param #AI_ESCORT self
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationRightLine( XStart, YStart, ZStart, ZSpace )
 
   self:MenuFormation( "RightLine", XStart, YStart, ZStart, ZSpace )
@@ -639,13 +639,13 @@ end
 
 --- Defines a menu slot to let the escort to join in a left wing formation.
 -- This menu will appear under **Formation**.
--- @param #AI_ESCORT self
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationLeftWing( XStart, XSpace, YStart, ZStart, ZSpace )
 
   self:MenuFormation( "LeftWing", XStart, XSpace, YStart, ZStart, ZSpace )
@@ -656,13 +656,13 @@ end
 
 --- Defines a menu slot to let the escort to join in a right wing formation.
 -- This menu will appear under **Formation**.
--- @param #AI_ESCORT self
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationRightWing( XStart, XSpace, YStart, ZStart, ZSpace )
 
   self:MenuFormation( "RightWing", XStart, XSpace, YStart, ZStart, ZSpace )
@@ -673,14 +673,14 @@ end
 
 --- Defines a menu slot to let the escort to join in a center wing formation.
 -- This menu will appear under **Formation**.
--- @param #AI_ESCORT self
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationCenterWing( XStart, XSpace, YStart, YSpace, ZStart, ZSpace )
 
   self:MenuFormation( "CenterWing", XStart, XSpace, YStart, YSpace, ZStart, ZSpace )
@@ -691,14 +691,14 @@ end
 
 --- Defines a menu slot to let the escort to join in a vic formation.
 -- This menu will appear under **Formation**.
--- @param #AI_ESCORT self
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationVic( XStart, XSpace, YStart, YSpace, ZStart, ZSpace )
 
   self:MenuFormation( "Vic", XStart, XSpace, YStart, YSpace, ZStart, ZSpace )
@@ -709,15 +709,15 @@ end
 
 --- Defines a menu slot to let the escort to join in a box formation.
 -- This menu will appear under **Formation**.
--- @param #AI_ESCORT self
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
--- @param #number ZLevels The amount of levels on the Z-axis.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+--- @param #number ZLevels The amount of levels on the Z-axis.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationBox( XStart, XSpace, YStart, YSpace, ZStart, ZSpace, ZLevels )
 
   self:MenuFormation( "Box", XStart, XSpace, YStart, YSpace, ZStart, ZSpace, ZLevels )
@@ -736,8 +736,8 @@ end
 
 
 --- Sets a menu slot to join formation for an escort.
--- @param #AI_ESCORT self
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @return #AI_ESCORT
 function AI_ESCORT:SetEscortMenuJoinUp( EscortGroup )
 
   if self.Menu.JoinUp == true then
@@ -752,8 +752,8 @@ end
 
 
 --- Defines --- Defines a menu slot to let the escort to join formation.
--- @param #AI_ESCORT self
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuJoinUp()
 
   self.Menu.JoinUp = true
@@ -810,11 +810,11 @@ end
 
 --- Defines a menu slot to let the escort hold at their current position and stay low with a specified height during a specified time in seconds.
 -- This menu will appear under **Hold position**.
--- @param #AI_ESCORT self
--- @param DCS#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
--- @param DCS#Time Speed Optional parameter that lets the escort orbit with a specified speed. The default value is a speed that is average for the type of airplane or helicopter.
--- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param DCS#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
+--- @param DCS#Time Speed Optional parameter that lets the escort orbit with a specified speed. The default value is a speed that is average for the type of airplane or helicopter.
+--- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuHoldAtEscortPosition( Height, Speed, MenuTextFormat )
   self:F( { Height, Speed, MenuTextFormat } )
 
@@ -900,11 +900,11 @@ end
 
 --- Defines a menu slot to let the escort hold at the client position and stay low with a specified height during a specified time in seconds.
 -- This menu will appear under **Navigation**.
--- @param #AI_ESCORT self
--- @param DCS#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
--- @param DCS#Time Speed Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
--- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain one or two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param DCS#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
+--- @param DCS#Time Speed Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
+--- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain one or two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuHoldAtLeaderPosition( Height, Speed, MenuTextFormat )
   self:F( { Height, Speed, MenuTextFormat } )
 
@@ -942,11 +942,11 @@ end
 
 --- Defines a menu slot to let the escort scan for targets at a certain height for a certain time in seconds.
 -- This menu will appear under **Scan targets**.
--- @param #AI_ESCORT self
--- @param DCS#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
--- @param DCS#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
--- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain one or two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param DCS#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
+--- @param DCS#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
+--- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain one or two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuScanForTargets( Height, Seconds, MenuTextFormat )
   self:F( { Height, Seconds, MenuTextFormat } )
 
@@ -1036,9 +1036,9 @@ end
 --- Defines a menu slot to let the escort disperse a flare in a certain color.
 -- This menu will appear under **Navigation**.
 -- The flare will be fired from the first unit in the group.
--- @param #AI_ESCORT self
--- @param #string MenuTextFormat Optional parameter that shows the menu option text. If no text is given, the default text will be displayed.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param #string MenuTextFormat Optional parameter that shows the menu option text. If no text is given, the default text will be displayed.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuFlare( MenuTextFormat )
   self:F()
 
@@ -1099,9 +1099,9 @@ end
 -- This menu will appear under **Navigation**.
 -- Note that smoke menu options will only be displayed for ships and ground units. Not for air units.
 -- The smoke will be fired from the first unit in the group.
--- @param #AI_ESCORT self
--- @param #string MenuTextFormat Optional parameter that shows the menu option text. If no text is given, the default text will be displayed.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param #string MenuTextFormat Optional parameter that shows the menu option text. If no text is given, the default text will be displayed.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuSmoke( MenuTextFormat )
   self:F()
 
@@ -1205,9 +1205,9 @@ end
 --- Defines a menu slot to let the escort report their current detected targets with a specified time interval in seconds.
 -- This menu will appear under **Report targets**.
 -- Note that if a report targets menu is not specified, no targets will be detected by the escort, and the attack and assisted attack menus will not be displayed.
--- @param #AI_ESCORT self
--- @param DCS#Time Seconds Optional parameter that lets the escort report their current detected targets after specified time interval in seconds. The default time is 30 seconds.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param DCS#Time Seconds Optional parameter that lets the escort report their current detected targets after specified time interval in seconds. The default time is 30 seconds.
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuTargets( Seconds )
   self:F( { Seconds } )
 
@@ -1225,8 +1225,8 @@ end
 --- Defines a menu slot to let the escort attack its detected targets using assisted attack from another escort joined also with the client.
 -- This menu will appear under **Request assistance from**.
 -- Note that this method needs to be preceded with the method MenuTargets.
--- @param #AI_ESCORT self
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuAssistedAttack()
   self:F()
 
@@ -1288,8 +1288,8 @@ end
 
 --- Defines a menu to let the escort set its rules of engagement.
 -- All rules of engagement will appear under the menu **ROE**.
--- @param #AI_ESCORT self
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuROE()
   self:F()
 
@@ -1348,8 +1348,8 @@ end
 
 --- Defines a menu to let the escort set its evasion when under threat.
 -- All rules of engagement will appear under the menu **Evasion**.
--- @param #AI_ESCORT self
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @return #AI_ESCORT
 function AI_ESCORT:MenuROT( MenuTextFormat )
   self:F( MenuTextFormat )
 
@@ -1361,8 +1361,8 @@ end
 
 --- Defines a menu to let the escort resume its mission from a waypoint on its route.
 -- All rules of engagement will appear under the menu **Resume mission from**.
--- @param #AI_ESCORT self
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @return #AI_ESCORT
 function AI_ESCORT:SetEscortMenuResumeMission( EscortGroup )
   self:F()
 
@@ -1376,10 +1376,10 @@ end
 
 
 --- @param #AI_ESCORT self
--- @param Wrapper.Group#GROUP OrbitGroup
--- @param Wrapper.Group#GROUP EscortGroup
--- @param #number OrbitHeight
--- @param #number OrbitSeconds
+--- @param Wrapper.Group#GROUP OrbitGroup
+--- @param Wrapper.Group#GROUP EscortGroup
+--- @param #number OrbitHeight
+--- @param #number OrbitSeconds
 function AI_ESCORT:_HoldPosition( OrbitGroup, EscortGroup, OrbitHeight, OrbitSeconds )
 
   local EscortUnit = self.PlayerUnit
@@ -1420,9 +1420,9 @@ end
 
 
 --- @param #AI_ESCORT self
--- @param Wrapper.Group#GROUP OrbitGroup
--- @param #number OrbitHeight
--- @param #number OrbitSeconds
+--- @param Wrapper.Group#GROUP OrbitGroup
+--- @param #number OrbitHeight
+--- @param #number OrbitSeconds
 function AI_ESCORT:_FlightHoldPosition( OrbitGroup, OrbitHeight, OrbitSeconds )
 
   local EscortUnit = self.PlayerUnit
@@ -1468,11 +1468,11 @@ end
 
 
 --- Lets the escort to join in a trail formation.
--- @param #AI_ESCORT self
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+--- @return #AI_ESCORT
 function AI_ESCORT:_EscortFormationTrail( EscortGroup, XStart, XSpace, YStart )
 
   self:FormationTrail( XStart, XSpace, YStart )
@@ -1494,12 +1494,12 @@ function AI_ESCORT:_FlightFormationTrail( XStart, XSpace, YStart )
 end
 
 --- Lets the escort to join in a stacked formation.
--- @param #AI_ESCORT self
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #number YStart The start position on the Y-axis in meters for the first group.
--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @return #AI_ESCORT
+--- @param #AI_ESCORT self
+--- @param #number XStart The start position on the X-axis in meters for the first group.
+--- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+--- @param #number YStart The start position on the Y-axis in meters for the first group.
+--- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+--- @return #AI_ESCORT
 function AI_ESCORT:_EscortFormationStack( EscortGroup, XStart, XSpace, YStart, YSpace )
 
   self:FormationStack( XStart, XSpace, YStart, YSpace )
@@ -1680,7 +1680,7 @@ function AI_ESCORT:_ScanTargets( ScanDuration )
 end
 
 --- @param Wrapper.Group#GROUP EscortGroup
--- @param #AI_ESCORT self
+--- @param #AI_ESCORT self
 function AI_ESCORT.___Resume( EscortGroup, self )
 
   self:F( { self=self } )
@@ -1702,8 +1702,8 @@ end
 
 
 --- @param #AI_ESCORT self
--- @param Wrapper.Group#GROUP EscortGroup
--- @param #number WayPoint
+--- @param Wrapper.Group#GROUP EscortGroup
+--- @param #number WayPoint
 function AI_ESCORT:_ResumeMission( EscortGroup, WayPoint )
 
   --self.FollowScheduler:Stop( self.FollowSchedule )
@@ -1724,8 +1724,8 @@ end
 
 
 --- @param #AI_ESCORT self
--- @param Wrapper.Group#GROUP EscortGroup The escort group that will attack the detected item.
--- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
+--- @param Wrapper.Group#GROUP EscortGroup The escort group that will attack the detected item.
+--- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
 function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
 
   self:F( EscortGroup )
@@ -1843,8 +1843,8 @@ end
 
 --- 
 --- @param #AI_ESCORT self
--- @param Wrapper.Group#GROUP EscortGroup The escort group that will attack the detected item.
--- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
+--- @param Wrapper.Group#GROUP EscortGroup The escort group that will attack the detected item.
+--- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
 function AI_ESCORT:_AssistTarget( EscortGroup, DetectedItem )
 
   local EscortUnit = self.PlayerUnit
@@ -1959,8 +1959,8 @@ function AI_ESCORT:_FlightROTVertical( EscortROTMessage )
 end
 
 --- Registers the waypoints
--- @param #AI_ESCORT self
--- @return #table
+--- @param #AI_ESCORT self
+--- @return #table
 function AI_ESCORT:RegisterRoute()
   self:F()
 
@@ -1974,8 +1974,8 @@ function AI_ESCORT:RegisterRoute()
 end
 
 --- Resume Scheduler.
--- @param #AI_ESCORT self
--- @param Wrapper.Group#GROUP EscortGroup
+--- @param #AI_ESCORT self
+--- @param Wrapper.Group#GROUP EscortGroup
 function AI_ESCORT:_ResumeScheduler( EscortGroup )
   self:F( EscortGroup:GetName() )
 
@@ -2002,7 +2002,7 @@ end
 
 
 --- Measure distance between coordinate player and coordinate detected item.
--- @param #AI_ESCORT self
+--- @param #AI_ESCORT self
 function AI_ESCORT:Distance( PlayerUnit, DetectedItem )
 
   local DetectedCoordinate = self.Detection:GetDetectedItemCoordinate( DetectedItem )
@@ -2013,8 +2013,8 @@ function AI_ESCORT:Distance( PlayerUnit, DetectedItem )
 end
 
 --- Report Targets Scheduler.
--- @param #AI_ESCORT self
--- @param Wrapper.Group#GROUP EscortGroup
+--- @param #AI_ESCORT self
+--- @param Wrapper.Group#GROUP EscortGroup
 function AI_ESCORT:_ReportTargetsScheduler( EscortGroup, Report )
   self:F( EscortGroup:GetName() )
 
@@ -2107,8 +2107,8 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup, Report )
 end
 
 --- Report Targets Scheduler for the flight. The report is generated from the perspective of the player plane, and is reported by the first plane in the formation set.
--- @param #AI_ESCORT self
--- @param Wrapper.Group#GROUP EscortGroup
+--- @param #AI_ESCORT self
+--- @param Wrapper.Group#GROUP EscortGroup
 function AI_ESCORT:_FlightReportTargetsScheduler()
 
   self:F("FlightReportTargetScheduler")

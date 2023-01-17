@@ -169,31 +169,31 @@
 -- -- Now use these 2 objects to construct the new EscortPlanes object.
 -- EscortPlanes = AI_ESCORT_REQUEST:New( EscortUnit, EscortGroup, "Desert", "Welcome to the mission. You are escorted by a plane with code name 'Desert', which can be instructed through the F10 radio menu." )
 --
--- @field #AI_ESCORT_REQUEST
+--- @field #AI_ESCORT_REQUEST
 AI_ESCORT_REQUEST = {
   ClassName = "AI_ESCORT_REQUEST",
 }
 
 --- AI_ESCORT_REQUEST.Mode class
--- @type AI_ESCORT_REQUEST.MODE
--- @field #number FOLLOW
--- @field #number MISSION
+--- @type AI_ESCORT_REQUEST.MODE
+--- @field #number FOLLOW
+--- @field #number MISSION
 
 --- MENUPARAM type
--- @type MENUPARAM
--- @field #AI_ESCORT_REQUEST ParamSelf
--- @field #Distance ParamDistance
--- @field #function ParamFunction
--- @field #string ParamMessage
+--- @type MENUPARAM
+--- @field #AI_ESCORT_REQUEST ParamSelf
+--- @field #Distance ParamDistance
+--- @field #function ParamFunction
+--- @field #string ParamMessage
 
 --- AI_ESCORT_REQUEST class constructor for an AI group
--- @param #AI_ESCORT_REQUEST self
--- @param Wrapper.Client#CLIENT EscortUnit The client escorted by the EscortGroup.
--- @param Core.Spawn#SPAWN EscortSpawn The spawn object of AI, escorting the EscortUnit.
--- @param Wrapper.Airbase#AIRBASE EscortAirbase The airbase where escorts will be spawned once requested.
--- @param #string EscortName Name of the escort.
--- @param #string EscortBriefing A text showing the AI_ESCORT_REQUEST briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
--- @return #AI_ESCORT_REQUEST
+--- @param #AI_ESCORT_REQUEST self
+--- @param Wrapper.Client#CLIENT EscortUnit The client escorted by the EscortGroup.
+--- @param Core.Spawn#SPAWN EscortSpawn The spawn object of AI, escorting the EscortUnit.
+--- @param Wrapper.Airbase#AIRBASE EscortAirbase The airbase where escorts will be spawned once requested.
+--- @param #string EscortName Name of the escort.
+--- @param #string EscortBriefing A text showing the AI_ESCORT_REQUEST briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
+--- @return #AI_ESCORT_REQUEST
 -- @usage
 -- EscortSpawn = SPAWN:NewWithAlias( "Red A2G Escort Template", "Red A2G Escort AI" ):InitLimit( 10, 10 )
 -- EscortSpawn:ParkAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Sochi_Adler ), AIRBASE.TerminalType.OpenBig )
@@ -264,7 +264,7 @@ function AI_ESCORT_REQUEST:SpawnEscort()
 end
 
 --- @param #AI_ESCORT_REQUEST self
--- @param Core.Set#SET_GROUP EscortGroupSet
+--- @param Core.Set#SET_GROUP EscortGroupSet
 function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
 
   self:F()
@@ -286,7 +286,7 @@ function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
 end
 
 --- @param #AI_ESCORT_REQUEST self
--- @param Core.Set#SET_GROUP EscortGroupSet
+--- @param Core.Set#SET_GROUP EscortGroupSet
 function AI_ESCORT_REQUEST:onafterStop( EscortGroupSet )
 
   self:F()
@@ -308,7 +308,7 @@ function AI_ESCORT_REQUEST:onafterStop( EscortGroupSet )
 end
 
 --- Set the spawn mode to be mission execution.
--- @param #AI_ESCORT_REQUEST self
+--- @param #AI_ESCORT_REQUEST self
 function AI_ESCORT_REQUEST:SetEscortSpawnMission()
 
   self.SpawnMode = self.__Enum.Mode.Mission

@@ -71,26 +71,26 @@
 --  
 -- ===
 -- 
--- @field #AI_A2G_SEAD
+--- @field #AI_A2G_SEAD
 AI_A2G_SEAD = {
   ClassName = "AI_A2G_SEAD",
 }
 
 --- Creates a new AI_A2G_SEAD object
--- @param #AI_A2G_SEAD self
--- @param Wrapper.Group#GROUP AIGroup
--- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
--- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
--- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
--- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
--- @param DCS#AltitudeType EngageAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
--- @return #AI_A2G_SEAD
+--- @param #AI_A2G_SEAD self
+--- @param Wrapper.Group#GROUP AIGroup
+--- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
+--- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
+--- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
+--- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
+--- @param DCS#AltitudeType EngageAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
+--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
+--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
+--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
+--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
+--- @return #AI_A2G_SEAD
 function AI_A2G_SEAD:New2( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
   local AI_Air = AI_AIR:New( AIGroup )
@@ -103,19 +103,19 @@ end
 
 
 --- Creates a new AI_A2G_SEAD object
--- @param #AI_A2G_SEAD self
--- @param Wrapper.Group#GROUP AIGroup
--- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
--- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
--- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
--- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
--- @return #AI_A2G_SEAD
+--- @param #AI_A2G_SEAD self
+--- @param Wrapper.Group#GROUP AIGroup
+--- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
+--- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
+--- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
+--- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
+--- @param Core.Zone#ZONE_BASE PatrolZone The @{Core.Zone} where the patrol needs to be executed.
+--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
+--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
+--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
+--- @return #AI_A2G_SEAD
 function AI_A2G_SEAD:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
   return self:New2( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, PatrolAltType, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
@@ -123,11 +123,11 @@ end
 
 
 --- Evaluate the attack and create an AttackUnitTask list. 
--- @param #AI_A2G_SEAD self
--- @param Core.Set#SET_UNIT AttackSetUnit The set of units to attack.
--- @param Wrapper.Group#GROUP DefenderGroup The group of defenders.
--- @param #number EngageAltitude The altitude to engage the targets.
--- @return #AI_A2G_SEAD self
+--- @param #AI_A2G_SEAD self
+--- @param Core.Set#SET_UNIT AttackSetUnit The set of units to attack.
+--- @param Wrapper.Group#GROUP DefenderGroup The group of defenders.
+--- @param #number EngageAltitude The altitude to engage the targets.
+--- @return #AI_A2G_SEAD self
 function AI_A2G_SEAD:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageAltitude )
 
   local AttackUnitTasks = {}

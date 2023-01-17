@@ -15,14 +15,14 @@
 
 
 --- SOCKET class.
--- @type SOCKET
--- @field #string ClassName Name of the class.
--- @field #number verbose Verbosity level.
--- @field #string lid Class id string for output to DCS log file.
--- @field #table socket The socket.
--- @field #number port The port.
--- @field #string host The host.
--- @field #table json JSON.
+--- @type SOCKET
+--- @field #string ClassName Name of the class.
+--- @field #number verbose Verbosity level.
+--- @field #string lid Class id string for output to DCS log file.
+--- @field #table socket The socket.
+--- @field #number port The port.
+--- @field #string host The host.
+--- @field #table json JSON.
 -- @extends Core.Fsm#FSM
 
 --- **At times I feel like a socket that remembers its tooth.** -- Saul Bellow
@@ -36,7 +36,7 @@
 -- **Note** that you have to **de-sanitize** `require` and `package` in your `MissionScripting.lua` file, which is in your `DCS/Scripts` folder.
 --
 --
--- @field #SOCKET
+--- @field #SOCKET
 SOCKET = {
   ClassName      = "SOCKET",
   verbose        =     0,
@@ -44,10 +44,10 @@ SOCKET = {
 }
 
 --- Data type. This is the keyword the socket listener uses.
--- @field #string TEXT Plain text.
--- @field #string BOMBRESULT Range bombing.
--- @field #string STRAFERESULT Range strafeing result.
--- @field #string LSOGRADE Airboss LSO grade.
+--- @field #string TEXT Plain text.
+--- @field #string BOMBRESULT Range bombing.
+--- @field #string STRAFERESULT Range strafeing result.
+--- @field #string LSOGRADE Airboss LSO grade.
 SOCKET.DataType={
   TEXT="moose_text",
   BOMBRESULT="moose_bomb_result",
@@ -57,7 +57,7 @@ SOCKET.DataType={
 
 
 --- SOCKET class version.
--- @field #string version
+--- @field #string version
 SOCKET.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -73,10 +73,10 @@ SOCKET.version="0.2.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new SOCKET object.
--- @param #SOCKET self
--- @param #number Port UDP port. Default `10042`.
--- @param #string Host Host. Default `"127.0.0.1"`.
--- @return #SOCKET self
+--- @param #SOCKET self
+--- @param #number Port UDP port. Default `10042`.
+--- @param #string Host Host. Default `"127.0.0.1"`.
+--- @return #SOCKET self
 function SOCKET:New(Port, Host)
 
   -- Inherit everything from FSM class.
@@ -99,26 +99,26 @@ function SOCKET:New(Port, Host)
 end
 
 --- Set port.
--- @param #SOCKET self
--- @param #number Port Port. Default 10042.
--- @return #SOCKET self
+--- @param #SOCKET self
+--- @param #number Port Port. Default 10042.
+--- @return #SOCKET self
 function SOCKET:SetPort(Port)
   self.port=Port or 10042
 end
 
 --- Set host.
--- @param #SOCKET self
--- @param #string Host Host. Default `"127.0.0.1"`.
--- @return #SOCKET self
+--- @param #SOCKET self
+--- @param #string Host Host. Default `"127.0.0.1"`.
+--- @return #SOCKET self
 function SOCKET:SetHost(Host)
   self.host=Host or "127.0.0.1"
 end
 
 
 --- Send a table.
--- @param #SOCKET self
--- @param #table Table Table to send.
--- @return #SOCKET self
+--- @param #SOCKET self
+--- @param #table Table Table to send.
+--- @return #SOCKET self
 function SOCKET:SendTable(Table)
 
   -- Add server name for DCS
@@ -138,9 +138,9 @@ function SOCKET:SendTable(Table)
 end
 
 --- Send a text message.
--- @param #SOCKET self
--- @param #string Text Test message.
--- @return #SOCKET self
+--- @param #SOCKET self
+--- @param #string Text Test message.
+--- @return #SOCKET self
 function SOCKET:SendText(Text)
 
   local message={}
