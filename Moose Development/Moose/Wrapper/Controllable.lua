@@ -1664,6 +1664,26 @@ function CONTROLLABLE:EnRouteTaskAntiShip(TargetTypes, Priority)
   return DCSTask
 end
 
+--- (AIR) Enroute SEAD task.
+-- @param #CONTROLLABLE self
+-- @param DCS#AttributeNameArray TargetTypes Array of target categories allowed to engage. Default `{"Air Defence"}`.
+-- @param #number Priority (Optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Default 0.
+-- @return DCS#Task The DCS task structure.
+function CONTROLLABLE:EnRouteTaskSEAD(TargetTypes, Priority)
+
+  local DCSTask = {
+    id      = 'EngageTargets',
+    key     = "SEAD",
+    --auto    = false,
+    --enabled = true,    
+    params  = {
+      targetTypes = TargetTypes or {"Air Defence"},
+      priority    = Priority or 0
+    }
+  }
+
+  return DCSTask
+end
 
 --- (AIR) Engaging a controllable. The task does not assign the target controllable to the unit/controllable to attack now; it just allows the unit/controllable to engage the target controllable as well as other assigned targets.
 -- @param #CONTROLLABLE self
