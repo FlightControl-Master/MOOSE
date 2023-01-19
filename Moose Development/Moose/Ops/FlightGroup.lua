@@ -216,7 +216,7 @@ FLIGHTGROUP.Players={}
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.8.4"
+FLIGHTGROUP.version="0.8.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -4152,13 +4152,21 @@ end
 function FLIGHTGROUP:GetClosestAirbase()
 
   local group=self.group --Wrapper.Group#GROUP
-
-  local coord=group:GetCoordinate()
-  local coalition=self:GetCoalition()
-
-  local airbase=coord:GetClosestAirbase() --(nil, coalition)
-
-  return airbase
+  
+  if group and group:IsAlive() then
+    
+    local coord=group:GetCoordinate()
+    local coalition=self:GetCoalition()
+  
+    local airbase=coord:GetClosestAirbase() --(nil, coalition)
+    
+    return airbase
+  
+  else
+  
+    return nil
+  
+  end
 end
 
 --- Search unoccupied parking spots at the airbase for all flight elements.
