@@ -2477,6 +2477,12 @@ end
 function UTILS.LoadSetOfGroups(Path,Filename,Spawn,Structured,Cinematic,Effect,Density)
   
   local fires = {}
+  local usedtemplates = {}
+  local spawn = true
+  if Spawn == false then spawn = false end
+  local filename = Filename or "SetOfGroups"
+  local setdata = SET_GROUP:New()
+  local datatable = {}
   
   local function Smokers(name,coord,effect,density)
     local eff = math.random(8)
@@ -2502,13 +2508,73 @@ function UTILS.LoadSetOfGroups(Path,Filename,Spawn,Structured,Cinematic,Effect,D
       end
     end
   end
+  
+  local function PostSpawn(args)
+    local spwndgrp = args[1]
+    local size = args[2]
+    local structure = args[3]
 
-  local spawn = true
-  if Spawn == false then spawn = false end
+    setdata:AddObject(spwndgrp)
+    local actualsize = spwndgrp:CountAliveUnits()
+    if actualsize > size then
+      if Structured and structure then
+  
+        local loadedstructure = {}
+        local strcset = UTILS.Split(structure,";")
+        for _,_data in pairs(strcset) do
+          local datasplit = UTILS.Split(_data,"==")
+          loadedstructure[datasplit[1]] = tonumber(datasplit[2])
+        end
+  
+        local originalstructure = UTILS.GetCountPerTypeName(spwndgrp)
+  
+        for _name,_number in pairs(originalstructure) do
+          local loadednumber = 0
+          if loadedstructure[_name] then
+            loadednumber = loadedstructure[_name]
+          end
+          local reduce = false
+          if loadednumber < _number then reduce = true end
+          
+          if reduce then
+            Cruncher(spwndgrp,_name,_number-loadednumber)  
+          end
+                     
+        end
+      else
+        local reduction = actualsize-size
+        -- reduce existing group
+        local units = spwndgrp:GetUnits()
+        local units2 = UTILS.ShuffleTable(units) -- randomize table
+        for i=1,reduction do
+          units2[i]:Destroy(false)
+        end
+      end
+    end
+  end
+            
+  local function MultiUse(Data)
+    local template = Data.template 
+    if template and usedtemplates[template] and usedtemplates[template].used and usedtemplates[template].used > 1 then
+      -- multispawn
+      if not usedtemplates[template].done then
+        local spwnd = 0
+        local spawngrp = SPAWN:New(template)
+        spawngrp:InitLimit(0,usedtemplates[template].used)
+        for _,_entry in pairs(usedtemplates[template].data) do       
+          spwnd = spwnd + 1
+          local sgrp=spawngrp:SpawnFromCoordinate(_entry.coordinate,spwnd)
+          BASE:ScheduleOnce(0.5,PostSpawn,{sgrp,_entry.size,_entry.structure})
+        end
+        usedtemplates[template].done = true
+      end
+      return true
+    else
+      return false
+    end
+  end
+  
   --BASE:I("Spawn = "..tostring(spawn))
-  local filename = Filename or "SetOfGroups"
-  local setdata = SET_GROUP:New()
-  local datatable = {}
   if UTILS.CheckFileExists(Path,filename) then
     local outcome,loadeddata = UTILS.LoadFromFile(Path,Filename)
     -- remove header
@@ -2525,55 +2591,27 @@ function UTILS.LoadSetOfGroups(Path,Filename,Spawn,Structured,Cinematic,Effect,D
       local structure = dataset[7]
       local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
       local group=nil
-      local data = { groupname=groupname, size=size, coordinate=coordinate, template=template }
-      table.insert(datatable,data)
-      if spawn then
-        local group = SPAWN:New(template)
-          :InitDelayOff()
-          :OnSpawnGroup(
-            function(spwndgrp)
-              setdata:AddObject(spwndgrp)
-              local actualsize = spwndgrp:CountAliveUnits()
-              if actualsize > size then
-                if Structured and structure then
-                  --BASE:I("Reducing group structure!")
-                  local loadedstructure = {}
-                  local strcset = UTILS.Split(structure,";")
-                  for _,_data in pairs(strcset) do
-                    local datasplit = UTILS.Split(_data,"==")
-                    loadedstructure[datasplit[1]] = tonumber(datasplit[2])
-                  end
-                  --BASE:I({loadedstructure})
-                  local originalstructure = UTILS.GetCountPerTypeName(spwndgrp)
-                  --BASE:I({originalstructure})
-                  for _name,_number in pairs(originalstructure) do
-                    local loadednumber = 0
-                    if loadedstructure[_name] then
-                      loadednumber = loadedstructure[_name]
-                    end
-                    local reduce = false
-                    if loadednumber < _number then reduce = true end
-                    
-                    --BASE:I(string.format("Looking at: %s | Original number: %d | Loaded number: %d | Reduce: %s",_name,_number,loadednumber,tostring(reduce))) 
-                    
-                    if reduce then
-                      Cruncher(spwndgrp,_name,_number-loadednumber)  
-                    end
-                               
-                  end
-                else
-                  local reduction = actualsize-size
-                  -- reduce existing group
-                  local units = spwndgrp:GetUnits()
-                  local units2 = UTILS.ShuffleTable(units) -- randomize table
-                  for i=1,reduction do
-                    units2[i]:Destroy(false)
-                  end
-                end
-              end
-            end
-          )
-          :SpawnFromCoordinate(coordinate)
+      if size > 0 then
+        local data = { groupname=groupname, size=size, coordinate=coordinate, template=template, structure=structure }
+        table.insert(datatable,data)
+        if usedtemplates[template] then
+          usedtemplates[template].used = usedtemplates[template].used + 1
+          table.insert(usedtemplates[template].data,data)
+        else
+          usedtemplates[template] = {
+              data = {},
+              used = 1,
+              done = false,
+            }
+          table.insert(usedtemplates[template].data,data)
+        end
+      end
+    end
+    for _id,_entry in pairs (datatable) do  
+      if spawn and not MultiUse(_entry) and _entry.size > 0 then
+        local group = SPAWN:New(_entry.template)
+        local sgrp=group:SpawnFromCoordinate(_entry.coordinate)
+        BASE:ScheduleOnce(0.5,PostSpawn,{sgrp,_entry.size,_entry.structure})
       end
     end 
   else
