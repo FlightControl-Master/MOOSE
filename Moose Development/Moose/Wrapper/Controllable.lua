@@ -670,9 +670,9 @@ end
 
 --- Activate ACLS system of the CONTROLLABLE. The controllable should be an aircraft carrier! Also needs Link4 to work.
 -- @param #CONTROLLABLE self
--- @param #number UnitID The DCS UNIT ID of the unit the ACLS system is attached to. Useful if more units are in one group.
+-- @param #number UnitID (Opional) The DCS UNIT ID of the unit the ACLS system is attached to. Defaults to the UNIT itself.
 -- @param #string Name (Optional) Name of the ACLS Beacon
--- @param #number Delay (Optional) Delay in seconds before the ICLS is deactivated.
+-- @param #number Delay (Optional) Delay in seconds before the ICLS is activated.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandActivateACLS( UnitID, Name, Delay )
 
@@ -681,9 +681,11 @@ function CONTROLLABLE:CommandActivateACLS( UnitID, Name, Delay )
   id = 'ActivateACLS', 
   params = {
     unitId = UnitID or self:GetID(), 
-    name = Name, 
+    name = Name or "ACL", 
   } 
 }
+
+  self:T({CommandActivateACLS})
 
   if Delay and Delay > 0 then
     SCHEDULER:New( nil, self.CommandActivateACLS, { self, UnitID, Name }, Delay )
@@ -720,7 +722,7 @@ end
 -- @param #number Channel ICLS channel.
 -- @param #number UnitID The DCS UNIT ID of the unit the ICLS system is attached to. Useful if more units are in one group.
 -- @param #string Callsign Morse code identification callsign.
--- @param #number Delay (Optional) Delay in seconds before the ICLS is deactivated.
+-- @param #number Delay (Optional) Delay in seconds before the ICLS is activated.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandActivateICLS( Channel, UnitID, Callsign, Delay )
 
@@ -746,23 +748,27 @@ end
 
 --- Activate LINK4 system of the CONTROLLABLE. The controllable should be an aircraft carrier!
 -- @param #CONTROLLABLE self
--- @param #number Frequency Link4 Frequency in MHz, e.g. 336
--- @param #number UnitID The DCS UNIT ID of the unit the LINK4 system is attached to. Useful if more units are in one group.
--- @param #string Callsign Morse code identification callsign.
--- @param #number Delay (Optional) Delay in seconds before the LINK4 is deactivated.
+-- @param #number Frequency Link4 Frequency in MHz, e.g. 336 (defaults to 336 MHz)
+-- @param #number UnitID (Optional) The DCS UNIT ID of the unit the LINK4 system is attached to. Defaults to the UNIT itself.
+-- @param #string Callsign (Optional) Morse code identification callsign.
+-- @param #number Delay (Optional) Delay in seconds before the LINK4 is activated.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandActivateLink4(Frequency, UnitID, Callsign, Delay)
-
+  
+  local freq = Frequency or 336
+  
   -- Command to activate Link4 system.
   local CommandActivateLink4= {
     id = "ActivateLink4",
     params= {
-      ["frequency "] = Frequency*1000,
+      ["frequency "] = freq*1000000,
       ["unitId"] = UnitID or self:GetID(),
-      ["name"] = Callsign,
+      ["name"] = Callsign or "LNK",
     }
   }
-
+  
+  self:T({CommandActivateLink4})
+  
   if Delay and Delay>0 then
     SCHEDULER:New(nil, self.CommandActivateLink4, {self, Frequency, UnitID, Callsign}, Delay)
   else
