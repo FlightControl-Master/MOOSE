@@ -670,7 +670,7 @@ end
 
 --- Activate ACLS system of the CONTROLLABLE. The controllable should be an aircraft carrier! Also needs Link4 to work.
 -- @param #CONTROLLABLE self
--- @param #number UnitID (Opional) The DCS UNIT ID of the unit the ACLS system is attached to. Defaults to the UNIT itself.
+-- @param #number UnitID (Optional) The DCS UNIT ID of the unit the ACLS system is attached to. Defaults to the UNIT itself.
 -- @param #string Name (Optional) Name of the ACLS Beacon
 -- @param #number Delay (Optional) Delay in seconds before the ICLS is activated.
 -- @return #CONTROLLABLE self
