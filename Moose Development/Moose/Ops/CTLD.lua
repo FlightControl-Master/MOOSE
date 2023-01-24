@@ -969,7 +969,110 @@ do
 --            
 -- **Caveat:**
 -- If you use units build by multiple templates, they will effectively double on loading. Dropped crates are not saved. Current stock is not saved.
+-- 
+-- ## 7. Complex example - Build a complete FARP from a CTLD crate drop
+-- 
+-- Prerequisites - you need to add a cargo of type FOB to your CTLD instance, for simplification reasons we call it FOB:
+-- 
+--            my_ctld:AddCratesCargo("FARP",{"FOB"},CTLD_CARGO.Enum.FOB,2)
+--            
+-- Also, you need to have **all statics with the fitting names** as per the script in your mission already, as we're going to copy them, and a template 
+-- for FARP vehicles, so -- services are goin to work (e.g. for the blue side: an unarmed humvee, two trucks and a fuel truck. Optionally add a fire fighter).
+-- 
+-- The following code will build a FARP at the coordinate the FOB was dropped and built:
+--            
+--            -- FARP Radio. First one has 130AM, next 131 and for forth
+--            local FARPFreq = 130
+--            local FARPName = 1 -- numbers 1..10
 --  
+--            local FARPClearnames = {
+--              [1]="London",
+--              [2]="Dallas",
+--              [3]="Paris",
+--              [4]="Moscow",
+--              [5]="Berlin",
+--              [6]="Rome",
+--              [7]="Madrid",
+--              [8]="Warsaw",
+--              [9]="Dublin",
+--              [10]="Perth",
+--              }
+--  
+--              function BuildAFARP(Coordinate)
+--                local coord = Coordinate -- Core.Point#COORDINATE
+--    
+--                local FarpName = ((FARPName-1)%10)+1
+--                local FName = FARPClearnames[FarpName]
+--                
+--                FARPFreq = FARPFreq + 1
+--                FARPName = FARPName + 1
+--
+--                -- Create a SPAWNSTATIC object from a template static FARP object.
+--                local SpawnStaticFarp=SPAWNSTATIC:NewFromStatic("Static Invisible FARP-1", country.id.USA)
+--    
+--                -- Spawning FARPs is special in DCS. Therefore, we need to specify that this is a FARP. We also set the callsign and the frequency.
+--                SpawnStaticFarp:InitFARP(FARPName, FARPFreq, 0)
+--                SpawnStaticFarp:InitDead(false)
+--    
+--                -- Spawn FARP 
+--                local ZoneSpawn = ZONE_RADIUS:New("FARP "..FName,Coordinate:GetVec2(),160,false)
+--                local Heading = 0
+--                local FarpBerlin=SpawnStaticFarp:SpawnFromZone(ZoneSpawn, Heading, "FARP "..FName)
+--    
+--                -- ATC and services - put them 125m from the center of the zone towards North
+--                local FarpVehicles = SPAWN:NewWithAlias("FARP Vehicles Template","FARP "..FName.." Technicals")
+--                FarpVehicles:InitHeading(180)
+--                local FarpVCoord = coord:Translate(125,0)
+--                FarpVehicles:SpawnFromCoordinate(FarpVCoord)
+--    
+--                -- We will put the rest of the statics in a nice circle around the center
+--                local base = 330
+--                local delta = 30
+--    
+--                local windsock = SPAWNSTATIC:NewFromStatic("Static Windsock-1",country.id.USA)
+--                local sockcoord = coord:Translate(125,base)
+--                windsock:SpawnFromCoordinate(sockcoord,Heading,"Windsock "..FName)
+--                base=base-delta
+--    
+--                local fueldepot = SPAWNSTATIC:NewFromStatic("Static FARP Fuel Depot-1",country.id.USA)
+--                local fuelcoord = coord:Translate(125,base)
+--                fueldepot:SpawnFromCoordinate(fuelcoord,Heading,"Fueldepot "..FName)
+--                base=base-delta
+--    
+--                local ammodepot = SPAWNSTATIC:NewFromStatic("Static FARP Ammo Storage-2-1",country.id.USA)
+--                local ammocoord = coord:Translate(125,base)
+--                ammodepot:SpawnFromCoordinate(ammocoord,Heading,"Ammodepot "..FName)
+--                base=base-delta
+--    
+--                local CommandPost = SPAWNSTATIC:NewFromStatic("Static FARP Command Post-1",country.id.USA)
+--                local CommandCoord = coord:Translate(125,base)
+--                CommandPost:SpawnFromCoordinate(CommandCoord,Heading,"Command Post "..FName)
+--                base=base-delta
+--    
+--                local Tent1 = SPAWNSTATIC:NewFromStatic("Static FARP Tent-11",country.id.USA)
+--                local Tent1Coord = coord:Translate(125,base)
+--                Tent1:SpawnFromCoordinate(Tent1Coord,Heading,"Command Tent "..FName)
+--                base=base-delta
+--    
+--                local Tent2 = SPAWNSTATIC:NewFromStatic("Static FARP Tent-11",country.id.USA)
+--                local Tent2Coord = coord:Translate(125,base)
+--                Tent2:SpawnFromCoordinate(Tent2Coord,Heading,"Command Tent2 "..FName)
+--     
+--                -- add a loadzone to CTLD
+--                my_ctld:AddCTLDZone("FARP "..FName,CTLD.CargoZoneType.LOAD,SMOKECOLOR.Blue,true,true)
+--                local m  = MESSAGE:New(string.format("FARP %s in operation!",FName),15,"CTLD"):ToBlue() 
+--              end
+--  
+--              function my_ctld:OnAfterCratesBuild(From,Event,To,Group,Unit,Vehicle)
+--                local name = Vehicle:GetName()
+--                if string.match(name,"FOB",1,true) then
+--                  local Coord = Vehicle:GetCoordinate()
+--                  Vehicle:Destroy(false)
+--                  BuildAFARP(Coord) 
+--                end
+--              end
+-- 
+-- 
 -- @field #CTLD
 CTLD = {
   ClassName       = "CTLD",
