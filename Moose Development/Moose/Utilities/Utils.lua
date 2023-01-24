@@ -2733,7 +2733,7 @@ end
 -- @return #string Formatted BRAA NATO call
 function UTILS.ToStringBRAANATO(FromGrp,ToGrp)
   local BRAANATO = "Merged."
-  local GroupNumber = FromGrp:GetSize()
+  local GroupNumber = ToGrp:GetSize()
   local GroupWords = "Singleton"
   if GroupNumber == 2 then GroupWords = "Two-Ship"
     elseif GroupNumber >= 3 then GroupWords = "Heavy"
