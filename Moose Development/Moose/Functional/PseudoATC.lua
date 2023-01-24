@@ -100,7 +100,7 @@ PSEUDOATC.id="PseudoATC | "
 
 --- PSEUDOATC version.
 -- @field #number version
-PSEUDOATC.version="0.9.4"
+PSEUDOATC.version="0.9.5"
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -521,7 +521,7 @@ function PSEUDOATC:PlayerLeft(unit)
   local GID=group:GetID()
   local UID=unit:GetDCSObject():getID()
   
-  if self.group[GID].player[UID] then
+  if self.group[GID] and self.group[GID].player and self.group[GID].player[UID] then
     local PlayerName=self.group[GID].player[UID].playername
     local CallSign=self.group[GID].player[UID].callsign
     local UnitName=self.group[GID].player[UID].unitname
@@ -707,7 +707,9 @@ function PSEUDOATC:MenuWaypoints(GID, UID)
       -- Position of Waypoint
       local pos=COORDINATE:New(wp.x, wp.alt, wp.y)
       local name=string.format("Waypoint %d", i-1)
-      
+      if wp.name and wp.name ~= "" then
+        name = string.format("Waypoint %s",wp.name)
+      end
       -- "F10/PseudoATC/Waypoints/Waypoint X"
       local submenu=missionCommands.addSubMenuForGroup(GID, name, self.group[GID].player[UID].menu_waypoints)
       
