@@ -1933,7 +1933,7 @@ function UTILS.GenerateVHFrequencies()
   705,720,722,730,735,740,745,750,770,795,
   822,830,862,866,
   905,907,920,935,942,950,995,
-  1000,1025,1030,1050,1065,1116,1175,1182,1210
+  1000,1025,1030,1050,1065,1116,1175,1182,1210,1215
   }
 
   local FreeVHFFrequencies = {}
@@ -2001,7 +2001,9 @@ function UTILS.GenerateUHFrequencies()
     local _start = 220000000
 
     while _start < 399000000 do
-        table.insert(FreeUHFFrequencies, _start)
+		if _start ~= 243000000 then
+			table.insert(FreeUHFFrequencies, _start)
+		end
         _start = _start + 500000
     end
 
@@ -2733,7 +2735,7 @@ end
 -- @return #string Formatted BRAA NATO call
 function UTILS.ToStringBRAANATO(FromGrp,ToGrp)
   local BRAANATO = "Merged."
-  local GroupNumber = FromGrp:GetSize()
+  local GroupNumber = ToGrp:GetSize()
   local GroupWords = "Singleton"
   if GroupNumber == 2 then GroupWords = "Two-Ship"
     elseif GroupNumber >= 3 then GroupWords = "Heavy"
