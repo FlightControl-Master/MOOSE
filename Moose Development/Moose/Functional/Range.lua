@@ -578,7 +578,7 @@ RANGE.MenuF10Root = nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version = "2.5.0"
+RANGE.version = "2.5.1"
 
 -- TODO list:
 -- TODO: Verbosity level for messages.
@@ -1207,12 +1207,17 @@ function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume,
     self.controlmsrs:SetCoalition(Coalition or coalition.side.BLUE)
     self.controlmsrs:SetLabel("RANGEC")
     self.controlsrsQ = MSRSQUEUE:New("CONTROL")
-    
+
     self.instructmsrs=MSRS:New(PathToSRS, Frequency or 305, Modulation or radio.modulation.AM, Volume or 1.0)
     self.instructmsrs:SetPort(Port)
     self.instructmsrs:SetCoalition(Coalition or coalition.side.BLUE)
     self.instructmsrs:SetLabel("RANGEI")
     self.instructsrsQ = MSRSQUEUE:New("INSTRUCT")
+    
+    if PathToGoogleKey then 
+      self.instructmsrs:SetGoogle(PathToGoogleKey)
+      self.instructmsrs:SetGoogle(PathToGoogleKey)
+    end
     
   else
     self:E(self.lid..string.format("ERROR: No SRS path specified!"))
