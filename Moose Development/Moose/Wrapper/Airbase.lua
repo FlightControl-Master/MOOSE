@@ -510,7 +510,11 @@ AIRBASE.MarianaIslands = {
 -- * AIRBASE.SouthAtlantic.Porvenir_Airfield
 -- * AIRBASE.SouthAtlantic.Almirante_Schroeders
 -- * AIRBASE.SouthAtlantic.Rio_Turbio
--- * AIRBASE.SouthAtlantic.Rio_Chico_Airfield
+-- * AIRBASE.SouthAtlantic.Rio_Chico
+-- * AIRBASE.SouthAtlantic.Franco_Bianco
+-- * AIRBASE.SouthAtlantic.Goose_Green
+-- * AIRBASE.SouthAtlantic.Hipico
+-- * AIRBASE.SouthAtlantic.CaletaTortel
 -- 
 --@field MarianaIslands
 AIRBASE.SouthAtlantic={
@@ -534,6 +538,10 @@ AIRBASE.SouthAtlantic={
   ["Almirante_Schroeders"]="Almirante Schroeders",
   ["Rio_Turbio"]="Rio Turbio",
   ["Rio_Chico"] = "Rio Chico",
+  ["Franco_Bianco"] = "Franco Bianco",
+  ["Goose_Green"] = "Goose Green",
+  ["Hipico"] = "Hipico",
+  ["CaletaTortel"] = "CaletaTortel",
 }
 
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
