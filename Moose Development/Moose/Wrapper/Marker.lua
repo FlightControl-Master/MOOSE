@@ -175,8 +175,6 @@ function MARKER:New( Coordinate, Text )
   -- Inherit everything from FSM class.
   local self = BASE:Inherit( self, FSM:New() ) -- #MARKER
 
-  local self=BASE:Inherit(self, FSM:New()) -- #MARKER
-
   self.coordinate=UTILS.DeepCopy(Coordinate)
 
   self.text = Text
