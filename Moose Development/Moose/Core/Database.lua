@@ -372,9 +372,58 @@ do -- Zones
       end
     end
 
+    -- Drawings as zones
+    if env.mission.drawings and env.mission.drawings.layers then
+    
+      -- Loop over layers.
+      for layerID, layerData in pairs(env.mission.drawings.layers or {}) do
+      
+        -- Loop over objects in layers.
+        for objectID, objectData in pairs(layerData.objects or {}) do
+          
+          -- Check for polygon which has at least 4 points (we would need 3 but the origin seems to be there twice)
+          if objectData.polygonMode=="free" and objectData.points and #objectData.points>=4 then
+        
+            -- Name of the zone.
+            local ZoneName=objectData.name or "Unknown Drawing Zone"
+            
+            -- Reference point. All other points need to be translated by this.
+            local vec2={x=objectData.mapX, y=objectData.mapY}
+            
+            -- Copy points array.            
+            local points=UTILS.DeepCopy(objectData.points)
+            
+            -- Translate points.
+            for i,_point in pairs(points) do
+              local point=_point --DCS#Vec2                           
+              points[i]=UTILS.Vec2Add(point, vec2)
+            end     
+            
+            -- Remove last point.
+            table.remove(points, #points)
+            
+            -- Debug output
+            self:I(string.format("Register ZONE: %s (Polygon drawing with %d verticies)", ZoneName, #points))                        
+            
+            -- Create new polygon zone.
+            local Zone=ZONE_POLYGON:NewFromPointsArray(ZoneName, points)
+            
+            -- Set color.
+            Zone:SetColor({1, 0, 0}, 0.15)
+            
+            -- Store in DB.
+            self.ZONENAMES[ZoneName] = ZoneName
+    
+            -- Add zone.
+            self:AddZone(ZoneName, Zone)          
+            
+          end        
+        end      
+      end
+            
+    end
+
   end
-
-
 end -- zone
 
 do -- Zone_Goal
