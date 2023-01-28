@@ -639,7 +639,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.9.10"
+AUFTRAG.version="1.0.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -3375,7 +3375,7 @@ function AUFTRAG:GetPriority()
   return self.prio
 end
 
---- Get casualties, i.e. number of units that died during this mission.
+--- Get casualties, *i.e.* number of own units that died during this mission.
 -- @param #AUFTRAG self
 -- @return #number Number of dead units.
 function AUFTRAG:GetCasualties()
@@ -3902,6 +3902,15 @@ function AUFTRAG:onafterStatus(From, Event, To)
   local Ngroups=self:CountOpsGroups()
   
   local Nassigned=self.Nassigned and self.Nassigned-self.Ndead or 0
+  
+  -- check conditions if set
+  local conditionDone=false
+  if self.conditionFailureSet then
+    conditionDone = self:EvalConditionsAny(self.conditionFailure)
+  end  
+  if self.conditionSuccessSet and not conditionDone then
+    conditionDone = self:EvalConditionsAny(self.conditionSuccess)
+  end  
 
   -- Check if mission is not OVER yet.
   if self:IsNotOver() then
@@ -3915,6 +3924,11 @@ function AUFTRAG:onafterStatus(From, Event, To)
 
       -- Cancel mission if stop time passed.
       self:Cancel()
+      
+    elseif conditionDone then
+    
+      -- Cancel mission if conditions were met.
+      self:Cancel()    
 
     elseif self.durationExe and self.Texecuting and Tnow-self.Texecuting>self.durationExe then
 
@@ -4014,18 +4028,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
     end
     self:I(self.lid..text)
   end  
-  
-  -- check conditions if set
-  if self.conditionFailureSet then
-    local failed = self:EvalConditionsAny(self.conditionFailure)
-    if failed then self:__Failed(-1) end
-  end
-  
-  if self.conditionSuccessSet then
-    local success = self:EvalConditionsAny(self.conditionSuccess)
-    if success then self:__Success(-1) end
-  end
-  
+    
   -- Ready to evaluate mission outcome?
   local ready2evaluate=self.Tover and Tnow-self.Tover>=self.dTevaluate or false
 
