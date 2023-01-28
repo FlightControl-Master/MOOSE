@@ -1027,11 +1027,26 @@ function DATABASE:_RegisterAirbases()
 
  for DCSAirbaseId, DCSAirbase in pairs(world.getAirbases()) do
 
+    self:_RegisterAirbase(DCSAirbase)
+
+  end
+
+  return self
+end
+
+--- Register a DCS airbase.
+-- @param #DATABASE self
+-- @param DCS#Airbase airbase Airbase.
+-- @return #DATABASE self
+function DATABASE:_RegisterAirbase(airbase)
+
+  if airbase then
+  
     -- Get the airbase name.
-    local DCSAirbaseName = DCSAirbase:getName()
+    local DCSAirbaseName = airbase:getName()
 
     -- This gave the incorrect value to be inserted into the airdromeID for DCS 2.5.6. Is fixed now.
-    local airbaseID=DCSAirbase:getID()
+    local airbaseID=airbase:getID()
 
     -- Add and register airbase.
     local airbase=self:AddAirbase( DCSAirbaseName )
@@ -1065,20 +1080,23 @@ function DATABASE:_EventOnBirth( Event )
 
   if Event.IniDCSUnit then
 
-    if Event.IniObjectCategory == 3 then
+    if Event.IniObjectCategory == Object.Category.STATIC then
 
+      -- Add static object to DB.
       self:AddStatic( Event.IniDCSUnitName )
 
     else
 
-      if Event.IniObjectCategory == 1 then
+      if Event.IniObjectCategory == Object.Category.UNIT then
 
+        -- Add unit and group to DB.
         self:AddUnit( Event.IniDCSUnitName )
         self:AddGroup( Event.IniDCSGroupName )
 
-        -- Add airbase if it was spawned later in the mission.
+        -- A unit can also be an airbase (e.g. ships).
         local DCSAirbase = Airbase.getByName(Event.IniDCSUnitName)
         if DCSAirbase then
+          -- Add airbase if it was spawned later in the mission.
           self:I(string.format("Adding airbase %s", tostring(Event.IniDCSUnitName)))
           self:AddAirbase(Event.IniDCSUnitName)
         end
@@ -1086,7 +1104,7 @@ function DATABASE:_EventOnBirth( Event )
       end
     end
 
-    if Event.IniObjectCategory == 1 then
+    if Event.IniObjectCategory == Object.Category.UNIT then
 
       Event.IniUnit = self:FindUnit( Event.IniDCSUnitName )
       Event.IniGroup = self:FindGroup( Event.IniDCSGroupName )

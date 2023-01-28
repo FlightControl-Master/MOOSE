@@ -246,7 +246,7 @@ AIRBASE.Normandy = {
 --
 -- * AIRBASE.PersianGulf.Abu_Dhabi_International_Airport
 -- * AIRBASE.PersianGulf.Abu_Musa_Island_Airport
--- * AIRBASE.PersianGulf.Al-Bateen_Airport
+-- * AIRBASE.PersianGulf.Al_Bateen_Airport
 -- * AIRBASE.PersianGulf.Al_Ain_International_Airport
 -- * AIRBASE.PersianGulf.Al_Dhafra_AB
 -- * AIRBASE.PersianGulf.Al_Maktoum_Intl
@@ -265,7 +265,7 @@ AIRBASE.Normandy = {
 -- * AIRBASE.PersianGulf.Lavan_Island_Airport
 -- * AIRBASE.PersianGulf.Liwa_Airbase
 -- * AIRBASE.PersianGulf.Qeshm_Island
--- * AIRBASE.PersianGulf.Ras_Al_Khaimah_International_Airport
+-- * AIRBASE.PersianGulf.Ras_Al_Khaimah
 -- * AIRBASE.PersianGulf.Sas_Al_Nakheel_Airport
 -- * AIRBASE.PersianGulf.Sharjah_Intl
 -- * AIRBASE.PersianGulf.Shiraz_International_Airport
@@ -510,6 +510,11 @@ AIRBASE.MarianaIslands = {
 -- * AIRBASE.SouthAtlantic.Porvenir_Airfield
 -- * AIRBASE.SouthAtlantic.Almirante_Schroeders
 -- * AIRBASE.SouthAtlantic.Rio_Turbio
+-- * AIRBASE.SouthAtlantic.Rio_Chico
+-- * AIRBASE.SouthAtlantic.Franco_Bianco
+-- * AIRBASE.SouthAtlantic.Goose_Green
+-- * AIRBASE.SouthAtlantic.Hipico
+-- * AIRBASE.SouthAtlantic.CaletaTortel
 -- 
 --@field MarianaIslands
 AIRBASE.SouthAtlantic={
@@ -532,6 +537,11 @@ AIRBASE.SouthAtlantic={
   ["Porvenir_Airfield"]="Porvenir Airfield",
   ["Almirante_Schroeders"]="Almirante Schroeders",
   ["Rio_Turbio"]="Rio Turbio",
+  ["Rio_Chico"] = "Rio Chico",
+  ["Franco_Bianco"] = "Franco Bianco",
+  ["Goose_Green"] = "Goose Green",
+  ["Hipico"] = "Hipico",
+  ["CaletaTortel"] = "CaletaTortel",
 }
 
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
@@ -685,6 +695,9 @@ function AIRBASE:Register(AirbaseName)
   else
     self:E(string.format("ERROR: Cound not get position Vec2 of airbase %s", AirbaseName))
   end
+  
+  -- Debug info.
+  self:T2(string.format("Registered airbase %s", tostring(self.AirbaseName)))
 
   return self
 end
@@ -836,7 +849,7 @@ end
 -- Black listed spots overrule white listed spots.
 -- **NOTE** that terminal IDs are not necessarily the same as those displayed in the mission editor!
 -- @param #AIRBASE self
--- @param #table TerminalIdBlacklist Table of white listed terminal IDs.
+-- @param #table TerminalIdWhitelist Table of white listed terminal IDs.
 -- @return #AIRBASE self
 -- @usage AIRBASE:FindByName("Batumi"):SetParkingSpotWhitelist({2, 3, 4}) --Only allow terminal IDs 2, 3, 4
 function AIRBASE:SetParkingSpotWhitelist(TerminalIdWhitelist)
@@ -1365,7 +1378,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   local _nspots=nspots or group:GetSize()
 
   -- Debug info.
-  self:E(string.format("%s: Looking for %d parking spot(s) for aircraft of size %.1f m (x=%.1f,y=%.1f,z=%.1f) at terminal type %s.", airport, _nspots, _aircraftsize, ax, ay, az, tostring(terminaltype)))
+  self:T(string.format("%s: Looking for %d parking spot(s) for aircraft of size %.1f m (x=%.1f,y=%.1f,z=%.1f) at terminal type %s.", airport, _nspots, _aircraftsize, ax, ay, az, tostring(terminaltype)))
 
   -- Table of valid spots.
   local validspots={}

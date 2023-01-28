@@ -1130,7 +1130,7 @@ function EVENT:onEvent( Event )
           Event.IniUnitName = Event.IniDCSUnitName
           Event.IniDCSGroup = Event.IniDCSUnit:getGroup()
           Event.IniUnit = UNIT:FindByName( Event.IniDCSUnitName )
-          
+                  
           if not Event.IniUnit then
             -- Unit can be a CLIENT. Most likely this will be the case ...
             Event.IniUnit = CLIENT:FindByName( Event.IniDCSUnitName, '', true )
@@ -1165,8 +1165,7 @@ function EVENT:onEvent( Event )
         if Event.IniObjectCategory == Object.Category.SCENERY then
           ---
           -- Scenery
-          ---
-          
+          ---          
           Event.IniDCSUnit = Event.initiator
           Event.IniDCSUnitName = Event.IniDCSUnit:getName()
           Event.IniUnitName = Event.IniDCSUnitName
@@ -1186,6 +1185,12 @@ function EVENT:onEvent( Event )
           Event.IniCoalition = Event.IniDCSUnit:getCoalition()
           Event.IniCategory = Event.IniDCSUnit:getDesc().category
           Event.IniTypeName = Event.IniDCSUnit:getTypeName()
+          
+          -- If the airbase does not exist in the DB, we add it (e.g. when FARPS are spawned).
+          if not Event.IniUnit then
+            _DATABASE:_RegisterAirbase(Event.initiator)
+            Event.IniUnit = AIRBASE:FindByName(Event.IniDCSUnitName)
+          end
         end
       end
 
@@ -1219,7 +1224,7 @@ function EVENT:onEvent( Event )
         if Event.TgtObjectCategory == Object.Category.STATIC then
           -- get base data
           Event.TgtDCSUnit = Event.target
-          if Event.target:isExist() and Event.id ~= 33 then -- leave out ejected seat object
+          if Event.target:isExist() and Event.id ~= 33 and not Event.TgtObjectCategory == Object.Category.COORDINATE then -- leave out ejected seat object
             Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
             Event.TgtUnitName = Event.TgtDCSUnitName
             Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
@@ -1275,9 +1280,11 @@ function EVENT:onEvent( Event )
           --local name=Event.place:getName()  -- This returns a DCS error "Airbase doesn't exit" :(
           -- However, this is not a big thing, as the aircraft the pilot ejected from is usually long crashed before the ejected pilot touches the ground.
           --Event.Place=UNIT:Find(Event.place)
-        else
-          Event.Place=AIRBASE:Find(Event.place)
-          Event.PlaceName=Event.Place:GetName()
+        else  
+          if Event.place:isExist() and Event.place:getCategory() ~= Object.Category.SCENERY then
+            Event.Place=AIRBASE:Find(Event.place)
+            Event.PlaceName=Event.Place:GetName()
+          end
         end
       end
 

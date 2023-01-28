@@ -26,11 +26,11 @@
 --
 -- ===
 --
--- ### Author: **Applevangelist** (Moose Version), ***Ciribob*** (original), Thanks to: Shadowze, Cammel (testing)
+-- ### Author: **Applevangelist** (Moose Version), ***Ciribob*** (original), Thanks to: Shadowze, Cammel (testing), The Chosen One (Persistence)
 -- @module Ops.CSAR
 -- @image OPS_CSAR.jpg
 
--- Date: November 2022
+-- Date: January 2023
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -197,6 +197,26 @@
 --
 --      --Create a casualty and CASEVAC request from a "Point" (VEC2) for the blue coalition --shagrat
 --      my_csar:SpawnCASEVAC(Point, coalition.side.BLUE)  
+--      
+-- ## 6. Save and load downed pilots - Persistance
+-- 
+-- You can save and later load back downed pilots to make your mission persistent.
+-- For this to work, you need to de-sanitize **io** and **lfs** in your MissionScripting.lua, which is located in your DCS installtion folder under Scripts.
+-- There is a risk involved in doing that; if you do not know what that means, this is possibly not for you.
+-- 
+-- Use the following options to manage your saves:
+-- 
+--              mycsar.enableLoadSave = true -- allow auto-saving and loading of files
+--              mycsar.saveinterval = 600 -- save every 10 minutes
+--              mycsar.filename = "missionsave.csv" -- example filename
+--              mycsar.filepath = "C:\\Users\\myname\\Saved Games\\DCS\Missions\\MyMission" -- example path
+--  
+--  Then use an initial load at the beginning of your mission:
+--  
+--            mycsar:__Load(10)
+--            
+--  **Caveat:**
+-- Dropped troop noMessage and forcedesc parameters aren't saved.      
 --
 -- @field #CSAR
 CSAR = {
@@ -272,7 +292,7 @@ CSAR.AircraftType["Bronco-OV-10A"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.16"
+CSAR.version="1.0.17"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -295,6 +315,8 @@ function CSAR:New(Coalition, Template, Alias)
   
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #CSAR
+  
+  BASE:T({Coalition, Prefixes, Alias})
   
   --set Coalition
   if Coalition and type(Coalition)=="string" then
@@ -346,6 +368,8 @@ function CSAR:New(Coalition, Template, Alias)
   self:AddTransition("*",             "Returning",          "*")        -- CSAR able to return to base.
   self:AddTransition("*",             "Rescued",            "*")          -- Pilot at MASH.
   self:AddTransition("*",             "KIA",                "*")          -- Pilot killed in action.
+  self:AddTransition("*",             "Load",                "*")           -- CSAR load  event.  
+  self:AddTransition("*",             "Save",                "*")           -- CSAR save  event.
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop FSM.
 
   -- tables, mainly for tracking actions
@@ -442,6 +466,14 @@ function CSAR:New(Coalition, Template, Alias)
   self.SRSVolume = 1.0 -- volume 0.0 to 1.0
   self.SRSGender = "male" -- male or female
   
+  local AliaS = string.gsub(self.alias," ","_")
+  self.filename = string.format("CSAR_%s_Persist.csv",AliaS)
+  
+  -- load and save downed pilots
+  self.enableLoadSave = false
+  self.filepath = nil
+  self.saveinterval = 600
+  
   ------------------------
   --- Pseudo Functions ---
   ------------------------
@@ -469,6 +501,24 @@ function CSAR:New(Coalition, Template, Alias)
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#CSAR] __Status
+  -- @param #CSAR self
+  -- @param #number delay Delay in seconds.
+  -- 
+  --   --- Triggers the FSM event "Load".
+  -- @function [parent=#CSAR] Load
+  -- @param #CSAR self
+
+  --- Triggers the FSM event "Load" after a delay.
+  -- @function [parent=#CSAR] __Load
+  -- @param #CSAR self
+  -- @param #number delay Delay in seconds.
+  
+  --- Triggers the FSM event "Save".
+  -- @function [parent=#CSAR] Load
+  -- @param #CSAR self
+
+  --- Triggers the FSM event "Save" after a delay.
+  -- @function [parent=#CSAR] __Save
   -- @param #CSAR self
   -- @param #number delay Delay in seconds.
   
@@ -537,6 +587,24 @@ function CSAR:New(Coalition, Template, Alias)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param #string Pilotname Name of the pilot KIA.
+  
+  --- FSM Function OnAfterLoad.
+  -- @function [parent=#CSAR] OnAfterLoad
+  -- @param #CSAR self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string path (Optional) Path where the file is located. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+  -- @param #string filename (Optional) File name for loading. Default is "CSAR_<alias>_Persist.csv".
+  
+  --- FSM Function OnAfterSave.
+  -- @function [parent=#CSAR] OnAfterSave
+  -- @param #CSAR self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string path (Optional) Path where the file is saved. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+  -- @param #string filename (Optional) File name for saving. Default is "CSAR_<alias>_Persist.csv".
   
   return self
 end
@@ -850,7 +918,7 @@ end
 
 --- (Internal) Function to add a CSAR object into the scene at a Point coordinate (VEC_2). For mission designers wanting to add e.g. casualties to the scene, that don't use beacons.
 -- @param #CSAR self
--- @param #string _Point a POINT_VEC2.
+-- @param Core.Point#COORDINATE _Point
 -- @param #number _coalition Coalition.
 -- @param #string _description (optional) Description.
 -- @param #boolean _nomessage (optional) If true, don\'t send a message to SAR.
@@ -883,7 +951,7 @@ end
 
 --- Function to add a CSAR object into the scene at a zone coordinate. For mission designers wanting to add e.g. PoWs to the scene.
 -- @param #CSAR self
--- @param #string Point a POINT_VEC2.
+-- @param Core.Point#COORDINATE Point
 -- @param #number Coalition Coalition.
 -- @param #string Description (optional) Description.
 -- @param #boolean addBeacon (optional) yes or no.
@@ -893,8 +961,8 @@ end
 -- @param #boolean Forcedesc (optional) Force to use the **description passed only** for the pilot track entry. Use to have fully custom names.
 -- @usage If missions designers want to spawn downed pilots into the field, e.g. at mission begin, to give the helicopter guys work, they can do this like so:
 --      
---        -- Create casualty  "CASEVAC" at Point #POINT_VEC2 for the blue coalition.
---        my_csar:SpawnCASEVAC( POINT_VEC2, coalition.side.BLUE )
+--        -- Create casualty  "CASEVAC" at coordinate Core.Point#COORDINATE for the blue coalition.
+--        my_csar:SpawnCASEVAC( coordinate, coalition.side.BLUE )
 function CSAR:SpawnCASEVAC(Point, Coalition, Description, Nomessage, Unitname, Typename, Forcedesc) 
   self:_SpawnCASEVAC(Point, Coalition, Description, Nomessage, Unitname, Typename, Forcedesc)
   return self
@@ -2108,9 +2176,10 @@ function CSAR:_AddBeaconToGroup(_group, _freq)
       local _radioUnit = _group:GetUnit(1)
       if _radioUnit then    
         local Frequency = _freq -- Freq in Hertz
+        local name = _radioUnit:GetName()
         local Sound =  "l10n/DEFAULT/"..self.radioSound
         local vec3 = _radioUnit:GetVec3() or _radioUnit:GetPositionVec3() or {x=0,y=0,z=0}
-        trigger.action.radioTransmission(Sound, vec3, 0, false, Frequency, self.ADFRadioPwr or 1000) -- Beacon in MP only runs for exactly 30secs straight
+        trigger.action.radioTransmission(Sound, vec3, 0, false, Frequency, self.ADFRadioPwr or 1000,name..math.random(1,10000)) -- Beacon in MP only runs for exactly 30secs straight
       end
     end
     return self
@@ -2218,7 +2287,16 @@ function CSAR:onafterStart(From, Event, To)
     self.msrs:SetLabel("CSAR")
     self.SRSQueue = MSRSQUEUE:New("CSAR")
   end
+  
   self:__Status(-10)
+  
+  if self.enableLoadSave then
+    local interval = self.saveinterval
+    local filename = self.filename
+    local filepath = self.filepath
+    self:__Save(interval,filepath,filename)
+  end
+  
   return self
 end
 
@@ -2451,6 +2529,240 @@ function CSAR:onbeforeLanded(From, Event, To, HeliName, Airbase)
   self:T({From, Event, To, HeliName, Airbase})
   return self
 end
+
+--- On before "Save" event. Checks if io and lfs are available.
+-- @param #CSAR self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string path (Optional) Path where the file is saved. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+-- @param #string filename (Optional) File name for saving. Default is "CSAR_<alias>_Persist.csv".
+function CSAR:onbeforeSave(From, Event, To, path, filename)
+  self:T({From, Event, To, path, filename})
+  if not self.enableLoadSave then
+    return self
+  end
+  -- Thanks to @FunkyFranky 
+  -- Check io module is available.
+  if not io then
+    self:E(self.lid.."ERROR: io not desanitized. Can't save current state.")
+    return false
+  end
+
+  -- Check default path.
+  if path==nil and not lfs then
+    self:E(self.lid.."WARNING: lfs not desanitized. State will be saved in DCS installation root directory rather than your \"Saved Games\\DCS\" folder.")
+  end
+
+  return true
+end
+
+--- On after "Save" event. Player data is saved to file.
+-- @param #CSAR self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string path Path where the file is saved. If nil, file is saved in the DCS root installtion directory or your "Saved Games" folder if lfs was desanitized.
+-- @param #string filename (Optional) File name for saving. Default is Default is "CSAR_<alias>_Persist.csv".
+function CSAR:onafterSave(From, Event, To, path, filename)
+  self:T({From, Event, To, path, filename})
+  -- Thanks to @FunkyFranky 
+  if not self.enableLoadSave then
+    return self
+  end
+  --- Function that saves data to file
+  local function _savefile(filename, data)
+    local f = assert(io.open(filename, "wb"))
+    f:write(data)
+    f:close()
+  end
+
+  -- Set path or default.
+  if lfs then
+    path=self.filepath or lfs.writedir()
+  end
+  
+  -- Set file name.
+  filename=filename or self.filename
+
+  -- Set path.
+  if path~=nil then
+    filename=path.."\\"..filename
+  end
+  
+  local pilots = self.downedPilots
+  
+  --local data = "LoadedData = {\n"
+  local data = "playerName,x,y,z,coalition,country,description,typeName,unitName,freq\n"
+  local n = 0
+  for _,_grp in pairs(pilots) do
+    local DownedPilot = _grp -- Wrapper.Group#GROUP
+    if DownedPilot and DownedPilot.alive then
+      -- get downed pilot data for saving
+      local playerName = DownedPilot.player
+      local group = DownedPilot.group
+      local coalition = group:GetCoalition()
+      local country = group:GetCountry()
+      local description = DownedPilot.desc
+      local typeName = DownedPilot.typename
+      local freq = DownedPilot.frequency
+      local location = group:GetVec3()
+      local unitName = DownedPilot.originalUnit
+      local txt = string.format("%s,%d,%d,%d,%s,%s,%s,%s,%s,%d\n",playerName,location.x,location.y,location.z,coalition,country,description,typeName,unitName,freq)
+      
+      self:I(self.lid.."Saving to CSAR File: " .. txt)
+      
+      data = data .. txt
+    end
+  end
+  
+  _savefile(filename, data)
+   
+  -- AutoSave
+  if self.enableLoadSave then
+    local interval = self.saveinterval
+    local filename = self.filename
+    local filepath = self.filepath
+    self:__Save(interval,filepath,filename)
+  end
+  return self
+end
+
+--- On before "Load" event. Checks if io and lfs and the file are available.
+-- @param #CSAR self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string path (Optional) Path where the file is located. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+-- @param #string filename (Optional) File name for loading. Default is "CSAR_<alias>_Persist.csv".
+function CSAR:onbeforeLoad(From, Event, To, path, filename)
+  self:T({From, Event, To, path, filename})
+  if not self.enableLoadSave then
+    return self
+  end
+  --- Function that check if a file exists.
+  local function _fileexists(name)
+     local f=io.open(name,"r")
+     if f~=nil then
+      io.close(f)
+      return true
+    else
+      return false
+    end
+  end
+  
+  -- Set file name and path
+  filename=filename or self.filename
+  path = path or self.filepath
+  
+  -- Check io module is available.
+  if not io then
+    self:E(self.lid.."WARNING: io not desanitized. Cannot load file.")
+    return false
+  end
+
+  -- Check default path.
+  if path==nil and not lfs then
+    self:E(self.lid.."WARNING: lfs not desanitized. State will be saved in DCS installation root directory rather than your \"Saved Games\\DCS\" folder.")
+  end
+
+  -- Set path or default.
+  if lfs then
+    path=path or lfs.writedir()
+  end
+
+  -- Set path.
+  if path~=nil then
+    filename=path.."\\"..filename
+  end
+
+  -- Check if file exists.
+  local exists=_fileexists(filename)
+
+  if exists then
+    return true
+  else
+    self:E(self.lid..string.format("WARNING: State file %s might not exist.", filename))
+    return false
+    --return self
+  end
+
+end
+
+--- On after "Load" event. Loads dropped units from file.
+-- @param #CSAR self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string path (Optional) Path where the file is located. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+-- @param #string filename (Optional) File name for loading. Default is "CSAR_<alias>_Persist.csv".
+function CSAR:onafterLoad(From, Event, To, path, filename)
+  self:T({From, Event, To, path, filename})
+  if not self.enableLoadSave then
+    return self
+  end
+  --- Function that loads data from a file.
+  local function _loadfile(filename)
+    local f=assert(io.open(filename, "rb"))
+    local data=f:read("*all")
+    f:close()
+    return data
+  end
+  
+  -- Set file name and path
+  filename=filename or self.filename
+  path = path or self.filepath
+  
+  -- Set path or default.
+  if lfs then
+    path=path or lfs.writedir()
+  end
+
+  -- Set path.
+  if path~=nil then
+    filename=path.."\\"..filename
+  end
+
+  -- Info message.
+  local text=string.format("Loading CSAR state from file %s", filename)
+  MESSAGE:New(text,10):ToAllIf(self.Debug)
+  self:I(self.lid..text)
+  
+  local file=assert(io.open(filename, "rb"))
+  
+  local loadeddata = {}
+  for line in file:lines() do
+      loadeddata[#loadeddata+1] = line
+  end
+  file:close()
+  
+  -- remove header
+  table.remove(loadeddata, 1)
+  
+  for _id,_entry in pairs (loadeddata) do
+    local dataset = UTILS.Split(_entry,",")
+    -- 1=playerName,2=x,3=y,4=z,5=coalition,6=country,7=description,8=typeName,9=unitName,10=freq\n
+    local playerName = dataset[1]
+    
+    local vec3 = {}
+    vec3.x = tonumber(dataset[2])
+    vec3.y = tonumber(dataset[3])
+    vec3.z = tonumber(dataset[4])
+    local point = COORDINATE:NewFromVec3(vec3)
+    
+    local coalition = dataset[5]
+    local country = dataset[6]
+    local description = dataset[7]
+    local typeName = dataset[8]
+    local unitName = dataset[9]
+    local freq = dataset[10]
+    
+    self:_AddCsar(coalition, country, point, typeName, unitName, playerName, freq, nil, description, nil)    
+  end
+  
+  return self
+end
+
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- End Ops.CSAR
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------

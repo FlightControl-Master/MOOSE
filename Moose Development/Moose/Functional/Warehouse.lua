@@ -302,8 +302,8 @@
 --
 -- Initial Spawn states is as follows:
 --    GROUND: ROE, "Return Fire" Alarm, "Green"
---    AIR: 	ROE, "Return Fire" Reaction to Threat, "Passive Defense"
---    NAVAL	ROE, "Return Fire" Alarm,"N/A"
+--    AIR:  ROE, "Return Fire" Reaction to Threat, "Passive Defense"
+--    NAVAL ROE, "Return Fire" Alarm,"N/A"
 --
 -- A request can be added by the @{#WAREHOUSE.AddRequest}(*warehouse*, *AssetDescriptor*, *AssetDescriptorValue*, *nAsset*, *TransportType*, *nTransport*, *Prio*, *Assignment*) function.
 -- The parameters are
@@ -2645,6 +2645,13 @@ end
 function WAREHOUSE:SetWarehouseZone(zone)
   self.zone=zone
   return self
+end
+
+--- Get the warehouse zone.
+-- @param #WAREHOUSE self
+-- @return Core.Zone#ZONE The warehouse zone.
+function WAREHOUSE:GetWarehouseZone()
+  return self.zone
 end
 
 --- Set auto defence on. When the warehouse is under attack, all ground assets are spawned automatically and will defend the warehouse zone.
@@ -5810,6 +5817,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
   -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
   local Parking={}
   if Request.cargocategory==Group.Category.AIRPLANE or Request.cargocategory==Group.Category.HELICOPTER then
+    --TODO: Check for airstart. Should be a request property.
     Parking=self:_FindParkingForAssets(self.airbase, cargoassets) or {}
   end
 
@@ -6069,7 +6077,9 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
         end
 
         if self.Debug then
-          coord:MarkToAll(string.format("Spawnplace unit %s terminal %d.", unit.name, terminal))
+          local text=string.format("Spawnplace unit %s terminal %d.", unit.name, terminal)
+          coord:MarkToAll(text)
+          env.info(text)
         end
 
         unit.x=coord.x
@@ -7374,6 +7384,7 @@ function WAREHOUSE:_CheckRequestNow(request)
   local _transports
   local _assetattribute
   local _assetcategory
+  local _assetairstart=false
 
   -- Check if at least one (cargo) asset is available.
   if _nassets>0 then
@@ -7381,21 +7392,28 @@ function WAREHOUSE:_CheckRequestNow(request)
     -- Get the attibute of the requested asset.
     _assetattribute=_assets[1].attribute
     _assetcategory=_assets[1].category
+    _assetairstart=_assets[1].takeoffType and _assets[1].takeoffType==COORDINATE.WaypointType.TurningPoint or false
 
     -- Check available parking for air asset units.
     if _assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER then
     
       if self.airbase and self.airbase:GetCoalition()==self:GetCoalition() then
     
-        if self:IsRunwayOperational() then
+        if self:IsRunwayOperational() or _assetairstart then
   
-          local Parking=self:_FindParkingForAssets(self.airbase,_assets)
-    
-          --if Parking==nil and not (self.category==Airbase.Category.HELIPAD) then
-          if Parking==nil then
-            local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all requested assets at the moment.", self.alias)
-            self:_InfoMessage(text, 5)
-            return false
+          if _assetairstart then
+            -- Airstart no need to check parking            
+          else
+          
+            -- Check parking.
+            local Parking=self:_FindParkingForAssets(self.airbase,_assets)
+      
+            -- No parking?
+            if Parking==nil then
+              local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all requested assets at the moment.", self.alias)
+              self:_InfoMessage(text, 5)
+              return false
+            end
           end
           
         else
@@ -7969,93 +7987,123 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
   -- Loop over all assets that need a parking psot.
   for _,asset in pairs(assets) do
     local _asset=asset --#WAREHOUSE.Assetitem
-
-    -- Get terminal type of this asset
-    local terminaltype=asset.terminalType or self:_GetTerminal(asset.attribute, self:GetAirbaseCategory())
-
-    -- Asset specific parking.
-    parking[_asset.uid]={}
-
-    -- Loop over all units - each one needs a spot.
-    for i=1,_asset.nunits do
     
-      -- Asset name
-      local assetname=_asset.spawngroupname.."-"..tostring(i)
+    if not _asset.spawned then
 
-      -- Loop over all parking spots.
-      local gotit=false
-      for _,_parkingspot in pairs(parkingdata) do
-        local parkingspot=_parkingspot --Wrapper.Airbase#AIRBASE.ParkingSpot
-
-        -- Check correct terminal type for asset. We don't want helos in shelters etc.
-        if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) and self:_CheckParkingValid(parkingspot) and self:_CheckParkingAsset(parkingspot, asset) and airbase:_CheckParkingLists(parkingspot.TerminalID) then
-
-          -- Coordinate of the parking spot.
-          local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
-          local _termid=parkingspot.TerminalID
-          local free=true
-          local problem=nil
-
-          -- Loop over all obstacles.
-          for _,obstacle in pairs(obstacles) do
-
-            -- Check if aircraft overlaps with any obstacle.
-            local dist=_spot:Get2DDistance(obstacle.coord)
-            local safe=_overlap(_asset.size, obstacle.size, dist)
-
-            -- Spot is blocked.
-            if not safe then
-              self:T3(self.lid..string.format("FF asset=%s (id=%d): spot id=%d dist=%.1fm is NOT SAFE", assetname, _asset.uid, _termid, dist))
-              free=false
-              problem=obstacle
-              problem.dist=dist
-              break
-            else
-              --env.info(string.format("FF asset=%s (id=%d): spot id=%d dist=%.1fm is SAFE", assetname, _asset.uid, _termid, dist))
-            end
-
-          end
-
-          -- Check if spot is free
-          if free then
-
-            -- Add parkingspot for this asset unit.
-            table.insert(parking[_asset.uid], parkingspot)
-
-            -- Debug
-            self:T(self.lid..string.format("Parking spot %d is free for asset %s [id=%d]!", _termid, assetname, _asset.uid))
-
-            -- Add the unit as obstacle so that this spot will not be available for the next unit.
-            table.insert(obstacles, {coord=_spot, size=_asset.size, name=assetname, type="asset"})
-
-            gotit=true
-            break
-
+      -- Get terminal type of this asset
+      local terminaltype=asset.terminalType or self:_GetTerminal(asset.attribute, self:GetAirbaseCategory())
+  
+      -- Asset specific parking.
+      parking[_asset.uid]={}
+  
+      -- Loop over all units - each one needs a spot.
+      for i=1,_asset.nunits do
+      
+        -- Asset name
+        local assetname=_asset.spawngroupname.."-"..tostring(i)
+  
+        -- Loop over all parking spots.
+        local gotit=false
+        for _,_parkingspot in pairs(parkingdata) do
+          local parkingspot=_parkingspot --Wrapper.Airbase#AIRBASE.ParkingSpot
+          
+          -- Parking valid?
+          local valid=true
+          
+          if asset.parkingIDs then
+            -- If asset has assigned parking spots, we take these no matter what.
+            valid=self:_CheckParkingAsset(parkingspot, asset)
           else
-
-            -- Debug output for occupied spots.            
-            if self.Debug then
-              local coord=problem.coord --Core.Point#COORDINATE
-              local text=string.format("Obstacle %s [type=%s] blocking spot=%d! Size=%.1f m and distance=%.1f m.", problem.name, problem.type, _termid, problem.size, problem.dist)
-              self:I(self.lid..text)
-              coord:MarkToAll(string.format(text))
-            else
-              self:T(self.lid..string.format("Parking spot %d is occupied or not big enough!", _termid))
-            end
-
+  
+            -- Valid terminal type depending on attribute.
+            local validTerminal=AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype)
+            
+            -- Valid parking list.
+            local validParking=self:_CheckParkingValid(parkingspot)
+            
+            -- Black and white list.
+            local validBWlist=airbase:_CheckParkingLists(parkingspot.TerminalID)        
+  
+            -- Debug info.
+            --env.info(string.format("FF validTerminal = %s", tostring(validTerminal)))
+            --env.info(string.format("FF validParking  = %s", tostring(validParking)))
+            --env.info(string.format("FF validBWlist   = %s", tostring(validBWlist)))
+          
+            -- Check if all are true
+            valid=validTerminal and validParking and validBWlist
           end
-
-        else
-          self:T2(self.lid..string.format("Terminal ID=%d: type=%s not supported", parkingspot.TerminalID, parkingspot.TerminalType))
-        end -- check terminal type
-      end -- loop over parking spots
-
-      -- No parking spot for at least one asset :(
-      if not gotit then
-        self:I(self.lid..string.format("WARNING: No free parking spot for asset %s [id=%d]", assetname, _asset.uid))
-        return nil
-      end
-    end -- loop over asset units
+          
+  
+          -- Check correct terminal type for asset. We don't want helos in shelters etc.
+          if valid then
+  
+            -- Coordinate of the parking spot.
+            local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
+            local _termid=parkingspot.TerminalID
+            local free=true
+            local problem=nil
+  
+            -- Loop over all obstacles.
+            for _,obstacle in pairs(obstacles) do
+  
+              -- Check if aircraft overlaps with any obstacle.
+              local dist=_spot:Get2DDistance(obstacle.coord)
+              local safe=_overlap(_asset.size, obstacle.size, dist)
+  
+              -- Spot is blocked.
+              if not safe then
+                self:T3(self.lid..string.format("FF asset=%s (id=%d): spot id=%d dist=%.1fm is NOT SAFE", assetname, _asset.uid, _termid, dist))
+                free=false
+                problem=obstacle
+                problem.dist=dist
+                break
+              else
+                --env.info(string.format("FF asset=%s (id=%d): spot id=%d dist=%.1fm is SAFE", assetname, _asset.uid, _termid, dist))
+              end
+  
+            end
+  
+            -- Check if spot is free
+            if free then
+  
+              -- Add parkingspot for this asset unit.
+              table.insert(parking[_asset.uid], parkingspot)
+  
+              -- Debug
+              self:T(self.lid..string.format("Parking spot %d is free for asset %s [id=%d]!", _termid, assetname, _asset.uid))
+  
+              -- Add the unit as obstacle so that this spot will not be available for the next unit.
+              table.insert(obstacles, {coord=_spot, size=_asset.size, name=assetname, type="asset"})
+  
+              gotit=true
+              break
+  
+            else
+  
+              -- Debug output for occupied spots.            
+              if self.Debug then
+                local coord=problem.coord --Core.Point#COORDINATE
+                local text=string.format("Obstacle %s [type=%s] blocking spot=%d! Size=%.1f m and distance=%.1f m.", problem.name, problem.type, _termid, problem.size, problem.dist)
+                self:I(self.lid..text)
+                coord:MarkToAll(string.format(text))
+              else
+                self:T(self.lid..string.format("Parking spot %d is occupied or not big enough!", _termid))
+              end
+  
+            end
+  
+          else
+            self:T2(self.lid..string.format("Terminal ID=%d: type=%s not supported", parkingspot.TerminalID, parkingspot.TerminalType))
+          end -- check terminal type
+        end -- loop over parking spots
+  
+        -- No parking spot for at least one asset :(
+        if not gotit then
+          self:I(self.lid..string.format("WARNING: No free parking spot for asset %s [id=%d]", assetname, _asset.uid))
+          return nil
+        end
+      end -- loop over asset units
+    end -- Asset spawned check
   end -- loop over asset groups
 
   return parking

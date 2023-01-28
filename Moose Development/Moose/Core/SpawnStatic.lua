@@ -275,7 +275,7 @@ end
 
 --- Initialize as dead.
 -- @param #SPAWNSTATIC self
--- @param #boolean IsCargo If true, this static is dead.
+-- @param #boolean IsDead If true, this static is dead.
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:InitDead(IsDead)
   self.InitStaticDead=IsDead
@@ -467,7 +467,7 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
   self:T(Template)
   
   -- Add static to the game.
-  local Static=nil
+  local Static=nil  --DCS#StaticObject
   
   if self.InitFarp then
     
@@ -487,6 +487,17 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
     
     -- ED's dirty way to spawn FARPS.
     Static=coalition.addGroup(CountryID, -1, TemplateGroup)
+
+    -- Currently DCS 2.8 does not trigger birth events if FAPRS are spawned!
+    -- We create such an event. The airbase is registered in Core.Event
+    local Event = {
+      id = EVENTS.Birth,
+      time = timer.getTime(),
+      initiator = Static
+      }
+    -- Create BIRTH event.
+    world.onEvent(Event)
+
   else
     self:T("Spawning Static")        
     self:T2({Template=Template})  
