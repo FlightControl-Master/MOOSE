@@ -5802,11 +5802,9 @@ function AUFTRAG:GetDCSMissionTask()
     -- SEAD Mission --
     ------------------
 
-    --[[
-    local DCStask=CONTROLLABLE.EnRouteTaskEngageTargets(nil, nil ,{"Air Defence"} , 0)
-    table.insert(self.enrouteTasks, DCStask)
-    DCStask.key="SEAD"
-    ]]
+    -- Add enroute task SEAD. Disabled that here because the group enganges everything on its route.
+    --local DCStask=CONTROLLABLE.EnRouteTaskSEAD(nil, self.TargetType)
+    --table.insert(self.enrouteTasks, DCStask)
 
     self:_GetDCSAttackTask(self.engageTarget, DCStasks)
 
