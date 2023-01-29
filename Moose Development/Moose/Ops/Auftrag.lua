@@ -1296,11 +1296,7 @@ end
 function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, TargetTypes)
 
   -- Ensure given TargetTypes parameter is a table.
-  if TargetTypes then
-    if type(TargetTypes)~="table" then
-      TargetTypes={TargetTypes}
-    end
-  end
+  TargetTypes=UTILS.EnsureTable(TargetTypes, true)
 
   -- Create ORBIT first.
   local mission=AUFTRAG:NewORBIT(Coordinate or ZoneCAP:GetCoordinate(), Altitude or 10000, Speed or 350, Heading, Leg)
@@ -1342,11 +1338,8 @@ end
 function AUFTRAG:NewCAPGROUP(Grp, Altitude, Speed, RelHeading, Leg, OffsetDist, OffsetAngle, UpdateDistance, TargetTypes, EngageRange)
 
   -- Ensure given TargetTypes parameter is a table.
-  if TargetTypes then
-    if type(TargetTypes)~="table" then
-      TargetTypes={TargetTypes}
-    end
-  end
+  TargetTypes=UTILS.EnsureTable(TargetTypes, true)
+
   -- Six NM astern.
  local OffsetVec2={r=OffsetDist or 6, phi=OffsetAngle or 180}
 
@@ -1395,11 +1388,7 @@ end
 function AUFTRAG:NewCAS(ZoneCAS, Altitude, Speed, Coordinate, Heading, Leg, TargetTypes)
 
   -- Ensure given TargetTypes parameter is a table.
-  if TargetTypes then
-    if type(TargetTypes)~="table" then
-      TargetTypes={TargetTypes}
-    end
-  end
+  TargetTypes=UTILS.EnsureTable(TargetTypes, true)
 
   -- Create ORBIT first.
   local mission=AUFTRAG:NewORBIT(Coordinate or ZoneCAS:GetCoordinate(), Altitude or 10000, Speed, Heading, Leg)
@@ -2428,9 +2417,9 @@ function AUFTRAG:NewFromTarget(Target, MissionType)
   elseif MissionType==AUFTRAG.Type.BOMBRUNWAY then
     mission=self:NewBOMBRUNWAY(Target, Altitude)
   elseif MissionType==AUFTRAG.Type.CAS then
-    mission=self:NewCAS(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000),Altitude,Speed,Target:GetAverageCoordinate(),Heading,Leg,TargetTypes)
+    mission=self:NewCAS(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000), Altitude, Speed, Target:GetAverageCoordinate(), Heading, Leg, TargetTypes)
   elseif MissionType==AUFTRAG.Type.CASENHANCED then
-    mission=self:NewCASENHANCED(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000),Altitude,Speed,RangeMax,NoEngageZoneSet,TargetTypes)
+    mission=self:NewCASENHANCED(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000), Altitude, Speed, RangeMax, NoEngageZoneSet, TargetTypes)
   elseif MissionType==AUFTRAG.Type.INTERCEPT then
     mission=self:NewINTERCEPT(Target)
   elseif MissionType==AUFTRAG.Type.SEAD then
