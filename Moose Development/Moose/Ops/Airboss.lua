@@ -32,20 +32,21 @@
 --    * [USS George Washington](https://en.wikipedia.org/wiki/USS_George_Washington_(CVN-73\)) (CVN-73) [Super Carrier Module]
 --    * [USS Harry S. Truman](https://en.wikipedia.org/wiki/USS_Harry_S._Truman) (CVN-75) [Super Carrier Module]
 --    * [USS Forrestal](https://en.wikipedia.org/wiki/USS_Forrestal_(CV-59\)) (CV-59) [Heatblur Carrier Module]
---    * [HMS Hermes](https://en.wikipedia.org/wiki/HMS_Hermes_(R12\)) (R12) [**WIP**]
---    * [HMS Invincible](https://en.wikipedia.org/wiki/HMS_Invincible_(R05\)) (R05) [**WIP**]
---    * [USS Tarawa](https://en.wikipedia.org/wiki/USS_Tarawa_(LHA-1\)) (LHA-1) [**WIP**]
---    * [USS America](https://en.wikipedia.org/wiki/USS_America_(LHA-6\)) (LHA-6) [**WIP**]
---    * [Juan Carlos I](https://en.wikipedia.org/wiki/Spanish_amphibious_assault_ship_Juan_Carlos_I) (L61) [**WIP**]
---    * [HMAS Canberra](https://en.wikipedia.org/wiki/HMAS_Canberra_(L02\)) (L02) [**WIP**]
+--    * [HMS Hermes](https://en.wikipedia.org/wiki/HMS_Hermes_(R12\)) (R12)
+--    * [HMS Invincible](https://en.wikipedia.org/wiki/HMS_Invincible_(R05\)) (R05)
+--    * [USS Tarawa](https://en.wikipedia.org/wiki/USS_Tarawa_(LHA-1\)) (LHA-1)
+--    * [USS America](https://en.wikipedia.org/wiki/USS_America_(LHA-6\)) (LHA-6)
+--    * [Juan Carlos I](https://en.wikipedia.org/wiki/Spanish_amphibious_assault_ship_Juan_Carlos_I) (L61)
+--    * [HMAS Canberra](https://en.wikipedia.org/wiki/HMAS_Canberra_(L02\)) (L02)
 --
 -- **Supported Aircraft:**
 --
 --    * [F/A-18C Hornet Lot 20](https://forums.eagle.ru/forumdisplay.php?f=557) (Player & AI)
 --    * [F-14A/B Tomcat](https://forums.eagle.ru/forumdisplay.php?f=395) (Player & AI)
 --    * [A-4E Skyhawk Community Mod](https://forums.eagle.ru/showthread.php?t=224989) (Player & AI)
---    * [AV-8B N/A Harrier](https://forums.eagle.ru/forumdisplay.php?f=555) (Player & AI) [**WIP**]
---    * [T-45C Goshawk](https://www.vnao-cvw-7.com/t-45-goshawk) (VNAO)(Player & AI) [**WIP**]
+--    * [AV-8B N/A Harrier](https://forums.eagle.ru/forumdisplay.php?f=555) (Player & AI)
+--    * [T-45C Goshawk](https://www.vnao-cvw-7.com/t-45-goshawk) (VNAO mod) (Player & AI)
+--    * [FE/A-18E/F/G Superhornet](https://forum.dcs.world/topic/316971-cjs-super-hornet-community-mod-v20-official-thread/) (CJS mod) (Player & AI)
 --    * F/A-18C Hornet (AI)
 --    * F-14A Tomcat (AI)
 --    * E-2D Hawkeye (AI)
@@ -1278,7 +1279,10 @@ AIRBOSS = {
 -- @field #string S3BTANKER Lockheed S-3B Viking tanker.
 -- @field #string E2D Grumman E-2D Hawkeye AWACS.
 -- @field #string C2A Grumman C-2A Greyhound from Military Aircraft Mod.
--- @field #string T45C T-45C by VNAO
+-- @field #string T45C T-45C by VNAO.
+-- @field #string RHINOE F/A-18E Superhornet (mod).
+-- @field #string RHINOF F/A-18F Superhornet (mod).
+-- @field #string GROWLER FEA-18G Superhornet (mod).
 AIRBOSS.AircraftCarrier={
   AV8B="AV8BNA",
   HORNET="FA-18C_hornet",
@@ -1292,6 +1296,9 @@ AIRBOSS.AircraftCarrier={
   S3BTANKER="S-3B Tanker",
   E2D="E-2C",
   C2A="C2A_Greyhound",
+  RHINOE="FA-18E",
+  RHINOF="FA-18F",
+  GROWLER="EA-18G",
 }
 
 --- Carrier types.
@@ -1302,7 +1309,7 @@ AIRBOSS.AircraftCarrier={
 -- @field #string STENNIS USS John C. Stennis (CVN-74)
 -- @field #string TRUMAN USS Harry S. Truman (CVN-75) [Super Carrier Module]
 -- @field #string FORRESTAL USS Forrestal (CV-59) [Heatblur Carrier Module]
--- @field #string VINSON USS Carl Vinson (CVN-70) [Obsolete]
+-- @field #string VINSON USS Carl Vinson (CVN-70) [Deprecated!]
 -- @field #string HERMES HMS Hermes (R12) [V/STOL Carrier]
 -- @field #string INVINCIBLE HMS Invincible (R05) [V/STOL Carrier]
 -- @field #string TARAWA USS Tarawa (LHA-1) [V/STOL Carrier]
@@ -5177,7 +5184,10 @@ end
 function AIRBOSS:_GetAircraftAoA( playerData )
 
   -- Get AC type.
-  local hornet = playerData.actype == AIRBOSS.AircraftCarrier.HORNET
+  local hornet =   playerData.actype == AIRBOSS.AircraftCarrier.HORNET
+                or playerData.actype == AIRBOSS.AircraftCarrier.RHINOE
+                or playerData.actype == AIRBOSS.AircraftCarrier.RHINOF
+                or playerData.actype == AIRBOSS.AircraftCarrier.GROWLER
   local goshawk = playerData.actype == AIRBOSS.AircraftCarrier.T45C
   local skyhawk = playerData.actype == AIRBOSS.AircraftCarrier.A4EC
   local harrier = playerData.actype == AIRBOSS.AircraftCarrier.AV8B
@@ -5340,7 +5350,10 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
   step = step or playerData.step
 
   -- Get AC type.
-  local hornet = playerData.actype == AIRBOSS.AircraftCarrier.HORNET
+  local hornet =    playerData.actype == AIRBOSS.AircraftCarrier.HORNET
+                 or playerData.actype == AIRBOSS.AircraftCarrier.RHINOE
+                 or playerData.actype == AIRBOSS.AircraftCarrier.RHINOF
+                 or playerData.actype == AIRBOSS.AircraftCarrier.GROWLER
   local skyhawk = playerData.actype == AIRBOSS.AircraftCarrier.A4EC
   local tomcat = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B
   local harrier = playerData.actype == AIRBOSS.AircraftCarrier.AV8B
@@ -6251,6 +6264,9 @@ function AIRBOSS:_RefuelAI( flight )
      actype==AIRBOSS.AircraftCarrier.F14B      or
      actype==AIRBOSS.AircraftCarrier.F14A_AI   or
      actype==AIRBOSS.AircraftCarrier.HORNET    or
+     actype==AIRBOSS.AircraftCarrier.RHINOE    or
+     actype==AIRBOSS.AircraftCarrier.RHINOF    or
+     actype==AIRBOSS.AircraftCarrier.GROWLER   or
      actype==AIRBOSS.AircraftCarrier.FA18C     or
      actype==AIRBOSS.AircraftCarrier.S3B       or
      actype==AIRBOSS.AircraftCarrier.S3BTANKER then
@@ -6348,7 +6364,11 @@ function AIRBOSS:_LandAI( flight )
   -- Aircraft speed when flying the pattern.
   local Speed = UTILS.KnotsToKmph( 200 )
 
-  if flight.actype == AIRBOSS.AircraftCarrier.HORNET or flight.actype == AIRBOSS.AircraftCarrier.FA18C then
+  if   flight.actype == AIRBOSS.AircraftCarrier.HORNET 
+    or flight.actype == AIRBOSS.AircraftCarrier.FA18C
+    or flight.actype == AIRBOSS.AircraftCarrier.RHINOE
+    or flight.actype == AIRBOSS.AircraftCarrier.RHINOF
+    or flight.actype == AIRBOSS.AircraftCarrier.GROWLER then
     Speed = UTILS.KnotsToKmph( 200 )
   elseif flight.actype == AIRBOSS.AircraftCarrier.E2D then
     Speed = UTILS.KnotsToKmph( 150 )
@@ -9172,7 +9192,13 @@ function AIRBOSS:_DirtyUp( playerData )
     self:_PlayerHint( playerData )
 
     -- Radio call "Say/Fly needles". Delayed by 10/15 seconds.
-    if playerData.actype == AIRBOSS.AircraftCarrier.HORNET or playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B then
+    if   playerData.actype == AIRBOSS.AircraftCarrier.HORNET 
+      or playerData.actype == AIRBOSS.AircraftCarrier.F14A 
+      or playerData.actype == AIRBOSS.AircraftCarrier.F14B 
+      or playerData.actype == AIRBOSS.AircraftCarrier.RHINOE
+      or playerData.actype == AIRBOSS.AircraftCarrier.RHINOF
+      or playerData.actype == AIRBOSS.AircraftCarrier.GROWLER
+    then
       local callsay = self:_NewRadioCall( self.MarshalCall.SAYNEEDLES, nil, nil, 5, playerData.onboard )
       local callfly = self:_NewRadioCall( self.MarshalCall.FLYNEEDLES, nil, nil, 5, playerData.onboard )
       self:RadioTransmission( self.MarshalRadio, callsay, false, 55, nil, true )
@@ -10263,7 +10289,10 @@ function AIRBOSS:_Trapped( playerData )
 
     -- Get current wire (estimate). This now based on the position where the player comes to a standstill which should reflect the trapped wire better.
     local dcorr = 100
-    if playerData.actype == AIRBOSS.AircraftCarrier.HORNET then
+    if   playerData.actype == AIRBOSS.AircraftCarrier.HORNET 
+      or playerData.actype == AIRBOSS.AircraftCarrier.RHINOE
+      or playerData.actype == AIRBOSS.AircraftCarrier.RHINOF
+      or playerData.actype == AIRBOSS.AircraftCarrier.GROWLER then
       dcorr = 100
     elseif playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B then
       -- TODO: Check Tomcat.
@@ -12463,7 +12492,10 @@ function AIRBOSS:_PlayerHint( playerData, delay, soundoff )
   if playerData.step == AIRBOSS.PatternStep.BULLSEYE then
     -- Hint follow the needles.
     if playerData.difficulty == AIRBOSS.Difficulty.EASY then
-      if playerData.actype == AIRBOSS.AircraftCarrier.HORNET then
+      if   playerData.actype == AIRBOSS.AircraftCarrier.HORNET
+        or playerData.actype == AIRBOSS.AircraftCarrier.RHINOE
+        or playerData.actype == AIRBOSS.AircraftCarrier.RHINOF
+        or playerData.actype == AIRBOSS.AircraftCarrier.GROWLER then
         hint = hint .. string.format( "\nIntercept glideslope and follow the needles." )
       else
         hint = hint .. string.format( "\nIntercept glideslope." )
@@ -13957,6 +13989,10 @@ function AIRBOSS:_GetACNickname( actype )
     nickname = "Tomcat"
   elseif actype == AIRBOSS.AircraftCarrier.FA18C or actype == AIRBOSS.AircraftCarrier.HORNET then
     nickname = "Hornet"
+  elseif actype == AIRBOSS.AircraftCarrier.RHINOE or actype == AIRBOSS.AircraftCarrier.RHINOF then
+    nickname = "Rhino"
+  elseif actype == AIRBOSS.AircraftCarrier.GROWLER then
+    nickname = "Growler"
   elseif actype == AIRBOSS.AircraftCarrier.S3B or actype == AIRBOSS.AircraftCarrier.S3BTANKER then
     nickname = "Viking"
   end
