@@ -27,21 +27,12 @@
 ENUMS = {}
 
 --- Rules of Engagement.
-<<<<<<< Updated upstream
---- @type ENUMS.ROE
---- @field #number WeaponFree [AIR] AI will engage any enemy group it detects. Target prioritization is based based on the threat of the target.
---- @field #number OpenFireWeaponFree [AIR] AI will engage any enemy group it detects, but will prioritize targets specified in the groups tasking.
---- @field #number OpenFire [AIR, GROUND, NAVAL] AI will engage only targets specified in its taskings.
---- @field #number ReturnFire [AIR, GROUND, NAVAL] AI will only engage threats that shoot first.
---- @field #number WeaponHold [AIR, GROUND, NAVAL] AI will hold fire under all circumstances.
-=======
 --- @type ENUMS.ROE
 --- @field #number WeaponFree AI will engage any enemy group it detects. Target prioritization is based based on the threat of the target.
 --- @field #number OpenFireWeaponFree AI will engage any enemy group it detects, but will prioritize targets specified in the groups tasking.
 --- @field #number OpenFire AI will engage only targets specified in its taskings.
 --- @field #number ReturnFire AI will only engage threats that shoot first.
 --- @field #number WeaponHold AI will hold fire under all circumstances.
->>>>>>> Stashed changes
 ENUMS.ROE = {
   WeaponFree=0,
   OpenFireWeaponFree=1,

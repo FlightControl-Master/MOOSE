@@ -2949,6 +2949,9 @@ function LEGION:AssignAssetsForEscort(Cohorts, Assets, NescortMin, NescortMax, M
           -- For a SEAD mission, we also adjust the mission task.
           if MissionType==AUFTRAG.Type.SEAD then
             escort.missionTask=ENUMS.MissionTask.SEAD
+            -- Add enroute task SEAD.
+            local DCStask=CONTROLLABLE.EnRouteTaskSEAD(nil)
+            table.insert(escort.enrouteTasks, DCStask)       
           end
           
           -- Reserve assts and add to mission.

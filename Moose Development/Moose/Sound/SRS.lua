@@ -155,6 +155,18 @@
 --     -- Text-to speech with default voice after 30 seconds.
 --     msrs:PlaySoundText(text, 30)
 --
+-- Basic example of using another class (ATIS) with SRS and the DCS-gRPC backend (DCS-gRPC not previously started):
+--
+--     -- Start DCS-gRPC
+--     GRPC.load()
+--     -- Select the alternate DCS-gRPC backend for new MSRS instances
+--     MSRS.SetDefaultBackendGRPC()
+--     -- Create new ATIS as usual
+--     atis=ATIS:New("Nellis", 251, radio.modulation.AM)
+--     -- ATIS:SetSRS() expects a string for the SRS path even though it is not needed with DCS-gRPC
+--     atis:SetSRS('')
+--     -- Start ATIS
+--     atis:Start()
 --
 --- @field #MSRS
 MSRS = {

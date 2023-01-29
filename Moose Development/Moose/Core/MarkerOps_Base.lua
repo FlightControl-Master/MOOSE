@@ -5,6 +5,12 @@
 --    * Create an easy way to tap into markers added to the F10 map by users.
 --    * Recognize own tag and list of keywords.
 --    * Matched keywords are handed down to functions.
+-- ##Listen for your tag
+--    myMarker = MARKEROPS_BASE:New("tag", {}, false)
+--    function myMarker:OnAfterMarkChanged(From, Event, To, Text, Keywords, Coord, idx)
+--
+--    end
+-- Make sure to use the "MarkChanged" event as "MarkAdded" comes in right after the user places a blank marker and your callback will never be called.
 --
 -- ===
 --

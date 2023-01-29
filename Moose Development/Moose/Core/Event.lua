@@ -1280,9 +1280,11 @@ function EVENT:onEvent( Event )
           --local name=Event.place:getName()  -- This returns a DCS error "Airbase doesn't exit" :(
           -- However, this is not a big thing, as the aircraft the pilot ejected from is usually long crashed before the ejected pilot touches the ground.
           --Event.Place=UNIT:Find(Event.place)
-        else
-          Event.Place=AIRBASE:Find(Event.place)
-          Event.PlaceName=Event.Place:GetName()
+        else  
+          if Event.place:isExist() and Event.place:getCategory() ~= Object.Category.SCENERY then
+            Event.Place=AIRBASE:Find(Event.place)
+            Event.PlaceName=Event.Place:GetName()
+          end
         end
       end
 

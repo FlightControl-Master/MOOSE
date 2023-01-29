@@ -403,7 +403,7 @@ function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPr
   local self = BASE:Inherit( self, BASE:New() )
   self:F( { SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPrefix } )
   if SpawnAliasPrefix == nil or SpawnAliasPrefix == "" then
-    BASE:I( "ERROR: in function NewFromTemplate, required paramter SpawnAliasPrefix is not set" )
+    BASE:I( "ERROR: in function NewFromTemplate, required parameter SpawnAliasPrefix is not set" )
     return nil
   end
 

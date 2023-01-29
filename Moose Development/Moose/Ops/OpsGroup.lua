@@ -669,9 +669,9 @@ function OPSGROUP:New(group)
   self:AddTransition("*",             "DetectedUnitKnown", "*")           -- A known unit is still detected.
   self:AddTransition("*",             "DetectedUnitLost",  "*")           -- Group lost a detected target.
 
-  self:AddTransition("*",             "DetectedGroup",      "*")          -- Unit was detected (again) in this detection cycle.
-  self:AddTransition("*",             "DetectedGroupNew",   "*")          -- Add a newly detected unit to the detected units set.
-  self:AddTransition("*",             "DetectedGroupKnown", "*")          -- A known unit is still detected.
+  self:AddTransition("*",             "DetectedGroup",      "*")          -- Group was detected (again) in this detection cycle.
+  self:AddTransition("*",             "DetectedGroupNew",   "*")          -- Add a newly detected Group to the detected Groups set.
+  self:AddTransition("*",             "DetectedGroupKnown", "*")          -- A known Group is still detected.
   self:AddTransition("*",             "DetectedGroupLost",  "*")          -- Group lost a detected target group.
 
   self:AddTransition("*",             "OutOfAmmo",         "*")          -- Group is completely out of ammo.
@@ -864,12 +864,76 @@ function OPSGROUP:New(group)
 
   --- On after "TransportCancel" event.
   -- @function [parent=#OPSGROUP] OnAfterTransportCancel
-  --- @param #OPSGROUP self
-  --- @param #string From From state.
-  --- @param #string Event Event.
-  --- @param #string To To state.
-  --- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
-
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  
+    --- On After "DetectedGroup" event.
+  -- @function [parent=#OPSGROUP] OnAfterDetectedGroup
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Group#Group Group Detected Group.
+  
+  --- On After "DetectedGroupNew" event.
+  -- @function [parent=#OPSGROUP] OnAfterDetectedGroupNew
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Group#Group Group Newly detected group.
+  
+  --- On After "DetectedGroupKnown" event.
+  -- @function [parent=#OPSGROUP] OnAfterDetectedGroupKnown
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Group#Group Group Known detected group.
+  
+  --- On After "DetectedGroupLost" event.
+  -- @function [parent=#OPSGROUP] OnAfterDetectedGroupLost
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Group#Group Group Lost detected group.
+  
+  --- On After "DetectedUnit" event.
+  -- @function [parent=#OPSGROUP] OnAfterDetectedUnit
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Unit#Unit Unit Detected Unit.
+  
+  --- On After "DetectedUnitNew" event.
+  -- @function [parent=#OPSGROUP] OnAfterDetectedUnitNew
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Unit#Unit Unit Newly detected unit.
+  
+  --- On After "DetectedUnitKnown" event.
+  -- @function [parent=#OPSGROUP] OnAfterDetectedUnitKnown
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Unit#Unit Unit Known detected unit.
+  
+  --- On After "DetectedUnitLost" event.
+  -- @function [parent=#OPSGROUP] OnAfterDetectedUnitLost
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Unit#Unit Unit Lost detected unit.
+  
   -- TODO: Add pseudo functions.
 
   return self

@@ -55,16 +55,11 @@ CONDITION = {
 }
 
 --- Condition function.
-<<<<<<< Updated upstream
 --- @type CONDITION.Function
 --- @field #number uid Unique ID of the condition function.
 --- @field #string type Type of the condition function: "gen", "any", "all".
 --- @field #boolean persistence If `true`, this is persistent.
---- @field #function func Callback function to check for a condition. Must return a `#boolean`.
-=======
---- @type CONDITION.Function
---- @field #function func Callback function to check for a condition. Should return a `#boolean`.
->>>>>>> Stashed changes
+--- @field #function func Callback function to check for a condition. Must return a `#boolean`.+
 --- @field #table arg (Optional) Arguments passed to the condition callback function if any.
 
 --- CONDITION class version.
