@@ -58,18 +58,16 @@
 -- If the maker should be visible to a specific coalition, you can use the :ToCoalition() function.
 --
 --     mymarker = MARKER:New( Coordinate , "I am Batumi Airfield" ):ToCoalition( coalition.side.BLUE )
---
--- ### To Blue Coalition
---
--- ### To Red Coalition
---
+--     
 -- This would show the marker only to the Blue coalition.
 --
 -- ## For a Group
 --
+--     mymarker = MARKER:New( Coordinate , "Target Location" ):ToGroup( tankGroup )
 --
 -- # Removing a Marker
---
+--     mymarker:Remove(60)
+-- This removes the marker after 60 seconds
 --
 -- # Updating a Marker
 --
@@ -174,8 +172,6 @@ function MARKER:New( Coordinate, Text )
 
   -- Inherit everything from FSM class.
   local self = BASE:Inherit( self, FSM:New() ) -- #MARKER
-
-  local self=BASE:Inherit(self, FSM:New()) -- #MARKER
 
   self.coordinate=UTILS.DeepCopy(Coordinate)
 
@@ -307,7 +303,7 @@ end
 -- User API Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Marker is readonly. Text cannot be changed and marker cannot be removed.
+--- Marker is readonly. Text cannot be changed and marker cannot be removed. The will not update the marker in the game, Call MARKER:Refresh to update state.
 -- @param #MARKER self
 -- @return #MARKER self
 function MARKER:ReadOnly()
@@ -317,7 +313,7 @@ function MARKER:ReadOnly()
   return self
 end
 
---- Marker is readonly. Text cannot be changed and marker cannot be removed.
+--- Marker is read and write. Text cannot be changed and marker cannot be removed. The will not update the marker in the game, Call MARKER:Refresh to update state.
 -- @param #MARKER self
 -- @return #MARKER self
 function MARKER:ReadWrite()
