@@ -1321,7 +1321,15 @@ do -- COORDINATE
     self.y=alt
     return self
   end
-
+  
+  --- Set altitude to be at land height (i.e. on the ground!)
+  -- @param #COORDINATE self
+  function COORDINATE:SetAtLandheight()
+    local alt=self:GetLandHeight()
+    self.y=alt
+    return self
+  end
+  
   --- Build an air type route point.
   -- @param #COORDINATE self
   -- @param #COORDINATE.WaypointAltType AltType The altitude type.
