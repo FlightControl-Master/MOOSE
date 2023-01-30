@@ -540,7 +540,7 @@ do -- COORDINATE
     local gotscenery=false
 
     local function EvaluateZone(ZoneObject)
-
+      BASE:T({ZoneObject})
       if ZoneObject then
 
         -- Get category of scanned object.
@@ -1321,7 +1321,15 @@ do -- COORDINATE
     self.y=alt
     return self
   end
-
+  
+  --- Set altitude to be at land height (i.e. on the ground!)
+  -- @param #COORDINATE self
+  function COORDINATE:SetAtLandheight()
+    local alt=self:GetLandHeight()
+    self.y=alt
+    return self
+  end
+  
   --- Build an air type route point.
   -- @param #COORDINATE self
   -- @param #COORDINATE.WaypointAltType AltType The altitude type.
@@ -1947,7 +1955,6 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #string name (Optional) Name of the fire to stop it, if not using the same COORDINATE object.
   function COORDINATE:StopBigSmokeAndFire( name )
-    self:F2( { name = name } )
     name = name or self.firename
     trigger.action.effectSmokeStop( name )
   end
