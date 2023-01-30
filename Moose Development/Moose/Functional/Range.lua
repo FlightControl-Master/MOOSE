@@ -1530,7 +1530,7 @@ end
 
 --- Add a unit or static object as bombing target.
 -- @param #RANGE self
--- @param Wrapper.Positionable#POSITIONABLE unit Positionable (unit or static) of the strafe target.
+-- @param Wrapper.Positionable#POSITIONABLE unit Positionable (unit or static) of the bombing target.
 -- @param #number goodhitrange Max distance from unit which is considered as a good hit.
 -- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
 -- @return #RANGE self
