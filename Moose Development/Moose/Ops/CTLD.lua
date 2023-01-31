@@ -733,6 +733,7 @@ do
 --        ["SA342Minigun"] = {type="SA342Minigun", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12, cargoweightlimit = 400},
 --        ["UH-1H"] = {type="UH-1H", crates=true, troops=true, cratelimit = 1, trooplimit = 8, length = 15, cargoweightlimit = 700},
 --        ["Mi-8MT"] = {type="Mi-8MT", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 15, cargoweightlimit = 3000},
+--        ["Mi-8MTV2"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 15, cargoweightlimit = 3000},
 --        ["Ka-50"] = {type="Ka-50", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 15, cargoweightlimit = 0},
 --        ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18, cargoweightlimit = 700},
 --        ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18, cargoweightlimit = 700},
@@ -1195,7 +1196,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.28"
+CTLD.version="1.0.29"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -3325,6 +3326,12 @@ function CTLD:_RefreshF10Menus()
       self.subcats[entry.Subcategory] = entry.Subcategory
     end
    end
+   for _id,_cargo in pairs(self.Cargo_Statics) do
+    local entry = _cargo -- #CTLD_CARGO
+    if not self.subcats[entry.Subcategory] then
+      self.subcats[entry.Subcategory] = entry.Subcategory
+    end
+   end
   end
   
   -- build unit menus
@@ -3388,6 +3395,13 @@ function CTLD:_RefreshF10Menus()
                 local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
                 menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._GetCrates, self, _group, _unit, entry)
               end
+              for _,_entry in pairs(self.Cargo_Statics) do
+                local entry = _entry -- #CTLD_CARGO
+                local subcat = entry.Subcategory
+                menucount = menucount + 1
+                local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
+                menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._GetCrates, self, _group, _unit, entry)
+              end
             else
               for _,_entry in pairs(self.Cargo_Crates) do
                 local entry = _entry -- #CTLD_CARGO
@@ -3395,12 +3409,12 @@ function CTLD:_RefreshF10Menus()
                 local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
                 menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
               end
-            end
-            for _,_entry in pairs(self.Cargo_Statics) do
-              local entry = _entry -- #CTLD_CARGO
-              menucount = menucount + 1
-              local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
-              menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
+              for _,_entry in pairs(self.Cargo_Statics) do
+                local entry = _entry -- #CTLD_CARGO
+                menucount = menucount + 1
+                local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
+                menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
+              end
             end
             listmenu = MENU_GROUP_COMMAND:New(_group,"List crates nearby",topcrates, self._ListCratesNearby, self, _group, _unit)
             local unloadmenu = MENU_GROUP_COMMAND:New(_group,"Drop crates",topcrates, self._UnloadCrates, self, _group, _unit)
@@ -3494,13 +3508,14 @@ end
 -- @param #string Name Unique name of this type of cargo as set in the mission editor (note: UNIT name!), e.g. "Ammunition-1".
 -- @param #number Mass Mass in kg of each static in kg, e.g. 100.
 -- @param #number Stock Number of groups in stock. Nil for unlimited.
-function CTLD:AddStaticsCargo(Name,Mass,Stock)
+-- @param #string SubCategory Name of sub-category (optional).
+function CTLD:AddStaticsCargo(Name,Mass,Stock,SubCategory)
   self:T(self.lid .. " AddStaticsCargo")
   self.CargoCounter = self.CargoCounter + 1
   local type = CTLD_CARGO.Enum.STATIC
   local template = STATIC:FindByName(Name,true):GetTypeName()
   -- Crates are not directly loadable
-  local cargo = CTLD_CARGO:New(self.CargoCounter,Name,template,type,false,false,1,nil,nil,Mass,Stock)
+  local cargo = CTLD_CARGO:New(self.CargoCounter,Name,template,type,false,false,1,nil,nil,Mass,Stock,SubCategory)
   table.insert(self.Cargo_Statics,cargo)
   return self
 end
