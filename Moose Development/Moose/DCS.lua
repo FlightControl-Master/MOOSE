@@ -427,8 +427,8 @@ do -- Types
   --- Vec3 type is a 3D-vector.
   -- DCS world has 3-dimensional coordinate system. DCS ground is an infinite plain.
   -- @type Vec3
-  -- @field #Distance x is directed to the north
-  -- @field #Distance z is directed to the east
+  -- @field #Distance x is directed to the North
+  -- @field #Distance z is directed to the East
   -- @field #Distance y is directed up
   
   --- Vec2 is a 2D-vector for the ground plane as a reference plane.
