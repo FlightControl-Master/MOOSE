@@ -406,9 +406,11 @@ RANGE.TargetType = {
 -- @field #boolean messages Display info messages.
 -- @field Wrapper.Client#CLIENT client Client object of player.
 -- @field #string unitname Name of player aircraft unit.
+-- @field Wrapper.Unit#UNIT unit Player unit.
 -- @field #string playername Name of player.
 -- @field #string airframe Aircraft type name.
 -- @field #boolean inzone If true, player is inside the range zone.
+-- @field #boolean targeton Target on.
 
 --- Bomb target data.
 -- @type RANGE.BombTarget
@@ -1721,6 +1723,7 @@ function RANGE:OnEventBirth( EventData )
     self.PlayerSettings[_playername].messages = true
     self.PlayerSettings[_playername].client = CLIENT:FindByName( _unitName, nil, true )
     self.PlayerSettings[_playername].unitname = _unitName
+    self.PlayerSettings[_playername].unit = _unit
     self.PlayerSettings[_playername].playername = _playername
     self.PlayerSettings[_playername].airframe = EventData.IniUnit:GetTypeName()
     self.PlayerSettings[_playername].inzone = false
@@ -1829,10 +1832,141 @@ function RANGE:OnEventHit( EventData )
   end
 end
 
---- Range event handler for event shot (when a unit releases a rocket or bomb (but not a fast firing gun).
+--- Function called on impact of a tracked weapon.
 -- @param #RANGE self
--- @param #table weapon Weapon
-function RANGE:_TrackWeapon(weapon)
+-- @param Wrapper.Weapon#WEAPON weapon The weapon object.
+-- @param #RANGE.PlayerData playerData Player data table.
+-- @param #number attackHdg Attack heading.
+-- @param #number attackAlt Attack altitude.
+-- @param #number attackVel Attack velocity.
+function RANGE:_OnImpact(weapon, playerData, attackHdg, attackAlt, attackVel)
+
+  -- Get closet target to last position.
+  local _closetTarget = nil -- #RANGE.BombTarget
+  local _distance = nil
+  local _closeCoord = nil   --Core.Point#COORDINATE
+  local _hitquality = "POOR"
+  
+  -- Get callsign.
+  local _callsign = self:_myname( playerData.unitname )
+  
+  local _playername=playerData.playername
+  
+  local _unit=playerData.unit
+  
+  -- Coordinate of impact point.
+  local impactcoord = weapon:GetImpactCoordinate()
+  
+  -- Check if impact happened in range zone.
+  local insidezone = self.rangezone:IsCoordinateInZone( impactcoord )
+
+  
+  -- Smoke impact point of bomb.
+  if playerData.smokebombimpact and insidezone then
+    if playerData.delaysmoke then
+      timer.scheduleFunction( self._DelayedSmoke, { coord = impactcoord, color = playerData.smokecolor }, timer.getTime() + self.TdelaySmoke )
+    else
+      impactcoord:Smoke( playerData.smokecolor )
+    end
+  end
+  
+  -- Loop over defined bombing targets.
+  for _, _bombtarget in pairs( self.bombingTargets ) do
+    local bombtarget=_bombtarget  --#RANGE.BombTarget
+  
+    -- Get target coordinate.
+    local targetcoord = self:_GetBombTargetCoordinate( _bombtarget )
+  
+    if targetcoord then
+  
+      -- Distance between bomb and target.
+      local _temp = impactcoord:Get2DDistance( targetcoord )
+  
+      -- Find closest target to last known position of the bomb.
+      if _distance == nil or _temp < _distance then
+        _distance = _temp
+        _closetTarget = bombtarget
+        _closeCoord   = targetcoord
+        if _distance <= 1.53 then -- Rangeboss Edit
+          _hitquality = "SHACK" -- Rangeboss Edit
+        elseif _distance <= 0.5 * bombtarget.goodhitrange then -- Rangeboss Edit
+          _hitquality = "EXCELLENT"
+        elseif _distance <= bombtarget.goodhitrange then
+          _hitquality = "GOOD"
+        elseif _distance <= 2 * bombtarget.goodhitrange then
+          _hitquality = "INEFFECTIVE"
+        else
+          _hitquality = "POOR"
+        end
+  
+      end
+    end
+  end
+  
+  -- Count if bomb fell less than ~1 km away from the target.
+  if _distance and _distance <= self.scorebombdistance then
+    -- Init bomb player results.
+    if not self.bombPlayerResults[_playername] then
+      self.bombPlayerResults[_playername] = {}
+    end
+  
+    -- Local results.
+    local _results = self.bombPlayerResults[_playername]
+  
+    local result = {} -- #RANGE.BombResult
+    result.command=SOCKET.DataType.BOMBRESULT
+    result.name = _closetTarget.name or "unknown"
+    result.distance = _distance
+    result.radial = _closeCoord:HeadingTo( impactcoord )
+    result.weapon = weapon:GetTypeName() or "unknown"
+    result.quality = _hitquality
+    result.player = playerData.playername
+    result.time = timer.getAbsTime()
+    result.clock = UTILS.SecondsToClock(result.time, true)
+    result.midate = UTILS.GetDCSMissionDate()
+    result.theatre = env.mission.theatre
+    result.airframe = playerData.airframe
+    result.roundsFired = 0 -- Rangeboss Edit
+    result.roundsHit = 0 -- Rangeboss Edit
+    result.roundsQuality = "N/A" -- Rangeboss Edit
+    result.rangename = self.rangename
+    result.attackHdg = attackHdg
+    result.attackVel = attackVel
+    result.attackAlt = attackAlt
+  
+    -- Add to table.
+    table.insert( _results, result )
+  
+    -- Call impact.
+    self:Impact( result, playerData )
+  
+  elseif insidezone then
+  
+    -- Send message.
+    -- DONE SRS message
+    local _message = string.format( "%s, weapon impacted too far from nearest range target (>%.1f km). No score!", _callsign, self.scorebombdistance / 1000 )
+    if self.useSRS then
+      local ttstext = string.format( "%s, weapon impacted too far from nearest range target, mor than %.1f kilometer. No score!", _callsign, self.scorebombdistance / 1000 )
+      self.controlsrsQ:NewTransmission(ttstext,nil,self.controlmsrs,nil,2)        
+    end
+    self:_DisplayMessageToGroup( _unit, _message, nil, false )
+  
+    if self.rangecontrol then
+      -- weapon impacted too far from the nearest target! No Score!
+      if self.useSRS then
+        self.controlsrsQ:NewTransmission(_message,nil,self.controlmsrs,nil,1)
+      else
+        self.rangecontrol:NewTransmission( RANGE.Sound.RCWeaponImpactedTooFar.filename, RANGE.Sound.RCWeaponImpactedTooFar.duration, self.soundpath, nil, nil, _message, self.subduration )
+      end
+    end
+  
+  else
+    self:T( self.lid .. "Weapon impacted outside range zone." )
+  end
+  
+  -- Terminate the timer
+  self:T( self.lid .. string.format( "Range %s, player %s: Terminating bomb track timer.", self.rangename, _playername ) )
+  return nil
 
 end
 
@@ -1847,32 +1981,11 @@ function RANGE:OnEventShot( EventData )
     return
   end
   
-  -- Weapon data.
-  local _weapon = EventData.Weapon:getTypeName() -- should be the same as Event.WeaponTypeName
-  local _weaponStrArray = UTILS.Split( _weapon, "%." )
-  local _weaponName = _weaponStrArray[#_weaponStrArray]
-
-  -- Weapon descriptor.
-  local desc = EventData.Weapon:getDesc()
-
-  -- Weapon category: 0=SHELL, 1=MISSILE, 2=ROCKET, 3=BOMB (Weapon.Category.X)
-  local weaponcategory = desc.category
-
-  -- Debug info.
-  self:T( self.lid .. "EVENT SHOT: Range " .. self.rangename )
-  self:T( self.lid .. "EVENT SHOT: Ini unit    = " .. EventData.IniUnitName )
-  self:T( self.lid .. "EVENT SHOT: Ini group   = " .. EventData.IniGroupName )
-  self:T( self.lid .. "EVENT SHOT: Weapon type = " .. _weapon )
-  self:T( self.lid .. "EVENT SHOT: Weapon name = " .. _weaponName )
-  self:T( self.lid .. "EVENT SHOT: Weapon cate = " .. weaponcategory )
-
-  -- Tracking conditions for bombs, rockets and missiles.
-  local _bombs = weaponcategory == Weapon.Category.BOMB -- string.match(_weapon, "weapons.bombs")
-  local _rockets = weaponcategory == Weapon.Category.ROCKET -- string.match(_weapon, "weapons.nurs")
-  local _missiles = weaponcategory == Weapon.Category.MISSILE -- string.match(_weapon, "weapons.missiles") or _viggen
+  -- Create weapon object.
+  local weapon=WEAPON:New(EventData.weapon)
 
   -- Check if any condition applies here.
-  local _track = (_bombs and self.trackbombs) or (_rockets and self.trackrockets) or (_missiles and self.trackmissiles)
+  local _track = (weapon:IsBomb() and self.trackbombs) or (weapon:IsRocket() and self.trackrockets) or (weapon:IsMissile() and self.trackmissiles)
 
   -- Get unit name.
   local _unitName = EventData.IniUnitName
@@ -1880,11 +1993,6 @@ function RANGE:OnEventShot( EventData )
   -- Get player unit and name.
   local _unit, _playername = self:_GetPlayerUnitAndName( _unitName )
   
-  -- Attack parameters.
-  local attackHdg=_unit:GetHeading()
-  local attackAlt=_unit:GetHeight()
-  local attackVel=_unit:GetVelocityKNOTS()
-
   -- Set this to larger value than the threshold.
   local dPR = self.BombtrackThreshold * 2
 
@@ -1899,175 +2007,23 @@ function RANGE:OnEventShot( EventData )
 
     -- Player data.
     local playerData = self.PlayerSettings[_playername] -- #RANGE.PlayerData
+    
+    -- Attack parameters.
+    local attackHdg=_unit:GetHeading()
+    local attackAlt=_unit:GetHeight()
+    local attackVel=_unit:GetVelocityKNOTS()    
 
     -- Tracking info and init of last bomb position.
-    self:T( self.lid .. string.format( "RANGE %s: Tracking %s - %s.", self.rangename, _weapon, EventData.weapon:getName() ) )
+    self:T( self.lid .. string.format( "RANGE %s: Tracking %s - %s.", self.rangename, weapon:GetTypeName(), weapon:GetName()))
+    
+    -- Set callback function on impact.
+    weapon:SetFuncImpact(RANGE._OnImpact, self, playerData, attackHdg, attackAlt, attackVel)
 
-    -- Init bomb position.
-    local _lastBombPos = { x = 0, y = 0, z = 0 } -- DCS#Vec3
-
-    -- Function monitoring the position of a bomb until impact.
-    local function trackBomb( _ordnance )
-
-      -- When the pcall returns a failure the weapon has hit.
-      local _status, _bombPos = pcall( function()
-        return _ordnance:getPoint()
-      end )
-
-      self:T2( self.lid .. string.format( "Range %s: Bomb still in air: %s", self.rangename, tostring( _status ) ) )
-      if _status then
-
-        ----------------------------
-        -- Weapon is still in air --
-        ----------------------------
-
-        -- Remember this position.
-        _lastBombPos = { x = _bombPos.x, y = _bombPos.y, z = _bombPos.z }
-
-        -- Check again in ~0.005 seconds ==> 200 checks per second.
-        return timer.getTime() + self.dtBombtrack
-      else
-
-        -----------------------------
-        -- Bomb did hit the ground --
-        -----------------------------
-
-        -- Get closet target to last position.
-        local _closetTarget = nil -- #RANGE.BombTarget
-        local _distance = nil
-        local _closeCoord = nil   --Core.Point#COORDINATE
-        local _hitquality = "POOR"
-
-        -- Get callsign.
-        local _callsign = self:_myname( _unitName )
-
-        -- Coordinate of impact point.
-        local impactcoord = COORDINATE:NewFromVec3( _lastBombPos )
-
-        -- Check if impact happened in range zone.
-        local insidezone = self.rangezone:IsCoordinateInZone( impactcoord )
-
-        -- Impact point of bomb.
-        if self.Debug then
-          impactcoord:MarkToAll( "Bomb impact point" )
-        end
-
-        -- Smoke impact point of bomb.
-        if playerData.smokebombimpact and insidezone then
-          if playerData.delaysmoke then
-            timer.scheduleFunction( self._DelayedSmoke, { coord = impactcoord, color = playerData.smokecolor }, timer.getTime() + self.TdelaySmoke )
-          else
-            impactcoord:Smoke( playerData.smokecolor )
-          end
-        end
-
-        -- Loop over defined bombing targets.
-        for _, _bombtarget in pairs( self.bombingTargets ) do
-          local bombtarget=_bombtarget  --#RANGE.BombTarget
-
-          -- Get target coordinate.
-          local targetcoord = self:_GetBombTargetCoordinate( _bombtarget )
-
-          if targetcoord then
-
-            -- Distance between bomb and target.
-            local _temp = impactcoord:Get2DDistance( targetcoord )
-
-            -- Find closest target to last known position of the bomb.
-            if _distance == nil or _temp < _distance then
-              _distance = _temp
-              _closetTarget = bombtarget
-              _closeCoord   = targetcoord
-              if _distance <= 1.53 then -- Rangeboss Edit
-                _hitquality = "SHACK" -- Rangeboss Edit
-              elseif _distance <= 0.5 * bombtarget.goodhitrange then -- Rangeboss Edit
-                _hitquality = "EXCELLENT"
-              elseif _distance <= bombtarget.goodhitrange then
-                _hitquality = "GOOD"
-              elseif _distance <= 2 * bombtarget.goodhitrange then
-                _hitquality = "INEFFECTIVE"
-              else
-                _hitquality = "POOR"
-              end
-
-            end
-          end
-        end
-
-        -- Count if bomb fell less than ~1 km away from the target.
-        if _distance and _distance <= self.scorebombdistance then
-          -- Init bomb player results.
-          if not self.bombPlayerResults[_playername] then
-            self.bombPlayerResults[_playername] = {}
-          end
-
-          -- Local results.
-          local _results = self.bombPlayerResults[_playername]
-
-          local result = {} -- #RANGE.BombResult
-          result.command=SOCKET.DataType.BOMBRESULT
-          result.name = _closetTarget.name or "unknown"
-          result.distance = _distance
-          result.radial = _closeCoord:HeadingTo( impactcoord )
-          result.weapon = _weaponName or "unknown"
-          result.quality = _hitquality
-          result.player = playerData.playername
-          result.time = timer.getAbsTime()
-          result.clock = UTILS.SecondsToClock(result.time, true)
-          result.midate = UTILS.GetDCSMissionDate()
-          result.theatre = env.mission.theatre
-          result.airframe = playerData.airframe
-          result.roundsFired = 0 -- Rangeboss Edit
-          result.roundsHit = 0 -- Rangeboss Edit
-          result.roundsQuality = "N/A" -- Rangeboss Edit
-          result.rangename = self.rangename
-          result.attackHdg = attackHdg
-          result.attackVel = attackVel
-          result.attackAlt = attackAlt
-
-          -- Add to table.
-          table.insert( _results, result )
-
-          -- Call impact.
-          self:Impact( result, playerData )
-
-        elseif insidezone then
-
-          -- Send message.
-          -- DONE SRS message
-          local _message = string.format( "%s, weapon impacted too far from nearest range target (>%.1f km). No score!", _callsign, self.scorebombdistance / 1000 )
-          if self.useSRS then
-            local ttstext = string.format( "%s, weapon impacted too far from nearest range target, mor than %.1f kilometer. No score!", _callsign, self.scorebombdistance / 1000 )
-            self.controlsrsQ:NewTransmission(ttstext,nil,self.controlmsrs,nil,2)        
-          end
-          self:_DisplayMessageToGroup( _unit, _message, nil, false )
-
-          if self.rangecontrol then
-            -- weapon impacted too far from the nearest target! No Score!
-            if self.useSRS then
-              self.controlsrsQ:NewTransmission(_message,nil,self.controlmsrs,nil,1)
-            else
-              self.rangecontrol:NewTransmission( RANGE.Sound.RCWeaponImpactedTooFar.filename, RANGE.Sound.RCWeaponImpactedTooFar.duration, self.soundpath, nil, nil, _message, self.subduration )
-            end
-          end
-
-        else
-          self:T( self.lid .. "Weapon impacted outside range zone." )
-        end
-
-        -- Terminate the timer
-        self:T( self.lid .. string.format( "Range %s, player %s: Terminating bomb track timer.", self.rangename, _playername ) )
-        return nil
-
-      end -- _status check
-
-    end -- end function trackBomb
-
-    -- Weapon is not yet "alife" just yet. Start timer in one second.
+    -- Weapon is not yet "alife" just yet. Start timer in 0.1 seconds.
     self:T( self.lid .. string.format( "Range %s, player %s: Tracking of weapon starts in 0.1 seconds.", self.rangename, _playername ) )
-    timer.scheduleFunction( trackBomb, EventData.weapon, timer.getTime() + 0.1 )
+    weapon:StartTrack(0.1)
 
-  end -- if _track (string.match) and player-range distance < threshold.
+  end
 
 end
 

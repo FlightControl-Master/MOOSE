@@ -679,10 +679,11 @@ do -- Weapon
 
   --- Weapon.Category enum that stores weapon categories.
   -- @type Weapon.Category
-  -- @field SHELL
-  -- @field MISSILE
-  -- @field ROCKET
-  -- @field BOMB
+  -- @field #number SHELL Shell.
+  -- @field #number MISSILE Missile
+  -- @field #number ROCKET Rocket.
+  -- @field #number BOMB Bomb.
+  -- @field #number TORPEDO Torpedo.
   
 
   --- Weapon.GuidanceType enum that stores guidance methods. Available only for guided weapon (Weapon.Category.MISSILE and some Weapon.Category.BOMB). 

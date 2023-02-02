@@ -168,7 +168,7 @@ FOX = {
 
 --- Missile data table.
 -- @type FOX.MissileData
--- @field Wrapper.Unit#UNIT weapon Missile weapon unit.
+-- @field DCS#Weapon weapon Missile weapon object.
 -- @field #boolean active If true the missile is active.
 -- @field #string missileType Type of missile.
 -- @field #string missileName Name of missile.
@@ -196,7 +196,7 @@ FOX.MenuF10Root=nil
 
 --- FOX class version.
 -- @field #string version
-FOX.version="0.6.1"
+FOX.version="0.7.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -762,6 +762,276 @@ function FOX:_IsProtected(targetunit)
   return false
 end
 
+
+--- Missle launch event.
+-- @param #FOX self
+-- @param Wrapper.Weapon#WEAPON weapon Weapon object.
+-- @param #FOX.MissileData missile Fired missile
+function FOX:_FuncTrack(weapon, missile)
+
+  -- Missile coordinate.
+  missileCoord=COORDINATE:NewFromVec3(_lastBombPos)
+  
+  -- Missile velocity in m/s.
+  local missileVelocity=UTILS.VecNorm(_ordnance:getVelocity())
+  
+  -- Update missile target if necessary.
+  self:GetMissileTarget(missile)
+  
+  if missile.targetUnit then
+  
+    -----------------------------------
+    -- Missile has a specific target --
+    -----------------------------------
+  
+    if missile.targetPlayer then
+      -- Target is a player.
+      if missile.targetPlayer.destroy==true then
+        target=missile.targetUnit
+      end
+    else
+      -- Check if unit is protected.
+      if self:_IsProtected(missile.targetUnit) then
+        target=missile.targetUnit
+      end
+    end
+    
+  else
+  
+    ------------------------------------
+    -- Missile has NO specific target --
+    ------------------------------------   
+    
+    -- TODO: This might cause a problem with wingman. Even if the shooter itself is excluded from the check, it's wingmen are not.
+    --       That would trigger the distance check right after missile launch if things to wrong.
+    --
+    --       Possible solutions:
+    --       * Time check: enable this check after X seconds after missile was fired. What is X?
+    --       * Coalition check. But would not work in training situations where blue on blue is valid!
+    --       * At least enable it for surface-to-air missiles.
+    
+    local function _GetTarget(_unit)
+      local unit=_unit --Wrapper.Unit#UNIT
+  
+      -- Player position.
+      local playerCoord=unit:GetCoordinate()
+        
+      -- Distance.            
+      local dist=missileCoord:Get3DDistance(playerCoord)
+                    
+      -- Update mindist if necessary. Only include players in range of missile + 50% safety margin.
+      if dist<=self.explosiondist then
+        return unit
+      end          
+    end
+    
+    -- Distance to closest player.
+    local mindist=nil
+    
+    -- Loop over players.
+    for _,_player in pairs(self.players) do
+      local player=_player  --#FOX.PlayerData
+      
+      -- Check that player was not the one who launched the missile.
+      if player.unitname~=missile.shooterName then
+      
+        -- Player position.
+        local playerCoord=player.unit:GetCoordinate()
+        
+        -- Distance.            
+        local dist=missileCoord:Get3DDistance(playerCoord)
+        
+        -- Distance from shooter to player.
+        local Dshooter2player=playerCoord:Get3DDistance(missile.shotCoord)
+        
+        -- Update mindist if necessary. Only include players in range of missile + 50% safety margin.
+        if (mindist==nil or dist<mindist) and (Dshooter2player<=missile.missileRange*1.5 or dist<=self.explosiondist) then
+          mindist=dist
+          target=player.unit
+        end
+      end            
+    end
+    
+    if self.protectedset then
+    
+      -- Distance to closest protected unit.
+      mindist=nil
+    
+      for _,_group in pairs(self.protectedset:GetSet()) do
+        local group=_group --Wrapper.Group#GROUP
+        for _,_unit in pairs(group:GetUnits()) do
+          local unit=_unit --Wrapper.Unit#UNIT
+          
+          if unit and unit:IsAlive() then
+          
+            -- Check that player was not the one who launched the missile.
+            if unit:GetName()~=missile.shooterName then
+            
+              -- Player position.
+              local playerCoord=unit:GetCoordinate()
+              
+              -- Distance.            
+              local dist=missileCoord:Get3DDistance(playerCoord)
+              
+              -- Distance from shooter to player.
+              local Dshooter2player=playerCoord:Get3DDistance(missile.shotCoord)
+              
+              -- Update mindist if necessary. Only include players in range of missile + 50% safety margin.
+              if (mindist==nil or dist<mindist) and (Dshooter2player<=missile.missileRange*1.5 or dist<=self.explosiondist) then
+                mindist=dist
+                target=unit
+              end
+            end
+                                      
+          end              
+        end             
+      end
+    end
+    
+    if target then
+      self:T(self.lid..string.format("Missile %s with NO explicit target got closest unit to missile as target %s. Dist=%s m", missile.missileType, target:GetName(), tostring(mindist)))
+    end
+         
+  end
+  
+  -- Check if missile has a valid target.
+  if target then
+  
+    -- Target coordinate.
+    local targetCoord=target:GetCoordinate()
+  
+    -- Distance from missile to target.
+    local distance=missileCoord:Get3DDistance(targetCoord)
+    
+    -- Distance missile to shooter.
+    local distShooter=nil
+    if missile.shooterUnit and missile.shooterUnit:IsAlive() then
+      distShooter=missileCoord:Get3DDistance(missile.shooterUnit:GetCoordinate())
+    end
+    
+    
+    -- Debug output.
+    if self.Debug then
+      local bearing=targetCoord:HeadingTo(missileCoord)
+      local eta=distance/missileVelocity
+    
+      -- Debug distance check.
+      self:I(self.lid..string.format("Missile %s Target %s: Distance = %.1f m, v=%.1f m/s, bearing=%03d°, ETA=%.1f sec", missile.missileType, target:GetName(), distance, missileVelocity, bearing, eta))
+    end
+    
+    -- Distroy missile if it's getting too close.
+    local destroymissile=distance<=self.explosiondist
+    
+    -- Check BIG missiles.
+    if self.explosiondist2 and distance<=self.explosiondist2 and not destroymissile then
+       destroymissile=missile.explosive>=self.bigmissilemass
+    end
+  
+    -- If missile is 150 m from target ==> destroy missile if in safe zone.
+    if destroymissile and self:_CheckCoordSafe(targetCoord) then
+    
+      -- Destroy missile.
+      self:I(self.lid..string.format("Destroying missile %s(%s) fired by %s aimed at %s [player=%s] at distance %.1f m", 
+      missile.missileType, missile.missileName, missile.shooterName, target:GetName(), tostring(missile.targetPlayer~=nil), distance))
+      _ordnance:destroy()
+      
+      -- Missile is not active any more.
+      missile.active=false
+      
+      -- Debug smoke.
+      if self.Debug then
+        missileCoord:SmokeRed()          
+        targetCoord:SmokeGreen()
+      end
+      
+      -- Create event.
+      self:MissileDestroyed(missile)
+      
+      -- Little explosion for the visual effect.
+      if self.explosionpower>0 and distance>50 and (distShooter==nil or (distShooter and distShooter>50)) then
+        missileCoord:Explosion(self.explosionpower)
+      end
+                
+      -- Target was a player.
+      if missile.targetPlayer then
+      
+        -- Message to target.
+        local text=string.format("Destroying missile. %s", self:_DeadText())
+        MESSAGE:New(text, 10):ToGroup(target:GetGroup())
+                
+        -- Increase dead counter.
+        missile.targetPlayer.dead=missile.targetPlayer.dead+1
+      end
+      
+      -- Terminate timer.
+      return nil
+      
+    else
+    
+      -- Time step.
+      local dt=1.0          
+      if distance>50000 then
+        -- > 50 km
+        dt=self.dt50 --=5.0
+      elseif distance>10000 then
+        -- 10-50 km
+        dt=self.dt10 --=1.0
+      elseif distance>5000 then
+        -- 5-10 km
+        dt=self.dt05 --0.5
+      elseif distance>1000 then
+        -- 1-5 km
+        dt=self.dt01 --0.1
+      else
+        -- < 1 km
+        dt=self.dt00 --0.01
+      end
+    
+      -- Check again in dt seconds.
+      return timer.getTime()+dt
+    end
+    
+  else
+  
+    -- Destroy missile.
+    self:T(self.lid..string.format("Missile %s(%s) fired by %s has no current target. Checking back in 0.1 sec.",  missile.missileType, missile.missileName, missile.shooterName))
+    return timer.getTime()+0.1
+    
+  end
+
+end
+
+--- Callback function on impact or destroy otherwise.
+-- @param #FOX self
+-- @param Wrapper.Weapon#WEAPON weapon Weapon object.
+-- @param #FOX.MissileData missile Fired missile
+function FOX:_FuncImpact(weapon, missile)
+
+  if target then  
+  
+    -- Get human player.
+    local player=self:_GetPlayerFromUnit(target)
+    
+    -- Check for player and distance < 10 km.
+    if player and player.unit:IsAlive() then -- and missileCoord and player.unit:GetCoordinate():Get3DDistance(missileCoord)<10*1000 then
+      local text=string.format("Missile defeated. Well done, %s!", player.name)
+      MESSAGE:New(text, 10):ToClient(player.client)
+      
+      -- Increase defeated counter.
+      player.defeated=player.defeated+1
+    end
+    
+  end
+  
+  -- Missile is not active any more.
+  missile.active=false   
+          
+  --Terminate the timer.
+  self:T(FOX.lid..string.format("Terminating missile track timer."))
+  return nil
+
+end
+
 --- Missle launch event.
 -- @param #FOX self
 -- @param #string From From state.
@@ -818,304 +1088,20 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
       end
         
     end
-  end              
+  end
   
-  -- Init missile position.
-  local _lastBombPos = {x=0,y=0,z=0}
+  local weapon=WEAPON:New(missile.weapon)
   
-  -- Missile coordinate.
-  local missileCoord = nil --Core.Point#COORDINATE
+  weapon:SetFuncTrack(FuncTrack)
   
-  -- Target unit of the missile.
-  local target=nil --Wrapper.Unit#UNIT
-      
-  --- Function monitoring the position of a bomb until impact.
-  local function trackMissile(_ordnance)
+  weapon:SetFuncImpact(FuncImpact)
   
-    -- When the pcall returns a failure the weapon has hit.
-    local _status,_bombPos =  pcall(
-    function()
-      return _ordnance:getPoint()
-    end)
-  
-    -- Check if status is not nil. If so, we have a valid point.
-    if _status then
-    
-      ----------------------------------------------
-      -- Still in the air. Remember this position --
-      ----------------------------------------------
-      
-      -- Missile position.
-      _lastBombPos = {x=_bombPos.x, y=_bombPos.y, z=_bombPos.z}
-      
-      -- Missile coordinate.
-      missileCoord=COORDINATE:NewFromVec3(_lastBombPos)
-      
-      -- Missile velocity in m/s.
-      local missileVelocity=UTILS.VecNorm(_ordnance:getVelocity())
-      
-      -- Update missile target if necessary.
-      self:GetMissileTarget(missile)
-      
-      if missile.targetUnit then
-      
-        -----------------------------------
-        -- Missile has a specific target --
-        -----------------------------------
-      
-        if missile.targetPlayer then
-          -- Target is a player.
-          if missile.targetPlayer.destroy==true then
-            target=missile.targetUnit
-          end
-        else
-          -- Check if unit is protected.
-          if self:_IsProtected(missile.targetUnit) then
-            target=missile.targetUnit
-          end
-        end
-        
-      else
-      
-        ------------------------------------
-        -- Missile has NO specific target --
-        ------------------------------------   
-        
-        -- TODO: This might cause a problem with wingman. Even if the shooter itself is excluded from the check, it's wingmen are not.
-        --       That would trigger the distance check right after missile launch if things to wrong.
-        --
-        --       Possible solutions:
-        --       * Time check: enable this check after X seconds after missile was fired. What is X?
-        --       * Coalition check. But would not work in training situations where blue on blue is valid!
-        --       * At least enable it for surface-to-air missiles.
-        
-        local function _GetTarget(_unit)
-          local unit=_unit --Wrapper.Unit#UNIT
 
-          -- Player position.
-          local playerCoord=unit:GetCoordinate()
-            
-          -- Distance.            
-          local dist=missileCoord:Get3DDistance(playerCoord)
-                        
-          -- Update mindist if necessary. Only include players in range of missile + 50% safety margin.
-          if dist<=self.explosiondist then
-            return unit
-          end          
-        end
-        
-        -- Distance to closest player.
-        local mindist=nil
-        
-        -- Loop over players.
-        for _,_player in pairs(self.players) do
-          local player=_player  --#FOX.PlayerData
-          
-          -- Check that player was not the one who launched the missile.
-          if player.unitname~=missile.shooterName then
-          
-            -- Player position.
-            local playerCoord=player.unit:GetCoordinate()
-            
-            -- Distance.            
-            local dist=missileCoord:Get3DDistance(playerCoord)
-            
-            -- Distance from shooter to player.
-            local Dshooter2player=playerCoord:Get3DDistance(missile.shotCoord)
-            
-            -- Update mindist if necessary. Only include players in range of missile + 50% safety margin.
-            if (mindist==nil or dist<mindist) and (Dshooter2player<=missile.missileRange*1.5 or dist<=self.explosiondist) then
-              mindist=dist
-              target=player.unit
-            end
-          end            
-        end
-        
-        if self.protectedset then
-        
-          -- Distance to closest protected unit.
-          mindist=nil
-        
-          for _,_group in pairs(self.protectedset:GetSet()) do
-            local group=_group --Wrapper.Group#GROUP
-            for _,_unit in pairs(group:GetUnits()) do
-              local unit=_unit --Wrapper.Unit#UNIT
-              
-              if unit and unit:IsAlive() then
-              
-                -- Check that player was not the one who launched the missile.
-                if unit:GetName()~=missile.shooterName then
-                
-                  -- Player position.
-                  local playerCoord=unit:GetCoordinate()
-                  
-                  -- Distance.            
-                  local dist=missileCoord:Get3DDistance(playerCoord)
-                  
-                  -- Distance from shooter to player.
-                  local Dshooter2player=playerCoord:Get3DDistance(missile.shotCoord)
-                  
-                  -- Update mindist if necessary. Only include players in range of missile + 50% safety margin.
-                  if (mindist==nil or dist<mindist) and (Dshooter2player<=missile.missileRange*1.5 or dist<=self.explosiondist) then
-                    mindist=dist
-                    target=unit
-                  end
-                end
-                                          
-              end              
-            end             
-          end
-        end
-        
-        if target then
-          self:T(self.lid..string.format("Missile %s with NO explicit target got closest unit to missile as target %s. Dist=%s m", missile.missileType, target:GetName(), tostring(mindist)))
-        end
-             
-      end
-  
-      -- Check if missile has a valid target.
-      if target then
-      
-        -- Target coordinate.
-        local targetCoord=target:GetCoordinate()
-      
-        -- Distance from missile to target.
-        local distance=missileCoord:Get3DDistance(targetCoord)
-        
-        -- Distance missile to shooter.
-        local distShooter=nil
-        if missile.shooterUnit and missile.shooterUnit:IsAlive() then
-          distShooter=missileCoord:Get3DDistance(missile.shooterUnit:GetCoordinate())
-        end
-        
-        
-        -- Debug output.
-        if self.Debug then
-          local bearing=targetCoord:HeadingTo(missileCoord)
-          local eta=distance/missileVelocity
-        
-          -- Debug distance check.
-          self:I(self.lid..string.format("Missile %s Target %s: Distance = %.1f m, v=%.1f m/s, bearing=%03d°, ETA=%.1f sec", missile.missileType, target:GetName(), distance, missileVelocity, bearing, eta))
-        end
-        
-        -- Distroy missile if it's getting too close.
-        local destroymissile=distance<=self.explosiondist
-        
-        -- Check BIG missiles.
-        if self.explosiondist2 and distance<=self.explosiondist2 and not destroymissile then
-           destroymissile=missile.explosive>=self.bigmissilemass
-        end
-      
-        -- If missile is 150 m from target ==> destroy missile if in safe zone.
-        if destroymissile and self:_CheckCoordSafe(targetCoord) then
-        
-          -- Destroy missile.
-          self:I(self.lid..string.format("Destroying missile %s(%s) fired by %s aimed at %s [player=%s] at distance %.1f m", 
-          missile.missileType, missile.missileName, missile.shooterName, target:GetName(), tostring(missile.targetPlayer~=nil), distance))
-          _ordnance:destroy()
-          
-          -- Missile is not active any more.
-          missile.active=false
-          
-          -- Debug smoke.
-          if self.Debug then
-            missileCoord:SmokeRed()          
-            targetCoord:SmokeGreen()
-          end
-          
-          -- Create event.
-          self:MissileDestroyed(missile)
-          
-          -- Little explosion for the visual effect.
-          if self.explosionpower>0 and distance>50 and (distShooter==nil or (distShooter and distShooter>50)) then
-            missileCoord:Explosion(self.explosionpower)
-          end
-                    
-          -- Target was a player.
-          if missile.targetPlayer then
-          
-            -- Message to target.
-            local text=string.format("Destroying missile. %s", self:_DeadText())
-            MESSAGE:New(text, 10):ToGroup(target:GetGroup())
-                    
-            -- Increase dead counter.
-            missile.targetPlayer.dead=missile.targetPlayer.dead+1
-          end
-          
-          -- Terminate timer.
-          return nil
-          
-        else
-        
-          -- Time step.
-          local dt=1.0          
-          if distance>50000 then
-            -- > 50 km
-            dt=self.dt50 --=5.0
-          elseif distance>10000 then
-            -- 10-50 km
-            dt=self.dt10 --=1.0
-          elseif distance>5000 then
-            -- 5-10 km
-            dt=self.dt05 --0.5
-          elseif distance>1000 then
-            -- 1-5 km
-            dt=self.dt01 --0.1
-          else
-            -- < 1 km
-            dt=self.dt00 --0.01
-          end
-        
-          -- Check again in dt seconds.
-          return timer.getTime()+dt
-        end
-        
-      else
-      
-        -- Destroy missile.
-        self:T(self.lid..string.format("Missile %s(%s) fired by %s has no current target. Checking back in 0.1 sec.",  missile.missileType, missile.missileName, missile.shooterName))
-        return timer.getTime()+0.1
-      
-        -- No target ==> terminate timer.
-        --return nil
-      end
-      
-    else
-    
-      -------------------------------------
-      -- Missile does not exist any more --
-      -------------------------------------
-            
-      if target then  
-      
-        -- Get human player.
-        local player=self:_GetPlayerFromUnit(target)
-        
-        -- Check for player and distance < 10 km.
-        if player and player.unit:IsAlive() then -- and missileCoord and player.unit:GetCoordinate():Get3DDistance(missileCoord)<10*1000 then
-          local text=string.format("Missile defeated. Well done, %s!", player.name)
-          MESSAGE:New(text, 10):ToClient(player.client)
-          
-          -- Increase defeated counter.
-          player.defeated=player.defeated+1
-        end
-        
-      end
-      
-      -- Missile is not active any more.
-      missile.active=false   
-              
-      --Terminate the timer.
-      self:T(FOX.lid..string.format("Terminating missile track timer."))
-      return nil
-  
-    end -- _status check
-    
-  end -- end function trackBomb
   
   -- Weapon is not yet "alife" just yet. Start timer with a little delay.
   self:T(FOX.lid..string.format("Tracking of missile starts in 0.0001 seconds."))
-  timer.scheduleFunction(trackMissile, missile.weapon, timer.getTime()+0.0001)
+  --timer.scheduleFunction(trackMissile, missile.weapon, timer.getTime()+0.0001)
+  weapon:StartTrack(0.0001)
 
 end
 
