@@ -411,7 +411,7 @@ function PLAYERRECCE:_CameraOn(client,playername)
       if vivihorizontal < -0.7 or vivihorizontal > 0.7 then 
         camera = false
       end
-    elseif typename == "Ka-50" or typename = "Ka-50_3" then
+    elseif string.find(typename,"Ka-50")  then
       camera = true
     end
   end
