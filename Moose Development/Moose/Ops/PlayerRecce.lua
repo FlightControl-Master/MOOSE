@@ -104,7 +104,7 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.0.16",
+  version            =   "0.0.17",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
   ViewZoneLaser      =   {},
@@ -149,7 +149,8 @@ PLAYERRECCE.LaserRelativePos = {
   ["SA342Mistral"] = { x = 1.7, y = 1.2, z = 0 },
   ["SA342Minigun"] = { x = 1.7, y = 1.2, z = 0 },
   ["SA342L"] = { x = 1.7, y = 1.2, z = 0 },
-  ["Ka-50"] = { x = 6.1, y = -0.85 , z = 0 }
+  ["Ka-50"] = { x = 6.1, y = -0.85 , z = 0 },
+  ["Ka-50_3"] = { x = 6.1, y = -0.85 , z = 0 }
 }
 
 ---
@@ -161,6 +162,7 @@ PLAYERRECCE.MaxViewDistance = {
   ["SA342Minigun"] = 8000,
   ["SA342L"] = 8000,
   ["Ka-50"] = 8000, 
+  ["Ka-50_3"] = 8000, 
 }
 
 ---
@@ -172,6 +174,7 @@ PLAYERRECCE.Cameraheight = {
   ["SA342Minigun"] = 2.85,
   ["SA342L"] = 2.85,
   ["Ka-50"] = 0.5, 
+  ["Ka-50_3"] = 0.5, 
 }
 
 ---
@@ -182,7 +185,8 @@ PLAYERRECCE.CanLase = {
   ["SA342Mistral"] = true,
   ["SA342Minigun"] = false, -- no optics
   ["SA342L"] = true,
-  ["Ka-50"] = true, 
+  ["Ka-50"] = true,
+  ["Ka-50_3"] = true,  
 }
 
 ---
@@ -337,11 +341,7 @@ function PLAYERRECCE:_GetClockDirection(unit, target)
     clock = 12+hours
     clock = UTILS.Round(clock,0)
     if clock > 12 then clock = clock-12 end
-  end
-  --if self.debug then
-    --local text = string.format("Heading = %d, Angle = %d, Hours= %d, Clock = %d",_heading,Angle,hours,clock)
-    --self:I(self.lid .. text)
-  --end    
+  end    
   return clock
 end
 
@@ -411,7 +411,7 @@ function PLAYERRECCE:_CameraOn(client,playername)
       if vivihorizontal < -0.7 or vivihorizontal > 0.7 then 
         camera = false
       end
-    elseif typename == "Ka-50" then
+    elseif typename == "Ka-50" or typename = "Ka-50_3" then
       camera = true
     end
   end
@@ -653,7 +653,7 @@ function PLAYERRECCE:_GetTargetSet(unit,camera,laser)
     angle=10
     -- Model nod and actual TV view don't compute
     maxview = self.MaxViewDistance[typename] or 5000
-  elseif typename == "Ka-50" and camera then
+  elseif string.find(typename,"Ka-50") and camera then
     heading = unit:GetHeading()
     nod,maxview,camon = 10,1000,true
     angle = 10
