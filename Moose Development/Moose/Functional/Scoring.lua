@@ -873,6 +873,7 @@ end
 function SCORING:OnEventBirth( Event )
 
   if Event.IniUnit then
+    Event.IniUnit.ThreatLevel, Event.IniUnit.ThreatType = Event.IniUnit:GetThreatLevel()
     if Event.IniObjectCategory == 1 then
       local PlayerName = Event.IniUnit:GetPlayerName()
       Event.IniUnit.BirthTime = timer.getTime()
@@ -1006,7 +1007,18 @@ function SCORING:_EventOnHit( Event )
         PlayerHit.PenaltyHit = PlayerHit.PenaltyHit or 0
         PlayerHit.TimeStamp = PlayerHit.TimeStamp or 0
         PlayerHit.UNIT = PlayerHit.UNIT or TargetUNIT
+        -- After an instant kill we can't compute the thread level anymore. To fix this we compute at OnEventBirth
+        if PlayerHit.UNIT.ThreatType == nil then
         PlayerHit.ThreatLevel, PlayerHit.ThreatType = PlayerHit.UNIT:GetThreatLevel()
+          -- if this fails for some reason, set a good default value
+          if PlayerHit.ThreatType == nil then
+            PlayerHit.ThreatLevel = 1
+            PlayerHit.ThreatType = "Unknown"
+          end
+        else
+          PlayerHit.ThreatLevel = PlayerHit.UNIT.ThreatLevel
+          PlayerHit.ThreatType = PlayerHit.UNIT.ThreatType
+        end
 
         -- Only grant hit scores if there was more than one second between the last hit.        
         if timer.getTime() - PlayerHit.TimeStamp > 1 then
