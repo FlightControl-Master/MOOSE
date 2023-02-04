@@ -1196,7 +1196,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.29"
+CTLD.version="1.0.30"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1817,7 +1817,7 @@ function CTLD:PreloadTroops(Unit,Troopname)
   return self
 end
 
---- (User) Pre-load crates into a helo. Do not use standalone!
+--- (Internal) Pre-load crates into a helo. Do not use standalone!
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group The group to load into, can be handed as Wrapper.Client#CLIENT object
 -- @param Wrapper.Unit#UNIT Unit The unit to load into, can be handed as Wrapper.Client#CLIENT object
