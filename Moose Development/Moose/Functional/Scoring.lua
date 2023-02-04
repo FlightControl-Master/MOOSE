@@ -875,6 +875,7 @@ function SCORING:OnEventBirth( Event )
   if Event.IniUnit then
     if Event.IniObjectCategory == 1 then
       local PlayerName = Event.IniUnit:GetPlayerName()
+      Event.IniUnit.BirthTime = timer.getTime()
       if PlayerName then
         self:_AddPlayerFromUnit( Event.IniUnit )
         self:SetScoringMenu( Event.IniGroup )
@@ -1211,7 +1212,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
       local Destroyed = false
 
       -- What is the player destroying?
-      if Player and Player.Hit and Player.Hit[TargetCategory] and Player.Hit[TargetCategory][TargetUnitName] and Player.Hit[TargetCategory][TargetUnitName].TimeStamp ~= 0 then -- Was there a hit for this unit for this player before registered???
+      if Player and Player.Hit and Player.Hit[TargetCategory] and Player.Hit[TargetCategory][TargetUnitName] and Player.Hit[TargetCategory][TargetUnitName].TimeStamp ~= 0 and (TargetUnit.BirthTime == nil or Player.Hit[TargetCategory][TargetUnitName].TimeStamp > TargetUnit.BirthTime) then -- Was there a hit for this unit for this player before registered???
 
         local TargetThreatLevel = Player.Hit[TargetCategory][TargetUnitName].ThreatLevel
         local TargetThreatType = Player.Hit[TargetCategory][TargetUnitName].ThreatType
