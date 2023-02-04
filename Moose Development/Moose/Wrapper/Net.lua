@@ -23,7 +23,7 @@ do
 -- @field #NET
 NET = {
   ClassName = "NET",
-  Version = "0.0.1"
+  Version = "0.0.2"
 }
 
 --- Instantiate a new NET object.
@@ -47,15 +47,40 @@ function NET:SendChat(Message,ToAll)
   return self
 end
 
+--- Find the PlayerID by name
+-- @param #NET self
+-- @param #string Name The player name whose ID to find
+-- @return #number PlayerID or nil
+function NET:GetPlayerIdByName(Name)
+  local playerList = self:GetPlayerList()
+  for i=1,#playerList do
+    local playerName = net.get_name(i)
+      if playerName == Name then
+        return playerList[i]
+      end
+  end
+  return nil
+end
+
+--- Find the PlayerID from a CLIENT object.
+-- @param #NET self
+-- @param Wrapper.Client#CLIENT Client The client
+-- @return #number PlayerID or nil
+function NET:GetPlayerIDFromClient(Client)
+  local name = Client:GetPlayerName()
+  local id = self:GetPlayerIdByName(name)
+  return id
+end
+
 --- Send chat message to a specific player.
 -- @param #NET self
 -- @param #string Message The text message
 -- @param Wrapper.Client#CLIENT ToClient Client receiving the message
--- @param Wrapper.Client#CLIENT FromClient(Optional) Client sending the message
+-- @param Wrapper.Client#CLIENT FromClient (Optional) Client sending the message
 -- @return #NET self
 function NET:SendChatToPlayer(Message, ToClient, FromClient)
-  local PlayerId = ToClient:GetID()
-  local FromId = FromClient:GetID()
+  local PlayerId = self:GetPlayerIDFromClient(ToClient)
+  local FromId = self:GetPlayerIDFromClient(FromClient)
   if Message and PlayerId and FromId then
     net.send_chat_to(Message, tonumber(PlayerId) , tonumber(FromId))
   elseif Message and PlayerId then
@@ -103,7 +128,7 @@ function NET:GetMyPlayerID()
   return net.get_my_player_id()
 end
 
---- Returns the playerID of the server. Currently always 1. 
+--- Returns the playerID of the server. Currently always returns 1. 
 -- @param #NET self
 -- @return #number ID
 function NET:GetServerID()
@@ -127,7 +152,7 @@ end
 --          'ucid'  : Unique Client Identifier, SERVER ONLY
 -- 
 function NET:GetPlayerInfo(Client,Attribute)
-  local PlayerID = Client:GetID()
+  local PlayerID = self:GetPlayerIDFromClient(Client)
   if PlayerID then
     return net.get_player_info(tonumber(PlayerID), Attribute)
   else
@@ -141,7 +166,7 @@ end
 -- @param #string Message (Optional) The message to send.
 -- @return #boolean success
 function NET:Kick(Client,Message)
-  local PlayerID = Client:GetID()
+  local PlayerID = self:GetPlayerIDFromClient(Client)
   if PlayerID and tonumber(PlayerID) ~= 1 then
     return net.kick(tonumber(PlayerID), Message)
   else
@@ -168,7 +193,7 @@ end
 -- 
 --          mynet:GetPlayerStatistic(Client,7) -- return number of ejects
 function NET:GetPlayerStatistic(Client,StatisticID)
-  local PlayerID = Client:GetID()
+  local PlayerID = self:GetPlayerIDFromClient(Client)
   local stats = StatisticID or 0
   if stats > 7 or stats < 0 then stats = 0 end
   if PlayerID then
@@ -178,13 +203,12 @@ function NET:GetPlayerStatistic(Client,StatisticID)
   end
 end
 
-
 --- Return the name of a given client. Same a CLIENT:GetPlayerName().
 -- @param #NET self
 -- @param Wrapper.Client#CLIENT Client The client
--- @return #string Name
+-- @return #string Name or nil if not obtainable
 function NET:GetName(Client)
-  local PlayerID = Client:GetID()
+  local PlayerID = self:GetPlayerIDFromClient(Client)
   if PlayerID then
     return net.get_name(tonumber(PlayerID))
   else
@@ -198,7 +222,7 @@ end
 -- @return #number SideID i.e. 0 : spectators, 1 : Red, 2 : Blue
 -- @return #number SlotID
 function NET:GetSlot(Client)
-  local PlayerID = Client:GetID()
+  local PlayerID = self:GetPlayerIDFromClient(Client)
   if PlayerID then
     local side,slot = net.get_slot(tonumber(PlayerID))
     return side,slot
@@ -214,7 +238,7 @@ end
 -- @param #number SlotID Slot number
 -- @return #boolean Success
 function NET:ForceSlot(Client,SideID,SlotID)
-  local PlayerID = Client:GetID()
+  local PlayerID = self:GetPlayerIDFromClient(Client)
   if PlayerID then
     return net.force_player_slot(tonumber(PlayerID), SideID, SlotID )
   else
