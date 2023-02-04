@@ -46,6 +46,7 @@ __Moose.Include( 'Scripts/Moose/Wrapper/Positionable.lua' )
 __Moose.Include( 'Scripts/Moose/Wrapper/Scenery.lua' )
 __Moose.Include( 'Scripts/Moose/Wrapper/Static.lua' )
 __Moose.Include( 'Scripts/Moose/Wrapper/Unit.lua' )
+__Moose.Include( 'Scripts/Moose/Wrapper/Weapon.lua' )
 
 __Moose.Include( 'Scripts/Moose/Cargo/Cargo.lua' )
 __Moose.Include( 'Scripts/Moose/Cargo/CargoUnit.lua' )
