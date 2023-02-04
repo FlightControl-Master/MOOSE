@@ -1776,6 +1776,22 @@ function CTLD:_FindTroopsCargoObject(Name)
   return nil
 end
 
+--- (Internal) Find a crates CTLD_CARGO object in stock
+-- @param #CTLD self
+-- @param #string Name of the object
+-- @return #CTLD_CARGO Cargo object, nil if it cannot be found
+function CTLD:_FindCratesCargoObject(Name)
+  self:T(self.lid .. " _FindCratesCargoObject")
+  local cargo = nil
+  for _,_cargo in pairs(self.Cargo_Crates)do
+    local cargo = _cargo -- #CTLD_CARGO
+    if cargo.Name == Name then
+      return cargo
+    end
+  end
+  return nil
+end
+
 --- (User) Pre-load troops into a helo, e.g. for airstart. Unit **must** be alive in-game, i.e. player has taken the slot!
 -- @param #CTLD self
 -- @param Wrapper.Unit#UNIT Unit The unit to load into, can be handed as Wrapper.Client#CLIENT object
@@ -1796,6 +1812,84 @@ function CTLD:PreloadTroops(Unit,Troopname)
       self:_LoadTroops(group,Unit,cargo,true)
     else
       self:E(self.lid.." Troops preload - Cargo Object "..name.." not found!")
+    end
+  end
+  return self
+end
+
+--- (User) Pre-load crates into a helo. Do not use standalone!
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group The group to load into, can be handed as Wrapper.Client#CLIENT object
+-- @param Wrapper.Unit#UNIT Unit The unit to load into, can be handed as Wrapper.Client#CLIENT object
+-- @param #CTLD_CARGO Cargo The Cargo crate object to load
+-- @param #number NumberOfCrates (Optional) Number of crates to be loaded. Default - all necessary to build this object. Might overload the helo!
+-- @return #CTLD self
+function CTLD:_PreloadCrates(Group, Unit, Cargo, NumberOfCrates)
+    -- load crate into heli
+  local group = Group -- Wrapper.Group#GROUP
+  local unit = Unit -- Wrapper.Unit#UNIT
+  local unitname = unit:GetName()
+  -- see if this heli can load crates
+  local unittype = unit:GetTypeName()
+  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitCapabilities
+  local cancrates = capabilities.crates -- #boolean
+  local cratelimit = capabilities.cratelimit -- #number
+  if not cancrates then
+    self:_SendMessage("Sorry this chopper cannot carry crates!", 10, false, Group) 
+    return self
+  else
+    -- have we loaded stuff already?
+    local numberonboard = 0
+    local massonboard = 0
+    local loaded = {}
+    if self.Loaded_Cargo[unitname] then
+      loaded = self.Loaded_Cargo[unitname] -- #CTLD.LoadedCargo
+      numberonboard = loaded.Cratesloaded or 0
+      massonboard = self:_GetUnitCargoMass(Unit)
+    else
+      loaded = {} -- #CTLD.LoadedCargo
+      loaded.Troopsloaded = 0
+      loaded.Cratesloaded = 0
+      loaded.Cargo = {}
+    end
+    local crate = Cargo -- #CTLD_CARGO
+    local numbercrates = NumberOfCrates or crate:GetCratesNeeded()
+    for i=1,numbercrates do
+      loaded.Cratesloaded = loaded.Cratesloaded + 1
+      crate:SetHasMoved(true)
+      crate:SetWasDropped(false)
+      table.insert(loaded.Cargo, crate)
+      crate.Positionable = nil
+      self:_SendMessage(string.format("Crate ID %d for %s loaded!",crate:GetID(),crate:GetName()), 10, false, Group)
+      --self:__CratesPickedUp(1, Group, Unit, crate)
+      self.Loaded_Cargo[unitname] = loaded
+      self:_UpdateUnitCargoMass(Unit)
+    end 
+  end
+  return self
+end
+
+--- (User) Pre-load crates into a helo, e.g. for airstart. Unit **must** be alive in-game, i.e. player has taken the slot!
+-- @param #CTLD self
+-- @param Wrapper.Unit#UNIT Unit The unit to load into, can be handed as Wrapper.Client#CLIENT object
+-- @param #string Cratesname The name of the cargo to be loaded. Must be created prior in the CTLD setup!
+-- @param #number NumberOfCrates (Optional) Number of crates to be loaded. Default - all necessary to build this object. Might overload the helo!
+-- @return #CTLD self
+-- @usage
+--          local client = UNIT:FindByName("Helo-1-1")
+--          if client and client:IsAlive() then
+--            myctld:PreloadCrates(client,"Humvee")
+--          end
+function CTLD:PreloadCrates(Unit,Cratesname,NumberOfCrates)
+  self:T(self.lid .. " PreloadCrates")
+  local name = Cratesname or "Unknown"
+  if Unit and Unit:IsAlive() then
+    local cargo = self:_FindCratesCargoObject(name)
+    local group = Unit:GetGroup()
+    if cargo then
+      self:_PreloadCrates(group,Unit,cargo,NumberOfCrates)
+    else
+      self:E(self.lid.." Crates preload - Cargo Object "..name.." not found!")
     end
   end
   return self
