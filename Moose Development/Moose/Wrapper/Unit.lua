@@ -167,7 +167,7 @@ end
 
 --- Get the DCS unit object.
 -- @param #UNIT self
--- @return DCS#Unit
+-- @return DCS#Unit The DCS unit object.
 function UNIT:GetDCSObject()
 
   local DCSUnit = Unit.getByName( self.UnitName )

@@ -26,6 +26,7 @@
 --- FOX class.
 -- @type FOX
 -- @field #string ClassName Name of the class.
+-- @field #number verbose Verbosity level.
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table menuadded Table of groups the menu was added for.
@@ -124,6 +125,7 @@
 -- @field #FOX
 FOX = {
   ClassName      = "FOX",
+  verbose        =    0,
   Debug          = false,
   lid            =   nil,
   menuadded      =    {},
@@ -185,6 +187,8 @@ FOX = {
 -- @field #string targetName Name of the target unit or "unknown".
 -- @field #string targetOrig Name of the "original" target, i.e. the one right after launched.
 -- @field #FOX.PlayerData targetPlayer Player that was targeted or nil.
+-- @field Core.Point#COORDINATE missileCoord Missile coordinate during tracking.
+-- @field Wrapper.Weapon#WEAPON Weapon Weapon object.
 
 --- Main radio menu on group level.
 -- @field #table MenuF10 Root menu table on group level.
@@ -196,7 +200,7 @@ FOX.MenuF10Root=nil
 
 --- FOX class version.
 -- @field #string version
-FOX.version="0.7.0"
+FOX.version="0.8.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -500,6 +504,7 @@ function FOX:SetDisableF10Menu()
   return self
 end
 
+
 --- Enable F10 menu for all players.
 -- @param #FOX self
 -- @return #FOX self
@@ -507,6 +512,15 @@ function FOX:SetEnableF10Menu()
 
   self.menudisabled=false
 
+  return self
+end
+
+--- Set verbosity level.
+-- @param #FOX self
+-- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @return #FOX self
+function FOX:SetVerbosity(VerbosityLevel)
+  self.verbose=VerbosityLevel or 0
   return self
 end
 
@@ -605,7 +619,9 @@ function FOX:onafterStatus(From, Event, To)
   local clock=UTILS.SecondsToClock(time)
   
   -- Status.
-  self:I(self.lid..string.format("Missile trainer status %s: %s", clock, fsmstate))
+  if self.verbose>=1 then
+    self:I(self.lid..string.format("Missile trainer status %s: %s", clock, fsmstate))
+  end
   
   -- Check missile status.
   self:_CheckMissileStatus()
@@ -713,7 +729,9 @@ function FOX:_CheckMissileStatus()
   if #self.missiles==0 then
     text=text.." none"
   end
-  self:I(self.lid..text)
+  if self.verbose>=2 then
+    self:I(self.lid..text)
+  end
 
   -- Remove inactive missiles.  
   for i=#self.missiles,1,-1 do
@@ -743,7 +761,7 @@ function FOX:_IsProtected(targetunit)
     if targetgroup then
       local targetname=targetgroup:GetName()
       
-      for _,_group in pairs(self.protectedset:GetSetObjects()) do
+      for _,_group in pairs(self.protectedset:GetSet()) do
         local group=_group --Wrapper.Group#GROUP
         
         if group then
@@ -763,20 +781,23 @@ function FOX:_IsProtected(targetunit)
 end
 
 
---- Missle launch event.
--- @param #FOX self
+--- Function called from weapon tracking.
 -- @param Wrapper.Weapon#WEAPON weapon Weapon object.
+-- @param #FOX self FOX object.
 -- @param #FOX.MissileData missile Fired missile
-function FOX:_FuncTrack(weapon, missile)
+function FOX._FuncTrack(weapon, self, missile)
 
   -- Missile coordinate.
-  missileCoord=COORDINATE:NewFromVec3(_lastBombPos)
+  local missileCoord= missile.missileCoord:UpdateFromVec3(weapon.vec3) --COORDINATE:NewFromVec3(_lastBombPos)
   
   -- Missile velocity in m/s.
-  local missileVelocity=UTILS.VecNorm(_ordnance:getVelocity())
+  local missileVelocity=weapon:GetSpeed() --UTILS.VecNorm(_ordnance:getVelocity())
   
   -- Update missile target if necessary.
   self:GetMissileTarget(missile)
+  
+ -- Target unit of the missile.
+  local target=nil --Wrapper.Unit#UNIT  
   
   if missile.targetUnit then
   
@@ -868,13 +889,13 @@ function FOX:_FuncTrack(weapon, missile)
             if unit:GetName()~=missile.shooterName then
             
               -- Player position.
-              local playerCoord=unit:GetCoordinate()
+              local playerVec3=unit:GetVec3()
               
-              -- Distance.            
-              local dist=missileCoord:Get3DDistance(playerCoord)
-              
+              -- Distance.
+              local dist=missileCoord:Get3DDistance(playerVec3)
+                            
               -- Distance from shooter to player.
-              local Dshooter2player=playerCoord:Get3DDistance(missile.shotCoord)
+              local Dshooter2player=missile.shotCoord:Get3DDistance(playerVec3)
               
               -- Update mindist if necessary. Only include players in range of missile + 50% safety margin.
               if (mindist==nil or dist<mindist) and (Dshooter2player<=missile.missileRange*1.5 or dist<=self.explosiondist) then
@@ -898,23 +919,22 @@ function FOX:_FuncTrack(weapon, missile)
   if target then
   
     -- Target coordinate.
-    local targetCoord=target:GetCoordinate()
+    local targetVec3=target:GetVec3() --target:GetCoordinate()
   
     -- Distance from missile to target.
-    local distance=missileCoord:Get3DDistance(targetCoord)
+    local distance=missileCoord:Get3DDistance(targetVec3)
     
     -- Distance missile to shooter.
     local distShooter=nil
     if missile.shooterUnit and missile.shooterUnit:IsAlive() then
-      distShooter=missileCoord:Get3DDistance(missile.shooterUnit:GetCoordinate())
+      distShooter=missileCoord:Get3DDistance(missile.shooterUnit:GetVec3())
     end
     
     
     -- Debug output.
-    if self.Debug then
-      local bearing=targetCoord:HeadingTo(missileCoord)
-      local eta=distance/missileVelocity
-    
+    if self.Debug then    
+      local bearing=missileCoord:HeadingTo(targetVec3)
+      local eta=distance/missileVelocity    
       -- Debug distance check.
       self:I(self.lid..string.format("Missile %s Target %s: Distance = %.1f m, v=%.1f m/s, bearing=%03d°, ETA=%.1f sec", missile.missileType, target:GetName(), distance, missileVelocity, bearing, eta))
     end
@@ -928,12 +948,12 @@ function FOX:_FuncTrack(weapon, missile)
     end
   
     -- If missile is 150 m from target ==> destroy missile if in safe zone.
-    if destroymissile and self:_CheckCoordSafe(targetCoord) then
+    if destroymissile and self:_CheckCoordSafe(targetVec3) then
     
       -- Destroy missile.
       self:I(self.lid..string.format("Destroying missile %s(%s) fired by %s aimed at %s [player=%s] at distance %.1f m", 
       missile.missileType, missile.missileName, missile.shooterName, target:GetName(), tostring(missile.targetPlayer~=nil), distance))
-      _ordnance:destroy()
+      weapon:Destroy()
       
       -- Missile is not active any more.
       missile.active=false
@@ -941,7 +961,6 @@ function FOX:_FuncTrack(weapon, missile)
       -- Debug smoke.
       if self.Debug then
         missileCoord:SmokeRed()          
-        targetCoord:SmokeGreen()
       end
       
       -- Create event.
@@ -962,9 +981,9 @@ function FOX:_FuncTrack(weapon, missile)
         -- Increase dead counter.
         missile.targetPlayer.dead=missile.targetPlayer.dead+1
       end
-      
-      -- Terminate timer.
-      return nil
+
+      -- We could disable the tracking here but then the impact function would not be called.
+      --weapon.tracking=false
       
     else
     
@@ -987,30 +1006,30 @@ function FOX:_FuncTrack(weapon, missile)
         dt=self.dt00 --0.01
       end
     
-      -- Check again in dt seconds.
-      return timer.getTime()+dt
+      -- Set time step.
+      weapon:SetTimeStepTrack(dt)
     end
     
   else
   
-    -- Destroy missile.
+    -- No current target.
     self:T(self.lid..string.format("Missile %s(%s) fired by %s has no current target. Checking back in 0.1 sec.",  missile.missileType, missile.missileName, missile.shooterName))
-    return timer.getTime()+0.1
+    weapon:SetTimeStepTrack(0.1)
     
   end
 
 end
 
 --- Callback function on impact or destroy otherwise.
--- @param #FOX self
 -- @param Wrapper.Weapon#WEAPON weapon Weapon object.
--- @param #FOX.MissileData missile Fired missile
-function FOX:_FuncImpact(weapon, missile)
+-- @param #FOX self FOX object.
+-- @param #FOX.MissileData missile Fired missile.
+function FOX._FuncImpact(weapon, self, missile)
 
-  if target then  
+  if missile.targetPlayer then  
   
     -- Get human player.
-    local player=self:_GetPlayerFromUnit(target)
+    local player=missile.targetPlayer
     
     -- Check for player and distance < 10 km.
     if player and player.unit:IsAlive() then -- and missileCoord and player.unit:GetCoordinate():Get3DDistance(missileCoord)<10*1000 then
@@ -1028,7 +1047,7 @@ function FOX:_FuncImpact(weapon, missile)
           
   --Terminate the timer.
   self:T(FOX.lid..string.format("Terminating missile track timer."))
-  return nil
+  weapon.tracking=false
 
 end
 
@@ -1090,18 +1109,17 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
     end
   end
   
-  local weapon=WEAPON:New(missile.weapon)
+  -- Set callback function for tracking.
+  missile.Weapon:SetFuncTrack(FOX._FuncTrack, self, missile)
   
-  weapon:SetFuncTrack(FuncTrack)
+  -- Set callback function for impact.
+  missile.Weapon:SetFuncImpact(FOX._FuncImpact, self, missile)
   
-  weapon:SetFuncImpact(FuncImpact)
-  
-
   
   -- Weapon is not yet "alife" just yet. Start timer with a little delay.
   self:T(FOX.lid..string.format("Tracking of missile starts in 0.0001 seconds."))
   --timer.scheduleFunction(trackMissile, missile.weapon, timer.getTime()+0.0001)
-  weapon:StartTrack(0.0001)
+  missile.Weapon:StartTrack(0.0001)
 
 end
 
@@ -1232,30 +1250,29 @@ end
 -- @param Core.Event#EVENTDATA EventData
 function FOX:OnEventShot(EventData)
   self:T2({eventshot=EventData})
+
+  -- Nil checks.  
+  if EventData.Weapon==nil or EventData.IniDCSUnit==nil or EventData.weapon==nil then
+    return
+  end
   
-  if EventData.Weapon==nil then
-    return
-  end
-  if EventData.IniDCSUnit==nil then
-    return
-  end
+  -- Create a weapon object.
+  local weapon=WEAPON:New(EventData.weapon)
   
   -- Weapon data.
-  local _weapon     = EventData.WeaponName
+  local _weapon     = weapon:GetTypeName()
   local _target     = EventData.Weapon:getTarget()
   local _targetName = "unknown"
   local _targetUnit = nil --Wrapper.Unit#UNIT
   
   -- Weapon descriptor.
-  local desc=EventData.Weapon:getDesc()
+  local desc=weapon.desc
   self:T2({desc=desc})
-  
-  -- Weapon category: 0=Shell, 1=Missile, 2=Rocket, 3=BOMB
-  local weaponcategory=desc.category
   
   -- Missile category: 1=AAM, 2=SAM, 6=OTHER
   local missilecategory=desc.missileCategory
   
+  -- Missile range.
   local missilerange=nil
   if missilecategory then
     missilerange=desc.rangeMaxAltMax
@@ -1265,8 +1282,8 @@ function FOX:OnEventShot(EventData)
   self:T2(FOX.lid.."EVENT SHOT: FOX")
   self:T2(FOX.lid..string.format("EVENT SHOT: Ini unit     = %s", tostring(EventData.IniUnitName)))
   self:T2(FOX.lid..string.format("EVENT SHOT: Ini group    = %s", tostring(EventData.IniGroupName)))
-  self:T2(FOX.lid..string.format("EVENT SHOT: Weapon type  = %s", tostring(_weapon)))
-  self:T2(FOX.lid..string.format("EVENT SHOT: Weapon categ = %s", tostring(weaponcategory)))
+  self:T2(FOX.lid..string.format("EVENT SHOT: Weapon type  = %s", tostring(weapon:GetTypeName())))
+  self:T2(FOX.lid..string.format("EVENT SHOT: Weapon categ = %s", tostring(weapon:GetCategory())))
   self:T2(FOX.lid..string.format("EVENT SHOT: Missil categ = %s", tostring(missilecategory)))
   self:T2(FOX.lid..string.format("EVENT SHOT: Missil range = %s", tostring(missilerange)))
   
@@ -1278,7 +1295,7 @@ function FOX:OnEventShot(EventData)
   end
   
   -- Track missiles of type AAM=1, SAM=2 or OTHER=6
-  local _track = weaponcategory==1 and missilecategory and (missilecategory==1 or missilecategory==2 or missilecategory==6)
+  local _track = weapon:IsMissile() and missilecategory and (missilecategory==1 or missilecategory==2 or missilecategory==6)
   
   -- Only track missiles
   if _track then
@@ -1287,6 +1304,7 @@ function FOX:OnEventShot(EventData)
     
     missile.active=true
     missile.weapon=EventData.weapon
+    missile.Weapon=weapon
     missile.missileType=_weapon
     missile.missileRange=missilerange
     missile.missileName=EventData.weapon:getName()
@@ -1299,6 +1317,7 @@ function FOX:OnEventShot(EventData)
     missile.fuseDist=desc.fuseDist
     missile.explosive=desc.warhead.explosiveMass or desc.warhead.shapedExplosiveMass
     missile.targetOrig=missile.targetName
+    missile.missileCoord=COORDINATE:New(0,0,0)
     
     -- Set missile target name, unit and player.
     self:GetMissileTarget(missile)
@@ -1617,7 +1636,7 @@ end
 
 --- Check if a coordinate lies within a safe training zone.
 -- @param #FOX self
--- @param Core.Point#COORDINATE coord Coordinate to check.
+-- @param Core.Point#COORDINATE coord Coordinate to check. Can also be a DCS#Vec3.
 -- @return #boolean True if safe.
 function FOX:_CheckCoordSafe(coord)
 
@@ -1629,7 +1648,9 @@ function FOX:_CheckCoordSafe(coord)
   -- Loop over all zones.
   for _,_zone in pairs(self.safezones) do
     local zone=_zone --Core.Zone#ZONE
-    local inzone=zone:IsCoordinateInZone(coord)
+    local Vec2={x=coord.x, y=coord.z}
+    local inzone=zone:IsVec2InZone(Vec2)
+    --local inzone=zone:IsCoordinateInZone(coord)
     if inzone then
       return true
     end
@@ -1640,7 +1661,7 @@ end
 
 --- Check if a coordinate lies within a launch zone.
 -- @param #FOX self
--- @param Core.Point#COORDINATE coord Coordinate to check.
+-- @param Core.Point#COORDINATE coord Coordinate to check. Can also be a DCS#Vec2.
 -- @return #boolean True if in launch zone.
 function FOX:_CheckCoordLaunch(coord)
 
@@ -1652,7 +1673,9 @@ function FOX:_CheckCoordLaunch(coord)
   -- Loop over all zones.
   for _,_zone in pairs(self.launchzones) do
     local zone=_zone --Core.Zone#ZONE
-    local inzone=zone:IsCoordinateInZone(coord)
+    local Vec2={x=coord.x, y=coord.z}
+    local inzone=zone:IsVec2InZone(Vec2)
+    --local inzone=zone:IsCoordinateInZone(coord)
     if inzone then
       return true
     end

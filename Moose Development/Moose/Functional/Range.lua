@@ -1833,13 +1833,13 @@ function RANGE:OnEventHit( EventData )
 end
 
 --- Function called on impact of a tracked weapon.
--- @param #RANGE self
 -- @param Wrapper.Weapon#WEAPON weapon The weapon object.
+-- @param #RANGE self RANGE object.
 -- @param #RANGE.PlayerData playerData Player data table.
 -- @param #number attackHdg Attack heading.
 -- @param #number attackAlt Attack altitude.
 -- @param #number attackVel Attack velocity.
-function RANGE:_OnImpact(weapon, playerData, attackHdg, attackAlt, attackVel)
+function RANGE._OnImpact(weapon, self, playerData, attackHdg, attackAlt, attackVel)
 
   -- Get closet target to last position.
   local _closetTarget = nil -- #RANGE.BombTarget
@@ -1964,10 +1964,6 @@ function RANGE:_OnImpact(weapon, playerData, attackHdg, attackAlt, attackVel)
     self:T( self.lid .. "Weapon impacted outside range zone." )
   end
   
-  -- Terminate the timer
-  self:T( self.lid .. string.format( "Range %s, player %s: Terminating bomb track timer.", self.rangename, _playername ) )
-  return nil
-
 end
 
 --- Range event handler for event shot (when a unit releases a rocket or bomb (but not a fast firing gun).
@@ -1993,7 +1989,7 @@ function RANGE:OnEventShot( EventData )
   -- Get player unit and name.
   local _unit, _playername = self:_GetPlayerUnitAndName( _unitName )
   
-  -- Set this to larger value than the threshold.
+  -- Distance Player-to-Range. Set this to larger value than the threshold.
   local dPR = self.BombtrackThreshold * 2
 
   -- Distance player to range.
@@ -2024,14 +2020,6 @@ function RANGE:OnEventShot( EventData )
     weapon:StartTrack(0.1)
 
   end
-
-end
-
---- Check spawn queue and spawn aircraft if necessary.
--- @param #RANGE self
--- @param #string PlayerName Name of player.
--- @return #RANGE.BombResult
-function RANGE:_GetBombResults(PlayerName)
 
 end
 

@@ -1133,12 +1133,15 @@ do -- COORDINATE
 
   --- Return the 3D distance in meters between the target COORDINATE and the COORDINATE.
   -- @param #COORDINATE self
-  -- @param #COORDINATE TargetCoordinate The target COORDINATE.
+  -- @param #COORDINATE TargetCoordinate The target COORDINATE. Can also be a DCS#Vec3.
   -- @return DCS#Distance Distance The distance in meters.
   function COORDINATE:Get3DDistance( TargetCoordinate )
-    local TargetVec3 = TargetCoordinate:GetVec3()
+    --local TargetVec3 = TargetCoordinate:GetVec3()
+    local TargetVec3 = {x=TargetCoordinate.x, y=TargetCoordinate.y, z=TargetCoordinate.z}
     local SourceVec3 = self:GetVec3()
-    return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.y - SourceVec3.y ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
+    --local dist=( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.y - SourceVec3.y ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
+    local dist=UTILS.VecDist3D(TargetVec3, SourceVec3)
+    return dist
   end
 
 
