@@ -1053,8 +1053,10 @@ function SCORING:_EventOnHit( Event )
               end
               self:ScoreCSV( InitPlayerName, TargetPlayerName, "HIT_PENALTY", 1, -10, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
             else
-              Player.Score = Player.Score + 1
-              PlayerHit.Score = PlayerHit.Score + 1
+              -- Hitting a target multiple times before destoying it should not result in a higger score
+              -- Multiple hits is typically a results of bombs/missles missing their target but still inflict some spash damage
+              -- Player.Score = Player.Score + 1
+              -- PlayerHit.Score = PlayerHit.Score + 1
               PlayerHit.ScoreHit = PlayerHit.ScoreHit + 1
               if TargetPlayerName ~= nil then -- It is a player hitting another player ...
                 MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit enemy player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.ScoreHit .. " times. " ..
@@ -1142,8 +1144,10 @@ function SCORING:_EventOnHit( Event )
                 :ToCoalitionIf( Event.WeaponCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
               self:ScoreCSV( Event.WeaponPlayerName, TargetPlayerName, "HIT_PENALTY", 1, -10, Event.WeaponName, Event.WeaponCoalition, Event.WeaponCategory, Event.WeaponTypeName, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
             else
-              Player.Score = Player.Score + 1
-              PlayerHit.Score = PlayerHit.Score + 1
+              -- Hitting a target multiple times before destoying it should not result in a higger score
+              -- Multiple hits is typically a results of bombs/missles missing their target but still inflict some spash damage
+              -- Player.Score = Player.Score + 1
+              -- PlayerHit.Score = PlayerHit.Score + 1
               PlayerHit.ScoreHit = PlayerHit.ScoreHit + 1
               MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. Event.WeaponPlayerName .. "' hit enemy target " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
                                "Score: +" .. PlayerHit.Score .. " = " .. Player.Score - Player.Penalty,
