@@ -46,6 +46,7 @@ __Moose.Include( 'Wrapper\\Airbase.lua' )
 __Moose.Include( 'Wrapper\\Scenery.lua' )
 __Moose.Include( 'Wrapper\\Marker.lua' )
 __Moose.Include( 'Wrapper\\Net.lua' )
+__Moose.Include( 'Wrapper\\Weapon.lua' )
 
 __Moose.Include( 'Cargo\\Cargo.lua' )
 __Moose.Include( 'Cargo\\CargoUnit.lua' )
