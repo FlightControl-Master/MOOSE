@@ -634,7 +634,7 @@ ATIS.version = "0.9.14"
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new ATIS class object for a specific aircraft carrier unit.
+--- Create a new ATIS class object for a specific airbase.
 -- @param #ATIS self
 -- @param #string AirbaseName Name of the airbase.
 -- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz.

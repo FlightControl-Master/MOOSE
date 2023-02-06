@@ -67,7 +67,6 @@
 --   * @{#CONTROLLABLE.TaskRouteToVec2}: (AIR + GROUND) Make the Controllable move to a given point.
 --   * @{#CONTROLLABLE.TaskRouteToVec3}: (AIR + GROUND) Make the Controllable move to a given point.
 --   * @{#CONTROLLABLE.TaskRouteToZone}: (AIR + GROUND) Route the controllable to a given zone.
---   * @{#CONTROLLABLE.TaskReturnToBase}: (AIR) Route the controllable to an airbase.
 --
 -- ## 2.2) EnRoute assignment
 --
@@ -669,12 +668,61 @@ function CONTROLLABLE:CommandActivateBeacon( Type, System, Frequency, UnitID, Ch
   return self
 end
 
+--- Activate ACLS system of the CONTROLLABLE. The controllable should be an aircraft carrier! Also needs Link4 to work.
+-- @param #CONTROLLABLE self
+-- @param #number UnitID (Optional) The DCS UNIT ID of the unit the ACLS system is attached to. Defaults to the UNIT itself.
+-- @param #string Name (Optional) Name of the ACLS Beacon
+-- @param #number Delay (Optional) Delay in seconds before the ICLS is activated.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandActivateACLS( UnitID, Name, Delay )
+
+  -- Command to activate ACLS system.
+  local CommandActivateACLS= { 
+  id = 'ActivateACLS', 
+  params = {
+    unitId = UnitID or self:GetID(), 
+    name = Name or "ACL", 
+  } 
+}
+
+  self:T({CommandActivateACLS})
+
+  if Delay and Delay > 0 then
+    SCHEDULER:New( nil, self.CommandActivateACLS, { self, UnitID, Name }, Delay )
+  else
+    self:SetCommand( CommandActivateACLS )
+  end
+
+  return self
+end
+
+--- Deactivate ACLS system of the CONTROLLABLE. The controllable should be an aircraft carrier!
+-- @param #CONTROLLABLE self
+-- @param #number Delay (Optional) Delay in seconds before the ICLS is deactivated.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandDeactivateACLS( Delay )
+
+  -- Command to activate ACLS system.
+  local CommandDeactivateACLS= { 
+  id = 'DeactivateACLS', 
+  params = { } 
+}
+
+  if Delay and Delay > 0 then
+    SCHEDULER:New( nil, self.CommandDeactivateACLS, { self }, Delay )
+  else
+    self:SetCommand( CommandDeactivateACLS )
+  end
+
+  return self
+end
+
 --- Activate ICLS system of the CONTROLLABLE. The controllable should be an aircraft carrier!
 -- @param #CONTROLLABLE self
 -- @param #number Channel ICLS channel.
 -- @param #number UnitID The DCS UNIT ID of the unit the ICLS system is attached to. Useful if more units are in one group.
 -- @param #string Callsign Morse code identification callsign.
--- @param #number Delay (Optional) Delay in seconds before the ICLS is deactivated.
+-- @param #number Delay (Optional) Delay in seconds before the ICLS is activated.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandActivateICLS( Channel, UnitID, Callsign, Delay )
 
@@ -684,13 +732,13 @@ function CONTROLLABLE:CommandActivateICLS( Channel, UnitID, Callsign, Delay )
     params = {
       ["type"] = BEACON.Type.ICLS,
       ["channel"] = Channel,
-      ["unitId"] = UnitID,
+      ["unitId"] = UnitID or self:GetID(),
       ["callsign"] = Callsign,
     },
   }
 
   if Delay and Delay > 0 then
-    SCHEDULER:New( nil, self.CommandActivateICLS, { self }, Delay )
+    SCHEDULER:New( nil, self.CommandActivateICLS, { self, Channel, UnitID, Callsign }, Delay )
   else
     self:SetCommand( CommandActivateICLS )
   end
@@ -700,53 +748,29 @@ end
 
 --- Activate LINK4 system of the CONTROLLABLE. The controllable should be an aircraft carrier!
 -- @param #CONTROLLABLE self
--- @param #number Frequency Link4 Frequency in MHz, e.g. 336
--- @param #number UnitID The DCS UNIT ID of the unit the LINK4 system is attached to. Useful if more units are in one group.
--- @param #string Callsign Morse code identification callsign.
--- @param #number Delay (Optional) Delay in seconds before the LINK4 is deactivated.
+-- @param #number Frequency Link4 Frequency in MHz, e.g. 336 (defaults to 336 MHz)
+-- @param #number UnitID (Optional) The DCS UNIT ID of the unit the LINK4 system is attached to. Defaults to the UNIT itself.
+-- @param #string Callsign (Optional) Morse code identification callsign.
+-- @param #number Delay (Optional) Delay in seconds before the LINK4 is activated.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandActivateLink4(Frequency, UnitID, Callsign, Delay)
-
+  
+  local freq = Frequency or 336
+  
   -- Command to activate Link4 system.
   local CommandActivateLink4= {
     id = "ActivateLink4",
     params= {
-      ["frequency "] = Frequency*1000,
-      ["unitId"] = UnitID,
-      ["name"] = Callsign,
+      ["frequency "] = freq*1000000,
+      ["unitId"] = UnitID or self:GetID(),
+      ["name"] = Callsign or "LNK",
     }
   }
-
+  
+  self:T({CommandActivateLink4})
+  
   if Delay and Delay>0 then
-    SCHEDULER:New(nil, self.CommandActivateLink4, {self}, Delay)
-  else
-    self:SetCommand(CommandActivateLink4)
-  end
-
-  return self
-end
-
---- Activate LINK4 system of the CONTROLLABLE. The controllable should be an aircraft carrier!
--- @param #CONTROLLABLE self
--- @param #number Frequency Link4 Frequency in MHz, e.g. 336
--- @param #number UnitID The DCS UNIT ID of the unit the LINK4 system is attached to. Useful if more units are in one group.
--- @param #string Callsign Morse code identification callsign.
--- @param #number Delay (Optional) Delay in seconds before the LINK4 is deactivated.
--- @return #CONTROLLABLE self
-function CONTROLLABLE:CommandActivateLink4(Frequency, UnitID, Callsign, Delay)
-
-  -- Command to activate Link4 system.
-  local CommandActivateLink4= {
-    id = "ActivateLink4",
-    params= {
-      ["frequency "] = Frequency*1000,
-      ["unitId"] = UnitID,
-      ["name"] = Callsign,
-    }
-  }
-
-  if Delay and Delay>0 then
-    SCHEDULER:New(nil, self.CommandActivateLink4, {self}, Delay)
+    SCHEDULER:New(nil, self.CommandActivateLink4, {self, Frequency, UnitID, Callsign}, Delay)
   else
     self:SetCommand(CommandActivateLink4)
   end
@@ -805,24 +829,6 @@ function CONTROLLABLE:CommandDeactivateICLS( Delay )
     SCHEDULER:New( nil, self.CommandDeactivateICLS, { self }, Delay )
   else
     self:SetCommand( CommandDeactivateICLS )
-  end
-
-  return self
-end
-
---- Deactivate the active Link4 of the CONTROLLABLE.
--- @param #CONTROLLABLE self
--- @param #number Delay (Optional) Delay in seconds before the Link4 is deactivated.
--- @return #CONTROLLABLE self
-function CONTROLLABLE:CommandDeactivateLink4(Delay)
-
-  -- Command to deactivate
-  local CommandDeactivateLink4={id='DeactivateLink4', params={}}
-
-  if Delay and Delay>0 then
-    SCHEDULER:New(nil, self.CommandDeactivateLink4, {self}, Delay)
-  else
-    self:SetCommand(CommandDeactivateLink4)
   end
 
   return self
@@ -1665,6 +1671,26 @@ function CONTROLLABLE:EnRouteTaskAntiShip(TargetTypes, Priority)
   return DCSTask
 end
 
+--- (AIR) Enroute SEAD task.
+-- @param #CONTROLLABLE self
+-- @param DCS#AttributeNameArray TargetTypes Array of target categories allowed to engage. Default `{"Air Defence"}`.
+-- @param #number Priority (Optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Default 0.
+-- @return DCS#Task The DCS task structure.
+function CONTROLLABLE:EnRouteTaskSEAD(TargetTypes, Priority)
+
+  local DCSTask = {
+    id      = 'EngageTargets',
+    key     = "SEAD",
+    --auto    = false,
+    --enabled = true,    
+    params  = {
+      targetTypes = TargetTypes or {"Air Defence"},
+      priority    = Priority or 0
+    }
+  }
+
+  return DCSTask
+end
 
 --- (AIR) Engaging a controllable. The task does not assign the target controllable to the unit/controllable to attack now; it just allows the unit/controllable to engage the target controllable as well as other assigned targets.
 -- @param #CONTROLLABLE self

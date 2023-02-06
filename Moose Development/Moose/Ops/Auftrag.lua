@@ -66,6 +66,8 @@
 -- @field #table conditionSuccess If all conditions are true, the mission is cancelled.
 -- @field #table conditionFailure If all conditions are true, the mission is cancelled.
 -- @field #table conditionPush If all conditions are true, the mission is executed. Before, the group(s) wait at the mission execution waypoint.
+-- @field #boolean conditionSuccessSet
+-- @field #boolean conditionFailureSet
 --
 -- @field #number orbitSpeed Orbit speed in m/s.
 -- @field #number orbitAltitude Orbit altitude in meters.
@@ -378,6 +380,8 @@ AUFTRAG = {
   conditionSuccess   =    {},
   conditionFailure   =    {},
   conditionPush      =    {},
+  conditionSuccessSet = false,
+  conditionFailureSet = false,
 }
 
 --- Global mission counter.
@@ -635,7 +639,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.9.9"
+AUFTRAG.version="0.9.10"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1450,10 +1454,14 @@ function AUFTRAG:NewCASENHANCED(CasZone, Altitude, Speed, RangeMax, NoEngageZone
   mission.missionFraction=1.0
   mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
   mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or nil
-
+  
+  -- Evaluate result after x secs. We might need time until targets have been detroyed.
+  mission.dTevaluate=15
+  
   mission.categories={AUFTRAG.Category.AIRCRAFT}
 
   mission.DCStask=mission:GetDCSMissionTask()
+  
 
   return mission
 end
@@ -3432,7 +3440,9 @@ function AUFTRAG:AddConditionSuccess(ConditionFunction, ...)
   end
 
   table.insert(self.conditionSuccess, condition)
-
+  
+  self.conditionSuccessSet = true
+  
   return self
 end
 
@@ -3452,7 +3462,9 @@ function AUFTRAG:AddConditionFailure(ConditionFunction, ...)
   end
 
   table.insert(self.conditionFailure, condition)
-
+  
+  self.conditionFailureSet = true
+  
   return self
 end
 
@@ -3745,7 +3757,7 @@ function AUFTRAG:IsReadyToGo()
   return true
 end
 
---- Check if mission is ready to be started.
+--- Check if mission is ready to be cancelled.
 -- * Mission stop already passed.
 -- * Any stop condition is true.
 -- @param #AUFTRAG self
@@ -4002,7 +4014,18 @@ function AUFTRAG:onafterStatus(From, Event, To)
     end
     self:I(self.lid..text)
   end  
-
+  
+  -- check conditions if set
+  if self.conditionFailureSet then
+    local failed = self:EvalConditionsAny(self.conditionFailure)
+    if failed then self:__Failed(-1) end
+  end
+  
+  if self.conditionSuccessSet then
+    local success = self:EvalConditionsAny(self.conditionSuccess)
+    if success then self:__Success(-1) end
+  end
+  
   -- Ready to evaluate mission outcome?
   local ready2evaluate=self.Tover and Tnow-self.Tover>=self.dTevaluate or false
 
@@ -5779,11 +5802,9 @@ function AUFTRAG:GetDCSMissionTask()
     -- SEAD Mission --
     ------------------
 
-    --[[
-    local DCStask=CONTROLLABLE.EnRouteTaskEngageTargets(nil, nil ,{"Air Defence"} , 0)
-    table.insert(self.enrouteTasks, DCStask)
-    DCStask.key="SEAD"
-    ]]
+    -- Add enroute task SEAD. Disabled that here because the group enganges everything on its route.
+    --local DCStask=CONTROLLABLE.EnRouteTaskSEAD(nil, self.TargetType)
+    --table.insert(self.enrouteTasks, DCStask)
 
     self:_GetDCSAttackTask(self.engageTarget, DCStasks)
 

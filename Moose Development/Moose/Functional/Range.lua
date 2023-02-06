@@ -578,7 +578,7 @@ RANGE.MenuF10Root = nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version = "2.5.0"
+RANGE.version = "2.5.1"
 
 -- TODO list:
 -- TODO: Verbosity level for messages.
@@ -1207,12 +1207,17 @@ function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume,
     self.controlmsrs:SetCoalition(Coalition or coalition.side.BLUE)
     self.controlmsrs:SetLabel("RANGEC")
     self.controlsrsQ = MSRSQUEUE:New("CONTROL")
-    
+
     self.instructmsrs=MSRS:New(PathToSRS, Frequency or 305, Modulation or radio.modulation.AM, Volume or 1.0)
     self.instructmsrs:SetPort(Port)
     self.instructmsrs:SetCoalition(Coalition or coalition.side.BLUE)
     self.instructmsrs:SetLabel("RANGEI")
     self.instructsrsQ = MSRSQUEUE:New("INSTRUCT")
+    
+    if PathToGoogleKey then 
+      self.instructmsrs:SetGoogle(PathToGoogleKey)
+      self.instructmsrs:SetGoogle(PathToGoogleKey)
+    end
     
   else
     self:E(self.lid..string.format("ERROR: No SRS path specified!"))
@@ -2570,7 +2575,7 @@ function RANGE:_DisplayMyStrafePitResults( _unitName )
   self:F( _unitName )
 
   -- Get player unit and name
-  local _unit, _playername = self:_GetPlayerUnitAndName( _unitName )
+  local _unit, _playername, _multiplayer = self:_GetPlayerUnitAndName( _unitName )
 
   if _unit and _playername then
 
@@ -2622,7 +2627,7 @@ function RANGE:_DisplayMyStrafePitResults( _unitName )
     end
 
     -- Send message to group.
-    self:_DisplayMessageToGroup( _unit, _message, nil, true, true )
+    self:_DisplayMessageToGroup( _unit, _message, nil, true, true, _multiplayer )
   end
 end
 
@@ -2633,7 +2638,7 @@ function RANGE:_DisplayStrafePitResults( _unitName )
   self:F( _unitName )
 
   -- Get player unit and name.
-  local _unit, _playername = self:_GetPlayerUnitAndName( _unitName )
+  local _unit, _playername, _multiplayer = self:_GetPlayerUnitAndName( _unitName )
 
   -- Check if we have a unit which is a player.
   if _unit and _playername then
@@ -2680,7 +2685,7 @@ function RANGE:_DisplayStrafePitResults( _unitName )
     end
 
     -- Send message.
-    self:_DisplayMessageToGroup( _unit, _message, nil, true, true )
+    self:_DisplayMessageToGroup( _unit, _message, nil, true, true, _multiplayer )
   end
 end
 
@@ -2691,7 +2696,7 @@ function RANGE:_DisplayMyBombingResults( _unitName )
   self:F( _unitName )
 
   -- Get player unit and name.
-  local _unit, _playername = self:_GetPlayerUnitAndName( _unitName )
+  local _unit, _playername, _multiplayer = self:_GetPlayerUnitAndName( _unitName )
 
   if _unit and _playername then
 
@@ -2737,7 +2742,7 @@ function RANGE:_DisplayMyBombingResults( _unitName )
     end
 
     -- Send message.
-    self:_DisplayMessageToGroup( _unit, _message, nil, true, true )
+    self:_DisplayMessageToGroup( _unit, _message, nil, true, true, _multiplayer )
   end
 end
 
@@ -2751,7 +2756,7 @@ function RANGE:_DisplayBombingResults( _unitName )
   local _playerResults = {}
 
   -- Get player unit and name.
-  local _unit, _player = self:_GetPlayerUnitAndName( _unitName )
+  local _unit, _player, _multiplayer = self:_GetPlayerUnitAndName( _unitName )
 
   -- Check if we have a unit with a player.
   if _unit and _player then
@@ -2795,7 +2800,7 @@ function RANGE:_DisplayBombingResults( _unitName )
     end
 
     -- Send message.
-    self:_DisplayMessageToGroup( _unit, _message, nil, true, true )
+    self:_DisplayMessageToGroup( _unit, _message, nil, true, true, _multiplayer )
   end
 end
 
@@ -2806,7 +2811,7 @@ function RANGE:_DisplayRangeInfo( _unitname )
   self:F( _unitname )
 
   -- Get player unit and player name.
-  local unit, playername = self:_GetPlayerUnitAndName( _unitname )
+  local unit, playername, _multiplayer = self:_GetPlayerUnitAndName( _unitname )
 
   -- Check if we have a player.
   if unit and playername then
@@ -2901,7 +2906,7 @@ function RANGE:_DisplayRangeInfo( _unitname )
       text = text .. textdelay
 
       -- Send message to player group.
-      self:_DisplayMessageToGroup( unit, text, nil, true, true )
+      self:_DisplayMessageToGroup( unit, text, nil, true, true, _multiplayer )
 
       -- Debug output.
       self:T2( self.id .. text )
@@ -2916,7 +2921,7 @@ function RANGE:_DisplayBombTargets( _unitname )
   self:F( _unitname )
 
   -- Get player unit and player name.
-  local _unit, _playername = self:_GetPlayerUnitAndName( _unitname )
+  local _unit, _playername, _multiplayer = self:_GetPlayerUnitAndName( _unitname )
 
   -- Check if we have a player.
   if _unit and _playername then
@@ -2948,7 +2953,7 @@ function RANGE:_DisplayBombTargets( _unitname )
       end
     end
 
-    self:_DisplayMessageToGroup( _unit, _text, 120, true, true )
+    self:_DisplayMessageToGroup( _unit, _text, 120, true, true, _multiplayer )
   end
 end
 
@@ -2959,7 +2964,7 @@ function RANGE:_DisplayStrafePits( _unitname )
   self:F( _unitname )
 
   -- Get player unit and player name.
-  local _unit, _playername = self:_GetPlayerUnitAndName( _unitname )
+  local _unit, _playername, _multiplayer = self:_GetPlayerUnitAndName( _unitname )
 
   -- Check if we have a player.
   if _unit and _playername then
@@ -2988,7 +2993,7 @@ function RANGE:_DisplayStrafePits( _unitname )
       _text = _text .. string.format( "\n- %s: heading %03d°\n%s", _strafepit.name, heading, mycoord )
     end
 
-    self:_DisplayMessageToGroup( _unit, _text, nil, true, true )
+    self:_DisplayMessageToGroup( _unit, _text, nil, true, true, _multiplayer )
   end
 end
 
@@ -2999,7 +3004,7 @@ function RANGE:_DisplayRangeWeather( _unitname )
   self:F( _unitname )
 
   -- Get player unit and player name.
-  local unit, playername = self:_GetPlayerUnitAndName( _unitname )
+  local unit, playername, _multiplayer = self:_GetPlayerUnitAndName( _unitname )
 
   -- Check if we have a player.
   if unit and playername then
@@ -3048,7 +3053,7 @@ function RANGE:_DisplayRangeWeather( _unitname )
     end
 
     -- Send message to player group.
-    self:_DisplayMessageToGroup( unit, text, nil, true, true )
+    self:_DisplayMessageToGroup( unit, text, nil, true, true, _multiplayer )
 
     -- Debug output.
     self:T2( self.id .. text )
@@ -3666,7 +3671,8 @@ end
 -- @param #number _time Duration how long the message is displayed.
 -- @param #boolean _clear Clear up old messages.
 -- @param #boolean display If true, display message regardless of player setting "Messages Off".
-function RANGE:_DisplayMessageToGroup( _unit, _text, _time, _clear, display )
+-- @param #boolean _togroup If true, display the message to the group in any case
+function RANGE:_DisplayMessageToGroup( _unit, _text, _time, _clear, display, _togroup )
   self:F( { unit = _unit, text = _text, time = _time, clear = _clear } )
 
   -- Defaults
@@ -3694,8 +3700,13 @@ function RANGE:_DisplayMessageToGroup( _unit, _text, _time, _clear, display )
     local playermessage = self.PlayerSettings[playername].messages
 
     -- Send message to player if messages enabled and not only for the examiner.
+    
     if _gid and (playermessage == true or display) and (not self.examinerexclusive) then
-      local m = MESSAGE:New(_text,_time,nil,_clear):ToUnit(_unit)
+      if _togroup and _grp then
+        local m = MESSAGE:New(_text,_time,nil,_clear):ToGroup(_grp)
+      else
+        local m = MESSAGE:New(_text,_time,nil,_clear):ToUnit(_unit)
+      end
     end
 
     -- Send message to examiner.
@@ -3715,7 +3726,7 @@ end
 function RANGE:_SmokeBombImpactOnOff( unitname )
   self:F( unitname )
 
-  local unit, playername = self:_GetPlayerUnitAndName( unitname )
+  local unit, playername, _multiplayer = self:_GetPlayerUnitAndName( unitname )
   if unit and playername then
     local text
     if self.PlayerSettings[playername].smokebombimpact == true then
@@ -3736,7 +3747,7 @@ end
 function RANGE:_SmokeBombDelayOnOff( unitname )
   self:F( unitname )
 
-  local unit, playername = self:_GetPlayerUnitAndName( unitname )
+  local unit, playername, _multiplayer = self:_GetPlayerUnitAndName( unitname )
   if unit and playername then
     local text
     if self.PlayerSettings[playername].delaysmoke == true then
@@ -3757,7 +3768,7 @@ end
 function RANGE:_MessagesToPlayerOnOff( unitname )
   self:F( unitname )
 
-  local unit, playername = self:_GetPlayerUnitAndName( unitname )
+  local unit, playername, _multiplayer = self:_GetPlayerUnitAndName( unitname )
   if unit and playername then
     local text
     if self.PlayerSettings[playername].messages == true then
@@ -3778,7 +3789,7 @@ function RANGE:_TargetsheetOnOff( _unitname )
   self:F2( _unitname )
 
   -- Get player unit and player name.
-  local unit, playername = self:_GetPlayerUnitAndName( _unitname )
+  local unit, playername, _multiplayer = self:_GetPlayerUnitAndName( _unitname )
 
   -- Check if we have a player.
   if unit and playername then
@@ -3820,7 +3831,7 @@ end
 function RANGE:_FlareDirectHitsOnOff( unitname )
   self:F( unitname )
 
-  local unit, playername = self:_GetPlayerUnitAndName( unitname )
+  local unit, playername, _multiplayer = self:_GetPlayerUnitAndName( unitname )
   if unit and playername then
     local text
     if self.PlayerSettings[playername].flaredirecthits == true then
@@ -4039,12 +4050,14 @@ end
 -- @param #string _unitName Name of the player unit.
 -- @return Wrapper.Unit#UNIT Unit of player.
 -- @return #string Name of the player.
--- @return nil If player does not exist.
+-- @return #boolean If true, group has > 1 player in it
 function RANGE:_GetPlayerUnitAndName( _unitName )
   self:F2( _unitName )
 
   if _unitName ~= nil then
-
+    
+    local multiplayer = false
+      
     -- Get DCS unit from its name.
     local DCSunit = Unit.getByName( _unitName )
 
@@ -4056,7 +4069,11 @@ function RANGE:_GetPlayerUnitAndName( _unitName )
       self:T2( { DCSunit = DCSunit, unit = unit, playername = playername } )
       if DCSunit and unit and playername then
         self:F2(playername)
-        return unit, playername
+        local grp = unit:GetGroup()
+        if grp and grp:CountAliveUnits() > 1 then
+          multiplayer = true
+        end
+        return unit, playername, multiplayer
       end
 
     end
@@ -4064,7 +4081,7 @@ function RANGE:_GetPlayerUnitAndName( _unitName )
   end
 
   -- Return nil if we could not find a player.
-  return nil, nil
+  return nil, nil, nil
 end
 
 --- Returns a string which consists of the player name.

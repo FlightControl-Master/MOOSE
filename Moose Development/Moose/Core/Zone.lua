@@ -1387,7 +1387,7 @@ end
 -- @param #ZONE_RADIUS self
 -- @param #number inner (Optional) Minimal distance from the center of the zone in meters. Default is 0 m.
 -- @param #number outer (Optional) Maximal distance from the outer edge of the zone in meters. Default is the radius of the zone.
--- @param #table surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type!
+-- @param #table surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 100 times to find the right type!
 -- @return Core.Point#COORDINATE The random coordinate.
 function ZONE_RADIUS:GetRandomCoordinate(inner, outer, surfacetypes)
 
