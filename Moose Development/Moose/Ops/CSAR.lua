@@ -2750,12 +2750,12 @@ function CSAR:onafterLoad(From, Event, To, path, filename)
     vec3.z = tonumber(dataset[4])
     local point = COORDINATE:NewFromVec3(vec3)
     
-    local coalition = dataset[5]
-    local country = dataset[6]
+    local coalition = tonumber(dataset[5])
+    local country = tonumber(dataset[6])
     local description = dataset[7]
     local typeName = dataset[8]
     local unitName = dataset[9]
-    local freq = dataset[10]
+    local freq = tonumber(dataset[10])
     
     self:_AddCsar(coalition, country, point, typeName, unitName, playerName, freq, nil, description, nil)    
   end
