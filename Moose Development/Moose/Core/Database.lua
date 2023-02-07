@@ -88,6 +88,7 @@ DATABASE = {
   WAREHOUSES = {},
   FLIGHTGROUPS = {},
   FLIGHTCONTROLS = {},
+  PATHLINES = {},
 }
 
 local _DATABASECoalition =
@@ -244,7 +245,7 @@ function DATABASE:FindAirbase( AirbaseName )
 end
 
 
-do -- Zones
+do -- Zones and Pathlines
 
   --- Finds a @{Core.Zone} based on the zone name.
   -- @param #DATABASE self
@@ -266,8 +267,7 @@ do -- Zones
       self.ZONES[ZoneName] = Zone
     end
   end
-
-
+  
   --- Deletes a @{Core.Zone} from the DATABASE based on the zone name.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
@@ -276,6 +276,39 @@ do -- Zones
     self.ZONES[ZoneName] = nil
   end
 
+
+  --- Adds a @{Core.Pathline} based on its name in the DATABASE.
+  -- @param #DATABASE self
+  -- @param #string PathlineName The name of the pathline
+  -- @param Core.Pathline#PATHLINE Pathline The pathline.
+  function DATABASE:AddPathline( PathlineName, Pathline )
+
+    if not self.PATHLINES[PathlineName] then
+      self.PATHLINES[PathlineName]=Pathline
+    end
+  end
+  
+  --- Finds a @{Core.Pathline} by its name.
+  -- @param #DATABASE self
+  -- @param #string PathlineName The name of the Pathline.
+  -- @return Core.Pathline#PATHLINE The found PATHLINE.
+  function DATABASE:FindPathline( PathlineName )
+
+    local pathline = self.PATHLINES[PathlineName]
+    
+    return pathline
+  end  
+
+
+  --- Deletes a @{Core.Pathline} from the DATABASE based on its name.
+  -- @param #DATABASE self
+  -- @param #string PathlineName The name of the PATHLINE.
+  function DATABASE:DeletePathline( PathlineName )
+
+    self.PATHLINES[PathlineName]=nil
+    
+    return self
+  end
 
   --- Private method that registers new ZONE_BASE derived objects within the DATABASE Object.
   -- @param #DATABASE self
@@ -383,7 +416,7 @@ do -- Zones
         for objectID, objectData in pairs(layerData.objects or {}) do
           
           -- Check for polygon which has at least 4 points (we would need 3 but the origin seems to be there twice)
-          if objectData.polygonMode=="free" and objectData.points and #objectData.points>=4 then
+          if objectData.polygonMode and objectData.polygonMode=="free" and objectData.points and #objectData.points>=4 then
         
             -- Name of the zone.
             local ZoneName=objectData.name or "Unknown Drawing"
@@ -409,7 +442,7 @@ do -- Zones
             table.remove(points, #points)
             
             -- Debug output
-            self:I(string.format("Register ZONE: %s (Polygon drawing with %d verticies)", ZoneName, #points))                        
+            self:I(string.format("Register ZONE: %s (Polygon drawing with %d vertices)", ZoneName, #points))                        
             
             -- Create new polygon zone.
             local Zone=ZONE_POLYGON:NewFromPointsArray(ZoneName, points)
@@ -421,8 +454,38 @@ do -- Zones
             self.ZONENAMES[ZoneName] = ZoneName
     
             -- Add zone.
-            self:AddZone(ZoneName, Zone)          
+            self:AddZone(ZoneName, Zone)
             
+          elseif objectData.lineMode and objectData.lineMode=="segments" and objectData.points and #objectData.points>=2 then
+          
+           -- Name of the zone.
+            local Name=objectData.name or "Unknown Line Drawing"
+            
+            -- Reference point. All other points need to be translated by this.
+            local vec2={x=objectData.mapX, y=objectData.mapY}
+            
+            -- Copy points array.            
+            local points=UTILS.DeepCopy(objectData.points)
+            
+            -- Translate points.
+            for i,_point in pairs(points) do
+              local point=_point --DCS#Vec2                           
+              points[i]=UTILS.Vec2Add(point, vec2)
+            end     
+
+            
+            -- Debug output
+            self:I(string.format("Register PATHLINE: %s (Line drawing with %d points)", Name, #points))                        
+            
+            -- Create new polygon zone.
+            local Pathline=PATHLINE:NewFromVec2Array(Name, points)
+            
+            -- Set color.
+            --Zone:SetColor({1, 0, 0}, 0.15)            
+    
+            -- Add zone.
+            self:AddPathline(Name,Pathline)
+          
           end
         
         end
