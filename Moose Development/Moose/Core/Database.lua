@@ -456,7 +456,7 @@ do -- Zones and Pathlines
             -- Add zone.
             self:AddZone(ZoneName, Zone)
             
-          elseif objectData.lineMode and objectData.lineMode=="segments" and objectData.points and #objectData.points>=2 then
+          elseif objectData.lineMode and (objectData.lineMode=="segments" or objectData.lineMode=="segment" or objectData.lineMode=="free") and objectData.points and #objectData.points>=2 then
           
            -- Name of the zone.
             local Name=objectData.name or "Unknown Line Drawing"
