@@ -9,7 +9,7 @@
         "__Moose",
         "trigger",
         "coord",
-        "missionCommands",
+        "missionCommands"
     ],
     "Lua.completion.displayContext": 5,
     "Lua.runtime.version": "Lua 5.1",
