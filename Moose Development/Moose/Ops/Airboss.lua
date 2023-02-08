@@ -1819,7 +1819,7 @@ AIRBOSS.version = "1.3.0"
 function AIRBOSS:New( carriername, alias )
 
   -- Inherit everthing from FSM class.
-  local self = BASE:Inherit( self, FSM:New() ) -- #AIRBOSS
+  self = BASE:Inherit( self, FSM:New() ) -- #AIRBOSS
 
   -- Debug.
   self:F2( { carriername = carriername, alias = alias } )
@@ -8338,7 +8338,7 @@ function AIRBOSS:OnEventLand( EventData )
         local dist = coord:Get2DDistance( self:GetCoordinate() )
 
         -- Get wire
-        local wire = self:_GetWire( coord, 0 )
+        local wire = self:_GetWirePos( coord, 0 )
 
         -- Aircraft type.
         local _type = EventData.IniUnit:GetTypeName()
@@ -10180,12 +10180,34 @@ function AIRBOSS:_GetSternCoord()
   return self.sterncoord
 end
 
+--- Get wire from 
+-- @param #AIRBOSS self
+-- @param Core.Point#COORDINATE Lcoord Landing position.
+-- @return #number Trapped wire (1-4) or 99 if no wire was trapped.
+function AIRBOSS:_GetWire()
+
+  local wireArgs={}
+  wireArgs[1]=141
+  wireArgs[2]=142
+  wireArgs[3]=143
+  wireArgs[4]=144
+
+  for wire,drawArg in pairs(wireArgs) do
+    local value=self.carrier:GetDrawArgumentValue(drawArg)
+    if math.abs(value)>0.001 then
+      return wire
+    end
+  end
+
+  return 99
+end
+
 --- Get wire from landing position.
 -- @param #AIRBOSS self
 -- @param Core.Point#COORDINATE Lcoord Landing position.
 -- @param #number dc Distance correction. Shift the landing coord back if dc>0 and forward if dc<0.
 -- @return #number Trapped wire (1-4) or 99 if no wire was trapped.
-function AIRBOSS:_GetWire( Lcoord, dc )
+function AIRBOSS:_GetWirePos( Lcoord, dc )
 
   -- Final bearing (true).
   local FB = self:GetFinalBearing()
@@ -10306,7 +10328,7 @@ function AIRBOSS:_Trapped( playerData )
     end
 
     -- Get wire.
-    local wire = self:_GetWire( coord, dcorr )
+    local wire = self:_GetWirePos( coord, dcorr )
 
     -- Debug.
     local text = string.format( "Player %s _Trapped: v=%.1f km/h, s-dcorr=%.1f m ==> wire=%d (dcorr=%d)", playerData.name, v, s - dcorr, wire, dcorr )

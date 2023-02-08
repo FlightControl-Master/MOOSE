@@ -30,6 +30,7 @@ Core/Timer.lua
 Core/Goal.lua
 Core/Spot.lua
 Core/TextAndSound.lua
+Core/Pathline.lua
 Core/Condition.lua
 
 Wrapper/Object.lua

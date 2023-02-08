@@ -235,3 +235,4 @@ MooseCodeWS.code-workspace
 .gitignore
 .gitignore
 /.gitignore
+Moose Development/Moose/.vscode/settings.json
