@@ -10,7 +10,6 @@
         "trigger",
         "coord",
         "missionCommands",
-        "world"
     ],
     "Lua.completion.displayContext": 5,
     "Lua.runtime.version": "Lua 5.1",
