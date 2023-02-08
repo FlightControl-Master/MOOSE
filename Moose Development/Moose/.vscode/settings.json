@@ -1,8 +1,7 @@
 {
     "Lua.workspace.preloadFileSize": 1000,
     "Lua.diagnostics.disable": [
-        "undefined-doc-name",
-        "need-check-nil"
+        "undefined-doc-name"
     ],
     "Lua.diagnostics.globals": [
         "BASE",
@@ -10,14 +9,9 @@
         "__Moose",
         "trigger",
         "coord",
-        "missionCommands",
-        "world"
+        "missionCommands"
     ],
     "Lua.completion.displayContext": 5,
     "Lua.runtime.version": "Lua 5.1",
-    "Lua.completion.callSnippet": "Both",
-    "Lua.workspace.library": [
-        "${3rd}/lfs/library"
-    ],
-    "Lua.workspace.checkThirdParty": false
+    "Lua.completion.callSnippet": "Both"
 }
