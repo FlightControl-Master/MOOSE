@@ -3,7 +3,7 @@
 -- **Main Features:**
 --
 --    * Path from A to B
---    * Arbitrary number of segments
+--    * Arbitrary number of points
 --    * Automatically from lines drawtool
 --
 -- ===
@@ -230,26 +230,56 @@ function PATHLINE:GetCoordinats()
   return vecs
 end
 
---- Get the n-th point.
+--- Get the n-th point of the pathline.
 -- @param #PATHLINE self
--- @param #number n The n-th point.
--- @return #number Number of points.
-function PATHLINE:GetPoint3D(n)
+-- @param #number n The index of the point. Default is the first point.
+-- @return #PATHLINE.Point Point.
+function PATHLINE:GetPointFromIndex(n)
 
   local N=self:GetNumberOfPoints()
+  
+  n=n or 1
 
-  local vec3=nil
-  if n and n>=1 and n<=N then
-
-    vec3=self.point[n]
+  local point=nil --#PATHLINE.Point
+  
+  if n>=1 and n<=N then
+    point=self.point[n]
   else
     self:E(self.lid..string.format("ERROR: No point in pathline for N=%s", tostring(n)))
   end
-  
-  return vec3
+
+  return point
 end
 
+--- Get the 3D position of the n-th point.
+-- @param #PATHLINE self
+-- @param #number n The n-th point.
+-- @return DCS#VEC3 Position in 3D.
+function PATHLINE:GetPoint3DFromIndex(n)
 
+  local point=self:GetPointFromIndex(n)
+  
+  if point then
+    return point.vec3
+  end
+  
+  return nil
+end
+
+--- Get the 2D position of the n-th point.
+-- @param #PATHLINE self
+-- @param #number n The n-th point.
+-- @return DCS#VEC2 Position in 3D.
+function PATHLINE:GetPoint2DFromIndex(n)
+
+  local point=self:GetPointFromIndex(n)
+  
+  if point then
+    return point.vec2
+  end
+  
+  return nil
+end
 
 
 --- Mark points on F10 map.
