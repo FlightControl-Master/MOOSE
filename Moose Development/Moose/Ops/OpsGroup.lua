@@ -7955,7 +7955,7 @@ function OPSGROUP:_CheckCargoTransport()
       end
 
       -- Boarding finished ==> Transport cargo.
-      if gotcargo and self.cargoTransport:_CheckRequiredCargos(self.cargoTZC) and not boarding then
+      if gotcargo and self.cargoTransport:_CheckRequiredCargos(self.cargoTZC, self) and not boarding then
         self:T(self.lid.."Boarding finished ==> Loaded")
         self:LoadingDone()
       else
@@ -9329,6 +9329,8 @@ function OPSGROUP:onafterUnloading(From, Event, To)
 
   -- Set carrier status to UNLOADING.
   self:_NewCarrierStatus(OPSGROUP.CarrierStatus.UNLOADING)
+  
+  self:I(self.lid.."FF Unloading..")
 
   -- Deploy zone.
   local zone=self.cargoTZC.DisembarkZone or self.cargoTZC.DeployZone  --Core.Zone#ZONE
@@ -9341,7 +9343,6 @@ function OPSGROUP:onafterUnloading(From, Event, To)
     if cargo.opsgroup:IsLoaded(self.groupname) and not cargo.opsgroup:IsDead() then
 
       -- Disembark to carrier.
-      local needscarrier=false --#boolean
       local carrier=nil        --Ops.OpsGroup#OPSGROUP.Element
       local carrierGroup=nil   --Ops.OpsGroup#OPSGROUP
 
@@ -9354,17 +9355,21 @@ function OPSGROUP:onafterUnloading(From, Event, To)
         carrier=carrierGroup:GetElementByName(shipname)
       end
 
-      if self.cargoTZC.DisembarkCarriers and #self.cargoTZC.DisembarkCarriers>0 then
+      if self.cargoTZC.disembarkToCarriers then
+      
+        self:I(self.lid.."FF Unloading 100")
+        self:I(zone:GetName())
 
-        needscarrier=true
-
+        -- Try to find a carrier that can take the cargo.
         carrier, carrierGroup=self.cargoTransport:FindTransferCarrierForCargo(cargo.opsgroup, zone, self.cargoTZC)
 
         --TODO: max unloading time if transfer carrier does not arrive in the zone.
 
       end
 
-      if needscarrier==false or (needscarrier and carrier and carrierGroup)  then
+      if (self.cargoTZC.disembarkToCarriers and carrier and carrierGroup) or (not self.cargoTZC.disembarkToCarriers)  then
+      
+        self:I(self.lid.."FF Unloading 200")
 
         -- Cargo was delivered (somehow).
         cargo.delivered=true
@@ -9383,7 +9388,7 @@ function OPSGROUP:onafterUnloading(From, Event, To)
         elseif zone and zone:IsInstanceOf("ZONE_AIRBASE") and zone:GetAirbase():IsShip() then
 
           ---
-          -- Delivered to a ship via helo or VTOL
+          -- Delivered to a ship via helo that landed on its platform
           ---
 
           -- Issue warning.
@@ -9397,6 +9402,8 @@ function OPSGROUP:onafterUnloading(From, Event, To)
           ---
           -- Delivered to deploy zone
           ---
+
+          self:I(self.lid.."FF Unloading 400")
 
           if self.cargoTransport:GetDisembarkInUtero(self.cargoTZC) then
 

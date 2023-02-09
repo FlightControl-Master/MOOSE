@@ -172,6 +172,7 @@ OPSTRANSPORT.Status={
 -- @field #table TransportPaths Path for Transport. Each elment of the table is of type `#OPSTRANSPORT.Path`. 
 -- @field #table RequiredCargos Required cargos.
 -- @field #table DisembarkCarriers Carriers where the cargo is directly disembarked to.
+-- @field #boolean disembarkToCarriers If `true`, cargo is supposed to embark to another carrier.
 -- @field #boolean disembarkActivation If true, troops are spawned in late activated state when disembarked from carrier.
 -- @field #boolean disembarkInUtero If true, troops are disembarked "in utero".
 -- @field #boolean assets Cargo assets.
@@ -722,7 +723,7 @@ function OPSTRANSPORT:GetDisembarkActivation(TransportZoneCombo)
   return TransportZoneCombo.disembarkActivation
 end
 
---- Set transfer carrier(s). These are carrier groups, where the cargo is directly loaded into when disembarked.
+--- Set/add transfer carrier(s). These are carrier groups, where the cargo is directly loaded into when disembarked.
 -- @param #OPSTRANSPORT self
 -- @param Core.Set#SET_GROUP Carriers Carrier set. Can also be passed as a #GROUP, #OPSGROUP or #SET_OPSGROUP object.
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
@@ -734,6 +735,9 @@ function OPSTRANSPORT:SetDisembarkCarriers(Carriers, TransportZoneCombo)
   
   -- Use default TZC if no transport zone combo is provided.
   TransportZoneCombo=TransportZoneCombo or self.tzcDefault
+  
+  -- Set that we want to disembark to carriers.
+  TransportZoneCombo.disembarkToCarriers=true
 
   if Carriers:IsInstanceOf("GROUP") or Carriers:IsInstanceOf("OPSGROUP") then
   
@@ -1928,31 +1932,61 @@ end
 --- Check if all required cargos are loaded.
 -- @param #OPSTRANSPORT self
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #boolean If true, all required cargos are loaded or there is no required cargo.
-function OPSTRANSPORT:_CheckRequiredCargos(TransportZoneCombo)
+-- @param Ops.OpsGroup#OPSGROUP CarrierGroup The carrier group asking.
+-- @return #boolean If true, all required cargos are loaded or there is no required cargo or asking carrier is full.
+function OPSTRANSPORT:_CheckRequiredCargos(TransportZoneCombo, CarrierGroup)
 
   -- Use default TZC if no transport zone combo is provided.
   TransportZoneCombo=TransportZoneCombo or self.tzcDefault
   
-  local requiredCargos=TransportZoneCombo.RequiredCargos
+  -- Use input or take all cargos.
+  local requiredCargos=TransportZoneCombo.RequiredCargos or TransportZoneCombo.Cargos
   
   if requiredCargos==nil or #requiredCargos==0 then
     return true
   end
   
+  -- All carrier names.
   local carrierNames=self:_GetCarrierNames()
   
-  local gotit=true
+  -- Cargo groups not loaded yet.
+  local weightmin=nil
+  
   for _,_cargo in pairs(requiredCargos) do
     local cargo=_cargo --Ops.OpsGroup#OPSGROUP
     
+    -- Is this cargo loaded into any carrier?
+    local isLoaded=cargo:IsLoaded(carrierNames)
     
-    if not cargo:IsLoaded(carrierNames) then
-      return false
+    if not isLoaded then
+      local weight=cargo:GetWeightTotal()
+      
+      if weightmin==nil or weight<weightmin then
+        weightmin=weight
+      end
     end
     
   end
   
+  if weightmin then
+  
+    -- Free space of carrier.
+    local freeSpace=CarrierGroup:GetFreeCargobayMax(true)
+    
+    -- Debug info.
+    self:T(self.lid..string.format("Check required cargos for carrier=%s free=%.1f, weight=%.1f", CarrierGroup:GetName(), freeSpace, weightmin))
+    
+    if weightmin<freeSpace then
+      -- This group can still take cargo.
+      return false    
+    else
+      -- This group is full! Even if there is cargo left, we cannot transport it.
+      return true
+    end
+    
+  end
+  
+  -- No cargo left.
   return true
 end
 
@@ -2021,6 +2055,7 @@ function OPSTRANSPORT:FindTransferCarrierForCargo(CargoGroup, Zone, TransportZon
     end
   end
 
+  self:T2(self.lid.."Could NOT find any carrier that is ALIVE and LOADING (or DELOYAIRBASE))!")
   return nil, nil
 end
 
