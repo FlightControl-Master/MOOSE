@@ -1,4 +1,4 @@
--- This routine is called from the LDT environment to create the Moose.lua file stub for use in .miz files.
+--- This routine is called from the LDT environment to create the Moose.lua file stub for use in .miz files.
 
 local MooseDynamicStatic = arg[1]
 local MooseCommitHash = arg[2]
