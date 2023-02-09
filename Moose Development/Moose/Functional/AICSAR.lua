@@ -11,6 +11,7 @@
 --    * Dedicated MASH zone
 --    * Some FSM functions to include in your mission scripts
 --    * Limit number of available helos
+--    * SRS voice output via TTS or soundfiles
 --
 -- ===
 --
@@ -20,8 +21,8 @@
 --       
 -- ===
 -- 
--- ### Author: **applevangelist**
--- Last Update April 2022
+-- ### Author: **Applevangelist**
+-- Last Update February 2022
 --
 -- ===
 -- @module Functional.AICSAR
@@ -87,10 +88,11 @@
 --            my_aicsar.rescuezoneradius -- landing zone around downed pilot. Defaults to 200m
 --            my_aicsar.autoonoff -- stop operations when human helicopter pilots are around. Defaults to true.
 --            my_aicsar.verbose -- text messages to own coalition about ongoing operations. Defaults to true.
---            my_aicsarlimithelos -- limit available number of helos going on mission (defaults to true)
+--            my_aicsar.limithelos -- limit available number of helos going on mission (defaults to true)
 --            my_aicsar.helonumber -- number of helos available (default: 3)
+--            my_aicsar.verbose -- boolean, set to `true`for message output on-screen
 -- 
--- ## Radio options
+-- ## Radio output options
 -- 
 -- Radio messages, soundfile names and (for SRS) lengths are defined in three enumerators, so you can customize, localize messages and soundfiles to your liking:
 -- 
@@ -100,7 +102,7 @@
 --              EN = {
 --              INITIALOK = "Roger, Pilot, we hear you. Stay where you are, a helo is on the way!",
 --              INITIALNOTOK = "Sorry, Pilot. You're behind maximum operational distance! Good Luck!",
---              PILOTDOWN = "Pilot down at ", -- note that this will be appended with the position
+--              PILOTDOWN = "Mayday, mayday, mayday! Pilot down at ", -- note that this will be appended with the position in MGRS
 --              PILOTKIA = "Pilot KIA!",
 --              HELODOWN = "CSAR Helo Down!",
 --              PILOTRESCUED = "Pilot rescued!",
@@ -136,8 +138,31 @@
 --              },
 --            }
 --
+-- ## Radio output via SRS and Text-To-Speech (TTS)
+-- 
+-- Radio output can be done via SRS and Text-To-Speech. No extra sound files required! 
+-- [Initially, Have a look at the guide on setting up SRS TTS for Moose](https://github.com/FlightControl-Master/MOOSE_GUIDES/blob/master/documents/Moose%20TTS%20Setup%20Guide.pdf).
+-- The text from the `AICSAR.Messages` table above is converted on the fly to an .ogg-file, which is then played back via SRS on the selected frequency and mdulation.
+-- Hint - the small black window popping up shortly is visible in Single-Player only. 
+-- 
+-- To set up AICSAR for SRS TTS output, add e.g. the following to your script:
+--              
+--              -- setup for google TTS, radio 243 AM, SRS server port 5002 with a google standard-quality voice (google cloud account required)
+--              my_aicsar:SetSRSTTSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone",243,radio.modulation.AM,5002,MSRS.Voices.Google.Standard.en_US_Standard_D,"en-US","female","C:\\Program Files\\DCS-SimpleRadio-Standalone\\google.json")
+--              
+--              -- alternatively for MS Desktop TTS (voices need to be installed locally first!)
+--              my_aicsar:SetSRSTTSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone",243,radio.modulation.AM,5002,MSRS.Voices.Microsoft.Hazel,"en-GB","female")
+--              
+--              -- define a different voice for the downed pilot(s)
+--              my_aicsar:SetPilotTTSVoice(MSRS.Voices.Google.Standard.en_AU_Standard_D,"en-AU","male")
+--              
+--              -- define another voice for the operator
+--              my_aicsar:SetOperatorTTSVoice(MSRS.Voices.Google.Standard.en_GB_Standard_A,"en-GB","female")
+--
+-- ## Radio output via preproduced soundfiles
+--
 -- The easiest way to add a soundfile to your mission is to use the "Sound to..." trigger in the mission editor. This will effectively 
--- save your sound file inside of the .miz mission file.
+-- save your sound file inside of the .miz mission file. [Example soundfiles are located on github](https://github.com/FlightControl-Master/MOOSE_SOUND/tree/master/AICSAR)
 -- 
 -- To customize or localize your texts and sounds, you can take e.g. the following approach to add a German language version:
 -- 
@@ -422,7 +447,7 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param Ops.FlightGroup#FLIGHTGROUP Helo
-  -- @param Ops.OpsGroup#OPSGROUP OpsGroup 
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroup  
 
   --- On after "PilotKIA" event.
   -- @function [parent=#AICSAR] OnAfterPilotKIA
@@ -1026,7 +1051,11 @@ function AICSAR:onafterHeloDown(From, Event, To, Helo, Index)
   elseif self.DCSRadio then
     self:DCSRadioBroadcast(Soundfile,Soundlength,text)
   elseif self.SRSTTSRadio then
+    if self.SRSOperatorVoice then
+      self.SRSQ:NewTransmission(text,nil,self.SRSOperator,nil,1)
+    else
       self.SRSQ:NewTransmission(text,nil,self.SRS,nil,1)
+    end
   end
   local findex = 0
   local fhname = Helo:GetName()
