@@ -2988,4 +2988,3 @@ do -- DETECTION_AREAS
   end
 
 end
-
