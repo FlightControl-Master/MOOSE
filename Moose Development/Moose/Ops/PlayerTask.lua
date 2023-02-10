@@ -96,7 +96,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.12"
+PLAYERTASK.version="0.1.14"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -3520,6 +3520,23 @@ function PLAYERTASKCONTROLLER:AddAgent(Recce)
   self:T(self.lid.."AddAgent")
   if self.Intel then
     self.Intel:AddAgent(Recce)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- [User] Add agent SET_GROUP to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Set#SET_GROUP RecceSet SET_GROUP of agents.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:AddAgentSet(RecceSet)
+  self:T(self.lid.."AddAgentSet")
+  if self.Intel then
+    local Set = RecceSet:GetAliveSet()
+    for _,_Recce in pairs(Set) do
+      self.Intel:AddAgent(_Recce)
+    end
   else
     self:E(self.lid.."*****NO detection has been set up (yet)!")
   end
