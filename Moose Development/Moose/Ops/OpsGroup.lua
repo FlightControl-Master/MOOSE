@@ -496,6 +496,8 @@ OPSGROUP.CargoStatus={
 -- @field #OPSGROUP opsgroup The cargo opsgroup.
 -- @field #boolean delivered If `true`, group was delivered.
 -- @field #boolean disembarkActivation If `true`, group is activated. If `false`, group is late activated.
+-- @field Core.Zone#ZONE disembarkZone Zone where this group is disembarked to.
+-- @field Core.Set#SET_OPSGROUP disembarkCarriers Carriers where this group is directly disembared to.
 -- @field #string status Status of the cargo group. Not used yet.
 
 --- OpsGroup version.
@@ -5311,7 +5313,8 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
     -- IMMOBILE Group
     ---
 
-    env.info(self.lid.."FF Immobile GROUP")
+    -- Debug info.
+    self:T(self.lid.."Immobile GROUP!")
 
     -- Add waypoint task. UpdateRoute is called inside.
     local Clock=Mission.Tpush and UTILS.SecondsToClock(Mission.Tpush) or 5
@@ -9330,7 +9333,7 @@ function OPSGROUP:onafterUnloading(From, Event, To)
   -- Set carrier status to UNLOADING.
   self:_NewCarrierStatus(OPSGROUP.CarrierStatus.UNLOADING)
   
-  self:I(self.lid.."FF Unloading..")
+  self:T(self.lid.."Unloading..")
 
   -- Deploy zone.
   local zone=self.cargoTZC.DisembarkZone or self.cargoTZC.DeployZone  --Core.Zone#ZONE
@@ -9345,6 +9348,14 @@ function OPSGROUP:onafterUnloading(From, Event, To)
       -- Disembark to carrier.
       local carrier=nil        --Ops.OpsGroup#OPSGROUP.Element
       local carrierGroup=nil   --Ops.OpsGroup#OPSGROUP
+      local disembarkToCarriers=cargo.disembarkCarriers~=nil or self.cargoTZC.disembarkToCarriers
+      
+      -- Set specifc zone for this cargo.
+      if cargo.disembarkZone then
+        zone=cargo.disembarkZone
+      end
+      
+      self:T(self.lid..string.format("Unloading cargo %s to zone %s", cargo.opsgroup:GetName(), zone and zone:GetName() or "No Zone Found!"))
 
       -- Try to get the OPSGROUP if deploy zone is a ship.
       if zone and zone:IsInstanceOf("ZONE_AIRBASE") and zone:GetAirbase():IsShip() then
@@ -9355,21 +9366,22 @@ function OPSGROUP:onafterUnloading(From, Event, To)
         carrier=carrierGroup:GetElementByName(shipname)
       end
 
-      if self.cargoTZC.disembarkToCarriers then
+      if disembarkToCarriers then
       
-        self:I(self.lid.."FF Unloading 100")
-        self:I(zone:GetName())
+        -- Debug info.
+        self:T(self.lid..string.format("Trying to find disembark carriers in zone %s", zone:GetName()))
+        
+        -- Disembarkcarriers.
+        local disembarkCarriers=cargo.disembarkCarriers or self.cargoTZC.DisembarkCarriers
 
         -- Try to find a carrier that can take the cargo.
-        carrier, carrierGroup=self.cargoTransport:FindTransferCarrierForCargo(cargo.opsgroup, zone, self.cargoTZC)
+        carrier, carrierGroup=self.cargoTransport:FindTransferCarrierForCargo(cargo.opsgroup, zone, disembarkCarriers, self.cargoTZC.DeployAirbase)
 
         --TODO: max unloading time if transfer carrier does not arrive in the zone.
 
       end
 
-      if (self.cargoTZC.disembarkToCarriers and carrier and carrierGroup) or (not self.cargoTZC.disembarkToCarriers)  then
-      
-        self:I(self.lid.."FF Unloading 200")
+      if (disembarkToCarriers and carrier and carrierGroup) or (not disembarkToCarriers)  then
 
         -- Cargo was delivered (somehow).
         cargo.delivered=true
@@ -9403,8 +9415,6 @@ function OPSGROUP:onafterUnloading(From, Event, To)
           -- Delivered to deploy zone
           ---
 
-          self:I(self.lid.."FF Unloading 400")
-
           if self.cargoTransport:GetDisembarkInUtero(self.cargoTZC) then
 
             -- Unload but keep "in utero" (no coordinate provided).
@@ -9413,7 +9423,7 @@ function OPSGROUP:onafterUnloading(From, Event, To)
           else
 
             -- Get disembark zone of this TZC.
-            local DisembarkZone=self.cargoTransport:GetDisembarkZone(self.cargoTZC)
+            local DisembarkZone=cargo.disembarkZone or self.cargoTransport:GetDisembarkZone(self.cargoTZC)
 
             local Coordinate=nil
 
@@ -9436,7 +9446,7 @@ function OPSGROUP:onafterUnloading(From, Event, To)
                 Coordinate=zoneCarrier:GetRandomCoordinate()
 
               else
-                env.info(string.format("FF ERROR carrier element nil!"))
+                self:E(self.lid..string.format("ERROR carrier element nil!"))
               end
 
             end
