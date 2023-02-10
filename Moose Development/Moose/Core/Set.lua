@@ -903,7 +903,7 @@ end
 
 do -- SET_GROUP
 
-  --- @type SET_GROUP
+  --- @type SET_GROUP #SET_GROUP
   -- @extends Core.Set#SET_BASE
 
   --- Mission designers can use the @{Core.Set#SET_GROUP} class to build sets of groups belonging to certain:
