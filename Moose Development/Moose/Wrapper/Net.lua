@@ -246,6 +246,15 @@ function NET:ForceSlot(Client,SideID,SlotID)
   end
 end
 
+--- Force a client back to spectators.
+-- @param #NET self
+-- @param Wrapper.Client#CLIENT Client The client
+-- @return #boolean Succes
+function NET:ReturnToSpectators(Client)
+  local outcome = self:ForceSlot(Client,0)
+  return outcome 
+end
+
 --- Converts a lua value to a JSON string.
 -- @param #string Lua Anything lua
 -- @return #table Json
