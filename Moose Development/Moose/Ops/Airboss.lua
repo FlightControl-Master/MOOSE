@@ -10180,6 +10180,28 @@ function AIRBOSS:_GetSternCoord()
   return self.sterncoord
 end
 
+--- Get wire from draw argument.
+-- @param #AIRBOSS self
+-- @param Core.Point#COORDINATE Lcoord Landing position.
+-- @return #number Trapped wire (1-4) or 99 if no wire was trapped.
+function AIRBOSS:_GetWireFromDrawArg()
+
+  local wireArgs={}
+  wireArgs[1]=141
+  wireArgs[2]=142
+  wireArgs[3]=143
+  wireArgs[4]=144
+
+  for wire,drawArg in pairs(wireArgs) do
+    local value=self.carrier:GetDrawArgumentValue(drawArg)
+    if math.abs(value)>0.001 then
+      return wire
+    end
+  end
+
+  return 99
+end
+
 --- Get wire from landing position.
 -- @param #AIRBOSS self
 -- @param Core.Point#COORDINATE Lcoord Landing position.

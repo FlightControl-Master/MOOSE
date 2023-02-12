@@ -34,6 +34,7 @@ Core/MarkerOps_Base.lua
 Core/Astar.lua
 Core/Condition.lua
 Core/TextAndSound.lua
+Core/Pathline.lua
 
 Wrapper/Object.lua
 Wrapper/Identifiable.lua
