@@ -1605,6 +1605,31 @@ function OPSGROUP:SetReturnOnOutOfAmmo()
   return self
 end
 
+--- Set max weight that each unit of the group can handle.
+-- @param #OPSGROUP self
+-- @param #number Weight Max weight of cargo in kg the unit can carry.
+-- @param #string UnitName Name of the Unit. If not given, weight is set for all units of the group.
+-- @return #OPSGROUP self
+function OPSGROUP:SetCargoBayLimit(Weight, UnitName)
+
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    
+    if UnitName==nil or UnitName==element.name then
+    
+      element.weightMaxCargo=Weight
+      
+      if element.unit then
+        element.unit:SetCargoBayWeightLimit(Weight)
+      end
+      
+    end
+  
+  end
+
+  return self
+end
+
 --- Check if an element of the group has line of sight to a coordinate.
 -- @param #OPSGROUP self
 -- @param Core.Point#COORDINATE Coordinate The position to which we check the LoS. Can also be a DCS#Vec3.
