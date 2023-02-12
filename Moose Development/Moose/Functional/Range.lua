@@ -3474,17 +3474,18 @@ function RANGE:_GetBombTargetCoordinate( target )
   local coord = nil -- Core.Point#COORDINATE
 
   if target.type == RANGE.TargetType.UNIT then
-
-    if not target.move then
-      -- Target should not move.
-      coord = target.coordinate
+  
+    -- Check if alive
+    if target.target and target.target:IsAlive() then
+      -- Get current position.
+      coord = target.target:GetCoordinate()
+      -- Save as last known position in case target dies.
+      target.coordinate=coord      
     else
-      -- Moving target. Check if alive and get current position
-      if target.target and target.target:IsAlive() then
-        coord = target.target:GetCoordinate()
-      end
+      -- Use stored position.
+      coord = target.coordinate
     end
-
+      
   elseif target.type == RANGE.TargetType.STATIC then
 
     -- Static targets dont move.
