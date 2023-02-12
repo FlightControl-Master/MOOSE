@@ -23,17 +23,36 @@
 -- @field #table points List of 3D points defining the path.
 -- @extends Core.Base#BASE
 
---- *When nothing goes right... Go left!*
+--- *The shortest distance between two points is a straight line.* -- Archimedes
 --
 -- ===
 --
 -- # The PATHLINE Concept
 -- 
--- List of points defining a path from A to B.
+-- List of points defining a path from A to B. The pathline can consist of multiple points. Each point holds the information of its position, the surface type, the land height
+-- and the water depth (if over sea).
 -- 
 -- Line drawings created in the mission editor are automatically registered as pathlines and stored in the MOOSE database.
 -- They can be accessed with the @{#PATHLINE.FindByName) function.
 -- 
+-- # Constructor
+-- 
+-- The @{PATHLINE.New) function creates a new PATHLINE object. This does not hold any points. Points can be added with the @{#PATHLINE.AddPointFromVec2} and @{#PATHLINE.AddPointFromVec3}
+-- 
+-- For a given table of 2D or 3D positions, a new PATHLINE object can be created with the @{#PATHLINE.NewFromVec2Array} or @{#PATHLINE.NewFromVec3Array}, respectively.
+-- 
+-- # Line Drawings
+-- 
+-- The most convenient way to create a pathline is the draw panel feature in the DCS mission editor. You can select "Line" and then "Segments", "Segment" or "Free" to draw your lines.
+-- These line drawings are then automatically added to the MOOSE database as PATHLINE objects and can be retrieved with the @{#PATHLINE.FindByName) function, where the name is the one
+-- you specify in the draw panel.
+-- 
+-- # Mark on F10 map
+-- 
+-- The ponints of the PATHLINE can be marked on the F10 map with the @{#PATHLINE.MarkPoints}(`true`) function. The mark points contain information of the surface type, land height and 
+-- water depth.
+-- 
+-- To remove the marks, use @{#PATHLINE.MarkPoints}(`false`).
 --
 -- @field #PATHLINE
 PATHLINE = {
@@ -54,7 +73,7 @@ PATHLINE = {
 
 --- PATHLINE class version.
 -- @field #string version
-PATHLINE.version="0.0.1"
+PATHLINE.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list

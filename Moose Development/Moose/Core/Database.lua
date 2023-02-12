@@ -417,10 +417,14 @@ do -- Zones and Pathlines
         for objectID, objectData in pairs(layerData.objects or {}) do
 
           -- Check for polygon which has at least 4 points (we would need 3 but the origin seems to be there twice)
-          if objectData.polygonMode and objectData.polygonMode=="free" and objectData.points and #objectData.points>=4 then
+          if objectData.polygonMode and (objectData.polygonMode=="free") and objectData.points and #objectData.points>=4 then
+
+            ---
+            -- Drawing: Polygon free
+            ---
 
             -- Name of the zone.
-            local ZoneName=objectData.name or "Unknown Drawing"
+            local ZoneName=objectData.name or "Unknown free Polygon Drawing"
 
             -- Reference point. All other points need to be translated by this.
             local vec2={x=objectData.mapX, y=objectData.mapY}
@@ -443,7 +447,48 @@ do -- Zones and Pathlines
             table.remove(points, #points)
 
             -- Debug output
-            self:I(string.format("Register ZONE: %s (Polygon drawing with %d vertices)", ZoneName, #points))
+            self:I(string.format("Register ZONE: %s (Polygon (free) drawing with %d vertices)", ZoneName, #points))
+
+            -- Create new polygon zone.
+            local Zone=ZONE_POLYGON:NewFromPointsArray(ZoneName, points)
+
+            -- Set color.
+            Zone:SetColor({1, 0, 0}, 0.15)
+
+            -- Store in DB.
+            self.ZONENAMES[ZoneName] = ZoneName
+
+            -- Add zone.
+            self:AddZone(ZoneName, Zone)
+
+          -- Check for polygon which has at least 4 points (we would need 3 but the origin seems to be there twice)
+          elseif objectData.polygonMode and objectData.polygonMode=="rect" then
+
+            ---
+            -- Drawing: Polygon rect
+            ---
+
+            -- Name of the zone.
+            local ZoneName=objectData.name or "Unknown rect Polygon Drawing"
+
+            -- Reference point (center of the rectangle).
+            local vec2={x=objectData.mapX, y=objectData.mapY}
+
+            -- For a rectangular polygon drawing, we have the width (y) and height (x).
+            local w=objectData.width
+            local h=objectData.height
+
+            -- Create points from center using with and height (width for y and height for x is a bit confusing, but this is how ED implemented it).
+            local points={}
+            points[1]={x=vec2.x-h/2, y=vec2.y+w/2} --Upper left
+            points[2]={x=vec2.x+h/2, y=vec2.y+w/2} --Upper right
+            points[3]={x=vec2.x+h/2, y=vec2.y-w/2} --Lower right
+            points[4]={x=vec2.x-h/2, y=vec2.y-w/2} --Lower left
+
+            --local coord=COORDINATE:NewFromVec2(vec2):MarkToAll("MapX, MapY")
+
+            -- Debug output
+            self:I(string.format("Register ZONE: %s (Polygon (rect) drawing with %d vertices)", ZoneName, #points))
 
             -- Create new polygon zone.
             local Zone=ZONE_POLYGON:NewFromPointsArray(ZoneName, points)
@@ -459,6 +504,10 @@ do -- Zones and Pathlines
 
           elseif objectData.lineMode and (objectData.lineMode=="segments" or objectData.lineMode=="segment" or objectData.lineMode=="free") and objectData.points and #objectData.points>=2 then
 
+            ---
+            -- Drawing: Line (segments, segment or free)
+            ---
+
            -- Name of the zone.
             local Name=objectData.name or "Unknown Line Drawing"
 
@@ -473,7 +522,6 @@ do -- Zones and Pathlines
               local point=_point --DCS#Vec2
               points[i]=UTILS.Vec2Add(point, vec2)
             end
-
 
             -- Debug output
             self:I(string.format("Register PATHLINE: %s (Line drawing with %d points)", Name, #points))
