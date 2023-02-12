@@ -3147,10 +3147,18 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
   -- Distance factor.
   local distance=0
   if TargetVec2 and OrigVec2 then
+  
     -- Distance in NM.
     distance=UTILS.MetersToNM(UTILS.VecDist2D(OrigVec2, TargetVec2))
-    -- Round: 55 NM ==> 5.5 ==> 6, 63 NM ==> 6.3 ==> 6
-    distance=UTILS.Round(distance/10, 0)
+    
+    if asset.category==Group.Category.AIRPLANE or asset.category==Group.Category.HELICOPTER then
+      -- Round: 55 NM ==> 5.5 ==> 6, 63 NM ==> 6.3 ==> 6
+      distance=UTILS.Round(distance/10, 0)
+    else
+      -- For ground units the distance is a more important factor
+      distance=UTILS.Round(distance, 0)
+    end
+    
   end
   
   -- Reduce score for legions that are futher away.
