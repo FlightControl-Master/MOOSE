@@ -31,6 +31,7 @@ Core/Goal.lua
 Core/Spot.lua
 Core/TextAndSound.lua
 Core/Condition.lua
+Core/Pathline.lua
 
 Wrapper/Object.lua
 Wrapper/Identifiable.lua
@@ -44,6 +45,7 @@ Wrapper/Airbase.lua
 Wrapper/Scenery.lua
 Wrapper/Marker.lua
 Wrapper/Weapon.lua
+Wrapper/Net.lua
 
 Cargo/Cargo.lua
 Cargo/CargoUnit.lua

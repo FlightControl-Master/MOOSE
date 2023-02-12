@@ -474,7 +474,7 @@ do -- DETECTION_BASE
     -- @param #string From The From State string.
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
-    -- @param #table DetectedItem The DetectedItem.
+    -- @param #DetectedItem DetectedItem The DetectedItem data structure.
 
     self:AddTransition( "*", "Stop", "Stopped" )
 
@@ -2478,14 +2478,14 @@ do -- DETECTION_AREAS
   --- DETECTION_AREAS constructor.
   -- @param #DETECTION_AREAS self
   -- @param Core.Set#SET_GROUP DetectionSetGroup The @{Core.Set} of GROUPs in the Forward Air Controller role.
-  -- @param DCS#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
+  -- @param #number DetectionZoneRange The range in meters within which targets are grouped upon the first detected target. Default 5000m.
   -- @return #DETECTION_AREAS
   function DETECTION_AREAS:New( DetectionSetGroup, DetectionZoneRange )
 
     -- Inherits from DETECTION_BASE
     local self = BASE:Inherit( self, DETECTION_BASE:New( DetectionSetGroup ) )
 
-    self.DetectionZoneRange = DetectionZoneRange
+    self.DetectionZoneRange = DetectionZoneRange or 5000
 
     self._SmokeDetectedUnits = false
     self._FlareDetectedUnits = false
@@ -2988,4 +2988,3 @@ do -- DETECTION_AREAS
   end
 
 end
-

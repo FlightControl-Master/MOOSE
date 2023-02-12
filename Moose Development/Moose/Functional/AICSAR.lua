@@ -11,6 +11,7 @@
 --    * Dedicated MASH zone
 --    * Some FSM functions to include in your mission scripts
 --    * Limit number of available helos
+--    * SRS voice output via TTS or soundfiles
 --
 -- ===
 --
@@ -20,8 +21,8 @@
 --       
 -- ===
 -- 
--- ### Author: **applevangelist**
--- Last Update April 2022
+-- ### Author: **Applevangelist**
+-- Last Update February 2022
 --
 -- ===
 -- @module Functional.AICSAR
@@ -87,10 +88,11 @@
 --            my_aicsar.rescuezoneradius -- landing zone around downed pilot. Defaults to 200m
 --            my_aicsar.autoonoff -- stop operations when human helicopter pilots are around. Defaults to true.
 --            my_aicsar.verbose -- text messages to own coalition about ongoing operations. Defaults to true.
---            my_aicsarlimithelos -- limit available number of helos going on mission (defaults to true)
+--            my_aicsar.limithelos -- limit available number of helos going on mission (defaults to true)
 --            my_aicsar.helonumber -- number of helos available (default: 3)
+--            my_aicsar.verbose -- boolean, set to `true`for message output on-screen
 -- 
--- ## Radio options
+-- ## Radio output options
 -- 
 -- Radio messages, soundfile names and (for SRS) lengths are defined in three enumerators, so you can customize, localize messages and soundfiles to your liking:
 -- 
@@ -100,7 +102,7 @@
 --              EN = {
 --              INITIALOK = "Roger, Pilot, we hear you. Stay where you are, a helo is on the way!",
 --              INITIALNOTOK = "Sorry, Pilot. You're behind maximum operational distance! Good Luck!",
---              PILOTDOWN = "Pilot down at ", -- note that this will be appended with the position
+--              PILOTDOWN = "Mayday, mayday, mayday! Pilot down at ", -- note that this will be appended with the position in MGRS
 --              PILOTKIA = "Pilot KIA!",
 --              HELODOWN = "CSAR Helo Down!",
 --              PILOTRESCUED = "Pilot rescued!",
@@ -136,8 +138,31 @@
 --              },
 --            }
 --
+-- ## Radio output via SRS and Text-To-Speech (TTS)
+-- 
+-- Radio output can be done via SRS and Text-To-Speech. No extra sound files required! 
+-- [Initially, Have a look at the guide on setting up SRS TTS for Moose](https://github.com/FlightControl-Master/MOOSE_GUIDES/blob/master/documents/Moose%20TTS%20Setup%20Guide.pdf).
+-- The text from the `AICSAR.Messages` table above is converted on the fly to an .ogg-file, which is then played back via SRS on the selected frequency and mdulation.
+-- Hint - the small black window popping up shortly is visible in Single-Player only. 
+-- 
+-- To set up AICSAR for SRS TTS output, add e.g. the following to your script:
+--              
+--              -- setup for google TTS, radio 243 AM, SRS server port 5002 with a google standard-quality voice (google cloud account required)
+--              my_aicsar:SetSRSTTSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone",243,radio.modulation.AM,5002,MSRS.Voices.Google.Standard.en_US_Standard_D,"en-US","female","C:\\Program Files\\DCS-SimpleRadio-Standalone\\google.json")
+--              
+--              -- alternatively for MS Desktop TTS (voices need to be installed locally first!)
+--              my_aicsar:SetSRSTTSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone",243,radio.modulation.AM,5002,MSRS.Voices.Microsoft.Hazel,"en-GB","female")
+--              
+--              -- define a different voice for the downed pilot(s)
+--              my_aicsar:SetPilotTTSVoice(MSRS.Voices.Google.Standard.en_AU_Standard_D,"en-AU","male")
+--              
+--              -- define another voice for the operator
+--              my_aicsar:SetOperatorTTSVoice(MSRS.Voices.Google.Standard.en_GB_Standard_A,"en-GB","female")
+--
+-- ## Radio output via preproduced soundfiles
+--
 -- The easiest way to add a soundfile to your mission is to use the "Sound to..." trigger in the mission editor. This will effectively 
--- save your sound file inside of the .miz mission file.
+-- save your sound file inside of the .miz mission file. [Example soundfiles are located on github](https://github.com/FlightControl-Master/MOOSE_SOUND/tree/master/AICSAR)
 -- 
 -- To customize or localize your texts and sounds, you can take e.g. the following approach to add a German language version:
 -- 
@@ -147,7 +172,7 @@
 --           
 -- Switch on radio transmissions via **either** SRS **or** "normal" DCS radio e.g. like so:
 -- 
---          my_aicsar:SetSRSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone",270,radio.modulation.AM,5002)
+--          my_aicsar:SetSRSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone",270,radio.modulation.AM,nil,5002)
 --         
 -- or         
 --          
@@ -161,7 +186,7 @@
 -- @field #AICSAR
 AICSAR = {
   ClassName = "AICSAR",
-  version = "0.0.8",
+  version = "0.1.9",
   lid = "",
   coalition = coalition.side.BLUE,
   template = "",
@@ -173,7 +198,7 @@ AICSAR = {
   pilotqueue = {},
   pilotindex = 0,
   helos = {},
-  verbose = true,
+  verbose = false,
   rescuezoneradius = 200,
   rescued = {},
   autoonoff = true,
@@ -194,6 +219,13 @@ AICSAR = {
   helonumber = 3,
   gettext = nil,
   locale ="en", -- default text language
+  SRSTTSRadio = false,
+  SRSGoogle = false,
+  SRSQ = nil,
+  SRSPilot = nil,
+  SRSPilotVoice = false,
+  SRSOperator = nil,
+  SRSOperatorVoice = false,
 }
 
 -- TODO Messages
@@ -203,7 +235,7 @@ AICSAR.Messages = {
   EN = {
   INITIALOK = "Roger, Pilot, we hear you. Stay where you are, a helo is on the way!",
   INITIALNOTOK = "Sorry, Pilot. You're behind maximum operational distance! Good Luck!",
-  PILOTDOWN = "Pilot down at ",
+  PILOTDOWN = "Mayday, mayday, mayday! Pilot down at ",
   PILOTKIA = "Pilot KIA!",
   HELODOWN = "CSAR Helo Down!",
   PILOTRESCUED = "Pilot rescued!",
@@ -212,7 +244,7 @@ AICSAR.Messages = {
   DE = {
   INITIALOK = "Copy, Pilot, wir hören Sie. Bleiben Sie, wo Sie sind!\nEin Hubschrauber sammelt Sie auf!",
   INITIALNOTOK = "Verstehe, Pilot. Sie sind zu weit weg von uns.\nViel Glück!",
-  PILOTDOWN = "Pilot abgestürzt: ",
+  PILOTDOWN = "Mayday, mayday, mayday! Pilot abgestürzt: ",
   PILOTKIA = "Pilot gefallen!",
   HELODOWN = "CSAR Hubschrauber verloren!",
   PILOTRESCUED = "Pilot gerettet!",
@@ -309,6 +341,9 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   -- Radio
   self.SRS = nil
   self.SRSRadio = false
+  self.SRSTTSRadio = false
+  self.SRSGoogle = false
+  self.SRSQ = nil
   self.SRSFrequency = 243
   self.SRSPath = "\\"
   self.SRSModulation = radio.modulation.AM
@@ -343,6 +378,7 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   self:AddTransition("*",             "Status",             "*")           -- CSAR status update.
   self:AddTransition("*",             "PilotDown",          "*")           -- Pilot down
   self:AddTransition("*",             "PilotPickedUp",      "*")           -- Pilot in helo
+  self:AddTransition("*",             "PilotUnloaded",      "*")           -- Pilot Unloaded from helo
   self:AddTransition("*",             "PilotRescued",       "*")           -- Pilot Rescued
   self:AddTransition("*",             "PilotKIA",           "*")           -- Pilot dead
   self:AddTransition("*",             "HeloDown",           "*")           -- Helo dead
@@ -404,6 +440,15 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   -- @param #string Event Event.
   -- @param #string To To state. 
 
+  --- On after "PilotUnloaded" event.
+  -- @function [parent=#AICSAR] OnAfterPilotUnloaded
+  -- @param #AICSAR self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.FlightGroup#FLIGHTGROUP Helo
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroup  
+
   --- On after "PilotKIA" event.
   -- @function [parent=#AICSAR] OnAfterPilotKIA
   -- @param #AICSAR self
@@ -453,7 +498,7 @@ function AICSAR:InitLocalization()
   return self
 end
 
---- [User] Switch sound output on and use SRS
+--- [User] Switch sound output on and use SRS output for sound files.
 -- @param #AICSAR self
 -- @param #boolean OnOff Switch on (true) or off (false).
 -- @param #string Path Path to your SRS Server Component, e.g. "E:\\\\Program Files\\\\DCS-SimpleRadio-Standalone"
@@ -464,10 +509,12 @@ end
 -- @return #AICSAR self
 function AICSAR:SetSRSRadio(OnOff,Path,Frequency,Modulation,SoundPath,Port)
   self:T(self.lid .. "SetSRSRadio")
-  self:T(self.lid .. "SetSRSRadio to "..tostring(OnOff))
   self.SRSRadio = OnOff and true
+  self.SRSTTSRadio = false
   self.SRSFrequency = Frequency or 243
   self.SRSPath = Path or "c:\\"
+  self.SRS:SetLabel("ACSR")
+  self.SRS:SetCoalition(self.coalition)
   self.SRSModulation = Modulation or radio.modulation.AM
   local soundpath = os.getenv('TMP') .. "\\DCS\\Mission\\l10n\\DEFAULT" -- defaults to "l10n/DEFAULT/", i.e. add messages by "Sound to..." in the ME
   self.SRSSoundPath = SoundPath or soundpath
@@ -477,6 +524,88 @@ function AICSAR:SetSRSRadio(OnOff,Path,Frequency,Modulation,SoundPath,Port)
     self.SRS:SetPort(self.SRSPort)
   end
   return self
+end
+
+--- [User] Switch sound output on and use SRS-TTS output. The voice will be used across all outputs, unless you define an extra voice for downed pilots and/or the operator.
+-- See `AICSAR:SetPilotTTSVoice()` and `AICSAR:SetOperatorTTSVoice()`
+-- @param #AICSAR self
+-- @param #boolean OnOff Switch on (true) or off (false).
+-- @param #string Path Path to your SRS Server Component, e.g. "E:\\\\Program Files\\\\DCS-SimpleRadio-Standalone"
+-- @param #number Frequency (Optional) Defaults to 243 (guard)
+-- @param #number Modulation (Optional) Radio modulation. Defaults to radio.modulation.AM
+-- @param #number Port (Optional) Port of the SRS, defaults to 5002.
+-- @param #string Voice (Optional) The voice to be used.
+-- @param #string Culture (Optional) The culture to be used, defaults to "en-GB"
+-- @param #string Gender (Optional)  The gender to be used, defaults to "male"
+-- @param #string GoogleCredentials (Optional) Path to google credentials
+-- @return #AICSAR self
+function AICSAR:SetSRSTTSRadio(OnOff,Path,Frequency,Modulation,Port,Voice,Culture,Gender,GoogleCredentials)
+  self:T(self.lid .. "SetSRSTTSRadio")
+  self.SRSTTSRadio = OnOff and true
+  self.SRSRadio = false
+  self.SRSFrequency = Frequency or 243
+  self.SRSPath = Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+  self.SRSModulation = Modulation or radio.modulation.AM
+  self.SRSPort = Port or 5002
+  if OnOff then
+    self.SRS = MSRS:New(Path,Frequency,Modulation,1)
+    self.SRS:SetPort(self.SRSPort)
+    self.SRS:SetCoalition(self.coalition)
+    self.SRS:SetLabel("ACSR")
+    self.SRS:SetVoice(Voice)
+    self.SRS:SetCulture(Culture)
+    self.SRS:SetGender(Gender)
+    if GoogleCredentials then
+      self.SRS:SetGoogle(GoogleCredentials)
+      self.SRSGoogle = true
+    end
+    self.SRSQ = MSRSQUEUE:New(self.alias)
+  end
+  return self
+end
+
+--- [User] Set SRS TTS Voice of downed pilot. `AICSAR:SetSRSTTSRadio()` needs to be set first!
+-- @param #AICSAR self
+-- @param #string Voice The voice to be used, e.g. `MSRS.Voices.Google.Standard.en_US_Standard_J` for Google or `MSRS.Voices.Microsoft.David` for Microsoft. 
+-- Specific voices override culture and gender!
+-- @param #string Culture (Optional) The culture to be used, defaults to "en-US"
+-- @param #string Gender (Optional)  The gender to be used, defaults to "male"
+-- @return #AICSAR self
+function AICSAR:SetPilotTTSVoice(Voice,Culture,Gender)
+ self:T(self.lid .. "SetPilotTTSVoice")
+ self.SRSPilotVoice = true
+ self.SRSPilot = MSRS:New(self.SRSPath,self.SRSFrequency,self.SRSModulation,1)
+ self.SRSPilot:SetCoalition(self.coalition)
+ self.SRSPilot:SetVoice(Voice)
+ self.SRSPilot:SetCulture(Culture or "en-US")
+ self.SRSPilot:SetGender(Gender or "male")
+ self.SRSPilot:SetLabel("PILOT")
+ if self.SRS.google then
+  self.SRSPilot:SetGoogle(self.SRS.google)
+ end
+ return self
+end
+
+--- [User] Set SRS TTS Voice of the rescue operator. `AICSAR:SetSRSTTSRadio()` needs to be set first!
+-- @param #AICSAR self
+-- @param #string Voice The voice to be used, e.g. `MSRS.Voices.Google.Standard.en_US_Standard_J` for Google or `MSRS.Voices.Microsoft.David` for Microsoft.
+-- Specific voices override culture and gender!
+-- @param #string Culture (Optional) The culture to be used, defaults to "en-GB"
+-- @param #string Gender (Optional)  The gender to be used, defaults to "female"
+-- @return #AICSAR self
+function AICSAR:SetOperatorTTSVoice(Voice,Culture,Gender)
+ self:T(self.lid .. "SetOperatorTTSVoice")
+ self.SRSOperatorVoice = true
+ self.SRSOperator = MSRS:New(self.SRSPath,self.SRSFrequency,self.SRSModulation,1)
+ self.SRSOperator:SetCoalition(self.coalition)
+ self.SRSOperator:SetVoice(Voice)
+ self.SRSOperator:SetCulture(Culture or "en-GB")
+ self.SRSOperator:SetGender(Gender or "female")
+ self.SRSPilot:SetLabel("RESCUE")
+ if self.SRS.google then
+  self.SRSOperator:SetGoogle(self.SRS.google)
+ end
+ return self
 end
 
 --- [User] Switch sound output on and use normale (DCS) radio
@@ -545,13 +674,25 @@ function AICSAR:OnEventLandingAfterEjection(EventData)
   -- Mayday Message
   local Text,Soundfile,Soundlength,Subtitle = self.gettext:GetEntry("PILOTDOWN",self.locale)
   local text = ""
+  local setting = {}
+  setting.MGRS_Accuracy = self.MGRS_Accuracy
+  local location = _LandingPos:ToStringMGRS(setting)
+  local msgtxt = Text..location.."!"
+  location = string.gsub(location,"MGRS ","")
+  location = string.gsub(location,"%s+","")
+  location = string.gsub(location,"([%a%d])","%1;") -- "0 5 1 "
+  location = string.gsub(location,"0","zero")
+  location = string.gsub(location,"9","niner")
+  location = "MGRS;"..location
+  if self.SRSGoogle then
+    location = string.format("<say-as interpret-as='characters'>%s</say-as>",location)
+  end
+  text = Text .. location .. "!"
+  local ttstext = Text .. location .. "! Repeat! "..location
   if _coalition == self.coalition then
     if self.verbose then
-      local setting = {}
-      setting.MGRS_Accuracy = self.MGRS_Accuracy
-      local location = _LandingPos:ToStringMGRS(setting)
-      text = Text .. location .. "!"
-      MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
+      MESSAGE:New(msgtxt,15,"AICSAR"):ToCoalition(self.coalition)
+     -- MESSAGE:New(msgtxt,15,"AICSAR"):ToLog()
     end
     if self.SRSRadio then
       local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
@@ -559,6 +700,12 @@ function AICSAR:OnEventLandingAfterEjection(EventData)
       self.SRS:PlaySoundFile(sound,2)
     elseif self.DCSRadio then
       self:DCSRadioBroadcast(Soundfile,Soundlength,text)
+    elseif self.SRSTTSRadio then
+      if self.SRSPilotVoice then
+        self.SRSQ:NewTransmission(ttstext,nil,self.SRSPilot,nil,1)
+      else
+        self.SRSQ:NewTransmission(ttstext,nil,self.SRS,nil,1)
+      end
     end   
   end
   
@@ -634,12 +781,20 @@ function AICSAR:_InitMission(Pilot,Index)
     self:__HeloDown(2,Helo,Index)   
   end
   
+  local function AICHeloUnloaded(Helo,OpsGroup)
+    self:__PilotUnloaded(2,Helo,OpsGroup)
+  end
+  
   function helo:OnAfterLoadingDone(From,Event,To)
     AICPickedUp(helo,helo:GetCargoGroups(),Index)   
   end
   
   function helo:OnAfterDead(From,Event,To)
     AICHeloDead(helo,Index)
+  end
+  
+  function helo:OnAfterUnloaded(From,Event,To,OpsGroupCargo)
+    AICHeloUnloaded(helo,OpsGroupCargo)
   end
   
   self.helos[Index] = helo
@@ -652,7 +807,7 @@ end
 -- @param Wrapper.Group#GROUP Pilot The pilot to be rescued.
 -- @return #boolean outcome
 function AICSAR:_CheckInMashZone(Pilot)
-  self:T(self.lid .. "_CheckQueue")
+  self:T(self.lid .. "_CheckInMashZone")
   if Pilot:IsInZone(self.farpzone) then
     return true
   else
@@ -696,8 +851,9 @@ end
 
 --- [Internal] Check pilot queue for next mission
 -- @param #AICSAR self
+-- @param Ops.OpsGroup#OPSGROUP OpsGroup
 -- @return #AICSAR self
-function AICSAR:_CheckQueue()
+function AICSAR:_CheckQueue(OpsGroup)
   self:T(self.lid .. "_CheckQueue")
   for _index, _pilot in pairs(self.pilotqueue) do
     local classname = _pilot.ClassName and _pilot.ClassName or "NONE"
@@ -709,8 +865,12 @@ function AICSAR:_CheckQueue()
      local flightgroup = self.helos[_index] -- Ops.FlightGroup#FLIGHTGROUP
      -- rescued?
      if self:_CheckInMashZone(_pilot) then
-      self:T("Pilot" .. _pilot.GroupName .. " rescued!") 
-      _pilot:Destroy(false)
+      self:T("Pilot" .. _pilot.GroupName .. " rescued!")
+      if OpsGroup then
+        OpsGroup:Despawn(10)
+      else 
+        _pilot:Destroy(true,10)
+      end
       self.pilotqueue[_index] = nil
       self.rescued[_index] = true
       self:__PilotRescued(2)
@@ -767,7 +927,7 @@ end
 -- @return #AICSAR self
 function AICSAR:onafterStatus(From, Event, To)
   self:T({From, Event, To})
-  self:_CheckQueue()
+  --self:_CheckQueue()
   self:_CheckHelos()
   self:__Status(30)
   return self
@@ -814,6 +974,12 @@ function AICSAR:onafterPilotDown(From, Event, To, Coordinate, InReach)
       self.SRS:PlaySoundFile(sound,2)
     elseif self.DCSRadio then
       self:DCSRadioBroadcast(Soundfile,Soundlength,text)
+    elseif self.SRSTTSRadio then
+      if self.SRSOperatorVoice then
+       self.SRSQ:NewTransmission(text,nil,self.SRSOperator,nil,1)
+      else
+        self.SRSQ:NewTransmission(text,nil,self.SRS,nil,1)
+      end
     end
   else
     local text,Soundfile,Soundlength,Subtitle = self.gettext:GetEntry("INITIALNOTOK",self.locale)
@@ -828,8 +994,15 @@ function AICSAR:onafterPilotDown(From, Event, To, Coordinate, InReach)
       self.SRS:PlaySoundFile(sound,2)
     elseif self.DCSRadio then
       self:DCSRadioBroadcast(Soundfile,Soundlength,text)
+    elseif self.SRSTTSRadio then
+      if self.SRSOperatorVoice then
+        self.SRSQ:NewTransmission(text,nil,self.SRSOperator,nil,1)
+      else
+        self.SRSQ:NewTransmission(text,nil,self.SRS,nil,1)
+      end
     end
   end
+  self:_CheckQueue()
   return self
 end
 
@@ -851,7 +1024,9 @@ function AICSAR:onafterPilotKIA(From, Event, To)
     self.SRS:PlaySoundFile(sound,2)
   elseif self.DCSRadio then
     self:DCSRadioBroadcast(Soundfile,Soundlength,text)
-  end
+  elseif self.SRSTTSRadio then
+      self.SRSQ:NewTransmission(text,nil,self.SRS,nil,1)
+    end
   return self
 end
 
@@ -875,6 +1050,12 @@ function AICSAR:onafterHeloDown(From, Event, To, Helo, Index)
     self.SRS:PlaySoundFile(sound,2)
   elseif self.DCSRadio then
     self:DCSRadioBroadcast(Soundfile,Soundlength,text)
+  elseif self.SRSTTSRadio then
+    if self.SRSOperatorVoice then
+      self.SRSQ:NewTransmission(text,nil,self.SRSOperator,nil,1)
+    else
+      self.SRSQ:NewTransmission(text,nil,self.SRS,nil,1)
+    end
   end
   local findex = 0
   local fhname = Helo:GetName()
@@ -927,7 +1108,23 @@ function AICSAR:onafterPilotRescued(From, Event, To)
     self.SRS:PlaySoundFile(sound,2)
   elseif self.DCSRadio then
     self:DCSRadioBroadcast(Soundfile,Soundlength,text)
+  elseif self.SRSTTSRadio then
+      self.SRSQ:NewTransmission(text,nil,self.SRS,nil,1)
   end
+  return self
+end
+
+--- [Internal] onafterPilotUnloaded
+-- @param #AICSAR self
+-- @param #string From 
+-- @param #string Event
+-- @param #string To
+-- @param Ops.FlightGroup#FLIGHTGROUP Helo
+-- @param Ops.OpsGroup#OPSGROUP OpsGroup
+-- @return #AICSAR self
+function AICSAR:onafterPilotUnloaded(From, Event, To, Helo, OpsGroup)
+  self:T({From, Event, To})
+  self:_CheckQueue(OpsGroup)
   return self
 end
 
@@ -952,6 +1149,8 @@ function AICSAR:onafterPilotPickedUp(From, Event, To, Helo, CargoTable, Index)
     self.SRS:PlaySoundFile(sound,2)
   elseif self.DCSRadio then
     self:DCSRadioBroadcast(Soundfile,Soundlength,text)
+  elseif self.SRSTTSRadio then
+    self.SRSQ:NewTransmission(text,nil,self.SRS,nil,1)
   end
   local findex = 0
   local fhname = Helo:GetName()
