@@ -89,6 +89,7 @@ DATABASE = {
   FLIGHTGROUPS = {},
   FLIGHTCONTROLS = {},
   OPSZONES = {},
+  PATHLINES = {},
 }
 
 local _DATABASECoalition =
