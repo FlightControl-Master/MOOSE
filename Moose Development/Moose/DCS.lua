@@ -209,21 +209,29 @@ do -- land
   
   --- [Type of surface enumerator](https://wiki.hoggitworld.com/view/DCS_singleton_land)
   -- @type land.SurfaceType
-  -- @field LAND
-  -- @field SHALLOW_WATER
-  -- @field WATER
-  -- @field ROAD
-  -- @field RUNWAY
+  -- @field LAND Land=1
+  -- @field SHALLOW_WATER Shallow water=2
+  -- @field WATER Water=3
+  -- @field ROAD Road=4
+  -- @field RUNWAY Runway=5
   
-  --- Returns altitude MSL of the point.
+  --- Returns the distance from sea level (y-axis) of a given vec2 point.
   -- @function [parent=#land] getHeight
-  -- @param #Vec2 point point on the ground. 
-  -- @return #Distance
+  -- @param #Vec2 point Point on the ground. 
+  -- @return #number Height in meters.
+
+  --- Returns the surface height and depth of a point. Useful for checking if the path is deep enough to support a given ship. 
+  -- Both values are positive. When checked over water at sea level the first value is always zero. 
+  -- When checked over water at altitude, for example the reservoir of the Inguri Dam, the first value is the corresponding altitude the water level is at.
+  -- @function [parent=#land] getSurfaceHeightWithSeabed
+  -- @param #Vec2 point Position where to check.
+  -- @return #number Height in meters.
+  -- @return #number Depth in meters.
   
-  --- returns surface type at the given point.
+  --- Returns surface type at the given point.
   -- @function [parent=#land] getSurfaceType
   -- @param #Vec2 point Point on the land. 
-  -- @return #land.SurfaceType
+  -- @return #number Enumerator value from `land.SurfaceType` (LAND=1, SHALLOW_WATER=2, WATER=3, ROAD=4, RUNWAY=5)
   
   --- [DCS Singleton land](https://wiki.hoggitworld.com/view/DCS_singleton_land)
   land = {} --#land
