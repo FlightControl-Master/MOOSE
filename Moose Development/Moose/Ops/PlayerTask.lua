@@ -1369,6 +1369,13 @@ PLAYERTASKCONTROLLER.Messages = {
     AIRDEFENSE = "Airdefense",
     SAM = "SAM",
     GROUP = "Group",
+    UNARMEDSHIP = "Merchant",
+    LIGHTARMEDSHIP = "Light Boat",
+    CORVETTE = "Corvette",
+    FRIGATE = "Frigate",
+    CRUISER = "Cruiser",
+    DESTROYER = "Destroyer",
+    CARRIER = "Aircraft Carrier",
   },
   DE = {
     TASKABORT = "Auftrag abgebrochen!",
@@ -1441,12 +1448,19 @@ PLAYERTASKCONTROLLER.Messages = {
     AIRDEFENSE = "Flak",
     SAM = "Luftabwehr",
     GROUP = "Einheit",
+    UNARMEDSHIP = "Handelsschiff",
+    LIGHTARMEDSHIP = "Tender",
+    CORVETTE = "Korvette",
+    FRIGATE = "Fregatte",
+    CRUISER = "Kreuzer",
+    DESTROYER = "Zerstörer",
+    CARRIER = "Flugzeugträger",
   },
 }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.56"
+PLAYERTASKCONTROLLER.version="0.1.57"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -2259,6 +2273,27 @@ function PLAYERTASKCONTROLLER:_CheckTargetQueue()
     local typename = self.gettext:GetEntry(typekey,self.locale)
     local gname = self.gettext:GetEntry("GROUP",self.locale)
     target.TypeName = string.format("%s %s",typename,gname)
+    --self:T(self.lid.."Target TypeName = "..target.TypeName)
+  end
+  
+  if self.UseTypeNames and object:IsShip() then
+    local threat = object:GetThreatLevel()
+    local typekey = "UNARMEDSHIP"
+    if threat == 1 then
+      typekey = "LIGHTARMEDSHIP"
+    elseif threat == 2 then
+      typekey = "CORVETTE" 
+    elseif threat == 3 or  threat == 4 then
+      typekey = "FRIGATE"
+    elseif threat == 5 or threat == 6 then
+      typekey = "CRUISER"
+    elseif threat == 7 or threat == 8 then
+      typekey = "DESTROYER"
+    elseif threat >= 9 then
+      typekey = "CARRIER"
+    end
+    local typename = self.gettext:GetEntry(typekey,self.locale)
+    target.TypeName = typename
     --self:T(self.lid.."Target TypeName = "..target.TypeName)
   end
   
