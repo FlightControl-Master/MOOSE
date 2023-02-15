@@ -5,7 +5,7 @@
 -- SPOT implements the DCS Spot class functionality, but adds additional luxury to be able to:
 -- 
 --   * Spot for a defined duration.
---   * Updates of laer spot position every 0.2 seconds for moving targets.
+--   * Updates of laser spot position every 0.2 seconds for moving targets.
 --   * Wiggle the spot at the target.
 --   * Provide a @{Wrapper.Unit} as a target, instead of a point.
 --   * Implement a status machine, LaseOn, LaseOff.
@@ -57,7 +57,7 @@ do
   -- 
   -- ## 1. SPOT constructor
   --   
-  --   * @{#SPOT.New}(..\Presentations\SPOT\Dia2.JPG): Creates a new SPOT object.
+  --   * @{#SPOT.New}(): Creates a new SPOT object.
   -- 
   -- ## 2. SPOT is a FSM
   -- 

@@ -1460,7 +1460,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.57"
+PLAYERTASKCONTROLLER.version="0.1.58"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -2245,56 +2245,60 @@ function PLAYERTASKCONTROLLER:_CheckTargetQueue()
     end
   end
   
-  if self.UseTypeNames and object:IsGround() then
-    --   * Threat level  0: Unit is unarmed.
-    --   * Threat level  1: Unit is infantry.
-    --   * Threat level  2: Unit is an infantry vehicle.
-    --   * Threat level  3: Unit is ground artillery.
-    --   * Threat level  4: Unit is a tank.
-    --   * Threat level  5: Unit is a modern tank or ifv with ATGM.
-    --   * Threat level  6: Unit is a AAA.
-    --   * Threat level  7: Unit is a SAM or manpad, IR guided.
-    --   * Threat level  8: Unit is a Short Range SAM, radar guided.
-    --   * Threat level  9: Unit is a Medium Range SAM, radar guided.
-    --   * Threat level 10: Unit is a Long Range SAM, radar guided.
-    local threat = object:GetThreatLevel()
-    local typekey = "INFANTRY"
-    if threat == 0 or threat == 2 then
-      typekey = "TECHNICAL"
-    elseif threat == 3 then
-      typekey = "ARTILLERY" 
-    elseif threat == 4 or  threat == 5 then
-      typekey = "TANKS"
-    elseif threat == 6 or threat == 7 then
-      typekey = "AIRDEFENSE"
-    elseif threat >= 8 then
-      typekey = "SAM"
-    end
-    local typename = self.gettext:GetEntry(typekey,self.locale)
-    local gname = self.gettext:GetEntry("GROUP",self.locale)
-    target.TypeName = string.format("%s %s",typename,gname)
-    --self:T(self.lid.."Target TypeName = "..target.TypeName)
-  end
+  if object:IsInstanceOf("UNIT") or object:IsInstanceOf("GROUP") then
   
-  if self.UseTypeNames and object:IsShip() then
-    local threat = object:GetThreatLevel()
-    local typekey = "UNARMEDSHIP"
-    if threat == 1 then
-      typekey = "LIGHTARMEDSHIP"
-    elseif threat == 2 then
-      typekey = "CORVETTE" 
-    elseif threat == 3 or  threat == 4 then
-      typekey = "FRIGATE"
-    elseif threat == 5 or threat == 6 then
-      typekey = "CRUISER"
-    elseif threat == 7 or threat == 8 then
-      typekey = "DESTROYER"
-    elseif threat >= 9 then
-      typekey = "CARRIER"
+    if self.UseTypeNames and object:IsGround() then
+      --   * Threat level  0: Unit is unarmed.
+      --   * Threat level  1: Unit is infantry.
+      --   * Threat level  2: Unit is an infantry vehicle.
+      --   * Threat level  3: Unit is ground artillery.
+      --   * Threat level  4: Unit is a tank.
+      --   * Threat level  5: Unit is a modern tank or ifv with ATGM.
+      --   * Threat level  6: Unit is a AAA.
+      --   * Threat level  7: Unit is a SAM or manpad, IR guided.
+      --   * Threat level  8: Unit is a Short Range SAM, radar guided.
+      --   * Threat level  9: Unit is a Medium Range SAM, radar guided.
+      --   * Threat level 10: Unit is a Long Range SAM, radar guided.
+      local threat = object:GetThreatLevel()
+      local typekey = "INFANTRY"
+      if threat == 0 or threat == 2 then
+        typekey = "TECHNICAL"
+      elseif threat == 3 then
+        typekey = "ARTILLERY" 
+      elseif threat == 4 or  threat == 5 then
+        typekey = "TANKS"
+      elseif threat == 6 or threat == 7 then
+        typekey = "AIRDEFENSE"
+      elseif threat >= 8 then
+        typekey = "SAM"
+      end
+      local typename = self.gettext:GetEntry(typekey,self.locale)
+      local gname = self.gettext:GetEntry("GROUP",self.locale)
+      target.TypeName = string.format("%s %s",typename,gname)
+      --self:T(self.lid.."Target TypeName = "..target.TypeName)
     end
-    local typename = self.gettext:GetEntry(typekey,self.locale)
-    target.TypeName = typename
-    --self:T(self.lid.."Target TypeName = "..target.TypeName)
+    
+    if self.UseTypeNames and object:IsShip() then
+      local threat = object:GetThreatLevel()
+      local typekey = "UNARMEDSHIP"
+      if threat == 1 then
+        typekey = "LIGHTARMEDSHIP"
+      elseif threat == 2 then
+        typekey = "CORVETTE" 
+      elseif threat == 3 or  threat == 4 then
+        typekey = "FRIGATE"
+      elseif threat == 5 or threat == 6 then
+        typekey = "CRUISER"
+      elseif threat == 7 or threat == 8 then
+        typekey = "DESTROYER"
+      elseif threat >= 9 then
+        typekey = "CARRIER"
+      end
+      local typename = self.gettext:GetEntry(typekey,self.locale)
+      target.TypeName = typename
+      --self:T(self.lid.."Target TypeName = "..target.TypeName)
+    end
+  
   end
   
   self:_AddTask(target)
