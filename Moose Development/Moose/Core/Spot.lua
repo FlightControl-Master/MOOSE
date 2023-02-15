@@ -40,7 +40,7 @@ do
   --- Implements the target spotting or marking functionality, but adds additional luxury to be able to:
   -- 
   --   * Mark targets for a defined duration.
-  --   * Updates of laser spot position every 0.2 seconds for moving targets.
+  --   * Updates of laser spot position every 0.25 seconds for moving targets.
   --   * Wiggle the spot at the target.
   --   * Provide a @{Wrapper.Unit} as a target, instead of a point.
   --   * Implement a status machine, LaseOn, LaseOff.
