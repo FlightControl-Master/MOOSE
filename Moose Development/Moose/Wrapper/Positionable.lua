@@ -1696,6 +1696,7 @@ do -- Cargo
           ["tt_DSHK"] = 6,
           ["HL_KORD"] = 6,
           ["HL_DSHK"] = 6,
+          ["CCKW_353"] = 16, --GMC CCKW 2½-ton 6×6 truck, estimating 16 soldiers
         }
 
         -- Assuming that each passenger weighs 95 kg on average.

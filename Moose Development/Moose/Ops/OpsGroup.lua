@@ -7906,9 +7906,14 @@ function OPSGROUP:_CheckCargoTransport()
     self.cargoTransport=nil
     self.cargoTZC=nil
   end
+  
+  local mission=self:GetMissionCurrent()  
+  if mission and mission.type==AUFTRAG.Type.NOTHING then
+    self:MissionCancel(mission)
+  end
 
   -- Check if there is anything in the queue.
-  if not self.cargoTransport and not self:IsOnMission() then
+  if not self.cargoTransport and not self:IsOnMission() then --(mission==nil or (mission and mission.type==AUFTRAG.Type.NOTHING)) then --not self:IsOnMission() then
     self.cargoTransport=self:_GetNextCargoTransport()
     if self.cargoTransport and not self:IsActive() then
       self:Activate()
