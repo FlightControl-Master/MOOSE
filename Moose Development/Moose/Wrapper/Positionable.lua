@@ -845,6 +845,58 @@ function POSITIONABLE:GetVelocityKNOTS()
   return UTILS.MpsToKnots( self:GetVelocityMPS() )
 end
 
+--- Returns the true airspeed (TAS). This is calculated from the current velocity minus wind in 3D.
+-- @param #POSITIONABLE self
+-- @return #number TAS in m/s. Returns 0 if the POSITIONABLE does not exist.
+function POSITIONABLE:GetAirspeedTrue()
+
+  -- TAS
+  local tas=0
+
+  -- Get current coordinate.
+  local coord=self:GetCoord()
+  
+  if coord then
+  
+    -- Altitude in meters.
+    local alt=coord.y
+  
+    -- Wind velocity vector.
+    local wvec3=coord:GetWindVec3(alt, false)
+    
+    -- Velocity vector.
+    local vvec3=self:GetVelocityVec3()
+
+    --GS=TAS+WIND ==> TAS=GS-WIND
+    local tasvec3=UTILS.VecSubstract(vvec3, wvec3)
+
+    -- True airspeed in m/s
+    tas=UTILS.VecNorm(tasvec3)
+  
+  end
+
+  return tas
+end
+
+--- Returns the indicated airspeed (IAS).
+-- The IAS is calculated from the TAS under the approximation that TAS increases by ~2% with every 1000 feet altitude ASL.
+-- @param #POSITIONABLE self
+-- @param #number oatcorr (Optional) Outside air temperature (OAT) correction factor. Default 0.017 (=1.7%).
+-- @return #number IAS in m/s. Returns 0 if the POSITIONABLE does not exist.
+function POSITIONABLE:GetAirspeedIndicated(oatcorr)
+
+  -- Get true airspeed.
+  local tas=self:GetAirspeedTrue()
+  
+  -- Get altitude.
+  local altitude=self:GetAltitude()
+  
+  -- Convert TAS to IAS.
+  local ias=UTILS.TasToIas(tas, altitude, oatcorr)
+
+  return ias
+end
+
 --- Returns the Angle of Attack of a POSITIONABLE.
 -- @param #POSITIONABLE self
 -- @return #number Angle of attack in degrees.
