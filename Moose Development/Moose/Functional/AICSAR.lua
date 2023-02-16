@@ -52,6 +52,7 @@
 -- @field Core.Set#SET_CLIENT playerset Track if alive heli pilots are available.
 -- @field #boolean limithelos limit available number of helos going on mission (defaults to true)
 -- @field #number helonumber number of helos available (default: 3)
+-- @field Utilities.FiFo#FIFO PilotStore
 -- @extends Core.Fsm#FSM
 
 
@@ -186,7 +187,7 @@
 -- @field #AICSAR
 AICSAR = {
   ClassName = "AICSAR",
-  version = "0.1.9",
+  version = "0.1.10",
   lid = "",
   coalition = coalition.side.BLUE,
   template = "",
@@ -226,6 +227,7 @@ AICSAR = {
   SRSPilotVoice = false,
   SRSOperator = nil,
   SRSOperatorVoice = false,
+  PilotStore = nil,
 }
 
 -- TODO Messages
@@ -369,6 +371,9 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("%s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
   
+  --Pilot Store
+  self.PilotStore = FIFO:New()
+  
   -- Start State.
   self:SetStartState("Stopped")
   
@@ -385,6 +390,7 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop FSM.
   
   self:HandleEvent(EVENTS.LandingAfterEjection)
+  self:HandleEvent(EVENTS.Ejection)
   
   self:__Start(math.random(2,5))
   
@@ -438,7 +444,8 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   -- @param #AICSAR self
   -- @param #string From From state.
   -- @param #string Event Event.
-  -- @param #string To To state. 
+  -- @param #string To To state.
+  -- @param #string PilotName 
 
   --- On after "PilotUnloaded" event.
   -- @function [parent=#AICSAR] OnAfterPilotUnloaded
@@ -648,6 +655,19 @@ function AICSAR:DCSRadioBroadcast(Soundfile,Duration,Subtitle)
   return self
 end
 
+--- [Internal] Catch the ejection and save the pilot name
+-- @param #AICSAR self
+-- @param Core.Event#EVENTDATA EventData
+-- @return #AICSAR self
+function AICSAR:OnEventEjection(EventData)
+  local _event = EventData -- Core.Event#EVENTDATA
+  if _event.IniPlayerName then
+    self.PilotStore:Push(_event.IniPlayerName)
+    self:T(self.lid.."Pilot Ejected: ".._event.IniPlayerName)
+  end
+  return self
+end
+
 --- [Internal] Catch the landing after ejection and spawn a pilot in situ.
 -- @param #AICSAR self
 -- @param Core.Event#EVENTDATA EventData
@@ -667,7 +687,7 @@ function AICSAR:OnEventLandingAfterEjection(EventData)
   local _LandingPos = COORDINATE:NewFromVec3(_event.initiator:getPosition().p)
   local _country = _event.initiator:getCountry()
   local _coalition = coalition.getCountryCoalition( _country )
-  
+
   -- DONE: add distance check
   local distancetofarp = _LandingPos:Get2DDistance(self.farp:GetCoordinate())
   
@@ -858,6 +878,7 @@ function AICSAR:_CheckQueue(OpsGroup)
   for _index, _pilot in pairs(self.pilotqueue) do
     local classname = _pilot.ClassName and _pilot.ClassName or "NONE"
     local name = _pilot.GroupName and _pilot.GroupName or "NONE"
+    local playername = "John Doe"
     local helocount = self:_CountHelos()
     --self:T("Looking at " .. classname .. " " .. name)
     -- find one w/o mission
@@ -873,7 +894,10 @@ function AICSAR:_CheckQueue(OpsGroup)
       end
       self.pilotqueue[_index] = nil
       self.rescued[_index] = true
-      self:__PilotRescued(2)
+      if self.PilotStore:Count() > 0 then
+        playername = self.PilotStore:Pull()
+      end
+      self:__PilotRescued(2,playername)
       if flightgroup then
         flightgroup.AICSARReserved = false
       end
@@ -1095,8 +1119,9 @@ end
 -- @param #string From 
 -- @param #string Event
 -- @param #string To
+-- @param #string PilotName
 -- @return #AICSAR self
-function AICSAR:onafterPilotRescued(From, Event, To)
+function AICSAR:onafterPilotRescued(From, Event, To, PilotName)
   self:T({From, Event, To})
   local text,Soundfile,Soundlength,Subtitle = self.gettext:GetEntry("PILOTRESCUED",self.locale)
   if self.verbose then
