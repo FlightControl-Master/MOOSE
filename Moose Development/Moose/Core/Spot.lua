@@ -5,7 +5,7 @@
 -- SPOT implements the DCS Spot class functionality, but adds additional luxury to be able to:
 -- 
 --   * Spot for a defined duration.
---   * Updates of laer spot position every 0.2 seconds for moving targets.
+--   * Updates of laser spot position every 0.2 seconds for moving targets.
 --   * Wiggle the spot at the target.
 --   * Provide a @{Wrapper.Unit} as a target, instead of a point.
 --   * Implement a status machine, LaseOn, LaseOff.
@@ -13,18 +13,8 @@
 -- ===
 -- 
 -- # Demo Missions
--- 
--- ### [SPOT Demo Missions source code]()
--- 
--- ### [SPOT Demo Missions, only for beta testers]()
 --
--- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
--- 
--- ===
--- 
--- # YouTube Channel
--- 
--- ### [SPOT YouTube Channel]()
+-- ### [Demo Missions on GitHub](https://github.com/FlightControl-Master/MOOSE_MISSIONS)
 -- 
 -- ===
 -- 
@@ -50,14 +40,14 @@ do
   --- Implements the target spotting or marking functionality, but adds additional luxury to be able to:
   -- 
   --   * Mark targets for a defined duration.
-  --   * Updates of laer spot position every 0.2 seconds for moving targets.
+  --   * Updates of laser spot position every 0.25 seconds for moving targets.
   --   * Wiggle the spot at the target.
   --   * Provide a @{Wrapper.Unit} as a target, instead of a point.
   --   * Implement a status machine, LaseOn, LaseOff.
   -- 
   -- ## 1. SPOT constructor
   --   
-  --   * @{#SPOT.New}(..\Presentations\SPOT\Dia2.JPG): Creates a new SPOT object.
+  --   * @{#SPOT.New}(): Creates a new SPOT object.
   -- 
   -- ## 2. SPOT is a FSM
   -- 
@@ -217,6 +207,8 @@ do
     
   
     self.Recce = Recce
+    
+    self.RecceName = self.Recce:GetName()
   
     self.LaseScheduler = SCHEDULER:New( self )
   
@@ -243,6 +235,9 @@ do
     end
     
     self.Target = Target
+    
+    self.TargetName = Target:GetName()
+    
     self.LaserCode = LaserCode
     
     self.Lasing = true
@@ -302,9 +297,15 @@ do
   function SPOT:OnEventDead(EventData)
     self:F( { Dead = EventData.IniDCSUnitName, Target = self.Target } )
     if self.Target then
-      if EventData.IniDCSUnitName == self.Target:GetName() then
-        self:F( {"Target dead ", self.Target:GetName() } )
+      if EventData.IniDCSUnitName == self.TargetName then
+        self:F( {"Target dead ", self.TargetName } )
         self:Destroyed()
+        self:LaseOff()
+      end
+    end
+    if self.Recce then
+      if EventData.IniDCSUnitName == self.RecceName then
+        self:F( {"Recce dead ", self.RecceName } )
         self:LaseOff()
       end
     end

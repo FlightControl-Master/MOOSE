@@ -1,4 +1,4 @@
---- **Wrapper** - GROUP wraps the DCS Class Group objects.
+----- **Wrapper** - GROUP wraps the DCS Class Group objects.
 -- 
 -- ===
 -- 
@@ -2810,7 +2810,7 @@ function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
   if self:IsAlive() then
     local IsPlayer = self:IsPlayer()
     local shortcallsign = self:GetCallsign() or "unknown91" -- e.g.Uzi91, but we want Uzi 9 1
-    local callsignroot = string.match(shortcallsign, '(%a+)') -- Uzi
+    local callsignroot = string.match(shortcallsign, '(%a+)') or "Ghost" -- Uzi
     --self:I("CallSign = " .. callsignroot)
     local groupname = self:GetName()
     local callnumber = string.match(shortcallsign, "(%d+)$" ) or "91" -- 91
