@@ -591,7 +591,7 @@ do -- OpsZone
   function DATABASE:FindOpsZone( ZoneName )
 
     local ZoneFound = self.OPSZONES[ZoneName]
-    
+
     return ZoneFound
   end
 
@@ -599,15 +599,15 @@ do -- OpsZone
   -- @param #DATABASE self
   -- @param Ops.OpsZone#OPSZONE OpsZone The zone.
   function DATABASE:AddOpsZone( OpsZone )
-  
+
     if OpsZone then
-    
+
       local ZoneName=OpsZone:GetName()
 
       if not self.OPSZONES[ZoneName] then
         self.OPSZONES[ZoneName] = OpsZone
       end
-      
+
     end
   end
 
