@@ -489,6 +489,31 @@ UTILS.hPa2inHg = function( hPa )
   return hPa * 0.0295299830714
 end
 
+--- Convert indicated airspeed (IAS) to true airspeed (TAS) for a given altitude above main sea level.
+-- The conversion is based on the approximation that TAS is ~2% higher than IAS with every 1000 ft altitude above sea level.
+-- @param #number ias Indicated air speed in any unit (m/s, km/h, knots, ...)
+-- @param #number altitude Altitude above main sea level in meters.
+-- @param #number oatcorr (Optional) Outside air temperature correction factor. Default 0.017.
+-- @return #number True airspeed in the same unit the IAS has been given.
+UTILS.IasToTas = function( ias, altitude, oatcorr )
+  oatcorr=oatcorr or 0.017
+  local tas=ias + (ias * oatcorr * UTILS.MetersToFeet(altitude) / 1000)
+  return tas
+end
+
+--- Convert true airspeed (TAS) to indicated airspeed (IAS) for a given altitude above main sea level.
+-- The conversion is based on the approximation that TAS is ~2% higher than IAS with every 1000 ft altitude above sea level.
+-- @param #number tas True air speed in any unit (m/s, km/h, knots, ...)
+-- @param #number altitude Altitude above main sea level in meters.
+-- @param #number oatcorr (Optional) Outside air temperature correction factor. Default 0.017.
+-- @return #number Indicated airspeed in the same unit the TAS has been given.
+UTILS.TasToIas = function( tas, altitude, oatcorr )
+  oatcorr=oatcorr or 0.017
+  local ias=tas/(1+oatcorr*UTILS.MetersToFeet(altitude)/1000)
+  return ias
+end
+
+
 --- Convert knots to altitude corrected KIAS, e.g. for tankers.
 -- @param #number knots Speed in knots.
 -- @param #number altitude Altitude in feet

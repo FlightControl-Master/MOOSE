@@ -1054,28 +1054,55 @@ do -- COORDINATE
     return heading
   end
 
+  --- Returns the 3D wind direction vector. Note that vector points into the direction the wind in blowing to.
+  -- @param #COORDINATE self
+  -- @param #number height (Optional) parameter specifying the height ASL in meters. The minimum height will be always be the land height since the wind is zero below the ground.
+  -- @param #boolean turbulence (Optional) If `true`, include turbulence.
+  -- @return DCS#Vec3 Wind 3D vector. Components in m/s.
+  function COORDINATE:GetWindVec3(height, turbulence)
+  
+    -- We at 0.1 meters to be sure to be above ground since wind is zero below ground level.
+    local landheight=self:GetLandHeight()+0.1 
+  
+    local point={x=self.x, y=math.max(height or self.y, landheight), z=self.z}
+        
+    -- Get wind velocity vector.
+    local wind = nil --DCS#Vec3
+    
+    if turbulence then
+      wind = atmosphere.getWindWithTurbulence(point)
+    else
+      wind = atmosphere.getWind(point)
+    end
+    
+    return wind
+  end
+
   --- Returns the wind direction (from) and strength.
   -- @param #COORDINATE self
-  -- @param height (Optional) parameter specifying the height ASL. The minimum height will be always be the land height since the wind is zero below the ground.
-  -- @return Direction the wind is blowing from in degrees.
-  -- @return Wind strength in m/s.
-  function COORDINATE:GetWind(height)
-    local landheight=self:GetLandHeight()+0.1 -- we at 0.1 meters to be sure to be above ground since wind is zero below ground level.
-    local point={x=self.x, y=math.max(height or self.y, landheight), z=self.z}
-    -- get wind velocity vector
-    local wind = atmosphere.getWind(point)
-    local direction = math.deg(math.atan2(wind.z, wind.x))
-    if direction < 0 then
-      direction = 360 + direction
-    end
-    -- Convert to direction to from direction
+  -- @param #number height (Optional) parameter specifying the height ASL. The minimum height will be always be the land height since the wind is zero below the ground.
+  -- @param #boolean turbulence If `true`, include turbulence. If `false` or `nil`, wind without turbulence.
+  -- @return #number Direction the wind is blowing from in degrees.
+  -- @return #number Wind strength in m/s.
+  function COORDINATE:GetWind(height, turbulence)
+
+    -- Get wind velocity vector
+    local wind = self:GetWindVec3(height, turbulence)
+
+    -- Calculate the direction of the vector.    
+    local direction=UTILS.VecHdg(wind)
+    
+    -- Invert "to" direction to "from" direction.
     if direction > 180 then
       direction = direction-180
     else
       direction = direction+180
     end
-    local strength=math.sqrt((wind.x)^2+(wind.z)^2)
-    -- Return wind direction and strength km/h.
+    
+    -- Wind strength in m/s.
+    local strength=UTILS.VecNorm(wind) -- math.sqrt((wind.x)^2+(wind.z)^2)
+    
+    -- Return wind direction and strength.
     return direction, strength
   end
 
