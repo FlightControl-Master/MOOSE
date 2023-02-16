@@ -897,6 +897,26 @@ function POSITIONABLE:GetAirspeedIndicated(oatcorr)
   return ias
 end
 
+--- Returns the horizonal speed relative to eath's surface. The vertical component of the velocity vector is projected out (set to zero).
+-- @param #POSITIONABLE self
+-- @return #number Ground speed in m/s. Returns 0 if the POSITIONABLE does not exist.
+function POSITIONABLE:GetGroundSpeed()
+
+  local gs=0
+  
+  local vel=self:GetVelocityVec3()
+  
+  if vel then
+    
+    local vec2={x=vel.x, y=vel.z}
+    
+    gs=UTILS.Vec2Norm(vel)
+  
+  end
+
+  return gs
+end
+
 --- Returns the Angle of Attack of a POSITIONABLE.
 -- @param #POSITIONABLE self
 -- @return #number Angle of attack in degrees.
