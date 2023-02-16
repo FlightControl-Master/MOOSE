@@ -316,7 +316,7 @@ function CSAR:New(Coalition, Template, Alias)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #CSAR
   
-  BASE:T({Coalition, Prefixes, Alias})
+  BASE:T({Coalition, Template, Alias})
   
   --set Coalition
   if Coalition and type(Coalition)=="string" then
