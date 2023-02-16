@@ -16,14 +16,27 @@ do
 -- @type NET
 -- @field #string ClassName
 -- @field #string Version
--- @extends Core.Base#BASE
+-- @field #string lid
+-- @field #number BlockTime
+-- @field #table BlockedPilots
+-- @field #table KnownPilots
+-- @field #string BlockMessage
+-- @field #string UnblockMessage
+-- @extends Core.Fsm#FSM
 
 --- Encapsules multiplayer environment scripting functions from [net](https://wiki.hoggitworld.com/view/DCS_singleton_net)
+-- with some added FSM functions and options to block/unblock players in MP environments.
 -- 
 -- @field #NET
 NET = {
   ClassName = "NET",
-  Version = "0.0.2"
+  Version = "0.0.3",
+  BlockTime = 600,
+  BlockedPilots = {},
+  KnownPilots = {},
+  BlockMessage = nil,
+  UnblockMessage = nil,
+  lid = nil,
 }
 
 --- Instantiate a new NET object.
@@ -31,7 +44,218 @@ NET = {
 -- @return #NET self
 function NET:New()
   -- Inherit base.
-  local self = BASE:Inherit(self, BASE:New()) -- #NET
+  local self = BASE:Inherit(self, FSM:New()) -- #NET
+  
+  self.BlockTime = 600
+  self.BlockedPilots = {}
+  self.KnownPilots = {}
+  self:SetBlockMessage()
+  self:SetUnblockMessage()
+  
+  self:HandleEvent(EVENTS.PlayerEnterUnit,self._EventHandler)
+  self:HandleEvent(EVENTS.PlayerEnterAircraft,self._EventHandler)
+  self:HandleEvent(EVENTS.PlayerLeaveUnit,self._EventHandler)
+  self:HandleEvent(EVENTS.PilotDead,self._EventHandler)
+  self:HandleEvent(EVENTS.Ejection,self._EventHandler)
+  self:HandleEvent(EVENTS.Crash,self._EventHandler)
+  self:HandleEvent(EVENTS.SelfKillPilot,self._EventHandler)
+  
+    -- Start State.
+  self:SetStartState("Running")
+
+  -- Add FSM transitions.
+  -- From State  -->   Event  -->  To State
+  self:AddTransition("*",       "Run",                "Running")     -- Start FSM.
+  self:AddTransition("*",       "PlayerJoined",       "*")
+  self:AddTransition("*",       "PlayerLeft",         "*")
+  self:AddTransition("*",       "PlayerDied",         "*")
+  self:AddTransition("*",       "PlayerEjected",      "*")
+  self:AddTransition("*",       "PlayerBlocked",      "*")
+  self:AddTransition("*",       "PlayerUnblocked",    "*")
+  
+  self.lid = string.format("NET %s | ",self.Version)
+  
+  --- FSM Function OnAfterPlayerJoined.
+  -- @function [parent=#NET] OnAfterPlayerJoined
+  -- @param #NET self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Unit#UNIT Client Unit Object.
+  -- @param #string Name Name of joining Pilot.
+  -- @return #NET self
+  
+  --- FSM Function OnAfterPlayerLeft.
+  -- @function [parent=#NET] OnAfterPlayerLeft
+  -- @param #NET self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Unit#UNIT Client Unit Object.
+  -- @param #string Name Name of leaving Pilot.
+  -- @return #NET self
+  
+  --- FSM Function OnAfterPlayerEjected.
+  -- @function [parent=#NET] OnAfterPlayerEjected
+  -- @param #NET self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Unit#UNIT Client Unit Object.
+  -- @param #string Name Name of leaving Pilot.
+  -- @return #NET self
+  
+  --- FSM Function OnAfterPlayerDied.
+  -- @function [parent=#NET] OnAfterPlayerDied
+  -- @param #NET self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Unit#UNIT Client Unit Object.
+  -- @param #string Name Name of dead Pilot.
+  -- @return #NET self
+  
+  --- FSM Function OnAfterPlayerBlocked.
+  -- @function [parent=#NET] OnAfterPlayerBlocked
+  -- @param #NET self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Client#CLIENT Client Client Object.
+  -- @param #string Name Name of blocked Pilot.
+  -- @param #number Seconds Blocked for this number of seconds
+  -- @return #NET self
+  
+  --- FSM Function OnAfterPlayerUnblocked.
+  -- @function [parent=#NET] OnAfterPlayerUnblocked
+  -- @param #NET self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Client#CLIENT Client Client Object.
+  -- @param #string Name Name of unblocked Pilot.
+  -- @return #NET self
+  
+  return self
+end
+
+--- [Internal] Event Handler
+-- @param #NET self
+-- @param Core.Event#EVENTDATA EventData
+-- @return #NET self
+function NET:_EventHandler(EventData)
+  self:T(self.lid .. " _EventHandler")
+  self:T2({Event = EventData.id})
+  local data = EventData -- Core.Event#EVENTDATA EventData
+  if data.id and data.IniUnit and (data.IniPlayerName or data.IniUnit:GetPlayerName()) then
+    -- Get PlayerName
+    local name = data.IniPlayerName and data.IniPlayerName or data.IniUnit:GetPlayerName()
+    self:T(self.lid.."Event for: "..name)
+    -- Joining
+    if data.id == EVENTS.PlayerEnterUnit or data.id == EVENTS.PlayerEnterAircraft then
+      -- Check for known pilots  
+      local TNow = timer.getTime()
+      if self.BlockedPilots[name] and TNow < self.BlockedPilots[name] then
+        -- block pilot
+        self:ReturnToSpectators(data.IniUnit)
+      else
+        self.KnownPilots[name] = true
+        self.BlockedPilots[name] = nil
+        self:__PlayerJoined(1,data.IniUnit,name)
+        return self
+      end
+    end
+    -- Leaving
+    if data.id == EVENTS.PlayerLeaveUnit and self.KnownPilots[name] then
+     self:__PlayerLeft(1,data.IniUnit,name)
+     self.KnownPilots[name] = false
+     return self
+    end
+    -- Ejected
+    if data.id == EVENTS.Ejection and self.KnownPilots[name] then
+     self:__PlayerEjected(1,data.IniUnit,name)
+     self.KnownPilots[name] = false
+     return self
+    end
+    -- Dead, Crash, Suicide
+    if (data.id == EVENTS.PilotDead or data.id == EVENTS.SelfKillPilot or data.id == EVENTS.Crash) and self.KnownPilots[name] then
+     self:__PlayerDied(1,data.IniUnit,name)
+     self.KnownPilots[name] = false
+     return self
+    end
+  end
+  return self
+end
+
+--- Block a player.
+-- @param #NET self
+-- @param Wrapper.Client#CLIENT Client CLIENT object.
+-- @param #string PlayerName (optional) Name of the player.
+-- @param #number Seconds (optional) Number of seconds the player has to wait before rejoining.
+-- @param #string Message (optional) Message to be sent via chat.
+-- @return #NET self
+function NET:BlockPlayer(Client,PlayerName,Seconds,Message)
+  local name
+  if Client then
+    name = CLIENT:GetPlayerName()
+  elseif PlayerName then
+    name = PlayerName
+  else
+    self:F(self.lid.."Block: No PlayerName given or not found!")
+    return self
+  end
+  local addon = Seconds or self.BlockTime
+  self.BlockedPilots[name] = timer.getTime()+addon
+  local message = Message or self.BlockMessage
+  if Client then
+    self:SendChatToPlayer(message,Client)
+  else
+    self:SendChat(name..": "..message)
+  end
+  self:__PlayerBlocked(1,Client,name,Seconds)
+  self:ReturnToSpectators(Client)
+  return self
+end
+
+--- Unblock a player.
+-- @param #NET self
+-- @param Wrapper.Client#CLIENT Client CLIENT object
+-- @param #string PlayerName (optional) Name of the player.
+-- @param #string Message (optional) Message to be sent via chat.
+-- @return #NET self
+function NET:UnblockPlayer(Client,PlayerName,Message)
+  local name
+  if Client then
+    name = CLIENT:GetPlayerName()
+  elseif PlayerName then
+    name = PlayerName
+  else
+    self:F(self.lid.."Unblock: No PlayerName given or not found!")
+    return self
+  end
+  self.BlockedPilots[name] = nil
+  local message = Message or self.UnblockMessage
+  if Client then
+    self:SendChatToPlayer(message,Client)
+  else
+    self:SendChat(name..": "..message)
+  end
+  self:__PlayerUnblocked(1,Client,name)
+  return self
+end
+
+function NET:SetBlockMessage(Text)
+  self.BlockMessage = Text or "You are blocked from joining. Wait time is: "..self.BlockTime.." seconds!"
+  return self
+end
+
+function NET:SetBlockTime(Seconds)
+  self.BlockTime = Seconds or 600
+  return self
+end
+
+function NET:SetUnblockMessage(Text)
+  self.UnblockMessage = Text or "You are unblocked now and can join again."
   return self
 end
 
