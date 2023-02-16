@@ -1,4 +1,4 @@
---- **Wrapper** - GROUP wraps the DCS Class Group objects.
+----- **Wrapper** - GROUP wraps the DCS Class Group objects.
 -- 
 -- ===
 -- 
