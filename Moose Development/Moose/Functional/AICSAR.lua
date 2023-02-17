@@ -53,6 +53,8 @@
 -- @field #boolean limithelos limit available number of helos going on mission (defaults to true)
 -- @field #number helonumber number of helos available (default: 3)
 -- @field Utilities.FiFo#FIFO PilotStore
+-- @field #number Altitude Default altitude setting for the helicopter FLIGHTGROUP 1500ft.
+-- @field #number Speed Default speed setting for the helicopter FLIGHTGROUP is 100kn.
 -- @extends Core.Fsm#FSM
 
 
@@ -78,7 +80,7 @@
 --            -- @param #string Alias Name of this instance.
 --            -- @param #number Coalition Coalition as in coalition.side.BLUE, can also be passed as "blue", "red" or "neutral"
 --            -- @param #string Pilottemplate Pilot template name.
---            -- @param #string Helotemplate Helicopter template name.
+--            -- @param #string Helotemplate Helicopter template name. Set the template to "cold start". Hueys work best.
 --            -- @param Wrapper.Airbase#AIRBASE FARP FARP object or Airbase from where to start.
 --            -- @param Core.Zone#ZONE MASHZone Zone where to drop pilots after rescue.
 --            local my_aicsar=AICSAR:New("Luftrettung",coalition.side.BLUE,"Downed Pilot","Rescue Helo",AIRBASE:FindByName("Test FARP"),ZONE:New("MASH"))
@@ -187,7 +189,7 @@
 -- @field #AICSAR
 AICSAR = {
   ClassName = "AICSAR",
-  version = "0.1.10",
+  version = "0.1.11",
   lid = "",
   coalition = coalition.side.BLUE,
   template = "",
@@ -228,6 +230,8 @@ AICSAR = {
   SRSOperator = nil,
   SRSOperatorVoice = false,
   PilotStore = nil,
+  Speed = 100,
+  Altitude = 1500,
 }
 
 -- TODO Messages
@@ -785,9 +789,14 @@ function AICSAR:_InitMission(Pilot,Index)
     -- Cargo transport assignment.
   local opstransport=OPSTRANSPORT:New(Pilot, pickupzone, self.farpzone)
   
+  
   local helo = self:_GetFlight()
   -- inject reservation
   helo.AICSARReserved = true
+  
+  helo:SetDefaultAltitude(self.Altitude or 1500)
+  
+  helo:SetDefaultSpeed(self.Speed or 100)
   
   -- Cargo transport assignment to first Huey group.
   helo:AddOpsTransport(opstransport)
@@ -833,6 +842,26 @@ function AICSAR:_CheckInMashZone(Pilot)
   else
     return false
   end
+end
+
+--- [User] Set default helo speed. Note - AI might have other ideas. Defaults to 100kn.
+-- @param #AICSAR self
+-- @param #number Knots Speed in knots.
+-- @return #AICSAR self
+function AICSAR:SetDefaultSpeed(Knots)
+  self:T(self.lid .. "SetDefaultSpeed")
+  self.Speed = Knots or 100
+  return self
+end
+
+--- [User] Set default helo altitudeAGL. Note - AI might have other ideas. Defaults to 1500ft.
+-- @param #AICSAR self
+-- @param #number Feet AGL set in feet.
+-- @return #AICSAR self
+function AICSAR:SetDefaultAltitude(Feet)
+  self:T(self.lid .. "SetDefaultAltitude")
+  self.Altitude = Feet or 1500
+  return self
 end
 
 --- [Internal] Check helo queue 
