@@ -91,7 +91,7 @@ function NET:New()
   -- @param #string From State.
   -- @param #string Event Trigger.
   -- @param #string To State.
-  -- @param Wrapper.Unit#UNIT Client Unit Object.
+  -- @param Wrapper.Unit#UNIT Client Unit Object, might be nil.
   -- @param #string Name Name of leaving Pilot.
   -- @return #NET self
   
@@ -101,7 +101,7 @@ function NET:New()
   -- @param #string From State.
   -- @param #string Event Trigger.
   -- @param #string To State.
-  -- @param Wrapper.Unit#UNIT Client Unit Object.
+  -- @param Wrapper.Unit#UNIT Client Unit Object, might be nil.
   -- @param #string Name Name of leaving Pilot.
   -- @return #NET self
   
@@ -111,7 +111,7 @@ function NET:New()
   -- @param #string From State.
   -- @param #string Event Trigger.
   -- @param #string To State.
-  -- @param Wrapper.Unit#UNIT Client Unit Object.
+  -- @param Wrapper.Unit#UNIT Client Unit Object, might be nil.
   -- @param #string Name Name of dead Pilot.
   -- @return #NET self
   
@@ -121,7 +121,7 @@ function NET:New()
   -- @param #string From State.
   -- @param #string Event Trigger.
   -- @param #string To State.
-  -- @param Wrapper.Client#CLIENT Client Client Object.
+  -- @param Wrapper.Client#CLIENT Client Client Object, might be nil.
   -- @param #string Name Name of blocked Pilot.
   -- @param #number Seconds Blocked for this number of seconds
   -- @return #NET self
@@ -132,7 +132,7 @@ function NET:New()
   -- @param #string From State.
   -- @param #string Event Trigger.
   -- @param #string To State.
-  -- @param Wrapper.Client#CLIENT Client Client Object.
+  -- @param Wrapper.Client#CLIENT Client Client Object, might be nil.
   -- @param #string Name Name of unblocked Pilot.
   -- @return #NET self
   
