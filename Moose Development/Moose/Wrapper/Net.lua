@@ -208,7 +208,7 @@ function NET:BlockPlayer(Client,PlayerName,Seconds,Message)
   elseif PlayerName then
     name = PlayerName
   else
-    self:F(self.lid.."Block: No PlayerName given or not found!")
+    self:F(self.lid.."Block: No Client or PlayerName given or nothing found!")
     return self
   end
   local ucid = self:GetPlayerUCID(Client,name)
@@ -414,7 +414,14 @@ end
 -- @param #string Name Player name to be used.
 -- @return #boolean success
 function NET:GetPlayerUCID(Client,Name)
-  local PlayerID = self:GetPlayerIDByName(Name) or self:GetPlayerIDFromClient(Client)
+  local PlayerID = nil
+  if Client then
+    PlayerID = self:GetPlayerIDFromClient(Client)
+  elseif Name then
+    PlayerID = self:GetPlayerIDByName(Name)
+  else
+    self:E(self.lid.."Neither client nor name provided!")
+  end
   local ucid = net.get_player_info(tonumber(PlayerID), 'ucid')
   return ucid
 end
