@@ -31,7 +31,7 @@ do
 -- @field #NET
 NET = {
   ClassName = "NET",
-  Version = "0.0.4",
+  Version = "0.0.5",
   BlockTime = 600,
   BlockedPilots = {},
   BlockedUCIDs = {},
@@ -202,7 +202,7 @@ end
 -- @param #string Message (optional) Message to be sent via chat.
 -- @return #NET self
 function NET:BlockPlayer(Client,PlayerName,Seconds,Message)
-  local name
+  local name = PlayerName
   if Client then
     name = Client:GetPlayerName()
   elseif PlayerName then
@@ -222,7 +222,10 @@ function NET:BlockPlayer(Client,PlayerName,Seconds,Message)
     self:SendChat(name..": "..message)
   end
   self:__PlayerBlocked(1,Client,name,Seconds)
-  self:ReturnToSpectators(Client)
+  local PlayerID = self:GetPlayerIDByName(name)
+  if PlayerID and tonumber(PlayerID) ~= 1 then
+    local outcome = net.force_player_slot(tonumber(PlayerID), 0, '' )
+  end
   return self
 end
 
@@ -233,7 +236,7 @@ end
 -- @param #string Message (optional) Message to be sent via chat.
 -- @return #NET self
 function NET:UnblockPlayer(Client,PlayerName,Message)
-  local name
+  local name = PlayerName
   if Client then
     name = Client:GetPlayerName()
   elseif PlayerName then
@@ -299,6 +302,7 @@ end
 -- @param #string Name The player name whose ID to find
 -- @return #number PlayerID or nil
 function NET:GetPlayerIDByName(Name)
+  if not Name then return nil end
   local playerList = self:GetPlayerList()
   for i=1,#playerList do
     local playerName = net.get_name(i)
@@ -526,8 +530,8 @@ end
 -- @return #boolean Success
 function NET:ForceSlot(Client,SideID,SlotID)
   local PlayerID = self:GetPlayerIDFromClient(Client)
-  if PlayerID then
-    return net.force_player_slot(tonumber(PlayerID), SideID, SlotID )
+  if PlayerID and tonumber(PlayerID) ~= 1 then
+    return net.force_player_slot(tonumber(PlayerID), SideID, SlotID or '' )
   else
     return false
   end
