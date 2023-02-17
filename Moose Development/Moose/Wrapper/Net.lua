@@ -216,8 +216,8 @@ function NET:BlockPlayer(Client,PlayerName,Seconds,Message)
   self.BlockedPilots[name] = timer.getTime()+addon
   self.BlockedUCIDs[ucid] = timer.getTime()+addon
   local message = Message or self.BlockMessage
-  if Client then
-    self:SendChatToPlayer(message,Client)
+  if name then
+    self:SendChatToPlayer(message,name)
   else
     self:SendChat(name..": "..message)
   end
@@ -246,8 +246,8 @@ function NET:UnblockPlayer(Client,PlayerName,Message)
   self.BlockedPilots[name] = nil
   self.BlockedUCIDs[ucid] = nil
   local message = Message or self.UnblockMessage
-  if Client then
-    self:SendChatToPlayer(message,Client)
+  if name then
+    self:SendChatToPlayer(message,name)
   else
     self:SendChat(name..": "..message)
   end
@@ -314,20 +314,41 @@ end
 -- @param Wrapper.Client#CLIENT Client The client
 -- @return #number PlayerID or nil
 function NET:GetPlayerIDFromClient(Client)
-  local name = Client:GetPlayerName()
-  local id = self:GetPlayerIDByName(name)
-  return id
+  if Client then
+    local name = Client:GetPlayerName()
+    local id = self:GetPlayerIDByName(name)
+    return id
+  else
+    return nil
+  end
 end
 
---- Send chat message to a specific player.
+--- Send chat message to a specific player using the CLIENT object.
 -- @param #NET self
 -- @param #string Message The text message
 -- @param Wrapper.Client#CLIENT ToClient Client receiving the message
 -- @param Wrapper.Client#CLIENT FromClient (Optional) Client sending the message
 -- @return #NET self
-function NET:SendChatToPlayer(Message, ToClient, FromClient)
+function NET:SendChatToClient(Message, ToClient, FromClient)
   local PlayerId = self:GetPlayerIDFromClient(ToClient)
   local FromId = self:GetPlayerIDFromClient(FromClient)
+  if Message and PlayerId and FromId then
+    net.send_chat_to(Message, tonumber(PlayerId) , tonumber(FromId))
+  elseif Message and PlayerId then
+    net.send_chat_to(Message, tonumber(PlayerId))
+  end
+  return self
+end
+
+--- Send chat message to a specific player using the player name
+-- @param #NET self
+-- @param #string Message The text message
+-- @param #string ToPlayer Player receiving the message
+-- @param #string  FromPlayer(Optional) Player sending the message
+-- @return #NET self
+function NET:SendChatToPlayer(Message, ToPlayer, FromPlayer)
+  local PlayerId = self:GetPlayerIDByName(ToPlayer)
+  local FromId = self:GetPlayerIDByName(FromPlayer)
   if Message and PlayerId and FromId then
     net.send_chat_to(Message, tonumber(PlayerId) , tonumber(FromId))
   elseif Message and PlayerId then
