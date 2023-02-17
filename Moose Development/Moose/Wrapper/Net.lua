@@ -204,7 +204,7 @@ end
 function NET:BlockPlayer(Client,PlayerName,Seconds,Message)
   local name
   if Client then
-    name = CLIENT:GetPlayerName()
+    name = Client:GetPlayerName()
   elseif PlayerName then
     name = PlayerName
   else
@@ -235,7 +235,7 @@ end
 function NET:UnblockPlayer(Client,PlayerName,Message)
   local name
   if Client then
-    name = CLIENT:GetPlayerName()
+    name = Client:GetPlayerName()
   elseif PlayerName then
     name = PlayerName
   else
