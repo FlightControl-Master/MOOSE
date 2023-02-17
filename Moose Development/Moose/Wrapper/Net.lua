@@ -160,10 +160,16 @@ function NET:_EventHandler(EventData)
       local TNow = timer.getTime()
       if self.BlockedPilots[name] and TNow < self.BlockedPilots[name] then
         -- block pilot by name
-        self:ReturnToSpectators(data.IniUnit)
+        local PlayerID = self:GetPlayerIDByName(name)
+        if PlayerID and tonumber(PlayerID) ~= 1 then
+          local outcome = net.force_player_slot(tonumber(PlayerID), 0, '' )
+        end
       elseif self.BlockedUCIDs[ucid] and TNow < self.BlockedUCIDs[ucid] then
         -- block pilot by ucid
-        self:ReturnToSpectators(data.IniUnit)
+        local PlayerID = self:GetPlayerIDByName(name)
+        if PlayerID and tonumber(PlayerID) ~= 1 then
+          local outcome = net.force_player_slot(tonumber(PlayerID), 0, '' )
+        end
       else
         self.KnownPilots[name] = true
         self.BlockedPilots[name] = nil
