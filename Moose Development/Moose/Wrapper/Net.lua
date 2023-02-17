@@ -1,6 +1,6 @@
 --- **Wrapper** - DCS net functions.
 --
--- Encapsules **multiplayer** environment scripting functions from [net](https://wiki.hoggitworld.com/view/DCS_singleton_net)
+-- Encapsules **multiplayer server** environment scripting functions from [net](https://wiki.hoggitworld.com/view/DCS_singleton_net)
 --
 -- ===
 --
@@ -22,6 +22,7 @@ do
 -- @field #table KnownPilots
 -- @field #string BlockMessage
 -- @field #string UnblockMessage
+-- @field #table BlockedUCIDs
 -- @extends Core.Fsm#FSM
 
 --- Encapsules multiplayer environment scripting functions from [net](https://wiki.hoggitworld.com/view/DCS_singleton_net)
@@ -30,9 +31,10 @@ do
 -- @field #NET
 NET = {
   ClassName = "NET",
-  Version = "0.0.3",
+  Version = "0.0.4",
   BlockTime = 600,
   BlockedPilots = {},
+  BlockedUCIDs = {},
   KnownPilots = {},
   BlockMessage = nil,
   UnblockMessage = nil,
@@ -150,17 +152,22 @@ function NET:_EventHandler(EventData)
   if data.id and data.IniUnit and (data.IniPlayerName or data.IniUnit:GetPlayerName()) then
     -- Get PlayerName
     local name = data.IniPlayerName and data.IniPlayerName or data.IniUnit:GetPlayerName()
-    self:T(self.lid.."Event for: "..name)
+    local ucid = self:GetPlayerUCID(nil,name)
+    self:T(self.lid.."Event for: "..name.." | UCID: "..ucid)
     -- Joining
     if data.id == EVENTS.PlayerEnterUnit or data.id == EVENTS.PlayerEnterAircraft then
       -- Check for known pilots  
       local TNow = timer.getTime()
       if self.BlockedPilots[name] and TNow < self.BlockedPilots[name] then
-        -- block pilot
+        -- block pilot by name
+        self:ReturnToSpectators(data.IniUnit)
+      elseif self.BlockedUCIDs[ucid] and TNow < self.BlockedUCIDs[ucid] then
+        -- block pilot by ucid
         self:ReturnToSpectators(data.IniUnit)
       else
         self.KnownPilots[name] = true
         self.BlockedPilots[name] = nil
+        self.BlockedUCIDs[ucid] = nil
         self:__PlayerJoined(1,data.IniUnit,name)
         return self
       end
@@ -204,8 +211,10 @@ function NET:BlockPlayer(Client,PlayerName,Seconds,Message)
     self:F(self.lid.."Block: No PlayerName given or not found!")
     return self
   end
+  local ucid = self:GetPlayerUCID(Client,name)
   local addon = Seconds or self.BlockTime
   self.BlockedPilots[name] = timer.getTime()+addon
+  self.BlockedUCIDs[ucid] = timer.getTime()+addon
   local message = Message or self.BlockMessage
   if Client then
     self:SendChatToPlayer(message,Client)
@@ -233,7 +242,9 @@ function NET:UnblockPlayer(Client,PlayerName,Message)
     self:F(self.lid.."Unblock: No PlayerName given or not found!")
     return self
   end
+  local ucid = self:GetPlayerUCID(Client,name)
   self.BlockedPilots[name] = nil
+  self.BlockedUCIDs[ucid] = nil
   local message = Message or self.UnblockMessage
   if Client then
     self:SendChatToPlayer(message,Client)
@@ -244,16 +255,28 @@ function NET:UnblockPlayer(Client,PlayerName,Message)
   return self
 end
 
+--- Set block chat message.
+-- @param #NET self
+-- @param #string Text The message
+-- @return #NET self
 function NET:SetBlockMessage(Text)
   self.BlockMessage = Text or "You are blocked from joining. Wait time is: "..self.BlockTime.." seconds!"
   return self
 end
 
+--- Set block time in seconds.
+-- @param #NET self
+-- @param #number Seconds Numnber of seconds this block will last. Defaults to 600.
+-- @return #NET self
 function NET:SetBlockTime(Seconds)
   self.BlockTime = Seconds or 600
   return self
 end
 
+--- Set unblock chat message.
+-- @param #NET self
+-- @param #string Text The message
+-- @return #NET self
 function NET:SetUnblockMessage(Text)
   self.UnblockMessage = Text or "You are unblocked now and can join again."
   return self
@@ -275,7 +298,7 @@ end
 -- @param #NET self
 -- @param #string Name The player name whose ID to find
 -- @return #number PlayerID or nil
-function NET:GetPlayerIdByName(Name)
+function NET:GetPlayerIDByName(Name)
   local playerList = self:GetPlayerList()
   for i=1,#playerList do
     local playerName = net.get_name(i)
@@ -292,7 +315,7 @@ end
 -- @return #number PlayerID or nil
 function NET:GetPlayerIDFromClient(Client)
   local name = Client:GetPlayerName()
-  local id = self:GetPlayerIdByName(name)
+  local id = self:GetPlayerIDByName(name)
   return id
 end
 
@@ -382,6 +405,18 @@ function NET:GetPlayerInfo(Client,Attribute)
   else
     return nil
   end
+end
+
+
+--- Get player UCID from player CLIENT object or player name. Provide either one.  
+-- @param #NET self
+-- @param Wrapper.Client#CLIENT Client The client object to be used.
+-- @param #string Name Player name to be used.
+-- @return #boolean success
+function NET:GetPlayerUCID(Client,Name)
+  local PlayerID = self:GetPlayerIDByName(Name) or self:GetPlayerIDFromClient(Client)
+  local ucid = net.get_player_info(tonumber(PlayerID), 'ucid')
+  return ucid
 end
 
 --- Kicks a player from the server. Can display a message to the user.  
