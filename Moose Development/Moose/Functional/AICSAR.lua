@@ -189,7 +189,7 @@
 -- @field #AICSAR
 AICSAR = {
   ClassName = "AICSAR",
-  version = "0.1.11",
+  version = "0.1.12",
   lid = "",
   coalition = coalition.side.BLUE,
   template = "",
@@ -393,8 +393,8 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   self:AddTransition("*",             "HeloDown",           "*")           -- Helo dead
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop FSM.
   
-  self:HandleEvent(EVENTS.LandingAfterEjection)
-  self:HandleEvent(EVENTS.Ejection)
+  self:HandleEvent(EVENTS.LandingAfterEjection,self._EventHandler)
+  self:HandleEvent(EVENTS.Ejection,self._EventHandlerEject)
   
   self:__Start(math.random(2,5))
   
@@ -663,7 +663,7 @@ end
 -- @param #AICSAR self
 -- @param Core.Event#EVENTDATA EventData
 -- @return #AICSAR self
-function AICSAR:OnEventEjection(EventData)
+function AICSAR:_EventHandlerEject(EventData)
   local _event = EventData -- Core.Event#EVENTDATA
   if _event.IniPlayerName then
     self.PilotStore:Push(_event.IniPlayerName)
@@ -676,7 +676,7 @@ end
 -- @param #AICSAR self
 -- @param Core.Event#EVENTDATA EventData
 -- @return #AICSAR self
-function AICSAR:OnEventLandingAfterEjection(EventData)
+function AICSAR:_EventHandler(EventData)
   self:T(self.lid .. "OnEventLandingAfterEjection ID=" .. EventData.id)
   
   -- autorescue on off?
