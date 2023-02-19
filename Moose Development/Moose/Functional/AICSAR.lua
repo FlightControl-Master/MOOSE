@@ -55,6 +55,8 @@
 -- @field Utilities.FiFo#FIFO PilotStore
 -- @field #number Altitude Default altitude setting for the helicopter FLIGHTGROUP 1500ft.
 -- @field #number Speed Default speed setting for the helicopter FLIGHTGROUP is 100kn.
+-- @field #boolean UseEventEject In case Event LandingAfterEjection isn't working, use set this to true.
+-- @field #number Delay In case of UseEventEject wait this long until we spawn a landed pilot.
 -- @extends Core.Fsm#FSM
 
 
@@ -189,7 +191,7 @@
 -- @field #AICSAR
 AICSAR = {
   ClassName = "AICSAR",
-  version = "0.1.12",
+  version = "0.1.14",
   lid = "",
   coalition = coalition.side.BLUE,
   template = "",
@@ -232,6 +234,8 @@ AICSAR = {
   PilotStore = nil,
   Speed = 100,
   Altitude = 1500,
+  UseEventEject = false,
+  Delay = 100,
 }
 
 -- TODO Messages
@@ -343,6 +347,8 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   self.farp = FARP
   self.farpzone = MASHZone
   self.playerset = SET_CLIENT:New():FilterActive(true):FilterCategories("helicopter"):FilterStart()
+  self.UseEventEject = false
+  self.Delay = 300
   
   -- Radio
   self.SRS = nil
@@ -394,7 +400,7 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop FSM.
   
   self:HandleEvent(EVENTS.LandingAfterEjection,self._EventHandler)
-  self:HandleEvent(EVENTS.Ejection,self._EventHandlerEject)
+  self:HandleEvent(EVENTS.Ejection,self._EjectEventHandler)
   
   self:__Start(math.random(2,5))
   
@@ -663,20 +669,99 @@ end
 -- @param #AICSAR self
 -- @param Core.Event#EVENTDATA EventData
 -- @return #AICSAR self
-function AICSAR:_EventHandlerEject(EventData)
+function AICSAR:_EjectEventHandler(EventData)
   local _event = EventData -- Core.Event#EVENTDATA
   if _event.IniPlayerName then
     self.PilotStore:Push(_event.IniPlayerName)
     self:T(self.lid.."Pilot Ejected: ".._event.IniPlayerName)
+    if self.UseEventEject then
+      -- get position and spawn in a template pilot
+      local _LandingPos = COORDINATE:NewFromVec3(_event.initiator:getPosition().p)
+      local _country = _event.initiator:getCountry()
+      local _coalition = coalition.getCountryCoalition( _country )
+      local data = UTILS.DeepCopy(EventData)
+      Unit.destroy(_event.initiator) -- shagrat remove static Pilot model
+      self:ScheduleOnce(self.Delay,self._DelayedSpawnPilot,self,_LandingPos,_coalition)
+    end
   end
+  return self
+end
+
+--- [Internal] Spawn a pilot
+-- @param #AICSAR self
+-- @param Core.Point#COORDINATE _LandingPos Landing Postion
+-- @param #number _coalition Coalition side
+-- @return #AICSAR self
+function AICSAR:_DelayedSpawnPilot(_LandingPos,_coalition)
+
+  local distancetofarp = _LandingPos:Get2DDistance(self.farp:GetCoordinate()) 
+  -- Mayday Message
+  local Text,Soundfile,Soundlength,Subtitle = self.gettext:GetEntry("PILOTDOWN",self.locale)
+  local text = ""
+  local setting = {}
+  setting.MGRS_Accuracy = self.MGRS_Accuracy
+  local location = _LandingPos:ToStringMGRS(setting)
+  local msgtxt = Text..location.."!"
+  location = string.gsub(location,"MGRS ","")
+  location = string.gsub(location,"%s+","")
+  location = string.gsub(location,"([%a%d])","%1;") -- "0 5 1 "
+  location = string.gsub(location,"0","zero")
+  location = string.gsub(location,"9","niner")
+  location = "MGRS;"..location
+  if self.SRSGoogle then
+    location = string.format("<say-as interpret-as='characters'>%s</say-as>",location)
+  end
+  text = Text .. location .. "!"
+  local ttstext = Text .. location .. "! Repeat! "..location
+  if _coalition == self.coalition then
+    if self.verbose then
+      MESSAGE:New(msgtxt,15,"AICSAR"):ToCoalition(self.coalition)
+     -- MESSAGE:New(msgtxt,15,"AICSAR"):ToLog()
+    end
+    if self.SRSRadio then
+      local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
+      sound:SetPlayWithSRS(true)
+      self.SRS:PlaySoundFile(sound,2)
+    elseif self.DCSRadio then
+      self:DCSRadioBroadcast(Soundfile,Soundlength,text)
+    elseif self.SRSTTSRadio then
+      if self.SRSPilotVoice then
+        self.SRSQ:NewTransmission(ttstext,nil,self.SRSPilot,nil,1)
+      else
+        self.SRSQ:NewTransmission(ttstext,nil,self.SRS,nil,1)
+      end
+    end   
+  end
+  
+  -- further processing
+  if _coalition == self.coalition and distancetofarp <= self.maxdistance then
+    -- in reach
+    self:T(self.lid .. "Spawning new Pilot")
+    self.pilotindex = self.pilotindex + 1
+    local newpilot = SPAWN:NewWithAlias(self.template,string.format("%s-AICSAR-%d",self.template, self.pilotindex))
+    newpilot:InitDelayOff()
+    newpilot:OnSpawnGroup(
+      function (grp)
+        self.pilotqueue[self.pilotindex] = grp
+      end
+    )
+    newpilot:SpawnFromCoordinate(_LandingPos) 
+    
+    self:__PilotDown(2,_LandingPos,true)
+  elseif _coalition == self.coalition and distancetofarp > self.maxdistance then
+    -- out of reach, apologies, too far off   
+    self:T(self.lid .. "Pilot out of reach")
+    self:__PilotDown(2,_LandingPos,false)
+  end 
   return self
 end
 
 --- [Internal] Catch the landing after ejection and spawn a pilot in situ.
 -- @param #AICSAR self
 -- @param Core.Event#EVENTDATA EventData
+-- @param #boolean FromEject
 -- @return #AICSAR self
-function AICSAR:_EventHandler(EventData)
+function AICSAR:_EventHandler(EventData, FromEject)
   self:T(self.lid .. "OnEventLandingAfterEjection ID=" .. EventData.id)
   
   -- autorescue on off?
@@ -685,6 +770,8 @@ function AICSAR:_EventHandler(EventData)
       return self
     end
   end
+  
+  if self.UseEventEject and (not FromEject) then return self end
   
   local _event = EventData -- Core.Event#EVENTDATA
   -- get position and spawn in a template pilot

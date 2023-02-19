@@ -95,6 +95,22 @@ function CLIENT:Find(DCSUnit, Error)
   end
 end
 
+--- Finds a CLIENT from the _DATABASE using the relevant player name.
+-- @param #CLIENT self
+-- @param #string Name Name of the player
+-- @return #CLIENT or nil if not found
+function CLIENT:FindByPlayerName(Name)
+  
+  local foundclient = nil
+  _DATABASE:ForEachClient(
+    function(client)
+      if client:GetPlayerName() == Name then
+        foundclient = client
+      end
+    end
+  )
+  return foundclient
+end
 
 --- Finds a CLIENT from the _DATABASE using the relevant Client Unit Name.
 -- As an optional parameter, a briefing text can be given also.
