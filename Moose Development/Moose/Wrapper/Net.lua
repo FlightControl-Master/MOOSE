@@ -5,7 +5,8 @@
 -- ===
 --
 -- ### Author: **applevangelist**
---
+-- # Last Update Feb 2023
+-- 
 -- ===
 --
 -- @module Wrapper.Net
@@ -23,7 +24,17 @@ do
 -- @field #string BlockMessage
 -- @field #string UnblockMessage
 -- @field #table BlockedUCIDs
+-- @field #table BlockedSlots
+-- @field #table BlockedSides
 -- @extends Core.Fsm#FSM
+
+---
+-- @type NET.PlayerData
+-- @field #string name
+-- @field #string ucid
+-- @field #number id
+-- @field #number side
+-- @field #number slot
 
 --- Encapsules multiplayer environment scripting functions from [net](https://wiki.hoggitworld.com/view/DCS_singleton_net)
 -- with some added FSM functions and options to block/unblock players in MP environments.
@@ -31,10 +42,12 @@ do
 -- @field #NET
 NET = {
   ClassName = "NET",
-  Version = "0.0.7",
+  Version = "0.1.0",
   BlockTime = 600,
   BlockedPilots = {},
   BlockedUCIDs = {},
+  BlockedSides = {},
+  BlockedSlots = {},
   KnownPilots = {},
   BlockMessage = nil,
   UnblockMessage = nil,
@@ -54,26 +67,20 @@ function NET:New()
   self:SetBlockMessage()
   self:SetUnblockMessage()
   
-  self:HandleEvent(EVENTS.PlayerEnterUnit,self._EventHandler)
-  self:HandleEvent(EVENTS.PlayerEnterAircraft,self._EventHandler)
-  self:HandleEvent(EVENTS.PlayerLeaveUnit,self._EventHandler)
-  self:HandleEvent(EVENTS.PilotDead,self._EventHandler)
-  self:HandleEvent(EVENTS.Ejection,self._EventHandler)
-  self:HandleEvent(EVENTS.Crash,self._EventHandler)
-  self:HandleEvent(EVENTS.SelfKillPilot,self._EventHandler)
-  
     -- Start State.
-  self:SetStartState("Running")
+  self:SetStartState("Stopped")
 
   -- Add FSM transitions.
   -- From State  -->   Event  -->  To State
-  self:AddTransition("*",       "Run",                "Running")     -- Start FSM.
+  self:AddTransition("Stopped", "Run",                "Running")     -- Start FSM.
   self:AddTransition("*",       "PlayerJoined",       "*")
   self:AddTransition("*",       "PlayerLeft",         "*")
   self:AddTransition("*",       "PlayerDied",         "*")
   self:AddTransition("*",       "PlayerEjected",      "*")
   self:AddTransition("*",       "PlayerBlocked",      "*")
   self:AddTransition("*",       "PlayerUnblocked",    "*")
+  self:AddTransition("*",       "Status",             "*")
+  self:AddTransition("*",       "Stop",               "Stopped")
   
   self.lid = string.format("NET %s | ",self.Version)
   
@@ -138,7 +145,43 @@ function NET:New()
   -- @param #string Name Name of unblocked Pilot.
   -- @return #NET self
   
+  self:Run()
+  
   return self
+end
+
+--- [Internal] Check any blockers
+-- @param #NET self
+-- @param #string UCID
+-- @param #string Name
+-- @param #number PlayerID
+-- @param #number PlayerSide
+-- @param #string PlayerSlot
+-- @return #boolean IsBlocked
+function NET:IsAnyBlocked(UCID,Name,PlayerID,PlayerSide,PlayerSlot)
+  local blocked = false
+  local TNow = timer.getTime()
+  -- UCID
+  if UCID and self.BlockedUCIDs[UCID] and TNow < self.BlockedUCIDs[UCID] then
+    return true
+  end
+  -- ID/Name
+  if PlayerID and not Name then
+    Name = self:GetPlayerIDByName(Name)
+  end
+  -- Name
+  if Name and self.BlockedPilots[Name] and TNow < self.BlockedPilots[Name] then
+    return true
+  end
+  -- Side
+  if PlayerSide and self.BlockedSides[PlayerSide] and TNow < self.BlockedSides[PlayerSide] then
+    return true
+  end
+  -- Slot
+  if PlayerSlot and self.BlockedSlots[PlayerSlot] and TNow < self.BlockedSlots[PlayerSlot] then
+    return true
+  end
+  return blocked
 end
 
 --- [Internal] Event Handler
@@ -150,33 +193,25 @@ function NET:_EventHandler(EventData)
   self:T2({Event = EventData.id})
   local data = EventData -- Core.Event#EVENTDATA EventData
   if data.id and data.IniUnit and (data.IniPlayerName or data.IniUnit:GetPlayerName()) then
-    -- Get PlayerName
+    
+    -- Get Player Data
     local name = data.IniPlayerName and data.IniPlayerName or data.IniUnit:GetPlayerName()
     local ucid = self:GetPlayerUCID(nil,name)
     local PlayerID = self:GetPlayerIDByName(name) or "none"
     local PlayerSide, PlayerSlot = self:GetSlot(data.IniUnit)
     local TNow = timer.getTime()
+    
     self:T(self.lid.."Event for: "..name.." | UCID: "..ucid)
-    if self.BlockedPilots[name] then
-      self:T(self.lid.."Pilot "..name.." ID "..PlayerID.." Blocked for another "..self.BlockedPilots[name]-timer.getTime().." seconds!")
-    end
-    if self.BlockedUCIDs[ucid] then
-      self:T(self.lid.."Pilot "..name.." ID "..PlayerID.." Blocked for another "..self.BlockedUCIDs[ucid]-timer.getTime().." seconds!")
-    end
+    
     -- Joining
     if data.id == EVENTS.PlayerEnterUnit or data.id == EVENTS.PlayerEnterAircraft then
       self:T(self.lid.."Pilot Joining: "..name.." | UCID: "..ucid)
-      -- Check for known pilots  
-      if self.BlockedPilots[name] and TNow < self.BlockedPilots[name] then
-        -- block pilot by name       
-        if PlayerID and tonumber(PlayerID) ~= 1 then
-          local outcome = net.force_player_slot(tonumber(PlayerID), 0, '' )
-        end
-      elseif self.BlockedUCIDs[ucid] and TNow < self.BlockedUCIDs[ucid] then
-        -- block pilot by ucid
-        if PlayerID and tonumber(PlayerID) ~= 1 then
-          local outcome = net.force_player_slot(tonumber(PlayerID), 0, '' )
-        end
+      -- Check for blockages
+      local blocked = self:IsAnyBlocked(ucid,name,PlayerID,PlayerSide,PlayerSlot)  
+      
+      if blocked and PlayerID and tonumber(PlayerID) ~= 1 then
+        -- block pilot
+        local outcome = net.force_player_slot(tonumber(PlayerID), 0, '' )
       else
         self.KnownPilots[name] = {
           name = name,
@@ -185,14 +220,11 @@ function NET:_EventHandler(EventData)
           side = PlayerSide,
           slot = PlayerSlot,
         }
-        if (self.BlockedUCIDs[ucid] and TNow >= self.BlockedUCIDs[ucid]) or (self.BlockedPilots[name] and TNow >= self.BlockedPilots[name]) then
-          self.BlockedPilots[name] = nil
-          self.BlockedUCIDs[ucid] = nil
-        end
         self:__PlayerJoined(1,data.IniUnit,name)
         return self
       end
     end
+    
     -- Leaving
     if data.id == EVENTS.PlayerLeaveUnit and self.KnownPilots[name] then
      self:T(self.lid.."Pilot Leaving: "..name.." | UCID: "..ucid)
@@ -200,6 +232,7 @@ function NET:_EventHandler(EventData)
      self.KnownPilots[name] = false
      return self
     end
+    
     -- Ejected
     if data.id == EVENTS.Ejection and self.KnownPilots[name] then
      self:T(self.lid.."Pilot Ejecting: "..name.." | UCID: "..ucid)
@@ -207,6 +240,7 @@ function NET:_EventHandler(EventData)
      self.KnownPilots[name] = false
      return self
     end
+    
     -- Dead, Crash, Suicide
     if (data.id == EVENTS.PilotDead or data.id == EVENTS.SelfKillPilot or data.id == EVENTS.Crash) and self.KnownPilots[name] then
      self:T(self.lid.."Pilot Dead: "..name.." | UCID: "..ucid)
@@ -215,6 +249,7 @@ function NET:_EventHandler(EventData)
      return self
     end
   end
+  
   return self
 end
 
@@ -251,6 +286,108 @@ function NET:BlockPlayer(Client,PlayerName,Seconds,Message)
   if PlayerID and tonumber(PlayerID) ~= 1 then
     local outcome = net.force_player_slot(tonumber(PlayerID), 0, '' )
   end
+  return self
+end
+
+--- Block a SET_CLIENT of players
+-- @param #NET self
+-- @param Core.Set#SET_CLIENT PlayerSet The SET to block.
+-- @param #number Seconds Seconds (optional) Number of seconds the player has to wait before rejoining.
+-- @param #string Message (optional) Message to be sent via chat.
+-- @return #NET self
+function NET:BlockPlayerSet(PlayerSet,Seconds,Message)
+  self:T({PlayerSet.Set,Seconds,Message})
+  local addon = Seconds or self.BlockTime
+  local message = Message or self.BlockMessage
+  for _,_client in pairs(PlayerSet.Set) do
+    local name = _client:GetPlayerName()
+    self:BlockPlayer(_client,name,addon,message)
+  end
+  return self
+end
+
+--- Unblock a SET_CLIENT of players
+-- @param #NET self
+-- @param Core.Set#SET_CLIENT PlayerSet The SET to unblock.
+-- @param #string Message (optional) Message to be sent via chat.
+-- @return #NET self
+function NET:UnblockPlayerSet(PlayerSet,Message)
+  self:T({PlayerSet.Set,Seconds,Message})
+  local message = Message or self.UnblockMessage
+  for _,_client in pairs(PlayerSet.Set) do
+    local name = _client:GetPlayerName()
+    self:UnblockPlayer(_client,name,message)
+  end
+  return self
+end
+
+--- Block a specific UCID of a player, does NOT automatically kick the player with the UCID if already joined.
+-- @param #NET self
+-- @param #string ucid
+-- @param #number Seconds Seconds (optional) Number of seconds the player has to wait before rejoining.
+-- @return #NET self
+function NET:BlockUCID(ucid,Seconds)
+  self:T({ucid,Seconds})
+  local addon = Seconds or self.BlockTime
+  self.BlockedUCIDs[ucid] = timer.getTime()+addon
+  return self
+end
+
+--- Unblock a specific UCID of a player
+-- @param #NET self
+-- @param #string ucid
+-- @return #NET self
+function NET:UnblockUCID(ucid)
+  self:T({ucid})
+  self.BlockedUCIDs[ucid] = nil
+  return self
+end
+
+--- Block a specific coalition side, does NOT automatically kick all players of that side or kick out joined players
+-- @param #NET self
+-- @param #number side The side to block - 1 : Red, 2 : Blue
+-- @param #number Seconds Seconds (optional) Number of seconds the player has to wait before rejoining.
+-- @return #NET self
+function NET:BlockSide(Side,Seconds)
+  self:T({Side,Seconds})
+  local addon = Seconds or self.BlockTime
+  if Side == 1 or Side == 2 then
+    self.BlockedSides[Side] = timer.getTime()+addon
+  end
+  return self
+end
+
+--- Unblock a specific coalition side. Does NOT unblock specifically blocked playernames or UCIDs.
+-- @param #number side The side to block - 1 : Red, 2 : Blue
+-- @param #number Seconds Seconds (optional) Number of seconds the player has to wait before rejoining.
+-- @return #NET self
+function NET:UnblockSide(Side,Seconds)
+  self:T({Side,Seconds})
+  local addon = Seconds or self.BlockTime
+  if Side == 1 or Side == 2 then
+    self.BlockedSides[Side] = nil
+  end
+  return self
+end
+
+--- Block a specific player slot, does NOT automatically kick a player in that slot or kick out joined players
+-- @param #NET self
+-- @param #string slot The slot to block
+-- @param #number Seconds Seconds (optional) Number of seconds the player has to wait before rejoining.
+-- @return #NET self
+function NET:BlockSlot(Slot,Seconds)
+  self:T({Slot,Seconds})
+  local addon = Seconds or self.BlockTime
+  self.BlockedSlots[Slot] = timer.getTime()+addon
+  return self
+end
+
+--- Unblock a specific slot.
+-- @param #string slot The slot to block
+-- @return #NET self
+function NET:UnblockSlot(Slot)
+  self:T({Slot})
+  self.BlockedSlots[Slot] = nil
   return self
 end
 
@@ -521,7 +658,7 @@ function NET:GetPlayerStatistic(Client,StatisticID)
   end
 end
 
---- Return the name of a given client. Same a CLIENT:GetPlayerName().
+--- Return the name of a given client. Effectively the same as CLIENT:GetPlayerName().
 -- @param #NET self
 -- @param Wrapper.Client#CLIENT Client The client
 -- @return #string Name or nil if not obtainable
@@ -610,6 +747,86 @@ function NET:Log(Message)
   return self
 end
 
+---  Get some data of pilots who have currently joined
+-- @param #NET self
+-- @param Wrapper.Client#CLIENT Client Provide either the client object whose data to find **or**
+-- @param #string Name The player name whose data to find 
+-- @return #table Table of #NET.PlayerData or nil if not found
+function NET:GetKnownPilotData(Client,Name)
+  local name = Name
+  if Client and not Name then
+    name = Client:GetPlayerName()
+  end
+  if name then
+    return self.KnownPilots[name]
+  else
+    return nil
+  end
+end
+
+---  Status - housekeeping
+-- @param #NET self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @return #NET self
+function NET:onafterStatus(From,Event,To)
+  self:I({From,Event,To})
+  
+  local function HouseHold(tavolo)
+    local TNow = timer.getTime()
+    for _,entry in pairs (tavolo) do
+      if entry >= TNow then entry =  nil end
+    end
+  end
+  
+  HouseHold(self.BlockedPilots)
+  HouseHold(self.BlockedSides)
+  HouseHold(self.BlockedSlots)
+  HouseHold(self.BlockedUCIDs)
+  
+  if self:Is("Running") then
+    self:__Status(-60)
+  end
+  
+  return self
+end
+
+---  Stop the event functions
+-- @param #NET self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @return #NET self
+function NET:onafterRun(From,Event,To)
+  self:I({From,Event,To})
+  self:HandleEvent(EVENTS.PlayerEnterUnit,self._EventHandler)
+  self:HandleEvent(EVENTS.PlayerEnterAircraft,self._EventHandler)
+  self:HandleEvent(EVENTS.PlayerLeaveUnit,self._EventHandler)
+  self:HandleEvent(EVENTS.PilotDead,self._EventHandler)
+  self:HandleEvent(EVENTS.Ejection,self._EventHandler)
+  self:HandleEvent(EVENTS.Crash,self._EventHandler)
+  self:HandleEvent(EVENTS.SelfKillPilot,self._EventHandler)
+  self:__Status(-30)
+end
+
+---  Stop the event functions
+-- @param #NET self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @return #NET self
+function NET:onafterStop(From,Event,To)
+  self:T({From,Event,To})
+  self:UnHandleEvent(EVENTS.PlayerEnterUnit)
+  self:UnHandleEvent(EVENTS.PlayerEnterAircraft)
+  self:UnHandleEvent(EVENTS.PlayerLeaveUnit)
+  self:UnHandleEvent(EVENTS.PilotDead)
+  self:UnHandleEvent(EVENTS.Ejection)
+  self:UnHandleEvent(EVENTS.Crash)
+  self:UnHandleEvent(EVENTS.SelfKillPilot)
+  return self
+end
 -------------------------------------------------------------------------------
 -- End of NET
 -------------------------------------------------------------------------------
