@@ -22,7 +22,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update Jan 2023
+-- Last Update Feb 2023
 
 do
 
@@ -1196,7 +1196,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.30"
+CTLD.version="1.0.31"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2609,7 +2609,7 @@ function CTLD:_LoadCratesNearby(Group, Unit)
               crateind = _crate:GetID()
             end
           else
-            if not _crate:HasMoved() and _crate:WasDropped() and _crate:GetID() > crateind then
+            if not _crate:HasMoved() and not _crate:WasDropped() and _crate:GetID() > crateind then
               crateind = _crate:GetID()
             end
           end
