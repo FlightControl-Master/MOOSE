@@ -305,8 +305,8 @@ EVENTS = {
 -- @field Wrapper.Airbase#AIRBASE Place The MOOSE airbase object.
 -- @field #string PlaceName The name of the airbase.
 --
--- @field #table weapon The weapon used during the event.
--- @field #table Weapon
+-- @field DCS#Weapon weapon The weapon used during the event.
+-- @field DCS#Weapon Weapon The weapon used during the event.
 -- @field #string WeaponName Name of the weapon.
 -- @field DCS#Unit WeaponTgtDCSUnit Target DCS unit of the weapon.
 --

@@ -90,7 +90,7 @@ NAVYGROUP = {
 
 --- NavyGroup version.
 -- @field #string version
-NAVYGROUP.version="0.7.9"
+NAVYGROUP.version="1.0.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -197,11 +197,6 @@ function NAVYGROUP:New(group)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param #number Speed Speed in knots until next waypoint is reached.
-
-
-
-
-
 
 
   --- Triggers the FSM event "TurnIntoWind".
@@ -1038,6 +1033,7 @@ end
 -- @param #number Speed Speed in knots to the next waypoint.
 -- @param #number Depth Depth in meters to the next waypoint.
 function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Depth)
+
   -- Is transition allowed? We assume yes until proven otherwise.
   local allowed=true
   local trepeat=nil
@@ -1057,6 +1053,9 @@ function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Depth)
   elseif self:IsHolding() then
     self:T(self.lid.."Update route denied. Group is holding position!")
     return false
+  elseif self:IsEngaging() then
+    self:T(self.lid.."Update route allowed. Group is engaging!")
+    return true      
   end
   
   -- Check for a current task.
@@ -1074,7 +1073,10 @@ function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Depth)
         self:T2(self.lid.."Allowing update route for Task: ReconMission")
       elseif task.dcstask.id==AUFTRAG.SpecialTask.RELOCATECOHORT then
         -- For relocate
-        self:T2(self.lid.."Allowing update route for Task: Relocate Cohort")          
+        self:T2(self.lid.."Allowing update route for Task: Relocate Cohort")
+      elseif task.dcstask.id==AUFTRAG.SpecialTask.REARMING then
+        -- For rearming
+        self:T2(self.lid.."Allowing update route for Task: Rearming")                
       else
         local taskname=task and task.description or "No description"
         self:T(self.lid..string.format("WARNING: Update route denied because taskcurrent=%d>0! Task description = %s", self.taskcurrent, tostring(taskname)))
@@ -1106,7 +1108,6 @@ function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Depth)
   end  
   
   return allowed
-
 end
 
 --- On after "UpdateRoute" event.

@@ -44,6 +44,7 @@ SOCKET = {
 }
 
 --- Data type. This is the keyword the socket listener uses.
+-- @type SOCKET.DataType
 -- @field #string TEXT Plain text.
 -- @field #string BOMBRESULT Range bombing.
 -- @field #string STRAFERESULT Range strafeing result.
