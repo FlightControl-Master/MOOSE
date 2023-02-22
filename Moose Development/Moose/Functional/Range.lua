@@ -591,14 +591,14 @@ RANGE.MenuF10Root = nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version = "2.6.0"
+RANGE.version = "2.7.0"
 
 -- TODO list:
--- TODO: Scenery as targets.
 -- TODO: Verbosity level for messages.
 -- TODO: Add option for default settings such as smoke off.
 -- TODO: Add custom weapons, which can be specified by the user.
 -- TODO: Check if units are still alive.
+-- DONE: Scenery as targets.
 -- DONE: Add statics for strafe pits.
 -- DONE: Add missiles.
 -- DONE: Convert env.info() to self:T()
@@ -1612,6 +1612,42 @@ function RANGE:AddBombingTargetCoordinate( coord, name, goodhitrange )
   return self
 end
 
+--- Add a scenery object as bombing target.
+-- @param #RANGE self
+-- @param Wrapper.Scenery#SCENERY scenery Scenary object.
+-- @param #number goodhitrange Max distance from unit which is considered as a good hit.
+-- @return #RANGE self
+function RANGE:AddBombingTargetScenery( scenery, goodhitrange)
+
+  -- Get name of positionable.
+  local name = scenery:GetName()
+
+  -- Default range is 25 m.
+  goodhitrange = goodhitrange or RANGE.Defaults.goodhitrange
+
+  -- Debug or error output.
+  if name then
+    self:I( self.lid .. string.format( "Adding SCENERY bombing target %s with good hit range %d", name, goodhitrange) )
+  else
+    self:E( self.lid .. string.format( "ERROR! No bombing target with name %s could be found!", name ) )
+  end
+
+
+  local target = {} -- #RANGE.BombTarget
+  target.name = name
+  target.target = scenery
+  target.goodhitrange = goodhitrange
+  target.move = false
+  target.speed = 0
+  target.coordinate = scenery:GetCoordinate()
+  target.type = RANGE.TargetType.SCENERY
+
+  -- Insert target to table.
+  table.insert( self.bombingTargets, target )
+
+  return self
+end
+
 --- Add all units of a group as bombing targets.
 -- @param #RANGE self
 -- @param Wrapper.Group#GROUP group Group of bombing targets.
@@ -1933,6 +1969,7 @@ function RANGE._OnImpact(weapon, self, playerData, attackHdg, attackAlt, attackV
     result.attackHdg = attackHdg
     result.attackVel = attackVel
     result.attackAlt = attackAlt
+    result.date=os and os.date() or "n/a"
   
     -- Add to table.
     table.insert( _results, result )
@@ -2292,10 +2329,7 @@ function RANGE:onafterSave( From, Event, To )
       local quality = result.quality
       local time = UTILS.SecondsToClock(result.time, true)
       local airframe = result.airframe
-      local date = "n/a"
-      if os then
-        date = os.date()
-      end
+      local date = result.date or "n/a"
       scores = scores .. string.format( "\n%s,%d,%s,%.2f,%03d,%s,%s,%s,%s,%s", playername, i, target, distance, radial, quality, weapon, airframe, time, date )
     end
   end
@@ -3399,6 +3433,11 @@ function RANGE:_GetBombTargetCoordinate( target )
 
     -- Coordinates dont move.
     coord = target.coordinate
+    
+  elseif target.type == RANGE.TargetType.SCENERY then
+
+    -- Coordinates dont move.
+    coord = target.coordinate    
 
   else
     self:E( self.lid .. "ERROR: Unknown target type." )

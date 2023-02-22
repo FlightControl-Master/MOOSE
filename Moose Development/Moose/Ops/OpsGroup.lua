@@ -502,7 +502,7 @@ OPSGROUP.CargoStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="0.9.0"
+OPSGROUP.version="1.0.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -625,6 +625,9 @@ function OPSGROUP:New(group)
 
   -- Set Default altitude.
   self:SetDefaultAltitude()
+  
+  -- Group will return to its legion when done.
+  self:SetReturnToLegion()
 
   -- Laser.
   self.spot={}
@@ -1008,6 +1011,20 @@ end
 function OPSGROUP:_SetLegion(Legion)
   self:T2(self.lid..string.format("Adding opsgroup to legion %s", Legion.alias))
   self.legion=Legion
+  return self
+end
+
+--- **[GROUND, NAVAL]** Set whether this group should return to its legion once all mission etc are finished. Only for ground and naval groups. Aircraft will 
+-- @param #OPSGROUP self
+-- @param #boolean Switch If `true` or `nil`, group will return. If `false`, group will not return and stay where it finishes its last mission.
+-- @return #OPSGROUP self
+function OPSGROUP:SetReturnToLegion(Switch)
+  if Switch==false then
+    self.legionReturn=false
+  else
+    self.legionReturn=true
+  end
+  self:T(self.lid..string.format("Setting ReturnToLetion=%s", tostring(self.legionReturn)))
   return self
 end
 
@@ -4385,7 +4402,7 @@ function OPSGROUP:_UpdateTask(Task, Mission)
 
     if self:IsArmygroup() or self:IsNavygroup() then
       -- Especially NAVYGROUP needs a full stop as patrol ad infinitum
-      self:FullStop()
+      self:__FullStop(0.1)
     else
       -- FLIGHTGROUP not implemented (intended!) for this AUFTRAG type.
     end
@@ -5639,6 +5656,11 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   if Mission.icls then
     self:_SwitchICLS()
   end
+  
+  -- Return to legion?
+  if self.legion and Mission.legionReturn~=nil then
+    self:SetReturnToLegion(Mission.legionReturn)
+  end
 
   -- Delay before check if group is done.
   local delay=1
@@ -5966,7 +5988,7 @@ function OPSGROUP:RouteToMission(mission, delay)
         formation=ENUMS.Formation.Vehicle.OffRoad
       end
       
-      waypoint=ARMYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, formation, false)
+      waypoint=ARMYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, formation, false)
       
     elseif self:IsNavygroup() then
     
@@ -7906,15 +7928,16 @@ function OPSGROUP:_CheckCargoTransport()
     self.cargoTransport=nil
     self.cargoTZC=nil
   end
-  
+
+  -- Get current mission (if any).  
   local mission=self:GetMissionCurrent()  
-  if mission and mission.type==AUFTRAG.Type.NOTHING then
-    self:MissionCancel(mission)
-  end
 
   -- Check if there is anything in the queue.
-  if not self.cargoTransport and not self:IsOnMission() then --(mission==nil or (mission and mission.type==AUFTRAG.Type.NOTHING)) then --not self:IsOnMission() then
+  if (not self.cargoTransport) and (mission==nil or mission.type==AUFTRAG.Type.NOTHING) then
     self.cargoTransport=self:_GetNextCargoTransport()
+    if self.cargoTransport and mission then
+      self:MissionCancel(mission)
+    end
     if self.cargoTransport and not self:IsActive() then
       self:Activate()
     end
@@ -9000,7 +9023,7 @@ function OPSGROUP:onafterLoading(From, Event, To)
     -- Check if current mission is using this ops transport.
     if isOnMission then
       local mission=cargo.opsgroup:GetMissionCurrent()
-      if mission and mission.opstransport and mission.opstransport.uid==self.cargoTransport.uid then  
+      if mission and ((mission.opstransport and mission.opstransport.uid==self.cargoTransport.uid) or mission.type==AUFTRAG.Type.NOTHING) then  
         isOnMission=not isHolding
       end
     end
@@ -10303,7 +10326,7 @@ function OPSGROUP:_CheckGroupDone(delay)
           -- Passed FINAL waypoint
           ---
 
-          if self.legion then
+          if self.legion and self.legionReturn then
 
             self:T(self.lid..string.format("Passed final WP, adinfinitum=FALSE, LEGION set ==> RTZ"))
             if self.isArmygroup then

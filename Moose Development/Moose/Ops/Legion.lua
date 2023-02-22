@@ -1984,9 +1984,9 @@ end
 
 --- Count total number of assets of the legion.
 -- @param #LEGION self
--- @param #boolean InStock If `true`, only assets that are in the warehouse stock/inventory are counted.
+-- @param #boolean InStock If `true`, only assets that are in the warehouse stock/inventory are counted. If `false`, only assets that are NOT in stock (i.e. spawned) are counted. If `nil`, all assets are counted.
 -- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
--- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+-- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `GROUP.Attribute.AIR_BOMBER`.
 -- @return #number Amount of asset groups in stock.
 function LEGION:CountAssets(InStock, MissionTypes, Attributes)
 
