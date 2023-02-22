@@ -1683,7 +1683,7 @@ function OPSGROUP:HasLoS(Coordinate, Element, OffsetElement, OffsetCoordinate)
       -- Check los for the given element.
       if Element.unit and Element.unit:IsAlive() then
         local vec3=Element.unit:GetVec3()
-        local los=checklos(Element)
+        local los=checklos(vec3)
         return los
       end
     else
@@ -7091,6 +7091,8 @@ function OPSGROUP:SetLaserTarget(Target)
 
     -- Set coordinate.
     self.spot.Coordinate:UpdateFromVec3(self.spot.vec3)
+    
+    self.spot.Coordinate:MarkToAll("Target Laser",ReadOnly,Text)
   end
 
 end

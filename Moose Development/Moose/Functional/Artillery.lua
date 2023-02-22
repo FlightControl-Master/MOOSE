@@ -2249,20 +2249,12 @@ function ARTY:OnEventShot(EventData)
   self:T3(self.lid.."EVENT SHOT: Weapon name = ".._weaponName)
 
   local group = EventData.IniGroup --Wrapper.Group#GROUP
-  
-  env.info("FF 100")
 
   if group and group:IsAlive() then
-  
-    env.info("FF 200")
 
     if EventData.IniGroupName == self.groupname then
-    
-      env.info("FF 300")
 
       if self.currentTarget then
-      
-        env.info("FF 400")
 
         -- Increase number of shots fired by this group on this target.
         self.Nshots=self.Nshots+1
@@ -2856,7 +2848,6 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
     end
     for _,targetname in pairs(notpossible) do
       self:E(self.lid..string.format("%s: Removing target %s because requested weapon is not possible with this type of unit.", self.groupname, targetname))
-      env.info("FF 1000",showMessageBox)
       self:RemoveTarget(targetname)
     end
 
