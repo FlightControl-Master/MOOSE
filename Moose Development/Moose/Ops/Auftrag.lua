@@ -158,6 +158,7 @@
 -- @field Core.Point#COORDINATE missionWaypointCoord Mission waypoint coordinate.
 -- @field Core.Point#COORDINATE missionEgressCoord Mission egress waypoint coordinate.
 -- @field #number missionWaypointRadius Random radius in meters.
+-- @field #boolean legionReturn If `true`, assets return to their legion (default). If `false`, they will stay alive. 
 --
 -- @field #table enrouteTasks Mission enroute tasks.
 --
@@ -639,7 +640,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.9.10"
+AUFTRAG.version="1.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -648,6 +649,7 @@ AUFTRAG.version="0.9.10"
 -- TODO: Replace engageRange by missionRange. Here and in other classes. CTRL+H is your friend!
 -- TODO: Mission success options damaged, destroyed.
 -- TODO: F10 marker to create new missions.
+-- DONE: Add option that assets do not return to their legion.
 -- DONE: Add Capture zone task.
 -- DONE: Add orbit mission for moving anker points.
 -- DONE: Add recovery tanker mission for boat ops.
@@ -1039,7 +1041,7 @@ end
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
 -- @param #number Altitude Orbit altitude in feet above sea level. Default is y component of `Coordinate`.
--- @param #number Speed Orbit speed in knots. Default 350 KIAS.
+-- @param #number Speed Orbit indicated airspeed in knots at the set altitude ASL. Default 350 KIAS.
 -- @param #number Heading Heading of race-track pattern in degrees. If not specified, a circular orbit is performed.
 -- @param #number Leg Length of race-track in NM. If not specified, a circular orbit is performed.
 -- @return #AUFTRAG self
@@ -1058,7 +1060,8 @@ function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
   end
     
   -- Orbit speed in m/s.
-  mission.orbitSpeed   = UTILS.KnotsToMps(UTILS.KnotsToAltKIAS(Speed or 350, UTILS.MetersToFeet(mission.orbitAltitude)))
+  --mission.orbitSpeed   = UTILS.KnotsToMps(UTILS.KnotsToAltKIAS(Speed or 350, UTILS.MetersToFeet(mission.orbitAltitude)))  
+  mission.orbitSpeed = UTILS.TasToIas(UTILS.KnotsToMps(Speed or 350), mission.orbitAltitude)
   
   -- Mission speed in km/h.
   mission.missionSpeed = UTILS.KnotsToKmph(Speed or 350)
@@ -1093,7 +1096,7 @@ end
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Position where to orbit around.
 -- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
--- @param #number Speed Orbit speed in knots. Default 350 KIAS.
+-- @param #number Speed Orbit indicated airspeed in knots at the set altitude ASL. Default 350 KIAS.
 -- @return #AUFTRAG self
 function AUFTRAG:NewORBIT_CIRCLE(Coordinate, Altitude, Speed)
 
@@ -1106,7 +1109,7 @@ end
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
 -- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
--- @param #number Speed Orbit speed in knots. Default 350 KIAS.
+-- @param #number Speed Orbit indicated airspeed in knots at the set altitude ASL. Default 350 KIAS.
 -- @param #number Heading Heading of race-track pattern in degrees. Default random in [0, 360) degrees.
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
 -- @return #AUFTRAG self
@@ -1124,7 +1127,7 @@ end
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP Group Group where to orbit around. Can also be a UNIT object.
 -- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
--- @param #number Speed Orbit speed in knots. Default 350 KIAS.
+-- @param #number Speed Orbit indicated airspeed in knots at the set altitude ASL. Default 350 KIAS.
 -- @param #number Leg Length of race-track in NM. Default nil.
 -- @param #number Heading Heading of race-track pattern in degrees. Default is heading of the group.
 -- @param DCS#Vec2 OffsetVec2 Offset 2D-vector {x=0, y=0} in NM with respect to the group. Default directly overhead. Can also be given in polar coordinates `{r=5, phi=45}`.
@@ -1172,7 +1175,7 @@ end
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
 -- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
--- @param #number Speed Orbit speed in knots. Default 350 kts.
+-- @param #number Speed Orbit indicated airspeed in knots at the set altitude ASL. Default 350 KIAS.
 -- @param #number Heading Heading of race-track pattern in degrees. Default random in [0, 360) degrees.
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
 -- @return #AUFTRAG self
@@ -1199,7 +1202,7 @@ end
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
 -- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
--- @param #number Speed Orbit speed in knots. Default 350 kts.
+-- @param #number Speed Orbit indicated airspeed in knots at the set altitude ASL. Default 350 KIAS.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
 -- @param #number RefuelSystem Refueling system (0=boom, 1=probe). This info is *only* for AIRWINGs so they launch the right tanker type.
@@ -1296,11 +1299,7 @@ end
 function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, TargetTypes)
 
   -- Ensure given TargetTypes parameter is a table.
-  if TargetTypes then
-    if type(TargetTypes)~="table" then
-      TargetTypes={TargetTypes}
-    end
-  end
+  TargetTypes=UTILS.EnsureTable(TargetTypes, true)
 
   -- Create ORBIT first.
   local mission=AUFTRAG:NewORBIT(Coordinate or ZoneCAP:GetCoordinate(), Altitude or 10000, Speed or 350, Heading, Leg)
@@ -1342,11 +1341,8 @@ end
 function AUFTRAG:NewCAPGROUP(Grp, Altitude, Speed, RelHeading, Leg, OffsetDist, OffsetAngle, UpdateDistance, TargetTypes, EngageRange)
 
   -- Ensure given TargetTypes parameter is a table.
-  if TargetTypes then
-    if type(TargetTypes)~="table" then
-      TargetTypes={TargetTypes}
-    end
-  end
+  TargetTypes=UTILS.EnsureTable(TargetTypes, true)
+
   -- Six NM astern.
  local OffsetVec2={r=OffsetDist or 6, phi=OffsetAngle or 180}
 
@@ -1395,11 +1391,7 @@ end
 function AUFTRAG:NewCAS(ZoneCAS, Altitude, Speed, Coordinate, Heading, Leg, TargetTypes)
 
   -- Ensure given TargetTypes parameter is a table.
-  if TargetTypes then
-    if type(TargetTypes)~="table" then
-      TargetTypes={TargetTypes}
-    end
-  end
+  TargetTypes=UTILS.EnsureTable(TargetTypes, true)
 
   -- Create ORBIT first.
   local mission=AUFTRAG:NewORBIT(Coordinate or ZoneCAS:GetCoordinate(), Altitude or 10000, Speed, Heading, Leg)
@@ -2428,9 +2420,9 @@ function AUFTRAG:NewFromTarget(Target, MissionType)
   elseif MissionType==AUFTRAG.Type.BOMBRUNWAY then
     mission=self:NewBOMBRUNWAY(Target, Altitude)
   elseif MissionType==AUFTRAG.Type.CAS then
-    mission=self:NewCAS(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000),Altitude,Speed,Target:GetAverageCoordinate(),Heading,Leg,TargetTypes)
+    mission=self:NewCAS(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000), Altitude, Speed, Target:GetAverageCoordinate(), Heading, Leg, TargetTypes)
   elseif MissionType==AUFTRAG.Type.CASENHANCED then
-    mission=self:NewCASENHANCED(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000),Altitude,Speed,RangeMax,NoEngageZoneSet,TargetTypes)
+    mission=self:NewCASENHANCED(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000), Altitude, Speed, RangeMax, NoEngageZoneSet, TargetTypes)
   elseif MissionType==AUFTRAG.Type.INTERCEPT then
     mission=self:NewINTERCEPT(Target)
   elseif MissionType==AUFTRAG.Type.SEAD then
@@ -2665,6 +2657,17 @@ function AUFTRAG:SetTeleport(Switch)
     Switch=true
   end
   self.teleport=Switch
+  return self
+end
+
+--- **[LEGION, COMMANDER, CHIEF]** Set whether assigned assets return to their legion once the mission is over. This is only applicable to **army** and **navy** groups, *i.e.* aircraft 
+-- will always return.
+-- @param #AUFTRAG self
+-- @param #boolean Switch If `true`, assets will return. If `false`, assets will not return and stay where it finishes its last mission. If `nil`, let asset decide.
+-- @return #AUFTRAG self
+function AUFTRAG:SetReturnToLegion(Switch)
+  self.legionReturn=Switch
+  self:T(self.lid..string.format("Setting ReturnToLetion=%s", tostring(self.legionReturn)))
   return self
 end
 
@@ -3375,7 +3378,7 @@ function AUFTRAG:GetPriority()
   return self.prio
 end
 
---- Get casualties, i.e. number of units that died during this mission.
+--- Get casualties, *i.e.* number of own units that died during this mission.
 -- @param #AUFTRAG self
 -- @return #number Number of dead units.
 function AUFTRAG:GetCasualties()
@@ -3902,6 +3905,15 @@ function AUFTRAG:onafterStatus(From, Event, To)
   local Ngroups=self:CountOpsGroups()
   
   local Nassigned=self.Nassigned and self.Nassigned-self.Ndead or 0
+  
+  -- check conditions if set
+  local conditionDone=false
+  if self.conditionFailureSet then
+    conditionDone = self:EvalConditionsAny(self.conditionFailure)
+  end  
+  if self.conditionSuccessSet and not conditionDone then
+    conditionDone = self:EvalConditionsAny(self.conditionSuccess)
+  end  
 
   -- Check if mission is not OVER yet.
   if self:IsNotOver() then
@@ -3915,6 +3927,11 @@ function AUFTRAG:onafterStatus(From, Event, To)
 
       -- Cancel mission if stop time passed.
       self:Cancel()
+      
+    elseif conditionDone then
+    
+      -- Cancel mission if conditions were met.
+      self:Cancel()    
 
     elseif self.durationExe and self.Texecuting and Tnow-self.Texecuting>self.durationExe then
 
@@ -4014,18 +4031,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
     end
     self:I(self.lid..text)
   end  
-  
-  -- check conditions if set
-  if self.conditionFailureSet then
-    local failed = self:EvalConditionsAny(self.conditionFailure)
-    if failed then self:__Failed(-1) end
-  end
-  
-  if self.conditionSuccessSet then
-    local success = self:EvalConditionsAny(self.conditionSuccess)
-    if success then self:__Success(-1) end
-  end
-  
+    
   -- Ready to evaluate mission outcome?
   local ready2evaluate=self.Tover and Tnow-self.Tover>=self.dTevaluate or false
 

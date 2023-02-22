@@ -435,8 +435,8 @@ do -- Types
   --- Vec3 type is a 3D-vector.
   -- DCS world has 3-dimensional coordinate system. DCS ground is an infinite plain.
   -- @type Vec3
-  -- @field #Distance x is directed to the north
-  -- @field #Distance z is directed to the east
+  -- @field #Distance x is directed to the North
+  -- @field #Distance z is directed to the East
   -- @field #Distance y is directed up
   
   --- Vec2 is a 2D-vector for the ground plane as a reference plane.
@@ -687,10 +687,11 @@ do -- Weapon
 
   --- Weapon.Category enum that stores weapon categories.
   -- @type Weapon.Category
-  -- @field SHELL
-  -- @field MISSILE
-  -- @field ROCKET
-  -- @field BOMB
+  -- @field #number SHELL Shell.
+  -- @field #number MISSILE Missile
+  -- @field #number ROCKET Rocket.
+  -- @field #number BOMB Bomb.
+  -- @field #number TORPEDO Torpedo.
   
 
   --- Weapon.GuidanceType enum that stores guidance methods. Available only for guided weapon (Weapon.Category.MISSILE and some Weapon.Category.BOMB). 
