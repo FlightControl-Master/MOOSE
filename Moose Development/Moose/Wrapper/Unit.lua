@@ -89,9 +89,9 @@
 -- 
 -- @field #UNIT
 UNIT = {
-	ClassName="UNIT",
-	UnitName=nil,
-	GroupName=nil,
+  ClassName="UNIT",
+  UnitName=nil,
+  GroupName=nil,
 }
 
 

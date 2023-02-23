@@ -703,11 +703,11 @@ function POSITIONABLE:IsSubmarine()
 
   if DCSUnit then
     local UnitDescriptor = DCSUnit:getDesc()
-		if UnitDescriptor.attributes["Submarines"] == true then
-			return true
-		else
-			return false
-		end
+    if UnitDescriptor.attributes["Submarines"] == true then
+      return true
+    else
+      return false
+    end
   end
 
   self:E( { "Cannot check IsSubmarine", Positionable = self, Alive = self:IsAlive() } )

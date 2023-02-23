@@ -2040,9 +2040,9 @@ function UTILS.GenerateUHFrequencies()
     local _start = 220000000
 
     while _start < 399000000 do
-		if _start ~= 243000000 then
-			table.insert(FreeUHFFrequencies, _start)
-		end
+    if _start ~= 243000000 then
+      table.insert(FreeUHFFrequencies, _start)
+    end
         _start = _start + 500000
     end
 
