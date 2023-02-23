@@ -499,7 +499,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.53", -- #string
+  version = "0.2.54", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -1062,7 +1062,8 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   
   local speed = 250
   self.SpeedBase = speed
-  self.Speed = UTILS.KnotsToAltKIAS(speed,self.AwacsAngels*1000)
+  --self.Speed = UTILS.KnotsToAltKIAS(speed,self.AwacsAngels*1000)
+  self.Speed = speed
   
   self.Heading = 0 -- north
   self.Leg = 50 -- nm
@@ -1843,7 +1844,8 @@ function AWACS:SetAwacsDetails(CallSign,CallSignNo,Angels,Speed,Heading,Leg)
   self.AwacsAngels = Angels or 25
   local speed = Speed or 250
   self.SpeedBase = speed
-  self.Speed = UTILS.KnotsToAltKIAS(speed,self.AwacsAngels*1000)
+  --self.Speed = UTILS.KnotsToAltKIAS(speed,self.AwacsAngels*1000)
+  self.Speed = speed
   self.Heading = Heading or 0
   self.Leg = Leg or 25
   return self
