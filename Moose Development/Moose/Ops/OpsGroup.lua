@@ -496,11 +496,13 @@ OPSGROUP.CargoStatus={
 -- @field #OPSGROUP opsgroup The cargo opsgroup.
 -- @field #boolean delivered If `true`, group was delivered.
 -- @field #boolean disembarkActivation If `true`, group is activated. If `false`, group is late activated.
+-- @field Core.Zone#ZONE disembarkZone Zone where this group is disembarked to.
+-- @field Core.Set#SET_OPSGROUP disembarkCarriers Carriers where this group is directly disembared to.
 -- @field #string status Status of the cargo group. Not used yet.
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="0.9.0"
+OPSGROUP.version="1.0.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -623,6 +625,9 @@ function OPSGROUP:New(group)
 
   -- Set Default altitude.
   self:SetDefaultAltitude()
+  
+  -- Group will return to its legion when done.
+  self:SetReturnToLegion()
 
   -- Laser.
   self.spot={}
@@ -1006,6 +1011,20 @@ end
 function OPSGROUP:_SetLegion(Legion)
   self:T2(self.lid..string.format("Adding opsgroup to legion %s", Legion.alias))
   self.legion=Legion
+  return self
+end
+
+--- **[GROUND, NAVAL]** Set whether this group should return to its legion once all mission etc are finished. Only for ground and naval groups. Aircraft will 
+-- @param #OPSGROUP self
+-- @param #boolean Switch If `true` or `nil`, group will return. If `false`, group will not return and stay where it finishes its last mission.
+-- @return #OPSGROUP self
+function OPSGROUP:SetReturnToLegion(Switch)
+  if Switch==false then
+    self.legionReturn=false
+  else
+    self.legionReturn=true
+  end
+  self:T(self.lid..string.format("Setting ReturnToLetion=%s", tostring(self.legionReturn)))
   return self
 end
 
@@ -1603,6 +1622,31 @@ function OPSGROUP:SetReturnOnOutOfAmmo()
   return self
 end
 
+--- Set max weight that each unit of the group can handle.
+-- @param #OPSGROUP self
+-- @param #number Weight Max weight of cargo in kg the unit can carry.
+-- @param #string UnitName Name of the Unit. If not given, weight is set for all units of the group.
+-- @return #OPSGROUP self
+function OPSGROUP:SetCargoBayLimit(Weight, UnitName)
+
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    
+    if UnitName==nil or UnitName==element.name then
+    
+      element.weightMaxCargo=Weight
+      
+      if element.unit then
+        element.unit:SetCargoBayWeightLimit(Weight)
+      end
+      
+    end
+  
+  end
+
+  return self
+end
+
 --- Check if an element of the group has line of sight to a coordinate.
 -- @param #OPSGROUP self
 -- @param Core.Point#COORDINATE Coordinate The position to which we check the LoS. Can also be a DCS#Vec3.
@@ -1639,7 +1683,7 @@ function OPSGROUP:HasLoS(Coordinate, Element, OffsetElement, OffsetCoordinate)
       -- Check los for the given element.
       if Element.unit and Element.unit:IsAlive() then
         local vec3=Element.unit:GetVec3()
-        local los=checklos(Element)
+        local los=checklos(vec3)
         return los
       end
     else
@@ -4360,7 +4404,7 @@ function OPSGROUP:_UpdateTask(Task, Mission)
 
     if self:IsArmygroup() or self:IsNavygroup() then
       -- Especially NAVYGROUP needs a full stop as patrol ad infinitum
-      self:FullStop()
+      self:__FullStop(0.1)
     else
       -- FLIGHTGROUP not implemented (intended!) for this AUFTRAG type.
     end
@@ -5313,7 +5357,8 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
     -- IMMOBILE Group
     ---
 
-    env.info(self.lid.."FF Immobile GROUP")
+    -- Debug info.
+    self:T(self.lid.."Immobile GROUP!")
 
     -- Add waypoint task. UpdateRoute is called inside.
     local Clock=Mission.Tpush and UTILS.SecondsToClock(Mission.Tpush) or 5
@@ -5612,6 +5657,11 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   -- ICLS beacon to default.
   if Mission.icls then
     self:_SwitchICLS()
+  end
+  
+  -- Return to legion?
+  if self.legion and Mission.legionReturn~=nil then
+    self:SetReturnToLegion(Mission.legionReturn)
   end
 
   -- Delay before check if group is done.
@@ -5940,7 +5990,7 @@ function OPSGROUP:RouteToMission(mission, delay)
         formation=ENUMS.Formation.Vehicle.OffRoad
       end
       
-      waypoint=ARMYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, formation, false)
+      waypoint=ARMYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, formation, false)
       
     elseif self:IsNavygroup() then
     
@@ -7043,6 +7093,8 @@ function OPSGROUP:SetLaserTarget(Target)
 
     -- Set coordinate.
     self.spot.Coordinate:UpdateFromVec3(self.spot.vec3)
+    
+    self.spot.Coordinate:MarkToAll("Target Laser",ReadOnly,Text)
   end
 
 end
@@ -7881,9 +7933,15 @@ function OPSGROUP:_CheckCargoTransport()
     self.cargoTZC=nil
   end
 
+  -- Get current mission (if any).  
+  local mission=self:GetMissionCurrent()  
+
   -- Check if there is anything in the queue.
-  if not self.cargoTransport and not self:IsOnMission() then
+  if (not self.cargoTransport) and (mission==nil or mission.type==AUFTRAG.Type.NOTHING) then
     self.cargoTransport=self:_GetNextCargoTransport()
+    if self.cargoTransport and mission then
+      self:MissionCancel(mission)
+    end
     if self.cargoTransport and not self:IsActive() then
       self:Activate()
     end
@@ -7957,7 +8015,7 @@ function OPSGROUP:_CheckCargoTransport()
       end
 
       -- Boarding finished ==> Transport cargo.
-      if gotcargo and self.cargoTransport:_CheckRequiredCargos(self.cargoTZC) and not boarding then
+      if gotcargo and self.cargoTransport:_CheckRequiredCargos(self.cargoTZC, self) and not boarding then
         self:T(self.lid.."Boarding finished ==> Loaded")
         self:LoadingDone()
       else
@@ -8969,7 +9027,7 @@ function OPSGROUP:onafterLoading(From, Event, To)
     -- Check if current mission is using this ops transport.
     if isOnMission then
       local mission=cargo.opsgroup:GetMissionCurrent()
-      if mission and mission.opstransport and mission.opstransport.uid==self.cargoTransport.uid then  
+      if mission and ((mission.opstransport and mission.opstransport.uid==self.cargoTransport.uid) or mission.type==AUFTRAG.Type.NOTHING) then  
         isOnMission=not isHolding
       end
     end
@@ -9331,6 +9389,8 @@ function OPSGROUP:onafterUnloading(From, Event, To)
 
   -- Set carrier status to UNLOADING.
   self:_NewCarrierStatus(OPSGROUP.CarrierStatus.UNLOADING)
+  
+  self:T(self.lid.."Unloading..")
 
   -- Deploy zone.
   local zone=self.cargoTZC.DisembarkZone or self.cargoTZC.DeployZone  --Core.Zone#ZONE
@@ -9343,9 +9403,16 @@ function OPSGROUP:onafterUnloading(From, Event, To)
     if cargo.opsgroup:IsLoaded(self.groupname) and not cargo.opsgroup:IsDead() then
 
       -- Disembark to carrier.
-      local needscarrier=false --#boolean
       local carrier=nil        --Ops.OpsGroup#OPSGROUP.Element
       local carrierGroup=nil   --Ops.OpsGroup#OPSGROUP
+      local disembarkToCarriers=cargo.disembarkCarriers~=nil or self.cargoTZC.disembarkToCarriers
+      
+      -- Set specifc zone for this cargo.
+      if cargo.disembarkZone then
+        zone=cargo.disembarkZone
+      end
+      
+      self:T(self.lid..string.format("Unloading cargo %s to zone %s", cargo.opsgroup:GetName(), zone and zone:GetName() or "No Zone Found!"))
 
       -- Try to get the OPSGROUP if deploy zone is a ship.
       if zone and zone:IsInstanceOf("ZONE_AIRBASE") and zone:GetAirbase():IsShip() then
@@ -9356,17 +9423,22 @@ function OPSGROUP:onafterUnloading(From, Event, To)
         carrier=carrierGroup:GetElementByName(shipname)
       end
 
-      if self.cargoTZC.DisembarkCarriers and #self.cargoTZC.DisembarkCarriers>0 then
+      if disembarkToCarriers then
+      
+        -- Debug info.
+        self:T(self.lid..string.format("Trying to find disembark carriers in zone %s", zone:GetName()))
+        
+        -- Disembarkcarriers.
+        local disembarkCarriers=cargo.disembarkCarriers or self.cargoTZC.DisembarkCarriers
 
-        needscarrier=true
-
-        carrier, carrierGroup=self.cargoTransport:FindTransferCarrierForCargo(cargo.opsgroup, zone, self.cargoTZC)
+        -- Try to find a carrier that can take the cargo.
+        carrier, carrierGroup=self.cargoTransport:FindTransferCarrierForCargo(cargo.opsgroup, zone, disembarkCarriers, self.cargoTZC.DeployAirbase)
 
         --TODO: max unloading time if transfer carrier does not arrive in the zone.
 
       end
 
-      if needscarrier==false or (needscarrier and carrier and carrierGroup)  then
+      if (disembarkToCarriers and carrier and carrierGroup) or (not disembarkToCarriers)  then
 
         -- Cargo was delivered (somehow).
         cargo.delivered=true
@@ -9385,7 +9457,7 @@ function OPSGROUP:onafterUnloading(From, Event, To)
         elseif zone and zone:IsInstanceOf("ZONE_AIRBASE") and zone:GetAirbase():IsShip() then
 
           ---
-          -- Delivered to a ship via helo or VTOL
+          -- Delivered to a ship via helo that landed on its platform
           ---
 
           -- Issue warning.
@@ -9408,7 +9480,7 @@ function OPSGROUP:onafterUnloading(From, Event, To)
           else
 
             -- Get disembark zone of this TZC.
-            local DisembarkZone=self.cargoTransport:GetDisembarkZone(self.cargoTZC)
+            local DisembarkZone=cargo.disembarkZone or self.cargoTransport:GetDisembarkZone(self.cargoTZC)
 
             local Coordinate=nil
 
@@ -9431,7 +9503,7 @@ function OPSGROUP:onafterUnloading(From, Event, To)
                 Coordinate=zoneCarrier:GetRandomCoordinate()
 
               else
-                env.info(string.format("FF ERROR carrier element nil!"))
+                self:E(self.lid..string.format("ERROR carrier element nil!"))
               end
 
             end
@@ -10258,7 +10330,7 @@ function OPSGROUP:_CheckGroupDone(delay)
           -- Passed FINAL waypoint
           ---
 
-          if self.legion then
+          if self.legion and self.legionReturn then
 
             self:T(self.lid..string.format("Passed final WP, adinfinitum=FALSE, LEGION set ==> RTZ"))
             if self.isArmygroup then

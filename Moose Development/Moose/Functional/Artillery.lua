@@ -103,6 +103,7 @@
 -- @field #number coalition The coalition of the arty group.
 -- @field #boolean respawnafterdeath Respawn arty group after all units are dead.
 -- @field #number respawndelay Respawn delay in seconds.
+-- @field #number dtTrack Time interval in seconds for weapon tracking.
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 --- Enables mission designers easily to assign targets for artillery units. Since the implementation is based on a Finite State Model (FSM), the mission designer can
@@ -693,7 +694,7 @@ ARTY.db={
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.2.0"
+ARTY.version="1.3.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -801,6 +802,9 @@ function ARTY:New(group, alias)
   else
     self.ismobile=false
   end
+  
+  -- Set track time interval.
+  self.dtTrack=0.2
 
   -- Set speed to 0.7 of maximum.
   self.Speed=self.SpeedMax * 0.7
@@ -1497,6 +1501,15 @@ function ARTY:SetStatusInterval(interval)
   return self
 end
 
+--- Set time interval for weapon tracking.
+-- @param #ARTY self
+-- @param #number interval Time interval in seconds. Default 0.2 seconds.
+-- @return self
+function ARTY:SetTrackInterval(interval)
+  self.dtTrack=interval or 0.2
+  return self
+end
+
 --- Set time how it is waited a unit the first shot event happens. If no shot is fired after this time, the task to fire is aborted and the target removed.
 -- @param #ARTY self
 -- @param #number waittime Time in seconds. Default 300 seconds.
@@ -2129,6 +2142,95 @@ end
 -- Event Handling
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Function called during tracking of weapon.
+-- @param Wrapper.Weapon#WEAPON weapon Weapon object.
+-- @param #ARTY self ARTY object.
+-- @param #ARTY.Target target Target of the weapon.
+function ARTY._FuncTrack(weapon, self, target)
+  
+  -- Coordinate and distance to target.
+  local _coord=weapon.coordinate
+  local _dist=_coord:Get2DDistance(target.coord)
+  local _destroyweapon=false
+  
+  -- Debug
+  self:T3(self.lid..string.format("ARTY %s weapon to target dist = %d m", self.groupname,_dist))
+  
+  if target.weapontype==ARTY.WeaponType.IlluminationShells then
+  
+    -- Check if within distace.
+    if _dist<target.radius then
+  
+      -- Get random coordinate within certain radius of the target.
+      local _cr=target.coord:GetRandomCoordinateInRadius(target.radius)
+  
+      -- Get random altitude over target.
+      local _alt=_cr:GetLandHeight()+math.random(self.illuMinalt, self.illuMaxalt)
+  
+      -- Adjust explosion height of coordinate.
+      local _ci=COORDINATE:New(_cr.x,_alt,_cr.z)
+  
+      -- Create illumination flare.
+      _ci:IlluminationBomb(self.illuPower)
+  
+      -- Destroy actual shell.
+      _destroyweapon=true
+    end
+  
+  elseif target.weapontype==ARTY.WeaponType.SmokeShells then
+  
+    if _dist<target.radius then
+  
+      -- Get random coordinate within a certain radius.
+      local _cr=_coord:GetRandomCoordinateInRadius(_data.target.radius)
+  
+      -- Fire smoke at this coordinate.
+      _cr:Smoke(self.smokeColor)
+  
+      -- Destroy actual shell.
+      _destroyweapon=true
+  
+    end
+  
+  end
+  
+  if _destroyweapon then
+  
+    self:T2(self.lid..string.format("ARTY %s destroying shell, stopping timer.", self.groupname))
+  
+    -- Destroy weapon and stop timer.
+    weapon:Destroy()
+    
+    -- No more tracking.
+    weapon.tracking=false
+
+  end
+
+end
+
+
+--- Function called after impact of weapon.
+-- @param Wrapper.Weapon#WEAPON weapon Weapon object.
+-- @param #ARTY self ARTY object.
+-- @param #ARTY.Target target Target of the weapon.
+function ARTY._FuncImpact(weapon, self, target)
+
+  -- Debug info.
+  self:I(self.lid..string.format("ARTY %s weapon NOT ALIVE any more.", self.groupname))
+
+  -- Get impact coordinate.
+  local _impactcoord=weapon:GetImpactCoordinate()
+    
+  -- Create a "nuclear" explosion and blast at the impact point.
+  if target.weapontype==ARTY.WeaponType.TacticalNukes then
+    self:T(self.lid..string.format("ARTY %s triggering nuclear explosion in one second.", self.groupname))
+    --SCHEDULER:New(nil, ARTY._NuclearBlast, {self,_impactcoord}, 1.0)
+    self:ScheduleOnce(1.0, ARTY._NuclearBlast, self, _impactcoord)
+  end
+
+end
+
+
 --- Eventhandler for shot event.
 -- @param #ARTY self
 -- @param Core.Event#EVENTDATA EventData
@@ -2162,128 +2264,32 @@ function ARTY:OnEventShot(EventData)
         self:T(self.lid..text)
         MESSAGE:New(text, 5):Clear():ToAllIf(self.report or self.Debug)
 
-        -- Last known position of the weapon fired.
-        local _lastpos={x=0, y=0, z=0}
-
-        --- Track the position of the weapon if it is supposed to model a tac nuke, illumination or smoke shell.
-        -- @param #table _weapon
-        local function _TrackWeapon(_data)
-
-          -- When the pcall status returns false the weapon has hit.
-          local _weaponalive,_currpos =  pcall(
-          function()
-            return _data.weapon:getPoint()
-          end)
-
-          -- Debug
-          self:T3(self.lid..string.format("ARTY %s: Weapon still in air: %s", self.groupname, tostring(_weaponalive)))
-
-          -- Destroy weapon before impact.
-          local _destroyweapon=false
-
-          if _weaponalive then
-
-            -- Update last position.
-            _lastpos={x=_currpos.x, y=_currpos.y, z=_currpos.z}
-
-            -- Coordinate and distance to target.
-            local _coord=COORDINATE:NewFromVec3(_lastpos)
-            local _dist=_coord:Get2DDistance(_data.target.coord)
-
-            -- Debug
-            self:T3(self.lid..string.format("ARTY %s weapon to target dist = %d m", self.groupname,_dist))
-
-            if _data.target.weapontype==ARTY.WeaponType.IlluminationShells then
-
-              -- Check if within distace.
-              if _dist<_data.target.radius then
-
-                -- Get random coordinate within certain radius of the target.
-                local _cr=_data.target.coord:GetRandomCoordinateInRadius(_data.target.radius)
-
-                -- Get random altitude over target.
-                local _alt=_cr:GetLandHeight()+math.random(self.illuMinalt, self.illuMaxalt)
-
-                -- Adjust explosion height of coordinate.
-                local _ci=COORDINATE:New(_cr.x,_alt,_cr.z)
-
-                -- Create illumination flare.
-                _ci:IlluminationBomb(self.illuPower)
-
-                -- Destroy actual shell.
-                _destroyweapon=true
-              end
-
-            elseif _data.target.weapontype==ARTY.WeaponType.SmokeShells then
-
-              if _dist<_data.target.radius then
-
-                -- Get random coordinate within a certain radius.
-                local _cr=_coord:GetRandomCoordinateInRadius(_data.target.radius)
-
-                -- Fire smoke at this coordinate.
-                _cr:Smoke(self.smokeColor)
-
-                -- Destroy actual shell.
-                _destroyweapon=true
-
-              end
-
-            end
-
-            if _destroyweapon then
-
-              self:T2(self.lid..string.format("ARTY %s destroying shell, stopping timer.", self.groupname))
-
-              -- Destroy weapon and stop timer.
-              _data.weapon:destroy()
-              return nil
-
-            else
-
-              -- TODO: Make dt input parameter.
-              local dt=0.02
-
-              self:T3(self.lid..string.format("ARTY %s tracking weapon again in %.3f seconds", self.groupname, dt))
-
-              -- Check again in 0.05 seconds.
-              return timer.getTime() + dt
-
-            end
-
-          else
-
-            -- Get impact coordinate.
-            local _impactcoord=COORDINATE:NewFromVec3(_lastpos)
-            
-            self:I(self.lid..string.format("ARTY %s weapon NOT ALIVE any more.", self.groupname))
-
-            -- Create a "nuclear" explosion and blast at the impact point.
-            if _data.target.weapontype==ARTY.WeaponType.TacticalNukes then
-              self:T(self.lid..string.format("ARTY %s triggering nuclear explosion in one second.", self.groupname))
-              SCHEDULER:New(nil, ARTY._NuclearBlast, {self,_impactcoord}, 1.0)
-            end
-
-            -- Stop timer.
-            return nil
-
-          end
-
-        end
-
         -- Start track the shell if we want to model a tactical nuke.
         local _tracknuke  = self.currentTarget.weapontype==ARTY.WeaponType.TacticalNukes and self.Nukes>0
         local _trackillu  = self.currentTarget.weapontype==ARTY.WeaponType.IlluminationShells and self.Nillu>0
         local _tracksmoke = self.currentTarget.weapontype==ARTY.WeaponType.SmokeShells and self.Nsmoke>0
+        
+        
         if _tracknuke or _trackillu or _tracksmoke then
 
-            self:T(self.lid..string.format("ARTY %s: Tracking of weapon starts in two seconds.", self.groupname))
-
-            local _peter={}
-            _peter.weapon=EventData.weapon
-            _peter.target=UTILS.DeepCopy(self.currentTarget)
-
-            timer.scheduleFunction(_TrackWeapon, _peter, timer.getTime() + 2.0)
+          -- Debug info.  
+          self:T(self.lid..string.format("ARTY %s: Tracking of weapon starts in two seconds.", self.groupname))
+            
+          -- Create a weapon object.
+          local weapon=WEAPON:New(EventData.weapon)
+          
+          -- Set time step for tracking.
+          weapon:SetTimeStepTrack(self.dtTrack)
+          
+          -- Copy target. We need a copy because it might already be overwritten with the next target during flight of weapon.
+          local target=UTILS.DeepCopy(self.currentTarget)
+          
+          -- Set callback functions.
+          weapon:SetFuncTrack(ARTY._FuncTrack, self, target)
+          weapon:SetFuncImpact(ARTY._FuncImpact, self, target)
+          
+          -- Start tracking in 2 sec (arty ammo should fly a bit).
+          weapon:StartTrack(2)
         end
 
         -- Get current ammo.
@@ -3931,9 +3937,10 @@ function ARTY:GetAmmo(display)
     return nammo, nshells, nrockets, nmissiles
   end
 
-  for _,unit in pairs(units) do
+  for _,_unit in pairs(units) do
+    local unit=_unit --Wrapper.Unit#UNIT
 
-    if unit and unit:IsAlive() then
+    if unit then
 
       -- Output.
       local text=string.format("ARTY group %s - unit %s:\n", self.groupname, unit:GetName())

@@ -555,7 +555,7 @@ function ZONE_BASE:GetZoneMaybe()
   end
 end
 
--- Returns the Value of the zone with the given PropertyName, or nil if no matching property exists.
+--- Returns the Value of the zone with the given PropertyName, or nil if no matching property exists.
 -- @param #ZONE_BASE self
 -- @param #string PropertyName The name of a the TriggerZone Property to be retrieved.
 -- @return #string The Value of the TriggerZone Property with the given PropertyName, or nil if absent.
@@ -569,7 +569,7 @@ function ZONE_BASE:GetProperty(PropertyName)
   return self.Properties[PropertyName]
 end
 
--- Returns the zone Properties table.
+--- Returns the zone Properties table.
 -- @param #ZONE_BASE self
 -- @return #table The Key:Value table of TriggerZone properties of the zone.
 function ZONE_BASE:GetAllProperties()
