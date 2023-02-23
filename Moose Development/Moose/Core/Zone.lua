@@ -927,7 +927,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
   local ZoneCoord = self:GetCoordinate()
   local ZoneRadius = self:GetRadius()
 
-  self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
+  --self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
 
   local SphereSearch = {
     id = world.VolumeType.SPHERE,
@@ -2924,7 +2924,7 @@ do -- ZONE_ELASTIC
 
   --- Add a set of groups. Positions of the group will be considered as polygon vertices when contructing the convex hull.
   -- @param #ZONE_ELASTIC self
-  -- @param Core.Set#SET_GROUP SetGroup Set of groups.
+  -- @param Core.Set#SET_GROUP GroupSet Set of groups.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:AddSetGroup(GroupSet)
   

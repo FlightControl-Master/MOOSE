@@ -89,9 +89,9 @@
 -- 
 -- @field #UNIT
 UNIT = {
-	ClassName="UNIT",
-	UnitName=nil,
-	GroupName=nil,
+  ClassName="UNIT",
+  UnitName=nil,
+  GroupName=nil,
 }
 
 
@@ -325,14 +325,19 @@ function UNIT:IsAlive()
   local DCSUnit = self:GetDCSObject() -- DCS#Unit
   
   if DCSUnit then
-    local UnitIsAlive  = DCSUnit:isExist() and DCSUnit:isActive()
+    local UnitIsAlive  = DCSUnit:isExist() and DCSUnit:isActive() -- and DCSUnit:getLife() > 1
     return UnitIsAlive
   end 
   
   return nil
 end
 
-
+--- Returns if the Unit is dead.
+-- @param #UNIT self  
+-- @return #boolean `true` if Unit is dead, else false or nil if the unit does not exist
+function UNIT:IsDead()
+  return not self:IsAlive()
+end
 
 --- Returns the Unit's callsign - the localized string.
 -- @param #UNIT self
@@ -626,7 +631,7 @@ function UNIT:IsFuelSupply()
   return false
 end
 
---- Returns the unit's group if it exist and nil otherwise.
+--- Returns the unit's group if it exists and nil otherwise.
 -- @param Wrapper.Unit#UNIT self
 -- @return Wrapper.Group#GROUP The Group of the Unit or `nil` if the unit does not exist.  
 function UNIT:GetGroup()
