@@ -555,7 +555,7 @@ function ZONE_BASE:GetZoneMaybe()
   end
 end
 
--- Returns the Value of the zone with the given PropertyName, or nil if no matching property exists.
+--- Returns the Value of the zone with the given PropertyName, or nil if no matching property exists.
 -- @param #ZONE_BASE self
 -- @param #string PropertyName The name of a the TriggerZone Property to be retrieved.
 -- @return #string The Value of the TriggerZone Property with the given PropertyName, or nil if absent.
@@ -569,7 +569,7 @@ function ZONE_BASE:GetProperty(PropertyName)
   return self.Properties[PropertyName]
 end
 
--- Returns the zone Properties table.
+--- Returns the zone Properties table.
 -- @param #ZONE_BASE self
 -- @return #table The Key:Value table of TriggerZone properties of the zone.
 function ZONE_BASE:GetAllProperties()
@@ -927,7 +927,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
   local ZoneCoord = self:GetCoordinate()
   local ZoneRadius = self:GetRadius()
 
-  self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
+  --self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
 
   local SphereSearch = {
     id = world.VolumeType.SPHERE,
@@ -2084,13 +2084,10 @@ function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlph
   return self
 end
 
-
---- Get the smallest circular zone encompassing all points points of the polygon zone. 
+--- Get the smallest radius encompassing all points of the polygon zone. 
 -- @param #ZONE_POLYGON_BASE self
--- @param #string ZoneName (Optional) Name of the zone. Default is the name of the polygon zone.
--- @param #boolean DoNotRegisterZone (Optional) If `true`, zone is not registered.
--- @return #ZONE_RADIUS The circular zone.
-function ZONE_POLYGON_BASE:GetZoneRadius(ZoneName, DoNotRegisterZone)
+-- @return #number Radius of the zone in meters.
+function ZONE_POLYGON_BASE:GetRadius()
 
   local center=self:GetVec2()
 
@@ -2106,6 +2103,20 @@ function ZONE_POLYGON_BASE:GetZoneRadius(ZoneName, DoNotRegisterZone)
     end
     
   end
+
+  return radius
+end
+
+--- Get the smallest circular zone encompassing all points of the polygon zone. 
+-- @param #ZONE_POLYGON_BASE self
+-- @param #string ZoneName (Optional) Name of the zone. Default is the name of the polygon zone.
+-- @param #boolean DoNotRegisterZone (Optional) If `true`, zone is not registered.
+-- @return #ZONE_RADIUS The circular zone.
+function ZONE_POLYGON_BASE:GetZoneRadius(ZoneName, DoNotRegisterZone)
+
+  local center=self:GetVec2()
+
+  local radius=self:GetRadius()
   
   local zone=ZONE_RADIUS:New(ZoneName or self.ZoneName, center, radius, DoNotRegisterZone)
 
@@ -2913,7 +2924,7 @@ do -- ZONE_ELASTIC
 
   --- Add a set of groups. Positions of the group will be considered as polygon vertices when contructing the convex hull.
   -- @param #ZONE_ELASTIC self
-  -- @param Core.Set#SET_GROUP SetGroup Set of groups.
+  -- @param Core.Set#SET_GROUP GroupSet Set of groups.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:AddSetGroup(GroupSet)
   

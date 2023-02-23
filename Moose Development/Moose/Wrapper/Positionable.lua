@@ -703,11 +703,11 @@ function POSITIONABLE:IsSubmarine()
 
   if DCSUnit then
     local UnitDescriptor = DCSUnit:getDesc()
-		if UnitDescriptor.attributes["Submarines"] == true then
-			return true
-		else
-			return false
-		end
+    if UnitDescriptor.attributes["Submarines"] == true then
+      return true
+    else
+      return false
+    end
   end
 
   self:E( { "Cannot check IsSubmarine", Positionable = self, Alive = self:IsAlive() } )
@@ -1768,6 +1768,7 @@ do -- Cargo
           ["tt_DSHK"] = 6,
           ["HL_KORD"] = 6,
           ["HL_DSHK"] = 6,
+          ["CCKW_353"] = 16, --GMC CCKW 2½-ton 6×6 truck, estimating 16 soldiers
         }
 
         -- Assuming that each passenger weighs 95 kg on average.

@@ -1222,6 +1222,20 @@ function UTILS.HdgDiff(h1, h2)
   return math.abs(delta)
 end
 
+--- Returns the heading from one vec3 to another vec3.
+-- @param DCS#Vec3 a From vec3.
+-- @param DCS#Vec3 b To vec3.
+-- @return #number Heading in degrees.
+function UTILS.HdgTo(a, b)
+  local dz=b.z-a.z
+  local dx=b.x-a.x
+  local heading=math.deg(math.atan2(dz, dx))
+  if heading < 0 then
+    heading = 360 + heading
+  end
+  return heading
+end
+
 
 --- Translate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged.
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
@@ -2026,9 +2040,9 @@ function UTILS.GenerateUHFrequencies()
     local _start = 220000000
 
     while _start < 399000000 do
-		if _start ~= 243000000 then
-			table.insert(FreeUHFFrequencies, _start)
-		end
+    if _start ~= 243000000 then
+      table.insert(FreeUHFFrequencies, _start)
+    end
         _start = _start + 500000
     end
 
