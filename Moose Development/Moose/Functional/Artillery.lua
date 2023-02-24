@@ -1,5 +1,4 @@
---- **Functional** - Control artillery units.
---
+---
 -- ===
 --
 -- The ARTY class can be used to easily assign and manage targets for artillery units using an advanced queueing system.
