@@ -489,6 +489,7 @@ ENUMS.ReportingName =
     --Mosquito = "A-20",
     Skyhawk = "A-4E",
     Viggen = "AJS37",
+    Harrier_B = "AV8BNA",
     Harrier = "AV-8B",
     Spirit = "B-2",
     Aviojet = "C-101",
