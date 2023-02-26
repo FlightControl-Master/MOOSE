@@ -1059,9 +1059,8 @@ function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
     mission.orbitAltitude=Coordinate.y
   end
     
-  -- Orbit speed in m/s.
-  --mission.orbitSpeed   = UTILS.KnotsToMps(UTILS.KnotsToAltKIAS(Speed or 350, UTILS.MetersToFeet(mission.orbitAltitude)))  
-  mission.orbitSpeed = UTILS.TasToIas(UTILS.KnotsToMps(Speed or 350), mission.orbitAltitude)
+  -- Orbit speed in m/s TAS.
+  mission.orbitSpeed = UTILS.IasToTas(UTILS.KnotsToMps(Speed or 350), mission.orbitAltitude)
   
   -- Mission speed in km/h.
   mission.missionSpeed = UTILS.KnotsToKmph(Speed or 350)

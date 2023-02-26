@@ -7094,7 +7094,7 @@ function OPSGROUP:SetLaserTarget(Target)
     -- Set coordinate.
     self.spot.Coordinate:UpdateFromVec3(self.spot.vec3)
     
-    self.spot.Coordinate:MarkToAll("Target Laser",ReadOnly,Text)
+    --self.spot.Coordinate:MarkToAll("Target Laser",ReadOnly,Text)
   end
 
 end
