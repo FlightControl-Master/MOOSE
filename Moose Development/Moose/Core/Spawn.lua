@@ -1146,7 +1146,8 @@ do -- Delay methods
     return self
   end
 
-  --- Turns the Delay On for the @{Wrapper.Group} when spawning.
+  --- Turns the Delay On for the @{Wrapper.Group} when spawning with @{SpawnScheduled}(). In effect then the 1st group will only be spawned
+  -- after the number of seconds given in SpawnScheduled as arguments, and not immediately.
   -- @param #SPAWN self
   -- @return #SPAWN The SPAWN object
   function SPAWN:InitDelayOn()
@@ -1443,6 +1444,8 @@ end
 -- @param #number SpawnTime The time interval defined in seconds between each new spawn of new groups.
 -- @param #number SpawnTimeVariation The variation to be applied on the defined time interval between each new spawn.
 -- The variation is a number between 0 and 1, representing the % of variation to be applied on the time interval.
+-- @param #boolen WithDelay Do not spawn the **first** group immediately, but delay the spawn as per the calculation below.
+-- Effectively the same as @{InitDelayOn}().
 -- @return #SPAWN self
 -- @usage
 -- -- NATO helicopters engaging in the battle field.
@@ -1453,17 +1456,20 @@ end
 -- --      High limit:  600 * ( 1 + 0.5 / 2 ) = 750
 -- -- Between these two values, a random amount of seconds will be chosen for each new spawn of the helicopters.
 -- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):SpawnScheduled( 600, 0.5 )
-function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation )
+function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation, WithDelay )
   self:F( { SpawnTime, SpawnTimeVariation } )
-
+  
+  local SpawnTime = SpawnTime or 60
+  local SpawnTimeVariation = SpawnTimeVariation or 0.5
+  
   if SpawnTime ~= nil and SpawnTimeVariation ~= nil then
     local InitialDelay = 0
-    if self.DelayOnOff == true then
+    if WithDelay or self.DelayOnOff == true then
       InitialDelay = math.random( SpawnTime - SpawnTime * SpawnTimeVariation, SpawnTime + SpawnTime * SpawnTimeVariation )
     end
     self.SpawnScheduler = SCHEDULER:New( self, self._Scheduler, {}, InitialDelay, SpawnTime, SpawnTimeVariation )
   end
-
+  
   return self
 end
 
