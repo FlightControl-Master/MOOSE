@@ -1469,7 +1469,7 @@ function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation, WithDelay )
     end
     self.SpawnScheduler = SCHEDULER:New( self, self._Scheduler, {}, InitialDelay, SpawnTime, SpawnTimeVariation )
   end
-
+  
   return self
 end
 
