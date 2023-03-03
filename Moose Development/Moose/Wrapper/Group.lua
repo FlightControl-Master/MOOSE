@@ -2785,6 +2785,7 @@ end
 --- @param #GROUP self
 --- @param #boolean ShortCallsign Return a shortened customized callsign, i.e. "Ghostrider 9" and not "Ghostrider 9 1"
 --- @param #boolean Keepnumber (Player only) Return customized callsign, incl optional numbers at the end, e.g. "Aerial 1-1#Ghostrider 109" results in "Ghostrider 109", if you want to e.g. use historical US Navy Callsigns
+--- @param #boolean Personalize (Player only) parse playernames containing '|' if true, e.x. Apple|Moose will result in "Moose". If false, mission editor callsigns or overrides set by CallsignTranslations will be used instead
 --- @param #table CallsignTranslations Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
 -- callsigns from playername or group name.
 --- @return #string Callsign
@@ -2803,9 +2804,8 @@ end
 --      'Victory 9'
 --
 -- 
-function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
-  --self:I("GetCustomCallSign")
-
+function GROUP:GetCustomCallSign(ShortCallsign, Keepnumber, Personalize, CallsignTranslations)
+  -- self:I("GetCustomCallSign")
   local callsign = "Ghost 1"
   if self:IsAlive() then
     local IsPlayer = self:IsPlayer()
@@ -2825,41 +2825,40 @@ function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
         shortcallsign = string.match(groupname,"#%s*([%a]+)") or "Ghost" -- Ghostrider
       end
       personalized = true
-    elseif IsPlayer and string.find(self:GetPlayerName(),"|") then
+    elseif IsPlayer and string.find(self:GetPlayerName(),"|") and Personalize then
       -- personalized flight name in group naming
       shortcallsign = string.match(self:GetPlayerName(),"|%s*([%a]+)") or string.match(self:GetPlayerName(),"|%s*([%d]+)") or "Ghost" -- Ghostrider
       personalized = true
     end
-  
-    if (not personalized) and CallsignTranslations and CallsignTranslations[callsignroot] then
+
+    if personalized then
+      -- player personalized callsign
+      -- remove trailing/leading spaces
+      shortcallsign=string.gsub(shortcallsign,"^%s*","")
+      shortcallsign=string.gsub(shortcallsign,"%s*$","")
+      if Keepnumber then
+        return shortcallsign -- Ghostrider 219
+      elseif ShortCallsign then
+        callsign = shortcallsign.." "..callnumbermajor -- Ghostrider 9
+      else
+        callsign = shortcallsign.." "..callnumbermajor.." "..callnumberminor -- Ghostrider 9 1
+      end
+      return callsign
+    end
+
+    if CallsignTranslations and CallsignTranslations[callsignroot] then
       callsignroot = CallsignTranslations[callsignroot]
     end
   
-  if personalized then
-    -- player personalized callsign
-    -- remove trailing/leading spaces
-    shortcallsign=string.gsub(shortcallsign,"^%s*","")
-    shortcallsign=string.gsub(shortcallsign,"%s*$","")
-    if Keepnumber then
-      return shortcallsign -- Ghostrider 219
-    elseif ShortCallsign then
-      callsign = shortcallsign.." "..callnumbermajor -- Ghostrider 9
+    -- AI or not personalized
+    if ShortCallsign then
+      callsign = callsignroot.." "..callnumbermajor -- Uzi/Victory 9
     else
-      callsign = shortcallsign.." "..callnumbermajor.." "..callnumberminor -- Ghostrider 9 1
+      callsign = callsignroot.." "..callnumbermajor.." "..callnumberminor -- Uzi/Victory 9 1
     end
-    return callsign
-  end
-  
-  -- AI or not personalized
-  if ShortCallsign then
-    callsign = callsignroot.." "..callnumbermajor -- Uzi/Victory 9
-  else
-    callsign = callsignroot.." "..callnumbermajor.." "..callnumberminor -- Uzi/Victory 9 1
-  end
 
     --self:I("Generated Callsign = " .. callsign)
   end
-  
   return callsign
 end
 
