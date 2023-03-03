@@ -555,10 +555,10 @@ function ZONE_BASE:GetZoneMaybe()
   end
 end
 
--- Returns the Value of the zone with the given PropertyName, or nil if no matching property exists.
---- @param #ZONE_BASE self
---- @param #string PropertyName The name of a the TriggerZone Property to be retrieved.
---- @return #string The Value of the TriggerZone Property with the given PropertyName, or nil if absent.
+--- Returns the Value of the zone with the given PropertyName, or nil if no matching property exists.
+-- @param #ZONE_BASE self
+-- @param #string PropertyName The name of a the TriggerZone Property to be retrieved.
+-- @return #string The Value of the TriggerZone Property with the given PropertyName, or nil if absent.
 -- @usage
 -- 
 -- local PropertiesZone = ZONE:FindByName("Properties Zone")
@@ -569,9 +569,9 @@ function ZONE_BASE:GetProperty(PropertyName)
   return self.Properties[PropertyName]
 end
 
--- Returns the zone Properties table.
---- @param #ZONE_BASE self
---- @return #table The Key:Value table of TriggerZone properties of the zone.
+--- Returns the zone Properties table.
+-- @param #ZONE_BASE self
+-- @return #table The Key:Value table of TriggerZone properties of the zone.
 function ZONE_BASE:GetAllProperties()
   return self.Properties
 end
@@ -927,7 +927,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
   local ZoneCoord = self:GetCoordinate()
   local ZoneRadius = self:GetRadius()
 
-  self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
+  --self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
 
   local SphereSearch = {
     id = world.VolumeType.SPHERE,
@@ -2923,9 +2923,9 @@ do -- ZONE_ELASTIC
 
 
   --- Add a set of groups. Positions of the group will be considered as polygon vertices when contructing the convex hull.
-  --- @param #ZONE_ELASTIC self
-  --- @param Core.Set#SET_GROUP SetGroup Set of groups.
-  --- @return #ZONE_ELASTIC self
+  -- @param #ZONE_ELASTIC self
+  -- @param Core.Set#SET_GROUP GroupSet Set of groups.
+  -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:AddSetGroup(GroupSet)
   
     -- Add set to table.

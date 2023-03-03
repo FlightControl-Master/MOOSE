@@ -634,21 +634,12 @@ ATIS.version = "0.9.14"
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<<<<<<< HEAD
---- Create a new ATIS class object for a specific aircraft carrier unit.
---- @param #ATIS self
---- @param #string AirbaseName Name of the airbase.
---- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz.
---- @param #number Modulation Radio modulation: 0=AM, 1=FM. Default 0=AM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators.
---- @return #ATIS self
-=======
 --- Create a new ATIS class object for a specific airbase.
 -- @param #ATIS self
 -- @param #string AirbaseName Name of the airbase.
 -- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz.
 -- @param #number Modulation Radio modulation: 0=AM, 1=FM. Default 0=AM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators.
 -- @return #ATIS self
->>>>>>> f3d1378692e2be85dbf853fd3552d4c58c53b215
 function ATIS:New(AirbaseName, Frequency, Modulation)
 
   -- Inherit everything from FSM class.

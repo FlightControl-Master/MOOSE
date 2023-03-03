@@ -715,7 +715,7 @@ do -- ZONE_CAPTURE_COALITION
   
       local UnitHit = EventData.TgtUnit
       
-      if UnitHit.ClassName ~= "SCENERY" then
+      if UnitHit and UnitHit.ClassName ~= "SCENERY" then
       -- Check if unit is inside the capture zone and that it is of the defending coalition.
           if UnitHit and UnitHit:IsInZone(self) and UnitHit:GetCoalition()==self.Coalition then
           

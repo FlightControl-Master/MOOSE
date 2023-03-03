@@ -17,7 +17,7 @@
 -- ### Author: **Applevangelist**
 -- 
 -- Date: 5 May 2021
--- Last Update: Sep 2022
+-- Last Update: Feb 2023
 -- 
 -- ===
 ---
@@ -50,7 +50,7 @@ MARKEROPS_BASE = {
   ClassName = "MARKEROPS",
   Tag = "mytag",
   Keywords = {},
-  version = "0.1.0",
+  version = "0.1.1",
   debug = false,
   Casesensitive = true,
 }
@@ -117,14 +117,15 @@ function MARKEROPS_BASE:New(Tagname,Keywords,Casesensitive)
    
    --- On after "MarkChanged" event. Triggered when a Marker is changed on the F10 map.
    -- @function [parent=#MARKEROPS_BASE] OnAfterMarkChanged
-   --- @param #MARKEROPS_BASE self
-   --- @param #string From The From state
-   --- @param #string Event The Event called
-   --- @param #string To The To state
-   --- @param #string Text The text on the marker
-   --- @param #table Keywords Table of matching keywords found in the Event text
-   --- @param Core.Point#COORDINATE Coord Coordinate of the marker.
-  
+   -- @param #MARKEROPS_BASE self
+   -- @param #string From The From state
+   -- @param #string Event The Event called
+   -- @param #string To The To state
+   -- @param #string Text The text on the marker
+   -- @param #table Keywords Table of matching keywords found in the Event text
+   -- @param Core.Point#COORDINATE Coord Coordinate of the marker.
+   -- @param #number idx DCS Marker ID
+
    --- On after "MarkDeleted" event. Triggered when a Marker is deleted from the F10 map.
    -- @function [parent=#MARKEROPS_BASE] OnAfterMarkDeleted
    --- @param #MARKEROPS_BASE self
@@ -172,7 +173,7 @@ function MARKEROPS_BASE:OnEventMark(Event)
       if Eventtext~=nil then
         if self:_MatchTag(Eventtext) then
          local matchtable = self:_MatchKeywords(Eventtext)
-         self:MarkChanged(Eventtext,matchtable,coord)
+         self:MarkChanged(Eventtext,matchtable,coord,Event.idx)
         end
       end
     elseif Event.id==world.event.S_EVENT_MARK_REMOVED then

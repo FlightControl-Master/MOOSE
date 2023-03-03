@@ -215,8 +215,8 @@ FLIGHTGROUP.PlayerSkill = {
 FLIGHTGROUP.Players={}
 
 --- FLIGHTGROUP class version.
---- @field #string version
-FLIGHTGROUP.version="0.8.4"
+-- @field #string version
+FLIGHTGROUP.version="1.0.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list

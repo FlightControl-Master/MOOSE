@@ -35,74 +35,75 @@
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- ARTY class
---- @type ARTY
---- @field #string ClassName Name of the class.
---- @field #string lid Log id for DCS.log file.
---- @field #boolean Debug Write Debug messages to DCS log file and send Debug messages to all players.
---- @field #table targets All targets assigned.
---- @field #table moves All moves assigned.
---- @field #ARTY.Target currentTarget Holds the current target, if there is one assigned.
---- @field #table currentMove Holds the current commanded move, if there is one assigned.
---- @field #number Nammo0 Initial amount total ammunition (shells+rockets+missiles) of the whole group.
---- @field #number Nshells0 Initial amount of shells of the whole group.
---- @field #number Nrockets0 Initial amount of rockets of the whole group.
---- @field #number Nmissiles0 Initial amount of missiles of the whole group.
---- @field #number Nukes0 Initial amount of tactical nukes of the whole group. Default is 0.
---- @field #number Nillu0 Initial amount of illumination shells of the whole group. Default is 0.
---- @field #number Nsmoke0 Initial amount of smoke shells of the whole group. Default is 0.
---- @field #number StatusInterval Update interval in seconds between status updates. Default 10 seconds.
---- @field #number WaitForShotTime Max time in seconds to wait until fist shot event occurs after target is assigned. If time is passed without shot, the target is deleted. Default is 300 seconds.
---- @field #table DCSdesc DCS descriptors of the ARTY group.
---- @field #string Type Type of the ARTY group.
---- @field #string DisplayName Extended type name of the ARTY group.
---- @field #number IniGroupStrength Inital number of units in the ARTY group.
---- @field #boolean IsArtillery If true, ARTY group has attribute "Artillery". This is automatically derived from the DCS descriptor table.
---- @field #boolean ismobile If true, ARTY group can move.
---- @field #boolean iscargo If true, ARTY group is defined as possible cargo. If it is immobile, targets out of range are not deleted from the queue.
---- @field Cargo.CargoGroup#CARGO_GROUP cargogroup Cargo group object if ARTY group is a cargo that will be transported to another place.
---- @field #string groupname Name of the ARTY group as defined in the mission editor.
---- @field #string alias Name of the ARTY group.
---- @field #table clusters Table of names of clusters the group belongs to. Can be used to address all groups within the cluster simultaniously.
---- @field #number SpeedMax Maximum speed of ARTY group in km/h. This is determined from the DCS descriptor table.
---- @field #number Speed Default speed in km/h the ARTY group moves at. Maximum speed possible is 80% of maximum speed the group can do.
---- @field #number RearmingDistance Safe distance in meters between ARTY group and rearming group or place at which rearming is possible. Default 100 m.
---- @field Wrapper.Group#GROUP RearmingGroup Unit designated to rearm the ARTY group.
---- @field #number RearmingGroupSpeed Speed in km/h the rearming unit moves at. Default is 50% of the max speed possible of the group.
---- @field #boolean RearmingGroupOnRoad If true, rearming group will move to ARTY group or rearming place using mainly roads. Default false.
---- @field Core.Point#COORDINATE RearmingGroupCoord Initial coordinates of the rearming unit. After rearming complete, the unit will return to this position.
---- @field Core.Point#COORDINATE RearmingPlaceCoord Coordinates of the rearming place. If the place is more than 100 m away from the ARTY group, the group will go there.
---- @field #boolean RearmingArtyOnRoad If true, ARTY group will move to rearming place using mainly roads. Default false.
---- @field Core.Point#COORDINATE InitialCoord Initial coordinates of the ARTY group.
---- @field #boolean report Arty group sends messages about their current state or target to its coalition.
---- @field #table ammoshells Table holding names of the shell types which are included when counting the ammo. Default is {"weapons.shells"} which include most shells.
---- @field #table ammorockets Table holding names of the rocket types which are included when counting the ammo. Default is {"weapons.nurs"} which includes most unguided rockets.
---- @field #table ammomissiles Table holding names of the missile types which are included when counting the ammo. Default is {"weapons.missiles"} which includes some guided missiles.
---- @field #number Nshots Number of shots fired on current target.
---- @field #number minrange Minimum firing range in kilometers. Targets closer than this distance are not engaged. Default 0.1 km.
---- @field #number maxrange Maximum firing range in kilometers. Targets further away than this distance are not engaged. Default 10000 km.
---- @field #number nukewarhead Explosion strength of tactical nuclear warhead in kg TNT. Default 75000.
---- @field #number Nukes Number of nuclear shells, the group has available. Note that if normal shells are empty, firing nukes is also not possible any more.
---- @field #number Nillu Number of illumination shells the group has available. Note that if normal shells are empty, firing illumination shells is also not possible any more.
---- @field #number illuPower Power of illumination warhead in mega candela. Default 1 mcd.
---- @field #number illuMinalt Minimum altitude in meters the illumination warhead will detonate.
---- @field #number illuMaxalt Maximum altitude in meters the illumination warhead will detonate.
---- @field #number Nsmoke Number of smoke shells the group has available. Note that if normal shells are empty, firing smoke shells is also not possible any more.
---- @field Utilities.Utils#SMOKECOLOR Smoke color of smoke shells. Default SMOKECOLOR.red.
---- @field #number nukerange Demolition range of tactical nuclear explostions.
---- @field #boolean nukefire Ignite additional fires and smoke for nuclear explosions Default true.
---- @field #number nukefires Number of nuclear fires and subexplosions.
---- @field #boolean relocateafterfire Group will relocate after each firing task. Default false.
---- @field #number relocateRmin Minimum distance in meters the group will look for places to relocate.
---- @field #number relocateRmax Maximum distance in meters the group will look for places to relocate.
---- @field #boolean markallow If true, Players are allowed to assign targets and moves for ARTY group by placing markers on the F10 map. Default is false.
---- @field #number markkey Authorization key. Only player who know this key can assign targets and moves via markers on the F10 map. Default no authorization required.
---- @field #boolean markreadonly Marks for targets are readonly and cannot be removed by players. Default is false.
---- @field #boolean autorelocate ARTY group will automatically move to within the max/min firing range.
---- @field #number autorelocatemaxdist Max distance [m] the ARTY group will travel to get within firing range. Default 50000 m = 50 km.
---- @field #boolean autorelocateonroad ARTY group will use mainly road to automatically get within firing range. Default is false.
---- @field #number coalition The coalition of the arty group.
---- @field #boolean respawnafterdeath Respawn arty group after all units are dead.
---- @field #number respawndelay Respawn delay in seconds.
+-- @type ARTY
+-- @field #string ClassName Name of the class.
+-- @field #string lid Log id for DCS.log file.
+-- @field #boolean Debug Write Debug messages to DCS log file and send Debug messages to all players.
+-- @field #table targets All targets assigned.
+-- @field #table moves All moves assigned.
+-- @field #ARTY.Target currentTarget Holds the current target, if there is one assigned.
+-- @field #table currentMove Holds the current commanded move, if there is one assigned.
+-- @field #number Nammo0 Initial amount total ammunition (shells+rockets+missiles) of the whole group.
+-- @field #number Nshells0 Initial amount of shells of the whole group.
+-- @field #number Nrockets0 Initial amount of rockets of the whole group.
+-- @field #number Nmissiles0 Initial amount of missiles of the whole group.
+-- @field #number Nukes0 Initial amount of tactical nukes of the whole group. Default is 0.
+-- @field #number Nillu0 Initial amount of illumination shells of the whole group. Default is 0.
+-- @field #number Nsmoke0 Initial amount of smoke shells of the whole group. Default is 0.
+-- @field #number StatusInterval Update interval in seconds between status updates. Default 10 seconds.
+-- @field #number WaitForShotTime Max time in seconds to wait until fist shot event occurs after target is assigned. If time is passed without shot, the target is deleted. Default is 300 seconds.
+-- @field #table DCSdesc DCS descriptors of the ARTY group.
+-- @field #string Type Type of the ARTY group.
+-- @field #string DisplayName Extended type name of the ARTY group.
+-- @field #number IniGroupStrength Inital number of units in the ARTY group.
+-- @field #boolean IsArtillery If true, ARTY group has attribute "Artillery". This is automatically derived from the DCS descriptor table.
+-- @field #boolean ismobile If true, ARTY group can move.
+-- @field #boolean iscargo If true, ARTY group is defined as possible cargo. If it is immobile, targets out of range are not deleted from the queue.
+-- @field Cargo.CargoGroup#CARGO_GROUP cargogroup Cargo group object if ARTY group is a cargo that will be transported to another place.
+-- @field #string groupname Name of the ARTY group as defined in the mission editor.
+-- @field #string alias Name of the ARTY group.
+-- @field #table clusters Table of names of clusters the group belongs to. Can be used to address all groups within the cluster simultaniously.
+-- @field #number SpeedMax Maximum speed of ARTY group in km/h. This is determined from the DCS descriptor table.
+-- @field #number Speed Default speed in km/h the ARTY group moves at. Maximum speed possible is 80% of maximum speed the group can do.
+-- @field #number RearmingDistance Safe distance in meters between ARTY group and rearming group or place at which rearming is possible. Default 100 m.
+-- @field Wrapper.Group#GROUP RearmingGroup Unit designated to rearm the ARTY group.
+-- @field #number RearmingGroupSpeed Speed in km/h the rearming unit moves at. Default is 50% of the max speed possible of the group.
+-- @field #boolean RearmingGroupOnRoad If true, rearming group will move to ARTY group or rearming place using mainly roads. Default false.
+-- @field Core.Point#COORDINATE RearmingGroupCoord Initial coordinates of the rearming unit. After rearming complete, the unit will return to this position.
+-- @field Core.Point#COORDINATE RearmingPlaceCoord Coordinates of the rearming place. If the place is more than 100 m away from the ARTY group, the group will go there.
+-- @field #boolean RearmingArtyOnRoad If true, ARTY group will move to rearming place using mainly roads. Default false.
+-- @field Core.Point#COORDINATE InitialCoord Initial coordinates of the ARTY group.
+-- @field #boolean report Arty group sends messages about their current state or target to its coalition.
+-- @field #table ammoshells Table holding names of the shell types which are included when counting the ammo. Default is {"weapons.shells"} which include most shells.
+-- @field #table ammorockets Table holding names of the rocket types which are included when counting the ammo. Default is {"weapons.nurs"} which includes most unguided rockets.
+-- @field #table ammomissiles Table holding names of the missile types which are included when counting the ammo. Default is {"weapons.missiles"} which includes some guided missiles.
+-- @field #number Nshots Number of shots fired on current target.
+-- @field #number minrange Minimum firing range in kilometers. Targets closer than this distance are not engaged. Default 0.1 km.
+-- @field #number maxrange Maximum firing range in kilometers. Targets further away than this distance are not engaged. Default 10000 km.
+-- @field #number nukewarhead Explosion strength of tactical nuclear warhead in kg TNT. Default 75000.
+-- @field #number Nukes Number of nuclear shells, the group has available. Note that if normal shells are empty, firing nukes is also not possible any more.
+-- @field #number Nillu Number of illumination shells the group has available. Note that if normal shells are empty, firing illumination shells is also not possible any more.
+-- @field #number illuPower Power of illumination warhead in mega candela. Default 1 mcd.
+-- @field #number illuMinalt Minimum altitude in meters the illumination warhead will detonate.
+-- @field #number illuMaxalt Maximum altitude in meters the illumination warhead will detonate.
+-- @field #number Nsmoke Number of smoke shells the group has available. Note that if normal shells are empty, firing smoke shells is also not possible any more.
+-- @field Utilities.Utils#SMOKECOLOR Smoke color of smoke shells. Default SMOKECOLOR.red.
+-- @field #number nukerange Demolition range of tactical nuclear explostions.
+-- @field #boolean nukefire Ignite additional fires and smoke for nuclear explosions Default true.
+-- @field #number nukefires Number of nuclear fires and subexplosions.
+-- @field #boolean relocateafterfire Group will relocate after each firing task. Default false.
+-- @field #number relocateRmin Minimum distance in meters the group will look for places to relocate.
+-- @field #number relocateRmax Maximum distance in meters the group will look for places to relocate.
+-- @field #boolean markallow If true, Players are allowed to assign targets and moves for ARTY group by placing markers on the F10 map. Default is false.
+-- @field #number markkey Authorization key. Only player who know this key can assign targets and moves via markers on the F10 map. Default no authorization required.
+-- @field #boolean markreadonly Marks for targets are readonly and cannot be removed by players. Default is false.
+-- @field #boolean autorelocate ARTY group will automatically move to within the max/min firing range.
+-- @field #number autorelocatemaxdist Max distance [m] the ARTY group will travel to get within firing range. Default 50000 m = 50 km.
+-- @field #boolean autorelocateonroad ARTY group will use mainly road to automatically get within firing range. Default is false.
+-- @field #number coalition The coalition of the arty group.
+-- @field #boolean respawnafterdeath Respawn arty group after all units are dead.
+-- @field #number respawndelay Respawn delay in seconds.
+-- @field #number dtTrack Time interval in seconds for weapon tracking.
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 --- Enables mission designers easily to assign targets for artillery units. Since the implementation is based on a Finite State Model (FSM), the mission designer can
@@ -692,8 +693,8 @@ ARTY.db={
 --- @field #boolean attackgroup If true, use task attack group rather than fire at point for engagement.
 
 --- Arty script version.
---- @field #string version
-ARTY.version="1.2.0"
+-- @field #string version
+ARTY.version="1.3.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -801,6 +802,9 @@ function ARTY:New(group, alias)
   else
     self.ismobile=false
   end
+  
+  -- Set track time interval.
+  self.dtTrack=0.2
 
   -- Set speed to 0.7 of maximum.
   self.Speed=self.SpeedMax * 0.7
@@ -1497,6 +1501,15 @@ function ARTY:SetStatusInterval(interval)
   return self
 end
 
+--- Set time interval for weapon tracking.
+-- @param #ARTY self
+-- @param #number interval Time interval in seconds. Default 0.2 seconds.
+-- @return self
+function ARTY:SetTrackInterval(interval)
+  self.dtTrack=interval or 0.2
+  return self
+end
+
 --- Set time how it is waited a unit the first shot event happens. If no shot is fired after this time, the task to fire is aborted and the target removed.
 --- @param #ARTY self
 --- @param #number waittime Time in seconds. Default 300 seconds.
@@ -2129,6 +2142,95 @@ end
 -- Event Handling
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Function called during tracking of weapon.
+-- @param Wrapper.Weapon#WEAPON weapon Weapon object.
+-- @param #ARTY self ARTY object.
+-- @param #ARTY.Target target Target of the weapon.
+function ARTY._FuncTrack(weapon, self, target)
+  
+  -- Coordinate and distance to target.
+  local _coord=weapon.coordinate
+  local _dist=_coord:Get2DDistance(target.coord)
+  local _destroyweapon=false
+  
+  -- Debug
+  self:T3(self.lid..string.format("ARTY %s weapon to target dist = %d m", self.groupname,_dist))
+  
+  if target.weapontype==ARTY.WeaponType.IlluminationShells then
+  
+    -- Check if within distace.
+    if _dist<target.radius then
+  
+      -- Get random coordinate within certain radius of the target.
+      local _cr=target.coord:GetRandomCoordinateInRadius(target.radius)
+  
+      -- Get random altitude over target.
+      local _alt=_cr:GetLandHeight()+math.random(self.illuMinalt, self.illuMaxalt)
+  
+      -- Adjust explosion height of coordinate.
+      local _ci=COORDINATE:New(_cr.x,_alt,_cr.z)
+  
+      -- Create illumination flare.
+      _ci:IlluminationBomb(self.illuPower)
+  
+      -- Destroy actual shell.
+      _destroyweapon=true
+    end
+  
+  elseif target.weapontype==ARTY.WeaponType.SmokeShells then
+  
+    if _dist<target.radius then
+  
+      -- Get random coordinate within a certain radius.
+      local _cr=_coord:GetRandomCoordinateInRadius(_data.target.radius)
+  
+      -- Fire smoke at this coordinate.
+      _cr:Smoke(self.smokeColor)
+  
+      -- Destroy actual shell.
+      _destroyweapon=true
+  
+    end
+  
+  end
+  
+  if _destroyweapon then
+  
+    self:T2(self.lid..string.format("ARTY %s destroying shell, stopping timer.", self.groupname))
+  
+    -- Destroy weapon and stop timer.
+    weapon:Destroy()
+    
+    -- No more tracking.
+    weapon.tracking=false
+
+  end
+
+end
+
+
+--- Function called after impact of weapon.
+-- @param Wrapper.Weapon#WEAPON weapon Weapon object.
+-- @param #ARTY self ARTY object.
+-- @param #ARTY.Target target Target of the weapon.
+function ARTY._FuncImpact(weapon, self, target)
+
+  -- Debug info.
+  self:I(self.lid..string.format("ARTY %s weapon NOT ALIVE any more.", self.groupname))
+
+  -- Get impact coordinate.
+  local _impactcoord=weapon:GetImpactCoordinate()
+    
+  -- Create a "nuclear" explosion and blast at the impact point.
+  if target.weapontype==ARTY.WeaponType.TacticalNukes then
+    self:T(self.lid..string.format("ARTY %s triggering nuclear explosion in one second.", self.groupname))
+    --SCHEDULER:New(nil, ARTY._NuclearBlast, {self,_impactcoord}, 1.0)
+    self:ScheduleOnce(1.0, ARTY._NuclearBlast, self, _impactcoord)
+  end
+
+end
+
+
 --- Eventhandler for shot event.
 --- @param #ARTY self
 --- @param Core.Event#EVENTDATA EventData
@@ -2162,128 +2264,32 @@ function ARTY:OnEventShot(EventData)
         self:T(self.lid..text)
         MESSAGE:New(text, 5):Clear():ToAllIf(self.report or self.Debug)
 
-        -- Last known position of the weapon fired.
-        local _lastpos={x=0, y=0, z=0}
-
-        --- Track the position of the weapon if it is supposed to model a tac nuke, illumination or smoke shell.
-        --- @param #table _weapon
-        local function _TrackWeapon(_data)
-
-          -- When the pcall status returns false the weapon has hit.
-          local _weaponalive,_currpos =  pcall(
-          function()
-            return _data.weapon:getPoint()
-          end)
-
-          -- Debug
-          self:T3(self.lid..string.format("ARTY %s: Weapon still in air: %s", self.groupname, tostring(_weaponalive)))
-
-          -- Destroy weapon before impact.
-          local _destroyweapon=false
-
-          if _weaponalive then
-
-            -- Update last position.
-            _lastpos={x=_currpos.x, y=_currpos.y, z=_currpos.z}
-
-            -- Coordinate and distance to target.
-            local _coord=COORDINATE:NewFromVec3(_lastpos)
-            local _dist=_coord:Get2DDistance(_data.target.coord)
-
-            -- Debug
-            self:T3(self.lid..string.format("ARTY %s weapon to target dist = %d m", self.groupname,_dist))
-
-            if _data.target.weapontype==ARTY.WeaponType.IlluminationShells then
-
-              -- Check if within distace.
-              if _dist<_data.target.radius then
-
-                -- Get random coordinate within certain radius of the target.
-                local _cr=_data.target.coord:GetRandomCoordinateInRadius(_data.target.radius)
-
-                -- Get random altitude over target.
-                local _alt=_cr:GetLandHeight()+math.random(self.illuMinalt, self.illuMaxalt)
-
-                -- Adjust explosion height of coordinate.
-                local _ci=COORDINATE:New(_cr.x,_alt,_cr.z)
-
-                -- Create illumination flare.
-                _ci:IlluminationBomb(self.illuPower)
-
-                -- Destroy actual shell.
-                _destroyweapon=true
-              end
-
-            elseif _data.target.weapontype==ARTY.WeaponType.SmokeShells then
-
-              if _dist<_data.target.radius then
-
-                -- Get random coordinate within a certain radius.
-                local _cr=_coord:GetRandomCoordinateInRadius(_data.target.radius)
-
-                -- Fire smoke at this coordinate.
-                _cr:Smoke(self.smokeColor)
-
-                -- Destroy actual shell.
-                _destroyweapon=true
-
-              end
-
-            end
-
-            if _destroyweapon then
-
-              self:T2(self.lid..string.format("ARTY %s destroying shell, stopping timer.", self.groupname))
-
-              -- Destroy weapon and stop timer.
-              _data.weapon:destroy()
-              return nil
-
-            else
-
-              -- TODO: Make dt input parameter.
-              local dt=0.02
-
-              self:T3(self.lid..string.format("ARTY %s tracking weapon again in %.3f seconds", self.groupname, dt))
-
-              -- Check again in 0.05 seconds.
-              return timer.getTime() + dt
-
-            end
-
-          else
-
-            -- Get impact coordinate.
-            local _impactcoord=COORDINATE:NewFromVec3(_lastpos)
-            
-            self:I(self.lid..string.format("ARTY %s weapon NOT ALIVE any more.", self.groupname))
-
-            -- Create a "nuclear" explosion and blast at the impact point.
-            if _data.target.weapontype==ARTY.WeaponType.TacticalNukes then
-              self:T(self.lid..string.format("ARTY %s triggering nuclear explosion in one second.", self.groupname))
-              SCHEDULER:New(nil, ARTY._NuclearBlast, {self,_impactcoord}, 1.0)
-            end
-
-            -- Stop timer.
-            return nil
-
-          end
-
-        end
-
         -- Start track the shell if we want to model a tactical nuke.
         local _tracknuke  = self.currentTarget.weapontype==ARTY.WeaponType.TacticalNukes and self.Nukes>0
         local _trackillu  = self.currentTarget.weapontype==ARTY.WeaponType.IlluminationShells and self.Nillu>0
         local _tracksmoke = self.currentTarget.weapontype==ARTY.WeaponType.SmokeShells and self.Nsmoke>0
+        
+        
         if _tracknuke or _trackillu or _tracksmoke then
 
-            self:T(self.lid..string.format("ARTY %s: Tracking of weapon starts in two seconds.", self.groupname))
-
-            local _peter={}
-            _peter.weapon=EventData.weapon
-            _peter.target=UTILS.DeepCopy(self.currentTarget)
-
-            timer.scheduleFunction(_TrackWeapon, _peter, timer.getTime() + 2.0)
+          -- Debug info.  
+          self:T(self.lid..string.format("ARTY %s: Tracking of weapon starts in two seconds.", self.groupname))
+            
+          -- Create a weapon object.
+          local weapon=WEAPON:New(EventData.weapon)
+          
+          -- Set time step for tracking.
+          weapon:SetTimeStepTrack(self.dtTrack)
+          
+          -- Copy target. We need a copy because it might already be overwritten with the next target during flight of weapon.
+          local target=UTILS.DeepCopy(self.currentTarget)
+          
+          -- Set callback functions.
+          weapon:SetFuncTrack(ARTY._FuncTrack, self, target)
+          weapon:SetFuncImpact(ARTY._FuncImpact, self, target)
+          
+          -- Start tracking in 2 sec (arty ammo should fly a bit).
+          weapon:StartTrack(2)
         end
 
         -- Get current ammo.
@@ -3541,8 +3547,6 @@ end
 function ARTY:onafterRespawn(Controllable, From, Event, To)
   self:_EventFromTo("onafterRespawn", Event, From, To)
 
-  env.info("FF Respawning arty group")
-
   local group=self.Controllable --Wrapper.Group#GROUP
 
   -- Respawn group.
@@ -3931,9 +3935,10 @@ function ARTY:GetAmmo(display)
     return nammo, nshells, nrockets, nmissiles
   end
 
-  for _,unit in pairs(units) do
+  for _,_unit in pairs(units) do
+    local unit=_unit --Wrapper.Unit#UNIT
 
-    if unit and unit:IsAlive() then
+    if unit then
 
       -- Output.
       local text=string.format("ARTY group %s - unit %s:\n", self.groupname, unit:GetName())

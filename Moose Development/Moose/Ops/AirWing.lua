@@ -524,7 +524,7 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType, Payloads)
     if a and b then  -- I had the case that a or b were nil even though the self.payloads table was looking okay. Very strange! Seems to be solved by pre-selecting valid payloads.
       local performanceA=self:GetPayloadPeformance(a, MissionType)
       local performanceB=self:GetPayloadPeformance(b, MissionType)
-      return (performanceA>performanceB) or (performanceA==performanceB and a.unlimited==true) or (performanceA==performanceB and a.unlimited==true and b.unlimited==true and a.navail>b.navail)
+      return (performanceA>performanceB) or (performanceA==performanceB and a.unlimited==true and b.unlimited~=true) or (performanceA==performanceB and a.unlimited==true and b.unlimited==true and a.navail>b.navail)
     elseif not a then
       self:I(self.lid..string.format("FF ERROR in sortpayloads: a is nil"))
       return false

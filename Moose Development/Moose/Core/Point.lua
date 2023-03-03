@@ -540,7 +540,7 @@ do -- COORDINATE
     local gotscenery=false
 
     local function EvaluateZone(ZoneObject)
-
+      BASE:T({ZoneObject})
       if ZoneObject then
 
         -- Get category of scanned object.
@@ -1054,28 +1054,55 @@ do -- COORDINATE
     return heading
   end
 
-  --- Returns the wind direction (from) and strength.
-  --- @param #COORDINATE self
-  --- @param height (Optional) parameter specifying the height ASL. The minimum height will be always be the land height since the wind is zero below the ground.
-  --- @return Direction the wind is blowing from in degrees.
-  --- @return Wind strength in m/s.
-  function COORDINATE:GetWind(height)
-    local landheight=self:GetLandHeight()+0.1 -- we at 0.1 meters to be sure to be above ground since wind is zero below ground level.
+  --- Returns the 3D wind direction vector. Note that vector points into the direction the wind in blowing to.
+  -- @param #COORDINATE self
+  -- @param #number height (Optional) parameter specifying the height ASL in meters. The minimum height will be always be the land height since the wind is zero below the ground.
+  -- @param #boolean turbulence (Optional) If `true`, include turbulence.
+  -- @return DCS#Vec3 Wind 3D vector. Components in m/s.
+  function COORDINATE:GetWindVec3(height, turbulence)
+  
+    -- We at 0.1 meters to be sure to be above ground since wind is zero below ground level.
+    local landheight=self:GetLandHeight()+0.1 
+  
     local point={x=self.x, y=math.max(height or self.y, landheight), z=self.z}
-    -- get wind velocity vector
-    local wind = atmosphere.getWind(point)
-    local direction = math.deg(math.atan2(wind.z, wind.x))
-    if direction < 0 then
-      direction = 360 + direction
+        
+    -- Get wind velocity vector.
+    local wind = nil --DCS#Vec3
+    
+    if turbulence then
+      wind = atmosphere.getWindWithTurbulence(point)
+    else
+      wind = atmosphere.getWind(point)
     end
-    -- Convert to direction to from direction
+    
+    return wind
+  end
+
+  --- Returns the wind direction (from) and strength.
+  -- @param #COORDINATE self
+  -- @param #number height (Optional) parameter specifying the height ASL. The minimum height will be always be the land height since the wind is zero below the ground.
+  -- @param #boolean turbulence If `true`, include turbulence. If `false` or `nil`, wind without turbulence.
+  -- @return #number Direction the wind is blowing from in degrees.
+  -- @return #number Wind strength in m/s.
+  function COORDINATE:GetWind(height, turbulence)
+
+    -- Get wind velocity vector
+    local wind = self:GetWindVec3(height, turbulence)
+
+    -- Calculate the direction of the vector.    
+    local direction=UTILS.VecHdg(wind)
+    
+    -- Invert "to" direction to "from" direction.
     if direction > 180 then
       direction = direction-180
     else
       direction = direction+180
     end
-    local strength=math.sqrt((wind.x)^2+(wind.z)^2)
-    -- Return wind direction and strength km/h.
+    
+    -- Wind strength in m/s.
+    local strength=UTILS.VecNorm(wind) -- math.sqrt((wind.x)^2+(wind.z)^2)
+    
+    -- Return wind direction and strength.
     return direction, strength
   end
 
@@ -1132,13 +1159,16 @@ do -- COORDINATE
   end
 
   --- Return the 3D distance in meters between the target COORDINATE and the COORDINATE.
-  --- @param #COORDINATE self
-  --- @param #COORDINATE TargetCoordinate The target COORDINATE.
-  --- @return DCS#Distance Distance The distance in meters.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE TargetCoordinate The target COORDINATE. Can also be a DCS#Vec3.
+  -- @return DCS#Distance Distance The distance in meters.
   function COORDINATE:Get3DDistance( TargetCoordinate )
-    local TargetVec3 = TargetCoordinate:GetVec3()
+    --local TargetVec3 = TargetCoordinate:GetVec3()
+    local TargetVec3 = {x=TargetCoordinate.x, y=TargetCoordinate.y, z=TargetCoordinate.z}
     local SourceVec3 = self:GetVec3()
-    return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.y - SourceVec3.y ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
+    --local dist=( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.y - SourceVec3.y ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
+    local dist=UTILS.VecDist3D(TargetVec3, SourceVec3)
+    return dist
   end
 
 
@@ -1321,7 +1351,15 @@ do -- COORDINATE
     self.y=alt
     return self
   end
-
+  
+  --- Set altitude to be at land height (i.e. on the ground!)
+  -- @param #COORDINATE self
+  function COORDINATE:SetAtLandheight()
+    local alt=self:GetLandHeight()
+    self.y=alt
+    return self
+  end
+  
   --- Build an air type route point.
   --- @param #COORDINATE self
   --- @param #COORDINATE.WaypointAltType AltType The altitude type.
@@ -1947,7 +1985,6 @@ do -- COORDINATE
   --- @param #COORDINATE self
   --- @param #string name (Optional) Name of the fire to stop it, if not using the same COORDINATE object.
   function COORDINATE:StopBigSmokeAndFire( name )
-    self:F2( { name = name } )
     name = name or self.firename
     trigger.action.effectSmokeStop( name )
   end

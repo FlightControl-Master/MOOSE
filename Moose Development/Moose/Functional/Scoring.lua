@@ -873,8 +873,10 @@ end
 function SCORING:OnEventBirth( Event )
 
   if Event.IniUnit then
+    Event.IniUnit.ThreatLevel, Event.IniUnit.ThreatType = Event.IniUnit:GetThreatLevel()
     if Event.IniObjectCategory == 1 then
       local PlayerName = Event.IniUnit:GetPlayerName()
+      Event.IniUnit.BirthTime = timer.getTime()
       if PlayerName then
         self:_AddPlayerFromUnit( Event.IniUnit )
         self:SetScoringMenu( Event.IniGroup )
@@ -1005,7 +1007,18 @@ function SCORING:_EventOnHit( Event )
         PlayerHit.PenaltyHit = PlayerHit.PenaltyHit or 0
         PlayerHit.TimeStamp = PlayerHit.TimeStamp or 0
         PlayerHit.UNIT = PlayerHit.UNIT or TargetUNIT
+        -- After an instant kill we can't compute the thread level anymore. To fix this we compute at OnEventBirth
+        if PlayerHit.UNIT.ThreatType == nil then
         PlayerHit.ThreatLevel, PlayerHit.ThreatType = PlayerHit.UNIT:GetThreatLevel()
+          -- if this fails for some reason, set a good default value
+          if PlayerHit.ThreatType == nil then
+            PlayerHit.ThreatLevel = 1
+            PlayerHit.ThreatType = "Unknown"
+          end
+        else
+          PlayerHit.ThreatLevel = PlayerHit.UNIT.ThreatLevel
+          PlayerHit.ThreatType = PlayerHit.UNIT.ThreatType
+        end
 
         -- Only grant hit scores if there was more than one second between the last hit.        
         if timer.getTime() - PlayerHit.TimeStamp > 1 then
@@ -1021,27 +1034,30 @@ function SCORING:_EventOnHit( Event )
 
           if InitCoalition then -- A coalition object was hit.
             if InitCoalition == TargetCoalition then
-              Player.Penalty = Player.Penalty + 10
-              PlayerHit.Penalty = PlayerHit.Penalty + 10
+              local Penalty = 10
+              Player.Penalty = Player.Penalty + Penalty
+              PlayerHit.Penalty = PlayerHit.Penalty + Penalty
               PlayerHit.PenaltyHit = PlayerHit.PenaltyHit + 1
 
               if TargetPlayerName ~= nil then -- It is a player hitting another player ...
                 MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit friendly player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.PenaltyHit .. " times. " ..
-                                 "Penalty: -" .. PlayerHit.Penalty .. ".  Score Total:" .. Player.Score - Player.Penalty,
+                                 "Penalty: -" .. Penalty .. ".  Score Total:" .. Player.Score - Player.Penalty,
                                  MESSAGE.Type.Update )
                        :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
                        :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
               else
                 MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit friendly target " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.PenaltyHit .. " times. " ..
-                                 "Penalty: -" .. PlayerHit.Penalty .. ".  Score Total:" .. Player.Score - Player.Penalty,
+                                 "Penalty: -" .. Penalty .. ".  Score Total:" .. Player.Score - Player.Penalty,
                                  MESSAGE.Type.Update )
                       :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
                       :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
               end
               self:ScoreCSV( InitPlayerName, TargetPlayerName, "HIT_PENALTY", 1, -10, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
             else
-              Player.Score = Player.Score + 1
-              PlayerHit.Score = PlayerHit.Score + 1
+              -- Hitting a target multiple times before destoying it should not result in a higger score
+              -- Multiple hits is typically a results of bombs/missles missing their target but still inflict some spash damage
+              -- Player.Score = Player.Score + 1
+              -- PlayerHit.Score = PlayerHit.Score + 1
               PlayerHit.ScoreHit = PlayerHit.ScoreHit + 1
               if TargetPlayerName ~= nil then -- It is a player hitting another player ...
                 MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit enemy player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.ScoreHit .. " times. " ..
@@ -1104,7 +1120,18 @@ function SCORING:_EventOnHit( Event )
         PlayerHit.PenaltyHit = PlayerHit.PenaltyHit or 0
         PlayerHit.TimeStamp = PlayerHit.TimeStamp or 0
         PlayerHit.UNIT = PlayerHit.UNIT or TargetUNIT
+        -- After an instant kill we can't compute the thread level anymore. To fix this we compute at OnEventBirth
+        if PlayerHit.UNIT.ThreatType == nil then
         PlayerHit.ThreatLevel, PlayerHit.ThreatType = PlayerHit.UNIT:GetThreatLevel()
+          -- if this fails for some reason, set a good default value
+          if PlayerHit.ThreatType == nil then
+            PlayerHit.ThreatLevel = 1
+            PlayerHit.ThreatType = "Unknown"
+          end
+        else
+          PlayerHit.ThreatLevel = PlayerHit.UNIT.ThreatLevel
+          PlayerHit.ThreatType = PlayerHit.UNIT.ThreatType
+        end
 
         -- Only grant hit scores if there was more than one second between the last hit.        
         if timer.getTime() - PlayerHit.TimeStamp > 1 then
@@ -1115,25 +1142,28 @@ function SCORING:_EventOnHit( Event )
           if InitCoalition then -- A coalition object was hit, probably a static.
             if InitCoalition == TargetCoalition then
               -- TODO: Penalty according scale
-              Player.Penalty = Player.Penalty + 10 --* self.ScaleDestroyPenalty
-              PlayerHit.Penalty = PlayerHit.Penalty + 10 --* self.ScaleDestroyPenalty
+              local Penalty = 10
+              Player.Penalty = Player.Penalty + Penalty --* self.ScaleDestroyPenalty
+              PlayerHit.Penalty = PlayerHit.Penalty + Penalty --* self.ScaleDestroyPenalty
               PlayerHit.PenaltyHit = PlayerHit.PenaltyHit + 1 * self.ScaleDestroyPenalty
       
               MESSAGE
                 :NewType( self.DisplayMessagePrefix .. "Player '" .. Event.WeaponPlayerName .. "' hit friendly target " .. 
                       TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
-                      "Penalty: -" .. PlayerHit.Penalty .. " = " .. Player.Score - Player.Penalty,
+                      "Penalty: -" .. Penalty .. " = " .. Player.Score - Player.Penalty,
                       MESSAGE.Type.Update
                     )
                 :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
                 :ToCoalitionIf( Event.WeaponCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
               self:ScoreCSV( Event.WeaponPlayerName, TargetPlayerName, "HIT_PENALTY", 1, -10, Event.WeaponName, Event.WeaponCoalition, Event.WeaponCategory, Event.WeaponTypeName, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
             else
-              Player.Score = Player.Score + 1
-              PlayerHit.Score = PlayerHit.Score + 1
+              -- Hitting a target multiple times before destoying it should not result in a higger score
+              -- Multiple hits is typically a results of bombs/missles missing their target but still inflict some spash damage
+              -- Player.Score = Player.Score + 1
+              -- PlayerHit.Score = PlayerHit.Score + 1
               PlayerHit.ScoreHit = PlayerHit.ScoreHit + 1
               MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. Event.WeaponPlayerName .. "' hit enemy target " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
-                               "Score: +" .. PlayerHit.Score .. " = " .. Player.Score - Player.Penalty,
+                               "Score: " .. PlayerHit.Score .. ".  Score Total:" .. Player.Score - Player.Penalty,
                                MESSAGE.Type.Update )
                      :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
                      :ToCoalitionIf( Event.WeaponCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
@@ -1211,7 +1241,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
       local Destroyed = false
 
       -- What is the player destroying?
-      if Player and Player.Hit and Player.Hit[TargetCategory] and Player.Hit[TargetCategory][TargetUnitName] and Player.Hit[TargetCategory][TargetUnitName].TimeStamp ~= 0 then -- Was there a hit for this unit for this player before registered???
+      if Player and Player.Hit and Player.Hit[TargetCategory] and Player.Hit[TargetCategory][TargetUnitName] and Player.Hit[TargetCategory][TargetUnitName].TimeStamp ~= 0 and (TargetUnit.BirthTime == nil or Player.Hit[TargetCategory][TargetUnitName].TimeStamp > TargetUnit.BirthTime) then -- Was there a hit for this unit for this player before registered???
 
         local TargetThreatLevel = Player.Hit[TargetCategory][TargetUnitName].ThreatLevel
         local TargetThreatType = Player.Hit[TargetCategory][TargetUnitName].ThreatType
@@ -1240,13 +1270,13 @@ function SCORING:_EventOnDeadOrCrash( Event )
 
             if Player.HitPlayers[TargetPlayerName] then -- A player destroyed another player
               MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' destroyed friendly player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
-                               "Penalty: -" .. TargetDestroy.Penalty .. " = " .. Player.Score - Player.Penalty,
+                               "Penalty: -" .. ThreatPenalty .. " = " .. Player.Score - Player.Penalty,
                                MESSAGE.Type.Information )
                      :ToAllIf( self:IfMessagesDestroy() and self:IfMessagesToAll() )
                      :ToCoalitionIf( InitCoalition, self:IfMessagesDestroy() and self:IfMessagesToCoalition() )
             else
               MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' destroyed friendly target " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
-                               "Penalty: -" .. TargetDestroy.Penalty .. " = " .. Player.Score - Player.Penalty,
+                               "Penalty: -" .. ThreatPenalty .. " = " .. Player.Score - Player.Penalty,
                                MESSAGE.Type.Information )
                      :ToAllIf( self:IfMessagesDestroy() and self:IfMessagesToAll() )
                      :ToCoalitionIf( InitCoalition, self:IfMessagesDestroy() and self:IfMessagesToCoalition() )
@@ -1268,13 +1298,13 @@ function SCORING:_EventOnDeadOrCrash( Event )
             TargetDestroy.ScoreDestroy = TargetDestroy.ScoreDestroy + 1
             if Player.HitPlayers[TargetPlayerName] then -- A player destroyed another player
               MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' destroyed enemy player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
-                               "Score: +" .. TargetDestroy.Score .. " = " .. Player.Score - Player.Penalty,
+                               "Score: +" .. ThreatScore .. " = " .. Player.Score - Player.Penalty,
                                MESSAGE.Type.Information )
                      :ToAllIf( self:IfMessagesDestroy() and self:IfMessagesToAll() )
                      :ToCoalitionIf( InitCoalition, self:IfMessagesDestroy() and self:IfMessagesToCoalition() )
             else
               MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' destroyed enemy " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
-                               "Score: +" .. TargetDestroy.Score .. " = " .. Player.Score - Player.Penalty,
+                               "Score: +" .. ThreatScore .. " = " .. Player.Score - Player.Penalty,
                                MESSAGE.Type.Information )
                      :ToAllIf( self:IfMessagesDestroy() and self:IfMessagesToAll() )
                      :ToCoalitionIf( InitCoalition, self:IfMessagesDestroy() and self:IfMessagesToCoalition() )

@@ -89,9 +89,9 @@
 -- 
 --- @field #UNIT
 UNIT = {
-	ClassName="UNIT",
-	UnitName=nil,
-	GroupName=nil,
+  ClassName="UNIT",
+  UnitName=nil,
+  GroupName=nil,
 }
 
 
@@ -166,8 +166,8 @@ function UNIT:Name()
 end
 
 --- Get the DCS unit object.
---- @param #UNIT self
---- @return DCS#Unit
+-- @param #UNIT self
+-- @return DCS#Unit The DCS unit object.
 function UNIT:GetDCSObject()
 
   local DCSUnit = Unit.getByName( self.UnitName )
@@ -325,14 +325,19 @@ function UNIT:IsAlive()
   local DCSUnit = self:GetDCSObject() -- DCS#Unit
   
   if DCSUnit then
-    local UnitIsAlive  = DCSUnit:isExist() and DCSUnit:isActive()
+    local UnitIsAlive  = DCSUnit:isExist() and DCSUnit:isActive() -- and DCSUnit:getLife() > 1
     return UnitIsAlive
   end 
   
   return nil
 end
 
-
+--- Returns if the Unit is dead.
+-- @param #UNIT self  
+-- @return #boolean `true` if Unit is dead, else false or nil if the unit does not exist
+function UNIT:IsDead()
+  return not self:IsAlive()
+end
 
 --- Returns the Unit's callsign - the localized string.
 --- @param #UNIT self
@@ -626,9 +631,9 @@ function UNIT:IsFuelSupply()
   return false
 end
 
---- Returns the unit's group if it exist and nil otherwise.
---- @param Wrapper.Unit#UNIT self
---- @return Wrapper.Group#GROUP The Group of the Unit or `nil` if the unit does not exist.  
+--- Returns the unit's group if it exists and nil otherwise.
+-- @param Wrapper.Unit#UNIT self
+-- @return Wrapper.Group#GROUP The Group of the Unit or `nil` if the unit does not exist.  
 function UNIT:GetGroup()
   self:F2( self.UnitName )  
   local UnitGroup = GROUP:FindByName(self.GroupName)
@@ -965,6 +970,24 @@ function UNIT:GetDamageRelative()
   end
   
   return 1
+end
+
+--- Returns the current value for an animation argument on the external model of the given object. 
+-- Each model animation has an id tied to with different values representing different states of the model. 
+-- Animation arguments can be figured out by opening the respective 3d model in the modelviewer.
+-- @param #UNIT self
+-- @param #number AnimationArgument Number corresponding to the animated part of the unit.
+-- @return #number Value of the animation argument [-1, 1]. If draw argument value is invalid for the unit in question a value of 0 will be returned.
+function UNIT:GetDrawArgumentValue(AnimationArgument)
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local value = DCSUnit:getDrawArgumentValue(AnimationArgument or 0)
+    return value
+  end
+  
+  return 0
 end
 
 --- Returns the category of the #UNIT from descriptor. Returns one of

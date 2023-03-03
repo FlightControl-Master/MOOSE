@@ -4,7 +4,7 @@
 -- 
 -- ### Author: **FlightControl**
 -- 
--- ### Contributions: **Applevangelist**
+-- ### Contributions: **Applevangelist**, **funkyfranky**
 -- 
 -- ===
 -- 
@@ -12,12 +12,12 @@
 -- @image Wrapper_Scenery.JPG
 
 
-
---- @type SCENERY
---- @field #string ClassName
---- @field #string SceneryName
---- @field #DCS.Object SceneryObject
---- @field #number Life0
+--- SCENERY Class
+-- @type SCENERY
+-- @field #string ClassName Name of the class.
+-- @field #string SceneryName Name of the scenery object.
+-- @field DCS#Object SceneryObject DCS scenery object.
+-- @field #number Life0 Initial life points.
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 
@@ -35,14 +35,18 @@ SCENERY = {
 }
 
 --- Register scenery object as POSITIONABLE.
---- @param #SCENERY self
---- @param #string SceneryName Scenery name.
---- @param #DCS.Object SceneryObject DCS scenery object.
---- @return #SCENERY Scenery object.
+--@param #SCENERY self
+--@param #string SceneryName Scenery name.
+--@param DCS#Object SceneryObject DCS scenery object.
+--@return #SCENERY Scenery object.
 function SCENERY:Register( SceneryName, SceneryObject )
+
   local self = BASE:Inherit( self, POSITIONABLE:New( SceneryName ) )
+  
   self.SceneryName = SceneryName
+  
   self.SceneryObject = SceneryObject
+  
   if self.SceneryObject then
     self.Life0 = self.SceneryObject:getLife()
   else
@@ -52,8 +56,8 @@ function SCENERY:Register( SceneryName, SceneryObject )
 end
 
 --- Obtain DCS Object from the SCENERY Object.
---- @param #SCENERY self
---- @return #DCS.Object DCS scenery object.
+--@param #SCENERY self
+--@return DCS#Object DCS scenery object.
 function SCENERY:GetDCSObject()
   return self.SceneryObject
 end
@@ -69,9 +73,9 @@ function SCENERY:GetLife()
   return life
 end
 
---- Get current initial life points from the SCENERY Object.
---- @param #SCENERY self
---- @return #number life
+--- Get initial life points of the SCENERY Object.
+--@param #SCENERY self
+--@return #number life
 function SCENERY:GetLife0()
   return self.Life0 or 0
 end
@@ -90,10 +94,10 @@ function SCENERY:IsDead()
   return self:GetLife() < 1 and true or false
 end 
 
---- Get the threat level of a SCENERY object. Always 0.
---- @param #SCENERY self
---- @return #number Threat level 0.
---- @return #string  "Scenery".
+--- Get the threat level of a SCENERY object. Always 0 as scenery does not pose a threat to anyone.
+--@param #SCENERY self
+--@return #number Threat level 0.
+--@return #string  "Scenery".
 function SCENERY:GetThreatLevel()
   return 0, "Scenery"
 end

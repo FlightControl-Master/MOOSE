@@ -703,11 +703,11 @@ function POSITIONABLE:IsSubmarine()
 
   if DCSUnit then
     local UnitDescriptor = DCSUnit:getDesc()
-		if UnitDescriptor.attributes["Submarines"] == true then
-			return true
-		else
-			return false
-		end
+    if UnitDescriptor.attributes["Submarines"] == true then
+      return true
+    else
+      return false
+    end
   end
 
   self:E( { "Cannot check IsSubmarine", Positionable = self, Alive = self:IsAlive() } )
@@ -843,6 +843,78 @@ end
 function POSITIONABLE:GetVelocityKNOTS()
   self:F2( self.PositionableName )
   return UTILS.MpsToKnots( self:GetVelocityMPS() )
+end
+
+--- Returns the true airspeed (TAS). This is calculated from the current velocity minus wind in 3D.
+-- @param #POSITIONABLE self
+-- @return #number TAS in m/s. Returns 0 if the POSITIONABLE does not exist.
+function POSITIONABLE:GetAirspeedTrue()
+
+  -- TAS
+  local tas=0
+
+  -- Get current coordinate.
+  local coord=self:GetCoord()
+  
+  if coord then
+  
+    -- Altitude in meters.
+    local alt=coord.y
+  
+    -- Wind velocity vector.
+    local wvec3=coord:GetWindVec3(alt, false)
+    
+    -- Velocity vector.
+    local vvec3=self:GetVelocityVec3()
+
+    --GS=TAS+WIND ==> TAS=GS-WIND
+    local tasvec3=UTILS.VecSubstract(vvec3, wvec3)
+
+    -- True airspeed in m/s
+    tas=UTILS.VecNorm(tasvec3)
+  
+  end
+
+  return tas
+end
+
+--- Returns the indicated airspeed (IAS).
+-- The IAS is calculated from the TAS under the approximation that TAS increases by ~2% with every 1000 feet altitude ASL.
+-- @param #POSITIONABLE self
+-- @param #number oatcorr (Optional) Outside air temperature (OAT) correction factor. Default 0.017 (=1.7%).
+-- @return #number IAS in m/s. Returns 0 if the POSITIONABLE does not exist.
+function POSITIONABLE:GetAirspeedIndicated(oatcorr)
+
+  -- Get true airspeed.
+  local tas=self:GetAirspeedTrue()
+  
+  -- Get altitude.
+  local altitude=self:GetAltitude()
+  
+  -- Convert TAS to IAS.
+  local ias=UTILS.TasToIas(tas, altitude, oatcorr)
+
+  return ias
+end
+
+--- Returns the horizonal speed relative to eath's surface. The vertical component of the velocity vector is projected out (set to zero).
+-- @param #POSITIONABLE self
+-- @return #number Ground speed in m/s. Returns 0 if the POSITIONABLE does not exist.
+function POSITIONABLE:GetGroundSpeed()
+
+  local gs=0
+  
+  local vel=self:GetVelocityVec3()
+  
+  if vel then
+    
+    local vec2={x=vel.x, y=vel.z}
+    
+    gs=UTILS.Vec2Norm(vel)
+  
+  end
+
+  return gs
 end
 
 --- Returns the Angle of Attack of a POSITIONABLE.
@@ -1696,6 +1768,7 @@ do -- Cargo
           ["tt_DSHK"] = 6,
           ["HL_KORD"] = 6,
           ["HL_DSHK"] = 6,
+          ["CCKW_353"] = 16, --GMC CCKW 2½-ton 6×6 truck, estimating 16 soldiers
         }
 
         -- Assuming that each passenger weighs 95 kg on average.

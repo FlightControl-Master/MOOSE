@@ -89,6 +89,7 @@ DATABASE = {
   FLIGHTGROUPS = {},
   FLIGHTCONTROLS = {},
   OPSZONES = {},
+  PATHLINES = {},
 }
 
 local _DATABASECoalition =
@@ -245,7 +246,7 @@ function DATABASE:FindAirbase( AirbaseName )
 end
 
 
-do -- Zones
+do -- Zones and Pathlines
 
   --- Finds a @{Core.Zone} based on the zone name.
   --- @param #DATABASE self
@@ -268,7 +269,6 @@ do -- Zones
     end
   end
 
-
   --- Deletes a @{Core.Zone} from the DATABASE based on the zone name.
   --- @param #DATABASE self
   --- @param #string ZoneName The name of the zone.
@@ -277,6 +277,39 @@ do -- Zones
     self.ZONES[ZoneName] = nil
   end
 
+
+  --- Adds a @{Core.Pathline} based on its name in the DATABASE.
+  -- @param #DATABASE self
+  -- @param #string PathlineName The name of the pathline
+  -- @param Core.Pathline#PATHLINE Pathline The pathline.
+  function DATABASE:AddPathline( PathlineName, Pathline )
+
+    if not self.PATHLINES[PathlineName] then
+      self.PATHLINES[PathlineName]=Pathline
+    end
+  end
+
+  --- Finds a @{Core.Pathline} by its name.
+  -- @param #DATABASE self
+  -- @param #string PathlineName The name of the Pathline.
+  -- @return Core.Pathline#PATHLINE The found PATHLINE.
+  function DATABASE:FindPathline( PathlineName )
+
+    local pathline = self.PATHLINES[PathlineName]
+
+    return pathline
+  end
+
+
+  --- Deletes a @{Core.Pathline} from the DATABASE based on its name.
+  -- @param #DATABASE self
+  -- @param #string PathlineName The name of the PATHLINE.
+  function DATABASE:DeletePathline( PathlineName )
+
+    self.PATHLINES[PathlineName]=nil
+
+    return self
+  end
 
   --- Private method that registers new ZONE_BASE derived objects within the DATABASE Object.
   --- @param #DATABASE self
@@ -371,60 +404,148 @@ do -- Zones
         -- Add zone to DB.
         self:AddZone( ZoneName, Zone_Polygon )
       end
+
     end
 
     -- Drawings as zones
     if env.mission.drawings and env.mission.drawings.layers then
-    
+
       -- Loop over layers.
       for layerID, layerData in pairs(env.mission.drawings.layers or {}) do
-      
+
         -- Loop over objects in layers.
         for objectID, objectData in pairs(layerData.objects or {}) do
-          
+
           -- Check for polygon which has at least 4 points (we would need 3 but the origin seems to be there twice)
-          if objectData.polygonMode=="free" and objectData.points and #objectData.points>=4 then
-        
+          if objectData.polygonMode and (objectData.polygonMode=="free") and objectData.points and #objectData.points>=4 then
+
+            ---
+            -- Drawing: Polygon free
+            ---
+
             -- Name of the zone.
-            local ZoneName=objectData.name or "Unknown Drawing Zone"
-            
+            local ZoneName=objectData.name or "Unknown free Polygon Drawing"
+
             -- Reference point. All other points need to be translated by this.
             local vec2={x=objectData.mapX, y=objectData.mapY}
-            
-            -- Copy points array.            
+
+            -- Debug stuff.
+            --local vec3={x=objectData.mapX, y=0, z=objectData.mapY}
+            --local coord=COORDINATE:NewFromVec2(vec2):MarkToAll("MapX, MapY")
+            --trigger.action.markToAll(id,  "mapXY", vec3)
+
+            -- Copy points array.
             local points=UTILS.DeepCopy(objectData.points)
-            
+
             -- Translate points.
             for i,_point in pairs(points) do
-              local point=_point --DCS#Vec2                           
+              local point=_point --DCS#Vec2
               points[i]=UTILS.Vec2Add(point, vec2)
-            end     
-            
+            end
+
             -- Remove last point.
             table.remove(points, #points)
-            
+
             -- Debug output
-            self:I(string.format("Register ZONE: %s (Polygon drawing with %d verticies)", ZoneName, #points))                        
-            
+            self:I(string.format("Register ZONE: %s (Polygon (free) drawing with %d vertices)", ZoneName, #points))
+
             -- Create new polygon zone.
             local Zone=ZONE_POLYGON:NewFromPointsArray(ZoneName, points)
-            
+
             -- Set color.
             Zone:SetColor({1, 0, 0}, 0.15)
-            
+
             -- Store in DB.
             self.ZONENAMES[ZoneName] = ZoneName
-    
+
             -- Add zone.
-            self:AddZone(ZoneName, Zone)          
-            
-          end        
-        end      
+            self:AddZone(ZoneName, Zone)
+
+          -- Check for polygon which has at least 4 points (we would need 3 but the origin seems to be there twice)
+          elseif objectData.polygonMode and objectData.polygonMode=="rect" then
+
+            ---
+            -- Drawing: Polygon rect
+            ---
+
+            -- Name of the zone.
+            local ZoneName=objectData.name or "Unknown rect Polygon Drawing"
+
+            -- Reference point (center of the rectangle).
+            local vec2={x=objectData.mapX, y=objectData.mapY}
+
+            -- For a rectangular polygon drawing, we have the width (y) and height (x).
+            local w=objectData.width
+            local h=objectData.height
+
+            -- Create points from center using with and height (width for y and height for x is a bit confusing, but this is how ED implemented it).
+            local points={}
+            points[1]={x=vec2.x-h/2, y=vec2.y+w/2} --Upper left
+            points[2]={x=vec2.x+h/2, y=vec2.y+w/2} --Upper right
+            points[3]={x=vec2.x+h/2, y=vec2.y-w/2} --Lower right
+            points[4]={x=vec2.x-h/2, y=vec2.y-w/2} --Lower left
+
+            --local coord=COORDINATE:NewFromVec2(vec2):MarkToAll("MapX, MapY")
+
+            -- Debug output
+            self:I(string.format("Register ZONE: %s (Polygon (rect) drawing with %d vertices)", ZoneName, #points))
+
+            -- Create new polygon zone.
+            local Zone=ZONE_POLYGON:NewFromPointsArray(ZoneName, points)
+
+            -- Set color.
+            Zone:SetColor({1, 0, 0}, 0.15)
+
+            -- Store in DB.
+            self.ZONENAMES[ZoneName] = ZoneName
+
+            -- Add zone.
+            self:AddZone(ZoneName, Zone)
+
+          elseif objectData.lineMode and (objectData.lineMode=="segments" or objectData.lineMode=="segment" or objectData.lineMode=="free") and objectData.points and #objectData.points>=2 then
+
+            ---
+            -- Drawing: Line (segments, segment or free)
+            ---
+
+           -- Name of the zone.
+            local Name=objectData.name or "Unknown Line Drawing"
+
+            -- Reference point. All other points need to be translated by this.
+            local vec2={x=objectData.mapX, y=objectData.mapY}
+
+            -- Copy points array.
+            local points=UTILS.DeepCopy(objectData.points)
+
+            -- Translate points.
+            for i,_point in pairs(points) do
+              local point=_point --DCS#Vec2
+              points[i]=UTILS.Vec2Add(point, vec2)
+            end
+
+            -- Debug output
+            self:I(string.format("Register PATHLINE: %s (Line drawing with %d points)", Name, #points))
+
+            -- Create new polygon zone.
+            local Pathline=PATHLINE:NewFromVec2Array(Name, points)
+
+            -- Set color.
+            --Zone:SetColor({1, 0, 0}, 0.15)
+
+            -- Add zone.
+            self:AddPathline(Name,Pathline)
+
+          end
+
+        end
+
       end
-            
+
     end
 
+
   end
+
 end -- zone
 
 do -- Zone_Goal
@@ -470,7 +591,7 @@ do -- OpsZone
   function DATABASE:FindOpsZone( ZoneName )
 
     local ZoneFound = self.OPSZONES[ZoneName]
-    
+
     return ZoneFound
   end
 
@@ -478,15 +599,15 @@ do -- OpsZone
   --- @param #DATABASE self
   --- @param Ops.OpsZone#OPSZONE OpsZone The zone.
   function DATABASE:AddOpsZone( OpsZone )
-  
+
     if OpsZone then
-    
+
       local ZoneName=OpsZone:GetName()
 
       if not self.OPSZONES[ZoneName] then
         self.OPSZONES[ZoneName] = OpsZone
       end
-      
+
     end
   end
 
@@ -1081,7 +1202,7 @@ function DATABASE:_RegisterClients()
   for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
     self:I(string.format("Register Client: %s", tostring(ClientName)))
     local client=self:AddClient( ClientName )
-    client.SpawnCoord=COORDINATE:New(ClientTemplate.x, ClientTemplate.alt, ClientTemplate.y)    
+    client.SpawnCoord=COORDINATE:New(ClientTemplate.x, ClientTemplate.alt, ClientTemplate.y)
   end
 
   return self
@@ -1131,7 +1252,7 @@ end
 function DATABASE:_RegisterAirbase(airbase)
 
   if airbase then
-  
+
     -- Get the airbase name.
     local DCSAirbaseName = airbase:getName()
 
@@ -1760,7 +1881,7 @@ function DATABASE:_RegisterTemplates()
 
                     if obj_type_name ~= "static" and Template and Template.units and type(Template.units) == 'table' then  --making sure again- this is a valid group
 
-                      self:_RegisterGroupTemplate(Template, CoalitionSide, _DATABASECategory[string.lower(CategoryName)], CountryID)                      
+                      self:_RegisterGroupTemplate(Template, CoalitionSide, _DATABASECategory[string.lower(CategoryName)], CountryID)
 
                     else
 

@@ -44,10 +44,11 @@ SOCKET = {
 }
 
 --- Data type. This is the keyword the socket listener uses.
---- @field #string TEXT Plain text.
---- @field #string BOMBRESULT Range bombing.
---- @field #string STRAFERESULT Range strafeing result.
---- @field #string LSOGRADE Airboss LSO grade.
+-- @type SOCKET.DataType
+-- @field #string TEXT Plain text.
+-- @field #string BOMBRESULT Range bombing.
+-- @field #string STRAFERESULT Range strafeing result.
+-- @field #string LSOGRADE Airboss LSO grade.
 SOCKET.DataType={
   TEXT="moose_text",
   BOMBRESULT="moose_bomb_result",

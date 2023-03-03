@@ -67,8 +67,8 @@ ARMYGROUP = {
 --- @field #number alarmstate Alarm state backup.
 
 --- Army Group version.
---- @field #string version
-ARMYGROUP.version="0.9.0"
+-- @field #string version
+ARMYGROUP.version="1.0.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list

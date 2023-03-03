@@ -1983,11 +1983,11 @@ function LEGION:CountMissionsInQueue(MissionTypes)
 end
 
 --- Count total number of assets of the legion.
---- @param #LEGION self
---- @param #boolean InStock If `true`, only assets that are in the warehouse stock/inventory are counted.
---- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
---- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
---- @return #number Amount of asset groups in stock.
+-- @param #LEGION self
+-- @param #boolean InStock If `true`, only assets that are in the warehouse stock/inventory are counted. If `false`, only assets that are NOT in stock (i.e. spawned) are counted. If `nil`, all assets are counted.
+-- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+-- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `GROUP.Attribute.AIR_BOMBER`.
+-- @return #number Amount of asset groups in stock.
 function LEGION:CountAssets(InStock, MissionTypes, Attributes)
 
   local N=0
@@ -3147,10 +3147,18 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
   -- Distance factor.
   local distance=0
   if TargetVec2 and OrigVec2 then
+  
     -- Distance in NM.
     distance=UTILS.MetersToNM(UTILS.VecDist2D(OrigVec2, TargetVec2))
-    -- Round: 55 NM ==> 5.5 ==> 6, 63 NM ==> 6.3 ==> 6
-    distance=UTILS.Round(distance/10, 0)
+    
+    if asset.category==Group.Category.AIRPLANE or asset.category==Group.Category.HELICOPTER then
+      -- Round: 55 NM ==> 5.5 ==> 6, 63 NM ==> 6.3 ==> 6
+      distance=UTILS.Round(distance/10, 0)
+    else
+      -- For ground units the distance is a more important factor
+      distance=UTILS.Round(distance, 0)
+    end
+    
   end
   
   -- Reduce score for legions that are futher away.

@@ -501,10 +501,6 @@ function CSAR:New(Coalition, Template, Alias)
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#CSAR] __Status
-<<<<<<< HEAD
-  --- @param #CSAR self
-  --- @param #number delay Delay in seconds.
-=======
   -- @param #CSAR self
   -- @param #number delay Delay in seconds.
   -- 
@@ -525,7 +521,6 @@ function CSAR:New(Coalition, Template, Alias)
   -- @function [parent=#CSAR] __Save
   -- @param #CSAR self
   -- @param #number delay Delay in seconds.
->>>>>>> f3d1378692e2be85dbf853fd3552d4c58c53b215
   
   --- On After "PilotDown" event. Downed Pilot detected.
   -- @function [parent=#CSAR] OnAfterPilotDown
@@ -2755,12 +2750,12 @@ function CSAR:onafterLoad(From, Event, To, path, filename)
     vec3.z = tonumber(dataset[4])
     local point = COORDINATE:NewFromVec3(vec3)
     
-    local coalition = dataset[5]
-    local country = dataset[6]
+    local coalition = tonumber(dataset[5])
+    local country = tonumber(dataset[6])
     local description = dataset[7]
     local typeName = dataset[8]
     local unitName = dataset[9]
-    local freq = dataset[10]
+    local freq = tonumber(dataset[10])
     
     self:_AddCsar(coalition, country, point, typeName, unitName, playerName, freq, nil, description, nil)    
   end

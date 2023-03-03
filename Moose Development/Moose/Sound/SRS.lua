@@ -1255,7 +1255,7 @@ MSRS_BACKEND_DCSGRPC.Functions._DCSgRPCtts = function (self, Text, Plaintext, Fr
     options.srsClientName = Label or self.Label
     options.position = {}
     if self.coordinate then
-        options.position.lat, options.position.lat, options.position.alt = self._GetLatLongAlt(self.coordinate)
+        options.position.lat, options.position.lat, options.position.alt = self:_GetLatLongAlt(self.coordinate)
     end
 
     options.position.lat = options.position.lat or 0.0
