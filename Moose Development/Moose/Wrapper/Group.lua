@@ -2785,11 +2785,16 @@ end
 -- @param #GROUP self
 -- @param #boolean ShortCallsign Return a shortened customized callsign, i.e. "Ghostrider 9" and not "Ghostrider 9 1"
 -- @param #boolean Keepnumber (Player only) Return customized callsign, incl optional numbers at the end, e.g. "Aerial 1-1#Ghostrider 109" results in "Ghostrider 109", if you want to e.g. use historical US Navy Callsigns
--- @param #table CallsignTranslations Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
+-- @param #table CallsignTranslations Table to translate between DCS standard callsigns and bespoke ones. Overrides personal/parsed callsigns if set
 -- callsigns from playername or group name.
 -- @return #string Callsign
 -- @usage
---            -- Set Custom CAP Flight Callsigns for use with TTS
+--            -- suppose there are three groups with one (client) unit each:
+--            -- Slot 1               -- with mission editor callsign Enfield-1
+--            -- Slot 2 # Apollo 403  -- with mission editor callsign Enfield-2
+--            -- Slot 3 | Apollo      -- with mission editor callsign Enfield-3 
+--            -- Slot 4 | Apollo      -- with mission editor callsign Devil-4
+--            -- and suppose these Custom CAP Flight Callsigns for use with TTS are set
 --            mygroup:GetCustomCallSign(true,false,{
 --              Devil = 'Bengal',
 --              Snake = 'Winder',
@@ -2797,12 +2802,12 @@ end
 --              Enfield = 'Victory',
 --              Uzi = 'Evil Eye'
 --            })
---
--- results in this outcome if the group has Callsign "Enfield 9 1" on the 1st #UNIT of the group:
---
---      'Victory 9'
---
--- 
+--            -- then GetCustomCallsign will return
+--            -- Enfield-1 for Slot 1
+--            -- Apollo for Slot 2 or Apollo 403 if Keepnumber is set
+--            -- Apollo for Slot 3
+--            -- Bengal-4 for Slot 4
+
 function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
   --self:I("GetCustomCallSign")
 
@@ -2817,7 +2822,11 @@ function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
     local callnumbermajor = string.char(string.byte(callnumber,1)) -- 9
     local callnumberminor = string.char(string.byte(callnumber,2)) -- 1
     local personalized = false
-    if IsPlayer and string.find(groupname,"#") then
+
+    -- prioritize bespoke callsigns over parsing, prefer parsing over default callsigns
+    if CallsignTranslations and CallsignTranslations[callsignroot] then
+      callsignroot = CallsignTranslations[callsignroot]
+    elseif IsPlayer and string.find(groupname,"#") then
       -- personalized flight name in group naming
       if Keepnumber then
         shortcallsign = string.match(groupname,"#(.+)") or "Ghost 111" -- Ghostrider 219
@@ -2830,32 +2839,28 @@ function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
       shortcallsign = string.match(self:GetPlayerName(),"|%s*([%a]+)") or string.match(self:GetPlayerName(),"|%s*([%d]+)") or "Ghost" -- Ghostrider
       personalized = true
     end
-  
-    if (not personalized) and CallsignTranslations and CallsignTranslations[callsignroot] then
-      callsignroot = CallsignTranslations[callsignroot]
+
+    if personalized then
+      -- player personalized callsign
+      -- remove trailing/leading spaces
+      shortcallsign=string.gsub(shortcallsign,"^%s*","")
+      shortcallsign=string.gsub(shortcallsign,"%s*$","")
+      if Keepnumber then
+        return shortcallsign -- Ghostrider 219
+      elseif ShortCallsign then
+        callsign = shortcallsign.." "..callnumbermajor -- Ghostrider 9
+      else
+        callsign = shortcallsign.." "..callnumbermajor.." "..callnumberminor -- Ghostrider 9 1
+      end
+      return callsign
     end
-  
-  if personalized then
-    -- player personalized callsign
-    -- remove trailing/leading spaces
-    shortcallsign=string.gsub(shortcallsign,"^%s*","")
-    shortcallsign=string.gsub(shortcallsign,"%s*$","")
-    if Keepnumber then
-      return shortcallsign -- Ghostrider 219
-    elseif ShortCallsign then
-      callsign = shortcallsign.." "..callnumbermajor -- Ghostrider 9
+    
+    -- AI or not personalized
+    if ShortCallsign then
+      callsign = callsignroot.." "..callnumbermajor -- Uzi/Victory 9
     else
-      callsign = shortcallsign.." "..callnumbermajor.." "..callnumberminor -- Ghostrider 9 1
+      callsign = callsignroot.." "..callnumbermajor.." "..callnumberminor -- Uzi/Victory 9 1
     end
-    return callsign
-  end
-  
-  -- AI or not personalized
-  if ShortCallsign then
-    callsign = callsignroot.." "..callnumbermajor -- Uzi/Victory 9
-  else
-    callsign = callsignroot.." "..callnumbermajor.." "..callnumberminor -- Uzi/Victory 9 1
-  end
 
     --self:I("Generated Callsign = " .. callsign)
   end
