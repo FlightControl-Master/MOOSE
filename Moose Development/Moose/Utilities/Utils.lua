@@ -2846,3 +2846,45 @@ function UTILS.IsAnyInTable(Table, Objects, Key)
 
   return false
 end
+
+--- Helper function to plot a racetrack on the F10 Map - curtesy of Buur.
+-- @param Core.Point#COORDINATE Coordinate
+-- @param #number Altitude Altitude in feet
+-- @param #number Speed Speed in knots
+-- @param #number Heading Heading in degrees
+-- @param #number Leg Leg in NM
+-- @param #number Coalition Coalition side, e.g. coaltion.side.RED or coaltion.side.BLUE
+-- @param #table Color Color of the line in RGB, e.g. {1,0,0} for red
+-- @param #number Alpha Transparency factor, between 0.1 and 1
+-- @param #number LineType Line type to be used, line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+-- @param #boolean ReadOnly 
+function UTILS.PlotRacetrack(Coordinate, Altitude, Speed, Heading, Leg, Coalition, Color, Alpha, LineType, ReadOnly)
+    local fix_coordinate = Coordinate
+    local altitude = Altitude
+    local speed = Speed or 350
+    local heading = Heading or 270
+    local leg_distance = Leg or 10
+    
+    local coalition = Coalition or -1
+    local color = Color or {1,0,0}
+    local alpha = Alpha or 1
+    local lineType = LineType or 1
+    
+    
+    speed = UTILS.IasToTas(speed, UTILS.FeetToMeters(altitude), oatcorr)
+      
+    local turn_radius = 0.0211 * speed -3.01
+    
+    local point_two = fix_coordinate:Translate(UTILS.NMToMeters(leg_distance), heading, true, false)
+    local point_three = point_two:Translate(UTILS.NMToMeters(turn_radius)*2, heading - 90, true, false)
+    local point_four = fix_coordinate:Translate(UTILS.NMToMeters(turn_radius)*2, heading - 90, true, false)
+    local circle_center_fix_four = point_two:Translate(UTILS.NMToMeters(turn_radius), heading - 90, true, false)
+    local circle_center_two_three = fix_coordinate:Translate(UTILS.NMToMeters(turn_radius), heading - 90, true, false)
+    
+
+    fix_coordinate:LineToAll(point_two, coalition, color, alpha, lineType)
+    point_four:LineToAll(point_three, coalition, color, alpha, lineType)
+    circle_center_fix_four:CircleToAll(UTILS.NMToMeters(turn_radius), coalition, color, alpha, nil, 0, lineType)--, ReadOnly, Text)
+    circle_center_two_three:CircleToAll(UTILS.NMToMeters(turn_radius), coalition, color, alpha, nil, 0, lineType)--, ReadOnly, Text)
+
+end
