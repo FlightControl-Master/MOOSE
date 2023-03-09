@@ -1653,7 +1653,7 @@ function GROUP:GetMinHeight()
   return nil
 end
 
---- Returns the current maximum height of the group.
+--- Returns the current maximum height of the group, i.e. the highest unit height of that group.
 -- Each unit within the group gets evaluated, and the maximum height (= the unit which is the highest elevated) is returned.
 -- @param #GROUP self
 -- @return #number Maximum height found.
@@ -1668,7 +1668,7 @@ function GROUP:GetMaxHeight()
     for Index, UnitData in pairs( DCSGroup:getUnits() ) do
       local UnitData = UnitData -- DCS#Unit
 
-      local UnitHeight = UnitData:getPoint()
+      local UnitHeight = UnitData:getPoint().p.y -- Height -- found by @Heavydrinker
 
       if UnitHeight > GroupHeightMax then
         GroupHeightMax = UnitHeight

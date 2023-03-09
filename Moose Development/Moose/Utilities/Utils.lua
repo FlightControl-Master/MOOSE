@@ -667,7 +667,10 @@ function UTILS.Round( num, idp )
   return math.floor( num * mult + 0.5 ) / mult
 end
 
--- porting in Slmod's dostring
+--- Porting in Slmod's dostring - execute a string as LUA code with error handling.
+-- @param #string s The code as string to be executed
+-- @return #boolean success If true, code was successfully executed, else false
+-- @return #string Outcome Code outcome if successful or error string if not successful
 function UTILS.DoString( s )
   local f, err = loadstring( s )
   if f then
@@ -677,7 +680,15 @@ function UTILS.DoString( s )
   end
 end
 
--- Here is a customized version of pairs, which I called spairs because it iterates over the table in a sorted order.
+--- Here is a customized version of pairs, which I called spairs because it iterates over the table in a sorted order.
+-- @param #table t The table
+-- @param #string order (Optional) The sorting function
+-- @return #string key The index key
+-- @return #string value The value at the indexed key
+-- @usage
+--            for key,value in UTILS.spairs(mytable) do
+--                -- your code here
+--            end
 function UTILS.spairs( t, order )
     -- collect the keys
     local keys = {}
@@ -702,7 +713,16 @@ function UTILS.spairs( t, order )
 end
 
 
--- Here is a customized version of pairs, which I called kpairs because it iterates over the table in a sorted order, based on a function that will determine the keys as reference first.
+--- Here is a customized version of pairs, which I called kpairs because it iterates over the table in a sorted order, based on a function that will determine the keys as reference first.
+-- @param #table t The table
+-- @param #string getkey The function to determine the keys for sorting
+-- @param #string order (Optional) The sorting function itself
+-- @return #string key The index key
+-- @return #string value The value at the indexed key
+-- @usage
+--            for key,value in UTILS.kpairs(mytable, getkeyfunc) do
+--                -- your code here
+--            end
 function UTILS.kpairs( t, getkey, order )
     -- collect the keys
     local keys = {}
@@ -727,7 +747,14 @@ function UTILS.kpairs( t, getkey, order )
     end
 end
 
--- Here is a customized version of pairs, which I called rpairs because it iterates over the table in a random order.
+--- Here is a customized version of pairs, which I called rpairs because it iterates over the table in a random order.
+-- @param #table t The table
+-- @return #string key The index key
+-- @return #string value The value at the indexed key
+-- @usage
+--            for key,value in UTILS.rpairs(mytable) do
+--                -- your code here
+--            end
 function UTILS.rpairs( t )
     -- collect the keys
 
