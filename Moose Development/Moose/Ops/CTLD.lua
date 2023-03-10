@@ -22,7 +22,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update Feb 2023
+-- Last Update Mar 2023
 
 do
 
@@ -288,7 +288,8 @@ CTLD_ENGINEERING = {
 end
 
 
-do  
+do 
+
 ------------------------------------------------------
 --- **CTLD_CARGO** class, extends Core.Base#BASE
 -- @type CTLD_CARGO
@@ -494,7 +495,7 @@ CTLD_CARGO = {
   
   --- Add Stock.
   -- @param #CTLD_CARGO self
-  -- @param #number Number to add, one if nil.
+  -- @param #number Number to add, none if nil.
   -- @return #CTLD_CARGO self
   function CTLD_CARGO:AddStock(Number)
     if self.Stock then -- Stock nil?
@@ -506,7 +507,7 @@ CTLD_CARGO = {
   
   --- Remove Stock.
   -- @param #CTLD_CARGO self
-  -- @param #number Number to reduce, one if nil.
+  -- @param #number Number to reduce, none if nil.
   -- @return #CTLD_CARGO self
   function CTLD_CARGO:RemoveStock(Number)
     if self.Stock then -- Stock nil?
@@ -514,6 +515,15 @@ CTLD_CARGO = {
       self.Stock = self.Stock - number
       if self.Stock < 0 then self.Stock = 0 end
     end
+    return self
+  end
+  
+  --- Set Stock.
+  -- @param #CTLD_CARGO self
+  -- @param #number Number to set, nil means unlimited.
+  -- @return #CTLD_CARGO self
+  function CTLD_CARGO:SetStock(Number)
+    self.Stock = Number
     return self
   end
   
@@ -1196,7 +1206,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.31"
+CTLD.version="1.0.32"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -4478,6 +4488,7 @@ end
         _troop:AddStock(number)
       end
     end
+    return self
   end
   
   --- User - function to add stock of a certain crates type
@@ -4495,6 +4506,115 @@ end
         _troop:AddStock(number)
       end
     end
+    return self
+  end
+  
+  --- User - function to add stock of a certain crates type
+  -- @param #CTLD self
+  -- @param #string Name Name as defined in the generic cargo.
+  -- @param #number Number Number of units/groups to add.
+  -- @return #CTLD self
+  function CTLD:AddStockStatics(Name, Number)
+    local name = Name or "none"
+    local number = Number or 1
+    -- find right generic type
+    local gentroops = self.Cargo_Statics
+    for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
+      if _troop.Name == name then
+        _troop:AddStock(number)
+      end
+    end
+    return self
+  end
+  
+  --- User - function to set the stock of a certain crates type
+  -- @param #CTLD self
+  -- @param #string Name Name as defined in the generic cargo.
+  -- @param #number Number Number of units/groups to be available. Nil equals unlimited
+  -- @return #CTLD self
+  function CTLD:SetStockCrates(Name, Number)
+    local name = Name or "none"
+    local number = Number
+    -- find right generic type
+    local gentroops = self.Cargo_Crates
+    for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
+      if _troop.Name == name then
+        _troop:SetStock(number)
+      end
+    end
+    return self
+  end
+  
+  --- User - function to set the stock of a certain troops type
+  -- @param #CTLD self
+  -- @param #string Name Name as defined in the generic cargo.
+  -- @param #number Number Number of units/groups to be available. Nil equals unlimited
+  -- @return #CTLD self
+  function CTLD:SetStockTroops(Name, Number)
+    local name = Name or "none"
+    local number = Number
+    -- find right generic type
+    local gentroops = self.Cargo_Troops
+    for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
+      if _troop.Name == name then
+        _troop:SetStock(number)
+      end
+    end
+    return self
+  end
+  
+  --- User - function to set the stock of a certain statics type
+  -- @param #CTLD self
+  -- @param #string Name Name as defined in the generic cargo.
+  -- @param #number Number Number of units/groups to be available. Nil equals unlimited
+  -- @return #CTLD self
+  function CTLD:SetStockStatics(Name, Number)
+    local name = Name or "none"
+    local number = Number
+    -- find right generic type
+    local gentroops = self.Cargo_Statics
+    for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
+      if _troop.Name == name then
+        _troop:SetStock(number)
+      end
+    end
+    return self
+  end
+  
+  --- User - function to get a table of crates in stock
+  -- @param #CTLD self
+  -- @return #table Table Table of Stock, indexed by cargo type name
+  function CTLD:GetStockCrates()
+    local Stock = {}
+    local gentroops = self.Cargo_Crates
+    for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
+      table.insert(Stock,_troop.Name,_troop.Stock or -1)
+    end
+    return Stock
+  end  
+  
+  --- User - function to get a table of troops in stock
+  -- @param #CTLD self
+  -- @return #table Table Table of Stock, indexed by cargo type name
+  function CTLD:GetStockTroops()
+    local Stock = {}
+    local gentroops = self.Cargo_Troops
+    for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
+      table.insert(Stock,_troop.Name,_troop.Stock or -1)
+    end
+    return Stock
+  end
+  
+  --- User - function to get a table of statics cargo in stock
+  -- @param #CTLD self
+  -- @return #table Table Table of Stock, indexed by cargo type name
+  function CTLD:GetStockStatics()
+    local Stock = {}
+    local gentroops = self.Cargo_Statics
+    for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
+      table.insert(Stock,_troop.Name,_troop.Stock or -1)
+    end
+    return Stock
   end
   
   --- User - function to remove stock of a certain troops type
@@ -4512,6 +4632,7 @@ end
         _troop:RemoveStock(number)
       end
     end
+    return self
   end
   
   --- User - function to remove stock of a certain crates type
@@ -4524,6 +4645,24 @@ end
     local number = Number or 1
     -- find right generic type
     local gentroops = self.Cargo_Crates
+    for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
+      if _troop.Name == name then
+        _troop:RemoveStock(number)
+      end
+    end
+    return self
+  end
+  
+  --- User - function to remove stock of a certain statics type
+  -- @param #CTLD self
+  -- @param #string Name Name as defined in the generic cargo.
+  -- @param #number Number Number of units/groups to add.
+  -- @return #CTLD self
+  function CTLD:RemoveStockStatics(Name, Number)
+    local name = Name or "none"
+    local number = Number or 1
+    -- find right generic type
+    local gentroops = self.Cargo_Statics
     for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
       if _troop.Name == name then
         _troop:RemoveStock(number)
