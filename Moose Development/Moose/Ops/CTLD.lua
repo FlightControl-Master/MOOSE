@@ -700,6 +700,7 @@ do
 --          my_ctld.useprefix = true -- (DO NOT SWITCH THIS OFF UNLESS YOU KNOW WHAT YOU ARE DOING!) Adjust **before** starting CTLD. If set to false, *all* choppers of the coalition side will be enabled for CTLD.
 --          my_ctld.CrateDistance = 35 -- List and Load crates in this radius only.
 --          my_ctld.dropcratesanywhere = false -- Option to allow crates to be dropped anywhere.
+--          my_ctld.dropAsCargoCrate = false -- Parachuted herc cargo is not unpacked automatically but placed as crate to be unpacked. Needs a cargo with the same name defined like the cargo that was dropped.
 --          my_ctld.maximumHoverHeight = 15 -- Hover max this high to load.
 --          my_ctld.minimumHoverHeight = 4 -- Hover min this low to load.
 --          my_ctld.forcehoverload = true -- Crates (not: troops) can **only** be loaded while hovering.
@@ -942,9 +943,9 @@ do
 --            ...Checking template for ART 2S9 NONA Skid [19030lb] (SAU 2-C9) ... MISSING)   
 --            ...Checking template for EWR SBORKA Air [21624lb] (Dog Ear radar) ... MISSING)   
 --            ...Checking template for Transport Tigr Air [15900lb] (Tigr_233036) ... OK)   
---            
+--
 -- Expected template names are the ones in the rounded brackets.
--- 
+--
 -- ### 5.2.1 Hints
 -- 
 -- The script works on the EVENTS.Shot trigger, which is used by the mod when you **drop cargo from the Hercules while flying**. Unloading on the ground does
@@ -961,6 +962,18 @@ do
 -- 
 --               ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64}, -- 19t cargo, 64 paratroopers
 --  
+-- ### 5.3 Don't automatically unpack dropped cargo but drop as CTLD_CARGO
+-- 
+-- Cargo can be defined to be automatically dropped as crates.
+--              my_ctld.dropAsCargoCrate = true -- default is false
+--
+-- The idea is, to have those crate behave like brought in with a helo. So any unpack restictions apply.
+-- To enable those cargo drops, the cargo types must be added manually in the CTLD configuration. So when the above defined template for "Vulcan" should be used
+-- as CTLD_Cargo, the following line has to be added. NoCrates, PerCrateMass, Stock, SubCategory can be configured freely.
+--              my_ctld:AddCratesCargo("Vulcan",      {"Vulcan"}, CTLD_CARGO.Enum.VEHICLE, 6, 2000, nil, "SAM/AAA")
+--
+-- So if the Vulcan in the example now needs six crates to complete, you have to bring two Hercs with three Vulcan crates each and drop them very close together...
+--
 -- ## 6. Save and load back units - persistance
 -- 
 -- You can save and later load back units dropped or build to make your mission persistent.
@@ -1331,7 +1344,8 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.forcehoverload = true
   self.hoverautoloading = true
   self.dropcratesanywhere = false -- #1570
-  
+  self.dropAsCargoCrate = false -- Parachuted herc cargo is not unpacked automatically but placed as crate to be unpacked
+
   self.smokedistance = 2000
   self.movetroopstowpzone = true
   self.movetroopsdistance = 5000
@@ -2303,7 +2317,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   end
   -- loop crates needed
   for i=1,number do
-    local cratealias = string.format("%s-%d", cratetemplate, math.random(1,100000))
+    local cratealias = string.format("%s-%s-%d", cratename, cratetemplate, math.random(1,100000))
     if not self.placeCratesAhead then
       cratedistance = (i-1)*2.5 + capabilities.length
       if cratedistance > self.CrateDistance then cratedistance = self.CrateDistance end
@@ -2403,10 +2417,10 @@ function CTLD:InjectStatics(Zone, Cargo, RandomCoord)
   --local number = 1
   local cratesneeded = cargotype:GetCratesNeeded() --#number
   local cratetemplate = "Container"-- #string
-  local cratealias = string.format("%s-%d", cratetemplate, math.random(1,100000))
   local cratename = cargotype:GetName()
   local cgotype = cargotype:GetType()
   local cgomass = cargotype:GetMass()
+  local cratealias = string.format("%s-%s-%d", cratename, cratetemplate, math.random(1,100000))
   local isstatic = false
   if cgotype == CTLD_CARGO.Enum.STATIC then
     cratetemplate = cargotype:GetTemplates()
@@ -5802,6 +5816,34 @@ function CTLD_HERCULES:Cargo_SpawnStatic(Cargo_Drop_initiator,Cargo_Drop_Positio
   return self
 end
 
+--- [Internal] Function to spawn cargo by type at position
+-- @param #CTLD_HERCULES self
+-- @param #string Cargo_Type_name
+-- @param Core.Point#POINT_VEC3 Cargo_Drop_Position
+-- @return #CTLD_HERCULES self
+function CTLD_HERCULES:Cargo_SpawnDroppedAsCargo(_name, _pos)
+  local theCargo = self.CTLD:_FindCratesCargoObject(_name)
+  if theCargo then
+    self.CTLD.CrateCounter = self.CTLD.CrateCounter + 1
+    self.CTLD.CargoCounter = self.CTLD.CargoCounter + 1
+
+    local basetype = self.CTLD.basetype or "container_cargo"
+    local theStatic = SPAWNSTATIC:NewFromType(basetype,"Cargos",self.cratecountry)    
+    :InitCargoMass(theCargo.PerCrateMass)
+    :InitCargo(self.CTLD.enableslingload)
+    :InitCoordinate(_pos)
+    :Spawn(270,_name .. "-Container-".. math.random(1,100000))
+  
+    self.CTLD.Spawned_Crates[self.CTLD.CrateCounter] = theStatic
+    local newCargo = CTLD_CARGO:New(self.CTLD.CargoCounter, theCargo.Name, theCargo.Templates, theCargo.CargoType, true, false, theCargo.CratesNeeded, self.CTLD.Spawned_Crates[self.CTLD.CrateCounter], true, theCargo.PerCrateMass, nil, theCargo.Subcategory)
+    table.insert(self.CTLD.Spawned_Cargo, newCargo)
+
+    newCargo:SetWasDropped(true)
+    newCargo:SetHasMoved(true)
+  end
+  return self
+end
+
 --- [Internal] Spawn cargo objects
 -- @param #CTLD_HERCULES self
 -- @param Wrapper.Group#GROUP Cargo_Drop_initiator
@@ -5851,8 +5893,12 @@ function CTLD_HERCULES:Cargo_SpawnObjects(Cargo_Drop_initiator,Cargo_Drop_Direct
           if ParatrooperGroupSpawn == true then
             self:Soldier_SpawnGroup(Cargo_Drop_initiator,Cargo_Content_position, Cargo_Type_name, CargoHeading, Cargo_Country, 0)
           else
-            self:Cargo_SpawnGroup(Cargo_Drop_initiator,Cargo_Content_position, Cargo_Type_name, CargoHeading, Cargo_Country)
-            self:Cargo_SpawnStatic(Cargo_Drop_initiator,Cargo_Content_position, "Hercules_Container_Parachute_Static", CargoHeading, false, Cargo_Country)
+            if self.CTLD.dropAsCargoCrate then
+              self:Cargo_SpawnDroppedAsCargo(Cargo_Type_name, Cargo_Content_position)
+            else
+              self:Cargo_SpawnGroup(Cargo_Drop_initiator,Cargo_Content_position, Cargo_Type_name, CargoHeading, Cargo_Country)
+              self:Cargo_SpawnStatic(Cargo_Drop_initiator,Cargo_Content_position, "Hercules_Container_Parachute_Static", CargoHeading, false, Cargo_Country)
+            end
           end
         else
           self:Cargo_SpawnStatic(Cargo_Drop_initiator,Cargo_Content_position, Cargo_Type_name, CargoHeading, true, Cargo_Country)
