@@ -540,8 +540,12 @@ AIRBASE.SouthAtlantic={
   ["Rio_Chico"] = "Rio Chico",
   ["Franco_Bianco"] = "Franco Bianco",
   ["Goose_Green"] = "Goose Green",
-  ["Hipico"] = "Hipico",
+  ["Hipico_Flying_Club"] = "Hipico Flying Club",
   ["CaletaTortel"] = "CaletaTortel",
+  ["Aeropuerto_de_Gobernador_Gregores"] = "Aeropuerto de Gobernador Gregores",
+  ["Aerodromo_O_Higgins"] = "Aerodromo O'Higgins",
+  ["Cullen_Airport"] = "Cullen Airport",
+  ["Gull_Point"] = "Gull Point",
 }
 
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
