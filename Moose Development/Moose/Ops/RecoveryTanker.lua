@@ -198,7 +198,7 @@
 -- The first parameter *callsignname* defines the name (1=Texaco, 2=Arco, 3=Shell). The second (optional) parameter specifies the first number and has to be between 1-9.
 -- Also see [DCS_enum_callsigns](https://wiki.hoggitworld.com/view/DCS_enum_callsigns) and [DCS_command_setCallsign](https://wiki.hoggitworld.com/view/DCS_command_setCallsign).
 -- 
---     TexacoStennis:SetCAllsign(CALLSIGN.Tanker.Arco)
+--     TexacoStennis:SetCallsign(CALLSIGN.Tanker.Arco)
 --
 -- For convenience, MOOSE has a CALLSIGN enumerator introduced.
 -- 
