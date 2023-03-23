@@ -920,7 +920,7 @@ function UNIT:GetLife()
 
   local DCSUnit = self:GetDCSObject()
   
-  if DCSUnit then
+  if DCSUnit and DCSUnit:isExist() then
     local UnitLife = DCSUnit:getLife()
     return UnitLife
   end
