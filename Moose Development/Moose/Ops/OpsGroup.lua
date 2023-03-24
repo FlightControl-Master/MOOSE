@@ -7238,7 +7238,7 @@ function OPSGROUP:onafterElementDamaged(From, Event, To, Element)
   
     local lifepoints=0
     
-    if Element.DCSunit then --and Element.DCSunit:isExist() then
+    if Element.DCSunit and Element.DCSunit:isExist() then
 
       -- Get life of unit
       lifepoints=Element.DCSunit:getLife()
@@ -7246,6 +7246,10 @@ function OPSGROUP:onafterElementDamaged(From, Event, To, Element)
       -- Debug output.
       self:T(self.lid..string.format("Element life %s: %.2f/%.2f", Element.name, lifepoints, Element.life0))
         
+    else
+    
+      self:T(self.lid..string.format("Element.DCSunit %s does not exist!", Element.name))
+      
     end
     
     if lifepoints<=1.0 then
