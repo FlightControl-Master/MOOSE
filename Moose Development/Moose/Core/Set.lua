@@ -903,7 +903,7 @@ end
 
 do -- SET_GROUP
 
-  --- @type SET_GROUP
+  --- @type SET_GROUP #SET_GROUP
   -- @extends Core.Set#SET_BASE
 
   --- Mission designers can use the @{Core.Set#SET_GROUP} class to build sets of groups belonging to certain:
@@ -1900,24 +1900,6 @@ do -- SET_GROUP
     return MGroupInclude
   end
 
-  --- Iterate the SET_GROUP and set for each unit the default cargo bay weight limit.
-  -- Because within a group, the type of carriers can differ, each cargo bay weight limit is set on @{Wrapper.Unit} level.
-  -- @param #SET_GROUP self
-  -- @usage
-  -- -- Set the default cargo bay weight limits of the carrier units.
-  -- local MySetGroup = SET_GROUP:New()
-  -- MySetGroup:SetCargoBayWeightLimit()
-  function SET_GROUP:SetCargoBayWeightLimit()
-    local Set = self:GetSet()
-    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
-      for UnitName, UnitData in pairs( GroupData:GetUnits() ) do
-        -- local UnitData = UnitData -- Wrapper.Unit#UNIT
-        UnitData:SetCargoBayWeightLimit()
-      end
-    end
-  end
-
-
   --- Get the closest group of the set with respect to a given reference coordinate. Optionally, only groups of given coalitions are considered in the search.
   -- @param #SET_GROUP self
   -- @param Core.Point#COORDINATE Coordinate Reference Coordinate from which the closest group is determined.
@@ -1950,6 +1932,23 @@ do -- SET_GROUP
     end
     
     return gmin, dmin
+  end
+
+  --- Iterate the SET_GROUP and set for each unit the default cargo bay weight limit.
+  -- Because within a group, the type of carriers can differ, each cargo bay weight limit is set on @{Wrapper.Unit} level.
+  -- @param #SET_GROUP self
+  -- @usage
+  -- -- Set the default cargo bay weight limits of the carrier units.
+  -- local MySetGroup = SET_GROUP:New()
+  -- MySetGroup:SetCargoBayWeightLimit()
+  function SET_GROUP:SetCargoBayWeightLimit()
+    local Set = self:GetSet()
+    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
+      for UnitName, UnitData in pairs( GroupData:GetUnits() ) do
+        -- local UnitData = UnitData -- Wrapper.Unit#UNIT
+        UnitData:SetCargoBayWeightLimit()
+      end
+    end
   end
 
 end
@@ -3792,6 +3791,40 @@ do -- SET_STATIC
     end
 
     return TypeReport:Text( Delimiter )
+  end
+
+  --- Get the closest static of the set with respect to a given reference coordinate. Optionally, only statics of given coalitions are considered in the search.
+  -- @param #SET_STATIC self
+  -- @param Core.Point#COORDINATE Coordinate Reference Coordinate from which the closest static is determined.
+  -- @return Wrapper.Static#STATIC The closest static (if any).
+  -- @return #number Distance in meters to the closest static.
+  function SET_STATIC:GetClosestStatic(Coordinate, Coalitions)
+  
+    local Set = self:GetSet()
+    
+    local dmin=math.huge
+    local gmin=nil
+    
+    for GroupID, GroupData in pairs( Set ) do -- For each STATIC in SET_STATIC
+      local group=GroupData --Wrapper.Static#STATIC
+      
+      if group and group:IsAlive() and (Coalitions==nil or UTILS.IsAnyInTable(Coalitions, group:GetCoalition())) then
+      
+        local coord=group:GetCoord()
+        
+        -- Distance between ref. coordinate and group coordinate.
+        local d=UTILS.VecDist3D(Coordinate, coord)
+      
+        if d<dmin then
+          dmin=d
+          gmin=group
+        end
+        
+      end
+    
+    end
+    
+    return gmin, dmin
   end
 
 end
