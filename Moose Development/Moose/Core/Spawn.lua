@@ -772,10 +772,8 @@ end
 -- @usage
 --
 --   -- NATO helicopters engaging in the battle field.
---   -- The KA-50 has waypoints Start point ( =0 or SP ), 1, 2, 3, 4, End point (= 5 or DP).
---   -- Waypoints 2 and 3 will only be randomized. The others will remain on their original position with each new spawn of the helicopter.
---   -- The randomization of waypoint 2 and 3 will take place within a radius of 2000 meters.
---   Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):InitRandomizeRoute( 2, 2, 2000 )
+--   -- UNIT positions of this group will be randomized around the base unit #1 in a circle of 50 to 500 meters.
+--   Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):InitRandomizeUnits( true, 500, 50 )
 --
 function SPAWN:InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )
   self:F( { self.SpawnTemplatePrefix, RandomizeUnits, OuterRadius, InnerRadius } )
@@ -788,6 +786,46 @@ function SPAWN:InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )
     self:_RandomizeRoute( GroupID )
   end
 
+  return self
+end
+
+--- Spawn the UNITs of this group with individual relative positions to unit #1 and individual headings.
+-- @param #SPAWN self
+-- @param #table Positions Table of positions, needs to one entry per unit in the group(!). The table contains one table each for each unit, with x,y, and optionally z 
+-- relative positions, and optionally an individual heading.
+-- @return #SPAWN
+-- @usage
+--
+--   -- NATO helicopter group of three units engaging in the battle field.
+--   local Positions = { [1] = {x = 0, y = 0, heading = 0}, [2] = {x = 50, y = 50, heading = 90}, [3] = {x = -50, y = 50, heading = 180} }
+--   Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):InitSetUnitRelativePositions(Positions)
+--
+function SPAWN:InitSetUnitRelativePositions(Positions)
+  self:F({self.SpawnTemplatePrefix, Positions})
+  
+  self.SpawnUnitsWithRelativePositions = true
+  self.UnitsRelativePositions = Positions
+  
+  return self
+end
+
+--- Spawn the UNITs of this group with individual absolute positions and individual headings.
+-- @param #SPAWN self
+-- @param #table Positions Table of positions, needs to one entry per unit in the group(!). The table contains one table each for each unit, with x,y, and optionally z 
+-- absolute positions, and optionally an individual heading.
+-- @return #SPAWN
+-- @usage
+--
+--   -- NATO helicopter group of three units engaging in the battle field.
+--   local Positions = { [1] = {x = 0, y = 0, heading = 0}, [2] = {x = 50, y = 50, heading = 90}, [3] = {x = -50, y = 50, heading = 180} }
+--   Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):InitSetUnitAbsolutePositions(Positions)
+--
+function SPAWN:InitSetUnitAbsolutePositions(Positions)
+  self:F({self.SpawnTemplatePrefix, Positions})
+  
+  self.SpawnUnitsWithAbsolutePositions = true
+  self.UnitsAbsolutePositions = Positions
+  
   return self
 end
 
@@ -1343,7 +1381,38 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
             SpawnTemplate.units[UnitID].psi = -SpawnTemplate.units[UnitID].heading
           end
         end
-
+        
+        -- Individual relative unit positions + heading
+        if self.SpawnUnitsWithRelativePositions and self.UnitsRelativePositions then
+          local BaseX = SpawnTemplate.units[1].x or 0
+          local BaseY = SpawnTemplate.units[1].y or 0
+          local BaseZ = SpawnTemplate.units[1].z or 0 
+          for UnitID = 1, #SpawnTemplate.units do
+            if self.UnitsRelativePositions[UnitID].heading then
+              SpawnTemplate.units[UnitID].heading = math.rad(self.UnitsRelativePositions[UnitID].heading or 0)
+            end
+            SpawnTemplate.units[UnitID].x = BaseX + (self.UnitsRelativePositions[UnitID].x or 0)
+            SpawnTemplate.units[UnitID].y = BaseY  + (self.UnitsRelativePositions[UnitID].y or 0)
+            if self.UnitsRelativePositions[UnitID].z then
+              SpawnTemplate.units[UnitID].z =  BaseZ + (self.UnitsRelativePositions[UnitID].z or 0)
+            end
+          end
+        end
+        
+       -- Individual asbolute unit positions + heading
+        if self.SpawnUnitsWithAbsolutePositions and self.UnitsAbsolutePositions then
+          for UnitID = 1, #SpawnTemplate.units do
+            if self.UnitsAbsolutePositions[UnitID].heading then
+              SpawnTemplate.units[UnitID].heading = math.rad(self.UnitsAbsolutePositions[UnitID].heading or 0)
+            end
+            SpawnTemplate.units[UnitID].x = self.UnitsAbsolutePositions[UnitID].x or 0
+            SpawnTemplate.units[UnitID].y = self.UnitsAbsolutePositions[UnitID].y or 0
+            if self.UnitsAbsolutePositions[UnitID].z then
+              SpawnTemplate.units[UnitID].z = self.UnitsAbsolutePositions[UnitID].z or 0
+            end
+          end
+        end
+        
         -- Set livery.
         if self.SpawnInitLivery then
           for UnitID = 1, #SpawnTemplate.units do

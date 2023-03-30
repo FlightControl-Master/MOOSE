@@ -110,10 +110,12 @@ end
 --@param #number Radius (optional) Search radius around coordinate, defaults to 100
 --@return #SCENERY Scenery Object or `nil` if it cannot be found
 function SCENERY:FindByName(Name, Coordinate, Radius)
-   
+  
   local radius = Radius or 100
   local name = Name or "unknown"
   local scenery = nil
+  
+  BASE:T({name, radius, Coordinate:GetVec2()})
   
   ---
   -- @param Core.Point#COORDINATE coordinate
@@ -170,6 +172,7 @@ function SCENERY:FindByZoneName( ZoneName )
   zone = ZONE:FindByName(ZoneName) 
   end
   local _id = zone:GetProperty('OBJECT ID')
+  BASE:T("Object ID ".._id)
   if not _id then
     -- this zone has no object ID
     BASE:E("**** Zone without object ID: "..ZoneName.." | Type: "..tostring(zone.ClassName))
