@@ -2113,10 +2113,12 @@ do -- SET_UNIT
     self:F2( Unit:GetName() )
 
     self:Add( Unit:GetName(), Unit )
-
-    -- Set the default cargo bay limit each time a new unit is added to the set.
-    Unit:SetCargoBayWeightLimit()
-
+    
+    if Unit:IsInstanceOf("UNIT") then
+      -- Set the default cargo bay limit each time a new unit is added to the set.
+      Unit:SetCargoBayWeightLimit()
+    end
+    
     return self
   end
 
