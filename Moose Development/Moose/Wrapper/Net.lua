@@ -42,7 +42,7 @@ do
 -- @field #NET
 NET = {
   ClassName = "NET",
-  Version = "0.1.0",
+  Version = "0.1.1",
   BlockTime = 600,
   BlockedPilots = {},
   BlockedUCIDs = {},
@@ -196,7 +196,7 @@ function NET:_EventHandler(EventData)
     
     -- Get Player Data
     local name = data.IniPlayerName and data.IniPlayerName or data.IniUnit:GetPlayerName()
-    local ucid = self:GetPlayerUCID(nil,name)
+    local ucid = self:GetPlayerUCID(nil,name) or "none"
     local PlayerID = self:GetPlayerIDByName(name) or "none"
     local PlayerSide, PlayerSlot = self:GetSlot(data.IniUnit)
     local TNow = timer.getTime()
@@ -771,7 +771,7 @@ end
 -- @param #string To
 -- @return #NET self
 function NET:onafterStatus(From,Event,To)
-  self:T({From,Event,To})
+  self:I({From,Event,To})
   
   local function HouseHold(tavolo)
     local TNow = timer.getTime()
@@ -799,7 +799,7 @@ end
 -- @param #string To
 -- @return #NET self
 function NET:onafterRun(From,Event,To)
-  self:T({From,Event,To})
+  self:I({From,Event,To})
   self:HandleEvent(EVENTS.PlayerEnterUnit,self._EventHandler)
   self:HandleEvent(EVENTS.PlayerEnterAircraft,self._EventHandler)
   self:HandleEvent(EVENTS.PlayerLeaveUnit,self._EventHandler)
