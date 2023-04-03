@@ -42,7 +42,7 @@ do
 -- @field #NET
 NET = {
   ClassName = "NET",
-  Version = "0.1.0",
+  Version = "0.1.1",
   BlockTime = 600,
   BlockedPilots = {},
   BlockedUCIDs = {},
@@ -196,7 +196,7 @@ function NET:_EventHandler(EventData)
     
     -- Get Player Data
     local name = data.IniPlayerName and data.IniPlayerName or data.IniUnit:GetPlayerName()
-    local ucid = self:GetPlayerUCID(nil,name)
+    local ucid = self:GetPlayerUCID(nil,name) or "none"
     local PlayerID = self:GetPlayerIDByName(name) or "none"
     local PlayerSide, PlayerSlot = self:GetSlot(data.IniUnit)
     local TNow = timer.getTime()
