@@ -88,6 +88,7 @@ DATABASE = {
   WAREHOUSES = {},
   FLIGHTGROUPS = {},
   FLIGHTCONTROLS = {},
+  OPSZONES = {},
   PATHLINES = {},
 }
 
@@ -580,6 +581,46 @@ do -- Zone_Goal
   end
 
 end -- Zone_Goal
+
+do -- OpsZone
+
+  --- Finds a @{Ops.OpsZone#OPSZONE} based on the zone name.
+  -- @param #DATABASE self
+  -- @param #string ZoneName The name of the zone.
+  -- @return Ops.OpsZone#OPSZONE The found OPSZONE.
+  function DATABASE:FindOpsZone( ZoneName )
+
+    local ZoneFound = self.OPSZONES[ZoneName]
+
+    return ZoneFound
+  end
+
+  --- Adds a @{Ops.OpsZone#OPSZONE} based on the zone name in the DATABASE.
+  -- @param #DATABASE self
+  -- @param Ops.OpsZone#OPSZONE OpsZone The zone.
+  function DATABASE:AddOpsZone( OpsZone )
+
+    if OpsZone then
+
+      local ZoneName=OpsZone:GetName()
+
+      if not self.OPSZONES[ZoneName] then
+        self.OPSZONES[ZoneName] = OpsZone
+      end
+
+    end
+  end
+
+
+  --- Deletes a @{Ops.OpsZone#OPSZONE} from the DATABASE based on the zone name.
+  -- @param #DATABASE self
+  -- @param #string ZoneName The name of the zone.
+  function DATABASE:DeleteOpsZone( ZoneName )
+    self.OPSZONES[ZoneName] = nil
+  end
+
+end -- OpsZone
+
 do -- cargo
 
   --- Adds a Cargo based on the Cargo Name in the DATABASE.
@@ -1599,10 +1640,10 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called object in the database. The function needs to accept a CLIENT parameter.
 -- @return #DATABASE self
-function DATABASE:ForEachClient( IteratorFunction, ... )
+function DATABASE:ForEachClient( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
 
-  self:ForEach( IteratorFunction, arg, self.CLIENTS )
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.CLIENTS )
 
   return self
 end
@@ -1611,10 +1652,10 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a CLIENT parameter.
 -- @return #DATABASE self
-function DATABASE:ForEachCargo( IteratorFunction, ... )
+function DATABASE:ForEachCargo( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
 
-  self:ForEach( IteratorFunction, arg, self.CARGOS )
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.CARGOS )
 
   return self
 end
