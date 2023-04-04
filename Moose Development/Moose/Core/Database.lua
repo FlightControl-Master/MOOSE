@@ -1640,10 +1640,10 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called object in the database. The function needs to accept a CLIENT parameter.
 -- @return #DATABASE self
-function DATABASE:ForEachClient( IteratorFunction, ... )
+function DATABASE:ForEachClient( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
 
-  self:ForEach( IteratorFunction, arg, self.CLIENTS )
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.CLIENTS )
 
   return self
 end
@@ -1652,10 +1652,10 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a CLIENT parameter.
 -- @return #DATABASE self
-function DATABASE:ForEachCargo( IteratorFunction, ... )
+function DATABASE:ForEachCargo( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
 
-  self:ForEach( IteratorFunction, arg, self.CARGOS )
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.CARGOS )
 
   return self
 end
