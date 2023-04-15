@@ -987,6 +987,7 @@ do
 --              my_ctld.filename = "missionsave.csv" -- example filename
 --              my_ctld.filepath = "C:\\Users\\myname\\Saved Games\\DCS\Missions\\MyMission" -- example path
 --              my_ctld.eventoninject = true -- fire OnAfterCratesBuild and OnAfterTroopsDeployed events when loading (uses Inject functions)
+--              my_ctld.useprecisecoordloads = true -- Instead if slightly varyiing the group position, try to maintain it as is
 --  
 --  Then use an initial load at the beginning of your mission:
 --  
@@ -1219,7 +1220,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.32"
+CTLD.version="1.0.34"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1312,6 +1313,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.droppedBeacons = {}
   self.droppedbeaconref = {}
   self.droppedbeacontimeout = 600
+  self.useprecisecoordloads = true
   
   -- Cargo
   self.Cargo_Crates = {}
@@ -2022,7 +2024,9 @@ function CTLD:_FindRepairNearby(Group, Unit, Repairtype)
         nearestDistance = distance
       end
     end
-
+    
+    --self:I("Distance: ".. nearestDistance)
+    
     -- found one and matching distance?  
     if nearestGroup == nil or nearestDistance > self.EngineerSearch then
       self:_SendMessage("No unit close enough to repair!", 10, false, Group)
@@ -2034,7 +2038,8 @@ function CTLD:_FindRepairNearby(Group, Unit, Repairtype)
     -- helper to find matching template
     local function matchstring(String,Table)
       local match = false
-      if type(Table) == "table" then
+      String = string.gsub(String,"-"," ")
+      if type(Table) == "table" then       
         for _,_name in pairs (Table) do
           _name = string.gsub(_name,"-"," ")
           if string.find(String,_name) then
@@ -2079,7 +2084,7 @@ end
 -- @param #number Number Number of objects in Crates (found) to limit search.
 -- @param #boolean Engineering If true it is an Engineering repair.
 function CTLD:_RepairObjectFromCrates(Group,Unit,Crates,Build,Number,Engineering)
-  self:T(self.lid .. " _RepairObjectFromCrates")
+  self:T(self.lid .. " _RepairObjectFromCrates") 
   local build = Build -- -- #CTLD.Buildable
   local Repairtype = build.Template -- #string
   local NearestGroup, CargoType = self:_FindRepairNearby(Group,Unit,Repairtype) -- Wrapper.Group#GROUP, #CTLD_CARGO
@@ -4799,6 +4804,8 @@ end
   -- @param #CTLD self
   -- @param Core.Zone#ZONE Zone The zone where to drop the troops.
   -- @param Ops.CTLD#CTLD_CARGO Cargo The #CTLD_CARGO object to spawn.
+  -- @param #table Surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type!
+  -- @param #boolean PreciseLocation (Optional) Don't try to get a random position in the zone but use the dead center. Caution not to stack up stuff on another!
   -- @return #CTLD self
   -- @usage Use this function to pre-populate the field with Vehicles or FOB at a random coordinate in a zone:
   --            -- create a matching #CTLD_CARGO type
@@ -4807,7 +4814,7 @@ end
   --            local dropzone = ZONE:New("InjectZone") -- Core.Zone#ZONE
   --            -- and go:
   --            my_ctld:InjectVehicles(dropzone,InjectVehicleType)
-  function CTLD:InjectVehicles(Zone,Cargo)
+  function CTLD:InjectVehicles(Zone,Cargo,Surfacetypes,PreciseLocation)
     self:T(self.lid.." InjectVehicles")
     local cargo = Cargo -- #CTLD_CARGO
     
@@ -4839,7 +4846,10 @@ end
       local temptable = cargo:GetTemplates() or {}
       local factor = 1.5
       local zone = Zone
-      local randomcoord = zone:GetRandomCoordinate(10,30*factor):GetVec2()
+      local randomcoord = zone:GetRandomCoordinate(10,30*factor,Surfacetypes):GetVec2()
+      if PreciseLocation then
+        randomcoord = zone:GetCoordinate():GetVec2()
+      end
       cargo:SetWasDropped(true)
       local canmove = false
       if type == CTLD_CARGO.Enum.VEHICLE then canmove = true end
@@ -5468,10 +5478,10 @@ end
         local dropzone = ZONE_RADIUS:New("DropZone",vec2,20)
         if cargotype == CTLD_CARGO.Enum.VEHICLE or cargotype == CTLD_CARGO.Enum.FOB then
           local injectvehicle = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,true,mass)      
-          self:InjectVehicles(dropzone,injectvehicle)
+          self:InjectVehicles(dropzone,injectvehicle,self.surfacetypes,self.useprecisecoordloads)
         elseif cargotype == CTLD_CARGO.Enum.TROOPS or cargotype == CTLD_CARGO.Enum.ENGINEERS then
           local injecttroops = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,true,mass)      
-          self:InjectTroops(dropzone,injecttroops,self.surfacetypes)
+          self:InjectTroops(dropzone,injecttroops,self.surfacetypes,self.useprecisecoordloads)
         end
       elseif (type(groupname) == "string" and groupname == "STATIC") or cargotype == CTLD_CARGO.Enum.REPAIR then
         local cargotemplates = dataset[6]
