@@ -22,7 +22,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update Mar 2023
+-- Last Update Apr 2023
 
 do
 
@@ -2005,6 +2005,7 @@ end
 
 function CTLD:_FindRepairNearby(Group, Unit, Repairtype)
     self:T(self.lid .. " _FindRepairNearby")
+    --self:I({Group:GetName(),Unit:GetName(),Repairtype})
     local unitcoord = Unit:GetCoordinate()
     
     -- find nearest group of deployed groups
@@ -2035,6 +2036,7 @@ function CTLD:_FindRepairNearby(Group, Unit, Repairtype)
       local match = false
       if type(Table) == "table" then
         for _,_name in pairs (Table) do
+          _name = string.gsub(_name,"-"," ")
           if string.find(String,_name) then
             match = true
             break
@@ -2042,6 +2044,7 @@ function CTLD:_FindRepairNearby(Group, Unit, Repairtype)
         end
       else
         if type(String) == "string" then
+          Table = string.gsub(Table,"-"," ")
           if string.find(String,Table) then match = true end
         end
       end 
@@ -2051,6 +2054,7 @@ function CTLD:_FindRepairNearby(Group, Unit, Repairtype)
     -- walk through generics and find matching type
     local Cargotype = nil
     for k,v in pairs(self.Cargo_Crates) do
+      --self:I({groupname,v.Templates,Repairtype})
       if matchstring(groupname,v.Templates) and matchstring(groupname,Repairtype) then
         Cargotype = v -- #CTLD_CARGO
         break
@@ -2060,6 +2064,7 @@ function CTLD:_FindRepairNearby(Group, Unit, Repairtype)
     if Cargotype == nil then
       return nil, nil
     else
+      --self:I({groupname,Cargotype})
       return nearestGroup, Cargotype
     end
     
