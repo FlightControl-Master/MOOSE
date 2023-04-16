@@ -1220,7 +1220,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.34"
+CTLD.version="1.0.35"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -4731,6 +4731,7 @@ end
   -- @param Ops.CTLD#CTLD_CARGO Cargo The #CTLD_CARGO object to spawn.
   -- @param #table Surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type!
   -- @param #boolean PreciseLocation (Optional) Don't try to get a random position in the zone but use the dead center. Caution not to stack up stuff on another!
+  -- @param #string Structure (Optional) String object describing the current structure of the injected group; mainly for load/save to keep current state setup.
   -- @return #CTLD self
   -- @usage Use this function to pre-populate the field with Troops or Engineers at a random coordinate in a zone:
   --            -- create a matching #CTLD_CARGO type
@@ -4739,7 +4740,7 @@ end
   --            local dropzone = ZONE:New("InjectZone") -- Core.Zone#ZONE
   --            -- and go:
   --            my_ctld:InjectTroops(dropzone,InjectTroopsType,{land.SurfaceType.LAND})
-  function CTLD:InjectTroops(Zone,Cargo,Surfacetypes,PreciseLocation)
+  function CTLD:InjectTroops(Zone,Cargo,Surfacetypes,PreciseLocation,Structure)
     self:T(self.lid.." InjectTroops")
     local cargo = Cargo -- #CTLD_CARGO
     
@@ -4755,6 +4756,49 @@ end
         end
       end
       return match
+    end
+    
+    local function Cruncher(group,typename,anzahl)
+      local units = group:GetUnits()
+      local reduced = 0
+      for _,_unit in pairs (units) do
+        local typo = _unit:GetTypeName()
+        if typename == typo then
+          _unit:Destroy(false)
+          reduced = reduced + 1
+          if reduced == anzahl then break end
+        end
+      end
+    end
+    
+    local function PostSpawn(args)
+      local group = args[1]
+      local structure = args[2]
+      if structure then
+  
+        local loadedstructure = {}
+        local strcset = UTILS.Split(structure,";")
+        for _,_data in pairs(strcset) do
+          local datasplit = UTILS.Split(_data,"==")
+          loadedstructure[datasplit[1]] = tonumber(datasplit[2])
+        end
+  
+        local originalstructure = UTILS.GetCountPerTypeName(group)
+  
+        for _name,_number in pairs(originalstructure) do
+          local loadednumber = 0
+          if loadedstructure[_name] then
+            loadednumber = loadedstructure[_name]
+          end
+          local reduce = false
+          if loadednumber < _number then reduce = true end
+          
+          if reduce then
+            Cruncher(group,_name,_number-loadednumber)  
+          end
+                    
+        end
+     end
     end
     
     if not IsTroopsMatch(cargo) then
@@ -4793,6 +4837,11 @@ end
         local grpname = self.DroppedTroops[self.TroopCounter]:GetName()
         self.EngineersInField[self.Engineers] = CTLD_ENGINEERING:New(name, grpname)
       end
+      
+      if Structure then
+        BASE:ScheduleOnce(0.5,PostSpawn,{self.DroppedTroops[self.TroopCounter],Structure})
+      end
+      
       if self.eventoninject then
          self:__TroopsDeployed(1,nil,nil,self.DroppedTroops[self.TroopCounter],type)
       end
@@ -4806,6 +4855,7 @@ end
   -- @param Ops.CTLD#CTLD_CARGO Cargo The #CTLD_CARGO object to spawn.
   -- @param #table Surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type!
   -- @param #boolean PreciseLocation (Optional) Don't try to get a random position in the zone but use the dead center. Caution not to stack up stuff on another!
+  -- @param #string Structure (Optional) String object describing the current structure of the injected group; mainly for load/save to keep current state setup.
   -- @return #CTLD self
   -- @usage Use this function to pre-populate the field with Vehicles or FOB at a random coordinate in a zone:
   --            -- create a matching #CTLD_CARGO type
@@ -4814,7 +4864,7 @@ end
   --            local dropzone = ZONE:New("InjectZone") -- Core.Zone#ZONE
   --            -- and go:
   --            my_ctld:InjectVehicles(dropzone,InjectVehicleType)
-  function CTLD:InjectVehicles(Zone,Cargo,Surfacetypes,PreciseLocation)
+  function CTLD:InjectVehicles(Zone,Cargo,Surfacetypes,PreciseLocation,Structure)
     self:T(self.lid.." InjectVehicles")
     local cargo = Cargo -- #CTLD_CARGO
     
@@ -4830,6 +4880,49 @@ end
         end
       end
       return match
+    end
+    
+    local function Cruncher(group,typename,anzahl)
+      local units = group:GetUnits()
+      local reduced = 0
+      for _,_unit in pairs (units) do
+        local typo = _unit:GetTypeName()
+        if typename == typo then
+          _unit:Destroy(false)
+          reduced = reduced + 1
+          if reduced == anzahl then break end
+        end
+      end
+    end
+    
+    local function PostSpawn(args)
+      local group = args[1]
+      local structure = args[2]
+      if structure then
+  
+        local loadedstructure = {}
+        local strcset = UTILS.Split(structure,";")
+        for _,_data in pairs(strcset) do
+          local datasplit = UTILS.Split(_data,"==")
+          loadedstructure[datasplit[1]] = tonumber(datasplit[2])
+        end
+  
+        local originalstructure = UTILS.GetCountPerTypeName(group)
+  
+        for _name,_number in pairs(originalstructure) do
+          local loadednumber = 0
+          if loadedstructure[_name] then
+            loadednumber = loadedstructure[_name]
+          end
+          local reduce = false
+          if loadednumber < _number then reduce = true end
+          
+          if reduce then
+            Cruncher(group,_name,_number-loadednumber)  
+          end
+                    
+        end
+     end
     end
     
     if not IsVehicMatch(cargo) then
@@ -4866,6 +4959,11 @@ end
             :InitDelayOff()
             :SpawnFromVec2(randomcoord)
         end
+        
+        if Structure then
+          BASE:ScheduleOnce(0.5,PostSpawn,{self.DroppedTroops[self.TroopCounter],Structure})
+        end
+        
         if self.eventoninject then
           self:__CratesBuild(1,nil,nil,self.DroppedTroops[self.TroopCounter])
         end
@@ -5250,6 +5348,7 @@ end
       -- name matching a template in the table
       local match = false
       local cargo = nil
+      name = string.gsub(name,"-"," ")
       for _ind,_cargo in pairs (table) do
         local thiscargo = _cargo -- #CTLD_CARGO
         local template = thiscargo:GetTemplates()
@@ -5257,6 +5356,7 @@ end
           template = { template }
         end
         for _,_name in pairs (template) do
+          _name = string.gsub(_name,"-"," ")
           if string.find(name,_name) and _cargo:GetType() ~= CTLD_CARGO.Enum.REPAIR then
             match = true
             cargo = thiscargo
@@ -5269,17 +5369,20 @@ end
     
       
     --local data = "LoadedData = {\n"
-    local data = "Group,x,y,z,CargoName,CargoTemplates,CargoType,CratesNeeded,CrateMass\n"
+    local data = "Group,x,y,z,CargoName,CargoTemplates,CargoType,CratesNeeded,CrateMass,Structure\n"
     local n = 0
     for _,_grp in pairs(grouptable) do
       local group = _grp -- Wrapper.Group#GROUP
       if group and group:IsAlive() then
         -- get template name
         local name = group:GetName()
-        local template = string.gsub(name,"-(.+)$","")
+        local template = name
+        
         if string.find(template,"#") then
           template = string.gsub(name,"#(%d+)$","")
         end
+        
+        local template = string.gsub(name,"-(%d+)$","")
         
         local match, cargo = FindCargoType(template,cgotable)
         if not match then
@@ -5293,6 +5396,11 @@ end
           local cgotype = cargo.CargoType
           local cgoneed = cargo.CratesNeeded
           local cgomass = cargo.PerCrateMass
+          local structure = UTILS.GetCountPerTypeName(group)
+          local strucdata =  ""
+          for typen,anzahl in pairs (structure) do
+            strucdata = strucdata .. typen .. "=="..anzahl..";"
+          end
           
           if type(cgotemp) == "table" then       
             local templates = "{"
@@ -5304,8 +5412,8 @@ end
           end
           
           local location = group:GetVec3()
-          local txt = string.format("%s,%d,%d,%d,%s,%s,%s,%d,%d\n"
-              ,template,location.x,location.y,location.z,cgoname,cgotemp,cgotype,cgoneed,cgomass)
+          local txt = string.format("%s,%d,%d,%d,%s,%s,%s,%d,%d,%s\n"
+              ,template,location.x,location.y,location.z,cgoname,cgotemp,cgotype,cgoneed,cgomass,strucdata)
           data = data .. txt
         end
       end
@@ -5460,7 +5568,7 @@ end
     
     for _id,_entry in pairs (loadeddata) do
       local dataset = UTILS.Split(_entry,",")     
-      -- 1=Group,2=x,3=y,4=z,5=CargoName,6=CargoTemplates,7=CargoType,8=CratesNeeded,9=CrateMass,10=SubCategory
+      -- 1=Group,2=x,3=y,4=z,5=CargoName,6=CargoTemplates,7=CargoType,8=CratesNeeded,9=CrateMass,10=Structure
       local groupname = dataset[1]
       local vec2 = {}
       vec2.x = tonumber(dataset[2])
@@ -5474,14 +5582,19 @@ end
         cargotemplates = UTILS.Split(cargotemplates,";")
         local size = tonumber(dataset[8])
         local mass = tonumber(dataset[9])
+        local structure = nil
+        if dataset[10] then
+          structure = dataset[10]
+          structure = string.gsub(structure,",","")
+        end
         -- inject at Vec2
         local dropzone = ZONE_RADIUS:New("DropZone",vec2,20)
         if cargotype == CTLD_CARGO.Enum.VEHICLE or cargotype == CTLD_CARGO.Enum.FOB then
           local injectvehicle = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,true,mass)      
-          self:InjectVehicles(dropzone,injectvehicle,self.surfacetypes,self.useprecisecoordloads)
+          self:InjectVehicles(dropzone,injectvehicle,self.surfacetypes,self.useprecisecoordloads,structure)
         elseif cargotype == CTLD_CARGO.Enum.TROOPS or cargotype == CTLD_CARGO.Enum.ENGINEERS then
           local injecttroops = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,true,mass)      
-          self:InjectTroops(dropzone,injecttroops,self.surfacetypes,self.useprecisecoordloads)
+          self:InjectTroops(dropzone,injecttroops,self.surfacetypes,self.useprecisecoordloads,structure)
         end
       elseif (type(groupname) == "string" and groupname == "STATIC") or cargotype == CTLD_CARGO.Enum.REPAIR then
         local cargotemplates = dataset[6]
