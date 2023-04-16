@@ -1083,11 +1083,11 @@ function FLIGHTGROUP:Status()
     -- Life points.
     local life=self.life or 0
     
-    -- Total ammo.            
+    -- Total ammo.
     local ammo=self:GetAmmoTot().Total
     
     -- Detected units.
-    local ndetected=self.detectionOn and tostring(self.detectedunits:Count()) or "Off"      
+    local ndetected=self.detectionOn and tostring(self.detectedunits:Count()) or "Off"
     
     -- Get cargo weight.
     local cargo=0
