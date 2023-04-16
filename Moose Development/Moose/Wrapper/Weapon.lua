@@ -804,7 +804,7 @@ function WEAPON:_TrackWeapon(time)
   
   -- Return next time the function is called or nil to stop the scheduler.
   if self.tracking then
-    if self.dtTrack and self.dtTrack>0.001 then
+    if self.dtTrack and self.dtTrack>=0.00001 then
       return time+self.dtTrack
     else
       return nil
