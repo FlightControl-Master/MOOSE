@@ -22,7 +22,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update Mar 2023
+-- Last Update Apr 2023
 
 do
 
@@ -1220,7 +1220,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.33"
+CTLD.version="1.0.34"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2007,6 +2007,7 @@ end
 
 function CTLD:_FindRepairNearby(Group, Unit, Repairtype)
     self:T(self.lid .. " _FindRepairNearby")
+    --self:I({Group:GetName(),Unit:GetName(),Repairtype})
     local unitcoord = Unit:GetCoordinate()
     
     -- find nearest group of deployed groups
@@ -2023,7 +2024,9 @@ function CTLD:_FindRepairNearby(Group, Unit, Repairtype)
         nearestDistance = distance
       end
     end
-
+    
+    --self:I("Distance: ".. nearestDistance)
+    
     -- found one and matching distance?  
     if nearestGroup == nil or nearestDistance > self.EngineerSearch then
       self:_SendMessage("No unit close enough to repair!", 10, false, Group)
@@ -2035,8 +2038,10 @@ function CTLD:_FindRepairNearby(Group, Unit, Repairtype)
     -- helper to find matching template
     local function matchstring(String,Table)
       local match = false
-      if type(Table) == "table" then
+      String = string.gsub(String,"-"," ")
+      if type(Table) == "table" then       
         for _,_name in pairs (Table) do
+          _name = string.gsub(_name,"-"," ")
           if string.find(String,_name) then
             match = true
             break
@@ -2044,6 +2049,7 @@ function CTLD:_FindRepairNearby(Group, Unit, Repairtype)
         end
       else
         if type(String) == "string" then
+          Table = string.gsub(Table,"-"," ")
           if string.find(String,Table) then match = true end
         end
       end 
@@ -2053,6 +2059,7 @@ function CTLD:_FindRepairNearby(Group, Unit, Repairtype)
     -- walk through generics and find matching type
     local Cargotype = nil
     for k,v in pairs(self.Cargo_Crates) do
+      --self:I({groupname,v.Templates,Repairtype})
       if matchstring(groupname,v.Templates) and matchstring(groupname,Repairtype) then
         Cargotype = v -- #CTLD_CARGO
         break
@@ -2062,6 +2069,7 @@ function CTLD:_FindRepairNearby(Group, Unit, Repairtype)
     if Cargotype == nil then
       return nil, nil
     else
+      --self:I({groupname,Cargotype})
       return nearestGroup, Cargotype
     end
     
@@ -2076,7 +2084,7 @@ end
 -- @param #number Number Number of objects in Crates (found) to limit search.
 -- @param #boolean Engineering If true it is an Engineering repair.
 function CTLD:_RepairObjectFromCrates(Group,Unit,Crates,Build,Number,Engineering)
-  self:T(self.lid .. " _RepairObjectFromCrates")
+  self:T(self.lid .. " _RepairObjectFromCrates") 
   local build = Build -- -- #CTLD.Buildable
   local Repairtype = build.Template -- #string
   local NearestGroup, CargoType = self:_FindRepairNearby(Group,Unit,Repairtype) -- Wrapper.Group#GROUP, #CTLD_CARGO
