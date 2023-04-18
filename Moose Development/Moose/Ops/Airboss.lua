@@ -8115,6 +8115,8 @@ function AIRBOSS:OnEventBirth( EventData )
     return
   end
 
+  if EventData.IniObjectCategory ~= Object.Category.UNIT then return end
+
   local _unitName = EventData.IniUnitName
   local _unit, _playername = self:_GetPlayerUnitAndName( _unitName )
 
