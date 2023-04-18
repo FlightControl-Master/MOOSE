@@ -5826,7 +5826,7 @@ function AIRBOSS:_ScanCarrierZone()
     if knownflight then
 
       -- Check if flight is AI and if we want to handle it at all.
-      if knownflight.ai and knownflight.flag == -100 and self.handleai and false then  --Disabled AI handling because of incorrect OPSGROUP reference!
+      if knownflight.ai and knownflight.flag == -100 and self.handleai and false then --Disabled AI handling because of incorrect OPSGROUP reference!
 
         local putintomarshal = false
 
@@ -8102,7 +8102,7 @@ end
 -- @param Core.Event#EVENTDATA EventData
 function AIRBOSS:OnEventBirth( EventData )
   self:F3( { eventbirth = EventData } )
-
+  
   -- Nil checks.
   if EventData == nil then
     self:E( self.lid .. "ERROR: EventData=nil in event BIRTH!" )
@@ -8114,7 +8114,9 @@ function AIRBOSS:OnEventBirth( EventData )
     self:E( EventData )
     return
   end
-
+  
+  if EventData.IniObjectCategory ~= Object.Category.UNIT then return end
+  
   local _unitName = EventData.IniUnitName
   local _unit, _playername = self:_GetPlayerUnitAndName( _unitName )
 
@@ -9792,23 +9794,23 @@ function AIRBOSS:_Groove( playerData )
     end
 
    end   
-	  
-	  -- Long V/STOL groove time Wave Off over 75 seconds to IC - TOPGUN level Only. --pene testing (WIP)--- Need to think more about this.
-	 
+    
+    -- Long V/STOL groove time Wave Off over 75 seconds to IC - TOPGUN level Only. --pene testing (WIP)--- Need to think more about this.
+   
   --if rho>=RAR and rho<=RIC and not playerData.waveoff and playerData.difficulty==AIRBOSS.Difficulty.HARD and  playerData.actype==      AIRBOSS.AircraftCarrier.AV8B then
    -- Get groove time
    --local vSlow=groovedata.time
    -- If too slow wave off.  
    --if vSlow >75 then
-	
+  
    -- LSO Wave off!
      --self:RadioTransmission(self.LSORadio, self.LSOCall.WAVEOFF, nil, nil, nil, true)
      --playerData.Tlso=timer.getTime()
-	 
+   
    -- Player was waved Off
      --playerData.waveoff=true
      --return
-  --end	   
+  --end    
  --end
 
   -- Groovedata step.
@@ -10162,7 +10164,7 @@ function AIRBOSS:_GetSternCoord()
     elseif case==2 or case==1 then
     -- V/Stol: Translate 8 meters port.
     self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(8, FB-90, true, true)
-	end
+  end
   elseif self.carriertype==AIRBOSS.CarrierType.STENNIS then
     -- Stennis: translate 7 meters starboard wrt Final bearing.
     self.sterncoord:Translate( self.carrierparam.sterndist, hdg, true, true ):Translate( 7, FB + 90, true, true )
@@ -11302,7 +11304,7 @@ function AIRBOSS:_GetOptLandingCoordinate()
       self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
 
     end
-	
+  
   else
 
     -- Ideally we want to land between 2nd and 3rd wire.
