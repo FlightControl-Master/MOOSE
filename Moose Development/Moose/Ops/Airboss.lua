@@ -8102,7 +8102,7 @@ end
 -- @param Core.Event#EVENTDATA EventData
 function AIRBOSS:OnEventBirth( EventData )
   self:F3( { eventbirth = EventData } )
-
+  
   -- Nil checks.
   if EventData == nil then
     self:E( self.lid .. "ERROR: EventData=nil in event BIRTH!" )
@@ -8114,7 +8114,9 @@ function AIRBOSS:OnEventBirth( EventData )
     self:E( EventData )
     return
   end
-
+  
+  if EventData.IniObjectCategory ~= Object.Category.UNIT then return end
+  
   local _unitName = EventData.IniUnitName
   local _unit, _playername = self:_GetPlayerUnitAndName( _unitName )
 
