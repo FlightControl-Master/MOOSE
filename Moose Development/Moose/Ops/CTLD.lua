@@ -24,6 +24,299 @@
 
 -- Last Update Apr 2023
 
+do 
+
+------------------------------------------------------
+--- **CTLD_CARGO** class, extends Core.Base#BASE
+-- @type CTLD_CARGO
+-- @field #string ClassName Class name.
+-- @field #number ID ID of this cargo.
+-- @field #string Name Name for menu.
+-- @field #table Templates Table of #POSITIONABLE objects.
+-- @field #string CargoType Enumerator of Type.
+-- @field #boolean HasBeenMoved Flag for moving.
+-- @field #boolean LoadDirectly Flag for direct loading.
+-- @field #number CratesNeeded Crates needed to build.
+-- @field Wrapper.Positionable#POSITIONABLE Positionable Representation of cargo in the mission.
+-- @field #boolean HasBeenDropped True if dropped from heli.
+-- @field #number PerCrateMass Mass in kg.
+-- @field #number Stock Number of builds available, -1 for unlimited.
+-- @field #string Subcategory Sub-category name.
+-- @extends Core.Base#BASE
+
+---
+-- @field #CTLD_CARGO CTLD_CARGO
+CTLD_CARGO = {
+  ClassName = "CTLD_CARGO",
+  ID = 0,
+  Name = "none",
+  Templates = {},
+  CargoType = "none",
+  HasBeenMoved = false,
+  LoadDirectly = false,
+  CratesNeeded = 0,
+  Positionable = nil,
+  HasBeenDropped = false,
+  PerCrateMass = 0,
+  Stock = nil,
+  Mark = nil,
+  }
+  
+  --- Define cargo types.
+  -- @type CTLD_CARGO.Enum
+  -- @field #string VEHICLE
+  -- @field #string TROOPS
+  -- @field #string FOB
+  -- @field #string CRATE
+  -- @field #string REPAIR
+  -- @field #string ENGINEERS
+  -- @field #string STATIC
+  CTLD_CARGO.Enum = {
+    VEHICLE = "Vehicle", -- #string vehicles
+    TROOPS = "Troops", -- #string troops
+    FOB = "FOB", -- #string FOB
+    CRATE = "Crate", -- #string crate
+    REPAIR = "Repair", -- #string repair
+    ENGINEERS = "Engineers", -- #string engineers
+    STATIC = "Static", -- #string statics
+  }
+  
+  --- Function to create new CTLD_CARGO object.
+  -- @param #CTLD_CARGO self
+  -- @param #number ID ID of this #CTLD_CARGO
+  -- @param #string Name Name for menu.
+  -- @param #table Templates Table of #POSITIONABLE objects.
+  -- @param #CTLD_CARGO.Enum Sorte Enumerator of Type.
+  -- @param #boolean HasBeenMoved Flag for moving.
+  -- @param #boolean LoadDirectly Flag for direct loading.
+  -- @param #number CratesNeeded Crates needed to build.
+  -- @param Wrapper.Positionable#POSITIONABLE Positionable Representation of cargo in the mission.
+  -- @param #boolean Dropped Cargo/Troops have been unloaded from a chopper.
+  -- @param #number PerCrateMass Mass in kg
+  -- @param #number Stock Number of builds available, nil for unlimited
+  -- @param #string Subcategory Name of subcategory, handy if using > 10 types to load.
+  -- @return #CTLD_CARGO self
+  function CTLD_CARGO:New(ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped, PerCrateMass, Stock, Subcategory)
+    -- Inherit everything from BASE class.
+    local self=BASE:Inherit(self, BASE:New()) -- #CTLD_CARGO
+    self:T({ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped})
+    self.ID = ID or math.random(100000,1000000)
+    self.Name = Name or "none" -- #string
+    self.Templates = Templates or {} -- #table
+    self.CargoType = Sorte or "type" -- #CTLD_CARGO.Enum
+    self.HasBeenMoved = HasBeenMoved or false -- #boolean
+    self.LoadDirectly = LoadDirectly or false -- #boolean
+    self.CratesNeeded = CratesNeeded or 0 -- #number
+    self.Positionable = Positionable or nil -- Wrapper.Positionable#POSITIONABLE
+    self.HasBeenDropped = Dropped or false --#boolean
+    self.PerCrateMass = PerCrateMass or 0 -- #number
+    self.Stock = Stock or nil --#number
+    self.Mark = nil
+    self.Subcategory = Subcategory or "Other"
+    return self
+  end
+  
+  --- Query ID.
+  -- @param #CTLD_CARGO self
+  -- @return #number ID
+  function CTLD_CARGO:GetID()
+    return self.ID
+  end
+  
+  --- Query Subcategory
+  -- @param #CTLD_CARGO self
+  -- @return #string SubCategory
+  function CTLD_CARGO:GetSubCat()
+    return self.Subcategory
+  end
+  
+  --- Query Mass.
+  -- @param #CTLD_CARGO self
+  -- @return #number Mass in kg
+  function CTLD_CARGO:GetMass()
+    return self.PerCrateMass
+  end  
+  
+  --- Query Name.
+  -- @param #CTLD_CARGO self
+  -- @return #string Name
+  function CTLD_CARGO:GetName()
+    return self.Name
+  end
+  
+  --- Query Templates.
+  -- @param #CTLD_CARGO self
+  -- @return #table Templates
+  function CTLD_CARGO:GetTemplates()
+    return self.Templates
+  end
+  
+  --- Query has moved.
+  -- @param #CTLD_CARGO self
+  -- @return #boolean Has moved
+  function CTLD_CARGO:HasMoved()
+    return self.HasBeenMoved
+  end
+  
+  --- Query was dropped.
+  -- @param #CTLD_CARGO self
+  -- @return #boolean Has been dropped.
+  function CTLD_CARGO:WasDropped()
+    return self.HasBeenDropped
+  end
+  
+  --- Query directly loadable.
+  -- @param #CTLD_CARGO self
+  -- @return #boolean loadable
+  function CTLD_CARGO:CanLoadDirectly()
+    return self.LoadDirectly
+  end
+  
+  --- Query number of crates or troopsize.
+  -- @param #CTLD_CARGO self
+  -- @return #number Crates or size of troops.
+  function CTLD_CARGO:GetCratesNeeded()
+    return self.CratesNeeded
+  end
+  
+  --- Query type.
+  -- @param #CTLD_CARGO self
+  -- @return #CTLD_CARGO.Enum Type
+  function CTLD_CARGO:GetType()
+    return self.CargoType
+  end
+  
+  --- Query type.
+  -- @param #CTLD_CARGO self
+  -- @return Wrapper.Positionable#POSITIONABLE Positionable
+  function CTLD_CARGO:GetPositionable()
+    return self.Positionable
+  end
+  
+  --- Set HasMoved.
+  -- @param #CTLD_CARGO self
+  -- @param #boolean moved
+  function CTLD_CARGO:SetHasMoved(moved)
+    self.HasBeenMoved = moved or false
+  end
+  
+   --- Query if cargo has been loaded.
+  -- @param #CTLD_CARGO self
+  -- @param #boolean loaded
+  function CTLD_CARGO:Isloaded()
+    if self.HasBeenMoved and not self.WasDropped() then
+      return true
+    else
+     return false
+    end 
+  end
+  
+  --- Set WasDropped.
+  -- @param #CTLD_CARGO self
+  -- @param #boolean dropped
+  function CTLD_CARGO:SetWasDropped(dropped)
+    self.HasBeenDropped = dropped or false
+  end
+  
+  --- Get Stock.
+  -- @param #CTLD_CARGO self
+  -- @return #number Stock
+  function CTLD_CARGO:GetStock()
+    if self.Stock then
+      return self.Stock
+    else
+      return -1
+    end
+  end
+  
+  --- Add Stock.
+  -- @param #CTLD_CARGO self
+  -- @param #number Number to add, none if nil.
+  -- @return #CTLD_CARGO self
+  function CTLD_CARGO:AddStock(Number)
+    if self.Stock then -- Stock nil?
+      local number = Number or 1
+      self.Stock = self.Stock + number
+    end
+    return self
+  end
+  
+  --- Remove Stock.
+  -- @param #CTLD_CARGO self
+  -- @param #number Number to reduce, none if nil.
+  -- @return #CTLD_CARGO self
+  function CTLD_CARGO:RemoveStock(Number)
+    if self.Stock then -- Stock nil?
+      local number = Number or 1
+      self.Stock = self.Stock - number
+      if self.Stock < 0 then self.Stock = 0 end
+    end
+    return self
+  end
+  
+  --- Set Stock.
+  -- @param #CTLD_CARGO self
+  -- @param #number Number to set, nil means unlimited.
+  -- @return #CTLD_CARGO self
+  function CTLD_CARGO:SetStock(Number)
+    self.Stock = Number
+    return self
+  end
+  
+  --- Query crate type for REPAIR
+  -- @param #CTLD_CARGO self
+  -- @param #boolean 
+  function CTLD_CARGO:IsRepair()
+   if self.CargoType == "Repair" then
+    return true
+   else
+    return false
+   end
+  end
+  
+  --- Query crate type for STATIC
+  -- @param #CTLD_CARGO self
+  -- @return #boolean 
+  function CTLD_CARGO:IsStatic()
+   if self.CargoType == "Static" then
+    return true
+   else
+    return false
+   end
+  end
+  
+  --- Add mark
+  -- @param #CTLD_CARGO self
+  -- @return #CTLD_CARGO self
+  function CTLD_CARGO:AddMark(Mark)
+    self.Mark = Mark
+    return self
+  end
+  
+  --- Get mark
+  -- @param #CTLD_CARGO self
+  -- @return #string Mark
+  function CTLD_CARGO:GetMark(Mark)
+    return self.Mark
+  end
+  
+  --- Wipe mark
+  -- @param #CTLD_CARGO self
+  -- @return #CTLD_CARGO self
+  function CTLD_CARGO:WipeMark()
+    self.Mark = nil
+    return self
+  end
+  
+  --- Get overall mass of a cargo object, i.e. crates needed x mass per crate
+  -- @param #CTLD_CARGO self
+  -- @return #number mass
+  function CTLD_CARGO:GetNetMass()
+    return self.CratesNeeded * self.PerCrateMass
+  end
+   
+end
+
 do
 
 ------------------------------------------------------
@@ -40,7 +333,7 @@ do
 -- @extends Core.Base#BASE
 
 ---
--- @field #CTLD_ENGINEERING
+-- @field #CTLD_ENGINEERING CTLD_ENGINEERING
 CTLD_ENGINEERING = {
   ClassName = "CTLD_ENGINEERING",
   lid = "",
@@ -285,300 +578,6 @@ CTLD_ENGINEERING = {
     end
   end
 
-end
-
-
-do 
-
-------------------------------------------------------
---- **CTLD_CARGO** class, extends Core.Base#BASE
--- @type CTLD_CARGO
--- @field #string ClassName Class name.
--- @field #number ID ID of this cargo.
--- @field #string Name Name for menu.
--- @field #table Templates Table of #POSITIONABLE objects.
--- @field #string CargoType Enumerator of Type.
--- @field #boolean HasBeenMoved Flag for moving.
--- @field #boolean LoadDirectly Flag for direct loading.
--- @field #number CratesNeeded Crates needed to build.
--- @field Wrapper.Positionable#POSITIONABLE Positionable Representation of cargo in the mission.
--- @field #boolean HasBeenDropped True if dropped from heli.
--- @field #number PerCrateMass Mass in kg.
--- @field #number Stock Number of builds available, -1 for unlimited.
--- @field #string Subcategory Sub-category name.
--- @extends Core.Base#BASE
-
----
--- @field #CTLD_CARGO CTLD_CARGO
-CTLD_CARGO = {
-  ClassName = "CTLD_CARGO",
-  ID = 0,
-  Name = "none",
-  Templates = {},
-  CargoType = "none",
-  HasBeenMoved = false,
-  LoadDirectly = false,
-  CratesNeeded = 0,
-  Positionable = nil,
-  HasBeenDropped = false,
-  PerCrateMass = 0,
-  Stock = nil,
-  Mark = nil,
-  }
-  
-  --- Define cargo types.
-  -- @type CTLD_CARGO.Enum
-  -- @field #string VEHICLE
-  -- @field #string TROOPS
-  -- @field #string FOB
-  -- @field #string CRATE
-  -- @field #string REPAIR
-  -- @field #string ENGINEERS
-  -- @field #string STATIC
-  CTLD_CARGO.Enum = {
-    VEHICLE = "Vehicle", -- #string vehicles
-    TROOPS = "Troops", -- #string troops
-    FOB = "FOB", -- #string FOB
-    CRATE = "Crate", -- #string crate
-    REPAIR = "Repair", -- #string repair
-    ENGINEERS = "Engineers", -- #string engineers
-    STATIC = "Static", -- #string statics
-  }
-  
-  --- Function to create new CTLD_CARGO object.
-  -- @param #CTLD_CARGO self
-  -- @param #number ID ID of this #CTLD_CARGO
-  -- @param #string Name Name for menu.
-  -- @param #table Templates Table of #POSITIONABLE objects.
-  -- @param #CTLD_CARGO.Enum Sorte Enumerator of Type.
-  -- @param #boolean HasBeenMoved Flag for moving.
-  -- @param #boolean LoadDirectly Flag for direct loading.
-  -- @param #number CratesNeeded Crates needed to build.
-  -- @param Wrapper.Positionable#POSITIONABLE Positionable Representation of cargo in the mission.
-  -- @param #boolean Dropped Cargo/Troops have been unloaded from a chopper.
-  -- @param #number PerCrateMass Mass in kg
-  -- @param #number Stock Number of builds available, nil for unlimited
-  -- @param #string Subcategory Name of subcategory, handy if using > 10 types to load.
-  -- @return #CTLD_CARGO self
-  function CTLD_CARGO:New(ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped, PerCrateMass, Stock, Subcategory)
-    -- Inherit everything from BASE class.
-    local self=BASE:Inherit(self, BASE:New()) -- #CTLD
-    self:T({ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped})
-    self.ID = ID or math.random(100000,1000000)
-    self.Name = Name or "none" -- #string
-    self.Templates = Templates or {} -- #table
-    self.CargoType = Sorte or "type" -- #CTLD_CARGO.Enum
-    self.HasBeenMoved = HasBeenMoved or false -- #boolean
-    self.LoadDirectly = LoadDirectly or false -- #boolean
-    self.CratesNeeded = CratesNeeded or 0 -- #number
-    self.Positionable = Positionable or nil -- Wrapper.Positionable#POSITIONABLE
-    self.HasBeenDropped = Dropped or false --#boolean
-    self.PerCrateMass = PerCrateMass or 0 -- #number
-    self.Stock = Stock or nil --#number
-    self.Mark = nil
-    self.Subcategory = Subcategory or "Other"
-    return self
-  end
-  
-  --- Query ID.
-  -- @param #CTLD_CARGO self
-  -- @return #number ID
-  function CTLD_CARGO:GetID()
-    return self.ID
-  end
-  
-  --- Query Subcategory
-  -- @param #CTLD_CARGO self
-  -- @return #string SubCategory
-  function CTLD_CARGO:GetSubCat()
-    return self.Subcategory
-  end
-  
-  --- Query Mass.
-  -- @param #CTLD_CARGO self
-  -- @return #number Mass in kg
-  function CTLD_CARGO:GetMass()
-    return self.PerCrateMass
-  end  
-  
-  --- Query Name.
-  -- @param #CTLD_CARGO self
-  -- @return #string Name
-  function CTLD_CARGO:GetName()
-    return self.Name
-  end
-  
-  --- Query Templates.
-  -- @param #CTLD_CARGO self
-  -- @return #table Templates
-  function CTLD_CARGO:GetTemplates()
-    return self.Templates
-  end
-  
-  --- Query has moved.
-  -- @param #CTLD_CARGO self
-  -- @return #boolean Has moved
-  function CTLD_CARGO:HasMoved()
-    return self.HasBeenMoved
-  end
-  
-  --- Query was dropped.
-  -- @param #CTLD_CARGO self
-  -- @return #boolean Has been dropped.
-  function CTLD_CARGO:WasDropped()
-    return self.HasBeenDropped
-  end
-  
-  --- Query directly loadable.
-  -- @param #CTLD_CARGO self
-  -- @return #boolean loadable
-  function CTLD_CARGO:CanLoadDirectly()
-    return self.LoadDirectly
-  end
-  
-  --- Query number of crates or troopsize.
-  -- @param #CTLD_CARGO self
-  -- @return #number Crates or size of troops.
-  function CTLD_CARGO:GetCratesNeeded()
-    return self.CratesNeeded
-  end
-  
-  --- Query type.
-  -- @param #CTLD_CARGO self
-  -- @return #CTLD_CARGO.Enum Type
-  function CTLD_CARGO:GetType()
-    return self.CargoType
-  end
-  
-  --- Query type.
-  -- @param #CTLD_CARGO self
-  -- @return Wrapper.Positionable#POSITIONABLE Positionable
-  function CTLD_CARGO:GetPositionable()
-    return self.Positionable
-  end
-  
-  --- Set HasMoved.
-  -- @param #CTLD_CARGO self
-  -- @param #boolean moved
-  function CTLD_CARGO:SetHasMoved(moved)
-    self.HasBeenMoved = moved or false
-  end
-  
-   --- Query if cargo has been loaded.
-  -- @param #CTLD_CARGO self
-  -- @param #boolean loaded
-  function CTLD_CARGO:Isloaded()
-    if self.HasBeenMoved and not self.WasDropped() then
-      return true
-    else
-     return false
-    end 
-  end
-  
-  --- Set WasDropped.
-  -- @param #CTLD_CARGO self
-  -- @param #boolean dropped
-  function CTLD_CARGO:SetWasDropped(dropped)
-    self.HasBeenDropped = dropped or false
-  end
-  
-  --- Get Stock.
-  -- @param #CTLD_CARGO self
-  -- @return #number Stock
-  function CTLD_CARGO:GetStock()
-    if self.Stock then
-      return self.Stock
-    else
-      return -1
-    end
-  end
-  
-  --- Add Stock.
-  -- @param #CTLD_CARGO self
-  -- @param #number Number to add, none if nil.
-  -- @return #CTLD_CARGO self
-  function CTLD_CARGO:AddStock(Number)
-    if self.Stock then -- Stock nil?
-      local number = Number or 1
-      self.Stock = self.Stock + number
-    end
-    return self
-  end
-  
-  --- Remove Stock.
-  -- @param #CTLD_CARGO self
-  -- @param #number Number to reduce, none if nil.
-  -- @return #CTLD_CARGO self
-  function CTLD_CARGO:RemoveStock(Number)
-    if self.Stock then -- Stock nil?
-      local number = Number or 1
-      self.Stock = self.Stock - number
-      if self.Stock < 0 then self.Stock = 0 end
-    end
-    return self
-  end
-  
-  --- Set Stock.
-  -- @param #CTLD_CARGO self
-  -- @param #number Number to set, nil means unlimited.
-  -- @return #CTLD_CARGO self
-  function CTLD_CARGO:SetStock(Number)
-    self.Stock = Number
-    return self
-  end
-  
-  --- Query crate type for REPAIR
-  -- @param #CTLD_CARGO self
-  -- @param #boolean 
-  function CTLD_CARGO:IsRepair()
-   if self.CargoType == "Repair" then
-    return true
-   else
-    return false
-   end
-  end
-  
-  --- Query crate type for STATIC
-  -- @param #CTLD_CARGO self
-  -- @return #boolean 
-  function CTLD_CARGO:IsStatic()
-   if self.CargoType == "Static" then
-    return true
-   else
-    return false
-   end
-  end
-  
-  --- Add mark
-  -- @param #CTLD_CARGO self
-  -- @return #CTLD_CARGO self
-  function CTLD_CARGO:AddMark(Mark)
-    self.Mark = Mark
-    return self
-  end
-  
-  --- Get mark
-  -- @param #CTLD_CARGO self
-  -- @return #string Mark
-  function CTLD_CARGO:GetMark(Mark)
-    return self.Mark
-  end
-  
-  --- Wipe mark
-  -- @param #CTLD_CARGO self
-  -- @return #CTLD_CARGO self
-  function CTLD_CARGO:WipeMark()
-    self.Mark = nil
-    return self
-  end
-  
-  --- Get overall mass of a cargo object, i.e. crates needed x mass per crate
-  -- @param #CTLD_CARGO self
-  -- @return #number mass
-  function CTLD_CARGO:GetNetMass()
-    return self.CratesNeeded * self.PerCrateMass
-  end
-   
 end
 
 do
