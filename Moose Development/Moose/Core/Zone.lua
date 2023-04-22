@@ -1001,6 +1001,24 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
 
 end
 
+--- Remove junk inside the zone using the `world.removeJunk` function.
+-- @param #ZONE_RADIUS self
+-- @return #number Number of deleted objects.
+function ZONE_RADIUS:RemoveJunk()
+
+  local radius=self.Radius
+  local vec3=self:GetVec3()
+
+  local volS = {
+    id = world.VolumeType.SPHERE,
+    params = {point = vec3, radius = radius}
+  }
+
+  local n=world.removeJunk(volS)
+
+  return n
+end
+
 --- Count the number of different coalitions inside the zone.
 -- @param #ZONE_RADIUS self
 -- @return #table Table of DCS units and DCS statics inside the zone.
@@ -2139,6 +2157,35 @@ function ZONE_POLYGON_BASE:GetZoneQuad(ZoneName, DoNotRegisterZone)
   local zone=ZONE_POLYGON_BASE:New(ZoneName or self.ZoneName, {vec1, vec2, vec3, vec4})
 
   return zone
+end
+
+--- Remove junk inside the zone. Due to DCS limitations, this works only for rectangular zones. So we get the smallest rectangular zone encompassing all points points of the polygon zone.
+-- @param #ZONE_POLYGON_BASE self
+-- @param #number Height Height of the box in meters. Default 1000.
+-- @return #number Number of removed objects.
+function ZONE_POLYGON_BASE:RemoveJunk(Height)
+
+  Height=Height or 1000
+ 
+  local vec2SW, vec2NE=self:GetBoundingVec2()
+
+  local vec3SW={x=vec2SW.x, y=-Height, z=vec2SW.y} --DCS#Vec3
+  local vec3NE={x=vec2NE.x, y= Height, z=vec2NE.y} --DCS#Vec3
+  
+  --local coord1=COORDINATE:NewFromVec3(vec3SW):MarkToAll("SW")
+  --local coord1=COORDINATE:NewFromVec3(vec3NE):MarkToAll("NE")
+  
+  local volume = {
+    id = world.VolumeType.BOX,
+    params = {
+      min=vec3SW,
+      max=vec3SW
+    }
+  }
+
+  local n=world.removeJunk(volume)  
+
+  return n
 end
 
 --- Smokes the zone boundaries in a color.
