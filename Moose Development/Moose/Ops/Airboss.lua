@@ -11304,7 +11304,7 @@ function AIRBOSS:_GetOptLandingCoordinate()
       self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
 
     end
-	
+  
   else
 
     -- Ideally we want to land between 2nd and 3rd wire.

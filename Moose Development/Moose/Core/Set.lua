@@ -1945,7 +1945,7 @@ do -- SET_GROUP
     if self.Filter.Zones then
       local MGroupZone = false
       for ZoneName, Zone in pairs( self.Filter.Zones ) do
-        self:T3( "Zone:", ZoneName )
+        --self:I( "Zone:", ZoneName )
         if MGroup:IsInZone(Zone) then
           MGroupZone = true
         end
