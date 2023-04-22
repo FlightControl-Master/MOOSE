@@ -2847,7 +2847,7 @@ function AIRBOSS:SetGlideslopeErrorThresholds(_max,_min, High, HIGH, Low, LOW)
 
   --Check if V/STOL Carrier
   if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
-  
+
   -- allow a larger GSE for V/STOL operations --Pene Testing
   self.gle._max=_max or  0.7
   self.gle.High=High or  1.4
@@ -2864,7 +2864,7 @@ function AIRBOSS:SetGlideslopeErrorThresholds(_max,_min, High, HIGH, Low, LOW)
   self.gle.Low=Low   or -0.6
   self.gle.LOW=LOW   or -0.9
   end
-  
+
   return self
 end
 
@@ -2884,7 +2884,7 @@ function AIRBOSS:SetLineupErrorThresholds(_max,_min, Left, LeftMed, LEFT, Right,
 
   --Check if V/STOL Carrier -- Pene testing
   if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
-  
+
   -- V/STOL Values -- allow a larger LUE for V/STOL operations
   self.lue._max=_max   or  1.8
   self.lue._min=_min   or -1.8
@@ -2905,7 +2905,7 @@ function AIRBOSS:SetLineupErrorThresholds(_max,_min, Left, LeftMed, LEFT, Right,
   self.lue.RightMed=RightMed or  2.0
   self.lue.RIGHT=RIGHT or  3.0
   end
-  
+
   return self
 end
 
@@ -3268,7 +3268,7 @@ function AIRBOSS:SetExtraVoiceOversAI(status)
   self.xtVoiceOversAI=status
   return self
 end
- 
+
 --- Do not handle AI aircraft.
 -- @param #AIRBOSS self
 -- @return #AIRBOSS self
@@ -3383,9 +3383,9 @@ end
 -- @param #string Host Host. Default `"127.0.0.1"`.
 -- @return #AIRBOSS self
 function AIRBOSS:SetFunkManOn(Port, Host)
-  
+
   self.funkmanSocket=SOCKET:New(Port, Host)
-  
+
   return self
 end
 
@@ -6364,7 +6364,7 @@ function AIRBOSS:_LandAI( flight )
   -- Aircraft speed when flying the pattern.
   local Speed = UTILS.KnotsToKmph( 200 )
 
-  if   flight.actype == AIRBOSS.AircraftCarrier.HORNET 
+  if   flight.actype == AIRBOSS.AircraftCarrier.HORNET
     or flight.actype == AIRBOSS.AircraftCarrier.FA18C
     or flight.actype == AIRBOSS.AircraftCarrier.RHINOE
     or flight.actype == AIRBOSS.AircraftCarrier.RHINOF
@@ -8115,6 +8115,8 @@ function AIRBOSS:OnEventBirth( EventData )
     return
   end
 
+  if EventData.IniObjectCategory ~= Object.Category.UNIT then return end
+
   local _unitName = EventData.IniUnitName
   local _unit, _playername = self:_GetPlayerUnitAndName( _unitName )
 
@@ -9192,9 +9194,9 @@ function AIRBOSS:_DirtyUp( playerData )
     self:_PlayerHint( playerData )
 
     -- Radio call "Say/Fly needles". Delayed by 10/15 seconds.
-    if   playerData.actype == AIRBOSS.AircraftCarrier.HORNET 
-      or playerData.actype == AIRBOSS.AircraftCarrier.F14A 
-      or playerData.actype == AIRBOSS.AircraftCarrier.F14B 
+    if   playerData.actype == AIRBOSS.AircraftCarrier.HORNET
+      or playerData.actype == AIRBOSS.AircraftCarrier.F14A
+      or playerData.actype == AIRBOSS.AircraftCarrier.F14B
       or playerData.actype == AIRBOSS.AircraftCarrier.RHINOE
       or playerData.actype == AIRBOSS.AircraftCarrier.RHINOF
       or playerData.actype == AIRBOSS.AircraftCarrier.GROWLER
@@ -9791,24 +9793,24 @@ function AIRBOSS:_Groove( playerData )
       return
     end
 
-   end   
-	  
-	  -- Long V/STOL groove time Wave Off over 75 seconds to IC - TOPGUN level Only. --pene testing (WIP)--- Need to think more about this.
-	 
+   end
+
+    -- Long V/STOL groove time Wave Off over 75 seconds to IC - TOPGUN level Only. --pene testing (WIP)--- Need to think more about this.
+
   --if rho>=RAR and rho<=RIC and not playerData.waveoff and playerData.difficulty==AIRBOSS.Difficulty.HARD and  playerData.actype==      AIRBOSS.AircraftCarrier.AV8B then
    -- Get groove time
    --local vSlow=groovedata.time
-   -- If too slow wave off.  
+   -- If too slow wave off.
    --if vSlow >75 then
-	
+
    -- LSO Wave off!
      --self:RadioTransmission(self.LSORadio, self.LSOCall.WAVEOFF, nil, nil, nil, true)
      --playerData.Tlso=timer.getTime()
-	 
+
    -- Player was waved Off
      --playerData.waveoff=true
      --return
-  --end	   
+  --end
  --end
 
   -- Groovedata step.
@@ -10006,7 +10008,7 @@ function AIRBOSS:_CheckWaveOff( glideslopeError, lineupError, AoA, playerData )
     waveoff = true
   end
 
-  -- Too slow or too fast? Only for pros.  
+  -- Too slow or too fast? Only for pros.
 
   if playerData.difficulty == AIRBOSS.Difficulty.HARD and playerData.actype ~= AIRBOSS.AircraftCarrier.AV8B then
     -- Get aircraft specific AoA values. Not for AV-8B due to transition to Stable Hover.
@@ -10162,7 +10164,7 @@ function AIRBOSS:_GetSternCoord()
     elseif case==2 or case==1 then
     -- V/Stol: Translate 8 meters port.
     self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(8, FB-90, true, true)
-	end
+  end
   elseif self.carriertype==AIRBOSS.CarrierType.STENNIS then
     -- Stennis: translate 7 meters starboard wrt Final bearing.
     self.sterncoord:Translate( self.carrierparam.sterndist, hdg, true, true ):Translate( 7, FB + 90, true, true )
@@ -10311,7 +10313,7 @@ function AIRBOSS:_Trapped( playerData )
 
     -- Get current wire (estimate). This now based on the position where the player comes to a standstill which should reflect the trapped wire better.
     local dcorr = 100
-    if   playerData.actype == AIRBOSS.AircraftCarrier.HORNET 
+    if   playerData.actype == AIRBOSS.AircraftCarrier.HORNET
       or playerData.actype == AIRBOSS.AircraftCarrier.RHINOE
       or playerData.actype == AIRBOSS.AircraftCarrier.RHINOF
       or playerData.actype == AIRBOSS.AircraftCarrier.GROWLER then
@@ -10836,7 +10838,7 @@ function AIRBOSS:_GetZoneAbeamLandingSpot()
 
   -- Coordinate array. Pene Testing extended Abeam landing spot V/STOL.
   local p={}
-  
+
   -- Points.
   p[1] = S:Translate( 15, FB ):Translate( 15, FB + 90 ) -- Top-Right
   p[2] = S:Translate( -45, FB ):Translate( 15, FB + 90 ) -- Bottom-Right
@@ -11284,7 +11286,7 @@ function AIRBOSS:_GetOptLandingCoordinate()
 
   -- set Case III V/STOL abeam landing spot over deck -- Pene Testing
   if self.carriertype==AIRBOSS.CarrierType.INVINCIBLE or self.carriertype==AIRBOSS.CarrierType.HERMES or self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
-  
+
     if case==3 then
 
       -- Landing coordinate.
@@ -11292,7 +11294,7 @@ function AIRBOSS:_GetOptLandingCoordinate()
 
       -- Altitude 120ft -- is this corect for Case III?
       self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
- 
+
     elseif case==2 or case==1 then
 
       -- Landing 100 ft abeam, 120 ft alt.
@@ -11302,7 +11304,7 @@ function AIRBOSS:_GetOptLandingCoordinate()
       self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
 
     end
-	
+
   else
 
     -- Ideally we want to land between 2nd and 3rd wire.
@@ -11897,7 +11899,7 @@ function AIRBOSS:_LSOgrade( playerData )
   local nS=count(G, '%(')
   local nN=N-nS-nL
   local nNv=Nv-nS-nL
-  
+
   -- Groove time 15-18.99 sec for a unicorn. Or 60-65 for V/STOL unicorn.
   local Tgroove=playerData.Tgroove
   local TgrooveUnicorn=Tgroove and (Tgroove>=15.0 and Tgroove<=18.99) or false
@@ -12014,7 +12016,7 @@ function AIRBOSS:_LSOgrade( playerData )
 
   elseif not playerData.hover and playerData.actype == AIRBOSS.AircraftCarrier.AV8B then
     -------------------------------
-    -- AV-8B not cleared to land -- -- Landing clearence is carrier from LC to Landing 
+    -- AV-8B not cleared to land -- -- Landing clearence is carrier from LC to Landing
     -------------------------------
     if playerData.landed then
       -- AIRBOSS wants your balls!
@@ -15244,13 +15246,13 @@ end
 -- @param #string modex Tail number.
 function AIRBOSS:_MarshallInboundCall(unit, modex)
 
-  -- Calculate 
+  -- Calculate
   local vectorCarrier = self:GetCoordinate():GetDirectionVec3(unit:GetCoordinate())
   local bearing =  UTILS.Round(unit:GetCoordinate():GetAngleDegrees( vectorCarrier ), 0)
   local distance = UTILS.Round(UTILS.MetersToNM(unit:GetCoordinate():Get2DDistance(self:GetCoordinate())),0)
   local angels = UTILS.Round(UTILS.MetersToFeet(unit:GetHeight()/1000),0)
   local state = UTILS.Round(self:_GetFuelState(unit)/1000,1)
-  
+
   -- Pilot: "Marshall, [modex], marking mom's [bearing] for [distance], angels [XX], state [X.X]"
   local text=string.format("Marshal, %s, marking mom's %d for %d, angels %d, state %.1f", modex, bearing, distance, angels, state)
   -- Debug message.
@@ -16077,8 +16079,8 @@ function AIRBOSS:_RequestMarshal( _unitName )
       -- Voice over of inbound call (regardless of airboss rejecting it or not)
       if self.xtVoiceOvers then
         self:_MarshallInboundCall(_unit, playerData.onboard)
-      end   
-    
+      end
+
       -- Check if player is in CCA
       local inCCA = playerData.unit:IsInZone( self.zoneCCA )
 
@@ -16326,12 +16328,12 @@ function AIRBOSS:_RequestCommence( _unitName )
     local playerData = self.players[_playername] -- #AIRBOSS.PlayerData
 
     if playerData then
-   
+
       -- Voice over of Commencing call (regardless of Airboss will rejected or not)
       if self.xtVoiceOvers then
         self:_CommencingCall(_unit, playerData.onboard)
       end
-      
+
       -- Check if unit is in CCA.
       local text = ""
       local cleared = false

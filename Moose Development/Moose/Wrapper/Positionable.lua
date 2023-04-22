@@ -394,6 +394,35 @@ function POSITIONABLE:GetCoordinate()
   return nil
 end
 
+
+--- Triggers an explosion at the coordinates of the positionable.
+-- @param #POSITIONABLE self
+-- @param #number power Power of the explosion in kg TNT. Default 100 kg TNT.
+-- @param #number delay (Optional) Delay of explosion in seconds.
+-- @return #POSITIONABLE self
+function POSITIONABLE:Explode(power, delay)
+
+  -- Default.
+  power=power or 100
+  
+  -- Check if delay or not.
+  if delay and delay>0 then
+    -- Delayed call.
+    self:ScheduleOnce(delay, POSITIONABLE.Explode, self, power, 0)
+  else
+  
+    local coord=self:GetCoord()
+    
+    if coord then  
+      -- Create an explotion at the coordinate of the positionable.
+      coord:Explosion(power)
+    end
+  
+  end
+  
+  return self
+end
+
 --- Returns a COORDINATE object, which is offset with respect to the orientation of the POSITIONABLE.
 -- @param #POSITIONABLE self
 -- @param #number x Offset in the direction "the nose" of the unit is pointing in meters. Default 0 m.
