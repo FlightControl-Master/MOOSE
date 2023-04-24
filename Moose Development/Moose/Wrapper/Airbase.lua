@@ -198,8 +198,47 @@ AIRBASE.Nevada = {
 --   * AIRBASE.Normandy.Needs_Oar_Point
 --   * AIRBASE.Normandy.Funtington
 --   * AIRBASE.Normandy.Tangmere
---   * AIRBASE.Normandy.Ford_AF
---   
+--   * AIRBASE.Normandy.Ford
+--   * AIRBASE.Normandy.Argentan
+--   * AIRBASE.Normandy.Goulet
+--   * AIRBASE.Normandy.Barville
+--   * AIRBASE.Normandy.Essay
+--   * AIRBASE.Normandy.Hauterive
+--   * AIRBASE.Normandy.Lymington
+--   * AIRBASE.Normandy.Vrigny
+--   * AIRBASE.Normandy.Odiham
+--   * AIRBASE.Normandy.Conches
+--   * AIRBASE.Normandy.West_Malling
+--   * AIRBASE.Normandy.Villacoublay
+--   * AIRBASE.Normandy.Kenley
+--   * AIRBASE.Normandy.Beauvais_Tille
+--   * AIRBASE.Normandy.Cormeilles_en_Vexin
+--   * AIRBASE.Normandy.Creil
+--   * AIRBASE.Normandy.Guyancourt
+--   * AIRBASE.Normandy.Lonrai
+--   * AIRBASE.Normandy.Dinan_Trelivan
+--   * AIRBASE.Normandy.Heathrow
+--   * AIRBASE.Normandy.Fecamp_Benouville
+--   * AIRBASE.Normandy.Farnborough
+--   * AIRBASE.Normandy.Friston
+--   * AIRBASE.Normandy.Deanland 
+--   * AIRBASE.Normandy.Triqueville
+--   * AIRBASE.Normandy.Poix
+--   * AIRBASE.Normandy.Orly
+--   * AIRBASE.Normandy.Stoney_Cross
+--   * AIRBASE.Normandy.Amiens_Glisy
+--   * AIRBASE.Normandy.Ronai
+--   * AIRBASE.Normandy.Rouen_Boos
+--   * AIRBASE.Normandy.Deauville
+--   * AIRBASE.Normandy.Saint_Aubin
+--   * AIRBASE.Normandy.Flers
+--   * AIRBASE.Normandy.Avranches_Le_Val_Saint_Pere
+--   * AIRBASE.Normandy.Gravesend
+--   * AIRBASE.Normandy.Beaumont_le_Roger
+--   * AIRBASE.Normandy.Broglie
+--   * AIRBASE.Normandy.Bernay_Saint_Martin
+--   * AIRBASE.Normandy.Saint_Andre_de_lEure
+--
 -- @field Normandy
 AIRBASE.Normandy = {
   ["Saint_Pierre_du_Mont"] = "Saint Pierre du Mont",
@@ -232,14 +271,46 @@ AIRBASE.Normandy = {
   ["Needs_Oar_Point"] = "Needs Oar Point",
   ["Funtington"] = "Funtington",
   ["Tangmere"] = "Tangmere",
-  ["Ford_AF"] = "Ford_AF",
-  ["Goulet"] = "Goulet",
+  ["Ford"] = "Ford", 
   ["Argentan"] = "Argentan",
-  ["Vrigny"] = "Vrigny",
+  ["Goulet"] = "Goulet",
+  ["Barville"] = "Barville",
   ["Essay"] = "Essay",
   ["Hauterive"] = "Hauterive",
-  ["Barville"] = "Barville",
+  ["Lymington"] = "Lymington",
+  ["Vrigny"] = "Vrigny",
+  ["Odiham"] = "Odiham",
   ["Conches"] = "Conches",
+  ["West_Malling"] = "West Malling",
+  ["Villacoublay"] = "Villacoublay",
+  ["Kenley"] = "Kenley",
+  ["Beauvais_Tille"] = "Beauvais-Tille",
+  ["Cormeilles_en_Vexin"] = "Cormeilles-en-Vexin",
+  ["Creil"] = "Creil",
+  ["Guyancourt"] = "Guyancourt",
+  ["Lonrai"] = "Lonrai",
+  ["Dinan_Trelivan"] = "Dinan-Trelivan",
+  ["Heathrow"] = "Heathrow",
+  ["Fecamp_Benouville"] = "Fecamp-Benouville",
+  ["Farnborough"] = "Farnborough",
+  ["Friston"] = "Friston",
+  ["Deanland "] = "Deanland ",
+  ["Triqueville"] = "Triqueville",
+  ["Poix"] = "Poix",
+  ["Orly"] = "Orly",
+  ["Stoney_Cross"] = "Stoney Cross",
+  ["Amiens_Glisy"] = "Amiens-Glisy",
+  ["Ronai"] = "Ronai",
+  ["Rouen_Boos"] = "Rouen-Boos",
+  ["Deauville"] = "Deauville",
+  ["Saint_Aubin"] = "Saint-Aubin",
+  ["Flers"] = "Flers",
+  ["Avranches_Le_Val_Saint_Pere"] = "Avranches Le Val-Saint-Pere",
+  ["Gravesend"] = "Gravesend",
+  ["Beaumont_le_Roger"] = "Beaumont-le-Roger",
+  ["Broglie"] = "Broglie",
+  ["Bernay_Saint_Martin"] = "Bernay Saint Martin",
+  ["Saint_Andre_de_lEure"] = "Saint-Andre-de-lEure",
 }
 
 --- Airbases of the Persion Gulf Map:
