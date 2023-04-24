@@ -7797,7 +7797,7 @@ do -- SET_SCENERY
 
   end
 
-  ---
+  --- [Internal] Determine if an object is to be included in the SET
   -- @param #SET_SCENERY self
   -- @param Wrapper.Scenery#SCENERY MScenery
   -- @return #SET_SCENERY self
@@ -7805,4 +7805,44 @@ do -- SET_SCENERY
     self:F2( MScenery )
   return true
   end
+  
+  --- Count overall initial (Life0) lifepoints of the SET objects.
+  -- @param #SET_SCENERY self
+  -- @return #number LIfe0Points
+  function SET_SCENERY:GetLife0()
+    local life0 = 0
+    self:ForEachScenery(
+      function(obj)
+        local Obj = obj -- Wrapper.Scenery#SCENERY
+        life0 = life0 + Obj:GetLife0()
+      end
+    )
+    return life0
+  end
+  
+  --- Count overall current lifepoints of the SET objects.
+  -- @param #SET_SCENERY self
+  -- @return #number LifePoints
+  function SET_SCENERY:GetLife()
+    local life = 0
+    self:ForEachScenery(
+      function(obj)
+        local Obj = obj -- Wrapper.Scenery#SCENERY
+        life = life + Obj:GetLife()
+      end
+    )
+    return life
+  end
+  
+  --- Calculate current relative lifepoints of the SET objects, i.e. Life divided by Life0 as percentage value, eg 75 meaning 75% alive. 
+  -- **CAVEAT**: Some objects change their life value or "hitpoints" **after** the first hit. Be aware that thus the relative life value might be > 100 after a hit.
+  -- @param #SET_SCENERY self
+  -- @return #number LifePoints
+  function SET_SCENERY:GetRelativeLife()
+    local life0 = self:GetLife0()
+    local life = self:GetLife()
+    local rlife = math.floor((life / life0) * 100)
+    return rlife
+  end
+  
 end
