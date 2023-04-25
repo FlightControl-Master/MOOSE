@@ -63,12 +63,18 @@ function SCENERY:GetDCSObject()
 end
 
 --- Get current life points from the SCENERY Object.
+--  **CAVEAT**: Some objects change their life value or "hitpoints" **after** the first hit. Hence we will adjust the life0 value to 120% 
+--  of the last life value if life exceeds life0 (initial life) at any point. Thus will will get a smooth percentage decrease, if you use this e.g. as success 
+--  criteria for a bombing task.
 --@param #SCENERY self
 --@return #number life
 function SCENERY:GetLife()
   local life = 0
   if self.SceneryObject then
     life = self.SceneryObject:getLife()
+    if life > self.Life0 then
+      self.Life0 = math.floor(life * 1.2)
+    end
   end
   return life
 end
