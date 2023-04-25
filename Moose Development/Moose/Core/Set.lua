@@ -7835,12 +7835,15 @@ do -- SET_SCENERY
   end
   
   --- Calculate current relative lifepoints of the SET objects, i.e. Life divided by Life0 as percentage value, eg 75 meaning 75% alive. 
-  -- **CAVEAT**: Some objects change their life value or "hitpoints" **after** the first hit. Be aware that thus the relative life value might be > 100 after a hit.
+  -- **CAVEAT**: Some objects change their life value or "hitpoints" **after** the first hit. Hence we will adjust the Life0 value to 120% 
+  -- of the last life value if life exceeds life0 ata any point.
+  -- Thus will will get a smooth percentage decrease, if you use this e.g. as success criteria for a bombing task.
   -- @param #SET_SCENERY self
   -- @return #number LifePoints
   function SET_SCENERY:GetRelativeLife()
-    local life0 = self:GetLife0()
     local life = self:GetLife()
+    local life0 = self:GetLife0()
+    self:T3(string.format("Set Lifepoints: %d life0 | %d life",life0,life))
     local rlife = math.floor((life / life0) * 100)
     return rlife
   end
