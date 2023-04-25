@@ -49,17 +49,19 @@ SOCKET = {
 -- @field #string BOMBRESULT Range bombing.
 -- @field #string STRAFERESULT Range strafeing result.
 -- @field #string LSOGRADE Airboss LSO grade.
+-- @field #string TTS Text-To-Speech.
 SOCKET.DataType={
   TEXT="moose_text",
   BOMBRESULT="moose_bomb_result",
   STRAFERESULT="moose_strafe_result",
   LSOGRADE="moose_lso_grade",
+  TTS="moose_text2speech"
 }
 
 
 --- SOCKET class version.
 -- @field #string version
-SOCKET.version="0.2.0"
+SOCKET.version="0.3.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -140,7 +142,7 @@ end
 
 --- Send a text message.
 -- @param #SOCKET self
--- @param #string Text Test message.
+-- @param #string Text Text message.
 -- @return #SOCKET self
 function SOCKET:SendText(Text)
 
@@ -148,6 +150,34 @@ function SOCKET:SendText(Text)
   
   message.command = SOCKET.DataType.TEXT
   message.text = Text  
+
+  self:SendTable(message)
+
+  return self
+end
+
+--- Send a text-to-speech message.
+-- @param #SOCKET self
+-- @param #string Text The text message to speek.
+-- @param #number Provider The TTS provider: 0=Microsoft (default), 1=Google.
+-- @param #string Voice The specific voice to use, e.g. `"Microsoft David Desktop"` or "`en-US-Standard-A`". If not set, the service will choose a voice based on the other parameters such as culture and gender.
+-- @param #string Culture The Culture or language code, *e.g.* `"en-US"`.
+-- @param #string Gender The Gender, *i.e.* "male", "female". Default "female".
+-- @param #number Volume The volume. Microsoft: [0,100] default 50, Google: [-96, 10] default 0.
+-- @return #SOCKET self
+function SOCKET:SendTextToSpeech(Text, Provider, Voice, Culture, Gender, Volume)
+
+  Text=Text or "Hello World!"
+
+  local message={}
+  
+  message.command = SOCKET.DataType.TTS
+  message.text = Text
+  message.provider=Provider
+  message.voice = Voice
+  message.culture = Culture
+  message.gender = Gender
+  message.volume = Volume
 
   self:SendTable(message)
 
