@@ -5346,7 +5346,7 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
   --if self.isFlightgroup and Mission.type~=AUFTRAG.Type.ALERT5 then
   --  FLIGHTGROUP.SetReadyForTakeoff(self, true)
   --end
-
+  
   -- Route group to mission zone.
   if self.speedMax>3.6 or true then
 
@@ -5402,7 +5402,18 @@ function OPSGROUP:onafterMissionExecute(From, Event, To, Mission)
   if Mission.engagedetectedOn then
     self:SetEngageDetectedOn(UTILS.MetersToNM(Mission.engagedetectedRmax), Mission.engagedetectedTypes, Mission.engagedetectedEngageZones, Mission.engagedetectedNoEngageZones)
   end
-
+  
+  -- Set AB usage for mission execution based on Mission entry, if the option was set in the mission
+  if self.isFlightgroup then
+    if Mission.prohibitABExecute == true then
+      self:SetProhibitAfterburner()
+      self:I("Set prohibit AB")
+    elseif Mission.prohibitABExecute == false then
+      self:SetAllowAfterburner()
+      self:T2("Set allow AB")
+    end
+  end
+  
 end
 
 --- On after "PauseMission" event.
@@ -5697,6 +5708,17 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
     end
     
     return
+  end
+  
+  -- Set AB usage based on Mission entry, if the option was set in the mission
+  if self.isFlightgroup then
+    if Mission.prohibitAB == true then
+      self:T2("Setting prohibit AB")
+      self:SetProhibitAfterburner()
+    elseif Mission.prohibitAB == false then
+      self:T2("Setting allow AB")
+      self:SetAllowAfterburner()
+    end
   end
   
   -- Check if group is done.
@@ -6118,7 +6140,19 @@ function OPSGROUP:_SetMissionOptions(mission)
   if mission.icls then
     self:SwitchICLS(mission.icls.Channel, mission.icls.Morse, mission.icls.UnitName)
   end
+  
+  -- Set AB usage based on Mission entry, if the option was set in the mission
+  if self.isFlightgroup then
+    if mission.prohibitAB == true then
+      self:SetProhibitAfterburner()
+      self:T2("Set prohibit AB")
+    elseif mission.prohibitAB == false then
+      self:SetAllowAfterburner()
+      self:T2("Set allow AB")
+    end
+  end
 
+  return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
