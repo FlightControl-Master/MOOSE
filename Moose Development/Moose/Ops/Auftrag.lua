@@ -3084,6 +3084,39 @@ function AUFTRAG:SetRequiredCarriers(NcarriersMin, NcarriersMax)
   return self
 end
 
+--- Set that (jet) aircraft are generally **not** allowed to use afterburner. Default is use of afterburner is allowed.
+-- @param #AUFTRAG self
+-- @return #AUFTRAG self
+function AUFTRAG:SetProhibitAfterburner()
+  self.prohibitAB = true
+  return self 
+end
+
+--- Set that (jet) aircraft are generally allowed to use afterburner. Default is use of afterburner is allowed.
+-- @param #AUFTRAG self
+-- @return #AUFTRAG self
+function AUFTRAG:SetAllowAfterburner()
+  self.prohibitAB = false
+  return self 
+end
+
+--- Set that (jet) aircraft are **not** allowed to use afterburner in mission execution phase. Default is use of afterburner is allowed.
+-- @param #AUFTRAG self
+-- @return #AUFTRAG self
+function AUFTRAG:SetProhibitAfterburnerExecutePhase()
+  self.prohibitABExecute = true
+  return self 
+end
+
+--- Set that (jet) aircraft are allowed to use afterburner in mission execution phase. Default is use of afterburner is allowed.
+-- @param #AUFTRAG self
+-- @return #AUFTRAG self
+function AUFTRAG:SetAllowAfterburnerExecutePhase()
+  self.prohibitABExecute = false
+  return self 
+end
+
+-- prohibitABExecute
 
 --- **[LEGION, COMMANDER, CHIEF]** Assign a legion cohort to the mission. Only these cohorts will be considered for the job.
 -- @param #AUFTRAG self
