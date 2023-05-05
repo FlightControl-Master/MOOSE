@@ -540,7 +540,7 @@ do -- COORDINATE
     local gotscenery=false
 
     local function EvaluateZone(ZoneObject)
-      BASE:T({ZoneObject})
+
       if ZoneObject then
 
         -- Get category of scanned object.
@@ -3283,7 +3283,52 @@ do -- COORDINATE
 
     return self:GetTemperatureText( nil, Settings )
   end
-
+  
+  
+  --- Function to check if a coordinate is in a steep (>8% elevation) area of the map
+  -- @param #COORDINATE self
+  -- @param #number Radius (Optional) Radius to check around the coordinate, defaults to 50m (100m diameter)
+  -- @param #number Minelevation (Optional) Elevation from which on a area is defined as steep, defaults to 8% (8m height gain across 100 meters)
+  -- @return #boolen IsSteep If true, area is steep
+  -- @return #number MaxElevation Elevation in meters measured over 100m
+  function COORDINATE:IsInSteepArea(Radius,Minelevation)
+    local steep = false
+    local elev = Minelevation or 8
+    local bdelta = 0
+    local h0 = self:GetLandHeight()
+    local radius = Radius or 50
+    local diam = radius * 2
+    for i=0,150,30 do
+      local polar = math.fmod(i+180,360)
+      local c1 = self:Translate(radius,i,false,false)
+      local c2 = self:Translate(radius,polar,false,false)
+      local h1 = c1:GetLandHeight()
+      local h2 = c2:GetLandHeight()
+      local d1 = math.abs(h1-h2)
+      local d2 = math.abs(h0-h1)
+      local d3 = math.abs(h0-h2)
+      local dm = d1 > d2 and d1 or d2
+      local dm1 = dm > d3 and dm or d3
+      bdelta = dm1 > bdelta and dm1 or bdelta
+      self:T(string.format("d1=%d, d2=%d, d3=%d, max delta=%d",d1,d2,d3,bdelta))
+    end
+    local steepness = bdelta / (radius / 100)    
+    if steepness >= elev then steep = true end
+    return steep, math.floor(steepness)
+  end
+  
+    --- Function to check if a coordinate is in a flat (<8% elevation) area of the map
+  -- @param #COORDINATE self
+  -- @param #number Radius (Optional) Radius to check around the coordinate, defaults to 50m (100m diameter)
+  -- @param #number Minelevation (Optional) Elevation from which on a area is defined as steep, defaults to 8% (8m height gain across 100 meters)
+  -- @return #boolen IsFlat If true, area is flat
+  -- @return #number MaxElevation Elevation in meters measured over 100m
+  function COORDINATE:IsInFlatArea(Radius,Minelevation)
+    local steep, elev = self:IsInSteepArea(Radius,Minelevation)
+    local flat = not steep
+    return flat, elev
+  end
+  
 end
 
 do -- POINT_VEC3
