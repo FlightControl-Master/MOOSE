@@ -443,9 +443,9 @@ end
 -- @param #AI_ESCORT self
 -- @param #number XStart The start position on the X-axis in meters for the first group.
 -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YStart The start position on the Y-axis in meters for the first group.
 -- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZStart The start position on the Z-axis in meters for the first group.
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 -- @param #number ZLevels The amount of levels on the Z-axis.
 -- @return #AI_ESCORT
@@ -493,9 +493,9 @@ end
 -- @param #AI_ESCORT self
 -- @param #number XStart The start position on the X-axis in meters for the first group.
 -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YStart The start position on the Y-axis in meters for the first group.
 -- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZStart The start position on the Z-axis in meters for the first group.
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 -- @param #number ZLevels The amount of levels on the Z-axis.
 -- @return #AI_ESCORT
@@ -580,7 +580,7 @@ end
 -- @param #AI_ESCORT self
 -- @param #number XStart The start position on the X-axis in meters for the first group.
 -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YStart The start position on the Y-axis in meters for the first group.
 -- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationTrail( XStart, XSpace, YStart )
 
@@ -594,7 +594,7 @@ end
 -- @param #AI_ESCORT self
 -- @param #number XStart The start position on the X-axis in meters for the first group.
 -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YStart The start position on the Y-axis in meters for the first group.
 -- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
 -- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationStack( XStart, XSpace, YStart, YSpace )
@@ -609,8 +609,8 @@ end
 -- This menu will appear under **Formation**.
 -- @param #AI_ESCORT self
 -- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number YStart The start position on the Y-axis in meters for the first group.
+-- @param #number ZStart The start position on the Z-axis in meters for the first group.
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 -- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationLeftLine( XStart, YStart, ZStart, ZSpace )
@@ -625,8 +625,8 @@ end
 -- This menu will appear under **Formation**.
 -- @param #AI_ESCORT self
 -- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number YStart The start position on the Y-axis in meters for the first group.
+-- @param #number ZStart The start position on the Z-axis in meters for the first group.
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 -- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationRightLine( XStart, YStart, ZStart, ZSpace )
@@ -642,8 +642,8 @@ end
 -- @param #AI_ESCORT self
 -- @param #number XStart The start position on the X-axis in meters for the first group.
 -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number YStart The start position on the Y-axis in meters for the first group.
+-- @param #number ZStart The start position on the Z-axis in meters for the first group.
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 -- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationLeftWing( XStart, XSpace, YStart, ZStart, ZSpace )
@@ -659,8 +659,8 @@ end
 -- @param #AI_ESCORT self
 -- @param #number XStart The start position on the X-axis in meters for the first group.
 -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number YStart The start position on the Y-axis in meters for the first group.
+-- @param #number ZStart The start position on the Z-axis in meters for the first group.
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 -- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationRightWing( XStart, XSpace, YStart, ZStart, ZSpace )
@@ -676,9 +676,9 @@ end
 -- @param #AI_ESCORT self
 -- @param #number XStart The start position on the X-axis in meters for the first group.
 -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YStart The start position on the Y-axis in meters for the first group.
 -- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZStart The start position on the Z-axis in meters for the first group.
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 -- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationCenterWing( XStart, XSpace, YStart, YSpace, ZStart, ZSpace )
@@ -694,9 +694,9 @@ end
 -- @param #AI_ESCORT self
 -- @param #number XStart The start position on the X-axis in meters for the first group.
 -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YStart The start position on the Y-axis in meters for the first group.
 -- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZStart The start position on the Z-axis in meters for the first group.
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 -- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationVic( XStart, XSpace, YStart, YSpace, ZStart, ZSpace )
@@ -712,9 +712,9 @@ end
 -- @param #AI_ESCORT self
 -- @param #number XStart The start position on the X-axis in meters for the first group.
 -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YStart The start position on the Y-axis in meters for the first group.
 -- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZStart The start position on the Z-axis in meters for the first group.
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 -- @param #number ZLevels The amount of levels on the Z-axis.
 -- @return #AI_ESCORT
@@ -1471,7 +1471,7 @@ end
 -- @param #AI_ESCORT self
 -- @param #number XStart The start position on the X-axis in meters for the first group.
 -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YStart The start position on the Y-axis in meters for the first group.
 -- @return #AI_ESCORT
 function AI_ESCORT:_EscortFormationTrail( EscortGroup, XStart, XSpace, YStart )
 
