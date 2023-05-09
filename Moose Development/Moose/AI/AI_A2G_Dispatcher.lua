@@ -1,4 +1,4 @@
---- **AI** - Create an automated A2G defense system based on a detection network of reconnaissance vehicles and air units, coordinating SEAD, BAI and CAS operations.
+--- **AI** - Create an automated A2G defense system with reconnaissance units, coordinating SEAD, BAI and CAS operations.
 -- 
 -- ===
 -- 
@@ -951,7 +951,7 @@ do -- AI_A2G_DISPATCHER
   AI_A2G_DISPATCHER.DefenseQueue = {}
   
   --- Defense approach types.
-  -- @type #AI_A2G_DISPATCHER.DefenseApproach
+  -- @type AI_A2G_DISPATCHER.DefenseApproach
   AI_A2G_DISPATCHER.DefenseApproach = {
     Random = 1,
     Distance = 2,
@@ -1806,6 +1806,19 @@ do -- AI_A2G_DISPATCHER
     return DefenderSquadron
   end
 
+  --- Get a resource count from a specific squadron
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string Squadron Name of the squadron.
+  -- @return #number Number of airframes available or nil if the squadron does not exist
+  function AI_A2G_DISPATCHER:QuerySquadron(Squadron)
+    local Squadron = self:GetSquadron(Squadron)
+    if Squadron.ResourceCount then
+      self:T2(string.format("%s = %s",Squadron.Name,Squadron.ResourceCount))
+      return Squadron.ResourceCount
+    end
+    self:F({Squadron = Squadron.Name,SquadronResourceCount = Squadron.ResourceCount})
+    return nil
+  end
   
   --- Set the Squadron visible before startup of the dispatcher.
   -- All planes will be spawned as uncontrolled on the parking spot.
@@ -1839,7 +1852,7 @@ do -- AI_A2G_DISPATCHER
   --- Check if the Squadron is visible before startup of the dispatcher.
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
-  -- @return #bool true if visible.
+  -- @return #boolean true if visible.
   -- @usage
   -- 
   --        -- Set the Squadron visible before startup of dispatcher.
