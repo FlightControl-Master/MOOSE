@@ -951,7 +951,7 @@ do -- AI_A2G_DISPATCHER
   AI_A2G_DISPATCHER.DefenseQueue = {}
   
   --- Defense approach types.
-  -- @type #AI_A2G_DISPATCHER.DefenseApproach
+  -- @type AI_A2G_DISPATCHER.DefenseApproach
   AI_A2G_DISPATCHER.DefenseApproach = {
     Random = 1,
     Distance = 2,

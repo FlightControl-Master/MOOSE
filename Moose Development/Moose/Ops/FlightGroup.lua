@@ -206,7 +206,7 @@ FLIGHTGROUP.PlayerSkill = {
 
 --- Player data.
 -- @type FLIGHTGROUP.PlayerData
--- @type #string name Player name.
+-- @field #string name Player name.
 -- @field #boolean subtitles Display subtitles.
 -- @field #string skill Skill level.
 

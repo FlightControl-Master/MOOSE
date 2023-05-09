@@ -947,7 +947,7 @@ do -- AI_AIR_DISPATCHER
   AI_AIR_DISPATCHER.DefenseQueue = {}
 
   --- Defense approach types
-  -- @type #AI_AIR_DISPATCHER.DefenseApproach
+  -- @type AI_AIR_DISPATCHER.DefenseApproach
   AI_AIR_DISPATCHER.DefenseApproach = {
     Random = 1,
     Distance = 2,
