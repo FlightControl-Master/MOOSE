@@ -1687,6 +1687,20 @@ do -- AI_A2A_DISPATCHER
 
     return DefenderSquadron
   end
+  
+  --- Get a resource count from a specific squadron
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string Squadron Name of the squadron.
+  -- @return #number Number of airframes available or nil if the squadron does not exist
+  function AI_A2A_DISPATCHER:QuerySquadron(Squadron)
+    local Squadron = self:GetSquadron(Squadron)
+    if Squadron.ResourceCount then
+      self:T2(string.format("%s = %s",Squadron.Name,Squadron.ResourceCount))
+      return Squadron.ResourceCount
+    end
+    self:F({Squadron = Squadron.Name,SquadronResourceCount = Squadron.ResourceCount})
+    return nil
+  end
 
   --- [DEPRECATED - Might create problems launching planes] Set the Squadron visible before startup of the dispatcher.
   -- All planes will be spawned as uncontrolled on the parking spot.
