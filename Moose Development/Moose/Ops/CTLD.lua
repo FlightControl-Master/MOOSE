@@ -1219,7 +1219,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.35"
+CTLD.version="1.0.36"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2335,7 +2335,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
       rheading = UTILS.RandomGaussian(0,30,-90,90,100)
       rheading = math.fmod((heading + rheading + addon), 360)
     else
-      local initialSpacing = IsHerc and 16 or 12 -- initial spacing of the first crates
+      local initialSpacing = IsHerc and 16 or (capabilities.length+2) -- initial spacing of the first crates
       local crateSpacing = 4 -- further spacing of remaining crates
       local lateralSpacing = 4 -- lateral spacing of crates
       local nrSideBySideCrates = 3 -- number of crates that are placed side-by-side
