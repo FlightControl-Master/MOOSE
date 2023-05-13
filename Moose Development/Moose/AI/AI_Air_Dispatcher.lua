@@ -947,7 +947,7 @@ do -- AI_AIR_DISPATCHER
   AI_AIR_DISPATCHER.DefenseQueue = {}
 
   --- Defense approach types
-  -- @type #AI_AIR_DISPATCHER.DefenseApproach
+  -- @type AI_AIR_DISPATCHER.DefenseApproach
   AI_AIR_DISPATCHER.DefenseApproach = {
     Random = 1,
     Distance = 2,
@@ -1852,7 +1852,7 @@ do -- AI_AIR_DISPATCHER
   --- Check if the Squadron is visible before startup of the dispatcher.
   -- @param #AI_AIR_DISPATCHER self
   -- @param #string SquadronName The squadron name.
-  -- @return #bool true if visible.
+  -- @return #boolean true if visible.
   -- @usage
   -- 
   --        -- Set the Squadron visible before startup of dispatcher.
