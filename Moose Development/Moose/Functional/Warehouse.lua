@@ -1798,7 +1798,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="1.0.2"
+WAREHOUSE.version="1.0.2a"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -4561,7 +4561,8 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       self:_ErrorMessage("ERROR: Cargo transport by train not supported yet!")
       return
 
-    elseif Request.transporttype==WAREHOUSE.TransportType.SHIP or Request.transporttype==WAREHOUSE.TransportType.NAVALCARRIER then
+    elseif Request.transporttype==WAREHOUSE.TransportType.SHIP or Request.transporttype==WAREHOUSE.TransportType.NAVALCARRIER
+      or Request.transporttype==WAREHOUSE.TransportType.ARMEDSHIP or Request.transporttype==WAREHOUSE.TransportType.WARSHIP then
 
       -- Spawn Ship in port zone
       spawngroup=self:_SpawnAssetGroundNaval(_alias, _assetitem, Request, self.portzone)
@@ -5829,62 +5830,65 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
 
     -- Get stock item.
     local asset=cargoassets[i] --#WAREHOUSE.Assetitem
+    
+    if not asset.spawned then
 
-    -- Set asset status to not spawned until we capture its birth event.
-    asset.spawned=false
-    asset.iscargo=true
-
-    -- Set request ID.
-    asset.rid=Request.uid
-
-    -- Spawn group name.
-    local _alias=asset.spawngroupname
-
-    --Request add asset by id.
-    Request.assets[asset.uid]=asset
-
-    -- Spawn an asset group.
-    local _group=nil --Wrapper.Group#GROUP
-    if asset.category==Group.Category.GROUND then
-
-      -- Spawn ground troops.
-      _group=self:_SpawnAssetGroundNaval(_alias, asset, Request, self.spawnzone, Request.lateActivation)
-
-    elseif asset.category==Group.Category.AIRPLANE or asset.category==Group.Category.HELICOPTER then
-
-      -- Spawn air units.
-      if Parking[asset.uid] then
-        _group=self:_SpawnAssetAircraft(_alias, asset, Request, Parking[asset.uid], UnControlled, Request.lateActivation)
-      else
-        _group=self:_SpawnAssetAircraft(_alias, asset, Request, nil, UnControlled, Request.lateActivation)
-      end
-
-    elseif asset.category==Group.Category.TRAIN then
-
-      -- Spawn train.
-      if self.rail then
-        --TODO: Rail should only get one asset because they would spawn on top!
-
-        -- Spawn naval assets.
+      -- Set asset status to not spawned until we capture its birth event.
+      asset.iscargo=true
+  
+      -- Set request ID.
+      asset.rid=Request.uid
+  
+      -- Spawn group name.
+      local _alias=asset.spawngroupname
+  
+      --Request add asset by id.
+      Request.assets[asset.uid]=asset
+  
+      -- Spawn an asset group.
+      local _group=nil --Wrapper.Group#GROUP
+      if asset.category==Group.Category.GROUND then
+  
+        -- Spawn ground troops.
         _group=self:_SpawnAssetGroundNaval(_alias, asset, Request, self.spawnzone, Request.lateActivation)
+  
+      elseif asset.category==Group.Category.AIRPLANE or asset.category==Group.Category.HELICOPTER then
+  
+        -- Spawn air units.
+        if Parking[asset.uid] then
+          _group=self:_SpawnAssetAircraft(_alias, asset, Request, Parking[asset.uid], UnControlled, Request.lateActivation)
+        else
+          _group=self:_SpawnAssetAircraft(_alias, asset, Request, nil, UnControlled, Request.lateActivation)
+        end
+  
+      elseif asset.category==Group.Category.TRAIN then
+  
+        -- Spawn train.
+        if self.rail then
+          --TODO: Rail should only get one asset because they would spawn on top!
+  
+          -- Spawn naval assets.
+          _group=self:_SpawnAssetGroundNaval(_alias, asset, Request, self.spawnzone, Request.lateActivation)
+        end
+  
+        --self:E(self.lid.."ERROR: Spawning of TRAIN assets not possible yet!")
+  
+      elseif asset.category==Group.Category.SHIP then
+  
+        -- Spawn naval assets.
+        _group=self:_SpawnAssetGroundNaval(_alias, asset, Request, self.portzone, Request.lateActivation)
+  
+      else
+        self:E(self.lid.."ERROR: Unknown asset category!")
       end
-
-      --self:E(self.lid.."ERROR: Spawning of TRAIN assets not possible yet!")
-
-    elseif asset.category==Group.Category.SHIP then
-
-      -- Spawn naval assets.
-      _group=self:_SpawnAssetGroundNaval(_alias, asset, Request, self.portzone, Request.lateActivation)
-
-    else
-      self:E(self.lid.."ERROR: Unknown asset category!")
+      
+      -- Trigger event.
+      if _group then
+        self:__AssetSpawned(0.01, _group, asset, Request)
+      end    
+  
     end
     
-    -- Trigger event.
-    if _group then
-      self:__AssetSpawned(0.01, _group, asset, Request)
-    end    
-
   end
 
 end
