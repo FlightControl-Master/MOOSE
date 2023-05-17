@@ -725,6 +725,8 @@ do
 --          my_ctld.movecratesbeforebuild = true -- crates must be moved once before they can be build. Set to false for direct builds.
 --          my_ctld.surfacetypes = {land.SurfaceType.LAND,land.SurfaceType.ROAD,land.SurfaceType.RUNWAY,land.SurfaceType.SHALLOW_WATER} -- surfaces for loading back objects.
 --          my_ctld.nobuildmenu = false -- if set to true effectively enforces to have engineers build/repair stuff for you.
+--          my_ctld.RadioSound = "beacon.ogg" -- -- this sound will be hearable if you tune in the beacon frequency. Add the sound file to your miz.
+--          my_ctld.RadioSoundFC3 = "beacon.ogg" -- this sound will be hearable by FC3 users (actually all UHF radios); change to something like "beaconsilent.ogg" and add the sound file to your miz if you don't want to annoy FC3 pilots.
 --          
 -- ## 2.1 User functions
 -- 
@@ -1219,7 +1221,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.36"
+CTLD.version="1.0.37"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1302,6 +1304,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   
   -- radio beacons
   self.RadioSound = "beacon.ogg"
+  self.RadioSoundFC3 = "beacon.ogg"
   self.RadioPath = "l10n/DEFAULT/"
   
   -- zones stuff
@@ -4023,7 +4026,7 @@ function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation, IsShip, IsDropped)
     local Sound =  self.RadioPath..Sound
     trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, Frequency, 1000, Name..math.random(1,10000)) -- Beacon in MP only runs for 30secs straight
     self:T2(string.format("Beacon added | Name = %s | Sound = %s | Vec3 = %d %d %d | Freq = %f | Modulation = %d (0=AM/1=FM)",Name,Sound,ZoneVec3.x,ZoneVec3.y,ZoneVec3.z,Mhz,Modulation))
-    else
+  else
     local ZoneCoord = Zone:GetCoordinate()
     local ZoneVec3 = ZoneCoord:GetVec3() or {x=0,y=0,z=0}
     local Frequency = Mhz * 1000000 -- Freq in Hert
@@ -4077,6 +4080,7 @@ function CTLD:_RefreshRadioBeacons()
       -- Get Beacon object from zone
       local czone = cargozone -- #CTLD.CargoZone
       local Sound = self.RadioSound
+      local Silent = self.RadioSoundFC3 or self.RadioSound
       if czone.active and czone.hasbeacon then
         local FMbeacon = czone.fmbeacon -- #CTLD.ZoneBeacon
         local VHFbeacon = czone.vhfbeacon -- #CTLD.ZoneBeacon
@@ -4086,8 +4090,8 @@ function CTLD:_RefreshRadioBeacons()
         local VHF = VHFbeacon.frequency -- KHz
         local UHF = UHFbeacon.frequency  -- MHz   
         self:_AddRadioBeacon(Name,Sound,FM, CTLD.RadioModulation.FM, IsShip, IsDropped)
-        self:_AddRadioBeacon(Name,Sound,VHF,CTLD.RadioModulation.FM, IsShip, IsDropped)
-        self:_AddRadioBeacon(Name,Sound,UHF,CTLD.RadioModulation.AM, IsShip, IsDropped)
+        self:_AddRadioBeacon(Name,Sound,VHF,CTLD.RadioModulation.AM, IsShip, IsDropped)
+        self:_AddRadioBeacon(Name,Silent,UHF,CTLD.RadioModulation.AM, IsShip, IsDropped)
       end
     end
   end

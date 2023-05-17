@@ -1692,7 +1692,9 @@ function CONTROLLABLE:EnRouteTaskSEAD(TargetTypes, Priority)
   return DCSTask
 end
 
---- (AIR) Engaging a controllable. The task does not assign the target controllable to the unit/controllable to attack now; it just allows the unit/controllable to engage the target controllable as well as other assigned targets.
+--- (AIR) Engaging a controllable. The task does not assign the target controllable to the unit/controllable to attack now; 
+-- it just allows the unit/controllable to engage the target controllable as well as other assigned targets.
+-- See [hoggit](https://wiki.hoggitworld.com/view/DCS_task_engageGroup).
 -- @param #CONTROLLABLE self
 -- @param #CONTROLLABLE AttackGroup The Controllable to be attacked.
 -- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first.
@@ -1741,6 +1743,7 @@ function CONTROLLABLE:EnRouteTaskEngageGroup( AttackGroup, Priority, WeaponType,
 end
 
 --- (AIR) Search and attack the Unit.
+-- See [hoggit](https://wiki.hoggitworld.com/view/DCS_task_engageUnit).
 -- @param #CONTROLLABLE self
 -- @param Wrapper.Unit#UNIT EngageUnit The UNIT.
 -- @param #number Priority (optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first.
@@ -1776,6 +1779,7 @@ function CONTROLLABLE:EnRouteTaskEngageUnit( EngageUnit, Priority, GroupAttack, 
 end
 
 --- (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.
+-- [hoggit](https://wiki.hoggitworld.com/view/DCS_task_awacs).
 -- @param #CONTROLLABLE self
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskAWACS()
@@ -1789,6 +1793,7 @@ function CONTROLLABLE:EnRouteTaskAWACS()
 end
 
 --- (AIR) Aircraft will act as a tanker for friendly units. No parameters.
+-- See [hoggit](https://wiki.hoggitworld.com/view/DCS_task_tanker).
 -- @param #CONTROLLABLE self
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskTanker()
@@ -1804,6 +1809,7 @@ end
 -- En-route tasks for ground units/controllables
 
 --- (GROUND) Ground unit (EW-radar) will act as an EWR for friendly units (will provide them with information about contacts). No parameters.
+-- See [hoggit](https://wiki.hoggitworld.com/view/DCS_task_ewr).
 -- @param #CONTROLLABLE self
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskEWR()
@@ -1821,14 +1827,17 @@ end
 --- (AIR + GROUND) The task makes the controllable/unit a FAC and lets the FAC to choose the target (enemy ground controllable) as well as other assigned targets.
 -- The killer is player-controlled allied CAS-aircraft that is in contact with the FAC.
 -- If the task is assigned to the controllable lead unit will be a FAC.
+-- See [hoggit](https://wiki.hoggitworld.com/view/DCS_task_fac_engageGroup).
 -- @param #CONTROLLABLE self
 -- @param #CONTROLLABLE AttackGroup Target CONTROLLABLE.
 -- @param #number Priority (Optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Default is 0.
 -- @param #number WeaponType (Optional) Bitmask of weapon types those allowed to use. Default is "Auto".
 -- @param DCS#AI.Task.Designation Designation (Optional) Designation type.
 -- @param #boolean Datalink (optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default.
+-- @param #number CallsignID CallsignID, e.g. `CALLSIGN.JTAC.Anvil` for ground or `CALLSIGN.Aircraft.Ford` for air.
+-- @param #number CallsignNumber Callsign first number, e.g. 2 for `Ford-2`.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:EnRouteTaskFAC_EngageGroup( AttackGroup, Priority, WeaponType, Designation, Datalink )
+function CONTROLLABLE:EnRouteTaskFAC_EngageGroup( AttackGroup, Priority, WeaponType, Designation, Datalink, Frequency, Modulation, CallsignID, CallsignNumber )
 
   local DCSTask = {
     id = 'FAC_EngageControllable',
@@ -1837,6 +1846,10 @@ function CONTROLLABLE:EnRouteTaskFAC_EngageGroup( AttackGroup, Priority, WeaponT
       weaponType  = WeaponType or "Auto",
       designation = Designation,
       datalink    = Datalink and Datalink or false,
+      frequency   = (Frequency or 133)*1000000,
+      modulation  = Modulation or radio.modulation.AM,
+      callname    = CallsignID,
+      number      = CallsignNumber,            
       priority    = Priority or 0,
     },
   }
@@ -1845,27 +1858,26 @@ function CONTROLLABLE:EnRouteTaskFAC_EngageGroup( AttackGroup, Priority, WeaponT
 end
 
 --- (AIR + GROUND) The task makes the controllable/unit a FAC and lets the FAC to choose a targets (enemy ground controllable) around as well as other assigned targets.
--- The killer is player-controlled allied CAS-aircraft that is in contact with the FAC.
--- If the task is assigned to the controllable lead unit will be a FAC.
+-- Assigns the controlled group to act as a Forward Air Controller or JTAC. Any detected targets will be assigned as targets to the player via the JTAC radio menu. 
+-- Target designation is set to auto and is dependent on the circumstances.
+-- See [hoggit](https://wiki.hoggitworld.com/view/DCS_task_fac).
 -- @param #CONTROLLABLE self
--- @param DCS#Distance Radius  The maximal distance from the FAC to a target.
+-- @param #number Frequency Frequency in MHz. Default 133 MHz.
+-- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
+-- @param #number CallsignID CallsignID, e.g. `CALLSIGN.JTAC.Anvil` for ground or `CALLSIGN.Aircraft.Ford` for air.
+-- @param #number CallsignNumber Callsign first number, e.g. 2 for `Ford-2`.
 -- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:EnRouteTaskFAC( Radius, Priority )
-
-  --  FAC = {
-  --    id = 'FAC',
-  --    params = {
-  --      radius = Distance,
-  --      priority = number
-  --    }
-  --  }
+function CONTROLLABLE:EnRouteTaskFAC( Frequency, Modulation, CallsignID, CallsignNumber, Priority )
 
   local DCSTask = {
     id = 'FAC',
     params = {
-      radius = Radius,
-      priority = Priority
+      frequency  = (Frequency or 133)*1000000,
+      modulation = Modulation or radio.modulation.AM,
+      callname   = CallsignID,
+      number     = CallsignNumber,      
+      priority   = Priority or 0
     }
   }
 
