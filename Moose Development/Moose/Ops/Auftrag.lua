@@ -114,6 +114,9 @@
 -- @field #number NcarriersMax Max number of required carrier assets.
 -- @field Core.Zone#ZONE transportDeployZone Deploy zone of an OPSTRANSPORT.
 -- @field Core.Zone#ZONE transportDisembarkZone Disembark zone of an OPSTRANSPORT.
+-- @param #table Categories Transport group categories.
+-- @field #table transportAttributes Generalized attribute(s) of transport assets.
+-- @field #table transportProperties DCS attribute(s) of transport assets.
 --
 -- @field #number artyRadius Radius in meters.
 -- @field #number artyShots Number of shots fired.
@@ -3056,12 +3059,18 @@ end
 -- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
 -- @param #number NcarriersMax Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
 -- @param Core.Zone#ZONE DisembarkZone Zone where assets are disembarked to.
+-- @param #table Categories Group categories.
+-- @param #table Attributes Generalizes group attributes.
+-- @param #table Properties DCS attributes.
 -- @return #AUFTRAG self
-function AUFTRAG:SetRequiredTransport(DeployZone, NcarriersMin, NcarriersMax, DisembarkZone)
+function AUFTRAG:SetRequiredTransport(DeployZone, NcarriersMin, NcarriersMax, DisembarkZone, Categories, Attributes, Properties)
 
   -- OPS transport from pickup to deploy zone.
   self.transportDeployZone=DeployZone
   self.transportDisembarkZone=DisembarkZone
+  self.transportCategories = UTILS.EnsureTable(Categories, true)
+  self.transportAttributes = UTILS.EnsureTable(Attributes, true)
+  self.transportProperties = UTILS.EnsureTable(Properties, true)
 
   -- Set required carriers.
   self:SetRequiredCarriers(NcarriersMin, NcarriersMax)

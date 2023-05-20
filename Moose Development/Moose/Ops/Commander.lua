@@ -1508,7 +1508,7 @@ function COMMANDER:CheckMissionQueue()
             local Transport=nil
             local Legions=mission.transportLegions or self.legions
             
-            TransportAvail, Transport=LEGION.AssignAssetsForTransport(self, Legions, assets, mission.NcarriersMin, mission.NcarriersMax, mission.transportDeployZone, mission.transportDisembarkZone)
+            TransportAvail, Transport=LEGION.AssignAssetsForTransport(self, Legions, assets, mission.NcarriersMin, mission.NcarriersMax, mission.transportDeployZone, mission.transportDisembarkZone, mission.transportCategories, mission.transportAttributes, mission.transportProperties)
             
             -- Add opstransport to mission.
             if TransportAvail and Transport then

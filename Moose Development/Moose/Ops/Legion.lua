@@ -714,7 +714,7 @@ function LEGION:CheckMissionQueue()
             local Legions=mission.transportLegions or {self}
                         
             -- Assign carrier assets for transport.
-            TransportAvail, Transport=self:AssignAssetsForTransport(Legions, assets, mission.NcarriersMin, mission.NcarriersMax, mission.transportDeployZone, mission.transportDisembarkZone)
+            TransportAvail, Transport=self:AssignAssetsForTransport(Legions, assets, mission.NcarriersMin, mission.NcarriersMax, mission.transportDeployZone, mission.transportDisembarkZone, mission.transportCategories, mission.transportAttributes, mission.transportProperties)
           end
           
           -- Add opstransport to mission.
