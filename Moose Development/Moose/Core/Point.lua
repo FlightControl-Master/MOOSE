@@ -614,8 +614,8 @@ do -- COORDINATE
 
     local set=SET_STATIC:New()
 
-    for _,unit in pairs(statics) do
-      set:AddUnit(unit)
+    for _,stat in pairs(statics) do
+      set:AddStatic(STATIC:Find(stat))
     end
 
     return set
