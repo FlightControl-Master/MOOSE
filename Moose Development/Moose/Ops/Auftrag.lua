@@ -642,7 +642,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="1.1.0"
+AUFTRAG.version="1.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1459,9 +1459,9 @@ function AUFTRAG:NewCASENHANCED(CasZone, Altitude, Speed, RangeMax, NoEngageZone
   return mission
 end
 
---- **[AIR]** Create a FAC mission. Group(s) will go to the zone and patrol it randomly and act as FAC for detected units.
+--- **[AIR, GROUND]** Create a FAC mission. Group(s) will go to the zone and patrol it randomly and act as FAC for detected units.
 -- @param #AUFTRAG self
--- @param Core.Zone#ZONE CasZone The CAS zone.
+-- @param Core.Zone#ZONE FacZone The FAC zone (or name of zone) where to patrol.
 -- @param #number Speed Speed in knots.
 -- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL. 
 -- @param #number Frequency Frequency in MHz.
@@ -1479,6 +1479,9 @@ function AUFTRAG:NewFAC(FacZone, Speed, Altitude, Frequency, Modulation)
   mission:_TargetFromObject(FacZone)
 
   mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.FAC)
+  
+  mission.facFreq=Frequency or 133
+  mission.facModu=Modulation or radio.modulation.AM
 
   mission.optionROE=ENUMS.ROE.ReturnFire
   mission.optionROT=ENUMS.ROT.EvadeFire
@@ -1488,7 +1491,7 @@ function AUFTRAG:NewFAC(FacZone, Speed, Altitude, Frequency, Modulation)
   mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
   mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or nil
 
-  mission.categories={AUFTRAG.Category.AIRCRAFT}
+  mission.categories={AUFTRAG.Category.AIRCRAFT, AUFTRAG.Category.GROUND}
 
   mission.DCStask=mission:GetDCSMissionTask()
   

@@ -95,7 +95,7 @@ OPSZONE.ZoneType={
 
 --- OPSZONE class version.
 -- @field #string version
-OPSZONE.version="0.5.0"
+OPSZONE.version="0.6.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -127,7 +127,7 @@ OPSZONE.version="0.5.0"
 -- 
 function OPSZONE:New(Zone, CoalitionOwner)
 
-  -- Inherit everything from LEGION class.
+  -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #OPSZONE
   
   -- Check if zone name instead of ZONE object was passed.
@@ -817,6 +817,15 @@ function OPSZONE:onafterCaptured(From, Event, To, NewOwnerCoalition)
   -- Set owners.
   self.ownerPrevious=self.ownerCurrent
   self.ownerCurrent=NewOwnerCoalition
+  
+  if self.drawZone then
+  
+    self.zone:UndrawZone()
+    
+    local color=self:_GetZoneColor()
+    
+    self.zone:DrawZone(nil, color, 1.0, color, 0.5)
+  end  
 
   for _,_chief in pairs(self.chiefs) do
     local chief=_chief --Ops.Chief#CHIEF
