@@ -400,6 +400,7 @@ _AUFTRAGSNR=0
 -- @field #string CAP Combat Air Patrol.
 -- @field #string CAS Close Air Support.
 -- @field #string ESCORT Escort mission.
+-- @field #string FAC Forward AirController mission.
 -- @field #string FACA Forward AirController airborne mission.
 -- @field #string FERRY Ferry mission.
 -- @field #string INTERCEPT Intercept mission.
@@ -443,6 +444,7 @@ AUFTRAG.Type={
   CAP="CAP",
   CAS="CAS",
   ESCORT="Escort",
+  FAC="FAC",
   FACA="FAC-A",
   FERRY="Ferry Flight",
   INTERCEPT="Intercept",
@@ -640,7 +642,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="1.1.0"
+AUFTRAG.version="1.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1450,6 +1452,46 @@ function AUFTRAG:NewCASENHANCED(CasZone, Altitude, Speed, RangeMax, NoEngageZone
   mission.dTevaluate=15
   
   mission.categories={AUFTRAG.Category.AIRCRAFT}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+
+  return mission
+end
+
+--- **[AIR, GROUND]** Create a FAC mission. Group(s) will go to the zone and patrol it randomly and act as FAC for detected units.
+-- @param #AUFTRAG self
+-- @param Core.Zone#ZONE FacZone The FAC zone (or name of zone) where to patrol.
+-- @param #number Speed Speed in knots.
+-- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL. 
+-- @param #number Frequency Frequency in MHz.
+-- @param #number Modulation Modulation.
+-- @return #AUFTRAG self
+function AUFTRAG:NewFAC(FacZone, Speed, Altitude, Frequency, Modulation)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.FAC)
+
+  -- Ensure we got a ZONE and not just the zone name.
+  if type(FacZone)=="string" then
+    FacZone=ZONE:FindByName(FacZone)
+  end
+
+  mission:_TargetFromObject(FacZone)
+
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.FAC)
+  
+  mission.facFreq=Frequency or 133
+  mission.facModu=Modulation or radio.modulation.AM
+
+  mission.optionROE=ENUMS.ROE.ReturnFire
+  mission.optionROT=ENUMS.ROT.EvadeFire
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+
+  mission.missionFraction=1.0
+  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
+  mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or nil
+
+  mission.categories={AUFTRAG.Category.AIRCRAFT, AUFTRAG.Category.GROUND}
 
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -2567,6 +2609,7 @@ function AUFTRAG:NewAUTO(EngageGroup)
     mission=AUFTRAG:NewESCORT(EscortGroup,OffsetVector,EngageMaxDistance,TargetTypes)
   elseif auftrag==AUFTRAG.Type.FACA then
     mission=AUFTRAG:NewFACA(Target,Designation,DataLink,Frequency,Modulation)
+  
   elseif auftrag==AUFTRAG.Type.FERRY then
     -- Not implemented yet.
   elseif auftrag==AUFTRAG.Type.GCICAP then
@@ -5749,13 +5792,37 @@ function AUFTRAG:GetDCSMissionTask()
 
   elseif self.type==AUFTRAG.Type.FACA then
 
-    -----------------
-    -- FAC Mission --
-    -----------------
+    ------------------
+    -- AFAC Mission --
+    ------------------
 
     local DCStask=CONTROLLABLE.TaskFAC_AttackGroup(nil, self.engageTarget:GetObject(), self.engageWeaponType, self.facDesignation, self.facDatalink, self.facFreq, self.facModu, CallsignName, CallsignNumber)
 
     table.insert(DCStasks, DCStask)
+
+  elseif self.type==AUFTRAG.Type.FAC then
+
+    -----------------
+    -- FAC Mission --
+    -----------------
+
+    local DCStask={}
+
+    DCStask.id=AUFTRAG.SpecialTask.PATROLZONE
+
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
+    local param={}
+    param.zone=self:GetObjective()
+    param.altitude=self.missionAltitude
+    param.speed=self.missionSpeed
+
+    DCStask.params=param
+
+    table.insert(DCStasks, DCStask)
+
+    -- Enroute task FAC
+    local DCSenroute=CONTROLLABLE.EnRouteTaskFAC(self, self.facFreq, self.facModu)
+    table.insert(self.enrouteTasks, DCSenroute)
 
   elseif self.type==AUFTRAG.Type.FERRY then
 
@@ -6400,6 +6467,8 @@ function AUFTRAG:GetMissionTaskforMissionType(MissionType)
     mtask=ENUMS.MissionTask.ESCORT
   elseif MissionType==AUFTRAG.Type.FACA then
     mtask=ENUMS.MissionTask.AFAC
+  elseif MissionType==AUFTRAG.Type.FAC then
+    mtask=ENUMS.MissionTask.AFAC    
   elseif MissionType==AUFTRAG.Type.FERRY then
     mtask=ENUMS.MissionTask.NOTHING
   elseif MissionType==AUFTRAG.Type.INTERCEPT then
