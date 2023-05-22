@@ -1798,7 +1798,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="1.0.2"
+WAREHOUSE.version="1.0.2a"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -4561,7 +4561,8 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       self:_ErrorMessage("ERROR: Cargo transport by train not supported yet!")
       return
 
-    elseif Request.transporttype==WAREHOUSE.TransportType.SHIP or Request.transporttype==WAREHOUSE.TransportType.NAVALCARRIER then
+    elseif Request.transporttype==WAREHOUSE.TransportType.SHIP or Request.transporttype==WAREHOUSE.TransportType.NAVALCARRIER
+      or Request.transporttype==WAREHOUSE.TransportType.ARMEDSHIP or Request.transporttype==WAREHOUSE.TransportType.WARSHIP then
 
       -- Spawn Ship in port zone
       spawngroup=self:_SpawnAssetGroundNaval(_alias, _assetitem, Request, self.portzone)

@@ -603,6 +603,46 @@ do -- COORDINATE
 
     return set
   end
+  
+  --- Scan/find STATICS within a certain radius around the coordinate using the world.searchObjects() DCS API function.
+  -- @param #COORDINATE self
+  -- @param #number radius (Optional) Scan radius in meters. Default 100 m.
+  -- @return Core.Set#SET_UNIT Set of units.
+  function COORDINATE:ScanStatics(radius)
+
+    local _,_,_,_,statics=self:ScanObjects(radius, false, true, false)
+
+    local set=SET_STATIC:New()
+
+    for _,stat in pairs(statics) do
+      set:AddStatic(STATIC:Find(stat))
+    end
+
+    return set
+  end
+
+  --- Find the closest static to the COORDINATE within a certain radius.
+  -- @param #COORDINATE self
+  -- @param #number radius Scan radius in meters. Default 100 m.
+  -- @return Wrapper.Static#STATIC The closest static or #nil if no unit is inside the given radius.
+  function COORDINATE:FindClosestStatic(radius)
+
+    local units=self:ScanStatics(radius)
+
+    local umin=nil --Wrapper.Unit#UNIT
+    local dmin=math.huge
+    for _,_unit in pairs(units.Set) do
+      local unit=_unit --Wrapper.Static#STATIC
+      local coordinate=unit:GetCoordinate()
+      local d=self:Get2DDistance(coordinate)
+      if d<dmin then
+        dmin=d
+        umin=unit
+      end
+    end
+
+    return umin
+  end
 
   --- Find the closest unit to the COORDINATE within a certain radius.
   -- @param #COORDINATE self
