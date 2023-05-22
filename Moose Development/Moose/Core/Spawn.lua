@@ -335,7 +335,7 @@ end
 -- @param #SPAWN self
 -- @param #string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template.
 -- @param #string SpawnAliasPrefix is the name that will be given to the Group at runtime.
--- @return #SPAWN
+-- @return #SPAWN self
 -- @usage
 -- -- NATO helicopters engaging in the battle field.
 -- Spawn_BE_KA50 = SPAWN:NewWithAlias( 'BE KA-50@RAMP-Ground Defense', 'Helicopter Attacking a City' )
@@ -385,32 +385,129 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
   return self
 end
 
---- Creates a new SPAWN instance to create new groups based on the provided template.
+--- Creates a new SPAWN instance to create new groups based on the provided template. This will also register the template for future use.
 -- @param #SPAWN self
--- @param #table SpawnTemplate is the Template of the Group. This must be a valid Group Template structure!
--- @param #string SpawnTemplatePrefix is the name of the Group that will be given at each spawn.
--- @param #string SpawnAliasPrefix is the name that will be given to the Group at runtime.
--- @return #SPAWN
+-- @param #table SpawnTemplate is the Template of the Group. This must be a valid Group Template structure - see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_func_addGroup)!
+-- @param #string SpawnTemplatePrefix [Mandatory] is the name of the template and the prefix of the GROUP on spawn.
+-- @param #string SpawnAliasPrefix [Optional] is the prefix that will be given to the GROUP on spawn.
+-- @param #boolean MooseNaming [Optional] If false, skip the Moose naming additions (like groupname#001-01) - you need to ensure yourself no duplicate group names exist!
+-- @return #SPAWN self
 -- @usage
--- -- Create a new SPAWN object based on a Group Template defined from scratch.
--- Spawn_BE_KA50 = SPAWN:NewWithAlias( 'BE KA-50@RAMP-Ground Defense', 'Helicopter Attacking a City' )
--- @usage
---
---   -- Create a new CSAR_Spawn object based on a normal Group Template to spawn a soldier.
---   local CSAR_Spawn = SPAWN:NewWithFromTemplate( Template, "CSAR", "Pilot" )
---
-function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPrefix )
-  local self = BASE:Inherit( self, BASE:New() )
-  self:F( { SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPrefix } )
-  if SpawnAliasPrefix == nil or SpawnAliasPrefix == "" then
-    BASE:I( "ERROR: in function NewFromTemplate, required parameter SpawnAliasPrefix is not set" )
+-- -- Spawn a P51 Mustang from scratch
+-- local ttemp =  
+--   {
+--       ["modulation"] = 0,
+--       ["tasks"] = 
+--       {
+--       }, -- end of ["tasks"]
+--       ["task"] = "Reconnaissance",
+--       ["uncontrolled"] = false,
+--       ["route"] = 
+--       {
+--           ["points"] = 
+--           {
+--               [1] = 
+--               {
+--                   ["alt"] = 2000,
+--                   ["action"] = "Turning Point",
+--                   ["alt_type"] = "BARO",
+--                   ["speed"] = 125,
+--                   ["task"] = 
+--                   {
+--                       ["id"] = "ComboTask",
+--                       ["params"] = 
+--                       {
+--                           ["tasks"] = 
+--                           {
+--                           }, -- end of ["tasks"]
+--                       }, -- end of ["params"]
+--                   }, -- end of ["task"]
+--                   ["type"] = "Turning Point",
+--                   ["ETA"] = 0,
+--                   ["ETA_locked"] = true,
+--                   ["y"] = 666285.71428571,
+--                   ["x"] = -312000,
+--                   ["formation_template"] = "",
+--                   ["speed_locked"] = true,
+--               }, -- end of [1]
+--           }, -- end of ["points"]
+--       }, -- end of ["route"]
+--       ["groupId"] = 1,
+--       ["hidden"] = false,
+--       ["units"] = 
+--       {
+--           [1] = 
+--           {
+--               ["alt"] = 2000,
+--               ["alt_type"] = "BARO",
+--               ["livery_id"] = "USAF 364th FS",
+--               ["skill"] = "High",
+--               ["speed"] = 125,
+--               ["type"] = "TF-51D",
+--               ["unitId"] = 1,
+--               ["psi"] = 0,
+--               ["y"] = 666285.71428571,
+--               ["x"] = -312000,
+--               ["name"] = "P51-1-1",
+--               ["payload"] = 
+--               {
+--                   ["pylons"] = 
+--                   {
+--                   }, -- end of ["pylons"]
+--                   ["fuel"] = 340.68,
+--                   ["flare"] = 0,
+--                   ["chaff"] = 0,
+--                   ["gun"] = 100,
+--               }, -- end of ["payload"]
+--               ["heading"] = 0,
+--               ["callsign"] = 
+--               {
+--                   [1] = 1,
+--                   [2] = 1,
+--                   ["name"] = "Enfield11",
+--                   [3] = 1,
+--               }, -- end of ["callsign"]
+--               ["onboard_num"] = "010",
+--           }, -- end of [1]
+--       }, -- end of ["units"]
+--       ["y"] = 666285.71428571,
+--       ["x"] = -312000,
+--       ["name"] = "P51",
+--       ["communication"] = true,
+--       ["start_time"] = 0,
+--       ["frequency"] = 124,
+--   } 
+-- 
+-- 
+-- local mustang = SPAWN:NewFromTemplate(ttemp,"P51D")
+-- -- you MUST set the next three:
+-- mustang:InitCountry(country.id.FRANCE)
+-- mustang:InitCategory(Group.Category.AIRPLANE)
+-- mustang:InitCoalition(coalition.side.BLUE)
+-- mustang:OnSpawnGroup(
+--   function(grp)
+--     MESSAGE:New("Group Spawned: "..grp:GetName(),15,"SPAWN"):ToAll()
+--   end
+-- )
+-- mustang:Spawn()
+-- 
+function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPrefix, MooseNaming )
+   local self = BASE:Inherit( self, BASE:New() )
+   self:F( { SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPrefix } )
+   --if SpawnAliasPrefix == nil or SpawnAliasPrefix == "" then
+     --BASE:I( "ERROR: in function NewFromTemplate, required parameter SpawnAliasPrefix is not set" )
+     --return nil
+  --end
+  if SpawnTemplatePrefix == nil or SpawnTemplatePrefix == "" then
+    BASE:I( "ERROR: in function NewFromTemplate, required parameter SpawnTemplatePrefix is not set" )
     return nil
   end
 
   if SpawnTemplate then
     self.SpawnTemplate = SpawnTemplate -- Contains the template structure for a Group Spawn from the Mission Editor. Note that this group must have lateActivation always on!!!
     self.SpawnTemplatePrefix = SpawnTemplatePrefix
-    self.SpawnAliasPrefix = SpawnAliasPrefix
+    self.SpawnAliasPrefix = SpawnAliasPrefix or SpawnTemplatePrefix
+    self.SpawnTemplate.name = SpawnTemplatePrefix
     self.SpawnIndex = 0
     self.SpawnCount = 0 -- The internal counter of the amount of spawning the has happened since SpawnStart.
     self.AliveUnits = 0 -- Contains the counter how many units are currently alive
@@ -435,7 +532,8 @@ function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPr
     self.SpawnInitModex = nil
     self.SpawnInitAirbase = nil
     self.TweakedTemplate = true -- Check if the user is using self made template.
-
+    self.MooseNameing  = MooseNaming or true
+    
     self.SpawnGroups = {} -- Array containing the descriptions of each Group to be Spawned.
   else
     error( "There is no template provided for SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
@@ -3060,6 +3158,9 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
   if self.TweakedTemplate ~= nil and self.TweakedTemplate == true then
     BASE:I( "WARNING: You are using a tweaked template." )
     SpawnTemplate = self.SpawnTemplate
+    if self.MooseNameing then
+      SpawnTemplate.name = self:SpawnGroupName( SpawnIndex )
+    end
   else
     SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
     SpawnTemplate.name = self:SpawnGroupName( SpawnIndex )
