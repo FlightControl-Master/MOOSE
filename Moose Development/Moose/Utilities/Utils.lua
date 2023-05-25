@@ -385,6 +385,23 @@ UTILS.BasicSerialize = function(s)
   end
 end
 
+function UTILS.PrintTableToLog(table, indent)
+  if not table then
+    BASE:E("No table passed!")
+    return 
+  end
+  if not indent then indent = 0 end
+  for k, v in pairs(table) do
+    if type(v) == "table" then
+      BASE:I(string.rep("  ", indent) .. tostring(k) .. " = {")
+      UTILS.PrintTableToLog(v, indent + 1)
+      BASE:I(string.rep("  ", indent) .. "}")
+    else
+      BASE:I(string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(v))
+    end
+  end
+end
+
 
 UTILS.ToDegree = function(angle)
   return angle*180/math.pi
