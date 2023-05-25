@@ -690,7 +690,8 @@ function CONTROLLABLE:CommandActivateACLS( UnitID, Name, Delay )
   if Delay and Delay > 0 then
     SCHEDULER:New( nil, self.CommandActivateACLS, { self, UnitID, Name }, Delay )
   else
-    self:SetCommand( CommandActivateACLS )
+    local controller = self:_GetController()
+    controller:setCommand( CommandActivateACLS )
   end
 
   return self
@@ -711,7 +712,8 @@ function CONTROLLABLE:CommandDeactivateACLS( Delay )
   if Delay and Delay > 0 then
     SCHEDULER:New( nil, self.CommandDeactivateACLS, { self }, Delay )
   else
-    self:SetCommand( CommandDeactivateACLS )
+    local controller = self:_GetController()
+    controller:setCommand( CommandDeactivateACLS )
   end
 
   return self
@@ -761,7 +763,7 @@ function CONTROLLABLE:CommandActivateLink4(Frequency, UnitID, Callsign, Delay)
   local CommandActivateLink4= {
     id = "ActivateLink4",
     params= {
-      ["frequency "] = freq*1000000,
+      ["frequency"] = freq*1000000,
       ["unitId"] = UnitID or self:GetID(),
       ["name"] = Callsign or "LNK",
     }
@@ -772,7 +774,8 @@ function CONTROLLABLE:CommandActivateLink4(Frequency, UnitID, Callsign, Delay)
   if Delay and Delay>0 then
     SCHEDULER:New(nil, self.CommandActivateLink4, {self, Frequency, UnitID, Callsign}, Delay)
   else
-    self:SetCommand(CommandActivateLink4)
+    local controller = self:_GetController()
+    controller:setCommand(CommandActivateLink4)
   end
 
   return self
@@ -810,7 +813,8 @@ function CONTROLLABLE:CommandDeactivateLink4(Delay)
   if Delay and Delay>0 then
     SCHEDULER:New(nil, self.CommandDeactivateLink4, {self}, Delay)
   else
-    self:SetCommand(CommandDeactivateLink4)
+    local controller = self:_GetController()
+    controller:setCommand(CommandDeactivateLink4)
   end
 
   return self
