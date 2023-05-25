@@ -691,7 +691,6 @@ function CONTROLLABLE:CommandActivateACLS( UnitID, Name, Delay )
     SCHEDULER:New( nil, self.CommandActivateACLS, { self, UnitID, Name }, Delay )
   else
     local controller = self:_GetController()
-    self:I({controller})
     controller:setCommand( CommandActivateACLS )
   end
 
