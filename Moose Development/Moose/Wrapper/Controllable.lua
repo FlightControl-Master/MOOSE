@@ -691,6 +691,7 @@ function CONTROLLABLE:CommandActivateACLS( UnitID, Name, Delay )
     SCHEDULER:New( nil, self.CommandActivateACLS, { self, UnitID, Name }, Delay )
   else
     local controller = self:_GetController()
+    self:I({controller})
     controller:setCommand( CommandActivateACLS )
   end
 
@@ -763,7 +764,7 @@ function CONTROLLABLE:CommandActivateLink4(Frequency, UnitID, Callsign, Delay)
   local CommandActivateLink4= {
     id = "ActivateLink4",
     params= {
-      ["frequency "] = freq*1000000,
+      ["frequency"] = freq*1000000,
       ["unitId"] = UnitID or self:GetID(),
       ["name"] = Callsign or "LNK",
     }
