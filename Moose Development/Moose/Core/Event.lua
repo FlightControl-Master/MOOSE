@@ -1224,7 +1224,7 @@ function EVENT:onEvent( Event )
         if Event.TgtObjectCategory == Object.Category.STATIC then
           -- get base data
           Event.TgtDCSUnit = Event.target
-          if Event.target:isExist() and Event.id ~= 33 and not Event.TgtObjectCategory == Object.Category.COORDINATE then -- leave out ejected seat object
+          if Event.target:isExist() and Event.id ~= 33 then -- leave out ejected seat object
             Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
             Event.TgtUnitName = Event.TgtDCSUnitName
             Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
