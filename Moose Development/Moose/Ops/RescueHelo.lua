@@ -805,7 +805,9 @@ function RESCUEHELO:_OnEventCrashOrEject(EventData)
       self:T(self.lid..text)
 
       -- Get coordinate of unit.      
-      local coord=unit:GetCoordinate()
+      --local coord=unit:GetCoordinate()
+      local Vec3 = EventData.IniDCSUnit:getPoint() -- Vec3
+      local coord = COORDINATE:NewFromVec3(Vec3)
       
       if coord and self.rescuezone:IsCoordinateInZone(coord) then
       
