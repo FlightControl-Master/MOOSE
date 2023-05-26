@@ -2771,7 +2771,10 @@ function AUFTRAG:SetRepeatOnSuccess(Nrepeat)
   return self
 end
 
---- **[LEGION, COMMANDER, CHIEF]** Set that mission assets get reinforced if their number drops below Nmin.
+--- **[LEGION, COMMANDER, CHIEF]** Set that mission assets get reinforced if their number drops below the minimum number of required assets of the mission (*c.f.* SetRequiredAssets() function).
+-- 
+-- **Note** that reinforcement groups are only recruited from the legion (airwing, brigade, fleet) the mission was assigned to. If the legion does not have any more of these assets, 
+-- no reinforcement can take place, even if the mission is submitted to a COMMANDER or CHIEF. 
 -- @param #AUFTRAG self
 -- @param #number Nreinforce Number of max asset groups used to reinforce.
 -- @return #AUFTRAG self
@@ -4029,7 +4032,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
       self:T(self.lid.."No targets left cancelling mission!")
       self:Cancel()
 
-    elseif self:IsExecuting() and ((not self.reinforce) or (self.reinforce==0 and Nassigned<=0)) then
+    elseif self:IsExecuting() and self:_IsNotReinforcing() then
     
 --      env.info("Mission Done:")
 --      env.info(string.format("Nreinforce= %d", self.reinforce or 0))      
@@ -4575,7 +4578,7 @@ function AUFTRAG:CheckGroupsDone()
   end
   
   -- Check if there is still reinforcement to be expected.
-  if self:IsExecuting() and self.reinforce and (self.reinforce>0 or self.Nassigned-self.Ndead>0) then
+  if self:IsExecuting() and self:_IsReinforcing() then
     self:T2(self.lid..string.format("CheckGroupsDone: Mission is still in state %s [FSM=%s] and reinfoce=%d. Mission NOT DONE!", self.status, self:GetState(), self.reinforce))
     return false  
   end
@@ -4735,11 +4738,13 @@ function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
 
   -- Number of groups alive.
   local N=self:CountOpsGroups()
+  
+  local notreinforcing=self:_IsNotReinforcing()
 
-  self:T(self.lid..string.format("Asset %s dead! Number of ops groups remaining %d", tostring(Asset.spawngroupname), N))
+  self:T(self.lid..string.format("Asset %s dead! Number of ops groups remaining %d (reinforcing=%s)", tostring(Asset.spawngroupname), N, tostring(not notreinforcing)))
 
   -- All assets dead?
-  if N==0 and (self.reinforce==nil or self.reinforce==0) then
+  if N==0 and notreinforcing then
 
     if self:IsNotOver() then
 
@@ -5374,12 +5379,20 @@ function AUFTRAG:AddAsset(Asset)
   -- Add to table.
   self.assets=self.assets or {}
   
-  -- Add to table.
-  table.insert(self.assets, Asset)
+  -- Get asset if it was already added.
+  local asset=self:GetAssetByName(Asset.spawngroupname)
   
-  self.Nassigned=self.Nassigned or 0
+  -- Only add an asset is not already in.
+  if not asset then
   
-  self.Nassigned=self.Nassigned+1
+    -- Add to table.
+    table.insert(self.assets, Asset)
+    
+    self.Nassigned=self.Nassigned or 0
+    
+    self.Nassigned=self.Nassigned+1
+    
+  end
 
   return self
 end
@@ -5657,6 +5670,31 @@ function AUFTRAG:_SetRequestID(Legion, RequestID)
 
   return self
 end
+
+--- Check if reinforcement is done.
+-- @param #AUFTRAG self
+-- @return #boolean If `true`, reinforcing is over.
+function AUFTRAG:_IsNotReinforcing()
+
+  -- Number of assigned assets that are still alive.
+  local Nassigned=self.Nassigned and self.Nassigned-self.Ndead or 0
+  
+  -- Not reinforcing?
+  local notreinforcing=((not self.reinforce) or (self.reinforce==0 and Nassigned<=0))
+  
+  return notreinforcing
+end
+
+--- Check if reinforcement is still ongoing.
+-- @param #AUFTRAG self
+-- @return #boolean If `true`, reinforcing is ongoing.
+function AUFTRAG:_IsReinforcing()
+
+  local reinforcing=not self:_IsNotReinforcing()
+  
+  return reinforcing
+end
+
 
 
 --- Update mission F10 map marker.
