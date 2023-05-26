@@ -682,7 +682,7 @@ function LEGION:CheckMissionQueue()
       
       -- Debug info.
       self:T(self.lid..string.format("Checking Reinforcement Nreinf=%d, Nops=%d, Nassigned=%d, Ndead=%d, Nmin=%d ==> Reinforce=%s", 
-      mission.reinforce, N, mission.Nassigned, mission.Ndead, mission.NassetsMin, tostring(reinforce)))      
+      mission.reinforce, N, mission.Nassigned, mission.Ndead, mission.NassetsMin, tostring(reinforce)))
     end
 
     -- Firstly, check if mission is due?
@@ -1003,6 +1003,7 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission, Assets)
           
           end
           
+          -- Add asset to mission.
           Mission:AddAsset(asset)
           
           -- Trigger event.
@@ -1054,6 +1055,7 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission, Assets)
         asset.takeoffType=COORDINATE.WaypointType.TakeOffParking
       end
       
+      -- Add asset to mission.
       Mission:AddAsset(asset)
 
     end
