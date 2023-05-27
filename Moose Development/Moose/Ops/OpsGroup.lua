@@ -2930,6 +2930,14 @@ end
 -- @param #string CarrierGroupName (Optional) Additionally check if group is loaded into a particular carrier group(s).
 -- @return #boolean If true, group is loaded.
 function OPSGROUP:IsLoaded(CarrierGroupName)
+
+  local isloaded=self.cargoStatus==OPSGROUP.CargoStatus.LOADED
+  
+  -- If not loaded, we can return false
+  if not isloaded then
+    return false
+  end
+
   if CarrierGroupName then
     if type(CarrierGroupName)~="table" then
       CarrierGroupName={CarrierGroupName}
@@ -2937,12 +2945,14 @@ function OPSGROUP:IsLoaded(CarrierGroupName)
     for _,CarrierName in pairs(CarrierGroupName) do
       local carrierGroup=self:_GetMyCarrierGroup()
       if carrierGroup and carrierGroup.groupname==CarrierName then
-        return true
+        return isloaded
       end
     end
+    -- Not in any specified carrier.
     return false
   end
-  return self.cargoStatus==OPSGROUP.CargoStatus.LOADED
+  
+  return isloaded
 end
 
 --- Check if the group is currently busy doing something.
@@ -10048,7 +10058,7 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
       if mycarriergroup then
         self:T(self.lid..string.format("Current carrier group %s", mycarriergroup:GetName()))
       end
-
+      
       -- Unload cargo first.
       if mycarriergroup and mycarriergroup:GetName()~=CarrierGroup:GetName() then
         -- TODO: Unload triggers other stuff like Disembarked. This can be a problem!
@@ -10058,7 +10068,6 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
 
       -- Trigger Load event.
       CarrierGroup:Load(self)
-
     end
 
   else
@@ -10069,7 +10078,6 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
 
     -- Set carrier. As long as the group is not loaded, we only reserve the cargo space.ï¿½
     CarrierGroup:_AddCargobay(self, Carrier, true)
-
   end
 
 
