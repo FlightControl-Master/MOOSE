@@ -318,7 +318,7 @@ function SPAWN:New( SpawnTemplatePrefix )
     self.SpawnInitRadio = nil -- No radio comms setting.
     self.SpawnInitModex = nil
     self.SpawnInitAirbase = nil
-    self.TweakedTemplate = false -- Check if the user is using self made template.
+    self.TweakedTemplate = true -- Check if the user is using self made template.
 
     self.SpawnGroups = {} -- Array containing the descriptions of each Group to be Spawned.
   else
@@ -388,9 +388,9 @@ end
 --- Creates a new SPAWN instance to create new groups based on the provided template. This will also register the template for future use.
 -- @param #SPAWN self
 -- @param #table SpawnTemplate is the Template of the Group. This must be a valid Group Template structure - see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_func_addGroup)!
--- @param #string SpawnTemplatePrefix [Mandatory] is the name of the template and the prefix of the GROUP on spawn.
+-- @param #string SpawnTemplatePrefix [Mandatory] is the name of the template and the prefix of the GROUP on spawn. The name in the template **will** be overwritten!
 -- @param #string SpawnAliasPrefix [Optional] is the prefix that will be given to the GROUP on spawn.
--- @param #boolean MooseNaming [Optional] If false, skip the Moose naming additions (like groupname#001-01) - you need to ensure yourself no duplicate group names exist!
+-- @param #boolean NoMooseNamingPostfix [Optional] If true, skip the Moose naming additions (like groupname#001-01) - **but** you need to ensure yourself no duplicate group names exist!
 -- @return #SPAWN self
 -- @usage
 -- -- Spawn a P51 Mustang from scratch
@@ -491,7 +491,7 @@ end
 -- )
 -- mustang:Spawn()
 -- 
-function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPrefix, MooseNaming )
+function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPrefix, NoMooseNamingPostfix )
    local self = BASE:Inherit( self, BASE:New() )
    self:F( { SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPrefix } )
    --if SpawnAliasPrefix == nil or SpawnAliasPrefix == "" then
@@ -532,7 +532,10 @@ function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPr
     self.SpawnInitModex = nil
     self.SpawnInitAirbase = nil
     self.TweakedTemplate = true -- Check if the user is using self made template.
-    self.MooseNameing  = MooseNaming or true
+    self.MooseNameing  = true
+    if NoMooseNamingPostfix == true then
+     self.MooseNameing  = false
+    end
     
     self.SpawnGroups = {} -- Array containing the descriptions of each Group to be Spawned.
   else
@@ -3158,8 +3161,10 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
   if self.TweakedTemplate ~= nil and self.TweakedTemplate == true then
     BASE:I( "WARNING: You are using a tweaked template." )
     SpawnTemplate = self.SpawnTemplate
-    if self.MooseNameing then
+    if self.MooseNameing == true then
       SpawnTemplate.name = self:SpawnGroupName( SpawnIndex )
+    else
+      SpawnTemplate.name = self:SpawnGroupName()
     end
   else
     SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
