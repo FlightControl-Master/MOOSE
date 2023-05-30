@@ -30,7 +30,7 @@
 -- @module Ops.CSAR
 -- @image OPS_CSAR.jpg
 
--- Date: January 2023
+-- Date: May 2023
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -292,7 +292,7 @@ CSAR.AircraftType["Bronco-OV-10A"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.17"
+CSAR.version="1.0.18"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -316,7 +316,7 @@ function CSAR:New(Coalition, Template, Alias)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #CSAR
   
-  BASE:T({Coalition, Prefixes, Alias})
+  BASE:T({Coalition, Template, Alias})
   
   --set Coalition
   if Coalition and type(Coalition)=="string" then
@@ -1880,7 +1880,7 @@ function CSAR:_SignalFlare(_unitName)
       if _SETTINGS:IsImperial() then
         _distance = string.format("%.1fnm",UTILS.MetersToNM(_closest.distance))
       else
-        _distance = string.format("%.1fkm",_closest.distance)
+        _distance = string.format("%.1fkm",_closest.distance/1000)
       end 
       local _msg = string.format("%s - Popping signal flare at your %s o\'clock. Distance %s", self:_GetCustomCallSign(_unitName), _clockDir, _distance)
       self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true, true)
@@ -2175,6 +2175,7 @@ function CSAR:_AddBeaconToGroup(_group, _freq)
     if _group:IsAlive() then
       local _radioUnit = _group:GetUnit(1)
       if _radioUnit then    
+     local name = _radioUnit:GetName()
         local Frequency = _freq -- Freq in Hertz
         local name = _radioUnit:GetName()
         local Sound =  "l10n/DEFAULT/"..self.radioSound
