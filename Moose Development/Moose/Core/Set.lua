@@ -7843,7 +7843,7 @@ do -- SET_SCENERY
   function SET_SCENERY:GetRelativeLife()
     local life = self:GetLife()
     local life0 = self:GetLife0()
-    self:T3(string.format("Set Lifepoints: %d life0 | %d life",life0,life))
+    self:T2(string.format("Set Lifepoints: %d life0 | %d life",life0,life))
     local rlife = math.floor((life / life0) * 100)
     return rlife
   end
