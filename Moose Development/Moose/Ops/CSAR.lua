@@ -2175,7 +2175,7 @@ function CSAR:_AddBeaconToGroup(_group, _freq)
     if _group:IsAlive() then
       local _radioUnit = _group:GetUnit(1)
       if _radioUnit then    
-	   local name = _radioUnit:GetName()
+     local name = _radioUnit:GetName()
         local Frequency = _freq -- Freq in Hertz
         local name = _radioUnit:GetName()
         local Sound =  "l10n/DEFAULT/"..self.radioSound
