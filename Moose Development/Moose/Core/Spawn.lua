@@ -318,7 +318,7 @@ function SPAWN:New( SpawnTemplatePrefix )
     self.SpawnInitRadio = nil -- No radio comms setting.
     self.SpawnInitModex = nil
     self.SpawnInitAirbase = nil
-    self.TweakedTemplate = true -- Check if the user is using self made template.
+    self.TweakedTemplate = false -- Check if the user is using self made template.
 
     self.SpawnGroups = {} -- Array containing the descriptions of each Group to be Spawned.
   else
