@@ -2295,3 +2295,17 @@ function AIRBASE:CheckOnRunWay(group, radius, despawn)
 
   return false
 end
+
+--- Get category of airbase.
+-- @param #AIRBASE self
+-- @return #number Category of airbase from GetDesc().category.
+function AIRBASE:GetCategory()
+  return self.category
+end
+
+--- Get category name of airbase.
+-- @param #AIRBASE self
+-- @return #string Category of airbase, i.e. Airdrome, Ship, or Helipad
+function AIRBASE:GetCategoryName()
+  return AIRBASE.CategoryName[self.category]
+end
