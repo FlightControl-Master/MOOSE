@@ -2309,5 +2309,3 @@ end
 function AIRBASE:GetCategoryName()
   return AIRBASE.CategoryName[self.category]
 end
-
-
