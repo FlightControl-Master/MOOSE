@@ -22,7 +22,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update Apr 2023
+-- Last Update June 2023
 
 do 
 
@@ -1221,7 +1221,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.37"
+CTLD.version="1.0.38"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -4308,6 +4308,9 @@ end
       local uspeed = Unit:GetVelocityMPS()
       local uheight = Unit:GetHeight()
       local ucoord = Unit:GetCoordinate()
+      if not ucoord then
+        return false
+      end
       local gheight = ucoord:GetLandHeight()
       local aheight = uheight - gheight -- height above ground
       local maxh = self.maximumHoverHeight -- 15
@@ -4334,6 +4337,9 @@ end
       local uspeed = Unit:GetVelocityMPS()
       local uheight = Unit:GetHeight()
       local ucoord = Unit:GetCoordinate()
+      if not ucoord then
+        return false
+      end
       local gheight = ucoord:GetLandHeight()
       local aheight = uheight - gheight -- height above ground
       local minh = self.HercMinAngels-- 1500m
@@ -4419,6 +4425,9 @@ end
     end
     local uheight = Unit:GetHeight()
     local ucoord = Unit:GetCoordinate()
+    if not ucoord then
+      return false
+    end
     local gheight = ucoord:GetLandHeight()
     local aheight = uheight - gheight -- height above ground
     if aheight >= minheight then
