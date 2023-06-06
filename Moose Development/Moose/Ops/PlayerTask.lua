@@ -3153,7 +3153,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
         --self:I(self.lid.." | ".. CoordText)
       end
       local ThreatLocaleTextTTS = self.gettext:GetEntry("THREATTEXTTTS",self.locale)
-      local ttstext = string.format(ThreatLocaleTextTTS,self.MenuName or self.Name,ttsplayername,ttstaskname,ThreatLevelText, targets, CoordText)
+      local ttstext = string.format(ThreatLocaleTextTTS,ttsplayername,self.MenuName or self.Name,ttstaskname,ThreatLevelText, targets, CoordText)
       -- POINTERTARGETLASINGTTS = ". Pointer over target and lasing."
       if task.Type == AUFTRAG.Type.PRECISIONBOMBING and self.precisionbombing then
         if self.LasingDrone.playertask.inreach and self.LasingDrone:IsLasing() then
