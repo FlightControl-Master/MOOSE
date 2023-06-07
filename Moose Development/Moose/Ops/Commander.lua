@@ -514,7 +514,7 @@ function COMMANDER:AddOpsTransport(Transport)
 
   Transport.commander=self
   
-  Transport.statusCommander=TRANSPORT.Status.PLANNED
+  Transport.statusCommander=OPSTRANSPORT.Status.PLANNED
 
   table.insert(self.transportqueue, Transport)
 
