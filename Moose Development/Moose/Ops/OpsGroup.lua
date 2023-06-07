@@ -12090,6 +12090,8 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
 
+  self:T(self.lid..string.format("Setting Default callsing %s-%s", tostring(CallsignName), tostring(CallsignNumber)))
+
   self.callsignDefault={} --#OPSGROUP.Callsign
   self.callsignDefault.NumberSquad=CallsignName
   self.callsignDefault.NumberGroup=CallsignNumber or 1
