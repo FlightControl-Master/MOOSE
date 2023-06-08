@@ -5490,7 +5490,7 @@ function RAT:_ATCInit(airports_map)
   if not RAT.ATC.init then
     local text
     text="Starting RAT ATC.\nSimultanious = "..RAT.ATC.Nclearance.."\n".."Delay        = "..RAT.ATC.delay
-	  BASE:T(RAT.id..text)
+    BASE:T(RAT.id..text)
     RAT.ATC.init=true
     for _,ap in pairs(airports_map) do
       local name=ap:GetName()
@@ -5671,9 +5671,9 @@ function RAT:_ATCClearForLanding(airport, flight)
 
   -- Debug message.
   local text1=string.format("ATC %s: Flight %s cleared for landing (flag=%d).", airport, flight, flagvalue)
-	if string.find(flight,"#") then
-		flight =  string.match(flight,"^(.+)#")
-	end
+  if string.find(flight,"#") then
+    flight =  string.match(flight,"^(.+)#")
+  end
   local text2=string.format("ATC %s: Flight %s you are cleared for landing.", airport, flight)
   BASE:T( RAT.id..text1)
   MESSAGE:New(text2, 10):ToAllIf(RAT.ATC.messages)
@@ -5716,9 +5716,9 @@ function RAT:_ATCFlightLanded(name)
     local text1=string.format("ATC %s: Flight %s landed. Tholding = %i:%02d, Tfinal = %i:%02d.", dest, name, Thold/60, Thold%60, Tfinal/60, Tfinal%60)
     local text2=string.format("ATC %s: Number of flights still on final %d.", dest, RAT.ATC.airport[dest].Nonfinal)
     local text3=string.format("ATC %s: Traffic report: Number of planes landed in total %d. Flights/hour = %3.2f.", dest, RAT.ATC.airport[dest].traffic, TrafficPerHour)
-	if string.find(name,"#") then
-		name =  string.match(name,"^(.+)#")
-	end
+  if string.find(name,"#") then
+    name =  string.match(name,"^(.+)#")
+  end
     local text4=string.format("ATC %s: Flight %s landed. Welcome to %s.", dest, name, dest)
     BASE:T(RAT.id..text1)
     BASE:T(RAT.id..text2)
