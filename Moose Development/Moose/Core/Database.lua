@@ -1124,7 +1124,7 @@ end
 -- @param #string AirbaseName Name of the airbase.
 -- @return #number Category.
 function DATABASE:GetCategoryFromAirbase( AirbaseName )
-  return self.AIRBASES[AirbaseName]:GetCategory()
+  return self.AIRBASES[AirbaseName]:GetAirbaseCategory()
 end
 
 

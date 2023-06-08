@@ -715,11 +715,11 @@ function SCORING:AddGoalScorePlayer( PlayerName, GoalTag, Text, Score )
     PlayerData.Goals[GoalTag] = PlayerData.Goals[GoalTag] or { Score = 0 }
     PlayerData.Goals[GoalTag].Score = PlayerData.Goals[GoalTag].Score + Score
     PlayerData.Score = PlayerData.Score + Score
-
-    MESSAGE:NewType( self.DisplayMessagePrefix .. Text,
-                     MESSAGE.Type.Information )
-           :ToAll()
-
+    if Text then
+      MESSAGE:NewType( self.DisplayMessagePrefix .. Text,
+                       MESSAGE.Type.Information )
+             :ToAll()
+    end
     self:ScoreCSV( PlayerName, "", "GOAL_" .. string.upper( GoalTag ), 1, Score, nil )
   end
 end
@@ -738,7 +738,7 @@ function SCORING:AddGoalScore( PlayerUnit, GoalTag, Text, Score )
 
   local PlayerName = PlayerUnit:GetPlayerName()
 
-  self:F( { PlayerUnit.UnitName, PlayerName, GoalTag, Text, Score } )
+  self:T2( { PlayerUnit.UnitName, PlayerName, GoalTag, Text, Score } )
 
   -- PlayerName can be nil, if the Unit with the player crashed or due to another reason.
   if PlayerName then
@@ -747,11 +747,12 @@ function SCORING:AddGoalScore( PlayerUnit, GoalTag, Text, Score )
     PlayerData.Goals[GoalTag] = PlayerData.Goals[GoalTag] or { Score = 0 }
     PlayerData.Goals[GoalTag].Score = PlayerData.Goals[GoalTag].Score + Score
     PlayerData.Score = PlayerData.Score + Score
-
-    MESSAGE:NewType( self.DisplayMessagePrefix .. Text,
+    
+    if Text then
+      MESSAGE:NewType( self.DisplayMessagePrefix .. Text,
                      MESSAGE.Type.Information )
            :ToAll()
-
+    end
     self:ScoreCSV( PlayerName, "", "GOAL_" .. string.upper( GoalTag ), 1, Score, PlayerUnit:GetName() )
   end
 end
@@ -784,11 +785,12 @@ function SCORING:_AddMissionTaskScore( Mission, PlayerUnit, Text, Score )
 
     PlayerData.Score = self.Players[PlayerName].Score + Score
     PlayerData.Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
-
-    MESSAGE:NewType( self.DisplayMessagePrefix .. Mission:GetText() .. " : " .. Text .. " Score: " .. Score,
-                     MESSAGE.Type.Information )
-           :ToAll()
-
+    
+    if Text then
+      MESSAGE:NewType( self.DisplayMessagePrefix .. Mission:GetText() .. " : " .. Text .. " Score: " .. Score,
+                       MESSAGE.Type.Information )
+             :ToAll()
+    end
     self:ScoreCSV( PlayerName, "", "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:GetName() )
   end
 end
@@ -820,9 +822,11 @@ function SCORING:_AddMissionGoalScore( Mission, PlayerName, Text, Score )
 
     PlayerData.Score = self.Players[PlayerName].Score + Score
     PlayerData.Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
-
-    MESSAGE:NewType( string.format( "%s%s: %s! Player %s receives %d score!", self.DisplayMessagePrefix, Mission:GetText(), Text, PlayerName, Score ), MESSAGE.Type.Information ):ToAll()
-
+    
+    if Text then  
+      MESSAGE:NewType( string.format( "%s%s: %s! Player %s receives %d score!", self.DisplayMessagePrefix, Mission:GetText(), Text, PlayerName, Score ), MESSAGE.Type.Information ):ToAll()
+    end
+    
     self:ScoreCSV( PlayerName, "", "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score )
   end
 end
@@ -847,11 +851,12 @@ function SCORING:_AddMissionScore( Mission, Text, Score )
 
       PlayerData.Score = PlayerData.Score + Score
       PlayerData.Mission[MissionName].ScoreMission = PlayerData.Mission[MissionName].ScoreMission + Score
-
-      MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' has " .. Text .. " in " .. Mission:GetText() .. ". " .. Score .. " mission score!",
+      
+      if Text then
+        MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' has " .. Text .. " in " .. Mission:GetText() .. ". " .. Score .. " mission score!",
                        MESSAGE.Type.Information )
              :ToAll()
-
+      end
       self:ScoreCSV( PlayerName, "", "MISSION_" .. MissionName:gsub( ' ', '_' ), 1, Score )
     end
   end

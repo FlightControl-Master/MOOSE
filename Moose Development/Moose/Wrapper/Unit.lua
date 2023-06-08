@@ -25,6 +25,7 @@
 -- @field #string ClassName Name of the class.
 -- @field #string UnitName Name of the unit.
 -- @field #string GroupName Name of the group the unit belongs to.
+-- @field #table DCSUnit The DCS Unit object from the API.
 -- @extends Wrapper.Controllable#CONTROLLABLE
 
 --- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
@@ -92,6 +93,7 @@ UNIT = {
   ClassName="UNIT",
   UnitName=nil,
   GroupName=nil,
+  DCSUnit = nil,
 }
 
 
@@ -124,6 +126,7 @@ function UNIT:Register( UnitName )
     if group then 
       self.GroupName=group:getName()
     end
+    self.DCSUnit = unit
   end
   
   -- Set event prio.
@@ -175,7 +178,11 @@ function UNIT:GetDCSObject()
   if DCSUnit then
     return DCSUnit
   end
-
+  
+  if self.DCSUnit then
+    return self.DCSUnit
+  end
+  
   return nil
 end
 

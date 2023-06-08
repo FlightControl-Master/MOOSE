@@ -1616,15 +1616,17 @@ function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius, Offset)
     if (Offset.dx or Offset.dy) and (Offset.rho or Offset.theta) then
       error("Cannot use (dx, dy) with (rho, theta)")
     end
+  end
 
+  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneUNIT:GetVec2(), Radius, true ) )
+
+  if Offset then
     self.dy = Offset.dy or 0.0
     self.dx = Offset.dx or 0.0
     self.rho = Offset.rho or 0.0
     self.theta = (Offset.theta or 0.0) * math.pi / 180.0
     self.relative_to_unit = Offset.relative_to_unit or false
   end
-
-  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneUNIT:GetVec2(), Radius, true ) )
 
   self:F( { ZoneName, ZoneUNIT:GetVec2(), Radius } )
 

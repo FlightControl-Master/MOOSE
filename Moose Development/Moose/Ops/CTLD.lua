@@ -22,7 +22,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update Apr 2023
+-- Last Update June 2023
 
 do 
 
@@ -1221,7 +1221,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.37"
+CTLD.version="1.0.39"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1750,6 +1750,8 @@ function CTLD:_EventHandler(EventData)
     if _coalition ~= self.coalition then
         return --ignore!
     end
+    local unitname = event.IniUnitName or "none"
+    self.MenusDone[unitname] = nil
     -- check is Helicopter
     local _unit = event.IniUnit
     local _group = event.IniGroup
@@ -1770,6 +1772,7 @@ function CTLD:_EventHandler(EventData)
     local unitname = event.IniUnitName or "none"
     self.CtldUnits[unitname] = nil
     self.Loaded_Cargo[unitname] = nil
+    self.MenusDone[unitname] = nil
   end
   return self
 end
@@ -3442,6 +3445,9 @@ function CTLD:_RefreshF10Menus()
         if _unit:IsHelicopter() or (self:IsHercules(_unit) and self.enableHercules) then --ensure no stupid unit entries here
           local unitName = _unit:GetName()
           _UnitList[unitName] = unitName
+        else
+          local unitName = _unit:GetName()
+          _UnitList[unitName] = nil
         end    
       end -- end isAlive
     end -- end if _unit
@@ -4308,6 +4314,9 @@ end
       local uspeed = Unit:GetVelocityMPS()
       local uheight = Unit:GetHeight()
       local ucoord = Unit:GetCoordinate()
+      if not ucoord then
+        return false
+      end
       local gheight = ucoord:GetLandHeight()
       local aheight = uheight - gheight -- height above ground
       local maxh = self.maximumHoverHeight -- 15
@@ -4334,6 +4343,9 @@ end
       local uspeed = Unit:GetVelocityMPS()
       local uheight = Unit:GetHeight()
       local ucoord = Unit:GetCoordinate()
+      if not ucoord then
+        return false
+      end
       local gheight = ucoord:GetLandHeight()
       local aheight = uheight - gheight -- height above ground
       local minh = self.HercMinAngels-- 1500m
@@ -4419,6 +4431,9 @@ end
     end
     local uheight = Unit:GetHeight()
     local ucoord = Unit:GetCoordinate()
+    if not ucoord then
+      return false
+    end
     local gheight = ucoord:GetLandHeight()
     local aheight = uheight - gheight -- height above ground
     if aheight >= minheight then

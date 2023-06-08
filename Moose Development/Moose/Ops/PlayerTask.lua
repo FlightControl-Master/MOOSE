@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update December 2022
+-- @date Last Update June 2023
 
 
 do
@@ -58,6 +58,7 @@ do
 -- @field #table NextTaskFailure
 -- @field #string FinalState
 -- @field #string TypeName
+-- @field #number PreviousCount
 -- @extends Core.Fsm#FSM
 
 
@@ -92,11 +93,12 @@ PLAYERTASK = {
   NextTaskSuccess    =   {},
   NextTaskFailure    =   {},
   FinalState         =   "none",
+  PreviousCount      =   0,
   }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.14"
+PLAYERTASK.version="0.1.17"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -151,6 +153,8 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
     return self
   end
   
+  self.PreviousCount = self.Target:CountTargets()
+  
   self:T(self.lid.."Created.")
   
   -- FMS start state is PLANNED.
@@ -162,6 +166,7 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
   self:AddTransition("*",            "ClientAdded",      "*")  -- Client has been added to the task
   self:AddTransition("*",            "ClientRemoved",    "*")  -- Client has been removed from the task
   self:AddTransition("*",            "Executing",        "Executing")   -- First client is executing the Task.
+  self:AddTransition("*",            "Progress",         "*")   -- Task target count reduced - progress
   self:AddTransition("*",            "Done",             "Done")   -- All clients have reported that Task is done.
   self:AddTransition("*",            "Cancel",           "Done")   -- Command to cancel the Task.
   self:AddTransition("*",            "Success",          "Done")
@@ -456,6 +461,9 @@ function PLAYERTASK:AddClient(Client)
     self.Clients:Push(Client,name)
     self:__ClientAdded(-2,Client)
   end
+  if self.TaskController and self.TaskController.Scoring then
+    self.TaskController.Scoring:_AddPlayerFromUnit(Client)
+  end
   return self
 end
 
@@ -710,6 +718,16 @@ function PLAYERTASK:onafterStatus(From, Event, To)
       status = "Success"
     end
     
+    if status ~= "Failed" and status ~= "Success" then
+      -- Partial Success?
+      local targetcount = self.Target:CountTargets()
+      if targetcount < self.PreviousCount then
+        -- Progress
+        self:__Progress(-2,targetcount)
+        self.PreviousCount = targetcount
+      end
+    end
+    
     if self.verbose then
       self:I(self.lid.."Target dead: "..tostring(targetdead).." | Clients alive: " .. tostring(clientsalive))
     end
@@ -722,6 +740,29 @@ function PLAYERTASK:onafterStatus(From, Event, To)
   return self
 end
 
+
+--- [Internal] On after progress call
+-- @param #PLAYERTASK self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @param #number TargetCount
+-- @return #PLAYERTASK self
+function PLAYERTASK:onafterProgress(From, Event, To, TargetCount)
+  self:T({From, Event, To})
+  if self.TaskController then
+    if self.TaskController.Scoring then
+      local clients,count = self:GetClientObjects()
+      if count > 0 then
+        for _,_client in pairs(clients) do
+          self.TaskController.Scoring:AddGoalScore(_client,self.Type,nil,10) 
+        end
+      end
+    end
+    self.TaskController:__TaskProgress(-1,self,TargetCount) 
+  end
+  return self
+end
 
 --- [Internal] On after planned call
 -- @param #PLAYERTASK self
@@ -835,6 +876,15 @@ function PLAYERTASK:onafterSuccess(From, Event, To)
   if self.TargetMarker then
     self.TargetMarker:Remove()
   end
+  if self.TaskController.Scoring then
+    local clients,count = self:GetClientObjects()
+    if count > 0 then
+      for _,_client in pairs(clients) do
+        local auftrag = self:GetSubType()
+        self.TaskController.Scoring:AddGoalScore(_client,self.Type,nil,self.TaskController.Scores[self.Type]) 
+      end
+    end
+  end 
   self.timestamp = timer.getAbsTime()
   self.FinalState = "Success"
   self:__Done(-1)
@@ -864,6 +914,15 @@ function PLAYERTASK:onafterFailed(From, Event, To)
     self.FinalState = "Failed"
     self:__Done(-1)
   end
+  if self.TaskController.Scoring then
+    local clients,count = self:GetClientObjects()
+    if count > 0 then
+      for _,_client in pairs(clients) do
+        local auftrag = self:GetSubType()
+        self.TaskController.Scoring:AddGoalScore(_client,self.Type,nil,-self.TaskController.Scores[self.Type]) 
+      end
+    end
+  end 
   self.timestamp = timer.getAbsTime()
   return self
 end
@@ -939,6 +998,7 @@ do
 -- @field #boolean InfoHasLLDDM
 -- @field #table PlayerMenuTag
 -- @field #boolean UseTypeNames
+-- @field Functional.Scoring#SCORING Scoring
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1264,6 +1324,7 @@ PLAYERTASKCONTROLLER = {
   InfoHasLLDDM       = false,
   InfoHasCoordinate  = false,
   UseTypeNames       = false,
+  Scoring            = nil,
   }
 
 ---
@@ -1283,6 +1344,22 @@ PLAYERTASKCONTROLLER.Type = {
 AUFTRAG.Type.PRECISIONBOMBING = "Precision Bombing"
 AUFTRAG.Type.CTLD = "Combat Transport"
 AUFTRAG.Type.CSAR = "Combat Rescue"
+
+---
+-- @type Scores
+PLAYERTASKCONTROLLER.Scores = {
+  [AUFTRAG.Type.PRECISIONBOMBING] = 100,
+  [AUFTRAG.Type.CTLD] = 100,
+  [AUFTRAG.Type.CSAR] = 100,
+  [AUFTRAG.Type.INTERCEPT] = 100,
+  [AUFTRAG.Type.ANTISHIP] = 100,
+  [AUFTRAG.Type.CAS] = 100,
+  [AUFTRAG.Type.BAI] = 100,
+  [AUFTRAG.Type.SEAD] = 100,
+  [AUFTRAG.Type.BOMBING] = 100,
+  [AUFTRAG.Type.PRECISIONBOMBING] = 100,
+  [AUFTRAG.Type.BOMBRUNWAY] = 100,  
+}
  
 --- 
 -- @type SeadAttributes
@@ -1460,7 +1537,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.58"
+PLAYERTASKCONTROLLER.version="0.1.60"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -1549,6 +1626,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self:AddTransition("*",            "TaskCancelled",         "*")
   self:AddTransition("*",            "TaskSuccess",           "*")
   self:AddTransition("*",            "TaskFailed",            "*")
+  self:AddTransition("*",            "TaskProgress",          "*")
   self:AddTransition("*",            "TaskTargetSmoked",      "*")
   self:AddTransition("*",            "TaskTargetFlared",      "*")
   self:AddTransition("*",            "TaskTargetIlluminated", "*")
@@ -1615,6 +1693,15 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param Ops.PlayerTask#PLAYERTASK Task
+  
+  --- On After "TaskProgress" event. Task target count has been reduced.
+  -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskProgress
+  -- @param #PLAYERTASKCONTROLLER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.PlayerTask#PLAYERTASK Task The current Task.
+  -- @param #number TargetCount Targets left over
    
   --- On After "TaskRepeatOnFailed" event. Task has failed and will be repeated.
   -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskRepeatOnFailed
@@ -1668,6 +1755,23 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   -- @param Wrapper.Client#CLIENT Client The player client object
   -- @param Ops.PlayerTask#PLAYERTASK Task
   
+end
+
+--- [User] Set or create a SCORING object for this taskcontroller
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Functional.Scoring#SCORING Scoring (optional) the Scoring object
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:EnableScoring(Scoring)
+  self.Scoring = Scoring or SCORING:New(self.Name)
+  return self
+end
+
+--- [User] Remove the SCORING object from this taskcontroller
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:DisableScoring()
+  self.Scoring = nil
+  return self
 end
 
 --- [Internal] Init localization
@@ -3113,7 +3217,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
         --self:I(self.lid.." | ".. CoordText)
       end
       local ThreatLocaleTextTTS = self.gettext:GetEntry("THREATTEXTTTS",self.locale)
-      local ttstext = string.format(ThreatLocaleTextTTS,self.MenuName or self.Name,ttsplayername,ttstaskname,ThreatLevelText, targets, CoordText)
+      local ttstext = string.format(ThreatLocaleTextTTS,ttsplayername,self.MenuName or self.Name,ttstaskname,ThreatLevelText, targets, CoordText)
       -- POINTERTARGETLASINGTTS = ". Pointer over target and lasing."
       if task.Type == AUFTRAG.Type.PRECISIONBOMBING and self.precisionbombing then
         if self.LasingDrone.playertask.inreach and self.LasingDrone:IsLasing() then
@@ -3303,13 +3407,13 @@ function PLAYERTASKCONTROLLER:_BuildTaskInfoMenu(group,client,playername,topmenu
   local taskinfomenu = nil
   if self.taskinfomenu then
     local menutaskinfo = self.gettext:GetEntry("MENUTASKINFO",self.locale)
-    local taskinfomenu = MENU_GROUP_DELAYED:New(group,menutaskinfo,topmenu):SetTag(newtag) 
+    local taskinfomenu = MENU_GROUP:New(group,menutaskinfo,topmenu):SetTag(newtag) 
     local ittypes = {}
     local itaskmenu = {}
     local tnow = timer.getTime()
     
     for _tasktype,_data in pairs(tasktypes) do
-      ittypes[_tasktype] = MENU_GROUP_DELAYED:New(group,_tasktype,taskinfomenu):SetTag(newtag)
+      ittypes[_tasktype] = MENU_GROUP:New(group,_tasktype,taskinfomenu):SetTag(newtag)
       local tasks =  taskpertype[_tasktype] or {}
       local n = 0
       for _,_task in pairs(tasks) do
@@ -3335,7 +3439,7 @@ function PLAYERTASKCONTROLLER:_BuildTaskInfoMenu(group,client,playername,topmenu
             --self:T(self.lid.."Menu text = "..text)
           end
         end
-        local taskentry = MENU_GROUP_COMMAND_DELAYED:New(group,text,ittypes[_tasktype],self._ActiveTaskInfo,self,group,client,_task):SetTag(newtag)
+        local taskentry = MENU_GROUP_COMMAND:New(group,text,ittypes[_tasktype],self._ActiveTaskInfo,self,group,client,_task):SetTag(newtag)
         --taskentry:SetTag(playername)
         itaskmenu[#itaskmenu+1] = taskentry
         -- keep max items limit
@@ -3409,6 +3513,7 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
           -- 2)+3) Join or abort?
           if joinorabort then
             self.PlayerMenu[playername]:RemoveSubMenus()
+            self.PlayerMenu[playername] = MENU_GROUP:New(group,menuname,self.MenuParent)
             self.PlayerMenu[playername]:SetTag(newtag)
             topmenu = self.PlayerMenu[playername]
           elseif (not playerhastask) or enforced then
@@ -3420,17 +3525,18 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
               --self.PlayerMenu[playername]:RemoveSubMenus()
               --oldmenu = self.PlayerMenu[playername]
               --self.PlayerMenu[playername] = nil
-              self.PlayerMenu[playername]:RemoveSubMenus()
-              self.PlayerMenu[playername] = MENU_GROUP_DELAYED:New(group,menuname,self.MenuParent)
-              self.PlayerMenu[playername]:SetTag(newtag)
-              self.PlayerMenu[playername].PTTimeStamp = timer.getAbsTime()
-              timedbuild = true
+              
+              --self.PlayerMenu[playername]:RemoveSubMenus()
+              --self.PlayerMenu[playername] = MENU_GROUP:New(group,menuname,self.MenuParent)
+              --self.PlayerMenu[playername]:SetTag(newtag)
+              --self.PlayerMenu[playername].PTTimeStamp = timer.getAbsTime()
+              --timedbuild = true
             end
             topmenu = self.PlayerMenu[playername]
           end
         else
           -- 1) new player#
-          topmenu = MENU_GROUP_DELAYED:New(group,menuname,self.MenuParent)
+          topmenu = MENU_GROUP:New(group,menuname,self.MenuParent)
           self.PlayerMenu[playername] = topmenu
           self.PlayerMenu[playername]:SetTag(newtag)
           self.PlayerMenu[playername].PTTimeStamp = timer.getAbsTime()
@@ -3450,21 +3556,21 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
           local menuflare = self.gettext:GetEntry("MENUFLARE",self.locale)
           local menuabort = self.gettext:GetEntry("MENUABORT",self.locale)
           
-          local active = MENU_GROUP_DELAYED:New(group,menuactive,topmenu):SetTag(newtag)
-          local info = MENU_GROUP_COMMAND_DELAYED:New(group,menuinfo,active,self._ActiveTaskInfo,self,group,client):SetTag(newtag)
-          local mark = MENU_GROUP_COMMAND_DELAYED:New(group,menumark,active,self._MarkTask,self,group,client):SetTag(newtag)
+          local active = MENU_GROUP:New(group,menuactive,topmenu):SetTag(newtag)
+          local info = MENU_GROUP_COMMAND:New(group,menuinfo,active,self._ActiveTaskInfo,self,group,client):SetTag(newtag)
+          local mark = MENU_GROUP_COMMAND:New(group,menumark,active,self._MarkTask,self,group,client):SetTag(newtag)
           if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
             if self.noflaresmokemenu ~= true then
               -- no smoking/flaring here if A2A or designer has set noflaresmokemenu to true
-              local smoke = MENU_GROUP_COMMAND_DELAYED:New(group,menusmoke,active,self._SmokeTask,self,group,client):SetTag(newtag)
-              local flare = MENU_GROUP_COMMAND_DELAYED:New(group,menuflare,active,self._FlareTask,self,group,client):SetTag(newtag)
+              local smoke = MENU_GROUP_COMMAND:New(group,menusmoke,active,self._SmokeTask,self,group,client):SetTag(newtag)
+              local flare = MENU_GROUP_COMMAND:New(group,menuflare,active,self._FlareTask,self,group,client):SetTag(newtag)
               local IsNight = client:GetCoordinate():IsNight()
               if IsNight then
-                local light = MENU_GROUP_COMMAND_DELAYED:New(group,menuflare,active,self._IlluminateTask,self,group,client):SetTag(newtag)
+                local light = MENU_GROUP_COMMAND:New(group,menuflare,active,self._IlluminateTask,self,group,client):SetTag(newtag)
               end
             end
           end
-          local abort = MENU_GROUP_COMMAND_DELAYED:New(group,menuabort,active,self._AbortTask,self,group,client):SetTag(newtag)
+          local abort = MENU_GROUP_COMMAND:New(group,menuabort,active,self._AbortTask,self,group,client):SetTag(newtag)
           if self.activehasinfomenu and self.taskinfomenu then
             self:T("Building Active-Info Menus for "..playername)
             if self.PlayerInfoMenu[playername] then
@@ -3484,13 +3590,13 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
             self.PlayerJoinMenu[playername]:RemoveSubMenus(nil,oldtag)
           end
           
-          local joinmenu = MENU_GROUP_DELAYED:New(group,menujoin,topmenu):SetTag(newtag)
+          local joinmenu = MENU_GROUP:New(group,menujoin,topmenu):SetTag(newtag)
           self.PlayerJoinMenu[playername] = joinmenu
           
           local ttypes = {}
           local taskmenu = {}
           for _tasktype,_data in pairs(tasktypes) do
-            ttypes[_tasktype] = MENU_GROUP_DELAYED:New(group,_tasktype,joinmenu):SetTag(newtag)
+            ttypes[_tasktype] = MENU_GROUP:New(group,_tasktype,joinmenu):SetTag(newtag)
             local tasks =  taskpertype[_tasktype] or {}
             local n = 0
             for _,_task in pairs(tasks) do
@@ -3510,7 +3616,7 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
                   text = string.format("%s (%03d) [%d%s",name,_task.PlayerTaskNr,pilotcount,newtext)
                 end
               end
-              local taskentry = MENU_GROUP_COMMAND_DELAYED:New(group,text,ttypes[_tasktype],self._JoinTask,self,group,client,_task):SetTag(newtag)
+              local taskentry = MENU_GROUP_COMMAND:New(group,text,ttypes[_tasktype],self._JoinTask,self,group,client,_task):SetTag(newtag)
               --taskentry:SetTag(playername)
               taskmenu[#taskmenu+1] = taskentry
               n = n + 1
@@ -3527,22 +3633,22 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
             self.PlayerInfoMenu[playername] = self:_BuildTaskInfoMenu(group,client,playername,topmenu,tasktypes,taskpertype,newtag)
           end
         end
-        if self.AllowFlash then
+        if self.AllowFlash and topmenu ~= nil then
          local flashtext = self.gettext:GetEntry("FLASHMENU",self.locale)
-         local flashmenu = MENU_GROUP_COMMAND_DELAYED:New(group,flashtext,topmenu,self._SwitchFlashing,self,group,client):SetTag(newtag)
+         local flashmenu = MENU_GROUP_COMMAND:New(group,flashtext,topmenu,self._SwitchFlashing,self,group,client):SetTag(newtag)
         end
         if self.TaskQueue:Count() == 0 then
           self:T("No open tasks info")
           local menunotasks = self.gettext:GetEntry("MENUNOTASKS",self.locale)
-          local joinmenu = MENU_GROUP_DELAYED:New(group,menunotasks,self.PlayerMenu[playername]):SetTag(newtag)
+          local joinmenu = MENU_GROUP:New(group,menunotasks,self.PlayerMenu[playername]):SetTag(newtag)
           rebuilddone = true
         end
         ---
         -- REFRESH MENU
         ---
        if rebuilddone then
-         self.PlayerMenu[playername]:RemoveSubMenus(nil,oldtag)
-         self.PlayerMenu[playername]:Set()
+         --self.PlayerMenu[playername]:RemoveSubMenus(nil,oldtag)
+         --self.PlayerMenu[playername]:Set()
          self.PlayerMenu[playername]:Refresh()
        end
       end
@@ -3874,7 +3980,9 @@ function PLAYERTASKCONTROLLER:onafterStatus(From, Event, To)
   
   if taskcount ~= self.lasttaskcount then
     self.lasttaskcount = taskcount
-    enforcedmenu = true
+    if taskcount < self.menuitemlimit then
+      enforcedmenu = true
+    end
   end
   
   self:_BuildMenus(nil,enforcedmenu)
