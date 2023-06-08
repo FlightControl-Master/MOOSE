@@ -4576,8 +4576,18 @@ function OPSGROUP:_UpdateTask(Task, Mission)
               self:EngageTarget(targetgroup)
               
             else
-              -- Debug info.
-              self:T(self.lid..string.format("Zone %s not captured but no target group could be found. Should be captured in the next zone evaluation.", zoneCurr:GetName()))          
+              
+              if self:IsFlightgroup() then
+                -- Debug info.
+                self:T(self.lid..string.format("Zone %s not captured but no target group could be found ==> TaskDone as FLIGHTGROUPS cannot capture zones", zoneCurr:GetName()))                
+              
+                -- Task done.
+                self:TaskDone(Task)
+              else
+                -- Debug info.
+                self:T(self.lid..string.format("Zone %s not captured but no target group could be found. Should be captured in the next zone evaluation.", zoneCurr:GetName()))                
+              end
+              
             end
             
           else
@@ -4882,12 +4892,37 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
       
         -- Remove mission waypoints.
         self:T(self.lid.."Remove mission waypoints")
-        self:_RemoveMissionWaypoints(Mission, false)      
-      
-        self:T(self.lid.."Task done ==> Route to mission for next opszone")
-        self:MissionStart(Mission)
+        self:_RemoveMissionWaypoints(Mission, false)
         
-        return      
+        if self:IsFlightgroup() then
+        
+          -- A flight cannot capture so we assume done.
+        
+--          local opszone=Mission:GetTargetData() --Ops.OpsZone#OPSZONE
+--          
+--          if opszone then
+--          
+--            local mycoalition=self:GetCoalition()
+--            
+--            if mycoalition~=opszone:GetOwner() then
+--              local nenemy=0
+--              if mycoalition==coalition.side.BLUE then
+--                nenemy=opszone.Nred
+--              else
+--                nenemy=opszone.Nblu
+--              end
+--                
+--            end
+--            
+--          end
+        
+        else
+      
+          self:T(self.lid.."Task done ==> Route to mission for next opszone")
+          self:MissionStart(Mission)
+          
+          return
+        end      
       end
 
       -- Get egress waypoint uid.
