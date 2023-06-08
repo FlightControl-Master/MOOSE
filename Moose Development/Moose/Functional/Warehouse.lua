@@ -6671,7 +6671,13 @@ function WAREHOUSE:_OnEventCrashOrDead(EventData)
         self:Destroyed()
       end
       if self.airbase and self.airbasename and self.airbasename==EventData.IniUnitName then
-        self:RunwayDestroyed()      
+        if self:IsRunwayOperational() then
+          -- Trigger RunwayDestroyed event (only if it is not destroyed already)
+          self:RunwayDestroyed()
+        else
+          -- Reset the time stamp.
+          self.runwaydestroyed=timer.getAbsTime()
+        end        
       end
     end
 

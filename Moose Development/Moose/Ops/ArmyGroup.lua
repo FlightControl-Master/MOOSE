@@ -68,7 +68,7 @@ ARMYGROUP = {
 
 --- Army Group version.
 -- @field #string version
-ARMYGROUP.version="1.0.0"
+ARMYGROUP.version="1.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1028,10 +1028,10 @@ function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Formation)
     local task=self:GetTaskByID(self.taskcurrent)
 
     if task then
-      if task.dcstask.id=="PatrolZone" then
+      if task.dcstask.id==AUFTRAG.SpecialTask.PATROLZONE then
         -- For patrol zone, we need to allow the update as we insert new waypoints.
         self:T2(self.lid.."Allowing update route for Task: PatrolZone")
-      elseif task.dcstask.id=="ReconMission" then
+      elseif task.dcstask.id==AUFTRAG.SpecialTask.RECON then
         -- For recon missions, we need to allow the update as we insert new waypoints.
         self:T2(self.lid.."Allowing update route for Task: ReconMission")
       elseif task.dcstask.id==AUFTRAG.SpecialTask.RELOCATECOHORT then
