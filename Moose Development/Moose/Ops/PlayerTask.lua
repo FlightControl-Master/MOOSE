@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update December 2022
+-- @date Last Update June 2023
 
 
 do
@@ -98,7 +98,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.16"
+PLAYERTASK.version="0.1.17"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -461,6 +461,9 @@ function PLAYERTASK:AddClient(Client)
     self.Clients:Push(Client,name)
     self:__ClientAdded(-2,Client)
   end
+  if self.TaskController and self.TaskController.Scoring then
+    self.TaskController.Scoring:_AddPlayerFromUnit(Client)
+  end
   return self
 end
 
@@ -748,7 +751,15 @@ end
 function PLAYERTASK:onafterProgress(From, Event, To, TargetCount)
   self:T({From, Event, To})
   if self.TaskController then
-    self.TaskController:__TaskProgress(-1,self,TargetCount  )
+    if self.TaskController.Scoring then
+      local clients,count = self:GetClientObjects()
+      if count > 0 then
+        for _,_client in pairs(clients) do
+          self.TaskController.Scoring:AddGoalScore(_client,self.Type,nil,10) 
+        end
+      end
+    end
+    self.TaskController:__TaskProgress(-1,self,TargetCount) 
   end
   return self
 end
@@ -865,6 +876,15 @@ function PLAYERTASK:onafterSuccess(From, Event, To)
   if self.TargetMarker then
     self.TargetMarker:Remove()
   end
+  if self.TaskController.Scoring then
+    local clients,count = self:GetClientObjects()
+    if count > 0 then
+      for _,_client in pairs(clients) do
+        local auftrag = self:GetSubType()
+        self.TaskController.Scoring:AddGoalScore(_client,self.Type,nil,self.TaskController.Scores[self.Type]) 
+      end
+    end
+  end 
   self.timestamp = timer.getAbsTime()
   self.FinalState = "Success"
   self:__Done(-1)
@@ -894,6 +914,15 @@ function PLAYERTASK:onafterFailed(From, Event, To)
     self.FinalState = "Failed"
     self:__Done(-1)
   end
+  if self.TaskController.Scoring then
+    local clients,count = self:GetClientObjects()
+    if count > 0 then
+      for _,_client in pairs(clients) do
+        local auftrag = self:GetSubType()
+        self.TaskController.Scoring:AddGoalScore(_client,self.Type,nil,-self.TaskController.Scores[self.Type]) 
+      end
+    end
+  end 
   self.timestamp = timer.getAbsTime()
   return self
 end
@@ -969,6 +998,7 @@ do
 -- @field #boolean InfoHasLLDDM
 -- @field #table PlayerMenuTag
 -- @field #boolean UseTypeNames
+-- @field Functional.Scoring#SCORING Scoring
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1294,6 +1324,7 @@ PLAYERTASKCONTROLLER = {
   InfoHasLLDDM       = false,
   InfoHasCoordinate  = false,
   UseTypeNames       = false,
+  Scoring            = nil,
   }
 
 ---
@@ -1313,6 +1344,22 @@ PLAYERTASKCONTROLLER.Type = {
 AUFTRAG.Type.PRECISIONBOMBING = "Precision Bombing"
 AUFTRAG.Type.CTLD = "Combat Transport"
 AUFTRAG.Type.CSAR = "Combat Rescue"
+
+---
+-- @type Scores
+PLAYERTASKCONTROLLER.Scores = {
+  [AUFTRAG.Type.PRECISIONBOMBING] = 100,
+  [AUFTRAG.Type.CTLD] = 100,
+  [AUFTRAG.Type.CSAR] = 100,
+  [AUFTRAG.Type.INTERCEPT] = 100,
+  [AUFTRAG.Type.ANTISHIP] = 100,
+  [AUFTRAG.Type.CAS] = 100,
+  [AUFTRAG.Type.BAI] = 100,
+  [AUFTRAG.Type.SEAD] = 100,
+  [AUFTRAG.Type.BOMBING] = 100,
+  [AUFTRAG.Type.PRECISIONBOMBING] = 100,
+  [AUFTRAG.Type.BOMBRUNWAY] = 100,  
+}
  
 --- 
 -- @type SeadAttributes
@@ -1490,7 +1537,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.59"
+PLAYERTASKCONTROLLER.version="0.1.60"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -1708,6 +1755,23 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   -- @param Wrapper.Client#CLIENT Client The player client object
   -- @param Ops.PlayerTask#PLAYERTASK Task
   
+end
+
+--- [User] Set or create a SCORING object for this taskcontroller
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Functional.Scoring#SCORING Scoring (optional) the Scoring object
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:EnableScoring(Scoring)
+  self.Scoring = Scoring or SCORING:New(self.Name)
+  return self
+end
+
+--- [User] Remove the SCORING object from this taskcontroller
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:DisableScoring()
+  self.Scoring = nil
+  return self
 end
 
 --- [Internal] Init localization
