@@ -90,7 +90,7 @@ NAVYGROUP = {
 
 --- NavyGroup version.
 -- @field #string version
-NAVYGROUP.version="1.0.0"
+NAVYGROUP.version="1.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -783,6 +783,28 @@ function NAVYGROUP:Status(From, Event, To)
         end
       end
     end
+
+
+    -- Get current mission (if any).
+    local mission=self:GetMissionCurrent()
+    
+    -- If mission, check if DCS task needs to be updated.
+    if mission and mission.updateDCSTask  then
+    
+      if mission.type==AUFTRAG.Type.CAPTUREZONE then
+       
+        -- Get task.
+        local Task=mission:GetGroupWaypointTask(self)
+        
+        -- Update task: Engage or get new zone.
+        if mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.EXECUTING or  mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.STARTED then
+          self:_UpdateTask(Task, mission)
+        end
+                  
+      end
+          
+    end    
+
     
   else
     -- Check damage of elements and group.
@@ -1065,10 +1087,10 @@ function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Depth)
     local task=self:GetTaskByID(self.taskcurrent)
 
     if task then
-      if task.dcstask.id=="PatrolZone" then
+      if task.dcstask.id==AUFTRAG.SpecialTask.PATROLZONE then
         -- For patrol zone, we need to allow the update as we insert new waypoints.
         self:T2(self.lid.."Allowing update route for Task: PatrolZone")
-      elseif task.dcstask.id=="ReconMission" then
+      elseif task.dcstask.id==AUFTRAG.SpecialTask.RECON then
         -- For recon missions, we need to allow the update as we insert new waypoints.
         self:T2(self.lid.."Allowing update route for Task: ReconMission")
       elseif task.dcstask.id==AUFTRAG.SpecialTask.RELOCATECOHORT then

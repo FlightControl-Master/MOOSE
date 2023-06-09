@@ -32,6 +32,7 @@
 -- @field #number Nred Number of red units in the zone.
 -- @field #number Nblu Number of blue units in the zone.
 -- @field #number Nnut Number of neutral units in the zone.
+-- @field #table Ncoal Number of units in zone for each coalition.
 -- @field #number Tred Threat level of red units in the zone.
 -- @field #number Tblu Threat level of blue units in the zone.
 -- @field #number Tnut Threat level of neutral units in the zone.
@@ -70,6 +71,7 @@ OPSZONE = {
   Nred           =     0,
   Nblu           =     0,
   Nnut           =     0,
+  Ncoal          =    {},
   Tred           =     0,
   Tblu           =     0,
   Tnut           =     0,
@@ -116,7 +118,7 @@ OPSZONE.version="0.6.0"
 
 --- Create a new OPSZONE class object.
 -- @param #OPSZONE self
--- @param Core.Zone#ZONE Zone The zone. Needs to be a ZONE\_RADIUS (round) zone. Can be passed as ZONE\_AIRBASE or simply as the name of the airbase.
+-- @param Core.Zone#ZONE Zone The zone. Can be passed as ZONE\_RADIUS, ZONE_POLYGON, ZONE\_AIRBASE or simply as the name of the airbase.
 -- @param #number CoalitionOwner Initial owner of the coaliton. Default `coalition.side.NEUTRAL`.
 -- @return #OPSZONE self
 -- @usage
@@ -192,6 +194,10 @@ function OPSZONE:New(Zone, CoalitionOwner)
   
   -- Contested.
   self.isContested=false
+  
+  self.Ncoal[coalition.side.BLUE]=0
+  self.Ncoal[coalition.side.RED]=0
+  self.Ncoal[coalition.side.NEUTRAL]=0
   
   -- We take the airbase coalition.
   if self.airbase then
@@ -1196,6 +1202,11 @@ function OPSZONE:Scan()
   self.Nred=Nred
   self.Nblu=Nblu
   self.Nnut=Nnut
+  
+  
+  self.Ncoal[coalition.side.BLUE]=Nblu
+  self.Ncoal[coalition.side.RED]=Nred
+  self.Ncoal[coalition.side.NEUTRAL]=Nnut
   
   self.Tblu=Tblu
   self.Tred=Tred

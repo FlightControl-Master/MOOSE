@@ -216,7 +216,7 @@ FLIGHTGROUP.Players={}
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="1.0.0"
+FLIGHTGROUP.version="1.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1004,6 +1004,17 @@ function FLIGHTGROUP:Status()
           self:_SandwitchDCSTask(DCSTask, Task, false, 1)
           
         end
+
+      elseif mission.type==AUFTRAG.Type.CAPTUREZONE then
+       
+        -- Get task.
+        local Task=mission:GetGroupWaypointTask(self)
+        
+        -- Update task: Engage or get new zone.
+        if mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.EXECUTING or  mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.STARTED then
+          self:_UpdateTask(Task, mission)
+        end
+        
       end    
     end
     
@@ -2240,13 +2251,16 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n, N)
     local task=self:GetTaskByID(self.taskcurrent)
 
     if task then
-      if task.dcstask.id=="PatrolZone" then
+      if task.dcstask.id==AUFTRAG.SpecialTask.PATROLZONE then
         -- For patrol zone, we need to allow the update as we insert new waypoints.
         self:T2(self.lid.."Allowing update route for Task: PatrolZone")
-      elseif task.dcstask.id=="ReconMission" then
+      elseif task.dcstask.id==AUFTRAG.SpecialTask.CAPTUREZONE then
+        -- For patrol zone, we need to allow the update as we insert new waypoints.
+        self:T2(self.lid.."Allowing update route for Task: CaptureZone")
+      elseif task.dcstask.id==AUFTRAG.SpecialTask.RECON then
         -- For recon missions, we need to allow the update as we insert new waypoints.
         self:T2(self.lid.."Allowing update route for Task: ReconMission")
-      elseif task.dcstask.id=="Hover" then
+      elseif task.dcstask.id==AUFTRAG.SpecialTask.HOVER then
         -- For recon missions, we need to allow the update as we insert new waypoints.
         self:T2(self.lid.."Allowing update route for Task: Hover")
       elseif task.dcstask.id==AUFTRAG.SpecialTask.RELOCATECOHORT then
