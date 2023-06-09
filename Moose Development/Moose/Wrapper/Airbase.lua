@@ -490,7 +490,6 @@ AIRBASE.Syria={
   ["Wujah_Al_Hajar"]="Wujah Al Hajar",
   ["Al_Dumayr"]="Al-Dumayr",
   ["Gazipasa"]="Gazipasa",
-  --["Ru_Convoy_4"]="Ru Convoy-4",
   ["Hatay"]="Hatay",
   ["Nicosia"]="Nicosia",
   ["Pinarbashi"]="Pinarbashi",
@@ -617,6 +616,72 @@ AIRBASE.SouthAtlantic={
   ["Aerodromo_O_Higgins"] = "Aerodromo O'Higgins",
   ["Cullen_Airport"] = "Cullen Airport",
   ["Gull_Point"] = "Gull Point",
+}
+
+--- Airbases of the Sinai map:
+--
+--  * AIRBASE.Sinai.Abu_Suwayr
+--  * AIRBASE.Sinai.Sde_Dov
+--  * AIRBASE.Sinai.AzZaqaziq
+--  * AIRBASE.Sinai.Hatzor
+--  * AIRBASE.Sinai.Kedem
+--  * AIRBASE.Sinai.Nevatim
+--  * AIRBASE.Sinai.Cairo_International_Airport
+--  * AIRBASE.Sinai.Al_Ismailiyah
+--  * AIRBASE.Sinai.As_Salihiyah
+--  * AIRBASE.Sinai.Fayed
+--  * AIRBASE.Sinai.Bilbeis_Air_Base
+--  * AIRBASE.Sinai.Ramon_Airbase
+--  * AIRBASE.Sinai.Kibrit_Air_Base
+--  * AIRBASE.Sinai.El_Arish
+--  * AIRBASE.Sinai.Ovda
+--  * AIRBASE.Sinai.Melez
+--  * AIRBASE.Sinai.Al_Mansurah
+--  * AIRBASE.Sinai.Palmahim
+--  * AIRBASE.Sinai.Baluza
+--  * AIRBASE.Sinai.El_Gora
+--  * AIRBASE.Sinai.Difarsuwar_Airfield
+--  * AIRBASE.Sinai.Wadi_al_Jandali
+--  * AIRBASE.Sinai.St_Catherine
+--  * AIRBASE.Sinai.Tel_Nof
+--  * AIRBASE.Sinai.Abu_Rudeis
+--  * AIRBASE.Sinai.Inshas_Airbase
+--  * AIRBASE.Sinai.Ben-Gurion
+--  * AIRBASE.Sinai.Bir_Hasanah
+--  * AIRBASE.Sinai.Cairo_West
+-- 
+-- @field Sinai
+AIRBASE.Sinai = {
+  ["Hatzerim"] = "Hatzerim",
+  ["Abu_Suwayr"] = "Abu Suwayr",
+  ["Sde_Dov"] = "Sde Dov",
+  ["AzZaqaziq"] = "AzZaqaziq",
+  ["Hatzor"] = "Hatzor",
+  ["Kedem"] = "Kedem",
+  ["Nevatim"] = "Nevatim",
+  ["Cairo_International_Airport"] = "Cairo International Airport",
+  ["Al_Ismailiyah"] = "Al Ismailiyah",
+  ["As_Salihiyah"] = "As Salihiyah",
+  ["Fayed"] = "Fayed",
+  ["Bilbeis_Air_Base"] = "Bilbeis Air Base",
+  ["Ramon_Airbase"] = "Ramon Airbase",
+  ["Kibrit_Air_Base"] = "Kibrit Air Base",
+  ["El_Arish"] = "El Arish",
+  ["Ovda"] = "Ovda",
+  ["Melez"] = "Melez",
+  ["Al_Mansurah"] = "Al Mansurah",
+  ["Palmahim"] = "Palmahim",
+  ["Baluza"] = "Baluza",
+  ["El_Gora"] = "El Gora",
+  ["Difarsuwar_Airfield"] = "Difarsuwar Airfield",
+  ["Wadi_al_Jandali"] = "Wadi al Jandali",
+  ["St_Catherine"] = "St Catherine",
+  ["Tel_Nof"] = "Tel Nof",
+  ["Abu_Rudeis"] = "Abu Rudeis",
+  ["Inshas_Airbase"] = "Inshas Airbase",
+  ["Ben-Gurion"] = "Ben-Gurion",
+  ["Bir_Hasanah"] = "Bir Hasanah",
+  ["Cairo_West"] = "Cairo West",
 }
 
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
