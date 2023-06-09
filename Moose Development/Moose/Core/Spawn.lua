@@ -1614,7 +1614,7 @@ end
 -- @param #number SpawnTime The time interval defined in seconds between each new spawn of new groups.
 -- @param #number SpawnTimeVariation The variation to be applied on the defined time interval between each new spawn.
 -- The variation is a number between 0 and 1, representing the % of variation to be applied on the time interval.
--- @param #boolen WithDelay Do not spawn the **first** group immediately, but delay the spawn as per the calculation below.
+-- @param #boolean WithDelay Do not spawn the **first** group immediately, but delay the spawn as per the calculation below.
 -- Effectively the same as @{InitDelayOn}().
 -- @return #SPAWN self
 -- @usage
