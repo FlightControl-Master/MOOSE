@@ -43,7 +43,7 @@ BIGSMOKEPRESET = {
   HugeSmoke=8,
 }
 
---- DCS map as returned by `env.mission.theatre`.
+--- DCS map as returned by env.mission.theatre.
 -- @type DCSMAP
 -- @field #string Caucasus Caucasus map.
 -- @field #string Normandy Normandy map.
