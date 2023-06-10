@@ -980,7 +980,7 @@ function OPSGROUP:GetLifePoints(Element)
     for _,element in pairs(self.elements) do
       local l,l0=self:GetLifePoints(element)
       life=life+l
-      life0=life+l0
+      life0=life0+l0
     end
 
   end
