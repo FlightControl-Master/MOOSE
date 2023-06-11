@@ -679,7 +679,7 @@ AIRBASE.Sinai = {
   ["Tel_Nof"] = "Tel Nof",
   ["Abu_Rudeis"] = "Abu Rudeis",
   ["Inshas_Airbase"] = "Inshas Airbase",
-  ["Ben-Gurion"] = "Ben-Gurion",
+  ["Ben_Gurion"] = "Ben-Gurion",
   ["Bir_Hasanah"] = "Bir Hasanah",
   ["Cairo_West"] = "Cairo West",
 }
