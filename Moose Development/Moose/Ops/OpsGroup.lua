@@ -5943,13 +5943,12 @@ function OPSGROUP:RouteToMission(mission, delay)
       -- Random coordinate.
       waypointcoord=targetzone:GetRandomCoordinate(nil , nil, surfacetypes)      
       
-
     else
       ---
       -- Default case
       ---
       
-      waypointcoord=mission:GetMissionWaypointCoord(self.group, randomradius, surfacetypes)      
+      waypointcoord=mission:GetMissionWaypointCoord(self.group, randomradius, surfacetypes)
     end
 
     -- Add enroute tasks.
@@ -6039,7 +6038,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     local d=currentcoord:Get2DDistance(waypointcoord)
     
     -- Debug info.
-    self:T(self.lid..string.format("Distance to ingress waypoint=%.1f m", d))     
+    self:T(self.lid..string.format("Distance to ingress waypoint=%.1f m", d))
     
     -- Add mission execution (ingress) waypoint.
     local waypoint=nil --#OPSGROUP.Waypoint
