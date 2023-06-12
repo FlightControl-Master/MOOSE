@@ -467,8 +467,8 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.H3_Northwest
 -- * AIRBASE.Syria.H3_Southwest
 -- * AIRBASE.Syria.Kharab_Ishk
--- * AIRBASE.Syria.Raj_al_Issa_East
--- * AIRBASE.Syria.Raj_al_Issa_West
+-- * AIRBASE.Syria.Raj_al_Issa_East (deleted by ED)
+-- * AIRBASE.Syria.Raj_al_Issa_West (deleted by ED)
 -- * AIRBASE.Syria.Ruwayshid
 -- * AIRBASE.Syria.Sanliurfa
 -- * AIRBASE.Syria.Tal_Siman
@@ -532,8 +532,8 @@ AIRBASE.Syria={
   ["H3_Northwest"]="H3 Northwest",
   ["H3_Southwest"]="H3 Southwest",
   ["Kharab_Ishk"]="Kharab Ishk",
-  ["Raj_al_Issa_East"]="Raj al Issa East",
-  ["Raj_al_Issa_West"]="Raj al Issa West",
+  -- ["Raj_al_Issa_East"]="Raj al Issa East",
+  -- ["Raj_al_Issa_West"]="Raj al Issa West",
   ["Ruwayshid"]="Ruwayshid",
   ["Sanliurfa"]="Sanliurfa",
   ["Tal_Siman"]="Tal Siman",
@@ -679,7 +679,7 @@ AIRBASE.Sinai = {
   ["Tel_Nof"] = "Tel Nof",
   ["Abu_Rudeis"] = "Abu Rudeis",
   ["Inshas_Airbase"] = "Inshas Airbase",
-  ["Ben-Gurion"] = "Ben-Gurion",
+  ["Ben_Gurion"] = "Ben-Gurion",
   ["Bir_Hasanah"] = "Bir Hasanah",
   ["Cairo_West"] = "Cairo West",
 }
