@@ -320,6 +320,23 @@ function UNIT:IsActive()
   return nil
 end
 
+--- Returns if the unit is exists in the mission.
+-- If not even the DCS unit object does exist, `nil` is returned.  
+-- If the unit object exists, the value of the DCS API function [isExist](https://wiki.hoggitworld.com/view/DCS_func_isExist) is returned.  
+-- @param #UNIT self
+-- @return #boolean Returns `true` if unit exists in the mission.
+function UNIT:IsExist()
+
+  local DCSUnit = self:GetDCSObject() -- DCS#Unit
+  
+  if DCSUnit then
+    local exists = DCSUnit:isExist()
+    return exists
+  end 
+  
+  return nil
+end
+
 --- Returns if the Unit is alive.  
 -- If the Unit is not alive, nil is returned.  
 -- If the Unit is alive and active, true is returned.    
