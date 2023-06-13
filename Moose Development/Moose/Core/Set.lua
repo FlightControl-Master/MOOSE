@@ -3040,7 +3040,7 @@ do -- SET_UNIT
   -- @param Wrapper.Unit#UNIT MUnit
   -- @return #SET_UNIT self
   function SET_UNIT:IsIncludeObject( MUnit )
-    self:F2( MUnit )
+    self:F2( {MUnit} )
 
     local MUnitInclude = false
 

@@ -681,19 +681,26 @@ end
 
 --- Returns the Unit's ammunition.
 -- @param #UNIT self
--- @return DCS#Unit.Ammo Table with ammuntion of the unit (or nil). This can be a complex table!  
+-- @return DCS#Unit.Ammo Table with ammuntion of the unit (or nil). This can be a complex table! 
 function UNIT:GetAmmo()
   self:F2( self.UnitName )
-
   local DCSUnit = self:GetDCSObject()
-  
   if DCSUnit then
-    local UnitAmmo = DCSUnit:getAmmo()
-    return UnitAmmo
+    local status, unitammo = pcall(
+       function()
+         local UnitAmmo = DCSUnit:getAmmo()
+         return UnitAmmo
+       end
+    )
+    if status then
+      return unitammo
+    end
+    --local UnitAmmo = DCSUnit:getAmmo()
+    --return UnitAmmo
   end
-  
   return nil
 end
+
 
 --- Sets the Unit's Internal Cargo Mass, in kg
 -- @param #UNIT self
