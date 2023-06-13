@@ -4111,9 +4111,14 @@ function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
 
   -- If airbase is ship, translate parking coords. Alternatively, we just move the coordinate of the unit to the origin of the map, which is way more efficient.
   if airbase and airbase:IsShip() then
-    coord.x=0
-    coord.z=0
-    maxdist=500 -- 100 meters was not enough, e.g. on the Seawise Giant, where the spot is 139 meters from the "center".
+    -- No need to compute the relative position if there is only one parking spot.
+    if #parking > 1 then
+      coord = airbase:GetRelativeCoordinate( coord.x, coord.y, coord.z )
+    else
+      coord.x=0
+      coord.z=0
+      maxdist=500 -- 100 meters was not enough, e.g. on the Seawise Giant, where the spot is 139 meters from the "center".
+    end
   end
 
   local spot=nil --Wrapper.Airbase#AIRBASE.ParkingSpot
