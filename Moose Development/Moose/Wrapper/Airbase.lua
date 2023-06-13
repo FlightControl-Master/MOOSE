@@ -646,7 +646,7 @@ AIRBASE.SouthAtlantic={
 --  * AIRBASE.Sinai.Tel_Nof
 --  * AIRBASE.Sinai.Abu_Rudeis
 --  * AIRBASE.Sinai.Inshas_Airbase
---  * AIRBASE.Sinai.Ben-Gurion
+--  * AIRBASE.Sinai.Ben_Gurion
 --  * AIRBASE.Sinai.Bir_Hasanah
 --  * AIRBASE.Sinai.Cairo_West
 -- 
