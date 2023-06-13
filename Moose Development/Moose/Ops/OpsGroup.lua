@@ -1812,7 +1812,7 @@ function OPSGROUP:GetVec3(UnitName)
   local carrier=self:_GetMyCarrierElement()
   if carrier and carrier.status~=OPSGROUP.ElementStatus.DEAD and self:IsLoaded() then
     local unit=carrier.unit
-    if unit and unit:IsAlive()~=nil then
+    if unit and unit:IsExist() then
       vec3=unit:GetVec3()
       return vec3
     end
@@ -12813,7 +12813,7 @@ function OPSGROUP:GetAmmoTot()
   for _,_unit in pairs(units or {}) do
     local unit=_unit --Wrapper.Unit#UNIT
 
-    if unit and unit:IsAlive()~=nil then
+    if unit and unit:IsExist() then
 
       -- Get ammo of the unit.
       local ammo=self:GetAmmoUnit(unit)
@@ -12849,8 +12849,6 @@ function OPSGROUP:GetAmmoUnit(unit, display)
   if display==nil then
     display=false
   end
-  
-  unit=unit or self.group:GetUnit(1)
 
   -- Init counter.
   local nammo=0
@@ -12866,117 +12864,123 @@ function OPSGROUP:GetAmmoUnit(unit, display)
   local ntorps=0
   local nbombs=0
 
-  -- Output.
-  local text=string.format("OPSGROUP group %s - unit %s:\n", self.groupname, unit:GetName())
+  unit=unit or self.group:GetUnit(1)
 
-  -- Get ammo table.
-  local ammotable=unit:GetAmmo()
+  if unit and unit:IsExist() then
 
-  if ammotable then
+    -- Output.
+    local text=string.format("OPSGROUP group %s - unit %s:\n", self.groupname, unit:GetName())
 
-    local weapons=#ammotable
-  
-  --self:I(ammotable)
+    -- Get ammo table.
+    local ammotable=unit:GetAmmo()
 
-    -- Loop over all weapons.
-    for w=1,weapons do
+    if ammotable then
 
-      -- Number of current weapon.
-      local Nammo=ammotable[w]["count"]
+      local weapons=#ammotable
     
-    -- Range in meters. Seems only to exist for missiles (not shells).
-    local rmin=ammotable[w]["desc"]["rangeMin"] or 0
-    local rmax=ammotable[w]["desc"]["rangeMaxAltMin"] or 0
+    --self:I(ammotable)
 
-      -- Type name of current weapon.
-      local Tammo=ammotable[w]["desc"]["typeName"]
+      -- Loop over all weapons.
+      for w=1,weapons do
 
-      local _weaponString = UTILS.Split(Tammo,"%.")
-      local _weaponName   = _weaponString[#_weaponString]
+        -- Number of current weapon.
+        local Nammo=ammotable[w]["count"]
+      
+      -- Range in meters. Seems only to exist for missiles (not shells).
+      local rmin=ammotable[w]["desc"]["rangeMin"] or 0
+      local rmax=ammotable[w]["desc"]["rangeMaxAltMin"] or 0
 
-      -- Get the weapon category: shell=0, missile=1, rocket=2, bomb=3, torpedo=4
-      local Category=ammotable[w].desc.category
+        -- Type name of current weapon.
+        local Tammo=ammotable[w]["desc"]["typeName"]
 
-      -- Get missile category: Weapon.MissileCategory AAM=1, SAM=2, BM=3, ANTI_SHIP=4, CRUISE=5, OTHER=6
-      local MissileCategory=nil
-      if Category==Weapon.Category.MISSILE then
-        MissileCategory=ammotable[w].desc.missileCategory
-      end
+        local _weaponString = UTILS.Split(Tammo,"%.")
+        local _weaponName   = _weaponString[#_weaponString]
 
-      -- We are specifically looking for shells or rockets here.
-      if Category==Weapon.Category.SHELL then
+        -- Get the weapon category: shell=0, missile=1, rocket=2, bomb=3, torpedo=4
+        local Category=ammotable[w].desc.category
 
-        -- Add up all shells.
-        nshells=nshells+Nammo
-
-        -- Debug info.
-        text=text..string.format("- %d shells of type %s, range=%d - %d meters\n", Nammo, _weaponName, rmin, rmax)
-
-      elseif Category==Weapon.Category.ROCKET then
-
-        -- Add up all rockets.
-        nrockets=nrockets+Nammo
-
-        -- Debug info.
-        text=text..string.format("- %d rockets of type %s, \n", Nammo, _weaponName, rmin, rmax)
-
-      elseif Category==Weapon.Category.BOMB then
-
-        -- Add up all rockets.
-        nbombs=nbombs+Nammo
-
-        -- Debug info.
-        text=text..string.format("- %d bombs of type %s\n", Nammo, _weaponName)
-
-      elseif Category==Weapon.Category.MISSILE then
-
-        -- Add up all cruise missiles (category 5)
-        if MissileCategory==Weapon.MissileCategory.AAM then
-          nmissiles=nmissiles+Nammo
-          nmissilesAA=nmissilesAA+Nammo
-        elseif MissileCategory==Weapon.MissileCategory.SAM then
-          nmissiles=nmissiles+Nammo
-          nmissilesSA=nmissilesSA+Nammo
-        elseif MissileCategory==Weapon.MissileCategory.ANTI_SHIP then
-          nmissiles=nmissiles+Nammo
-          nmissilesAS=nmissilesAS+Nammo
-        elseif MissileCategory==Weapon.MissileCategory.BM then
-          nmissiles=nmissiles+Nammo
-          nmissilesBM=nmissilesBM+Nammo
-        elseif MissileCategory==Weapon.MissileCategory.CRUISE then
-          nmissiles=nmissiles+Nammo
-          nmissilesCR=nmissilesCR+Nammo
-        elseif MissileCategory==Weapon.MissileCategory.OTHER then
-          nmissiles=nmissiles+Nammo
-          nmissilesAG=nmissilesAG+Nammo
+        -- Get missile category: Weapon.MissileCategory AAM=1, SAM=2, BM=3, ANTI_SHIP=4, CRUISE=5, OTHER=6
+        local MissileCategory=nil
+        if Category==Weapon.Category.MISSILE then
+          MissileCategory=ammotable[w].desc.missileCategory
         end
 
-        -- Debug info.
-        text=text..string.format("- %d %s missiles of type %s, range=%d - %d meters\n", Nammo, self:_MissileCategoryName(MissileCategory), _weaponName, rmin, rmax)
+        -- We are specifically looking for shells or rockets here.
+        if Category==Weapon.Category.SHELL then
 
-      elseif Category==Weapon.Category.TORPEDO then
+          -- Add up all shells.
+          nshells=nshells+Nammo
 
-        -- Add up all rockets.
-        ntorps=ntorps+Nammo
+          -- Debug info.
+          text=text..string.format("- %d shells of type %s, range=%d - %d meters\n", Nammo, _weaponName, rmin, rmax)
 
-        -- Debug info.
-        text=text..string.format("- %d torpedos of type %s\n", Nammo, _weaponName)
+        elseif Category==Weapon.Category.ROCKET then
 
-      else
+          -- Add up all rockets.
+          nrockets=nrockets+Nammo
 
-        -- Debug info.
-        text=text..string.format("- %d unknown ammo of type %s (category=%d, missile category=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
+          -- Debug info.
+          text=text..string.format("- %d rockets of type %s, \n", Nammo, _weaponName, rmin, rmax)
+
+        elseif Category==Weapon.Category.BOMB then
+
+          -- Add up all rockets.
+          nbombs=nbombs+Nammo
+
+          -- Debug info.
+          text=text..string.format("- %d bombs of type %s\n", Nammo, _weaponName)
+
+        elseif Category==Weapon.Category.MISSILE then
+
+          -- Add up all cruise missiles (category 5)
+          if MissileCategory==Weapon.MissileCategory.AAM then
+            nmissiles=nmissiles+Nammo
+            nmissilesAA=nmissilesAA+Nammo
+          elseif MissileCategory==Weapon.MissileCategory.SAM then
+            nmissiles=nmissiles+Nammo
+            nmissilesSA=nmissilesSA+Nammo
+          elseif MissileCategory==Weapon.MissileCategory.ANTI_SHIP then
+            nmissiles=nmissiles+Nammo
+            nmissilesAS=nmissilesAS+Nammo
+          elseif MissileCategory==Weapon.MissileCategory.BM then
+            nmissiles=nmissiles+Nammo
+            nmissilesBM=nmissilesBM+Nammo
+          elseif MissileCategory==Weapon.MissileCategory.CRUISE then
+            nmissiles=nmissiles+Nammo
+            nmissilesCR=nmissilesCR+Nammo
+          elseif MissileCategory==Weapon.MissileCategory.OTHER then
+            nmissiles=nmissiles+Nammo
+            nmissilesAG=nmissilesAG+Nammo
+          end
+
+          -- Debug info.
+          text=text..string.format("- %d %s missiles of type %s, range=%d - %d meters\n", Nammo, self:_MissileCategoryName(MissileCategory), _weaponName, rmin, rmax)
+
+        elseif Category==Weapon.Category.TORPEDO then
+
+          -- Add up all rockets.
+          ntorps=ntorps+Nammo
+
+          -- Debug info.
+          text=text..string.format("- %d torpedos of type %s\n", Nammo, _weaponName)
+
+        else
+
+          -- Debug info.
+          text=text..string.format("- %d unknown ammo of type %s (category=%d, missile category=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
+
+        end
 
       end
-
     end
-  end
 
-  -- Debug text and send message.
-  if display then
-    self:I(self.lid..text)
-  else
-    self:T3(self.lid..text)
+    -- Debug text and send message.
+    if display then
+      self:I(self.lid..text)
+    else
+      self:T3(self.lid..text)
+    end
+
   end
 
   -- Total amount of ammunition.
