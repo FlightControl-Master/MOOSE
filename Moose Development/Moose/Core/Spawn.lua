@@ -3127,7 +3127,11 @@ function SPAWN:_GetTemplate( SpawnTemplatePrefix )
   self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnTemplatePrefix } )
 
   local SpawnTemplate = nil
-
+  
+  if _DATABASE.Templates.Groups[SpawnTemplatePrefix] == nil then
+    error( 'No Template exists for SpawnTemplatePrefix = ' .. SpawnTemplatePrefix )
+  end
+  
   local Template = _DATABASE.Templates.Groups[SpawnTemplatePrefix].Template
   self:F( { Template = Template } )
 

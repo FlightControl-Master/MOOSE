@@ -179,9 +179,9 @@ function UNIT:GetDCSObject()
     return DCSUnit
   end
   
-  if self.DCSUnit then
-    return self.DCSUnit
-  end
+  --if self.DCSUnit then
+    --return self.DCSUnit
+  --end
   
   return nil
 end
