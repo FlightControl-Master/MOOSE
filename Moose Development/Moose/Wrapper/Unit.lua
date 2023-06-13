@@ -338,18 +338,18 @@ function UNIT:IsExist()
 end
 
 --- Returns if the Unit is alive.  
--- If the Unit is not alive, nil is returned.  
--- If the Unit is alive and active, true is returned.    
--- If the Unit is alive but not active, false is returned.  
+-- If the Unit is not alive/existent, `nil` is returned.  
+-- If the Unit is alive and active, `true` is returned.    
+-- If the Unit is alive but not active, `false`` is returned.  
 -- @param #UNIT self
--- @return #boolean `true` if Unit is alive and active. `false` if Unit is alive but not active. `nil` if the Unit is not existing or is not alive.
+-- @return #boolean Returns `true` if Unit is alive and active, `false` if it exists but is not active and `nil` if the object does not exist or DCS `isExist` function returns false.
 function UNIT:IsAlive()
   self:F3( self.UnitName )
 
   local DCSUnit = self:GetDCSObject() -- DCS#Unit
   
-  if DCSUnit then
-    local UnitIsAlive  = DCSUnit:isExist() and DCSUnit:isActive() -- and DCSUnit:getLife() > 1
+  if DCSUnit and DCSUnit:isExist() then
+    local UnitIsAlive = DCSUnit:isActive()
     return UnitIsAlive
   end 
   
