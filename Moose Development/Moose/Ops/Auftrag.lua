@@ -1444,7 +1444,7 @@ function AUFTRAG:NewCASENHANCED(CasZone, Altitude, Speed, RangeMax, NoEngageZone
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
 
-  mission.missionFraction=1.0
+  mission.missionFraction=0.5
   mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
   mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or nil
   
