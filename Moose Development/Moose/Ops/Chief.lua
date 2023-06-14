@@ -2969,7 +2969,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
   
   -- Shortcuts.
   local MissionType=Resource.MissionType
-  local NassetsMin=Resource.Nmax
+  local NassetsMin=Resource.Nmin
   local NassetsMax=Resource.Nmax
   local Categories=Resource.Categories
   local Attributes=Resource.Attributes
