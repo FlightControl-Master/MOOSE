@@ -465,6 +465,115 @@ function POSITIONABLE:GetOffsetCoordinate( x, y, z )
   return coord
 end
 
+--- Returns a COORDINATE object, which is transformed to be relative to the POSITIONABLE. Inverse of @{#POSITIONABLE.GetOffsetCoordinate}.
+-- @param #POSITIONABLE self
+-- @param #number x Offset along the world x-axis in meters. Default 0 m.
+-- @param #number y Offset along the world y-axis in meters. Default 0 m.
+-- @param #number z Offset along the world z-axis in meters. Default 0 m.
+-- @return Core.Point#COORDINATE The relative COORDINATE with respect to the orientation of the  POSITIONABLE.
+function POSITIONABLE:GetRelativeCoordinate( x, y, z )
+
+  -- Default if nil.
+  x = x or 0
+  y = y or 0
+  z = z or 0
+  
+  
+  -- Vector from the origin of the map to self.
+  local selfPos = self:GetVec3()
+  
+  -- Vectors making up self's local coordinate system.
+  local X = self:GetOrientationX()
+  local Y = self:GetOrientationY()
+  local Z = self:GetOrientationZ()
+  
+  -- Offset from self to self's position (still in the world coordinate system).
+  local off = {
+    x = x - selfPos.x,
+    y = y - selfPos.y,
+    z = z - selfPos.z
+  }
+  
+  -- The end result
+  local res = { x = 0, y = 0, z = 0 }
+  
+  -- Matrix equation to solve:
+  -- | X.x, Y.x, Z.x |   | res.x |   | off.x |
+  -- | X.y, Y.y, Z.y | . | res.y | = | off.y |
+  -- | X.z, Y.z, Z.z |   | res.z |   | off.z |
+  
+  -- Use gaussian elimination to solve the system of equations.
+  -- https://en.wikipedia.org/wiki/Gaussian_elimination
+
+  local mat = {
+    { X.x, Y.x, Z.x, off.x },
+    { X.y, Y.y, Z.y, off.y },
+    { X.z, Y.z, Z.z, off.z }
+  }
+  
+  -- Matrix dimensions
+  local m = 3
+  local n = 4
+  
+  -- Pivot indices
+  local h = 1
+  local k = 1
+  
+  while h <= m and k <= n do
+    local v_max = math.abs( mat[h][k] )
+    local i_max = h
+    for i = h,m,1 do
+      local value = math.abs( mat[i][k] )
+        if value > v_max then
+          i_max = i
+          v_max = value
+        end
+    end
+    
+    if mat[i_max][k] == 0 then
+      -- Already all 0s, nothing to do.
+      k = k + 1
+    else
+      -- Swap rows h and i_max
+      local tmp = mat[h]
+      mat[h] = mat[i_max]
+      mat[i_max] = tmp
+      
+      for i = h + 1,m,1 do
+        -- The scaling factor to use to reduce all values in this column
+        local f = mat[i][k] / mat[h][k]
+        mat[i][k] = 0
+        for j = k+1,n,1 do
+          mat[i][j] = mat[i][j] - f*mat[h][j]
+        end
+      end
+      
+      h = h + 1
+      k = k + 1
+    end
+  end
+  
+  -- mat is now in row echelon form:
+  -- | #, #, #, # |
+  -- | 0, #, #, # |
+  -- | 0, 0, #, # |
+  --
+  -- and the linear equation is now effectively:
+  -- | #, #, # |   | res.x |   | # |
+  -- | 0, #, # | . | res.y | = | # |
+  -- | 0, 0, # |   | res.z |   | # |
+  -- this resulting system of equations can be easily solved via substitution.
+  
+  res.z = mat[3][4] / mat[3][3]
+  res.y = (mat[2][4] - res.z * mat[2][3]) / mat[2][2]
+  res.x = (mat[1][4] - res.y * mat[1][2] - res.z * mat[1][3]) / mat[1][1]
+  
+  local coord = COORDINATE:NewFromVec3( res )
+
+  -- Return the relative coordinate.
+  return coord
+end
+
 --- Returns a random @{DCS#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param #POSITIONABLE self
 -- @param #number Radius
