@@ -107,7 +107,7 @@ _TIMERID=0
 
 --- TIMER class version.
 -- @field #string version
-TIMER.version="0.1.2"
+TIMER.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -222,7 +222,20 @@ function TIMER:Stop(Delay)
     
       -- Remove timer function.
       self:T(self.lid..string.format("Stopping timer by removing timer function after %d calls!", self.ncalls))
-      timer.removeFunction(self.tid)
+
+      -- We use a pcall here because if the DCS timer does not exist any more, it crashes the whole script!
+      local status=pcall(
+        function ()
+          timer.removeFunction(self.tid)
+        end 
+      )
+      
+      -- Debug messages.
+      if status then
+        self:T2(self.lid..string.format("Stopped timer!"))
+      else
+        self:E(self.lid..string.format("WARNING: Could not remove timer function! isrunning=%s", tostring(self.isrunning)))
+      end
       
       -- Not running any more.
       self.isrunning=false
