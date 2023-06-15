@@ -5,7 +5,7 @@
 -- ===
 --
 -- ### Author: **Applevangelist**
--- # Last Update Apr 2023
+-- # Last Update June 2023
 -- 
 -- ===
 --
@@ -42,7 +42,7 @@ do
 -- @field #NET
 NET = {
   ClassName = "NET",
-  Version = "0.1.1",
+  Version = "0.1.2",
   BlockTime = 600,
   BlockedPilots = {},
   BlockedUCIDs = {},
@@ -90,7 +90,7 @@ function NET:New()
   -- @param #string From State.
   -- @param #string Event Trigger.
   -- @param #string To State.
-  -- @param Wrapper.Unit#UNIT Client Unit Object.
+  -- @param Wrapper.Client#CLIENT Client Object.
   -- @param #string Name Name of joining Pilot.
   -- @return #NET self
   
@@ -220,7 +220,8 @@ function NET:_EventHandler(EventData)
           side = PlayerSide,
           slot = PlayerSlot,
         }
-        self:__PlayerJoined(1,data.IniUnit,name)
+        local client = CLIENT:FindByPlayerName(name) or data.IniUnit
+        self:__PlayerJoined(1,client,name)
         return self
       end
     end
@@ -771,7 +772,7 @@ end
 -- @param #string To
 -- @return #NET self
 function NET:onafterStatus(From,Event,To)
-  self:I({From,Event,To})
+  self:T({From,Event,To})
   
   local function HouseHold(tavolo)
     local TNow = timer.getTime()
@@ -799,7 +800,7 @@ end
 -- @param #string To
 -- @return #NET self
 function NET:onafterRun(From,Event,To)
-  self:I({From,Event,To})
+  self:T({From,Event,To})
   self:HandleEvent(EVENTS.PlayerEnterUnit,self._EventHandler)
   self:HandleEvent(EVENTS.PlayerEnterAircraft,self._EventHandler)
   self:HandleEvent(EVENTS.PlayerLeaveUnit,self._EventHandler)
@@ -807,7 +808,7 @@ function NET:onafterRun(From,Event,To)
   self:HandleEvent(EVENTS.Ejection,self._EventHandler)
   self:HandleEvent(EVENTS.Crash,self._EventHandler)
   self:HandleEvent(EVENTS.SelfKillPilot,self._EventHandler)
-  self:__Status(-30)
+  self:__Status(-10)
 end
 
 ---  Stop the event functions
