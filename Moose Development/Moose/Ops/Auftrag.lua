@@ -5579,7 +5579,13 @@ function AUFTRAG:GetMissionWaypointCoord(group, randomradius, surfacetypes)
   end
 
   -- Create waypoint coordinate half way between us and the target.
-  local waypointcoord=group:GetCoordinate():GetIntermediateCoordinate(self:GetTargetCoordinate(), self.missionFraction)
+  local waypointcoord=COORDINATE:New(0,0,0)
+  local coord=group:GetCoordinate()
+  if coord then
+    waypointcoord=coord:GetIntermediateCoordinate(self:GetTargetCoordinate(), self.missionFraction)
+  else
+    self:E(self.lid..string.format("ERROR: Cannot get coordinate of group %s (alive=%s)!", tostring(group:GetName()), tostring(group:IsAlive())))
+  end
   local alt=waypointcoord.y
 
   -- Add some randomization.

@@ -703,17 +703,17 @@ function UNIT:GetAmmo()
   self:F2( self.UnitName )
   local DCSUnit = self:GetDCSObject()
   if DCSUnit then
-    local status, unitammo = pcall(
-       function()
-         local UnitAmmo = DCSUnit:getAmmo()
-         return UnitAmmo
-       end
-    )
-    if status then
-      return unitammo
-    end
-    --local UnitAmmo = DCSUnit:getAmmo()
-    --return UnitAmmo
+--    local status, unitammo = pcall(
+--       function()
+--         local UnitAmmo = DCSUnit:getAmmo()
+--         return UnitAmmo
+--       end
+--    )
+--    if status then
+--      return unitammo
+--    end
+    local UnitAmmo = DCSUnit:getAmmo()
+    return UnitAmmo
   end
   return nil
 end
