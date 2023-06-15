@@ -2579,7 +2579,9 @@ function CHIEF:CheckOpsZoneQueue()
     local zoneName=stratzone.opszone.zone:GetName()
         
     -- Check coalition and importance.
-    if ownercoalition~=self.coalition and (stratzone.importance==nil or stratzone.importance<=vip) and (not stratzone.opszone:IsStopped()) then
+    if (ownercoalition~=self.coalition or (ownercoalition==self.coalition and stratzone.opszone:IsEmpty())) 
+      and (stratzone.importance==nil or stratzone.importance<=vip) 
+      and (not stratzone.opszone:IsStopped()) then
 
       -- Debug info.
       self:T(self.lid..string.format("Zone %s [%s] is owned by coalition %d", zoneName, stratzone.opszone:GetState(), ownercoalition))
