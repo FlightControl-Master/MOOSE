@@ -1347,6 +1347,11 @@ MSRSQUEUE = {
 -- @field #number interval Interval in seconds before next transmission.
 -- @field #boolean TransmitOnlyWithPlayers If true, only transmit if there are alive Players.
 -- @field Core.Set#SET_CLIENT PlayerSet PlayerSet created when TransmitOnlyWithPlayers == true
+-- @field #string gender Voice gender
+-- @field #string culture Voice culture
+-- @field #string voice Voice if any
+-- @field #number volume Volume
+-- @field #string label Label to be used
 
 --- Create a new MSRSQUEUE object for a given radio frequency/modulation.
 -- @param #MSRSQUEUE self
@@ -1426,8 +1431,13 @@ end
 -- @param #number subduration Duration [sec] of the subtitle being displayed. Default 5 sec.
 -- @param #number frequency Radio frequency if other than MSRS default.
 -- @param #number modulation Radio modulation if other then MSRS default.
+-- @param #string gender Gender of the voice
+-- @param #string culture Culture of the voice
+-- @param #string voice Specific voice
+-- @param #number volume Volume setting
+-- @param #string label Label to be used
 -- @return #MSRSQUEUE.Transmission Radio transmission table.
-function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation)
+function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation, gender, culture, voice, volume, label)
   
   if self.TransmitOnlyWithPlayers then
     if self.PlayerSet and self.PlayerSet:CountAlive() == 0 then
@@ -1462,6 +1472,11 @@ function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgr
   else
     transmission.subduration=0 --nil
   end
+  transmission.gender = gender
+  transmission.culture = culture
+  transmission.voice = voice
+  transmission.gender = volume
+  transmission.label = label
   
   -- Add transmission to queue.  
   self:AddTransmission(transmission)
@@ -1475,7 +1490,7 @@ end
 function MSRSQUEUE:Broadcast(transmission)
   
   if transmission.frequency then
-    transmission.msrs:PlayTextExt(transmission.text, nil, transmission.frequency, transmission.modulation, Gender, Culture, Voice, Volume, Label)
+    transmission.msrs:PlayTextExt(transmission.text, nil, transmission.frequency, transmission.modulation, transmission.gender, transmission.culture, transmission.voice, transmission.volume, transmission.label)
   else
     transmission.msrs:PlayText(transmission.text)
   end
