@@ -239,18 +239,18 @@ end
 function POSITIONABLE:GetVec3()
   local DCSPositionable = self:GetDCSObject()
   if DCSPositionable then
-    local status, vec3 = pcall(
-       function()
-          local vec3 = DCSPositionable:getPoint()
-          return vec3
-       end
-    )
-    --local vec3 = DCSPositionable:getPoint()
-    if status then
+    --local status, vec3 = pcall(
+      -- function()
+        --  local vec3 = DCSPositionable:getPoint()
+        --  return vec3
+       --end
+    --)
+    local vec3 = DCSPositionable:getPoint()
+    --if status then
       return vec3
-    else
-      self:E( { "Cannot get Vec3 from DCS Object", Positionable = self, Alive = self:IsAlive() } )
-    end
+    --else
+      --self:E( { "Cannot get Vec3 from DCS Object", Positionable = self, Alive = self:IsAlive() } )
+    --end
   end
   -- ERROR!
   self:E( { "Cannot get the Positionable DCS Object for GetVec3", Positionable = self, Alive = self:IsAlive() } )
