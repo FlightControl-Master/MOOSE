@@ -3122,7 +3122,7 @@ end
 -- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
 -- @param #number NcarriersMax Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
 -- @param #table Categories Group categories.
--- @param #table Attributes Generalizes group attributes.
+-- @param #table Attributes Group attributes. See `GROUP.Attribute.`
 -- @param #table Properties DCS attributes.
 -- @return #AUFTRAG self
 function AUFTRAG:SetRequiredCarriers(NcarriersMin, NcarriersMax, Categories, Attributes, Properties)
