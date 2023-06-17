@@ -2252,8 +2252,7 @@ function LEGION:RecruitAssetsForMission(Mission)
       local cohort=_cohort --Ops.Cohort#COHORT
       
       -- Check if cohort can perform transport to target.
-      --TODO: Option to filter transport carrier asset categories, attributes and/or properties.
-      local can=LEGION._CohortCan(cohort, AUFTRAG.Type.OPSTRANSPORT, Categories, Attributes, Properties, nil, TargetVec2)
+      local can=LEGION._CohortCan(cohort, AUFTRAG.Type.OPSTRANSPORT, Mission.transportCategories, Mission.transportAttributes, Mission.transportProperties, nil, TargetVec2)
       
       -- MaxWeight of cargo assets is limited by the largets available cargo bay. We don't want to select, e.g., tanks that cannot be transported by APCs or helos.
       if can and (MaxWeight==nil or cohort.cargobayLimit>MaxWeight) then
