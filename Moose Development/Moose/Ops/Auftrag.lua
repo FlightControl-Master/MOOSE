@@ -3068,12 +3068,9 @@ function AUFTRAG:SetRequiredTransport(DeployZone, NcarriersMin, NcarriersMax, Di
   -- OPS transport from pickup to deploy zone.
   self.transportDeployZone=DeployZone
   self.transportDisembarkZone=DisembarkZone
-  self.transportCategories = UTILS.EnsureTable(Categories, true)
-  self.transportAttributes = UTILS.EnsureTable(Attributes, true)
-  self.transportProperties = UTILS.EnsureTable(Properties, true)
 
   -- Set required carriers.
-  self:SetRequiredCarriers(NcarriersMin, NcarriersMax)
+  self:SetRequiredCarriers(NcarriersMin, NcarriersMax, Categories, Attributes, Properties)
 
   return self
 end
@@ -3124,8 +3121,11 @@ end
 -- @param #AUFTRAG self
 -- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
 -- @param #number NcarriersMax Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
+-- @param #table Categories Group categories.
+-- @param #table Attributes Generalizes group attributes.
+-- @param #table Properties DCS attributes.
 -- @return #AUFTRAG self
-function AUFTRAG:SetRequiredCarriers(NcarriersMin, NcarriersMax)
+function AUFTRAG:SetRequiredCarriers(NcarriersMin, NcarriersMax, Categories, Attributes, Properties)
 
   self.NcarriersMin=NcarriersMin or 1
 
@@ -3135,6 +3135,10 @@ function AUFTRAG:SetRequiredCarriers(NcarriersMin, NcarriersMax)
   if self.NcarriersMax<self.NcarriersMin then
     self.NcarriersMax=self.NcarriersMin
   end
+
+  self.transportCategories = UTILS.EnsureTable(Categories, true)
+  self.transportAttributes = UTILS.EnsureTable(Attributes, true)
+  self.transportProperties = UTILS.EnsureTable(Properties, true)
 
   return self
 end
