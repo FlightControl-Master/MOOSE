@@ -3136,9 +3136,9 @@ function AUFTRAG:SetRequiredCarriers(NcarriersMin, NcarriersMax, Categories, Att
     self.NcarriersMax=self.NcarriersMin
   end
 
-  self.transportCategories = UTILS.EnsureTable(Categories, true)
-  self.transportAttributes = UTILS.EnsureTable(Attributes, true)
-  self.transportProperties = UTILS.EnsureTable(Properties, true)
+  self.carrierCategories = UTILS.EnsureTable(Categories, true)
+  self.carrierAttributes = UTILS.EnsureTable(Attributes, true)
+  self.carrierProperties = UTILS.EnsureTable(Properties, true)
 
   return self
 end

@@ -714,7 +714,7 @@ function LEGION:CheckMissionQueue()
             local Legions=mission.transportLegions or {self}
                         
             -- Assign carrier assets for transport.
-            TransportAvail, Transport=self:AssignAssetsForTransport(Legions, assets, mission.NcarriersMin, mission.NcarriersMax, mission.transportDeployZone, mission.transportDisembarkZone, mission.transportCategories, mission.transportAttributes, mission.transportProperties)
+            TransportAvail, Transport=self:AssignAssetsForTransport(Legions, assets, mission.NcarriersMin, mission.NcarriersMax, mission.transportDeployZone, mission.transportDisembarkZone, mission.carrierCategories, mission.carrierAttributes, mission.carrierProperties)
           end
           
           -- Add opstransport to mission.
@@ -2252,7 +2252,7 @@ function LEGION:RecruitAssetsForMission(Mission)
       local cohort=_cohort --Ops.Cohort#COHORT
       
       -- Check if cohort can perform transport to target.
-      local can=LEGION._CohortCan(cohort, AUFTRAG.Type.OPSTRANSPORT, Mission.transportCategories, Mission.transportAttributes, Mission.transportProperties, nil, TargetVec2)
+      local can=LEGION._CohortCan(cohort, AUFTRAG.Type.OPSTRANSPORT, Mission.carrierCategories, Mission.carrierAttributes, Mission.carrierProperties, nil, TargetVec2)
       
       -- MaxWeight of cargo assets is limited by the largets available cargo bay. We don't want to select, e.g., tanks that cannot be transported by APCs or helos.
       if can and (MaxWeight==nil or cohort.cargobayLimit>MaxWeight) then
