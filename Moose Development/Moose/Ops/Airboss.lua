@@ -159,6 +159,9 @@
 -- @field #AIRBOSS.Radio MarshalRadio Radio for carrier calls.
 -- @field #number MarshalFreq Marshal radio frequency in MHz.
 -- @field #string MarshalModu Marshal radio modulation "AM" or "FM".
+-- @field #AIRBOSS.Radio AirbossRadio Radio for carrier calls.
+-- @field #number AirbossFreq Airboss radio frequency in MHz.
+-- @field #string AirbossModu Airboss radio modulation "AM" or "FM".
 -- @field #number TowerFreq Tower radio frequency in MHz.
 -- @field Core.Scheduler#SCHEDULER radiotimer Radio queue scheduler.
 -- @field Core.Zone#ZONE_UNIT zoneCCA Carrier controlled area (CCA), i.e. a zone of 50 NM radius around the carrier.
@@ -1881,6 +1884,7 @@ function AIRBOSS:New( carriername, alias )
 
   -- Set up Airboss radio.
   self:SetMarshalRadio()
+  self:SetAirbossRadio()
 
   -- Set up LSO radio.
   self:SetLSORadio()
@@ -3052,17 +3056,17 @@ end
 -- @param #AIRBOSS self
 -- @param #string PathToSRS Path to SRS folder, e.g. "C:\\Program Files\\DCS-SimpleRadio-Standalone".
 -- @param #number Port Port of the SRS server, defaults to 5002.
--- @param #string Culture (Optional)  Culture, defaults to "en-US".
--- @param #string Gender (Optional)  Gender, e.g. "male" or "female". Defaults to "male".
--- @param #string Voice (Optional) Set to use a specific voice. Will **override gender and culture** settings.  
+-- @param #string Culture (Optional, Airboss Culture)  Culture, defaults to "en-US".
+-- @param #string Gender (Optional, Airboss Gender)  Gender, e.g. "male" or "female". Defaults to "male".
+-- @param #string Voice (Optional, Airboss Voice) Set to use a specific voice. Will **override gender and culture** settings.  
 -- @param #string GoogleCreds (Optional) Path to Google credentials, e.g. "C:\\Program Files\\DCS-SimpleRadio-Standalone\\yourgooglekey.json".
 -- @param #number Volume (Optional) E.g. 0.75. Defaults to 1.0 (loudest).
 -- @param #table AltBackend (Optional) See MSRS for details.
 -- @return #AIRBOSS self
 function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volume,AltBackend)
   -- SRS
-  local Frequency = self.MarshalRadio.frequency
-  local Modulation = self.MarshalRadio.modulation
+  local Frequency = self.AirbossRadio.frequency
+  local Modulation = self.AirbossRadio.modulation
   self.SRS = MSRS:New(PathToSRS,Frequency,Modulation,Volume,AltBackend)
   self.SRS:SetCoalition(self:GetCoalition())
   self.SRS:SetCoordinate(self:GetCoordinate())
@@ -3071,7 +3075,7 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
   self.SRS:SetGender(Gender or "male")
   self.SRS:SetPath(PathToSRS)
   self.SRS:SetPort(Port or 5002)
-  self.SRS:SetLabel(self.MarshalRadio.alias or "AIRBOSS")
+  self.SRS:SetLabel(self.AirbossRadio.alias or "AIRBOSS")
   --self.SRS:SetModulations(Modulations)
   if GoogleCreds then
     self.SRS:SetGoogle(GoogleCreds)
@@ -3119,7 +3123,47 @@ function AIRBOSS:SetLSORadio( Frequency, Modulation, Voice, Gender, Culture  )
   return self
 end
 
---- Set carrier radio frequency and modulation. Default frequency is 305 MHz AM.
+--- Set Airboss radio frequency and modulation. Default frequency is Tower frequency.
+-- @param #AIRBOSS self
+-- @param #number Frequency (Optional) Frequency in MHz. Default frequency is Tower frequency.
+-- @param #string Modulation (Optional) Modulation, "AM" or "FM". Default "AM".
+-- @param #string Voice (Optional) SRS specific voice
+-- @param #string Gender (Optional) SRS specific gender
+-- @param #string Culture (Optional) SRS specific culture
+-- @return #AIRBOSS self
+-- @usage
+--    -- Set single frequency
+--    myairboss:SetAirbossRadio(127.5,"AM",MSRS.Voices.Google.Standard.en_GB_Standard_F)
+--
+--    -- Set multiple frequencies, note you **need** to pass one modulation per frequency given!
+--    myairboss:SetAirbossRadio({127.5,243},{radio.modulation.AM,radio.modulation.AM},MSRS.Voices.Google.Standard.en_GB_Standard_F)
+function AIRBOSS:SetAirbossRadio( Frequency, Modulation, Voice, Gender, Culture )
+
+  self.AirbossFreq = Frequency or self:_GetTowerFrequency() or 127.5
+  Modulation = Modulation or "AM"
+
+  if type(Modulation) == "table" then
+    self.AirbossModu = Modulation
+  else
+    if Modulation == "FM" then
+      self.AirbossModu = radio.modulation.FM
+    else
+      self.AirbossModu = radio.modulation.AM
+    end
+  end
+
+  self.AirbossRadio = {} -- #AIRBOSS.Radio
+  self.AirbossRadio.frequency = self.AirbossFreq
+  self.AirbossRadio.modulation = self.AirbossModu
+  self.AirbossRadio.alias = "AIRBOSS"
+  self.AirbossRadio.voice = Voice
+  self.AirbossRadio.gender = Gender or "male"
+  self.AirbossRadio.culture = Culture or "en-US"
+
+  return self
+end
+
+--- Set Marshal radio frequency and modulation. Default frequency is 305 MHz AM.
 -- @param #AIRBOSS self
 -- @param #number Frequency (Optional) Frequency in MHz. Default 305 MHz.
 -- @param #string Modulation (Optional) Modulation, "AM" or "FM". Default "AM".
@@ -14711,11 +14755,20 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
     local gender = nil
     local culture = nil
     
-    if radio.alias == "MARSHAL" or radio.alias == "AIRBOSS" then
+    if radio.alias == "AIRBOSS" then
+      frequency = self.AirbossRadio.frequency
+      modulation = self.AirbossRadio.modulation
+      voice = self.AirbossRadio.voice
+      gender = self.AirbossRadio.gender
+      culture = self.AirbossRadio.culture
+    end
+    
+    if radio.alias == "MARSHAL" then
       voice = self.MarshalRadio.voice
       gender = self.MarshalRadio.gender
       culture = self.MarshalRadio.culture
     end
+    
     if radio.alias == "LSO" then
       frequency = self.LSORadio.frequency
       modulation = self.LSORadio.modulation
@@ -14723,16 +14776,18 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
       gender = self.LSORadio.gender
       culture = self.LSORadio.culture
     end
+    
     if pilotcall then
       voice = self.PilotRadio.voice
       gender = self.PilotRadio.gender
       culture = self.PilotRadio.culture
       radio.alias = "PILOT"
     end
+
     if not radio.alias then
       -- TODO - what freq to use here?
-      frequency = 243
-      modulation = radio.modulation.AM
+      frequency = self.AirbossRadio.frequency
+      modulation = self.AirbossRadio.modulation
       radio.alias = "AIRBOSS"
     end
     
@@ -14744,8 +14799,8 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
     
     --local text = tostring(call.modexreceiver).."; "..radio.alias.."; "..call.subtitle
     local text = call.subtitle
-    self:I(text) 
-    local srstext = string.gsub(text,"\n","; ")
+    self:I(self.lid..text) 
+    local srstext = self:_GetNiceSRSText(text)
     self.SRSQ:NewTransmission(srstext, call.duration, self.SRS, tstart, 0.1, subgroups, call.subtitle, call.subduration, frequency, modulation, gender, culture, voice, volume, radio.alias)
   end
 end
@@ -15014,6 +15069,37 @@ function AIRBOSS:_RadioFilename( call, loud, channel )
   return filename
 end
 
+--- Format text into SRS friendly string
+-- @param #AIRBOSS self
+-- @param #string text
+-- @return #string text
+function AIRBOSS:_GetNiceSRSText(text)
+  text = string.gsub(text,"================================\n","")
+  text = string.gsub(text,"||","parallel")
+  text = string.gsub(text,"==","perpendicular")
+  text = string.gsub(text,"BRC","Base recovery")
+  text = string.gsub(text,"#","Number")
+  text = string.gsub(text,"°C","° Celsius")
+  text = string.gsub(text,"°"," degrees")
+  text = string.gsub(text," FB "," Final bearing ")
+  text = string.gsub(text," ops"," operations ")
+  text = string.gsub(text," kts"," knots")
+  text = string.gsub(text,"TACAN","Tackan")
+  text = string.gsub(text,"ICLS","I.C.L.S.")
+  text = string.gsub(text,"LSO","L.S.O.")
+  text = string.gsub(text,"inHg","inches of Mercury")
+  text = string.gsub(text,"QFE","Q.F.E.")
+  text = string.gsub(text,"hPa","hecto pascal")
+  text = string.gsub(text," NM"," nautical miles")
+  text = string.gsub(text," ft"," feet")
+  text = string.gsub(text,"A/C","aircraft")
+  text = string.gsub(text,"%.000"," dot zero")
+  text = string.gsub(text,"00"," double zero")
+  text = string.gsub(text," 0 "," zero " )
+  text = string.gsub(text,"\n","; ")
+  return text
+end
+
 --- Send text message to player client.
 -- Message format will be "SENDER: RECCEIVER, MESSAGE".
 -- @param #AIRBOSS self
@@ -15025,7 +15111,7 @@ end
 -- @param #boolean clear If true, clear screen from previous messages.
 -- @param #number delay Delay in seconds, before the message is displayed.
 function AIRBOSS:MessageToPlayer( playerData, message, sender, receiver, duration, clear, delay )
-
+  self:I({sender,receiver,message})
   if playerData and message and message ~= "" then
 
     -- Default duration.
@@ -15095,32 +15181,42 @@ function AIRBOSS:MessageToPlayer( playerData, message, sender, receiver, duratio
         -- SRS transmission
         local frequency = self.MarshalRadio.frequency
         local modulation = self.MarshalRadio.modulation
-        local voice = nil
-        local gender = nil
-        local culture = nil
+        local voice = self.MarshalRadio.voice
+        local gender = self.MarshalRadio.gender
+        local culture = self.MarshalRadio.culture
         
-        if sender == "MARSHAL" or sender == "AIRBOSS" then
-          voice = self.MarshalRadio.voice
-          gender = self.MarshalRadio.gender
-          culture = self.MarshalRadio.culture
+        if not sender then sender = "AIRBOSS" end
+
+        if string.find(sender,"AIRBOSS" ) then
+          frequency = self.AirbossRadio.frequency
+          modulation = self.AirbossRadio.modulation
+          voice = self.AirbossRadio.voice
+          gender = self.AirbossRadio.gender
+          culture = self.AirbossRadio.culture
         end
+
+        --if sender == "MARSHAL" then
+          --voice = self.MarshalRadio.voice
+          --gender = self.MarshalRadio.gender
+          --culture = self.MarshalRadio.culture
+        --end
+
         if sender == "LSO" then
           frequency = self.LSORadio.frequency
           modulation = self.LSORadio.modulation
           voice = self.LSORadio.voice
           gender = self.LSORadio.gender
           culture = self.LSORadio.culture
-        elseif not sender then
+        --elseif not sender then
           -- TODO - what freq to use here?
-          frequency = 243
-          modulation = radio.modulation.AM
-          sender = "AIRBOSS"
+          --frequency = self.AirbossRadio.frequency
+          --modulation = self.AirbossRadio.modulation
+          --sender = "AIRBOSS"
         end
-        
-       -- local text = tostring(receiver or "").."; "..sender.."; "..text 
-        --local text = sender.."; "..text      
-        self:I(text)
-        local srstext = string.gsub(text,"\n","; ")
+
+        self:I(self.lid..text)
+        self:I({sender,frequency,modulation,voice})
+        local srstext = self:_GetNiceSRSText(text)
         self.SRSQ:NewTransmission(srstext,duration,self.SRS,tstart,0.1,subgroups,subtitle,subduration,frequency,modulation,gender,culture,voice,volume,sender)
       end
       -- Text message to player client.
