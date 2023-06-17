@@ -114,9 +114,9 @@
 -- @field #number NcarriersMax Max number of required carrier assets.
 -- @field Core.Zone#ZONE transportDeployZone Deploy zone of an OPSTRANSPORT.
 -- @field Core.Zone#ZONE transportDisembarkZone Disembark zone of an OPSTRANSPORT.
--- @param #table Categories Transport group categories.
--- @field #table transportAttributes Generalized attribute(s) of transport assets.
--- @field #table transportProperties DCS attribute(s) of transport assets.
+-- @param #table carrierCategories Transport group categories.
+-- @field #table carrierAttributes Generalized attribute(s) of transport assets.
+-- @field #table carrierProperties DCS attribute(s) of transport assets.
 --
 -- @field #number artyRadius Radius in meters.
 -- @field #number artyShots Number of shots fired.
