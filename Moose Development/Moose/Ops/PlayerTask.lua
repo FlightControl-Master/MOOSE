@@ -1536,7 +1536,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.60"
+PLAYERTASKCONTROLLER.version="0.1.60a"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -3463,11 +3463,11 @@ end
 function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
   self:T(self.lid.."_BuildMenus")
   
-  if self.MenuBuildLocked then
+  if self.MenuBuildLocked and (timer.getAbsTime() - self.MenuBuildLocked < 2) then
     self:ScheduleOnce(2,self._BuildMenus,self,Client,enforced,fromsuccess)
     return self
   else
-   self.MenuBuildLocked = true
+   self.MenuBuildLocked = timer.getAbsTime()
   end
   
   local clients = self.ClientSet:GetAliveSet()
