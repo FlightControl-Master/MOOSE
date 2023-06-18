@@ -2195,8 +2195,10 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
       --local text = string.format("%s, %s, switch to %s for task assignment!",EventData.IniPlayerName,self.MenuName or self.Name,freqtext)
       local text = string.format(switchtext,playername,self.MenuName or self.Name,freqtext)
       self.SRSQueue:NewTransmission(text,nil,self.SRS,timer.getAbsTime()+60,2,{EventData.IniGroup},text,30,self.BCFrequency,self.BCModulation)
-      if EventData.IniUnitName then
-        self:_BuildMenus(CLIENT:FindByName(EventData.IniUnitName))
+      if EventData.IniPlayerName then
+        self.PlayerMenu[EventData.IniPlayerName] = nil
+       --self:_BuildMenus(CLIENT:FindByName(EventData.IniUnitName))
+        self:_BuildMenus(CLIENT:FindByPlayerName(EventData.IniPlayerName))
       end
     end
   end
@@ -3460,7 +3462,14 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
   self:T(self.lid.."_BuildMenus")
-
+  
+  if self.MenuBuildLocked then
+    self:ScheduleOnce(2,self._BuildMenus,self,Client,enforced,fromsuccess)
+    return self
+  else
+   self.MenuBuildLocked = true
+  end
+  
   local clients = self.ClientSet:GetAliveSet()
   local joinorabort = false
   local timedbuild = false
@@ -3653,6 +3662,7 @@ function PLAYERTASKCONTROLLER:_BuildMenus(Client,enforced,fromsuccess)
       end
     end
   end
+  self.MenuBuildLocked = false
   return self
 end
 
