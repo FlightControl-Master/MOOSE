@@ -152,12 +152,16 @@
 -- @field #boolean ICLSon Automatic ICLS is activated.
 -- @field #number ICLSchannel ICLS channel.
 -- @field #string ICLSmorse ICLS morse code, e.g. "STN".
+-- @field #AIRBOSS.Radio PilotRadio Radio for Pilot calls.
 -- @field #AIRBOSS.Radio LSORadio Radio for LSO calls.
 -- @field #number LSOFreq LSO radio frequency in MHz.
 -- @field #string LSOModu LSO radio modulation "AM" or "FM".
 -- @field #AIRBOSS.Radio MarshalRadio Radio for carrier calls.
 -- @field #number MarshalFreq Marshal radio frequency in MHz.
 -- @field #string MarshalModu Marshal radio modulation "AM" or "FM".
+-- @field #AIRBOSS.Radio AirbossRadio Radio for carrier calls.
+-- @field #number AirbossFreq Airboss radio frequency in MHz.
+-- @field #string AirbossModu Airboss radio modulation "AM" or "FM".
 -- @field #number TowerFreq Tower radio frequency in MHz.
 -- @field Core.Scheduler#SCHEDULER radiotimer Radio queue scheduler.
 -- @field Core.Zone#ZONE_UNIT zoneCCA Carrier controlled area (CCA), i.e. a zone of 50 NM radius around the carrier.
@@ -1731,6 +1735,10 @@ AIRBOSS.Difficulty = {
 -- @field #table trapsheet Groove data table recorded every 0.5 seconds.
 -- @field #boolean trapon If true, save trap sheets.
 -- @field #string debriefschedulerID Debrief scheduler ID.
+-- 
+-- @field Sound.SRS#MSRS SRS
+-- @field Sound.SRS#MSRSQUEUE SRSQ
+-- 
 -- @extends #AIRBOSS.FlightGroup
 
 --- Main group level radio menu: F10 Other/Airboss.
@@ -1743,7 +1751,7 @@ AIRBOSS.MenuF10Root = nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version = "1.3.0"
+AIRBOSS.version = "1.3.2"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1876,6 +1884,7 @@ function AIRBOSS:New( carriername, alias )
 
   -- Set up Airboss radio.
   self:SetMarshalRadio()
+  self:SetAirbossRadio()
 
   -- Set up LSO radio.
   self:SetLSORadio()
@@ -3043,12 +3052,56 @@ function AIRBOSS:SetBeaconRefresh( TimeInterval )
   return self
 end
 
+--- Set up SRS for usage without sound files
+-- @param #AIRBOSS self
+-- @param #string PathToSRS Path to SRS folder, e.g. "C:\\Program Files\\DCS-SimpleRadio-Standalone".
+-- @param #number Port Port of the SRS server, defaults to 5002.
+-- @param #string Culture (Optional, Airboss Culture)  Culture, defaults to "en-US".
+-- @param #string Gender (Optional, Airboss Gender)  Gender, e.g. "male" or "female". Defaults to "male".
+-- @param #string Voice (Optional, Airboss Voice) Set to use a specific voice. Will **override gender and culture** settings.  
+-- @param #string GoogleCreds (Optional) Path to Google credentials, e.g. "C:\\Program Files\\DCS-SimpleRadio-Standalone\\yourgooglekey.json".
+-- @param #number Volume (Optional) E.g. 0.75. Defaults to 1.0 (loudest).
+-- @param #table AltBackend (Optional) See MSRS for details.
+-- @return #AIRBOSS self
+function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volume,AltBackend)
+  -- SRS
+  local Frequency = self.AirbossRadio.frequency
+  local Modulation = self.AirbossRadio.modulation
+  self.SRS = MSRS:New(PathToSRS,Frequency,Modulation,Volume,AltBackend)
+  self.SRS:SetCoalition(self:GetCoalition())
+  self.SRS:SetCoordinate(self:GetCoordinate())
+  self.SRS:SetCulture(Culture or "en-US")
+  --self.SRS:SetFrequencies(Frequencies)
+  self.SRS:SetGender(Gender or "male")
+  self.SRS:SetPath(PathToSRS)
+  self.SRS:SetPort(Port or 5002)
+  self.SRS:SetLabel(self.AirbossRadio.alias or "AIRBOSS")
+  --self.SRS:SetModulations(Modulations)
+  if GoogleCreds then
+    self.SRS:SetGoogle(GoogleCreds)
+  end
+  if Voice then
+    self.SRS:SetVoice(Voice)
+  end
+  self.SRS:SetVolume(Volume or 1.0)
+  -- SRSQUEUE
+  self.SRSQ = MSRSQUEUE:New("AIRBOSS")
+  self.SRSQ:SetTransmitOnlyWithPlayers(true)
+  if not self.PilotRadio then 
+    self:SetSRSPilotVoice()
+  end
+  return self  
+end
+
 --- Set LSO radio frequency and modulation. Default frequency is 264 MHz AM.
 -- @param #AIRBOSS self
 -- @param #number Frequency (Optional) Frequency in MHz. Default 264 MHz.
 -- @param #string Modulation (Optional) Modulation, "AM" or "FM". Default "AM".
+-- @param #string Voice (Optional) SRS specific voice
+-- @param #string Gender (Optional) SRS specific gender
+-- @param #string Culture (Optional) SRS specific culture
 -- @return #AIRBOSS self
-function AIRBOSS:SetLSORadio( Frequency, Modulation )
+function AIRBOSS:SetLSORadio( Frequency, Modulation, Voice, Gender, Culture  )
 
   self.LSOFreq = (Frequency or 264)
   Modulation = Modulation or "AM"
@@ -3063,16 +3116,62 @@ function AIRBOSS:SetLSORadio( Frequency, Modulation )
   self.LSORadio.frequency = self.LSOFreq
   self.LSORadio.modulation = self.LSOModu
   self.LSORadio.alias = "LSO"
+  self.LSORadio.voice = Voice
+  self.LSORadio.gender = Gender or "male"
+  self.LSORadio.culture = Culture or "en-US"
 
   return self
 end
 
---- Set carrier radio frequency and modulation. Default frequency is 305 MHz AM.
+--- Set Airboss radio frequency and modulation. Default frequency is Tower frequency.
+-- @param #AIRBOSS self
+-- @param #number Frequency (Optional) Frequency in MHz. Default frequency is Tower frequency.
+-- @param #string Modulation (Optional) Modulation, "AM" or "FM". Default "AM".
+-- @param #string Voice (Optional) SRS specific voice
+-- @param #string Gender (Optional) SRS specific gender
+-- @param #string Culture (Optional) SRS specific culture
+-- @return #AIRBOSS self
+-- @usage
+--    -- Set single frequency
+--    myairboss:SetAirbossRadio(127.5,"AM",MSRS.Voices.Google.Standard.en_GB_Standard_F)
+--
+--    -- Set multiple frequencies, note you **need** to pass one modulation per frequency given!
+--    myairboss:SetAirbossRadio({127.5,243},{radio.modulation.AM,radio.modulation.AM},MSRS.Voices.Google.Standard.en_GB_Standard_F)
+function AIRBOSS:SetAirbossRadio( Frequency, Modulation, Voice, Gender, Culture )
+
+  self.AirbossFreq = Frequency or self:_GetTowerFrequency() or 127.5
+  Modulation = Modulation or "AM"
+
+  if type(Modulation) == "table" then
+    self.AirbossModu = Modulation
+  else
+    if Modulation == "FM" then
+      self.AirbossModu = radio.modulation.FM
+    else
+      self.AirbossModu = radio.modulation.AM
+    end
+  end
+
+  self.AirbossRadio = {} -- #AIRBOSS.Radio
+  self.AirbossRadio.frequency = self.AirbossFreq
+  self.AirbossRadio.modulation = self.AirbossModu
+  self.AirbossRadio.alias = "AIRBOSS"
+  self.AirbossRadio.voice = Voice
+  self.AirbossRadio.gender = Gender or "male"
+  self.AirbossRadio.culture = Culture or "en-US"
+
+  return self
+end
+
+--- Set Marshal radio frequency and modulation. Default frequency is 305 MHz AM.
 -- @param #AIRBOSS self
 -- @param #number Frequency (Optional) Frequency in MHz. Default 305 MHz.
 -- @param #string Modulation (Optional) Modulation, "AM" or "FM". Default "AM".
+-- @param #string Voice (Optional) SRS specific voice
+-- @param #string Gender (Optional) SRS specific gender
+-- @param #string Culture (Optional) SRS specific culture
 -- @return #AIRBOSS self
-function AIRBOSS:SetMarshalRadio( Frequency, Modulation )
+function AIRBOSS:SetMarshalRadio( Frequency, Modulation, Voice, Gender, Culture )
 
   self.MarshalFreq = Frequency or 305
   Modulation = Modulation or "AM"
@@ -3087,6 +3186,9 @@ function AIRBOSS:SetMarshalRadio( Frequency, Modulation )
   self.MarshalRadio.frequency = self.MarshalFreq
   self.MarshalRadio.modulation = self.MarshalModu
   self.MarshalRadio.alias = "MARSHAL"
+  self.MarshalRadio.voice = Voice
+  self.MarshalRadio.gender = Gender or "male"
+  self.MarshalRadio.culture = Culture or "en-US"
 
   return self
 end
@@ -11448,8 +11550,42 @@ end
 -- @return #number Carrier heading in degrees.
 function AIRBOSS:GetHeadingIntoWind( magnetic, coord )
 
+  local function adjustDegreesForWindSpeed(windSpeed)
+    local degreesAdjustment = 0
+  -- the windspeeds are in m/s
+  
+  -- +0 degrees at 15m/s = 37kts
+  -- +0 degrees at 14m/s = 35kts
+  -- +0 degrees at 13m/s = 33kts
+  -- +4 degrees at 12m/s = 31kts
+  -- +4 degrees at 11m/s = 29kts
+  -- +4 degrees at 10m/s = 27kts
+  -- +4 degrees at 9m/s = 27kts
+  -- +4 degrees at 8m/s = 27kts
+  -- +8 degrees at 7m/s = 27kts
+  -- +8 degrees at 6m/s = 27kts
+  -- +8 degrees at 5m/s = 26kts
+  -- +20 degrees at 4m/s = 26kts
+  -- +20 degrees at 3m/s = 26kts
+  -- +30 degrees at 2m/s = 26kts 1s
+  
+    if windSpeed > 0 and windSpeed < 3 then
+      degreesAdjustment = 30
+    elseif windSpeed >= 3 and windSpeed < 5 then
+      degreesAdjustment = 20
+    elseif windSpeed >= 5 and windSpeed < 8 then
+      degreesAdjustment = 8
+    elseif windSpeed >= 8 and windSpeed < 13 then
+      degreesAdjustment = 4
+    elseif windSpeed >= 13 then
+      degreesAdjustment = 0
+    end
+  
+    return degreesAdjustment
+  end
+
   -- Get direction the wind is blowing from. This is where we want to go.
-  local windfrom, vwind = self:GetWind( nil, nil, coord )
+  local windfrom, vwind = self:GetWind( nil, nil, coord ) + adjustDegreesForWindSpeed(vwind)
 
   -- Actually, we want the runway in the wind.
   local intowind = windfrom - self.carrierparam.rwyangle
@@ -13384,8 +13520,8 @@ function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
   -- Wind speed.
   local _, vwind = self:GetWind()
 
-  -- Speed of carrier in m/s but at least 2 knots.
-  local vtot = math.max( vdeck - vwind, UTILS.KnotsToMps( 2 ) )
+  -- Speed of carrier in m/s but at least 4 knots.
+  local vtot = math.max( vdeck - vwind, UTILS.KnotsToMps( 4 ) )
 
   -- Distance to travel
   local dist = vtot * time
@@ -14588,59 +14724,140 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
   if radio == nil or call == nil then
     return
   end
-
-  -- Create a new radio transmission item.
-  local transmission = {} -- #AIRBOSS.Radioitem
-
-  transmission.radio = radio
-  transmission.call = call
-  transmission.Tplay = timer.getAbsTime() + (delay or 0)
-  transmission.interval = interval
-  transmission.isplaying = false
-  transmission.Tstarted = nil
-  transmission.loud = loud and call.loud
-
-  -- Player onboard number if sender has one.
-  if self:_IsOnboard( call.modexsender ) then
-    self:_Number2Radio( radio, call.modexsender, delay, 0.3, pilotcall )
-  end
-
-  -- Play onboard number if receiver has one.
-  if self:_IsOnboard( call.modexreceiver ) then
-    self:_Number2Radio( radio, call.modexreceiver, delay, 0.3, pilotcall )
-  end
-
-  -- Add transmission to the right queue.
-  local caller = ""
-  if radio.alias == "LSO" then
-
-    table.insert( self.RQLSO, transmission )
-
-    caller = "LSOCall"
-
-    -- Schedule radio queue checks.
-    if not self.RQLid then
-      self:T( self.lid .. string.format( "Starting LSO radio queue." ) )
-      self.RQLid = self.radiotimer:Schedule( nil, AIRBOSS._CheckRadioQueue, { self, self.RQLSO, "LSO" }, 0.02, 0.05 )
+  
+  if not self.SRS then
+  
+    -- Create a new radio transmission item.
+    local transmission = {} -- #AIRBOSS.Radioitem
+  
+    transmission.radio = radio
+    transmission.call = call
+    transmission.Tplay = timer.getAbsTime() + (delay or 0)
+    transmission.interval = interval
+    transmission.isplaying = false
+    transmission.Tstarted = nil
+    transmission.loud = loud and call.loud
+  
+    -- Player onboard number if sender has one.
+    if self:_IsOnboard( call.modexsender ) then
+      self:_Number2Radio( radio, call.modexsender, delay, 0.3, pilotcall )
+    end
+  
+    -- Play onboard number if receiver has one.
+    if self:_IsOnboard( call.modexreceiver ) then
+      self:_Number2Radio( radio, call.modexreceiver, delay, 0.3, pilotcall )
+    end
+  
+    -- Add transmission to the right queue.
+    local caller = ""
+    if radio.alias == "LSO" then
+  
+      table.insert( self.RQLSO, transmission )
+  
+      caller = "LSOCall"
+  
+      -- Schedule radio queue checks.
+      if not self.RQLid then
+        self:T( self.lid .. string.format( "Starting LSO radio queue." ) )
+        self.RQLid = self.radiotimer:Schedule( nil, AIRBOSS._CheckRadioQueue, { self, self.RQLSO, "LSO" }, 0.02, 0.05 )
+      end
+  
+    elseif radio.alias == "MARSHAL" then
+  
+      table.insert( self.RQMarshal, transmission )
+  
+      caller = "MarshalCall"
+  
+      if not self.RQMid then
+        self:T( self.lid .. string.format( "Starting Marhal radio queue." ) )
+        self.RQMid = self.radiotimer:Schedule( nil, AIRBOSS._CheckRadioQueue, { self, self.RQMarshal, "MARSHAL" }, 0.02, 0.05 )
+      end
+  
+    end
+  
+    -- Append radio click sound at the end of the transmission.
+    if click then
+      self:RadioTransmission( radio, self[caller].CLICK, false, delay )
+    end
+  
+  else
+    -- SRS transmission
+    
+    local frequency = self.MarshalRadio.frequency
+    local modulation = self.MarshalRadio.modulation
+    local voice = nil
+    local gender = nil
+    local culture = nil
+    
+    if radio.alias == "AIRBOSS" then
+      frequency = self.AirbossRadio.frequency
+      modulation = self.AirbossRadio.modulation
+      voice = self.AirbossRadio.voice
+      gender = self.AirbossRadio.gender
+      culture = self.AirbossRadio.culture
+    end
+    
+    if radio.alias == "MARSHAL" then
+      voice = self.MarshalRadio.voice
+      gender = self.MarshalRadio.gender
+      culture = self.MarshalRadio.culture
+    end
+    
+    if radio.alias == "LSO" then
+      frequency = self.LSORadio.frequency
+      modulation = self.LSORadio.modulation
+      voice = self.LSORadio.voice
+      gender = self.LSORadio.gender
+      culture = self.LSORadio.culture
+    end
+    
+    if pilotcall then
+      voice = self.PilotRadio.voice
+      gender = self.PilotRadio.gender
+      culture = self.PilotRadio.culture
+      radio.alias = "PILOT"
     end
 
-  elseif radio.alias == "MARSHAL" then
-
-    table.insert( self.RQMarshal, transmission )
-
-    caller = "MarshalCall"
-
-    if not self.RQMid then
-      self:T( self.lid .. string.format( "Starting Marhal radio queue." ) )
-      self.RQMid = self.radiotimer:Schedule( nil, AIRBOSS._CheckRadioQueue, { self, self.RQMarshal, "MARSHAL" }, 0.02, 0.05 )
+    if not radio.alias then
+      -- TODO - what freq to use here?
+      frequency = self.AirbossRadio.frequency
+      modulation = self.AirbossRadio.modulation
+      radio.alias = "AIRBOSS"
     end
-
+    
+    local volume = nil
+    
+    if loud then
+      volume = 1.0
+    end
+    
+    --local text = tostring(call.modexreceiver).."; "..radio.alias.."; "..call.subtitle
+    local text = call.subtitle
+    self:I(self.lid..text) 
+    local srstext = self:_GetNiceSRSText(text)
+    self.SRSQ:NewTransmission(srstext, call.duration, self.SRS, tstart, 0.1, subgroups, call.subtitle, call.subduration, frequency, modulation, gender, culture, voice, volume, radio.alias)
   end
+end
 
-  -- Append radio click sound at the end of the transmission.
-  if click then
-    self:RadioTransmission( radio, self[caller].CLICK, false, delay )
+--- Set SRS voice for the pilot calls.
+-- @param #AIRBOSS self
+-- @param #string Voice (Optional) SRS specific voice
+-- @param #string Gender (Optional) SRS specific gender
+-- @param #string Culture (Optional) SRS specific culture
+-- @return #AIRBOSS self
+function AIRBOSS:SetSRSPilotVoice( Voice, Gender, Culture )
+
+  self.PilotRadio = {} -- #AIRBOSS.Radio
+  self.PilotRadio.alias = "PILOT"
+  self.PilotRadio.voice = Voice or MSRS.Voices.Microsoft.David
+  self.PilotRadio.gender = Gender or "male"
+  self.PilotRadio.culture = Culture or "en-US"
+  
+  if (not Voice) and self.SRS and self.SRS.google then
+    self.PilotRadio.voice = MSRS.Voices.Google.Standard.en_US_Standard_J
   end
+  
+  return self
 end
 
 --- Check if a call needs a subtitle because the complete voice overs are not available.
@@ -14886,6 +15103,39 @@ function AIRBOSS:_RadioFilename( call, loud, channel )
   return filename
 end
 
+--- Format text into SRS friendly string
+-- @param #AIRBOSS self
+-- @param #string text
+-- @return #string text
+function AIRBOSS:_GetNiceSRSText(text)
+  text = string.gsub(text,"================================\n","")
+  text = string.gsub(text,"||","parallel")
+  text = string.gsub(text,"==","perpendicular")
+  text = string.gsub(text,"BRC","Base recovery")
+  --text = string.gsub(text,"#","Number")
+  text = string.gsub(text,"%((%a+)%)","Morse %1")
+  text = string.gsub(text,"°C","° Celsius")
+  text = string.gsub(text,"°"," degrees")
+  text = string.gsub(text," FB "," Final bearing ")
+  text = string.gsub(text," ops"," operations ")
+  text = string.gsub(text," kts"," knots")
+  text = string.gsub(text,"TACAN","Tackan")
+  text = string.gsub(text,"ICLS","I.C.L.S.")
+  text = string.gsub(text,"LSO","L.S.O.")
+  text = string.gsub(text,"inHg","inches of Mercury")
+  text = string.gsub(text,"QFE","Q.F.E.")
+  text = string.gsub(text,"hPa","hecto pascal")
+  text = string.gsub(text," NM"," nautical miles")
+  text = string.gsub(text," ft"," feet")
+  text = string.gsub(text,"A/C","aircraft")
+  text = string.gsub(text,"(#[%a%d%p%s]+)\n","")
+  text = string.gsub(text,"%.000"," dot zero")
+  text = string.gsub(text,"00"," double zero")
+  text = string.gsub(text," 0 "," zero " )
+  text = string.gsub(text,"\n","; ")
+  return text
+end
+
 --- Send text message to player client.
 -- Message format will be "SENDER: RECCEIVER, MESSAGE".
 -- @param #AIRBOSS self
@@ -14897,7 +15147,7 @@ end
 -- @param #boolean clear If true, clear screen from previous messages.
 -- @param #number delay Delay in seconds, before the message is displayed.
 function AIRBOSS:MessageToPlayer( playerData, message, sender, receiver, duration, clear, delay )
-
+  self:I({sender,receiver,message})
   if playerData and message and message ~= "" then
 
     -- Default duration.
@@ -14920,49 +15170,91 @@ function AIRBOSS:MessageToPlayer( playerData, message, sender, receiver, duratio
       -- SCHEDULER:New(nil, self.MessageToPlayer, {self, playerData, message, sender, receiver, duration, clear}, delay)
       self:ScheduleOnce( delay, self.MessageToPlayer, self, playerData, message, sender, receiver, duration, clear )
     else
-
-      -- Wait until previous sound finished.
-      local wait = 0
-
-      -- Onboard number to get the attention.
-      if receiver == playerData.onboard then
-
-        -- Which voice over number to use.
-        if sender and (sender == "LSO" or sender == "MARSHAL" or sender == "AIRBOSS") then
-
-          -- User sound of board number.
-          wait = wait + self:_Number2Sound( playerData, sender, receiver )
-
+      
+      if not self.SRS then
+        -- Wait until previous sound finished.
+        local wait = 0
+  
+        -- Onboard number to get the attention.
+        if receiver == playerData.onboard then
+  
+          -- Which voice over number to use.
+          if sender and (sender == "LSO" or sender == "MARSHAL" or sender == "AIRBOSS") then
+  
+            -- User sound of board number.
+            wait = wait + self:_Number2Sound( playerData, sender, receiver )
+  
+          end
         end
-      end
+  
+        -- Negative.
+        if string.find( text:lower(), "negative" ) then
+          local filename = self:_RadioFilename( self.MarshalCall.NEGATIVE, false, "MARSHAL" )
+          USERSOUND:New( filename ):ToGroup( playerData.group, wait )
+          wait = wait + self.MarshalCall.NEGATIVE.duration
+        end
+  
+        -- Affirm.
+        if string.find( text:lower(), "affirm" ) then
+          local filename = self:_RadioFilename( self.MarshalCall.AFFIRMATIVE, false, "MARSHAL" )
+          USERSOUND:New( filename ):ToGroup( playerData.group, wait )
+          wait = wait + self.MarshalCall.AFFIRMATIVE.duration
+        end
+  
+        -- Roger.
+        if string.find( text:lower(), "roger" ) then
+          local filename = self:_RadioFilename( self.MarshalCall.ROGER, false, "MARSHAL" )
+          USERSOUND:New( filename ):ToGroup( playerData.group, wait )
+          wait = wait + self.MarshalCall.ROGER.duration
+        end
+  
+        -- Play click sound to end message.
+        if wait > 0 then
+          local filename = self:_RadioFilename( self.MarshalCall.CLICK )
+          USERSOUND:New( filename ):ToGroup( playerData.group, wait )
+        end
+      else
+        -- SRS transmission
+        local frequency = self.MarshalRadio.frequency
+        local modulation = self.MarshalRadio.modulation
+        local voice = self.MarshalRadio.voice
+        local gender = self.MarshalRadio.gender
+        local culture = self.MarshalRadio.culture
+        
+        if not sender then sender = "AIRBOSS" end
 
-      -- Negative.
-      if string.find( text:lower(), "negative" ) then
-        local filename = self:_RadioFilename( self.MarshalCall.NEGATIVE, false, "MARSHAL" )
-        USERSOUND:New( filename ):ToGroup( playerData.group, wait )
-        wait = wait + self.MarshalCall.NEGATIVE.duration
-      end
+        if string.find(sender,"AIRBOSS" ) then
+          frequency = self.AirbossRadio.frequency
+          modulation = self.AirbossRadio.modulation
+          voice = self.AirbossRadio.voice
+          gender = self.AirbossRadio.gender
+          culture = self.AirbossRadio.culture
+        end
 
-      -- Affirm.
-      if string.find( text:lower(), "affirm" ) then
-        local filename = self:_RadioFilename( self.MarshalCall.AFFIRMATIVE, false, "MARSHAL" )
-        USERSOUND:New( filename ):ToGroup( playerData.group, wait )
-        wait = wait + self.MarshalCall.AFFIRMATIVE.duration
-      end
+        --if sender == "MARSHAL" then
+          --voice = self.MarshalRadio.voice
+          --gender = self.MarshalRadio.gender
+          --culture = self.MarshalRadio.culture
+        --end
 
-      -- Roger.
-      if string.find( text:lower(), "roger" ) then
-        local filename = self:_RadioFilename( self.MarshalCall.ROGER, false, "MARSHAL" )
-        USERSOUND:New( filename ):ToGroup( playerData.group, wait )
-        wait = wait + self.MarshalCall.ROGER.duration
-      end
+        if sender == "LSO" then
+          frequency = self.LSORadio.frequency
+          modulation = self.LSORadio.modulation
+          voice = self.LSORadio.voice
+          gender = self.LSORadio.gender
+          culture = self.LSORadio.culture
+        --elseif not sender then
+          -- TODO - what freq to use here?
+          --frequency = self.AirbossRadio.frequency
+          --modulation = self.AirbossRadio.modulation
+          --sender = "AIRBOSS"
+        end
 
-      -- Play click sound to end message.
-      if wait > 0 then
-        local filename = self:_RadioFilename( self.MarshalCall.CLICK )
-        USERSOUND:New( filename ):ToGroup( playerData.group, wait )
+        self:I(self.lid..text)
+        self:I({sender,frequency,modulation,voice})
+        local srstext = self:_GetNiceSRSText(text)
+        self.SRSQ:NewTransmission(srstext,duration,self.SRS,tstart,0.1,subgroups,subtitle,subduration,frequency,modulation,gender,culture,voice,volume,sender)
       end
-
       -- Text message to player client.
       if playerData.client then
         MESSAGE:New( text, duration, sender, clear ):ToClient( playerData.client )
@@ -16301,7 +16593,7 @@ function AIRBOSS:_RequestSpinning( _unitName )
         -- Some advice.
         if playerData.difficulty == AIRBOSS.Difficulty.EASY then
           local text = "Climb to 1200 feet and proceed to the initial again."
-          self:MessageToPlayer( playerData, text, "INSTRUCTOR", "" )
+          self:MessageToPlayer( playerData, text, "AIRBOSS", "" )
         end
 
         return

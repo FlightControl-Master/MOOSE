@@ -426,7 +426,7 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Al_Dumayr
 -- * AIRBASE.Syria.Gazipasa
 -- * AIRBASE.Syria.Hatay
--- * AIRBASE.Syria.Nicosia
+-- * AIRBASE.Syria.Nicosia [Deactivated by ED as of June/2023]
 -- * AIRBASE.Syria.Pinarbashi
 -- * AIRBASE.Syria.Paphos
 -- * AIRBASE.Syria.Kingsfield
@@ -491,7 +491,7 @@ AIRBASE.Syria={
   ["Al_Dumayr"]="Al-Dumayr",
   ["Gazipasa"]="Gazipasa",
   ["Hatay"]="Hatay",
-  ["Nicosia"]="Nicosia",
+  --["Nicosia"]="Nicosia",
   ["Pinarbashi"]="Pinarbashi",
   ["Paphos"]="Paphos",
   ["Kingsfield"]="Kingsfield",

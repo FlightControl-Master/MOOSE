@@ -35,6 +35,7 @@ do
 -- @field #number id
 -- @field #number side
 -- @field #number slot
+-- @field #numner timestamp
 
 --- Encapsules multiplayer environment scripting functions from [net](https://wiki.hoggitworld.com/view/DCS_singleton_net)
 -- with some added FSM functions and options to block/unblock players in MP environments.
@@ -205,7 +206,7 @@ function NET:_EventHandler(EventData)
     
     -- Joining
     if data.id == EVENTS.PlayerEnterUnit or data.id == EVENTS.PlayerEnterAircraft then
-      self:T(self.lid.."Pilot Joining: "..name.." | UCID: "..ucid)
+      self:T(self.lid.."Pilot Joining: "..name.." | UCID: "..ucid.." | Event ID: "..data.id)
       -- Check for blockages
       local blocked = self:IsAnyBlocked(ucid,name,PlayerID,PlayerSide,PlayerSlot)  
       
@@ -213,15 +214,18 @@ function NET:_EventHandler(EventData)
         -- block pilot
         local outcome = net.force_player_slot(tonumber(PlayerID), 0, '' )
       else
-        self.KnownPilots[name] = {
-          name = name,
-          ucid = ucid,
-          id = PlayerID,
-          side = PlayerSide,
-          slot = PlayerSlot,
-        }
         local client = CLIENT:FindByPlayerName(name) or data.IniUnit
-        self:__PlayerJoined(1,client,name)
+        if not self.KnownPilots[name] or (self.KnownPilots[name] and TNow-self.KnownPilots[name].timestamp > 3) then
+          self:__PlayerJoined(1,client,name)
+          self.KnownPilots[name] = {
+            name = name,
+            ucid = ucid,
+            id = PlayerID,
+            side = PlayerSide,
+            slot = PlayerSlot,
+            timestamp = TNow,
+          }
+        end
         return self
       end
     end
