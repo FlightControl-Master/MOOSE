@@ -861,7 +861,7 @@ end
 -- @param #string command Command to executer
 -- @return #number Return value of os.execute() command.
 function MSRS:_ExecCommand(command)
-
+    self:T("SRS TTS command="..command)
     -- Create a tmp file.
     local filename=os.getenv('TMP').."\\MSRS-"..STTS.uuid()..".bat"
     
