@@ -1291,8 +1291,8 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
   -- Convert to knots.
   vwind=UTILS.MpsToKnots(vwind)
 
-  -- Speed of carrier relative to wind but at least 2 knots.
-  local speed=math.max(IntoWind.Speed-vwind, 2)
+  -- Speed of carrier relative to wind but at least 4 knots.
+  local speed=math.max(IntoWind.Speed-vwind, 4)
 
   -- Debug info.
   self:T(self.lid..string.format("Steaming into wind: Heading=%03d Speed=%.1f Vwind=%.1f Vtot=%.1f knots, Tstart=%d Tstop=%d", IntoWind.Heading, speed, vwind, speed+vwind, IntoWind.Tstart, IntoWind.Tstop))
