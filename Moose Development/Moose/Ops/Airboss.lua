@@ -13520,8 +13520,8 @@ function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
   -- Wind speed.
   local _, vwind = self:GetWind()
 
-  -- Speed of carrier in m/s but at least 2 knots.
-  local vtot = math.max( vdeck - vwind, UTILS.KnotsToMps( 2 ) )
+  -- Speed of carrier in m/s but at least 4 knots.
+  local vtot = math.max( vdeck - vwind, UTILS.KnotsToMps( 4 ) )
 
   -- Distance to travel
   local dist = vtot * time
