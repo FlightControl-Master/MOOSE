@@ -1751,7 +1751,7 @@ AIRBOSS.MenuF10Root = nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version = "1.3.1"
+AIRBOSS.version = "1.3.2"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -11550,8 +11550,42 @@ end
 -- @return #number Carrier heading in degrees.
 function AIRBOSS:GetHeadingIntoWind( magnetic, coord )
 
+  local function adjustDegreesForWindSpeed(windSpeed)
+    local degreesAdjustment = 0
+  -- the windspeeds are in m/s
+  
+  -- +0 degrees at 15m/s = 37kts
+  -- +0 degrees at 14m/s = 35kts
+  -- +0 degrees at 13m/s = 33kts
+  -- +4 degrees at 12m/s = 31kts
+  -- +4 degrees at 11m/s = 29kts
+  -- +4 degrees at 10m/s = 27kts
+  -- +4 degrees at 9m/s = 27kts
+  -- +4 degrees at 8m/s = 27kts
+  -- +8 degrees at 7m/s = 27kts
+  -- +8 degrees at 6m/s = 27kts
+  -- +8 degrees at 5m/s = 26kts
+  -- +20 degrees at 4m/s = 26kts
+  -- +20 degrees at 3m/s = 26kts
+  -- +30 degrees at 2m/s = 26kts 1s
+  
+    if windSpeed > 0 and windSpeed < 3 then
+      degreesAdjustment = 30
+    elseif windSpeed >= 3 and windSpeed < 5 then
+      degreesAdjustment = 20
+    elseif windSpeed >= 5 and windSpeed < 8 then
+      degreesAdjustment = 8
+    elseif windSpeed >= 8 and windSpeed < 13 then
+      degreesAdjustment = 4
+    elseif windSpeed >= 13 then
+      degreesAdjustment = 0
+    end
+  
+    return degreesAdjustment
+  end
+
   -- Get direction the wind is blowing from. This is where we want to go.
-  local windfrom, vwind = self:GetWind( nil, nil, coord )
+  local windfrom, vwind = self:GetWind( nil, nil, coord ) + adjustDegreesForWindSpeed(vwind)
 
   -- Actually, we want the runway in the wind.
   local intowind = windfrom - self.carrierparam.rwyangle
