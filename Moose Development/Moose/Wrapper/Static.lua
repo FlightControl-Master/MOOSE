@@ -12,7 +12,7 @@
 -- @image Wrapper_Static.JPG
 
 
---- @type STATIC
+-- @type STATIC
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 --- Wrapper class to handle Static objects.

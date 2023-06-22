@@ -109,7 +109,7 @@
 
 
 
---- @type ESCORT
+-- @type ESCORT
 -- @extends Core.Base#BASE
 -- @field Wrapper.Client#CLIENT EscortClient
 -- @field Wrapper.Group#GROUP EscortGroup
@@ -693,7 +693,7 @@ function ESCORT:MenuResumeMission()
 end
 
 
---- @param #MENUPARAM MenuParam
+-- @param #MENUPARAM MenuParam
 function ESCORT:_HoldPosition( OrbitGroup, OrbitHeight, OrbitSeconds )
 
   local EscortGroup = self.EscortGroup
@@ -733,7 +733,7 @@ function ESCORT:_HoldPosition( OrbitGroup, OrbitHeight, OrbitSeconds )
 
 end
 
---- @param #MENUPARAM MenuParam
+-- @param #MENUPARAM MenuParam
 function ESCORT:_JoinUpAndFollow( Distance )
 
   local EscortGroup = self.EscortGroup
@@ -766,7 +766,7 @@ function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
   EscortGroup:MessageToClient( "Rejoining and Following at " .. Distance .. "!", 30, EscortClient )
 end
 
---- @param #MENUPARAM MenuParam
+-- @param #MENUPARAM MenuParam
 function ESCORT:_Flare( Color, Message )
 
   local EscortGroup = self.EscortGroup
@@ -776,7 +776,7 @@ function ESCORT:_Flare( Color, Message )
   EscortGroup:MessageToClient( Message, 10, EscortClient )
 end
 
---- @param #MENUPARAM MenuParam
+-- @param #MENUPARAM MenuParam
 function ESCORT:_Smoke( Color, Message )
 
   local EscortGroup = self.EscortGroup
@@ -787,7 +787,7 @@ function ESCORT:_Smoke( Color, Message )
 end
 
 
---- @param #MENUPARAM MenuParam
+-- @param #MENUPARAM MenuParam
 function ESCORT:_ReportNearbyTargetsNow()
 
   local EscortGroup = self.EscortGroup
@@ -814,7 +814,7 @@ function ESCORT:_SwitchReportNearbyTargets( ReportTargets )
   end
 end
 
---- @param #MENUPARAM MenuParam
+-- @param #MENUPARAM MenuParam
 function ESCORT:_ScanTargets( ScanDuration )
 
   local EscortGroup = self.EscortGroup -- Wrapper.Group#GROUP
@@ -844,7 +844,7 @@ function ESCORT:_ScanTargets( ScanDuration )
 
 end
 
---- @param Wrapper.Group#GROUP EscortGroup
+-- @param Wrapper.Group#GROUP EscortGroup
 function _Resume( EscortGroup )
   env.info( '_Resume' )
 
@@ -856,7 +856,7 @@ function _Resume( EscortGroup )
 
 end
 
---- @param #ESCORT self
+-- @param #ESCORT self
 -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
 function ESCORT:_AttackTarget( DetectedItem )
 
@@ -877,7 +877,7 @@ function ESCORT:_AttackTarget( DetectedItem )
     local Tasks = {}
 
     DetectedSet:ForEachUnit(
-      --- @param Wrapper.Unit#UNIT DetectedUnit
+      -- @param Wrapper.Unit#UNIT DetectedUnit
       function( DetectedUnit, Tasks )
         if DetectedUnit:IsAlive() then
           Tasks[#Tasks+1] = EscortGroup:TaskAttackUnit( DetectedUnit )
@@ -900,7 +900,7 @@ function ESCORT:_AttackTarget( DetectedItem )
     local Tasks = {}
 
     DetectedSet:ForEachUnit(
-      --- @param Wrapper.Unit#UNIT DetectedUnit
+      -- @param Wrapper.Unit#UNIT DetectedUnit
       function( DetectedUnit, Tasks )
         if DetectedUnit:IsAlive() then
           Tasks[#Tasks+1] = EscortGroup:TaskFireAtPoint( DetectedUnit:GetVec2(), 50 )
@@ -921,7 +921,7 @@ function ESCORT:_AttackTarget( DetectedItem )
 end
 
 --- 
---- @param #ESCORT self
+-- @param #ESCORT self
 -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
 function ESCORT:_AssistTarget( EscortGroupAttack, DetectedItem )
 
@@ -939,7 +939,7 @@ function ESCORT:_AssistTarget( EscortGroupAttack, DetectedItem )
     local Tasks = {}
 
     DetectedSet:ForEachUnit(
-      --- @param Wrapper.Unit#UNIT DetectedUnit
+      -- @param Wrapper.Unit#UNIT DetectedUnit
       function( DetectedUnit, Tasks )
         if DetectedUnit:IsAlive() then
           Tasks[#Tasks+1] = EscortGroupAttack:TaskAttackUnit( DetectedUnit )
@@ -961,7 +961,7 @@ function ESCORT:_AssistTarget( EscortGroupAttack, DetectedItem )
     local Tasks = {}
 
     DetectedSet:ForEachUnit(
-      --- @param Wrapper.Unit#UNIT DetectedUnit
+      -- @param Wrapper.Unit#UNIT DetectedUnit
       function( DetectedUnit, Tasks )
         if DetectedUnit:IsAlive() then
           Tasks[#Tasks+1] = EscortGroupAttack:TaskFireAtPoint( DetectedUnit:GetVec2(), 50 )
@@ -981,7 +981,7 @@ function ESCORT:_AssistTarget( EscortGroupAttack, DetectedItem )
 
 end
 
---- @param #MENUPARAM MenuParam
+-- @param #MENUPARAM MenuParam
 function ESCORT:_ROE( EscortROEFunction, EscortROEMessage )
 
   local EscortGroup = self.EscortGroup
@@ -991,7 +991,7 @@ function ESCORT:_ROE( EscortROEFunction, EscortROEMessage )
   EscortGroup:MessageToClient( EscortROEMessage, 10, EscortClient )
 end
 
---- @param #MENUPARAM MenuParam
+-- @param #MENUPARAM MenuParam
 function ESCORT:_ROT( EscortROTFunction, EscortROTMessage )
 
   local EscortGroup = self.EscortGroup
@@ -1001,7 +1001,7 @@ function ESCORT:_ROT( EscortROTFunction, EscortROTMessage )
   EscortGroup:MessageToClient( EscortROTMessage, 10, EscortClient )
 end
 
---- @param #MENUPARAM MenuParam
+-- @param #MENUPARAM MenuParam
 function ESCORT:_ResumeMission( WayPoint )
 
   local EscortGroup = self.EscortGroup
@@ -1036,7 +1036,7 @@ function ESCORT:RegisterRoute()
   return TaskPoints
 end
 
---- @param Functional.Escort#ESCORT self
+-- @param Functional.Escort#ESCORT self
 function ESCORT:_FollowScheduler()
   self:F( { self.FollowDistance } )
 

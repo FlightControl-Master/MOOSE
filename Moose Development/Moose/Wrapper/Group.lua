@@ -38,7 +38,7 @@
 -- @image Wrapper_Group.JPG
 
 
---- @type GROUP
+-- @type GROUP
 -- @extends Wrapper.Controllable#CONTROLLABLE
 -- @field #string GroupName The name of the group.
 
@@ -91,7 +91,7 @@
 --          
 --          Tasks[#Tasks+1] = HeliGroup:TaskFunction( "_Resume", { "''" } )
 --          
---          --- @param Wrapper.Group#GROUP HeliGroup
+--          -- @param Wrapper.Group#GROUP HeliGroup
 --          function _Resume( HeliGroup )
 --            env.info( '_Resume' )
 --          

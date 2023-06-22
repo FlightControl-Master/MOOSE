@@ -20,7 +20,7 @@
 
 do -- Velocity
 
-  --- @type VELOCITY
+  -- @type VELOCITY
   -- @extends Core.Base#BASE
 
 
@@ -127,7 +127,7 @@ end
 
 do -- VELOCITY_POSITIONABLE
 
-  --- @type VELOCITY_POSITIONABLE
+  -- @type VELOCITY_POSITIONABLE
   -- @extends Core.Base#BASE
 
 

@@ -67,7 +67,7 @@
 
 do -- TASK_CARGO_CSAR
 
-  --- @type TASK_CARGO_CSAR
+  -- @type TASK_CARGO_CSAR
   -- @extends Tasking.Task_Cargo#TASK_CARGO
   
   --- Orchestrates the task for players to execute CSAR for downed pilots.
@@ -313,7 +313,7 @@ do -- TASK_CARGO_CSAR
     local CargoReport = REPORT:New( "Rescue a downed pilot from the following position:")
     
     SetCargo:ForEachCargo(
-      --- @param Core.Cargo#CARGO Cargo
+      -- @param Core.Cargo#CARGO Cargo
       function( Cargo )
         local CargoType = Cargo:GetType()
         local CargoName = Cargo:GetName()
@@ -378,7 +378,7 @@ do -- TASK_CARGO_CSAR
     return CargoDeployed
   end
   
-  --- @param #TASK_CARGO_CSAR self
+  -- @param #TASK_CARGO_CSAR self
   function TASK_CARGO_CSAR:onafterGoal( TaskUnit, From, Event, To )
     local CargoSet = self.CargoSet
     

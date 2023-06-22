@@ -11,7 +11,7 @@
 -- @module Wrapper.Controllable
 -- @image Wrapper_Controllable.JPG
 
---- @type CONTROLLABLE
+-- @type CONTROLLABLE
 -- @field DCS#Controllable DCSControllable The DCS controllable class.
 -- @field #string ControllableName The name of the controllable.
 -- @extends Wrapper.Positionable#POSITIONABLE
@@ -1906,7 +1906,7 @@ end
 --
 --  GroundGroup = GROUP:FindByName( "Vehicle" )
 --
---  --- @param Wrapper.Group#GROUP GroundGroup
+--  -- @param Wrapper.Group#GROUP GroundGroup
 --  function RouteToZone( Vehicle, ZoneRoute )
 --
 --    local Route = {}

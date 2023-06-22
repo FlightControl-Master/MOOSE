@@ -32,7 +32,7 @@
 -- @image Core_Database.JPG
 
 
---- @type DATABASE
+-- @type DATABASE
 -- @field #string ClassName Name of the class.
 -- @field #table Templates Templates: Units, Groups, Statics, ClientsByName, ClientsByID.
 -- @field #table CLIENTS Clients.
@@ -1813,7 +1813,7 @@ function DATABASE:GetFlightControl(airbasename)
   return self.FLIGHTCONTROLS[airbasename]
 end
 
---- @param #DATABASE self
+-- @param #DATABASE self
 function DATABASE:_RegisterTemplates()
   self:F2()
 

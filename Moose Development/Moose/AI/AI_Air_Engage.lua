@@ -13,7 +13,7 @@
 
 
 
---- @type AI_AIR_ENGAGE
+-- @type AI_AIR_ENGAGE
 -- @extends AI.AI_AIR#AI_AIR
 
 
@@ -367,7 +367,7 @@ function AI_AIR_ENGAGE:onafterAbort( AIGroup, From, Event, To )
 end
 
 
---- @param #AI_AIR_ENGAGE self
+-- @param #AI_AIR_ENGAGE self
 -- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -377,7 +377,7 @@ function AI_AIR_ENGAGE:onafterAccomplish( AIGroup, From, Event, To )
   --self:SetDetectionOff()
 end
 
---- @param #AI_AIR_ENGAGE self
+-- @param #AI_AIR_ENGAGE self
 -- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -390,7 +390,7 @@ function AI_AIR_ENGAGE:onafterDestroy( AIGroup, From, Event, To, EventData )
   end
 end
 
---- @param #AI_AIR_ENGAGE self
+-- @param #AI_AIR_ENGAGE self
 -- @param Core.Event#EVENTDATA EventData
 function AI_AIR_ENGAGE:OnEventDead( EventData )
   self:F( { "EventDead", EventData } )
@@ -403,7 +403,7 @@ function AI_AIR_ENGAGE:OnEventDead( EventData )
 end
 
 
---- @param Wrapper.Group#GROUP AIControllable
+-- @param Wrapper.Group#GROUP AIControllable
 function AI_AIR_ENGAGE.___EngageRoute( AIGroup, Fsm, AttackSetUnit )
   Fsm:I(string.format("AI_AIR_ENGAGE.___EngageRoute: %s", tostring(AIGroup:GetName())))
   
@@ -413,7 +413,7 @@ function AI_AIR_ENGAGE.___EngageRoute( AIGroup, Fsm, AttackSetUnit )
 end
 
 
---- @param #AI_AIR_ENGAGE self
+-- @param #AI_AIR_ENGAGE self
 -- @param Wrapper.Group#GROUP DefenderGroup The GroupGroup managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -494,7 +494,7 @@ function AI_AIR_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, Attac
 end
 
 
---- @param Wrapper.Group#GROUP AIControllable
+-- @param Wrapper.Group#GROUP AIControllable
 function AI_AIR_ENGAGE.___Engage( AIGroup, Fsm, AttackSetUnit )
 
   Fsm:I(string.format("AI_AIR_ENGAGE.___Engage: %s", tostring(AIGroup:GetName())))
@@ -506,7 +506,7 @@ function AI_AIR_ENGAGE.___Engage( AIGroup, Fsm, AttackSetUnit )
 end
 
 
---- @param #AI_AIR_ENGAGE self
+-- @param #AI_AIR_ENGAGE self
 -- @param Wrapper.Group#GROUP DefenderGroup The GroupGroup managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -591,7 +591,7 @@ function AI_AIR_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetU
   end
 end
 
---- @param Wrapper.Group#GROUP AIEngage
+-- @param Wrapper.Group#GROUP AIEngage
 function AI_AIR_ENGAGE.Resume( AIEngage, Fsm )
 
   AIEngage:F( { "Resume:", AIEngage:GetName() } )

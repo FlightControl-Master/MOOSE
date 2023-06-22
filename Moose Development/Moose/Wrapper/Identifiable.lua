@@ -11,7 +11,7 @@
 -- @module Wrapper.Identifiable
 -- @image MOOSE.JPG
 
---- @type IDENTIFIABLE
+-- @type IDENTIFIABLE
 -- @extends Wrapper.Object#OBJECT
 -- @field #string IdentifiableName The name of the identifiable.
 

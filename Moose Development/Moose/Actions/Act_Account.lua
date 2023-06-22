@@ -269,7 +269,7 @@ do -- ACT_ACCOUNT_DEADS
 
   --- DCS Events
 
-  --- @param #ACT_ACCOUNT_DEADS self
+  -- @param #ACT_ACCOUNT_DEADS self
   -- @param Core.Event#EVENTDATA EventData
   function ACT_ACCOUNT_DEADS:OnEventHit( EventData )
     self:T( { "EventDead", EventData } )
@@ -280,7 +280,7 @@ do -- ACT_ACCOUNT_DEADS
     end
   end
 
-  --- @param #ACT_ACCOUNT_DEADS self
+  -- @param #ACT_ACCOUNT_DEADS self
   -- @param Core.Event#EVENTDATA EventData
   function ACT_ACCOUNT_DEADS:onfuncEventDead( EventData )
     self:T( { "EventDead", EventData } )
@@ -292,7 +292,7 @@ do -- ACT_ACCOUNT_DEADS
 
   --- DCS Events
 
-  --- @param #ACT_ACCOUNT_DEADS self
+  -- @param #ACT_ACCOUNT_DEADS self
   -- @param Core.Event#EVENTDATA EventData
   function ACT_ACCOUNT_DEADS:onfuncEventCrash( EventData )
     self:T( { "EventDead", EventData } )

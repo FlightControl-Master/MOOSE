@@ -230,7 +230,7 @@ CSAR = {
   takenOff = {},
   csarUnits = {},  -- table of unit names
   downedPilots = {},
-  woundedGroups = {},
+  -- = {},
   landedStatus = {},
   addedTo = {},
   woundedGroups = {}, -- contains the new group of units
@@ -1306,7 +1306,7 @@ end
 -- @param #string UnitName
 -- @return #string CallSign
 function CSAR:_GetCustomCallSign(UnitName)
-  local callsign = Unitname
+  local callsign = UnitName
   local unit = UNIT:FindByName(UnitName)
   if unit and unit:IsAlive() then
     local group = unit:GetGroup()
@@ -1876,7 +1876,7 @@ function CSAR:_SignalFlare(_unitName)
   if _closest ~= nil and _closest.pilot ~= nil and _closest.distance > 0 and _closest.distance < smokedist then
   
       local _clockDir = self:_GetClockDirection(_heli, _closest.pilot)
-      local _distance = 0
+      local _distance = ""
       if _SETTINGS:IsImperial() then
         _distance = string.format("%.1fnm",UTILS.MetersToNM(_closest.distance))
       else
@@ -1889,12 +1889,13 @@ function CSAR:_SignalFlare(_unitName)
       _coord:FlareRed(_clockDir)
   else
       local _distance = smokedist
+      local dtext = ""
       if _SETTINGS:IsImperial() then
-        _distance = string.format("%.1fnm",UTILS.MetersToNM(smokedist))
+        dtext = string.format("%.1fnm",UTILS.MetersToNM(smokedist))
       else
-        _distance = string.format("%.1fkm",smokedist/1000)
+        dtext = string.format("%.1fkm",smokedist/1000)
       end 
-      self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",_distance), self.messageTime, false, false, true)
+      self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",dtext), self.messageTime, false, false, true)
   end
   return self
 end
@@ -1930,7 +1931,7 @@ function CSAR:_Reqsmoke( _unitName )
   local _closest = self:_GetClosestDownedPilot(_heli)
   if _closest ~= nil and _closest.pilot ~= nil and _closest.distance > 0 and _closest.distance < smokedist then
       local _clockDir = self:_GetClockDirection(_heli, _closest.pilot)
-      local _distance = 0
+      local _distance = string.format("%.1fkm",_closest.distance/1000)
       if _SETTINGS:IsImperial() then
         _distance = string.format("%.1fnm",UTILS.MetersToNM(_closest.distance))
       else
@@ -1942,7 +1943,7 @@ function CSAR:_Reqsmoke( _unitName )
       local color = self.smokecolor
       _coord:Smoke(color)
   else
-      local _distance = 0
+      local _distance = string.format("%.1fkm",smokedist/1000)
       if _SETTINGS:IsImperial() then
         _distance = string.format("%.1fnm",UTILS.MetersToNM(smokedist))
       else

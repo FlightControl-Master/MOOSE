@@ -173,7 +173,7 @@
 -- @image Core_Event.JPG
 
 
---- @type EVENT
+-- @type EVENT
 -- @field #EVENT.Events Events
 -- @extends Core.Base#BASE
 

@@ -1068,7 +1068,7 @@ self:T(self.lid.."_ReportLaserTargets")
   if number > 0 and self.AutoLase[playername] then
     local Settings = ( client and _DATABASE:GetPlayerSettings( playername  ) ) or _SETTINGS
     local target = self:_GetHVTTarget(targetset) -- the one we're lasing
-    local ThreatLevel = target:GetThreatLevel()
+    local ThreatLevel = target:GetThreatLevel() or 1
     local ThreatLevelText = "high"
     if ThreatLevel > 3 and ThreatLevel < 8 then
      ThreatLevelText = "medium"
@@ -1078,7 +1078,7 @@ self:T(self.lid.."_ReportLaserTargets")
     local ThreatGraph = "[" .. string.rep(  "■", ThreatLevel ) .. string.rep(  "□", 10 - ThreatLevel ) .. "]: "..ThreatLevel
     local report = REPORT:New("Lasing Report")
     report:Add(string.rep("-",15))
-    report:Add("Target type: "..target:GetTypeName())
+    report:Add("Target type: "..target:GetTypeName() or "unknown")
     report:Add("Threat Level: "..ThreatGraph.." ("..ThreatLevelText..")")
     if not self.ReferencePoint then
       report:Add("Location: "..client:GetCoordinate():ToStringBULLS(self.Coalition,Settings))

@@ -53,7 +53,7 @@
 -- @module Core.Zone
 -- @image Core_Zones.JPG
 
---- @type ZONE_BASE
+-- @type ZONE_BASE
 -- @field #string ZoneName Name of the zone.
 -- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 -- @field #number DrawID Unique ID of the drawn zone on the F10 map.
@@ -1496,7 +1496,7 @@ function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,ma
   
 end
 
---- @type ZONE
+-- @type ZONE
 -- @extends #ZONE_RADIUS
 
 
@@ -1581,7 +1581,7 @@ end
 
 
 
---- @type ZONE_UNIT
+-- @type ZONE_UNIT
 -- @field Wrapper.Unit#UNIT ZoneUNIT
 -- @extends Core.Zone#ZONE_RADIUS
 
@@ -1723,7 +1723,7 @@ function ZONE_UNIT:GetVec3( Height )
   return Vec3
 end
 
---- @type ZONE_GROUP
+-- @type ZONE_GROUP
 -- @extends #ZONE_RADIUS
 
 
@@ -1809,7 +1809,7 @@ function ZONE_GROUP:GetRandomPointVec2( inner, outer )
 end
 
 
---- @type ZONE_POLYGON_BASE
+-- @type ZONE_POLYGON_BASE
 -- @field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCS#Vec2}.
 -- @extends #ZONE_BASE
 
@@ -2458,7 +2458,7 @@ function ZONE_POLYGON_BASE:Boundary(Coalition, Color, Radius, Alpha, Segments, C
     return self
 end
 
---- @type ZONE_POLYGON
+-- @type ZONE_POLYGON
 -- @extends #ZONE_POLYGON_BASE
 
 
@@ -2909,7 +2909,7 @@ end
 
 do -- ZONE_ELASTIC
 
-  --- @type ZONE_ELASTIC
+  -- @type ZONE_ELASTIC
   -- @field #table points Points in 2D.
   -- @field #table setGroups Set of GROUPs.
   -- @field #table setOpsGroups Set of OPSGROUPS.
@@ -3109,7 +3109,7 @@ end
 
 do -- ZONE_AIRBASE
 
-  --- @type ZONE_AIRBASE
+  -- @type ZONE_AIRBASE
   -- @field #boolean isShip If `true`, airbase is a ship.
   -- @field #boolean isHelipad If `true`, airbase is a helipad.
   -- @field #boolean isAirdrome If `true`, airbase is an airdrome.

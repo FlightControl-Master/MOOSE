@@ -52,11 +52,11 @@
 -- @module Functional.CleanUp
 -- @image CleanUp_Airbases.JPG
 
---- @type CLEANUP_AIRBASE.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
+-- @type CLEANUP_AIRBASE.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
 -- @field #map<#string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.
 -- @extends Core.Base#BASE
 
---- @type CLEANUP_AIRBASE
+-- @type CLEANUP_AIRBASE
 -- @extends #CLEANUP_AIRBASE.__
 
 --- Keeps airbases clean, and tries to guarantee continuous airbase operations, even under combat.
@@ -93,7 +93,7 @@ CLEANUP_AIRBASE = {
 -- @field #CLEANUP_AIRBASE.__
 CLEANUP_AIRBASE.__ = {}
 
---- @field #CLEANUP_AIRBASE.__.Airbases
+-- @field #CLEANUP_AIRBASE.__.Airbases
 CLEANUP_AIRBASE.__.Airbases = {}
 
 --- Creates the main object which is handling the cleaning of the debris within the given Zone Names.
@@ -240,7 +240,8 @@ function CLEANUP_AIRBASE.__:DestroyMissile( MissileObject )
 	end
 end
 
---- @param #CLEANUP_AIRBASE self
+---
+-- @param #CLEANUP_AIRBASE self
 -- @param Core.Event#EVENTDATA EventData
 function CLEANUP_AIRBASE.__:OnEventBirth( EventData )
   self:F( { EventData } )

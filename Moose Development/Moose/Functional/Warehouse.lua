@@ -8229,7 +8229,7 @@ end
 -- @return #number Request ID.
 function WAREHOUSE:_GetIDsFromGroupName(groupname)
 
-  ---@param #string text The text to analyse.
+  -- @param #string text The text to analyse.
   local function analyse(text)
 
     -- Get rid of #0001 tail from spawn.

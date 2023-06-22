@@ -21,7 +21,7 @@
 
 do -- UserSound
 
-  --- @type USERSOUND
+  -- @type USERSOUND
   -- @extends Core.Base#BASE
 
 

@@ -112,7 +112,7 @@ do
   -- @field Harms
   SHORAD.Harms = {
   ["AGM_88"] = "AGM_88",
-  ["AGM_45"] = "AGM_45",
+  --["AGM_45"] = "AGM_45",
   ["AGM_122"] = "AGM_122",
   ["AGM_84"] = "AGM_84",
   ["AGM_45"] = "AGM_45",
@@ -213,7 +213,7 @@ do
     if onoff then
       self:SwitchDebugOn()
     else
-      self.SwitchDebugOff()
+      self:SwitchDebugOff()
     end
     return self
   end

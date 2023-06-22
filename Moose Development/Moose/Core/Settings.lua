@@ -29,7 +29,7 @@
 -- @module Core.Settings
 -- @image Core_Settings.JPG
 
---- @type SETTINGS
+-- @type SETTINGS
 -- @extends Core.Base#BASE
 
 --- Takes care of various settings that influence the behavior of certain functionalities and classes within the MOOSE framework.
@@ -218,7 +218,7 @@ SETTINGS = {
 
 SETTINGS.__Enum = {}
 
---- @type SETTINGS.__Enum.Era
+-- @type SETTINGS.__Enum.Era
 -- @field #number WWII
 -- @field #number Korea
 -- @field #number Cold
@@ -491,7 +491,7 @@ do -- SETTINGS
     return (self.A2ASystem and self.A2ASystem == "MGRS") or (not self.A2ASystem and _SETTINGS:IsA2A_MGRS())
   end
 
-  --- @param #SETTINGS self
+  -- @param #SETTINGS self
   -- @param Wrapper.Group#GROUP MenuGroup Group for which to add menus.
   -- @param #table RootMenu Root menu table
   -- @return #SETTINGS
@@ -945,49 +945,49 @@ do -- SETTINGS
     return self
   end
 
-  --- @param #SETTINGS self
+  -- @param #SETTINGS self
   function SETTINGS:A2GMenuSystem( MenuGroup, RootMenu, A2GSystem )
     self.A2GSystem = A2GSystem
     MESSAGE:New( string.format( "Settings: Default A2G coordinate system set to %s for all players!", A2GSystem ), 5 ):ToAll()
     self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
-  --- @param #SETTINGS self
+  -- @param #SETTINGS self
   function SETTINGS:A2AMenuSystem( MenuGroup, RootMenu, A2ASystem )
     self.A2ASystem = A2ASystem
     MESSAGE:New( string.format( "Settings: Default A2A coordinate system set to %s for all players!", A2ASystem ), 5 ):ToAll()
     self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
-  --- @param #SETTINGS self
+  -- @param #SETTINGS self
   function SETTINGS:MenuLL_DDM_Accuracy( MenuGroup, RootMenu, LL_Accuracy )
     self.LL_Accuracy = LL_Accuracy
     MESSAGE:New( string.format( "Settings: Default LL accuracy set to %s for all players!", LL_Accuracy ), 5 ):ToAll()
     self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
-  --- @param #SETTINGS self
+  -- @param #SETTINGS self
   function SETTINGS:MenuMGRS_Accuracy( MenuGroup, RootMenu, MGRS_Accuracy )
     self.MGRS_Accuracy = MGRS_Accuracy
     MESSAGE:New( string.format( "Settings: Default MGRS accuracy set to %s for all players!", MGRS_Accuracy ), 5 ):ToAll()
     self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
-  --- @param #SETTINGS self
+  -- @param #SETTINGS self
   function SETTINGS:MenuMWSystem( MenuGroup, RootMenu, MW )
     self.Metric = MW
     MESSAGE:New( string.format( "Settings: Default measurement format set to %s for all players!", MW and "Metric" or "Imperial" ), 5 ):ToAll()
     self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
-  --- @param #SETTINGS self
+  -- @param #SETTINGS self
   function SETTINGS:MenuMessageTimingsSystem( MenuGroup, RootMenu, MessageType, MessageTime )
     self:SetMessageTime( MessageType, MessageTime )
     MESSAGE:New( string.format( "Settings: Default message time set for %s to %d.", MessageType, MessageTime ), 5 ):ToAll()
   end
 
   do
-    --- @param #SETTINGS self
+    -- @param #SETTINGS self
     function SETTINGS:MenuGroupA2GSystem( PlayerUnit, PlayerGroup, PlayerName, A2GSystem )
       BASE:E( { self, PlayerUnit:GetName(), A2GSystem } )
       self.A2GSystem = A2GSystem
@@ -998,7 +998,7 @@ do -- SETTINGS
       end
     end
 
-    --- @param #SETTINGS self
+    -- @param #SETTINGS self
     function SETTINGS:MenuGroupA2ASystem( PlayerUnit, PlayerGroup, PlayerName, A2ASystem )
       self.A2ASystem = A2ASystem
       MESSAGE:New( string.format( "Settings: A2A format set to %s for player %s.", A2ASystem, PlayerName ), 5 ):ToGroup( PlayerGroup )
@@ -1008,7 +1008,7 @@ do -- SETTINGS
       end
     end
 
-    --- @param #SETTINGS self
+    -- @param #SETTINGS self
     function SETTINGS:MenuGroupLL_DDM_AccuracySystem( PlayerUnit, PlayerGroup, PlayerName, LL_Accuracy )
       self.LL_Accuracy = LL_Accuracy
       MESSAGE:New( string.format( "Settings: LL format accuracy set to %d decimal places for player %s.", LL_Accuracy, PlayerName ), 5 ):ToGroup( PlayerGroup )
@@ -1018,7 +1018,7 @@ do -- SETTINGS
       end
     end
 
-    --- @param #SETTINGS self
+    -- @param #SETTINGS self
     function SETTINGS:MenuGroupMGRS_AccuracySystem( PlayerUnit, PlayerGroup, PlayerName, MGRS_Accuracy )
       self.MGRS_Accuracy = MGRS_Accuracy
       MESSAGE:New( string.format( "Settings: MGRS format accuracy set to %d for player %s.", MGRS_Accuracy, PlayerName ), 5 ):ToGroup( PlayerGroup )
@@ -1028,7 +1028,7 @@ do -- SETTINGS
       end
     end
 
-    --- @param #SETTINGS self
+    -- @param #SETTINGS self
     function SETTINGS:MenuGroupMWSystem( PlayerUnit, PlayerGroup, PlayerName, MW )
       self.Metric = MW
       MESSAGE:New( string.format( "Settings: Measurement format set to %s for player %s.", MW and "Metric" or "Imperial", PlayerName ), 5 ):ToGroup( PlayerGroup )
@@ -1038,7 +1038,7 @@ do -- SETTINGS
       end
     end
 
-    --- @param #SETTINGS self
+    -- @param #SETTINGS self
     function SETTINGS:MenuGroupMessageTimingsSystem( PlayerUnit, PlayerGroup, PlayerName, MessageType, MessageTime )
       self:SetMessageTime( MessageType, MessageTime )
       MESSAGE:New( string.format( "Settings: Default message time set for %s to %d.", MessageType, MessageTime ), 5 ):ToGroup( PlayerGroup )

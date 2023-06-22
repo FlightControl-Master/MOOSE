@@ -204,7 +204,7 @@ CTLD_CARGO = {
   -- @param #CTLD_CARGO self
   -- @param #boolean loaded
   function CTLD_CARGO:Isloaded()
-    if self.HasBeenMoved and not self.WasDropped() then
+    if self.HasBeenMoved and not self:WasDropped() then
       return true
     else
      return false

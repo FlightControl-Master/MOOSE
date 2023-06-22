@@ -170,19 +170,19 @@ do -- TASK_A2G
 
   end
 
-  --- @param #TASK_A2G self
+  -- @param #TASK_A2G self
   -- @param Core.Set#SET_UNIT TargetSetUnit The set of targets.
   function TASK_A2G:SetTargetSetUnit( TargetSetUnit )
 
     self.TargetSetUnit = TargetSetUnit
   end
 
-  --- @param #TASK_A2G self
+  -- @param #TASK_A2G self
   function TASK_A2G:GetPlannedMenuText()
     return self:GetStateString() .. " - " .. self:GetTaskName() .. " ( " .. self.TargetSetUnit:GetUnitTypesText() .. " )"
   end
 
-  --- @param #TASK_A2G self
+  -- @param #TASK_A2G self
   -- @param Core.Point#COORDINATE RendezVousCoordinate The Coordinate object referencing to the 2D point where the RendezVous point is located on the map.
   -- @param #number RendezVousRange The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
   -- @param Wrapper.Unit#UNIT TaskUnit
@@ -195,7 +195,7 @@ do -- TASK_A2G
     ActRouteRendezVous:SetRange( RendezVousRange )
   end
 
-  --- @param #TASK_A2G self
+  -- @param #TASK_A2G self
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return Core.Point#COORDINATE The Coordinate object referencing to the 2D point where the RendezVous point is located on the map.
   -- @return #number The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
@@ -207,7 +207,7 @@ do -- TASK_A2G
     return ActRouteRendezVous:GetCoordinate(), ActRouteRendezVous:GetRange()
   end
 
-  --- @param #TASK_A2G self
+  -- @param #TASK_A2G self
   -- @param Core.Zone#ZONE_BASE RendezVousZone The Zone object where the RendezVous is located on the map.
   -- @param Wrapper.Unit#UNIT TaskUnit
   function TASK_A2G:SetRendezVousZone( RendezVousZone, TaskUnit )
@@ -218,7 +218,7 @@ do -- TASK_A2G
     ActRouteRendezVous:SetZone( RendezVousZone )
   end
 
-  --- @param #TASK_A2G self
+  -- @param #TASK_A2G self
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return Core.Zone#ZONE_BASE The Zone object where the RendezVous is located on the map.
   function TASK_A2G:GetRendezVousZone( TaskUnit )
@@ -229,7 +229,7 @@ do -- TASK_A2G
     return ActRouteRendezVous:GetZone()
   end
 
-  --- @param #TASK_A2G self
+  -- @param #TASK_A2G self
   -- @param Core.Point#COORDINATE TargetCoordinate The Coordinate object where the Target is located on the map.
   -- @param Wrapper.Unit#UNIT TaskUnit
   function TASK_A2G:SetTargetCoordinate( TargetCoordinate, TaskUnit )
@@ -240,7 +240,7 @@ do -- TASK_A2G
     ActRouteTarget:SetCoordinate( TargetCoordinate )
   end
 
-  --- @param #TASK_A2G self
+  -- @param #TASK_A2G self
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return Core.Point#COORDINATE The Coordinate object where the Target is located on the map.
   function TASK_A2G:GetTargetCoordinate( TaskUnit )
@@ -251,7 +251,7 @@ do -- TASK_A2G
     return ActRouteTarget:GetCoordinate()
   end
 
-  --- @param #TASK_A2G self
+  -- @param #TASK_A2G self
   -- @param Core.Zone#ZONE_BASE TargetZone The Zone object where the Target is located on the map.
   -- @param Wrapper.Unit#UNIT TaskUnit
   function TASK_A2G:SetTargetZone( TargetZone, TaskUnit )
@@ -262,7 +262,7 @@ do -- TASK_A2G
     ActRouteTarget:SetZone( TargetZone )
   end
 
-  --- @param #TASK_A2G self
+  -- @param #TASK_A2G self
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return Core.Zone#ZONE_BASE The Zone object where the Target is located on the map.
   function TASK_A2G:GetTargetZone( TaskUnit )
@@ -306,7 +306,7 @@ do -- TASK_A2G
     self:__Goal( -10 )
   end
 
-  --- @param #TASK_A2G self
+  -- @param #TASK_A2G self
   function TASK_A2G:UpdateTaskInfo( DetectedItem )
 
     if self:IsStatePlanned() or self:IsStateAssigned() then

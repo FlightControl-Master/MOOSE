@@ -9,7 +9,7 @@
 -- @module AI.AI_Air
 -- @image MOOSE.JPG
 
---- @type AI_AIR
+-- @type AI_AIR
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 --- The AI_AIR class implements the core functions to operate an AI @{Wrapper.Group}.
@@ -259,7 +259,7 @@ function AI_AIR:New( AIGroup )
   return self
 end
 
---- @param Wrapper.Group#GROUP self
+-- @param Wrapper.Group#GROUP self
 -- @param Core.Event#EVENTDATA EventData
 function GROUP:OnEventTakeoff( EventData, Fsm )
   Fsm:Takeoff()
@@ -441,13 +441,13 @@ function AI_AIR:onafterReturn( Controllable, From, Event, To )
   
 end
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 function AI_AIR:onbeforeStatus()
 
   return self.CheckStatus
 end
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 function AI_AIR:onafterStatus()
 
   if self.Controllable and self.Controllable:IsAlive() then
@@ -555,7 +555,7 @@ function AI_AIR:onafterStatus()
 end
 
 
---- @param Wrapper.Group#GROUP AIGroup
+-- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR.RTBRoute( AIGroup, Fsm )
 
   AIGroup:F( { "AI_AIR.RTBRoute:", AIGroup:GetName() } )
@@ -566,7 +566,7 @@ function AI_AIR.RTBRoute( AIGroup, Fsm )
 
 end
 
---- @param Wrapper.Group#GROUP AIGroup
+-- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR.RTBHold( AIGroup, Fsm )
 
   AIGroup:F( { "AI_AIR.RTBHold:", AIGroup:GetName() } )
@@ -593,7 +593,7 @@ function AI_AIR:SetRTBSpeedFactors(MinFactor,MaxFactor)
 end
 
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 -- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR:onafterRTB( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
@@ -681,7 +681,7 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
 
 end
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 -- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR:onafterHome( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
@@ -695,7 +695,7 @@ end
 
 
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 -- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR:onafterHold( AIGroup, From, Event, To, HoldTime )
   self:F( { AIGroup, From, Event, To } )
@@ -717,7 +717,7 @@ function AI_AIR:onafterHold( AIGroup, From, Event, To, HoldTime )
 
 end
 
---- @param Wrapper.Group#GROUP AIGroup
+-- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR.Resume( AIGroup, Fsm )
 
   AIGroup:I( { "AI_AIR.Resume:", AIGroup:GetName() } )
@@ -727,7 +727,7 @@ function AI_AIR.Resume( AIGroup, Fsm )
   
 end
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 -- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR:onafterRefuel( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
@@ -793,13 +793,13 @@ end
     
 
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 function AI_AIR:onafterDead()
   self:SetStatusOff()
 end
 
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 -- @param Core.Event#EVENTDATA EventData
 function AI_AIR:OnCrash( EventData )
 
@@ -810,7 +810,7 @@ function AI_AIR:OnCrash( EventData )
   end
 end
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 -- @param Core.Event#EVENTDATA EventData
 function AI_AIR:OnEjection( EventData )
 
@@ -819,7 +819,7 @@ function AI_AIR:OnEjection( EventData )
   end
 end
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 -- @param Core.Event#EVENTDATA EventData
 function AI_AIR:OnPilotDead( EventData )
 

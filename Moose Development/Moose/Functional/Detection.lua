@@ -39,7 +39,7 @@
 
 do -- DETECTION_BASE
 
-  --- @type DETECTION_BASE
+  -- @type DETECTION_BASE
   -- @field Core.Set#SET_GROUP DetectionSetGroup The @{Core.Set} of GROUPs in the Forward Air Controller role.
   -- @field DCS#Distance DetectionRange The range till which targets are accepted to be detected.
   -- @field #DETECTION_BASE.DetectedObjects DetectedObjects The list of detected objects.
@@ -269,10 +269,10 @@ do -- DETECTION_BASE
     DetectedItemsByIndex = {},
   }
 
-  --- @type DETECTION_BASE.DetectedObjects
+  -- @type DETECTION_BASE.DetectedObjects
   -- @list <#DETECTION_BASE.DetectedObject>
 
-  --- @type DETECTION_BASE.DetectedObject
+  -- @type DETECTION_BASE.DetectedObject
   -- @field #string Name
   -- @field #boolean IsVisible
   -- @field #boolean KnowType
@@ -284,7 +284,7 @@ do -- DETECTION_BASE
   -- @field #boolean LastPos
   -- @field #number LastVelocity
 
-  --- @type DETECTION_BASE.DetectedItems
+  -- @type DETECTION_BASE.DetectedItems
   -- @list <#DETECTION_BASE.DetectedItem>
 
   --- Detected item data structure.
@@ -522,7 +522,7 @@ do -- DETECTION_BASE
 
   do -- State Transition Handling
 
-    --- @param #DETECTION_BASE self
+    -- @param #DETECTION_BASE self
     -- @param #string From The From State string.
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
@@ -530,7 +530,7 @@ do -- DETECTION_BASE
       self:__Detect( 1 )
     end
 
-    --- @param #DETECTION_BASE self
+    -- @param #DETECTION_BASE self
     -- @param #string From The From State string.
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
@@ -570,7 +570,7 @@ do -- DETECTION_BASE
 
     end
 
-    --- @param #DETECTION_BASE self
+    -- @param #DETECTION_BASE self
     -- @param #number The amount of alive recce.
     function DETECTION_BASE:CountAliveRecce()
 
@@ -578,7 +578,7 @@ do -- DETECTION_BASE
 
     end
 
-    --- @param #DETECTION_BASE self
+    -- @param #DETECTION_BASE self
     function DETECTION_BASE:ForEachAliveRecce( IteratorFunction, ... )
       self:F2( arg )
 
@@ -587,7 +587,7 @@ do -- DETECTION_BASE
       return self
     end
 
-    --- @param #DETECTION_BASE self
+    -- @param #DETECTION_BASE self
     -- @param #string From The From State string.
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
@@ -1354,7 +1354,7 @@ do -- DETECTION_BASE
           }
         }
 
-        --- @param DCS#Unit FoundDCSUnit
+        -- @param DCS#Unit FoundDCSUnit
         -- @param Wrapper.Group#GROUP ReportGroup
         -- @param Core.Set#SET_GROUP ReportSetGroup
         local FindNearByFriendlies = function( FoundDCSUnit, ReportGroupData )
@@ -1419,7 +1419,7 @@ do -- DETECTION_BASE
         DetectedItem.PlayersNearBy = nil
 
         _DATABASE:ForEachPlayer(
-        --- @param Wrapper.Unit#UNIT PlayerUnit
+        -- @param Wrapper.Unit#UNIT PlayerUnit
         function( PlayerUnitName )
           local PlayerUnit = UNIT:FindByName( PlayerUnitName )
 
@@ -1976,7 +1976,7 @@ end
 
 do -- DETECTION_UNITS
 
-  --- @type DETECTION_UNITS
+  -- @type DETECTION_UNITS
   -- @field DCS#Distance DetectionRange The range till which targets are detected.
   -- @extends Functional.Detection#DETECTION_BASE
 
@@ -2232,7 +2232,7 @@ end
 
 do -- DETECTION_TYPES
 
-  --- @type DETECTION_TYPES
+  -- @type DETECTION_TYPES
   -- @extends Functional.Detection#DETECTION_BASE
 
   --- Will detect units within the battle zone.
@@ -2434,7 +2434,7 @@ end
 
 do -- DETECTION_AREAS
 
-  --- @type DETECTION_AREAS
+  -- @type DETECTION_AREAS
   -- @field DCS#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
   -- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Wrapper.Unit}s, @{Core.Zone}s, the center @{Wrapper.Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
   -- @extends Functional.Detection#DETECTION_BASE
@@ -2960,7 +2960,7 @@ do -- DETECTION_AREAS
 
       -- DetectedSet:Flush( self )
 
-      DetectedSet:ForEachUnit(  --- @param Wrapper.Unit#UNIT DetectedUnit
+      DetectedSet:ForEachUnit(  -- @param Wrapper.Unit#UNIT DetectedUnit
       function( DetectedUnit )
         if DetectedUnit:IsAlive() then
           -- self:T( "Detected Set #" .. DetectedItem.ID .. ":" .. DetectedUnit:GetName() )

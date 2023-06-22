@@ -9,7 +9,7 @@
 -- @module AI.AI_Cargo
 -- @image Cargo.JPG
 
---- @type AI_CARGO
+-- @type AI_CARGO
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 

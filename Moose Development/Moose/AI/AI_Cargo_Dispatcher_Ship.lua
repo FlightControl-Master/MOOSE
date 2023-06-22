@@ -23,7 +23,7 @@
 -- @module AI.AI_Cargo_Dispatcher_Ship
 -- @image AI_Cargo_Dispatcher.JPG
 
---- @type AI_CARGO_DISPATCHER_SHIP
+-- @type AI_CARGO_DISPATCHER_SHIP
 -- @extends AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
 
 

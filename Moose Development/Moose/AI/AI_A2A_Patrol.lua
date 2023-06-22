@@ -10,7 +10,7 @@
 -- @image AI_Air_Patrolling.JPG
 
 
---- @type AI_A2A_PATROL
+-- @type AI_A2A_PATROL
 -- @extends AI.AI_A2A#AI_A2A
 
 --- Implements the core functions to patrol a @{Core.Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group}.

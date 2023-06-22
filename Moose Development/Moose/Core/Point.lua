@@ -41,7 +41,7 @@
 
 do -- COORDINATE
 
-  --- @type COORDINATE
+  -- @type COORDINATE
   -- @field #string ClassName Name of the class
   -- @field #number x Component of the 3D vector.
   -- @field #number y Component of the 3D vector.
@@ -3592,7 +3592,7 @@ end
 
 do -- POINT_VEC2
 
-  --- @type POINT_VEC2
+  -- @type POINT_VEC2
   -- @field DCS#Distance x The x coordinate in meters.
   -- @field DCS#Distance y the y coordinate in meters.
   -- @extends Core.Point#COORDINATE

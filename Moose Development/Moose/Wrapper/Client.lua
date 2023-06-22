@@ -323,7 +323,7 @@ function CLIENT:Alive( CallBackFunction, ... )
   return self
 end
 
---- @param #CLIENT self
+-- @param #CLIENT self
 function CLIENT:_AliveCheckScheduler( SchedulerName )
   self:F3( { SchedulerName, self.ClientName, self.ClientAlive2, self.ClientBriefingShown, self.ClientCallBack } )
 

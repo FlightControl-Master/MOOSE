@@ -9,7 +9,7 @@
 -- @module AI.AI_Cargo_Helicopter
 -- @image AI_Cargo_Dispatching_For_Helicopters.JPG
 
---- @type AI_CARGO_HELICOPTER
+-- @type AI_CARGO_HELICOPTER
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 
@@ -282,7 +282,7 @@ function AI_CARGO_HELICOPTER:SetLandingSpeedAndHeight(speed, height)
   return self
 end
 
---- @param #AI_CARGO_HELICOPTER self
+-- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
 -- @param From
 -- @param Event
@@ -321,7 +321,7 @@ function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
   
 end
 
---- @param #AI_CARGO_HELICOPTER self
+-- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
 -- @param From
 -- @param Event
@@ -404,7 +404,7 @@ function AI_CARGO_HELICOPTER:onafterQueue( Helicopter, From, Event, To, Coordina
 end
 
 
---- @param #AI_CARGO_HELICOPTER self
+-- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
 -- @param From
 -- @param Event

@@ -34,7 +34,7 @@
 -- @module Core.SpawnStatic
 -- @image Core_Spawnstatic.JPG
 
---- @type SPAWNSTATIC
+-- @type SPAWNSTATIC
 -- @field #string SpawnTemplatePrefix Name of the template group.
 -- @field #number CountryID Country ID.
 -- @field #number CoalitionID Coalition ID.

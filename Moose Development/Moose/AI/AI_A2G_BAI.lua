@@ -11,7 +11,7 @@
 -- @module AI.AI_A2G_BAI
 -- @image AI_Air_To_Ground_Engage.JPG
 
---- @type AI_A2G_BAI
+-- @type AI_A2G_BAI
 -- @extends AI.AI_A2A_Engage#AI_A2A_Engage -- TODO: Documentation. This class does not exist, unable to determine what it extends.
 
 --- Implements the core functions to intercept intruders. Use the Engage trigger to intercept intruders.

@@ -24,7 +24,7 @@
 -- @image AI_Cargo_Dispatching_For_Airplanes.JPG
 
 
---- @type AI_CARGO_DISPATCHER_AIRPLANE
+-- @type AI_CARGO_DISPATCHER_AIRPLANE
 -- @extends AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
 
 

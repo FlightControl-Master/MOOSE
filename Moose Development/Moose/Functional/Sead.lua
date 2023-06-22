@@ -66,7 +66,7 @@ SEAD = {
   -- @field Harms
   SEAD.Harms = {
   ["AGM_88"] = "AGM_88",
-  ["AGM_45"] = "AGM_45",
+  --["AGM_45"] = "AGM_45",
   ["AGM_122"] = "AGM_122",
   ["AGM_84"] = "AGM_84",
   ["AGM_45"] = "AGM_45",
@@ -369,7 +369,7 @@ function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADP
       local reach = 10
       if hit then
         local wpndata = SEAD.HarmData[data]
-        reach = wpndata[1] * 1,1
+        reach = wpndata[1] * 1.1
         local mach = wpndata[2]
         wpnspeed = math.floor(mach * 340.29)
       end

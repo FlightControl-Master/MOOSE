@@ -3252,7 +3252,7 @@ do -- AI_A2A_DISPATCHER
             end
           end
 
-          --- @param #AI_A2A_DISPATCHER self
+          -- @param #AI_A2A_DISPATCHER self
           function AI_A2A_Fsm:onafterHome( Defender, From, Event, To, Action )
             if Defender and Defender:IsAlive() then
               self:F( { "CAP Home", Defender:GetName() } )
@@ -3500,7 +3500,7 @@ do -- AI_A2A_DISPATCHER
                     Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
                   end
 
-                  --- @param #AI_A2A_DISPATCHER self
+                  -- @param #AI_A2A_DISPATCHER self
                   function Fsm:onafterLostControl( Defender, From, Event, To )
                     self:F( { "GCI LostControl", Defender:GetName() } )
                     self:GetParent( self ).onafterHome( self, Defender, From, Event, To )
@@ -3513,7 +3513,7 @@ do -- AI_A2A_DISPATCHER
                     end
                   end
 
-                  --- @param #AI_A2A_DISPATCHER self
+                  -- @param #AI_A2A_DISPATCHER self
                   function Fsm:onafterHome( DefenderGroup, From, Event, To, Action )
                     self:F( { "GCI Home", DefenderGroup:GetName() } )
                     self:GetParent( self ).onafterHome( self, DefenderGroup, From, Event, To )
@@ -3944,7 +3944,7 @@ end
 
 do
 
-  --- @type AI_A2A_GCICAP
+  -- @type AI_A2A_GCICAP
   -- @extends #AI_A2A_DISPATCHER
 
   --- Create an automatic air defence system for a coalition setting up GCI and CAP air defenses.

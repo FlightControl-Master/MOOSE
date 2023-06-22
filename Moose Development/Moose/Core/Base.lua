@@ -34,7 +34,7 @@ local _TraceClassMethod = {}
 
 local _ClassID = 0
 
---- @type BASE
+-- @type BASE
 -- @field ClassName The name of the class.
 -- @field ClassID The ID number of the class.
 -- @field ClassNameAndID The name of the class concatenated with the ID number of the class.
@@ -201,10 +201,10 @@ BASE = {
   Scheduler = nil,
 }
 
---- @field #BASE.__
+-- @field #BASE.__
 BASE.__ = {}
 
---- @field #BASE._
+-- @field #BASE._
 BASE._ = {
   Schedules = {}, --- Contains the Schedulers Active
 }

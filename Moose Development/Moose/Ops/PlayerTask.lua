@@ -522,7 +522,7 @@ function PLAYERTASK:MarkTargetOnF10Map(Text,Coalition,ReadOnly)
         -- Marker exists, delete one first
         self.TargetMarker:Remove()
       end
-      local text = Text or "Target of "..self.lid
+      local text = Text or ("Target of "..self.lid)
       self.TargetMarker = MARKER:New(coordinate,text)
       if ReadOnly then
         self.TargetMarker:ReadOnly()

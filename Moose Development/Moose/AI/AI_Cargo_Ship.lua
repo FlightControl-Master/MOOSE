@@ -9,7 +9,7 @@
 -- @module AI.AI_Cargo_Ship
 -- @image AI_Cargo_Dispatcher.JPG
 
---- @type AI_CARGO_SHIP
+-- @type AI_CARGO_SHIP
 -- @extends AI.AI_Cargo#AI_CARGO
 
 --- Brings a dynamic cargo handling capability for an AI naval group.

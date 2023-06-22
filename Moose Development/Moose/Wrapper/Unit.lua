@@ -21,7 +21,7 @@
 -- @image Wrapper_Unit.JPG
 
 
---- @type UNIT
+-- @type UNIT
 -- @field #string ClassName Name of the class.
 -- @field #string UnitName Name of the unit.
 -- @field #string GroupName Name of the group the unit belongs to.

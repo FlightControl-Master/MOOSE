@@ -11,10 +11,10 @@
 -- @module Wrapper.Positionable
 -- @image Wrapper_Positionable.JPG
 
---- @type POSITIONABLE.__ Methods which are not intended for mission designers, but which are used internally by the moose designer :-)
+-- @type POSITIONABLE.__ Methods which are not intended for mission designers, but which are used internally by the moose designer :-)
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
 
---- @type POSITIONABLE
+-- @type POSITIONABLE
 -- @field Core.Point#COORDINATE coordinate Coordinate object.
 -- @field Core.Point#POINT_VEC3 pointvec3 Point Vec3 object.
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
@@ -51,10 +51,10 @@ POSITIONABLE = {
   pointvec3  = nil,
 }
 
---- @field #POSITIONABLE.__
+-- @field #POSITIONABLE.__
 POSITIONABLE.__ = {}
 
---- @field #POSITIONABLE.__.Cargo
+-- @field #POSITIONABLE.__.Cargo
 POSITIONABLE.__.Cargo = {}
 
 --- A DCSPositionable

@@ -68,7 +68,7 @@
 -- @image Missile_Trainer.JPG
 
 
---- @type MISSILETRAINER
+-- @type MISSILETRAINER
 -- @field Core.Set#SET_CLIENT DBClients
 -- @extends Core.Base#BASE
 
@@ -205,7 +205,7 @@ function MISSILETRAINER:New( Distance, Briefing )
 
 
 --  	self.DB:ForEachClient(
---  	 --- @param Wrapper.Client#CLIENT Client
+--  	 -- @param Wrapper.Client#CLIENT Client
 --  	 function( Client )
 --
 --        ... actions ...

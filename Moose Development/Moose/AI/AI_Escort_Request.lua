@@ -148,7 +148,7 @@
 
 
 
---- @type AI_ESCORT_REQUEST
+-- @type AI_ESCORT_REQUEST
 -- @extends AI.AI_Escort#AI_ESCORT
 
 --- AI_ESCORT_REQUEST class
@@ -223,7 +223,7 @@ function AI_ESCORT_REQUEST:New( EscortUnit, EscortSpawn, EscortAirbase, EscortNa
   return self
 end
 
---- @param #AI_ESCORT_REQUEST self
+-- @param #AI_ESCORT_REQUEST self
 function AI_ESCORT_REQUEST:SpawnEscort()
 
   local EscortGroup = self.EscortSpawn:SpawnAtAirbase( self.EscortAirbase, SPAWN.Takeoff.Hot )
@@ -248,7 +248,7 @@ function AI_ESCORT_REQUEST:SpawnEscort()
       self:_InitEscortMenus( EscortGroup )
       self:_InitEscortRoute( EscortGroup )
 
-      --- @param #AI_ESCORT self
+      -- @param #AI_ESCORT self
       -- @param Core.Event#EVENTDATA EventData
       function EscortGroup:OnEventDeadOrCrash( EventData )
         self:F( { "EventDead", EventData } )
@@ -263,7 +263,7 @@ function AI_ESCORT_REQUEST:SpawnEscort()
 
 end
 
---- @param #AI_ESCORT_REQUEST self
+-- @param #AI_ESCORT_REQUEST self
 -- @param Core.Set#SET_GROUP EscortGroupSet
 function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
 
@@ -285,14 +285,14 @@ function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
     
 end
 
---- @param #AI_ESCORT_REQUEST self
+-- @param #AI_ESCORT_REQUEST self
 -- @param Core.Set#SET_GROUP EscortGroupSet
 function AI_ESCORT_REQUEST:onafterStop( EscortGroupSet )
 
   self:F()
   
   EscortGroupSet:ForEachGroup(
-    --- @param Core.Group#GROUP EscortGroup
+    -- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
       EscortGroup:WayPointInitialize()
     

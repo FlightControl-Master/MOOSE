@@ -1,3 +1,4 @@
+---@diagnostic disable: cast-local-type
 --- **Ops** - Automatic Terminal Information Service (ATIS).
 --
 -- ===
@@ -2139,6 +2140,8 @@ function ATIS:onafterBroadcast( From, Event, To )
     end
   end
   alltext = alltext .. ";\n" .. subtitle
+  
+  local _RUNACT
 
   if not self.ATISforFARPs then
     -- Active runway.
@@ -2148,7 +2151,7 @@ function ATIS:onafterBroadcast( From, Event, To )
     elseif rwyLandingLeft==false then
       subtitle=subtitle.." Right"
     end
-    local _RUNACT = subtitle
+    _RUNACT = subtitle
     if not self.useSRS then
       self:Transmission(ATIS.Sound.ActiveRunway, 1.0, subtitle)
       self.radioqueue:Number2Transmission(runwayLanding)

@@ -19,7 +19,7 @@
 
 do -- CARGO_GROUP
 
-  --- @type CARGO_GROUP
+  -- @type CARGO_GROUP
   -- @field Core.Set#SET_CARGO CargoSet The collection of derived CARGO objects.
   -- @field #string GroupName The name of the CargoGroup.
   -- @extends Cargo.Cargo#CARGO_REPORTABLE
@@ -262,7 +262,7 @@ do -- CARGO_GROUP
   end
 
 
-  --- @param #CARGO_GROUP self
+  -- @param #CARGO_GROUP self
   -- @param Core.Event#EVENTDATA EventData 
   function CARGO_GROUP:OnEventCargoDead( EventData )
   
@@ -422,7 +422,7 @@ do -- CARGO_GROUP
   
       -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
       self.CargoSet:ForEach(
-        --- @param Cargo.Cargo#CARGO Cargo
+        -- @param Cargo.Cargo#CARGO Cargo
         function( Cargo, NearRadius )
           if not Cargo:IsDestroyed() then
             local ToVec=nil

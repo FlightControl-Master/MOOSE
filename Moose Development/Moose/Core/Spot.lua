@@ -33,7 +33,7 @@
 
 do
 
-  --- @type SPOT
+  -- @type SPOT
   -- @extends Core.Fsm#FSM
 
 
@@ -292,7 +292,7 @@ do
     self:__Lasing(-1)
   end  
 
-  --- @param #SPOT self
+  -- @param #SPOT self
   -- @param Core.Event#EVENTDATA EventData
   function SPOT:OnEventDead(EventData)
     self:F( { Dead = EventData.IniDCSUnitName, Target = self.Target } )
@@ -311,7 +311,7 @@ do
     end
   end
   
-  --- @param #SPOT self
+  -- @param #SPOT self
   -- @param From
   -- @param Event
   -- @param To
@@ -337,7 +337,7 @@ do
   
   end
 
-  --- @param #SPOT self
+  -- @param #SPOT self
   -- @param From
   -- @param Event
   -- @param To

@@ -905,14 +905,14 @@ do -- AI_AIR_DISPATCHER
   -- @type AI_AIR_DISPATCHER.DefenseCoordinates
   -- @map <#string,Core.Point#COORDINATE> A list of all defense coordinates mapped per defense coordinate name.
 
-  --- @field #AI_AIR_DISPATCHER.DefenseCoordinates DefenseCoordinates
+  -- @field #AI_AIR_DISPATCHER.DefenseCoordinates DefenseCoordinates
   AI_AIR_DISPATCHER.DefenseCoordinates = {}
 
   --- Enumerator for spawns at airbases
   -- @type AI_AIR_DISPATCHER.Takeoff
   -- @extends Wrapper.Group#GROUP.Takeoff
 
-  --- @field #AI_AIR_DISPATCHER.Takeoff Takeoff
+  -- @field #AI_AIR_DISPATCHER.Takeoff Takeoff
   AI_AIR_DISPATCHER.Takeoff = GROUP.Takeoff
 
   --- Defnes Landing location.
@@ -943,7 +943,7 @@ do -- AI_AIR_DISPATCHER
   -- @type AI_AIR_DISPATCHER.DefenseQueue
   -- @list<#AI_AIR_DISPATCHER.DefenseQueueItem> DefenseQueueItem A list of all defenses being queued ...
 
-  --- @field #AI_AIR_DISPATCHER.DefenseQueue DefenseQueue
+  -- @field #AI_AIR_DISPATCHER.DefenseQueue DefenseQueue
   AI_AIR_DISPATCHER.DefenseQueue = {}
 
   --- Defense approach types
@@ -1135,7 +1135,7 @@ do -- AI_AIR_DISPATCHER
   end
 
 
-  --- @param #AI_AIR_DISPATCHER self
+  -- @param #AI_AIR_DISPATCHER self
   function AI_AIR_DISPATCHER:onafterStart( From, Event, To )
 
     self:GetParent( self ).onafterStart( self, From, Event, To )
@@ -1199,7 +1199,7 @@ do -- AI_AIR_DISPATCHER
   end
   
 
-  --- @param #AI_AIR_DISPATCHER self
+  -- @param #AI_AIR_DISPATCHER self
   function AI_AIR_DISPATCHER:ResourcePark( DefenderSquadron )
     local TemplateID = math.random( 1, #DefenderSquadron.Spawn )
     local Spawn = DefenderSquadron.Spawn[ TemplateID ] -- Core.Spawn#SPAWN
@@ -1216,7 +1216,7 @@ do -- AI_AIR_DISPATCHER
   end
 
 
-  --- @param #AI_AIR_DISPATCHER self
+  -- @param #AI_AIR_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_AIR_DISPATCHER:OnEventBaseCaptured( EventData )
 
@@ -1234,13 +1234,13 @@ do -- AI_AIR_DISPATCHER
     end
   end
 
-  --- @param #AI_AIR_DISPATCHER self
+  -- @param #AI_AIR_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_AIR_DISPATCHER:OnEventCrashOrDead( EventData )
     self.Detection:ForgetDetectedUnit( EventData.IniUnitName ) 
   end
 
-  --- @param #AI_AIR_DISPATCHER self
+  -- @param #AI_AIR_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_AIR_DISPATCHER:OnEventLand( EventData )
     self:F( "Landed" )
@@ -1257,7 +1257,7 @@ do -- AI_AIR_DISPATCHER
           self:RemoveDefenderFromSquadron( Squadron, Defender )
         end
         DefenderUnit:Destroy()
-        self:ResourcePark( Squadron, Defender )
+        self:ResourcePark( Squadron )
         return
       end
       if DefenderUnit:GetLife() ~= DefenderUnit:GetLife0() then
@@ -1268,7 +1268,7 @@ do -- AI_AIR_DISPATCHER
     end 
   end
   
-  --- @param #AI_AIR_DISPATCHER self
+  -- @param #AI_AIR_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_AIR_DISPATCHER:OnEventEngineShutdown( EventData )
     local DefenderUnit = EventData.IniUnit
@@ -1284,31 +1284,31 @@ do -- AI_AIR_DISPATCHER
           self:RemoveDefenderFromSquadron( Squadron, Defender )
         end
         DefenderUnit:Destroy()
-        self:ResourcePark( Squadron, Defender )
+        self:ResourcePark( Squadron )
       end
     end 
   end
 
   do -- Manage the defensive behaviour
   
-    --- @param #AI_AIR_DISPATCHER self
+    -- @param #AI_AIR_DISPATCHER self
     -- @param #string DefenseCoordinateName The name of the coordinate to be defended by AIR defenses.
     -- @param Core.Point#COORDINATE DefenseCoordinate The coordinate to be defended by AIR defenses.
     function AI_AIR_DISPATCHER:AddDefenseCoordinate( DefenseCoordinateName, DefenseCoordinate )
       self.DefenseCoordinates[DefenseCoordinateName] = DefenseCoordinate
     end
     
-    --- @param #AI_AIR_DISPATCHER self
+    -- @param #AI_AIR_DISPATCHER self
     function AI_AIR_DISPATCHER:SetDefenseReactivityLow()
       self.DefenseReactivity = 0.05
     end
     
-    --- @param #AI_AIR_DISPATCHER self
+    -- @param #AI_AIR_DISPATCHER self
     function AI_AIR_DISPATCHER:SetDefenseReactivityMedium()
       self.DefenseReactivity = 0.15
     end
     
-    --- @param #AI_AIR_DISPATCHER self
+    -- @param #AI_AIR_DISPATCHER self
     function AI_AIR_DISPATCHER:SetDefenseReactivityHigh()
       self.DefenseReactivity = 0.5
     end
@@ -1872,7 +1872,7 @@ do -- AI_AIR_DISPATCHER
     
   end
 
-  --- @param #AI_AIR_DISPATCHER self
+  -- @param #AI_AIR_DISPATCHER self
   -- @param #string SquadronName The squadron name.
   -- @param #number TakeoffInterval  Only Takeoff new units each specified interval in seconds in 10 seconds steps.
   -- @usage
@@ -2774,7 +2774,7 @@ do -- AI_AIR_DISPATCHER
 
   -- TODO: Need to model the resources in a squadron.
 
-  --- @param #AI_AIR_DISPATCHER self
+  -- @param #AI_AIR_DISPATCHER self
   -- @param AI.AI_Air_Squadron#AI_AIR_SQUADRON Squadron
   function AI_AIR_DISPATCHER:AddDefenderToSquadron( Squadron, Defender, Size )
     self.Defenders = self.Defenders or {}
@@ -2787,7 +2787,7 @@ do -- AI_AIR_DISPATCHER
     self:F( { DefenderName = DefenderName, SquadronResourceCount = Squadron.ResourceCount } )
   end
 
-  --- @param #AI_AIR_DISPATCHER self
+  -- @param #AI_AIR_DISPATCHER self
   -- @param AI.AI_Air_Squadron#AI_AIR_SQUADRON Squadron
   function AI_AIR_DISPATCHER:RemoveDefenderFromSquadron( Squadron, Defender )
     self.Defenders = self.Defenders or {}
@@ -2800,7 +2800,7 @@ do -- AI_AIR_DISPATCHER
     self:F( { DefenderName = DefenderName, SquadronResourceCount = SquadronResourceCount } )
   end
   
-  --- @param #AI_AIR_DISPATCHER self
+  -- @param #AI_AIR_DISPATCHER self
   -- @param Wrapper.Group#GROUP Defender
   -- @return AI.AI_Air_Squadron#AI_AIR_SQUADRON The Squadron.
   function AI_AIR_DISPATCHER:GetSquadronFromDefender( Defender )

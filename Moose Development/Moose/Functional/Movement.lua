@@ -10,7 +10,7 @@
 -- @module Functional.Movement
 -- @image MOOSE.JPG
 
---- @type MOVEMENT
+-- @type MOVEMENT
 -- @extends Core.Base#BASE
 
 ---

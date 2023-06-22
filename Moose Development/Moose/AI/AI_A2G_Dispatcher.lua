@@ -909,14 +909,14 @@ do -- AI_A2G_DISPATCHER
   -- @type AI_A2G_DISPATCHER.DefenseCoordinates
   -- @map <#string,Core.Point#COORDINATE> A list of all defense coordinates mapped per defense coordinate name.
 
-  --- @field #AI_A2G_DISPATCHER.DefenseCoordinates DefenseCoordinates
+  -- @field #AI_A2G_DISPATCHER.DefenseCoordinates DefenseCoordinates
   AI_A2G_DISPATCHER.DefenseCoordinates = {}
 
   --- Enumerator for spawns at airbases.
   -- @type AI_A2G_DISPATCHER.Takeoff
   -- @extends Wrapper.Group#GROUP.Takeoff
   
-  --- @field #AI_A2G_DISPATCHER.Takeoff Takeoff
+  -- @field #AI_A2G_DISPATCHER.Takeoff Takeoff
   AI_A2G_DISPATCHER.Takeoff = GROUP.Takeoff
   
   --- Defines Landing location.
@@ -947,7 +947,7 @@ do -- AI_A2G_DISPATCHER
   -- @type AI_A2G_DISPATCHER.DefenseQueue
   -- @list<#AI_A2G_DISPATCHER.DefenseQueueItem> DefenseQueueItem A list of all defenses being queued ...
   
-  --- @field #AI_A2G_DISPATCHER.DefenseQueue DefenseQueue
+  -- @field #AI_A2G_DISPATCHER.DefenseQueue DefenseQueue
   AI_A2G_DISPATCHER.DefenseQueue = {}
   
   --- Defense approach types.
@@ -1141,7 +1141,7 @@ do -- AI_A2G_DISPATCHER
   end
 
 
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:onafterStart( From, Event, To )
 
     self:GetParent( self ).onafterStart( self, From, Event, To )
@@ -1206,7 +1206,7 @@ do -- AI_A2G_DISPATCHER
   end
   
 
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:ResourcePark( DefenderSquadron )
     local TemplateID = math.random( 1, #DefenderSquadron.Spawn )
     local Spawn = DefenderSquadron.Spawn[ TemplateID ] -- Core.Spawn#SPAWN
@@ -1223,7 +1223,7 @@ do -- AI_A2G_DISPATCHER
   end
 
 
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_A2G_DISPATCHER:OnEventBaseCaptured( EventData )
 
@@ -1242,14 +1242,14 @@ do -- AI_A2G_DISPATCHER
   end
 
 
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_A2G_DISPATCHER:OnEventCrashOrDead( EventData )
     self.Detection:ForgetDetectedUnit( EventData.IniUnitName ) 
   end
 
 
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_A2G_DISPATCHER:OnEventLand( EventData )
     self:F( "Landed" )
@@ -1266,7 +1266,7 @@ do -- AI_A2G_DISPATCHER
           self:RemoveDefenderFromSquadron( Squadron, Defender )
         end
         DefenderUnit:Destroy()
-        self:ResourcePark( Squadron, Defender )
+        self:ResourcePark( Squadron )
         return
       end
       if DefenderUnit:GetLife() ~= DefenderUnit:GetLife0() then
@@ -1278,7 +1278,7 @@ do -- AI_A2G_DISPATCHER
   end
   
 
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_A2G_DISPATCHER:OnEventEngineShutdown( EventData )
     local DefenderUnit = EventData.IniUnit
@@ -1294,7 +1294,7 @@ do -- AI_A2G_DISPATCHER
           self:RemoveDefenderFromSquadron( Squadron, Defender )
         end
         DefenderUnit:Destroy()
-        self:ResourcePark( Squadron, Defender )
+        self:ResourcePark( Squadron )
       end
     end 
   end
@@ -1302,7 +1302,7 @@ do -- AI_A2G_DISPATCHER
 
   do -- Manage the defensive behaviour
   
-    --- @param #AI_A2G_DISPATCHER self
+    -- @param #AI_A2G_DISPATCHER self
     -- @param #string DefenseCoordinateName The name of the coordinate to be defended by A2G defenses.
     -- @param Core.Point#COORDINATE DefenseCoordinate The coordinate to be defended by A2G defenses.
     function AI_A2G_DISPATCHER:AddDefenseCoordinate( DefenseCoordinateName, DefenseCoordinate )
@@ -1310,19 +1310,19 @@ do -- AI_A2G_DISPATCHER
     end
     
 
-    --- @param #AI_A2G_DISPATCHER self
+    -- @param #AI_A2G_DISPATCHER self
     function AI_A2G_DISPATCHER:SetDefenseReactivityLow()
       self.DefenseReactivity = 0.05
     end
     
 
-    --- @param #AI_A2G_DISPATCHER self
+    -- @param #AI_A2G_DISPATCHER self
     function AI_A2G_DISPATCHER:SetDefenseReactivityMedium()
       self.DefenseReactivity = 0.15
     end
     
 
-    --- @param #AI_A2G_DISPATCHER self
+    -- @param #AI_A2G_DISPATCHER self
     function AI_A2G_DISPATCHER:SetDefenseReactivityHigh()
       self.DefenseReactivity = 0.5
     end
@@ -1873,7 +1873,7 @@ do -- AI_A2G_DISPATCHER
   end
 
   
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
   -- @param #number TakeoffInterval  Only Takeoff new units each specified interval in seconds in 10 seconds steps.
   -- @usage
@@ -3374,7 +3374,7 @@ do -- AI_A2G_DISPATCHER
   end 
 
 
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:AddDefenderToSquadron( Squadron, Defender, Size )
     self.Defenders = self.Defenders or {}
     local DefenderName = Defender:GetName()
@@ -3385,7 +3385,7 @@ do -- AI_A2G_DISPATCHER
     self:F( { DefenderName = DefenderName, SquadronResourceCount = Squadron.ResourceCount } )
   end
 
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:RemoveDefenderFromSquadron( Squadron, Defender )
     self.Defenders = self.Defenders or {}
     local DefenderName = Defender:GetName()
@@ -3801,7 +3801,7 @@ do -- AI_A2G_DISPATCHER
         Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
       end
 
-      --- @param #AI_A2G_DISPATCHER self
+      -- @param #AI_A2G_DISPATCHER self
       function AI_A2G_Fsm:onafterLostControl( DefenderGroup, From, Event, To )
         self:F({"LostControl", DefenderGroup:GetName()})
         self:GetParent(self).onafterHome( self, DefenderGroup, From, Event, To )
@@ -3818,7 +3818,7 @@ do -- AI_A2G_DISPATCHER
         end
       end
       
-      --- @param #AI_A2G_DISPATCHER self
+      -- @param #AI_A2G_DISPATCHER self
       function AI_A2G_Fsm:onafterHome( DefenderGroup, From, Event, To, Action )
         self:F({"Home", DefenderGroup:GetName()})
         self:GetParent(self).onafterHome( self, DefenderGroup, From, Event, To )
@@ -3938,7 +3938,7 @@ do -- AI_A2G_DISPATCHER
         Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
       end
 
-      --- @param #AI_A2G_DISPATCHER self
+      -- @param #AI_A2G_DISPATCHER self
       function AI_A2G_Fsm:onafterLostControl( DefenderGroup, From, Event, To )
         self:F({"Defender LostControl", DefenderGroup:GetName()})
         self:GetParent(self).onafterHome( self, DefenderGroup, From, Event, To )
@@ -3955,7 +3955,7 @@ do -- AI_A2G_DISPATCHER
         end
       end
       
-      --- @param #AI_A2G_DISPATCHER self
+      -- @param #AI_A2G_DISPATCHER self
       function AI_A2G_Fsm:onafterHome( DefenderGroup, From, Event, To, Action )
         self:F({"Defender Home", DefenderGroup:GetName()})
         self:GetParent(self).onafterHome( self, DefenderGroup, From, Event, To )

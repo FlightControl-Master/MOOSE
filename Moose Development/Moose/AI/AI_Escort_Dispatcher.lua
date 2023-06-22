@@ -15,7 +15,7 @@
 -- @image MOOSE.JPG
 
 
---- @type AI_ESCORT_DISPATCHER
+-- @type AI_ESCORT_DISPATCHER
 -- @extends Core.Fsm#FSM
 
 
@@ -28,7 +28,7 @@ AI_ESCORT_DISPATCHER = {
   ClassName = "AI_ESCORT_DISPATCHER",
 }
 
---- @field #list 
+-- @field #list 
 AI_ESCORT_DISPATCHER.AI_Escorts = {}
 
 
@@ -97,7 +97,7 @@ function AI_ESCORT_DISPATCHER:onafterStart( From, Event, To )
 
 end
 
---- @param #AI_ESCORT_DISPATCHER self
+-- @param #AI_ESCORT_DISPATCHER self
 -- @param Core.Event#EVENTDATA EventData
 function AI_ESCORT_DISPATCHER:OnEventExit( EventData )
 
@@ -120,7 +120,7 @@ function AI_ESCORT_DISPATCHER:OnEventExit( EventData )
       
 end
 
---- @param #AI_ESCORT_DISPATCHER self
+-- @param #AI_ESCORT_DISPATCHER self
 -- @param Core.Event#EVENTDATA EventData
 function AI_ESCORT_DISPATCHER:OnEventBirth( EventData )
 

@@ -12,7 +12,7 @@
 -- @image Wrapper_Airbase.JPG
 
 
---- @type AIRBASE
+-- @type AIRBASE
 -- @field #string ClassName Name of the class, i.e. "AIRBASE".
 -- @field #table CategoryName Names of airbase categories.
 -- @field #string AirbaseName Name of the airbase.

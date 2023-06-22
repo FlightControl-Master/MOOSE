@@ -30,7 +30,7 @@
 -- @module AI.AI_Cargo_Dispatcher_APC
 -- @image AI_Cargo_Dispatching_For_APC.JPG
 
---- @type AI_CARGO_DISPATCHER_APC
+-- @type AI_CARGO_DISPATCHER_APC
 -- @extends AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
 
 

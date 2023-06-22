@@ -67,7 +67,7 @@ do -- CARGO_SLINGLOAD
   end
 
 
-  --- @param #CARGO_SLINGLOAD self
+  -- @param #CARGO_SLINGLOAD self
   -- @param Core.Event#EVENTDATA EventData 
   function CARGO_SLINGLOAD:OnEventCargoDead( EventData )
 

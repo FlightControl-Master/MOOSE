@@ -195,7 +195,7 @@ do -- ACT_ASSIST_SMOKE_TARGETS_ZONE
   function ACT_ASSIST_SMOKE_TARGETS_ZONE:onenterSmoking( ProcessUnit, From, Event, To )
 
     self.TargetSetUnit:ForEachUnit(
-      --- @param Wrapper.Unit#UNIT SmokeUnit
+      -- @param Wrapper.Unit#UNIT SmokeUnit
       function( SmokeUnit )
         if math.random( 1, ( 100 * self.TargetSetUnit:Count() ) / 4 ) <= 100 then
           SCHEDULER:New( self,

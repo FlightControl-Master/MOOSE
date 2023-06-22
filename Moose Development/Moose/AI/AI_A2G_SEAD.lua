@@ -13,7 +13,7 @@
 
 
 
---- @type AI_A2G_SEAD
+-- @type AI_A2G_SEAD
 -- @extends AI.AI_A2G_Patrol#AI_AIR_PATROL
 
 

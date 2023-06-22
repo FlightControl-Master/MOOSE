@@ -182,7 +182,7 @@
 
 do -- DESIGNATE
 
-  --- @type DESIGNATE
+  -- @type DESIGNATE
   -- @extends Core.Fsm#FSM_PROCESS
 
   --- Manage the designation of detected targets.
@@ -523,7 +523,7 @@ do -- DESIGNATE
 
     self.AttackSet:ForEachGroupAlive(
     
-      --- @param Wrapper.Group#GROUP AttackGroup
+      -- @param Wrapper.Group#GROUP AttackGroup
       function( AttackGroup )
         self.FlashStatusMenu[AttackGroup] = FlashMenu
       end
@@ -552,7 +552,7 @@ do -- DESIGNATE
 
     self.AttackSet:ForEachGroupAlive(
     
-      --- @param Wrapper.Group#GROUP AttackGroup
+      -- @param Wrapper.Group#GROUP AttackGroup
       function( AttackGroup )
         self.FlashDetectionMessage[AttackGroup] = FlashDetectionMessage
       end
@@ -824,7 +824,7 @@ do -- DESIGNATE
           -- This Detection is obsolete, remove from the designate scope
           self.Designating[DesignateIndex] = nil
           self.AttackSet:ForEachGroupAlive(
-            --- @param Wrapper.Group#GROUP AttackGroup
+            -- @param Wrapper.Group#GROUP AttackGroup
             function( AttackGroup )
               if AttackGroup:IsAlive() == true then
                 local DetectionText = self.Detection:DetectedItemReportSummary( DetectedItem, AttackGroup ):Text( ", " )
@@ -901,7 +901,7 @@ do -- DESIGNATE
 
     self.AttackSet:ForEachGroupAlive(
     
-      --- @param Wrapper.Group#GROUP GroupReport
+      -- @param Wrapper.Group#GROUP GroupReport
       function( AttackGroup )
       
         if self.FlashStatusMenu[AttackGroup] or ( MenuAttackGroup and ( AttackGroup:GetName() == MenuAttackGroup:GetName() ) ) then
@@ -1058,7 +1058,7 @@ do -- DESIGNATE
 
     self.AttackSet:ForEachGroupAlive(
     
-      --- @param Wrapper.Group#GROUP GroupReport
+      -- @param Wrapper.Group#GROUP GroupReport
       function( AttackGroup )
       
         self:ScheduleOnce( Delay, self.SetMenu, self, AttackGroup )
@@ -1230,7 +1230,7 @@ do -- DESIGNATE
     if self.AutoLase or ( not self.AutoLase and ( self.LaseStart + Duration >= timer.getTime() ) ) then
 
       TargetSetUnit:ForEachUnitPerThreatLevel( 10, 0,
-        --- @param Wrapper.Unit#UNIT SmokeUnit
+        -- @param Wrapper.Unit#UNIT SmokeUnit
         function( TargetUnit )
         
           self:F( { TargetUnit = TargetUnit:GetName() } )
@@ -1390,7 +1390,7 @@ do -- DESIGNATE
     local MarkedCount = 0
   
     TargetSetUnit:ForEachUnitPerThreatLevel( 10, 0,
-      --- @param Wrapper.Unit#UNIT SmokeUnit
+      -- @param Wrapper.Unit#UNIT SmokeUnit
       function( SmokeUnit )
 
         if MarkedCount < self.MaximumMarkings then

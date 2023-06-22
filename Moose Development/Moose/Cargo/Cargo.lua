@@ -365,7 +365,7 @@ CARGOS = {}
 
 do -- CARGO
 
-  --- @type CARGO
+  -- @type CARGO
   -- @extends Core.Fsm#FSM_PROCESS
   -- @field #string Type A string defining the type of the cargo. eg. Engineers, Equipment, Screwdrivers.
   -- @field #string Name A string defining the name of the cargo. The name is the unique identifier of the cargo.
@@ -428,7 +428,7 @@ do -- CARGO
     Reported = {},
   }
 
-  --- @type CARGO.CargoObjects
+  -- @type CARGO.CargoObjects
   -- @map < #string, Wrapper.Positionable#POSITIONABLE > The alive POSITIONABLE objects representing the the cargo.
 
   --- CARGO Constructor. This class is an abstract class and should not be instantiated.
@@ -1029,7 +1029,7 @@ end -- CARGO
 
 do -- CARGO_REPRESENTABLE
 
-  --- @type CARGO_REPRESENTABLE
+  -- @type CARGO_REPRESENTABLE
   -- @extends #CARGO
   -- @field test
 
@@ -1137,7 +1137,7 @@ end -- CARGO_REPRESENTABLE
 
 do -- CARGO_REPORTABLE
 
-    --- @type CARGO_REPORTABLE
+    -- @type CARGO_REPORTABLE
     -- @extends #CARGO
     CARGO_REPORTABLE = {
       ClassName = "CARGO_REPORTABLE"
@@ -1173,7 +1173,7 @@ end
 
 do -- CARGO_PACKAGE
 
-  --- @type CARGO_PACKAGE
+  -- @type CARGO_PACKAGE
   -- @extends #CARGO_REPRESENTABLE
   CARGO_PACKAGE = {
     ClassName = "CARGO_PACKAGE"

@@ -18,7 +18,7 @@
 
 do -- UserFlag
 
-  --- @type USERFLAG
+  -- @type USERFLAG
   -- @field #string ClassName Name of the class
   -- @field #string UserFlagName Name of the flag.
   -- @extends Core.Base#BASE

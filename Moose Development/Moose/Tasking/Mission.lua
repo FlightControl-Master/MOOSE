@@ -19,7 +19,7 @@
 -- @module Tasking.Mission
 -- @image Task_Mission.JPG
 
---- @type MISSION
+-- @type MISSION
 -- @field #MISSION.Clients _Clients
 -- @field Core.Menu#MENU_COALITION MissionMenu
 -- @field #string MissionBriefing
@@ -785,7 +785,7 @@ function MISSION:HasGroup( TaskGroup )
   return Has
 end
 
---- @param #MISSION self
+-- @param #MISSION self
 -- @return #number
 function MISSION:GetTasksRemaining()
   -- Determine how many tasks are remaining.
@@ -800,7 +800,7 @@ function MISSION:GetTasksRemaining()
   return TasksRemaining
 end
 
---- @param #MISSION self
+-- @param #MISSION self
 -- @return #number
 function MISSION:GetTaskTypes()
   -- Determine how many tasks are remaining.
@@ -860,7 +860,7 @@ end
 ----      - <xx> Aborted Tasks (xp)
 ----      - <xx> Failed Tasks (xp)
 ---- 
----- @param #MISSION self
+-- @param #MISSION self
 ---- @return #string
 --function MISSION:ReportSummary()
 --
@@ -1170,7 +1170,7 @@ end
 
 
 
---- @param #MISSION self
+-- @param #MISSION self
 -- @param #string TaskStatus The status
 -- @param Wrapper.Group#GROUP ReportGroup
 function MISSION:MenuReportTasksPerStatus( ReportGroup, TaskStatus )
@@ -1181,7 +1181,7 @@ function MISSION:MenuReportTasksPerStatus( ReportGroup, TaskStatus )
 end
 
 
---- @param #MISSION self
+-- @param #MISSION self
 -- @param Wrapper.Group#GROUP ReportGroup
 function MISSION:MenuReportPlayersPerTask( ReportGroup )
 
@@ -1190,7 +1190,7 @@ function MISSION:MenuReportPlayersPerTask( ReportGroup )
   self:GetCommandCenter():MessageTypeToGroup( Report, ReportGroup, MESSAGE.Type.Overview )
 end
 
---- @param #MISSION self
+-- @param #MISSION self
 -- @param Wrapper.Group#GROUP ReportGroup
 function MISSION:MenuReportPlayersProgress( ReportGroup )
 

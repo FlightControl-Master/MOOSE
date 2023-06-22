@@ -112,7 +112,7 @@ AI_FORMATION = {
 
 AI_FORMATION.__Enum = {}
 
---- @type AI_FORMATION.__Enum.Formation
+-- @type AI_FORMATION.__Enum.Formation
 -- @field #number None
 -- @field #number Line
 -- @field #number Trail
@@ -137,7 +137,7 @@ AI_FORMATION.__Enum.Formation = {
   Box = 10,
 }
 
---- @type AI_FORMATION.__Enum.Mode
+-- @type AI_FORMATION.__Enum.Mode
 -- @field #number Mission
 -- @field #number Formation
 AI_FORMATION.__Enum.Mode = {
@@ -147,13 +147,13 @@ AI_FORMATION.__Enum.Mode = {
   Reconnaissance = "R",
 }
 
---- @type AI_FORMATION.__Enum.ReportType
+-- @type AI_FORMATION.__Enum.ReportType
 -- @field #number All
 -- @field #number Airborne
 -- @field #number GroundRadar
 -- @field #number Ground
 AI_FORMATION.__Enum.ReportType = {
-  Airborne = "*",
+  All = "*",
   Airborne = "A",
   GroundRadar = "R",
   Ground = "G",
@@ -1000,7 +1000,7 @@ function AI_FORMATION:SetFlightModeMission( FollowGroup )
     FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
   else
     self.FollowGroupSet:ForSomeGroupAlive(
-      --- @param Core.Group#GROUP EscortGroup
+      -- @param Core.Group#GROUP EscortGroup
       function( FollowGroup )
         FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
         FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
@@ -1024,7 +1024,7 @@ function AI_FORMATION:SetFlightModeAttack( FollowGroup )
     FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Attack )
   else
     self.FollowGroupSet:ForSomeGroupAlive(
-      --- @param Core.Group#GROUP EscortGroup
+      -- @param Core.Group#GROUP EscortGroup
       function( FollowGroup )
         FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
         FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Attack )
@@ -1048,7 +1048,7 @@ function AI_FORMATION:SetFlightModeFormation( FollowGroup )
     FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
   else
     self.FollowGroupSet:ForSomeGroupAlive(
-      --- @param Core.Group#GROUP EscortGroup
+      -- @param Core.Group#GROUP EscortGroup
       function( FollowGroup )
         FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
         FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
@@ -1226,7 +1226,7 @@ function AI_FORMATION:FollowMe(FollowGroup, ClientUnit, CT1, CV1, CT2, CV2)
         local CVI = { 
           x = CV2.x + CS * 10 * math.sin(Ca),
           y = GH2.y + Inclination, -- + FollowFormation.y,
-          y = GH2.y,
+          --y = GH2.y,
           z = CV2.z + CS * 10 * math.cos(Ca),
         }
   

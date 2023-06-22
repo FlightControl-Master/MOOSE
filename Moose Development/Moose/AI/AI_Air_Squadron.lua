@@ -13,7 +13,7 @@
 
 
 
---- @type AI_AIR_SQUADRON
+-- @type AI_AIR_SQUADRON
 -- @extends Core.Base#BASE
 
 

@@ -1,3 +1,4 @@
+---@diagnostic disable: undefined-global
 --- **Ops** - Auftrag (mission) for Ops.
 --
 -- ## Main Features:
@@ -477,7 +478,7 @@ AUFTRAG.Type={
   RELOCATECOHORT="Relocate Cohort",
   AIRDEFENSE="Air Defence",
   EWR="Early Warning Radar",
-  RECOVERYTANKER="Recovery Tanker",
+  --RECOVERYTANKER="Recovery Tanker",
   REARMING="Rearming",
   CAPTUREZONE="Capture Zone",
   NOTHING="Nothing",

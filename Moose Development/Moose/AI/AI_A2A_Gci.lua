@@ -13,7 +13,7 @@
 
 
 
---- @type AI_A2A_GCI
+-- @type AI_A2A_GCI
 -- @extends AI.AI_A2A#AI_A2A
 
 

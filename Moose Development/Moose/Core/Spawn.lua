@@ -268,7 +268,7 @@ SPAWN = {
 -- @type SPAWN.Takeoff
 -- @extends Wrapper.Group#GROUP.Takeoff
 
---- @field #SPAWN.Takeoff Takeoff
+-- @field #SPAWN.Takeoff Takeoff
 SPAWN.Takeoff = {
   Air = 1,
   Runway = 2,
@@ -276,7 +276,7 @@ SPAWN.Takeoff = {
   Cold = 4,
 }
 
---- @type SPAWN.SpawnZoneTable
+-- @type SPAWN.SpawnZoneTable
 -- @list <Core.Zone#ZONE_BASE> SpawnZone
 
 --- Creates the main object to spawn a @{Wrapper.Group} defined in the DCS ME.
@@ -3419,7 +3419,7 @@ end
 
 -- TODO Need to delete this... _DATABASE does this now ...
 
---- @param #SPAWN self 
+-- @param #SPAWN self 
 -- @param Core.Event#EVENTDATA EventData
 function SPAWN:_OnBirth( EventData )
   self:F( self.SpawnTemplatePrefix )
@@ -3439,7 +3439,7 @@ function SPAWN:_OnBirth( EventData )
 
 end
 
---- @param #SPAWN self 
+-- @param #SPAWN self 
 -- @param Core.Event#EVENTDATA EventData
 function SPAWN:_OnDeadOrCrash( EventData )
   self:F( self.SpawnTemplatePrefix )
