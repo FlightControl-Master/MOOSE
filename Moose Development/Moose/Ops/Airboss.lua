@@ -10266,7 +10266,7 @@ function AIRBOSS:_GetSternCoord()
     elseif case==2 or case==1 then
     -- V/Stol: Translate 8 meters port.
     self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(8, FB-90, true, true)
-  end
+	end
   elseif self.carriertype==AIRBOSS.CarrierType.STENNIS then
     -- Stennis: translate 7 meters starboard wrt Final bearing.
     self.sterncoord:Translate( self.carrierparam.sterndist, hdg, true, true ):Translate( 7, FB + 90, true, true )
@@ -11585,7 +11585,13 @@ function AIRBOSS:GetHeadingIntoWind( magnetic, coord )
   end
 
   -- Get direction the wind is blowing from. This is where we want to go.
-  local windfrom, vwind = self:GetWind( nil, nil, coord ) + adjustDegreesForWindSpeed(vwind)
+  local windfrom, vwind = self:GetWind( nil, nil, coord )
+  
+  --self:I("windfrom="..windfrom.." vwind="..vwind)
+  
+  vwind = vwind + adjustDegreesForWindSpeed(vwind)
+  
+  --self:I("windfrom="..windfrom.." (c)vwind="..vwind)
 
   -- Actually, we want the runway in the wind.
   local intowind = windfrom - self.carrierparam.rwyangle
@@ -17348,7 +17354,7 @@ function AIRBOSS:_DisplayCarrierInfo( _unitname )
         state = "Deck closed"
       end
       if self.turning then
-        state = state .. " (turning currently)"
+        state = state .. " (currently turning)"
       end
 
       -- Message text.
