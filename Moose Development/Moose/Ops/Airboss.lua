@@ -5459,6 +5459,7 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
   local skyhawk = playerData.actype == AIRBOSS.AircraftCarrier.A4EC
   local tomcat = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B
   local harrier = playerData.actype == AIRBOSS.AircraftCarrier.AV8B
+  local goshawk = playerData.actype == AIRBOSS.AircraftCarrier.T45C
 
   -- Return values.
   local alt
@@ -14841,7 +14842,7 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
     local text = call.subtitle
     self:I(self.lid..text) 
     local srstext = self:_GetNiceSRSText(text)
-    self.SRSQ:NewTransmission(srstext, call.duration, self.SRS, tstart, 0.1, subgroups, call.subtitle, call.subduration, frequency, modulation, gender, culture, voice, volume, radio.alias)
+    self.SRSQ:NewTransmission(srstext, call.duration, self.SRS, nil, 0.1, nil, call.subtitle, call.subduration, frequency, modulation, gender, culture, voice, volume, radio.alias)
   end
 end
 
@@ -15259,7 +15260,7 @@ function AIRBOSS:MessageToPlayer( playerData, message, sender, receiver, duratio
         self:I(self.lid..text)
         self:I({sender,frequency,modulation,voice})
         local srstext = self:_GetNiceSRSText(text)
-        self.SRSQ:NewTransmission(srstext,duration,self.SRS,tstart,0.1,subgroups,subtitle,subduration,frequency,modulation,gender,culture,voice,volume,sender)
+        self.SRSQ:NewTransmission(srstext,duration,self.SRS,nil,0.1,nil,nil,nil,frequency,modulation,gender,culture,voice,1.0,sender)
       end
       -- Text message to player client.
       if playerData.client then

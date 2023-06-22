@@ -1221,7 +1221,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.39"
+CTLD.version="1.0.40"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2280,6 +2280,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   if not drop then 
     inzone = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
     if not inzone then
+---@diagnostic disable-next-line: cast-local-type
       inzone, ship, zone, distance, width  = self:IsUnitInZone(Unit,CTLD.CargoZoneType.SHIP)
     end
   else
