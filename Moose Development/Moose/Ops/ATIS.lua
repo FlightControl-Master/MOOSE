@@ -609,15 +609,16 @@ _ATIS = {}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version = "0.9.14"
+ATIS.version = "0.9.15"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add new Normandy airfields.
--- TODO: Zulu time --> Zulu in output.
 -- TODO: Correct fog for elevation.
+-- DONE: Zulu time --> Zulu in output.
+-- DONE: Fix for AB not having a runway - Helopost like Naqoura
+-- DONE: Add new Normandy airfields.
 -- DONE: Use new AIRBASE system to set start/landing runway
 -- DONE: SetILS doesn't work
 -- DONE: Visibility reported twice over SRS
@@ -2145,11 +2146,13 @@ function ATIS:onafterBroadcast( From, Event, To )
 
   if not self.ATISforFARPs then
     -- Active runway.
-    local subtitle=string.format("Active runway %s", runwayLanding)
-    if rwyLandingLeft==true then
-      subtitle=subtitle.." Left"
-    elseif rwyLandingLeft==false then
-      subtitle=subtitle.." Right"
+    if runwayLanding then
+      local subtitle=string.format("Active runway %s", runwayLanding)
+      if rwyLandingLeft==true then
+        subtitle=subtitle.." Left"
+      elseif rwyLandingLeft==false then
+        subtitle=subtitle.." Right"
+      end
     end
     _RUNACT = subtitle
     if not self.useSRS then
@@ -2512,8 +2515,11 @@ function ATIS:GetActiveRunway(Takeoff)
   else
     runway=self.airbase:GetActiveRunwayLanding()
   end
-  
-  return runway.name, runway.isLeft
+  if runway then -- some ABs have NO runways, e.g. Syria Naqoura
+    return runway.name, runway.isLeft
+  else
+    return nil, nil
+  end
 end
 
 --- Get runway from user supplied magnetic heading.

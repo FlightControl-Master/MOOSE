@@ -1504,7 +1504,9 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   local _aircraftsize, ax,ay,az
   if group and group.ClassName == "GROUP" then
     aircraft=group:GetUnit(1)
-    _aircraftsize, ax,ay,az=aircraft:GetObjectSize()
+    if aircraft then
+      _aircraftsize, ax,ay,az=aircraft:GetObjectSize()
+    end
   else
     -- SU27 dimensions
     _aircraftsize = 23
