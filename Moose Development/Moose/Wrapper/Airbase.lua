@@ -12,7 +12,7 @@
 -- @image Wrapper_Airbase.JPG
 
 
---- @type AIRBASE
+-- @type AIRBASE
 -- @field #string ClassName Name of the class, i.e. "AIRBASE".
 -- @field #table CategoryName Names of airbase categories.
 -- @field #string AirbaseName Name of the airbase.
@@ -1501,16 +1501,16 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
 
   -- Get the aircraft size, i.e. it's longest side of x,z.
   local aircraft = nil -- fix local problem below
-  local _aircraftsize, ax,ay,az
+  -- SU27 dimensions as default
+  local _aircraftsize = 23
+  local ax = 23 -- l
+  local ay = 7 -- h
+  local az = 17 -- w
   if group and group.ClassName == "GROUP" then
     aircraft=group:GetUnit(1)
-    _aircraftsize, ax,ay,az=aircraft:GetObjectSize()
-  else
-    -- SU27 dimensions
-    _aircraftsize = 23
-    ax = 23 -- length
-    ay = 7 -- height
-    az = 17 -- width
+    if aircraft then
+      _aircraftsize, ax,ay,az=aircraft:GetObjectSize()
+    end
   end
 
 
