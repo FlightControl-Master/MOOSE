@@ -88,7 +88,7 @@
 -- @module Functional.Scoring
 -- @image Scoring.JPG
 
--- @type SCORING
+--- @type SCORING
 -- @field Players A collection of the current players that have joined the game.
 -- @extends Core.Base#BASE
 
