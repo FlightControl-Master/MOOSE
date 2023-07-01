@@ -299,14 +299,14 @@ end
 -- @param #table tbl Input table.
 UTILS.OneLineSerialize = function( tbl )  -- serialization of a table all on a single line, no comments, made to replace old get_table_string function
 
-  lookup_table = {}
+local  lookup_table = {}
 
   local function _Serialize( tbl )
 
     if type(tbl) == 'table' then --function only works for tables!
 
       if lookup_table[tbl] then
-        return lookup_table[object]
+        return lookup_table[tbl]
       end
 
       local tbl_str = {}

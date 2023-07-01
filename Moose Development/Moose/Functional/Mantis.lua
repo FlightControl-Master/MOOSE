@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: Oct 2022
+-- Last Update: July 2023
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -369,6 +369,7 @@ MANTIS.SamData = {
   ["SA-20A"] = { Range=150, Blindspot=5, Height=27, Type="Long" , Radar="S-300PMU1"},
   ["SA-20B"] = { Range=200, Blindspot=4, Height=27, Type="Long" , Radar="S-300PMU2"},
   ["HQ-2"] = { Range=50, Blindspot=6, Height=35, Type="Medium", Radar="HQ_2_Guideline_LN" },
+  ["SHORAD"] = { Range=3, Blindspot=0, Height=3, Type="Short", Radar="Igla" }
 }
 
 --- SAM data HDS
@@ -578,7 +579,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.8.9"
+    self.version="0.8.10"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -1319,7 +1320,7 @@ do
     elseif sma then
       SAMData = self.SamDataSMA
     end
-    --self:I("Looking to auto-match for "..grpname)
+    --self:T("Looking to auto-match for "..grpname)
     for _,_unit in pairs(units) do
       local unit = _unit -- Wrapper.Unit#UNIT
       local type = string.lower(unit:GetTypeName())
