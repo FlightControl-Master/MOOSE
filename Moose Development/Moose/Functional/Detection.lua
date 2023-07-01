@@ -1975,7 +1975,8 @@ do -- DETECTION_BASE
 end
 
 do -- DETECTION_UNITS
-
+  
+  ---
   -- @type DETECTION_UNITS
   -- @field DCS#Distance DetectionRange The range till which targets are detected.
   -- @extends Functional.Detection#DETECTION_BASE

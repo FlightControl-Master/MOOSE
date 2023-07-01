@@ -20,7 +20,7 @@
 -- @module Wrapper.Unit
 -- @image Wrapper_Unit.JPG
 
-
+---
 -- @type UNIT
 -- @field #string ClassName Name of the class.
 -- @field #string UnitName Name of the unit.

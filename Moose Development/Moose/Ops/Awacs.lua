@@ -499,7 +499,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.54", -- #string
+  version = "0.2.55", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -783,8 +783,8 @@ AWACS.Messages = {
 -- @field #string AwacsStateMission
 -- @field #string AwacsStateFG
 -- @field #boolean AwacsShiftChange 
--- @field #string EscortsStateMission
--- @field #string EscortsStateFG
+-- @field #table EscortsStateMission
+-- @field #table EscortsStateFG
 -- @field #boolean EscortsShiftChange
 -- @field #number AICAPMax
 -- @field #number AICAPCurrent
@@ -1162,8 +1162,8 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   MonitoringData.AwacsStateFG = "unknown"
   MonitoringData.AwacsStateMission = "unknown"
   MonitoringData.EscortsShiftChange = false
-  MonitoringData.EscortsStateFG= "unknown"
-  MonitoringData.EscortsStateMission = "unknown"
+  MonitoringData.EscortsStateFG = {}
+  MonitoringData.EscortsStateMission = {}
   self.MonitoringOn = false -- #boolean
   self.MonitoringData = MonitoringData
   
