@@ -499,7 +499,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.54", -- #string
+  version = "0.2.55", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -783,8 +783,8 @@ AWACS.Messages = {
 -- @field #string AwacsStateMission
 -- @field #string AwacsStateFG
 -- @field #boolean AwacsShiftChange 
--- @field #string EscortsStateMission
--- @field #string EscortsStateFG
+-- @field #table EscortsStateMission
+-- @field #table EscortsStateFG
 -- @field #boolean EscortsShiftChange
 -- @field #number AICAPMax
 -- @field #number AICAPCurrent
@@ -1162,8 +1162,8 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   MonitoringData.AwacsStateFG = "unknown"
   MonitoringData.AwacsStateMission = "unknown"
   MonitoringData.EscortsShiftChange = false
-  MonitoringData.EscortsStateFG= "unknown"
-  MonitoringData.EscortsStateMission = "unknown"
+  MonitoringData.EscortsStateFG = {}
+  MonitoringData.EscortsStateMission = {}
   self.MonitoringOn = false -- #boolean
   self.MonitoringData = MonitoringData
   
@@ -2027,9 +2027,9 @@ function AWACS:_StartEscorts(Shiftchange)
     self.CatchAllMissions[#self.CatchAllMissions+1] = escort
 
     if Shiftchange then
-      self.EscortMissionReplacement[i] = mission
+      self.EscortMissionReplacement[i] = escort
     else
-      self.EscortMission[i] = mission
+      self.EscortMission[i] = escort
     end
   end
   
@@ -3597,10 +3597,13 @@ function AWACS:_SetClientMenus()
             local tasking = MENU_GROUP:New(cgrp,"Tasking",basemenu)
             local showtask = MENU_GROUP_COMMAND:New(cgrp,"Showtask",tasking,self._Showtask,self,cgrp)
             
+            local commit
+            local unable
+            local abort
             if self.PlayerCapAssignment then
-              local commit = MENU_GROUP_COMMAND:New(cgrp,"Commit",tasking,self._Commit,self,cgrp)
-              local unable = MENU_GROUP_COMMAND:New(cgrp,"Unable",tasking,self._Unable,self,cgrp)
-              local abort = MENU_GROUP_COMMAND:New(cgrp,"Abort",tasking,self._TaskAbort,self,cgrp)
+              commit = MENU_GROUP_COMMAND:New(cgrp,"Commit",tasking,self._Commit,self,cgrp)
+              unable = MENU_GROUP_COMMAND:New(cgrp,"Unable",tasking,self._Unable,self,cgrp)
+              abort = MENU_GROUP_COMMAND:New(cgrp,"Abort",tasking,self._TaskAbort,self,cgrp)
               --local judy = MENU_GROUP_COMMAND:New(cgrp,"Judy",tasking,self._Judy,self,cgrp)
             end
             
@@ -4933,8 +4936,8 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag,IsPopup,Repo
     end
   end
   
-  string.gsub(BRAText,"BRAA","brah")
-  string.gsub(BRAText,"BRA","brah")
+  BRAText = string.gsub(BRAText,"BRAA","brah")
+  BRAText = string.gsub(BRAText,"BRA","brah")
   
   local prio = IsNew or IsBogeyDope
   self:_NewRadioEntry(BRAText,TextScreen,GID,isGroup,true,IsNew,false,prio)
@@ -5547,7 +5550,7 @@ end
 -- @param #string Event
 -- @param #string To
 -- @return #AWACS self
-function AWACS:onbeforeStart(From,Event,to)
+function AWACS:onbeforeStart(From,Event,To)
   self:T({From, Event, To})
   if self.IncludeHelicopters then
     self.clientset:FilterCategories("helicopter")
