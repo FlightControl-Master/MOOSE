@@ -115,7 +115,7 @@
 AMMOTRUCK = {
   ClassName = "AMMOTRUCK",
   lid = "",
-  version = "0.0.11",
+  version = "0.0.12",
   alias = "",
   debug = false,
   trucklist = {},
@@ -373,7 +373,7 @@ function AMMOTRUCK:CheckReturningTrucks(dataset)
       truck.statusquo = AMMOTRUCK.State.IDLE
       truck.timestamp = timer.getAbsTime()
       truck.coordinate = coord
-	  truck.reloads = self.reloads or 5
+	    truck.reloads = self.reloads or 5
       self:__TruckHome(1,truck)
     end
   end
@@ -545,7 +545,7 @@ function AMMOTRUCK:CheckTrucksAlive()
       newtruck.statusquo = AMMOTRUCK.State.IDLE
       newtruck.timestamp = timer.getAbsTime()
       newtruck.coordinate = truck:GetCoordinate()
-	  newtruck.reloads = self.reloads or 5
+	    newtruck.reloads = self.reloads or 5
       self.trucklist[name] = newtruck
     end 
   end
@@ -632,10 +632,10 @@ function AMMOTRUCK:onafterMonitor(From, Event, To)
           unloadingtrucks[#unloadingtrucks+1] = data
         elseif data.statusquo == AMMOTRUCK.State.RETURNING then
           returningtrucks[#returningtrucks+1] = data
-		  if data.reloads > 0 or data.reloads == -1 then
-			idletrucks[#idletrucks+1] = data
-			found = true
-		  end         
+  		  if data.reloads > 0 or data.reloads == -1 then
+    			idletrucks[#idletrucks+1] = data
+    			found = true
+  		  end         
         end
     else
       self.truckset[data.name] = nil

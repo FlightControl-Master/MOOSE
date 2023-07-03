@@ -52,6 +52,7 @@
 --   * @{#CONTROLLABLE.TaskEmbarking}: (AIR) Move the controllable to a Vec2 Point, wait for a defined duration and embark a controllable.
 --   * @{#CONTROLLABLE.TaskEmbarkToTransport}: (GROUND) Embark to a Transport landed at a location.
 --   * @{#CONTROLLABLE.TaskEscort}: (AIR) Escort another airborne controllable.
+--   * @{#CONTROLLABLE.TaskGroundEscort}: (AIR/HELO) Escort a ground controllable.
 --   * @{#CONTROLLABLE.TaskFAC_AttackGroup}: (AIR + GROUND) The task makes the controllable/unit a FAC and orders the FAC to control the target (enemy ground controllable) destruction.
 --   * @{#CONTROLLABLE.TaskFireAtPoint}: (GROUND) Fire some or all ammunition at a VEC2 point.
 --   * @{#CONTROLLABLE.TaskFollow}: (AIR) Following another airborne controllable.
@@ -1487,7 +1488,7 @@ end
 -- @param #CONTROLLABLE FollowControllable The controllable to be escorted.
 -- @param #number LastWaypointIndex (optional) Detach waypoint of another controllable. Once reached the unit / controllable Escort task is finished.
 -- @param #number OrbitDistance (optional) Maximum distance helo will orbit around the ground unit in meters. Defaults to 2000 meters.
--- @param DCS#AttributeNameArray TargetTypes (optional) Array of AttributeName that is contains threat categories allowed to engage. Default {"Ground vehicles"}. See https://wiki.hoggit.us/view/DCS_enum_attributes
+-- @param DCS#AttributeNameArray TargetTypes (optional) Array of AttributeName that is contains threat categories allowed to engage. Default {"Ground vehicles"}. See [https://wiki.hoggit.us/view/DCS_enum_attributes](https://wiki.hoggit.us/view/DCS_enum_attributes)
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskGroundEscort( FollowControllable, LastWaypointIndex, OrbitDistance, TargetTypes )
 
@@ -1506,12 +1507,12 @@ function CONTROLLABLE:TaskGroundEscort( FollowControllable, LastWaypointIndex, O
   local DCSTask = {
     id = 'GroundEscort',
     params = {
-      groupId           = FollowControllable and FollowControllable:GetID() or nil
-	  engagementDistMax = OrbitDistance or 2000,
-      lastWptIndexFlag  = LastWaypointIndex and true or false,
-      lastWptIndex      = LastWaypointIndex,   
-      targetTypes       = TargetTypes or {"Ground vehicles"},
-	  lastWptIndexFlagChangedManually = true,
+    groupId           = FollowControllable and FollowControllable:GetID() or nil,
+    engagementDistMax = OrbitDistance or 2000,
+    lastWptIndexFlag  = LastWaypointIndex and true or false,
+    lastWptIndex      = LastWaypointIndex,   
+    targetTypes       = TargetTypes or {"Ground vehicles"},
+    lastWptIndexFlagChangedManually = true,
     },
   }
 
