@@ -1,3 +1,4 @@
+---@diagnostic disable: undefined-global
 --- **Ops** - Auftrag (mission) for Ops.
 --
 -- ## Main Features:
@@ -259,6 +260,10 @@
 --
 -- Not implemented yet.
 --
+-- ## Ground Escort
+--
+-- An escort mission can be created with the @{#AUFTRAG.NewGROUNDESCORT}() function.
+-- 
 -- ## Intercept
 --
 -- An intercept mission can be created with the @{#AUFTRAG.NewINTERCEPT}() function.
@@ -406,6 +411,7 @@ _AUFTRAGSNR=0
 -- @field #string FAC Forward AirController mission.
 -- @field #string FACA Forward AirController airborne mission.
 -- @field #string FERRY Ferry mission.
+-- @field #string GROUNDESCORT Ground escort mission.
 -- @field #string INTERCEPT Intercept mission.
 -- @field #string ORBIT Orbit mission.
 -- @field #string GCICAP Similar to CAP but no auto engage targets.
@@ -450,6 +456,7 @@ AUFTRAG.Type={
   FAC="FAC",
   FACA="FAC-A",
   FERRY="Ferry Flight",
+  GROUNDESCORT="Ground Escort",
   INTERCEPT="Intercept",
   ORBIT="Orbit",
   GCICAP="Ground Controlled CAP",
@@ -477,7 +484,7 @@ AUFTRAG.Type={
   RELOCATECOHORT="Relocate Cohort",
   AIRDEFENSE="Air Defence",
   EWR="Early Warning Radar",
-  RECOVERYTANKER="Recovery Tanker",
+  --RECOVERYTANKER="Recovery Tanker",
   REARMING="Rearming",
   CAPTUREZONE="Capture Zone",
   NOTHING="Nothing",
@@ -1735,6 +1742,43 @@ function AUFTRAG:NewBOMBCARPET(Target, Altitude, CarpetLength)
   mission.categories={AUFTRAG.Category.AIRCRAFT}
 
   -- Get DCS task.
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
+--- **[AIR/HELO]** Create a GROUNDESCORT (or FOLLOW) mission. Helo will escort a **ground** group and automatically engage certain target types.
+-- @param #AUFTRAG self
+-- @param Wrapper.Group#GROUP EscortGroup The ground group to escort.
+-- @param #number OrbitDistance Orbit to/from the lead unit this many NM. Defaults to 1.5 NM.
+-- @param #table TargetTypes Types of targets to engage automatically. Default is {"Ground vehicles"}, i.e. all enemy ground units. Use an empty set {} for a simple "FOLLOW" mission.
+-- @return #AUFTRAG self
+function AUFTRAG:NewGROUNDESCORT(EscortGroup, OrbitDistance, TargetTypes)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.GROUNDESCORT)
+
+  -- If only a string is passed we set a variable and check later if the group exists.
+  if type(EscortGroup)=="string" then
+    mission.escortGroupName=EscortGroup
+    mission:_TargetFromObject()
+  else
+    mission:_TargetFromObject(EscortGroup)
+  end
+
+  -- DCS task parameters:
+  mission.orbitDistance=OrbitDistance and UTILS.NMToMeters(OrbitDistance) or UTILS.NMToMeters(1.5)
+  --mission.engageMaxDistance=EngageMaxDistance and UTILS.NMToMeters(EngageMaxDistance) or UTILS.NMToMeters(5)
+  mission.engageTargetTypes=TargetTypes or {"Ground vehicles"}
+
+  -- Mission options:
+  mission.missionTask=ENUMS.MissionTask.GROUNDESCORT
+  mission.missionFraction=0.1
+  mission.missionAltitude=100
+  mission.optionROE=ENUMS.ROE.OpenFire       -- TODO: what's the best ROE here? Make dependent on ESCORT or FOLLOW!
+  mission.optionROT=ENUMS.ROT.EvadeFire
+
+  mission.categories={AUFTRAG.Category.HELICOPTER}
+
   mission.DCStask=mission:GetDCSMissionTask()
 
   return mission
@@ -5843,10 +5887,20 @@ function AUFTRAG:GetDCSMissionTask()
     -- ESCORT Mission --
     --------------------
 
-    local DCStask=CONTROLLABLE.TaskEscort(nil, self.engageTarget:GetObject(), self.escortVec3, LastWaypointIndex, self.engageMaxDistance, self.engageTargetTypes)
+    local DCStask=CONTROLLABLE.TaskEscort(nil, self.engageTarget:GetObject(), self.escortVec3, nil, self.engageMaxDistance, self.engageTargetTypes)
 
     table.insert(DCStasks, DCStask)
+    
+  elseif self.type==AUFTRAG.Type.GROUNDESCORT then
 
+    --------------------
+    -- GROUNDESCORT Mission --
+    --------------------
+
+    local DCSTask=CONTROLLABLE.TaskGroundEscort(nil,self.engageTarget:GetObject(),nil,self.orbitDistance,self.engageTargetTypes)
+    
+    table.insert(DCStasks, DCSTask)
+    
   elseif self.type==AUFTRAG.Type.FACA then
 
     ------------------
@@ -6528,6 +6582,8 @@ function AUFTRAG:GetMissionTaskforMissionType(MissionType)
     mtask=ENUMS.MissionTask.AFAC    
   elseif MissionType==AUFTRAG.Type.FERRY then
     mtask=ENUMS.MissionTask.NOTHING
+  elseif MissionType==AUFTRAG.Type.GROUNDESCORT then
+    mtask=ENUMS.MissionTask.GROUNDESCORT
   elseif MissionType==AUFTRAG.Type.INTERCEPT then
     mtask=ENUMS.MissionTask.INTERCEPT
   elseif MissionType==AUFTRAG.Type.RECON then
