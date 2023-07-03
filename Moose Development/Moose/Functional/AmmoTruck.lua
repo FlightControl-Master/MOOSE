@@ -77,7 +77,7 @@
 --            ammotruck.monitor = -60 -- 1 minute - AMMOTRUCK checks run every one minute
 --            ammotruck.routeonroad = true -- Trucks will **try** to drive on roads
 --            ammotruck.usearmygroup = false -- If true, will make use of ARMYGROUP in the background (if used in DEV branch)
---			  ammotruck.reloads = 5 -- Maxn re-arms a truck can do before he needs to go home and restock. Set to -1 for unlimited
+--        ammotruck.reloads = 5 -- Maxn re-arms a truck can do before he needs to go home and restock. Set to -1 for unlimited
 -- 
 -- ## 3 FSM Events to shape mission
 -- 
@@ -373,7 +373,7 @@ function AMMOTRUCK:CheckReturningTrucks(dataset)
       truck.statusquo = AMMOTRUCK.State.IDLE
       truck.timestamp = timer.getAbsTime()
       truck.coordinate = coord
-	    truck.reloads = self.reloads or 5
+      truck.reloads = self.reloads or 5
       self:__TruckHome(1,truck)
     end
   end
@@ -545,7 +545,7 @@ function AMMOTRUCK:CheckTrucksAlive()
       newtruck.statusquo = AMMOTRUCK.State.IDLE
       newtruck.timestamp = timer.getAbsTime()
       newtruck.coordinate = truck:GetCoordinate()
-	    newtruck.reloads = self.reloads or 5
+      newtruck.reloads = self.reloads or 5
       self.trucklist[name] = newtruck
     end 
   end
@@ -632,10 +632,10 @@ function AMMOTRUCK:onafterMonitor(From, Event, To)
           unloadingtrucks[#unloadingtrucks+1] = data
         elseif data.statusquo == AMMOTRUCK.State.RETURNING then
           returningtrucks[#returningtrucks+1] = data
-  		  if data.reloads > 0 or data.reloads == -1 then
-    			idletrucks[#idletrucks+1] = data
-    			found = true
-  		  end         
+        if data.reloads > 0 or data.reloads == -1 then
+          idletrucks[#idletrucks+1] = data
+          found = true
+        end         
         end
     else
       self.truckset[data.name] = nil
@@ -758,12 +758,12 @@ end
     end
     
     local scheduler = SCHEDULER:New(nil,destroyammo,{ammo},self.waitingtime)
-	
-	-- one reload less
-	if truck.reloads ~= -1 then
-		truck.reloads = truck.reloads - 1
-	end
-	return self
+  
+  -- one reload less
+  if truck.reloads ~= -1 then
+    truck.reloads = truck.reloads - 1
+  end
+  return self
  end 
 
 ---
