@@ -1750,10 +1750,10 @@ end
 --- **[AIR/HELO]** Create a GROUNDESCORT (or FOLLOW) mission. Helo will escort a **ground** group and automatically engage certain target types.
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP EscortGroup The ground group to escort.
--- @param #number OrbitDistance Orbit to/from the lead unit this many NM. Defaults to 3 NM.
+-- @param #number OrbitDistance Orbit to/from the lead unit this many NM. Defaults to 1.5 NM.
 -- @param #table TargetTypes Types of targets to engage automatically. Default is {"Ground vehicles"}, i.e. all enemy ground units. Use an empty set {} for a simple "FOLLOW" mission.
 -- @return #AUFTRAG self
-function AUFTRAG:NewESCORT(EscortGroup, OrbitDistance, TargetTypes)
+function AUFTRAG:NewGROUNDESCORT(EscortGroup, OrbitDistance, TargetTypes)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.GROUNDESCORT)
 
@@ -1766,16 +1766,16 @@ function AUFTRAG:NewESCORT(EscortGroup, OrbitDistance, TargetTypes)
   end
 
   -- DCS task parameters:
-  mission.orbitDistance=OrbitDistance and UTILS.NMToMeters(OrbitDistance) or UTILS.NMToMeters(3)
+  mission.orbitDistance=OrbitDistance and UTILS.NMToMeters(OrbitDistance) or UTILS.NMToMeters(1.5)
   --mission.engageMaxDistance=EngageMaxDistance and UTILS.NMToMeters(EngageMaxDistance) or UTILS.NMToMeters(5)
   mission.engageTargetTypes=TargetTypes or {"Ground vehicles"}
 
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.GROUNDESCORT
   mission.missionFraction=0.1
-  mission.missionAltitude=1000
+  mission.missionAltitude=100
   mission.optionROE=ENUMS.ROE.OpenFire       -- TODO: what's the best ROE here? Make dependent on ESCORT or FOLLOW!
-  mission.optionROT=ENUMS.ROT.PassiveDefense
+  mission.optionROT=ENUMS.ROT.EvadeFire
 
   mission.categories={AUFTRAG.Category.HELICOPTER}
 
@@ -5899,7 +5899,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     local DCSTask=CONTROLLABLE.TaskGroundEscort(nil,self.engageTarget:GetObject(),nil,self.orbitDistance,self.engageTargetTypes)
     
-    table.insert(DCStasks, DCStask)
+    table.insert(DCStasks, DCSTask)
     
   elseif self.type==AUFTRAG.Type.FACA then
 
