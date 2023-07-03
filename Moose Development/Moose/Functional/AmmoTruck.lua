@@ -17,7 +17,7 @@
 -- @module Functional.AmmoTruck
 -- @image Artillery.JPG
 --
--- Date: Nov 2022
+-- Last update: July 2023
 
 -------------------------------------------------------------------------
 --- **AMMOTRUCK** class, extends Core.FSM#FSM
@@ -40,6 +40,7 @@
 -- @field #number unloadtime Unload time in seconds
 -- @field #number waitingtime Max waiting time in seconds
 -- @field #boolean routeonroad Route truck on road if true (default)
+-- @field #number reloads Number of reloads a single truck can do before he must return home
 -- @extends Core.FSM#FSM
 
 --- *Amateurs talk about tactics, but professionals study logistics.* - General Robert H Barrow, USMC
@@ -73,9 +74,10 @@
 --            ammotruck.remunidist = 20000 -- 20km - send trucks max this far from home
 --            ammotruck.unloadtime = 600 -- 10 minutes - min time to unload ammunition
 --            ammotruck.waitingtime = 1800 -- 30 mintes - wait max this long until remunition is done
---            ammotruck.monitor = -60 - 1 minute - AMMOTRUCK checks on things every 1 minute
---            ammotruck.routeonroad = true - Trucks will **try** to drive on roads
---            ammotruck.usearmygroup = false - if true, will make use of ARMYGROUP in the background (if used in DEV branch)
+--            ammotruck.monitor = -60 -- 1 minute - AMMOTRUCK checks run every one minute
+--            ammotruck.routeonroad = true -- Trucks will **try** to drive on roads
+--            ammotruck.usearmygroup = false -- If true, will make use of ARMYGROUP in the background (if used in DEV branch)
+--        ammotruck.reloads = 5 -- Maxn re-arms a truck can do before he needs to go home and restock. Set to -1 for unlimited
 -- 
 -- ## 3 FSM Events to shape mission
 -- 
@@ -113,7 +115,7 @@
 AMMOTRUCK = {
   ClassName = "AMMOTRUCK",
   lid = "",
-  version = "0.0.10",
+  version = "0.0.12",
   alias = "",
   debug = false,
   trucklist = {},
@@ -128,7 +130,8 @@ AMMOTRUCK = {
   monitor = -60,
   unloadtime = 600,
   waitingtime = 1800,
-  routeonroad = true
+  routeonroad = true,
+  reloads = 5,
 }
 
 ---
@@ -156,6 +159,7 @@ AMMOTRUCK.State = {
 --@field #string targetname
 --@field Wrapper.Group#GROUP targetgroup
 --@field Core.Point#COORDINATE targetcoordinate
+--@field #number reloads
 
 ---
 -- @param #AMMOTRUCK self
@@ -369,6 +373,7 @@ function AMMOTRUCK:CheckReturningTrucks(dataset)
       truck.statusquo = AMMOTRUCK.State.IDLE
       truck.timestamp = timer.getAbsTime()
       truck.coordinate = coord
+      truck.reloads = self.reloads or 5
       self:__TruckHome(1,truck)
     end
   end
@@ -540,6 +545,7 @@ function AMMOTRUCK:CheckTrucksAlive()
       newtruck.statusquo = AMMOTRUCK.State.IDLE
       newtruck.timestamp = timer.getAbsTime()
       newtruck.coordinate = truck:GetCoordinate()
+      newtruck.reloads = self.reloads or 5
       self.trucklist[name] = newtruck
     end 
   end
@@ -626,8 +632,10 @@ function AMMOTRUCK:onafterMonitor(From, Event, To)
           unloadingtrucks[#unloadingtrucks+1] = data
         elseif data.statusquo == AMMOTRUCK.State.RETURNING then
           returningtrucks[#returningtrucks+1] = data
+        if data.reloads > 0 or data.reloads == -1 then
           idletrucks[#idletrucks+1] = data
           found = true
+        end         
         end
     else
       self.truckset[data.name] = nil
@@ -637,7 +645,7 @@ function AMMOTRUCK:onafterMonitor(From, Event, To)
   local n=0
   if found and remunition then
     -- match
-    local match = false
+    --local match = false
     for _,_truckdata in pairs(idletrucks) do
       local truckdata = _truckdata -- #AMMOTRUCK.data
       local truckcoord = truckdata.group:GetCoordinate() -- Core.Point#COORDINATE
@@ -750,6 +758,12 @@ end
     end
     
     local scheduler = SCHEDULER:New(nil,destroyammo,{ammo},self.waitingtime)
+  
+  -- one reload less
+  if truck.reloads ~= -1 then
+    truck.reloads = truck.reloads - 1
+  end
+  return self
  end 
 
 ---
