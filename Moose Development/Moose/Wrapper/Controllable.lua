@@ -52,6 +52,7 @@
 --   * @{#CONTROLLABLE.TaskEmbarking}: (AIR) Move the controllable to a Vec2 Point, wait for a defined duration and embark a controllable.
 --   * @{#CONTROLLABLE.TaskEmbarkToTransport}: (GROUND) Embark to a Transport landed at a location.
 --   * @{#CONTROLLABLE.TaskEscort}: (AIR) Escort another airborne controllable.
+--   * @{#CONTROLLABLE.TaskGroundEscort}: (AIR/HELO) Escort a ground controllable.
 --   * @{#CONTROLLABLE.TaskFAC_AttackGroup}: (AIR + GROUND) The task makes the controllable/unit a FAC and orders the FAC to control the target (enemy ground controllable) destruction.
 --   * @{#CONTROLLABLE.TaskFireAtPoint}: (GROUND) Fire some or all ammunition at a VEC2 point.
 --   * @{#CONTROLLABLE.TaskFollow}: (AIR) Following another airborne controllable.
@@ -1270,7 +1271,7 @@ end
 
 --- (AIR) Orbit at a position with at a given altitude and speed. Optionally, a race track pattern can be specified.
 -- @param #CONTROLLABLE self
--- @param Core.Point#COORDINATE Coord Coordinate at which the CONTROLLABLE orbits.
+-- @param Core.Point#COORDINATE Coord Coordinate at which the CONTROLLABLE orbits. Can also be given as a `DCS#Vec3` or `DCS#Vec2` object.
 -- @param #number Altitude Altitude in meters of the orbit pattern. Default y component of Coord.
 -- @param #number Speed Speed [m/s] flying the orbit pattern. Default 128 m/s = 250 knots.
 -- @param Core.Point#COORDINATE CoordRaceTrack (Optional) If this coordinate is specified, the CONTROLLABLE will fly a race-track pattern using this and the initial coordinate.
@@ -1279,11 +1280,11 @@ function CONTROLLABLE:TaskOrbit( Coord, Altitude, Speed, CoordRaceTrack )
 
   local Pattern = AI.Task.OrbitPattern.CIRCLE
 
-  local P1 = Coord:GetVec2()
+  local P1 = {x=Coord.x, y=Coord.z or Coord.y}
   local P2 = nil
   if CoordRaceTrack then
     Pattern = AI.Task.OrbitPattern.RACE_TRACK
-    P2 = CoordRaceTrack:GetVec2()
+    P2 = {x=CoordRaceTrack.x, y=CoordRaceTrack.z or CoordRaceTrack.y}
   end
 
   local Task = {
@@ -1480,15 +1481,53 @@ function CONTROLLABLE:TaskFollow( FollowControllable, Vec3, LastWaypointIndex )
   return DCSTask
 end
 
+--- (AIR/HELO) Escort a ground controllable.
+-- The unit / controllable will follow lead unit of the other controllable, additional units of both controllables will continue following their leaders.
+-- The unit / controllable will also protect that controllable from threats of specified types.
+-- @param #CONTROLLABLE self
+-- @param #CONTROLLABLE FollowControllable The controllable to be escorted.
+-- @param #number LastWaypointIndex (optional) Detach waypoint of another controllable. Once reached the unit / controllable Escort task is finished.
+-- @param #number OrbitDistance (optional) Maximum distance helo will orbit around the ground unit in meters. Defaults to 2000 meters.
+-- @param DCS#AttributeNameArray TargetTypes (optional) Array of AttributeName that is contains threat categories allowed to engage. Default {"Ground vehicles"}. See [https://wiki.hoggit.us/view/DCS_enum_attributes](https://wiki.hoggit.us/view/DCS_enum_attributes)
+-- @return DCS#Task The DCS task structure.
+function CONTROLLABLE:TaskGroundEscort( FollowControllable, LastWaypointIndex, OrbitDistance, TargetTypes )
+
+  --  Escort = {
+  --    id = 'GroundEscort',
+  --    params = {
+  --      groupId = Group.ID, -- must
+  --      engagementDistMax = Distance, -- Must. With his task it does not appear to actually define the range AI are allowed to attack at, rather it defines the size length of the orbit. The helicopters will fly up to this set distance before returning to the escorted group.
+  --      lastWptIndexFlag = boolean, -- optional
+  --      lastWptIndex = number, -- optional
+  --      targetTypes = array of AttributeName, -- must
+  --      lastWptIndexFlagChangedManually = boolean, -- must be true
+  --    }
+  --  }
+
+  local DCSTask = {
+    id = 'GroundEscort',
+    params = {
+    groupId           = FollowControllable and FollowControllable:GetID() or nil,
+    engagementDistMax = OrbitDistance or 2000,
+    lastWptIndexFlag  = LastWaypointIndex and true or false,
+    lastWptIndex      = LastWaypointIndex,   
+    targetTypes       = TargetTypes or {"Ground vehicles"},
+    lastWptIndexFlagChangedManually = true,
+    },
+  }
+
+  return DCSTask
+end
+
 --- (AIR) Escort another airborne controllable.
 -- The unit / controllable will follow lead unit of another controllable, wingmens of both controllables will continue following their leaders.
 -- The unit / controllable will also protect that controllable from threats of specified types.
 -- @param #CONTROLLABLE self
 -- @param #CONTROLLABLE FollowControllable The controllable to be escorted.
 -- @param DCS#Vec3 Vec3 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.
--- @param #number LastWaypointIndex Detach waypoint of another controllable. Once reached the unit / controllable Follow task is finished.
--- @param #number EngagementDistance Maximal distance from escorted controllable to threat. If the threat is already engaged by escort escort will disengage if the distance becomes greater than 1.5 * engagementDistMax.
--- @param DCS#AttributeNameArray TargetTypes Array of AttributeName that is contains threat categories allowed to engage. Default {"Air"}.
+-- @param #number LastWaypointIndex Detach waypoint of another controllable. Once reached the unit / controllable Escort task is finished.
+-- @param #number EngagementDistance Maximal distance from escorted controllable to threat in meters. If the threat is already engaged by escort escort will disengage if the distance becomes greater than 1.5 * engagementDistMax.
+-- @param DCS#AttributeNameArray TargetTypes Array of AttributeName that is contains threat categories allowed to engage. Default {"Air"}. See https://wiki.hoggit.us/view/DCS_enum_attributes
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskEscort( FollowControllable, Vec3, LastWaypointIndex, EngagementDistance, TargetTypes )
 
@@ -1504,8 +1543,7 @@ function CONTROLLABLE:TaskEscort( FollowControllable, Vec3, LastWaypointIndex, E
   --    }
   --  }
 
-  local DCSTask
-  DCSTask = {
+  local DCSTask = {
     id = 'Escort',
     params = {
       groupId           = FollowControllable and FollowControllable:GetID() or nil,
