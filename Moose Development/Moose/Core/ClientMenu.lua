@@ -15,6 +15,7 @@
 -- ### Author: **applevangelist**
 -- 
 -- ===
+-- 
 -- @module Core.ClientMenu
 -- @image Core_Menu.JPG
 -- last change: July 2023
@@ -247,7 +248,8 @@ end
 --
 ----------------------------------------------------------------------------------------------------------------
 
----CLIENTMENUMANAGER class
+
+--- Class CLIENTMENUMANAGER              
 -- @type CLIENTMENUMANAGER
 -- @field #string ClassName Class Name
 -- @field #string lid Lid for log entries
@@ -265,7 +267,7 @@ end
 --
 -- ===
 --
--- # CLIENTMENU and CLIENTMENUMANAGER
+-- ## CLIENTMENU and CLIENTMENUMANAGER
 -- 
 -- Manage menu structures for a SET_CLIENT of clients.
 -- 
@@ -338,13 +340,8 @@ end
 --            
 -- ## Reset all and clear the reference tree
 -- 
---            menumgr:ResetMenuComplete()          
----
--- @type CLIENTMENUMANAGER.Structure
--- @field #table generic
--- @field #table IDs 
-
----
+--            menumgr:ResetMenuComplete() 
+--
 -- @field #CLIENTMENUMANAGER
 CLIENTMENUMANAGER = {
   ClassName = "CLIENTMENUMANAGER",
@@ -369,6 +366,10 @@ CLIENTMENUMANAGER = {
   debug = true,
 }
 
+---
+-- @type CLIENTMENUMANAGER.Structure
+-- @field #table generic
+-- @field #table IDs 
 
 --- Create a new ClientManager instance.
 -- @param #CLIENTMENUMANAGER self
