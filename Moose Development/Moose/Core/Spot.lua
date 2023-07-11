@@ -316,7 +316,7 @@ do
   -- @param Event
   -- @param To
   function SPOT:onafterLasing( From, Event, To )
-    if self.lasing then
+    if self.Lasing then
     if self.Target and self.Target:IsAlive() then
       self.SpotIR:setPoint( self.Target:GetPointVec3():AddY(1):AddY(math.random(-100,100)/100):AddX(math.random(-100,100)/100):GetVec3() )
       self.SpotLaser:setPoint( self.Target:GetPointVec3():AddY(1):GetVec3() )
