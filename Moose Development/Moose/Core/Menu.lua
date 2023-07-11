@@ -166,6 +166,7 @@ function MENU_INDEX:Refresh( Group )
 end
 
 do -- MENU_BASE
+    ---
   -- @type MENU_BASE
   -- @extends Core.Base#BASE
   --- Defines the main MENU class where other MENU classes are derived from.

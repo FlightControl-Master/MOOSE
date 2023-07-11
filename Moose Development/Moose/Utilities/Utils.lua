@@ -299,7 +299,7 @@ end
 -- @param #table tbl Input table.
 UTILS.OneLineSerialize = function( tbl )  -- serialization of a table all on a single line, no comments, made to replace old get_table_string function
 
-  local lookup_table = {}
+  lookup_table = {}
 
   local function _Serialize( tbl )
 

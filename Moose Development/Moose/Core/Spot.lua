@@ -33,6 +33,7 @@
 
 do
 
+  ---
   -- @type SPOT
   -- @extends Core.Fsm#FSM
 
@@ -256,6 +257,8 @@ do
     self:HandleEvent( EVENTS.Dead )
     
     self:__Lasing( -1 )
+    
+    return self
   end
   
   
@@ -290,8 +293,10 @@ do
     end
     
     self:__Lasing(-1)
+    return self
   end  
-
+  
+  ---
   -- @param #SPOT self
   -- @param Core.Event#EVENTDATA EventData
   function SPOT:OnEventDead(EventData)
@@ -309,8 +314,10 @@ do
         self:LaseOff()
       end
     end
+    return self
   end
   
+  ---
   -- @param #SPOT self
   -- @param From
   -- @param Event
@@ -318,9 +325,11 @@ do
   function SPOT:onafterLasing( From, Event, To )
   
     if self.Target and self.Target:IsAlive() then
+      
       self.SpotIR:setPoint( self.Target:GetPointVec3():AddY(1):AddY(math.random(-100,100)/100):AddX(math.random(-100,100)/100):GetVec3() )
       self.SpotLaser:setPoint( self.Target:GetPointVec3():AddY(1):GetVec3() )
-      self:__Lasing( -0.2 )
+      
+      self:__Lasing( -0.3 )
     elseif self.TargetCoord then
     
       -- Wiggle the IR spot a bit.  
@@ -330,13 +339,14 @@ do
       self.SpotIR:setPoint(irvec3)
       self.SpotLaser:setPoint(lsvec3)
       
-      self:__Lasing(-0.25)    
+      self:__Lasing(-0.3)    
     else
       self:F( { "Target is not alive", self.Target:IsAlive() } )
     end
-  
+    return self
   end
-
+  
+  ---
   -- @param #SPOT self
   -- @param From
   -- @param Event
@@ -359,7 +369,11 @@ do
     end
     self.ScheduleID = nil
     
-    self.Target = nil
+    if self.Target and self.Target:IsAlive() then
+      self:I("Target still alive.")
+    else
+      self.Target = nil
+    end
     
     return self
   end

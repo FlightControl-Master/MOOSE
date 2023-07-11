@@ -31,6 +31,7 @@ Core/Spot.lua
 Core/MarkerOps_Base.lua
 Core/Astar.lua
 Core/Condition.lua
+Core/ClientMenu
 
 Wrapper/Object.lua
 Wrapper/Identifiable.lua

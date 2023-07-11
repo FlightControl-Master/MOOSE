@@ -11,7 +11,7 @@
 -- @module Wrapper.Airbase
 -- @image Wrapper_Airbase.JPG
 
-
+---
 -- @type AIRBASE
 -- @field #string ClassName Name of the class, i.e. "AIRBASE".
 -- @field #table CategoryName Names of airbase categories.
@@ -787,7 +787,13 @@ function AIRBASE:Register(AirbaseName)
 
   -- Category.
   self.category=self.descriptors and self.descriptors.category or Airbase.Category.AIRDROME
-
+  
+  -- H2 is bugged
+  --if self.AirbaseName == "H4" and self.descriptors == nil then
+    --self:E("***** H4 on Syria map is currently bugged!")
+    --return nil
+  --end
+  
   -- Set category.
   if self.category==Airbase.Category.AIRDROME then
     self.isAirdrome=true

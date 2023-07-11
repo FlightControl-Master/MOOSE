@@ -54,7 +54,7 @@ routines.utils.oneLineSerialize = function( tbl ) -- serialization of a table al
     if type( tbl ) == 'table' then -- function only works for tables!
 
       if lookup_table[tbl] then
-        return lookup_table[tbl]
+        return lookup_table[object]
       end
 
       local tbl_str = {}
