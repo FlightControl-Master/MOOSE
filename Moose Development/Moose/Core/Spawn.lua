@@ -1047,7 +1047,7 @@ end
 --- This method provides the functionality to randomize the spawning of the Groups at a given list of zones of different types.
 -- @param #SPAWN self
 -- @param #table SpawnZoneTable A table with @{Core.Zone} objects. If this table is given, then each spawn will be executed within the given list of @{Core.Zone}s objects.
--- @return #SPAWN
+-- @return #SPAWN self
 -- @usage
 --
 --    -- Create a zone table of the 2 zones.
@@ -1074,6 +1074,31 @@ function SPAWN:InitRandomizeZones( SpawnZoneTable )
     self:_RandomizeZones( SpawnGroupID )
   end
 
+  return self
+end
+
+--- This method sets a spawn position for the group that is different from the location of the template.
+-- @param #SPAWN self
+-- @param Core.Point#COORDINATE Coordinate The position to spawn from
+-- @return #SPAWN self
+function SPAWN:InitPositionCoordinate(Coordinate)
+  self:T( { self.SpawnTemplatePrefix, Coordinate:GetVec2()} )
+  self:InitPositionVec2(Coordinate:GetVec2())
+  return self
+end
+
+--- This method sets a spawn position for the group that is different from the location of the template.
+-- @param #SPAWN self
+-- @param DCS#Vec2 Vec2 The position to spawn from
+-- @return #SPAWN self
+function SPAWN:InitPositionVec2(Vec2)
+  self:T( { self.SpawnTemplatePrefix, Vec2} )
+  self.SpawnInitPosition = Vec2
+  self.SpawnFromNewPosition = true
+  self:I("MaxGroups:"..self.SpawnMaxGroups)
+  for SpawnGroupID = 1, self.SpawnMaxGroups do
+    self:_SetInitialPosition( SpawnGroupID )
+  end
   return self
 end
 
@@ -1376,7 +1401,12 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
   self:F2( { SpawnTemplatePrefix = self.SpawnTemplatePrefix, SpawnIndex = SpawnIndex, AliveUnits = self.AliveUnits, SpawnMaxGroups = self.SpawnMaxGroups } )
 
   if self:_GetSpawnIndex( SpawnIndex ) then
-
+    
+    if self.SpawnFromNewPosition then
+     self:_SetInitialPosition( SpawnIndex )
+    end
+      
+      
     if self.SpawnGroups[self.SpawnIndex].Visible then
       self.SpawnGroups[self.SpawnIndex].Group:Activate()
     else
@@ -3296,6 +3326,57 @@ function SPAWN:_RandomizeTemplate( SpawnIndex )
   end
 
   self:_RandomizeRoute( SpawnIndex )
+
+  return self
+end
+
+--- Private method that sets the DCS#Vec2 where the Group will be spawned.
+-- @param #SPAWN self
+-- @param #number SpawnIndex
+-- @return #SPAWN self
+function SPAWN:_SetInitialPosition( SpawnIndex )
+  self:T( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnRandomizeZones } )
+  
+  if self.SpawnFromNewPosition then
+    
+    self:T( "Preparing Spawn at Vec2 ", self.SpawnInitPosition )
+
+    local SpawnVec2 = self.SpawnInitPosition
+
+    self:T( { SpawnVec2 = SpawnVec2 } )
+
+    local SpawnTemplate = self.SpawnGroups[SpawnIndex].SpawnTemplate
+
+    SpawnTemplate.route = SpawnTemplate.route or {}
+    SpawnTemplate.route.points = SpawnTemplate.route.points or {}
+    SpawnTemplate.route.points[1] = SpawnTemplate.route.points[1] or {}
+    SpawnTemplate.route.points[1].x = SpawnTemplate.route.points[1].x or 0
+    SpawnTemplate.route.points[1].y = SpawnTemplate.route.points[1].y or 0
+      
+    self:T( { Route = SpawnTemplate.route } )
+
+    for UnitID = 1, #SpawnTemplate.units do
+      local UnitTemplate = SpawnTemplate.units[UnitID]
+      self:T( 'Before Translation SpawnTemplate.units[' .. UnitID .. '].x = ' .. UnitTemplate.x .. ', SpawnTemplate.units[' .. UnitID .. '].y = ' .. UnitTemplate.y )
+      local SX = UnitTemplate.x
+      local SY = UnitTemplate.y
+      local BX = SpawnTemplate.route.points[1].x
+      local BY = SpawnTemplate.route.points[1].y
+      local TX = SpawnVec2.x + (SX - BX)
+      local TY = SpawnVec2.y + (SY - BY)
+      UnitTemplate.x = TX
+      UnitTemplate.y = TY
+      -- TODO: Manage altitude based on landheight...
+      -- SpawnTemplate.units[UnitID].alt = SpawnVec2:
+      self:T( 'After Translation SpawnTemplate.units[' .. UnitID .. '].x = ' .. UnitTemplate.x .. ', SpawnTemplate.units[' .. UnitID .. '].y = ' .. UnitTemplate.y )
+    end
+    
+    SpawnTemplate.route.points[1].x = SpawnVec2.x
+    SpawnTemplate.route.points[1].y = SpawnVec2.y
+    SpawnTemplate.x = SpawnVec2.x
+    SpawnTemplate.y = SpawnVec2.y
+    
+  end
 
   return self
 end
