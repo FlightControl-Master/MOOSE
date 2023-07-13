@@ -162,7 +162,17 @@
 -- ### Array formation
 --
 --   * @{#SPAWN.InitArray}(): Make groups visible before they are actually activated, and order these groups like a battalion in an array.
---
+--   
+-- ### Group initial position - if wanted different from template position, for use with e.g. @{#SPAWN.SpawnScheduled}().   
+-- 
+--   * @{#SPAWN.InitPositionCoordinate}(): Set initial position of group via a COORDINATE.
+--   * @{#SPAWN.InitPositionVec2}(): Set initial position of group via a VEC2. 
+--   
+-- ### Set the positions of a group's units to absolute positions, or relative positions to unit No. 1
+-- 
+--   * @{#SPAWN.InitSetUnitRelativePositions}(): Spawn the UNITs of this group with individual relative positions to unit #1 and individual headings.
+--   * @{#SPAWN.InitSetUnitAbsolutePositions}(): Spawn the UNITs of this group with individual absolute positions and individual headings.
+--   
 -- ### Position randomization
 --
 --   * @{#SPAWN.InitRandomizePosition}(): Randomizes the position of @{Wrapper.Group}s that are spawned within a **radius band**, given an Outer and Inner radius, from the point that the spawn happens.
