@@ -988,6 +988,7 @@ do
 -- @field #table PlayerJoinMenu
 -- @field #table PlayerInfoMenu
 -- @field #boolean noflaresmokemenu
+-- @field #boolean illumenu
 -- @field #boolean TransmitOnlyWithPlayers
 -- @field #boolean buddylasing
 -- @field Ops.PlayerRecce#PLAYERRECCE PlayerRecce
@@ -999,6 +1000,13 @@ do
 -- @field #table PlayerMenuTag
 -- @field #boolean UseTypeNames
 -- @field Functional.Scoring#SCORING Scoring
+-- @field Core.ClientMenu#CLIENTMENUMANAGER JoinTaskMenuTemplate
+-- @field Core.ClientMenu#CLIENTMENU JoinMenu
+-- @field Core.ClientMenu#CLIENTMENU JoinTopMenu
+-- @field Core.ClientMenu#CLIENTMENU JoinInfoMenu
+-- @field Core.ClientMenu#CLIENTMENUMANAGER ActiveTaskMenuTemplate
+-- @field Core.ClientMenu#CLIENTMENU ActiveTopMenu
+-- @field Core.ClientMenu#CLIENTMENU ActiveInfoMenu
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1155,6 +1163,7 @@ do
 --                MENUMARK = "Mark on map",
 --                MENUSMOKE = "Smoke",
 --                MENUFLARE = "Flare",
+--                MENUILLU = "Illuminate",
 --                MENUABORT = "Abort",
 --                MENUJOIN = "Join Task",
 --                MENUTASKINFO = Task Info",
@@ -1315,6 +1324,7 @@ PLAYERTASKCONTROLLER = {
   PlayerInfoMenu     =   {},
   PlayerMenuTag      =   {},
   noflaresmokemenu   =   false,
+  illumenu           =   false,
   TransmitOnlyWithPlayers = true,
   buddylasing        = false,
   PlayerRecce        = nil,
@@ -1408,6 +1418,7 @@ PLAYERTASKCONTROLLER.Messages = {
     MENUMARK = "Mark on map",
     MENUSMOKE = "Smoke",
     MENUFLARE = "Flare",
+    MENUILLU = "Illuminate",
     MENUABORT = "Abort",
     MENUJOIN = "Join Task",
     MENUTASKINFO = "Task Info",
@@ -1487,6 +1498,7 @@ PLAYERTASKCONTROLLER.Messages = {
     MENUMARK = "Kartenmarkierung",
     MENUSMOKE = "Rauchgranate",
     MENUFLARE = "Leuchtgranate",
+    MENUILLU = "Feldbeleuchtung",
     MENUABORT = "Abbrechen",
     MENUJOIN = "Auftrag annehmen",
     MENUTASKINFO = "Auftrag Briefing",
@@ -1592,6 +1604,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.CallsignTranslations = nil
   
   self.noflaresmokemenu = false
+  self.illumenu = false
   
   self.ShowMagnetic = true
   
@@ -1846,6 +1859,24 @@ end
 function PLAYERTASKCONTROLLER:SetEnableSmokeFlareTask()
   self:T(self.lid.."SetEnableSmokeFlareTask")
   self.noflaresmokemenu = false
+  return self
+end
+
+--- [User] Show menu entries to illuminate targets. Needs smoke/flare enabled.
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetEnableIlluminateTask()
+  self:T(self.lid.."SetEnableSmokeFlareTask")
+  self.illumenu = true
+  return self
+end
+
+--- [User] Do not show menu entries to illuminate targets.
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetDisableIlluminateTask()
+  self:T(self.lid.."SetDisableIlluminateTask")
+  self.illumenu = false
   return self
 end
 
@@ -2140,7 +2171,7 @@ end
 -- @param Core.Event#EVENTDATA EventData
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_EventHandler(EventData)
-  self:T(self.lid.."_EventHandler: "..EventData.id)
+  self:I(self.lid.."_EventHandler: "..EventData.id)
   if EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
     if EventData.IniPlayerName then
       self:T(self.lid.."Event for player: "..EventData.IniPlayerName)
@@ -2168,7 +2199,7 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
       if self.ClientSet:IsNotInSet(CLIENT:FindByName(EventData.IniUnitName)) then
         return self
       end
-      self:T(self.lid.."Event for player: "..EventData.IniPlayerName)
+      self:I(self.lid.."Event for player: "..EventData.IniPlayerName)
       local frequency = self.Frequency
       local freqtext = ""
       if type(frequency) == "table" then
@@ -2198,7 +2229,11 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
       if EventData.IniPlayerName then
         self.PlayerMenu[EventData.IniPlayerName] = nil
        --self:_BuildMenus(CLIENT:FindByName(EventData.IniUnitName))
-        self:_BuildMenus(CLIENT:FindByPlayerName(EventData.IniPlayerName))
+        --self:_BuildMenus(CLIENT:FindByPlayerName(EventData.IniPlayerName))
+        local player = CLIENT:FindByName(EventData.IniUnitName)
+        self:I({player})
+        local controller = self.JoinTaskMenuTemplate
+        controller:Propagate(player)
       end
     end
   end
@@ -2308,7 +2343,7 @@ function PLAYERTASKCONTROLLER:_GetTasksPerType()
   self:T(self.lid.."_GetTasksPerType")
   local tasktypes = self:_GetAvailableTaskTypes()
   
-  --self:T({tasktypes})
+  -- self:I({tasktypes})
   
   -- Sort tasks per threat level first
   local datatable = self.TaskQueue:GetDataTable()
@@ -2965,12 +3000,12 @@ end
 
 --- [Internal] Join a player to a task
 -- @param #PLAYERTASKCONTROLLER self
--- @param Wrapper.Group#GROUP Group
--- @param Wrapper.Client#CLIENT Client
 -- @param Ops.PlayerTask#PLAYERTASK Task
 -- @param #boolean Force Assign task even if client already has one
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Client#CLIENT Client
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task, Force)
+function PLAYERTASKCONTROLLER:_JoinTask(Task, Force, Group, Client)
   self:T(self.lid.."_JoinTask")
   local playername, ttsplayername = self:_GetPlayerName(Client)
   if self.TasksPerPlayer:HasUniqueID(playername) and not Force then
@@ -3004,7 +3039,7 @@ function PLAYERTASKCONTROLLER:_JoinTask(Group, Client, Task, Force)
     self.TasksPerPlayer:Push(Task,playername)
     self:__PlayerJoinedTask(1, Group, Client, Task)
     -- clear menu
-    self:_BuildMenus(Client,true)
+    --self:_BuildMenus(Client,true)
   end
   if Task.Type == AUFTRAG.Type.PRECISIONBOMBING then
     if not self.PrecisionTasks:HasUniqueID(Task.PlayerTaskNr) then
@@ -3065,11 +3100,11 @@ end
 
 --- [Internal] Show active task info
 -- @param #PLAYERTASKCONTROLLER self
+-- @param Ops.PlayerTask#PLAYERTASK Task
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Client#CLIENT Client
--- @param Ops.PlayerTask#PLAYERTASK Task
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Group, Client, Task)
+function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
   self:T(self.lid.."_ActiveTaskInfo")
   local playername, ttsplayername = self:_GetPlayerName(Client)
   local text = ""
@@ -3389,7 +3424,7 @@ function PLAYERTASKCONTROLLER:_AbortTask(Group, Client)
   if not self.NoScreenOutput then
     local m=MESSAGE:New(text,15,"Tasking"):ToClient(Client)
   end
-  self:_BuildMenus(Client,true)
+  --self:_BuildMenus(Client,true)
   return self
 end
 
@@ -3452,6 +3487,150 @@ function PLAYERTASKCONTROLLER:_BuildTaskInfoMenu(group,client,playername,topmenu
     end
   end
   return taskinfomenu
+end
+
+-- TODO - New Menu Manager
+
+function PLAYERTASKCONTROLLER:_UpdateJoinMenuTemplate()
+  self:I("_UpdateJoinMenuTemplate")
+  if self.TaskQueue:Count() > 0 then
+    local taskpertype = self:_GetTasksPerType()
+    local JoinMenu = self.JoinMenu -- Core.ClientMenu#CLIENTMENU
+    self:I(JoinMenu.path)
+    local controller = self.JoinTaskMenuTemplate -- Core.ClientMenu#CLIENTMENUMANAGER
+    local actcontroller = self.ActiveTaskMenuTemplate -- Core.ClientMenu#CLIENTMENUMANAGER
+    local entrynumbers = {}
+    local existingentries = {}
+    local maxn = self.menuitemlimit
+    -- Generate task type menu items
+    for _type,_ in pairs(taskpertype) do
+      --local found = controller:FindEntryByText(_type)
+      local found, text = controller:FindEntryUnderParentByText(JoinMenu,_type)
+      self:I(text)
+      if not found then
+        local newentry = controller:NewEntry(_type,JoinMenu)
+        controller:AddEntry(newentry)
+        if self.JoinInfoMenu then
+          local newentry = controller:NewEntry(_type,self.JoinInfoMenu)
+          controller:AddEntry(newentry)
+        end
+        entrynumbers[_type] = 0
+        existingentries[_type] = {}
+      else
+        entrynumbers[_type] = #found.Children
+        if #taskpertype[_type] > 0  and entrynumbers[_type] < maxn then
+          existingentries[_type] = {}
+          for _,_entry in pairs(found.Children) do
+            local entry = _entry -- Core.ClientMenu#CLIENTMENU
+            table.insert(existingentries[_type],_entry.name)
+          end
+          if self.verbose then
+            UTILS.PrintTableToLog(existingentries)
+          end
+        end
+      end
+    end
+    
+    local function FindInList(List,Text)
+      local found = false
+      for _,_name in pairs(List) do
+        if string.match(_name,Text) then
+          found = true
+          break
+        end
+      end
+      return found
+    end
+    
+  end
+  return self
+end
+
+function PLAYERTASKCONTROLLER:_CreateJoinMenuTemplate()
+  self:I("_CreateActiveTaskMenuTemplate")
+  
+  local menujoin = self.gettext:GetEntry("MENUJOIN",self.locale)
+  local menunotasks = self.gettext:GetEntry("MENUNOTASKS",self.locale)  
+  local flashtext = self.gettext:GetEntry("FLASHMENU",self.locale)
+ 
+  local JoinTaskMenuTemplate = CLIENTMENUMANAGER:New(self.ClientSet,"JoinTask")
+  
+  if not self.JoinTopMenu then
+   local taskings = self.gettext:GetEntry("MENUTASKING",self.locale)
+   local longname = self.Name..taskings..self.Type
+   local menuname = self.MenuName or longname
+   self.JoinTopMenu = JoinTaskMenuTemplate:NewEntry(menuname,self.MenuParent)
+  end
+  
+  if self.AllowFlash then
+    JoinTaskMenuTemplate:NewEntry(flashtext,self.JoinTopMenu,self._SwitchFlashing,self,group,client)
+  end
+  
+  self.JoinMenu = JoinTaskMenuTemplate:NewEntry(menujoin,self.JoinTopMenu)
+  
+  if self.taskinfomenu then
+    local menutaskinfo = self.gettext:GetEntry("MENUTASKINFO",self.locale)
+    self.JoinInfoMenu = JoinTaskMenuTemplate:NewEntry(menutaskinfo,self.JoinTopMenu)
+  end
+  
+  if self.TaskQueue:Count() == 0 then
+    JoinTaskMenuTemplate:NewEntry(menunotasks,self.JoinMenu)
+  end
+  
+  self.JoinTaskMenuTemplate = JoinTaskMenuTemplate
+  
+  return self
+end
+
+
+function PLAYERTASKCONTROLLER:_CreateActiveTaskMenuTemplate()
+  self:I("_CreateActiveTaskMenuTemplate")
+  
+  local menuactive = self.gettext:GetEntry("MENUACTIVE",self.locale)
+  local menuinfo = self.gettext:GetEntry("MENUINFO",self.locale)
+  local menumark = self.gettext:GetEntry("MENUMARK",self.locale)
+  local menusmoke = self.gettext:GetEntry("MENUSMOKE",self.locale)
+  local menuflare = self.gettext:GetEntry("MENUFLARE",self.locale)
+  local menuillu = self.gettext:GetEntry("MENUILLU",self.locale)
+  local menuabort = self.gettext:GetEntry("MENUABORT",self.locale)
+  
+  local ActiveTaskMenuTemplate = CLIENTMENUMANAGER:New(self.ClientSet,"ActiveTask")
+  
+  if not self.ActiveTopMenu then
+   local taskings = self.gettext:GetEntry("MENUTASKING",self.locale)
+   local longname = self.Name..taskings..self.Type
+   local menuname = self.MenuName or longname
+   self.ActiveTopMenu = ActiveTaskMenuTemplate:NewEntry(menuname,self.MenuParent)
+  end
+  
+  if self.AllowFlash then
+    local flashtext = self.gettext:GetEntry("FLASHMENU",self.locale)
+    ActiveTaskMenuTemplate:NewEntry(flashtext,self.ActiveTopMenu,self._SwitchFlashing,self,group,client)
+  end
+  
+  local active = ActiveTaskMenuTemplate:NewEntry(menuactive,self.ActiveTopMenu)
+  ActiveTaskMenuTemplate:NewEntry(menuinfo,active,self._ActiveTaskInfo,self,nil)
+  ActiveTaskMenuTemplate:NewEntry(menumark,active,self._MarkTask,self,nil)
+  
+  if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A and self.noflaresmokemenu ~= true then
+    ActiveTaskMenuTemplate:NewEntry(menusmoke,active,self._SmokeTask,self,group,client)
+    ActiveTaskMenuTemplate:NewEntry(menuflare,active,self._FlareTask,self,group,client)
+    
+    if self.illumenu then
+      ActiveTaskMenuTemplate:NewEntry(menuillu,active,self._IlluminateTask,self,group,client)
+    end
+    
+  end
+  
+  ActiveTaskMenuTemplate:NewEntry(menuabort,active,self._AbortTask,self,group,client)
+  self.ActiveTaskMenuTemplate = ActiveTaskMenuTemplate
+  
+  if self.taskinfomenu and self.activehasinfomenu then
+    local menutaskinfo = self.gettext:GetEntry("MENUTASKINFO",self.locale)
+    self.ActiveInfoMenu = ActiveTaskMenuTemplate:NewEntry(menutaskinfo,self.ActiveTopMenu)
+  end
+  
+  return self
 end
 
 --- [Internal] Build client menus
@@ -3965,6 +4144,20 @@ end
 -- TODO: FSM Functions PLAYERTASKCONTROLLER
 -------------------------------------------------------------------------------------------------------------------
 
+--- [Internal] On after start call
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:onafterStart(From, Event, To)
+  self:I({From, Event, To})
+  self:I(self.lid.."onafterStart")
+  self:_CreateJoinMenuTemplate()
+  self:_CreateActiveTaskMenuTemplate()
+  return self
+end
+
 --- [Internal] On after Status call
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string From
@@ -3994,7 +4187,9 @@ function PLAYERTASKCONTROLLER:onafterStatus(From, Event, To)
     end
   end
   
-  self:_BuildMenus(nil,enforcedmenu)
+  --self:_BuildMenus(nil,enforcedmenu)
+  
+  self:_UpdateJoinMenuTemplate()
   
   if self.verbose then
     local text = string.format("%s | New Targets: %02d | Active Tasks: %02d | Active Players: %02d | Assigned Tasks: %02d",self.MenuName, targetcount,taskcount,playercount,assignedtasks)
@@ -4067,7 +4262,7 @@ function PLAYERTASKCONTROLLER:onafterTaskSuccess(From, Event, To, Task)
   end
   local clients=Task:GetClientObjects()
   for _,client in pairs(clients) do
-    self:_BuildMenus(client,true,true)
+    --self:_BuildMenus(client,true,true)
   end
   return self
 end
