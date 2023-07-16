@@ -104,8 +104,12 @@
 -- * Silkworm (though strictly speaking this is a surface to ship missile)
 -- * SA-2, SA-3, SA-5, SA-6, SA-7, SA-8, SA-9, SA-10, SA-11, SA-13, SA-15, SA-19
 -- * From HDS (see note on HDS below): SA-2, SA-3, SA-10B, SA-10C, SA-12, SA-17, SA-20A, SA-20B, SA-23, HQ-2
+-- 
 -- * From SMA: RBS98M, RBS70, RBS90, RBS90M, RBS103A, RBS103B, RBS103AM, RBS103BM, Lvkv9040M 
 -- **NOTE** If you are using the Swedish Military Assets (SMA), please note that the **group name** for RBS-SAM types also needs to contain the keyword "SMA"
+-- 
+-- * From CH: 2S38, PantsirS1, PantsirS2, PGL-625, HQ-17A, M903PAC2, M903PAC3, TorM2, TorM2K, TorM2M, NASAMS3-AMRAAMER, NASAMS3-AIM9X2, C-RAM, PGZ-09, S350-9M100, S350-9M96D
+-- **NOTE** If you are using the Military Assets by Currenthill (CH), please note that the **group name** for CH-SAM types also needs to contain the keyword "CHM"
 -- 
 -- Following the example started above, an SA-6 site group name should start with "Red SAM SA-6" then, or a blue Patriot installation with e.g. "Blue SAM Patriot". 
 -- **NOTE** If you are using the High-Digit-Sam Mod, please note that the **group name** for the following SAM types also needs to contain the keyword "HDS":
@@ -416,6 +420,35 @@ MANTIS.SamDataSMA = {
   ["Lvkv9040M SMA"] = { Range=4, Blindspot=0, Height=2.5, Type="Short", Radar="LvKv9040" },      
 }
 
+--- SAM data CH
+-- @type MANTIS.SamDataCH
+-- @field #number Range Max firing range in km
+-- @field #number Blindspot no-firing range (green circle)
+-- @field #number Height Max firing height in km
+-- @field #string Type #MANTIS.SamType of SAM, i.e. SHORT, MEDIUM or LONG (range)
+-- @field #string Radar Radar typename on unit level (used as key)
+MANTIS.SamDataCH = {
+  -- units from CH (Military Assets by Currenthill)
+  -- https://www.currenthill.com/
+  -- group name MUST contain CHM to ID launcher type correctly!
+  ["2S38 CH"]         = { Range=8,  Blindspot=0.5,  Height=6,     Type="Short",   Radar="2S38" },
+  ["PantsirS1 CH"]      = { Range=20,   Blindspot=1.2,  Height=15,    Type="Short",   Radar="PantsirS1" },  
+  ["PantsirS2 CH"]      = { Range=30,   Blindspot=1.2,  Height=18,    Type="Medium",  Radar="PantsirS2" }, 
+  ["PGL-625 CH"]      = { Range=10,   Blindspot=0.5,  Height=5,     Type="Short",   Radar="PGL_625" }, 
+  ["HQ-17A CH"]       = { Range=20,   Blindspot=1.5,  Height=10,    Type="Short",   Radar="HQ17A" },  
+  ["M903PAC2 CH"]       = { Range=160,  Blindspot=3,  Height=24.5,  Type="Long",  Radar="MIM104_M903_PAC2" },
+  ["M903PAC3 CH"]       = { Range=120,  Blindspot=1,  Height=40,    Type="Long",  Radar="MIM104_M903_PAC3" }, 
+  ["TorM2 CH"]        = { Range=12,   Blindspot=1,  Height=10,    Type="Short",   Radar="TorM2" },
+  ["TorM2K CH"]       = { Range=12,   Blindspot=1,  Height=10,    Type="Short",   Radar="TorM2K" },
+  ["TorM2M CH"]       = { Range=16,   Blindspot=1,  Height=10,    Type="Short",   Radar="TorM2M" },   
+  ["NASAMS3-AMRAAMER CH"]   = { Range=50,   Blindspot=2,  Height=35.7,  Type="Medium",  Radar="CH_NASAMS3_LN_AMRAAM_ER" },  
+  ["NASAMS3-AIM9X2 CH"]   = { Range=20,   Blindspot=0.2,  Height=18,    Type="Short",   Radar="CH_NASAMS3_LN_AIM9X2" },
+  ["C-RAM CH"]        = { Range=2,  Blindspot=0,  Height=2,     Type="Short",   Radar="CH_Centurion_C_RAM" }, 
+  ["PGZ-09 CH"]       = { Range=4,  Blindspot=0,  Height=3,     Type="Short",   Radar="CH_PGZ09" },
+  ["S350-9M100 CH"]     = { Range=15,   Blindspot=1.5,  Height=8,     Type="Short",   Radar="CH_S350_50P6_9M100" },
+  ["S350-9M96D CH"]     = { Range=150,  Blindspot=2.5,  Height=30,    Type="Long",  Radar="CH_S350_50P6_9M96D" },       
+}
+
 -----------------------------------------------------------------------
 -- MANTIS System
 -----------------------------------------------------------------------
@@ -579,7 +612,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.8.10"
+    self.version="0.8.11"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -1300,11 +1333,12 @@ do
   -- @param #string grpname Name of the group
   -- @param #boolean mod HDS mod flag
   -- @param #boolean sma SMA mod flag
+  -- @param #boolean chm CH mod flag
   -- @return #number range Max firing range
   -- @return #number height Max firing height
   -- @return #string type Long, medium or short range
   -- @return #number blind "blind" spot
-  function MANTIS:_GetSAMDataFromUnits(grpname,mod,sma)
+  function MANTIS:_GetSAMDataFromUnits(grpname,mod,sma,chm)
     self:T(self.lid.."_GetSAMRangeFromUnits")
     local found = false
     local range = self.checkradius
@@ -1319,6 +1353,8 @@ do
       SAMData = self.SamDataHDS
     elseif sma then
       SAMData = self.SamDataSMA
+    elseif chm then
+      SAMData = self.SamDataCH
     end
     --self:T("Looking to auto-match for "..grpname)
     for _,_unit in pairs(units) do
@@ -1365,10 +1401,13 @@ do
     local found = false
     local HDSmod = false
     local SMAMod = false
+    local CHMod = false
     if string.find(grpname,"HDS",1,true) then
       HDSmod = true
     elseif string.find(grpname,"SMA",1,true) then
       SMAMod = true
+    elseif string.find(grpname,"CHM",1,true) then
+      CHMod = true
     end
     if self.automode then
       for idx,entry in pairs(self.SamData) do
@@ -1387,8 +1426,8 @@ do
       end
     end
     -- secondary filter if not found
-    if (not found and self.automode) or HDSmod or SMAMod then
-      range, height, type = self:_GetSAMDataFromUnits(grpname,HDSmod,SMAMod)
+    if (not found and self.automode) or HDSmod or SMAMod or CHMod then
+      range, height, type = self:_GetSAMDataFromUnits(grpname,HDSmod,SMAMod,CHMod)
     elseif not found then
       self:E(self.lid .. string.format("*****Could not match radar data for %s! Will default to midrange values!",grpname))
     end
