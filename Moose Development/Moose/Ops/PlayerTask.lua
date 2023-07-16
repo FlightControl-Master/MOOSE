@@ -3517,17 +3517,6 @@ function PLAYERTASKCONTROLLER:_UpdateJoinMenuTemplate()
         entrynumbers[_type] = 0
         existingentries[_type] = {}
       else
-        entrynumbers[_type] = #found.Children
-        if #taskpertype[_type] > 0  and entrynumbers[_type] < maxn then
-          existingentries[_type] = {}
-          for _,_entry in pairs(found.Children) do
-            local entry = _entry -- Core.ClientMenu#CLIENTMENU
-            table.insert(existingentries[_type],_entry.name)
-          end
-          if self.verbose then
-            UTILS.PrintTableToLog(existingentries)
-          end
-        end
       end
     end
     
