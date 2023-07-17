@@ -3,12 +3,14 @@
 -- **Main Features:**
 --
 --    * For complex, non-static menu structures
---    * Separation of menu tree creation from pushing it to clients
+--    * Lightweigt implementation as alternative to MENU
+--    * Separation of menu tree creation from menu on the clients's side
 --    * Works with a SET_CLIENT set of clients
 --    * Allow manipulation of the shadow tree in various ways
 --    * Push to all or only one client
---    * Change entries' menu text, even if they have a sub-structure
---    * Option to make an entry usable once
+--    * Change entries' menu text
+--    * Option to make an entry usable once only across all clients
+--    * Auto appends GROUP and CLIENT objects to menu calls
 --
 -- ===
 --
@@ -37,9 +39,10 @@
 -- @field #table parentpath
 -- @field #CLIENTMENU Parent
 -- @field Wrapper.Client#CLIENT client
--- @field #number GID
--- @field #number ID
+-- @field #number GroupID Group ID
+-- @field #number ID Entry ID
 -- @field Wrapper.Group#GROUP group
+-- @field #string UUID Unique ID based on path+name
 -- @field #string Function
 -- @field #table Functionargs
 -- @field #table Children
@@ -54,12 +57,12 @@
 CLIENTMENU = {
   ClassName = "CLIENTMENUE",
   lid = "",
-  version = "0.0.1",
+  version = "0.1.0",
   name = nil,
   path = nil,
   group = nil,
   client = nil,
-  GID = nil,
+  GroupID = nil,
   Children = {},
   Once = false,
   Generic = false,
@@ -87,20 +90,26 @@ function CLIENTMENU:NewEntry(Client,Text,Parent,Function,...)
   if Client then
     self.group = Client:GetGroup()
     self.client = Client
-    self.GID = self.group:GetID()
+    self.GroupID = self.group:GetID()
   else
     self.Generic = true
   end
   self.name = Text or "unknown entry"
   if Parent then
-    self.parentpath = Parent:GetPath()
-    Parent:AddChild(self)
+    if Parent:IsInstanceOf("MENU_BASE") then
+      self.parentpath = Parent.MenuPath
+    else
+      self.parentpath = Parent:GetPath()
+      Parent:AddChild(self)
+    end
   end
   self.Parent = Parent
   self.Function = Function
-  self.Functionargs = arg
+  self.Functionargs = arg or {}
+  table.insert(self.Functionargs,self.group)
+  table.insert(self.Functionargs,self.client)
   if self.Functionargs and self.debug then
-    self:I({"Functionargs",self.Functionargs})
+    self:T({"Functionargs",self.Functionargs})
   end
   if not self.Generic then
     if Function ~= nil then
@@ -120,9 +129,9 @@ function CLIENTMENU:NewEntry(Client,Text,Parent,Function,...)
           self:Clear()
         end
       end
-      self.path = missionCommands.addCommandForGroup(self.GID,Text,self.parentpath, self.CallHandler)
+      self.path = missionCommands.addCommandForGroup(self.GroupID,Text,self.parentpath, self.CallHandler)
     else
-      self.path = missionCommands.addSubMenuForGroup(self.GID,Text,self.parentpath)
+      self.path = missionCommands.addSubMenuForGroup(self.GroupID,Text,self.parentpath)
     end
   else
     if self.parentpath then
@@ -131,13 +140,29 @@ function CLIENTMENU:NewEntry(Client,Text,Parent,Function,...)
       self.path = {}
     end
     self.path[#self.path+1] = Text
-    self:T({self.path})
   end
+  self.UUID = table.concat(self.path,";")
+  self:T({self.UUID})
   self.Once = false
   -- Log id.
   self.lid=string.format("CLIENTMENU %s | %s | ", self.ID, self.name)
   self:T(self.lid.."Created")
   return self
+end
+
+--- Create a UUID
+-- @param #CLIENTMENU self
+-- @param #CLIENTMENU Parent The parent object if any
+-- @param #string Text The menu entry text
+-- @return #string UUID
+function CLIENTMENU:CreateUUID(Parent,Text)
+  local path = {}
+  if Parent and Parent.path then
+    path = Parent.path
+  end
+  path[#path+1] = Text
+  local UUID = table.concat(path,";")
+  return UUID
 end
 
 --- Set the CLIENTMENUMANAGER for this entry.
@@ -163,8 +188,9 @@ end
 -- @return #CLIENTMENU self 
 function CLIENTMENU:RemoveF10()
   self:T(self.lid.."RemoveF10")
-  if not self.Generic then
-    missionCommands.removeItemForGroup(self.GID , self.path )
+  if self.GroupID then
+    --self:I(self.lid.."Removing "..table.concat(self.path,";"))
+    missionCommands.removeItemForGroup(self.GroupID , self.path )
   end
   return self
 end
@@ -175,6 +201,14 @@ end
 function CLIENTMENU:GetPath()
   self:T(self.lid.."GetPath")
   return self.path 
+end
+
+--- Get the UUID.
+-- @param #CLIENTMENU self
+-- @return #string UUID
+function CLIENTMENU:GetUUID()
+  self:T(self.lid.."GetUUID")
+  return self.UUID
 end
 
 --- Link a child entry.
@@ -202,7 +236,7 @@ end
 -- @return #CLIENTMENU self
 function CLIENTMENU:RemoveSubEntries()
   self:T(self.lid.."RemoveSubEntries")
-  --self:T({self.Children})
+  self:T({self.Children})
   for _id,_entry in pairs(self.Children) do
     self:T("Removing ".._id)
     if _entry then
@@ -211,10 +245,10 @@ function CLIENTMENU:RemoveSubEntries()
       if _entry.Parent then
         _entry.Parent:RemoveChild(self)
       end
-      if self.Controller then
-        self.Controller:_RemoveByID(_entry.ID)
-      end
-      _entry = nil
+      --if self.Controller then
+        --self.Controller:_RemoveByID(_entry.ID)
+      --end
+      --_entry = nil
     end
   end
   return self
@@ -235,9 +269,9 @@ function CLIENTMENU:Clear()
   if self.Parent then
     self.Parent:RemoveChild(self)
   end
-  if self.Controller then
-    self.Controller:_RemoveByID(self.ID)
-  end
+  --if self.Controller then
+    --self.Controller:_RemoveByID(self.ID)
+  --end
   return self
 end
 
@@ -256,9 +290,9 @@ end
 -- @field #string version Version string
 -- @field #string name Name
 -- @field Core.Set#SET_CLIENT clientset The set of clients this menu manager is for
--- @field #table structure
--- @field #table replacementstructure
+-- @field #table flattree
 -- @field #table rootentries
+-- @field #table menutree
 -- @field #number entrycount
 -- @field #boolean debug
 -- @extends Core.Base#BASE
@@ -310,27 +344,28 @@ end
 --            
  -- ## Remove a single entry and also it's subtree
 -- 
---            menumgr:Clear(mymenu_lv3a)
+--            menumgr:DeleteEntry(mymenu_lv3a)
 -- 
 -- ## Add a single entry
 -- 
 --            local baimenu = menumgr:NewEntry("BAI",mymenu_lv1b)
---            menumgr:AddEntry(baimenu)           
+--            
+--            menumgr:AddEntry(baimenu)  
+--            
+-- ## Add an entry with a function 
+-- 
+--            local baimenu = menumgr:NewEntry("Task Action", mymenu_lv1b, TestFunction, Argument1, Argument1)
+--            
+--  Now, the class will **automatically append the call with GROUP and CLIENT objects**, as this is can only be done when pushing the entry to the clients. So, the actual function implementation needs to look like this:
+--  
+--            function TestFunction( Argument1, Argument2, Group, Client)
+--            
+--  **Caveat is**, that you need to ensure your arguments are not **nil** or **false**, as LUA will optimize those away. You would end up having Group and Client in wrong places in the function call. Hence,
+--  if you need/ want to send **nil** or **false**, send a place holder instead and ensure your function can handle this, e.g.
+--  
+--            local baimenu = menumgr:NewEntry("Task Action", mymenu_lv1b, TestFunction, "nil", Argument1)
 --     
--- ## Prepare and push a partial replacement in the tree
---            
---            menumgr:PrepareNewReplacementStructure()
---            local submenu = menumgr:NewReplacementEntry("New Level 2 ba",mymenu_lv2a)
---            menumgr:NewReplacementEntry("New Level 2 bb",mymenu_lv2a)
---            menumgr:NewReplacementEntry("Deleted",mymenu_lv2a)
---            menumgr:NewReplacementEntry("New Level 2 bd",mymenu_lv2a)
---            menumgr:NewReplacementEntry("SubLevel 3 baa",submenu)
---            menumgr:NewReplacementEntry("SubLevel 3 bab",submenu)
---            menumgr:NewReplacementEntry("SubLevel 3 bac",submenu)
---            menumgr:NewReplacementEntry("SubLevel 3 bad",submenu)
---            menumgr:ReplaceEntries(mymenu_lv2a)
---            
--- ## Change the text of an entry in the menu tree          
+-- ## Change the text of a leaf entry in the menu tree          
 --            
 --            menumgr:ChangeEntryTextForAll(mymenu_lv1b,"Attack")
 --            
@@ -346,30 +381,16 @@ end
 CLIENTMENUMANAGER = {
   ClassName = "CLIENTMENUMANAGER",
   lid = "",
-  version = "0.0.1",
+  version = "0.1.0",
   name = nil,
   clientset = nil,
-  ---
-  -- @field #CLIENTMENUMANAGER.Structure
-  structure = { 
-    generic = {},
-    IDs = {},
-  },
-  ---
-  -- #CLIENTMENUMANAGER.ReplacementStructure
-  replacementstructure = { 
-    generic = {},
-    IDs = {},
-  },
+  menutree = {},
+  flattree = {},
+  playertree = {},
   entrycount = 0,
   rootentries = {},
   debug = true,
 }
-
----
--- @type CLIENTMENUMANAGER.Structure
--- @field #table generic
--- @field #table IDs 
 
 --- Create a new ClientManager instance.
 -- @param #CLIENTMENUMANAGER self
@@ -384,7 +405,7 @@ function CLIENTMENUMANAGER:New(ClientSet, Alias)
     -- Log id.
   self.lid=string.format("CLIENTMENUMANAGER %s | %s | ", self.version, self.name)
   if self.debug then
-    self:I(self.lid.."Created")
+    self:T(self.lid.."Created")
   end
   return self
 end
@@ -400,271 +421,177 @@ function CLIENTMENUMANAGER:NewEntry(Text,Parent,Function,...)
   self:T(self.lid.."NewEntry "..Text or "None")
   self.entrycount = self.entrycount + 1
   local entry = CLIENTMENU:NewEntry(nil,Text,Parent,Function,unpack(arg))
-  self.structure.generic[self.entrycount] = entry
-  self.structure.IDs[entry.ID] = self.entrycount
   if not Parent then
-    self.rootentries[self.entrycount] = self.entrycount
+    self.rootentries[self.entrycount] = entry
   end
+  local depth = #entry.path
+  if not self.menutree[depth] then self.menutree[depth] = {} end
+  table.insert(self.menutree[depth],entry.UUID)
+  self.flattree[entry.UUID] = entry
   return entry
 end
 
---- Find **first** matching entry in the generic structure by the menu text.
+--- Check matching entry in the generic structure by UUID.
 -- @param #CLIENTMENUMANAGER self
--- @param #string Text Text of the F10 menu entry.
+-- @param #string UUID UUID of the menu entry.
+-- @return #boolean Exists
+function CLIENTMENUMANAGER:EntryUUIDExists(UUID)
+  local exists = self.flattree[UUID] and true or false
+  return exists
+end
+
+--- Find matching entry in the generic structure by UUID.
+-- @param #CLIENTMENUMANAGER self
+-- @param #string UUID UUID of the menu entry.
 -- @return #CLIENTMENU Entry The #CLIENTMENU object found or nil.
--- @return #number GID GID  The GID found or nil.
-function CLIENTMENUMANAGER:FindEntryByText(Text)
-  self:T(self.lid.."FindEntryByText "..Text or "None")
+function CLIENTMENUMANAGER:FindEntryByUUID(UUID)
+  self:T(self.lid.."FindEntryByUUID "..UUID or "None")
   local entry = nil
-  local gid = nil
-  for _gid,_entry in UTILS.spairs(self.structure.generic) do
+  for _gid,_entry in pairs(self.flattree) do
     local Entry = _entry -- #CLIENTMENU
-    if Entry and Entry.name == Text then
+    if Entry and Entry.UUID == UUID then
       entry = Entry
-      gid = _gid
     end
-  end
-  return entry, gid
-end
-
---- Find first matching entry in the generic structure by the GID.
--- @param #CLIENTMENUMANAGER self
--- @param #number GID The GID of the entry to find.
--- @return #CLIENTMENU Entry The #CLIENTMENU object found or nil.
-function CLIENTMENUMANAGER:GetEntryByGID(GID)
-  self:T(self.lid.."GetEntryByGID "..GID or "None")
-  if GID and type(GID) == "number" then
-    return self.structure.generic[GID]
-  else
-    return nil
-  end
-end
-
---- Alter the text of an entry in the generic structure and push to all clients.
--- @param #CLIENTMENUMANAGER self
--- @param #CLIENTMENU Entry The menu entry.
--- @param #string Text Text of the F10 menu entry.
--- @return #CLIENTMENUMANAGER self
-function CLIENTMENUMANAGER:ChangeEntryTextForAll(Entry,Text)
-  self:T(self.lid.."ChangeEntryTextForAll "..Text or "None")
-  for _,_client in pairs(self.clientset.Set) do
-    local client = _client -- Wrapper.Client#CLIENT
-    if client and client:IsAlive() then
-      self:ChangeEntryText(Entry,Text, client)
-    end
-  end
-  return self
-end
-
---- Alter the text of an entry in the generic structure and push to one specific client.
--- @param #CLIENTMENUMANAGER self
--- @param #CLIENTMENU Entry The menu entry.
--- @param #string Text Text of the F10 menu entry.
--- @param Wrapper.Client#CLIENT Client The client for whom to alter the entry
--- @return #CLIENTMENUMANAGER self
-function CLIENTMENUMANAGER:ChangeEntryText(Entry,Text, Client)
-  self:T(self.lid.."ChangeEntryText "..Text or "None")
-  
-  local text = Text or "none"
-  local oldtext = Entry.name
-  Entry.name = text
-  
-  local newstructure = {}
-  local changed = 0
-  
-  local function ChangePath(path,oldtext,newtext)
-    local newpath = {}
-    for _id,_text in UTILS.spairs(path) do
-      local txt = _text
-      if _text == oldtext then
-        txt = newtext
-      end
-      newpath[_id] = txt
-    end
-    return newpath  
-  end
-  
-  local function AlterPath(children)
-    for _,_entry in pairs(children) do
-      local entry = _entry -- #CLIENTMENU
-      local newpath = ChangePath(entry.path,oldtext,text)
-      local newparentpath = ChangePath(entry.parentpath,oldtext,text)
-      entry.path = nil
-      entry.parentpath = nil
-      entry.path = newpath
-      entry.parentpath = newparentpath
-      self:T({entry.ID})
-      --self:T({entry.parentpath})
-      newstructure[entry.ID] = UTILS.DeepCopy(entry)
-      changed = changed + 1
-      if entry.Children and #entry.Children > 0 then
-        AlterPath(entry.Children)
-      end
-    end
-  end
- 
-  -- get the entry
-  local ID = Entry.ID
-  local GID = self.structure.IDs[ID]
-  local playername = Client:GetPlayerName()
-  local children = self.structure[playername][GID].Children
-  AlterPath(children)
-  
-  self:T("Changed entries: "..changed)
-
-  local NewParent = self:NewEntry(Entry.name,Entry.Parent,Entry.Function,unpack(Entry.Functionargs))
-  
-  for _,_entry in pairs(children) do
-    self:T("Changed parent for ".._entry.ID.." | GID ".._entry.GID)
-    local entry = _entry -- #CLIENTMENU
-    entry.Parent = NewParent
-  end
-  
-  self:PrepareNewReplacementStructure()
-  
-  for _,_entry in pairs(newstructure) do
-    self:T("Changed entry: ".._entry.ID.." | GID ".._entry.GID)
-    local entry = _entry -- #CLIENTMENU
-    self:NewReplacementEntry(entry.name,entry.Parent,entry.Function,unpack(entry.Functionargs))
-  end
-  
-
-  self:AddEntry(NewParent)
-  self:ReplaceEntries(NewParent)
-  
-  self:Clear(Entry)
-  
-  return self
-end
-
---- Create a new entry in the replacement structure.
--- @param #CLIENTMENUMANAGER self
--- @param #string Text Text of the F10 menu entry.
--- @param #CLIENTMENU Parent The parent menu entry.
--- @param #string Function (optional) Function to call when the entry is used.
--- @param ... (optional) Arguments for the Function, comma separated
--- @return #CLIENTMENU Entry
-function CLIENTMENUMANAGER:NewReplacementEntry(Text,Parent,Function,...)
-  self:T(self.lid.."NewReplacementEntry "..Text or "None")
-  self.entrycount = self.entrycount + 1
-  local entry = CLIENTMENU:NewEntry(nil,Text,Parent,Function,unpack(arg))
-  self.replacementstructure.generic[self.entrycount] = entry
-  self.replacementstructure.IDs[entry.ID] = self.entrycount
-  local pID = Parent and Parent.ID or "none"
-  if self.debug then
-    self:I("Entry ID = "..self.entrycount.." | Parent ID = "..tostring(pID))
-  end
-  if not Parent then
-    self.rootentries[self.entrycount] = self.entrycount
   end
   return entry
 end
 
---- Prepare a new replacement structure. Deletes the previous one.
+--- Find matching entries by text in the generic structure by UUID.
 -- @param #CLIENTMENUMANAGER self
--- @return #CLIENTMENUMANAGER self
-function CLIENTMENUMANAGER:PrepareNewReplacementStructure()
-  self:T(self.lid.."PrepareNewReplacementStructure")
-  self.replacementstructure = nil -- #CLIENTMENUMANAGER.Structure
-  self.replacementstructure = {
-    generic = {},
-    IDs = {},
-    }
-  return self
-end
-
---- [Internal] Merge the replacement structure into the generic structure.
--- @param #CLIENTMENUMANAGER self
--- @return #CLIENTMENUMANAGER self
-function CLIENTMENUMANAGER:_MergeReplacementData()
-  self:T(self.lid.."_MergeReplacementData")
-  for _id,_entry in pairs(self.replacementstructure.generic) do
-    self.structure.generic[_id] = _entry
-  end
-  for _id,_entry in pairs(self.replacementstructure.IDs) do
-    self.structure.IDs[_id] = _entry
-  end
-  self:_CleanUpPlayerStructure()
-  return self
-end
-
---- Replace entries under the Parent entry with the Replacement structure created prior for all clients.
--- @param #CLIENTMENUMANAGER self
--- @param #CLIENTMENU Parent The parent entry under which to replace with the new structure.
--- @param Wrapper.Client#CLIENT Client (optional) If given, make this change only for this client. In this case the generic structure will not be touched.
--- @return #CLIENTMENUMANAGER self
-function CLIENTMENUMANAGER:ReplaceEntries(Parent,Client)
-  self:T(self.lid.."ReplaceEntries")
-  -- clear Parent substructure
-  local Set = self.clientset.Set
-  if Client then
-    Set = {Client}
-  else
-    self:RemoveSubEntries(Parent)
-  end
-  for _,_client in pairs(Set) do
-    local client = _client -- Wrapper.Client#CLIENT
-    if client and client:IsAlive() then
-      local playername = client:GetPlayerName()
-        --self.structure[playername] = {}
-        for _id,_entry in UTILS.spairs(self.replacementstructure.generic) do
-          local entry = _entry -- #CLIENTMENU
-          local parent = Parent
-          self:T("Posted Parent = "..Parent.ID)
-          if entry.Parent and entry.Parent.name then
-            parent = self:_GetParentEntry(self.replacementstructure.generic,entry.Parent.name) or Parent
-            self:T("Found Parent = "..parent.ID)
-          end
-          self.structure[playername][_id] = CLIENTMENU:NewEntry(client,entry.name,parent,entry.Function,unpack(entry.Functionargs))
-          self.structure[playername][_id].Once = entry.Once
-        end
+-- @param #string Text Text or partial text of the menu entry to find.
+-- @param #CLIENTMENU Parent (Optional) Only find entries under this parent entry.
+-- @return #table Table of matching UUIDs of #CLIENTMENU objects
+-- @return #table Table of matching #CLIENTMENU objects
+-- @return #number Number of matches
+function CLIENTMENUMANAGER:FindUUIDsByText(Text,Parent)
+  self:T(self.lid.."FindUUIDsByText "..Text or "None")
+  local matches = {}
+  local entries = {}
+  local n = 0
+  for _uuid,_entry in pairs(self.flattree) do
+    local Entry = _entry -- #CLIENTMENU
+    if Parent then
+      if Entry and string.find(Entry.name,Text) and string.find(Entry.UUID,Parent.UUID) then
+        table.insert(matches,_uuid)
+        table.insert(entries,Entry )
+        n=n+1
+      end
+    else
+      if Entry and string.find(Entry.name,Text) then
+        table.insert(matches,_uuid)
+        table.insert(entries,Entry )
+        n=n+1
+      end
     end
   end
-  self:_MergeReplacementData()
+  return matches, entries, n
+end
+
+--- Find matching entries in the generic structure by the menu text.
+-- @param #CLIENTMENUMANAGER self
+-- @param #string Text Text or partial text of the F10 menu entry.
+-- @param #CLIENTMENU Parent (Optional) Only find entries under this parent entry.
+-- @return #table Table of matching #CLIENTMENU objects.
+-- @return #number Number of matches
+function CLIENTMENUMANAGER:FindEntriesByText(Text,Parent)
+  self:T(self.lid.."FindEntriesByText "..Text or "None")
+  local matches, objects, number = self:FindUUIDsByText(Text, Parent)
+  return objects, number
+end
+
+--- Find matching entries under a parent in the generic structure by UUID.
+-- @param #CLIENTMENUMANAGER self
+-- @param #CLIENTMENU Parent Find entries under this parent entry.
+-- @return #table Table of matching UUIDs of #CLIENTMENU objects
+-- @return #table Table of matching #CLIENTMENU objects
+-- @return #number Number of matches
+function CLIENTMENUMANAGER:FindUUIDsByParent(Parent)
+  self:T(self.lid.."FindUUIDsByParent")
+  local matches = {}
+  local entries = {}
+  local n = 0
+  for _uuid,_entry in pairs(self.flattree) do
+    local Entry = _entry -- #CLIENTMENU
+    if Parent then
+      if Entry and string.find(Entry.UUID,Parent.UUID) then
+        table.insert(matches,_uuid)
+        table.insert(entries,Entry )
+        n=n+1
+      end
+    end
+  end
+  return matches, entries, n
+end
+
+--- Find matching entries in the generic structure under a parent.
+-- @param #CLIENTMENUMANAGER self
+-- @param #CLIENTMENU Parent Find entries under this parent entry.
+-- @return #table Table of matching #CLIENTMENU objects.
+-- @return #number Number of matches
+function CLIENTMENUMANAGER:FindEntriesByParent(Parent)
+  self:T(self.lid.."FindEntriesByParent")
+  local matches, objects, number = self:FindUUIDsByParent(Parent)
+  return objects, number
+end
+
+--- Alter the text of a leaf entry in the generic structure and push to one specific client's F10 menu.
+-- @param #CLIENTMENUMANAGER self
+-- @param #CLIENTMENU Entry The menu entry.
+-- @param #string Text New Text of the F10 menu entry.
+-- @param Wrapper.Client#CLIENT Client (optional) The client for whom to alter the entry, if nil done for all clients.
+-- @return #CLIENTMENUMANAGER self
+function CLIENTMENUMANAGER:ChangeEntryText(Entry, Text, Client)
+  self:T(self.lid.."ChangeEntryText "..Text or "None")
+  local newentry = CLIENTMENU:NewEntry(nil,Text,Entry.Parent,Entry.Function,unpack(Entry.Functionargs))
+  self:DeleteF10Entry(Entry,Client)
+  self:DeleteGenericEntry(Entry)
+  if not Entry.Parent then
+    self.rootentries[self.entrycount] = newentry
+  end
+  local depth = #newentry.path
+  if not self.menutree[depth] then self.menutree[depth] = {} end
+  table.insert(self.menutree[depth],newentry.UUID)
+  self.flattree[newentry.UUID] = newentry
+  self:AddEntry(newentry,Client)
   return self
 end
 
---- [Internal] Find a parent entry in a given structure by name.
--- @param #CLIENTMENUMANAGER self
--- @param #table Structure Table of entries.
--- @param #string Name Name to find.
--- @return #CLIENTMENU Entry
-function CLIENTMENUMANAGER:_GetParentEntry(Structure,Name)
-  self:T(self.lid.."_GetParentEntry")
-  local found = nil
-  for _,_entry in pairs(Structure) do
-    local entry = _entry -- #CLIENTMENU
-    if entry.name == Name then
-      found = entry
-      break
-    end
-  end
-  return found
-end
-
---- Push the complete menu structure to each of the clients in the set.
+--- Push the complete menu structure to each of the clients in the set - refresh the menu tree of the clients.
 -- @param #CLIENTMENUMANAGER self
 -- @param Wrapper.Client#CLIENT Client (optional) If given, propagate only for this client.
 -- @return #CLIENTMENU Entry
 function CLIENTMENUMANAGER:Propagate(Client)
   self:T(self.lid.."Propagate")
+  self:T(Client)
   local Set = self.clientset.Set
   if Client then
-    Set = {Set}
+    Set = {Client}
   end
+  self:ResetMenu(Client)
   for _,_client in pairs(Set) do
     local client = _client -- Wrapper.Client#CLIENT
     if client and client:IsAlive() then
       local playername = client:GetPlayerName()
-        self.structure[playername] = {}
-        for _id,_entry in pairs(self.structure.generic) do
-          local entry = _entry -- #CLIENTMENU
-          local parent = nil
-          if entry.Parent and entry.Parent.name then
-            parent = self:_GetParentEntry(self.structure[playername],entry.Parent.name)
+        if not self.playertree[playername] then
+          self.playertree[playername] = {}
+        end
+        for level,branch in pairs (self.menutree) do
+          self:T("Building branch:" .. level)
+          for _,leaf in pairs(branch) do
+            self:T("Building leaf:" .. leaf)
+            local entry = self:FindEntryByUUID(leaf)
+            if entry then
+              self:T("Found generic entry:" .. entry.UUID)
+              local parent = nil
+              if entry.Parent and entry.Parent.UUID then
+                parent = self.playertree[playername][entry.Parent.UUID] or self:FindEntryByUUID(entry.Parent.UUID)
+              end
+              self.playertree[playername][entry.UUID] = CLIENTMENU:NewEntry(client,entry.name,parent,entry.Function,unpack(entry.Functionargs))
+              self.playertree[playername][entry.UUID].Once = entry.Once
+            else
+              self:T("NO generic entry for:" .. leaf)
+            end  
           end
-          self.structure[playername][_id] = CLIENTMENU:NewEntry(client,entry.name,parent,entry.Function,unpack(entry.Functionargs))
-          self.structure[playername][_id].Once = entry.Once
         end
     end
   end
@@ -686,85 +613,79 @@ function CLIENTMENUMANAGER:AddEntry(Entry,Client)
     local client = _client -- Wrapper.Client#CLIENT
     if client and client:IsAlive() then
       local playername = client:GetPlayerName()
-      local entry = Entry -- #CLIENTMENU
-      local parent = nil
-      if entry.Parent and entry.Parent.name then
-        parent = self:_GetParentEntry(self.structure[playername],entry.Parent.name)
-      end
-      self.structure[playername][Entry.ID] = CLIENTMENU:NewEntry(client,entry.name,parent,entry.Function,unpack(entry.Functionargs))
-      self.structure[playername][Entry.ID].Once = entry.Once
+      if Entry then
+        self:T("Adding generic entry:" .. Entry.UUID)
+        local parent = nil
+        if not self.playertree[playername] then
+          self.playertree[playername] = {}
+        end
+        if Entry.Parent and Entry.Parent.UUID then
+          parent = self.playertree[playername][Entry.Parent.UUID] or self:FindEntryByUUID(Entry.Parent.UUID)
+        end
+        self.playertree[playername][Entry.UUID] = CLIENTMENU:NewEntry(client,Entry.name,parent,Entry.Function,unpack(Entry.Functionargs))
+        self.playertree[playername][Entry.UUID].Once = Entry.Once
+      else
+        self:T("NO generic entry given")
+      end 
     end
   end
   return self
 end
 
---- Blank out the menu - remove **all root entries** and all entries below from the client's menus, leaving the generic structure untouched.
+--- Blank out the menu - remove **all root entries** and all entries below from the client's F10 menus, leaving the generic structure untouched.
 -- @param #CLIENTMENUMANAGER self
--- @param Wrapper.Client#CLIENT Client 
+-- @param Wrapper.Client#CLIENT Client (optional) If given, remove only for this client.
 -- @return #CLIENTMENUMANAGER self
 function CLIENTMENUMANAGER:ResetMenu(Client)
   self:T(self.lid.."ResetMenu")
   for _,_entry in pairs(self.rootentries) do
-    local RootEntry = self.structure.generic[_entry]
-    if RootEntry then
-      self:Clear(RootEntry,Client)
+    --local RootEntry = self.structure.generic[_entry]
+    if _entry then
+      self:DeleteF10Entry(_entry,Client)
     end
   end
   return self
 end
 
---- Blank out the menu - remove **all root entries** and all entries below from all clients' menus, and **delete** the generic structure.
+--- Blank out the menu - remove **all root entries** and all entries below from all clients' F10 menus, and **delete** the generic structure.
 -- @param #CLIENTMENUMANAGER self
 -- @return #CLIENTMENUMANAGER self
 function CLIENTMENUMANAGER:ResetMenuComplete()
   self:T(self.lid.."ResetMenuComplete")
   for _,_entry in pairs(self.rootentries) do
-    local RootEntry = self.structure.generic[_entry]
-    if RootEntry then
-      self:Clear(RootEntry)
+    --local RootEntry = self.structure.generic[_entry]
+    if _entry then
+      self:DeleteF10Entry(_entry)
     end
   end
-  self.structure = nil
-  self.structure = { 
-    generic = {},
-    IDs = {},
-  }
+  self.playertree = nil
+  self.playertree = {}
   self.rootentries = nil
   self.rootentries = {}
+  self.menutree = nil
+  self.menutree = {}
   return self
 end
 
---- Remove the entry and all entries below the given entry from the client's menus and the generic structure.
+--- Remove the entry and all entries below the given entry from the client's F10 menus.
 -- @param #CLIENTMENUMANAGER self
 -- @param #CLIENTMENU Entry The entry to remove
 -- @param Wrapper.Client#CLIENT Client (optional) If given, make this change only for this client. In this case the generic structure will not be touched.
 -- @return #CLIENTMENUMANAGER self
-function CLIENTMENUMANAGER:Clear(Entry,Client)
-  self:T(self.lid.."Clear")
-  local rid = self.structure.IDs[Entry.ID]
-  if rid then
-    local generic = self.structure.generic[rid]
-    local Set = self.clientset.Set
-    if Client then
-      Set = {Client}
-    end
-    for _,_client in pairs(Set) do
-      local client = _client -- Wrapper.Client#CLIENT
-      if client and client:IsAlive() then
-        local playername = client:GetPlayerName()
-        local entry = self.structure[playername][rid] -- #CLIENTMENU
-        if entry then
-          entry:Clear()
-          self.structure[playername][rid] = nil        
-          end
-      end
-    end
-    if not Client then
-      for _id,_entry in pairs(self.structure.generic) do
-        local entry = _entry -- #CLIENTMENU
-        if entry and entry.Parent and entry.Parent.ID and entry.Parent.ID == rid then
-          self.structure.IDs[entry.ID] = nil
-          entry = nil
+function CLIENTMENUMANAGER:DeleteF10Entry(Entry,Client)
+  self:T(self.lid.."DeleteF10Entry")
+  local Set = self.clientset.Set
+  if Client then
+    Set = {Client}
+  end
+  for _,_client in pairs(Set) do
+    if _client and _client:IsAlive() then
+      local playername = _client:GetPlayerName()
+      if self.playertree[playername] then
+        local centry = self.playertree[playername][Entry.UUID] -- #CLIENTMENU
+        if centry then
+          --self:I("Match for "..Entry.UUID)
+          centry:Clear()
         end
       end
     end
@@ -772,114 +693,86 @@ function CLIENTMENUMANAGER:Clear(Entry,Client)
   return self
 end
 
---- [Internal] Clean up player shadow structure
+--- Remove the entry and all entries below the given entry from the generic tree.
 -- @param #CLIENTMENUMANAGER self
+-- @param #CLIENTMENU Entry The entry to remove
 -- @return #CLIENTMENUMANAGER self
-function CLIENTMENUMANAGER:_CleanUpPlayerStructure()
-  self:T(self.lid.."_CleanUpPlayerStructure")
-  for _,_client in pairs(self.clientset.Set) do
-    local client = _client -- Wrapper.Client#CLIENT
-    if client and client:IsAlive()  then
-      local playername = client:GetPlayerName()
-      local newstructure = {}
-      for _id, _entry in UTILS.spairs(self.structure[playername]) do
-        if self.structure.generic[_id] then
-          newstructure[_id] = _entry
-        end
-      end
-      self.structure[playername] = nil
-      self.structure[playername] = newstructure
+function CLIENTMENUMANAGER:DeleteGenericEntry(Entry)
+  self:T(self.lid.."DeleteGenericEntry")
+  
+  if Entry.Children and #Entry.Children > 0 then
+    self:RemoveGenericSubEntries(Entry)
+  end
+  
+  local depth = #Entry.path
+  local uuid = Entry.UUID
+  
+  local tbl = UTILS.DeepCopy(self.menutree)
+  
+  if tbl[depth] then
+    for i=depth,#tbl do
+      --self:I("Level = "..i)
+      for _id,_uuid in pairs(tbl[i]) do
+        self:T(_uuid)
+        if string.find(_uuid,uuid) or _uuid == uuid then
+          --self:I("Match for ".._uuid)
+          self.menutree[i][_id] = nil
+          self.flattree[_uuid] = nil
+        end  
+      end 
     end
   end
+  
   return self
 end
 
---- Remove all entries below the given entry from the clients' menus and the generic structure.
+--- Remove all entries below the given entry from the generic tree.
 -- @param #CLIENTMENUMANAGER self
--- @param #CLIENTMENU Entry The menu entry
+-- @param #CLIENTMENU Entry The entry where to start. This entry stays.
+-- @return #CLIENTMENUMANAGER self
+function CLIENTMENUMANAGER:RemoveGenericSubEntries(Entry)
+  self:T(self.lid.."RemoveGenericSubEntries")
+  
+  local depth = #Entry.path + 1
+  local uuid = Entry.UUID
+  
+  local tbl = UTILS.DeepCopy(self.menutree)
+  
+  if tbl[depth] then
+    for i=depth,#tbl do
+      self:T("Level = "..i)
+      for _id,_uuid in pairs(tbl[i]) do
+        self:T(_uuid)
+        if string.find(_uuid,uuid) then
+          self:T("Match for ".._uuid)
+          self.menutree[i][_id] = nil
+          self.flattree[_uuid] = nil
+        end  
+      end 
+    end
+  end  
+  return self
+end
+
+
+--- Remove all entries below the given entry from the client's F10 menus.
+-- @param #CLIENTMENUMANAGER self
+-- @param #CLIENTMENU Entry The entry where to start. This entry stays.
 -- @param Wrapper.Client#CLIENT Client (optional) If given, make this change only for this client. In this case the generic structure will not be touched.
 -- @return #CLIENTMENUMANAGER self
-function CLIENTMENUMANAGER:RemoveSubEntries(Entry,Client)
+function CLIENTMENUMANAGER:RemoveF10SubEntries(Entry,Client)
   self:T(self.lid.."RemoveSubEntries")
-  local rid = self.structure.IDs[Entry.ID]
-  if rid then
-    local Set = self.clientset.Set
-    if Client then
-      Set = {Client}
-    end
-    for _,_client in pairs(Set) do
-      local client = _client -- Wrapper.Client#CLIENT
-      if client and client:IsAlive() then
-        local playername = client:GetPlayerName()
-        local entry = self.structure[playername][rid] -- #CLIENTMENU
-        if entry then 
-          entry:RemoveSubEntries()
-        end
+  local Set = self.clientset.Set
+  if Client then
+    Set = {Client}
+  end
+  for _,_client in pairs(Set) do
+    if _client and _client:IsAlive() then
+      local playername = _client:GetPlayerName()
+      if self.playertree[playername] then
+        local centry = self.playertree[playername][Entry.UUID] -- #CLIENTMENU
+        centry:RemoveSubEntries()
       end
-    end
-    if not Client then
-      for _id,_entry in pairs(self.structure.generic) do
-        local entry = _entry -- #CLIENTMENU
-        if entry and entry.Parent and entry.Parent.ID and entry.Parent.ID == rid then
-          self.structure.IDs[entry.ID] = nil
-          self.structure.generic[_id] = nil
-        end
-      end
-    end
-  end
-  self:_CleanUpPlayerStructure()
-  return self
-end
-
---- Remove a specific entry by ID from the generic structure
--- @param #CLIENTMENUMANAGER self
--- @param #number ID
--- @return #CLIENTMENUMANAGER self
-function CLIENTMENUMANAGER:_RemoveByID(ID)
-  self:T(self.lid.."_RemoveByID "..ID or "none")
-  if ID then
-    local gid = self.structure.IDs[ID]
-    if gid then
-      self.structure.generic[gid] = nil
-      self.structure.IDs[ID] = nil
-    end
-  end
-  return self
-end
-
---- [Internal] Dump structures to log for debug
--- @param #CLIENTMENUMANAGER self
--- @param #string Playername
--- @return #CLIENTMENUMANAGER self
-function CLIENTMENUMANAGER:_CheckStructures(Playername)
-  self:T(self.lid.."CheckStructures")
-  self:I("Generic Structure")
-  self:I("-----------------")
-  for _id,_entry in UTILS.spairs(self.structure.generic) do
-    local ID = "none"
-    if _entry and _entry.ID then
-      ID = _entry.ID
-    end
-    self:I("ID= ".._id.." | EntryID = "..ID)
-    if _id > 10 and _id < 14 then
-      self:I(_entry.name)
-    end
-  end
-  self:I("Reverse Structure")
-  self:I("-----------------")
-  for _id,_entry in UTILS.spairs(self.structure.IDs) do
-    self:I("EntryID= ".._id.." | ID = ".._entry)
-  end
-  if Playername then
-    self:I("Player Structure")
-    self:I("-----------------")
-    for _id,_entry in UTILS.spairs(self.structure[Playername]) do
-      local ID = "none"
-      if _entry and _entry.ID then
-        ID = _entry.ID
-      end
-      local _lid = _id or "none"
-      self:I("ID= ".._lid.." | EntryID = "..ID)
     end
   end
   return self
