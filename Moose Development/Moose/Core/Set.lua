@@ -3945,7 +3945,8 @@ do -- SET_STATIC
 end
 
 do -- SET_CLIENT
-
+  
+  ---
   -- @type SET_CLIENT
   -- @field Core.Timer#TIMER ZoneTimer
   -- @field #number ZoneTimerInterval
@@ -4059,7 +4060,7 @@ do -- SET_CLIENT
 
   --- Remove CLIENT(s) from SET_CLIENT.
   -- @param Core.Set#SET_CLIENT self
-  -- @param Wrapper.Client#CLIENT RemoveClientNames A single name or an array of CLIENT names.
+  -- @param Wrapper.Client#CLIENT RemoveClientNames A single object or an array of CLIENT objects.
   -- @return self
   function SET_CLIENT:RemoveClientsByName( RemoveClientNames )
 

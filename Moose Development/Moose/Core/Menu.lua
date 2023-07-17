@@ -278,7 +278,9 @@ do -- MENU_BASE
   end
   
 end
-do -- MENU_COMMAND_BASE
+do 
+  ---
+  -- MENU_COMMAND_BASE
   -- @type MENU_COMMAND_BASE
   -- @field #function MenuCallHandler
   -- @extends Core.Menu#MENU_BASE
@@ -344,7 +346,9 @@ do -- MENU_COMMAND_BASE
   end
 end
 
-do -- MENU_MISSION
+do 
+  ---
+  -- MENU_MISSION
   -- @type MENU_MISSION
   -- @extends Core.Menu#MENU_BASE
   --- Manages the main menus for a complete mission.  
@@ -432,8 +436,9 @@ do -- MENU_MISSION
   end
 
 end
-do -- MENU_MISSION_COMMAND
-  
+do 
+
+  --- MENU_MISSION_COMMAND
   -- @type MENU_MISSION_COMMAND
   -- @extends Core.Menu#MENU_COMMAND_BASE
   
@@ -510,7 +515,8 @@ do -- MENU_MISSION_COMMAND
     return self
   end
 end
-do -- MENU_COALITION
+do 
+  --- MENU_COALITION
   -- @type MENU_COALITION
   -- @extends Core.Menu#MENU_BASE
   
@@ -636,8 +642,9 @@ do -- MENU_COALITION
     return self
   end
 end
-do -- MENU_COALITION_COMMAND
-  
+do 
+
+  --- MENU_COALITION_COMMAND
   -- @type MENU_COALITION_COMMAND
   -- @extends Core.Menu#MENU_COMMAND_BASE
   
@@ -726,7 +733,10 @@ do
   -- So every menu for a client created must be tracked so that program logic accidentally does not create.
   -- the same menus twice during initialization logic.
   -- These menu classes are handling this logic with this variable.
+  
   local _MENUGROUPS = {}
+  
+  ---
   -- @type MENU_GROUP
   -- @extends Core.Menu#MENU_BASE
   
@@ -900,7 +910,7 @@ do
     return self
   end
   
-  
+  ---
   -- @type MENU_GROUP_COMMAND
   -- @extends Core.Menu#MENU_COMMAND_BASE
   
@@ -984,6 +994,7 @@ do
 end
 --- MENU_GROUP_DELAYED
 do
+  ---
   -- @type MENU_GROUP_DELAYED
   -- @extends Core.Menu#MENU_BASE
   
@@ -1107,7 +1118,7 @@ do
     return self
   end
   
-  
+  ---
   -- @type MENU_GROUP_COMMAND_DELAYED
   -- @extends Core.Menu#MENU_COMMAND_BASE
   
