@@ -236,6 +236,7 @@ ENUMS.WeaponType.Any={
 -- @field #string ESCORT Escort another group.
 -- @field #string FIGHTERSWEEP Fighter sweep.
 -- @field #string GROUNDATTACK Ground attack.
+-- @field #string GROUNDESCORT Ground escort another group.
 -- @field #string INTERCEPT Intercept.
 -- @field #string PINPOINTSTRIKE Pinpoint strike.
 -- @field #string RECONNAISSANCE Reconnaissance mission.
@@ -251,6 +252,7 @@ ENUMS.MissionTask={
   CAP="CAP",
   CAS="CAS",
   ESCORT="Escort",
+  GROUNDESCORT="Ground escort",
   FIGHTERSWEEP="Fighter Sweep",
   GROUNDATTACK="Ground Attack",
   INTERCEPT="Intercept",

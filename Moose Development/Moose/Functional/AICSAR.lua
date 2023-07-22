@@ -22,7 +22,7 @@
 -- ===
 -- 
 -- ### Author: **Applevangelist**
--- Last Update February 2022
+-- Last Update July 2023
 --
 -- ===
 -- @module Functional.AICSAR
@@ -191,7 +191,7 @@
 -- @field #AICSAR
 AICSAR = {
   ClassName = "AICSAR",
-  version = "0.1.14",
+  version = "0.1.15",
   lid = "",
   coalition = coalition.side.BLUE,
   template = "",
@@ -397,6 +397,7 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   self:AddTransition("*",             "PilotRescued",       "*")           -- Pilot Rescued
   self:AddTransition("*",             "PilotKIA",           "*")           -- Pilot dead
   self:AddTransition("*",             "HeloDown",           "*")           -- Helo dead
+  self:AddTransition("*",             "HeloOnDuty",         "*")           -- Helo spawnd
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop FSM.
   
   self:HandleEvent(EVENTS.LandingAfterEjection,self._EventHandler)
@@ -472,6 +473,14 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state. 
+
+  --- On after "HeloOnDuty" event.
+  -- @function [parent=#AICSAR] OnAfterHeloOnDuty
+  -- @param #AICSAR self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Group#GROUP Helo Helo group object
 
   --- On after "HeloDown" event.
   -- @function [parent=#AICSAR] OnAfterHeloDown
@@ -853,6 +862,11 @@ function AICSAR:_GetFlight()
   local newhelo = SPAWN:NewWithAlias(self.helotemplate,self.helotemplate..math.random(1,10000))
     :InitDelayOff()
     :InitUnControlled(true)
+    :OnSpawnGroup(
+      function(Group)
+        self:__HeloOnDuty(1,Group)
+      end
+    )
     :Spawn()
     
   local nhelo=FLIGHTGROUP:New(newhelo)

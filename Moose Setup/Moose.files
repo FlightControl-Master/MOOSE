@@ -32,6 +32,7 @@ Core/Spot.lua
 Core/TextAndSound.lua
 Core/Condition.lua
 Core/Pathline.lua
+Core/ClientMenu.lua
 
 Wrapper/Object.lua
 Wrapper/Identifiable.lua

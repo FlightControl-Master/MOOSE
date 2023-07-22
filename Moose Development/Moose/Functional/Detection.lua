@@ -2354,6 +2354,7 @@ do -- DETECTION_TYPES
           if not DetectedItem then
             DetectedItem = self:AddDetectedItem( "TYPE", DetectedTypeName )
             DetectedItem.TypeName = DetectedTypeName
+            DetectedItem.Name = DetectedUnitName -- fix by @Nocke
           end
 
           DetectedItem.Set:AddUnit( DetectedUnit )
