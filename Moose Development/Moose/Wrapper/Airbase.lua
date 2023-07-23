@@ -548,6 +548,8 @@ AIRBASE.Syria={
 -- * AIRBASE.MarianaIslands.Saipan_Intl
 -- * AIRBASE.MarianaIslands.Tinian_Intl
 -- * AIRBASE.MarianaIslands.Olf_Orote
+-- * AIRBASE.MarianaIslands.Pagan_Airstrip
+-- * AIRBASE.MarianaIslands.North_West_Field
 --
 -- @field MarianaIslands
 AIRBASE.MarianaIslands = {
@@ -557,6 +559,8 @@ AIRBASE.MarianaIslands = {
   ["Saipan_Intl"] = "Saipan Intl",
   ["Tinian_Intl"] = "Tinian Intl",
   ["Olf_Orote"] = "Olf Orote",
+  ["Pagan_Airstrip"] = "Pagan Airstrip",
+  ["North_West_Field"] = "North West Field",
 }
 
 --- Airbases of the South Atlantic map:
