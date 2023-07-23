@@ -98,7 +98,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.17"
+PLAYERTASK.version="0.1.18"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -1008,6 +1008,7 @@ do
 -- @field Core.ClientMenu#CLIENTMENUMANAGER ActiveTaskMenuTemplate
 -- @field Core.ClientMenu#CLIENTMENU ActiveTopMenu
 -- @field Core.ClientMenu#CLIENTMENU ActiveInfoMenu
+-- @field Core.ClientMenu#CLIENTMENU MenuNoTask
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1336,6 +1337,7 @@ PLAYERTASKCONTROLLER = {
   InfoHasCoordinate  = false,
   UseTypeNames       = false,
   Scoring            = nil,
+  MenuNoTask         = nil,
   }
 
 ---
@@ -3469,6 +3471,19 @@ function PLAYERTASKCONTROLLER:_UpdateJoinMenuTemplate()
     local actinfomenu = self.ActiveInfoMenu
     --local entrynumbers = {}
     --local existingentries = {}
+    
+    if self.TaskQueue:Count() == 0 and self.MenuNoTask == nil then
+      local menunotasks = self.gettext:GetEntry("MENUNOTASKS",self.locale)  
+      self.MenuNoTask = controller:NewEntry(menunotasks,self.JoinMenu)
+      controller:AddEntry(self.MenuNoTask)
+    end
+    
+    if self.TaskQueue:Count() > 0 and self.MenuNoTask ~= nil then
+      controller:DeleteGenericEntry(self.MenuNoTask)
+      controller:DeleteF10Entry(self.MenuNoTask)
+      self.MenuNoTask = nil
+    end
+    
     local maxn = self.menuitemlimit
     -- Generate task type menu items
     for _type,_ in pairs(taskpertype) do
@@ -3641,8 +3656,13 @@ function PLAYERTASKCONTROLLER:_CreateJoinMenuTemplate()
     self.JoinInfoMenu = JoinTaskMenuTemplate:NewEntry(menutaskinfo,self.JoinTopMenu)
   end
   
-  if self.TaskQueue:Count() == 0 then
-    JoinTaskMenuTemplate:NewEntry(menunotasks,self.JoinMenu)
+  if self.TaskQueue:Count() == 0 and self.MenuNoTask == nil then
+    self.MenuNoTask = JoinTaskMenuTemplate:NewEntry(menunotasks,self.JoinMenu)
+  end
+  
+  if self.TaskQueue:Count() > 0 and self.MenuNoTask ~= nil then
+    JoinTaskMenuTemplate:DeleteGenericEntry(self.MenuNoTask)
+    self.MenuNoTask = nil
   end
   
   self.JoinTaskMenuTemplate = JoinTaskMenuTemplate
