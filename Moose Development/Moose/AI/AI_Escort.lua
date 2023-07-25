@@ -2192,5 +2192,3 @@ function AI_ESCORT:_FlightReportTargetsScheduler()
   
   return false
 end
-
-
