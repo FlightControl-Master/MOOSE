@@ -207,6 +207,7 @@ do -- MENU_BASE
     
     return self
   end
+  
   function MENU_BASE:SetParentMenu( MenuText, Menu )
     if self.ParentMenu then
       self.ParentMenu.Menus = self.ParentMenu.Menus or {}

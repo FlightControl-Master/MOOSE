@@ -147,7 +147,7 @@
 -- @image Escorting.JPG
 
 
-
+---
 -- @type AI_ESCORT
 -- @extends AI.AI_Formation#AI_FORMATION
 
@@ -168,11 +168,14 @@
 -- 
 -- -- First find the GROUP object and the CLIENT object.
 -- local EscortUnit = CLIENT:FindByName( "Unit Name" ) -- The Unit Name is the name of the unit flagged with the skill Client in the mission editor.
--- local EscortGroup = GROUP:FindByName( "Group Name" ) -- The Group Name is the name of the group that will escort the Escort Client.
+-- local EscortGroup = SET_GROUP:New():FilterPrefixes("Escort"):FilterOnce() -- The the group name of the escorts contains "Escort".
 -- 
 -- -- Now use these 2 objects to construct the new EscortPlanes object.
 -- EscortPlanes = AI_ESCORT:New( EscortUnit, EscortGroup, "Desert", "Welcome to the mission. You are escorted by a plane with code name 'Desert', which can be instructed through the F10 radio menu." )
---
+-- EscortPlanes:MenusAirplanes() -- create menus for airplanes
+-- EscortPlanes:__Start(2)
+-- 
+-- 
 -- @field #AI_ESCORT
 AI_ESCORT = {
   ClassName = "AI_ESCORT",
@@ -211,10 +214,14 @@ AI_ESCORT.Detection = nil
 -- 
 -- -- First find the GROUP object and the CLIENT object.
 -- local EscortUnit = CLIENT:FindByName( "Unit Name" ) -- The Unit Name is the name of the unit flagged with the skill Client in the mission editor.
--- local EscortGroup = GROUP:FindByName( "Group Name" ) -- The Group Name is the name of the group that will escort the Escort Client.
+-- local EscortGroup = SET_GROUP:New():FilterPrefixes("Escort"):FilterOnce() -- The the group name of the escorts contains "Escort".
 -- 
 -- -- Now use these 2 objects to construct the new EscortPlanes object.
 -- EscortPlanes = AI_ESCORT:New( EscortUnit, EscortGroup, "Desert", "Welcome to the mission. You are escorted by a plane with code name 'Desert', which can be instructed through the F10 radio menu." )
+-- EscortPlanes:MenusAirplanes() -- create menus for airplanes
+-- EscortPlanes:__Start(2)
+-- 
+-- 
 function AI_ESCORT:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing )
   
   local self = BASE:Inherit( self, AI_FORMATION:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing ) ) -- #AI_ESCORT
@@ -227,10 +234,17 @@ function AI_ESCORT:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing )
   self.EscortGroupSet = EscortGroupSet
   
   self.EscortGroupSet:SetSomeIteratorLimit( 8 )
-  
+
   self.EscortBriefing = EscortBriefing
  
   self.Menu = {}
+  self.Menu.HoldAtEscortPosition = self.Menu.HoldAtEscortPosition or {}
+  self.Menu.HoldAtLeaderPosition = self.Menu.HoldAtLeaderPosition or {}
+  self.Menu.Flare = self.Menu.Flare or {}
+  self.Menu.Smoke = self.Menu.Smoke or {}
+  self.Menu.Targets = self.Menu.Targets or {}
+  self.Menu.ROE = self.Menu.ROE or {}
+  self.Menu.ROT = self.Menu.ROT or {}
   
 --  if not EscortBriefing then
 --    EscortGroup:MessageToClient( EscortGroup:GetCategoryName() .. " '" .. EscortName .. "' (" .. EscortGroup:GetCallsign() .. ") reporting! " ..
@@ -764,7 +778,7 @@ end
 
 function AI_ESCORT:SetFlightMenuHoldAtEscortPosition()
 
-  for _, MenuHoldAtEscortPosition in pairs( self.Menu.HoldAtEscortPosition ) do
+  for _, MenuHoldAtEscortPosition in pairs( self.Menu.HoldAtEscortPosition or {} ) do
     local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
   
     local FlightMenuHoldPosition = MENU_GROUP_COMMAND
@@ -785,7 +799,7 @@ end
 
 function AI_ESCORT:SetEscortMenuHoldAtEscortPosition( EscortGroup )
 
-  for _, HoldAtEscortPosition in pairs( self.Menu.HoldAtEscortPosition ) do
+  for _, HoldAtEscortPosition in pairs( self.Menu.HoldAtEscortPosition or {}) do
     if EscortGroup:IsAir() then
       local EscortGroupName = EscortGroup:GetName()
       local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortGroup.EscortMenu )
@@ -853,7 +867,7 @@ end
 
 function AI_ESCORT:SetFlightMenuHoldAtLeaderPosition()
 
-  for _, MenuHoldAtLeaderPosition in pairs( self.Menu.HoldAtLeaderPosition ) do
+  for _, MenuHoldAtLeaderPosition in pairs( self.Menu.HoldAtLeaderPosition or {}) do
     local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
   
     local FlightMenuHoldAtLeaderPosition = MENU_GROUP_COMMAND
@@ -874,7 +888,7 @@ end
 
 function AI_ESCORT:SetEscortMenuHoldAtLeaderPosition( EscortGroup )
 
-  for _, HoldAtLeaderPosition in pairs( self.Menu.HoldAtLeaderPosition ) do
+  for _, HoldAtLeaderPosition in pairs( self.Menu.HoldAtLeaderPosition or {}) do
     if EscortGroup:IsAir() then
       
       local EscortGroupName = EscortGroup:GetName()
@@ -999,7 +1013,7 @@ end
 
 function AI_ESCORT:SetFlightMenuFlare()
 
-  for _, MenuFlare in pairs( self.Menu.Flare) do
+  for _, MenuFlare in pairs( self.Menu.Flare or {}) do
     local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
     local FlightMenuFlare = MENU_GROUP:New( self.PlayerGroup, MenuFlare.MenuText, FlightMenuReportNavigation )
   
@@ -1014,7 +1028,7 @@ end
 
 function AI_ESCORT:SetEscortMenuFlare( EscortGroup )
 
-  for _, MenuFlare in pairs( self.Menu.Flare) do
+  for _, MenuFlare in pairs( self.Menu.Flare or {}) do
     if EscortGroup:IsAir() then
       
       local EscortGroupName = EscortGroup:GetName()
@@ -1059,7 +1073,7 @@ end
 
 function AI_ESCORT:SetFlightMenuSmoke()
 
-  for _, MenuSmoke in pairs( self.Menu.Smoke) do
+  for _, MenuSmoke in pairs( self.Menu.Smoke or {}) do
     local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
     local FlightMenuSmoke = MENU_GROUP:New( self.PlayerGroup, MenuSmoke.MenuText, FlightMenuReportNavigation )
   
@@ -1076,7 +1090,7 @@ end
 
 function AI_ESCORT:SetEscortMenuSmoke( EscortGroup )
 
-  for _, MenuSmoke in pairs( self.Menu.Smoke) do
+  for _, MenuSmoke in pairs( self.Menu.Smoke or {}) do
     if EscortGroup:IsAir() then
       
       local EscortGroupName = EscortGroup:GetName()
@@ -1169,7 +1183,7 @@ function AI_ESCORT:SetFlightMenuTargets()
   local FlightMenuAttackNearbyAir = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Attack nearest airborne targets",  self.FlightMenuAttack, AI_ESCORT._FlightAttackNearestTarget, self, self.__Enum.ReportType.Air ):SetTag( "Attack" )
   local FlightMenuAttackNearbyGround = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Attack nearest ground targets",  self.FlightMenuAttack, AI_ESCORT._FlightAttackNearestTarget, self, self.__Enum.ReportType.Ground ):SetTag( "Attack" )
   
-  for _, MenuTargets in pairs( self.Menu.Targets) do
+  for _, MenuTargets in pairs( self.Menu.Targets or {}) do
     MenuTargets.FlightReportTargetsScheduler = SCHEDULER:New( self, self._FlightReportTargetsScheduler, {}, MenuTargets.Interval, MenuTargets.Interval )
   end
 
@@ -1179,7 +1193,7 @@ end
 
 function AI_ESCORT:SetEscortMenuTargets( EscortGroup )
 
-  for _, MenuTargets in pairs( self.Menu.Targets) do
+  for _, MenuTargets in pairs( self.Menu.Targets or {} or {}) do
     if EscortGroup:IsAir() then
       local EscortGroupName = EscortGroup:GetName()
       --local EscortMenuReportTargets = MENU_GROUP:New( self.PlayerGroup, "Report targets", EscortGroup.EscortMenu )
@@ -1246,7 +1260,7 @@ end
 
 function AI_ESCORT:SetFlightMenuROE()
 
-  for _, MenuROE in pairs( self.Menu.ROE) do
+  for _, MenuROE in pairs( self.Menu.ROE or {}) do
     local FlightMenuROE = MENU_GROUP:New( self.PlayerGroup, "Rule Of Engagement", self.FlightMenu )
   
     local FlightMenuROEHoldFire   = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Hold fire",          FlightMenuROE, AI_ESCORT._FlightROEHoldFire,   self,  "Holding weapons!" )
@@ -1261,7 +1275,7 @@ end
 
 function AI_ESCORT:SetEscortMenuROE( EscortGroup )
 
-  for _, MenuROE in pairs( self.Menu.ROE) do
+  for _, MenuROE in pairs( self.Menu.ROE or {}) do
     if EscortGroup:IsAir() then
 
       local EscortGroupName = EscortGroup:GetName()
@@ -1302,7 +1316,7 @@ end
 
 function AI_ESCORT:SetFlightMenuROT()
 
-  for _, MenuROT in pairs( self.Menu.ROT) do
+  for _, MenuROT in pairs( self.Menu.ROT or {}) do
     local FlightMenuROT = MENU_GROUP:New( self.PlayerGroup, "Reaction On Threat", self.FlightMenu )
   
     local FlightMenuROTNoReaction     = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Fight until death",             FlightMenuROT, AI_ESCORT._FlightROTNoReaction,     self, "Fighting until death!" )
@@ -1317,7 +1331,7 @@ end
 
 function AI_ESCORT:SetEscortMenuROT( EscortGroup )
 
-  for _, MenuROT in pairs( self.Menu.ROT) do
+  for _, MenuROT in pairs( self.Menu.ROT or {}) do
     if EscortGroup:IsAir() then
 
       local EscortGroupName = EscortGroup:GetName()

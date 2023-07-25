@@ -901,8 +901,11 @@ do -- SET_BASE
 
 end
 
-do -- SET_GROUP
+do 
 
+  -- SET_GROUP
+  
+  ---
   -- @type SET_GROUP #SET_GROUP
   -- @field Core.Timer#TIMER ZoneTimer
   -- @field #number ZoneTimerInterval
