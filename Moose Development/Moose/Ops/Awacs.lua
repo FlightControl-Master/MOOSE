@@ -17,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update December 2022
+-- @date Last Update July 2023
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -113,6 +113,13 @@ do
 -- @field Wrapper.Group#GROUP GCIGroup EWR group object for GCI ops
 -- @field #string locale Localization
 -- @field #boolean IncludeHelicopters
+-- @field #boolean TacticalMenu
+-- @field #table TacticalFrequencies
+-- @field #table TacticalSubscribers
+-- @field #number TacticalBaseFreq
+-- @field #number TacticalIncrFreq
+-- @field #number TacticalModulation
+-- @field #number TacticalInterval
 -- @extends Core.Fsm#FSM
 
 
@@ -499,7 +506,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.55", -- #string
+  version = "0.2.56", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -587,6 +594,13 @@ AWACS = {
   GCIGroup = nil,
   locale = "en",
   IncludeHelicopters = false,
+  TacticalMenu = false,
+  TacticalFrequencies = {},
+  TacticalSubscribers = {},
+  TacticalBaseFreq = 130,
+  TacticalIncrFreq = 0.5,
+  TacticalModulation = radio.modulation.AM,
+  TacticalInterval = 120,
 }
 
 ---
@@ -917,7 +931,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.2.52
+-- TODO-List 0.2.53
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
@@ -1180,6 +1194,15 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   
   self.clientmenus = FIFO:New() -- Utilities.FiFo#FIFO
   
+  -- Tactical Menu
+  self.TacticalMenu = false
+  self.TacticalBaseFreq = 130
+  self.TacticalIncrFreq = 0.5
+  self.TacticalModulation = radio.modulation.AM
+  self.acticalFrequencies = {}
+  self.TacticalSubscribers = {}
+  self.TacticalInterval = 120
+  
   -- SET for Intel Detection
   self.DetectionSet=SET_GROUP:New()
   
@@ -1204,6 +1227,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self:AddTransition("*",             "LostCluster",        "*")
   self:AddTransition("*",             "LostContact",        "*")
   self:AddTransition("*",             "CheckRadioQueue",    "*")
+  self:AddTransition("*",             "CheckTacticalQueue", "*")  
   self:AddTransition("*",             "EscortShiftChange",  "*")
   self:AddTransition("*",             "AwacsShiftChange",   "*")
   self:AddTransition("*",             "FlightOnMission",    "*")
@@ -1353,6 +1377,106 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- [User] Set the tactical information option, create 10 radio channels groups can subscribe and get Bogey Dope on a specific frequency automatically.
+-- @param #AWACS self
+-- @param #number BaseFreq Base Frequency to use, defaults to 130.
+-- @param #number Increase Increase to use, defaults to 0.5, thus channels created are 130, 130.5, 131 .. etc.
+-- @param #number Modulation Modulation to use, defaults to radio.modulation.AM.
+-- @param #number Interval Seconds between each update call.
+-- @return #AWACS self
+function AWACS:SetTacticalRadios(BaseFreq,Increase,Modulation,Interval)
+  self:T(self.lid.."SetTacticalRadios")
+  self.TacticalMenu = true
+  self.TacticalBaseFreq = BaseFreq or 130
+  self.TacticalIncrFreq = Increase or 0.5
+  self.TacticalModulation = Modulation or radio.modulation.AM
+  self.TacticalInterval = Interval or 120
+  for i=1,10 do
+    local freq = self.TacticalBaseFreq + ((i-1)*self.TacticalIncrFreq)
+    self.TacticalFrequencies[freq] = freq
+  end
+  return self
+end
+
+
+--- TODO
+function AWACS:_RefreshMenuNonSubscribed()
+  self:T(self.lid.."_RefreshMenuNonSubscribed")
+  local menustr = self.clientmenus:ReadByID(gname)
+  local menu = menustr.tactical -- Core.Menu#MENU_GROUP
+  menu:RemoveSubMenus()
+  for _,_freq in UTILS.spairs(self.TacticalFrequencies) do
+    local modu = UTILS.GetModulationName(self.TacticalModulation)
+    local text = string.format("Subscribe to %.3f %s",_freq,modu)
+    local entry = MENU_GROUP_COMMAND:New(Group,text,menu,self._SubScribeTactRadio,self,Group,_freq) 
+  end
+  return self
+end
+
+--- [Internal] _UnsubScribeTactRadio
+-- @param #AWACS self
+-- @param Wrapper.Group#GROUP Group
+-- @return #AWACS self
+function AWACS:_UnsubScribeTactRadio(Group)
+  self:T(self.lid.."_UnsubScribeTactRadio")
+  local text = ""
+  local textScreen = ""
+  local GID, Outcome = self:_GetManagedGrpID(Group)
+  local gcallsign = self:_GetCallSign(Group,GID) or "Ghost 1"
+  local gname = Group:GetName() or "unknown"
+    
+  if Outcome and self.TacticalSubscribers[gname] then
+    -- Pilot is checked in
+    local Freq = self.TacticalSubscribers[gname]
+    self.TacticalFrequencies[Freq] = Freq
+    self.TacticalSubscribers[gname] = nil
+    local modu = self.TacticalModulation == 0 and "AM" or "FM"
+    text = string.format("%s, %s, switch back to AWACS main frequency!",gcallsign,self.callsigntxt)
+    self:_NewRadioEntry(text,text,GID,true,true,true,false,true)
+    self:_RefreshMenuNonSubscribed()
+  elseif self.AwacsFG then
+    -- no, unknown
+    local nocheckin = self.gettext:GetEntry("NOTCHECKEDIN",self.locale)
+    text = string.format(nocheckin,self:_GetCallSign(Group,GID) or "Ghost 1", self.callsigntxt) 
+    self:_NewRadioEntry(text,text,GID,Outcome,true,true,false)
+  end
+  return self
+end
+
+--- [Internal] _SubScribeTactRadio
+-- @param #AWACS self
+-- @param Wrapper.Group#GROUP Group
+-- @param #number Frequency
+-- @return #AWACS self
+function AWACS:_SubScribeTactRadio(Group,Frequency)
+  self:T(self.lid.."_SubScribeTactRadio")
+  local text = ""
+  local textScreen = ""
+  local GID, Outcome = self:_GetManagedGrpID(Group)
+  local gcallsign = self:_GetCallSign(Group,GID) or "Ghost 1"
+  local gname = Group:GetName() or "unknown"
+    
+  if Outcome then
+    -- Pilot is checked in
+    self.TacticalSubscribers[gname] = Frequency
+    self.TacticalFrequencies[Frequency] = nil
+    local modu = self.TacticalModulation == 0 and "AM" or "FM"
+    text = string.format("%s, %s, switch to %.3f %s for tactical information!",gcallsign,self.callsigntxt,Frequency,modu)
+    self:_NewRadioEntry(text,text,GID,true,true,true,false,true)
+    local menustr = self.clientmenus:ReadByID(gname)
+    local menu = menustr.tactical -- Core.Menu#MENU_GROUP
+    menu:RemoveSubMenus()
+    local entry = MENU_GROUP_COMMAND:New(Group,"Unsubscribe",menu,self._UnsubScribeTactRadio,self,Group) 
+  elseif self.AwacsFG then
+    -- no, unknown
+    local nocheckin = self.gettext:GetEntry("NOTCHECKEDIN",self.locale)
+    text = string.format(nocheckin,self:_GetCallSign(Group,GID) or "Ghost 1", self.callsigntxt) 
+    self:_NewRadioEntry(text,text,GID,Outcome,true,true,false)
+  end
+  
+  return self
+end
 
 --- [Internal] Init localization
 -- @param #AWACS self
@@ -3614,6 +3738,22 @@ function AWACS:_SetClientMenus()
               local friendly = MENU_GROUP_COMMAND:New(cgrp,"Friendly",vid,self._VID,self,cgrp,AWACS.IFF.FRIENDLY)
             end
             
+            local tactical
+            if self.TacticalMenu then
+              tactical = MENU_GROUP:New(cgrp,"Tactical Radio",basemenu)
+              if self.TacticalSubscribers[cgrpname] then
+                -- unsubscribe
+                local entry = MENU_GROUP_COMMAND:New(cgrp,"Unsubscribe",tactical,self._UnsubScribeTactRadio,self,cgrp) 
+              else
+                -- subscribe
+                for _,_freq in UTILS.spairs(self.TacticalFrequencies) do
+                  local modu = UTILS.GetModulationName(self.TacticalModulation)
+                  local text = string.format("Subscribe to %.3f %s",_freq,modu)
+                  local entry = MENU_GROUP_COMMAND:New(cgrp,text,tactical,self._SubScribeTactRadio,self,cgrp,_freq) 
+                end
+              end
+            end
+
             local ainfo = MENU_GROUP_COMMAND:New(cgrp,"Awacs Info",basemenu,self._ShowAwacsInfo,self,cgrp)                
             local checkout = MENU_GROUP_COMMAND:New(cgrp,"Check Out",basemenu,self._CheckOut,self,cgrp)
             
@@ -3631,6 +3771,7 @@ function AWACS:_SetClientMenus()
               unable = unable,
               abort = abort,
               commit=commit,
+              tactical=tactical,
             }
             self.clientmenus:PullByID(cgrpname)
             self.clientmenus:Push(menus,cgrpname)
