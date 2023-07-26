@@ -507,7 +507,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.56", -- #string
+  version = "0.2.57", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -1784,7 +1784,7 @@ function AWACS:_EventHandler(EventData)
         if WeaponDesc.category == 1 then
           Type = "Missile"
           -- AAM  
-          local guidance = WeaponDesc.guidance -- IR=2, Radar Active=3, Radar Semi Active=4, Radar Passive = 5
+          local guidance = WeaponDesc.guidance or 4 -- IR=2, Radar Active=3, Radar Semi Active=4, Radar Passive = 5
           if guidance == 2 then
             warndist = 10
           elseif guidance == 3 then
@@ -3695,11 +3695,17 @@ function AWACS:_CheckOut(Group,GID,dead)
     local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
     local Stack = managedgroup.AnchorStackNo
     local Angels = managedgroup.AnchorStackAngels
+    local GroupName = managedgroup.GroupName
     -- remove menus
     if managedgroup.IsPlayer then
-      if self.clientmenus:HasUniqueID(managedgroup.GroupName) then
-        local menus = self.clientmenus:PullByID(managedgroup.GroupName) --#AWACS.MenuStructure
+      if self.clientmenus:HasUniqueID(GroupName) then
+        local menus = self.clientmenus:PullByID(GroupName) --#AWACS.MenuStructure
         menus.basemenu:Remove()
+        if self.TacticalSubscribers[GroupName] then
+          local Freq = self.TacticalSubscribers[GroupName]
+          self.TacticalFrequencies[Freq] = Freq
+          self.TacticalSubscribers[GroupName] = nil
+        end
       end
     end
     -- delete open tasks
