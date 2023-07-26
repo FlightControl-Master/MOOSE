@@ -777,7 +777,7 @@ end
 --- Remove a holding pattern.
 -- @param #FLIGHTCONTROL self
 -- @param #FLIGHTCONTROL.HoldingPattern HoldingPattern Holding pattern to be removed.
--- @param #FLIGHTCONTROL self
+-- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:RemoveHoldingPattern(HoldingPattern)
 
   for i,_holdingpattern in pairs(self.holdingpatterns) do
