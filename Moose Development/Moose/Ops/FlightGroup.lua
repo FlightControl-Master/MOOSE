@@ -4206,11 +4206,13 @@ function FLIGHTGROUP:GetClosestAirbase()
     
     local coord=group:GetCoordinate()
     local coalition=self:GetCoalition()
-  
-    local airbase=coord:GetClosestAirbase() --(nil, coalition)
-    
-    return airbase
-  
+
+    if coord then
+        local airbase=coord:GetClosestAirbase() --(nil, coalition)
+        return airbase
+    else
+        return nil
+    end
   else
   
     return nil
