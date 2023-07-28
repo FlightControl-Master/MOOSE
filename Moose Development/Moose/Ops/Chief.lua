@@ -1485,6 +1485,17 @@ function CHIEF:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
   return zone
 end
 
+--- Remove a GCI CAP
+-- @param #CHIEF self
+-- @param Core.Zone#ZONE Zone Zone, where the flight orbits.
+function CHIEF:RemoveGciCapZone(Zone)
+
+  -- Hand over to commander.
+  local zone=self.commander:RemoveGciCapZone(Zone)
+
+  return zone
+end
+
 --- Add an AWACS zone.
 -- @param #CHIEF self
 -- @param Core.Zone#ZONE Zone Zone.
