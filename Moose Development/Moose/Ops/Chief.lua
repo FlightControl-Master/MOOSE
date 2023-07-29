@@ -1501,6 +1501,17 @@ function CHIEF:AddAwacsZone(Zone, Altitude, Speed, Heading, Leg)
   return zone
 end
 
+--- Remove a AWACS zone.
+-- @param #CHIEF self
+-- @param Core.Zone#ZONE Zone Zone, where the flight orbits.
+function CHIEF:RemoveAwacsZone(Zone)
+
+  -- Hand over to commander.
+  local zone=self.commander:RemoveAwacsZone(Zone)
+
+  return zone
+end
+
 --- Add a refuelling tanker zone.
 -- @param #CHIEF self
 -- @param Core.Zone#ZONE Zone Zone.
@@ -1518,6 +1529,16 @@ function CHIEF:AddTankerZone(Zone, Altitude, Speed, Heading, Leg, RefuelSystem)
   return zone
 end
 
+--- Remove a refuelling tanker zone.
+-- @param #CHIEF self
+-- @param Core.Zone#ZONE Zone Zone, where the flight orbits.
+function CHIEF:RemoveTankerZone(Zone)
+
+  -- Hand over to commander.
+  local zone=self.commander:RemoveTankerZone(Zone)
+
+  return zone
+end
 
 --- Set border zone set, defining your territory.
 -- 
