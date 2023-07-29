@@ -2483,6 +2483,15 @@ function PLAYERTASKCONTROLLER:_CheckTaskQueue()
         self:T("*****Removing player " .. _id)
         self.TasksPerPlayer:PullByID(_id)
       end
+      local clients=task:GetClientObjects()
+      for _,client in pairs(clients) do
+        self:_RemoveMenuEntriesForTask(task,client)
+        --self:_SwitchMenuForClient(client,"Info")
+      end
+      for _,client in pairs(clients) do
+       -- self:_RemoveMenuEntriesForTask(Task,client)
+        self:_SwitchMenuForClient(client,"Info",5)
+      end
       -- Follow-up tasks?
       local nexttasks = {}
       if task.FinalState == "Success" then
