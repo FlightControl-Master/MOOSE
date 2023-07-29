@@ -327,6 +327,15 @@ function FLIGHTGROUP:New(group)
 
   -- TODO: Add pseudo functions.
 
+  --- FSM Function OnAfterLandAtAirbase
+  -- @function [parent=#FLIGHTGROUP] OnAfterLandAtAirbase
+  -- @param #FLIGHTGROUP self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Airbase#AIRBASE Airbase.
+  -- @return #FLIGHTGROUP self
+
   -- Handle events:
   self:HandleEvent(EVENTS.Birth,           self.OnEventBirth)
   self:HandleEvent(EVENTS.EngineStartup,   self.OnEventEngineStartup)
