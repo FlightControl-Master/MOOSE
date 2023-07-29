@@ -1517,6 +1517,23 @@ function AWACS:_SubScribeTactRadio(Group,Frequency)
   return self
 end
 
+--- [Internal] _CheckSubscribers
+-- @param #AWACS self
+-- @return #AWACS self
+function AWACS:_CheckSubscribers()
+   self:T(self.lid.."_InitLocalization")
+   
+   for _name,_freq in pairs(self.TacticalSubscribers or {}) do
+    local grp = GROUP:FindByName(_name)
+    if (not grp) or (not grp:IsAlive()) then
+      self.TacticalFrequencies[_freq] = _freq
+      self.TacticalSubscribers[_name] = nil
+    end
+   end
+   
+   return self
+end
+
 --- [Internal] Init localization
 -- @param #AWACS self
 -- @return #AWACS self
@@ -6179,6 +6196,8 @@ function AWACS:onafterStatus(From, Event, To)
     self:_CleanUpContacts()
     
     self:_CheckMerges()
+    
+    self:_CheckSubscribers()
     
     local outcome, targets = self:_TargetSelectionProcess(true)
     
