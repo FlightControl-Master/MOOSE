@@ -1,5 +1,5 @@
 {
-    "Lua.workspace.preloadFileSize": 1000,
+    "Lua.workspace.preloadFileSize": 10000,
     "Lua.diagnostics.disable": [
         "undefined-doc-name",
         "duplicate-set-field",
@@ -8,7 +8,10 @@
         "ambiguity-1",
         "undefined-doc-param",
         "redundant-parameter",
-        "param-type-mismatch"
+        "param-type-mismatch",
+        "deprecated",
+        "undefined-global",
+        "lowercase-global"
     ],
     "Lua.diagnostics.globals": [
         "BASE",

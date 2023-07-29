@@ -98,7 +98,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.18"
+PLAYERTASK.version="0.1.19"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -3594,28 +3594,28 @@ function PLAYERTASKCONTROLLER:_RemoveMenuEntriesForTask(Task,Client)
   if Task then
     if Task.UUIDS and self.JoinTaskMenuTemplate then
       --self:I("***** JoinTaskMenuTemplate")
-      UTILS.PrintTableToLog(Task.UUIDS)
+      --UTILS.PrintTableToLog(Task.UUIDS)
       local controller = self.JoinTaskMenuTemplate
       for _,_uuid in pairs(Task.UUIDS) do
         local Entry = controller:FindEntryByUUID(_uuid)
         if Entry then
           controller:DeleteF10Entry(Entry,Client)
           controller:DeleteGenericEntry(Entry)
-          UTILS.PrintTableToLog(controller.menutree)
+          --UTILS.PrintTableToLog(controller.menutree)
         end
       end
     end
 
     if Task.AUUIDS and self.ActiveTaskMenuTemplate then
       --self:I("***** ActiveTaskMenuTemplate")
-      UTILS.PrintTableToLog(Task.AUUIDS)
+      --UTILS.PrintTableToLog(Task.AUUIDS)
       for _,_uuid in pairs(Task.AUUIDS) do
         local controller = self.ActiveTaskMenuTemplate
         local Entry = controller:FindEntryByUUID(_uuid)
         if Entry then
           controller:DeleteF10Entry(Entry,Client)
           controller:DeleteGenericEntry(Entry)
-          UTILS.PrintTableToLog(controller.menutree)
+          --UTILS.PrintTableToLog(controller.menutree)
         end
       end
     end
@@ -4209,6 +4209,15 @@ function PLAYERTASKCONTROLLER:onafterTaskFailed(From, Event, To, Task)
   if self.UseSRS then
     taskname = string.format(failtxttts, self.MenuName or self.Name, Task.PlayerTaskNr, tostring(Task.TTSType))
     self.SRSQueue:NewTransmission(taskname,nil,self.SRS,nil,2)
+  end
+  local clients=Task:GetClientObjects()
+  for _,client in pairs(clients) do
+    self:_RemoveMenuEntriesForTask(Task,client)
+    --self:_SwitchMenuForClient(client,"Info")
+  end
+  for _,client in pairs(clients) do
+   -- self:_RemoveMenuEntriesForTask(Task,client)
+    self:_SwitchMenuForClient(client,"Info",5)
   end
   return self
 end
