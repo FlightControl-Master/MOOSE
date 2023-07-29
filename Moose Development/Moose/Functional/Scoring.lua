@@ -1420,7 +1420,7 @@ function SCORING:ReportDetailedPlayerHits( PlayerName )
           Penalty = Penalty + UnitData.Penalty
           PenaltyHit = UnitData.PenaltyHit
         end
-        local ScoreMessageHit = string.format( "%s:%d  ", CategoryName, Score - Penalty )
+        local ScoreMessageHit = string.format( "%s: %d  ", CategoryName, Score - Penalty )
         self:T( ScoreMessageHit )
         ScoreMessageHits = ScoreMessageHits .. ScoreMessageHit
         PlayerScore = PlayerScore + Score
@@ -1476,7 +1476,7 @@ function SCORING:ReportDetailedPlayerDestroys( PlayerName )
           end
         end
 
-        local ScoreMessageDestroy = string.format( "  %s:%d  ", CategoryName, Score - Penalty )
+        local ScoreMessageDestroy = string.format( "  %s: %d  ", CategoryName, Score - Penalty )
         self:T( ScoreMessageDestroy )
         ScoreMessageDestroys = ScoreMessageDestroys .. ScoreMessageDestroy
 
