@@ -2177,7 +2177,7 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_EventHandler(EventData)
   self:T(self.lid.."_EventHandler: "..EventData.id)
-  self:T(self.lid.."_EventHandler: "..EventData.IniPlayerName)
+  --self:T(self.lid.."_EventHandler: "..EventData.IniPlayerName)
   if EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
     if EventData.IniPlayerName then
       self:T(self.lid.."Event for player: "..EventData.IniPlayerName)

@@ -1613,7 +1613,7 @@ function AWACS:_NewRadioEntry(TextTTS, TextScreen,GID,IsGroup,ToScreen,IsNew,Fro
   local RadioEntry = {} -- #AWACS.RadioEntry
   RadioEntry.IsNew = IsNew
   RadioEntry.TextTTS = TextTTS
-  RadioEntry.TextScreen = TextScreen
+  RadioEntry.TextScreen = TextScreen or TextTTS
   RadioEntry.GroupID = GID
   RadioEntry.ToScreen = ToScreen 
   RadioEntry.Duration = STTS.getSpeechTime(TextTTS,0.95,false) or 8
