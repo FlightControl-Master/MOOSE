@@ -71,6 +71,8 @@ FLIGHTPLAN.version="0.0.1"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: A lot...
+-- TODO: How to handle the FLIGHTGROUP:_LandAtAirBase
+-- TODO: Do we always need a holding pattern
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -82,29 +84,18 @@ FLIGHTPLAN.version="0.0.1"
 -- @param #string SceneryName Name of the scenery object.
 -- @param #string Type Type of Navaid.
 -- @return #FLIGHTPLAN self
-function FLIGHTPLAN:New(ZoneName, SceneryName, Type)
+function FLIGHTPLAN:New(Name)
 
   -- Inherit everything from SCENERY class.
   self=BASE:Inherit(self, BASE:New()) -- #FLIGHTPLAN
 
-
-  self.zone=ZONE:FindByName(ZoneName)  
+  -- Set alias.
+  self.alias=tostring(Name)
   
-  self.coordinate=self.zone:GetCoordinate()
-  
-  if SceneryName then
-    self.scenery=SCENERY:FindByNameInZone(SceneryName, ZoneName)
-    if not self.scenery then
-      self:E("ERROR: Could not find scenery object %s in zone %s", SceneryName, ZoneName)
-    end
-  end
-  
-  self.alias=string.format("%s %s %s", tostring(ZoneName), tostring(SceneryName), tostring(Type))
-  
-
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("FLIGHTPLAN %s | ", self.alias)
   
+  -- Debug info.
   self:I(self.lid..string.format("Created FLIGHTPLAN!"))
 
   return self
@@ -125,42 +116,6 @@ function FLIGHTPLAN:SetFrequency(Frequency)
   return self
 end
 
---- Set channel.
--- @param #FLIGHTPLAN self
--- @param #number Channel
--- @param #string Band
--- @return #FLIGHTPLAN self
-function FLIGHTPLAN:SetChannel(Channel, Band)
-
-  self.channel=Channel
-  self.band=Band
-
-  return self
-end
-
---- Add marker the FLIGHTPLAN on the F10 map.
--- @param #FLIGHTPLAN self
--- @return #FLIGHTPLAN self
-function FLIGHTPLAN:AddMarker()
-
-  local text=string.format("I am a FLIGHTPLAN!")
-  
-  self.markID=self.coordinate:MarkToAll(text, true)
-
-  return self
-end
-
---- Remove marker of the FLIGHTPLAN from the F10 map.
--- @param #FLIGHTPLAN self
--- @return #FLIGHTPLAN self
-function FLIGHTPLAN:DelMarker()
-
-  if self.markID then
-    UTILS.RemoveMark(self.markID)
-  end
-
-  return self
-end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Private Functions
