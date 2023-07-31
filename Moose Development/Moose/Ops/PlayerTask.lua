@@ -1656,13 +1656,6 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   local starttime = math.random(5,10)
   self:__Status(starttime)
   
-  -- Player leaves
-  self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventHandler)
-  self:HandleEvent(EVENTS.Ejection, self._EventHandler)
-  self:HandleEvent(EVENTS.Crash, self._EventHandler)
-  self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
-  self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
-  
   self:I(self.lid..self.version.." Started.")
   
   return self
@@ -4072,6 +4065,12 @@ function PLAYERTASKCONTROLLER:onafterStart(From, Event, To)
   self:T(self.lid.."onafterStart")
   self:_CreateJoinMenuTemplate()
   self:_CreateActiveTaskMenuTemplate()
+  -- Player Events
+  self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventHandler)
+  self:HandleEvent(EVENTS.Ejection, self._EventHandler)
+  self:HandleEvent(EVENTS.Crash, self._EventHandler)
+  self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
+  self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)                  
   return self
 end
 
