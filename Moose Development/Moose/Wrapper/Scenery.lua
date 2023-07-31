@@ -128,7 +128,7 @@ function SCENERY:FindByName(Name, Coordinate, Radius)
   -- @param #number radius
   -- @param #string name
   local function SceneryScan(coordinate, radius, name)
-    if coordinate ~= nil then
+    if coordinate ~= nil then   
       local scenerylist = coordinate:ScanScenery(radius)
       local rscenery = nil
       for _,_scenery in pairs(scenerylist) do
@@ -157,14 +157,14 @@ end
 --@param Core.Zone#ZONE Zone Where to find the scenery object. Can be handed as zone name.
 --@param #number Radius (optional) Search radius around coordinate, defaults to 100
 --@return #SCENERY Scenery Object or `nil` if it cannot be found
-function SCENERY:FindByNameInZone(Name, Zone, Radius)   
+function SCENERY:FindByNameInZone(Name, Zone, Radius)
   local radius = Radius or 100
   local name = Name or "unknown"
   if type(Zone) == "string" then
     Zone = ZONE:FindByName(Zone)
   end
   local coordinate = Zone:GetCoordinate()
-  return self:FindByName(Name,coordinate,Radius)  
+  return self:FindByName(Name,coordinate,Radius)
 end
 
 --- Find a SCENERY object from its zone name. Since SCENERY isn't registered in the Moose database (just too many objects per map), we need to do a scan first

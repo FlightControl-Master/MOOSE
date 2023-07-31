@@ -107,6 +107,9 @@ Ops/FlightControl.lua
 Ops/PlayerTask.lua
 Ops/PlayerRecce.lua
 
+Navigation/Navaid.lua
+Navigation/FlightPlan.lua
+
 AI/AI_Balancer.lua
 AI/AI_Air.lua
 AI/AI_Air_Patrol.lua

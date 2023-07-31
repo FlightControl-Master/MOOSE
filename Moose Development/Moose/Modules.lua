@@ -115,6 +115,9 @@ __Moose.Include( 'Scripts/Moose/Ops/RescueHelo.lua' )
 __Moose.Include( 'Scripts/Moose/Ops/Squadron.lua' )
 __Moose.Include( 'Scripts/Moose/Ops/Target.lua' )
 
+__Moose.Include( 'Scripts/Moose/Navigation/Navaid.lua' )
+__Moose.Include( 'Scripts/Moose/Navigation/FlightPlan.lua' )
+
 __Moose.Include( 'Scripts/Moose/AI/AI_Balancer.lua' )
 __Moose.Include( 'Scripts/Moose/AI/AI_Air.lua' )
 __Moose.Include( 'Scripts/Moose/AI/AI_Air_Patrol.lua' )

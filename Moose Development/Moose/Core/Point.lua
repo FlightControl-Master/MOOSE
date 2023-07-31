@@ -676,7 +676,7 @@ do -- COORDINATE
     local _,_,_,_,_,scenerys=self:ScanObjects(radius, false, false, true)
 
     local set={}
-
+    
     for _,_scenery in pairs(scenerys) do
       local scenery=_scenery --DCS#Object
 
