@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update June 2023
+-- @date Last Update July 2023
 
 
 do
@@ -1656,13 +1656,6 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   local starttime = math.random(5,10)
   self:__Status(starttime)
   
-  -- Player leaves
-  self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventHandler)
-  self:HandleEvent(EVENTS.Ejection, self._EventHandler)
-  self:HandleEvent(EVENTS.Crash, self._EventHandler)
-  self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
-  self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
-  
   self:I(self.lid..self.version.." Started.")
   
   return self
@@ -2177,7 +2170,7 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_EventHandler(EventData)
   self:T(self.lid.."_EventHandler: "..EventData.id)
---  self:T(self.lid.."_EventHandler: "..EventData.IniPlayerName)
+  --self:T(self.lid.."_EventHandler: "..EventData.IniPlayerName)
   if EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
     if EventData.IniPlayerName then
       self:T(self.lid.."Event for player: "..EventData.IniPlayerName)
@@ -4072,6 +4065,12 @@ function PLAYERTASKCONTROLLER:onafterStart(From, Event, To)
   self:T(self.lid.."onafterStart")
   self:_CreateJoinMenuTemplate()
   self:_CreateActiveTaskMenuTemplate()
+  -- Player Events
+  self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventHandler)
+  self:HandleEvent(EVENTS.Ejection, self._EventHandler)
+  self:HandleEvent(EVENTS.Crash, self._EventHandler)
+  self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
+  self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)                  
   return self
 end
 
