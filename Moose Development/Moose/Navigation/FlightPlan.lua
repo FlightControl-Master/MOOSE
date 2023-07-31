@@ -72,7 +72,7 @@ FLIGHTPLAN.version="0.0.1"
 
 -- TODO: A lot...
 -- TODO: How to handle the FLIGHTGROUP:_LandAtAirBase
--- TODO: Do we always need a holding pattern
+-- TODO: Do we always need a holding pattern? https://www.faa.gov/air_traffic/publications/atpubs/aip_html/part2_enr_section_1.5.html#:~:text=If%20no%20holding%20pattern%20is,than%20that%20desired%20by%20ATC.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
