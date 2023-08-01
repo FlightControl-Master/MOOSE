@@ -9,7 +9,7 @@
 -- ===
 -- 
 -- @module Wrapper.Scenery
--- @image Wrapper_Scenery.JPG+
+-- @image Wrapper_Scenery.JPG
 
 
 --- SCENERY Class
