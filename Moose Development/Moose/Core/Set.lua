@@ -46,7 +46,8 @@
 -- @image Core_Sets.JPG
 
 do -- SET_BASE
-
+  
+  ---
   -- @type SET_BASE
   -- @field #table Filter Table of filters.
   -- @field #table Set Table of objects.
@@ -242,7 +243,7 @@ do -- SET_BASE
   function SET_BASE:Add( ObjectName, Object )
   
     -- Debug info.
-    self:T( { ObjectName = ObjectName, Object = Object } )
+    self:T2( { ObjectName = ObjectName, Object = Object } )
 
     -- Ensure that the existing element is removed from the Set before a new one is inserted to the Set
     if self.Set[ObjectName] then
@@ -257,6 +258,8 @@ do -- SET_BASE
 
     -- Trigger Added event.
     self:Added( ObjectName, Object )
+    
+    return self
   end
 
   --- Adds a @{Core.Base#BASE} object in the @{Core.Set#SET_BASE}, using the Object Name as the index.
@@ -1948,7 +1951,7 @@ do
     if self.Filter.Zones then
       local MGroupZone = false
       for ZoneName, Zone in pairs( self.Filter.Zones ) do
-        --self:I( "Zone:", ZoneName )
+        --self:T( "Zone:", ZoneName )
         if MGroup:IsInZone(Zone) then
           MGroupZone = true
         end
@@ -2014,7 +2017,8 @@ do
 end
 
 do -- SET_UNIT
-
+  
+  ---
   -- @type SET_UNIT
   -- @field Core.Timer#TIMER ZoneTimer
   -- @field #number ZoneTimerInterval
@@ -3194,7 +3198,8 @@ do -- SET_UNIT
 end
 
 do -- SET_STATIC
-
+  
+  ---
   -- @type SET_STATIC
   -- @extends Core.Set#SET_BASE
 
@@ -4463,7 +4468,7 @@ do -- SET_CLIENT
         if self.Filter.Active == false or (self.Filter.Active == true and MClient:IsActive() == true and MClient:IsAlive() == true) then
           MClientActive = true
         end
-        --self:I( { "Evaluated Active", MClientActive } )
+        --self:T( { "Evaluated Active", MClientActive } )
         MClientInclude = MClientInclude and MClientActive
       end
 
@@ -4545,7 +4550,7 @@ do -- SET_CLIENT
 		if self.Filter.Playernames then
 			local MClientPlayername = false
 			local playername = MClient:GetPlayerName() or "Unknown"
-			--self:I(playername)
+			--self:T(playername)
 			for _,_Playername in pairs(self.Filter.Playernames) do
 				if playername and string.find(playername,_Playername) then
 					MClientPlayername = true
@@ -4558,7 +4563,7 @@ do -- SET_CLIENT
 		if self.Filter.Callsigns then
 			local MClientCallsigns = false
 			local callsign = MClient:GetCallsign()
-			--self:I(callsign)
+			--self:T(callsign)
 			for _,_Callsign in pairs(self.Filter.Callsigns) do
 				if callsign and string.find(callsign,_Callsign) then
 					MClientCallsigns = true
@@ -4577,6 +4582,7 @@ end
 
 do -- SET_PLAYER
 
+  ---
   -- @type SET_PLAYER
   -- @extends Core.Set#SET_BASE
 
@@ -5002,7 +5008,8 @@ do -- SET_PLAYER
 end
 
 do -- SET_AIRBASE
-
+  
+  ---
   -- @type SET_AIRBASE
   -- @extends Core.Set#SET_BASE
 
@@ -5345,7 +5352,8 @@ do -- SET_AIRBASE
 end
 
 do -- SET_CARGO
-
+  
+  ---
   -- @type SET_CARGO
   -- @extends Core.Set#SET_BASE
 
@@ -5771,7 +5779,8 @@ do -- SET_CARGO
 end
 
 do -- SET_ZONE
-
+  
+  ---
   -- @type SET_ZONE
   -- @extends Core.Set#SET_BASE
 
@@ -6139,7 +6148,8 @@ do -- SET_ZONE
 end
 
 do -- SET_ZONE_GOAL
-
+  
+  ---
   -- @type SET_ZONE_GOAL
   -- @extends Core.Set#SET_BASE
 
@@ -6450,7 +6460,8 @@ do -- SET_ZONE_GOAL
 end
 
 do -- SET_OPSZONE
-
+  
+  ---
   -- @type SET_OPSZONE
   -- @extends Core.Set#SET_BASE
 
@@ -6907,7 +6918,8 @@ end
 
 
 do -- SET_OPSGROUP
-
+  
+  ---
   -- @type SET_OPSGROUP
   -- @extends Core.Set#SET_BASE
 
@@ -7575,6 +7587,7 @@ do -- SET_SCENERY
     Scenerys = {},
     Filter = {
       SceneryPrefixes = nil,
+      SceneryRoles = nil,
       Zones = nil,
     },
   }
@@ -7597,7 +7610,7 @@ do -- SET_SCENERY
     
     if ZoneSet then
       for _,_zone in pairs(ZoneSet.Set) do
-         self:T("Zone type handed: "..tostring(_zone.ClassName))
+        self:T("Zone type handed: "..tostring(_zone.ClassName))
         table.insert(zonenames,_zone:GetName())
       end   
       self:AddSceneryByName(zonenames)
@@ -7691,6 +7704,7 @@ do -- SET_SCENERY
     end
     for _,Zone in pairs( zones ) do
       local zonename = Zone:GetName()
+      self:T(zonename)
       self.Filter.Zones[zonename] = Zone
     end
     return self
@@ -7709,11 +7723,30 @@ do -- SET_SCENERY
       Prefixes = { Prefixes }
     end
     for PrefixID, Prefix in pairs( Prefixes ) do
+      --self:T(Prefix)
       self.Filter.SceneryPrefixes[Prefix] = Prefix
     end
     return self
   end
-
+  
+  --- Builds a set of SCENERYs that **contain** an exact match of the "ROLE" property.
+  -- @param #SET_SCENERY self
+  -- @param #string Role The string pattern(s) that needs to exactly match the scenery "ROLE" property from the ME quad-zone properties. Can also be passed as a `#table` of strings.
+  -- @return #SET_SCENERY self
+  function SET_SCENERY:FilterRoles( Role )
+    if not self.Filter.SceneryRoles then
+      self.Filter.SceneryRoles = {}
+    end
+    if type( Role ) ~= "table" then
+      Role = { Role }
+    end
+    for PrefixID, Prefix in pairs( Role ) do
+      --self:T(Prefix)
+      self.Filter.SceneryRoles[Prefix] = Prefix
+    end
+    return self
+  end
+  
   --- Iterate the SET_SCENERY and count how many SCENERYSs are alive.
   -- @param #SET_SCENERY self
   -- @return #number The number of SCENERYSs alive.
@@ -7806,9 +7839,75 @@ do -- SET_SCENERY
   -- @param Wrapper.Scenery#SCENERY MScenery
   -- @return #SET_SCENERY self
   function SET_SCENERY:IsIncludeObject( MScenery )
-    self:F2( MScenery )
-  return true
+    self:T( MScenery.SceneryName )
+
+    local MSceneryInclude = true
+    
+    if MScenery then
+      local MSceneryName = MScenery:GetName()
+      
+      -- Filter Prefixes
+      if self.Filter.Prefixes then
+        local MSceneryPrefix = false
+        for ZonePrefixId, ZonePrefix in pairs( self.Filter.Prefixes ) do
+          self:T( { "Prefix:", string.find( MSceneryName, ZonePrefix, 1 ), ZonePrefix } )
+          if string.find( MSceneryName, ZonePrefix, 1 ) then
+            MSceneryPrefix = true
+          end
+        end
+        self:T( { "Evaluated Prefix", MSceneryPrefix } )
+        MSceneryInclude = MSceneryInclude and MSceneryPrefix
+      end
+      
+      if self.Filter.Zones then
+        local MSceneryZone = false
+        for ZoneName, Zone in pairs( self.Filter.Zones ) do
+          --self:T( "Zone:", ZoneName )
+          local coord = MScenery:GetCoordinate()
+          if coord and Zone:IsCoordinateInZone(coord) then
+            MSceneryZone = true
+          end
+          self:T( { "Evaluated Zone", MSceneryZone } )
+        end
+        MSceneryInclude = MSceneryInclude and MSceneryZone
+      end
+
+      -- Filter Roles
+      if self.Filter.SceneryRoles then
+        local MSceneryRole = false
+        local Role = MScenery:GetProperty("ROLE") or "none"
+        for ZoneRoleId, ZoneRole in pairs( self.Filter.SceneryRoles ) do
+          self:T( { "Role:", ZoneRole, Role } )
+          if ZoneRole == Role then
+            MSceneryRole = true
+          end
+        end
+        self:T( { "Evaluated Role ", MSceneryRole } )
+        MSceneryInclude = MSceneryInclude and MSceneryRole
+      end
+    end
+
+    self:T2( MSceneryInclude )
+    return MSceneryInclude
   end
+  
+  --- Filters for the defined collection.
+  -- @param #SET_SCENERY self
+  -- @return #SET_SCENERY self
+  function SET_SCENERY:FilterOnce()
+
+    for ObjectName, Object in pairs( self:GetSet() ) do
+      self:T(ObjectName)
+      if self:IsIncludeObject( Object ) then
+        self:Add( ObjectName, Object )
+      else
+        self:Remove(ObjectName, true)
+      end
+    end
+
+    return self --FilteredSet
+  end
+  
   
   --- Count overall initial (Life0) lifepoints of the SET objects.
   -- @param #SET_SCENERY self
