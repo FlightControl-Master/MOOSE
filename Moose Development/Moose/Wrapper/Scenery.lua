@@ -178,7 +178,7 @@ function SCENERY:FindByZoneName( ZoneName )
   zone = ZONE:FindByName(ZoneName) 
   end
   local _id = zone:GetProperty('OBJECT ID')
-  BASE:T("Object ID ".._id)
+  --BASE:T("Object ID ".._id)
   if not _id then
     -- this zone has no object ID
     BASE:E("**** Zone without object ID: "..ZoneName.." | Type: "..tostring(zone.ClassName))
