@@ -46,8 +46,9 @@
 -- @image Core_Sets.JPG
 
 do -- SET_BASE
-
-  --- @type SET_BASE
+  
+  ---
+  -- @type SET_BASE
   -- @field #table Filter Table of filters.
   -- @field #table Set Table of objects.
   -- @field #table Index Table of indices.
@@ -578,8 +579,8 @@ do -- SET_BASE
   end
 
   ----- Private method that registers all alive players in the mission.
-  ---- @param #SET_BASE self
-  ---- @return #SET_BASE self
+  -- @param #SET_BASE self
+  -- @return #SET_BASE self
   -- function SET_BASE:_RegisterPlayers()
   --
   --  local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
@@ -796,8 +797,8 @@ do -- SET_BASE
 
 
   ----- Iterate the SET_BASE and call an iterator function for each **alive** unit, providing the Unit and optional parameters.
-  ---- @param #SET_BASE self
-  ---- @param #function IteratorFunction The function that will be called when there is an alive unit in the SET_BASE. The function needs to accept a UNIT parameter.
+  -- @param #SET_BASE self
+  -- @param #function IteratorFunction The function that will be called when there is an alive unit in the SET_BASE. The function needs to accept a UNIT parameter.
   ---- @return #SET_BASE self
   -- function SET_BASE:ForEachDCSUnitAlive( IteratorFunction, ... )
   --  self:F3( arg )
@@ -808,8 +809,8 @@ do -- SET_BASE
   -- end
   --
   ----- Iterate the SET_BASE and call an iterator function for each **alive** player, providing the Unit of the player and optional parameters.
-  ---- @param #SET_BASE self
-  ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_BASE. The function needs to accept a UNIT parameter.
+  -- @param #SET_BASE self
+  -- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_BASE. The function needs to accept a UNIT parameter.
   ---- @return #SET_BASE self
   -- function SET_BASE:ForEachPlayer( IteratorFunction, ... )
   --  self:F3( arg )
@@ -821,8 +822,8 @@ do -- SET_BASE
   --
   --
   ----- Iterate the SET_BASE and call an iterator function for each client, providing the Client to the function and optional parameters.
-  ---- @param #SET_BASE self
-  ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_BASE. The function needs to accept a CLIENT parameter.
+  -- @param #SET_BASE self
+  -- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_BASE. The function needs to accept a CLIENT parameter.
   ---- @return #SET_BASE self
   -- function SET_BASE:ForEachClient( IteratorFunction, ... )
   --  self:F3( arg )
@@ -901,9 +902,12 @@ do -- SET_BASE
 
 end
 
-do -- SET_GROUP
+do 
 
-  --- @type SET_GROUP #SET_GROUP
+  -- SET_GROUP
+  
+  ---
+  -- @type SET_GROUP #SET_GROUP
   -- @field Core.Timer#TIMER ZoneTimer
   -- @field #number ZoneTimerInterval
   -- @extends Core.Set#SET_BASE
@@ -1568,7 +1572,7 @@ do -- SET_GROUP
     self:F2( arg )
 
     self:ForEach( IteratorFunction, arg, self:GetSet(),
-      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Group#GROUP GroupObject
       function( ZoneObject, GroupObject )
         if GroupObject:IsCompletelyInZone( ZoneObject ) then
@@ -1590,7 +1594,7 @@ do -- SET_GROUP
     self:F2( arg )
 
     self:ForEach( IteratorFunction, arg, self:GetSet(),
-      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Group#GROUP GroupObject
       function( ZoneObject, GroupObject )
         if GroupObject:IsPartlyInZone( ZoneObject ) then
@@ -1612,7 +1616,7 @@ do -- SET_GROUP
     self:F2( arg )
 
     self:ForEach( IteratorFunction, arg, self:GetSet(),
-      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Group#GROUP GroupObject
       function( ZoneObject, GroupObject )
         if GroupObject:IsNotInZone( ZoneObject ) then
@@ -1659,7 +1663,7 @@ do -- SET_GROUP
     self:F2( arg )
 
     self:ForEach( IteratorFunction, arg, self:GetSet(),
-      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Group#GROUP GroupObject
       function( ZoneObject, GroupObject )
         if GroupObject:IsAnyInZone( ZoneObject ) then
@@ -1857,8 +1861,8 @@ do -- SET_GROUP
   end
 
   ----- Iterate the SET_GROUP and call an iterator function for each **alive** player, providing the Group of the player and optional parameters.
-  ---- @param #SET_GROUP self
-  ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a GROUP parameter.
+  -- @param #SET_GROUP self
+  -- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a GROUP parameter.
   ---- @return #SET_GROUP self
   -- function SET_GROUP:ForEachPlayer( IteratorFunction, ... )
   --  self:F2( arg )
@@ -1870,8 +1874,8 @@ do -- SET_GROUP
   --
   --
   ----- Iterate the SET_GROUP and call an iterator function for each client, providing the Client to the function and optional parameters.
-  ---- @param #SET_GROUP self
-  ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a CLIENT parameter.
+  -- @param #SET_GROUP self
+  -- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a CLIENT parameter.
   ---- @return #SET_GROUP self
   -- function SET_GROUP:ForEachClient( IteratorFunction, ... )
   --  self:F2( arg )
@@ -2011,8 +2015,9 @@ do -- SET_GROUP
 end
 
 do -- SET_UNIT
-
-  --- @type SET_UNIT
+  
+  ---
+  -- @type SET_UNIT
   -- @field Core.Timer#TIMER ZoneTimer
   -- @field #number ZoneTimerInterval
   -- @extends Core.Set#SET_BASE
@@ -2672,7 +2677,7 @@ do -- SET_UNIT
     self:F2( arg )
 
     self:ForEach( IteratorFunction, arg, self:GetSet(),
-      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Unit#UNIT UnitObject
       function( ZoneObject, UnitObject )
         if UnitObject:IsInZone( ZoneObject ) then
@@ -2694,7 +2699,7 @@ do -- SET_UNIT
     self:F2( arg )
 
     self:ForEach( IteratorFunction, arg, self:GetSet(),
-      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Unit#UNIT UnitObject
       function( ZoneObject, UnitObject )
         if UnitObject:IsNotInZone( ZoneObject ) then
@@ -3011,8 +3016,8 @@ do -- SET_UNIT
 
 
   ----- Iterate the SET_UNIT and call an iterator function for each **alive** player, providing the Unit of the player and optional parameters.
-  ---- @param #SET_UNIT self
-  ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a UNIT parameter.
+  -- @param #SET_UNIT self
+  -- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a UNIT parameter.
   ---- @return #SET_UNIT self
   -- function SET_UNIT:ForEachPlayer( IteratorFunction, ... )
   --  self:F2( arg )
@@ -3024,8 +3029,8 @@ do -- SET_UNIT
   --
   --
   ----- Iterate the SET_UNIT and call an iterator function for each client, providing the Client to the function and optional parameters.
-  ---- @param #SET_UNIT self
-  ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a CLIENT parameter.
+  -- @param #SET_UNIT self
+  -- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a CLIENT parameter.
   ---- @return #SET_UNIT self
   -- function SET_UNIT:ForEachClient( IteratorFunction, ... )
   --  self:F2( arg )
@@ -3040,7 +3045,7 @@ do -- SET_UNIT
   -- @param Wrapper.Unit#UNIT MUnit
   -- @return #SET_UNIT self
   function SET_UNIT:IsIncludeObject( MUnit )
-    self:F2( MUnit )
+    self:F2( {MUnit} )
 
     local MUnitInclude = false
 
@@ -3191,8 +3196,9 @@ do -- SET_UNIT
 end
 
 do -- SET_STATIC
-
-  --- @type SET_STATIC
+  
+  ---
+  -- @type SET_STATIC
   -- @extends Core.Set#SET_BASE
 
   --- Mission designers can use the SET_STATIC class to build sets of Statics belonging to certain:
@@ -3612,7 +3618,7 @@ do -- SET_STATIC
     self:F2( arg )
 
     self:ForEach( IteratorFunction, arg, self:GetSet(),
-      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Static#STATIC StaticObject
       function( ZoneObject, StaticObject )
         if StaticObject:IsInZone( ZoneObject ) then
@@ -3634,7 +3640,7 @@ do -- SET_STATIC
     self:F2( arg )
 
     self:ForEach( IteratorFunction, arg, self:GetSet(),
-      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Static#STATIC StaticObject
       function( ZoneObject, StaticObject )
         if StaticObject:IsNotInZone( ZoneObject ) then
@@ -3945,8 +3951,9 @@ do -- SET_STATIC
 end
 
 do -- SET_CLIENT
-
-  --- @type SET_CLIENT
+  
+  ---
+  -- @type SET_CLIENT
   -- @field Core.Timer#TIMER ZoneTimer
   -- @field #number ZoneTimerInterval
   -- @extends Core.Set#SET_BASE
@@ -4008,8 +4015,8 @@ do -- SET_CLIENT
       Countries = nil,
       ClientPrefixes = nil,
       Zones = nil,
-      Playernames = nil,
-      Callsigns = nil,
+  	  Playernames = nil,
+  	  Callsigns = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -4059,7 +4066,7 @@ do -- SET_CLIENT
 
   --- Remove CLIENT(s) from SET_CLIENT.
   -- @param Core.Set#SET_CLIENT self
-  -- @param Wrapper.Client#CLIENT RemoveClientNames A single name or an array of CLIENT names.
+  -- @param Wrapper.Client#CLIENT RemoveClientNames A single object or an array of CLIENT objects.
   -- @return self
   function SET_CLIENT:RemoveClientsByName( RemoveClientNames )
 
@@ -4369,7 +4376,7 @@ do -- SET_CLIENT
     self:F2( arg )
 
     self:ForEach( IteratorFunction, arg, self:GetSet(),
-      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Client#CLIENT ClientObject
       function( ZoneObject, ClientObject )
         if ClientObject:IsInZone( ZoneObject ) then
@@ -4391,7 +4398,7 @@ do -- SET_CLIENT
     self:F2( arg )
 
     self:ForEach( IteratorFunction, arg, self:GetSet(),
-      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Client#CLIENT ClientObject
       function( ZoneObject, ClientObject )
         if ClientObject:IsNotInZone( ZoneObject ) then
@@ -4526,45 +4533,45 @@ do -- SET_CLIENT
         MClientInclude = MClientInclude and MClientPrefix
       end
 
-    if self.Filter.Zones then
-      local MClientZone = false
-      for ZoneName, Zone in pairs( self.Filter.Zones ) do
-      self:T3( "Zone:", ZoneName )
-      local unit = MClient:GetClientGroupUnit()
-      if unit and unit:IsInZone(Zone) then
-        MClientZone = true
-      end
-      end
-      MClientInclude = MClientInclude and MClientZone
-    end
-    
-    if self.Filter.Playernames then
-      local MClientPlayername = false
-      local playername = MClient:GetPlayerName() or "Unknown"
-      --self:I(playername)
-      for _,_Playername in pairs(self.Filter.Playernames) do
-        if playername and string.find(playername,_Playername) then
-          MClientPlayername = true
-        end
-      end
-      self:T( { "Evaluated Playername", MClientPlayername } )
-      MClientInclude = MClientInclude and MClientPlayername
-    end
-    
-    if self.Filter.Callsigns then
-      local MClientCallsigns = false
-      local callsign = MClient:GetCallsign()
-      --self:I(callsign)
-      for _,_Callsign in pairs(self.Filter.Callsigns) do
-        if callsign and string.find(callsign,_Callsign) then
-          MClientCallsigns = true
-        end
-      end
-      self:T( { "Evaluated Callsign", MClientCallsigns } )
-      MClientInclude = MClientInclude and MClientCallsigns
-    end
-    
-  end
+		if self.Filter.Zones then
+		  local MClientZone = false
+		  for ZoneName, Zone in pairs( self.Filter.Zones ) do
+			self:T3( "Zone:", ZoneName )
+			local unit = MClient:GetClientGroupUnit()
+			if unit and unit:IsInZone(Zone) then
+			  MClientZone = true
+			end
+		  end
+		  MClientInclude = MClientInclude and MClientZone
+		end
+		
+		if self.Filter.Playernames then
+			local MClientPlayername = false
+			local playername = MClient:GetPlayerName() or "Unknown"
+			--self:I(playername)
+			for _,_Playername in pairs(self.Filter.Playernames) do
+				if playername and string.find(playername,_Playername) then
+					MClientPlayername = true
+				end
+			end
+			self:T( { "Evaluated Playername", MClientPlayername } )
+			MClientInclude = MClientInclude and MClientPlayername
+		end
+		
+		if self.Filter.Callsigns then
+			local MClientCallsigns = false
+			local callsign = MClient:GetCallsign()
+			--self:I(callsign)
+			for _,_Callsign in pairs(self.Filter.Callsigns) do
+				if callsign and string.find(callsign,_Callsign) then
+					MClientCallsigns = true
+				end
+			end
+			self:T( { "Evaluated Callsign", MClientCallsigns } )
+			MClientInclude = MClientInclude and MClientCallsigns
+		end
+		
+	end
     self:T2( MClientInclude )
     return MClientInclude
   end
@@ -4573,7 +4580,8 @@ end
 
 do -- SET_PLAYER
 
-  --- @type SET_PLAYER
+  ---
+  -- @type SET_PLAYER
   -- @extends Core.Set#SET_BASE
 
   --- Mission designers can use the @{Core.Set#SET_PLAYER} class to build sets of units belonging to alive players:
@@ -4868,7 +4876,7 @@ do -- SET_PLAYER
     self:F2( arg )
 
     self:ForEach( IteratorFunction, arg, self:GetSet(),
-      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Client#CLIENT ClientObject
       function( ZoneObject, ClientObject )
         if ClientObject:IsInZone( ZoneObject ) then
@@ -4890,7 +4898,7 @@ do -- SET_PLAYER
     self:F2( arg )
 
     self:ForEach( IteratorFunction, arg, self:GetSet(),
-      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Client#CLIENT ClientObject
       function( ZoneObject, ClientObject )
         if ClientObject:IsNotInZone( ZoneObject ) then
@@ -4998,8 +5006,9 @@ do -- SET_PLAYER
 end
 
 do -- SET_AIRBASE
-
-  --- @type SET_AIRBASE
+  
+  ---
+  -- @type SET_AIRBASE
   -- @extends Core.Set#SET_BASE
 
   --- Mission designers can use the @{Core.Set#SET_AIRBASE} class to build sets of airbases optionally belonging to certain:
@@ -5341,8 +5350,9 @@ do -- SET_AIRBASE
 end
 
 do -- SET_CARGO
-
-  --- @type SET_CARGO
+  
+  ---
+  -- @type SET_CARGO
   -- @extends Core.Set#SET_BASE
 
   --- Mission designers can use the @{Core.Set#SET_CARGO} class to build sets of cargos optionally belonging to certain:
@@ -5767,8 +5777,9 @@ do -- SET_CARGO
 end
 
 do -- SET_ZONE
-
-  --- @type SET_ZONE
+  
+  ---
+  -- @type SET_ZONE
   -- @extends Core.Set#SET_BASE
 
   --- Mission designers can use the @{Core.Set#SET_ZONE} class to build sets of zones of various types.
@@ -6135,8 +6146,9 @@ do -- SET_ZONE
 end
 
 do -- SET_ZONE_GOAL
-
-  --- @type SET_ZONE_GOAL
+  
+  ---
+  -- @type SET_ZONE_GOAL
   -- @extends Core.Set#SET_BASE
 
   --- Mission designers can use the @{Core.Set#SET_ZONE_GOAL} class to build sets of zones of various types.
@@ -6446,8 +6458,9 @@ do -- SET_ZONE_GOAL
 end
 
 do -- SET_OPSZONE
-
-  --- @type SET_OPSZONE
+  
+  ---
+  -- @type SET_OPSZONE
   -- @extends Core.Set#SET_BASE
 
   --- Mission designers can use the @{Core.Set#SET_OPSZONE} class to build sets of zones of various types.
@@ -6903,8 +6916,9 @@ end
 
 
 do -- SET_OPSGROUP
-
-  --- @type SET_OPSGROUP
+  
+  ---
+  -- @type SET_OPSGROUP
   -- @extends Core.Set#SET_BASE
 
   --- Mission designers can use the @{Core.Set#SET_OPSGROUP} class to build sets of OPS groups belonging to certain:
@@ -7617,7 +7631,7 @@ do -- SET_SCENERY
   
   --- Add SCENERY(s) to SET_SCENERY.
   -- @param #SET_SCENERY self
-  -- @param #string AddScenery A single SCENERY.
+  -- @param Wrapper.Scenery#SCENERY AddScenery A single SCENERY object.
   -- @return #SET_SCENERY self
   function SET_SCENERY:AddScenery( AddScenery )
     self:F2( AddScenery:GetName() )
@@ -7843,7 +7857,7 @@ do -- SET_SCENERY
   function SET_SCENERY:GetRelativeLife()
     local life = self:GetLife()
     local life0 = self:GetLife0()
-    self:T3(string.format("Set Lifepoints: %d life0 | %d life",life0,life))
+    self:T2(string.format("Set Lifepoints: %d life0 | %d life",life0,life))
     local rlife = math.floor((life / life0) * 100)
     return rlife
   end
