@@ -7621,7 +7621,7 @@ do -- SET_SCENERY
   
   --- Add SCENERY(s) to SET_SCENERY.
   -- @param #SET_SCENERY self
-  -- @param #string AddScenery A single SCENERY.
+  -- @param Wrapper.Scenery#SCENERY AddScenery A single SCENERY object.
   -- @return #SET_SCENERY self
   function SET_SCENERY:AddScenery( AddScenery )
     self:F2( AddScenery:GetName() )
