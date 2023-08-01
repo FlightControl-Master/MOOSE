@@ -710,6 +710,26 @@ function COMMANDER:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
   return patrolzone
 end
 
+--- Remove a GCI CAP.
+-- @param #COMMANDER self
+-- @param Core.Zone#ZONE Zone Zone, where the flight orbits.
+function COMMANDER:RemoveGciCapZone(Zone)
+
+  local patrolzone={} --Ops.AirWing#AIRWING.PatrolZone
+  
+  patrolzone.zone=Zone
+  for i,_patrolzone in pairs(self.gcicapZones) do
+    if _patrolzone.zone == patrolzone.zone then
+      if _patrolzone.mission and _patrolzone.mission:IsNotOver() then
+          _patrolzone.mission:Cancel()
+      end
+      table.remove(self.gcicapZones, i)
+      break
+    end
+  end
+  return patrolzone
+end
+
 --- Add an AWACS zone.
 -- @param #COMMANDER self
 -- @param Core.Zone#ZONE Zone Zone.
