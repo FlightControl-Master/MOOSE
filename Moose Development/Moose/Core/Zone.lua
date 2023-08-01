@@ -953,7 +953,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
 
         local Include = false
         if not UnitCategories then
-          -- Anythink found is included.
+          -- Anything found is included.
           Include = true
         else
           -- Check if found object is in specified categories.
@@ -984,9 +984,9 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
       if ObjectCategory == Object.Category.SCENERY then
         local SceneryType = ZoneObject:getTypeName()
         local SceneryName = ZoneObject:getName()
-        --BASE:I("SceneryType "..SceneryType.."SceneryName"..SceneryName)
+        --BASE:I("SceneryType "..SceneryType.." SceneryName "..tostring(SceneryName))
         self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
-        self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( SceneryName, ZoneObject )
+        self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( tostring(SceneryName), ZoneObject)
         table.insert(self.ScanData.SceneryTable,self.ScanData.Scenery[SceneryType][SceneryName] )
         self:T( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
       end
@@ -2586,7 +2586,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
   local minmarkcoord = COORDINATE:NewFromVec3(minVec3)
   local maxmarkcoord = COORDINATE:NewFromVec3(maxVec3)
   local ZoneRadius = minmarkcoord:Get2DDistance(maxmarkcoord)/2
-  
+--  self:I("Scan Radius:" ..ZoneRadius)
   local CenterVec3 = self:GetCoordinate():GetVec3()
   
  --[[ this a bit shaky in functionality it seems
