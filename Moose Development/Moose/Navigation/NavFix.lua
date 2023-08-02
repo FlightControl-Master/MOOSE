@@ -160,6 +160,22 @@ function NAVFIX:SetInitialApproachFix(IntermediateFix)
   return self
 end
 
+--- Get the altitude in feet MSL.
+-- @param #NAVFIX self
+-- @return #number Altitude in feet MSL. Can be `#nil`
+function NAVFIX:GetAltitude()
+
+  local alt=nil
+  if self.altMin and self.altMax then
+    alt=math.random(self.altMin, self.altMax)
+  elseif self.altMin then
+    alt=self.altMin
+  elseif self.altMax then
+    alt=self.altMax
+  end
+
+  return alt
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Private Functions

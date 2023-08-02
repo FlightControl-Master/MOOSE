@@ -59,6 +59,8 @@
 -- @field #boolean prohibitAB Disallow (true) or allow (false) AI to use the afterburner.
 -- @field #boolean jettisonEmptyTanks Allow (true) or disallow (false) AI to jettison empty fuel tanks.
 -- @field #boolean jettisonWeapons Allow (true) or disallow (false) AI to jettison weapons if in danger.
+-- @field #table flightplans Flight plans for this group.
+-- @field Navigation.FlightPlan#FLIGHTPLAN flightplan Currently active flight plan.
 --
 -- @extends Ops.OpsGroup#OPSGROUP
 
@@ -150,7 +152,8 @@ FLIGHTGROUP = {
   playerWarnings     =    {},
   prohibitAB         =   false,
   jettisonEmptyTanks =   true,
-  jettisonWeapons    =   true, -- that's actually a negative option like prohibitAB  
+  jettisonWeapons    =   true, -- that's actually a negative option like prohibitAB
+  flightplans        =     {},
 }
 
 
@@ -644,6 +647,18 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetDespawnAfterHolding()
   self.despawnAfterHolding=true
+  return self
+end
+
+--- Add flightplan.
+-- @param #FLIGHTGROUP self
+-- @param Navigation.FlightPlan#FLIGHTPLAN FlightPlan The flight plan.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:AddFlightPlan(FlightPlan)
+
+  self:T(self.lid..string.format("Adding flight plan %s", FlightPlan:GetName() ))
+  table.insert(self.flightplans, FlightPlan)
+  
   return self
 end
 
@@ -1305,6 +1320,10 @@ function FLIGHTGROUP:Status()
   
   -- Current mission.
   local mission=self:GetMissionCurrent()
+  
+  if not (self.cargoTransport or mission) then  
+    self:_CheckFlightPlans()
+  end  
 
 end
 
@@ -3351,6 +3370,56 @@ function FLIGHTGROUP:onafterFuelCritical(From, Event, To)
     self:RTB(airbase)
     --TODO: RTZ
   end
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Flightplan Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Check flightplans.
+-- @param #FLIGHTGROUP self
+-- @param Navigation.FlightPlan#FLIGHTPLAN FlightPlan Flight plan.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:_SetFlightPlan(FlightPlan)
+
+  self.flightplan=FlightPlan
+
+  for i,_fix in pairs(FlightPlan.fixes) do
+    local fix=_fix --Navigation.NavFix#NAVFIX
+    
+    --fix.coordinate
+    
+    local speed=fix.altMin
+    
+    local altitude=(fix.altMin or fix.altMax)~=nil and fix:GetAltitude() or FlightPlan:GetCruiseAltitude()
+    
+    local wp=self:AddWaypoint(fix.coordinate, Speed, AfterWaypointWithID, altitude or 10000, false)
+  
+  end
+
+end
+
+--- Check flightplans.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:_CheckFlightPlans()
+
+  if self.flightplan then
+    return
+  end
+
+
+  for i,_flightplan in pairs(self.flightplans) do
+    local flightplan=_flightplan --Navigation.FlightPlan#FLIGHTPLAN
+  
+    if flightplan then
+      
+      self:_SetFlightPlan(flightplan)
+      
+      break
+    end    
+  end
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

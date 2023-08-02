@@ -332,6 +332,13 @@ FLIGHTCONTROL.version="0.7.3"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 
+-- TODO: Ground control for takeoff and taxi.
+-- TODO: Improve approach pattern with new NAVIGATION classes.
+-- TODO: SID procedure for departures.
+-- TODO: STAR procedure for arrivals.
+-- TODO: Holding positions for runways.
+-- TODO: Taxi ways.
+-- TODO: Better phrasiology.
 -- TODO: Switch to enable/disable AI messages.
 -- TODO: Talk me down option.
 -- TODO: Check runways and clean up.

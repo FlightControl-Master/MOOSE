@@ -24,6 +24,11 @@
 -- @type FLIGHTPLAN
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity of output.
+-- @field #table fixes Navigation fixes.
+-- @field Wrapper.Airbase#AIRBASE departureAirbase Departure airbase.
+-- @field Wrapper.Airbase#AIRBASE destinationAirbase Destination airbase.
+-- @field #number altitudeCruiseMin Minimum cruise altitude in feet MSL.
+-- @field #number altitudeCruiseMax Maximum cruise altitude in feet MSL.
 -- @extends Core.Base#BASE
 
 --- *A fleet of British ships at war are the best negotiators.* -- Horatio Nelson
@@ -39,7 +44,7 @@
 -- A new `FLIGHTPLAN` object can be created with the @{#FLIGHTPLAN.New}(`WarehouseName`, `FleetName`) function, where `WarehouseName` is the name of the static or unit object hosting the fleet
 -- and `FleetName` is the name you want to give the fleet. This must be *unique*!
 -- 
---     myFleet=FLIGHTPLAN:New("myWarehouseName", "1st Fleet")
+--     myFlightplan=FLIGHTPLAN:New("Plan A")
 --     myFleet:SetPortZone(ZonePort1stFleet)
 --     myFleet:Start()
 --     
@@ -51,6 +56,7 @@
 FLIGHTPLAN = {
   ClassName       = "FLIGHTPLAN",
   verbose         =       0,
+  fixes           = {}
 }
 
 --- Type of navaid
@@ -78,11 +84,9 @@ FLIGHTPLAN.version="0.0.1"
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new FLIGHTPLAN class instance.
+--- Create a new FLIGHTPLAN instance.
 -- @param #FLIGHTPLAN self
--- @param #string ZoneName Name of the zone to scan the scenery.
--- @param #string SceneryName Name of the scenery object.
--- @param #string Type Type of Navaid.
+-- @param #string Name Name of this flight plan.
 -- @return #FLIGHTPLAN self
 function FLIGHTPLAN:New(Name)
 
@@ -101,21 +105,93 @@ function FLIGHTPLAN:New(Name)
   return self
 end
 
+--- Create a new FLIGHTPLAN instance from another FLIGHTPLAN acting as blue print.
+-- The newly created flight plan is deep copied from the given one.
+-- @param #FLIGHTPLAN self
+-- @param #FLIGHTPLAN FlightPlan Blue print of the flight plan to copy.
+-- @return #FLIGHTPLAN self
+function FLIGHTPLAN:NewFromFlightPlan(FlightPlan)
+  self=UTILS.DeepCopy(FlightPlan)
+  return self
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Set frequency.
+--- Add navigation fix to the flight plan.
 -- @param #FLIGHTPLAN self
--- @param #number Frequency Frequency in Hz.
+-- @param Navigation.NavFix#NAVFIX NavFix The nav fix.
 -- @return #FLIGHTPLAN self
-function FLIGHTPLAN:SetFrequency(Frequency)
+function FLIGHTPLAN:AddNavFix(NavFix)
 
-  self.frequency=Frequency
+  table.insert(self.fixes, NavFix)
 
   return self
 end
 
+
+--- Set depature airbase.
+-- @param #FLIGHTPLAN self
+-- @param #string AirbaseName Name of the airbase or AIRBASE object.
+-- @return #FLIGHTPLAN self
+function FLIGHTPLAN:SetDepartureAirbase(AirbaseName)
+
+  self.departureAirbase=AIRBASE:FindByName(AirbaseName)
+
+  return self
+end
+
+--- Set destination airbase.
+-- @param #FLIGHTPLAN self
+-- @param #string AirbaseName Name of the airbase or AIRBASE object.
+-- @return #FLIGHTPLAN self
+function FLIGHTPLAN:SetDestinationAirbase(AirbaseName)
+
+  self.destinationAirbase=AIRBASE:FindByName(AirbaseName)
+
+  return self
+end
+
+
+--- Set cruise altitude.
+-- @param #FLIGHTPLAN self
+-- @param #number AltMin Minimum altitude in feet MSL.
+-- @param #number AltMax Maximum altitude in feet MSL. Default is `AltMin`.
+-- @return #FLIGHTPLAN self
+function FLIGHTPLAN:SetCruiseAltitude(AltMin, AltMax)
+
+  self.altitudeCruiseMin=AltMin
+  self.altitudeCruiseMax=AltMax or self.altitudeCruiseMin
+
+  return self
+end
+
+
+--- Get the name of this flight plan.
+-- @param #FLIGHTPLAN self
+-- @return #string The name.
+function FLIGHTPLAN:GetName()
+  return self.alias
+end
+
+
+--- Get cruise altitude. This returns a random altitude between the set min/max cruise altitudes.
+-- @param #FLIGHTPLAN self
+-- @return #number Cruise altitude in feet MSL.
+function FLIGHTPLAN:GetCruiseAltitude()
+
+  local alt=10000
+  if self.altitudeCruiseMin and self.altitudeCruiseMax then
+    alt=math.random(self.altitudeCruiseMin, self.altitudeCruiseMax)
+  elseif self.altitudeCruiseMin then
+    alt=self.altitudeCruiseMin
+  elseif self.altitudeCruiseMax then
+    alt=self.altitudeCruiseMax
+  end
+  
+  return alt
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Private Functions
