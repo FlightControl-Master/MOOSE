@@ -555,6 +555,18 @@ UTILS.kg2lbs = function( kg )
   return kg * 2.20462
 end
 
+--- Convert latitude or longitude from degrees, minutes, seconds (DMS) to decimal degrees (DD).
+-- @param #number Degrees Degrees in grad.
+-- @param #number Minutes Minutes.
+-- @param #number Seconds Seconds.
+-- @return #number Latitude or Longitude in decimal degrees.
+UTILS.LLDMSToDD = function(Degrees, Minutes, Seconds)
+
+  local dd=(Degrees or 0) + (Minutes or 0)/60 + (Seconds or 0)/3600
+
+  return dd
+end
+
 --[[acc:
 in DM: decimal point of minutes.
 In DMS: decimal point of seconds.
