@@ -31,7 +31,7 @@
 -- @field #number altitudeCruiseMax Maximum cruise altitude in feet MSL.
 -- @extends Core.Base#BASE
 
---- *A fleet of British ships at war are the best negotiators.* -- Horatio Nelson
+--- *Life is what happens to us while we are making other plans.* -- Allen Saunders
 --
 -- ===
 --

@@ -740,7 +740,7 @@ function FLIGHTCONTROL:AddHoldingPattern(ArrivalZone, Heading, Length, Flightlev
 
   -- Get ZONE if passed as string.
   if type(ArrivalZone)=="string" then
-    ArrivalZone=ZONE:New(ArrivalZone)
+    ArrivalZone=ZONE:FindByName(ArrivalZone)
   end
   
   -- Increase counter.
