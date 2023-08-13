@@ -1768,7 +1768,9 @@ do -- Cargo
     end
     return self.__.CargoBayWeightLimit - CargoWeight
   end
-
+  
+  -- Abstract out the "XYZ*95" calculation in the Ground POSITIONABLE case, where the table 
+  -- holds number of infantry that the vehicle could carry, instead of actual cargo weights.
   local _DefaultInfantryWeight = 95;
 
   POSITIONABLE.CargoBayCapacityValues = {
