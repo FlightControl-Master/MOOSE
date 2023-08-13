@@ -295,8 +295,9 @@ UTILS.DeepCopy = function(object)
 end
 
 
---- Porting in Slmod's serialize_slmod2.
+--- Serialize a given table.
 -- @param #table tbl Input table.
+-- @return #string Table as a string.
 UTILS.OneLineSerialize = function( tbl )  -- serialization of a table all on a single line, no comments, made to replace old get_table_string function
 
 local  lookup_table = {}
@@ -373,7 +374,54 @@ local  lookup_table = {}
   return objectreturn
 end
 
---porting in Slmod's "safestring" basic serialize
+--- Serialize a table to a single line string.
+-- @param #table tbl table to serialize.
+-- @return #string string containing serialized table.
+function UTILS._OneLineSerialize(tbl)
+
+  if type(tbl) == 'table' then --function only works for tables!
+
+    local tbl_str = {}
+
+    tbl_str[#tbl_str + 1] = '{ '
+
+    for ind,val in pairs(tbl) do -- serialize its fields
+      if type(ind) == "number" then
+        tbl_str[#tbl_str + 1] = '['
+        tbl_str[#tbl_str + 1] = tostring(ind)
+        tbl_str[#tbl_str + 1] = '] = '
+      else --must be a string
+        tbl_str[#tbl_str + 1] = '['
+        tbl_str[#tbl_str + 1] = UTILS.BasicSerialize(ind)
+        tbl_str[#tbl_str + 1] = '] = '
+      end
+
+      if ((type(val) == 'number') or (type(val) == 'boolean')) then
+        tbl_str[#tbl_str + 1] = tostring(val)
+        tbl_str[#tbl_str + 1] = ', '
+      elseif type(val) == 'string' then
+        tbl_str[#tbl_str + 1] = UTILS.BasicSerialize(val)
+        tbl_str[#tbl_str + 1] = ', '
+      elseif type(val) == 'nil' then -- won't ever happen, right?
+        tbl_str[#tbl_str + 1] = 'nil, '
+      elseif type(val) == 'table' then
+        tbl_str[#tbl_str + 1] = UTILS._OneLineSerialize(val)
+        tbl_str[#tbl_str + 1] = ', '   --I think this is right, I just added it
+      else
+        --log:warn('Unable to serialize value type $1 at index $2', mist.utils.basicSerialize(type(val)), tostring(ind))
+      end
+
+    end
+    
+      tbl_str[#tbl_str + 1] = '}'
+      return table.concat(tbl_str)
+    else
+      return  UTILS.BasicSerialize(tbl)
+  end
+end
+
+--- Basic serialize (porting in Slmod's "safestring" basic serialize).
+-- @param #string s Table to serialize.
 UTILS.BasicSerialize = function(s)
   if s == nil then
     return "\"\""
@@ -401,6 +449,114 @@ function UTILS.PrintTableToLog(table, indent)
     else
       BASE:I(string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(v))
     end
+  end
+end
+
+--- Returns table in a easy readable string representation.
+-- @param tbl table to show
+-- @param loc
+-- @param indent
+-- @param tableshow_tbls
+-- @return Human readable string representation of given table.
+function UTILS.TableShow(tbl, loc, indent, tableshow_tbls)
+  tableshow_tbls = tableshow_tbls or {} --create table of tables
+  loc = loc or ""
+  indent = indent or ""
+  if type(tbl) == 'table' then --function only works for tables!
+    tableshow_tbls[tbl] = loc
+
+    local tbl_str = {}
+
+    tbl_str[#tbl_str + 1] = indent .. '{\n'
+
+    for ind,val in pairs(tbl) do -- serialize its fields
+      if type(ind) == "number" then
+        tbl_str[#tbl_str + 1] = indent
+        tbl_str[#tbl_str + 1] = loc .. '['
+        tbl_str[#tbl_str + 1] = tostring(ind)
+        tbl_str[#tbl_str + 1] = '] = '
+      else
+        tbl_str[#tbl_str + 1] = indent
+        tbl_str[#tbl_str + 1] = loc .. '['
+        tbl_str[#tbl_str + 1] = UTILS.BasicSerialize(ind)
+        tbl_str[#tbl_str + 1] = '] = '
+      end
+
+      if ((type(val) == 'number') or (type(val) == 'boolean')) then
+        tbl_str[#tbl_str + 1] = tostring(val)
+        tbl_str[#tbl_str + 1] = ',\n'
+      elseif type(val) == 'string' then
+        tbl_str[#tbl_str + 1] = UTILS.BasicSerialize(val)
+        tbl_str[#tbl_str + 1] = ',\n'
+      elseif type(val) == 'nil' then -- won't ever happen, right?
+        tbl_str[#tbl_str + 1] = 'nil,\n'
+      elseif type(val) == 'table' then
+        if tableshow_tbls[val] then
+          tbl_str[#tbl_str + 1] = tostring(val) .. ' already defined: ' .. tableshow_tbls[val] .. ',\n'
+        else
+          tableshow_tbls[val] = loc ..  '[' .. UTILS.BasicSerialize(ind) .. ']'
+          tbl_str[#tbl_str + 1] = tostring(val) .. ' '
+          tbl_str[#tbl_str + 1] = UTILS.TableShow(val, loc .. '[' .. UTILS.BasicSerialize(ind).. ']', indent .. '    ', tableshow_tbls)
+          tbl_str[#tbl_str + 1] = ',\n'
+        end
+      elseif type(val) == 'function' then
+        if debug and debug.getinfo then
+          local fcnname = tostring(val)
+          local info = debug.getinfo(val, "S")
+          if info.what == "C" then
+            tbl_str[#tbl_str + 1] = string.format('%q', fcnname .. ', C function') .. ',\n'
+          else
+            if (string.sub(info.source, 1, 2) == [[./]]) then
+              tbl_str[#tbl_str + 1] = string.format('%q', fcnname .. ', defined in (' .. info.linedefined .. '-' .. info.lastlinedefined .. ')' .. info.source) ..',\n'
+            else
+              tbl_str[#tbl_str + 1] = string.format('%q', fcnname .. ', defined in (' .. info.linedefined .. '-' .. info.lastlinedefined .. ')') ..',\n'
+            end
+          end
+
+        else
+          tbl_str[#tbl_str + 1] = 'a function,\n'
+        end
+      else
+        tbl_str[#tbl_str + 1] = 'unable to serialize value type ' .. UTILS.BasicSerialize(type(val)) .. ' at index ' .. tostring(ind)
+      end
+    end
+
+    tbl_str[#tbl_str + 1] = indent .. '}'
+    return table.concat(tbl_str)
+  end
+end
+
+--- Dumps the global table _G.
+-- This dumps the global table _G to a file in the DCS\Logs directory.
+-- This function requires you to disable script sanitization in $DCS_ROOT\Scripts\MissionScripting.lua to access lfs and io libraries.
+-- @param #string fname File name.
+function UTILS.Gdump(fname)
+  if lfs and io then
+  
+    local fdir = lfs.writedir() .. [[Logs\]] .. fname
+    
+    local f = io.open(fdir, 'w')
+    
+    f:write(UTILS.TableShow(_G))
+    
+    f:close()
+    
+    env.info(string.format('Wrote debug data to $1', fdir))
+  else
+    env.error("WARNING: lfs and/or io not de-sanitized - cannot dump _G!")
+  end
+end
+
+--- Executes the given string.
+-- borrowed from Slmod
+-- @param #string s string containing LUA code.
+-- @return #boolean `true` if successfully executed, `false` otherwise.
+function UTILS.DoString(s)
+  local f, err = loadstring(s)
+  if f then
+    return true, f()
+  else
+    return false, err
   end
 end
 
