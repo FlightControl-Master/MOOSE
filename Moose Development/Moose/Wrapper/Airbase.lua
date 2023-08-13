@@ -11,7 +11,7 @@
 -- @module Wrapper.Airbase
 -- @image Wrapper_Airbase.JPG
 
-
+---
 -- @type AIRBASE
 -- @field #string ClassName Name of the class, i.e. "AIRBASE".
 -- @field #table CategoryName Names of airbase categories.
@@ -548,6 +548,8 @@ AIRBASE.Syria={
 -- * AIRBASE.MarianaIslands.Saipan_Intl
 -- * AIRBASE.MarianaIslands.Tinian_Intl
 -- * AIRBASE.MarianaIslands.Olf_Orote
+-- * AIRBASE.MarianaIslands.Pagan_Airstrip
+-- * AIRBASE.MarianaIslands.North_West_Field
 --
 -- @field MarianaIslands
 AIRBASE.MarianaIslands = {
@@ -557,6 +559,8 @@ AIRBASE.MarianaIslands = {
   ["Saipan_Intl"] = "Saipan Intl",
   ["Tinian_Intl"] = "Tinian Intl",
   ["Olf_Orote"] = "Olf Orote",
+  ["Pagan_Airstrip"] = "Pagan Airstrip",
+  ["North_West_Field"] = "North West Field",
 }
 
 --- Airbases of the South Atlantic map:
@@ -787,7 +791,13 @@ function AIRBASE:Register(AirbaseName)
 
   -- Category.
   self.category=self.descriptors and self.descriptors.category or Airbase.Category.AIRDROME
-
+  
+  -- H2 is bugged
+  --if self.AirbaseName == "H4" and self.descriptors == nil then
+    --self:E("***** H4 on Syria map is currently bugged!")
+    --return nil
+  --end
+  
   -- Set category.
   if self.category==Airbase.Category.AIRDROME then
     self.isAirdrome=true

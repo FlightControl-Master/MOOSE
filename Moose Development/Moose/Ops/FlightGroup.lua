@@ -325,7 +325,322 @@ function FLIGHTGROUP:New(group)
   -- @param #FLIGHTGROUP self
   -- @param #number delay Delay in seconds.
 
-  -- TODO: Add pseudo functions.
+  --- FSM Function OnAfterElementSpawned.
+  -- @function [parent=#FLIGHTGROUP] OnAfterElementSpawned
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsGroup#OPSGROUP.Element Element The flight group element.
+
+  --- FSM Function OnAfterElementParking.
+  -- @function [parent=#FLIGHTGROUP] OnAfterElementParking
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsGroup#OPSGROUP.Element Element The flight group element.
+  -- @param Wrapper.Airbase#AIRBASE.ParkingSpot Spot Parking Spot.
+
+  --- FSM Function OnAfterElementEngineOn.
+  -- @function [parent=#FLIGHTGROUP] OnAfterElementEngineOn
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsGroup#OPSGROUP.Element Element The flight group element.
+
+  --- FSM Function OnAfterElementTaxiing.
+  -- @function [parent=#FLIGHTGROUP] OnAfterElementTaxiing
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsGroup#OPSGROUP.Element Element The flight group element.
+
+  --- FSM Function OnAfterElementTakeoff.
+  -- @function [parent=#FLIGHTGROUP] OnAfterElementTakeoff
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsGroup#OPSGROUP.Element Element The flight group element.
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase if applicable or nil.
+
+  --- FSM Function OnAfterElementAirborne.
+  -- @function [parent=#FLIGHTGROUP] OnAfterElementAirborne
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsGroup#OPSGROUP.Element Element The flight group element.
+
+  --- FSM Function OnAfterElementLanded.
+  -- @function [parent=#FLIGHTGROUP] OnAfterElementLanded
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsGroup#OPSGROUP.Element Element The flight group element.
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase if applicable or nil.
+
+  --- FSM Function OnAfterElementArrived.
+  -- @function [parent=#FLIGHTGROUP] OnAfterElementArrived
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsGroup#OPSGROUP.Element Element The flight group element.
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase, where the element arrived.
+  -- @param Wrapper.Airbase#AIRBASE.ParkingSpot Parking The Parking spot the element has.
+
+  --- FSM Function OnAfterElementDestroyed.
+  -- @function [parent=#FLIGHTGROUP] OnAfterElementDestroyed
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsGroup#OPSGROUP.Element Element The flight group element.
+
+  --- FSM Function OnAfterElementDead.
+  -- @function [parent=#FLIGHTGROUP] OnAfterElementDead
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsGroup#OPSGROUP.Element Element The flight group element.
+
+  --- FSM Function OnAfterSpawned.
+  -- @function [parent=#FLIGHTGROUP] OnAfterSpawned
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- FSM Function OnAfterParking.
+  -- @function [parent=#FLIGHTGROUP] OnAfterParking
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- FSM Function OnAfterTaxiing.
+  -- @function [parent=#FLIGHTGROUP] OnAfterTaxiing
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- FSM Function OnAfterTakeoff.
+  -- @function [parent=#FLIGHTGROUP] OnAfterTakeoff
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- FSM Function OnAfterAirborne.
+  -- @function [parent=#FLIGHTGROUP] OnAfterAirborne
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- FSM Function OnAfterCruise.
+  -- @function [parent=#FLIGHTGROUP] OnAfterCruise
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- FSM Function OnAfterLanding.
+  -- @function [parent=#FLIGHTGROUP] OnAfterLanding
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- FSM Function OnAfterLanded.
+  -- @function [parent=#FLIGHTGROUP] OnAfterLanded
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
+
+  --- FSM Function OnAfterLandedAt.
+  -- @function [parent=#FLIGHTGROUP] OnAfterLandedAt
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- FSM Function OnAfterArrived.
+  -- @function [parent=#FLIGHTGROUP] OnAfterArrived
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- FSM Function OnAfterDead.
+  -- @function [parent=#FLIGHTGROUP] OnAfterDead
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- FSM Function OnAfterUpdateRoute.
+  -- @function [parent=#FLIGHTGROUP] OnAfterUpdateRoute
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+  -- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
+
+  --- FSM Function OnAfterOutOfMissilesAA.
+  -- @function [parent=#FLIGHTGROUP] OnAfterOutOfMissilesAA
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- FSM Function OnAfterOutOfMissilesAG.
+  -- @function [parent=#FLIGHTGROUP] OnAfterOutOfMissilesAG
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- FSM Function OnAfterRTB.
+  -- @function [parent=#FLIGHTGROUP] OnAfterRTB
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase to hold at.
+  -- @param #number SpeedTo Speed used for traveling from current position to holding point in knots. Default 75% of max speed.
+  -- @param #number SpeedHold Holding speed in knots. Default 250 kts.
+  -- @param #number SpeedLand Landing speed in knots. Default 170 kts.
+
+  --- FSM Function OnAfterLandAtAirbase.
+  -- @function [parent=#FLIGHTGROUP] OnAfterLandAtAirbase
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase to hold at.
+
+  --- FSM Function OnAfterWait.
+  -- @function [parent=#FLIGHTGROUP] OnAfterWait
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number Duration Duration how long the group will be waiting in seconds. Default `nil` (=forever).
+  -- @param #number Altitude Altitude in feet. Default 10,000 ft for airplanes and 1,000 feet for helos.
+  -- @param #number Speed Speed in knots. Default 250 kts for airplanes and 20 kts for helos.
+
+  --- FSM Function OnAfterRefuel.
+  -- @function [parent=#FLIGHTGROUP] OnAfterRefuel
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Core.Point#COORDINATE Coordinate The coordinate.
+
+  --- FSM Function OnAfterRefueled.
+  -- @function [parent=#FLIGHTGROUP] OnAfterRefueled
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- FSM Function OnAfterDisengage.
+  -- @function [parent=#FLIGHTGROUP] OnAfterDisengage
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Core.Set#SET_UNIT TargetUnitSet
+
+  --- FSM Function OnAfterEngageTarget.
+  -- @function [parent=#FLIGHTGROUP] OnAfterEngageTarget
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #table Target Target object. Can be a UNIT, STATIC, GROUP, SET_UNIT or SET_GROUP object.
+
+  --- FSM Function OnAfterLandAt.
+  -- @function [parent=#FLIGHTGROUP] OnAfterLandAt
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Core.Set#SET_UNIT TargetUnitSet
+
+  --- FSM Function OnAfterFuelLow.
+  -- @function [parent=#FLIGHTGROUP] OnAfterFuelLow
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- FSM Function OnAfterFuelCritical.
+  -- @function [parent=#FLIGHTGROUP] OnAfterFuelCritical
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- FSM Function OnBeforeUpdateRoute.
+  -- @function [parent=#FLIGHTGROUP] OnBeforeUpdateRoute
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+  -- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
+  -- @return #boolean Transision allowed?
+
+  --- FSM Function OnBeforeRTB.
+  -- @function [parent=#FLIGHTGROUP] OnBeforeRTB
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase to hold at.
+  -- @param #number SpeedTo Speed used for travelling from current position to holding point in knots.
+  -- @param #number SpeedHold Holding speed in knots.
+
+  --- FSM Function OnBeforeLandAtAirbase.
+  -- @function [parent=#FLIGHTGROUP] OnBeforeLandAtAirbase
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase to hold at.
+
+  --- FSM Function OnBeforeWait.
+  -- @function [parent=#FLIGHTGROUP] OnBeforeWait
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number Duration Duration how long the group will be waiting in seconds. Default `nil` (=forever).
+  -- @param #number Altitude Altitude in feet. Default 10,000 ft for airplanes and 1,000 feet for helos.
+  -- @param #number Speed Speed in knots. Default 250 kts for airplanes and 20 kts for helos.
+
+  --- FSM Function OnBeforeLandAt.
+  -- @function [parent=#FLIGHTGROUP] OnBeforeLandAt
+  -- @param #FLIGHTGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Core.Point#COORDINATE Coordinate The coordinate where to land. Default is current position.
+  -- @param #number Duration The duration in seconds to remain on ground. Default 600 sec (10 min).
+
+  -- TODO: Add pseudo functions ? Normally done, but should be double check
 
   -- Handle events:
   self:HandleEvent(EVENTS.Birth,           self.OnEventBirth)
@@ -4176,11 +4491,13 @@ function FLIGHTGROUP:GetClosestAirbase()
     
     local coord=group:GetCoordinate()
     local coalition=self:GetCoalition()
-  
-    local airbase=coord:GetClosestAirbase() --(nil, coalition)
-    
-    return airbase
-  
+
+    if coord then
+        local airbase=coord:GetClosestAirbase() --(nil, coalition)
+        return airbase
+    else
+        return nil
+    end
   else
   
     return nil
