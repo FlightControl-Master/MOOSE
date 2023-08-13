@@ -293,6 +293,10 @@ FLIGHTCONTROL = {
 -- @field Core.Point#COORDINATE pos1 Second position of racetrack holding pattern.
 -- @field #number heading Heading.
 
+--- Holding point for runway.
+-- @type FLIGHTCONTROL.HoldingPoint
+-- @field Core.Zone#ZONE zone Zone that marks this holding point.
+-- @field #string runway Name of the runway this holding point is for.
 
 --- Parking spot data.
 -- @type FLIGHTCONTROL.ParkingSpot
@@ -815,6 +819,22 @@ function FLIGHTCONTROL:SetMarkHoldingPattern(Switch)
 
   return self
 end
+
+
+--- Add a holding point. This is the area on the taxi way, where aircraft are told to hold until they get taxi clearance.
+-- @param #FLIGHTCONTROL self
+-- @param Core.Zone#ZONE HoldingZone Zone where planes .
+-- @param #string RunwayName Name of the runway.
+-- @return #FLIGHTCONTROL.HoldingPoint Holding point table.
+function FLIGHTCONTROL:AddHoldingPoint(HoldingZone, RunwayName)
+
+  local hp={} --#FLIGHTCONTROL.HoldingPoint
+  
+  hp.zone=HoldingZone
+  hp.runway=RunwayName
+ 
+end
+
 
 --- Set speed limit for taxiing.
 -- @param #FLIGHTCONTROL self
