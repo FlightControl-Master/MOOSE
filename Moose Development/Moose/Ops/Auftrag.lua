@@ -5776,10 +5776,12 @@ function AUFTRAG:UpdateMarker()
     -- Get target coordinates. Can be nil!
     local targetcoord=self:GetTargetCoordinate()
 
-    if self.markerCoaliton and self.markerCoaliton>=0 then
-      self.marker=MARKER:New(targetcoord, text):ReadOnly():ToCoalition(self.markerCoaliton)
-    else
-      self.marker=MARKER:New(targetcoord, text):ReadOnly():ToAll()
+    if targetcoord then
+        if self.markerCoaliton and self.markerCoaliton>=0 then
+        self.marker=MARKER:New(targetcoord, text):ReadOnly():ToCoalition(self.markerCoaliton)
+        else
+        self.marker=MARKER:New(targetcoord, text):ReadOnly():ToAll()
+        end
     end
 
   else
