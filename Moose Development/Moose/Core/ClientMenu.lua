@@ -381,7 +381,7 @@ end
 CLIENTMENUMANAGER = {
   ClassName = "CLIENTMENUMANAGER",
   lid = "",
-  version = "0.1.0",
+  version = "0.1.1",
   name = nil,
   clientset = nil,
   menutree = {},
@@ -670,7 +670,7 @@ end
 --- Remove the entry and all entries below the given entry from the client's F10 menus.
 -- @param #CLIENTMENUMANAGER self
 -- @param #CLIENTMENU Entry The entry to remove
--- @param Wrapper.Client#CLIENT Client (optional) If given, make this change only for this client. In this case the generic structure will not be touched.
+-- @param Wrapper.Client#CLIENT Client (optional) If given, make this change only for this client. 
 -- @return #CLIENTMENUMANAGER self
 function CLIENTMENUMANAGER:DeleteF10Entry(Entry,Client)
   self:T(self.lid.."DeleteF10Entry")
@@ -783,3 +783,4 @@ end
 -- End ClientMenu
 --
 ----------------------------------------------------------------------------------------------------------------
+

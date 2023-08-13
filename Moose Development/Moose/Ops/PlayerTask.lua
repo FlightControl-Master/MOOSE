@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update June 2023
+-- @date Last Update July 2023
 
 
 do
@@ -98,7 +98,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.17"
+PLAYERTASK.version="0.1.19"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -1008,6 +1008,7 @@ do
 -- @field Core.ClientMenu#CLIENTMENUMANAGER ActiveTaskMenuTemplate
 -- @field Core.ClientMenu#CLIENTMENU ActiveTopMenu
 -- @field Core.ClientMenu#CLIENTMENU ActiveInfoMenu
+-- @field Core.ClientMenu#CLIENTMENU MenuNoTask
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1336,6 +1337,7 @@ PLAYERTASKCONTROLLER = {
   InfoHasCoordinate  = false,
   UseTypeNames       = false,
   Scoring            = nil,
+  MenuNoTask         = nil,
   }
 
 ---
@@ -1653,13 +1655,6 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self:__Start(2)
   local starttime = math.random(5,10)
   self:__Status(starttime)
-  
-  -- Player leaves
-  self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventHandler)
-  self:HandleEvent(EVENTS.Ejection, self._EventHandler)
-  self:HandleEvent(EVENTS.Crash, self._EventHandler)
-  self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
-  self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
   
   self:I(self.lid..self.version.." Started.")
   
@@ -2175,7 +2170,7 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_EventHandler(EventData)
   self:T(self.lid.."_EventHandler: "..EventData.id)
-  self:T(self.lid.."_EventHandler: "..EventData.IniPlayerName)
+  --self:T(self.lid.."_EventHandler: "..EventData.IniPlayerName)
   if EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
     if EventData.IniPlayerName then
       self:T(self.lid.."Event for player: "..EventData.IniPlayerName)
@@ -2480,6 +2475,15 @@ function PLAYERTASKCONTROLLER:_CheckTaskQueue()
       for _,_id in pairs(clientsattask) do
         self:T("*****Removing player " .. _id)
         self.TasksPerPlayer:PullByID(_id)
+      end
+      local clients=task:GetClientObjects()
+      for _,client in pairs(clients) do
+        self:_RemoveMenuEntriesForTask(task,client)
+        --self:_SwitchMenuForClient(client,"Info")
+      end
+      for _,client in pairs(clients) do
+       -- self:_RemoveMenuEntriesForTask(Task,client)
+        self:_SwitchMenuForClient(client,"Info",5)
       end
       -- Follow-up tasks?
       local nexttasks = {}
@@ -3469,6 +3473,19 @@ function PLAYERTASKCONTROLLER:_UpdateJoinMenuTemplate()
     local actinfomenu = self.ActiveInfoMenu
     --local entrynumbers = {}
     --local existingentries = {}
+    
+    if self.TaskQueue:Count() == 0 and self.MenuNoTask == nil then
+      local menunotasks = self.gettext:GetEntry("MENUNOTASKS",self.locale)  
+      self.MenuNoTask = controller:NewEntry(menunotasks,self.JoinMenu)
+      controller:AddEntry(self.MenuNoTask)
+    end
+    
+    if self.TaskQueue:Count() > 0 and self.MenuNoTask ~= nil then
+      controller:DeleteGenericEntry(self.MenuNoTask)
+      controller:DeleteF10Entry(self.MenuNoTask)
+      self.MenuNoTask = nil
+    end
+    
     local maxn = self.menuitemlimit
     -- Generate task type menu items
     for _type,_ in pairs(taskpertype) do
@@ -3579,28 +3596,28 @@ function PLAYERTASKCONTROLLER:_RemoveMenuEntriesForTask(Task,Client)
   if Task then
     if Task.UUIDS and self.JoinTaskMenuTemplate then
       --self:I("***** JoinTaskMenuTemplate")
-      UTILS.PrintTableToLog(Task.UUIDS)
+      --UTILS.PrintTableToLog(Task.UUIDS)
       local controller = self.JoinTaskMenuTemplate
       for _,_uuid in pairs(Task.UUIDS) do
         local Entry = controller:FindEntryByUUID(_uuid)
         if Entry then
           controller:DeleteF10Entry(Entry,Client)
           controller:DeleteGenericEntry(Entry)
-          UTILS.PrintTableToLog(controller.menutree)
+          --UTILS.PrintTableToLog(controller.menutree)
         end
       end
     end
 
     if Task.AUUIDS and self.ActiveTaskMenuTemplate then
       --self:I("***** ActiveTaskMenuTemplate")
-      UTILS.PrintTableToLog(Task.AUUIDS)
+      --UTILS.PrintTableToLog(Task.AUUIDS)
       for _,_uuid in pairs(Task.AUUIDS) do
         local controller = self.ActiveTaskMenuTemplate
         local Entry = controller:FindEntryByUUID(_uuid)
         if Entry then
           controller:DeleteF10Entry(Entry,Client)
           controller:DeleteGenericEntry(Entry)
-          UTILS.PrintTableToLog(controller.menutree)
+          --UTILS.PrintTableToLog(controller.menutree)
         end
       end
     end
@@ -3641,8 +3658,13 @@ function PLAYERTASKCONTROLLER:_CreateJoinMenuTemplate()
     self.JoinInfoMenu = JoinTaskMenuTemplate:NewEntry(menutaskinfo,self.JoinTopMenu)
   end
   
-  if self.TaskQueue:Count() == 0 then
-    JoinTaskMenuTemplate:NewEntry(menunotasks,self.JoinMenu)
+  if self.TaskQueue:Count() == 0 and self.MenuNoTask == nil then
+    self.MenuNoTask = JoinTaskMenuTemplate:NewEntry(menunotasks,self.JoinMenu)
+  end
+  
+  if self.TaskQueue:Count() > 0 and self.MenuNoTask ~= nil then
+    JoinTaskMenuTemplate:DeleteGenericEntry(self.MenuNoTask)
+    self.MenuNoTask = nil
   end
   
   self.JoinTaskMenuTemplate = JoinTaskMenuTemplate
@@ -4043,6 +4065,12 @@ function PLAYERTASKCONTROLLER:onafterStart(From, Event, To)
   self:T(self.lid.."onafterStart")
   self:_CreateJoinMenuTemplate()
   self:_CreateActiveTaskMenuTemplate()
+  -- Player Events
+  self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventHandler)
+  self:HandleEvent(EVENTS.Ejection, self._EventHandler)
+  self:HandleEvent(EVENTS.Crash, self._EventHandler)
+  self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
+  self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)                  
   return self
 end
 
@@ -4189,6 +4217,15 @@ function PLAYERTASKCONTROLLER:onafterTaskFailed(From, Event, To, Task)
   if self.UseSRS then
     taskname = string.format(failtxttts, self.MenuName or self.Name, Task.PlayerTaskNr, tostring(Task.TTSType))
     self.SRSQueue:NewTransmission(taskname,nil,self.SRS,nil,2)
+  end
+  local clients=Task:GetClientObjects()
+  for _,client in pairs(clients) do
+    self:_RemoveMenuEntriesForTask(Task,client)
+    --self:_SwitchMenuForClient(client,"Info")
+  end
+  for _,client in pairs(clients) do
+   -- self:_RemoveMenuEntriesForTask(Task,client)
+    self:_SwitchMenuForClient(client,"Info",5)
   end
   return self
 end
