@@ -18,6 +18,7 @@
 -- @field #string SceneryName Name of the scenery object.
 -- @field DCS#Object SceneryObject DCS scenery object.
 -- @field #number Life0 Initial life points.
+-- @field #table Properties
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 
@@ -43,7 +44,7 @@ function SCENERY:Register( SceneryName, SceneryObject )
 
   local self = BASE:Inherit( self, POSITIONABLE:New( SceneryName ) )
   
-  self.SceneryName = SceneryName
+  self.SceneryName = tostring(SceneryName)
   
   self.SceneryObject = SceneryObject
   
@@ -52,7 +53,41 @@ function SCENERY:Register( SceneryName, SceneryObject )
   else
     self.Life0 = 0
   end
+  
+  self.Properties = {}
+  
   return self
+end
+
+--- Returns the Value of the zone with the given PropertyName, or nil if no matching property exists.
+-- @param #SCENERY self
+-- @param #string PropertyName The name of a the QuadZone Property from the scenery assignment to be retrieved.
+-- @return #string The Value of the QuadZone Property from the scenery assignment with the given PropertyName, or nil if absent.
+function SCENERY:GetProperty(PropertyName)
+  return self.Properties[PropertyName]
+end
+
+--- Returns the scenery Properties table.
+-- @param #SCENERY self
+-- @return #table The Key:Value table of QuadZone properties of the zone from the scenery assignment .
+function SCENERY:GetAllProperties()
+  return self.Properties
+end
+
+--- Set a scenery property
+-- @param #SCENERY self
+-- @param #string PropertyName
+-- @param #string PropertyValue
+-- @return #SCENERY self
+function SCENERY:SetProperty(PropertyName, PropertyValue)
+  self.Properties[PropertyName] = PropertyValue
+  return self
+end
+--- Obtain object name.
+--@param #SCENERY self
+--@return #string Name
+function SCENERY:GetName()
+  return self.SceneryName
 end
 
 --- Obtain DCS Object from the SCENERY Object.
@@ -115,26 +150,28 @@ end
 --@param Core.Point#COORDINATE Coordinate Where to find the scenery object
 --@param #number Radius (optional) Search radius around coordinate, defaults to 100
 --@return #SCENERY Scenery Object or `nil` if it cannot be found
-function SCENERY:FindByName(Name, Coordinate, Radius)
-  
+function SCENERY:FindByName(Name, Coordinate, Radius, Role)
+
   local radius = Radius or 100
   local name = Name or "unknown"
   local scenery = nil
-  
-  BASE:T({name, radius, Coordinate:GetVec2()})
   
   ---
   -- @param Core.Point#COORDINATE coordinate
   -- @param #number radius
   -- @param #string name
-  local function SceneryScan(coordinate, radius, name)
-    if coordinate ~= nil then
-      local scenerylist = coordinate:ScanScenery(radius)
-      local rscenery = nil
-      for _,_scenery in pairs(scenerylist) do
+  local function SceneryScan(scoordinate, sradius, sname)
+    if scoordinate ~= nil then
+      local Vec2 = scoordinate:GetVec2()
+      local scanzone = ZONE_RADIUS:New("Zone-"..sname,Vec2,sradius,true)
+      scanzone:Scan({Object.Category.SCENERY})
+      local scanned = scanzone:GetScannedSceneryObjects()
+      local rscenery = nil -- Wrapper.Scenery#SCENERY
+      for _,_scenery in pairs(scanned) do
         local scenery = _scenery -- Wrapper.Scenery#SCENERY
-        if tostring(scenery.SceneryName) == tostring(name) then
+        if tostring(scenery.SceneryName) == tostring(sname) then
           rscenery = scenery
+          if Role then rscenery:SetProperty("ROLE",Role) end
           break
         end
       end
@@ -144,6 +181,7 @@ function SCENERY:FindByName(Name, Coordinate, Radius)
   end
   
   if Coordinate then
+    --BASE:I("Coordinate Scenery Scan")
     scenery = SceneryScan(Coordinate, radius, name)
   end
 
@@ -154,7 +192,7 @@ end
 -- to find the correct object.
 --@param #SCENERY self
 --@param #string Name The name or id of the scenery object as taken from the ME. Ex. '595785449'
---@param Core.Zone#ZONE Zone Where to find the scenery object. Can be handed as zone name.
+--@param Core.Zone#ZONE_BASE Zone Where to find the scenery object. Can be handed as zone name.
 --@param #number Radius (optional) Search radius around coordinate, defaults to 100
 --@return #SCENERY Scenery Object or `nil` if it cannot be found
 function SCENERY:FindByNameInZone(Name, Zone, Radius)   
@@ -164,7 +202,7 @@ function SCENERY:FindByNameInZone(Name, Zone, Radius)
     Zone = ZONE:FindByName(Zone)
   end
   local coordinate = Zone:GetCoordinate()
-  return self:FindByName(Name,coordinate,Radius)  
+  return self:FindByName(Name,coordinate,Radius,Zone:GetProperty("ROLE"))
 end
 
 --- Find a SCENERY object from its zone name. Since SCENERY isn't registered in the Moose database (just too many objects per map), we need to do a scan first
@@ -173,38 +211,34 @@ end
 --@param #string ZoneName The name of the scenery zone as created with a right-click on the map in the mission editor and select "assigned to...". Can be handed over as ZONE object.
 --@return #SCENERY First found Scenery Object or `nil` if it cannot be found
 function SCENERY:FindByZoneName( ZoneName )
-  local zone = ZoneName -- Core.Zone#ZONE
+  local zone = ZoneName -- Core.Zone#ZONE_BASE
   if type(ZoneName) == "string" then
-  zone = ZONE:FindByName(ZoneName) 
+    zone = ZONE:FindByName(ZoneName)  -- Core.Zone#ZONE_POLYGON
   end
   local _id = zone:GetProperty('OBJECT ID')
-  BASE:T("Object ID ".._id)
+  --local properties = zone:GetAllProperties() or {}
+  --BASE:I(string.format("Object ID is: %s",_id or "none"))
+  --BASE:T("Object ID ".._id)
   if not _id then
     -- this zone has no object ID
     BASE:E("**** Zone without object ID: "..ZoneName.." | Type: "..tostring(zone.ClassName))
     if string.find(zone.ClassName,"POLYGON") then
       zone:Scan({Object.Category.SCENERY})
-      local scanned = zone:GetScannedScenery()
+      local scanned = zone:GetScannedSceneryObjects()
       for _,_scenery in (scanned) do
         local scenery = _scenery -- Wrapper.Scenery#SCENERY
         if scenery:IsAlive() then
+          local role = zone:GetProperty("ROLE")
+          if role then scenery:SetProperty("ROLE",role) end
           return scenery
         end
       end
       return nil
     else
-      local coordinate = zone:GetCoordinate()
-      local scanned = coordinate:ScanScenery()
-      for _,_scenery in (scanned) do
-        local scenery = _scenery -- Wrapper.Scenery#SCENERY
-        if scenery:IsAlive() then
-          return scenery
-        end
-      end
-      return nil
+      return self:FindByName(_id, zone:GetCoordinate(),nil,zone:GetProperty("ROLE"))
     end
   else
-    return self:FindByName(_id, zone:GetCoordinate())
+    return self:FindByName(_id, zone:GetCoordinate(),nil,zone:GetProperty("ROLE"))
   end
 end
 
@@ -219,6 +253,7 @@ function SCENERY:FindAllByZoneName( ZoneName )
     zone = ZONE:FindByName(ZoneName) 
   end
   local _id = zone:GetProperty('OBJECT ID')
+  --local properties = zone:GetAllProperties() or {}
   if not _id then
     -- this zone has no object ID
     --BASE:E("**** Zone without object ID: "..ZoneName.." | Type: "..tostring(zone.ClassName))
@@ -230,7 +265,7 @@ function SCENERY:FindAllByZoneName( ZoneName )
       return nil
     end
   else
-    local obj = self:FindByName(_id, zone:GetCoordinate())
+    local obj = self:FindByName(_id, zone:GetCoordinate(),nil,zone:GetProperty("ROLE"))
     if obj then
       return {obj}
     else

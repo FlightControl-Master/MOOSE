@@ -2389,7 +2389,6 @@ do -- COORDINATE
     end
 
     --- Creates a free form shape on the F10 map. The first point is the current COORDINATE. The remaining points need to be specified.
-    -- **NOTE**: A free form polygon must have **at least three points** in total and currently only **up to 15 points** in total are supported.
     -- @param #COORDINATE self
     -- @param #table Coordinates Table of coordinates of the remaining points of the shape.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
@@ -2463,9 +2462,30 @@ do -- COORDINATE
                                                          vecs[11], vecs[12], vecs[13], vecs[14], vecs[15],
                                                          Color, FillColor, LineType, ReadOnly, Text or "")
       else
-        self:E("ERROR: Currently a free form polygon can only have 15 points in total!")
+        
         -- Unfortunately, unpack(vecs) does not work! So no idea how to generalize this :(
-        trigger.action.markupToAll(7, Coalition, MarkID, unpack(vecs), Color, FillColor, LineType, ReadOnly, Text or "")
+        --trigger.action.markupToAll(7, Coalition, MarkID, unpack(vecs), Color, FillColor, LineType, ReadOnly, Text or "")
+        
+        -- Write command as string and execute that. Idea by Grimes https://forum.dcs.world/topic/324201-mark-to-all-function/#comment-5273793
+        local s=string.format("trigger.action.markupToAll(7, %d, %d,", Coalition, MarkID)
+        for _,vec in pairs(vecs) do
+          s=s..string.format("%s,", UTILS._OneLineSerialize(vec))
+        end
+        s=s..string.format("%s, %s, %s, %s", UTILS._OneLineSerialize(Color), UTILS._OneLineSerialize(FillColor), tostring(LineType), tostring(ReadOnly))
+        if Text and Text~="" then
+          s=s..string.format(", \"%s\"", Text)
+        end
+        s=s..")"
+        
+        
+        -- Execute string command
+        local success=UTILS.DoString(s)
+                
+        if not success then
+          self:E("ERROR: Could not draw polygon")
+          env.info(s)
+        end
+        
       end
 
       return MarkID

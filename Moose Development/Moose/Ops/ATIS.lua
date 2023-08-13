@@ -419,6 +419,8 @@ ATIS.RunwayM2T = {
   TheChannel = -10,
   Syria = 5,
   MarianaIslands = 2,
+  Falklands = 12,
+  Sinai = 5,
 }
 
 --- Whether ICAO phraseology is used for ATIS broadcasts.
@@ -430,6 +432,8 @@ ATIS.RunwayM2T = {
 -- @field #boolean TheChannel true.
 -- @field #boolean Syria true.
 -- @field #boolean MarianaIslands true.
+-- @field #boolean Falklands true.
+-- @field #boolean Sinai true.
 ATIS.ICAOPhraseology = {
   Caucasus = true,
   Nevada = false,
@@ -437,7 +441,9 @@ ATIS.ICAOPhraseology = {
   PersianGulf = true,
   TheChannel = true,
   Syria = true,
-  MarianaIslands = true
+  MarianaIslands = true,
+  Falklands = true,
+  Sinai = true,
 }
 
 --- Nav point data.
@@ -1272,7 +1278,8 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ATIS:onafterStart( From, Event, To )
-
+  self:I("Airbase category is "..self.airbase:GetAirbaseCategory())
+  
   -- Check that this is an airdrome.
   if self.airbase:GetAirbaseCategory() == Airbase.Category.SHIP then
     self:E( self.lid .. string.format( "ERROR: Cannot start ATIS for airbase %s! Only AIRDROMES are supported but NOT SHIPS.", self.airbasename ) )
@@ -1823,7 +1830,10 @@ function ATIS:onafterBroadcast( From, Event, To )
 
   -- Airbase name
   subtitle = string.format( "%s", self.airbasename )
-  if (not self.ATISforFARPs) and self.airbasename:find( "AFB" ) == nil and self.airbasename:find( "Airport" ) == nil and self.airbasename:find( "Airstrip" ) == nil and self.airbasename:find( "airfield" ) == nil and self.airbasename:find( "AB" ) == nil then
+  if (not self.ATISforFARPs) and self.airbasename:find( "AFB" ) == nil and self.airbasename:find( "Airport" ) == nil 
+      and self.airbasename:find( "Airstrip" ) == nil and self.airbasename:find( "airfield" ) == nil and self.airbasename:find( "AB" ) == nil
+      and self.airbasename:find( "Field" ) == nil
+      then
     subtitle = subtitle .. " Airport"
   end
   if not self.useSRS then

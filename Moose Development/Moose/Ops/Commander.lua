@@ -710,6 +710,26 @@ function COMMANDER:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
   return patrolzone
 end
 
+--- Remove a GCI CAP.
+-- @param #COMMANDER self
+-- @param Core.Zone#ZONE Zone Zone, where the flight orbits.
+function COMMANDER:RemoveGciCapZone(Zone)
+
+  local patrolzone={} --Ops.AirWing#AIRWING.PatrolZone
+  
+  patrolzone.zone=Zone
+  for i,_patrolzone in pairs(self.gcicapZones) do
+    if _patrolzone.zone == patrolzone.zone then
+      if _patrolzone.mission and _patrolzone.mission:IsNotOver() then
+          _patrolzone.mission:Cancel()
+      end
+      table.remove(self.gcicapZones, i)
+      break
+    end
+  end
+  return patrolzone
+end
+
 --- Add an AWACS zone.
 -- @param #COMMANDER self
 -- @param Core.Zone#ZONE Zone Zone.
@@ -732,6 +752,26 @@ function COMMANDER:AddAwacsZone(Zone, Altitude, Speed, Heading, Leg)
 
   table.insert(self.awacsZones, awacszone)
 
+  return awacszone
+end
+
+--- Remove a AWACS zone.
+-- @param #COMMANDER self
+-- @param Core.Zone#ZONE Zone Zone, where the flight orbits.
+function COMMANDER:RemoveAwacsZone(Zone)
+
+  local awacszone={} --Ops.AirWing#AIRWING.PatrolZone
+  
+  awacszone.zone=Zone
+  for i,_awacszone in pairs(self.awacsZones) do
+    if _awacszone.zone == awacszone.zone then
+      if _awacszone.mission and _awacszone.mission:IsNotOver() then
+          _awacszone.mission:Cancel()
+      end
+      table.remove(self.awacsZones, i)
+      break
+    end
+  end
   return awacszone
 end
 
@@ -759,6 +799,26 @@ function COMMANDER:AddTankerZone(Zone, Altitude, Speed, Heading, Leg, RefuelSyst
 
   table.insert(self.tankerZones, tankerzone)
 
+  return tankerzone
+end
+
+--- Remove a refuelling tanker zone.
+-- @param #COMMANDER self
+-- @param Core.Zone#ZONE Zone Zone, where the flight orbits.
+function COMMANDER:RemoveTankerZone(Zone)
+
+  local tankerzone={} --Ops.AirWing#AIRWING.PatrolZone
+  
+  tankerzone.zone=Zone
+  for i,_tankerzone in pairs(self.tankerZones) do
+    if _tankerzone.zone == tankerzone.zone then
+      if _tankerzone.mission and _tankerzone.mission:IsNotOver() then
+          _tankerzone.mission:Cancel()
+      end
+      table.remove(self.tankerZones, i)
+      break
+    end
+  end
   return tankerzone
 end
 
