@@ -1773,7 +1773,7 @@ do -- Cargo
   -- holds number of infantry that the vehicle could carry, instead of actual cargo weights.
   local _DefaultInfantryWeight = 95
 
-  POSITIONABLE.CargoBayCapacityValues = {
+  local _POSITIONABLE_CargoBayCapacityValues = {
     ["Air"] = {
       -- C-17A
       -- Wiki says: max=265,352, empty=128,140, payload=77,516 (134 troops, 1 M1 Abrams tank, 2 M2 Bradley or 3 Stryker)
@@ -1849,6 +1849,21 @@ do -- Cargo
     }
   }
 
+  function POSITIONABLE.GetCargoBayWeightOverrides()
+    return _POSITIONABLE_CargoBayCapacityValues
+  end
+
+  -- @param UnitType Either "Air", "Naval", or "Ground"
+  -- @param #string TypeName Name of the unit type.
+  -- @param #number WeightLimit Weight limit in kg. If not given, the value is removed from the overrides.
+  function POSITIONABLE.SetCargoBayWeightOverride( UnitType, TypeName, WeightLimit )
+    if UnitType ~= "Air" and UnitType ~= "Naval" and UnitType ~= "Ground" then
+        BASE:E("ERROR: Provided argument for UnitType is not one of the valid values")
+        error("Provided argument for UnitType is not one of the valid values")
+    end
+    _POSITIONABLE_CargoBayCapacityValues[UnitType][TypeName] = WeightLimit
+  end
+
   --- Set Cargo Bay Weight Limit in kg.
   -- @param #POSITIONABLE self
   -- @param #number WeightLimit (Optional) Weight limit in kg. If not given, the value is taken from the descriptors or hard coded. 
@@ -1877,7 +1892,7 @@ do -- Cargo
       if self:IsAir() then
 
         -- Max takeoff weight if DCS descriptors have unrealstic values.
-        local Weights = POSITIONABLE.CargoBayCapacityValues.Air;
+        local Weights = self:GetCargoBayWeightOverrides().Air;
         
         -- Max (takeoff) weight (empty+fuel+cargo weight).
         local massMax= Desc.massMax or 0
@@ -1912,13 +1927,13 @@ do -- Cargo
       elseif self:IsShip() then
 
         -- Hard coded cargo weights in kg.
-        local Weights = POSITIONABLE.CargoBayCapacityValues.Naval;
+        local Weights = self:GetCargoBayWeightOverrides().Naval;
         self.__.CargoBayWeightLimit = ( Weights[TypeName] or 50000 )
 
       else
 
         -- Hard coded number of soldiers.
-        local Weights = POSITIONABLE.CargoBayCapacityValues.Ground;
+        local Weights = self:GetCargoBayWeightOverrides().Ground;
 
         -- Assuming that each passenger weighs 95 kg on average.
         local CargoBayWeightLimit = ( Weights[TypeName] or 0 )
