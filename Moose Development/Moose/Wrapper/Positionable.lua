@@ -1853,7 +1853,7 @@ do -- Cargo
     return _POSITIONABLE_CargoBayCapacityValues
   end
 
-  -- @param UnitType Either "Air", "Naval", or "Ground"
+  -- @param #string UnitType Either "Air", "Naval", or "Ground"
   -- @param #string TypeName Name of the unit type.
   -- @param #number WeightLimit Weight limit in kg. If not given, the value is removed from the overrides.
   function POSITIONABLE.SetCargoBayWeightOverride( UnitType, TypeName, WeightLimit )
