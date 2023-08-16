@@ -49,6 +49,7 @@ Wrapper/Scenery.lua
 Wrapper/Marker.lua
 Wrapper/Weapon.lua
 Wrapper/Net.lua
+Wrapper/Storage.lua
 
 Cargo/Cargo.lua
 Cargo/CargoUnit.lua
