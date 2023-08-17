@@ -30,6 +30,7 @@
 -- @field #table runways Runways of airdromes.
 -- @field #AIRBASE.Runway runwayLanding Runway used for landing.
 -- @field #AIRBASE.Runway runwayTakeoff Runway used for takeoff.
+-- @field Wrapper.Storage#STORAGE storage The DCS warehouse storage.
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 --- Wrapper class to handle the DCS Airbase objects:
@@ -832,6 +833,9 @@ function AIRBASE:Register(AirbaseName)
 
   -- Init coordinate.
   self:GetCoordinate()
+  
+  -- Storage.
+  self.storage=_DATABASE:AddStorage(AirbaseName)
 
   if vec2 then
     if self.isShip then
@@ -917,6 +921,87 @@ end
 -- @return Core.Zone#ZONE_RADIUS The zone radius of the airbase.
 function AIRBASE:GetZone()
   return self.AirbaseZone
+end
+
+--- Get the DCS warehouse.
+-- @param #AIRBASE self
+-- @return DCS#Warehouse The DCS warehouse object.
+function AIRBASE:GetWarehouse()
+  local warehouse=nil --DCS#Warehouse
+  local airbase=self:GetDCSObject()
+  if airbase then
+    warehouse=airbase:getWarehouse()
+  end
+  return warehouse
+end
+
+--- Get the warehouse storage of this airbase. The returned `STORAGE` object is the wrapper of the DCS warehouse. 
+-- This allows you to add and remove items such as aircraft, liquids, weapons and other equipment.
+-- @param #AIRBASE self
+-- @return Wrapper.Storage#STORAGE The storage.
+function AIRBASE:GetStorage()
+  return self.storage
+end
+
+--- Enables or disables automatic capturing of the airbase.
+-- @param #AIRBASE self
+-- @param #boolean Switch If `true`, enable auto capturing. If `false`, disable it.
+-- @return #AIRBASE self
+function AIRBASE:SetAutoCapture(Switch)
+
+  local airbase=self:GetDCSObject()
+  
+  if airbase then
+    airbase:autoCapture(Switch)
+  end
+
+  return self
+end
+
+--- Enables automatic capturing of the airbase.
+-- @param #AIRBASE self
+-- @return #AIRBASE self
+function AIRBASE:SetAutoCaptureON()
+  self:SetAutoCapture(true)
+  return self
+end
+
+--- Disables automatic capturing of the airbase.
+-- @param #AIRBASE self
+-- @return #AIRBASE self
+function AIRBASE:SetAutoCaptureOFF()
+  self:SetAutoCapture(false)
+  return self
+end
+
+--- Returns whether auto capturing of the airbase is on or off.
+-- @param #AIRBASE self
+-- @return #boolean Returns `true` if auto capturing is on, `false` if off and `nil` if the airbase object cannot be retrieved. 
+function AIRBASE:IsAutoCapture()
+
+  local airbase=self:GetDCSObject()
+  
+  local auto=nil
+  if airbase then
+    auto=airbase:autoCaptureIsOn()
+  end
+
+  return auto
+end
+
+--- Sets the coalition of the airbase.
+-- @param #AIRBASE self
+-- @param #number Coal Coalition that the airbase should have (0=Neutral, 1=Red, 2=Blue).
+-- @return #AIRBASE self
+function AIRBASE:SetCoalition(Coal)
+
+  local airbase=self:GetDCSObject()
+  
+  if airbase then
+    airbase:setCoalition(Coal)
+  end
+  
+  return self
 end
 
 --- Get all airbases of the current map. This includes ships and FARPS.
