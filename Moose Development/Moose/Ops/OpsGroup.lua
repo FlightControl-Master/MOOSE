@@ -3013,7 +3013,7 @@ function OPSGROUP:MarkWaypoints(Duration)
     local waypoint=_waypoint --#OPSGROUP.Waypoint
 
     local text=string.format("Waypoint ID=%d of %s", waypoint.uid, self.groupname)
-    text=text..string.format("\nSpeed=%.1f kts, Alt=%d ft (%s)", UTILS.MpsToKnots(waypoint.speed), UTILS.MetersToFeet(waypoint.alt), "BARO")
+    text=text..string.format("\nSpeed=%.1f kts, Alt=%d ft (%s)", UTILS.MpsToKnots(waypoint.speed), UTILS.MetersToFeet(waypoint.alt or 0), "BARO")
 
     if waypoint.marker then
       if waypoint.marker.text~=text then
