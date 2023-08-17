@@ -793,10 +793,111 @@ do -- Airbase
   -- @function [parent=#Airbase] getDesc
   -- @param self
   -- @return #Airbase.Desc
-  
+
+  --- Returns the warehouse object associated with the airbase object. Can then be used to call the warehouse class functions to modify the contents of the warehouse.
+  -- @function [parent=#Airbase] getWarehouse
+  -- @param self
+  -- @return #Warehouse The DCS warehouse object of this airbase.
+
+  --- Enables or disables the airbase and FARP auto capture game mechanic where ownership of a base can change based on the presence of ground forces or the 
+  -- default setting assigned in the editor.
+  -- @function [parent=#Airbase] autoCapture
+  -- @param self
+  -- @param #boolean setting `true` : enables autoCapture behavior, `false` : disables autoCapture behavior
+
+  --- Returns the current autoCapture setting for the passed base.
+  -- @function [parent=#Airbase] autoCaptureIsOn
+  -- @param self
+  -- @return #boolean `true` if autoCapture behavior is enabled and `false` otherwise.
+
+  --- Changes the passed airbase object's coalition to the set value. Must be used with Airbase.autoCapture to disable auto capturing of the base, 
+  -- otherwise the base can revert back to a different coalition depending on the situation and built in game capture rules.
+  -- @function [parent=#Airbase] setCoalition
+  -- @param self
+  -- @param #number coa The new owner coalition: 0=neutra, 1=red, 2=blue.
+
+  --- Returns the wsType of every object that exists in DCS. A wsType is a table consisting of 4 entries indexed numerically. 
+  -- It can be used to broadly categorize object types. The table can be broken down as: {mainCategory, subCat1, subCat2, index}
+  -- @function [parent=#Airbase] getResourceMap
+  -- @param self
+  -- @return #table wsType of every object that exists in DCS.
+
   Airbase = {} --#Airbase
 
 end -- Airbase
+
+
+do -- Warehouse
+
+  --- [DCS Class Warehouse](https://wiki.hoggitworld.com/view/DCS_Class_Warehouse)
+  -- The warehouse class gives control over warehouses that exist in airbase objects. These warehouses can limit the aircraft, munitions, and fuel available to coalition aircraft.
+  -- @type Warehouse
+
+  --- Adds the passed amount of a given item to the warehouse.
+  -- itemName is the typeName associated with the item: "weapons.missiles.AIM_54C_Mk47"
+  -- A wsType table can also be used, however the last digit with wsTypes has been known to change. {4, 4, 7, 322}
+  -- @function [parent=#Warehouse] addItem
+  -- @param self
+  -- @param #string itemName Name of the item.
+  -- @param #number count Number of items to add.
+
+  --- Returns the number of the passed type of item currently in a warehouse object.
+  -- @function [parent=#Warehouse] getItemCount
+  -- @param self
+  -- @param #string itemName Name of the item.
+
+  --- Sets the passed amount of a given item to the warehouse.
+  -- @function [parent=#Warehouse] setItem
+  -- @param self
+  -- @param #string itemName Name of the item.
+  -- @param #number count Number of items to add.
+
+  --- Removes the amount of the passed item from the warehouse.
+  -- @function [parent=#Warehouse] removeItem
+  -- @param self
+  -- @param #string itemName Name of the item.
+  -- @param #number count Number of items to be removed.
+
+  --- Adds the passed amount of a liquid fuel into the warehouse inventory.
+  -- @function [parent=#Warehouse] addLiquid
+  -- @param self
+  -- @param #number liquidType Type of liquid to add: 0=jetfuel, 1=aviation gasoline, 2=MW50, 3=Diesel.
+  -- @param #number count Amount of liquid to add.
+
+  --- Returns the amount of the passed liquid type within a given warehouse.
+  -- @function [parent=#Warehouse] getLiquidAmount
+  -- @param self
+  -- @param #number liquidType Type of liquid to add: 0=jetfuel, 1=aviation gasoline, 2=MW50, 3=Diesel.
+  -- @return #number Amount of liquid.
+
+  --- Sets the passed amount of a liquid fuel into the warehouse inventory.
+  -- @function [parent=#Warehouse] setLiquidAmount
+  -- @param self
+  -- @param #number liquidType Type of liquid to add: 0=jetfuel, 1=aviation gasoline, 2=MW50, 3=Diesel.
+  -- @param #number count Amount of liquid.
+
+  --- Removes the set amount of liquid from the inventory in a warehouse.
+  -- @function [parent=#Warehouse] setLiquidAmount
+  -- @param self
+  -- @param #number liquidType Type of liquid to add: 0=jetfuel, 1=aviation gasoline, 2=MW50, 3=Diesel.
+  -- @param #number count Amount of liquid.
+
+  --- Returns the airbase object associated with the warehouse object.
+  -- @function [parent=#Warehouse] getOwner
+  -- @param self
+  -- @return #Airbase The airbase object owning this warehouse.
+
+  --- Returns a full itemized list of everything currently in a warehouse. If a category is set to unlimited then the table will be returned empty.
+  -- Aircraft and weapons are indexed by strings. Liquids are indexed by number.
+  -- @function [parent=#Warehouse] getInventory
+  -- @param self
+  -- @param #string itemName Name of the item.
+  -- @return #table Itemized list of everything currently in a warehouse
+
+
+  Warehouse = {} --#Warehouse 
+
+end
 
 do -- Spot
 
