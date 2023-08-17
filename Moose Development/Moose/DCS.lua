@@ -799,7 +799,8 @@ do -- Airbase
   -- @param self
   -- @return #Warehouse The DCS warehouse object of this airbase.
 
-  --- Enables or disables the airbase and FARP auto capture game mechanic where ownership of a base can change based on the presence of ground forces or the default setting assigned in the editor.
+  --- Enables or disables the airbase and FARP auto capture game mechanic where ownership of a base can change based on the presence of ground forces or the 
+  -- default setting assigned in the editor.
   -- @function [parent=#Airbase] autoCapture
   -- @param self
   -- @param #boolean setting `true` : enables autoCapture behavior, `false` : disables autoCapture behavior
@@ -809,10 +810,17 @@ do -- Airbase
   -- @param self
   -- @return #boolean `true` if autoCapture behavior is enabled and `false` otherwise.
 
-  --- Changes the passed airbase object's coalition to the set value. Must be used with Airbase.autoCapture to disable auto capturing of the base, otherwise the base can revert back to a different coalition depending on the situation and built in game capture rules.
+  --- Changes the passed airbase object's coalition to the set value. Must be used with Airbase.autoCapture to disable auto capturing of the base, 
+  -- otherwise the base can revert back to a different coalition depending on the situation and built in game capture rules.
   -- @function [parent=#Airbase] setCoalition
   -- @param self
   -- @param #number coa The new owner coalition: 0=neutra, 1=red, 2=blue.
+
+  --- Returns the wsType of every object that exists in DCS. A wsType is a table consisting of 4 entries indexed numerically. 
+  -- It can be used to broadly categorize object types. The table can be broken down as: {mainCategory, subCat1, subCat2, index}
+  -- @function [parent=#Airbase] getResourceMap
+  -- @param self
+  -- @return #table wsType of every object that exists in DCS.
 
   Airbase = {} --#Airbase
 
