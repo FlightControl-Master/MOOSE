@@ -4101,9 +4101,9 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
   -- Get the size of an object.
   local function _GetObjectSize(DCSdesc)
     if DCSdesc.box then
-      local x=DCSdesc.box.max.x+math.abs(DCSdesc.box.min.x)  --length
-      local y=DCSdesc.box.max.y+math.abs(DCSdesc.box.min.y)  --height
-      local z=DCSdesc.box.max.z+math.abs(DCSdesc.box.min.z)  --width
+      local x=DCSdesc.box.max.x-DCSdesc.box.min.x  --length
+      local y=DCSdesc.box.max.y-DCSdesc.box.min.y  --height
+      local z=DCSdesc.box.max.z-DCSdesc.box.min.z  --width
       return math.max(x,z), x , y, z
     end
     return 0,0,0,0
