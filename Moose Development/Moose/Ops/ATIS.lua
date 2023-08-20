@@ -46,6 +46,7 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
+-- ### Additions for SRS and FARP: **applevangelist**
 --
 -- @module Ops.ATIS
 -- @image OPS_ATIS.png
@@ -615,7 +616,7 @@ _ATIS = {}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version = "0.9.15"
+ATIS.version = "0.9.16"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2158,8 +2159,9 @@ function ATIS:onafterBroadcast( From, Event, To )
 
   if not self.ATISforFARPs then
     -- Active runway.
+    local subtitle
     if runwayLanding then
-      local subtitle=string.format("Active runway %s", runwayLanding)
+      subtitle=string.format("Active runway %s", runwayLanding)
       if rwyLandingLeft==true then
         subtitle=subtitle.." Left"
       elseif rwyLandingLeft==false then

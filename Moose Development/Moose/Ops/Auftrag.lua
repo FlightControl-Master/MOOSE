@@ -1336,9 +1336,9 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
   return mission
 end
 
---- **[AIR]** Create a CAP mission on a group.
+--- **[AIR]** Create a CAP mission over a (moving) group.
 -- @param #AUFTRAG self
--- @param Wrapper.Group#GROUP Grp.
+-- @param Wrapper.Group#GROUP Grp The grp to perform the CAP over.
 -- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
 -- @param #number Speed Orbit speed in knots. Default 250 KIAS.
 -- @param #number RelHeading Relative heading [0, 360) of race-track pattern in degrees wrt heading of the carrier. Default is heading of the carrier.
