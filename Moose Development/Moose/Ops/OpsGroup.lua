@@ -493,7 +493,9 @@ OPSGROUP.CargoStatus={
 
 --- Cargo group data.
 -- @type OPSGROUP.CargoGroup
+-- @field #string type Type of cargo: "OPSGROUP" or "STORAGE".
 -- @field #OPSGROUP opsgroup The cargo opsgroup.
+-- @field Ops.OpsTransport#OPSTRANSPORT.Storage storage Storage data.
 -- @field #boolean delivered If `true`, group was delivered.
 -- @field #boolean disembarkActivation If `true`, group is activated. If `false`, group is late activated.
 -- @field Core.Zone#ZONE disembarkZone Zone where this group is disembarked to.
@@ -7993,13 +7995,17 @@ function OPSGROUP:_CheckCargoTransport()
       text=text..string.format("\n[%d] UID=%d Status=%s: %s --> %s", i, transport.uid, transport:GetState(), pickupname, deployname)
       for j,_cargo in pairs(transport:GetCargos()) do
         local cargo=_cargo --#OPSGROUP.CargoGroup
-        local state=cargo.opsgroup:GetState()
-        local status=cargo.opsgroup.cargoStatus
-        local name=cargo.opsgroup.groupname
-        local carriergroup, carrierelement, reserved=cargo.opsgroup:_GetMyCarrier()
-        local carrierGroupname=carriergroup and carriergroup.groupname or "none"
-        local carrierElementname=carrierelement and carrierelement.name or "none"
-        text=text..string.format("\n  (%d) %s [%s]: %s, carrier=%s(%s), delivered=%s", j, name, state, status, carrierGroupname, carrierElementname, tostring(cargo.delivered))
+        if cargo.type==OPSTRANSPORT.CargoType.OPSGROUP then
+          local state=cargo.opsgroup:GetState()
+          local status=cargo.opsgroup.cargoStatus
+          local name=cargo.opsgroup.groupname
+          local carriergroup, carrierelement, reserved=cargo.opsgroup:_GetMyCarrier()
+          local carrierGroupname=carriergroup and carriergroup.groupname or "none"
+          local carrierElementname=carrierelement and carrierelement.name or "none"
+          text=text..string.format("\n  (%d) %s [%s]: %s, carrier=%s(%s), delivered=%s", j, name, state, status, carrierGroupname, carrierElementname, tostring(cargo.delivered))
+        else
+          --TODO: STORAGE
+        end
       end
     end
     if text~="" then
@@ -8748,46 +8754,72 @@ end
 --- Check if the group can *in principle* be carrier of a cargo group. This checks the max cargo capacity of the group but *not* how much cargo is already loaded (if any).
 -- **Note** that the cargo group *cannot* be split into units, i.e. the largest cargo bay of any element of the group must be able to load the whole cargo group in one piece.
 -- @param #OPSGROUP self
--- @param #OPSGROUP CargoGroup Cargo group, which needs a carrier.
+-- @param Ops.OpsGroup#OPSGROUP.CargoGroup CargoGroup Cargo group, which needs a carrier.
 -- @return #boolean If `true`, there is an element of the group that can load the whole cargo group.
-function OPSGROUP:CanCargo(CargoGroup)
+function OPSGROUP:CanCargo(Cargo)
 
-  if CargoGroup then
+  if Cargo then
+  
+    local weight=math.huge
+    if Cargo.type==OPSTRANSPORT.CargoType.OPSGROUP then
 
-    local weight=CargoGroup:GetWeightTotal()
+      local weight=Cargo.opsgroup:GetWeightTotal()      
 
-    for _,_element in pairs(self.elements) do
-      local element=_element --#OPSGROUP.Element
-
-      -- Check that element is not dead and has
-      if element and element.status~=OPSGROUP.ElementStatus.DEAD and element.weightMaxCargo>=weight then
-        return true
+      for _,_element in pairs(self.elements) do
+        local element=_element --#OPSGROUP.Element
+  
+        -- Check that element is not dead and has
+        if element and element.status~=OPSGROUP.ElementStatus.DEAD and element.weightMaxCargo>=weight then
+          return true
+        end
       end
 
+
+    else
+    
+      if type(Cargo.storage.cargoType)=="number" then
+        weight=Cargo.storage.cargoAmount
+      else
+        weight=Cargo.storage.cargoAmount*100
+      end
+      
+      local bay=0
+      for _,_element in pairs(self.elements) do
+        local element=_element --#OPSGROUP.Element
+  
+        -- Check that element is not dead and has
+        if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+          bay=bay+element.weightMaxCargo
+        end
+      end
+      
+      if bay>=weight then
+        return true
+      end
+    
     end
+    
 
   end
 
   return false
 end
 
---- Add weight to the internal cargo of an element of the group.
+--- Find carrier for cargo by evaluating the free cargo bay storage.
 -- @param #OPSGROUP self
--- @param #OPSGROUP CargoGroup Cargo group, which needs a carrier.
+-- @param #number Weight Weight of cargo in kg.
 -- @return #OPSGROUP.Element Carrier able to transport the cargo.
-function OPSGROUP:FindCarrierForCargo(CargoGroup)
-
-  local weight=CargoGroup:GetWeightTotal()
+function OPSGROUP:FindCarrierForCargo(Weight)
 
   for _,_element in pairs(self.elements) do
     local element=_element --#OPSGROUP.Element
 
     local free=self:GetFreeCargobay(element.name)
 
-    if free>=weight then
+    if free>=Weight then
       return element
     else
-      self:T3(self.lid..string.format("%s: Weight %d>%d free cargo bay", element.name, weight, free))
+      self:T3(self.lid..string.format("%s: Weight %d>%d free cargo bay", element.name, Weight, free))
     end
 
   end
@@ -9097,14 +9129,14 @@ function OPSGROUP:onafterLoading(From, Event, To)
     local isNotCargo=cargo.opsgroup:IsNotCargo(true)
     
     -- Check if cargo is holding or loaded
-    local isHolding=cargo.opsgroup:IsHolding() or cargo.opsgroup:IsLoaded()
+    local isHolding=cargo.type==OPSTRANSPORT.CargoType.OPSGROUP and (cargo.opsgroup:IsHolding() or cargo.opsgroup:IsLoaded()) or true
     
     -- Check if cargo is in embark/pickup zone.
     -- Added InUtero here, if embark zone is moving (ship) and cargo has been spawned late activated and its position is not updated. Not sure if that breaks something else!
-    local inZone=cargo.opsgroup:IsInZone(self.cargoTZC.EmbarkZone) or cargo.opsgroup:IsInUtero()
+    local inZone=cargo.type==OPSTRANSPORT.CargoType.OPSGROUP and (cargo.opsgroup:IsInZone(self.cargoTZC.EmbarkZone) or cargo.opsgroup:IsInUtero()) or true
     
     -- Check if cargo is currently on a mission.
-    local isOnMission=cargo.opsgroup:IsOnMission()
+    local isOnMission=cargo.type==OPSTRANSPORT.CargoType.OPSGROUP and cargo.opsgroup:IsOnMission() or false
     
     -- Check if current mission is using this ops transport.
     if isOnMission then
@@ -9114,12 +9146,29 @@ function OPSGROUP:onafterLoading(From, Event, To)
       end
     end
     
+    local isAvail=true
+    if cargo.type==OPSTRANSPORT.CargoType.STORAGE then
+      local nAvail=0
+      if type(cargo.storage.cargoType)=="number" then
+        nAvail=cargo.storage.storageFrom:GetLiquidAmount(cargo.storage.cargoType)
+      else
+        nAvail=cargo.storage.storageFrom:GetItemAmount(cargo.storage.cargoType)
+      end
+      if nAvail>0 then
+        isAvail=true
+      else
+        isAvail=false
+      end
+    end
+    
+    local isDead=cargo.type==OPSTRANSPORT.CargoType.OPSGROUP and cargo.opsgroup:IsDead() or false
+    
     -- Debug message.
     self:T(self.lid..string.format("Loading: canCargo=%s, isCarrier=%s, isNotCargo=%s, isHolding=%s, isOnMission=%s",
-    tostring(canCargo), tostring(isCarrier), tostring(isNotCargo), tostring(isHolding), tostring(isOnMission)))
+    tostring(canCargo), tostring(isCarrier), tostring(isNotCargo), tostring(isHolding), tostring(isOnMission)))    
 
     -- TODO: Need a better :IsBusy() function or :IsReadyForMission() :IsReadyForBoarding() :IsReadyForTransport()
-    if canCargo and inZone and isNotCargo and isHolding and (not (cargo.delivered or cargo.opsgroup:IsDead() or isCarrier or isOnMission)) then
+    if canCargo and inZone and isNotCargo and isHolding and isAvail and (not (cargo.delivered or isDead or isCarrier or isOnMission)) then
       table.insert(cargos, cargo)
     end
   end
@@ -9135,9 +9184,24 @@ function OPSGROUP:onafterLoading(From, Event, To)
   -- Loop over all cargos.
   for _,_cargo in pairs(cargos) do
     local cargo=_cargo --#OPSGROUP.CargoGroup
+    
+    local weight=nil
+    if cargo.type==OPSTRANSPORT.CargoType.OPSGROUP then
+    
+      weight=cargo.opsgroup:GetWeightTotal()
+      
+    else
+
+      if type(cargo.storage.cargoType)=="number" then
+        weight=cargo.storage.cargoAmount
+      else
+        weight=cargo.storage.cargoAmount*100 -- Assume 100 kg per item
+      end
+    
+    end
 
     -- Find a carrier for this cargo.
-    local carrier=self:FindCarrierForCargo(cargo.opsgroup)
+    local carrier=self:FindCarrierForCargo(weight)
 
     if carrier then
       

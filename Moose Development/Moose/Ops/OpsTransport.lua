@@ -186,6 +186,22 @@ OPSTRANSPORT.Status={
 -- @field #number radius Radomization radius for waypoints in meters. Default 0 m.
 -- @field #boolean reverse If `true`, path is used in reversed order.
 
+--- Storage data.
+-- @type OPSTRANSPORT.Storage
+-- @field Wrapper.Storage#STORAGE storageFrom Storage from.
+-- @field Wrapper.Storage#STORAGE storageTo Storage To.
+-- @field #string cargoType Type of cargo.
+-- @field #number cargoAmount Amount of cargo. Liquids in kg.
+
+--- Storage data.
+-- @type OPSTRANSPORT.CargoType
+-- @field #string OPSGROUP Cargo is an OPSGROUP.
+-- @field #string STORAGE Cargo is storage of DCS warehouse.
+OPSTRANSPORT.CargoType={
+  OPSGROUP="OPSGROUP",
+  STORAGE="STORAGE",
+}
+
 --- Generic transport condition.
 -- @type OPSTRANSPORT.Condition
 -- @field #function func Callback function to check for a condition. Should return a #boolean.
@@ -574,6 +590,27 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, TransportZoneCombo, DisembarkActi
 
 
   return self
+end
+
+--- Add cargo groups to be transported.
+-- @param #OPSTRANSPORT self
+-- @param Wrapper.Storage#STORAGE StorageFrom Storage from.
+-- @param Wrapper.Storage#STORAGE StorageTo Storage to.
+-- @param #string CargoType Type of cargo.
+-- @param #number CargoAmount Amount of cargo. Liquids in kg.
+-- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:AddCargoStorage(StorageFrom, StorageTo, CargoType, CargoAmount, TransportZoneCombo)
+
+  -- Use default TZC if no transport zone combo is provided.
+  TransportZoneCombo=TransportZoneCombo or self.tzcDefault
+
+  -- Cargo data.
+  local cargo=self:_CreateCargoStorage(StorageFrom,StorageTo, CargoType, CargoAmount, TransportZoneCombo)
+
+  -- Add to TZC table.
+  table.insert(TransportZoneCombo.Cargos, cargo)
+
 end
 
 
@@ -1068,11 +1105,34 @@ function OPSTRANSPORT:GetCargoOpsGroups(Delivered, Carrier, TransportZoneCombo)
   local opsgroups={}
   for _,_cargo in pairs(cargos) do
     local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
-    if Delivered==nil or cargo.delivered==Delivered  then
+    if cargo.type=="OPSGROUP" and (Delivered==nil or cargo.delivered==Delivered)  then
       if cargo.opsgroup and not (cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped()) then
         if Carrier==nil or Carrier:CanCargo(cargo.opsgroup) then
           table.insert(opsgroups, cargo.opsgroup)
         end
+      end
+    end
+  end
+    
+  return opsgroups
+end
+
+--- Get (all) cargo @{Ops.OpsGroup#OPSGROUP}s. Optionally, only delivered or undelivered groups can be returned.
+-- @param #OPSTRANSPORT self
+-- @param #boolean Delivered If `true`, only delivered groups are returned. If `false` only undelivered groups are returned. If `nil`, all groups are returned.
+-- @param Ops.OpsGroup#OPSGROUP Carrier (Optional) Only count cargo groups that fit into the given carrier group. Current cargo is not a factor.
+-- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+-- @return #table Cargo Ops groups. Can be and empty table `{}`.
+function OPSTRANSPORT:GetCargoStorages(Delivered, Carrier, TransportZoneCombo)
+
+  local cargos=self:GetCargos(TransportZoneCombo)
+
+  local opsgroups={}
+  for _,_cargo in pairs(cargos) do
+    local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
+    if cargo.type=="STORAGE" and (Delivered==nil or cargo.delivered==Delivered)  then
+      if Carrier==nil or Carrier:CanCargo(cargo.opsgroup) then
+        table.insert(opsgroups, cargo.opsgroup)
       end
     end
   end
@@ -1106,6 +1166,28 @@ function OPSTRANSPORT:GetCargos(TransportZoneCombo)
     return cargos
   end
 
+end
+
+--- Get total weight.
+-- @param #OPSTRANSPORT self
+-- @param Ops.OpsGroup#OPSGROUP.CargoGroup Cargo Cargo data.
+-- @param #boolean IncludeReserved Include reserved cargo.
+-- @return #number Weight in kg.
+function OPSTRANSPORT:GetCargoTotalWeight(Cargo, IncludeReserved)
+
+  local weight=0
+
+  if Cargo.type==OPSTRANSPORT.CargoType.OPSGROUP then
+    weight=Cargo.opsgroup:GetWeightTotal(nil, IncludeReserved)
+  else
+    if type(Cargo.storage.cargoType)=="number" then
+      return Cargo.storage.cargoAmount
+    else
+      return Cargo.storage.cargoAmount*100 -- Assume 100 kg per item
+    end
+  end
+
+  return weight
 end
 
 --- Set transport start and stop time.
@@ -1642,11 +1724,15 @@ function OPSTRANSPORT:onafterStatusUpdate(From, Event, To)
       text=text..string.format("\nCargos:")
       for _,_cargo in pairs(self:GetCargos()) do
         local cargo=_cargo  --Ops.OpsGroup#OPSGROUP.CargoGroup
-        local carrier=cargo.opsgroup:_GetMyCarrierElement()
-        local name=carrier and carrier.name or "none"
-        local cstate=carrier and carrier.status or "N/A"
-        text=text..string.format("\n- %s: %s [%s], weight=%d kg, carrier=%s [%s], delivered=%s [UID=%s]", 
-        cargo.opsgroup:GetName(), cargo.opsgroup.cargoStatus:upper(), cargo.opsgroup:GetState(), cargo.opsgroup:GetWeightTotal(), name, cstate, tostring(cargo.delivered), tostring(cargo.opsgroup.cargoTransportUID))
+        if cargo.type==OPSTRANSPORT.CargoType.OPSGROUP then
+          local carrier=cargo.opsgroup:_GetMyCarrierElement()
+          local name=carrier and carrier.name or "none"
+          local cstate=carrier and carrier.status or "N/A"
+          text=text..string.format("\n- %s: %s [%s], weight=%d kg, carrier=%s [%s], delivered=%s [UID=%s]", 
+          cargo.opsgroup:GetName(), cargo.opsgroup.cargoStatus:upper(), cargo.opsgroup:GetState(), cargo.opsgroup:GetWeightTotal(), name, cstate, tostring(cargo.delivered), tostring(cargo.opsgroup.cargoTransportUID))
+        else
+          --TODO: Storage
+        end
       end
       
       text=text..string.format("\nCarriers:")
@@ -2119,7 +2205,7 @@ function OPSTRANSPORT:_CreateCargoGroupData(group, TransportZoneCombo, Disembark
 
   -- Create a new data item.
   local cargo={} --Ops.OpsGroup#OPSGROUP.CargoGroup
-    
+  cargo.type="OPSGROUP"
   cargo.opsgroup=opsgroup
   cargo.delivered=false
   cargo.status="Unknown"
@@ -2129,6 +2215,37 @@ function OPSTRANSPORT:_CreateCargoGroupData(group, TransportZoneCombo, Disembark
     cargo.disembarkCarriers={}
     self:_AddDisembarkCarriers(DisembarkCarriers, cargo.disembarkCarriers)
   end
+
+  return cargo
+end
+
+--- Create a cargo group data structure.
+-- @param #OPSTRANSPORT self
+-- @param Wrapper.Storage#STORAGE StorageFrom Storage from.
+-- @param Wrapper.Storage#STORAGE StorageTo Storage to.
+-- @param #string CargoType Type of cargo.
+-- @param #number CargoAmount Amount of cargo. Liquids in kg.
+-- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+-- @return Ops.OpsGroup#OPSGROUP.CargoGroup Cargo group data.
+function OPSTRANSPORT:_CreateCargoStorage(StorageFrom, StorageTo, CargoType, CargoAmount, TransportZoneCombo)
+
+  local storage={}  --#OPSTRANSPORT.Storage
+  storage.storageFrom=StorageFrom
+  storage.storageTo=StorageTo
+  storage.cargoType=CargoType
+  storage.cargoAmount=CargoAmount
+  
+
+  -- Create a new data item.
+  local cargo={} --Ops.OpsGroup#OPSGROUP.CargoGroup
+  cargo.type="STORAGE"
+  cargo.opsgroup=nil
+  cargo.storage=storage
+  cargo.delivered=false
+  cargo.status="Unknown"
+  cargo.tzcUID=TransportZoneCombo
+  cargo.disembarkZone=nil
+  cargo.disembarkCarriers=nil
 
   return cargo
 end
