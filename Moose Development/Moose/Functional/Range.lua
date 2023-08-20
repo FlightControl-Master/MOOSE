@@ -591,7 +591,7 @@ RANGE.MenuF10Root = nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version = "2.7.0"
+RANGE.version = "2.7.1"
 
 -- TODO list:
 -- TODO: Verbosity level for messages.
@@ -2044,6 +2044,7 @@ function RANGE:OnEventShot( EventData )
     -- Attack parameters.
     local attackHdg=_unit:GetHeading()
     local attackAlt=_unit:GetHeight()
+    attackAlt = UTILS.MetersToFeet(attackAlt)
     local attackVel=_unit:GetVelocityKNOTS()    
 
     -- Tracking info and init of last bomb position.
