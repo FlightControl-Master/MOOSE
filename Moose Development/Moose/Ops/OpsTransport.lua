@@ -218,6 +218,7 @@ OPSTRANSPORT.version="0.7.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Storage.
 -- TODO: Trains.
 -- TODO: Stop transport.
 -- TODO: Improve pickup and transport paths.
@@ -1100,16 +1101,14 @@ end
 -- @return #table Cargo Ops groups. Can be and empty table `{}`.
 function OPSTRANSPORT:GetCargoOpsGroups(Delivered, Carrier, TransportZoneCombo)
 
-  local cargos=self:GetCargos(TransportZoneCombo)
+  local cargos=self:GetCargos(TransportZoneCombo, Carrier, Delivered)
 
   local opsgroups={}
   for _,_cargo in pairs(cargos) do
     local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
-    if cargo.type=="OPSGROUP" and (Delivered==nil or cargo.delivered==Delivered)  then
+    if cargo.type=="OPSGROUP" then
       if cargo.opsgroup and not (cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped()) then
-        if Carrier==nil or Carrier:CanCargo(cargo.opsgroup) then
-          table.insert(opsgroups, cargo.opsgroup)
-        end
+        table.insert(opsgroups, cargo.opsgroup)
       end
     end
   end
@@ -1125,15 +1124,13 @@ end
 -- @return #table Cargo Ops groups. Can be and empty table `{}`.
 function OPSTRANSPORT:GetCargoStorages(Delivered, Carrier, TransportZoneCombo)
 
-  local cargos=self:GetCargos(TransportZoneCombo)
+  local cargos=self:GetCargos(TransportZoneCombo, Carrier, Delivered)
 
   local opsgroups={}
   for _,_cargo in pairs(cargos) do
     local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
-    if cargo.type=="STORAGE" and (Delivered==nil or cargo.delivered==Delivered)  then
-      if Carrier==nil or Carrier:CanCargo(cargo.opsgroup) then
-        table.insert(opsgroups, cargo.opsgroup)
-      end
+    if cargo.type=="STORAGE" then
+      table.insert(opsgroups, cargo.storage)
     end
   end
     
@@ -1150,22 +1147,30 @@ end
 --- Get cargos.
 -- @param #OPSTRANSPORT self
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+-- @param Ops.OpsGroup#OPSGROUP Carrier Specific carrier.
+-- @param #boolean Delivered Delivered status.
 -- @return #table Cargos.
-function OPSTRANSPORT:GetCargos(TransportZoneCombo)
-
+function OPSTRANSPORT:GetCargos(TransportZoneCombo, Carrier, Delivered)
+  
+  local tczs=self.tzCombos
   if TransportZoneCombo then
-    return TransportZoneCombo.Cargos
-  else
-    local cargos={}
-    for _,_tzc in pairs(self.tzCombos) do
-      local tzc=_tzc --#OPSTRANSPORT.TransportZoneCombo
-      for _,cargo in pairs(tzc.Cargos) do
-        table.insert(cargos, cargo)
-      end
-    end
-    return cargos
+    tczs={TransportZoneCombo}
   end
 
+  local cargos={}
+  for _,_tcz in pairs(tczs) do
+    local tcz=_tcz --#OPSTRANSPORT.TransportZoneCombo
+    for _,_cargo in pairs(tcz.Cargos) do
+      local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
+      if Delivered==nil or cargo.delivered==Delivered  then
+        if Carrier==nil or Carrier:CanCargo(cargo) then
+          table.insert(cargos, cargo)
+        end
+      end
+    end
+  end
+
+  return cargos
 end
 
 --- Get total weight.
@@ -1732,6 +1737,8 @@ function OPSTRANSPORT:onafterStatusUpdate(From, Event, To)
           cargo.opsgroup:GetName(), cargo.opsgroup.cargoStatus:upper(), cargo.opsgroup:GetState(), cargo.opsgroup:GetWeightTotal(), name, cstate, tostring(cargo.delivered), tostring(cargo.opsgroup.cargoTransportUID))
         else
           --TODO: Storage
+          text=text..string.format("\n- delivered=%s [UID=%s]",
+          tostring(cargo.delivered), tostring(nil))
         end
       end
       
@@ -2260,7 +2267,9 @@ end
 function OPSTRANSPORT:_CountCargosInZone(Zone, Delivered, Carrier, TransportZoneCombo)
 
   -- Get cargo ops groups.
-  local cargos=self:GetCargoOpsGroups(Delivered, Carrier, TransportZoneCombo)
+  --local cargos=self:GetCargoOpsGroups(Delivered, Carrier, TransportZoneCombo)
+  
+  local cargos=self:GetCargos(TransportZoneCombo, Carrier, Delivered)
   
   --- Function to check if carrier is supposed to be disembarked to.
   local function iscarrier(_cargo)
@@ -2302,22 +2311,33 @@ function OPSTRANSPORT:_CountCargosInZone(Zone, Delivered, Carrier, TransportZone
   
   local N=0
   for _,_cargo in pairs(cargos) do
-    local cargo=_cargo --Ops.OpsGroup#OPSGROUP
-
-    -- Is not cargo? 
-    local isNotCargo=cargo:IsNotCargo(true)
-    if not isNotCargo then
-      isNotCargo=iscarrier(cargo)
-    end    
-
-    -- Is in zone?
-    local isInZone=cargo:IsInZone(Zone)
+    local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
     
-    -- Is in utero?
-    local isInUtero=cargo:IsInUtero()
+    local isNotCargo=true
+    local isInZone=true
+    local isInUtero=true
+    
+    if cargo.type==OPSTRANSPORT.CargoType.OPSGROUP then
+      local opsgroup=cargo.opsgroup
 
-    -- Debug info.
-    self:T(self.lid..string.format("Cargo=%s: notcargo=%s, iscarrier=%s inzone=%s, inutero=%s", cargo:GetName(), tostring(cargo:IsNotCargo(true)), tostring(iscarrier(cargo)), tostring(isInZone), tostring(isInUtero)))
+      -- Is not cargo? 
+      isNotCargo=opsgroup:IsNotCargo(true)
+      if not isNotCargo then
+        isNotCargo=iscarrier(opsgroup)
+      end    
+  
+      -- Is in zone?
+      isInZone=opsgroup:IsInZone(Zone)
+      
+      -- Is in utero?
+      isInUtero=opsgroup:IsInUtero()
+
+      -- Debug info.
+      self:T(self.lid..string.format("Cargo=%s: notcargo=%s, iscarrier=%s inzone=%s, inutero=%s", opsgroup:GetName(), tostring(opsgroup:IsNotCargo(true)), tostring(iscarrier(opsgroup)), tostring(isInZone), tostring(isInUtero)))
+
+      
+    end
+
 
     -- We look for groups that are not cargo, in the zone or in utero.
     if isNotCargo and (isInZone or isInUtero) then
