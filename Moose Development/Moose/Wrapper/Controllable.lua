@@ -4056,3 +4056,1211 @@ function CONTROLLABLE:SetAltitude(Altitude, Keep, AltType)
   end
   return self
 end
+
+--- Return an empty task shell for Aerobatics.
+-- @param #CONTROLLABLE self
+-- @return DCS#Task
+-- @usage
+--        local plane = GROUP:FindByName("Aerial-1")
+--        -- get a task shell
+--        local aerotask = plane:TaskAerobatics() 
+--        -- add a series of maneuvers
+--        aerotask = plane:TaskAerobaticsHorizontalEight(aerotask,1,5000,850,true,false,1,70)
+--        aerotask = plane:TaskAerobaticsWingoverFlight(aerotask,1,0,0,true,true,20)
+--        aerotask = plane:TaskAerobaticsLoop(aerotask,1,0,0,false,true)
+--        -- set the task
+--        plane:SetTask(aerotask)
+function CONTROLLABLE:TaskAerobatics()
+
+  local DCSTaskAerobatics = {
+    id = "Aerobatics",
+    params = {
+      ["maneuversSequency"] = {},
+    },
+    ["enabled"] = true,
+    ["auto"] = false,          
+  }
+
+  return DCSTaskAerobatics
+end
+
+--- Add an aerobatics entry of type "CANDLE" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsCandle(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately)
+  
+  local maxrepeats = 10
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local CandleTask = {
+    ["name"] = "CANDLE",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      }
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],CandleTask)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "EDGE_FLIGHT" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @param #number FlightTime (Optional) Time to fly this manoever in seconds, defaults to 10.
+-- @param #number Side (Optional) On which side to fly,  0 == left, 1 == right side, defaults to 0.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsEdgeFlight(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately,FlightTime,Side)
+  
+  local maxrepeats = 10
+  local maxflight = 200
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local flighttime = FlightTime or 10
+  
+  if flighttime > 200 then maxflight = flighttime end
+  
+  local EdgeTask = {
+    ["name"] = "EDGE_FLIGHT",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      },
+      ["FlightTime"] = {
+        ["max_v"] = maxflight,
+        ["min_v"] = 1,
+        ["order"] = 6,
+        ["step"] = 0.1,
+        ["value"] = flighttime or 10, -- Secs?
+      },
+      ["SIDE"] = {
+        ["order"] = 7,
+        ["value"] = Side or 0, --0 == left, 1 == right side
+      },
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],EdgeTask)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "WINGOVER_FLIGHT" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @param #number FlightTime (Optional) Time to fly this manoever in seconds, defaults to 10.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsWingoverFlight(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately,FlightTime)
+  
+  local maxrepeats = 10
+  local maxflight = 200
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local flighttime = FlightTime or 10
+  
+  if flighttime > 200 then maxflight = flighttime end
+  
+  local WingoverTask = {
+    ["name"] = "WINGOVER_FLIGHT",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      },
+      ["FlightTime"] = {
+        ["max_v"] = maxflight,
+        ["min_v"] = 1,
+        ["order"] = 6,
+        ["step"] = 0.1,
+        ["value"] = flighttime or 10, -- Secs?
+      },
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],WingoverTask)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "LOOP" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsLoop(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately)
+  
+  local maxrepeats = 10
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local LoopTask = {
+    ["name"] = "LOOP",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      }
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],LoopTask)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "HORIZONTAL_EIGHT" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @param #number Side (Optional) On which side to fly,  0 == left, 1 == right side, defaults to 0.
+-- @param #number RollDeg (Optional) Roll degrees for Roll 1 and 2, defaults to 60.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsHorizontalEight(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately,Side,RollDeg)
+  
+  local maxrepeats = 10
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local LoopTask = {
+    ["name"] = "HORIZONTAL_EIGHT",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      },
+      ["SIDE"] = {
+        ["order"] = 6,
+        ["value"] = Side or 0,
+      },
+      ["ROLL1"] = {
+        ["order"] = 7,
+        ["value"] = RollDeg or 60,
+      },
+      ["ROLL2"] = {
+        ["order"] = 8,
+        ["value"] = RollDeg or 60,
+      },
+      
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],LoopTask)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "HAMMERHEAD" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @param #number Side (Optional) On which side to fly,  0 == left, 1 == right side, defaults to 0.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsHammerhead(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately,Side)
+  
+  local maxrepeats = 10
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local Task = {
+    ["name"] = "HUMMERHEAD",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      },
+      ["SIDE"] = {
+        ["order"] = 6,
+        ["value"] = Side or 0,
+      },    
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],Task)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "SKEWED_LOOP" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @param #number Side (Optional) On which side to fly,  0 == left, 1 == right side, defaults to 0.
+-- @param #number RollDeg (Optional) Roll degrees for Roll 1 and 2, defaults to 60.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsSkewedLoop(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately,Side,RollDeg)
+  
+  local maxrepeats = 10
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local Task = {
+    ["name"] = "SKEWED_LOOP",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      },
+      ["ROLL"] = {
+        ["order"] = 6,
+        ["value"] = RollDeg or 60,
+      },
+      ["SIDE"] = {
+        ["order"] = 7,
+        ["value"] = Side or 0,
+      },    
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],Task)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "TURN" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @param #number Side (Optional) On which side to fly,  0 == left, 1 == right side, defaults to 0.
+-- @param #number RollDeg (Optional) Roll degrees for Roll 1 and 2, defaults to 60.
+-- @param #number Pull (Optional) How many Gs to pull in this, defaults to 2.
+-- @param #number Angle (Optional) How many degrees to turn, defaults to 180.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsTurn(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately,Side,RollDeg,Pull,Angle)
+  
+  local maxrepeats = 10
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local Task = {
+    ["name"] = "TURN",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      },
+      ["Ny_req"] = {
+        ["order"] = 6,
+        ["value"] = Pull or 2, --amount of G to pull
+      },
+      ["ROLL"] = {
+        ["order"] = 7,
+        ["value"] = RollDeg or 60,
+      },
+      ["SECTOR"] = {
+        ["order"] = 8,
+        ["value"] = Angle or 180,
+      },
+      ["SIDE"] = {
+        ["order"] = 9,
+        ["value"] = Side or 0,
+      },    
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],Task)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "DIVE" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 5000.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @param #number Angle (Optional) With how many degrees to dive, defaults to 45. Can be 15 to 90 degrees.
+-- @param #number FinalAltitude (Optional) Final altitude in meters, defaults to 1000.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsDive(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately,Angle,FinalAltitude)
+  
+  local maxrepeats = 10
+  
+  local angle = Angle
+  
+  if angle < 15 then angle = 15 elseif angle > 90 then angle = 90 end
+  
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local Task = {
+    ["name"] = "DIVE",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 5000,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      },
+      ["Angle"] = {
+        ["max_v"] = 90,
+        ["min_v"] = 15,
+        ["order"] = 6,
+        ["step"] = 5,
+        ["value"] = angle or 45,
+      },
+      ["FinalAltitude"] = {
+        ["order"] = 7,
+        ["value"] = FinalAltitude or 1000,
+      },   
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],Task)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "MILITARY_TURN" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsMilitaryTurn(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately)
+  
+  local maxrepeats = 10
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local Task = {
+    ["name"] = "MILITARY_TURN",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      }
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],Task)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "IMMELMAN" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsImmelmann(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately)
+  
+  local maxrepeats = 10
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local Task = {
+    ["name"] = "IMMELMAN",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      }
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],Task)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "STRAIGHT_FLIGHT" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @param #number FlightTime (Optional) Time to fly this manoever in seconds, defaults to 10.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsStraightFlight(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately,FlightTime)
+  
+  local maxrepeats = 10
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local maxflight = 200
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+   
+  local flighttime = FlightTime or 10
+  
+  if flighttime > 200 then maxflight = flighttime end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local Task = {
+    ["name"] = "STRAIGHT_FLIGHT",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      },
+      ["FlightTime"] = {
+        ["max_v"] = maxflight,
+        ["min_v"] = 1,
+        ["order"] = 6,
+        ["step"] = 0.1,
+        ["value"] = flighttime or 10,
+      },
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],Task)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "CLIMB" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @param #number Angle (Optional) Angle to climb. Can be between 15 and 90 degrees. Defaults to 45 degrees.
+-- @param #number FinalAltitude (Optional) Altitude to climb to in meters. Defaults to 5000m.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsClimb(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately,Angle,FinalAltitude)
+  
+  local maxrepeats = 10
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local Task = {
+    ["name"] = "CLIMB",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      },
+      ["Angle"] = {
+        ["max_v"] = 90,
+        ["min_v"] = 15,
+        ["order"] = 6,
+        ["step"] = 5,
+        ["value"] = Angle or 45,
+      },
+      ["FinalAltitude"] = {
+        ["order"] = 7,
+        ["value"] = FinalAltitude or 5000,
+      },
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],Task)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "SPIRAL" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @param #number TurnAngle (Optional) Turn angle, defaults to 360 degrees.
+-- @param #number Roll (Optional) Roll to take, defaults to 60 degrees.
+-- @param #number Side (Optional) On which side to fly,  0 == left, 1 == right side, defaults to 0.
+-- @param #number UpDown (Optional) Spiral upwards (1) or downwards (0). Defaults to 0 - downwards.
+-- @param #number Angle (Optional) Angle to spiral. Can be between 15 and 90 degrees. Defaults to 45 degrees.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsSpiral(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately,TurnAngle,Roll,Side,UpDown,Angle)
+  
+  local maxrepeats = 10
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  local updown = UpDown and 1 or 0
+  local side = Side and 1 or 0
+  
+  local Task = {
+    ["name"] = "SPIRAL",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      },
+      ["SECTOR"] = {
+        ["order"] = 6,
+        ["value"] = TurnAngle or 360,
+      },
+      ["ROLL"] = {
+        ["order"] = 7,
+        ["value"] = Roll or 60,
+      },
+      ["SIDE"] = {
+        ["order"] = 8,
+        ["value"] = side or 0,
+      },
+      ["UPDOWN"] = {
+        ["order"] = 9,
+        ["value"] = updown or 0,
+      },      
+      ["Angle"] = {
+        ["max_v"] = 90,
+        ["min_v"] = 15,
+        ["order"] = 10,
+        ["step"] = 5,
+        ["value"] = Angle or 45,
+      },
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],Task)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "SPLIT_S" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @param #number FinalSpeed (Optional) Final speed to reach in KPH. Defaults to 500 kph.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsSplitS(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately,FinalSpeed)
+  
+  local maxrepeats = 10
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local maxflight = 200
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+   
+  local finalspeed = FinalSpeed or 500
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local Task = {
+    ["name"] = "SPLIT_S",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      },
+      ["FinalSpeed"] = {
+        ["order"] = 6,
+        ["value"] = finalspeed,
+      },
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],Task)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "AILERON_ROLL" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @param #number Side (Optional) On which side to fly,  0 == left, 1 == right side, defaults to 0.
+-- @param #number RollRate (Optional) How many degrees to roll per sec(?), can be between 15 and 450, defaults to 90.
+-- @param #number TurnAngle (Optional) Angles to turn overall, defaults to 360.
+-- @param #number FixAngle (Optional) No idea what this does, can be between 0 and 180 degrees, defaults to 180.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsAileronRoll(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately,Side,RollRate,TurnAngle,FixAngle)
+  
+  local maxrepeats = 10
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local maxflight = 200
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local Task = {
+    ["name"] = "AILERON_ROLL",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      },
+      ["SIDE"] = {
+        ["order"] = 6,
+        ["value"] = Side or 0,
+      },
+      ["RollRate"] = {
+        ["max_v"] = 450,
+        ["min_v"] = 15,
+        ["order"] = 7,
+        ["step"] = 5,
+        ["value"] = RollRate or 90,
+      },
+      ["SECTOR"] = {
+        ["order"] = 8,
+        ["value"] = TurnAngle or 360,
+      },
+      ["FIXSECTOR"] = {
+        ["max_v"] = 180,
+        ["min_v"] = 0,
+        ["order"] = 9,
+        ["step"] = 5,
+        ["value"] = FixAngle or 0, -- TODO: Need to find out what this does
+      },
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],Task)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "FORCED_TURN" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @param #number TurnAngle (Optional) Angles to turn, defaults to 360.
+-- @param #number Side (Optional) On which side to fly,  0 == left, 1 == right side, defaults to 0.
+-- @param #number FlightTime (Optional) Flight time in seconds for thos maneuver. Defaults to 30.
+-- @param #number MinSpeed (Optional) Minimum speed to keep in kph, defaults to 250 kph.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsForcedTurn(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately,TurnAngle,Side,FlightTime,MinSpeed)
+  
+  local maxrepeats = 10
+  local flighttime = FlightTime or 30
+  local maxtime = 200
+  if flighttime > 200 then maxtime = flighttime end
+  
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local Task = {
+    ["name"] = "FORCED_TURN",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      },
+      ["SECTOR"] = {
+        ["order"] = 6,
+        ["value"] = TurnAngle or 360,
+      },
+      ["SIDE"] = {
+        ["order"] = 7,
+        ["value"] = Side or 0,
+      },
+      ["FlightTime"] = {
+        ["max_v"] = maxtime or 200,
+        ["min_v"] = 0,
+        ["order"] = 8,
+        ["step"] = 0.1,
+        ["value"] = flighttime or 30,
+      },
+      ["MinSpeed"] = {
+        ["max_v"] = 3000,
+        ["min_v"] = 30,
+        ["order"] = 9,
+        ["step"] = 10,
+        ["value"] = MinSpeed or 250,
+      },
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],Task)
+  
+  return TaskAerobatics
+end
+
+--- Add an aerobatics entry of type "BARREL_ROLL" to the Aerobatics Task.
+-- @param #CONTROLLABLE self
+-- @param DCS#Task TaskAerobatics The Aerobatics Task
+-- @param #number Repeats (Optional) The number of repeats, defaults to 1.
+-- @param #number InitAltitude (Optional) Starting altitude in meters, defaults to 0.
+-- @param #number InitSpeed (Optional) Starting speed in KPH, defaults to 0.
+-- @param #boolean UseSmoke (Optional)  Using smoke, defaults to false.
+-- @param #boolean StartImmediately (Optional) If true, start immediately and ignore  InitAltitude and InitSpeed.
+-- @param #number Side (Optional) On which side to fly,  0 == left, 1 == right side, defaults to 0.
+-- @param #number RollRate (Optional) How many degrees to roll per sec(?), can be between 15 and 450, defaults to 90.
+-- @param #number TurnAngle (Optional) Turn angle, defaults to 360 degrees.
+-- @return DCS#Task
+function CONTROLLABLE:TaskAerobaticsBarrelRoll(TaskAerobatics,Repeats,InitAltitude,InitSpeed,UseSmoke,StartImmediately,Side,RollRate,TurnAngle)
+  
+  local maxrepeats = 10
+
+  if Repeats > maxrepeats then maxrepeats = Repeats end
+  
+  local usesmoke = UseSmoke and 1 or 0
+  
+  local startimmediately = StartImmediately and 1 or 0
+  
+  local Task = {
+    ["name"] = "BARREL_ROLL",
+    ["params"] = {
+      ["RepeatQty"] = {
+        ["max_v"] = maxrepeats,
+        ["min_v"] = 1,
+        ["order"] = 1,
+        ["value"] = Repeats or 1,
+      },
+      ["InitAltitude"] = {
+        ["order"] = 2,
+        ["value"] = InitAltitude or 0,
+      },
+      ["InitSpeed"] = {
+        ["order"] = 3,
+        ["value"] = InitSpeed or 0,
+      },
+      ["UseSmoke"] = {
+        ["order"] = 4,
+        ["value"] = usesmoke,
+      },
+      ["StartImmediatly"] = {
+        ["order"] = 5,
+        ["value"] = startimmediately,
+      },
+      ["SIDE"] = {
+        ["order"] = 6,
+        ["value"] = Side or 0,
+      },      
+      ["RollRate"] = {
+        ["max_v"] = 450,
+        ["min_v"] = 15,
+        ["order"] = 7,
+        ["step"] = 5,
+        ["value"] = RollRate or 90,
+      },
+      ["SECTOR"] = {
+        ["order"] = 8,
+        ["value"] = TurnAngle or 360,
+      },
+    }
+  }
+  
+  table.insert(TaskAerobatics.params["maneuversSequency"],Task)
+  
+  return TaskAerobatics
+end
