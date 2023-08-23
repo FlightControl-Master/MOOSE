@@ -63,6 +63,7 @@
 -- @field Ops.Chief#CHIEF chief Chief of the transport.
 -- @field Ops.OpsZone#OPSZONE opszone OPS zone.
 -- @field #table requestID The ID of the queued warehouse request. Necessary to cancel the request if the transport was cancelled before the request is processed.
+-- @field #number cargocounter Running number to generate cargo UIDs.
 -- 
 -- @extends Core.Fsm#FSM
 
@@ -131,6 +132,7 @@ OPSTRANSPORT = {
   legions         =  {},
   statusLegion    =  {},
   requestID       =  {},
+  cargocounter    =   0,
 }
 
 --- Cargo transport status.
@@ -191,7 +193,12 @@ OPSTRANSPORT.Status={
 -- @field Wrapper.Storage#STORAGE storageFrom Storage from.
 -- @field Wrapper.Storage#STORAGE storageTo Storage To.
 -- @field #string cargoType Type of cargo.
--- @field #number cargoAmount Amount of cargo. Liquids in kg.
+-- @field #number cargoAmount Amount of cargo that should be transported.
+-- @field #number cargoReserved Amount of cargo that is reserved for a carrier group.
+-- @field #number cargoDelivered Amount of cargo that has been delivered.
+-- @field #number cargoLost Amount of cargo that was lost.
+-- @field #number cargoLoaded Amount of cargo that is loading.
+-- @field #number cargoWeight Weight of one single cargo item in kg. Default 1 kg.
 
 --- Storage data.
 -- @type OPSTRANSPORT.CargoType
@@ -212,7 +219,7 @@ _OPSTRANSPORTID=0
 
 --- Army Group version.
 -- @field #string version
-OPSTRANSPORT.version="0.7.0"
+OPSTRANSPORT.version="0.8.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -599,15 +606,16 @@ end
 -- @param Wrapper.Storage#STORAGE StorageTo Storage to.
 -- @param #string CargoType Type of cargo.
 -- @param #number CargoAmount Amount of cargo. Liquids in kg.
+-- @param #number CargoWeight Weight of a single cargo item in kg. Default 1 kg.
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
 -- @return #OPSTRANSPORT self
-function OPSTRANSPORT:AddCargoStorage(StorageFrom, StorageTo, CargoType, CargoAmount, TransportZoneCombo)
+function OPSTRANSPORT:AddCargoStorage(StorageFrom, StorageTo, CargoType, CargoAmount, CargoWeight, TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
   TransportZoneCombo=TransportZoneCombo or self.tzcDefault
 
   -- Cargo data.
-  local cargo=self:_CreateCargoStorage(StorageFrom,StorageTo, CargoType, CargoAmount, TransportZoneCombo)
+  local cargo=self:_CreateCargoStorage(StorageFrom,StorageTo, CargoType, CargoAmount, CargoWeight, TransportZoneCombo)
 
   -- Add to TZC table.
   table.insert(TransportZoneCombo.Cargos, cargo)
@@ -1186,9 +1194,17 @@ function OPSTRANSPORT:GetCargoTotalWeight(Cargo, IncludeReserved)
     weight=Cargo.opsgroup:GetWeightTotal(nil, IncludeReserved)
   else
     if type(Cargo.storage.cargoType)=="number" then
-      return Cargo.storage.cargoAmount
+      if IncludeReserved then
+        return Cargo.storage.cargoAmount+Cargo.storage.cargoReserved
+      else
+        return Cargo.storage.cargoAmount
+      end
     else
-      return Cargo.storage.cargoAmount*100 -- Assume 100 kg per item
+      if IncludeReserved then
+        return Cargo.storage.cargoAmount*100 -- Assume 100 kg per item
+      else
+        return (Cargo.storage.cargoAmount+Cargo.storage.cargoReserved)*100 -- Assume 100 kg per item
+      end
     end
   end
 
@@ -1737,8 +1753,9 @@ function OPSTRANSPORT:onafterStatusUpdate(From, Event, To)
           cargo.opsgroup:GetName(), cargo.opsgroup.cargoStatus:upper(), cargo.opsgroup:GetState(), cargo.opsgroup:GetWeightTotal(), name, cstate, tostring(cargo.delivered), tostring(cargo.opsgroup.cargoTransportUID))
         else
           --TODO: Storage
-          text=text..string.format("\n- delivered=%s [UID=%s]",
-          tostring(cargo.delivered), tostring(nil))
+          local storage=cargo.storage
+          text=text..string.format("\n- storage type=%s: amount: total=%d loaded=%d, lost=%d, delivered=%d, delivered=%s [UID=%s]",
+          storage.cargoType, storage.cargoAmount, storage.cargoLoaded, storage.cargoLost, storage.cargoDelivered, tostring(cargo.delivered), tostring(nil))
         end
       end
       
@@ -2212,6 +2229,7 @@ function OPSTRANSPORT:_CreateCargoGroupData(group, TransportZoneCombo, Disembark
 
   -- Create a new data item.
   local cargo={} --Ops.OpsGroup#OPSGROUP.CargoGroup
+  cargo.uid=self.cargocounter
   cargo.type="OPSGROUP"
   cargo.opsgroup=opsgroup
   cargo.delivered=false
@@ -2231,16 +2249,22 @@ end
 -- @param Wrapper.Storage#STORAGE StorageFrom Storage from.
 -- @param Wrapper.Storage#STORAGE StorageTo Storage to.
 -- @param #string CargoType Type of cargo.
--- @param #number CargoAmount Amount of cargo. Liquids in kg.
+-- @param #number CargoAmount Total amount of cargo that should be transported. Liquids in kg.
+-- @param #number CargoWeight Weight of a single cargo item in kg. Default 1 kg.
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
 -- @return Ops.OpsGroup#OPSGROUP.CargoGroup Cargo group data.
-function OPSTRANSPORT:_CreateCargoStorage(StorageFrom, StorageTo, CargoType, CargoAmount, TransportZoneCombo)
+function OPSTRANSPORT:_CreateCargoStorage(StorageFrom, StorageTo, CargoType, CargoAmount, CargoWeight, TransportZoneCombo)
 
   local storage={}  --#OPSTRANSPORT.Storage
   storage.storageFrom=StorageFrom
   storage.storageTo=StorageTo
   storage.cargoType=CargoType
   storage.cargoAmount=CargoAmount
+  storage.cargoDelivered=0
+  storage.cargoLost=0
+  storage.cargoReserved=0
+  storage.cargoLoaded=0
+  storage.cargoWeight=CargoWeight or 1
   
 
   -- Create a new data item.

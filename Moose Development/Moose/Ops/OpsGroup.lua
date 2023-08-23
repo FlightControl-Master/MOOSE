@@ -489,10 +489,14 @@ OPSGROUP.CargoStatus={
 --- Element cargo bay data.
 -- @type OPSGROUP.MyCargo
 -- @field #OPSGROUP group The cargo group.
+-- @field #number storageType Type of storage.
+-- @field #number storageAmount Amount of storage.
+-- @field #number storageWeight Weight of storage item.
 -- @field #boolean reserved If `true`, the cargo bay space is reserved but cargo has not actually been loaded yet.
 
 --- Cargo group data.
 -- @type OPSGROUP.CargoGroup
+-- @field #number uid Unique ID of this cargo data.
 -- @field #string type Type of cargo: "OPSGROUP" or "STORAGE".
 -- @field #OPSGROUP opsgroup The cargo opsgroup.
 -- @field Ops.OpsTransport#OPSTRANSPORT.Storage storage Storage data.
@@ -7974,7 +7978,11 @@ function OPSGROUP:_CheckCargoTransport()
       local element=_element --#OPSGROUP.Element
       for _,_cargo in pairs(element.cargoBay) do
         local cargo=_cargo --#OPSGROUP.MyCargo
-        text=text..string.format("\n- %s in carrier %s, reserved=%s", tostring(cargo.group:GetName()), tostring(element.name), tostring(cargo.reserved))
+        if cargo.group then
+          text=text..string.format("\n- %s in carrier %s, reserved=%s", tostring(cargo.group:GetName()), tostring(element.name), tostring(cargo.reserved))
+        else
+          text=text..string.format("\n- storage %s=%d kg in carrier %s", tostring(cargo.storageType), tostring(cargo.storageAmount*cargo.storageWeight), tostring(element.name))
+        end
       end
     end
     if text=="" then
@@ -8242,6 +8250,8 @@ function OPSGROUP:_AddCargobay(CargoGroup, CarrierElement, Reserved)
   if cargo then
     cargo.reserved=Reserved
   else
+  
+    --cargo=self:_CreateMyCargo(CargoUID, CargoGroup)
 
     cargo={} --#OPSGROUP.MyCargo
     cargo.group=CargoGroup
@@ -8269,6 +8279,95 @@ function OPSGROUP:_AddCargobay(CargoGroup, CarrierElement, Reserved)
 
   return self
 end
+
+--- Add warehouse storage to cargo bay of a carrier.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.Element CarrierElement The element of the carrier.
+-- @param #number CargoUID UID of the cargo data.
+-- @param #string StorageType Storage type.
+-- @param #number StorageAmount Storage amount.
+-- @param #number StorageWeight Weight of a single storage item in kg.
+function OPSGROUP:_AddCargobayStorage(CarrierElement, CargoUID, StorageType, StorageAmount, StorageWeight)
+
+  local MyCargo=self:_CreateMyCargo(CargoUID, nil, StorageType, StorageAmount, StorageWeight)
+  
+  self:_AddMyCargoBay(MyCargo, CarrierElement)
+
+  
+end
+
+--- Add OPSGROUP to cargo bay of a carrier.
+-- @param #OPSGROUP self
+-- @param #number CargoUID UID of the cargo data.
+-- @param #OPSGROUP OpsGroup Cargo group.
+-- @param #string StorageType Storage type.
+-- @param #number StorageAmount Storage amount.
+-- @param #number StorageWeight Weight of a single storage item in kg.
+-- @return #OPSGROUP.MyCargo My cargo object.
+function OPSGROUP:_CreateMyCargo(CargoUID, OpsGroup, StorageType, StorageAmount, StorageWeight)
+
+  local cargo={} --#OPSGROUP.MyCargo
+  
+  cargo.cargoUID=CargoUID
+  cargo.group=OpsGroup
+  cargo.storageType=StorageType
+  cargo.storageAmount=StorageAmount
+  cargo.storageWeight=StorageWeight
+  cargo.reserved=false
+
+  return cargo
+end
+
+
+--- Add storage to cargo bay of a carrier.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.MyCargo MyCargo My cargo.
+-- @param #OPSGROUP.Element CarrierElement The element of the carrier.
+function OPSGROUP:_AddMyCargoBay(MyCargo, CarrierElement)
+
+  table.insert(CarrierElement.cargoBay, MyCargo)
+
+  if not MyCargo.reserved then
+
+    -- Cargo weight.
+    local weight=0
+    
+    if MyCargo.group then
+      weight=MyCargo.group:GetWeightTotal()
+    else
+      weight=MyCargo.storageAmount*MyCargo.storageWeight
+    end
+
+    -- Add weight to carrier.
+    self:AddWeightCargo(CarrierElement.name, weight)
+
+  end
+
+
+end
+
+--- Get cargo bay data from a cargo data id.
+-- @param #OPSGROUP self
+-- @param #number uid Unique ID of cargo data.
+-- @return #OPSGROUP.MyCargo Cargo My cargo.
+-- @return #OPSGROUP.Element Element that has loaded the cargo.
+function OPSGROUP:_GetMyCargoBayFromUID(uid)
+
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    
+    for i,_mycargo in pairs(element.cargoBay) do
+      local mycargo=_mycargo --#OPSGROUP.MyCargo
+      
+      if mycargo.cargoUID and mycargo.cargoUID==uid then
+        return mycargo, element, i
+      end
+    end
+  end
+  
+  return nil, nil, nil
+end
+
 
 --- Get all groups currently loaded as cargo.
 -- @param #OPSGROUP self
@@ -8315,6 +8414,49 @@ function OPSGROUP:_GetCargobay(CargoGroup)
   end
 
   return nil, nil, nil
+end
+
+--- Remove OPSGROUP from cargo bay of a carrier.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.Element Element Cargo group.
+-- @param #number CargoUID Cargo UID.
+-- @return #OPSGROUP.MyCargo MyCargo My cargo data.
+function OPSGROUP:_GetCargobayElement(Element, CargoUID)
+
+  for i,_mycargo in pairs(Element.cargoBay) do
+    local mycargo=_mycargo --#OPSGROUP.MyCargo
+    
+    if mycargo.cargoUID and mycargo.cargoUID==CargoUID then
+      return mycargo
+    end
+    
+  end
+
+end
+
+--- Remove OPSGROUP from cargo bay of a carrier.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.Element Element Cargo group.
+-- @param #OPSGROUP.MyCargo MyCargo My cargo data.
+-- @return #boolean If `true`, cargo could be removed.
+function OPSGROUP:_DelCargobayElement(Element, MyCargo)
+
+  for i,_mycargo in pairs(Element.cargoBay) do
+    local mycargo=_mycargo --#OPSGROUP.MyCargo
+    
+    if mycargo.cargoUID and MyCargo.cargoUID and mycargo.cargoUID==MyCargo.cargoUID then
+      if MyCargo.group then
+        self:RedWeightCargo(Element.name, MyCargo.group:GetWeightTotal())
+      else
+        self:RedWeightCargo(Element.name, MyCargo.storageAmount*MyCargo.storageWeight)
+      end
+      table.remove(Element.cargoBay, i)
+      return true
+    end
+    
+  end
+
+  return false
 end
 
 --- Remove OPSGROUP from cargo bay of a carrier.
@@ -8680,8 +8822,11 @@ function OPSGROUP:GetWeightCargo(UnitName, IncludeReserved)
       for _,_cargo in pairs(element.cargoBay) do
         local cargo=_cargo --#OPSGROUP.MyCargo
         if (not cargo.reserved) or (cargo.reserved==true and (IncludeReserved==true or IncludeReserved==nil)) then
-          local cargoweight=cargo.group:GetWeightTotal()
-          gewicht=gewicht+cargoweight
+          if cargo.group then
+            gewicht=gewicht+cargo.group:GetWeightTotal()
+          else
+            gewicht=gewicht+cargo.storageAmount*cargo.storageWeight
+          end
           --self:I(self.lid..string.format("unit=%s (reserved=%s): cargo=%s weight=%d, total weight=%d", tostring(UnitName), tostring(IncludeReserved), cargo.group:GetName(), cargoweight, weight))
         end
       end
@@ -8775,6 +8920,32 @@ function OPSGROUP:RedWeightCargo(UnitName, Weight)
   return self
 end
 
+--- Get weight of warehouse storage to transport.
+-- @param #OPSGROUP self
+-- @param Ops.OpsTransport#OPSTRANSPORT.Storage Storage
+-- @param #boolean Total Get total weight. Otherweise the already delivered or lost weight is substracted.
+-- @param #boolean Reserved Reduce weight that is reserved.
+-- @param #boolean Amount Return amount not weight.
+-- @return #number Weight of cargo in kg or amount in number of items, if `Amount=true`.
+function OPSGROUP:_GetWeightStorage(Storage, Total, Reserved, Amount)
+
+  local weight=Storage.cargoAmount
+  
+  if not Total then
+    weight=weight-Storage.cargoLost-Storage.cargoLoaded-Storage.cargoDelivered
+  end
+  
+  if Reserved then
+    weight=weight-Storage.cargoReserved
+  end
+  
+  if not Amount then
+    weight=weight*Storage.cargoWeight
+  end
+
+  return weight
+end
+
 --- Check if the group can *in principle* be carrier of a cargo group. This checks the max cargo capacity of the group but *not* how much cargo is already loaded (if any).
 -- **Note** that the cargo group *cannot* be split into units, i.e. the largest cargo bay of any element of the group must be able to load the whole cargo group in one piece.
 -- @param #OPSGROUP self
@@ -8785,6 +8956,7 @@ function OPSGROUP:CanCargo(Cargo)
   if Cargo then
   
     local weight=math.huge
+    
     if Cargo.type==OPSTRANSPORT.CargoType.OPSGROUP then
 
       local weight=Cargo.opsgroup:GetWeightTotal()      
@@ -8801,28 +8973,32 @@ function OPSGROUP:CanCargo(Cargo)
 
     else
     
-      if type(Cargo.storage.cargoType)=="number" then
-        weight=Cargo.storage.cargoAmount
-      else
-        weight=Cargo.storage.cargoAmount*100
-      end
-      
-      local bay=0
-      for _,_element in pairs(self.elements) do
-        local element=_element --#OPSGROUP.Element
-  
-        -- Check that element is not dead and has
-        if element and element.status~=OPSGROUP.ElementStatus.DEAD then
-          bay=bay+element.weightMaxCargo
-        end
-      end
-      
-      if bay>=weight then
-        return true
-      end
+      ---
+      -- STORAGE
+      ---
     
+      -- Since storage cargo can be devided onto multiple carriers, we take the weight of a single cargo item (even 1 kg of fuel).
+      weight=Cargo.storage.cargoWeight
+      
     end
     
+    -- Calculate cargo bay space.
+    local bay=0
+    for _,_element in pairs(self.elements) do
+      local element=_element --#OPSGROUP.Element
+
+      -- Check that element is not dead and has
+      if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+        bay=bay+element.weightMaxCargo
+      end
+      
+    end
+    
+    -- Check if cargo fits into cargo bay(s) of carrier group.
+    if bay>=weight then
+      return true
+    end
+
 
   end
 
@@ -9217,37 +9393,70 @@ function OPSGROUP:onafterLoading(From, Event, To)
     if cargo.type==OPSTRANSPORT.CargoType.OPSGROUP then
     
       weight=cargo.opsgroup:GetWeightTotal()
+ 
+       -- Find a carrier for this cargo.
+      local carrier=self:FindCarrierForCargo(weight)
+  
+      -- Order cargo group to board the carrier.
+      if carrier then          
+        cargo.opsgroup:Board(self, carrier)        
+      end
       
     else
-
-      if type(cargo.storage.cargoType)=="number" then
-        weight=cargo.storage.cargoAmount
-      else
-        weight=cargo.storage.cargoAmount*100 -- Assume 100 kg per item
-      end
     
-    end
+      ---
+      -- STORAGE
+      ---
 
-    -- Find a carrier for this cargo.
-    local carrier=self:FindCarrierForCargo(weight)
-
-    if carrier then
+      -- Get weight of cargo that needs to be transported.
+      weight=self:_GetWeightStorage(cargo.storage, false)
       
-      -- Order cargo group to board the carrier.
-      if cargo.type==OPSTRANSPORT.CargoType.OPSGROUP then
-        cargo.opsgroup:Board(self, carrier)
-      else
-        env.info("FF loading storage!")
+      -- Debug info.
+      env.info(string.format("FF loading storage weight=%d kg!", weight))
+      
+      -- Loop over all elements of the carrier group.
+      for _,_element in pairs(self.elements) do
+        local element=_element --#OPSGROUP.Element
+    
+        -- Get the free cargo space of the carrier.
+        local free=self:GetFreeCargobay(element.name)
+        
+        -- Min of weight or bay.
+        local w=math.min(weight, free)
+    
+        -- Calculate item amount.
+        local amount=w/cargo.storage.cargoWeight
+        
+        -- Remove items from warehouse.
         if type(cargo.storage.cargoType)=="number" then
-          cargo.storage.storageFrom:RemoveLiquid(cargo.storage.cargoType, cargo.storage.cargoAmount)
+          cargo.storage.storageFrom:RemoveLiquid(cargo.storage.cargoType, amount)
         else
-          cargo.storage.storageFrom:RemoveItem(cargo.storage.cargoType, cargo.storage.cargoAmount)
+          cargo.storage.storageFrom:RemoveItem(cargo.storage.cargoType, amount)
         end
+        
+        -- Add amount to loaded cargo.
+        cargo.storage.cargoLoaded=cargo.storage.cargoLoaded+amount
+
+        -- Add cargo to cargo by of element.        
+        self:_AddCargobayStorage(element, cargo.uid, cargo.storage.cargoType, amount, cargo.storage.cargoWeight)        
+               
+        -- Reduce weight for the next element (if any).
+        weight=weight-w
+        
+        -- Debug info.
+        local text=string.format("FF element %s: amount=%d, weight=%d, left=%d", element.name, amount, w, weight)
+        env.info(text)
+        
+        -- If no cargo left, break the loop.
+        if weight<=0 then
+          break
+        end
+        
       end
-
-    end
-
+      
+    end    
   end
+  
 end
 
 --- Set (new) cargo status.
@@ -9726,18 +9935,52 @@ function OPSGROUP:onafterUnloading(From, Event, To)
       -- STORAGE
       ---
       
-      if type(cargo.storage.cargoType)=="number" then
-        cargo.storage.storageTo:AddLiquid(cargo.storage.cargoType, cargo.storage.cargoAmount)
-        --cargo.storage.amountDelivered=cargo.storage.amountDelivered+
-      else
-        cargo.storage.storageTo:AddItem(cargo.storage.cargoType, cargo.storage.cargoAmount)
+      for _,_element in pairs(self.elements) do
+        local element=_element --#OPSGROUP.Element
+        
+        -- Get my cargo from cargo bay of element.
+        local mycargo=self:_GetCargobayElement(element, cargo.uid)
+        
+        if mycargo then
+
+          -- Add cargo to warehouse storage.
+          if type(mycargo.storageType)=="number" then
+            cargo.storage.storageTo:AddLiquid(mycargo.storageType, mycargo.storageAmount)            
+          else
+            cargo.storage.storageTo:AddItem(cargo.storage.cargoType, cargo.storage.cargoAmount)
+          end
+      
+          -- Add amount to delivered.    
+          cargo.storage.cargoDelivered=cargo.storage.cargoDelivered+mycargo.storageAmount
+          
+          -- Reduce loaded amount.
+          cargo.storage.cargoLoaded=cargo.storage.cargoLoaded-mycargo.storageAmount
+          
+          -- Remove cargo from bay.
+          self:_DelCargobayElement(element, mycargo)
+          
+        end      
       end
       
-      -- Cargo was delivered (somehow).
-      cargo.delivered=true
-
-      -- Increase number of delivered cargos.
-      self.cargoTransport.Ndelivered=self.cargoTransport.Ndelivered+1
+      -- Get amount that was delivered.
+      local amountDelivered=self:_GetWeightStorage(cargo.storage, false, false, true)
+      
+      -- Get total amount to be delivered.
+      local amountTotal=self:_GetWeightStorage(cargo.storage, true, false, true)
+      
+      -- Debug info.
+      local text=string.format("FF Amount delivered=%d, total=%d", amountDelivered, amountTotal)
+      self:I(self.lid..text)
+      
+      if amountDelivered>=amountTotal then
+      
+        -- Cargo was delivered (somehow).
+        cargo.delivered=true
+  
+        -- Increase number of delivered cargos.
+        self.cargoTransport.Ndelivered=self.cargoTransport.Ndelivered+1
+        
+      end
       
     end
 
@@ -10171,7 +10414,7 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
       -- Debug info.
       self:T(self.lid..string.format("Group is loaded currently ==> Moving directly to new carrier - No Unload(), Disembart() events triggered!"))
 
-      -- Remove my carrier.
+      -- Remove old/current carrier.
       self:_RemoveMyCarrier()
 
       -- Trigger Load event.
