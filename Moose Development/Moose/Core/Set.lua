@@ -37,8 +37,8 @@
 --
 -- ## Notes on `FilterPrefixes()`:  
 -- 
--- This filter always looks for a **partial match** somewhere in the give field. LUA regular expression apply here, so special characters in names like minus, dot, hash (#) etc might lead to unexpected results. 
--- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching).  
+-- This filter always looks for a **partial match** somewhere in the given field. LUA regular expression apply here, so special characters in names like minus, dot, hash (#) etc might lead to unexpected results. 
+-- Have a read through the following to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching).  
 -- For example, setting a filter like so `FilterPrefixes("Huey")` is perfectly all right, whilst `FilterPrefixes("UH-1H Al-Assad")` might not be due to the minus signs. A quick fix here is to use a dot (.) 
 -- in place of the special character, or escape it with a percentage sign (%), i.e. either `FilterPrefixes("UH.1H Al.Assad")` or `FilterPrefixes("UH%-1H Al%-Assad")` will give you the expected results.
 --
