@@ -1755,7 +1755,7 @@ function OPSTRANSPORT:onafterStatusUpdate(From, Event, To)
           --TODO: Storage
           local storage=cargo.storage
           text=text..string.format("\n- storage type=%s: amount: total=%d loaded=%d, lost=%d, delivered=%d, delivered=%s [UID=%s]",
-          storage.cargoType, storage.cargoAmount, storage.cargoLoaded, storage.cargoLost, storage.cargoDelivered, tostring(cargo.delivered), tostring(nil))
+          storage.cargoType, storage.cargoAmount, storage.cargoLoaded, storage.cargoLost, storage.cargoDelivered, tostring(cargo.delivered), tostring(cargo.uid))
         end
       end
       
@@ -2226,6 +2226,7 @@ function OPSTRANSPORT:_CreateCargoGroupData(group, TransportZoneCombo, Disembark
     end
   end
 
+  self.cargocounter=self.cargocounter+1
 
   -- Create a new data item.
   local cargo={} --Ops.OpsGroup#OPSGROUP.CargoGroup
@@ -2265,10 +2266,12 @@ function OPSTRANSPORT:_CreateCargoStorage(StorageFrom, StorageTo, CargoType, Car
   storage.cargoReserved=0
   storage.cargoLoaded=0
   storage.cargoWeight=CargoWeight or 1
-  
+
+  self.cargocounter=self.cargocounter+1  
 
   -- Create a new data item.
   local cargo={} --Ops.OpsGroup#OPSGROUP.CargoGroup
+  cargo.uid=self.cargocounter
   cargo.type="STORAGE"
   cargo.opsgroup=nil
   cargo.storage=storage

@@ -7452,35 +7452,54 @@ function OPSGROUP:onafterElementDead(From, Event, To, Element)
 
   -- Clear cargo bay of element.
   for i=#Element.cargoBay,1,-1 do
-    local cargo=Element.cargoBay[i] --#OPSGROUP.MyCargo
+    local mycargo=Element.cargoBay[i] --#OPSGROUP.MyCargo
+    
+    if mycargo.group then
 
-    -- Remove from cargo bay.
-    self:_DelCargobay(cargo.group)
-
-    if cargo.group and not (cargo.group:IsDead() or cargo.group:IsStopped()) then
-
-      -- Remove my carrier
-      cargo.group:_RemoveMyCarrier()
-
-      if cargo.reserved then
-
-        -- This group was not loaded yet ==> Not cargo any more.
-        cargo.group:_NewCargoStatus(OPSGROUP.CargoStatus.NOTCARGO)
-
-      else
-
-        -- Carrier dead ==> cargo dead.
-        for _,cargoelement in pairs(cargo.group.elements) do
-
-          -- Debug info.
-          self:T2(self.lid.."Cargo element dead "..cargoelement.name)
-
-          -- Trigger dead event.
-          cargo.group:ElementDead(cargoelement)
-
+      -- Remove from cargo bay.
+      self:_DelCargobay(mycargo.group)
+  
+      if mycargo.group and not (mycargo.group:IsDead() or mycargo.group:IsStopped()) then
+  
+        -- Remove my carrier
+        mycargo.group:_RemoveMyCarrier()
+  
+        if mycargo.reserved then
+  
+          -- This group was not loaded yet ==> Not cargo any more.
+          mycargo.group:_NewCargoStatus(OPSGROUP.CargoStatus.NOTCARGO)
+  
+        else
+  
+          -- Carrier dead ==> cargo dead.
+          for _,cargoelement in pairs(mycargo.group.elements) do
+  
+            -- Debug info.
+            self:T2(self.lid.."Cargo element dead "..cargoelement.name)
+  
+            -- Trigger dead event.
+            mycargo.group:ElementDead(cargoelement)
+  
+          end
         end
+  
+      end
+      
+    else
+          
+      -- Add cargo to lost.
+      if self.cargoTZC then
+        for _,_cargo in pairs(self.cargoTZC.Cargos) do
+          local cargo=_cargo --#OPSGROUP.CargoGroup          
+          if cargo.uid==mycargo.cargoUID then          
+            cargo.storage.cargoLost=cargo.storage.cargoLost+mycargo.storageAmount
+          end
+        end      
       end
 
+      -- Remove cargo from cargo bay.
+      self:_DelCargobayElement(Element, mycargo)
+    
     end
   end
 
@@ -7981,7 +8000,8 @@ function OPSGROUP:_CheckCargoTransport()
         if cargo.group then
           text=text..string.format("\n- %s in carrier %s, reserved=%s", tostring(cargo.group:GetName()), tostring(element.name), tostring(cargo.reserved))
         else
-          text=text..string.format("\n- storage %s=%d kg in carrier %s", tostring(cargo.storageType), tostring(cargo.storageAmount*cargo.storageWeight), tostring(element.name))
+          text=text..string.format("\n- storage %s=%d kg in carrier %s [UID=%s]", 
+          tostring(cargo.storageType), tostring(cargo.storageAmount*cargo.storageWeight), tostring(element.name), tostring(cargo.cargoUID))
         end
       end
     end
@@ -8171,7 +8191,15 @@ function OPSGROUP:_CheckCargoTransport()
           end
           
         else
-          --TODO: storage
+          ---
+          -- STORAGE
+          ---
+          
+          if cargo.delivered then
+            
+          end
+          
+          
         end
 
       end
@@ -8422,16 +8450,18 @@ end
 -- @param #number CargoUID Cargo UID.
 -- @return #OPSGROUP.MyCargo MyCargo My cargo data.
 function OPSGROUP:_GetCargobayElement(Element, CargoUID)
+  self:T3({Element=Element, CargoUID=CargoUID})
 
   for i,_mycargo in pairs(Element.cargoBay) do
     local mycargo=_mycargo --#OPSGROUP.MyCargo
-    
+
     if mycargo.cargoUID and mycargo.cargoUID==CargoUID then
       return mycargo
     end
     
   end
 
+  return nil
 end
 
 --- Remove OPSGROUP from cargo bay of a carrier.
@@ -8595,9 +8625,9 @@ function OPSGROUP:_CheckGoPickup(CargoTransport)
 
         if cargo.delivered then
           -- This one is delivered.
-        elseif cargo.opsgroup==nil or cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped() then
+        elseif cargo.type==OPSTRANSPORT.CargoType.OPSGROUP and (cargo.opsgroup==nil or cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped()) then
           -- This one is dead.
-        elseif cargo.opsgroup:IsLoaded(CargoTransport:_GetCarrierNames()) then
+        elseif cargo.type==OPSTRANSPORT.CargoType.OPSGROUP and (cargo.opsgroup:IsLoaded(CargoTransport:_GetCarrierNames())) then
           -- This one is loaded into a(nother) carrier.
         else
           done=false --Someone is not done!
@@ -8923,7 +8953,7 @@ end
 --- Get weight of warehouse storage to transport.
 -- @param #OPSGROUP self
 -- @param Ops.OpsTransport#OPSTRANSPORT.Storage Storage
--- @param #boolean Total Get total weight. Otherweise the already delivered or lost weight is substracted.
+-- @param #boolean Total Get total weight. Otherweise the amount left to deliver (total-loaded-lost-delivered).
 -- @param #boolean Reserved Reduce weight that is reserved.
 -- @param #boolean Amount Return amount not weight.
 -- @return #number Weight of cargo in kg or amount in number of items, if `Amount=true`.
@@ -9412,7 +9442,7 @@ function OPSGROUP:onafterLoading(From, Event, To)
       weight=self:_GetWeightStorage(cargo.storage, false)
       
       -- Debug info.
-      env.info(string.format("FF loading storage weight=%d kg!", weight))
+      self:T(self.lid..string.format("Loading storage weight=%d kg!", weight))
       
       -- Loop over all elements of the carrier group.
       for _,_element in pairs(self.elements) do
@@ -9444,8 +9474,8 @@ function OPSGROUP:onafterLoading(From, Event, To)
         weight=weight-w
         
         -- Debug info.
-        local text=string.format("FF element %s: amount=%d, weight=%d, left=%d", element.name, amount, w, weight)
-        env.info(text)
+        local text=string.format("Element %s: amount=%d, weight=%d, left=%d", element.name, amount, w, weight)
+        self:T2(self.lid..text)
         
         -- If no cargo left, break the loop.
         if weight<=0 then
@@ -9941,17 +9971,16 @@ function OPSGROUP:onafterUnloading(From, Event, To)
         -- Get my cargo from cargo bay of element.
         local mycargo=self:_GetCargobayElement(element, cargo.uid)
         
-        if mycargo then
-
+        if mycargo then        
           -- Add cargo to warehouse storage.
           if type(mycargo.storageType)=="number" then
             cargo.storage.storageTo:AddLiquid(mycargo.storageType, mycargo.storageAmount)            
           else
-            cargo.storage.storageTo:AddItem(cargo.storage.cargoType, cargo.storage.cargoAmount)
+            cargo.storage.storageTo:AddItem(mycargo.storageType, mycargo.storageAmount)
           end
       
           -- Add amount to delivered.    
-          cargo.storage.cargoDelivered=cargo.storage.cargoDelivered+mycargo.storageAmount
+          cargo.storage.cargoDelivered=cargo.storage.cargoDelivered+mycargo.storageAmount                    
           
           -- Reduce loaded amount.
           cargo.storage.cargoLoaded=cargo.storage.cargoLoaded-mycargo.storageAmount
@@ -9959,20 +9988,23 @@ function OPSGROUP:onafterUnloading(From, Event, To)
           -- Remove cargo from bay.
           self:_DelCargobayElement(element, mycargo)
           
+          -- Debug info
+          self:T2(self.lid..string.format("Cargo loaded=%d, delivered=%d, lost=%d", cargo.storage.cargoLoaded, cargo.storage.cargoDelivered, cargo.storage.cargoLost))
+          
         end      
       end
       
       -- Get amount that was delivered.
-      local amountDelivered=self:_GetWeightStorage(cargo.storage, false, false, true)
+      local amountToDeliver=self:_GetWeightStorage(cargo.storage, false, false, true)
       
       -- Get total amount to be delivered.
       local amountTotal=self:_GetWeightStorage(cargo.storage, true, false, true)
       
       -- Debug info.
-      local text=string.format("FF Amount delivered=%d, total=%d", amountDelivered, amountTotal)
-      self:I(self.lid..text)
+      local text=string.format("FF Amount delivered=%d, total=%d", amountToDeliver, amountTotal)
+      self:T(self.lid..text)
       
-      if amountDelivered>=amountTotal then
+      if amountToDeliver<=0 then
       
         -- Cargo was delivered (somehow).
         cargo.delivered=true
