@@ -600,7 +600,8 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, TransportZoneCombo, DisembarkActi
   return self
 end
 
---- Add cargo groups to be transported.
+--- Add cargo warehouse storage to be transported. This adds items such as fuel, weapons and other equipment, which is to be transported
+-- from one DCS warehouse to another.
 -- @param #OPSTRANSPORT self
 -- @param Wrapper.Storage#STORAGE StorageFrom Storage from.
 -- @param Wrapper.Storage#STORAGE StorageTo Storage to.
@@ -616,9 +617,16 @@ function OPSTRANSPORT:AddCargoStorage(StorageFrom, StorageTo, CargoType, CargoAm
 
   -- Cargo data.
   local cargo=self:_CreateCargoStorage(StorageFrom,StorageTo, CargoType, CargoAmount, CargoWeight, TransportZoneCombo)
+  
+  if cargo then
+  
+    -- Add total amount of ever assigned cargos.
+    self.Ncargo=self.Ncargo+1
 
-  -- Add to TZC table.
-  table.insert(TransportZoneCombo.Cargos, cargo)
+    -- Add to TZC table.
+    table.insert(TransportZoneCombo.Cargos, cargo)
+
+  end
 
 end
 
@@ -2033,14 +2041,14 @@ function OPSTRANSPORT:_CheckDelivered()
       if cargo.delivered then
         -- This one is delivered.
         dead=false
-      elseif cargo.opsgroup==nil then
+      elseif cargo.type==OPSTRANSPORT.CargoType.OPSGROUP and cargo.opsgroup==nil then
         -- This one is nil?!
         dead=false
-      elseif cargo.opsgroup:IsDestroyed() then
+      elseif cargo.type==OPSTRANSPORT.CargoType.OPSGROUP and cargo.opsgroup:IsDestroyed() then
         -- This one was destroyed.
-      elseif cargo.opsgroup:IsDead() then
+      elseif cargo.type==OPSTRANSPORT.CargoType.OPSGROUP and cargo.opsgroup:IsDead() then
         -- This one is dead.
-      elseif cargo.opsgroup:IsStopped() then
+      elseif cargo.type==OPSTRANSPORT.CargoType.OPSGROUP and cargo.opsgroup:IsStopped() then
         -- This one is stopped.
         dead=false
       else
