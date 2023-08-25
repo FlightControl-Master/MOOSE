@@ -9411,7 +9411,19 @@ function OPSGROUP:onafterLoading(From, Event, To)
   local function _sort(a, b)
     local cargoA=a --Ops.OpsGroup#OPSGROUP.CargoGroup
     local cargoB=b --Ops.OpsGroup#OPSGROUP.CargoGroup
-    return cargoA.opsgroup:GetWeightTotal()>cargoB.opsgroup:GetWeightTotal()
+    local weightA=0
+    local weightB=0
+    if cargoA.opsgroup then
+      weightA=cargoA.opsgroup:GetWeightTotal()
+    else
+      weightA=self:_GetWeightStorage(cargoA.storage)
+    end
+    if cargoB.opsgroup then
+      weightB=cargoB.opsgroup:GetWeightTotal()
+    else
+      weightB=self:_GetWeightStorage(cargoB.storage)
+    end
+    return weightA>weightB
   end
   table.sort(cargos, _sort)
 
@@ -9965,53 +9977,61 @@ function OPSGROUP:onafterUnloading(From, Event, To)
       -- STORAGE
       ---
       
-      for _,_element in pairs(self.elements) do
-        local element=_element --#OPSGROUP.Element
+      -- TODO: should proabaly move this check to the top to include OPSGROUPS as well?!
+      if not cargo.delivered then
+      
+        for _,_element in pairs(self.elements) do
+          local element=_element --#OPSGROUP.Element
+          
+          -- Get my cargo from cargo bay of element.
+          local mycargo=self:_GetCargobayElement(element, cargo.uid)
+          
+          if mycargo then        
+            -- Add cargo to warehouse storage.
+            if type(mycargo.storageType)=="number" then
+              cargo.storage.storageTo:AddLiquid(mycargo.storageType, mycargo.storageAmount)            
+            else
+              cargo.storage.storageTo:AddItem(mycargo.storageType, mycargo.storageAmount)
+            end
         
-        -- Get my cargo from cargo bay of element.
-        local mycargo=self:_GetCargobayElement(element, cargo.uid)
+            -- Add amount to delivered.    
+            cargo.storage.cargoDelivered=cargo.storage.cargoDelivered+mycargo.storageAmount                    
+            
+            -- Reduce loaded amount.
+            cargo.storage.cargoLoaded=cargo.storage.cargoLoaded-mycargo.storageAmount
+            
+            -- Remove cargo from bay.
+            self:_DelCargobayElement(element, mycargo)
+            
+            -- Debug info
+            self:T2(self.lid..string.format("Cargo loaded=%d, delivered=%d, lost=%d", cargo.storage.cargoLoaded, cargo.storage.cargoDelivered, cargo.storage.cargoLost))
+            
+          end      
+        end
         
-        if mycargo then        
-          -- Add cargo to warehouse storage.
-          if type(mycargo.storageType)=="number" then
-            cargo.storage.storageTo:AddLiquid(mycargo.storageType, mycargo.storageAmount)            
-          else
-            cargo.storage.storageTo:AddItem(mycargo.storageType, mycargo.storageAmount)
-          end
-      
-          -- Add amount to delivered.    
-          cargo.storage.cargoDelivered=cargo.storage.cargoDelivered+mycargo.storageAmount                    
-          
-          -- Reduce loaded amount.
-          cargo.storage.cargoLoaded=cargo.storage.cargoLoaded-mycargo.storageAmount
-          
-          -- Remove cargo from bay.
-          self:_DelCargobayElement(element, mycargo)
-          
-          -- Debug info
-          self:T2(self.lid..string.format("Cargo loaded=%d, delivered=%d, lost=%d", cargo.storage.cargoLoaded, cargo.storage.cargoDelivered, cargo.storage.cargoLost))
-          
-        end      
-      end
-      
-      -- Get amount that was delivered.
-      local amountToDeliver=self:_GetWeightStorage(cargo.storage, false, false, true)
-      
-      -- Get total amount to be delivered.
-      local amountTotal=self:_GetWeightStorage(cargo.storage, true, false, true)
-      
-      -- Debug info.
-      local text=string.format("FF Amount delivered=%d, total=%d", amountToDeliver, amountTotal)
-      self:T(self.lid..text)
-      
-      if amountToDeliver<=0 then
-      
-        -- Cargo was delivered (somehow).
-        cargo.delivered=true
+        -- Get amount that was delivered.
+        local amountToDeliver=self:_GetWeightStorage(cargo.storage, false, false, true)
+        
+        -- Get total amount to be delivered.
+        local amountTotal=self:_GetWeightStorage(cargo.storage, true, false, true)
+        
+        -- Debug info.
+        local text=string.format("Amount delivered=%d, total=%d", amountToDeliver, amountTotal)
+        self:T(self.lid..text)
+        
+        if amountToDeliver<=0 then
+        
+          -- Cargo was delivered (somehow).
+          cargo.delivered=true
+    
+          -- Increase number of delivered cargos.
+          self.cargoTransport.Ndelivered=self.cargoTransport.Ndelivered+1
   
-        -- Increase number of delivered cargos.
-        self.cargoTransport.Ndelivered=self.cargoTransport.Ndelivered+1
-        
+          -- Debug info.
+          local text=string.format("Ndelivered=%d delivered=%s", self.cargoTransport.Ndelivered, tostring(cargo.delivered))
+          self:T(self.lid..text)
+          
+        end
       end
       
     end
