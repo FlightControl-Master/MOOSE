@@ -46,6 +46,7 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
+-- ### Additions for SRS and FARP: **applevangelist**
 --
 -- @module Ops.ATIS
 -- @image OPS_ATIS.png
@@ -615,7 +616,7 @@ _ATIS = {}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version = "0.9.15"
+ATIS.version = "0.9.16"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1278,7 +1279,8 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ATIS:onafterStart( From, Event, To )
-  self:I("Airbase category is "..self.airbase:GetAirbaseCategory())
+  self:T({From, Event, To})
+  self:T("Airbase category is "..self.airbase:GetAirbaseCategory())
   
   -- Check that this is an airdrome.
   if self.airbase:GetAirbaseCategory() == Airbase.Category.SHIP then
@@ -1340,7 +1342,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ATIS:onafterStatus( From, Event, To )
-
+  self:T({From, Event, To})
   -- Get FSM state.
   local fsmstate = self:GetState()
 
@@ -1362,7 +1364,7 @@ function ATIS:onafterStatus( From, Event, To )
   self:T( self.lid .. text )
   
   if not self:Is("Stopped") then
-    self:__Status( -60 )
+    self:__Status( 60 )
   end
 end
 
@@ -1376,25 +1378,26 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ATIS:onafterCheckQueue( From, Event, To )
-
-  if self.useSRS then
-
-    self:Broadcast()
-
-  else
-
-    if #self.radioqueue.queue == 0 then
-      self:T( self.lid .. string.format( "Radio queue empty. Repeating message." ) )
-      self:Broadcast()
-    else
-      self:T2( self.lid .. string.format( "Radio queue %d transmissions queued.", #self.radioqueue.queue ) )
-    end
-
-  end
-  
+  self:T({From, Event, To})
   if not self:Is("Stopped") then
+    if self.useSRS then
+
+      self:Broadcast()
+
+    else
+
+      if #self.radioqueue.queue == 0 then
+        self:T( self.lid .. string.format( "Radio queue empty. Repeating message." ) )
+        self:Broadcast()
+      else
+        self:T2( self.lid .. string.format( "Radio queue %d transmissions queued.", #self.radioqueue.queue ) )
+      end
+
+    end
+  
+
     -- Check back in 5 seconds.  
-    self:__CheckQueue( -math.abs( self.dTQueueCheck ) )
+    self:__CheckQueue( math.abs( self.dTQueueCheck ) )
   end
 end
 
@@ -1404,7 +1407,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ATIS:onafterBroadcast( From, Event, To )
-
+  self:T({From, Event, To})
   -- Get current coordinate.
   local coord = self.airbase:GetCoordinate()
 
@@ -2156,8 +2159,9 @@ function ATIS:onafterBroadcast( From, Event, To )
 
   if not self.ATISforFARPs then
     -- Active runway.
+    local subtitle
     if runwayLanding then
-      local subtitle=string.format("Active runway %s", runwayLanding)
+      subtitle=string.format("Active runway %s", runwayLanding)
       if rwyLandingLeft==true then
         subtitle=subtitle.." Left"
       elseif rwyLandingLeft==false then
@@ -2417,6 +2421,7 @@ end
 -- @param #string To To state.
 -- @param #string Text Report text.
 function ATIS:onafterReport( From, Event, To, Text )
+  self:T({From, Event, To})
   self:T( self.lid .. string.format( "Report:\n%s", Text ) )
 
   if self.useSRS and self.msrs then
