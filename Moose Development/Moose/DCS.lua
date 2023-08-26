@@ -833,6 +833,12 @@ do -- Warehouse
   -- The warehouse class gives control over warehouses that exist in airbase objects. These warehouses can limit the aircraft, munitions, and fuel available to coalition aircraft.
   -- @type Warehouse
 
+  
+  --- Get a warehouse by passing its name.
+  -- @function [parent=#Warehouse] getByName
+  -- @param #string Name Name of the warehouse.
+  -- @return #Warehouse The warehouse object.
+
   --- Adds the passed amount of a given item to the warehouse.
   -- itemName is the typeName associated with the item: "weapons.missiles.AIM_54C_Mk47"
   -- A wsType table can also be used, however the last digit with wsTypes has been known to change. {4, 4, 7, 322}

@@ -336,6 +336,181 @@ function STORAGE:GetLiquidName(Type)
   return name
 end
 
+--- Adds the amount of a given type of aircraft, liquid, weapon currently present the warehouse.
+-- @param #STORAGE self
+-- @param #number Type Type of liquid or name of aircraft, weapon or equipment.
+-- @param #number Amount Amount of given type to add. Liquids in kg.
+-- @return #STORAGE self
+function STORAGE:AddAmount(Type, Amount)
+
+  if type(Type)=="number" then
+    self:AddLiquid(Type, Amount)
+  else
+    self:AddItem(Type, Amount)
+  end
+
+  return self
+end
+
+--- Removes the amount of a given type of aircraft, liquid, weapon from the warehouse.
+-- @param #STORAGE self
+-- @param #number Type Type of liquid or name of aircraft, weapon or equipment.
+-- @param #number Amount Amount of given type to remove. Liquids in kg.
+-- @return #STORAGE self
+function STORAGE:RemoveAmount(Type, Amount)
+
+  if type(Type)=="number" then
+    self:RemoveLiquid(Type, Amount)
+  else
+    self:RemoveItem(Type, Amount)
+  end
+
+  return self
+end
+
+--- Sets the amount of a given type of aircraft, liquid, weapon currently present the warehouse.
+-- @param #STORAGE self
+-- @param #number Type Type of liquid or name of aircraft, weapon or equipment.
+-- @param #number Amount of given type. Liquids in kg.
+-- @return #STORAGE self
+function STORAGE:SetAmount(Type, Amount)
+
+  if type(Type)=="number" then
+    self:SetLiquid(Type, Amount)
+  else
+    self:SetItem(Type, Amount)
+  end
+
+  return self
+end
+
+
+--- Gets the amount of a given type of aircraft, liquid, weapon currently present the warehouse.
+-- @param #STORAGE self
+-- @param #number Type Type of liquid or name of aircraft, weapon or equipment.
+-- @return #number Amount of given type. Liquids in kg.
+function STORAGE:GetAmount(Type)
+
+  local N=0
+  if type(Type)=="number" then
+    N=self:GetLiquidAmount(Type)
+  else
+    N=self:GetItemAmount(Type)
+  end
+
+  return N
+end
+
+--- Returns whether a given type of aircraft, liquid, weapon is set to be unlimited.
+-- @param #STORAGE self
+-- @param #string Type Name of aircraft, weapon or equipment or type of liquid (as `#number`).
+-- @return #boolen If `true` the given type is unlimited or `false` otherwise.
+function STORAGE:IsUnlimited(Type)
+
+  -- Get current amount of type.
+  local N=self:GetAmount(Type)
+  
+  local unlimited=false
+  
+  if N>0 then
+  
+    -- Remove one item.
+    self:RemoveAmount(Type, 1)
+    
+    -- Get amount.
+    local n=self:GetAmount(Type)
+    
+    -- If amount did not change, it is unlimited.
+    unlimited=n==N
+    
+    -- Add item back.
+    if not unlimited then
+      self:AddAmount(Type, 1)
+    end
+    
+    -- Debug info.
+    self:I(self.lid..string.format("Type=%s: unlimited=%s (N=%d n=%d)", tostring(Type), tostring(unlimited), N, n))
+  end
+
+  return unlimited
+end
+
+--- Returns whether a given type of aircraft, liquid, weapon is set to be limited.
+-- @param #STORAGE self
+-- @param #number Type Type of liquid or name of aircraft, weapon or equipment.
+-- @return #boolen If `true` the given type is limited or `false` otherwise.
+function STORAGE:IsLimited(Type)
+
+  local limited=not self:IsUnlimited(Type)
+
+  return limited
+end
+
+--- Returns whether aircraft are unlimited.
+-- @param #STORAGE self
+-- @return #boolen If `true` aircraft are unlimited or `false` otherwise.
+function STORAGE:IsUnlimitedAircraft()
+
+  -- We test with a specific type but if it is unlimited, than all aircraft are.
+  local unlimited=self:IsUnlimited("A-10C")
+
+  return unlimited
+end
+
+--- Returns whether liquids are unlimited.
+-- @param #STORAGE self
+-- @return #boolen If `true` liquids are unlimited or `false` otherwise.
+function STORAGE:IsUnlimitedLiquids()
+
+  -- We test with a specific type but if it is unlimited, than all are.
+  local unlimited=self:IsUnlimited(STORAGE.Liquid.DIESEL)
+
+  return unlimited
+end
+
+--- Returns whether weapons and equipment are unlimited.
+-- @param #STORAGE self
+-- @return #boolen If `true` weapons and equipment are unlimited or `false` otherwise.
+function STORAGE:IsUnlimitedWeapons()
+
+  -- We test with a specific type but if it is unlimited, than all are.
+  local unlimited=self:IsUnlimited(ENUMS.Storage.weapons.bombs.Mk_82)
+
+  return unlimited
+end
+
+--- Returns whether aircraft are limited.
+-- @param #STORAGE self
+-- @return #boolen If `true` aircraft are limited or `false` otherwise.
+function STORAGE:IsLimitedAircraft()
+
+  -- We test with a specific type but if it is limited, than all are.
+  local limited=self:IsLimited("A-10C")
+
+  return limited
+end
+
+--- Returns whether liquids are limited.
+-- @param #STORAGE self
+-- @return #boolen If `true` liquids are limited or `false` otherwise.
+function STORAGE:IsLimitedLiquids()
+
+  -- We test with a specific type but if it is limited, than all are.
+  local limited=self:IsLimited(STORAGE.Liquid.DIESEL)
+
+  return limited
+end
+
+--- Returns whether weapons and equipment are limited.
+-- @param #STORAGE self
+-- @return #boolen If `true` liquids are limited or `false` otherwise.
+function STORAGE:IsLimitedWeapons()
+
+  -- We test with a specific type but if it is limited, than all are.
+  local limited=self:IsLimited(ENUMS.Storage.weapons.bombs.Mk_82)
+
+  return limited
+end
 
 --- Returns a full itemized list of everything currently in a warehouse. If a category is set to unlimited then the table will be returned empty.
 -- @param #STORAGE self
