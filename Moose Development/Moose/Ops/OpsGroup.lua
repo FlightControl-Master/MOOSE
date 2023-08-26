@@ -9469,6 +9469,10 @@ function OPSGROUP:onafterLoading(From, Event, To)
         -- Calculate item amount.
         local amount=w/cargo.storage.cargoWeight
         
+        --TODO: Check the amount that the warehouse currently has!
+        --      We dont want to remove more than what is actually there.
+        --      Also needs a check if it is unlimited.
+        
         -- Remove items from warehouse.
         if type(cargo.storage.cargoType)=="number" then
           cargo.storage.storageFrom:RemoveLiquid(cargo.storage.cargoType, amount)
