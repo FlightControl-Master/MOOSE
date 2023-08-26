@@ -521,6 +521,26 @@ function CONTROLLABLE:TaskWrappedAction( DCSCommand, Index )
   return DCSTaskWrappedAction
 end
 
+--- Return an Empty Task.
+-- @param #CONTROLLABLE self
+-- @return DCS#Task
+function CONTROLLABLE:TaskEmptyTask()
+
+  local DCSTaskWrappedAction = {  
+            ["id"] = "WrappedAction",
+            ["params"] = {
+              ["action"] = {
+                ["id"] = "Script",
+                ["params"] = {
+                  ["command"] = "",
+                },
+              },
+            },
+          }
+
+  return DCSTaskWrappedAction
+end
+
 --- Set a Task at a Waypoint using a Route list.
 -- @param #CONTROLLABLE self
 -- @param #table Waypoint The Waypoint!

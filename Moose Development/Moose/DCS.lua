@@ -1210,14 +1210,17 @@ do -- Unit
   -- @field #Distance detectionDistanceHRM detection distance for RCS=1m^2 in high-resolution mapping mode, nil if radar has no HRM
   -- @field #Unit.Radar.detectionDistanceAir detectionDistanceAir detection distance for RCS=1m^2 airborne target, nil if radar doesn't support air search
   
+  --- A radar.
   -- @type Unit.Radar.detectionDistanceAir 
   -- @field #Unit.Radar.detectionDistanceAir.upperHemisphere upperHemisphere
   -- @field #Unit.Radar.detectionDistanceAir.lowerHemisphere lowerHemisphere
   
+  --- A radar.
   -- @type Unit.Radar.detectionDistanceAir.upperHemisphere
   -- @field #Distance headOn
   -- @field #Distance tailOn
   
+  --- A radar.
   -- @type Unit.Radar.detectionDistanceAir.lowerHemisphere 
   -- @field #Distance headOn
   -- @field #Distance tailOn
@@ -1520,6 +1523,7 @@ do -- AI
   -- @field IR_POINTER
   -- @field LASER
   
+  ---
   -- @type AI.Task.WaypointType
   -- @field TAKEOFF
   -- @field TAKEOFF_PARKING
@@ -1527,14 +1531,17 @@ do -- AI
   -- @field TAKEOFF_PARKING_HOT
   -- @field LAND
   
+  ---
   -- @type AI.Task.TurnMethod
   -- @field FLY_OVER_POINT
   -- @field FIN_POINT
   
+  ---
   -- @type AI.Task.AltitudeType
   -- @field BARO
   -- @field RADIO
   
+  ---
   -- @type AI.Task.VehicleFormation
   -- @field OFF_ROAD
   -- @field ON_ROAD
@@ -1545,15 +1552,18 @@ do -- AI
   -- @field ECHELON_LEFT
   -- @field ECHELON_RIGHT
   
+  ---
   -- @type AI.Option
   -- @field #AI.Option.Air                          Air
   -- @field #AI.Option.Ground                       Ground
   -- @field #AI.Option.Naval                        Naval
   
+  ---
   -- @type AI.Option.Air
   -- @field #AI.Option.Air.id                       id
   -- @field #AI.Option.Air.val                      val
   
+  ---
   -- @type AI.Option.Ground
   -- @field #AI.Option.Ground.id                    id
   -- @field #AI.Option.Ground.val                   val
@@ -1564,7 +1574,7 @@ do -- AI
   -- @field #AI.Option.Naval.id                     id
   -- @field #AI.Option.Naval.val                    val
  
- 
+  ---
   -- @type AI.Option.Air.id
   -- @field NO_OPTION
   -- @field ROE
@@ -1588,6 +1598,7 @@ do -- AI
   -- @field JETT_TANKS_IF_EMPTY
   -- @field FORCED_ATTACK
   
+  ---
   -- @type AI.Option.Air.id.FORMATION
   -- @field LINE_ABREAST
   -- @field TRAIL
@@ -1606,20 +1617,22 @@ do -- AI
   -- @field COMBAT_BOX
   -- @field JAVELIN_DOWN
 
-  
+  ---
   -- @type AI.Option.Air.val
   -- @field #AI.Option.Air.val.ROE ROE
   -- @field #AI.Option.Air.val.REACTION_ON_THREAT REACTION_ON_THREAT
   -- @field #AI.Option.Air.val.RADAR_USING RADAR_USING
   -- @field #AI.Option.Air.val.FLARE_USING FLARE_USING
   
+  ---
   -- @type AI.Option.Air.val.ROE
   -- @field WEAPON_FREE
   -- @field OPEN_FIRE_WEAPON_FREE
   -- @field OPEN_FIRE
   -- @field RETURN_FIRE
   -- @field WEAPON_HOLD
-   
+  
+  --- 
   -- @type AI.Option.Air.val.REACTION_ON_THREAT
   -- @field NO_REACTION
   -- @field PASSIVE_DEFENCE
@@ -1627,24 +1640,28 @@ do -- AI
   -- @field BYPASS_AND_ESCAPE
   -- @field ALLOW_ABORT_MISSION
   
+  ---
   -- @type AI.Option.Air.val.RADAR_USING
   -- @field NEVER
   -- @field FOR_ATTACK_ONLY
   -- @field FOR_SEARCH_IF_REQUIRED
   -- @field FOR_CONTINUOUS_SEARCH
   
+  ---
   -- @type AI.Option.Air.val.FLARE_USING
   -- @field NEVER
   -- @field AGAINST_FIRED_MISSILE
   -- @field WHEN_FLYING_IN_SAM_WEZ
   -- @field WHEN_FLYING_NEAR_ENEMIES
-
+  
+  ---
   -- @type AI.Option.Air.val.ECM_USING
   -- @field NEVER_USE
   -- @field USE_IF_ONLY_LOCK_BY_RADAR
   -- @field USE_IF_DETECTED_LOCK_BY_RADAR
   -- @field ALWAYS_USE
-
+  
+  ---
   -- @type AI.Option.Air.val.MISSILE_ATTACK
   -- @field MAX_RANGE
   -- @field NEZ_RANGE
@@ -1652,7 +1669,7 @@ do -- AI
   -- @field TARGET_THREAT_EST
   -- @field RANDOM_RANGE
 
-  
+  ---
   -- @type AI.Option.Ground.id
   -- @field NO_OPTION
   -- @field ROE @{#AI.Option.Ground.val.ROE}
@@ -1662,41 +1679,50 @@ do -- AI
   -- @field ENGAGE_AIR_WEAPONS
   -- @field AC_ENGAGEMENT_RANGE_RESTRICTION
   
+  ---
   -- @type AI.Option.Ground.mid -- Moose added
   -- @field RESTRICT_AAA_MIN        27
   -- @field RESTRICT_AAA_MAX        29
   -- @field RESTRICT_TARGETS @{#AI.Option.Ground.mval.ENGAGE_TARGETS}  28
   
+  ---
   -- @type AI.Option.Ground.val
   -- @field #AI.Option.Ground.val.ROE               ROE
   -- @field #AI.Option.Ground.val.ALARM_STATE       ALARM_STATE
   -- @field #AI.Option.Ground.val.ENGAGE_TARGETS    RESTRICT_TARGETS
   
+  ---
   -- @type AI.Option.Ground.val.ROE
   -- @field OPEN_FIRE
   -- @field RETURN_FIRE
   -- @field WEAPON_HOLD
   
+  ---
   -- @type AI.Option.Ground.mval -- Moose added
   -- @field #AI.Option.Ground.mval.ENGAGE_TARGETS   ENGAGE_TARGETS
   
+  ---
   -- @type AI.Option.Ground.mval.ENGAGE_TARGETS -- Moose added
   -- @field ANY_TARGET -- 0
   -- @field AIR_UNITS_ONLY -- 1
   -- @field GROUND_UNITS_ONLY -- 2
   
+  ---
   -- @type AI.Option.Ground.val.ALARM_STATE
   -- @field AUTO
   -- @field GREEN
   -- @field RED
   
+  ---
   -- @type AI.Option.Naval.id
   -- @field NO_OPTION
   -- @field ROE
   
+  ---
   -- @type AI.Option.Naval.val
   -- @field #AI.Option.Naval.val.ROE ROE
   
+  ---
   -- @type AI.Option.Naval.val.ROE
   -- @field OPEN_FIRE
   -- @field RETURN_FIRE
