@@ -6,6 +6,7 @@
 --    * Supports ground, naval and airborne (airplanes and helicopters) units as carriers
 --    * Use combined forces (ground, naval, air) to transport the troops
 --    * Additional FSM events to hook into and customize your mission design
+--    * Transport of warehouse storage (fuel, weapons and equipment)
 --
 -- ===
 --
@@ -602,6 +603,8 @@ end
 
 --- Add cargo warehouse storage to be transported. This adds items such as fuel, weapons and other equipment, which is to be transported
 -- from one DCS warehouse to another.
+-- For weapons and equipment, the weight per item has to be specified explicitly as these cannot be retrieved by the DCS API. For liquids the
+-- default value of 1 kg per item should be used as the amount of liquid is already given in kg.
 -- @param #OPSTRANSPORT self
 -- @param Wrapper.Storage#STORAGE StorageFrom Storage from.
 -- @param Wrapper.Storage#STORAGE StorageTo Storage to.

@@ -5458,10 +5458,10 @@ function OPSGROUP:onafterMissionExecute(From, Event, To, Mission)
   if self.isFlightgroup then
     if Mission.prohibitABExecute == true then
       self:SetProhibitAfterburner()
-      self:I("Set prohibit AB")
+      self:T(self.lid.."Set prohibit AB")
     elseif Mission.prohibitABExecute == false then
       self:SetAllowAfterburner()
-      self:T2("Set allow AB")
+      self:T2(self.lid.."Set allow AB")
     end
   end
   
@@ -8108,17 +8108,16 @@ function OPSGROUP:_CheckCargoTransport()
       -- Current pickup time.
       local tloading=Time-self.Tloading
 
-      --TODO: Check max loading time. If exceeded ==> abort transport.
+      --TODO: Check max loading time. If exceeded ==> abort transport. Time might depend on required cargos, because we need to give them time to arrive.
 
       -- Debug info.
-      self:T(self.lid..string.format("Loading at %s [TZC UID=%d] for %s sec...", self.cargoTZC.PickupZone and self.cargoTZC.PickupZone:GetName() or "unknown", self.cargoTZC.uid, tloading))
+      self:T(self.lid..string.format("Loading at %s [TZC UID=%d] for %.1f sec...", self.cargoTZC.PickupZone and self.cargoTZC.PickupZone:GetName() or "unknown", self.cargoTZC.uid, tloading))
 
       local boarding=false
       local gotcargo=false
       for _,_cargo in pairs(self.cargoTZC.Cargos) do
         local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
-        
-        
+              
         if cargo.type==OPSTRANSPORT.CargoType.OPSTRANPORT then
 
           -- Check if anyone is still boarding.
@@ -8133,8 +8132,12 @@ function OPSGROUP:_CheckCargoTransport()
           
         else
         
-          --TODO: load storage
-          gotcargo=true
+          -- Get cargo if it is in the cargo bay of any carrier element.
+          local mycargo=self:_GetMyCargoBayFromUID(cargo.uid)
+          
+          if mycargo and mycargo.storageAmount>0 then
+            gotcargo=true
+          end
           
         end
 
@@ -8142,16 +8145,12 @@ function OPSGROUP:_CheckCargoTransport()
 
       -- Boarding finished ==> Transport cargo.
       if gotcargo and self.cargoTransport:_CheckRequiredCargos(self.cargoTZC, self) and not boarding then
-        self:T(self.lid.."Boarding finished ==> Loaded")
+        self:T(self.lid.."Boarding/loading finished ==> Loaded")
+        self.Tloading=nil
         self:LoadingDone()
       else
         -- No cargo and no one is boarding ==> check again if we can make anyone board.
         self:Loading()
-      end
-
-      -- No cargo and no one is boarding ==> check again if we can make anyone board.
-      if not gotcargo and not boarding then
-        --self:Loading()
       end
 
     elseif self:IsTransporting() then
@@ -8195,11 +8194,14 @@ function OPSGROUP:_CheckCargoTransport()
           -- STORAGE
           ---
           
-          if cargo.delivered then
-            
+          -- Get cargo if it is in the cargo bay of any carrier element.
+          local mycargo=self:_GetMyCargoBayFromUID(cargo.uid)
+          
+          if mycargo and not cargo.delivered then
+            delivered=false
+            break
           end
-          
-          
+                    
         end
 
       end
@@ -8595,8 +8597,6 @@ function OPSGROUP:_CheckDelivered(CargoTransport)
         done=false --Someone is not done!
       end
       
-      --TODO: check if storage is delivered
-
     end
 
   end
@@ -9330,6 +9330,36 @@ function OPSGROUP:onafterPickup(From, Event, To)
 
 end
 
+--- On after "Loading" event.
+-- @param #OPSGROUP self
+-- @param #table Cargos Table of cargos.
+-- @return #table Table of sorted cargos.
+function OPSGROUP:_SortCargo(Cargos)
+
+  -- Sort results table wrt descending weight.
+  local function _sort(a, b)
+    local cargoA=a --Ops.OpsGroup#OPSGROUP.CargoGroup
+    local cargoB=b --Ops.OpsGroup#OPSGROUP.CargoGroup
+    local weightA=0
+    local weightB=0
+    if cargoA.opsgroup then
+      weightA=cargoA.opsgroup:GetWeightTotal()
+    else
+      weightA=self:_GetWeightStorage(cargoA.storage)
+    end
+    if cargoB.opsgroup then
+      weightB=cargoB.opsgroup:GetWeightTotal()
+    else
+      weightB=self:_GetWeightStorage(cargoB.storage)
+    end
+    return weightA>weightB
+  end
+  
+  table.sort(Cargos, _sort)
+
+  return Cargos
+end
+
 
 --- On after "Loading" event.
 -- @param #OPSGROUP self
@@ -9340,9 +9370,6 @@ function OPSGROUP:onafterLoading(From, Event, To)
 
   -- Set carrier status.
   self:_NewCarrierStatus(OPSGROUP.CarrierStatus.LOADING)
-
-  -- Loading time stamp.
-  self.Tloading=timer.getAbsTime()
 
   -- Get valid cargos of the TZC.
   local cargos={}
@@ -9379,12 +9406,7 @@ function OPSGROUP:onafterLoading(From, Event, To)
     
     local isAvail=true
     if cargo.type==OPSTRANSPORT.CargoType.STORAGE then
-      local nAvail=0
-      if type(cargo.storage.cargoType)=="number" then
-        nAvail=cargo.storage.storageFrom:GetLiquidAmount(cargo.storage.cargoType)
-      else
-        nAvail=cargo.storage.storageFrom:GetItemAmount(cargo.storage.cargoType)
-      end
+      local nAvail=cargo.storage.storageFrom:GetAmount(cargo.storage.cargoType)
       if nAvail>0 then
         isAvail=true
       else
@@ -9407,25 +9429,8 @@ function OPSGROUP:onafterLoading(From, Event, To)
     end
   end
 
-  -- Sort results table wrt descending weight.
-  local function _sort(a, b)
-    local cargoA=a --Ops.OpsGroup#OPSGROUP.CargoGroup
-    local cargoB=b --Ops.OpsGroup#OPSGROUP.CargoGroup
-    local weightA=0
-    local weightB=0
-    if cargoA.opsgroup then
-      weightA=cargoA.opsgroup:GetWeightTotal()
-    else
-      weightA=self:_GetWeightStorage(cargoA.storage)
-    end
-    if cargoB.opsgroup then
-      weightB=cargoB.opsgroup:GetWeightTotal()
-    else
-      weightB=self:_GetWeightStorage(cargoB.storage)
-    end
-    return weightA>weightB
-  end
-  table.sort(cargos, _sort)
+  -- Sort cargos.
+  self:_SortCargo(cargos)
 
   -- Loop over all cargos.
   for _,_cargo in pairs(cargos) do
@@ -9452,9 +9457,16 @@ function OPSGROUP:onafterLoading(From, Event, To)
 
       -- Get weight of cargo that needs to be transported.
       weight=self:_GetWeightStorage(cargo.storage, false)
+
+      -- Get amount that the warehouse currently has.
+      local Amount=cargo.storage.storageFrom:GetAmount(cargo.storage.cargoType)
+      local Weight=Amount*cargo.storage.cargoWeight
       
+      -- Make sure, we do not take more than the warehouse can provide.
+      weight=math.min(weight, Weight)
+            
       -- Debug info.
-      self:T(self.lid..string.format("Loading storage weight=%d kg!", weight))
+      self:T(self.lid..string.format("Loading storage weight=%d kg (warehouse has %d kg)!", weight, Weight))
       
       -- Loop over all elements of the carrier group.
       for _,_element in pairs(self.elements) do
@@ -9465,37 +9477,34 @@ function OPSGROUP:onafterLoading(From, Event, To)
         
         -- Min of weight or bay.
         local w=math.min(weight, free)
+        
+        -- Check that weight is >0 and also greater that at least one item. We cannot transport half a missile.
+        if w>=cargo.storage.cargoWeight then
     
-        -- Calculate item amount.
-        local amount=w/cargo.storage.cargoWeight
-        
-        --TODO: Check the amount that the warehouse currently has!
-        --      We dont want to remove more than what is actually there.
-        --      Also needs a check if it is unlimited.
-        
-        -- Remove items from warehouse.
-        if type(cargo.storage.cargoType)=="number" then
-          cargo.storage.storageFrom:RemoveLiquid(cargo.storage.cargoType, amount)
-        else
-          cargo.storage.storageFrom:RemoveItem(cargo.storage.cargoType, amount)
-        end
-        
-        -- Add amount to loaded cargo.
-        cargo.storage.cargoLoaded=cargo.storage.cargoLoaded+amount
-
-        -- Add cargo to cargo by of element.        
-        self:_AddCargobayStorage(element, cargo.uid, cargo.storage.cargoType, amount, cargo.storage.cargoWeight)        
-               
-        -- Reduce weight for the next element (if any).
-        weight=weight-w
-        
-        -- Debug info.
-        local text=string.format("Element %s: amount=%d, weight=%d, left=%d", element.name, amount, w, weight)
-        self:T2(self.lid..text)
-        
-        -- If no cargo left, break the loop.
-        if weight<=0 then
-          break
+          -- Calculate item amount.
+          local amount=math.floor(w/cargo.storage.cargoWeight)
+          
+          -- Remove items from warehouse.
+          cargo.storage.storageFrom:RemoveAmount(cargo.storage.cargoType, amount)
+          
+          -- Add amount to loaded cargo.
+          cargo.storage.cargoLoaded=cargo.storage.cargoLoaded+amount
+  
+          -- Add cargo to cargo by of element.        
+          self:_AddCargobayStorage(element, cargo.uid, cargo.storage.cargoType, amount, cargo.storage.cargoWeight)
+                 
+          -- Reduce weight for the next element (if any).
+          weight=weight-amount*cargo.storage.cargoWeight
+          
+          -- Debug info.
+          local text=string.format("Element %s: loaded amount=%d (weight=%d) ==> left=%d kg", element.name, amount, amount*cargo.storage.cargoWeight, weight)
+          self:T(self.lid..text)
+          
+          -- If no cargo left, break the loop.
+          if weight<=0 then
+            break
+          end
+          
         end
         
       end
@@ -9992,11 +10001,7 @@ function OPSGROUP:onafterUnloading(From, Event, To)
           
           if mycargo then        
             -- Add cargo to warehouse storage.
-            if type(mycargo.storageType)=="number" then
-              cargo.storage.storageTo:AddLiquid(mycargo.storageType, mycargo.storageAmount)            
-            else
-              cargo.storage.storageTo:AddItem(mycargo.storageType, mycargo.storageAmount)
-            end
+            cargo.storage.storageTo:AddAmount(mycargo.storageType, mycargo.storageAmount)
         
             -- Add amount to delivered.    
             cargo.storage.cargoDelivered=cargo.storage.cargoDelivered+mycargo.storageAmount                    
