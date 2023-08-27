@@ -150,7 +150,7 @@ FLIGHTGROUP = {
   playerWarnings     =    {},
   prohibitAB         =   false,
   jettisonEmptyTanks =   true,
-  jettisonWeapons    =   true, -- that's actually a negative option like prohibitAB
+  jettisonWeapons    =   true, -- that's actually a negative option like prohibitAB  
 }
 
 
@@ -1515,6 +1515,36 @@ function FLIGHTGROUP:Status()
     -- Log outut.
     self:T(self.lid..string.format("Travelled ds=%.1f km dt=%.1f s ==> v=%.1f knots. Fuel left for %.1f min", self.traveldist/1000, dt, UTILS.MpsToKnots(v), TmaxFuel/60))
 
+  end
+
+  --- 
+  -- Track flight
+  ---
+  if false then
+  
+    for _,_element in pairs(self.elements) do
+      local element=_element --Ops.OpsGroup#OPSGROUP.Element
+      
+      local unit=element.unit
+      
+      if unit and unit:IsAlive() then
+      
+        local vec3=unit:GetVec3()
+        
+        if vec3 and element.pos then
+        
+          local id=UTILS.GetMarkID()
+          
+          trigger.action.lineToAll(-1, id, vec3, element.pos, {1,1,1,0.5}, 1)
+        
+        end
+        
+        element.pos=vec3
+        
+      end
+  
+    end
+    
   end
 
   ---
