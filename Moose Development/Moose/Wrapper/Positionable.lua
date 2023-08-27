@@ -591,10 +591,10 @@ function POSITIONABLE:GetRandomVec3( Radius )
 
     if Radius then
       local PositionableRandomVec3 = {}
-      local angle = math.random() * math.pi * 2;
-      PositionableRandomVec3.x = PositionablePointVec3.x + math.cos( angle ) * math.random() * Radius;
+      local angle = math.random() * math.pi * 2
+      PositionableRandomVec3.x = PositionablePointVec3.x + math.cos( angle ) * math.random() * Radius
       PositionableRandomVec3.y = PositionablePointVec3.y
-      PositionableRandomVec3.z = PositionablePointVec3.z + math.sin( angle ) * math.random() * Radius;
+      PositionableRandomVec3.z = PositionablePointVec3.z + math.sin( angle ) * math.random() * Radius
 
       self:T3( PositionableRandomVec3 )
       return PositionableRandomVec3
@@ -1768,6 +1768,93 @@ do -- Cargo
     end
     return self.__.CargoBayWeightLimit - CargoWeight
   end
+  
+  ---
+  -- @field DefaultInfantryWeight
+  -- Abstract out the "XYZ*95" calculation in the Ground POSITIONABLE case, where the table 
+  -- holds number of infantry that the vehicle could carry, instead of actual cargo weights.
+  POSITIONABLE.DefaultInfantryWeight = 95
+
+  ---
+  -- @field CargoBayCapacityValues
+  -- @field CargoBayCapacityValues.Air
+  -- @field CargoBayCapacityValues.Naval
+  -- @field CargoBayCapacityValues.Ground
+  POSITIONABLE.CargoBayCapacityValues = {
+    ["Air"] = {
+      -- C-17A
+      -- Wiki says: max=265,352, empty=128,140, payload=77,516 (134 troops, 1 M1 Abrams tank, 2 M2 Bradley or 3 Stryker)
+      -- DCS  says: max=265,350, empty=125,645, fuel=132,405 ==> Cargo Bay=7300 kg with a full fuel load (lot of fuel!) and 73300 with half a fuel load.
+      --["C-17A"] = 35000,   --77519 cannot be used, because it loads way too much apcs and infantry.
+      -- C-130:
+      -- DCS  says: max=79,380, empty=36,400, fuel=10,415 kg ==> Cargo Bay=32,565 kg with fuel load.
+      -- Wiki says: max=70,307, empty=34,382, payload=19,000 kg (92 passengers, 2-3 Humvees or 2 M113s), max takeoff weight 70,037 kg.
+      -- Here we say two M113s should be transported. Each one weights 11,253 kg according to DCS. So the cargo weight should be 23,000 kg with a full load of fuel.
+      -- This results in a max takeoff weight of 69,815 kg (23,000+10,415+36,400), which is very close to the Wiki value of 70,037 kg.
+      ["C_130"] = 70000,
+    },
+    ["Naval"] = {
+      ["Type_071"]         =   245000,
+      ["LHA_Tarawa"]       =   500000,
+      ["Ropucha_class"]    =   150000,
+      ["Dry_cargo_ship_1"] =    70000,
+      ["Dry_cargo_ship_2"] =    70000,
+      ["Higgins_boat"]     =     3700, -- Higgins Boat can load 3700 kg of general cargo or 36 men (source wikipedia).
+      ["USS_Samuel_Chase"] =    25000, -- Let's say 25 tons for now. Wiki says 33 Higgins boats, which would be 264 tons (can't be right!) and/or 578 troops.
+      ["LST_Mk2"]          =  2100000, -- Can carry 2100 tons according to wiki source!
+      ["speedboat"]        =      500, -- 500 kg ~ 5 persons
+      ["Seawise_Giant"]    =261000000, -- Gross tonnage is 261,000 tonns.
+    },
+    ["Ground"] = {
+      ["AAV7"] = 25*POSITIONABLE.DefaultInfantryWeight,
+      ["Bedford_MWD"] = 8*POSITIONABLE.DefaultInfantryWeight, -- new by kappa
+      ["Blitz_36_6700A"] = 10*POSITIONABLE.DefaultInfantryWeight, -- new by kappa
+      ["BMD_1"] = 9*POSITIONABLE.DefaultInfantryWeight, -- IRL should be 4 passengers
+      ["BMP_1"] = 8*POSITIONABLE.DefaultInfantryWeight,
+      ["BMP_2"] = 7*POSITIONABLE.DefaultInfantryWeight,
+      ["BMP_3"] = 8*POSITIONABLE.DefaultInfantryWeight, -- IRL should be 7+2 passengers
+      ["Boman"] = 25*POSITIONABLE.DefaultInfantryWeight,
+      ["BTR_80"] = 9*POSITIONABLE.DefaultInfantryWeight, -- IRL should be 7 passengers
+      ["BTR_82A"] = 9*POSITIONABLE.DefaultInfantryWeight, -- new by kappa -- IRL should be 7 passengers
+      ["BTR_D"] = 12*POSITIONABLE.DefaultInfantryWeight, -- IRL should be 10 passengers
+      ["Cobra"] = 8*POSITIONABLE.DefaultInfantryWeight,
+      ["Land_Rover_101_FC"] = 11*POSITIONABLE.DefaultInfantryWeight, -- new by kappa
+      ["Land_Rover_109_S3"] = 7*POSITIONABLE.DefaultInfantryWeight, -- new by kappa
+      ["LAV_25"] = 6*POSITIONABLE.DefaultInfantryWeight,
+      ["M_2_Bradley"] = 6*POSITIONABLE.DefaultInfantryWeight,
+      ["M1043_HMMWV_Armament"] = 4*POSITIONABLE.DefaultInfantryWeight,
+      ["M1045_HMMWV_TOW"] = 4*POSITIONABLE.DefaultInfantryWeight,
+      ["M1126_Stryker_ICV"] = 9*POSITIONABLE.DefaultInfantryWeight,
+      ["M1134_Stryker_ATGM"] = 9*POSITIONABLE.DefaultInfantryWeight,
+      ["M2A1_halftrack"] = 9*POSITIONABLE.DefaultInfantryWeight,
+      ["M_113"] = 9*POSITIONABLE.DefaultInfantryWeight, -- IRL should be 11 passengers
+      ["Marder"] = 6*POSITIONABLE.DefaultInfantryWeight,
+      ["MCV_80"] = 9*POSITIONABLE.DefaultInfantryWeight, -- IRL should be 7 passengers
+      ["MLRS_FDDM"] = 4*POSITIONABLE.DefaultInfantryWeight,
+      ["MTLB"] = 25*POSITIONABLE.DefaultInfantryWeight, -- IRL should be 11 passengers
+      ["GAZ_66"] = 8*POSITIONABLE.DefaultInfantryWeight,
+      ["GAZ_3307"] = 12*POSITIONABLE.DefaultInfantryWeight,
+      ["GAZ_3308"] = 14*POSITIONABLE.DefaultInfantryWeight,
+      ["Grad_FDDM"] = 6*POSITIONABLE.DefaultInfantryWeight, -- new by kappa
+      ["KAMAZ_Truck"] = 12*POSITIONABLE.DefaultInfantryWeight,
+      ["KrAZ6322"] = 12*POSITIONABLE.DefaultInfantryWeight,
+      ["M_818"] = 12*POSITIONABLE.DefaultInfantryWeight,
+      ["Tigr_233036"] = 6*POSITIONABLE.DefaultInfantryWeight,
+      ["TPZ"] = 10*POSITIONABLE.DefaultInfantryWeight, -- Fuchs
+      ["UAZ_469"] = 4*POSITIONABLE.DefaultInfantryWeight, -- new by kappa
+      ["Ural_375"] = 12*POSITIONABLE.DefaultInfantryWeight,
+      ["Ural_4320_31"] = 14*POSITIONABLE.DefaultInfantryWeight,
+      ["Ural_4320_APA_5D"] = 10*POSITIONABLE.DefaultInfantryWeight,
+      ["Ural_4320T"] = 14*POSITIONABLE.DefaultInfantryWeight,
+      ["ZBD04A"] = 7*POSITIONABLE.DefaultInfantryWeight, -- new by kappa
+      ["VAB_Mephisto"] = 8*POSITIONABLE.DefaultInfantryWeight, -- new by Apple
+      ["tt_KORD"] = 6*POSITIONABLE.DefaultInfantryWeight, -- 2.7.1 HL/TT
+      ["tt_DSHK"] = 6*POSITIONABLE.DefaultInfantryWeight,
+      ["HL_KORD"] = 6*POSITIONABLE.DefaultInfantryWeight,
+      ["HL_DSHK"] = 6*POSITIONABLE.DefaultInfantryWeight,
+      ["CCKW_353"] = 16*POSITIONABLE.DefaultInfantryWeight, --GMC CCKW 2½-ton 6×6 truck, estimating 16 soldiers,
+    }
+  }
 
   --- Set Cargo Bay Weight Limit in kg.
   -- @param #POSITIONABLE self
@@ -1792,23 +1879,13 @@ do -- Cargo
       
       -- Unit type name.
       local TypeName=Desc.typeName or "Unknown Type"
-
+      TypeName = string.gsub(TypeName,"[%p%s]","_")
+      
       -- When an airplane or helicopter, we calculate the WeightLimit based on the descriptor.
       if self:IsAir() then
 
         -- Max takeoff weight if DCS descriptors have unrealstic values.
-        local Weights = {
-          -- C-17A
-          -- Wiki says: max=265,352, empty=128,140, payload=77,516 (134 troops, 1 M1 Abrams tank, 2 M2 Bradley or 3 Stryker)
-          -- DCS  says: max=265,350, empty=125,645, fuel=132,405 ==> Cargo Bay=7300 kg with a full fuel load (lot of fuel!) and 73300 with half a fuel load.
-          --["C-17A"] = 35000,   --77519 cannot be used, because it loads way too much apcs and infantry.
-          -- C-130:
-          -- DCS  says: max=79,380, empty=36,400, fuel=10,415 kg ==> Cargo Bay=32,565 kg with fuel load.
-          -- Wiki says: max=70,307, empty=34,382, payload=19,000 kg (92 passengers, 2-3 Humvees or 2 M113s), max takeoff weight 70,037 kg.
-          -- Here we say two M113s should be transported. Each one weights 11,253 kg according to DCS. So the cargo weight should be 23,000 kg with a full load of fuel.
-          -- This results in a max takeoff weight of 69,815 kg (23,000+10,415+36,400), which is very close to the Wiki value of 70,037 kg.
-          ["C-130"] = 70000,
-        }
+        local Weights = POSITIONABLE.CargoBayCapacityValues.Air
         
         -- Max (takeoff) weight (empty+fuel+cargo weight).
         local massMax= Desc.massMax or 0
@@ -1843,75 +1920,16 @@ do -- Cargo
       elseif self:IsShip() then
 
         -- Hard coded cargo weights in kg.
-        local Weights = {
-          ["Type_071"]         =   245000,
-          ["LHA_Tarawa"]       =   500000,
-          ["Ropucha-class"]    =   150000,
-          ["Dry-cargo ship-1"] =    70000,
-          ["Dry-cargo ship-2"] =    70000,
-          ["Higgins_boat"]     =     3700, -- Higgins Boat can load 3700 kg of general cargo or 36 men (source wikipedia).
-          ["USS_Samuel_Chase"] =    25000, -- Let's say 25 tons for now. Wiki says 33 Higgins boats, which would be 264 tons (can't be right!) and/or 578 troops.
-          ["LST_Mk2"]          =  2100000, -- Can carry 2100 tons according to wiki source!
-          ["speedboat"]        =      500, -- 500 kg ~ 5 persons
-          ["Seawise_Giant"]    =261000000, -- Gross tonnage is 261,000 tonns.
-        }
+        local Weights = POSITIONABLE.CargoBayCapacityValues.Naval
         self.__.CargoBayWeightLimit = ( Weights[TypeName] or 50000 )
 
       else
 
         -- Hard coded number of soldiers.
-        local Weights = {
-          ["AAV7"] = 25,
-          ["Bedford_MWD"] = 8, -- new by kappa
-          ["Blitz_36-6700A"] = 10, -- new by kappa
-          ["BMD-1"] = 9, -- IRL should be 4 passengers
-          ["BMP-1"] = 8,
-          ["BMP-2"] = 7,
-          ["BMP-3"] = 8, -- IRL should be 7+2 passengers
-          ["Boman"] = 25,
-          ["BTR-80"] = 9, -- IRL should be 7 passengers
-          ["BTR-82A"] = 9, -- new by kappa -- IRL should be 7 passengers
-          ["BTR_D"] = 12, -- IRL should be 10 passengers
-          ["Cobra"] = 8,
-          ["Land_Rover_101_FC"] = 11, -- new by kappa
-          ["Land_Rover_109_S3"] = 7, -- new by kappa
-          ["LAV-25"] = 6,
-          ["M-2 Bradley"] = 6,
-          ["M1043 HMMWV Armament"] = 4,
-          ["M1045 HMMWV TOW"] = 4,
-          ["M1126 Stryker ICV"] = 9,
-          ["M1134 Stryker ATGM"] = 9,
-          ["M2A1_halftrack"] = 9,
-          ["M-113"] = 9, -- IRL should be 11 passengers
-          ["Marder"] = 6,
-          ["MCV-80"] = 9, -- IRL should be 7 passengers
-          ["MLRS FDDM"] = 4,
-          ["MTLB"] = 25, -- IRL should be 11 passengers
-          ["GAZ-66"] = 8,
-          ["GAZ-3307"] = 12,
-          ["GAZ-3308"] = 14,
-          ["Grad_FDDM"] = 6, -- new by kappa
-          ["KAMAZ Truck"] = 12,
-          ["KrAZ6322"] = 12,
-          ["M 818"] = 12,
-          ["Tigr_233036"] = 6,
-          ["TPZ"] = 10, -- Fuchs
-          ["UAZ-469"] = 4, -- new by kappa
-          ["Ural-375"] = 12,
-          ["Ural-4320-31"] = 14,
-          ["Ural-4320 APA-5D"] = 10,
-          ["Ural-4320T"] = 14,
-          ["ZBD04A"] = 7, -- new by kappa
-          ["VAB_Mephisto"] = 8, -- new by Apple
-          ["tt_KORD"] = 6, -- 2.7.1 HL/TT
-          ["tt_DSHK"] = 6,
-          ["HL_KORD"] = 6,
-          ["HL_DSHK"] = 6,
-          ["CCKW_353"] = 16, --GMC CCKW 2½-ton 6×6 truck, estimating 16 soldiers
-        }
+        local Weights = POSITIONABLE.CargoBayCapacityValues.Ground
 
         -- Assuming that each passenger weighs 95 kg on average.
-        local CargoBayWeightLimit = ( Weights[TypeName] or 0 ) * 95
+        local CargoBayWeightLimit = ( Weights[TypeName] or 0 )
 
         self.__.CargoBayWeightLimit = CargoBayWeightLimit
       end
