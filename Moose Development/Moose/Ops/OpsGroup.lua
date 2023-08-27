@@ -2274,21 +2274,26 @@ end
 -- @param #OPSGROUP self
 -- @param #number Delay Delay in seconds. Default now.
 -- @param #number ExplosionPower (Optional) Explosion power in kg TNT. Default 100 kg.
+-- @param #string ElementName Name of the element that should be destroyed. Default is all elements.
 -- @return #OPSGROUP self
-function OPSGROUP:SelfDestruction(Delay, ExplosionPower)
+function OPSGROUP:SelfDestruction(Delay, ExplosionPower, ElementName)
 
   if Delay and Delay>0 then
-    self:ScheduleOnce(Delay, OPSGROUP.SelfDestruction, self, 0, ExplosionPower)
+    self:ScheduleOnce(Delay, OPSGROUP.SelfDestruction, self, 0, ExplosionPower, ElementName)
   else
 
     -- Loop over all elements.
     for i,_element in pairs(self.elements) do
       local element=_element --#OPSGROUP.Element
+      
+      if ElementName==nil or ElementName==element.name then
 
-      local unit=element.unit
-
-      if unit and unit:IsAlive() then
-        unit:Explode(ExplosionPower or 100)
+        local unit=element.unit
+  
+        if unit and unit:IsAlive() then
+          unit:Explode(ExplosionPower or 100)
+        end
+        
       end
     end
   end

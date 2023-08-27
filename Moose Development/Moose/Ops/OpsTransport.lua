@@ -606,12 +606,12 @@ end
 -- For weapons and equipment, the weight per item has to be specified explicitly as these cannot be retrieved by the DCS API. For liquids the
 -- default value of 1 kg per item should be used as the amount of liquid is already given in kg.
 -- @param #OPSTRANSPORT self
--- @param Wrapper.Storage#STORAGE StorageFrom Storage from.
--- @param Wrapper.Storage#STORAGE StorageTo Storage to.
--- @param #string CargoType Type of cargo.
+-- @param Wrapper.Storage#STORAGE StorageFrom Storage warehouse from which the cargo is taken.
+-- @param Wrapper.Storage#STORAGE StorageTo Storage warehouse to which the cargo is delivered.
+-- @param #string CargoType Type of cargo, *e.g.* `"weapons.bombs.Mk_84"` or liquid type as #number.
 -- @param #number CargoAmount Amount of cargo. Liquids in kg.
 -- @param #number CargoWeight Weight of a single cargo item in kg. Default 1 kg.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+-- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo if other than default.
 -- @return #OPSTRANSPORT self
 function OPSTRANSPORT:AddCargoStorage(StorageFrom, StorageTo, CargoType, CargoAmount, CargoWeight, TransportZoneCombo)
 
