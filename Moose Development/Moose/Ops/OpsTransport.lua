@@ -1,12 +1,12 @@
---- **Ops** - Troop transport assignment for OPS groups.
+--- **Ops** - Transport assignment for OPS groups and storage.
 -- 
 -- ## Main Features:
 --
 --    * Transport troops from A to B
+--    * Transport of warehouse storage (fuel, weapons and equipment)
 --    * Supports ground, naval and airborne (airplanes and helicopters) units as carriers
 --    * Use combined forces (ground, naval, air) to transport the troops
 --    * Additional FSM events to hook into and customize your mission design
---    * Transport of warehouse storage (fuel, weapons and equipment)
 --
 -- ===
 --
@@ -81,7 +81,7 @@
 -- * Cargo groups are **not** split and distributed into different carrier *units*. That means that the whole cargo group **must fit** into one of the carrier units.
 -- * Cargo groups must be inside the pickup zones to be considered for loading. Groups not inside the pickup zone will not get the command to board. 
 -- 
--- # Constructor
+-- # Troop Transport
 -- 
 -- A new cargo transport assignment is created with the @{#OPSTRANSPORT.New}() function
 -- 
@@ -102,6 +102,30 @@
 -- There is no restriction to the type of the carrier. It can be a ground group (e.g. an APC), a helicopter, an airplane or even a ship.
 -- 
 -- You can also mix carrier types. For instance, you can assign the same transport to APCs and helicopters. Or to helicopters and airplanes.
+-- 
+-- # Storage Transport
+-- 
+-- An instance of the OPSTRANSPORT class is created similarly to the troop transport case. However, the first parameter is `nil` as not troops 
+-- are transported.
+-- 
+--     local storagetransport=OPSTRANSPORT:New(nil, PickupZone, DeployZone) 
+-- 
+-- ## Defining Storage
+-- 
+-- The storage warehouses from which the cargo is taken and to which the cargo is delivered have to be specified
+-- 
+--     storagetransport:AddCargoStorage(berlinStorage, batumiStorage, STORAGE.Liquid.JETFUEL, 1000)
+--     
+-- Here `berlinStorage` and `batumiStorage` are @{Wrapper.Storage#STORAGE} objects of DCS warehouses. 
+-- 
+-- Furthermore, that type of cargo (liquids or weapons/equipment) and the amount has to be specified. If weapons/equipment is the cargo,
+-- we also need to specify the weight per storage item as this cannot be retrieved from the DCS API and is not stored in any MOOSE database.
+-- 
+--     storagetransport:AddCargoStorage(berlinStorage, batumiStorage, ENUMS.Storage.weapons.bombs.Mk_82, 9, 230)     
+--
+-- Finally, the transport is assigned to one or multiple groups, which carry out the transport
+-- 
+--     myopsgroup:AddOpsTransport(storagetransport)
 -- 
 -- # Examples
 --
@@ -226,10 +250,10 @@ OPSTRANSPORT.version="0.8.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Storage.
 -- TODO: Trains.
 -- TODO: Stop transport.
 -- TODO: Improve pickup and transport paths.
+-- DONE: Storage.
 -- DONE: Disembark parameters per cargo group.
 -- DONE: Special transport cohorts/legions. Similar to mission.
 -- DONE: Cancel transport.

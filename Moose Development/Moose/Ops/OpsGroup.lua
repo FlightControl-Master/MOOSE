@@ -9692,6 +9692,8 @@ function OPSGROUP:onafterTransport(From, Event, To)
       ready2deploy=true
     end
   end
+  
+  --env.info(string.format("FF Transport: Zone=%s inzone=%s, ready2deploy=%s", Zone:GetName(), tostring(inzone), tostring(ready2deploy)))
 
   if inzone then
 
