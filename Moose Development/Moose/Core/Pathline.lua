@@ -244,6 +244,7 @@ function PATHLINE:GetCoordinats()
   for _,_point in pairs(self.points) do
     local point=_point --#PATHLINE.Point
     local coord=COORDINATE:NewFromVec3(point.vec3)
+    table.insert(vecs, coord)
   end
 
   return vecs

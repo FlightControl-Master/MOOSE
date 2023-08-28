@@ -262,6 +262,30 @@ function ASTAR:AddNodeFromCoordinate(Coordinate)
   return node
 end
 
+--- Adds nodes to the table of grid nodes from a PATHLINE.
+-- @param #ASTAR self
+-- @param #string PathlineName Name of pathline. Has to exist.
+-- @return #ASTAR self
+function ASTAR:AddNodeFromPathlineName(PathlineName)
+
+  local pathline=PATHLINE:FindByName(PathlineName)
+  
+  if pathline then
+  
+    local coords=pathline:GetCoordinats()
+    
+    for _,_coord in pairs(coords) do
+      local c=_coord --Core.Point#COORDINATE
+      env.info("FF 100")
+      self:AddNodeFromCoordinate(c)  
+    end
+  else
+    env.error("FF error pathline")
+  end
+
+  return self
+end
+
 --- Check if the coordinate of a node has is at a valid surface type.
 -- @param #ASTAR self
 -- @param #ASTAR.Node Node The node to be added.
@@ -384,7 +408,7 @@ end
 -- @return #ASTAR self
 function ASTAR:SetCostRoad()
 
-  self:SetCostFunction(ASTAR)
+  self:SetCostFunction(ASTAR.Road)
 
   return self
 end
@@ -791,6 +815,32 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
   MESSAGE:New(text, 60, "ASTAR"):ToAllIf(self.Debug)
   
   return nil -- no valid path
+end
+
+--- A* pathfinding function. This seaches the path along nodes between start and end nodes/coordinates.
+-- @param #ASTAR self
+-- @param #boolean ExcludeStartNode If *true*, do not include start node in found path. Default is to include it.
+-- @param #boolean ExcludeEndNode If *true*, do not include end node in found path. Default is to include it.
+-- @return Core.Pathline#PATHLINE Pathline
+function ASTAR:GetPathline(ExcludeStartNode, ExcludeEndNode)
+
+  local nodes=self:GetPath(ExcludeStartNode, ExcludeEndNode)
+  
+  local pathline=nil --Core.Pathline#PATHLINE
+  if nodes then
+  
+    pathline=PATHLINE:New("Astar")
+  
+    for _,_note in pairs(nodes) do
+      local note=_note --#ASTAR.Node 
+      
+      pathline:AddPointFromVec3(note.coordinate)
+    
+    end
+      
+  end
+
+  return pathline
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
