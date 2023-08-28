@@ -9444,6 +9444,7 @@ function OPSGROUP:onafterLoading(From, Event, To)
     local weight=nil
     if cargo.type==OPSTRANSPORT.CargoType.OPSGROUP then
     
+      -- Get total weight of group.
       weight=cargo.opsgroup:GetWeightTotal()
  
        -- Find a carrier for this cargo.
@@ -9582,8 +9583,10 @@ function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
 
   -- No carrier provided.
   if not carrier then
+    -- Get total weight of group.
+    local weight=CargoGroup:GetWeightTotal()
     -- Try to find a carrier manually.
-    carrier=self:FindCarrierForCargo(CargoGroup)
+    carrier=self:FindCarrierForCargo(weight)
   end
 
   if carrier then
