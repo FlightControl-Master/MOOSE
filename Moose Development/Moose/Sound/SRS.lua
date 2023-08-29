@@ -899,8 +899,25 @@ function MSRS:_ExecCommand(command)
       -- Remove file in 1 second.
       timer.scheduleFunction(os.remove, filename, timer.getTime()+1)
       timer.scheduleFunction(os.remove, filenvbs, timer.getTime()+1)
-    
-    
+
+    elseif false then
+
+      -- Create a tmp file.
+      local filenvbs = os.getenv('TMP') .. "\\MSRS-"..STTS.uuid()..".vbs"
+      
+      -- VBS script
+      local script = io.open(filenvbs, "w+")
+      script:write(string.format('Set oShell = CreateObject ("Wscript.Shell")\n'))
+      script:write(string.format('Dim strArgs\n'))
+      script:write(string.format('strArgs = "cmd /c %s"\n', filename))
+      script:write(string.format('oShell.Run strArgs, 0, false'))
+      script:close()      
+      
+      local runvbs=string.format('cscript.exe //Nologo //B "%s"', filenvbs)
+
+      -- Play file in 0.01 seconds
+      res=os.execute(runvbs)
+      
     else
 
       -- Debug output.
