@@ -431,22 +431,24 @@ MANTIS.SamDataCH = {
   -- units from CH (Military Assets by Currenthill)
   -- https://www.currenthill.com/
   -- group name MUST contain CHM to ID launcher type correctly!
-  ["2S38 CH"]         = { Range=8,  Blindspot=0.5,  Height=6,     Type="Short",   Radar="2S38" },
-  ["PantsirS1 CH"]      = { Range=20,   Blindspot=1.2,  Height=15,    Type="Short",   Radar="PantsirS1" },  
-  ["PantsirS2 CH"]      = { Range=30,   Blindspot=1.2,  Height=18,    Type="Medium",  Radar="PantsirS2" }, 
-  ["PGL-625 CH"]      = { Range=10,   Blindspot=0.5,  Height=5,     Type="Short",   Radar="PGL_625" }, 
-  ["HQ-17A CH"]       = { Range=20,   Blindspot=1.5,  Height=10,    Type="Short",   Radar="HQ17A" },  
-  ["M903PAC2 CH"]       = { Range=160,  Blindspot=3,  Height=24.5,  Type="Long",  Radar="MIM104_M903_PAC2" },
-  ["M903PAC3 CH"]       = { Range=120,  Blindspot=1,  Height=40,    Type="Long",  Radar="MIM104_M903_PAC3" }, 
-  ["TorM2 CH"]        = { Range=12,   Blindspot=1,  Height=10,    Type="Short",   Radar="TorM2" },
-  ["TorM2K CH"]       = { Range=12,   Blindspot=1,  Height=10,    Type="Short",   Radar="TorM2K" },
-  ["TorM2M CH"]       = { Range=16,   Blindspot=1,  Height=10,    Type="Short",   Radar="TorM2M" },   
-  ["NASAMS3-AMRAAMER CH"]   = { Range=50,   Blindspot=2,  Height=35.7,  Type="Medium",  Radar="CH_NASAMS3_LN_AMRAAM_ER" },  
-  ["NASAMS3-AIM9X2 CH"]   = { Range=20,   Blindspot=0.2,  Height=18,    Type="Short",   Radar="CH_NASAMS3_LN_AIM9X2" },
-  ["C-RAM CH"]        = { Range=2,  Blindspot=0,  Height=2,     Type="Short",   Radar="CH_Centurion_C_RAM" }, 
-  ["PGZ-09 CH"]       = { Range=4,  Blindspot=0,  Height=3,     Type="Short",   Radar="CH_PGZ09" },
-  ["S350-9M100 CH"]     = { Range=15,   Blindspot=1.5,  Height=8,     Type="Short",   Radar="CH_S350_50P6_9M100" },
-  ["S350-9M96D CH"]     = { Range=150,  Blindspot=2.5,  Height=30,    Type="Long",  Radar="CH_S350_50P6_9M96D" },       
+  ["2S38 CH"] = { Range=8,  Blindspot=0.5,  Height=6,     Type="Short",   Radar="2S38" },
+  ["PantsirS1 CH"] = { Range=20,   Blindspot=1.2,  Height=15,    Type="Short",   Radar="PantsirS1" },  
+  ["PantsirS2 CH"] = { Range=30,   Blindspot=1.2,  Height=18,    Type="Medium",  Radar="PantsirS2" }, 
+  ["PGL-625 CH"] = { Range=10,   Blindspot=0.5,  Height=5,     Type="Short",   Radar="PGL_625" }, 
+  ["HQ-17A CH"] = { Range=20,   Blindspot=1.5,  Height=10,    Type="Short",   Radar="HQ17A" },  
+  ["M903PAC2 CH"] = { Range=160,  Blindspot=3,  Height=24.5,  Type="Long",  Radar="MIM104_M903_PAC2" },
+  ["M903PAC3 CH"] = { Range=120,  Blindspot=1,  Height=40,    Type="Long",  Radar="MIM104_M903_PAC3" }, 
+  ["TorM2 CH"] = { Range=12,   Blindspot=1,  Height=10,    Type="Short",   Radar="TorM2" },
+  ["TorM2K CH"] = { Range=12,   Blindspot=1,  Height=10,    Type="Short",   Radar="TorM2K" },
+  ["TorM2M CH"] = { Range=16,   Blindspot=1,  Height=10,    Type="Short",   Radar="TorM2M" },   
+  ["NASAMS3-AMRAAMER CH"] = { Range=50,   Blindspot=2,  Height=35.7,  Type="Medium",  Radar="CH_NASAMS3_LN_AMRAAM_ER" },  
+  ["NASAMS3-AIM9X2 CH"] = { Range=20,   Blindspot=0.2,  Height=18,    Type="Short",   Radar="CH_NASAMS3_LN_AIM9X2" },
+  ["C-RAM CH"] = { Range=2,  Blindspot=0,  Height=2,     Type="Short",   Radar="CH_Centurion_C_RAM" }, 
+  ["PGZ-09 CH"] = { Range=4,  Blindspot=0,  Height=3,     Type="Short",   Radar="CH_PGZ09" },
+  ["S350-9M100 CH"] = { Range=15,   Blindspot=1.5,  Height=8,     Type="Short",   Radar="CH_S350_50P6_9M100" },
+  ["S350-9M96D CH"] = { Range=150,  Blindspot=2.5,  Height=30,    Type="Long",  Radar="CH_S350_50P6_9M96D" },
+  ["LAV-AD CHM"] = { Range=8,     Blindspot=0.2,     Height=4.8,     Type="Short",     Radar="CH_LAVAD" },   
+  ["HQ-22 CHM"] = { Range=170,     Blindspot=5,     Height=27,         Type="Long",     Radar="CH_HQ22_LN" },        
 }
 
 -----------------------------------------------------------------------
@@ -612,7 +614,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.8.11"
+    self.version="0.8.12"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
