@@ -21,6 +21,7 @@
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #string name Name of the path line.
 -- @field #table points List of 3D points defining the path.
+-- @field #number counter Running number counting the point IDs.
 -- @extends Core.Base#BASE
 
 --- *The shortest distance between two points is a straight line.* -- Archimedes
@@ -59,10 +60,13 @@ PATHLINE = {
   ClassName      = "PATHLINE",
   lid            =   nil,
   points         =    {},
+  counter        =     0,
 }
 
 --- Point of line.
 -- @type PATHLINE.Point
+-- @field #number uid Unique ID of this point.
+-- @field #string name Name of the pathline this point belongs to.
 -- @field DCS#Vec3 vec3 3D position.
 -- @field DCS#Vec2 vec2 2D position.
 -- @field #number surfaceType Surface type.
@@ -73,7 +77,7 @@ PATHLINE = {
 
 --- PATHLINE class version.
 -- @field #string version
-PATHLINE.version="0.1.0"
+PATHLINE.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -312,7 +316,7 @@ function PATHLINE:MarkPoints(Switch)
     if Switch==false then
       
       if point.markerID then
-        UTILS.RemoveMark(point.markerID, Delay)
+        UTILS.RemoveMark(point.markerID)
       end
       
     else
@@ -323,7 +327,7 @@ function PATHLINE:MarkPoints(Switch)
     
       point.markerID=UTILS.GetMarkID()
       
-      local text=string.format("Pathline %s: Point #%d\nSurface Type=%d\nHeight=%.1f m\nDepth=%.1f m", self.name, i, point.surfaceType, point.landHeight, point.depth)
+      local text=string.format("Pathline %s: Point #%d [UID=%d]\nSurface Type=%d\nHeight=%.1f m\nDepth=%.1f m", self.name, i, point.uid, point.surfaceType, point.landHeight, point.depth)
       
       trigger.action.markToAll(point.markerID, text, point.vec3, "")
     
@@ -343,6 +347,11 @@ end
 function PATHLINE:_CreatePoint(Vec)
 
   local point={} --#PATHLINE.Point
+  
+  self.counter=self.counter+1
+  
+  point.uid=self.counter
+  point.name=self.name
 
   if Vec.z then
     -- Given vec is 3D
@@ -365,6 +374,23 @@ function PATHLINE:_CreatePoint(Vec)
   return point
 end
 
+--- Get index of point in the lua table.
+-- @param #PATHLINE self
+-- @param #Pathline.Point Point Given point.
+-- @return #number index
+function PATHLINE:_GetPointIndex(Point)
+
+  for i,_point in pairs(self.points) do
+    local point=_point --#Pathline.Point
+   
+    if point.uid==Point.uid then
+      return i
+    end
+  
+  end
+
+  return nil
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

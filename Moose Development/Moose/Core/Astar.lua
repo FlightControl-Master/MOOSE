@@ -157,6 +157,8 @@ ASTAR = {
 -- @field #number surfacetype Surface type.
 -- @field #table valid Cached valid/invalid nodes.
 -- @field #table cost Cached cost.
+-- @field Core.Pathline#PATHLINE pathline Pathline that node is part of.
+-- @field Core.Pathline#PATHLINE.Point pathpoint Pathline point.
 
 --- ASTAR infinity.
 -- @field #number INF
@@ -264,21 +266,24 @@ end
 
 --- Adds nodes to the table of grid nodes from a PATHLINE.
 -- @param #ASTAR self
--- @param #string PathlineName Name of pathline. Has to exist.
+-- @param Core.Pathline#PATHLINE Pathline Pathline or name of pathline. Has to exist.
 -- @return #ASTAR self
-function ASTAR:AddNodeFromPathlineName(PathlineName)
+function ASTAR:AddNodeFromPathlineName(Pathline)
 
-  local pathline=PATHLINE:FindByName(PathlineName)
+  if type(Pathline)=="string" then
+    Pathline=PATHLINE:FindByName(Pathline)
+  end
   
-  if pathline then
+  if Pathline then
   
-    local coords=pathline:GetCoordinats()
+    for i,_point in pairs(Pathline.points) do
+      local point=_point --Core.Pathline#PATHLINE.Point
+      local coord=COORDINATE:NewFromVec3(point.vec3)
+      local node=self:AddNodeFromCoordinate(coord)
+      node.pathline=Pathline
+      node.pathpoint=point
+    end    
     
-    for _,_coord in pairs(coords) do
-      local c=_coord --Core.Point#COORDINATE
-      env.info("FF 100")
-      self:AddNodeFromCoordinate(c)  
-    end
   else
     env.error("FF error pathline")
   end
@@ -363,6 +368,18 @@ function ASTAR:SetValidNeighbourRoad(MaxDistance)
 
   return self
 end
+
+--- Set valid neighbours to be on the same pathline or not further apart than 10 meters.
+-- @param #ASTAR self
+-- @param #number MaxDistance Max distance between nodes in meters. Default is 2000 m.
+-- @return #ASTAR self
+function ASTAR:SetValidNeighbourPathline(MaxDistance)
+
+  self:SetValidNeighbourFunction(ASTAR.Pathline, MaxDistance)
+
+  return self
+end
+
 
 --- Set the function which calculates the "cost" to go from one to another node.
 -- The first to arguments of this function are always the two nodes under consideration. But you can add optional arguments.
@@ -568,6 +585,37 @@ function ASTAR.Road(nodeA, nodeB)
 
 end
 
+--- Function to check if two nodes are on the same pathline or if nodes are less than 10 meters apart.
+-- @param #ASTAR.Node nodeA First node.
+-- @param #ASTAR.Node nodeB Other node.
+-- @param #number distmax Max distance in meters. Default is 10 m.
+-- @return #boolean If true, two nodes are connected.
+function ASTAR.Pathline(nodeA, nodeB, distmax)
+
+  distmax=distmax or 10
+
+  if nodeA.pathpoint.name==nodeB.pathpoint.name then
+  
+    local pathline=nodeA.pathline
+    
+    local idxA=pathline:_GetPointIndex(nodeA.pathpoint)
+    local idxB=pathline:_GetPointIndex(nodeB.pathpoint)
+    
+    if math.abs(idxA-idxB)<=1 then
+      return true
+    end
+    
+  else
+    local dist=nodeA.coordinate:Get2DDistance(nodeB.coordinate)
+    if dist<distmax then
+      return true
+    end
+  end
+
+  return false
+end
+
+
 --- Function to check if distance between two nodes is less than a threshold distance.
 -- @param #ASTAR.Node nodeA First node.
 -- @param #ASTAR.Node nodeB Other node.
@@ -591,7 +639,7 @@ end
 -- @param #ASTAR.Node nodeB Other node.
 -- @return #number Distance between the two nodes.
 function ASTAR.Dist2D(nodeA, nodeB)
-  local dist=nodeA.coordinate:Get2DDistance(nodeB)
+  local dist=nodeA.coordinate:Get2DDistance(nodeB.coordinate)
   return dist
 end
 
@@ -744,6 +792,9 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
     -- Get current node.
     local current=self:_LowestFscore(openset, f_score)
     
+    self:I(current)
+    self:I(goal)
+    
     -- Check if we are at the end node.
     if current.id==goal.id then
     
@@ -870,6 +921,8 @@ function ASTAR:_HeuristicCost(nodeA, nodeB)
   else
     cost=self:_DistNodes(nodeA, nodeB)
   end
+  
+  self:T(self.lid..string.format("Cost nodeA=%d --> nodeB=%d = %.1f", nodeA.id, nodeB.id, cost))
   
   nodeA.cost[nodeB.id]=cost
   nodeB.cost[nodeA.id]=cost  -- Symmetric problem. 
