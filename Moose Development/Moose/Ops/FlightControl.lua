@@ -347,6 +347,7 @@ FLIGHTCONTROL.version="0.7.3"
 -- TODO: Talk me down option.
 -- TODO: Check runways and clean up.
 -- TODO: Add FARPS?
+-- TODO: Info on Taxi "Departing flights shall contact Tower to obtain ATC clearance before comencing taxing". On F10 menu as text and voice.
 -- DONE: Improve ATC TTS messages.
 -- DONE: ATIS option.
 -- DONE: Runway destroyed.

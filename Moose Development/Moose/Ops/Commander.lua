@@ -1807,7 +1807,7 @@ function COMMANDER:RecruitAssetsForEscort(Mission, Assets)
     local Cohorts=self:_GetCohorts(Mission.escortLegions, Mission.escortCohorts, Mission.operation)
     
     -- Call LEGION function but provide COMMANDER as self.
-    local assigned=LEGION.AssignAssetsForEscort(self, Cohorts, Assets, Mission.NescortMin, Mission.NescortMax, Mission.escortTargetTypes, Mission.escortEngageRange)
+    local assigned=LEGION.AssignAssetsForEscort(self, Cohorts, Assets, Mission.NescortMin, Mission.NescortMax, Mission.escortMissionType, Mission.escortTargetTypes, Mission.escortEngageRange)
     
     return assigned    
   end

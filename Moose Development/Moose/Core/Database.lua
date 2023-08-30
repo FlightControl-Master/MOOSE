@@ -32,10 +32,12 @@
 -- @image Core_Database.JPG
 
 
---- @type DATABASE
+--- DATABASE class.
+-- @type DATABASE
 -- @field #string ClassName Name of the class.
 -- @field #table Templates Templates: Units, Groups, Statics, ClientsByName, ClientsByID.
 -- @field #table CLIENTS Clients.
+-- @field #table STORAGES DCS warehouse storages.
 -- @extends Core.Base#BASE
 
 --- Contains collections of wrapper objects defined within MOOSE that reflect objects within the simulator.
@@ -50,6 +52,7 @@
 --  * PLAYERSJOINED
 --  * PLAYERS
 --  * CARGOS
+--  * STORAGES (DCS warehouses)
 --
 -- On top, for internal MOOSE administration purposes, the DATABASE administers the Unit and Group TEMPLATES as defined within the Mission Editor.
 --
@@ -90,6 +93,7 @@ DATABASE = {
   FLIGHTCONTROLS = {},
   OPSZONES = {},
   PATHLINES = {},
+  STORAGES = {},
 }
 
 local _DATABASECoalition =
@@ -245,6 +249,38 @@ function DATABASE:FindAirbase( AirbaseName )
   return AirbaseFound
 end
 
+
+
+--- Adds a STORAGE (DCS warehouse wrapper) based on the Airbase Name to the DATABASE.
+-- @param #DATABASE self
+-- @param #string AirbaseName The name of the airbase.
+-- @return Wrapper.Storage#STORAGE Storage object.
+function DATABASE:AddStorage( AirbaseName )
+
+  if not self.STORAGES[AirbaseName] then
+    self.STORAGES[AirbaseName] = STORAGE:New( AirbaseName )
+  end
+
+  return self.STORAGES[AirbaseName]
+end
+
+
+--- Deletes a STORAGE from the DATABASE based on the name of the associated airbase.
+-- @param #DATABASE self
+-- @param #string AirbaseName The name of the airbase.
+function DATABASE:DeleteStorage( AirbaseName )
+  self.STORAGES[AirbaseName] = nil
+end
+
+
+--- Finds an STORAGE based on the name of the associated airbase.
+-- @param #DATABASE self
+-- @param #string AirbaseName Name of the airbase.
+-- @return Wrapper.Storage#STORAGE The found STORAGE.
+function DATABASE:FindStorage( AirbaseName )
+  local storage = self.STORAGES[AirbaseName]
+  return storage
+end
 
 do -- Zones and Pathlines
 
