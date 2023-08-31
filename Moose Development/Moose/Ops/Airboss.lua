@@ -14844,7 +14844,7 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
     
     --local text = tostring(call.modexreceiver).."; "..radio.alias.."; "..call.subtitle
     local text = call.subtitle
-    self:I(self.lid..text) 
+    self:T(self.lid..text) 
     local srstext = self:_GetNiceSRSText(text)
     self.SRSQ:NewTransmission(srstext, call.duration, self.SRS, nil, 0.1, nil, call.subtitle, call.subduration, frequency, modulation, gender, culture, voice, volume, radio.alias)
   end
@@ -15261,8 +15261,8 @@ function AIRBOSS:MessageToPlayer( playerData, message, sender, receiver, duratio
           --sender = "AIRBOSS"
         end
 
-        self:I(self.lid..text)
-        self:I({sender,frequency,modulation,voice})
+        self:T(self.lid..text)
+        self:T({sender,frequency,modulation,voice})
         local srstext = self:_GetNiceSRSText(text)
         self.SRSQ:NewTransmission(srstext,duration,self.SRS,nil,0.1,nil,nil,nil,frequency,modulation,gender,culture,voice,nil,sender)
       end
