@@ -1312,8 +1312,11 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
   -- Ensure given TargetTypes parameter is a table.
   TargetTypes=UTILS.EnsureTable(TargetTypes, true)
 
+  -- Set default altitude if not specified.
+  Altitude = Altitude or 10000
+
   -- Create ORBIT first.
-  local mission=AUFTRAG:NewORBIT(Coordinate or ZoneCAP:GetCoordinate(), Altitude or 10000, Speed or 350, Heading, Leg)
+  local mission=AUFTRAG:NewORBIT(Coordinate or ZoneCAP:GetCoordinate(), Altitude, Speed or 350, Heading, Leg)
 
   -- Mission type CAP.
   mission.type=AUFTRAG.Type.CAP
