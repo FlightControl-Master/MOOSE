@@ -2543,7 +2543,7 @@ function AIRBOSS:AddRecoveryWindow( starttime, stoptime, case, holdingoffset, tu
     return self
   end
   if Tstop <= Tnow then
-    self:I( string.format( "WARNING: Recovery stop time %s already over. Tnow=%s! Recovery window rejected.", UTILS.SecondsToClock( Tstop ), UTILS.SecondsToClock( Tnow ) ) )
+      string.format( "WARNING: Recovery stop time %s already over. Tnow=%s! Recovery window rejected.", UTILS.SecondsToClock( Tstop ), UTILS.SecondsToClock( Tnow ) ) 
     return self
   end
 
@@ -3258,7 +3258,7 @@ function AIRBOSS:SoundCheckLSO( delay )
     end
 
     -- Debug message.
-    self:I( self.lid .. text )
+    self:T( self.lid .. text )
 
   end
 end
@@ -3293,7 +3293,7 @@ function AIRBOSS:SoundCheckMarshal( delay )
     end
 
     -- Debug message.
-    self:I( self.lid .. text )
+    self:T( self.lid .. text )
 
   end
 end
@@ -3684,7 +3684,7 @@ function AIRBOSS:onafterStatus( From, Event, To )
     if i == 0 then
       text = text .. " none"
     end
-    self:I( self.lid .. text )
+    self:T( self.lid .. text )
 
     -- Check for collision.
     if collision then
@@ -5459,6 +5459,7 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
   local skyhawk = playerData.actype == AIRBOSS.AircraftCarrier.A4EC
   local tomcat = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B
   local harrier = playerData.actype == AIRBOSS.AircraftCarrier.AV8B
+  local goshawk = playerData.actype == AIRBOSS.AircraftCarrier.T45C
 
   -- Return values.
   local alt
@@ -5924,6 +5925,7 @@ function AIRBOSS:_ScanCarrierZone()
     -- Get aircraft type name.
     local actype = group:GetTypeName()
 
+    -- Create a new flight group
     if knownflight then
 
       -- Debug output.
@@ -6958,7 +6960,7 @@ function AIRBOSS:_GetFreeStack( ai, case, empty )
 
   end
 
-  self:I( self.lid .. string.format( "Returning free stack %s", tostring( nfree ) ) )
+  self:T( self.lid .. string.format( "Returning free stack %s", tostring( nfree ) ) )
   return nfree
 end
 
@@ -7892,7 +7894,7 @@ function AIRBOSS:_RemoveFlight( flight, completely )
       -- Remove player from players table.
       local playerdata = self.players[flight.name]
       if playerdata then
-        self:I( self.lid .. string.format( "Removing player %s completely.", flight.name ) )
+        self:T( self.lid .. string.format( "Removing player %s completely.", flight.name ) )
         self.players[flight.name] = nil
       end
 
@@ -14756,38 +14758,43 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
     if self:_IsOnboard( call.modexreceiver ) then
       self:_Number2Radio( radio, call.modexreceiver, delay, 0.3, pilotcall )
     end
-
+  
     -- Add transmission to the right queue.
     local caller = ""
     if radio.alias == "LSO" then
-
+  
       table.insert( self.RQLSO, transmission )
-
+  
       caller = "LSOCall"
-
+  
       -- Schedule radio queue checks.
       if not self.RQLid then
         self:T( self.lid .. string.format( "Starting LSO radio queue." ) )
         self.RQLid = self.radiotimer:Schedule( nil, AIRBOSS._CheckRadioQueue, { self, self.RQLSO, "LSO" }, 0.02, 0.05 )
       end
-
+  
     elseif radio.alias == "MARSHAL" then
-
+  
       table.insert( self.RQMarshal, transmission )
-
+  
       caller = "MarshalCall"
-
+  
       if not self.RQMid then
         self:T( self.lid .. string.format( "Starting Marhal radio queue." ) )
         self.RQMid = self.radiotimer:Schedule( nil, AIRBOSS._CheckRadioQueue, { self, self.RQMarshal, "MARSHAL" }, 0.02, 0.05 )
       end
-
+  
     end
-
+  
     -- Append radio click sound at the end of the transmission.
     if click then
       self:RadioTransmission( radio, self[caller].CLICK, false, delay )
     end
+  
+  else
+    -- SRS transmission
+    if call.subtitle ~= nil and string.len(call.subtitle) > 1  then
+
 
   else
     -- SRS transmission
@@ -14861,11 +14868,11 @@ function AIRBOSS:SetSRSPilotVoice( Voice, Gender, Culture )
   self.PilotRadio.voice = Voice or MSRS.Voices.Microsoft.David
   self.PilotRadio.gender = Gender or "male"
   self.PilotRadio.culture = Culture or "en-US"
-
+  
   if (not Voice) and self.SRS and self.SRS.google then
     self.PilotRadio.voice = MSRS.Voices.Google.Standard.en_US_Standard_J
   end
-
+  
   return self
 end
 
@@ -15632,7 +15639,7 @@ function AIRBOSS:_LSOCallAircraftBall( modex, nickname, fuelstate )
   local text = string.format( "%s Ball, %.1f.", nickname, fuelstate )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Nickname UPPERCASE.
   local NICKNAME = nickname:upper()
@@ -15668,7 +15675,7 @@ function AIRBOSS:_MarshalCallGasAtTanker( modex )
   local text = string.format( "Bingo fuel! Going for gas at the recovery tanker." )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
 
   -- Create new call to display complete subtitle.
@@ -15692,7 +15699,7 @@ function AIRBOSS:_MarshalCallGasAtDivert( modex, divertname )
   local text = string.format( "Bingo fuel! Going for gas at divert field %s.", divertname )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Create new call to display complete subtitle.
   local call = self:_NewRadioCall( self.PilotCall.BINGOFUEL, modex, text, self.Tmessage, nil, modex )
@@ -15714,7 +15721,7 @@ function AIRBOSS:_MarshalCallRecoveryStopped( case )
   local text = string.format( "Case %d recovery ops are stopped. Deck is closed.", case )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Create new call to display complete subtitle.
   local call = self:_NewRadioCall( self.MarshalCall.CASE, "AIRBOSS", text, self.Tmessage, "99" )
@@ -15755,7 +15762,7 @@ function AIRBOSS:_MarshalCallRecoveryPausedResumedAt( clock )
   local text = string.format( "aircraft recovery is paused and will be resumed at %s.", clock )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Create new call with full subtitle.
   local call = self:_NewRadioCall( self.MarshalCall.RECOVERYPAUSEDRESUMED, "AIRBOSS", text, self.Tmessage, "99" )
@@ -15782,7 +15789,7 @@ function AIRBOSS:_MarshalCallClearedForRecovery( modex, case )
   local text = string.format( "you're cleared for Case %d recovery.", case )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Create new call with full subtitle.
   local call = self:_NewRadioCall( self.MarshalCall.CLEAREDFORRECOVERY, "MARSHAL", text, self.Tmessage, modex )
@@ -15820,7 +15827,7 @@ function AIRBOSS:_MarshalCallNewFinalBearing( FB )
   local text = string.format( "new final bearing %03d°.", FB )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Create new call with full subtitle.
   local call = self:_NewRadioCall( self.MarshalCall.NEWFB, "AIRBOSS", text, self.Tmessage, "99" )
@@ -15843,7 +15850,7 @@ function AIRBOSS:_MarshalCallCarrierTurnTo( hdg )
   local text = string.format( "carrier is now starting turn to heading %03d°.", hdg )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Create new call with full subtitle.
   local call = self:_NewRadioCall( self.MarshalCall.CARRIERTURNTOHEADING, "AIRBOSS", text, self.Tmessage, "99" )
@@ -15874,7 +15881,7 @@ function AIRBOSS:_MarshalCallStackFull( modex, nwaiting )
   end
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Create new call with full subtitle.
   local call = self:_NewRadioCall( self.MarshalCall.STACKFULL, "AIRBOSS", text, self.Tmessage, modex )
@@ -15945,7 +15952,7 @@ function AIRBOSS:_MarshalCallArrived( modex, case, brc, altitude, charlie, qfe )
   local text = string.format( "Case %d, expected BRC %03d°, hold at angels %d. Expected Charlie Time %s. Altimeter %.2f. Report see me.", case, brc, angels, charlie, qfe )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Create new call to display complete subtitle.
   local casecall = self:_NewRadioCall( self.MarshalCall.CASE, "MARSHAL", text, self.Tmessage, modex )
