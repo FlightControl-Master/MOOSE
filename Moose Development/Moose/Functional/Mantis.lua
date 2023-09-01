@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: July 2023
+-- Last Update: Sept 2023
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -467,6 +467,7 @@ do
   --@param #string awacs Group name of your Awacs (optional)
   --@param #boolean EmOnOff Make MANTIS switch Emissions on and off instead of changing the alarm state between RED and GREEN (optional)
   --@param #number Padding For #SEAD - Extra number of seconds to add to radar switch-back-on time (optional)
+  --@param #table Zones Table of Core.Zone#ZONE Zones Consider SAM groups in this zone(s) only for this MANTIS instance, must be handed as #table of Zone objects
   --@return #MANTIS self
   --@usage Start up your MANTIS with a basic setting
   --
@@ -485,7 +486,7 @@ do
   --        mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
   --        mybluemantis:Start()
   --
-  function MANTIS:New(name,samprefix,ewrprefix,hq,coalition,dynamic,awacs, EmOnOff, Padding)
+  function MANTIS:New(name,samprefix,ewrprefix,hq,coalition,dynamic,awacs, EmOnOff, Padding, Zones)
 
     -- DONE: Create some user functions for these
     -- DONE: Make HQ useful
@@ -546,6 +547,7 @@ do
     self.maxclassic = 6
     self.autoshorad = true
     self.ShoradGroupSet = SET_GROUP:New() -- Core.Set#SET_GROUP
+    self.FilterZones = Zones
     
     self.UseEmOnOff = true
     if EmOnOff == false then
@@ -595,16 +597,23 @@ do
     
     self:T({self.ewr_templates})
     
+    self.SAM_Group = SET_GROUP:New():FilterPrefixes(self.SAM_Templates_Prefix):FilterCoalitions(self.Coalition)
+    self.EWR_Group = SET_GROUP:New():FilterPrefixes(self.ewr_templates):FilterCoalitions(self.Coalition)
+    
+    if self.FilterZones then
+      self.SAM_Group:FilterZones(self.FilterZones)
+    end
+    
     if self.dynamic then
       -- Set SAM SET_GROUP
-      self.SAM_Group = SET_GROUP:New():FilterPrefixes(self.SAM_Templates_Prefix):FilterCoalitions(self.Coalition):FilterStart()
+      self.SAM_Group:FilterStart()
       -- Set EWR SET_GROUP
-      self.EWR_Group = SET_GROUP:New():FilterPrefixes(self.ewr_templates):FilterCoalitions(self.Coalition):FilterStart()
+      self.EWR_Group:FilterStart()
     else
       -- Set SAM SET_GROUP
-      self.SAM_Group = SET_GROUP:New():FilterPrefixes(self.SAM_Templates_Prefix):FilterCoalitions(self.Coalition):FilterOnce()
+      self.SAM_Group:FilterOnce()
       -- Set EWR SET_GROUP
-      self.EWR_Group = SET_GROUP:New():FilterPrefixes(self.ewr_templates):FilterCoalitions(self.Coalition):FilterOnce()
+      self.EWR_Group:FilterOnce()
     end
 
     -- set up CC
@@ -614,7 +623,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.8.12a"
+    self.version="0.8.14"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
