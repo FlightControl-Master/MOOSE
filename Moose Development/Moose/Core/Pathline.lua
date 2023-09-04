@@ -5,6 +5,8 @@
 --    * Path from A to B
 --    * Arbitrary number of points
 --    * Automatically from lines drawtool
+--    * Draw line or mark points on F10 map
+--    * Find closest points to path
 --
 -- ===
 --
@@ -73,11 +75,12 @@ PATHLINE = {
 -- @field #number landHeight Land height in meters.
 -- @field #number depth Water depth in meters.
 -- @field #number markerID Marker ID.
+-- @field #number lineID Marker of pathline ID.
 
 
 --- PATHLINE class version.
 -- @field #string version
-PATHLINE.version="0.2.0"
+PATHLINE.version="0.3.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -155,15 +158,19 @@ end
 --- Add a point to the path from a given 2D position. The third dimension is determined from the land height.
 -- @param #PATHLINE self
 -- @param DCS#Vec2 Vec2 The 2D vector (x,y) to add.
+-- @param #number Index Index to add this point, *e.g.* 1 for first point or 2 for second point. Default is at the end.
 -- @return #PATHLINE self
-function PATHLINE:AddPointFromVec2(Vec2)
+function PATHLINE:AddPointFromVec2(Vec2, Index)
 
   if Vec2 then
   
     local point=self:_CreatePoint(Vec2)
 
-    table.insert(self.points, point)
-    
+    if Index then
+      table.insert(self.points, Index, point)
+    else
+      table.insert(self.points, point)
+    end 
   end
   
   return self
@@ -172,14 +179,19 @@ end
 --- Add a point to the path from a given 3D position.
 -- @param #PATHLINE self
 -- @param DCS#Vec3 Vec3 The 3D vector (x,y) to add.
+-- @param #number Index Index to add this point, *e.g.* 1 for first point or 2 for second point. Default is at the end.
 -- @return #PATHLINE self
-function PATHLINE:AddPointFromVec3(Vec3)
+function PATHLINE:AddPointFromVec3(Vec3, Index)
 
   if Vec3 then
   
     local point=self:_CreatePoint(Vec3)
 
-    table.insert(self.points, point)
+    if Index then
+      table.insert(self.points, Index, point)
+    else
+      table.insert(self.points, point)
+    end
     
   end
   
@@ -309,10 +321,12 @@ end
 --- Mark points on F10 map.
 -- @param #PATHLINE self
 -- @param #boolean Switch If `true` or nil, set marks. If `false`, remove marks.
--- @return <DCS#Vec3> List of DCS#Vec3 points.
+-- @return #PATHLINE self
 function PATHLINE:MarkPoints(Switch)
+
   for i,_point in pairs(self.points) do
     local point=_point --#PATHLINE.Point
+    
     if Switch==false then
       
       if point.markerID then
@@ -333,6 +347,175 @@ function PATHLINE:MarkPoints(Switch)
     
     end
   end
+  
+  return self
+end
+
+
+--- Draw line on F10 map.
+-- @param #PATHLINE self
+-- @param #boolean Switch If `true` or nil, draw pathline. If `false`, remove drawing.
+-- @param #number Coalition Coalition side. Default -1 for all.
+-- @param #table Color RGB color and alpha `{r, g, b, a}`. Default {0, 1, 0, 0.5}.
+-- @param #number LineType Line type. Default 1=solid.
+-- @return #PATHLINE self
+function PATHLINE:Draw(Switch, Coalition, Color, LineType)
+
+  Coalition=Coalition or -1
+  Color=Color or {0, 1, 0, 0.5}
+  LineType=LineType or -1
+
+  if Switch==false then
+
+    for i,_point in pairs(self.points) do
+      local point=_point --#PATHLINE.Point
+        
+      if point.lineID then
+        UTILS.RemoveMark(point.lineID)
+      end
+      
+    end
+      
+  else
+
+    for i=2,#self.points do
+      
+    
+      local p1=self.points[i-1] --#PATHLINE.Point
+      local p2=self.points[i]   --#PATHLINE.Point
+      
+      if p2.lineID then
+        UTILS.RemoveMark(p2.lineID)
+      end
+    
+      p2.lineID=UTILS.GetMarkID()      
+    
+      trigger.action.lineToAll(Coalition, p2.lineID, p1.vec3, p2.vec3, Color, LineType)
+      
+    end
+    
+  end
+  
+  return self
+end
+
+--- Get the closest point on the pathline for a given reference point.
+-- @param #PATHLINE self
+-- @param DCS#Vec2 Vec2 Reference Point in 2D.
+-- @return DCS#Vec2 Cloest point on pathline.
+-- @return #number Distance from closest point to ref point in meters.
+function PATHLINE:GetClosestPoint2D(Vec2)
+
+
+  local P=nil --DCS#Vec2  
+  local D=math.huge
+  
+  for i=2,#self.points do
+
+    local A=self.points[i-1] --#PATHLINE.Point
+    local B=self.points[i]   --#PATHLINE.Point
+    
+    local a=A.vec2
+    local b=B.vec2
+        
+    local ab=UTILS.Vec2Substract(b, a)  
+    local ap=UTILS.Vec2Substract(Vec2, a)
+    
+    local proj=UTILS.Vec2Dot(ap, ab)
+    
+    local lab=UTILS.Vec2Norm(ab)
+    
+    local f=proj/lab/lab
+    
+    -- Debug info.
+    local text=string.format("FF Proj=%.1f, |ab|=%.1f, f=%.1f", proj, lab, f)
+    self:T(self.lid..text)
+    
+    -- Cases for finite segment.
+    local p=nil --DCS#Vec2
+    if f<0 then
+      p=a
+    elseif f>1 then
+      p=b
+    else
+      local r=UTILS.Vec2Mult(ab, f)
+      p=UTILS.Vec2Add(a, r)  
+    end
+    
+    -- Distance.
+    local d=UTILS.VecDist2D(p, Vec2)
+    
+    if d<=D then
+      D=d
+      P=p
+    end
+    
+  end
+  
+    
+  --local c=COORDINATE:NewFromVec2(P)  
+  --c:MarkToAll(string.format("Point D=%.1f m", D))
+
+  return P, D
+end
+
+--- Get the closest point on the pathline for a given reference point.
+-- @param #PATHLINE self
+-- @param DCS#Vec3 Vec3 Reference Point in 2D.
+-- @return DCS#Vec3 Cloest point on pathline.
+-- @return #number Distance from closest point to ref point in meters.
+function PATHLINE:GetClosestPoint3D(Vec3)
+
+  local P=nil --DCS#Vec3
+  local D=math.huge
+  
+  for i=2,#self.points do
+
+    local A=self.points[i-1] --#PATHLINE.Point
+    local B=self.points[i]   --#PATHLINE.Point
+    
+    local a=A.vec3
+    local b=B.vec3
+        
+    local ab=UTILS.VecSubstract(b, a)  
+    local ap=UTILS.VecSubstract(Vec3, a)
+    
+    local proj=UTILS.VecDot(ap, ab)
+    
+    local lab=UTILS.VecNorm(ab)
+    
+    local f=proj/lab/lab
+    
+    -- Debug info.
+    local text=string.format("FF Proj=%.1f, |ab|=%.1f, f=%.1f", proj, lab, f)
+    self:T(self.lid..text)
+    
+    -- Cases for finite segment.
+    local p=nil --DCS#Vec2
+    if f<0 then
+      p=a
+    elseif f>1 then
+      p=b
+    else
+      local r=UTILS.VecMult(ab, f)
+      p=UTILS.VecAdd(a, r)  
+    end
+    
+    -- Distance.
+    local d=UTILS.VecDist3D(p, Vec3)
+    
+    if d<=D then
+      D=d
+      P=p
+    end
+    
+  end
+  
+    
+  --local c=COORDINATE:NewFromVec2(P)  
+  --c:MarkToAll(string.format("Point D=%.1f m", D))
+
+  return P, D
 end
 
 
@@ -343,7 +526,7 @@ end
 --- Get 3D points of pathline.
 -- @param #PATHLINE self
 -- @param DCS#Vec3 Vec Position vector. Can also be a DCS#Vec2 in which case the altitude at landheight is taken.
--- @return #PATHLINE.Point
+-- @return #PATHLINE.Point Pathline Point.
 function PATHLINE:_CreatePoint(Vec)
 
   local point={} --#PATHLINE.Point

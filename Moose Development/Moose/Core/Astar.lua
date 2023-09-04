@@ -369,9 +369,9 @@ function ASTAR:SetValidNeighbourRoad(MaxDistance)
   return self
 end
 
---- Set valid neighbours to be on the same pathline or not further apart than 10 meters.
+--- Set valid neighbours to be on the same pathline or not further apart than 10 meters to jump from one pathline to another.
 -- @param #ASTAR self
--- @param #number MaxDistance Max distance between nodes in meters. Default is 2000 m.
+-- @param #number MaxDistance Max allowed distance between nodes of different pathlines in meters. Default is 10 m.
 -- @return #ASTAR self
 function ASTAR:SetValidNeighbourPathline(MaxDistance)
 
@@ -666,7 +666,7 @@ function ASTAR.DistRoad(nodeA, nodeB)
     local dist=0
     
     for i=2,#path do
-      local b=path[i] --DCS#Vec2
+      local b=path[i]   --DCS#Vec2
       local a=path[i-1] --DCS#Vec2
       
       dist=dist+UTILS.VecDist2D(a,b)
@@ -676,7 +676,6 @@ function ASTAR.DistRoad(nodeA, nodeB)
     return dist
   end
   
-
   return math.huge
 end
 
@@ -686,10 +685,11 @@ end
 
 --- Find the closest node from a given coordinate.
 -- @param #ASTAR self
--- @param Core.Point#COORDINATE Coordinate.
--- @return #ASTAR.Node Cloest node to the coordinate.
+-- @param Core.Point#COORDINATE Coordinate Reference coordinate.
+-- @param #table ExcludeNodes Table of nodes that are excluded.
+-- @return #ASTAR.Node Closest node to the coordinate.
 -- @return #number Distance to closest node in meters.
-function ASTAR:FindClosestNode(Coordinate)
+function ASTAR:FindClosestNode(Coordinate, ExcludeNodes)
 
   local distMin=math.huge
   local closeNode=nil
@@ -697,11 +697,15 @@ function ASTAR:FindClosestNode(Coordinate)
   for _,_node in pairs(self.nodes) do
     local node=_node --#ASTAR.Node
     
-    local dist=node.coordinate:Get2DDistance(Coordinate)
+    if ExcludeNodes==nil or self:_IsNodeNotInTable(ExcludeNodes, node) then
     
-    if dist<distMin then
-      distMin=dist
-      closeNode=node
+      local dist=node.coordinate:Get2DDistance(Coordinate)
+      
+      if dist<distMin then
+        distMin=dist
+        closeNode=node
+      end
+      
     end
     
   end
@@ -711,7 +715,6 @@ end
 
 --- Find the start node.
 -- @param #ASTAR self
--- @param #ASTAR.Node Node The node to be added to the nodes table.
 -- @return #ASTAR self
 function ASTAR:FindStartNode()
 
@@ -727,13 +730,12 @@ function ASTAR:FindStartNode()
   return self
 end
 
---- Add a node.
+--- Find the end node.
 -- @param #ASTAR self
--- @param #ASTAR.Node Node The node to be added to the nodes table.
 -- @return #ASTAR self
 function ASTAR:FindEndNode()
 
-  local node, dist=self:FindClosestNode(self.endCoord)
+  local node, dist=self:FindClosestNode(self.endCoord, {self.startNode})
 
   self.endNode=node
   
@@ -762,6 +764,8 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
   local nodes=self.nodes
   local start=self.startNode
   local goal=self.endNode
+  
+  self:I(self.lid..string.format("GetPath Start Node=%d, End Node=%d", start.id, goal.id))
 
   -- Sets.
   local openset   = {}
@@ -837,7 +841,6 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
     
     -- Loop over neighbours.
     for _,neighbor in pairs(neighbors) do
-    
       if self:_NotIn(closedset, neighbor.id) then
       
         local tentative_g_score=g_score[current.id]+self:_DistNodes(current, neighbor)
@@ -868,11 +871,13 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
   return nil -- no valid path
 end
 
---- A* pathfinding function. This seaches the path along nodes between start and end nodes/coordinates.
+--- A* pathfinding function. This seaches the path along nodes between start and end nodes/coordinates. 
+-- It automatically creates a PATHLINE object that is returned in combination with the nodes of the optimal path. 
 -- @param #ASTAR self
 -- @param #boolean ExcludeStartNode If *true*, do not include start node in found path. Default is to include it.
 -- @param #boolean ExcludeEndNode If *true*, do not include end node in found path. Default is to include it.
--- @return Core.Pathline#PATHLINE Pathline
+-- @return Core.Pathline#PATHLINE Pathline.
+-- @return #table Nodes of path.
 function ASTAR:GetPathline(ExcludeStartNode, ExcludeEndNode)
 
   local nodes=self:GetPath(ExcludeStartNode, ExcludeEndNode)
@@ -891,7 +896,23 @@ function ASTAR:GetPathline(ExcludeStartNode, ExcludeEndNode)
       
   end
 
-  return pathline
+  return pathline, nodes
+end
+
+--- Get pathlines from nodes.
+-- @param #ASTAR self
+-- @param #boolean ExcludeStartNode If *true*, do not include start node in found path. Default is to include it.
+-- @param #boolean ExcludeEndNode If *true*, do not include end node in found path. Default is to include it.
+-- @return #table Table of PATHLINES used in the path. Key is the pathline name and value is the PATHLINE.
+function ASTAR:GetPathlinesFromNodes(Nodes)
+
+  local pathlines={}
+  for _,_node in pairs(Nodes or {}) do
+    local node=_node --#ASTAR.Node
+    pathlines[node.pathline.name]=node.pathline
+  end
+
+  return pathlines
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -987,6 +1008,8 @@ function ASTAR:_LowestFscore(set, f_score)
     end
   end
   
+  self:I(self.lid..string.format("Lowest Fscore=%.1f, Node=%d", lowest, bestNode))
+  
   return self.nodes[bestNode]
 end
 
@@ -1033,12 +1056,39 @@ end
 -- @return #table Unwinded path.
 function ASTAR:_UnwindPath( flat_path, map, current_node )
 
-  if map [current_node] then
+  if map[current_node] then
     table.insert (flat_path, 1, map[current_node]) 
     return self:_UnwindPath(flat_path, map, map[current_node])
   else
     return flat_path
   end
+end
+
+--- Function to check if a certain node is in a given table.
+-- @param #ASTAR self
+-- @param #table Nodes Nodes table.
+-- @param #ASTAR.Node Node The node to check.
+-- @return #boolean If true, the node is not in the set.
+function ASTAR:_IsNodeInTable(Nodes, Node)
+
+  for _,_node in pairs(Nodes) do
+    local node=_node --#ASTAR.Node
+    if node.id==Node.id then
+      return true
+    end
+  end
+
+  return false
+end
+
+--- Function to check if a certain node is **not** in a given table.
+-- @param #ASTAR self
+-- @param #table Nodes Nodes table.
+-- @param #ASTAR.Node Node The node to check.
+-- @return #boolean If true, the node is not in the set.
+function ASTAR:_IsNodeNotInTable(Nodes, Node)
+  local is=self:_IsNodeInTable(Nodes, Node)
+  return not is
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -1375,6 +1375,22 @@ function UTILS.Vec2Add(a, b)
   return {x=a.x+b.x, y=a.y+b.y}
 end
 
+--- Multiply 2D vector by a scalar value.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @param #number c Scalar value.
+-- @return DCS#Vec2 Vector 
+function UTILS.Vec2Mult(a, c)
+  return {x=c*a.x, y=c*a.y}
+end
+
+--- Multiply 3D vector by a scalar value.
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param #number c Scalar value.
+-- @return DCS#Vec3 Vector 
+function UTILS.VecMult(a, c)
+  return {x=c*a.x, y=c*a.y, z=c*a.z}
+end
+
 --- Calculate the angle between two 3D vectors.
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @param DCS#Vec3 b Vector in 3D with x, y, z components.
