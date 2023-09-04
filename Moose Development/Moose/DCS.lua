@@ -222,6 +222,21 @@ do -- land
 
 end -- land
 
+do
+
+  --- [DCS enum radio](https://wiki.hoggitworld.com/view/DCS_enum_radio)
+  -- @type radio
+  -- @field #radio.modulation modulation Modulation
+
+  --- [Type of modulation](https://wiki.hoggitworld.com/view/DCS_singleton_land)
+  -- @type radio.modulation
+  -- @field #number AM Amplitude modulation (AM=0)
+  -- @field #number FM Frequency modulation (FM=1)
+
+  radio={} --#radio
+
+end -- radio
+
 do -- country
 
   --- [DCS Enum country](https://wiki.hoggitworld.com/view/DCS_enum_country)
@@ -374,7 +389,8 @@ end -- coalition
 
 do -- Types
 
-  --- @type Desc
+  --- Descriptors
+  -- @type Desc
   -- @field #number speedMax0 Max speed in meters/second at zero altitude.
   -- @field #number massEmpty Empty mass in kg.
   -- @field #number tankerType Type of refueling system: 0=boom, 1=probe.
