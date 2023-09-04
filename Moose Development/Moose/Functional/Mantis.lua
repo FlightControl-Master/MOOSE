@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: July 2023
+-- Last Update: Sept 2023
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -431,22 +431,24 @@ MANTIS.SamDataCH = {
   -- units from CH (Military Assets by Currenthill)
   -- https://www.currenthill.com/
   -- group name MUST contain CHM to ID launcher type correctly!
-  ["2S38 CH"]         = { Range=8,  Blindspot=0.5,  Height=6,     Type="Short",   Radar="2S38" },
-  ["PantsirS1 CH"]      = { Range=20,   Blindspot=1.2,  Height=15,    Type="Short",   Radar="PantsirS1" },  
-  ["PantsirS2 CH"]      = { Range=30,   Blindspot=1.2,  Height=18,    Type="Medium",  Radar="PantsirS2" }, 
-  ["PGL-625 CH"]      = { Range=10,   Blindspot=0.5,  Height=5,     Type="Short",   Radar="PGL_625" }, 
-  ["HQ-17A CH"]       = { Range=20,   Blindspot=1.5,  Height=10,    Type="Short",   Radar="HQ17A" },  
-  ["M903PAC2 CH"]       = { Range=160,  Blindspot=3,  Height=24.5,  Type="Long",  Radar="MIM104_M903_PAC2" },
-  ["M903PAC3 CH"]       = { Range=120,  Blindspot=1,  Height=40,    Type="Long",  Radar="MIM104_M903_PAC3" }, 
-  ["TorM2 CH"]        = { Range=12,   Blindspot=1,  Height=10,    Type="Short",   Radar="TorM2" },
-  ["TorM2K CH"]       = { Range=12,   Blindspot=1,  Height=10,    Type="Short",   Radar="TorM2K" },
-  ["TorM2M CH"]       = { Range=16,   Blindspot=1,  Height=10,    Type="Short",   Radar="TorM2M" },   
-  ["NASAMS3-AMRAAMER CH"]   = { Range=50,   Blindspot=2,  Height=35.7,  Type="Medium",  Radar="CH_NASAMS3_LN_AMRAAM_ER" },  
-  ["NASAMS3-AIM9X2 CH"]   = { Range=20,   Blindspot=0.2,  Height=18,    Type="Short",   Radar="CH_NASAMS3_LN_AIM9X2" },
-  ["C-RAM CH"]        = { Range=2,  Blindspot=0,  Height=2,     Type="Short",   Radar="CH_Centurion_C_RAM" }, 
-  ["PGZ-09 CH"]       = { Range=4,  Blindspot=0,  Height=3,     Type="Short",   Radar="CH_PGZ09" },
-  ["S350-9M100 CH"]     = { Range=15,   Blindspot=1.5,  Height=8,     Type="Short",   Radar="CH_S350_50P6_9M100" },
-  ["S350-9M96D CH"]     = { Range=150,  Blindspot=2.5,  Height=30,    Type="Long",  Radar="CH_S350_50P6_9M96D" },       
+ ["2S38 CH"] = { Range=8, Blindspot=0.5, Height=6, Type="Short", Radar="2S38" },
+ ["PantsirS1 CH"] = { Range=20, Blindspot=1.2, Height=15, Type="Short", Radar="PantsirS1" }, 
+ ["PantsirS2 CH"] = { Range=30, Blindspot=1.2, Height=18, Type="Medium", Radar="PantsirS2" }, 
+ ["PGL-625 CH"] = { Range=10, Blindspot=0.5, Height=5, Type="Short", Radar="PGL_625" }, 
+ ["HQ-17A CH"] = { Range=20, Blindspot=1.5, Height=10, Type="Short", Radar="HQ17A" }, 
+ ["M903PAC2 CH"] = { Range=160, Blindspot=3, Height=24.5, Type="Long", Radar="MIM104_M903_PAC2" },
+ ["M903PAC3 CH"] = { Range=120, Blindspot=1, Height=40, Type="Long", Radar="MIM104_M903_PAC3" }, 
+ ["TorM2 CH"] = { Range=12, Blindspot=1, Height=10, Type="Short", Radar="TorM2" },
+ ["TorM2K CH"] = { Range=12, Blindspot=1, Height=10, Type="Short", Radar="TorM2K" },
+ ["TorM2M CH"] = { Range=16, Blindspot=1, Height=10, Type="Short", Radar="TorM2M" }, 
+ ["NASAMS3-AMRAAMER CH"] = { Range=50, Blindspot=2, Height=35.7, Type="Medium", Radar="CH_NASAMS3_LN_AMRAAM_ER" }, 
+ ["NASAMS3-AIM9X2 CH"] = { Range=20, Blindspot=0.2, Height=18, Type="Short", Radar="CH_NASAMS3_LN_AIM9X2" },
+ ["C-RAM CH"] = { Range=2, Blindspot=0, Height=2, Type="Short", Radar="CH_Centurion_C_RAM" }, 
+ ["PGZ-09 CH"] = { Range=4, Blindspot=0, Height=3, Type="Short", Radar="CH_PGZ09" },
+ ["S350-9M100 CH"] = { Range=15, Blindspot=1.5, Height=8, Type="Short", Radar="CH_S350_50P6_9M100" },
+ ["S350-9M96D CH"] = { Range=150, Blindspot=2.5, Height=30, Type="Long", Radar="CH_S350_50P6_9M96D" },
+ ["LAV-AD CH"] = { Range=8, Blindspot=0.2, Height=4.8, Type="Short", Radar="CH_LAVAD" }, 
+ ["HQ-22 CH"] = { Range=170, Blindspot=5, Height=27, Type="Long", Radar="CH_HQ22_LN" }, 
 }
 
 -----------------------------------------------------------------------
@@ -465,6 +467,7 @@ do
   --@param #string awacs Group name of your Awacs (optional)
   --@param #boolean EmOnOff Make MANTIS switch Emissions on and off instead of changing the alarm state between RED and GREEN (optional)
   --@param #number Padding For #SEAD - Extra number of seconds to add to radar switch-back-on time (optional)
+  --@param #table Zones Table of Core.Zone#ZONE Zones Consider SAM groups in this zone(s) only for this MANTIS instance, must be handed as #table of Zone objects
   --@return #MANTIS self
   --@usage Start up your MANTIS with a basic setting
   --
@@ -483,7 +486,7 @@ do
   --        mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
   --        mybluemantis:Start()
   --
-  function MANTIS:New(name,samprefix,ewrprefix,hq,coalition,dynamic,awacs, EmOnOff, Padding)
+  function MANTIS:New(name,samprefix,ewrprefix,hq,coalition,dynamic,awacs, EmOnOff, Padding, Zones)
 
     -- DONE: Create some user functions for these
     -- DONE: Make HQ useful
@@ -544,6 +547,7 @@ do
     self.maxclassic = 6
     self.autoshorad = true
     self.ShoradGroupSet = SET_GROUP:New() -- Core.Set#SET_GROUP
+    self.FilterZones = Zones
     
     self.UseEmOnOff = true
     if EmOnOff == false then
@@ -593,16 +597,23 @@ do
     
     self:T({self.ewr_templates})
     
+    self.SAM_Group = SET_GROUP:New():FilterPrefixes(self.SAM_Templates_Prefix):FilterCoalitions(self.Coalition)
+    self.EWR_Group = SET_GROUP:New():FilterPrefixes(self.ewr_templates):FilterCoalitions(self.Coalition)
+    
+    if self.FilterZones then
+      self.SAM_Group:FilterZones(self.FilterZones)
+    end
+    
     if self.dynamic then
       -- Set SAM SET_GROUP
-      self.SAM_Group = SET_GROUP:New():FilterPrefixes(self.SAM_Templates_Prefix):FilterCoalitions(self.Coalition):FilterStart()
+      self.SAM_Group:FilterStart()
       -- Set EWR SET_GROUP
-      self.EWR_Group = SET_GROUP:New():FilterPrefixes(self.ewr_templates):FilterCoalitions(self.Coalition):FilterStart()
+      self.EWR_Group:FilterStart()
     else
       -- Set SAM SET_GROUP
-      self.SAM_Group = SET_GROUP:New():FilterPrefixes(self.SAM_Templates_Prefix):FilterCoalitions(self.Coalition):FilterOnce()
+      self.SAM_Group:FilterOnce()
       -- Set EWR SET_GROUP
-      self.EWR_Group = SET_GROUP:New():FilterPrefixes(self.ewr_templates):FilterCoalitions(self.Coalition):FilterOnce()
+      self.EWR_Group:FilterOnce()
     end
 
     -- set up CC
@@ -612,7 +623,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.8.11"
+    self.version="0.8.14"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
