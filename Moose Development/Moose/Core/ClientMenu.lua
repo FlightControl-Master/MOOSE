@@ -35,6 +35,7 @@
 -- @field #string lid Lid for log entries
 -- @field #string version Version string
 -- @field #string name Name
+-- @field #string groupname Group name
 -- @field #table path
 -- @field #table parentpath
 -- @field #CLIENTMENU Parent
@@ -57,7 +58,7 @@
 CLIENTMENU = {
   ClassName = "CLIENTMENUE",
   lid = "",
-  version = "0.1.0",
+  version = "0.1.1",
   name = nil,
   path = nil,
   group = nil,
@@ -68,6 +69,7 @@ CLIENTMENU = {
   Generic = false,
   debug = false,
   Controller = nil,
+  groupname = nil,
 }
 
 ---
@@ -91,6 +93,7 @@ function CLIENTMENU:NewEntry(Client,Text,Parent,Function,...)
     self.group = Client:GetGroup()
     self.client = Client
     self.GroupID = self.group:GetID()
+    self.groupname = self.group:GetName() or "Unknown Groupname"
   else
     self.Generic = true
   end
@@ -190,7 +193,10 @@ function CLIENTMENU:RemoveF10()
   self:T(self.lid.."RemoveF10")
   if self.GroupID then
     --self:I(self.lid.."Removing "..table.concat(self.path,";"))
-    missionCommands.removeItemForGroup(self.GroupID , self.path )
+    local status, err = pcall(missionCommands.removeItemForGroup(self.GroupID , self.path ))
+    if not status then
+      self:I(string.format("**** Error Removing Menu Entry %s for %s!",tostring(self.name),self.groupname))
+    end
   end
   return self
 end
