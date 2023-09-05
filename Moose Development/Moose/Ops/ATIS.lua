@@ -1840,6 +1840,7 @@ function ATIS:onafterBroadcast( From, Event, To )
     subtitle = subtitle .. " Airport"
   end
   if not self.useSRS then
+    --self:I(string.format( "%s/%s.ogg", self.theatre, self.airbasename ))
     self.radioqueue:NewTransmission( string.format( "%s/%s.ogg", self.theatre, self.airbasename ), 3.0, self.soundpath, nil, nil, subtitle, self.subduration )
   end
   local alltext = subtitle
