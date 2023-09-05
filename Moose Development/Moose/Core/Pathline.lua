@@ -77,6 +77,11 @@ PATHLINE = {
 -- @field #number markerID Marker ID.
 -- @field #number lineID Marker of pathline ID.
 
+--- Segment of line.
+-- @type PATHLINE.Segment
+-- @field #PATHLINE.Point p1 First point.
+-- @field #PATHLINE.Point p2 Second point.
+
 
 --- PATHLINE class version.
 -- @field #string version
@@ -159,17 +164,28 @@ end
 -- @param #PATHLINE self
 -- @param DCS#Vec2 Vec2 The 2D vector (x,y) to add.
 -- @param #number Index Index to add this point, *e.g.* 1 for first point or 2 for second point. Default is at the end.
+-- @param #PATHLINE.Point Point Add point after given point. Default is at the end or at given index.
 -- @return #PATHLINE self
-function PATHLINE:AddPointFromVec2(Vec2, Index)
+function PATHLINE:AddPointFromVec2(Vec2, Index, Point)
 
   if Vec2 then
   
+    -- Create a new point.
     local point=self:_CreatePoint(Vec2)
 
     if Index then
+      -- Add at given index.
       table.insert(self.points, Index, point)
     else
-      table.insert(self.points, point)
+      if Point then
+        -- Get index of given point.
+        local i=self:_GetPointIndex(Point)
+        -- Add new point after given point.
+        table.insert(self.points, i+1, point)
+      else
+        -- Add add the end.
+        table.insert(self.points, point)
+      end
     end 
   end
   
@@ -180,22 +196,31 @@ end
 -- @param #PATHLINE self
 -- @param DCS#Vec3 Vec3 The 3D vector (x,y) to add.
 -- @param #number Index Index to add this point, *e.g.* 1 for first point or 2 for second point. Default is at the end.
--- @return #PATHLINE self
-function PATHLINE:AddPointFromVec3(Vec3, Index)
+-- @param #PATHLINE.Point Point Add point after given point. Default is at the end or at given index.
+-- @return #PATHLINE.Point Point that was added.
+function PATHLINE:AddPointFromVec3(Vec3, Index, Point)
 
   if Vec3 then
   
     local point=self:_CreatePoint(Vec3)
 
     if Index then
+      -- Add add given index.
       table.insert(self.points, Index, point)
     else
-      table.insert(self.points, point)
+      if Point then
+        local i=self:_GetPointIndex(Point)
+        table.insert(self.points, i+1, point)
+      else
+        -- Add add the end.
+        table.insert(self.points, point)
+      end
     end
-    
+  
+    return point  
   end
   
-  return self
+  return nil
 end
 
 --- Get name of pathline.
@@ -380,7 +405,6 @@ function PATHLINE:Draw(Switch, Coalition, Color, LineType)
 
     for i=2,#self.points do
       
-    
       local p1=self.points[i-1] --#PATHLINE.Point
       local p2=self.points[i]   --#PATHLINE.Point
       
@@ -404,11 +428,12 @@ end
 -- @param DCS#Vec2 Vec2 Reference Point in 2D.
 -- @return DCS#Vec2 Cloest point on pathline.
 -- @return #number Distance from closest point to ref point in meters.
+-- @return #PATHLINE.Segment Closest segment of ref point.
 function PATHLINE:GetClosestPoint2D(Vec2)
-
 
   local P=nil --DCS#Vec2  
   local D=math.huge
+  local S={} --#PATHLINE.Segment
   
   for i=2,#self.points do
 
@@ -448,26 +473,26 @@ function PATHLINE:GetClosestPoint2D(Vec2)
     if d<=D then
       D=d
       P=p
+      S.p1=A
+      S.p2=B
     end
     
   end
   
-    
-  --local c=COORDINATE:NewFromVec2(P)  
-  --c:MarkToAll(string.format("Point D=%.1f m", D))
-
-  return P, D
+  return P, D, S
 end
 
 --- Get the closest point on the pathline for a given reference point.
 -- @param #PATHLINE self
--- @param DCS#Vec3 Vec3 Reference Point in 2D.
--- @return DCS#Vec3 Cloest point on pathline.
+-- @param DCS#Vec3 Vec3 Reference Point in 3D. Can also be a `COORDINATE`.
+-- @return DCS#Vec3 Closest point on pathline.
 -- @return #number Distance from closest point to ref point in meters.
+-- @return #PATHLINE.Segment Closest segment of ref point.
 function PATHLINE:GetClosestPoint3D(Vec3)
 
   local P=nil --DCS#Vec3
   local D=math.huge
+  local S={} --#PATHLINE.Segment
   
   for i=2,#self.points do
 
@@ -507,17 +532,14 @@ function PATHLINE:GetClosestPoint3D(Vec3)
     if d<=D then
       D=d
       P=p
+      S.p1=A
+      S.p2=B
     end
     
   end
-  
-    
-  --local c=COORDINATE:NewFromVec2(P)  
-  --c:MarkToAll(string.format("Point D=%.1f m", D))
-
-  return P, D
+ 
+  return P, D, S
 end
-
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Private functions
@@ -559,12 +581,12 @@ end
 
 --- Get index of point in the lua table.
 -- @param #PATHLINE self
--- @param #Pathline.Point Point Given point.
+-- @param #PATHLINE.Point Point Given point.
 -- @return #number index
 function PATHLINE:_GetPointIndex(Point)
 
   for i,_point in pairs(self.points) do
-    local point=_point --#Pathline.Point
+    local point=_point --#PATHLINE.Point
    
     if point.uid==Point.uid then
       return i

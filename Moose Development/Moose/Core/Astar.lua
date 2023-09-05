@@ -713,6 +713,43 @@ function ASTAR:FindClosestNode(Coordinate, ExcludeNodes)
   return closeNode, distMin
 end
 
+--- Find the closest pathline to a given reference coordinate.
+-- @param #ASTAR self
+-- @param Core.Point#COORDINATE Coordinate Reference coordinate.
+-- @return Core.Pathline#PATHLINE Closest pathline
+-- @return #number Distance in meters.
+-- @return DCS#Vec3 Closest point on pathline to the ref coordinate.
+-- @return Core.Pathline#PATHLINE.Segment Segment.
+function ASTAR:FindClosestPathline(Coordinate)
+
+  local pathline=nil --Core.Pathline#PATHLINE
+  local dist=math.huge
+  local vec3=nil
+  local S=nil
+  
+  for _,_node in pairs(self.nodes) do
+    local node=_node --#ASTAR.Node
+    
+    if node.pathline then
+    
+      local vec, d, s=node.pathline:GetClosestPoint3D(Coordinate)
+      
+      if d<dist then
+        pathline=node.pathline
+        dist=d
+        vec3=vec
+        S=s        
+      end
+    
+    
+    end
+    
+  end
+
+  return pathline, dist, vec3, S
+end
+
+
 --- Find the start node.
 -- @param #ASTAR self
 -- @return #ASTAR self
@@ -722,10 +759,20 @@ function ASTAR:FindStartNode()
   
   self.startNode=node
   
-  if dist>1000 then
-    self:T(self.lid.."Adding start node to node grid!")
-    self:AddNode(node)
+  local pathline, dist, vec3, s=self:FindClosestPathline(self.startCoord)
+  if pathline and vec3 then
+    local Coordinate=COORDINATE:NewFromVec3(vec3)
+    node=self:AddNodeFromCoordinate(Coordinate)
+    node.pathline=pathline
+    local point=pathline:AddPointFromVec3(vec3, nil, s.p1)
+    node.pathpoint=point
   end
+  
+  -- Not sure why I did this. The node does not need to be added again as it is already contained in self.nodes!
+--  if dist>1000 then
+--    self:T(self.lid.."Adding start node to node grid!")
+--    self:AddNode(node)
+--  end
     
   return self
 end
@@ -739,10 +786,18 @@ function ASTAR:FindEndNode()
 
   self.endNode=node
   
-  if dist>1000 then
-    self:T(self.lid.."Adding end node to node grid!")
-    self:AddNode(node)
+  local pathline, dist, vec3=self:FindClosestPathline(self.startCoord)
+  if pathline and vec3 then
+    local Coordinate=COORDINATE:NewFromVec3(vec3)
+    self:AddNodeFromCoordinate(Coordinate)
   end
+  
+  
+  -- Not sure why I did this. The node does not need to be added again as it is already contained in self.nodes!
+--  if dist>1000 then
+--    self:T(self.lid.."Adding end node to node grid!")
+--    self:AddNode(node)
+--  end
     
   return self
 end
