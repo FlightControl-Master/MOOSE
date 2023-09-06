@@ -745,6 +745,11 @@ function ASTAR:FindClosestPathline(Coordinate)
     end
     
   end
+  
+  if pathline then
+    -- Debug info.
+    self:T(self.lid..string.format("Closest pathline %s: dist=%.1f", pathline.name, dist))
+  end
 
   return pathline, dist, vec3, S
 end
@@ -761,11 +766,22 @@ function ASTAR:FindStartNode()
   
   local pathline, dist, vec3, s=self:FindClosestPathline(self.startCoord)
   if pathline and vec3 then
+  
     local Coordinate=COORDINATE:NewFromVec3(vec3)
+    
+    Coordinate:MarkToAll("Start coord")
+    
     node=self:AddNodeFromCoordinate(Coordinate)
+    
     node.pathline=pathline
+    
     local point=pathline:AddPointFromVec3(vec3, nil, s.p1)
+    
     node.pathpoint=point
+    
+    self:T(self.lid..string.format("Adding START node ID=%d", node.id))
+  else
+    env.info("FF error start node")
   end
   
   -- Not sure why I did this. The node does not need to be added again as it is already contained in self.nodes!
@@ -786,10 +802,18 @@ function ASTAR:FindEndNode()
 
   self.endNode=node
   
-  local pathline, dist, vec3=self:FindClosestPathline(self.startCoord)
+  local pathline, dist, vec3, s=self:FindClosestPathline(self.endCoord)
   if pathline and vec3 then
     local Coordinate=COORDINATE:NewFromVec3(vec3)
-    self:AddNodeFromCoordinate(Coordinate)
+    Coordinate:MarkToAll("End coord",ReadOnly,Text)
+    node=self:AddNodeFromCoordinate(Coordinate)
+    node.pathline=pathline
+    local point=pathline:AddPointFromVec3(vec3, nil, s.p1)
+    node.pathpoint=point
+    
+    self:T(self.lid..string.format("Adding END node ID=%d", node.id))
+  else
+    env.info("FF error end node",showMessageBox)
   end
   
   
@@ -820,7 +844,8 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
   local start=self.startNode
   local goal=self.endNode
   
-  self:I(self.lid..string.format("GetPath Start Node=%d, End Node=%d", start.id, goal.id))
+  -- Debug info.
+  self:T(self.lid..string.format("GetPath Start Node=%d, End Node=%d", start.id, goal.id))
 
   -- Sets.
   local openset   = {}
@@ -851,8 +876,8 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
     -- Get current node.
     local current=self:_LowestFscore(openset, f_score)
     
-    self:I(current)
-    self:I(goal)
+    --self:I(current)
+    --self:I(goal)
     
     -- Check if we are at the end node.
     if current.id==goal.id then
@@ -880,7 +905,12 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
         text=text..string.format(", OS Time %.6f sec", dT)
       end
       text=text..string.format(", Nvalid=%d [%d cached]", self.nvalid, self.nvalidcache)
-      text=text..string.format(", Ncost=%d [%d cached]", self.ncost, self.ncostcache)
+      text=text..string.format(", Ncost=%d [%d cached]", self.ncost, self.ncostcache)      
+      text=text..string.format("\nNodes:")
+      for i,_node in pairs(path) do
+        local node=_node --#ASTAR.Node
+        text=text..string.format("\n[%d] Node ID=%d", i, node.id)
+      end
       self:T(self.lid..text)
       
       return path
@@ -1063,7 +1093,8 @@ function ASTAR:_LowestFscore(set, f_score)
     end
   end
   
-  self:I(self.lid..string.format("Lowest Fscore=%.1f, Node=%d", lowest, bestNode))
+  -- Debug info.
+  self:T(self.lid..string.format("Lowest Fscore=%.1f, Node=%d", lowest, bestNode))
   
   return self.nodes[bestNode]
 end

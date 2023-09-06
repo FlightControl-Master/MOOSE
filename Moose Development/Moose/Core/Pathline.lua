@@ -483,6 +483,7 @@ function PATHLINE:GetClosestPoint2D(Vec2)
 end
 
 --- Get the closest point on the pathline for a given reference point.
+-- This point does not necessarily is a node of the pathline. In general it will be somewhere in between the nodes defining the pathline.
 -- @param #PATHLINE self
 -- @param DCS#Vec3 Vec3 Reference Point in 3D. Can also be a `COORDINATE`.
 -- @return DCS#Vec3 Closest point on pathline.
