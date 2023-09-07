@@ -14792,6 +14792,7 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
     end
   
   else
+
     -- SRS transmission
     if call.subtitle ~= nil and string.len(call.subtitle) > 1  then
 
