@@ -54,6 +54,11 @@ do -- ACT_ACCOUNT
   --     The state transition method needs to start with the name **OnAfter + the name of the state**.
   --     These state transition methods need to provide a return value, which is specified at the function description.
   --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
   -- @type ACT_ACCOUNT
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Core.Fsm#FSM_PROCESS
