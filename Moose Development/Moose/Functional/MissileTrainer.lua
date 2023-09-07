@@ -97,6 +97,11 @@
 --  * @{#MISSILETRAINER.InitRangeOnOff}: Sets by default the display of range information of missiles ON of OFF.
 --  * @{#MISSILETRAINER.InitBearingOnOff}: Sets by default the display of bearing information of missiles ON of OFF.
 --  * @{#MISSILETRAINER.InitMenusOnOff}: Allows to configure the options through the radio menu.
+--  
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE.
+-- Therefore, this class is considered to be deprecated and superseded by the @{Functional.Fox#FOX} class, which provides the same functionality.
 --
 -- @field #MISSILETRAINER
 MISSILETRAINER = {

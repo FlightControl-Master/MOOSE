@@ -14792,66 +14792,68 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
     end
   
   else
+
     -- SRS transmission
     if call.subtitle ~= nil and string.len(call.subtitle) > 1  then
 
 
-  else
-    -- SRS transmission
+    else
+      -- SRS transmission
 
-    local frequency = self.MarshalRadio.frequency
-    local modulation = self.MarshalRadio.modulation
-    local voice = nil
-    local gender = nil
-    local culture = nil
+      local frequency = self.MarshalRadio.frequency
+      local modulation = self.MarshalRadio.modulation
+      local voice = nil
+      local gender = nil
+      local culture = nil
 
-    if radio.alias == "AIRBOSS" then
-      frequency = self.AirbossRadio.frequency
-      modulation = self.AirbossRadio.modulation
-      voice = self.AirbossRadio.voice
-      gender = self.AirbossRadio.gender
-      culture = self.AirbossRadio.culture
+      if radio.alias == "AIRBOSS" then
+        frequency = self.AirbossRadio.frequency
+        modulation = self.AirbossRadio.modulation
+        voice = self.AirbossRadio.voice
+        gender = self.AirbossRadio.gender
+        culture = self.AirbossRadio.culture
+      end
+
+      if radio.alias == "MARSHAL" then
+        voice = self.MarshalRadio.voice
+        gender = self.MarshalRadio.gender
+        culture = self.MarshalRadio.culture
+      end
+
+      if radio.alias == "LSO" then
+        frequency = self.LSORadio.frequency
+        modulation = self.LSORadio.modulation
+        voice = self.LSORadio.voice
+        gender = self.LSORadio.gender
+        culture = self.LSORadio.culture
+      end
+
+      if pilotcall then
+        voice = self.PilotRadio.voice
+        gender = self.PilotRadio.gender
+        culture = self.PilotRadio.culture
+        radio.alias = "PILOT"
+      end
+
+      if not radio.alias then
+        -- TODO - what freq to use here?
+        frequency = self.AirbossRadio.frequency
+        modulation = self.AirbossRadio.modulation
+        radio.alias = "AIRBOSS"
+      end
+
+      local volume = nil
+
+      if loud then
+        volume = 1.0
+      end
+
+      --local text = tostring(call.modexreceiver).."; "..radio.alias.."; "..call.subtitle
+      local text = call.subtitle
+      self:I(self.lid..text)
+      local srstext = self:_GetNiceSRSText(text)
+      self.SRSQ:NewTransmission(srstext, call.duration, self.SRS, tstart, 0.1, subgroups, call.subtitle, call.subduration, frequency, modulation, gender, culture, voice, volume, radio.alias)
     end
-
-    if radio.alias == "MARSHAL" then
-      voice = self.MarshalRadio.voice
-      gender = self.MarshalRadio.gender
-      culture = self.MarshalRadio.culture
-    end
-
-    if radio.alias == "LSO" then
-      frequency = self.LSORadio.frequency
-      modulation = self.LSORadio.modulation
-      voice = self.LSORadio.voice
-      gender = self.LSORadio.gender
-      culture = self.LSORadio.culture
-    end
-
-    if pilotcall then
-      voice = self.PilotRadio.voice
-      gender = self.PilotRadio.gender
-      culture = self.PilotRadio.culture
-      radio.alias = "PILOT"
-    end
-
-    if not radio.alias then
-      -- TODO - what freq to use here?
-      frequency = self.AirbossRadio.frequency
-      modulation = self.AirbossRadio.modulation
-      radio.alias = "AIRBOSS"
-    end
-
-    local volume = nil
-
-    if loud then
-      volume = 1.0
-    end
-
-    --local text = tostring(call.modexreceiver).."; "..radio.alias.."; "..call.subtitle
-    local text = call.subtitle
-    self:I(self.lid..text)
-    local srstext = self:_GetNiceSRSText(text)
-    self.SRSQ:NewTransmission(srstext, call.duration, self.SRS, tstart, 0.1, subgroups, call.subtitle, call.subduration, frequency, modulation, gender, culture, voice, volume, radio.alias)
   end
 end
 
