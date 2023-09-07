@@ -176,7 +176,12 @@
 -- Per one, two, three, four?
 --
 -- **The default grouping is 1. That means, that each spawned defender will act individually.**
---
+  --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
 -- ===
 --
 -- ### Authors: **FlightControl** rework of GCICAP + introduction of new concepts (squadrons).

@@ -253,7 +253,12 @@
 -- 
 -- **The default grouping is 1. That means, that each spawned defender will act individually.**
 -- But you can specify a number between 1 and 4, so that the defenders will act as a group.
--- 
+  --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
 -- ===
 -- 
 -- ### Author: **FlightControl** rework of GCICAP + introduction of new concepts (squadrons).

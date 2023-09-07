@@ -883,6 +883,11 @@ do -- AI_AIR_DISPATCHER
   -- However, the squadron will still stay alive. Any airplane that is airborne will continue its operations until all airborne airplanes
   -- of the squadron will be destroyed. This to keep consistency of air operations not to confuse the players.
   --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
   -- @field #AI_AIR_DISPATCHER
   AI_AIR_DISPATCHER = {
     ClassName = "AI_AIR_DISPATCHER",

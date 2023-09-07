@@ -36,7 +36,12 @@ do -- CARGO_CRATE
   -- 
   --   * @{Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT} to transport cargo by human players.
   --   * @{Tasking.Task_Cargo_Transport#TASK_CARGO_CSAR} to transport downed pilots by human players.
+  --
+  -- # Developer Note
   -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
   -- ===
   -- 
   -- @field #CARGO_CRATE

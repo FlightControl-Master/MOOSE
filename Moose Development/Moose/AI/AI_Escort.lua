@@ -174,8 +174,12 @@
 -- EscortPlanes = AI_ESCORT:New( EscortUnit, EscortGroup, "Desert", "Welcome to the mission. You are escorted by a plane with code name 'Desert', which can be instructed through the F10 radio menu." )
 -- EscortPlanes:MenusAirplanes() -- create menus for airplanes
 -- EscortPlanes:__Start(2)
--- 
--- 
+  --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
 -- @field #AI_ESCORT
 AI_ESCORT = {
   ClassName = "AI_ESCORT",

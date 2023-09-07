@@ -203,7 +203,12 @@
 -- 
 -- These different completion states are important for the mission designer to reflect scoring to a player.
 -- A success could mean a positive score to be given, while a failure could mean a negative score or penalties to be awarded.
--- 
+  --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
 -- ===
 -- 
 -- ### Author(s): **FlightControl**

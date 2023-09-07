@@ -108,7 +108,12 @@
 -- 
 -- **There are a lot of templates available that allows you to quickly setup an event handler for a specific event type!**
 -- 
--- 
+  --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
 -- 
 -- @field #AI_CARGO_DISPATCHER_AIRPLANE
 AI_CARGO_DISPATCHER_AIRPLANE = {

@@ -36,7 +36,12 @@ do -- TASK_ZONE_GOAL
   --   * @{#TASK_ZONE_GOAL.SetScoreOnDestroy}(): Set a score when a target in scope of the A2G attack, has been destroyed.
   --   * @{#TASK_ZONE_GOAL.SetScoreOnSuccess}(): Set a score when all the targets in scope of the A2G attack, have been destroyed.
   --   * @{#TASK_ZONE_GOAL.SetPenaltyOnFailed}(): Set a penalty when the A2G attack has failed.
+  --
+  -- # Developer Note
   -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
   -- @field #TASK_ZONE_GOAL
   TASK_ZONE_GOAL = {
     ClassName = "TASK_ZONE_GOAL",

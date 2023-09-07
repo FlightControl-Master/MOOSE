@@ -391,7 +391,12 @@
 --   - @{Tasking.Task_CARGO#TASK_CARGO_TRANSPORT}: Documents the specific methods how to handle the cargo transportation tasking from a mission designer perspective.
 --   - @{Tasking.Task_CARGO#TASK_CARGO_CSAR}: Documents the specific methods how to handle the cargo CSAR tasking from a mission designer perspective.
 --   
--- 
+  --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
 -- ===
 -- 
 -- ### Author: **FlightControl**
