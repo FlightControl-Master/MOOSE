@@ -36,6 +36,11 @@ do -- TASK_A2G
   --   * @{#TASK_A2G.SetScoreOnSuccess}(): Set a score when all the targets in scope of the A2G attack, have been destroyed.
   --   * @{#TASK_A2G.SetPenaltyOnFailed}(): Set a penalty when the A2G attack has failed.
   --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
   -- @field #TASK_A2G
   TASK_A2G = {
     ClassName = "TASK_A2G"

@@ -233,7 +233,12 @@
 --      Note that this option is optional, so can be omitted. The default value of the RR is 250 meters.
 --    * **NR=** Provide the maximum range in meters when the cargo units will be boarded within the carrier during boarding.
 --      Note that this option is optional, so can be omitted. The default value of the RR is 10 meters.
--- 
+  --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
 -- ===
 -- 
 -- ### Author: **FlightControl**

@@ -18,7 +18,12 @@
 -- # TASKINFO class, extends @{Core.Base#BASE}
 -- 
 -- ## The TASKINFO class implements the methods to contain information and display information of a task. 
--- 
+  --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
 -- @field #TASKINFO
 TASKINFO = {
   ClassName = "TASKINFO",
