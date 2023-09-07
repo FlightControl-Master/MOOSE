@@ -247,6 +247,9 @@ function ASTAR:AddNode(Node)
 
   self.nodes[Node.id]=Node
   self.Nnodes=self.Nnodes+1 
+  
+  self:T(self.lid..string.format("Adding node UID=%d", Node.id))
+  --Node.coordinate:MarkToAll(string.format("Node ID=%d", Node.id))
     
   return self
 end
@@ -759,19 +762,15 @@ end
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:FindStartNode()
-
-  local node, dist=self:FindClosestNode(self.startCoord)
   
-  self.startNode=node
-  
+  -- Find the closest pathline to the 
   local pathline, dist, vec3, s=self:FindClosestPathline(self.startCoord)
+  
   if pathline and vec3 then
   
     local Coordinate=COORDINATE:NewFromVec3(vec3)
     
-    Coordinate:MarkToAll("Start coord")
-    
-    node=self:AddNodeFromCoordinate(Coordinate)
+    local node=self:AddNodeFromCoordinate(Coordinate)
     
     node.pathline=pathline
     
@@ -779,16 +778,20 @@ function ASTAR:FindStartNode()
     
     node.pathpoint=point
     
-    self:T(self.lid..string.format("Adding START node ID=%d", node.id))
+    self.startNode=node        
   else
-    env.info("FF error start node")
+    -- Find the closest node to the given start coordinate.
+    self.startNode, dist=self:FindClosestNode(self.startCoord)
   end
   
+  -- Debug info.
+  self:T(self.lid..string.format("START node ID=%d", self.startNode.id))
+  
   -- Not sure why I did this. The node does not need to be added again as it is already contained in self.nodes!
---  if dist>1000 then
---    self:T(self.lid.."Adding start node to node grid!")
---    self:AddNode(node)
---  end
+  --  if dist>1000 then
+  --    self:T(self.lid.."Adding start node to node grid!")
+  --    self:AddNode(node)
+  --  end
     
   return self
 end
@@ -797,31 +800,34 @@ end
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:FindEndNode()
-
-  local node, dist=self:FindClosestNode(self.endCoord, {self.startNode})
-
-  self.endNode=node
   
   local pathline, dist, vec3, s=self:FindClosestPathline(self.endCoord)
+  
   if pathline and vec3 then
+  
     local Coordinate=COORDINATE:NewFromVec3(vec3)
-    Coordinate:MarkToAll("End coord",ReadOnly,Text)
-    node=self:AddNodeFromCoordinate(Coordinate)
+    
+    local node=self:AddNodeFromCoordinate(Coordinate)
+    
     node.pathline=pathline
+    
     local point=pathline:AddPointFromVec3(vec3, nil, s.p1)
+    
     node.pathpoint=point
     
-    self:T(self.lid..string.format("Adding END node ID=%d", node.id))
+    self.endNode=node
   else
-    env.info("FF error end node",showMessageBox)
+    self.endNode, dist=self:FindClosestNode(self.endCoord, {self.startNode})
   end
   
+  -- Debug info.
+  self:T(self.lid..string.format("END node ID=%d", self.endNode.id))
   
   -- Not sure why I did this. The node does not need to be added again as it is already contained in self.nodes!
---  if dist>1000 then
---    self:T(self.lid.."Adding end node to node grid!")
---    self:AddNode(node)
---  end
+  --  if dist>1000 then
+  --    self:T(self.lid.."Adding end node to node grid!")
+  --    self:AddNode(node)
+  --  end
     
   return self
 end
@@ -907,7 +913,7 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
       text=text..string.format(", Nvalid=%d [%d cached]", self.nvalid, self.nvalidcache)
       text=text..string.format(", Ncost=%d [%d cached]", self.ncost, self.ncostcache)      
       text=text..string.format("\nNodes:")
-      for i,_node in pairs(path) do
+      for i,_node in ipairs(path) do
         local node=_node --#ASTAR.Node
         text=text..string.format("\n[%d] Node ID=%d", i, node.id)
       end
@@ -1043,9 +1049,10 @@ end
 -- @return #boolean If true, transition between nodes is possible.
 function ASTAR:_IsValidNeighbour(node, neighbor)
 
-  -- Counter.
+  -- Counter of function calls.
   self.nvalid=self.nvalid+1
   
+  -- Check if neighbour is in cached set.
   local valid=node.valid[neighbor.id]
   if valid~=nil then
     --env.info(string.format("Node %d has valid=%s neighbour %d", node.id, tostring(valid), neighbor.id))
@@ -1053,13 +1060,16 @@ function ASTAR:_IsValidNeighbour(node, neighbor)
     return valid
   end
 
+  -- Check if this is a valid neighbour.
   local valid=nil
   if self.ValidNeighbourFunc then
     valid=self.ValidNeighbourFunc(node, neighbor, unpack(self.ValidNeighbourArg))  
   else
+    -- If no valid neighbour function is defined, we assume all nodes are valid neighbours.
     valid=true
   end
 
+  -- Cache valid neighbour.
   node.valid[neighbor.id]=valid
   neighbor.valid[node.id]=valid  -- Symmetric problem. 
 
