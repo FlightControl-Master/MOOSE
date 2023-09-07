@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update July 2023
+-- @date Last Update Sept 2023
 
 
 do
@@ -1551,7 +1551,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.60a"
+PLAYERTASKCONTROLLER.version="0.1.61"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -2503,7 +2503,8 @@ function PLAYERTASKCONTROLLER:_CheckTaskQueue()
         end
       end
       local TNow = timer.getAbsTime()
-      if TNow - task.timestamp > 10 then
+      if TNow - task.timestamp > 5 then
+        self:_RemoveMenuEntriesForTask(task)
         local task = self.TaskQueue:PullByID(_id) -- Ops.PlayerTask#PLAYERTASK
         task = nil
       end
@@ -3516,13 +3517,6 @@ function PLAYERTASKCONTROLLER:_UpdateJoinMenuTemplate()
         if _task.InMenu then
           self:T("**** Task already in Menu ".._task.Target:GetName())
         else
-          --local pilotcount = _task:CountClients()
-          --local newtext = "]"
-          --local tnow = timer.getTime()
-          -- marker for new tasks
-          --if tnow - _task.timestamp < 60 then
-            --newtext = "*]"
-          --end
           local menutaskno = self.gettext:GetEntry("MENUTASKNO",self.locale)
           --local text = string.format("%s %03d [%d%s",menutaskno,_task.PlayerTaskNr,pilotcount,newtext)
           local text = string.format("%s %03d",menutaskno,_task.PlayerTaskNr)
@@ -3533,7 +3527,6 @@ function PLAYERTASKCONTROLLER:_UpdateJoinMenuTemplate()
               text = string.format("%s (%03d)",name,_task.PlayerTaskNr)
             end
           end
-          --local taskentry = MENU_GROUP_COMMAND:New(group,text,ttypes[_tasktype],self._JoinTask,self,group,client,_task):SetTag(newtag)
           local parenttable, number = controller:FindEntriesByText(_tasktype,JoinMenu)
           if number > 0 then
             local Parent = parenttable[1]

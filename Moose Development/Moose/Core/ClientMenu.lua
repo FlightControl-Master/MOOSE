@@ -20,7 +20,7 @@
 -- 
 -- @module Core.ClientMenu
 -- @image Core_Menu.JPG
--- last change: July 2023
+-- last change: Sept 2023
 
 -- TODO
 ----------------------------------------------------------------------------------------------------------------
@@ -193,7 +193,10 @@ function CLIENTMENU:RemoveF10()
   self:T(self.lid.."RemoveF10")
   if self.GroupID then
     --self:I(self.lid.."Removing "..table.concat(self.path,";"))
-    local status, err = pcall(missionCommands.removeItemForGroup(self.GroupID , self.path ))
+    local function RemoveFunction()
+      return missionCommands.removeItemForGroup(self.GroupID , self.path )
+    end
+    local status, err = pcall(RemoveFunction)
     if not status then
       self:I(string.format("**** Error Removing Menu Entry %s for %s!",tostring(self.name),self.groupname))
     end
@@ -477,13 +480,13 @@ function CLIENTMENUMANAGER:FindUUIDsByText(Text,Parent)
   for _uuid,_entry in pairs(self.flattree) do
     local Entry = _entry -- #CLIENTMENU
     if Parent then
-      if Entry and string.find(Entry.name,Text) and string.find(Entry.UUID,Parent.UUID) then
+      if Entry and string.find(Entry.name,Text,1,true) and string.find(Entry.UUID,Parent.UUID,1,true) then
         table.insert(matches,_uuid)
         table.insert(entries,Entry )
         n=n+1
       end
     else
-      if Entry and string.find(Entry.name,Text) then
+      if Entry and string.find(Entry.name,Text,1,true) then
         table.insert(matches,_uuid)
         table.insert(entries,Entry )
         n=n+1
@@ -519,7 +522,7 @@ function CLIENTMENUMANAGER:FindUUIDsByParent(Parent)
   for _uuid,_entry in pairs(self.flattree) do
     local Entry = _entry -- #CLIENTMENU
     if Parent then
-      if Entry and string.find(Entry.UUID,Parent.UUID) then
+      if Entry and string.find(Entry.UUID,Parent.UUID,1,true) then
         table.insert(matches,_uuid)
         table.insert(entries,Entry )
         n=n+1
@@ -720,7 +723,7 @@ function CLIENTMENUMANAGER:DeleteGenericEntry(Entry)
       --self:I("Level = "..i)
       for _id,_uuid in pairs(tbl[i]) do
         self:T(_uuid)
-        if string.find(_uuid,uuid) or _uuid == uuid then
+        if string.find(_uuid,uuid,1,true) or _uuid == uuid then
           --self:I("Match for ".._uuid)
           self.menutree[i][_id] = nil
           self.flattree[_uuid] = nil
@@ -749,7 +752,7 @@ function CLIENTMENUMANAGER:RemoveGenericSubEntries(Entry)
       self:T("Level = "..i)
       for _id,_uuid in pairs(tbl[i]) do
         self:T(_uuid)
-        if string.find(_uuid,uuid) then
+        if string.find(_uuid,uuid,1,true) then
           self:T("Match for ".._uuid)
           self.menutree[i][_id] = nil
           self.flattree[_uuid] = nil
