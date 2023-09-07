@@ -57,7 +57,12 @@
 -- # 1.1) ACT_ASSIST_SMOKE_TARGETS_ZONE constructor:
 --
 --   * @{#ACT_ASSIST_SMOKE_TARGETS_ZONE.New}(): Creates a new ACT_ASSIST_SMOKE_TARGETS_ZONE object.
---
+  --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
 -- ===
 --
 -- @module Actions.Act_Assist

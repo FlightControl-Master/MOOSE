@@ -27,7 +27,12 @@ do -- CARGO_UNIT
   -- Note that ground forces behave in a group, and thus, act in formation, regardless if one unit is commanded to move.
   -- 
   -- This class is used in CARGO_GROUP, and is not meant to be used by mission designers individually.
+  --
+  -- # Developer Note
   -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
   -- ===
   -- 
   -- @field #CARGO_UNIT CARGO_UNIT

@@ -428,6 +428,11 @@ do -- TASK_A2G_DISPATCHER
   --       :New( Mission, AttackSet, DetectionAreas ) -- We assign the TaskDispatcher under Mission. The AttackSet will engage the enemy and will receive the dispatched Tasks. The DetectionAreas will report any detected enemies to the TaskDispatcher.
   --
   --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
   --
   -- @field #TASK_A2G_DISPATCHER
   TASK_A2G_DISPATCHER = {

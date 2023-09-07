@@ -130,7 +130,12 @@
 --      AIBAIZone:SearchOff()
 -- 
 -- Searching can be switched back on with the method @{#AI_BAI_ZONE.SearchOn}(). Use the method @{#AI_BAI_ZONE.SearchOnOff}() to flexibily switch searching on or off.
--- 
+  --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
 -- ===
 -- 
 -- @field #AI_BAI_ZONE

@@ -136,7 +136,12 @@
 -- 
 -- Escort groups can have their own mission. This menu item will allow the escort group to resume their Mission from a given waypoint.
 -- Note that this is really fantastic, as you now have the dynamic of taking control of the escort groups, and allowing them to resume their path or mission.
---
+  --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
 -- ===
 -- 
 -- ### Authors: **FlightControl** 
