@@ -1167,7 +1167,7 @@ function BASE:_F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
       if DebugInfoFrom then
         LineFrom = DebugInfoFrom.currentline
       end
-      env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function, UTILS.OneLineSerialize( Arguments ) ) )
+      env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function, UTILS.BasicSerialize( Arguments ) ) )
     end
   end
 end
@@ -1241,7 +1241,7 @@ function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
       if DebugInfoFrom then
         LineFrom = DebugInfoFrom.currentline
       end
-      env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s", LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, UTILS.OneLineSerialize( Arguments ) ) )
+      env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s", LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, UTILS.BasicSerialize( Arguments ) ) )
     end
   end
 end
@@ -1311,9 +1311,9 @@ function BASE:E( Arguments )
       LineFrom = DebugInfoFrom.currentline
     end
 
-    env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, UTILS.OneLineSerialize( Arguments ) ) )
+    env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, UTILS.BasicSerialize( Arguments ) ) )
   else
-    env.info( string.format( "%1s:%30s%05d(%s)", "E", self.ClassName, self.ClassID, UTILS.OneLineSerialize( Arguments ) ) )
+    env.info( string.format( "%1s:%30s%05d(%s)", "E", self.ClassName, self.ClassID, UTILS.BasicSerialize( Arguments ) ) )
   end
 
 end
@@ -1338,9 +1338,9 @@ function BASE:I( Arguments )
       LineFrom = DebugInfoFrom.currentline
     end
 
-    env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "I", self.ClassName, self.ClassID, Function, UTILS.OneLineSerialize( Arguments ) ) )
+    env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "I", self.ClassName, self.ClassID, Function, UTILS.BasicSerialize( Arguments ) ) )
   else
-    env.info( string.format( "%1s:%30s%05d(%s)", "I", self.ClassName, self.ClassID, UTILS.OneLineSerialize( Arguments ) ) )
+    env.info( string.format( "%1s:%30s%05d(%s)", "I", self.ClassName, self.ClassID, UTILS.BasicSerialize( Arguments ) ) )
   end
 
 end

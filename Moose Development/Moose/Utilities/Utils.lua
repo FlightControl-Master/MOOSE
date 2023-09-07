@@ -426,10 +426,12 @@ UTILS.BasicSerialize = function(s)
   if s == nil then
     return "\"\""
   else
-    if ((type(s) == 'number') or (type(s) == 'boolean') or (type(s) == 'function') or (type(s) == 'table') or (type(s) == 'userdata') ) then
+    if ((type(s) == 'number') or (type(s) == 'boolean') or (type(s) == 'function') or (type(s) == 'userdata') ) then
       return tostring(s)
+    elseif type(s) == "table" then
+      return UTILS._OneLineSerialize(s) 
     elseif type(s) == 'string' then
-      s = string.format('%q', s)
+      s = string.format('(%s)', s)
       return s
     end
   end
