@@ -25,7 +25,7 @@ routines.utils.round = function( number, decimals )
 end
 
 -- from http://lua-users.org/wiki/CopyTable
-routines.utils.deepCopy = function( object )
+UTILS.DeepCopy = function( object )
   local lookup_table = {}
   local function _copy( object )
     if type( object ) ~= "table" then
@@ -474,7 +474,7 @@ function routines.getRandPointInCircle( point, radius, innerRadius )
 end
 
 routines.goRoute = function( group, path )
-  local misTask = { id = 'Mission', params = { route = { points = routines.utils.deepCopy( path ) } } }
+  local misTask = { id = 'Mission', params = { route = { points = UTILS.DeepCopy( path ) } } }
   if type( group ) == 'string' then
     group = Group.getByName( group )
   end
@@ -1671,7 +1671,7 @@ routines.ground.patrolRoute = function( vars )
     end
 
     if pType and string.lower( pType ) == 'doubleback' then
-      local curRoute = routines.utils.deepCopy( useRoute )
+      local curRoute = UTILS.DeepCopy( useRoute )
       for i = #curRoute, 2, -1 do
         useRoute[#useRoute + 1] = routines.ground.buildWP( curRoute[i], curRoute[i].action, curRoute[i].speed )
       end

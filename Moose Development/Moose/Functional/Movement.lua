@@ -55,7 +55,6 @@ end
 --- Call this function to start the MOVEMENT scheduling.
 function MOVEMENT:ScheduleStart()
 	self:F()
-	--self.MoveFunction = routines.scheduleFunction( self._Scheduler, { self }, timer.getTime() + 1, 120 )
   self.MoveFunction = SCHEDULER:New( self, self._Scheduler, {}, 1, 120 )
 end
 

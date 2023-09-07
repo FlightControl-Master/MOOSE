@@ -2200,7 +2200,7 @@ end
 function GROUP:GetTaskMission()
   self:F2( self.GroupName )
 
-  return routines.utils.deepCopy( _DATABASE.Templates.Groups[self.GroupName].Template )
+  return UTILS.DeepCopy( _DATABASE.Templates.Groups[self.GroupName].Template )
 end
 
 --- Return the mission route of the group.
@@ -2209,7 +2209,7 @@ end
 function GROUP:GetTaskRoute()
   self:F2( self.GroupName )
 
-  return routines.utils.deepCopy( _DATABASE.Templates.Groups[self.GroupName].Template.route.points )
+  return UTILS.DeepCopy( _DATABASE.Templates.Groups[self.GroupName].Template.route.points )
 end
 
 --- Return the route of a group by using the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
@@ -2245,7 +2245,7 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
 
     for TPointID = Begin + 1, #Template.route.points - End do
       if Template.route.points[TPointID] then
-        Points[#Points+1] = routines.utils.deepCopy( Template.route.points[TPointID] )
+        Points[#Points+1] = UTILS.DeepCopy( Template.route.points[TPointID] )
         if Randomize then
           if not Radius then
             Radius = 500

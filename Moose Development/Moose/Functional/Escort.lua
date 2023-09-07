@@ -600,7 +600,7 @@ function ESCORT:MenuReportTargets( Seconds )
   self.EscortMenuAttackNearbyTargets = MENU_GROUP:New( self.EscortClient:GetGroup(), "Attack targets", self.EscortMenu )
 
 
-  self.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, {}, 1, Seconds )
+  self.ReportTargetsScheduler, self.ReportTargetsSchedulerID = SCHEDULER:New( self, self._ReportTargetsScheduler, {}, 1, Seconds )
 
   return self
 end
@@ -809,7 +809,7 @@ function ESCORT:_SwitchReportNearbyTargets( ReportTargets )
       self.ReportTargetsScheduler:Schedule( self, self._ReportTargetsScheduler, {}, 1, 30 )
     end
   else
-    routines.removeFunction( self.ReportTargetsScheduler )
+    self.ReportTargetsScheduler:Remove(self.ReportTargetsSchedulerID)
     self.ReportTargetsScheduler = nil
   end
 end
