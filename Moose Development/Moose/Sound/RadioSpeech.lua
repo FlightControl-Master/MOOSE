@@ -17,7 +17,12 @@
 --- Makes the radio speak.
 --
 -- # RADIOSPEECH usage
---
+  --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
 --
 -- @type RADIOSPEECH
 -- @extends Core.RadioQueue#RADIOQUEUE
