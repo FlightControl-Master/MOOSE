@@ -68,7 +68,7 @@
 -- @image Missile_Trainer.JPG
 
 
---- @type MISSILETRAINER
+-- @type MISSILETRAINER
 -- @field Core.Set#SET_CLIENT DBClients
 -- @extends Core.Base#BASE
 
@@ -210,7 +210,7 @@ function MISSILETRAINER:New( Distance, Briefing )
 
 
 --  	self.DB:ForEachClient(
---  	 --- @param Wrapper.Client#CLIENT Client
+--  	 -- @param Wrapper.Client#CLIENT Client
 --  	 function( Client )
 --
 --        ... actions ...
@@ -560,7 +560,7 @@ function MISSILETRAINER:_AddBearing( Client, TrainerWeapon )
 
     local DirectionVector = { x = PositionMissile.x - TargetVec3.x, y = PositionMissile.y - TargetVec3.y, z = PositionMissile.z - TargetVec3.z }
     local DirectionRadians = math.atan2( DirectionVector.z, DirectionVector.x )
-    --DirectionRadians = DirectionRadians + routines.getNorthCorrection( PositionTarget )
+
     if DirectionRadians < 0 then
       DirectionRadians = DirectionRadians + 2 * math.pi
     end

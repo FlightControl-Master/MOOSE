@@ -521,6 +521,26 @@ function CONTROLLABLE:TaskWrappedAction( DCSCommand, Index )
   return DCSTaskWrappedAction
 end
 
+--- Return an Empty Task.
+-- @param #CONTROLLABLE self
+-- @return DCS#Task
+function CONTROLLABLE:TaskEmptyTask()
+
+  local DCSTaskWrappedAction = {  
+            ["id"] = "WrappedAction",
+            ["params"] = {
+              ["action"] = {
+                ["id"] = "Script",
+                ["params"] = {
+                  ["command"] = "",
+                },
+              },
+            },
+          }
+
+  return DCSTaskWrappedAction
+end
+
 --- Set a Task at a Waypoint using a Route list.
 -- @param #CONTROLLABLE self
 -- @param #table Waypoint The Waypoint!
@@ -2809,7 +2829,7 @@ end
 function CONTROLLABLE:GetTaskMission()
   self:F2( self.ControllableName )
 
-  return routines.utils.deepCopy( _DATABASE.Templates.Controllables[self.ControllableName].Template )
+  return UTILS.DeepCopy( _DATABASE.Templates.Controllables[self.ControllableName].Template )
 end
 
 --- Return the mission route of the controllable.
@@ -2818,7 +2838,7 @@ end
 function CONTROLLABLE:GetTaskRoute()
   self:F2( self.ControllableName )
 
-  return routines.utils.deepCopy( _DATABASE.Templates.Controllables[self.ControllableName].Template.route.points )
+  return UTILS.DeepCopy( _DATABASE.Templates.Controllables[self.ControllableName].Template.route.points )
 end
 
 --- Return the route of a controllable by using the @{Core.Database#DATABASE} class.
@@ -2854,7 +2874,7 @@ function CONTROLLABLE:CopyRoute( Begin, End, Randomize, Radius )
 
     for TPointID = Begin + 1, #Template.route.points - End do
       if Template.route.points[TPointID] then
-        Points[#Points + 1] = routines.utils.deepCopy( Template.route.points[TPointID] )
+        Points[#Points + 1] = UTILS.DeepCopy( Template.route.points[TPointID] )
         if Randomize then
           if not Radius then
             Radius = 500
@@ -5264,3 +5284,4 @@ function CONTROLLABLE:TaskAerobaticsBarrelRoll(TaskAerobatics,Repeats,InitAltitu
   
   return TaskAerobatics
 end
+
