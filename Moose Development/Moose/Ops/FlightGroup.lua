@@ -3900,6 +3900,7 @@ function FLIGHTGROUP:_InitGroup(Template)
     self.menu.atc=self.menu.atc or {} --#table
     self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC") --Core.Menu#MENU_GROUP
     self.menu.atc.help=self.menu.atc.help or MENU_GROUP:New(self.group, "Help", self.menu.atc.root) --Core.Menu#MENU_GROUP
+    self.menu.nav.root=self.menu.nav.root or MENU_GROUP:New(self.group, "Navigation") --Core.Menu#MENU_GROUP
   end
 
   -- Units of the group.
@@ -5233,6 +5234,76 @@ function FLIGHTGROUP:_GetDistToParking(Spot, Coordinate)
   end
 
   return dist
+end
+
+
+--- Create player menu for Navigation.
+-- @param #FLIGHTGROUP self
+-- @param Core.Menu#MENU_GROUP mainmenu Nav root menu table.
+function FLIGHTGROUP:_CreatePlayerMenuNav(mainmenu)
+  
+  -- Group info.
+  local group=self.group
+  local groupname=self.groupname
+  local gid=group:GetID()
+
+  -- Get player element.
+  local player=self:GetPlayerElement()
+  
+  -- Debug info.
+  local text=string.format("Creating NAV player menu for flight %s: in state=%s, player=%s", tostring(self.groupname), self:GetState(), player.status)
+  self:T(self.lid..text)
+
+
+  -- Airbase root menu.  
+  local flightplans=MENU_GROUP:New(group, "Flight Plans", mainmenu)
+  
+  for i,_flightplan in pairs(self.flightplans or {}) do
+    local flightplan=_flightplan --#FLIGHTPLAN
+    MENU_GROUP_COMMAND:New(group, flightplan.alias, flightplans, self._PlayerSelectFlightplan,  self, flightplan)
+  end
+  
+  if self.flightplan then
+    
+    local flightplan=MENU_GROUP:New(group, "Current Flight Plan", mainmenu)
+    
+    
+    MENU_GROUP_COMMAND:New(group, "List NavFixes", flightplan, self._PlayerListNavfixes,  self, self.flightplan)
+  end
+  
+  
+    
+end
+
+--- Player selected flightplan from Menu.
+-- @param #FLIGHTGROUP self
+-- @param Navigation.FlightPlan#FLIGHTPLAN flightplan The flightplan chosen.
+function FLIGHTGROUP:_PlayerSelectFlightplan(flightplan)
+  
+  self:_SetFlightPlan(flightplan)
+
+  self:_CreatePlayerMenuNav(self.menu.nav)
+end
+
+--- Player selected flightplan from Menu.
+-- @param #FLIGHTGROUP self
+-- @param Navigation.FlightPlan#FLIGHTPLAN flightplan The flightplan chosen.
+function FLIGHTGROUP:_PlayerListNavfixes(flightplan)
+
+  if flightplan then
+    
+    local text="Nav Fixes:"
+    for i,_fix in pairs(flightplan.fixes) do
+      local fix=_fix --Navigation.NavFix#NAVFIX
+      
+      --TODO: parameters of fix to output.
+      
+      text=text..string.format("\n%s",fix.name)
+    end    
+    MESSAGE:New(text, 60):ToGroup(self.group)
+  
+  end
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

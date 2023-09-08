@@ -82,6 +82,8 @@ NAVFIX.version="0.0.1"
 
 --- Create a new NAVFIX class instance.
 -- @param #NAVFIX self
+-- @param Core.Point#COORDINATE Coordinate of the fix.
+-- @param #string Name Name of the fix. Should be unique!
 -- @return #NAVFIX self
 function NAVFIX:New(Coordinate, Name)
 
@@ -133,7 +135,7 @@ function NAVFIX:SetCompulsory(Compulsory)
   return self
 end
 
---- Set whether this fix is compulsory.
+--- Set whether this is a fly-over fix fix.
 -- @param #NAVFIX self
 -- @param #boolean FlyOver If `true`, this is a fly over fix. If `false` or nil, it is not.
 -- @return #NAVFIX self
@@ -142,7 +144,7 @@ function NAVFIX:SetFlyOver(FlyOver)
   return self
 end
 
---- Set whether this is the intermediate fix.
+--- Set whether this is the intermediate fix (IF).
 -- @param #NAVFIX self
 -- @param #boolean IntermediateFix If `true`, this is an intermediate fix.
 -- @return #NAVFIX self

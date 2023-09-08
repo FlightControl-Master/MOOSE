@@ -59,13 +59,15 @@ FLIGHTPLAN = {
   fixes           = {}
 }
 
---- Type of navaid
+--- Type of  flightplan.
 -- @type FLIGHTPLAN.Type
--- @field #string VOR VOR
--- @field #string NDB NDB
+-- @field #string IFRH Instrument Flying Rules High Altitude.
+-- @field #string IFRL Instrument Flying Rules Low Altitude.
+-- @field #string VFR Visual Flight Rules.
 FLIGHTPLAN.TYPE={
-  VOR="VOR",
-  NDB="NDB",
+  IFRH="IFR Heigh",
+  IFRL="IFR Low",
+  VFR="VFR",
 }
   
 --- FLIGHTPLAN class version.
@@ -196,6 +198,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Private Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
