@@ -92,7 +92,12 @@
 -- local LargeFormation = AI_FORMATION:New( LeaderUnit, FollowGroupSet, "Center Wing Formation", "Briefing" )
 -- LargeFormation:FormationCenterWing( 500, 50, 0, 250, 250 )
 -- LargeFormation:__Start( 1 )
--- 
+  --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
 -- @field #AI_FORMATION 
 AI_FORMATION = {
   ClassName = "AI_FORMATION",

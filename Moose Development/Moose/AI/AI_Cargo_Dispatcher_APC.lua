@@ -137,7 +137,12 @@
 -- Use @{#AI_CARGO_DISPATCHER_APC.SetHomeZone}() to specify the home zone.
 -- 
 -- If no home zone is specified, the APCs will wait near the deploy zone for a new pickup command.   
--- 
+  --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
 -- ===
 -- 
 -- @field #AI_CARGO_DISPATCHER_APC

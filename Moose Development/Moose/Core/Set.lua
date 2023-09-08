@@ -439,7 +439,7 @@ do -- SET_BASE
   function SET_BASE:SetDatabase( BaseSet )
 
     -- Copy the filter criteria of the BaseSet
-    local OtherFilter = routines.utils.deepCopy( BaseSet.Filter )
+    local OtherFilter = UTILS.DeepCopy( BaseSet.Filter )
     self.Filter = OtherFilter
 
     -- Now base the new Set on the BaseSet

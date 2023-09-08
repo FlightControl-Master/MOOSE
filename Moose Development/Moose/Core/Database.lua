@@ -32,7 +32,6 @@
 -- @image Core_Database.JPG
 
 
---- DATABASE class.
 -- @type DATABASE
 -- @field #string ClassName Name of the class.
 -- @field #table Templates Templates: Units, Groups, Statics, ClientsByName, ClientsByID.
@@ -1849,13 +1848,13 @@ function DATABASE:GetFlightControl(airbasename)
   return self.FLIGHTCONTROLS[airbasename]
 end
 
---- @param #DATABASE self
+-- @param #DATABASE self
 function DATABASE:_RegisterTemplates()
   self:F2()
 
   self.Navpoints = {}
   self.UNITS = {}
-  --Build routines.db.units and self.Navpoints
+  --Build self.Navpoints
   for CoalitionName, coa_data in pairs(env.mission.coalition) do
     self:T({CoalitionName=CoalitionName})
 
@@ -1877,7 +1876,7 @@ function DATABASE:_RegisterTemplates()
         for nav_ind, nav_data in pairs(coa_data.nav_points) do
 
           if type(nav_data) == 'table' then
-            self.Navpoints[CoalitionName][nav_ind] = routines.utils.deepCopy(nav_data)
+            self.Navpoints[CoalitionName][nav_ind] = UTILS.DeepCopy(nav_data)
 
             self.Navpoints[CoalitionName][nav_ind]['name'] = nav_data.callsignStr  -- name is a little bit more self-explanatory.
             self.Navpoints[CoalitionName][nav_ind]['point'] = {}  -- point is used by SSE, support it.
