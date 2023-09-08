@@ -13,7 +13,7 @@
 -- @image MOOSE.JPG
 
 
---- @type SMOKECOLOR
+-- @type SMOKECOLOR
 -- @field Green
 -- @field Red
 -- @field White
@@ -22,7 +22,7 @@
 
 SMOKECOLOR = trigger.smokeColor -- #SMOKECOLOR
 
---- @type FLARECOLOR
+-- @type FLARECOLOR
 -- @field Green
 -- @field Red
 -- @field White
@@ -300,14 +300,14 @@ end
 -- @return #string Table as a string.
 UTILS.OneLineSerialize = function( tbl )  -- serialization of a table all on a single line, no comments, made to replace old get_table_string function
 
-local  lookup_table = {}
+  lookup_table = {}
 
   local function _Serialize( tbl )
 
     if type(tbl) == 'table' then --function only works for tables!
 
       if lookup_table[tbl] then
-        return lookup_table[tbl]
+        return lookup_table[object]
       end
 
       local tbl_str = {}
@@ -324,7 +324,7 @@ local  lookup_table = {}
           ind_str[#ind_str + 1] = ']='
         else --must be a string
           ind_str[#ind_str + 1] = '['
-          ind_str[#ind_str + 1] = routines.utils.basicSerialize(ind)
+          ind_str[#ind_str + 1] = UTILS.BasicSerialize(ind)
           ind_str[#ind_str + 1] = ']='
         end
 
@@ -335,7 +335,7 @@ local  lookup_table = {}
           tbl_str[#tbl_str + 1] = table.concat(ind_str)
           tbl_str[#tbl_str + 1] = table.concat(val_str)
       elseif type(val) == 'string' then
-          val_str[#val_str + 1] = routines.utils.basicSerialize(val)
+          val_str[#val_str + 1] = UTILS.BasicSerialize(val)
           val_str[#val_str + 1] = ','
           tbl_str[#tbl_str + 1] = table.concat(ind_str)
           tbl_str[#tbl_str + 1] = table.concat(val_str)
@@ -358,7 +358,7 @@ local  lookup_table = {}
           tbl_str[#tbl_str + 1] = "f() " .. tostring(ind)
           tbl_str[#tbl_str + 1] = ','   --I think this is right, I just added it
         else
-          env.info('unable to serialize value type ' .. routines.utils.basicSerialize(type(val)) .. ' at index ' .. tostring(ind))
+          env.info('unable to serialize value type ' .. UTILS.BasicSerialize(type(val)) .. ' at index ' .. tostring(ind))
           env.info( debug.traceback() )
         end
 
@@ -426,10 +426,12 @@ UTILS.BasicSerialize = function(s)
   if s == nil then
     return "\"\""
   else
-    if ((type(s) == 'number') or (type(s) == 'boolean') or (type(s) == 'function') or (type(s) == 'table') or (type(s) == 'userdata') ) then
+    if ((type(s) == 'number') or (type(s) == 'boolean') or (type(s) == 'function') or (type(s) == 'userdata') ) then
       return tostring(s)
+    elseif type(s) == "table" then
+      return UTILS._OneLineSerialize(s) 
     elseif type(s) == 'string' then
-      s = string.format('%q', s)
+      s = string.format('(%s)', s)
       return s
     end
   end

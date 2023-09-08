@@ -208,7 +208,7 @@ SCHEDULER = {
 -- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
 -- @param #number Stop Specifies the amount of seconds when the scheduler will be stopped.
 -- @return #SCHEDULER self.
--- @return #table The ScheduleID of the planned schedule.
+-- @return #string The ScheduleID of the planned schedule.
 function SCHEDULER:New( MasterObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop )
 
   local self = BASE:Inherit( self, BASE:New() ) -- #SCHEDULER
