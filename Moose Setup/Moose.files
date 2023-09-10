@@ -16,11 +16,9 @@ Core/Event.lua
 Core/Settings.lua
 Core/Menu.lua
 Core/Zone.lua
-Core/Zone_Detection.lua
 Core/Database.lua
 Core/Set.lua
 Core/Point.lua
-Core/Velocity.lua
 Core/Message.lua
 Core/Fsm.lua
 Core/Spawn.lua
