@@ -146,7 +146,7 @@ MSRS = {
 MSRS.version="0.1.1"
 
 --- Voices
--- @type Voices
+-- @type MSRS.Voices
 MSRS.Voices = {
   Microsoft = {
     ["Hedda"] = "Microsoft Hedda Desktop", -- de-DE
