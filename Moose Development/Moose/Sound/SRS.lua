@@ -192,7 +192,7 @@ MSRS = {
 MSRS.version="0.1.2"
 
 --- Voices
--- @type Voices
+-- @type MSRS.Voices
 MSRS.Voices = {
   Microsoft = {
     ["Hedda"] = "Microsoft Hedda Desktop", -- de-DE
@@ -634,7 +634,7 @@ function MSRS:Help()
 end
 
 --- Sets an alternate SRS backend to be used by MSRS to transmit over SRS for all new MSRS class instances.
--- @param #table A table containing a table `Functions` with new/replacement class functions and `Vars` with new/replacement variables. 
+-- @param #table Backend A table containing a table `Functions` with new/replacement class functions and `Vars` with new/replacement variables. 
 -- @return #boolean Returns 'true' on success.
 function MSRS.SetDefaultBackend(Backend)
   if type(Backend) == "table" then
@@ -1194,7 +1194,7 @@ MSRS_BACKEND_DCSGRPC.Functions.PlayTextExt = function (self, Text, Delay, Freque
   if Delay and Delay>0 then
       self:ScheduleOnce(Delay, self.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label)
   else
-      self:_DCSgRPCtts(tostring(Text, nil, Frequencies, Voice, Label))
+      self:_DCSgRPCtts(tostring(Text), nil, Frequencies, Voice, Label)
   end
   
   return self

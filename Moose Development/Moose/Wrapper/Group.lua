@@ -37,7 +37,7 @@
 -- @module Wrapper.Group
 -- @image Wrapper_Group.JPG
 
-
+---
 -- @type GROUP
 -- @extends Wrapper.Controllable#CONTROLLABLE
 -- @field #string GroupName The name of the group.
