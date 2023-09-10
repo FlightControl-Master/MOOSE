@@ -2,6 +2,7 @@
 -- @module Core.Zone_Detection
 -- @image MOOSE.JPG
 
+---
 -- @type ZONE_DETECTION
 -- @field DCS#Vec2 Vec2 The current location of the zone.
 -- @field DCS#Distance Radius The radius of the zone.
