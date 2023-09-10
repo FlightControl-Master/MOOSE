@@ -432,13 +432,17 @@ function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS, Port, 
   -- SRS for Tower.
   self.msrsTower=MSRS:New(PathToSRS, Frequency, Modulation)
   self.msrsTower:SetPort(self.Port)
-  self.msrsTower:SetGoogle(GoogleKey)
+  if GoogleKey then
+    self.msrsTower:SetGoogle(GoogleKey)
+  end
   self:SetSRSTower()
   
   -- SRS for Pilot.
   self.msrsPilot=MSRS:New(PathToSRS, Frequency, Modulation)
   self.msrsPilot:SetPort(self.Port)
-  self.msrsPilot:SetGoogle(GoogleKey)
+  if GoogleKey then
+    self.msrsPilot:SetGoogle(GoogleKey)
+  end
   self:SetSRSPilot()
   
   -- Wait at least 10 seconds after last radio message before calling the next status update.
@@ -624,7 +628,9 @@ function FLIGHTCONTROL:_SetSRSOptions(msrs, Gender, Culture, Voice, Volume, Labe
     msrs:SetVoice(Voice)
     msrs:SetVolume(Volume)
     msrs:SetLabel(Label)
-    msrs:SetGoogle(PathToGoogleCredentials)
+    if PathToGoogleCredentials then
+      msrs:SetGoogle(PathToGoogleCredentials)
+    end
     msrs:SetCoalition(self:GetCoalition())
     msrs:SetPort(Port or self.Port or 5002)
   end
