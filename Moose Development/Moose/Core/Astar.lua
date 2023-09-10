@@ -246,9 +246,9 @@ end
 function ASTAR:AddNode(Node)
 
   self.nodes[Node.id]=Node
-  self.Nnodes=self.Nnodes+1 
+  self.Nnodes=self.Nnodes+1
   
-  self:T(self.lid..string.format("Adding node UID=%d", Node.id))
+  self:T3(self.lid..string.format("Adding node UID=%d", Node.id))
   --Node.coordinate:MarkToAll(string.format("Node ID=%d", Node.id))
     
   return self
@@ -285,6 +285,13 @@ function ASTAR:AddNodeFromPathlineName(Pathline)
       local node=self:AddNodeFromCoordinate(coord)
       node.pathline=Pathline
       node.pathpoint=point
+      
+      local name=node.pathline and node.pathline.name or "N/A"
+      local idx=node.pathline and node.pathline:_GetPointIndex(node.pathpoint) or "N/A"
+      
+      self:T(self.lid..string.format("Adding node UID=%d pathline=%s [%s]", node.id, name, tostring(idx)))
+      node.coordinate:MarkToAll(string.format("Node ID=%d\npathline=%s [%s]", node.id, name, tostring(idx)))      
+      
     end    
     
   else
@@ -599,6 +606,8 @@ function ASTAR.Pathline(nodeA, nodeB, distmax)
 
   if nodeA.pathpoint.name==nodeB.pathpoint.name then
   
+    -- Nodes are on the same pathline. We use the index to check if they are neighbours.
+  
     local pathline=nodeA.pathline
     
     local idxA=pathline:_GetPointIndex(nodeA.pathpoint)
@@ -609,10 +618,24 @@ function ASTAR.Pathline(nodeA, nodeB, distmax)
     end
     
   else
-    local dist=nodeA.coordinate:Get2DDistance(nodeB.coordinate)
+  
+--    local dist=nodeA.coordinate:Get2DDistance(nodeB.coordinate)
+--    if dist<distmax then
+--      return true
+--    end
+    
+    -- Check if nodeB is close to pathline of nodeA.
+    local c, dist=nodeA.pathline:GetClosestPoint3D(nodeB.coordinate)    
     if dist<distmax then
       return true
     end
+    
+    -- Check if nodeA is close to pathline of nodeB.
+    local c, dist=nodeB.pathline:GetClosestPoint3D(nodeA.coordinate)
+    if dist<distmax then
+      return true
+    end    
+    
   end
 
   return false
@@ -778,7 +801,7 @@ function ASTAR:FindStartNode()
     
     node.pathpoint=point
     
-    self.startNode=node        
+    self.startNode=node
   else
     -- Find the closest node to the given start coordinate.
     self.startNode, dist=self:FindClosestNode(self.startCoord)
@@ -930,11 +953,22 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
     -- Get neighbour nodes.
     local neighbors=self:_NeighbourNodes(current, nodes)
     
+--    local text=string.format("Current node UID=%d pathline=%s", current.id, current.pathline and current.pathline.name or "N/A")
+--    for _,_node in pairs(neighbors) do
+--      local node=_node --#ASTAR.Node
+--      text=text..string.format("\nNeighbour node UID=%d pathline=%s", node.id, node.pathline and node.pathline.name or "N/A")
+--    end
+--    self:T(self.lid..text)
+    
     -- Loop over neighbours.
     for _,neighbor in pairs(neighbors) do
+    
+      -- Node is not in closed set.
       if self:_NotIn(closedset, neighbor.id) then
       
-        local tentative_g_score=g_score[current.id]+self:_DistNodes(current, neighbor)
+        -- Calculate tentative_g_score.
+        --local tentative_g_score=g_score[current.id] + self:_DistNodes(current, neighbor)
+        local tentative_g_score=g_score[current.id] + self:_HeuristicCost(current, neighbor)
          
         if self:_NotIn(openset, neighbor.id) or tentative_g_score < g_score[neighbor.id] then
         
@@ -994,13 +1028,36 @@ end
 -- @param #ASTAR self
 -- @param #boolean ExcludeStartNode If *true*, do not include start node in found path. Default is to include it.
 -- @param #boolean ExcludeEndNode If *true*, do not include end node in found path. Default is to include it.
--- @return #table Table of PATHLINES used in the path. Key is the pathline name and value is the PATHLINE.
+-- @return #table Table of PATHLINES used in the path.
 function ASTAR:GetPathlinesFromNodes(Nodes)
 
   local pathlines={}
-  for _,_node in pairs(Nodes or {}) do
-    local node=_node --#ASTAR.Node
-    pathlines[node.pathline.name]=node.pathline
+  
+  --for _,_node in pairs(Nodes or {}) do
+  for i=1,#Nodes do
+    local node=Nodes[i] --#ASTAR.Node
+    
+    
+    local pathline=node.pathline
+    
+    if pathline and i>1 and i<#Nodes then
+      
+      local n=Nodes[i-1] --#ASTAR.Node
+      local N=Nodes[i+1] --#ASTAR.Node
+      
+      -- Check if previous and next nodes are 
+      if n.pathline and N.pathline and n.pathline.name==N.pathline.name and n.pathline.name~=pathline.name then
+        env.info("FF 100 "..pathline.name)
+        pathline=n.pathline
+      end
+      
+    end
+    
+    -- Add pathline to table (if it is not already in).
+    if not UTILS.IsAnyInTable(pathlines, {pathline}, "name") then
+      env.info(string.format("Adding pathline %s", pathline.name, tostring(UTILS.IsAnyInTable(pathlines, pathline))))
+      table.insert(pathlines, pathline)
+    end
   end
 
   return pathlines
@@ -1024,6 +1081,7 @@ function ASTAR:_HeuristicCost(nodeA, nodeB)
   local cost=nodeA.cost[nodeB.id]
   if cost~=nil then
     self.ncostcache=self.ncostcache+1
+    self:T(self.lid..string.format("Cost nodeA=%d --> nodeB=%d = %.1f (Cashed!)", nodeA.id, nodeB.id, cost))
     return cost
   end
 

@@ -3898,6 +3898,7 @@ function FLIGHTGROUP:_InitGroup(Template)
   if not self.isAI then
     self.menu=self.menu or {}
     self.menu.atc=self.menu.atc or {} --#table
+    self.menu.nav=self.menu.nav or {} --#table
     self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC") --Core.Menu#MENU_GROUP
     self.menu.atc.help=self.menu.atc.help or MENU_GROUP:New(self.group, "Help", self.menu.atc.root) --Core.Menu#MENU_GROUP
     self.menu.nav.root=self.menu.nav.root or MENU_GROUP:New(self.group, "Navigation") --Core.Menu#MENU_GROUP
