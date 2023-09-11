@@ -1015,8 +1015,8 @@ function ASTAR:GetPathline(ExcludeStartNode, ExcludeEndNode)
     for _,_note in pairs(nodes) do
       local note=_note --#ASTAR.Node 
       
-      pathline:AddPointFromVec3(note.coordinate)
-    
+      local point=pathline:AddPointFromVec3(note.coordinate)
+          
     end
       
   end
@@ -1026,8 +1026,7 @@ end
 
 --- Get pathlines from nodes.
 -- @param #ASTAR self
--- @param #boolean ExcludeStartNode If *true*, do not include start node in found path. Default is to include it.
--- @param #boolean ExcludeEndNode If *true*, do not include end node in found path. Default is to include it.
+-- @param #table Nodes Given nodes.
 -- @return #table Table of PATHLINES used in the path.
 function ASTAR:GetPathlinesFromNodes(Nodes)
 
@@ -1037,25 +1036,29 @@ function ASTAR:GetPathlinesFromNodes(Nodes)
   for i=1,#Nodes do
     local node=Nodes[i] --#ASTAR.Node
     
-    
+    -- Pathline.
     local pathline=node.pathline
     
     if pathline and i>1 and i<#Nodes then
       
+      -- Previous and next nodes.
       local n=Nodes[i-1] --#ASTAR.Node
       local N=Nodes[i+1] --#ASTAR.Node
       
-      -- Check if previous and next nodes are 
+      -- Check if previous and next nodes are on the same pathline.
+      -- If only one point in beteen is of another pathline, this is a junction and we dont actually switch to the other pathline.
       if n.pathline and N.pathline and n.pathline.name==N.pathline.name and n.pathline.name~=pathline.name then
-        env.info("FF 100 "..pathline.name)
         pathline=n.pathline
       end
       
     end
     
     -- Add pathline to table (if it is not already in).
-    if not UTILS.IsAnyInTable(pathlines, {pathline}, "name") then
-      env.info(string.format("Adding pathline %s", pathline.name, tostring(UTILS.IsAnyInTable(pathlines, pathline))))
+    --if not UTILS.IsAnyInTable(pathlines, {pathline}, "name") then
+      --env.info(string.format("Adding pathline %s", pathline.name, tostring(UTILS.IsAnyInTable(pathlines, pathline))))
+      
+    -- We do not want to add the same pathline two times in a row.
+    if #pathlines==0 or (#pathlines>0 and pathlines[#pathlines].name~=pathline.name) then      
       table.insert(pathlines, pathline)
     end
   end

@@ -31,6 +31,7 @@
 -- @field #AIRBASE.Runway runwayLanding Runway used for landing.
 -- @field #AIRBASE.Runway runwayTakeoff Runway used for takeoff.
 -- @field Wrapper.Storage#STORAGE storage The DCS warehouse storage.
+-- @field #table taxiways Taxiways stored as PATHLINEs.
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 --- Wrapper class to handle the DCS Airbase objects:
@@ -73,6 +74,7 @@ AIRBASE = {
     [Airbase.Category.SHIP] = "Ship",
   },
   activerwyno = nil,
+  taxiways = {},
 }
 
 --- Enumeration to identify the airbases in the Caucasus region.
@@ -1191,6 +1193,78 @@ end
 -- @return #boolean If true, airbase is a ship.
 function AIRBASE:IsShip()
   return self.isShip
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Taxi ways
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Add a taxiway from a given PATHLINE.
+-- @param #AIRBASE self
+-- @param Core.Pathline#PATHLINE TaxiPathline Pathline of the taxi way.
+-- @param #string Name Name of the taxi way, *e.g.* "Alpha", or "Alpha-Kilo".
+-- @return #boolean If `true`, silent mode is enabled.
+function AIRBASE:AddTaxiway(TaxiPathline, Name)
+
+  self.taxiways[Name]=TaxiPathline
+
+end
+
+
+--- Find the shortest path using taxiways to get from given coodinates A to B on the airbase.
+-- Note that the taxi ways have to be manually added with the `AIRBASE:AddTaxiway()` function.
+-- @param #AIRBASE self
+-- @param Core.Point#COORDINATE StartCoord Start coordinate.
+-- @param Core.Point#COORDINATE EndCoord End coordinate.
+-- @return Core.Pathline#PATHLINE Shortest path on taxiways from `StartCoord` to `EndCoord`.
+-- @return #table Table of used taxi way pathlines.
+function AIRBASE:FindTaxiwaysFromAtoB(StartCoord, EndCoord)
+
+  -- Create A* pathfinding.  
+  local astar=ASTAR:New()
+  
+  -- Add pathlines of taxiways of airport.
+  for _,_taxiway in pairs(self.taxiways) do
+    local taxiway=_taxiway --Core.Pathline#PATHLINE
+    
+    astar:AddNodeFromPathlineName(taxiway)  
+  end
+  
+  -- Set cost function.
+  astar:SetCostDist2D()
+  
+  -- Set valid neighbours to be on the same pathline or at most 10 meters between nodes to jump from one pathline/taxiway to another.
+  astar:SetValidNeighbourPathline(10)  
+
+  -- Set start and end coordinates.
+  astar:SetStartCoordinate(StartCoord)    
+  astar:SetEndCoordinate(EndCoord)
+  
+  -- Get pathline.
+  local taxipath, nodes=astar:GetPathline()
+  
+  local taxiways=astar:GetPathlinesFromNodes(nodes)
+
+  return taxipath, taxiways
+end
+
+--- Find the shortest path using taxiways to get from given parking spot to the starting point of a runway.
+-- Note that the taxi ways have to be manually added with the `AIRBASE:AddTaxiway()` function.
+-- @param #AIRBASE self
+-- @param #AIRBASE.ParkingSpot ParkingSport Parking spot.
+-- @param #AIRBASE.Runway Runway The runway. If none is given, we take the active runway for takeoff.
+-- @return Core.Pathline#PATHLINE Shortest path on taxiways from `StartCoord` to `EndCoord`.
+-- @return #table Table of used taxi way pathlines.
+function AIRBASE:FindTaxiwaysParkingToRunway(ParkingSpot, Runway)
+
+  Runway=Runway or self:GetActiveRunwayTakeoff()
+
+  local StartCoord=ParkingSpot.Coordinate  
+  local EndCoord=Runway.position
+  
+  local taxipath, taxiways=self:FindTaxiwaysFromAtoB(StartCoord,EndCoord)
+
+  return taxipath, taxiways
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
