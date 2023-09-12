@@ -623,16 +623,24 @@ function ASTAR.Pathline(nodeA, nodeB, distmax)
 --    if dist<distmax then
 --      return true
 --    end
+
+    local idxA=nodeA.pathline:_GetPointIndex(nodeA.pathpoint)
+    local idxB=nodeB.pathline:_GetPointIndex(nodeB.pathpoint)
     
     -- Check if nodeB is close to pathline of nodeA.
-    local c, dist=nodeA.pathline:GetClosestPoint3D(nodeB.coordinate)    
-    if dist<distmax then
+    local c, dist, segA=nodeA.pathline:GetClosestPoint3D(nodeB.coordinate)
+    local seg=segA --Core.Pathline#PATHLINE.Segment
+    
+    --TODO: Check that 
+    if dist<distmax and (nodeA.pathpoint.uid==seg.p1.uid or nodeA.pathpoint.uid==seg.p2.uid) then
+      env.info(string.format("FF NodeB=%d [pathline=%s] is close to NodeA=%d [pathline=%s] ==> valid neighbour", nodeB.id, nodeB.pathline.name, nodeA.id, nodeA.pathline.name))
       return true
     end
     
     -- Check if nodeA is close to pathline of nodeB.
     local c, dist=nodeB.pathline:GetClosestPoint3D(nodeA.coordinate)
     if dist<distmax then
+      env.info(string.format("FF NodeA=%d [pathline=%s] is close to NodeB=%d [pathline=%s] ==> valid neighbour", nodeA.id, nodeA.pathline.name, nodeB.id, nodeB.pathline.name))
       return true
     end    
     
@@ -905,8 +913,22 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
     -- Get current node.
     local current=self:_LowestFscore(openset, f_score)
     
-    --self:I(current)
-    --self:I(goal)
+    env.info("FF current node="..current.id)
+    env.info("FF came_from")
+    for _neighbour,_current in pairs(came_from) do
+      local neighbour=_neighbour --#ASTAR.Node
+      local current=_current --#ASTAR.Node
+      env.info(string.format("neighbour=%d --> %d=current", neighbour.id, current.id))
+    end
+    --self:I(came_from)
+    
+    local text="Path:"
+    local path=self:_UnwindPath({}, came_from, current)
+    for i,_node in pairs(path) do
+      local node=_node --#ASTAR.Node
+      text=text..string.format("\n[%d] Node=%d", i, node.id)
+    end
+    env.info(text)
     
     -- Check if we are at the end node.
     if current.id==goal.id then
@@ -953,12 +975,12 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
     -- Get neighbour nodes.
     local neighbors=self:_NeighbourNodes(current, nodes)
     
---    local text=string.format("Current node UID=%d pathline=%s", current.id, current.pathline and current.pathline.name or "N/A")
---    for _,_node in pairs(neighbors) do
---      local node=_node --#ASTAR.Node
---      text=text..string.format("\nNeighbour node UID=%d pathline=%s", node.id, node.pathline and node.pathline.name or "N/A")
---    end
---    self:T(self.lid..text)
+    local text=string.format("Current node UID=%d pathline=%s", current.id, current.pathline and current.pathline.name or "N/A")
+    for _,_node in pairs(neighbors) do
+      local node=_node --#ASTAR.Node
+      text=text..string.format("\nNeighbour node UID=%d pathline=%s", node.id, node.pathline and node.pathline.name or "N/A")
+    end
+    self:T(self.lid..text)
     
     -- Loop over neighbours.
     for _,neighbor in pairs(neighbors) do
@@ -1211,12 +1233,15 @@ end
 -- @param #table map Map.
 -- @param #ASTAR.Node current_node The current node.
 -- @return #table Unwinded path.
-function ASTAR:_UnwindPath( flat_path, map, current_node )
+function ASTAR:_UnwindPath(flat_path, map, current_node)
 
-  if map[current_node] then
-    table.insert (flat_path, 1, map[current_node]) 
-    return self:_UnwindPath(flat_path, map, map[current_node])
+  local previous_node=map[current_node]
+
+  if previous_node then
+    table.insert(flat_path, 1, previous_node) 
+    return self:_UnwindPath(flat_path, map, previous_node)
   else
+    -- No previous node ==> return path.
     return flat_path
   end
 end
