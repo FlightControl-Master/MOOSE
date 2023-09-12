@@ -281,16 +281,23 @@ function ASTAR:AddNodeFromPathlineName(Pathline)
   
     for i,_point in pairs(Pathline.points) do
       local point=_point --Core.Pathline#PATHLINE.Point
-      local coord=COORDINATE:NewFromVec3(point.vec3)
-      local node=self:AddNodeFromCoordinate(coord)
+
+      -- Create node from point coordinate.
+      local node=self:AddNodeFromCoordinate(COORDINATE:NewFromVec3(point.vec3))
+      
+      -- Add pathline parameters.
       node.pathline=Pathline
       node.pathpoint=point
       
+      -- Debug.
       local name=node.pathline and node.pathline.name or "N/A"
       local idx=node.pathline and node.pathline:_GetPointIndex(node.pathpoint) or "N/A"
       
+      -- Debug message.
       self:T(self.lid..string.format("Adding node UID=%d pathline=%s [%s]", node.id, name, tostring(idx)))
-      node.coordinate:MarkToAll(string.format("Node ID=%d\npathline=%s [%s]", node.id, name, tostring(idx)))      
+            
+      -- Debug mark
+      --node.coordinate:MarkToAll(string.format("Node ID=%d\npathline=%s [%s]", node.id, name, tostring(idx)))
       
     end    
     
@@ -604,7 +611,7 @@ function ASTAR.Pathline(nodeA, nodeB, distmax)
 
   distmax=distmax or 10
 
-  if nodeA.pathpoint.name==nodeB.pathpoint.name then
+  if nodeA.pathline.name==nodeB.pathline.name then
   
     -- Nodes are on the same pathline. We use the index to check if they are neighbours.
   
@@ -618,28 +625,22 @@ function ASTAR.Pathline(nodeA, nodeB, distmax)
     end
     
   else
-  
---    local dist=nodeA.coordinate:Get2DDistance(nodeB.coordinate)
---    if dist<distmax then
---      return true
---    end
-
-    local idxA=nodeA.pathline:_GetPointIndex(nodeA.pathpoint)
-    local idxB=nodeB.pathline:_GetPointIndex(nodeB.pathpoint)
     
     -- Check if nodeB is close to pathline of nodeA.
     local c, dist, segA=nodeA.pathline:GetClosestPoint3D(nodeB.coordinate)
     local seg=segA --Core.Pathline#PATHLINE.Segment
     
-    --TODO: Check that 
     if dist<distmax and (nodeA.pathpoint.uid==seg.p1.uid or nodeA.pathpoint.uid==seg.p2.uid) then
       env.info(string.format("FF NodeB=%d [pathline=%s] is close to NodeA=%d [pathline=%s] ==> valid neighbour", nodeB.id, nodeB.pathline.name, nodeA.id, nodeA.pathline.name))
       return true
     end
-    
+
+
     -- Check if nodeA is close to pathline of nodeB.
-    local c, dist=nodeB.pathline:GetClosestPoint3D(nodeA.coordinate)
-    if dist<distmax then
+    local c, dist, segB=nodeB.pathline:GetClosestPoint3D(nodeA.coordinate)
+    local seg=segB --Core.Pathline#PATHLINE.Segment
+
+    if dist<distmax and (nodeB.pathpoint.uid==seg.p1.uid or nodeB.pathpoint.uid==seg.p2.uid) then
       env.info(string.format("FF NodeA=%d [pathline=%s] is close to NodeB=%d [pathline=%s] ==> valid neighbour", nodeA.id, nodeA.pathline.name, nodeB.id, nodeB.pathline.name))
       return true
     end    
@@ -674,6 +675,8 @@ end
 -- @return #number Distance between the two nodes.
 function ASTAR.Dist2D(nodeA, nodeB)
   local dist=nodeA.coordinate:Get2DDistance(nodeB.coordinate)
+  local text=string.format("FF Cost Dist2D NodeA=%d-->NodeB=%d = %.1f", nodeA.id, nodeB.id, dist)
+  env.info(text)
   return dist
 end
 
@@ -797,23 +800,24 @@ function ASTAR:FindStartNode()
   -- Find the closest pathline to the 
   local pathline, dist, vec3, s=self:FindClosestPathline(self.startCoord)
   
-  if pathline and vec3 then
-  
-    local Coordinate=COORDINATE:NewFromVec3(vec3)
+  if pathline and vec3 and dist and dist>10 then
+
+    -- Create a node on the closest pathline so we first go straight there and then along the pathline.
+    local node=self:AddNodeFromCoordinate(COORDINATE:NewFromVec3(vec3))
     
-    local node=self:AddNodeFromCoordinate(Coordinate)
-    
-    node.pathline=pathline
-    
+    -- We also need the pathline point.    
     local point=pathline:AddPointFromVec3(vec3, nil, s.p1)
-    
+
+    node.pathline=pathline    
     node.pathpoint=point
     
-    self.startNode=node
-  else
-    -- Find the closest node to the given start coordinate.
-    self.startNode, dist=self:FindClosestNode(self.startCoord)
+    self:T2(self.lid..string.format("Added new node=%d, which is closest to start coord. dist=%.1f m", node.id, dist))
   end
+
+  -- Find the closest node to the given start coordinate.
+  self.startNode, dist=self:FindClosestNode(self.startCoord)
+  
+  --self.startNode.coordinate:MarkToAll("Start Node")
   
   -- Debug info.
   self:T(self.lid..string.format("START node ID=%d", self.startNode.id))
@@ -834,22 +838,25 @@ function ASTAR:FindEndNode()
   
   local pathline, dist, vec3, s=self:FindClosestPathline(self.endCoord)
   
-  if pathline and vec3 then
-  
-    local Coordinate=COORDINATE:NewFromVec3(vec3)
-    
-    local node=self:AddNodeFromCoordinate(Coordinate)
-    
-    node.pathline=pathline
-    
+  if pathline and vec3 and dist and dist>10 then
+
+    -- Create a node on the closest pathline so we first go straight there and then along the pathline.
+    local node=self:AddNodeFromCoordinate(COORDINATE:NewFromVec3(vec3))
+        
+    -- We also need the point.
     local point=pathline:AddPointFromVec3(vec3, nil, s.p1)
     
+    -- Add pathline parameters to node.
+    node.pathline=pathline
     node.pathpoint=point
     
-    self.endNode=node
-  else
-    self.endNode, dist=self:FindClosestNode(self.endCoord, {self.startNode})
+    self:T2(self.lid..string.format("Added new node=%d, which is closest to END coord: dist=%.1f m", node.id, dist))
   end
+  
+  -- Find closest node to the end coordinate (exclude the start coordinate.
+  self.endNode, dist=self:FindClosestNode(self.endCoord, {self.startNode})
+  
+  --self.endNode.coordinate:MarkToAll("End Node")
   
   -- Debug info.
   self:T(self.lid..string.format("END node ID=%d", self.endNode.id))
@@ -913,22 +920,21 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
     -- Get current node.
     local current=self:_LowestFscore(openset, f_score)
     
-    env.info("FF current node="..current.id)
-    env.info("FF came_from")
-    for _neighbour,_current in pairs(came_from) do
-      local neighbour=_neighbour --#ASTAR.Node
-      local current=_current --#ASTAR.Node
-      env.info(string.format("neighbour=%d --> %d=current", neighbour.id, current.id))
-    end
-    --self:I(came_from)
-    
-    local text="Path:"
-    local path=self:_UnwindPath({}, came_from, current)
-    for i,_node in pairs(path) do
-      local node=_node --#ASTAR.Node
-      text=text..string.format("\n[%d] Node=%d", i, node.id)
-    end
-    env.info(text)
+    -- Debug
+--    self:I("FF current node="..current.id)
+--    self:I("FF came_from")
+--    for _neighbour,_current in pairs(came_from) do
+--      local neighbour=_neighbour --#ASTAR.Node
+--      local current=_current --#ASTAR.Node
+--      self:I(string.format("neighbour=%d --> %d=current", neighbour.id, current.id))
+--    end
+--    local text="Path:"
+--    local path=self:_UnwindPath({}, came_from, current)
+--    for i,_node in pairs(path) do
+--      local node=_node --#ASTAR.Node
+--      text=text..string.format("\n[%d] Node=%d", i, node.id)
+--    end
+--    self:I(text)
     
     -- Check if we are at the end node.
     if current.id==goal.id then
@@ -975,12 +981,12 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
     -- Get neighbour nodes.
     local neighbors=self:_NeighbourNodes(current, nodes)
     
-    local text=string.format("Current node UID=%d pathline=%s", current.id, current.pathline and current.pathline.name or "N/A")
-    for _,_node in pairs(neighbors) do
-      local node=_node --#ASTAR.Node
-      text=text..string.format("\nNeighbour node UID=%d pathline=%s", node.id, node.pathline and node.pathline.name or "N/A")
-    end
-    self:T(self.lid..text)
+--    local text=string.format("Current node UID=%d pathline=%s", current.id, current.pathline and current.pathline.name or "N/A")
+--    for _,_node in pairs(neighbors) do
+--      local node=_node --#ASTAR.Node
+--      text=text..string.format("\nNeighbour node UID=%d pathline=%s", node.id, node.pathline and node.pathline.name or "N/A")
+--    end
+--    self:T(self.lid..text)
     
     -- Loop over neighbours.
     for _,neighbor in pairs(neighbors) do
@@ -1034,10 +1040,11 @@ function ASTAR:GetPathline(ExcludeStartNode, ExcludeEndNode)
   
     pathline=PATHLINE:New("Astar")
   
-    for _,_note in pairs(nodes) do
-      local note=_note --#ASTAR.Node 
+    for _,_node in pairs(nodes) do
+      local node=_node --#ASTAR.Node 
       
-      local point=pathline:AddPointFromVec3(note.coordinate)
+      local point=pathline:AddPointFromVec3(node.coordinate)
+      point.name=node.pathline.name
           
     end
       
@@ -1074,11 +1081,7 @@ function ASTAR:GetPathlinesFromNodes(Nodes)
       end
       
     end
-    
-    -- Add pathline to table (if it is not already in).
-    --if not UTILS.IsAnyInTable(pathlines, {pathline}, "name") then
-      --env.info(string.format("Adding pathline %s", pathline.name, tostring(UTILS.IsAnyInTable(pathlines, pathline))))
-      
+
     -- We do not want to add the same pathline two times in a row.
     if #pathlines==0 or (#pathlines>0 and pathlines[#pathlines].name~=pathline.name) then      
       table.insert(pathlines, pathline)
@@ -1110,7 +1113,6 @@ function ASTAR:_HeuristicCost(nodeA, nodeB)
     return cost
   end
 
-  local cost=nil
   if self.CostFunc then
     cost=self.CostFunc(nodeA, nodeB, unpack(self.CostArg))
   else

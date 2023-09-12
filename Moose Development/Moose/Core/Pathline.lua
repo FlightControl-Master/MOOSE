@@ -68,7 +68,8 @@ PATHLINE = {
 --- Point of line.
 -- @type PATHLINE.Point
 -- @field #number uid Unique ID of this point.
--- @field #string name Name of the pathline this point belongs to.
+-- @field #string mother Name of the pathline this point belongs to.
+-- @field #string name Name of this point.
 -- @field DCS#Vec3 vec3 3D position.
 -- @field DCS#Vec2 vec2 2D position.
 -- @field #number surfaceType Surface type.
@@ -240,9 +241,26 @@ end
 
 --- Get points of pathline. Not that points are tables, that contain more information as just the 2D or 3D position but also the surface type etc.
 -- @param #PATHLINE self
--- @return <#PATHLINE.Point> List of points.
+-- @return <Core.Pathline#PATHLINE.Point> List of points.
 function PATHLINE:GetPoints()  
   return self.points
+end
+
+--- Get segments of pathline.
+-- @param #PATHLINE self
+-- @return <Core.Pathline#PATHLINE.Segment> List of points.
+function PATHLINE:GetSetments()
+
+  local segments={}
+
+  for i=1,#self.points-1 do
+    local segment={} --#PATHLINE.Segment
+    segment.p1=self.points[i]
+    segment.p2=self.points[i+1]
+    table.insert(segments, segment)
+  end
+  
+  return segments
 end
 
 --- Get 3D points of pathline.
@@ -557,7 +575,9 @@ function PATHLINE:_CreatePoint(Vec)
   self.counter=self.counter+1
   
   point.uid=self.counter
-  point.name=self.name
+  point.mother=self.name
+  
+  point.name=string.format("%s #%d", self.name, point.uid)
 
   if Vec.z then
     -- Given vec is 3D
