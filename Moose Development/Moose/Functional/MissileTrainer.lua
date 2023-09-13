@@ -67,7 +67,6 @@
 -- @module Functional.MissileTrainer
 -- @image Missile_Trainer.JPG
 
-
 ---
 -- @type MISSILETRAINER
 -- @field Core.Set#SET_CLIENT DBClients
