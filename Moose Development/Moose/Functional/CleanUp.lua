@@ -52,10 +52,12 @@
 -- @module Functional.CleanUp
 -- @image CleanUp_Airbases.JPG
 
+---
 -- @type CLEANUP_AIRBASE.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
 -- @field #map<#string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.
 -- @extends Core.Base#BASE
 
+---
 -- @type CLEANUP_AIRBASE
 -- @extends #CLEANUP_AIRBASE.__
 

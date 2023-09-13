@@ -181,6 +181,7 @@ COMMANDCENTER = {
 }
 
 
+---
 -- @type COMMANDCENTER.AutoAssignMethods
 COMMANDCENTER.AutoAssignMethods = {
   ["Random"] = 1,

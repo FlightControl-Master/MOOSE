@@ -34,6 +34,7 @@ local _TraceClassMethod = {}
 
 local _ClassID = 0
 
+---
 -- @type BASE
 -- @field ClassName The name of the class.
 -- @field ClassID The ID number of the class.

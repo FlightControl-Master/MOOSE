@@ -15,6 +15,7 @@
 -- @module Core.Report
 -- @image Core_Report.JPG
 
+---
 -- @type REPORT
 -- @extends Core.Base#BASE
 

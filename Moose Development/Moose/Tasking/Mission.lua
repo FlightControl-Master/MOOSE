@@ -19,6 +19,7 @@
 -- @module Tasking.Mission
 -- @image Task_Mission.JPG
 
+---
 -- @type MISSION
 -- @field #MISSION.Clients _Clients
 -- @field Core.Menu#MENU_COALITION MissionMenu

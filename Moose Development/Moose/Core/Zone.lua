@@ -53,6 +53,7 @@
 -- @module Core.Zone
 -- @image Core_Zones.JPG
 
+---
 -- @type ZONE_BASE
 -- @field #string ZoneName Name of the zone.
 -- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
@@ -1496,6 +1497,7 @@ function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,ma
   
 end
 
+---
 -- @type ZONE
 -- @extends #ZONE_RADIUS
 
@@ -1580,7 +1582,7 @@ function ZONE:FindByName( ZoneName )
 end
 
 
-
+---
 -- @type ZONE_UNIT
 -- @field Wrapper.Unit#UNIT ZoneUNIT
 -- @extends Core.Zone#ZONE_RADIUS
@@ -1723,6 +1725,7 @@ function ZONE_UNIT:GetVec3( Height )
   return Vec3
 end
 
+---
 -- @type ZONE_GROUP
 -- @extends #ZONE_RADIUS
 
@@ -1809,6 +1812,7 @@ function ZONE_GROUP:GetRandomPointVec2( inner, outer )
 end
 
 
+---
 -- @type ZONE_POLYGON_BASE
 -- @field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCS#Vec2}.
 -- @extends #ZONE_BASE

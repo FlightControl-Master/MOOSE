@@ -11,6 +11,7 @@
 -- @module Tasking.TaskInfo
 -- @image MOOSE.JPG
 
+---
 -- @type TASKINFO
 -- @extends Core.Base#BASE
 
@@ -29,6 +30,7 @@ TASKINFO = {
   ClassName = "TASKINFO",
 }
 
+---
 -- @type TASKINFO.Detail #string A string that flags to document which level of detail needs to be shown in the report.
 -- 
 --   - "M" for Markings on the Map (F10).

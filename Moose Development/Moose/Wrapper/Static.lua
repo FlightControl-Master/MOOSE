@@ -12,6 +12,7 @@
 -- @image Wrapper_Static.JPG
 
 
+---
 -- @type STATIC
 -- @extends Wrapper.Positionable#POSITIONABLE
 

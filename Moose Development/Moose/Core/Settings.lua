@@ -29,6 +29,8 @@
 -- @module Core.Settings
 -- @image Core_Settings.JPG
 
+
+---
 -- @type SETTINGS
 -- @extends Core.Base#BASE
 
@@ -218,6 +220,7 @@ SETTINGS = {
 
 SETTINGS.__Enum = {}
 
+---
 -- @type SETTINGS.__Enum.Era
 -- @field #number WWII
 -- @field #number Korea

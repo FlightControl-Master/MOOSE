@@ -220,6 +220,7 @@
 -- @module Tasking.Task
 -- @image MOOSE.JPG
 
+---
 -- @type TASK
 -- @field Core.Scheduler#SCHEDULER TaskScheduler
 -- @field Tasking.Mission#MISSION Mission

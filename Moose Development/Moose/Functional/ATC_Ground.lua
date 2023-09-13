@@ -26,6 +26,7 @@
 -- @module Functional.ATC_Ground
 -- @image Air_Traffic_Control_Ground_Operations.JPG
 
+---
 -- @type ATC_GROUND
 -- @field Core.Set#SET_CLIENT SetClient
 -- @extends Core.Base#BASE
@@ -39,6 +40,7 @@ ATC_GROUND = {
   AirbaseNames = nil,
 }
 
+---
 -- @type ATC_GROUND.AirbaseNames
 -- @list <#string>
 
@@ -846,6 +848,7 @@ function ATC_GROUND_UNIVERSAL:Start( RepeatScanSeconds )
   return self
 end
 
+---
 -- @type ATC_GROUND_CAUCASUS
 -- @extends #ATC_GROUND
 
@@ -985,7 +988,7 @@ function ATC_GROUND_CAUCASUS:Start( RepeatScanSeconds )
 end
 
 
-
+---
 -- @type ATC_GROUND_NEVADA
 -- @extends #ATC_GROUND
 
@@ -1123,7 +1126,7 @@ function ATC_GROUND_NEVADA:Start( RepeatScanSeconds )
   self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
 end
 
-
+---
 -- @type ATC_GROUND_NORMANDY
 -- @extends #ATC_GROUND
 
@@ -1280,6 +1283,7 @@ function ATC_GROUND_NORMANDY:Start( RepeatScanSeconds )
   self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
 end
 
+---
 -- @type ATC_GROUND_PERSIANGULF
 -- @extends #ATC_GROUND
 

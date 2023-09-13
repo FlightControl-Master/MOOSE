@@ -11,7 +11,7 @@
 -- @module Wrapper.Object
 -- @image MOOSE.JPG
 
-
+---
 -- @type OBJECT
 -- @extends Core.Base#BASE
 -- @field #string ObjectName The name of the Object.
