@@ -2458,6 +2458,7 @@ function ZONE_POLYGON_BASE:Boundary(Coalition, Color, Radius, Alpha, Segments, C
     return self
 end
 
+---
 -- @type ZONE_POLYGON
 -- @extends #ZONE_POLYGON_BASE
 
