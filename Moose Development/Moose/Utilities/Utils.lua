@@ -12,7 +12,7 @@
 -- @module Utilities.Utils
 -- @image MOOSE.JPG
 
-
+---
 -- @type SMOKECOLOR
 -- @field Green
 -- @field Red
@@ -22,6 +22,7 @@
 
 SMOKECOLOR = trigger.smokeColor -- #SMOKECOLOR
 
+---
 -- @type FLARECOLOR
 -- @field Green
 -- @field Red

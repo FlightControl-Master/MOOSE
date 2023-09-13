@@ -108,7 +108,7 @@
 -- @image Escorting.JPG
 
 
-
+---
 -- @type ESCORT
 -- @extends Core.Base#BASE
 -- @field Wrapper.Client#CLIENT EscortClient

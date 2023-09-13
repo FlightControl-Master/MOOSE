@@ -286,6 +286,7 @@ SPAWN.Takeoff = {
   Cold = 4,
 }
 
+---
 -- @type SPAWN.SpawnZoneTable
 -- @list <Core.Zone#ZONE_BASE> SpawnZone
 
