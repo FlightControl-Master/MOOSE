@@ -11592,14 +11592,8 @@ function AIRBOSS:GetHeadingIntoWind( magnetic, coord )
   -- Get direction the wind is blowing from. This is where we want to go.
   local windfrom, vwind = self:GetWind( nil, nil, coord )
 
-  --self:T("windfrom="..windfrom.." vwind="..vwind)
-
-  vwind = vwind + adjustDegreesForWindSpeed(vwind)
-
-  --self:T("windfrom="..windfrom.." (c)vwind="..vwind)
-
   -- Actually, we want the runway in the wind.
-  local intowind = windfrom - self.carrierparam.rwyangle
+  local intowind = windfrom - self.carrierparam.rwyangle + adjustDegreesForWindSpeed(vwind)
 
   -- If no wind, take current heading.
   if vwind < 0.1 then
