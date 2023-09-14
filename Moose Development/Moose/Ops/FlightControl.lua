@@ -61,6 +61,7 @@
 -- @field #number runwaydestroyed Time stamp (abs), when runway was destroyed. If `nil`, runway is operational.
 -- @field #number runwayrepairtime Time in seconds until runway will be repaired after it was destroyed. Default is 3600 sec (one hour).
 -- @field #boolean markerParking If `true`, occupied parking spots are marked.
+-- @field #table warnings Warnings issued to flight groups.
 -- @extends Core.Fsm#FSM
 
 --- **Ground Control**: Airliner X, Good news, you are clear to taxi to the active.
@@ -270,6 +271,7 @@ FLIGHTCONTROL = {
   Nparkingspots    = nil,
   holdingpatterns  =  {},
   hpcounter        =   0,
+  warnings         =  {},
 }
 
 --- Holding point. Contains holding stacks.
@@ -329,6 +331,21 @@ FLIGHTCONTROL.FlightStatus={
   ARRIVED="Arrived",
 }
 
+--- Violations
+-- @type FLIGHTCONTROL.Violation
+FLIGHTCONTROL.Violation={
+  Speeding="Speeding",
+  AltitudeDeviation="Altitude Deviation", --300 feet from assigned alt.
+  RunwayIncursion="Runway Incursion",
+  
+}
+
+--- Warning.
+-- @type FLIGHTCONTROL.Warning
+-- @field Ops.FlightGroup#FLIGHTGROUP flight The flight group.
+-- @field #string type Type of warning.
+-- @field #number time Time stamp when warning was issued.
+
 --- FlightControl class version.
 -- @field #string version
 FLIGHTCONTROL.version="0.7.3"
@@ -336,6 +353,7 @@ FLIGHTCONTROL.version="0.7.3"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 
+-- TODO: Progressive Taxi
 -- TODO: Ground control for takeoff and taxi.
 -- TODO: Improve approach pattern with new NAVIGATION classes.
 -- TODO: SID procedure for departures.
@@ -1390,6 +1408,7 @@ function FLIGHTCONTROL:_CheckQueues()
           dTlanding=timer.getAbsTime()-self.Tlanding
         end
       
+        -- Check if parking is available and timely spacing okay.
         if parking and dTlanding>=self.dTlanding then
         
           -- Get callsign.
@@ -1468,7 +1487,7 @@ function FLIGHTCONTROL:_CheckQueues()
           -- Start uncontrolled aircraft.
           if flight:IsUncontrolled() then
 
-          -- Message.
+            -- Message.
             text=text..string.format("starting engines, ")
             
             -- Start uncontrolled aircraft.          
@@ -2533,7 +2552,7 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, mainmenu)
         else
           MENU_GROUP_COMMAND:New(group, "Reserve Parking",    rootmenu, self._PlayerRequestParking, self, groupname)
         end
-        MENU_GROUP_COMMAND:New(group, "Arrived at Parking", rootmenu, self._PlayerArrived,        self, groupname)          
+        MENU_GROUP_COMMAND:New(group, "Arrived at Parking", rootmenu, self._PlayerArrived,        self, groupname)
       end
       
     elseif flight:IsInbound() then
@@ -3478,7 +3497,7 @@ function FLIGHTCONTROL:_PlayerRequestTaxi(groupname)
     local callsign=self:_GetCallsignName(flight)
     
     -- Pilot request for taxi.
-    local text=string.format("%s, %s, request taxi to runway.", self.alias, callsign)        
+    local text=string.format("%s, %s, request taxi to runway.", self.alias, callsign)
     self:TransmissionPilot(text, flight)
         
     if flight:IsParking() then
@@ -3489,6 +3508,8 @@ function FLIGHTCONTROL:_PlayerRequestTaxi(groupname)
       
       -- Set flight status to "Ready to Taxi".
       self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.READYTX)
+      
+      self.airbase:FindTaxiwaysFromAtoB(StartCoord,EndCoord)
       
     elseif flight:IsTaxiing() then
     
@@ -4072,64 +4093,100 @@ function FLIGHTCONTROL:_CheckFlights()
     end  
   end
 
-  -- Check speeding.  
-  if self.speedLimitTaxi then
+  -- Loop over all flights.
+  for _,_flight in pairs(self.flights) do
+    local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
 
-    for _,_flight in pairs(self.flights) do
-      local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
-      
-      if not flight.isAI then
-      
-        -- Get player element.
-        local playerElement=flight:GetPlayerElement()
-        
-        -- Current flight status.
-        local flightstatus=self:GetFlightStatus(flight)
-        
-        if playerElement then
-        
-          -- Check if speeding while taxiing.
-          if (flightstatus==FLIGHTCONTROL.FlightStatus.TAXIINB or flightstatus==FLIGHTCONTROL.FlightStatus.TAXIOUT) and self.speedLimitTaxi then
-        
-            -- Current speed in m/s.
-            local speed=playerElement.unit:GetVelocityMPS()
-            
-            -- Current position.
-            local coord=playerElement.unit:GetCoord()
-            
-            -- We do not want to check speed on runways.
-            local onRunway=self:IsCoordinateRunway(coord)
-                                   
-            -- Debug output.
-            self:T(self.lid..string.format("Player %s speed %.1f knots (max=%.1f) onRunway=%s", playerElement.playerName, UTILS.MpsToKnots(speed), UTILS.MpsToKnots(self.speedLimitTaxi), tostring(onRunway)))
-            
-            if speed and speed>self.speedLimitTaxi and not onRunway then
-            
-              -- Callsign.
-              local callsign=self:_GetCallsignName(flight)            
-            
-              -- Radio text.
-              local text=string.format("%s, slow down, you are taxiing too fast!", callsign)
-              
-              -- Radio message to player.
-              self:TransmissionTower(text, flight)
-              
-              -- Get player data.
-              local PlayerData=flight:_GetPlayerData()
-              
-              -- Trigger FSM speeding event.              
-              self:PlayerSpeeding(PlayerData)
-                        
-            end
-            
-          end
-          
-        end
-      end
-    end
+    -- Current flight status.
+    local flightstatus=self:GetFlightStatus(flight)
     
+    if not flight.isAI then
+
+      -- Check if speeding while taxiing.
+      if (flightstatus==FLIGHTCONTROL.FlightStatus.TAXIINB or flightstatus==FLIGHTCONTROL.FlightStatus.TAXIOUT) then
+      
+        if self.speedLimitTaxi then
+          self:_CheckFlightSpeeding(flight)
+        end
+                
+      end
+      
+      if (flightstatus==FLIGHTCONTROL.FlightStatus.TAXIINB or flightstatus==FLIGHTCONTROL.FlightStatus.TAXIOUT) then
+        
+      end
+      
+      if (flightstatus==FLIGHTCONTROL.FlightStatus.LANDING) then
+        --Talk down
+      end
+
+      if (flightstatus==FLIGHTCONTROL.FlightStatus.PARKING) then
+        --Check if still on parking spot!
+      end
+
+      if (flightstatus==FLIGHTCONTROL.FlightStatus.HOLDING) then
+        --Check altitude and position
+      end
+
+      if (flightstatus==FLIGHTCONTROL.FlightStatus.ARRIVED) then
+        --Check if still on correct parking spot!
+      end
+      
+      if (flightstatus==FLIGHTCONTROL.FlightStatus.READYTX) then
+        -- ?
+      end
+      
+      if (flightstatus==FLIGHTCONTROL.FlightStatus.READYTO) then
+        -- ?
+      end
+
+
+    end
   end
+end
+
+--- Check if flight is speeding while taxiing and issue a warning.
+-- @param #FLIGHTCONTROL self
+-- @param Ops.FlightGroup#FLIGHTGROUP flight The flight to check.
+function FLIGHTCONTROL:_CheckFlightSpeeding(flight)
+
+  -- Get player element.
+  local playerElement=flight:GetPlayerElement()
+    
+  if playerElement then
   
+    -- Current speed in m/s.
+    local speed=playerElement.unit:GetVelocityMPS()
+    
+    -- Current position.
+    local coord=playerElement.unit:GetCoord()
+    
+    -- We do not want to check speed on runways.
+    local onRunway=self:IsCoordinateRunway(coord)
+                           
+    -- Debug output.
+    self:T(self.lid..string.format("Player %s speed %.1f knots (max=%.1f) onRunway=%s", playerElement.playerName, UTILS.MpsToKnots(speed), UTILS.MpsToKnots(self.speedLimitTaxi), tostring(onRunway)))
+    
+    if speed and speed>self.speedLimitTaxi and not onRunway then
+    
+      -- Callsign.
+      local callsign=self:_GetCallsignName(flight)            
+    
+      -- Radio text.
+      local text=string.format("%s, slow down, you are taxiing too fast!", callsign)
+      
+      -- Radio message to player.
+      self:TransmissionTower(text, flight)
+      
+      -- Get player data.
+      local PlayerData=flight:_GetPlayerData()
+      
+      -- Trigger FSM speeding event.              
+      self:PlayerSpeeding(PlayerData)
+                
+    end
+
+  end
+
 end
 
 --- Check status of all registered flights and do some sanity checks.
@@ -4319,6 +4376,41 @@ function FLIGHTCONTROL:TransmissionTower(Text, Flight, Delay)
   
   -- New transmission.  
   local transmission=self.msrsqueue:NewTransmission(text, nil, self.msrsTower, nil, 1, subgroups, Text)
+  
+  -- Set time stamp. Can be in the future.
+  self.Tlastmessage=timer.getAbsTime() + (Delay or 0)
+  
+  -- Debug message.
+  self:T(self.lid..string.format("Radio Tower: %s", Text))
+
+end
+
+
+--- Radio transmission from ground control.
+-- @param #FLIGHTCONTROL self
+-- @param #string Text The text to transmit.
+-- @param Ops.FlightGroup#FLIGHTGROUP Flight The flight.
+-- @param #number Delay Delay in seconds before the text is transmitted. Default 0 sec.
+function FLIGHTCONTROL:TransmissionGround(Text, Flight, Delay)
+
+  -- Spoken text.
+  local text=self:_GetTextForSpeech(Text)
+    
+  -- "Subtitle".
+  local subgroups=nil
+  if Flight and not Flight.isAI then
+    local playerData=Flight:_GetPlayerData()
+    if playerData.subtitles then
+      subgroups=subgroups or {}
+      table.insert(subgroups, Flight.group)
+    end
+  end
+  
+  -- Use ground or tower if ground not set up.
+  local msrs=self.msrsGround~=nil and self.msrsGround or self.msrsTower
+  
+  -- New transmission.  
+  local transmission=self.msrsqueue:NewTransmission(text, nil, msrs, nil, 1, subgroups, Text)
   
   -- Set time stamp. Can be in the future.
   self.Tlastmessage=timer.getAbsTime() + (Delay or 0)
