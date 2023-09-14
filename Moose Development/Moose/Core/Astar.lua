@@ -778,9 +778,7 @@ function ASTAR:FindClosestPathline(Coordinate)
         S=s        
       end
     
-    
-    end
-    
+    end    
   end
   
   if pathline then
@@ -799,8 +797,11 @@ function ASTAR:FindStartNode()
   
   -- Find the closest pathline to the 
   local pathline, dist, vec3, s=self:FindClosestPathline(self.startCoord)
+
+  -- Find the closest node to the given start coordinate.
+  local node, dist2=self:FindClosestNode(self.startCoord)
   
-  if pathline and vec3 and dist and dist>10 then
+  if pathline and vec3 and dist and dist2>dist then
 
     -- Create a node on the closest pathline so we first go straight there and then along the pathline.
     local node=self:AddNodeFromCoordinate(COORDINATE:NewFromVec3(vec3))
@@ -815,7 +816,7 @@ function ASTAR:FindStartNode()
   end
 
   -- Find the closest node to the given start coordinate.
-  self.startNode, dist=self:FindClosestNode(self.startCoord)
+  self.startNode, dist2=self:FindClosestNode(self.startCoord)
   
   --self.startNode.coordinate:MarkToAll("Start Node")
   
@@ -838,7 +839,10 @@ function ASTAR:FindEndNode()
   
   local pathline, dist, vec3, s=self:FindClosestPathline(self.endCoord)
   
-  if pathline and vec3 and dist and dist>10 then
+  -- Find the closest node to the given start coordinate.
+  local node, dist2=self:FindClosestNode(self.endCoord)  
+  
+  if pathline and vec3 and dist and dist2>dist then
 
     -- Create a node on the closest pathline so we first go straight there and then along the pathline.
     local node=self:AddNodeFromCoordinate(COORDINATE:NewFromVec3(vec3))

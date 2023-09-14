@@ -1413,6 +1413,24 @@ function UTILS.VecAngle(a, b)
   return math.deg(alpha)
 end
 
+--- Calculate the angle between two 3D vectors.
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+-- @return #number Angle alpha between and b in degrees.
+function UTILS.VecAngleSigned(a, b)
+
+      local a=UTILS.VecSubstract(s1.p2.vec3, s1.p1.vec3)
+      
+      local b=UTILS.VecSubstract(s2.p2.vec3, s2.p1.vec3)
+      
+      local h1=UTILS.VecHdg(a)
+      local h2=UTILS.VecHdg(b)
+      
+      local angle=h1-h2 --UTILS.VecAngle(a, b)
+
+
+end
+
 --- Calculate "heading" of a 3D vector in the X-Z plane.
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @return #number Heading in degrees in [0,360).
@@ -1433,6 +1451,20 @@ function UTILS.Vec2Hdg(a)
     h=h+360
   end
   return h
+end
+
+--- Calculate the difference between two "heading", i.e. angles in [0,360) deg.
+-- @param DCS#Vec3 a Vector a.
+-- @param DCS#Vec3 a Vector b.
+-- @return #number Heading difference in degrees.
+function UTILS.VecHdgDiff(a, b)
+
+  local ha=math.deg(math.atan2(a.z, a.x))
+  local hb=math.deg(math.atan2(b.z, b.x))
+  
+  local angle=ha-hb
+
+  return angle
 end
 
 --- Calculate the difference between two "heading", i.e. angles in [0,360) deg.
