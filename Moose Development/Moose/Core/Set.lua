@@ -860,8 +860,10 @@ do -- SET_BASE
     self:F3( Object )
     local outcome = false
     local name = Object:GetName()
+    --self:I("SET_BASE: Objectname = "..name)
     self:ForEach(
       function(object)
+        --self:I("SET_BASE: In set objectname = "..object:GetName())
         if object:GetName() == name then
           outcome = true
         end
@@ -4330,7 +4332,6 @@ do -- SET_CLIENT
   function SET_CLIENT:FilterStart()
 
     if _DATABASE then
-      self:_FilterStart()
       self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
       self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
       self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
@@ -4339,6 +4340,7 @@ do -- SET_CLIENT
         local timing = self.ZoneTimerInterval or 30
         self.ZoneTimer:Start(timing,timing)
       end
+      self:_FilterStart()
     end
 
     return self
@@ -4574,9 +4576,9 @@ do -- SET_CLIENT
 		if self.Filter.Callsigns then
 			local MClientCallsigns = false
 			local callsign = MClient:GetCallsign()
-			--self:T(callsign)
+			--self:I(callsign)
 			for _,_Callsign in pairs(self.Filter.Callsigns) do
-				if callsign and string.find(callsign,_Callsign) then
+				if callsign and string.find(callsign,_Callsign,1,true) then
 					MClientCallsigns = true
 				end
 			end
