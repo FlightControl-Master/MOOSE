@@ -4152,6 +4152,51 @@ function FLIGHTCONTROL:_CheckFlights()
     -- Current flight status.
     local flightstatus=self:GetFlightStatus(flight)
     
+
+
+    --- 
+    -- Track flight
+    ---
+    if true then
+    
+      for _,_element in pairs(flight.elements) do
+        local element=_element --Ops.OpsGroup#OPSGROUP.Element
+        
+        local unit=element.unit
+        
+        if unit and unit:IsAlive() then
+        
+          local coord=unit:GetCoord()
+          local vec3=coord:GetVec3()
+          
+          if vec3 and element.pos then
+          
+            local id=UTILS.GetMarkID()
+            
+            trigger.action.lineToAll(-1, id, vec3, element.pos, {1,1,1,0.5}, 1)
+          
+          end
+          
+          if coord then
+            local taxipath, dist, tpcoord, seg=self.airbase:GetClosestTaxiway(coord)
+            
+            if taxipath then
+              local text=string.format("Flight %s [%s/%s]: Unit %s close to taxiway %s. Dist=%.1f meters, Segment=%s-%s", flight:GetName(), flight:GetState(), self:GetFlightStatus(flight),
+              element.name, taxipath:GetName(), dist, seg.p1.name, seg.p2.name)
+              MESSAGE:New(text,10):ToAll():ToLog()            
+            end
+            
+          end
+          
+          -- Store last position.
+          element.pos=vec3
+          
+        end
+    
+      end
+      
+    end
+    
     if not flight.isAI then
 
       -- Check if speeding while taxiing.

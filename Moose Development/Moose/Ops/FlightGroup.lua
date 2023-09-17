@@ -61,6 +61,7 @@
 -- @field #boolean jettisonWeapons Allow (true) or disallow (false) AI to jettison weapons if in danger.
 -- @field #table flightplans Flight plans for this group.
 -- @field Navigation.FlightPlan#FLIGHTPLAN flightplan Currently active flight plan.
+-- @field Core.Pathline#PATHLINE taxipath Assigned taxi pathline.
 --
 -- @extends Ops.OpsGroup#OPSGROUP
 

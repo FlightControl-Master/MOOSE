@@ -166,7 +166,7 @@ ASTAR.INF=1/0
 
 --- ASTAR class version.
 -- @field #string version
-ASTAR.version="0.4.0"
+ASTAR.version="0.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -174,6 +174,7 @@ ASTAR.version="0.4.0"
 
 -- TODO: Add more valid neighbour functions.
 -- TODO: Write docs.
+-- DONE: Add pathlines for seach/valid neighbours.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -789,6 +790,42 @@ function ASTAR:FindClosestPathline(Coordinate)
   return pathline, dist, vec3, S
 end
 
+--- Find the closest node to the given coordinate.
+-- @param #ASTAR self
+-- @param Core.Point#COORDINATE Coord Reference coordinate.
+-- @param #table ExcludeNodes Nodes that are excluded.
+-- @return #ASTAR.Node The node that was fround
+function ASTAR:_FindClosestTerminalNode(Coord, ExcludeNodes)
+  
+  -- Find the closest pathline to the ref coordinate.
+  local pathline, dist, vec3, s=self:FindClosestPathline(Coord)
+
+  -- Find the closest node to the given start coordinate.
+  local node, dist2=self:FindClosestNode(Coord)
+  
+  if pathline and vec3 and dist and dist2>dist then
+
+    -- Create a node on the closest pathline so we first go straight there and then along the pathline.
+    local node=self:AddNodeFromCoordinate(COORDINATE:NewFromVec3(vec3))
+    
+    -- We also need the pathline point.    
+    local point=pathline:AddPointFromVec3(vec3, nil, s.p1)
+
+    node.pathline=pathline    
+    node.pathpoint=point
+    
+    self:T2(self.lid..string.format("Added new node=%d, which is closest to start coord. dist=%.1f m", node.id, dist))
+  end
+
+  -- Find the closest node to the given start coordinate.
+  local Node, dist3=self:FindClosestNode(Coord, ExcludeNodes)
+
+  -- Debug info.
+  self:T(self.lid..string.format("CLOSEST node ID=%d, distance=%.1f", Node.id, dist3))
+
+  return Node, dist3
+end
+
 
 --- Find the start node.
 -- @param #ASTAR self
@@ -885,8 +922,14 @@ end
 -- @return #table Table of nodes from start to finish.
 function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
 
-  self:FindStartNode()
-  self:FindEndNode()
+--  self:FindStartNode()
+--  self:FindEndNode()
+  
+  -- Find start Node (closest node to start coordinate).
+  self.startNode=self:_FindClosestTerminalNode(self.startCoord)
+  
+  -- Find end node, which is not the start node (excluded).
+  self.endNode=self:_FindClosestTerminalNode(self.endCoord, {self.startNode})
 
   local nodes=self.nodes
   local start=self.startNode
@@ -923,22 +966,6 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
   
     -- Get current node.
     local current=self:_LowestFscore(openset, f_score)
-    
-    -- Debug
---    self:I("FF current node="..current.id)
---    self:I("FF came_from")
---    for _neighbour,_current in pairs(came_from) do
---      local neighbour=_neighbour --#ASTAR.Node
---      local current=_current --#ASTAR.Node
---      self:I(string.format("neighbour=%d --> %d=current", neighbour.id, current.id))
---    end
---    local text="Path:"
---    local path=self:_UnwindPath({}, came_from, current)
---    for i,_node in pairs(path) do
---      local node=_node --#ASTAR.Node
---      text=text..string.format("\n[%d] Node=%d", i, node.id)
---    end
---    self:I(text)
     
     -- Check if we are at the end node.
     if current.id==goal.id then
@@ -984,14 +1011,7 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
     
     -- Get neighbour nodes.
     local neighbors=self:_NeighbourNodes(current, nodes)
-    
---    local text=string.format("Current node UID=%d pathline=%s", current.id, current.pathline and current.pathline.name or "N/A")
---    for _,_node in pairs(neighbors) do
---      local node=_node --#ASTAR.Node
---      text=text..string.format("\nNeighbour node UID=%d pathline=%s", node.id, node.pathline and node.pathline.name or "N/A")
---    end
---    self:T(self.lid..text)
-    
+
     -- Loop over neighbours.
     for _,neighbor in pairs(neighbors) do
     

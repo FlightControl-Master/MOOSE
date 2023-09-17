@@ -1201,15 +1201,32 @@ end
 
 --- Add a taxiway from a given PATHLINE.
 -- @param #AIRBASE self
--- @param Core.Pathline#PATHLINE TaxiPathline Pathline of the taxi way.
--- @param #string Name Name of the taxi way, *e.g.* "Alpha", or "Alpha-Kilo".
--- @return #boolean If `true`, silent mode is enabled.
+-- @param Core.Pathline#PATHLINE TaxiPathline Pathline of the taxi way or name of pathline as #string.
+-- @param #string Name Name of the taxi way, *e.g.* "Alpha", or "Alpha-Kilo". Default is name of pathline.
+-- @return #AIRBASE self
 function AIRBASE:AddTaxiway(TaxiPathline, Name)
 
+  -- If passed as string, get pathline.
+  if type(TaxiPathline)=="string" then
+    TaxiPathline=PATHLINE:FindByName(TaxiPathline)
+  end
+
+  -- Set name.
   Name=Name or TaxiPathline:GetName()
 
-  self.taxiways[Name]=TaxiPathline
+  -- Create a deep copy.
+  local taxiway=UTILS.DeepCopy(TaxiPathline) --Core.Pathline#PATHLINE
+  
+  -- Set name.
+  taxiway.name=Name
 
+  -- Add to taxiways.
+  self.taxiways[Name]=taxiway
+  
+  
+  --self:I(self.taxiways)
+
+  return self
 end
 
 
@@ -1249,6 +1266,38 @@ function AIRBASE:FindTaxiwaysFromAtoB(StartCoord, EndCoord)
 
   return taxipath, taxiways
 end
+
+--- Get closest taxiway from a given reference coordinate.
+-- @param #AIRBASE self
+-- @param Core.Point#COORDINATE Coord Reference coordinate.
+-- @return Core.Pathline#PATHLINE Taxiway.
+-- @return #number Distance to taxiway in meters.
+-- @return Core.Point#COORDINATE Coordinate on taxiway closest to reference coordinate.
+-- @return Core.Pathline#PATHLINE.Segment Segment of the taxiway closest to the reference coordinate.
+function AIRBASE:GetClosestTaxiway(Coord)
+
+  local taxipath=nil
+  local distmin=math.huge
+  local coordmin=nil
+  local segmin=nil
+  
+  for name,_pathline in pairs(self.taxiways) do
+    local pathline=_pathline --Core.Pathline#PATHLINE
+    
+    local coord, dist, segment=pathline:GetClosestPoint3D(Coord)
+    
+    if dist<distmin then
+      taxipath=pathline
+      coordmin=coord
+      distmin=dist
+      segmin=segment
+    end
+  
+  end
+
+  return taxipath, distmin, coordmin, segmin
+end
+
 
 --- Find the shortest path using taxiways to get from given parking spot to the starting point of a runway.
 -- Note that the taxi ways have to be manually added with the `AIRBASE:AddTaxiway()` function.

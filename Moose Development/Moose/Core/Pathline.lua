@@ -513,6 +513,11 @@ function PATHLINE:GetClosestPoint3D(Vec3)
   local D=math.huge
   local S={} --#PATHLINE.Segment
   
+  if not Vec3 then
+    self:E(self.lid.."ERROR: input Vec3 is nil!")
+    return nil, nil, nil
+  end
+  
   for i=2,#self.points do
 
     local A=self.points[i-1] --#PATHLINE.Point
@@ -531,8 +536,7 @@ function PATHLINE:GetClosestPoint3D(Vec3)
     local f=proj/lab/lab
     
     -- Debug info.
-    local text=string.format("FF Proj=%.1f, |ab|=%.1f, f=%.1f", proj, lab, f)
-    self:T(self.lid..text)
+    self:T(self.lid..string.format("Proj=%.1f, |ab|=%.1f, f=%.1f", proj, lab, f))
     
     -- Cases for finite segment.
     local p=nil --DCS#Vec2
