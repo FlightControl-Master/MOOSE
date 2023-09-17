@@ -4157,7 +4157,7 @@ function FLIGHTCONTROL:_CheckFlights()
     --- 
     -- Track flight
     ---
-    if true then
+    if false then
     
       for _,_element in pairs(flight.elements) do
         local element=_element --Ops.OpsGroup#OPSGROUP.Element
