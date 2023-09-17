@@ -406,7 +406,7 @@ function PATHLINE:Draw(Switch, Coalition, Color, LineType)
 
   Coalition=Coalition or -1
   Color=Color or {0, 1, 0, 0.5}
-  LineType=LineType or -1
+  LineType=LineType or 1
 
   if Switch==false then
 
@@ -430,7 +430,7 @@ function PATHLINE:Draw(Switch, Coalition, Color, LineType)
         UTILS.RemoveMark(p2.lineID)
       end
     
-      p2.lineID=UTILS.GetMarkID()      
+      p2.lineID=UTILS.GetMarkID()
     
       trigger.action.lineToAll(Coalition, p2.lineID, p1.vec3, p2.vec3, Color, LineType)
       

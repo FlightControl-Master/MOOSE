@@ -4183,7 +4183,7 @@ function FLIGHTCONTROL:_CheckFlights()
             if taxipath then
               local text=string.format("Flight %s [%s/%s]: Unit %s close to taxiway %s. Dist=%.1f meters, Segment=%s-%s", flight:GetName(), flight:GetState(), self:GetFlightStatus(flight),
               element.name, taxipath:GetName(), dist, seg.p1.name, seg.p2.name)
-              MESSAGE:New(text,10):ToAll():ToLog()            
+              MESSAGE:New(text,10):ToLog()            
             end
             
           end
