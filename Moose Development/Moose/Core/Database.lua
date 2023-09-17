@@ -31,7 +31,7 @@
 -- @module Core.Database
 -- @image Core_Database.JPG
 
-
+---
 -- @type DATABASE
 -- @field #string ClassName Name of the class.
 -- @field #table Templates Templates: Units, Groups, Statics, ClientsByName, ClientsByID.

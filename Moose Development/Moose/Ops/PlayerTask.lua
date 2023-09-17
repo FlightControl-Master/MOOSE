@@ -98,7 +98,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.19"
+PLAYERTASK.version="0.1.20"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -2195,7 +2195,8 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
     end
   elseif EventData.id == EVENTS.PlayerEnterAircraft and EventData.IniCoalition == self.Coalition then
     if EventData.IniPlayerName and EventData.IniGroup then
-      if self.IsClientSet and self.ClientSet:IsNotInSet(CLIENT:FindByName(EventData.IniUnitName)) then
+      --if self.IsClientSet and self.ClientSet:IsNotInSet(CLIENT:FindByName(EventData.IniUnitName)) then
+      if self.IsClientSet and (not self.ClientSet:IsIncludeObject(CLIENT:FindByName(EventData.IniUnitName))) then
         self:T(self.lid.."Client not in SET: "..EventData.IniPlayerName)
         return self
       end
@@ -4063,7 +4064,8 @@ function PLAYERTASKCONTROLLER:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.Ejection, self._EventHandler)
   self:HandleEvent(EVENTS.Crash, self._EventHandler)
   self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
-  self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)                  
+  self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
+  self:SetEventPriority(5)          
   return self
 end
 

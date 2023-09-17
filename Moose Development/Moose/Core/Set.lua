@@ -860,8 +860,10 @@ do -- SET_BASE
     self:F3( Object )
     local outcome = false
     local name = Object:GetName()
+    --self:I("SET_BASE: Objectname = "..name)
     self:ForEach(
       function(object)
+        --self:I("SET_BASE: In set objectname = "..object:GetName())
         if object:GetName() == name then
           outcome = true
         end
@@ -4028,8 +4030,8 @@ do -- SET_CLIENT
       Countries = nil,
       ClientPrefixes = nil,
       Zones = nil,
-  	  Playernames = nil,
-  	  Callsigns = nil,
+      Playernames = nil,
+      Callsigns = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -4330,7 +4332,6 @@ do -- SET_CLIENT
   function SET_CLIENT:FilterStart()
 
     if _DATABASE then
-      self:_FilterStart()
       self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
       self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
       self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
@@ -4339,6 +4340,7 @@ do -- SET_CLIENT
         local timing = self.ZoneTimerInterval or 30
         self.ZoneTimer:Start(timing,timing)
       end
+      self:_FilterStart()
     end
 
     return self
@@ -4546,45 +4548,45 @@ do -- SET_CLIENT
         MClientInclude = MClientInclude and MClientPrefix
       end
 
-		if self.Filter.Zones then
-		  local MClientZone = false
-		  for ZoneName, Zone in pairs( self.Filter.Zones ) do
-			self:T3( "Zone:", ZoneName )
-			local unit = MClient:GetClientGroupUnit()
-			if unit and unit:IsInZone(Zone) then
-			  MClientZone = true
-			end
-		  end
-		  MClientInclude = MClientInclude and MClientZone
-		end
-		
-		if self.Filter.Playernames then
-			local MClientPlayername = false
-			local playername = MClient:GetPlayerName() or "Unknown"
-			--self:T(playername)
-			for _,_Playername in pairs(self.Filter.Playernames) do
-				if playername and string.find(playername,_Playername) then
-					MClientPlayername = true
-				end
-			end
-			self:T( { "Evaluated Playername", MClientPlayername } )
-			MClientInclude = MClientInclude and MClientPlayername
-		end
-		
-		if self.Filter.Callsigns then
-			local MClientCallsigns = false
-			local callsign = MClient:GetCallsign()
-			--self:T(callsign)
-			for _,_Callsign in pairs(self.Filter.Callsigns) do
-				if callsign and string.find(callsign,_Callsign) then
-					MClientCallsigns = true
-				end
-			end
-			self:T( { "Evaluated Callsign", MClientCallsigns } )
-			MClientInclude = MClientInclude and MClientCallsigns
-		end
-		
-	end
+    if self.Filter.Zones then
+      local MClientZone = false
+      for ZoneName, Zone in pairs( self.Filter.Zones ) do
+      self:T3( "Zone:", ZoneName )
+      local unit = MClient:GetClientGroupUnit()
+      if unit and unit:IsInZone(Zone) then
+        MClientZone = true
+      end
+      end
+      MClientInclude = MClientInclude and MClientZone
+    end
+    
+    if self.Filter.Playernames then
+      local MClientPlayername = false
+      local playername = MClient:GetPlayerName() or "Unknown"
+      --self:T(playername)
+      for _,_Playername in pairs(self.Filter.Playernames) do
+        if playername and string.find(playername,_Playername) then
+          MClientPlayername = true
+        end
+      end
+      self:T( { "Evaluated Playername", MClientPlayername } )
+      MClientInclude = MClientInclude and MClientPlayername
+    end
+    
+    if self.Filter.Callsigns then
+      local MClientCallsigns = false
+      local callsign = MClient:GetCallsign()
+      --self:I(callsign)
+      for _,_Callsign in pairs(self.Filter.Callsigns) do
+        if callsign and string.find(callsign,_Callsign,1,true) then
+          MClientCallsigns = true
+        end
+      end
+      self:T( { "Evaluated Callsign", MClientCallsigns } )
+      MClientInclude = MClientInclude and MClientCallsigns
+    end
+    
+  end
     self:T2( MClientInclude )
     return MClientInclude
   end
