@@ -631,7 +631,7 @@ function ASTAR.Pathline(nodeA, nodeB, distmax)
     local seg=segA --Core.Pathline#PATHLINE.Segment
     
     if dist<distmax and (nodeA.pathpoint.uid==seg.p1.uid or nodeA.pathpoint.uid==seg.p2.uid) then
-      env.info(string.format("FF NodeB=%d [pathline=%s] is close to NodeA=%d [pathline=%s] ==> valid neighbour", nodeB.id, nodeB.pathline.name, nodeA.id, nodeA.pathline.name))
+      --env.info(string.format("FF NodeB=%d [pathline=%s] is close to NodeA=%d [pathline=%s] ==> valid neighbour", nodeB.id, nodeB.pathline.name, nodeA.id, nodeA.pathline.name))
       return true
     end
 
@@ -641,7 +641,7 @@ function ASTAR.Pathline(nodeA, nodeB, distmax)
     local seg=segB --Core.Pathline#PATHLINE.Segment
 
     if dist<distmax and (nodeB.pathpoint.uid==seg.p1.uid or nodeB.pathpoint.uid==seg.p2.uid) then
-      env.info(string.format("FF NodeA=%d [pathline=%s] is close to NodeB=%d [pathline=%s] ==> valid neighbour", nodeA.id, nodeA.pathline.name, nodeB.id, nodeB.pathline.name))
+      --env.info(string.format("FF NodeA=%d [pathline=%s] is close to NodeB=%d [pathline=%s] ==> valid neighbour", nodeA.id, nodeA.pathline.name, nodeB.id, nodeB.pathline.name))
       return true
     end    
     
@@ -675,8 +675,8 @@ end
 -- @return #number Distance between the two nodes.
 function ASTAR.Dist2D(nodeA, nodeB)
   local dist=nodeA.coordinate:Get2DDistance(nodeB.coordinate)
-  local text=string.format("FF Cost Dist2D NodeA=%d-->NodeB=%d = %.1f", nodeA.id, nodeB.id, dist)
-  env.info(text)
+  --local text=string.format("FF Cost Dist2D NodeA=%d-->NodeB=%d = %.1f", nodeA.id, nodeB.id, dist)
+  --env.info(text)
   return dist
 end
 

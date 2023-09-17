@@ -1206,6 +1206,8 @@ end
 -- @return #boolean If `true`, silent mode is enabled.
 function AIRBASE:AddTaxiway(TaxiPathline, Name)
 
+  Name=Name or TaxiPathline:GetName()
+
   self.taxiways[Name]=TaxiPathline
 
 end
@@ -1251,7 +1253,7 @@ end
 --- Find the shortest path using taxiways to get from given parking spot to the starting point of a runway.
 -- Note that the taxi ways have to be manually added with the `AIRBASE:AddTaxiway()` function.
 -- @param #AIRBASE self
--- @param #AIRBASE.ParkingSpot ParkingSport Parking spot.
+-- @param #AIRBASE.ParkingSpot ParkingSpot Parking spot.
 -- @param #AIRBASE.Runway Runway The runway. If none is given, we take the active runway for takeoff.
 -- @return Core.Pathline#PATHLINE Shortest path on taxiways from `StartCoord` to `EndCoord`.
 -- @return #table Table of used taxi way pathlines.

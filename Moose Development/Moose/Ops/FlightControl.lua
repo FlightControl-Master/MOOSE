@@ -384,8 +384,8 @@ FLIGHTCONTROL.version="0.7.3"
 --- Create a new FLIGHTCONTROL class object for an associated airbase.
 -- @param #FLIGHTCONTROL self
 -- @param #string AirbaseName Name of the airbase.
--- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. Can also be given as a `#table` of multiple frequencies.
--- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a `#table` of multiple modulations.
+-- @param #number Frequency Tower radio frequency in MHz. Default 143.00 MHz. Can also be given as a `#table` of multiple frequencies.
+-- @param #number Modulation Tower radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a `#table` of multiple modulations.
 -- @param #string PathToSRS Path to the directory, where SRS is located.
 -- @param #number Port Port of SRS Server, defaults to 5002
 -- @param #string GoogleKey Path to the Google JSON-Key.
@@ -1395,9 +1395,9 @@ function FLIGHTCONTROL:_CheckQueues()
       
     if isholding then
 
-      --------------------
-      -- Holding flight --
-      --------------------
+      --------------
+      -- Arrivals --
+      --------------
 
       -- No other flight is taking off and number of landing flights is below threshold.      
       if self:_CheckFlightLanding(flight) then
@@ -1451,9 +1451,9 @@ function FLIGHTCONTROL:_CheckQueues()
     
     else
     
-      --------------------
-      -- Takeoff flight --
-      --------------------
+      ----------------
+      -- Departures --
+      ----------------
      
       -- No other flight is taking off or landing.
       if self:_CheckFlightTakeoff(flight) then
@@ -1463,9 +1463,34 @@ function FLIGHTCONTROL:_CheckQueues()
           
         -- Runway.
         local runway=self:GetActiveRunwayText(true)
+        
+        local rwy=self:GetActiveRunwayTakeoff()
+        
+        local coord=flight:GetCoordinate()
+        local taxipath, taxiways=self.airbase:FindTaxiwaysFromAtoB(coord, rwy.position)
+        
+        taxipath:Draw(true)
       
         -- Message.
-        local text=string.format("%s, %s, taxi to runway %s, hold short", callsign, self.alias, runway)
+        local text=string.format("%s, %s, taxi to runway %s", callsign, self.alias, runway)
+        
+        local taxiroute=""
+        if taxipath and taxiways then
+          taxiroute=taxiroute.." via "
+          for _,_pathline in pairs(taxiways) do
+            local pathline=_pathline --Core.Pathline#PATHLINE
+            local name=UTILS.Split(pathline.name, " ")
+            local name=name[#name]
+            local tw=name
+            if string.len(name)==1 then
+              name=ENUMS.Phonetic[name]
+            end            
+            taxiroute=taxiroute..string.format("%s, ", name)
+          end
+        end
+        text=text..taxiroute
+        
+        text=text..string.format("hold short of runway %s.", runway)
         
         if self:GetFlightStatus(flight)==FLIGHTCONTROL.FlightStatus.READYTO then
           text=string.format("%s, %s, cleared for take-off, runway %s", callsign, self.alias, runway)
@@ -1498,7 +1523,7 @@ function FLIGHTCONTROL:_CheckQueues()
           text=text..string.format("runway %s, %s", runway, callsign)
           
           -- Transmit message.
-          self:TransmissionPilot(text, flight, 10)             
+          self:TransmissionPilot(text, flight, 10)
           
           -- Remove parking guards.
           for _,_element in pairs(flight.elements) do
@@ -2165,6 +2190,10 @@ function FLIGHTCONTROL:_InitParkingSpots()
           
           -- Spawn parking guard.
           self:SpawnParkingGuard(unit)
+          
+          
+          local group=unit:GetGroup()
+          FLIGHTGROUP:New(group)
         
         else
         
@@ -2524,9 +2553,14 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, mainmenu)
       ---
       
       if status==FLIGHTCONTROL.FlightStatus.READYTX then
-        MENU_GROUP_COMMAND:New(group, "Cancel Taxi",    rootmenu, self._PlayerAbortTaxi,   self, groupname)
+        -- After requesting taxi.
+        MENU_GROUP_COMMAND:New(group, "Confirm Taxi",  rootmenu, self._PlayerConfirmTaxi, self, groupname)
+        MENU_GROUP_COMMAND:New(group, "Cancel Taxi",   rootmenu, self._PlayerAbortTaxi,   self, groupname)
+      elseif status==FLIGHTCONTROL.FlightStatus.TAXIOUT then
+        -- After Confirming Taxi
+        MENU_GROUP_COMMAND:New(group, "Cancel Taxi",   rootmenu, self._PlayerAbortTaxi,   self, groupname)
       else
-        MENU_GROUP_COMMAND:New(group, "Request Taxi",  rootmenu, self._PlayerRequestTaxi, self, groupname)
+        MENU_GROUP_COMMAND:New(group, "Request Taxi",  rootmenu, self._PlayerRequestTaxi, self, groupname)        
       end
       
     elseif flight:IsTaxiing(player) then
@@ -3504,12 +3538,11 @@ function FLIGHTCONTROL:_PlayerRequestTaxi(groupname)
         
       -- Tell pilot to wait until cleared.
       local text=string.format("%s, %s, hold position until further notice.", callsign, self.alias)
+      
       self:TransmissionTower(text, flight, 10)
       
       -- Set flight status to "Ready to Taxi".
-      self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.READYTX)
-      
-      self.airbase:FindTaxiwaysFromAtoB(StartCoord,EndCoord)
+      self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.READYTX)     
       
     elseif flight:IsTaxiing() then
     
@@ -3539,6 +3572,33 @@ function FLIGHTCONTROL:_PlayerRequestTaxi(groupname)
     self:E(self.lid..string.format("Cannot find flight group %s.", tostring(groupname)))
   end  
 
+end
+
+--- Player confirm taxi.
+-- @param #FLIGHTCONTROL self
+-- @param #string groupname Name of the flight group.
+function FLIGHTCONTROL:_PlayerConfirmTaxi(groupname)
+  
+  -- Get flight.
+  local flight=_DATABASE:GetOpsGroup(groupname) --Ops.FlightGroup#FLIGHTGROUP
+  
+  if flight then
+  
+    -- Get callsign.
+    local callsign=self:_GetCallsignName(flight)
+
+      -- Runway for takeoff.
+      local runway=self:GetActiveRunwayText(true)
+
+      -- Tell pilot to wait until cleared.
+      local text=string.format("Taxi to runway %s, %s", runway, callsign)
+      self:TransmissionPilot(text, flight)
+
+      -- Taxi out.    
+      self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.TAXIOUT)    
+  end
+  
+  
 end
 
 --- Player aborts taxi.
@@ -3609,62 +3669,54 @@ function FLIGHTCONTROL:_PlayerRequestTakeoff(groupname)
   
     if flight:IsTaxiing() then
     
+      -- TODO: Get closest runway
+      local runway=self:GetActiveRunwayTakeoff()
+      
+      local runwayName=self:GetActiveRunwayText(true)
+      
+      local distToRunway=flight:GetCoordinate():Get2DDistance(runway.position)
+
       -- Get callsign.
       local callsign=self:_GetCallsignName(flight)
       
-      -- Pilot request for taxi.
-      local text=string.format("%s, %s, ready for departure. Request takeoff.", self.alias, callsign)
-      self:TransmissionPilot(text, flight)    
-    
-      -- Get number of flights landing.
-      local Nlanding=self:CountFlights(FLIGHTCONTROL.FlightStatus.LANDING)
-      
-      -- Get number of flights taking off.
-      local Ntakeoff=self:CountFlights(FLIGHTCONTROL.FlightStatus.TAKEOFF)
-      
-      --[[
-      local text=""
-      if Nlanding==0 and Ntakeoff==0 then
-        text="No current traffic. You are cleared for takeoff."
-        self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.TAKEOFF)
-      elseif Nlanding>0 and Ntakeoff>0 then
-        text=string.format("Negative, we got %d flights inbound and %d outbound ahead of you. Hold position until futher notice.", Nlanding, Ntakeoff)
-        self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.READYTO)      
-      elseif Nlanding>0 then
-        if Nlanding==1 then
-          text=string.format("Negative, we got %d flight inbound before it's your turn. Wait until futher notice.", Nlanding)
-        else
-          text=string.format("Negative, we got %d flights inbound. Wait until futher notice.", Nlanding)
-        end
-        self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.READYTO)
-      elseif Ntakeoff>0 then
-        text=string.format("Negative, %d flights ahead of you are waiting for takeoff. Talk to you soon.", Ntakeoff)
-        self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.READYTO)
-      end
-      ]]
-      
-      -- We only check for landing flights.
-      local text=string.format("%s, %s, ", callsign, self.alias)
-      if Nlanding==0 then
-      
-        -- No traffic.
-        text=text.."no current traffic. You are cleared for takeoff."
+      if distToRunway < 100 then
         
-        -- Set status to "Take off".
-        self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.TAKEOFF)
-      elseif Nlanding>0 then
-        if Nlanding==1 then
-          text=text..string.format("negative, we got %d flight inbound before it's your turn. Hold position until futher notice.", Nlanding)
-        else
-          text=text..string.format("negative, we got %d flights inbound. Hold positon until futher notice.", Nlanding)
-        end
-      end      
+        -- Pilot request for taxi.
+        local text=string.format("%s, %s, ready for departure, runway %s", self.alias, callsign, runwayName)
+        self:TransmissionPilot(text, flight)    
       
-      -- Message from tower.
-      self:TransmissionTower(text, flight, 10)
+        -- Get number of flights landing.
+        local Nlanding=self:CountFlights(FLIGHTCONTROL.FlightStatus.LANDING)
+        
+        -- Get number of flights taking off.
+        local Ntakeoff=self:CountFlights(FLIGHTCONTROL.FlightStatus.TAKEOFF)
+        
+        -- We only check for landing flights.
+        local text=string.format("%s, %s, ", callsign, self.alias)
+        if Nlanding==0 then
+        
+          -- No traffic.
+          text=text.."no current traffic. You are cleared for takeoff."
+          
+          -- Set status to "Take off".
+          self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.TAKEOFF)
+        elseif Nlanding>0 then
+          if Nlanding==1 then
+            text=text..string.format("negative, we got %d flight inbound before it's your turn. Hold position until futher notice.", Nlanding)
+          else
+            text=text..string.format("negative, we got %d flights inbound. Hold position until futher notice.", Nlanding)
+          end
+        end      
+        
+        -- Message from tower.
+        self:TransmissionTower(text, flight, 10)
+        
+      else
+        local text=string.format("%s, you are too far from the active runway. Proceed to runway %s and repeat your request when you are at the holding position", callsign, runwayName)
+      end
       
     else
-      self:TextMessageToFlight(string.format("Negative, you must request TAXI before you can request TAKEOFF!"), flight)  
+      self:TextMessageToFlight(string.format("Negative, you must request TAXI before you can request TAKEOFF!"), flight)
     end
     
   else

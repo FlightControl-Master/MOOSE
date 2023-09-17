@@ -564,6 +564,11 @@ function OPSGROUP:New(group)
 
   -- Set DCS group and controller.
   self.dcsgroup=self:GetDCSGroup()
+  
+  if not self.dcsgroup then
+    return
+  end
+  
   self.controller=self.dcsgroup:getController()
 
   -- Category.

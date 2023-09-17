@@ -2279,7 +2279,12 @@ function FLIGHTGROUP:onafterTaxiing(From, Event, To)
       self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.TAKEOFF)
     else
       -- Human flights go to TAXI OUT queue. They will go to the ready for takeoff queue when they request it.
-      self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.TAXIOUT)
+      if self.controlstatus~=FLIGHTCONTROL.FlightStatus.TAXIOUT then
+        self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.TAXIOUT)
+      else
+        -- Update menu. This happens now if we confirmed taxiing and later began to taxi. (in the FLIGHTCONTROL:SetFlightStatus function the menu is only updated, when the controlstatus changed)
+        self:_UpdateMenu(0.2)
+      end
     end
 
   end
