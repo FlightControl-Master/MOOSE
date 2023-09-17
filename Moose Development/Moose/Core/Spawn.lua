@@ -2178,14 +2178,18 @@ end
 -- @param #table Spots Table of parking spot IDs. Note that these in general are different from the numbering in the mission editor!
 -- @param #SPAWN.Takeoff Takeoff (Optional) Takeoff type, i.e. either SPAWN.Takeoff.Cold or SPAWN.Takeoff.Hot. Default is Hot.
 -- @return Wrapper.Group#GROUP The group that was spawned or nil when nothing was spawned.
-function SPAWN:SpawnAtParkingSpot( Airbase, Spots, Takeoff ) -- R2.5
+function SPAWN:SpawnAtParkingSpot( Airbase, Spots, Takeoff )
   self:F( { Airbase = Airbase, Spots = Spots, Takeoff = Takeoff } )
-
+  
   -- Ensure that Spots parameter is a table.
   if type( Spots ) ~= "table" then
     Spots = { Spots }
   end
-
+  
+  if type(Airbase) == "string" then
+    Airbase = AIRBASE:FindByName(Airbase)
+  end
+  
   -- Get template group.
   local group = GROUP:FindByName( self.SpawnTemplatePrefix )
 
