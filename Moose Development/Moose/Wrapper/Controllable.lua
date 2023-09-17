@@ -1790,24 +1790,8 @@ end
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskEngageGroup( AttackGroup, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit )
 
-  --  EngageControllable  = {
-  --   id = 'EngageControllable ',
-  --   params = {
-  --     groupId = Group.ID,
-  --     weaponType = number,
-  --     expend = enum AI.Task.WeaponExpend,
-  --     attackQty = number,
-  --     directionEnabled = boolean,
-  --     direction = Azimuth,
-  --     altitudeEnabled = boolean,
-  --     altitude = Distance,
-  --     attackQtyLimit = boolean,
-  --     priority = number,
-  --   }
-  -- }
-
   local DCSTask = {
-    id = 'EngageControllable',
+    id = 'EngageGroup',
     params = {
       groupId          = AttackGroup:GetID(),
       weaponType       = WeaponType,
@@ -1923,7 +1907,7 @@ end
 function CONTROLLABLE:EnRouteTaskFAC_EngageGroup( AttackGroup, Priority, WeaponType, Designation, Datalink, Frequency, Modulation, CallsignID, CallsignNumber )
 
   local DCSTask = {
-    id = 'FAC_EngageControllable',
+    id = 'FAC_EngageGroup',
     params = {
       groupId     = AttackGroup:GetID(),
       weaponType  = WeaponType or "Auto",
