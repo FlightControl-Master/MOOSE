@@ -328,6 +328,8 @@ function SPAWN:New( SpawnTemplatePrefix )
     self.SpawnInitModu = nil -- No special modulation.
     self.SpawnInitRadio = nil -- No radio comms setting.
     self.SpawnInitModex = nil
+    self.SpawnInitModexPrefix = nil
+    self.SpawnInitModexPostfix = nil
     self.SpawnInitAirbase = nil
     self.TweakedTemplate = false -- Check if the user is using self made template.
 
@@ -382,6 +384,8 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
     self.SpawnInitModu = nil -- No special modulation.
     self.SpawnInitRadio = nil -- No radio communication setting.
     self.SpawnInitModex = nil
+    self.SpawnInitModexPrefix = nil
+    self.SpawnInitModexPostfix = nil
     self.SpawnInitAirbase = nil
     self.TweakedTemplate = false -- Check if the user is using self made template.
 
@@ -541,6 +545,8 @@ function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPr
     self.SpawnInitModu = nil -- No special modulation.
     self.SpawnInitRadio = nil -- No radio communication setting.
     self.SpawnInitModex = nil
+    self.SpawnInitModexPrefix = nil
+    self.SpawnInitModexPostfix = nil
     self.SpawnInitAirbase = nil
     self.TweakedTemplate = true -- Check if the user is using self made template.
     self.MooseNameing  = true
@@ -812,12 +818,17 @@ end
 --- Sets the modex of the first unit of the group. If more units are in the group, the number is increased by one with every unit.
 -- @param #SPAWN self
 -- @param #number modex Modex of the first unit.
+-- @param #string prefix (optional) String to prefix to modex, e.g. for French AdA Modex, eg. -L-102 then "-L-" would be the prefix.
+-- @param #string postfix (optional) String to postfix to modex, example tbd.
 -- @return #SPAWN self
-function SPAWN:InitModex( modex )
+function SPAWN:InitModex( modex, prefix, postfix )
 
   if modex then
     self.SpawnInitModex = tonumber( modex )
   end
+  
+  self.SpawnInitModexPrefix = prefix
+  self.SpawnInitModexPostfix = postfix
 
   return self
 end
@@ -1571,7 +1582,10 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
         -- Set tail number.
         if self.SpawnInitModex then
           for UnitID = 1, #SpawnTemplate.units do
-            SpawnTemplate.units[UnitID].onboard_num = string.format( "%03d", self.SpawnInitModex + (UnitID - 1) )
+            local modexnumber = string.format( "%03d", self.SpawnInitModex + (UnitID - 1) )
+            if self.SpawnInitModexPrefix then modexnumber = self.SpawnInitModexPrefix..modexnumber end
+            if self.SpawnInitModexPostfix then modexnumber = modexnumber..self.SpawnInitModexPostfix end
+            SpawnTemplate.units[UnitID].onboard_num = modexnumber
           end
         end
 
