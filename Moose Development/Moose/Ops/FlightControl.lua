@@ -1492,6 +1492,8 @@ function FLIGHTCONTROL:_CheckQueues()
         
         text=text..string.format("hold short of runway %s.", runway)
         
+        flight.taxipath=taxipath
+        
         if self:GetFlightStatus(flight)==FLIGHTCONTROL.FlightStatus.READYTO then
           text=string.format("%s, %s, cleared for take-off, runway %s", callsign, self.alias, runway)
         end
@@ -4603,6 +4605,25 @@ function FLIGHTCONTROL:_CleanText(Text)
   local text=Text:gsub("\n$",""):gsub("\n$","")
 
   return text
+end
+
+--- Clean text. Remove control sequences.
+-- @param #FLIGHTCONTROL self
+-- @param Core.Pathline#PATHLINE taxipath Taxi path.
+-- @param #string Cleaned text.
+function FLIGHTCONTROL:_GetTaxiwayText(taxipath)
+
+  local taxiroute=""
+  for i,_point in pairs(taxipath.points) do
+    local p=_point --Core.Pathline#PATHLINE.Point
+    local name=UTILS.Split(p.name, " ")
+    local name=name[#name]
+    local tw=name
+    if string.len(name)==1 then
+      name=ENUMS.Phonetic[name]
+    end            
+    taxiroute=taxiroute..string.format("%s, ", name)
+  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
