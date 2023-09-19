@@ -337,7 +337,6 @@ FLIGHTCONTROL.Violation={
   Speeding="Speeding",
   AltitudeDeviation="Altitude Deviation", --300 feet from assigned alt.
   RunwayIncursion="Runway Incursion",
-  
 }
 
 --- Warning.
@@ -353,6 +352,7 @@ FLIGHTCONTROL.version="0.7.3"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 
+-- TODO: Controller is a nice guy or not. How he/she reacts on warnings and violations!
 -- TODO: Progressive Taxi
 -- TODO: Ground control for takeoff and taxi.
 -- TODO: Improve approach pattern with new NAVIGATION classes.
@@ -1426,7 +1426,7 @@ function FLIGHTCONTROL:_CheckQueues()
           -- Give AI the landing signal.
           if flight.isAI then
           
-            -- Message.
+            -- Readback instructions.
             local text=string.format("Runway %s, cleared to land, %s", runway, callsign)
                       
             -- Transmit message.
@@ -1434,6 +1434,8 @@ function FLIGHTCONTROL:_CheckQueues()
           
             -- Land AI.          
             self:_LandAI(flight, parking)
+            
+            --TODO: Why do I not set the status to LANDING for AI?
           else
           
             -- We set this flight to landing. With this he is allowed to leave the pattern.
@@ -1461,97 +1463,103 @@ function FLIGHTCONTROL:_CheckQueues()
         -- Get callsign.
         local callsign=self:_GetCallsignName(flight)
           
-        -- Runway.
+        -- Runway text.
         local runway=self:GetActiveRunwayText(true)
         
+        -- Runway for take-off.
         local rwy=self:GetActiveRunwayTakeoff()
         
         local coord=flight:GetCoordinate()
-        local taxipath, taxiways=self.airbase:FindTaxiwaysFromAtoB(coord, rwy.position)
-        
-        taxipath:Draw(true)
-      
-        -- Message.
-        local text=string.format("%s, %s, taxi to runway %s", callsign, self.alias, runway)
-        
-        local taxiroute=""
-        if taxipath and taxiways then
-          taxiroute=taxiroute.." via "
-          for _,_pathline in pairs(taxiways) do
-            local pathline=_pathline --Core.Pathline#PATHLINE
-            local name=UTILS.Split(pathline.name, " ")
-            local name=name[#name]
-            local tw=name
-            if string.len(name)==1 then
-              name=ENUMS.Phonetic[name]
-            end            
-            taxiroute=taxiroute..string.format("%s, ", name)
-          end
-        end
-        text=text..taxiroute
-        
-        text=text..string.format("hold short of runway %s.", runway)
-        
-        flight.taxipath=taxipath
-        
+                
         if self:GetFlightStatus(flight)==FLIGHTCONTROL.FlightStatus.READYTO then
-          text=string.format("%s, %s, cleared for take-off, runway %s", callsign, self.alias, runway)
-        end
-          
-        -- Transmit message.
-        self:TransmissionTower(text, flight)
-     
-        -- Check if flight is AI. Humans have to request taxi via F10 menu.
-        if flight.isAI then
         
           ---
-          -- AI
+          -- Ready for TAKEOFF
           ---
-                  
-          -- Message.
-          local text="Wilco, "
-          
-          -- Start uncontrolled aircraft.
-          if flight:IsUncontrolled() then
+                
+          local text=string.format("%s, %s, cleared for take-off, runway %s", callsign, self.alias, runway)
 
-            -- Message.
-            text=text..string.format("starting engines, ")
-            
-            -- Start uncontrolled aircraft.          
-            flight:StartUncontrolled()
-          end
-          
-          -- Message.
-          text=text..string.format("runway %s, %s", runway, callsign)
-          
-          -- Transmit message.
-          self:TransmissionPilot(text, flight, 10)
-          
-          -- Remove parking guards.
-          for _,_element in pairs(flight.elements) do
-            local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
-            if element and element.parking then
-              local spot=self:GetParkingSpotByID(element.parking.TerminalID)
-              self:RemoveParkingGuard(spot)
-            end
-          end
-          
-          -- Set flight to takeoff. No way we can stop the AI now.
+          -- Player is ready for takeoff
           self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.TAKEOFF)
           
         else
-
+        
           ---
-          -- PLAYER
+          -- Ready to TAXI
           ---
-
-          if self:GetFlightStatus(flight)==FLIGHTCONTROL.FlightStatus.READYTO then
-
-            -- Player is ready for takeoff
+      
+          -- Message.
+          local text=string.format("%s, %s, taxi to runway %s", callsign, self.alias, runway)
+          
+          -- Get taxi ways if they have been specified by the mission designer.
+          local taxipath, taxiways=self.airbase:FindTaxiwaysFromAtoB(coord, rwy.position)
+          
+          if taxipath then
+          
+            taxipath:Draw(true)
+          
+            -- Get taxi way text.
+            local taxiroute=self:_GetTaxiwayText(taxipath, false)
+            
+            text=text.." via "..taxiroute          
+          end
+  
+          -- Hold short instructions.
+          -- TODO: Does this need to be said?          
+          text=text..string.format(", hold short of runway %s.", runway)
+            
+          -- Set taxiway to flight so he can read back.
+          flight.taxipath=taxipath
+                      
+          -- Transmit message.
+          self:TransmissionTower(text, flight)
+       
+          -- Check if flight is AI. Humans have to request taxi via F10 menu.
+          if flight.isAI then
+          
+            ---
+            -- AI
+            ---
+                    
+            -- Read back runway.
+            local text=string.format("Runway %s, ", runway)
+            
+            -- Start uncontrolled aircraft.
+            if flight:IsUncontrolled() then
+  
+              -- Message.
+              text=text..string.format("starting engines, ")
+              
+              -- Start uncontrolled aircraft.          
+              flight:StartUncontrolled()
+            end
+            
+            -- Append call sign.
+            text=text..callsign
+            
+            -- Transmit message.
+            self:TransmissionPilot(text, flight, 10)
+            
+            -- Remove parking guards.
+            for _,_element in pairs(flight.elements) do
+              local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
+              if element and element.parking then
+                local spot=self:GetParkingSpotByID(element.parking.TerminalID)
+                self:RemoveParkingGuard(spot)
+              end
+            end
+            
+            -- Set flight to takeoff. No way we can stop the AI now.
+            -- TODO: To improve this, we would need to monitor if the AI gets to the holding position or on the runway.
+            --       Probably need some holding guard similar to the parking guard.
             self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.TAKEOFF)
             
           else
-
+  
+            ---
+            -- PLAYER
+            ---
+  
             -- Remove parking guards.
             for _,_element in pairs(flight.elements) do
               local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
@@ -1565,7 +1573,7 @@ function FLIGHTCONTROL:_CheckQueues()
               end        
             end
             
-          end
+          end --AI/PLAYER
           
         end
         
@@ -3206,6 +3214,7 @@ function FLIGHTCONTROL:_PlayerHolding(groupname)
           -- Distance.
           local dist=stack.pos0:Get2DDistance(Coordinate)
           
+          -- Currently take a large valu for testing!
           local dmax=UTILS.NMToMeters(500)
           
           if dist<dmax then
@@ -3339,6 +3348,11 @@ function FLIGHTCONTROL:_PlayerConfirmLanding(groupname)
       
       if self:GetFlightStatus(flight)==FLIGHTCONTROL.FlightStatus.LANDING then
       
+        ---
+        -- If flight is in status LANDING, he got permission to land.
+        -- So next step is to confirm it.
+        ---
+      
         -- Runway.
         local runway=self:GetActiveRunwayText()
       
@@ -3346,7 +3360,7 @@ function FLIGHTCONTROL:_PlayerConfirmLanding(groupname)
         local text=string.format("Runway %s, cleared to land, %s", runway, callsign)
                   
         -- Transmit message.
-        self:TransmissionPilot(text, flight)                
+        self:TransmissionPilot(text, flight)
         
         -- Set flight to landing. This clears the stack and Tholding.
         flight:Landing()
@@ -3361,6 +3375,11 @@ function FLIGHTCONTROL:_PlayerConfirmLanding(groupname)
         flight:_UpdateMenu(0.5)
         
       else
+      
+        ---
+        -- Flight is NOT in status LANDING ==> This means no clearance for landing!
+        -- 
+        ---
 
         -- Pilot leaves pattern for landing
         local text=string.format("%s, %s, leaving pattern for landing.", self.alias, callsign)
@@ -3372,7 +3391,7 @@ function FLIGHTCONTROL:_PlayerConfirmLanding(groupname)
         local text=string.format("%s, negative! Hold position until you get clearance.",  callsign)
             
         -- Send message.
-        self:TransmissionTower(text, flight, 10)            
+        self:TransmissionTower(text, flight, 10)
       end
             
     else
@@ -4224,6 +4243,48 @@ function FLIGHTCONTROL:_CheckFlights()
 
       if (flightstatus==FLIGHTCONTROL.FlightStatus.HOLDING) then
         --Check altitude and position
+        
+        local stack=flight.stack
+        
+        if stack then
+        
+          local altitude=stack.angels
+          
+          local alt=flight:GetAltitude()
+          
+          local diff=alt-altitude
+          
+          -- TODO: issue warning and keep track. otherwise this will repeat unncessarily
+          -- TODO: make a good warning structure and save it in the flightgroup or here.
+          --       needs the kind of warning and the time stamp at least
+          --
+          
+          if diff<300 then
+          
+            local timestamp=self:_GetLastWarning(WARNING.Type.AltitudeLow)
+            if timestamp==nil or timer.getAbsTime()-timestamp>5*60 then
+            
+            end
+            
+            -- Get number of warnings issued in the last 30 min.
+            local N=self:_GetWarnings(WARNING.Type.AltitudeLow, Tstart, Tend)
+            if N>1 then
+            elseif N>5 then
+              --Possible pilot deviation.
+            end
+            
+          
+            local text=string.format("%s, you are too low. Climb to the assigned altitude!")
+            self:TransmissionTower(text, flight)
+            
+          elseif diff>300 then
+
+            local text=string.format("%s, you are too high. Descent to the assigned altitude!")
+            self:TransmissionTower(text, flight)
+          
+          end                  
+        end
+              
       end
 
       if (flightstatus==FLIGHTCONTROL.FlightStatus.ARRIVED) then
@@ -4607,23 +4668,62 @@ function FLIGHTCONTROL:_CleanText(Text)
   return text
 end
 
---- Clean text. Remove control sequences.
+--- Get taxiway, e.g. "Alpha, Echo or Bravo".
+-- We assume that the last part of the input string is separated by a blank " ", e.g. "Kutaisi Taxiway Alpha".
+-- @param #FLIGHTCONTROL self
+-- @param #string Name Name that contains the taxiway.
+-- @param #boolean Short Only return letter, e.g. "A" for "Alpha".
+-- @return #string Taxiway name, e.g. "Alpha".
+function FLIGHTCONTROL:_GetTaxiwayName(Name, Short)
+  
+  -- Split by blanks.
+  local name=UTILS.Split(Name, " ")
+  
+  -- Get last part.
+  local name=name[#name]
+  
+  if string.len(name)==1 then
+    -- Taxiway given as "A"
+    if not Short then
+      -- Get full name "Alpha"
+      name=ENUMS.Phonetic[name]
+    end
+  else
+    -- Taxiway given as "Alpha"
+    if Short then
+      -- Get only first character.
+      name=string.sub(name, 1, 1)
+    end
+  end            
+
+  return name
+end
+
+--- Get taxiways as text, e.g. "Alpha, Echo, Bravo", from a given PATHLINE taxiway.
 -- @param #FLIGHTCONTROL self
 -- @param Core.Pathline#PATHLINE taxipath Taxi path.
--- @param #string Cleaned text.
-function FLIGHTCONTROL:_GetTaxiwayText(taxipath)
+-- @param #boolean short Only short names, e.g. "A" instead of "Alpha".
+-- @return #string Taxiway names.
+function FLIGHTCONTROL:_GetTaxiwayText(taxipath, short)
+  
+  -- Last taxiway name.
+  local last=self:_GetTaxiwayName(taxipath.points[1].name, short)
+  
+  -- Init taxiways.
+  local taxiroute=last
+  
+  for i=2,#taxipath.points do
+    local p=taxipath.points[i] --Core.Pathline#PATHLINE.Point
+    
+    local name=self:_GetTaxiwayName(p.name, short)
 
-  local taxiroute=""
-  for i,_point in pairs(taxipath.points) do
-    local p=_point --Core.Pathline#PATHLINE.Point
-    local name=UTILS.Split(p.name, " ")
-    local name=name[#name]
-    local tw=name
-    if string.len(name)==1 then
-      name=ENUMS.Phonetic[name]
-    end            
-    taxiroute=taxiroute..string.format("%s, ", name)
+    if last~=name then
+      taxiroute=taxiroute..string.format(", %s", name)
+      last=name
+    end
   end
+  
+  return taxiroute
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

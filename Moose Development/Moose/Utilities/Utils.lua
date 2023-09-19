@@ -301,7 +301,7 @@ end
 -- @return #string Table as a string.
 UTILS.OneLineSerialize = function( tbl )  -- serialization of a table all on a single line, no comments, made to replace old get_table_string function
 
-  lookup_table = {}
+  local lookup_table = {}
 
   local function _Serialize( tbl )
 
@@ -3073,7 +3073,7 @@ end
 -- @param #table Table The table.
 -- @param #table Object The object to check.
 -- @param #string Key (Optional) Key to check. By default, the object itself is checked.
--- @return #booolen Returns `true` if object is in table.
+-- @return #boolean Returns `true` if object is in table.
 function UTILS.IsInTable(Table, Object, Key)
 
   for key, object in pairs(Table) do
@@ -3095,7 +3095,7 @@ end
 -- @param #table Table The table.
 -- @param #table Objects The objects to check.
 -- @param #string Key (Optional) Key to check.
--- @return #booolen Returns `true` if object is in table.
+-- @return #boolean Returns `true` if object is in table.
 function UTILS.IsAnyInTable(Table, Objects, Key)
 
   for _,Object in pairs(UTILS.EnsureTable(Objects)) do
