@@ -3483,7 +3483,7 @@ function RAT:Status(message, forID)
     -- Get group.
     local group=ratcraft.group  --Wrapper.Group#GROUP
 
-    if group and group:IsAlive() then
+    if group and group:IsAlive() and (group:GetCoordinate() or group:GetVec3()) then
       nalive=nalive+1
 
       -- Gather some information.
