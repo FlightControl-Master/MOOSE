@@ -93,6 +93,8 @@ PATHLINE.version="0.3.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: A lot...
+-- TODO: Read/write to JSON file
+-- TODO: Translate/rotate pathline
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -562,6 +564,104 @@ function PATHLINE:GetClosestPoint3D(Vec3)
   end
  
   return P, D, S
+end
+
+
+--- Write PATHLINE to JSON file.
+-- **NOTE**: Requires `io` and `lfs` to be de-sanitized!
+-- @param #PATHLINE self
+-- @param #string FileName Name of the file.
+function PATHLINE:WriteJSON(FileName)
+
+  if io and lfs then
+
+    -- JSON script.
+    local json=loadfile("Scripts\\JSON.lua")()
+    
+    local data={}
+    
+    data.name=self.name
+    
+    data.points=self.points
+    for i,_point in pairs(self.points) do
+      local point=_point --#PATHLINE.Point
+      --point.markerID=nil
+    end
+    
+    -- Encode data to raw JSON.
+    local raw_json=json:encode(data)
+    
+    self:I(data)
+
+    -- Write in "User/Saved Games/" Folder.
+    local filepath=lfs.writedir() .. FileName
+    
+    -- Open file for writing.
+    local f = io.open(filepath, "wb")
+    if f then
+      f:write(raw_json)
+      f:close()
+      self:I(self.lid .. string.format("FF Saving PATHLINE %s file %s", self.name, tostring(filepath)))
+    else
+      self:E(self.lid .. string.format( "ERROR: Could not save PATHLINE to file %s", tostring(filepath)))
+    end
+    
+  else
+    self:E(self.lid .. string.format( "ERROR: Could not save results because IO and/or LFS are not de-sanitized!"))
+  end  
+
+end
+
+--- Read PATHLINE from JSON file.
+-- **NOTE**: Requires `io` and `lfs` to be de-sanitized!
+-- @param #PATHLINE self
+-- @param #string FileName Name of the file.
+-- @return #PATHLINE self
+function PATHLINE:NewFromJSON(FileName)
+
+
+  if io and lfs then
+
+    -- JSON script.
+    local json=loadfile("Scripts\\JSON.lua")()
+    
+    local data={}
+    
+    -- Write in "User/Saved Games/" Folder.
+    local filepath=lfs.writedir() .. FileName
+    
+    env.info(filepath)
+
+    local f = io.open( filepath, "rb" )
+    if f then
+      -- self:I(self.lid..string.format("Loading player results from file %s", tostring(filename)))
+      data = f:read("*all")
+      f:close()      
+    else
+      env.info(string.format( "WARNING: Could not load player results from file %s. File might not exist just yet.", tostring( filepath ) ) )
+      return nil
+    end
+    
+    BASE:I(data)
+    
+    local _data=json:decode(data)
+    BASE:I(_data)
+
+    local self=PATHLINE:New(data.name)
+    
+    for i=1,#data.points do
+      local point=data.points[i] --#PATHLINE.Point
+      local p=pathline:AddPointFromVec3(point.vec3)
+      p.name=point.name
+      p.markerID=nil
+    end
+    
+    return self
+  else
+  
+  end
+
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
