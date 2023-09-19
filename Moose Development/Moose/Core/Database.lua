@@ -1369,7 +1369,7 @@ function DATABASE:_EventOnBirth( Event )
       if PlayerName then
 
         -- Debug info.
-        self:I(string.format("Player '%s' joint unit '%s' of group '%s'", tostring(PlayerName), tostring(Event.IniDCSUnitName), tostring(Event.IniDCSGroupName)))
+        self:I(string.format("Player '%s' joined unit '%s' of group '%s'", tostring(PlayerName), tostring(Event.IniDCSUnitName), tostring(Event.IniDCSGroupName)))
 
         -- Add client in case it does not exist already.
         if not client then
