@@ -1,4 +1,4 @@
---- **Functional** - Make SAM sites execute evasive and defensive behaviour when being fired upon.
+--- **Functional** - Make SAM sites evasive and execute defensive behaviour when being fired upon.
 --
 -- ===
 --
@@ -19,7 +19,7 @@
 --
 -- ### Authors: **FlightControl**, **applevangelist**
 --
--- Last Update: Feb 2022
+-- Last Update: September 2023
 --
 -- ===
 --
@@ -66,7 +66,7 @@ SEAD = {
   -- @field Harms
   SEAD.Harms = {
   ["AGM_88"] = "AGM_88",
-  ["AGM_45"] = "AGM_45",
+  --["AGM_45"] = "AGM_45",
   ["AGM_122"] = "AGM_122",
   ["AGM_84"] = "AGM_84",
   ["AGM_45"] = "AGM_45",
@@ -143,7 +143,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   self:AddTransition("*",             "ManageEvasion",                "*")
   self:AddTransition("*",             "CalculateHitZone",             "*")
   
-  self:I("*** SEAD - Started Version 0.4.3")
+  self:I("*** SEAD - Started Version 0.4.4")
   return self
 end
 
@@ -203,7 +203,7 @@ function SEAD:SwitchEmissions(Switch)
   return self
 end
 
---- Add an object to call back when going evasive.
+--- Set an object to call back when going evasive.
 -- @param #SEAD self
 -- @param #table Object The object to call. Needs to have object functions as follows:
 -- `:SeadSuppressionPlanned(Group, Name, SuppressionStartTime, SuppressionEndTime)` 
@@ -369,7 +369,7 @@ function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADP
       local reach = 10
       if hit then
         local wpndata = SEAD.HarmData[data]
-        reach = wpndata[1] * 1,1
+        reach = wpndata[1] * 1.1
         local mach = wpndata[2]
         wpnspeed = math.floor(mach * 340.29)
       end
@@ -405,7 +405,7 @@ function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADP
         local function SuppressionStop(args)
           self:T(string.format("*** SEAD - %s Radar On",args[2]))
           local grp = args[1]  -- Wrapper.Group#GROUP
-          local name = args[2] -- #string Group Nam
+          local name = args[2] -- #string Group Name
           if self.UseEmissionsOnOff then
             grp:EnableEmission(true)
           end
@@ -424,7 +424,7 @@ function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADP
         if _tti > 600 then delay =  _tti - 90 end -- shot from afar, 600 is default shorad ontime
   
         local SuppressionStartTime = timer.getTime() + delay
-        local SuppressionEndTime = timer.getTime() + _tti + self.Padding
+        local SuppressionEndTime = timer.getTime() + delay + _tti + self.Padding + delay
         local _targetgroupname = _targetgroup:GetName()
         if not self.SuppressedGroups[_targetgroupname] then
           self:T(string.format("*** SEAD - %s | Parameters TTI %ds | Switch-Off in %ds",_targetgroupname,_tti,delay))
