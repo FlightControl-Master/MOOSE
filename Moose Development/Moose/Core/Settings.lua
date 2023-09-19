@@ -744,7 +744,7 @@ do -- SETTINGS
 
       self.PlayerMenu = PlayerMenu
 
-      self:I( string.format( "Setting menu for player %s", tostring( PlayerName ) ) )
+      self:T( string.format( "Setting menu for player %s", tostring( PlayerName ) ) )
 
       local submenu = MENU_GROUP:New( PlayerGroup, "LL Accuracy", PlayerMenu )
       MENU_GROUP_COMMAND:New( PlayerGroup, "LL 0 Decimals", submenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 0 )
@@ -989,7 +989,7 @@ do -- SETTINGS
   do
     --- @param #SETTINGS self
     function SETTINGS:MenuGroupA2GSystem( PlayerUnit, PlayerGroup, PlayerName, A2GSystem )
-      BASE:E( { self, PlayerUnit:GetName(), A2GSystem } )
+      --BASE:E( {PlayerUnit:GetName(), A2GSystem } )
       self.A2GSystem = A2GSystem
       MESSAGE:New( string.format( "Settings: A2G format set to %s for player %s.", A2GSystem, PlayerName ), 5 ):ToGroup( PlayerGroup )
       if _SETTINGS.MenuStatic == false then
