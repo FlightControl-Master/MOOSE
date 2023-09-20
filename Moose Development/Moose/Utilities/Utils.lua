@@ -406,8 +406,8 @@ function UTILS._OneLineSerialize(tbl)
       elseif type(val) == 'nil' then -- won't ever happen, right?
         tbl_str[#tbl_str + 1] = 'nil, '
       elseif type(val) == 'table' then
-        tbl_str[#tbl_str + 1] = UTILS._OneLineSerialize(val)
-        tbl_str[#tbl_str + 1] = ', '   --I think this is right, I just added it
+        --tbl_str[#tbl_str + 1] = UTILS._OneLineSerialize(val)
+        --tbl_str[#tbl_str + 1] = ', '   --I think this is right, I just added it
       else
         --log:warn('Unable to serialize value type $1 at index $2', mist.utils.basicSerialize(type(val)), tostring(ind))
       end
