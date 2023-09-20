@@ -5498,8 +5498,13 @@ function WAREHOUSE:onafterAssetDead(From, Event, To, asset, request)
       ---
   
       -- Remove dead group from cargo group set.
-      request.cargogroupset:Remove(groupname, NoTriggerEvent)
-      self:T(self.lid..string.format("Removed selfpropelled cargo %s: ncargo=%d.", groupname, request.cargogroupset:Count()))
+      if request.cargogroupset then
+        -- cargogroupset was nil for user case. Difficult to reproduce so we add a nil check.
+        request.cargogroupset:Remove(groupname, NoTriggerEvent)
+        self:T(self.lid..string.format("Removed selfpropelled cargo %s: ncargo=%d.", groupname, request.cargogroupset:Count()))
+      else
+        self:E(self.lid..string.format("ERROR: cargogroupset is nil for request ID=%s!", tostring(request.uid)))
+      end
   
     else
   
