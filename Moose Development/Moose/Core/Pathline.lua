@@ -92,9 +92,9 @@ PATHLINE.version="0.3.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: A lot...
 -- TODO: Read/write to JSON file
 -- TODO: Translate/rotate pathline
+-- TODO: Add color.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -111,7 +111,7 @@ function PATHLINE:New(Name)
   
   self.name=Name or "Unknown Path"
 
-  self.lid=string.format("PATHLINE %s | ", Name)
+  self.lid=string.format("PATHLINE %s | ", self.name)
 
   return self
 end
@@ -570,7 +570,8 @@ end
 --- Write PATHLINE to JSON file.
 -- **NOTE**: Requires `io` and `lfs` to be de-sanitized!
 -- @param #PATHLINE self
--- @param #string FileName Name of the file.
+-- @param #string FileName Name of the file. Default is the name of the pathline.
+-- @return #PATHLINE self
 function PATHLINE:WriteJSON(FileName)
 
   if io and lfs then
@@ -580,18 +581,19 @@ function PATHLINE:WriteJSON(FileName)
     
     local data={}
     
-    data.name=self.name
-    
+    -- We store the name and the points.
+    data.name=self.name    
     data.points=self.points
     for i,_point in pairs(self.points) do
       local point=_point --#PATHLINE.Point
       --point.markerID=nil
     end
     
-    -- Encode data to raw JSON.
+    -- Encode data to raw JSON. Encode converts a lua table into JSON string that can be written to file.
     local raw_json=json:encode(data)
     
-    self:I(data)
+    -- Debug data.
+    self:T(data)
 
     -- Write in "User/Saved Games/" Folder.
     local filepath=lfs.writedir() .. FileName
@@ -601,7 +603,7 @@ function PATHLINE:WriteJSON(FileName)
     if f then
       f:write(raw_json)
       f:close()
-      self:I(self.lid .. string.format("FF Saving PATHLINE %s file %s", self.name, tostring(filepath)))
+      self:T(self.lid .. string.format("Saving PATHLINE %s file %s", self.name, tostring(filepath)))
     else
       self:E(self.lid .. string.format( "ERROR: Could not save PATHLINE to file %s", tostring(filepath)))
     end
@@ -619,7 +621,6 @@ end
 -- @return #PATHLINE self
 function PATHLINE:NewFromJSON(FileName)
 
-
   if io and lfs then
 
     -- JSON script.
@@ -630,38 +631,47 @@ function PATHLINE:NewFromJSON(FileName)
     -- Write in "User/Saved Games/" Folder.
     local filepath=lfs.writedir() .. FileName
     
-    env.info(filepath)
+    --env.info(filepath)
 
-    local f = io.open( filepath, "rb" )
+    -- Open file in binary mode for reading.
+    local f = io.open(filepath, "rb")
     if f then
-      -- self:I(self.lid..string.format("Loading player results from file %s", tostring(filename)))
       data = f:read("*all")
-      f:close()      
+      f:close()
     else
-      env.info(string.format( "WARNING: Could not load player results from file %s. File might not exist just yet.", tostring( filepath ) ) )
+      env.info(string.format("WARNING: Could not load PATHLINE from file %s!", tostring(filepath)))
       return nil
     end
     
-    BASE:I(data)
+    -- Decode JSON data to get a lua table.
+    local data=json:decode(data)
     
-    local _data=json:decode(data)
-    BASE:I(_data)
+    if data and data.name then
 
-    local self=PATHLINE:New(data.name)
-    
-    for i=1,#data.points do
-      local point=data.points[i] --#PATHLINE.Point
-      local p=pathline:AddPointFromVec3(point.vec3)
-      p.name=point.name
-      p.markerID=nil
+      -- Create a new pathline instance.
+      local self=PATHLINE:New(data.name)
+      
+      for i=1,#data.points do
+        local point=data.points[i] --#PATHLINE.Point
+        
+        -- Create new point from data.
+        local p=self:AddPointFromVec3(point.vec3)
+        
+        -- Set name.
+        p.name=point.name
+        
+        -- Remove marker ID.
+        p.markerID=nil
+      end
+      
+      return self      
+    else
+      BASE:E("ERROR: Cannot find pathline name in data from JSON file. File may be corrupted!")
     end
-    
-    return self
   else
-  
+    BASE:E("ERROR: IO and/or LFS not de-sanitized! Cannot read file.")
   end
-
-  
+    
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

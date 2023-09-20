@@ -333,17 +333,20 @@ FLIGHTCONTROL.FlightStatus={
 
 --- Violations
 -- @type FLIGHTCONTROL.Violation
+-- @field #string Speeding Speed violation while taxiing.
+-- @field #string Altitude Altitude deviation (300 ft from assigned).
+-- @field #string Runway Runway incursion.
 FLIGHTCONTROL.Violation={
   Speeding="Speeding",
-  AltitudeDeviation="Altitude Deviation", --300 feet from assigned alt.
-  RunwayIncursion="Runway Incursion",
+  Altitude="Altitude Deviation", --300 feet from assigned alt.
+  Runway="Runway Incursion",
 }
 
 --- Warning.
 -- @type FLIGHTCONTROL.Warning
 -- @field Ops.FlightGroup#FLIGHTGROUP flight The flight group.
 -- @field #string type Type of warning.
--- @field #number time Time stamp when warning was issued.
+-- @field #number time Abs. time stamp when warning was issued.
 
 --- FlightControl class version.
 -- @field #string version
@@ -1501,7 +1504,7 @@ function FLIGHTCONTROL:_CheckQueues()
             -- Get taxi way text.
             local taxiroute=self:_GetTaxiwayText(taxipath, false)
             
-            text=text.." via "..taxiroute          
+            text=text.." via "..taxiroute
           end
   
           -- Hold short instructions.
@@ -1522,20 +1525,25 @@ function FLIGHTCONTROL:_CheckQueues()
             ---
                     
             -- Read back runway.
-            local text=string.format("Runway %s, ", runway)
+            local text=string.format("Runway %s", runway)
+            
+            -- Read back taxi ways (if available).
+            if flight.taxipath then
+              text=text..string.format(" via %s", self:_GetTaxiwayText(flight.taxipath))
+            end
             
             -- Start uncontrolled aircraft.
             if flight:IsUncontrolled() then
   
               -- Message.
-              text=text..string.format("starting engines, ")
+              text=text..string.format(", starting engines")
               
               -- Start uncontrolled aircraft.          
               flight:StartUncontrolled()
             end
             
             -- Append call sign.
-            text=text..callsign
+            text=text..string.format(", %s.", callsign)
             
             -- Transmit message.
             self:TransmissionPilot(text, flight, 10)
@@ -3608,17 +3616,27 @@ function FLIGHTCONTROL:_PlayerConfirmTaxi(groupname)
     -- Get callsign.
     local callsign=self:_GetCallsignName(flight)
 
-      -- Runway for takeoff.
-      local runway=self:GetActiveRunwayText(true)
+    -- Runway for takeoff.
+    local runway=self:GetActiveRunwayText(true)
 
-      -- Tell pilot to wait until cleared.
-      local text=string.format("Taxi to runway %s, %s", runway, callsign)
-      self:TransmissionPilot(text, flight)
+    -- Read back runway.
+    local text=string.format("Taxi to runway %s", runway)
+    
+    -- Read back taxi ways (if available).
+    if flight.taxipath then
+      text=text..string.format(" via %s", self:_GetTaxiwayText(flight.taxipath))
+    end
+    
+    -- Append call sign.
+    text=text..string.format(", %s.", callsign)
+    
+    -- Transmission.
+    self:TransmissionPilot(text, flight)
 
-      -- Taxi out.    
-      self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.TAXIOUT)    
+    -- Taxi out.    
+    self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.TAXIOUT)
+    
   end
-  
   
 end
 
@@ -4173,8 +4191,6 @@ function FLIGHTCONTROL:_CheckFlights()
     -- Current flight status.
     local flightstatus=self:GetFlightStatus(flight)
     
-
-
     --- 
     -- Track flight
     ---
@@ -4219,86 +4235,131 @@ function FLIGHTCONTROL:_CheckFlights()
     end
     
     if not flight.isAI then
-
-      -- Check if speeding while taxiing.
-      if (flightstatus==FLIGHTCONTROL.FlightStatus.TAXIINB or flightstatus==FLIGHTCONTROL.FlightStatus.TAXIOUT) then
+    
+      if flightstatus==FLIGHTCONTROL.FlightStatus.PARKING then
+      
+        -- Check if still on parking spot!
+            
+      elseif flightstatus==FLIGHTCONTROL.FlightStatus.READYTX then
+      
+        -- Flight is ready to taxi to the runway: ?
+      
+      elseif flightstatus==FLIGHTCONTROL.FlightStatus.TAXIOUT then
       
         if self.speedLimitTaxi then
           self:_CheckFlightSpeeding(flight)
-        end
-                
-      end
+        end      
       
-      if (flightstatus==FLIGHTCONTROL.FlightStatus.TAXIINB or flightstatus==FLIGHTCONTROL.FlightStatus.TAXIOUT) then
-        
-      end
+      elseif flightstatus==FLIGHTCONTROL.FlightStatus.READYTO then
       
-      if (flightstatus==FLIGHTCONTROL.FlightStatus.LANDING) then
-        --Talk down
-      end
+        -- Flight is ready for taking-off: ?
+      
+      elseif flightstatus==FLIGHTCONTROL.FlightStatus.TAKEOFF then
+      
+        -- Flight is taking-off: Check correct runway
+            
+      elseif flightstatus==FLIGHTCONTROL.FlightStatus.INBOUND then
+      
+        -- Flight is inbound to holding pattern: Nothing to do!
+      
+      elseif flightstatus==FLIGHTCONTROL.FlightStatus.HOLDING then
 
-      if (flightstatus==FLIGHTCONTROL.FlightStatus.PARKING) then
-        --Check if still on parking spot!
-      end
-
-      if (flightstatus==FLIGHTCONTROL.FlightStatus.HOLDING) then
         --Check altitude and position
-        
         local stack=flight.stack
         
         if stack then
         
-          local altitude=stack.angels
+          local altitude=stack.angels*1000
           
-          local alt=flight:GetAltitude()
+          local alt=UTILS.MetersToFeet(flight:GetAltitude())
           
           local diff=alt-altitude
+          
+          local callsign=self:_GetCallsignName(flight)
           
           -- TODO: issue warning and keep track. otherwise this will repeat unncessarily
           -- TODO: make a good warning structure and save it in the flightgroup or here.
           --       needs the kind of warning and the time stamp at least
           --
-          
-          if diff<300 then
-          
-            local timestamp=self:_GetLastWarning(WARNING.Type.AltitudeLow)
-            if timestamp==nil or timer.getAbsTime()-timestamp>5*60 then
-            
-            end
-            
-            -- Get number of warnings issued in the last 30 min.
-            local N=self:_GetWarnings(WARNING.Type.AltitudeLow, Tstart, Tend)
-            if N>1 then
-            elseif N>5 then
-              --Possible pilot deviation.
-            end
-            
-          
-            local text=string.format("%s, you are too low. Climb to the assigned altitude!")
-            self:TransmissionTower(text, flight)
-            
-          elseif diff>300 then
 
-            local text=string.format("%s, you are too high. Descent to the assigned altitude!")
-            self:TransmissionTower(text, flight)
+          -- Check if absolute difference > 300 ft (lower or higher).
+          if math.abs(diff)>300 then
           
-          end                  
-        end
+            -- Get last altitude warning.
+            local warningAlt=self:_WarningGetLast(flight, FLIGHTCONTROL.Violation.Altitude)
+                      
+            -- Check if no warning so far or last warning more than 5 min ago.
+            if warningAlt==nil or timer.getAbsTime()-warningAlt.time>5*60 then
+            
+              -- Number of warnings.
+              local N=self:_WarningCount(flight, FLIGHTCONTROL.Violation.Altitude)
               
-      end
-
-      if (flightstatus==FLIGHTCONTROL.FlightStatus.ARRIVED) then
+              local text=string.format("%s, you are ", callsign)
+              
+              if diff<300 then
+                
+                -- Get number of warnings issued in the last 30 min.           
+                if N==0 then
+                  text=text..string.format("too low. Climb to the assigned altitude.")
+                elseif N==1 then
+                    text=text..string.format("still too low. Climb to the assigned altitude!")
+                elseif N==2 then
+                  text=text..string.format("still too low. Climb to the assigned altitude immediately!")                
+                end
+                                
+              elseif diff>300 then
+                
+                if N==0 then
+                  text=text..string.format("you are too high. Descent to the assigned altitude!")
+                elseif N==1 then
+                    text=text..string.format("still too high. Descent to the assigned altitude!")
+                elseif N==2 then
+                  text=text..string.format("still too high. Descent to the assigned altitude immediately!")
+                end
+              
+              end
+              
+              if N==1 then
+                text=text..string.format("This was your second warning for an altitude deviation!")
+              elseif N==2 then
+                text=text..string.format("This was your third and last warning.")
+              elseif N==3 then
+                text=text..string.format("Possible pilot deviation. Call 5 5 5 - 1 2 3 4 5")
+              else
+                text=nil
+              end
+              
+              -- Transmission.              
+              if text then
+                self:TransmissionTower(text, flight)
+              end
+              
+              -- Issue another warning.
+              self:_WarningIssue(flight, FLIGHTCONTROL.Violation.Altitude)
+              
+            end -- No warning or warning more then threshold            
+          end -- Alt diff > 300 ft
+        end -- Stack~=nil
+      
+      elseif flightstatus==FLIGHTCONTROL.FlightStatus.LANDING then
+      
+        --Talk down if on final
+              
+      elseif flightstatus==FLIGHTCONTROL.FlightStatus.TAXIINB then
+      
+        if self.speedLimitTaxi then
+          self:_CheckFlightSpeeding(flight)
+        end      
+            
+      elseif flightstatus==FLIGHTCONTROL.FlightStatus.ARRIVED then
+            
         --Check if still on correct parking spot!
-      end
       
-      if (flightstatus==FLIGHTCONTROL.FlightStatus.READYTX) then
-        -- ?
+      elseif flightstatus==FLIGHTCONTROL.FlightStatus.UNKNOWN then
+        -- Status Unknown: Nothing to do!
+      else
+        self:E(self.lid..string.format("ERROR: Unknown flight status!"))
       end
-      
-      if (flightstatus==FLIGHTCONTROL.FlightStatus.READYTO) then
-        -- ?
-      end
-
 
     end
   end
@@ -4339,6 +4400,9 @@ function FLIGHTCONTROL:_CheckFlightSpeeding(flight)
       
       -- Get player data.
       local PlayerData=flight:_GetPlayerData()
+      
+      -- Issue warning.
+      local warning=self:_WarningIssue(flight, FLIGHTCONTROL.Violation.Speeding)
       
       -- Trigger FSM speeding event.              
       self:PlayerSpeeding(PlayerData)
@@ -4508,6 +4572,111 @@ function FLIGHTCONTROL:_FlightOnFinal(flight)
   self:TransmissionPilot(text, flight)
 
   return self
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Warning Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Issue a warning to a flight for a given violation.
+-- @param #FLIGHTCONTROL self
+-- @param Ops.Flightgroup#FLIGHTGROUP Flight The flight group.
+-- @param #string Violation Violation of flight.
+-- @return #FLIGHTCONTROL.Warning The warning data that was issued.
+function FLIGHTCONTROL:_WarningIssue(Flight, Violation)
+
+  --TODO: Violation should be issued for a player not the flight.
+  --      AI gets no violations
+
+  local name=Flight:GetName()
+
+  self.warnings[name]=self.warnings[name] or {}
+  
+  -- Create a new warning.
+  local warning={} --#FLIGHTCONTROL.Warning
+  warning.flight=Flight
+  warning.type=Violation
+  warning.time=timer.getAbsTime()
+  
+  table.insert(self.warnings[name], warning)
+
+  return warning
+end
+
+
+--- Get last warning of a given flight.
+-- @param #FLIGHTCONTROL self
+-- @param Ops.Flightgroup#FLIGHTGROUP Flight The flight group.
+-- @param #string Violation Violation of flight. If not specified, the last violation independent of type is returned.
+-- @return #FLIGHTCONTROL.Warning Last warning data or `nil` if no warning was issued so far.
+function FLIGHTCONTROL:_WarningGetLast(Flight, Violation)
+
+  -- Get flight name.
+  local name=Flight:GetName()
+  
+  -- All warnings of flight
+  local warnings=self.warnings[name] or {}
+
+  -- Go backwards because the warnings are appended, so the last warning is at the end of the table.
+  for i=#warnings,1,-1 do
+    local warning=warnings[i] --#FLIGHTCONTROL.Warning
+    if Violation==nil or warning.type==Violation then
+      return warning
+    end
+  end
+  
+  return nil
+end
+
+--- Count warnings of a given flight.
+-- @param #FLIGHTCONTROL self
+-- @param Ops.Flightgroup#FLIGHTGROUP Flight The flight group.
+-- @param #string Violation Violation of flight. If not specified, all violations independent of type are counted.
+-- @return #number Numer of warnings.
+function FLIGHTCONTROL:_WarningCount(Flight, Violation)
+
+  -- Get flight name.
+  local name=Flight:GetName()
+  
+  -- All warnings of flight
+  local warnings=self.warnings[name] or {}
+  
+  -- Init counter.
+  local N=0
+
+  -- Go backwards because the warnings are appended, so the last warning is at the end of the table.
+  for i=#warnings,1,-1 do
+    local warning=warnings[i] --#FLIGHTCONTROL.Warning
+    if Violation==nil or warning.type==Violation then
+      N=N+1
+    end
+  end
+  
+  return N
+end
+
+
+--- Clear all warnings of a given flight.
+-- @param #FLIGHTCONTROL self
+-- @param Ops.Flightgroup#FLIGHTGROUP Flight The flight group.
+-- @param #string Violation Violation of flight. If not specified, all violations independent of type are cleared.
+function FLIGHTCONTROL:_WarningClear(Flight, Violation)
+
+
+  -- Get flight name.
+  local name=Flight:GetName()
+  
+  -- All warnings of flight
+  local warnings=self.warnings[name] or {}
+
+  -- Go backwards because otherwise remove by index gets confused.
+  for i=#warnings,1,-1 do
+    local warning=warnings[i] --#FLIGHTCONTROL.Warning
+    if Violation==nil or warning.type==Violation then
+      table.remove(warnings, i)
+    end
+  end
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
