@@ -386,7 +386,7 @@
 --   
 --          atis=ATIS:New("Batumi", 305, radio.modulation.AM)
 --          atis:SetSRS("D:\\DCS\\_SRS\\", "female", "de_DE")
---          atis:SetLocale("de")
+--          atis:SetLocale("de") -- available locales from source are "en", "de" and "es"
 --          atis:Start()    
 --
 -- ## FARPS
@@ -808,7 +808,67 @@ ATIS.Messages = {
     TACAN = "Tackan",
     FARP = "Farp",
     DELIMITER = "Komma", -- decimal delimiter
-  }
+  },
+  -- Set ES Locale translations for ATIS thanks to @Ritu
+  ES =
+  {
+    HOURS = "horas",
+    TIME = "horas",
+    NOCLOUDINFO = "Información sobre capa de nubes no disponible",
+    OVERCAST = "Nublado",
+    BROKEN = "Nubes rotas",
+    SCATTERED = "Nubes dispersas",
+    FEWCLOUDS = "Ligeramente nublado",
+    NOCLOUDS = "Despejado",
+    AIRPORT = "Aeropuerto",
+    INFORMATION ="Informacion",
+    SUNRISEAT = "Amanecer a las %s hora local",
+    SUNSETAT = "Puesta de sol a las %s hora local",
+    WINDFROMMS = "Viento procedente de %s con %s m/s",
+    WINDFROMKNOTS = "Viento de %s con %s nudos",
+    GUSTING = "ráfagas",
+    VISIKM = "Visibilidad %s km",
+    VISISM = "Visibilidad %s millas",
+    RAIN = "Lluvia",
+    TSTORM = "Tormenta",
+    SNOW = "Nieve",
+    SSTROM = "Tormenta de nieve",
+    FOG = "Niebla",
+    DUST = "Polvo",
+    PHENOMENA = "Fenómenos meteorológicos",
+    CLOUDBASEM = "Capa de nubes de %s a %s metros",
+    CLOUDBASEFT = "Capa de nubes de %s a %s pies",
+    TEMPERATURE = "Temperatura",
+    DEWPOINT = "Punto de rocio",
+    ALTIMETER = "Altímetro",
+    ACTIVERUN = "Pista activa",
+    LEFT = "Izquierda",
+    RIGHT = "Derecha",
+    RWYLENGTH = "Longitud de pista",
+    METERS = "Metro",
+    FEET = "Pie",
+    ELEVATION = "Elevación",
+    TOWERFREQ = "Frecuencias de la torre de control",
+    ILSFREQ = "Fecuencia ILS",
+    OUTERNDB = "Frecuencia NDB externa",
+    INNERNDB = "Frecuencia NDB interior",
+    VORFREQ = "Frecuencia VOR",
+    VORFREQTTS = "Frecuencia V O R",
+    TACANCH = "Canal TACAN %d Xaver",
+    RSBNCH = "Canal RSBN",
+    PRMGCH = "Canal PRMG",
+    ADVISE = "Avise en el contacto inicial a torre de que tiene la informacion",
+    STATUTE = "Millas inglesas",
+    DEGREES = "Grados Celsius",
+    FAHRENHEIT = "Grados Fahrenheit",
+    INCHHG = "Pulgadas de mercurio",
+    MMHG = "Milímeteros de Mercurio",
+    HECTO = "Hectopascales",
+    METERSPER = "Metros por segundo",
+    TACAN = "Tacan",
+    FARP = "Farp",
+    DELIMITER = "Punto", -- decimal delimiter
+  },
 }
 
 ---
@@ -821,7 +881,7 @@ _ATIS = {}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version = "0.10.1"
+ATIS.version = "0.10.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
