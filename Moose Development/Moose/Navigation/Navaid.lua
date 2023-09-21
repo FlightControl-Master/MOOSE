@@ -57,9 +57,13 @@ NAVAID = {
 -- @type NAVAID.Type
 -- @field #string VOR VOR
 -- @field #string NDB NDB
-NAVAID.TYPE={
+NAVAID.Type={
   VOR="VOR",
   NDB="NDB",
+  DME="DME",
+  TACAN="TACAN",
+  LOC="Loc"
+  
 }
   
 --- NAVAID class version.
@@ -85,7 +89,7 @@ NAVAID.version="0.0.1"
 -- @return #NAVAID self
 function NAVAID:New(ZoneName, SceneryName, Type)
 
-  -- Inherit everything from SCENERY class.
+  -- Inherit everything from BASE class.
   self=BASE:Inherit(self, BASE:New()) -- #NAVAID
 
 

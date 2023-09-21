@@ -64,11 +64,13 @@ FLIGHTPLAN = {
 -- @field #string IFRH Instrument Flying Rules High Altitude.
 -- @field #string IFRL Instrument Flying Rules Low Altitude.
 -- @field #string VFR Visual Flight Rules.
-FLIGHTPLAN.TYPE={
+FLIGHTPLAN.Type={
   IFRH="IFR Heigh",
   IFRL="IFR Low",
   VFR="VFR",
 }
+
+
   
 --- FLIGHTPLAN class version.
 -- @field #string version

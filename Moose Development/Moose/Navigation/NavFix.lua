@@ -82,10 +82,10 @@ NAVFIX.version="0.0.1"
 
 --- Create a new NAVFIX class instance.
 -- @param #NAVFIX self
--- @param Core.Point#COORDINATE Coordinate of the fix.
 -- @param #string Name Name of the fix. Should be unique!
+-- @param Core.Point#COORDINATE Coordinate of the fix.
 -- @return #NAVFIX self
-function NAVFIX:New(Coordinate, Name)
+function NAVFIX:NewFromCoordinate(Name, Coordinate)
 
   -- Inherit everything from SCENERY class.
   self=BASE:Inherit(self, BASE:New()) -- #NAVFIX
@@ -96,6 +96,28 @@ function NAVFIX:New(Coordinate, Name)
   
   self.marker=MARKER:New(Coordinate, self:_GetMarkerText())
   self.marker:ToAll()
+
+  return self
+end
+
+--- Create a new NAVFIX class instance from a given NavAid.
+-- @param #NAVFIX self
+-- @param #string Name Name of the fix. Should be unique!
+-- @param Navigation.NavFix#NAVFIX NavFix The navigation fix.
+-- @param #number Distance Distance in nautical miles. 
+-- @param #number Bearing Bearing from the given NavFix to the newly created one.
+-- @param #boolean Reciprocal If `true` the reciprocal `Bearing` is taken so it specifies the direction from the new navfix to the given one. 
+-- @return #NAVFIX self
+function NAVFIX:NewFromNavFix(Name, NavFix, Distance, Bearing, Reciprocal)
+
+  local coord=NavFix.coordinate
+  
+  local Angle=Bearing-90
+  
+  local coord=NavFix.coordinate:Translate(UTILS.NMToMeters(Distance), Angle)
+  
+  local self=NAVFIX:NewFromCoordinate(coord, Name)
+  
 
   return self
 end
@@ -154,6 +176,11 @@ function NAVFIX:SetIntermediateFix(IntermediateFix)
 end
 
 --- Set whether this is an initial approach fix (IAF).
+-- The IAF is the point where the initial approach segment of an instrument approach begins.
+-- It is usually a designated intersection, VHF omidirectional range (VOR) non-directional beacon (NDB)
+-- or distance measuring equipment (DME) fix.
+-- The IAF may be collocated with the intermediate fix (IF) of the instrument apprach an in such case they designate the
+-- beginning of the intermediate segment of the approach. When the IAF and the IF are combined, there is no inital approach segment.
 -- @param #NAVFIX self
 -- @param #boolean IntermediateFix If `true`, this is an intermediate fix.
 -- @return #NAVFIX self
@@ -164,7 +191,7 @@ end
 
 --- Get the altitude in feet MSL.
 -- @param #NAVFIX self
--- @return #number Altitude in feet MSL. Can be `#nil`
+-- @return #number Altitude in feet MSL. Can be `nil`, if neither min nor max altitudes have beeen set. 
 function NAVFIX:GetAltitude()
 
   local alt=nil
