@@ -908,6 +908,23 @@ function FLIGHTCONTROL:SetParkingGuardStatic(TemplateStaticName)
   return self
 end
 
+
+--- Set the holding guard group. 
+-- This group is used to block (AI) aircraft from entering the runway. 
+-- It should contain of only one unit, *e.g.* a simple soldier.
+-- @param #FLIGHTCONTROL self
+-- @param #string TemplateGroupName Name of the template group.
+-- @return #FLIGHTCONTROL self
+function FLIGHTCONTROL:SetHoldingGuard(TemplateGroupName)
+
+  local alias=string.format("Holding Guard %s", self.airbasename)
+
+  -- Need spawn with alias for multiple FCs.  
+  self.holdingGuard=SPAWN:NewWithAlias(TemplateGroupName, alias)
+
+  return self
+end
+
 --- Set ATIS.
 -- @param #FLIGHTCONTROL self
 -- @param Ops.Atis#ATIS Atis ATIS.
