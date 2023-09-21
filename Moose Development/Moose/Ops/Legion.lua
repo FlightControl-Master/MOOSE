@@ -45,9 +45,14 @@ LEGION = {
   cohorts        =    {},
 }
 
+--- Random score that is added to the asset score in the selection process.
+-- @field #number RandomAssetScore
+LEGION.RandomAssetScore=1
+
+
 --- LEGION class version.
 -- @field #string version
-LEGION.version="0.4.0"
+LEGION.version="0.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -3229,7 +3234,25 @@ function LEGION._OptimizeAssetSelection(assets, MissionType, TargetVec2, Include
   -- Calculate the mission score of all assets.
   for _,_asset in pairs(assets) do
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    
+    -- Calculate the asset score.
     asset.score=LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, IncludePayload)
+    
+    if IncludePayload then
+    
+      -- Max random asset score.
+      local RandomScoreMax=asset.legion and asset.legion.RandomAssetScore or LEGION.RandomAssetScore
+      
+      -- Random score.
+      local RandomScore=math.random(0, RandomScoreMax)
+      
+      -- Debug info.
+      --env.info(string.format("Asset %s: randomscore=%d, max=%d", asset.spawngroupname, RandomScore, RandomScoreMax))
+      
+      -- Add a bit of randomness.
+      asset.score=asset.score+RandomScore
+      
+    end
   end
 
   --- Sort assets wrt to their mission score. Higher is better.
@@ -3246,7 +3269,7 @@ function LEGION._OptimizeAssetSelection(assets, MissionType, TargetVec2, Include
     local text=string.format("Optimized %d assets for %s mission/transport (payload=%s):", #assets, MissionType, tostring(IncludePayload))
     for i,Asset in pairs(assets) do
       local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
-      text=text..string.format("\n%s %s: score=%d", asset.squadname, asset.spawngroupname, asset.score or -1)
+      text=text..string.format("\n%d. %s [%s]: score=%d", i, asset.spawngroupname, asset.squadname, asset.score or -1)
       asset.score=nil
     end
     env.info(text)

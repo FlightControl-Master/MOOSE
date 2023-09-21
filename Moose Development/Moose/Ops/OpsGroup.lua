@@ -8123,7 +8123,7 @@ function OPSGROUP:_CheckCargoTransport()
       for _,_cargo in pairs(self.cargoTZC.Cargos) do
         local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
               
-        if cargo.type==OPSTRANSPORT.CargoType.OPSTRANPORT then
+        if cargo.type==OPSTRANSPORT.CargoType.OPSGROUP then
 
           -- Check if anyone is still boarding.
           if cargo.opsgroup and cargo.opsgroup:IsBoarding(self.groupname) then
