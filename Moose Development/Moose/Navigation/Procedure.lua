@@ -1,4 +1,4 @@
---- **NAVIGATION** - Template.
+--- **NAVIGATION** - Prodedures for Departure (SID), Arrival (STAR) and Approach.
 --
 -- **Main Features:**
 --
@@ -16,34 +16,32 @@
 -- ### Author: **funkyfranky**
 -- 
 -- ===
--- @module Navigation.Template
--- @image NAVIGATION_Template.png
+-- @module Navigation.Procedure
+-- @image NAVIGATION_Procedure.png
 
 
---- NAVAPP class.
--- @type NAVAPP
+--- APPROACH class.
+-- @type APPROACH
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity of output.
 -- @field #string apptype Approach type (ILS, VOR, LOC).
 -- @field Wrapper.Airbase#AIRBASE airbase Airbase of this approach.
 -- @field Wrapper.Airbase#AIRBASE.Runway runway Runway of this approach.
 -- @field #number wpcounter Running number counting the waypoints to generate its UID.
--- @list <#NAVAPP.Waypoint> path Path of approach consisting of waypoints.
+-- @list <#APPROACH.Waypoint> path Path of approach consisting of waypoints.
 -- @extends Core.Base#BASE
 
 --- *A fleet of British ships at war are the best negotiators.* -- Horatio Nelson
 --
 -- ===
 --
--- # The NAVAPP Concept
---
--- The NAVAPP class has a great concept!
+-- # The APPROACH Concept
 -- 
--- A typical approach has (up to) three segments. It starts with the initial approach segment, followed by the intermediate approach segment, followed
--- by the final approach segment.
+-- A typical approach has (up to) four segments. It starts with the initial approach segment, followed by the intermediate approach segment, followed
+-- by the final approach segment. In case something goes wrong during the final approach, the missed approach segment kicks in. 
 -- 
 -- The initial approach segment starts at the initial approach fix (IAF). The segment can contain multiple other fixes, that need to be passed.
--- An approach procedure can have more than one segment and IAF.
+-- Note, that an approach procedure can have more than one intitial approach segment and IAF.
 -- 
 -- The intermediate approach segment starts at the intermediate fix (IF). The intermediate approach segment blends the initial approach segment into the final approach segment. 
 -- It is the segment in which aircraft configuration, speed, and positioning adjustments are made for entry into the final approach segment.
@@ -54,37 +52,37 @@
 -- 
 -- # Basic Setup
 -- 
--- A new `NAVAPP` object can be created with the @{#NAVAPP.New}() function.
+-- A new `APPROACH` object can be created with the @{#APPROACH.New}() function.
 -- 
---     myTemplate=NAVAPP:New()
+--     myTemplate=APPROACH:New()
 --     myTemplate:SetXYZ(X, Y, Z)
 --     
 -- This is how it works.
 --
--- @field #NAVAPP
-NAVAPP = {
-  ClassName       = "NAVAPP",
+-- @field #APPROACH
+APPROACH = {
+  ClassName       = "APPROACH",
   verbose         =       0,
   wpcounter       =       0,
 }
 
 --- Type of approach.
--- @type NAVAPP.Type
+-- @type APPROACH.Type
 -- @field #string VOR VOR
 -- @field #string NDB NDB
-NAVAPP.Type={
+APPROACH.Type={
   VOR="VOR",
   ILS="ILS",
 }
 
 
 --- Setments of  approach.
--- @type NAVAPP.Segment
+-- @type APPROACH.Segment
 -- @field #string INITIAL Initial approach segment.
 -- @field #string INTERMEDIATE Intermediate approach segment.
 -- @field #string FINAL Final approach segment.
 -- @field #string MISSED Missed approach segment.
-NAVAPP.Segment={
+APPROACH.Segment={
   INITIAL="Initial",
   INTERMEDIATE="Intermediate",
   FINAL="Final",
@@ -92,14 +90,14 @@ NAVAPP.Segment={
 }
  
 --- Waypoint of the approach.
--- @type NAVAPP.Waypoint
+-- @type APPROACH.Waypoint
 -- @field #number uid Unique ID of the point.
 -- @field #string segment The segment this point belongs to.
 -- @field Navigation.NavFix#NAVFIX navfix The navigation fix that determines the coordinates of this point.
   
---- NAVAPP class version.
+--- APPROACH class version.
 -- @field #string version
-NAVAPP.version="0.0.1"
+APPROACH.version="0.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -112,16 +110,16 @@ NAVAPP.version="0.0.1"
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new NAVAPP class instance.
--- @param #NAVAPP self
+--- Create a new APPROACH class instance.
+-- @param #APPROACH self
 -- @param #string Type Type of approach (ILS, VOR, LOC).
 -- @param Wrapper.Airbase#AIRBASE Airbase The airbase or name of the airbase.
 -- @param Wrapper.Airbase#AIRBASE.Runway Runway The runway or name of the runway.
--- @return #NAVAPP self
-function NAVAPP:New(Type, Airbase, Runway)
+-- @return #APPROACH self
+function APPROACH:New(Type, Airbase, Runway)
 
   -- Inherit everything from BASE class.
-  self=BASE:Inherit(self, BASE:New()) -- #NAVAPP
+  self=BASE:Inherit(self, BASE:New()) -- #APPROACH
   
   self.apptype=Type
   
@@ -137,10 +135,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set the primary navigation aid used in the approach.
--- @param #NAVAPP self
+-- @param #APPROACH self
 -- @param Navigation.NavAid#NAVAID NavAid The NAVAID.
--- @return #NAVAPP self
-function NAVAPP:SetNavAid(NavAid)
+-- @return #APPROACH self
+function APPROACH:SetNavAid(NavAid)
 
   self.navaid=NavAid
 
@@ -148,15 +146,15 @@ function NAVAPP:SetNavAid(NavAid)
 end
 
 --- Add a waypoint to the path of the approach.
--- @param #NAVAPP self
+-- @param #APPROACH self
 -- @param Navigation.NavAid#NAVAID NavAid The NAVAID.
 -- @param #string Segment The approach segment this fix belongs to.
--- @return #NAVAPP self
-function NAVAPP:AddWaypoint(NavFix, Segment)
+-- @return #APPROACH self
+function APPROACH:AddWaypoint(NavFix, Segment)
 
   self.wpcounter=self.wpcounter+1
 
-  local point={} --#NAVAPP.Waypoint
+  local point={} --#APPROACH.Waypoint
   point.uid=self.wpcounter
   point.segment=Segment
   point.navfix=NavFix
