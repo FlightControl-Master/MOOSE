@@ -480,7 +480,7 @@ NAVPOINT.version="0.0.1"
 --- Create a new NAVPOINT class instance from a given COORDINATE.
 -- @param #NAVPOINT self
 -- @param #string Name Name of the fix. Should be unique!
--- @param Core.Point#COORDINATE Coordinate of the fix.
+-- @param Core.Point#COORDINATE Coordinate Coordinate of the point.
 -- @return #NAVPOINT self
 function NAVPOINT:NewFromCoordinate(Name, Coordinate)
 
@@ -498,18 +498,24 @@ function NAVPOINT:NewFromCoordinate(Name, Coordinate)
 end
 
 --- Create a new NAVPOINT class instance from a given NAVPOINT.
+-- You have to specify the distance and bearing from the new point to the given point. *E.g.*, for a distance of 5 NM and a bearing of 090° (West), the
+-- new nav point is created 5 NM East of the given nav point. The reason is that this corresponts to convention used in most maps.
+-- You can, however, use the `Reciprocal` switch to create the new point in the direction you specify.
 -- @param #NAVFIX self
 -- @param #string Name Name of the fix. Should be unique!
--- @param Navigation.Point#NAVPOINT NavPoint The navigation fix.
--- @param #number Distance Distance in nautical miles. 
--- @param #number Bearing Bearing from the given NavFix to the newly created one.
--- @param #boolean Reciprocal If `true` the reciprocal `Bearing` is taken so it specifies the direction from the new navfix to the given one. 
+-- @param Navigation.Point#NAVPOINT NavPoint The given/existing navigation point.
+-- @param #number Distance Distance from the given to the new point in nautical miles. 
+-- @param #number Bearing Bearing [Deg] from the new point to the given one.
+-- @param #boolean Reciprocal If `true` the reciprocal `Bearing` is taken so it specifies the direction from the given point to the new one. 
 -- @return #NAVFIX self
 function NAVPOINT:NewFromNavPoint(Name, NavPoint, Distance, Bearing, Reciprocal)
 
-  local Angle=Bearing
+  if Reciprocal then
+    Bearing=Bearing-180
+  end
   
-  local coord=NavPoint.coordinate:Translate(UTILS.NMToMeters(Distance), Angle)
+  -- Translate.
+  local coord=NavPoint.coordinate:Translate(UTILS.NMToMeters(Distance), Bearing)
   
   local self=NavPoint:NewFromCoordinate(Name, coord)
   

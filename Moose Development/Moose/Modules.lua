@@ -35,6 +35,7 @@ __Moose.Include( 'Scripts/Moose/Core/Velocity.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Zone_Detection.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Zone.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Pathline.lua' )
+__Moose.Include( 'Scripts/Moose/Core/Vector.lua' )
 
 __Moose.Include( 'Scripts/Moose/Wrapper/Airbase.lua' )
 __Moose.Include( 'Scripts/Moose/Wrapper/Client.lua' )
