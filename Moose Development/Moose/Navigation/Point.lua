@@ -97,7 +97,7 @@ function NAVAID:New(ZoneName, SceneryName, Type)
 
   self.zone=ZONE:FindByName(ZoneName)  
   
-  self.coordinate=self.zone:GetCoordinate()
+  self=self.zone:GetCoordinate()
   
   if SceneryName then
     self.scenery=SCENERY:FindByNameInZone(SceneryName, ZoneName)
@@ -173,6 +173,8 @@ end
 -- Private Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- Add private CLASS functions here.
+-- No private NAVAID functions yet.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -434,7 +436,7 @@ end
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity of output.
 -- @field #string name Name of the point.
--- @field Core.Point#COORDINATE coordinate Coordinate of the fix.
+-- @field Core.Vector#VECTOR vector Position vector of the fix.
 -- @field Wrapper.Marker#MARKER marker Marker on F10 map.
 -- @field #boolean isCompulsory Is this a compulsory fix.
 -- 
@@ -477,23 +479,35 @@ NAVPOINT.version="0.0.1"
 -- Constructor(s)
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new NAVPOINT class instance from a given COORDINATE.
+--- Create a new NAVPOINT class instance from a given VECTOR.
 -- @param #NAVPOINT self
 -- @param #string Name Name of the fix. Should be unique!
--- @param Core.Point#COORDINATE Coordinate Coordinate of the point.
+-- @param Core.Vector#VECTOR Vector Position vector of the navpoint.
 -- @return #NAVPOINT self
-function NAVPOINT:NewFromCoordinate(Name, Coordinate)
+function NAVPOINT:NewFromVector(Name, Vector)
 
   -- Inherit everything from BASE class.
   self=BASE:Inherit(self, BASE:New()) -- #NAVFIX
   
-  self.coordinate=Coordinate
+  self.vector=Vector
   
   self.name=Name
   
   --self.marker=MARKER:New(Coordinate, self:_GetMarkerText())
   --self.marker:ToAll()
 
+  return self
+end
+
+
+--- Create a new NAVPOINT class instance from a given COORDINATE.
+-- @param #NAVPOINT self
+-- @param #string Name Name of the fix. Should be unique!
+-- @param Core.Point#COORDINATE Coordinate Coordinate of the point.
+-- @return #NAVPOINT self
+function NAVPOINT:NewFromCoordinate(Name, Coordinate)
+  local Vector=VECTOR:NewFromVec(Coordinate)
+  self=NAVPOINT:NewFromVector(Name, Vector)
   return self
 end
 

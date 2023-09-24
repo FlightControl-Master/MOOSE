@@ -141,7 +141,9 @@ VECTOR.__index = VECTOR
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: A lot...
+-- TODO: 3D rotation
+-- TODO: Markers
+-- TODO: Documentation
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -1063,6 +1065,8 @@ end
 function VECTOR.__div(a, b)
 
   assert(VECTOR._IsVector(a) and type(b) == "number", "div: wrong argument types (expected <vector> and <number>)")
+  
+  env.info("FF __div")
 
   local c=VECTOR:New(a.x/b, a.y/b, a.z/b)
 
@@ -1081,7 +1085,10 @@ end
 -- @param #VECTOR b Vector b.
 -- @return #boolean If `true`, both vectors are equal
 function VECTOR.__eq(a, b)
-  assert(VECTOR._IsVector(a) and VECTOR._IsVector(b), "ERROR in VECTOR.__eq: wrong argument types: (expected <vector> and <vector>)")
+  --assert(VECTOR._IsVector(a) and VECTOR._IsVector(b), "ERROR in VECTOR.__eq: wrong argument types: (expected <vector> and <vector>)")
+  env.info("FF __eq",showMessageBox)
+  BASE:I(a)
+  BASE:I(b)
   return a.x==b.x and a.y==b.y and a.z==b.z
 end
 
