@@ -243,14 +243,14 @@ end
 
 --- Get points of pathline. Not that points are tables, that contain more information as just the 2D or 3D position but also the surface type etc.
 -- @param #PATHLINE self
--- @return <Core.Pathline#PATHLINE.Point> List of points.
+-- @return #list <Core.Pathline#PATHLINE.Point> List of points.
 function PATHLINE:GetPoints()  
   return self.points
 end
 
 --- Get segments of pathline.
 -- @param #PATHLINE self
--- @return <Core.Pathline#PATHLINE.Segment> List of points.
+-- @return #list <Core.Pathline#PATHLINE.Segment> List of points.
 function PATHLINE:GetSetments()
 
   local segments={}
@@ -267,7 +267,7 @@ end
 
 --- Get 3D points of pathline.
 -- @param #PATHLINE self
--- @return <DCS#Vec3> List of DCS#Vec3 points.
+-- @return #list <DCS#Vec3> List of DCS#Vec3 points.
 function PATHLINE:GetPoints3D()
 
   local vecs={}
@@ -282,7 +282,7 @@ end
 
 --- Get 2D points of pathline.
 -- @param #PATHLINE self
--- @return <DCS#Vec2> List of DCS#Vec2 points.
+-- @return #list <DCS#Vec2> List of DCS#Vec2 points.
 function PATHLINE:GetPoints2D()
 
   local vecs={}
@@ -297,7 +297,7 @@ end
 
 --- Get COORDINATES of pathline. Note that COORDINATE objects are created when calling this function. That does involve deep copy calls and can have an impact on performance if done too often.
 -- @param #PATHLINE self
--- @return <Core.Point#COORDINATE> List of COORDINATES points.
+-- @return #list <Core.Point#COORDINATE> List of COORDINATES points.
 function PATHLINE:GetCoordinats()
 
   local vecs={}

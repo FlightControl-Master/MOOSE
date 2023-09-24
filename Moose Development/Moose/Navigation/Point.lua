@@ -484,7 +484,7 @@ NAVPOINT.version="0.0.1"
 -- @return #NAVPOINT self
 function NAVPOINT:NewFromCoordinate(Name, Coordinate)
 
-  -- Inherit everything from SCENERY class.
+  -- Inherit everything from BASE class.
   self=BASE:Inherit(self, BASE:New()) -- #NAVFIX
   
   self.coordinate=Coordinate

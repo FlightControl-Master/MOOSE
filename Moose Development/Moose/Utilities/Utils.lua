@@ -3038,6 +3038,20 @@ function UTILS.BearingToCardinal(Heading)
   end
 end
 
+--- Adjust given heading so that is is in [0, 360).
+-- @param #number Heading The heading in degrees.
+-- @return #number Adjust heading in [0,360).
+function UTILS.AdjustHeading360(Heading)
+
+  if Heading>=360 then
+    Heading=Heading-360
+  elseif Heading<0 then
+    Heading=Heading+360
+  end
+
+  return Heading
+end
+
 --- Create a BRAA NATO call string BRAA between two GROUP objects
 -- @param Wrapper.Group#GROUP FromGrp GROUP object
 -- @param Wrapper.Group#GROUP ToGrp GROUP object

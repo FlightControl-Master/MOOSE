@@ -296,6 +296,20 @@ function ZONE_BASE:GetCoordinate( Height ) --R2.1
   return self.Coordinate
 end
 
+---  Returns the @{Core.Vector#VECTOR} of the zone.
+-- @param #ZONE_BASE self
+-- @param DCS#Distance Height The height in meters to add to the land height where the center of the zone is located.
+-- @return Core.Vector#VECTOR The vector of the zone.
+function ZONE_BASE:GetVector( Height )
+  self:F2(self.ZoneName)
+
+  local Vec3 = self:GetVec3( Height )
+  
+  local vector=VECTOR:NewFromVec(Vec3)
+
+  return vector
+end
+
 --- Get 2D distance to a coordinate.
 -- @param #ZONE_BASE self
 -- @param Core.Point#COORDINATE Coordinate Reference coordinate. Can also be a DCS#Vec2 or DCS#Vec3 object.

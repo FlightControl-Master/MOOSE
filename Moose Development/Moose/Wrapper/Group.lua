@@ -1074,6 +1074,24 @@ function GROUP:GetAverageVec3()
   return nil 
 end
 
+--- Returns the current VECTOR of the GROUP.
+-- @param #GROUP self
+-- @return Core.Vector#VECTOR Current VECTOR of the first Unit of the GROUP. Can return `nil` if no unit can be found.
+function GROUP:GetVector()
+
+  -- Get first unit.
+  local unit=self:GetUnit(1)
+
+  if unit then
+    local vec3=unit:GetVec3()
+    local vector=VECTOR:New(vec3.x, vec3.y, vec3.z)
+    return vector
+  end
+  
+  self:E("ERROR: Cannot get VECTOR of group "..tostring(self.GroupName))
+  return nil
+end
+
 --- Returns a POINT_VEC2 object indicating the point in 2D of the first UNIT of the GROUP within the mission.
 -- @param #GROUP self
 -- @return Core.Point#POINT_VEC2 The 2D point vector of the first DCS Unit of the GROUP.
