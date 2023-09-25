@@ -3052,6 +3052,48 @@ function UTILS.AdjustHeading360(Heading)
   return Heading
 end
 
+--- Transfroms a given 2D vector 3D.
+-- This takes care of ED's different conventions for 2D and 3D coordinate systems.
+-- @param DCS#Vec2 Vec Vector to be transformed. Can be any table/object that has at least x and y and optionally a z component.
+-- @param #boolean OnSurface If `true`, new vector's y-component (alt) is at surface height. Otherwise, it is set to 0.
+-- @return DCS#Vec3 Vector in 3D with x-, y- and z-components.
+function UTILS.VecTo3D(Vec, OnSurface)
+
+  local vec={x=0, y=0, z=0} --DCS#Vec3
+  if Vec.z then
+    -- Vector is 3D already ==> Nothing to do.
+    vec.x=Vec.x
+    vec.y=Vec.y
+    vec.z=Vec.z
+  else
+    -- Vector is 2D
+    vec.x=Vec.x
+    vec.y=OnSurface and land.getHeight({x=Vec.x, y=Vec.y}) or 0
+    vec.z=Vec.y
+  end
+
+  return vec
+end
+
+--- Transfroms a given 3D (or 2D) vector to 2D.
+-- This takes care of ED's different conventions for 2D and 3D coordinate systems.
+-- @param DCS#Vec3 Vec Vector to be transformed. Can be any table/object that has at least x and y and optionally a z component.
+-- @return DCS#Vec2 Vector in 2D with x- and y-components.
+function UTILS.VecTo2D(Vec)
+
+  local vec={x=0, y=0} --DCS#Vec2
+  
+  if Vec.z then
+    vec.x=Vec.x
+    vec.y=Vec.z
+  else
+    vec.x=Vec.x
+    vec.y=Vec.y
+  end
+
+  return vec
+end
+
 --- Create a BRAA NATO call string BRAA between two GROUP objects
 -- @param Wrapper.Group#GROUP FromGrp GROUP object
 -- @param Wrapper.Group#GROUP ToGrp GROUP object

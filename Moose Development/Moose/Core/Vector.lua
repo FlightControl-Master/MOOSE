@@ -39,6 +39,8 @@
 --
 -- The VECTOR class has a great concept!
 -- 
+-- https://github.com/automattf/vector.lua/blob/master/vector.lua
+-- 
 -- # The DCS Coordinate System
 -- 
 -- DCS has a rather unconventional way to define the coordinate system. The definition even depends whether you work with a 2D vector or a 3D vector.
