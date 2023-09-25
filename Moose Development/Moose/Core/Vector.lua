@@ -1001,6 +1001,22 @@ function VECTOR:Flare(Color, Azimuth)
   return self
 end
 
+
+--- Creates a arrow from this VECTOR to another vector on the F10 map.
+-- @param #VECTOR self
+-- @param #VECTOR Vector The vector defining the endpoint.
+-- @return #VECTOR self
+function VECTOR:ArrowToAll(Vector)
+
+  local vec3Start=self:GetVec3()
+  
+  
+  
+  trigger.action.arrowToAll(coalition , id, vec3Start, vec3End, color, fillColor , lineType, readOnly, "")
+
+  return self
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Private Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
