@@ -180,7 +180,6 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
 --- NAVFIX class.
 -- @type NAVFIX
 -- @field #string ClassName Name of the class.
@@ -283,59 +282,6 @@ end
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Set minimum altitude.
--- @param #NAVFIX self
--- @param #number Altitude Min altitude in feet.
--- @return #NAVFIX self
-function NAVFIX:SetAltMin(Altitude)
-
-  self.altMin=Altitude
-
-  return self
-end
-
---- Set maximum altitude.
--- @param #NAVFIX self
--- @param #number Altitude Max altitude in feet.
--- @return #NAVFIX self
-function NAVFIX:SetAltMax(Altitude)
-
-  self.altMax=Altitude
-
-  return self
-end
-
-
---- Set mandatory altitude (min alt = max alt).
--- @param #NAVFIX self
--- @param #number Altitude Altitude in feet.
--- @return #NAVFIX self
-function NAVFIX:SetAltMandatory(Altitude)
-
-  self.altMin=Altitude
-  self.altMax=Altitude
-
-  return self
-end
-
---- Set whether this fix is compulsory.
--- @param #NAVFIX self
--- @param #boolean Compulsory If `true`, this is a compusory fix. If `false` or nil, it is non-compulsory.
--- @return #NAVFIX self
-function NAVFIX:SetCompulsory(Compulsory)
-  self.isCompulsory=Compulsory
-  return self
-end
-
---- Set whether this is a fly-over fix fix.
--- @param #NAVFIX self
--- @param #boolean FlyOver If `true`, this is a fly over fix. If `false` or nil, it is not.
--- @return #NAVFIX self
-function NAVFIX:SetFlyOver(FlyOver)
-  self.isFlyover=FlyOver
-  return self
-end
-
 --- Set whether this is the intermediate fix (IF).
 -- @param #NAVFIX self
 -- @param #boolean IntermediateFix If `true`, this is an intermediate fix.
@@ -376,24 +322,6 @@ end
 function NAVFIX:SetMissedApproachFix(MissedApproachFix)
   self.isMAF=MissedApproachFix
   return self
-end
-
-
---- Get the altitude in feet MSL.
--- @param #NAVFIX self
--- @return #number Altitude in feet MSL. Can be `nil`, if neither min nor max altitudes have beeen set. 
-function NAVFIX:GetAltitude()
-
-  local alt=nil
-  if self.altMin and self.altMax then
-    alt=math.random(self.altMin, self.altMax)
-  elseif self.altMin then
-    alt=self.altMin
-  elseif self.altMax then
-    alt=self.altMax
-  end
-
-  return alt
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -438,6 +366,9 @@ end
 -- @field #string name Name of the point.
 -- @field Core.Vector#VECTOR vector Position vector of the fix.
 -- @field Wrapper.Marker#MARKER marker Marker on F10 map.
+-- @field #number altMin Minimum altitude in meters.
+-- @field #number altMax Maximum altitude in meters.
+-- 
 -- @field #boolean isCompulsory Is this a compulsory fix.
 -- 
 -- @extends Core.Base#BASE
@@ -489,11 +420,16 @@ function NAVPOINT:NewFromVector(Name, Vector)
   -- Inherit everything from BASE class.
   self=BASE:Inherit(self, BASE:New()) -- #NAVFIX
   
+  -- Vector of point.
   self.vector=Vector
   
+  -- Name of point.
   self.name=Name
   
-  --self.marker=MARKER:New(Coordinate, self:_GetMarkerText())
+  -- Marker on F10.
+  self.marker=MARKER:New(Vector:GetCoordinate(true), self:_GetMarkerText())
+  
+  
   --self.marker:ToAll()
 
   return self
@@ -529,9 +465,9 @@ function NAVPOINT:NewFromNavPoint(Name, NavPoint, Distance, Bearing, Reciprocal)
   end
   
   -- Translate.
-  local coord=NavPoint.coordinate:Translate(UTILS.NMToMeters(Distance), Bearing)
+  local Vector=NavPoint.vector:Translate(UTILS.NMToMeters(Distance), Bearing)
   
-  local self=NavPoint:NewFromCoordinate(Name, coord)
+  self=NavPoint:NewFromVector(Name, Vector)
   
   return self
 end
@@ -540,13 +476,106 @@ end
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- No user functions yet.
+--- Set minimum altitude.
+-- @param #NAVPOINT self
+-- @param #number Altitude Min altitude in feet.
+-- @return #NAVPOINT self
+function NAVPOINT:SetAltMin(Altitude)
+
+  self.altMin=Altitude
+
+  return self
+end
+
+--- Set maximum altitude.
+-- @param #NAVPOINT self
+-- @param #number Altitude Max altitude in feet.
+-- @return #NAVPOINT self
+function NAVPOINT:SetAltMax(Altitude)
+
+  self.altMax=Altitude
+
+  return self
+end
+
+
+--- Set mandatory altitude (min alt = max alt).
+-- @param #NAVPOINT self
+-- @param #number Altitude Altitude in feet.
+-- @return #NAVPOINT self
+function NAVPOINT:SetAltMandatory(Altitude)
+
+  self.altMin=Altitude
+  self.altMax=Altitude
+
+  return self
+end
+
+--- Set whether this fix is compulsory.
+-- @param #NAVPOINT self
+-- @param #boolean Compulsory If `true`, this is a compusory fix. If `false` or nil, it is non-compulsory.
+-- @return #NAVPOINT self
+function NAVPOINT:SetCompulsory(Compulsory)
+  self.isCompulsory=Compulsory
+  return self
+end
+
+--- Set whether this is a fly-over fix fix.
+-- @param #NAVPOINT self
+-- @param #boolean FlyOver If `true`, this is a fly over fix. If `false` or nil, it is not.
+-- @return #NAVPOINT self
+function NAVPOINT:SetFlyOver(FlyOver)
+  self.isFlyover=FlyOver
+  return self
+end
+
+
+--- Get the altitude in feet MSL.
+-- @param #NAVPOINT self
+-- @return #number Altitude in feet MSL. Can be `nil`, if neither min nor max altitudes have beeen set. 
+function NAVPOINT:GetAltitude()
+
+  local alt=nil
+  if self.altMin and self.altMax then
+    alt=math.random(self.altMin, self.altMax)
+  elseif self.altMin then
+    alt=self.altMin
+  elseif self.altMax then
+    alt=self.altMax
+  end
+
+  return alt
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Private Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- No private functions yet.
+--- Get text displayed in the F10 marker.
+-- @param #NAVPOINT self
+-- @return #string Marker text.
+function NAVPOINT:_GetMarkerText()
+
+  local altmin=self.altMin and tostring(self.altMin) or ""
+  local altmax=self.altMax and tostring(self.altMax) or ""
+  local speedmin=self.speedMin and tostring(self.speedMin) or ""
+  local speedmax=self.speedMax and tostring(self.speedMax) or ""
+
+
+  local text=string.format("NAVPOINT %s", self.name)
+  if self.isIAF then
+    text=text..string.format(" (IAF)")
+  end
+  if self.isIF then
+    text=text..string.format(" (IF)")
+  end
+  text=text..string.format("\nAltitude: %s - %s", altmin, altmax)
+  text=text..string.format("\nSpeed: %s - %s", speedmin, speedmax)
+  text=text..string.format("\nCompulsory: %s", tostring(self.isCompulsory))
+  text=text..string.format("\nFly Over: %s", tostring(self.isFlyover))
+  
+  return text
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

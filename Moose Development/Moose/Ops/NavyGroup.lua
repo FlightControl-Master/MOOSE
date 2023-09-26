@@ -1277,25 +1277,20 @@ end
 -- @param #NAVYGROUP.IntoWind Into wind parameters.
 function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
 
-  IntoWind.Heading=self:GetHeadingIntoWind(IntoWind.Offset)
+  -- Calculate heading and speed of ship.
+  local heading, speed=self:GetHeadingIntoWind(IntoWind.Offset, IntoWind.Speed)
   
+  IntoWind.Heading=heading
   IntoWind.Open=true
   
+  -- Get coordinate.
   IntoWind.Coordinate=self:GetCoordinate(true)
   
+  -- Set current into wind parameters.
   self.intowind=IntoWind
-  
-  -- Wind speed in m/s.
-  local _,vwind=self:GetWind()
-  
-  -- Convert to knots.
-  vwind=UTILS.MpsToKnots(vwind)
-
-  -- Speed of carrier relative to wind but at least 4 knots.
-  local speed=math.max(IntoWind.Speed-vwind, 4)
 
   -- Debug info.
-  self:T(self.lid..string.format("Steaming into wind: Heading=%03d Speed=%.1f Vwind=%.1f Vtot=%.1f knots, Tstart=%d Tstop=%d", IntoWind.Heading, speed, vwind, speed+vwind, IntoWind.Tstart, IntoWind.Tstop))
+  self:T(self.lid..string.format("Steaming into wind: Heading=%03d Speed=%.1f, Tstart=%d Tstop=%d", IntoWind.Heading, speed, IntoWind.Tstart, IntoWind.Tstop))
   
   local distance=UTILS.NMToMeters(1000)
   
@@ -2072,7 +2067,7 @@ end
 -- @param #NAVYGROUP self
 -- @param #number Offset Offset angle in degrees, e.g. to account for an angled runway.
 -- @return #number Carrier heading in degrees.
-function NAVYGROUP:GetHeadingIntoWind(Offset)
+function NAVYGROUP:GetHeadingIntoWind_old(Offset)
 
   Offset=Offset or 0
 
@@ -2086,14 +2081,100 @@ function NAVYGROUP:GetHeadingIntoWind(Offset)
   if vwind<0.1 then
     intowind=self:GetHeading()
   end
-
+  
   -- Adjust negative values.
   if intowind<0 then
     intowind=intowind+360
   end
-
+  
   return intowind
 end
+
+
+--- Get heading of group into the wind. This minimizes the cross wind for an angled runway.
+-- Implementation based on [Mags & Bami](https://magwo.github.io/carrier-cruise/) work.
+-- @param #NAVYGROUP self
+-- @param #number Offset Offset angle in degrees, e.g. to account for an angled runway.
+-- @param #number vdeck Desired wind speed on deck in Knots.
+-- @return #number Carrier heading in degrees.
+function NAVYGROUP:GetHeadingIntoWind(Offset, vdeck)
+
+  -- Default offset angle.
+  Offset=Offset or 0
+
+  -- Get direction the wind is blowing from.
+  local windfrom, vwind=self:GetWind()
+  
+  -- Convert wind speed to knots.
+  vwind=UTILS.MpsToKnots(vwind)
+  
+  -- Wind to in knots.
+  local windto=(windfrom+180)%360
+  
+  -- Offset angle in rad.
+  local alpha=math.rad(Offset)
+  
+  -- Ships min/max speed.
+  local Vmin=4
+  local Vmax=UTILS.KmphToKnots(self.speedMax)
+  
+  -- Constant.
+  local C = math.sqrt(math.cos(alpha)^2 / math.sin(alpha)^2 + 1)
+  
+
+  -- Upper limit of desired speed due to max boat speed.
+  local vdeckMax=vwind + math.cos(alpha) * Vmax
+  
+  -- Lower limit of desired speed due to min boat speed.
+  local vdeckMin=vwind + math.cos(alpha) * Vmin
+  
+  
+  -- Speed of ship so it matches the desired speed.
+  local v
+  
+  -- Angle wrt. to wind TO-direction 
+  local theta
+
+  if vdeck>vdeckMax then
+    -- Boat cannot go fast enough
+    
+    -- Set max speed.
+    v=Vmax
+    
+    -- Calculate theta.
+    theta = math.asin(v/(vwind*C)) - math.asin(-1/C)
+  
+  elseif vdeck<vdeckMin then
+    -- Boat cannot go slow enought
+  
+    -- Set min speed.
+    v=Vmin
+    
+    -- Calculatge theta.
+    theta = math.asin(v/(vwind*C)) - math.asin(-1/C)
+  
+  elseif vdeck*math.sin(alpha)>vwind then
+    -- Too little wind
+    
+    -- Set theta to 90°
+    theta=math.pi/2
+    
+    -- Set speed.
+    v = math.sqrt(vdeck^2 - vwind^2)
+  
+  else
+    -- Normal case
+    theta = math.asin(vdeck * math.sin(alpha) / vwind)
+    v = vdeck * math.cos(alpha) - vwind * math.cos(theta)
+  end
+  
+  
+  -- Ship heading so cross wind is min for the given wind.
+  local intowind = (540 + (windto + math.deg(theta) )) % 360
+  
+  return intowind, v
+end
+
 
 --- Find free path to next waypoint.
 -- @param #NAVYGROUP self
