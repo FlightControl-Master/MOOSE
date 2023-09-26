@@ -8,14 +8,14 @@
 -------------------------------------------------------------------------
 -- Date: September 2023
 -------------------------------------------------------------------------
----@diagnostic disable: cast-local-type
+--
 --- **Ops** - Easy GCI & CAP Manager
 --
 -- ===
 --
 -- **Main Features:**
 --
---    * Automatically create and manage A2A CAP/GCI defenses using an @{Ops.AirWing#AIRWING} and Squadrons for one coalition
+--    * Automatically create and manage A2A CAP/GCI defenses using an AirWing and Squadrons for one coalition
 --    * Easy set-up
 --    * Add additional AirWings on other airbases
 --    * Each wing can have more than one Squadron - tasking to Squadrons is done on a random basis per AirWing
