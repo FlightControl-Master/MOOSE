@@ -94,6 +94,7 @@ Ops/Operation.lua
 Ops/FlightControl.lua
 Ops/PlayerTask.lua
 Ops/PlayerRecce.lua
+Ops/EasyGCICAP.lua
 
 Sound/UserSound.lua
 Sound/SoundOutput.lua
