@@ -671,7 +671,7 @@ function POSITIONABLE:GetBoundingRadius( MinDist )
     return math.max( math.max( CX, CZ ), boxmin )
   end
 
-  BASE:E( { "Cannot GetBoundingRadius", Positionable = self, Alive = self:IsAlive() } )
+  BASE:T( { "Cannot GetBoundingRadius", Positionable = self, Alive = self:IsAlive() } )
 
   return nil
 end
