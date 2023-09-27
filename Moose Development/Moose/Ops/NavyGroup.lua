@@ -90,7 +90,7 @@ NAVYGROUP = {
 
 --- NavyGroup version.
 -- @field #string version
-NAVYGROUP.version="1.0.1"
+NAVYGROUP.version="1.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -586,7 +586,7 @@ end
 -- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
 -- @param #number speed Wind speed on deck in knots during turn into wind leg. Default 20 knots.
 -- @param #boolean uturn If `true` (or `nil`), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
--- @param #number offset Offset angle in degrees, e.g. to account for an angled runway. Default 0 deg.
+-- @param #number offset Offset angle clock-wise in degrees, *e.g.* to account for an angled runway. Default 0 deg. Use around -9.1° for US carriers.
 -- @return #NAVYGROUP.IntoWind Turn into window data table.
 function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn, offset)
 
@@ -2050,15 +2050,16 @@ end
 
 --- Get wind direction and speed at current position.
 -- @param #NAVYGROUP self
+-- @param #number Altitude Altitude in meters above main sea level at which the wind is calculated. Default 18 meters.
 -- @return #number Direction the wind is blowing **from** in degrees.
 -- @return #number Wind speed in m/s.
-function NAVYGROUP:GetWind()
+function NAVYGROUP:GetWind(Altitude)
 
   -- Current position of the carrier or input.
   local coord=self:GetCoordinate()
 
-  -- Wind direction and speed. By default at 50 meters ASL.
-  local Wdir, Wspeed=coord:GetWind(50)
+  -- Wind direction and speed. By default at 18 meters ASL.
+  local Wdir, Wspeed=coord:GetWind(Altitude or 18)
 
   return Wdir, Wspeed
 end
@@ -2103,7 +2104,7 @@ function NAVYGROUP:GetHeadingIntoWind(Offset, vdeck)
   Offset=Offset or 0
 
   -- Get direction the wind is blowing from.
-  local windfrom, vwind=self:GetWind()
+  local windfrom, vwind=self:GetWind(18)
   
   -- Convert wind speed to knots.
   vwind=UTILS.MpsToKnots(vwind)
@@ -2111,8 +2112,8 @@ function NAVYGROUP:GetHeadingIntoWind(Offset, vdeck)
   -- Wind to in knots.
   local windto=(windfrom+180)%360
   
-  -- Offset angle in rad.
-  local alpha=math.rad(Offset)
+  -- Offset angle in rad. We also define the rotation to be clock-wise, which requires a minus sign.
+  local alpha=math.rad(-Offset)
   
   -- Ships min/max speed.
   local Vmin=4
@@ -2130,10 +2131,10 @@ function NAVYGROUP:GetHeadingIntoWind(Offset, vdeck)
   
   
   -- Speed of ship so it matches the desired speed.
-  local v
+  local v=0
   
   -- Angle wrt. to wind TO-direction 
-  local theta
+  local theta=0
 
   if vdeck>vdeckMax then
     -- Boat cannot go fast enough
@@ -2171,6 +2172,9 @@ function NAVYGROUP:GetHeadingIntoWind(Offset, vdeck)
   
   -- Ship heading so cross wind is min for the given wind.
   local intowind = (540 + (windto + math.deg(theta) )) % 360
+  
+  -- Debug info.
+  self:I(self.lid..string.format("Heading into Wind: vship=%.1f, vwind=%.1f, WindTo=%03d°, Theta=%03d°, Heading=%03d", v, vwind, windto, theta, intowind))
   
   return intowind, v
 end

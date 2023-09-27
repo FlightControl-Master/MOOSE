@@ -12664,7 +12664,7 @@ function OPSGROUP:_UpdatePosition()
     self.positionLast=self.position or self:GetVec3()
     self.headingLast=self.heading or self:GetHeading()
     self.orientXLast=self.orientX or self:GetOrientationX()
-  self.velocityLast=self.velocity or self.group:GetVelocityMPS()
+    self.velocityLast=self.velocity or self.group:GetVelocityMPS()
 
     -- Current state.
     self.position=self:GetVec3()

@@ -644,6 +644,41 @@ function VECTOR:SubVec(Vec)
   return self
 end
 
+--- Calculate the dot product of this VECTOR with another vector. This function works for DCS#Vec2, DCS#Vec3, VECTOR, COORDINATE objects.
+-- @param #VECTOR self
+-- @param DCS#Vec3 Vec The other vector. Can also be a DCS#Vec2, DCS#Vec3, COORDINATE or VECTOR object.
+-- @return #number Dot product Sum_i(a[i]*b[i]). Note that this is a **scalar** and not a vector any more!
+function VECTOR:Dot(Vec)
+
+  local dot=self.x*Vec.x
+  if Vec.z then
+    dot=dot+self.y*Vec.y+self.z*Vec.z
+  else
+    -- Vec is 2D ==> we take its y-component for z.
+    dot=dot+self.z*Vec.y
+  end
+   
+  return dot
+end
+
+--- Calculate the rotation or cross product of this VECTOR with another vector. This function works for DCS#Vec2, DCS#Vec3, VECTOR, COORDINATE objects.
+-- @param #VECTOR self
+-- @param DCS#Vec3 Vec The other vector. Can also be a DCS#Vec2, DCS#Vec3, COORDINATE or VECTOR object.
+-- @return #VECTOR The cross product vector.
+function VECTOR:Rot(Vec)
+
+  -- TODO:
+  local dot=self.x*Vec.x
+  if Vec.z then
+    dot=dot+self.y*Vec.y+self.z*Vec.z
+  else
+    -- Vec is 2D ==> we take its y-component for z.
+    dot=dot+self.z*Vec.y
+  end
+   
+  return dot
+end
+
 
 --- Get a clone (deep copy) of this vector.
 -- @param #VECTOR self
@@ -1011,8 +1046,6 @@ end
 function VECTOR:ArrowToAll(Vector)
 
   local vec3Start=self:GetVec3()
-  
-  
   
   trigger.action.arrowToAll(coalition , id, vec3Start, vec3End, color, fillColor , lineType, readOnly, "")
 
