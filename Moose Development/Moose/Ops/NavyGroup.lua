@@ -2174,7 +2174,7 @@ function NAVYGROUP:GetHeadingIntoWind(Offset, vdeck)
   local intowind = (540 + (windto + math.deg(theta) )) % 360
   
   -- Debug info.
-  self:I(self.lid..string.format("Heading into Wind: vship=%.1f, vwind=%.1f, WindTo=%03d°, Theta=%03d°, Heading=%03d", v, vwind, windto, theta, intowind))
+  self:T(self.lid..string.format("Heading into Wind: vship=%.1f, vwind=%.1f, WindTo=%03d°, Theta=%03d°, Heading=%03d", v, vwind, windto, theta, intowind))
   
   return intowind, v
 end
