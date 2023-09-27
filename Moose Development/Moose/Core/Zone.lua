@@ -196,7 +196,7 @@ end
 
 --- Returns if a PointVec2 is within the zone. (Name is misleading, actually takes a #COORDINATE)
 -- @param #ZONE_BASE self
--- @param Core.Point#COORDINATE PointVec2 The coordinate to test.
+-- @param Core.Point#COORDINATE Coordinate The coordinate to test.
 -- @return #boolean true if the PointVec2 is within the zone.
 function ZONE_BASE:IsPointVec2InZone( Coordinate )
   local InZone = self:IsVec2InZone( Coordinate:GetVec2() )
@@ -1443,8 +1443,11 @@ function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,ma
   local T1 = timer.getTime()
 
   local buildings = {}
+  local buildingzones = {}
+  
   if self.ScanData and self.ScanData.BuildingCoordinates then
     buildings = self.ScanData.BuildingCoordinates
+    buildingzones = self.ScanData.BuildingZones
   else
     -- build table of buildings coordinates
     for _,_object in pairs (objects) do
@@ -1456,28 +1459,32 @@ function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,ma
             MARKER:New(scenery:GetCoordinate(),"Building"):ToAll()
           end
           buildings[#buildings+1] = scenery:GetCoordinate()
+          local bradius = scenery:GetBoundingRadius() or dist
+          local bzone = ZONE_RADIUS:New("Building-"..math.random(1,100000),scenery:GetVec2(),bradius,false)
+          buildingzones[#buildingzones+1] = bzone
+          --bzone:DrawZone(-1,{1,0,0},Alpha,FillColor,FillAlpha,1,ReadOnly)
          end
       end
     end
     self.ScanData.BuildingCoordinates = buildings
+    self.ScanData.BuildingZones = buildingzones
   end
 
   -- max 1000 tries
   local rcoord = nil  
-  local found = false
+  local found = true
   local iterations = 0
 
   for i=1,1000 do
     iterations = iterations + 1
     rcoord = self:GetRandomCoordinate(inner,outer)
-    found = false
-    for _,_coord in pairs (buildings) do
-      local coord = _coord -- Core.Point#COORDINATE
+    found = true
+    for _,_coord in pairs (buildingzones) do
+      local zone = _coord -- Core.Zone#ZONE_RADIUS
       -- keep >50m dist from buildings
-      if coord:Get3DDistance(rcoord) > dist then
-        found = true
-      else
+      if zone:IsPointVec2InZone(rcoord) then
         found = false
+        break
       end
     end
     if found then 
@@ -1489,9 +1496,36 @@ function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,ma
     end
   end
   
+  if not found then
+    -- max 1000 tries
+    local rcoord = nil  
+    local found = true
+    local iterations = 0
+  
+    for i=1,1000 do
+      iterations = iterations + 1
+      rcoord = self:GetRandomCoordinate(inner,outer)
+      found = true
+      for _,_coord in pairs (buildings) do
+        local coord = _coord -- Core.Point#COORDINATE
+        -- keep >50m dist from buildings
+        if coord:Get3DDistance(rcoord) < dist then
+          found = false
+        end
+      end
+      if found then 
+        -- we have a winner!
+        if markfinal then
+          MARKER:New(rcoord,"FREE"):ToAll()
+        end
+        break 
+      end
+    end
+  end
+  
   T1=timer.getTime()
   
-  self:T(string.format("Found a coordinate: %s | Iterations: %d | Time: %d",tostring(found),iterations,T1-T0))
+  self:T(string.format("Found a coordinate: %s | Iterations: %d | Time: %.3f",tostring(found),iterations,T1-T0))
   
   if found then return rcoord else return nil end
   
