@@ -53,7 +53,8 @@
 -- @module Core.Zone
 -- @image Core_Zones.JPG
 
---- @type ZONE_BASE
+---
+-- @type ZONE_BASE
 -- @field #string ZoneName Name of the zone.
 -- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 -- @field #number DrawID Unique ID of the drawn zone on the F10 map.
@@ -195,7 +196,7 @@ end
 
 --- Returns if a PointVec2 is within the zone. (Name is misleading, actually takes a #COORDINATE)
 -- @param #ZONE_BASE self
--- @param Core.Point#COORDINATE PointVec2 The coordinate to test.
+-- @param Core.Point#COORDINATE Coordinate The coordinate to test.
 -- @return #boolean true if the PointVec2 is within the zone.
 function ZONE_BASE:IsPointVec2InZone( Coordinate )
   local InZone = self:IsVec2InZone( Coordinate:GetVec2() )
@@ -953,7 +954,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
 
         local Include = false
         if not UnitCategories then
-          -- Anythink found is included.
+          -- Anything found is included.
           Include = true
         else
           -- Check if found object is in specified categories.
@@ -984,9 +985,9 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
       if ObjectCategory == Object.Category.SCENERY then
         local SceneryType = ZoneObject:getTypeName()
         local SceneryName = ZoneObject:getName()
-        --BASE:I("SceneryType "..SceneryType.."SceneryName"..SceneryName)
+        --BASE:I("SceneryType "..SceneryType.." SceneryName "..tostring(SceneryName))
         self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
-        self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( SceneryName, ZoneObject )
+        self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( tostring(SceneryName), ZoneObject)
         table.insert(self.ScanData.SceneryTable,self.ScanData.Scenery[SceneryType][SceneryName] )
         self:T( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
       end
@@ -1442,8 +1443,11 @@ function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,ma
   local T1 = timer.getTime()
 
   local buildings = {}
+  local buildingzones = {}
+  
   if self.ScanData and self.ScanData.BuildingCoordinates then
     buildings = self.ScanData.BuildingCoordinates
+    buildingzones = self.ScanData.BuildingZones
   else
     -- build table of buildings coordinates
     for _,_object in pairs (objects) do
@@ -1455,28 +1459,32 @@ function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,ma
             MARKER:New(scenery:GetCoordinate(),"Building"):ToAll()
           end
           buildings[#buildings+1] = scenery:GetCoordinate()
+          local bradius = scenery:GetBoundingRadius() or dist
+          local bzone = ZONE_RADIUS:New("Building-"..math.random(1,100000),scenery:GetVec2(),bradius,false)
+          buildingzones[#buildingzones+1] = bzone
+          --bzone:DrawZone(-1,{1,0,0},Alpha,FillColor,FillAlpha,1,ReadOnly)
          end
       end
     end
     self.ScanData.BuildingCoordinates = buildings
+    self.ScanData.BuildingZones = buildingzones
   end
 
   -- max 1000 tries
   local rcoord = nil  
-  local found = false
+  local found = true
   local iterations = 0
 
   for i=1,1000 do
     iterations = iterations + 1
     rcoord = self:GetRandomCoordinate(inner,outer)
-    found = false
-    for _,_coord in pairs (buildings) do
-      local coord = _coord -- Core.Point#COORDINATE
+    found = true
+    for _,_coord in pairs (buildingzones) do
+      local zone = _coord -- Core.Zone#ZONE_RADIUS
       -- keep >50m dist from buildings
-      if coord:Get3DDistance(rcoord) > dist then
-        found = true
-      else
+      if zone:IsPointVec2InZone(rcoord) then
         found = false
+        break
       end
     end
     if found then 
@@ -1488,15 +1496,43 @@ function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,ma
     end
   end
   
+  if not found then
+    -- max 1000 tries
+    local rcoord = nil  
+    local found = true
+    local iterations = 0
+  
+    for i=1,1000 do
+      iterations = iterations + 1
+      rcoord = self:GetRandomCoordinate(inner,outer)
+      found = true
+      for _,_coord in pairs (buildings) do
+        local coord = _coord -- Core.Point#COORDINATE
+        -- keep >50m dist from buildings
+        if coord:Get3DDistance(rcoord) < dist then
+          found = false
+        end
+      end
+      if found then 
+        -- we have a winner!
+        if markfinal then
+          MARKER:New(rcoord,"FREE"):ToAll()
+        end
+        break 
+      end
+    end
+  end
+  
   T1=timer.getTime()
   
-  self:T(string.format("Found a coordinate: %s | Iterations: %d | Time: %d",tostring(found),iterations,T1-T0))
+  self:T(string.format("Found a coordinate: %s | Iterations: %d | Time: %.3f",tostring(found),iterations,T1-T0))
   
   if found then return rcoord else return nil end
   
 end
 
---- @type ZONE
+---
+-- @type ZONE
 -- @extends #ZONE_RADIUS
 
 
@@ -1580,8 +1616,8 @@ function ZONE:FindByName( ZoneName )
 end
 
 
-
---- @type ZONE_UNIT
+---
+-- @type ZONE_UNIT
 -- @field Wrapper.Unit#UNIT ZoneUNIT
 -- @extends Core.Zone#ZONE_RADIUS
 
@@ -1616,15 +1652,17 @@ function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius, Offset)
     if (Offset.dx or Offset.dy) and (Offset.rho or Offset.theta) then
       error("Cannot use (dx, dy) with (rho, theta)")
     end
+  end
 
+  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneUNIT:GetVec2(), Radius, true ) )
+
+  if Offset then
     self.dy = Offset.dy or 0.0
     self.dx = Offset.dx or 0.0
     self.rho = Offset.rho or 0.0
     self.theta = (Offset.theta or 0.0) * math.pi / 180.0
     self.relative_to_unit = Offset.relative_to_unit or false
   end
-
-  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneUNIT:GetVec2(), Radius, true ) )
 
   self:F( { ZoneName, ZoneUNIT:GetVec2(), Radius } )
 
@@ -1721,7 +1759,8 @@ function ZONE_UNIT:GetVec3( Height )
   return Vec3
 end
 
---- @type ZONE_GROUP
+---
+-- @type ZONE_GROUP
 -- @extends #ZONE_RADIUS
 
 
@@ -1807,7 +1846,8 @@ function ZONE_GROUP:GetRandomPointVec2( inner, outer )
 end
 
 
---- @type ZONE_POLYGON_BASE
+---
+-- @type ZONE_POLYGON_BASE
 -- @field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCS#Vec2}.
 -- @extends #ZONE_BASE
 
@@ -2456,7 +2496,8 @@ function ZONE_POLYGON_BASE:Boundary(Coalition, Color, Radius, Alpha, Segments, C
     return self
 end
 
---- @type ZONE_POLYGON
+---
+-- @type ZONE_POLYGON
 -- @extends #ZONE_POLYGON_BASE
 
 
@@ -2584,7 +2625,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
   local minmarkcoord = COORDINATE:NewFromVec3(minVec3)
   local maxmarkcoord = COORDINATE:NewFromVec3(maxVec3)
   local ZoneRadius = minmarkcoord:Get2DDistance(maxmarkcoord)/2
-  
+--  self:I("Scan Radius:" ..ZoneRadius)
   local CenterVec3 = self:GetCoordinate():GetVec3()
   
  --[[ this a bit shaky in functionality it seems
@@ -2907,7 +2948,7 @@ end
 
 do -- ZONE_ELASTIC
 
-  --- @type ZONE_ELASTIC
+  -- @type ZONE_ELASTIC
   -- @field #table points Points in 2D.
   -- @field #table setGroups Set of GROUPs.
   -- @field #table setOpsGroups Set of OPSGROUPS.
@@ -3107,7 +3148,7 @@ end
 
 do -- ZONE_AIRBASE
 
-  --- @type ZONE_AIRBASE
+  -- @type ZONE_AIRBASE
   -- @field #boolean isShip If `true`, airbase is a ship.
   -- @field #boolean isHelipad If `true`, airbase is a helipad.
   -- @field #boolean isAirdrome If `true`, airbase is an airdrome.
