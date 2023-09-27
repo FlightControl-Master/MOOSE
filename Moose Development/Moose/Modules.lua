@@ -115,6 +115,7 @@ __Moose.Include( 'Scripts/Moose/Ops/RecoveryTanker.lua' )
 __Moose.Include( 'Scripts/Moose/Ops/RescueHelo.lua' )
 __Moose.Include( 'Scripts/Moose/Ops/Squadron.lua' )
 __Moose.Include( 'Scripts/Moose/Ops/Target.lua' )
+__Moose.Include( 'Scripts/Moose/Ops/EasyGCICAP.lua' )
 
 __Moose.Include( 'Scripts/Moose/Navigation/Point.lua' )
 __Moose.Include( 'Scripts/Moose/Navigation/Procedure.lua' )
