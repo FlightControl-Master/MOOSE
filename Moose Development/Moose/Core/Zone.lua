@@ -190,6 +190,7 @@ end
 -- @param Core.Point#COORDINATE Coordinate The coordinate to test.
 -- @return #boolean true if the coordinate is within the zone.
 function ZONE_BASE:IsCoordinateInZone( Coordinate )
+  if not Coordinate then return false end
   local InZone = self:IsVec2InZone( Coordinate:GetVec2() )
   return InZone
 end
