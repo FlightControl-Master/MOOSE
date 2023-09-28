@@ -165,6 +165,11 @@
 -- * @{#EASYGCICAP.SetMaxAliveMissions}: Set max parallel missions can be done (CAP+GCI+Alert5+Tanker+AWACS), defaults to 8.
 -- * @{#EASYGCICAP.SetDefaultRepeatOnFailure}: Set max repeats on failure for intercepting/killing intruders, defaults to 3.
 -- * @{#EASYGCICAP.SetTankerAndAWACSInvisible}: Set Tanker and AWACS to be invisible to enemy AI eyes. Is set to `true` by default.
+-- 
+-- ## Debug and Monitor
+-- 
+--          mywing.debug = true -- log information
+--          mywing.Monitor = true -- show some statistics on screen
 --
 --
 -- @field #EASYGCICAP
@@ -1127,20 +1132,24 @@ function EASYGCICAP:onafterStatus(From,Event,To)
   local caps = counttable(self.ManagedCP)
   local assets = 0
   local instock = 0
+  local capmission = 0
+  local interceptmission = 0
   for _,_wing in pairs(self.wings) do
     local count = _wing[1]:CountAssetsOnMission(MissionTypes,Cohort)
     local count2 = _wing[1]:CountAssets(true,MissionTypes,Attributes)
+    capmission = capmission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.GCICAP})
+    interceptmission = interceptmission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.INTERCEPT})
     assets = assets + count
     instock = instock + count2
-  end
-  if self.debug then
-    self:I(self.lid.."Wings: "..wings.." | Squads: "..squads.." | CapPoints: "..caps.." | Assets on Mission: "..assets.." | Assets in Stock: "..instock)
   end
   if self.Monitor then
     local threatcount = #self.Intel.Clusters or 0
     local text =  "GCICAP "..self.alias
     text = text.."\nWings: "..wings.."\nSquads: "..squads.."\nCapPoints: "..caps.."\nAssets on Mission: "..assets.."\nAssets in Stock: "..instock
     text = text.."\nThreats: "..threatcount
+    text = text.."\Missions: "..capmission+interceptmission
+    text = text.."\ - CAP: "..capmission
+    text = text.."\ - Intercept: "..interceptmission
     MESSAGE:New(text,15,"GCICAP"):ToAll():ToLogIf(self.debug)
   end
   self:__Status(30)
