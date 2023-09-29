@@ -253,8 +253,7 @@
 -- # Sound Files
 --
 -- More than 180 individual sound files have been created using a text-to-speech program. All ATIS information is given with en-US accent.
---
--- Check out the pinned messages in the Moose discord #ops-atis channel.
+-- You can find the sound files [here](https://github.com/FlightControl-Master/MOOSE_SOUND/releases). Also check out the pinned messages in the Moose discord #ops-atis channel.
 --
 -- To include the files, open the mission (.miz) file with, *e.g.*, 7-zip. Then just drag-n-drop the file into the miz.
 --
