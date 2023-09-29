@@ -50,6 +50,11 @@
 --     * **100 meter**: Destroys the missile when the distance to the aircraft is below or equal to 100 meter.
 --     * **150 meter**: Destroys the missile when the distance to the aircraft is below or equal to 150 meter.
 --     * **200 meter**: Destroys the missile when the distance to the aircraft is below or equal to 200 meter.
+--     
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE.
+-- Therefore, this class is considered to be deprecated and superseded by the [Functional.Fox](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Functional.Fox.html) class, which provides the same functionality.
 --
 -- ===
 --
@@ -102,7 +107,7 @@
 -- # Developer Note
 -- 
 -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE.
--- Therefore, this class is considered to be deprecated and superseded by the @{Functional.Fox#FOX} class, which provides the same functionality.
+-- Therefore, this class is considered to be deprecated and superseded by the [Functional.Fox](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Functional.Fox.html) class, which provides the same functionality.
 --
 -- @field #MISSILETRAINER
 MISSILETRAINER = {
