@@ -511,6 +511,17 @@ function NAVPOINT:SetAltMandatory(Altitude)
   return self
 end
 
+--- Set minimum speed.
+-- @param #NAVPOINT self
+-- @param #number Speed Min speed in knots.
+-- @return #NAVPOINT self
+function NAVPOINT:SetSpeedMin(Speed)
+
+  self.speedMin=Altitude
+
+  return self
+end
+
 --- Set whether this fix is compulsory.
 -- @param #NAVPOINT self
 -- @param #boolean Compulsory If `true`, this is a compusory fix. If `false` or nil, it is non-compulsory.
