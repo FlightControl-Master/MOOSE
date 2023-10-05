@@ -26,6 +26,7 @@
 -- @field #table filterCategoryGroup Filter for group categories.
 -- @field Core.Set#SET_ZONE acceptzoneset Set of accept zones. If defined, only contacts in these zones are considered.
 -- @field Core.Set#SET_ZONE rejectzoneset Set of reject zones. Contacts in these zones are not considered, even if they are in accept zones.
+-- @field Core.Set#SET_ZONE conflictzoneset Set of conflict zones. Contacts in these zones are considered, even if they are not in accept zones or if they are in reject zones.
 -- @field #table Contacts Table of detected items.
 -- @field #table ContactsLost Table of lost detected items.
 -- @field #table ContactsUnknown Table of new detected items.
@@ -159,13 +160,12 @@ INTEL.Ctype={
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.3.5"
+INTEL.version="0.3.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Make forget times user input. Currently these are hard coded.
 -- TODO: Add min cluster size. Only create new clusters if they have a certain group size.
 -- TODO: process detected set asynchroniously for better performance.
 -- DONE: Add statics.
@@ -266,6 +266,7 @@ function INTEL:New(DetectionSet, Coalition, Alias)
   self:SetForgetTime()
   self:SetAcceptZones()
   self:SetRejectZones()
+  self:SetConflictZones()
 
   ------------------------
   --- Pseudo Functions ---
@@ -416,7 +417,7 @@ function INTEL:RemoveAcceptZone(AcceptZone)
 end
 
 --- Set reject zones. Contacts detected in this/these zone(s) are rejected and not reported by the detection.
--- Note that reject zones overrule accept zones, i.e. if a unit is inside and accept zone and inside a reject zone, it is rejected.
+-- Note that reject zones overrule accept zones, i.e. if a unit is inside an accept zone and inside a reject zone, it is rejected.
 -- @param #INTEL self
 -- @param Core.Set#SET_ZONE RejectZoneSet Set of reject zone(s).
 -- @return #INTEL self
@@ -426,7 +427,7 @@ function INTEL:SetRejectZones(RejectZoneSet)
 end
 
 --- Add a reject zone. Contacts detected in this zone are rejected and not reported by the detection.
--- Note that reject zones overrule accept zones, i.e. if a unit is inside and accept zone and inside a reject zone, it is rejected.
+-- Note that reject zones overrule accept zones, i.e. if a unit is inside an accept zone and inside a reject zone, it is rejected.
 -- @param #INTEL self
 -- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
 -- @return #INTEL self
@@ -441,6 +442,36 @@ end
 -- @return #INTEL self
 function INTEL:RemoveRejectZone(RejectZone)
   self.rejectzoneset:Remove(RejectZone:GetName(), true)
+  return self
+end
+
+--- Set conflict zones. Contacts detected in this/these zone(s) are reported by the detection.
+-- Note that conflict zones overrule all other zones, i.e. if a unit is outside of an accept zone and inside a reject zone, it is still reported if inside a conflict zone.
+-- @param #INTEL self
+-- @param Core.Set#SET_ZONE ConflictZoneSet Set of conflict zone(s).
+-- @return #INTEL self
+function INTEL:SetConflictZones(ConflictZoneSet)
+  self.conflictzoneset=ConflictZoneSet or SET_ZONE:New()
+  return self
+end
+
+--- Add a conflict zone. Contacts detected in this zone are conflicted and not reported by the detection.
+-- Note that conflict zones overrule all other zones, i.e. if a unit is outside of an accept zone and inside a reject zone, it is still reported if inside a conflict zone.
+-- @param #INTEL self
+-- @param Core.Zone#ZONE ConflictZone Add a zone to the conflict zone set.
+-- @return #INTEL self
+function INTEL:AddConflictZone(ConflictZone)
+  self.conflictzoneset:AddZone(ConflictZone)
+  return self
+end
+
+--- Remove a conflict zone from the conflict zone set.
+-- Note that conflict zones overrule all other zones, i.e. if a unit is outside of an accept zone and inside a reject zone, it is still reported if inside a conflict zone.
+-- @param #INTEL self
+-- @param Core.Zone#ZONE ConflictZone Remove a zone from the conflict zone set.
+-- @return #INTEL self
+function INTEL:RemoveConflictZone(ConflictZone)
+  self.conflictzoneset:Remove(ConflictZone:GetName(), true)
   return self
 end
 
@@ -780,7 +811,19 @@ function INTEL:UpdateIntel()
   local remove={}
   for unitname,_unit in pairs(DetectedUnits) do
     local unit=_unit --Wrapper.Unit#UNIT
-
+    
+    local inconflictzone=false
+    -- Check if unit is in any of the conflict zones.
+    if self.conflictzoneset:Count()>0 then
+      for _,_zone in pairs(self.conflictzoneset.Set) do
+        local zone=_zone --Core.Zone#ZONE
+        if unit:IsInZone(zone) then
+          inconflictzone=true
+          break
+        end
+      end
+    end
+    
     -- Check if unit is in any of the accept zones.
     if self.acceptzoneset:Count()>0 then
       local inzone=false
@@ -793,7 +836,7 @@ function INTEL:UpdateIntel()
       end
 
       -- Unit is not in accept zone ==> remove!
-      if not inzone then
+      if (not inzone) and (not inconflictzone) then
         table.insert(remove, unitname)
       end
     end
@@ -810,7 +853,7 @@ function INTEL:UpdateIntel()
       end
 
       -- Unit is inside a reject zone ==> remove!
-      if inzone then
+      if inzone and (not inconflictzone) then
         table.insert(remove, unitname)
       end
     end
