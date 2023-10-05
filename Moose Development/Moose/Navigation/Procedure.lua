@@ -27,6 +27,7 @@
 -- @field #string apptype Approach type (ILS, VOR, LOC).
 -- @field Wrapper.Airbase#AIRBASE airbase Airbase of this approach.
 -- @field Wrapper.Airbase#AIRBASE.Runway runway Runway of this approach.
+-- @field Navigation.Point#NAVAID navaid Primary navigation aid.
 -- @field #number wpcounter Running number counting the waypoints to generate its UID.
 -- @list <#APPROACH.Waypoint> path Path of approach consisting of waypoints.
 -- @extends Core.Base#BASE
@@ -112,9 +113,9 @@ APPROACH.version="0.0.1"
 
 --- Create a new APPROACH class instance.
 -- @param #APPROACH self
--- @param #string Type Type of approach (ILS, VOR, LOC).
 -- @param Wrapper.Airbase#AIRBASE Airbase The airbase or name of the airbase.
 -- @param Wrapper.Airbase#AIRBASE.Runway Runway The runway or name of the runway.
+-- @param #string Type Type of approach (ILS, VOR, LOC).
 -- @return #APPROACH self
 function APPROACH:New(Type, Airbase, Runway)
 
@@ -123,9 +124,17 @@ function APPROACH:New(Type, Airbase, Runway)
   
   self.apptype=Type
   
-  self.airbase=Airbase
+  if type(Airbase)=="string" then
+    self.airbase=AIRBASE:FindByName(Airbase)
+  else
+    self.airbase=Airbase
+  end
   
-  self.runway=Runway
+  if type(Runway)=="string" then
+    self.airbase:GetRunwayByName(Runway)
+  else
+    self.runway=Runway
+  end
 
   return self
 end
@@ -136,7 +145,7 @@ end
 
 --- Set the primary navigation aid used in the approach.
 -- @param #APPROACH self
--- @param Navigation.NavAid#NAVAID NavAid The NAVAID.
+-- @param Navigation.Point#NAVAID NavAid The NAVAID.
 -- @return #APPROACH self
 function APPROACH:SetNavAid(NavAid)
 
@@ -147,17 +156,17 @@ end
 
 --- Add a waypoint to the path of the approach.
 -- @param #APPROACH self
--- @param Navigation.NavAid#NAVAID NavAid The NAVAID.
+-- @param Navigation.Point#NAVPOINT NavPoint The NAVPOINT.
 -- @param #string Segment The approach segment this fix belongs to.
 -- @return #APPROACH self
-function APPROACH:AddWaypoint(NavFix, Segment)
+function APPROACH:AddWaypoint(NavPoint, Segment)
 
   self.wpcounter=self.wpcounter+1
 
   local point={} --#APPROACH.Waypoint
   point.uid=self.wpcounter
   point.segment=Segment
-  point.navfix=NavFix
+  point.navfix=NavPoint
 
   table.insert(self.path, point)
 
@@ -172,3 +181,144 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- DEPARTURE class.
+-- @type DEPARTURE
+-- @field #string ClassName Name of the class.
+-- @field #number verbose Verbosity of output.
+-- @field #string apptype DEPARTURE type (ILS, VOR, LOC).
+-- @field Wrapper.Airbase#AIRBASE airbase Airbase of this DEPARTURE.
+-- @field Wrapper.Airbase#AIRBASE.Runway runway Runway of this DEPARTURE.
+-- @field Navigation.Point#NAVAID navaid Primary navigation aid.
+-- @field #number wpcounter Running number counting the waypoints to generate its UID.
+-- @list <#DEPARTURE.Waypoint> path Path of DEPARTURE consisting of waypoints.
+-- @extends Core.Base#BASE
+
+--- *A fleet of British ships at war are the best negotiators.* -- Horatio Nelson
+--
+-- ===
+--
+-- # The DEPARTURE Concept
+-- 
+-- Bla.
+--
+-- @field #DEPARTURE
+DEPARTURE = {
+  ClassName       = "DEPARTURE",
+  verbose         =       0,
+  wpcounter       =       0,
+}
+
+--- Type of DEPARTURE.
+-- @type DEPARTURE.Type
+-- @field #string VOR VOR
+-- @field #string NDB NDB
+DEPARTURE.Type={
+  VOR="VOR",
+  ILS="ILS",
+}
+
+
+--- Setments of  DEPARTURE.
+-- @type DEPARTURE.Segment
+-- @field #string INITIAL Initial DEPARTURE segment.
+-- @field #string INTERMEDIATE Intermediate DEPARTURE segment.
+-- @field #string FINAL Final DEPARTURE segment.
+-- @field #string MISSED Missed DEPARTURE segment.
+DEPARTURE.Segment={
+  INITIAL="Initial",
+  INTERMEDIATE="Intermediate",
+  FINAL="Final",
+  MISSED="Missed",
+}
+ 
+--- Waypoint of the DEPARTURE.
+-- @type DEPARTURE.Waypoint
+-- @field #number uid Unique ID of the point.
+-- @field #string segment The segment this point belongs to.
+-- @field Navigation.NavFix#NAVFIX navfix The navigation fix that determines the coordinates of this point.
+  
+--- DEPARTURE class version.
+-- @field #string version
+DEPARTURE.version="0.0.1"
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- ToDo list
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- TODO: A lot...
+-- Initial DEPARTURE segment --> Intermediate DEPARTURE segment: starts at IF --> Final DEPARTURE segment
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Constructor
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Create a new DEPARTURE class instance.
+-- @param #DEPARTURE self
+-- @param Wrapper.Airbase#AIRBASE Airbase The airbase or name of the airbase.
+-- @param Wrapper.Airbase#AIRBASE.Runway Runway The runway or name of the runway.
+-- @param #string Type Type of DEPARTURE (ILS, VOR, LOC).
+-- @return #DEPARTURE self
+function DEPARTURE:New(Airbase, Runway)
+
+  -- Inherit everything from BASE class.
+  self=BASE:Inherit(self, BASE:New()) -- #DEPARTURE
+
+  if type(Airbase)=="string" then
+    self.airbase=AIRBASE:FindByName(Airbase)
+  else
+    self.airbase=Airbase
+  end
+  
+  if type(Runway)=="string" then
+    self.runway=self.airbase:GetRunwayByName(Runway)
+  else
+    self.runway=Runway
+  end
+
+  return self
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- User Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Set the primary navigation aid used in the DEPARTURE.
+-- @param #DEPARTURE self
+-- @param Navigation.Point#NAVAID NavAid The NAVAID.
+-- @return #DEPARTURE self
+function DEPARTURE:SetNavAid(NavAid)
+
+  self.navaid=NavAid
+
+  return self
+end
+
+--- Add a waypoint to the path of the DEPARTURE.
+-- @param #DEPARTURE self
+-- @param Navigation.Point#NAVPOINT NavPoint The NAVPOINT.
+-- @param #string Segment The DEPARTURE segment this fix belongs to.
+-- @return #DEPARTURE self
+function DEPARTURE:AddWaypoint(NavPoint, Segment)
+
+  self.wpcounter=self.wpcounter+1
+
+  local point={} --#DEPARTURE.Waypoint
+  point.uid=self.wpcounter
+  point.segment=Segment
+  point.navfix=NavPoint
+
+  table.insert(self.path, point)
+
+  return point
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Private Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+

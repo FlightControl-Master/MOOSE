@@ -441,6 +441,7 @@ OPSGROUP.TaskType={
 -- @field Wrapper.Marker#MARKER marker Marker on the F10 map.
 -- @field #string formation Ground formation. Similar to action but on/off road.
 -- @field #number missionUID Mission UID (Auftragsnr) this waypoint belongs to.
+-- @field Navigation.FlightPlan#FLIGHTPLAN flightplan Flightplan this waypoint belongs to.
 
 --- Cargo Carrier status.
 -- @type OPSGROUP.CarrierStatus
@@ -11243,9 +11244,9 @@ function OPSGROUP:_SimpleTaskFunction(Function, uid)
   return DCSTask
 end
 
---- Enhance waypoint table.
+--- Enhanced waypoint table.
 -- @param #OPSGROUP self
--- @param #OPSGROUP.Waypoint Waypoint data.
+-- @param #OPSGROUP.Waypoint waypoint Waypoint data.
 -- @return #OPSGROUP.Waypoint Modified waypoint data.
 function OPSGROUP:_CreateWaypoint(waypoint)
 

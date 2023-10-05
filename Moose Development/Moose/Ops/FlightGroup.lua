@@ -3715,6 +3715,7 @@ function FLIGHTGROUP:_SetFlightPlan(FlightPlan)
     local altitude=(fix.altMin or fix.altMax)~=nil and fix:GetAltitude() or FlightPlan:GetCruiseAltitude()
     
     local wp=self:AddWaypoint(fix.coordinate, Speed, AfterWaypointWithID, altitude or 10000, false)
+    wp.flightplan=FlightPlan
   
   end
 
