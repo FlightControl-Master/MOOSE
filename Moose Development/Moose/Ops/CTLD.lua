@@ -616,6 +616,8 @@ do
 -- You need to load an .ogg soundfile for the pilot\'s beacons into the mission, e.g. "beacon.ogg", use a once trigger, "sound to country" for that.
 -- Create the late-activated troops, vehicles, that will make up your deployable forces.
 -- 
+-- Example sound files are here: [Moose Sound](https://github.com/FlightControl-Master/MOOSE_SOUND/tree/master/CTLD%20CSAR)
+-- 
 -- ## 1. Basic Setup
 -- 
 -- ## 1.1 Create and start a CTLD instance

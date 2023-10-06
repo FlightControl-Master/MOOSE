@@ -61,6 +61,8 @@
 -- You need to load an .ogg soundfile for the pilot\'s beacons into the mission, e.g. "beacon.ogg", use a once trigger, "sound to country" for that.
 -- Create a late-activated single infantry unit as template in the mission editor and name it e.g. "Downed Pilot".
 -- 
+-- Example sound files are here: [Moose Sound](https://github.com/FlightControl-Master/MOOSE_SOUND/tree/master/CTLD%20CSAR)
+-- 
 -- ## 1. Basic Setup
 -- 
 -- A basic setup example is the following:
