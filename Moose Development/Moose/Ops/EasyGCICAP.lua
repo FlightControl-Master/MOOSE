@@ -56,6 +56,7 @@
 -- @field #table ManagedCP
 -- @field #table ManagedTK
 -- @field #table ManagedEWR
+-- @field #table ManagedREC
 -- @field #number MaxAliveMissions
 -- @field #boolean debug
 -- @field #number repeatsonfailure
@@ -197,6 +198,7 @@ EASYGCICAP = {
   ManagedCP = {},
   ManagedTK = {},
   ManagedEWR = {},
+  ManagedREC = {},
   MaxAliveMissions = 8,
   debug = false,
   engagerange = 50,
@@ -218,6 +220,7 @@ EASYGCICAP = {
 -- @field #string Livery
 -- @field #boolean Tanker
 -- @field #boolean AWACS
+-- @field #boolean RECON
 -- @field #number Frequency
 -- @field #number Modulation
 -- @field #number TACAN
@@ -475,14 +478,22 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   
   -- Create Airwing
   local CAP_Wing = AIRWING:New(Airbasename,Alias)
+  CAP_Wing:SetVerbosityLevel(3)
   CAP_Wing:SetReportOff()
   CAP_Wing:SetMarker(false)
   CAP_Wing:SetAirbase(AIRBASE:FindByName(Airbasename))
   CAP_Wing:SetRespawnAfterDestroyed()
   CAP_Wing:SetNumberCAP(self.capgrouping)
-  CAP_Wing:SetNumberTankerBoom(1)
-  CAP_Wing:SetNumberTankerProbe(1)
-  CAP_Wing:SetNumberAWACS(1)
+  if #self.ManagedTK > 0 then
+    CAP_Wing:SetNumberTankerBoom(1)
+    CAP_Wing:SetNumberTankerProbe(1)
+  end
+  if #self.ManagedAW > 0 then
+    CAP_Wing:SetNumberAWACS(1)
+  end
+  if #self.ManagedREC > 0 then
+    CAP_Wing:SetNumberRecon(1)
+  end
   --local PatrolCoordinateKutaisi = ZONE:New(CapZoneName):GetCoordinate()
   --CAP_Wing:AddPatrolPointCAP(PatrolCoordinateKutaisi,self.capalt,UTILS.KnotsToAltKIAS(self.capspeed,self.capalt),self.capdir,self.capleg)
   CAP_Wing:SetTakeoffHot()
@@ -500,13 +511,17 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     flightgroup:SetDespawnAfterHolding()
     flightgroup:SetDestinationbase(AIRBASE:FindByName(Airbasename))
     flightgroup:GetGroup():CommandEPLRS(true,5)
-    if Mission.type ~= AUFTRAG.Type.TANKER and Mission.type ~= AUFTRAG.Type.AWACS then
+    if Mission.type ~= AUFTRAG.Type.TANKER and Mission.type ~= AUFTRAG.Type.AWACS and Mission.type ~= AUFTRAG.Type.RECON then
+      flightgroup:SetDetection(true)
       flightgroup:SetEngageDetectedOn(self.engagerange,{"Air"},self.GoZoneSet,self.NoGoZoneSet)
       flightgroup:SetOutOfAAMRTB()
     end
-    if Mission.type == AUFTRAG.Type.TANKER or Mission.type == AUFTRAG.Type.AWACS then
+    if Mission.type == AUFTRAG.Type.TANKER or Mission.type == AUFTRAG.Type.AWACS or Mission.type == AUFTRAG.Type.RECON then
       if TankerInvisible then
-          flightgroup:GetGroup():SetCommandInvisible(true)
+        flightgroup:GetGroup():SetCommandInvisible(true)
+      end
+      if Mission.type == AUFTRAG.Type.RECON then
+        flightgroup:SetDetection(true)
       end
     end
     flightgroup:GetGroup():OptionROTEvadeFire()   
@@ -551,6 +566,31 @@ function EASYGCICAP:AddPatrolPointCAP(AirbaseName,Coordinate,Altitude,Speed,Head
   self.ManagedCP[#self.ManagedCP+1] = EntryCAP
   if self.debug then
     local mark = MARKER:New(Coordinate,self.lid.."Patrol Point"):ToAll()
+  end
+  return self
+end
+
+--- Add a RECON patrol point to a Wing
+-- @param #EASYGCICAP self
+-- @param #string AirbaseName Name of the Wing's airbase
+-- @param Core.Point#COORDINATE Coordinate.
+-- @param #number Altitude Defaults to 25000 feet.
+-- @param #number Speed  Defaults to 300 knots.
+-- @param #number Heading Defaults to 90 degrees (East).
+-- @param #number LegLength Defaults to 15 NM.
+-- @return #EASYGCICAP self
+function EASYGCICAP:AddPatrolPointRecon(AirbaseName,Coordinate,Altitude,Speed,Heading,LegLength)
+  self:T(self.lid.."AddPatrolPointRecon "..Coordinate:ToStringLLDDM())
+  local EntryCAP = {} -- #EASYGCICAP.CapPoint
+  EntryCAP.AirbaseName = AirbaseName
+  EntryCAP.Coordinate = Coordinate
+  EntryCAP.Altitude = Altitude or 25000
+  EntryCAP.Speed = Speed or 300
+  EntryCAP.Heading = Heading or 90
+  EntryCAP.LegLength = LegLength or 15
+  self.ManagedREC[#self.ManagedREC+1] = EntryCAP
+  if self.debug then
+    local mark = MARKER:New(Coordinate,self.lid.."Patrol Point Recon"):ToAll()
   end
   return self
 end
@@ -662,25 +702,22 @@ function EASYGCICAP:_SetCAPPatrolPoints()
   return self
 end
 
---- (Internal) Add a CAP patrol point to a Wing
+--- (Internal) Set actual PatrolPoints from the list
 -- @param #EASYGCICAP self
--- @param #string AirbaseName Name of the Wing's airbase
--- @param Core.Point#COORDINATE Coordinate.
--- @param #number Altitude Defaults to 25000 feet.
--- @param #number Speed  Defaults to 300 knots.
--- @param #number Heading Defaults to 90 degrees (East).
--- @param #number LegLength Defaults to 15 NM.
--- @return #EASYGCICAP self
-function EASYGCICAP:_AddPatrolPointCAP(AirbaseName,Coordinate,Altitude,Speed,Heading,LegLength)
-  self:T(self.lid.."_AddPatrolPointCAP")
-  local airbasename = AirbaseName or self.airbasename
-  local coordinate = Coordinate
-  local Altitude = Altitude or 25000
-  local Speed = Speed or 300
-  local Heading = Heading or 90
-  local LegLength = LegLength or 15
-  local wing = self.wings[airbasename][1] -- Ops.AirWing#AIRWING
-  wing:AddPatrolPointCAP(coordinate,Altitude,Speed,Heading,LegLength)
+-- @return #EASYGCICAP self 
+function EASYGCICAP:_SetReconPatrolPoints()
+  self:T(self.lid.."_SetReconPatrolPoints")
+  for _,_data in pairs(self.ManagedREC) do
+    local data = _data --#EASYGCICAP.CapPoint
+    local Wing = self.wings[data.AirbaseName][1] -- Ops.AirWing#AIRWING
+    local Coordinate = data.Coordinate
+    local Altitude = data.Altitude
+    local Speed = data.Speed 
+    local Heading = data.Heading
+    local LegLength = data.LegLength
+    Wing:AddPatrolPointRecon(Coordinate,Altitude,Speed,Heading,LegLength)
+  end
+  
   return self
 end
 
@@ -705,6 +742,8 @@ function EASYGCICAP:_CreateSquads()
       self:_AddTankerSquadron(TemplateName,SquadName,AirbaseName,AirFrames,Skill,Modex,Livery,Frequeny,Modulation,TACAN)
     elseif squad.AWACS then
       self:_AddAWACSSquadron(TemplateName,SquadName,AirbaseName,AirFrames,Skill,Modex,Livery,Frequeny,Modulation)
+    elseif squad.RECON then
+      self:_AddReconSquadron(TemplateName,SquadName,AirbaseName,AirFrames,Skill,Modex,Livery)
     else
       self:_AddSquadron(TemplateName,SquadName,AirbaseName,AirFrames,Skill,Modex,Livery)
     end
@@ -734,6 +773,34 @@ function EASYGCICAP:AddSquadron(TemplateName, SquadName, AirbaseName, AirFrames,
   EntrySQ.Modex = Modex or 402
   EntrySQ.Livery = Livery
   
+  self.ManagedSQ[SquadName] = EntrySQ
+  
+  return self
+end
+
+--- Add a Recon Squadron to an Airwing of the manager
+-- @param #EASYGCICAP self
+-- @param #string TemplateName Name of the group template.
+-- @param #string SquadName Squadron name - must be unique!
+-- @param #string AirbaseName Name of the airbase the airwing resides on, e.g. AIRBASE.Caucasus.Kutaisi
+-- @param #number AirFrames Number of available airframes, e.g. 20.
+-- @param #string Skill(optional) Skill level, e.g. AI.Skill.AVERAGE
+-- @param #string Modex (optional) Modex to be used,e.g. 402.
+-- @param #string Livery (optional) Livery name to be used.
+-- @return #EASYGCICAP self 
+function EASYGCICAP:AddReconSquadron(TemplateName, SquadName, AirbaseName, AirFrames, Skill, Modex, Livery)
+  self:T(self.lid.."AddReconSquadron "..SquadName)
+  -- Add Squadron Data
+  local EntrySQ = {} -- #EASYGCICAP.Squad
+  EntrySQ.TemplateName = TemplateName
+  EntrySQ.SquadName = SquadName
+  EntrySQ.AirbaseName = AirbaseName
+  EntrySQ.AirFrames = AirFrames or 20
+  EntrySQ.Skill = Skill or AI.Skill.AVERAGE
+  EntrySQ.Modex = Modex or 402
+  EntrySQ.Livery = Livery
+  EntrySQ.RECON = true
+    
   self.ManagedSQ[SquadName] = EntrySQ
   
   return self
@@ -834,6 +901,37 @@ function EASYGCICAP:_AddSquadron(TemplateName, SquadName, AirbaseName, AirFrames
   
   wing:AddSquadron(Squadron_One)
   wing:NewPayload(TemplateName,-1,{AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT, AUFTRAG.Type.ALERT5},75)
+  
+  return self
+end
+
+--- (Internal) Add a Recon Squadron to an Airwing of the manager
+-- @param #EASYGCICAP self
+-- @param #string TemplateName Name of the group template.
+-- @param #string SquadName Squadron name - must be unique!
+-- @param #string AirbaseName Name of the airbase the airwing resides on, e.g. AIRBASE.Caucasus.Kutaisi
+-- @param #number AirFrames Number of available airframes, e.g. 20.
+-- @param #string Skill(optional) Skill level, e.g. AI.Skill.AVERAGE
+-- @param #string Modex (optional) Modex to be used,e.g. 402.
+-- @param #string Livery (optional) Livery name to be used.
+-- @return #EASYGCICAP self 
+function EASYGCICAP:_AddReconSquadron(TemplateName, SquadName, AirbaseName, AirFrames, Skill, Modex, Livery)
+  self:T(self.lid.."_AddReconSquadron "..SquadName)
+  -- Add Squadrons
+  local Squadron_One = SQUADRON:New(TemplateName,AirFrames,SquadName)
+  Squadron_One:AddMissionCapability({AUFTRAG.Type.RECON})
+  --Squadron_One:SetFuelLowRefuel(true)
+  Squadron_One:SetFuelLowThreshold(0.3)
+  Squadron_One:SetTurnoverTime(10,20)
+  Squadron_One:SetModex(Modex)
+  Squadron_One:SetLivery(Livery)
+  Squadron_One:SetSkill(Skill or AI.Skill.AVERAGE)
+  Squadron_One:SetMissionRange(self.missionrange)
+  
+  local wing = self.wings[AirbaseName][1] -- Ops.AirWing#AIRWING
+  
+  wing:AddSquadron(Squadron_One)
+  wing:NewPayload(TemplateName,-1,{AUFTRAG.Type.RECON},75)
   
   return self
 end
@@ -1095,6 +1193,7 @@ function EASYGCICAP:onafterStart(From,Event,To)
   self:_SetCAPPatrolPoints()
   self:_SetTankerPatrolPoints()
   self:_SetAwacsPatrolPoints()
+  self:_SetReconPatrolPoints()
   self:__Status(-10)
   return self
 end
@@ -1134,11 +1233,13 @@ function EASYGCICAP:onafterStatus(From,Event,To)
   local instock = 0
   local capmission = 0
   local interceptmission = 0
+  local reconmission = 0
   for _,_wing in pairs(self.wings) do
     local count = _wing[1]:CountAssetsOnMission(MissionTypes,Cohort)
     local count2 = _wing[1]:CountAssets(true,MissionTypes,Attributes)
     capmission = capmission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.GCICAP})
     interceptmission = interceptmission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.INTERCEPT})
+    reconmission = reconmission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.RECON})
     assets = assets + count
     instock = instock + count2
   end
@@ -1147,9 +1248,10 @@ function EASYGCICAP:onafterStatus(From,Event,To)
     local text =  "GCICAP "..self.alias
     text = text.."\nWings: "..wings.."\nSquads: "..squads.."\nCapPoints: "..caps.."\nAssets on Mission: "..assets.."\nAssets in Stock: "..instock
     text = text.."\nThreats: "..threatcount
-    text = text.."\Missions: "..capmission+interceptmission
-    text = text.."\ - CAP: "..capmission
-    text = text.."\ - Intercept: "..interceptmission
+    text = text.."\nMissions: "..capmission+interceptmission
+    text = text.."\n - CAP: "..capmission
+    text = text.."\n - Intercept: "..interceptmission
+    text = text.."\n - Recon: "..reconmission
     MESSAGE:New(text,15,"GCICAP"):ToAll():ToLogIf(self.debug)
   end
   self:__Status(30)
