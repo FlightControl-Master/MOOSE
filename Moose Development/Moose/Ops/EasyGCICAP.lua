@@ -590,7 +590,7 @@ function EASYGCICAP:AddPatrolPointRecon(AirbaseName,Coordinate,Altitude,Speed,He
   EntryCAP.LegLength = LegLength or 15
   self.ManagedREC[#self.ManagedREC+1] = EntryCAP
   if self.debug then
-    --local mark = MARKER:New(Coordinate,self.lid.."Patrol Point Recon"):ToAll()
+    local mark = MARKER:New(Coordinate,self.lid.."Patrol Point Recon"):ToAll()
   end
   return self
 end
