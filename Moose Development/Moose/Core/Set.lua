@@ -6052,7 +6052,29 @@ do -- SET_ZONE
 
     return self
   end
-
+  
+  --- Get the average aggregated coordinate of this set of zones.
+  -- @param #SET_ZONE self
+  -- @return Core.Point#COORDINATE
+  function SET_ZONE:GetAverageCoordinate()
+    local x,y,z = 0,0,0
+    local count = 0
+    for _,_zone in pairs(self.Set) do
+      local zone=_zone --Core.Zone#ZONE
+      local vec3 = zone:GetVec3()
+      x = x + vec3.x
+      y = y + vec3.y
+      z = z + vec3.z
+      count = count + 1
+    end
+    if count > 1 then
+      x = x/count
+      y = y/count
+      z = z/count
+    end
+    local coord = COORDINATE:New(x,y,z)
+    return coord
+  end
 
   --- Private function.
   -- @param #SET_ZONE self
