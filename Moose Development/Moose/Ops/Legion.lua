@@ -1445,7 +1445,7 @@ end
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
 function LEGION:onafterLegionAssetReturned(From, Event, To, Cohort, Asset)
   -- Debug message.
-  self:I(self.lid..string.format("Asset %s from Cohort %s returned! asset.assignment=\"%s\"", Asset.spawngroupname, Cohort.name, tostring(Asset.assignment)))
+  self:T(self.lid..string.format("Asset %s from Cohort %s returned! asset.assignment=\"%s\"", Asset.spawngroupname, Cohort.name, tostring(Asset.assignment)))
 
   -- Stop flightgroup.
   if Asset.flightgroup and not Asset.flightgroup:IsStopped() then
@@ -2557,9 +2557,10 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
     
     -- Distance to target.
     local TargetDistance=TargetVec2 and UTILS.VecDist2D(TargetVec2, cohort.legion:GetVec2()) or 0
-    
+ 
     -- Is in range?
     local Rmax=cohort:GetMissionRange(WeaponTypes)
+    local RangeMax = RangeMax or 0    
     local InRange=(RangeMax and math.max(RangeMax, Rmax) or Rmax) >= TargetDistance
     
     return InRange    
@@ -2609,6 +2610,7 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
   
   -- Is capable of the mission type?
   local can=AUFTRAG.CheckMissionCapability(MissionType, Cohort.missiontypes)
+  
   
   if can then
     can=CheckCategory(Cohort)
@@ -2687,7 +2689,7 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
   return nil
 end
 
---- Recruit assets from Cohorts for the given parameters. **NOTE** that we set the `asset.isReserved=true` flag so it cant be recruited by anyone else.
+--- Recruit assets from Cohorts for the given parameters. **NOTE** that we set the `asset.isReserved=true` flag so it cannot be recruited by anyone else.
 -- @param #table Cohorts Cohorts included.
 -- @param #string MissionTypeRecruit Mission type for recruiting the cohort assets.
 -- @param #string MissionTypeOpt Mission type for which the assets are optimized. Default is the same as `MissionTypeRecruit`.

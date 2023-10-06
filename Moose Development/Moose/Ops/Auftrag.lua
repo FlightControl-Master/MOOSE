@@ -2229,7 +2229,9 @@ function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly, Forma
   local mission=AUFTRAG:New(AUFTRAG.Type.RECON)
 
   mission:_TargetFromObject(ZoneSet)
-
+  
+  mission.missionZoneSet = ZoneSet
+  
   mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.RECON)
 
   mission.optionROE=ENUMS.ROE.WeaponHold
@@ -2669,7 +2671,7 @@ function AUFTRAG:NewAUTO(EngageGroup)
   elseif auftrag==AUFTRAG.Type.ORBIT then
     mission=AUFTRAG:NewORBIT(Coordinate,Altitude,Speed,Heading,Leg)
   elseif auftrag==AUFTRAG.Type.RECON then
-    -- Not implemented yet.
+    mission=AUFTRAG:NewRECON(ZoneSet,Speed,Altitude,Adinfinitum,Randomly,Formation)
   elseif auftrag==AUFTRAG.Type.RESCUEHELO then
     mission=AUFTRAG:NewRESCUEHELO(Carrier)
   elseif auftrag==AUFTRAG.Type.SEAD then
@@ -5362,6 +5364,10 @@ function AUFTRAG:GetTargetCoordinate()
 
     -- Special case where we defined a
     return self.transportPickup
+    
+  elseif self.missionZoneSet and self.type == AUFTRAG.Type.RECON then
+  
+    return self.missionZoneSet:GetAverageCoordinate()
 
   elseif self.engageTarget then
 
