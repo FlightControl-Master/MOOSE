@@ -466,7 +466,7 @@ _MESSAGESRS = {}
 -- @param #number Frequency Frequency in MHz. Can also be given as a #table of frequencies.
 -- @param #number Modulation Modulation, i.e. radio.modulation.AM  or radio.modulation.FM. Can also be given as a #table of modulations.
 -- @param #string Gender (optional) Gender, i.e. "male" or "female", defaults to "male".
--- @param #strimg Culture (optional) Culture, e.g. "en-US", defaults to "en-GB"
+-- @param #string Culture (optional) Culture, e.g. "en-US", defaults to "en-GB"
 -- @param #string Voice (optional) Voice. Will override gender and culture settings, e.g. MSRS.Voices.Microsoft.Hazel or MSRS.Voices.Google.Standard.de_DE_Standard_D. Hint on Microsoft voices - working voices are limited to Hedda, Hazel, David, Zira and Hortense. **Must** be installed on your Desktop or Server!
 -- @param #number Coalition (optional) Coalition, can be coalition.side.RED, coalition.side.BLUE or coalition.side.NEUTRAL. Defaults to coalition.side.NEUTRAL.
 -- @param #number Volume (optional) Volume, can be between 0.0 and 1.0 (loudest).
@@ -477,7 +477,7 @@ _MESSAGESRS = {}
 --          -- Needed once only
 --          MESSAGE.SetMSRS("D:\\Program Files\\DCS-SimpleRadio-Standalone",5012,nil,127,radio.modulation.FM,"female","en-US",nil,coalition.side.BLUE)
 --          -- later on in your code
---          MESSAGE:New("Test message!",15,"SPAWN"):ToAll():ToSRS()
+--          MESSAGE:New("Test message!",15,"SPAWN"):ToSRS()
 --          
 function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,Gender,Culture,Voice,Coalition,Volume,Label,Coordinate)
   local path = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
@@ -502,12 +502,19 @@ end
 -- @param #number frequency (optional) Frequency in MHz. Can also be given as a #table of frequencies. Only needed if you want to override defaults set with `MESSAGE.SetMSRS()` for this one setting.
 -- @param #number modulation (optional) Modulation, i.e. radio.modulation.AM  or radio.modulation.FM. Can also be given as a #table of modulations. Only needed if you want to override defaults set with `MESSAGE.SetMSRS()` for this one setting.
 -- @param #string gender (optional) Gender, i.e. "male" or "female". Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
--- @param #strimg culture (optional) Culture, e.g. "en-US. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
+-- @param #string culture (optional) Culture, e.g. "en-US. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @param #string voice (optional) Voice. Will override gender and culture settings. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @param #number coalition (optional) Coalition, can be coalition.side.RED, coalition.side.BLUE or coalition.side.NEUTRAL. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @param #number volume (optional) Volume, can be between 0.0 and 1.0 (loudest). Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @param Core.Point#COORDINATE coordinate (optional) Coordinate this messages originates from. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @return #MESSAGE self
+-- @usage
+--          -- Mind the dot here, not using the colon this time around!
+--          -- Needed once only
+--          MESSAGE.SetMSRS("D:\\Program Files\\DCS-SimpleRadio-Standalone",5012,nil,127,radio.modulation.FM,"female","en-US",nil,coalition.side.BLUE)
+--          -- later on in your code
+--          MESSAGE:New("Test message!",15,"SPAWN"):ToSRS()
+--          
 function MESSAGE:ToSRS(frequency,modulation,gender,culture,voice,coalition,volume,coordinate)
   if _MESSAGESRS.SRSQ then
     _MESSAGESRS.MSRS:SetLabel(self.MessageCategory or _MESSAGESRS.MSRS.Label or "MESSAGE")
@@ -539,11 +546,18 @@ end
 -- @param #number frequency (optional) Frequency in MHz. Can also be given as a #table of frequencies. Only needed if you want to override defaults set with `MESSAGE.SetMSRS()` for this one setting.
 -- @param #number modulation (optional) Modulation, i.e. radio.modulation.AM  or radio.modulation.FM. Can also be given as a #table of modulations. Only needed if you want to override defaults set with `MESSAGE.SetMSRS()` for this one setting.
 -- @param #string gender (optional) Gender, i.e. "male" or "female". Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
--- @param #strimg culture (optional) Culture, e.g. "en-US. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
+-- @param #string culture (optional) Culture, e.g. "en-US. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @param #string voice (optional) Voice. Will override gender and culture settings. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @param #number volume (optional) Volume, can be between 0.0 and 1.0 (loudest). Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @param Core.Point#COORDINATE coordinate (optional) Coordinate this messages originates from. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @return #MESSAGE self
+-- @usage
+--          -- Mind the dot here, not using the colon this time around!
+--          -- Needed once only
+--          MESSAGE.SetMSRS("D:\\Program Files\\DCS-SimpleRadio-Standalone",5012,nil,127,radio.modulation.FM,"female","en-US",nil,coalition.side.BLUE)
+--          -- later on in your code
+--          MESSAGE:New("Test message!",15,"SPAWN"):ToSRSBlue()
+--          
 function MESSAGE:ToSRSBlue(frequency,modulation,gender,culture,voice,volume,coordinate)
   self:ToSRS(frequency,modulation,gender,culture,voice,coalition.side.BLUE,volume,coordinate)
   return self
@@ -554,11 +568,18 @@ end
 -- @param #number frequency (optional) Frequency in MHz. Can also be given as a #table of frequencies. Only needed if you want to override defaults set with `MESSAGE.SetMSRS()` for this one setting.
 -- @param #number modulation (optional) Modulation, i.e. radio.modulation.AM  or radio.modulation.FM. Can also be given as a #table of modulations. Only needed if you want to override defaults set with `MESSAGE.SetMSRS()` for this one setting.
 -- @param #string gender (optional) Gender, i.e. "male" or "female". Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
--- @param #strimg culture (optional) Culture, e.g. "en-US. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
+-- @param #string culture (optional) Culture, e.g. "en-US. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @param #string voice (optional) Voice. Will override gender and culture settings. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @param #number volume (optional) Volume, can be between 0.0 and 1.0 (loudest). Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @param Core.Point#COORDINATE coordinate (optional) Coordinate this messages originates from. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @return #MESSAGE self
+-- @usage
+--          -- Mind the dot here, not using the colon this time around!
+--          -- Needed once only
+--          MESSAGE.SetMSRS("D:\\Program Files\\DCS-SimpleRadio-Standalone",5012,nil,127,radio.modulation.FM,"female","en-US",nil,coalition.side.RED)
+--          -- later on in your code
+--          MESSAGE:New("Test message!",15,"SPAWN"):ToSRSRed()
+--          
 function MESSAGE:ToSRSRed(frequency,modulation,gender,culture,voice,volume,coordinate)
   self:ToSRS(frequency,modulation,gender,culture,voice,coalition.side.RED,volume,coordinate)
   return self
@@ -569,11 +590,18 @@ end
 -- @param #number frequency (optional) Frequency in MHz. Can also be given as a #table of frequencies. Only needed if you want to override defaults set with `MESSAGE.SetMSRS()` for this one setting.
 -- @param #number modulation (optional) Modulation, i.e. radio.modulation.AM  or radio.modulation.FM. Can also be given as a #table of modulations. Only needed if you want to override defaults set with `MESSAGE.SetMSRS()` for this one setting.
 -- @param #string gender (optional) Gender, i.e. "male" or "female". Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
--- @param #strimg culture (optional) Culture, e.g. "en-US. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
+-- @param #string culture (optional) Culture, e.g. "en-US. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @param #string voice (optional) Voice. Will override gender and culture settings. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @param #number volume (optional) Volume, can be between 0.0 and 1.0 (loudest). Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @param Core.Point#COORDINATE coordinate (optional) Coordinate this messages originates from. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @return #MESSAGE self
+-- @usage
+--          -- Mind the dot here, not using the colon this time around!
+--          -- Needed once only
+--          MESSAGE.SetMSRS("D:\\Program Files\\DCS-SimpleRadio-Standalone",5012,nil,127,radio.modulation.FM,"female","en-US",nil,coalition.side.NEUTRAL)
+--          -- later on in your code
+--          MESSAGE:New("Test message!",15,"SPAWN"):ToSRSAll()
+--          
 function MESSAGE:ToSRSAll(frequency,modulation,gender,culture,voice,volume,coordinate)
   self:ToSRS(frequency,modulation,gender,culture,voice,coalition.side.NEUTRAL,volume,coordinate)
   return self
