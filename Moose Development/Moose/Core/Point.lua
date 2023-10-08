@@ -468,6 +468,23 @@ do -- COORDINATE
   end
 
 
+  --- Returns the coordinate from the latitude and longitude given in degrees, minutes and seconds (DMS).
+  -- @param #COORDINATE self
+  -- @param #string Latitude Latitude in DMS as string, e.g. "`42° 24' 14.3"`". Not that the characters `°`, `'` and `"` are important.
+  -- @param #string Longitude Longitude in DMS as string, e.g. "`42° 24' 14.3"`". Not that the characters `°`, `'` and `"` are important.
+  -- @param #number Altitude (Optional) Altitude in meters. Default is the land height at the coordinate.
+  -- @return #COORDINATE
+  function COORDINATE:NewFromLLDMS(Latitude, Longitude, Altitude)
+  
+    local lat=UTILS.LLDMSstringToDD(Latitude)
+    local lon=UTILS.LLDMSstringToDD(Longitude)
+    
+    self=COORDINATE:NewFromLLDD(lat, lon, Altitude)
+  
+    return self
+  end  
+
+
   --- Returns if the 2 coordinates are at the same 2D position.
   -- @param #COORDINATE self
   -- @param #COORDINATE Coordinate

@@ -3697,13 +3697,17 @@ end
 -- Flightplan Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Check flightplans.
+--- Set flightplan and add waypoints.
 -- @param #FLIGHTGROUP self
 -- @param Navigation.FlightPlan#FLIGHTPLAN FlightPlan Flight plan.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:_SetFlightPlan(FlightPlan)
 
+  self:I(self.lid..string.format("Setting flightplan %s", FlightPlan.alias))
+
   self.flightplan=FlightPlan
+  
+  self:SetDestinationbase(self.flightplan.destinationAirbase)
 
   for i,_fix in pairs(FlightPlan.fixes) do
     local fix=_fix --Navigation.NavFix#NAVFIX
@@ -3714,7 +3718,7 @@ function FLIGHTGROUP:_SetFlightPlan(FlightPlan)
     
     local altitude=(fix.altMin or fix.altMax)~=nil and fix:GetAltitude() or FlightPlan:GetCruiseAltitude()
     
-    local wp=self:AddWaypoint(fix.coordinate, Speed, AfterWaypointWithID, altitude or 10000, false)
+    local wp=self:AddWaypoint(fix.vector, Speed, AfterWaypointWithID, altitude or 10000, false)
     wp.flightplan=FlightPlan
   
   end

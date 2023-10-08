@@ -721,7 +721,22 @@ end
 -- @return #number Latitude or Longitude in decimal degrees.
 UTILS.LLDMSToDD = function(Degrees, Minutes, Seconds)
 
-  local dd=(Degrees or 0) + (Minutes or 0)/60 + (Seconds or 0)/3600
+  local dd=tonumber(Degrees or 0) + tonumber(Minutes or 0)/60 + tonumber(Seconds or 0)/3600
+
+  return dd
+end
+
+--- Convert latitude or longitude from degrees, minutes, seconds (DMS) given in text form to decimal degrees (DD).
+-- @param #string LatOrLongString Latitude or longitude passed as ttring in format `DD°MM'SS.SS"`.
+-- @return #number Latitude or Longitude in decimal degrees.
+UTILS.LLDMSstringToDD = function(LatOrLongString)
+
+  local hem=string.match(LatOrLongString, "(%a)")
+  local Degrees=string.match(LatOrLongString, "(%d+)°")
+  local Minutes=string.match(LatOrLongString, "(%d+)'")
+  local Seconds=string.match(LatOrLongString, "([%d\.]+)\"")
+
+  local dd=UTILS.LLDMSToDD(Degrees, Minutes, Seconds)
 
   return dd
 end

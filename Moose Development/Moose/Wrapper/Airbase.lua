@@ -753,6 +753,32 @@ AIRBASE.SpotStatus = {
   RESERVED="Reserved",
 }
 
+--- ICAO Codes.
+-- @type AIRBASE.ICAO
+AIRBASE.ICAO = {
+  UGTB=AIRBASE.Caucasus.Tbilisi_Lochini,
+  UGKO=AIRBASE.Caucasus.Kutaisi,
+  UG5X=AIRBASE.Caucasus.Kobuleti,
+  UG24=AIRBASE.Caucasus.Soganlug,
+  UG27=AIRBASE.Caucasus.Vaziani,
+  UGSS=AIRBASE.Caucasus.Sukhumi_Babushara,
+  UG23=AIRBASE.Caucasus.Gudauta,
+  URSS=AIRBASE.Caucasus.Sochi_Adler,
+  URMO=AIRBASE.Caucasus.Beslan,
+  URMN=AIRBASE.Caucasus.Nalchik,
+  XRMF=AIRBASE.Caucasus.Mozdok,
+  URMM=AIRBASE.Caucasus.Mineralnye_Vody,
+  URKH=AIRBASE.Caucasus.Maykop_Khanskaya,
+  URKK=AIRBASE.Caucasus.Krasnodar_Pashkovsky,
+  URKL=AIRBASE.Caucasus.Krasnodar_Center,
+  URKG=AIRBASE.Caucasus.Gelendzhik,
+  URKN=AIRBASE.Caucasus.Novorossiysk,
+  URKW=AIRBASE.Caucasus.Krymsk,
+  URKA=AIRBASE.Caucasus.Anapa_Vityazevo,
+}
+
+
+
 --- Runway data.
 -- @type AIRBASE.Runway
 -- @field #string name Runway name.
@@ -875,12 +901,45 @@ end
 
 --- Find a AIRBASE in the _DATABASE using the name of an existing DCS Airbase.
 -- @param #AIRBASE self
--- @param #string AirbaseName The Airbase Name.
+-- @param #string AirbaseName The name of the airbase. Can also be the ICAO code or the airbase ID. 
 -- @return #AIRBASE self
 function AIRBASE:FindByName( AirbaseName )
 
   local AirbaseFound = _DATABASE:FindAirbase( AirbaseName )
+  
+  if not AirbaseFound then
+    AirbaseFound=self:FindByICAO(AirbaseName)
+  end
+  
+  if not AirbaseFound then
+    AirbaseFound=self:FindByID(AirbaseName)
+  end
+    
   return AirbaseFound
+end
+
+
+--- Find an AIRBASE in the _DATABASE using the [International Civil Aviation Organization](https://en.wikipedia.org/wiki/ICAO_airport_code) (ICAO) airport code.
+-- The code consists of four characters. Typically, the first one or two letters of the ICAO code indicate the country and the remaining letters identify the airport.
+-- 
+-- **NOTE** that the ICAO code cannot be retrieved via the DCS API and has to be hard coded into the MOOSE code. Therefore, it is a rare occasion where 
+-- @param #AIRBASE self
+-- @param #string AirbaseICAO The Airbase ICAO code.
+-- @return #AIRBASE self
+function AIRBASE:FindByICAO( AirbaseICAO )
+
+  if AirbaseICAO then
+
+    local name=AIRBASE.ICAO[AirbaseICAO]
+    
+    env.info(string.format("FF ICAO=%s, Name=%s", tostring(AirbaseICAO), tostring(name)))
+    
+    local Airbase=self:FindByName(name)
+    return Airbase
+    
+  end
+  
+  return nil
 end
 
 --- Find a AIRBASE in the _DATABASE by its ID.

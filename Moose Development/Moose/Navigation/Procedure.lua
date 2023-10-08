@@ -1,4 +1,4 @@
---- **NAVIGATION** - Prodedures for Departure (SID), Arrival (STAR) and Approach.
+--- **NAVIGATION** - Prodedures for Departure (*e.g.* SID), Enroute, Arrival (*e.g.* STAR) and Approach.
 --
 -- **Main Features:**
 --

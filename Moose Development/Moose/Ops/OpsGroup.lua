@@ -13493,20 +13493,24 @@ end
 -- @return Core.Point#COORDINATE The coordinate of the object.
 function OPSGROUP:_CoordinateFromObject(Object)
 
+  env.info("FF coordfrom object")
   if Object then
-    if Object:IsInstanceOf("COORDINATE") then
+    if VECTOR._IsVector(Object) then
+      env.info("FF VECTOR")
+      return Object:GetCoordinate()
+    elseif Object:IsInstanceOf("COORDINATE") then
       return Object
     else
       if Object:IsInstanceOf("POSITIONABLE") or Object:IsInstanceOf("ZONE_BASE") then
-        self:T(self.lid.."WARNING: Coordinate is not a COORDINATE but a POSITIONABLE or ZONE. Trying to get coordinate")
+        self:E(self.lid.."WARNING: Coordinate is not a COORDINATE but a POSITIONABLE or ZONE. Trying to get coordinate")
         local coord=Object:GetCoordinate()
         return coord
       else
-        self:T(self.lid.."ERROR: Coordinate is neither a COORDINATE nor any POSITIONABLE or ZONE!")
+        self:E(self.lid.."ERROR: Coordinate is neither a COORDINATE nor any POSITIONABLE or ZONE!")
       end
     end
   else
-    self:T(self.lid.."ERROR: Object passed is nil!")
+    self:E(self.lid.."ERROR: Object passed is nil!")
   end
 
   return nil

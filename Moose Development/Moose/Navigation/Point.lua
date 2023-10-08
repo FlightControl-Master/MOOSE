@@ -97,7 +97,7 @@ function NAVAID:New(ZoneName, SceneryName, Type)
 
   self.zone=ZONE:FindByName(ZoneName)  
   
-  self=self.zone:GetCoordinate()
+  self.coordinate=self.zone:GetCoordinate()
   
   if SceneryName then
     self.scenery=SCENERY:FindByNameInZone(SceneryName, ZoneName)
@@ -364,6 +364,7 @@ end
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity of output.
 -- @field #string name Name of the point.
+-- @field #string typePoint Type of the point, *e.g. "Intersection", "VOR", "Airport".
 -- @field Core.Vector#VECTOR vector Position vector of the fix.
 -- @field Wrapper.Marker#MARKER marker Marker on F10 map.
 -- @field #number altMin Minimum altitude in meters.
@@ -377,13 +378,16 @@ end
 --
 -- ===
 --
--- # The NAVFIX Concept
+-- # The NAVPOINT Concept
 --
--- The NAVFIX class has a great concept!
+-- The NAVPOINT class has a great concept!
+-- 
+-- A NAVPOINT describes a geo position and can, *e.g.*, be part of a FLIGHTPLAN. It has a unique name and is of a certain type, *e.g.* "Intersection", "VOR", "Airbase" etc.
+-- It can also have further properties as min/max altitudes and speeds that aircraft need to obey when they pass the point.
 -- 
 -- # Basic Setup
 -- 
--- A new `NAVFIX` object can be created with the @{#NAVFIX.New}() function.
+-- A new `NAVPOINT` object can be created with the @{#NAVPOINT.New}() function.
 -- 
 --     myNavPoint=NAVPOINT:New()
 --     myTemplate:SetXYZ(X, Y, Z)
@@ -394,6 +398,21 @@ end
 NAVPOINT = {
   ClassName       = "NAVPOINT",
   verbose         =          0,
+}
+
+--- Type of point.
+-- @type NAVPOINT.Type
+-- @field #string VOR VOR
+-- @field #string NDB NDB
+NAVPOINT.Type={
+  POINT="Point",
+  INTERSECTION="Intersection",
+  AIRPORT="Airport",
+  VOR="VOR",
+  DME="DME",
+  VORDME="VOR/DME",
+  LOC="Localizer",
+  NDB="NDB",
 }
 
 --- NAVPOINT class version.
@@ -412,10 +431,11 @@ NAVPOINT.version="0.0.1"
 
 --- Create a new NAVPOINT class instance from a given VECTOR.
 -- @param #NAVPOINT self
--- @param #string Name Name of the fix. Should be unique!
+-- @param #string Name Name of the point. Should be unique!
+-- @param #string Type Type of the point. Default `NAVPOINT.Type.POINT`.
 -- @param Core.Vector#VECTOR Vector Position vector of the navpoint.
 -- @return #NAVPOINT self
-function NAVPOINT:NewFromVector(Name, Vector)
+function NAVPOINT:NewFromVector(Name, Type, Vector)
 
   -- Inherit everything from BASE class.
   self=BASE:Inherit(self, BASE:New()) -- #NAVFIX
@@ -425,6 +445,8 @@ function NAVPOINT:NewFromVector(Name, Vector)
   
   -- Name of point.
   self.name=Name
+  
+  self.typePoint=Type or NAVPOINT.Type.POINT
   
   -- Marker on F10.
   self.marker=MARKER:New(Vector:GetCoordinate(true), self:_GetMarkerText())
@@ -439,15 +461,59 @@ end
 --- Create a new NAVPOINT class instance from a given COORDINATE.
 -- @param #NAVPOINT self
 -- @param #string Name Name of the fix. Should be unique!
+-- @param #string Type Type of the point. Default `NAVPOINT.Type.POINT`.
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the point.
 -- @return #NAVPOINT self
-function NAVPOINT:NewFromCoordinate(Name, Coordinate)
+function NAVPOINT:NewFromCoordinate(Name, Type, Coordinate)
+
+  -- Create a VECTOR from the coordinate.
   local Vector=VECTOR:NewFromVec(Coordinate)
-  self=NAVPOINT:NewFromVector(Name, Vector)
+  
+  -- Create NAVPOINT.
+  self=NAVPOINT:NewFromVector(Name, Type, Vector)
+  
   return self
 end
 
---- Create a new NAVPOINT class instance from a given NAVPOINT.
+
+--- Create a new NAVPOINT instance from given latitude and longitude in degrees, minutes and seconds (DMS).
+-- @param #NAVPOINT self
+-- @param #string Name Name of the fix. Should be unique!
+-- @param #string Type Type of the point. Default `NAVPOINT.Type.POINT`.
+-- @param #string Latitude Latitude in DMS as string.
+-- @param #string Longitude Longitude in DMS as string.
+-- @return #NAVPOINT self
+function NAVPOINT:NewFromLLDMS(Name, Type, Latitude, Longitude)
+
+  -- Create a VECTOR from the coordinate.
+  local Vector=VECTOR:NewFromLLDMS(Latitude, Longitude)
+
+  -- Create NAVPOINT.
+  self=NAVPOINT:NewFromVector(Name, Type, Vector)
+  
+  return self  
+end
+
+--- Create a new NAVPOINT instance from given latitude and longitude in decimal degrees (DD).
+-- @param #NAVPOINT self
+-- @param #string Name Name of the fix. Should be unique!
+-- @param #string Type Type of the point. Default `NAVPOINT.Type.POINT`.
+-- @param #number Latitude Latitude in DD.
+-- @param #number Longitude Longitude in DD.
+-- @return #NAVPOINT self
+function NAVPOINT:NewFromLLDD(Name, Type, Latitude, Longitude)
+
+  -- Create a VECTOR from the coordinate.
+  local Vector=VECTOR:NewFromLLDD(Latitude, Longitude)
+
+  -- Create NAVPOINT.
+  self=NAVPOINT:NewFromVector(Name, Type, Vector)
+  
+  return self  
+end
+
+
+--- Create a new NAVPOINT class instance relative to a given other NAVPOINT.
 -- You have to specify the distance and bearing from the new point to the given point. *E.g.*, for a distance of 5 NM and a bearing of 090° (West), the
 -- new nav point is created 5 NM East of the given nav point. The reason is that this corresponts to convention used in most maps.
 -- You can, however, use the `Reciprocal` switch to create the new point in the direction you specify.
@@ -517,7 +583,19 @@ end
 -- @return #NAVPOINT self
 function NAVPOINT:SetSpeedMin(Speed)
 
-  self.speedMin=Altitude
+  self.speedMin=Speed
+
+  return self
+end
+
+
+--- Set maximum speed.
+-- @param #NAVPOINT self
+-- @param #number Speed Max speed in knots.
+-- @return #NAVPOINT self
+function NAVPOINT:SetSpeedMax(Speed)
+
+  self.speedMax=Speed
 
   return self
 end
@@ -541,13 +619,13 @@ function NAVPOINT:SetFlyOver(FlyOver)
 end
 
 
---- Get the altitude in feet MSL.
+--- Get the altitude in feet MSL. If min and max altitudes are set, it will return a random altitude between min and max.
 -- @param #NAVPOINT self
 -- @return #number Altitude in feet MSL. Can be `nil`, if neither min nor max altitudes have beeen set. 
 function NAVPOINT:GetAltitude()
 
   local alt=nil
-  if self.altMin and self.altMax then
+  if self.altMin and self.altMax and self.altMin~=self.altMax then
     alt=math.random(self.altMin, self.altMax)
   elseif self.altMin then
     alt=self.altMin

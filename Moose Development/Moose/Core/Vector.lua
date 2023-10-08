@@ -270,6 +270,48 @@ function VECTOR:NewDirectionalVector(a, b)
   return c
 end
 
+
+--- Creates a new VECTOR instance from given the latitude and longitude in decimal degrees (DD).
+-- @param #VECTOR self
+-- @param #number Latitude Latitude in decimal degrees.
+-- @param #number Longitude Longitude in decimal degrees.
+-- @param #number altitude (Optional) Altitude in meters. Default is the land height at the 2D position.
+-- @return #VECTOR self
+function VECTOR:NewFromLLDD(Latitude, Longitude, Altitude)
+
+  -- Returns a point from latitude and longitude in the vec3 format.
+  local vec3=coord.LLtoLO(Latitude, Longitude)
+
+  -- Convert vec3 to coordinate object.
+  self=VECTOR:NewFromVec(vec3)
+
+--  -- Adjust height
+--  if Altitude==nil then
+--    self.y=self:GetSurfaceHeight()
+--  else
+--    self.y=Altitude
+--  end
+
+  return self
+end
+
+--- Creates a new VECTOR instance from given latitude and longitude in degrees, minutes and seconds (DMS).
+-- **Note** that latitude and longitude are passed as strings and the characters `°`, `'` and `"` are important.
+-- @param #VECTOR self
+-- @param #string Latitude Latitude in DMS as string, e.g. "`42° 24' 14.3"`".
+-- @param #string Longitude Longitude in DMS as string, e.g. "`42° 24' 14.3"`".
+-- @param #number Altitude (Optional) Altitude in meters. Default is the land height at the coordinate.
+-- @return #VECTOR
+function VECTOR:NewFromLLDMS(Latitude, Longitude, Altitude)
+
+  local lat=UTILS.LLDMSstringToDD(Latitude)
+  local lon=UTILS.LLDMSstringToDD(Longitude)
+  
+  self=VECTOR:NewFromLLDD(lat, lon, Altitude)
+
+  return self
+end  
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
