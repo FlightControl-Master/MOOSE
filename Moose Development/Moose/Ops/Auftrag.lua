@@ -2232,7 +2232,7 @@ function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly, Forma
   
   if ZoneSet:IsInstanceOf("SET_ZONE") then
     mission.missionZoneSet = ZoneSet
-  else
+  elseif ZoneSet:IsInstanceOf("ZONE_BASE") then
    mission.missionZoneSet = SET_ZONE:New()
    mission.missionZoneSet:AddZone(ZoneSet)
   end
