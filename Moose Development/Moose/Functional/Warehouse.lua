@@ -6761,7 +6761,7 @@ function WAREHOUSE:_UnitDead(deadunit, deadgroup, request)
   -- Dont trigger a Remove event for the group sets.
   local NoTriggerEvent=true
 
-  if not request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
+  if request.transporttype~=WAREHOUSE.TransportType.SELFPROPELLED then
 
     ---
     -- Complicated case: Dead unit could be:
