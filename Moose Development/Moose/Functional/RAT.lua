@@ -1,4 +1,4 @@
---- **Functional** - Create random airtraffic in your missions.
+--- **Functional** - Create random air traffic in your missions.
 --
 -- ===
 --
@@ -184,8 +184,8 @@
 -- * Climb rate is set to a moderate value of ~1500 ft/min.
 -- * The standard descent rate follows the 3:1 rule, i.e. 1000 ft decent per 3 miles of travel. Hence, angle of descent is ~3.6 degrees.
 -- * A holding point is randomly selected at a distance between 5 and 10 km away from destination airport.
--- * The altitude of theholding point is ~1200 m AGL. Holding patterns might or might not happen with variable duration.
--- * If an aircraft is spawned in air, the procedure omitts taxi and take-off and starts with the climb/cruising part.
+-- * The altitude of the holding point is ~1200 m AGL. Holding patterns might or might not happen with variable duration.
+-- * If an aircraft is spawned in air, the procedure omits taxi and take-off and starts with the climb/cruising part.
 -- * All values are randomized for each spawned aircraft.
 --
 -- ## Mission Editor Setup
@@ -201,13 +201,13 @@
 -- Voilà, your already done!
 --
 -- Optionally, you can set a specific livery for the aircraft or give it some weapons.
--- However, the aircraft will by default not engage any enemies. Think of them as beeing on a peaceful or ferry mission.
+-- However, the aircraft will by default not engage any enemies. Think of them as being on a peaceful or ferry mission.
 --
 -- ## Basic Lua Script
 --
 -- ![Process](..\Presentations\RAT\RAT_Basic_Lua_Script.png)
 --
--- The basic Lua script for one template group consits of two simple lines as shown in the picture above.
+-- The basic Lua script for one template group consists of two simple lines as shown in the picture above.
 --
 -- * **Line 2** creates a new RAT object "yak". The only required parameter for the constructor @{#RAT.New}() is the name of the group as defined in the mission editor. In this example it is "RAT_YAK".
 -- * **Line 5** trigger the command to spawn the aircraft. The (optional) parameter for the @{#RAT.Spawn}() function is the number of aircraft to be spawned of this object.
@@ -221,9 +221,9 @@
 -- ## Parking Problems
 --
 -- One big issue in DCS is that not all aircraft can be spawned on every airport or airbase. In particular, bigger aircraft might not have a valid parking spot at smaller airports and
--- airstripes. This can lead to multiple problems in DCS.
+-- airstrips. This can lead to multiple problems in DCS.
 --
--- * Landing: When an aircraft tries to land at an airport where it does not have a valid parking spot, it is immidiately despawned the moment its wheels touch the runway, i.e.
+-- * Landing: When an aircraft tries to land at an airport where it does not have a valid parking spot, it is immediately despawned the moment its wheels touch the runway, i.e.
 -- when a landing event is triggered. This leads to the loss of the RAT aircraft. On possible way to circumvent the this problem is to let another RAT aircraft spawn at landing
 -- and not when it shuts down its engines. See the @{RAT.RespawnAfterLanding}() function.
 -- * Spawning: When a big aircraft is dynamically spawned on a small airbase a few things can go wrong. For example, it could be spawned at a parking spot with a shelter.
@@ -251,9 +251,9 @@
 --      c17:Spawn(5)
 --
 -- This would randomly spawn five C-17s but only on airports which have big open air parking spots. Note that also only destination airports are allowed
--- which do have this type of parking spot. This should ensure that the aircraft is able to land at the destination without beeing despawned immidiately.
+-- which do have this type of parking spot. This should ensure that the aircraft is able to land at the destination without being despawned immediately.
 --
--- Also, the aircraft are spawned only on the requested parking spot types and not on any other type. If no parking spot of this type is availabe at the
+-- Also, the aircraft are spawned only on the requested parking spot types and not on any other type. If no parking spot of this type is available at the
 -- moment of spawning, the group is automatically spawned in air above the selected airport.
 --
 -- ## Examples
@@ -279,7 +279,7 @@
 --
 -- It is also possible to make aircraft "commute" between two airports, i.e. flying from airport A to B and then back from B to A, etc.
 -- This can be done by the @{#RAT.Commute}() function. Note that if no departure or destination airports are specified, the first departure and destination are chosen randomly.
--- Then the aircraft will fly back and forth between those two airports indefinetly.
+-- Then the aircraft will fly back and forth between those two airports indefinitely.
 --
 --
 -- ### Spawn in Air
@@ -307,7 +307,7 @@
 -- *  @{#RAT.SetTakeoff}("cold"), which means that all aircraft are spawned with their engines off,
 -- *  @{#RAT.SetTakeoff}("hot"), which means that all aircraft are spawned with their engines on,
 -- *  @{#RAT.SetTakeoff}("runway"), which means that all aircraft are spawned already at the runway ready to takeoff.
--- Note that in this case the default spawn intervall is set to 180 seconds in order to avoid aircraft jamms on the runway. Generally, this takeoff at runways should be used with care and problems are to be expected.
+-- Note that in this case the default spawn intervall is set to 180 seconds in order to avoid aircraft jams on the runway. Generally, this takeoff at runways should be used with care and problems are to be expected.
 --
 --
 -- The options @{#RAT.SetMinDistance}() and @{#RAT.SetMaxDistance}() can be used to restrict the range from departure to destination. For example
@@ -330,7 +330,7 @@
 --
 -- * @{#RAT.SetFLcruise}(300) will cause most planes fly around FL300.
 -- * @{#RAT.SetFLmin}(100) restricts the cruising alt such that no plane will fly below FL100. Note that this automatically changes the minimum distance from departure to destination.
--- That means that only destinations are possible for which the aircraft has had enought time to reach that flight level and descent again.
+-- That means that only destinations are possible for which the aircraft has had enough time to reach that flight level and descent again.
 -- * @{#RAT.SetFLmax}(200) will restrict the cruise alt to maximum FL200, i.e. no aircraft will travel above this height.
 --
 --
@@ -684,10 +684,10 @@ function RAT:Spawn(naircraft)
     -- Set the coalition table based on choice of self.coalition and self.friendly.
   self:_SetCoalitionTable()
 
-  -- Get all airports of this map beloning to friendly coalition(s).
+  -- Get all airports of this map belonging to friendly coalition(s).
   self:_GetAirportsOfCoalition()
 
-  -- Set submenuname if it has not been set by user.
+  -- Set sub-menu name if it has not been set by user.
   if not self.SubMenuName then
     self.SubMenuName=self.alias
   end
@@ -1223,9 +1223,9 @@ end
 
 --- Set name of destination airports or zones for the AI aircraft.
 -- @param #RAT self
--- @param #string destinationnames Name of the destination airport or table of destination airports.
+-- @param #string destinationnames Name of the destination airport or #table of destination airports.
 -- @return #RAT RAT self object.
--- @usage RAT:SetDestination("Krymsk") makes all aircraft of this RAT oject fly to Krymsk airport.
+-- @usage RAT:SetDestination("Krymsk") makes all aircraft of this RAT object fly to Krymsk airport.
 function RAT:SetDestination(destinationnames)
   self:F2(destinationnames)
 
@@ -1478,7 +1478,7 @@ function RAT:NoRespawn()
   return self
 end
 
---- Number of tries to respawn an aircraft in case it has accitentally been spawned on runway.
+--- Number of tries to respawn an aircraft in case it has accidentally been spawned on runway.
 -- @param #RAT self
 -- @param #number n Number of retries. Default is 3.
 -- @return #RAT RAT self object.
@@ -1534,7 +1534,7 @@ function RAT:RespawnInAirNotAllowed()
   return self
 end
 
---- Check if aircraft have accidentally been spawned on the runway. If so they will be removed immediatly.
+--- Check if aircraft have accidentally been spawned on the runway. If so they will be removed immediately.
 -- @param #RAT self
 -- @param #boolean switch If true, check is performed. If false, this check is omitted.
 -- @param #number radius Distance in meters until a unit is considered to have spawned accidentally on the runway. Default is 75 m.
