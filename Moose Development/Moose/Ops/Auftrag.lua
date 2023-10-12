@@ -2230,7 +2230,13 @@ function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly, Forma
 
   mission:_TargetFromObject(ZoneSet)
   
-  mission.missionZoneSet = ZoneSet
+  if ZoneSet:IsInstanceOf("SET_ZONE") then
+    mission.missionZoneSet = ZoneSet
+  else
+   mission.missionZoneSet = SET_ZONE:New()
+   mission.missionZoneSet:AddZone(ZoneSet)
+  end
+  
   
   mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.RECON)
 
