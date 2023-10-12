@@ -2167,7 +2167,7 @@ do -- Patrol methods
   -- @return #CONTROLLABLE
   function CONTROLLABLE:PatrolZones( ZoneList, Speed, Formation, DelayMin, DelayMax )
 
-    if not type( ZoneList ) == "table" then
+    if type( ZoneList ) ~= "table" then
       ZoneList = { ZoneList }
     end
 

@@ -224,7 +224,7 @@ UTILS = {
 -- @return #boolean
 UTILS.IsInstanceOf = function( object, className )
   -- Is className NOT a string ?
-  if not type( className ) == 'string' then
+  if type( className ) ~= 'string' then
 
     -- Is className a Moose class ?
     if type( className ) == 'table' and className.IsInstanceOf ~= nil then
