@@ -189,7 +189,7 @@ MSRS = {
 
 --- MSRS class version.
 -- @field #string version
-MSRS.version="0.1.2"
+MSRS.version="0.1.3"
 
 --- Voices
 -- @type MSRS.Voices
@@ -582,6 +582,17 @@ function MSRS:SetVoice(Voice)
   return self
 end
 
+--- Set to use a specific voice. Will override gender and culture settings. 
+-- @param #MSRS self
+-- @param #string Voice Voice.
+-- @return #MSRS self
+function MSRS:SetDefaultVoice(Voice)
+
+  self.defaultVoice=Voice
+  
+  return self
+end
+
 --- Set the coordinate from which the transmissions will be broadcasted.
 -- @param #MSRS self
 -- @param Core.Point#COORDINATE Coordinate Origin of the transmission.
@@ -595,11 +606,25 @@ end
 
 --- Use google text-to-speech.
 -- @param #MSRS self
--- @param PathToCredentials Full path to the google credentials JSON file, e.g. "C:\Users\username\Downloads\service-account-file.json".
+-- @param #string PathToCredentials Full path to the google credentials JSON file, e.g. "C:\Users\username\Downloads\service-account-file.json".
 -- @return #MSRS self
 function MSRS:SetGoogle(PathToCredentials)
 
   self.google=PathToCredentials
+  self.APIKey=PathToCredentials
+  self.provider = "gcloud"
+  
+  return self
+end
+
+--- Use google text-to-speech.
+-- @param #MSRS self
+-- @param #string APIKey API Key, usually a string of length 40 with characters and numbers.
+-- @return #MSRS self
+function MSRS:SetGoogleAPIKey(APIKey)
+
+  self.APIKey=APIKey
+  self.provider = "gcloud"
   
   return self
 end
@@ -1102,6 +1127,24 @@ MSRS_BACKEND_DCSGRPC.Functions.SetGoogle = function (self)
     return self
 end
 
+--- Replacement function for @{#MSRS.SetGoogle} to use google text-to-speech - here: Set the API key
+-- @param #MSRS self
+-- @param #string key
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions.SetAPIKey = function (self, key)
+    self.APIKey = key
+    return self
+end
+
+--- Replacement function for @{#MSRS.SetGoogle} to use google text-to-speech - here: Set the API key
+-- @param #MSRS self
+-- @param #string voice
+-- @return #MSRS self
+MSRS_BACKEND_DCSGRPC.Functions.SetDefaultVoice = function (self, voice)
+    self.defaultVoice = voice
+    return self
+end
+
 --- MSRS:SetAWS() Use AWS text-to-speech. (API key set as part of DCS-gRPC configuration)
 -- @param #MSRS self
 -- @return #MSRS self
@@ -1285,11 +1328,18 @@ MSRS_BACKEND_DCSGRPC.Functions._DCSgRPCtts = function (self, Text, Plaintext, Fr
       options.coalition = 'red'
     end
 
-    options.provider = {}
-    options.provider[self.provider] = {}
-
+    options[self.provider] = {}
+    
+    if self.APIKey then
+      options[self.provider].key = self.APIKey
+    end
+    
+    if self.defaultVoice then
+      options[self.provider].voice = self.defaultVoice
+    end
+    
     if self.voice then
-      options.provider[self.provider].voice = Voice or self.voice
+      options[self.provider].voice = Voice or self.voice
     elseif ssml then
       -- DCS-gRPC doesn't directly support language/gender, but can use SSML
       -- Only use if a voice isn't explicitly set
