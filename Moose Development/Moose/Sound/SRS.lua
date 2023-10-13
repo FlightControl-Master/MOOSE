@@ -582,6 +582,17 @@ function MSRS:SetVoice(Voice)
   return self
 end
 
+--- Set to use a specific voice. Will override gender and culture settings. 
+-- @param #MSRS self
+-- @param #string Voice Voice.
+-- @return #MSRS self
+function MSRS:SetDefaultVoice(Voice)
+
+  self.defaultVoice=Voice
+  
+  return self
+end
+
 --- Set the coordinate from which the transmissions will be broadcasted.
 -- @param #MSRS self
 -- @param Core.Point#COORDINATE Coordinate Origin of the transmission.
@@ -600,6 +611,20 @@ end
 function MSRS:SetGoogle(PathToCredentials)
 
   self.google=PathToCredentials
+  self.APIKey=PathToCredentials
+  self.provider = "gcloud"
+  
+  return self
+end
+
+--- Use google text-to-speech.
+-- @param #MSRS self
+-- @param #string APIKey API Key, usually a string of length 40 with characters and numbers.
+-- @return #MSRS self
+function MSRS:SetGoogleAPIKey(APIKey)
+
+  self.APIKey=APIKey
+  self.provider = "gcloud"
   
   return self
 end
