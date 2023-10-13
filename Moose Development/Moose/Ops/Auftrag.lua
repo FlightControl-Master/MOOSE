@@ -1339,9 +1339,9 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
   return mission
 end
 
---- **[AIR]** Create a CAP mission on a group.
+--- **[AIR]** Create a CAP mission over a (moving) group.
 -- @param #AUFTRAG self
--- @param Wrapper.Group#GROUP Grp.
+-- @param Wrapper.Group#GROUP Grp The grp to perform the CAP over.
 -- @param #number Altitude Orbit altitude in feet. Default is 6,000 ft.
 -- @param #number Speed Orbit speed in knots. Default 250 KIAS.
 -- @param #number RelHeading Relative heading [0, 360) of race-track pattern in degrees wrt heading of the carrier. Default is heading of the carrier.
@@ -2229,7 +2229,9 @@ function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly, Forma
   local mission=AUFTRAG:New(AUFTRAG.Type.RECON)
 
   mission:_TargetFromObject(ZoneSet)
-
+  
+  mission.missionZoneSet = ZoneSet
+  
   mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.RECON)
 
   mission.optionROE=ENUMS.ROE.WeaponHold
@@ -2669,7 +2671,7 @@ function AUFTRAG:NewAUTO(EngageGroup)
   elseif auftrag==AUFTRAG.Type.ORBIT then
     mission=AUFTRAG:NewORBIT(Coordinate,Altitude,Speed,Heading,Leg)
   elseif auftrag==AUFTRAG.Type.RECON then
-    -- Not implemented yet.
+    mission=AUFTRAG:NewRECON(ZoneSet,Speed,Altitude,Adinfinitum,Randomly,Formation)
   elseif auftrag==AUFTRAG.Type.RESCUEHELO then
     mission=AUFTRAG:NewRESCUEHELO(Carrier)
   elseif auftrag==AUFTRAG.Type.SEAD then
@@ -5362,6 +5364,10 @@ function AUFTRAG:GetTargetCoordinate()
 
     -- Special case where we defined a
     return self.transportPickup
+    
+  elseif self.missionZoneSet and self.type == AUFTRAG.Type.RECON then
+  
+    return self.missionZoneSet:GetAverageCoordinate()
 
   elseif self.engageTarget then
 
