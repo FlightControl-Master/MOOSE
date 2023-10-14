@@ -1555,7 +1555,7 @@ end
 
 --- Get the coalition of the associated airbase.
 -- @param #ATIS self
--- @return #number Coalition of the associcated airbase.
+-- @return #number Coalition of the associated airbase.
 function ATIS:GetCoalition()
   local coal = self.airbase and self.airbase:GetCoalition() or nil
   return coal
