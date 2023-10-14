@@ -480,21 +480,24 @@ _MESSAGESRS = {}
 --          MESSAGE:New("Test message!",15,"SPAWN"):ToSRS()
 --          
 function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,Gender,Culture,Voice,Coalition,Volume,Label,Coordinate)
-  local path = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
-  _MESSAGESRS.MSRS = MSRS:New(path,Frequency,Modulation,Volume)
+  _MESSAGESRS.MSRS = MSRS:New(PathToSRS,Frequency,Modulation,Volume)
   _MESSAGESRS.MSRS:SetCoalition(Coalition)
   _MESSAGESRS.MSRS:SetCoordinate(Coordinate)
   _MESSAGESRS.MSRS:SetCulture(Culture)
-  _MESSAGESRS.MSRS:SetFrequencies(Frequency)
+  _MESSAGESRS.Culture = Culture
+  --_MESSAGESRS.MSRS:SetFrequencies(Frequency)
   _MESSAGESRS.MSRS:SetGender(Gender)
+  _MESSAGESRS.Gender = Gender
   _MESSAGESRS.MSRS:SetGoogle(PathToCredentials)
   _MESSAGESRS.MSRS:SetLabel(Label or "MESSAGE")
-  _MESSAGESRS.MSRS:SetModulations(Modulation)
-  _MESSAGESRS.MSRS:SetPath(PathToSRS)
+  --_MESSAGESRS.MSRS:SetModulations(Modulation)
+  --_MESSAGESRS.MSRS:SetPath(PathToSRS)
   _MESSAGESRS.MSRS:SetPort(Port)
-  _MESSAGESRS.MSRS:SetVolume(Volume)
+ -- _MESSAGESRS.MSRS:SetVolume(Volume)
   _MESSAGESRS.MSRS:SetVoice(Voice)
+  _MESSAGESRS.Voice = Voice
   _MESSAGESRS.SRSQ = MSRSQUEUE:New(Label or "MESSAGE")
+  env.info(_MESSAGESRS.MSRS.provider,false)
 end
 
 --- Sends a message via SRS.
@@ -517,26 +520,8 @@ end
 --          
 function MESSAGE:ToSRS(frequency,modulation,gender,culture,voice,coalition,volume,coordinate)
   if _MESSAGESRS.SRSQ then
-    _MESSAGESRS.MSRS:SetLabel(self.MessageCategory or _MESSAGESRS.MSRS.Label or "MESSAGE")
-    if gender then 
-      _MESSAGESRS.MSRS:SetGender(gender)
-    end
-    if coalition then 
-      _MESSAGESRS.MSRS:SetCoalition(coalition)
-    end
-    if culture then 
-      _MESSAGESRS.MSRS:SetCulture(culture)
-    end
-    if volume then 
-      _MESSAGESRS.MSRS:SetVolume(volume)
-    end
-    if coordinate then 
-      _MESSAGESRS.MSRS:SetCoordinate(coordinate)
-    end
-    if voice then 
-      _MESSAGESRS.MSRS:SetVoice(voice)
-    end
-    _MESSAGESRS.SRSQ:NewTransmission(self.MessageText,nil,_MESSAGESRS.MSRS,nil,1,nil,nil,nil,frequency,modulation)
+      _MESSAGESRS.MSRS:SetVoice(voice or _MESSAGESRS.Voice)
+      _MESSAGESRS.SRSQ:NewTransmission(self.MessageText,nil,_MESSAGESRS.MSRS,nil,nil,nil,nil,nil,frequency,modulation,gender or _MESSAGESRS.Gender,culture or _MESSAGESRS.Culture,voice or _MESSAGESRS.Voice,volume,self.MessageCategory)
   end
   return self
 end

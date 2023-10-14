@@ -1524,7 +1524,7 @@ end
 -- @param #string GoogleKey Path to Google JSON-Key.
 -- @return #ATIS self
 function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey)
-  if PathToSRS then
+  if PathToSRS or MSRS.path then
     self.useSRS=true
     self.msrs=MSRS:New(PathToSRS, self.frequency, self.modulation)
     self.msrs:SetGender(Gender)

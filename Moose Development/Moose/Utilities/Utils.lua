@@ -2421,7 +2421,7 @@ function UTILS.CheckFileExists(Path,Filename)
      
   -- Check io module is available.
   if not io then
-    BASE:E("ERROR: io not desanitized. Can't save current state.")
+    BASE:E("ERROR: io not desanitized.")
     return false
   end
   
