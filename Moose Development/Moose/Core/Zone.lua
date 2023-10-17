@@ -64,6 +64,7 @@
 -- @field #number ZoneID ID of zone. Only zones defined in the ME have an ID!
 -- @field #table Table of any trigger zone properties from the ME. The key is the Name of the property, and the value is the property's Value.
 -- @field #number Surface Type of surface. Only determined at the center of the zone!
+-- @field #number Checktime Check every Checktime seconds, used for ZONE:Trigger()
 -- @extends Core.Fsm#FSM
 
 
@@ -122,6 +123,7 @@ ZONE_BASE = {
   ZoneID=nil,
   Properties={},
   Surface=nil,
+  Checktime = 5,
 }
 
 --- The ZONE_BASE.BoundingSquare
@@ -556,6 +558,154 @@ function ZONE_BASE:GetZoneMaybe()
     return nil
   end
 end
+
+--- Set the check time for ZONE:Trigger()
+-- @param #ZONE_BASE self
+-- @param #number seconds Check every seconds for objects entering or leaving the zone. Defaults to 5 secs.
+-- @return #ZONE_BASE self
+function ZONE_BASE:SetCheckTime(seconds)
+  self.Checktime = seconds or 5
+  return self
+end
+
+--- Start watching if the Object or Objects move into or out of a zone.
+-- @param #ZONE_BASE self
+-- @param Wrappe.Controllable#CONTROLLABLE Objects Object or Objects to watch, can be of type UNIT, GROUP, CLIENT, or SET\_UNIT, SET\_GROUP, SET\_CLIENT
+-- @return #ZONE_BASE self
+-- @usage
+--            -- Create a new zone and start watching it every 5 secs for a certain GROUP entering or leaving
+--            local triggerzone = ZONE:New("ZonetoWatch"):Trigger(GROUP:FindByName("Aerial-1"))
+--            
+--            -- function to handle FSM event "EnteredZone"
+--            function triggerzone:OnAfterEnteredZone(From,Event,To,Group)
+--              MESSAGE:New("Group has entered zone!",15):ToAll()
+--            end
+--            
+--            -- function to handle FSM event "LeftZone"
+--            function triggerzone:OnAfterLeftZone(From,Event,To,Group)
+--              MESSAGE:New("Group has left zone!",15):ToAll()
+--            end
+--            
+--            -- Stop watching the zone after 1 hour
+--           triggerzone:__TriggerStop(2600)
+function ZONE_BASE:Trigger(Objects)
+  --self:I("Added Zone Trigger")
+  self:SetStartState("TriggerStopped")
+  self:AddTransition("TriggerStopped","TriggerStart","TriggerRunning")
+  self:AddTransition("*","EnteredZone","*")
+  self:AddTransition("*","LeftZone","*")
+  self:AddTransition("*","TriggerRunCheck","*")
+  self:AddTransition("*","TriggerStop","TriggerStopped")
+  self:TriggerStart()
+  self.checkobjects = Objects
+  if UTILS.IsInstanceOf(Objects,"SET_BASE") then
+    self.objectset = Objects.Set
+  else
+    self.objectset = {Objects}
+  end
+  self:_TriggerCheck(true)
+  self:__TriggerRunCheck(self.Checktime)
+  return self
+  
+  ------------------------
+  --- Pseudo Functions ---
+  ------------------------
+  
+  --- Triggers the FSM event "TriggerStop". Stops the ZONE_BASE Trigger.
+  -- @function [parent=#ZONE_BASE] TriggerStop
+  -- @param #ZONE_BASE self
+
+  --- Triggers the FSM event "TriggerStop" after a delay. 
+  -- @function [parent=#ZONE_BASE] __TriggerStop
+  -- @param #ZONE_BASE self
+  -- @param #number delay Delay in seconds.
+  
+  --- On After "EnteredZone" event. An observed object has entered the zone.
+  -- @function [parent=#ZONE_BASE] OnAfterEnteredZone
+  -- @param #ZONE_BASE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The controllable entering the zone.
+
+  --- On After "LeftZone" event. An observed object has left the zone.
+  -- @function [parent=#ZONE_BASE] OnAfterLeftZone
+  -- @param #ZONE_BASE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The controllable leaving the zone.
+end
+
+--- (Internal) Check the assigned objects for being in/out of the zone
+-- @param #ZONE_BASE self
+-- @param #boolean fromstart If true, do the init of the objects
+-- @return #ZONE_BASE self
+function ZONE_BASE:_TriggerCheck(fromstart)
+  --self:I("_TriggerCheck | FromStart = "..tostring(fromstart))
+  local objectset = self.objectset or {}
+  if fromstart then
+    -- just earmark everyone in/out
+    for _,_object in pairs(objectset) do
+      local obj = _object -- Wrapper.Controllable#CONTROLLABLE
+      if not obj.TriggerInZone then obj.TriggerInZone = {} end
+      if obj and obj:IsAlive() and self:IsCoordinateInZone(obj:GetCoordinate()) then
+        obj.TriggerInZone[self.ZoneName] = true
+      else
+        obj.TriggerInZone[self.ZoneName] = false
+      end
+      --self:I("Object "..obj:GetName().." is in zone = "..tostring(obj.TriggerInZone[self.ZoneName]))
+    end
+  else
+    -- Check for changes
+    for _,_object in pairs(objectset) do
+      local obj = _object -- Wrapper.Controllable#CONTROLLABLE
+      if obj and obj:IsAlive() then
+        if not obj.TriggerInZone then
+          -- has not been tagged previously - wasn't in set! 
+          obj.TriggerInZone = {}
+        end
+        if not obj.TriggerInZone[self.ZoneName] then
+          -- has not been tagged previously - wasn't in set! 
+          obj.TriggerInZone[self.ZoneName] = false 
+        end
+        -- is obj in zone?
+        local inzone = self:IsCoordinateInZone(obj:GetCoordinate())
+        --self:I("Object "..obj:GetName().." is in zone: "..tostring(inzone))
+        if inzone and not obj.TriggerInZone[self.ZoneName] then
+          -- wasn't in zone before
+          --self:I("Newly entered")
+          self:__EnteredZone(0.5,obj)
+          obj.TriggerInZone[self.ZoneName] = true
+        elseif (not inzone) and obj.TriggerInZone[self.ZoneName] then
+          -- has left the zone
+          --self:I("Newly left")
+          self:__LeftZone(0.5,obj)
+          obj.TriggerInZone[self.ZoneName] = false
+        else
+          --self:I("Not left or not entered, or something went wrong!")
+        end
+      end
+    end
+  end  
+  return self
+end
+
+--- (Internal) Check the assigned objects for being in/out of the zone
+-- @param #ZONE_BASE self
+-- @param #string From
+-- @param #string Event
+-- @param #string to
+-- @return #ZONE_BASE self
+function ZONE_BASE:onafterTriggerRunCheck(From,Event,To)
+  if self:GetState() ~= "TriggerStopped" then
+    self:_TriggerCheck()
+    self:__TriggerRunCheck(self.Checktime)
+  end
+  return self
+end
+
+
 
 --- Returns the Value of the zone with the given PropertyName, or nil if no matching property exists.
 -- @param #ZONE_BASE self
