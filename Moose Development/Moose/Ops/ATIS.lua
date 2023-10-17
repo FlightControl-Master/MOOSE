@@ -1524,7 +1524,7 @@ end
 -- @param #string GoogleKey Path to Google JSON-Key.
 -- @return #ATIS self
 function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey)
-  if PathToSRS then
+  if PathToSRS or MSRS.path then
     self.useSRS=true
     self.msrs=MSRS:New(PathToSRS, self.frequency, self.modulation)
     self.msrs:SetGender(Gender)
@@ -1555,7 +1555,7 @@ end
 
 --- Get the coalition of the associated airbase.
 -- @param #ATIS self
--- @return #number Coalition of the associcated airbase.
+-- @return #number Coalition of the associated airbase.
 function ATIS:GetCoalition()
   local coal = self.airbase and self.airbase:GetCoalition() or nil
   return coal

@@ -224,7 +224,7 @@ UTILS = {
 -- @return #boolean
 UTILS.IsInstanceOf = function( object, className )
   -- Is className NOT a string ?
-  if not type( className ) == 'string' then
+  if type( className ) ~= 'string' then
 
     -- Is className a Moose class ?
     if type( className ) == 'table' and className.IsInstanceOf ~= nil then
@@ -406,7 +406,7 @@ function UTILS._OneLineSerialize(tbl)
       elseif type(val) == 'nil' then -- won't ever happen, right?
         tbl_str[#tbl_str + 1] = 'nil, '
       elseif type(val) == 'table' then
-        --tbl_str[#tbl_str + 1] = UTILS._OneLineSerialize(val)
+        --tbl_str[#tbl_str + 1] = UTILS.TableShow(tbl,loc,indent,tableshow_tbls)
         --tbl_str[#tbl_str + 1] = ', '   --I think this is right, I just added it
       else
         --log:warn('Unable to serialize value type $1 at index $2', mist.utils.basicSerialize(type(val)), tostring(ind))
@@ -2421,7 +2421,7 @@ function UTILS.CheckFileExists(Path,Filename)
      
   -- Check io module is available.
   if not io then
-    BASE:E("ERROR: io not desanitized. Can't save current state.")
+    BASE:E("ERROR: io not desanitized.")
     return false
   end
   
