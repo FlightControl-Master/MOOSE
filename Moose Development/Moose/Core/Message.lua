@@ -591,4 +591,3 @@ function MESSAGE:ToSRSAll(frequency,modulation,gender,culture,voice,volume,coord
   self:ToSRS(frequency,modulation,gender,culture,voice,coalition.side.NEUTRAL,volume,coordinate)
   return self
 end
-

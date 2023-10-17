@@ -6198,30 +6198,21 @@ do -- SET_ZONE
   -- @param Wrappe.Controllable#CONTROLLABLE Objects Object or Objects to watch, can be of type UNIT, GROUP, CLIENT, or SET\_UNIT, SET\_GROUP, SET\_CLIENT
   -- @return #SET_ZONE self
   -- @usage
-  -- Create a SET_ZONE and have it look after a SET_GROUP of objects:
-  -- 
-  --          local groupset = SET_GROUP:New():FilterPrefixes("Aerial"):FilterStart(
-  --          local zoneset = SET_ZONE:New():FilterPrefixes("Target Zone"):FilterOnce():Trigger(groupset)
-  --          
-  --          -- Draw on the map
-  --          zoneset:ForEachZone(
-  --            function(zone)
-  --              zone:DrawZone(-1, {0,1,0}, Alpha, FillColor, FillAlpha, 4, ReadOnly)
-  --            end 
-  --          )
-  --          
-  --          -- function called when a controllable enters
-  --          function zoneset:OnAfterEnteredZone(From,Event,To,Controllable,Zone)
-  --            MESSAGE:New("Group "..Controllable:GetName() .. " entered zone "..Zone:GetName(),10,"Set Trigger"):ToAll()
-  --          end
-  --          
-  --          -- function called when a controllable leaves
-  --          function zoneset:OnAfterLeftZone(From,Event,To,Controllable,Zone)
-  --            MESSAGE:New("Group "..Controllable:GetName() .. " left zone "..Zone:GetName(),10,"Set Trigger"):ToAll()
-  --          end
-  --          
-  --          -- Stop after 1 hour
-  --          zoneset:__TriggerStop(3600)
+  --            -- Create a new zone and start watching it every 5 secs for a certain GROUP entering or leaving
+  --            local triggerzone = ZONE:New("ZonetoWatch"):Trigger(GROUP:FindByName("Aerial-1"))
+  --            
+  --            -- function to handle FSM event "EnteredZone"
+  --            function triggerzone:OnAfterEnteredZone(From,Event,To,Group)
+  --              MESSAGE:New("Group has entered zone!",15):ToAll()
+  --            end
+  --            
+  --            -- function to handle FSM event "LeftZone"
+  --            function triggerzone:OnAfterLeftZone(From,Event,To,Group)
+  --              MESSAGE:New("Group has left zone!",15):ToAll()
+  --            end
+  --            
+  --            -- Stop watching the zone
+  --           triggerzone:TriggerStop()
   function SET_ZONE:Trigger(Objects)
     --self:I("Added Set_Zone Trigger")
     self:AddTransition("*","TriggerStart","TriggerRunning")

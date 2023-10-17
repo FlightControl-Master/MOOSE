@@ -587,7 +587,7 @@ end
 --            end
 --            
 --            -- Stop watching the zone after 1 hour
---           triggerzone:__TriggerStop(2600)
+--           triggerzone:__TriggerStop(3600)
 function ZONE_BASE:Trigger(Objects)
   --self:I("Added Zone Trigger")
   self:SetStartState("TriggerStopped")
