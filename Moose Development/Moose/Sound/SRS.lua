@@ -1120,12 +1120,72 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   return command
 end
 
---- Get SRS command to play sound using the `DCS-SR-ExternalAudio.exe`.
+--- Get central SRS configuration to be able to play tts over SRS radio using the `DCS-SR-ExternalAudio.exe`.
 -- @param #MSRS self
 -- @param #string Path Path to config file, defaults to "C:\Users\<yourname>\Saved Games\DCS\Config"
 -- @param #string Filename File to load, defaults to "Moose_MSRS.lua"
 -- @param #boolean ConfigLoaded - if true, skip the loading
 -- @return #boolean success
+-- @usage
+--  0) Benefits: Centralize configuration of SRS, keep paths and keys out of the mission source code, making it safer and easier to move missions to/between servers,
+--  and also make config easier to use in the code.
+--  1) Create a config file named "Moose_MSRS.lua" at this location "C:\Users\<yourname>\Saved Games\DCS\Config" (or wherever your Saved Games folder resides).
+--  2) The file needs the following structure:
+--
+--          -- Moose MSRS default Config
+--          MSRS_Config = {
+--            Path = "C:\\Program Files\\DCS-SimpleRadio-Standalone", -- adjust as needed
+--            Port = 5002, -- adjust as needed
+--            Frequency = {127,243}, -- must be a table, 1..n entries!
+--            Modulation = {0,0}, -- must be a table, 1..n entries, one for each frequency!
+--            Volume = 1.0,
+--            Coalition = 0,  -- 0 = Neutral, 1 = Red, 2 = Blue
+--            Coordinate = {0,0,0}, -- x,y,alt - optional
+--            Culture = "en-GB",
+--            Gender = "male",
+--            Google = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\yourfilename.json", -- path to google json key file - optional
+--            Label = "MSRS",
+--            Voice = "Microsoft Hazel Desktop",
+--            -- gRPC (optional)
+--            GRPC = { -- see https://github.com/DCS-gRPC/rust-server
+--              coalition = "blue", -- blue, red, neutral
+--              DefaultProvider = "gcloud", -- win, gcloud, aws, or azure, some of the values below depend on your cloud provider
+--              gcloud = {
+--                key = "<API Google Key>", -- for gRPC Google API key
+--                --secret = "", -- needed for aws
+--                --region = "",-- needed for aws
+--                defaultVoice = MSRS.Voices.Google.Standard.en_GB_Standard_F,
+--              },
+--              win = {
+--                defaultVoice = "Hazel",
+--              },
+--            }
+--          }
+--  
+--  3) Load the config into the MSRS raw class before you do anything else:
+--  
+--         MSRS.LoadConfigFile() -- Note the "." here
+--         
+--  This will populate variables for the MSRS raw class and all instances you create with e.g. `mysrs = MSRS:New()`
+--  Optionally you can also load this per **single instance** if so needed, i.e.
+--    
+--         mysrs:LoadConfig(Path,Filename)
+--         
+--  4) Use the config in your code like so, variable names are basically the same as in the config file, but all lower case, examples:
+--  
+--         -- Needed once only
+--         MESSAGE.SetMSRS(MSRS.path,nil,MSRS.google,243,radio.modulation.AM,nil,nil,
+--         MSRS.Voices.Google.Standard.de_DE_Standard_B,coalition.side.BLUE)
+--
+--         -- later on in your code
+--
+--         MESSAGE:New("Test message!",15,"SPAWN"):ToSRS(243,radio.modulation.AM,nil,nil,MSRS.Voices.Google.Standard.fr_FR_Standard_C)
+--        
+--          -- Create new ATIS as usual
+--          atis=ATIS:New(AIRBASE.Caucasus.Batumi, 123, radio.modulation.AM)
+--          atis:SetSRS(nil,nil,nil,MSRS.Voices.Google.Standard.en_US_Standard_H)
+--          --Start ATIS
+--          atis:Start()
 function MSRS:LoadConfigFile(Path,Filename,ConfigLoaded)
   
   local path = Path or lfs.writedir()..MSRS.ConfigFilePath 
@@ -1138,8 +1198,8 @@ function MSRS:LoadConfigFile(Path,Filename,ConfigLoaded)
       --[[
           -- Moose MSRS default Config
           MSRS_Config = {
-            Path = "D:\\Program Files\\DCS-SimpleRadio-Standalone",
-            Port = 5002,
+            Path = "C:\\Program Files\\DCS-SimpleRadio-Standalone", -- adjust as needed
+            Port = 5002, -- adjust as needed
             Frequency = {127,243}, -- must be a table, 1..n entries!
             Modulation = {0,0}, -- must be a table, 1..n entries, one for each frequency!
             Volume = 1.0,
@@ -1147,10 +1207,10 @@ function MSRS:LoadConfigFile(Path,Filename,ConfigLoaded)
             Coordinate = {0,0,0}, -- x,y,alt - optional
             Culture = "en-GB",
             Gender = "male",
-            Google = "D:\\Program Files\\DCS-SimpleRadio-Standalone\\yourfilename.json", -- path to google json key file - optional
+            Google = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\yourfilename.json", -- path to google json key file - optional
             Label = "MSRS",
             Voice = "Microsoft Hazel Desktop",
-            -- gRPC
+            -- gRPC (optional)
             GRPC = { -- see https://github.com/DCS-gRPC/rust-server
               coalition = "blue", -- blue, red, neutral
               DefaultProvider = "gcloud", -- win, gcloud, aws, or azure, some of the values below depend on your cloud provider
