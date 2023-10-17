@@ -1158,10 +1158,10 @@ function MSRS:LoadConfigFile(Path,Filename,ConfigLoaded)
                 key = "<API Google Key>", -- for gRPC Google API key
                 --secret = "", -- needed for aws
                 --region = "",-- needed for aws
-                defaultVoice = "MSRS.Voices.Google.Standard.en_GB_Standard_F",
+                defaultVoice = MSRS.Voices.Google.Standard.en_GB_Standard_F,
               },
               win = {
-                defaultVoice = "Microsoft Hazel Desktop",
+                defaultVoice = "Hazel",
               },
             }
           }
@@ -1514,18 +1514,20 @@ MSRS_BACKEND_DCSGRPC.Functions._DCSgRPCtts = function (self, Text, Plaintext, Fr
     
     local provider = self.provider or self.GRPCOptions.DefaultProvider or MSRS.GRPCOptions.DefaultProvider
     
-    options[provider] = {}
+    options.provider = {}
+    
+    options.provider[provider] = {}
     
     if self.APIKey then
-      options[provider].key = self.APIKey
+      options.provider[provider].key = self.APIKey
     end
     
     if self.defaultVoice then
-      --options[provider].defaultVoice = self.defaultVoice
+      options.provider[provider].defaultVoice = self.defaultVoice
     end
     
     if self.voice then
-      options[provider].voice = Voice or self.voice or self.defaultVoice
+      options.provider[provider].voice = Voice or self.voice or self.defaultVoice
     elseif ssml then
       -- DCS-gRPC doesn't directly support language/gender, but can use SSML
       -- Only use if a voice isn't explicitly set
@@ -1551,7 +1553,7 @@ MSRS_BACKEND_DCSGRPC.Functions._DCSgRPCtts = function (self, Text, Plaintext, Fr
         BASE:T("GRPC.tts")
         BASE:T(ssml)
         BASE:T(freq)
-        BASE:T(options)
+        BASE:T({options})
         GRPC.tts(ssml, freq, options)
     end
 
