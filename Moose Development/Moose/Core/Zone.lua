@@ -573,15 +573,15 @@ end
 -- @param Wrappe.Controllable#CONTROLLABLE Objects Object or Objects to watch, can be of type UNIT, GROUP, CLIENT, or SET\_UNIT, SET\_GROUP, SET\_CLIENT
 -- @return #ZONE_BASE self
 -- @usage
---            -- Create a new zone and start watching it every 5 secs for a certain GROUP entering or leaving
+--            -- Create a new zone and start watching it every 5 secs for a defined GROUP entering or leaving
 --            local triggerzone = ZONE:New("ZonetoWatch"):Trigger(GROUP:FindByName("Aerial-1"))
 --            
---            -- function to handle FSM event "EnteredZone"
+--            -- This FSM function will be called when the group enters the zone
 --            function triggerzone:OnAfterEnteredZone(From,Event,To,Group)
 --              MESSAGE:New("Group has entered zone!",15):ToAll()
 --            end
 --            
---            -- function to handle FSM event "LeftZone"
+--            -- This FSM function will be called when the group leaves the zone
 --            function triggerzone:OnAfterLeftZone(From,Event,To,Group)
 --              MESSAGE:New("Group has left zone!",15):ToAll()
 --            end
