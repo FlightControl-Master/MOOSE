@@ -129,8 +129,8 @@ jobs:
       - name: Push result to docs repository
         if: ${{ vars.FORCE_PUSH == 'true' }}
         run: |
-          git config user.name "kaltokri"
-          git config user.email "rolf.geuenich@gmail.com"
+          git config user.name "MooseBotter"
+          git config user.email "moosebotter@tniedermeier.com"
           git add .
           git commit --allow-empty -m "Auto commit by GitHub Actions Workflow"
           git push --set-upstream origin master
