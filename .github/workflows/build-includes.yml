@@ -120,7 +120,7 @@ jobs:
           cp -r ./build/result/* ./build/MOOSE_INCLUDE/
 
       - name: Push result to MOOSE_INCLUDE repository (skipped by act)
-        if: ${{ env.FORCE_PUSH == 'true' }}
+        if: ${{ vars.FORCE_PUSH == 'true' }}
         run: |
           git config user.name "MooseBotter"
           git config user.email "moosebotter@tniedermeier.com"
