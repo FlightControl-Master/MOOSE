@@ -616,7 +616,7 @@ end
 --- Set x-component of vector. The x-axis points to the North.
 -- @param #VECTOR self
 -- @param #number x Value of x. Default 0.
--- @param #VECTOR self
+-- @return #VECTOR self
 function VECTOR:SetX(x)
   self.x=x or 0
   return self
@@ -625,7 +625,7 @@ end
 --- Set y-component of vector. The y-axis points to the upwards and describes the altitude above mean sea level.
 -- @param #VECTOR self
 -- @param #number y Value of y. Default land/surface height at this point.
--- @param #VECTOR self
+-- @return #VECTOR self
 function VECTOR:SetY(y)
 
   if y==nil then
@@ -998,9 +998,10 @@ function VECTOR:GetWindVector(WithTurbulence)
 
   local wind=nil
   if WithTurbulence then
-    wind=atmosphere.getWind(vec3)
-  else
     wind=atmosphere.getWindWithTurbulence(vec3)
+    
+  else
+    wind=atmosphere.getWind(vec3)
   end
   
   local vector=VECTOR:New(wind)
