@@ -25,7 +25,7 @@ jobs:
             echo "Repository:    ${{ github.repository }}"
             echo "Commit-Id:     ${{ github.sha }}"
             echo "Owner:         ${{ github.repository_owner }}"
-            echo "FORCE_PUSH:    ${{ env.FORCE_PUSH }}"
+            echo "FORCE_PUSH:    ${{ vars.FORCE_PUSH }}"
 
       #########################################################################
       # Prepare build environment
@@ -126,8 +126,8 @@ jobs:
         run: |
           cp ./build/doc/*.html ./build/MOOSE_DOCS/Documentation/
 
-      - name: Push result to docs repository (skipped by act)
-        if: ${{ env.FORCE_PUSH == 'true' }}
+      - name: Push result to docs repository
+        if: ${{ vars.FORCE_PUSH == 'true' }}
         run: |
           git config user.name "kaltokri"
           git config user.email "rolf.geuenich@gmail.com"

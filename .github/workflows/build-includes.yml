@@ -95,7 +95,7 @@ jobs:
       # Run LuaCheck
       #########################################################################
       - name: Run LuaCheck
-        if: ${{ env.SKIP_LUACHECK != 'true' }}
+        if: ${{ vars.SKIP_LUACHECK != true }}
         continue-on-error: true
         run: |
           luacheck --std=lua51c --config=.luacheckrc -gurasqq "Moose Development/Moose"
@@ -119,7 +119,7 @@ jobs:
         run: |
           cp -r ./build/result/* ./build/MOOSE_INCLUDE/
 
-      - name: Push result to MOOSE_INCLUDE repository (skipped by act)
+      - name: Push result to MOOSE_INCLUDE repository
         if: ${{ vars.FORCE_PUSH == 'true' }}
         run: |
           git config user.name "MooseBotter"
