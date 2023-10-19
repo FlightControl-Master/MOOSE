@@ -24,7 +24,7 @@ jobs:
             echo "Branch name:   ${{ steps.extract_branch.outputs.branch }}"
             echo "Repository:    ${{ github.repository }}"
             echo "Commit-Id:     ${{ github.sha }}"
-            echo "FORCE_PUSH:    ${{ env.FORCE_PUSH }}"
+            echo "FORCE_PUSH:    ${{ vars.FORCE_PUSH }}"
 
       #########################################################################
       # Prepare build environment
