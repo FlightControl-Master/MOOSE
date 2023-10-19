@@ -1,4 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/1y8nfmx7lwsn33tt?svg=true)](https://ci.appveyor.com/project/Applevangelist/MOOSE)
+[![Moose-Includes](https://github.com/FlightControl-Master/MOOSE/actions/workflows/build-includes.yml/badge.svg?branch=master)](https://github.com/FlightControl-Master/MOOSE/actions/workflows/build-includes.yml)
 
 # MOOSE framework
 

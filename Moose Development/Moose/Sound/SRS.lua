@@ -94,7 +94,7 @@
 -- ## Set Google
 -- 
 -- Use Google's text-to-speech engine with the @{#MSRS.SetGoogle} function, e.g. ':SetGoogle()'.
--- By enabling this it also allows you to utilize SSML in your text for added flexibilty.
+-- By enabling this it also allows you to utilize SSML in your text for added flexibility.
 -- For more information on setting up a cloud account, visit: https://cloud.google.com/text-to-speech
 -- Google's supported SSML reference: https://cloud.google.com/text-to-speech/docs/ssml
 -- 
