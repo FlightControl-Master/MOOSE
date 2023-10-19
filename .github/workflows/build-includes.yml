@@ -24,6 +24,7 @@ jobs:
             echo "Branch name:   ${{ steps.extract_branch.outputs.branch }}"
             echo "Repository:    ${{ github.repository }}"
             echo "Commit-Id:     ${{ github.sha }}"
+            echo "Owner:         ${{ github.repository_owner }}"
             echo "FORCE_PUSH:    ${{ vars.FORCE_PUSH }}"
 
       #########################################################################
@@ -106,7 +107,7 @@ jobs:
       - name: Checkout MOOSE_INCLUDE
         uses: actions/checkout@v4
         with:
-          repository: kaltokri/MOOSE_INCLUDE
+          repository: ${{ github.repository_owner }}/MOOSE_INCLUDE
           path: './build/MOOSE_INCLUDE'
           fetch-depth: 0
           ref: ${{ steps.extract_branch.outputs.branch }}
