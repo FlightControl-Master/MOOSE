@@ -62,6 +62,7 @@
 --   * @{#CONTROLLABLE.TaskLandAtZone}: (AIR) Land the controllable at a @{Core.Zone#ZONE_RADIUS).
 --   * @{#CONTROLLABLE.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the controllable at a specified altitude.
 --   * @{#CONTROLLABLE.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified altitude during a specified duration with a specified speed.
+--   * @{#CONTROLLABLE.TaskStrafing}: (AIR) Strafe a point Vec2 with onboard weapons.
 --   * @{#CONTROLLABLE.TaskRefueling}: (AIR) Refueling from the nearest tanker. No parameters.
 --   * @{#CONTROLLABLE.TaskRecoveryTanker}: (AIR) Set  group to act as recovery tanker for a naval group.
 --   * @{#CONTROLLABLE.TaskRoute}: (AIR + GROUND) Return a Mission task to follow a given route defined by Points.
