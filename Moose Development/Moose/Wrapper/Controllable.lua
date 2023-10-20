@@ -909,6 +909,30 @@ function CONTROLLABLE:CommandEPLRS( SwitchOnOff, Delay )
   return self
 end
 
+--- Set unlimited fuel. See [DCS command Unlimited Fuel](https://wiki.hoggitworld.com/view/DCS_command_setUnlimitedFuel).
+-- @param #CONTROLLABLE self
+-- @param #boolean OnOff Set unlimited fuel on = true or off = false.
+-- @param #number Delay (Optional) Set the option only after x seconds.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandSetUnlimitedFuel(OnOff, Delay)
+
+  local CommandSetFuel = {
+    id = 'SetUnlimitedFuel', 
+    params = { 
+    value = OnOff 
+  } 
+}
+
+  if Delay and Delay > 0 then
+    SCHEDULER:New( nil, self.CommandSetUnlimitedFuel, { self, OnOff }, Delay )
+  else
+    self:SetCommand( CommandSetFuel )
+  end
+
+  return self
+end
+
+
 --- Set radio frequency. See [DCS command EPLRS](https://wiki.hoggitworld.com/view/DCS_command_setFrequency)
 -- @param #CONTROLLABLE self
 -- @param #number Frequency Radio frequency in MHz.
@@ -1073,6 +1097,42 @@ function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, D
   return DCSTask
 end
 
+--- (AIR) Strafe the point on the ground.
+-- @param #CONTROLLABLE self
+-- @param DCS#Vec2 Vec2 2D-coordinates of the point to deliver strafing at.
+-- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aircraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aircraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+-- @param #number Length (optional) Length of the strafing area.
+-- @param #number WeaponType (optional) The WeaponType. WeaponType is a number associated with a [corresponding weapons flags](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag)
+-- @param DCS#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much ammunition will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion, e.g. AI.Task.WeaponExpend.ALL.
+-- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
+-- @param #boolean GroupAttack (optional) If true, all units in the group will attack the Unit when found.
+-- @return DCS#Task The DCS task structure.
+-- @usage
+-- local attacker = GROUP:FindByName("Aerial-1")
+-- local attackVec2 = ZONE:New("Strafe Attack"):GetVec2()
+-- -- Attack with any cannons = 805306368, 4 runs, strafe a field of 200 meters
+-- local task = attacker:TaskStrafing(attackVec2,4,200,805306368,AI.Task.WeaponExpend.ALL)
+-- attacker:SetTask(task,2)
+function CONTROLLABLE:TaskStrafing( Vec2, AttackQty, Length, WeaponType, WeaponExpend, Direction, GroupAttack )
+
+  local DCSTask =  { 
+    id = 'Strafing', 
+    params = { 
+     point = Vec2, -- req
+     weaponType = WeaponType or 1073741822,
+     expend = WeaponExpend or "Auto", 
+     attackQty = AttackQty or 1,  -- req
+     attackQtyLimit = AttackQty >1 and true or false,
+     direction = Direction and math.rad(Direction) or 0, 
+     directionEnabled = Direction and true or false,
+     groupAttack = GroupAttack or false, 
+     length = Length, 
+    } 
+}
+
+  return DCSTask
+end
+
 --- (AIR) Attacking the map object (building, structure, etc).
 -- @param #CONTROLLABLE self
 -- @param DCS#Vec2 Vec2 2D-coordinates of the point to deliver weapon at.
@@ -1094,7 +1154,6 @@ function CONTROLLABLE:TaskAttackMapObject( Vec2, GroupAttack, WeaponExpend, Atta
       groupAttack      = GroupAttack or false,
       expend           = WeaponExpend or "Auto",
       attackQtyLimit   = AttackQty and true or false,
-      attackQty        = AttackQty,
       directionEnabled = Direction and true or false,
       direction        = Direction and math.rad(Direction) or 0,
       altitudeEnabled  = Altitude and true or false,
