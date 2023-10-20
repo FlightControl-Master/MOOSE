@@ -55,6 +55,8 @@ local MooseSourcesFile = assert(io.open( PathConvert(MooseModulesFilePath), "r" 
 local MooseSource = MooseSourcesFile:read("*l")
 
 while( MooseSource ) do
+  -- Remove Windows line endings. Can occur when using act
+  MooseSource = string.gsub(MooseSource, "\r", "")
   
   if MooseSource ~= "" then
     MooseSource = string.match( MooseSource, "Scripts/Moose/(.+)'" )
