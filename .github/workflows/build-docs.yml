@@ -136,7 +136,7 @@ jobs:
 
       - name: Copy build result to MOOSE_DOCS
         run: |
-          cp ./build/doc/*.html ./build/MOOSE_DOCS/Documentation/
+          cp ./build/doc/*.* ./build/MOOSE_DOCS/Documentation/
 
       - name: Push result to docs repository
         if: ${{ vars.FORCE_PUSH == 'true' }}
