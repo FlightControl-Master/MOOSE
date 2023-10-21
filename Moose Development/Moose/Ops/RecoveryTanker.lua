@@ -63,6 +63,7 @@
 -- @field #boolean eplrs If true, enable data link, e.g. if used as AWACS.
 -- @field #boolean recovery If true, tanker will recover using the AIRBOSS marshal pattern.
 -- @field #number terminaltype Terminal type of used parking spots on airbases.
+-- @field #boolean unlimitedfuel If true, the tanker will have unlimited fuel.
 -- @extends Core.Fsm#FSM
 
 --- Recovery Tanker.
@@ -300,6 +301,7 @@ RECOVERYTANKER = {
   eplrs           = nil,
   recovery        = nil,
   terminaltype    = nil,
+  unlimitedfuel   = false,
 }
 
 --- Unique ID (global).
@@ -308,7 +310,7 @@ _RECOVERYTANKERID=0
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="1.0.9"
+RECOVERYTANKER.version="1.0.10"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -326,6 +328,7 @@ RECOVERYTANKER.version="1.0.9"
 -- DONE: Set AA TACAN.
 -- DONE: Add refueling event/state.
 -- DONE: Possibility to add already present/spawned aircraft, e.g. for warehouse.
+-- DONE: Add unlimited fuel
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -549,6 +552,15 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Set the tanker to have unlimited fuel.
+-- @param #RECOVERYTANKER self
+-- @param #boolean OnOff If true, the tanker will have unlimited fuel.
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetUnlimitedFuel(OnOff)
+  self.unlimitedfuel = OnOff
+  return self
+end
 
 --- Set the speed the tanker flys in its orbit pattern.
 -- @param #RECOVERYTANKER self
@@ -898,6 +910,14 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
   
   -- Spawn tanker. We need to introduce an alias in case this class is used twice. This would confuse the spawn routine.
   local Spawn=SPAWN:NewWithAlias(self.tankergroupname, self.alias)
+  
+  if self.unlimitedfuel then
+    Spawn:OnSpawnGroup(
+      function (grp)
+        grp:CommandSetUnlimitedFuel(self.unlimitedfuel)
+      end
+    )
+  end
   
   -- Set radio frequency and modulation.
   Spawn:InitRadioCommsOnOff(true)
