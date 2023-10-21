@@ -94,6 +94,18 @@ jobs:
         working-directory: ${{ github.workspace }}/build/tools/luadocumentor
 
       #########################################################################
+      # Replace <head> tag
+      #########################################################################
+      - name: Replace head tag
+        run: |
+          python3 "${{ github.workspace }}/Moose Development/docs-header.py"
+        working-directory: ${{ github.workspace }}/build/doc
+
+      - name: Check replacement of head tag
+        run: |
+          head -10 ${{ github.workspace }}/build/doc/AI.AI_A2A_Cap.html
+
+      #########################################################################
       # Push to MOOSE_DOCS
       #########################################################################
       - name: Set docs repo for branch
@@ -124,7 +136,7 @@ jobs:
 
       - name: Copy build result to MOOSE_DOCS
         run: |
-          cp ./build/doc/*.html ./build/MOOSE_DOCS/Documentation/
+          cp ./build/doc/*.* ./build/MOOSE_DOCS/Documentation/
 
       - name: Push result to docs repository
         if: ${{ vars.FORCE_PUSH == 'true' }}
