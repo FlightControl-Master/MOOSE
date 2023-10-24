@@ -5329,3 +5329,51 @@ function CONTROLLABLE:TaskAerobaticsBarrelRoll(TaskAerobatics,Repeats,InitAltitu
   return TaskAerobatics
 end
 
+ 
+--- [Air] Make an airplane or helicopter patrol between two points in a racetrack - resulting in a much tighter track around the start and end points.
+-- @param #CONTROLLABLE self
+-- @param Core.Point#COORDINATE Point1 Start point.
+-- @param Core.Point#COORDINATE Point2 End point.
+-- @param #number Altitude (Optional) Altitude in meters. Defaults to the altitude of the coordinate.
+-- @param #number Speed (Optional) Speed in kph. Defaults to 500 kph.
+-- @param #number Formation (Optional) Formation to take, e.g. ENUMS.Formation.FixedWing.Trail.Close, also see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_option_formation).
+-- @param #number Delay  (Optional) Set the task after delay seconds only.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:PatrolRaceTrack(Point1, Point2, Altitude, Speed, Formation, Delay)
+
+  local PatrolGroup = self -- Wrapper.Group#GROUP
+  
+  if not self:IsInstanceOf( "GROUP" ) then
+    PatrolGroup = self:GetGroup() -- Wrapper.Group#GROUP
+  end
+   
+  local delay = Delay or 1
+  
+  self:F( { PatrolGroup = PatrolGroup:GetName() } )
+  
+  if PatrolGroup:IsAir() then 
+    if Formation then
+       PatrolGroup:SetOption(AI.Option.Air.id.FORMATION,Formation) -- https://wiki.hoggitworld.com/view/DCS_option_formation
+   end
+  
+   local FromCoord = PatrolGroup:GetCoordinate()
+   local ToCoord = Point1:GetCoordinate()
+   
+   -- Calculate the new Route
+   if Altitude then
+     FromCoord:SetAltitude(Altitude)
+     ToCoord:SetAltitude(Altitude)
+   end
+            
+   -- Create a "air waypoint", which is a "point" structure that can be given as a parameter to a Task
+   local Route = {}  
+   Route[#Route + 1] = FromCoord:WaypointAir( AltType, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, Speed, true, nil, DCSTasks, description, timeReFuAr )
+   Route[#Route + 1] = ToCoord:WaypointAir( AltType, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, Speed, true, nil, DCSTasks, description, timeReFuAr )
+  
+   local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRaceTrack", Point2, Point1, Altitude, Speed, Formation, Delay )
+   PatrolGroup:SetTaskWaypoint( Route[#Route], TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+   PatrolGroup:Route( Route, Delay ) -- Move after delay seconds to the Route. See the Route method for details.
+  end
+  
+  return self
+end
