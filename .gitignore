@@ -227,3 +227,5 @@ MooseCodeWS.code-workspace
 # Excludes for act (https://github.com/nektos/act)
 .secrets
 .env
+.actrc
+.vars
