@@ -3616,9 +3616,10 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   end
 
   -- Print queue after processing requests.
-  self:_PrintQueue(self.queue, "Queue waiting")
-  self:_PrintQueue(self.pending, "Queue pending")
-
+  if self.verbosity > 2 then
+    self:_PrintQueue(self.queue, "Queue waiting")
+    self:_PrintQueue(self.pending, "Queue pending")
+  end
   -- Check fuel for all assets.
   --self:_CheckFuel()
 
@@ -4101,9 +4102,9 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
   -- Get the size of an object.
   local function _GetObjectSize(DCSdesc)
     if DCSdesc.box then
-      local x=DCSdesc.box.max.x+math.abs(DCSdesc.box.min.x)  --length
-      local y=DCSdesc.box.max.y+math.abs(DCSdesc.box.min.y)  --height
-      local z=DCSdesc.box.max.z+math.abs(DCSdesc.box.min.z)  --width
+      local x=DCSdesc.box.max.x-DCSdesc.box.min.x  --length
+      local y=DCSdesc.box.max.y-DCSdesc.box.min.y  --height
+      local z=DCSdesc.box.max.z-DCSdesc.box.min.z  --width
       return math.max(x,z), x , y, z
     end
     return 0,0,0,0
@@ -5498,8 +5499,13 @@ function WAREHOUSE:onafterAssetDead(From, Event, To, asset, request)
       ---
   
       -- Remove dead group from cargo group set.
-      request.cargogroupset:Remove(groupname, NoTriggerEvent)
-      self:T(self.lid..string.format("Removed selfpropelled cargo %s: ncargo=%d.", groupname, request.cargogroupset:Count()))
+      if request.cargogroupset then
+        -- cargogroupset was nil for user case. Difficult to reproduce so we add a nil check.
+        request.cargogroupset:Remove(groupname, NoTriggerEvent)
+        self:T(self.lid..string.format("Removed selfpropelled cargo %s: ncargo=%d.", groupname, request.cargogroupset:Count()))
+      else
+        self:E(self.lid..string.format("ERROR: cargogroupset is nil for request ID=%s!", tostring(request.uid)))
+      end
   
     else
   
@@ -6671,7 +6677,13 @@ function WAREHOUSE:_OnEventCrashOrDead(EventData)
         self:Destroyed()
       end
       if self.airbase and self.airbasename and self.airbasename==EventData.IniUnitName then
-        self:RunwayDestroyed()      
+        if self:IsRunwayOperational() then
+          -- Trigger RunwayDestroyed event (only if it is not destroyed already)
+          self:RunwayDestroyed()
+        else
+          -- Reset the time stamp.
+          self.runwaydestroyed=timer.getAbsTime()
+        end        
       end
     end
 
@@ -8223,7 +8235,7 @@ end
 -- @return #number Request ID.
 function WAREHOUSE:_GetIDsFromGroupName(groupname)
 
-  ---@param #string text The text to analyse.
+  -- @param #string text The text to analyse.
   local function analyse(text)
 
     -- Get rid of #0001 tail from spawn.
