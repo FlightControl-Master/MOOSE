@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update Sept 2023
+-- @date Last Update Oct 2023
 
 
 do
@@ -98,7 +98,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.20"
+PLAYERTASK.version="0.1.21"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -470,10 +470,11 @@ end
 --- [User] Remove a client from this task
 -- @param #PLAYERTASK self
 -- @param Wrapper.Client#CLIENT Client
+-- @param #string Name Name of the client
 -- @return #PLAYERTASK self
-function PLAYERTASK:RemoveClient(Client)
+function PLAYERTASK:RemoveClient(Client,Name)
   self:T(self.lid.."RemoveClient")
-  local name = Client:GetPlayerName()
+  local name = Name or Client:GetPlayerName()
   if self.Clients:HasUniqueID(name) then
     self.Clients:PullByID(name)
     if self.verbose then
@@ -1551,7 +1552,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.61"
+PLAYERTASKCONTROLLER.version="0.1.62"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -2184,6 +2185,10 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
           local Client = _DATABASE:FindClient( EventData.IniPlayerName )
           if Client then
             task:RemoveClient(Client)
+            --text = "Task aborted!"
+            text = self.gettext:GetEntry("TASKABORT",self.locale)
+          else
+            task:RemoveClient(nil,EventData.IniPlayerName)
             --text = "Task aborted!"
             text = self.gettext:GetEntry("TASKABORT",self.locale)
           end
