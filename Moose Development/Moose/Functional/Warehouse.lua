@@ -3616,9 +3616,10 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   end
 
   -- Print queue after processing requests.
-  self:_PrintQueue(self.queue, "Queue waiting")
-  self:_PrintQueue(self.pending, "Queue pending")
-
+  if self.verbosity > 2 then
+    self:_PrintQueue(self.queue, "Queue waiting")
+    self:_PrintQueue(self.pending, "Queue pending")
+  end
   -- Check fuel for all assets.
   --self:_CheckFuel()
 

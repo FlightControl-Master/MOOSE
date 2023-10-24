@@ -965,7 +965,7 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission, Assets)
             local pause=false
           
             -- Check if mission is INTERCEPT and asset is currently on GCI mission. If so, GCI is paused.
-            if currM.type==AUFTRAG.Type.GCICAP and Mission.type==AUFTRAG.Type.INTERCEPT then
+            if (currM.type==AUFTRAG.Type.GCICAP or currM.type==AUFTRAG.Type.PATROLRACETRACK) and Mission.type==AUFTRAG.Type.INTERCEPT then
               pause=true
             elseif (currM.type==AUFTRAG.Type.ONGUARD or currM.type==AUFTRAG.Type.PATROLZONE) and (Mission.type==AUFTRAG.Type.ARTY or Mission.type==AUFTRAG.Type.GROUNDATTACK) then
               pause=true
@@ -3183,7 +3183,7 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
       if currmission.type==AUFTRAG.Type.ALERT5 and currmission.alert5MissionType==MissionType then
         -- Prefer assets that are on ALERT5 for this mission type.
         score=score+25
-      elseif currmission.type==AUFTRAG.Type.GCICAP and MissionType==AUFTRAG.Type.INTERCEPT then
+      elseif (currmission.type==AUFTRAG.Type.GCICAP or currmission.type==AUFTRAG.Type.PATROLRACETRACK) and MissionType==AUFTRAG.Type.INTERCEPT then
         -- Prefer assets that are on GCICAP to perform INTERCEPTS. We set this even higher than alert5 because they are already in the air.
         score=score+35
       elseif (currmission.type==AUFTRAG.Type.ONGUARD or currmission.type==AUFTRAG.Type.PATROLZONE) and (MissionType==AUFTRAG.Type.ARTY  or MissionType==AUFTRAG.Type.GROUNDATTACK) then
