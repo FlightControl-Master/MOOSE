@@ -2605,6 +2605,9 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n, N)
       elseif task.dcstask.id==AUFTRAG.SpecialTask.RECON then
         -- For recon missions, we need to allow the update as we insert new waypoints.
         self:T2(self.lid.."Allowing update route for Task: ReconMission")
+      elseif task.dcstask.id==AUFTRAG.SpecialTask.PATROLRACETRACK then
+        -- For recon missions, we need to allow the update as we insert new waypoints.
+        self:T2(self.lid.."Allowing update route for Task: Patrol Race Track")
       elseif task.dcstask.id==AUFTRAG.SpecialTask.HOVER then
         -- For recon missions, we need to allow the update as we insert new waypoints.
         self:T2(self.lid.."Allowing update route for Task: Hover")

@@ -4463,6 +4463,26 @@ function OPSGROUP:_UpdateTask(Task, Mission)
     if target then
       self:EngageTarget(target, speed, Task.dcstask.params.formation)
     end
+  
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.PATROLRACETRACK then
+  
+    ---
+    -- Task "Patrol Race Track" Mission.
+    ---
+    
+    if self.isFlightgroup then
+      self:T("We are Special Auftrag Patrol Race Track, starting now ...")
+      --self:I({Task.dcstask.params})
+      --[[
+          Task.dcstask.params.TrackAltitude = self.TrackAltitude
+          Task.dcstask.params.TrackSpeed = self.TrackSpeed
+          Task.dcstask.params.TrackPoint1 = self.TrackPoint1
+          Task.dcstask.params.TrackPoint2 = self.TrackPoint2
+          Task.dcstask.params.TrackFormation = self.TrackFormation
+      --]]
+      local aircraft = self:GetGroup()
+      aircraft:PatrolRaceTrack(Task.dcstask.params.TrackPoint1,Task.dcstask.params.TrackPoint2,Task.dcstask.params.TrackAltitude,Task.dcstask.params.TrackSpeed,Task.dcstask.params.TrackFormation,1)
+    end
     
   elseif Task.dcstask.id==AUFTRAG.SpecialTask.HOVER then
 

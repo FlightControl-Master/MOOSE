@@ -75,7 +75,7 @@ COHORT = {
   livery         =   nil,
   skill          =   nil,
   legion         =   nil,
-  Ngroups        =   nil,
+  --Ngroups        =   nil,
   Ngroups        =     0,
   engageRange    =   nil,
   tacanChannel   =    {},
@@ -1098,7 +1098,7 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
           -- Assets on mission NOTHING are considered.
           table.insert(assets, asset)
           
-        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.GCICAP) and MissionType==AUFTRAG.Type.INTERCEPT then
+        elseif self.legion:IsAssetOnMission(asset, {AUFTRAG.Type.GCICAP, AUFTRAG.Type.PATROLRACETRACK}) and MissionType==AUFTRAG.Type.INTERCEPT then
   
           -- Check if the payload of this asset is compatible with the mission.
           -- Note: we do not check the payload as an asset that is on a GCICAP mission should be able to do an INTERCEPT as well!
@@ -1595,4 +1595,3 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
