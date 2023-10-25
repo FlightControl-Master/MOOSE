@@ -4,7 +4,7 @@
 --
 --    * Manage aircraft departure and arrival
 --    * Handles AI and human players
---    * Limit number of AI groups taxiing, taking off and landing simultaniously
+--    * Limit number of AI groups taxiing, taking off and landing simultaneously
 --    * Immersive voice overs via SRS text-to-speech
 --    * Define holding patterns for airdromes
 --     
@@ -61,6 +61,7 @@
 -- @field #number runwaydestroyed Time stamp (abs), when runway was destroyed. If `nil`, runway is operational.
 -- @field #number runwayrepairtime Time in seconds until runway will be repaired after it was destroyed. Default is 3600 sec (one hour).
 -- @field #boolean markerParking If `true`, occupied parking spots are marked.
+-- @field #boolean nosubs If `true`, SRS TTS is without subtitles.
 -- @extends Core.Fsm#FSM
 
 --- **Ground Control**: Airliner X, Good news, you are clear to taxi to the active.
@@ -122,7 +123,7 @@
 -- * `Length` is the length of the pattern.
 -- * `FlightLevelMin` is the lowest altitude at which aircraft can hold.
 -- * `FlightLevelMax` is the highest altitude at which aircraft can hold.
--- * `Prio` is the priority of this holdig stacks. If multiple patterns are defined, patterns with higher prio will be filled first.
+-- * `Prio` is the priority of this holding stacks. If multiple patterns are defined, patterns with higher prio will be filled first.
 -- 
 -- # Parking Guard
 -- 
@@ -137,13 +138,13 @@
 -- 
 -- # Limits for Inbound and Outbound Flights
 -- 
--- You can define limits on how many aircraft are simultaniously landing and taking off. This avoids (DCS) problems where taxiing aircraft cause a "traffic jam" on the taxi way(s)
+-- You can define limits on how many aircraft are simultaneously landing and taking off. This avoids (DCS) problems where taxiing aircraft cause a "traffic jam" on the taxi way(s)
 -- and bring the whole airbase effectively to a stand still.
 -- 
 -- ## Landing Limits
 -- 
 -- The number of groups getting landing clearance can be set with the @{#FLIGHTCONTROL.SetLimitLanding}(*Nlanding, Ntakeoff*) function. 
--- The first parameter, `Nlanding`, defines how many groups get clearance simultaniously.
+-- The first parameter, `Nlanding`, defines how many groups get clearance simultaneously.
 -- 
 -- The second parameter, `Ntakeoff`, sets a limit on how many flights can take off whilst inbound flights still get clearance. By default, this is set to zero because the runway can only be used for takeoff *or*
 -- landing. So if you have a flight taking off, inbound fights will have to wait until the runway is clear. 
@@ -155,7 +156,7 @@
 -- ## Taxiing/Takeoff Limits
 -- 
 -- The number of AI flight groups getting clearance to taxi to the runway can be set with the @{#FLIGHTCONTROL.SetLimitTaxi}(*Nlanding, Ntakeoff*) function. 
--- The first parameter, `Ntaxi`, defines how many groups are allowed to taxi to the runway simultaniously. Note that once the AI starts to taxi, we loose complete control over it.
+-- The first parameter, `Ntaxi`, defines how many groups are allowed to taxi to the runway simultaneously. Note that once the AI starts to taxi, we loose complete control over it.
 -- They will follow their internal logic to get the the runway and take off. Therefore, giving clearance to taxi is equivalent to giving them clearance for takeoff.
 -- 
 -- By default, the parameter only counts the number of flights taxiing *to* the runway. If you set the second parameter, `IncludeInbound`, to `true`, this will also count the flights
@@ -237,9 +238,9 @@
 --     atcNellis:SetParkingGuardStatic("Static Generator F Template")
 --     -- Set taxi speed limit to 25 knots.
 --     atcNellis:SetSpeedLimitTaxi(25)
---     -- Set that max 3 groups are allowed to taxi simultaniously.
+--     -- Set that max 3 groups are allowed to taxi simultaneously.
 --     atcNellis:SetLimitTaxi(3, false, 1)
---     -- Set that max 2 groups are allowd to land simultaniously and unlimited number (99) groups can land, while other groups are taking off.
+--     -- Set that max 2 groups are allowd to land simultaneously and unlimited number (99) groups can land, while other groups are taking off.
 --     atcNellis:SetLimitLanding(2, 99)
 --     -- Use Google for text-to-speech.
 --     atcNellis:SetSRSTower(nil, nil, "en-AU-Standard-A", nil, nil, "D:\\Path To Google\\GoogleCredentials.json")
@@ -270,6 +271,7 @@ FLIGHTCONTROL = {
   Nparkingspots    = nil,
   holdingpatterns  =  {},
   hpcounter        =   0,
+  nosubs         =  false,
 }
 
 --- Holding point. Contains holding stacks.
@@ -327,7 +329,7 @@ FLIGHTCONTROL.FlightStatus={
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.7.3"
+FLIGHTCONTROL.version="0.7.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -407,6 +409,7 @@ function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS, Port, 
   self:SetFrequency(Frequency, Modulation)
   self:SetMarkHoldingPattern(true)
   self:SetRunwayRepairtime()
+  self.nosubs = false
   
   -- Set SRS Port
   self:SetSRSPort(Port or 5002)
@@ -556,6 +559,22 @@ function FLIGHTCONTROL:SetVerbosity(VerbosityLevel)
   return self
 end
 
+--- Set subtitles to appear on SRS TTS messages.
+-- @param #FLIGHTCONTROL self
+-- @return #FLIGHTCONTROL self
+function FLIGHTCONTROL:SwitchSubtitlesOn()
+  self.nosubs = false
+  return self
+end
+
+--- Set subtitles to appear on SRS TTS messages.
+-- @param #FLIGHTCONTROL self
+-- @return #FLIGHTCONTROL self
+function FLIGHTCONTROL:SwitchSubtitlesOff()
+  self.nosubs = true
+  return self
+end
+
 --- Set the tower frequency.
 -- @param #FLIGHTCONTROL self
 -- @param #number Frequency Frequency in MHz. Default 305 MHz.
@@ -595,7 +614,7 @@ end
 -- @param #string Culture Culture, e.g. "en-GB" (default).
 -- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
 -- @param #number Volume Volume. Default 1.0.
--- @param #string Label Name under which SRS transmitts.
+-- @param #string Label Name under which SRS transmits.
 -- @param #string PathToGoogleCredentials Path to google credentials json file.
 -- @param #number Port Server port for SRS
 -- @return #FLIGHTCONTROL self
@@ -626,7 +645,7 @@ end
 -- @param #string Culture Culture, e.g. "en-GB" (default).
 -- @param #string Voice Specific voice. Overrides `Gender` and `Culture`. See [Google Voices](https://cloud.google.com/text-to-speech/docs/voices).
 -- @param #number Volume Volume. Default 1.0.
--- @param #string Label Name under which SRS transmitts. Default `self.alias`.
+-- @param #string Label Name under which SRS transmits. Default `self.alias`.
 -- @param #string PathToGoogleCredentials Path to google credentials json file.
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetSRSTower(Gender, Culture, Voice, Volume, Label, PathToGoogleCredentials)
@@ -644,7 +663,7 @@ end
 -- @param #string Culture Culture, e.g. "en-US" (default).
 -- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
 -- @param #number Volume Volume. Default 1.0.
--- @param #string Label Name under which SRS transmitts. Default "Pilot".
+-- @param #string Label Name under which SRS transmits. Default "Pilot".
 -- @param #string PathToGoogleCredentials Path to google credentials json file.
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetSRSPilot(Gender, Culture, Voice, Volume, Label, PathToGoogleCredentials)
@@ -657,17 +676,17 @@ function FLIGHTCONTROL:SetSRSPilot(Gender, Culture, Voice, Volume, Label, PathTo
 end
 
 
---- Set the number of aircraft groups, that are allowed to land simultaniously.
+--- Set the number of aircraft groups, that are allowed to land simultaneously.
 -- Note that this restricts AI and human players.
 -- 
 -- By default, up to two groups get landing clearance. They are spaced out in time, i.e. after the first one got cleared, the second has to wait a bit.
 -- This
 -- 
 -- By default, landing clearance is only given when **no** other flight is taking off. You can adjust this for airports with more than one runway or 
--- in cases where simulatious takeoffs and landings are unproblematic. Note that only because there are multiple runways, it does not mean the AI uses them.
+-- in cases where simultaneous takeoffs and landings are unproblematic. Note that only because there are multiple runways, it does not mean the AI uses them.
 --  
 -- @param #FLIGHTCONTROL self
--- @param #number Nlanding Max number of aircraft landing simultaniously. Default 2.
+-- @param #number Nlanding Max number of aircraft landing simultaneously. Default 2.
 -- @param #number Ntakeoff Allowed number of aircraft taking off for groups to get landing clearance. Default 0. 
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetLimitLanding(Nlanding, Ntakeoff)
@@ -691,7 +710,7 @@ function FLIGHTCONTROL:SetLandingInterval(dt)
 end
 
 
---- Set the number of **AI** aircraft groups, that are allowed to taxi simultaniously.
+--- Set the number of **AI** aircraft groups, that are allowed to taxi simultaneously.
 -- If the limit is reached, other AI groups not get taxi clearance to taxi to the runway.
 -- 
 -- By default, this only counts the number of AI that taxi from their parking position to the runway.
@@ -887,7 +906,7 @@ end
 -- Note that this is the time, the DCS engine uses not something we can control on a user level or we could get via scripting.
 -- You need to input the value. On the DCS forum it was stated that this is currently one hour. Hence this is the default value.
 -- @param #FLIGHTCONTROL self
--- @param #number RepairTime Time in seconds until the runway is repaired. Default 3600 sec (one hour).
+-- @param #number RepairTime Time in seconds until the runway is repaired. Default 3600sec (one hour).
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetRunwayRepairtime(RepairTime)
   self.runwayrepairtime=RepairTime or 3600
@@ -1010,7 +1029,7 @@ function FLIGHTCONTROL:onbeforeStatusUpdate()
   if Tqueue>0 then
       -- Debug info.
       local text=string.format("Still got %d messages in the radio queue. Will call status again in %.1f sec", #self.msrsqueue, Tqueue)
-      self:I(self.lid..text)
+      self:T(self.lid..text)
         
       -- Call status again in dt seconds.
       self:__StatusUpdate(-Tqueue)
@@ -2753,9 +2772,10 @@ function FLIGHTCONTROL:_PlayerInfoATIS(groupname)
   if flight then
   
     local text=string.format("Airbase %s ATIS:", self.airbasename)
-    
+    local srstxt = string.format("Airbase %s ", self.airbasename)
     if self.atis then
       text=text..string.format("\nATIS %.3f MHz %s", self.atis.frequency, UTILS.GetModulationName(self.atis.modulation))
+      srstxt=srstxt..string.format("ATIS %.3f Megahertz %s", self.atis.frequency, UTILS.GetModulationName(self.atis.modulation))
       if self.atis.towerfrequency then
         local tower=""
         for _,freq in pairs(self.atis.towerfrequency) do
@@ -2779,7 +2799,17 @@ function FLIGHTCONTROL:_PlayerInfoATIS(groupname)
     end
 
     -- Message to flight
-    self:TextMessageToFlight(text, flight, 10, true)
+    
+    --self:TextMessageToFlight(text, flight, 10, true)
+    -- Call sign.
+    local callsign=self:_GetCallsignName(flight)
+           
+    -- Pilot calls inbound for landing.
+    local rtext=string.format("%s, %s, request ATIS frequency.", self.alias, callsign)
+    
+    -- Radio message.
+    self:TransmissionPilot(rtext, flight)
+    self:TransmissionTower(srstxt,flight,10)
     
   else
     self:E(self.lid..string.format("Cannot find flight group %s.", tostring(groupname)))
@@ -3390,7 +3420,7 @@ function FLIGHTCONTROL:_PlayerRequestDirectLanding(groupname)
       if nTakeoff>self.NlandingTakeoff then
 
         -- Message text.
-        local text=string.format("%s, negative! We have currently traffic taking off",  callsign)
+        local text=string.format("%s, negative! We have currently traffic taking off!",  callsign)
             
         -- Send message.
         self:TransmissionTower(text, flight, 10)
@@ -3854,7 +3884,7 @@ function FLIGHTCONTROL:_PlayerArrived(groupname)
       else
       
         -- Message text.
-        local text=string.format("%s, %s, arrived at parking position", self.alias, callsign)
+        local text=string.format("%s, %s, arrived at parking position.", self.alias, callsign)
         
         -- Transmit message.
         self:TransmissionPilot(text, flight)
@@ -4277,7 +4307,7 @@ function FLIGHTCONTROL:TransmissionTower(Text, Flight, Delay)
   local subgroups=nil
   if Flight and not Flight.isAI then
     local playerData=Flight:_GetPlayerData()
-    if playerData.subtitles then
+    if playerData.subtitles and (not self.nosubs) then
       subgroups=subgroups or {}
       table.insert(subgroups, Flight.group)
     end
@@ -4324,7 +4354,7 @@ function FLIGHTCONTROL:TransmissionPilot(Text, Flight, Delay)
     local subgroups=nil
     if Flight and not Flight.isAI then
       local playerData=Flight:_GetPlayerData()
-      if playerData.subtitles then
+      if playerData.subtitles and (not self.nosubs) then
         subgroups=subgroups or {}
         table.insert(subgroups, Flight.group)
       end
