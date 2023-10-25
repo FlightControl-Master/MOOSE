@@ -5337,9 +5337,10 @@ end
 -- @param #number Altitude (Optional) Altitude in meters. Defaults to the altitude of the coordinate.
 -- @param #number Speed (Optional) Speed in kph. Defaults to 500 kph.
 -- @param #number Formation (Optional) Formation to take, e.g. ENUMS.Formation.FixedWing.Trail.Close, also see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_option_formation).
+-- @param #boolean AGL (Optional) If true, set altitude to above ground level (AGL), not above sea level (ASL).
 -- @param #number Delay  (Optional) Set the task after delay seconds only.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:PatrolRaceTrack(Point1, Point2, Altitude, Speed, Formation, Delay)
+function CONTROLLABLE:PatrolRaceTrack(Point1, Point2, Altitude, Speed, Formation, AGL, Delay)
 
   local PatrolGroup = self -- Wrapper.Group#GROUP
   
@@ -5361,8 +5362,10 @@ function CONTROLLABLE:PatrolRaceTrack(Point1, Point2, Altitude, Speed, Formation
    
    -- Calculate the new Route
    if Altitude then
-     FromCoord:SetAltitude(Altitude)
-     ToCoord:SetAltitude(Altitude)
+     local asl = true
+     if AGL then asl = false end
+     FromCoord:SetAltitude(Altitude, asl)
+     ToCoord:SetAltitude(Altitude, asl)
    end
             
    -- Create a "air waypoint", which is a "point" structure that can be given as a parameter to a Task

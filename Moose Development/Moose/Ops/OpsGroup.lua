@@ -4481,7 +4481,7 @@ function OPSGROUP:_UpdateTask(Task, Mission)
           Task.dcstask.params.TrackFormation = self.TrackFormation
       --]]
       local aircraft = self:GetGroup()
-      aircraft:PatrolRaceTrack(Task.dcstask.params.TrackPoint1,Task.dcstask.params.TrackPoint2,Task.dcstask.params.TrackAltitude,Task.dcstask.params.TrackSpeed,Task.dcstask.params.TrackFormation,1)
+      aircraft:PatrolRaceTrack(Task.dcstask.params.TrackPoint1,Task.dcstask.params.TrackPoint2,Task.dcstask.params.TrackAltitude,Task.dcstask.params.TrackSpeed,Task.dcstask.params.TrackFormation,false,1)
     end
     
   elseif Task.dcstask.id==AUFTRAG.SpecialTask.HOVER then
