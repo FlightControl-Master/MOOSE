@@ -1055,8 +1055,8 @@ end
 --- **[AIR]** Create an enhanced orbit race track mission. Planes will keep closer to the track.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to start the race track.
--- @param #number Altitude (Optional) Altitude in feet. Defaults to 20,000ft.
--- @param #number Speed (Optional) Speed in knots. Defaults to 300kn.
+-- @param #number Altitude (Optional) Altitude in feet. Defaults to 20,000ft ASL.
+-- @param #number Speed (Optional) Speed in knots. Defaults to 300kn TAS.
 -- @param #number Heading (Optional) Heading in degrees, 0 to 360. Defaults to 90 degree (East).
 -- @param #number Leg (Optional) Leg of the race track in NM. Defaults to 10nm.
 -- @param #number Formation (Optional) Formation to take, e.g. ENUMS.Formation.FixedWing.Trail.Close, also see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_option_formation).

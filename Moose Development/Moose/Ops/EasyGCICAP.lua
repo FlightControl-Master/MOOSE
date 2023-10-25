@@ -569,8 +569,8 @@ end
 -- @param #EASYGCICAP self
 -- @param #string AirbaseName Name of the Wing's airbase
 -- @param Core.Point#COORDINATE Coordinate.
--- @param #number Altitude Defaults to 25000 feet.
--- @param #number Speed  Defaults to 300 knots.
+-- @param #number Altitude Defaults to 25000 feet ASL.
+-- @param #number Speed  Defaults to 300 knots TAS.
 -- @param #number Heading Defaults to 90 degrees (East).
 -- @param #number LegLength Defaults to 15 NM.
 -- @return #EASYGCICAP self
