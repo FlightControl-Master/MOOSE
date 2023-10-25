@@ -35,7 +35,7 @@ Main build steps to create the include files are defined in [.github/workflows/b
     - Push results to [MOOSE_INCLUDE] repository
 
 [.github/workflows/build-includes.yml]: https://github.com/FlightControl-Master/MOOSE/blob/master/.github/workflows/build-includes.yml
-[tree]: https://www.cyberciti.biz/faq/linux-show-directory-structure-command-line/
+[tree]: https://wiki.ubuntuusers.de/tree/
 [lua5.3]: https://www.lua.org/manual/5.3/
 [LuaRocks]: https://luarocks.org/
 [LuaCheck]: https://github.com/mpeterv/luacheck
