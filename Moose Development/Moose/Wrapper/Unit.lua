@@ -561,7 +561,7 @@ end
 
 --- Check if the unit is a tanker. Also retrieves the refuelling system (boom or probe) if applicable.
 -- @param #UNIT self
--- @return #boolean If true, unit is refuelable (checks for the attribute "Refuelable").
+-- @return #boolean If true, unit is a tanker (checks for the attribute "Tankers").
 -- @return #number Refueling system (if any): 0=boom, 1=probe.
 function UNIT:IsTanker()
   self:F2( self.UnitName )
@@ -582,7 +582,7 @@ function UNIT:IsTanker()
     -- Some hard coded data as this is not in the descriptors...
     if typename=="IL-78M" then
       system=1 --probe
-    elseif typename=="KC130" then
+    elseif typename=="KC130" or typename=="KC130J" then
       system=1 --probe
     elseif typename=="KC135BDA" then
       system=1 --probe
@@ -590,6 +590,10 @@ function UNIT:IsTanker()
       system=1 --probe
     elseif typename=="S-3B Tanker" then
       system=1 --probe
+    elseif typename=="KC_10_Extender" then
+      system=1 --probe
+    elseif typename=="KC_10_Extender_D" then
+      system=0 --boom
     end
     
   end

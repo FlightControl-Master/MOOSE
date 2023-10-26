@@ -972,6 +972,7 @@ function COHORT:CanMission(Mission)
   
     if Mission.refuelSystem and Mission.refuelSystem==self.tankerSystem then
       -- Correct refueling system.
+      self:T(self.lid..string.format("INFO: Correct refueling system requested=%s != %s=available", tostring(Mission.refuelSystem), tostring(self.tankerSystem)))
     else
       self:T(self.lid..string.format("INFO: Wrong refueling system requested=%s != %s=available", tostring(Mission.refuelSystem), tostring(self.tankerSystem)))
       return false
