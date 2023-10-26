@@ -56,7 +56,7 @@ Main build steps to create the class documentation are defined in [.github/workf
     - Copy build result to `MOOSE_DOCS` folder.
     - Push results to the target repository.
 
-[tree]: https://www.cyberciti.biz/faq/linux-show-directory-structure-command-line/
+[tree]: https://wiki.ubuntuusers.de/tree/
 [LuaDoc]: https://keplerproject.github.io/luadoc/
 [LuaDocumentor]: https://luarocks.org/modules/luarocks/luadocumentor
 [Applevangelist/luadocumentor]: https://github.com/Applevangelist/luadocumentor/tree/patch-1

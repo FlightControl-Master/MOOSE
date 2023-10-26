@@ -34,7 +34,7 @@ This can be displayed as follows:
 - You need a working installation of [Docker].
 - Go to the `docs` subfolder.
 - Run `docker compose up`.
-- Open a browser with the following URL: <http://127.0.0.1:4000/>.
+- Open a browser with the following URL: `http://127.0.0.1:4000/`.
 - After a change of the [Markdown] files, wait some seconds and press F5 in the browser.
 
 [GitHub Pages]: https://pages.github.com/

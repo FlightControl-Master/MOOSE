@@ -1,3 +1,5 @@
+baseurl: ""
+url: "https://flightcontrol-master.github.io"
 repository: FlightControl-Master/MOOSE
 title: MOOSE
 description: MOOSE is a Mission Object Oriented Scripting Environment for mission designers in DCS World
