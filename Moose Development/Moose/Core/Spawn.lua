@@ -2783,7 +2783,7 @@ end
 -- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 -- @usage
 --
---   local SpawnPointVec2 = ZONE:New( ZoneName ):GetPointVec2()
+--   local SpawnPointVec2 = ZONE:New( ZoneName ):GetPointVec2() 
 --
 --   -- Spawn at the zone center position at the height specified in the ME of the group template!
 --   SpawnAirplanes:SpawnFromPointVec2( SpawnPointVec2 )
