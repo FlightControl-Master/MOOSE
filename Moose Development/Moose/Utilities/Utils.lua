@@ -100,7 +100,10 @@ CALLSIGN={
     Texaco=1,
     Arco=2,
     Shell=3,
-  },
+    Navy_One=4,
+    Mauler=5,
+    Bloodhound=6,  
+    },
   -- JTAC
   JTAC={
     Axeman=1,
