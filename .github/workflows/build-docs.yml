@@ -5,6 +5,15 @@ on:
     branches:
       - master
       - develop
+    paths:
+      - 'Moose Setup/**/*.lua'
+      - 'Moose Development/**/*.lua'
+      - 'Moose Development/**/*.py'
+      - 'Moose Development/**/*.html'
+      - '.github/workflows/build-docs.yml'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   Build:
