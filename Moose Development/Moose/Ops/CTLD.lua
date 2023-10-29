@@ -19,10 +19,12 @@
 -- ===
 --
 -- ### Author: **Applevangelist** (Moose Version), ***Ciribob*** (original), Thanks to: Shadowze, Cammel (testing), bbirchnz (additional code!!)
+-- ### Repack addition for crates: **Raiden**
+-- 
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update June 2023
+-- Last Update October 2023
 
 do 
 
@@ -1146,6 +1148,7 @@ CTLD = {
 -- DONE: List cargo in stock
 -- DONE: Limit of troops, crates buildable?
 -- DONE: Allow saving of Troops & Vehicles
+-- DONE: Adding re-packing dropped units
 ------------------------------
 
 --- Radio Beacons
@@ -1225,7 +1228,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.40"
+CTLD.version="1.0.41"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
