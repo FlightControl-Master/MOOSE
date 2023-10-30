@@ -46,8 +46,6 @@
 --
 -- ===
 --
--- ![Banner Image](OPS_CSAR.jpg)
---
 -- # CSAR Concept
 -- 
 --  * MOOSE-based Helicopter CSAR Operations for Players.

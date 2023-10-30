@@ -980,7 +980,7 @@ do -- CARGO
 
   --- Report to a Carrier Group with a Flaring signal.
   -- @param #CARGO self
-  -- @param Utils#UTILS.FlareColor FlareColor the color of the flare.
+  -- @param Utilities.Utils#UTILS.FlareColor FlareColor the color of the flare.
   -- @return #CARGO
   function CARGO:ReportFlare( FlareColor )
 
@@ -989,7 +989,7 @@ do -- CARGO
 
   --- Report to a Carrier Group with a Smoking signal.
   -- @param #CARGO self
-  -- @param Utils#UTILS.SmokeColor SmokeColor the color of the smoke.
+  -- @param Utilities.Utils#UTILS.SmokeColor SmokeColor the color of the smoke.
   -- @return #CARGO
   function CARGO:ReportSmoke( SmokeColor )
 
