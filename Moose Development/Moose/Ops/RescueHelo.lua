@@ -64,8 +64,6 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\RESCUEHELO\RescueHelo_Main.png)
---
 -- # Recue Helo
 --
 -- The rescue helo will fly in close formation with another unit, which is typically an aircraft carrier.

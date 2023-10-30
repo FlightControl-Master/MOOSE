@@ -601,7 +601,7 @@ do
 --
 -- ===
 --
--- ![Banner Image](OPS_CTLD.jpg)
+-- ![Banner Image](../Images/OPS_CTLD.jpg)
 --
 -- # CTLD Concept
 -- 

@@ -893,7 +893,7 @@ do
 
   --- Function to get the HQ object for further use
   -- @param #MANTIS self
-  -- @return Wrapper.GROUP#GROUP The HQ #GROUP object or *nil* if it doesn't exist
+  -- @return Wrapper.Group#GROUP The HQ #GROUP object or *nil* if it doesn't exist
   function MANTIS:GetCommandCenter()
     self:T(self.lid .. "GetCommandCenter")
     if self.HQ_CC then
@@ -929,7 +929,7 @@ do
 
   --- Function to set the HQ object for further use
   -- @param #MANTIS self
-  -- @param Wrapper.GROUP#GROUP group The #GROUP object to be set as HQ
+  -- @param Wrapper.Group#GROUP group The #GROUP object to be set as HQ
   function MANTIS:SetCommandCenter(group)
     self:T(self.lid .. "SetCommandCenter")
     local group = group or nil
@@ -991,7 +991,7 @@ do
 
   --- Set using your own #INTEL_DLINK object instead of #DETECTION
   -- @param #MANTIS self
-  -- @param Ops.Intelligence#INTEL_DLINK DLink The data link object to be used.
+  -- @param Ops.Intel#INTEL_DLINK DLink The data link object to be used.
   function MANTIS:SetUsingDLink(DLink)
     self:T(self.lid .. "SetUsingDLink")
     self.DLink = true

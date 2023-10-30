@@ -225,7 +225,7 @@
 --
 -- * Landing: When an aircraft tries to land at an airport where it does not have a valid parking spot, it is immidiately despawned the moment its wheels touch the runway, i.e.
 -- when a landing event is triggered. This leads to the loss of the RAT aircraft. On possible way to circumvent the this problem is to let another RAT aircraft spawn at landing
--- and not when it shuts down its engines. See the @{RAT.RespawnAfterLanding}() function.
+-- and not when it shuts down its engines. See the @{#RAT.RespawnAfterLanding}() function.
 -- * Spawning: When a big aircraft is dynamically spawned on a small airbase a few things can go wrong. For example, it could be spawned at a parking spot with a shelter.
 -- Or it could be damaged by a scenery object when it is taxiing out to the runway, or it could overlap with other aircraft on parking spots near by.
 --
@@ -2474,11 +2474,11 @@ end
 -- @param #RAT self
 -- @param #number takeoff Takeoff type. Could also be air start.
 -- @param #number landing Landing type. Could also be a destination in air.
--- @param Wrapper.Airport#AIRBASE _departure (Optional) Departure airbase.
--- @param Wrapper.Airport#AIRBASE _destination (Optional) Destination airbase.
+-- @param Wrapper.Airbase#AIRBASE _departure (Optional) Departure airbase.
+-- @param Wrapper.Airbase#AIRBASE _destination (Optional) Destination airbase.
 -- @param #table _waypoint Initial waypoint.
--- @return Wrapper.Airport#AIRBASE Departure airbase.
--- @return Wrapper.Airport#AIRBASE Destination airbase.
+-- @return Wrapper.Airbase#AIRBASE Departure airbase.
+-- @return Wrapper.Airbase#AIRBASE Destination airbase.
 -- @return #table Table of flight plan waypoints.
 -- @return #nil If no valid departure or destination airport could be found.
 function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
