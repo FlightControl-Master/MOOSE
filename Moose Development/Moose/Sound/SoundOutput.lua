@@ -313,7 +313,7 @@ do -- Text-To-Speech
   --
   -- ## Specific Voice
   -- 
-  -- You can use a specific voice for the transmission with the @{SOUNDTEXT.SetVoice}(*VoiceName*) function. Here are some examples
+  -- You can use a specific voice for the transmission with the @{#SOUNDTEXT.SetVoice}(*VoiceName*) function. Here are some examples
   --
   -- * Name: Microsoft Hazel Desktop, Culture: en-GB,  Gender: Female, Age: Adult, Desc: Microsoft Hazel Desktop - English (Great Britain)
   -- * Name: Microsoft David Desktop, Culture: en-US,  Gender: Male, Age: Adult, Desc: Microsoft David Desktop - English (United States)

@@ -249,7 +249,7 @@ do -- FSM
   --
   -- ### Linear Transition Example
   --
-  -- This example is fully implemented in the MOOSE test mission on GITHUB: [FSM-100 - Transition Explanation](https://github.com/FlightControl-Master/MOOSE/blob/master/Moose%20Test%20Missions/FSM%20-%20Finite%20State%20Machine/FSM-100%20-%20Transition%20Explanation/FSM-100%20-%20Transition%20Explanation.lua)
+  -- This example is fully implemented in the MOOSE test mission on GITHUB: [FSM-100 - Transition Explanation](https://github.com/FlightControl-Master/MOOSE_MISSIONS/blob/master/FSM%20-%20Finite%20State%20Machine/FSM-100%20-%20Transition%20Explanation/FSM-100%20-%20Transition%20Explanation.lua)
   --
   -- It models a unit standing still near Batumi, and flaring every 5 seconds while switching between a Green flare and a Red flare.
   -- The purpose of this example is not to show how exciting flaring is, but it demonstrates how a Linear Transition FSM can be build.
