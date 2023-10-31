@@ -1,0 +1,36 @@
+baseurl: ""
+url: "https://flightcontrol-master.github.io"
+repository: FlightControl-Master/MOOSE
+title: MOOSE
+description: MOOSE is a Mission Object Oriented Scripting Environment for mission designers in DCS World
+theme: just-the-docs
+color_scheme: moose
+
+gh_edit_link: false
+gh_edit_link_text: "Edit this page on GitHub"
+gh_edit_repository: https://github.com/FlightControl-Master/MOOSE
+gh_edit_branch: master
+gh_edit_source: docs
+gh_edit_view_mode: edit
+
+callouts_level: quiet # or loud
+callouts:
+  highlight:
+    color: grey-dk
+  important:
+    title: Important
+    color: red
+  new:
+    title: New
+    color: grey-lt
+  note:
+    title: Note
+    color: green
+  warning:
+    title: Warning
+    color: yellow
+callouts_opacity: 0.4
+
+aux_links:
+  GitHub: https://github.com/FlightControl-Master/MOOSE
+  Discord: https://discord.gg/aQtjcR94Qf

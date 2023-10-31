@@ -30,7 +30,7 @@
 -- 
 -- ### Contributions: 
 -- 
---   * [**Entropy**](https://forums.eagle.ru/member.php?u=111471), **Afinegan**: Came up with the requirement for AIOnOff().
+--   * **Entropy**, **Afinegan**: Came up with the requirement for AIOnOff().
 -- 
 -- ===
 -- 
@@ -305,6 +305,8 @@ function GROUP:GetDCSObject()
 
   if DCSGroup then
     return DCSGroup
+  else
+    env.error("ERROR: Could not get DCS group object!")
   end
 
   return nil
@@ -1870,7 +1872,7 @@ function GROUP:InitModex(modex)
   return self
 end
 
---- Respawn the @{Wrapper.Group} at a @{Point}.
+--- Respawn the @{Wrapper.Group} at a @{Core.Point}.
 -- The method will setup the new group template according the Init(Respawn) settings provided for the group.
 -- These settings can be provided by calling the relevant Init...() methods of the Group.
 -- 

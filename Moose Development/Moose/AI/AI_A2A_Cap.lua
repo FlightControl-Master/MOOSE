@@ -91,12 +91,12 @@
 -- An optional @{Core.Zone} can be set,
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- Use the method @{#AI_A2A_CAP.SetEngageZone}() to define that Zone.
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- ===
 --
 -- @field #AI_A2A_CAP
@@ -123,7 +123,7 @@ function AI_A2A_CAP:New2( AICap, EngageMinSpeed, EngageMaxSpeed, EngageFloorAlti
 
   -- Multiple inheritance ... :-)
   local AI_Air = AI_AIR:New( AICap )
-  local AI_Air_Patrol = AI_AIR_PATROL:New( AI_Air, AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) -- #AI_AIR_PATROL
+  local AI_Air_Patrol = AI_AIR_PATROL:New( AI_Air, AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
   local AI_Air_Engage = AI_AIR_ENGAGE:New( AI_Air_Patrol, AICap, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType )
   local self = BASE:Inherit( self, AI_Air_Engage ) --#AI_A2A_CAP
 

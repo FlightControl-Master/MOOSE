@@ -443,6 +443,7 @@ _AUFTRAGSNR=0
 -- @field #string REARMING Rearming mission.
 -- @field #string CAPTUREZONE Capture zone mission.
 -- @field #string NOTHING Nothing.
+-- @field #string PATROLRACETRACK Patrol Racetrack.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",
@@ -484,10 +485,10 @@ AUFTRAG.Type={
   RELOCATECOHORT="Relocate Cohort",
   AIRDEFENSE="Air Defence",
   EWR="Early Warning Radar",
-  --RECOVERYTANKER="Recovery Tanker",
   REARMING="Rearming",
   CAPTUREZONE="Capture Zone",
   NOTHING="Nothing",
+  PATROLRACETRACK="Patrol Racetrack",
 }
 
 --- Special task description.
@@ -511,6 +512,7 @@ AUFTRAG.Type={
 -- @field #string REARMING Rearming.
 -- @field #string CAPTUREZONE Capture OPS zone.
 -- @field #string NOTHING Nothing.
+-- @field #string PATROLRACETRACK Patrol Racetrack.
 AUFTRAG.SpecialTask={
   FORMATION="Formation",
   PATROLZONE="PatrolZone",
@@ -532,6 +534,7 @@ AUFTRAG.SpecialTask={
   REARMING="Rearming",
   CAPTUREZONE="Capture Zone",  
   NOTHING="Nothing",
+  PATROLRACETRACK="Patrol Racetrack",
 }
 
 --- Mission status.
@@ -652,7 +655,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="1.2.0"
+AUFTRAG.version="1.2.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1017,7 +1020,7 @@ end
 -- @param #number Altitude Hover altitude in feet AGL. Default is 50 feet above ground.
 -- @param #number Time Time in seconds to hold the hover. Default 300 seconds.
 -- @param #number Speed Speed in knots to fly to the target coordinate. Default 150kn.
--- @param #number MissionAlt Altitide to fly towards the mission in feet AGL. Default 1000ft.
+-- @param #number MissionAlt Altitude to fly towards the mission in feet AGL. Default 1000ft.
 -- @return #AUFTRAG self
 function AUFTRAG:NewHOVER(Coordinate, Altitude, Time, Speed, MissionAlt)
 
@@ -1048,6 +1051,58 @@ function AUFTRAG:NewHOVER(Coordinate, Altitude, Time, Speed, MissionAlt)
 
   return mission
 end
+
+--- **[AIR]** Create an enhanced orbit race track mission. Planes will keep closer to the track.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Coordinate Where to start the race track.
+-- @param #number Altitude (Optional) Altitude in feet. Defaults to 20,000ft ASL.
+-- @param #number Speed (Optional) Speed in knots. Defaults to 300kn TAS.
+-- @param #number Heading (Optional) Heading in degrees, 0 to 360. Defaults to 90 degree (East).
+-- @param #number Leg (Optional) Leg of the race track in NM. Defaults to 10nm.
+-- @param #number Formation (Optional) Formation to take, e.g. ENUMS.Formation.FixedWing.Trail.Close, also see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_option_formation).
+-- @return #AUFTRAG self
+function AUFTRAG:NewPATROL_RACETRACK(Coordinate,Altitude,Speed,Heading,Leg,Formation)
+  
+  local mission = AUFTRAG:New(AUFTRAG.Type.PATROLRACETRACK)
+  
+    -- Target.
+  mission:_TargetFromObject(Coordinate)
+  
+  -- Set Altitude.  
+  if Altitude then
+    mission.TrackAltitude=UTILS.FeetToMeters(Altitude)
+  else
+    mission.TrackAltitude=UTILS.FeetToMeters(20000)
+  end
+  
+  -- Points
+  mission.TrackPoint1 = Coordinate
+  
+  local leg = UTILS.NMToMeters(Leg) or UTILS.NMToMeters(10)
+  
+  local heading = Heading or 90
+  
+  if heading < 0 or heading > 360 then heading = 90 end
+  
+  mission.TrackPoint2 = Coordinate:Translate(leg,heading,true)
+  
+  -- Orbit speed in m/s TAS.
+  mission.TrackSpeed = UTILS.IasToTas(UTILS.KnotsToKmph(Speed or 300), mission.TrackAltitude)
+  
+  -- Mission speed in km/h and altitude
+  mission.missionSpeed = UTILS.KnotsToKmph(Speed or 300)
+  mission.missionAltitude = mission.TrackAltitude * 0.9
+  mission.missionTask=ENUMS.MissionTask.CAP
+  mission.optionROE=ENUMS.ROE.ReturnFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  return mission
+end
+
 
 --- **[AIR]** Create an ORBIT mission, which can be either a circular orbit or a race-track pattern.
 -- @param #AUFTRAG self
@@ -1181,7 +1236,7 @@ function AUFTRAG:NewORBIT_GROUP(Group, Altitude, Speed, Leg, Heading, OffsetVec2
 end
 
 
---- **[AIR]** Create a Ground Controlled CAP (GCICAP) mission. Flights with this task are considered for A2A INTERCEPT missions by the CHIEF class. They will perform a compat air patrol but not engage by
+--- **[AIR]** Create a Ground Controlled CAP (GCICAP) mission. Flights with this task are considered for A2A INTERCEPT missions by the CHIEF class. They will perform a combat air patrol but not engage by
 -- themselfs. They wait for the CHIEF to tell them whom to engage.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
@@ -2688,6 +2743,8 @@ function AUFTRAG:NewAUTO(EngageGroup)
     mission=AUFTRAG:NewTANKER(Coordinate,Altitude,Speed,Heading,Leg,RefuelSystem)
   elseif auftrag==AUFTRAG.Type.TROOPTRANSPORT then
     mission=AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet,DropoffCoordinate,PickupCoordinate)
+  elseif auftrag==AUFTRAG.Type.PATROLRACETRACK then
+    mission=AUFTRAG:NewPATROL_RACETRACK(Coordinate,Altitude,Speed,Heading,Leg,Formation)
   else
 
   end
@@ -6343,8 +6400,32 @@ function AUFTRAG:GetDCSMissionTask()
 
     DCStask.params=param
 
-    table.insert(DCStasks, DCStask)   
+    table.insert(DCStasks, DCStask)
+       
+  elseif self.type==AUFTRAG.Type.PATROLRACETRACK then
 
+    ---------------------
+    -- Enhanced Orbit Racetrack --
+    ---------------------
+
+    local DCStask={}
+    DCStask.id=AUFTRAG.SpecialTask.PATROLRACETRACK
+
+    local param={}
+    -- ONTROLLABLE:PatrolRaceTrack(Point1, Point2, Altitude, Speed, Formation, Delay)
+    
+    param.TrackAltitude = self.TrackAltitude
+    param.TrackSpeed = self.TrackSpeed
+    param.TrackPoint1 = self.TrackPoint1
+    param.TrackPoint2 = self.TrackPoint2
+    param.missionSpeed = self.missionSpeed
+    param.missionAltitude = self.missionAltitude
+    param.TrackFormation = self.TrackFormation
+
+    DCStask.params=param
+
+    table.insert(DCStasks, DCStask)
+    
   elseif self.type==AUFTRAG.Type.HOVER then
 
     ---------------------
@@ -6619,6 +6700,8 @@ function AUFTRAG:GetMissionTaskforMissionType(MissionType)
     mtask=ENUMS.MissionTask.NOTHING
   elseif MissionType==AUFTRAG.Type.HOVER then
     mtask=ENUMS.MissionTask.NOTHING
+  elseif MissionType==AUFTRAG.Type.PATROLRACETRACK then
+    mtask=ENUMS.MissionTask.CAP
   end
 
   return mtask

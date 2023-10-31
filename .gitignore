@@ -227,11 +227,12 @@ pip-log.txt
 _gsdata_/
 
 #GITHUB
-.gitattributes
-.gitignore
 Moose Test Missions/MOOSE_Test_Template.miz
 Moose Development/Moose/.vscode/launch.json
 MooseCodeWS.code-workspace
-.gitignore
-.gitignore
-/.gitignore
+
+# Excludes for act (https://github.com/nektos/act)
+.secrets
+.env
+.actrc
+.vars

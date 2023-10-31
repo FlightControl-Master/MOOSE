@@ -252,7 +252,7 @@ end
 --- Set a Detection method for the EscortClient to be reported upon.
 -- Detection methods are based on the derived classes from DETECTION_BASE.
 -- @param #ESCORT self
--- @param Function.Detection#DETECTION_BASE Detection
+-- @param Functional.Detection#DETECTION_BASE Detection
 function ESCORT:SetDetection( Detection )
 
   self.Detection = Detection

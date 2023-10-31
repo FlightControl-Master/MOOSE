@@ -19,10 +19,12 @@
 -- ===
 --
 -- ### Author: **Applevangelist** (Moose Version), ***Ciribob*** (original), Thanks to: Shadowze, Cammel (testing), bbirchnz (additional code!!)
+-- ### Repack addition for crates: **Raiden**
+-- 
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update June 2023
+-- Last Update October 2023
 
 do 
 
@@ -599,7 +601,7 @@ do
 --
 -- ===
 --
--- ![Banner Image](OPS_CTLD.jpg)
+-- ![Banner Image](../Images/OPS_CTLD.jpg)
 --
 -- # CTLD Concept
 -- 
@@ -700,6 +702,7 @@ do
 --
 --          my_ctld.useprefix = true -- (DO NOT SWITCH THIS OFF UNLESS YOU KNOW WHAT YOU ARE DOING!) Adjust **before** starting CTLD. If set to false, *all* choppers of the coalition side will be enabled for CTLD.
 --          my_ctld.CrateDistance = 35 -- List and Load crates in this radius only.
+--          my_ctld.PackDistance = 35 -- Pack crates in this radius only
 --          my_ctld.dropcratesanywhere = false -- Option to allow crates to be dropped anywhere.
 --          my_ctld.dropAsCargoCrate = false -- Parachuted herc cargo is not unpacked automatically but placed as crate to be unpacked. Needs a cargo with the same name defined like the cargo that was dropped.
 --          my_ctld.maximumHoverHeight = 15 -- Hover max this high to load.
@@ -1121,6 +1124,7 @@ CTLD = {
   Spawned_Crates = {}, -- Holds objects for crates spawned generally
   Spawned_Cargo = {}, -- Binds together spawned_crates and their CTLD_CARGO objects
   CrateDistance = 35, -- list crates in this radius
+  PackDistance = 35,  -- pack crates in this radius
   debug = false,
   wpZones = {},
   dropOffZones = {},
@@ -1144,6 +1148,7 @@ CTLD = {
 -- DONE: List cargo in stock
 -- DONE: Limit of troops, crates buildable?
 -- DONE: Allow saving of Troops & Vehicles
+-- DONE: Adding re-packing dropped units
 ------------------------------
 
 --- Radio Beacons
@@ -1223,7 +1228,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.40"
+CTLD.version="1.0.41"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1341,6 +1346,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   
   -- setup
   self.CrateDistance = 35 -- list/load crates in this radius
+  self.PackDistance = 35 -- pack objects in this radius
   self.ExtractFactor = 3.33 -- factor for troops extraction, i.e. CrateDistance * Extractfactor
   self.prefixes = Prefixes or {"Cargoheli"}
   self.useprefix = true
@@ -2260,9 +2266,10 @@ end
 -- @param #CTLD_CARGO Cargo
 -- @param #number number Number of crates to generate (for dropping)
 -- @param #boolean drop If true we\'re dropping from heli rather than loading.
-function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
+-- @param #boolean pack If true we\'re packing crates from a template rather than loading or dropping
+function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
   self:T(self.lid .. " _GetCrates")
-  if not drop then
+  if not drop and not pack then
     local cgoname = Cargo:GetName()
     -- check if we have stock
     local instock = Cargo:GetStock()
@@ -2279,18 +2286,20 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   local width = 20
   local distance = nil
   local zone = nil
-  if not drop then 
+  if not drop and not pack then 
     inzone = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
     if not inzone then
 ---@diagnostic disable-next-line: cast-local-type
       inzone, ship, zone, distance, width  = self:IsUnitInZone(Unit,CTLD.CargoZoneType.SHIP)
     end
-  else
+  elseif drop and not pack then
     if self.dropcratesanywhere then -- #1570
       inzone = true
     else
       inzone = self:IsUnitInZone(Unit,CTLD.CargoZoneType.DROP)
     end
+  elseif pack and not drop then
+    inzone = true
   end
   
   if not inzone then
@@ -3233,6 +3242,42 @@ end
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Unit#UNIT Unit
+
+function CTLD:_PackCratesNearby(Group, Unit)
+  self:T(self.lid .. " _PackCratesNearby")
+  -----------------------------------------
+  -- search for nearest group to player
+  -- determine if group is packable
+  -- generate crates and destroy group
+  -----------------------------------------
+
+  -- get nearby vehicles
+  local location = Group:GetCoordinate() -- get coordinate of group using function
+  local nearestGroups = SET_GROUP:New():FilterCoalitions("blue"):FilterZones({ZONE_RADIUS:New("TempZone", location:GetVec2(), self.PackDistance, false)}):FilterOnce() -- get all groups withing PackDistance from group using function
+  -- get template name of all vehicles in zone
+
+  -- determine if group is packable
+  for _, _Group in pairs(nearestGroups.Set) do -- convert #SET_GROUP to a list of Wrapper.Group#GROUP
+    for _, _Template in pairs(_DATABASE.Templates.Groups) do -- iterate through the database of templates
+      if (string.match(_Group:GetName(), _Template.GroupName)) then -- check if the Wrapper.Group#GROUP near the player is in the list of templates by name
+        -- generate crates and destroy group
+        for _, _entry in pairs(self.Cargo_Crates) do -- iterate through #CTLD_CARGO
+          if (_entry.Templates[1] == _Template.GroupName) then -- check if the #CTLD_CARGO matches the template name
+            _Group:Destroy() -- if a match is found destroy the Wrapper.Group#GROUP near the player
+            self:_GetCrates(Group, Unit, _entry, nil, false, true) -- spawn the appropriate crates near the player
+            return self
+          end
+        end
+      end
+    end
+  end
+  return self
+end
+
+--- (Internal) Function to repair nearby vehicles / FOBs
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Unit#UNIT Unit
 -- @param #boolean Engineering If true, this is an engineering role
 function CTLD:_RepairCrates(Group, Unit, Engineering)
   self:T(self.lid .. " _RepairCrates")
@@ -3541,6 +3586,7 @@ function CTLD:_RefreshF10Menus()
           if cancrates then 
             local loadmenu = MENU_GROUP_COMMAND:New(_group,"Load crates",topcrates, self._LoadCratesNearby, self, _group, _unit)
             local cratesmenu = MENU_GROUP:New(_group,"Get Crates",topcrates)
+            local packmenu = MENU_GROUP_COMMAND:New(_group, "Pack crates", topcrates, self._PackCratesNearby, self, _group, _unit)
             
             if self.usesubcats then
               local subcatmenus = {}

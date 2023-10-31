@@ -54,7 +54,9 @@
 -- @field #string takeoffType Take of type.
 -- @field #boolean despawnAfterLanding Aircraft are despawned after landing.
 -- @field #boolean despawnAfterHolding Aircraft are despawned after holding.
---
+-- @field #boolean capOptionPatrolRaceTrack Use closer patrol race track or standard orbit auftrag.
+-- @field #number capFormation If capOptionPatrolRaceTrack is true, set the formation, also.
+-- 
 -- @extends Ops.Legion#LEGION
 
 --- *I fly because it releases my mind from the tyranny of petty things.* -- Antoine de Saint-Exupery
@@ -128,6 +130,8 @@ AIRWING = {
   pointsAWACS    =    {},
   pointsRecon    =    {},
   markpoints     =   false,
+  capOptionPatrolRaceTrack = false,
+  capFormation   =    nil,
 }
 
 --- Payload data.
@@ -179,7 +183,7 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.9.3"
+AIRWING.version="0.9.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -699,6 +703,24 @@ function AIRWING:SetNumberCAP(n)
   return self
 end
 
+--- Set CAP flight formation.
+-- @param #AIRWING self
+-- @param #number Formation Formation to take, e.g. ENUMS.Formation.FixedWing.Trail.Close, also see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_option_formation).
+-- @return #AIRWING self
+function AIRWING:SetCAPFormation(Formation)
+  self.capFormation = Formation
+  return self
+end
+
+--- Set CAP close race track.We'll utilize the AUFTRAG PatrolRaceTrack instead of a standard race track orbit task.
+-- @param #AIRWING self
+-- @param #boolean OnOff If true, switch this on, else switch off. Off by default.
+-- @return #AIRWING self
+function AIRWING:SetCapCloseRaceTrack(OnOff)
+  self.capOptionPatrolRaceTrack = OnOff
+  return self
+end
+
 --- Set number of TANKER flights with Boom constantly in the air.
 -- @param #AIRWING self
 -- @param #number Nboom Number of flights. Default 1.
@@ -1112,13 +1134,14 @@ end
 -- @return #AIRWING self
 function AIRWING:CheckCAP()
 
-  local Ncap=0 --self:CountMissionsInQueue({AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT})
+  local Ncap=0 
+
 
   -- Count CAP missions.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
 
-    if mission:IsNotOver() and mission.type==AUFTRAG.Type.GCICAP and mission.patroldata then
+    if mission:IsNotOver() and (mission.type==AUFTRAG.Type.GCICAP or mission.type == AUFTRAG.Type.PATROLRACETRACK) and mission.patroldata then
       Ncap=Ncap+1
     end
 
@@ -1130,8 +1153,18 @@ function AIRWING:CheckCAP()
 
     local altitude=patrol.altitude+1000*patrol.noccupied
 
-    local missionCAP=AUFTRAG:NewGCICAP(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg)
-
+    local missionCAP = nil -- Ops.Auftrag#AUFTRAG
+    
+    if self.capOptionPatrolRaceTrack then
+      
+      missionCAP=AUFTRAG:NewPATROL_RACETRACK(patrol.coord,altitude,patrol.speed,patrol.heading,patrol.leg, self.capFormation)
+      
+    else
+        
+      missionCAP=AUFTRAG:NewGCICAP(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg)
+    
+    end
+    
     missionCAP.patroldata=patrol
 
     patrol.noccupied=patrol.noccupied+1
@@ -1150,7 +1183,7 @@ end
 -- @return #AIRWING self
 function AIRWING:CheckRECON()
 
-  local Ncap=0 --self:CountMissionsInQueue({AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT})
+  local Ncap=0
 
   -- Count CAP missions.
   for _,_mission in pairs(self.missionqueue) do
@@ -1277,7 +1310,6 @@ function AIRWING:CheckAWACS()
     end
 
   end
-
 
   for i=1,self.nflightsAWACS-N do
 

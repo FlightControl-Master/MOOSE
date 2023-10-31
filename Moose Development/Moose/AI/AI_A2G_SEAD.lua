@@ -14,38 +14,25 @@
 
 
 --- @type AI_A2G_SEAD
--- @extends AI.AI_A2G_Patrol#AI_AIR_PATROL
+-- @extends AI.AI_Air_Patrol#AI_AIR_PATROL
+-- @extends AI.AI_Air_Engage#AI_AIR_ENGAGE
 
 
 --- Implements the core functions to SEAD intruders. Use the Engage trigger to intercept intruders.
 -- 
--- ![Process](..\Presentations\AI_GCI\Dia3.JPG)
--- 
 -- The AI_A2G_SEAD is assigned a @{Wrapper.Group} and this must be done before the AI_A2G_SEAD process can be started using the **Start** event.
--- 
--- ![Process](..\Presentations\AI_GCI\Dia4.JPG)
 -- 
 -- The AI will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
 -- Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
 -- 
--- ![Process](..\Presentations\AI_GCI\Dia5.JPG)
--- 
 -- This cycle will continue.
 -- 
--- ![Process](..\Presentations\AI_GCI\Dia6.JPG)
--- 
 -- During the patrol, the AI will detect enemy targets, which are reported through the **Detected** event.
---
--- ![Process](..\Presentations\AI_GCI\Dia9.JPG)
 -- 
 -- When enemies are detected, the AI will automatically engage the enemy.
 -- 
--- ![Process](..\Presentations\AI_GCI\Dia10.JPG)
--- 
 -- Until a fuel or damage threshold has been reached by the AI, or when the AI is commanded to RTB.
 -- When the fuel threshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
--- 
--- ![Process](..\Presentations\AI_GCI\Dia13.JPG)
 -- 
 -- ## 1. AI_A2G_SEAD constructor
 --   
@@ -53,27 +40,16 @@
 --
 -- ## 3. Set the Range of Engagement
 -- 
--- ![Range](..\Presentations\AI_GCI\Dia11.JPG)
--- 
 -- An optional range can be set in meters, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- The range can be beyond or smaller than the range of the Patrol Zone.
 -- The range is applied at the position of the AI.
--- Use the method @{AI.AI_GCI#AI_A2G_SEAD.SetEngageRange}() to define that range.
 --
--- ## 4. Set the Zone of Engagement
+-- # Developer Note
 -- 
--- ![Zone](..\Presentations\AI_GCI\Dia12.JPG)
--- 
--- An optional @{Core.Zone} can be set, 
--- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_CAP#AI_CAP_ZONE.SetEngageZone}() to define that Zone. -- TODO: Documentation. Check that this is actually correct. The originally referenced class does not exist.
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- ===
 -- 
 -- @field #AI_A2G_SEAD
@@ -99,7 +75,7 @@ AI_A2G_SEAD = {
 function AI_A2G_SEAD:New2( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
   local AI_Air = AI_AIR:New( AIGroup )
-  local AI_Air_Patrol = AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) -- #AI_AIR_PATROL
+  local AI_Air_Patrol = AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
   local AI_Air_Engage = AI_AIR_ENGAGE:New( AI_Air_Patrol, AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType )
   local self = BASE:Inherit( self, AI_Air_Engage )
 

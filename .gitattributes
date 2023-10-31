@@ -15,3 +15,7 @@
 *.PDF	 diff=astextplain
 *.rtf	 diff=astextplain
 *.RTF	 diff=astextplain
+
+# Avoid Windows line endings on shell scripts
+# Needed for dockerfile builds
+*.sh text eol=lf

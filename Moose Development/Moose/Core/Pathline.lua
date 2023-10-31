@@ -11,7 +11,7 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
--- 
+--
 -- ===
 -- @module Core.Pathline
 -- @image CORE_Pathline.png
@@ -31,30 +31,30 @@
 -- ===
 --
 -- # The PATHLINE Concept
--- 
+--
 -- List of points defining a path from A to B. The pathline can consist of multiple points. Each point holds the information of its position, the surface type, the land height
 -- and the water depth (if over sea).
--- 
+--
 -- Line drawings created in the mission editor are automatically registered as pathlines and stored in the MOOSE database.
 -- They can be accessed with the @{#PATHLINE.FindByName) function.
--- 
+--
 -- # Constructor
--- 
+--
 -- The @{PATHLINE.New) function creates a new PATHLINE object. This does not hold any points. Points can be added with the @{#PATHLINE.AddPointFromVec2} and @{#PATHLINE.AddPointFromVec3}
--- 
+--
 -- For a given table of 2D or 3D positions, a new PATHLINE object can be created with the @{#PATHLINE.NewFromVec2Array} or @{#PATHLINE.NewFromVec3Array}, respectively.
--- 
+--
 -- # Line Drawings
--- 
+--
 -- The most convenient way to create a pathline is the draw panel feature in the DCS mission editor. You can select "Line" and then "Segments", "Segment" or "Free" to draw your lines.
 -- These line drawings are then automatically added to the MOOSE database as PATHLINE objects and can be retrieved with the @{#PATHLINE.FindByName) function, where the name is the one
 -- you specify in the draw panel.
--- 
+--
 -- # Mark on F10 map
--- 
--- The ponints of the PATHLINE can be marked on the F10 map with the @{#PATHLINE.MarkPoints}(`true`) function. The mark points contain information of the surface type, land height and 
+--
+-- The ponints of the PATHLINE can be marked on the F10 map with the @{#PATHLINE.MarkPoints}(`true`) function. The mark points contain information of the surface type, land height and
 -- water depth.
--- 
+--
 -- To remove the marks, use @{#PATHLINE.MarkPoints}(`false`).
 --
 -- @field #PATHLINE
@@ -108,7 +108,7 @@ function PATHLINE:New(Name)
 
   -- Inherit everything from INTEL class.
   local self=BASE:Inherit(self, BASE:New()) --#PATHLINE
-  
+
   self.name=Name or "Unknown Path"
 
   self.lid=string.format("PATHLINE %s | ", self.name)
@@ -172,7 +172,7 @@ end
 function PATHLINE:AddPointFromVec2(Vec2, Index, Point)
 
   if Vec2 then
-  
+
     -- Create a new point.
     local point=self:_CreatePoint(Vec2)
 
@@ -189,9 +189,9 @@ function PATHLINE:AddPointFromVec2(Vec2, Index, Point)
         -- Add add the end.
         table.insert(self.points, point)
       end
-    end 
+    end
   end
-  
+
   return self
 end
 
@@ -204,7 +204,7 @@ end
 function PATHLINE:AddPointFromVec3(Vec3, Index, Point)
 
   if Vec3 then
-  
+
     local point=self:_CreatePoint(Vec3)
 
     if Index then
@@ -219,17 +219,17 @@ function PATHLINE:AddPointFromVec3(Vec3, Index, Point)
         table.insert(self.points, point)
       end
     end
-  
-    return point  
+
+    return point
   end
-  
+
   return nil
 end
 
 --- Get name of pathline.
 -- @param #PATHLINE self
 -- @return #string Name of the pathline.
-function PATHLINE:GetName()  
+function PATHLINE:GetName()
   return self.name
 end
 
@@ -244,7 +244,7 @@ end
 --- Get points of pathline. Not that points are tables, that contain more information as just the 2D or 3D position but also the surface type etc.
 -- @param #PATHLINE self
 -- @return #list <Core.Pathline#PATHLINE.Point> List of points.
-function PATHLINE:GetPoints()  
+function PATHLINE:GetPoints()
   return self.points
 end
 
@@ -261,7 +261,7 @@ function PATHLINE:GetSetments()
     segment.p2=self.points[i+1]
     table.insert(segments, segment)
   end
-  
+
   return segments
 end
 
@@ -271,7 +271,7 @@ end
 function PATHLINE:GetPoints3D()
 
   local vecs={}
-  
+
   for _,_point in pairs(self.points) do
     local point=_point --#PATHLINE.Point
     table.insert(vecs, point.vec3)
@@ -286,7 +286,7 @@ end
 function PATHLINE:GetPoints2D()
 
   local vecs={}
-  
+
   for _,_point in pairs(self.points) do
     local point=_point --#PATHLINE.Point
     table.insert(vecs, point.vec2)
@@ -301,7 +301,7 @@ end
 function PATHLINE:GetCoordinats()
 
   local vecs={}
-  
+
   for _,_point in pairs(self.points) do
     local point=_point --#PATHLINE.Point
     local coord=COORDINATE:NewFromVec3(point.vec3)
@@ -318,11 +318,11 @@ end
 function PATHLINE:GetPointFromIndex(n)
 
   local N=self:GetNumberOfPoints()
-  
+
   n=n or 1
 
   local point=nil --#PATHLINE.Point
-  
+
   if n>=1 and n<=N then
     point=self.point[n]
   else
@@ -339,11 +339,11 @@ end
 function PATHLINE:GetPoint3DFromIndex(n)
 
   local point=self:GetPointFromIndex(n)
-  
+
   if point then
     return point.vec3
   end
-  
+
   return nil
 end
 
@@ -354,11 +354,11 @@ end
 function PATHLINE:GetPoint2DFromIndex(n)
 
   local point=self:GetPointFromIndex(n)
-  
+
   if point then
     return point.vec2
   end
-  
+
   return nil
 end
 
@@ -371,28 +371,28 @@ function PATHLINE:MarkPoints(Switch)
 
   for i,_point in pairs(self.points) do
     local point=_point --#PATHLINE.Point
-    
+
     if Switch==false then
-      
+
       if point.markerID then
         UTILS.RemoveMark(point.markerID)
       end
-      
+
     else
-    
+
       if point.markerID then
         UTILS.RemoveMark(point.markerID)
       end
-    
+
       point.markerID=UTILS.GetMarkID()
-      
+
       local text=string.format("Pathline %s: Point #%d [UID=%d]\nSurface Type=%d\nHeight=%.1f m\nDepth=%.1f m", self.name, i, point.uid, point.surfaceType, point.landHeight, point.depth)
-      
+
       trigger.action.markToAll(point.markerID, text, point.vec3, "")
-    
+
     end
   end
-  
+
   return self
 end
 
@@ -414,32 +414,32 @@ function PATHLINE:Draw(Switch, Coalition, Color, LineType)
 
     for i,_point in pairs(self.points) do
       local point=_point --#PATHLINE.Point
-        
+
       if point.lineID then
         UTILS.RemoveMark(point.lineID)
       end
-      
+
     end
-      
+
   else
 
     for i=2,#self.points do
-      
+
       local p1=self.points[i-1] --#PATHLINE.Point
       local p2=self.points[i]   --#PATHLINE.Point
-      
+
       if p2.lineID then
         UTILS.RemoveMark(p2.lineID)
       end
-    
+
       p2.lineID=UTILS.GetMarkID()
-    
+
       trigger.action.lineToAll(Coalition, p2.lineID, p1.vec3, p2.vec3, Color, LineType)
-      
+
     end
-    
+
   end
-  
+
   return self
 end
 
@@ -451,31 +451,31 @@ end
 -- @return #PATHLINE.Segment Closest segment of ref point.
 function PATHLINE:GetClosestPoint2D(Vec2)
 
-  local P=nil --DCS#Vec2  
+  local P=nil --DCS#Vec2
   local D=math.huge
   local S={} --#PATHLINE.Segment
-  
+
   for i=2,#self.points do
 
     local A=self.points[i-1] --#PATHLINE.Point
     local B=self.points[i]   --#PATHLINE.Point
-    
+
     local a=A.vec2
     local b=B.vec2
-        
-    local ab=UTILS.Vec2Substract(b, a)  
+
+    local ab=UTILS.Vec2Substract(b, a)
     local ap=UTILS.Vec2Substract(Vec2, a)
-    
+
     local proj=UTILS.Vec2Dot(ap, ab)
-    
+
     local lab=UTILS.Vec2Norm(ab)
-    
+
     local f=proj/lab/lab
-    
+
     -- Debug info.
     local text=string.format("FF Proj=%.1f, |ab|=%.1f, f=%.1f", proj, lab, f)
     self:T(self.lid..text)
-    
+
     -- Cases for finite segment.
     local p=nil --DCS#Vec2
     if f<0 then
@@ -484,21 +484,21 @@ function PATHLINE:GetClosestPoint2D(Vec2)
       p=b
     else
       local r=UTILS.Vec2Mult(ab, f)
-      p=UTILS.Vec2Add(a, r)  
+      p=UTILS.Vec2Add(a, r)
     end
-    
+
     -- Distance.
     local d=UTILS.VecDist2D(p, Vec2)
-    
+
     if d<=D then
       D=d
       P=p
       S.p1=A
       S.p2=B
     end
-    
+
   end
-  
+
   return P, D, S
 end
 
@@ -514,32 +514,32 @@ function PATHLINE:GetClosestPoint3D(Vec3)
   local P=nil --DCS#Vec3
   local D=math.huge
   local S={} --#PATHLINE.Segment
-  
+
   if not Vec3 then
     self:E(self.lid.."ERROR: input Vec3 is nil!")
     return nil, nil, nil
   end
-  
+
   for i=2,#self.points do
 
     local A=self.points[i-1] --#PATHLINE.Point
     local B=self.points[i]   --#PATHLINE.Point
-    
+
     local a=A.vec3
     local b=B.vec3
-        
-    local ab=UTILS.VecSubstract(b, a)  
+
+    local ab=UTILS.VecSubstract(b, a)
     local ap=UTILS.VecSubstract(Vec3, a)
-    
+
     local proj=UTILS.VecDot(ap, ab)
-    
+
     local lab=UTILS.VecNorm(ab)
-    
+
     local f=proj/lab/lab
-    
+
     -- Debug info.
     self:T(self.lid..string.format("Proj=%.1f, |ab|=%.1f, f=%.1f", proj, lab, f))
-    
+
     -- Cases for finite segment.
     local p=nil --DCS#Vec2
     if f<0 then
@@ -548,21 +548,21 @@ function PATHLINE:GetClosestPoint3D(Vec3)
       p=b
     else
       local r=UTILS.VecMult(ab, f)
-      p=UTILS.VecAdd(a, r)  
+      p=UTILS.VecAdd(a, r)
     end
-    
+
     -- Distance.
     local d=UTILS.VecDist3D(p, Vec3)
-    
+
     if d<=D then
       D=d
       P=p
       S.p1=A
       S.p2=B
     end
-    
+
   end
- 
+
   return P, D, S
 end
 
@@ -578,26 +578,26 @@ function PATHLINE:WriteJSON(FileName)
 
     -- JSON script.
     local json=loadfile("Scripts\\JSON.lua")()
-    
+
     local data={}
-    
+
     -- We store the name and the points.
-    data.name=self.name    
+    data.name=self.name
     data.points=self.points
     for i,_point in pairs(self.points) do
       local point=_point --#PATHLINE.Point
       --point.markerID=nil
     end
-    
+
     -- Encode data to raw JSON. Encode converts a lua table into JSON string that can be written to file.
     local raw_json=json:encode(data)
-    
+
     -- Debug data.
     self:T(data)
 
     -- Write in "User/Saved Games/" Folder.
     local filepath=lfs.writedir() .. FileName
-    
+
     -- Open file for writing.
     local f = io.open(filepath, "wb")
     if f then
@@ -607,10 +607,10 @@ function PATHLINE:WriteJSON(FileName)
     else
       self:E(self.lid .. string.format( "ERROR: Could not save PATHLINE to file %s", tostring(filepath)))
     end
-    
+
   else
     self:E(self.lid .. string.format( "ERROR: Could not save results because IO and/or LFS are not de-sanitized!"))
-  end  
+  end
 
 end
 
@@ -625,12 +625,12 @@ function PATHLINE:NewFromJSON(FileName)
 
     -- JSON script.
     local json=loadfile("Scripts\\JSON.lua")()
-    
+
     local data={}
-    
+
     -- Write in "User/Saved Games/" Folder.
     local filepath=lfs.writedir() .. FileName
-    
+
     --env.info(filepath)
 
     -- Open file in binary mode for reading.
@@ -642,36 +642,36 @@ function PATHLINE:NewFromJSON(FileName)
       env.info(string.format("WARNING: Could not load PATHLINE from file %s!", tostring(filepath)))
       return nil
     end
-    
+
     -- Decode JSON data to get a lua table.
     local data=json:decode(data)
-    
+
     if data and data.name then
 
       -- Create a new pathline instance.
       local self=PATHLINE:New(data.name)
-      
+
       for i=1,#data.points do
         local point=data.points[i] --#PATHLINE.Point
-        
+
         -- Create new point from data.
         local p=self:AddPointFromVec3(point.vec3)
-        
+
         -- Set name.
         p.name=point.name
-        
+
         -- Remove marker ID.
         p.markerID=nil
       end
-      
-      return self      
+
+      return self
     else
       BASE:E("ERROR: Cannot find pathline name in data from JSON file. File may be corrupted!")
     end
   else
     BASE:E("ERROR: IO and/or LFS not de-sanitized! Cannot read file.")
   end
-    
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -685,12 +685,12 @@ end
 function PATHLINE:_CreatePoint(Vec)
 
   local point={} --#PATHLINE.Point
-  
+
   self.counter=self.counter+1
-  
+
   point.uid=self.counter
   point.mother=self.name
-  
+
   point.name=string.format("%s #%d", self.name, point.uid)
 
   if Vec.z then
@@ -698,17 +698,17 @@ function PATHLINE:_CreatePoint(Vec)
     point.vec3=UTILS.DeepCopy(Vec)
     point.vec2={x=Vec.x, y=Vec.z}
   else
-    -- Given vec is 2D  
+    -- Given vec is 2D
     point.vec2=UTILS.DeepCopy(Vec)
     point.vec3={x=Vec.x, y=land.getHeight(Vec), z=Vec.y}
   end
 
   -- Get surface type.
   point.surfaceType=land.getSurfaceType(point.vec2)
-  
+
   -- Get land height and depth.
   point.landHeight, point.depth=land.getSurfaceHeightWithSeabed(point.vec2)
-  
+
   point.markerID=nil
 
   return point
@@ -722,11 +722,11 @@ function PATHLINE:_GetPointIndex(Point)
 
   for i,_point in pairs(self.points) do
     local point=_point --#PATHLINE.Point
-   
+
     if point.uid==Point.uid then
       return i
     end
-  
+
   end
 
   return nil

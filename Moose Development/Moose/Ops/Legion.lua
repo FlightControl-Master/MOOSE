@@ -965,7 +965,7 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission, Assets)
             local pause=false
           
             -- Check if mission is INTERCEPT and asset is currently on GCI mission. If so, GCI is paused.
-            if currM.type==AUFTRAG.Type.GCICAP and Mission.type==AUFTRAG.Type.INTERCEPT then
+            if (currM.type==AUFTRAG.Type.GCICAP or currM.type==AUFTRAG.Type.PATROLRACETRACK) and Mission.type==AUFTRAG.Type.INTERCEPT then
               pause=true
             elseif (currM.type==AUFTRAG.Type.ONGUARD or currM.type==AUFTRAG.Type.PATROLZONE) and (Mission.type==AUFTRAG.Type.ARTY or Mission.type==AUFTRAG.Type.GROUNDATTACK) then
               pause=true
@@ -1445,7 +1445,7 @@ end
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
 function LEGION:onafterLegionAssetReturned(From, Event, To, Cohort, Asset)
   -- Debug message.
-  self:I(self.lid..string.format("Asset %s from Cohort %s returned! asset.assignment=\"%s\"", Asset.spawngroupname, Cohort.name, tostring(Asset.assignment)))
+  self:T(self.lid..string.format("Asset %s from Cohort %s returned! asset.assignment=\"%s\"", Asset.spawngroupname, Cohort.name, tostring(Asset.assignment)))
 
   -- Stop flightgroup.
   if Asset.flightgroup and not Asset.flightgroup:IsStopped() then
@@ -2557,9 +2557,10 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
     
     -- Distance to target.
     local TargetDistance=TargetVec2 and UTILS.VecDist2D(TargetVec2, cohort.legion:GetVec2()) or 0
-    
+ 
     -- Is in range?
     local Rmax=cohort:GetMissionRange(WeaponTypes)
+    local RangeMax = RangeMax or 0    
     local InRange=(RangeMax and math.max(RangeMax, Rmax) or Rmax) >= TargetDistance
     
     return InRange    
@@ -2609,6 +2610,7 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
   
   -- Is capable of the mission type?
   local can=AUFTRAG.CheckMissionCapability(MissionType, Cohort.missiontypes)
+  
   
   if can then
     can=CheckCategory(Cohort)
@@ -2687,7 +2689,7 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
   return nil
 end
 
---- Recruit assets from Cohorts for the given parameters. **NOTE** that we set the `asset.isReserved=true` flag so it cant be recruited by anyone else.
+--- Recruit assets from Cohorts for the given parameters. **NOTE** that we set the `asset.isReserved=true` flag so it cannot be recruited by anyone else.
 -- @param #table Cohorts Cohorts included.
 -- @param #string MissionTypeRecruit Mission type for recruiting the cohort assets.
 -- @param #string MissionTypeOpt Mission type for which the assets are optimized. Default is the same as `MissionTypeRecruit`.
@@ -3181,7 +3183,7 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
       if currmission.type==AUFTRAG.Type.ALERT5 and currmission.alert5MissionType==MissionType then
         -- Prefer assets that are on ALERT5 for this mission type.
         score=score+25
-      elseif currmission.type==AUFTRAG.Type.GCICAP and MissionType==AUFTRAG.Type.INTERCEPT then
+      elseif (currmission.type==AUFTRAG.Type.GCICAP or currmission.type==AUFTRAG.Type.PATROLRACETRACK) and MissionType==AUFTRAG.Type.INTERCEPT then
         -- Prefer assets that are on GCICAP to perform INTERCEPTS. We set this even higher than alert5 because they are already in the air.
         score=score+35
       elseif (currmission.type==AUFTRAG.Type.ONGUARD or currmission.type==AUFTRAG.Type.PATROLZONE) and (MissionType==AUFTRAG.Type.ARTY  or MissionType==AUFTRAG.Type.GROUNDATTACK) then

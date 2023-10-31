@@ -27,7 +27,7 @@
 -- and creates a CSV file logging the scoring events and results for use at team or squadron websites.
 --
 -- SCORING automatically calculates the threat level of the objects hit and destroyed by players,
--- which can be @{Wrapper.Unit}, @{Static) and @{Scenery} objects.
+-- which can be @{Wrapper.Unit}, @{Wrapper.Static) and @{Scenery} objects.
 --
 -- Positive score points are granted when enemy or neutral targets are destroyed.
 -- Negative score points or penalties are given when a friendly target is hit or destroyed.
@@ -81,7 +81,7 @@
 --
 --   * **Wingthor (TAW)**: Testing & Advice.
 --   * **Dutch-Baron (TAW)**: Testing & Advice.
---   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing and Advice.
+--   * **Whisper**: Testing and Advice.
 --
 -- ===
 --

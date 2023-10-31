@@ -62,6 +62,7 @@
 --   * @{#CONTROLLABLE.TaskLandAtZone}: (AIR) Land the controllable at a @{Core.Zone#ZONE_RADIUS).
 --   * @{#CONTROLLABLE.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the controllable at a specified altitude.
 --   * @{#CONTROLLABLE.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified altitude during a specified duration with a specified speed.
+--   * @{#CONTROLLABLE.TaskStrafing}: (AIR) Strafe a point Vec2 with onboard weapons.
 --   * @{#CONTROLLABLE.TaskRefueling}: (AIR) Refueling from the nearest tanker. No parameters.
 --   * @{#CONTROLLABLE.TaskRecoveryTanker}: (AIR) Set  group to act as recovery tanker for a naval group.
 --   * @{#CONTROLLABLE.TaskRoute}: (AIR + GROUND) Return a Mission task to follow a given route defined by Points.
@@ -98,7 +99,7 @@
 -- This method can also be used to **embed a function call when a certain waypoint has been reached**.
 -- See below the **Tasks at Waypoints** section.
 --
--- Demonstration Mission: [GRP-502 - Route at waypoint to random point](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/GRP - Group Commands/GRP-502 - Route at waypoint to random point)
+-- Demonstration Mission: [GRP-502 - Route at waypoint to random point](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/GRP%20-%20Group%20Commands/GRP-502%20-%20Route%20at%20waypoint%20to%20random%20point)
 --
 -- ## 2.5) Tasks at Waypoints
 --
@@ -488,7 +489,7 @@ end
 
 --- Return a Combo Task taking an array of Tasks.
 -- @param #CONTROLLABLE self
--- @param DCS#TaskArray DCSTasks Array of @{DCSTasking.Task#Task}
+-- @param DCS#TaskArray DCSTasks Array of DCSTasking.Task#Task
 -- @return DCS#Task
 function CONTROLLABLE:TaskCombo( DCSTasks )
 
@@ -909,6 +910,30 @@ function CONTROLLABLE:CommandEPLRS( SwitchOnOff, Delay )
   return self
 end
 
+--- Set unlimited fuel. See [DCS command Unlimited Fuel](https://wiki.hoggitworld.com/view/DCS_command_setUnlimitedFuel).
+-- @param #CONTROLLABLE self
+-- @param #boolean OnOff Set unlimited fuel on = true or off = false.
+-- @param #number Delay (Optional) Set the option only after x seconds.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandSetUnlimitedFuel(OnOff, Delay)
+
+  local CommandSetFuel = {
+    id = 'SetUnlimitedFuel', 
+    params = { 
+    value = OnOff 
+  } 
+}
+
+  if Delay and Delay > 0 then
+    SCHEDULER:New( nil, self.CommandSetUnlimitedFuel, { self, OnOff }, Delay )
+  else
+    self:SetCommand( CommandSetFuel )
+  end
+
+  return self
+end
+
+
 --- Set radio frequency. See [DCS command EPLRS](https://wiki.hoggitworld.com/view/DCS_command_setFrequency)
 -- @param #CONTROLLABLE self
 -- @param #number Frequency Radio frequency in MHz.
@@ -1073,6 +1098,42 @@ function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, D
   return DCSTask
 end
 
+--- (AIR) Strafe the point on the ground.
+-- @param #CONTROLLABLE self
+-- @param DCS#Vec2 Vec2 2D-coordinates of the point to deliver strafing at.
+-- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aircraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aircraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+-- @param #number Length (optional) Length of the strafing area.
+-- @param #number WeaponType (optional) The WeaponType. WeaponType is a number associated with a [corresponding weapons flags](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag)
+-- @param DCS#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much ammunition will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion, e.g. AI.Task.WeaponExpend.ALL.
+-- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
+-- @param #boolean GroupAttack (optional) If true, all units in the group will attack the Unit when found.
+-- @return DCS#Task The DCS task structure.
+-- @usage
+-- local attacker = GROUP:FindByName("Aerial-1")
+-- local attackVec2 = ZONE:New("Strafe Attack"):GetVec2()
+-- -- Attack with any cannons = 805306368, 4 runs, strafe a field of 200 meters
+-- local task = attacker:TaskStrafing(attackVec2,4,200,805306368,AI.Task.WeaponExpend.ALL)
+-- attacker:SetTask(task,2)
+function CONTROLLABLE:TaskStrafing( Vec2, AttackQty, Length, WeaponType, WeaponExpend, Direction, GroupAttack )
+
+  local DCSTask =  { 
+    id = 'Strafing', 
+    params = { 
+     point = Vec2, -- req
+     weaponType = WeaponType or 1073741822,
+     expend = WeaponExpend or "Auto", 
+     attackQty = AttackQty or 1,  -- req
+     attackQtyLimit = AttackQty >1 and true or false,
+     direction = Direction and math.rad(Direction) or 0, 
+     directionEnabled = Direction and true or false,
+     groupAttack = GroupAttack or false, 
+     length = Length, 
+    } 
+}
+
+  return DCSTask
+end
+
 --- (AIR) Attacking the map object (building, structure, etc).
 -- @param #CONTROLLABLE self
 -- @param DCS#Vec2 Vec2 2D-coordinates of the point to deliver weapon at.
@@ -1094,7 +1155,6 @@ function CONTROLLABLE:TaskAttackMapObject( Vec2, GroupAttack, WeaponExpend, Atta
       groupAttack      = GroupAttack or false,
       expend           = WeaponExpend or "Auto",
       attackQtyLimit   = AttackQty and true or false,
-      attackQty        = AttackQty,
       directionEnabled = Direction and true or false,
       direction        = Direction and math.rad(Direction) or 0,
       altitudeEnabled  = Altitude and true or false,
@@ -2167,7 +2227,7 @@ do -- Patrol methods
   -- @return #CONTROLLABLE
   function CONTROLLABLE:PatrolZones( ZoneList, Speed, Formation, DelayMin, DelayMax )
 
-    if not type( ZoneList ) == "table" then
+    if type( ZoneList ) ~= "table" then
       ZoneList = { ZoneList }
     end
 
@@ -2679,7 +2739,7 @@ do -- Route methods
   -- @param Core.Zone#ZONE Zone The zone where to route to.
   -- @param #boolean Randomize Defines whether to target point gets randomized within the Zone.
   -- @param #number Speed The speed in m/s. Default is 5.555 m/s = 20 km/h.
-  -- @param Base#FORMATION Formation The formation string.
+  -- @param Core.Base#FORMATION Formation The formation string.
   function CONTROLLABLE:TaskRouteToZone( Zone, Randomize, Speed, Formation )
     self:F2( Zone )
 
@@ -2739,7 +2799,7 @@ do -- Route methods
   -- @param #CONTROLLABLE self
   -- @param DCS#Vec2 Vec2 The Vec2 where to route to.
   -- @param #number Speed The speed in m/s. Default is 5.555 m/s = 20 km/h.
-  -- @param Base#FORMATION Formation The formation string.
+  -- @param Core.Base#FORMATION Formation The formation string.
   function CONTROLLABLE:TaskRouteToVec2( Vec2, Speed, Formation )
 
     local DCSControllable = self:GetDCSObject()
@@ -5269,3 +5329,54 @@ function CONTROLLABLE:TaskAerobaticsBarrelRoll(TaskAerobatics,Repeats,InitAltitu
   return TaskAerobatics
 end
 
+ 
+--- [Air] Make an airplane or helicopter patrol between two points in a racetrack - resulting in a much tighter track around the start and end points.
+-- @param #CONTROLLABLE self
+-- @param Core.Point#COORDINATE Point1 Start point.
+-- @param Core.Point#COORDINATE Point2 End point.
+-- @param #number Altitude (Optional) Altitude in meters. Defaults to the altitude of the coordinate.
+-- @param #number Speed (Optional) Speed in kph. Defaults to 500 kph.
+-- @param #number Formation (Optional) Formation to take, e.g. ENUMS.Formation.FixedWing.Trail.Close, also see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_option_formation).
+-- @param #boolean AGL (Optional) If true, set altitude to above ground level (AGL), not above sea level (ASL).
+-- @param #number Delay  (Optional) Set the task after delay seconds only.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:PatrolRaceTrack(Point1, Point2, Altitude, Speed, Formation, AGL, Delay)
+
+  local PatrolGroup = self -- Wrapper.Group#GROUP
+  
+  if not self:IsInstanceOf( "GROUP" ) then
+    PatrolGroup = self:GetGroup() -- Wrapper.Group#GROUP
+  end
+   
+  local delay = Delay or 1
+  
+  self:F( { PatrolGroup = PatrolGroup:GetName() } )
+  
+  if PatrolGroup:IsAir() then 
+    if Formation then
+       PatrolGroup:SetOption(AI.Option.Air.id.FORMATION,Formation) -- https://wiki.hoggitworld.com/view/DCS_option_formation
+   end
+  
+   local FromCoord = PatrolGroup:GetCoordinate()
+   local ToCoord = Point1:GetCoordinate()
+   
+   -- Calculate the new Route
+   if Altitude then
+     local asl = true
+     if AGL then asl = false end
+     FromCoord:SetAltitude(Altitude, asl)
+     ToCoord:SetAltitude(Altitude, asl)
+   end
+            
+   -- Create a "air waypoint", which is a "point" structure that can be given as a parameter to a Task
+   local Route = {}  
+   Route[#Route + 1] = FromCoord:WaypointAir( AltType, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, Speed, true, nil, DCSTasks, description, timeReFuAr )
+   Route[#Route + 1] = ToCoord:WaypointAir( AltType, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, Speed, true, nil, DCSTasks, description, timeReFuAr )
+  
+   local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRaceTrack", Point2, Point1, Altitude, Speed, Formation, Delay )
+   PatrolGroup:SetTaskWaypoint( Route[#Route], TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+   PatrolGroup:Route( Route, Delay ) -- Move after delay seconds to the Route. See the Route method for details.
+  end
+  
+  return self
+end

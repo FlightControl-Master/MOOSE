@@ -20,11 +20,11 @@
 -- ### Author: **FlightControl**
 -- ### Contributions:
 --
---   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
---   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
---   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
---   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing.
---   * **[Delta99](https://forums.eagle.ru/member.php?u=125166): Testing.
+--   * **Quax**: Concept, Advice & Testing.
+--   * **Pikey**: Concept, Advice & Testing.
+--   * **Gunterlund**: Test case revision.
+--   * **Whisper**: Testing.
+--   * **Delta99**: Testing.
 -- 
 -- ===       
 --
@@ -112,12 +112,12 @@
 -- An optional @{Core.Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- Use the method @{#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- ===
 -- 
 -- @field #AI_CAP_ZONE

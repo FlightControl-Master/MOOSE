@@ -117,12 +117,12 @@
 --   - @{#MISSION.ReportPlayersPerTask}(): Generates a report showing the active players per task.
 --   - @{#MISSION.ReportPlayersProgress}(): Generates a report showing the task progress per player.
 -- 
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- @field #MISSION 
 MISSION = {
 	ClassName = "MISSION",
