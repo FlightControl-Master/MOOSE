@@ -190,8 +190,8 @@
 --
 -- There are different methods that can be used to change the **System settings** using the \_SETTINGS object.
 --
---   - @{#SETTINGS.SetMessageTime}(): Define for a specific @{Message.MESSAGE.MessageType} the duration to be displayed in seconds.
---   - @{#SETTINGS.GetMessageTime}(): Retrieves for a specific @{Message.MESSAGE.MessageType} the duration to be displayed in seconds.
+--   - @{#SETTINGS.SetMessageTime}(): Define for a specific @{Core.Message#MESSAGE.MessageType} the duration to be displayed in seconds.
+--   - @{#SETTINGS.GetMessageTime}(): Retrieves for a specific @{Core.Message#MESSAGE.MessageType} the duration to be displayed in seconds.
 --
 -- ## 3.5) **Era** of the battle
 --

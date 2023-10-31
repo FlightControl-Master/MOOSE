@@ -34,8 +34,8 @@
 -- @field Core.Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
 -- @field #number FollowDistance The current follow distance.
 -- @field #boolean ReportTargets If true, nearby targets are reported.
--- @Field DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the FollowGroup.
--- @field DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the FollowGroup.
+-- @field DCS#AI.Option.Air.val.ROE OptionROE Which ROE is set to the FollowGroup.
+-- @field DCS#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the FollowGroup.
 -- @field #number dtFollow Time step between position updates.
 
 
@@ -92,12 +92,12 @@
 -- local LargeFormation = AI_FORMATION:New( LeaderUnit, FollowGroupSet, "Center Wing Formation", "Briefing" )
 -- LargeFormation:FormationCenterWing( 500, 50, 0, 250, 250 )
 -- LargeFormation:__Start( 1 )
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- @field #AI_FORMATION 
 AI_FORMATION = {
   ClassName = "AI_FORMATION",

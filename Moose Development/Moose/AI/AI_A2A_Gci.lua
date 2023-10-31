@@ -83,19 +83,11 @@
 -- The range is applied at the position of the AI.
 -- Use the method @{AI.AI_GCI#AI_A2A_GCI.SetEngageRange}() to define that range.
 --
--- ## 4. Set the Zone of Engagement
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
 --
--- ![Zone](..\Presentations\AI_GCI\Dia12.JPG)
---
--- An optional @{Core.Zone} can be set,
--- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_CAP#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
 -- ===
 --
 -- @field #AI_A2A_GCI

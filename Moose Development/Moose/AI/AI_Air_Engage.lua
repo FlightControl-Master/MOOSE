@@ -61,19 +61,11 @@
 -- The range is applied at the position of the AI.
 -- Use the method @{AI.AI_GCI#AI_AIR_ENGAGE.SetEngageRange}() to define that range.
 --
--- ## 4. Set the Zone of Engagement
+-- # Developer Note
 -- 
--- ![Zone](..\Presentations\AI_GCI\Dia12.JPG)
--- 
--- An optional @{Core.Zone} can be set, 
--- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_CAP#AI_AIR_ENGAGE.SetEngageZone}() to define that Zone.
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- ===
 -- 
 -- @field #AI_AIR_ENGAGE
@@ -456,12 +448,12 @@ function AI_AIR_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, Attac
       -- TODO: A factor of * 3 is way too close. This causes the AI not to engange until merged sometimes!
       if TargetDistance <= EngageDistance * 9 then
 
-        self:I(string.format("AI_AIR_ENGAGE onafterEngageRoute ==> __Engage - target distance = %.1f km", TargetDistance/1000))
+        --self:I(string.format("AI_AIR_ENGAGE onafterEngageRoute ==> __Engage - target distance = %.1f km", TargetDistance/1000))
         self:__Engage( 0.1, AttackSetUnit )
 
       else
       
-        self:I(string.format("FF AI_AIR_ENGAGE onafterEngageRoute ==> Routing - target distance = %.1f km", TargetDistance/1000))
+        --self:I(string.format("FF AI_AIR_ENGAGE onafterEngageRoute ==> Routing - target distance = %.1f km", TargetDistance/1000))
 
         local EngageRoute = {}
         local AttackTasks = {}
