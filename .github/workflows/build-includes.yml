@@ -5,6 +5,13 @@ on:
     branches:
       - master
       - develop
+    paths:
+      - 'Moose Setup/**/*.lua'
+      - 'Moose Development/**/*.lua'
+      - '.github/workflows/build-includes.yml'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   Build:

@@ -52,7 +52,7 @@
 --
 -- A SCHEDULER can manage **multiple** (repeating) schedules. Each planned or executing schedule has a unique **ScheduleID**.
 -- The ScheduleID is returned when the method @{#SCHEDULER.Schedule}() is called.
--- It is recommended to store the ScheduleID in a variable, as it is used in the methods @{SCHEDULER.Start}() and @{SCHEDULER.Stop}(),
+-- It is recommended to store the ScheduleID in a variable, as it is used in the methods @{#SCHEDULER.Start}() and @{#SCHEDULER.Stop}(),
 -- which can start and stop specific repeating schedules respectively within a SCHEDULER object.
 --
 -- ## SCHEDULER constructor

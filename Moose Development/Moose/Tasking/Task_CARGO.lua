@@ -5,7 +5,7 @@
 --   * TASK_CARGO is the **base class** for:
 --   
 --     * @{Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT}
---     * @{Tasking.Task_CARGO_CSAR#TASK_CARGO_CSAR}
+--     * @{Tasking.Task_Cargo_CSAR#TASK_CARGO_CSAR}
 -- 
 -- 
 -- ===
@@ -14,7 +14,7 @@
 -- 
 -- Test missions can be located on the main GITHUB site.
 -- 
--- [FlightControl-Master/MOOSE_MISSIONS/TAD - Task Dispatching/CGO - Cargo Dispatching/](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/TAD%20-%20Task%20Dispatching/CGO%20-%20Cargo%20Dispatching)
+-- [FlightControl-Master/MOOSE_MISSIONS/TAD - Task Dispatching/CGO - Cargo Dispatching/](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/TAD%20-%20Task%20Dispatching/CGO%20-%20Cargo%20Task%20Dispatching)
 -- 
 -- ===
 --
@@ -34,7 +34,7 @@
 -- The following TASK_CARGO_ classes are important, as they implement the CONCRETE tasks:
 -- 
 --   * @{Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT}: Defines a task for a human player to transport a set of cargo between various zones.
---   * @{Tasking.Task_CARGO_CSAR#TASK_CARGO_CSAR}: Defines a task for a human player to Search and Rescue wounded pilots.
+--   * @{Tasking.Task_Cargo_CSAR#TASK_CARGO_CSAR}: Defines a task for a human player to Search and Rescue wounded pilots.
 -- 
 -- However! The menu system and basic usage of the TASK_CARGO classes is explained in the @{#TASK_CARGO} class description.
 -- So please browse further below to understand how to use it from a player perspective!
@@ -49,7 +49,7 @@
 -- Once the task is assigned to the player and accepted by the player, the player will obtain 
 -- an extra **Cargo (Radio) Menu** that contains the CARGO objects that need to be transported.
 -- 
--- Each @{Cargo.Cargo} object has a certain state:
+-- Each @{Tasking.Task_CARGO#TASK_CARGO} object has a certain state:
 -- 
 --   * **UnLoaded**: The cargo is located within the battlefield. It may still need to be transported.
 --   * **Loaded**: The cargo is loaded within a Carrier. This can be your air unit, or another air unit, or even a vehicle.
@@ -298,8 +298,7 @@
 -- 
 -- When you are within the range of the deploy zone (can be also a polygon!), a message is communicated by HQ that you have arrived within the zone!
 -- 
--- The routing messages are formulated in the coordinate format that is currently active as configured in your settings profile.  
--- ![Task_Types](../Tasking/Task_Cargo_Settings.JPG)  
+-- The routing messages are formulated in the coordinate format that is currently active as configured in your settings profile.
 -- Use the **Settings Menu** to select the coordinate format that you would like to use for location determination.
 -- 
 -- #### Unboard Cargo.
@@ -391,12 +390,12 @@
 --   - @{Tasking.Task_CARGO#TASK_CARGO_TRANSPORT}: Documents the specific methods how to handle the cargo transportation tasking from a mission designer perspective.
 --   - @{Tasking.Task_CARGO#TASK_CARGO_CSAR}: Documents the specific methods how to handle the cargo CSAR tasking from a mission designer perspective.
 --   
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- ===
 -- 
 -- ### Author: **FlightControl**
@@ -448,7 +447,7 @@ do -- TASK_CARGO
   --   
   -- ## 2.2) Handle TASK_CARGO Events ...
   -- 
-  -- The TASK_CARGO classes define @{Cargo} transport tasks, 
+  -- The TASK_CARGO classes define Cargo transport tasks,
   -- based on the tasking capabilities defined in @{Tasking.Task#TASK}.
   -- 
   -- ### 2.2.1) Boarding events.
@@ -515,7 +514,7 @@ do -- TASK_CARGO
     -- @param #string Event
     -- @param #string To
     -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-    -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
+    -- @param Cargo.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
     -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
     -- @return #boolean
     
@@ -526,7 +525,7 @@ do -- TASK_CARGO
     -- @param #string Event
     -- @param #string To
     -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-    -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
+    -- @param Cargo.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
     -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
     -- @usage
     -- 
@@ -568,7 +567,7 @@ do -- TASK_CARGO
     -- @param #string Event
     -- @param #string To
     -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-    -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
+    -- @param Cargo.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
     -- @return #boolean
     
     --- CargoPickedUp Handler OnAfter for TASK_CARGO
@@ -578,7 +577,7 @@ do -- TASK_CARGO
     -- @param #string Event
     -- @param #string To
     -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-    -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
+    -- @param Cargo.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
 
     
     local Fsm = self:GetUnitProcess()
@@ -844,7 +843,7 @@ do -- TASK_CARGO
     -- @param From
     -- @param Event
     -- @param To
-    -- @param Core.Cargo#CARGO Cargo
+    -- @param Cargo.Cargo#CARGO Cargo
     function Fsm:onafterRouteToPickup( TaskUnit, Task, From, Event, To, Cargo )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 

@@ -99,7 +99,7 @@
 -- This method can also be used to **embed a function call when a certain waypoint has been reached**.
 -- See below the **Tasks at Waypoints** section.
 --
--- Demonstration Mission: [GRP-502 - Route at waypoint to random point](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/GRP - Group Commands/GRP-502 - Route at waypoint to random point)
+-- Demonstration Mission: [GRP-502 - Route at waypoint to random point](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/GRP%20-%20Group%20Commands/GRP-502%20-%20Route%20at%20waypoint%20to%20random%20point)
 --
 -- ## 2.5) Tasks at Waypoints
 --
@@ -489,7 +489,7 @@ end
 
 --- Return a Combo Task taking an array of Tasks.
 -- @param #CONTROLLABLE self
--- @param DCS#TaskArray DCSTasks Array of @{DCSTasking.Task#Task}
+-- @param DCS#TaskArray DCSTasks Array of DCSTasking.Task#Task
 -- @return DCS#Task
 function CONTROLLABLE:TaskCombo( DCSTasks )
 
@@ -2739,7 +2739,7 @@ do -- Route methods
   -- @param Core.Zone#ZONE Zone The zone where to route to.
   -- @param #boolean Randomize Defines whether to target point gets randomized within the Zone.
   -- @param #number Speed The speed in m/s. Default is 5.555 m/s = 20 km/h.
-  -- @param Base#FORMATION Formation The formation string.
+  -- @param Core.Base#FORMATION Formation The formation string.
   function CONTROLLABLE:TaskRouteToZone( Zone, Randomize, Speed, Formation )
     self:F2( Zone )
 
@@ -2799,7 +2799,7 @@ do -- Route methods
   -- @param #CONTROLLABLE self
   -- @param DCS#Vec2 Vec2 The Vec2 where to route to.
   -- @param #number Speed The speed in m/s. Default is 5.555 m/s = 20 km/h.
-  -- @param Base#FORMATION Formation The formation string.
+  -- @param Core.Base#FORMATION Formation The formation string.
   function CONTROLLABLE:TaskRouteToVec2( Vec2, Speed, Formation )
 
     local DCSControllable = self:GetDCSObject()

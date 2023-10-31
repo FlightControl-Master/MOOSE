@@ -4,7 +4,7 @@
 --
 -- The RANGE class enables easy set up of bombing and strafing ranges within DCS World.
 --
--- Implementation is based on the [Simple Range Script](https://forums.eagle.ru/showthread.php?t=157991) by [Ciribob](https://forums.eagle.ru/member.php?u=112175), which itself was motivated
+-- Implementation is based on the [Simple Range Script](https://forums.eagle.ru/showthread.php?t=157991) by Ciribob, which itself was motivated
 -- by a script by SNAFU [see here](https://forums.eagle.ru/showthread.php?t=109174).
 --
 -- [476th - Air Weapons Range Objects mod](http://www.476vfightergroup.com/downloads.php?do=file&id=287) is highly recommended for this class.
@@ -42,9 +42,9 @@
 --
 -- ===
 --
--- ### Author: **[funkyfranky](https://forums.eagle.ru/member.php?u=115026)**
+-- ### Author: **funkyfranky**
 --
--- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536), [Ciribob](https://forums.eagle.ru/member.php?u=112175)
+-- ### Contributions: FlightControl, Ciribob
 -- ### SRS Additions: Applevangelist
 -- 
 -- ===

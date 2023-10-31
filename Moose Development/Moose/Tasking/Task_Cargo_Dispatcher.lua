@@ -52,12 +52,12 @@
 --   * Switch between coordinate formats used in messages: BR, BRA, LL DMS, LL DDM, MGRS.
 --   * Different settings modes for A2G and A2A operations.
 --   * Various other options.
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- ===
 -- 
 -- ### Author: **FlightControl**
@@ -144,7 +144,7 @@ do -- TASK_CARGO_DISPATCHER
   --     -- Note that the name of the cargo is "Engineer Team 1".
   --     local CargoGroup = CARGO_GROUP:New( PilotGroup, "Workmaterials", "Engineer Team 1", 500 )
   -- 
-  -- What is also needed, is to have a set of @{Core.Group}s defined that contains the clients of the players.
+  -- What is also needed, is to have a set of @{Wrapper.Group}s defined that contains the clients of the players.
   -- 
   --     -- Allocate the Transport, which are the helicopters to retrieve the pilot, that can be manned by players.
   --     -- The name of these helicopter groups containing one client begins with "Transport", as modelled within the mission editor.
@@ -214,7 +214,7 @@ do -- TASK_CARGO_DISPATCHER
   -- 
   -- The method will create a new CSAR task, and will generate the pilots cargo itself, at the specified coordinate.
   -- 
-  -- What is first needed, is to have a set of @{Core.Group}s defined that contains the clients of the players.
+  -- What is first needed, is to have a set of @{Wrapper.Group}s defined that contains the clients of the players.
   -- 
   --     -- Allocate the Transport, which are the helicopter to retrieve the pilot, that can be manned by players.
   --     local GroupSet = SET_GROUP:New():FilterPrefixes( "Transport" ):FilterStart()
@@ -570,7 +570,7 @@ do -- TASK_CARGO_DISPATCHER
   -- @param #string CSARTaskPrefix (optional) The prefix of the CSAR task. 
   -- @param Core.Point#COORDINATE CSARCoordinate The coordinate where a downed pilot will be spawned.
   -- @param #number CSARHeading The heading of the pilot in degrees.
-  -- @param DCSCountry#Country CSARCountry The country ID of the pilot that will be spawned.
+  -- @param #DCSCountry CSARCountry The country ID of the pilot that will be spawned.
   -- @param #string CSARBriefing The briefing of the CSAR task.
   -- @return #string The CSAR Task Name as a string. The Task Name is the main key and is shown in the task list of the Mission Tasking menu.
   -- @usage
@@ -686,7 +686,7 @@ do -- TASK_CARGO_DISPATCHER
   -- @param #string TaskPrefix (optional) The prefix of the transport task. 
   -- This prefix will be appended with a . + a number of 3 digits.
   -- If no TaskPrefix is given, then "Transport" will be used as the prefix. 
-  -- @param Core.SetCargo#SET_CARGO SetCargo The SetCargo to be transported.
+  -- @param Core.Set#SET_CARGO SetCargo The SetCargo to be transported.
   -- @param #string Briefing The briefing of the task transport to be shown to the player.
   -- @param #boolean Silent If true don't send a message that a new task is available.
   -- @return Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT

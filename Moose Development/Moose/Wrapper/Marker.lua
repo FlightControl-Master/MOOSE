@@ -32,8 +32,6 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\MARKER\Marker_Main.jpg)
---
 -- # The MARKER Class Idea
 --
 -- The MARKER class simplifies creating, updating and removing of markers on the F10 map.

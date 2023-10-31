@@ -199,7 +199,7 @@ end
 
 --- Get points of pathline. Not that points are tables, that contain more information as just the 2D or 3D position but also the surface type etc.
 -- @param #PATHLINE self
--- @return <#PATHLINE.Point> List of points.
+-- @return #list <#PATHLINE.Point> List of points.
 function PATHLINE:GetPoints()  
   return self.points
 end

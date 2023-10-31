@@ -1,0 +1,14 @@
+version: "3.5"
+
+services:
+  moose-build-includes:
+    image: moose/build-includes
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: moose-build-includes
+    volumes:
+      - ../../:/moose
+    stdin_open: true
+    tty: true
+    command: /bin/bash -c /start.sh

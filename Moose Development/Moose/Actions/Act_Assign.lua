@@ -51,15 +51,15 @@
 --   * **After** the state transition.
 --     The state transition method needs to start with the name **OnAfter + the name of the state**.
 --     These state transition methods need to provide a return value, which is specified at the function description.
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- ===
 --
--- # 1) @{#ACT_ASSIGN_ACCEPT} class, extends @{Core.Fsm.Assign#ACT_ASSIGN}
+-- # 1) @{#ACT_ASSIGN_ACCEPT} class, extends @{Core.Fsm#ACT_ASSIGN}
 --
 -- The ACT_ASSIGN_ACCEPT class accepts by default a task for a player. No player intervention is allowed to reject the task.
 --
@@ -69,7 +69,7 @@
 --
 -- ===
 --
--- # 2) @{#ACT_ASSIGN_MENU_ACCEPT} class, extends @{Core.Fsm.Assign#ACT_ASSIGN}
+-- # 2) @{#ACT_ASSIGN_MENU_ACCEPT} class, extends @{Core.Fsm#ACT_ASSIGN}
 --
 -- The ACT_ASSIGN_MENU_ACCEPT class accepts a task when the player accepts the task through an added menu option.
 -- This assignment type is useful to conditionally allow the player to choose whether or not he would accept the task.

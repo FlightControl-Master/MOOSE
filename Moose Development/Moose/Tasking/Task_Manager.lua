@@ -23,12 +23,12 @@
 -- If an ad-hoc report is requested, use the method @{Tasking.Task_Manager#TASK_MANAGER#ManageTasks}().
 -- 
 -- The default task management interval is every 60 seconds.
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- ===
 -- 
 -- ### Contributions: Mechanist, Prof_Hilactic, FlightControl - Concept & Testing

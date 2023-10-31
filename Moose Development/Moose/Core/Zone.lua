@@ -570,7 +570,7 @@ end
 
 --- Start watching if the Object or Objects move into or out of a zone.
 -- @param #ZONE_BASE self
--- @param Wrappe.Controllable#CONTROLLABLE Objects Object or Objects to watch, can be of type UNIT, GROUP, CLIENT, or SET\_UNIT, SET\_GROUP, SET\_CLIENT
+-- @param Wrapper.Controllable#CONTROLLABLE Objects Object or Objects to watch, can be of type UNIT, GROUP, CLIENT, or SET\_UNIT, SET\_GROUP, SET\_CLIENT
 -- @return #ZONE_BASE self
 -- @usage
 --            -- Create a new zone and start watching it every 5 secs for a defined GROUP entering or leaving
@@ -1057,11 +1057,11 @@ end
 --- Scan the zone for the presence of units of the given ObjectCategories.
 -- Note that **only after** a zone has been scanned, the zone can be evaluated by:
 --
---   * @{ZONE_RADIUS.IsAllInZoneOfCoalition}(): Scan the presence of units in the zone of a coalition.
---   * @{ZONE_RADIUS.IsAllInZoneOfOtherCoalition}(): Scan the presence of units in the zone of an other coalition.
---   * @{ZONE_RADIUS.IsSomeInZoneOfCoalition}(): Scan if there is some presence of units in the zone of the given coalition.
---   * @{ZONE_RADIUS.IsNoneInZoneOfCoalition}(): Scan if there isn't any presence of units in the zone of an other coalition than the given one.
---   * @{ZONE_RADIUS.IsNoneInZone}(): Scan if the zone is empty.
+--   * @{Core.Zone#ZONE_RADIUS.IsAllInZoneOfCoalition}(): Scan the presence of units in the zone of a coalition.
+--   * @{Core.Zone#ZONE_RADIUS.IsAllInZoneOfOtherCoalition}(): Scan the presence of units in the zone of an other coalition.
+--   * @{Core.Zone#ZONE_RADIUS.IsSomeInZoneOfCoalition}(): Scan if there is some presence of units in the zone of the given coalition.
+--   * @{Core.Zone#ZONE_RADIUS.IsNoneInZoneOfCoalition}(): Scan if there isn't any presence of units in the zone of an other coalition than the given one.
+--   * @{Core.Zone#ZONE_RADIUS.IsNoneInZone}(): Scan if the zone is empty.
 -- @param #ZONE_RADIUS self
 -- @param ObjectCategories An array of categories of the objects to find in the zone. E.g. `{Object.Category.UNIT}`
 -- @param UnitCategories An array of unit categories of the objects to find in the zone. E.g. `{Unit.Category.GROUND_UNIT,Unit.Category.SHIP}`
@@ -1787,7 +1787,7 @@ ZONE_UNIT = {
 -- @param #ZONE_UNIT self
 -- @param #string ZoneName Name of the zone.
 -- @param Wrapper.Unit#UNIT ZoneUNIT The unit as the center of the zone.
--- @param Dcs.DCSTypes#Distance Radius The radius of the zone.
+-- @param #number Radius The radius of the zone in meters.
 -- @param #table Offset A table specifying the offset. The offset table may have the following elements:
 --  dx The offset in X direction, +x is north.
 --  dy The offset in Y direction, +y is east.
@@ -2749,11 +2749,11 @@ end
 --- Scan the zone for the presence of units of the given ObjectCategories. Does **not** scan for scenery at the moment.
 -- Note that **only after** a zone has been scanned, the zone can be evaluated by:
 --
---   * @{ZONE_POLYGON.IsAllInZoneOfCoalition}(): Scan the presence of units in the zone of a coalition.
---   * @{ZONE_POLYGON.IsAllInZoneOfOtherCoalition}(): Scan the presence of units in the zone of an other coalition.
---   * @{ZONE_POLYGON.IsSomeInZoneOfCoalition}(): Scan if there is some presence of units in the zone of the given coalition.
---   * @{ZONE_POLYGON.IsNoneInZoneOfCoalition}(): Scan if there isn't any presence of units in the zone of an other coalition than the given one.
---   * @{ZONE_POLYGON.IsNoneInZone}(): Scan if the zone is empty.
+--   * @{Core.Zone#ZONE_POLYGON.IsAllInZoneOfCoalition}(): Scan the presence of units in the zone of a coalition.
+--   * @{Core.Zone#ZONE_POLYGON.IsAllInZoneOfOtherCoalition}(): Scan the presence of units in the zone of an other coalition.
+--   * @{Core.Zone#ZONE_POLYGON.IsSomeInZoneOfCoalition}(): Scan if there is some presence of units in the zone of the given coalition.
+--   * @{Core.Zone#ZONE_POLYGON.IsNoneInZoneOfCoalition}(): Scan if there isn't any presence of units in the zone of an other coalition than the given one.
+--   * @{Core.Zone#ZONE_POLYGON.IsNoneInZone}(): Scan if the zone is empty.
 -- @param #ZONE_POLYGON self
 -- @param ObjectCategories An array of categories of the objects to find in the zone. E.g. `{Object.Category.UNIT}`
 -- @param UnitCategories An array of unit categories of the objects to find in the zone. E.g. `{Unit.Category.GROUND_UNIT,Unit.Category.SHIP}`

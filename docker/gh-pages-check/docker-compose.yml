@@ -1,0 +1,17 @@
+version: "3.5"
+
+services:
+  moose-gh-pages-checks:
+    image: moose/gh-pages-checks
+    #image: node:latest
+    #image: joskfg/np
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: moose-gh-pages-checks
+    volumes:
+      - .:/moose
+    stdin_open: true
+    tty: true
+    #command: /bin/bash -c /moose/start.sh
+    command: npx linkinator https://flightcontrol-master.github.io/MOOSE/

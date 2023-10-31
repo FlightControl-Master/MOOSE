@@ -401,7 +401,7 @@ do -- TASK_A2A_DISPATCHER
   --- Calculates which friendlies are nearby the area
   -- @param #TASK_A2A_DISPATCHER self
   -- @param DetectedItem
-  -- @return #number, Core.CommandCenter#REPORT
+  -- @return #number, Tasking.CommandCenter#REPORT
   function TASK_A2A_DISPATCHER:GetFriendliesNearBy( DetectedItem )
 
     local DetectedSet = DetectedItem.Set
@@ -444,7 +444,7 @@ do -- TASK_A2A_DISPATCHER
   --- Calculates which HUMAN friendlies are nearby the area
   -- @param #TASK_A2A_DISPATCHER self
   -- @param DetectedItem
-  -- @return #number, Core.CommandCenter#REPORT
+  -- @return #number, Tasking.CommandCenter#REPORT
   function TASK_A2A_DISPATCHER:GetPlayerFriendliesNearBy( DetectedItem )
 
     local DetectedSet = DetectedItem.Set

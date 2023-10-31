@@ -11,7 +11,7 @@
 
 
 --- @type AI_A2A_PATROL
--- @extends AI.AI_A2A#AI_A2A
+-- @extends AI.AI_Air_Patrol#AI_AIR_PATROL
 
 --- Implements the core functions to patrol a @{Core.Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group}.
 -- 
@@ -111,12 +111,12 @@
 -- When the AI is damaged, it is required that a new Patrol is started. However, damage cannon be foreseen early on. 
 -- Therefore, when the damage threshold is reached, the AI will return immediately to the home base (RTB).
 -- Use the method @{#AI_A2A_PATROL.ManageDamage}() to have this proces in place.
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- ===
 -- 
 -- @field #AI_A2A_PATROL

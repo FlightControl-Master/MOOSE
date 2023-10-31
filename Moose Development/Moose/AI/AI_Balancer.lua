@@ -20,7 +20,7 @@
 -- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
---   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
+--   * **Dutch_Baron**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
 -- 
 -- ===
 -- 
@@ -40,7 +40,7 @@
 -- 
 -- The parent class @{Core.Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM). 
 -- The mission designer can tailor the behaviour of the AI_BALANCER, by defining event and state transition methods.
--- An explanation about state and event transition methods can be found in the @{FSM} module documentation.
+-- An explanation about state and event transition methods can be found in the @{Core.Fsm} module documentation.
 -- 
 -- The mission designer can tailor the AI_BALANCER behaviour, by implementing a state or event handling method for the following:
 -- 
@@ -52,7 +52,7 @@
 -- 
 -- ## 2. AI_BALANCER is a FSM
 -- 
--- ![Process](..\Presentations\AI_Balancer\Dia13.JPG)
+-- ![Process](..\Presentations\AI_BALANCER\Dia13.JPG)
 -- 
 -- ### 2.1. AI_BALANCER States
 -- 
@@ -85,12 +85,12 @@
 -- 
 -- Note that when AI returns to an airbase, the AI_BALANCER will trigger the **Return** event and the AI will return, 
 -- otherwise the AI_BALANCER will trigger a **Destroy** event, and the AI will be destroyed.
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- @field #AI_BALANCER
 AI_BALANCER = {
   ClassName = "AI_BALANCER",

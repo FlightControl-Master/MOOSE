@@ -58,7 +58,7 @@
 -- @field #SPAWN.SpawnZoneTable SpawnZoneTable
 -- @extends Core.Base#BASE
 
---- Allows to spawn dynamically new @{Core.Group}s.
+--- Allows to spawn dynamically new @{Wrapper.Group}s.
 --
 -- Each SPAWN object needs to be have related **template groups** setup in the Mission Editor (ME),
 -- which is a normal group with the **Late Activation** flag set.
@@ -1331,7 +1331,7 @@ do -- Delay methods
     return self
   end
 
-  --- Turns the Delay On for the @{Wrapper.Group} when spawning with @{SpawnScheduled}(). In effect then the 1st group will only be spawned
+  --- Turns the Delay On for the @{Wrapper.Group} when spawning with @{#SpawnScheduled}(). In effect then the 1st group will only be spawned
   -- after the number of seconds given in SpawnScheduled as arguments, and not immediately.
   -- @param #SPAWN self
   -- @return #SPAWN The SPAWN object
@@ -1669,7 +1669,7 @@ end
 -- @param #number SpawnTimeVariation The variation to be applied on the defined time interval between each new spawn.
 -- The variation is a number between 0 and 1, representing the % of variation to be applied on the time interval.
 -- @param #boolean WithDelay Do not spawn the **first** group immediately, but delay the spawn as per the calculation below.
--- Effectively the same as @{InitDelayOn}().
+-- Effectively the same as @{#InitDelayOn}().
 -- @return #SPAWN self
 -- @usage
 -- -- NATO helicopters engaging in the battle field.
@@ -3622,7 +3622,7 @@ function SPAWN:_OnLand( EventData )
 end
 
 --- Will detect AIR Units shutting down their engines ...
--- When the event takes place, and the method @{RepeatOnEngineShutDown} was called, the spawned Group will Re-SPAWN.
+-- When the event takes place, and the method @{#InitRepeatOnEngineShutDown} was called, the spawned Group will Re-SPAWN.
 -- But only when the Unit was registered to have landed.
 -- @param #SPAWN self
 -- @param Core.Event#EVENTDATA EventData

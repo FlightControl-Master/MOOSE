@@ -14,38 +14,24 @@
 
 
 --- @type AI_AIR_ENGAGE
--- @extends AI.AI_AIR#AI_AIR
+-- @extends AI.AI_Air#AI_AIR
 
 
 --- Implements the core functions to intercept intruders. Use the Engage trigger to intercept intruders.
 -- 
--- ![Process](..\Presentations\AI_GCI\Dia3.JPG)
--- 
 -- The AI_AIR_ENGAGE is assigned a @{Wrapper.Group} and this must be done before the AI_AIR_ENGAGE process can be started using the **Start** event.
--- 
--- ![Process](..\Presentations\AI_GCI\Dia4.JPG)
 -- 
 -- The AI will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
 -- Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
 -- 
--- ![Process](..\Presentations\AI_GCI\Dia5.JPG)
--- 
 -- This cycle will continue.
 -- 
--- ![Process](..\Presentations\AI_GCI\Dia6.JPG)
--- 
 -- During the patrol, the AI will detect enemy targets, which are reported through the **Detected** event.
---
--- ![Process](..\Presentations\AI_GCI\Dia9.JPG)
 -- 
 -- When enemies are detected, the AI will automatically engage the enemy.
 -- 
--- ![Process](..\Presentations\AI_GCI\Dia10.JPG)
--- 
 -- Until a fuel or damage threshold has been reached by the AI, or when the AI is commanded to RTB.
 -- When the fuel threshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
--- 
--- ![Process](..\Presentations\AI_GCI\Dia13.JPG)
 -- 
 -- ## 1. AI_AIR_ENGAGE constructor
 --   
@@ -53,19 +39,14 @@
 --
 -- ## 3. Set the Range of Engagement
 -- 
--- ![Range](..\Presentations\AI_GCI\Dia11.JPG)
--- 
 -- An optional range can be set in meters, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- The range can be beyond or smaller than the range of the Patrol Zone.
 -- The range is applied at the position of the AI.
--- Use the method @{AI.AI_GCI#AI_AIR_ENGAGE.SetEngageRange}() to define that range.
 --
 -- ## 4. Set the Zone of Engagement
--- 
--- ![Zone](..\Presentations\AI_GCI\Dia12.JPG)
--- 
--- An optional @{Core.Zone} can be set, 
+--
+-- An optional @{Core.Zone} can be set,
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- Use the method @{AI.AI_CAP#AI_AIR_ENGAGE.SetEngageZone}() to define that Zone.
   --
@@ -74,6 +55,11 @@
   -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
   -- Therefore, this class is considered to be deprecated
   --
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- ===
 -- 
 -- @field #AI_AIR_ENGAGE
@@ -456,12 +442,12 @@ function AI_AIR_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, Attac
       -- TODO: A factor of * 3 is way too close. This causes the AI not to engange until merged sometimes!
       if TargetDistance <= EngageDistance * 9 then
 
-        self:I(string.format("AI_AIR_ENGAGE onafterEngageRoute ==> __Engage - target distance = %.1f km", TargetDistance/1000))
+        --self:I(string.format("AI_AIR_ENGAGE onafterEngageRoute ==> __Engage - target distance = %.1f km", TargetDistance/1000))
         self:__Engage( 0.1, AttackSetUnit )
 
       else
       
-        self:I(string.format("FF AI_AIR_ENGAGE onafterEngageRoute ==> Routing - target distance = %.1f km", TargetDistance/1000))
+        --self:I(string.format("FF AI_AIR_ENGAGE onafterEngageRoute ==> Routing - target distance = %.1f km", TargetDistance/1000))
 
         local EngageRoute = {}
         local AttackTasks = {}

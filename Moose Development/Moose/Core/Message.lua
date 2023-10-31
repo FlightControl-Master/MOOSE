@@ -73,7 +73,7 @@ MESSAGE.Type = {
   Detailed = "Detailed Report",
 }
 
---- Creates a new MESSAGE object. Note that these MESSAGE objects are not yet displayed on the display panel. You must use the functions @{ToClient} or @{ToCoalition} or @{ToAll} to send these Messages to the respective recipients.
+--- Creates a new MESSAGE object. Note that these MESSAGE objects are not yet displayed on the display panel. You must use the functions @{#MESSAGE.ToClient} or @{#MESSAGE.ToCoalition} or @{#MESSAGE.ToAll} to send these Messages to the respective recipients.
 -- @param self
 -- @param #string MessageText is the text of the Message.
 -- @param #number MessageDuration is a number in seconds of how long the MESSAGE should be shown on the display panel.
@@ -127,7 +127,7 @@ end
 
 --- Creates a new MESSAGE object of a certain type.
 -- Note that these MESSAGE objects are not yet displayed on the display panel.
--- You must use the functions @{ToClient} or @{ToCoalition} or @{ToAll} to send these Messages to the respective recipients.
+-- You must use the functions @{Core.Message#ToClient} or @{Core.Message#ToCoalition} or @{Core.Message#ToAll} to send these Messages to the respective recipients.
 -- The message display times are automatically defined based on the timing settings in the @{Core.Settings} menu.
 -- @param self
 -- @param #string MessageText is the text of the Message.
@@ -343,7 +343,7 @@ end
 
 --- Sends a MESSAGE to a Coalition.
 -- @param #MESSAGE self
--- @param #DCS.coalition.side CoalitionSide @{#DCS.coalition.side} to which the message is displayed.
+-- @param DCS#coalition.side CoalitionSide @{#DCS.coalition.side} to which the message is displayed.
 -- @param Core.Settings#SETTINGS Settings (Optional) Settings for message display.
 -- @return #MESSAGE Message object.
 -- @usage
@@ -379,7 +379,7 @@ end
 
 --- Sends a MESSAGE to a Coalition if the given Condition is true.
 -- @param #MESSAGE self
--- @param CoalitionSide needs to be filled out by the defined structure of the standard scripting engine @{coalition.side}.
+-- @param CoalitionSide needs to be filled out by the defined structure of the standard scripting engine @{#DCS.coalition.side}.
 -- @param #boolean Condition Sends the message only if the condition is true.
 -- @return #MESSAGE self
 function MESSAGE:ToCoalitionIf( CoalitionSide, Condition )

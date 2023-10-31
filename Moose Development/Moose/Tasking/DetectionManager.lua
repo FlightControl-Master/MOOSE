@@ -18,7 +18,7 @@
 -- Derived classes need to implement the method @{#DETECTION_MANAGER.GetReportDisplayTime}() to use the correct display time for displayed messages during a report.
 -- 
 -- Reporting can be started and stopped using the methods @{#DETECTION_MANAGER.StartReporting}() and @{#DETECTION_MANAGER.StopReporting}() respectively.
--- If an ad-hoc report is requested, use the method @{#DETECTION_MANAGER#ReportNow}().
+-- If an ad-hoc report is requested, use the method @{#DETECTION_MANAGER.ReportNow}().
 -- 
 -- The default reporting interval is every 60 seconds. The reporting messages are displayed 15 seconds.
 -- 
@@ -32,12 +32,12 @@
 -- -------------------------------
 -- The @{#DETECTION_REPORTING.New}() method creates a new DETECTION_REPORTING instance.
 --    
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --   
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--   
 -- ===
 -- 
 -- ### Contributions: Mechanist, Prof_Hilactic, FlightControl - Concept & Testing

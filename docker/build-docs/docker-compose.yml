@@ -1,0 +1,14 @@
+version: "3.5"
+
+services:
+  lua:
+    image: moose/build-docs
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: moose-build-docs
+    volumes:
+      - ../../:/moose
+    stdin_open: true
+    tty: true
+    command: /bin/bash -c /start.sh

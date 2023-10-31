@@ -8,7 +8,7 @@
 -- 
 -- ===
 -- 
--- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/FOR%20-%20Formation)
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/FOR%20-%20AI%20Group%20Formation)
 -- 
 -- ===
 -- 
@@ -31,11 +31,11 @@
 -- @field Core.Set#SET_GROUP FollowGroupSet
 -- @field #string FollowName
 -- @field #AI_FORMATION.MODE FollowMode The mode the escort is in.
--- @field Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
+-- @field Core.Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
 -- @field #number FollowDistance The current follow distance.
 -- @field #boolean ReportTargets If true, nearby targets are reported.
--- @Field DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the FollowGroup.
--- @field DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the FollowGroup.
+-- @field DCS#AI.Option.Air.val.ROE OptionROE Which ROE is set to the FollowGroup.
+-- @field DCS#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the FollowGroup.
 -- @field #number dtFollow Time step between position updates.
 
 
@@ -92,12 +92,12 @@
 -- local LargeFormation = AI_FORMATION:New( LeaderUnit, FollowGroupSet, "Center Wing Formation", "Briefing" )
 -- LargeFormation:FormationCenterWing( 500, 50, 0, 250, 250 )
 -- LargeFormation:__Start( 1 )
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- @field #AI_FORMATION 
 AI_FORMATION = {
   ClassName = "AI_FORMATION",
@@ -163,15 +163,6 @@ AI_FORMATION.__Enum.ReportType = {
   GroundRadar = "R",
   Ground = "G",
 }
-
-
-
---- MENUPARAM type
--- @type MENUPARAM
--- @field #AI_FORMATION ParamSelf
--- @field #number ParamDistance
--- @field #function ParamFunction
--- @field #string ParamMessage
 
 --- AI_FORMATION class constructor for an AI group
 -- @param #AI_FORMATION self
@@ -1005,7 +996,7 @@ function AI_FORMATION:SetFlightModeMission( FollowGroup )
     FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
   else
     self.FollowGroupSet:ForSomeGroupAlive(
-      --- @param Core.Group#GROUP EscortGroup
+      --- @param Wrapper.Group#GROUP EscortGroup
       function( FollowGroup )
         FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
         FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
@@ -1029,7 +1020,7 @@ function AI_FORMATION:SetFlightModeAttack( FollowGroup )
     FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Attack )
   else
     self.FollowGroupSet:ForSomeGroupAlive(
-      --- @param Core.Group#GROUP EscortGroup
+      --- @param Wrapper.Group#GROUP EscortGroup
       function( FollowGroup )
         FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
         FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Attack )
@@ -1053,7 +1044,7 @@ function AI_FORMATION:SetFlightModeFormation( FollowGroup )
     FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
   else
     self.FollowGroupSet:ForSomeGroupAlive(
-      --- @param Core.Group#GROUP EscortGroup
+      --- @param Wrapper.Group#GROUP EscortGroup
       function( FollowGroup )
         FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
         FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )

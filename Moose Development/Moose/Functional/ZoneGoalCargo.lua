@@ -4,12 +4,12 @@
 -- 
 -- ZONE_GOAL_CARGO models processes that have a Goal with a defined achievement involving a Zone and Cargo.  
 -- Derived classes implement the ways how the achievements can be realized.
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- ===
 -- 
 -- ### Author: **FlightControl**
@@ -61,7 +61,7 @@ do -- ZoneGoal
   --- ZONE_GOAL_CARGO Constructor.
   -- @param #ZONE_GOAL_CARGO self
   -- @param Core.Zone#ZONE Zone A @{Core.Zone} object with the goal to be achieved.
-  -- @param DCSCoalition.DCSCoalition#coalition Coalition The initial coalition owning the zone.
+  -- @param #number Coalition The initial coalition owning the zone.
   -- @return #ZONE_GOAL_CARGO
   function ZONE_GOAL_CARGO:New( Zone, Coalition )
   
@@ -259,7 +259,7 @@ do -- ZoneGoal
 
   --- Set the owning coalition of the zone.
   -- @param #ZONE_GOAL_CARGO self
-  -- @param DCSCoalition.DCSCoalition#coalition Coalition
+  -- @param #number Coalition
   function ZONE_GOAL_CARGO:SetCoalition( Coalition )
     self.Coalition = Coalition
   end
@@ -267,7 +267,7 @@ do -- ZoneGoal
   
   --- Get the owning coalition of the zone.
   -- @param #ZONE_GOAL_CARGO self
-  -- @return DCSCoalition.DCSCoalition#coalition Coalition.
+  -- @return #number Coalition.
   function ZONE_GOAL_CARGO:GetCoalition()
     return self.Coalition
   end
