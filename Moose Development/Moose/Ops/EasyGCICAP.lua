@@ -64,6 +64,7 @@
 -- @field Core.Set#SET_ZONE NoGoZoneSet
 -- @field #boolean Monitor
 -- @field #boolean TankerInvisible
+-- @field #number CapFormation
 -- @extends Core.Fsm#FSM
 
 --- *“Airspeed, altitude, and brains. Two are always needed to successfully complete the flight.”* -- Unknown.
@@ -207,6 +208,7 @@ EASYGCICAP = {
   NoGoZoneSet = nil,
   Monitor = false,
   TankerInvisible = true,
+  CapFormation = nil,
 }
 
 --- Internal Squadron data type
@@ -242,7 +244,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.0.8"
+EASYGCICAP.version="0.0.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -289,6 +291,7 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.repeatsonfailure = 3
   self.Monitor = false
   self.TankerInvisible = true
+  self.CapFormation = ENUMS.Formation.FixedWing.FingerFour.Group
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("EASYGCICAP %s | ", self.alias)
@@ -313,6 +316,14 @@ end
 -- Functions
 -------------------------------------------------------------------------
 
+--- Set CAP formation.
+-- @param #EASYGCICAP self
+-- @param #number Formation Formation to fly, defaults to ENUMS.Formation.FixedWing.FingerFour.Group
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetCAPFormation(Formation)
+  self.CapFormation = Formation
+  return self
+end
 
 --- Set Tanker and AWACS to be invisible to enemy AI eyes
 -- @param #EASYGCICAP self
@@ -476,6 +487,8 @@ end
 function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   self:T(self.lid.."_AddAirwing "..Airbasename)
   
+  local CapFormation = self.CapFormation
+  
   -- Create Airwing
   local CAP_Wing = AIRWING:New(Airbasename,Alias)
   CAP_Wing:SetVerbosityLevel(3)
@@ -484,11 +497,15 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   CAP_Wing:SetAirbase(AIRBASE:FindByName(Airbasename))
   CAP_Wing:SetRespawnAfterDestroyed()
   CAP_Wing:SetNumberCAP(self.capgrouping)
+  CAP_Wing:SetCapCloseRaceTrack(true)
+  if CapFormation then
+    CAP_Wing:SetCAPFormation(CapFormation)
+  end
   if #self.ManagedTK > 0 then
     CAP_Wing:SetNumberTankerBoom(1)
     CAP_Wing:SetNumberTankerProbe(1)
   end
-  if #self.ManagedAW > 0 then
+  if #self.ManagedEWR > 0 then
     CAP_Wing:SetNumberAWACS(1)
   end
   if #self.ManagedREC > 0 then
@@ -515,6 +532,9 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
       flightgroup:SetDetection(true)
       flightgroup:SetEngageDetectedOn(self.engagerange,{"Air"},self.GoZoneSet,self.NoGoZoneSet)
       flightgroup:SetOutOfAAMRTB()
+      if CapFormation then
+        flightgroup:GetGroup():SetOption(AI.Option.Air.id.FORMATION,CapFormation)
+      end
     end
     if Mission.type == AUFTRAG.Type.TANKER or Mission.type == AUFTRAG.Type.AWACS or Mission.type == AUFTRAG.Type.RECON then
       if TankerInvisible then
@@ -549,8 +569,8 @@ end
 -- @param #EASYGCICAP self
 -- @param #string AirbaseName Name of the Wing's airbase
 -- @param Core.Point#COORDINATE Coordinate.
--- @param #number Altitude Defaults to 25000 feet.
--- @param #number Speed  Defaults to 300 knots.
+-- @param #number Altitude Defaults to 25000 feet ASL.
+-- @param #number Speed  Defaults to 300 knots TAS.
 -- @param #number Heading Defaults to 90 degrees (East).
 -- @param #number LegLength Defaults to 15 NM.
 -- @return #EASYGCICAP self
@@ -888,7 +908,7 @@ function EASYGCICAP:_AddSquadron(TemplateName, SquadName, AirbaseName, AirFrames
   self:T(self.lid.."_AddSquadron "..SquadName)
   -- Add Squadrons
   local Squadron_One = SQUADRON:New(TemplateName,AirFrames,SquadName)
-  Squadron_One:AddMissionCapability({AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT, AUFTRAG.Type.ALERT5})
+  Squadron_One:AddMissionCapability({AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT, AUFTRAG.Type.PATROLRACETRACK, AUFTRAG.Type.ALERT5})
   --Squadron_One:SetFuelLowRefuel(true)
   Squadron_One:SetFuelLowThreshold(0.3)
   Squadron_One:SetTurnoverTime(10,20)
@@ -900,7 +920,7 @@ function EASYGCICAP:_AddSquadron(TemplateName, SquadName, AirbaseName, AirFrames
   local wing = self.wings[AirbaseName][1] -- Ops.AirWing#AIRWING
   
   wing:AddSquadron(Squadron_One)
-  wing:NewPayload(TemplateName,-1,{AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT, AUFTRAG.Type.ALERT5},75)
+  wing:NewPayload(TemplateName,-1,{AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT, AUFTRAG.Type.PATROLRACETRACK, AUFTRAG.Type.ALERT5},75)
   
   return self
 end
@@ -1234,12 +1254,16 @@ function EASYGCICAP:onafterStatus(From,Event,To)
   local capmission = 0
   local interceptmission = 0
   local reconmission = 0
+  local awacsmission = 0
+  local tankermission = 0
   for _,_wing in pairs(self.wings) do
     local count = _wing[1]:CountAssetsOnMission(MissionTypes,Cohort)
     local count2 = _wing[1]:CountAssets(true,MissionTypes,Attributes)
-    capmission = capmission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.GCICAP})
+    capmission = capmission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.GCICAP,AUFTRAG.Type.PATROLRACETRACK})
     interceptmission = interceptmission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.INTERCEPT})
     reconmission = reconmission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.RECON})
+    awacsmission = awacsmission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.AWACS})
+    tankermission = tankermission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.TANKER})
     assets = assets + count
     instock = instock + count2
   end
@@ -1251,6 +1275,8 @@ function EASYGCICAP:onafterStatus(From,Event,To)
     text = text.."\nMissions: "..capmission+interceptmission
     text = text.."\n - CAP: "..capmission
     text = text.."\n - Intercept: "..interceptmission
+    text = text.."\n - AWACS: "..awacsmission
+    text = text.."\n - TANKER: "..tankermission
     text = text.."\n - Recon: "..reconmission
     MESSAGE:New(text,15,"GCICAP"):ToAll():ToLogIf(self.debug)
   end
