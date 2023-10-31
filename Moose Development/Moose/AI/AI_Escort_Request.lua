@@ -297,7 +297,7 @@ function AI_ESCORT_REQUEST:onafterStop( EscortGroupSet )
   self:F()
   
   EscortGroupSet:ForEachGroup(
-    --- @param Core.Group#GROUP EscortGroup
+    --- @param Wrapper.Group#GROUP EscortGroup
     function( EscortGroup )
       EscortGroup:WayPointInitialize()
     

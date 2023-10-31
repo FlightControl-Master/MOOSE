@@ -137,7 +137,7 @@ do -- TASK_CARGO_CSAR
   --     -- The cargoset "CargoSet" will embed all defined cargo of type "Pilots" (prefix) into its set.
   --     local CargoGroup = CARGO_GROUP:New( PilotGroup, "Pilots", "Downed Pilot", 500 )
   -- 
-  -- What is also needed, is to have a set of @{#Core.Group}s defined that contains the clients of the players.
+  -- What is also needed, is to have a set of @{#Wrapper.Group}s defined that contains the clients of the players.
   -- 
   --     -- Allocate the Transport, which are the helicopter to retrieve the pilot, that can be manned by players.
   --     local GroupSet = SET_GROUP:New():FilterPrefixes( "Transport" ):FilterStart()
