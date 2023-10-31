@@ -14,7 +14,8 @@
 
 
 --- @type AI_A2G_SEAD
--- @extends AI.Air_Patrol#AI_AIR_PATROL
+-- @extends AI.AI_Air_Patrol#AI_AIR_PATROL
+-- @extends AI.AI_Air_Engage#AI_AIR_ENGAGE
 
 
 --- Implements the core functions to SEAD intruders. Use the Engage trigger to intercept intruders.
@@ -81,7 +82,7 @@ AI_A2G_SEAD = {
 function AI_A2G_SEAD:New2( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
   local AI_Air = AI_AIR:New( AIGroup )
-  local AI_Air_Patrol = AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) -- #AI_AIR_PATROL
+  local AI_Air_Patrol = AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
   local AI_Air_Engage = AI_AIR_ENGAGE:New( AI_Air_Patrol, AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType )
   local self = BASE:Inherit( self, AI_Air_Engage )
 

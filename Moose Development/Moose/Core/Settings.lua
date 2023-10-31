@@ -120,7 +120,7 @@
 --
 -- Will customize which display format is used to indicate A2A coordinates in text as part of the Command Center communications.
 --
---   - A2A BRAA: [Bearing Range Altitude Aspect](https://en.wikipedia.org/wiki/Bearing_(navigation)).
+--   - A2A BRAA: [Bearing Range Altitude Aspect](https://en.wikipedia.org/wiki/Bearing_\(navigation\)).
 --   - A2A MGRS: The [Military Grid Reference System](https://en.wikipedia.org/wiki/Military_Grid_Reference_System). The accuracy can also be adapted.
 --   - A2A LL DMS: Lattitude Longitude [Degrees Minutes Seconds](https://en.wikipedia.org/wiki/Geographic_coordinate_conversion). The accuracy can also be adapted.
 --   - A2A LL DDM: Lattitude Longitude [Decimal Degrees and Minutes](https://en.wikipedia.org/wiki/Decimal_degrees). The accuracy can also be adapted.
@@ -190,8 +190,8 @@
 --
 -- There are different methods that can be used to change the **System settings** using the \_SETTINGS object.
 --
---   - @{#SETTINGS.SetMessageTime}(): Define for a specific @{Message.MESSAGE.MessageType} the duration to be displayed in seconds.
---   - @{#SETTINGS.GetMessageTime}(): Retrieves for a specific @{Message.MESSAGE.MessageType} the duration to be displayed in seconds.
+--   - @{Core.Settings#SETTINGS.SetMessageTime}(): Define for a specific @{Message.MESSAGE.MessageType} the duration to be displayed in seconds.
+--   - @{Core.Settings#SETTINGS.GetMessageTime}(): Retrieves for a specific @{Message.MESSAGE.MessageType} the duration to be displayed in seconds.
 --
 -- ## 3.5) **Era** of the battle
 --

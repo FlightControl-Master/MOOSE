@@ -1260,7 +1260,7 @@ do -- FSM_PROCESS
 
   --- Assign the process to a @{Wrapper.Unit} and activate the process.
   -- @param #FSM_PROCESS self
-  -- @param Task.Tasking#TASK Task
+  -- @param Tasking.Task#TASK Task
   -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @return #FSM_PROCESS self
   function FSM_PROCESS:Assign( ProcessUnit, Task )

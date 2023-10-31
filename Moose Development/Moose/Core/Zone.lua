@@ -1787,7 +1787,7 @@ ZONE_UNIT = {
 -- @param #ZONE_UNIT self
 -- @param #string ZoneName Name of the zone.
 -- @param Wrapper.Unit#UNIT ZoneUNIT The unit as the center of the zone.
--- @param Dcs.DCSTypes#Distance Radius The radius of the zone.
+-- @param #number Radius The radius of the zone in meters.
 -- @param #table Offset A table specifying the offset. The offset table may have the following elements:
 --  dx The offset in X direction, +x is north.
 --  dy The offset in Y direction, +y is east.

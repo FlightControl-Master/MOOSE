@@ -49,7 +49,7 @@
 -- Once the task is assigned to the player and accepted by the player, the player will obtain 
 -- an extra **Cargo (Radio) Menu** that contains the CARGO objects that need to be transported.
 -- 
--- Each @{CARGO.Cargo} object has a certain state:
+-- Each @{Tasking.Task_CARGO#TASK_CARGO} object has a certain state:
 -- 
 --   * **UnLoaded**: The cargo is located within the battlefield. It may still need to be transported.
 --   * **Loaded**: The cargo is loaded within a Carrier. This can be your air unit, or another air unit, or even a vehicle.
@@ -447,7 +447,7 @@ do -- TASK_CARGO
   --   
   -- ## 2.2) Handle TASK_CARGO Events ...
   -- 
-  -- The TASK_CARGO classes define @{Cargo} transport tasks, 
+  -- The TASK_CARGO classes define Cargo transport tasks,
   -- based on the tasking capabilities defined in @{Tasking.Task#TASK}.
   -- 
   -- ### 2.2.1) Boarding events.
