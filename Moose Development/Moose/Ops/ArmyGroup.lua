@@ -2043,81 +2043,89 @@ end
 -- @param #ARMYGROUP self
 -- @param #table Template Template used to init the group. Default is `self.template`.
 -- @return #ARMYGROUP self
-function ARMYGROUP:_InitGroup(Template)
+function ARMYGROUP:_InitGroup(Template, Delay)
 
-  -- First check if group was already initialized.
-  if self.groupinitialized then
-    self:T(self.lid.."WARNING: Group was already initialized! Will NOT do it again!")
-    return
-  end
-
-  -- Get template of group.
-  local template=Template or self:_GetTemplate()
-  
-  -- Ground are always AI.
-  self.isAI=true
-  
-  -- Is (template) group late activated.
-  self.isLateActivated=template.lateActivation
-  
-  -- Ground groups cannot be uncontrolled.
-  self.isUncontrolled=false
-  
-  -- Max speed in km/h.
-  self.speedMax=self.group:GetSpeedMax()
-  
-  -- Is group mobile?
-  if self.speedMax>3.6 then
-    self.isMobile=true
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, ARMYGROUP._InitGroup, self, Template, 0)
   else
-    self.isMobile=false
-  end
-  
-  -- Cruise speed in km/h
-  self.speedCruise=self.speedMax*0.7
-  
-  -- Group ammo.
-  self.ammo=self:GetAmmoTot()
-  
-  -- Radio parameters from template.
-  self.radio.On=false  -- Radio is always OFF for ground.
-  self.radio.Freq=133
-  self.radio.Modu=radio.modulation.AM
-  
-  -- Set default radio.
-  self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, self.radio.On)
-  
-  -- Get current formation from first waypoint.
-  self.option.Formation=template.route.points[1].action
-  
-  -- Set default formation to "on road".
-  self.optionDefault.Formation=ENUMS.Formation.Vehicle.OnRoad
 
-  -- Default TACAN off.
-  self:SetDefaultTACAN(nil, nil, nil, nil, true)
-  self.tacan=UTILS.DeepCopy(self.tacanDefault)
+    -- First check if group was already initialized.
+    if self.groupinitialized then
+      self:T(self.lid.."WARNING: Group was already initialized! Will NOT do it again!")
+      return
+    end
+    
+    self:I(self.lid.."FF Initializing Group")
   
-  -- Units of the group.
-  local units=self.group:GetUnits()
+    -- Get template of group.
+    local template=Template or self:_GetTemplate()
+    
+    -- Ground are always AI.
+    self.isAI=true
+    
+    -- Is (template) group late activated.
+    self.isLateActivated=template.lateActivation
+    
+    -- Ground groups cannot be uncontrolled.
+    self.isUncontrolled=false
+    
+    -- Max speed in km/h.
+    self.speedMax=self.group:GetSpeedMax()
+    
+    -- Is group mobile?
+    if self.speedMax>3.6 then
+      self.isMobile=true
+    else
+      self.isMobile=false
+    end
+    
+    -- Cruise speed in km/h
+    self.speedCruise=self.speedMax*0.7
+    
+    -- Group ammo.
+    self.ammo=self:GetAmmoTot()
+    
+    -- Radio parameters from template.
+    self.radio.On=false  -- Radio is always OFF for ground.
+    self.radio.Freq=133
+    self.radio.Modu=radio.modulation.AM
+    
+    -- Set default radio.
+    self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, self.radio.On)
+    
+    -- Get current formation from first waypoint.
+    self.option.Formation=template.route.points[1].action
+    
+    -- Set default formation to "on road".
+    self.optionDefault.Formation=ENUMS.Formation.Vehicle.OnRoad
   
-  -- DCS group.
-  local dcsgroup=Group.getByName(self.groupname)
-  local size0=dcsgroup:getInitialSize()
+    -- Default TACAN off.
+    self:SetDefaultTACAN(nil, nil, nil, nil, true)
+    self.tacan=UTILS.DeepCopy(self.tacanDefault)
+    
+    -- Units of the group.
+    local units=self.group:GetUnits()
+    
+    -- DCS group.
+    local dcsgroup=Group.getByName(self.groupname)
+    local size0=dcsgroup:getInitialSize()
+    local u=dcsgroup:getUnits()
+    
+    -- Quick check.
+    if #units~=size0 then
+      self:T(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units! u=%d", #units, size0, #u))
+    end
+    
+    -- Add elemets.
+    for _,unit in pairs(units) do
+      local unitname=unit:GetName()
+      self:_AddElementByName(unitname)
+    end
+    
   
-  -- Quick check.
-  if #units~=size0 then
-    self:T(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
+    -- Init done.
+    self.groupinitialized=true
   end
-  
-  -- Add elemets.
-  for _,unit in pairs(units) do
-    local unitname=unit:GetName()
-    self:_AddElementByName(unitname)
-  end
-  
-
-  -- Init done.
-  self.groupinitialized=true
   
   return self
 end

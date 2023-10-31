@@ -305,6 +305,8 @@ function GROUP:GetDCSObject()
 
   if DCSGroup then
     return DCSGroup
+  else
+    env.error("ERROR: Could not get DCS group object!")
   end
 
   return nil

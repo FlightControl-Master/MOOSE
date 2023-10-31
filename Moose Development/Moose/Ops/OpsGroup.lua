@@ -1768,6 +1768,8 @@ function OPSGROUP:GetDCSUnit(UnitNumber)
   if DCSGroup then
     local unit=DCSGroup:getUnit(UnitNumber or 1)
     return unit
+  else
+    self:E(self.lid..string.format("ERROR: DCS group does not exist! Cannot get unit"))
   end
 
   return nil
@@ -3517,9 +3519,11 @@ function OPSGROUP:OnEventBirth(EventData)
     local element=self:GetElementByName(unitname)
 
     if element and element.status~=OPSGROUP.ElementStatus.SPAWNED then
-
+    
       -- Debug info.
       self:T(self.lid..string.format("EVENT: Element %s born ==> spawned", unitname))
+      
+      self:T2(self.lid..string.format("DCS unit=%s isExist=%s", tostring(EventData.IniDCSUnit:getName()), tostring(EventData.IniDCSUnit:isExist()) ))
 
       -- Set element to spawned state.
       self:ElementSpawned(element)
