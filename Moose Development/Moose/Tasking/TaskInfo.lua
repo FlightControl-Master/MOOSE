@@ -256,7 +256,7 @@ end
 
 --- Add Cargo. 
 -- @param #TASKINFO self
--- @param Core.Cargo#CARGO Cargo
+-- @param Cargo.Cargo#CARGO Cargo
 -- @param #number Order The display order, which is a number from 0 to 100.
 -- @param #TASKINFO.Detail Detail The detail Level.
 -- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
