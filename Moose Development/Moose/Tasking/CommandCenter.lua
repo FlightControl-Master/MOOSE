@@ -339,7 +339,7 @@ end
 
 --- Gets the coalition of the command center.
 -- @param #COMMANDCENTER self
--- @return DCScoalition#coalition
+-- @return #number Coalition of the command center.
 function COMMANDCENTER:GetCoalition()
 
   return self.CommandCenterCoalition

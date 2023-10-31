@@ -120,7 +120,7 @@
 --
 -- Will customize which display format is used to indicate A2A coordinates in text as part of the Command Center communications.
 --
---   - A2A BRAA: [Bearing Range Altitude Aspect](https://en.wikipedia.org/wiki/Bearing_(navigation)).
+--   - A2A BRAA: [Bearing Range Altitude Aspect](https://en.wikipedia.org/wiki/Bearing_\(navigation\)).
 --   - A2A MGRS: The [Military Grid Reference System](https://en.wikipedia.org/wiki/Military_Grid_Reference_System). The accuracy can also be adapted.
 --   - A2A LL DMS: Lattitude Longitude [Degrees Minutes Seconds](https://en.wikipedia.org/wiki/Geographic_coordinate_conversion). The accuracy can also be adapted.
 --   - A2A LL DDM: Lattitude Longitude [Decimal Degrees and Minutes](https://en.wikipedia.org/wiki/Decimal_degrees). The accuracy can also be adapted.
@@ -283,21 +283,21 @@ do -- SETTINGS
   function SETTINGS:SetMetric()
     self.Metric = true
   end
-  
+
   --- Sets the SETTINGS default text locale.
   -- @param #SETTINGS self
   -- @param #string Locale
   function SETTINGS:SetLocale(Locale)
     self.Locale = Locale or "en"
   end
-  
+
   --- Gets the SETTINGS text locale.
   -- @param #SETTINGS self
   -- @return #string
   function SETTINGS:GetLocale()
     return self.Locale or _SETTINGS:GetLocale()
   end
-  
+
   --- Gets if the SETTINGS is metric.
   -- @param #SETTINGS self
   -- @return #boolean true if metric.
