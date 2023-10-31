@@ -58,7 +58,7 @@
 -- @field #SPAWN.SpawnZoneTable SpawnZoneTable
 -- @extends Core.Base#BASE
 
---- Allows to spawn dynamically new @{Core.Group}s.
+--- Allows to spawn dynamically new @{Wrapper.Group}s.
 --
 -- Each SPAWN object needs to be have related **template groups** setup in the Mission Editor (ME),
 -- which is a normal group with the **Late Activation** flag set.
