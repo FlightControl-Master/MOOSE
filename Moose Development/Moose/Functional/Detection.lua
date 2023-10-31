@@ -2452,7 +2452,7 @@ do -- DETECTION_AREAS
   -- 
   -- Retrieve the DetectedItems[].Set with the method @{Functional.Detection#DETECTION_BASE.GetDetectedSet}(). A @{Core.Set#SET_UNIT} object will be returned.
   -- 
-  -- Retrieve the formed @{Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Functional.Detection#DETECTION_AREAS.GetDetectionZones}().
+  -- Retrieve the formed @{Core.Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Functional.Detection#DETECTION_AREAS.GetDetectionZones}().
   -- To understand the amount of zones created, use the method @{Functional.Detection#DETECTION_AREAS.GetDetectionZoneCount}(). 
   -- If you want to obtain a specific zone from the DetectedZones, use the method @{Functional.Detection#DETECTION_AREAS.GetDetectionZoneByID}() with a given index.
   -- 
