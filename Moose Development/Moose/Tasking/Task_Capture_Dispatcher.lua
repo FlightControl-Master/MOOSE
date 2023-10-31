@@ -245,7 +245,7 @@ do -- TASK_CAPTURE_DISPATCHER
   -- @param #string TaskPrefix (optional) The prefix of the capture zone task. 
   -- If no TaskPrefix is given, then "Capture" will be used as the TaskPrefix. 
   -- The TaskPrefix will be appended with a . + a number of 3 digits, if the TaskPrefix already exists in the task collection.
-  -- @param Functional.CaptureZoneCoalition#ZONE_CAPTURE_COALITION CaptureZone The zone of the coalition to be captured as the task goal.
+  -- @param Functional.ZoneCaptureCoalition#ZONE_CAPTURE_COALITION CaptureZone The zone of the coalition to be captured as the task goal.
   -- @param #string Briefing The briefing of the task to be shown to the player.
   -- @return Tasking.Task_Capture_Zone#TASK_CAPTURE_ZONE
   -- @usage
