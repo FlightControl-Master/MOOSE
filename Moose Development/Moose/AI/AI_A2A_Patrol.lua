@@ -11,7 +11,7 @@
 
 
 --- @type AI_A2A_PATROL
--- @extends AI.AI_A2A#AI_A2A
+-- @extends AI.AI_Air_Patrol#AI_AIR_PATROL
 
 --- Implements the core functions to patrol a @{Core.Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group}.
 -- 

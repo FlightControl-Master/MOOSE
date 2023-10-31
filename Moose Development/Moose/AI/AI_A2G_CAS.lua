@@ -12,7 +12,8 @@
 -- @image AI_Air_To_Ground_Engage.JPG
 
 --- @type AI_A2G_CAS
--- @extends AI.AI_A2G_Patrol#AI_AIR_PATROL TODO: Documentation. This class does not exist, unable to determine what it extends.
+-- @extends AI.AI_Air_Patrol#AI_AIR_PATROL
+-- @extends AI.AI_Air_Engage#AI_AIR_ENGAGE
 
 --- Implements the core functions to intercept intruders. Use the Engage trigger to intercept intruders.
   --
@@ -46,7 +47,7 @@ AI_A2G_CAS = {
 function AI_A2G_CAS:New2( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
   local AI_Air = AI_AIR:New( AIGroup )
-  local AI_Air_Patrol = AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) -- #AI_AIR_PATROL
+  local AI_Air_Patrol = AI_AIR_PATROL:New( AI_Air, AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
   local AI_Air_Engage = AI_AIR_ENGAGE:New( AI_Air_Patrol, AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType )
   local self = BASE:Inherit( self, AI_Air_Engage )
 
