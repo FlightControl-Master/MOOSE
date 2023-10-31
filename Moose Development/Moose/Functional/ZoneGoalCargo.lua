@@ -259,7 +259,7 @@ do -- ZoneGoal
 
   --- Set the owning coalition of the zone.
   -- @param #ZONE_GOAL_CARGO self
-  -- @param DCSCoalition.DCSCoalition#coalition Coalition
+  -- @param #number Coalition
   function ZONE_GOAL_CARGO:SetCoalition( Coalition )
     self.Coalition = Coalition
   end
@@ -267,7 +267,7 @@ do -- ZoneGoal
   
   --- Get the owning coalition of the zone.
   -- @param #ZONE_GOAL_CARGO self
-  -- @return DCSCoalition.DCSCoalition#coalition Coalition.
+  -- @return #number Coalition.
   function ZONE_GOAL_CARGO:GetCoalition()
     return self.Coalition
   end

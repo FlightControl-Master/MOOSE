@@ -514,7 +514,7 @@ do -- TASK_CARGO
     -- @param #string Event
     -- @param #string To
     -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-    -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
+    -- @param Cargo.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
     -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
     -- @return #boolean
     
@@ -525,7 +525,7 @@ do -- TASK_CARGO
     -- @param #string Event
     -- @param #string To
     -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-    -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
+    -- @param Cargo.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
     -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
     -- @usage
     -- 
@@ -567,7 +567,7 @@ do -- TASK_CARGO
     -- @param #string Event
     -- @param #string To
     -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-    -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
+    -- @param Cargo.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
     -- @return #boolean
     
     --- CargoPickedUp Handler OnAfter for TASK_CARGO
@@ -577,7 +577,7 @@ do -- TASK_CARGO
     -- @param #string Event
     -- @param #string To
     -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-    -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
+    -- @param Cargo.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
 
     
     local Fsm = self:GetUnitProcess()
@@ -843,7 +843,7 @@ do -- TASK_CARGO
     -- @param From
     -- @param Event
     -- @param To
-    -- @param Core.Cargo#CARGO Cargo
+    -- @param Cargo.Cargo#CARGO Cargo
     function Fsm:onafterRouteToPickup( TaskUnit, Task, From, Event, To, Cargo )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 

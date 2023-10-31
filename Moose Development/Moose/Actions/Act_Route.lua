@@ -60,7 +60,7 @@
 --
 -- ===
 --
--- # 1) @{#ACT_ROUTE_ZONE} class, extends @{Core.Fsm.Route#ACT_ROUTE}
+-- # 1) @{#ACT_ROUTE_ZONE} class, extends @{#ACT_ROUTE}
 --
 -- The ACT_ROUTE_ZONE class implements the core functions to route an AIR @{Wrapper.Controllable} player @{Wrapper.Unit} to a @{Core.Zone}.
 -- The player receives on perioding times messages with the coordinates of the route to follow.
