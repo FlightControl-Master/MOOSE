@@ -343,7 +343,7 @@ end
 
 --- Sends a MESSAGE to a Coalition.
 -- @param #MESSAGE self
--- @param #DCS.coalition.side CoalitionSide @{#DCS.coalition.side} to which the message is displayed.
+-- @param DCS#coalition.side CoalitionSide @{#DCS.coalition.side} to which the message is displayed.
 -- @param Core.Settings#SETTINGS Settings (Optional) Settings for message display.
 -- @return #MESSAGE Message object.
 -- @usage

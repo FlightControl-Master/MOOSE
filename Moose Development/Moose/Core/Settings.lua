@@ -190,8 +190,8 @@
 --
 -- There are different methods that can be used to change the **System settings** using the \_SETTINGS object.
 --
---   - @{Core.Settings#SETTINGS.SetMessageTime}(): Define for a specific @{Message.MESSAGE.MessageType} the duration to be displayed in seconds.
---   - @{Core.Settings#SETTINGS.GetMessageTime}(): Retrieves for a specific @{Message.MESSAGE.MessageType} the duration to be displayed in seconds.
+--   - @{#SETTINGS.SetMessageTime}(): Define for a specific @{Core.Message#MESSAGE.MessageType} the duration to be displayed in seconds.
+--   - @{#SETTINGS.GetMessageTime}(): Retrieves for a specific @{Core.Message#MESSAGE.MessageType} the duration to be displayed in seconds.
 --
 -- ## 3.5) **Era** of the battle
 --
@@ -283,21 +283,21 @@ do -- SETTINGS
   function SETTINGS:SetMetric()
     self.Metric = true
   end
-  
+
   --- Sets the SETTINGS default text locale.
   -- @param #SETTINGS self
   -- @param #string Locale
   function SETTINGS:SetLocale(Locale)
     self.Locale = Locale or "en"
   end
-  
+
   --- Gets the SETTINGS text locale.
   -- @param #SETTINGS self
   -- @return #string
   function SETTINGS:GetLocale()
     return self.Locale or _SETTINGS:GetLocale()
   end
-  
+
   --- Gets if the SETTINGS is metric.
   -- @param #SETTINGS self
   -- @return #boolean true if metric.

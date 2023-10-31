@@ -16,12 +16,12 @@
 -- @extends AI.AI_Air_Engage#AI_AIR_ENGAGE
 
 --- Implements the core functions to intercept intruders. Use the Engage trigger to intercept intruders.
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- ===
 -- 
 -- @field #AI_A2G_CAS
