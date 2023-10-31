@@ -53,8 +53,6 @@
 --
 -- ## 2. AI_A2A_GCI is a FSM
 --
--- ![Process](..\Presentations\AI_GCI\Dia2.JPG)
---
 -- ### 2.1 AI_A2A_GCI States
 --
 --   * **None** ( Group ): The process is not started yet.

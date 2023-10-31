@@ -73,7 +73,7 @@ MESSAGE.Type = {
   Detailed = "Detailed Report",
 }
 
---- Creates a new MESSAGE object. Note that these MESSAGE objects are not yet displayed on the display panel. You must use the functions @{ToClient} or @{ToCoalition} or @{ToAll} to send these Messages to the respective recipients.
+--- Creates a new MESSAGE object. Note that these MESSAGE objects are not yet displayed on the display panel. You must use the functions @{#MESSAGE.ToClient} or @{#MESSAGE.ToCoalition} or @{#MESSAGE.ToAll} to send these Messages to the respective recipients.
 -- @param self
 -- @param #string MessageText is the text of the Message.
 -- @param #number MessageDuration is a number in seconds of how long the MESSAGE should be shown on the display panel.
@@ -379,7 +379,7 @@ end
 
 --- Sends a MESSAGE to a Coalition if the given Condition is true.
 -- @param #MESSAGE self
--- @param CoalitionSide needs to be filled out by the defined structure of the standard scripting engine @{coalition.side}.
+-- @param CoalitionSide needs to be filled out by the defined structure of the standard scripting engine @{#DCS.coalition.side}.
 -- @param #boolean Condition Sends the message only if the condition is true.
 -- @return #MESSAGE self
 function MESSAGE:ToCoalitionIf( CoalitionSide, Condition )

@@ -681,7 +681,7 @@ do -- cargo
   --- Finds an CARGO based on the CargoName.
   -- @param #DATABASE self
   -- @param #string CargoName
-  -- @return Wrapper.Cargo#CARGO The found CARGO.
+  -- @return Cargo.Cargo#CARGO The found CARGO.
   function DATABASE:FindCargo( CargoName )
 
     local CargoFound = self.CARGOS[CargoName]
