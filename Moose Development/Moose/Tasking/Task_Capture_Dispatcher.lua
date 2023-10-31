@@ -128,7 +128,7 @@ do -- TASK_CAPTURE_DISPATCHER
   -- 
   -- ## 2.2. Create a set of player groups.
   --    
-  -- What is also needed, is to have a set of @{Core.Group}s defined that contains the clients of the players.
+  -- What is also needed, is to have a set of @{Wrapper.Group}s defined that contains the clients of the players.
   -- 
   --     -- Allocate the player slots, which must be aircraft (airplanes or helicopters), that can be manned by players.
   --     -- We use the method FilterPrefixes to filter those player groups that have client slots, as defined in the mission editor.

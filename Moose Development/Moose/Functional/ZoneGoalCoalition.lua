@@ -80,7 +80,7 @@ do -- ZoneGoal
 
   --- Set the owning coalition of the zone.
   -- @param #ZONE_GOAL_COALITION self
-  -- @param DCSCoalition.DCSCoalition#coalition Coalition The coalition ID, e.g. *coalition.side.RED*.
+  -- @param #number Coalition The coalition ID, e.g. *coalition.side.RED*.
   -- @return #ZONE_GOAL_COALITION
   function ZONE_GOAL_COALITION:SetCoalition( Coalition )
     self.PreviousCoalition = self.Coalition or Coalition
@@ -120,14 +120,14 @@ do -- ZoneGoal
 
   --- Get the owning coalition of the zone.
   -- @param #ZONE_GOAL_COALITION self
-  -- @return DCSCoalition.DCSCoalition#coalition Coalition.
+  -- @return #number Coalition.
   function ZONE_GOAL_COALITION:GetCoalition()
     return self.Coalition
   end
 
   --- Get the previous coalition, i.e. the one owning the zone before the current one. 
   -- @param #ZONE_GOAL_COALITION self
-  -- @return DCSCoalition.DCSCoalition#coalition Coalition.
+  -- @return #number Coalition.
   function ZONE_GOAL_COALITION:GetPreviousCoalition()
     return self.PreviousCoalition
   end
