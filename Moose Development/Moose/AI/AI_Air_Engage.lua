@@ -14,7 +14,7 @@
 
 
 --- @type AI_AIR_ENGAGE
--- @extends AI.AI_AIR#AI_AIR
+-- @extends AI.AI_Air#AI_AIR
 
 
 --- Implements the core functions to intercept intruders. Use the Engage trigger to intercept intruders.

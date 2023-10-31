@@ -769,7 +769,7 @@ end
 
 --- Play sound file (ogg or mp3) via SRS.
 -- @param #MSRS self
--- @param Sound.SoundFile#SOUNDFILE Soundfile Sound file to play.
+-- @param Sound.SoundOutput#SOUNDFILE Soundfile Sound file to play.
 -- @param #number Delay Delay in seconds, before the sound file is played.
 -- @return #MSRS self
 function MSRS:PlaySoundFile(Soundfile, Delay)

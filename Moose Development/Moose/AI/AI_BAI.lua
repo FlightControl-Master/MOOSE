@@ -22,7 +22,7 @@
 -- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
---   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
+--   * **Gunterlund**: Test case revision.
 -- 
 -- ===
 --

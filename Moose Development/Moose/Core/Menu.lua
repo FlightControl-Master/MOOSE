@@ -513,7 +513,7 @@ do -- MENU_COALITION
   --- @type MENU_COALITION
   -- @extends Core.Menu#MENU_BASE
   
-  --- Manages the main menus for @{DCS.coalition}s.  
+  --- Manages the main menus for DCS.coalition.
   -- 
   -- You can add menus with the @{#MENU_COALITION.New} method, which constructs a MENU_COALITION object and returns you the object reference.
   -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_COALITION.Remove}.
