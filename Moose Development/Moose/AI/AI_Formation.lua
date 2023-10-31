@@ -164,15 +164,6 @@ AI_FORMATION.__Enum.ReportType = {
   Ground = "G",
 }
 
-
-
---- MENUPARAM type
--- @type MENUPARAM
--- @field #AI_FORMATION ParamSelf
--- @field #number ParamDistance
--- @field #function ParamFunction
--- @field #string ParamMessage
-
 --- AI_FORMATION class constructor for an AI group
 -- @param #AI_FORMATION self
 -- @param Wrapper.Unit#UNIT FollowUnit The UNIT leading the FolllowGroupSet.

@@ -14,7 +14,7 @@
 
 
 --- @type AI_A2A_GCI
--- @extends AI.AI_A2A#AI_A2A
+-- @extends AI.AI_Air_Engage#AI_AIR_ENGAGE
 
 
 --- Implements the core functions to intercept intruders. Use the Engage trigger to intercept intruders.

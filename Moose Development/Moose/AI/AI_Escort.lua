@@ -199,13 +199,6 @@ AI_ESCORT = {
 -- @field Functional.Detection#DETECTION_AREAS
 AI_ESCORT.Detection = nil
 
---- MENUPARAM type
--- @type MENUPARAM
--- @field #AI_ESCORT ParamSelf
--- @field #Distance ParamDistance
--- @field #function ParamFunction
--- @field #string ParamMessage
-
 --- AI_ESCORT class constructor for an AI group
 -- @param #AI_ESCORT self
 -- @param Wrapper.Client#CLIENT EscortUnit The client escorted by the EscortGroup.
