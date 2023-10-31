@@ -301,7 +301,7 @@ do -- TASK_CARGO_CSAR
       -- @param #string Event The Event string.
       -- @param #string To The To State string.
       -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
+      -- @param Cargo.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
         
       --- OnAfter Transition Handler for Event CargoDeployed.
       -- @function [parent=#TASK_CARGO_CSAR] OnAfterCargoDeployed
@@ -310,7 +310,7 @@ do -- TASK_CARGO_CSAR
       -- @param #string Event The Event string.
       -- @param #string To The To State string.
       -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
+      -- @param Cargo.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
       -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
         
     local Fsm = self:GetUnitProcess()
@@ -318,7 +318,7 @@ do -- TASK_CARGO_CSAR
     local CargoReport = REPORT:New( "Rescue a downed pilot from the following position:")
     
     SetCargo:ForEachCargo(
-      --- @param Core.Cargo#CARGO Cargo
+      --- @param Cargo.Cargo#CARGO Cargo
       function( Cargo )
         local CargoType = Cargo:GetType()
         local CargoName = Cargo:GetName()
@@ -358,7 +358,7 @@ do -- TASK_CARGO_CSAR
     
     -- Loop the CargoSet (so evaluate each Cargo in the SET_CARGO ).
     for CargoID, CargoData in pairs( Set ) do
-      local Cargo = CargoData -- Core.Cargo#CARGO
+      local Cargo = CargoData -- Cargo.Cargo#CARGO
       
       self:F( { Cargo = Cargo:GetName(), CargoDeployed = Cargo:IsDeployed() } )
 
