@@ -797,7 +797,7 @@ end
 
 --- Play a SOUNDTEXT text-to-speech object.
 -- @param #MSRS self
--- @param Sound.SoundFile#SOUNDTEXT SoundText Sound text.
+-- @param Sound.SoundOutput#SOUNDTEXT SoundText Sound text.
 -- @param #number Delay Delay in seconds, before the sound file is played.
 -- @return #MSRS self
 function MSRS:PlaySoundText(SoundText, Delay)
@@ -1417,7 +1417,7 @@ end
 
 --- Replacement function for @{#MSRS.PlaySoundText} 
 -- @param #MSRS self
--- @param Sound.SoundFile#SOUNDTEXT SoundText Sound text.
+-- @param Sound.SoundOutput#SOUNDTEXT SoundText Sound text.
 -- @param #number Delay Delay in seconds, before the sound file is played.
 -- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions.PlaySoundText = function (self, SoundText, Delay)

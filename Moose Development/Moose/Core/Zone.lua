@@ -1057,11 +1057,11 @@ end
 --- Scan the zone for the presence of units of the given ObjectCategories.
 -- Note that **only after** a zone has been scanned, the zone can be evaluated by:
 --
---   * @{ZONE_RADIUS.IsAllInZoneOfCoalition}(): Scan the presence of units in the zone of a coalition.
---   * @{ZONE_RADIUS.IsAllInZoneOfOtherCoalition}(): Scan the presence of units in the zone of an other coalition.
---   * @{ZONE_RADIUS.IsSomeInZoneOfCoalition}(): Scan if there is some presence of units in the zone of the given coalition.
---   * @{ZONE_RADIUS.IsNoneInZoneOfCoalition}(): Scan if there isn't any presence of units in the zone of an other coalition than the given one.
---   * @{ZONE_RADIUS.IsNoneInZone}(): Scan if the zone is empty.
+--   * @{Core.Zone#ZONE_RADIUS.IsAllInZoneOfCoalition}(): Scan the presence of units in the zone of a coalition.
+--   * @{Core.Zone#ZONE_RADIUS.IsAllInZoneOfOtherCoalition}(): Scan the presence of units in the zone of an other coalition.
+--   * @{Core.Zone#ZONE_RADIUS.IsSomeInZoneOfCoalition}(): Scan if there is some presence of units in the zone of the given coalition.
+--   * @{Core.Zone#ZONE_RADIUS.IsNoneInZoneOfCoalition}(): Scan if there isn't any presence of units in the zone of an other coalition than the given one.
+--   * @{Core.Zone#ZONE_RADIUS.IsNoneInZone}(): Scan if the zone is empty.
 -- @param #ZONE_RADIUS self
 -- @param ObjectCategories An array of categories of the objects to find in the zone. E.g. `{Object.Category.UNIT}`
 -- @param UnitCategories An array of unit categories of the objects to find in the zone. E.g. `{Unit.Category.GROUND_UNIT,Unit.Category.SHIP}`

@@ -1773,7 +1773,7 @@ do -- Links
 
   --- Set detection of a task
   -- @param #TASK self
-  -- @param Function.Detection#DETECTION_BASE Detection
+  -- @param Functional.Detection#DETECTION_BASE Detection
   -- @param DetectedItem
   -- @return #TASK
   function TASK:SetDetection( Detection, DetectedItem )
