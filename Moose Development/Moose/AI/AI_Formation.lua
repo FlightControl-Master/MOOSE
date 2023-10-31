@@ -8,7 +8,7 @@
 -- 
 -- ===
 -- 
--- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/FOR%20-%20Formation)
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/FOR%20-%20AI%20Group%20Formation)
 -- 
 -- ===
 -- 
@@ -31,7 +31,7 @@
 -- @field Core.Set#SET_GROUP FollowGroupSet
 -- @field #string FollowName
 -- @field #AI_FORMATION.MODE FollowMode The mode the escort is in.
--- @field Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
+-- @field Core.Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
 -- @field #number FollowDistance The current follow distance.
 -- @field #boolean ReportTargets If true, nearby targets are reported.
 -- @Field DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the FollowGroup.
@@ -163,15 +163,6 @@ AI_FORMATION.__Enum.ReportType = {
   GroundRadar = "R",
   Ground = "G",
 }
-
-
-
---- MENUPARAM type
--- @type MENUPARAM
--- @field #AI_FORMATION ParamSelf
--- @field #number ParamDistance
--- @field #function ParamFunction
--- @field #string ParamMessage
 
 --- AI_FORMATION class constructor for an AI group
 -- @param #AI_FORMATION self

@@ -25,7 +25,7 @@
   --
 --
 -- @type RADIOSPEECH
--- @extends Core.RadioQueue#RADIOQUEUE
+-- @extends Sound.RadioQueue#RADIOQUEUE
 RADIOSPEECH = {
   ClassName = "RADIOSPEECH",
   Vocabulary = {

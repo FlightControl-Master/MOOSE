@@ -5,7 +5,7 @@
 --   * TASK_CARGO is the **base class** for:
 --   
 --     * @{Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT}
---     * @{Tasking.Task_CARGO_CSAR#TASK_CARGO_CSAR}
+--     * @{Tasking.Task_Cargo_CSAR#TASK_CARGO_CSAR}
 -- 
 -- 
 -- ===
@@ -14,7 +14,7 @@
 -- 
 -- Test missions can be located on the main GITHUB site.
 -- 
--- [FlightControl-Master/MOOSE_MISSIONS/TAD - Task Dispatching/CGO - Cargo Dispatching/](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/TAD%20-%20Task%20Dispatching/CGO%20-%20Cargo%20Dispatching)
+-- [FlightControl-Master/MOOSE_MISSIONS/TAD - Task Dispatching/CGO - Cargo Dispatching/](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/TAD%20-%20Task%20Dispatching/CGO%20-%20Cargo%20Task%20Dispatching)
 -- 
 -- ===
 --
@@ -34,7 +34,7 @@
 -- The following TASK_CARGO_ classes are important, as they implement the CONCRETE tasks:
 -- 
 --   * @{Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT}: Defines a task for a human player to transport a set of cargo between various zones.
---   * @{Tasking.Task_CARGO_CSAR#TASK_CARGO_CSAR}: Defines a task for a human player to Search and Rescue wounded pilots.
+--   * @{Tasking.Task_Cargo_CSAR#TASK_CARGO_CSAR}: Defines a task for a human player to Search and Rescue wounded pilots.
 -- 
 -- However! The menu system and basic usage of the TASK_CARGO classes is explained in the @{#TASK_CARGO} class description.
 -- So please browse further below to understand how to use it from a player perspective!
@@ -49,7 +49,7 @@
 -- Once the task is assigned to the player and accepted by the player, the player will obtain 
 -- an extra **Cargo (Radio) Menu** that contains the CARGO objects that need to be transported.
 -- 
--- Each @{Cargo.Cargo} object has a certain state:
+-- Each @{CARGO.Cargo} object has a certain state:
 -- 
 --   * **UnLoaded**: The cargo is located within the battlefield. It may still need to be transported.
 --   * **Loaded**: The cargo is loaded within a Carrier. This can be your air unit, or another air unit, or even a vehicle.
@@ -298,8 +298,7 @@
 -- 
 -- When you are within the range of the deploy zone (can be also a polygon!), a message is communicated by HQ that you have arrived within the zone!
 -- 
--- The routing messages are formulated in the coordinate format that is currently active as configured in your settings profile.  
--- ![Task_Types](../Tasking/Task_Cargo_Settings.JPG)  
+-- The routing messages are formulated in the coordinate format that is currently active as configured in your settings profile.
 -- Use the **Settings Menu** to select the coordinate format that you would like to use for location determination.
 -- 
 -- #### Unboard Cargo.

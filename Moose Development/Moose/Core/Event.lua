@@ -314,7 +314,7 @@ EVENTS = {
 -- @field Cargo.Cargo#CARGO Cargo The cargo object.
 -- @field #string CargoName The name of the cargo object.
 --
--- @field Core.ZONE#ZONE Zone The zone object.
+-- @field Core.Zone#ZONE Zone The zone object.
 -- @field #string ZoneName The name of the zone.
 
 
@@ -989,7 +989,7 @@ do -- Event Creation
 
   --- Creation of a New ZoneGoal Event.
   -- @param #EVENT self
-  -- @param Core.Functional#ZONE_GOAL ZoneGoal The ZoneGoal created.
+  -- @param Functional.ZoneGoal#ZONE_GOAL ZoneGoal The ZoneGoal created.
   function EVENT:CreateEventNewZoneGoal( ZoneGoal )
     self:F( { ZoneGoal } )
 

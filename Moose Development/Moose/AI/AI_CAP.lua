@@ -20,11 +20,11 @@
 -- ### Author: **FlightControl**
 -- ### Contributions:
 --
---   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
---   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
---   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
---   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing.
---   * **[Delta99](https://forums.eagle.ru/member.php?u=125166): Testing.
+--   * **Quax**: Concept, Advice & Testing.
+--   * **Pikey**: Concept, Advice & Testing.
+--   * **Gunterlund**: Test case revision.
+--   * **Whisper**: Testing.
+--   * **Delta99**: Testing.
 -- 
 -- ===       
 --

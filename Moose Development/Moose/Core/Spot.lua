@@ -21,9 +21,9 @@
 -- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
---   * [**Ciribob**](https://forums.eagle.ru/member.php?u=112175): Showing the way how to lase targets + how laser codes work!!! Explained the autolase script.
---   * [**EasyEB**](https://forums.eagle.ru/member.php?u=112055): Ideas and Beta Testing
---   * [**Wingthor**](https://forums.eagle.ru/member.php?u=123698): Beta Testing
+--   * **Ciribob**: Showing the way how to lase targets + how laser codes work!!! Explained the autolase script.
+--   * **EasyEB**: Ideas and Beta Testing
+--   * **Wingthor**: Beta Testing
 -- 
 -- ===
 -- 

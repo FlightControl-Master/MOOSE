@@ -112,7 +112,7 @@
 -- 
 -- # Calculate the Path
 -- 
--- Finally, we have to calculate the path. This is done by the @{ASTAR.GetPath}(*ExcludeStart, ExcludeEnd*) function. This function returns a table of nodes, which
+-- Finally, we have to calculate the path. This is done by the @{#GetPath}(*ExcludeStart, ExcludeEnd*) function. This function returns a table of nodes, which
 -- describe the optimal path from the start node to the end node.
 -- 
 -- By default, the start and end node are include in the table that is returned.

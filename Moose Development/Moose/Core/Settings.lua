@@ -93,7 +93,7 @@
 --
 -- Will customize which display format is used to indicate A2G coordinates in text as part of the Command Center communications.
 --
---   - A2G BR: [Bearing Range](https://en.wikipedia.org/wiki/Bearing_(navigation)).
+--   - A2G BR: [Bearing Range](https://en.wikipedia.org/wiki/Bearing_\(navigation\)).
 --   - A2G MGRS: The [Military Grid Reference System](https://en.wikipedia.org/wiki/Military_Grid_Reference_System). The accuracy can also be adapted.
 --   - A2G LL DMS: Latitude Longitude [Degrees Minutes Seconds](https://en.wikipedia.org/wiki/Geographic_coordinate_conversion). The accuracy can also be adapted.
 --   - A2G LL DDM: Latitude Longitude [Decimal Degrees Minutes](https://en.wikipedia.org/wiki/Decimal_degrees). The accuracy can also be adapted.
@@ -107,9 +107,9 @@
 -- There are different methods that can be used to change the **System settings** using the \_SETTINGS object.
 --
 --   - @{#SETTINGS.SetA2G_BR}(): Enable the BR display formatting by default.
---   - @{#SETTINGS.SetA2G_MGRS}(): Enable the MGRS display formatting by default. Use @{SETTINGS.SetMGRS_Accuracy}() to adapt the accuracy of the MGRS formatting.
---   - @{#SETTINGS.SetA2G_LL_DMS}(): Enable the LL DMS display formatting by default. Use @{SETTINGS.SetLL_Accuracy}() to adapt the accuracy of the Seconds formatting.
---   - @{#SETTINGS.SetA2G_LL_DDM}(): Enable the LL DDM display formatting by default. Use @{SETTINGS.SetLL_Accuracy}() to adapt the accuracy of the Seconds formatting.
+--   - @{#SETTINGS.SetA2G_MGRS}(): Enable the MGRS display formatting by default. Use @{#SETTINGS.SetMGRS_Accuracy}() to adapt the accuracy of the MGRS formatting.
+--   - @{#SETTINGS.SetA2G_LL_DMS}(): Enable the LL DMS display formatting by default. Use @{#SETTINGS.SetLL_Accuracy}() to adapt the accuracy of the Seconds formatting.
+--   - @{#SETTINGS.SetA2G_LL_DDM}(): Enable the LL DDM display formatting by default. Use @{#SETTINGS.SetLL_Accuracy}() to adapt the accuracy of the Seconds formatting.
 --
 -- ### 3.1.4) A2G coordinates setting - additional notes
 --
@@ -137,9 +137,9 @@
 -- There are different methods that can be used to change the **System settings** using the \_SETTINGS object.
 --
 --   - @{#SETTINGS.SetA2A_BRAA}(): Enable the BR display formatting by default.
---   - @{#SETTINGS.SetA2A_MGRS}(): Enable the MGRS display formatting by default. Use @{SETTINGS.SetMGRS_Accuracy}() to adapt the accuracy of the MGRS formatting.
---   - @{#SETTINGS.SetA2A_LL_DMS}(): Enable the LL DMS display formatting by default. Use @{SETTINGS.SetLL_Accuracy}() to adapt the accuracy of the Seconds formatting.
---   - @{#SETTINGS.SetA2A_LL_DDM}(): Enable the LL DDM display formatting by default. Use @{SETTINGS.SetLL_Accuracy}() to adapt the accuracy of the Seconds formatting.
+--   - @{#SETTINGS.SetA2A_MGRS}(): Enable the MGRS display formatting by default. Use @{#SETTINGS.SetMGRS_Accuracy}() to adapt the accuracy of the MGRS formatting.
+--   - @{#SETTINGS.SetA2A_LL_DMS}(): Enable the LL DMS display formatting by default. Use @{#SETTINGS.SetLL_Accuracy}() to adapt the accuracy of the Seconds formatting.
+--   - @{#SETTINGS.SetA2A_LL_DDM}(): Enable the LL DDM display formatting by default. Use @{#SETTINGS.SetLL_Accuracy}() to adapt the accuracy of the Seconds formatting.
 --   - @{#SETTINGS.SetA2A_BULLS}(): Enable the BULLSeye display formatting by default.
 --
 -- ### 3.2.4) A2A coordinates settings - additional notes

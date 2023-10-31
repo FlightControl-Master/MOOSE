@@ -142,7 +142,7 @@ end -- ACT_ACCOUNT
 
 do -- ACT_ACCOUNT_DEADS
 
-  --- # @{#ACT_ACCOUNT_DEADS} FSM class, extends @{Core.Fsm.Account#ACT_ACCOUNT}
+  --- # @{#ACT_ACCOUNT_DEADS} FSM class, extends @{#ACT_ACCOUNT}
   --
   -- The ACT_ACCOUNT_DEADS class accounts (detects, counts and reports) successful kills of DCS units.
   -- The process is given a @{Core.Set} of units that will be tracked upon successful destruction.
