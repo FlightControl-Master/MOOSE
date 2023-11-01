@@ -283,7 +283,7 @@ function STORAGE:SetLiquid(Type, Amount)
 
   self:T(self.lid..string.format("Setting liquid %s to N=%d", self:GetLiquidName(Type), Amount))
 
-  self.warehouse:setLiquid(Type, Amount)
+  self.warehouse:setLiquidAmount(Type, Amount)
 
   return self
 end
