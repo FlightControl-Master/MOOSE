@@ -424,12 +424,14 @@ function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS, Port, 
   self.msrsTower=MSRS:New(PathToSRS, Frequency, Modulation)
   self.msrsTower:SetPort(self.Port)
   self.msrsTower:SetGoogle(GoogleKey)
+  self.msrsTower:SetCoordinate(self:GetCoordinate())
   self:SetSRSTower()
   
   -- SRS for Pilot.
   self.msrsPilot=MSRS:New(PathToSRS, Frequency, Modulation)
   self.msrsPilot:SetPort(self.Port)
   self.msrsPilot:SetGoogle(GoogleKey)
+  self.msrsTower:SetCoordinate(self:GetCoordinate())
   self:SetSRSPilot()
   
   -- Wait at least 10 seconds after last radio message before calling the next status update.
@@ -4341,7 +4343,7 @@ function FLIGHTCONTROL:TransmissionPilot(Text, Flight, Delay)
     local text=self:_GetTextForSpeech(Text)
     
     -- MSRS instance to use.
-    local msrs=self.msrsPilot
+    local msrs=self.msrsPilot -- Sound.SRS#MSRS
  
     if Flight.useSRS and Flight.msrs then
       
@@ -4361,6 +4363,8 @@ function FLIGHTCONTROL:TransmissionPilot(Text, Flight, Delay)
     end      
     
     -- Add transmission to msrsqueue.
+    local coordinate = Flight:GetCoordinate(true)
+    msrs:SetCoordinate()
     self.msrsqueue:NewTransmission(text, nil, msrs, nil, 1, subgroups, Text, nil, self.frequency, self.modulation)
     
   end
