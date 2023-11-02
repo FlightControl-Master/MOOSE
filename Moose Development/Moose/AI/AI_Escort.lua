@@ -174,12 +174,12 @@
 -- EscortPlanes = AI_ESCORT:New( EscortUnit, EscortGroup, "Desert", "Welcome to the mission. You are escorted by a plane with code name 'Desert', which can be instructed through the F10 radio menu." )
 -- EscortPlanes:MenusAirplanes() -- create menus for airplanes
 -- EscortPlanes:__Start(2)
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- @field #AI_ESCORT
 AI_ESCORT = {
   ClassName = "AI_ESCORT",
@@ -261,7 +261,7 @@ function AI_ESCORT:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing )
 
 
   EscortGroupSet:ForEachGroup(
-    -- @param Core.Group#GROUP EscortGroup
+    -- @param Wrapper.Group#GROUP EscortGroup
     function( EscortGroup )
       -- Set EscortGroup known at EscortUnit.
       if not self.PlayerUnit._EscortGroups then
@@ -343,7 +343,7 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
   self:F()
 
   EscortGroupSet:ForEachGroup(
-    -- @param Core.Group#GROUP EscortGroup
+    -- @param Wrapper.Group#GROUP EscortGroup
     function( EscortGroup )
       EscortGroup:WayPointInitialize()
     
@@ -381,7 +381,7 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
   self:_InitFlightMenus()
   
   self.EscortGroupSet:ForSomeGroupAlive(
-    -- @param Core.Group#GROUP EscortGroup
+    -- @param Wrapper.Group#GROUP EscortGroup
     function( EscortGroup )
 
       self:_InitEscortMenus( EscortGroup )
@@ -412,7 +412,7 @@ function AI_ESCORT:onafterStop( EscortGroupSet )
   self:F()
 
   EscortGroupSet:ForEachGroup(
-    -- @param Core.Group#GROUP EscortGroup
+    -- @param Wrapper.Group#GROUP EscortGroup
     function( EscortGroup )
       EscortGroup:WayPointInitialize()
     
@@ -561,7 +561,7 @@ function AI_ESCORT:SetFlightMenuFormation( Formation )
     local MenuFlightFormationID = MENU_GROUP_COMMAND:New( self.PlayerGroup, Formation, FlightMenuFormation, 
       function ( self, Formation, ... )
         self.EscortGroupSet:ForSomeGroupAlive(
-          -- @param Core.Group#GROUP EscortGroup
+          -- @param Wrapper.Group#GROUP EscortGroup
           function( EscortGroup, self, Formation, Arguments )
             if EscortGroup:IsAir() then
               self:E({FormationID=FormationID})
@@ -1242,7 +1242,7 @@ function AI_ESCORT:MenuAssistedAttack()
   self:F()
 
   self.EscortGroupSet:ForSomeGroupAlive(
-    -- @param Core.Group#GROUP EscortGroup
+    -- @param Wrapper.Group#GROUP EscortGroup
     function( EscortGroup )
       if not EscortGroup:IsAir() then
         -- Request assistance from other escorts.
@@ -1439,7 +1439,7 @@ function AI_ESCORT:_FlightHoldPosition( OrbitGroup, OrbitHeight, OrbitSeconds )
   local EscortUnit = self.PlayerUnit
 
   self.EscortGroupSet:ForEachGroupAlive(
-    -- @param Core.Group#GROUP EscortGroup
+    -- @param Wrapper.Group#GROUP EscortGroup
     function( EscortGroup, OrbitGroup )
       if EscortGroup:IsAir() then
         if OrbitGroup == nil then
@@ -1467,7 +1467,7 @@ end
 function AI_ESCORT:_FlightJoinUp()
 
   self.EscortGroupSet:ForEachGroupAlive(
-    -- @param Core.Group#GROUP EscortGroup
+    -- @param Wrapper.Group#GROUP EscortGroup
     function( EscortGroup )
       if EscortGroup:IsAir() then
         self:_JoinUp( EscortGroup )
@@ -1494,7 +1494,7 @@ end
 function AI_ESCORT:_FlightFormationTrail( XStart, XSpace, YStart )
 
   self.EscortGroupSet:ForEachGroupAlive(
-    -- @param Core.Group#GROUP EscortGroup
+    -- @param Wrapper.Group#GROUP EscortGroup
     function( EscortGroup )
       if EscortGroup:IsAir() then
         self:_EscortFormationTrail( EscortGroup, XStart, XSpace, YStart )
@@ -1521,7 +1521,7 @@ end
 function AI_ESCORT:_FlightFormationStack( XStart, XSpace, YStart, YSpace )
 
   self.EscortGroupSet:ForEachGroupAlive(
-    -- @param Core.Group#GROUP EscortGroup
+    -- @param Wrapper.Group#GROUP EscortGroup
     function( EscortGroup )
       if EscortGroup:IsAir() then
         self:_EscortFormationStack( EscortGroup, XStart, XSpace, YStart, YSpace )
@@ -1544,7 +1544,7 @@ end
 function AI_ESCORT:_FlightFlare( Color, Message )
 
   self.EscortGroupSet:ForEachGroupAlive(
-    -- @param Core.Group#GROUP EscortGroup
+    -- @param Wrapper.Group#GROUP EscortGroup
     function( EscortGroup )
       if EscortGroup:IsAir() then
         self:_Flare( EscortGroup, Color, Message )
@@ -1567,7 +1567,7 @@ end
 function AI_ESCORT:_FlightSmoke( Color, Message )
 
   self.EscortGroupSet:ForEachGroupAlive(
-    -- @param Core.Group#GROUP EscortGroup
+    -- @param Wrapper.Group#GROUP EscortGroup
     function( EscortGroup )
       if EscortGroup:IsAir() then
         self:_Smoke( EscortGroup, Color, Message )
@@ -1598,7 +1598,7 @@ end
 function AI_ESCORT:_FlightSwitchReportNearbyTargets( ReportTargets )
 
   self.EscortGroupSet:ForEachGroupAlive(
-    -- @param Core.Group#GROUP EscortGroup
+    -- @param Wrapper.Group#GROUP EscortGroup
     function( EscortGroup )
       if EscortGroup:IsAir() then
         self:_EscortSwitchReportNearbyTargets( EscortGroup, ReportTargets )
@@ -1806,7 +1806,7 @@ end
 function AI_ESCORT:_FlightAttackTarget( DetectedItem )
 
   self.EscortGroupSet:ForEachGroupAlive(
-    -- @param Core.Group#GROUP EscortGroup
+    -- @param Wrapper.Group#GROUP EscortGroup
     function( EscortGroup, DetectedItem )
       if EscortGroup:IsAir() then
         self:_AttackTarget( EscortGroup, DetectedItem )

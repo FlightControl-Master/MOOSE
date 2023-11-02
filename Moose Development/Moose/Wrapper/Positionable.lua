@@ -1684,7 +1684,7 @@ do -- Cargo
 
   --- Add cargo.
   -- @param #POSITIONABLE self
-  -- @param Core.Cargo#CARGO Cargo
+  -- @param Cargo.Cargo#CARGO Cargo
   -- @return #POSITIONABLE
   function POSITIONABLE:AddCargo( Cargo )
     self.__.Cargo[Cargo] = Cargo
@@ -1700,7 +1700,7 @@ do -- Cargo
 
   --- Remove cargo.
   -- @param #POSITIONABLE self
-  -- @param Core.Cargo#CARGO Cargo
+  -- @param Cargo.Cargo#CARGO Cargo
   -- @return #POSITIONABLE
   function POSITIONABLE:RemoveCargo( Cargo )
     self.__.Cargo[Cargo] = nil
@@ -1709,7 +1709,7 @@ do -- Cargo
 
   --- Returns if carrier has given cargo.
   -- @param #POSITIONABLE self
-  -- @return Core.Cargo#CARGO Cargo
+  -- @return Cargo.Cargo#CARGO Cargo
   function POSITIONABLE:HasCargo( Cargo )
     return self.__.Cargo[Cargo]
   end
@@ -1733,7 +1733,7 @@ do -- Cargo
 
   --- Get cargo item count.
   -- @param #POSITIONABLE self
-  -- @return Core.Cargo#CARGO Cargo
+  -- @return Cargo.Cargo#CARGO Cargo
   function POSITIONABLE:CargoItemCount()
     local ItemCount = 0
     for CargoName, Cargo in pairs( self.__.Cargo ) do

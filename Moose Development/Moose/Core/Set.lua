@@ -5471,7 +5471,7 @@ do -- SET_CARGO
 
   --- (R2.1) Remove CARGOs from SET_CARGO.
   -- @param Core.Set#SET_CARGO self
-  -- @param Wrapper.Cargo#CARGO RemoveCargoNames A single name or an array of CARGO names.
+  -- @param Cargo.Cargo#CARGO RemoveCargoNames A single name or an array of CARGO names.
   -- @return Core.Set#SET_CARGO self
   function SET_CARGO:RemoveCargosByName( RemoveCargoNames ) -- R2.1
 
@@ -5487,7 +5487,7 @@ do -- SET_CARGO
   --- (R2.1) Finds a Cargo based on the Cargo Name.
   -- @param #SET_CARGO self
   -- @param #string CargoName
-  -- @return Wrapper.Cargo#CARGO The found Cargo.
+  -- @return Cargo.Cargo#CARGO The found Cargo.
   function SET_CARGO:FindCargo( CargoName ) -- R2.1
 
     local CargoFound = self.Set[CargoName]
@@ -5630,7 +5630,7 @@ do -- SET_CARGO
   --- (R2.1) Iterate the SET_CARGO while identifying the nearest @{Cargo.Cargo#CARGO} from a @{Core.Point#POINT_VEC2}.
   -- @param #SET_CARGO self
   -- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest @{Cargo.Cargo#CARGO}.
-  -- @return Wrapper.Cargo#CARGO The closest @{Cargo.Cargo#CARGO}.
+  -- @return Cargo.Cargo#CARGO The closest @{Cargo.Cargo#CARGO}.
   function SET_CARGO:FindNearestCargoFromPointVec2( PointVec2 ) -- R2.1
     self:F2( PointVec2 )
 
@@ -6195,7 +6195,7 @@ do -- SET_ZONE
   
   --- Start watching if the Object or Objects move into or out of our set of zones.
   -- @param #SET_ZONE self
-  -- @param Wrappe.Controllable#CONTROLLABLE Objects Object or Objects to watch, can be of type UNIT, GROUP, CLIENT, or SET\_UNIT, SET\_GROUP, SET\_CLIENT
+  -- @param Wrapper.Controllable#CONTROLLABLE Objects Object or Objects to watch, can be of type UNIT, GROUP, CLIENT, or SET\_UNIT, SET\_GROUP, SET\_CLIENT
   -- @return #SET_ZONE self
   -- @usage
   --          -- Create a SET_GROUP and a SET_ZONE for this:

@@ -54,7 +54,7 @@ do -- ZoneGoal
   --- ZONE_GOAL_COALITION Constructor.
   -- @param #ZONE_GOAL_COALITION self
   -- @param Core.Zone#ZONE Zone A @{Core.Zone} object with the goal to be achieved.
-  -- @param DCSCoalition.DCSCoalition#coalition Coalition The initial coalition owning the zone. Default coalition.side.NEUTRAL.
+  -- @param #number Coalition The initial coalition owning the zone. Default coalition.side.NEUTRAL.
   -- @param #table UnitCategories Table of unit categories. See [DCS Class Unit](https://wiki.hoggitworld.com/view/DCS_Class_Unit). Default {Unit.Category.GROUND_UNIT}.
   -- @return #ZONE_GOAL_COALITION
   function ZONE_GOAL_COALITION:New( Zone, Coalition, UnitCategories )
@@ -80,7 +80,7 @@ do -- ZoneGoal
 
   --- Set the owning coalition of the zone.
   -- @param #ZONE_GOAL_COALITION self
-  -- @param DCSCoalition.DCSCoalition#coalition Coalition The coalition ID, e.g. *coalition.side.RED*.
+  -- @param #number Coalition The coalition ID, e.g. *coalition.side.RED*.
   -- @return #ZONE_GOAL_COALITION
   function ZONE_GOAL_COALITION:SetCoalition( Coalition )
     self.PreviousCoalition = self.Coalition or Coalition
@@ -120,14 +120,14 @@ do -- ZoneGoal
 
   --- Get the owning coalition of the zone.
   -- @param #ZONE_GOAL_COALITION self
-  -- @return DCSCoalition.DCSCoalition#coalition Coalition.
+  -- @return #number Coalition.
   function ZONE_GOAL_COALITION:GetCoalition()
     return self.Coalition
   end
 
   --- Get the previous coalition, i.e. the one owning the zone before the current one. 
   -- @param #ZONE_GOAL_COALITION self
-  -- @return DCSCoalition.DCSCoalition#coalition Coalition.
+  -- @return #number Coalition.
   function ZONE_GOAL_COALITION:GetPreviousCoalition()
     return self.PreviousCoalition
   end

@@ -20,12 +20,12 @@
 
 
 --- Models the assignment of AI escorts to player flights upon request using the radio menu.
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- ===
 --   
 -- @field #AI_ESCORT_DISPATCHER_REQUEST

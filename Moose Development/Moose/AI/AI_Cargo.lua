@@ -25,12 +25,12 @@
 --    * @{AI.AI_Cargo_APC} - Cargo transportation using APCs and other vehicles between zones.
 --    * @{AI.AI_Cargo_Helicopter} - Cargo transportation using helicopters between zones.
 --    * @{AI.AI_Cargo_Airplane} - Cargo transportation using airplanes to and from airbases.
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  -- 
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+-- 
 -- @field #AI_CARGO
 AI_CARGO = {
   ClassName = "AI_CARGO",

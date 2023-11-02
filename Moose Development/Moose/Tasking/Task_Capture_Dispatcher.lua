@@ -45,12 +45,12 @@
 --   * Switch between metric and imperial measurement system.
 --   * Switch between coordinate formats used in messages: BR, BRA, LL DMS, LL DDM, MGRS.
 --   * Various other options.
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  -- 
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+-- 
 -- ===
 -- 
 -- ### Author: **FlightControl**
@@ -128,7 +128,7 @@ do -- TASK_CAPTURE_DISPATCHER
   -- 
   -- ## 2.2. Create a set of player groups.
   --    
-  -- What is also needed, is to have a set of @{Core.Group}s defined that contains the clients of the players.
+  -- What is also needed, is to have a set of @{Wrapper.Group}s defined that contains the clients of the players.
   -- 
   --     -- Allocate the player slots, which must be aircraft (airplanes or helicopters), that can be manned by players.
   --     -- We use the method FilterPrefixes to filter those player groups that have client slots, as defined in the mission editor.
@@ -245,7 +245,7 @@ do -- TASK_CAPTURE_DISPATCHER
   -- @param #string TaskPrefix (optional) The prefix of the capture zone task. 
   -- If no TaskPrefix is given, then "Capture" will be used as the TaskPrefix. 
   -- The TaskPrefix will be appended with a . + a number of 3 digits, if the TaskPrefix already exists in the task collection.
-  -- @param Functional.CaptureZoneCoalition#ZONE_CAPTURE_COALITION CaptureZone The zone of the coalition to be captured as the task goal.
+  -- @param Functional.ZoneCaptureCoalition#ZONE_CAPTURE_COALITION CaptureZone The zone of the coalition to be captured as the task goal.
   -- @param #string Briefing The briefing of the task to be shown to the player.
   -- @return Tasking.Task_Capture_Zone#TASK_CAPTURE_ZONE
   -- @usage

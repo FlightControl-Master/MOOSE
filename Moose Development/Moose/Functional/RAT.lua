@@ -46,9 +46,9 @@
 --
 -- ===
 --
--- ### Author: **[funkyfranky](https://forums.eagle.ru/member.php?u=115026)**
+-- ### Author: **funkyfranky**
 --
--- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536)
+-- ### Contributions: FlightControl
 --
 -- ===
 -- @module Functional.RAT
@@ -4605,7 +4605,7 @@ function RAT:_TaskHolding(P1, Altitude, Speed, Duration)
 end
 
 --- Function which is called after passing every waypoint. Info on waypoint is given and special functions are executed.
--- @param Core.Group#GROUP group Group of aircraft.
+-- @param Wrapper.Group#GROUP group Group of aircraft.
 -- @param #RAT rat RAT object.
 -- @param #number wp Waypoint index. Running number of the waypoints. Determines the actions to be executed.
 function RAT._WaypointFunction(group, rat, wp)
