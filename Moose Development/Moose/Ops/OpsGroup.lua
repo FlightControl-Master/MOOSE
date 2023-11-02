@@ -2353,6 +2353,10 @@ function OPSGROUP:RadioTransmission(Text, Delay, SayCallsign, Frequency)
 
       local freq, modu, radioon=self:GetRadio()
       
+      local coord = self:GetCoordinate()
+      
+      self.msrs:SetCoordinate(coord)
+      
       if Frequency then
         self.msrs:SetFrequencies(Frequency)
       else

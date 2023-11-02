@@ -37,14 +37,7 @@
 --   
 --   * @{#AI_AIR_ENGAGE.New}(): Creates a new AI_AIR_ENGAGE object.
 --
--- ## 3. Set the Range of Engagement
--- 
--- An optional range can be set in meters, 
--- that will define when the AI will engage with the detected airborne enemy targets.
--- The range can be beyond or smaller than the range of the Patrol Zone.
--- The range is applied at the position of the AI.
---
--- ## 4. Set the Zone of Engagement
+-- ## 2. Set the Zone of Engagement
 --
 -- An optional @{Core.Zone} can be set,
 -- that will define when the AI will engage with the detected airborne enemy targets.

@@ -4871,7 +4871,7 @@ function FLIGHTGROUP:_GetTerminal(_attribute, _category)
   -- Default terminal is "large".
   local _terminal=AIRBASE.TerminalType.OpenBig
 
-  if _attribute==FLIGHTGROUP.Attribute.AIR_FIGHTER then
+  if _attribute==FLIGHTGROUP.Attribute.AIR_FIGHTER or _attribute==FLIGHTGROUP.Attribute.AIR_UAV then
     -- Fighter ==> small.
     _terminal=AIRBASE.TerminalType.FighterAircraft
   elseif _attribute==FLIGHTGROUP.Attribute.AIR_BOMBER or _attribute==FLIGHTGROUP.Attribute.AIR_TRANSPORTPLANE or _attribute==FLIGHTGROUP.Attribute.AIR_TANKER or _attribute==FLIGHTGROUP.Attribute.AIR_AWACS then
