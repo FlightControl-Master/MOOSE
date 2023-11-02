@@ -27,8 +27,8 @@
 -- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
---   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
---   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Testing and API concept review.
+--   * **Dutch_Baron**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
+--   * **Pikey**: Testing and API concept review.
 -- 
 -- ===
 -- 
@@ -144,12 +144,12 @@
 -- When the AI is damaged, it is required that a new AIControllable is started. However, damage cannon be foreseen early on. 
 -- Therefore, when the damage threshold is reached, the AI will return immediately to the home base (RTB).
 -- Use the method @{#AI_PATROL_ZONE.ManageDamage}() to have this process in place.
-  --
-  -- # Developer Note
-  -- 
-  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
-  -- Therefore, this class is considered to be deprecated
-  --
+--
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- ===
 -- 
 -- @field #AI_PATROL_ZONE

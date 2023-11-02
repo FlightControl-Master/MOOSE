@@ -33,9 +33,9 @@
 -- 
 -- ===
 -- 
--- ### Author: **[funkyfranky](https://forums.eagle.ru/member.php?u=115026)**
+-- ### Author: **funkyfranky**
 -- 
--- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536)
+-- ### Contributions: FlightControl
 -- 
 -- ===
 -- 

@@ -353,6 +353,7 @@
 --              DEWPOINT = "Taupunkt",
 --              ALTIMETER = "Hoehenmesser",
 --              ACTIVERUN = "Aktive Startbahn",
+--              ACTIVELANDING = "Aktive Landebahn",
 --              LEFT = "Links",
 --              RIGHT = "Rechts",
 --              RWYLENGTH = "Startbahn",
@@ -721,7 +722,8 @@ ATIS.Messages = {
     TEMPERATURE = "Temperature",
     DEWPOINT = "Dew point",
     ALTIMETER = "Altimeter",
-    ACTIVERUN = "Active runway",
+    ACTIVERUN = "Active runway take off",
+    ACTIVELANDING = "Active runway landing",
     LEFT = "Left",
     RIGHT = "Right",
     RWYLENGTH = "Runway length",
@@ -781,6 +783,7 @@ ATIS.Messages = {
     DEWPOINT = "Taupunkt",
     ALTIMETER = "Hoehenmesser",
     ACTIVERUN = "Aktive Startbahn",
+    ACTIVELANDING = "Aktive Landebahn",
     LEFT = "Links",
     RIGHT = "Rechts",
     RWYLENGTH = "Startbahn",
@@ -841,6 +844,7 @@ ATIS.Messages = {
     DEWPOINT = "Punto de rocio",
     ALTIMETER = "Altímetro",
     ACTIVERUN = "Pista activa",
+    ACTIVELANDING = "Pista de aterrizaje activa",
     LEFT = "Izquierda",
     RIGHT = "Derecha",
     RWYLENGTH = "Longitud de pista",
@@ -880,7 +884,7 @@ _ATIS = {}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version = "0.10.2"
+ATIS.version = "0.10.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -902,6 +906,7 @@ ATIS.version = "0.10.2"
 -- DONE: Set magnetic variation.
 -- DONE: New DCS 2.7 weather presets.
 -- DONE: Added TextAndSound localization
+-- DONE: Added SRS spelling out both take off and landing runway
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -1534,6 +1539,7 @@ function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey)
     self.msrs:SetCoalition(self:GetCoalition())
     self.msrs:SetLabel("ATIS")
     self.msrs:SetGoogle(GoogleKey)
+    self.msrs:SetCoordinate(self.airbase:GetCoordinate())
     self.msrsQ = MSRSQUEUE:New("ATIS")
     self.msrsQ:SetTransmitOnlyWithPlayers(self.TransmitOnlyWithPlayers)
     if self.dTQueueCheck<=10 then
@@ -2508,6 +2514,19 @@ function ATIS:onafterBroadcast( From, Event, To )
     -- Active runway.
     local subtitle
     if runwayLanding then
+      local actrun = self.gettext:GetEntry("ACTIVELANDING",self.locale)
+      --subtitle=string.format("Active runway landing %s", runwayLanding)
+      subtitle=string.format("%s %s", actrun, runwayTakeoff)
+      if rwyTakeoffLeft==true then
+        --subtitle=subtitle.." Left"
+        subtitle=subtitle.." "..self.gettext:GetEntry("LEFT",self.locale)
+      elseif rwyTakeoffLeft==false then
+        --subtitle=subtitle.." Right"
+        subtitle=subtitle.." "..self.gettext:GetEntry("RIGHT",self.locale)
+      end
+      alltext = alltext .. ";\n" .. subtitle
+    end    
+    if runwayTakeoff then
       local actrun = self.gettext:GetEntry("ACTIVERUN",self.locale)
       --subtitle=string.format("Active runway %s", runwayLanding)
       subtitle=string.format("%s %s", actrun, runwayLanding)

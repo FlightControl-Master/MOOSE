@@ -8,7 +8,7 @@
 --
 -- ## Example Missions:
 --
--- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Wrapper%20-%20Storage).
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Wrapper/Storage).
 --
 -- ===
 --
@@ -283,7 +283,7 @@ function STORAGE:SetLiquid(Type, Amount)
 
   self:T(self.lid..string.format("Setting liquid %s to N=%d", self:GetLiquidName(Type), Amount))
 
-  self.warehouse:setLiquid(Type, Amount)
+  self.warehouse:setLiquidAmount(Type, Amount)
 
   return self
 end
