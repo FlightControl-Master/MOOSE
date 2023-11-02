@@ -722,8 +722,8 @@ ATIS.Messages = {
     TEMPERATURE = "Temperature",
     DEWPOINT = "Dew point",
     ALTIMETER = "Altimeter",
-    ACTIVERUN = "Active runway take off",
-    ACTIVELANDING = "Active runway landing",
+    ACTIVERUN = "Active runway departure",
+    ACTIVELANDING = "Active runway arrival",
     LEFT = "Left",
     RIGHT = "Right",
     RWYLENGTH = "Runway length",
@@ -2516,11 +2516,11 @@ function ATIS:onafterBroadcast( From, Event, To )
     if runwayLanding then
       local actrun = self.gettext:GetEntry("ACTIVELANDING",self.locale)
       --subtitle=string.format("Active runway landing %s", runwayLanding)
-      subtitle=string.format("%s %s", actrun, runwayTakeoff)
-      if rwyTakeoffLeft==true then
+      subtitle=string.format("%s %s", actrun, runwayLanding)
+      if rwyLandingLeft==true then
         --subtitle=subtitle.." Left"
         subtitle=subtitle.." "..self.gettext:GetEntry("LEFT",self.locale)
-      elseif rwyTakeoffLeft==false then
+      elseif rwyLandingLeft==false then
         --subtitle=subtitle.." Right"
         subtitle=subtitle.." "..self.gettext:GetEntry("RIGHT",self.locale)
       end
@@ -2529,11 +2529,11 @@ function ATIS:onafterBroadcast( From, Event, To )
     if runwayTakeoff then
       local actrun = self.gettext:GetEntry("ACTIVERUN",self.locale)
       --subtitle=string.format("Active runway %s", runwayLanding)
-      subtitle=string.format("%s %s", actrun, runwayLanding)
-      if rwyLandingLeft==true then
+      subtitle=string.format("%s %s", actrun, runwayTakeoff)
+      if rwyTakeoffLeft==true then
         --subtitle=subtitle.." Left"
         subtitle=subtitle.." "..self.gettext:GetEntry("LEFT",self.locale)
-      elseif rwyLandingLeft==false then
+      elseif rwyTakeoffLeft==false then
         --subtitle=subtitle.." Right"
         subtitle=subtitle.." "..self.gettext:GetEntry("RIGHT",self.locale)
       end
