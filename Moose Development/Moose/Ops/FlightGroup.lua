@@ -3713,15 +3713,14 @@ function FLIGHTGROUP:_SetFlightPlan(FlightPlan)
   self:SetDestinationbase(self.flightplan.destinationAirbase)
 
   for i,_fix in pairs(FlightPlan.fixes) do
-    local fix=_fix --Navigation.NavFix#NAVFIX
+    local fix=_fix --Navigation.Point#NAVFIX
     
     --fix.coordinate
+    local speed=fix:GetSpeed() or FlightPlan:GetCruiseSpeed()
     
-    local speed=fix.altMin
+    local altitude=fix:GetAltitude() or FlightPlan:GetCruiseAltitude()
     
-    local altitude=(fix.altMin or fix.altMax)~=nil and fix:GetAltitude() or FlightPlan:GetCruiseAltitude()
-    
-    local wp=self:AddWaypoint(fix.vector, Speed, AfterWaypointWithID, altitude or 10000, false)
+    local wp=self:AddWaypoint(fix.vector, speed, nil, altitude or 10000, false)
     wp.flightplan=FlightPlan
   
   end

@@ -564,7 +564,6 @@ function NAVPOINT:SetAltMax(Altitude)
   return self
 end
 
-
 --- Set mandatory altitude (min alt = max alt).
 -- @param #NAVPOINT self
 -- @param #number Altitude Altitude in feet.
@@ -588,7 +587,6 @@ function NAVPOINT:SetSpeedMin(Speed)
   return self
 end
 
-
 --- Set maximum speed.
 -- @param #NAVPOINT self
 -- @param #number Speed Max speed in knots.
@@ -599,6 +597,19 @@ function NAVPOINT:SetSpeedMax(Speed)
 
   return self
 end
+
+--- Set mandatory speed (min speed = max speed).
+-- @param #NAVPOINT self
+-- @param #number Altitude Mandatory speed in knots.
+-- @return #NAVPOINT self
+function NAVPOINT:SetSpeedMandatory(Speed)
+
+  self.speedMin=Speed
+  self.speedMax=Speed
+
+  return self
+end
+
 
 --- Set whether this fix is compulsory.
 -- @param #NAVPOINT self
@@ -634,6 +645,24 @@ function NAVPOINT:GetAltitude()
   end
 
   return alt
+end
+
+
+--- Get the speed. If min and max speeds are set, it will return a random speed between min and max.
+-- @param #NAVPOINT self
+-- @return #number Speed in knots. Can be `nil`, if neither min nor max speeds have beeen set. 
+function NAVPOINT:GetSpeed()
+
+  local speed=nil
+  if self.speedMin and self.speedMax and self.speedMin~=self.speedMax then
+    speed=math.random(self.speedMin, self.speedMax)
+  elseif self.speedMin then
+    speed=self.speedMin
+  elseif self.speedMax then
+    speed=self.speedMax
+  end
+
+  return speed
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
