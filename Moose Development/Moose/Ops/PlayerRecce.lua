@@ -104,7 +104,7 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.0.18",
+  version            =   "0.0.19",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
   ViewZoneLaser      =   {},
@@ -1524,8 +1524,12 @@ function PLAYERRECCE:onafterRecceOnStation(From, Event, To, Client, Playername)
   end
   if self.UseSRS then
     local grp = Client:GetGroup()
+    local coord = grp:GetCoordinate()
+    if coord then
+      self.SRS:SetCoordinate(coord)
+    end
     self.SRSQueue:NewTransmission(text1,nil,self.SRS,nil,2)
-    self.SRSQueue:NewTransmission(text2tts,nil,self.SRS,nil,2)
+    self.SRSQueue:NewTransmission(text2tts,nil,self.SRS,nil,3)
     MESSAGE:New(text2,10,self.Name or "FACA"):ToCoalition(self.Coalition)
   else
     MESSAGE:New(text1,10,self.Name or "FACA"):ToClient(Client)
@@ -1560,8 +1564,12 @@ function PLAYERRECCE:onafterRecceOffStation(From, Event, To, Client, Playername)
   local text1 = "Going home!"
   if self.UseSRS then
     local grp = Client:GetGroup()
+    local coord = grp:GetCoordinate()
+    if coord then
+      self.SRS:SetCoordinate(coord)
+    end
     self.SRSQueue:NewTransmission(text1,nil,self.SRS,nil,2)
-    self.SRSQueue:NewTransmission(texttts,nil,self.SRS,nil,2)
+    self.SRSQueue:NewTransmission(texttts,nil,self.SRS,nil,3)
     MESSAGE:New(text,10,self.Name or "FACA"):ToCoalition(self.Coalition)
   else
     MESSAGE:New(text,10,self.Name or "FACA"):ToCoalition(self.Coalition)
@@ -1617,6 +1625,9 @@ function PLAYERRECCE:onafterTargetDetected(From, Event, To, Targetsbyclock, Clie
       local ttstext = string.format("Target! %s! %s oh clock, %d %s!", ThreatTxt, i, targetdistance, dunits)
       if self.UseSRS then
         local grp = Client:GetGroup()
+        if clientcoord then
+          self.SRS:SetCoordinate(clientcoord)
+        end
         self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
       else
         MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
@@ -1653,6 +1664,10 @@ function PLAYERRECCE:onafterTargetDetected(From, Event, To, Targetsbyclock, Clie
       local ttstext = string.format("%d targets! %s oh clock, %d %s!", targetno, i, targetdistance, dunits)
       if self.UseSRS then
         local grp = Client:GetGroup()
+        local coord = grp:GetCoordinate()
+        if coord then
+          self.SRS:SetCoordinate(coord)
+        end
         self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
       else
         MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
@@ -1694,6 +1709,10 @@ function PLAYERRECCE:onafterIllumination(From, Event, To, Client, Playername, Ta
   local ttstext = "Sunshine!"
   if self.UseSRS then
     local grp = Client:GetGroup()
+    local coord = grp:GetCoordinate()
+    if coord then
+      self.SRS:SetCoordinate(coord)
+    end
     self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
   else
     MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
@@ -1733,6 +1752,10 @@ function PLAYERRECCE:onafterTargetsSmoked(From, Event, To, Client, Playername, T
   local ttstext = "Smoke and Mirrors!"
   if self.UseSRS then
     local grp = Client:GetGroup()
+    local coord = grp:GetCoordinate()
+    if coord then
+      self.SRS:SetCoordinate(coord)
+    end
     self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
   else
     MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
@@ -1772,6 +1795,10 @@ function PLAYERRECCE:onafterTargetsFlared(From, Event, To, Client, Playername, T
   local ttstext = "Fire works!"
   if self.UseSRS then
     local grp = Client:GetGroup()
+    local coord = grp:GetCoordinate()
+    if coord then
+      self.SRS:SetCoordinate(coord)
+    end
     self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
   else
     MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
@@ -1817,6 +1844,10 @@ function PLAYERRECCE:onafterTargetLasing(From, Event, To, Client, Target, Laserc
   local ttstext = "Laser on!"
   if self.UseSRS then
     local grp = Client:GetGroup()
+    local coord = grp:GetCoordinate()
+    if coord then
+      self.SRS:SetCoordinate(coord)
+    end
     self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
   else
     MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
@@ -1861,6 +1892,10 @@ function PLAYERRECCE:onafterShack(From, Event, To, Client, Target, Targettype)
   local ttstext = "Shack!"
   if self.UseSRS then
     local grp = Client:GetGroup()
+    local coord = grp:GetCoordinate()
+    if coord then
+      self.SRS:SetCoordinate(coord)
+    end
     self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1)
   else
     MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
@@ -1904,6 +1939,10 @@ function PLAYERRECCE:onafterTargetLOSLost(From, Event, To, Client, Target)
   local ttstext = "Lost L O S!"
   if self.UseSRS then
     local grp = Client:GetGroup()
+    local coord = grp:GetCoordinate()
+    if coord then
+      self.SRS:SetCoordinate(coord)
+    end
     self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,1,{grp},text,10)
   else
     MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
@@ -1952,6 +1991,10 @@ function PLAYERRECCE:onafterTargetReportSent(From, Event, To, Client, TargetSet)
   local text = "Upload completed!"
   if self.UseSRS then
     local grp = Client:GetGroup()
+    local coord = grp:GetCoordinate()
+    if coord then
+      self.SRS:SetCoordinate(coord)
+    end
     self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,1,{grp},text,10)
   else
     MESSAGE:New(text,10,self.Name or "FACA"):ToClient(Client)
