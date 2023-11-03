@@ -31,6 +31,7 @@
 -- @image OPS_CSAR.jpg
 
 -- Date: May 2023
+-- Last: Update Oct 2024
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -116,21 +117,21 @@
 --         mycsar.ADFRadioPwr = 1000 -- ADF Beacons sending with 1KW as default
 --         mycsar.PilotWeight = 80 --  Loaded pilots weigh 80kgs each
 --         
--- ## 2.1 Experimental Features
+-- ## 2.1 SRS Features and Other Features
 -- 
---       WARNING - Here\'ll be dragons!
---       DANGER - For this to work you need to de-sanitize your mission environment (all three entries) in <DCS root>\Scripts\MissionScripting.lua
---       Needs SRS => 1.9.6 to work (works on the **server** side of SRS)
 --       mycsar.useSRS = false -- Set true to use FF\'s SRS integration
 --       mycsar.SRSPath = "C:\\Progra~1\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your SRS installation -- server(!)
 --       mycsar.SRSchannel = 300 -- radio channel
 --       mycsar.SRSModulation = radio.modulation.AM -- modulation
 --       mycsar.SRSport = 5002  -- and SRS Server port
 --       mycsar.SRSCulture = "en-GB" -- SRS voice culture
---       mycsar.SRSVoice = nil -- SRS voice, relevant for Google TTS
+--       mycsar.SRSVoice = nil -- SRS voice for downed pilot, relevant for Google TTS
 --       mycsar.SRSGPathToCredentials = nil -- Path to your Google credentials json file, set this if you want to use Google TTS
 --       mycsar.SRSVolume = 1 -- Volume, between 0 and 1
 --       mycsar.SRSGender = "male" -- male or female voice
+--       mycsar.CSARVoice = MSRS.Voices.Google.Standard.en_US_Standard_A -- SRS voice for CSAR Controller, relevant for Google TTS
+--       mycsar.CSARVoiceMS = MSRS.Voices.Microsoft.Hedda -- SRS voice for CSAR Controller, relevant for MS Desktop TTS
+--       mycsar.coordinate -- Coordinate from which CSAR TTS is sending. Defaults to a random MASH object position
 --       --
 --       mycsar.csarUsePara = false -- If set to true, will use the LandingAfterEjection Event instead of Ejection. Requires mycsar.enableForAI to be set to true. --shagrat
 --       mycsar.wetfeettemplate = "man in floating thingy" -- if you use a mod to have a pilot in a rescue float, put the template name in here for wet feet spawns. Note: in conjunction with csarUsePara this might create dual ejected pilots in edge cases.
@@ -465,7 +466,10 @@ function CSAR:New(Coalition, Template, Alias)
   self.SRSGPathToCredentials = nil
   self.SRSVolume = 1.0 -- volume 0.0 to 1.0
   self.SRSGender = "male" -- male or female
-  
+  self.CSARVoice = MSRS.Voices.Google.Standard.en_US_Standard_A
+  self.CSARVoiceMS = MSRS.Voices.Microsoft.Hedda
+  self.coordinate = nil -- Core.Point#COORDINATE
+    
   local AliaS = string.gsub(self.alias," ","_")
   self.filename = string.format("CSAR_%s_Persist.csv",AliaS)
   
@@ -1737,7 +1741,16 @@ function CSAR:_DisplayMessageToSAR(_unit, _text, _time, _clear, _speak, _overrid
   end
   -- integrate SRS
   if _speak and self.useSRS then
-    self.SRSQueue:NewTransmission(_text,nil,self.msrs,nil,2)
+    local coord = _unit:GetCoordinate()
+    if coord then
+      self.msrs:SetCoordinate(coord)
+    end
+    _text = string.gsub(_text,"km"," kilometer")
+    _text = string.gsub(_text,"nm"," nautical miles")
+    --self.msrs:SetVoice(self.SRSVoice)
+    --self.SRSQueue:NewTransmission(_text,nil,self.msrs,nil,1)
+    self:I("Voice = "..self.SRSVoice)
+    self.SRSQueue:NewTransmission(_text,duration,self.msrs,tstart,2,subgroups,subtitle,subduration,self.SRSchannel,self.SRSModulation,gender,culture,self.SRSVoice,volume,label,coord)
   end
   return self
 end
@@ -1908,6 +1921,14 @@ end
 function CSAR:_DisplayToAllSAR(_message, _side, _messagetime)
   self:T(self.lid .. " _DisplayToAllSAR")
   local messagetime = _messagetime or self.messageTime
+  if self.msrs then
+    local voice = self.CSARVoice or MSRS.Voices.Google.Standard.en_GB_Standard_F
+    if self.msrs.google == nil then
+      voice = self.CSARVoiceMS or MSRS.Voices.Microsoft.Hedda
+    end
+    self:I("Voice = "..voice)
+    self.SRSQueue:NewTransmission(_message,duration,self.msrs,tstart,2,subgroups,subtitle,subduration,self.SRSchannel,self.SRSModulation,gender,culture,voice,volume,label,self.coordinate)
+  end
   for _, _unitName in pairs(self.csarUnits) do
     local _unit = self:_GetSARHeli(_unitName)
     if _unit and not self.suppressmessages then
@@ -2268,6 +2289,12 @@ function CSAR:onafterStart(From, Event, To)
     self.allheligroupset = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterCategoryHelicopter():FilterStart()
   end
   self.mash = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart() -- currently only GROUP objects, maybe support STATICs also?
+  if not self.coordinate then
+    local csarhq = self.mash:GetRandom()
+    if csarhq then 
+      self.coordinate = csarhq:GetCoordinate()
+    end
+  end
   if self.wetfeettemplate then
     self.usewetfeet = true
   end
@@ -2275,7 +2302,7 @@ function CSAR:onafterStart(From, Event, To)
     local path = self.SRSPath
     local modulation = self.SRSModulation
     local channel = self.SRSchannel
-    self.msrs = MSRS:New(path,channel,modulation)
+    self.msrs = MSRS:New(path,channel,modulation) -- Sound.SRS#MSRS
     self.msrs:SetPort(self.SRSport)
     self.msrs:SetLabel("CSAR")
     self.msrs:SetCulture(self.SRSCulture)
@@ -2287,7 +2314,7 @@ function CSAR:onafterStart(From, Event, To)
     end
     self.msrs:SetVolume(self.SRSVolume)
     self.msrs:SetLabel("CSAR")
-    self.SRSQueue = MSRSQUEUE:New("CSAR")
+    self.SRSQueue = MSRSQUEUE:New("CSAR") -- Sound.SRS#MSRSQUEUE
   end
   
   self:__Status(-10)

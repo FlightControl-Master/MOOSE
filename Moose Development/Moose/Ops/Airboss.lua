@@ -1746,7 +1746,7 @@ AIRBOSS.MenuF10Root = nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version = "1.3.2"
+AIRBOSS.version = "1.3.3"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3071,6 +3071,7 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
   self.SRS:SetPath(PathToSRS)
   self.SRS:SetPort(Port or 5002)
   self.SRS:SetLabel(self.AirbossRadio.alias or "AIRBOSS")
+  self.SRS:SetCoordinate(self.carrier:GetCoordinate())
   --self.SRS:SetModulations(Modulations)
   if GoogleCreds then
     self.SRS:SetGoogle(GoogleCreds)
