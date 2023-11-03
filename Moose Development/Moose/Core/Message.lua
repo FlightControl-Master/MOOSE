@@ -521,6 +521,9 @@ end
 function MESSAGE:ToSRS(frequency,modulation,gender,culture,voice,coalition,volume,coordinate)
   if _MESSAGESRS.SRSQ then
       _MESSAGESRS.MSRS:SetVoice(voice or _MESSAGESRS.Voice)
+      if coordinate then
+        _MESSAGESRS.MSRS:SetCoordinate(coordinate)  
+      end
       _MESSAGESRS.SRSQ:NewTransmission(self.MessageText,nil,_MESSAGESRS.MSRS,nil,nil,nil,nil,nil,frequency,modulation,gender or _MESSAGESRS.Gender,culture or _MESSAGESRS.Culture,voice or _MESSAGESRS.Voice,volume,self.MessageCategory)
   end
   return self

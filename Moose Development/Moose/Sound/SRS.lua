@@ -195,7 +195,7 @@ MSRS = {
 
 --- MSRS class version.
 -- @field #string version
-MSRS.version="0.1.4"
+MSRS.version="0.1.2"
 
 --- Voices
 -- @type MSRS.Voices
@@ -824,15 +824,16 @@ end
 -- @param #MSRS self
 -- @param #string Text Text message.
 -- @param #number Delay Delay in seconds, before the message is played.
+-- @param Core.Point#COORDINATE Coordinate Coordinate.
 -- @return #MSRS self
-function MSRS:PlayText(Text, Delay)
+function MSRS:PlayText(Text, Delay, Coordinate)
 
   if Delay and Delay>0 then
-    self:ScheduleOnce(Delay, MSRS.PlayText, self, Text, 0)
+    self:ScheduleOnce(Delay, MSRS.PlayText, self, Text, nil, Coordinate)
   else
 
     -- Get command line.
-    local command=self:_GetCommand()    
+    local command=self:_GetCommand(nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,Coordinate)    
 
     -- Append text.
     command=command..string.format(" --text=\"%s\"", tostring(Text))
@@ -856,11 +857,12 @@ end
 -- @param #string Voice Voice.
 -- @param #number Volume Volume.
 -- @param #string Label Label.
+-- @param Core.Point#COORDINATE Coordinate Coordinate.
 -- @return #MSRS self
-function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label)
+function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
 
   if Delay and Delay>0 then
-    self:ScheduleOnce(Delay, MSRS.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label)
+    self:ScheduleOnce(Delay, MSRS.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
   else
   
     -- Ensure table.
@@ -874,7 +876,7 @@ function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture
     end
 
     -- Get command line.
-    local command=self:_GetCommand(Frequencies, Modulations, nil, Gender, Voice, Culture, Volume, nil, nil, Label)    
+    local command=self:_GetCommand(Frequencies, Modulations, nil, Gender, Voice, Culture, Volume, nil, nil, Label, Coordinate)    
 
     -- Append text.
     command=command..string.format(" --text=\"%s\"", tostring(Text))
@@ -1065,8 +1067,9 @@ end
 -- @param #number speed Speed.
 -- @param #number port Port.
 -- @param #string label Label, defaults to "ROBOT" (displayed sender name in the radio overlay of SRS) - No spaces allowed!
+-- @param Core.Point#COORDINATE coordinate Coordinate.
 -- @return #string Command.
-function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, speed, port,label)
+function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, speed, port,label,coordinate)
 
   local path=self:GetPath() or STTS.DIRECTORY    
   local exe=STTS.EXECUTABLE or "DCS-SR-ExternalAudio.exe"
@@ -1080,6 +1083,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   speed=speed or self.speed
   port=port or self.port
   label=label or self.Label
+  coordinate=coordinate or self.coordinate
   
   -- Replace modulation
   modus=modus:gsub("0", "AM")
@@ -1104,8 +1108,8 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   end
   
   -- Set coordinate.
-  if self.coordinate then
-    local lat,lon,alt=self:_GetLatLongAlt(self.coordinate)
+  if coordinate then
+    local lat,lon,alt=self:_GetLatLongAlt(coordinate)
     command=command..string.format(" -L %.4f -O %.4f -A %d", lat, lon, alt)
   end
   
@@ -1667,6 +1671,7 @@ MSRSQUEUE = {
 -- @field #string voice Voice if any
 -- @field #number volume Volume
 -- @field #string label Label to be used
+-- @field Core.Point#COORDINATE coordinate Coordinate for this transmission
 
 --- Create a new MSRSQUEUE object for a given radio frequency/modulation.
 -- @param #MSRSQUEUE self
@@ -1751,8 +1756,9 @@ end
 -- @param #string voice Specific voice
 -- @param #number volume Volume setting
 -- @param #string label Label to be used
+-- @param Core.Point#COORDINATE coordinate Coordinate to be used
 -- @return #MSRSQUEUE.Transmission Radio transmission table.
-function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation, gender, culture, voice, volume, label)
+function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation, gender, culture, voice, volume, label,coordinate)
   
   if self.TransmitOnlyWithPlayers then
     if self.PlayerSet and self.PlayerSet:CountAlive() == 0 then
@@ -1792,7 +1798,8 @@ function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgr
   transmission.voice = voice
   transmission.gender = volume
   transmission.label = label
-  
+  transmission.coordinate = coordinate
+    
   -- Add transmission to queue.  
   self:AddTransmission(transmission)
   
@@ -1805,9 +1812,9 @@ end
 function MSRSQUEUE:Broadcast(transmission)
   
   if transmission.frequency then
-    transmission.msrs:PlayTextExt(transmission.text, nil, transmission.frequency, transmission.modulation, transmission.gender, transmission.culture, transmission.voice, transmission.volume, transmission.label)
+    transmission.msrs:PlayTextExt(transmission.text, nil, transmission.frequency, transmission.modulation, transmission.gender, transmission.culture, transmission.voice, transmission.volume, transmission.label, transmission.coordinate)
   else
-    transmission.msrs:PlayText(transmission.text)
+    transmission.msrs:PlayText(transmission.text,nil,transmission.coordinate)
   end
   
   local function texttogroup(gid)
