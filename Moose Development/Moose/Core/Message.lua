@@ -524,6 +524,7 @@ function MESSAGE:ToSRS(frequency,modulation,gender,culture,voice,coalition,volum
       if coordinate then
         _MESSAGESRS.MSRS:SetCoordinate(coordinate)  
       end
+      local category = string.gsub(self.MessageCategory,":","")
       _MESSAGESRS.SRSQ:NewTransmission(self.MessageText,nil,_MESSAGESRS.MSRS,nil,nil,nil,nil,nil,frequency,modulation,gender or _MESSAGESRS.Gender,culture or _MESSAGESRS.Culture,voice or _MESSAGESRS.Voice,volume,self.MessageCategory)
   end
   return self

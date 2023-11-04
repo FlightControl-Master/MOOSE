@@ -1140,20 +1140,6 @@ function EASYGCICAP:_StartIntel()
       -- Do we have a matching airwing?
       if targetairwing then
         local AssetCount = targetairwing:CountAssetsOnMission(MissionTypes,Cohort)
-        --[[
-        local Assets = targetairwing:GetAssetsOnMission(AUFTRAG.Type.GCICAP)
-        for _,_asset in pairs(Assets) do
-          local asset = _asset -- Functional.Warehouse#WAREHOUSE.Assetitem
-          local fg = asset.flightgroup
-          local name = asset.spawngroupname
-          local mission = fg:GetMissionCurrent()
-          local mtype = mission.type
-          local distance = position:Get3DDistance(fg:GetCoordinate()) or 1000*1000
-          distance = distance / 1000
-          local text = string.format("FlightGroup %s on mission %s with distance %d km",name,mtype,distance)
-          local m = MESSAGE:New(text,15,"GCICAP"):ToAllIf(self.debug):ToLog()
-        end
-        --]]
         -- Enough airframes on mission already?
         self:T(self.lid.." Assets on Mission "..AssetCount)
         if AssetCount <= MaxAliveMissions then
