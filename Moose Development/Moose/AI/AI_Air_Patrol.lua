@@ -79,7 +79,7 @@
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- The range can be beyond or smaller than the range of the Patrol Zone.
 -- The range is applied at the position of the AI.
--- Use the method @{AI.AI_CAP#AI_AIR_PATROL.SetEngageRange}() to define that range.
+-- Use the method @{#AI_AIR_PATROL.SetEngageRange}() to define that range.
 --
 -- # Developer Note
 -- 

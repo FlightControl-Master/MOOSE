@@ -4,6 +4,7 @@
 cd /moose/
 mkdir -p build/tools
 mkdir -p build/doc
+rm -f build/doc/*
 
 # Checkout luadocumentor
 cd /moose/build/tools
@@ -18,7 +19,6 @@ lua luadocumentor.lua -d /moose/build/doc '/moose/Moose Development/Moose'
 
 # Copy generated files in the MOOSE_DOCS repo if it is already there
 if [ -d /moose/build/MOOSE_DOCS/Documentation ]; then
-  rm -rf /moose/build/MOOSE_DOCS/Documentation
-  mkdir -p /moose/build/MOOSE_DOCS/Documentation
+  rm -f /moose/build/MOOSE_DOCS/Documentation/*
   cp /moose/build/doc/* /moose/build/MOOSE_DOCS/Documentation/
 fi
