@@ -98,7 +98,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.21"
+PLAYERTASK.version="0.1.22"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -935,7 +935,7 @@ end
 do
 -------------------------------------------------------------------------------------------------------------------
 -- PLAYERTASKCONTROLLER
--- TODO: PLAYERTASKCONTROLLER
+  -- TODO: PLAYERTASKCONTROLLER
 -- DONE Playername customized
 -- DONE Coalition-level screen info to SET based
 -- DONE Flash directions
@@ -4003,8 +4003,9 @@ end
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
 -- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
 -- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS
+-- @param Core.Point#COORDINATE Coordinate Coordinate from which the controller radio is sending
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
+function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,Coordinate)
   self:T(self.lid.."SetSRS")
   self.PathToSRS = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone" --
   self.Gender = Gender or "male" --
@@ -4028,6 +4029,9 @@ function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Cultu
   self.SRS:SetVoice(self.Voice)
   if self.PathToGoogleKey then
     self.SRS:SetGoogle(self.PathToGoogleKey)
+  end
+  if Coordinate then
+    self.SRS:SetCoordinate(Coordinate)
   end
   self.SRSQueue = MSRSQUEUE:New(self.MenuName or self.Name)
   self.SRSQueue:SetTransmitOnlyWithPlayers(self.TransmitOnlyWithPlayers)
