@@ -1743,6 +1743,8 @@ function FLIGHTGROUP:OnEventLanding(EventData)
     if element then
       self:T3(self.lid..string.format("EVENT: Element %s landed at %s ==> landed", element.name, airbasename))
       self:ElementLanded(element, airbase)
+    else
+      self:T3(self.lid.."EVENT: Could not get element in landing event")
     end
 
   end
@@ -3722,6 +3724,8 @@ function FLIGHTGROUP:_SetFlightPlan(FlightPlan)
     
     local wp=self:AddWaypoint(fix.vector, speed, nil, altitude or 10000, false)
     wp.flightplan=FlightPlan
+    
+    wp.name=fix.name
   
   end
 

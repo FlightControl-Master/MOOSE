@@ -94,7 +94,7 @@ APPROACH.Segment={
 -- @type APPROACH.Waypoint
 -- @field #number uid Unique ID of the point.
 -- @field #string segment The segment this point belongs to.
--- @field Navigation.NavFix#NAVFIX navfix The navigation fix that determines the coordinates of this point.
+-- @field Navigation.Point#NAVFIX navfix The navigation fix that determines the coordinates of this point.
   
 --- APPROACH class version.
 -- @field #string version
@@ -122,6 +122,8 @@ function APPROACH:New(Type, Airbase, Runway)
   -- Inherit everything from BASE class.
   self=BASE:Inherit(self, BASE:New()) -- #APPROACH
   
+  -- Set approach type.
+  -- TODO: Check if this is a valid/known approach type.
   self.apptype=Type
   
   if type(Airbase)=="string" then
@@ -131,11 +133,14 @@ function APPROACH:New(Type, Airbase, Runway)
   end
   
   if type(Runway)=="string" then
-    self.airbase:GetRunwayByName(Runway)
+    self.runway=self.airbase:GetRunwayByName(Runway)
   else
     self.runway=Runway
   end
-
+  
+  -- Debug info.
+  self:I("Created new approach for airbase %s: type=%s, runway=%s", self.airbase:GetName(), self.apptype, self.runway.name)
+  
   return self
 end
 
@@ -156,17 +161,17 @@ end
 
 --- Add a waypoint to the path of the approach.
 -- @param #APPROACH self
--- @param Navigation.Point#NAVPOINT NavPoint The NAVPOINT.
+-- @param Navigation.Point#NAVFIX NavFix The navigation fix.
 -- @param #string Segment The approach segment this fix belongs to.
--- @return #APPROACH self
-function APPROACH:AddWaypoint(NavPoint, Segment)
+-- @return #APPROACH.Waypoint The waypoint data table.
+function APPROACH:AddNavFix(NavFix, Segment)
 
   self.wpcounter=self.wpcounter+1
 
   local point={} --#APPROACH.Waypoint
   point.uid=self.wpcounter
   point.segment=Segment
-  point.navfix=NavPoint
+  point.navfix=NavFix
 
   table.insert(self.path, point)
 
@@ -177,6 +182,7 @@ end
 -- Private Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- Add private functions here.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -236,7 +242,7 @@ DEPARTURE.Segment={
 -- @type DEPARTURE.Waypoint
 -- @field #number uid Unique ID of the point.
 -- @field #string segment The segment this point belongs to.
--- @field Navigation.NavFix#NAVFIX navfix The navigation fix that determines the coordinates of this point.
+-- @field Navigation.Point#NAVFIX navfix The navigation fix that determines the coordinates of this point.
   
 --- DEPARTURE class version.
 -- @field #string version
@@ -296,17 +302,17 @@ end
 
 --- Add a waypoint to the path of the DEPARTURE.
 -- @param #DEPARTURE self
--- @param Navigation.Point#NAVPOINT NavPoint The NAVPOINT.
+-- @param Navigation.Point#NAVFIX NavFix The navigation fix.
 -- @param #string Segment The DEPARTURE segment this fix belongs to.
--- @return #DEPARTURE self
-function DEPARTURE:AddWaypoint(NavPoint, Segment)
+-- @return #DEPARTURE.Waypoint The waypoint data.
+function DEPARTURE:AddWaypoint(NavFix, Segment)
 
   self.wpcounter=self.wpcounter+1
 
   local point={} --#DEPARTURE.Waypoint
   point.uid=self.wpcounter
   point.segment=Segment
-  point.navfix=NavPoint
+  point.navfix=NavFix
 
   table.insert(self.path, point)
 
@@ -317,6 +323,7 @@ end
 -- Private Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- Add DEPARTURE private functions here.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
