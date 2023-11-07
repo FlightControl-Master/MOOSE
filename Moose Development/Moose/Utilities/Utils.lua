@@ -441,19 +441,22 @@ UTILS.BasicSerialize = function(s)
   end
 end
 
+--- Print a table to log in a nice format
+-- @param #table table The table to print
+-- @param #number ident Number of idents
 function UTILS.PrintTableToLog(table, indent)
   if not table then
-    BASE:E("No table passed!")
+    env.warning("No table passed!")
     return 
   end
   if not indent then indent = 0 end
   for k, v in pairs(table) do
     if type(v) == "table" then
-      BASE:I(string.rep("  ", indent) .. tostring(k) .. " = {")
+      env.info(string.rep("  ", indent) .. tostring(k) .. " = {")
       UTILS.PrintTableToLog(v, indent + 1)
-      BASE:I(string.rep("  ", indent) .. "}")
+      env.info(string.rep("  ", indent) .. "}")
     else
-      BASE:I(string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(v))
+      env.info(string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(v))
     end
   end
 end

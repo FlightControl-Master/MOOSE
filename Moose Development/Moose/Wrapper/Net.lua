@@ -470,11 +470,9 @@ end
 -- @return #number PlayerID or nil
 function NET:GetPlayerIDByName(Name)
   if not Name then return nil end
-  local playerList = self:GetPlayerList()
-  self:T({playerList})
+  local playerList = net.get_player_list()
   for i=1,#playerList do
     local playerName = net.get_name(i)
-      self:T({playerName})
       if playerName == Name then
         return playerList[i]
       end

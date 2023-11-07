@@ -283,6 +283,7 @@ EVENTS = {
 -- @field Wrapper.Group#GROUP IniGroup (UNIT) The initiating MOOSE wrapper @{Wrapper.Group#GROUP} of the initiator Group object.
 -- @field #string IniGroupName UNIT) The initiating GROUP name (same as IniDCSGroupName).
 -- @field #string IniPlayerName (UNIT) The name of the initiating player in case the Unit is a client or player slot.
+-- @field #string IniPlayerUCID (UNIT) The UCID of the initiating player in case the Unit is a client or player slot and on a multi-player server.
 -- @field DCS#coalition.side IniCoalition (UNIT) The coalition of the initiator.
 -- @field DCS#Unit.Category IniCategory (UNIT) The category of the initiator.
 -- @field #string IniTypeName (UNIT) The type name of the initiator.
@@ -298,6 +299,7 @@ EVENTS = {
 -- @field Wrapper.Group#GROUP TgtGroup (UNIT) The target MOOSE wrapper @{Wrapper.Group#GROUP} of the target Group object.
 -- @field #string TgtGroupName (UNIT) The target GROUP name (same as TgtDCSGroupName).
 -- @field #string TgtPlayerName (UNIT) The name of the target player in case the Unit is a client or player slot.
+-- @field #string TgtPlayerUCID (UNIT) The UCID of the target player in case the Unit is a client or player slot and on a multi-player server.
 -- @field DCS#coalition.side TgtCoalition (UNIT) The coalition of the target.
 -- @field DCS#Unit.Category TgtCategory (UNIT) The category of the target.
 -- @field #string TgtTypeName (UNIT) The type name of the target.
@@ -1145,6 +1147,14 @@ function EVENT:onEvent( Event )
           end
           
           Event.IniPlayerName = Event.IniDCSUnit:getPlayerName()
+          if Event.IniPlayerName then
+            -- get UUCID
+            local PID = NET.GetPlayerIDByName(nil,Event.IniPlayerName)
+            if PID then
+              Event.IniPlayerUCID = net.get_player_info(tonumber(PID), 'ucid')
+              --env.info("Event.IniPlayerUCID="..tostring(Event.IniPlayerUCID),false)
+            end
+          end
           Event.IniCoalition = Event.IniDCSUnit:getCoalition()
           Event.IniTypeName = Event.IniDCSUnit:getTypeName()
           Event.IniCategory = Event.IniDCSUnit:getDesc().category  
@@ -1217,6 +1227,14 @@ function EVENT:onEvent( Event )
             Event.TgtGroupName = Event.TgtDCSGroupName
           end
           Event.TgtPlayerName = Event.TgtDCSUnit:getPlayerName()
+          if Event.TgtPlayerName  then
+            -- get UUCID
+            local PID = NET.GetPlayerIDByName(nil,Event.TgtPlayerName)
+            if PID then
+              Event.TgtPlayerUCID = net.get_player_info(tonumber(PID), 'ucid')
+              --env.info("Event.TgtPlayerUCID="..tostring(Event.TgtPlayerUCID),false)
+            end
+          end
           Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
           Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
           Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
