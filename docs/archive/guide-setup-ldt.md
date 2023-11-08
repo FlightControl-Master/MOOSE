@@ -2,6 +2,7 @@
 parent: Archive
 nav_order: 3
 ---
+
 # LDT Setup Guide
 
 Using the MOOSE framework is very easy, and this document provides you with a detailed explanation how to install
@@ -10,7 +11,7 @@ and use MOOSE within your missions.
 
 ## 1.1) MOOSE Framework on GITHUB
 
-For reference, you can find the source code of [MOOSE framework on GITHUB].
+For reference, you can find the source code of [MOOSE framework on GitHub].
 It is free for download and usage, since it is released under the GNU 3.0 open source license policy.
 You don't need to use the source code as an end-user, but it may help to sneak into the code and understand how certain
 things are working.

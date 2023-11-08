@@ -5,7 +5,7 @@ nav_order: 4
 has_toc: false
 ---
 
-# Old Guides
+# Archive
 
 {: .important }
 > This documentation is outdated! We are working on new a documentation.
@@ -52,7 +52,7 @@ Click on the hamburger menu on the left upper corner of each page to navigate to
 
 The delivery of MOOSE follows a structured release process. Over time, new features are added that can be used in your mission.
 
-The latest release of MOOSE can be downloaded **[here](https://github.com/FlightControl-Master/MOOSE/releases)**.
+The latest release of MOOSE can be downloaded [here](https://github.com/FlightControl-Master/MOOSE/releases).
 
 There are 3 different ways how you can use MOOSE, each with a different engagement and complexity level:
 
