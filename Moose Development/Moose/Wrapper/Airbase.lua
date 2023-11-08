@@ -1773,7 +1773,7 @@ function AIRBASE:_CheckParkingLists(TerminalID)
 end
 
 --- Helper function to check for the correct terminal type including "artificial" ones.
--- @param #number Term_Type Termial type from getParking routine.
+-- @param #number Term_Type Terminal type from getParking routine.
 -- @param #AIRBASE.TerminalType termtype Terminal type from AIRBASE.TerminalType enumerator.
 -- @return #boolean True if terminal types match.
 function AIRBASE._CheckTerminalType(Term_Type, termtype)
