@@ -1080,9 +1080,9 @@ function EVENT:onEvent( Event )
 
       if Event.initiator then
 
-        Event.IniObjectCategory = Event.initiator:getCategory()
+        Event.IniObjectCategory = Object.getCategory(Event.initiator) --Event.initiator:getCategory()
         
-       if Event.IniObjectCategory == Object.Category.STATIC then
+        if Event.IniObjectCategory == Object.Category.STATIC then
           ---
           -- Static
           ---          
@@ -1118,10 +1118,9 @@ function EVENT:onEvent( Event )
           local Unit=UNIT:FindByName(Event.IniDCSUnitName)
           if Unit then
             Event.IniObjectCategory = Object.Category.UNIT
-          end
-        end        
+          end       
 
-        if Event.IniObjectCategory == Object.Category.UNIT then
+        elseif Event.IniObjectCategory == Object.Category.UNIT then
           ---
           -- Unit
           ---        
@@ -1147,9 +1146,8 @@ function EVENT:onEvent( Event )
           Event.IniCoalition = Event.IniDCSUnit:getCoalition()
           Event.IniTypeName = Event.IniDCSUnit:getTypeName()
           Event.IniCategory = Event.IniDCSUnit:getDesc().category  
-        end
 
-        if Event.IniObjectCategory == Object.Category.CARGO then
+        elseif Event.IniObjectCategory == Object.Category.CARGO then
           ---
           -- Cargo
           ---
@@ -1160,9 +1158,8 @@ function EVENT:onEvent( Event )
           Event.IniCoalition = Event.IniDCSUnit:getCoalition()
           Event.IniCategory = Event.IniDCSUnit:getDesc().category
           Event.IniTypeName = Event.IniDCSUnit:getTypeName()
-        end
 
-        if Event.IniObjectCategory == Object.Category.SCENERY then
+        elseif Event.IniObjectCategory == Object.Category.SCENERY then
           ---
           -- Scenery
           ---          
@@ -1172,9 +1169,8 @@ function EVENT:onEvent( Event )
           Event.IniUnit = SCENERY:Register( Event.IniDCSUnitName, Event.initiator )
           Event.IniCategory = Event.IniDCSUnit:getDesc().category
           Event.IniTypeName = Event.initiator:isExist() and Event.IniDCSUnit:getTypeName() or "SCENERY"
-        end
 
-        if Event.IniObjectCategory == Object.Category.BASE then
+        elseif Event.IniObjectCategory == Object.Category.BASE then
           ---
           -- Base Object
           ---
@@ -1201,9 +1197,12 @@ function EVENT:onEvent( Event )
         ---
 
         -- Target category.
-        Event.TgtObjectCategory = Event.target:getCategory()
+        Event.TgtObjectCategory = Object.getCategory(Event.target) --Event.target:getCategory()
 
         if Event.TgtObjectCategory == Object.Category.UNIT then
+          ---
+          -- UNIT
+          ---
           Event.TgtDCSUnit = Event.target
           Event.TgtDCSGroup = Event.TgtDCSUnit:getGroup()
           Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
@@ -1219,10 +1218,11 @@ function EVENT:onEvent( Event )
           Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
           Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
           Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
-        end
 
-        if Event.TgtObjectCategory == Object.Category.STATIC then
-          -- get base data
+        elseif Event.TgtObjectCategory == Object.Category.STATIC then
+          ---
+          -- STATIC
+          ---
           Event.TgtDCSUnit = Event.target
           if Event.target:isExist() and Event.id ~= 33 then -- leave out ejected seat object
             Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
@@ -1249,9 +1249,11 @@ function EVENT:onEvent( Event )
               Event.TgtTypeName = "Static"
             end
           end
-        end
 
-        if Event.TgtObjectCategory == Object.Category.SCENERY then
+        elseif Event.TgtObjectCategory == Object.Category.SCENERY then
+          ---
+          -- SCENERY
+          ---
           Event.TgtDCSUnit = Event.target
           Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
           Event.TgtUnitName = Event.TgtDCSUnitName
