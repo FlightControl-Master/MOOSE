@@ -73,7 +73,7 @@ to identify which methods are properties are defined for which class.
 
 MOOSE contains a lot of classes that can be used to enhance your missions.
 
-![MOOSE framework](/images/classes/overview.jpg)
+![MOOSE framework](../images/classes/overview.jpg)
 
 Each section has an overview explanation on the different classes that mission designers can use to design compelling
 simulation scenarios. It provides a short explanation of the concepts and its features, as well as important information

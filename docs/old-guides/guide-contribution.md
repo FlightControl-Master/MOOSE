@@ -186,7 +186,7 @@ Every method should be documented by a comment block. You can copy paste the fol
 To ensure that the next Release of Moose is as bug-free and feature rich as possible, every Moose contributor
 **respects a release cycle**.
 
-![](/images/archive/installation/MOOSE_Release_Cycle.JPG)
+![](../images/archive/installation/MOOSE_Release_Cycle.JPG)
 
 The key takeways are:
 

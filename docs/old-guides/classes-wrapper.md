@@ -5,14 +5,14 @@ nav_order: 5
 ---
 # Wrapper classes guide
 
-![MOOSE WRAPPER](/images/classes/category-wrapper.jpg)
+![MOOSE WRAPPER](../images/classes/category-wrapper.jpg)
 
 This chapter lists the wrapper classes which enhances the functionality for mission designers on the mission objects.
 
 
 ## 1. [GROUP](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Wrapper.Group.html)
 
-![Group](/images/classes/wrapper/group.jpg)
+![Group](../images/classes/wrapper/group.jpg)
 
 Wraps the DCS _Group_ objects.
 
@@ -26,7 +26,7 @@ Wraps the DCS _Group_ objects.
 
 ## 2. [UNIT](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Wrapper.Unit.html)
 
-![Unit](/images/classes/wrapper/unit.jpg)
+![Unit](../images/classes/wrapper/unit.jpg)
 
 Wraps the DCS _Unit_ objects.
 
@@ -40,7 +40,7 @@ Wraps the DCS _Unit_ objects.
 
 ## 3. [STATIC](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Wrapper.Static.html)
 
-![Static](/images/classes/wrapper/static.jpg)
+![Static](../images/classes/wrapper/static.jpg)
 
 Wraps the DCS _Static_ objects.
 Note that Statics are almost the same as Units, but they don't have a controller.
@@ -54,7 +54,7 @@ Note that Statics are almost the same as Units, but they don't have a controller
 
 ## 4. [AIRBASE](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Wrapper.Airbase.html)
 
-![Airbase](/images/classes/wrapper/airbase.jpg)
+![Airbase](../images/classes/wrapper/airbase.jpg)
 
 Wraps the DCS _Airbase_ objects.
 

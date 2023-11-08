@@ -6,7 +6,7 @@ nav_order: 2
 
 # Tasking classes guide
 
-![MOOSE TASKING](/images/classes/category-tasking.jpg)
+![MOOSE TASKING](../images/classes/category-tasking.jpg)
 
 This chapter explains the major principles behind the tasking concepts in MOOSE.
 Tasking is achieved through the utilization of various classes that fall in the category Tasking.
@@ -33,7 +33,7 @@ In order to setup the Tasking, you'll have to define:
 
 ## 1. [Command Center]
 
-![Tasking Command Center](/images/classes/tasking/commandcenter.jpg)
+![Tasking Command Center](../images/classes/tasking/commandcenter.jpg)
 
 A command center governs multiple missions, and takes care of the reporting and communications.
 
@@ -47,7 +47,7 @@ A command center governs multiple missions, and takes care of the reporting and 
 
 ## 2. [Mission]
 
-![Tasking Command Center](/images/classes/tasking/mission.jpg)
+![Tasking Command Center](../images/classes/tasking/mission.jpg)
 
 A mission models a goal to be achieved through the execution and completion of tasks by human players.
 
@@ -62,7 +62,7 @@ A mission models a goal to be achieved through the execution and completion of t
 
 ## 3. [A2A Task Dispatcher]
 
-![Tasking A2A Dispatching](/images/classes/tasking/task-a2a-dispatcher.jpg)
+![Tasking A2A Dispatching](../images/classes/tasking/task-a2a-dispatcher.jpg)
 
 Dynamically allocates A2A tasks to human players, based on detected airborne targets through an EWR network.
 
@@ -81,7 +81,7 @@ Dynamically allocates A2A tasks to human players, based on detected airborne tar
 
 ## 3. [A2G Task Dispatcher]
 
-![Tasking A2G Dispatching](/images/classes/tasking/task-a2g-dispatcher.jpg)
+![Tasking A2G Dispatching](../images/classes/tasking/task-a2g-dispatcher.jpg)
 
 Dynamically allocates A2G tasks to human players, based on detected ground targets through reconnaissance.
 

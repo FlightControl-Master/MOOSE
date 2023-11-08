@@ -6,7 +6,7 @@ nav_order: 5
 
 # Core classes guide
 
-![MOOSE CORE](/images/classes/category-core.jpg)
+![MOOSE CORE](../images/classes/category-core.jpg)
 
 This chapter lists the core classes, which enhance existing DCS capabilities, and are used throughout the framework.
 Mission designers can use these core classes to enhance their scripting.
@@ -14,7 +14,7 @@ Mission designers can use these core classes to enhance their scripting.
 
 ## 1. [BASE](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Base.html)
 
-![BASE](/images/classes/core/base.jpg)
+![BASE](../images/classes/core/base.jpg)
 
 Wraps the DCS _Group_ objects.
 
@@ -32,7 +32,7 @@ Wraps the DCS _Group_ objects.
 
 ## 2. [DATABASE](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Database.html)
 
-![DATABASE](/images/classes/core/database.jpg)
+![DATABASE](../images/classes/core/database.jpg)
 
 Manages several databases containing templates, mission objects, and mission information.
 
@@ -60,7 +60,7 @@ Manages several databases containing templates, mission objects, and mission inf
 
 ## 3. [EVENT](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Event.html)
 
-![EVENT](/images/classes/core/event.jpg)
+![EVENT](../images/classes/core/event.jpg)
 
  Models DCS event dispatching using a publish-subscribe model.
 
@@ -74,7 +74,7 @@ Manages several databases containing templates, mission objects, and mission inf
 
 ## 4. [FSM](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Fsm.html)
 
-![FSM](/images/classes/core/fsm.jpg)
+![FSM](../images/classes/core/fsm.jpg)
 
 FSM (Finite State Machine) are objects that model and control long lasting business processes and workflow.
 
@@ -94,7 +94,7 @@ FSM (Finite State Machine) are objects that model and control long lasting busin
 
 ## 5. [GOAL](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Goal.html)
 
-![GOAL](/images/classes/core/goal.jpg)
+![GOAL](../images/classes/core/goal.jpg)
 
 Models the process to achieve Goal(s). Derived classes implement the ways how the achievements can be realized.
 
@@ -109,7 +109,7 @@ Models the process to achieve Goal(s). Derived classes implement the ways how th
 
 ## 6. [MENU](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Menu.html)
 
-![MENU](/images/classes/core/menu.jpg)
+![MENU](../images/classes/core/menu.jpg)
 
 Manage hierarchical menu structures and commands for players within a mission.
 The advantage of using menu classes is that it hides the complexity of dealing with menu management in more advanced
@@ -144,7 +144,7 @@ be updated without having to touch the menus.
 
 ## 7. [MESSAGE](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Message.html)
 
-![MESSAGE](/images/classes/core/message.jpg)
+![MESSAGE](../images/classes/core/message.jpg)
 
 Informs the players using messages during a simulation.
 
@@ -162,7 +162,7 @@ Informs the players using messages during a simulation.
 
 ## 8. [POINT](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Point.html)
 
-![POINT](/images/classes/core/point.jpg)
+![POINT](../images/classes/core/point.jpg)
 
 Defines an extensive API to manage 3D points in the DCS World 3D simulation space.
 
@@ -179,7 +179,7 @@ Defines an extensive API to manage 3D points in the DCS World 3D simulation spac
 
 ## 9. [RADIO](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Sound.Radio.html)
 
-![RADIO](/images/classes/sound/radio.jpg)
+![RADIO](../images/classes/sound/radio.jpg)
 
 Is responsible for everything that is related to radio transmission and you can hear in DCS, be it TACAN beacons, Radio
 transmissions.
@@ -194,7 +194,7 @@ transmissions.
 
 ## 10. [REPORT](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Report.html)
 
-![REPORT](/images/classes/core/report.jpg)
+![REPORT](../images/classes/core/report.jpg)
 
 Provides a handy means to create messages and reports. This class is extensively used in the tasking mechanism.
 
@@ -209,7 +209,7 @@ Provides a handy means to create messages and reports. This class is extensively
 
 ## 11. [SCHEDULER](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Scheduler.html)
 
-![SCHEDULER](/images/classes/core/scheduler.jpg)
+![SCHEDULER](../images/classes/core/scheduler.jpg)
 
 Prepares and handles the execution of functions over scheduled time (intervals).
 
@@ -227,7 +227,7 @@ Prepares and handles the execution of functions over scheduled time (intervals).
 
 ## 12. [SET](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Set.html)
 
-![SET](/images/classes/core/sets.jpg)
+![SET](../images/classes/core/sets.jpg)
 
 Define collections of objects to perform bulk actions and logically group objects.
 
@@ -244,7 +244,7 @@ Define collections of objects to perform bulk actions and logically group object
 
 ## 13. [SETTINGS](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Settings.html)
 
-![SETTINGS](/images/classes/core/settings.jpg)
+![SETTINGS](../images/classes/core/settings.jpg)
 
 Manages various settings for running missions, consumed by moose classes and provides a menu system for players to tweak
 settings in running missions.
@@ -263,7 +263,7 @@ settings in running missions.
 
 ## 14. [SPAWN](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Spawn.html)
 
-![SPAWN](/images/classes/core/spawn.jpg)
+![SPAWN](../images/classes/core/spawn.jpg)
 
 Spawn dynamically new groups of units in running missions.
 
@@ -298,7 +298,7 @@ Spawn dynamically new groups of units in running missions.
 
 ## 15. [SPAWNSTATIC](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.SpawnStatic.html)
 
-![SPAWNSTATIC](/images/classes/core/spawnstatic.jpg)
+![SPAWNSTATIC](../images/classes/core/spawnstatic.jpg)
 
 Spawn new statics in your running missions.
 
@@ -315,7 +315,7 @@ Spawn new statics in your running missions.
 
 ## 16. [SPOT](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Spot.html)
 
-![SPOT](/images/classes/core/spot.jpg)
+![SPOT](../images/classes/core/spot.jpg)
 
 Management of spotting logistics, that can be activated and deactivated upon command.
 
@@ -332,7 +332,7 @@ Management of spotting logistics, that can be activated and deactivated upon com
 
 ## 17. [USERFLAG](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.UserFlag.html)
 
-![USERFLAG](/images/classes/core/userflag.jpg)
+![USERFLAG](../images/classes/core/userflag.jpg)
 
 Manage user flags to interact with the mission editor trigger system and server side scripts.
 
@@ -345,7 +345,7 @@ Manage user flags to interact with the mission editor trigger system and server 
 
 ## 18. [USERSOUND](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Sound.UserSound.html)
 
-![USERSOUND](/images/classes/sound/usersound.jpg)
+![USERSOUND](../images/classes/sound/usersound.jpg)
 
 Manage user sound.
 
@@ -358,7 +358,7 @@ Manage user sound.
 
 ## 19. [VELOCITY](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Velocity.html)
 
-![VELOCITY](/images/classes/core/velocity.jpg)
+![VELOCITY](../images/classes/core/velocity.jpg)
 
 Models a velocity or speed, which can be expressed in various formats according the settings.
 
@@ -373,7 +373,7 @@ Models a velocity or speed, which can be expressed in various formats according 
 
 ## 20. [ZONE](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Zone.html)
 
-![ZONE](/images/classes/core/zones.jpg)
+![ZONE](../images/classes/core/zones.jpg)
 
 Define zones within your mission of various forms, with various capabilities.
 
