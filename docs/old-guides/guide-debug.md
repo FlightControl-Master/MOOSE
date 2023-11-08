@@ -32,16 +32,16 @@ off-the-shelf assets aren't working. So use the assets as listed here, or your d
 
 ## 1. Explanation of the LDT debugging environment.
 
-![](/images/archive/debugging/DEBUG_Intro.JPG)
+![](../images/archive/debugging/DEBUG_Intro.JPG)
 
 The following pictures outline some of the interesting places in LDT to debug your lua code... A quick manual.
 
-![](/images/archive/debugging/DEBUG_Bug.JPG)
+![](../images/archive/debugging/DEBUG_Bug.JPG)
 
 This picture shows a debug view of the LDT environment. You can activate the debug view through the debug icon that is
 located in the upper right corner of the LDT.
 
-![](/images/archive/debugging/DEBUG_Tracking.JPG)
+![](../images/archive/debugging/DEBUG_Tracking.JPG)
 
 Various windows exist to track the content of:
 
@@ -50,14 +50,14 @@ Various windows exist to track the content of:
   * Expressions: Various expressions can be entered to evaluate a more complex statement.
   * Interactive Console: Here you can type in commands that will be executed. Here you can SPAWN for example new groups.
 
-![](/images/archive/debugging/DEBUG_Source.JPG)
+![](../images/archive/debugging/DEBUG_Source.JPG)
 
 This window lists the sources active in Eclipse.
 During a debug sessions, the sources where the process is at the moment of debugging, should be loaded automatically.
 If not, something is wrong.
 All the other sources that are currently open in the LDT are also listed.
 
-![](/images/archive/debugging/DEBUG_Engine.JPG)
+![](../images/archive/debugging/DEBUG_Engine.JPG)
 
 This window shows the status of the "attach debug engine".
 If this process is running, it will listen to the IP 127.0.0.1 or localhost if setup on your PC.
@@ -68,7 +68,7 @@ If this process is running, it will listen to the IP 127.0.0.1 or localhost if s
 
 To use the debug enviornment in LDT, you'll need to setup within LDT a " Lua Attach to Application" **debug listener**.
 
-![](/images/archive/debugging/DEBUG_Engine.JPG)
+![](../images/archive/debugging/DEBUG_Engine.JPG)
 
 You can access this screen through the LDT editor menu **Run->Debug Configurations...**.
 
@@ -110,7 +110,7 @@ This is the **debug client**. The source is part of the LDT debug suite, but has
 DCS World scripting engine. You need to copy this file to the root directory of your DCS World installation in 
 Program Files.
 
-![](/images/archive/debugging/DEBUG_Debugger.JPG)
+![](../images/archive/debugging/DEBUG_Debugger.JPG)
 
 By example, the location of debugger.lua is here on my DCS World installation PC.
 
@@ -120,7 +120,7 @@ The READ.ME file is a file that contains an explanation of how to modify the Mis
 
 But for clarity reasons, I've also attached my version of the MissionScripting.lua.
 
-![](/images/archive/debugging/DEBUG_MissionScripting.JPG)
+![](../images/archive/debugging/DEBUG_MissionScripting.JPG)
 
 
 Take the MissionScripting.lua from the folder, and copy / paste (overwrite) the version in your DCS World installation
@@ -207,11 +207,11 @@ For example, in my mission I put a debug flag 999. When 999 is ON, I would NOT e
 
 Follow this process how to do that... As my recommendation...
 
-![](/images/archive/debugging/DEBUG_Flag.JPG)
+![](../images/archive/debugging/DEBUG_Flag.JPG)
 
 Setup a debug flag... If you wanna debug, set flag 999 to ON.
 
-![](/images/archive/debugging/DEBUG_Static.JPG)
+![](../images/archive/debugging/DEBUG_Static.JPG)
 
 Conditionalize the DO SCRIPT FILE execution by evaluating if the 999 is OFF.
 
@@ -221,12 +221,12 @@ Conditionalize the DO SCRIPT FILE execution by evaluating if the 999 is OFF.
 Now we are adding a little line.
 We are now going to ADD a **dynamic loader** of your mission source.
 
-![](/images/archive/debugging/DEBUG_Dynamic.JPG)
+![](../images/archive/debugging/DEBUG_Dynamic.JPG)
 
 This loads the file dynamically. Instead of a DO SCRIPT FILE, we execute here a DO SCRIPT.
 The DO SCRIPT contains a little piece of code that loads your source file from a location on your disk.
 
-![](/images/archive/debugging/DEBUG_Loader.JPG)
+![](../images/archive/debugging/DEBUG_Loader.JPG)
 
 This is how my piece of code looks like. I am using a stub of the MOOSE framework to load the file.
 
@@ -254,12 +254,12 @@ Now we are going to run a debug. To have a successful debug run, you need to sta
 
 First we setup the Debug as your "favorite", so that it is easy for your to repeat the run easily.
 
-![](/images/archive/debugging/DEBUG_Favorites.JPG)
+![](../images/archive/debugging/DEBUG_Favorites.JPG)
 
 Click on the "Bug" icon that you'll find in the task bar. The "Bug" icon is the place where you will start your
 **debug listener**. However, first, click on Organize Favorites. You need to do this one time only.
 
-![](/images/archive/debugging/DEBUG_Add_Favorites.JPG)
+![](../images/archive/debugging/DEBUG_Add_Favorites.JPG)
 
 Just click on the Debug Name that you entered (for me DCS 1.5) in the Debug Configuration window and it will be added to
 your favorites. I did already that, so it was already added as an example in the previous picture.
@@ -268,11 +268,11 @@ your favorites. I did already that, so it was already added as an example in the
 
 Now you can easily activate the **debug listener**.
 
-![](/images/archive/debugging/DEBUG_Run_Listener.JPG)
+![](../images/archive/debugging/DEBUG_Run_Listener.JPG)
 
 Just click the "Bug" again, and select the **debug listener** that you configured.
 
-![](/images/archive/debugging/DEBUG_Listener.JPG)
+![](../images/archive/debugging/DEBUG_Listener.JPG)
 
 When done, you'll see that the **debug listener** is running!
 
@@ -283,12 +283,12 @@ It will be listening quietly to IP 127.0.0.1 on port 100000.
 Open your source file **from the exact location** from where you have specified it to be loaded as part of the
 **dynamic loading**. Once it is loaded, you can attach breakpoints within the editor.
 
-![](/images/archive/debugging/DEBUG_Breakpoint.JPG)
+![](../images/archive/debugging/DEBUG_Breakpoint.JPG)
 
 How? Right click on the source line number or the grey area before the line, and a pop-up window will appear. Select
 "Toggle Breakpoint".
 
-![](/images/archive/debugging/DEBUG_Breakpoint_List.JPG)
+![](../images/archive/debugging/DEBUG_Breakpoint_List.JPG)
 
 As a result, the breakpoint will be listed in the "Breakpoints" list at the debug view, and it will show also the line
 number where the breakpoint is set. When your mission runs, the logic will stop at this line!!!
@@ -308,7 +308,7 @@ Now it is time to start your DCS World mission. Just run it as you would like ha
   6. Once it matches a valid breakpoint at a valid source and a specified line, it will stop the logic!
   
 
-![](/images/archive/debugging/DEBUG_Session.JPG)
+![](../images/archive/debugging/DEBUG_Session.JPG)
 
 
 

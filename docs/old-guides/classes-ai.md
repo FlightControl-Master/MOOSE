@@ -10,7 +10,7 @@ nav_order: 1
 
 ### 1.1. [AI A2A Dispatcher]
 
-![AI A2A Dispatcher](/images/classes/ai/a2a-dispatcher.jpg)
+![AI A2A Dispatcher](../images/classes/ai/a2a-dispatcher.jpg)
 
 Create an **A2A defense system** executed by AI to perform CAP or GCI to defend your airspace.
 There are two classes that are important to learn:
@@ -58,7 +58,7 @@ Cargo can be transported by APC or trucks, or by helicopters.
 
 ### 2.1. [AI Cargo Dispatching for APC]
 
-![AI_Cargo_Dispatcher_APC](/images/classes/ai/cargo-dispatcher-apc.jpg)
+![AI_Cargo_Dispatcher_APC](../images/classes/ai/cargo-dispatcher-apc.jpg)
 
 Models the intelligent transportation of infantry and other cargo using **APCs or trucks**.
 
@@ -71,7 +71,7 @@ Models the intelligent transportation of infantry and other cargo using **APCs o
 
 ### 2.2. [AI Cargo Dispatching for Helicopters]
 
-![AI_Cargo_Dispatcher_Helicopter](/images/classes/ai/cargo-dispatcher-helicopters.jpg)
+![AI_Cargo_Dispatcher_Helicopter](../images/classes/ai/cargo-dispatcher-helicopters.jpg)
 
 Models the intelligent transportation of infantry and other cargo using **Helicopters**.
 
@@ -85,7 +85,7 @@ Models the intelligent transportation of infantry and other cargo using **Helico
 
 ## 3. [AI Balancing]
 
-![AI_Balancer](/images/classes/ai/balancer.jpg)
+![AI_Balancer](../images/classes/ai/balancer.jpg)
 
 Balance player slots with AI to create an engaging simulation environment, independent of the amount of players.
 
@@ -99,7 +99,7 @@ Balance player slots with AI to create an engaging simulation environment, indep
 
 ## 4. [AI Large Formations]
 
-![AI_Formation](/images/classes/ai/formation.jpg)
+![AI_Formation](../images/classes/ai/formation.jpg)
 
 Build large airborne formations of aircraft.
 
@@ -113,7 +113,7 @@ Build large airborne formations of aircraft.
 
 ### 5.1. [AI Patrolling]
 
-![AI_Patrol](/images/classes/ai/patrol.jpg)
+![AI_Patrol](../images/classes/ai/patrol.jpg)
 
 Peform Air Patrolling for airplanes within a patrol zone.
 
@@ -126,7 +126,7 @@ Peform Air Patrolling for airplanes within a patrol zone.
 
 ### 5.2. [AI Combat Air Patrolling]
 
-![AI_Patrol](/images/classes/ai/cap.jpg)
+![AI_Patrol](../images/classes/ai/cap.jpg)
 
 Peform Combat Air Patrolling (CAP) for airplanes within a patrol zone.
 
@@ -139,7 +139,7 @@ Peform Combat Air Patrolling (CAP) for airplanes within a patrol zone.
 
 ### 5.3. [AI Close Air Support]
 
-![AI_Patrol](/images/classes/ai/a2g-cas.jpg)
+![AI_Patrol](../images/classes/ai/a2g-cas.jpg)
 
 Peform Close Air Support (CAS) near friendlies within an engagement zone.
 
@@ -154,7 +154,7 @@ Peform Close Air Support (CAS) near friendlies within an engagement zone.
 
 ### 5.4. [AI Battlefield Air Interdiction]
 
-![AI_Patrol](/images/classes/ai/bai.jpg)
+![AI_Patrol](../images/classes/ai/bai.jpg)
 
 Peform Battlefield Air Interdiction (BAI) within an engagement zone.
 

@@ -31,7 +31,7 @@ and mission designers can write mission script lua code that is **intellisense**
 What that means is that while you are coding your mission, your object and variables (derived from MOOSE classes)
 will list interactively the methods and properties of that class interactively while coding.
 
-![Intellisense](/images/archive/installation/intellisense.jpg)
+![Intellisense](../images/archive/installation/intellisense.jpg)
 
 This highly increases the quality and the speed of your scripting.
 
@@ -93,7 +93,7 @@ When you open EclipseLDT for the first time, it will ask you where to put your *
 
 ### 4.2.1) Select from the Menu: **File** -> **New** -> **Lua Project**.
 
-![LDT_New_Project](/images/archive/installation/LDT_New_Project.JPG)
+![LDT_New_Project](../images/archive/installation/LDT_New_Project.JPG)
 
 Here, we will create a **New Project** called **Moose_Framework** in your LDT environment.
 
@@ -105,11 +105,11 @@ We will link into that directory and **automatically load the Project properties
 
 ### 4.2.2) Type the Project Name: **Moose_Framework**.
 
-![LDT_Project](/images/archive/installation/LDT_Project.JPG)
+![LDT_Project](../images/archive/installation/LDT_Project.JPG)
 
 ### 4.2.3) In the sub-box "Project Contents", select the option **Create Project at existing location** (from existing source).
 
-![LDT_Project](/images/archive/installation/LDT_Project_Existing_Location.JPG)
+![LDT_Project](../images/archive/installation/LDT_Project_Existing_Location.JPG)
 
 ### 4.2.4) **Browse** to the local MOOSE directory (press on the Browse button) and select the **local Moose folder on your PC, which you unzipped**. Press OK.
 
@@ -123,13 +123,13 @@ The Moose Development/Moose directory should be flagged as the **Source Director
 This is important because it will search in the files in this directory and sub directories for lua documentator enabled lua files. 
 This will enable the intellisense of the MOOSE repository!
 
-![LDT Finish](/images/archive/installation/LDT_Moose_Framework_Finish.JPG)
+![LDT Finish](../images/archive/installation/LDT_Moose_Framework_Finish.JPG)
 
 ### 4.2.7) Press the **Finish** button.
 
 As a result, when you browse to the Script Explorer, you'll see the following:
 
-![LDT_Script_Explorer](/images/archive/installation/LDT_Script_Explorer.JPG)
+![LDT_Script_Explorer](../images/archive/installation/LDT_Script_Explorer.JPG)
 
 ### 4.2.8) **Congratulations! You have now setup your Moose_Framework project LDT environment!**
 
@@ -176,11 +176,11 @@ The LDT has been customized and provides a tool to **automatically** maintain yo
 
 ### 6.1.1. Select from the Menu: **File** -> **New** -> **Lua Project**.
 
-![LDT_New_Project](/images/archive/installation/LDT_New_Project.JPG)
+![LDT_New_Project](../images/archive/installation/LDT_New_Project.JPG)
 
 ### 6.1.2. A **New Project** dialog box is shown.
 
-![LDT_Project](/images/archive/installation/LDT_Project.JPG)
+![LDT_Project](../images/archive/installation/LDT_Project.JPG)
 
 ### 6.1.3. Type your Project Name: (In my example it is **DCS_Caucasus_Missions**.
 
@@ -189,13 +189,13 @@ Note the indicated options in yellow:
   * Note that you can select the option **No execution environment**.
   * Deselect the option **Create default project template ready to run**.
 
-![LDT_Project](/images/archive/installation/LDT_Project_My_Missions.JPG)
+![LDT_Project](../images/archive/installation/LDT_Project_My_Missions.JPG)
 
 ### 6.1.4. Press **Next >**
 
 ### 6.1.5. Click the **Projects** tab at the top of the window.
 
-![LDT_Project](/images/archive/installation/LDT_New_Project_Projects.JPG)
+![LDT_Project](../images/archive/installation/LDT_New_Project_Projects.JPG)
 
 ### 6.1.6. Press the **Add...** button.
 
@@ -203,7 +203,7 @@ Note the indicated options in yellow:
 
 This is an important step. This will _link_ your project to the Moose_Framework project and will activate **intellisense**.
 
-![LDT_Project](/images/archive/installation/LDT_Select_Moose_Framework.JPG)
+![LDT_Project](../images/archive/installation/LDT_Select_Moose_Framework.JPG)
 
 ### 6.1.8. After the selection, press the **OK** button.
 
@@ -211,19 +211,19 @@ This is an important step. This will _link_ your project to the Moose_Framework 
 
 You can delete the possibly created SRC directory. You won't need it at all.
 
-![LDT_Project](/images/archive/installation/LDT_Delete_Src.JPG)
+![LDT_Project](../images/archive/installation/LDT_Delete_Src.JPG)
 
 ### 6.1.10. Within your newly created Missions Project, right click and select **New -> Folder**.
 
 As explained above, each of your missions will be stored in a separate folder. Please follow the explanation how to do that.
 
-![LDT_Project](/images/archive/installation/LDT_Add_Folder.JPG)
+![LDT_Project](../images/archive/installation/LDT_Add_Folder.JPG)
 
 ### 6.1.11. Type the **Folder Name**.
 
 This can be any descriptive text explaining the title of your mission.
 
-![LDT_Project](/images/archive/installation/LDT_Mission_Folder_Name.JPG)
+![LDT_Project](../images/archive/installation/LDT_Mission_Folder_Name.JPG)
 
 ### 6.1.12. In your newly created **Mission Folder**, right click and select **New -> Lua File**.
 
@@ -232,7 +232,7 @@ the file that contains all the lua code using the Moose framework using your mis
 
 ### 6.1.13. Type the **Lua Mission Script Name**.
 
-![LDT_Project](/images/archive/installation/LDT_Mission_Lua_File_Name.JPG)
+![LDT_Project](../images/archive/installation/LDT_Mission_Lua_File_Name.JPG)
 
 
 ## 6.2) Create your first Mission file
@@ -255,7 +255,7 @@ Find below a detailed explanation of the actions to follow:
 
 ### 6.2.1. Open the Mission Editor in DCS, select an empty mission, and click the triggers button.
 
-![LDT_Project](/images/archive/installation/DCS_Triggers_Empty.JPG)
+![LDT_Project](../images/archive/installation/DCS_Triggers_Empty.JPG)
 
 ### 6.2.2. Add a new trigger, that will load the Moose.lua file.
 
@@ -266,7 +266,7 @@ Check the cyan colored circles:
   * It contains a DO SCRIPT FILE action.
   * No additional conditions!
 
-![LDT_Project](/images/archive/installation/DCS_Triggers_Load_Moose_Add.JPG)
+![LDT_Project](../images/archive/installation/DCS_Triggers_Load_Moose_Add.JPG)
 
 ### 6.2.3. Select the Moose.lua loader from the **Moose Mission Setup** folder in the Moose_Framework pack.
 
@@ -278,11 +278,11 @@ Additional notes:
 
 Press the **OK** button.
 
-![LDT_Project](/images/archive/installation/DCS_Triggers_Load_Moose_Select_File.JPG)
+![LDT_Project](../images/archive/installation/DCS_Triggers_Load_Moose_Select_File.JPG)
 
 ### 6.2.4. Check that the Moose.lua file has been correctly added to your Mission.
 
-![LDT_Project](/images/archive/installation/DCS_Triggers_Load_Moose_File_Added.JPG)
+![LDT_Project](../images/archive/installation/DCS_Triggers_Load_Moose_File_Added.JPG)
 
 ### 6.2.5. Add a new trigger, that will load your mission .lua file.
 
@@ -293,7 +293,7 @@ Check the cyan colored circles:
   * It contains a DO SCRIPT FILE action.
   * No additional conditions!
 
-![LDT_Project](/images/archive/installation/DCS_Triggers_Load_Mission_Add.JPG)
+![LDT_Project](../images/archive/installation/DCS_Triggers_Load_Mission_Add.JPG)
 
 ### 6.2.6. Select the mission .lua file from your **missions** folder you just created or already have.
 
@@ -304,11 +304,11 @@ Additional notes:
 
 Press the **OK** button.
 
-![LDT_Project](/images/archive/installation/DCS_Triggers_Load_Mission_File_Select.JPG)
+![LDT_Project](../images/archive/installation/DCS_Triggers_Load_Mission_File_Select.JPG)
 
 ### 6.2.7. Check that your mission .lua script file has been correctly added to your mission.
 
-![LDT_Project](/images/archive/installation/DCS_Triggers_Load_Mission_File_Added.JPG)
+![LDT_Project](../images/archive/installation/DCS_Triggers_Load_Mission_File_Added.JPG)
 
 
 ## 6.3) Maintain your .miz files
@@ -320,7 +320,7 @@ This can be a tedious task, and for this purpose, a tool has been developed that
 
 This will activate a script that will automatically re-insert your mission .lua file into your mission.
 
-![LDT_Project](/images/archive/installation/DCS_Triggers_Load_Mission_File_Added.JPG)
+![LDT_Project](../images/archive/installation/DCS_Triggers_Load_Mission_File_Added.JPG)
 
 
 ## 6.4) Create folder links into your "My Missions" folder in Saved Games/DCS/Missions.

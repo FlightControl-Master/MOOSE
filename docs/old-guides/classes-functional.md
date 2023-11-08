@@ -5,14 +5,14 @@ nav_order: 4
 ---
 # Functional classes guide
 
-![MOOSE FUNCTIONAL](/images/classes/category-functional.jpg)
+![MOOSE FUNCTIONAL](../images/classes/category-functional.jpg)
 
 This chapter explains functional classes within MOOSE that allows you to enrich or enhance the functionality of your mission scenarios.
 
 
 ## 1. [ATC_GROUND]
 
-![ATC Ground](/images/classes/functional/atc-ground.jpg)
+![ATC Ground](../images/classes/functional/atc-ground.jpg)
 
 The ATC_GROUND classes monitor airbase traffic and regulate speed while taxiing.
 
@@ -25,7 +25,7 @@ The ATC_GROUND classes monitor airbase traffic and regulate speed while taxiing.
 
 ## 2. [ARTY]
 
-![Arty](/images/classes/functional/artillery.jpg)
+![Arty](../images/classes/functional/artillery.jpg)
 
 Easily assign and manage targets for artillery units using an advanced queueing system.
 
@@ -48,7 +48,7 @@ Easily assign and manage targets for artillery units using an advanced queueing 
 
 ## 3. [CLEANUP]
 
-![CleanUp](/images/classes/functional/cleanup.jpg)
+![CleanUp](../images/classes/functional/cleanup.jpg)
 
 Keep an airbase clean of crashing or colliding airplanes.
 
@@ -62,7 +62,7 @@ Keep an airbase clean of crashing or colliding airplanes.
 
 ## 4. [DESIGNATE]
 
-![Designate](/images/classes/functional/designation.jpg)
+![Designate](../images/classes/functional/designation.jpg)
 
 Orchestrate the designation of potential targets executed by a Recce group, 
 and communicates these to a dedicated attacking group of players, 
@@ -83,7 +83,7 @@ each detected set of potential targets can be lased or smoked...
 
 ## 5. [DETECTION]
 
-![Detection](/images/classes/functional/detection.jpg)
+![Detection](../images/classes/functional/detection.jpg)
 
 Facilitate the detection of enemy units within the battle zone executed by FACs (Forward Air Controllers) or Recces (Reconnassance Units). 
 Detection uses the in-built detection capabilities of DCS World, but adds new functionalities.
@@ -100,7 +100,7 @@ Detection uses the in-built detection capabilities of DCS World, but adds new fu
 
 ## 6. [ESCORT]
 
-![Escort](/images/classes/functional/escorting.jpg)
+![Escort](../images/classes/functional/escorting.jpg)
 
 Allows you to interact with escorting AI on your flight and take the lead.
 Each escorting group can be commanded with a whole set of radio commands (radio menu in your flight, and then F10).
@@ -124,7 +124,7 @@ Ships and Ground troops will have a more limited set, but they can provide suppo
 
 ## 7. [MISSILE_TRAINER]
 
-![MissileTrainer](/images/classes/functional/missile-trainer.jpg)
+![MissileTrainer](../images/classes/functional/missile-trainer.jpg)
 
 be alerted of any missiles fired, and when a missile would hit your aircraft, the class will destroy the missile within a certain range, 
 to avoid damage to your aircraft. This is a training class for noob pilots, receiving training on missile evasion and detection techniques.
@@ -140,7 +140,7 @@ to avoid damage to your aircraft. This is a training class for noob pilots, rece
 
 ## 8. [RANGE]
 
-![Range](/images/classes/functional/range.jpg)
+![Range](../images/classes/functional/range.jpg)
 
 The RANGE class enables easy set up of bombing and strafing ranges within DCS World.
 476th - Air Weapons Range Objects mod is highly recommended for this class.
@@ -161,7 +161,7 @@ The RANGE class enables easy set up of bombing and strafing ranges within DCS Wo
 
 ## 9. [RAT]
 
-![rat](/images/classes/functional/rat.jpg)
+![rat](../images/classes/functional/rat.jpg)
 
 Fill the empty DCS world with randomized air traffic and bring more life to your airports.
 In particular, it is designed to spawn AI air units at random airports. These units will be assigned a random flight path to another random airport on the map.
@@ -185,7 +185,7 @@ Even the mission designer will not know where aircraft will be spawned and which
 
 ## 10. [SCORING]
 
-![Scoring](/images/classes/functional/scoring.jpg)
+![Scoring](../images/classes/functional/scoring.jpg)
 
 Administers the scoring of player achievements, and creates a CSV file logging the scoring events and results for use at team or squadron websites.
 Automatically calculates the threat level of the objects hit and destroyed by players, which can be Wrapper.Unit, Static objects.
@@ -211,7 +211,7 @@ The total score of the player is calculated by adding the scores minus the penal
 
 ## 11. [SEAD]
 
-![Sead](/images/classes/functional/sead.jpg)
+![Sead](../images/classes/functional/sead.jpg)
 
 Provides defensive behaviour to a set of SAM sites within a running Mission.
 
@@ -223,7 +223,7 @@ Provides defensive behaviour to a set of SAM sites within a running Mission.
 
 ## 12. [SUPPRESSION]
 
-![Supporession](/images/classes/functional/suppression.jpg)
+![Supporession](../images/classes/functional/suppression.jpg)
 
 When ground units get hit by (suppressive) enemy fire, they will not be able to shoot back for a certain amount of time.
 The implementation is based on an idea and script by MBot. See the DCS forum threat for details.
@@ -236,7 +236,7 @@ In addition to suppressing the fire, conditions can be specified which let the g
 
 ## 13. [WAREHOUSE]
 
-![Warehouse](/images/classes/functional/warehouse.jpg)
+![Warehouse](../images/classes/functional/warehouse.jpg)
 
 The warehouse concept simulates the organization and implementation of complex operations regarding the flow of assets between the point of origin 
 and the point of consumption in order to meet requirements of a potential conflict. 
@@ -258,7 +258,7 @@ since an armed force without resources and transportation is defenseless.
 
 ## 14. [ZONE_CAPTURE_COALITION]
 
-![ZoneCaptureCoalition](/images/classes/functional/zonecapturecoalition.jpg)
+![ZoneCaptureCoalition](../images/classes/functional/zonecapturecoalition.jpg)
 
 A very powerful class to models the process to zone guarding, attacking and capturing.
 

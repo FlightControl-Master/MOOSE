@@ -42,7 +42,7 @@ Link the MOOSE repository on GITHUB to your freshly installed GITHUB desktop.
 This is done by browing to the [MOOSE repository at GitHub](https://github.com/FlightControl-Master/MOOSE), and
 selecting the green button **Clone or Download** -> **Open in Desktop**.
 
-![](/images/archive/installation/GitHub_Clone.JPG)
+![](../images/archive/installation/GitHub_Clone.JPG)
 
 Specify a local directory on your PC where you want to store the MOOSE repository contents.
 Sync the MOOSE repository to a defined local MOOSE directory on your PC using GITHUB desktop (press the sync button).
@@ -105,7 +105,7 @@ Note that if you want to **release your missions to end users**, you will need t
 To ensure that the next Release of Moose is as bug-free and feature rich as possible, every Moose contributor respects
 a release cycle.
 
-![](/images/archive/installation/MOOSE_Release_Cycle.JPG)
+![](../images/archive/installation/MOOSE_Release_Cycle.JPG)
 
 If you are not familiar with Git, this might be a bit criptic, but the idea behind it is simple :
 
@@ -143,7 +143,7 @@ new issue:
   code, and  **_\`\`\`_**  at the end, to make your code readable.
 * The relevant part of **`dcs.log`**. Please put **_\`\`\`_** before and after your copy-pasted log to make it readable.
 
-![Example of a great bug report](/images/archive/installation/GitHub_Issue_example.JPG)
+![Example of a great bug report](../images/archive/installation/GitHub_Issue_example.JPG)
 
 ## How to add a feature request?
 

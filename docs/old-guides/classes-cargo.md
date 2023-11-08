@@ -6,7 +6,7 @@ nav_order: 3
 
 # Cargo classes guide
 
-![MOOSE CARGO](/images/classes/category-cargo.jpg)
+![MOOSE CARGO](../images/classes/category-cargo.jpg)
 
 MOOSE implements a whole enhanced mechanism to **create virtual cargo** within your missions.
 Within this system, virtual cargo can be represented by:
@@ -26,7 +26,7 @@ class documentation.
 
 ## 1. [WAREHOUSE]
 
-![WAREHOUSE](/images/classes/functional/warehouse.jpg)
+![WAREHOUSE](../images/classes/functional/warehouse.jpg)
 
 The MOOSE warehouse concept simulates the organization and implementation of complex operations regarding the flow of
 assets between the point of origin and the point of consumption in order to meet requirements of a potential conflict.
@@ -53,7 +53,7 @@ Please note that his class is work in progress and in an **alpha** stage.
 
 ## 2. [AI_CARGO_DISPATCHER]
 
-![AI_CARGO_DISPATCHER](/images/classes/ai/cargo-dispatcher.jpg)
+![AI_CARGO_DISPATCHER](../images/classes/ai/cargo-dispatcher.jpg)
 
 This section details the classes that you can use to setup an automatic cargo dispatching system that will make
 AI carriers transport cargo (automatically) through the battlefield. Depending on the type of AI unit types, various
@@ -65,7 +65,7 @@ implementation classes. So, please read the documentation of the AI_CARGO_DISPAT
 
 ### 2.1. [AI_CARGO_DISPATCHER_APC]
 
-![AI_Cargo_Dispatcher_APC](/images/classes/ai/cargo-dispatcher-apc.jpg)
+![AI_Cargo_Dispatcher_APC](../images/classes/ai/cargo-dispatcher-apc.jpg)
 
 Models the intelligent transportation of **infantry** and other **small or lightweight cargo** using **APCs or trucks**.
 This class models cargo to be transported between **zones**!
@@ -80,7 +80,7 @@ This class models cargo to be transported between **zones**!
 
 ### 2.2. [AI_CARGO_DISPATCHER_HELICOPTER]
 
-![AI_Cargo_Dispatcher_Helicopter](/images/classes/ai/cargo-dispatcher-helicopters.jpg)
+![AI_Cargo_Dispatcher_Helicopter](../images/classes/ai/cargo-dispatcher-helicopters.jpg)
 
 Models the intelligent transportation of **infantry** and other **small cargo** using **Helicopters**.
 This class models cargo to be transported between **zones**!
@@ -95,7 +95,7 @@ This class models cargo to be transported between **zones**!
 
 ### 2.3. [AI_CARGO_DISPATCHER_AIRPLANE]
 
-![AI_Cargo_Dispatcher_Airplane](/images/classes/ai/cargo-dispatcher-airplanes.jpg)
+![AI_Cargo_Dispatcher_Airplane](../images/classes/ai/cargo-dispatcher-airplanes.jpg)
 
 Models the intelligent transportation of **infantry, vehicles** and other **heavy cargo** using **Airplanes**.
 This class models cargo to be transported between **airbases**!
@@ -113,7 +113,7 @@ Also **humans can achieve tasks** by to **transporting cargo** as part of a task
 
 ### 3.1. [TASK_CARGO_DISPATCHER]
 
-![TASK_CARGO_DISPATCHER](/images/classes/tasking/cargo-dispatcher.jpg)
+![TASK_CARGO_DISPATCHER](../images/classes/tasking/cargo-dispatcher.jpg)
 
 The [TASK_CARGO_DISPATCHER] allows you to setup various tasks for let human players transport cargo as part of a task.
 
@@ -190,7 +190,7 @@ missions.
 
 ### 5.1. [CARGO_GROUP]
 
-![CARGO_GROUP](/images/classes/cargo/cargogroup.jpg)
+![CARGO_GROUP](../images/classes/cargo/cargogroup.jpg)
 
 Management of **moveable** and **grouped** cargo logistics, which are based on a
 [Wrapper.Group] object. Typical cargo of this type can be infantry or (small) vehicles.
@@ -208,7 +208,7 @@ Management of **moveable** and **grouped** cargo logistics, which are based on a
 
 ### 5.2. [CARGO_CRATE]
 
-![CARGO_CRATE](/images/classes/cargo/cargocrate.jpg)
+![CARGO_CRATE](../images/classes/cargo/cargocrate.jpg)
 
 Management of single cargo crates, which are based on a [Wrapper.Static] object. Typical cargo of this type can be
 crates, oil barrels, wooden crates etc. The cargo can be ANY static type! So potentially also other types of static
@@ -225,7 +225,7 @@ objects can be treated as cargo! Like flags, tires etc.
 
 ### 5.3. [CARGO_SLINGLOAD]
 
-![CARGO_SLINGLOAD](/images/classes/cargo/cargoslingload.jpg)
+![CARGO_SLINGLOAD](../images/classes/cargo/cargoslingload.jpg)
 
 Management of **sling loadable** cargo crates, which are based on a [Wrapper.Static] object. This cargo can only be
 slingloaded.
