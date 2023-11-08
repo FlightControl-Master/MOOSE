@@ -104,7 +104,7 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.0.19",
+  version            =   "0.0.20",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
   ViewZoneLaser      =   {},
@@ -268,6 +268,146 @@ function PLAYERRECCE:New(Name, Coalition, PlayerSet)
   
   self:I(self.lid.." Started.")
   
+  ------------------------
+  --- Pseudo Functions ---
+  ------------------------
+  
+    --- Triggers the FSM event "Start". Starts the PLAYERRECCE. Note: Start() is called automatically after New().
+  -- @function [parent=#PLAYERRECCE] Start
+  -- @param #PLAYERRECCE self
+
+  --- Triggers the FSM event "Start" after a delay. Starts the PLAYERRECCE. Note: Start() is called automatically after New().
+  -- @function [parent=#PLAYERRECCE] __Start
+  -- @param #PLAYERRECCE self
+  -- @param #number delay Delay in seconds.
+
+  --- Triggers the FSM event "Stop". Stops the PLAYERRECCE and all its event handlers.
+  -- @param #PLAYERRECCE self
+  
+  --- Triggers the FSM event "Stop" after a delay. Stops the PLAYERRECCE and all its event handlers.
+  -- @function [parent=#PLAYERRECCE] __Stop
+  -- @param #PLAYERRECCE self
+  -- @param #number delay Delay in seconds.
+ 
+  --- FSM Function OnAfterRecceOnStation. Recce came on station.
+  -- @function [parent=#PLAYERRECCE] OnAfterRecceOnStation
+  -- @param #PLAYERRECCE self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Client#CLIENT Client
+  -- @param #string Playername
+  -- @return #PLAYERRECCE self
+   
+  --- FSM Function OnAfterRecceOffStation. Recce went off duty.
+  -- @function [parent=#PLAYERRECCE] OnAfterRecceOffStation
+  -- @param #PLAYERRECCE self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Client#CLIENT Client
+  -- @param #string Playername
+  -- @return #PLAYERRECCE self
+   
+  --- FSM Function OnAfterTargetDetected. Targets detected.
+  -- @function [parent=#PLAYERRECCE] OnAfterTargetDetected
+  -- @param #PLAYERRECCE self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param #table Targetsbyclock #table with index 1..12 containing a #table of Wrapper.Unit#UNIT objects each.
+  -- @param Wrapper.Client#CLIENT Client
+  -- @param #string Playername
+  -- @return #PLAYERRECCE self
+  
+  --- FSM Function OnAfterTargetsSmoked. Smoke grenade shot.
+  -- @function [parent=#PLAYERRECCE] OnAfterTargetsSmoked
+  -- @param #PLAYERRECCE self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Client#CLIENT Client
+  -- @param #string Playername
+  -- @param Core.Set#SET_UNIT TargetSet
+  -- @return #PLAYERRECCE self
+   
+  --- FSM Function OnAfterTargetsFlared. Flares shot.
+  -- @function [parent=#PLAYERRECCE] OnAfterTargetsFlared
+  -- @param #PLAYERRECCE self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Client#CLIENT Client
+  -- @param #string Playername
+  -- @param Core.Set#SET_UNIT TargetSet
+  -- @return #PLAYERRECCE self
+   
+  --- FSM Function OnAfterIllumination. Illumination rocket shot.
+  -- @function [parent=#PLAYERRECCE] OnAfterIllumination
+  -- @param #PLAYERRECCE self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Client#CLIENT Client
+  -- @param #string Playername
+  -- @param Core.Set#SET_UNIT TargetSet
+  -- @return #PLAYERRECCE self
+   
+  --- FSM Function OnAfterTargetLasing. Lasing a new target.
+  -- @function [parent=#PLAYERRECCE] OnAfterTargetLasing
+  -- @param #PLAYERRECCE self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Client#CLIENT Client
+  -- @param Wrapper.Unit#UNIT Target
+  -- @param #number Lasercode
+  -- @param #number Lasingtime
+  -- @return #PLAYERRECCE self
+   
+  --- FSM Function OnAfterTargetLOSLost. Lost LOS on lased target.
+  -- @function [parent=#PLAYERRECCE] OnAfterTargetLOSLost
+  -- @param #PLAYERRECCE self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Client#CLIENT Client
+  -- @param Wrapper.Unit#UNIT Target
+  -- @return #PLAYERRECCE self
+   
+  --- FSM Function OnAfterTargetReport. Laser target report sent.
+  -- @function [parent=#PLAYERRECCE] OnAfterTargetReport
+  -- @param #PLAYERRECCE self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Client#CLIENT Client
+  -- @param Core.Set#SET_UNIT TargetSet
+  -- @param Wrapper.Unit#UNIT Target Target currently lased
+  -- @param #string Text
+  -- @return #PLAYERRECCE self
+   
+  --- FSM Function OnAfterTargetReportSent. All targets report sent.
+  -- @function [parent=#PLAYERRECCE] OnAfterTargetReportSent
+  -- @param #PLAYERRECCE self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Client#CLIENT Client Client sending the report
+  -- @param #string Playername Player name
+  -- @param Core.Set#SET_UNIT TargetSet Set of targets
+  -- @return #PLAYERRECCE self
+   
+  --- FSM Function OnAfterShack. Lased target has been destroyed.
+  -- @function [parent=#PLAYERRECCE] OnAfterShack
+  -- @param #PLAYERRECCE self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Client#CLIENT Client
+  -- @param Wrapper.Unit#UNIT Target The destroyed target (if obtainable)
+  -- @return #PLAYERRECCE self
+  
   return self
 end
 
@@ -399,7 +539,7 @@ end
 -- @param #PLAYERRECCE self
 -- @param Wrapper.Client#CLIENT client
 -- @param #string playername
--- @return #boolen OnOff
+-- @return #boolean OnOff
 function PLAYERRECCE:_CameraOn(client,playername)
   local camera = true
   local unit = client -- Wrapper.Unit#UNIT
@@ -1582,7 +1722,7 @@ end
 -- @param #string From
 -- @param #string Event
 -- @param #string To
--- @param #table Targetsbyclock
+-- @param #table Targetsbyclock. #table with index 1..12 containing a #table of Wrapper.Unit#UNIT objects each.
 -- @param Wrapper.Client#CLIENT Client
 -- @param #string Playername
 -- @return #PLAYERRECCE self
@@ -1862,9 +2002,8 @@ end
 -- @param #string To
 -- @param Wrapper.Client#CLIENT Client
 -- @param Wrapper.Unit#UNIT Target
--- @param #string Targettype
 -- @return #PLAYERRECCE self
-function PLAYERRECCE:onafterShack(From, Event, To, Client, Target, Targettype)
+function PLAYERRECCE:onafterShack(From, Event, To, Client, Target)
   self:T({From, Event, To})
   local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
   local Settings = ( Client and _DATABASE:GetPlayerSettings( Client:GetPlayerName() ) ) or _SETTINGS
@@ -1972,7 +2111,6 @@ function PLAYERRECCE:onafterTargetReport(From, Event, To, Client, TargetSet, Tar
       end
     end
   end
-  --self:__TargetReportSent(-2,Client, TargetSet, Target, Text)
   return self
 end
 
@@ -1981,12 +2119,11 @@ end
 -- @param #string From
 -- @param #string Event
 -- @param #string To
--- @param Wrapper.Client#CLIENT Client
--- @param Core.Set#SET_UNIT TargetSet
--- @param Wrapper.Unit#UNIT Target
--- @param #string Text
+-- @param Wrapper.Client#CLIENT Client Client sending the report
+-- @param #string Playername Player name
+-- @param Core.Set#SET_UNIT TargetSet Set of targets
 -- @return #PLAYERRECCE self
-function PLAYERRECCE:onafterTargetReportSent(From, Event, To, Client, TargetSet)
+function PLAYERRECCE:onafterTargetReportSent(From, Event, To, Client, Playername, TargetSet)
   self:T({From, Event, To})
   local text = "Upload completed!"
   if self.UseSRS then
