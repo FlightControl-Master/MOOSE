@@ -5,7 +5,7 @@
 -- ===
 --
 -- ### Author: **Applevangelist**
--- # Last Update June 2023
+-- # Last Update Oct 2023
 -- 
 -- ===
 --
@@ -43,7 +43,7 @@ do
 -- @field #NET
 NET = {
   ClassName = "NET",
-  Version = "0.1.2",
+  Version = "0.1.3",
   BlockTime = 600,
   BlockedPilots = {},
   BlockedUCIDs = {},
