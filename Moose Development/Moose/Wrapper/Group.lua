@@ -52,8 +52,8 @@
 --
 --  * @{#GROUP.Find}(): Find a GROUP instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Group object.
 --  * @{#GROUP.FindByName}(): Find a GROUP instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Group name.
---  * @{#GROUP:FindByMatching}(): Find a GROUP instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using pattern matching.
---  * @{#GROUP:FindByAllMatching}(): Find all GROUP instances from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using pattern matching.
+--  * @{#GROUP.FindByMatching}(): Find a GROUP instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using pattern matching.
+--  * @{#GROUP.FindAllByMatching}(): Find all GROUP instances from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using pattern matching.
 --
 -- ## Tasking of groups
 --
