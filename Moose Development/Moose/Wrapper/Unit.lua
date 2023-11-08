@@ -42,8 +42,8 @@
 -- 
 --  * @{#UNIT.Find}(): Find a UNIT instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Unit object.
 --  * @{#UNIT.FindByName}(): Find a UNIT instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Unit name.
---  * @{#UNIT:FindByMatching}(): Find a UNIT instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a pattern.
---  * @{#UNIT:FindByAllMatching}(): Find all UNIT instances from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a pattern.
+--  * @{#UNIT.FindByMatching}(): Find a UNIT instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a pattern.
+--  * @{#UNIT.FindAllByMatching}(): Find all UNIT instances from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a pattern.
 --  
 -- IMPORTANT: ONE SHOULD NEVER SANITIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).
 -- 
