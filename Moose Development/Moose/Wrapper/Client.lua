@@ -585,7 +585,7 @@ function CLIENT:GetUCID()
   return net.get_player_info(tonumber(PID), 'ucid')
 end
 
---- [Multi-Player Server] Return a table of attributes for a given CLIENT. If optional attribute is present, only that value is returned. 
+--- [Multi-Player Server] Return a table of attributes from CLIENT. If optional attribute is present, only that value is returned. 
 -- @param #CLIENT self
 -- @param #string Attribute (Optional) The attribute to obtain. List see below.
 -- @return #table PlayerInfo or nil if it cannot be found
