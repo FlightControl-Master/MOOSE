@@ -347,7 +347,7 @@ end
 --            local mymenu_lv3b = menumgr:NewEntry("Level 3 aab",mymenu_lv2a)
 --            local mymenu_lv3c = menumgr:NewEntry("Level 3 aac",mymenu_lv2a)
 --            
---            menumgr:Propagate()
+--            menumgr:Propagate() -- propagate **once** to all clients in the SET_CLIENT
 --            
 -- ## Remove a single entry's subtree
 -- 
@@ -386,7 +386,11 @@ end
 --            
 -- ## Reset all and clear the reference tree
 -- 
---            menumgr:ResetMenuComplete() 
+--            menumgr:ResetMenuComplete()
+--            
+-- ## Set to auto-propagate for CLIENTs joining the SET_CLIENT **after** the script is loaded - handy if you have a single menu tree.
+-- 
+--            menumgr:InitAutoPropagation()
 --
 -- @field #CLIENTMENUMANAGER
 CLIENTMENUMANAGER = {
