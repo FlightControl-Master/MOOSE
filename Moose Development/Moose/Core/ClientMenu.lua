@@ -20,7 +20,7 @@
 -- 
 -- @module Core.ClientMenu
 -- @image Core_Menu.JPG
--- last change: Sept 2023
+-- last change: Oct 2023
 
 -- TODO
 ----------------------------------------------------------------------------------------------------------------
@@ -304,6 +304,8 @@ end
 -- @field #table menutree
 -- @field #number entrycount
 -- @field #boolean debug
+-- @field #table PlayerMenu
+-- @field #number Coalition
 -- @extends Core.Base#BASE
 
 --- *As a child my family's menu consisted of two choices: take it, or leave it.*
@@ -390,7 +392,7 @@ end
 CLIENTMENUMANAGER = {
   ClassName = "CLIENTMENUMANAGER",
   lid = "",
-  version = "0.1.1",
+  version = "0.1.3",
   name = nil,
   clientset = nil,
   menutree = {},
@@ -399,24 +401,106 @@ CLIENTMENUMANAGER = {
   entrycount = 0,
   rootentries = {},
   debug = true,
+  PlayerMenu = {},
+  Coalition = nil,
 }
 
 --- Create a new ClientManager instance.
 -- @param #CLIENTMENUMANAGER self
 -- @param Core.Set#SET_CLIENT ClientSet The set of clients to manage.
 -- @param #string Alias The name of this manager.
+-- @param #number Coalition (Optional) Coalition of this Manager, defaults to coalition.side.BLUE
 -- @return #CLIENTMENUMANAGER self
-function CLIENTMENUMANAGER:New(ClientSet, Alias)
+function CLIENTMENUMANAGER:New(ClientSet, Alias, Coalition)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, BASE:New()) -- #CLIENTMENUMANAGER
   self.clientset = ClientSet
+  self.PlayerMenu = {}
   self.name = Alias or "Nightshift"
+  self.Coalition = Coalition or coalition.side.BLUE
     -- Log id.
   self.lid=string.format("CLIENTMENUMANAGER %s | %s | ", self.version, self.name)
   if self.debug then
-    self:T(self.lid.."Created")
+    self:I(self.lid.."Created")
   end
   return self
+end
+
+--- [Internal] Event handling
+-- @param #CLIENTMENUMANAGER self
+-- @param Core.Event#EVENTDATA EventData
+-- @return #CLIENTMENUMANAGER self
+function CLIENTMENUMANAGER:_EventHandler(EventData)
+  self:T(self.lid.."_EventHandler: "..EventData.id)
+  --self:I(self.lid.."_EventHandler: "..tostring(EventData.IniPlayerName))
+  if EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
+    self:T(self.lid.."Leave event for player: "..tostring(EventData.IniPlayerName)) 
+    local Client = _DATABASE:FindClient( EventData.IniPlayerName )
+    if Client then
+      self:ResetMenu(Client)
+    end
+  elseif (EventData.id == EVENTS.PlayerEnterAircraft) and EventData.IniCoalition == self.Coalition then
+    if EventData.IniPlayerName and EventData.IniGroup then
+      if (not self.clientset:IsIncludeObject(_DATABASE:FindClient( EventData.IniPlayerName ))) then
+        self:T(self.lid.."Client not in SET: "..EventData.IniPlayerName)
+        return self
+      end
+      --self:I(self.lid.."Join event for player: "..EventData.IniPlayerName)
+      local player = _DATABASE:FindClient( EventData.IniPlayerName )
+      self:Propagate(player)
+    end
+  elseif EventData.id == EVENTS.PlayerEnterUnit then
+    -- special for CA slots
+    local grp = GROUP:FindByName(EventData.IniGroupName)
+    if grp:IsGround() then
+      self:T(string.format("Player %s entered GROUND unit %s!",EventData.IniPlayerName,EventData.IniUnitName))
+      local IsPlayer = EventData.IniDCSUnit:getPlayerName()
+      if IsPlayer then
+        
+        local client=_DATABASE.CLIENTS[EventData.IniDCSUnitName] --Wrapper.Client#CLIENT
+        
+        -- Add client in case it does not exist already.
+        if not client then
+          
+          -- Debug info.
+          self:I(string.format("Player '%s' joined ground unit '%s' of group '%s'", tostring(EventData.IniPlayerName), tostring(EventData.IniDCSUnitName), tostring(EventData.IniDCSGroupName)))
+        
+          client=_DATABASE:AddClient(EventData.IniDCSUnitName)
+            
+          -- Add player.
+          client:AddPlayer(EventData.IniPlayerName)
+          
+          -- Add player.
+          if not _DATABASE.PLAYERS[EventData.IniPlayerName] then
+            _DATABASE:AddPlayer( EventData.IniUnitName, EventData.IniPlayerName )
+          end
+          
+          -- Player settings.
+          local Settings = SETTINGS:Set( EventData.IniPlayerName )
+          Settings:SetPlayerMenu(EventData.IniUnit)
+        end
+        --local player = _DATABASE:FindClient( EventData.IniPlayerName )
+        self:Propagate(client)
+      end
+    end
+  end
+  
+  return self
+end
+
+--- Set this Client Manager to auto-propagate menus to newly joined players. Useful if you have **one** menu structure only.
+-- @param #CLIENTMENUMANAGER self
+-- @return #CLIENTMENUMANAGER self
+function CLIENTMENUMANAGER:InitAutoPropagation()
+  -- Player Events
+  self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventHandler)
+  self:HandleEvent(EVENTS.Ejection, self._EventHandler)
+  self:HandleEvent(EVENTS.Crash, self._EventHandler)
+  self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
+  self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
+  self:HandleEvent(EVENTS.PlayerEnterUnit, self._EventHandler)
+  self:SetEventPriority(5) 
+  return self 
 end
 
 --- Create a new entry in the generic structure.
@@ -571,7 +655,7 @@ end
 -- @return #CLIENTMENU Entry
 function CLIENTMENUMANAGER:Propagate(Client)
   self:T(self.lid.."Propagate")
-  self:T(Client)
+  --self:I(UTILS.PrintTableToLog(Client,1))
   local Set = self.clientset.Set
   if Client then
     Set = {Client}

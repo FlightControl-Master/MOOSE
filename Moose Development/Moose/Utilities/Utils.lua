@@ -443,7 +443,7 @@ end
 
 --- Print a table to log in a nice format
 -- @param #table table The table to print
--- @param #number ident Number of idents
+-- @param #number indent Number of idents
 function UTILS.PrintTableToLog(table, indent)
   if not table then
     env.warning("No table passed!")
