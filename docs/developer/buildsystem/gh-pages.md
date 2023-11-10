@@ -38,6 +38,20 @@ This can be displayed as follows:
 - Open a browser with the following URL: `http://127.0.0.1:4000/`.
 - After a change of the [Markdown] files, wait some seconds and press F5 in the browser.
 
+{: .warning }
+> Some changes are not processed properly with this procedure. It is then
+> necessary to stop and restart the container once. On startup everything is
+> always regenerated.
+
+# Run linkinator to find brocken links
+
+When changing this documentation it is very useful to run linkinator to find broken links.
+This can be done as follows:
+
+- You need a working installation of [Docker].
+- Go to the `docker/gh-pages-check` subfolder.
+- Run `docker compose up`.
+
 [GitHub Pages]: https://pages.github.com/
 [MOOSE]: https://github.com/FlightControl-Master/MOOSE
 [Just the Docs]: https://github.com/just-the-docs/just-the-docs
