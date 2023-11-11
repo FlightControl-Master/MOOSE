@@ -668,7 +668,7 @@ function CLIENTMENUMANAGER:Propagate(Client)
   for _,_client in pairs(Set) do
     local client = _client -- Wrapper.Client#CLIENT
     if client and client:IsAlive() then
-      local playername = client:GetPlayerName()
+      local playername = client:GetPlayerName() or "none"
         if not self.playertree[playername] then
           self.playertree[playername] = {}
         end

@@ -4030,8 +4030,8 @@ do -- SET_CLIENT
       Countries = nil,
       ClientPrefixes = nil,
       Zones = nil,
-  	  Playernames = nil,
-  	  Callsigns = nil,
+      Playernames = nil,
+      Callsigns = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -4317,6 +4317,8 @@ do -- SET_CLIENT
       self:UnHandleEvent(EVENTS.Birth)
       self:UnHandleEvent(EVENTS.Dead)
       self:UnHandleEvent(EVENTS.Crash)
+      --self:UnHandleEvent(EVENTS.PlayerEnterUnit)
+      --self:UnHandleEvent(EVENTS.PlayerLeaveUnit)
       
       if self.Filter.Zones and self.ZoneTimer and self.ZoneTimer:IsRunning() then
         self.ZoneTimer:Stop()
@@ -4335,6 +4337,9 @@ do -- SET_CLIENT
       self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
       self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
       self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+      --self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventPlayerEnterUnit)
+      --self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventPlayerLeaveUnit)
+      --self:SetEventPriority(1)
       if self.Filter.Zones then
         self.ZoneTimer = TIMER:New(self._ContinousZoneFilter,self)
         local timing = self.ZoneTimerInterval or 30
@@ -4343,6 +4348,43 @@ do -- SET_CLIENT
       self:_FilterStart()
     end
 
+    return self
+  end
+  
+  --- Handle CA slots addition
+  -- @param #SET_CLIENT self
+  -- @param Core.Event#EVENTDATA Event
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:_EventPlayerEnterUnit(Event)
+    self:I( "_EventPlayerEnterUnit" )
+    if Event.IniDCSUnit then
+      if Event.IniObjectCategory == 1 and Event.IniGroup and Event.IniGroup:IsGround() then
+        -- CA Slot entered
+        local ObjectName, Object = self:AddInDatabase( Event )
+        self:I( ObjectName, UTILS.PrintTableToLog(Object) )
+        if Object and self:IsIncludeObject( Object ) then
+          self:Add( ObjectName, Object )
+        end
+      end
+    end
+    return self
+  end
+  
+  --- Handle CA slots removal
+  -- @param #SET_CLIENT self
+  -- @param Core.Event#EVENTDATA Event
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:_EventPlayerLeaveUnit(Event)
+    self:I( "_EventPlayerLeaveUnit" )
+    if Event.IniDCSUnit then
+      if Event.IniObjectCategory == 1 and Event.IniGroup and Event.IniGroup:IsGround() then
+        -- CA Slot left
+        local ObjectName, Object = self:FindInDatabase( Event )
+        if ObjectName then
+          self:Remove( ObjectName )
+        end
+      end
+    end
     return self
   end
 
@@ -4548,45 +4590,45 @@ do -- SET_CLIENT
         MClientInclude = MClientInclude and MClientPrefix
       end
 
-		if self.Filter.Zones then
-		  local MClientZone = false
-		  for ZoneName, Zone in pairs( self.Filter.Zones ) do
-			self:T3( "Zone:", ZoneName )
-			local unit = MClient:GetClientGroupUnit()
-			if unit and unit:IsInZone(Zone) then
-			  MClientZone = true
-			end
-		  end
-		  MClientInclude = MClientInclude and MClientZone
-		end
-		
-		if self.Filter.Playernames then
-			local MClientPlayername = false
-			local playername = MClient:GetPlayerName() or "Unknown"
-			--self:T(playername)
-			for _,_Playername in pairs(self.Filter.Playernames) do
-				if playername and string.find(playername,_Playername) then
-					MClientPlayername = true
-				end
-			end
-			self:T( { "Evaluated Playername", MClientPlayername } )
-			MClientInclude = MClientInclude and MClientPlayername
-		end
-		
-		if self.Filter.Callsigns then
-			local MClientCallsigns = false
-			local callsign = MClient:GetCallsign()
-			--self:I(callsign)
-			for _,_Callsign in pairs(self.Filter.Callsigns) do
-				if callsign and string.find(callsign,_Callsign,1,true) then
-					MClientCallsigns = true
-				end
-			end
-			self:T( { "Evaluated Callsign", MClientCallsigns } )
-			MClientInclude = MClientInclude and MClientCallsigns
-		end
-		
-	end
+    if self.Filter.Zones then
+      local MClientZone = false
+      for ZoneName, Zone in pairs( self.Filter.Zones ) do
+      self:T3( "Zone:", ZoneName )
+      local unit = MClient:GetClientGroupUnit()
+      if unit and unit:IsInZone(Zone) then
+        MClientZone = true
+      end
+      end
+      MClientInclude = MClientInclude and MClientZone
+    end
+    
+    if self.Filter.Playernames then
+      local MClientPlayername = false
+      local playername = MClient:GetPlayerName() or "Unknown"
+      --self:T(playername)
+      for _,_Playername in pairs(self.Filter.Playernames) do
+        if playername and string.find(playername,_Playername) then
+          MClientPlayername = true
+        end
+      end
+      self:T( { "Evaluated Playername", MClientPlayername } )
+      MClientInclude = MClientInclude and MClientPlayername
+    end
+    
+    if self.Filter.Callsigns then
+      local MClientCallsigns = false
+      local callsign = MClient:GetCallsign()
+      --self:I(callsign)
+      for _,_Callsign in pairs(self.Filter.Callsigns) do
+        if callsign and string.find(callsign,_Callsign,1,true) then
+          MClientCallsigns = true
+        end
+      end
+      self:T( { "Evaluated Callsign", MClientCallsigns } )
+      MClientInclude = MClientInclude and MClientCallsigns
+    end
+    
+  end
     self:T2( MClientInclude )
     return MClientInclude
   end

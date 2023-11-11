@@ -486,7 +486,7 @@ function PLAYERRECCE:_GetClockDirection(unit, target)
 end
 
 --- [User] Set a table of possible laser codes.
--- Each new RECCE can select a code from this table, default is 1688.
+-- Each new RECCE can select a code from this table, default is { 1688, 1130, 4785, 6547, 1465, 4578 }.
 -- @param #PLAYERRECCE self
 -- @param #list<#number> LaserCodes
 -- @return #PLAYERRECCE
