@@ -1,5 +1,6 @@
 ---
 parent: Build system
+grand_parent: Developer
 nav_order: 2
 ---
 
@@ -56,6 +57,25 @@ Main build steps to create the class documentation are defined in [.github/workf
     - Copy build result to `MOOSE_DOCS` folder.
     - Push results to the target repository.
 
+# Build a preview locally
+
+To generate a preview of the class documentation go into the folder
+`docker/build-docks` and run `docker compose up`. It will create a Docker image
+and start a Docker container. Within this container all needed software packages
+are included to build to class documentation.
+
+- You need a working installation of [Docker].
+- In the main repository folder a new folder `build` will be created.
+- Subfolders `build/docs` and `build/tools` will be generated.
+- Repo `Applevangelist/luadocumentor` will be checked out to `build/tools/luadocumentor`
+- `luadocumentor.lua` will be executed and writes the output to `build/docs`.
+
+{: .note }
+> If [MOOSE_DOCS] is checked out to `/moose/build/MOOSE_DOCS` by the developer
+> manually, then the generated files are also copied into `/moose/build/MOOSE_DOCS/Documentation/`.
+> This allows to run `docker compose up` in `/moose/build/MOOSE_DOCS/docker/`,
+> so the full result can be checked.
+
 [tree]: https://wiki.ubuntuusers.de/tree/
 [LuaDoc]: https://keplerproject.github.io/luadoc/
 [LuaDocumentor]: https://luarocks.org/modules/luarocks/luadocumentor
@@ -71,3 +91,4 @@ Main build steps to create the class documentation are defined in [.github/workf
 [Lua]: https://www.lua.org/
 [LuaRocks]: https://luarocks.org/
 [.github/workflows/build-docs.yml]: https://github.com/FlightControl-Master/MOOSE/blob/master/.github/workflows/build-docs.yml
+[Docker]: https://www.docker.com/
