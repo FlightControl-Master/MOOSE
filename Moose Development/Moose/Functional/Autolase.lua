@@ -329,6 +329,9 @@ function AUTOLASE:SetPilotMenu()
         local lasetopm = MENU_GROUP:New(Group,"Autolase",nil)
         self.playermenus[unitname] = lasetopm
         local lasemenu = MENU_GROUP_COMMAND:New(Group,"Status",lasetopm,self.ShowStatus,self,Group,Unit)
+        local smoke = (self.smoketargets == true) and "off" or "on"
+        local smoketext = string.format("Switch smoke targets to %s",smoke)
+        local smokemenu = MENU_GROUP_COMMAND:New(Group,smoketext,lasetopm,self.SetSmokeTargets,self,(not self.smoketargets))
         for _,_grp in pairs(self.RecceSet.Set) do
           local grp = _grp -- Wrapper.Group#GROUP
           local unit = grp:GetUnit(1)
@@ -570,6 +573,9 @@ end
 function AUTOLASE:SetSmokeTargets(OnOff,Color)
   self.smoketargets = OnOff
   self.smokecolor = Color or SMOKECOLOR.Red
+  local smktxt = OnOff == true and "on" or "off"
+  local Message = "Smoking targets is now "..smktxt.."!"
+  self:NotifyPilots(Message,10)
   return self
 end
 
