@@ -1,7 +1,7 @@
 ---
 title: Archive
 has_children: true
-nav_order: 4
+nav_order: 99
 has_toc: false
 ---
 
@@ -21,10 +21,16 @@ After that we can create a new documentation step by step.
 [MOOSE_DOCS]: https://github.com/FlightControl-Master/MOOSE_DOCS
 [MOOSE_DOCS_DEVELOP]: https://github.com/FlightControl-Master/MOOSE_DOCS_DEVELOP
 
+![MOOSE](../images/classes/overview.jpg)
+
+MOOSE is a **M**ission **O**bject **O**riented **S**cripting **E**nvironment, and is meant for mission designers and
+mission hosters. It allows to quickly setup complex missions using pre-scripted scenarios using the available classes
+within the MOOSE Framework. MOOSE works with the current DCS world and earlier versions.
+
 ## Starters guide
 
 You need to write lua code (scripts) to apply the MOOSE framework. But it is not really that hard, if you understand
-a couple of principles.
+a couple of principles. Read more in the [Starters Guide](guide-starters.md).
 
 ## Mission Designers Guide
 
@@ -37,7 +43,9 @@ Here you find a high-level explanation and features, how to:
    * Setup task dispatchers for Mission completion
    * How to use MOOSE wrapper classes
    * The different components of the core MOOSE engine
-   
+
+Read more in the [Mission Designers Guide](guide-designers.md).
+
 Each class will link you further down into the MOOSE Classes guide, for more detailed information on each MOOSE class.
 
 ## MOOSE Classes Guide
@@ -77,7 +85,7 @@ As a return or as a reward, testers get:
   * You can evaluate and contribute to the stability of the next release.
   * Your mission creation workflow becomes very flexible. New features are dynamically added to you missions.
 
-Please read the detailed [Beta tester guide](guide-beta-tester.md) for more information.
+Please read the detailed [Beta Tester Guide](guide-beta-tester.md) for more information.
 
 ### Contribute on the MOOSE development
 
@@ -94,7 +102,7 @@ Have a look at the [Interactive Debugging](guide-debug.html) to setup your syste
 
 MOOSE is broadcasted, documented and supported through various social media channels.
 
-Click here for the [communities guide](guide-communities.md) of the MOOSE framework.
+Click here for the [Communities Guide](guide-communities.md) of the MOOSE framework.
 
 
 ## MOOSE framework goal
@@ -117,7 +125,7 @@ It is the ambition to grow this framework as a de-facto standard for mission des
 
 Join our MOOSE community on Discord.
 A place where mission designers and developers come together to discuss the latest features.
-There are a lot of people supporting Mission Designers on [Discord](https://discord.gg/yBPfxC6).
+There are a lot of people supporting Mission Designers on [Discord](https://discord.gg/gj68fm969S).
 
 
 Thank you!

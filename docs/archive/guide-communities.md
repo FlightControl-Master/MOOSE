@@ -36,7 +36,7 @@ In other words, treat this development as a project.
 
 ## 4. MOOSE community on Discord
 
-Join our MOOSE community on [Discord](https://discord.gg/yBPfxC6).
+Join our MOOSE community on [Discord](https://discord.gg/gj68fm969S).
 A place where mission designers and developers come together to discuss the latest features.
 We are now with about 5 people supporting Mission Designers on Discord.
 

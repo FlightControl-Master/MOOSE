@@ -1,5 +1,6 @@
 ---
 parent: Build system
+grand_parent: Developer
 nav_order: 1
 ---
 
@@ -21,8 +22,8 @@ Main build steps to create the include files are defined in [.github/workflows/b
 
 - Run the build steps:
     - Run `./Moose Setup/Moose_Create.lua` to create `Moose.lua`.
-    - Run `./Moose Setup/Moose_Create.lua` to create dynamic `Moose.lua` to
-      load individual Lua class files used by Moose developers.
+    - Run `./Moose Setup/Moose_Create.lua` to create dynamic `Moose.lua` which
+      loads individual Lua class files used by Moose developers.
     - Run [LuaSrcDiet] to compress the [Lua] code and create `Moose_.lua`
     - Run [LuaCheck] to find errors in the code. Warnings are ignored, because
       there are a lot of warnings, which cannot be resolved by the Moose team.
@@ -34,6 +35,23 @@ Main build steps to create the include files are defined in [.github/workflows/b
     - Copy build result to `MOOSE_INCLUDE` folder
     - Push results to [MOOSE_INCLUDE] repository
 
+# Build a preview locally
+
+To generate a preview of the include files go into the folder
+`docker/build-includes` and run `docker compose up`. It will create a Docker
+image and start a Docker container.
+Within this container all needed software packages are included to build the
+include files.
+
+- You need a working installation of [Docker].
+- In the main repository folder a new folder `build` will be created.
+- The following subfolders will be generated:
+    - `build/result/Moose_Include_Dynamic` and
+    - `build/result/Moose_Include_Static`
+- `./Moose Setup/Moose_Create.lua` will be executed to generate the target files
+- [LuaSrcDiet] will be executed to generate the target file `Moose_.lua`
+- [LuaCheck] runs to find errors
+
 [.github/workflows/build-includes.yml]: https://github.com/FlightControl-Master/MOOSE/blob/master/.github/workflows/build-includes.yml
 [tree]: https://wiki.ubuntuusers.de/tree/
 [lua5.3]: https://www.lua.org/manual/5.3/
@@ -43,3 +61,4 @@ Main build steps to create the include files are defined in [.github/workflows/b
 [MOOSE_INCLUDE]: https://github.com/FlightControl-Master/MOOSE_INCLUDE
 [LuaSrcDiet]: https://github.com/jirutka/luasrcdiet
 [Lua]: https://www.lua.org/
+[Docker]: https://www.docker.com/
