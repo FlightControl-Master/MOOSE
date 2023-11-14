@@ -487,7 +487,11 @@ do
   --        mybluemantis:Start()
   --
   function MANTIS:New(name,samprefix,ewrprefix,hq,coalition,dynamic,awacs, EmOnOff, Padding, Zones)
-
+    
+    
+    -- Inherit everything from BASE class.
+    local self = BASE:Inherit(self, FSM:New()) -- #MANTIS
+    
     -- DONE: Create some user functions for these
     -- DONE: Make HQ useful
     -- DONE: Set SAMs to auto if EWR dies
@@ -549,6 +553,10 @@ do
     self.ShoradGroupSet = SET_GROUP:New() -- Core.Set#SET_GROUP
     self.FilterZones = Zones
     
+    self.SkateZones = nil
+    self.SkateNumber =  3
+    self.shootandscoot = false   
+    
     self.UseEmOnOff = true
     if EmOnOff == false then
       self.UseEmOnOff = false
@@ -559,9 +567,6 @@ do
     else
       self.advAwacs = false
     end
-
-    -- Inherit everything from BASE class.
-    local self = BASE:Inherit(self, FSM:New()) -- #MANTIS
 
     -- Set the string id for output to DCS.log file.
     self.lid=string.format("MANTIS %s | ", self.name)
@@ -784,6 +789,19 @@ do
     self:T(self.lid .. "SetEWRGrouping")
     local radius = radius or 5000
     self.grouping = radius
+    return self
+  end
+  
+  --- Add a SET_ZONE of zones for Shoot&Scoot - SHORAD units will move around
+  -- @param #MANTIS self
+  -- @param Core.Set#SET_ZONE ZoneSet Set of zones to be used. Units will move around to the next (random) zone between 100m and 3000m away.
+  -- @param #number Number Number of closest zones to be considered, defaults to 3.
+  -- @return #MANTIS self
+  function MANTIS:AddScootZones(ZoneSet, Number)
+    self:T(self.lid .. " AddScootZones")
+    self.SkateZones = ZoneSet
+    self.SkateNumber = Number or 3
+    self.shootandscoot = true    
     return self
   end
   
@@ -1786,6 +1804,10 @@ do
       self.Shorad:SetDefenseLimits(80,95)
       self.ShoradLink = true
       self.Shorad.Groupset=self.ShoradGroupSet
+      self.Shorad.debug = self.debug
+    end
+    if self.shootandscoot and self.SkateZones then
+      self.Shorad:AddScootZones(self.SkateZones,self.SkateNumber or 3)
     end
     self:__Status(-math.random(1,10))
     return self
