@@ -34,7 +34,7 @@
 --
 -- This class is very easy to use. Just setup a SEAD object by using @{#SEAD.New}() and SAMs will evade and take defensive action when being fired upon.
 -- Once a HARM attack is detected, SEAD will shut down the radars of the attacked SAM site and take evasive action by moving the SAM
--- vehicles around (*if* they are drivable, that is). There's a component of randomness in detection and evasion, which is based on the
+-- vehicles around (*if* they are driveable, that is). There's a component of randomness in detection and evasion, which is based on the
 -- skill set of the SAM set (the higher the skill, the more likely). When a missile is fired from far away, the SAM will stay active for a 
 -- period of time to stay defensive, before it takes evasive actions.
 -- 
@@ -66,7 +66,6 @@ SEAD = {
   -- @field Harms
   SEAD.Harms = {
   ["AGM_88"] = "AGM_88",
-  --["AGM_45"] = "AGM_45",
   ["AGM_122"] = "AGM_122",
   ["AGM_84"] = "AGM_84",
   ["AGM_45"] = "AGM_45",
