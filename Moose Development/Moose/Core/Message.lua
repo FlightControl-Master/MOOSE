@@ -465,7 +465,7 @@ _MESSAGESRS = {}
 -- @param #string PathToCredentials (optional) Path to credentials file for e.g. Google.
 -- @param #number Frequency Frequency in MHz. Can also be given as a #table of frequencies.
 -- @param #number Modulation Modulation, i.e. radio.modulation.AM  or radio.modulation.FM. Can also be given as a #table of modulations.
--- @param #string Gender (optional) Gender, i.e. "male" or "female", defaults to "male".
+-- @param #string Gender (optional) Gender, i.e. "male" or "female", defaults to "female".
 -- @param #string Culture (optional) Culture, e.g. "en-US", defaults to "en-GB"
 -- @param #string Voice (optional) Voice. Will override gender and culture settings, e.g. MSRS.Voices.Microsoft.Hazel or MSRS.Voices.Google.Standard.de_DE_Standard_D. Hint on Microsoft voices - working voices are limited to Hedda, Hazel, David, Zira and Hortense. **Must** be installed on your Desktop or Server!
 -- @param #number Coalition (optional) Coalition, can be coalition.side.RED, coalition.side.BLUE or coalition.side.NEUTRAL. Defaults to coalition.side.NEUTRAL.
@@ -480,24 +480,42 @@ _MESSAGESRS = {}
 --          MESSAGE:New("Test message!",15,"SPAWN"):ToSRS()
 --          
 function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,Gender,Culture,Voice,Coalition,Volume,Label,Coordinate)
-  _MESSAGESRS.MSRS = MSRS:New(PathToSRS,Frequency,Modulation,Volume)
-  _MESSAGESRS.MSRS:SetCoalition(Coalition)
+  _MESSAGESRS.MSRS = MSRS:New(PathToSRS,Frequency or 243,Modulation or radio.modulation.AM,Volume)
+  
+  _MESSAGESRS.frequency = Frequency
+  _MESSAGESRS.modulation = Modulation or radio.modulation.AM
+  
+  _MESSAGESRS.MSRS:SetCoalition(Coalition or coalition.side.NEUTRAL)
+  _MESSAGESRS.coalition = Coalition or coalition.side.NEUTRAL
+  
+  _MESSAGESRS.coordinate = Coordinate
   _MESSAGESRS.MSRS:SetCoordinate(Coordinate)
+  
   _MESSAGESRS.MSRS:SetCulture(Culture)
-  _MESSAGESRS.Culture = Culture
-  --_MESSAGESRS.MSRS:SetFrequencies(Frequency)
+  _MESSAGESRS.Culture = Culture or "en-GB"
+
   _MESSAGESRS.MSRS:SetGender(Gender)
-  _MESSAGESRS.Gender = Gender
+  _MESSAGESRS.Gender = Gender or "female"
+
   _MESSAGESRS.MSRS:SetGoogle(PathToCredentials)
+  _MESSAGESRS.google = PathToCredentials
+
   _MESSAGESRS.MSRS:SetLabel(Label or "MESSAGE")
-  --_MESSAGESRS.MSRS:SetModulations(Modulation)
-  --_MESSAGESRS.MSRS:SetPath(PathToSRS)
-  _MESSAGESRS.MSRS:SetPort(Port)
- -- _MESSAGESRS.MSRS:SetVolume(Volume)
-  _MESSAGESRS.MSRS:SetVoice(Voice)
-  _MESSAGESRS.Voice = Voice
+  _MESSAGESRS.label = Label or "MESSAGE"
+
+  _MESSAGESRS.MSRS:SetPort(Port or 5002)
+  _MESSAGESRS.port = Port or 5002
+  
+  _MESSAGESRS.volume = Volume or 1
+  _MESSAGESRS.MSRS:SetVolume(_MESSAGESRS.volume)
+  
+  if Voice then _MESSAGESRS.MSRS:SetVoice(Voice) end
+  
+  _MESSAGESRS.voice = Voice --or MSRS.Voices.Microsoft.Hedda
+  --if _MESSAGESRS.google and not Voice then _MESSAGESRS.Voice = MSRS.Voices.Google.Standard.en_GB_Standard_A end
+  --_MESSAGESRS.MSRS:SetVoice(Voice or _MESSAGESRS.voice)
+  
   _MESSAGESRS.SRSQ = MSRSQUEUE:New(Label or "MESSAGE")
-  env.info(_MESSAGESRS.MSRS.provider,false)
 end
 
 --- Sends a message via SRS.
@@ -505,7 +523,7 @@ end
 -- @param #number frequency (optional) Frequency in MHz. Can also be given as a #table of frequencies. Only needed if you want to override defaults set with `MESSAGE.SetMSRS()` for this one setting.
 -- @param #number modulation (optional) Modulation, i.e. radio.modulation.AM  or radio.modulation.FM. Can also be given as a #table of modulations. Only needed if you want to override defaults set with `MESSAGE.SetMSRS()` for this one setting.
 -- @param #string gender (optional) Gender, i.e. "male" or "female". Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
--- @param #string culture (optional) Culture, e.g. "en-US. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
+-- @param #string culture (optional) Culture, e.g. "en-US". Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @param #string voice (optional) Voice. Will override gender and culture settings. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @param #number coalition (optional) Coalition, can be coalition.side.RED, coalition.side.BLUE or coalition.side.NEUTRAL. Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
 -- @param #number volume (optional) Volume, can be between 0.0 and 1.0 (loudest). Only needed if you want to change defaults set with `MESSAGE.SetMSRS()`.
@@ -519,13 +537,16 @@ end
 --          MESSAGE:New("Test message!",15,"SPAWN"):ToSRS()
 --          
 function MESSAGE:ToSRS(frequency,modulation,gender,culture,voice,coalition,volume,coordinate)
+  local tgender = gender or _MESSAGESRS.Gender
   if _MESSAGESRS.SRSQ then
-      _MESSAGESRS.MSRS:SetVoice(voice or _MESSAGESRS.Voice)
+      if voice then
+        _MESSAGESRS.MSRS:SetVoice(voice or _MESSAGESRS.voice)
+      end
       if coordinate then
         _MESSAGESRS.MSRS:SetCoordinate(coordinate)  
       end
       local category = string.gsub(self.MessageCategory,":","")
-      _MESSAGESRS.SRSQ:NewTransmission(self.MessageText,nil,_MESSAGESRS.MSRS,nil,nil,nil,nil,nil,frequency,modulation,gender or _MESSAGESRS.Gender,culture or _MESSAGESRS.Culture,voice or _MESSAGESRS.Voice,volume,category,coordinate)
+      _MESSAGESRS.SRSQ:NewTransmission(self.MessageText,nil,_MESSAGESRS.MSRS,nil,nil,nil,nil,nil,frequency or _MESSAGESRS.frequency,modulation or _MESSAGESRS.modulation, gender or _MESSAGESRS.Gender,culture or _MESSAGESRS.Culture,nil,volume or _MESSAGESRS.volume,category,coordinate or _MESSAGESRS.coordinate)
   end
   return self
 end
