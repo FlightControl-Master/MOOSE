@@ -756,7 +756,7 @@ end -- cargo
 
 --- Finds a CLIENT based on the ClientName.
 -- @param #DATABASE self
--- @param #string ClientName
+-- @param #string ClientName - Note this is the UNIT name of the client!
 -- @return Wrapper.Client#CLIENT The found CLIENT.
 function DATABASE:FindClient( ClientName )
 

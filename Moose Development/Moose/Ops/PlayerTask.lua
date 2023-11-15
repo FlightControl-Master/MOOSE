@@ -2239,7 +2239,7 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
       end
       if EventData.IniPlayerName then
         --self.PlayerMenu[EventData.IniPlayerName] = nil
-        local player = _DATABASE:FindClient( EventData.IniPlayerName )
+        local player = _DATABASE:FindClient( EventData.IniUnitName )
         self:_SwitchMenuForClient(player,"Info")
       end
     end
