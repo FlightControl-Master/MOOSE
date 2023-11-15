@@ -1119,7 +1119,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   end
   
   -- Debug output.
-  self:T("MSRS command="..command)
+  self:I("MSRS command="..command)
 
   return command
 end
@@ -1243,7 +1243,7 @@ function MSRS:LoadConfigFile(Path,Filename,ConfigLoaded)
         self.gender = MSRS_Config.Gender or "male"
         self.google = MSRS_Config.Google
         self.Label = MSRS_Config.Label or "MSRS"
-        self.voice = MSRS_Config.Voice or MSRS.Voices.Microsoft.Hazel
+        self.voice = MSRS_Config.Voice --or MSRS.Voices.Microsoft.Hazel
         if MSRS_Config.GRPC then
            self.provider = MSRS_Config.GRPC.DefaultProvider
            if MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider] then
@@ -1267,7 +1267,7 @@ function MSRS:LoadConfigFile(Path,Filename,ConfigLoaded)
         MSRS.gender = MSRS_Config.Gender or "male"
         MSRS.google = MSRS_Config.Google
         MSRS.Label = MSRS_Config.Label or "MSRS"
-        MSRS.voice = MSRS_Config.Voice or MSRS.Voices.Microsoft.Hazel
+        MSRS.voice = MSRS_Config.Voice --or MSRS.Voices.Microsoft.Hazel
         if MSRS_Config.GRPC then
            MSRS.provider = MSRS_Config.GRPC.DefaultProvider
            if MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider] then
@@ -1677,7 +1677,7 @@ end
 -- @param #MSRSQUEUE self
 -- @return #MSRSQUEUE self The MSRSQUEUE object.
 function MSRSQUEUE:Clear()
-  self:I(self.lid.."Clearning MSRSQUEUE")
+  self:I(self.lid.."Clearing MSRSQUEUE")
   self.queue={}
   return self
 end
@@ -1778,7 +1778,7 @@ function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgr
   transmission.gender = gender
   transmission.culture = culture
   transmission.voice = voice
-  transmission.gender = volume
+  transmission.volume = volume
   transmission.label = label
   transmission.coordinate = coordinate
     
@@ -1792,7 +1792,7 @@ end
 -- @param #MSRSQUEUE self
 -- @param #MSRSQUEUE.Transmission transmission The transmission.
 function MSRSQUEUE:Broadcast(transmission)
-  
+
   if transmission.frequency then
     transmission.msrs:PlayTextExt(transmission.text, nil, transmission.frequency, transmission.modulation, transmission.gender, transmission.culture, transmission.voice, transmission.volume, transmission.label, transmission.coordinate)
   else
