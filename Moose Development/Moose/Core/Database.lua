@@ -2023,8 +2023,6 @@ end
       TargetPlayerName = Event.IniPlayerName
 
       TargetCoalition = Event.IniCoalition
-      --TargetCategory = TargetUnit:getCategory()
-      --TargetCategory = TargetUnit:getDesc().category  -- Workaround
       TargetCategory = Event.IniCategory
       TargetType = Event.IniTypeName
 

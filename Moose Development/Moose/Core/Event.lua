@@ -1083,7 +1083,7 @@ function EVENT:onEvent( Event )
 
       if Event.initiator then
 
-        Event.IniObjectCategory = Object.getCategory(Event.initiator) --Event.initiator:getCategory()
+        Event.IniObjectCategory = Object.getCategory(Event.initiator)
         
         if Event.IniObjectCategory == Object.Category.STATIC then
           ---
@@ -1208,7 +1208,7 @@ function EVENT:onEvent( Event )
         ---
 
         -- Target category.
-        Event.TgtObjectCategory = Object.getCategory(Event.target) --Event.target:getCategory()
+        Event.TgtObjectCategory = Object.getCategory(Event.target)
 
         if Event.TgtObjectCategory == Object.Category.UNIT then
           ---
@@ -1302,7 +1302,7 @@ function EVENT:onEvent( Event )
           -- However, this is not a big thing, as the aircraft the pilot ejected from is usually long crashed before the ejected pilot touches the ground.
           --Event.Place=UNIT:Find(Event.place)
         else  
-          if Event.place:isExist() and Event.place:getCategory() ~= Object.Category.SCENERY then
+          if Event.place:isExist() and Object.getCategory(Event.place) ~= Object.Category.SCENERY then
             Event.Place=AIRBASE:Find(Event.place)
             Event.PlaceName=Event.Place:GetName()
           end

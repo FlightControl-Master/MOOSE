@@ -673,7 +673,7 @@ do
           return self
         end
         
-        local targetcat = targetdata:getCategory() -- Identify category
+        local targetcat = Object.getCategory(targetdata) -- Identify category
         self:T(string.format("Target Category (3=STATIC, 1=UNIT)= %s",tostring(targetcat)))
         self:T({targetdata})
         local targetunit = nil

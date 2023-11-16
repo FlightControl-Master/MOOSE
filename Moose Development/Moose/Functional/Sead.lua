@@ -484,7 +484,7 @@ function SEAD:HandleEventShot( EventData )
       end
       return self
     end
-    local targetcat = _target:getCategory() -- Identify category
+    local targetcat = Object.getCategory(_target) -- Identify category
     local _targetUnit = nil -- Wrapper.Unit#UNIT
     local _targetgroup = nil -- Wrapper.Group#GROUP
     self:T(string.format("*** Targetcat = %d",targetcat))
