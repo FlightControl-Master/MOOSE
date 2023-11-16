@@ -104,7 +104,7 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.0.20",
+  version            =   "0.0.21",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
   ViewZoneLaser      =   {},
@@ -486,7 +486,7 @@ function PLAYERRECCE:_GetClockDirection(unit, target)
 end
 
 --- [User] Set a table of possible laser codes.
--- Each new RECCE can select a code from this table, default is 1688.
+-- Each new RECCE can select a code from this table, default is { 1688, 1130, 4785, 6547, 1465, 4578 }.
 -- @param #PLAYERRECCE self
 -- @param #list<#number> LaserCodes
 -- @return #PLAYERRECCE
@@ -570,26 +570,31 @@ function PLAYERRECCE:_GetGazelleVivianneSight(Gazelle)
   local unit = Gazelle -- Wrapper.Unit#UNIT
   if unit and unit:IsAlive() then
     local dcsunit = Unit.getByName(Gazelle:GetName())
-    local vivihorizontal = dcsunit:getDrawArgumentValue(215) or 0 -- (not in MiniGun) 1 to -1 -- zero is straight ahead, 1/-1 = 180 deg
+    local vivihorizontal = dcsunit:getDrawArgumentValue(215) or 0 -- (not in MiniGun) 1 to -1 -- zero is straight ahead, 1/-1 = 180 deg,
     local vivivertical = dcsunit:getDrawArgumentValue(216) or 0 -- L/Mistral/Minigun model has no 216, ca 10deg up (=1) and down (=-1)
+    -- vertical model limits 1.53846, -1.10731
     local vivioff = false
     -- -1 = -180, 1 = 180
-    -- Actual view -0,66 to 0,66
-    -- Nick view -0,98 to 0,98 for +/- 30° 
-    if vivihorizontal < -0.7 then 
-      vivihorizontal = -0.7
-      vivioff = true
-      return 0,0,0,false 
-    elseif vivihorizontal > 0.7 then 
-      vivihorizontal = 0.7
+    -- Actual model view -0,66 to 0,66
+    -- Nick view 1.53846, -1.10731 for - 30° to +45° 
+    if vivihorizontal < -0.67 then  -- model end
+      vivihorizontal = -0.67
+      vivioff = false
+      --return 0,0,0,false 
+    elseif vivihorizontal > 0.67 then -- vivi off
+      vivihorizontal = 0.67
       vivioff = true
       return 0,0,0,false
     end
+    vivivertical = vivivertical / 1.10731 -- normalize
     local horizontalview = vivihorizontal * -180 
-    local verticalview = vivivertical * -30 -- ca +/- 30° 
+    local verticalview = vivivertical * 30 -- ca +/- 30°
+   --self:I(string.format("vivihorizontal=%.5f | vivivertical=%.5f",vivihorizontal,vivivertical)) 
+    --self:I(string.format("horizontal=%.5f | vertical=%.5f",horizontalview,verticalview))
     local heading = unit:GetHeading()
     local viviheading = (heading+horizontalview)%360
     local maxview = self:_GetActualMaxLOSight(unit,viviheading, verticalview,vivioff)
+    --self:I(string.format("maxview=%.5f",maxview))
     -- visual skew
     local factor = 3.15
     self.GazelleViewFactors = {
@@ -609,16 +614,18 @@ function PLAYERRECCE:_GetGazelleVivianneSight(Gazelle)
       }
     local lfac = UTILS.Round(maxview,-2)
     if lfac <= 1300 then
-      factor = self.GazelleViewFactors[lfac/100]
+      --factor = self.GazelleViewFactors[lfac/100]
+      factor = 3.15
       maxview = math.ceil((maxview*factor)/100)*100
     end
     if maxview > 8000 then maxview = 8000 end
+    --self:I(string.format("corrected maxview=%.5f",maxview))
     return viviheading, verticalview,maxview, not vivioff
   end
   return 0,0,0,false
 end
 
---- [Internal] Get the max line of sight based on unit head and camera nod via trigonometrie. Returns 0 if camera is off.
+--- [Internal] Get the max line of sight based on unit head and camera nod via trigonometry. Returns 0 if camera is off.
 -- @param #PLAYERRECCE self
 -- @param Wrapper.Unit#UNIT unit The unit which LOS we want
 -- @param #number vheading Heading where the unit or camera is looking
@@ -628,12 +635,13 @@ end
 function PLAYERRECCE:_GetActualMaxLOSight(unit,vheading, vnod, vivoff)
   self:T(self.lid.."_GetActualMaxLOSight")
   if vivoff then return 0 end
+  --if vnod < -0.03 then vnod = -0.03 end
   local maxview = 0
   if unit and unit:IsAlive() then
     local typename = unit:GetTypeName()
-    maxview = self.MaxViewDistance[typename] or 8000
+    maxview = self.MaxViewDistance[typename] or 8000  
     local CamHeight = self.Cameraheight[typename] or 0
-    if vnod > 0 then
+    if vnod < 0 then
         -- Looking down
         -- determine max distance we're looking at
         local beta = 90
@@ -645,7 +653,7 @@ function PLAYERRECCE:_GetActualMaxLOSight(unit,vheading, vnod, vivoff)
         maxview = c*1.2 -- +20%
     end
   end 
-  return maxview 
+  return math.abs(maxview)
 end
 
 --- [User] Set callsign options for TTS output. See @{Wrapper.Group#GROUP.GetCustomCallSign}() on how to set customized callsigns.

@@ -1119,7 +1119,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   end
   
   -- Debug output.
-  self:I("MSRS command="..command)
+  self:T("MSRS command="..command)
 
   return command
 end
