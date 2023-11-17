@@ -168,8 +168,10 @@ function STORAGE:New(AirbaseName)
   local self=BASE:Inherit(self, BASE:New()) -- #STORAGE
 
   self.airbase=Airbase.getByName(AirbaseName)
-
-  self.warehouse=self.airbase:getWarehouse()
+  
+  if Airbase.getWarehouse then
+    self.warehouse=self.airbase:getWarehouse()
+  end
 
   self.lid = string.format("STORAGE %s", AirbaseName)
 

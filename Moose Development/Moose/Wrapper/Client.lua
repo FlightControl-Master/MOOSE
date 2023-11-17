@@ -323,7 +323,7 @@ function CLIENT:Alive( CallBackFunction, ... )
   return self
 end
 
---- @param #CLIENT self
+-- @param #CLIENT self
 function CLIENT:_AliveCheckScheduler( SchedulerName )
   self:F3( { SchedulerName, self.ClientName, self.ClientAlive2, self.ClientBriefingShown, self.ClientCallBack } )
 
@@ -531,8 +531,6 @@ function CLIENT:ShowCargo()
 
 end
 
-
-
 --- The main message driver for the CLIENT.
 -- This function displays various messages to the Player logged into the CLIENT through the DCS World Messaging system.
 -- @param #CLIENT self
@@ -578,3 +576,36 @@ function CLIENT:Message( Message, MessageDuration, MessageCategory, MessageInter
     end
   end
 end
+
+--- [Multi-Player Server] Get UCID from a CLIENT.
+-- @param #CLIENT self
+-- @return #string UCID
+function CLIENT:GetUCID()
+  local PID = NET.GetPlayerIDByName(nil,self:GetPlayerName())
+  return net.get_player_info(tonumber(PID), 'ucid')
+end
+
+--- [Multi-Player Server] Return a table of attributes from CLIENT. If optional attribute is present, only that value is returned. 
+-- @param #CLIENT self
+-- @param #string Attribute (Optional) The attribute to obtain. List see below.
+-- @return #table PlayerInfo or nil if it cannot be found
+-- @usage
+-- Returned table holds these attributes:
+--
+--          'id'    : player ID
+--          'name'  : player name
+--          'side'  : 0 - spectators, 1 - red, 2 - blue
+--          'slot'  : slot ID of the player or 
+--          'ping'  : ping of the player in ms
+--          'ipaddr': IP address of the player, SERVER ONLY
+--          'ucid'  : Unique Client Identifier, SERVER ONLY
+--
+function CLIENT:GetPlayerInfo(Attribute)
+  local PID = NET.GetPlayerIDByName(nil,self:GetPlayerName())
+  if PID then
+    return net.get_player_info(tonumber(PID), Attribute)
+  else
+    return nil
+  end
+end
+

@@ -9,6 +9,8 @@ layout: home
 
 # MOOSE framework
 
+![MOOSE](./images/classes/overview.jpg)
+
 MOOSE is a **M**ission **O**bject **O**riented **S**cripting **E**nvironment for mission designers in [DCS World].
 It allows to quickly setup complex missions using pre-scripted scenarios using the available classes within the MOOSE Framework.
 MOOSE is written in [Lua] which is a small and fast programming language, which is embedded in [DCS World].
@@ -57,9 +59,9 @@ There are different tutorial playlists available on YouTube:
 
 MOOSE has a living community of users, beta testers and contributors.
 The gathering point is a service provided by [Discord].
-If you want to join this community, just click the link below and you'll be on board in no time.
+If you want to join this community, just click the link below and you'll be on board in no time:
 
-- [Moose for DCS Discord server](https://discord.gg/aQtjcR94Qf)
+- [Moose Discord server](https://discord.gg/gj68fm969S)
 
 [DCS World]: https://www.digitalcombatsimulator.com/de/
 [Lua]: https://www.lua.org/

@@ -31,7 +31,8 @@
 -- ### Contributions: 
 -- 
 --   * **Entropy**, **Afinegan**: Came up with the requirement for AIOnOff().
--- 
+--   * **Applevangelist**: various
+--   
 -- ===
 -- 
 -- @module Wrapper.Group
@@ -45,12 +46,16 @@
 
 --- Wrapper class of the DCS world Group object.
 -- 
+-- ## Finding groups
+-- 
 -- The GROUP class provides the following functions to retrieve quickly the relevant GROUP instance:
 --
 --  * @{#GROUP.Find}(): Find a GROUP instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Group object.
 --  * @{#GROUP.FindByName}(): Find a GROUP instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Group name.
+--  * @{#GROUP.FindByMatching}(): Find a GROUP instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using pattern matching.
+--  * @{#GROUP.FindAllByMatching}(): Find all GROUP instances from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using pattern matching.
 --
--- # 1. Tasking of groups
+-- ## Tasking of groups
 --
 -- A GROUP is derived from the wrapper class CONTROLLABLE (@{Wrapper.Controllable#CONTROLLABLE}). 
 -- See the @{Wrapper.Controllable} task methods section for a description of the task methods.
@@ -285,7 +290,7 @@ function GROUP:Find( DCSGroup )
   return GroupFound
 end
 
---- Find the created GROUP using the DCS Group Name.
+--- Find a GROUP using the DCS Group Name.
 -- @param #GROUP self
 -- @param #string GroupName The DCS Group Name.
 -- @return #GROUP The GROUP.
@@ -293,6 +298,55 @@ function GROUP:FindByName( GroupName )
 
   local GroupFound = _DATABASE:FindGroup( GroupName )
   return GroupFound
+end
+
+--- Find the first(!) GROUP matching using patterns. Note that this is **a lot** slower than `:FindByName()`!
+-- @param #GROUP self
+-- @param #string Pattern The pattern to look for. Refer to [LUA patterns](http://www.easyuo.com/openeuo/wiki/index.php/Lua_Patterns_and_Captures_(Regular_Expressions)) for regular expressions in LUA.
+-- @return #GROUP The GROUP.
+-- @usage
+--          -- Find a group with a partial group name
+--          local grp = GROUP:FindByMatching( "Apple" )
+--          -- will return e.g. a group named "Apple-1-1"
+--          
+--          -- using a pattern
+--          local grp = GROUP:FindByMatching( ".%d.%d$" )
+--          -- will return the first group found ending in "-1-1" to "-9-9", but not e.g. "-10-1"
+function GROUP:FindByMatching( Pattern )
+  local GroupFound = nil
+  
+  for name,group in pairs(_DATABASE.GROUPS) do
+    if string.match(name, Pattern ) then
+      GroupFound = group
+      break
+    end
+  end
+  
+  return GroupFound
+end
+
+--- Find all GROUP objects matching using patterns. Note that this is **a lot** slower than `:FindByName()`!
+-- @param #GROUP self
+-- @param #string Pattern The pattern to look for. Refer to [LUA patterns](http://www.easyuo.com/openeuo/wiki/index.php/Lua_Patterns_and_Captures_(Regular_Expressions)) for regular expressions in LUA.
+-- @return #table Groups Table of matching #GROUP objects found
+-- @usage
+--          -- Find all group with a partial group name
+--          local grptable = GROUP:FindAllByMatching( "Apple" )
+--          -- will return all groups with "Apple" in the name
+--          
+--          -- using a pattern
+--          local grp = GROUP:FindAllByMatching( ".%d.%d$" )
+--          -- will return the all groups found ending in "-1-1" to "-9-9", but not e.g. "-10-1" or "-1-10"
+function GROUP:FindAllByMatching( Pattern )
+  local GroupsFound = {}
+  
+  for name,group in pairs(_DATABASE.GROUPS) do
+    if string.match(name, Pattern ) then
+      GroupsFound[#GroupsFound+1] = group
+    end
+  end
+  
+  return GroupsFound
 end
 
 -- DCS Group methods support.

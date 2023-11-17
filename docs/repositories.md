@@ -1,6 +1,6 @@
 ---
 title: Repositories
-nav_order: 2
+nav_order: 5
 ---
 
 # MOOSE Repositories
@@ -9,7 +9,7 @@ The underlying picture documents the different repositories in the MOOSE framewo
 The white ones are edited and are the source of the framework.
 The red ones contain generated artefacts. See further the explanation for each repository.
 
-![Graphic](https://raw.githubusercontent.com/FlightControl-Master/MOOSE_DOCS/master/Configuration/Master.png)
+![Graphic](/images/deployment-flow.png)
 
 ## [MOOSE](https://github.com/FlightControl-Master/MOOSE) - For development and static documentation
 
