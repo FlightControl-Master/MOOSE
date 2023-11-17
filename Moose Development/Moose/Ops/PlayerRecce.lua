@@ -916,7 +916,8 @@ function PLAYERRECCE:_LaseTarget(client,targetset)
     -- still looking at target?
     local target=self.LaserTarget[playername] -- Ops.Target#TARGET
     local oldtarget = target:GetObject() --or laser.Target
-    self:T("Targetstate: "..target:GetState())
+    --self:I("Targetstate: "..target:GetState())
+    --self:I("Laser State: "..tostring(laser:IsLasing()))
     if not oldtarget or targetset:IsNotInSet(oldtarget) or target:IsDead() or target:IsDestroyed() then
       -- lost LOS or dead
       laser:LaseOff()
@@ -928,12 +929,20 @@ function PLAYERRECCE:_LaseTarget(client,targetset)
         self.LaserTarget[playername] = nil
       end
     end
+    if oldtarget and (not laser:IsLasing()) then
+      --self:I("Switching laser back on ..")
+      local lasercode = self.UnitLaserCodes[playername] or laser.LaserCode or 1688
+      local lasingtime = self.lasingtime or 60
+      --local targettype = target:GetTypeName()
+      laser:LaseOn(oldtarget,lasercode,lasingtime)
+      --self:__TargetLasing(-1,client,oldtarget,lasercode,lasingtime) 
+    end
   elseif not laser:IsLasing() and target then
     local relativecam = self.LaserRelativePos[client:GetTypeName()]
     laser:SetRelativeStartPosition(relativecam)
     local lasercode = self.UnitLaserCodes[playername] or laser.LaserCode or 1688
     local lasingtime = self.lasingtime or 60
-    local targettype = target:GetTypeName()
+    --local targettype = target:GetTypeName()
     laser:LaseOn(target,lasercode,lasingtime) 
     self.LaserTarget[playername] = TARGET:New(target)
     self.LaserTarget[playername].TStatus = 9
@@ -1101,9 +1110,13 @@ function PLAYERRECCE:_SmokeTargets(client,group,playername)
     end
   end
   
+  local coordinate = nil
+  local setthreat = 0
   -- smoke everything else
-  local coordinate = cameraset:GetCoordinate()
-  local setthreat = cameraset:CalculateThreatLevelA2G()
+  if cameraset:CountAlive() > 1 then
+    local coordinate = cameraset:GetCoordinate()
+    local setthreat = cameraset:CalculateThreatLevelA2G()
+  end
   
   if coordinate then
     local color = lowsmoke
@@ -1983,7 +1996,7 @@ function PLAYERRECCE:onafterTargetLasing(From, Event, To, Client, Target, Laserc
           coordtext = coord:ToStringFromRPShort(self.ReferencePoint,self.RPName,client,Settings)
         end
         local coordtext = coord:ToStringA2G(client,Settings)
-        local text = string.format("All stations, %s lasing %s\nat %s!\nCode %d, Duration %d seconds!",callsign, targettype, coordtext, Lasercode, Lasingtime)
+        local text = string.format("All stations, %s lasing %s\nat %s!\nCode %d, Duration %d plus seconds!",callsign, targettype, coordtext, Lasercode, Lasingtime)
         MESSAGE:New(text,15,self.Name or "FACA"):ToClient(client)
       end
     end
