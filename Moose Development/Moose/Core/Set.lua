@@ -2425,6 +2425,26 @@ do -- SET_UNIT
     return CountU
   end
   
+  --- Gets the alive set.
+  -- @param #SET_UNIT self
+  -- @return #table Table of SET objects
+  -- @return #SET_UNIT AliveSet 
+  function SET_UNIT:GetAliveSet()
+
+    local AliveSet = SET_UNIT:New()
+
+    -- Clean the Set before returning with only the alive Groups.
+    for GroupName, GroupObject in pairs(self.Set) do    
+      local GroupObject=GroupObject --Wrapper.Client#CLIENT
+      
+      if GroupObject and GroupObject:IsAlive() then      
+        AliveSet:Add(GroupName, GroupObject)
+      end
+    end
+
+    return AliveSet.Set or {}, AliveSet
+  end
+  
   --- [Internal] Private function for use of continous zone filter
   -- @param #SET_UNIT self
   -- @return #SET_UNIT self
@@ -2819,51 +2839,58 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @return Core.Point#COORDINATE The center coordinate of all the units in the set, including heading in degrees and speed in mps in case of moving units.
   function SET_UNIT:GetCoordinate()
-
-    local Coordinate = self:GetRandom():GetCoordinate()
-    --self:F({Coordinate:GetVec3()})
     
-    
-    local x1 = Coordinate.x
-    local x2 = Coordinate.x
-    local y1 = Coordinate.y
-    local y2 = Coordinate.y
-    local z1 = Coordinate.z
-    local z2 = Coordinate.z
-    local MaxVelocity = 0
-    local AvgHeading = nil
-    local MovingCount = 0
-
-    for UnitName, UnitData in pairs( self:GetSet() ) do
-
-      local Unit = UnitData -- Wrapper.Unit#UNIT
-      local Coordinate = Unit:GetCoordinate()
-
-      x1 = (Coordinate.x < x1) and Coordinate.x or x1
-      x2 = (Coordinate.x > x2) and Coordinate.x or x2
-      y1 = (Coordinate.y < y1) and Coordinate.y or y1
-      y2 = (Coordinate.y > y2) and Coordinate.y or y2
-      z1 = (Coordinate.y < z1) and Coordinate.z or z1
-      z2 = (Coordinate.y > z2) and Coordinate.z or z2
-
-      local Velocity = Coordinate:GetVelocity()
-      if Velocity ~= 0 then
-        MaxVelocity = (MaxVelocity < Velocity) and Velocity or MaxVelocity
-        local Heading = Coordinate:GetHeading()
-        AvgHeading = AvgHeading and (AvgHeading + Heading) or Heading
-        MovingCount = MovingCount + 1
-      end
+    local Coordinate = nil
+    local unit = self:GetRandom()
+    if self:Count() == 1 and unit then
+      return unit:GetCoordinate()
     end
-
-    AvgHeading = AvgHeading and (AvgHeading / MovingCount)
-
-    Coordinate.x = (x2 - x1) / 2 + x1
-    Coordinate.y = (y2 - y1) / 2 + y1
-    Coordinate.z = (z2 - z1) / 2 + z1
-    Coordinate:SetHeading( AvgHeading )
-    Coordinate:SetVelocity( MaxVelocity )
-
-    self:F( { Coordinate = Coordinate } )
+    if unit then
+      local Coordinate = unit:GetCoordinate()
+      --self:F({Coordinate:GetVec3()})
+      
+      
+      local x1 = Coordinate.x
+      local x2 = Coordinate.x
+      local y1 = Coordinate.y
+      local y2 = Coordinate.y
+      local z1 = Coordinate.z
+      local z2 = Coordinate.z
+      local MaxVelocity = 0
+      local AvgHeading = nil
+      local MovingCount = 0
+  
+      for UnitName, UnitData in pairs( self:GetAliveSet() ) do
+  
+        local Unit = UnitData -- Wrapper.Unit#UNIT
+        local Coordinate = Unit:GetCoordinate()
+  
+        x1 = (Coordinate.x < x1) and Coordinate.x or x1
+        x2 = (Coordinate.x > x2) and Coordinate.x or x2
+        y1 = (Coordinate.y < y1) and Coordinate.y or y1
+        y2 = (Coordinate.y > y2) and Coordinate.y or y2
+        z1 = (Coordinate.y < z1) and Coordinate.z or z1
+        z2 = (Coordinate.y > z2) and Coordinate.z or z2
+  
+        local Velocity = Coordinate:GetVelocity()
+        if Velocity ~= 0 then
+          MaxVelocity = (MaxVelocity < Velocity) and Velocity or MaxVelocity
+          local Heading = Coordinate:GetHeading()
+          AvgHeading = AvgHeading and (AvgHeading + Heading) or Heading
+          MovingCount = MovingCount + 1
+        end
+      end
+  
+      AvgHeading = AvgHeading and (AvgHeading / MovingCount)
+  
+      Coordinate.x = (x2 - x1) / 2 + x1
+      Coordinate.y = (y2 - y1) / 2 + y1
+      Coordinate.z = (z2 - z1) / 2 + z1
+      Coordinate:SetHeading( AvgHeading )
+      Coordinate:SetVelocity( MaxVelocity )
+  
+      self:F( { Coordinate = Coordinate } )
+    end
     return Coordinate
 
   end
@@ -4317,6 +4344,8 @@ do -- SET_CLIENT
       self:UnHandleEvent(EVENTS.Birth)
       self:UnHandleEvent(EVENTS.Dead)
       self:UnHandleEvent(EVENTS.Crash)
+      --self:UnHandleEvent(EVENTS.PlayerEnterUnit)
+      --self:UnHandleEvent(EVENTS.PlayerLeaveUnit)
       
       if self.Filter.Zones and self.ZoneTimer and self.ZoneTimer:IsRunning() then
         self.ZoneTimer:Stop()
@@ -4335,6 +4364,9 @@ do -- SET_CLIENT
       self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
       self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
       self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+      --self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventPlayerEnterUnit)
+      --self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventPlayerLeaveUnit)
+      --self:SetEventPriority(1)
       if self.Filter.Zones then
         self.ZoneTimer = TIMER:New(self._ContinousZoneFilter,self)
         local timing = self.ZoneTimerInterval or 30
@@ -4343,6 +4375,43 @@ do -- SET_CLIENT
       self:_FilterStart()
     end
 
+    return self
+  end
+  
+  --- Handle CA slots addition
+  -- @param #SET_CLIENT self
+  -- @param Core.Event#EVENTDATA Event
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:_EventPlayerEnterUnit(Event)
+    self:I( "_EventPlayerEnterUnit" )
+    if Event.IniDCSUnit then
+      if Event.IniObjectCategory == 1 and Event.IniGroup and Event.IniGroup:IsGround() then
+        -- CA Slot entered
+        local ObjectName, Object = self:AddInDatabase( Event )
+        self:I( ObjectName, UTILS.PrintTableToLog(Object) )
+        if Object and self:IsIncludeObject( Object ) then
+          self:Add( ObjectName, Object )
+        end
+      end
+    end
+    return self
+  end
+  
+  --- Handle CA slots removal
+  -- @param #SET_CLIENT self
+  -- @param Core.Event#EVENTDATA Event
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:_EventPlayerLeaveUnit(Event)
+    self:I( "_EventPlayerLeaveUnit" )
+    if Event.IniDCSUnit then
+      if Event.IniObjectCategory == 1 and Event.IniGroup and Event.IniGroup:IsGround() then
+        -- CA Slot left
+        local ObjectName, Object = self:FindInDatabase( Event )
+        if ObjectName then
+          self:Remove( ObjectName )
+        end
+      end
+    end
     return self
   end
 
