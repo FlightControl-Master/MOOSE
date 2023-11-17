@@ -929,7 +929,7 @@ end
 function AIRBASE:GetWarehouse()
   local warehouse=nil --DCS#Warehouse
   local airbase=self:GetDCSObject()
-  if airbase then
+  if airbase and Airbase.getWarehouse then
     warehouse=airbase:getWarehouse()
   end
   return warehouse

@@ -544,7 +544,7 @@ do -- COORDINATE
       if ZoneObject then
 
         -- Get category of scanned object.
-        local ObjectCategory = ZoneObject:getCategory()
+        local ObjectCategory = Object.getCategory(ZoneObject)
 
         -- Check for unit or static objects
         if ObjectCategory==Object.Category.UNIT and ZoneObject:isExist() then

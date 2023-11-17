@@ -1093,11 +1093,8 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
     --if ZoneObject:isExist() then --FF: isExist always returns false for SCENERY objects since DCS 2.2 and still in DCS 2.5
     if ZoneObject then
 
-      local ObjectCategory = ZoneObject:getCategory()
-
-      --local name=ZoneObject:getName()
-      --env.info(string.format("Zone object %s", tostring(name)))
-      --self:E(ZoneObject)
+      -- Get object category.
+      local ObjectCategory = Object.getCategory(ZoneObject)
 
       if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive() ) or (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
 
@@ -2801,7 +2798,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
 
     if ZoneObject then
 
-      local ObjectCategory = ZoneObject:getCategory()
+      local ObjectCategory = Object.getCategory(ZoneObject)
       
       if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive() ) or (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
 
