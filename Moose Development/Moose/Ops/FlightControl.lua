@@ -351,7 +351,7 @@ FLIGHTCONTROL.Violation={
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.7.4"
+FLIGHTCONTROL.version="0.7.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -4974,11 +4974,21 @@ function FLIGHTCONTROL:SpawnParkingGuard(unit)
       -- Length of the unit + 3 meters.
       local size, x, y, z=unit:GetObjectSize()
 
+      local xdiff = 3
+      --Fix for hangars, puts the guy out front and not on top.
+      if AIRBASE._CheckTerminalType(spot.TerminalType, AIRBASE.TerminalType.Shelter) then
+          xdiff = 27-(x*0.5)
+      end
+
+      if (AIRBASE._CheckTerminalType(spot.TerminalType, AIRBASE.TerminalType.OpenMed) or AIRBASE._CheckTerminalType(spot.TerminalType, AIRBASE.TerminalType.Shelter)) and self.airbasename == AIRBASE.Sinai.Ramon_Airbase then
+          xdiff = 12
+      end
+
       -- Debug message.
-      self:T2(self.lid..string.format("Parking guard for %s: heading=%d, distance x=%.1f m", unit:GetName(), heading, x))
+      self:T2(self.lid..string.format("Parking guard for %s: heading=%d, length x=%.1f m, xdiff=%.1f m", unit:GetName(), heading, x, xdiff))
 
       -- Coordinate for the guard.
-      local Coordinate=coordinate:Translate(0.75*x+3, heading)
+      local Coordinate=coordinate:Translate(x*0.5+xdiff, heading)
 
       -- Let him face the aircraft.
       local lookat=heading-180

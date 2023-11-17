@@ -21,6 +21,7 @@
 -- @image Functional.Shorad.jpg
 --
 -- Date: Nov 2021
+-- Last Update: Nov 2023
 
 -------------------------------------------------------------------------
 --- **SHORAD** class, extends Core.Base#BASE
@@ -39,8 +40,11 @@
 -- @field #boolean DefendHarms Default true, intercept incoming HARMS
 -- @field #boolean DefendMavs Default true, intercept incoming AG-Missiles
 -- @field #number DefenseLowProb Default 70, minimum detection limit
--- @field #number DefenseHighProb Default 90, maximim detection limit
+-- @field #number DefenseHighProb Default 90, maximum detection limit
 -- @field #boolean UseEmOnOff Decide if we are using Emission on/off (default) or AlarmState red/green.
+-- @field #boolean shootandscoot
+-- @field #number SkateNumber
+-- @field Core.Set#SET_ZONE SkateZones  
 -- @extends Core.Base#BASE
 
 
@@ -99,7 +103,10 @@ SHORAD = {
   DefendMavs = true,
   DefenseLowProb = 70,
   DefenseHighProb = 90,
-  UseEmOnOff = false,  
+  UseEmOnOff = true,
+  shootandscoot = false,
+  SkateNumber = 3,
+  SkateZones = nil,
 }
 
 -----------------------------------------------------------------------
@@ -112,7 +119,6 @@ do
   -- @field Harms
   SHORAD.Harms = {
   ["AGM_88"] = "AGM_88",
-  ["AGM_45"] = "AGM_45",
   ["AGM_122"] = "AGM_122",
   ["AGM_84"] = "AGM_84",
   ["AGM_45"] = "AGM_45",
@@ -123,6 +129,8 @@ do
   ["X_25"] = "X_25",
   ["X_31"] = "X_31",
   ["Kh25"] = "Kh25",
+  ["HY-2"] = "HY-2",
+  ["ADM_141A"] = "ADM_141A",
   }
   
   --- TODO complete list?
@@ -134,7 +142,6 @@ do
   ["Kh29"] = "Kh29",
   ["Kh31"] = "Kh31",
   ["Kh66"] = "Kh66",
-  --["BGM_109"] = "BGM_109",
   }
   
   --- Instantiates a new SHORAD object
@@ -146,7 +153,7 @@ do
   -- @param #number ActiveTimer Determines how many seconds the systems stay on red alert after wake-up call
   -- @param #string Coalition Coalition, i.e. "blue", "red", or "neutral"
   -- @param #boolean UseEmOnOff Use Emissions On/Off rather than Alarm State Red/Green (default: use Emissions switch)
-  -- @retunr #SHORAD self
+  -- @return #SHORAD self
   function SHORAD:New(Name, ShoradPrefix, Samset, Radius, ActiveTimer, Coalition, UseEmOnOff) 
     local self = BASE:Inherit( self, FSM:New() )
     self:T({Name, ShoradPrefix, Samset, Radius, ActiveTimer, Coalition})
@@ -165,8 +172,9 @@ do
     self.DefendMavs = true
     self.DefenseLowProb = 70 -- probability to detect a missile shot, low margin
     self.DefenseHighProb = 90  -- probability to detect a missile shot, high margin
-    self.UseEmOnOff = UseEmOnOff or false -- Decide if we are using Emission on/off (default) or AlarmState red/green
-    self:I("*** SHORAD - Started Version 0.3.1")
+    self.UseEmOnOff = true -- Decide if we are using Emission on/off (default) or AlarmState red/green
+    if UseEmOnOff == false then self.UseEmOnOff = UseEmOnOff end
+    self:I("*** SHORAD - Started Version 0.3.2")
     -- Set the string id for output to DCS.log file.
     self.lid=string.format("SHORAD %s | ", self.name)
     self:_InitState()
@@ -176,12 +184,14 @@ do
     self:SetStartState("Running")
     self:AddTransition("*",             "WakeUpShorad",                 "*")
     self:AddTransition("*",             "CalculateHitZone",             "*")
+    self:AddTransition("*",             "ShootAndScoot",                "*")
     
     return self
   end
   
   --- Initially set all groups to alarm state GREEN
   -- @param #SHORAD self
+  -- @return #SHORAD self
   function SHORAD:_InitState()
     self:T(self.lid .. " _InitState")
     local table = {}
@@ -205,21 +215,36 @@ do
     return self
   end
   
+  --- Add a SET_ZONE of zones for Shoot&Scoot
+  -- @param #SHORAD self
+  -- @param Core.Set#SET_ZONE ZoneSet Set of zones to be used. Units will move around to the next (random) zone between 100m and 3000m away.
+  -- @param #number Number Number of closest zones to be considered, defaults to 3.
+  -- @return #SHORAD self
+  function SHORAD:AddScootZones(ZoneSet, Number)
+    self:T(self.lid .. " AddScootZones")
+    self.SkateZones = ZoneSet
+    self.SkateNumber = Number or 3
+    self.shootandscoot = true    
+    return self
+  end
+  
   --- Switch debug state on
   -- @param #SHORAD self
   -- @param #boolean debug Switch debug on (true) or off (false)
+  -- @return #SHORAD self 
   function SHORAD:SwitchDebug(onoff)
     self:T( { onoff } )
     if onoff then
       self:SwitchDebugOn()
     else
-      self.SwitchDebugOff()
+      self:SwitchDebugOff()
     end
     return self
   end
   
   --- Switch debug state on
   -- @param #SHORAD self
+  -- @return #SHORAD self 
   function SHORAD:SwitchDebugOn()
      self.debug = true
      --tracing
@@ -230,6 +255,7 @@ do
   
   --- Switch debug state off
   -- @param #SHORAD self
+  -- @return #SHORAD self 
   function SHORAD:SwitchDebugOff()
     self.debug = false
     BASE:TraceOff()
@@ -239,6 +265,7 @@ do
   --- Switch defense for HARMs
   -- @param #SHORAD self
   -- @param #boolean onoff
+  -- @return #SHORAD self 
   function SHORAD:SwitchHARMDefense(onoff)
     self:T( { onoff } )
     local onoff = onoff or true
@@ -249,6 +276,7 @@ do
   --- Switch defense for AGMs
   -- @param #SHORAD self
   -- @param #boolean onoff
+  -- @return #SHORAD self 
   function SHORAD:SwitchAGMDefense(onoff)
     self:T( { onoff } )
     local onoff = onoff or true
@@ -260,6 +288,7 @@ do
   -- @param #SHORAD self
   -- @param #number low Minimum detection limit, integer 1-100
   -- @param #number high Maximum detection limit integer 1-100
+  -- @return #SHORAD self 
   function SHORAD:SetDefenseLimits(low,high)
     self:T( { low, high } )
     local low = low or 70
@@ -278,6 +307,7 @@ do
   --- Set the number of seconds a SHORAD site will stay active
   -- @param #SHORAD self
   -- @param #number seconds Number of seconds systems stay active
+  -- @return #SHORAD self 
   function SHORAD:SetActiveTimer(seconds)
     self:T(self.lid .. " SetActiveTimer")
     local timer = seconds or 600
@@ -291,6 +321,7 @@ do
   --- Set the number of meters for the SHORAD defense zone
   -- @param #SHORAD self
   -- @param #number meters Radius of the defense search zone in meters. #SHORADs in this range around a targeted group will go active 
+  -- @return #SHORAD self 
   function SHORAD:SetDefenseRadius(meters)
   self:T(self.lid .. " SetDefenseRadius")
     local radius = meters or 20000
@@ -304,6 +335,7 @@ do
   --- Set using Emission on/off instead of changing alarm state
   -- @param #SHORAD self
   -- @param #boolean switch Decide if we are changing alarm state or AI state
+  -- @return #SHORAD self 
   function SHORAD:SetUsingEmOnOff(switch)
   self:T(self.lid .. " SetUsingEmOnOff")
     self.UseEmOnOff = switch or false
@@ -375,11 +407,11 @@ do
     local shorad = self.Groupset
     local shoradset = shorad:GetAliveSet() --#table
     local returnname = false
+    --local TDiff = 1
     for _,_groups in pairs (shoradset) do
       local groupname = _groups:GetName()
       if string.find(groupname, tgtgrp, 1, true) then
         returnname = true
-        --_groups:RelocateGroundRandomInRadius(7,100,false,false) -- be a bit evasive
       end
     end
     return returnname  
@@ -426,6 +458,7 @@ do
   -- @param #number Radius Radius of the #ZONE
   -- @param #number ActiveTimer Number of seconds to stay active
   -- @param #number TargetCat (optional) Category, i.e. Object.Category.UNIT or Object.Category.STATIC
+  -- @return #SHORAD self 
   -- @usage Use this function to integrate with other systems, example   
   -- 
   -- local SamSet = SET_GROUP:New():FilterPrefixes("Blue SAM"):FilterCoalitions("blue"):FilterStart()
@@ -452,28 +485,35 @@ do
     local targetzone = ZONE_RADIUS:New("Shorad",targetvec2,Radius)  -- create a defense zone to check
     local groupset = self.Groupset --Core.Set#SET_GROUP
     local shoradset = groupset:GetAliveSet() --#table
+    
     -- local function to switch off shorad again
     local function SleepShorad(group)
-      local groupname = group:GetName()
-      self.ActiveGroups[groupname] = nil
-      if self.UseEmOnOff then
-        group:EnableEmission(false)
-        --group:SetAIOff()
-      else
-        group:OptionAlarmStateGreen()
+      if group and group:IsAlive() then
+        local groupname = group:GetName()
+        self.ActiveGroups[groupname] = nil
+        if self.UseEmOnOff then
+          group:EnableEmission(false)
+        else
+          group:OptionAlarmStateGreen()
+        end
+        local text = string.format("Sleeping SHORAD %s", group:GetName())
+        self:T(text)
+        local m = MESSAGE:New(text,10,"SHORAD"):ToAllIf(self.debug)
+        --Shoot and Scoot
+        if self.shootandscoot then
+          self:__ShootAndScoot(1,group)
+        end
       end
-      local text = string.format("Sleeping SHORAD %s", group:GetName())
-      self:T(text)
-      local m = MESSAGE:New(text,10,"SHORAD"):ToAllIf(self.debug)
     end
+    
     -- go through set and find the one(s) to activate
+    local TDiff = 4
     for _,_group in pairs (shoradset) do
       if _group:IsAnyInZone(targetzone) then
         local text = string.format("Waking up SHORAD %s", _group:GetName())
         self:T(text)
         local m = MESSAGE:New(text,10,"SHORAD"):ToAllIf(self.debug)
         if self.UseEmOnOff then
-          --_group:SetAIOn()
           _group:EnableEmission(true)
         end
         _group:OptionAlarmStateRed()
@@ -481,91 +521,128 @@ do
         if self.ActiveGroups[groupname] == nil then -- no timer yet for this group
           self.ActiveGroups[groupname] = { Timing = ActiveTimer }
           local endtime = timer.getTime() + (ActiveTimer * math.random(75,100) / 100 ) -- randomize wakeup a bit
-          timer.scheduleFunction(SleepShorad, _group, endtime)
+          self.ActiveGroups[groupname].Timer = TIMER:New(SleepShorad,_group):Start(endtime)
+          --Shoot and Scoot
+          if self.shootandscoot then
+            self:__ShootAndScoot(TDiff,_group)
+            TDiff=TDiff+1
+          end
         end
       end
     end
     return self
   end
   
---- (Internal) Calculate hit zone of an AGM-88
--- @param #SHORAD self
--- @param #table SEADWeapon DCS.Weapon object
--- @param Core.Point#COORDINATE pos0 Position of the plane when it fired
--- @param #number height Height when the missile was fired
--- @param Wrapper.Group#GROUP SEADGroup Attacker group
--- @return #SHORAD self 
-function SHORAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADGroup)
-  self:T("**** Calculating hit zone")
-  if SEADWeapon and SEADWeapon:isExist() then
-    --local pos = SEADWeapon:getPoint()
+  --- (Internal) Calculate hit zone of an AGM-88
+  -- @param #SHORAD self
+  -- @param #table SEADWeapon DCS.Weapon object
+  -- @param Core.Point#COORDINATE pos0 Position of the plane when it fired
+  -- @param #number height Height when the missile was fired
+  -- @param Wrapper.Group#GROUP SEADGroup Attacker group
+  -- @return #SHORAD self 
+  function SHORAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADGroup)
+    self:T("**** Calculating hit zone")
+    if SEADWeapon and SEADWeapon:isExist() then
+      --local pos = SEADWeapon:getPoint()
+      
+      -- postion and height
+      local position = SEADWeapon:getPosition()
+      local mheight = height
+      -- heading
+      local wph = math.atan2(position.x.z, position.x.x)      
+      if wph < 0 then
+        wph=wph+2*math.pi
+      end   
+      wph=math.deg(wph)
+      
+      -- velocity
+      local wpndata = SEAD.HarmData["AGM_88"]
+      local mveloc = math.floor(wpndata[2] * 340.29)
+      local c1 = (2*mheight*9.81)/(mveloc^2)
+      local c2 = (mveloc^2) / 9.81
+      local Ropt = c2 * math.sqrt(c1+1) 
+      if height <= 5000 then
+        Ropt = Ropt * 0.72
+      elseif height <= 7500 then
+        Ropt = Ropt * 0.82  
+      elseif height <= 10000 then
+        Ropt = Ropt * 0.87
+      elseif height <= 12500 then
+        Ropt = Ropt * 0.98
+      end
+      
+      -- look at a couple of zones across the trajectory
+      for n=1,3 do
+        local dist = Ropt - ((n-1)*20000)
+        local predpos= pos0:Translate(dist,wph)
+        if predpos then
     
-    -- postion and height
-    local position = SEADWeapon:getPosition()
-    local mheight = height
-    -- heading
-    local wph = math.atan2(position.x.z, position.x.x)      
-    if wph < 0 then
-      wph=wph+2*math.pi
-    end   
-    wph=math.deg(wph)
-    
-    -- velocity
-    local wpndata = SEAD.HarmData["AGM_88"]
-    local mveloc = math.floor(wpndata[2] * 340.29)
-    local c1 = (2*mheight*9.81)/(mveloc^2)
-    local c2 = (mveloc^2) / 9.81
-    local Ropt = c2 * math.sqrt(c1+1) 
-    if height <= 5000 then
-      Ropt = Ropt * 0.72
-    elseif height <= 7500 then
-      Ropt = Ropt * 0.82  
-    elseif height <= 10000 then
-      Ropt = Ropt * 0.87
-    elseif height <= 12500 then
-      Ropt = Ropt * 0.98
+          local targetzone = ZONE_RADIUS:New("Target Zone",predpos:GetVec2(),20000)
+          
+          if self.debug then
+            predpos:MarkToAll(string.format("height=%dm | heading=%d | velocity=%ddeg | Ropt=%dm",mheight,wph,mveloc,Ropt),false)
+            targetzone:DrawZone(coalition.side.BLUE,{0,0,1},0.2,nil,nil,3,true)
+          end  
+          
+          local seadset = self.Groupset
+          local tgtcoord = targetzone:GetRandomPointVec2()
+          local tgtgrp = seadset:FindNearestGroupFromPointVec2(tgtcoord)
+          local _targetgroup = nil
+          local _targetgroupname = "none"
+          local _targetskill = "Random"
+          if tgtgrp and tgtgrp:IsAlive() then
+            _targetgroup = tgtgrp
+            _targetgroupname = tgtgrp:GetName() -- group name
+            _targetskill = tgtgrp:GetUnit(1):GetSkill()
+            self:T("*** Found Target = ".. _targetgroupname)
+            self:WakeUpShorad(_targetgroupname, self.Radius, self.ActiveTimer, Object.Category.UNIT)
+          end
+        end
+      end     
     end
-    
-    -- look at a couple of zones across the trajectory
-    for n=1,3 do
-      local dist = Ropt - ((n-1)*20000)
-      local predpos= pos0:Translate(dist,wph)
-      if predpos then
+    return self
+  end
   
-        local targetzone = ZONE_RADIUS:New("Target Zone",predpos:GetVec2(),20000)
-        
-        if self.debug then
-          predpos:MarkToAll(string.format("height=%dm | heading=%d | velocity=%ddeg | Ropt=%dm",mheight,wph,mveloc,Ropt),false)
-          targetzone:DrawZone(coalition.side.BLUE,{0,0,1},0.2,nil,nil,3,true)
-        end  
-        
-        local seadset = self.Groupset
-        local tgtcoord = targetzone:GetRandomPointVec2()
-        local tgtgrp = seadset:FindNearestGroupFromPointVec2(tgtcoord)
-        local _targetgroup = nil
-        local _targetgroupname = "none"
-        local _targetskill = "Random"
-        if tgtgrp and tgtgrp:IsAlive() then
-          _targetgroup = tgtgrp
-          _targetgroupname = tgtgrp:GetName() -- group name
-          _targetskill = tgtgrp:GetUnit(1):GetSkill()
-          self:T("*** Found Target = ".. _targetgroupname)
-          self:WakeUpShorad(_targetgroupname, self.Radius, self.ActiveTimer, Object.Category.UNIT)
+  --- (Internal) Shoot and Scoot
+  -- @param #SHORAD self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param Wrapper.Group#GROUP Shorad Shorad group
+  -- @return #SHORAD self 
+  function SHORAD:onafterShootAndScoot(From,Event,To,Shorad)
+    self:T( { From,Event,To } )
+    local possibleZones = {}
+    local mindist = 100
+    local maxdist = 3000
+    if Shorad and Shorad:IsAlive() then
+      local NowCoord = Shorad:GetCoordinate()
+      for _,_zone in pairs(self.SkateZones.Set) do
+        local zone = _zone -- Core.Zone#ZONE_RADIUS
+        local dist = NowCoord:Get2DDistance(zone:GetCoordinate())
+        if dist >= mindist and dist <= maxdist then
+          possibleZones[#possibleZones+1] = zone
+          if #possibleZones == self.SkateNumber then break end
         end
       end
-    end     
+      if #possibleZones > 0 and Shorad:GetVelocityKMH() < 2 then
+        local rand = math.floor(math.random(1,#possibleZones*1000)/1000+0.5)
+        if rand == 0 then rand = 1 end
+        self:T(self.lid .. " ShootAndScoot to zone "..rand)
+        local ToCoordinate = possibleZones[rand]:GetCoordinate()
+        Shorad:RouteGroundTo(ToCoordinate,20,"Cone",1)
+      end
+    end
+    return self
   end
-  return self
-end
   
   --- Main function - work on the EventData
   -- @param #SHORAD self
   -- @param Core.Event#EVENTDATA EventData The event details table data set
+  -- @return #SHORAD self 
   function SHORAD:HandleEventShot( EventData )
     self:T( { EventData } )
     self:T(self.lid .. " HandleEventShot")
-    --local ShootingUnit = EventData.IniDCSUnit
-    --local ShootingUnitName = EventData.IniDCSUnitName
     local ShootingWeapon = EventData.Weapon -- Identify the weapon fired
     local ShootingWeaponName = EventData.WeaponName -- return weapon type
     -- get firing coalition
@@ -596,27 +673,18 @@ end
           return self
         end
         
-        local targetcat = targetdata:getCategory() -- Identify category
+        local targetcat = Object.getCategory(targetdata) -- Identify category
         self:T(string.format("Target Category (3=STATIC, 1=UNIT)= %s",tostring(targetcat)))
         self:T({targetdata})
         local targetunit = nil
         if targetcat == Object.Category.UNIT then -- UNIT
           targetunit = UNIT:Find(targetdata)
         elseif targetcat == Object.Category.STATIC then  -- STATIC
-          --self:T("Static Target Data")
-          --self:T({targetdata:isExist()})
-          --self:T({targetdata:getPoint()})
           local tgtcoord = COORDINATE:NewFromVec3(targetdata:getPoint())
-          --tgtcoord:MarkToAll("Missile Target",true)
-          
-          local tgtgrp1 = self.Samset:FindNearestGroupFromPointVec2(tgtcoord)
+         local tgtgrp1 = self.Samset:FindNearestGroupFromPointVec2(tgtcoord)
           local tgtcoord1 = tgtgrp1:GetCoordinate()
-          --tgtcoord1:MarkToAll("Close target SAM",true)
-          
           local tgtgrp2 = self.Groupset:FindNearestGroupFromPointVec2(tgtcoord)
           local tgtcoord2 = tgtgrp2:GetCoordinate()
-          --tgtcoord2:MarkToAll("Close target SHORAD",true)
-          
           local dist1 = tgtcoord:Get2DDistance(tgtcoord1)
           local dist2 = tgtcoord:Get2DDistance(tgtcoord2)
           
@@ -628,10 +696,8 @@ end
             targetcat = Object.Category.UNIT
           end
         end   
-        --local targetunitname = Unit.getName(targetdata) -- Unit name
         if targetunit and targetunit:IsAlive() then
           local targetunitname = targetunit:GetName()
-          --local targetgroup = Unit.getGroup(Weapon.getTarget(ShootingWeapon)) --targeted group
           local targetgroup = nil
           local targetgroupname = "none"
           if targetcat == Object.Category.UNIT then
@@ -649,7 +715,6 @@ end
           self:T( text )
           local m = MESSAGE:New(text,10,"Info"):ToAllIf(self.debug)
           -- check if we or a SAM site are the target 
-          --local TargetGroup = EventData.TgtGroup -- Wrapper.Group#GROUP
           local shotatus = self:_CheckShotAtShorad(targetgroupname) --#boolean
           local shotatsams = self:_CheckShotAtSams(targetgroupname) --#boolean
           -- if being shot at, find closest SHORADs to activate

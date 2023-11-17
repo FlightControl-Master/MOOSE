@@ -1552,7 +1552,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.62"
+PLAYERTASKCONTROLLER.version="0.1.63"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -1585,7 +1585,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.TaskQueue = FIFO:New() -- Utilities.FiFo#FIFO
   self.TasksPerPlayer = FIFO:New() -- Utilities.FiFo#FIFO
   self.PrecisionTasks = FIFO:New() -- Utilities.FiFo#FIFO
-  self.PlayerMenu = {} -- #table
+  --self.PlayerMenu = {} -- #table
   self.FlashPlayer = {} -- #table
   self.AllowFlash = false
   self.lasttaskcount = 0
@@ -2175,10 +2175,10 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
   if EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
     if EventData.IniPlayerName then
       self:T(self.lid.."Event for player: "..EventData.IniPlayerName)
-      if self.PlayerMenu[EventData.IniPlayerName] then
-        self.PlayerMenu[EventData.IniPlayerName]:Remove()
-        self.PlayerMenu[EventData.IniPlayerName] = nil
-      end
+      --if self.PlayerMenu[EventData.IniPlayerName] then
+        --self.PlayerMenu[EventData.IniPlayerName]:Remove()
+        --self.PlayerMenu[EventData.IniPlayerName] = nil
+      --end
         local text = ""
         if self.TasksPerPlayer:HasUniqueID(EventData.IniPlayerName) then
           local task = self.TasksPerPlayer:PullByID(EventData.IniPlayerName) -- Ops.PlayerTask#PLAYERTASK
@@ -2187,6 +2187,8 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
             task:RemoveClient(Client)
             --text = "Task aborted!"
             text = self.gettext:GetEntry("TASKABORT",self.locale)
+            self.ActiveTaskMenuTemplate:ResetMenu(Client)
+            self.JoinTaskMenuTemplate:ResetMenu(Client)
           else
             task:RemoveClient(nil,EventData.IniPlayerName)
             --text = "Task aborted!"
@@ -2236,8 +2238,8 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
         self.SRSQueue:NewTransmission(text,nil,self.SRS,timer.getAbsTime()+60,2,{EventData.IniGroup},text,30,self.BCFrequency,self.BCModulation)
       end
       if EventData.IniPlayerName then
-        self.PlayerMenu[EventData.IniPlayerName] = nil
-        local player = CLIENT:FindByName(EventData.IniUnitName)
+        --self.PlayerMenu[EventData.IniPlayerName] = nil
+        local player = _DATABASE:FindClient( EventData.IniUnitName )
         self:_SwitchMenuForClient(player,"Info")
       end
     end
@@ -2949,7 +2951,7 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
     task:HandleEvent(EVENTS.Shot)
     function task:OnEventShot(EventData)
       local data = EventData -- Core.Event#EVENTDATA EventData
-      local wcat = data.Weapon:getCategory() -- cat 2 or 3
+      local wcat = Object.getCategory(data.Weapon) -- cat 2 or 3
       local coord = data.IniUnit:GetCoordinate() or data.IniGroup:GetCoordinate()
       local vec2 = coord:GetVec2()  or {x=0, y=0}
       local coal = data.IniCoalition

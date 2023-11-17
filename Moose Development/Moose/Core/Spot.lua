@@ -329,14 +329,14 @@ do
     if self.Lasing then
       if self.Target and self.Target:IsAlive() then
         
-        self.SpotIR:setPoint( self.Target:GetPointVec3():AddY(1):AddY(math.random(-100,100)/100):AddX(math.random(-100,100)/100):GetVec3() )
+        self.SpotIR:setPoint( self.Target:GetPointVec3():AddY(1):AddY(math.random(-100,100)/200):AddX(math.random(-100,100)/200):GetVec3() )
         self.SpotLaser:setPoint( self.Target:GetPointVec3():AddY(1):GetVec3() )
         
         self:__Lasing(0.2)
       elseif self.TargetCoord then
       
         -- Wiggle the IR spot a bit.  
-        local irvec3={x=self.TargetCoord.x+math.random(-100,100)/100, y=self.TargetCoord.y+math.random(-100,100)/100, z=self.TargetCoord.z} --#DCS.Vec3
+        local irvec3={x=self.TargetCoord.x+math.random(-100,100)/200, y=self.TargetCoord.y+math.random(-100,100)/200, z=self.TargetCoord.z} --#DCS.Vec3
         local lsvec3={x=self.TargetCoord.x, y=self.TargetCoord.y, z=self.TargetCoord.z} --#DCS.Vec3
         
         self.SpotIR:setPoint(irvec3)

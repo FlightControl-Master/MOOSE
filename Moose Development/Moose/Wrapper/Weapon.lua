@@ -367,7 +367,7 @@ function WEAPON:GetTarget()
     if object then
     
       -- Get object category.
-      local category=object:getCategory()
+      local category=Object.getCategory(object)
       
       --Target name
       local name=object:getName()

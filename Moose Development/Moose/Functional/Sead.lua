@@ -19,7 +19,7 @@
 --
 -- ### Authors: **FlightControl**, **applevangelist**
 --
--- Last Update: September 2023
+-- Last Update: Oct 2023
 --
 -- ===
 --
@@ -34,7 +34,7 @@
 --
 -- This class is very easy to use. Just setup a SEAD object by using @{#SEAD.New}() and SAMs will evade and take defensive action when being fired upon.
 -- Once a HARM attack is detected, SEAD will shut down the radars of the attacked SAM site and take evasive action by moving the SAM
--- vehicles around (*if* they are drivable, that is). There's a component of randomness in detection and evasion, which is based on the
+-- vehicles around (*if* they are driveable, that is). There's a component of randomness in detection and evasion, which is based on the
 -- skill set of the SAM set (the higher the skill, the more likely). When a missile is fired from far away, the SAM will stay active for a 
 -- period of time to stay defensive, before it takes evasive actions.
 -- 
@@ -66,7 +66,6 @@ SEAD = {
   -- @field Harms
   SEAD.Harms = {
   ["AGM_88"] = "AGM_88",
-  --["AGM_45"] = "AGM_45",
   ["AGM_122"] = "AGM_122",
   ["AGM_84"] = "AGM_84",
   ["AGM_45"] = "AGM_45",
@@ -80,6 +79,7 @@ SEAD = {
   ["BGM_109"] = "BGM_109",
   ["AGM_154"] = "AGM_154",
   ["HY-2"] = "HY-2",
+  ["ADM_141A"] = "ADM_141A",
   }
 
   --- Missile enumerators - from DCS ME and Wikipedia
@@ -100,6 +100,7 @@ SEAD = {
   ["BGM_109"] = {460, 0.705}, --in-game ~465kn
   ["AGM_154"] = {130, 0.61},
   ["HY-2"] = {90,1},
+  ["ADM_141A"] = {126,0.6},
   }
 
 --- Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.
@@ -143,7 +144,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   self:AddTransition("*",             "ManageEvasion",                "*")
   self:AddTransition("*",             "CalculateHitZone",             "*")
   
-  self:I("*** SEAD - Started Version 0.4.4")
+  self:I("*** SEAD - Started Version 0.4.5")
   return self
 end
 
@@ -348,8 +349,9 @@ end
 -- @param #string SEADWeaponName
 -- @param Wrapper.Group#GROUP SEADGroup Attacker Group
 -- @param #number timeoffset Offset for tti calc
+-- @param Wrapper.Weapon#WEAPON Weapon
 -- @return #SEAD self 
-function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADPlanePos,SEADWeaponName,SEADGroup,timeoffset)
+function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADPlanePos,SEADWeaponName,SEADGroup,timeoffset,Weapon)
   local timeoffset = timeoffset  or 0
   if _targetskill == "Random" then -- when skill is random, choose a skill
     local Skills = { "Average", "Good", "High", "Excellent" }
@@ -372,6 +374,10 @@ function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADP
         reach = wpndata[1] * 1.1
         local mach = wpndata[2]
         wpnspeed = math.floor(mach * 340.29)
+        if Weapon then
+          wpnspeed = Weapon:GetSpeed()
+          self:T(string.format("*** SEAD - Weapon Speed from WEAPON: %f m/s",wpnspeed))
+        end
       end
       -- time to impact
       local _tti = math.floor(_distance / wpnspeed) - timeoffset -- estimated impact time
@@ -457,6 +463,9 @@ function SEAD:HandleEventShot( EventData )
   local SEADWeapon = EventData.Weapon -- Identify the weapon fired
   local SEADWeaponName = EventData.WeaponName -- return weapon type
 
+  local WeaponWrapper = WEAPON:New(EventData.Weapon)
+  --local SEADWeaponSpeed = WeaponWrapper:GetSpeed() -- mps
+  
   self:T( "*** SEAD - Missile Launched = " .. SEADWeaponName)
   --self:T({ SEADWeapon })
 
@@ -475,7 +484,7 @@ function SEAD:HandleEventShot( EventData )
       end
       return self
     end
-    local targetcat = _target:getCategory() -- Identify category
+    local targetcat = Object.getCategory(_target) -- Identify category
     local _targetUnit = nil -- Wrapper.Unit#UNIT
     local _targetgroup = nil -- Wrapper.Group#GROUP
     self:T(string.format("*** Targetcat = %d",targetcat))
@@ -513,7 +522,11 @@ function SEAD:HandleEventShot( EventData )
       end
     end
     if SEADGroupFound == true then -- yes we are being attacked
-      self:ManageEvasion(_targetskill,_targetgroup,SEADPlanePos,SEADWeaponName,SEADGroup)
+      if string.find(SEADWeaponName,"ADM_141",1,true) then
+        self:__ManageEvasion(2,_targetskill,_targetgroup,SEADPlanePos,SEADWeaponName,SEADGroup,0,WeaponWrapper)
+      else
+        self:ManageEvasion(_targetskill,_targetgroup,SEADPlanePos,SEADWeaponName,SEADGroup,0,WeaponWrapper)
+      end
     end
   end
   return self

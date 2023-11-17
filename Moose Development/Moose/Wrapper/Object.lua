@@ -4,7 +4,7 @@
 -- 
 -- ### Author: **FlightControl**
 -- 
--- ### Contributions: 
+-- ### Contributions: **funkyfranky
 -- 
 -- ===
 -- 
@@ -12,12 +12,13 @@
 -- @image MOOSE.JPG
 
 
---- @type OBJECT
+--- OBJECT class.
+-- @type OBJECT
 -- @extends Core.Base#BASE
 -- @field #string ObjectName The name of the Object.
 
 
---- Wrapper class to hendle the DCS Object objects.
+--- Wrapper class to handle the DCS Object objects.
 --
 --  * Support all DCS Object APIs.
 --  * Enhance with Object specific APIs not in the DCS Object API set.
@@ -43,9 +44,15 @@ OBJECT = {
 -- @param #OBJECT self
 -- @param DCS#Object ObjectName The Object name
 -- @return #OBJECT self
-function OBJECT:New( ObjectName, Test )
+function OBJECT:New( ObjectName)
+
+  -- Inherit BASE class.
   local self = BASE:Inherit( self, BASE:New() )
+  
+  -- Debug output.
   self:F2( ObjectName )
+  
+  -- Set object name.
   self.ObjectName = ObjectName
 
   return self
@@ -64,15 +71,14 @@ function OBJECT:GetID()
     return ObjectID
   end 
 
-  BASE:E( { "Cannot GetID", Name = self.ObjectName, Class = self:GetClassName() } )
+  self:E( { "Cannot GetID", Name = self.ObjectName, Class = self:GetClassName() } )
 
   return nil
 end
 
 --- Destroys the OBJECT.
 -- @param #OBJECT self
--- @return #boolean true if the object is destroyed.
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return #boolean Returns `true` if the object is destroyed or #nil if the object is nil.
 function OBJECT:Destroy()
 
   local DCSObject = self:GetDCSObject()
@@ -83,7 +89,7 @@ function OBJECT:Destroy()
     return true
   end
 
-  BASE:E( { "Cannot Destroy", Name = self.ObjectName, Class = self:GetClassName() } )
+  self:E( { "Cannot Destroy", Name = self.ObjectName, Class = self:GetClassName() } )
 
   return nil
 end

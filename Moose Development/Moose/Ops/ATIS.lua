@@ -2512,7 +2512,7 @@ function ATIS:onafterBroadcast( From, Event, To )
 
   if not self.ATISforFARPs then
     -- Active runway.
-    local subtitle
+    local subtitle = ""
     if runwayLanding then
       local actrun = self.gettext:GetEntry("ACTIVELANDING",self.locale)
       --subtitle=string.format("Active runway landing %s", runwayLanding)

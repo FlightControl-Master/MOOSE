@@ -11,7 +11,7 @@ on:
     branches: ["master"]
     paths:
       - 'docs/**'
-      - '.github/workflows/pages.yml'
+      - '.github/workflows/gh-pages.yml'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -75,4 +75,4 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
       - run: npm install linkinator
-      - run: npx linkinator https://flightcontrol-master.github.io/MOOSE/ --recurse
+      - run: npx linkinator https://flightcontrol-master.github.io/MOOSE/ --verbosity error --timeout 5000 --recurse --skip "(java.com)"
