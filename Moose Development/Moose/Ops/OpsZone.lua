@@ -1025,7 +1025,7 @@ function OPSZONE:Scan()
     if ZoneObject then
 
       -- Object category.
-      local ObjectCategory=ZoneObject:getCategory()
+      local ObjectCategory=Object.getCategory(ZoneObject)
 
       if ObjectCategory==Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive() then
       
