@@ -2951,7 +2951,7 @@ function PLAYERTASKCONTROLLER:_AddTask(Target)
     task:HandleEvent(EVENTS.Shot)
     function task:OnEventShot(EventData)
       local data = EventData -- Core.Event#EVENTDATA EventData
-      local wcat = data.Weapon:getCategory() -- cat 2 or 3
+      local wcat = Object.getCategory(data.Weapon) -- cat 2 or 3
       local coord = data.IniUnit:GetCoordinate() or data.IniGroup:GetCoordinate()
       local vec2 = coord:GetVec2()  or {x=0, y=0}
       local coal = data.IniCoalition
