@@ -24,7 +24,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update October 2023
+-- Last Update November 2023
 
 do 
 
@@ -741,7 +741,7 @@ do
 -- 
 --        -- E.g. update unit capabilities for testing. Please stay realistic in your mission design.
 --        -- Make a Gazelle into a heavy truck, this type can load both crates and troops and eight of each type, up to 4000 kgs:
---        my_ctld:UnitCapabilities("SA342L", true, true, 8, 8, 12, 4000)
+--        my_ctld:SetUnitCapabilities("SA342L", true, true, 8, 8, 12, 4000)
 --        
 --        -- Default unit type capabilities are: 
 --        ["SA342Mistral"] = {type="SA342Mistral", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12, cargoweightlimit = 400},
@@ -1200,14 +1200,14 @@ CTLD.CargoZoneType = {
 -- @field #CTLD_CARGO.Enum Type Type enumerator (for moves).
 
 --- Unit capabilities.
--- @type CTLD.UnitCapabilities
+-- @type CTLD.UnitTypeCapabilities
 -- @field #string type Unit type.
 -- @field #boolean crates Can transport crate.
 -- @field #boolean troops Can transport troops.
 -- @field #number cratelimit Number of crates transportable.
 -- @field #number trooplimit Number of troop units transportable.
 -- @field #number cargoweightlimit Max loadable kgs of cargo.
-CTLD.UnitTypes = {
+CTLD.UnitTypeCapabilities = {
     ["SA342Mistral"] = {type="SA342Mistral", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12, cargoweightlimit = 400},
     ["SA342L"] = {type="SA342L", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12, cargoweightlimit = 400},
     ["SA342M"] = {type="SA342M", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12, cargoweightlimit = 400},
@@ -1228,7 +1228,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.41"
+CTLD.version="1.0.42"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1680,7 +1680,7 @@ function CTLD:_GetUnitCapabilities(Unit)
   self:T(self.lid .. " _GetUnitCapabilities")
   local _unit = Unit -- Wrapper.Unit#UNIT
   local unittype = _unit:GetTypeName()
-  local capabilities = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
+  local capabilities = self.UnitTypeCapabilities[unittype] -- #CTLD.UnitTypeCapabilities
   if not capabilities or capabilities == {} then
     -- e.g. ["Ka-50"] = {type="Ka-50", crates=false, troops=false, cratelimit = 0, trooplimit = 0},
     capabilities = {}
@@ -1871,7 +1871,7 @@ function CTLD:_PreloadCrates(Group, Unit, Cargo, NumberOfCrates)
   local unitname = unit:GetName()
   -- see if this heli can load crates
   local unittype = unit:GetTypeName()
-  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitCapabilities
+  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitTypeCapabilities
   local cancrates = capabilities.crates -- #boolean
   local cratelimit = capabilities.cratelimit -- #number
   if not cancrates then
@@ -2308,7 +2308,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
   end
 
   -- avoid crate spam
-  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitCapabilities
+  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitTypeCapabilities
   local canloadcratesno = capabilities.cratelimit
   local loaddist = self.CrateDistance or 35
   local nearcrates, numbernearby = self:_FindCratesNearby(Group,Unit,loaddist,true)
@@ -2601,8 +2601,8 @@ function CTLD:_LoadCratesNearby(Group, Unit)
   local unitname = unit:GetName()
   -- see if this heli can load crates
   local unittype = unit:GetTypeName()
-  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitCapabilities
-  --local capabilities = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
+  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitTypeCapabilities
+  --local capabilities = self.UnitTypeCapabilities[unittype] -- #CTLD.UnitTypeCapabilities
   local cancrates = capabilities.crates -- #boolean
   local cratelimit = capabilities.cratelimit -- #number
   local grounded = not self:IsUnitInAir(Unit)
@@ -2753,7 +2753,7 @@ function CTLD:_GetMaxLoadableMass(Unit)
   if not Unit then return 0 end
   local loadable = 0
   local loadedmass = self:_GetUnitCargoMass(Unit)
-  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitCapabilities
+  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitTypeCapabilities
   local maxmass = capabilities.cargoweightlimit or 2000 -- max 2 tons
   loadable = maxmass - loadedmass
   return loadable
@@ -2778,7 +2778,7 @@ function CTLD:_ListCargo(Group, Unit)
   self:T(self.lid .. " _ListCargo")
   local unitname = Unit:GetName()
   local unittype = Unit:GetTypeName()
-  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitCapabilities
+  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitTypeCapabilities
   local trooplimit = capabilities.trooplimit -- #boolean
   local cratelimit = capabilities.cratelimit -- #number
   local loadedcargo = self.Loaded_Cargo[unitname] or {} -- #CTLD.LoadedCargo
@@ -3536,13 +3536,19 @@ function CTLD:_RefreshF10Menus()
         if _group then
           -- get chopper capabilities
           local unittype = _unit:GetTypeName()
-          local capabilities = self:_GetUnitCapabilities(_unit) -- #CTLD.UnitCapabilities
+          local capabilities = self:_GetUnitCapabilities(_unit) -- #CTLD.UnitTypeCapabilities
           local cantroops = capabilities.troops
           local cancrates = capabilities.crates
           -- top menu
           local topmenu = MENU_GROUP:New(_group,"CTLD",nil)
-          local toptroops = MENU_GROUP:New(_group,"Manage Troops",topmenu)
-          local topcrates = MENU_GROUP:New(_group,"Manage Crates",topmenu)
+          local toptroops = nil
+          local topcrates = nil
+          if cantroops then
+            toptroops = MENU_GROUP:New(_group,"Manage Troops",topmenu)
+          end
+          if cancrates then
+            topcrates = MENU_GROUP:New(_group,"Manage Crates",topmenu)
+          end
           local listmenu = MENU_GROUP_COMMAND:New(_group,"List boarded cargo",topmenu, self._ListCargo, self, _group, _unit)
           local invtry = MENU_GROUP_COMMAND:New(_group,"Inventory",topmenu, self._ListInventory, self, _group, _unit)
           local rbcns = MENU_GROUP_COMMAND:New(_group,"List active zone beacons",topmenu, self._ListRadioBeacons, self, _group, _unit)
@@ -4339,7 +4345,7 @@ end
   -- @param #number Trooplimit Unit can carry number of troops. Default 0.
   -- @param #number Length Unit lenght (in metres) for the load radius. Default 20.
   -- @param #number Maxcargoweight Maxmimum weight in kgs this helo can carry. Default 500.
-  function CTLD:UnitCapabilities(Unittype, Cancrates, Cantroops, Cratelimit, Trooplimit, Length, Maxcargoweight)
+  function CTLD:SetUnitCapabilities(Unittype, Cancrates, Cantroops, Cratelimit, Trooplimit, Length, Maxcargoweight)
     self:T(self.lid .. " UnitCapabilities")
     local unittype =  nil
     local unit = nil
@@ -4353,13 +4359,13 @@ end
     end
     local length = 20
     local maxcargo = 500
-    local existingcaps = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
+    local existingcaps = self.UnitTypeCapabilities[unittype] -- #CTLD.UnitTypeCapabilities
     if existingcaps then
       length = existingcaps.length or 20
       maxcargo = existingcaps.cargoweightlimit or 500
     end
     -- set capabilities
-    local capabilities = {} -- #CTLD.UnitCapabilities
+    local capabilities = {} -- #CTLD.UnitTypeCapabilities
     capabilities.type = unittype
     capabilities.crates = Cancrates or false
     capabilities.troops = Cantroops or false
@@ -4367,7 +4373,7 @@ end
     capabilities.trooplimit = Trooplimit or 0
     capabilities.length = Length or length
     capabilities.cargoweightlimit = Maxcargoweight or maxcargo
-    self.UnitTypes[unittype] = capabilities
+    self.UnitTypeCapabilities[unittype] = capabilities
     return self
   end
   
@@ -4523,7 +4529,7 @@ end
     local unittype = Unit:GetTypeName()
     local unitname = Unit:GetName()
     local Group = Unit:GetGroup()
-    local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitCapabilities
+    local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitTypeCapabilities
     local cancrates = capabilities.crates -- #boolean
     local cratelimit = capabilities.cratelimit -- #number
     if cancrates then
