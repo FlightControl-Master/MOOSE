@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: Oct 2023
+-- Last Update: Nov 2023
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -1809,7 +1809,7 @@ do
       self.Shorad.Groupset=self.ShoradGroupSet
       self.Shorad.debug = self.debug
     end
-    if self.shootandscoot and self.SkateZones then
+    if self.shootandscoot and self.SkateZones and self.Shorad then
       self.Shorad:AddScootZones(self.SkateZones,self.SkateNumber or 3)
     end
     self:__Status(-math.random(1,10))
