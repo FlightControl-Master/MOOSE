@@ -4377,6 +4377,22 @@ end
     return self
   end
   
+  --- [Deprecated] - Function to add/adjust unittype capabilities. Has been replaced with `SetUnitCapabilities()` - pls use the new one going forward!
+  -- @param #CTLD self
+  -- @param #string Unittype The unittype to adjust. If passed as Wrapper.Unit#UNIT, it will search for the unit in the mission.
+  -- @param #boolean Cancrates Unit can load crates. Default false.
+  -- @param #boolean Cantroops Unit can load troops. Default false.
+  -- @param #number Cratelimit Unit can carry number of crates. Default 0.
+  -- @param #number Trooplimit Unit can carry number of troops. Default 0.
+  -- @param #number Length Unit lenght (in metres) for the load radius. Default 20.
+  -- @param #number Maxcargoweight Maxmimum weight in kgs this helo can carry. Default 500.
+  function CTLD:UnitCapabilities(Unittype, Cancrates, Cantroops, Cratelimit, Trooplimit, Length, Maxcargoweight)
+    self:I(self.lid.."This function been replaced with `SetUnitCapabilities()` - pls use the new one going forward!")
+    self:SetUnitCapabilities(Unittype, Cancrates, Cantroops, Cratelimit, Trooplimit, Length, Maxcargoweight)
+    return self
+  end
+  
+  
   --- (Internal) Check if a unit is hovering *in parameters*.
   -- @param #CTLD self
   -- @param Wrapper.Unit#UNIT Unit
