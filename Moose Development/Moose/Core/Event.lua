@@ -1245,11 +1245,14 @@ function EVENT:onEvent( Event )
           Event.TgtDCSUnit = Event.target
           if Event.target:isExist() and Event.id ~= 33 then -- leave out ejected seat object
             Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
-            Event.TgtUnitName = Event.TgtDCSUnitName
-            Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
-            Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
-            Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
-            Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+            -- Workaround for borked target info on cruise missiles
+            if Event.TgtDCSUnitName and Event.TgtDCSUnitName ~= "" then
+              Event.TgtUnitName = Event.TgtDCSUnitName
+              Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
+              Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
+              Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
+              Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+            end
           else
             Event.TgtDCSUnitName = string.format("No target object for Event ID %s", tostring(Event.id))
             Event.TgtUnitName = Event.TgtDCSUnitName
