@@ -1228,7 +1228,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.42"
+CTLD.version="1.0.43"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1293,6 +1293,8 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self:AddTransition("*",             "CratesDropped",       "*")           -- CTLD deploy  event.  
   self:AddTransition("*",             "CratesBuild",         "*")           -- CTLD build  event.
   self:AddTransition("*",             "CratesRepaired",      "*")           -- CTLD repair  event.
+  self:AddTransition("*",             "CratesBuildStarted",  "*")           -- CTLD build  event.
+  self:AddTransition("*",             "CratesRepairStarted", "*")           -- CTLD repair  event.
   self:AddTransition("*",             "Load",                "*")           -- CTLD load  event.  
   self:AddTransition("*",             "Save",                "*")           -- CTLD save  event.      
   self:AddTransition("*",             "Stop",                "Stopped")     -- Stop FSM.
@@ -1475,7 +1477,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #CTLD self
   -- @param #number delay Delay in seconds.
   
-    --- FSM Function OnBeforeTroopsPickedUp.
+  --- FSM Function OnBeforeTroopsPickedUp.
   -- @function [parent=#CTLD] OnBeforeTroopsPickedUp
   -- @param #CTLD self
   -- @param #string From State.
@@ -1625,6 +1627,46 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
   -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB build.
+  -- @return #CTLD self
+
+  --- FSM Function OnAfterCratesBuildStarted. Info event that a build has been started.
+  -- @function [parent=#CTLD] OnAfterCratesBuildStarted
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @return #CTLD self
+
+  --- FSM Function OnAfterCratesRepairStarted. Info event that a repair has been started.
+  -- @function [parent=#CTLD] OnAfterCratesRepairStarted
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @return #CTLD self
+
+  --- FSM Function OnBeforeCratesBuildStarted. Info event that a build has been started.
+  -- @function [parent=#CTLD] OnBeforeCratesBuildStarted
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @return #CTLD self
+
+  --- FSM Function OnBeforeCratesRepairStarted. Info event that a repair has been started.
+  -- @function [parent=#CTLD] OnBeforeCratesRepairStarted
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
   -- @return #CTLD self
 
   --- FSM Function OnAfterCratesRepaired.
@@ -2124,6 +2166,7 @@ function CTLD:_RepairObjectFromCrates(Group,Unit,Crates,Build,Number,Engineering
     desttimer:Start(self.repairtime - 1)
     local buildtimer = TIMER:New(self._BuildObjectFromCrates,self,Group,Unit,object,true,NearestGroup:GetCoordinate())
     buildtimer:Start(self.repairtime)
+    self:__CratesRepairStarted(1,Group,Unit)
   else
     if not Engineering then
       self:_SendMessage("Can't repair this unit with " .. build.Name, 10, false, Group)
@@ -3226,6 +3269,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering)
               local buildtimer = TIMER:New(self._BuildObjectFromCrates,self,Group,Unit,build,false,Group:GetCoordinate())
               buildtimer:Start(self.buildtime)
               self:_SendMessage(string.format("Build started, ready in %d seconds!",self.buildtime),15,false,Group)
+              self:__CratesBuildStarted(1,Group,Unit)
           else
             self:_BuildObjectFromCrates(Group,Unit,build)
           end
