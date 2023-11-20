@@ -41,10 +41,14 @@
 -- @field #boolean DefendMavs Default true, intercept incoming AG-Missiles
 -- @field #number DefenseLowProb Default 70, minimum detection limit
 -- @field #number DefenseHighProb Default 90, maximum detection limit
--- @field #boolean UseEmOnOff Decide if we are using Emission on/off (default) or AlarmState red/green.
--- @field #boolean shootandscoot
--- @field #number SkateNumber
--- @field Core.Set#SET_ZONE SkateZones  
+-- @field #boolean UseEmOnOff Decide if we are using Emission on/off (default) or AlarmState red/green
+-- @field #boolean shootandscoot If true, shoot and scoot between zones
+-- @field #number SkateNumber Number of zones to consider
+-- @field Core.Set#SET_ZONE SkateZones Zones in this set are considered
+-- @field #number minscootdist Min distance of the next zone
+-- @field #number maxscootdist Max distance of the next zone
+-- @field #boolean scootrandomcoord If true, use a random coordinate in the zone and not the center
+-- @field #string scootformation Formation to take for scooting, e.g. "Vee" or "Cone"  
 -- @extends Core.Base#BASE
 
 
@@ -77,14 +81,15 @@
 --    
 --        `myshorad = SHORAD:New("RedShorad", "Red SHORAD", SamSet, 25000, 600, "red")`       
 --
--- ## Customize options   
+-- ## Customization options   
 --  
---  * SHORAD:SwitchDebug(debug)
---  * SHORAD:SwitchHARMDefense(onoff)
---  * SHORAD:SwitchAGMDefense(onoff)
---  * SHORAD:SetDefenseLimits(low,high)
---  * SHORAD:SetActiveTimer(seconds)
---  * SHORAD:SetDefenseRadius(meters)
+--  * myshorad:SwitchDebug(debug)
+--  * myshorad:SwitchHARMDefense(onoff)
+--  * myshorad:SwitchAGMDefense(onoff)
+--  * myshorad:SetDefenseLimits(low,high)
+--  * myshorad:SetActiveTimer(seconds)
+--  * myshorad:SetDefenseRadius(meters)
+--  * myshorad:AddScootZones(ZoneSet,Number,Random,Formation)
 --
 -- @field #SHORAD
 SHORAD = {
@@ -107,6 +112,9 @@ SHORAD = {
   shootandscoot = false,
   SkateNumber = 3,
   SkateZones = nil,
+  minscootdist = 100,
+  minscootdist = 3000,
+  scootrandomcoord = false,  
 }
 
 -----------------------------------------------------------------------
@@ -174,7 +182,7 @@ do
     self.DefenseHighProb = 90  -- probability to detect a missile shot, high margin
     self.UseEmOnOff = true -- Decide if we are using Emission on/off (default) or AlarmState red/green
     if UseEmOnOff == false then self.UseEmOnOff = UseEmOnOff end
-    self:I("*** SHORAD - Started Version 0.3.2")
+    self:I("*** SHORAD - Started Version 0.3.4")
     -- Set the string id for output to DCS.log file.
     self.lid=string.format("SHORAD %s | ", self.name)
     self:_InitState()
@@ -219,12 +227,16 @@ do
   -- @param #SHORAD self
   -- @param Core.Set#SET_ZONE ZoneSet Set of zones to be used. Units will move around to the next (random) zone between 100m and 3000m away.
   -- @param #number Number Number of closest zones to be considered, defaults to 3.
+  -- @param #boolean Random If true, use a random coordinate inside the next zone to scoot to.
+  -- @param #string Formation Formation to use, defaults to "Cone". See mission editor dropdown for options.
   -- @return #SHORAD self
-  function SHORAD:AddScootZones(ZoneSet, Number)
+  function SHORAD:AddScootZones(ZoneSet, Number, Random, Formation)
     self:T(self.lid .. " AddScootZones")
     self.SkateZones = ZoneSet
     self.SkateNumber = Number or 3
-    self.shootandscoot = true    
+    self.shootandscoot = true
+    self.scootrandomcoord = Random
+    self.scootformation = Formation or "Cone"   
     return self
   end
   
@@ -613,8 +625,8 @@ do
   function SHORAD:onafterShootAndScoot(From,Event,To,Shorad)
     self:T( { From,Event,To } )
     local possibleZones = {}
-    local mindist = 100
-    local maxdist = 3000
+    local mindist = self.minscootdist or 100
+    local maxdist = self.maxscootdist or 3000
     if Shorad and Shorad:IsAlive() then
       local NowCoord = Shorad:GetCoordinate()
       for _,_zone in pairs(self.SkateZones.Set) do
@@ -630,7 +642,11 @@ do
         if rand == 0 then rand = 1 end
         self:T(self.lid .. " ShootAndScoot to zone "..rand)
         local ToCoordinate = possibleZones[rand]:GetCoordinate()
-        Shorad:RouteGroundTo(ToCoordinate,20,"Cone",1)
+        if self.scootrandomcoord then
+          ToCoordinate = possibleZones[rand]:GetRandomCoordinate(nil,nil,{land.SurfaceType.LAND,land.SurfaceType.ROAD})         
+        end
+        local formation = self.scootformation or "Cone"
+        Shorad:RouteGroundTo(ToCoordinate,20,formation,1)
       end
     end
     return self

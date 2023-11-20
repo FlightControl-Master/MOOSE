@@ -261,6 +261,15 @@ EVENTS = {
   SimulationStart           = world.event.S_EVENT_SIMULATION_START or -1,
   WeaponRearm               = world.event.S_EVENT_WEAPON_REARM or -1,
   WeaponDrop                = world.event.S_EVENT_WEAPON_DROP or -1,
+  -- Added with DCS 2.9.0
+  UnitTaskTimeout           = world.event.S_EVENT_UNIT_TASK_TIMEOUT or -1,
+  UnitTaskStage             = world.event.S_EVENT_UNIT_TASK_STAGE or -1,
+  MacSubtaskScore           = world.event.S_EVENT_MAC_SUBTASK_SCORE or -1, 
+  MacExtraScore             = world.event.S_EVENT_MAC_EXTRA_SCORE or -1,
+  MissionRestart            = world.event.S_EVENT_MISSION_RESTART or -1,
+  MissionWinner             = world.event.S_EVENT_MISSION_WINNER or -1, 
+  PostponedTakeoff          = world.event.S_EVENT_POSTPONED_TAKEOFF or -1, 
+  PostponedLand             = world.event.S_EVENT_POSTPONED_LAND or -1, 
 }
 
 --- The Event structure
@@ -636,6 +645,55 @@ local _EVENTMETA = {
      Event = "OnEventWeaponDrop",
      Text = "S_EVENT_WEAPON_DROP"
    },
+   -- DCS 2.9
+  [EVENTS.UnitTaskTimeout] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventUnitTaskTimeout",
+     Text = "S_EVENT_UNIT_TASK_TIMEOUT "
+   },
+  [EVENTS.UnitTaskStage] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventUnitTaskStage",
+     Text = "S_EVENT_UNIT_TASK_STAGE "
+   },
+  [EVENTS.MacSubtaskScore] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventMacSubtaskScore",
+     Text = "S_EVENT_MAC_SUBTASK_SCORE"
+   },
+  [EVENTS.MacExtraScore] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventMacExtraScore",
+     Text = "S_EVENT_MAC_EXTRA_SCOREP"
+   },
+  [EVENTS.MissionRestart] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventMissionRestart",
+     Text = "S_EVENT_MISSION_RESTART"
+   },
+  [EVENTS.MissionWinner] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventMissionWinner",
+     Text = "S_EVENT_MISSION_WINNER"
+   },
+  [EVENTS.PostponedTakeoff] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventPostponedTakeoff",
+     Text = "S_EVENT_POSTPONED_TAKEOFF"
+   },
+  [EVENTS.PostponedLand] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventPostponedLand",
+     Text = "S_EVENT_POSTPONED_LAND"
+   }, 
 }
 
 --- The Events structure
@@ -1245,11 +1303,14 @@ function EVENT:onEvent( Event )
           Event.TgtDCSUnit = Event.target
           if Event.target:isExist() and Event.id ~= 33 then -- leave out ejected seat object
             Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
-            Event.TgtUnitName = Event.TgtDCSUnitName
-            Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
-            Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
-            Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
-            Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+            -- Workaround for borked target info on cruise missiles
+            if Event.TgtDCSUnitName and Event.TgtDCSUnitName ~= "" then
+              Event.TgtUnitName = Event.TgtDCSUnitName
+              Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
+              Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
+              Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
+              Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+            end
           else
             Event.TgtDCSUnitName = string.format("No target object for Event ID %s", tostring(Event.id))
             Event.TgtUnitName = Event.TgtDCSUnitName
