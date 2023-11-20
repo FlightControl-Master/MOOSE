@@ -2391,7 +2391,7 @@ function UTILS.LoadFromFile(Path,Filename)
   -- Check if file exists.
   local exists=UTILS.CheckFileExists(Path,Filename)
   if not exists then
-    BASE:E(string.format("ERROR: File %s does not exist!",filename))
+    BASE:I(string.format("ERROR: File %s does not exist!",filename))
     return false
   end
     
