@@ -1170,7 +1170,7 @@ end
 --  This will populate variables for the MSRS raw class and all instances you create with e.g. `mysrs = MSRS:New()`
 --  Optionally you can also load this per **single instance** if so needed, i.e.
 --    
---         mysrs:LoadConfig(Path,Filename)
+--         mysrs:LoadConfigFile(Path,Filename)
 --         
 --  4) Use the config in your code like so, variable names are basically the same as in the config file, but all lower case, examples:
 --  
