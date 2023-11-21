@@ -1579,7 +1579,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.ClusterRadius = 0.5
   self.TargetRadius = 500
   
-  self.ClientFilter = ClientFilter or ""
+  self.ClientFilter = ClientFilter --or ""
   
   self.TargetQueue = FIFO:New() -- Utilities.FiFo#FIFO
   self.TaskQueue = FIFO:New() -- Utilities.FiFo#FIFO
