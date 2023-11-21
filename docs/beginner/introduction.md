@@ -37,12 +37,12 @@ videos on YouTube.
 in applications. It's main advantages are:
 
 - It is fast,
-- it is portabel (Windows, Linux, MacOS),
+- it is portable (Windows, Linux, MacOS),
 - it is easy to use.
 
-[Lua] is embedded in DCS, so we can use it without any modifacation to the game.
+[Lua] is embedded in DCS, so we can use it without any modification to the game.
 
-## What is are scripts, frameworks and classes?
+## What are scripts, frameworks and classes?
 
 A script is a set of instructions in plain text read by a computer and processed
 on the fly. Scripts do not need to be compiled before execution, unlike exe

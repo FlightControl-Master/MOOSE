@@ -377,9 +377,7 @@ function MSRS:New(PathToSRS, Frequency, Modulation, Volume, AltBackend)
     return self:_NewAltBackend(Backend)
   end
   
-  local success = self:LoadConfigFile(nil,nil,self.ConfigLoaded)
-  
-  if (not success) and (not self.ConfigLoaded) then
+  if not self.ConfigLoaded then
   
     -- If no AltBackend table, the proceed with default initialisation
     self:SetPath(PathToSRS)
@@ -446,7 +444,7 @@ function MSRS:SetPath(Path)
     end
     
     -- Debug output.
-    self:I(string.format("SRS path=%s", self:GetPath()))
+    self:T(string.format("SRS path=%s", self:GetPath()))
   end
   return self
 end
@@ -1128,7 +1126,6 @@ end
 -- @param #MSRS self
 -- @param #string Path Path to config file, defaults to "C:\Users\<yourname>\Saved Games\DCS\Config"
 -- @param #string Filename File to load, defaults to "Moose_MSRS.lua"
--- @param #boolean ConfigLoaded - if true, skip the loading
 -- @return #boolean success
 -- @usage
 --  0) Benefits: Centralize configuration of SRS, keep paths and keys out of the mission source code, making it safer and easier to move missions to/between servers,
@@ -1190,46 +1187,17 @@ end
 --          atis:SetSRS(nil,nil,nil,MSRS.Voices.Google.Standard.en_US_Standard_H)
 --          --Start ATIS
 --          atis:Start()
-function MSRS:LoadConfigFile(Path,Filename,ConfigLoaded)
+function MSRS:LoadConfigFile(Path,Filename)
   
   local path = Path or lfs.writedir()..MSRS.ConfigFilePath 
   local file = Filename or MSRS.ConfigFileName or "Moose_MSRS.lua"
+  local pathandfile = path..file
+  local filexsists =  UTILS.FileExists(pathandfile)
   
-  if UTILS.CheckFileExists(path,file) and not ConfigLoaded then
+  if filexsists and not MSRS.ConfigLoaded then
     assert(loadfile(path..file))()
     -- now we should have a global var MSRS_Config
     if MSRS_Config then
-      --[[
-          -- Moose MSRS default Config
-          MSRS_Config = {
-            Path = "C:\\Program Files\\DCS-SimpleRadio-Standalone", -- adjust as needed
-            Port = 5002, -- adjust as needed
-            Frequency = {127,243}, -- must be a table, 1..n entries!
-            Modulation = {0,0}, -- must be a table, 1..n entries, one for each frequency!
-            Volume = 1.0,
-            Coalition = 0,  -- 0 = Neutral, 1 = Red, 2 = Blue
-            Coordinate = {0,0,0}, -- x,y,alt - optional
-            Culture = "en-GB",
-            Gender = "male",
-            Google = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\yourfilename.json", -- path to google json key file - optional
-            Label = "MSRS",
-            Voice = "Microsoft Hazel Desktop",
-            -- gRPC (optional)
-            GRPC = { -- see https://github.com/DCS-gRPC/rust-server
-              coalition = "blue", -- blue, red, neutral
-              DefaultProvider = "gcloud", -- win, gcloud, aws, or azure, some of the values below depend on your cloud provider
-              gcloud = {
-                key = "<API Google Key>", -- for gRPC Google API key
-                --secret = "", -- needed for aws
-                --region = "",-- needed for aws
-                defaultVoice = MSRS.Voices.Google.Standard.en_GB_Standard_F,
-              },
-              win = {
-                defaultVoice = "Hazel",
-              },
-            }
-          }
-    --]]
       if self then
         self.path = MSRS_Config.Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
         self.port = MSRS_Config.Port or 5002
@@ -1281,8 +1249,9 @@ function MSRS:LoadConfigFile(Path,Filename,ConfigLoaded)
       end
     end
     env.info("MSRS - Sucessfully loaded default configuration from disk!",false)
-  else
-    env.info("MSRS - Cannot load default configuration from disk!",false)
+  end
+  if not filexsists then
+    env.info("MSRS - Cannot find default configuration file!",false)
     return false
   end
   
@@ -1995,6 +1964,7 @@ function MSRSQUEUE:_CheckRadioQueue(delay)
   
 end
 
+MSRS.LoadConfigFile()
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
