@@ -5,7 +5,7 @@
 -- **Main Features:**
 --
 --    * Play sound files via SRS
---    * Play text-to-speach via SRS
+--    * Play text-to-speech via SRS
 --
 -- ===
 --
@@ -64,6 +64,16 @@
 -- ## Prerequisites
 -- 
 -- This script needs SRS version >= 1.9.6.
+-- 
+-- ## Knwon Issues
+-- 
+-- ### Pop-up Window
+-- 
+-- The text-to-speech conversion of SRS is done via an external exe file. When this file is called, a windows `cmd` window is briefly opended. That puts DCS out of focus, which is annoying,
+-- expecially in VR but unavoidable (if you have a solution, please feel free to share!).
+-- 
+-- NOTE that this is not an issue if the mission is running on a server.
+-- Also NOTE that using DCS-gRPC as backend will avoid the pop-up window.
 -- 
 -- # Play Sound Files
 -- 
@@ -188,7 +198,7 @@ MSRS = {
   gender         =   "female",
   culture        =        nil,  
   voice          =        nil,
-  volume         =          1,  
+  volume         =          1,
   speed          =          1,
   coordinate     =        nil,
   Label          =    "ROBOT",
@@ -201,7 +211,7 @@ MSRS = {
 
 --- MSRS class version.
 -- @field #string version
-MSRS.version="0.1.3"
+MSRS.version="0.2.0"
 
 --- Voices
 -- @type MSRS.Voices
@@ -304,7 +314,20 @@ MSRS.Voices = {
     },
   }
 
----
+--- Text-to-speech providers. These are compatible with the DCS-gRPC conventions.
+-- @type MSRS.Provider
+-- @field #string WINDOWS Microsoft windows (`win`).
+-- @field #string GOOGLE Google (`gcloud`).
+-- @field #string AZURE Microsoft Azure (`azure`).
+-- @field #string AMAZON Amazon Web Service (`asw`).
+MSRS.Provider = {
+  WINDOWS = "win",
+  GOOGLE  = "gcloud",
+  AZURE   = "azure",
+  AMAZON  = "asw",
+}
+
+--- Provider options.
 -- @type MSRS.ProviderOptions
 -- @field #string key
 -- @field #string secret
@@ -312,7 +335,7 @@ MSRS.Voices = {
 -- @field #string defaultVoice
 -- @field #string voice
 
---- GRPC options
+--- GRPC options.
 -- @type MSRS.GRPCOptions
 -- @field #string plaintext
 -- @field #string srsClientName
@@ -339,6 +362,8 @@ MSRS.GRPCOptions.DefaultProvider = "win"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Refactoring of input/config file.
+-- TODO: Refactoring gRPC backend.
 -- TODO: Add functions to remove freqs and modulations.
 -- DONE: Add coordinate.
 -- DONE: Add google.
@@ -354,7 +379,7 @@ MSRS.GRPCOptions.DefaultProvider = "win"
 -- @param #string PathToSRS Path to the directory, where SRS is located.
 -- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. Can also be given as a #table of multiple frequencies.
 -- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a #table of multiple modulations.
--- @param #number Volume Volume - 1.0 is max, 0.0 is silence
+-- @param #number Volume Volume - 1.0 is max, 0.0 is silence.
 -- @param #table AltBackend Optional table containing tables 'Functions' and 'Vars' which add/replace functions and variables for the MSRS instance to allow alternate backends for transmitting to SRS.
 -- @return #MSRS self
 function MSRS:New(PathToSRS, Frequency, Modulation, Volume, AltBackend)
@@ -534,13 +559,8 @@ end
 -- @param #table Frequencies Frequencies in MHz. Can also be given as a #number if only one frequency should be used.
 -- @return #MSRS self
 function MSRS:SetFrequencies(Frequencies)
-
-  -- Ensure table.
-  if type(Frequencies)~="table" then
-    Frequencies={Frequencies}
-  end
   
-  self.frequencies=Frequencies
+  self.frequencies=UTILS.EnsureTable(Frequencies, false)
   
   return self
 end
@@ -551,12 +571,8 @@ end
 -- @return #MSRS self
 function MSRS:AddFrequencies(Frequencies)
 
-  -- Ensure table.
-  if type(Frequencies)~="table" then
-    Frequencies={Frequencies}
-  end
-  
-  for _,_freq in pairs(Frequencies) do
+  for _,_freq in pairs(UTILS.EnsureTable(Frequencies, false)) do
+    self:T(self.lid..string.format("Adding frequency %s", tostring(_freq)))
     table.insert(self.frequencies,_freq)
   end
   
@@ -576,13 +592,12 @@ end
 -- @param #table Modulations Modulations. Can also be given as a #number if only one modulation should be used.
 -- @return #MSRS self
 function MSRS:SetModulations(Modulations)
-
-  -- Ensure table.
-  if type(Modulations)~="table" then
-    Modulations={Modulations}
-  end
   
-  self.modulations=Modulations
+  self.modulations=UTILS.EnsureTable(Modulations, false)
+  
+  -- Debug info.
+  self:T(self.lid.."Modulations:")
+  self:T(self.modulations)
   
   return self
 end
@@ -592,13 +607,8 @@ end
 -- @param #table Modulations Modulations. Can also be given as a #number if only one modulation should be used.
 -- @return #MSRS self
 function MSRS:AddModulations(Modulations)
-
-  -- Ensure table.
-  if type(Modulations)~="table" then
-    Modulations={Modulations}
-  end
   
-   for _,_mod in pairs(Modulations) do
+   for _,_mod in pairs(UTILS.EnsureTable(Modulations, false)) do
     table.insert(self.modulations,_mod)
    end
   
