@@ -1266,7 +1266,7 @@ function MSRS:LoadConfigFile(Path,Filename)
         MSRS.gender = MSRS_Config.Gender or "male"
         MSRS.google = MSRS_Config.Google
         if MSRS_Config.Provider then
-          self.ttsprovider = MSRS_Config.Provider
+          MSRS.ttsprovider = MSRS_Config.Provider
         end
         MSRS.Label = MSRS_Config.Label or "MSRS"
         MSRS.voice = MSRS_Config.Voice --or MSRS.Voices.Microsoft.Hazel
