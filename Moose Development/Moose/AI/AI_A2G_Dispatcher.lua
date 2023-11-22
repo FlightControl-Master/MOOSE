@@ -1351,14 +1351,14 @@ do -- AI_A2G_DISPATCHER
   --   1. the **distance of the closest airbase to target**, being smaller than the **Defend Radius**.
   --   2. the **distance to any defense reference point**.
   -- 
-  -- The **default** defense radius is defined as **400000** or **40km**. Override the default defense radius when the era of the warfare is early, or, 
+  -- The **default** defense radius is defined as **40000** or **40km**. Override the default defense radius when the era of the warfare is early, or, 
   -- when you don't want to let the AI_A2G_DISPATCHER react immediately when a certain border or area is not being crossed.
   -- 
   -- Use the method @{#AI_A2G_DISPATCHER.SetDefendRadius}() to set a specific defend radius for all squadrons,
   -- **the Defense Radius is defined for ALL squadrons which are operational.**
   -- 
   -- @param #AI_A2G_DISPATCHER self
-  -- @param #number DefenseRadius (Optional, Default = 200000) The defense radius to engage detected targets from the nearest capable and available squadron airbase.
+  -- @param #number DefenseRadius (Optional, Default = 20000) The defense radius to engage detected targets from the nearest capable and available squadron airbase.
   -- @return #AI_A2G_DISPATCHER
   -- @usage
   -- 
@@ -1373,7 +1373,7 @@ do -- AI_A2G_DISPATCHER
   --   
   function AI_A2G_DISPATCHER:SetDefenseRadius( DefenseRadius )
 
-    self.DefenseRadius = DefenseRadius or 100000
+    self.DefenseRadius = DefenseRadius or 40000
     
     self.Detection:SetAcceptRange( self.DefenseRadius ) 
   
