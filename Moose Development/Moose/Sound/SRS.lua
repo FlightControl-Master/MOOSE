@@ -50,6 +50,7 @@
 -- @field #string ConfigFileName Name of the standard config file
 -- @field #string ConfigFilePath Path to the standard config file
 -- @field #boolean ConfigLoaded
+-- @field #string ttsprovider Default provider TTS backend, e.g. "Google" or "Microsoft", default is Microsoft
 -- @extends Core.Base#BASE
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -127,6 +128,10 @@
 -- 
 -- Use @{#MSRS.SetVolume} to define the SRS volume. Defaults to 1.0. Allowed values are between 0.0 and 1.0, from silent to loudest.
 -- 
+-- ## Config file for many variables, auto-loaded by Moose
+-- 
+-- See @{#MSRS.LoadConfigFile} for details on how to set this up.
+-- 
 -- ## Set DCS-gRPC as an alternative to 'DCS-SR-ExternalAudio.exe' for TTS 
 --
 -- Use @{#MSRS.SetDefaultBackendGRPC} to enable [DCS-gRPC](https://github.com/DCS-gRPC/rust-server) as an alternate backend for transmitting text-to-speech over SRS.
@@ -191,11 +196,12 @@ MSRS = {
   ConfigFileName =    "Moose_MSRS.lua",
   ConfigFilePath =    "Config\\",
   ConfigLoaded   =     false,
+  ttsprovider    =     "Microsoft",
 }
 
 --- MSRS class version.
 -- @field #string version
-MSRS.version="0.1.2"
+MSRS.version="0.1.3"
 
 --- Voices
 -- @type MSRS.Voices
@@ -672,7 +678,7 @@ function MSRS:SetCoordinate(Coordinate)
   return self
 end
 
---- Use google text-to-speech.
+--- Use google text-to-speech credentials. Also sets Google as default TTS provider.
 -- @param #MSRS self
 -- @param #string PathToCredentials Full path to the google credentials JSON file, e.g. "C:\Users\username\Downloads\service-account-file.json". Can also be the Google API key.
 -- @return #MSRS self
@@ -686,13 +692,14 @@ function MSRS:SetGoogle(PathToCredentials)
     
     self.GRPCOptions.DefaultProvider = "gcloud"
     self.GRPCOptions.gcloud.key = PathToCredentials
+    self.ttsprovider = "Google"
   
   end
   
   return self
 end
 
---- Use google text-to-speech.
+--- gRPC Backend: Use google text-to-speech set the API key.
 -- @param #MSRS self
 -- @param #string APIKey API Key, usually a string of length 40 with characters and numbers.
 -- @return #MSRS self
@@ -703,6 +710,22 @@ function MSRS:SetGoogleAPIKey(APIKey)
     self.GRPCOptions.DefaultProvider = "gcloud"
     self.GRPCOptions.gcloud.key = APIKey
   end
+  return self
+end
+
+--- Use Google text-to-speech as default.
+-- @param #MSRS self
+-- @return #MSRS self
+function MSRS:SetTTSProviderGoogle()
+  self.ttsprovider = "Google"
+  return self
+end
+
+--- Use Microsoft text-to-speech as default.
+-- @param #MSRS self
+-- @return #MSRS self
+function MSRS:SetTTSProviderMicrosoft()
+  self.ttsprovider = "Microsoft"
   return self
 end
 
@@ -1112,7 +1135,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   end
   
   -- Set google.
-  if self.google then
+  if self.google and self.ttsprovider == "Google" then
     command=command..string.format(' --ssml -G "%s"', self.google)
   end
   
@@ -1135,18 +1158,19 @@ end
 --
 --          -- Moose MSRS default Config
 --          MSRS_Config = {
---            Path = "C:\\Program Files\\DCS-SimpleRadio-Standalone", -- adjust as needed
+--            Path = "C:\\Program Files\\DCS-SimpleRadio-Standalone", -- adjust as needed, note double  \\
 --            Port = 5002, -- adjust as needed
 --            Frequency = {127,243}, -- must be a table, 1..n entries!
 --            Modulation = {0,0}, -- must be a table, 1..n entries, one for each frequency!
---            Volume = 1.0,
+--            Volume = 1.0, -- 0.0 to 1.0
 --            Coalition = 0,  -- 0 = Neutral, 1 = Red, 2 = Blue
---            Coordinate = {0,0,0}, -- x,y,alt - optional
+--            Coordinate = {0,0,0}, -- x,y,altitude - optional, all in meters
 --            Culture = "en-GB",
 --            Gender = "male",
---            Google = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\yourfilename.json", -- path to google json key file - optional
+--            Google = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\yourfilename.json", -- path to google json key file - optional.
 --            Label = "MSRS",
 --            Voice = "Microsoft Hazel Desktop",
+--            Provider = "Microsoft", -- this is the default TTS provider, e.g. "Google" or "Microsoft"
 --            -- gRPC (optional)
 --            GRPC = { -- see https://github.com/DCS-gRPC/rust-server
 --              coalition = "blue", -- blue, red, neutral
@@ -1163,9 +1187,13 @@ end
 --            }
 --          }
 --  
---  3) Load the config into the MSRS raw class before you do anything else:
+--  3) The config file is automatically loaded when Moose starts. YOu can also load the config into the MSRS raw class manually before you do anything else:
 --  
 --         MSRS.LoadConfigFile() -- Note the "." here
+-- 
+--  Optionally, your might want to provide a specific path and filename:
+--  
+--         MSRS.LoadConfigFile(nil,MyPath,MyFilename) -- Note the "." here
 --         
 --  This will populate variables for the MSRS raw class and all instances you create with e.g. `mysrs = MSRS:New()`
 --  Optionally you can also load this per **single instance** if so needed, i.e.
@@ -1210,6 +1238,9 @@ function MSRS:LoadConfigFile(Path,Filename)
         self.culture = MSRS_Config.Culture or "en-GB"
         self.gender = MSRS_Config.Gender or "male"
         self.google = MSRS_Config.Google
+        if MSRS_Config.Provider then
+          self.ttsprovider = MSRS_Config.Provider
+        end
         self.Label = MSRS_Config.Label or "MSRS"
         self.voice = MSRS_Config.Voice --or MSRS.Voices.Microsoft.Hazel
         if MSRS_Config.GRPC then
@@ -1234,6 +1265,9 @@ function MSRS:LoadConfigFile(Path,Filename)
         MSRS.culture = MSRS_Config.Culture or "en-GB"
         MSRS.gender = MSRS_Config.Gender or "male"
         MSRS.google = MSRS_Config.Google
+        if MSRS_Config.Provider then
+          self.ttsprovider = MSRS_Config.Provider
+        end
         MSRS.Label = MSRS_Config.Label or "MSRS"
         MSRS.voice = MSRS_Config.Voice --or MSRS.Voices.Microsoft.Hazel
         if MSRS_Config.GRPC then
@@ -1248,7 +1282,7 @@ function MSRS:LoadConfigFile(Path,Filename)
         MSRS.ConfigLoaded = true
       end
     end
-    env.info("MSRS - Sucessfully loaded default configuration from disk!",false)
+    env.info("MSRS - Successfully loaded default configuration from disk!",false)
   end
   if not filexsists then
     env.info("MSRS - Cannot find default configuration file!",false)
