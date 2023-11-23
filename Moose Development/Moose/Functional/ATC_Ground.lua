@@ -53,7 +53,7 @@ function ATC_GROUND:New( Airbases, AirbaseList )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() ) -- #ATC_GROUND
-  self:E( { self.ClassName, Airbases } )
+  self:T( { self.ClassName, Airbases } )
 
   self.Airbases = Airbases
   self.AirbaseList = AirbaseList
@@ -260,7 +260,7 @@ function ATC_GROUND:_AirbaseMonitor()
         local IsOnGround = Client:InAir() == false
 
         for AirbaseID, AirbaseMeta in pairs( self.Airbases ) do
-          self:E( AirbaseID, AirbaseMeta.KickSpeed )
+          self:T( AirbaseID, AirbaseMeta.KickSpeed )
   
           if AirbaseMeta.Monitor == true and Client:IsInZone( AirbaseMeta.ZoneBoundary )  then
 
@@ -273,7 +273,7 @@ function ATC_GROUND:_AirbaseMonitor()
               
               if IsOnGround then
                 local Taxi = Client:GetState( self, "Taxi" )
-                self:E( Taxi )
+                self:T( Taxi )
                 if Taxi == false then
                   local Velocity = VELOCITY:New( AirbaseMeta.KickSpeed or self.KickSpeed )
                   Client:Message( "Welcome to " .. AirbaseID .. ". The maximum taxiing speed is " .. 
@@ -439,7 +439,7 @@ function ATC_GROUND_UNIVERSAL:New(AirbaseList)
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() ) -- #ATC_GROUND
-  self:E( { self.ClassName } )
+  self:T( { self.ClassName } )
 
   self.Airbases = {}
 
@@ -696,9 +696,9 @@ end
 -- @param #ATC_GROUND_UNIVERSAL self
 -- @return #ATC_GROUND_UNIVERSAL self
 function ATC_GROUND_UNIVERSAL:_AirbaseMonitor()
-
+  self:I("_AirbaseMonitor")
   self.SetClient:ForEachClient(
-    -- @param Wrapper.Client#CLIENT Client
+    --- @param Wrapper.Client#CLIENT Client
     function( Client )
 
       if Client:IsAlive() then
@@ -706,7 +706,7 @@ function ATC_GROUND_UNIVERSAL:_AirbaseMonitor()
         local IsOnGround = Client:InAir() == false
 
         for AirbaseID, AirbaseMeta in pairs( self.Airbases ) do
-          self:E( AirbaseID, AirbaseMeta.KickSpeed )
+          self:T( AirbaseID, AirbaseMeta.KickSpeed )
   
           if AirbaseMeta.Monitor == true and Client:IsInZone( AirbaseMeta.ZoneBoundary )  then
 
@@ -723,7 +723,7 @@ function ATC_GROUND_UNIVERSAL:_AirbaseMonitor()
               
               if IsOnGround then
                 local Taxi = Client:GetState( self, "Taxi" )
-                self:E( Taxi )
+                self:T( Taxi )
                 if Taxi == false then
                   local Velocity = VELOCITY:New( AirbaseMeta.KickSpeed or self.KickSpeed )
                   Client:Message( "Welcome to " .. AirbaseID .. ". The maximum taxiing speed is " .. 
@@ -859,7 +859,7 @@ end
 -- @return #ATC_GROUND_UNIVERSAL self
 function ATC_GROUND_UNIVERSAL:Start( RepeatScanSeconds )
   RepeatScanSeconds = RepeatScanSeconds or 0.05
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, RepeatScanSeconds )
   return self
 end
 
@@ -999,7 +999,7 @@ end
 -- @return nothing
 function ATC_GROUND_CAUCASUS:Start( RepeatScanSeconds )
   RepeatScanSeconds = RepeatScanSeconds or 0.05
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, RepeatScanSeconds )
 end
 
 
@@ -1138,7 +1138,7 @@ end
 -- @return nothing
 function ATC_GROUND_NEVADA:Start( RepeatScanSeconds )
   RepeatScanSeconds = RepeatScanSeconds or 0.05
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, RepeatScanSeconds )
 end
 
 ---
@@ -1295,7 +1295,7 @@ end
 -- @return nothing
 function ATC_GROUND_NORMANDY:Start( RepeatScanSeconds )
   RepeatScanSeconds = RepeatScanSeconds or 0.05
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, RepeatScanSeconds )
 end
 
 ---
@@ -1438,7 +1438,7 @@ end
 -- @return nothing
 function ATC_GROUND_PERSIANGULF:Start( RepeatScanSeconds )
   RepeatScanSeconds = RepeatScanSeconds or 0.05
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, RepeatScanSeconds )
 end
           
 
@@ -1562,5 +1562,5 @@ end
 -- @return nothing
 function ATC_GROUND_MARIANAISLANDS:Start( RepeatScanSeconds )
   RepeatScanSeconds = RepeatScanSeconds or 0.05
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, RepeatScanSeconds )
 end
