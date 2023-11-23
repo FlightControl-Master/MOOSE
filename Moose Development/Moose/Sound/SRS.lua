@@ -1216,7 +1216,13 @@ end
 --          --Start ATIS
 --          atis:Start()
 function MSRS:LoadConfigFile(Path,Filename)
-  
+  if not lfs then
+    env.info("MSRS - Config load, lfs is not available!",false)
+    return
+  end
+  if not os then
+    env.info("MSRS - Config load, os is not available!",false)
+  end
   local path = Path or lfs.writedir()..MSRS.ConfigFilePath 
   local file = Filename or MSRS.ConfigFileName or "Moose_MSRS.lua"
   local pathandfile = path..file

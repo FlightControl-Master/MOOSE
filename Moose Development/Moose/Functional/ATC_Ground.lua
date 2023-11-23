@@ -426,8 +426,15 @@ ATC_GROUND_UNIVERSAL = {
 
 --- Creates a new ATC\_GROUND\_UNIVERSAL object. This works on any map.
 -- @param #ATC_GROUND_UNIVERSAL self
--- @param AirbaseList (Optional) A table of Airbase Names.
+-- @param AirbaseList A table of Airbase Names. Leave empty to cover **all** airbases of the map.
 -- @return #ATC_GROUND_UNIVERSAL self
+-- @usage
+--            -- define monitoring for one airbase
+--            local atc=ATC_GROUND_UNIVERSAL:New({AIRBASE.Syria.Gecitkale})
+--            -- set kick speed
+--            atc:SetKickSpeed(UTILS.KnotsToMps(20))
+--            -- start monitoring evey 10 secs
+--            atc:Start(10)
 function ATC_GROUND_UNIVERSAL:New(AirbaseList)
 
   -- Inherits from BASE
@@ -441,6 +448,13 @@ function ATC_GROUND_UNIVERSAL:New(AirbaseList)
   end
   
   self.AirbaseList = AirbaseList
+  
+  if not self.AirbaseList then
+    self.AirbaseList = {}
+    for _name,_ in pairs(_DATABASE.AIRBASES) do
+      self.AirbaseList[_name]=_name 
+    end
+  end
   
   self.SetClient = SET_CLIENT:New():FilterCategories( "plane" ):FilterStart()
   
@@ -461,6 +475,7 @@ function ATC_GROUND_UNIVERSAL:New(AirbaseList)
   for AirbaseID, AirbaseName in pairs( self.AirbaseList or {} ) do
     self.Airbases[AirbaseName].Monitor = true
   end
+
 
   self.SetClient:ForEachClient(
     -- @param Wrapper.Client#CLIENT Client
@@ -840,7 +855,7 @@ end
 
 --- Start SCHEDULER for ATC_GROUND_UNIVERSAL object.
 -- @param #ATC_GROUND_UNIVERSAL self
--- @param RepeatScanSeconds Time in second for defining occurency of alerts.
+-- @param RepeatScanSeconds Time in second for defining schedule of alerts.
 -- @return #ATC_GROUND_UNIVERSAL self
 function ATC_GROUND_UNIVERSAL:Start( RepeatScanSeconds )
   RepeatScanSeconds = RepeatScanSeconds or 0.05
