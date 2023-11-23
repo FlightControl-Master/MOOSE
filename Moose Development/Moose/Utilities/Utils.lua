@@ -3127,7 +3127,7 @@ function UTILS.TimeDifferenceInSeconds(start_time, end_time)
     return UTILS.ClockToSeconds(end_time) - UTILS.ClockToSeconds(start_time)
 end
 
---- Given check if the current time is later than time_string.
+--- Check if the current time is later than time_string.
 -- @param #string start_time Time string like "07:15:22"
 -- @return #boolean True if later, False if before
 function UTILS.TimeLaterThan(time_string)
@@ -3137,7 +3137,7 @@ function UTILS.TimeLaterThan(time_string)
     return false
 end
 
---- Given check if the current time is before time_string.
+--- Check if the current time is before time_string.
 -- @param #string start_time Time string like "07:15:22"
 -- @return #boolean False if later, True if before
 function UTILS.TimeBefore(time_string)
@@ -3236,7 +3236,7 @@ function UTILS.ClampAngle(value)
 end
 
 --- Remap an input to a new value in a given range. For example:
---- UTILS.RemapValue(20, 10, 30, 0, 200) would return 50
+--- UTILS.RemapValue(20, 10, 30, 0, 200) would return 100
 --- 20 is 50% between 10 and 30
 --- 50% between 0 and 200 is 100
 -- @param #number value Input value
