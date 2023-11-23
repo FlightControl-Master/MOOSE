@@ -396,7 +396,7 @@ end
 CLIENTMENUMANAGER = {
   ClassName = "CLIENTMENUMANAGER",
   lid = "",
-  version = "0.1.3",
+  version = "0.1.4",
   name = nil,
   clientset = nil,
   menutree = {},
@@ -439,18 +439,18 @@ function CLIENTMENUMANAGER:_EventHandler(EventData)
   --self:I(self.lid.."_EventHandler: "..tostring(EventData.IniPlayerName))
   if EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
     self:T(self.lid.."Leave event for player: "..tostring(EventData.IniPlayerName)) 
-    local Client = _DATABASE:FindClient( EventData.IniPlayerName )
+    local Client = _DATABASE:FindClient( EventData.IniUnitName )
     if Client then
       self:ResetMenu(Client)
     end
   elseif (EventData.id == EVENTS.PlayerEnterAircraft) and EventData.IniCoalition == self.Coalition then
     if EventData.IniPlayerName and EventData.IniGroup then
-      if (not self.clientset:IsIncludeObject(_DATABASE:FindClient( EventData.IniPlayerName ))) then
+      if (not self.clientset:IsIncludeObject(_DATABASE:FindClient( EventData.IniUnitName ))) then
         self:T(self.lid.."Client not in SET: "..EventData.IniPlayerName)
         return self
       end
       --self:I(self.lid.."Join event for player: "..EventData.IniPlayerName)
-      local player = _DATABASE:FindClient( EventData.IniPlayerName )
+      local player = _DATABASE:FindClient( EventData.IniUnitName )
       self:Propagate(player)
     end
   elseif EventData.id == EVENTS.PlayerEnterUnit then
@@ -668,7 +668,7 @@ function CLIENTMENUMANAGER:Propagate(Client)
   for _,_client in pairs(Set) do
     local client = _client -- Wrapper.Client#CLIENT
     if client and client:IsAlive() then
-      local playername = client:GetPlayerName()
+      local playername = client:GetPlayerName() or "none"
         if not self.playertree[playername] then
           self.playertree[playername] = {}
         end
