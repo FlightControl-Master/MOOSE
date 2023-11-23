@@ -3,7 +3,8 @@
 -- ===
 --
 -- **Main Features:**
---
+-- 
+--    * Incease immersion of your missions with more sound output
 --    * Play sound files via SRS
 --    * Play text-to-speech via SRS
 --
@@ -113,7 +114,7 @@
 -- **Pro-Tipp** - use the command line with power shell to call DCS-SR-ExternalAudio.exe - it will tell you what is missing.    
 -- and also the Google Console error, in case you have missed a step in setting up your Google TTS.   
 -- E.g. `.\DCS-SR-ExternalAudio.exe -t "Text Message" -f 255 -m AM -c 2 -s 2 -z -G "Path_To_You_Google.Json"`   
--- Plays a message on 255AM for the blue coalition in-game.
+-- Plays a message on 255 MHz AM for the blue coalition in-game.
 -- 
 -- ## Set Voice
 -- 
@@ -314,6 +315,16 @@ MSRS.Voices = {
     },
   }
 
+
+--- Backend options to communicate with SRS.
+-- @type MSRS.Backend
+-- @field #string SRSEXE Use SRS exe. 
+-- @field #string GRPC Use DCS-gRPC.
+MSRS.Backend = {
+  SRSEXE = "srsexe",
+  GRPC   = "grpc",
+}
+
 --- Text-to-speech providers. These are compatible with the DCS-gRPC conventions.
 -- @type MSRS.Provider
 -- @field #string WINDOWS Microsoft windows (`win`).
@@ -374,7 +385,10 @@ MSRS.GRPCOptions.DefaultProvider = "win"
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new MSRS object.
+--- Create a new MSRS object. Required argument is the frequency and modulation. 
+-- Other parameters are read from the `Moose_MSRS.lua` config file. If you do not have that file set up you must set up and use the SRS-TTS.exe (not DCS-gRPC) as backend, you need to still
+-- set the path to the exe file via @{#MSRS.SetPath}. 
+-- 
 -- @param #MSRS self
 -- @param #string PathToSRS Path to the directory, where SRS is located.
 -- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. Can also be given as a #table of multiple frequencies.
@@ -382,14 +396,16 @@ MSRS.GRPCOptions.DefaultProvider = "win"
 -- @param #number Volume Volume - 1.0 is max, 0.0 is silence.
 -- @param #table AltBackend Optional table containing tables 'Functions' and 'Vars' which add/replace functions and variables for the MSRS instance to allow alternate backends for transmitting to SRS.
 -- @return #MSRS self
-function MSRS:New(PathToSRS, Frequency, Modulation, Volume, AltBackend)
+function MSRS:New(Frequency, Modulation, Volume, AltBackend)
 
   -- Defaults.
   Frequency = Frequency or 143
   Modulation = Modulation or radio.modulation.AM
 
-  -- Inherit everything from FSM class.
+  -- Inherit everything from BASE class.
   local self=BASE:Inherit(self, BASE:New()) -- #MSRS
+  
+  self.lid = string.format("%s-%s | ", "unknown", self.version)
 
   -- If AltBackend is supplied, initialize it, which will add/replace functions and variables in this MSRS instance.
   if type( AltBackend ) == "table" or type( self.AltBackend ) == "table" then
@@ -451,6 +467,22 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Set backend to communicate with SRS.
+-- There are two options:
+-- 
+-- - `MSRS.Backend.SRSEXE`: This is the default and uses the SRS.exe.
+-- - `MSRS.Backend.GRPC`: Via DCS-gRPC.
+-- 
+-- @param #MSRS self
+-- @param #string Backend Backend used. Default is `MSRS.Backend.SRSEXE`.
+-- @return #MSRS self
+function MSRS:SetBackend(Backend)
+
+  self.backend=Backend or MSRS.Backend.SRSEXE
+
+  return self
+end
 
 --- Set path to SRS install directory. More precisely, path to where the DCS-
 -- @param #MSRS self
@@ -649,7 +681,7 @@ function MSRS:SetCulture(Culture)
   return self
 end
 
---- Set to use a specific voice. Will override gender and culture settings. 
+--- Set to use a specific voice. Will override any gender and culture settings.
 -- @param #MSRS self
 -- @param #string Voice Voice.
 -- @return #MSRS self
@@ -993,12 +1025,105 @@ function MSRS:_NewAltBackend(Backend)
   return self
 end
 
+
+--- Get lat, long and alt from coordinate.
+-- @param #MSRS self
+-- @param Core.Point#Coordinate Coordinate Coordinate. Can also be a DCS#Vec3.
+-- @return #number Latitude.
+-- @return #number Longitude.
+-- @return #number Altitude.
+function MSRS:_GetLatLongAlt(Coordinate)
+  
+  local lat, lon, alt=coord.LOtoLL(Coordinate)
+  
+  return lat, lon, math.floor(alt)
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Backend ExternalAudio.exe
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Get SRS command to play sound using the `DCS-SR-ExternalAudio.exe`.
+-- @param #MSRS self
+-- @param #table freqs Frequencies in MHz.
+-- @param #table modus Modulations.
+-- @param #number coal Coalition.
+-- @param #string gender Gender.
+-- @param #string voice Voice.
+-- @param #string culture Culture.
+-- @param #number volume Volume.
+-- @param #number speed Speed.
+-- @param #number port Port.
+-- @param #string label Label, defaults to "ROBOT" (displayed sender name in the radio overlay of SRS) - No spaces allowed!
+-- @param Core.Point#COORDINATE coordinate Coordinate.
+-- @return #string Command.
+function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, speed, port, label, coordinate)
+
+  local path=self:GetPath() or STTS.DIRECTORY
+  
+  local exe=STTS.EXECUTABLE or "DCS-SR-ExternalAudio.exe"
+  
+  freqs=table.concat(freqs or self.frequencies, ",")
+  modus=table.concat(modus or self.modulations, ",")
+  
+  coal=coal or self.coalition
+  gender=gender or self.gender
+  voice=voice or self.voice
+  culture=culture or self.culture
+  volume=volume or self.volume
+  speed=speed or self.speed
+  port=port or self.port
+  label=label or self.Label
+  coordinate=coordinate or self.coordinate
+  
+  -- Replace modulation
+  modus=modus:gsub("0", "AM")
+  modus=modus:gsub("1", "FM")
+  
+  -- Command.
+  local command=string.format('"%s\\%s" -f "%s" -m "%s" -c %s -p %s -n "%s" -v "%.1f"', path, exe, freqs, modus, coal, port, label,volume)
+
+  -- Set voice or gender/culture.
+  if voice then
+    -- Use a specific voice (no need for gender and/or culture.
+    command=command..string.format(" --voice=\"%s\"", tostring(voice))
+  else
+    -- Add gender.
+    if gender and gender~="female" then
+      command=command..string.format(" -g %s", tostring(gender))
+    end
+    -- Add culture.
+    if culture and culture~="en-GB" then
+      command=command..string.format(" -l %s", tostring(culture))
+    end
+  end
+  
+  -- Set coordinate.
+  if coordinate then
+    local lat,lon,alt=self:_GetLatLongAlt(coordinate)
+    command=command..string.format(" -L %.4f -O %.4f -A %d", lat, lon, alt)
+  end
+  
+  -- Set google.
+  if self.google and self.ttsprovider == "Google" then
+    command=command..string.format(' --ssml -G "%s"', self.google)
+  end
+  
+  -- Debug output.
+  self:T("MSRS command="..command)
+
+  return command
+end
+
 --- Execute SRS command to play sound using the `DCS-SR-ExternalAudio.exe`.
 -- @param #MSRS self
 -- @param #string command Command to executer
 -- @return #number Return value of os.execute() command.
 function MSRS:_ExecCommand(command)
+
+    -- Debug info.
     self:T("SRS TTS command="..command)
+    
     -- Create a tmp file.
     local filename=os.getenv('TMP').."\\MSRS-"..STTS.uuid()..".bat"
     
@@ -1064,7 +1189,7 @@ function MSRS:_ExecCommand(command)
       res=os.execute(command)
       
       -- Remove file in 1 second.
-      timer.scheduleFunction(os.remove, filename, timer.getTime()+1)  
+      timer.scheduleFunction(os.remove, filename, timer.getTime()+1)
     
     end
     
@@ -1072,88 +1197,133 @@ function MSRS:_ExecCommand(command)
   return res
 end
 
---- Get lat, long and alt from coordinate.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- DCS-gRPC Backend Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- DCS-gRPC v0.70 TTS API call:
+-- GRPC.tts(ssml, frequency[, options]) - Synthesize text (ssml; SSML tags supported) to speech and transmit it over SRS on the frequency with the following optional options (and their defaults):
+
+-- {
+--     -- The plain text without any transformations made to it for the purpose of getting it spoken out
+--     -- as desired (no SSML tags, no FOUR NINER instead of 49, ...). Even though this field is
+--     -- optional, please consider providing it as it can be used to display the spoken text to players
+--     -- with hearing impairments.
+--     plaintext = null, -- e.g. `= "Hello Pilot"`
+
+--     -- Name of the SRS client.
+--     srsClientName = "DCS-gRPC",
+
+--     -- The origin of the transmission. Relevant if the SRS server has "Line of
+--     -- Sight" and/or "Distance Limit" enabled.
+--     position = {
+--         lat = 0.0,
+--         lon = 0.0,
+--         alt = 0.0, -- in meters
+--     },
+
+--     -- The coalition of the transmission. Relevant if the SRS server has "Secure
+--     -- Coalition Radios" enabled. Supported values are: `blue` and `red`. Defaults
+--     -- to being spectator if not specified.
+--     coalition = null,
+
+--     -- TTS provider to be use. Defaults to the one configured in your config or to Windows'
+--     -- built-in TTS. Examples:
+--     -- `= { aws = {} }` / `= { aws = { voice = "..." } }` enable AWS TTS
+--     -- `= { azure = {} }` / `= { azure = { voice = "..." } }` enable Azure TTS
+--     -- `= { gcloud = {} }` / `= { gcloud = { voice = "..." } }` enable Google Cloud TTS
+--     -- `= { win = {} }` / `= { win = { voice = "..." } }` enable Windows TTS
+--     provider = null,
+-- }
+
+--- Make DCS-gRPC API call to transmit text-to-speech over SRS.
 -- @param #MSRS self
--- @param Core.Point#Coordinate Coordinate Coordinate. Can also be a DCS#Vec3.
--- @return #number Latitude.
--- @return #number Longitude.
--- @return #number Altitude.
-function MSRS:_GetLatLongAlt(Coordinate)
-  
-  local lat, lon, alt=coord.LOtoLL(Coordinate)
-  
-  return lat, lon, math.floor(alt)
+-- @param #string Text Text of message to transmit (can also be SSML).
+-- @param #string Optional plaintext version of message (for accessiblity).
+-- @param #table Frequencies Radio frequencies to transmit on. Can also accept a number in MHz.
+-- @param #string Voice Voice for the TTS provider to user. 
+-- @param #string Label Label (SRS diplays as name of the transmitter).
+-- @return #MSRS self
+function MSRS:_DCSgRPCtts(Text, Plaintext, Frequencies, Voice, Label)
+
+    BASE:T("MSRS_BACKEND_DCSGRPC:_DCSgRPCtts()")
+    BASE:T({Text, Plaintext, Frequencies, Voice, Label})
+
+    local options = self.ProviderOptions or MSRS.ProviderOptions or {} -- #MSRS.GRPCOptions
+    local ssml = Text or ''
+
+    local XmitFrequencies = Frequencies or self.Frequency
+    if type(XmitFrequencies)~="table" then
+        XmitFrequencies={XmitFrequencies}
+    end
+
+    options.plaintext = Plaintext
+    options.srsClientName = Label or self.Label
+    options.position = {}
+    if self.coordinate then
+        options.position.lat, options.position.lon, options.position.alt = self:_GetLatLongAlt(self.coordinate)
+    end
+
+    options.position.lat = options.position.lat or 0.0
+    options.position.lon = options.position.lon or 0.0
+    options.position.alt = options.position.alt or 0.0
+
+    if UTILS.GetCoalitionName(self.coalition) == 'Blue' then
+      options.coalition = 'blue'
+    elseif UTILS.GetCoalitionName(self.coalition) == 'Red' then
+      options.coalition = 'red'
+    end
+    
+    local provider = self.provider or self.GRPCOptions.DefaultProvider or MSRS.GRPCOptions.DefaultProvider
+    
+    options.provider = {}
+    
+    options.provider[provider] = {}
+    
+    if self.APIKey then
+      options.provider[provider].key = self.APIKey
+    end
+    
+    if self.defaultVoice then
+      options.provider[provider].defaultVoice = self.defaultVoice
+    end
+    
+    if self.voice then
+      options.provider[provider].voice = Voice or self.voice or self.defaultVoice
+    elseif ssml then
+      -- DCS-gRPC doesn't directly support language/gender, but can use SSML
+      -- Only use if a voice isn't explicitly set
+      local preTag, genderProp, langProp, postTag = '', '', '', ''
+
+      if self.gender then
+        genderProp = ' gender=\"' .. self.gender .. '\"'
+      end
+      if self.culture then
+        langProp = ' language=\"' .. self.culture .. '\"'
+      end
+
+      if self.culture or self.gender then
+        preTag = '<voice' .. langProp .. genderProp  .. '>'
+        postTag = '</voice>'
+        ssml = preTag .. Text .. postTag
+      end
+
+    end
+
+    for _,_freq in ipairs(XmitFrequencies) do
+        local freq = _freq*1000000
+        BASE:T("GRPC.tts")
+        BASE:T(ssml)
+        BASE:T(freq)
+        BASE:T({options})
+        GRPC.tts(ssml, freq, options)
+    end
+
 end
 
-
---- Get SRS command to play sound using the `DCS-SR-ExternalAudio.exe`.
--- @param #MSRS self
--- @param #table freqs Frequencies in MHz.
--- @param #table modus Modulations.
--- @param #number coal Coalition.
--- @param #string gender Gender.
--- @param #string voice Voice.
--- @param #string culture Culture.
--- @param #number volume Volume.
--- @param #number speed Speed.
--- @param #number port Port.
--- @param #string label Label, defaults to "ROBOT" (displayed sender name in the radio overlay of SRS) - No spaces allowed!
--- @param Core.Point#COORDINATE coordinate Coordinate.
--- @return #string Command.
-function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, speed, port,label,coordinate)
-
-  local path=self:GetPath() or STTS.DIRECTORY    
-  local exe=STTS.EXECUTABLE or "DCS-SR-ExternalAudio.exe"
-  freqs=table.concat(freqs or self.frequencies, ",")
-  modus=table.concat(modus or self.modulations, ",")
-  coal=coal or self.coalition
-  gender=gender or self.gender
-  voice=voice or self.voice
-  culture=culture or self.culture
-  volume=volume or self.volume
-  speed=speed or self.speed
-  port=port or self.port
-  label=label or self.Label
-  coordinate=coordinate or self.coordinate
-  
-  -- Replace modulation
-  modus=modus:gsub("0", "AM")
-  modus=modus:gsub("1", "FM")
-  
-  -- Command.
-  local command=string.format('"%s\\%s" -f "%s" -m "%s" -c %s -p %s -n "%s" -v "%.1f"', path, exe, freqs, modus, coal, port, label,volume)
-
-  -- Set voice or gender/culture.
-  if voice then
-    -- Use a specific voice (no need for gender and/or culture.
-    command=command..string.format(" --voice=\"%s\"", tostring(voice))
-  else
-    -- Add gender.
-    if gender and gender~="female" then
-      command=command..string.format(" -g %s", tostring(gender))
-    end
-    -- Add culture.
-    if culture and culture~="en-GB" then
-      command=command..string.format(" -l %s", tostring(culture))
-    end
-  end
-  
-  -- Set coordinate.
-  if coordinate then
-    local lat,lon,alt=self:_GetLatLongAlt(coordinate)
-    command=command..string.format(" -L %.4f -O %.4f -A %d", lat, lon, alt)
-  end
-  
-  -- Set google.
-  if self.google and self.ttsprovider == "Google" then
-    command=command..string.format(' --ssml -G "%s"', self.google)
-  end
-  
-  -- Debug output.
-  self:T("MSRS command="..command)
-
-  return command
-end
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Config File
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get central SRS configuration to be able to play tts over SRS radio using the `DCS-SR-ExternalAudio.exe`.
 -- @param #MSRS self
@@ -1208,7 +1378,7 @@ end
 --  This will populate variables for the MSRS raw class and all instances you create with e.g. `mysrs = MSRS:New()`
 --  Optionally you can also load this per **single instance** if so needed, i.e.
 --    
---         mysrs:LoadConfigFile(Path,Filename)
+--     mysrs:LoadConfigFile(Path,Filename)
 --         
 --  4) Use the config in your code like so, variable names are basically the same as in the config file, but all lower case, examples:
 --  
@@ -1225,7 +1395,7 @@ end
 --          atis:SetSRS(nil,nil,nil,MSRS.Voices.Google.Standard.en_US_Standard_H)
 --          --Start ATIS
 --          atis:Start()
-function MSRS:LoadConfigFile(Path,Filename)
+function MSRS:LoadConfigFile(Path, Filename)
   
   local path = Path or lfs.writedir()..MSRS.ConfigFilePath 
   local file = Filename or MSRS.ConfigFileName or "Moose_MSRS.lua"
