@@ -566,7 +566,7 @@ end
 -- @return #number Heading
 function WEAPON:GetReleaseHeading(AccountForMagneticInclination)
     AccountForMagneticInclination = AccountForMagneticInclination or true
-    if AccountForMagneticInclination then return self.releaseHeading - UTILS.GetMagneticDeclination() else return self.releaseHeading end
+    if AccountForMagneticInclination then return UTILS.ClampAngle(self.releaseHeading - UTILS.GetMagneticDeclination()) else return UTILS.ClampAngle(self.releaseHeading) end
 end
 
 --- Get the altitude above sea level at which the weapon was released
@@ -603,7 +603,7 @@ end
 -- @return #number Heading
 function WEAPON:GetImpactHeading(AccountForMagneticInclination)
     AccountForMagneticInclination = AccountForMagneticInclination or true
-    if AccountForMagneticInclination then return self.impactHeading - UTILS.GetMagneticDeclination() else return self.impactHeading end
+    if AccountForMagneticInclination then return UTILS.ClampAngle(self.impactHeading - UTILS.GetMagneticDeclination()) else return self.impactHeading end
 end
 
 --- Check if weapon is in the air. Obviously not really useful for torpedos. Well, then again, this is DCS...
@@ -766,7 +766,10 @@ function WEAPON:_TrackWeapon(time)
     
     -- Update coordinate.
     self.coordinate:UpdateFromVec3(self.vec3)
-    
+
+    -- Safe the last velocity of the weapon. This is needed to get the impact heading
+    self.last_velocity = self.weapon:getVelocity()
+
     -- Keep on tracking by returning the next time below.
     self.tracking=true
     
@@ -836,8 +839,8 @@ function WEAPON:_TrackWeapon(time)
     -- Safe impact coordinate.
     self.impactCoord=COORDINATE:NewFromVec3(self.vec3)
 
-    -- Safe impact heading
-    self.impactHeading =  UTILS.VecHdg(self:GetVelocityVec3())
+    -- Safe impact heading, using last_velocity because self:GetVelocityVec3() is no longer possible
+    self.impactHeading =  UTILS.VecHdg(self.last_velocity)
 
     -- Mark impact point on F10 map.
     if self.impactMark then
