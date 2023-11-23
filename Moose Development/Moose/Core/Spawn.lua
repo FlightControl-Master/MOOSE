@@ -2783,7 +2783,7 @@ end
 -- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 -- @usage
 --
---   local SpawnPointVec2 = ZONE:New( ZoneName ):GetPointVec2()
+--   local SpawnPointVec2 = ZONE:New( ZoneName ):GetPointVec2() 
 --
 --   -- Spawn at the zone center position at the height specified in the ME of the group template!
 --   SpawnAirplanes:SpawnFromPointVec2( SpawnPointVec2 )
@@ -3283,6 +3283,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
         local CallsignName = SpawnTemplate.units[UnitID].callsign["name"] -- #string
         CallsignName = string.match(CallsignName,"^(%a+)") -- 2.8 - only the part w/o numbers
         local CallsignLen = CallsignName:len()
+        SpawnTemplate.units[UnitID].callsign[2] = UnitID
         SpawnTemplate.units[UnitID].callsign["name"] = CallsignName:sub( 1, CallsignLen ) .. SpawnTemplate.units[UnitID].callsign[2] .. SpawnTemplate.units[UnitID].callsign[3]
       else
         SpawnTemplate.units[UnitID].callsign = Callsign + SpawnIndex
