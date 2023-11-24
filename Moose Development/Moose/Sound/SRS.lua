@@ -3,7 +3,7 @@
 -- ===
 --
 -- **Main Features:**
--- 
+--
 --    * Incease immersion of your missions with more sound output
 --    * Play sound files via SRS
 --    * Play text-to-speech via SRS
@@ -61,104 +61,104 @@
 -- # The MSRS Concept
 --
 -- This class allows to broadcast sound files or text via Simple Radio Standalone (SRS).
--- 
+--
 -- ## Prerequisites
--- 
+--
 -- This script needs SRS version >= 1.9.6.
--- 
+--
 -- ## Knwon Issues
--- 
+--
 -- ### Pop-up Window
--- 
+--
 -- The text-to-speech conversion of SRS is done via an external exe file. When this file is called, a windows `cmd` window is briefly opended. That puts DCS out of focus, which is annoying,
 -- expecially in VR but unavoidable (if you have a solution, please feel free to share!).
--- 
+--
 -- NOTE that this is not an issue if the mission is running on a server.
 -- Also NOTE that using DCS-gRPC as backend will avoid the pop-up window.
--- 
+--
 -- # Play Sound Files
--- 
+--
 --     local soundfile=SOUNDFILE:New("My Soundfile.ogg", "D:\\Sounds For DCS")
 --     local msrs=MSRS:New("C:\\Path To SRS", 251, radio.modulation.AM)
 --     msrs:PlaySoundFile(soundfile)
--- 
+--
 -- # Play Text-To-Speech
--- 
+--
 -- Basic example:
--- 
+--
 --     -- Create a SOUNDTEXT object.
 --     local text=SOUNDTEXT:New("All Enemies destroyed")
---     
---     -- MOOSE SRS 
+--
+--     -- MOOSE SRS
 --     local msrs=MSRS:New("D:\\DCS\\_SRS\\", 305, radio.modulation.AM)
 --
 --     -- Text-to speech with default voice after 2 seconds.
 --     msrs:PlaySoundText(text, 2)
 --
 -- ## Set Gender
--- 
+--
 -- Use a specific gender with the @{#MSRS.SetGender} function, e.g. `SetGender("male")` or `:SetGender("female")`.
--- 
+--
 -- ## Set Culture
--- 
+--
 -- Use a specific "culture" with the @{#MSRS.SetCulture} function, e.g. `:SetCulture("en-US")` or `:SetCulture("de-DE")`.
--- 
+--
 -- ## Set Google
--- 
+--
 -- Use Google's text-to-speech engine with the @{#MSRS.SetGoogle} function, e.g. ':SetGoogle()'.
 -- By enabling this it also allows you to utilize SSML in your text for added flexibility.
 -- For more information on setting up a cloud account, visit: https://cloud.google.com/text-to-speech
 -- Google's supported SSML reference: https://cloud.google.com/text-to-speech/docs/ssml
--- 
--- 
--- **Pro-Tipp** - use the command line with power shell to call DCS-SR-ExternalAudio.exe - it will tell you what is missing.    
--- and also the Google Console error, in case you have missed a step in setting up your Google TTS.   
--- E.g. `.\DCS-SR-ExternalAudio.exe -t "Text Message" -f 255 -m AM -c 2 -s 2 -z -G "Path_To_You_Google.Json"`   
+--
+--
+-- **Pro-Tipp** - use the command line with power shell to call DCS-SR-ExternalAudio.exe - it will tell you what is missing.
+-- and also the Google Console error, in case you have missed a step in setting up your Google TTS.
+-- E.g. `.\DCS-SR-ExternalAudio.exe -t "Text Message" -f 255 -m AM -c 2 -s 2 -z -G "Path_To_You_Google.Json"`
 -- Plays a message on 255 MHz AM for the blue coalition in-game.
--- 
+--
 -- ## Set Voice
--- 
+--
 -- Use a specific voice with the @{#MSRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system.
 -- If enabling SetGoogle(), you can use voices provided by Google
 -- Google's supported voices: https://cloud.google.com/text-to-speech/docs/voices
 -- For voices there are enumerators in this class to help you out on voice names:
--- 
+--
 --            MSRS.Voices.Microsoft -- e.g. MSRS.Voices.Microsoft.Hedda - the Microsoft enumerator contains all voices known to work with SRS
 --            MSRS.Voices.Google -- e.g. MSRS.Voices.Google.Standard.en_AU_Standard_A or MSRS.Voices.Google.Wavenet.de_DE_Wavenet_C - The Google enumerator contains voices for EN, DE, IT, FR and ES.
--- 
+--
 -- ## Set Coordinate
--- 
+--
 -- Use @{#MSRS.SetCoordinate} to define the origin from where the transmission is broadcasted.
 --
 -- ## Set SRS Port
--- 
+--
 -- Use @{#MSRS.SetPort} to define the SRS port. Defaults to 5002.
--- 
+--
 -- ## Set SRS Volume
--- 
+--
 -- Use @{#MSRS.SetVolume} to define the SRS volume. Defaults to 1.0. Allowed values are between 0.0 and 1.0, from silent to loudest.
--- 
+--
 -- ## Config file for many variables, auto-loaded by Moose
--- 
+--
 -- See @{#MSRS.LoadConfigFile} for details on how to set this up.
--- 
--- ## Set DCS-gRPC as an alternative to 'DCS-SR-ExternalAudio.exe' for TTS 
+--
+-- ## Set DCS-gRPC as an alternative to 'DCS-SR-ExternalAudio.exe' for TTS
 --
 -- Use @{#MSRS.SetDefaultBackendGRPC} to enable [DCS-gRPC](https://github.com/DCS-gRPC/rust-server) as an alternate backend for transmitting text-to-speech over SRS.
 -- This can be useful if 'DCS-SR-ExternalAudio.exe' cannot be used in the environment, or to use Azure or AWS clouds for TTS.  Note that DCS-gRPC does not (yet?) support
 -- all of the features and options available with 'DCS-SR-ExternalAudio.exe'. Of note, only text-to-speech is supported and it it cannot be used to transmit audio files.
 --
--- DCS-gRPC must be installed and configured per the [DCS-gRPC documentation](https://github.com/DCS-gRPC/rust-server) and already running via either the 'autostart' mechanism 
--- or a Lua call to 'GRPC.load()' prior to use of the alternate DCS-gRPC backend. If a cloud TTS provider is being used, the API key must be set via the 'Config\dcs-grpc.lua' 
+-- DCS-gRPC must be installed and configured per the [DCS-gRPC documentation](https://github.com/DCS-gRPC/rust-server) and already running via either the 'autostart' mechanism
+-- or a Lua call to 'GRPC.load()' prior to use of the alternate DCS-gRPC backend. If a cloud TTS provider is being used, the API key must be set via the 'Config\dcs-grpc.lua'
 -- configuration file prior DCS-gRPC being started. DCS-gRPC can be used both with DCS dedicated server and regular DCS installations.
--- 
+--
 -- To use the default local Windows TTS with DCS-gRPC, Windows 2019 Server (or newer) or Windows 10/11 are required.  Voices for non-local languages and dialects may need to
 -- be explicitly installed.
 --
 -- To set the MSRS class to use the DCS-gRPC backend for all future instances, call the function `MSRS.SetDefaultBackendGRPC()`.
 --
--- **Note** - When using other classes that use MSRS with the alternate DCS-gRPC backend, pass them strings instead of nil values for non-applicable fields with filesystem paths, 
+-- **Note** - When using other classes that use MSRS with the alternate DCS-gRPC backend, pass them strings instead of nil values for non-applicable fields with filesystem paths,
 -- such as the SRS path or Google credential path. This will help maximize compatibility with other classes that were written for the default backend.
 --
 -- Basic Play Text-To-Speech example using alternate DCS-gRPC backend (DCS-gRPC not previously started):
@@ -168,8 +168,8 @@
 --     -- Select the alternate DCS-gRPC backend for new MSRS instances
 --     MSRS.SetDefaultBackendGRPC()
 --     -- Create a SOUNDTEXT object.
---     local text=SOUNDTEXT:New("All Enemies destroyed")  
---     -- MOOSE SRS 
+--     local text=SOUNDTEXT:New("All Enemies destroyed")
+--     -- MOOSE SRS
 --     local msrs=MSRS:New('', 305.0)
 --     -- Text-to speech with default voice after 30 seconds.
 --     msrs:PlaySoundText(text, 30)
@@ -197,7 +197,7 @@ MSRS = {
   modulations    =         {},
   coalition      =          0,
   gender         =   "female",
-  culture        =        nil,  
+  culture        =        nil,
   voice          =        nil,
   volume         =          1,
   speed          =          1,
@@ -303,7 +303,7 @@ MSRS.Voices = {
        ["de_DE_Wavenet_C"] = "de-DE-Wavenet-C", -- Female
        ["de_DE_Wavenet_D"] = "de-DE-Wavenet-D", -- Male
        ["de_DE_Wavenet_E"] = "de-DE-Wavenet-E", -- Male
-       ["de_DE_Wavenet_F"] = "de-DE-Wavenet-F", -- Female      
+       ["de_DE_Wavenet_F"] = "de-DE-Wavenet-F", -- Female
        ["es_ES_Wavenet_B"] = "es-ES-Wavenet-B", -- Male
        ["es_ES_Wavenet_C"] = "es-ES-Wavenet-C", -- Female
        ["es_ES_Wavenet_D"] = "es-ES-Wavenet-D", -- Female
@@ -311,14 +311,14 @@ MSRS.Voices = {
        ["it_IT_Wavenet_B"] = "it-IT-Wavenet-B", -- Female
        ["it_IT_Wavenet_C"] = "it-IT-Wavenet-C", -- Male
        ["it_IT_Wavenet_D"] = "it-IT-Wavenet-D", -- Male
-      } , 
+      } ,
     },
   }
 
 
 --- Backend options to communicate with SRS.
 -- @type MSRS.Backend
--- @field #string SRSEXE Use SRS exe. 
+-- @field #string SRSEXE Use SRS exe.
 -- @field #string GRPC Use DCS-gRPC.
 MSRS.Backend = {
   SRSEXE = "srsexe",
@@ -385,10 +385,10 @@ MSRS.GRPCOptions.DefaultProvider = "win"
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new MSRS object. Required argument is the frequency and modulation. 
+--- Create a new MSRS object. Required argument is the frequency and modulation.
 -- Other parameters are read from the `Moose_MSRS.lua` config file. If you do not have that file set up you must set up and use the SRS-TTS.exe (not DCS-gRPC) as backend, you need to still
--- set the path to the exe file via @{#MSRS.SetPath}. 
--- 
+-- set the path to the exe file via @{#MSRS.SetPath}.
+--
 -- @param #MSRS self
 -- @param #string PathToSRS Path to the directory, where SRS is located.
 -- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. Can also be given as a #table of multiple frequencies.
@@ -404,7 +404,7 @@ function MSRS:New(Frequency, Modulation, Volume, AltBackend)
 
   -- Inherit everything from BASE class.
   local self=BASE:Inherit(self, BASE:New()) -- #MSRS
-  
+
   self.lid = string.format("%s-%s | ", "unknown", self.version)
 
   -- If AltBackend is supplied, initialize it, which will add/replace functions and variables in this MSRS instance.
@@ -419,13 +419,13 @@ function MSRS:New(Frequency, Modulation, Volume, AltBackend)
     Backend.Vars.Modulation = UTILS.DeepCopy(Modulation)
     Backend.Vars.Volume     = Volume
 
-    Backend.Functions = Backend.Functions or {} 
+    Backend.Functions = Backend.Functions or {}
 
     return self:_NewAltBackend(Backend)
   end
-  
+
   if not self.ConfigLoaded then
-  
+
     -- If no AltBackend table, the proceed with default initialisation
     self:SetPath(PathToSRS)
     self:SetPort()
@@ -435,32 +435,32 @@ function MSRS:New(Frequency, Modulation, Volume, AltBackend)
     self:SetCoalition()
     self:SetLabel()
     self:SetVolume(Volume)
-  
+
   else
-    
+
     -- there might be some overwrites from :New()
-    
+
     if PathToSRS then
       self:SetPath(PathToSRS)
     end
-    
+
     if Frequency then
       self:SetFrequencies(Frequency)
       self:SetModulations(Modulation)
     end
-    
+
     if Volume then
       self:SetVolume(Volume)
     end
-  
+
   end
-  
+
   self.lid = string.format("%s-%s | ", self.name, self.version)
-  
+
   if not io or not os then
     self:E(self.lid.."***** ERROR - io or os NOT desanitized! MSRS will not work!")
   end
-  
+
   return self
 end
 
@@ -470,10 +470,10 @@ end
 
 --- Set backend to communicate with SRS.
 -- There are two options:
--- 
+--
 -- - `MSRS.Backend.SRSEXE`: This is the default and uses the SRS.exe.
 -- - `MSRS.Backend.GRPC`: Via DCS-gRPC.
--- 
+--
 -- @param #MSRS self
 -- @param #string Backend Backend used. Default is `MSRS.Backend.SRSEXE`.
 -- @return #MSRS self
@@ -494,18 +494,18 @@ function MSRS:SetPath(Path)
     self:E("ERROR: No path to SRS directory specified!")
     return nil
   end
-  
+
   if Path then
     -- Set path.
     self.path=Path
-  
+
     -- Remove (back)slashes.
     local n=1 ; local nmax=1000
     while (self.path:sub(-1)=="/" or self.path:sub(-1)==[[\]]) and n<=nmax do
       self.path=self.path:sub(1,#self.path-1)
       n=n+1
     end
-    
+
     -- Debug output.
     self:T(string.format("SRS path=%s", self:GetPath()))
   end
@@ -531,7 +531,7 @@ function MSRS:SetVolume(Volume)
 end
 
 --- Get SRS volume.
--- @param #MSRS self 
+-- @param #MSRS self
 -- @return #number Volume Volume - 1.0 is max, 0.0 is silence
 function MSRS:GetVolume()
   return self.volume
@@ -591,9 +591,9 @@ end
 -- @param #table Frequencies Frequencies in MHz. Can also be given as a #number if only one frequency should be used.
 -- @return #MSRS self
 function MSRS:SetFrequencies(Frequencies)
-  
+
   self.frequencies=UTILS.EnsureTable(Frequencies, false)
-  
+
   return self
 end
 
@@ -607,7 +607,7 @@ function MSRS:AddFrequencies(Frequencies)
     self:T(self.lid..string.format("Adding frequency %s", tostring(_freq)))
     table.insert(self.frequencies,_freq)
   end
-  
+
   return self
 end
 
@@ -624,13 +624,13 @@ end
 -- @param #table Modulations Modulations. Can also be given as a #number if only one modulation should be used.
 -- @return #MSRS self
 function MSRS:SetModulations(Modulations)
-  
+
   self.modulations=UTILS.EnsureTable(Modulations, false)
-  
+
   -- Debug info.
   self:T(self.lid.."Modulations:")
   self:T(self.modulations)
-  
+
   return self
 end
 
@@ -639,11 +639,11 @@ end
 -- @param #table Modulations Modulations. Can also be given as a #number if only one modulation should be used.
 -- @return #MSRS self
 function MSRS:AddModulations(Modulations)
-  
+
    for _,_mod in pairs(UTILS.EnsureTable(Modulations, false)) do
     table.insert(self.modulations,_mod)
    end
-  
+
   return self
 end
 
@@ -659,14 +659,14 @@ end
 -- @param #string Gender Gender: "male" or "female" (default).
 -- @return #MSRS self
 function MSRS:SetGender(Gender)
-  
+
   Gender=Gender or "female"
-  
+
   self.gender=Gender:lower()
-  
+
   -- Debug output.
   self:T("Setting gender to "..tostring(self.gender))
-  
+
   return self
 end
 
@@ -677,7 +677,7 @@ end
 function MSRS:SetCulture(Culture)
 
   self.culture=Culture
-  
+
   return self
 end
 
@@ -688,15 +688,15 @@ end
 function MSRS:SetVoice(Voice)
 
   self.voice=Voice
-  
+
   --local defaultprovider = self.provider or self.GRPCOptions.DefaultProvider or MSRS.GRPCOptions.DefaultProvider or "win"
-  
+
   --self.GRPCOptions[defaultprovider].voice = Voice
-  
+
   return self
 end
 
---- Set to use a specific voice. Will override gender and culture settings. 
+--- Set to use a specific voice. Will override gender and culture settings.
 -- @param #MSRS self
 -- @param #string Voice Voice.
 -- @return #MSRS self
@@ -705,7 +705,7 @@ function MSRS:SetDefaultVoice(Voice)
   self.defaultVoice=Voice
   local provider = self.provider or self.GRPCOptions.DefaultProvider or MSRS.GRPCOptions.DefaultProvider or "win"
   self.GRPCOptions[provider].defaultVoice = Voice
-  
+
   return self
 end
 
@@ -716,7 +716,7 @@ end
 function MSRS:SetCoordinate(Coordinate)
 
   self.coordinate=Coordinate
-  
+
   return self
 end
 
@@ -725,19 +725,19 @@ end
 -- @param #string PathToCredentials Full path to the google credentials JSON file, e.g. "C:\Users\username\Downloads\service-account-file.json". Can also be the Google API key.
 -- @return #MSRS self
 function MSRS:SetGoogle(PathToCredentials)
-  
+
   if PathToCredentials then
-  
+
     self.google=PathToCredentials
     self.APIKey=PathToCredentials
     self.provider = "gcloud"
-    
+
     self.GRPCOptions.DefaultProvider = "gcloud"
     self.GRPCOptions.gcloud.key = PathToCredentials
     self.ttsprovider = "Google"
-  
+
   end
-  
+
   return self
 end
 
@@ -777,31 +777,31 @@ end
 function MSRS:Help()
 
   -- Path and exe.
-  local path=self:GetPath() or STTS.DIRECTORY    
+  local path=self:GetPath() or STTS.DIRECTORY
   local exe=STTS.EXECUTABLE or "DCS-SR-ExternalAudio.exe"
-  
+
   -- Text file for output.
   local filename = os.getenv('TMP') .. "\\MSRS-help-"..STTS.uuid()..".txt"
-    
+
   -- Print help.
-  local command=string.format("%s/%s --help > %s", path, exe, filename)  
+  local command=string.format("%s/%s --help > %s", path, exe, filename)
   os.execute(command)
-  
+
   local f=assert(io.open(filename, "rb"))
   local data=f:read("*all")
   f:close()
-  
+
   -- Print to log file.
   env.info("SRS STTS help output:")
   env.info("======================================================================")
   env.info(data)
   env.info("======================================================================")
-  
+
   return self
 end
 
 --- Sets an alternate SRS backend to be used by MSRS to transmit over SRS for all new MSRS class instances.
--- @param #table Backend A table containing a table `Functions` with new/replacement class functions and `Vars` with new/replacement variables. 
+-- @param #table Backend A table containing a table `Functions` with new/replacement class functions and `Vars` with new/replacement variables.
 -- @return #boolean Returns 'true' on success.
 function MSRS.SetDefaultBackend(Backend)
   if type(Backend) == "table" then
@@ -809,7 +809,7 @@ function MSRS.SetDefaultBackend(Backend)
   else
     return false
   end
-  
+
   return true
 end
 
@@ -846,13 +846,13 @@ function MSRS:PlaySoundFile(Soundfile, Delay)
 
     -- Get command.
     local command=self:_GetCommand()
-    
+
     -- Append file.
     command=command..' --file="'..tostring(soundfile)..'"'
-    
+
     -- Execute command.
     self:_ExecCommand(command)
-        
+
   end
 
   return self
@@ -871,13 +871,13 @@ function MSRS:PlaySoundText(SoundText, Delay)
 
     -- Get command.
     local command=self:_GetCommand(nil, nil, nil, SoundText.gender, SoundText.voice, SoundText.culture, SoundText.volume, SoundText.speed)
-    
+
     -- Append text.
     command=command..string.format(" --text=\"%s\"", tostring(SoundText.text))
-    
+
     -- Execute command.
     self:_ExecCommand(command)
-        
+
   end
 
   return self
@@ -896,16 +896,16 @@ function MSRS:PlayText(Text, Delay, Coordinate)
   else
 
     -- Get command line.
-    local command=self:_GetCommand(nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,Coordinate)    
+    local command=self:_GetCommand(nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,Coordinate)
 
     -- Append text.
     command=command..string.format(" --text=\"%s\"", tostring(Text))
-    
+
     -- Execute command.
     self:_ExecCommand(command)
-    
+
   end
-  
+
   return self
 end
 
@@ -927,7 +927,7 @@ function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MSRS.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
   else
-  
+
     -- Ensure table.
     if Frequencies and type(Frequencies)~="table" then
       Frequencies={Frequencies}
@@ -939,16 +939,16 @@ function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture
     end
 
     -- Get command line.
-    local command=self:_GetCommand(Frequencies, Modulations, nil, Gender, Voice, Culture, Volume, nil, nil, Label, Coordinate)    
+    local command=self:_GetCommand(Frequencies, Modulations, nil, Gender, Voice, Culture, Volume, nil, nil, Label, Coordinate)
 
     -- Append text.
     command=command..string.format(" --text=\"%s\"", tostring(Text))
-    
+
     -- Execute command.
     self:_ExecCommand(command)
-    
+
   end
-  
+
   return self
 end
 
@@ -963,31 +963,31 @@ function MSRS:PlayTextFile(TextFile, Delay)
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MSRS.PlayTextFile, self, TextFile, 0)
   else
-  
+
     -- First check if text file exists!
-    local exists=UTILS.FileExists(TextFile)    
+    local exists=UTILS.FileExists(TextFile)
     if not exists then
       self:E("ERROR: MSRS Text file does not exist! File="..tostring(TextFile))
       return self
     end
 
-    -- Get command line.    
+    -- Get command line.
     local command=self:_GetCommand()
 
     -- Append text file.
     command=command..string.format(" --textFile=\"%s\"", tostring(TextFile))
-    
+
     -- Debug output.
     self:T(string.format("MSRS TextFile command=%s", command))
-    
+
     -- Count length of command.
     local l=string.len(command)
 
     -- Execute command.
     self:_ExecCommand(command)
-        
+
   end
-  
+
   return self
 end
 
@@ -998,7 +998,7 @@ end
 
 --- Adds or replaces functions and variables in the current MSRS class instance to enable an alternate backends for transmitting to SRS.
 -- @param #MSRS self
--- @param #table A table containing a table `Functions` with new/replacement class functions and `Vars` with new/replacement variables. 
+-- @param #table A table containing a table `Functions` with new/replacement class functions and `Vars` with new/replacement variables.
 -- @return #MSRS self
 function MSRS:_NewAltBackend(Backend)
   BASE:T('Entering MSRS:_NewAltBackend()')
@@ -1016,7 +1016,7 @@ function MSRS:_NewAltBackend(Backend)
       BASE:T('MSRS setting self.' .. varName)
       self[varName] = UTILS.DeepCopy(varVal)
   end
-  
+
   -- If _MSRSbackendInit() is defined in the backend, then run it (it should return self)
   if self._MSRSbackendInit and type(self._MSRSbackendInit) == 'function' then
     return self:_MSRSbackendInit()
@@ -1033,9 +1033,9 @@ end
 -- @return #number Longitude.
 -- @return #number Altitude.
 function MSRS:_GetLatLongAlt(Coordinate)
-  
+
   local lat, lon, alt=coord.LOtoLL(Coordinate)
-  
+
   return lat, lon, math.floor(alt)
 end
 
@@ -1060,12 +1060,12 @@ end
 function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, speed, port, label, coordinate)
 
   local path=self:GetPath() or STTS.DIRECTORY
-  
+
   local exe=STTS.EXECUTABLE or "DCS-SR-ExternalAudio.exe"
-  
+
   freqs=table.concat(freqs or self.frequencies, ",")
   modus=table.concat(modus or self.modulations, ",")
-  
+
   coal=coal or self.coalition
   gender=gender or self.gender
   voice=voice or self.voice
@@ -1075,11 +1075,11 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   port=port or self.port
   label=label or self.Label
   coordinate=coordinate or self.coordinate
-  
+
   -- Replace modulation
   modus=modus:gsub("0", "AM")
   modus=modus:gsub("1", "FM")
-  
+
   -- Command.
   local command=string.format('"%s\\%s" -f "%s" -m "%s" -c %s -p %s -n "%s" -v "%.1f"', path, exe, freqs, modus, coal, port, label,volume)
 
@@ -1097,18 +1097,18 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
       command=command..string.format(" -l %s", tostring(culture))
     end
   end
-  
+
   -- Set coordinate.
   if coordinate then
     local lat,lon,alt=self:_GetLatLongAlt(coordinate)
     command=command..string.format(" -L %.4f -O %.4f -A %d", lat, lon, alt)
   end
-  
+
   -- Set google.
   if self.google and self.ttsprovider == "Google" then
     command=command..string.format(' --ssml -G "%s"', self.google)
   end
-  
+
   -- Debug output.
   self:T("MSRS command="..command)
 
@@ -1123,23 +1123,23 @@ function MSRS:_ExecCommand(command)
 
     -- Debug info.
     self:T("SRS TTS command="..command)
-    
+
     -- Create a tmp file.
     local filename=os.getenv('TMP').."\\MSRS-"..STTS.uuid()..".bat"
-    
+
     local script=io.open(filename, "w+")
     script:write(command.." && exit")
     script:close()
-      
-    -- Play command.  
+
+    -- Play command.
     command=string.format('start /b "" "%s"', filename)
-    
+
     local res=nil
     if true then
-    
+
       -- Create a tmp file.
       local filenvbs = os.getenv('TMP') .. "\\MSRS-"..STTS.uuid()..".vbs"
-      
+
       -- VBS script
       local script = io.open(filenvbs, "w+")
       script:write(string.format('Dim WinScriptHost\n'))
@@ -1148,16 +1148,16 @@ function MSRS:_ExecCommand(command)
       script:write(string.format('Set WinScriptHost = Nothing'))
       script:close()
 
-      -- Run visual basic script. This still pops up a window but very briefly and does not put the DCS window out of focus.      
+      -- Run visual basic script. This still pops up a window but very briefly and does not put the DCS window out of focus.
       local runvbs=string.format('cscript.exe //Nologo //B "%s"', filenvbs)
-      
+
       -- Debug output.
       self:T("MSRS execute command="..command)
       self:T("MSRS execute VBS command="..runvbs)
-            
+
       -- Play file in 0.01 seconds
-      res=os.execute(runvbs)      
-      
+      res=os.execute(runvbs)
+
       -- Remove file in 1 second.
       timer.scheduleFunction(os.remove, filename, timer.getTime()+1)
       timer.scheduleFunction(os.remove, filenvbs, timer.getTime()+1)
@@ -1166,33 +1166,33 @@ function MSRS:_ExecCommand(command)
 
       -- Create a tmp file.
       local filenvbs = os.getenv('TMP') .. "\\MSRS-"..STTS.uuid()..".vbs"
-      
+
       -- VBS script
       local script = io.open(filenvbs, "w+")
       script:write(string.format('Set oShell = CreateObject ("Wscript.Shell")\n'))
       script:write(string.format('Dim strArgs\n'))
       script:write(string.format('strArgs = "cmd /c %s"\n', filename))
       script:write(string.format('oShell.Run strArgs, 0, false'))
-      script:close()      
-      
+      script:close()
+
       local runvbs=string.format('cscript.exe //Nologo //B "%s"', filenvbs)
 
       -- Play file in 0.01 seconds
       res=os.execute(runvbs)
-      
+
     else
 
       -- Debug output.
-      self:T("MSRS execute command="..command)    
-            
+      self:T("MSRS execute command="..command)
+
       -- Execute command
       res=os.execute(command)
-      
+
       -- Remove file in 1 second.
       timer.scheduleFunction(os.remove, filename, timer.getTime()+1)
-    
+
     end
-    
+
 
   return res
 end
@@ -1241,7 +1241,7 @@ end
 -- @param #string Text Text of message to transmit (can also be SSML).
 -- @param #string Optional plaintext version of message (for accessiblity).
 -- @param #table Frequencies Radio frequencies to transmit on. Can also accept a number in MHz.
--- @param #string Voice Voice for the TTS provider to user. 
+-- @param #string Voice Voice for the TTS provider to user.
 -- @param #string Label Label (SRS diplays as name of the transmitter).
 -- @return #MSRS self
 function MSRS:_DCSgRPCtts(Text, Plaintext, Frequencies, Voice, Label)
@@ -1273,21 +1273,21 @@ function MSRS:_DCSgRPCtts(Text, Plaintext, Frequencies, Voice, Label)
     elseif UTILS.GetCoalitionName(self.coalition) == 'Red' then
       options.coalition = 'red'
     end
-    
+
     local provider = self.provider or self.GRPCOptions.DefaultProvider or MSRS.GRPCOptions.DefaultProvider
-    
+
     options.provider = {}
-    
+
     options.provider[provider] = {}
-    
+
     if self.APIKey then
       options.provider[provider].key = self.APIKey
     end
-    
+
     if self.defaultVoice then
       options.provider[provider].defaultVoice = self.defaultVoice
     end
-    
+
     if self.voice then
       options.provider[provider].voice = Voice or self.voice or self.defaultVoice
     elseif ssml then
@@ -1366,22 +1366,22 @@ end
 --              },
 --            }
 --          }
---  
+--
 --  3) The config file is automatically loaded when Moose starts. YOu can also load the config into the MSRS raw class manually before you do anything else:
---  
+--
 --         MSRS.LoadConfigFile() -- Note the "." here
--- 
+--
 --  Optionally, your might want to provide a specific path and filename:
---  
+--
 --         MSRS.LoadConfigFile(nil,MyPath,MyFilename) -- Note the "." here
---         
+--
 --  This will populate variables for the MSRS raw class and all instances you create with e.g. `mysrs = MSRS:New()`
 --  Optionally you can also load this per **single instance** if so needed, i.e.
---    
+--
 --     mysrs:LoadConfigFile(Path,Filename)
---         
+--
 --  4) Use the config in your code like so, variable names are basically the same as in the config file, but all lower case, examples:
---  
+--
 --         -- Needed once only
 --         MESSAGE.SetMSRS(MSRS.path,nil,MSRS.google,243,radio.modulation.AM,nil,nil,
 --         MSRS.Voices.Google.Standard.de_DE_Standard_B,coalition.side.BLUE)
@@ -1389,19 +1389,23 @@ end
 --         -- later on in your code
 --
 --         MESSAGE:New("Test message!",15,"SPAWN"):ToSRS(243,radio.modulation.AM,nil,nil,MSRS.Voices.Google.Standard.fr_FR_Standard_C)
---        
+--
 --          -- Create new ATIS as usual
 --          atis=ATIS:New(AIRBASE.Caucasus.Batumi, 123, radio.modulation.AM)
 --          atis:SetSRS(nil,nil,nil,MSRS.Voices.Google.Standard.en_US_Standard_H)
 --          --Start ATIS
 --          atis:Start()
-function MSRS:LoadConfigFile(Path, Filename)
-  
-  local path = Path or lfs.writedir()..MSRS.ConfigFilePath 
+function MSRS:LoadConfigFile(Path,Filename)
+
+  if lfs == nil then
+        env.info("*****Note - lfs and os need to be desanitized for MSRS to work!")
+        return false
+  end
+  local path = Path or lfs.writedir()..MSRS.ConfigFilePath
   local file = Filename or MSRS.ConfigFileName or "Moose_MSRS.lua"
   local pathandfile = path..file
   local filexsists =  UTILS.FileExists(pathandfile)
-  
+
   if filexsists and not MSRS.ConfigLoaded then
     assert(loadfile(path..file))()
     -- now we should have a global var MSRS_Config
@@ -1468,7 +1472,7 @@ function MSRS:LoadConfigFile(Path, Filename)
     env.info("MSRS - Cannot find default configuration file!",false)
     return false
   end
-  
+
   return true
 end
 
@@ -1480,8 +1484,8 @@ end
 -- ### Author: **dogjutsu**
 -- A table containing functions and variables for MSRS to use DCS-gRPC [DCS-gRPC](https://github.com/DCS-gRPC/rust-server) 0.7.0 or newer as a backend to transmit over SRS.
 -- This is not a standalone class. Instead, variables and functions under the `Vars` and `Functions` tables get added to or replace MSRS variables/functions when activated.
--- 
--- @type MSRS_BACKEND_DCSGRPC 
+--
+-- @type MSRS_BACKEND_DCSGRPC
 -- @field #number version Version number of this alternate backend.
 -- @field #table Functions A table of functions that will add or replace the default MSRS class functions.
 -- @field #table Vars A table of variables that will add or replace the default MSRS class variables.
@@ -1544,7 +1548,7 @@ MSRS_BACKEND_DCSGRPC.Functions.SetGender = function (self, Gender)
   if Gender then
     self.gender=Gender:lower()
   end
-  
+
   -- Debug output.
   self:T("Setting gender to "..tostring(self.gender))
   return self
@@ -1620,7 +1624,7 @@ MSRS_BACKEND_DCSGRPC.Functions.PlaySoundFile = function (self)
     return self
 end
 
---- Replacement function for @{#MSRS.PlaySoundText} 
+--- Replacement function for @{#MSRS.PlaySoundText}
 -- @param #MSRS self
 -- @param Sound.SoundOutput#SOUNDTEXT SoundText Sound text.
 -- @param #number Delay Delay in seconds, before the sound file is played.
@@ -1632,11 +1636,11 @@ MSRS_BACKEND_DCSGRPC.Functions.PlaySoundText = function (self, SoundText, Delay)
     else
         self:_DCSgRPCtts(tostring(SoundText.text))
     end
-    
+
     return self
 end
 
---- Replacement function for @{#MSRS.PlayText} 
+--- Replacement function for @{#MSRS.PlayText}
 -- @param #MSRS self
 -- @param #string Text Text message.
 -- @param #number Delay Delay in seconds, before the message is played.
@@ -1648,11 +1652,11 @@ MSRS_BACKEND_DCSGRPC.Functions.PlayText = function (self, Text, Delay)
     else
         self:_DCSgRPCtts(tostring(Text))
     end
-    
+
     return self
 end
 
---- Replacement function for @{#MSRS.PlayText} 
+--- Replacement function for @{#MSRS.PlayText}
 -- @param #MSRS self
 -- @param #string Text Text message.
 -- @param #number Delay Delay in seconds, before the message is played.
@@ -1660,7 +1664,7 @@ end
 -- @param #table Modulations Radio modulations. (Non-functional, DCS-gRPC sets automatically)
 -- @param #string Gender Gender. (Non-functional, only 'Voice' supported)
 -- @param #string Culture Culture. (Non-functional, only 'Voice' supported)
--- @param #string Voice Voice. 
+-- @param #string Voice Voice.
 -- @param #number Volume Volume. (Non-functional, all transmissions full volume with DCS-gRPC)
 -- @param #string Label Label.
 -- @return #MSRS self
@@ -1670,7 +1674,7 @@ MSRS_BACKEND_DCSGRPC.Functions.PlayTextExt = function (self, Text, Delay, Freque
   else
       self:_DCSgRPCtts(tostring(Text), nil, Frequencies, Voice, Label)
   end
-  
+
   return self
 end
 
@@ -1726,7 +1730,7 @@ end
 -- @param #string Text Text of message to transmit (can also be SSML).
 -- @param #string Optional plaintext version of message (for accessiblity)
 -- @param #table Frequencies Radio frequencies to transmit on. Can also accept a number in MHz.
--- @param #string Voice Voice for the TTS provider to user. 
+-- @param #string Voice Voice for the TTS provider to user.
 -- @param #string Label Label (SRS diplays as name of the transmitter).
 -- @return #MSRS self
 MSRS_BACKEND_DCSGRPC.Functions._DCSgRPCtts = function (self, Text, Plaintext, Frequencies, Voice, Label)
@@ -1758,21 +1762,21 @@ MSRS_BACKEND_DCSGRPC.Functions._DCSgRPCtts = function (self, Text, Plaintext, Fr
     elseif UTILS.GetCoalitionName(self.coalition) == 'Red' then
       options.coalition = 'red'
     end
-    
+
     local provider = self.provider or self.GRPCOptions.DefaultProvider or MSRS.GRPCOptions.DefaultProvider
-    
+
     options.provider = {}
-    
+
     options.provider[provider] = {}
-    
+
     if self.APIKey then
       options.provider[provider].key = self.APIKey
     end
-    
+
     if self.defaultVoice then
       options.provider[provider].defaultVoice = self.defaultVoice
     end
-    
+
     if self.voice then
       options.provider[provider].voice = Voice or self.voice or self.defaultVoice
     elseif ssml then
@@ -1809,16 +1813,16 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Manages radio transmissions.
--- 
+--
 -- The purpose of the MSRSQUEUE class is to manage SRS text-to-speech (TTS) messages using the MSRS class.
 -- This can be used to submit multiple TTS messages and the class takes care that they are transmitted one after the other (and not overlapping).
--- 
+--
 -- @type MSRSQUEUE
 -- @field #string ClassName Name of the class "MSRSQUEUE".
 -- @field #string lid ID for dcs.log.
 -- @field #table queue The queue of transmissions.
 -- @field #string alias Name of the radio queue.
--- @field #number dt Time interval in seconds for checking the radio queue. 
+-- @field #number dt Time interval in seconds for checking the radio queue.
 -- @field #number Tlast Time (abs) when the last transmission finished.
 -- @field #boolean checking If `true`, the queue update function is scheduled to be called again.
 -- @extends Core.Base#BASE
@@ -1864,13 +1868,13 @@ function MSRSQUEUE:New(alias)
 
   -- Inherit base
   local self=BASE:Inherit(self, BASE:New()) --#MSRSQUEUE
-  
+
   self.alias=alias or "My Radio"
-  
+
   self.dt=1.0
-  
+
   self.lid=string.format("MSRSQUEUE %s | ", self.alias)
-  
+
   return self
 end
 
@@ -1886,17 +1890,17 @@ end
 
 --- Add a transmission to the radio queue.
 -- @param #MSRSQUEUE self
--- @param #MSRSQUEUE.Transmission transmission The transmission data table. 
+-- @param #MSRSQUEUE.Transmission transmission The transmission data table.
 -- @return #MSRSQUEUE self
 function MSRSQUEUE:AddTransmission(transmission)
-  
+
   -- Init.
   transmission.isplaying=false
   transmission.Tstarted=nil
 
   -- Add to queue.
   table.insert(self.queue, transmission)
-  
+
   -- Start checking.
   if not self.checking then
     self:_CheckRadioQueue()
@@ -1942,13 +1946,13 @@ end
 -- @param Core.Point#COORDINATE coordinate Coordinate to be used
 -- @return #MSRSQUEUE.Transmission Radio transmission table.
 function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation, gender, culture, voice, volume, label,coordinate)
-  
+
   if self.TransmitOnlyWithPlayers then
     if self.PlayerSet and self.PlayerSet:CountAlive() == 0 then
       return self
     end
   end
-  
+
   -- Sanity checks.
   if not text then
     self:E(self.lid.."ERROR: No text specified.")
@@ -1956,10 +1960,10 @@ function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgr
   end
   if type(text)~="string" then
     self:E(self.lid.."ERROR: Text specified is NOT a string.")
-    return nil    
+    return nil
   end
 
-  
+
   -- Create a new transmission object.
   local transmission={} --#MSRSQUEUE.Transmission
   transmission.text=text
@@ -1982,10 +1986,10 @@ function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgr
   transmission.volume = volume
   transmission.label = label
   transmission.coordinate = coordinate
-    
-  -- Add transmission to queue.  
+
+  -- Add transmission to queue.
   self:AddTransmission(transmission)
-  
+
   return transmission
 end
 
@@ -1999,27 +2003,27 @@ function MSRSQUEUE:Broadcast(transmission)
   else
     transmission.msrs:PlayText(transmission.text,nil,transmission.coordinate)
   end
-  
+
   local function texttogroup(gid)
     -- Text to group.
-    trigger.action.outTextForGroup(gid, transmission.subtitle, transmission.subduration, true)  
+    trigger.action.outTextForGroup(gid, transmission.subtitle, transmission.subduration, true)
   end
-  
+
   if transmission.subgroups and #transmission.subgroups>0 then
-    
+
     for _,_group in pairs(transmission.subgroups) do
       local group=_group --Wrapper.Group#GROUP
-      
+
       if group and group:IsAlive() then
         local gid=group:GetID()
-        
-        self:ScheduleOnce(4, texttogroup, gid) 
+
+        self:ScheduleOnce(4, texttogroup, gid)
       end
-      
+
     end
-    
+
   end
-  
+
 end
 
 --- Calculate total transmission duration of all transmission in the queue.
@@ -2032,18 +2036,18 @@ function MSRSQUEUE:CalcTransmisstionDuration()
   local T=0
   for _,_transmission in pairs(self.queue) do
     local transmission=_transmission --#MSRSQUEUE.Transmission
-    
+
     if transmission.isplaying then
-    
+
       -- Playing for dt seconds.
       local dt=Tnow-transmission.Tstarted
-      
+
       T=T+transmission.duration-dt
-    
+
     else
       T=T+transmission.duration
     end
-  
+
   end
 
   return T
@@ -2054,146 +2058,146 @@ end
 -- @param #number delay Delay in seconds before checking.
 function MSRSQUEUE:_CheckRadioQueue(delay)
 
-  -- Transmissions in queue.  
+  -- Transmissions in queue.
   local N=#self.queue
 
   -- Debug info.
   self:T2(self.lid..string.format("Check radio queue %s: delay=%.3f sec, N=%d, checking=%s", self.alias, delay or 0, N, tostring(self.checking)))
-  
+
   if delay and delay>0 then
-  
+
     -- Delayed call.
     self:ScheduleOnce(delay, MSRSQUEUE._CheckRadioQueue, self)
-    
+
     -- Checking on.
     self.checking=true
-  
+
   else
 
     -- Check if queue is empty.
     if N==0 then
-    
+
       -- Debug info.
       self:T(self.lid..string.format("Check radio queue %s empty ==> disable checking", self.alias))
-    
+
       -- Queue is now empty. Nothing to else to do. We start checking again, if a transmission is added.
       self.checking=false
-      
+
       return
     end
 
     -- Get current abs time.
     local time=timer.getAbsTime()
-    
+
     -- Checking on.
     self.checking=true
-    
+
     -- Set dt.
     local dt=self.dt
-      
-    
+
+
     local playing=false
     local next=nil  --#MSRSQUEUE.Transmission
     local remove=nil
     for i,_transmission in ipairs(self.queue) do
       local transmission=_transmission  --#MSRSQUEUE.Transmission
-      
+
       -- Check if transmission time has passed.
-      if time>=transmission.Tplay then 
-        
+      if time>=transmission.Tplay then
+
         -- Check if transmission is currently playing.
         if transmission.isplaying then
-        
+
           -- Check if transmission is finished.
           if time>=transmission.Tstarted+transmission.duration then
-            
+
             -- Transmission over.
             transmission.isplaying=false
-            
+
             -- Remove ith element in queue.
             remove=i
-            
+
             -- Store time last transmission finished.
             self.Tlast=time
-                      
+
           else -- still playing
-          
+
             -- Transmission is still playing.
             playing=true
-            
+
             dt=transmission.duration-(time-transmission.Tstarted)
-            
+
           end
-        
+
         else -- not playing yet
-        
+
           local Tlast=self.Tlast
-        
+
           if transmission.interval==nil  then
-        
+
             -- Not playing ==> this will be next.
             if next==nil then
               next=transmission
             end
-            
+
           else
-          
+
             if Tlast==nil or time-Tlast>=transmission.interval then
-              next=transmission            
+              next=transmission
             else
-              
+
             end
           end
-          
+
           -- We got a transmission or one with an interval that is not due yet. No need for anything else.
           if next or Tlast then
             break
           end
-               
+
         end
-        
+
       else
-        
+
           -- Transmission not due yet.
-        
-      end  
+
+      end
     end
-    
+
     -- Found a new transmission.
     if next~=nil and not playing then
       -- Debug info.
       self:T(self.lid..string.format("Broadcasting text=\"%s\" at T=%.3f", next.text, time))
-      
+
       -- Call SRS.
       self:Broadcast(next)
-      
+
       next.isplaying=true
       next.Tstarted=time
       dt=next.duration
     end
-    
+
     -- Remove completed call from queue.
     if remove then
       -- Remove from queue.
       table.remove(self.queue, remove)
       N=N-1
-      
+
       -- Check if queue is empty.
       if #self.queue==0 then
         -- Debug info.
         self:T(self.lid..string.format("Check radio queue %s empty ==> disable checking", self.alias))
-              
+
         self.checking=false
-        
+
         return
       end
     end
-    
+
     -- Check queue.
     self:_CheckRadioQueue(dt)
-    
+
   end
-  
+
 end
 
 MSRS.LoadConfigFile()
