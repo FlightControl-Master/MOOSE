@@ -1216,7 +1216,11 @@ end
 --          --Start ATIS
 --          atis:Start()
 function MSRS:LoadConfigFile(Path,Filename)
-  
+
+  if lfs == nil then
+        env.info("*****Note - lfs and os need to be desanitized for MSRS to work!")
+        return false
+  end
   local path = Path or lfs.writedir()..MSRS.ConfigFilePath 
   local file = Filename or MSRS.ConfigFileName or "Moose_MSRS.lua"
   local pathandfile = path..file
