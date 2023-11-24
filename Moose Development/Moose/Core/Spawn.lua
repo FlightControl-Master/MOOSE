@@ -3289,6 +3289,26 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
         SpawnTemplate.units[UnitID].callsign = Callsign + SpawnIndex
       end
     end
+    -- Link16
+    local AddProps = SpawnTemplate.units[UnitID].AddPropAircraft
+    if AddProps then
+      if SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 then
+        SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 = SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16+UnitID-1
+        if SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 < 10000 then
+          SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 = string.format("0%d",SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16)
+        end
+      end
+      -- VoiceCallsignNumber
+      if SpawnTemplate.units[UnitID].AddPropAircraft.VoiceCallsignNumber then
+        SpawnTemplate.units[UnitID].AddPropAircraft.VoiceCallsignNumber = SpawnTemplate.units[UnitID].AddPropAircraft.VoiceCallsignNumber+UnitID-1
+      end
+      --UTILS.PrintTableToLog(SpawnTemplate.units[UnitID].AddPropAircraft,1)
+      -- FlightLead
+      if SpawnTemplate.units[UnitID].datalinks and SpawnTemplate.units[UnitID].datalinks.Link16 and SpawnTemplate.units[UnitID].datalinks.Link16.settings then
+        SpawnTemplate.units[UnitID].datalinks.Link16.settings.flightLead = UnitID == 1 and true or false
+      end
+      --UTILS.PrintTableToLog(SpawnTemplate.units[UnitID].datalinks,1)
+    end
   end
 
   self:T3( { "Template:", SpawnTemplate } )
