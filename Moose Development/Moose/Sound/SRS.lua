@@ -65,6 +65,7 @@
 -- ## Prerequisites
 --
 -- This script needs SRS version >= 1.9.6.
+-- Optional: DCS-gRPC as backend to communicate with SRS (vide infra)
 --
 -- ## Knwon Issues
 --
@@ -130,6 +131,7 @@
 -- ## Set Coordinate
 --
 -- Use @{#MSRS.SetCoordinate} to define the origin from where the transmission is broadcasted.
+-- Note that this is only a factor if SRS server has line-of-sight and/or distance limit enabled.
 --
 -- ## Set SRS Port
 --
@@ -193,6 +195,7 @@ MSRS = {
   lid            =        nil,
   port           =       5002,
   name           =     "MSRS",
+  backend        =   "srsexe",
   frequencies    =         {},
   modulations    =         {},
   coalition      =          0,
@@ -202,12 +205,12 @@ MSRS = {
   volume         =          1,
   speed          =          1,
   coordinate     =        nil,
+  provider       =      "win",
   Label          =    "ROBOT",
-  AltBackend     =        nil,
   ConfigFileName =    "Moose_MSRS.lua",
   ConfigFilePath =    "Config\\",
   ConfigLoaded   =     false,
-  ttsprovider    =     "Microsoft",
+  poptions       = {},
 }
 
 --- MSRS class version.
@@ -329,8 +332,8 @@ MSRS.Backend = {
 -- @type MSRS.Provider
 -- @field #string WINDOWS Microsoft windows (`win`).
 -- @field #string GOOGLE Google (`gcloud`).
--- @field #string AZURE Microsoft Azure (`azure`).
--- @field #string AMAZON Amazon Web Service (`asw`).
+-- @field #string AZURE Microsoft Azure (`azure`). Only possible with DCS-gRPC backend.
+-- @field #string AMAZON Amazon Web Service (`asw`). Only possible with DCS-gRPC backend.
 MSRS.Provider = {
   WINDOWS = "win",
   GOOGLE  = "gcloud",
@@ -340,10 +343,10 @@ MSRS.Provider = {
 
 --- Provider options.
 -- @type MSRS.ProviderOptions
--- @field #string key
--- @field #string secret
--- @field #string region
--- @field #string defaultVoice
+-- @field #string key Access key (DCS-gRPC with Google, ASW, AZURE as provider).
+-- @field #string secret Secret key (DCS-gRPC with ASW as provider)
+-- @field #string region Region.
+-- @field #string defaultVoice Default voice.
 -- @field #string voice
 
 --- GRPC options.
@@ -390,13 +393,11 @@ MSRS.GRPCOptions.DefaultProvider = "win"
 -- set the path to the exe file via @{#MSRS.SetPath}.
 --
 -- @param #MSRS self
--- @param #string PathToSRS Path to the directory, where SRS is located.
 -- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. Can also be given as a #table of multiple frequencies.
 -- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a #table of multiple modulations.
--- @param #number Volume Volume - 1.0 is max, 0.0 is silence.
--- @param #table AltBackend Optional table containing tables 'Functions' and 'Vars' which add/replace functions and variables for the MSRS instance to allow alternate backends for transmitting to SRS.
+-- @param #string Backend Backend used: `MSRS.Backend.SRSEXE` (default) or `MSRS.Backend.GRPC`.
 -- @return #MSRS self
-function MSRS:New(Frequency, Modulation, Volume, AltBackend)
+function MSRS:New(Frequency, Modulation, Backend)
 
   -- Defaults.
   Frequency = Frequency or 143
@@ -407,50 +408,25 @@ function MSRS:New(Frequency, Modulation, Volume, AltBackend)
 
   self.lid = string.format("%s-%s | ", "unknown", self.version)
 
-  -- If AltBackend is supplied, initialize it, which will add/replace functions and variables in this MSRS instance.
-  if type( AltBackend ) == "table" or type( self.AltBackend ) == "table" then
-
-    local Backend = UTILS.DeepCopy(AltBackend) or UTILS.DeepCopy(self.AltBackend)
-
-    -- Add parameters to vars so alternate backends can use them if applicable
-    Backend.Vars            = Backend.Vars or {}
-    Backend.Vars.PathToSRS  = PathToSRS
-    Backend.Vars.Frequency  = UTILS.DeepCopy(Frequency)
-    Backend.Vars.Modulation = UTILS.DeepCopy(Modulation)
-    Backend.Vars.Volume     = Volume
-
-    Backend.Functions = Backend.Functions or {}
-
-    return self:_NewAltBackend(Backend)
-  end
-
   if not self.ConfigLoaded then
 
-    -- If no AltBackend table, the proceed with default initialisation
-    self:SetPath(PathToSRS)
+    -- Defaults.
+    self:SetPath()
     self:SetPort()
     self:SetFrequencies(Frequency)
     self:SetModulations(Modulation)
     self:SetGender()
     self:SetCoalition()
     self:SetLabel()
-    self:SetVolume(Volume)
+    self:SetVolume()
 
   else
 
     -- there might be some overwrites from :New()
 
-    if PathToSRS then
-      self:SetPath(PathToSRS)
-    end
-
     if Frequency then
       self:SetFrequencies(Frequency)
       self:SetModulations(Modulation)
-    end
-
-    if Volume then
-      self:SetVolume(Volume)
     end
 
   end
@@ -484,9 +460,37 @@ function MSRS:SetBackend(Backend)
   return self
 end
 
+--- Set DCS-gRPC as backend to communicate with SRS.
+-- @param #MSRS self
+-- @return #MSRS self
+function MSRS:SetBackendGRPC()
+
+  self:SetBackend(MSRS.Backend.GRPC)
+
+  return self
+end
+
+--- Set SRS-TTS.exe as backend to communicate with SRS.
+-- @param #MSRS self
+-- @return #MSRS self
+function MSRS:SetBackendSRSEXE(Backend)
+
+  self:SetBackend(MSRS.Backend.SRSEXE)
+
+  return self
+end
+
+
+--- Get currently set backend.
+-- @param #MSRS self
+-- @return #string Backend.
+function MSRS:GetBackend()
+  return self.backend
+end
+
 --- Set path to SRS install directory. More precisely, path to where the DCS-
 -- @param #MSRS self
--- @param #string Path Path to the directory, where the sound file is located. This does **not** contain a final backslash or slash.
+-- @param #string Path Path to the directory, where the sound file is located.
 -- @return #MSRS self
 function MSRS:SetPath(Path)
 
@@ -613,7 +617,7 @@ end
 
 --- Get frequencies.
 -- @param #MSRS self
--- @param #table Frequencies in MHz.
+-- @return #table Frequencies in MHz.
 function MSRS:GetFrequencies()
   return self.frequencies
 end
@@ -672,7 +676,7 @@ end
 
 --- Set culture.
 -- @param #MSRS self
--- @param #string Culture Culture, e.g. "en-GB" (default).
+-- @param #string Culture Culture, e.g. "en-GB".
 -- @return #MSRS self
 function MSRS:SetCulture(Culture)
 
@@ -681,17 +685,13 @@ function MSRS:SetCulture(Culture)
   return self
 end
 
---- Set to use a specific voice. Will override any gender and culture settings.
+--- Set to use a specific voice. Note that this will override any gender and culture settings as a voice already has a certain gender/culture.
 -- @param #MSRS self
 -- @param #string Voice Voice.
 -- @return #MSRS self
 function MSRS:SetVoice(Voice)
 
   self.voice=Voice
-
-  --local defaultprovider = self.provider or self.GRPCOptions.DefaultProvider or MSRS.GRPCOptions.DefaultProvider or "win"
-
-  --self.GRPCOptions[defaultprovider].voice = Voice
 
   return self
 end
@@ -703,13 +703,14 @@ end
 function MSRS:SetDefaultVoice(Voice)
 
   self.defaultVoice=Voice
+  
   local provider = self.provider or self.GRPCOptions.DefaultProvider or MSRS.GRPCOptions.DefaultProvider or "win"
   self.GRPCOptions[provider].defaultVoice = Voice
 
   return self
 end
 
---- Set the coordinate from which the transmissions will be broadcasted.
+--- Set the coordinate from which the transmissions will be broadcasted. Note that this is only a factor if SRS has line-of-sight or distance enabled.
 -- @param #MSRS self
 -- @param Core.Point#COORDINATE Coordinate Origin of the transmission.
 -- @return #MSRS self
@@ -754,6 +755,77 @@ function MSRS:SetGoogleAPIKey(APIKey)
   end
   return self
 end
+
+
+--- Set provider used to generate text-to-speech.
+-- These options are available:
+-- 
+-- - `MSRS.Provider.WINDOWS`: Microsoft Windows (default)
+-- - `MSRS.Provider.GOOGLE`: Google Cloud
+-- - `MSRS.Provider.AZURE`: Microsoft Azure (only with DCS-gRPC backend)
+-- - `MSRS.Provier.AMAZON`: Amazone Web Service (only with DCS-gRPC backend)
+-- 
+-- Note that all providers except Microsoft Windows need as additonal information the credentials of your account.
+-- 
+-- @param #MSRS self
+-- @param #string Provider
+-- @return #MSRS self
+function MSRS:SetProvider(Provider)
+  self.provider = Provider or MSRS.Provider.WINDOWS
+  return self
+end
+
+
+--- Get provider.
+-- @param #MSRS self
+-- @return #MSRS self
+function MSRS:GetProvider()
+  return self.provider or MSRS.Provider.WINDOWS
+end
+
+--- Set provider options and credentials.
+-- @param #MSRS self
+-- @param #string Provider Provider.
+-- @param #string CredentialsFile Full path to your credentials file. For Google this is the path to a JSON file.
+-- @param #string AccessKey Your API access key.
+-- @param #string SecretKey Your secret key.
+-- @param #string Region Region to use.
+-- @return #MSRS.ProviderOptions Provider optionas table.
+function MSRS:SetProviderOptions(Provider, CredentialsFile, AccessKey, SecretKey, Region)
+
+  local option={} --#MSRS.ProviderOptions
+  
+  option.provider=Provider
+  option.credentials=CredentialsFile
+  option.key=AccessKey
+  option.secret=SecretKey
+  option.region=Region
+  
+  self.poptions[Provider]=option
+
+  return option
+end
+
+--- Set provider options and credentials for Google Cloud.
+-- @param #MSRS self
+-- @param #string CredentialsFile Full path to your credentials file. For Google this is the path to a JSON file. This is used if SRS-TTS.exe is used as backend.
+-- @param #string AccessKey Your API access key. This is necessary if DCS-gRPC is used as backend.
+-- @return #MSRS self
+function MSRS:SetProviderOptionsGoogle(CredentialsFile, AccessKey)
+
+  self:SetProviderOptions(MSRS.Provider.GOOGLE, CredentialsFile, AccessKey)
+  
+  return self
+end
+
+--- Set provider options and credentials for Google Cloud.
+-- @param #MSRS self
+-- @param #string Provider Provider. Default is as set via @{#MSRS.SetProvider}.
+-- @return #MSRS.ProviderOptions Provider options.
+function MSRS:GetProviderOptions(Provider)
+  return self.poptions[Provider or self.provider]
+end
+
 
 --- Use Google text-to-speech as default.
 -- @param #MSRS self
@@ -894,15 +966,24 @@ function MSRS:PlayText(Text, Delay, Coordinate)
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MSRS.PlayText, self, Text, nil, Coordinate)
   else
+  
+    if self.backend==MSRS.Backend.SRSEXE then
 
-    -- Get command line.
-    local command=self:_GetCommand(nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,Coordinate)
-
-    -- Append text.
-    command=command..string.format(" --text=\"%s\"", tostring(Text))
-
-    -- Execute command.
-    self:_ExecCommand(command)
+      -- Get command line.
+      local command=self:_GetCommand(nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,Coordinate)
+  
+      -- Append text.
+      command=command..string.format(" --text=\"%s\"", tostring(Text))
+  
+      -- Execute command.
+      self:_ExecCommand(command)
+      
+    else
+      
+      self:T(self.lid.."Transmitting")
+      self:_DCSgRPCtts(Text, nil, nil , nil, nil, nil, nil, Coordinate)
+      
+    end
 
   end
 
@@ -927,25 +1008,23 @@ function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MSRS.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
   else
+  
+    if self.backend==MSRS.Backend.SRSEXE then
 
-    -- Ensure table.
-    if Frequencies and type(Frequencies)~="table" then
-      Frequencies={Frequencies}
+      -- Get command line.
+      local command=self:_GetCommand(UTILS.EnsureTable(Frequencies, false), UTILS.EnsureTable(Modulations, false), nil, Gender, Voice, Culture, Volume, nil, nil, Label, Coordinate)
+  
+      -- Append text.
+      command=command..string.format(" --text=\"%s\"", tostring(Text))
+  
+      -- Execute command.
+      self:_ExecCommand(command)
+      
+    elseif self.backend==MSRS.Backend.GRPC then
+    
+      self:_DCSgRPCtts(Text,Optional,Frequencies,Voice,Label,Plaintext)
+    
     end
-
-    -- Ensure table.
-    if Modulations and type(Modulations)~="table" then
-      Modulations={Modulations}
-    end
-
-    -- Get command line.
-    local command=self:_GetCommand(Frequencies, Modulations, nil, Gender, Voice, Culture, Volume, nil, nil, Label, Coordinate)
-
-    -- Append text.
-    command=command..string.format(" --text=\"%s\"", tostring(Text))
-
-    -- Execute command.
-    self:_ExecCommand(command)
 
   end
 
@@ -1029,12 +1108,18 @@ end
 --- Get lat, long and alt from coordinate.
 -- @param #MSRS self
 -- @param Core.Point#Coordinate Coordinate Coordinate. Can also be a DCS#Vec3.
--- @return #number Latitude.
--- @return #number Longitude.
--- @return #number Altitude.
+-- @return #number Latitude (or 0 if no input coordinate was given). 
+-- @return #number Longitude (or 0 if no input coordinate was given). 
+-- @return #number Altitude (or 0 if no input coordinate was given).
 function MSRS:_GetLatLongAlt(Coordinate)
 
-  local lat, lon, alt=coord.LOtoLL(Coordinate)
+  local lat=0.0
+  local lon=0.0
+  local alt=0.0
+
+  if Coordinate then
+    lat, lon, alt=coord.LOtoLL(Coordinate)
+  end
 
   return lat, lon, math.floor(alt)
 end
@@ -1239,85 +1324,92 @@ end
 --- Make DCS-gRPC API call to transmit text-to-speech over SRS.
 -- @param #MSRS self
 -- @param #string Text Text of message to transmit (can also be SSML).
--- @param #string Optional plaintext version of message (for accessiblity).
 -- @param #table Frequencies Radio frequencies to transmit on. Can also accept a number in MHz.
--- @param #string Voice Voice for the TTS provider to user.
--- @param #string Label Label (SRS diplays as name of the transmitter).
+-- @param #string Gender Gender.
+-- @param #string Culture Culture.
+-- @param #string Voice Voice.
+-- @param #number Volume Volume.
+-- @param #string Label Label.
+-- @param Core.Point#COORDINATE Coordinate Coordinate.
 -- @return #MSRS self
-function MSRS:_DCSgRPCtts(Text, Plaintext, Frequencies, Voice, Label)
+function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Label, Coordinate)
 
-    BASE:T("MSRS_BACKEND_DCSGRPC:_DCSgRPCtts()")
-    BASE:T({Text, Plaintext, Frequencies, Voice, Label})
-
-    local options = self.ProviderOptions or MSRS.ProviderOptions or {} -- #MSRS.GRPCOptions
-    local ssml = Text or ''
-
-    local XmitFrequencies = Frequencies or self.Frequency
-    if type(XmitFrequencies)~="table" then
-        XmitFrequencies={XmitFrequencies}
-    end
-
-    options.plaintext = Plaintext
-    options.srsClientName = Label or self.Label
+  --Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
+  
+  self:I("MSRS_BACKEND_DCSGRPC:_DCSgRPCtts()")
+  self:I({Text, Frequencies, Gender, Culture, Voice, Volume, Label, Coordinate})
+  
+  --local options = self.ProviderOptions or MSRS.ProviderOptions or {} -- #MSRS.GRPCOptions
+  
+  local options = {} -- #MSRS.GRPCOptions
+  
+  local ssml = Text or ''
+  
+  Frequencies = UTILS.EnsureTable(Frequencies, true) or self:GetFrequencies()
+  
+  options.plaintext = Plaintext
+  options.srsClientName = Label or self.Label
+  
+  if false then
+  
     options.position = {}
     if self.coordinate then
-        options.position.lat, options.position.lon, options.position.alt = self:_GetLatLongAlt(self.coordinate)
-    end
-
-    options.position.lat = options.position.lat or 0.0
-    options.position.lon = options.position.lon or 0.0
-    options.position.alt = options.position.alt or 0.0
-
+      options.position.lat, options.position.lon, options.position.alt = self:_GetLatLongAlt(self.coordinate)
+    end  
+    
     if UTILS.GetCoalitionName(self.coalition) == 'Blue' then
       options.coalition = 'blue'
     elseif UTILS.GetCoalitionName(self.coalition) == 'Red' then
       options.coalition = 'red'
     end
-
+    
     local provider = self.provider or self.GRPCOptions.DefaultProvider or MSRS.GRPCOptions.DefaultProvider
-
+    
     options.provider = {}
-
-    options.provider[provider] = {}
-
+    --options.provider[provider] = {}
+    options.provider[provider] = self:GetProviderOptions(provider)
+    
     if self.APIKey then
       options.provider[provider].key = self.APIKey
     end
-
+  
     if self.defaultVoice then
       options.provider[provider].defaultVoice = self.defaultVoice
     end
+    
+  end
 
-    if self.voice then
-      options.provider[provider].voice = Voice or self.voice or self.defaultVoice
-    elseif ssml then
-      -- DCS-gRPC doesn't directly support language/gender, but can use SSML
-      -- Only use if a voice isn't explicitly set
-      local preTag, genderProp, langProp, postTag = '', '', '', ''
-
-      if self.gender then
-        genderProp = ' gender=\"' .. self.gender .. '\"'
-      end
-      if self.culture then
-        langProp = ' language=\"' .. self.culture .. '\"'
-      end
-
-      if self.culture or self.gender then
-        preTag = '<voice' .. langProp .. genderProp  .. '>'
-        postTag = '</voice>'
-        ssml = preTag .. Text .. postTag
-      end
-
+  if self.voice then
+    --options.provider[provider].voice = Voice or self.voice or self.defaultVoice
+  elseif ssml then
+    -- DCS-gRPC doesn't directly support language/gender, but can use SSML
+    -- Only use if a voice isn't explicitly set
+    local preTag, genderProp, langProp, postTag = '', '', '', ''
+  
+    if self.gender then
+      genderProp = ' gender=\"' .. self.gender .. '\"'
     end
-
-    for _,_freq in ipairs(XmitFrequencies) do
-        local freq = _freq*1000000
-        BASE:T("GRPC.tts")
-        BASE:T(ssml)
-        BASE:T(freq)
-        BASE:T({options})
-        GRPC.tts(ssml, freq, options)
+    if self.culture then
+      langProp = ' language=\"' .. self.culture .. '\"'
     end
+  
+    if self.culture or self.gender then
+      preTag = '<voice' .. langProp .. genderProp  .. '>'
+      postTag = '</voice>'
+      ssml = preTag .. Text .. postTag
+    end  
+  end
+  
+  env.info("FF freq")
+  for _,freq in pairs(Frequencies) do
+    env.info("FF freq1")
+    self:T("GRPC.tts")
+    self:T(ssml)
+    self:T(freq)
+    self:T({options})
+    UTILS.PrintTableToLog(options)
+    --GRPC.tts(ssml, freq*1e6, options)
+  end
 
 end
 
@@ -1778,10 +1870,15 @@ MSRS_BACKEND_DCSGRPC.Functions._DCSgRPCtts = function (self, Text, Plaintext, Fr
     end
 
     if self.voice then
+    
+      -- Set voice.
       options.provider[provider].voice = Voice or self.voice or self.defaultVoice
+      
     elseif ssml then
+    
       -- DCS-gRPC doesn't directly support language/gender, but can use SSML
       -- Only use if a voice isn't explicitly set
+      
       local preTag, genderProp, langProp, postTag = '', '', '', ''
 
       if self.gender then
@@ -2200,7 +2297,7 @@ function MSRSQUEUE:_CheckRadioQueue(delay)
 
 end
 
-MSRS.LoadConfigFile()
+--MSRS.LoadConfigFile()
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
