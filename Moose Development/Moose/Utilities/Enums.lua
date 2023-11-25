@@ -566,6 +566,14 @@ ENUMS.ReportingName =
   }
 }
 
+--- Enums for Link16 transmit power
+-- @type ENUMS.Link16Power
+ENUMS.Link16Power = {
+  none = 0,
+  low = 1,
+  medium = 2,
+  high = 3,
+}
 
 
 --- Enums for the STORAGE class for stores - which need to be in ""

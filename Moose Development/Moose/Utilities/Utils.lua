@@ -3602,3 +3602,31 @@ function table.find_key_value_pair(tbl, key, value)
     return nil
 end
 
+--- Convert a decimal to octal
+-- @param #number Number the number to convert
+-- @return #number Octal
+function UTILS.DecimalToOctal(Number)
+  if Number < 8 then return Number end
+  local number = tonumber(Number)
+  local octal = ""
+  local n=1
+  while number > 7 do
+    local number1 = number%8
+    octal = string.format("%d",number1)..octal
+    local number2 = math.abs(number/8)
+    if number2 < 8 then
+      octal = string.format("%d",number2)..octal
+    end
+    number = number2
+    n=n+1
+  end
+  return tonumber(octal)
+end
+
+--- Convert an octal to decimal
+-- @param #number Number the number to convert
+-- @return #number Decimal
+function UTILS.OctalToDecimal(Number)
+  return tonumber(Number,8)
+end
+
