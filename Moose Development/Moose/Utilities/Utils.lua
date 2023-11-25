@@ -3328,7 +3328,7 @@ function UTILS.GetZoneProperties(zone_name)
                 for _, property in pairs(zone["properties"]) do
                     return_table[property["key"]] = property["value"]
                 end
-    	        return return_table
+              return return_table
             else
                 BASE:I(string.format("%s doesn't have any properties", zone_name))
                 return {}
@@ -3629,4 +3629,3 @@ end
 function UTILS.OctalToDecimal(Number)
   return tonumber(Number,8)
 end
-
