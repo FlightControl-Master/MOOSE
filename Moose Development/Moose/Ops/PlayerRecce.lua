@@ -104,7 +104,7 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.0.21",
+  version            =   "0.0.22",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
   ViewZoneLaser      =   {},
@@ -469,8 +469,10 @@ function PLAYERRECCE:_GetClockDirection(unit, target)
   local _playerPosition = unit:GetCoordinate() -- get position of helicopter
   local _targetpostions = target:GetCoordinate() -- get position of downed pilot
   local _heading = unit:GetHeading() -- heading
+  --self:I("Heading = ".._heading)
   local DirectionVec3 = _playerPosition:GetDirectionVec3( _targetpostions )
   local Angle = _playerPosition:GetAngleDegrees( DirectionVec3 )
+  --self:I("Angle = "..Angle)
   local clock = 12
   local hours = 0   
   if _heading and Angle then
@@ -478,10 +480,13 @@ function PLAYERRECCE:_GetClockDirection(unit, target)
     --if angle == 0 then angle = 360 end
     clock = _heading-Angle  
     hours = (clock/30)*-1
+    --self:I("hours = "..hours)
     clock = 12+hours
     clock = UTILS.Round(clock,0)
     if clock > 12 then clock = clock-12 end
-  end    
+    if clock == 0 then clock = 12 end
+  end
+  --self:I("Clock ="..clock)    
   return clock
 end
 
@@ -912,32 +917,41 @@ function PLAYERRECCE:_LaseTarget(client,targetset)
   else
     laser = self.LaserSpots[playername]
   end
+  -- old target
   if self.LaserTarget[playername] then
     -- still looking at target?
     local target=self.LaserTarget[playername] -- Ops.Target#TARGET
     local oldtarget = target:GetObject() --or laser.Target
-    --self:I("Targetstate: "..target:GetState())
-    --self:I("Laser State: "..tostring(laser:IsLasing()))
-    if not oldtarget or targetset:IsNotInSet(oldtarget) or target:IsDead() or target:IsDestroyed() then
+    self:T("Targetstate: "..target:GetState())
+    self:T("Laser State: "..tostring(laser:IsLasing()))
+    if (not oldtarget) or targetset:IsNotInSet(oldtarget) or target:IsDead() or target:IsDestroyed() then
       -- lost LOS or dead
       laser:LaseOff()
       if target:IsDead() or target:IsDestroyed() or target:GetLife() < 2 then
         self:__Shack(-1,client,oldtarget)
-        self.LaserTarget[playername] = nil
+        --self.LaserTarget[playername] = nil
       else
         self:__TargetLOSLost(-1,client,oldtarget)
-        self.LaserTarget[playername] = nil
+        --self.LaserTarget[playername] = nil
       end
-    end
-    if oldtarget and (not laser:IsLasing()) then
-      --self:I("Switching laser back on ..")
+      self.LaserTarget[playername] = nil
+      oldtarget = nil
+      self.LaserSpots[playername] = nil
+    elseif oldtarget and laser and (not laser:IsLasing()) then
+      --laser:LaseOff()
+      self:T("Switching laser back on ..")
       local lasercode = self.UnitLaserCodes[playername] or laser.LaserCode or 1688
       local lasingtime = self.lasingtime or 60
       --local targettype = target:GetTypeName()
       laser:LaseOn(oldtarget,lasercode,lasingtime)
       --self:__TargetLasing(-1,client,oldtarget,lasercode,lasingtime) 
+    else
+      -- we should not be here...
+      self:T("Target alive and laser is on!")
+      --self.LaserSpots[playername] = nil
     end
-  elseif not laser:IsLasing() and target then
+  -- new target
+  elseif (not laser:IsLasing()) and target then
     local relativecam = self.LaserRelativePos[client:GetTypeName()]
     laser:SetRelativeStartPosition(relativecam)
     local lasercode = self.UnitLaserCodes[playername] or laser.LaserCode or 1688
@@ -945,7 +959,7 @@ function PLAYERRECCE:_LaseTarget(client,targetset)
     --local targettype = target:GetTypeName()
     laser:LaseOn(target,lasercode,lasingtime) 
     self.LaserTarget[playername] = TARGET:New(target)
-    self.LaserTarget[playername].TStatus = 9
+    --self.LaserTarget[playername].TStatus = 9
     self:__TargetLasing(-1,client,target,lasercode,lasingtime)
   end
   return self
@@ -1027,6 +1041,13 @@ function PLAYERRECCE:_SwitchLasing(client,group,playername)
     MESSAGE:New("Lasing is now ON",10,self.Name or "FACA"):ToClient(client)
   else
     self.AutoLase[playername] = false
+    if self.LaserSpots[playername] then 
+      local laser = self.LaserSpots[playername] -- Core.Spot#SPOT
+      if laser:IsLasing() then
+        laser:LaseOff()
+      end
+      self.LaserSpots[playername] = nil
+    end
     MESSAGE:New("Lasing is now OFF",10,self.Name or "FACA"):ToClient(client)
   end
   if self.ClientMenus[playername] then
@@ -1681,7 +1702,7 @@ function PLAYERRECCE:onafterRecceOnStation(From, Event, To, Client, Playername)
   local text2tts = string.format("All stations, FACA %s on station at %s!",callsign, coordtext)
   text2tts = self:_GetTextForSpeech(text2tts)
   if self.debug then
-  self:I(text2.."\n"..text2tts)
+  self:T(text2.."\n"..text2tts)
   end
   if self.UseSRS then
     local grp = Client:GetGroup()
@@ -1720,7 +1741,7 @@ function PLAYERRECCE:onafterRecceOffStation(From, Event, To, Client, Playername)
   local texttts = string.format("All stations, FACA %s leaving station at %s, good bye!",callsign, coordtext)
   texttts = self:_GetTextForSpeech(texttts)
   if self.debug then
-    self:I(text.."\n"..texttts)
+    self:T(text.."\n"..texttts)
   end
   local text1 = "Going home!"
   if self.UseSRS then
