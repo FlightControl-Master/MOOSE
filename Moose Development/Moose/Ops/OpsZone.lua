@@ -1483,16 +1483,31 @@ function OPSZONE:_GetZoneColor()
   local color={0,0,0}
   
   if self.ownerCurrent==coalition.side.NEUTRAL then
-    color={1, 1, 1}
+    color=self.ZoneOwnerNeutral or {1, 1, 1}
   elseif self.ownerCurrent==coalition.side.BLUE then
-    color={0, 0, 1}
+    color=self.ZoneOwnerBlue or {0, 0, 1}
   elseif self.ownerCurrent==coalition.side.RED then
-    color={1, 0, 0}
+    color=self.ZoneOwnerRed or {1, 0, 0}
   else
   
   end
 
   return color
+end
+
+--- Set custom RGB color of zone depending on current owner.
+-- @param #OPSZONE self
+-- @param #table Neutral Color is a table of RGB values 0..1 for Red, Green, and Blue respectively, e.g. {1,0,0} for red.
+-- @param #table Blue Color is a table of RGB values 0..1 for Red, Green, and Blue respectively, e.g. {0,1,0} for green.
+-- @param #table Red Color is a table of RGB values 0..1 for Red, Green, and Blue respectively, e.g. {0,0,1} for blue.
+-- @return  #OPSZONE self
+function OPSZONE:SetZoneColor(Neutral, Blue, Red)
+  
+  self.ZoneOwnerNeutral = Neutral  or {1, 1, 1}
+  self.ZoneOwnerBlue = Blue or {0, 0, 1}
+  self.ZoneOwnerRed = Red or {1, 0, 0}
+
+  return self
 end
 
 --- Update marker on the F10 map.
