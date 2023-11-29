@@ -3324,7 +3324,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
         -- UTILS.PrintTableToLog(SpawnTemplate.units[UnitID].callsign,1) 
       end         
     else
-      -- Ruskis
+      -- Russkis
       for UnitID = 1, #SpawnTemplate.units do
         SpawnTemplate.units[UnitID].callsign = math.random(1,999)
       end
@@ -3402,8 +3402,25 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
       -- UTILS.PrintTableToLog(SpawnTemplate.units[UnitID].datalinks,1)   
     end
   end
+  -- Link16 team members
+  for UnitID = 1, #SpawnTemplate.units do
+    if SpawnTemplate.units[UnitID].datalinks and SpawnTemplate.units[UnitID].datalinks.Link16 and SpawnTemplate.units[UnitID].datalinks.Link16.network then
+      local team = {}
+      local isF16 = string.find(SpawnTemplate.units[UnitID].type,"F-16",1,true) and true or false
+      for ID = 1, #SpawnTemplate.units do
+        local member = {}
+        member.missionUnitId = ID 
+        if isF16 then
+          member.TDOA = true
+        end
+        table.insert(team,member)
+      end
+      SpawnTemplate.units[UnitID].datalinks.Link16.network.teamMembers = team
+    end
+  end
 
   self:T3( { "Template:", SpawnTemplate } )
+  --UTILS.PrintTableToLog(SpawnTemplate,1)
   return SpawnTemplate
 
 end
