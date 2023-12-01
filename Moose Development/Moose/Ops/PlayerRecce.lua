@@ -714,8 +714,8 @@ function PLAYERRECCE:_GetViewZone(unit, vheading, minview, maxview, angle, camon
       local heading2 = (vheading-90)%360
       self:T({heading1,heading2})
       local startpos = startp:Translate(minview,vheading)
-      local pos1 = startpos:Translate(10,heading1)
-      local pos2 = startpos:Translate(10,heading2)
+      local pos1 = startpos:Translate(12.5,heading1)
+      local pos2 = startpos:Translate(12.5,heading2)
       local pos3 = pos1:Translate(maxview,vheading)
       local pos4 = pos2:Translate(maxview,vheading)
       local array = {}

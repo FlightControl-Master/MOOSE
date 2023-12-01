@@ -1051,9 +1051,9 @@ function UTILS.BeaufortScale(speed)
   return bn,bd
 end
 
---- Split string at seperators. C.f. [split-string-in-lua](http://stackoverflow.com/questions/1426954/split-string-in-lua).
+--- Split string at separators. C.f. [split-string-in-lua](http://stackoverflow.com/questions/1426954/split-string-in-lua).
 -- @param #string str Sting to split.
--- @param #string sep Speparator for split.
+-- @param #string sep Separator for split.
 -- @return #table Split text.
 function UTILS.Split(str, sep)
   local result = {}

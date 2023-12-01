@@ -2565,7 +2565,7 @@ do -- COORDINATE
 
     Offset=Offset or 2
 
-    -- Measurement of visibility should not be from the ground, so Adding a hypotethical 2 meters to each Coordinate.
+    -- Measurement of visibility should not be from the ground, so Adding a hypothetical 2 meters to each Coordinate.
     local FromVec3 = self:GetVec3()
     FromVec3.y = FromVec3.y + Offset
 
