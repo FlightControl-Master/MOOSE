@@ -239,6 +239,13 @@ AIRBASE.Nevada = {
 --   * AIRBASE.Normandy.Broglie
 --   * AIRBASE.Normandy.Bernay_Saint_Martin
 --   * AIRBASE.Normandy.Saint_Andre_de_lEure
+--   * AIRBASE.Normandy.Biggin_Hill
+--   * AIRBASE.Normandy.Manston
+--   * AIRBASE.Normandy.Detling
+--   * AIRBASE.Normandy.Lympne
+--   * AIRBASE.Normandy.Abbeville_Drucat
+--   * AIRBASE.Normandy.Merville_Calonne
+--   * AIRBASE.Normandy.Saint_Omer_Wizernes
 --
 -- @field Normandy
 AIRBASE.Normandy = {
@@ -311,7 +318,14 @@ AIRBASE.Normandy = {
   ["Beaumont_le_Roger"] = "Beaumont-le-Roger",
   ["Broglie"] = "Broglie",
   ["Bernay_Saint_Martin"] = "Bernay Saint Martin",
-  ["Saint_Andre_de_lEure"] = "Saint-Andre-de-lEure",
+  ["Saint_Andre_de_lEure"] = "Saint-Andre-de-lEure",  
+  ["Biggin_Hill"] = "Biggin Hill",
+  ["Manston"] = "Manston",
+  ["Detling"] = "Detling",
+  ["Lympne"] = "Lympne",
+  ["Abbeville_Drucat"] = "Abbeville Drucat",
+  ["Merville_Calonne"] = "Merville Calonne",
+  ["Saint_Omer_Wizernes"] = "Saint-Omer Wizernes",
 }
 
 --- Airbases of the Persion Gulf Map:
