@@ -46,7 +46,7 @@
 -- ===
 --
 -- ### Author: **FlightControl**
--- ### Contributions: **Applevangelist**, **FunkyFranky**
+-- ### Contributions: **Applevangelist**, **FunkyFranky**, **coconutcockpit**
 --
 -- ===
 --
@@ -479,8 +479,12 @@ function ZONE_BASE:UndrawZone(Delay)
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, ZONE_BASE.UndrawZone, self)
   else
-    if self.DrawID then
+    if self.DrawID and type(self.DrawID) ~= "table" then
       UTILS.RemoveMark(self.DrawID)
+    else -- DrawID is a table with a collections of mark ids, as used in ZONE_POLYGON
+        for _, mark_id in pairs(self.DrawID) do
+            UTILS.RemoveMark(mark_id)
+        end
     end
   end
   return self
@@ -1994,6 +1998,97 @@ function ZONE_GROUP:GetRandomPointVec2( inner, outer )
 end
 
 
+
+--- Ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Triangle.lua
+--- This triangle "zone" is not really to be used on its own, it only serves as building blocks for
+--- ZONE_POLYGON to accurately find a point inside a polygon; as well as getting the correct surface area of
+--- a polygon.
+-- @type _ZONE_TRIANGLE
+-- @extends #BASE
+
+_ZONE_TRIANGLE = {
+    ClassName="ZONE_TRIANGLE",
+    Points={},
+    Coords={},
+    CenterVec2={x=0, y=0},
+    SurfaceArea=0,
+    DrawIDs={}
+}
+
+function _ZONE_TRIANGLE:New(p1, p2, p3)
+    local self = BASE:Inherit(self, BASE:New())
+    self.Points = {p1, p2, p3}
+
+    local center_x = (p1.x + p2.x + p3.x) / 3
+    local center_y = (p1.y + p2.y + p3.y) / 3
+    self.CenterVec2 = {x=center_x, y=center_y}
+
+    for _, pt in pairs({p1, p2, p3}) do
+        table.add(self.Coords, COORDINATE:NewFromVec2(pt))
+    end
+
+    self.SurfaceArea = math.abs((p2.x - p1.x) * (p3.y - p1.y) - (p3.x - p1.x) * (p2.y - p1.y)) * 0.5
+
+    return self
+end
+
+--- Checks if a point is contained within the triangle.
+-- @param #table pt The point to check
+-- @param #table points (optional) The points of the triangle, or 3 other points if you're just using the TRIANGLE class without an object of it
+-- @return #bool True if the point is contained, false otherwise
+function _ZONE_TRIANGLE:ContainsPoint(pt, points)
+    points = points or self.Points
+
+    local function sign(p1, p2, p3)
+        return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y)
+    end
+
+    local d1 = sign(pt, self.Points[1], self.Points[2])
+    local d2 = sign(pt, self.Points[2], self.Points[3])
+    local d3 = sign(pt, self.Points[3], self.Points[1])
+
+    local has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
+    local has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
+
+    return not (has_neg and has_pos)
+end
+
+--- Returns a random Vec2 within the triangle.
+-- @param #table points The points of the triangle, or 3 other points if you're just using the TRIANGLE class without an object of it
+-- @return #table The random Vec2
+function _ZONE_TRIANGLE:GetRandomVec2(points)
+    points = points or self.Points
+    local pt = {math.random(), math.random()}
+    table.sort(pt)
+    local s = pt[1]
+    local t = pt[2] - pt[1]
+    local u = 1 - pt[2]
+
+    return {x = s * points[1].x + t * points[2].x + u * points[3].x,
+            y = s * points[1].y + t * points[2].y + u * points[3].y}
+end
+
+--- Draw the triangle
+function _ZONE_TRIANGLE:Draw(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
+    Coalition=Coalition or -1
+
+    Color=Color or {1, 0, 0 }
+    Alpha=Alpha or 1
+
+    FillColor=FillColor or Color
+    if not FillColor then UTILS.DeepCopy(Color) end
+    FillAlpha=FillAlpha or Alpha
+    if not FillAlpha then FillAlpha=1 end
+
+    for i=1, #self.Coords do
+        local c1 = self.Coords[i]
+        local c2 = self.Coords[i % #self.Coords + 1]
+        table.add(self.DrawIDs, c1:LineToAll(c2, Coalition, Color, Alpha, LineType, ReadOnly))
+    end
+    return self.DrawIDs
+end
+
+
 ---
 -- @type ZONE_POLYGON_BASE
 -- @field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCS#Vec2}.
@@ -2021,7 +2116,10 @@ end
 -- @field #ZONE_POLYGON_BASE
 ZONE_POLYGON_BASE = {
   ClassName="ZONE_POLYGON_BASE",
-  }
+  _Triangles={}, -- _ZONE_TRIANGLES
+  SurfaceArea=0,
+  DrawID={} -- making a table out of the MarkID so its easier to draw an n-sided polygon, see ZONE_POLYGON_BASE:Draw()
+}
 
 --- A 2D points array.
 -- @type ZONE_POLYGON_BASE.ListVec2
@@ -2055,7 +2153,99 @@ function ZONE_POLYGON_BASE:New( ZoneName, PointsArray )
 
   end
 
+  -- triangulate the polygon so we can work with it
+  self._Triangles = self:_Triangulate()
+  -- set the polygon's surface area
+  self.SurfaceArea = self:_CalculateSurfaceArea()
+
   return self
+end
+
+--- Triangulates the polygon.
+--- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Polygon.lua
+-- @return #table The #_TRIANGLE list that make up
+function ZONE_POLYGON_BASE:_Triangulate()
+    local points = self._.Polygon
+    local triangles = {}
+
+    local function get_orientation(shape_points)
+        local sum = 0
+        for i = 1, #shape_points do
+            local j = i % #shape_points + 1
+            sum = sum + (shape_points[j].x - shape_points[i].x) * (shape_points[j].y + shape_points[i].y)
+        end
+        return sum >= 0 and "clockwise" or "counter-clockwise" -- sum >= 0, return "clockwise", else return "counter-clockwise"
+    end
+
+    local function ensure_clockwise(shape_points)
+        local orientation = get_orientation(shape_points)
+        if orientation == "counter-clockwise" then
+            -- Reverse the order of shape_points so they're clockwise
+            local reversed = {}
+            for i = #shape_points, 1, -1 do
+                table.insert(reversed, shape_points[i])
+            end
+            return reversed
+        end
+        return shape_points
+    end
+
+    local function is_clockwise(p1, p2, p3)
+        local cross_product = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)
+        return cross_product < 0
+    end
+
+    local function divide_recursively(shape_points)
+        if #shape_points == 3 then
+            table.insert(triangles, _ZONE_TRIANGLE:New(shape_points[1], shape_points[2], shape_points[3]))
+        elseif #shape_points > 3 then  -- find an ear -> a triangle with no other points inside it
+            for i, p1 in ipairs(shape_points) do
+                local p2 = shape_points[(i % #shape_points) + 1]
+                local p3 = shape_points[(i + 1) % #shape_points + 1]
+                local triangle = _ZONE_TRIANGLE:New(p1, p2, p3)
+                local is_ear = true
+
+                if not is_clockwise(p1, p2, p3) then
+                    is_ear = false
+                else
+                    for _, point in ipairs(shape_points) do
+                        if point ~= p1 and point ~= p2 and point ~= p3 and triangle:ContainsPoint(point) then
+                            is_ear = false
+                            break
+                        end
+                    end
+                end
+
+                if is_ear then
+                    -- Check if any point in the original polygon is inside the ear triangle
+                    local is_valid_triangle = true
+                    for _, point in ipairs(points) do
+                        if point ~= p1 and point ~= p2 and point ~= p3 and triangle:ContainsPoint(point) then
+                            is_valid_triangle = false
+                            break
+                        end
+                    end
+                    if is_valid_triangle then
+                        table.insert(triangles, triangle)
+                        local remaining_points = {}
+                        for j, point in ipairs(shape_points) do
+                            if point ~= p2 then
+                                table.insert(remaining_points, point)
+                            end
+                        end
+                        divide_recursively(remaining_points)
+                        break
+                    end
+                else
+
+                end
+            end
+        end
+    end
+
+    points = ensure_clockwise(points)
+    divide_recursively(points)
+    return triangles
 end
 
 --- Update polygon points with an array of @{DCS#Vec2}.
@@ -2072,6 +2262,10 @@ function ZONE_POLYGON_BASE:UpdateFromVec2(Vec2Array)
     self._.Polygon[i].y=Vec2Array[i].y
   end
 
+  -- triangulate the polygon so we can work with it
+  self._Triangles = self:_Triangulate()
+  -- set the polygon's surface area
+  self.SurfaceArea = self:_CalculateSurfaceArea()
   return self
 end
 
@@ -2089,7 +2283,22 @@ function ZONE_POLYGON_BASE:UpdateFromVec3(Vec3Array)
     self._.Polygon[i].y=Vec3Array[i].z
   end
 
+  -- triangulate the polygon so we can work with it
+  self._Triangles = self:_Triangulate()
+  -- set the polygon's surface area
+  self.SurfaceArea = self:_CalculateSurfaceArea()
   return self
+end
+
+--- Calculates the surface area of the polygon. The surface area is the sum of the areas of the triangles that make up the polygon.
+--- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Polygon.lua
+-- @return #number The surface area of the polygon
+function ZONE_POLYGON_BASE:_CalculateSurfaceArea()
+    local area = 0
+    for _, triangle in pairs(self._Triangles) do
+        area = area + triangle.SurfaceArea
+    end
+    return area
 end
 
 --- Returns the center location of the polygon.
@@ -2233,62 +2442,76 @@ function ZONE_POLYGON_BASE:BoundZone( UnBound )
   return self
 end
 
---- Draw the zone on the F10 map.  **NOTE** Currently, only polygons **up to ten points** are supported!
+--- Draw the zone on the F10 map.  Infinite number of points supported
+--- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Polygon.lua
 -- @param #ZONE_POLYGON_BASE self
 -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
 -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
 -- @param #number Alpha Transparency [0,1]. Default 1.
--- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
--- @param #number FillAlpha Transparency [0,1]. Default 0.15.
+-- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value. -- doesn't seem to work
+-- @param #number FillAlpha Transparency [0,1]. Default 0.15.                                                 -- doesn't seem to work
 -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
 -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
 -- @return #ZONE_POLYGON_BASE self
-function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
+function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, IncludeTriangles)
+    if self._.Polygon and #self._.Polygon >= 3 then
+        Coalition = Coalition or self:GetDrawCoalition()
 
-  if self._.Polygon and #self._.Polygon>=3 then
+        -- Set draw coalition.
+        self:SetDrawCoalition(Coalition)
 
-    local coordinate=COORDINATE:NewFromVec2(self._.Polygon[1])
+        Color = Color or self:GetColorRGB()
+        Alpha = Alpha or 1
 
-    Coalition=Coalition or self:GetDrawCoalition()
+        -- Set color.
+        self:SetColor(Color, Alpha)
 
-    -- Set draw coalition.
-    self:SetDrawCoalition(Coalition)
+        FillColor = FillColor or self:GetFillColorRGB()
+        if not FillColor then
+            UTILS.DeepCopy(Color)
+        end
+        FillAlpha = FillAlpha or self:GetFillColorAlpha()
+        if not FillAlpha then
+            FillAlpha = 0.15
+        end
 
-    Color=Color or self:GetColorRGB()
-    Alpha=Alpha or 1
+        -- Set fill color -----------> has fill color worked in recent versions of DCS?
+        -- doing something like
+        --
+        -- trigger.action.markupToAll(7, -1, 501, p.Coords[1]:GetVec3(), p.Coords[2]:GetVec3(),p.Coords[3]:GetVec3(),p.Coords[4]:GetVec3(),{1,0,0, 1}, {1,0,0, 1}, 4, false, Text or "")
+        --
+        -- doesn't seem to fill in the shape for an n-sided polygon
+        self:SetFillColor(FillColor, FillAlpha)
 
-    -- Set color.
-    self:SetColor(Color, Alpha)
+        IncludeTriangles = IncludeTriangles or false
 
-    FillColor=FillColor or self:GetFillColorRGB()
-    if not FillColor then UTILS.DeepCopy(Color) end
-    FillAlpha=FillAlpha or self:GetFillColorAlpha()
-    if not FillAlpha then FillAlpha=0.15 end
-
-    -- Set fill color.
-    self:SetFillColor(FillColor, FillAlpha)
-
-    if #self._.Polygon==4 then
-
-      local Coord2=COORDINATE:NewFromVec2(self._.Polygon[2])
-      local Coord3=COORDINATE:NewFromVec2(self._.Polygon[3])
-      local Coord4=COORDINATE:NewFromVec2(self._.Polygon[4])
-
-      self.DrawID=coordinate:QuadToAll(Coord2, Coord3, Coord4, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
-
-    else
-
-      local Coordinates=self:GetVerticiesCoordinates()
-      table.remove(Coordinates, 1)
-
-      self.DrawID=coordinate:MarkupToAllFreeForm(Coordinates, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
-
+        -- just draw the triangles, we get the outline for free
+        if IncludeTriangles then
+            for _, triangle in pairs(self._Triangles) do
+                local draw_ids = triangle:Draw()
+                table.combine(self.DrawID, draw_ids)
+            end
+        -- draw outline only
+        else
+            local coords = self:GetVerticiesCoordinates()
+            for i = 1, #coords do
+                local c1 = coords[i]
+                local c2 = coords[i % #coords + 1]
+                table.add(self.DrawID, c1:LineToAll(c2, Coalition, Color, Alpha, LineType, ReadOnly))
+            end
+        end
     end
-
-  end
-
-  return self
+    return self
 end
+
+--- Get the surface area of this polygon
+-- @param #ZONE_POLYGON_BASE self
+-- @return #number Surface area
+function ZONE_POLYGON_BASE:GetSurfaceArea()
+  return self.SurfaceArea
+end
+
+
 
 --- Get the smallest radius encompassing all points of the polygon zone. 
 -- @param #ZONE_POLYGON_BASE self
@@ -2449,7 +2672,7 @@ end
 -- @return #boolean true if the location is within the zone.
 function ZONE_POLYGON_BASE:IsVec2InZone( Vec2 )
   self:F2( Vec2 )
-  if not Vec2 then return false end 
+  if not Vec2 then return false end
   local Next
   local Prev
   local InPolygon = false
@@ -2479,40 +2702,34 @@ end
 -- @return #boolean true if the point is within the zone.
 function ZONE_POLYGON_BASE:IsVec3InZone( Vec3 )
   self:F2( Vec3 )
-  
-  if not Vec3 then return false end 
-    
+
+  if not Vec3 then return false end
+
   local InZone = self:IsVec2InZone( { x = Vec3.x, y = Vec3.z } )
 
   return InZone
 end
 
 --- Define a random @{DCS#Vec2} within the zone.
+--- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Polygon.lua
 -- @param #ZONE_POLYGON_BASE self
 -- @return DCS#Vec2 The Vec2 coordinate.
 function ZONE_POLYGON_BASE:GetRandomVec2()
-
-  -- It is a bit tricky to find a random point within a polygon. Right now i am doing it the dirty and inefficient way...
-
-  -- Get the bounding square.
-  local BS = self:GetBoundingSquare()
-
-  local Nmax=1000 ; local n=0
-  while n<Nmax do
-
-    -- Random point in the bounding square.
-    local Vec2={x=math.random(BS.x1, BS.x2), y=math.random(BS.y1, BS.y2)}
-
-    -- Check if this is in the polygon.
-    if self:IsVec2InZone(Vec2) then
-      return Vec2
+    -- make sure we assign weights to the triangles based on their surface area, otherwise
+    -- we'll be more likely to generate random points in smaller triangles
+    local weights = {}
+    for _, triangle in pairs(self._Triangles) do
+        weights[triangle] = triangle.SurfaceArea / self.SurfaceArea
     end
 
-    n=n+1
-  end
-
-  self:E("Could not find a random point in the polygon zone!")
-  return nil
+    local random_weight = math.random()
+    local accumulated_weight = 0
+    for triangle, weight in pairs(weights) do
+        accumulated_weight = accumulated_weight + weight
+        if accumulated_weight >= random_weight then
+            return triangle:GetRandomVec2()
+        end
+    end
 end
 
 --- Return a @{Core.Point#POINT_VEC2} object representing a random 2D point at landheight within the zone.
@@ -2649,7 +2866,8 @@ end
 -- @extends #ZONE_POLYGON_BASE
 
 
---- The ZONE_POLYGON class defined by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+--- The ZONE_POLYGON class defined by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon, OR by drawings made with the Draw tool
+--- in the Mission Editor
 -- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
 --
 -- ## Declare a ZONE_POLYGON directly in the DCS mission editor!
@@ -2672,6 +2890,13 @@ end
 -- then SetZone would contain the ZONE_POLYGON object `DefenseZone` as part of the zone collection,
 -- without much scripting overhead!
 --
+-- This class now also supports drawings made with the Draw tool in the Mission Editor. Any drawing made with Line > Segments > Closed, Polygon > Rect or Polygon > Free can be
+-- made into a ZONE_POLYGON.
+--
+-- This class has been updated to use a accurate way of generating random points inside the polygon without having to use trial and error guesses.
+-- You can also get the surface area of the polygon now, handy if you want measure which coalition has the largest captured area, for example.
+
+
 -- @field #ZONE_POLYGON
 ZONE_POLYGON = {
   ClassName="ZONE_POLYGON",
@@ -2730,6 +2955,49 @@ function ZONE_POLYGON:NewFromGroupName( GroupName )
   _EVENTDISPATCHER:CreateEventNewZone( self )
 
   return self
+end
+
+--- Constructor to create a ZONE_POLYGON instance, taking the name of a drawing made with the draw tool in the Mission Editor.
+-- @param #ZONE_POLYGON self
+-- @param #string DrawingName The name of the drawing in the Mission Editor
+-- @return #ZONE_POLYGON self
+function ZONE_POLYGON:NewFromDrawing(DrawingName)
+    local points = {}
+    for _, layer in pairs(env.mission.drawings.layers) do
+        for _, object in pairs(layer["objects"]) do
+            if object["name"] == DrawingName then
+                if (object["primitiveType"] == "Line" and object["closed"] == true) or (object["polygonMode"] == "free") then
+                    -- points for the drawings are saved in local space, so add the object's map x and y coordinates to get
+                    -- world space points we can use
+                    for _, point in UTILS.spairs(object["points"]) do
+                        local p = {x = object["mapX"] + point["x"],
+                                   y = object["mapY"] + point["y"] }
+                        table.add(points, p)
+                    end
+                elseif object["polygonMode"] == "rect" then
+                    -- the points for a rect are saved as local coordinates with an angle. To get the world space points from this
+                    -- we need to rotate the points around the center of the rects by an angle. UTILS.RotatePointAroundPivot was
+                    -- committed in an earlier commit
+                    local angle = object["angle"]
+                    local half_width  = object["width"] / 2
+                    local half_height = object["height"] / 2
+
+                    local center = { x = object["mapX"], y = object["mapY"] }
+                    local p1 = UTILS.RotatePointAroundPivot({ x = center.x - half_height, y = center.y + half_width }, center, angle)
+                    local p2 = UTILS.RotatePointAroundPivot({ x = center.x + half_height, y = center.y + half_width }, center, angle)
+                    local p3 = UTILS.RotatePointAroundPivot({ x = center.x + half_height, y = center.y - half_width }, center, angle)
+                    local p4 = UTILS.RotatePointAroundPivot({ x = center.x - half_height, y = center.y - half_width }, center, angle)
+
+                    points = {p1, p2, p3, p4}
+                else
+                    -- something else that might be added in the future
+                end
+            end
+        end
+    end
+    local self = BASE:Inherit(self, ZONE_POLYGON_BASE:New(DrawingName, points))
+    _EVENTDISPATCHER:CreateEventNewZone(self)
+    return self
 end
 
 
