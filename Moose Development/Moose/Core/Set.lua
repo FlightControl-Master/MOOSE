@@ -1065,8 +1065,15 @@ do
     self:FilterActive( false )
 
     return self
+       
+    --- Filter the set once
+    -- @function [parent=#SET_GROUP] FilterOnce
+    -- @param #SET_GROUP self
+    -- @return #SET_GROUP self
+    
+    
   end
-
+  
   --- Get a *new* set that only contains alive groups.
   -- @param #SET_GROUP self
   -- @return #SET_GROUP Set of alive groups.
@@ -1976,6 +1983,7 @@ do
   --- Get the closest group of the set with respect to a given reference coordinate. Optionally, only groups of given coalitions are considered in the search.
   -- @param #SET_GROUP self
   -- @param Core.Point#COORDINATE Coordinate Reference Coordinate from which the closest group is determined.
+  -- @param #table Coalitions (Optional) Table of coalition #number entries to filter for.
   -- @return Wrapper.Group#GROUP The closest group (if any).
   -- @return #number Distance in meters to the closest group.
   function SET_GROUP:GetClosestGroup(Coordinate, Coalitions)
