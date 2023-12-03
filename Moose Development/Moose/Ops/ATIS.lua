@@ -312,9 +312,15 @@
 --
 --     atis=ATIS:New("Batumi", 305, radio.modulation.AM)
 --     atis:SetSRS("D:\\DCS\\_SRS\\", "male", "en-US")
---     atis:Start()  
+--     atis:Start()
 --
 -- This uses a male voice with US accent. It requires SRS to be installed in the `D:\DCS\_SRS\` directory. Note that backslashes need to be escaped or simply use slashes (as in linux).
+-- 
+-- ### SRS can use multiple frequencies: 
+-- 
+--     atis=ATIS:New("Batumi", {305,103.85}, {radio.modulation.AM,radio.modulation.FM})
+--     atis:SetSRS("D:\\DCS\\_SRS\\", "male", "en-US")
+--     atis:Start()
 -- 
 -- ### SRS Localization
 -- 
@@ -884,13 +890,14 @@ _ATIS = {}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version = "0.10.3"
+ATIS.version = "0.10.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Correct fog for elevation.
+-- DONE: Option to add multiple frequencies for SRS
 -- DONE: Zulu time --> Zulu in output.
 -- DONE: Fix for AB not having a runway - Helopost like Naqoura
 -- DONE: Add new Normandy airfields.
@@ -899,7 +906,7 @@ ATIS.version = "0.10.3"
 -- DONE: Visibility reported twice over SRS
 -- DONE: Add text report for output.
 -- DONE: Add stop FMS functions.
--- NOGO: Use local time. Not realisitc!
+-- NOGO: Use local time. Not realistic!
 -- DONE: Dew point. Approx. done.
 -- DONE: Metric units.
 -- DONE: Set UTC correction.
@@ -915,8 +922,8 @@ ATIS.version = "0.10.3"
 --- Create a new ATIS class object for a specific airbase.
 -- @param #ATIS self
 -- @param #string AirbaseName Name of the airbase.
--- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz.
--- @param #number Modulation Radio modulation: 0=AM, 1=FM. Default 0=AM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators.
+-- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. When using **SRS** this can be passed as a table of multiple frequencies.
+-- @param #number Modulation Radio modulation: 0=AM, 1=FM. Default 0=AM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. When using **SRS** this can be passed as a table of multiple modulations.
 -- @return #ATIS self
 function ATIS:New(AirbaseName, Frequency, Modulation)
 
@@ -1594,8 +1601,16 @@ function ATIS:onafterStart( From, Event, To )
   end
 
   -- Info.
-  self:I( self.lid .. string.format( "Starting ATIS v%s for airbase %s on %.3f MHz Modulation=%d", ATIS.version, self.airbasename, self.frequency, self.modulation ) )
-
+  if type(self.frequency) == "table" then
+    local frequency = table.concat(self.frequency,"/")
+    local modulation = self.modulation
+    if type(self.modulation) == "table" then
+      modulation = table.concat(self.modulation,"/")
+    end
+    self:I( self.lid .. string.format( "Starting ATIS v%s for airbase %s on %s MHz Modulation=%s", ATIS.version, self.airbasename, frequency, modulation ) )
+  else
+    self:I( self.lid .. string.format( "Starting ATIS v%s for airbase %s on %.3f MHz Modulation=%d", ATIS.version, self.airbasename, self.frequency, self.modulation ) )
+  end
   -- Start radio queue.
   if not self.useSRS then
     self.radioqueue = RADIOQUEUE:New( self.frequency, self.modulation, string.format( "ATIS %s", self.airbasename ) )
@@ -1653,7 +1668,17 @@ function ATIS:onafterStatus( From, Event, To )
   end
 
   -- Info text.
-  local text = string.format( "State %s: Freq=%.3f MHz %s", fsmstate, self.frequency, UTILS.GetModulationName( self.modulation ) )
+  local text = ""
+  if type(self.frequency) == "table" then
+    local frequency = table.concat(self.frequency,"/")
+    local modulation = self.modulation
+    if type(self.modulation) == "table" then
+      modulation = table.concat(self.modulation,"/")
+    end
+    text = string.format( "State %s: Freq=%s MHz %s", fsmstate, frequency, modulation )
+  else
+    text = string.format( "State %s: Freq=%.3f MHz %s", fsmstate, self.frequency, UTILS.GetModulationName( self.modulation ) )
+  end
   if self.useSRS then
     text = text .. string.format( ", SRS path=%s (%s), gender=%s, culture=%s, voice=%s", tostring( self.msrs.path ), tostring( self.msrs.port ), tostring( self.msrs.gender ), tostring( self.msrs.culture ), tostring( self.msrs.voice ) )
   else
@@ -2919,8 +2944,17 @@ function ATIS:UpdateMarker( information, runact, wind, altimeter, temperature )
   if self.markerid then
     self.airbase:GetCoordinate():RemoveMark( self.markerid )
   end
-
-  local text = string.format( "ATIS on %.3f %s, %s:\n", self.frequency, UTILS.GetModulationName( self.modulation ), tostring( information ) )
+  local text = ""
+  if type(self.frequency) == "table" then
+    local frequency = table.concat(self.frequency,"/")
+    local modulation = self.modulation
+    if type(modulation) == "table" then
+      modulation = table.concat(self.modulation,"/")
+    end
+    text = string.format( "ATIS on %s %s, %s:\n", tostring(frequency), tostring(modulation), tostring( information ) )
+  else
+    text = string.format( "ATIS on %.3f %s, %s:\n", self.frequency, UTILS.GetModulationName( self.modulation ), tostring( information ) )
+  end
   text = text .. string.format( "%s\n", tostring( runact ) )
   text = text .. string.format( "%s\n", tostring( wind ) )
   text = text .. string.format( "%s\n", tostring( altimeter ) )

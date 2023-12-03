@@ -2811,7 +2811,11 @@ function FLIGHTCONTROL:_PlayerInfoATIS(groupname)
     
     -- Radio message.
     self:TransmissionPilot(rtext, flight)
-    self:TransmissionTower(srstxt,flight,10)
+    if self.atis then
+      self:TransmissionTower(srstxt,flight,10)
+    else
+      self:TransmissionTower(text,flight,10)
+    end
     
   else
     self:E(self.lid..string.format("Cannot find flight group %s.", tostring(groupname)))
