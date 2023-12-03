@@ -111,7 +111,7 @@
 -- ## A zone might have additional Properties created in the DCS Mission Editor, which can be accessed:
 --
 --   *@{#ZONE_BASE.GetProperty}(): Returns the Value of the zone with the given PropertyName, or nil if no matching property exists.
---   *@{#ZONE_BASE.GetAllProperties}(): Returns the zone Properties table.  
+--   *@{#ZONE_BASE.GetAllProperties}(): Returns the zone Properties table.
 --
 -- @field #ZONE_BASE
 ZONE_BASE = {
@@ -313,7 +313,7 @@ function ZONE_BASE:Get2DDistance(Coordinate)
   else
     b.x=Coordinate.x
     b.y=Coordinate.y
-  end  
+  end
   local dist=UTILS.VecDist2D(a,b)
   return dist
 end
@@ -579,17 +579,17 @@ end
 -- @usage
 --            -- Create a new zone and start watching it every 5 secs for a defined GROUP entering or leaving
 --            local triggerzone = ZONE:New("ZonetoWatch"):Trigger(GROUP:FindByName("Aerial-1"))
---            
+--
 --            -- This FSM function will be called when the group enters the zone
 --            function triggerzone:OnAfterEnteredZone(From,Event,To,Group)
 --              MESSAGE:New("Group has entered zone!",15):ToAll()
 --            end
---            
+--
 --            -- This FSM function will be called when the group leaves the zone
 --            function triggerzone:OnAfterLeftZone(From,Event,To,Group)
 --              MESSAGE:New("Group has left zone!",15):ToAll()
 --            end
---            
+--
 --            -- Stop watching the zone after 1 hour
 --           triggerzone:__TriggerStop(3600)
 function ZONE_BASE:Trigger(Objects)
@@ -610,20 +610,20 @@ function ZONE_BASE:Trigger(Objects)
   self:_TriggerCheck(true)
   self:__TriggerRunCheck(self.Checktime)
   return self
-  
+
   ------------------------
   --- Pseudo Functions ---
   ------------------------
-  
+
   --- Triggers the FSM event "TriggerStop". Stops the ZONE_BASE Trigger.
   -- @function [parent=#ZONE_BASE] TriggerStop
   -- @param #ZONE_BASE self
 
-  --- Triggers the FSM event "TriggerStop" after a delay. 
+  --- Triggers the FSM event "TriggerStop" after a delay.
   -- @function [parent=#ZONE_BASE] __TriggerStop
   -- @param #ZONE_BASE self
   -- @param #number delay Delay in seconds.
-  
+
   --- On After "EnteredZone" event. An observed object has entered the zone.
   -- @function [parent=#ZONE_BASE] OnAfterEnteredZone
   -- @param #ZONE_BASE self
@@ -666,12 +666,12 @@ function ZONE_BASE:_TriggerCheck(fromstart)
       local obj = _object -- Wrapper.Controllable#CONTROLLABLE
       if obj and obj:IsAlive() then
         if not obj.TriggerInZone then
-          -- has not been tagged previously - wasn't in set! 
+          -- has not been tagged previously - wasn't in set!
           obj.TriggerInZone = {}
         end
         if not obj.TriggerInZone[self.ZoneName] then
-          -- has not been tagged previously - wasn't in set! 
-          obj.TriggerInZone[self.ZoneName] = false 
+          -- has not been tagged previously - wasn't in set!
+          obj.TriggerInZone[self.ZoneName] = false
         end
         -- is obj in zone?
         local inzone = self:IsCoordinateInZone(obj:GetCoordinate())
@@ -691,7 +691,7 @@ function ZONE_BASE:_TriggerCheck(fromstart)
         end
       end
     end
-  end  
+  end
   return self
 end
 
@@ -716,7 +716,7 @@ end
 -- @param #string PropertyName The name of a the TriggerZone Property to be retrieved.
 -- @return #string The Value of the TriggerZone Property with the given PropertyName, or nil if absent.
 -- @usage
--- 
+--
 -- local PropertiesZone = ZONE:FindByName("Properties Zone")
 -- local Property = "ExampleProperty"
 -- local PropertyValue = PropertiesZone:GetProperty(Property)
@@ -792,7 +792,7 @@ function ZONE_RADIUS:New( ZoneName, Vec2, Radius, DoNotRegisterZone )
   if not DoNotRegisterZone then
     _EVENTDISPATCHER:CreateEventNewZone(self)
   end
-  
+
   --self.Coordinate=COORDINATE:NewFromVec2(Vec2)
 
   return self
@@ -1430,7 +1430,7 @@ end
 function ZONE_RADIUS:IsVec2InZone( Vec2 )
   self:F2( Vec2 )
 
-  if not Vec2 then return false end 
+  if not Vec2 then return false end
 
   local ZoneVec2 = self:GetVec2()
 
@@ -1449,7 +1449,7 @@ end
 -- @return #boolean true if the point is within the zone.
 function ZONE_RADIUS:IsVec3InZone( Vec3 )
   self:F2( Vec3 )
-  if not Vec3 then return false end  
+  if not Vec3 then return false end
   local InZone = self:IsVec2InZone( { x = Vec3.x, y = Vec3.z } )
 
   return InZone
@@ -1569,7 +1569,7 @@ function ZONE_RADIUS:GetRandomCoordinate(inner, outer, surfacetypes)
   return Coordinate
 end
 
---- Returns a @{Core.Point#COORDINATE} object reflecting a random location within the zone where there are no **map objects** of type "Building". 
+--- Returns a @{Core.Point#COORDINATE} object reflecting a random location within the zone where there are no **map objects** of type "Building".
 -- Does not find statics you might have placed there. **Note** This might be quite CPU intensive, use with care.
 -- @param #ZONE_RADIUS self
 -- @param #number inner (Optional) Minimal distance from the center of the zone in meters. Default is 0m.
@@ -1596,7 +1596,7 @@ function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,ma
 
   local buildings = {}
   local buildingzones = {}
-  
+
   if self.ScanData and self.ScanData.BuildingCoordinates then
     buildings = self.ScanData.BuildingCoordinates
     buildingzones = self.ScanData.BuildingZones
@@ -1623,7 +1623,7 @@ function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,ma
   end
 
   -- max 1000 tries
-  local rcoord = nil  
+  local rcoord = nil
   local found = true
   local iterations = 0
 
@@ -1639,21 +1639,21 @@ function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,ma
         break
       end
     end
-    if found then 
+    if found then
       -- we have a winner!
       if markfinal then
         MARKER:New(rcoord,"FREE"):ToAll()
       end
-      break 
+      break
     end
   end
-  
+
   if not found then
     -- max 1000 tries
-    local rcoord = nil  
+    local rcoord = nil
     local found = true
     local iterations = 0
-  
+
     for i=1,1000 do
       iterations = iterations + 1
       rcoord = self:GetRandomCoordinate(inner,outer)
@@ -1665,22 +1665,22 @@ function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,ma
           found = false
         end
       end
-      if found then 
+      if found then
         -- we have a winner!
         if markfinal then
           MARKER:New(rcoord,"FREE"):ToAll()
         end
-        break 
+        break
       end
     end
   end
-  
+
   T1=timer.getTime()
-  
+
   self:T(string.format("Found a coordinate: %s | Iterations: %d | Time: %.3f",tostring(found),iterations,T1-T0))
-  
+
   if found then return rcoord else return nil end
-  
+
 end
 
 ---
@@ -1998,6 +1998,218 @@ function ZONE_GROUP:GetRandomPointVec2( inner, outer )
 end
 
 
+--- Ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Triangle.lua
+--- This triangle "zone" is not really to be used on its own, it only serves as building blocks for
+--- ZONE_POLYGON to accurately find a point inside a polygon; as well as getting the correct surface area of
+--- a polygon.
+-- @type _ZONE_TRIANGLE
+-- @extends #BASE
+
+ZONE_OVAL = {
+    ClassName = "OVAL",
+    ZoneName="",
+    MajorAxis = nil,
+    MinorAxis = nil,
+    Angle = 0,
+    DrawPoly = nil -- let's just use a ZONE_POLYGON to draw the ZONE_OVAL on the map
+}
+
+--- Creates a new ZONE_OVAL from a center point, major axis, minor axis, and angle.
+--- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Oval.lua
+-- @param #table vec2 The center point of the oval
+-- @param #number major_axis The major axis of the oval
+-- @param #number minor_axis The minor axis of the oval
+-- @param #number angle The angle of the oval
+-- @return #ZONE_OVAL The new oval
+function ZONE_OVAL:New(name, vec2, major_axis, minor_axis, angle)
+    self = BASE:Inherit(self, ZONE_BASE:New())
+    self.ZoneName = name
+    self.CenterVec2 = vec2
+    self.MajorAxis = major_axis
+    self.MinorAxis = minor_axis
+    self.Angle = angle or 0
+
+    _DATABASE:AddZone(name, self)
+
+    return self
+end
+
+--- Constructor to create a ZONE_OVAL instance, taking the name of a drawing made with the draw tool in the Mission Editor.
+--- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Oval.lua
+-- @param #ZONE_OVAL self
+-- @param #string DrawingName The name of the drawing in the Mission Editor
+-- @return #ZONE_OVAL self
+function ZONE_OVAL:NewFromDrawing(DrawingName)
+    self = BASE:Inherit(self, ZONE_BASE:New(DrawingName))
+    for _, layer in pairs(env.mission.drawings.layers) do
+        for _, object in pairs(layer["objects"]) do
+            if string.find(object["name"], DrawingName, 1, true) then
+                if object["polygonMode"] == "oval" then
+                    self.CenterVec2 = { x = object["mapX"], y = object["mapY"] }
+                    self.MajorAxis = object["r1"]
+                    self.MinorAxis = object["r2"]
+                    self.Angle = object["angle"]
+
+                end
+            end
+        end
+    end
+
+    return self
+end
+
+--- Gets the major axis of the oval.
+-- @return #number The major axis of the oval
+function ZONE_OVAL:GetMajorAxis()
+    return self.MajorAxis
+end
+
+--- Gets the minor axis of the oval.
+-- @return #number The minor axis of the oval
+function ZONE_OVAL:GetMinorAxis()
+    return self.MinorAxis
+end
+
+--- Gets the angle of the oval.
+-- @return #number The angle of the oval
+function ZONE_OVAL:GetAngle()
+    return self.Angle
+end
+
+--- Returns a the center point of the oval
+-- @return #table The center Vec2
+function ZONE_OVAL:GetVec2()
+    return self.CenterVec2
+end
+
+--- Checks if a point is contained within the oval.
+-- @param #table point The point to check
+-- @return #bool True if the point is contained, false otherwise
+function ZONE_OVAL:IsVec2InZone(vec2)
+    local cos, sin = math.cos, math.sin
+    local dx = vec2.x - self.CenterVec2.x
+    local dy = vec2.y - self.CenterVec2.y
+    local rx = dx * cos(self.Angle) + dy * sin(self.Angle)
+    local ry = -dx * sin(self.Angle) + dy * cos(self.Angle)
+    return rx * rx / (self.MajorAxis * self.MajorAxis) + ry * ry / (self.MinorAxis * self.MinorAxis) <= 1
+end
+
+--- Calculates the bounding box of the oval. The bounding box is the smallest rectangle that contains the oval.
+-- @return #table The bounding box of the oval
+function ZONE_OVAL:GetBoundingSquare()
+    local min_x = self.CenterVec2.x - self.MajorAxis
+    local min_y = self.CenterVec2.y - self.MinorAxis
+    local max_x = self.CenterVec2.x + self.MajorAxis
+    local max_y = self.CenterVec2.y + self.MinorAxis
+
+    return {
+        {x=min_x, y=min_x}, {x=max_x, y=min_y}, {x=max_x, y=max_y}, {x=min_x, y=max_y}
+    }
+end
+
+--- Find points on the edge of the oval
+-- @param #number num_points How many points should be found. More = smoother shape
+-- @return #table Points on he edge
+function ZONE_OVAL:PointsOnEdge(num_points)
+    num_points = num_points or 40
+    local points = {}
+    local dtheta = 2 * math.pi / num_points
+
+    for i = 0, num_points - 1 do
+        local theta = i * dtheta
+        local x = self.CenterVec2.x + self.MajorAxis * math.cos(theta) * math.cos(self.Angle) - self.MinorAxis * math.sin(theta) * math.sin(self.Angle)
+        local y = self.CenterVec2.y + self.MajorAxis * math.cos(theta) * math.sin(self.Angle) + self.MinorAxis * math.sin(theta) * math.cos(self.Angle)
+        table.insert(points, {x = x, y = y})
+    end
+
+    return points
+end
+
+--- Returns a random Vec2 within the oval.
+-- @return #table The random Vec2
+function ZONE_OVAL:GetRandomVec2()
+    local theta = math.rad(self.Angle)
+
+    local random_point = math.sqrt(math.random())  --> uniformly
+    --local random_point = math.random()           --> more clumped around center
+    local phi = math.random() * 2 * math.pi
+    local x_c = random_point * math.cos(phi)
+    local y_c = random_point * math.sin(phi)
+    local x_e = x_c * self.MajorAxis
+    local y_e = y_c * self.MinorAxis
+    local rx = (x_e * math.cos(theta) - y_e * math.sin(theta)) + self.CenterVec2.x
+    local ry = (x_e * math.sin(theta) + y_e * math.cos(theta)) + self.CenterVec2.y
+
+    return {x=rx, y=ry}
+end
+
+--- Define a random @{Core.Point#POINT_VEC2} within the zone.
+-- @param #ZONE_OVAL self
+-- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
+function ZONE_OVAL:GetRandomPointVec2()
+    return POINT_VEC2:NewFromVec2(self:GetRandomVec2())
+end
+
+--- Define a random @{Core.Point#POINT_VEC2} within the zone.
+-- @param #ZONE_OVAL self
+-- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
+function ZONE_OVAL:GetRandomPointVec3()
+    return POINT_VEC2:NewFromVec3(self:GetRandomVec2())
+end
+
+--- Draw the zone on the F10 map.
+--- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Oval.lua
+-- @param #ZONE_OVAL self
+-- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+-- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
+-- @param #number Alpha Transparency [0,1]. Default 1.
+-- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value. -- doesn't seem to work
+-- @param #number FillAlpha Transparency [0,1]. Default 0.15.                                                 -- doesn't seem to work
+-- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+-- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+-- @return #ZONE_OVAL self
+function ZONE_OVAL:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType)
+    Coalition = Coalition or self:GetDrawCoalition()
+
+    -- Set draw coalition.
+    self:SetDrawCoalition(Coalition)
+
+    Color = Color or self:GetColorRGB()
+    Alpha = Alpha or 1
+
+    -- Set color.
+    self:SetColor(Color, Alpha)
+
+    FillColor = FillColor or self:GetFillColorRGB()
+    if not FillColor then
+        UTILS.DeepCopy(Color)
+    end
+    FillAlpha = FillAlpha or self:GetFillColorAlpha()
+    if not FillAlpha then
+        FillAlpha = 0.15
+    end
+
+    LineType = LineType or 1
+
+    -- Set fill color -----------> has fill color worked in recent versions of DCS?
+    -- doing something like
+    --
+    -- trigger.action.markupToAll(7, -1, 501, p.Coords[1]:GetVec3(), p.Coords[2]:GetVec3(),p.Coords[3]:GetVec3(),p.Coords[4]:GetVec3(),{1,0,0, 1}, {1,0,0, 1}, 4, false, Text or "")
+    --
+    -- doesn't seem to fill in the shape for an n-sided polygon
+    self:SetFillColor(FillColor, FillAlpha)
+
+    self.DrawPoly = ZONE_POLYGON:NewFromPointsArray(self.ZoneName, self:PointsOnEdge(80))
+    self.DrawPoly:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType)
+end
+
+--- Remove drawing from F10 map
+function ZONE_OVAL:UndrawZone()
+    if self.DrawPoly then
+        self.DrawPoly:UndrawZone()
+    end
+end
+
 
 --- Ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Triangle.lua
 --- This triangle "zone" is not really to be used on its own, it only serves as building blocks for
@@ -2016,7 +2228,7 @@ _ZONE_TRIANGLE = {
 }
 
 function _ZONE_TRIANGLE:New(p1, p2, p3)
-    local self = BASE:Inherit(self, BASE:New())
+    local self = BASE:Inherit(self, ZONE_BASE:New())
     self.Points = {p1, p2, p3}
 
     local center_x = (p1.x + p2.x + p3.x) / 3
@@ -2513,7 +2725,7 @@ end
 
 
 
---- Get the smallest radius encompassing all points of the polygon zone. 
+--- Get the smallest radius encompassing all points of the polygon zone.
 -- @param #ZONE_POLYGON_BASE self
 -- @return #number Radius of the zone in meters.
 function ZONE_POLYGON_BASE:GetRadius()
@@ -2521,22 +2733,22 @@ function ZONE_POLYGON_BASE:GetRadius()
   local center=self:GetVec2()
 
   local radius=0
-    
+
   for _,_vec2 in pairs(self._.Polygon) do
     local vec2=_vec2 --DCS#Vec2
-    
+
     local r=UTILS.VecDist2D(center, vec2)
-    
+
     if r>radius then
       radius=r
     end
-    
+
   end
 
   return radius
 end
 
---- Get the smallest circular zone encompassing all points of the polygon zone. 
+--- Get the smallest circular zone encompassing all points of the polygon zone.
 -- @param #ZONE_POLYGON_BASE self
 -- @param #string ZoneName (Optional) Name of the zone. Default is the name of the polygon zone.
 -- @param #boolean DoNotRegisterZone (Optional) If `true`, zone is not registered.
@@ -2546,25 +2758,25 @@ function ZONE_POLYGON_BASE:GetZoneRadius(ZoneName, DoNotRegisterZone)
   local center=self:GetVec2()
 
   local radius=self:GetRadius()
-  
+
   local zone=ZONE_RADIUS:New(ZoneName or self.ZoneName, center, radius, DoNotRegisterZone)
 
   return zone
 end
 
 
---- Get the smallest rectangular zone encompassing all points points of the polygon zone. 
+--- Get the smallest rectangular zone encompassing all points points of the polygon zone.
 -- @param #ZONE_POLYGON_BASE self
 -- @param #string ZoneName (Optional) Name of the zone. Default is the name of the polygon zone.
 -- @param #boolean DoNotRegisterZone (Optional) If `true`, zone is not registered.
 -- @return #ZONE_POLYGON The rectangular zone.
 function ZONE_POLYGON_BASE:GetZoneQuad(ZoneName, DoNotRegisterZone)
- 
+
   local vec1, vec3=self:GetBoundingVec2()
-  
+
   local vec2={x=vec1.x, y=vec3.y}
   local vec4={x=vec3.x, y=vec1.y}
-  
+
   local zone=ZONE_POLYGON_BASE:New(ZoneName or self.ZoneName, {vec1, vec2, vec3, vec4})
 
   return zone
@@ -2577,15 +2789,15 @@ end
 function ZONE_POLYGON_BASE:RemoveJunk(Height)
 
   Height=Height or 1000
- 
+
   local vec2SW, vec2NE=self:GetBoundingVec2()
 
   local vec3SW={x=vec2SW.x, y=-Height, z=vec2SW.y} --DCS#Vec3
   local vec3NE={x=vec2NE.x, y= Height, z=vec2NE.y} --DCS#Vec3
-  
+
   --local coord1=COORDINATE:NewFromVec3(vec3SW):MarkToAll("SW")
   --local coord1=COORDINATE:NewFromVec3(vec3NE):MarkToAll("NE")
-  
+
   local volume = {
     id = world.VolumeType.BOX,
     params = {
@@ -2594,7 +2806,7 @@ function ZONE_POLYGON_BASE:RemoveJunk(Height)
     }
   }
 
-  local n=world.removeJunk(volume)  
+  local n=world.removeJunk(volume)
 
   return n
 end
@@ -2814,7 +3026,7 @@ function ZONE_POLYGON_BASE:GetBoundingVec2()
     y2 = ( y2 < self._.Polygon[i].y ) and self._.Polygon[i].y or y2
 
   end
-  
+
   local vec1={x=x1, y=y1}
   local vec2={x=x2, y=y2}
 
