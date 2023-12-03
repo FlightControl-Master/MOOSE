@@ -976,7 +976,8 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     -- Update route.
     if Nwp>1 and self.isMobile then
       self:T(self.lid..string.format("Got %d waypoints on spawn ==> Cruise in -1.0 sec!", Nwp))
-      self:__Cruise(-1, nil, self.option.Formation)
+      --self:__Cruise(-1, nil, self.option.Formation)
+      self:__Cruise(-1)
     else
       self:T(self.lid.."No waypoints on spawn ==> Full Stop!")
       self:FullStop()
@@ -1948,7 +1949,7 @@ function ARMYGROUP:onafterCruise(From, Event, To, Speed, Formation)
   self.dTwait=nil
   
   -- Debug info.
-  self:T(self.lid.."Cruise ==> Update route in 0.01 sec")
+  self:T(self.lid..string.format("Cruise ==> Update route in 0.01 sec (speed=%s, formation=%s)", tostring(Speed), tostring(Formation)))
 
   -- Update route.
   self:__UpdateRoute(-0.01, nil, nil, Speed, Formation)
@@ -2003,7 +2004,7 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
     elseif self.optionDefault.Formation then
       Formation = self.optionDefault.Formation
     elseif self.option.Formation then
-      Formation = self.option.Formation      
+      Formation = self.option.Formation
     else
       -- Default formation is on road.
       Formation = ENUMS.Formation.Vehicle.OnRoad

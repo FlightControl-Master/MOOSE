@@ -3974,7 +3974,7 @@ function CONTROLLABLE:OptionAAAttackRange( range )
     local Controller = self:_GetController()
     if Controller then
       if self:IsAir() then
-        self:SetOption( AI.Option.Air.val.MISSILE_ATTACK, range )
+        self:SetOption( AI.Option.Air.id.MISSILE_ATTACK, range )
       end
     end
     return self

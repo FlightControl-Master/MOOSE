@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: Oct 2023
+-- Last Update: Nov 2023
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -799,12 +799,16 @@ do
   -- @param #MANTIS self
   -- @param Core.Set#SET_ZONE ZoneSet Set of zones to be used. Units will move around to the next (random) zone between 100m and 3000m away.
   -- @param #number Number Number of closest zones to be considered, defaults to 3.
+  -- @param #boolean Random If true, use a random coordinate inside the next zone to scoot to.
+  -- @param #string Formation Formation to use, defaults to "Cone". See mission editor dropdown for options.
   -- @return #MANTIS self
-  function MANTIS:AddScootZones(ZoneSet, Number)
+  function MANTIS:AddScootZones(ZoneSet, Number, Random, Formation)
     self:T(self.lid .. " AddScootZones")
     self.SkateZones = ZoneSet
     self.SkateNumber = Number or 3
-    self.shootandscoot = true    
+    self.shootandscoot = true
+    self.ScootRandom = Random
+    self.ScootFormation = Formation or "Cone"    
     return self
   end
   
@@ -1809,8 +1813,8 @@ do
       self.Shorad.Groupset=self.ShoradGroupSet
       self.Shorad.debug = self.debug
     end
-    if self.shootandscoot and self.SkateZones then
-      self.Shorad:AddScootZones(self.SkateZones,self.SkateNumber or 3)
+    if self.shootandscoot and self.SkateZones and self.Shorad then
+      self.Shorad:AddScootZones(self.SkateZones,self.SkateNumber or 3,self.ScootRandom,self.ScootFormation)
     end
     self:__Status(-math.random(1,10))
     return self
