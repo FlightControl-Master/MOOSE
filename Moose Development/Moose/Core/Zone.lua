@@ -42,6 +42,7 @@
 --   * @{#ZONE_UNIT}: The ZONE_UNIT class defines by a zone around a @{Wrapper.Unit#UNIT} with a radius.
 --   * @{#ZONE_GROUP}: The ZONE_GROUP class defines by a zone around a @{Wrapper.Group#GROUP} with a radius.
 --   * @{#ZONE_POLYGON}: The ZONE_POLYGON class defines by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+--   * @{#ZONE_OVAL}: The ZONE_OVAL class isdefined by a center point, major axis, minor axis, and angle.
 --
 -- ===
 --
@@ -1998,13 +1999,17 @@ function ZONE_GROUP:GetRandomPointVec2( inner, outer )
 end
 
 
---- Ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Triangle.lua
---- This triangle "zone" is not really to be used on its own, it only serves as building blocks for
---- ZONE_POLYGON to accurately find a point inside a polygon; as well as getting the correct surface area of
---- a polygon.
--- @type _ZONE_TRIANGLE
--- @extends #BASE
+--- ZONE_OVAL created from a center point, major axis, minor axis, and angle.
+-- Ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Oval.lua
+-- @type ZONE_OVAL
+-- @extends Core.Zone#ZONE_BASE
 
+--- ## ZONE_OVAL class, extends @{#ZONE_BASE}
+--
+-- The ZONE_OVAL class is defined by a center point, major axis, minor axis, and angle.
+-- This class implements the inherited functions from @{#ZONE_BASE} taking into account the own zone format and properties.
+--
+-- @field #ZONE_OVAL
 ZONE_OVAL = {
     ClassName = "OVAL",
     ZoneName="",
@@ -2060,31 +2065,36 @@ function ZONE_OVAL:NewFromDrawing(DrawingName)
     return self
 end
 
---- Gets the major axis of the oval.
+--- Gets the major axis of the oval. 
+-- @param #ZONE_OVAL self
 -- @return #number The major axis of the oval
 function ZONE_OVAL:GetMajorAxis()
     return self.MajorAxis
 end
 
 --- Gets the minor axis of the oval.
+-- @param #ZONE_OVAL self
 -- @return #number The minor axis of the oval
 function ZONE_OVAL:GetMinorAxis()
     return self.MinorAxis
 end
 
 --- Gets the angle of the oval.
+-- @param #ZONE_OVAL self
 -- @return #number The angle of the oval
 function ZONE_OVAL:GetAngle()
     return self.Angle
 end
 
 --- Returns a the center point of the oval
+-- @param #ZONE_OVAL self
 -- @return #table The center Vec2
 function ZONE_OVAL:GetVec2()
     return self.CenterVec2
 end
 
 --- Checks if a point is contained within the oval.
+-- @param #ZONE_OVAL self
 -- @param #table point The point to check
 -- @return #bool True if the point is contained, false otherwise
 function ZONE_OVAL:IsVec2InZone(vec2)
@@ -2097,6 +2107,7 @@ function ZONE_OVAL:IsVec2InZone(vec2)
 end
 
 --- Calculates the bounding box of the oval. The bounding box is the smallest rectangle that contains the oval.
+-- @param #ZONE_OVAL self
 -- @return #table The bounding box of the oval
 function ZONE_OVAL:GetBoundingSquare()
     local min_x = self.CenterVec2.x - self.MajorAxis
@@ -2110,6 +2121,7 @@ function ZONE_OVAL:GetBoundingSquare()
 end
 
 --- Find points on the edge of the oval
+-- @param #ZONE_OVAL self
 -- @param #number num_points How many points should be found. More = smoother shape
 -- @return #table Points on he edge
 function ZONE_OVAL:PointsOnEdge(num_points)
@@ -2128,6 +2140,7 @@ function ZONE_OVAL:PointsOnEdge(num_points)
 end
 
 --- Returns a random Vec2 within the oval.
+-- @param #ZONE_OVAL self
 -- @return #table The random Vec2
 function ZONE_OVAL:GetRandomVec2()
     local theta = math.rad(self.Angle)
@@ -2206,6 +2219,7 @@ function ZONE_OVAL:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineT
 end
 
 --- Remove drawing from F10 map
+-- @param #ZONE_OVAL self
 function ZONE_OVAL:UndrawZone()
     if self.DrawPoly then
         self.DrawPoly:UndrawZone()
@@ -2219,7 +2233,6 @@ end
 --- a polygon.
 -- @type _ZONE_TRIANGLE
 -- @extends #BASE
-
 _ZONE_TRIANGLE = {
     ClassName="ZONE_TRIANGLE",
     Points={},
