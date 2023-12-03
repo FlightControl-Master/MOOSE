@@ -312,9 +312,15 @@
 --
 --     atis=ATIS:New("Batumi", 305, radio.modulation.AM)
 --     atis:SetSRS("D:\\DCS\\_SRS\\", "male", "en-US")
---     atis:Start()  
+--     atis:Start()
 --
 -- This uses a male voice with US accent. It requires SRS to be installed in the `D:\DCS\_SRS\` directory. Note that backslashes need to be escaped or simply use slashes (as in linux).
+-- 
+-- ### SRS can use multiple frequencies: 
+-- 
+--     atis=ATIS:New("Batumi", {305,103.85}, {radio.modulation.AM,radio.modulation.FM})
+--     atis:SetSRS("D:\\DCS\\_SRS\\", "male", "en-US")
+--     atis:Start()
 -- 
 -- ### SRS Localization
 -- 
@@ -884,13 +890,14 @@ _ATIS = {}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version = "0.10.3"
+ATIS.version = "0.10.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Correct fog for elevation.
+-- DONE: Option to add multiple frequencies for SRS
 -- DONE: Zulu time --> Zulu in output.
 -- DONE: Fix for AB not having a runway - Helopost like Naqoura
 -- DONE: Add new Normandy airfields.
@@ -899,7 +906,7 @@ ATIS.version = "0.10.3"
 -- DONE: Visibility reported twice over SRS
 -- DONE: Add text report for output.
 -- DONE: Add stop FMS functions.
--- NOGO: Use local time. Not realisitc!
+-- NOGO: Use local time. Not realistic!
 -- DONE: Dew point. Approx. done.
 -- DONE: Metric units.
 -- DONE: Set UTC correction.
@@ -915,8 +922,8 @@ ATIS.version = "0.10.3"
 --- Create a new ATIS class object for a specific airbase.
 -- @param #ATIS self
 -- @param #string AirbaseName Name of the airbase.
--- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz.
--- @param #number Modulation Radio modulation: 0=AM, 1=FM. Default 0=AM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators.
+-- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. When using **SRS** this can be passed as a table of multiple frequencies.
+-- @param #number Modulation Radio modulation: 0=AM, 1=FM. Default 0=AM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. When using **SRS** this can be passed as a table of multiple modulations.
 -- @return #ATIS self
 function ATIS:New(AirbaseName, Frequency, Modulation)
 
