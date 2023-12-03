@@ -920,7 +920,7 @@ do -- COORDINATE
   end
 
 
-  --- Return an angle in radians from the COORDINATE using a direction vector in Vec3 format.
+  --- Return an angle in radians from the COORDINATE using a **direction vector in Vec3 format**.
   -- @param #COORDINATE self
   -- @param DCS#Vec3 DirectionVec3 The direction vector in Vec3 format.
   -- @return #number DirectionRadians The angle in radians.
@@ -933,10 +933,12 @@ do -- COORDINATE
     return DirectionRadians
   end
 
-  --- Return an angle in degrees from the COORDINATE using a direction vector in Vec3 format.
+  --- Return an angle in degrees from the COORDINATE using a **direction vector in Vec3 format**.
   -- @param #COORDINATE self
   -- @param DCS#Vec3 DirectionVec3 The direction vector in Vec3 format.
   -- @return #number DirectionRadians The angle in degrees.
+  -- @usage
+  --         local directionAngle = currentCoordinate:GetAngleDegrees(currentCoordinate:GetDirectionVec3(sourceCoordinate:GetVec3()))
   function COORDINATE:GetAngleDegrees( DirectionVec3 )
     local AngleRadians = self:GetAngleRadians( DirectionVec3 )
     local Angle = UTILS.ToDegree( AngleRadians )
@@ -3019,6 +3021,16 @@ do -- COORDINATE
     end
       
     return BRAANATO 
+  end
+  
+  --- Return the BULLSEYE as COORDINATE Object
+  -- @param #number Coalition Coalition of the bulls eye to return, e.g. coalition.side.BLUE
+  -- @return #COORDINATE self
+  -- @usage
+  --          -- note the dot (.) here,not using the colon (:)
+  --          local redbulls = COORDINATE.GetBullseyeCoordinate(coalition.side.RED)
+  function COORDINATE.GetBullseyeCoordinate(Coalition)
+    return COORDINATE:NewFromVec3( coalition.getMainRefPoint( Coalition ) )
   end
   
   --- Return a BULLS string out of the BULLS of the coalition to the COORDINATE.
