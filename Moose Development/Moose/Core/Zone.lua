@@ -2055,6 +2055,8 @@ function ZONE_OVAL:NewFromDrawing(DrawingName)
         end
     end
 
+    _DATABASE:AddZone(DrawingName, self)
+
     return self
 end
 
