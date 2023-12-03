@@ -2863,8 +2863,11 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
             end
 
           else
+            -- Check if not parking (could be on ALERT5 and just spawned (current mission=nil)
+            if not self:IsParking() then            
               self:T(self.lid..string.format("Passed Final WP but Tasks=%d or Missions=%d left in the queue. Wait!", nTasks, nMissions))
               self:__Wait(-1)
+            end
           end
         else
           self:T(self.lid..string.format("Passed Final WP but still have current Task (#%s) or Mission (#%s) left to do", tostring(self.taskcurrent), tostring(self.currentmission)))
