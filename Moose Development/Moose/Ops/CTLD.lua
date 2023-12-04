@@ -2561,6 +2561,40 @@ function CTLD:_ListCratesNearby( _group, _unit)
   return self
 end
 
+-- (Internal) Function to find and Remove nearby crates.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Unit#UNIT Unit
+-- @return #CTLD self
+function CTLD:_RemoveCratesNearby( _group, _unit)
+  self:T(self.lid .. " _RemoveCratesNearby")
+  local finddist = self.CrateDistance or 35
+  local crates,number = self:_FindCratesNearby(_group,_unit, finddist,true) -- #table
+  if number > 0 then
+    local text = REPORT:New("Removing Crates Found Nearby:")
+    text:Add("------------------------------------------------------------")
+    for _,_entry in pairs (crates) do
+      local entry = _entry -- #CTLD_CARGO
+      local name = entry:GetName() --#string
+      local dropped = entry:WasDropped()
+      if dropped then
+        text:Add(string.format("Crate for %s, %dkg removed",name, entry.PerCrateMass))
+      else
+        text:Add(string.format("Crate for %s, %dkg removed",name, entry.PerCrateMass))
+      end
+      entry:GetPositionable():Destroy(false)
+    end
+    if text:GetCount() == 1 then
+    text:Add("        N O N E")
+    end
+    text:Add("------------------------------------------------------------")
+    self:_SendMessage(text:Text(), 30, true, _group) 
+  else
+    self:_SendMessage(string.format("No (loadable) crates within %d meters!",finddist), 10, false, _group) 
+  end
+  return self
+end
+
 --- (Internal) Return distance in meters between two coordinates.
 -- @param #CTLD self
 -- @param Core.Point#COORDINATE _point1 Coordinate one
@@ -3672,6 +3706,7 @@ function CTLD:_RefreshF10Menus()
               end
             end
             listmenu = MENU_GROUP_COMMAND:New(_group,"List crates nearby",topcrates, self._ListCratesNearby, self, _group, _unit)
+            listmenu = MENU_GROUP_COMMAND:New(_group,"Remove crates nearby",topcrates, self._RemoveCratesNearby, self, _group, _unit)
             local unloadmenu = MENU_GROUP_COMMAND:New(_group,"Drop crates",topcrates, self._UnloadCrates, self, _group, _unit)
             if not self.nobuildmenu then
               local buildmenu = MENU_GROUP_COMMAND:New(_group,"Build crates",topcrates, self._BuildCrates, self, _group, _unit)
