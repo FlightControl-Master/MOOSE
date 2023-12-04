@@ -3472,10 +3472,9 @@ function OPSGROUP:RemoveWaypoint(wpindex)
       
       -- Could be that the waypoint we are currently moving to was the LAST waypoint. Then we now passed the final waypoint.
       if (self.adinfinitum or istemp) then
-        self:_PassedFinalWaypoint(false, "Removed PASSED temporary waypoint ")
-      end      
-      
-      
+        self:_PassedFinalWaypoint(false, "Removed PASSED temporary waypoint")
+      end
+            
     end
 
   end
@@ -5799,6 +5798,27 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
       self:T2("Setting allow AB")
       self:SetAllowAfterburner()
     end
+  end
+  
+  if self.legion and self.legionReturn==false and self.waypoints and #self.waypoints==1 then
+    ---
+    -- This is the case where a group was send on a mission (which is over now), has no addional
+    -- waypoints or tasks and should NOT return to its legion.
+    -- We create a new waypoint at the current position and let it hold here.
+    ---
+    
+    local Coordinate=self:GetCoordinate()
+    
+    if self.isArmygroup then
+      ARMYGROUP.AddWaypoint(self, Coordinate, 0, nil, nil, false)
+    elseif self.isNavygroup then
+      NAVYGROUP.AddWaypoint(self,Coordinate, 0, nil, nil, false)
+    end
+    
+    -- Remove original waypoint.
+    self:RemoveWaypoint(1)
+    
+    self:_PassedFinalWaypoint(true, "Passed final waypoint as group is done with mission but should NOT return to its legion")
   end
   
   -- Check if group is done.
