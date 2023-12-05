@@ -2380,12 +2380,12 @@ function ZONE_POLYGON_BASE:New( ZoneName, PointsArray )
       self._.Polygon[i].y = PointsArray[i].y
     end
 
+    -- triangulate the polygon so we can work with it
+    self._Triangles = self:_Triangulate()
+    -- set the polygon's surface area
+    self.SurfaceArea = self:_CalculateSurfaceArea()
+    
   end
-
-  -- triangulate the polygon so we can work with it
-  self._Triangles = self:_Triangulate()
-  -- set the polygon's surface area
-  self.SurfaceArea = self:_CalculateSurfaceArea()
 
   return self
 end
