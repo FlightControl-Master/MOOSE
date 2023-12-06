@@ -480,12 +480,14 @@ function ZONE_BASE:UndrawZone(Delay)
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, ZONE_BASE.UndrawZone, self)
   else
-    if self.DrawID and type(self.DrawID) ~= "table" then
-      UTILS.RemoveMark(self.DrawID)
-    else -- DrawID is a table with a collections of mark ids, as used in ZONE_POLYGON
+    if self.DrawID then
+      if type(self.DrawID) ~= "table" then
+        UTILS.RemoveMark(self.DrawID)
+      else -- DrawID is a table with a collections of mark ids, as used in ZONE_POLYGON
         for _, mark_id in pairs(self.DrawID) do
-            UTILS.RemoveMark(mark_id)
+          UTILS.RemoveMark(mark_id)
         end
+      end
     end
   end
   return self
@@ -2378,12 +2380,12 @@ function ZONE_POLYGON_BASE:New( ZoneName, PointsArray )
       self._.Polygon[i].y = PointsArray[i].y
     end
 
+    -- triangulate the polygon so we can work with it
+    self._Triangles = self:_Triangulate()
+    -- set the polygon's surface area
+    self.SurfaceArea = self:_CalculateSurfaceArea()
+    
   end
-
-  -- triangulate the polygon so we can work with it
-  self._Triangles = self:_Triangulate()
-  -- set the polygon's surface area
-  self.SurfaceArea = self:_CalculateSurfaceArea()
 
   return self
 end
