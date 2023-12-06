@@ -3377,11 +3377,11 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
         end
       end
       -- VoiceCallsignNumber
-      if SpawnTemplate.units[UnitID].AddPropAircraft.VoiceCallsignNumber then
+      if SpawnTemplate.units[UnitID].AddPropAircraft.VoiceCallsignNumber and type( Callsign ) ~= "number" then
         SpawnTemplate.units[UnitID].AddPropAircraft.VoiceCallsignNumber = SpawnTemplate.units[UnitID].callsign[2] .. SpawnTemplate.units[UnitID].callsign[3]
       end
       -- VoiceCallsignLabel
-      if SpawnTemplate.units[UnitID].AddPropAircraft.VoiceCallsignLabel then
+      if SpawnTemplate.units[UnitID].AddPropAircraft.VoiceCallsignLabel and type( Callsign ) ~= "number" then
         local CallsignName = SpawnTemplate.units[UnitID].callsign["name"] -- #string
         CallsignName = string.match(CallsignName,"^(%a+)") -- 2.8 - only the part w/o numbers
         local label = "NY" -- Navy One exception
