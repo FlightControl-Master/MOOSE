@@ -1080,7 +1080,7 @@ function INTEL:CreateDetectedItems(DetectedGroups, DetectedStatics, RecceDetecti
 end
 
 --- (Internal) Return the detected target groups of the controllable as a @{SET_GROUP}.
--- The optional parametes specify the detection methods that can be applied.
+-- The optional parameters specify the detection methods that can be applied.
 -- If no detection method is given, the detection will use all the available methods by default.
 -- @param #INTEL self
 -- @param Wrapper.Unit#UNIT Unit The unit detecting.
@@ -1093,11 +1093,14 @@ end
 -- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
 -- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
 function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
-
+  --self:T(self.lid.."GetDetectedUnits "..Unit:GetName())
   -- Get detected DCS units.
   local reccename = Unit:GetName()
+  
   local detectedtargets=Unit:GetDetectedTargets(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
-
+  
+  --UTILS.PrintTableToLog(detectedtargets,1)
+  
   for DetectionObjectID, Detection in pairs(detectedtargets or {}) do
     local DetectedObject=Detection.object -- DCS#Object
 

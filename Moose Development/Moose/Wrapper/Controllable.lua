@@ -2937,7 +2937,7 @@ function CONTROLLABLE:CopyRoute( Begin, End, Randomize, Radius )
 end
 
 --- Return the detected targets of the controllable.
--- The optional parametes specify the detection methods that can be applied.
+-- The optional parameters specify the detection methods that can be applied.
 -- If no detection method is given, the detection will use all the available methods by default.
 -- @param #CONTROLLABLE self
 -- @param #boolean DetectVisual (optional)
