@@ -419,7 +419,11 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return Core.Base#BASE
   function SET_BASE:GetRandom()
-    local tablemax = table.maxn(self.Index)
+    local tablemax = 0
+    for _,_ind in pairs(self.Index) do
+      tablemax = tablemax + 1
+    end
+    --local tablemax = table.maxn(self.Index)
     local RandomItem = self.Set[self.Index[math.random(1,tablemax)]]
     self:T3( { RandomItem } )
     return RandomItem
@@ -561,10 +565,12 @@ do -- SET_BASE
     return self
   end
 
-  --- Iterate the SET_BASE while identifying the nearest object from a @{Core.Point#POINT_VEC2}.
+  --- Iterate the SET_BASE while identifying the nearest object in the set from a @{Core.Point#POINT_VEC2}.
   -- @param #SET_BASE self
-  -- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest object in the set.
+  -- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#COORDINATE} or @{Core.Point#POINT_VEC2} object (but **not** a simple DCS#Vec2!) from where to evaluate the closest object in the set.
   -- @return Core.Base#BASE The closest object.
+  -- @usage
+  --          myset:FindNearestObjectFromPointVec2( ZONE:New("Test Zone"):GetCoordinate() )
   function SET_BASE:FindNearestObjectFromPointVec2( PointVec2 )
     self:F2( PointVec2 )
 
@@ -2849,15 +2855,14 @@ do -- SET_UNIT
   function SET_UNIT:GetCoordinate()
     
     local Coordinate = nil
-    local unit = self:GetRandom()
+    local unit = self:GetFirst()
     if self:Count() == 1 and unit then
       return unit:GetCoordinate()
     end
     if unit then
-      local Coordinate = unit:GetCoordinate()
-      --self:F({Coordinate:GetVec3()})
-      
-      
+      Coordinate = unit:GetCoordinate()
+      self:T2(UTILS.PrintTableToLog(Coordinate:GetVec3()))
+          
       local x1 = Coordinate.x
       local x2 = Coordinate.x
       local y1 = Coordinate.y
@@ -2868,19 +2873,19 @@ do -- SET_UNIT
       local AvgHeading = nil
       local MovingCount = 0
   
-      for UnitName, UnitData in pairs( self:GetAliveSet() ) do
+      for UnitName, UnitData in pairs( self.Set) do
   
         local Unit = UnitData -- Wrapper.Unit#UNIT
-        local Coordinate = Unit:GetCoordinate()
+        local Coord = Unit:GetCoordinate()
   
-        x1 = (Coordinate.x < x1) and Coordinate.x or x1
-        x2 = (Coordinate.x > x2) and Coordinate.x or x2
-        y1 = (Coordinate.y < y1) and Coordinate.y or y1
-        y2 = (Coordinate.y > y2) and Coordinate.y or y2
-        z1 = (Coordinate.y < z1) and Coordinate.z or z1
-        z2 = (Coordinate.y > z2) and Coordinate.z or z2
+        x1 = (Coord.x < x1) and Coord.x or x1
+        x2 = (Coord.x > x2) and Coord.x or x2
+        y1 = (Coord.y < y1) and Coord.y or y1
+        y2 = (Coord.y > y2) and Coord.y or y2
+        z1 = (Coord.y < z1) and Coord.z or z1
+        z2 = (Coord.y > z2) and Coord.z or z2
   
-        local Velocity = Coordinate:GetVelocity()
+        local Velocity = Coord:GetVelocity()
         if Velocity ~= 0 then
           MaxVelocity = (MaxVelocity < Velocity) and Velocity or MaxVelocity
           local Heading = Coordinate:GetHeading()
@@ -2897,7 +2902,7 @@ do -- SET_UNIT
       Coordinate:SetHeading( AvgHeading )
       Coordinate:SetVelocity( MaxVelocity )
   
-      self:F( { Coordinate = Coordinate } )
+      self:T2(UTILS.PrintTableToLog(Coordinate:GetVec3()))
     end
     return Coordinate
 
