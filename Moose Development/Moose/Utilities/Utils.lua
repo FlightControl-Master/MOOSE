@@ -443,22 +443,35 @@ end
 
 --- Print a table to log in a nice format
 -- @param #table table The table to print
--- @param #number indent Number of idents
+-- @param #number indent Number of indents
+-- @return #string text Text created on the fly of the log output
 function UTILS.PrintTableToLog(table, indent)
+  local text = "\n"
   if not table then
     env.warning("No table passed!")
-    return 
+    return nil
   end
   if not indent then indent = 0 end
   for k, v in pairs(table) do
+    if string.find(k," ") then k='"'..k..'"'end
     if type(v) == "table" then
       env.info(string.rep("  ", indent) .. tostring(k) .. " = {")
-      UTILS.PrintTableToLog(v, indent + 1)
-      env.info(string.rep("  ", indent) .. "}")
+      text = text ..string.rep("  ", indent) .. tostring(k) .. " = {\n"
+      text = text .. tostring(UTILS.PrintTableToLog(v, indent + 1)).."\n"
+      env.info(string.rep("  ", indent) .. "},")
+      text = text .. string.rep("  ", indent) .. "},\n"
     else
-      env.info(string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(v))
+      local value
+      if tostring(v) == "true" or tostring(v) == "false" or tonumber(v) ~= nil then
+        value=v
+      else
+        value = '"'..tostring(v)..'"'
+      end
+      env.info(string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(value)..",\n")
+      text = text .. string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(value)..",\n"
     end
   end
+  return text
 end
 
 --- Returns table in a easy readable string representation.
