@@ -79,6 +79,7 @@
 -- @field Utilities.FiFo#FIFO TargetCache
 -- @field #boolean smokeownposition
 -- @field #table SmokeOwn
+-- @field #boolean smokeaveragetargetpos
 -- @extends Core.Fsm#FSM
 
 ---
@@ -104,7 +105,7 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.0.22",
+  version            =   "0.1.23",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
   ViewZoneLaser      =   {},
@@ -130,8 +131,9 @@ PLAYERRECCE = {
   ReferencePoint     =   nil,
   TForget            =   600,
   TargetCache        =   nil,
-  smokeownposition   =   true,
+  smokeownposition   =   false,
   SmokeOwn           =   {},
+  smokeaveragetargetpos = false,
 }
 
 --- 
@@ -1109,9 +1111,8 @@ function PLAYERRECCE:_SmokeTargets(client,group,playername)
   self:T(self.lid.."_SmokeTargets")
   local cameraset = self:_GetTargetSet(client,true) -- Core.Set#SET_UNIT
   local visualset = self:_GetTargetSet(client,false) -- Core.Set#SET_UNIT
-  cameraset:AddSet(visualset)
   
-  if cameraset:CountAlive() > 0 then
+  if cameraset:CountAlive() > 0 or visualset:CountAlive() > 0 then
     self:__TargetsSmoked(-1,client,playername,cameraset)
   else
     return self
@@ -1126,29 +1127,31 @@ function PLAYERRECCE:_SmokeTargets(client,group,playername)
   -- laser targer gets extra smoke
   if laser and laser.Target and laser.Target:IsAlive() then
     laser.Target:GetCoordinate():Smoke(lasersmoke)
-    if cameraset:IsInSet(laser.Target) then
-      cameraset:Remove(laser.Target:GetName(),true)
+  end
+  
+  local coord = visualset:GetCoordinate()
+  if coord and self.smokeaveragetargetpos then
+    coord:SetAtLandheight()
+    coord:Smoke(medsmoke)
+  else
+    -- smoke everything 
+    for _,_unit in pairs(visualset.Set) do
+      local unit = _unit --Wrapper.Unit#UNIT
+      if unit and unit:IsAlive() then
+        local coord = unit:GetCoordinate()
+        local threat = unit:GetThreatLevel()
+        if coord then
+          local color = lowsmoke
+          if threat > 7 then
+            color = highsmoke
+          elseif threat > 2 then
+            color = medsmoke
+          end
+          coord:Smoke(color)
+        end
+      end
     end
   end
-  
-  local coordinate = nil
-  local setthreat = 0
-  -- smoke everything else
-  if cameraset:CountAlive() > 1 then
-    local coordinate = cameraset:GetCoordinate()
-    local setthreat = cameraset:CalculateThreatLevelA2G()
-  end
-  
-  if coordinate then
-    local color = lowsmoke
-    if setthreat > 7 then
-      color = medsmoke
-    elseif setthreat > 2 then
-      color = lowsmoke
-    end
-    coordinate:Smoke(color)
-  end
-  
   if self.SmokeOwn[playername] then
     local cc = client:GetVec2()
     -- don't smoke mid-air
@@ -1189,15 +1192,15 @@ function PLAYERRECCE:_FlareTargets(client,group,playername)
   -- smoke everything else
   for _,_unit in pairs(cameraset.Set) do
     local unit = _unit --Wrapper.Unit#UNIT
-    if unit then
+    if unit and unit:IsAlive() then
       local coord = unit:GetCoordinate()
       local threat = unit:GetThreatLevel()
       if coord then
         local color = lowsmoke
         if threat > 7 then
-          color = medsmoke
+          color = highsmoke
         elseif threat > 2 then
-          color = lowsmoke
+          color = medsmoke
         end
         coord:Flare(color)
       end
@@ -1546,7 +1549,7 @@ end
 -- @param #PLAYERRECCE self
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:EnableSmokeOwnPosition()
-  self:T(self.lid.."ENableSmokeOwnPosition")
+  self:T(self.lid.."EnableSmokeOwnPosition")
   self.smokeownposition = true
   return self
 end
@@ -1557,6 +1560,24 @@ end
 function PLAYERRECCE:DisableSmokeOwnPosition()
   self:T(self.lid.."DisableSmokeOwnPosition")
   self.smokeownposition = false
+  return self
+end
+
+--- [User] Enable smoking of average target positions, instead of all targets visible. Loses smoke per threatlevel -- each is med threat. Default is - smoke all positions.
+-- @param #PLAYERRECCE self
+-- @return #PLAYERRECCE self
+function PLAYERRECCE:EnableSmokeAverageTargetPosition()
+  self:T(self.lid.."ENableSmokeOwnPosition")
+  self.smokeaveragetargetpos = true
+  return self
+end
+
+--- [User] Disable smoking of average target positions, instead of all targets visible. Default is - smoke all positions.
+-- @param #PLAYERRECCE self
+-- @return #PLAYERRECCE 
+function PLAYERRECCE:DisableSmokeAverageTargetPosition()
+  self:T(self.lid.."DisableSmokeAverageTargetPosition")
+  self.smokeaveragetargetpos = false
   return self
 end
 
