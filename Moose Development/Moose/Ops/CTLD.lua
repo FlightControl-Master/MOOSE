@@ -3671,6 +3671,7 @@ function CTLD:_RefreshF10Menus()
             local loadmenu = MENU_GROUP_COMMAND:New(_group,"Load crates",topcrates, self._LoadCratesNearby, self, _group, _unit)
             local cratesmenu = MENU_GROUP:New(_group,"Get Crates",topcrates)
             local packmenu = MENU_GROUP_COMMAND:New(_group, "Pack crates", topcrates, self._PackCratesNearby, self, _group, _unit)
+            local removecratesmenu = MENU_GROUP:New(_group, "Remove crates", topcrates)
             
             if self.usesubcats then
               local subcatmenus = {}
@@ -3706,7 +3707,7 @@ function CTLD:_RefreshF10Menus()
               end
             end
             listmenu = MENU_GROUP_COMMAND:New(_group,"List crates nearby",topcrates, self._ListCratesNearby, self, _group, _unit)
-            listmenu = MENU_GROUP_COMMAND:New(_group,"Remove crates nearby",topcrates, self._RemoveCratesNearby, self, _group, _unit)
+            removecrates = MENU_GROUP_COMMAND:New(_group,"Remove crates nearby",removecratesmenu, self._RemoveCratesNearby, self, _group, _unit)
             local unloadmenu = MENU_GROUP_COMMAND:New(_group,"Drop crates",topcrates, self._UnloadCrates, self, _group, _unit)
             if not self.nobuildmenu then
               local buildmenu = MENU_GROUP_COMMAND:New(_group,"Build crates",topcrates, self._BuildCrates, self, _group, _unit)
