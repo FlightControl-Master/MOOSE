@@ -98,7 +98,7 @@ function MESSAGE:New( MessageText, MessageDuration, MessageCategory, ClearScreen
 
   self.MessageType = nil
 
-  -- When no MessageCategory is given, we don't show it as a title... 
+  -- When no MessageCategory is given, we don't show it as a title...	
   if MessageCategory and MessageCategory ~= "" then
     if MessageCategory:sub( -1 ) ~= "\n" then
       self.MessageCategory = MessageCategory .. ": "
@@ -368,7 +368,7 @@ function MESSAGE:ToCoalition( CoalitionSide, Settings )
   if CoalitionSide then
     if self.MessageDuration ~= 0 then
       self:T( self.MessageCategory .. self.MessageText:gsub( "\n$", "" ):gsub( "\n$", "" ) .. " / " .. self.MessageDuration )
-      trigger.action.outTextForCoalition( CoalitionSide, self.MessageText:gsub( "\n$", "" ):gsub( "\n$", "" ), self.MessageDuration, self.ClearScreen )
+      trigger.action.outTextForCoalition( CoalitionSide, self.MessageCategory .. self.MessageText:gsub( "\n$", "" ):gsub( "\n$", "" ), self.MessageDuration, self.ClearScreen )
     end
   end
   
