@@ -24,7 +24,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update November 2023
+-- Last Update December 2023
 
 do 
 
@@ -1228,7 +1228,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.43"
+CTLD.version="1.0.44"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -3010,6 +3010,35 @@ function CTLD:IsHercules(Unit)
   end
 end
 
+
+--- (Internal) Function to set troops positions of a template to a nice circle
+-- @param #CTLD self
+-- @param Core.Point#COORDINATE Coordinate Start coordinate to use
+-- @param #number Radius Radius to be used
+-- @param #number Heading Heading starting with
+-- @param #string Template The group template name
+-- @return #table Positions The positions table
+function CTLD:_GetUnitPositions(Coordinate,Radius,Heading,Template)
+  local Positions = {}
+  local template = _DATABASE:GetGroupTemplate(Template)
+  UTILS.PrintTableToLog(template)
+  local numbertroops = #template.units
+  local newcenter = Coordinate:Translate(Radius,((Heading+270)%360))
+  for i=1,360,math.floor(360/numbertroops) do
+    local phead = ((Heading+270+i)%360)
+    local post = newcenter:Translate(Radius,phead)
+    local pos1 = post:GetVec2()
+    local p1t = {
+    x = pos1.x,
+    y = pos1.y,
+    heading = phead,
+    }
+    table.insert(Positions,p1t)
+  end
+  UTILS.PrintTableToLog(Positions)
+  return Positions
+end
+
 --- (Internal) Function to unload troops from heli.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
@@ -3061,14 +3090,29 @@ function CTLD:_UnloadTroops(Group, Unit)
             zoneradius = Unit:GetVelocityMPS() or 100
           end
           local zone = ZONE_GROUP:New(string.format("Unload zone-%s",unitname),Group,zoneradius*factor)
-          local randomcoord = zone:GetRandomCoordinate(10,30*factor):GetVec2()
+          local randomcoord = zone:GetRandomCoordinate(10,30*factor) --:GetVec2()
+          local heading = Group:GetHeading() or 0
+          -- Spawn troops left from us, closer when hovering, further off when landed
+          if hoverunload or grounded then
+            randomcoord = Group:GetCoordinate()
+            -- slightly left from us           
+            local Angle = (heading+270)%360
+            local offset = hoverunload and 1.5 or 5
+            randomcoord:Translate(offset,Angle,nil,true)
+          end
+          local tempcount = 0
           for _,_template in pairs(temptable) do
             self.TroopCounter = self.TroopCounter + 1
+            tempcount = tempcount+1
             local alias = string.format("%s-%d", _template, math.random(1,100000))
+            local rad = 2.5+tempcount
+            local Positions = self:_GetUnitPositions(randomcoord,rad,heading,_template)
             self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
-              :InitRandomizeUnits(true,20,2)
+              --:InitRandomizeUnits(true,20,2)
+              --:InitHeading(heading)
               :InitDelayOff()
-              :SpawnFromVec2(randomcoord)
+              :InitSetUnitAbsolutePositions(Positions)
+              :SpawnFromVec2(randomcoord:GetVec2())
             self:__TroopsDeployed(1, Group, Unit, self.DroppedTroops[self.TroopCounter],type)
           end -- template loop
           cargo:SetWasDropped(true)
