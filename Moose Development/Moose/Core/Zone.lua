@@ -10,7 +10,7 @@
 --   * Create moving zones around a unit.
 --   * Create moving zones around a group.
 --   * Provide the zone behavior. Some zones are static, while others are moveable.
---   * Enquiry if a coordinate is within a zone.
+--   * Enquire if a coordinate is within a zone.
 --   * Smoke zones.
 --   * Set a zone probability to control zone selection.
 --   * Get zone coordinates.
@@ -42,7 +42,7 @@
 --   * @{#ZONE_UNIT}: The ZONE_UNIT class defines by a zone around a @{Wrapper.Unit#UNIT} with a radius.
 --   * @{#ZONE_GROUP}: The ZONE_GROUP class defines by a zone around a @{Wrapper.Group#GROUP} with a radius.
 --   * @{#ZONE_POLYGON}: The ZONE_POLYGON class defines by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
---   * @{#ZONE_OVAL}: The ZONE_OVAL class isdefined by a center point, major axis, minor axis, and angle.
+--   * @{#ZONE_OVAL}: The ZONE_OVAL class is defined by a center point, major axis, minor axis, and angle.
 --
 -- ===
 --
@@ -2232,7 +2232,14 @@ end
 --- ZONE_POLYGON to accurately find a point inside a polygon; as well as getting the correct surface area of
 --- a polygon.
 -- @type _ZONE_TRIANGLE
--- @extends #BASE
+-- @extends Core.Zone#ZONE_BASE
+
+--- ## _ZONE_TRIANGLE class, extends @{#ZONE_BASE}
+--
+-- _ZONE_TRIANGLE class is a helper class for ZONE_POLYGON
+-- This class implements the inherited functions from @{#ZONE_BASE} taking into account the own zone format and properties.
+--
+-- @field #_ZONE_TRIANGLE
 _ZONE_TRIANGLE = {
     ClassName="ZONE_TRIANGLE",
     Points={},
@@ -2241,7 +2248,12 @@ _ZONE_TRIANGLE = {
     SurfaceArea=0,
     DrawIDs={}
 }
-
+---
+-- @param #_ZONE_TRIANGLE self
+-- @param DCS#Vec p1
+-- @param DCS#Vec p2
+-- @param DCS#Vec p3
+-- @return #_ZONE_TRIANGLE self
 function _ZONE_TRIANGLE:New(p1, p2, p3)
     local self = BASE:Inherit(self, ZONE_BASE:New())
     self.Points = {p1, p2, p3}
@@ -2260,6 +2272,7 @@ function _ZONE_TRIANGLE:New(p1, p2, p3)
 end
 
 --- Checks if a point is contained within the triangle.
+-- @param #_ZONE_TRIANGLE self
 -- @param #table pt The point to check
 -- @param #table points (optional) The points of the triangle, or 3 other points if you're just using the TRIANGLE class without an object of it
 -- @return #bool True if the point is contained, false otherwise
@@ -2281,6 +2294,7 @@ function _ZONE_TRIANGLE:ContainsPoint(pt, points)
 end
 
 --- Returns a random Vec2 within the triangle.
+-- @param #_ZONE_TRIANGLE self
 -- @param #table points The points of the triangle, or 3 other points if you're just using the TRIANGLE class without an object of it
 -- @return #table The random Vec2
 function _ZONE_TRIANGLE:GetRandomVec2(points)
@@ -2296,6 +2310,8 @@ function _ZONE_TRIANGLE:GetRandomVec2(points)
 end
 
 --- Draw the triangle
+-- @param #_ZONE_TRIANGLE self
+-- @return #table of draw IDs
 function _ZONE_TRIANGLE:Draw(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
     Coalition=Coalition or -1
 
@@ -2390,7 +2406,8 @@ end
 
 --- Triangulates the polygon.
 --- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Polygon.lua
--- @return #table The #_TRIANGLE list that make up
+-- @param #ZONE_POLYGON_BASE self
+-- @return #table The #_ZONE_TRIANGLE list that makes up the polygon
 function ZONE_POLYGON_BASE:_Triangulate()
     local points = self._.Polygon
     local triangles = {}
@@ -2519,6 +2536,7 @@ end
 
 --- Calculates the surface area of the polygon. The surface area is the sum of the areas of the triangles that make up the polygon.
 --- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Polygon.lua
+-- @param #ZONE_POLYGON_BASE self
 -- @return #number The surface area of the polygon
 function ZONE_POLYGON_BASE:_CalculateSurfaceArea()
     local area = 0
@@ -3590,7 +3608,8 @@ end
 
 
 do -- ZONE_ELASTIC
-
+  
+  ---
   -- @type ZONE_ELASTIC
   -- @field #table points Points in 2D.
   -- @field #table setGroups Set of GROUPs.
@@ -3791,6 +3810,7 @@ end
 
 do -- ZONE_AIRBASE
 
+  ---
   -- @type ZONE_AIRBASE
   -- @field #boolean isShip If `true`, airbase is a ship.
   -- @field #boolean isHelipad If `true`, airbase is a helipad.
