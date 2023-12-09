@@ -2435,7 +2435,8 @@ do -- DETECTION_TYPES
 end
 
 do -- DETECTION_AREAS
-
+  
+  ---
   -- @type DETECTION_AREAS
   -- @field DCS#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
   -- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Wrapper.Unit}s, @{Core.Zone}s, the center @{Wrapper.Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
