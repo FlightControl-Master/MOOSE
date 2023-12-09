@@ -22,7 +22,7 @@
 -- ===
 -- 
 -- ### Author: **Applevangelist**
--- Last Update July 2023
+-- Last Update Sept 2023
 --
 -- ===
 -- @module Functional.AICSAR
@@ -191,7 +191,7 @@
 -- @field #AICSAR
 AICSAR = {
   ClassName = "AICSAR",
-  version = "0.1.15",
+  version = "0.1.16",
   lid = "",
   coalition = coalition.side.BLUE,
   template = "",
@@ -889,7 +889,7 @@ function AICSAR:_InitMission(Pilot,Index)
   
     -- Cargo transport assignment.
   local opstransport=OPSTRANSPORT:New(Pilot, pickupzone, self.farpzone)
-  
+  --opstransport:SetVerbosity(3)
   
   local helo = self:_GetFlight()
   -- inject reservation
@@ -915,8 +915,9 @@ function AICSAR:_InitMission(Pilot,Index)
     self:__PilotUnloaded(2,Helo,OpsGroup)
   end
   
-  function helo:OnAfterLoadingDone(From,Event,To)
-    AICPickedUp(helo,helo:GetCargoGroups(),Index)   
+  function helo:OnAfterLoading(From,Event,To)
+    AICPickedUp(helo,helo:GetCargoGroups(),Index) 
+    helo:__LoadingDone(5)  
   end
   
   function helo:OnAfterDead(From,Event,To)
@@ -925,6 +926,7 @@ function AICSAR:_InitMission(Pilot,Index)
   
   function helo:OnAfterUnloaded(From,Event,To,OpsGroupCargo)
     AICHeloUnloaded(helo,OpsGroupCargo)
+    helo:__UnloadingDone(5)
   end
   
   self.helos[Index] = helo

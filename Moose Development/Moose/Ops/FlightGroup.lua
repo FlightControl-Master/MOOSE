@@ -150,7 +150,7 @@ FLIGHTGROUP = {
   playerWarnings     =    {},
   prohibitAB         =   false,
   jettisonEmptyTanks =   true,
-  jettisonWeapons    =   true, -- that's actually a negative option like prohibitAB
+  jettisonWeapons    =   true, -- that's actually a negative option like prohibitAB  
 }
 
 
@@ -216,7 +216,7 @@ FLIGHTGROUP.Players={}
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="1.0.1"
+FLIGHTGROUP.version="1.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1256,20 +1256,20 @@ function FLIGHTGROUP:Status()
     
       -- Check damage.
     self:_CheckDamage()
- 
+    
+    -- Get current mission (if any).
+    local mission=self:GetMissionCurrent()
+    
      -- TODO: Check if group is waiting?
     if self:IsWaiting() then
       if self.Twaiting and self.dTwait then
         if timer.getAbsTime()>self.Twaiting+self.dTwait then
           --self.Twaiting=nil
           --self.dTwait=nil
-          --self:Cruise()
+          --self:_CheckGroupDone()
         end
       end
     end
-    
-    -- Get current mission (if any).
-    local mission=self:GetMissionCurrent()
     
     -- If mission, check if DCS task needs to be updated.
     if mission and mission.updateDCSTask then
@@ -1363,7 +1363,7 @@ function FLIGHTGROUP:Status()
 
   else
     -- Check damage.
-    self:_CheckDamage()      
+    self:_CheckDamage()   
   end
     
   ---
@@ -1517,6 +1517,36 @@ function FLIGHTGROUP:Status()
 
   end
 
+  --- 
+  -- Track flight
+  ---
+  if false then
+  
+    for _,_element in pairs(self.elements) do
+      local element=_element --Ops.OpsGroup#OPSGROUP.Element
+      
+      local unit=element.unit
+      
+      if unit and unit:IsAlive() then
+      
+        local vec3=unit:GetVec3()
+        
+        if vec3 and element.pos then
+        
+          local id=UTILS.GetMarkID()
+          
+          trigger.action.lineToAll(-1, id, vec3, element.pos, {1,1,1,0.5}, 1)
+        
+        end
+        
+        element.pos=vec3
+        
+      end
+  
+    end
+    
+  end
+
   ---
   -- Fuel State
   ---
@@ -1587,9 +1617,15 @@ function FLIGHTGROUP:Status()
   ---
 
   self:_PrintTaskAndMissionStatus()
-  
-  -- Current mission.
+
+  -- All done?
+  -- Get current mission (if any).
   local mission=self:GetMissionCurrent()
+  if not mission then
+    self.Twaiting=nil
+    self.dTwait=nil
+    self:_CheckGroupDone()
+  end
 
 end
 
@@ -2575,6 +2611,9 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n, N)
       elseif task.dcstask.id==AUFTRAG.SpecialTask.RECON then
         -- For recon missions, we need to allow the update as we insert new waypoints.
         self:T2(self.lid.."Allowing update route for Task: ReconMission")
+      elseif task.dcstask.id==AUFTRAG.SpecialTask.PATROLRACETRACK then
+        -- For recon missions, we need to allow the update as we insert new waypoints.
+        self:T2(self.lid.."Allowing update route for Task: Patrol Race Track")
       elseif task.dcstask.id==AUFTRAG.SpecialTask.HOVER then
         -- For recon missions, we need to allow the update as we insert new waypoints.
         self:T2(self.lid.."Allowing update route for Task: Hover")
@@ -2824,8 +2863,11 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
             end
 
           else
+            -- Check if not parking (could be on ALERT5 and just spawned (current mission=nil)
+            if not self:IsParking() then            
               self:T(self.lid..string.format("Passed Final WP but Tasks=%d or Missions=%d left in the queue. Wait!", nTasks, nMissions))
               self:__Wait(-1)
+            end
           end
         else
           self:T(self.lid..string.format("Passed Final WP but still have current Task (#%s) or Mission (#%s) left to do", tostring(self.taskcurrent), tostring(self.currentmission)))
@@ -4756,7 +4798,7 @@ function FLIGHTGROUP:_GetTerminal(_attribute, _category)
   -- Default terminal is "large".
   local _terminal=AIRBASE.TerminalType.OpenBig
 
-  if _attribute==FLIGHTGROUP.Attribute.AIR_FIGHTER then
+  if _attribute==FLIGHTGROUP.Attribute.AIR_FIGHTER or _attribute==FLIGHTGROUP.Attribute.AIR_UAV then
     -- Fighter ==> small.
     _terminal=AIRBASE.TerminalType.FighterAircraft
   elseif _attribute==FLIGHTGROUP.Attribute.AIR_BOMBER or _attribute==FLIGHTGROUP.Attribute.AIR_TRANSPORTPLANE or _attribute==FLIGHTGROUP.Attribute.AIR_TANKER or _attribute==FLIGHTGROUP.Attribute.AIR_AWACS then

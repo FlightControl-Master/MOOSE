@@ -25,9 +25,9 @@
 --
 -- ===
 --
--- ### Author: **[funkyfranky](https://forums.eagle.ru/member.php?u=115026)**
+-- ### Author: **funkyfranky**
 --
--- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536)
+-- ### Contributions: FlightControl
 --
 -- ====
 -- @module Functional.Artillery
@@ -291,14 +291,14 @@
 -- ### Illumination Shells
 --
 -- ARTY groups that possess shells can fire shells with illumination bombs. First, the group needs to be equipped with this weapon. This is done by the
--- function @{ARTY.SetIlluminationShells}(*n*, *power*), where *n* is the number of shells the group has available and *power* the illumination power in mega candela (mcd).
+-- function @{#ARTY.SetIlluminationShells}(*n*, *power*), where *n* is the number of shells the group has available and *power* the illumination power in mega candela (mcd).
 --
 -- In order to execute an engagement with illumination shells one has to use the weapon type *ARTY.WeaponType.IlluminationShells* in the
 -- @{#ARTY.AssignTargetCoord}() function.
 --
 -- In the simulation, the explosive shell that is fired is destroyed once it gets close to the target point but before it can actually impact.
 -- At this position an illumination bomb is triggered at a random altitude between 500 and 1000 meters. This interval can be set by the function
--- @{ARTY.SetIlluminationMinMaxAlt}(*minalt*, *maxalt*).
+-- @{#ARTY.SetIlluminationMinMaxAlt}(*minalt*, *maxalt*).
 --
 -- ### Smoke Shells
 --

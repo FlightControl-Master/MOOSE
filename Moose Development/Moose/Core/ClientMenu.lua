@@ -20,7 +20,7 @@
 -- 
 -- @module Core.ClientMenu
 -- @image Core_Menu.JPG
--- last change: July 2023
+-- last change: Oct 2023
 
 -- TODO
 ----------------------------------------------------------------------------------------------------------------
@@ -35,6 +35,7 @@
 -- @field #string lid Lid for log entries
 -- @field #string version Version string
 -- @field #string name Name
+-- @field #string groupname Group name
 -- @field #table path
 -- @field #table parentpath
 -- @field #CLIENTMENU Parent
@@ -57,7 +58,7 @@
 CLIENTMENU = {
   ClassName = "CLIENTMENUE",
   lid = "",
-  version = "0.1.0",
+  version = "0.1.1",
   name = nil,
   path = nil,
   group = nil,
@@ -68,6 +69,7 @@ CLIENTMENU = {
   Generic = false,
   debug = false,
   Controller = nil,
+  groupname = nil,
 }
 
 ---
@@ -91,6 +93,7 @@ function CLIENTMENU:NewEntry(Client,Text,Parent,Function,...)
     self.group = Client:GetGroup()
     self.client = Client
     self.GroupID = self.group:GetID()
+    self.groupname = self.group:GetName() or "Unknown Groupname"
   else
     self.Generic = true
   end
@@ -190,7 +193,13 @@ function CLIENTMENU:RemoveF10()
   self:T(self.lid.."RemoveF10")
   if self.GroupID then
     --self:I(self.lid.."Removing "..table.concat(self.path,";"))
-    missionCommands.removeItemForGroup(self.GroupID , self.path )
+    local function RemoveFunction()
+      return missionCommands.removeItemForGroup(self.GroupID , self.path )
+    end
+    local status, err = pcall(RemoveFunction)
+    if not status then
+      self:I(string.format("**** Error Removing Menu Entry %s for %s!",tostring(self.name),self.groupname))
+    end
   end
   return self
 end
@@ -295,6 +304,8 @@ end
 -- @field #table menutree
 -- @field #number entrycount
 -- @field #boolean debug
+-- @field #table PlayerMenu
+-- @field #number Coalition
 -- @extends Core.Base#BASE
 
 --- *As a child my family's menu consisted of two choices: take it, or leave it.*
@@ -336,7 +347,7 @@ end
 --            local mymenu_lv3b = menumgr:NewEntry("Level 3 aab",mymenu_lv2a)
 --            local mymenu_lv3c = menumgr:NewEntry("Level 3 aac",mymenu_lv2a)
 --            
---            menumgr:Propagate()
+--            menumgr:Propagate() -- propagate **once** to all clients in the SET_CLIENT
 --            
 -- ## Remove a single entry's subtree
 -- 
@@ -375,13 +386,17 @@ end
 --            
 -- ## Reset all and clear the reference tree
 -- 
---            menumgr:ResetMenuComplete() 
+--            menumgr:ResetMenuComplete()
+--            
+-- ## Set to auto-propagate for CLIENTs joining the SET_CLIENT **after** the script is loaded - handy if you have a single menu tree.
+-- 
+--            menumgr:InitAutoPropagation()
 --
 -- @field #CLIENTMENUMANAGER
 CLIENTMENUMANAGER = {
   ClassName = "CLIENTMENUMANAGER",
   lid = "",
-  version = "0.1.1",
+  version = "0.1.4",
   name = nil,
   clientset = nil,
   menutree = {},
@@ -390,24 +405,106 @@ CLIENTMENUMANAGER = {
   entrycount = 0,
   rootentries = {},
   debug = true,
+  PlayerMenu = {},
+  Coalition = nil,
 }
 
 --- Create a new ClientManager instance.
 -- @param #CLIENTMENUMANAGER self
 -- @param Core.Set#SET_CLIENT ClientSet The set of clients to manage.
 -- @param #string Alias The name of this manager.
+-- @param #number Coalition (Optional) Coalition of this Manager, defaults to coalition.side.BLUE
 -- @return #CLIENTMENUMANAGER self
-function CLIENTMENUMANAGER:New(ClientSet, Alias)
+function CLIENTMENUMANAGER:New(ClientSet, Alias, Coalition)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, BASE:New()) -- #CLIENTMENUMANAGER
   self.clientset = ClientSet
+  self.PlayerMenu = {}
   self.name = Alias or "Nightshift"
+  self.Coalition = Coalition or coalition.side.BLUE
     -- Log id.
   self.lid=string.format("CLIENTMENUMANAGER %s | %s | ", self.version, self.name)
   if self.debug then
-    self:T(self.lid.."Created")
+    self:I(self.lid.."Created")
   end
   return self
+end
+
+--- [Internal] Event handling
+-- @param #CLIENTMENUMANAGER self
+-- @param Core.Event#EVENTDATA EventData
+-- @return #CLIENTMENUMANAGER self
+function CLIENTMENUMANAGER:_EventHandler(EventData)
+  self:T(self.lid.."_EventHandler: "..EventData.id)
+  --self:I(self.lid.."_EventHandler: "..tostring(EventData.IniPlayerName))
+  if EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
+    self:T(self.lid.."Leave event for player: "..tostring(EventData.IniPlayerName)) 
+    local Client = _DATABASE:FindClient( EventData.IniUnitName )
+    if Client then
+      self:ResetMenu(Client)
+    end
+  elseif (EventData.id == EVENTS.PlayerEnterAircraft) and EventData.IniCoalition == self.Coalition then
+    if EventData.IniPlayerName and EventData.IniGroup then
+      if (not self.clientset:IsIncludeObject(_DATABASE:FindClient( EventData.IniUnitName ))) then
+        self:T(self.lid.."Client not in SET: "..EventData.IniPlayerName)
+        return self
+      end
+      --self:I(self.lid.."Join event for player: "..EventData.IniPlayerName)
+      local player = _DATABASE:FindClient( EventData.IniUnitName )
+      self:Propagate(player)
+    end
+  elseif EventData.id == EVENTS.PlayerEnterUnit then
+    -- special for CA slots
+    local grp = GROUP:FindByName(EventData.IniGroupName)
+    if grp:IsGround() then
+      self:T(string.format("Player %s entered GROUND unit %s!",EventData.IniPlayerName,EventData.IniUnitName))
+      local IsPlayer = EventData.IniDCSUnit:getPlayerName()
+      if IsPlayer then
+        
+        local client=_DATABASE.CLIENTS[EventData.IniDCSUnitName] --Wrapper.Client#CLIENT
+        
+        -- Add client in case it does not exist already.
+        if not client then
+          
+          -- Debug info.
+          self:I(string.format("Player '%s' joined ground unit '%s' of group '%s'", tostring(EventData.IniPlayerName), tostring(EventData.IniDCSUnitName), tostring(EventData.IniDCSGroupName)))
+        
+          client=_DATABASE:AddClient(EventData.IniDCSUnitName)
+            
+          -- Add player.
+          client:AddPlayer(EventData.IniPlayerName)
+          
+          -- Add player.
+          if not _DATABASE.PLAYERS[EventData.IniPlayerName] then
+            _DATABASE:AddPlayer( EventData.IniUnitName, EventData.IniPlayerName )
+          end
+          
+          -- Player settings.
+          local Settings = SETTINGS:Set( EventData.IniPlayerName )
+          Settings:SetPlayerMenu(EventData.IniUnit)
+        end
+        --local player = _DATABASE:FindClient( EventData.IniPlayerName )
+        self:Propagate(client)
+      end
+    end
+  end
+  
+  return self
+end
+
+--- Set this Client Manager to auto-propagate menus to newly joined players. Useful if you have **one** menu structure only.
+-- @param #CLIENTMENUMANAGER self
+-- @return #CLIENTMENUMANAGER self
+function CLIENTMENUMANAGER:InitAutoPropagation()
+  -- Player Events
+  self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventHandler)
+  self:HandleEvent(EVENTS.Ejection, self._EventHandler)
+  self:HandleEvent(EVENTS.Crash, self._EventHandler)
+  self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
+  self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
+  self:HandleEvent(EVENTS.PlayerEnterUnit, self._EventHandler)
+  self:SetEventPriority(5) 
+  return self 
 end
 
 --- Create a new entry in the generic structure.
@@ -471,13 +568,13 @@ function CLIENTMENUMANAGER:FindUUIDsByText(Text,Parent)
   for _uuid,_entry in pairs(self.flattree) do
     local Entry = _entry -- #CLIENTMENU
     if Parent then
-      if Entry and string.find(Entry.name,Text) and string.find(Entry.UUID,Parent.UUID) then
+      if Entry and string.find(Entry.name,Text,1,true) and string.find(Entry.UUID,Parent.UUID,1,true) then
         table.insert(matches,_uuid)
         table.insert(entries,Entry )
         n=n+1
       end
     else
-      if Entry and string.find(Entry.name,Text) then
+      if Entry and string.find(Entry.name,Text,1,true) then
         table.insert(matches,_uuid)
         table.insert(entries,Entry )
         n=n+1
@@ -513,7 +610,7 @@ function CLIENTMENUMANAGER:FindUUIDsByParent(Parent)
   for _uuid,_entry in pairs(self.flattree) do
     local Entry = _entry -- #CLIENTMENU
     if Parent then
-      if Entry and string.find(Entry.UUID,Parent.UUID) then
+      if Entry and string.find(Entry.UUID,Parent.UUID,1,true) then
         table.insert(matches,_uuid)
         table.insert(entries,Entry )
         n=n+1
@@ -562,7 +659,7 @@ end
 -- @return #CLIENTMENU Entry
 function CLIENTMENUMANAGER:Propagate(Client)
   self:T(self.lid.."Propagate")
-  self:T(Client)
+  --self:I(UTILS.PrintTableToLog(Client,1))
   local Set = self.clientset.Set
   if Client then
     Set = {Client}
@@ -571,7 +668,7 @@ function CLIENTMENUMANAGER:Propagate(Client)
   for _,_client in pairs(Set) do
     local client = _client -- Wrapper.Client#CLIENT
     if client and client:IsAlive() then
-      local playername = client:GetPlayerName()
+      local playername = client:GetPlayerName() or "none"
         if not self.playertree[playername] then
           self.playertree[playername] = {}
         end
@@ -714,7 +811,7 @@ function CLIENTMENUMANAGER:DeleteGenericEntry(Entry)
       --self:I("Level = "..i)
       for _id,_uuid in pairs(tbl[i]) do
         self:T(_uuid)
-        if string.find(_uuid,uuid) or _uuid == uuid then
+        if string.find(_uuid,uuid,1,true) or _uuid == uuid then
           --self:I("Match for ".._uuid)
           self.menutree[i][_id] = nil
           self.flattree[_uuid] = nil
@@ -743,7 +840,7 @@ function CLIENTMENUMANAGER:RemoveGenericSubEntries(Entry)
       self:T("Level = "..i)
       for _id,_uuid in pairs(tbl[i]) do
         self:T(_uuid)
-        if string.find(_uuid,uuid) then
+        if string.find(_uuid,uuid,1,true) then
           self:T("Match for ".._uuid)
           self.menutree[i][_id] = nil
           self.flattree[_uuid] = nil
@@ -783,4 +880,3 @@ end
 -- End ClientMenu
 --
 ----------------------------------------------------------------------------------------------------------------
-

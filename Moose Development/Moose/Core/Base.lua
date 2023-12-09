@@ -34,7 +34,8 @@ local _TraceClassMethod = {}
 
 local _ClassID = 0
 
---- @type BASE
+---
+-- @type BASE
 -- @field ClassName The name of the class.
 -- @field ClassID The ID number of the class.
 -- @field ClassNameAndID The name of the class concatenated with the ID number of the class.
@@ -201,10 +202,10 @@ BASE = {
   Scheduler = nil,
 }
 
---- @field #BASE.__
+-- @field #BASE.__
 BASE.__ = {}
 
---- @field #BASE._
+-- @field #BASE._
 BASE._ = {
   Schedules = {}, --- Contains the Schedulers Active
 }
@@ -229,7 +230,7 @@ FORMATION = {
 -- @param #BASE self
 -- @return #BASE
 function BASE:New()
-  --local self = routines.utils.deepCopy( self ) -- Create a new self instance
+  --local self = UTILS.DeepCopy( self ) -- Create a new self instance
   local self = UTILS.DeepCopy(self)
 
   _ClassID = _ClassID + 1
@@ -252,7 +253,7 @@ end
 function BASE:Inherit( Child, Parent )
 
   -- Create child.
-  local Child = routines.utils.deepCopy( Child )
+  local Child = UTILS.DeepCopy( Child )
 
   if Child ~= nil then
 
@@ -1167,7 +1168,7 @@ function BASE:_F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
       if DebugInfoFrom then
         LineFrom = DebugInfoFrom.currentline
       end
-      env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+      env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function, UTILS.BasicSerialize( Arguments ) ) )
     end
   end
 end
@@ -1241,7 +1242,7 @@ function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
       if DebugInfoFrom then
         LineFrom = DebugInfoFrom.currentline
       end
-      env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s", LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
+      env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s", LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, UTILS.BasicSerialize( Arguments ) ) )
     end
   end
 end
@@ -1311,9 +1312,9 @@ function BASE:E( Arguments )
       LineFrom = DebugInfoFrom.currentline
     end
 
-    env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+    env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, UTILS.BasicSerialize( Arguments ) ) )
   else
-    env.info( string.format( "%1s:%30s%05d(%s)", "E", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
+    env.info( string.format( "%1s:%30s%05d(%s)", "E", self.ClassName, self.ClassID, UTILS.BasicSerialize( Arguments ) ) )
   end
 
 end
@@ -1338,9 +1339,9 @@ function BASE:I( Arguments )
       LineFrom = DebugInfoFrom.currentline
     end
 
-    env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "I", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+    env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "I", self.ClassName, self.ClassID, Function, UTILS.BasicSerialize( Arguments ) ) )
   else
-    env.info( string.format( "%1s:%30s%05d(%s)", "I", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
+    env.info( string.format( "%1s:%30s%05d(%s)", "I", self.ClassName, self.ClassID, UTILS.BasicSerialize( Arguments ) ) )
   end
 
 end

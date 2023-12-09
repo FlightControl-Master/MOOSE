@@ -9,7 +9,7 @@
 --    * Visibility
 --    * Cloud coverage, base and ceiling
 --    * Temperature
---    * Dew point (approximate as there is no relative humidity in DCS yet)    
+--    * Dew point (approximate as there is no relative humidity in DCS yet)
 --    * Pressure QNH/QFE
 --    * Weather phenomena: rain, thunderstorm, fog, dust
 --    * Active runway based on wind direction
@@ -46,6 +46,7 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
+-- ### Additions for SRS and FARP: **applevangelist**
 --
 -- @module Ops.ATIS
 -- @image OPS_ATIS.png
@@ -96,6 +97,8 @@
 -- @field #boolean TransmitOnlyWithPlayers For SRS - If true, only transmit if there are alive Players.
 -- @field #string SRSText Text of the complete SRS message (if done at least once, else nil)
 -- @field #boolean ATISforFARPs Will be set to true if the base given is a FARP/Helipad
+-- @field Core.TextAndSound#TEXTANDSOUND gettext Gettext for localization
+-- @field #string locale Current locale
 -- @extends Core.Fsm#FSM
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -128,6 +131,8 @@
 -- Broadcasting is started via the @{#ATIS.Start}() function. The start can be delayed by using @{#ATIS.__Start}(*delay*), where *delay* is the delay in seconds.
 --
 -- ## Subtitles
+--
+-- **Note** Subtitles are not displayed when using SRS. The DCS mechanic to show subtitles (top left screen), is via the function call that plays a sound file from a UNIT, hence this doesn't work here.
 --
 -- Currently, DCS allows for displaying subtitles of radio transmissions only from airborne units, *i.e.* airplanes and helicopters. Therefore, if you want to have subtitles, it is necessary to place an
 -- additional aircraft on the ATIS airport and set it to uncontrolled. This unit can then function as a radio relay to transmit messages with subtitles. These subtitles will only be displayed, if the
@@ -248,8 +253,7 @@
 -- # Sound Files
 --
 -- More than 180 individual sound files have been created using a text-to-speech program. All ATIS information is given with en-US accent.
---
--- Check out the pinned messages in the Moose discord #ops-atis channel.
+-- You can find the sound files [here](https://github.com/FlightControl-Master/MOOSE_SOUND/releases). Also check out the pinned messages in the Moose discord #ops-atis channel.
 --
 -- To include the files, open the mission (.miz) file with, *e.g.*, 7-zip. Then just drag-n-drop the file into the miz.
 --
@@ -310,12 +314,91 @@
 --     atis:SetSRS("D:\\DCS\\_SRS\\", "male", "en-US")
 --     atis:Start()
 --
--- This uses a male voice with US accent. It requires SRS to be installed in the `D:\DCS\_SRS\` directory. Not that backslashes need to be escaped or simply use slashes (as in linux).
+-- This uses a male voice with US accent. It requires SRS to be installed in the `D:\DCS\_SRS\` directory. Note that backslashes need to be escaped or simply use slashes (as in linux).
 -- 
+-- ### SRS can use multiple frequencies: 
+-- 
+--     atis=ATIS:New("Batumi", {305,103.85}, {radio.modulation.AM,radio.modulation.FM})
+--     atis:SetSRS("D:\\DCS\\_SRS\\", "male", "en-US")
+--     atis:Start()
+-- 
+-- ### SRS Localization
+-- 
+--  You can localize the SRS output, all you need is to provide a table of translations and set the `locale` of your instance. You need to provide the translations in your script **before you instantiate your ATIS**.
+--  The German localization (already provided in the code) e.g. looks like follows:
+--  
+--          ATIS.Messages.DE =
+--            {
+--              HOURS = "Uhr",
+--              TIME = "Zeit",
+--              NOCLOUDINFO = "Informationen über Wolken nicht verfuegbar",
+--              OVERCAST = "Geschlossene Wolkendecke",
+--              BROKEN = "Stark bewoelkt",
+--              SCATTERED = "Bewoelkt",
+--              FEWCLOUDS = "Leicht bewoelkt",
+--              NOCLOUDS = "Klar",
+--              AIRPORT = "Flughafen",
+--              INFORMATION ="Information",
+--              SUNRISEAT = "Sonnenaufgang um %s lokaler Zeit",
+--              SUNSETAT = "Sonnenuntergang um %s lokaler Zeit",
+--              WINDFROMMS = "Wind aus %s mit %s m/s",
+--              WINDFROMKNOTS = "Wind aus %s mit %s Knoten",
+--              GUSTING = "boeig",
+--              VISIKM = "Sichtweite %s km",
+--              VISISM = "Sichtweite %s Meilen",
+--              RAIN = "Regen",
+--              TSTORM = "Gewitter",
+--              SNOW = "Schnee",
+--              SSTROM = "Schneesturm",
+--              FOG = "Nebel",
+--              DUST = "Staub",
+--              PHENOMENA = "Wetter Phaenomene",
+--              CLOUDBASEM = "Wolkendecke von %s bis %s Meter",
+--              CLOUDBASEFT = "Wolkendecke von %s bis %s Fuß",
+--              TEMPERATURE = "Temperatur",
+--              DEWPOINT = "Taupunkt",
+--              ALTIMETER = "Hoehenmesser",
+--              ACTIVERUN = "Aktive Startbahn",
+--              ACTIVELANDING = "Aktive Landebahn",
+--              LEFT = "Links",
+--              RIGHT = "Rechts",
+--              RWYLENGTH = "Startbahn",
+--              METERS = "Meter",
+--              FEET = "Fuß",
+--              ELEVATION = "Hoehe",
+--              TOWERFREQ = "Kontrollturm Frequenz",
+--              ILSFREQ = "ILS Frequenz",
+--              OUTERNDB = "Aeussere NDB Frequenz",
+--              INNERNDB = "Innere NDB Frequenz",
+--              VORFREQ = "VOR Frequenz",
+--              VORFREQTTS = "V O R Frequenz",
+--              TACANCH = "TACAN Kanal %d Xaver",
+--              RSBNCH = "RSBN Kanal",
+--              PRMGCH = "PRMG Kanal",
+--              ADVISE = "Hinweis bei Erstkontakt, Sie haben Informationen",
+--              STATUTE = "englische Meilen",
+--              DEGREES = "Grad Celsius",
+--              FAHRENHEIT = "Grad Fahrenheit",
+--              INCHHG = "Inches H G",
+--              MMHG = "Millimeter H G",
+--              HECTO = "Hektopascal",
+--              METERSPER = "Meter pro Sekunde",
+--              TACAN = "Tackan",
+--              FARP = "Farp",
+--              DELIMITER = "Komma", -- decimal delimiter
+--            }
+-- 
+-- Then set up your ATIS and set the locale:
+--   
+--          atis=ATIS:New("Batumi", 305, radio.modulation.AM)
+--          atis:SetSRS("D:\\DCS\\_SRS\\", "female", "de_DE")
+--          atis:SetLocale("de") -- available locales from source are "en", "de" and "es"
+--          atis:Start()    
+--
 -- ## FARPS
--- 
+--
 -- ATIS is working with FARPS, but this requires the usage of SRS. The airbase name for the `New()-method` is the UNIT name of the FARP:
--- 
+--
 --      atis = ATIS:New("FARP Gold",119,radio.modulation.AM)
 --      atis:SetMetricUnits()
 --      atis:SetTransmitOnlyWithPlayers(true)
@@ -366,7 +449,8 @@ ATIS = {
   relHumidity    =   nil,
   ReportmBar     =   false,
   TransmitOnlyWithPlayers = false,
-  ATISforFARPs = false,
+  ATISforFARPs   =   false,
+  locale         =   "en",
 }
 
 --- NATO alphabet.
@@ -411,6 +495,7 @@ ATIS.Alphabet = {
 -- @field #number TheChannel -10° (West).
 -- @field #number Syria +5° (East).
 -- @field #number MarianaIslands +2° (East).
+-- @field #number SinaiMao +5° (East).
 ATIS.RunwayM2T = {
   Caucasus = 0,
   Nevada = 12,
@@ -420,7 +505,7 @@ ATIS.RunwayM2T = {
   Syria = 5,
   MarianaIslands = 2,
   Falklands = 12,
-  Sinai = 5,
+  SinaiMap = 5,
 }
 
 --- Whether ICAO phraseology is used for ATIS broadcasts.
@@ -433,7 +518,7 @@ ATIS.RunwayM2T = {
 -- @field #boolean Syria true.
 -- @field #boolean MarianaIslands true.
 -- @field #boolean Falklands true.
--- @field #boolean Sinai true.
+-- @field #boolean SinaiMap true.
 ATIS.ICAOPhraseology = {
   Caucasus = true,
   Nevada = false,
@@ -443,7 +528,7 @@ ATIS.ICAOPhraseology = {
   Syria = true,
   MarianaIslands = true,
   Falklands = true,
-  Sinai = true,
+  SinaiMap = true,
 }
 
 --- Nav point data.
@@ -609,19 +694,210 @@ ATIS.Sound = {
   Zulu = { filename = "Zulu.ogg", duration = 0.62 },
 }
 
+---
+-- @field Messages
+ATIS.Messages = {
+  EN =
+  {
+    HOURS = "hours",
+    TIME = "hours",
+    NOCLOUDINFO = "Cloud coverage information not available",
+    OVERCAST = "Overcast",
+    BROKEN = "Broken clouds",
+    SCATTERED = "Scattered clouds",
+    FEWCLOUDS = "Few clouds",
+    NOCLOUDS = "No clouds",
+    AIRPORT = "Airport",
+    INFORMATION ="Information",
+    SUNRISEAT = "Sunrise at %s local time",
+    SUNSETAT = "Sunset at %s local time",
+    WINDFROMMS = "Wind from %s at %s m/s",
+    WINDFROMKNOTS = "Wind from %s at %s knots",
+    GUSTING = "gusting",
+    VISIKM = "Visibility %s km",
+    VISISM = "Visibility %s SM",
+    RAIN = "rain",
+    TSTORM = "thunderstorm",
+    SNOW = "snow",
+    SSTROM = "snowstorm",
+    FOG = "fog",
+    DUST = "dust",
+    PHENOMENA = "Weather phenomena",
+    CLOUDBASEM = "Cloud base %s, ceiling %s meters",
+    CLOUDBASEFT = "Cloud base %s, ceiling %s feet",
+    TEMPERATURE = "Temperature",
+    DEWPOINT = "Dew point",
+    ALTIMETER = "Altimeter",
+    ACTIVERUN = "Active runway departure",
+    ACTIVELANDING = "Active runway arrival",
+    LEFT = "Left",
+    RIGHT = "Right",
+    RWYLENGTH = "Runway length",
+    METERS = "meters",
+    FEET = "feet",
+    ELEVATION = "Elevation",
+    TOWERFREQ = "Tower frequency",
+    ILSFREQ = "ILS frequency",
+    OUTERNDB = "Outer NDB frequency",
+    INNERNDB = "Inner NDB frequency",
+    VORFREQ = "VOR frequency",
+    VORFREQTTS = "V O R frequency",
+    TACANCH = "TACAN channel %dX Ray",
+    RSBNCH = "RSBN channel",
+    PRMGCH = "PRMG channel",
+    ADVISE = "Advise on initial contact, you have information",
+    STATUTE = "statute miles",
+    DEGREES = "degrees Celsius",
+    FAHRENHEIT = "degrees Fahrenheit",
+    INCHHG = "inches of Mercury",
+    MMHG = "millimeters of Mercury",
+    HECTO = "hectopascals",
+    METERSPER = "meters per second",
+    TACAN = "tackan",
+    FARP = "farp",
+    DELIMITER = "point", -- decimal delimiter
+  },
+  DE =
+  {
+    HOURS = "Uhr",
+    TIME = "Zeit",
+    NOCLOUDINFO = "Informationen über Wolken nicht verfuegbar",
+    OVERCAST = "Geschlossene Wolkendecke",
+    BROKEN = "Stark bewoelkt",
+    SCATTERED = "Bewoelkt",
+    FEWCLOUDS = "Leicht bewoelkt",
+    NOCLOUDS = "Klar",
+    AIRPORT = "Flughafen",
+    INFORMATION ="Information",
+    SUNRISEAT = "Sonnenaufgang um %s lokaler Zeit",
+    SUNSETAT = "Sonnenuntergang um %s lokaler Zeit",
+    WINDFROMMS = "Wind aus %s mit %s m/s",
+    WINDFROMKNOTS = "Wind aus %s mit %s Knoten",
+    GUSTING = "boeig",
+    VISIKM = "Sichtweite %s km",
+    VISISM = "Sichtweite %s Meilen",
+    RAIN = "Regen",
+    TSTORM = "Gewitter",
+    SNOW = "Schnee",
+    SSTROM = "Schneesturm",
+    FOG = "Nebel",
+    DUST = "Staub",
+    PHENOMENA = "Wetter Phaenomene",
+    CLOUDBASEM = "Wolkendecke von %s bis %s Meter",
+    CLOUDBASEFT = "Wolkendecke von %s bis %s Fuß",
+    TEMPERATURE = "Temperatur",
+    DEWPOINT = "Taupunkt",
+    ALTIMETER = "Hoehenmesser",
+    ACTIVERUN = "Aktive Startbahn",
+    ACTIVELANDING = "Aktive Landebahn",
+    LEFT = "Links",
+    RIGHT = "Rechts",
+    RWYLENGTH = "Startbahn",
+    METERS = "Meter",
+    FEET = "Fuß",
+    ELEVATION = "Hoehe",
+    TOWERFREQ = "Kontrollturm Frequenz",
+    ILSFREQ = "ILS Frequenz",
+    OUTERNDB = "Aeussere NDB Frequenz",
+    INNERNDB = "Innere NDB Frequenz",
+    VORFREQ = "VOR Frequenz",
+    VORFREQTTS = "V O R Frequenz",
+    TACANCH = "TACAN Kanal %d Xaver",
+    RSBNCH = "RSBN Kanal",
+    PRMGCH = "PRMG Kanal",
+    ADVISE = "Hinweis bei Erstkontakt, Sie haben Informationen",
+    STATUTE = "englische Meilen",
+    DEGREES = "Grad Celsius",
+    FAHRENHEIT = "Grad Fahrenheit",
+    INCHHG = "Inches H G",
+    MMHG = "Millimeter H G",
+    HECTO = "Hektopascal",
+    METERSPER = "Meter pro Sekunde",
+    TACAN = "Tackan",
+    FARP = "Farp",
+    DELIMITER = "Komma", -- decimal delimiter
+  },
+  -- Set ES Locale translations for ATIS thanks to @Ritu
+  ES =
+  {
+    HOURS = "horas",
+    TIME = "horas",
+    NOCLOUDINFO = "Información sobre capa de nubes no disponible",
+    OVERCAST = "Nublado",
+    BROKEN = "Nubes rotas",
+    SCATTERED = "Nubes dispersas",
+    FEWCLOUDS = "Ligeramente nublado",
+    NOCLOUDS = "Despejado",
+    AIRPORT = "Aeropuerto",
+    INFORMATION ="Informacion",
+    SUNRISEAT = "Amanecer a las %s hora local",
+    SUNSETAT = "Puesta de sol a las %s hora local",
+    WINDFROMMS = "Viento procedente de %s con %s m/s",
+    WINDFROMKNOTS = "Viento de %s con %s nudos",
+    GUSTING = "ráfagas",
+    VISIKM = "Visibilidad %s km",
+    VISISM = "Visibilidad %s millas",
+    RAIN = "Lluvia",
+    TSTORM = "Tormenta",
+    SNOW = "Nieve",
+    SSTROM = "Tormenta de nieve",
+    FOG = "Niebla",
+    DUST = "Polvo",
+    PHENOMENA = "Fenómenos meteorológicos",
+    CLOUDBASEM = "Capa de nubes de %s a %s metros",
+    CLOUDBASEFT = "Capa de nubes de %s a %s pies",
+    TEMPERATURE = "Temperatura",
+    DEWPOINT = "Punto de rocio",
+    ALTIMETER = "Altímetro",
+    ACTIVERUN = "Pista activa",
+    ACTIVELANDING = "Pista de aterrizaje activa",
+    LEFT = "Izquierda",
+    RIGHT = "Derecha",
+    RWYLENGTH = "Longitud de pista",
+    METERS = "Metro",
+    FEET = "Pie",
+    ELEVATION = "Elevación",
+    TOWERFREQ = "Frecuencias de la torre de control",
+    ILSFREQ = "Fecuencia ILS",
+    OUTERNDB = "Frecuencia NDB externa",
+    INNERNDB = "Frecuencia NDB interior",
+    VORFREQ = "Frecuencia VOR",
+    VORFREQTTS = "Frecuencia V O R",
+    TACANCH = "Canal TACAN %d Xaver",
+    RSBNCH = "Canal RSBN",
+    PRMGCH = "Canal PRMG",
+    ADVISE = "Avise en el contacto inicial a torre de que tiene la informacion",
+    STATUTE = "Millas inglesas",
+    DEGREES = "Grados Celsius",
+    FAHRENHEIT = "Grados Fahrenheit",
+    INCHHG = "Pulgadas de mercurio",
+    MMHG = "Milímeteros de Mercurio",
+    HECTO = "Hectopascales",
+    METERSPER = "Metros por segundo",
+    TACAN = "Tacan",
+    FARP = "Farp",
+    DELIMITER = "Punto", -- decimal delimiter
+  },
+}
+
+---
+-- @field locale
+ATIS.locale = "en"
+
 --- ATIS table containing all defined ATISes.
 -- @field #table _ATIS
 _ATIS = {}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version = "0.9.15"
+ATIS.version = "0.10.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Correct fog for elevation.
+-- DONE: Option to add multiple frequencies for SRS
 -- DONE: Zulu time --> Zulu in output.
 -- DONE: Fix for AB not having a runway - Helopost like Naqoura
 -- DONE: Add new Normandy airfields.
@@ -630,13 +906,14 @@ ATIS.version = "0.9.15"
 -- DONE: Visibility reported twice over SRS
 -- DONE: Add text report for output.
 -- DONE: Add stop FMS functions.
--- NOGO: Use local time. Not realisitc!
+-- NOGO: Use local time. Not realistic!
 -- DONE: Dew point. Approx. done.
 -- DONE: Metric units.
 -- DONE: Set UTC correction.
 -- DONE: Set magnetic variation.
 -- DONE: New DCS 2.7 weather presets.
--- DONE: whatever
+-- DONE: Added TextAndSound localization
+-- DONE: Added SRS spelling out both take off and landing runway
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -645,8 +922,8 @@ ATIS.version = "0.9.15"
 --- Create a new ATIS class object for a specific airbase.
 -- @param #ATIS self
 -- @param #string AirbaseName Name of the airbase.
--- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz.
--- @param #number Modulation Radio modulation: 0=AM, 1=FM. Default 0=AM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators.
+-- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. When using **SRS** this can be passed as a table of multiple frequencies.
+-- @param #number Modulation Radio modulation: 0=AM, 1=FM. Default 0=AM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. When using **SRS** this can be passed as a table of multiple modulations.
 -- @return #ATIS self
 function ATIS:New(AirbaseName, Frequency, Modulation)
 
@@ -685,6 +962,7 @@ function ATIS:New(AirbaseName, Frequency, Modulation)
   self:SetRelativeHumidity()
   self:SetQueueUpdateTime()
   self:SetReportmBar(false)
+  self:_InitLocalization()
 
   -- Start State.
   self:SetStartState( "Stopped" )
@@ -773,6 +1051,33 @@ end
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- [Internal] Init localization
+-- @param #ATIS self
+-- @return #ATIS self
+function ATIS:_InitLocalization()
+  self:T(self.lid.."_InitLocalization")
+  self.gettext = TEXTANDSOUND:New("AWACS","en") -- Core.TextAndSound#TEXTANDSOUND
+  self.locale = "en"
+  for locale,table in pairs(self.Messages) do
+    local Locale = string.lower(tostring(locale))
+    self:T("**** Adding locale: "..Locale)
+    for ID,Text in pairs(table) do
+      self:T(string.format('Adding ID %s',tostring(ID)))
+      self.gettext:AddEntry(Locale,tostring(ID),Text)
+    end
+  end
+  return self
+end
+
+--- Set locale for localized text-to-sound output via SRS, defaults to "en".
+-- @param #ATIS self
+-- @param #string locale Locale for localized text-to-sound output via SRS, defaults to "en".
+-- @return #ATIS self
+function ATIS:SetLocale(locale)
+  self.locale = string.lower(locale)
+  return self
+end
+
 --- Set sound files folder within miz file.
 -- @param #ATIS self
 -- @param #string path Path for sound files. Default "ATIS Soundfiles/". Mind the slash "/" at the end!
@@ -800,7 +1105,7 @@ end
 -- @return #ATIS self
 function ATIS:SetTowerFrequencies( freqs )
   if type( freqs ) == "table" then
-    -- nothing to do
+  -- nothing to do
   else
     freqs = { freqs }
   end
@@ -828,9 +1133,9 @@ end
 function ATIS:SetActiveRunway( runway )
   self.activerunway = tostring( runway )
   local prefer = nil
-  if string.find(string.lower(runway),"l") then 
+  if string.find(string.lower(runway),"l") then
     prefer = true
-  elseif string.find(string.lower(runway),"r") then 
+  elseif string.find(string.lower(runway),"r") then
     prefer = false
   end
   self.airbase:SetActiveRunway(runway,prefer)
@@ -919,7 +1224,7 @@ function ATIS:SetRunwayHeadingsMagnetic( headings )
 
   -- First make sure, we have a table.
   if type( headings ) == "table" then
-    -- nothing to do
+  -- nothing to do
   else
     headings = { headings }
   end
@@ -1003,9 +1308,9 @@ function ATIS:SetTemperatureFahrenheit()
 end
 
 --- Set relative humidity. This is used to approximately calculate the dew point.
--- Note that the dew point is only an artificial information as DCS does not have an atmospheric model that includes humidity (yet). 
+-- Note that the dew point is only an artificial information as DCS does not have an atmospheric model that includes humidity (yet).
 -- @param #ATIS self
--- @param #number Humidity Relative Humidity, i.e. a number between 0 and 100 %. Default is 50 %. 
+-- @param #number Humidity Relative Humidity, i.e. a number between 0 and 100 %. Default is 50 %.
 -- @return #ATIS self
 function ATIS:SetRelativeHumidity( Humidity )
   self.relHumidity = Humidity or 50
@@ -1076,7 +1381,7 @@ end
 --   * 182° on the Persian Gulf map
 --
 -- Likewise, to convert *true* into *magnetic* heading, one has to substract easterly and add westerly variation.
--- 
+--
 -- Or you make your life simple and just include the sign so you don't have to bother about East/West.
 --
 -- @param #ATIS self
@@ -1231,7 +1536,7 @@ end
 -- @param #string GoogleKey Path to Google JSON-Key.
 -- @return #ATIS self
 function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey)
-  if PathToSRS then
+  if PathToSRS or MSRS.path then
     self.useSRS=true
     self.msrs=MSRS:New(PathToSRS, self.frequency, self.modulation)
     self.msrs:SetGender(Gender)
@@ -1241,6 +1546,7 @@ function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey)
     self.msrs:SetCoalition(self:GetCoalition())
     self.msrs:SetLabel("ATIS")
     self.msrs:SetGoogle(GoogleKey)
+    self.msrs:SetCoordinate(self.airbase:GetCoordinate())
     self.msrsQ = MSRSQUEUE:New("ATIS")
     self.msrsQ:SetTransmitOnlyWithPlayers(self.TransmitOnlyWithPlayers)
     if self.dTQueueCheck<=10 then
@@ -1262,7 +1568,7 @@ end
 
 --- Get the coalition of the associated airbase.
 -- @param #ATIS self
--- @return #number Coalition of the associcated airbase.
+-- @return #number Coalition of the associated airbase.
 function ATIS:GetCoalition()
   local coal = self.airbase and self.airbase:GetCoalition() or nil
   return coal
@@ -1278,24 +1584,33 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ATIS:onafterStart( From, Event, To )
-  self:I("Airbase category is "..self.airbase:GetAirbaseCategory())
-  
+  self:T({From, Event, To})
+  self:T("Airbase category is "..self.airbase:GetAirbaseCategory())
+
   -- Check that this is an airdrome.
   if self.airbase:GetAirbaseCategory() == Airbase.Category.SHIP then
     self:E( self.lid .. string.format( "ERROR: Cannot start ATIS for airbase %s! Only AIRDROMES are supported but NOT SHIPS.", self.airbasename ) )
     return
   end
-  
+
   -- Check that if is a Helipad.
   if self.airbase:GetAirbaseCategory() == Airbase.Category.HELIPAD then
     self:E( self.lid .. string.format( "EXPERIMENTAL: Starting ATIS for Helipad %s! SRS must be ON", self.airbasename ) )
     self.ATISforFARPs = true
     self.useSRS = true
   end
-  
-  -- Info.
-  self:I( self.lid .. string.format( "Starting ATIS v%s for airbase %s on %.3f MHz Modulation=%d", ATIS.version, self.airbasename, self.frequency, self.modulation ) )
 
+  -- Info.
+  if type(self.frequency) == "table" then
+    local frequency = table.concat(self.frequency,"/")
+    local modulation = self.modulation
+    if type(self.modulation) == "table" then
+      modulation = table.concat(self.modulation,"/")
+    end
+    self:I( self.lid .. string.format( "Starting ATIS v%s for airbase %s on %s MHz Modulation=%s", ATIS.version, self.airbasename, frequency, modulation ) )
+  else
+    self:I( self.lid .. string.format( "Starting ATIS v%s for airbase %s on %.3f MHz Modulation=%d", ATIS.version, self.airbasename, self.frequency, self.modulation ) )
+  end
   -- Start radio queue.
   if not self.useSRS then
     self.radioqueue = RADIOQUEUE:New( self.frequency, self.modulation, string.format( "ATIS %s", self.airbasename ) )
@@ -1340,7 +1655,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ATIS:onafterStatus( From, Event, To )
-
+  self:T({From, Event, To})
   -- Get FSM state.
   local fsmstate = self:GetState()
 
@@ -1353,16 +1668,26 @@ function ATIS:onafterStatus( From, Event, To )
   end
 
   -- Info text.
-  local text = string.format( "State %s: Freq=%.3f MHz %s", fsmstate, self.frequency, UTILS.GetModulationName( self.modulation ) )
+  local text = ""
+  if type(self.frequency) == "table" then
+    local frequency = table.concat(self.frequency,"/")
+    local modulation = self.modulation
+    if type(self.modulation) == "table" then
+      modulation = table.concat(self.modulation,"/")
+    end
+    text = string.format( "State %s: Freq=%s MHz %s", fsmstate, frequency, modulation )
+  else
+    text = string.format( "State %s: Freq=%.3f MHz %s", fsmstate, self.frequency, UTILS.GetModulationName( self.modulation ) )
+  end
   if self.useSRS then
     text = text .. string.format( ", SRS path=%s (%s), gender=%s, culture=%s, voice=%s", tostring( self.msrs.path ), tostring( self.msrs.port ), tostring( self.msrs.gender ), tostring( self.msrs.culture ), tostring( self.msrs.voice ) )
   else
     text = text .. string.format( ", Relay unit=%s (alive=%s)", tostring( self.relayunitname ), relayunitstatus )
   end
   self:T( self.lid .. text )
-  
+
   if not self:Is("Stopped") then
-    self:__Status( -60 )
+    self:__Status( 60 )
   end
 end
 
@@ -1376,25 +1701,26 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ATIS:onafterCheckQueue( From, Event, To )
+  self:T({From, Event, To})
+  if not self:Is("Stopped") then
+    if self.useSRS then
 
-  if self.useSRS then
-
-    self:Broadcast()
-
-  else
-
-    if #self.radioqueue.queue == 0 then
-      self:T( self.lid .. string.format( "Radio queue empty. Repeating message." ) )
       self:Broadcast()
+
     else
-      self:T2( self.lid .. string.format( "Radio queue %d transmissions queued.", #self.radioqueue.queue ) )
+
+      if #self.radioqueue.queue == 0 then
+        self:T( self.lid .. string.format( "Radio queue empty. Repeating message." ) )
+        self:Broadcast()
+      else
+        self:T2( self.lid .. string.format( "Radio queue %d transmissions queued.", #self.radioqueue.queue ) )
+      end
+
     end
 
-  end
-  
-  if not self:Is("Stopped") then
-    -- Check back in 5 seconds.  
-    self:__CheckQueue( -math.abs( self.dTQueueCheck ) )
+
+    -- Check back in 5 seconds.
+    self:__CheckQueue( math.abs( self.dTQueueCheck ) )
   end
 end
 
@@ -1404,7 +1730,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ATIS:onafterBroadcast( From, Event, To )
-
+  self:T({From, Event, To})
   -- Get current coordinate.
   local coord = self.airbase:GetCoordinate()
 
@@ -1504,11 +1830,11 @@ function ATIS:onafterBroadcast( From, Event, To )
   --------------
   --- Runway ---
   --------------
-  
-  
+
+
   local runwayLanding, rwyLandingLeft
   local runwayTakeoff, rwyTakeoffLeft
-  
+
   if self.airbase:GetAirbaseCategory() == Airbase.Category.HELIPAD then
     runwayLanding, rwyLandingLeft="PAD 01",false
     runwayTakeoff, rwyTakeoffLeft="PAD 02",false
@@ -1516,7 +1842,7 @@ function ATIS:onafterBroadcast( From, Event, To )
     runwayLanding, rwyLandingLeft=self:GetActiveRunway()
     runwayTakeoff, rwyTakeoffLeft=self:GetActiveRunway(true)
   end
-  
+
   ------------
   --- Time ---
   ------------
@@ -1537,8 +1863,9 @@ function ATIS:onafterBroadcast( From, Event, To )
   local clock = UTILS.SecondsToClock( time )
   local zulu = UTILS.Split( clock, ":" )
   local ZULU = string.format( "%s%s", zulu[1], zulu[2] )
+  local hours = self.gettext:GetEntry("TIME",self.locale)
   if self.useSRS then
-    ZULU = string.format( "%s hours", zulu[1] )
+    ZULU = string.format( "%s %s", hours, zulu[1] )
   end
 
   -- NATO time stamp. 0=Alfa, 1=Bravo, 2=Charlie, etc.
@@ -1554,19 +1881,20 @@ function ATIS:onafterBroadcast( From, Event, To )
   --------------------------
   --- Sunrise and Sunset ---
   --------------------------
-
+  
+  local hours = self.gettext:GetEntry("HOURS",self.locale)
   local sunrise = coord:GetSunrise()
   sunrise = UTILS.Split( sunrise, ":" )
   local SUNRISE = string.format( "%s%s", sunrise[1], sunrise[2] )
   if self.useSRS then
-    SUNRISE = string.format( "%s %s hours", sunrise[1], sunrise[2] )
+    SUNRISE = string.format( "%s %s %s", sunrise[1], sunrise[2], hours )
   end
 
   local sunset = coord:GetSunset()
   sunset = UTILS.Split( sunset, ":" )
   local SUNSET = string.format( "%s%s", sunset[1], sunset[2] )
   if self.useSRS then
-    SUNSET = string.format( "%s %s hours", sunset[1], sunset[2] )
+    SUNSET = string.format( "%s %s %s", sunset[1], sunset[2], hours )
   end
 
   ---------------------------------
@@ -1651,7 +1979,7 @@ function ATIS:onafterBroadcast( From, Event, To )
   local cloudceil = clouds.base + clouds.thickness
   local clouddens = clouds.density
 
-  -- Cloud preset (DCS 2.7)  
+  -- Cloud preset (DCS 2.7)
   local cloudspreset = clouds.preset or "Nothing"
 
   -- Precepitation: 0=None, 1=Rain, 2=Thunderstorm, 3=Snow, 4=Snowstorm.
@@ -1792,32 +2120,37 @@ function ATIS:onafterBroadcast( From, Event, To )
   -- No cloud info for dynamic weather.
   local CloudCover = {} -- #ATIS.Soundfile
   CloudCover = ATIS.Sound.CloudsNotAvailable
-  local CLOUDSsub = "Cloud coverage information not available"
-
+  --local CLOUDSsub = "Cloud coverage information not available"
+  local CLOUDSsub = self.gettext:GetEntry("NOCLOUDINFO",self.locale)
   -- Only valid for static weather.
   if static then
     if clouddens >= 9 then
       -- Overcast 9,10
       CloudCover = ATIS.Sound.CloudsOvercast
-      CLOUDSsub = "Overcast"
+      --CLOUDSsub = "Overcast"
+      CLOUDSsub = self.gettext:GetEntry("OVERCAST",self.locale)
     elseif clouddens >= 7 then
       -- Broken 7,8
       CloudCover = ATIS.Sound.CloudsBroken
-      CLOUDSsub = "Broken clouds"
+      --CLOUDSsub = "Broken clouds"
+      CLOUDSsub = self.gettext:GetEntry("BROKEN",self.locale)
     elseif clouddens >= 4 then
       -- Scattered 4,5,6
       CloudCover = ATIS.Sound.CloudsScattered
-      CLOUDSsub = "Scattered clouds"
+      --CLOUDSsub = "Scattered clouds"
+      CLOUDSsub = self.gettext:GetEntry("SCATTERED",self.locale)
     elseif clouddens >= 1 then
       -- Few 1,2,3
       CloudCover = ATIS.Sound.CloudsFew
-      CLOUDSsub = "Few clouds"
+      --CLOUDSsub = "Few clouds"
+      CLOUDSsub = self.gettext:GetEntry("FEWCLOUDS",self.locale)
     else
       -- No clouds
       CLOUDBASE = nil
       CLOUDCEIL = nil
       CloudCover = ATIS.Sound.CloudsNo
-      CLOUDSsub = "No clouds"
+      --CLOUDSsub = "No clouds"
+      CLOUDSsub = self.gettext:GetEntry("NOCLOUDS",self.locale)
     end
   end
 
@@ -1830,19 +2163,23 @@ function ATIS:onafterBroadcast( From, Event, To )
 
   -- Airbase name
   subtitle = string.format( "%s", self.airbasename )
-  if (not self.ATISforFARPs) and self.airbasename:find( "AFB" ) == nil and self.airbasename:find( "Airport" ) == nil 
-      and self.airbasename:find( "Airstrip" ) == nil and self.airbasename:find( "airfield" ) == nil and self.airbasename:find( "AB" ) == nil
-      and self.airbasename:find( "Field" ) == nil
-      then
-    subtitle = subtitle .. " Airport"
+  if (not self.ATISforFARPs) and self.airbasename:find( "AFB" ) == nil and self.airbasename:find( "Airport" ) == nil
+    and self.airbasename:find( "Airstrip" ) == nil and self.airbasename:find( "airfield" ) == nil and self.airbasename:find( "AB" ) == nil
+    and self.airbasename:find( "Field" ) == nil
+  then
+    --subtitle = subtitle .. " Airport"
+    subtitle = subtitle .. " "..self.gettext:GetEntry("AIRPORT",self.locale)
   end
   if not self.useSRS then
+    --self:I(string.format( "%s/%s.ogg", self.theatre, self.airbasename ))
     self.radioqueue:NewTransmission( string.format( "%s/%s.ogg", self.theatre, self.airbasename ), 3.0, self.soundpath, nil, nil, subtitle, self.subduration )
   end
   local alltext = subtitle
 
   -- Information tag
-  subtitle = string.format( "Information %s", NATO )
+  local information = self.gettext:GetEntry("INFORMATION",self.locale)
+  --subtitle = string.format( "Information %s", NATO )
+  subtitle = string.format( "%s %s", information, NATO )
   local _INFORMATION = subtitle
   if not self.useSRS then
     self:Transmission( ATIS.Sound.Information, 0.5, subtitle )
@@ -1861,7 +2198,9 @@ function ATIS:onafterBroadcast( From, Event, To )
   if not self.zulutimeonly then
 
     -- Sunrise Time
-    subtitle = string.format( "Sunrise at %s local time", SUNRISE )
+    local sunrise = self.gettext:GetEntry("SUNRISEAT",self.locale)
+    --subtitle = string.format( "Sunrise at %s local time", SUNRISE )
+    subtitle = string.format( sunrise, SUNRISE )
     if not self.useSRS then
       self:Transmission( ATIS.Sound.SunriseAt, 0.5, subtitle )
       self.radioqueue:Number2Transmission( SUNRISE, nil, 0.2 )
@@ -1870,7 +2209,9 @@ function ATIS:onafterBroadcast( From, Event, To )
     alltext = alltext .. ";\n" .. subtitle
 
     -- Sunset Time
-    subtitle = string.format( "Sunset at %s local time", SUNSET )
+    local sunset = self.gettext:GetEntry("SUNSETAT",self.locale)
+    --subtitle = string.format( "Sunset at %s local time", SUNSET )
+    subtitle = string.format( sunset, SUNSET )
     if not self.useSRS then
       self:Transmission( ATIS.Sound.SunsetAt, 0.5, subtitle )
       self.radioqueue:Number2Transmission( SUNSET, nil, 0.5 )
@@ -1880,17 +2221,22 @@ function ATIS:onafterBroadcast( From, Event, To )
   end
 
   -- Wind
-   -- Adding a space after each digit of WINDFROM to convert this to aviation-speak for TTS via SRS
+  -- Adding a space after each digit of WINDFROM to convert this to aviation-speak for TTS via SRS
   if self.useSRS then
     WINDFROM = string.gsub(WINDFROM,".", "%1 ")
-  end 
+  end
   if self.metric then
-    subtitle = string.format( "Wind from %s at %s m/s", WINDFROM, WINDSPEED )
+    local windfrom = self.gettext:GetEntry("WINDFROMMS",self.locale)
+    --subtitle = string.format( "Wind from %s at %s m/s", WINDFROM, WINDSPEED )
+    subtitle = string.format( windfrom, WINDFROM, WINDSPEED )
   else
-    subtitle = string.format( "Wind from %s at %s knots", WINDFROM, WINDSPEED )
+    local windfrom = self.gettext:GetEntry("WINDFROMKNOTS",self.locale)
+    --subtitle = string.format( "Wind from %s at %s m/s", WINDFROM, WINDSPEED )
+    subtitle = string.format( windfrom, WINDFROM, WINDSPEED )
   end
   if turbulence > 0 then
-    subtitle = subtitle .. ", gusting"
+    --subtitle = subtitle .. ", gusting"
+    subtitle = subtitle .. ", "..self.gettext:GetEntry("GUSTING",self.locale)
   end
   local _WIND = subtitle
   if not self.useSRS then
@@ -1908,12 +2254,16 @@ function ATIS:onafterBroadcast( From, Event, To )
     end
   end
   alltext = alltext .. ";\n" .. subtitle
-  
+
   -- Visibility
   if self.metric then
-    subtitle = string.format( "Visibility %s km", VISIBILITY )
+    local visi = self.gettext:GetEntry("VISIKM",self.locale)
+    --subtitle = string.format( "Visibility %s km", VISIBILITY )
+    subtitle = string.format( visi, VISIBILITY )
   else
-    subtitle = string.format( "Visibility %s SM", VISIBILITY )
+    local visi = self.gettext:GetEntry("VISISM",self.locale)
+    --subtitle = string.format( "Visibility %s SM", VISIBILITY )
+    subtitle = string.format( visi, VISIBILITY )
   end
   if not self.useSRS then
     self:Transmission( ATIS.Sound.Visibilty, 1.0, subtitle )
@@ -1925,44 +2275,52 @@ function ATIS:onafterBroadcast( From, Event, To )
     end
   end
   alltext = alltext .. ";\n" .. subtitle
-  
+
   subtitle = ""
   -- Weather phenomena
   local wp = false
   local wpsub = ""
   if precepitation == 1 then
     wp = true
-    wpsub = wpsub .. " rain"
+    --wpsub = wpsub .. " rain"
+    wpsub = wpsub .. " "..self.gettext:GetEntry("RAIN",self.locale)
   elseif precepitation == 2 then
     if wp then
       wpsub = wpsub .. ","
     end
-    wpsub = wpsub .. " thunderstorm"
+    --wpsub = wpsub .. " thunderstorm"
+    wpsub = wpsub .. " "..self.gettext:GetEntry("TSTORM",self.locale)
     wp = true
   elseif precepitation == 3 then
-    wpsub = wpsub .. " snow"
+    --wpsub = wpsub .. " snow"
+    wpsub = wpsub .. " "..self.gettext:GetEntry("SNOW",self.locale)
     wp = true
   elseif precepitation == 4 then
-    wpsub = wpsub .. " snowstorm"
+    --wpsub = wpsub .. " snowstorm"
+    wpsub = wpsub .. " "..self.gettext:GetEntry("SSTROM",self.locale)
     wp = true
   end
   if fog then
     if wp then
       wpsub = wpsub .. ","
     end
-    wpsub = wpsub .. " fog"
+    --wpsub = wpsub .. " fog"
+    wpsub = wpsub .. " "..self.gettext:GetEntry("FOG",self.locale)
     wp = true
   end
   if dust then
     if wp then
       wpsub = wpsub .. ","
     end
-    wpsub = wpsub .. " dust"
+    --wpsub = wpsub .. " dust"
+    wpsub = wpsub .. " "..self.gettext:GetEntry("DUST",self.locale)
     wp = true
   end
   -- Actual output
   if wp then
-    subtitle = string.format( "Weather phenomena:%s", wpsub )
+    local phenos = self.gettext:GetEntry("PHENOMENA",self.locale)
+    --subtitle = string.format( "Weather phenomena: %s", wpsub )
+    subtitle = string.format( "%s: %s", phenos, wpsub )
     if not self.useSRS then
       self:Transmission( ATIS.Sound.WeatherPhenomena, 1.0, subtitle )
       if precepitation == 1 then
@@ -1994,10 +2352,14 @@ function ATIS:onafterBroadcast( From, Event, To )
     local cceil = tostring( tonumber( CLOUDCEIL1000 ) * 1000 + tonumber( CLOUDCEIL0100 ) * 100 )
     if self.metric then
       -- subtitle=string.format("Cloud base %s, ceiling %s meters", CLOUDBASE, CLOUDCEIL)
-      subtitle = string.format( "Cloud base %s, ceiling %s meters", cbase, cceil )
+      local cloudbase = self.gettext:GetEntry("CLOUDBASEM",self.locale)
+      --subtitle = string.format( "Cloud base %s, ceiling %s meters", cbase, cceil )
+      subtitle = string.format( cloudbase, cbase, cceil )
     else
       -- subtitle=string.format("Cloud base %s, ceiling %s feet", CLOUDBASE, CLOUDCEIL)
-      subtitle = string.format( "Cloud base %s, ceiling %s feet", cbase, cceil )
+      local cloudbase = self.gettext:GetEntry("CLOUDBASEFT",self.locale)
+      --subtitle = string.format( "Cloud base %s, ceiling %s feet", cbase, cceil )
+      subtitle = string.format( cloudbase, cbase, cceil )
     end
     if not self.useSRS then
       self:Transmission( ATIS.Sound.CloudBase, 1.0, subtitle )
@@ -2030,17 +2392,22 @@ function ATIS:onafterBroadcast( From, Event, To )
   alltext = alltext .. ";\n" .. subtitle
   subtitle = ""
   -- Temperature
+  local temptext = self.gettext:GetEntry("TEMPERATURE",self.locale)
   if self.TDegF then
     if temperature < 0 then
-      subtitle = string.format( "Temperature -%s °F", TEMPERATURE )
+      --subtitle = string.format( "Temperature -%s °F", TEMPERATURE )
+      subtitle = string.format( "%s -%s °F", temptext, TEMPERATURE )
     else
-      subtitle = string.format( "Temperature %s °F", TEMPERATURE )
+      --subtitle = string.format( "Temperature %s °F", TEMPERATURE )
+      subtitle = string.format( "%s %s °F", temptext, TEMPERATURE )
     end
   else
     if temperature < 0 then
-      subtitle = string.format( "Temperature -%s °C", TEMPERATURE )
+      --subtitle = string.format( "Temperature -%s °C", TEMPERATURE )
+      subtitle = string.format( "%s -%s °C", temptext, TEMPERATURE )
     else
-      subtitle = string.format( "Temperature %s °C", TEMPERATURE )
+      --subtitle = string.format( "Temperature %s °C", TEMPERATURE )
+      subtitle = string.format( "%s %s °C", temptext, TEMPERATURE )
     end
   end
   local _TEMPERATURE = subtitle
@@ -2057,19 +2424,24 @@ function ATIS:onafterBroadcast( From, Event, To )
     end
   end
   alltext = alltext .. ";\n" .. subtitle
-    
+
   -- Dew point
+  local dewtext = self.gettext:GetEntry("DEWPOINT",self.locale)
   if self.TDegF then
     if dewpoint < 0 then
-      subtitle = string.format( "Dew point -%s °F", DEWPOINT )
+      --subtitle = string.format( "Dew point -%s °F", DEWPOINT )
+      subtitle = string.format( "%s -%s °F", dewtext, DEWPOINT )
     else
-      subtitle = string.format( "Dew point %s °F", DEWPOINT )
+      --subtitle = string.format( "Dew point %s °F", DEWPOINT )
+      subtitle = string.format( "%s %s °F", dewtext, DEWPOINT )
     end
   else
     if dewpoint < 0 then
-      subtitle = string.format( "Dew point -%s °C", DEWPOINT )
+      --subtitle = string.format( "Dew point -%s °C", DEWPOINT )
+      subtitle = string.format( "%s -%s °C", dewtext, DEWPOINT )
     else
-      subtitle = string.format( "Dew point %s °C", DEWPOINT )
+      --subtitle = string.format( "Dew point %s °C", DEWPOINT )
+      subtitle = string.format( "%s %s °C", dewtext, DEWPOINT )
     end
   end
   local _DEWPOINT = subtitle
@@ -2088,36 +2460,45 @@ function ATIS:onafterBroadcast( From, Event, To )
   alltext = alltext .. ";\n" .. subtitle
 
   -- Altimeter QNH/QFE.
+  local altim = self.gettext:GetEntry("ALTIMETER",self.locale)
   if self.PmmHg then
     if self.qnhonly then
-      subtitle = string.format( "Altimeter %s.%s mmHg", QNH[1], QNH[2] )
+      --subtitle = string.format( "Altimeter %s.%s mmHg", QNH[1], QNH[2] )
+      subtitle = string.format( "%s %s.%s mmHg", altim, QNH[1], QNH[2] )
     else
-      subtitle = string.format( "Altimeter: QNH %s.%s, QFE %s.%s mmHg", QNH[1], QNH[2], QFE[1], QFE[2] )
+      --subtitle = string.format( "Altimeter: QNH %s.%s, QFE %s.%s mmHg", QNH[1], QNH[2], QFE[1], QFE[2] )
+      subtitle = string.format( "%s: QNH %s.%s, QFE %s.%s mmHg", altim, QNH[1], QNH[2], QFE[1], QFE[2] )
     end
   else
     if self.metric then
       if self.qnhonly then
-        subtitle = string.format( "Altimeter %s.%s hPa", QNH[1], QNH[2] )
+        --subtitle = string.format( "Altimeter %s.%s hPa", QNH[1], QNH[2] )
+        subtitle = string.format( "%s %s.%s hPa", altim, QNH[1], QNH[2] )
       else
-        subtitle = string.format( "Altimeter: QNH %s.%s, QFE %s.%s hPa", QNH[1], QNH[2], QFE[1], QFE[2] )
+        --subtitle = string.format( "Altimeter: QNH %s.%s, QFE %s.%s hPa", QNH[1], QNH[2], QFE[1], QFE[2] )
+        subtitle = string.format( "%s: QNH %s.%s, QFE %s.%s hPa", altim, QNH[1], QNH[2], QFE[1], QFE[2] )
       end
     else
       if self.qnhonly then
-        subtitle = string.format( "Altimeter %s.%s inHg", QNH[1], QNH[2] )
+        --subtitle = string.format( "Altimeter %s.%s inHg", QNH[1], QNH[2] )
+        subtitle = string.format( "%s %s.%s inHg", altim, QNH[1], QNH[2] )
       else
-        subtitle = string.format( "Altimeter: QNH %s.%s, QFE %s.%s inHg", QNH[1], QNH[2], QFE[1], QFE[2] )
+        --subtitle = string.format( "Altimeter: QNH %s.%s, QFE %s.%s inHg", QNH[1], QNH[2], QFE[1], QFE[2] )
+        subtitle = string.format( "%s: QNH %s.%s, QFE %s.%s inHg", altim, QNH[1], QNH[2], QFE[1], QFE[2] )
       end
     end
   end
-  
+
   if self.ReportmBar and not self.metric then
     if self.qnhonly then
-      subtitle = string.format( "%s;\nAltimeter %d hPa", subtitle, mBarqnh )
+      --subtitle = string.format( "%s;\nAltimeter %d hPa", subtitle, mBarqnh )
+      subtitle = string.format( "%s;\n%s %d hPa", subtitle, altim, mBarqnh )
     else
-      subtitle = string.format( "%s;\nAltimeter: QNH %d, QFE %d hPa", subtitle, mBarqnh, mBarqfe)
+      --subtitle = string.format( "%s;\nAltimeter: QNH %d, QFE %d hPa", subtitle, mBarqnh, mBarqfe)
+      subtitle = string.format( "%s;\n%s: QNH %d, QFE %d hPa", subtitle, altim, mBarqnh, mBarqfe)
     end
   end
-  
+
   local _ALTIMETER = subtitle
   if not self.useSRS then
     self:Transmission( ATIS.Sound.Altimeter, 1.0, subtitle )
@@ -2151,17 +2532,35 @@ function ATIS:onafterBroadcast( From, Event, To )
     end
   end
   alltext = alltext .. ";\n" .. subtitle
-  
+
   local _RUNACT
 
   if not self.ATISforFARPs then
     -- Active runway.
+    local subtitle = ""
     if runwayLanding then
-      local subtitle=string.format("Active runway %s", runwayLanding)
+      local actrun = self.gettext:GetEntry("ACTIVELANDING",self.locale)
+      --subtitle=string.format("Active runway landing %s", runwayLanding)
+      subtitle=string.format("%s %s", actrun, runwayLanding)
       if rwyLandingLeft==true then
-        subtitle=subtitle.." Left"
+        --subtitle=subtitle.." Left"
+        subtitle=subtitle.." "..self.gettext:GetEntry("LEFT",self.locale)
       elseif rwyLandingLeft==false then
-        subtitle=subtitle.." Right"
+        --subtitle=subtitle.." Right"
+        subtitle=subtitle.." "..self.gettext:GetEntry("RIGHT",self.locale)
+      end
+      alltext = alltext .. ";\n" .. subtitle
+    end    
+    if runwayTakeoff then
+      local actrun = self.gettext:GetEntry("ACTIVERUN",self.locale)
+      --subtitle=string.format("Active runway %s", runwayLanding)
+      subtitle=string.format("%s %s", actrun, runwayTakeoff)
+      if rwyTakeoffLeft==true then
+        --subtitle=subtitle.." Left"
+        subtitle=subtitle.." "..self.gettext:GetEntry("LEFT",self.locale)
+      elseif rwyTakeoffLeft==false then
+        --subtitle=subtitle.." Right"
+        subtitle=subtitle.." "..self.gettext:GetEntry("RIGHT",self.locale)
       end
     end
     _RUNACT = subtitle
@@ -2175,27 +2574,31 @@ function ATIS:onafterBroadcast( From, Event, To )
       end
     end
     alltext = alltext .. ";\n" .. subtitle
-  
+
     -- Runway length.
     if self.rwylength then
-  
+
       local runact = self.airbase:GetActiveRunway( self.runwaym2t )
       local length = runact.length
       if not self.metric then
         length = UTILS.MetersToFeet( length )
       end
-  
+
       -- Length in thousands and hundrets of ft/meters.
       local L1000, L0100 = self:_GetThousandsAndHundreds( length )
-  
+
       -- Subtitle.
-      local subtitle = string.format( "Runway length %d", length )
+      local rwyl = self.gettext:GetEntry("RWYLENGTH",self.locale)
+      local meters = self.gettext:GetEntry("METERS",self.locale)
+      local feet = self.gettext:GetEntry("FEET",self.locale)
+      --local subtitle = string.format( "Runway length %d", length )
+      local subtitle = string.format( "%s %d", rwyl, length )
       if self.metric then
-        subtitle = subtitle .. " meters"
+        subtitle = subtitle .. " "..meters
       else
-        subtitle = subtitle .. " feet"
+        subtitle = subtitle .. " "..feet
       end
-  
+
       -- Transmit.
       if not self.useSRS then
         self:Transmission( ATIS.Sound.RunwayLength, 1.0, subtitle )
@@ -2218,7 +2621,11 @@ function ATIS:onafterBroadcast( From, Event, To )
   end
   -- Airfield elevation
   if self.elevation then
-
+    
+    local elev = self.gettext:GetEntry("ELEVATION",self.locale)
+    local meters = self.gettext:GetEntry("METERS",self.locale)
+    local feet = self.gettext:GetEntry("FEET",self.locale)
+    
     local elevation = self.airbase:GetHeight()
     if not self.metric then
       elevation = UTILS.MetersToFeet( elevation )
@@ -2228,11 +2635,12 @@ function ATIS:onafterBroadcast( From, Event, To )
     local L1000, L0100 = self:_GetThousandsAndHundreds( elevation )
 
     -- Subtitle.
-    local subtitle = string.format( "Elevation %d", elevation )
+    --local subtitle = string.format( "Elevation %d", elevation )
+    local subtitle = string.format( "%s %d", elev, elevation )
     if self.metric then
-      subtitle = subtitle .. " meters"
+      subtitle = subtitle .. " "..meters
     else
-      subtitle = subtitle .. " feet"
+      subtitle = subtitle .. " "..feet
     end
 
     -- Transmit.
@@ -2264,7 +2672,9 @@ function ATIS:onafterBroadcast( From, Event, To )
         freqs = freqs .. ", "
       end
     end
-    subtitle = string.format( "Tower frequency %s", freqs )
+    local twrfrq = self.gettext:GetEntry("TOWERFREQ",self.locale)
+    --subtitle = string.format( "Tower frequency %s", freqs )
+    subtitle = string.format( "%s %s", twrfrq, freqs )
     if not self.useSRS then
       self:Transmission( ATIS.Sound.TowerFrequency, 1.0, subtitle )
       for _, freq in pairs( self.towerfrequency ) do
@@ -2284,7 +2694,9 @@ function ATIS:onafterBroadcast( From, Event, To )
   -- ILS
   local ils=self:GetNavPoint(self.ils, runwayLanding, rwyLandingLeft)
   if ils then
-    subtitle = string.format( "ILS frequency %.2f MHz", ils.frequency )
+    local ilstxt = self.gettext:GetEntry("ILSFREQ",self.locale)
+    --subtitle = string.format( "ILS frequency %.2f MHz", ils.frequency )
+    subtitle = string.format( "%s %.2f MHz", ilstxt, ils.frequency )
     if not self.useSRS then
       self:Transmission( ATIS.Sound.ILSFrequency, 1.0, subtitle )
       local f = string.format( "%.2f", ils.frequency )
@@ -2302,7 +2714,9 @@ function ATIS:onafterBroadcast( From, Event, To )
   -- Outer NDB
   local ndb=self:GetNavPoint(self.ndbouter, runwayLanding, rwyLandingLeft)
   if ndb then
-    subtitle = string.format( "Outer NDB frequency %.2f MHz", ndb.frequency )
+    local ndbtxt = self.gettext:GetEntry("OUTERNDB",self.locale)
+    --subtitle = string.format( "Outer NDB frequency %.2f MHz", ndb.frequency )
+    subtitle = string.format( "%s %.2f MHz", ndbtxt, ndb.frequency )
     if not self.useSRS then
       self:Transmission( ATIS.Sound.OuterNDBFrequency, 1.0, subtitle )
       local f = string.format( "%.2f", ndb.frequency )
@@ -2320,7 +2734,9 @@ function ATIS:onafterBroadcast( From, Event, To )
   -- Inner NDB
   local ndb=self:GetNavPoint(self.ndbinner, runwayLanding, rwyLandingLeft)
   if ndb then
-    subtitle = string.format( "Inner NDB frequency %.2f MHz", ndb.frequency )
+    local ndbtxt = self.gettext:GetEntry("INNERNDB",self.locale)
+    --subtitle = string.format( "Inner NDB frequency %.2f MHz", ndb.frequency )
+    subtitle = string.format( "%s %.2f MHz", ndbtxt, ndb.frequency )
     if not self.useSRS then
       self:Transmission( ATIS.Sound.InnerNDBFrequency, 1.0, subtitle )
       local f = string.format( "%.2f", ndb.frequency )
@@ -2337,9 +2753,13 @@ function ATIS:onafterBroadcast( From, Event, To )
 
   -- VOR
   if self.vor then
-    subtitle = string.format( "VOR frequency %.2f MHz", self.vor )
+    local vortxt = self.gettext:GetEntry("VORFREQ",self.locale)
+    local vorttstxt = self.gettext:GetEntry("VORFREQTTS",self.locale)
+    --subtitle = string.format( "VOR frequency %.2f MHz", self.vor )
+    subtitle = string.format( "%s %.2f MHz", vortxt, self.vor )
     if self.useSRS then
-      subtitle = string.format( "V O R frequency %.2f MHz", self.vor )
+      --subtitle = string.format( "V O R frequency %.2f MHz", self.vor )
+      subtitle = string.format( "%s %.2f MHz", vorttstxt, self.vor )
     end
     if not self.useSRS then
       self:Transmission( ATIS.Sound.VORFrequency, 1.0, subtitle )
@@ -2357,7 +2777,9 @@ function ATIS:onafterBroadcast( From, Event, To )
 
   -- TACAN
   if self.tacan then
-    subtitle=string.format("TACAN channel %dX Ray", self.tacan)
+    local tactxt = self.gettext:GetEntry("TACANCH",self.locale)
+    --subtitle=string.format("TACAN channel %dX Ray", self.tacan)
+    subtitle=string.format(tactxt, self.tacan)
     if not self.useSRS then
       self:Transmission( ATIS.Sound.TACANChannel, 1.0, subtitle )
       self.radioqueue:Number2Transmission( tostring( self.tacan ), nil, 0.2 )
@@ -2368,7 +2790,9 @@ function ATIS:onafterBroadcast( From, Event, To )
 
   -- RSBN
   if self.rsbn then
-    subtitle = string.format( "RSBN channel %d", self.rsbn )
+    local rsbntxt = self.gettext:GetEntry("RSBNCH",self.locale)
+    --subtitle = string.format( "RSBN channel %d", self.rsbn )
+    subtitle = string.format( "%s %d", rsbntxt, self.rsbn )
     if not self.useSRS then
       self:Transmission( ATIS.Sound.RSBNChannel, 1.0, subtitle )
       self.radioqueue:Number2Transmission( tostring( self.rsbn ), nil, 0.2 )
@@ -2379,21 +2803,25 @@ function ATIS:onafterBroadcast( From, Event, To )
   -- PRMG
   local ndb=self:GetNavPoint(self.prmg, runwayLanding, rwyLandingLeft)
   if ndb then
-    subtitle = string.format( "PRMG channel %d", ndb.frequency )
+    local prmtxt = self.gettext:GetEntry("PRMGCH",self.locale)
+    --subtitle = string.format( "PRMG channel %d", ndb.frequency )
+    subtitle = string.format( "%s %d", prmtxt, ndb.frequency )
     if not self.useSRS then
       self:Transmission( ATIS.Sound.PRMGChannel, 1.0, subtitle )
       self.radioqueue:Number2Transmission( tostring( ndb.frequency ), nil, 0.5 )
     end
     alltext = alltext .. ";\n" .. subtitle
   end
-  
+
   -- additional info, if any
   if self.useSRS and self.AdditionalInformation then
     alltext = alltext .. ";\n"..self.AdditionalInformation
   end
-  
+
   -- Advice on initial...
-  subtitle = string.format( "Advise on initial contact, you have information %s", NATO )
+  local advtxt = self.gettext:GetEntry("ADVISE",self.locale)
+  --subtitle = string.format( "Advise on initial contact, you have information %s", NATO )
+  subtitle = string.format( "%s %s", advtxt, NATO )
   if not self.useSRS then
     self:Transmission( ATIS.Sound.AdviceOnInitial, 0.5, subtitle )
     self.radioqueue:NewTransmission( string.format( "NATO Alphabet/%s.ogg", NATO ), 0.75, self.soundpath )
@@ -2417,6 +2845,7 @@ end
 -- @param #string To To state.
 -- @param #string Text Report text.
 function ATIS:onafterReport( From, Event, To, Text )
+  self:T({From, Event, To})
   self:T( self.lid .. string.format( "Report:\n%s", Text ) )
 
   if self.useSRS and self.msrs then
@@ -2425,16 +2854,33 @@ function ATIS:onafterReport( From, Event, To, Text )
     local text = string.gsub( Text, "[\r\n]", "" )
 
     -- Replace other stuff.
-    local text = string.gsub( text, "SM", "statute miles" )
-    local text = string.gsub( text, "°C", "degrees Celsius" )
-    local text = string.gsub( text, "°F", "degrees Fahrenheit" )
-    local text = string.gsub( text, "inHg", "inches of Mercury" )
-    local text = string.gsub( text, "mmHg", "millimeters of Mercury" )
-    local text = string.gsub( text, "hPa", "hectopascals" )
-    local text = string.gsub( text, "m/s", "meters per second" )
-    local text = string.gsub( text, "TACAN", "tackan" )
-    local text = string.gsub( text, "FARP", "farp" )
-
+    local statute = self.gettext:GetEntry("STATUTE",self.locale)
+    local degc = self.gettext:GetEntry("DEGREES",self.locale)
+    local degf = self.gettext:GetEntry("FAHRENHEIT",self.locale)
+    local inhg = self.gettext:GetEntry("INCHHG",self.locale)
+    local mmhg = self.gettext:GetEntry("MMHG",self.locale)
+    local hpa = self.gettext:GetEntry("HECTO",self.locale)
+    local emes = self.gettext:GetEntry("METERSPER",self.locale)
+    local tacan = self.gettext:GetEntry("TACAN",self.locale)
+    local farp = self.gettext:GetEntry("FARP",self.locale)
+    
+    
+    local text = string.gsub( text, "SM", statute )
+    text = string.gsub( text, "°C", degc )
+    text = string.gsub( text, "°F", degf )
+    text = string.gsub( text, "inHg", inhg )
+    text = string.gsub( text, "mmHg", mmhg )
+    text = string.gsub( text, "hPa", hpa )
+    text = string.gsub( text, "m/s", emes )
+    text = string.gsub( text, "TACAN", tacan )
+    text = string.gsub( text, "FARP", farp )
+    
+    local delimiter = self.gettext:GetEntry("DELIMITER",self.locale)
+    
+    if string.lower(self.locale) ~= "en" then
+      text = string.gsub(text,"(%d+)(%.)(%d+)","%1 "..delimiter.." %3")
+    end
+    
     -- Replace ";" by "."
     local text = string.gsub( text, ";", " . " )
 
@@ -2443,10 +2889,10 @@ function ATIS:onafterReport( From, Event, To, Text )
 
     -- Play text-to-speech report.
     local duration = STTS.getSpeechTime(text,0.95)
-    self.msrsQ:NewTransmission(text,duration,self.msrs,nil,2)    
+    self.msrsQ:NewTransmission(text,duration,self.msrs,nil,2)
     --self.msrs:PlayText( text )
     self.SRSText = text
-    
+
   end
 
 end
@@ -2498,8 +2944,17 @@ function ATIS:UpdateMarker( information, runact, wind, altimeter, temperature )
   if self.markerid then
     self.airbase:GetCoordinate():RemoveMark( self.markerid )
   end
-
-  local text = string.format( "ATIS on %.3f %s, %s:\n", self.frequency, UTILS.GetModulationName( self.modulation ), tostring( information ) )
+  local text = ""
+  if type(self.frequency) == "table" then
+    local frequency = table.concat(self.frequency,"/")
+    local modulation = self.modulation
+    if type(modulation) == "table" then
+      modulation = table.concat(self.modulation,"/")
+    end
+    text = string.format( "ATIS on %s %s, %s:\n", tostring(frequency), tostring(modulation), tostring( information ) )
+  else
+    text = string.format( "ATIS on %.3f %s, %s:\n", self.frequency, UTILS.GetModulationName( self.modulation ), tostring( information ) )
+  end
   text = text .. string.format( "%s\n", tostring( runact ) )
   text = text .. string.format( "%s\n", tostring( wind ) )
   text = text .. string.format( "%s\n", tostring( altimeter ) )
@@ -2518,7 +2973,7 @@ end
 -- @return #string Active runway, e.g. "31" for 310 deg.
 -- @return #boolean Use Left=true, Right=false, or nil.
 function ATIS:GetActiveRunway(Takeoff)
-  
+
   local runway=nil --Wrapper.Airbase#AIRBASE.Runway
   if Takeoff then
     runway=self.airbase:GetActiveRunwayTakeoff()
@@ -2581,7 +3036,7 @@ function ATIS:GetNavPoint( navpoints, runway, left )
       if hdgD <= 15 then -- We allow an error of +-15° here.
         if navL == nil or (navL == true and left == true) or (navL == false and left == false) then
           return nav
-        end
+      end
       end
     end
   end

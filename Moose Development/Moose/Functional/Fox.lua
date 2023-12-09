@@ -58,7 +58,7 @@
 --
 -- # The FOX Concept
 -- 
--- As you probably know [Fox](https://en.wikipedia.org/wiki/Fox_(code_word)) is a NATO brevity code for launching air-to-air munition. Therefore, the class name is not 100% accurate as this
+-- As you probably know [Fox](https://en.wikipedia.org/wiki/Fox_\(code_word\)) is a NATO brevity code for launching air-to-air munition. Therefore, the class name is not 100% accurate as this
 -- script handles air-to-air but also surface-to-air missiles.
 -- 
 -- # Basic Script
@@ -113,14 +113,9 @@
 --     -- Start missile trainer.
 --     fox:Start()
 -- 
--- # Fine Tuning
+-- # Notes
 -- 
--- Todo!
--- 
--- # Special Events
--- 
--- Todo!
--- 
+-- The script needs to be running before you enter an airplane slot. If FOX is not available to you, go back to observers and then join a slot again.
 -- 
 -- @field #FOX
 FOX = {

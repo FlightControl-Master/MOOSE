@@ -79,16 +79,13 @@
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- The range can be beyond or smaller than the range of the Patrol Zone.
 -- The range is applied at the position of the AI.
--- Use the method @{AI.AI_CAP#AI_AIR_PATROL.SetEngageRange}() to define that range.
+-- Use the method @{#AI_AIR_PATROL.SetEngageRange}() to define that range.
 --
--- ## 4. Set the Zone of Engagement
+-- # Developer Note
 -- 
--- ![Zone](..\Presentations\AI_CAP\Dia12.JPG)
--- 
--- An optional @{Core.Zone} can be set, 
--- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_CAP#AI_AIR_PATROL.SetEngageZone}() to define that Zone.
---  
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- ===
 -- 
 -- @field #AI_AIR_PATROL

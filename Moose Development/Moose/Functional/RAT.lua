@@ -46,9 +46,9 @@
 --
 -- ===
 --
--- ### Author: **[funkyfranky](https://forums.eagle.ru/member.php?u=115026)**
+-- ### Author: **funkyfranky**
 --
--- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536)
+-- ### Contributions: FlightControl
 --
 -- ===
 -- @module Functional.RAT
@@ -225,7 +225,7 @@
 --
 -- * Landing: When an aircraft tries to land at an airport where it does not have a valid parking spot, it is immidiately despawned the moment its wheels touch the runway, i.e.
 -- when a landing event is triggered. This leads to the loss of the RAT aircraft. On possible way to circumvent the this problem is to let another RAT aircraft spawn at landing
--- and not when it shuts down its engines. See the @{RAT.RespawnAfterLanding}() function.
+-- and not when it shuts down its engines. See the @{#RAT.RespawnAfterLanding}() function.
 -- * Spawning: When a big aircraft is dynamically spawned on a small airbase a few things can go wrong. For example, it could be spawned at a parking spot with a shelter.
 -- Or it could be damaged by a scenery object when it is taxiing out to the runway, or it could overlap with other aircraft on parking spots near by.
 --
@@ -2474,11 +2474,11 @@ end
 -- @param #RAT self
 -- @param #number takeoff Takeoff type. Could also be air start.
 -- @param #number landing Landing type. Could also be a destination in air.
--- @param Wrapper.Airport#AIRBASE _departure (Optional) Departure airbase.
--- @param Wrapper.Airport#AIRBASE _destination (Optional) Destination airbase.
+-- @param Wrapper.Airbase#AIRBASE _departure (Optional) Departure airbase.
+-- @param Wrapper.Airbase#AIRBASE _destination (Optional) Destination airbase.
 -- @param #table _waypoint Initial waypoint.
--- @return Wrapper.Airport#AIRBASE Departure airbase.
--- @return Wrapper.Airport#AIRBASE Destination airbase.
+-- @return Wrapper.Airbase#AIRBASE Departure airbase.
+-- @return Wrapper.Airbase#AIRBASE Destination airbase.
 -- @return #table Table of flight plan waypoints.
 -- @return #nil If no valid departure or destination airport could be found.
 function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
@@ -3483,7 +3483,7 @@ function RAT:Status(message, forID)
     -- Get group.
     local group=ratcraft.group  --Wrapper.Group#GROUP
 
-    if group and group:IsAlive() then
+    if group and group:IsAlive() and (group:GetCoordinate() or group:GetVec3()) then
       nalive=nalive+1
 
       -- Gather some information.
@@ -3491,8 +3491,11 @@ function RAT:Status(message, forID)
       local life=self:_GetLife(group)
       local fuel=group:GetFuel()*100.0
       local airborne=group:InAir()
-      local coords=group:GetCoordinate()
-      local alt=coords.y or 1000
+      local coords=group:GetCoordinate() or group:GetVec3()
+      local alt=1000
+      if coords then
+        alt=coords.y or 1000
+      end  
       --local vel=group:GetVelocityKMH()
       local departure=ratcraft.departure:GetName()
       local destination=ratcraft.destination:GetName()
@@ -4602,7 +4605,7 @@ function RAT:_TaskHolding(P1, Altitude, Speed, Duration)
 end
 
 --- Function which is called after passing every waypoint. Info on waypoint is given and special functions are executed.
--- @param Core.Group#GROUP group Group of aircraft.
+-- @param Wrapper.Group#GROUP group Group of aircraft.
 -- @param #RAT rat RAT object.
 -- @param #number wp Waypoint index. Running number of the waypoints. Determines the actions to be executed.
 function RAT._WaypointFunction(group, rat, wp)

@@ -1,5 +1,4 @@
 Utilities/Enums.lua
-Utilities/Routines.lua
 Utilities/Utils.lua
 Utilities/Enums.lua
 Utilities/Profiler.lua
@@ -107,6 +106,7 @@ Ops/Operation.lua
 Ops/FlightControl.lua
 Ops/PlayerTask.lua
 Ops/PlayerRecce.lua
+Ops/EasyGCICAP.lua
 
 AI/AI_Balancer.lua
 AI/AI_Air.lua

@@ -1,0 +1,148 @@
+name: Moose-Includes
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+    paths:
+      - 'Moose Setup/**/*.lua'
+      - 'Moose Development/**/*.lua'
+      - '.github/workflows/build-includes.yml'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
+
+      - name: Build informations
+        run: |
+            echo "Triggered by:  ${{ github.event_name }}"
+            echo "Running on:    ${{ runner.os }}"
+            echo "Ref:           ${{ github.ref }}"
+            echo "Branch name:   ${{ steps.extract_branch.outputs.branch }}"
+            echo "Repository:    ${{ github.repository }}"
+            echo "Commit-Id:     ${{ github.sha }}"
+            echo "Owner:         ${{ github.repository_owner }}"
+            echo "FORCE_PUSH:    ${{ vars.FORCE_PUSH }}"
+
+      #########################################################################
+      # Prepare build environment
+      #########################################################################
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Prepare build output folders
+        run: |
+          mkdir -p build/result/Moose_Include_Dynamic
+          mkdir -p build/result/Moose_Include_Static
+
+      - name: Update apt-get (needed for act docker image)
+        run: |
+          sudo apt-get -qq update
+
+      - name: Install tree
+        run: |
+          sudo apt-get -qq install tree
+
+      #########################################################################
+      # Install all prerequisites
+      #########################################################################
+      - name: Install Lua 5.3
+        run: |
+          sudo apt-get -qq install lua5.3 -y
+      - name: Check Lua version
+        run: |
+          lua -v
+
+      - name: Install LuaRocks
+        run: |
+          sudo apt-get -qq install luarocks -y
+      - name: Check LuaRocks version
+        run: |
+          luarocks --version
+
+      - name: Install Lua 5.3 Dev for prerequisites for LuaSrcDiet
+        run: |
+          sudo apt-get -qq install liblua5.3-dev -y
+
+      - name: Install LuaSrcDiet
+        run: |
+          sudo luarocks install luasrcdiet
+
+      - name: Install LuaCheck
+        run: |
+          sudo luarocks install luacheck
+
+      #########################################################################
+      # Build Include files
+      #########################################################################
+      - name: Build Include Static
+        run: |
+          export COMMIT_TIME=$(git show -s --format=%cd ${{ github.sha }} --date=iso-strict)
+          lua5.3 "./Moose Setup/Moose_Create.lua" S "$COMMIT_TIME-${{ github.sha }}" "./Moose Development/Moose" "./Moose Setup" "./build/result/Moose_Include_Static"
+
+      - name: Build Includes Dynamic
+        run: |
+          export COMMIT_TIME=$(git show -s --format=%cd ${{ github.sha }} --date=iso-strict)
+          lua5.3 "./Moose Setup/Moose_Create.lua" D "$COMMIT_TIME-${{ github.sha }}" "./Moose Development/Moose" "./Moose Setup" "./build/result/Moose_Include_Dynamic"
+
+      - name: Run LuaSrcDiet
+        run: |
+          luasrcdiet --basic --opt-emptylines ./build/result/Moose_Include_Static/Moose.lua -o ./build/result/Moose_Include_Static/Moose_.lua
+
+      #########################################################################
+      # Run LuaCheck
+      #########################################################################
+      - name: Run LuaCheck
+        if: ${{ vars.SKIP_LUACHECK != true }}
+        continue-on-error: true
+        run: |
+          luacheck --std=lua51c --config=.luacheckrc -gurasqq "Moose Development/Moose"
+
+      #########################################################################
+      # Push to MOOSE_INCLUDE
+      #########################################################################
+      - name: Checkout MOOSE_INCLUDE
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/MOOSE_INCLUDE
+          path: './build/MOOSE_INCLUDE'
+          fetch-depth: 0
+          ref: ${{ steps.extract_branch.outputs.branch }}
+          token: ${{ secrets.BOT_TOKEN }}
+
+      - name: Create target folder (needed if checkout is deactivated)
+        run: mkdir -p build/MOOSE_INCLUDE
+
+      - name: Copy build reseult to MOOSE_INCLUDE
+        run: |
+          cp -r ./build/result/* ./build/MOOSE_INCLUDE/
+
+      - name: Push result to MOOSE_INCLUDE repository
+        if: ${{ vars.FORCE_PUSH == 'true' }}
+        run: |
+          git config user.name "MooseBotter"
+          git config user.email "MooseBotter@users.noreply.github.com"
+          git add .
+          git commit --allow-empty -m "Auto commit by GitHub Actions Workflow"
+          git push --set-upstream origin ${{ steps.extract_branch.outputs.branch }}
+
+        working-directory: ${{ github.workspace }}/build/MOOSE_INCLUDE
+
+      #########################################################################
+      # Show the results
+      #########################################################################
+      - name: List files in the repository
+        run: |
+          tree ${{ github.workspace }}/build
+
+      - run: echo "This job's status is ${{ job.status }}."

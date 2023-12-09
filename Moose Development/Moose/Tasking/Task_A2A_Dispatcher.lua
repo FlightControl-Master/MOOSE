@@ -176,6 +176,11 @@ do -- TASK_A2A_DISPATCHER
   --   * @{Tasking.Task#TASK.SetScoreOnSuccess}() will add additional (negative) scores when the task goes into **Failed** state.
   --     This means the **task has not been successfully completed**, and the scores must be given with a negative value!
   --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
   -- @field #TASK_A2A_DISPATCHER
   TASK_A2A_DISPATCHER = {
     ClassName = "TASK_A2A_DISPATCHER",
@@ -396,7 +401,7 @@ do -- TASK_A2A_DISPATCHER
   --- Calculates which friendlies are nearby the area
   -- @param #TASK_A2A_DISPATCHER self
   -- @param DetectedItem
-  -- @return #number, Core.CommandCenter#REPORT
+  -- @return #number, Tasking.CommandCenter#REPORT
   function TASK_A2A_DISPATCHER:GetFriendliesNearBy( DetectedItem )
 
     local DetectedSet = DetectedItem.Set
@@ -439,7 +444,7 @@ do -- TASK_A2A_DISPATCHER
   --- Calculates which HUMAN friendlies are nearby the area
   -- @param #TASK_A2A_DISPATCHER self
   -- @param DetectedItem
-  -- @return #number, Core.CommandCenter#REPORT
+  -- @return #number, Tasking.CommandCenter#REPORT
   function TASK_A2A_DISPATCHER:GetPlayerFriendliesNearBy( DetectedItem )
 
     local DetectedSet = DetectedItem.Set

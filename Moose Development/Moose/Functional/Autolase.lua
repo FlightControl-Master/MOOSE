@@ -74,7 +74,7 @@
 -- @image Designation.JPG
 --
 -- Date: 24 Oct 2021
--- Last Update: Aug 2022
+-- Last Update: Oct 2023
 --
 --- Class AUTOLASE
 -- @type AUTOLASE
@@ -84,6 +84,9 @@
 -- @field #string alias
 -- @field #boolean debug
 -- @field #string version
+-- @field Core.Set#SET_GROUP RecceSet
+-- @field #table LaserCodes
+-- @field #table playermenus
 -- @extends Ops.Intel#INTEL
 
 ---
@@ -109,9 +112,10 @@ AUTOLASE = {
 -- @field #string unittype
 -- @field Core.Point#COORDINATE coordinate
 
+
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.1.21"
+AUTOLASE.version = "0.1.22"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -196,6 +200,8 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.NoMenus = false
   self.minthreatlevel = 0
   self.blacklistattributes = {}
+  self:SetLaserCodes( { 1688, 1130, 4785, 6547, 1465, 4578 } ) -- set self.LaserCodes
+  self.playermenus = {}
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AUTOLASE %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -214,7 +220,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   if PilotSet then
     self.usepilotset = true
     self.pilotset = PilotSet
-    self:HandleEvent(EVENTS.PlayerEnterAircraft)
+    self:HandleEvent(EVENTS.PlayerEnterAircraft,self._EventHandler)
     --self:SetPilotMenu()
   end
   --self.SetPilotMenu()
@@ -298,6 +304,16 @@ end
 -- Helper Functions
 -------------------------------------------------------------------
 
+--- [User] Set a table of possible laser codes.
+-- Each new RECCE can select a code from this table, default is { 1688, 1130, 4785, 6547, 1465, 4578 } .
+-- @param #AUTOLASE self
+-- @param #list<#number> LaserCodes
+-- @return #AUTOLASE
+function AUTOLASE:SetLaserCodes( LaserCodes )
+  self.LaserCodes = ( type( LaserCodes ) == "table" ) and LaserCodes or { LaserCodes }
+  return self
+end
+
 --- (Internal) Function to set pilot menu.
 -- @param #AUTOLASE self
 -- @return #AUTOLASE self 
@@ -308,8 +324,31 @@ function AUTOLASE:SetPilotMenu()
       local Unit = _unit -- Wrapper.Unit#UNIT
       if Unit and Unit:IsAlive() then
         local Group = Unit:GetGroup()
-        local lasemenu = MENU_GROUP_COMMAND:New(Group,"Autolase Status",nil,self.ShowStatus,self,Group,Unit)
-        lasemenu:Refresh()
+        local unitname = Unit:GetName()
+        if self.playermenus[unitname] then self.playermenus[unitname]:Remove() end
+        local lasetopm = MENU_GROUP:New(Group,"Autolase",nil)
+        self.playermenus[unitname] = lasetopm
+        local lasemenu = MENU_GROUP_COMMAND:New(Group,"Status",lasetopm,self.ShowStatus,self,Group,Unit)
+        local smoke = (self.smoketargets == true) and "off" or "on"
+        local smoketext = string.format("Switch smoke targets to %s",smoke)
+        local smokemenu = MENU_GROUP_COMMAND:New(Group,smoketext,lasetopm,self.SetSmokeTargets,self,(not self.smoketargets))
+        for _,_grp in pairs(self.RecceSet.Set) do
+          local grp = _grp -- Wrapper.Group#GROUP
+          local unit = grp:GetUnit(1)
+          --local name = grp:GetName()
+          if unit and unit:IsAlive() then
+            local name = unit:GetName()
+            local mname = string.gsub(name,".%d+.%d+$","")
+            local code = self:GetLaserCode(name)
+            local unittop = MENU_GROUP:New(Group,"Change laser code for "..mname,lasetopm)
+            for _,_code in pairs(self.LaserCodes) do
+              local text = tostring(_code)
+              if _code == code then text = text.."(*)" end
+              local changemenu = MENU_GROUP_COMMAND:New(Group,text,unittop,self.SetRecceLaserCode,self,name,_code,true)
+            end
+          end
+        end
+        --lasemenu:Refresh()
       end
     end
   else
@@ -324,7 +363,7 @@ end
 -- @param #AUTOLASE self
 -- @param Core.Event#EVENTDATA EventData
 -- @return #AUTOLASE self 
-function AUTOLASE:OnEventPlayerEnterAircraft(EventData)
+function AUTOLASE:_EventHandler(EventData)
   self:SetPilotMenu()
   return self
 end
@@ -397,7 +436,7 @@ end
 --- (User) Function enable sending messages via SRS.
 -- @param #AUTOLASE self
 -- @param #boolean OnOff Switch usage on and off
--- @param #string Path Path to SRS directory, e.g. C:\\Program Files\\DCS-SimpleRadio-Standalon
+-- @param #string Path Path to SRS directory, e.g. C:\\Program Files\\DCS-SimpleRadio-Standalone
 -- @param #number Frequency Frequency to send, e.g. 243
 -- @param #number Modulation Modulation i.e. radio.modulation.AM or radio.modulation.FM
 -- @param #string Label (Optional) Short label to be used on the SRS Client Overlay
@@ -465,10 +504,20 @@ end
 -- @param #AUTOLASE self
 -- @param #string RecceName (Unit!) Name of the Recce
 -- @param #number Code The lase code
+-- @param #boolean Refresh If true, refresh menu entries
 -- @return #AUTOLASE self 
-function AUTOLASE:SetRecceLaserCode(RecceName, Code)
+function AUTOLASE:SetRecceLaserCode(RecceName, Code, Refresh)
   local code = Code or 1688
   self.RecceLaserCode[RecceName] = code
+  if Refresh then
+    self:SetPilotMenu()
+    if self.notifypilots then
+      if string.find(RecceName,"#") then
+        RecceName = string.match(RecceName,"^(.*)#")
+      end
+      self:NotifyPilots(string.format("Code for %s set to: %d",RecceName,Code),15)
+    end
+  end
   return self
 end
 
@@ -524,6 +573,9 @@ end
 function AUTOLASE:SetSmokeTargets(OnOff,Color)
   self.smoketargets = OnOff
   self.smokecolor = Color or SMOKECOLOR.Red
+  local smktxt = OnOff == true and "on" or "off"
+  local Message = "Smoking targets is now "..smktxt.."!"
+  self:NotifyPilots(Message,10)
   return self
 end
 
@@ -673,7 +725,7 @@ function AUTOLASE:ShowStatus(Group,Unit)
     if playername then
       local settings = _DATABASE:GetPlayerSettings(playername)
       if settings then
-        --self:I("Get Settings ok!")
+        self:I("Get Settings ok!")
         if settings:IsA2G_MGRS() then
           locationstring = entry.coordinate:ToStringMGRS(settings)
         elseif settings:IsA2G_LL_DMS() then
@@ -995,6 +1047,9 @@ end
 function AUTOLASE:onbeforeRecceKIA(From,Event,To,RecceName)
   self:T({From, Event, To, RecceName})
   if self.notifypilots or self.debug then
+    if string.find(RecceName,"#") then
+      RecceName = string.match(RecceName,"^(.*)#")
+    end
     local text = string.format("Recce %s KIA!",RecceName)
     self:NotifyPilots(text,self.reporttimeshort)
   end
@@ -1029,6 +1084,9 @@ end
 function AUTOLASE:onbeforeTargetLost(From,Event,To,UnitName,RecceName)
   self:T({From, Event, To, UnitName,RecceName})
   if self.notifypilots or self.debug then
+    if string.find(RecceName,"#") then
+      RecceName = string.match(RecceName,"^(.*)#")
+    end
     local text = string.format("%s lost sight of unit %s.",RecceName,UnitName)
     self:NotifyPilots(text,self.reporttimeshort)
   end
@@ -1046,6 +1104,9 @@ end
 function AUTOLASE:onbeforeLaserTimeout(From,Event,To,UnitName,RecceName)
   self:T({From, Event, To, UnitName,RecceName})
   if self.notifypilots or self.debug then
+    if string.find(RecceName,"#") then
+      RecceName = string.match(RecceName,"^(.*)#")
+    end
     local text = string.format("%s laser timeout on unit %s.",RecceName,UnitName)
     self:NotifyPilots(text,self.reporttimeshort)
   end
@@ -1063,10 +1124,9 @@ function AUTOLASE:onbeforeLasing(From,Event,To,LaserSpot)
   self:T({From, Event, To, LaserSpot.unittype})
   if self.notifypilots or self.debug then
     local laserspot = LaserSpot -- #AUTOLASE.LaserSpot
-    local name = laserspot.reccename
-    if string.find(name,"#") then
+    local name = laserspot.reccename    if string.find(name,"#") then
         name = string.match(name,"^(.*)#")
-      end
+    end
     local text = string.format("%s is lasing %s code %d\nat %s",name,laserspot.unittype,laserspot.lasercode,laserspot.location)
     self:NotifyPilots(text,self.reporttimeshort+5)
   end

@@ -35,6 +35,13 @@
 --   * Validate the presence of objects in the SET.
 --   * Trigger events when objects in the SET change a zone presence.
 --
+-- ## Notes on `FilterPrefixes()`:  
+-- 
+-- This filter always looks for a **partial match** somewhere in the given field. LUA regular expression apply here, so special characters in names like minus, dot, hash (#) etc might lead to unexpected results. 
+-- Have a read through the following to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching).  
+-- For example, setting a filter like so `FilterPrefixes("Huey")` is perfectly all right, whilst `FilterPrefixes("UH-1H Al-Assad")` might not be due to the minus signs. A quick fix here is to use a dot (.) 
+-- in place of the special character, or escape it with a percentage sign (%), i.e. either `FilterPrefixes("UH.1H Al.Assad")` or `FilterPrefixes("UH%-1H Al%-Assad")` will give you the expected results.
+--
 -- ===
 --
 -- ### Author: **FlightControl**
@@ -412,7 +419,11 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return Core.Base#BASE
   function SET_BASE:GetRandom()
-    local tablemax = table.maxn(self.Index)
+    local tablemax = 0
+    for _,_ind in pairs(self.Index) do
+      tablemax = tablemax + 1
+    end
+    --local tablemax = table.maxn(self.Index)
     local RandomItem = self.Set[self.Index[math.random(1,tablemax)]]
     self:T3( { RandomItem } )
     return RandomItem
@@ -432,7 +443,7 @@ do -- SET_BASE
   function SET_BASE:SetDatabase( BaseSet )
 
     -- Copy the filter criteria of the BaseSet
-    local OtherFilter = routines.utils.deepCopy( BaseSet.Filter )
+    local OtherFilter = UTILS.DeepCopy( BaseSet.Filter )
     self.Filter = OtherFilter
 
     -- Now base the new Set on the BaseSet
@@ -554,10 +565,12 @@ do -- SET_BASE
     return self
   end
 
-  --- Iterate the SET_BASE while identifying the nearest object from a @{Core.Point#POINT_VEC2}.
+  --- Iterate the SET_BASE while identifying the nearest object in the set from a @{Core.Point#POINT_VEC2}.
   -- @param #SET_BASE self
-  -- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest object in the set.
+  -- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#COORDINATE} or @{Core.Point#POINT_VEC2} object (but **not** a simple DCS#Vec2!) from where to evaluate the closest object in the set.
   -- @return Core.Base#BASE The closest object.
+  -- @usage
+  --          myset:FindNearestObjectFromPointVec2( ZONE:New("Test Zone"):GetCoordinate() )
   function SET_BASE:FindNearestObjectFromPointVec2( PointVec2 )
     self:F2( PointVec2 )
 
@@ -853,8 +866,10 @@ do -- SET_BASE
     self:F3( Object )
     local outcome = false
     local name = Object:GetName()
+    --self:I("SET_BASE: Objectname = "..name)
     self:ForEach(
       function(object)
+        --self:I("SET_BASE: In set objectname = "..object:GetName())
         if object:GetName() == name then
           outcome = true
         end
@@ -940,7 +955,8 @@ do
   --    * @{#SET_GROUP.FilterCoalitions}: Builds the SET_GROUP with the groups belonging to the coalition(s).
   --    * @{#SET_GROUP.FilterCategories}: Builds the SET_GROUP with the groups belonging to the category(ies).
   --    * @{#SET_GROUP.FilterCountries}: Builds the SET_GROUP with the groups belonging to the country(ies).
-  --    * @{#SET_GROUP.FilterPrefixes}: Builds the SET_GROUP with the groups *containing* the given string in the group name. **Attention!** Bad naming convention, as this not really filtering *prefixes*.
+  --    * @{#SET_GROUP.FilterPrefixes}: Builds the SET_GROUP with the groups *containing* the given string in the group name. **Attention!** LUA regular expression apply here, so special characters in names like minus, dot, hash (#) etc might lead to unexpected results. 
+  -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
   --    * @{#SET_GROUP.FilterActive}: Builds the SET_GROUP with the groups that are only active. Groups that are inactive (late activation) won't be included in the set!
   --
   -- For the Category Filter, extra methods have been added:
@@ -1055,8 +1071,15 @@ do
     self:FilterActive( false )
 
     return self
+       
+    --- Filter the set once
+    -- @function [parent=#SET_GROUP] FilterOnce
+    -- @param #SET_GROUP self
+    -- @return #SET_GROUP self
+    
+    
   end
-
+  
   --- Get a *new* set that only contains alive groups.
   -- @param #SET_GROUP self
   -- @return #SET_GROUP Set of alive groups.
@@ -1966,6 +1989,7 @@ do
   --- Get the closest group of the set with respect to a given reference coordinate. Optionally, only groups of given coalitions are considered in the search.
   -- @param #SET_GROUP self
   -- @param Core.Point#COORDINATE Coordinate Reference Coordinate from which the closest group is determined.
+  -- @param #table Coalitions (Optional) Table of coalition #number entries to filter for.
   -- @return Wrapper.Group#GROUP The closest group (if any).
   -- @return #number Distance in meters to the closest group.
   function SET_GROUP:GetClosestGroup(Coordinate, Coalitions)
@@ -2052,7 +2076,8 @@ do -- SET_UNIT
   --    * @{#SET_UNIT.FilterCategories}: Builds the SET_UNIT with the units belonging to the category(ies).
   --    * @{#SET_UNIT.FilterTypes}: Builds the SET_UNIT with the units belonging to the unit type(s).
   --    * @{#SET_UNIT.FilterCountries}: Builds the SET_UNIT with the units belonging to the country(ies).
-  --    * @{#SET_UNIT.FilterPrefixes}: Builds the SET_UNIT with the units sharing the same string(s) in their name. **ATTENTION!** Bad naming convention as this *does not* only filter *prefixes*.
+  --    * @{#SET_UNIT.FilterPrefixes}: Builds the SET_UNIT with the units sharing the same string(s) in their name. **Attention!** LUA regular expression apply here, so special characters in names like minus, dot, hash (#) etc might lead to unexpected results. 
+  -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
   --    * @{#SET_UNIT.FilterActive}: Builds the SET_UNIT with the units that are only active. Units that are inactive (late activation) won't be included in the set!
   --    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Core.Zone#ZONE}.
   --    
@@ -2412,6 +2437,26 @@ do -- SET_UNIT
     end
 
     return CountU
+  end
+  
+  --- Gets the alive set.
+  -- @param #SET_UNIT self
+  -- @return #table Table of SET objects
+  -- @return #SET_UNIT AliveSet 
+  function SET_UNIT:GetAliveSet()
+
+    local AliveSet = SET_UNIT:New()
+
+    -- Clean the Set before returning with only the alive Groups.
+    for GroupName, GroupObject in pairs(self.Set) do    
+      local GroupObject=GroupObject --Wrapper.Client#CLIENT
+      
+      if GroupObject and GroupObject:IsAlive() then      
+        AliveSet:Add(GroupName, GroupObject)
+      end
+    end
+
+    return AliveSet.Set or {}, AliveSet
   end
   
   --- [Internal] Private function for use of continous zone filter
@@ -2808,53 +2853,51 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @return Core.Point#COORDINATE The center coordinate of all the units in the set, including heading in degrees and speed in mps in case of moving units.
   function SET_UNIT:GetCoordinate()
-
-    local Coordinate = self:GetRandom():GetCoordinate()
-    --self:F({Coordinate:GetVec3()})
     
-    
-    local x1 = Coordinate.x
-    local x2 = Coordinate.x
-    local y1 = Coordinate.y
-    local y2 = Coordinate.y
-    local z1 = Coordinate.z
-    local z2 = Coordinate.z
-    local MaxVelocity = 0
-    local AvgHeading = nil
-    local MovingCount = 0
-
-    for UnitName, UnitData in pairs( self:GetSet() ) do
-
-      local Unit = UnitData -- Wrapper.Unit#UNIT
-      local Coordinate = Unit:GetCoordinate()
-
-      x1 = (Coordinate.x < x1) and Coordinate.x or x1
-      x2 = (Coordinate.x > x2) and Coordinate.x or x2
-      y1 = (Coordinate.y < y1) and Coordinate.y or y1
-      y2 = (Coordinate.y > y2) and Coordinate.y or y2
-      z1 = (Coordinate.y < z1) and Coordinate.z or z1
-      z2 = (Coordinate.y > z2) and Coordinate.z or z2
-
-      local Velocity = Coordinate:GetVelocity()
-      if Velocity ~= 0 then
-        MaxVelocity = (MaxVelocity < Velocity) and Velocity or MaxVelocity
-        local Heading = Coordinate:GetHeading()
-        AvgHeading = AvgHeading and (AvgHeading + Heading) or Heading
-        MovingCount = MovingCount + 1
+    local function GetSetVec3(units)
+      -- Init.
+      local x=0 
+      local y=0 
+      local z=0 
+      local n=0
+      -- Loop over all units.
+      for _,unit in pairs(units) do
+        local vec3=nil --DCS#Vec3
+        if unit and unit:IsAlive() then
+          vec3 = unit:GetVec3()
+        end
+        if vec3 then
+          -- Sum up posits.
+          x=x+vec3.x
+          y=y+vec3.y
+          z=z+vec3.z
+          -- Increase counter.
+          n=n+1
+        end
       end
+      if n>0 then
+        -- Average.
+        local Vec3={x=x/n, y=y/n, z=z/n} --DCS#Vec3
+        return Vec3
+      end
+      return nil
+    end
+    
+    local Coordinate = nil
+    local Vec3 = GetSetVec3(self.Set)
+    if Vec3 then
+      Coordinate = COORDINATE:NewFromVec3(Vec3)
     end
 
-    AvgHeading = AvgHeading and (AvgHeading / MovingCount)
+    if Coordinate then
+      local heading = self:GetHeading() or 0
+      local velocity = self:GetVelocity() or 0
+      Coordinate:SetHeading( heading )
+      Coordinate:SetVelocity( velocity )
+      self:I(UTILS.PrintTableToLog(Coordinate))
+    end
 
-    Coordinate.x = (x2 - x1) / 2 + x1
-    Coordinate.y = (y2 - y1) / 2 + y1
-    Coordinate.z = (z2 - z1) / 2 + z1
-    Coordinate:SetHeading( AvgHeading )
-    Coordinate:SetVelocity( MaxVelocity )
-
-    self:F( { Coordinate = Coordinate } )
     return Coordinate
-
   end
 
   --- Get the maximum velocity of the SET_UNIT.
@@ -3231,7 +3274,8 @@ do -- SET_STATIC
   --    * @{#SET_STATIC.FilterCategories}: Builds the SET_STATIC with the units belonging to the category(ies).
   --    * @{#SET_STATIC.FilterTypes}: Builds the SET_STATIC with the units belonging to the unit type(s).
   --    * @{#SET_STATIC.FilterCountries}: Builds the SET_STATIC with the units belonging to the country(ies).
-  --    * @{#SET_STATIC.FilterPrefixes}: Builds the SET_STATIC with the units containing the same string(s) in their name. **ATTENTION** bad naming convention as this *does not** only filter *prefixes*.
+  --    * @{#SET_STATIC.FilterPrefixes}: Builds the SET_STATIC with the units containing the same string(s) in their name. **Attention!** LUA regular expression apply here, so special characters in names like minus, dot, hash (#) etc might lead to unexpected results. 
+  -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
   --    * @{#SET_STATIC.FilterZones}: Builds the SET_STATIC with the units within a @{Core.Zone#ZONE}.
   --    
   -- Once the filter criteria have been set for the SET_STATIC, you can start filtering using:
@@ -3988,7 +4032,8 @@ do -- SET_CLIENT
   --    * @{#SET_CLIENT.FilterCategories}: Builds the SET_CLIENT with the clients belonging to the category(ies).
   --    * @{#SET_CLIENT.FilterTypes}: Builds the SET_CLIENT with the clients belonging to the client type(s).
   --    * @{#SET_CLIENT.FilterCountries}: Builds the SET_CLIENT with the clients belonging to the country(ies).
-  --    * @{#SET_CLIENT.FilterPrefixes}: Builds the SET_CLIENT with the clients containing the same string(s) in their unit/pilot name. **ATTENTION!** Bad naming convention as this *does not* only filter *prefixes*.
+  --    * @{#SET_CLIENT.FilterPrefixes}: Builds the SET_CLIENT with the clients containing the same string(s) in their unit/pilot name. **Attention!** LUA regular expression apply here, so special characters in names like minus, dot, hash (#) etc might lead to unexpected results. 
+  -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
   --    * @{#SET_CLIENT.FilterActive}: Builds the SET_CLIENT with the units that are only active. Units that are inactive (late activation) won't be included in the set!
   --    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Core.Zone#ZONE}.
   --    
@@ -4017,8 +4062,8 @@ do -- SET_CLIENT
       Countries = nil,
       ClientPrefixes = nil,
       Zones = nil,
-  	  Playernames = nil,
-  	  Callsigns = nil,
+      Playernames = nil,
+      Callsigns = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -4304,6 +4349,8 @@ do -- SET_CLIENT
       self:UnHandleEvent(EVENTS.Birth)
       self:UnHandleEvent(EVENTS.Dead)
       self:UnHandleEvent(EVENTS.Crash)
+      --self:UnHandleEvent(EVENTS.PlayerEnterUnit)
+      --self:UnHandleEvent(EVENTS.PlayerLeaveUnit)
       
       if self.Filter.Zones and self.ZoneTimer and self.ZoneTimer:IsRunning() then
         self.ZoneTimer:Stop()
@@ -4319,17 +4366,57 @@ do -- SET_CLIENT
   function SET_CLIENT:FilterStart()
 
     if _DATABASE then
-      self:_FilterStart()
       self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
       self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
       self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+      --self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventPlayerEnterUnit)
+      --self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventPlayerLeaveUnit)
+      --self:SetEventPriority(1)
       if self.Filter.Zones then
         self.ZoneTimer = TIMER:New(self._ContinousZoneFilter,self)
         local timing = self.ZoneTimerInterval or 30
         self.ZoneTimer:Start(timing,timing)
       end
+      self:_FilterStart()
     end
 
+    return self
+  end
+  
+  --- Handle CA slots addition
+  -- @param #SET_CLIENT self
+  -- @param Core.Event#EVENTDATA Event
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:_EventPlayerEnterUnit(Event)
+    self:I( "_EventPlayerEnterUnit" )
+    if Event.IniDCSUnit then
+      if Event.IniObjectCategory == 1 and Event.IniGroup and Event.IniGroup:IsGround() then
+        -- CA Slot entered
+        local ObjectName, Object = self:AddInDatabase( Event )
+        self:I( ObjectName, UTILS.PrintTableToLog(Object) )
+        if Object and self:IsIncludeObject( Object ) then
+          self:Add( ObjectName, Object )
+        end
+      end
+    end
+    return self
+  end
+  
+  --- Handle CA slots removal
+  -- @param #SET_CLIENT self
+  -- @param Core.Event#EVENTDATA Event
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:_EventPlayerLeaveUnit(Event)
+    self:I( "_EventPlayerLeaveUnit" )
+    if Event.IniDCSUnit then
+      if Event.IniObjectCategory == 1 and Event.IniGroup and Event.IniGroup:IsGround() then
+        -- CA Slot left
+        local ObjectName, Object = self:FindInDatabase( Event )
+        if ObjectName then
+          self:Remove( ObjectName )
+        end
+      end
+    end
     return self
   end
 
@@ -4535,45 +4622,45 @@ do -- SET_CLIENT
         MClientInclude = MClientInclude and MClientPrefix
       end
 
-		if self.Filter.Zones then
-		  local MClientZone = false
-		  for ZoneName, Zone in pairs( self.Filter.Zones ) do
-			self:T3( "Zone:", ZoneName )
-			local unit = MClient:GetClientGroupUnit()
-			if unit and unit:IsInZone(Zone) then
-			  MClientZone = true
-			end
-		  end
-		  MClientInclude = MClientInclude and MClientZone
-		end
-		
-		if self.Filter.Playernames then
-			local MClientPlayername = false
-			local playername = MClient:GetPlayerName() or "Unknown"
-			--self:T(playername)
-			for _,_Playername in pairs(self.Filter.Playernames) do
-				if playername and string.find(playername,_Playername) then
-					MClientPlayername = true
-				end
-			end
-			self:T( { "Evaluated Playername", MClientPlayername } )
-			MClientInclude = MClientInclude and MClientPlayername
-		end
-		
-		if self.Filter.Callsigns then
-			local MClientCallsigns = false
-			local callsign = MClient:GetCallsign()
-			--self:T(callsign)
-			for _,_Callsign in pairs(self.Filter.Callsigns) do
-				if callsign and string.find(callsign,_Callsign) then
-					MClientCallsigns = true
-				end
-			end
-			self:T( { "Evaluated Callsign", MClientCallsigns } )
-			MClientInclude = MClientInclude and MClientCallsigns
-		end
-		
-	end
+    if self.Filter.Zones then
+      local MClientZone = false
+      for ZoneName, Zone in pairs( self.Filter.Zones ) do
+      self:T3( "Zone:", ZoneName )
+      local unit = MClient:GetClientGroupUnit()
+      if unit and unit:IsInZone(Zone) then
+        MClientZone = true
+      end
+      end
+      MClientInclude = MClientInclude and MClientZone
+    end
+    
+    if self.Filter.Playernames then
+      local MClientPlayername = false
+      local playername = MClient:GetPlayerName() or "Unknown"
+      --self:T(playername)
+      for _,_Playername in pairs(self.Filter.Playernames) do
+        if playername and string.find(playername,_Playername) then
+          MClientPlayername = true
+        end
+      end
+      self:T( { "Evaluated Playername", MClientPlayername } )
+      MClientInclude = MClientInclude and MClientPlayername
+    end
+    
+    if self.Filter.Callsigns then
+      local MClientCallsigns = false
+      local callsign = MClient:GetCallsign()
+      --self:I(callsign)
+      for _,_Callsign in pairs(self.Filter.Callsigns) do
+        if callsign and string.find(callsign,_Callsign,1,true) then
+          MClientCallsigns = true
+        end
+      end
+      self:T( { "Evaluated Callsign", MClientCallsigns } )
+      MClientInclude = MClientInclude and MClientCallsigns
+    end
+    
+  end
     self:T2( MClientInclude )
     return MClientInclude
   end
@@ -4603,7 +4690,8 @@ do -- SET_PLAYER
   --    * @{#SET_PLAYER.FilterCategories}: Builds the SET_PLAYER with the clients belonging to the category(ies).
   --    * @{#SET_PLAYER.FilterTypes}: Builds the SET_PLAYER with the clients belonging to the client type(s).
   --    * @{#SET_PLAYER.FilterCountries}: Builds the SET_PLAYER with the clients belonging to the country(ies).
-  --    * @{#SET_PLAYER.FilterPrefixes}: Builds the SET_PLAYER with the clients sharing the same string(s) in their unit/pilot name. **ATTENTION** Bad naming convention as this *does not* only filter prefixes.
+  --    * @{#SET_PLAYER.FilterPrefixes}: Builds the SET_PLAYER with the clients sharing the same string(s) in their unit/pilot name. **Attention!** LUA regular expression apply here, so special characters in names like minus, dot, hash (#) etc might lead to unexpected results. 
+  -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
   --
   -- Once the filter criteria have been set for the SET_PLAYER, you can start filtering using:
   --
@@ -5380,7 +5468,8 @@ do -- SET_CARGO
   -- Filter criteria are defined by:
   --
   --    * @{#SET_CARGO.FilterCoalitions}: Builds the SET_CARGO with the cargos belonging to the coalition(s).
-  --    * @{#SET_CARGO.FilterPrefixes}: Builds the SET_CARGO with the cargos containing the same string(s). **ATTENTION** Bad naming convention as this *does not* only filter *prefixes*.
+  --    * @{#SET_CARGO.FilterPrefixes}: Builds the SET_CARGO with the cargos containing the same string(s). **Attention!** LUA regular expression apply here, so special characters in names like minus, dot, hash (#) etc might lead to unexpected results. 
+  -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
   --    * @{#SET_CARGO.FilterTypes}: Builds the SET_CARGO with the cargos belonging to the cargo type(s).
   --    * @{#SET_CARGO.FilterCountries}: Builds the SET_CARGO with the cargos belonging to the country(ies).
   --
@@ -5456,7 +5545,7 @@ do -- SET_CARGO
 
   --- (R2.1) Remove CARGOs from SET_CARGO.
   -- @param Core.Set#SET_CARGO self
-  -- @param Wrapper.Cargo#CARGO RemoveCargoNames A single name or an array of CARGO names.
+  -- @param Cargo.Cargo#CARGO RemoveCargoNames A single name or an array of CARGO names.
   -- @return Core.Set#SET_CARGO self
   function SET_CARGO:RemoveCargosByName( RemoveCargoNames ) -- R2.1
 
@@ -5472,7 +5561,7 @@ do -- SET_CARGO
   --- (R2.1) Finds a Cargo based on the Cargo Name.
   -- @param #SET_CARGO self
   -- @param #string CargoName
-  -- @return Wrapper.Cargo#CARGO The found Cargo.
+  -- @return Cargo.Cargo#CARGO The found Cargo.
   function SET_CARGO:FindCargo( CargoName ) -- R2.1
 
     local CargoFound = self.Set[CargoName]
@@ -5615,7 +5704,7 @@ do -- SET_CARGO
   --- (R2.1) Iterate the SET_CARGO while identifying the nearest @{Cargo.Cargo#CARGO} from a @{Core.Point#POINT_VEC2}.
   -- @param #SET_CARGO self
   -- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest @{Cargo.Cargo#CARGO}.
-  -- @return Wrapper.Cargo#CARGO The closest @{Cargo.Cargo#CARGO}.
+  -- @return Cargo.Cargo#CARGO The closest @{Cargo.Cargo#CARGO}.
   function SET_CARGO:FindNearestCargoFromPointVec2( PointVec2 ) -- R2.1
     self:F2( PointVec2 )
 
@@ -5802,7 +5891,8 @@ do -- SET_ZONE
   -- You can set filter criteria to build the collection of zones in SET_ZONE.
   -- Filter criteria are defined by:
   --
-  --    * @{#SET_ZONE.FilterPrefixes}: Builds the SET_ZONE with the zones having a certain text pattern in their name. **ATTENTION!** Bad naming convention as this *does not* only filter *prefixes*.
+  --    * @{#SET_ZONE.FilterPrefixes}: Builds the SET_ZONE with the zones having a certain text pattern in their name. **Attention!** LUA regular expression apply here, so special characters in names like minus, dot, hash (#) etc might lead to unexpected results. 
+  -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
   --
   -- Once the filter criteria have been set for the SET_ZONE, you can start filtering using:
   --
@@ -5826,6 +5916,7 @@ do -- SET_ZONE
     },
       FilterMeta = {
     },
+    Checktime = 5,
   }
 
   --- Creates a new SET_ZONE object, building a set of zones.
@@ -6036,7 +6127,29 @@ do -- SET_ZONE
 
     return self
   end
-
+  
+  --- Get the average aggregated coordinate of this set of zones.
+  -- @param #SET_ZONE self
+  -- @return Core.Point#COORDINATE
+  function SET_ZONE:GetAverageCoordinate()
+    local x,y,z = 0,0,0
+    local count = 0
+    for _,_zone in pairs(self.Set) do
+      local zone=_zone --Core.Zone#ZONE
+      local vec3 = zone:GetVec3()
+      x = x + vec3.x
+      y = y + vec3.y
+      z = z + vec3.z
+      count = count + 1
+    end
+    if count > 1 then
+      x = x/count
+      y = y/count
+      z = z/count
+    end
+    local coord = COORDINATE:New(x,y,z)
+    return coord
+  end
 
   --- Private function.
   -- @param #SET_ZONE self
@@ -6144,7 +6257,170 @@ do -- SET_ZONE
 
     return zmin, dmin
   end  
-
+  
+  --- Set the check time for SET_ZONE:Trigger()
+  -- @param #SET_ZONE self
+  -- @param #number seconds Check every seconds for objects entering or leaving the zone. Defaults to 5 secs.
+  -- @return #SET_ZONE self
+  function SET_ZONE:SetCheckTime(seconds)
+    self.Checktime = seconds or 5
+    return self
+  end
+  
+  --- Start watching if the Object or Objects move into or out of our set of zones.
+  -- @param #SET_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Objects Object or Objects to watch, can be of type UNIT, GROUP, CLIENT, or SET\_UNIT, SET\_GROUP, SET\_CLIENT
+  -- @return #SET_ZONE self
+  -- @usage
+  --          -- Create a SET_GROUP and a SET_ZONE for this:
+  -- 
+  --          local groupset = SET_GROUP:New():FilterPrefixes("Aerial"):FilterStart()
+  --          
+  --          -- Trigger will check each zone of the SET_ZONE every 5 secs for objects entering or leaving from the groupset
+  --          local zoneset = SET_ZONE:New():FilterPrefixes("Target Zone"):FilterOnce():Trigger(groupset)
+  --          
+  --          -- Draw zones on map so we see what's going on
+  --          zoneset:ForEachZone(
+  --            function(zone)
+  --              zone:DrawZone(-1, {0,1,0}, Alpha, FillColor, FillAlpha, 4, ReadOnly)
+  --            end 
+  --          )
+  --          
+  --          -- This FSM function will be called for entering objects
+  --          function zoneset:OnAfterEnteredZone(From,Event,To,Controllable,Zone)
+  --            MESSAGE:New("Group "..Controllable:GetName() .. " entered zone "..Zone:GetName(),10,"Set Trigger"):ToAll()
+  --          end
+  --          
+  --          -- This FSM function will be called for leaving objects
+  --          function zoneset:OnAfterLeftZone(From,Event,To,Controllable,Zone)
+  --            MESSAGE:New("Group "..Controllable:GetName() .. " left zone "..Zone:GetName(),10,"Set Trigger"):ToAll()
+  --          end
+  --          
+  --          -- Stop watching after 1 hour
+  --          zoneset:__TriggerStop(3600)
+  function SET_ZONE:Trigger(Objects)
+    --self:I("Added Set_Zone Trigger")
+    self:AddTransition("*","TriggerStart","TriggerRunning")
+    self:AddTransition("*","EnteredZone","*")
+    self:AddTransition("*","LeftZone","*")
+    self:AddTransition("*","TriggerRunCheck","*")
+    self:AddTransition("*","TriggerStop","TriggerStopped")
+    self:TriggerStart()
+    self.checkobjects = Objects
+    if UTILS.IsInstanceOf(Objects,"SET_BASE") then
+      self.objectset = Objects.Set
+    else
+      self.objectset = {Objects}
+    end
+    self:_TriggerCheck(true)
+    self:__TriggerRunCheck(self.Checktime)
+    return self
+    
+    ------------------------
+    --- Pseudo Functions ---
+    ------------------------
+    
+    --- Triggers the FSM event "TriggerStop". Stops the SET_ZONE Trigger.
+    -- @function [parent=#SET_ZONE] TriggerStop
+    -- @param #SET_ZONE self
+  
+    --- Triggers the FSM event "TriggerStop" after a delay. 
+    -- @function [parent=#SET_ZONE] __TriggerStop
+    -- @param #SET_ZONE self
+    -- @param #number delay Delay in seconds.
+    
+    --- On After "EnteredZone" event. An observed object has entered the zone.
+    -- @function [parent=#SET_ZONE] OnAfterEnteredZone
+    -- @param #SET_ZONE self
+    -- @param #string From From state.
+    -- @param #string Event Event.
+    -- @param #string To To state.
+    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The controllable entering the zone.
+    -- @param Core.Zone#ZONE_BASE Zone The zone entered.
+  
+    --- On After "LeftZone" event. An observed object has left the zone.
+    -- @function [parent=#SET_ZONE] OnAfterLeftZone
+    -- @param #SET_ZONE self
+    -- @param #string From From state.
+    -- @param #string Event Event.
+    -- @param #string To To state.
+    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The controllable leaving the zone.
+    -- @param Core.Zone#ZONE_BASE Zone The zone left.
+  end
+  
+  --- (Internal) Check the assigned objects for being in/out of the zone
+  -- @param #SET_ZONE self
+  -- @param #boolean fromstart If true, do the init of the objects
+  -- @return #SET_ZONE self
+  function SET_ZONE:_TriggerCheck(fromstart)
+    --self:I("_TriggerCheck | FromStart = "..tostring(fromstart))
+    if fromstart then
+      for _,_object in pairs(self.objectset) do
+        local obj = _object -- Wrapper.Controllable#CONTROLLABLE
+        if obj and obj:IsAlive() then
+          for _,_zone in pairs(self.Set) do
+            if not obj.TriggerInZone then obj.TriggerInZone = {} end
+            if _zone:IsCoordinateInZone(obj:GetCoordinate()) then
+              obj.TriggerInZone[_zone.ZoneName] = true
+            else
+              obj.TriggerInZone[_zone.ZoneName] = false
+            end
+            --self:I("Object "..obj:GetName().." is in zone = "..tostring(obj.TriggerInZone[_zone.ZoneName]))
+          end
+        end
+      end
+    else
+      for _,_object in pairs(self.objectset) do
+        local obj = _object -- Wrapper.Controllable#CONTROLLABLE
+        if obj and obj:IsAlive() then
+          for _,_zone in pairs(self.Set) do
+            -- Check for pop-up objects
+            if not obj.TriggerInZone then
+              -- has not been tagged previously - wasn't in set! 
+              obj.TriggerInZone = {}
+            end
+            if not obj.TriggerInZone[_zone.ZoneName] then
+              -- has not been tagged previously - wasn't in set! 
+              obj.TriggerInZone[_zone.ZoneName] = false 
+            end
+            -- is obj in zone?
+            local inzone = _zone:IsCoordinateInZone(obj:GetCoordinate())
+            --self:I("Object "..obj:GetName().." is in zone: "..tostring(inzone))
+            if inzone and not obj.TriggerInZone[_zone.ZoneName] then
+              -- wasn't in zone before
+              --self:I("Newly entered")
+              self:__EnteredZone(0.5,obj,_zone)
+              obj.TriggerInZone[_zone.ZoneName] = true
+            elseif (not inzone) and obj.TriggerInZone[_zone.ZoneName] then
+              -- has left the zone
+              --self:I("Newly left")
+              self:__LeftZone(0.5,obj,_zone)
+              obj.TriggerInZone[_zone.ZoneName] = false
+            else
+              --self:I("Not left or not entered, or something went wrong!")
+            end
+          end
+        end
+      end
+    end 
+    return self
+  end
+  
+  --- (Internal) Check the assigned objects for being in/out of the zone
+  -- @param #SET_ZONE self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string to
+  -- @return #SET_ZONE self
+  function SET_ZONE:onafterTriggerRunCheck(From,Event,To)
+    --self:I("onafterTriggerRunCheck")
+    --self:I({From, Event, To})  
+    if self:GetState() ~= "TriggerStopped" then
+      self:_TriggerCheck()
+      self:__TriggerRunCheck(self.Checktime)
+    end
+    return self
+  end
 end
 
 do -- SET_ZONE_GOAL
@@ -6171,7 +6447,8 @@ do -- SET_ZONE_GOAL
   -- You can set filter criteria to build the collection of zones in SET_ZONE_GOAL.
   -- Filter criteria are defined by:
   --
-  --    * @{#SET_ZONE_GOAL.FilterPrefixes}: Builds the SET_ZONE_GOAL with the zones having a certain text pattern in their name. **ATTENTION!** Bad naming convention as this *does not* only filter *prefixes*.
+  --    * @{#SET_ZONE_GOAL.FilterPrefixes}: Builds the SET_ZONE_GOAL with the zones having a certain text pattern in their name. **Attention!** LUA regular expression apply here, so special characters in names like minus, dot, hash (#) etc might lead to unexpected results. 
+  -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
   --
   -- Once the filter criteria have been set for the SET_ZONE_GOAL, you can start filtering using:
   --
@@ -6483,7 +6760,8 @@ do -- SET_OPSZONE
   -- You can set filter criteria to build the collection of zones in SET_OPSZONE.
   -- Filter criteria are defined by:
   --
-  --    * @{#SET_OPSZONE.FilterPrefixes}: Builds the SET_OPSZONE with the zones having a certain text pattern in their name. **ATTENTION!** Bad naming convention as this *does not* only filter *prefixes*.
+  --    * @{#SET_OPSZONE.FilterPrefixes}: Builds the SET_OPSZONE with the zones having a certain text pattern in their name. **Attention!** LUA regular expression apply here, so special characters in names like minus, dot, hash (#) etc might lead to unexpected results. 
+  -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
   --
   -- Once the filter criteria have been set for the SET_OPSZONE, you can start filtering using:
   --
@@ -6949,7 +7227,8 @@ do -- SET_OPSGROUP
   --    * @{#SET_OPSGROUP.FilterCoalitions}: Builds the SET_OPSGROUP with the groups belonging to the coalition(s).
   --    * @{#SET_OPSGROUP.FilterCategories}: Builds the SET_OPSGROUP with the groups belonging to the category(ies).
   --    * @{#SET_OPSGROUP.FilterCountries}: Builds the SET_OPSGROUP with the groups belonging to the country(ies).
-  --    * @{#SET_OPSGROUP.FilterPrefixes}: Builds the SET_OPSGROUP with the groups *containing* the given string in the group name. **Attention!** Bad naming convention, as this not really filtering *prefixes*.
+  --    * @{#SET_OPSGROUP.FilterPrefixes}: Builds the SET_OPSGROUP with the groups *containing* the given string in the group name. **Attention!** LUA regular expression apply here, so special characters in names like minus, dot, hash (#) etc might lead to unexpected results. 
+  -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
   --    * @{#SET_OPSGROUP.FilterActive}: Builds the SET_OPSGROUP with the groups that are only active. Groups that are inactive (late activation) won't be included in the set!
   --
   -- For the Category Filter, extra methods have been added:

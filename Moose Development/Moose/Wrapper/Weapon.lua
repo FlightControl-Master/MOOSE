@@ -14,7 +14,7 @@
 --
 -- ## Example Missions:
 --
--- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Wrapper%20-%20Weapon).
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/WRAPPER%20-%20Weapon).
 --
 -- ===
 --
@@ -223,7 +223,15 @@ function WEAPON:New(WeaponObject)
   
   -- Set log ID.
   self.lid=string.format("[%s] %s | ", self.typeName, self.name)
-  
+
+  if self.launcherUnit then
+    self.releaseHeading = self.launcherUnit:GetHeading()
+    self.releaseAltitudeASL = self.launcherUnit:GetAltitude()
+    self.releaseAltitudeAGL = self.launcherUnit:GetAltitude(true)
+    self.releaseCoordinate = self.launcherUnit:GetCoordinate()
+    self.releasePitch = self.launcherUnit:GetPitch()
+  end
+
   -- Set default parameters
   self:SetTimeStepTrack()
   self:SetDistanceInterceptPoint()
@@ -367,7 +375,7 @@ function WEAPON:GetTarget()
     if object then
     
       -- Get object category.
-      local category=object:getCategory()
+      local category=Object.getCategory(object)
       
       --Target name
       local name=object:getName()
@@ -552,6 +560,52 @@ function WEAPON:GetImpactCoordinate()
   return self.impactCoord
 end
 
+--- Get the heading on which the weapon was released
+-- @param #WEAPON self
+-- @param #bool AccountForMagneticInclination (Optional) If true will account for the magnetic declination of the current map. Default is true
+-- @return #number Heading
+function WEAPON:GetReleaseHeading(AccountForMagneticInclination)
+    AccountForMagneticInclination = AccountForMagneticInclination or true
+    if AccountForMagneticInclination then return UTILS.ClampAngle(self.releaseHeading - UTILS.GetMagneticDeclination()) else return UTILS.ClampAngle(self.releaseHeading) end
+end
+
+--- Get the altitude above sea level at which the weapon was released
+-- @param #WEAPON self
+-- @return #number Altitude in meters
+function WEAPON:GetReleaseAltitudeASL()
+    return self.releaseAltitudeASL
+end
+
+--- Get the altitude above ground level at which the weapon was released
+-- @param #WEAPON self
+-- @return #number Altitude in meters
+function WEAPON:GetReleaseAltitudeAGL()
+    return self.releaseAltitudeAGL
+end
+
+--- Get the coordinate where the weapon was released
+-- @param #WEAPON self
+-- @return Core.Point#COORDINATE Impact coordinate (if any).
+function WEAPON:GetReleaseCoordinate()
+    return self.releaseCoordinate
+end
+
+--- Get the pitch of the unit when the weapon was released
+-- @param #WEAPON self
+-- @return #number Degrees
+function WEAPON:GetReleasePitch()
+    return self.releasePitch
+end
+
+--- Get the heading of the weapon when it impacted. Note that this might not exist if the weapon has not impacted yet!
+-- @param #WEAPON self
+-- @param #bool AccountForMagneticInclination (Optional) If true will account for the magnetic declination of the current map. Default is true
+-- @return #number Heading
+function WEAPON:GetImpactHeading(AccountForMagneticInclination)
+    AccountForMagneticInclination = AccountForMagneticInclination or true
+    if AccountForMagneticInclination then return UTILS.ClampAngle(self.impactHeading - UTILS.GetMagneticDeclination()) else return self.impactHeading end
+end
+
 --- Check if weapon is in the air. Obviously not really useful for torpedos. Well, then again, this is DCS...
 -- @param #WEAPON self
 -- @return #boolean If `true`, weapon is in the air and `false` if not. Returns `nil` if weapon object itself is `nil`.
@@ -712,7 +766,10 @@ function WEAPON:_TrackWeapon(time)
     
     -- Update coordinate.
     self.coordinate:UpdateFromVec3(self.vec3)
-    
+
+    -- Safe the last velocity of the weapon. This is needed to get the impact heading
+    self.last_velocity = self.weapon:getVelocity()
+
     -- Keep on tracking by returning the next time below.
     self.tracking=true
     
@@ -781,7 +838,10 @@ function WEAPON:_TrackWeapon(time)
     
     -- Safe impact coordinate.
     self.impactCoord=COORDINATE:NewFromVec3(self.vec3)
-    
+
+    -- Safe impact heading, using last_velocity because self:GetVelocityVec3() is no longer possible
+    self.impactHeading =  UTILS.VecHdg(self.last_velocity)
+
     -- Mark impact point on F10 map.
     if self.impactMark then
       self.impactCoord:MarkToAll(string.format("Impact point of weapon %s\ntype=%s\nlauncher=%s", self.name, self.typeName, self.launcherName))

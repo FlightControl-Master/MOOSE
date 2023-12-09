@@ -30,27 +30,32 @@
 -- 
 -- ### Contributions: 
 -- 
---   * [**Entropy**](https://forums.eagle.ru/member.php?u=111471), **Afinegan**: Came up with the requirement for AIOnOff().
--- 
+--   * **Entropy**, **Afinegan**: Came up with the requirement for AIOnOff().
+--   * **Applevangelist**: various
+--   
 -- ===
 -- 
 -- @module Wrapper.Group
 -- @image Wrapper_Group.JPG
 
-
---- @type GROUP
+---
+-- @type GROUP
 -- @extends Wrapper.Controllable#CONTROLLABLE
 -- @field #string GroupName The name of the group.
 
 
 --- Wrapper class of the DCS world Group object.
 -- 
+-- ## Finding groups
+-- 
 -- The GROUP class provides the following functions to retrieve quickly the relevant GROUP instance:
 --
 --  * @{#GROUP.Find}(): Find a GROUP instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Group object.
 --  * @{#GROUP.FindByName}(): Find a GROUP instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using a DCS Group name.
+--  * @{#GROUP.FindByMatching}(): Find a GROUP instance from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using pattern matching.
+--  * @{#GROUP.FindAllByMatching}(): Find all GROUP instances from the global _DATABASE object (an instance of @{Core.Database#DATABASE}) using pattern matching.
 --
--- # 1. Tasking of groups
+-- ## Tasking of groups
 --
 -- A GROUP is derived from the wrapper class CONTROLLABLE (@{Wrapper.Controllable#CONTROLLABLE}). 
 -- See the @{Wrapper.Controllable} task methods section for a description of the task methods.
@@ -91,7 +96,7 @@
 --          
 --          Tasks[#Tasks+1] = HeliGroup:TaskFunction( "_Resume", { "''" } )
 --          
---          --- @param Wrapper.Group#GROUP HeliGroup
+--          -- @param Wrapper.Group#GROUP HeliGroup
 --          function _Resume( HeliGroup )
 --            env.info( '_Resume' )
 --          
@@ -285,7 +290,7 @@ function GROUP:Find( DCSGroup )
   return GroupFound
 end
 
---- Find the created GROUP using the DCS Group Name.
+--- Find a GROUP using the DCS Group Name.
 -- @param #GROUP self
 -- @param #string GroupName The DCS Group Name.
 -- @return #GROUP The GROUP.
@@ -293,6 +298,55 @@ function GROUP:FindByName( GroupName )
 
   local GroupFound = _DATABASE:FindGroup( GroupName )
   return GroupFound
+end
+
+--- Find the first(!) GROUP matching using patterns. Note that this is **a lot** slower than `:FindByName()`!
+-- @param #GROUP self
+-- @param #string Pattern The pattern to look for. Refer to [LUA patterns](http://www.easyuo.com/openeuo/wiki/index.php/Lua_Patterns_and_Captures_(Regular_Expressions)) for regular expressions in LUA.
+-- @return #GROUP The GROUP.
+-- @usage
+--          -- Find a group with a partial group name
+--          local grp = GROUP:FindByMatching( "Apple" )
+--          -- will return e.g. a group named "Apple-1-1"
+--          
+--          -- using a pattern
+--          local grp = GROUP:FindByMatching( ".%d.%d$" )
+--          -- will return the first group found ending in "-1-1" to "-9-9", but not e.g. "-10-1"
+function GROUP:FindByMatching( Pattern )
+  local GroupFound = nil
+  
+  for name,group in pairs(_DATABASE.GROUPS) do
+    if string.match(name, Pattern ) then
+      GroupFound = group
+      break
+    end
+  end
+  
+  return GroupFound
+end
+
+--- Find all GROUP objects matching using patterns. Note that this is **a lot** slower than `:FindByName()`!
+-- @param #GROUP self
+-- @param #string Pattern The pattern to look for. Refer to [LUA patterns](http://www.easyuo.com/openeuo/wiki/index.php/Lua_Patterns_and_Captures_(Regular_Expressions)) for regular expressions in LUA.
+-- @return #table Groups Table of matching #GROUP objects found
+-- @usage
+--          -- Find all group with a partial group name
+--          local grptable = GROUP:FindAllByMatching( "Apple" )
+--          -- will return all groups with "Apple" in the name
+--          
+--          -- using a pattern
+--          local grp = GROUP:FindAllByMatching( ".%d.%d$" )
+--          -- will return the all groups found ending in "-1-1" to "-9-9", but not e.g. "-10-1" or "-1-10"
+function GROUP:FindAllByMatching( Pattern )
+  local GroupsFound = {}
+  
+  for name,group in pairs(_DATABASE.GROUPS) do
+    if string.match(name, Pattern ) then
+      GroupsFound[#GroupsFound+1] = group
+    end
+  end
+  
+  return GroupsFound
 end
 
 -- DCS Group methods support.
@@ -1103,6 +1157,7 @@ function GROUP:GetAverageCoordinate()
     local coord = COORDINATE:NewFromVec3(vec3)
     local Heading = self:GetHeading()
     coord.Heading = Heading
+    return coord
   else
     BASE:E( { "Cannot GetAverageCoordinate", Group = self, Alive = self:IsAlive() } )
     return nil
@@ -1852,7 +1907,7 @@ function GROUP:InitModex(modex)
   return self
 end
 
---- Respawn the @{Wrapper.Group} at a @{Point}.
+--- Respawn the @{Wrapper.Group} at a @{Core.Point}.
 -- The method will setup the new group template according the Init(Respawn) settings provided for the group.
 -- These settings can be provided by calling the relevant Init...() methods of the Group.
 -- 
@@ -2200,7 +2255,7 @@ end
 function GROUP:GetTaskMission()
   self:F2( self.GroupName )
 
-  return routines.utils.deepCopy( _DATABASE.Templates.Groups[self.GroupName].Template )
+  return UTILS.DeepCopy( _DATABASE.Templates.Groups[self.GroupName].Template )
 end
 
 --- Return the mission route of the group.
@@ -2209,7 +2264,7 @@ end
 function GROUP:GetTaskRoute()
   self:F2( self.GroupName )
 
-  return routines.utils.deepCopy( _DATABASE.Templates.Groups[self.GroupName].Template.route.points )
+  return UTILS.DeepCopy( _DATABASE.Templates.Groups[self.GroupName].Template.route.points )
 end
 
 --- Return the route of a group by using the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
@@ -2245,7 +2300,7 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
 
     for TPointID = Begin + 1, #Template.route.points - End do
       if Template.route.points[TPointID] then
-        Points[#Points+1] = routines.utils.deepCopy( Template.route.points[TPointID] )
+        Points[#Points+1] = UTILS.DeepCopy( Template.route.points[TPointID] )
         if Randomize then
           if not Radius then
             Radius = 500
@@ -2868,7 +2923,7 @@ function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
   return callsign
 end
 
----
+--- Set a GROUP to act as recovery tanker
 -- @param #GROUP self
 -- @param Wrapper.Group#GROUP CarrierGroup.
 -- @param #number Speed Speed in knots.
@@ -2894,3 +2949,37 @@ function GROUP:SetAsRecoveryTanker(CarrierGroup,Speed,ToKIAS,Altitude,Delay,Last
   
   return self  
 end
+
+--- Get a list of Link16 S/TN data from a GROUP. Can (as of Nov 2023) be obtained from F-18, F-16, F-15E (not the user flyable one) and A-10C-II groups.
+-- @param #GROUP self
+-- @return #table Table of data entries, indexed by unit name, each entry is a table containing STN, VCL (voice call label), VCN (voice call number), and Lead (#boolean, if true it's the flight lead)
+-- @return #string Report Formatted report of all data
+function GROUP:GetGroupSTN()
+  local tSTN = {} -- table
+  local units = self:GetUnits()
+  local gname = self:GetName()
+  gname = string.gsub(gname,"(#%d+)$","")
+  local report = REPORT:New()
+  report:Add("Link16 S/TN Report")
+  report:Add("Group: "..gname)
+  report:Add("==================")
+  for _,_unit in pairs(units) do
+   local unit = _unit -- Wrapper.Unit#UNIT
+   if unit and unit:IsAlive() then
+     local STN, VCL, VCN, Lead = unit:GetSTN()
+     local name = unit:GetName()
+     tSTN[name] = {
+      STN=STN,
+      VCL=VCL,
+      VCN=VCN,
+      Lead=Lead,
+     }
+     local lead = Lead == true and "(*)" or ""
+     report:Add(string.format("| %s%s %s %s",tostring(VCL),tostring(VCN),tostring(STN),lead))
+   end
+  end
+  report:Add("==================")
+  local text = report:Text()
+  return tSTN,text
+end
+

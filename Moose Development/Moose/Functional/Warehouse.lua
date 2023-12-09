@@ -742,7 +742,7 @@
 --
 -- ## Save Assets
 --
--- Saving asset data to file is achieved by the @{WAREHOUSE.Save}(*path*, *filename*) function. The parameter *path* specifies the path on the file system where the
+-- Saving asset data to file is achieved by the @{#WAREHOUSE.Save}(*path*, *filename*) function. The parameter *path* specifies the path on the file system where the
 -- warehouse data is saved. If you do not specify a path, the file is saved your the DCS installation root directory.
 -- The parameter *filename* is optional and defines the name of the saved file. By default this is automatically created from the warehouse id and name, for example
 -- "Warehouse-1234_Batumi.txt".
@@ -753,13 +753,13 @@
 --
 -- ### Automatic Save at Mission End
 --
--- The assets can be saved automatically when the mission is ended via the @{WAREHOUSE.SetSaveOnMissionEnd}(*path*, *filename*) function, i.e.
+-- The assets can be saved automatically when the mission is ended via the @{#WAREHOUSE.SetSaveOnMissionEnd}(*path*, *filename*) function, i.e.
 --
 --     warehouseBatumi:SetSaveOnMissionEnd("D:\\My Warehouse Data\\")
 --
 -- ## Load Assets
 --
--- Loading assets data from file is achieved by the @{WAREHOUSE.Load}(*path*, *filename*) function. The parameter *path* specifies the path on the file system where the
+-- Loading assets data from file is achieved by the @{#WAREHOUSE.Load}(*path*, *filename*) function. The parameter *path* specifies the path on the file system where the
 -- warehouse data is loaded from. If you do not specify a path, the file is loaded from your the DCS installation root directory.
 -- The parameter *filename* is optional and defines the name of the file to load. By default this is automatically generated from the warehouse id and name, for example
 -- "Warehouse-1234_Batumi.txt".
@@ -3616,9 +3616,10 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   end
 
   -- Print queue after processing requests.
-  self:_PrintQueue(self.queue, "Queue waiting")
-  self:_PrintQueue(self.pending, "Queue pending")
-
+  if self.verbosity > 2 then
+    self:_PrintQueue(self.queue, "Queue waiting")
+    self:_PrintQueue(self.pending, "Queue pending")
+  end
   -- Check fuel for all assets.
   --self:_CheckFuel()
 
@@ -5498,8 +5499,13 @@ function WAREHOUSE:onafterAssetDead(From, Event, To, asset, request)
       ---
   
       -- Remove dead group from cargo group set.
-      request.cargogroupset:Remove(groupname, NoTriggerEvent)
-      self:T(self.lid..string.format("Removed selfpropelled cargo %s: ncargo=%d.", groupname, request.cargogroupset:Count()))
+      if request.cargogroupset then
+        -- cargogroupset was nil for user case. Difficult to reproduce so we add a nil check.
+        request.cargogroupset:Remove(groupname, NoTriggerEvent)
+        self:T(self.lid..string.format("Removed selfpropelled cargo %s: ncargo=%d.", groupname, request.cargogroupset:Count()))
+      else
+        self:E(self.lid..string.format("ERROR: cargogroupset is nil for request ID=%s!", tostring(request.uid)))
+      end
   
     else
   
@@ -6767,7 +6773,7 @@ function WAREHOUSE:_UnitDead(deadunit, deadgroup, request)
   -- Dont trigger a Remove event for the group sets.
   local NoTriggerEvent=true
 
-  if not request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
+  if request.transporttype~=WAREHOUSE.TransportType.SELFPROPELLED then
 
     ---
     -- Complicated case: Dead unit could be:
@@ -7398,6 +7404,8 @@ function WAREHOUSE:_CheckRequestNow(request)
 
   -- Check if at least one (cargo) asset is available.
   if _nassets>0 then
+  
+    local asset=_assets[1] --#WAREHOUSE.Assetitem
 
     -- Get the attibute of the requested asset.
     _assetattribute=_assets[1].attribute
@@ -7408,11 +7416,24 @@ function WAREHOUSE:_CheckRequestNow(request)
     if _assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER then
     
       if self.airbase and self.airbase:GetCoalition()==self:GetCoalition() then
+      
+        -- Check if DCS warehouse of airbase has enough assets        
+        if self.airbase.storage then
+          local nS=self.airbase.storage:GetAmount(asset.unittype)
+          local nA=asset.nunits*request.nasset  -- Number of units requested
+          if nS<nA then
+            local text=string.format("Warehouse %s: Request denied! DCS Warehouse has only %d assets of type %s ==> NOT enough to spawn the requested %d asset units (%d groups)", 
+            self.alias, nS, asset.unittype, nA, request.nasset)
+            self:_InfoMessage(text, 5)            
+            return false
+          end
+        end
+        
     
         if self:IsRunwayOperational() or _assetairstart then
   
           if _assetairstart then
-            -- Airstart no need to check parking            
+            -- Airstart no need to check parking
           else
           
             -- Check parking.
@@ -7524,6 +7545,9 @@ function WAREHOUSE:_CheckRequestNow(request)
         self:_InfoMessage(text, 5)
         return false
       end
+      
+    elseif _assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER then
+
 
     end
 
@@ -7864,7 +7888,7 @@ function WAREHOUSE:_GetTerminal(_attribute, _category)
   -- Default terminal is "large".
   local _terminal=AIRBASE.TerminalType.OpenBig
 
-  if _attribute==WAREHOUSE.Attribute.AIR_FIGHTER then
+  if _attribute==WAREHOUSE.Attribute.AIR_FIGHTER or _attribute==WAREHOUSE.Attribute.AIR_UAV then
     -- Fighter ==> small.
     _terminal=AIRBASE.TerminalType.FighterAircraft
   elseif _attribute==WAREHOUSE.Attribute.AIR_BOMBER or _attribute==WAREHOUSE.Attribute.AIR_TRANSPORTPLANE or _attribute==WAREHOUSE.Attribute.AIR_TANKER or _attribute==WAREHOUSE.Attribute.AIR_AWACS then
@@ -8229,7 +8253,7 @@ end
 -- @return #number Request ID.
 function WAREHOUSE:_GetIDsFromGroupName(groupname)
 
-  ---@param #string text The text to analyse.
+  -- @param #string text The text to analyse.
   local function analyse(text)
 
     -- Get rid of #0001 tail from spawn.

@@ -17,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update July 2023
+-- @date Last Update Nov 2023
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -507,7 +507,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.57", -- #string
+  version = "0.2.59", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -971,6 +971,7 @@ AWACS.TaskStatus = {
 -- DONE - (WIP) Reporting
 -- DONE - Do not report non-airborne groups
 -- DONE - Added option for helos
+-- DONE - Added setting a coordinate for SRS
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -2987,7 +2988,7 @@ function AWACS:_Picture(Group,IsGeneral)
     
     if clustersAO == 0 and clustersEWR == 0 then
       -- clean
-      self:_NewRadioEntry(text,textScreen,GID,Outcome,true,true,false)
+      self:_NewRadioEntry(text,text,GID,Outcome,true,true,false)
     else
     
       if clustersAO > 0 then
@@ -6190,6 +6191,16 @@ function AWACS:onafterStatus(From, Event, To)
   
   -- Check on AUFTRAG status for CAP AI
   if self:Is("Running") and (awacsalive or self.AwacsInZone) then
+    
+      
+    -- update coord for SRS
+    
+    if self.AwacsSRS then
+      self.AwacsSRS:SetCoordinate(self.AwacsFG:GetCoordinate())
+      if self.TacticalSRS then
+        self.TacticalSRS:SetCoordinate(self.AwacsFG:GetCoordinate())
+      end
+    end
     
     self:_CheckAICAPOnStation()
     

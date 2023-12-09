@@ -4,7 +4,7 @@
 --
 -- The RANGE class enables easy set up of bombing and strafing ranges within DCS World.
 --
--- Implementation is based on the [Simple Range Script](https://forums.eagle.ru/showthread.php?t=157991) by [Ciribob](https://forums.eagle.ru/member.php?u=112175), which itself was motivated
+-- Implementation is based on the [Simple Range Script](https://forums.eagle.ru/showthread.php?t=157991) by Ciribob, which itself was motivated
 -- by a script by SNAFU [see here](https://forums.eagle.ru/showthread.php?t=109174).
 --
 -- [476th - Air Weapons Range Objects mod](http://www.476vfightergroup.com/downloads.php?do=file&id=287) is highly recommended for this class.
@@ -42,9 +42,9 @@
 --
 -- ===
 --
--- ### Author: **[funkyfranky](https://forums.eagle.ru/member.php?u=115026)**
+-- ### Author: **funkyfranky**
 --
--- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536), [Ciribob](https://forums.eagle.ru/member.php?u=112175)
+-- ### Contributions: FlightControl, Ciribob
 -- ### SRS Additions: Applevangelist
 -- 
 -- ===
@@ -105,6 +105,7 @@
 -- @field Sound.SRS#MSRSQUEUE controlsrsQ SRS queue for range controller. 
 -- @field Sound.SRS#MSRS instructmsrs SRS wrapper for range instructor.
 -- @field Sound.SRS#MSRSQUEUE instructsrsQ SRS queue for range instructor.
+-- @field #number Coalition Coalition side for the menu, if any.
 -- @extends Core.Fsm#FSM
 
 --- *Don't only practice your art, but force your way into its secrets; art deserves that, for it and knowledge can raise man to the Divine.* - Ludwig van Beethoven
@@ -355,7 +356,8 @@ RANGE = {
   targetsheet = nil,
   targetpath = nil,
   targetprefix = nil,
-}
+  Coalition = nil,
+  }
 
 --- Default range parameters.
 -- @type RANGE.Defaults
@@ -591,7 +593,7 @@ RANGE.MenuF10Root = nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version = "2.7.0"
+RANGE.version = "2.7.3"
 
 -- TODO list:
 -- TODO: Verbosity level for messages.
@@ -613,8 +615,9 @@ RANGE.version = "2.7.0"
 --- RANGE contructor. Creates a new RANGE object.
 -- @param #RANGE self
 -- @param #string RangeName Name of the range. Has to be unique. Will we used to create F10 menu items etc.
+-- @param #number Coalition (optional) Coalition of the range, if any, e.g. coalition.side.BLUE.
 -- @return #RANGE RANGE object.
-function RANGE:New( RangeName )
+function RANGE:New( RangeName, Coalition )
 
   -- Inherit BASE.
   local self = BASE:Inherit( self, FSM:New() ) -- #RANGE
@@ -622,7 +625,9 @@ function RANGE:New( RangeName )
   -- Get range name.
   -- TODO: make sure that the range name is not given twice. This would lead to problems in the F10 radio menu.
   self.rangename = RangeName or "Practice Range"
-
+  
+  self.Coalition = Coalition
+  
   -- Log id.
   self.lid = string.format( "RANGE %s | ", self.rangename )
 
@@ -1229,7 +1234,7 @@ function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume,
   return self
 end
 
---- (SRS) Set range control frequency and voice.
+--- (SRS) Set range control frequency and voice. Use `RANGE:SetSRS()` once first before using this function.
 -- @param #RANGE self
 -- @param #number frequency Frequency in MHz. Default 256 MHz.
 -- @param #number modulation Modulation, defaults to radio.modulation.AM.
@@ -1239,6 +1244,10 @@ end
 -- @param #string relayunitname Name of the unit used for transmission location.
 -- @return #RANGE self
 function RANGE:SetSRSRangeControl( frequency, modulation, voice, culture, gender, relayunitname )
+  if not self.instructmsrs then
+    self:E(self.lid.."Use myrange:SetSRS() once first before using myrange:SetSRSRangeControl!")
+    return self
+  end
   self.rangecontrolfreq = frequency or 256
   self.controlmsrs:SetFrequencies(self.rangecontrolfreq)
   self.controlmsrs:SetModulations(modulation or radio.modulation.AM)
@@ -1254,7 +1263,7 @@ function RANGE:SetSRSRangeControl( frequency, modulation, voice, culture, gender
   return self
 end
 
---- (SRS) Set range instructor frequency and voice.
+--- (SRS) Set range instructor frequency and voice. Use `RANGE:SetSRS()` once first before using this function.
 -- @param #RANGE self
 -- @param #number frequency Frequency in MHz. Default 305 MHz.
 -- @param #number modulation Modulation, defaults to radio.modulation.AM.
@@ -1264,6 +1273,10 @@ end
 -- @param #string relayunitname Name of the unit used for transmission location.
 -- @return #RANGE self
 function RANGE:SetSRSRangeInstructor( frequency, modulation, voice, culture, gender, relayunitname )
+  if not self.instructmsrs then
+    self:E(self.lid.."Use myrange:SetSRS() once first before using myrange:SetSRSRangeInstructor!")
+    return self
+  end
   self.instructorfreq = frequency or 305
   self.instructmsrs:SetFrequencies(self.instructorfreq)
   self.instructmsrs:SetModulations(modulation or radio.modulation.AM)
@@ -1745,10 +1758,16 @@ function RANGE:OnEventBirth( EventData )
 
     -- Reset current strafe status.
     self.strafeStatus[_uid] = nil
-
-    -- Add Menu commands after a delay of 0.1 seconds.
-    self:ScheduleOnce( 0.1, self._AddF10Commands, self, _unitName )
-
+    
+    if self.Coalition then
+      if EventData.IniCoalition == self.Coalition then
+        self:ScheduleOnce( 0.1, self._AddF10Commands, self, _unitName )
+      end
+    else
+      -- Add Menu commands after a delay of 0.1 seconds.
+      self:ScheduleOnce( 0.1, self._AddF10Commands, self, _unitName )
+    end
+    
     -- By default, some bomb impact points and do not flare each hit on target.
     self.PlayerSettings[_playername] = {} -- #RANGE.PlayerData
     self.PlayerSettings[_playername].smokebombimpact = self.defaultsmokebomb
@@ -2044,6 +2063,7 @@ function RANGE:OnEventShot( EventData )
     -- Attack parameters.
     local attackHdg=_unit:GetHeading()
     local attackAlt=_unit:GetHeight()
+    attackAlt = UTILS.MetersToFeet(attackAlt)
     local attackVel=_unit:GetVelocityKNOTS()    
 
     -- Tracking info and init of last bomb position.

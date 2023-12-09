@@ -1,0 +1,14 @@
+version: "3.5"
+
+services:
+  jekyll:
+    build:
+      context: ../../docs
+      dockerfile: ./Dockerfile
+    ports:
+      - 4000:4000
+    volumes:
+      - ../../docs:/usr/src/app
+    stdin_open: true
+    tty: true
+    command: bundle exec jekyll serve -H 0.0.0.0 -t --force_polling

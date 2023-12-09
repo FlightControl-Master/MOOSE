@@ -46,6 +46,11 @@
 --   * **Stop**: Stop the transport process.
 --   * **Monitor**: Monitor and take action.
 --
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- @field #AI_AIR
 AI_AIR = {
   ClassName = "AI_AIR",

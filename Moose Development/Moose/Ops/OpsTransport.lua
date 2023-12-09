@@ -1,8 +1,9 @@
---- **Ops** - Troop transport assignment for OPS groups.
+--- **Ops** - Transport assignment for OPS groups and storage.
 -- 
 -- ## Main Features:
 --
 --    * Transport troops from A to B
+--    * Transport of warehouse storage (fuel, weapons and equipment)
 --    * Supports ground, naval and airborne (airplanes and helicopters) units as carriers
 --    * Use combined forces (ground, naval, air) to transport the troops
 --    * Additional FSM events to hook into and customize your mission design
@@ -63,6 +64,7 @@
 -- @field Ops.Chief#CHIEF chief Chief of the transport.
 -- @field Ops.OpsZone#OPSZONE opszone OPS zone.
 -- @field #table requestID The ID of the queued warehouse request. Necessary to cancel the request if the transport was cancelled before the request is processed.
+-- @field #number cargocounter Running number to generate cargo UIDs.
 -- 
 -- @extends Core.Fsm#FSM
 
@@ -79,7 +81,7 @@
 -- * Cargo groups are **not** split and distributed into different carrier *units*. That means that the whole cargo group **must fit** into one of the carrier units.
 -- * Cargo groups must be inside the pickup zones to be considered for loading. Groups not inside the pickup zone will not get the command to board. 
 -- 
--- # Constructor
+-- # Troop Transport
 -- 
 -- A new cargo transport assignment is created with the @{#OPSTRANSPORT.New}() function
 -- 
@@ -100,6 +102,30 @@
 -- There is no restriction to the type of the carrier. It can be a ground group (e.g. an APC), a helicopter, an airplane or even a ship.
 -- 
 -- You can also mix carrier types. For instance, you can assign the same transport to APCs and helicopters. Or to helicopters and airplanes.
+-- 
+-- # Storage Transport
+-- 
+-- An instance of the OPSTRANSPORT class is created similarly to the troop transport case. However, the first parameter is `nil` as not troops 
+-- are transported.
+-- 
+--     local storagetransport=OPSTRANSPORT:New(nil, PickupZone, DeployZone) 
+-- 
+-- ## Defining Storage
+-- 
+-- The storage warehouses from which the cargo is taken and to which the cargo is delivered have to be specified
+-- 
+--     storagetransport:AddCargoStorage(berlinStorage, batumiStorage, STORAGE.Liquid.JETFUEL, 1000)
+--     
+-- Here `berlinStorage` and `batumiStorage` are @{Wrapper.Storage#STORAGE} objects of DCS warehouses. 
+-- 
+-- Furthermore, that type of cargo (liquids or weapons/equipment) and the amount has to be specified. If weapons/equipment is the cargo,
+-- we also need to specify the weight per storage item as this cannot be retrieved from the DCS API and is not stored in any MOOSE database.
+-- 
+--     storagetransport:AddCargoStorage(berlinStorage, batumiStorage, ENUMS.Storage.weapons.bombs.Mk_82, 9, 230)     
+--
+-- Finally, the transport is assigned to one or multiple groups, which carry out the transport
+-- 
+--     myopsgroup:AddOpsTransport(storagetransport)
 -- 
 -- # Examples
 --
@@ -131,6 +157,7 @@ OPSTRANSPORT = {
   legions         =  {},
   statusLegion    =  {},
   requestID       =  {},
+  cargocounter    =   0,
 }
 
 --- Cargo transport status.
@@ -186,6 +213,27 @@ OPSTRANSPORT.Status={
 -- @field #number radius Radomization radius for waypoints in meters. Default 0 m.
 -- @field #boolean reverse If `true`, path is used in reversed order.
 
+--- Storage data.
+-- @type OPSTRANSPORT.Storage
+-- @field Wrapper.Storage#STORAGE storageFrom Storage from.
+-- @field Wrapper.Storage#STORAGE storageTo Storage To.
+-- @field #string cargoType Type of cargo.
+-- @field #number cargoAmount Amount of cargo that should be transported.
+-- @field #number cargoReserved Amount of cargo that is reserved for a carrier group.
+-- @field #number cargoDelivered Amount of cargo that has been delivered.
+-- @field #number cargoLost Amount of cargo that was lost.
+-- @field #number cargoLoaded Amount of cargo that is loading.
+-- @field #number cargoWeight Weight of one single cargo item in kg. Default 1 kg.
+
+--- Storage data.
+-- @type OPSTRANSPORT.CargoType
+-- @field #string OPSGROUP Cargo is an OPSGROUP.
+-- @field #string STORAGE Cargo is storage of DCS warehouse.
+OPSTRANSPORT.CargoType={
+  OPSGROUP="OPSGROUP",
+  STORAGE="STORAGE",
+}
+
 --- Generic transport condition.
 -- @type OPSTRANSPORT.Condition
 -- @field #function func Callback function to check for a condition. Should return a #boolean.
@@ -196,7 +244,7 @@ _OPSTRANSPORTID=0
 
 --- Army Group version.
 -- @field #string version
-OPSTRANSPORT.version="0.7.0"
+OPSTRANSPORT.version="0.8.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -205,6 +253,7 @@ OPSTRANSPORT.version="0.7.0"
 -- TODO: Trains.
 -- TODO: Stop transport.
 -- TODO: Improve pickup and transport paths.
+-- DONE: Storage.
 -- DONE: Disembark parameters per cargo group.
 -- DONE: Special transport cohorts/legions. Similar to mission.
 -- DONE: Cancel transport.
@@ -574,6 +623,38 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, TransportZoneCombo, DisembarkActi
 
 
   return self
+end
+
+--- Add cargo warehouse storage to be transported. This adds items such as fuel, weapons and other equipment, which is to be transported
+-- from one DCS warehouse to another.
+-- For weapons and equipment, the weight per item has to be specified explicitly as these cannot be retrieved by the DCS API. For liquids the
+-- default value of 1 kg per item should be used as the amount of liquid is already given in kg.
+-- @param #OPSTRANSPORT self
+-- @param Wrapper.Storage#STORAGE StorageFrom Storage warehouse from which the cargo is taken.
+-- @param Wrapper.Storage#STORAGE StorageTo Storage warehouse to which the cargo is delivered.
+-- @param #string CargoType Type of cargo, *e.g.* `"weapons.bombs.Mk_84"` or liquid type as #number.
+-- @param #number CargoAmount Amount of cargo. Liquids in kg.
+-- @param #number CargoWeight Weight of a single cargo item in kg. Default 1 kg.
+-- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo if other than default.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:AddCargoStorage(StorageFrom, StorageTo, CargoType, CargoAmount, CargoWeight, TransportZoneCombo)
+
+  -- Use default TZC if no transport zone combo is provided.
+  TransportZoneCombo=TransportZoneCombo or self.tzcDefault
+
+  -- Cargo data.
+  local cargo=self:_CreateCargoStorage(StorageFrom,StorageTo, CargoType, CargoAmount, CargoWeight, TransportZoneCombo)
+  
+  if cargo then
+  
+    -- Add total amount of ever assigned cargos.
+    self.Ncargo=self.Ncargo+1
+
+    -- Add to TZC table.
+    table.insert(TransportZoneCombo.Cargos, cargo)
+
+  end
+
 end
 
 
@@ -1063,17 +1144,36 @@ end
 -- @return #table Cargo Ops groups. Can be and empty table `{}`.
 function OPSTRANSPORT:GetCargoOpsGroups(Delivered, Carrier, TransportZoneCombo)
 
-  local cargos=self:GetCargos(TransportZoneCombo)
+  local cargos=self:GetCargos(TransportZoneCombo, Carrier, Delivered)
 
   local opsgroups={}
   for _,_cargo in pairs(cargos) do
     local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
-    if Delivered==nil or cargo.delivered==Delivered  then
+    if cargo.type=="OPSGROUP" then
       if cargo.opsgroup and not (cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped()) then
-        if Carrier==nil or Carrier:CanCargo(cargo.opsgroup) then
-          table.insert(opsgroups, cargo.opsgroup)
-        end
+        table.insert(opsgroups, cargo.opsgroup)
       end
+    end
+  end
+    
+  return opsgroups
+end
+
+--- Get (all) cargo @{Ops.OpsGroup#OPSGROUP}s. Optionally, only delivered or undelivered groups can be returned.
+-- @param #OPSTRANSPORT self
+-- @param #boolean Delivered If `true`, only delivered groups are returned. If `false` only undelivered groups are returned. If `nil`, all groups are returned.
+-- @param Ops.OpsGroup#OPSGROUP Carrier (Optional) Only count cargo groups that fit into the given carrier group. Current cargo is not a factor.
+-- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+-- @return #table Cargo Ops groups. Can be and empty table `{}`.
+function OPSTRANSPORT:GetCargoStorages(Delivered, Carrier, TransportZoneCombo)
+
+  local cargos=self:GetCargos(TransportZoneCombo, Carrier, Delivered)
+
+  local opsgroups={}
+  for _,_cargo in pairs(cargos) do
+    local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
+    if cargo.type=="STORAGE" then
+      table.insert(opsgroups, cargo.storage)
     end
   end
     
@@ -1090,22 +1190,60 @@ end
 --- Get cargos.
 -- @param #OPSTRANSPORT self
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+-- @param Ops.OpsGroup#OPSGROUP Carrier Specific carrier.
+-- @param #boolean Delivered Delivered status.
 -- @return #table Cargos.
-function OPSTRANSPORT:GetCargos(TransportZoneCombo)
-
+function OPSTRANSPORT:GetCargos(TransportZoneCombo, Carrier, Delivered)
+  
+  local tczs=self.tzCombos
   if TransportZoneCombo then
-    return TransportZoneCombo.Cargos
-  else
-    local cargos={}
-    for _,_tzc in pairs(self.tzCombos) do
-      local tzc=_tzc --#OPSTRANSPORT.TransportZoneCombo
-      for _,cargo in pairs(tzc.Cargos) do
-        table.insert(cargos, cargo)
-      end
-    end
-    return cargos
+    tczs={TransportZoneCombo}
   end
 
+  local cargos={}
+  for _,_tcz in pairs(tczs) do
+    local tcz=_tcz --#OPSTRANSPORT.TransportZoneCombo
+    for _,_cargo in pairs(tcz.Cargos) do
+      local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
+      if Delivered==nil or cargo.delivered==Delivered  then
+        if Carrier==nil or Carrier:CanCargo(cargo) then
+          table.insert(cargos, cargo)
+        end
+      end
+    end
+  end
+
+  return cargos
+end
+
+--- Get total weight.
+-- @param #OPSTRANSPORT self
+-- @param Ops.OpsGroup#OPSGROUP.CargoGroup Cargo Cargo data.
+-- @param #boolean IncludeReserved Include reserved cargo.
+-- @return #number Weight in kg.
+function OPSTRANSPORT:GetCargoTotalWeight(Cargo, IncludeReserved)
+
+  local weight=0
+
+  if Cargo.type==OPSTRANSPORT.CargoType.OPSGROUP then
+    weight=Cargo.opsgroup:GetWeightTotal(nil, IncludeReserved)
+  else
+    if type(Cargo.storage.cargoType)=="number" then
+      if IncludeReserved then
+        return Cargo.storage.cargoAmount+Cargo.storage.cargoReserved
+      else
+        return Cargo.storage.cargoAmount
+      end
+    else
+      if IncludeReserved then
+        return Cargo.storage.cargoAmount*100 -- Assume 100 kg per item
+      else
+        return (Cargo.storage.cargoAmount+Cargo.storage.cargoReserved)*100 -- Assume 100 kg per item
+      end
+    end
+  end
+
+  return weight
 end
 
 --- Set transport start and stop time.
@@ -1642,11 +1780,18 @@ function OPSTRANSPORT:onafterStatusUpdate(From, Event, To)
       text=text..string.format("\nCargos:")
       for _,_cargo in pairs(self:GetCargos()) do
         local cargo=_cargo  --Ops.OpsGroup#OPSGROUP.CargoGroup
-        local carrier=cargo.opsgroup:_GetMyCarrierElement()
-        local name=carrier and carrier.name or "none"
-        local cstate=carrier and carrier.status or "N/A"
-        text=text..string.format("\n- %s: %s [%s], weight=%d kg, carrier=%s [%s], delivered=%s [UID=%s]", 
-        cargo.opsgroup:GetName(), cargo.opsgroup.cargoStatus:upper(), cargo.opsgroup:GetState(), cargo.opsgroup:GetWeightTotal(), name, cstate, tostring(cargo.delivered), tostring(cargo.opsgroup.cargoTransportUID))
+        if cargo.type==OPSTRANSPORT.CargoType.OPSGROUP then
+          local carrier=cargo.opsgroup:_GetMyCarrierElement()
+          local name=carrier and carrier.name or "none"
+          local cstate=carrier and carrier.status or "N/A"
+          text=text..string.format("\n- %s: %s [%s], weight=%d kg, carrier=%s [%s], delivered=%s [UID=%s]", 
+          cargo.opsgroup:GetName(), cargo.opsgroup.cargoStatus:upper(), cargo.opsgroup:GetState(), cargo.opsgroup:GetWeightTotal(), name, cstate, tostring(cargo.delivered), tostring(cargo.opsgroup.cargoTransportUID))
+        else
+          --TODO: Storage
+          local storage=cargo.storage
+          text=text..string.format("\n- storage type=%s: amount: total=%d loaded=%d, lost=%d, delivered=%d, delivered=%s [UID=%s]",
+          storage.cargoType, storage.cargoAmount, storage.cargoLoaded, storage.cargoLost, storage.cargoDelivered, tostring(cargo.delivered), tostring(cargo.uid))
+        end
       end
       
       text=text..string.format("\nCarriers:")
@@ -1923,14 +2068,14 @@ function OPSTRANSPORT:_CheckDelivered()
       if cargo.delivered then
         -- This one is delivered.
         dead=false
-      elseif cargo.opsgroup==nil then
+      elseif cargo.type==OPSTRANSPORT.CargoType.OPSGROUP and cargo.opsgroup==nil then
         -- This one is nil?!
         dead=false
-      elseif cargo.opsgroup:IsDestroyed() then
+      elseif cargo.type==OPSTRANSPORT.CargoType.OPSGROUP and cargo.opsgroup:IsDestroyed() then
         -- This one was destroyed.
-      elseif cargo.opsgroup:IsDead() then
+      elseif cargo.type==OPSTRANSPORT.CargoType.OPSGROUP and cargo.opsgroup:IsDead() then
         -- This one is dead.
-      elseif cargo.opsgroup:IsStopped() then
+      elseif cargo.type==OPSTRANSPORT.CargoType.OPSGROUP and cargo.opsgroup:IsStopped() then
         -- This one is stopped.
         dead=false
       else
@@ -2116,10 +2261,12 @@ function OPSTRANSPORT:_CreateCargoGroupData(group, TransportZoneCombo, Disembark
     end
   end
 
+  self.cargocounter=self.cargocounter+1
 
   -- Create a new data item.
   local cargo={} --Ops.OpsGroup#OPSGROUP.CargoGroup
-    
+  cargo.uid=self.cargocounter
+  cargo.type="OPSGROUP"
   cargo.opsgroup=opsgroup
   cargo.delivered=false
   cargo.status="Unknown"
@@ -2129,6 +2276,45 @@ function OPSTRANSPORT:_CreateCargoGroupData(group, TransportZoneCombo, Disembark
     cargo.disembarkCarriers={}
     self:_AddDisembarkCarriers(DisembarkCarriers, cargo.disembarkCarriers)
   end
+
+  return cargo
+end
+
+--- Create a cargo group data structure.
+-- @param #OPSTRANSPORT self
+-- @param Wrapper.Storage#STORAGE StorageFrom Storage from.
+-- @param Wrapper.Storage#STORAGE StorageTo Storage to.
+-- @param #string CargoType Type of cargo.
+-- @param #number CargoAmount Total amount of cargo that should be transported. Liquids in kg.
+-- @param #number CargoWeight Weight of a single cargo item in kg. Default 1 kg.
+-- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+-- @return Ops.OpsGroup#OPSGROUP.CargoGroup Cargo group data.
+function OPSTRANSPORT:_CreateCargoStorage(StorageFrom, StorageTo, CargoType, CargoAmount, CargoWeight, TransportZoneCombo)
+
+  local storage={}  --#OPSTRANSPORT.Storage
+  storage.storageFrom=StorageFrom
+  storage.storageTo=StorageTo
+  storage.cargoType=CargoType
+  storage.cargoAmount=CargoAmount
+  storage.cargoDelivered=0
+  storage.cargoLost=0
+  storage.cargoReserved=0
+  storage.cargoLoaded=0
+  storage.cargoWeight=CargoWeight or 1
+
+  self.cargocounter=self.cargocounter+1  
+
+  -- Create a new data item.
+  local cargo={} --Ops.OpsGroup#OPSGROUP.CargoGroup
+  cargo.uid=self.cargocounter
+  cargo.type="STORAGE"
+  cargo.opsgroup=nil
+  cargo.storage=storage
+  cargo.delivered=false
+  cargo.status="Unknown"
+  cargo.tzcUID=TransportZoneCombo
+  cargo.disembarkZone=nil
+  cargo.disembarkCarriers=nil
 
   return cargo
 end
@@ -2143,7 +2329,9 @@ end
 function OPSTRANSPORT:_CountCargosInZone(Zone, Delivered, Carrier, TransportZoneCombo)
 
   -- Get cargo ops groups.
-  local cargos=self:GetCargoOpsGroups(Delivered, Carrier, TransportZoneCombo)
+  --local cargos=self:GetCargoOpsGroups(Delivered, Carrier, TransportZoneCombo)
+  
+  local cargos=self:GetCargos(TransportZoneCombo, Carrier, Delivered)
   
   --- Function to check if carrier is supposed to be disembarked to.
   local function iscarrier(_cargo)
@@ -2185,22 +2373,33 @@ function OPSTRANSPORT:_CountCargosInZone(Zone, Delivered, Carrier, TransportZone
   
   local N=0
   for _,_cargo in pairs(cargos) do
-    local cargo=_cargo --Ops.OpsGroup#OPSGROUP
-
-    -- Is not cargo? 
-    local isNotCargo=cargo:IsNotCargo(true)
-    if not isNotCargo then
-      isNotCargo=iscarrier(cargo)
-    end    
-
-    -- Is in zone?
-    local isInZone=cargo:IsInZone(Zone)
+    local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
     
-    -- Is in utero?
-    local isInUtero=cargo:IsInUtero()
+    local isNotCargo=true
+    local isInZone=true
+    local isInUtero=true
+    
+    if cargo.type==OPSTRANSPORT.CargoType.OPSGROUP then
+      local opsgroup=cargo.opsgroup
 
-    -- Debug info.
-    self:T(self.lid..string.format("Cargo=%s: notcargo=%s, iscarrier=%s inzone=%s, inutero=%s", cargo:GetName(), tostring(cargo:IsNotCargo(true)), tostring(iscarrier(cargo)), tostring(isInZone), tostring(isInUtero)))
+      -- Is not cargo? 
+      isNotCargo=opsgroup:IsNotCargo(true)
+      if not isNotCargo then
+        isNotCargo=iscarrier(opsgroup)
+      end    
+  
+      -- Is in zone?
+      isInZone=opsgroup:IsInZone(Zone)
+      
+      -- Is in utero?
+      isInUtero=opsgroup:IsInUtero()
+
+      -- Debug info.
+      self:T(self.lid..string.format("Cargo=%s: notcargo=%s, iscarrier=%s inzone=%s, inutero=%s", opsgroup:GetName(), tostring(opsgroup:IsNotCargo(true)), tostring(iscarrier(opsgroup)), tostring(isInZone), tostring(isInUtero)))
+
+      
+    end
+
 
     -- We look for groups that are not cargo, in the zone or in utero.
     if isNotCargo and (isInZone or isInUtero) then

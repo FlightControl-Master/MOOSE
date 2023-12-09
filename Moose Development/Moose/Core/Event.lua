@@ -173,7 +173,8 @@
 -- @image Core_Event.JPG
 
 
---- @type EVENT
+---
+-- @type EVENT
 -- @field #EVENT.Events Events
 -- @extends Core.Base#BASE
 
@@ -260,6 +261,15 @@ EVENTS = {
   SimulationStart           = world.event.S_EVENT_SIMULATION_START or -1,
   WeaponRearm               = world.event.S_EVENT_WEAPON_REARM or -1,
   WeaponDrop                = world.event.S_EVENT_WEAPON_DROP or -1,
+  -- Added with DCS 2.9.0
+  UnitTaskTimeout           = world.event.S_EVENT_UNIT_TASK_TIMEOUT or -1,
+  UnitTaskStage             = world.event.S_EVENT_UNIT_TASK_STAGE or -1,
+  MacSubtaskScore           = world.event.S_EVENT_MAC_SUBTASK_SCORE or -1, 
+  MacExtraScore             = world.event.S_EVENT_MAC_EXTRA_SCORE or -1,
+  MissionRestart            = world.event.S_EVENT_MISSION_RESTART or -1,
+  MissionWinner             = world.event.S_EVENT_MISSION_WINNER or -1, 
+  PostponedTakeoff          = world.event.S_EVENT_POSTPONED_TAKEOFF or -1, 
+  PostponedLand             = world.event.S_EVENT_POSTPONED_LAND or -1, 
 }
 
 --- The Event structure
@@ -282,6 +292,7 @@ EVENTS = {
 -- @field Wrapper.Group#GROUP IniGroup (UNIT) The initiating MOOSE wrapper @{Wrapper.Group#GROUP} of the initiator Group object.
 -- @field #string IniGroupName UNIT) The initiating GROUP name (same as IniDCSGroupName).
 -- @field #string IniPlayerName (UNIT) The name of the initiating player in case the Unit is a client or player slot.
+-- @field #string IniPlayerUCID (UNIT) The UCID of the initiating player in case the Unit is a client or player slot and on a multi-player server.
 -- @field DCS#coalition.side IniCoalition (UNIT) The coalition of the initiator.
 -- @field DCS#Unit.Category IniCategory (UNIT) The category of the initiator.
 -- @field #string IniTypeName (UNIT) The type name of the initiator.
@@ -297,6 +308,7 @@ EVENTS = {
 -- @field Wrapper.Group#GROUP TgtGroup (UNIT) The target MOOSE wrapper @{Wrapper.Group#GROUP} of the target Group object.
 -- @field #string TgtGroupName (UNIT) The target GROUP name (same as TgtDCSGroupName).
 -- @field #string TgtPlayerName (UNIT) The name of the target player in case the Unit is a client or player slot.
+-- @field #string TgtPlayerUCID (UNIT) The UCID of the target player in case the Unit is a client or player slot and on a multi-player server.
 -- @field DCS#coalition.side TgtCoalition (UNIT) The coalition of the target.
 -- @field DCS#Unit.Category TgtCategory (UNIT) The category of the target.
 -- @field #string TgtTypeName (UNIT) The type name of the target.
@@ -313,7 +325,7 @@ EVENTS = {
 -- @field Cargo.Cargo#CARGO Cargo The cargo object.
 -- @field #string CargoName The name of the cargo object.
 --
--- @field Core.ZONE#ZONE Zone The zone object.
+-- @field Core.Zone#ZONE Zone The zone object.
 -- @field #string ZoneName The name of the zone.
 
 
@@ -633,6 +645,55 @@ local _EVENTMETA = {
      Event = "OnEventWeaponDrop",
      Text = "S_EVENT_WEAPON_DROP"
    },
+   -- DCS 2.9
+  [EVENTS.UnitTaskTimeout] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventUnitTaskTimeout",
+     Text = "S_EVENT_UNIT_TASK_TIMEOUT "
+   },
+  [EVENTS.UnitTaskStage] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventUnitTaskStage",
+     Text = "S_EVENT_UNIT_TASK_STAGE "
+   },
+  [EVENTS.MacSubtaskScore] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventMacSubtaskScore",
+     Text = "S_EVENT_MAC_SUBTASK_SCORE"
+   },
+  [EVENTS.MacExtraScore] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventMacExtraScore",
+     Text = "S_EVENT_MAC_EXTRA_SCOREP"
+   },
+  [EVENTS.MissionRestart] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventMissionRestart",
+     Text = "S_EVENT_MISSION_RESTART"
+   },
+  [EVENTS.MissionWinner] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventMissionWinner",
+     Text = "S_EVENT_MISSION_WINNER"
+   },
+  [EVENTS.PostponedTakeoff] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventPostponedTakeoff",
+     Text = "S_EVENT_POSTPONED_TAKEOFF"
+   },
+  [EVENTS.PostponedLand] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventPostponedLand",
+     Text = "S_EVENT_POSTPONED_LAND"
+   }, 
 }
 
 --- The Events structure
@@ -988,7 +1049,7 @@ do -- Event Creation
 
   --- Creation of a New ZoneGoal Event.
   -- @param #EVENT self
-  -- @param Core.Functional#ZONE_GOAL ZoneGoal The ZoneGoal created.
+  -- @param Functional.ZoneGoal#ZONE_GOAL ZoneGoal The ZoneGoal created.
   function EVENT:CreateEventNewZoneGoal( ZoneGoal )
     self:F( { ZoneGoal } )
 
@@ -1080,9 +1141,9 @@ function EVENT:onEvent( Event )
 
       if Event.initiator then
 
-        Event.IniObjectCategory = Event.initiator:getCategory()
+        Event.IniObjectCategory = Object.getCategory(Event.initiator)
         
-       if Event.IniObjectCategory == Object.Category.STATIC then
+        if Event.IniObjectCategory == Object.Category.STATIC then
           ---
           -- Static
           ---          
@@ -1118,10 +1179,9 @@ function EVENT:onEvent( Event )
           local Unit=UNIT:FindByName(Event.IniDCSUnitName)
           if Unit then
             Event.IniObjectCategory = Object.Category.UNIT
-          end
-        end        
+          end       
 
-        if Event.IniObjectCategory == Object.Category.UNIT then
+        elseif Event.IniObjectCategory == Object.Category.UNIT then
           ---
           -- Unit
           ---        
@@ -1144,12 +1204,19 @@ function EVENT:onEvent( Event )
           end
           
           Event.IniPlayerName = Event.IniDCSUnit:getPlayerName()
+          if Event.IniPlayerName then
+            -- get UUCID
+            local PID = NET.GetPlayerIDByName(nil,Event.IniPlayerName)
+            if PID then
+              Event.IniPlayerUCID = net.get_player_info(tonumber(PID), 'ucid')
+              --env.info("Event.IniPlayerUCID="..tostring(Event.IniPlayerUCID),false)
+            end
+          end
           Event.IniCoalition = Event.IniDCSUnit:getCoalition()
           Event.IniTypeName = Event.IniDCSUnit:getTypeName()
           Event.IniCategory = Event.IniDCSUnit:getDesc().category  
-        end
 
-        if Event.IniObjectCategory == Object.Category.CARGO then
+        elseif Event.IniObjectCategory == Object.Category.CARGO then
           ---
           -- Cargo
           ---
@@ -1160,9 +1227,8 @@ function EVENT:onEvent( Event )
           Event.IniCoalition = Event.IniDCSUnit:getCoalition()
           Event.IniCategory = Event.IniDCSUnit:getDesc().category
           Event.IniTypeName = Event.IniDCSUnit:getTypeName()
-        end
 
-        if Event.IniObjectCategory == Object.Category.SCENERY then
+        elseif Event.IniObjectCategory == Object.Category.SCENERY then
           ---
           -- Scenery
           ---          
@@ -1172,9 +1238,8 @@ function EVENT:onEvent( Event )
           Event.IniUnit = SCENERY:Register( Event.IniDCSUnitName, Event.initiator )
           Event.IniCategory = Event.IniDCSUnit:getDesc().category
           Event.IniTypeName = Event.initiator:isExist() and Event.IniDCSUnit:getTypeName() or "SCENERY"
-        end
 
-        if Event.IniObjectCategory == Object.Category.BASE then
+        elseif Event.IniObjectCategory == Object.Category.BASE then
           ---
           -- Base Object
           ---
@@ -1201,9 +1266,12 @@ function EVENT:onEvent( Event )
         ---
 
         -- Target category.
-        Event.TgtObjectCategory = Event.target:getCategory()
+        Event.TgtObjectCategory = Object.getCategory(Event.target)
 
         if Event.TgtObjectCategory == Object.Category.UNIT then
+          ---
+          -- UNIT
+          ---
           Event.TgtDCSUnit = Event.target
           Event.TgtDCSGroup = Event.TgtDCSUnit:getGroup()
           Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
@@ -1216,21 +1284,33 @@ function EVENT:onEvent( Event )
             Event.TgtGroupName = Event.TgtDCSGroupName
           end
           Event.TgtPlayerName = Event.TgtDCSUnit:getPlayerName()
+          if Event.TgtPlayerName  then
+            -- get UUCID
+            local PID = NET.GetPlayerIDByName(nil,Event.TgtPlayerName)
+            if PID then
+              Event.TgtPlayerUCID = net.get_player_info(tonumber(PID), 'ucid')
+              --env.info("Event.TgtPlayerUCID="..tostring(Event.TgtPlayerUCID),false)
+            end
+          end
           Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
           Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
           Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
-        end
 
-        if Event.TgtObjectCategory == Object.Category.STATIC then
-          -- get base data
+        elseif Event.TgtObjectCategory == Object.Category.STATIC then
+          ---
+          -- STATIC
+          ---
           Event.TgtDCSUnit = Event.target
           if Event.target:isExist() and Event.id ~= 33 then -- leave out ejected seat object
             Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
-            Event.TgtUnitName = Event.TgtDCSUnitName
-            Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
-            Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
-            Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
-            Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+            -- Workaround for borked target info on cruise missiles
+            if Event.TgtDCSUnitName and Event.TgtDCSUnitName ~= "" then
+              Event.TgtUnitName = Event.TgtDCSUnitName
+              Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
+              Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
+              Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
+              Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+            end
           else
             Event.TgtDCSUnitName = string.format("No target object for Event ID %s", tostring(Event.id))
             Event.TgtUnitName = Event.TgtDCSUnitName
@@ -1249,9 +1329,11 @@ function EVENT:onEvent( Event )
               Event.TgtTypeName = "Static"
             end
           end
-        end
 
-        if Event.TgtObjectCategory == Object.Category.SCENERY then
+        elseif Event.TgtObjectCategory == Object.Category.SCENERY then
+          ---
+          -- SCENERY
+          ---
           Event.TgtDCSUnit = Event.target
           Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
           Event.TgtUnitName = Event.TgtDCSUnitName
@@ -1266,7 +1348,8 @@ function EVENT:onEvent( Event )
         Event.Weapon = Event.weapon
         Event.WeaponName = Event.Weapon:getTypeName()
         Event.WeaponUNIT = CLIENT:Find( Event.Weapon, '', true ) -- Sometimes, the weapon is a player unit!
-        Event.WeaponPlayerName = Event.WeaponUNIT and Event.Weapon:getPlayerName()
+        Event.WeaponPlayerName = Event.WeaponUNIT and Event.Weapon.getPlayerName and Event.Weapon:getPlayerName()
+        --Event.WeaponPlayerName = Event.WeaponUNIT and Event.Weapon:getPlayerName()
         Event.WeaponCoalition = Event.WeaponUNIT and Event.Weapon:getCoalition()
         Event.WeaponCategory = Event.WeaponUNIT and Event.Weapon:getDesc().category
         Event.WeaponTypeName = Event.WeaponUNIT and Event.Weapon:getTypeName()
@@ -1281,7 +1364,7 @@ function EVENT:onEvent( Event )
           -- However, this is not a big thing, as the aircraft the pilot ejected from is usually long crashed before the ejected pilot touches the ground.
           --Event.Place=UNIT:Find(Event.place)
         else  
-          if Event.place:isExist() and Event.place:getCategory() ~= Object.Category.SCENERY then
+          if Event.place:isExist() and Object.getCategory(Event.place) ~= Object.Category.SCENERY then
             Event.Place=AIRBASE:Find(Event.place)
             Event.PlaceName=Event.Place:GetName()
           end

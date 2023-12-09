@@ -38,8 +38,9 @@
 -- @image Detection.JPG
 
 do -- DETECTION_BASE
-
-  --- @type DETECTION_BASE
+  
+  ---
+  -- @type DETECTION_BASE
   -- @field Core.Set#SET_GROUP DetectionSetGroup The @{Core.Set} of GROUPs in the Forward Air Controller role.
   -- @field DCS#Distance DetectionRange The range till which targets are accepted to be detected.
   -- @field #DETECTION_BASE.DetectedObjects DetectedObjects The list of detected objects.
@@ -91,6 +92,11 @@ do -- DETECTION_BASE
   --
   --     DetectionObject:FilterCategories( { Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
   --
+  -- 
+  -- ## Radar Blur - use to make the radar less exact, e.g. for WWII scenarios
+  -- 
+  --  * @{DETECTION_BASE.SetRadarBlur}(): Set the radar blur to be used.
+  --  
   -- ## **DETECTION_ derived classes** group the detected units into a **DetectedItems[]** list
   --
   -- DETECTION_BASE derived classes build a list called DetectedItems[], which is essentially a first later
@@ -268,11 +274,13 @@ do -- DETECTION_BASE
     DetectedItems = {},
     DetectedItemsByIndex = {},
   }
-
-  --- @type DETECTION_BASE.DetectedObjects
+  
+  ---
+  -- @type DETECTION_BASE.DetectedObjects
   -- @list <#DETECTION_BASE.DetectedObject>
 
-  --- @type DETECTION_BASE.DetectedObject
+  ---
+  -- @type DETECTION_BASE.DetectedObject
   -- @field #string Name
   -- @field #boolean IsVisible
   -- @field #boolean KnowType
@@ -283,8 +291,9 @@ do -- DETECTION_BASE
   -- @field #number LastTime
   -- @field #boolean LastPos
   -- @field #number LastVelocity
-
-  --- @type DETECTION_BASE.DetectedItems
+  
+  ---
+  -- @type DETECTION_BASE.DetectedItems
   -- @list <#DETECTION_BASE.DetectedItem>
 
   --- Detected item data structure.
@@ -522,7 +531,7 @@ do -- DETECTION_BASE
 
   do -- State Transition Handling
 
-    --- @param #DETECTION_BASE self
+    -- @param #DETECTION_BASE self
     -- @param #string From The From State string.
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
@@ -530,7 +539,7 @@ do -- DETECTION_BASE
       self:__Detect( 1 )
     end
 
-    --- @param #DETECTION_BASE self
+    -- @param #DETECTION_BASE self
     -- @param #string From The From State string.
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
@@ -570,7 +579,7 @@ do -- DETECTION_BASE
 
     end
 
-    --- @param #DETECTION_BASE self
+    -- @param #DETECTION_BASE self
     -- @param #number The amount of alive recce.
     function DETECTION_BASE:CountAliveRecce()
 
@@ -578,7 +587,7 @@ do -- DETECTION_BASE
 
     end
 
-    --- @param #DETECTION_BASE self
+    -- @param #DETECTION_BASE self
     function DETECTION_BASE:ForEachAliveRecce( IteratorFunction, ... )
       self:F2( arg )
 
@@ -587,7 +596,7 @@ do -- DETECTION_BASE
       return self
     end
 
-    --- @param #DETECTION_BASE self
+    -- @param #DETECTION_BASE self
     -- @param #string From The From State string.
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
@@ -709,6 +718,26 @@ do -- DETECTION_BASE
                   if RejectZone:IsVec2InZone( DetectedObjectVec2 ) == true then
                     DetectionAccepted = false
                   end
+                end
+              end
+              
+              -- Calculate radar blue probability
+              
+              if self.RadarBlur then
+                BASE:I("RadarBlur")
+                local minheight = self.RadarBlurMinHeight or 250 -- meters
+                local thresheight = self.RadarBlurThresHeight or 90 -- 10% chance to find a low flying group
+                local thresblur = self.RadarBlurThresBlur or 85 -- 25% chance to escape the radar overall
+                local fheight = math.floor(math.random(1,10000)/100)
+                local fblur = math.floor(math.random(1,10000)/100)
+                local unit = UNIT:FindByName(DetectedObjectName)
+                if unit and unit:IsAlive() then
+                  local AGL = unit:GetAltitude(true)
+                  BASE:I("Unit "..DetectedObjectName.." is at "..AGL.."m.")
+                  BASE:I(string.format("fheight = %d/%d | fblur = %d/%d",fheight,thresheight,fblur,thresblur))
+                  if fblur > thresblur then DetectionAccepted = false end
+                  if AGL <= minheight and fheight < thresheight then DetectionAccepted = false end                
+                  BASE:I("Detection Accepted = "..tostring(DetectionAccepted))
                 end
               end
               
@@ -1011,7 +1040,21 @@ do -- DETECTION_BASE
       return self
 
     end
-
+    
+    --- Method to make the radar detection less accurate, e.g. for WWII scenarios.
+    -- @param #DETECTION_BASE self
+    -- @param #number minheight Minimum flight height to be detected, in meters AGL (above ground)
+    -- @param #number thresheight Threshold to escape the radar if flying below minheight, defaults to 90 (90% escape chance)
+    -- @param #number thresblur Threshold to be detected by the radar overall, defaults to 85 (85% chance to be found)
+    -- @return #DETECTION_BASE self
+    function DETECTION_BASE:SetRadarBlur(minheight,thresheight,thresblur)
+      self.RadarBlur = true
+      self.RadarBlurMinHeight = minheight or 250 -- meters
+      self.RadarBlurThresHeight = thresheight or 90 -- 10% chance to find a low flying group
+      self.RadarBlurThresBlur = thresblur or 85 -- 25% chance to escape the radar overall
+      return self
+    end
+    
   end
 
   do
@@ -1354,7 +1397,7 @@ do -- DETECTION_BASE
           }
         }
 
-        --- @param DCS#Unit FoundDCSUnit
+        -- @param DCS#Unit FoundDCSUnit
         -- @param Wrapper.Group#GROUP ReportGroup
         -- @param Core.Set#SET_GROUP ReportSetGroup
         local FindNearByFriendlies = function( FoundDCSUnit, ReportGroupData )
@@ -1419,7 +1462,7 @@ do -- DETECTION_BASE
         DetectedItem.PlayersNearBy = nil
 
         _DATABASE:ForEachPlayer(
-        --- @param Wrapper.Unit#UNIT PlayerUnit
+        -- @param Wrapper.Unit#UNIT PlayerUnit
         function( PlayerUnitName )
           local PlayerUnit = UNIT:FindByName( PlayerUnitName )
 
@@ -1975,8 +2018,9 @@ do -- DETECTION_BASE
 end
 
 do -- DETECTION_UNITS
-
-  --- @type DETECTION_UNITS
+  
+  ---
+  -- @type DETECTION_UNITS
   -- @field DCS#Distance DetectionRange The range till which targets are detected.
   -- @extends Functional.Detection#DETECTION_BASE
 
@@ -2231,8 +2275,9 @@ do -- DETECTION_UNITS
 end
 
 do -- DETECTION_TYPES
-
-  --- @type DETECTION_TYPES
+  
+  ---
+  -- @type DETECTION_TYPES
   -- @extends Functional.Detection#DETECTION_BASE
 
   --- Will detect units within the battle zone.
@@ -2434,8 +2479,9 @@ do -- DETECTION_TYPES
 end
 
 do -- DETECTION_AREAS
-
-  --- @type DETECTION_AREAS
+  
+  ---
+  -- @type DETECTION_AREAS
   -- @field DCS#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
   -- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Wrapper.Unit}s, @{Core.Zone}s, the center @{Wrapper.Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
   -- @extends Functional.Detection#DETECTION_BASE
@@ -2452,7 +2498,7 @@ do -- DETECTION_AREAS
   -- 
   -- Retrieve the DetectedItems[].Set with the method @{Functional.Detection#DETECTION_BASE.GetDetectedSet}(). A @{Core.Set#SET_UNIT} object will be returned.
   -- 
-  -- Retrieve the formed @{Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Functional.Detection#DETECTION_AREAS.GetDetectionZones}().
+  -- Retrieve the formed @{Core.Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Functional.Detection#DETECTION_AREAS.GetDetectionZones}().
   -- To understand the amount of zones created, use the method @{Functional.Detection#DETECTION_AREAS.GetDetectionZoneCount}(). 
   -- If you want to obtain a specific zone from the DetectedZones, use the method @{Functional.Detection#DETECTION_AREAS.GetDetectionZoneByID}() with a given index.
   -- 
@@ -2961,7 +3007,7 @@ do -- DETECTION_AREAS
 
       -- DetectedSet:Flush( self )
 
-      DetectedSet:ForEachUnit(  --- @param Wrapper.Unit#UNIT DetectedUnit
+      DetectedSet:ForEachUnit(  -- @param Wrapper.Unit#UNIT DetectedUnit
       function( DetectedUnit )
         if DetectedUnit:IsAlive() then
           -- self:T( "Detected Set #" .. DetectedItem.ID .. ":" .. DetectedUnit:GetName() )

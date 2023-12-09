@@ -1,0 +1,168 @@
+name: Moose-Docs
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+    paths:
+      - 'Moose Setup/**/*.lua'
+      - 'Moose Development/**/*.lua'
+      - 'Moose Development/**/*.py'
+      - 'Moose Development/**/*.html'
+      - '.github/workflows/build-docs.yml'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
+
+      - name: Build informations
+        run: |
+            echo "Triggered by:  ${{ github.event_name }}"
+            echo "Running on:    ${{ runner.os }}"
+            echo "Ref:           ${{ github.ref }}"
+            echo "Branch name:   ${{ steps.extract_branch.outputs.branch }}"
+            echo "Repository:    ${{ github.repository }}"
+            echo "Commit-Id:     ${{ github.sha }}"
+            echo "Owner:         ${{ github.repository_owner }}"
+            echo "FORCE_PUSH:    ${{ vars.FORCE_PUSH }}"
+
+      #########################################################################
+      # Prepare build environment
+      #########################################################################
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Prepare build output folders
+        run: |
+          mkdir -p build/tools
+          mkdir -p build/doc
+
+      - name: Checkout FlightControls modified luadocumentor
+        uses: actions/checkout@v4
+        with:
+          repository: Applevangelist/luadocumentor
+          path: './build/tools/luadocumentor'
+          ref: 'patch-1'
+          token: ${{ secrets.BOT_TOKEN }}
+
+      - name: Update apt-get (needed for act docker image)
+        run: |
+          sudo apt-get -qq update
+
+      - name: Install tree
+        run: |
+          sudo apt-get -qq install tree
+
+      #########################################################################
+      # Install all prerequisites for LuaDocumentor
+      #########################################################################
+      - name: Install Lua
+        run: |
+          sudo apt-get -qq install lua5.1
+
+      - name: Install LuaRocks
+        run: |
+          sudo apt-get -qq install luarocks -y
+
+      - name: Install markdown (prereq for LuaDocumentor)
+        run: |
+          sudo luarocks install markdown 0.32-2
+
+      - name: Install penlight (prereq for LuaDocumentor)
+        run: |
+          sudo luarocks install penlight 1.11.0-1
+
+      - name: Install metalua-compiler (prereq for LuaDocumentor)
+        run: |
+          sudo luarocks install metalua-compiler 0.7.3-1
+
+      - name: Install metalua-parser (prereq for LuaDocumentor)
+        run: |
+          sudo luarocks install metalua-parser 0.7.3-2
+
+      - name: Install checks (prereq for LuaDocumentor)
+        run: |
+          sudo luarocks install checks
+
+      #########################################################################
+      # Run LuaDocumentor
+      #########################################################################
+      - name: Run LuaDocumentor
+        run: |
+          lua luadocumentor.lua -d ${{ github.workspace }}/build/doc "${{ github.workspace }}/Moose Development/Moose"
+        working-directory: ${{ github.workspace }}/build/tools/luadocumentor
+
+      #########################################################################
+      # Replace <head> tag
+      #########################################################################
+      - name: Replace head tag
+        run: |
+          python3 "${{ github.workspace }}/Moose Development/docs-header.py"
+        working-directory: ${{ github.workspace }}/build/doc
+
+      - name: Check replacement of head tag
+        run: |
+          head -10 ${{ github.workspace }}/build/doc/AI.AI_A2A_Cap.html
+
+      #########################################################################
+      # Push to MOOSE_DOCS
+      #########################################################################
+      - name: Set docs repo for branch
+        shell: bash
+        id: set_doc_repo
+        run: |
+          if [[ $GITHUB_REF == 'refs/heads/master' ]]; then
+              echo "docrepo=MOOSE_DOCS" >> "$GITHUB_OUTPUT"
+          else
+              echo "docrepo=MOOSE_DOCS_DEVELOP" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout ${{ steps.set_doc_repo.outputs.docrepo }} to folder MOOSE_DOCS
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/${{ steps.set_doc_repo.outputs.docrepo }}
+          path: './build/MOOSE_DOCS'
+          fetch-depth: 0
+          ref: 'master'
+          token: ${{ secrets.BOT_TOKEN }}
+
+      - name: Delete folder to remove deleted files
+        run: |
+          rm -rf ./build/MOOSE_DOCS/Documentation/
+
+      - name: Create target folder
+        run: mkdir -p build/MOOSE_DOCS/Documentation
+
+      - name: Copy build result to MOOSE_DOCS
+        run: |
+          cp ./build/doc/*.* ./build/MOOSE_DOCS/Documentation/
+
+      - name: Push result to docs repository
+        if: ${{ vars.FORCE_PUSH == 'true' }}
+        run: |
+          git config user.name "MooseBotter"
+          git config user.email "MooseBotter@users.noreply.github.com"
+          git add .
+          git commit --allow-empty -m "Auto commit by GitHub Actions Workflow"
+          git push --set-upstream origin master
+
+        working-directory: ${{ github.workspace }}/build/MOOSE_DOCS
+
+      #########################################################################
+      # Show the results
+      #########################################################################
+      - name: List files in the repository
+        run: |
+          tree ${{ github.workspace }}/build
+
+      - run: echo "This job's status is ${{ job.status }}."

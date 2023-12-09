@@ -5,7 +5,7 @@
 -- ===
 --
 -- ### Author: **Applevangelist**
--- # Last Update June 2023
+-- # Last Update Oct 2023
 -- 
 -- ===
 --
@@ -43,7 +43,7 @@ do
 -- @field #NET
 NET = {
   ClassName = "NET",
-  Version = "0.1.2",
+  Version = "0.1.3",
   BlockTime = 600,
   BlockedPilots = {},
   BlockedUCIDs = {},
@@ -470,11 +470,9 @@ end
 -- @return #number PlayerID or nil
 function NET:GetPlayerIDByName(Name)
   if not Name then return nil end
-  local playerList = self:GetPlayerList()
-  self:T({playerList})
+  local playerList = net.get_player_list()
   for i=1,#playerList do
     local playerName = net.get_name(i)
-      self:T({playerName})
       if playerName == Name then
         return playerList[i]
       end

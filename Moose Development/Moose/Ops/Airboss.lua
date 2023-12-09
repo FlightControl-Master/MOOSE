@@ -27,17 +27,17 @@
 -- **Supported Carriers:**
 --
 --    * [USS John C. Stennis](https://en.wikipedia.org/wiki/USS_John_C._Stennis) (CVN-74)
---    * [USS Theodore Roosevelt](https://en.wikipedia.org/wiki/USS_Theodore_Roosevelt_(CVN-71\)) (CVN-71) [Super Carrier Module]
---    * [USS Abraham Lincoln](https://en.wikipedia.org/wiki/USS_Abraham_Lincoln_(CVN-72\)) (CVN-72) [Super Carrier Module]
---    * [USS George Washington](https://en.wikipedia.org/wiki/USS_George_Washington_(CVN-73\)) (CVN-73) [Super Carrier Module]
+--    * [USS Theodore Roosevelt](https://en.wikipedia.org/wiki/USS_Theodore_Roosevelt_\(CVN-71\)) (CVN-71) [Super Carrier Module]
+--    * [USS Abraham Lincoln](https://en.wikipedia.org/wiki/USS_Abraham_Lincoln_\(CVN-72\)) (CVN-72) [Super Carrier Module]
+--    * [USS George Washington](https://en.wikipedia.org/wiki/USS_George_Washington_\(CVN-73\)) (CVN-73) [Super Carrier Module]
 --    * [USS Harry S. Truman](https://en.wikipedia.org/wiki/USS_Harry_S._Truman) (CVN-75) [Super Carrier Module]
---    * [USS Forrestal](https://en.wikipedia.org/wiki/USS_Forrestal_(CV-59\)) (CV-59) [Heatblur Carrier Module]
---    * [HMS Hermes](https://en.wikipedia.org/wiki/HMS_Hermes_(R12\)) (R12)
---    * [HMS Invincible](https://en.wikipedia.org/wiki/HMS_Invincible_(R05\)) (R05)
---    * [USS Tarawa](https://en.wikipedia.org/wiki/USS_Tarawa_(LHA-1\)) (LHA-1)
---    * [USS America](https://en.wikipedia.org/wiki/USS_America_(LHA-6\)) (LHA-6)
+--    * [USS Forrestal](https://en.wikipedia.org/wiki/USS_Forrestal_\(CV-59\)) (CV-59) [Heatblur Carrier Module]
+--    * [HMS Hermes](https://en.wikipedia.org/wiki/HMS_Hermes_\(R12\)) (R12)
+--    * [HMS Invincible](https://en.wikipedia.org/wiki/HMS_Invincible_\(R05\)) (R05)
+--    * [USS Tarawa](https://en.wikipedia.org/wiki/USS_Tarawa_\(LHA-1\)) (LHA-1)
+--    * [USS America](https://en.wikipedia.org/wiki/USS_America_\(LHA-6\)) (LHA-6)
 --    * [Juan Carlos I](https://en.wikipedia.org/wiki/Spanish_amphibious_assault_ship_Juan_Carlos_I) (L61)
---    * [HMAS Canberra](https://en.wikipedia.org/wiki/HMAS_Canberra_(L02\)) (L02)
+--    * [HMAS Canberra](https://en.wikipedia.org/wiki/HMAS_Canberra_\(L02\)) (L02)
 --
 -- **Supported Aircraft:**
 --
@@ -45,7 +45,7 @@
 --    * [F-14A/B Tomcat](https://forums.eagle.ru/forumdisplay.php?f=395) (Player & AI)
 --    * [A-4E Skyhawk Community Mod](https://forums.eagle.ru/showthread.php?t=224989) (Player & AI)
 --    * [AV-8B N/A Harrier](https://forums.eagle.ru/forumdisplay.php?f=555) (Player & AI)
---    * [T-45C Goshawk](https://www.vnao-cvw-7.com/t-45-goshawk) (VNAO mod) (Player & AI)
+--    * [T-45C Goshawk](https://forum.dcs.world/topic/203816-vnao-t-45-goshawk/) (VNAO mod) (Player & AI)
 --    * [FE/A-18E/F/G Superhornet](https://forum.dcs.world/topic/316971-cjs-super-hornet-community-mod-v20-official-thread/) (CJS mod) (Player & AI)
 --    * F/A-18C Hornet (AI)
 --    * F-14A Tomcat (AI)
@@ -61,7 +61,7 @@
 --
 -- Heatblur's mighty F-14B Tomcat has been added (March 13th 2019) as well. Same goes for the A version.
 --
--- The [DCS Supercarriers](https://forums.eagle.ru/forum/151-dcs-supercarrier/) are also supported.
+-- The [DCS Supercarriers](https://www.digitalcombatsimulator.com/de/shop/modules/supercarrier/) are also supported.
 --
 -- ## Discussion
 --
@@ -94,11 +94,6 @@
 --    * [[MOOSE] Airboss - New LSO/Marshal Voice Overs by Raynor](https://www.youtube.com/watch?v=_Suo68bRu8k)
 --    * [[MOOSE] Airboss - CASE I, "Until We Go Down" featuring the F-14B by Pikes](https://www.youtube.com/watch?v=ojgHDSw3Doc)
 --    * [[MOOSE] Airboss - Skipper Menu](https://youtu.be/awnecCxRoNQ)
---
--- ### Lex explaining Boat Ops:
---
---    * [( DCS HORNET ) Some boat ops basics VID 1](https://www.youtube.com/watch?v=LvGQS-3AzMc)
---    * [( DCS HORNET ) Some boat ops basics VID 2](https://www.youtube.com/watch?v=bN44wvtRsw0)
 --
 -- ### Jabbers Case I and III Recovery Tutorials:
 --
@@ -1735,10 +1730,10 @@ AIRBOSS.Difficulty = {
 -- @field #table trapsheet Groove data table recorded every 0.5 seconds.
 -- @field #boolean trapon If true, save trap sheets.
 -- @field #string debriefschedulerID Debrief scheduler ID.
---
+-- 
 -- @field Sound.SRS#MSRS SRS
 -- @field Sound.SRS#MSRSQUEUE SRSQ
---
+-- 
 -- @extends #AIRBOSS.FlightGroup
 
 --- Main group level radio menu: F10 Other/Airboss.
@@ -1751,7 +1746,7 @@ AIRBOSS.MenuF10Root = nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version = "1.3.2"
+AIRBOSS.version = "1.3.3"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2543,7 +2538,7 @@ function AIRBOSS:AddRecoveryWindow( starttime, stoptime, case, holdingoffset, tu
     return self
   end
   if Tstop <= Tnow then
-    self:I( string.format( "WARNING: Recovery stop time %s already over. Tnow=%s! Recovery window rejected.", UTILS.SecondsToClock( Tstop ), UTILS.SecondsToClock( Tnow ) ) )
+      string.format( "WARNING: Recovery stop time %s already over. Tnow=%s! Recovery window rejected.", UTILS.SecondsToClock( Tstop ), UTILS.SecondsToClock( Tnow ) ) 
     return self
   end
 
@@ -3058,7 +3053,7 @@ end
 -- @param #number Port Port of the SRS server, defaults to 5002.
 -- @param #string Culture (Optional, Airboss Culture)  Culture, defaults to "en-US".
 -- @param #string Gender (Optional, Airboss Gender)  Gender, e.g. "male" or "female". Defaults to "male".
--- @param #string Voice (Optional, Airboss Voice) Set to use a specific voice. Will **override gender and culture** settings.
+-- @param #string Voice (Optional, Airboss Voice) Set to use a specific voice. Will **override gender and culture** settings.  
 -- @param #string GoogleCreds (Optional) Path to Google credentials, e.g. "C:\\Program Files\\DCS-SimpleRadio-Standalone\\yourgooglekey.json".
 -- @param #number Volume (Optional) E.g. 0.75. Defaults to 1.0 (loudest).
 -- @param #table AltBackend (Optional) See MSRS for details.
@@ -3076,6 +3071,7 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
   self.SRS:SetPath(PathToSRS)
   self.SRS:SetPort(Port or 5002)
   self.SRS:SetLabel(self.AirbossRadio.alias or "AIRBOSS")
+  self.SRS:SetCoordinate(self.carrier:GetCoordinate())
   --self.SRS:SetModulations(Modulations)
   if GoogleCreds then
     self.SRS:SetGoogle(GoogleCreds)
@@ -3087,10 +3083,10 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
   -- SRSQUEUE
   self.SRSQ = MSRSQUEUE:New("AIRBOSS")
   self.SRSQ:SetTransmitOnlyWithPlayers(true)
-  if not self.PilotRadio then
+  if not self.PilotRadio then 
     self:SetSRSPilotVoice()
   end
-  return self
+  return self  
 end
 
 --- Set LSO radio frequency and modulation. Default frequency is 264 MHz AM.
@@ -3258,7 +3254,7 @@ function AIRBOSS:SoundCheckLSO( delay )
     end
 
     -- Debug message.
-    self:I( self.lid .. text )
+    self:T( self.lid .. text )
 
   end
 end
@@ -3293,7 +3289,7 @@ function AIRBOSS:SoundCheckMarshal( delay )
     end
 
     -- Debug message.
-    self:I( self.lid .. text )
+    self:T( self.lid .. text )
 
   end
 end
@@ -3684,7 +3680,7 @@ function AIRBOSS:onafterStatus( From, Event, To )
     if i == 0 then
       text = text .. " none"
     end
-    self:I( self.lid .. text )
+    self:T( self.lid .. text )
 
     -- Check for collision.
     if collision then
@@ -4075,7 +4071,7 @@ function AIRBOSS:_CheckRecoveryTimes()
 
         -- Check that wind is blowing from a direction > 5° different from the current heading.
         local hdg = self:GetHeading()
-        local wind = self:GetHeadingIntoWind()
+        local wind = self:GetHeadingIntoWind(nextwindow.SPEED)
         local delta = self:_GetDeltaHeading( hdg, wind )
         local uturn = delta > 5
 
@@ -5459,6 +5455,7 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
   local skyhawk = playerData.actype == AIRBOSS.AircraftCarrier.A4EC
   local tomcat = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B
   local harrier = playerData.actype == AIRBOSS.AircraftCarrier.AV8B
+  local goshawk = playerData.actype == AIRBOSS.AircraftCarrier.T45C
 
   -- Return values.
   local alt
@@ -5924,6 +5921,7 @@ function AIRBOSS:_ScanCarrierZone()
     -- Get aircraft type name.
     local actype = group:GetTypeName()
 
+    -- Create a new flight group
     if knownflight then
 
       -- Debug output.
@@ -6726,7 +6724,7 @@ function AIRBOSS:_AddMarshalGroup( flight, stack )
 
   -- If the carrier is supposed to turn into the wind, we take the wind coordinate.
   if self.recoverywindow and self.recoverywindow.WIND then
-    brc = self:GetBRCintoWind()
+    brc = self:GetBRCintoWind(self.recoverywindow.SPEED)
   end
 
   -- Get charlie time estimate.
@@ -6958,7 +6956,7 @@ function AIRBOSS:_GetFreeStack( ai, case, empty )
 
   end
 
-  self:I( self.lid .. string.format( "Returning free stack %s", tostring( nfree ) ) )
+  self:T( self.lid .. string.format( "Returning free stack %s", tostring( nfree ) ) )
   return nfree
 end
 
@@ -7892,7 +7890,7 @@ function AIRBOSS:_RemoveFlight( flight, completely )
       -- Remove player from players table.
       local playerdata = self.players[flight.name]
       if playerdata then
-        self:I( self.lid .. string.format( "Removing player %s completely.", flight.name ) )
+        self:T( self.lid .. string.format( "Removing player %s completely.", flight.name ) )
         self.players[flight.name] = nil
       end
 
@@ -10269,7 +10267,7 @@ function AIRBOSS:_GetSternCoord()
     elseif case==2 or case==1 then
     -- V/Stol: Translate 8 meters port.
     self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(8, FB-90, true, true)
-	end
+  end
   elseif self.carriertype==AIRBOSS.CarrierType.STENNIS then
     -- Stennis: translate 7 meters starboard wrt Final bearing.
     self.sterncoord:Translate( self.carrierparam.sterndist, hdg, true, true ):Translate( 7, FB + 90, true, true )
@@ -11551,12 +11549,12 @@ end
 -- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
 -- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
 -- @return #number Carrier heading in degrees.
-function AIRBOSS:GetHeadingIntoWind( magnetic, coord )
+function AIRBOSS:GetHeadingIntoWind_old( magnetic, coord )
 
   local function adjustDegreesForWindSpeed(windSpeed)
     local degreesAdjustment = 0
   -- the windspeeds are in m/s
-
+  
   -- +0 degrees at 15m/s = 37kts
   -- +0 degrees at 14m/s = 35kts
   -- +0 degrees at 13m/s = 33kts
@@ -11571,7 +11569,7 @@ function AIRBOSS:GetHeadingIntoWind( magnetic, coord )
   -- +20 degrees at 4m/s = 26kts
   -- +20 degrees at 3m/s = 26kts
   -- +30 degrees at 2m/s = 26kts 1s
-
+  
     if windSpeed > 0 and windSpeed < 3 then
       degreesAdjustment = 30
     elseif windSpeed >= 3 and windSpeed < 5 then
@@ -11583,21 +11581,15 @@ function AIRBOSS:GetHeadingIntoWind( magnetic, coord )
     elseif windSpeed >= 13 then
       degreesAdjustment = 0
     end
-
+  
     return degreesAdjustment
   end
 
   -- Get direction the wind is blowing from. This is where we want to go.
   local windfrom, vwind = self:GetWind( nil, nil, coord )
 
-  --self:I("windfrom="..windfrom.." vwind="..vwind)
-
-  vwind = vwind + adjustDegreesForWindSpeed(vwind)
-
-  --self:I("windfrom="..windfrom.." (c)vwind="..vwind)
-
   -- Actually, we want the runway in the wind.
-  local intowind = windfrom - self.carrierparam.rwyangle
+  local intowind = windfrom - self.carrierparam.rwyangle + adjustDegreesForWindSpeed(vwind)
 
   -- If no wind, take current heading.
   if vwind < 0.1 then
@@ -11617,13 +11609,108 @@ function AIRBOSS:GetHeadingIntoWind( magnetic, coord )
   return intowind
 end
 
+--- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
+-- Implementation based on [Mags & Bambi](https://magwo.github.io/carrier-cruise/).
+-- @param #AIRBOSS self
+-- @param #number vdeck Desired wind velocity over deck in knots.
+-- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
+-- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
+-- @return #number Carrier heading in degrees.
+-- @return #number Carrier speed in knots to reach desired wind speed on deck.
+function AIRBOSS:GetHeadingIntoWind( vdeck, magnetic, coord )
+
+  -- Default offset angle.
+  local Offset=self.carrierparam.rwyangle or 0
+
+  -- Get direction the wind is blowing from.
+  local windfrom, vwind=self:GetWind(18, nil ,coord)
+
+  -- Ships min/max speed.
+  local Vmin=4
+  local Vmax=UTILS.KmphToKnots(self.carrier:GetSpeedMax())
+
+  -- No wind. will stay on current heading.
+  if vwind<0.1 then
+    local h=self:GetHeading(magnetic)
+    return h, math.min(vdeck, Vmax)
+  end
+  
+  -- Convert wind speed to knots.
+  vwind=UTILS.MpsToKnots(vwind)
+  
+  -- Wind to in knots.
+  local windto=(windfrom+180)%360
+  
+  -- Offset angle in rad. We also define the rotation to be clock-wise, which requires a minus sign.
+  local alpha=math.rad(-Offset)
+    
+  -- Constant.
+  local C = math.sqrt(math.cos(alpha)^2 / math.sin(alpha)^2 + 1)
+  
+
+  -- Upper limit of desired speed due to max boat speed.
+  local vdeckMax=vwind + math.cos(alpha) * Vmax
+  
+  -- Lower limit of desired speed due to min boat speed.
+  local vdeckMin=vwind + math.cos(alpha) * Vmin
+  
+  
+  -- Speed of ship so it matches the desired speed.
+  local v=0
+  
+  -- Angle wrt. to wind TO-direction 
+  local theta=0
+
+  if vdeck>vdeckMax then
+    -- Boat cannot go fast enough
+    
+    -- Set max speed.
+    v=Vmax
+    
+    -- Calculate theta.
+    theta = math.asin(v/(vwind*C)) - math.asin(-1/C)
+  
+  elseif vdeck<vdeckMin then
+    -- Boat cannot go slow enought
+  
+    -- Set min speed.
+    v=Vmin
+    
+    -- Calculatge theta.
+    theta = math.asin(v/(vwind*C)) - math.asin(-1/C)
+  
+  elseif vdeck*math.sin(alpha)>vwind then
+    -- Too little wind
+    
+    -- Set theta to 90°
+    theta=math.pi/2
+    
+    -- Set speed.
+    v = math.sqrt(vdeck^2 - vwind^2)
+  
+  else
+    -- Normal case
+    theta = math.asin(vdeck * math.sin(alpha) / vwind)
+    v = vdeck * math.cos(alpha) - vwind * math.cos(theta)
+  end
+
+  -- Magnetic heading.
+  local magvar= magnetic and self.magvar or 0
+  
+  -- Ship heading so cross wind is min for the given wind.
+  local intowind = (540 + (windto - magvar + math.deg(theta) )) % 360  
+
+  return intowind, v
+end
+
 --- Get base recovery course (BRC) when the carrier would head into the wind.
 -- This includes the current wind direction and accounts for the angled runway.
 -- @param #AIRBOSS self
+-- @param #number vdeck Desired wind velocity over deck in knots.
 -- @return #number BRC into the wind in degrees.
-function AIRBOSS:GetBRCintoWind()
+function AIRBOSS:GetBRCintoWind(vdeck)
   -- BRC is the magnetic heading.
-  return self:GetHeadingIntoWind( true )
+  return self:GetHeadingIntoWind(vdeck, true )
 end
 
 --- Get final bearing (FB) of carrier.
@@ -13529,21 +13616,20 @@ function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
   -- Wind speed.
   local _, vwind = self:GetWind()
 
+  -- Desired wind on deck in knots.
+  local vdeck=UTILS.MpsToKnots(vdeck)
+
+  -- Get heading into the wind accounting for angled runway.
+  local hiw, speedknots = self:GetHeadingIntoWind(vdeck)
+
   -- Speed of carrier in m/s but at least 4 knots.
-  local vtot = math.max( vdeck - vwind, UTILS.KnotsToMps( 4 ) )
+  local vtot = UTILS.KnotsToMps(speedknots)
 
   -- Distance to travel
   local dist = vtot * time
 
-  -- Speed in knots
-  local speedknots = UTILS.MpsToKnots( vtot )
+  -- Distance in NM.
   local distNM = UTILS.MetersToNM( dist )
-
-  -- Debug output
-  self:I( self.lid .. string.format( "Carrier steaming into the wind (%.1f kts). Distance=%.1f NM, Speed=%.1f knots, Time=%d sec.", UTILS.MpsToKnots( vwind ), distNM, speedknots, time ) )
-
-  -- Get heading into the wind accounting for angled runway.
-  local hiw = self:GetHeadingIntoWind()
 
   -- Current heading.
   local hdg = self:GetHeading()
@@ -13551,6 +13637,11 @@ function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
   -- Heading difference.
   local deltaH = self:_GetDeltaHeading( hdg, hiw )
 
+  -- Debug output
+  self:I( self.lid .. string.format( "Carrier steaming into the wind (%.1f kts). Heading=%03d-->%03d (Delta=%.1f), Speed=%.1f knots, Distance=%.1f NM, Time=%d sec", 
+  UTILS.MpsToKnots( vwind ), hdg, hiw, deltaH, speedknots, distNM, speedknots, time ) )
+
+  -- Current coordinate.
   local Cv = self:GetCoordinate()
 
   local Ctiw = nil -- Core.Point#COORDINATE
@@ -13564,7 +13655,7 @@ function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
     Csoo = Cv:Translate( 750, hdg ):Translate( 750, hiw )
 
     -- Heading into wind from Csoo.
-    local hsw = self:GetHeadingIntoWind( false, Csoo )
+    local hsw = self:GetHeadingIntoWind(vdeck, false, Csoo )
 
     -- Into the wind coord.
     Ctiw = Csoo:Translate( dist, hsw )
@@ -13576,7 +13667,7 @@ function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
     Csoo = Cv:Translate( 900, hdg ):Translate( 900, hiw )
 
     -- Heading into wind from Csoo.
-    local hsw = self:GetHeadingIntoWind( false, Csoo )
+    local hsw = self:GetHeadingIntoWind(vdeck, false, Csoo )
 
     -- Into the wind coord.
     Ctiw = Csoo:Translate( dist, hsw )
@@ -13588,7 +13679,7 @@ function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
     Csoo = Cv:Translate( 1100, hdg - 90 ):Translate( 1000, hiw )
 
     -- Heading into wind from Csoo.
-    local hsw = self:GetHeadingIntoWind( false, Csoo )
+    local hsw = self:GetHeadingIntoWind(vdeck, false, Csoo )
 
     -- Into the wind coord.
     Ctiw = Csoo:Translate( dist, hsw )
@@ -13600,7 +13691,7 @@ function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
     Csoo = Cv:Translate( 1200, hdg - 90 ):Translate( 1000, hiw )
 
     -- Heading into wind from Csoo.
-    local hsw = self:GetHeadingIntoWind( false, Csoo )
+    local hsw = self:GetHeadingIntoWind(vdeck, false, Csoo )
 
     -- Into the wind coord.
     Ctiw = Csoo:Translate( dist, hsw )
@@ -13813,7 +13904,8 @@ function AIRBOSS:_CheckCarrierTurning()
     local hdg
     if self.turnintowind then
       -- We are now steaming into the wind.
-      hdg = self:GetHeadingIntoWind( false )
+      local vdeck=self.recoverywindow and self.recoverywindow.SPEED or 20
+      hdg = self:GetHeadingIntoWind(vdeck, false)
     else
       -- We turn towards the next waypoint.
       hdg = self:GetCoordinate():HeadingTo( self:_GetNextWaypoint() )
@@ -14733,12 +14825,12 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
   if radio == nil or call == nil then
     return
   end
-
+  
   if not self.SRS then
-
+  
     -- Create a new radio transmission item.
     local transmission = {} -- #AIRBOSS.Radioitem
-
+  
     transmission.radio = radio
     transmission.call = call
     transmission.Tplay = timer.getAbsTime() + (delay or 0)
@@ -14746,105 +14838,108 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
     transmission.isplaying = false
     transmission.Tstarted = nil
     transmission.loud = loud and call.loud
-
+  
     -- Player onboard number if sender has one.
     if self:_IsOnboard( call.modexsender ) then
       self:_Number2Radio( radio, call.modexsender, delay, 0.3, pilotcall )
     end
-
+  
     -- Play onboard number if receiver has one.
     if self:_IsOnboard( call.modexreceiver ) then
       self:_Number2Radio( radio, call.modexreceiver, delay, 0.3, pilotcall )
     end
-
+  
     -- Add transmission to the right queue.
     local caller = ""
     if radio.alias == "LSO" then
-
+  
       table.insert( self.RQLSO, transmission )
-
+  
       caller = "LSOCall"
-
+  
       -- Schedule radio queue checks.
       if not self.RQLid then
         self:T( self.lid .. string.format( "Starting LSO radio queue." ) )
         self.RQLid = self.radiotimer:Schedule( nil, AIRBOSS._CheckRadioQueue, { self, self.RQLSO, "LSO" }, 0.02, 0.05 )
       end
-
+  
     elseif radio.alias == "MARSHAL" then
-
+  
       table.insert( self.RQMarshal, transmission )
-
+  
       caller = "MarshalCall"
-
+  
       if not self.RQMid then
         self:T( self.lid .. string.format( "Starting Marhal radio queue." ) )
         self.RQMid = self.radiotimer:Schedule( nil, AIRBOSS._CheckRadioQueue, { self, self.RQMarshal, "MARSHAL" }, 0.02, 0.05 )
       end
-
+  
     end
-
+  
     -- Append radio click sound at the end of the transmission.
     if click then
       self:RadioTransmission( radio, self[caller].CLICK, false, delay )
     end
-
+  
   else
+
     -- SRS transmission
+    if call.subtitle ~= nil and string.len(call.subtitle) > 1  then
 
-    local frequency = self.MarshalRadio.frequency
-    local modulation = self.MarshalRadio.modulation
-    local voice = nil
-    local gender = nil
-    local culture = nil
+      local frequency = self.MarshalRadio.frequency
+      local modulation = self.MarshalRadio.modulation
+      local voice = nil
+      local gender = nil
+      local culture = nil
+      
+      if radio.alias == "AIRBOSS" then
+        frequency = self.AirbossRadio.frequency
+        modulation = self.AirbossRadio.modulation
+        voice = self.AirbossRadio.voice
+        gender = self.AirbossRadio.gender
+        culture = self.AirbossRadio.culture
+      end
+      
+      if radio.alias == "MARSHAL" then
+        voice = self.MarshalRadio.voice
+        gender = self.MarshalRadio.gender
+        culture = self.MarshalRadio.culture
+      end
+      
+      if radio.alias == "LSO" then
+        frequency = self.LSORadio.frequency
+        modulation = self.LSORadio.modulation
+        voice = self.LSORadio.voice
+        gender = self.LSORadio.gender
+        culture = self.LSORadio.culture
+      end
+      
+      if pilotcall then
+        voice = self.PilotRadio.voice
+        gender = self.PilotRadio.gender
+        culture = self.PilotRadio.culture
+        radio.alias = "PILOT"
+      end
 
-    if radio.alias == "AIRBOSS" then
-      frequency = self.AirbossRadio.frequency
-      modulation = self.AirbossRadio.modulation
-      voice = self.AirbossRadio.voice
-      gender = self.AirbossRadio.gender
-      culture = self.AirbossRadio.culture
+      if not radio.alias then
+        -- TODO - what freq to use here?
+        frequency = self.AirbossRadio.frequency
+        modulation = self.AirbossRadio.modulation
+        radio.alias = "AIRBOSS"
+      end
+      
+      local volume = nil
+      
+      if loud then
+        volume = 1.0
+      end
+      
+      --local text = tostring(call.modexreceiver).."; "..radio.alias.."; "..call.subtitle
+      local text = call.subtitle
+      self:T(self.lid..text) 
+      local srstext = self:_GetNiceSRSText(text)
+      self.SRSQ:NewTransmission(srstext, call.duration, self.SRS, nil, 0.1, nil, call.subtitle, call.subduration, frequency, modulation, gender, culture, voice, volume, radio.alias)
     end
-
-    if radio.alias == "MARSHAL" then
-      voice = self.MarshalRadio.voice
-      gender = self.MarshalRadio.gender
-      culture = self.MarshalRadio.culture
-    end
-
-    if radio.alias == "LSO" then
-      frequency = self.LSORadio.frequency
-      modulation = self.LSORadio.modulation
-      voice = self.LSORadio.voice
-      gender = self.LSORadio.gender
-      culture = self.LSORadio.culture
-    end
-
-    if pilotcall then
-      voice = self.PilotRadio.voice
-      gender = self.PilotRadio.gender
-      culture = self.PilotRadio.culture
-      radio.alias = "PILOT"
-    end
-
-    if not radio.alias then
-      -- TODO - what freq to use here?
-      frequency = self.AirbossRadio.frequency
-      modulation = self.AirbossRadio.modulation
-      radio.alias = "AIRBOSS"
-    end
-
-    local volume = nil
-
-    if loud then
-      volume = 1.0
-    end
-
-    --local text = tostring(call.modexreceiver).."; "..radio.alias.."; "..call.subtitle
-    local text = call.subtitle
-    self:I(self.lid..text)
-    local srstext = self:_GetNiceSRSText(text)
-    self.SRSQ:NewTransmission(srstext, call.duration, self.SRS, tstart, 0.1, subgroups, call.subtitle, call.subduration, frequency, modulation, gender, culture, voice, volume, radio.alias)
   end
 end
 
@@ -14861,11 +14956,11 @@ function AIRBOSS:SetSRSPilotVoice( Voice, Gender, Culture )
   self.PilotRadio.voice = Voice or MSRS.Voices.Microsoft.David
   self.PilotRadio.gender = Gender or "male"
   self.PilotRadio.culture = Culture or "en-US"
-
+  
   if (not Voice) and self.SRS and self.SRS.google then
     self.PilotRadio.voice = MSRS.Voices.Google.Standard.en_US_Standard_J
   end
-
+  
   return self
 end
 
@@ -15156,7 +15251,7 @@ end
 -- @param #boolean clear If true, clear screen from previous messages.
 -- @param #number delay Delay in seconds, before the message is displayed.
 function AIRBOSS:MessageToPlayer( playerData, message, sender, receiver, duration, clear, delay )
-  self:I({sender,receiver,message})
+  self:T({sender,receiver,message})
   if playerData and message and message ~= "" then
 
     -- Default duration.
@@ -15179,44 +15274,44 @@ function AIRBOSS:MessageToPlayer( playerData, message, sender, receiver, duratio
       -- SCHEDULER:New(nil, self.MessageToPlayer, {self, playerData, message, sender, receiver, duration, clear}, delay)
       self:ScheduleOnce( delay, self.MessageToPlayer, self, playerData, message, sender, receiver, duration, clear )
     else
-
+      
       if not self.SRS then
         -- Wait until previous sound finished.
         local wait = 0
-
+  
         -- Onboard number to get the attention.
         if receiver == playerData.onboard then
-
+  
           -- Which voice over number to use.
           if sender and (sender == "LSO" or sender == "MARSHAL" or sender == "AIRBOSS") then
-
+  
             -- User sound of board number.
             wait = wait + self:_Number2Sound( playerData, sender, receiver )
-
+  
           end
         end
-
+  
         -- Negative.
         if string.find( text:lower(), "negative" ) then
           local filename = self:_RadioFilename( self.MarshalCall.NEGATIVE, false, "MARSHAL" )
           USERSOUND:New( filename ):ToGroup( playerData.group, wait )
           wait = wait + self.MarshalCall.NEGATIVE.duration
         end
-
+  
         -- Affirm.
         if string.find( text:lower(), "affirm" ) then
           local filename = self:_RadioFilename( self.MarshalCall.AFFIRMATIVE, false, "MARSHAL" )
           USERSOUND:New( filename ):ToGroup( playerData.group, wait )
           wait = wait + self.MarshalCall.AFFIRMATIVE.duration
         end
-
+  
         -- Roger.
         if string.find( text:lower(), "roger" ) then
           local filename = self:_RadioFilename( self.MarshalCall.ROGER, false, "MARSHAL" )
           USERSOUND:New( filename ):ToGroup( playerData.group, wait )
           wait = wait + self.MarshalCall.ROGER.duration
         end
-
+  
         -- Play click sound to end message.
         if wait > 0 then
           local filename = self:_RadioFilename( self.MarshalCall.CLICK )
@@ -15229,7 +15324,7 @@ function AIRBOSS:MessageToPlayer( playerData, message, sender, receiver, duratio
         local voice = self.MarshalRadio.voice
         local gender = self.MarshalRadio.gender
         local culture = self.MarshalRadio.culture
-
+        
         if not sender then sender = "AIRBOSS" end
 
         if string.find(sender,"AIRBOSS" ) then
@@ -15259,10 +15354,10 @@ function AIRBOSS:MessageToPlayer( playerData, message, sender, receiver, duratio
           --sender = "AIRBOSS"
         end
 
-        self:I(self.lid..text)
-        self:I({sender,frequency,modulation,voice})
+        self:T(self.lid..text)
+        self:T({sender,frequency,modulation,voice})
         local srstext = self:_GetNiceSRSText(text)
-        self.SRSQ:NewTransmission(srstext,duration,self.SRS,tstart,0.1,subgroups,subtitle,subduration,frequency,modulation,gender,culture,voice,volume,sender)
+        self.SRSQ:NewTransmission(srstext,duration,self.SRS,nil,0.1,nil,nil,nil,frequency,modulation,gender,culture,voice,nil,sender)
       end
       -- Text message to player client.
       if playerData.client then
@@ -15632,7 +15727,7 @@ function AIRBOSS:_LSOCallAircraftBall( modex, nickname, fuelstate )
   local text = string.format( "%s Ball, %.1f.", nickname, fuelstate )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Nickname UPPERCASE.
   local NICKNAME = nickname:upper()
@@ -15668,7 +15763,7 @@ function AIRBOSS:_MarshalCallGasAtTanker( modex )
   local text = string.format( "Bingo fuel! Going for gas at the recovery tanker." )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
 
   -- Create new call to display complete subtitle.
@@ -15692,7 +15787,7 @@ function AIRBOSS:_MarshalCallGasAtDivert( modex, divertname )
   local text = string.format( "Bingo fuel! Going for gas at divert field %s.", divertname )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Create new call to display complete subtitle.
   local call = self:_NewRadioCall( self.PilotCall.BINGOFUEL, modex, text, self.Tmessage, nil, modex )
@@ -15714,7 +15809,7 @@ function AIRBOSS:_MarshalCallRecoveryStopped( case )
   local text = string.format( "Case %d recovery ops are stopped. Deck is closed.", case )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Create new call to display complete subtitle.
   local call = self:_NewRadioCall( self.MarshalCall.CASE, "AIRBOSS", text, self.Tmessage, "99" )
@@ -15755,7 +15850,7 @@ function AIRBOSS:_MarshalCallRecoveryPausedResumedAt( clock )
   local text = string.format( "aircraft recovery is paused and will be resumed at %s.", clock )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Create new call with full subtitle.
   local call = self:_NewRadioCall( self.MarshalCall.RECOVERYPAUSEDRESUMED, "AIRBOSS", text, self.Tmessage, "99" )
@@ -15782,7 +15877,7 @@ function AIRBOSS:_MarshalCallClearedForRecovery( modex, case )
   local text = string.format( "you're cleared for Case %d recovery.", case )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Create new call with full subtitle.
   local call = self:_NewRadioCall( self.MarshalCall.CLEAREDFORRECOVERY, "MARSHAL", text, self.Tmessage, modex )
@@ -15820,7 +15915,7 @@ function AIRBOSS:_MarshalCallNewFinalBearing( FB )
   local text = string.format( "new final bearing %03d°.", FB )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Create new call with full subtitle.
   local call = self:_NewRadioCall( self.MarshalCall.NEWFB, "AIRBOSS", text, self.Tmessage, "99" )
@@ -15843,7 +15938,7 @@ function AIRBOSS:_MarshalCallCarrierTurnTo( hdg )
   local text = string.format( "carrier is now starting turn to heading %03d°.", hdg )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Create new call with full subtitle.
   local call = self:_NewRadioCall( self.MarshalCall.CARRIERTURNTOHEADING, "AIRBOSS", text, self.Tmessage, "99" )
@@ -15874,7 +15969,7 @@ function AIRBOSS:_MarshalCallStackFull( modex, nwaiting )
   end
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Create new call with full subtitle.
   local call = self:_NewRadioCall( self.MarshalCall.STACKFULL, "AIRBOSS", text, self.Tmessage, modex )
@@ -15945,7 +16040,7 @@ function AIRBOSS:_MarshalCallArrived( modex, case, brc, altitude, charlie, qfe )
   local text = string.format( "Case %d, expected BRC %03d°, hold at angels %d. Expected Charlie Time %s. Altimeter %.2f. Report see me.", case, brc, angels, charlie, qfe )
 
   -- Debug message.
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Create new call to display complete subtitle.
   local casecall = self:_NewRadioCall( self.MarshalCall.CASE, "MARSHAL", text, self.Tmessage, modex )

@@ -55,6 +55,11 @@
 -- coordinate. The Ship will follow the Shipping Lane to ensure consistent cargo transportation within the simulation environment.
 --
 --
+-- # Developer Note
+-- 
+-- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+-- Therefore, this class is considered to be deprecated
+--
 -- @field #AI_CARGO_SHIP
 AI_CARGO_SHIP = {
     ClassName = "AI_CARGO_SHIP",

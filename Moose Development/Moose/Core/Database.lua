@@ -31,8 +31,7 @@
 -- @module Core.Database
 -- @image Core_Database.JPG
 
-
---- DATABASE class.
+---
 -- @type DATABASE
 -- @field #string ClassName Name of the class.
 -- @field #table Templates Templates: Units, Groups, Statics, ClientsByName, ClientsByID.
@@ -127,6 +126,8 @@ function DATABASE:New()
   self:SetEventPriority( 1 )
 
   self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
+  -- DCS 2.9 fixed CA event for players -- TODO: reset unit when leaving
+  self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
@@ -681,7 +682,7 @@ do -- cargo
   --- Finds an CARGO based on the CargoName.
   -- @param #DATABASE self
   -- @param #string CargoName
-  -- @return Wrapper.Cargo#CARGO The found CARGO.
+  -- @return Cargo.Cargo#CARGO The found CARGO.
   function DATABASE:FindCargo( CargoName )
 
     local CargoFound = self.CARGOS[CargoName]
@@ -811,6 +812,7 @@ function DATABASE:AddPlayer( UnitName, PlayerName )
     self.PLAYERUNITS[PlayerName] = self:FindUnit( UnitName )
     self.PLAYERSJOINED[PlayerName] = PlayerName
   end
+  
 end
 
 --- Deletes a player from the DATABASE based on the Player Name.
@@ -1369,7 +1371,7 @@ function DATABASE:_EventOnBirth( Event )
       if PlayerName then
 
         -- Debug info.
-        self:I(string.format("Player '%s' joint unit '%s' of group '%s'", tostring(PlayerName), tostring(Event.IniDCSUnitName), tostring(Event.IniDCSGroupName)))
+        self:I(string.format("Player '%s' joined unit '%s' of group '%s'", tostring(PlayerName), tostring(Event.IniDCSUnitName), tostring(Event.IniDCSGroupName)))
 
         -- Add client in case it does not exist already.
         if not client then
@@ -1471,39 +1473,43 @@ function DATABASE:_EventOnDeadOrCrash( Event )
 end
 
 
---- Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).
+--- Handles the OnPlayerEnterUnit event to fill the active players table for CA units (with the unit filter applied).
 -- @param #DATABASE self
 -- @param Core.Event#EVENTDATA Event
 function DATABASE:_EventOnPlayerEnterUnit( Event )
   self:F2( { Event } )
 
   if Event.IniDCSUnit then
-    if Event.IniObjectCategory == 1 then
+    -- Player entering a CA slot
+    if Event.IniObjectCategory == 1 and Event.IniGroup and Event.IniGroup:IsGround() then
+        
+      local IsPlayer = Event.IniDCSUnit:getPlayerName()
+      if IsPlayer then
 
-      -- Add unit.
-      self:AddUnit( Event.IniDCSUnitName )
+        -- Debug info.
+        self:I(string.format("Player '%s' joined GROUND unit '%s' of group '%s'", tostring(Event.IniPlayerName), tostring(Event.IniDCSUnitName), tostring(Event.IniDCSGroupName)))
+        
+        local client= self.CLIENTS[Event.IniDCSUnitName] --Wrapper.Client#CLIENT
+        
+        -- Add client in case it does not exist already.
+        if not client then
+          client=self:AddClient(Event.IniDCSUnitName)
+        end
+              
+        -- Add player.
+        client:AddPlayer(Event.IniPlayerName)
 
-      -- Ini unit.
-      Event.IniUnit = self:FindUnit( Event.IniDCSUnitName )
-
-      -- Add group.
-      self:AddGroup( Event.IniDCSGroupName )
-
-      -- Get player unit.
-      local PlayerName = Event.IniDCSUnit:getPlayerName()
-
-      if PlayerName then
-
-        if not self.PLAYERS[PlayerName] then
-          self:AddPlayer( Event.IniDCSUnitName, PlayerName )
+        -- Add player.
+        if not self.PLAYERS[Event.IniPlayerName] then
+          self:AddPlayer( Event.IniUnitName, Event.IniPlayerName )
         end
 
-        local Settings = SETTINGS:Set( PlayerName )
-        Settings:SetPlayerMenu( Event.IniUnit )
+        -- Player settings.
+        local Settings = SETTINGS:Set( Event.IniPlayerName )
+        Settings:SetPlayerMenu(Event.IniUnit)
 
-      else
-        self:E("ERROR: getPlayerName() returned nil for event PlayerEnterUnit")
       end
+
     end
   end
 end
@@ -1514,15 +1520,26 @@ end
 -- @param Core.Event#EVENTDATA Event
 function DATABASE:_EventOnPlayerLeaveUnit( Event )
   self:F2( { Event } )
-
+  
+  local function FindPlayerName(UnitName)
+    local playername = nil
+    for _name,_unitname in pairs(self.PLAYERS) do
+      if _unitname == UnitName then
+        playername = _name
+        break
+      end
+    end
+    return playername
+  end
+  
   if Event.IniUnit then
 
     if Event.IniObjectCategory == 1 then
 
       -- Try to get the player name. This can be buggy for multicrew aircraft!
-      local PlayerName = Event.IniUnit:GetPlayerName()
-
-      if PlayerName then --and self.PLAYERS[PlayerName] then
+      local PlayerName = Event.IniUnit:GetPlayerName() or FindPlayerName(Event.IniUnitName)
+          
+      if PlayerName then
 
         -- Debug info.
         self:I(string.format("Player '%s' left unit %s", tostring(PlayerName), tostring(Event.IniUnitName)))
@@ -1849,13 +1866,13 @@ function DATABASE:GetFlightControl(airbasename)
   return self.FLIGHTCONTROLS[airbasename]
 end
 
---- @param #DATABASE self
+-- @param #DATABASE self
 function DATABASE:_RegisterTemplates()
   self:F2()
 
   self.Navpoints = {}
   self.UNITS = {}
-  --Build routines.db.units and self.Navpoints
+  --Build self.Navpoints
   for CoalitionName, coa_data in pairs(env.mission.coalition) do
     self:T({CoalitionName=CoalitionName})
 
@@ -1877,7 +1894,7 @@ function DATABASE:_RegisterTemplates()
         for nav_ind, nav_data in pairs(coa_data.nav_points) do
 
           if type(nav_data) == 'table' then
-            self.Navpoints[CoalitionName][nav_ind] = routines.utils.deepCopy(nav_data)
+            self.Navpoints[CoalitionName][nav_ind] = UTILS.DeepCopy(nav_data)
 
             self.Navpoints[CoalitionName][nav_ind]['name'] = nav_data.callsignStr  -- name is a little bit more self-explanatory.
             self.Navpoints[CoalitionName][nav_ind]['point'] = {}  -- point is used by SSE, support it.
@@ -2006,8 +2023,6 @@ end
       TargetPlayerName = Event.IniPlayerName
 
       TargetCoalition = Event.IniCoalition
-      --TargetCategory = TargetUnit:getCategory()
-      --TargetCategory = TargetUnit:getDesc().category  -- Workaround
       TargetCategory = Event.IniCategory
       TargetType = Event.IniTypeName
 

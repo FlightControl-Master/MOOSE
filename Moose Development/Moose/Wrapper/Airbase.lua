@@ -61,7 +61,7 @@
 --
 -- The DCS Airbase APIs are used extensively within MOOSE. The AIRBASE class has for each DCS Airbase API a corresponding method.
 -- To be able to distinguish easily in your code the difference between a AIRBASE API call and a DCS Airbase API call,
--- the first letter of the method is also capitalized. So, by example, the DCS Airbase method @{DCSWrapper.Airbase#Airbase.getName}()
+-- the first letter of the method is also capitalized. So, by example, the DCS Airbase method DCSWrapper.Airbase#Airbase.getName()
 -- is implemented in the AIRBASE class as @{#AIRBASE.GetName}().
 --
 -- @field #AIRBASE AIRBASE
@@ -239,6 +239,13 @@ AIRBASE.Nevada = {
 --   * AIRBASE.Normandy.Broglie
 --   * AIRBASE.Normandy.Bernay_Saint_Martin
 --   * AIRBASE.Normandy.Saint_Andre_de_lEure
+--   * AIRBASE.Normandy.Biggin_Hill
+--   * AIRBASE.Normandy.Manston
+--   * AIRBASE.Normandy.Detling
+--   * AIRBASE.Normandy.Lympne
+--   * AIRBASE.Normandy.Abbeville_Drucat
+--   * AIRBASE.Normandy.Merville_Calonne
+--   * AIRBASE.Normandy.Saint_Omer_Wizernes
 --
 -- @field Normandy
 AIRBASE.Normandy = {
@@ -311,7 +318,14 @@ AIRBASE.Normandy = {
   ["Beaumont_le_Roger"] = "Beaumont-le-Roger",
   ["Broglie"] = "Broglie",
   ["Bernay_Saint_Martin"] = "Bernay Saint Martin",
-  ["Saint_Andre_de_lEure"] = "Saint-Andre-de-lEure",
+  ["Saint_Andre_de_lEure"] = "Saint-Andre-de-lEure",  
+  ["Biggin_Hill"] = "Biggin Hill",
+  ["Manston"] = "Manston",
+  ["Detling"] = "Detling",
+  ["Lympne"] = "Lympne",
+  ["Abbeville_Drucat"] = "Abbeville Drucat",
+  ["Merville_Calonne"] = "Merville Calonne",
+  ["Saint_Omer_Wizernes"] = "Saint-Omer Wizernes",
 }
 
 --- Airbases of the Persion Gulf Map:
@@ -929,7 +943,7 @@ end
 function AIRBASE:GetWarehouse()
   local warehouse=nil --DCS#Warehouse
   local airbase=self:GetDCSObject()
-  if airbase then
+  if airbase and Airbase.getWarehouse then
     warehouse=airbase:getWarehouse()
   end
   return warehouse
@@ -1773,7 +1787,7 @@ function AIRBASE:_CheckParkingLists(TerminalID)
 end
 
 --- Helper function to check for the correct terminal type including "artificial" ones.
--- @param #number Term_Type Termial type from getParking routine.
+-- @param #number Term_Type Terminal type from getParking routine.
 -- @param #AIRBASE.TerminalType termtype Terminal type from AIRBASE.TerminalType enumerator.
 -- @return #boolean True if terminal types match.
 function AIRBASE._CheckTerminalType(Term_Type, termtype)
