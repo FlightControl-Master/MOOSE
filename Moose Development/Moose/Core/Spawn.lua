@@ -1108,6 +1108,22 @@ function SPAWN:InitRandomizeCallsign()
   return self
 end
 
+--- [AIR only!] This method sets a specific callsign for a spawned group. Use for a group with one unit only!
+-- @param #SPAWN self
+-- @param #number ID ID of the callsign enumerator, e.g. CALLSIGN.Tanker.Texaco - - resulting in e.g. Texaco-2-1
+-- @param #string Name Name of this callsign as it cannot be determined from the ID because of the dependency on the task type of the plane, and the plane type. E.g. "Texaco"
+-- @param #number Minor Minor number, i.e. the unit number within the group, e.g 2 - resulting in e.g. Texaco-2-1
+-- @param #number Major Major number, i.e. the group number of this name, e.g. 1 - resulting in e.g. Texaco-2-1
+-- @return #SPAWN self
+function SPAWN:InitCallSign(ID,Name,Minor,Major)
+  self.SpawnInitCallSign = true
+  self.SpawnInitCallSignID = ID or 1 
+  self.SpawnInitCallSignMinor = Minor or 1
+  self.SpawnInitCallSignMajor = Major or 1 
+  self.SpawnInitCallSignName = string.lower(Name) or "enfield"
+  return self
+end
+
 --- This method sets a spawn position for the group that is different from the location of the template.
 -- @param #SPAWN self
 -- @param Core.Point#COORDINATE Coordinate The position to spawn from
@@ -3331,10 +3347,23 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
     end
   end
   
+  if self.SpawnInitCallSign then
+    for UnitID = 1, #SpawnTemplate.units do
+      local Callsign = SpawnTemplate.units[UnitID].callsign
+      if Callsign and type( Callsign ) ~= "number" then
+        SpawnTemplate.units[UnitID].callsign[1] = self.SpawnInitCallSignID 
+        SpawnTemplate.units[UnitID].callsign[2] = self.SpawnInitCallSignMinor
+        SpawnTemplate.units[UnitID].callsign[3] = self.SpawnInitCallSignMajor
+        SpawnTemplate.units[UnitID].callsign["name"] = string.format("%s%d%d",self.SpawnInitCallSignName,self.SpawnInitCallSignMinor,self.SpawnInitCallSignMajor)
+        UTILS.PrintTableToLog(SpawnTemplate.units[UnitID].callsign,1)
+      end
+    end
+  end
+  
   for UnitID = 1, #SpawnTemplate.units do
     local Callsign = SpawnTemplate.units[UnitID].callsign
     if Callsign then
-      if type( Callsign ) ~= "number" then -- blue callsign
+      if type( Callsign ) ~= "number" and not self.SpawnInitCallSign then -- blue callsign
         -- UTILS.PrintTableToLog(Callsign,1)
         Callsign[2] = ((SpawnIndex - 1) % 10) + 1
         local CallsignName = SpawnTemplate.units[UnitID].callsign["name"] -- #string
