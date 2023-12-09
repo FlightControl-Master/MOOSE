@@ -712,6 +712,22 @@ do -- DETECTION_BASE
                 end
               end
               
+              -- Calculate radar blue probability
+              
+              if self.RadarBlur then
+                local minheight = self.RadarBlurMinHeight or 250 -- meters
+                local thresheight = self.RadarBlurThresHeight or 90 -- 10% chance to find a low flying group
+                local thresblur = self.RadarBlurThresBlur or 85 -- 25% chance to escape the radar overall
+                local fheight = math.floor(math.random(1,10000)/100)
+                local fblur = math.floor(math.random(1,10000)/100)
+                local unit = UNIT:FindByName(DetectedObjectName)
+                if unit and unit:IsAlive() then
+                  local AGL = unit:GetAltitude(true)
+                  if AGL <= minheight and fheight > thresheight then DetectionAccepted = false end
+                  if fblur > thresblur then DetectionAccepted = false end
+                end
+              end
+              
               -- Calculate additional probabilities
               
               if not self.DetectedObjects[DetectedObjectName] and TargetIsVisible and self.DistanceProbability then
@@ -1011,7 +1027,21 @@ do -- DETECTION_BASE
       return self
 
     end
-
+    
+    --- Method to make the radar detection less accurate, e.g. for WWII scenarios.
+    -- @param #DETECTION_BASE self
+    -- @param #number minheight Minimum flight height to be detected, in meters AGL (above ground)
+    -- @param #number thresheight Threshold to escape the radar if flying below minheight, defaults to 90 (90% escape chance)
+    -- @param #number thresblur Threshold to be detected by the radar overall, defaults to 85 (85% chance to be found)
+    -- @return #DETECTION_BASE self
+    function DETECTION_BASE:SetRadarBlur(minheight,thresheight,thresblur)
+      self.RadarBlur = true
+      self.RadarBlurMinHeight = minheight or 250 -- meters
+      self.RadarBlurThresHeight = thresheight or 90 -- 10% chance to find a low flying group
+      self.RadarBlurThresBlur = thresblur or 85 -- 25% chance to escape the radar overall
+      return self
+    end
+    
   end
 
   do
