@@ -1108,7 +1108,7 @@ function SPAWN:InitRandomizeCallsign()
   return self
 end
 
---- [AIR only!] This method sets a specific callsign for a spawned group. Use for a group with one unit only!
+--- [BLUE AIR only!] This method sets a specific callsign for a spawned group. Use for a group with one unit only!
 -- @param #SPAWN self
 -- @param #number ID ID of the callsign enumerator, e.g. CALLSIGN.Tanker.Texaco - - resulting in e.g. Texaco-2-1
 -- @param #string Name Name of this callsign as it cannot be determined from the ID because of the dependency on the task type of the plane, and the plane type. E.g. "Texaco"
@@ -3355,7 +3355,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
         SpawnTemplate.units[UnitID].callsign[2] = self.SpawnInitCallSignMinor
         SpawnTemplate.units[UnitID].callsign[3] = self.SpawnInitCallSignMajor
         SpawnTemplate.units[UnitID].callsign["name"] = string.format("%s%d%d",self.SpawnInitCallSignName,self.SpawnInitCallSignMinor,self.SpawnInitCallSignMajor)
-        UTILS.PrintTableToLog(SpawnTemplate.units[UnitID].callsign,1)
+        --UTILS.PrintTableToLog(SpawnTemplate.units[UnitID].callsign,1)
       end
     end
   end
@@ -3371,7 +3371,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
         local CallsignLen = CallsignName:len()
         SpawnTemplate.units[UnitID].callsign[2] = UnitID
         SpawnTemplate.units[UnitID].callsign["name"] = CallsignName:sub( 1, CallsignLen ) .. SpawnTemplate.units[UnitID].callsign[2] .. SpawnTemplate.units[UnitID].callsign[3]
-      else
+      elseif type( Callsign ) == "number" then
         SpawnTemplate.units[UnitID].callsign = Callsign + SpawnIndex
       end
     end
