@@ -38,7 +38,8 @@
 -- @image Detection.JPG
 
 do -- DETECTION_BASE
-
+  
+  ---
   -- @type DETECTION_BASE
   -- @field Core.Set#SET_GROUP DetectionSetGroup The @{Core.Set} of GROUPs in the Forward Air Controller role.
   -- @field DCS#Distance DetectionRange The range till which targets are accepted to be detected.
@@ -91,6 +92,11 @@ do -- DETECTION_BASE
   --
   --     DetectionObject:FilterCategories( { Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
   --
+  -- 
+  -- ## Radar Blur - use to make the radar less exact, e.g. for WWII scenarios
+  -- 
+  --  * @{DETECTION_BASE.SetRadarBlur}(): Set the radar blur to be used.
+  --  
   -- ## **DETECTION_ derived classes** group the detected units into a **DetectedItems[]** list
   --
   -- DETECTION_BASE derived classes build a list called DetectedItems[], which is essentially a first later
@@ -268,10 +274,12 @@ do -- DETECTION_BASE
     DetectedItems = {},
     DetectedItemsByIndex = {},
   }
-
+  
+  ---
   -- @type DETECTION_BASE.DetectedObjects
   -- @list <#DETECTION_BASE.DetectedObject>
 
+  ---
   -- @type DETECTION_BASE.DetectedObject
   -- @field #string Name
   -- @field #boolean IsVisible
@@ -283,7 +291,8 @@ do -- DETECTION_BASE
   -- @field #number LastTime
   -- @field #boolean LastPos
   -- @field #number LastVelocity
-
+  
+  ---
   -- @type DETECTION_BASE.DetectedItems
   -- @list <#DETECTION_BASE.DetectedItem>
 
@@ -715,7 +724,7 @@ do -- DETECTION_BASE
               -- Calculate radar blue probability
               
               if self.RadarBlur then
-                --BASE:I("RadarBlur")
+                BASE:I("RadarBlur")
                 local minheight = self.RadarBlurMinHeight or 250 -- meters
                 local thresheight = self.RadarBlurThresHeight or 90 -- 10% chance to find a low flying group
                 local thresblur = self.RadarBlurThresBlur or 85 -- 25% chance to escape the radar overall
@@ -724,11 +733,11 @@ do -- DETECTION_BASE
                 local unit = UNIT:FindByName(DetectedObjectName)
                 if unit and unit:IsAlive() then
                   local AGL = unit:GetAltitude(true)
-                  --BASE:I("Unit "..DetectedObjectName.." is at "..AGL.."m.")
-                  --BASE:I(string.format("fheight = %d/%d | fblur = %d/%d",fheight,thresheight,fblur,thresblur))
+                  BASE:I("Unit "..DetectedObjectName.." is at "..AGL.."m.")
+                  BASE:I(string.format("fheight = %d/%d | fblur = %d/%d",fheight,thresheight,fblur,thresblur))
                   if fblur > thresblur then DetectionAccepted = false end
                   if AGL <= minheight and fheight < thresheight then DetectionAccepted = false end                
-                  --BASE:I("Detection Accepted = "..tostring(DetectionAccepted))
+                  BASE:I("Detection Accepted = "..tostring(DetectionAccepted))
                 end
               end
               
@@ -2266,7 +2275,8 @@ do -- DETECTION_UNITS
 end
 
 do -- DETECTION_TYPES
-
+  
+  ---
   -- @type DETECTION_TYPES
   -- @extends Functional.Detection#DETECTION_BASE
 
