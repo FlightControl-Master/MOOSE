@@ -1157,6 +1157,7 @@ function GROUP:GetAverageCoordinate()
     local coord = COORDINATE:NewFromVec3(vec3)
     local Heading = self:GetHeading()
     coord.Heading = Heading
+    return coord
   else
     BASE:E( { "Cannot GetAverageCoordinate", Group = self, Alive = self:IsAlive() } )
     return nil
