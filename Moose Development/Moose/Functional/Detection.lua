@@ -724,7 +724,7 @@ do -- DETECTION_BASE
               -- Calculate radar blue probability
               
               if self.RadarBlur then
-                BASE:I("RadarBlur")
+                MESSAGE:New("Radar Blur",10):ToLogIf(self.debug):ToAllIf(self.verbose)
                 local minheight = self.RadarBlurMinHeight or 250 -- meters
                 local thresheight = self.RadarBlurThresHeight or 90 -- 10% chance to find a low flying group
                 local thresblur = self.RadarBlurThresBlur or 85 -- 25% chance to escape the radar overall
@@ -733,11 +733,11 @@ do -- DETECTION_BASE
                 local unit = UNIT:FindByName(DetectedObjectName)
                 if unit and unit:IsAlive() then
                   local AGL = unit:GetAltitude(true)
-                  BASE:I("Unit "..DetectedObjectName.." is at "..AGL.."m.")
-                  BASE:I(string.format("fheight = %d/%d | fblur = %d/%d",fheight,thresheight,fblur,thresblur))
+                  MESSAGE:New("Unit "..DetectedObjectName.." is at "..math.floor(AGL).."m.",10):ToLogIf(self.debug):ToAllIf(self.verbose)
+                  MESSAGE:New(string.format("fheight = %d/%d | fblur = %d/%d",fheight,thresheight,fblur,thresblur),10):ToLogIf(self.debug):ToAllIf(self.verbose)
                   if fblur > thresblur then DetectionAccepted = false end
-                  if AGL <= minheight and fheight < thresheight then DetectionAccepted = false end                
-                  BASE:I("Detection Accepted = "..tostring(DetectionAccepted))
+                  if AGL <= minheight and fheight < thresheight then DetectionAccepted = false end  
+                  MESSAGE:New("Detection Accepted = "..tostring(DetectionAccepted),10):ToLogIf(self.debug):ToAllIf(self.verbose)              
                 end
               end
               
