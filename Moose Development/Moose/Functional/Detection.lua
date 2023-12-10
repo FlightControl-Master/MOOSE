@@ -46,8 +46,6 @@ do -- DETECTION_BASE
   -- @field #DETECTION_BASE.DetectedObjects DetectedObjects The list of detected objects.
   -- @field #table DetectedObjectsIdentified Map of the DetectedObjects identified.
   -- @field #number DetectionRun
-  -- @field #boolean debug
-  -- @field #boolean verbose
   -- @extends Core.Fsm#FSM
 
   --- Defines the core functions to administer detected objects.
@@ -275,8 +273,6 @@ do -- DETECTION_BASE
     DetectedObjectsIdentified = {},
     DetectedItems = {},
     DetectedItemsByIndex = {},
-    debug = false,
-    verbose = false,
   }
   
   ---
@@ -725,19 +721,24 @@ do -- DETECTION_BASE
                 end
               end
               
-              -- Calculate radar blur probability
+              -- Calculate radar blue probability
               
               if self.RadarBlur then
                 MESSAGE:New("Radar Blur",10):ToLogIf(self.debug):ToAllIf(self.verbose)
                 local minheight = self.RadarBlurMinHeight or 250 -- meters
                 local thresheight = self.RadarBlurThresHeight or 90 -- 10% chance to find a low flying group
                 local thresblur = self.RadarBlurThresBlur or 85 -- 25% chance to escape the radar overall
+                local dist = math.floor(Distance)
+                if dist <= 20 then
+                  thresheight = (((dist*dist)/400)*thresheight)
+                  thresblur = (((dist*dist)/400)*thresblur)
+                end
                 local fheight = math.floor(math.random(1,10000)/100)
                 local fblur = math.floor(math.random(1,10000)/100)
                 local unit = UNIT:FindByName(DetectedObjectName)
                 if unit and unit:IsAlive() then
                   local AGL = unit:GetAltitude(true)
-                  MESSAGE:New("Unit "..DetectedObjectName.." is at "..math.floor(AGL).."m.",10):ToLogIf(self.debug):ToAllIf(self.verbose)
+                  MESSAGE:New("Unit "..DetectedObjectName.." is at "..math.floor(AGL).."m. Distance "..math.floor(Distance).."km.",10):ToLogIf(self.debug):ToAllIf(self.verbose)
                   MESSAGE:New(string.format("fheight = %d/%d | fblur = %d/%d",fheight,thresheight,fblur,thresblur),10):ToLogIf(self.debug):ToAllIf(self.verbose)
                   if fblur > thresblur then DetectionAccepted = false end
                   if AGL <= minheight and fheight < thresheight then DetectionAccepted = false end  
