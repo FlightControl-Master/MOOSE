@@ -721,7 +721,7 @@ do -- DETECTION_BASE
                 end
               end
               
-              -- Calculate radar blue probability
+              -- Calculate radar blur probability
               
               if self.RadarBlur then
                 MESSAGE:New("Radar Blur",10):ToLogIf(self.debug):ToAllIf(self.verbose)
@@ -729,9 +729,9 @@ do -- DETECTION_BASE
                 local thresheight = self.RadarBlurThresHeight or 90 -- 10% chance to find a low flying group
                 local thresblur = self.RadarBlurThresBlur or 85 -- 25% chance to escape the radar overall
                 local dist = math.floor(Distance)
-                if dist <= 20 then
-                  thresheight = (((dist*dist)/400)*thresheight)
-                  thresblur = (((dist*dist)/400)*thresblur)
+                if dist <= self.RadarBlurClosing  then
+                  thresheight = (((dist*dist)/self.RadarBlurClosingSquare)*thresheight)
+                  thresblur = (((dist*dist)/self.RadarBlurClosingSquare)*thresblur)
                 end
                 local fheight = math.floor(math.random(1,10000)/100)
                 local fblur = math.floor(math.random(1,10000)/100)
@@ -1051,12 +1051,15 @@ do -- DETECTION_BASE
     -- @param #number minheight Minimum flight height to be detected, in meters AGL (above ground)
     -- @param #number thresheight Threshold to escape the radar if flying below minheight, defaults to 90 (90% escape chance)
     -- @param #number thresblur Threshold to be detected by the radar overall, defaults to 85 (85% chance to be found)
+    -- @param #number closing Closing-in in km - the limit of km from which on it becomes increasingly difficult to escape radar detection if flying towards the radar position. Should be about 1/3 of the radar detection radius in kilometers, defaults to 20.
     -- @return #DETECTION_BASE self
-    function DETECTION_BASE:SetRadarBlur(minheight,thresheight,thresblur)
+    function DETECTION_BASE:SetRadarBlur(minheight,thresheight,thresblur,closing)
       self.RadarBlur = true
       self.RadarBlurMinHeight = minheight or 250 -- meters
       self.RadarBlurThresHeight = thresheight or 90 -- 10% chance to find a low flying group
       self.RadarBlurThresBlur = thresblur or 85 -- 25% chance to escape the radar overall
+      self.RadarBlurClosing = closing or 20 -- 20km
+      self.RadarBlurClosingSquare = self.RadarBlurClosing * self.RadarBlurClosing 
       return self
     end
     
