@@ -3242,6 +3242,7 @@ end
 -- @param #string MissionType Mission type.
 -- @param DCS#Vec2 TargetVec2 Target position as 2D vector.
 -- @param #boolean IncludePayload If `true`, include the payload in the calulation if the asset has one attached.
+-- @param #number TotalWeight The total weight of the cargo to be transported, if applicable.
 function LEGION._OptimizeAssetSelection(assets, MissionType, TargetVec2, IncludePayload, TotalWeight)
 
   -- Calculate the mission score of all assets.
