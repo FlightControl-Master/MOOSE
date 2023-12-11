@@ -721,23 +721,28 @@ do -- DETECTION_BASE
                 end
               end
               
-              -- Calculate radar blue probability
+              -- Calculate radar blur probability
               
               if self.RadarBlur then
-                BASE:I("RadarBlur")
+                MESSAGE:New("Radar Blur",10):ToLogIf(self.debug):ToAllIf(self.verbose)
                 local minheight = self.RadarBlurMinHeight or 250 -- meters
                 local thresheight = self.RadarBlurThresHeight or 90 -- 10% chance to find a low flying group
                 local thresblur = self.RadarBlurThresBlur or 85 -- 25% chance to escape the radar overall
+                local dist = math.floor(Distance)
+                if dist <= self.RadarBlurClosing  then
+                  thresheight = (((dist*dist)/self.RadarBlurClosingSquare)*thresheight)
+                  thresblur = (((dist*dist)/self.RadarBlurClosingSquare)*thresblur)
+                end
                 local fheight = math.floor(math.random(1,10000)/100)
                 local fblur = math.floor(math.random(1,10000)/100)
                 local unit = UNIT:FindByName(DetectedObjectName)
                 if unit and unit:IsAlive() then
                   local AGL = unit:GetAltitude(true)
-                  BASE:I("Unit "..DetectedObjectName.." is at "..AGL.."m.")
-                  BASE:I(string.format("fheight = %d/%d | fblur = %d/%d",fheight,thresheight,fblur,thresblur))
+                  MESSAGE:New("Unit "..DetectedObjectName.." is at "..math.floor(AGL).."m. Distance "..math.floor(Distance).."km.",10):ToLogIf(self.debug):ToAllIf(self.verbose)
+                  MESSAGE:New(string.format("fheight = %d/%d | fblur = %d/%d",fheight,thresheight,fblur,thresblur),10):ToLogIf(self.debug):ToAllIf(self.verbose)
                   if fblur > thresblur then DetectionAccepted = false end
-                  if AGL <= minheight and fheight < thresheight then DetectionAccepted = false end                
-                  BASE:I("Detection Accepted = "..tostring(DetectionAccepted))
+                  if AGL <= minheight and fheight < thresheight then DetectionAccepted = false end  
+                  MESSAGE:New("Detection Accepted = "..tostring(DetectionAccepted),10):ToLogIf(self.debug):ToAllIf(self.verbose)              
                 end
               end
               
@@ -1046,12 +1051,15 @@ do -- DETECTION_BASE
     -- @param #number minheight Minimum flight height to be detected, in meters AGL (above ground)
     -- @param #number thresheight Threshold to escape the radar if flying below minheight, defaults to 90 (90% escape chance)
     -- @param #number thresblur Threshold to be detected by the radar overall, defaults to 85 (85% chance to be found)
+    -- @param #number closing Closing-in in km - the limit of km from which on it becomes increasingly difficult to escape radar detection if flying towards the radar position. Should be about 1/3 of the radar detection radius in kilometers, defaults to 20.
     -- @return #DETECTION_BASE self
-    function DETECTION_BASE:SetRadarBlur(minheight,thresheight,thresblur)
+    function DETECTION_BASE:SetRadarBlur(minheight,thresheight,thresblur,closing)
       self.RadarBlur = true
       self.RadarBlurMinHeight = minheight or 250 -- meters
       self.RadarBlurThresHeight = thresheight or 90 -- 10% chance to find a low flying group
       self.RadarBlurThresBlur = thresblur or 85 -- 25% chance to escape the radar overall
+      self.RadarBlurClosing = closing or 20 -- 20km
+      self.RadarBlurClosingSquare = self.RadarBlurClosing * self.RadarBlurClosing 
       return self
     end
     
