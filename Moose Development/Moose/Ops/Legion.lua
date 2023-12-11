@@ -3211,19 +3211,15 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
   -- TRANSPORT specific.
   if MissionType==AUFTRAG.Type.OPSTRANSPORT then
     if TotalWeight then
-      local value = 0
       -- Add 1 score point for each 10 kg of cargo bay capacity up to the total cargo weight,
       -- and then subtract 1 score point for each excess 10kg of cargo bay capacity.
       if asset.cargobaymax < TotalWeight then
-        -- Add 1 score for every 1
-        value=UTILS.Round(asset.cargobaymax/10, 0)
+        score=score+UTILS.Round(asset.cargobaymax/10, 0)
       else
-        value=UTILS.Round(TotalWeight/10, 0)
-        --value=UTILS.Round((2*TotalWeight - asset.cargobaymax)/10, 0)
+        score=score+UTILS.Round(TotalWeight/10, 0)
       end
-      score = score + value
     else
-      ---- Add 1 score point for each 10 kg of cargo bay.
+      -- Add 1 score point for each 10 kg of cargo bay.
       score=score+UTILS.Round(asset.cargobaymax/10, 0)
     end
   end  
