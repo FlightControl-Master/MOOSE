@@ -512,6 +512,23 @@ function INTEL:SetFilterCategory(Categories)
   return self
 end
 
+--- Method to make the radar detection less accurate, e.g. for WWII scenarios.
+-- @param #INTEL self
+-- @param #number minheight Minimum flight height to be detected, in meters AGL (above ground)
+-- @param #number thresheight Threshold to escape the radar if flying below minheight, defaults to 90 (90% escape chance)
+-- @param #number thresblur Threshold to be detected by the radar overall, defaults to 85 (85% chance to be found)
+-- @param #number closing Closing-in in km - the limit of km from which on it becomes increasingly difficult to escape radar detection if flying towards the radar position. Should be about 1/3 of the radar detection radius in kilometers, defaults to 20.
+-- @return #INTEL self
+function INTEL:SetRadarBlur(minheight,thresheight,thresblur,closing)
+  self.RadarBlur = true
+  self.RadarBlurMinHeight = minheight or 250 -- meters
+  self.RadarBlurThresHeight = thresheight or 90 -- 10% chance to find a low flying group
+  self.RadarBlurThresBlur = thresblur or 85 -- 25% chance to escape the radar overall
+  self.RadarBlurClosing = closing or 20 -- 20km
+  self.RadarBlurClosingSquare = self.RadarBlurClosing * self.RadarBlurClosing 
+  return self
+end
+
 --- Filter group categories. Valid categories are:
 --
 -- * Group.Category.AIRPLANE
@@ -1093,14 +1110,12 @@ end
 -- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
 -- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
 function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
-  --self:T(self.lid.."GetDetectedUnits "..Unit:GetName())
+
   -- Get detected DCS units.
   local reccename = Unit:GetName()
-  
+
   local detectedtargets=Unit:GetDetectedTargets(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
-  
-  --UTILS.PrintTableToLog(detectedtargets,1)
-  
+
   for DetectionObjectID, Detection in pairs(detectedtargets or {}) do
     local DetectedObject=Detection.object -- DCS#Object
 
@@ -1117,11 +1132,39 @@ function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisua
       if status then
 
         local unit=UNIT:FindByName(name)
-
+ 
         if unit and unit:IsAlive() then
-          DetectedUnits[name]=unit
-          RecceDetecting[name]=reccename
-          self:T(string.format("Unit %s detect by %s", name, reccename))
+		local DetectionAccepted = true
+		if self.RadarBlur then
+			local reccecoord = Unit:GetCoordinate()
+			local coord = unit:GetCoordinate()
+			local dist = math.floor(coord:Get2DDistance(reccecoord)/1000) -- km
+			local AGL = unit:GetAltitude(true)
+			local minheight = self.RadarBlurMinHeight or 250 -- meters
+			local thresheight = self.RadarBlurThresHeight or 90 -- 10% chance to find a low flying group
+			local thresblur = self.RadarBlurThresBlur or 85 -- 25% chance to escape the radar overall
+			--local dist = math.floor(Distance)
+			if dist <= self.RadarBlurClosing  then
+			  thresheight = (((dist*dist)/self.RadarBlurClosingSquare)*thresheight)
+			  thresblur = (((dist*dist)/self.RadarBlurClosingSquare)*thresblur)
+			end
+			local fheight = math.floor(math.random(1,10000)/100)
+			local fblur = math.floor(math.random(1,10000)/100)
+			if fblur > thresblur then DetectionAccepted = false end
+			if AGL <= minheight and fheight < thresheight then DetectionAccepted = false end
+			if self.debug or self.verbose > 1 then
+			  MESSAGE:New("Radar Blur",10):ToLogIf(self.debug):ToAllIf(self.verbose>1)			
+			  MESSAGE:New("Unit "..DetectedObjectName.." is at "..math.floor(AGL).."m. Distance "..math.floor(Distance).."km.",10):ToLogIf(self.debug):ToAllIf(self.verbose>1)
+			  MESSAGE:New(string.format("fheight = %d/%d | fblur = %d/%d",fheight,thresheight,fblur,thresblur),10):ToLogIf(self.debug):ToAllIf(self.verbose>1)
+			  MESSAGE:New("Detection Accepted = "..tostring(DetectionAccepted),10):ToLogIf(self.debug):ToAllIf(self.verbose>1)
+			end
+		end
+		 
+		if DetectionAccepted then
+			DetectedUnits[name]=unit
+			RecceDetecting[name]=reccename
+			self:T(string.format("Unit %s detect by %s", name, reccename))
+		end
         else
           if self.detectStatics then
             local static=STATIC:FindByName(name, false)
@@ -1139,7 +1182,6 @@ function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisua
       end
     end
   end
-
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
