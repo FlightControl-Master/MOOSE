@@ -271,7 +271,7 @@ do -- CARGO_GROUP
   -- @param Core.Event#EVENTDATA EventData 
   function CARGO_GROUP:OnEventCargoDead( EventData )
   
-    self:E(EventData)
+    --self:E(EventData)
 
     local Destroyed = false
   
