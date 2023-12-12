@@ -25,7 +25,7 @@
 
 do -- COORDINATE
 
-  --- @type COORDINATE
+  -- @type COORDINATE
   -- @field #string ClassName Name of the class
   -- @field #number x Component of the 3D vector.
   -- @field #number y Component of the 3D vector.
@@ -2551,7 +2551,7 @@ do -- COORDINATE
 
     Offset=Offset or 2
 
-    -- Measurement of visibility should not be from the ground, so Adding a hypotethical 2 meters to each Coordinate.
+    -- Measurement of visibility should not be from the ground, so Adding a hypothetical 2 meters to each Coordinate.
     local FromVec3 = self:GetVec3()
     FromVec3.y = FromVec3.y + Offset
 
@@ -2952,10 +2952,10 @@ do -- COORDINATE
     end
 
     -- corrected Track to be direction of travel of bogey (self in this case)
-   	local track = "Maneuver"
-	
-	if self.Heading then
-		track = UTILS.BearingToCardinal(self.Heading) or "North"
+    local track = "Maneuver"
+  
+  if self.Heading then
+    track = UTILS.BearingToCardinal(self.Heading) or "North"
     end
     
     if rangeNM > 3 then
@@ -3099,6 +3099,44 @@ do -- COORDINATE
     local lat, lon = coord.LOtoLL( self:GetVec3() )
     local MGRS = coord.LLtoMGRS( lat, lon )
     return "MGRS " .. UTILS.tostringMGRS( MGRS, MGRS_Accuracy )
+  end
+  
+  --- Provides a COORDINATE from an MGRS String
+  -- @param #COORDINATE self
+  -- @param #string MGRSString MGRS String, e.g. "MGRS 37T DK 12345 12345"
+  -- @return #COORDINATE self
+  function COORDINATE:NewFromMGRSString( MGRSString )
+    local myparts = UTILS.Split(MGRSString," ")
+    UTILS.PrintTableToLog(myparts,1)
+    local MGRS = {
+            UTMZone = myparts[2],
+            MGRSDigraph = myparts[3],
+            Easting = tonumber(myparts[4]),
+            Northing = tonumber(myparts[5]),
+          }
+    local lat, lon = coord.MGRStoLL(MGRS)
+    local point = coord.LLtoLO(lat, lon, 0)
+    local coord = COORDINATE:NewFromVec2({x=point.x,y=point.z})
+    return coord
+  end
+  
+  --- Provides a COORDINATE from an MGRS Coordinate
+  -- @param #COORDINATE self
+  -- @param #string UTMZone UTM Zone, e.g. "37T"
+  -- @param #string MGRSDigraph Digraph, e.g. "DK"
+  -- @param #number Easting Meters easting
+  -- @param #number Northing Meters northing
+  -- @return #COORDINATE self
+  function COORDINATE:NewFromMGRS( UTMZone, MGRSDigraph, Easting, Northing )
+    local MGRS = {
+            UTMZone = UTMZone,
+            MGRSDigraph = MGRSDigraph,
+            Easting = Easting,
+            Northing = Northing,
+          }
+    local lat, lon = coord.MGRStoLL(MGRS)
+    local point = coord.LLtoLO(lat, lon, 0)
+    local coord = COORDINATE:NewFromVec2({x=point.x,y=point.z})
   end
 
   --- Provides a coordinate string of the point, based on a coordinate format system:
@@ -3613,7 +3651,7 @@ end
 
 do -- POINT_VEC2
 
-  --- @type POINT_VEC2
+  -- @type POINT_VEC2
   -- @field DCS#Distance x The x coordinate in meters.
   -- @field DCS#Distance y the y coordinate in meters.
   -- @extends Core.Point#COORDINATE
