@@ -1144,45 +1144,45 @@ function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisua
         local unit=UNIT:FindByName(name)
  
         if unit and unit:IsAlive() then
-      		local DetectionAccepted = true
-      		
+          local DetectionAccepted = true
+          
           if self.RadarAcceptRange then
             local reccecoord = Unit:GetCoordinate()
             local coord = unit:GetCoordinate()
             local dist = math.floor(coord:Get2DDistance(reccecoord)/1000) -- km
             if dist > self.RadarAcceptRangeKilometers then DetectionAccepted = false end
           end
-      		
-      		if self.RadarBlur then
-      			local reccecoord = Unit:GetCoordinate()
-      			local coord = unit:GetCoordinate()
-      			local dist = math.floor(coord:Get2DDistance(reccecoord)/1000) -- km
-      			local AGL = unit:GetAltitude(true)
-      			local minheight = self.RadarBlurMinHeight or 250 -- meters
-      			local thresheight = self.RadarBlurThresHeight or 90 -- 10% chance to find a low flying group
-      			local thresblur = self.RadarBlurThresBlur or 85 -- 25% chance to escape the radar overall
-      			--local dist = math.floor(Distance)
-      			if dist <= self.RadarBlurClosing  then
-      			  thresheight = (((dist*dist)/self.RadarBlurClosingSquare)*thresheight)
-      			  thresblur = (((dist*dist)/self.RadarBlurClosingSquare)*thresblur)
-      			end
-      			local fheight = math.floor(math.random(1,10000)/100)
-      			local fblur = math.floor(math.random(1,10000)/100)
-      			if fblur > thresblur then DetectionAccepted = false end
-      			if AGL <= minheight and fheight < thresheight then DetectionAccepted = false end
-      			if self.debug or self.verbose > 1 then
-      			  MESSAGE:New("Radar Blur",10):ToLogIf(self.debug):ToAllIf(self.verbose>1)			
-      			  MESSAGE:New("Unit "..name.." is at "..math.floor(AGL).."m. Distance "..math.floor(dist).."km.",10):ToLogIf(self.debug):ToAllIf(self.verbose>1)
-      			  MESSAGE:New(string.format("fheight = %d/%d | fblur = %d/%d",fheight,thresheight,fblur,thresblur),10):ToLogIf(self.debug):ToAllIf(self.verbose>1)
-      			  MESSAGE:New("Detection Accepted = "..tostring(DetectionAccepted),10):ToLogIf(self.debug):ToAllIf(self.verbose>1)
-      			end
-      		end
-      		 
-      		if DetectionAccepted then
-      			DetectedUnits[name]=unit
-      			RecceDetecting[name]=reccename
-      			self:T(string.format("Unit %s detect by %s", name, reccename))
-      		end
+          
+          if self.RadarBlur then
+            local reccecoord = Unit:GetCoordinate()
+            local coord = unit:GetCoordinate()
+            local dist = math.floor(coord:Get2DDistance(reccecoord)/1000) -- km
+            local AGL = unit:GetAltitude(true)
+            local minheight = self.RadarBlurMinHeight or 250 -- meters
+            local thresheight = self.RadarBlurThresHeight or 90 -- 10% chance to find a low flying group
+            local thresblur = self.RadarBlurThresBlur or 85 -- 25% chance to escape the radar overall
+            --local dist = math.floor(Distance)
+            if dist <= self.RadarBlurClosing  then
+              thresheight = (((dist*dist)/self.RadarBlurClosingSquare)*thresheight)
+              thresblur = (((dist*dist)/self.RadarBlurClosingSquare)*thresblur)
+            end
+            local fheight = math.floor(math.random(1,10000)/100)
+            local fblur = math.floor(math.random(1,10000)/100)
+            if fblur > thresblur then DetectionAccepted = false end
+            if AGL <= minheight and fheight < thresheight then DetectionAccepted = false end
+            if self.debug or self.verbose > 1 then
+              MESSAGE:New("Radar Blur",10):ToLogIf(self.debug):ToAllIf(self.verbose>1)      
+              MESSAGE:New("Unit "..name.." is at "..math.floor(AGL).."m. Distance "..math.floor(dist).."km.",10):ToLogIf(self.debug):ToAllIf(self.verbose>1)
+              MESSAGE:New(string.format("fheight = %d/%d | fblur = %d/%d",fheight,thresheight,fblur,thresblur),10):ToLogIf(self.debug):ToAllIf(self.verbose>1)
+              MESSAGE:New("Detection Accepted = "..tostring(DetectionAccepted),10):ToLogIf(self.debug):ToAllIf(self.verbose>1)
+            end
+          end
+           
+          if DetectionAccepted then
+            DetectedUnits[name]=unit
+            RecceDetecting[name]=reccename
+            self:T(string.format("Unit %s detect by %s", name, reccename))
+          end
         else
           if self.detectStatics then
             local static=STATIC:FindByName(name, false)
