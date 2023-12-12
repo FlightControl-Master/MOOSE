@@ -2952,10 +2952,10 @@ do -- COORDINATE
     end
 
     -- corrected Track to be direction of travel of bogey (self in this case)
-   	local track = "Maneuver"
-	
-	if self.Heading then
-		track = UTILS.BearingToCardinal(self.Heading) or "North"
+    local track = "Maneuver"
+  
+  if self.Heading then
+    track = UTILS.BearingToCardinal(self.Heading) or "North"
     end
     
     if rangeNM > 3 then
