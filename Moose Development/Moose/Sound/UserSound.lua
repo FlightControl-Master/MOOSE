@@ -137,7 +137,7 @@ do -- UserSound
     return self
   end  
   
-    --- Play the usersound to the given @{Wrapper.Unit}.
+  --- Play the usersound to the given @{Wrapper.Unit}.
   -- @param #USERSOUND self
   -- @param Wrapper.Unit#UNIT Unit The @{Wrapper.Unit} to play the usersound to.
   -- @param #number Delay (Optional) Delay in seconds, before the sound is played. Default 0.
@@ -159,4 +159,24 @@ do -- UserSound
     return self
   end 
 
+
+  --- Play the usersound to the given @{Wrapper.Client}.
+  -- @param #USERSOUND self
+  -- @param Wrapper.Client#CLIENT The @{Wrapper.Client} to play the usersound to.
+  -- @param #number Delay (Optional) Delay in seconds, before the sound is played. Default 0.
+  -- @return #USERSOUND The usersound instance.
+  -- @usage
+  --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
+  --   local PlayerUnit = CLIENT:FindByPlayerName("Karl Heinz")-- Search for the active client with playername "Karl Heinz", a human player.
+  --   BlueVictory:ToClient( PlayerUnit ) -- Play the victory sound to the player unit.
+  --   
+  function USERSOUND:ToClient( Client, Delay ) 
+    Delay=Delay or 0
+    if Delay>0 then
+      SCHEDULER:New(nil, USERSOUND.ToClient,{self, Client}, Delay)      
+    else
+      trigger.action.outSoundForUnit( Client:GetID(), self.UserSoundFileName )
+    end
+    return self
+  end 
 end
