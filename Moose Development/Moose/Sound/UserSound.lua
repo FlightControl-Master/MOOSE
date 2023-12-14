@@ -160,7 +160,7 @@ do -- UserSound
   end 
 
 
-  --- Play the usersound to the given @{Wrapper.Unit}.
+  --- Play the usersound to the given @{Wrapper.Client}.
   -- @param #USERSOUND self
   -- @param Wrapper.Client#CLIENT The @{Wrapper.Client} to play the usersound to.
   -- @param #number Delay (Optional) Delay in seconds, before the sound is played. Default 0.
