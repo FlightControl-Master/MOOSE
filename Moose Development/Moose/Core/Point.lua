@@ -24,7 +24,8 @@
 
 
 do -- COORDINATE
-
+  
+  ---
   -- @type COORDINATE
   -- @field #string ClassName Name of the class
   -- @field #number x Component of the 3D vector.
@@ -3107,13 +3108,16 @@ do -- COORDINATE
   -- @return #COORDINATE self
   function COORDINATE:NewFromMGRSString( MGRSString )
     local myparts = UTILS.Split(MGRSString," ")
-    UTILS.PrintTableToLog(myparts,1)
+    local northing = tostring(myparts[5]) or ""
+    local easting = tostring(myparts[4]) or ""
+    if string.len(easting) < 5 then easting = easting..string.rep("0",5-string.len(easting)) end  
+    if string.len(northing) < 5 then northing = northing..string.rep("0",5-string.len(northing)) end
     local MGRS = {
             UTMZone = myparts[2],
             MGRSDigraph = myparts[3],
-            Easting = tonumber(myparts[4]),
-            Northing = tonumber(myparts[5]),
-          }
+            Easting = easting,
+            Northing = northing,
+          } 
     local lat, lon = coord.MGRStoLL(MGRS)
     local point = coord.LLtoLO(lat, lon, 0)
     local coord = COORDINATE:NewFromVec2({x=point.x,y=point.z})
@@ -3124,10 +3128,12 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #string UTMZone UTM Zone, e.g. "37T"
   -- @param #string MGRSDigraph Digraph, e.g. "DK"
-  -- @param #number Easting Meters easting
-  -- @param #number Northing Meters northing
+  -- @param #string Easting Meters easting - string in order to allow for leading zeros, e.g. "01234". Should be 5 digits.
+  -- @param #string Northing Meters northing - string in order to allow for leading zeros, e.g. "12340". Should be 5 digits.
   -- @return #COORDINATE self
   function COORDINATE:NewFromMGRS( UTMZone, MGRSDigraph, Easting, Northing )
+    if string.len(Easting) < 5 then Easting = Easting..string.rep("0",5-string.len(Easting) )end  
+    if string.len(Northing) < 5 then Northing = Northing..string.rep("0",5-string.len(Northing) )end
     local MGRS = {
             UTMZone = UTMZone,
             MGRSDigraph = MGRSDigraph,
