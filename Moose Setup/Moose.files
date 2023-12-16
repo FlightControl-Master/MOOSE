@@ -5,6 +5,7 @@ Utilities/Profiler.lua
 Utilities/Templates.lua
 Utilities/STTS.lua
 Utilities/FiFo.lua
+Utilities/Socket.lua
 
 Core/Base.lua
 Core/Beacon.lua
@@ -32,6 +33,8 @@ Core/TextAndSound.lua
 Core/Condition.lua
 Core/Pathline.lua
 Core/ClientMenu.lua
+Core/Astar.lua
+Core/MarkerOps_Base.lua
 
 Wrapper/Object.lua
 Wrapper/Identifiable.lua
@@ -79,6 +82,7 @@ Functional/Shorad.lua
 Functional/Autolase.lua
 Functional/AICSAR.lua
 Functional/AmmoTruck.lua
+Functional/ZoneGoalCargo.lua
 
 Ops/Airboss.lua
 Ops/RecoveryTanker.lua
@@ -107,6 +111,10 @@ Ops/FlightControl.lua
 Ops/PlayerTask.lua
 Ops/PlayerRecce.lua
 Ops/EasyGCICAP.lua
+Ops/OpsZone.lua
+Ops/ArmyGroup.lua
+Ops/OpsTransport.lua
+Ops/Target.lua
 
 AI/AI_Balancer.lua
 AI/AI_Air.lua

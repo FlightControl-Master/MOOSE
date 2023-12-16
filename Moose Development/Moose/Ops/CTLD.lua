@@ -24,7 +24,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update November 2023
+-- Last Update December 2023
 
 do 
 
@@ -1228,7 +1228,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.43"
+CTLD.version="1.0.44"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2561,6 +2561,40 @@ function CTLD:_ListCratesNearby( _group, _unit)
   return self
 end
 
+-- (Internal) Function to find and Remove nearby crates.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Unit#UNIT Unit
+-- @return #CTLD self
+function CTLD:_RemoveCratesNearby( _group, _unit)
+  self:T(self.lid .. " _RemoveCratesNearby")
+  local finddist = self.CrateDistance or 35
+  local crates,number = self:_FindCratesNearby(_group,_unit, finddist,true) -- #table
+  if number > 0 then
+    local text = REPORT:New("Removing Crates Found Nearby:")
+    text:Add("------------------------------------------------------------")
+    for _,_entry in pairs (crates) do
+      local entry = _entry -- #CTLD_CARGO
+      local name = entry:GetName() --#string
+      local dropped = entry:WasDropped()
+      if dropped then
+        text:Add(string.format("Crate for %s, %dkg removed",name, entry.PerCrateMass))
+      else
+        text:Add(string.format("Crate for %s, %dkg removed",name, entry.PerCrateMass))
+      end
+      entry:GetPositionable():Destroy(false)
+    end
+    if text:GetCount() == 1 then
+    text:Add("        N O N E")
+    end
+    text:Add("------------------------------------------------------------")
+    self:_SendMessage(text:Text(), 30, true, _group) 
+  else
+    self:_SendMessage(string.format("No (loadable) crates within %d meters!",finddist), 10, false, _group) 
+  end
+  return self
+end
+
 --- (Internal) Return distance in meters between two coordinates.
 -- @param #CTLD self
 -- @param Core.Point#COORDINATE _point1 Coordinate one
@@ -2976,6 +3010,35 @@ function CTLD:IsHercules(Unit)
   end
 end
 
+
+--- (Internal) Function to set troops positions of a template to a nice circle
+-- @param #CTLD self
+-- @param Core.Point#COORDINATE Coordinate Start coordinate to use
+-- @param #number Radius Radius to be used
+-- @param #number Heading Heading starting with
+-- @param #string Template The group template name
+-- @return #table Positions The positions table
+function CTLD:_GetUnitPositions(Coordinate,Radius,Heading,Template)
+  local Positions = {}
+  local template = _DATABASE:GetGroupTemplate(Template)
+  UTILS.PrintTableToLog(template)
+  local numbertroops = #template.units
+  local newcenter = Coordinate:Translate(Radius,((Heading+270)%360))
+  for i=1,360,math.floor(360/numbertroops) do
+    local phead = ((Heading+270+i)%360)
+    local post = newcenter:Translate(Radius,phead)
+    local pos1 = post:GetVec2()
+    local p1t = {
+    x = pos1.x,
+    y = pos1.y,
+    heading = phead,
+    }
+    table.insert(Positions,p1t)
+  end
+  UTILS.PrintTableToLog(Positions)
+  return Positions
+end
+
 --- (Internal) Function to unload troops from heli.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
@@ -3027,14 +3090,29 @@ function CTLD:_UnloadTroops(Group, Unit)
             zoneradius = Unit:GetVelocityMPS() or 100
           end
           local zone = ZONE_GROUP:New(string.format("Unload zone-%s",unitname),Group,zoneradius*factor)
-          local randomcoord = zone:GetRandomCoordinate(10,30*factor):GetVec2()
+          local randomcoord = zone:GetRandomCoordinate(10,30*factor) --:GetVec2()
+          local heading = Group:GetHeading() or 0
+          -- Spawn troops left from us, closer when hovering, further off when landed
+          if hoverunload or grounded then
+            randomcoord = Group:GetCoordinate()
+            -- slightly left from us           
+            local Angle = (heading+270)%360
+            local offset = hoverunload and 1.5 or 5
+            randomcoord:Translate(offset,Angle,nil,true)
+          end
+          local tempcount = 0
           for _,_template in pairs(temptable) do
             self.TroopCounter = self.TroopCounter + 1
+            tempcount = tempcount+1
             local alias = string.format("%s-%d", _template, math.random(1,100000))
+            local rad = 2.5+tempcount
+            local Positions = self:_GetUnitPositions(randomcoord,rad,heading,_template)
             self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
-              :InitRandomizeUnits(true,20,2)
+              --:InitRandomizeUnits(true,20,2)
+              --:InitHeading(heading)
               :InitDelayOff()
-              :SpawnFromVec2(randomcoord)
+              :InitSetUnitAbsolutePositions(Positions)
+              :SpawnFromVec2(randomcoord:GetVec2())
             self:__TroopsDeployed(1, Group, Unit, self.DroppedTroops[self.TroopCounter],type)
           end -- template loop
           cargo:SetWasDropped(true)
@@ -3637,6 +3715,7 @@ function CTLD:_RefreshF10Menus()
             local loadmenu = MENU_GROUP_COMMAND:New(_group,"Load crates",topcrates, self._LoadCratesNearby, self, _group, _unit)
             local cratesmenu = MENU_GROUP:New(_group,"Get Crates",topcrates)
             local packmenu = MENU_GROUP_COMMAND:New(_group, "Pack crates", topcrates, self._PackCratesNearby, self, _group, _unit)
+            local removecratesmenu = MENU_GROUP:New(_group, "Remove crates", topcrates)
             
             if self.usesubcats then
               local subcatmenus = {}
@@ -3672,6 +3751,7 @@ function CTLD:_RefreshF10Menus()
               end
             end
             listmenu = MENU_GROUP_COMMAND:New(_group,"List crates nearby",topcrates, self._ListCratesNearby, self, _group, _unit)
+            removecrates = MENU_GROUP_COMMAND:New(_group,"Remove crates nearby",removecratesmenu, self._RemoveCratesNearby, self, _group, _unit)
             local unloadmenu = MENU_GROUP_COMMAND:New(_group,"Drop crates",topcrates, self._UnloadCrates, self, _group, _unit)
             if not self.nobuildmenu then
               local buildmenu = MENU_GROUP_COMMAND:New(_group,"Build crates",topcrates, self._BuildCrates, self, _group, _unit)
