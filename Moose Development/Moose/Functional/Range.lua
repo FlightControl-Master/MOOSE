@@ -2187,7 +2187,7 @@ function RANGE:onafterExitRange( From, Event, To, player )
     
       local text = "You left the bombing range zone. "
       
-      local r=math.random(2)
+      local r=math.random(5)
       
       if r==1 then
         text=text.."Have a nice day!"
