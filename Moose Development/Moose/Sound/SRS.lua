@@ -48,10 +48,11 @@
 -- @field #string google Full path google credentials JSON file, e.g. "C:\Users\username\Downloads\service-account-file.json".
 -- @field #string Label Label showing up on the SRS radio overlay. Default is "ROBOT". No spaces allowed.
 -- @field #table AltBackend Table containing functions and variables to enable an alternate backend to transmit to SRS.
--- @field #string ConfigFileName Name of the standard config file
--- @field #string ConfigFilePath Path to the standard config file
--- @field #boolean ConfigLoaded
--- @field #string ttsprovider Default provider TTS backend, e.g. "Google" or "Microsoft", default is Microsoft
+-- @field #string ConfigFileName Name of the standard config file.
+-- @field #string ConfigFilePath Path to the standard config file.
+-- @field #boolean ConfigLoaded If `true` if config file was loaded.
+-- @field #string ttsprovider Default provider TTS backend, e.g. "Google" or "Microsoft", default is Microsoft.
+-- @field #table poptions Provider options. Each element is a data structure of type `MSRS.ProvierOptions`.
 -- @extends Core.Base#BASE
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -64,8 +65,9 @@
 --
 -- ## Prerequisites
 --
--- This script needs SRS version >= 1.9.6.
--- Optional: DCS-gRPC as backend to communicate with SRS (vide infra)
+-- * This script needs SRS version >= 1.9.6
+-- * You need to de-sanitize os, io and lfs in hte missionscripting.lua
+-- * Optional: DCS-gRPC as backend to communicate with SRS (vide infra)
 --
 -- ## Knwon Issues
 --
@@ -112,7 +114,7 @@
 -- Google's supported SSML reference: https://cloud.google.com/text-to-speech/docs/ssml
 --
 --
--- **Pro-Tipp** - use the command line with power shell to call DCS-SR-ExternalAudio.exe - it will tell you what is missing.
+-- **Pro-Tip** - use the command line with power shell to call DCS-SR-ExternalAudio.exe - it will tell you what is missing.
 -- and also the Google Console error, in case you have missed a step in setting up your Google TTS.
 -- E.g. `.\DCS-SR-ExternalAudio.exe -t "Text Message" -f 255 -m AM -c 2 -s 2 -z -G "Path_To_You_Google.Json"`
 -- Plays a message on 255 MHz AM for the blue coalition in-game.
@@ -210,7 +212,7 @@ MSRS = {
   ConfigFileName =    "Moose_MSRS.lua",
   ConfigFilePath =    "Config\\",
   ConfigLoaded   =     false,
-  poptions       = {},
+  poptions       =        {},
 }
 
 --- MSRS class version.
@@ -343,6 +345,8 @@ MSRS.Provider = {
 
 --- Provider options.
 -- @type MSRS.ProviderOptions
+-- @field #string provider Provider.
+-- @field #string credentials Google credentials JSON file (full path).
 -- @field #string key Access key (DCS-gRPC with Google, ASW, AZURE as provider).
 -- @field #string secret Secret key (DCS-gRPC with ASW as provider)
 -- @field #string region Region.
@@ -653,7 +657,7 @@ end
 
 --- Get modulations.
 -- @param #MSRS self
--- @param #table Modulations.
+-- @return #table Modulations.
 function MSRS:GetModulations()
   return self.modulations
 end
@@ -874,32 +878,6 @@ function MSRS:Help()
   return self
 end
 
---- Sets an alternate SRS backend to be used by MSRS to transmit over SRS for all new MSRS class instances.
--- @param #table Backend A table containing a table `Functions` with new/replacement class functions and `Vars` with new/replacement variables.
--- @return #boolean Returns 'true' on success.
-function MSRS.SetDefaultBackend(Backend)
-  if type(Backend) == "table" then
-    MSRS.AltBackend = UTILS.DeepCopy(Backend)
-  else
-    return false
-  end
-
-  return true
-end
-
---- Restores default SRS backend (DCS-SR-ExternalAudio.exe) to be used by all new MSRS class instances to transmit over SRS.
--- @return #boolean Returns 'true' on success.
-function MSRS.ResetDefaultBackend()
-  MSRS.AltBackend = nil
-  return true
-end
-
---- Sets DCS-gRPC as the default SRS backend for all new MSRS class instances.
--- @return #boolean Returns 'true' on success.
-function MSRS.SetDefaultBackendGRPC()
-  return MSRS.SetDefaultBackend(MSRS_BACKEND_DCSGRPC)
-end
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Transmission Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -984,7 +962,7 @@ function MSRS:PlayText(Text, Delay, Coordinate)
       
     else
     
-      self:PlayTextExt(Text,Delay, nil, nil, nil, nil, nil, nil, nil,Coordinate)
+      self:PlayTextExt(Text, Delay, nil, nil, nil, nil, nil, nil, nil, Coordinate)
     
     end      
 
@@ -1011,6 +989,9 @@ function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MSRS.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
   else
+  
+    Frequencies = Frequencies or self:GetFrequencies()
+    Modulations = Modulations or self:GetModulations()
   
     if self.backend==MSRS.Backend.SRSEXE then
 
@@ -1162,9 +1143,14 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
     command=command..string.format(" -L %.4f -O %.4f -A %d", lat, lon, alt)
   end
 
-  -- Set google.
-  if self.google and self.ttsprovider == "Google" then
-    command=command..string.format(' --ssml -G "%s"', self.google)
+  -- Set provider options
+  if self.provider==MSRS.Provider.GOOGLE then
+    local pops=self:GetProviderOptions()    
+    command=command..string.format(' --ssml -G "%s"', pops.credentials)
+  elseif self.provider==MSRS.Provider.WINDOWS then
+    -- Nothing to do.
+  else
+    self:E("ERROR: SRS only supports WINWOWS and GOOGLE as TTS providers! Use DCS-gRPC backend for other providers such as ")
   end
 
   -- Debug output.
