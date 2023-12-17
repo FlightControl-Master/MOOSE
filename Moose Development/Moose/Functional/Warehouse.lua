@@ -7404,6 +7404,8 @@ function WAREHOUSE:_CheckRequestNow(request)
 
   -- Check if at least one (cargo) asset is available.
   if _nassets>0 then
+  
+    local asset=_assets[1] --#WAREHOUSE.Assetitem
 
     -- Get the attibute of the requested asset.
     _assetattribute=_assets[1].attribute
@@ -7414,11 +7416,24 @@ function WAREHOUSE:_CheckRequestNow(request)
     if _assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER then
     
       if self.airbase and self.airbase:GetCoalition()==self:GetCoalition() then
+      
+        -- Check if DCS warehouse of airbase has enough assets        
+        if self.airbase.storage then
+          local nS=self.airbase.storage:GetAmount(asset.unittype)
+          local nA=asset.nunits*request.nasset  -- Number of units requested
+          if nS<nA then
+            local text=string.format("Warehouse %s: Request denied! DCS Warehouse has only %d assets of type %s ==> NOT enough to spawn the requested %d asset units (%d groups)", 
+            self.alias, nS, asset.unittype, nA, request.nasset)
+            self:_InfoMessage(text, 5)            
+            return false
+          end
+        end
+        
     
         if self:IsRunwayOperational() or _assetairstart then
   
           if _assetairstart then
-            -- Airstart no need to check parking            
+            -- Airstart no need to check parking
           else
           
             -- Check parking.
@@ -7530,6 +7545,9 @@ function WAREHOUSE:_CheckRequestNow(request)
         self:_InfoMessage(text, 5)
         return false
       end
+      
+    elseif _assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER then
+
 
     end
 

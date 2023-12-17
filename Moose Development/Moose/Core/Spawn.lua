@@ -320,7 +320,7 @@ function SPAWN:New( SpawnTemplatePrefix )
     self.AIOnOff = true -- The AI is on by default when spawning a group.
     self.SpawnUnControlled = false
     self.SpawnInitKeepUnitNames = false -- Overwrite unit names by default with group name.
-    self.DelayOnOff = false -- No intial delay when spawning the first group.
+    self.DelayOnOff = false -- No initial delay when spawning the first group.
     self.SpawnGrouping = nil -- No grouping.
     self.SpawnInitLivery = nil -- No special livery.
     self.SpawnInitSkill = nil -- No special skill.
@@ -332,6 +332,7 @@ function SPAWN:New( SpawnTemplatePrefix )
     self.SpawnInitModexPostfix = nil
     self.SpawnInitAirbase = nil
     self.TweakedTemplate = false -- Check if the user is using self made template.
+    self.SpawnRandomCallsign = false
 
     self.SpawnGroups = {} -- Array containing the descriptions of each Group to be Spawned.
   else
@@ -1096,6 +1097,30 @@ function SPAWN:InitRandomizeZones( SpawnZoneTable )
     self:_RandomizeZones( SpawnGroupID )
   end
 
+  return self
+end
+
+--- [AIR/Fighter only!] This method randomizes the callsign for a new group.
+-- @param #SPAWN self
+-- @return #SPAWN self
+function SPAWN:InitRandomizeCallsign()
+  self.SpawnRandomCallsign = true
+  return self
+end
+
+--- [BLUE AIR only!] This method sets a specific callsign for a spawned group. Use for a group with one unit only!
+-- @param #SPAWN self
+-- @param #number ID ID of the callsign enumerator, e.g. CALLSIGN.Tanker.Texaco - - resulting in e.g. Texaco-2-1
+-- @param #string Name Name of this callsign as it cannot be determined from the ID because of the dependency on the task type of the plane, and the plane type. E.g. "Texaco"
+-- @param #number Minor Minor number, i.e. the unit number within the group, e.g 2 - resulting in e.g. Texaco-2-1
+-- @param #number Major Major number, i.e. the group number of this name, e.g. 1 - resulting in e.g. Texaco-2-1
+-- @return #SPAWN self
+function SPAWN:InitCallSign(ID,Name,Minor,Major)
+  self.SpawnInitCallSign = true
+  self.SpawnInitCallSignID = ID or 1 
+  self.SpawnInitCallSignMinor = Minor or 1
+  self.SpawnInitCallSignMajor = Major or 1 
+  self.SpawnInitCallSignName = string.lower(Name) or "enfield"
   return self
 end
 
@@ -3275,17 +3300,78 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
   end
 
   -- Callsign
+  
+  if self.SpawnRandomCallsign and SpawnTemplate.units[1].callsign then
+    if type( SpawnTemplate.units[1].callsign ) ~= "number" then
+      -- change callsign
+      local min = 1
+      local max = 8
+      local ctable = CALLSIGN.Aircraft
+      if string.find(SpawnTemplate.units[1].type, "A-10",1,true) then 
+        max = 12
+      end
+      if string.find(SpawnTemplate.units[1].type, "18",1,true) then
+        min = 9 
+        max = 20 
+        ctable = CALLSIGN.F18
+      end
+      if string.find(SpawnTemplate.units[1].type, "16",1,true) then
+        min = 9 
+        max = 20 
+        ctable = CALLSIGN.F16
+      end
+      if SpawnTemplate.units[1].type == "F-15E" then
+        min = 9 
+        max = 18 
+        ctable = CALLSIGN.F15E
+      end
+      local callsignnr = math.random(min,max)
+      local callsignname = "Enfield"
+      for name, value in pairs(ctable) do
+        if value==callsignnr then
+          callsignname = name
+        end
+      end
+      for UnitID = 1, #SpawnTemplate.units do
+        SpawnTemplate.units[UnitID].callsign[1] = callsignnr
+        SpawnTemplate.units[UnitID].callsign[2] = UnitID
+        SpawnTemplate.units[UnitID].callsign[3] = "1"
+        SpawnTemplate.units[UnitID].callsign["name"] = tostring(callsignname)..tostring(UnitID).."1"
+        -- UTILS.PrintTableToLog(SpawnTemplate.units[UnitID].callsign,1) 
+      end         
+    else
+      -- Russkis
+      for UnitID = 1, #SpawnTemplate.units do
+        SpawnTemplate.units[UnitID].callsign = math.random(1,999)
+      end
+    end
+  end
+  
+  if self.SpawnInitCallSign then
+    for UnitID = 1, #SpawnTemplate.units do
+      local Callsign = SpawnTemplate.units[UnitID].callsign
+      if Callsign and type( Callsign ) ~= "number" then
+        SpawnTemplate.units[UnitID].callsign[1] = self.SpawnInitCallSignID 
+        SpawnTemplate.units[UnitID].callsign[2] = self.SpawnInitCallSignMinor
+        SpawnTemplate.units[UnitID].callsign[3] = self.SpawnInitCallSignMajor
+        SpawnTemplate.units[UnitID].callsign["name"] = string.format("%s%d%d",self.SpawnInitCallSignName,self.SpawnInitCallSignMinor,self.SpawnInitCallSignMajor)
+        --UTILS.PrintTableToLog(SpawnTemplate.units[UnitID].callsign,1)
+      end
+    end
+  end
+  
   for UnitID = 1, #SpawnTemplate.units do
     local Callsign = SpawnTemplate.units[UnitID].callsign
     if Callsign then
-      if type( Callsign ) ~= "number" then -- blue callsign
+      if type( Callsign ) ~= "number" and not self.SpawnInitCallSign then -- blue callsign
+        -- UTILS.PrintTableToLog(Callsign,1)
         Callsign[2] = ((SpawnIndex - 1) % 10) + 1
         local CallsignName = SpawnTemplate.units[UnitID].callsign["name"] -- #string
         CallsignName = string.match(CallsignName,"^(%a+)") -- 2.8 - only the part w/o numbers
         local CallsignLen = CallsignName:len()
         SpawnTemplate.units[UnitID].callsign[2] = UnitID
         SpawnTemplate.units[UnitID].callsign["name"] = CallsignName:sub( 1, CallsignLen ) .. SpawnTemplate.units[UnitID].callsign[2] .. SpawnTemplate.units[UnitID].callsign[3]
-      else
+      elseif type( Callsign ) == "number" then
         SpawnTemplate.units[UnitID].callsign = Callsign + SpawnIndex
       end
     end
@@ -3293,25 +3379,77 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
     local AddProps = SpawnTemplate.units[UnitID].AddPropAircraft
     if AddProps then
       if SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 then
-        SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 = SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16+UnitID-1
-        if SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 < 10000 then
-          SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 = string.format("0%d",SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16)
+        -- 4 digit octal with leading 0
+        if tonumber(SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16) ~= nil then
+          local octal = SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16
+          local decimal = UTILS.OctalToDecimal(octal)+UnitID-1
+          SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 = string.format("%05d",UTILS.DecimalToOctal(decimal))
+        else -- ED bug - chars in here
+          local STN = math.floor(UTILS.RandomGaussian(4088/2,nil,1000,4088))
+          STN = STN+UnitID-1
+          local OSTN = UTILS.DecimalToOctal(STN)
+          SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 = string.format("%05d",OSTN)
+        end
+      end
+      -- A10CII
+      if SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN then
+        -- 3 digit octal with leading 0
+        if tonumber(SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN) ~= nil then
+          local octal = SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN
+          local decimal = UTILS.OctalToDecimal(octal)+UnitID-1
+          SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN = string.format("%04d",UTILS.DecimalToOctal(decimal))
+        else -- ED bug - chars in here
+          local STN = math.floor(UTILS.RandomGaussian(504/2,nil,100,504))
+          STN = STN+UnitID-1
+          local OSTN = UTILS.DecimalToOctal(STN)
+          SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN = string.format("%04d",OSTN)
         end
       end
       -- VoiceCallsignNumber
-      if SpawnTemplate.units[UnitID].AddPropAircraft.VoiceCallsignNumber then
-        SpawnTemplate.units[UnitID].AddPropAircraft.VoiceCallsignNumber = SpawnTemplate.units[UnitID].AddPropAircraft.VoiceCallsignNumber+UnitID-1
+      if SpawnTemplate.units[UnitID].AddPropAircraft.VoiceCallsignNumber and type( Callsign ) ~= "number" then
+        SpawnTemplate.units[UnitID].AddPropAircraft.VoiceCallsignNumber = SpawnTemplate.units[UnitID].callsign[2] .. SpawnTemplate.units[UnitID].callsign[3]
       end
-      --UTILS.PrintTableToLog(SpawnTemplate.units[UnitID].AddPropAircraft,1)
+      -- VoiceCallsignLabel
+      if SpawnTemplate.units[UnitID].AddPropAircraft.VoiceCallsignLabel and type( Callsign ) ~= "number" then
+        local CallsignName = SpawnTemplate.units[UnitID].callsign["name"] -- #string
+        CallsignName = string.match(CallsignName,"^(%a+)") -- 2.8 - only the part w/o numbers
+        local label = "NY" -- Navy One exception
+        if not string.find(CallsignName," ") then
+          label = string.upper(string.match(CallsignName,"^%a")..string.match(CallsignName,"%a$"))
+        end
+        SpawnTemplate.units[UnitID].AddPropAircraft.VoiceCallsignLabel = label
+      end
+      -- UTILS.PrintTableToLog(SpawnTemplate.units[UnitID].AddPropAircraft,1)
       -- FlightLead
       if SpawnTemplate.units[UnitID].datalinks and SpawnTemplate.units[UnitID].datalinks.Link16 and SpawnTemplate.units[UnitID].datalinks.Link16.settings then
         SpawnTemplate.units[UnitID].datalinks.Link16.settings.flightLead = UnitID == 1 and true or false
       end
-      --UTILS.PrintTableToLog(SpawnTemplate.units[UnitID].datalinks,1)
+      -- A10CII
+      if SpawnTemplate.units[UnitID].datalinks and SpawnTemplate.units[UnitID].datalinks.SADL and SpawnTemplate.units[UnitID].datalinks.SADL.settings then
+        SpawnTemplate.units[UnitID].datalinks.SADL.settings.flightLead = UnitID == 1 and true or false
+      end
+      -- UTILS.PrintTableToLog(SpawnTemplate.units[UnitID].datalinks,1)   
+    end
+  end
+  -- Link16 team members
+  for UnitID = 1, #SpawnTemplate.units do
+    if SpawnTemplate.units[UnitID].datalinks and SpawnTemplate.units[UnitID].datalinks.Link16 and SpawnTemplate.units[UnitID].datalinks.Link16.network then
+      local team = {}
+      local isF16 = string.find(SpawnTemplate.units[UnitID].type,"F-16",1,true) and true or false
+      for ID = 1, #SpawnTemplate.units do
+        local member = {}
+        member.missionUnitId = ID 
+        if isF16 then
+          member.TDOA = true
+        end
+        table.insert(team,member)
+      end
+      SpawnTemplate.units[UnitID].datalinks.Link16.network.teamMembers = team
     end
   end
 
   self:T3( { "Template:", SpawnTemplate } )
+  --UTILS.PrintTableToLog(SpawnTemplate,1)
   return SpawnTemplate
 
 end

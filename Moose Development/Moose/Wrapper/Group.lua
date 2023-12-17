@@ -1157,6 +1157,7 @@ function GROUP:GetAverageCoordinate()
     local coord = COORDINATE:NewFromVec3(vec3)
     local Heading = self:GetHeading()
     coord.Heading = Heading
+    return coord
   else
     BASE:E( { "Cannot GetAverageCoordinate", Group = self, Alive = self:IsAlive() } )
     return nil
@@ -2922,7 +2923,7 @@ function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
   return callsign
 end
 
----
+--- Set a GROUP to act as recovery tanker
 -- @param #GROUP self
 -- @param Wrapper.Group#GROUP CarrierGroup.
 -- @param #number Speed Speed in knots.
@@ -2948,3 +2949,37 @@ function GROUP:SetAsRecoveryTanker(CarrierGroup,Speed,ToKIAS,Altitude,Delay,Last
   
   return self  
 end
+
+--- Get a list of Link16 S/TN data from a GROUP. Can (as of Nov 2023) be obtained from F-18, F-16, F-15E (not the user flyable one) and A-10C-II groups.
+-- @param #GROUP self
+-- @return #table Table of data entries, indexed by unit name, each entry is a table containing STN, VCL (voice call label), VCN (voice call number), and Lead (#boolean, if true it's the flight lead)
+-- @return #string Report Formatted report of all data
+function GROUP:GetGroupSTN()
+  local tSTN = {} -- table
+  local units = self:GetUnits()
+  local gname = self:GetName()
+  gname = string.gsub(gname,"(#%d+)$","")
+  local report = REPORT:New()
+  report:Add("Link16 S/TN Report")
+  report:Add("Group: "..gname)
+  report:Add("==================")
+  for _,_unit in pairs(units) do
+   local unit = _unit -- Wrapper.Unit#UNIT
+   if unit and unit:IsAlive() then
+     local STN, VCL, VCN, Lead = unit:GetSTN()
+     local name = unit:GetName()
+     tSTN[name] = {
+      STN=STN,
+      VCL=VCL,
+      VCN=VCN,
+      Lead=Lead,
+     }
+     local lead = Lead == true and "(*)" or ""
+     report:Add(string.format("| %s%s %s %s",tostring(VCL),tostring(VCN),tostring(STN),lead))
+   end
+  end
+  report:Add("==================")
+  local text = report:Text()
+  return tSTN,text
+end
+

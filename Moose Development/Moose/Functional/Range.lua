@@ -1207,18 +1207,18 @@ end
 -- @return #RANGE self
 function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume, PathToGoogleKey)
 
-  if PathToSRS then
+  if PathToSRS or MSRS.path then
   
     self.useSRS=true
     
-    self.controlmsrs=MSRS:New(PathToSRS, Frequency or 256, Modulation or radio.modulation.AM, Volume or 1.0)
-    self.controlmsrs:SetPort(Port)
+    self.controlmsrs=MSRS:New(PathToSRS or MSRS.path, Frequency or 256, Modulation or radio.modulation.AM, Volume or 1.0)
+    self.controlmsrs:SetPort(Port or MSRS.port)
     self.controlmsrs:SetCoalition(Coalition or coalition.side.BLUE)
     self.controlmsrs:SetLabel("RANGEC")
     self.controlsrsQ = MSRSQUEUE:New("CONTROL")
 
-    self.instructmsrs=MSRS:New(PathToSRS, Frequency or 305, Modulation or radio.modulation.AM, Volume or 1.0)
-    self.instructmsrs:SetPort(Port)
+    self.instructmsrs=MSRS:New(PathToSRS or MSRS.path, Frequency or 305, Modulation or radio.modulation.AM, Volume or 1.0)
+    self.instructmsrs:SetPort(Port or MSRS.port)
     self.instructmsrs:SetCoalition(Coalition or coalition.side.BLUE)
     self.instructmsrs:SetLabel("RANGEI")
     self.instructsrsQ = MSRSQUEUE:New("INSTRUCT")
@@ -1234,7 +1234,7 @@ function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume,
   return self
 end
 
---- (SRS) Set range control frequency and voice.
+--- (SRS) Set range control frequency and voice. Use `RANGE:SetSRS()` once first before using this function.
 -- @param #RANGE self
 -- @param #number frequency Frequency in MHz. Default 256 MHz.
 -- @param #number modulation Modulation, defaults to radio.modulation.AM.
@@ -1244,6 +1244,10 @@ end
 -- @param #string relayunitname Name of the unit used for transmission location.
 -- @return #RANGE self
 function RANGE:SetSRSRangeControl( frequency, modulation, voice, culture, gender, relayunitname )
+  if not self.instructmsrs then
+    self:E(self.lid.."Use myrange:SetSRS() once first before using myrange:SetSRSRangeControl!")
+    return self
+  end
   self.rangecontrolfreq = frequency or 256
   self.controlmsrs:SetFrequencies(self.rangecontrolfreq)
   self.controlmsrs:SetModulations(modulation or radio.modulation.AM)
@@ -1259,7 +1263,7 @@ function RANGE:SetSRSRangeControl( frequency, modulation, voice, culture, gender
   return self
 end
 
---- (SRS) Set range instructor frequency and voice.
+--- (SRS) Set range instructor frequency and voice. Use `RANGE:SetSRS()` once first before using this function.
 -- @param #RANGE self
 -- @param #number frequency Frequency in MHz. Default 305 MHz.
 -- @param #number modulation Modulation, defaults to radio.modulation.AM.
@@ -1269,6 +1273,10 @@ end
 -- @param #string relayunitname Name of the unit used for transmission location.
 -- @return #RANGE self
 function RANGE:SetSRSRangeInstructor( frequency, modulation, voice, culture, gender, relayunitname )
+  if not self.instructmsrs then
+    self:E(self.lid.."Use myrange:SetSRS() once first before using myrange:SetSRSRangeInstructor!")
+    return self
+  end
   self.instructorfreq = frequency or 305
   self.instructmsrs:SetFrequencies(self.instructorfreq)
   self.instructmsrs:SetModulations(modulation or radio.modulation.AM)
@@ -2179,7 +2187,7 @@ function RANGE:onafterExitRange( From, Event, To, player )
     
       local text = "You left the bombing range zone. "
       
-      local r=math.random(2)
+      local r=math.random(5)
       
       if r==1 then
         text=text.."Have a nice day!"

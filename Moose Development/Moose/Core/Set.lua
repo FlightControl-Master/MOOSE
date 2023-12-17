@@ -419,7 +419,11 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return Core.Base#BASE
   function SET_BASE:GetRandom()
-    local tablemax = table.maxn(self.Index)
+    local tablemax = 0
+    for _,_ind in pairs(self.Index) do
+      tablemax = tablemax + 1
+    end
+    --local tablemax = table.maxn(self.Index)
     local RandomItem = self.Set[self.Index[math.random(1,tablemax)]]
     self:T3( { RandomItem } )
     return RandomItem
@@ -561,10 +565,12 @@ do -- SET_BASE
     return self
   end
 
-  --- Iterate the SET_BASE while identifying the nearest object from a @{Core.Point#POINT_VEC2}.
+  --- Iterate the SET_BASE while identifying the nearest object in the set from a @{Core.Point#POINT_VEC2}.
   -- @param #SET_BASE self
-  -- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest object in the set.
+  -- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#COORDINATE} or @{Core.Point#POINT_VEC2} object (but **not** a simple DCS#Vec2!) from where to evaluate the closest object in the set.
   -- @return Core.Base#BASE The closest object.
+  -- @usage
+  --          myset:FindNearestObjectFromPointVec2( ZONE:New("Test Zone"):GetCoordinate() )
   function SET_BASE:FindNearestObjectFromPointVec2( PointVec2 )
     self:F2( PointVec2 )
 
@@ -1065,8 +1071,15 @@ do
     self:FilterActive( false )
 
     return self
+       
+    --- Filter the set once
+    -- @function [parent=#SET_GROUP] FilterOnce
+    -- @param #SET_GROUP self
+    -- @return #SET_GROUP self
+    
+    
   end
-
+  
   --- Get a *new* set that only contains alive groups.
   -- @param #SET_GROUP self
   -- @return #SET_GROUP Set of alive groups.
@@ -1976,6 +1989,7 @@ do
   --- Get the closest group of the set with respect to a given reference coordinate. Optionally, only groups of given coalitions are considered in the search.
   -- @param #SET_GROUP self
   -- @param Core.Point#COORDINATE Coordinate Reference Coordinate from which the closest group is determined.
+  -- @param #table Coalitions (Optional) Table of coalition #number entries to filter for.
   -- @return Wrapper.Group#GROUP The closest group (if any).
   -- @return #number Distance in meters to the closest group.
   function SET_GROUP:GetClosestGroup(Coordinate, Coalitions)
@@ -2840,59 +2854,50 @@ do -- SET_UNIT
   -- @return Core.Point#COORDINATE The center coordinate of all the units in the set, including heading in degrees and speed in mps in case of moving units.
   function SET_UNIT:GetCoordinate()
     
-    local Coordinate = nil
-    local unit = self:GetRandom()
-    if self:Count() == 1 and unit then
-      return unit:GetCoordinate()
-    end
-    if unit then
-      local Coordinate = unit:GetCoordinate()
-      --self:F({Coordinate:GetVec3()})
-      
-      
-      local x1 = Coordinate.x
-      local x2 = Coordinate.x
-      local y1 = Coordinate.y
-      local y2 = Coordinate.y
-      local z1 = Coordinate.z
-      local z2 = Coordinate.z
-      local MaxVelocity = 0
-      local AvgHeading = nil
-      local MovingCount = 0
-  
-      for UnitName, UnitData in pairs( self:GetAliveSet() ) do
-  
-        local Unit = UnitData -- Wrapper.Unit#UNIT
-        local Coordinate = Unit:GetCoordinate()
-  
-        x1 = (Coordinate.x < x1) and Coordinate.x or x1
-        x2 = (Coordinate.x > x2) and Coordinate.x or x2
-        y1 = (Coordinate.y < y1) and Coordinate.y or y1
-        y2 = (Coordinate.y > y2) and Coordinate.y or y2
-        z1 = (Coordinate.y < z1) and Coordinate.z or z1
-        z2 = (Coordinate.y > z2) and Coordinate.z or z2
-  
-        local Velocity = Coordinate:GetVelocity()
-        if Velocity ~= 0 then
-          MaxVelocity = (MaxVelocity < Velocity) and Velocity or MaxVelocity
-          local Heading = Coordinate:GetHeading()
-          AvgHeading = AvgHeading and (AvgHeading + Heading) or Heading
-          MovingCount = MovingCount + 1
+    local function GetSetVec3(units)
+      -- Init.
+      local x=0 
+      local y=0 
+      local z=0 
+      local n=0
+      -- Loop over all units.
+      for _,unit in pairs(units) do
+        local vec3=nil --DCS#Vec3
+        if unit and unit:IsAlive() then
+          vec3 = unit:GetVec3()
+        end
+        if vec3 then
+          -- Sum up posits.
+          x=x+vec3.x
+          y=y+vec3.y
+          z=z+vec3.z
+          -- Increase counter.
+          n=n+1
         end
       end
-  
-      AvgHeading = AvgHeading and (AvgHeading / MovingCount)
-  
-      Coordinate.x = (x2 - x1) / 2 + x1
-      Coordinate.y = (y2 - y1) / 2 + y1
-      Coordinate.z = (z2 - z1) / 2 + z1
-      Coordinate:SetHeading( AvgHeading )
-      Coordinate:SetVelocity( MaxVelocity )
-  
-      self:F( { Coordinate = Coordinate } )
+      if n>0 then
+        -- Average.
+        local Vec3={x=x/n, y=y/n, z=z/n} --DCS#Vec3
+        return Vec3
+      end
+      return nil
     end
-    return Coordinate
+    
+    local Coordinate = nil
+    local Vec3 = GetSetVec3(self.Set)
+    if Vec3 then
+      Coordinate = COORDINATE:NewFromVec3(Vec3)
+    end
 
+    if Coordinate then
+      local heading = self:GetHeading() or 0
+      local velocity = self:GetVelocity() or 0
+      Coordinate:SetHeading( heading )
+      Coordinate:SetVelocity( velocity )
+      self:I(UTILS.PrintTableToLog(Coordinate))
+    end
+
+    return Coordinate
   end
 
   --- Get the maximum velocity of the SET_UNIT.

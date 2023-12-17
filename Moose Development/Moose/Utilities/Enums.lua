@@ -29,7 +29,6 @@ ENUMS = {}
 --- Suppress the error box
 env.setErrorMessageBoxEnabled( false )
 
-
 --- Rules of Engagement.
 -- @type ENUMS.ROE
 -- @field #number WeaponFree [AIR] AI will engage any enemy group it detects. Target prioritization is based based on the threat of the target.
@@ -567,6 +566,14 @@ ENUMS.ReportingName =
   }
 }
 
+--- Enums for Link16 transmit power
+-- @type ENUMS.Link16Power
+ENUMS.Link16Power = {
+  none = 0,
+  low = 1,
+  medium = 2,
+  high = 3,
+}
 
 
 --- Enums for the STORAGE class for stores - which need to be in ""
