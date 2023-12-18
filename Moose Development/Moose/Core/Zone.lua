@@ -2473,6 +2473,20 @@ end
 -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, IncludeTriangles)
+
+    local coords = self:GetVerticiesCoordinates()
+    
+    local coord=coords[1] --Core.Point#COORDINATE
+    
+    table.remove(coords, 1)
+    
+    coord:MarkupToAllFreeForm(coords, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, "Drew Polygon")
+    
+    if true then
+      return
+    end
+
+
     if self._.Polygon and #self._.Polygon >= 3 then
         Coalition = Coalition or self:GetDrawCoalition()
 
@@ -3610,13 +3624,17 @@ ZONE_OVAL = {
 
 --- Creates a new ZONE_OVAL from a center point, major axis, minor axis, and angle.
 --- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Oval.lua
+-- @param #ZONE_OVAL self
+-- @param #string name Name of the zone.
 -- @param #table vec2 The center point of the oval
 -- @param #number major_axis The major axis of the oval
 -- @param #number minor_axis The minor axis of the oval
 -- @param #number angle The angle of the oval
 -- @return #ZONE_OVAL The new oval
 function ZONE_OVAL:New(name, vec2, major_axis, minor_axis, angle)
+
     self = BASE:Inherit(self, ZONE_BASE:New())
+    
     self.ZoneName = name
     self.CenterVec2 = vec2
     self.MajorAxis = major_axis

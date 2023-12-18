@@ -42,7 +42,7 @@
 -- @field #number volume Volume between 0 (min) and 1 (max). Default 1.
 -- @field #string culture Culture. Default "en-GB".
 -- @field #string gender Gender. Default "female".
--- @field #string voice Specific voce.
+-- @field #string voice Specific voice.
 -- @field Core.Point#COORDINATE coordinate Coordinate from where the transmission is send.
 -- @field #string path Path to the SRS exe. This includes the final slash "/".
 -- @field #string google Full path google credentials JSON file, e.g. "C:\Users\username\Downloads\service-account-file.json".
@@ -364,17 +364,6 @@ MSRS.Provider = {
 -- @field #MSRS.ProviderOptions azure
 -- @field #MSRS.ProviderOptions aws
 -- @field #string DefaultProvider
-
-MSRS.GRPCOptions = {} -- #MSRS.GRPCOptions
-MSRS.GRPCOptions.gcloud = {} -- #MSRS.ProviderOptions
-MSRS.GRPCOptions.win = {} -- #MSRS.ProviderOptions
-MSRS.GRPCOptions.azure = {} -- #MSRS.ProviderOptions
-MSRS.GRPCOptions.aws = {} -- #MSRS.ProviderOptions
-
-MSRS.GRPCOptions.win.defaultVoice = "Hedda"
-MSRS.GRPCOptions.win.voice = "Hedda"
-
-MSRS.GRPCOptions.DefaultProvider = "win"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -700,18 +689,34 @@ function MSRS:SetVoice(Voice)
   return self
 end
 
---- Set to use a specific voice. Will override gender and culture settings.
+--- Set to use a specific voice for a given provider. Note that this will override any gender and culture settings.
 -- @param #MSRS self
+-- @param #string Provider Provider. Default `MSRS.Provider.WINDOWS`.
 -- @param #string Voice Voice.
 -- @return #MSRS self
-function MSRS:SetDefaultVoice(Voice)
-
-  self.defaultVoice=Voice
+function MSRS:SetProviderVoice(Provider, Voice)
   
-  local provider = self.provider or self.GRPCOptions.DefaultProvider or MSRS.GRPCOptions.DefaultProvider or "win"
-  self.GRPCOptions[provider].defaultVoice = Voice
+  self.poptions=self.poptions or {}
+  
+  self.poptions[Provider or MSRS.Provider.WINDOWSo]=Voice
 
   return self
+end
+
+--- Get voice.
+-- @param #MSRS self
+-- @param #string Provider Provider. Default is the currently set provider (`self.provider`).
+-- @return #MSRS self
+function MSRS:GetVoice(Provider)
+
+  Provider=Provider or self.provider
+  
+  if Provider then
+    return self.poptions[Provider].voice
+  else
+    return self.voice
+  end
+
 end
 
 --- Set the coordinate from which the transmissions will be broadcasted. Note that this is only a factor if SRS has line-of-sight or distance enabled.
@@ -796,6 +801,34 @@ end
 -- @param #string Region Region to use.
 -- @return #MSRS.ProviderOptions Provider optionas table.
 function MSRS:SetProviderOptions(Provider, CredentialsFile, AccessKey, SecretKey, Region)
+  
+  local option=MSRS._CreateProviderOptions(Provider, CredentialsFile, AccessKey, SecretKey, Region)
+  
+  if self then
+  
+    self.poptions=self.poptions or {}
+    
+    self.poptions[Provider]=option
+    
+  else
+  
+    MSRS.poptions=MSRS.poptions or {}
+    
+    MSRS.poptions[Provider]=option
+    
+  end
+
+  return option
+end
+
+--- Create MSRS.ProviderOptions.
+-- @param #string Provider Provider.
+-- @param #string CredentialsFile Full path to your credentials file. For Google this is the path to a JSON file.
+-- @param #string AccessKey Your API access key.
+-- @param #string SecretKey Your secret key.
+-- @param #string Region Region to use.
+-- @return #MSRS.ProviderOptions Provider optionas table.
+function MSRS._CreateProviderOptions(Provider, CredentialsFile, AccessKey, SecretKey, Region)
 
   local option={} --#MSRS.ProviderOptions
   
@@ -804,10 +837,6 @@ function MSRS:SetProviderOptions(Provider, CredentialsFile, AccessKey, SecretKey
   option.key=AccessKey
   option.secret=SecretKey
   option.region=Region
-  
-  self.poptions=self.poptions or {}
-  
-  self.poptions[Provider]=option
 
   return option
 end
@@ -824,7 +853,7 @@ function MSRS:SetProviderOptionsGoogle(CredentialsFile, AccessKey)
   return self
 end
 
---- Set provider options and credentials for Google Cloud.
+--- Get provider options.
 -- @param #MSRS self
 -- @param #string Provider Provider. Default is as set via @{#MSRS.SetProvider}.
 -- @return #MSRS.ProviderOptions Provider options.
@@ -1107,7 +1136,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
 
   coal=coal or self.coalition
   gender=gender or self.gender
-  voice=voice or self.voice
+  voice=voice or self:GetVoice(self.provider) or self.voice
   culture=culture or self.culture
   volume=volume or self.volume
   speed=speed or self.speed
@@ -1297,9 +1326,7 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
   
   self:I("MSRS_BACKEND_DCSGRPC:_DCSgRPCtts()")
   self:I({Text, Frequencies, Gender, Culture, Voice, Volume, Label, Coordinate})
-  
-  --local options = self.ProviderOptions or MSRS.ProviderOptions or {} -- #MSRS.GRPCOptions
-  
+
   local options = {} -- #MSRS.GRPCOptions
   
   local ssml = Text or ''
@@ -1323,14 +1350,14 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
   options.coalition = UTILS.GetCoalitionName(self.coalition):lower()
 
   -- Provider (win, gcloud, ...)
-  local provider = self.provider or self.GRPCOptions.DefaultProvider or MSRS.GRPCOptions.DefaultProvider
+  local provider = self.provider or MSRS.Provider.WINDOWS
 
   -- Provider options: voice, credentials
   options.provider = {}
   options.provider[provider] = self:GetProviderOptions(provider)
   
   -- Voice
-  Voice=Voice or self.voice
+  Voice=Voice or self:GetVoice(self.provider) or self.voice
 
   if Voice then
     -- We use a specific voice
@@ -1453,76 +1480,115 @@ end
 function MSRS:LoadConfigFile(Path,Filename)
 
   if lfs == nil then
-        env.info("*****Note - lfs and os need to be desanitized for MSRS to work!")
-        return false
+    env.info("*****Note - lfs and os need to be desanitized for MSRS to work!")
+    return false
   end
+  
   local path = Path or lfs.writedir()..MSRS.ConfigFilePath
   local file = Filename or MSRS.ConfigFileName or "Moose_MSRS.lua"
   local pathandfile = path..file
   local filexsists =  UTILS.FileExists(pathandfile)
 
   if filexsists and not MSRS.ConfigLoaded then
+  
+    env.info("FF reading config file")
+  
+    -- Load global MSRS_Config
     assert(loadfile(path..file))()
-    -- now we should have a global var MSRS_Config
+    
     if MSRS_Config then
-      if self then
-        self.path = MSRS_Config.Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
-        self.port = MSRS_Config.Port or 5002
-        self.frequencies = MSRS_Config.Frequency or {127,243}
-        self.modulations = MSRS_Config.Modulation or {0,0}
-        self.coalition = MSRS_Config.Coalition or 0
-        if MSRS_Config.Coordinate then
-          self.coordinate = COORDINATE:New( MSRS_Config.Coordinate[1],MSRS_Config.Coordinate[2],MSRS_Config.Coordinate[3])
-        end
-        self.culture = MSRS_Config.Culture or "en-GB"
-        self.gender = MSRS_Config.Gender or "male"
-        self.google = MSRS_Config.Google
-        if MSRS_Config.Provider then
-          self.ttsprovider = MSRS_Config.Provider
-        end
-        self.Label = MSRS_Config.Label or "MSRS"
-        self.voice = MSRS_Config.Voice --or MSRS.Voices.Microsoft.Hazel
-        if MSRS_Config.GRPC then
-           self.provider = MSRS_Config.GRPC.DefaultProvider
-           if MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider] then
-              self.APIKey = MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider].key
-              self.defaultVoice = MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider].defaultVoice
-              self.region = MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider].secret
-              self.secret = MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider].region
-           end
-        end
-        self.ConfigLoaded = true
-      else
-        MSRS.path = MSRS_Config.Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
-        MSRS.port = MSRS_Config.Port or 5002
-        MSRS.frequencies = MSRS_Config.Frequency or {127,243}
-        MSRS.modulations = MSRS_Config.Modulation or {0,0}
-        MSRS.coalition = MSRS_Config.Coalition or 0
-        if MSRS_Config.Coordinate then
-          MSRS.coordinate = COORDINATE:New( MSRS_Config.Coordinate[1],MSRS_Config.Coordinate[2],MSRS_Config.Coordinate[3])
-        end
-        MSRS.culture = MSRS_Config.Culture or "en-GB"
-        MSRS.gender = MSRS_Config.Gender or "male"
-        MSRS.google = MSRS_Config.Google
-        if MSRS_Config.Provider then
-          MSRS.ttsprovider = MSRS_Config.Provider
-        end
-        MSRS.Label = MSRS_Config.Label or "MSRS"
-        MSRS.voice = MSRS_Config.Voice --or MSRS.Voices.Microsoft.Hazel
-        if MSRS_Config.GRPC then
-           MSRS.provider = MSRS_Config.GRPC.DefaultProvider
-           if MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider] then
-              MSRS.APIKey = MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider].key
-              MSRS.defaultVoice = MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider].defaultVoice
-              MSRS.region = MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider].secret
-              MSRS.secret = MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider].region
-           end
-        end
-        MSRS.ConfigLoaded = true
+    
+      local Self = self or MSRS  --#MSRS
+      
+      Self.path = MSRS_Config.Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+      Self.port = MSRS_Config.Port or 5002
+      Self.frequencies = MSRS_Config.Frequency or {127,243}
+      Self.modulations = MSRS_Config.Modulation or {0,0}
+      Self.coalition = MSRS_Config.Coalition or 0
+      if MSRS_Config.Coordinate then
+        Self.coordinate = COORDINATE:New( MSRS_Config.Coordinate[1], MSRS_Config.Coordinate[2], MSRS_Config.Coordinate[3] )
       end
+      Self.culture = MSRS_Config.Culture or "en-GB"
+      Self.gender = MSRS_Config.Gender or "male"
+      Self.Label = MSRS_Config.Label or "MSRS"
+      Self.voice = MSRS_Config.Voice --or MSRS.Voices.Microsoft.Hazel
+
+      Self.provider = MSRS_Config.Provider or MSRS.Provider.WINDOWS
+      for _,provider in pairs(MSRS.Provider) do
+        if MSRS_Config[provider] then
+          Self.poptions[provider]=MSRS_Config[provider]
+        end
+      end
+      
+      Self.ConfigLoaded = true
+      
+      if false then
+    
+        if self then
+          self.path = MSRS_Config.Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+          self.port = MSRS_Config.Port or 5002
+          self.frequencies = MSRS_Config.Frequency or {127,243}
+          self.modulations = MSRS_Config.Modulation or {0,0}
+          self.coalition = MSRS_Config.Coalition or 0
+          if MSRS_Config.Coordinate then
+            self.coordinate = COORDINATE:New( MSRS_Config.Coordinate[1], MSRS_Config.Coordinate[2], MSRS_Config.Coordinate[3] )
+          end
+          self.culture = MSRS_Config.Culture or "en-GB"
+          self.gender = MSRS_Config.Gender or "male"
+          self.google = MSRS_Config.Google
+          if MSRS_Config.Provider then
+            self.ttsprovider = MSRS_Config.Provider
+          end
+          self.Label = MSRS_Config.Label or "MSRS"
+          self.voice = MSRS_Config.Voice --or MSRS.Voices.Microsoft.Hazel
+          
+          if MSRS_Config.GRPC then
+             self.provider = MSRS_Config.GRPC.DefaultProvider
+             if MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider] then
+                self.APIKey = MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider].key
+                self.defaultVoice = MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider].defaultVoice
+                self.region = MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider].secret
+                self.secret = MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider].region
+             end
+          end
+          
+          self.ConfigLoaded = true
+        else
+        
+          MSRS.path = MSRS_Config.Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+          MSRS.port = MSRS_Config.Port or 5002
+          MSRS.frequencies = MSRS_Config.Frequency or {127,243}
+          MSRS.modulations = MSRS_Config.Modulation or {0,0}
+          MSRS.coalition = MSRS_Config.Coalition or 0
+          if MSRS_Config.Coordinate then
+            MSRS.coordinate = COORDINATE:New( MSRS_Config.Coordinate[1], MSRS_Config.Coordinate[2], MSRS_Config.Coordinate[3] )
+          end
+          MSRS.culture = MSRS_Config.Culture or "en-GB"
+          MSRS.gender = MSRS_Config.Gender or "male"
+          MSRS.google = MSRS_Config.Google
+          if MSRS_Config.Provider then
+            MSRS.ttsprovider = MSRS_Config.Provider
+          end
+          MSRS.Label = MSRS_Config.Label or "MSRS"
+          MSRS.voice = MSRS_Config.Voice --or MSRS.Voices.Microsoft.Hazel
+          if MSRS_Config.GRPC then
+             MSRS.provider = MSRS_Config.GRPC.DefaultProvider
+             if MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider] then
+                MSRS.APIKey = MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider].key
+                MSRS.defaultVoice = MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider].defaultVoice
+                MSRS.region = MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider].secret
+                MSRS.secret = MSRS_Config.GRPC[MSRS_Config.GRPC.DefaultProvider].region
+             end
+          end
+          MSRS.ConfigLoaded = true
+        end
+      
+      end
+      
     end
     env.info("MSRS - Successfully loaded default configuration from disk!",false)
   end
+  
   if not filexsists then
     env.info("MSRS - Cannot find default configuration file!",false)
     return false
@@ -1921,7 +1987,7 @@ function MSRSQUEUE:_CheckRadioQueue(delay)
 
 end
 
---MSRS.LoadConfigFile()
+MSRS.LoadConfigFile()
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
