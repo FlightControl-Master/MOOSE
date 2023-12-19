@@ -2020,7 +2020,7 @@ _ZONE_TRIANGLE = {
     Coords={},
     CenterVec2={x=0, y=0},
     SurfaceArea=0,
-    DrawIDs={}
+    DrawID={}
 }
 ---
 -- @param #_ZONE_TRIANGLE self
@@ -2100,15 +2100,35 @@ function _ZONE_TRIANGLE:Draw(Coalition, Color, Alpha, FillColor, FillAlpha, Line
     for i=1, #self.Coords do
         local c1 = self.Coords[i]
         local c2 = self.Coords[i % #self.Coords + 1]
-        table.add(self.DrawIDs, c1:LineToAll(c2, Coalition, Color, Alpha, LineType, ReadOnly))
+        local id = c1:LineToAll(c2, Coalition, Color, Alpha, LineType, ReadOnly)
+        self.DrawID[#self.DrawID+1] = id
     end
-    return self.DrawIDs
+    local newID = self.Coords[1]:MarkupToAllFreeForm({self.Coords[2],self.Coords[3]},Coalition,Color,Alpha,FillColor,FillAlpha,LineType,ReadOnly)
+    self.DrawID[#self.DrawID+1] = newID
+    return self.DrawID
+end
+
+--- Draw the triangle
+-- @param #_ZONE_TRIANGLE self
+-- @return #table of draw IDs
+function _ZONE_TRIANGLE:Fill(Coalition, FillColor, FillAlpha, ReadOnly)
+    Coalition=Coalition or -1
+    FillColor = FillColor
+    FillAlpha = FillAlpha 
+    local newID = self.Coords[1]:MarkupToAllFreeForm({self.Coords[2],self.Coords[3]},Coalition,nil,nil,FillColor,FillAlpha,0,nil)
+    self.DrawID[#self.DrawID+1] = newID
+    return self.DrawID
 end
 
 
 ---
 -- @type ZONE_POLYGON_BASE
 -- @field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCS#Vec2}.
+-- @field #number SurfaceArea
+-- @field #table DrawID
+-- @field #table FillTriangles
+-- @field #table _Triangles
+-- @field #table Borderlines
 -- @extends #ZONE_BASE
 
 
@@ -2133,9 +2153,11 @@ end
 -- @field #ZONE_POLYGON_BASE
 ZONE_POLYGON_BASE = {
   ClassName="ZONE_POLYGON_BASE",
-  _Triangles={}, -- _ZONE_TRIANGLES
+  _Triangles={}, -- #table of #_ZONE_TRIANGLE
   SurfaceArea=0,
-  DrawID={} -- making a table out of the MarkID so its easier to draw an n-sided polygon, see ZONE_POLYGON_BASE:Draw()
+  DrawID={}, -- making a table out of the MarkID so its easier to draw an n-sided polygon, see ZONE_POLYGON_BASE:Draw()
+  FillTriangles = {},
+  Borderlines = {},
 }
 
 --- A 2D points array.
@@ -2470,57 +2492,97 @@ end
 -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value. -- doesn't seem to work
 -- @param #number FillAlpha Transparency [0,1]. Default 0.15.                                                 -- doesn't seem to work
 -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
--- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+-- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.s
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, IncludeTriangles)
-    if self._.Polygon and #self._.Polygon >= 3 then
-        Coalition = Coalition or self:GetDrawCoalition()
-
-        -- Set draw coalition.
-        self:SetDrawCoalition(Coalition)
-
-        Color = Color or self:GetColorRGB()
-        Alpha = Alpha or 1
-
-        -- Set color.
-        self:SetColor(Color, Alpha)
-
-        FillColor = FillColor or self:GetFillColorRGB()
-        if not FillColor then
-            UTILS.DeepCopy(Color)
-        end
-        FillAlpha = FillAlpha or self:GetFillColorAlpha()
-        if not FillAlpha then
-            FillAlpha = 0.15
-        end
-
-        -- Set fill color -----------> has fill color worked in recent versions of DCS?
-        -- doing something like
-        --
-        -- trigger.action.markupToAll(7, -1, 501, p.Coords[1]:GetVec3(), p.Coords[2]:GetVec3(),p.Coords[3]:GetVec3(),p.Coords[4]:GetVec3(),{1,0,0, 1}, {1,0,0, 1}, 4, false, Text or "")
-        --
-        -- doesn't seem to fill in the shape for an n-sided polygon
-        self:SetFillColor(FillColor, FillAlpha)
-
-        IncludeTriangles = IncludeTriangles or false
-
-        -- just draw the triangles, we get the outline for free
-        if IncludeTriangles then
-            for _, triangle in pairs(self._Triangles) do
-                local draw_ids = triangle:Draw()
-                table.combine(self.DrawID, draw_ids)
-            end
-        -- draw outline only
-        else
-            local coords = self:GetVerticiesCoordinates()
-            for i = 1, #coords do
-                local c1 = coords[i]
-                local c2 = coords[i % #coords + 1]
-                table.add(self.DrawID, c1:LineToAll(c2, Coalition, Color, Alpha, LineType, ReadOnly))
-            end
-        end
+  
+  if self._.Polygon and #self._.Polygon >= 3 then
+    Coalition = Coalition or self:GetDrawCoalition()
+  
+    -- Set draw coalition.
+    self:SetDrawCoalition(Coalition)
+  
+    Color = Color or self:GetColorRGB()
+    Alpha = Alpha or self:GetColorAlpha()
+  
+    FillColor = FillColor or self:GetFillColorRGB()
+    FillAlpha = FillAlpha or self:GetFillColorAlpha()
+  
+    if FillColor then
+      self:ReFill(Color,Alpha)  
     end
-    return self
+    
+    if Color then
+        self:ReDrawBorderline(Color,Alpha,LineType)
+    end
+  end
+  
+  return self
+end
+
+--- Change/Re-fill a Polygon Zone
+-- @param #ZONE_POLYGON_BASE self
+-- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
+-- @param #number Alpha Transparency [0,1]. Default 1.
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:ReFill(Color,Alpha)
+  local color = Color or self:GetFillColorRGB() or {1,0,0}
+  local alpha = Alpha or self:GetFillColorAlpha() or 1
+  local coalition = self:GetDrawCoalition() or -1
+  -- undraw if already filled
+  if #self.FillTriangles > 0 then
+    for _, triangle in pairs(self._Triangles) do
+      triangle:UndrawZone()
+    end
+    -- remove mark IDs
+    for _,_value in pairs(self.FillTriangles) do
+      table.remove_by_value(self.DrawID, _value)
+    end
+    self.FillTriangles = nil
+    self.FillTriangles = {}
+  end
+  -- refill
+  for _, triangle in pairs(self._Triangles) do
+      local draw_ids = triangle:Fill(coalition,color,alpha,nil)
+      self.FillTriangles = draw_ids
+      table.combine(self.DrawID, draw_ids)
+  end
+  return self
+end
+
+--- Change/Re-draw the border of a Polygon Zone
+-- @param #ZONE_POLYGON_BASE self
+-- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
+-- @param #number Alpha Transparency [0,1]. Default 1.
+-- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+-- @return #ZONE_POLYGON_BASE
+function ZONE_POLYGON_BASE:ReDrawBorderline(Color, Alpha, LineType)
+  local color = Color or self:GetFillColorRGB() or {1,0,0}
+  local alpha = Alpha or self:GetFillColorAlpha() or 1
+  local coalition = self:GetDrawCoalition() or -1
+  local linetype = LineType or 1
+    -- undraw if already drawn
+  if #self.Borderlines > 0 then
+    for _, MarkID in pairs(self.Borderlines) do
+      trigger.action.removeMark(MarkID)
+    end
+    -- remove mark IDs
+    for _,_value in pairs(self.Borderlines) do
+      table.remove_by_value(self.DrawID, _value)
+    end
+    self.Borderlines = nil
+    self.Borderlines = {}
+  end
+  -- Redraw border
+  local coords = self:GetVerticiesCoordinates()
+  for i = 1, #coords do
+      local c1 = coords[i]
+      local c2 = coords[i % #coords + 1]
+      local newID = c1:LineToAll(c2, coalition, color, alpha, linetype, nil)
+      self.DrawID[#self.DrawID+1]=newID
+      self.Borderlines[#self.Borderlines+1] = newID
+  end
+  return self
 end
 
 --- Get the surface area of this polygon
@@ -2856,6 +2918,7 @@ function ZONE_POLYGON_BASE:Boundary(Coalition, Color, Radius, Alpha, Segments, C
     Alpha = Alpha or 1
     Segments = Segments or 10
     Closed = Closed or false
+    local Limit
     local i = 1
     local j = #self._.Polygon
     if (Closed) then
