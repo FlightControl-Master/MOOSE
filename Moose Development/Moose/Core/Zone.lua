@@ -2509,7 +2509,7 @@ function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlph
     FillAlpha = FillAlpha or self:GetFillColorAlpha()
   
     if FillColor then
-      self:ReFill(Color,Alpha)  
+      self:ReFill(FillColor,FillAlpha)  
     end
     
     if Color then
