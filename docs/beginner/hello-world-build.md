@@ -144,9 +144,16 @@ have create everything on your own.
 - Change the text a little bit, like `Hello Dude! ...` and save the file.
 - Run the mission again.
 - The text will not be changed in the mission. Why?
-  The mission editor copies the script into the mission file when you add it.
-  Ever change on the script file on your hard disk is not recognized by mission editor.
-  You have to add the file after each change again.
+
+{: .important }
+The mission editor copies the script into the mission file when you add it.
+Every change on the script file on your hard disk is not recognized by mission
+editor.  **You have to add the file after each change again!**
+
+There is also another method available to dynamically load mission scripts.
+But this method has some brawbacks and will be explained in the advanced section.
+
+Now we add the mission script again:
 
 - On the left side of the `TRIGGERS` dialog click on `Load Mission Script`.
 - On the right side under `ACTIONS` you need to add the script again:
