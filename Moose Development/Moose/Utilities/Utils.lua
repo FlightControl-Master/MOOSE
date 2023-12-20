@@ -2146,17 +2146,17 @@ function UTILS.IsLoadingDoorOpen( unit_name )
           return true
       end
 
-      if string.find(type_name, "Bell-47",1,true) then -- bell aint got no doors so always ready to load injured soldiers
+      if type_name == "Bell-47" then -- bell aint got no doors so always ready to load injured soldiers
           BASE:T(unit_name .. " door is open")
           return true
       end
-      
+     
       if type_name == "UH-60L" and (unit:getDrawArgumentValue(401) == 1 or unit:getDrawArgumentValue(402) == 1) then
           BASE:T(unit_name .. " cargo door is open")
           return true
       end
 
-      if type_name == "UH-60L" and (unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(400) == 1 ) then
+      if type_name ==  "UH-60L" and (unit:getDrawArgumentValue(38) > 0 or unit:getDrawArgumentValue(400) == 1 ) then
           BASE:T(unit_name .. " front door(s) are open")
           return true
       end
